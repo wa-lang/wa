@@ -1,0 +1,7 @@
+// 版权 @2022 _examples/hello 作者。保留所有权利。
+
+package pkg
+
+fn Println(x int) {
+	println(x)
+}

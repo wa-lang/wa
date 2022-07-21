@@ -1,0 +1,15 @@
+// 版权 @2021 凹语言 作者。保留所有权利。
+
+fn PrintPrime(max int) {
+	for n := 2; n <= max; n = n + 1 {
+		isPrime := 1
+		for i := 2; i*i <= n; i = i + 1 {
+			if x := n % i; x == 0 {
+				isPrime = 0
+			}
+		}
+		if isPrime != 0 {
+			println(n)
+		}
+	}
+}
