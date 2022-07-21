@@ -20,11 +20,11 @@
 - 凹语言™支持中文/英文双语关键字，即任一关键字均有中文及英文版，二者在语法层面等价。
 
 ## 处理过程
-![处理过程](./image/proc.png)
+![处理过程](docs/images/proc.png)
 
 ## 例子: 打印素数
 
-[./_examples/hello/hello.wa.go](./_examples/hello/hello.wa.go) 打印 30 以内的素数：
+打印 30 以内的素数：
 
 ```
 // 版权 @2021 凹语言™ 作者。保留所有权利。
@@ -43,6 +43,8 @@ fn main() {
 	}
 }
 ```
+
+更多例子: [_examples/hello](_examples/hello)
 
 ## 版权
 
