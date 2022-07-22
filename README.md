@@ -20,7 +20,25 @@
 - 凹语言™支持中文/英文双语关键字，即任一关键字均有中文及英文版，二者在语法层面等价。
 
 ## 处理过程
-![处理过程](docs/images/proc.png)
+
+```mermaid
+graph LR
+    wa_ext(.wa);
+    wago_ext(.wa.go);
+
+    wa_ast(Wa AST);
+
+    c_cpp(C/C++);
+    llir(LLVM IR);
+    wasm(WASM);
+
+    wa_ext   --> wa_ast;
+    wago_ext --> wa_ast;
+
+    wa_ast --> c_cpp;
+    wa_ast --> llir;
+    wa_ast --> wasm;
+```
 
 ## 例子: 打印素数
 
