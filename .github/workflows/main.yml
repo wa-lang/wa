@@ -1,0 +1,24 @@
+name: main
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+      - "releases/*"
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Git checkout
+        uses: actions/checkout@v2
+
+      - name: Set up Go
+        uses: actions/setup-go@v2
+        with:
+          go-version: 1.17
+
+      - run: go test -v -coverprofile=profile.cov ./pkg/...
+
+      - uses: shogo82148/actions-goveralls@v1
+        with:
+          path-to-profile: profile.cov
