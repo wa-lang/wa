@@ -3,16 +3,21 @@
 package app
 
 import (
+	"bytes"
+	"errors"
 	"fmt"
 	"html/template"
+	"io"
 	"io/fs"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"runtime"
+	"strings"
 	"time"
 
 	"github.com/wa-lang/wa/internal/config"
+	"github.com/wa-lang/wa/internal/format"
 	"github.com/wa-lang/wa/internal/logger"
 	"github.com/wa-lang/wa/internal/waroot"
 )
@@ -141,7 +146,28 @@ func (p *App) InitApp(name, pkgpath string, update bool) error {
 }
 
 func (p *App) Fmt(path string) error {
-	panic("TODO")
+	if path == "" {
+		path, _ = os.Getwd()
+	}
+
+	if strings.HasSuffix(path, "...") {
+		panic("TODO: fmt dir/...")
+	}
+
+	fi, err := os.Lstat(path)
+	if err != nil {
+		return err
+	}
+	if fi.IsDir() {
+		panic("TODO: fmt dir")
+	}
+
+	code, err := format.File(nil, path, nil)
+	if err != nil {
+		return err
+	}
+
+	return os.WriteFile(path, code, 0666)
 }
 
 func (p *App) Lex(filename string) error {
@@ -166,4 +192,26 @@ func (p *App) Build(filename string, src interface{}, outfile string) (output []
 
 func (p *App) Run(filename string, src interface{}) (data []byte, err error) {
 	panic("TODO")
+}
+
+func (p *App) readSource(filename string, src interface{}) ([]byte, error) {
+	if src != nil {
+		switch s := src.(type) {
+		case string:
+			return []byte(s), nil
+		case []byte:
+			return s, nil
+		case *bytes.Buffer:
+			if s != nil {
+				return s.Bytes(), nil
+			}
+		case io.Reader:
+			d, err := io.ReadAll(s)
+			return d, err
+		}
+		return nil, errors.New("invalid source")
+	}
+
+	d, err := os.ReadFile(filename)
+	return d, err
 }
