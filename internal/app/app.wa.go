@@ -16,9 +16,11 @@ import (
 	"strings"
 	"time"
 
+	"github.com/wa-lang/wa/internal/ast"
 	"github.com/wa-lang/wa/internal/config"
 	"github.com/wa-lang/wa/internal/format"
 	"github.com/wa-lang/wa/internal/logger"
+	"github.com/wa-lang/wa/internal/parser"
 	"github.com/wa-lang/wa/internal/scanner"
 	"github.com/wa-lang/wa/internal/token"
 	"github.com/wa-lang/wa/internal/waroot"
@@ -195,7 +197,13 @@ func (p *App) Lex(filename string) error {
 }
 
 func (p *App) AST(filename string) error {
-	panic("TODO")
+	fset := token.NewFileSet() // positions are relative to fset
+	f, err := parser.ParseFile(nil, fset, filename, nil, 0)
+	if err != nil {
+		return err
+	}
+
+	return ast.Print(fset, f)
 }
 
 func (p *App) SSA(filename string) error {
