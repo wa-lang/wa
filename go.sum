@@ -1,2 +1,4 @@
+github.com/pkg/errors v0.9.1 h1:FEBLx1zS214owpjy7qsBeixbURkuhQAwrK5UwLGTwt4=
+github.com/pkg/errors v0.9.1/go.mod h1:bwawxfHBFNV+L2hUp1rHADufV3IMtnDRdf1r5NINEl0=
 github.com/wa-lang/cli v0.1.0 h1:UXkUbhvFPd8rsV6vD2I0wC51rikCKeLF2zoWqEz1aHk=
 github.com/wa-lang/cli v0.1.0/go.mod h1:3NcBOchk7iddLdJvwZZMSoK5obMs4Xa1JF9IW4gfyTw=
