@@ -18,7 +18,7 @@ jobs:
         with:
           go-version: 1.17
 
-      - run: go test -v -coverprofile=profile.cov ./pkg/...
+      - run: go test -v -coverprofile=profile.cov ./internal/...
 
       - uses: shogo82148/actions-goveralls@v1
         with:
