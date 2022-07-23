@@ -17,8 +17,8 @@ import (
 
 func main() {
 	cliApp := cli.NewApp()
-	cliApp.Name = "wago"
-	cliApp.Usage = "Wago is a tool for managing Wa source code."
+	cliApp.Name = "Wa"
+	cliApp.Usage = "Wa is a tool for managing Wa source code."
 	cliApp.Version = func() string {
 		if info, ok := debug.ReadBuildInfo(); ok {
 			if info.Main.Version != "" {
