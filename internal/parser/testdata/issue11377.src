@@ -1,0 +1,27 @@
+// Copyright 2018 The Go Authors. All rights reserved.
+// Use of this source code is governed by a BSD-style
+// license that can be found in the LICENSE file.
+
+// Test case for issue 11377: Better synchronization of
+// parser after certain syntax errors.
+
+package p
+
+fn bad1() {
+    if f()) /* ERROR "expected ';', found '\)'" */ {
+        return
+    }
+}
+
+// There shouldn't be any errors down below.
+
+fn F1() {}
+fn F2() {}
+fn F3() {}
+fn F4() {}
+fn F5() {}
+fn F6() {}
+fn F7() {}
+fn F8() {}
+fn F9() {}
+fn F10() {}
