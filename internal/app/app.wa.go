@@ -7,9 +7,13 @@ import (
 	"html/template"
 	"io/fs"
 	"os"
+	"os/exec"
 	"path/filepath"
+	"runtime"
 	"time"
 
+	"github.com/wa-lang/wa/internal/config"
+	"github.com/wa-lang/wa/internal/logger"
 	"github.com/wa-lang/wa/internal/waroot"
 )
 
@@ -32,7 +36,50 @@ type App struct {
 
 // 构建命令行程序对象
 func NewApp(opt *Option) *App {
-	return &App{}
+	logger.Tracef(&config.EnableTrace_app, "opt: %+v", opt)
+
+	p := &App{}
+	if opt != nil {
+		p.opt = *opt
+	}
+	if p.opt.Clang == "" {
+		if runtime.GOOS == "windows" {
+			p.opt.Clang, _ = exec.LookPath("clang.exe")
+		} else {
+			p.opt.Clang, _ = exec.LookPath("clang")
+		}
+		if p.opt.Clang == "" {
+			p.opt.Clang = "clang"
+		}
+	}
+	if p.opt.WasmLLC == "" {
+		if runtime.GOOS == "windows" {
+			p.opt.WasmLLC, _ = exec.LookPath("llc.exe")
+		} else {
+			p.opt.WasmLLC, _ = exec.LookPath("llc")
+		}
+		if p.opt.WasmLLC == "" {
+			p.opt.WasmLLC = "llc"
+		}
+	}
+	if p.opt.WasmLD == "" {
+		if runtime.GOOS == "windows" {
+			p.opt.WasmLD, _ = exec.LookPath("wasm-ld.exe")
+		} else {
+			p.opt.WasmLD, _ = exec.LookPath("wasm-ld")
+		}
+		if p.opt.WasmLD == "" {
+			p.opt.WasmLD = "wasm-ld"
+		}
+	}
+	if p.opt.TargetOS == "" {
+		p.opt.TargetOS = runtime.GOOS
+	}
+	if p.opt.TargetArch == "" {
+		p.opt.TargetArch = runtime.GOARCH
+	}
+
+	return p
 }
 
 func (p *App) InitApp(name, pkgpath string, update bool) error {
