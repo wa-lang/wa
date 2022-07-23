@@ -1,0 +1,8 @@
+*.exe
+*.dll
+*.a
+*.so
+*.dylib
+
+*.out*
+_target
