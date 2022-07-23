@@ -12,7 +12,7 @@ import . /* ERROR "imported but not used" */ "unsafe"
 import . "fmt"     // declares Println in file scope
 
 import (
-	// TODO(gri) At the moment, 2 errors are reported because both github.com/wa-lang/wago/parser
+	// TODO(gri) At the moment, 2 errors are reported because both github.com/wa-lang/wa/internal/parser
 	// and the type checker report it. Eventually, this test should not be
 	// done by the parser anymore.
 	"" /* ERROR invalid import path */ /* ERROR invalid import path */

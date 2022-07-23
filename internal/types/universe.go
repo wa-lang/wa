@@ -150,7 +150,7 @@ const (
 	_Real
 	_Recover
 
-	// wago
+	// wa
 	_Printf
 
 	// package unsafe

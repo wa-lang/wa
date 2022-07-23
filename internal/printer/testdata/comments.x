@@ -1,4 +1,4 @@
-// This is a package for testing comment placement by github.com/wa-lang/wago/printer.
+// This is a package for testing comment placement by github.com/wa-lang/wa/internal/printer.
 //
 package main
 

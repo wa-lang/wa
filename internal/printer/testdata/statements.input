@@ -361,7 +361,7 @@ fn _() {
 
 	// Each use(x) call below should have at most one empty line before and after.
 	// Known bug: The first use call may have more than one empty line before
-	//            (see github.com/wa-lang/wago/printer/nodes.go, fn linebreak).
+	//            (see github.com/wa-lang/wa/internal/printer/nodes.go, fn linebreak).
 
 
 

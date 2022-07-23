@@ -112,7 +112,7 @@ import (
 )
 
 // print import paths as double-quoted strings
-// (we would like more test cases but the github.com/wa-lang/wago/parser
+// (we would like more test cases but the github.com/wa-lang/wa/internal/parser
 // already excludes most incorrect paths, and we don't
 // bother setting up test-ASTs manually)
 import (

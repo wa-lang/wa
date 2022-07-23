@@ -178,7 +178,7 @@ func g2() [unsafe.Sizeof(x2)]int
 var x2 = g2
 
 // verify that we get the correct sizes for the functions above
-// (note: assert is statically evaluated in github.com/wa-lang/wago/types test mode)
+// (note: assert is statically evaluated in github.com/wa-lang/wa/internal/types test mode)
 func init() {
 	assert(unsafe.Sizeof(g1) == 8)
 	assert(unsafe.Sizeof(x2) == 8)

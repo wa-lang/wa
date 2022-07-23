@@ -709,7 +709,7 @@ fn _() {
 }
 
 // Literal function types in conversions must be parenthesized;
-// for now github.com/wa-lang/wago/parser accepts the unparenthesized form where it
+// for now github.com/wa-lang/wa/internal/parser accepts the unparenthesized form where it
 // is non-ambiguous.
 fn _() {
 	// these conversions should be rewritten to look
