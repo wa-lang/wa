@@ -13,15 +13,18 @@ import (
 	"os/exec"
 	"path/filepath"
 	"runtime"
+	"sort"
 	"strings"
 	"time"
 
 	"github.com/wa-lang/wa/internal/ast"
 	"github.com/wa-lang/wa/internal/config"
 	"github.com/wa-lang/wa/internal/format"
+	"github.com/wa-lang/wa/internal/loader"
 	"github.com/wa-lang/wa/internal/logger"
 	"github.com/wa-lang/wa/internal/parser"
 	"github.com/wa-lang/wa/internal/scanner"
+	"github.com/wa-lang/wa/internal/ssa"
 	"github.com/wa-lang/wa/internal/token"
 	"github.com/wa-lang/wa/internal/waroot"
 )
@@ -207,7 +210,26 @@ func (p *App) AST(filename string) error {
 }
 
 func (p *App) SSA(filename string) error {
-	panic("TODO")
+	cfg := config.DefaultConfig()
+	prog, err := loader.LoadProgram(cfg, filename)
+	if err != nil {
+		return err
+	}
+
+	prog.SSAMainPkg.WriteTo(os.Stdout)
+
+	var funcNames []string
+	for name, x := range prog.SSAMainPkg.Members {
+		if _, ok := x.(*ssa.Function); ok {
+			funcNames = append(funcNames, name)
+		}
+	}
+	sort.Strings(funcNames)
+	for _, s := range funcNames {
+		prog.SSAMainPkg.Func(s).WriteTo(os.Stdout)
+	}
+
+	return nil
 }
 
 func (p *App) ASM(filename string) error {
