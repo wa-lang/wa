@@ -19,6 +19,8 @@ import (
 	"github.com/wa-lang/wa/internal/config"
 	"github.com/wa-lang/wa/internal/format"
 	"github.com/wa-lang/wa/internal/logger"
+	"github.com/wa-lang/wa/internal/scanner"
+	"github.com/wa-lang/wa/internal/token"
 	"github.com/wa-lang/wa/internal/waroot"
 )
 
@@ -171,6 +173,24 @@ func (p *App) Fmt(path string) error {
 }
 
 func (p *App) Lex(filename string) error {
+	src, err := p.readSource(filename, nil)
+	if err != nil {
+		return err
+	}
+
+	var s scanner.Scanner
+	fset := token.NewFileSet()
+	file := fset.AddFile(filename, fset.Base(), len(src))
+	s.Init(file, src, nil, scanner.ScanComments)
+
+	for {
+		pos, tok, lit := s.Scan()
+		if tok == token.EOF {
+			break
+		}
+		fmt.Printf("%s\t%s\t%q\n", fset.Position(pos), tok, lit)
+	}
+
 	return nil
 }
 
