@@ -11,8 +11,8 @@ import (
 	"runtime/debug"
 
 	"github.com/wa-lang/cli"
-	"github.com/wa-lang/wa/pkg/app"
-	"github.com/wa-lang/wa/pkg/config"
+	"github.com/wa-lang/wa/internal/app"
+	"github.com/wa-lang/wa/internal/config"
 )
 
 func main() {
