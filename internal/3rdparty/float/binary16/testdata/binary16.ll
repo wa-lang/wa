@@ -1,0 +1,14 @@
+@f_pos_nan = global half 0xH7E00
+@f_neg_nan = global half 0xHFE00
+@f_pos_inf = global half 0xH7C00
+@f_neg_inf = global half 0xHFC00
+@f_pos_0 = global half 0xH0000
+@f_neg_0 = global half 0xH8000
+@f_pos_0_dot_5 = global half 0xH3800
+@f_neg_0_dot_5 = global half 0xHB800
+@f_pos_1_dot_5 = global half 0xH3E00
+@f_neg_1_dot_5 = global half 0xHBE00
+@f_pos_2_dot_5 = global half 0xH4100
+@f_neg_2_dot_5 = global half 0xHC100
+@f_pos_3_dot_14 = global half 0xH4248
+@f_neg_3_dot_14 = global half 0xHC248

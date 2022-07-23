@@ -1,0 +1,11 @@
+digraph {
+	"@add"
+	"@sub"
+	"@f"
+	"@f" -> "@printf"
+	"@main"
+	"@main" -> "@add"
+	"@main" -> "@sub"
+	"@main" -> "@f"
+	"@printf"
+}
