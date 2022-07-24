@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/pkg/errors"
+	"github.com/wa-lang/wa/internal/3rdparty/errors"
 	constant "github.com/wa-lang/wa/internal/3rdparty/llir/llconstant"
 	types "github.com/wa-lang/wa/internal/3rdparty/llir/lltypes"
 )

@@ -6,7 +6,7 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/pkg/errors"
+	"github.com/wa-lang/wa/internal/3rdparty/errors"
 	"github.com/wa-lang/wa/internal/3rdparty/llir/internal/enc"
 	"github.com/wa-lang/wa/internal/3rdparty/llir/internal/natsort"
 	enum "github.com/wa-lang/wa/internal/3rdparty/llir/llenum"

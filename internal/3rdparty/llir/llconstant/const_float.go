@@ -8,7 +8,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/pkg/errors"
+	"github.com/wa-lang/wa/internal/3rdparty/errors"
 	"github.com/wa-lang/wa/internal/3rdparty/float"
 	"github.com/wa-lang/wa/internal/3rdparty/float/bfloat"
 	"github.com/wa-lang/wa/internal/3rdparty/float/binary128"

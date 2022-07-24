@@ -14,7 +14,7 @@ import (
 	"sort"
 	"text/template"
 
-	"github.com/pkg/errors"
+	"github.com/wa-lang/wa/internal/3rdparty/errors"
 )
 
 func main() {
