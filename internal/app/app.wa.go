@@ -117,8 +117,8 @@ func (p *App) InitApp(name, pkgpath string, update bool) error {
 		Year:    time.Now().Year(),
 	}
 
-	fileSys := waroot.GetExampleAppFS()
-	return fs.WalkDir(fileSys, ".", func(path string, d fs.DirEntry, err error) error {
+	appFS := waroot.GetExampleAppFS()
+	err := fs.WalkDir(appFS, ".", func(path string, d fs.DirEntry, err error) error {
 		if d == nil || d.IsDir() {
 			return nil
 		}
@@ -126,7 +126,7 @@ func (p *App) InitApp(name, pkgpath string, update bool) error {
 			return err
 		}
 
-		data, err := fs.ReadFile(fileSys, path)
+		data, err := fs.ReadFile(appFS, path)
 		if err != nil {
 			return err
 		}
@@ -152,6 +152,50 @@ func (p *App) InitApp(name, pkgpath string, update bool) error {
 
 		return nil
 	})
+	if err != nil {
+		return err
+	}
+
+	vendorFS := waroot.GetExampleVendorFS()
+	err = fs.WalkDir(vendorFS, ".", func(path string, d fs.DirEntry, err error) error {
+		if d == nil || d.IsDir() {
+			return nil
+		}
+		if err != nil {
+			return err
+		}
+
+		data, err := fs.ReadFile(vendorFS, path)
+		if err != nil {
+			return err
+		}
+
+		tmpl, err := template.New(path).Parse(string(data))
+		if err != nil {
+			return err
+		}
+
+		dstpath := filepath.Join(name, "vendor", path)
+		os.MkdirAll(filepath.Dir(dstpath), 0777)
+
+		f, err := os.Create(dstpath)
+		if err != nil {
+			return err
+		}
+		defer f.Close()
+
+		err = tmpl.Execute(f, &info)
+		if err != nil {
+			return err
+		}
+
+		return nil
+	})
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func (p *App) Fmt(path string) error {
