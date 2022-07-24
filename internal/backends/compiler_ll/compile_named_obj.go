@@ -1,4 +1,4 @@
-package compiler
+package compiler_ll
 
 import "github.com/wa-lang/wa/internal/3rdparty/llir/lltypes"
 

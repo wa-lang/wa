@@ -1,4 +1,4 @@
-package compiler
+package compiler_ll
 
 const (
 	g_typ_string_name     = "ugo_string_t"

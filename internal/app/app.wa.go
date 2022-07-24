@@ -18,6 +18,7 @@ import (
 	"time"
 
 	"github.com/wa-lang/wa/internal/ast"
+	"github.com/wa-lang/wa/internal/backends/compiler_ll"
 	"github.com/wa-lang/wa/internal/config"
 	"github.com/wa-lang/wa/internal/format"
 	"github.com/wa-lang/wa/internal/loader"
@@ -233,7 +234,19 @@ func (p *App) SSA(filename string) error {
 }
 
 func (p *App) ASM(filename string) error {
-	panic("TODO")
+	cfg := config.DefaultConfig()
+	prog, err := loader.LoadProgram(cfg, filename)
+	if err != nil {
+		return err
+	}
+
+	output, err := compiler_ll.New().Compile(prog)
+	if err != nil {
+		return err
+	}
+
+	fmt.Print(output)
+	return nil
 }
 
 func (p *App) Build(filename string, src interface{}, outfile string) (output []byte, err error) {
