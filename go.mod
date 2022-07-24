@@ -5,6 +5,5 @@ module github.com/wa-lang/wa
 go 1.17
 
 require (
-	github.com/wa-lang/cli v0.1.0
 	github.com/pkg/errors v0.9.1
 )

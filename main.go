@@ -10,7 +10,7 @@ import (
 	"runtime"
 	"runtime/debug"
 
-	"github.com/wa-lang/cli"
+	"github.com/wa-lang/wa/internal/3rdparty/cli"
 	"github.com/wa-lang/wa/internal/app"
 	"github.com/wa-lang/wa/internal/config"
 )
