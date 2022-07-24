@@ -88,7 +88,7 @@ $ wa run _examples/prime
 
 [_examples](_examples)
 
-![](https://wa-lang.org/wa-run-demo.gif)
+![](https://raw.githubusercontent.com/wa-lang/wa-lang.github.io/master/wa-run-demo.gif)
 
 ## 版权
 
