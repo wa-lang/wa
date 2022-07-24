@@ -68,7 +68,27 @@ fn main() {
 }
 ```
 
-更多例子: [_examples/hello](_examples/hello)
+输出结果:
+
+```
+$ wa run _examples/prime
+2
+3
+5
+7
+11
+13
+17
+19
+23
+29
+```
+
+## 更多例子
+
+[_examples](_examples)
+
+![](https://wa-lang.org/wa-run-demo.gif)
 
 ## 版权
 
