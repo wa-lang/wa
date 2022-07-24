@@ -6,7 +6,6 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
-	"html/template"
 	"io"
 	"io/fs"
 	"os"
@@ -15,6 +14,7 @@ import (
 	"runtime"
 	"sort"
 	"strings"
+	"text/template"
 	"time"
 
 	"github.com/wa-lang/wa/internal/ast"

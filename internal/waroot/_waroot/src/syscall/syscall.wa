@@ -1,6 +1,4 @@
 // 版权 @2019 凹语言 作者。保留所有权利。
 
-package syscall
-
 //wa:linkname write
 fn Write(int32 fs, uintptr data, int size) int

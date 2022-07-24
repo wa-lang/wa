@@ -17,6 +17,12 @@
 +------------+
 ```
 
+安装和测试:
+
+1. `go install github.com/wa-lang/wa@latest`
+2. `wa init -name=_examples/hi`
+3. `wa run _examples/hi`
+
 ## 设计目标
 
 - 披着 Go 和 Rust 语法外衣的 C++ 语言；
