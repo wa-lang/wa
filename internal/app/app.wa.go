@@ -19,6 +19,7 @@ import (
 
 	"github.com/wa-lang/wa/internal/ast"
 	"github.com/wa-lang/wa/internal/backends/compiler_ll"
+	"github.com/wa-lang/wa/internal/backends/compiler_ll/builtin"
 	"github.com/wa-lang/wa/internal/config"
 	"github.com/wa-lang/wa/internal/format"
 	"github.com/wa-lang/wa/internal/loader"
@@ -250,11 +251,82 @@ func (p *App) ASM(filename string) error {
 }
 
 func (p *App) Build(filename string, src interface{}, outfile string) (output []byte, err error) {
-	panic("TODO")
+	return p.build(filename, src, outfile, p.opt.TargetOS, p.opt.TargetArch)
+}
+
+func (p *App) build(filename string, src interface{}, outfile, goos, goarch string) (output []byte, err error) {
+	cfg := config.DefaultConfig()
+	prog, err := loader.LoadProgram(cfg, filename)
+	if err != nil {
+		return nil, err
+	}
+
+	llOutput, err := compiler_ll.New().Compile(prog)
+	if err != nil {
+		return nil, err
+	}
+
+	const (
+		_a_out_ll     = "_a.out.ll"
+		_a_builtin_ll = "_a_builtin.out.ll"
+	)
+
+	if !p.opt.Debug {
+		defer func() {
+			if err == nil {
+				os.Remove(_a_out_ll)
+				os.Remove(_a_builtin_ll)
+			}
+		}()
+	}
+
+	llButiltin := builtin.GetBuiltinLL(p.opt.TargetOS, p.opt.TargetArch)
+	if err := os.WriteFile(_a_builtin_ll, []byte(llButiltin), 0666); err != nil {
+		return nil, err
+	}
+
+	if err := os.WriteFile(_a_out_ll, []byte(llOutput), 0666); err != nil {
+		return nil, err
+	}
+
+	args := []string{
+		"-Wno-override-module", "-o", outfile,
+		_a_out_ll, _a_builtin_ll,
+	}
+
+	cmd := exec.Command(p.opt.Clang, args...)
+	data, err := cmd.CombinedOutput()
+	return data, err
 }
 
 func (p *App) Run(filename string, src interface{}) (data []byte, err error) {
-	panic("TODO")
+	if p.opt.TargetOS == "wasm" {
+		return nil, fmt.Errorf("donot support run wasm")
+	}
+
+	a_out := "./a.out"
+	if runtime.GOOS == "windows" {
+		a_out = `.\a.out.exe`
+	}
+	if !p.opt.Debug {
+		defer func() {
+			if err == nil {
+				os.Remove(a_out)
+			}
+		}()
+	}
+
+	output, err := p.build(filename, src, a_out, runtime.GOOS, runtime.GOARCH)
+	if err != nil {
+		return output, err
+	}
+
+	output, err = exec.Command(a_out).CombinedOutput()
+	if err != nil {
+		return output, err
+	}
+
+	return output, nil
 }
 
 func (p *App) readSource(filename string, src interface{}) ([]byte, error) {
