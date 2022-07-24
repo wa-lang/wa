@@ -14,9 +14,9 @@ import (
 // 模块文件
 const WaModFile = "wa.mod.json"
 
-// wa.json 文件结构
+// WaModFile 文件结构
 type Manifest struct {
-	Root    string `json:"root"` // wa.json 所在目录
+	Root    string `json:"root"` // WaModFile 所在目录
 	MainPkg string `json:"main"` // 主包路径
 
 	Pkg Manifest_package `json:"package"`
@@ -53,7 +53,7 @@ func (p *Manifest) Clone() *Manifest {
 	return &v
 }
 
-// 加载 wa.json 文件
+// 加载 WaModFile 文件
 func LoadManifest(appPath string) (*Manifest, error) {
 	workDir := appPath
 	if workDir == "" {
@@ -64,13 +64,13 @@ func LoadManifest(appPath string) (*Manifest, error) {
 		workDir = wd
 	}
 
-	// 查找 wa.json 路径
+	// 查找 WaModFile 路径
 	kManifestPath, err := findManifestPath(workDir)
 	if err != nil {
-		return nil, fmt.Errorf("loader.LoadManifest: find wa.json failed : %w", err)
+		return nil, fmt.Errorf("loader.LoadManifest: find '%s' failed : %w", WaModFile, err)
 	}
 
-	// 读取 wa.json 文件
+	// 读取 WaModFile 文件
 	data, err := os.ReadFile(kManifestPath)
 	if err != nil {
 		return nil, fmt.Errorf("loader.LoadManifest: read %s failed: %w", kManifestPath, err)
@@ -98,13 +98,13 @@ func (p *Manifest) JSONString() string {
 	return string(d)
 }
 
-// 查找 wa.json 文件路径
+// 查找 WaModFile 文件路径
 func findManifestPath(pkgpath string) (string, error) {
 	if pkgpath == "" {
 		return "", fmt.Errorf("empty pkgpath")
 	}
 
-	// 依次向上查找 wa.json
+	// 依次向上查找 WaModFile
 	pkgroot := pkgpath
 	for pkgroot != "" {
 		kManifestPath := filepath.Join(pkgroot, WaModFile)
@@ -122,5 +122,5 @@ func findManifestPath(pkgpath string) (string, error) {
 	}
 
 	// 查找失败
-	return "", fmt.Errorf("%s: <wa.json> not found", pkgpath)
+	return "", fmt.Errorf("%s: '%s' not found", WaModFile, pkgpath)
 }

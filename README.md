@@ -76,10 +76,10 @@ fn main() {
 }
 ```
 
-输出结果:
+运行并输出结果:
 
 ```
-$ wa run _examples/prime
+$ go run main.go run _examples/prime
 2
 3
 5

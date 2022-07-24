@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+
+	"github.com/wa-lang/wa/internal/config"
 )
 
 func findPkgInfo(workDir string) (pkgroot, pkgpath string, err error) {
@@ -24,7 +26,7 @@ func findPkgInfo(workDir string) (pkgroot, pkgpath string, err error) {
 
 	pkgroot = wd
 	for pkgroot != "" {
-		waJsonPath := filepath.Join(pkgroot, "wa.json")
+		waJsonPath := filepath.Join(pkgroot, config.WaModFile)
 		if fi, _ := os.Stat(waJsonPath); fi != nil {
 			pkgpath, err = filepath.Rel(pkgroot, wd)
 			pkgroot = filepath.ToSlash(pkgroot)
