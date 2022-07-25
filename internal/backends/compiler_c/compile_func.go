@@ -18,8 +18,8 @@ import (
 type functionGenerator struct {
 	compiler *CompilerC
 
-	locals  map[ssa.Value]cir.Var
-	localID int
+	locals       map[ssa.Value]cir.Var
+	cur_local_id int
 
 	params        []cir.VarDecl
 	var_cur_block cir.Expr
@@ -524,8 +524,8 @@ func (g *functionGenerator) genPhi(inst *ssa.Phi) {
 }
 
 func (g *functionGenerator) genRegister() string {
-	defer func() { g.localID++ }()
-	return "$T_" + strconv.Itoa(g.localID)
+	defer func() { g.cur_local_id++ }()
+	return "$T_" + strconv.Itoa(g.cur_local_id)
 }
 
 func (g *functionGenerator) genReturn(inst *ssa.Return) {

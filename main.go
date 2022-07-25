@@ -215,6 +215,24 @@ func main() {
 			},
 		},
 		{
+			Name:  "cir",
+			Usage: "print cir code",
+			Action: func(c *cli.Context) error {
+				if c.NArg() == 0 {
+					fmt.Fprintf(os.Stderr, "no input file")
+					os.Exit(1)
+				}
+
+				ctx := app.NewApp(build_Options(c))
+				err := ctx.CIR(c.Args().First())
+				if err != nil {
+					fmt.Println(err)
+					os.Exit(1)
+				}
+				return nil
+			},
+		},
+		{
 			Name:  "asm",
 			Usage: "parse Wa and print ouput assembly code",
 			Action: func(c *cli.Context) error {
