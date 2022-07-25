@@ -17,14 +17,16 @@ type Scope struct {
 	//在该域中定义的结构体
 	Structs []*StructDecl
 
-	//在该域中定义的变量
-	Vars []*VarDecl
+	locals []*VarDecl
 
 	//在该域中定义的函数
 	Funcs []*FuncDecl
 
 	//域中包含的语句
 	Stmts []Stmt
+
+	//在该域中定义的变量（含局部变量和临时变量，局部变量位于域头部结构体之后，临时变量可出现于域内任意位置）
+	Vars []*VarDecl
 }
 
 //实现Stmt接口
@@ -51,10 +53,17 @@ func (s *Scope) AddTupleDecl(t ctypes.Tuple) *StructDecl {
 	return &decl
 }
 
-func (s *Scope) AddVarDecl(name string, t ctypes.Type) *VarDeclStmt {
+func (s *Scope) AddTempVarDecl(name string, t ctypes.Type) *VarDeclStmt {
 	decl := NewVarDeclStmt(name, t)
 	s.Stmts = append(s.Stmts, decl)
 	s.Vars = append(s.Vars, &decl.VarDecl)
+	return decl
+}
+
+func (s *Scope) AddLocalVarDecl(name string, t ctypes.Type) *VarDecl {
+	decl := NewVarDecl(name, t)
+	s.locals = append(s.locals, decl)
+	s.Vars = append(s.Vars, decl)
 	return decl
 }
 
@@ -156,11 +165,11 @@ func (s *Scope) CIRString() string {
 		buf.WriteString(";\n")
 	}
 
-	//for _, v := range s.Vars {
-	//	buf.WriteString(genIndent(indent))
-	//	buf.WriteString(v.CIRString())
-	//	buf.WriteString(";\n")
-	//}
+	for _, v := range s.locals {
+		buf.WriteString(genIndent(indent))
+		buf.WriteString(v.CIRString())
+		buf.WriteString(";\n")
+	}
 
 	for _, v := range s.Funcs {
 		b := v.Body

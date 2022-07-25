@@ -14,13 +14,13 @@ func (p *CompilerC) compileGlobal(g *ssa.Global) {
 
 	switch c_type.(type) {
 	case *ctypes.Array:
-		p.curScope.AddVarDecl(g.Name(), c_type).Var.AssociatedSSAObj = g
+		p.curScope.AddLocalVarDecl(g.Name(), c_type).Var.AssociatedSSAObj = g
 
 	default:
 		c_name := "$Global_" + g.Name()
-		c_var := &p.curScope.AddVarDecl(c_name, c_type).Var
+		c_var := &p.curScope.AddLocalVarDecl(c_name, c_type).Var
 
-		w_var_decl := p.curScope.AddVarDecl(g.Name(), ctypes.NewPointerType(c_type))
+		w_var_decl := p.curScope.AddLocalVarDecl(g.Name(), ctypes.NewPointerType(c_type))
 		w_var_decl.InitVal = cir.NewGetaddrExpr(c_var)
 		w_var_decl.Var.AssociatedSSAObj = g
 	}

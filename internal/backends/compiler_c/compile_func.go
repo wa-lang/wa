@@ -147,7 +147,7 @@ func (g *functionGenerator) genFunction(f *ssa.Function) {
 	g.compiler.curScope = fn.Body
 	defer func() { g.compiler.curScope = fn.Body.Parent }()
 
-	g.var_cur_block = &g.compiler.curScope.AddVarDecl("$T_Block_Current", ctypes.Uint32).Var
+	g.var_cur_block = &g.compiler.curScope.AddTempVarDecl("$T_Block_Current", ctypes.Uint32).Var
 
 	for _, b := range f.Blocks {
 		g.genBlock(b)
@@ -200,7 +200,7 @@ func (g *functionGenerator) createInstruction(inst ssa.Instruction) {
 		if v.Type().Equal(ctypes.Void) {
 			g.compiler.curScope.AddExprStmt(v)
 		} else {
-			r := g.compiler.curScope.AddVarDecl(g.genRegister(), v.Type())
+			r := g.compiler.curScope.AddTempVarDecl(g.genRegister(), v.Type())
 			r.AssociatedSSAObj = inst
 			r.InitVal = v
 		}
@@ -338,14 +338,14 @@ func (g *functionGenerator) genAlloc(inst *ssa.Alloc) {
 	if inst.Heap {
 		ref_type := ctypes.NewRefType(cir.ToCType(inst.Type().(*types.Pointer).Elem()))
 		v := cir.NewRawExpr(ref_type.CIRString()+"::New()", ref_type)
-		r := g.compiler.curScope.AddVarDecl(g.genRegister(), v.Type())
+		r := g.compiler.curScope.AddTempVarDecl(g.genRegister(), v.Type())
 		r.AssociatedSSAObj = inst
 		r.InitVal = v
 		return
 	}
 
 	c_type := cir.ToCType(inst.Type().(*types.Pointer).Elem())
-	r := g.compiler.curScope.AddVarDecl(g.genRegister(), c_type)
+	r := g.compiler.curScope.AddTempVarDecl(g.genRegister(), c_type)
 	switch c_type := c_type.(type) {
 	case *ctypes.Array:
 		r.AssociatedSSAObj = inst
@@ -354,7 +354,7 @@ func (g *functionGenerator) genAlloc(inst *ssa.Alloc) {
 		r.AssociatedSSAObj = inst
 
 	default:
-		rt := g.compiler.curScope.AddVarDecl(g.genRegister(), ctypes.NewPointerType(c_type))
+		rt := g.compiler.curScope.AddTempVarDecl(g.genRegister(), ctypes.NewPointerType(c_type))
 		rt.InitVal = cir.NewGetaddrExpr(&r.Var)
 		rt.AssociatedSSAObj = inst
 	}
@@ -509,7 +509,7 @@ func (g *functionGenerator) genPrint(v cir.Expr) cir.Expr {
 }
 
 func (g *functionGenerator) genPhi(inst *ssa.Phi) {
-	r := &g.compiler.curScope.AddVarDecl(g.genRegister(), cir.ToCType(inst.Type())).Var
+	r := &g.compiler.curScope.AddTempVarDecl(g.genRegister(), cir.ToCType(inst.Type())).Var
 	r.AssociatedSSAObj = inst
 
 	var edges []cir.PhiEdge
