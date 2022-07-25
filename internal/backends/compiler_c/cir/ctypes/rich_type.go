@@ -123,7 +123,7 @@ func (t *Array) String() string {
 }
 
 func (t *Array) CIRString() string {
-	return "std::array<" + t.elem.CIRString() + ", " + strconv.Itoa(int(t.len)) + ">"
+	return "$wartc::Array<" + t.elem.CIRString() + ", " + strconv.Itoa(int(t.len)) + ">"
 }
 
 func (t *Array) Name() string {

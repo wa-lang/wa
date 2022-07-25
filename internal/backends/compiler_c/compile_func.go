@@ -239,7 +239,7 @@ func (g *functionGenerator) genValue(v ssa.Value) cir.Expr {
 		return g.genIndexAddr(v)
 
 	case *ssa.Slice:
-
+		return g.genSlice(v)
 	}
 
 	logger.Fatalf("Todo: %v, type: %T", v, v)
@@ -394,11 +394,10 @@ func (g *functionGenerator) genField(inst *ssa.Field) cir.Expr {
 }
 
 func (g *functionGenerator) genIndexAddr(inst *ssa.IndexAddr) cir.Expr {
-	println(g.getValue(inst.Index))
 	x := g.getValue(inst.X)
 	switch t := x.Type().(type) {
 	case *ctypes.Array:
-		return cir.NewRawExpr("&"+x.CIRString()+".at("+g.getValue(inst.Index).CIRString()+")", ctypes.NewPointerType(t.GetElem()))
+		return cir.NewRawExpr(x.CIRString()+".At("+g.getValue(inst.Index).CIRString()+")", ctypes.NewPointerType(t.GetElem()))
 
 	case *ctypes.Slice:
 		return cir.NewRawExpr("{ "+x.CIRString()+".At("+g.getValue(inst.Index).CIRString()+"), "+x.CIRString()+".GetBlock() }", ctypes.NewRefType(t.GetElem()))
@@ -406,9 +405,10 @@ func (g *functionGenerator) genIndexAddr(inst *ssa.IndexAddr) cir.Expr {
 	case *ctypes.PointerType:
 		switch t := t.Base.(type) {
 		case *ctypes.Array:
-			return cir.NewRawExpr("&"+x.CIRString()+"->at("+g.getValue(inst.Index).CIRString()+")", ctypes.NewPointerType(t.GetElem()))
+			return cir.NewRawExpr(x.CIRString()+"->At("+g.getValue(inst.Index).CIRString()+")", ctypes.NewPointerType(t.GetElem()))
 
 		case *ctypes.Slice:
+			logger.Fatal("a bug here?")
 			return cir.NewRawExpr("{ "+x.CIRString()+"->At("+g.getValue(inst.Index).CIRString()+"), "+x.CIRString()+".GetBlock() }", ctypes.NewRefType(t.GetElem()))
 
 		default:
@@ -418,9 +418,10 @@ func (g *functionGenerator) genIndexAddr(inst *ssa.IndexAddr) cir.Expr {
 	case *ctypes.RefType:
 		switch t := t.Base.(type) {
 		case *ctypes.Array:
-			return cir.NewRawExpr("{ &"+x.CIRString()+".GetRaw()->at("+g.getValue(inst.Index).CIRString()+"), "+x.CIRString()+".GetBlock() }", ctypes.NewRefType(t.GetElem()))
+			return cir.NewRawExpr("{ "+x.CIRString()+".GetRaw()->At("+g.getValue(inst.Index).CIRString()+"), "+x.CIRString()+".GetBlock() }", ctypes.NewRefType(t.GetElem()))
 
 		case *ctypes.Slice:
+			logger.Fatal("a bug here?")
 			return cir.NewRawExpr("{ "+x.CIRString()+".GetRaw()->At("+g.getValue(inst.Index).CIRString()+"), "+x.CIRString()+".GetBlock() }", ctypes.NewRefType(t.GetElem()))
 		}
 
@@ -428,6 +429,55 @@ func (g *functionGenerator) genIndexAddr(inst *ssa.IndexAddr) cir.Expr {
 		logger.Fatalf("Todo: genIndexAddr(), %T %s", x.Type(), inst)
 
 	}
+	return nil
+}
+
+func (g *functionGenerator) genSlice(inst *ssa.Slice) cir.Expr {
+	x := g.getValue(inst.X)
+	switch t := x.Type().(type) {
+	case *ctypes.Array:
+		logger.Fatal("Shouldn't have ctypes.Array here!")
+
+	case *ctypes.Slice:
+		logger.Fatalf("Todo: genSlice(), %T %s", x.Type(), inst)
+
+	case *ctypes.RefType:
+		switch t := t.Base.(type) {
+		case *ctypes.Array:
+			var low, high cir.Expr
+			if inst.Low != nil {
+				low = g.getValue(inst.Low)
+			} else {
+				low = cconstant.NewInt(ctypes.Int64, 0)
+			}
+			if inst.High != nil {
+				high = g.getValue(inst.High)
+			} else {
+				high = cir.NewRawExpr(x.CIRString()+".GetRaw()->Size()", ctypes.Uint64)
+			}
+
+			array_len := cir.NewSubExpr(high, low)
+			array_cap := cir.NewSubExpr(cir.NewRawExpr(x.CIRString()+".GetRaw()->Size()", ctypes.Uint64), low)
+			s := "{ "
+			s += x.CIRString() + ".GetRaw()->At("
+			s += low.CIRString() + "), "
+			s += x.CIRString() + ".GetBlock(), "
+			s += array_len.CIRString() + ", "
+			s += array_cap.CIRString() + " }"
+
+			return cir.NewRawExpr(s, ctypes.NewSlice(t.GetElem()))
+
+		case *ctypes.Slice:
+			logger.Printf("Todo: genSlice(), range check: %s\n", inst)
+
+		default:
+			logger.Fatalf("Todo: genSlice(), %T %s", x.Type(), inst)
+		}
+
+	default:
+		logger.Fatalf("Todo: genSlice(), %T %s", x.Type(), inst)
+	}
+
 	return nil
 }
 
