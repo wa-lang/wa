@@ -26,7 +26,7 @@ func NewZero() *Zero {
 }
 
 func (z *Zero) CIRString() string {
-	return "0"
+	return "$wartc::ZeroValue{}"
 }
 
 func (z *Zero) Type() ctypes.Type {
@@ -39,15 +39,15 @@ func (z *Zero) IsExpr() {}
 Bool
 **************************************/
 type Bool struct {
-	X bool
+	x bool
 }
 
 func NewBool(x bool) *Bool {
-	return &Bool{X: x}
+	return &Bool{x: x}
 }
 
 func (b *Bool) CIRString() string {
-	if b.X {
+	if b.x {
 		return "true"
 	}
 	return "false"
@@ -206,7 +206,7 @@ func (d *Double) Type() ctypes.Type {
 func (d *Double) IsExpr() {}
 
 /**************************************
-Double:
+String:
 **************************************/
 type String struct {
 	// 常数值
