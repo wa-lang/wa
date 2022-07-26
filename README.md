@@ -30,7 +30,6 @@
 - 凹语言™源码文件后缀为 `.wa`；
 - 凹语言™编译器兼容 WaGo 语法。WaGo 是 Go 真子集。使用 WaGo 语法的源码文件后缀为 `.wa.go`。凹语法与 WaGo 语法在 AST 层面一致；
 - 凹语言™支持中文/英文双语关键字，即任一关键字均有中文及英文版，二者在语法层面等价。
-- 更多内容位于：docs/goals.md
 
 更详细请参考 [凹语言™项目目标](docs/goals.md)
 
@@ -98,6 +97,10 @@ $ go run main.go run _examples/prime
 [_examples](_examples)
 
 ![](https://raw.githubusercontent.com/wa-lang/wa-lang.github.io/master/wa-run-demo.gif)
+
+## 微信群
+
+![微信群二维码](https://wa-lang.org/static/images/wechatgroup.jpg)
 
 ## 版权
 
