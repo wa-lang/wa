@@ -18,6 +18,7 @@ import (
 	"time"
 
 	"github.com/wa-lang/wa/internal/ast"
+	"github.com/wa-lang/wa/internal/backends/compiler_c"
 	"github.com/wa-lang/wa/internal/backends/compiler_ll"
 	"github.com/wa-lang/wa/internal/backends/compiler_ll/builtin"
 	"github.com/wa-lang/wa/internal/config"
@@ -274,6 +275,21 @@ func (p *App) SSA(filename string) error {
 	for _, s := range funcNames {
 		prog.SSAMainPkg.Func(s).WriteTo(os.Stdout)
 	}
+
+	return nil
+}
+
+func (p *App) CIR(filename string) error {
+	cfg := config.DefaultConfig()
+	prog, err := loader.LoadProgram(cfg, filename)
+	if err != nil {
+		return err
+	}
+
+	var c compiler_c.CompilerC
+	c.CompilePackage(prog.SSAMainPkg)
+	print("\n\n")
+	print(c.String())
 
 	return nil
 }
