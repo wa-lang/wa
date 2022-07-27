@@ -44,7 +44,7 @@ func ToCType(from types.Type) ctypes.Type {
 			return ctypes.Double
 
 		case types.String:
-			return &ctypes.StringType{}
+			return &ctypes.StringVar{}
 
 		default:
 			logger.Fatalf("Unknown type:%s", t)

@@ -20,7 +20,7 @@ type Type interface {
 	fmt.Stringer
 	// CIRString 返回该类型的CIR表达
 	CIRString() string
-	// Name 返回该类型的名字，例如字符串类型的Name()=="string"，而其CIRString()=="std::string"
+	// Name 返回该类型的名字，例如字符串类型的Name()=="string"，而其CIRString()=="$wartc::string"
 	Name() string
 	// Equal 判断u是否与当前类型相同
 	Equal(u Type) bool
@@ -387,28 +387,58 @@ func (t *RefType) Equal(u Type) bool {
 }
 
 /**************************************
-StringType:
+StringLit:
 **************************************/
-type StringType struct {
+type StringLit struct {
 }
 
 // String 返回该类型的字符串表达
-func (t *StringType) String() string {
+func (t *StringLit) String() string {
 	return t.CIRString()
 }
 
 // CIRString 返回该类型的CIR语法表达
-func (t *StringType) CIRString() string {
-	return "std::string"
+func (t *StringLit) CIRString() string {
+	//字符串字面值类型没有CIR表达
+	logger.Fatal("Unreachable")
+	return ""
 }
 
-func (t *StringType) Name() string {
+func (t *StringLit) Name() string {
+	return "StringLit"
+}
+
+// Equal 判断u是否与当前类型相同
+func (t *StringLit) Equal(u Type) bool {
+	if _, ok := u.(*StringLit); ok {
+		return true
+	}
+	return false
+}
+
+/**************************************
+String:
+**************************************/
+type StringVar struct {
+}
+
+// String 返回该类型的字符串表达
+func (t *StringVar) String() string {
+	return t.CIRString()
+}
+
+// CIRString 返回该类型的CIR语法表达
+func (t *StringVar) CIRString() string {
+	return "$wartc::String"
+}
+
+func (t *StringVar) Name() string {
 	return "string"
 }
 
 // Equal 判断u是否与当前类型相同
-func (t *StringType) Equal(u Type) bool {
-	if _, ok := u.(*StringType); ok {
+func (t *StringVar) Equal(u Type) bool {
+	if _, ok := u.(*StringVar); ok {
 		return true
 	}
 	return false

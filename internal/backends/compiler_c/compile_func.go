@@ -30,6 +30,10 @@ func newFunctionGenerator(p *CompilerC) *functionGenerator {
 }
 
 func (g *functionGenerator) getValue(i interface{}) cir.Expr {
+	if i == nil {
+		return cir.NewRawExpr("$wartc::ZeroValue()", ctypes.Void)
+	}
+
 	for scope := g.compiler.curScope; scope != nil; scope = scope.Parent {
 		for _, v := range scope.Vars {
 			if v.AssociatedSSAObj == i {
@@ -64,16 +68,17 @@ func (g *functionGenerator) getValue(i interface{}) cir.Expr {
 				val, _ := constant.Float64Val(v.Value)
 				return cconstant.NewDouble(val)
 
-			case types.String:
+			case types.String, types.UntypedString:
 				val := constant.StringVal(v.Value)
-				return cconstant.NewString(val)
+				return cconstant.NewStringLit(val)
 
 			default:
 				logger.Fatal("Todo: getValue(), ", t)
 			}
 
 		case *types.Slice:
-			logger.Fatal("Todo: getValue(), ", t)
+			elem_type := cir.ToCType(t.Elem())
+			return cir.NewRawExpr("$wartc::Slice<"+elem_type.CIRString()+">("+g.getValue(v.Value).CIRString()+")", ctypes.NewSlice(elem_type))
 
 		default:
 			logger.Fatal("Todo: getValue(), ", t)
@@ -408,8 +413,7 @@ func (g *functionGenerator) genIndexAddr(inst *ssa.IndexAddr) cir.Expr {
 			return cir.NewRawExpr(x.CIRString()+"->At("+g.getValue(inst.Index).CIRString()+")", ctypes.NewPointerType(t.GetElem()))
 
 		case *ctypes.Slice:
-			logger.Fatal("a bug here?")
-			return cir.NewRawExpr("{ "+x.CIRString()+"->At("+g.getValue(inst.Index).CIRString()+"), "+x.CIRString()+".GetBlock() }", ctypes.NewRefType(t.GetElem()))
+			return cir.NewRawExpr("{ "+x.CIRString()+"->At("+g.getValue(inst.Index).CIRString()+"), "+x.CIRString()+"->GetBlock() }", ctypes.NewRefType(t.GetElem()))
 
 		default:
 			logger.Fatalf("Todo: genIndexAddr(), %T %s", x.Type(), inst)
@@ -421,8 +425,7 @@ func (g *functionGenerator) genIndexAddr(inst *ssa.IndexAddr) cir.Expr {
 			return cir.NewRawExpr("{ "+x.CIRString()+".GetRaw()->At("+g.getValue(inst.Index).CIRString()+"), "+x.CIRString()+".GetBlock() }", ctypes.NewRefType(t.GetElem()))
 
 		case *ctypes.Slice:
-			logger.Fatal("a bug here?")
-			return cir.NewRawExpr("{ "+x.CIRString()+".GetRaw()->At("+g.getValue(inst.Index).CIRString()+"), "+x.CIRString()+".GetBlock() }", ctypes.NewRefType(t.GetElem()))
+			return cir.NewRawExpr("{ "+x.CIRString()+".GetRaw()->At("+g.getValue(inst.Index).CIRString()+"), "+x.CIRString()+".GetRaw()->GetBlock() }", ctypes.NewRefType(t.GetElem()))
 		}
 
 	default:
@@ -456,6 +459,43 @@ func (g *functionGenerator) genSlice(inst *ssa.Slice) cir.Expr {
 		s += high.CIRString() + ")"
 		return cir.NewRawExpr(s, ctypes.NewSlice(t.GetElem()))
 
+	case *ctypes.StringVar:
+		var low, high cir.Expr
+		if inst.Low != nil {
+			low = g.getValue(inst.Low)
+		} else {
+			low = cconstant.NewInt(ctypes.Int64, 0)
+		}
+		if inst.High != nil {
+			high = g.getValue(inst.High)
+		} else {
+			high = cir.NewRawExpr(x.CIRString()+".Len()", ctypes.Uint64)
+		}
+		s := x.CIRString() + ".Sub("
+		s += low.CIRString() + ", "
+		s += high.CIRString() + ")"
+		return cir.NewRawExpr(s, &ctypes.StringVar{})
+
+	case *ctypes.StringLit:
+		r := g.compiler.curScope.AddTempVarDecl(g.genRegister(), &ctypes.StringVar{})
+		r.InitVal = x
+
+		var low, high cir.Expr
+		if inst.Low != nil {
+			low = g.getValue(inst.Low)
+		} else {
+			low = cconstant.NewInt(ctypes.Int64, 0)
+		}
+		if inst.High != nil {
+			high = g.getValue(inst.High)
+		} else {
+			high = cir.NewRawExpr(r.Var.CIRString()+".Len()", ctypes.Uint64)
+		}
+		s := r.Var.CIRString() + ".Sub("
+		s += low.CIRString() + ", "
+		s += high.CIRString() + ")"
+		return cir.NewRawExpr(s, &ctypes.StringVar{})
+
 	case *ctypes.RefType:
 		switch t := t.Base.(type) {
 		case *ctypes.Array:
@@ -481,7 +521,21 @@ func (g *functionGenerator) genSlice(inst *ssa.Slice) cir.Expr {
 			return cir.NewRawExpr(s, ctypes.NewSlice(t.GetElem()))
 
 		case *ctypes.Slice:
-			logger.Fatalf("Todo: genSlice(), %T %s", x.Type(), inst)
+			var low, high cir.Expr
+			if inst.Low != nil {
+				low = g.getValue(inst.Low)
+			} else {
+				low = cconstant.NewInt(ctypes.Int64, 0)
+			}
+			if inst.High != nil {
+				high = g.getValue(inst.High)
+			} else {
+				high = cir.NewRawExpr(x.CIRString()+".GetRaw()->Len()", ctypes.Uint64)
+			}
+			s := x.CIRString() + ".GetRaw()->Sub("
+			s += low.CIRString() + ", "
+			s += high.CIRString() + ")"
+			return cir.NewRawExpr(s, ctypes.NewSlice(t.GetElem()))
 
 		default:
 			logger.Fatalf("Todo: genSlice(), %T %s", x.Type(), inst)
@@ -507,10 +561,15 @@ func (g *functionGenerator) genBuiltin(call *ssa.CallCommon) cir.Expr {
 			}
 			arg := g.getValue(arg)
 			switch arg.Type().(type) {
-			case *ctypes.StringType:
-				arg_type = append(arg_type, &ctypes.StringType{})
+			case *ctypes.StringLit:
+				arg_type = append(arg_type, &ctypes.StringLit{})
 				f += "%s"
-				args = append(args, cir.NewRawExpr(arg.CIRString()+".c_str()", &ctypes.StringType{}))
+				args = append(args, cir.NewRawExpr(arg.CIRString(), &ctypes.StringLit{}))
+
+			case *ctypes.StringVar:
+				arg_type = append(arg_type, &ctypes.StringVar{})
+				f += "%s"
+				args = append(args, cir.NewRawExpr(arg.CIRString()+".GetRaw()", &ctypes.StringVar{}))
 
 			case *ctypes.BoolType:
 			case *ctypes.IntType:
@@ -531,45 +590,56 @@ func (g *functionGenerator) genBuiltin(call *ssa.CallCommon) cir.Expr {
 			f += "\\n"
 		}
 
-		args[0] = cconstant.NewString(f)
+		args[0] = cconstant.NewStringLit(f)
 		fn_type := ctypes.NewFuncType(ctypes.Void, arg_type)
-		fn := cir.NewVar("printf", fn_type)
-		expr := cir.NewCallExpr(fn, args)
+		function := cir.NewVar("printf", fn_type)
+		expr := cir.NewCallExpr(function, args)
 		return expr
 
+	case "append":
+		var args []cir.Expr
+		var args_type []ctypes.Type
+		for _, arg := range call.Args {
+			arg := g.getValue(arg)
+			args = append(args, arg)
+			args_type = append(args_type, arg.Type())
+		}
+		fn_type := ctypes.NewFuncType(cir.ToCType(call.Value.(*ssa.Builtin).Type().(*types.Signature).Results()), args_type)
+		function := cir.NewVar("$wartc::Append", fn_type)
+		return cir.NewCallExpr(function, args)
 	}
 	logger.Fatal("Todo:", call.Value)
 	return nil
 }
 
-func (g *functionGenerator) genPrint(v cir.Expr) cir.Expr {
-	var args []cir.Expr
-	var fn_type ctypes.Type
-	switch v.Type().(type) {
-	case *ctypes.StringType:
-		args = append(args, cconstant.NewString("%s"))
-		args = append(args, v)
-		fn_type = ctypes.NewFuncType(ctypes.Void, []ctypes.Type{&ctypes.StringType{}, &ctypes.StringType{}})
-
-	case *ctypes.BoolType:
-	case *ctypes.IntType:
-		args = append(args, cconstant.NewString("%d"))
-		args = append(args, v)
-		fn_type = ctypes.NewFuncType(ctypes.Void, []ctypes.Type{&ctypes.StringType{}, ctypes.Int64})
-
-	case *ctypes.FloatType:
-		args = append(args, cconstant.NewString("%lf"))
-		args = append(args, v)
-		fn_type = ctypes.NewFuncType(ctypes.Void, []ctypes.Type{&ctypes.StringType{}, ctypes.Double})
-
-	default:
-		logger.Fatalf("Todo: print(%s)", v.Type().Name())
-		return nil
-	}
-	fn := cir.NewVar("printf", fn_type)
-	expr := cir.NewCallExpr(fn, args)
-	return expr
-}
+//func (g *functionGenerator) genPrint(v cir.Expr) cir.Expr {
+//	var args []cir.Expr
+//	var fn_type ctypes.Type
+//	switch v.Type().(type) {
+//	case *ctypes.StringType:
+//		args = append(args, cconstant.NewString("%s"))
+//		args = append(args, v)
+//		fn_type = ctypes.NewFuncType(ctypes.Void, []ctypes.Type{&ctypes.StringType{}, &ctypes.StringType{}})
+//
+//	case *ctypes.BoolType:
+//	case *ctypes.IntType:
+//		args = append(args, cconstant.NewString("%d"))
+//		args = append(args, v)
+//		fn_type = ctypes.NewFuncType(ctypes.Void, []ctypes.Type{&ctypes.StringType{}, ctypes.Int64})
+//
+//	case *ctypes.FloatType:
+//		args = append(args, cconstant.NewString("%lf"))
+//		args = append(args, v)
+//		fn_type = ctypes.NewFuncType(ctypes.Void, []ctypes.Type{&ctypes.StringType{}, ctypes.Double})
+//
+//	default:
+//		logger.Fatalf("Todo: print(%s)", v.Type().Name())
+//		return nil
+//	}
+//	fn := cir.NewVar("printf", fn_type)
+//	expr := cir.NewCallExpr(fn, args)
+//	return expr
+//}
 
 func (g *functionGenerator) genPhi(inst *ssa.Phi) {
 	r := &g.compiler.curScope.AddTempVarDecl(g.genRegister(), cir.ToCType(inst.Type())).Var

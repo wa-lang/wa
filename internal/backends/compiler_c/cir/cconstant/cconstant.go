@@ -206,24 +206,24 @@ func (d *Double) Type() ctypes.Type {
 func (d *Double) IsExpr() {}
 
 /**************************************
-String:
+StringLit:
 **************************************/
-type String struct {
-	// 常数值
+type StringLit struct {
+	//字符串字面值
 	x string
 }
 
 //
-func NewString(v string) *String {
-	return &String{x: v}
+func NewStringLit(v string) *StringLit {
+	return &StringLit{x: v}
 }
 
-func (s *String) CIRString() string {
+func (s *StringLit) CIRString() string {
 	return "\"" + s.x + "\""
 }
 
-func (s *String) Type() ctypes.Type {
-	return &ctypes.StringType{}
+func (s *StringLit) Type() ctypes.Type {
+	return &ctypes.StringLit{}
 }
 
-func (s *String) IsExpr() {}
+func (s *StringLit) IsExpr() {}
