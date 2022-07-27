@@ -168,7 +168,7 @@ func (p *Compiler) emitGlobals() error {
 	if len(p.module.Global.Globals) > 0 {
 		return nil
 	}
-	panic("TODO")
+	panic("TODO: support WASM")
 }
 
 func (p *Compiler) emitMainBody() error {
@@ -206,7 +206,7 @@ func (p *Compiler) compileNone(ctx *module.Expr, node ast.Node) error {
 		return nil
 	}
 
-	panic("TODO")
+	panic("TODO: support WASM")
 }
 
 func (p *Compiler) globalIndexByName(name string) uint32 {
