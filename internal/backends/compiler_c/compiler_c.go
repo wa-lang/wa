@@ -38,21 +38,36 @@ func (p *CompilerC) CompilePackage(ssaPkg *ssa.Package) {
 		}
 	}
 
-	for _, t := range ts {
-		p.compileType(t)
+	for _, v := range ts {
+		p.compileType(v)
 	}
 
-	for _, c := range cs {
-		p.compileConst(c)
+	for _, v := range cs {
+		p.compileConst(v)
 	}
 
-	for _, g := range gs {
-		p.compileGlobal(g)
+	for _, v := range gs {
+		p.compileGlobal(v)
 	}
 
-	for _, fn := range fns {
-		newFunctionGenerator(p).genFunction(fn)
+	for _, v := range ssaPkg.GetValues() {
+		if f, ok := v.(*ssa.Function); ok {
+			found := false
+			for _, m := range fns {
+				if m.Object() == f.Object() {
+					found = true
+				}
+			}
+			if found {
+				continue
+			}
+			fns = append(fns, f)
+		}
 	}
+	for _, v := range fns {
+		newFunctionGenerator(p).genFunction(v)
+	}
+
 }
 
 func (p *CompilerC) String() string {

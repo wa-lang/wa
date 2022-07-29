@@ -1410,6 +1410,11 @@ func (p *Package) Type(name string) (t *Type) {
 	return
 }
 
+//强制导出values
+func (p *Package) GetValues() map[types.Object]Value {
+	return p.values
+}
+
 func (v *Call) Pos() token.Pos      { return v.Call.pos }
 func (s *Defer) Pos() token.Pos     { return s.pos }
 func (s *MapUpdate) Pos() token.Pos { return s.pos }

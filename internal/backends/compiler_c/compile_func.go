@@ -304,7 +304,7 @@ func (g *functionGenerator) genBinOp(inst *ssa.BinOp) cir.Expr {
 
 func (g *functionGenerator) genCall(inst *ssa.Call) cir.Expr {
 	if inst.Call.IsInvoke() {
-		logger.Fatal("Todo: Invoke")
+		logger.Fatal("Todo: genCall(), Invoke")
 	}
 
 	switch inst.Call.Value.(type) {
@@ -325,7 +325,7 @@ func (g *functionGenerator) genCall(inst *ssa.Call) cir.Expr {
 		return g.genBuiltin(inst.Common())
 
 	case *ssa.MakeClosure:
-		logger.Fatal("Todo: MakeClosure")
+		logger.Fatal("Todo: genCall(), MakeClosure")
 
 	default:
 		logger.Fatalf("Todo: type:%T", inst.Call.Value)
@@ -390,7 +390,7 @@ func (g *functionGenerator) genFieldAddr(inst *ssa.FieldAddr) cir.Expr {
 
 func (g *functionGenerator) genField(inst *ssa.Field) cir.Expr {
 	cx := g.getValue(inst.X)
-	field := inst.X.Type().(*types.Struct).Field(inst.Field)
+	field := inst.X.Type().Underlying().(*types.Struct).Field(inst.Field)
 	fieldname := field.Name()
 	if field.Embedded() {
 		fieldname = "$" + fieldname
