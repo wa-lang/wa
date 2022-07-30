@@ -1,24 +1,24 @@
 // 版权 @2022 _examples/hello 作者。保留所有权利。
 
-import (
-	"fmt"
+导入 "fmt"
 
+import (
 	"3rdparty/pkg"
 	"myapp/mymath"
 	"myapp/mypkg"
 )
 
-fn main() {
+函数 main() {
 	fmt.Println(42)
 	pkg.Println(42 + 1)
 
-	mypkg.Println(sum(100))
+	mypkg.Println(求和(100))
 	mymath.PrintPrime(30)
 
 	heart()
 }
 
-fn sum(n int) int {
+函数 求和(n int) int {
 	let v int
 	for i := 1; i <= n; i++ {
 		v += i
