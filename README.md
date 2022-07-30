@@ -61,9 +61,9 @@ graph LR
 ```
 // 版权 @2021 凹语言™ 作者。保留所有权利。
 
-fn main() {
+函数 main() {
 	for n := 2; n <= 30; n = n + 1 {
-		let isPrime int = 1
+		变量 isPrime int = 1
 		for i := 2; i*i <= n; i = i + 1 {
 			if x := n % i; x == 0 {
 				isPrime = 0
