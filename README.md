@@ -113,7 +113,7 @@ $ go run main.go run _examples/prime
 群号：112919306
 
 ## 微信群
-群已超过200人，请田间加群助手微信号后拉入：
+群已超过200人，请添加群助手微信号后拉入：
 
 ![微信群二维码](https://wa-lang.org/static/images/wechatgroup.jpg)
 
