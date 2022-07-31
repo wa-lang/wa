@@ -99,6 +99,7 @@ $ go run main.go run _examples/prime
 ![](https://raw.githubusercontent.com/wa-lang/wa-lang.github.io/master/wa-run-demo.gif)
 
 ## 微信群
+群已超过200人，请田间加群助手微信号后拉入：
 
 ![微信群二维码](https://wa-lang.org/static/images/wechatgroup.jpg)
 
