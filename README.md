@@ -1,9 +1,20 @@
-# 凹语言™
+<div align="center">
+<p>
+    <img width="80" src="https://raw.githubusercontent.com/wa-lang/wa/master/docs/images/logo/logo-round.svg?sanitize=true">
+</p>
+<h1>🇨🇳 凹语言™ The Wa Programming Language</h1>
+
+[wa-lang.org](https://wa-lang.org) | [设计目标](https://wa-lang.org/goals.html) | [路线规划](https://wa-lang.org/smalltalk/st0002.html) | [变更日志](https://wa-lang.org/changelog.html)
+
+</div>
+<div align="center">
 
 [![Build Status](https://github.com/wa-lang/wa/actions/workflows/wa.yml/badge.svg)](https://github.com/wa-lang/wa/actions/workflows/wa.yml)
 [![Go Report Card](https://goreportcard.com/badge/github.com/wa-lang/wa)](https://goreportcard.com/report/github.com/wa-lang/wa)
 [![Coverage Status](https://coveralls.io/repos/github/wa-lang/wa/badge.svg)](https://coveralls.io/github/wa-lang/wa)
 [![GitHub release](https://img.shields.io/github/v/tag/wa-lang/wa.svg?label=release)](https://github.com/wa-lang/wa/releases)
+
+</div>
 
 凹语言™（凹读音“Wa”）是[柴树杉](https://github.com/chai2010)、[丁尔男](https://github.com/3dgen)和[史斌](https://github.com/benshi001)设计的实验性编程语言。
 
