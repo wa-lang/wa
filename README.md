@@ -35,6 +35,8 @@
 3. `wa init -name=_examples/hi`
 4. `wa run _examples/hi`
 
+> 项目尚处于原型开源阶段，如果有共建和PR需求请入群交流。
+
 ## 设计目标
 
 - 披着 Go 和 Rust 语法外衣的 C++ 语言；
@@ -107,16 +109,17 @@ $ go run main.go run _examples/prime
 
 [_examples](_examples)
 
-![](https://raw.githubusercontent.com/wa-lang/wa-lang.github.io/master/wa-run-demo.gif)
+![](https://wa-lang.org/wa-run-demo.gif)
 
 ## QQ群
 群号：112919306
 
 ## 微信群
-群已超过200人，请添加群助手微信号后拉入，添加群助手微信时注明“加凹语言群”：
+群已超过200人，请添加群助手微信号后拉入：
 
 ![微信群二维码](https://wa-lang.org/static/images/wechatgroup.jpg)
 
 ## 版权
 
 版权 @2019 凹语言™ 作者。保留所有权利。
+
