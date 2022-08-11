@@ -13,8 +13,7 @@ import (
 	"os"
 	"sort"
 	"text/template"
-
-	"github.com/wa-lang/wa/internal/3rdparty/errors"
+	"errors"
 )
 
 func main() {
@@ -71,7 +70,7 @@ func dumpTest(path string) error {
 		"denormalized": getDenormalized(mants),
 	}
 	if err := t.Execute(f, data); err != nil {
-		return errors.WithStack(err)
+		return errors.New(err)
 	}
 	return nil
 }

@@ -4,6 +4,7 @@
 package main
 
 import (
+	"errors"
 	"flag"
 	"fmt"
 	"log"
@@ -11,8 +12,6 @@ import (
 	"math/big"
 	"os"
 	"text/template"
-
-	"github.com/wa-lang/wa/internal/3rdparty/errors"
 )
 
 func main() {
@@ -27,19 +26,19 @@ func main() {
 func dumpTest(path string) error {
 	f, err := os.Create(path)
 	if err != nil {
-		return errors.WithStack(err)
+		return errors.New(err)
 	}
 	defer f.Close()
 	t, err := template.ParseFiles("extra_test.tmpl")
 	if err != nil {
-		return errors.WithStack(err)
+		return errors.New(err)
 	}
 	data := map[string][]string{
 		"normalized":   getNormalized(),
 		"denormalized": getDenormalized(),
 	}
 	if err := t.Execute(f, data); err != nil {
-		return errors.WithStack(err)
+		return errors.New(err)
 	}
 	return nil
 }
