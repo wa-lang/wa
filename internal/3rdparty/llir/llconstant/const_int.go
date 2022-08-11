@@ -5,7 +5,6 @@ import (
 	"math/big"
 	"strings"
 
-	"github.com/wa-lang/wa/internal/3rdparty/errors"
 	types "github.com/wa-lang/wa/internal/3rdparty/llir/lltypes"
 )
 
@@ -49,12 +48,12 @@ func NewIntFromString(typ *types.IntType, s string) (*Int, error) {
 	switch s {
 	case "true":
 		if !typ.Equal(types.I1) {
-			return nil, errors.Errorf("invalid boolean type; expected i1, got %T", typ)
+			return nil, fmt.Errorf("invalid boolean type; expected i1, got %T", typ)
 		}
 		return True, nil
 	case "false":
 		if !typ.Equal(types.I1) {
-			return nil, errors.Errorf("invalid boolean type; expected i1, got %T", typ)
+			return nil, fmt.Errorf("invalid boolean type; expected i1, got %T", typ)
 		}
 		return False, nil
 	}
@@ -66,7 +65,7 @@ func NewIntFromString(typ *types.IntType, s string) (*Int, error) {
 		const base = 16
 		x, _ := (&big.Int{}).SetString(s, base)
 		if x == nil {
-			return nil, errors.Errorf("unable to parse integer constant %q", s)
+			return nil, fmt.Errorf("unable to parse integer constant %q", s)
 		}
 		return &Int{Typ: typ, X: x}, nil
 	// signed hexadecimal integer literal
@@ -77,7 +76,7 @@ func NewIntFromString(typ *types.IntType, s string) (*Int, error) {
 		const base = 16
 		x, _ := (&big.Int{}).SetString(s, base)
 		if x == nil {
-			return nil, errors.Errorf("unable to parse integer constant %q", s)
+			return nil, fmt.Errorf("unable to parse integer constant %q", s)
 		}
 		// Check if signed.
 		if x.Bit(int(typ.BitSize)-1) == 1 {
@@ -96,7 +95,7 @@ func NewIntFromString(typ *types.IntType, s string) (*Int, error) {
 	// Integer literal.
 	x, _ := (&big.Int{}).SetString(s, 10)
 	if x == nil {
-		return nil, errors.Errorf("unable to parse integer constant %q", s)
+		return nil, fmt.Errorf("unable to parse integer constant %q", s)
 	}
 	return &Int{Typ: typ, X: x}, nil
 }

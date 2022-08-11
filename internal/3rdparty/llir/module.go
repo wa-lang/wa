@@ -6,7 +6,6 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/wa-lang/wa/internal/3rdparty/errors"
 	"github.com/wa-lang/wa/internal/3rdparty/llir/internal/enc"
 	"github.com/wa-lang/wa/internal/3rdparty/llir/internal/natsort"
 	enum "github.com/wa-lang/wa/internal/3rdparty/llir/llenum"
@@ -335,7 +334,7 @@ func (m *Module) AssignGlobalIDs() error {
 			if n.ID() != 0 && id != n.ID() {
 				want := id
 				got := n.ID()
-				return errors.Errorf("invalid global ID, expected %s, got %s", enc.GlobalID(want), enc.GlobalID(got))
+				return fmt.Errorf("invalid global ID, expected %s, got %s", enc.GlobalID(want), enc.GlobalID(got))
 			}
 			n.SetID(id)
 			id++
@@ -345,25 +344,25 @@ func (m *Module) AssignGlobalIDs() error {
 	// Assign global IDs to unnamed global variables.
 	for _, n := range m.Globals {
 		if err := setName(n); err != nil {
-			return errors.WithStack(err)
+			return err
 		}
 	}
 	// Assign global IDs to unnamed aliases.
 	for _, n := range m.Aliases {
 		if err := setName(n); err != nil {
-			return errors.WithStack(err)
+			return err
 		}
 	}
 	// Assign global IDs to unnamed IFuncs.
 	for _, n := range m.IFuncs {
 		if err := setName(n); err != nil {
-			return errors.WithStack(err)
+			return err
 		}
 	}
 	// Assign global IDs to unnamed functions.
 	for _, n := range m.Funcs {
 		if err := setName(n); err != nil {
-			return errors.WithStack(err)
+			return err
 		}
 	}
 	return nil
@@ -380,7 +379,7 @@ func (m *Module) AssignMetadataIDs() error {
 		id := md.ID()
 		if id != -1 {
 			if _, ok := used[id]; ok {
-				return errors.Errorf("metadata ID %s already in use", enc.MetadataID(id))
+				return fmt.Errorf("metadata ID %s already in use", enc.MetadataID(id))
 			}
 			used[id] = true
 		}

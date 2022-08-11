@@ -5,7 +5,6 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/wa-lang/wa/internal/3rdparty/errors"
 	"github.com/wa-lang/wa/internal/3rdparty/llir/internal/enc"
 	constant "github.com/wa-lang/wa/internal/3rdparty/llir/llconstant"
 	enum "github.com/wa-lang/wa/internal/3rdparty/llir/llenum"
@@ -160,7 +159,7 @@ func (f *Func) AssignIDs() error {
 			if n.ID() != 0 && id != n.ID() {
 				want := id
 				got := n.ID()
-				return errors.Errorf("invalid local ID in function %q, expected %s, got %s", f.Ident(), enc.LocalID(want), enc.LocalID(got))
+				return fmt.Errorf("invalid local ID in function %q, expected %s, got %s", f.Ident(), enc.LocalID(want), enc.LocalID(got))
 			}
 			n.SetID(id)
 			id++
@@ -170,13 +169,13 @@ func (f *Func) AssignIDs() error {
 	for _, param := range f.Params {
 		// Assign local IDs to unnamed parameters of function definitions.
 		if err := setName(param); err != nil {
-			return errors.WithStack(err)
+			return err
 		}
 	}
 	for _, block := range f.Blocks {
 		// Assign local IDs to unnamed basic blocks.
 		if err := setName(block); err != nil {
-			return errors.WithStack(err)
+			return err
 		}
 		for _, inst := range block.Insts {
 			n, ok := inst.(namedVar)
@@ -189,7 +188,7 @@ func (f *Func) AssignIDs() error {
 			}
 			// Assign local IDs to unnamed local variables.
 			if err := setName(n); err != nil {
-				return errors.WithStack(err)
+				return err
 			}
 		}
 		n, ok := block.Term.(namedVar)
@@ -201,7 +200,7 @@ func (f *Func) AssignIDs() error {
 			continue
 		}
 		if err := setName(n); err != nil {
-			return errors.WithStack(err)
+			return err
 		}
 	}
 	return nil

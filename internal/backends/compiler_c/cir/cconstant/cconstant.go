@@ -6,7 +6,6 @@ import (
 	"math/big"
 	"strings"
 
-	"github.com/wa-lang/wa/internal/3rdparty/errors"
 	"github.com/wa-lang/wa/internal/backends/compiler_c/cir/ctypes"
 )
 
@@ -87,12 +86,12 @@ func NewIntFromString(t *ctypes.IntType, s string) (*Int, error) {
 	switch s {
 	case "true":
 		if !t.Equal(ctypes.Int8) {
-			return nil, errors.Errorf("类型错误。布尔型应为types.Int8，而非输入的：%T", t)
+			return nil, fmt.Errorf("类型错误。布尔型应为types.Int8，而非输入的：%T", t)
 		}
 		return NewInt(ctypes.Int8, 0), nil
 	case "false":
 		if !t.Equal(ctypes.Int8) {
-			return nil, errors.Errorf("类型错误。布尔型应为types.Int8，而非输入的：%T", t)
+			return nil, fmt.Errorf("类型错误。布尔型应为types.Int8，而非输入的：%T", t)
 		}
 		return NewInt(ctypes.Int8, 1), nil
 	}
@@ -104,7 +103,7 @@ func NewIntFromString(t *ctypes.IntType, s string) (*Int, error) {
 		const base = 16
 		v, _ := (&big.Int{}).SetString(s, base)
 		if v == nil {
-			return nil, errors.Errorf("无法解析整型数： %q", s)
+			return nil, fmt.Errorf("无法解析整型数： %q", s)
 		}
 		return &Int{typ: t, x: v}, nil
 	// signed hexadecimal integer literal
@@ -115,7 +114,7 @@ func NewIntFromString(t *ctypes.IntType, s string) (*Int, error) {
 		const base = 16
 		v, _ := (&big.Int{}).SetString(s, base)
 		if v == nil {
-			return nil, errors.Errorf("无法解析整型数： %q", s)
+			return nil, fmt.Errorf("无法解析整型数： %q", s)
 		}
 		bitSize := t.Kind.GetBitSize()
 		// Check if signed.
@@ -134,7 +133,7 @@ func NewIntFromString(t *ctypes.IntType, s string) (*Int, error) {
 	// Integer literal.
 	v, _ := (&big.Int{}).SetString(s, 10)
 	if v == nil {
-		return nil, errors.Errorf("无法解析整型数： %q", s)
+		return nil, fmt.Errorf("无法解析整型数： %q", s)
 	}
 	return &Int{typ: t, x: v}, nil
 }

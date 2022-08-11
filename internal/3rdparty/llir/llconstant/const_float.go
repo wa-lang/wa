@@ -8,7 +8,6 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/wa-lang/wa/internal/3rdparty/errors"
 	"github.com/wa-lang/wa/internal/3rdparty/float"
 	"github.com/wa-lang/wa/internal/3rdparty/float/bfloat"
 	"github.com/wa-lang/wa/internal/3rdparty/float/binary128"
@@ -75,11 +74,11 @@ func NewFloatFromString(typ *types.FloatType, s string) (*Float, error) {
 			part2 := hex[hexLen/2:]
 			se, err := strconv.ParseUint(part1, 16, 16)
 			if err != nil {
-				return nil, errors.WithStack(err)
+				return nil, err
 			}
 			m, err := strconv.ParseUint(part2, 16, 64)
 			if err != nil {
-				return nil, errors.WithStack(err)
+				return nil, err
 			}
 			f := float80x86.NewFromBits(uint16(se), m)
 			x, nan := f.Big()
@@ -100,11 +99,11 @@ func NewFloatFromString(typ *types.FloatType, s string) (*Float, error) {
 			part2 := hex[maxHexLen/2:]
 			a, err := strconv.ParseUint(part1, 16, 64)
 			if err != nil {
-				return nil, errors.WithStack(err)
+				return nil, err
 			}
 			b, err := strconv.ParseUint(part2, 16, 64)
 			if err != nil {
-				return nil, errors.WithStack(err)
+				return nil, err
 			}
 			f := binary128.NewFromBits(a, b)
 			x, nan := f.Big()
@@ -121,11 +120,11 @@ func NewFloatFromString(typ *types.FloatType, s string) (*Float, error) {
 			part2 := hex[maxHexLen/2:]
 			a, err := strconv.ParseUint(part1, 16, 64)
 			if err != nil {
-				return nil, errors.WithStack(err)
+				return nil, err
 			}
 			b, err := strconv.ParseUint(part2, 16, 64)
 			if err != nil {
-				return nil, errors.WithStack(err)
+				return nil, err
 			}
 			f := float128ppc.NewFromBits(a, b)
 			x, nan := f.Big()
@@ -139,7 +138,7 @@ func NewFloatFromString(typ *types.FloatType, s string) (*Float, error) {
 			hex := strings.TrimPrefix(s, "0xH")
 			bits, err := strconv.ParseUint(hex, 16, 16)
 			if err != nil {
-				return nil, errors.WithStack(err)
+				return nil, err
 			}
 			f := binary16.NewFromBits(uint16(bits))
 			x, nan := f.Big()
@@ -152,7 +151,7 @@ func NewFloatFromString(typ *types.FloatType, s string) (*Float, error) {
 			hex := strings.TrimPrefix(s, "0xR")
 			bits, err := strconv.ParseUint(hex, 16, 16)
 			if err != nil {
-				return nil, errors.WithStack(err)
+				return nil, err
 			}
 			f := bfloat.NewFromBits(uint16(bits))
 			x, nan := f.Big()
@@ -167,7 +166,7 @@ func NewFloatFromString(typ *types.FloatType, s string) (*Float, error) {
 			hex := strings.TrimPrefix(s, "0x")
 			bits, err := strconv.ParseUint(hex, 16, 64)
 			if err != nil {
-				return nil, errors.WithStack(err)
+				return nil, err
 			}
 			switch typ.Kind {
 			case types.FloatKindHalf:
@@ -238,7 +237,7 @@ func NewFloatFromString(typ *types.FloatType, s string) (*Float, error) {
 		const precision = 11
 		x, _, err := big.ParseFloat(s, base, precision, big.ToNearestEven)
 		if err != nil {
-			return nil, errors.WithStack(err)
+			return nil, err
 		}
 		c := &Float{
 			Typ: typ,
@@ -249,7 +248,7 @@ func NewFloatFromString(typ *types.FloatType, s string) (*Float, error) {
 		const precision = 24
 		x, _, err := big.ParseFloat(s, base, precision, big.ToNearestEven)
 		if err != nil {
-			return nil, errors.WithStack(err)
+			return nil, err
 		}
 		c := &Float{
 			Typ: typ,
@@ -260,7 +259,7 @@ func NewFloatFromString(typ *types.FloatType, s string) (*Float, error) {
 		const precision = 53
 		x, _, err := big.ParseFloat(s, base, precision, big.ToNearestEven)
 		if err != nil {
-			return nil, errors.WithStack(err)
+			return nil, err
 		}
 		c := &Float{
 			Typ: typ,
