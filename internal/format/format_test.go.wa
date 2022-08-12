@@ -82,7 +82,7 @@ var tests = []string{
 
 	// statement lists
 	"x := 0",
-	"f(a, b, c)\nlet x int = f(1, 2, 3)",
+	"f(a, b, c)\nvar x int = f(1, 2, 3)",
 
 	// indentation, leading and trailing space
 	"\n\t\t\n\n\t\t\tx := 0\n\t\t\tconst s = `\nfoo\n`\n\n\n",     // no indentation added inside raw strings
