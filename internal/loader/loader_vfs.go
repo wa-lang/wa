@@ -9,6 +9,6 @@ import (
 )
 
 // 从 VFS 加载程序
-func _LoadProgramVFS(cfg *config.Config, appPath string, vfs fs.FS) (*Program, error) {
+func _LoadProgramVFS(cfg *config.Config, pkgPath string, vfs fs.FS) (*Program, error) {
 	panic("TODO")
 }
