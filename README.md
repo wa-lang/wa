@@ -4,7 +4,7 @@
 </p>
 <h1>🇨🇳 凹语言™ The Wa Programming Language</h1>
 
-[wa-lang.org](https://wa-lang.org) | [设计目标](https://wa-lang.org/goals.html) | [路线规划](https://wa-lang.org/smalltalk/st0002.html) | [变更日志](https://wa-lang.org/changelog.html)
+[主页](https://wa-lang.org) | [目标](https://wa-lang.org/goals.html) | [路线](https://wa-lang.org/smalltalk/st0002.html) | [社区](https://wa-lang.org/community) | [日志](https://wa-lang.org/changelog.html)
 
 </div>
 <div align="center">
@@ -46,27 +46,6 @@
 
 更多细节请参考 [凹语言™项目目标](docs/goals.md)
 
-## 处理过程
-
-```mermaid
-graph LR
-    wa_ext(.wa);
-    wago_ext(.wa.go);
-
-    wa_ast(Wa AST);
-
-    c_cpp(C/C++);
-    llir(LLVM IR);
-    wasm(WASM);
-
-    wa_ext   --> wa_ast;
-    wago_ext --> wa_ast;
-
-    wa_ast --> c_cpp;
-    wa_ast --> llir;
-    wa_ast --> wasm;
-```
-
 ## 例子: 打印素数
 
 打印 30 以内的素数：
@@ -105,19 +84,7 @@ $ go run main.go run _examples/prime
 29
 ```
 
-## 更多例子
-
-[_examples](_examples)
-
-![](https://wa-lang.org/wa-run-demo.gif)
-
-## QQ群
-群号：112919306
-
-## 微信群
-群已超过200人，请添加群助手微信号后拉入：
-
-![微信群二维码](https://wa-lang.org/static/images/wechatgroup.jpg)
+更多例子 [_examples](_examples)
 
 ## 版权
 
