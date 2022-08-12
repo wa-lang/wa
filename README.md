@@ -35,7 +35,7 @@
 3. `wa init -name=_examples/hi`
 4. `wa run _examples/hi`
 
-> 项目尚处于原型开源阶段，如果有共建和PR需求请入群交流。
+> 项目尚处于原型开源阶段，如果有共建和PR需求请 [入群交流](https://wa-lang.org/community/index.html)。
 
 ## 设计目标
 
