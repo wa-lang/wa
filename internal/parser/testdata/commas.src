@@ -7,11 +7,11 @@
 
 package p
 
-let _ = []int{
+var _ = []int{
 	0/* ERROR HERE "missing ','" */
 }
 
-let _ = []int{
+var _ = []int{
 	0,
 	1,
 	2,

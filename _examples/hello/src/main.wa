@@ -19,7 +19,7 @@ import (
 }
 
 函数 求和(n int) int {
-	let v int
+	var v int
 	for i := 1; i <= n; i++ {
 		v += i
 	}

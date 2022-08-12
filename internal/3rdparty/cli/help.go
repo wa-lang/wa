@@ -358,7 +358,7 @@ func checkCompletions(c *Context) bool {
 	if args := c.Args(); args.Present() {
 		name := args.First()
 		if cmd := c.App.Command(name); cmd != nil {
-			// let the command handle the completion
+			// var the command handle the completion
 			return false
 		}
 	}

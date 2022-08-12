@@ -654,7 +654,7 @@ func (p *printer) writeComment(comment *ast.Comment) {
 		return
 	}
 
-	// for /*-style comments, print line by line and let the
+	// for /*-style comments, print line by line and var the
 	// write function take care of the proper indentation
 	lines := strings.Split(text, "\n")
 

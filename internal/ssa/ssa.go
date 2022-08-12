@@ -70,7 +70,7 @@ type Member interface {
 	Object() types.Object            // typechecker's object for this member, if any
 	Pos() token.Pos                  // position of member's declaration, if known
 	Type() types.Type                // type of the package member
-	Token() token.Token              // token.{LET,FN,CONST,TYPE}
+	Token() token.Token              // token.{VAR,FN,CONST,TYPE}
 	Package() *Package               // the containing package
 }
 
@@ -1313,7 +1313,7 @@ func (v *Global) Name() string                         { return v.name }
 func (v *Global) Parent() *Function                    { return nil }
 func (v *Global) Pos() token.Pos                       { return v.pos }
 func (v *Global) Referrers() *[]Instruction            { return nil }
-func (v *Global) Token() token.Token                   { return token.LET }
+func (v *Global) Token() token.Token                   { return token.VAR }
 func (v *Global) Object() types.Object                 { return v.object }
 func (v *Global) String() string                       { return v.RelString(nil) }
 func (v *Global) Package() *Package                    { return v.Pkg }

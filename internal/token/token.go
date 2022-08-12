@@ -117,7 +117,7 @@ const (
 	STRUCT
 	SWITCH
 	TYPE
-	LET
+	VAR
 
 	// reserved keywords
 	CLASS
@@ -216,7 +216,7 @@ var tokens = [...]string{
 	STRUCT: "struct",
 	SWITCH: "switch",
 	TYPE:   "type",
-	LET:    "let",
+	VAR:    "var",
 
 	CLASS: "class",
 	ENUM:  "enum",
@@ -227,7 +227,7 @@ var tokens_zh = map[Token]string{
 	IMPORT: "导入",
 
 	CONST: "常量",
-	LET:   "变量",
+	VAR:   "变量",
 
 	TYPE:      "类型",
 	MAP:       "字典",
@@ -237,7 +237,7 @@ var tokens_zh = map[Token]string{
 	INTERFACE: "接口",
 
 	FN:     "函数",
-	DEFER:  "押后",
+	DEFER:  "善后",
 	RETURN: "返回",
 
 	IF:       "如果",

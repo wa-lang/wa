@@ -1744,7 +1744,7 @@ import (
 	"time"
 )
 
-let x = 1
+var x = 1
 `,
 		out: `package main
 
@@ -1758,7 +1758,7 @@ import (
 	"time"
 )
 
-let x = 1
+var x = 1
 `,
 	},
 	{
@@ -1774,7 +1774,7 @@ import (
 	"url"
 )
 
-let x = 1 // comment on x, not on url
+var x = 1 // comment on x, not on url
 `,
 		out: `package main
 
@@ -1785,7 +1785,7 @@ import (
 	"path"
 )
 
-let x = 1 // comment on x, not on url
+var x = 1 // comment on x, not on url
 `,
 	},
 	{
@@ -1801,7 +1801,7 @@ import (
 	"text/template"
 )
 
-let addr = flag.String("addr", ":1718", "http service address") // Q=17, R=18
+var addr = flag.String("addr", ":1718", "http service address") // Q=17, R=18
 `,
 		out: `package main
 
@@ -1812,7 +1812,7 @@ import (
 	"text/template"
 )
 
-let addr = flag.String("addr", ":1718", "http service address") // Q=17, R=18
+var addr = flag.String("addr", ":1718", "http service address") // Q=17, R=18
 `,
 	},
 }
@@ -1946,7 +1946,7 @@ var usesImportTests = []struct {
 
 import "io"
 
-let _ io.Writer
+var _ io.Writer
 `,
 		want: true,
 	},
@@ -1966,7 +1966,7 @@ import "io"
 
 import "io"
 
-let io = 42
+var io = 42
 `,
 		want: false,
 	},
@@ -1977,7 +1977,7 @@ let io = 42
 
 import i "io"
 
-let _ i.Writer
+var _ i.Writer
 `,
 		want: true,
 	},
@@ -1997,8 +1997,8 @@ import i "io"
 
 import i "io"
 
-let i = 42
-let io = 42
+var i = 42
+var io = 42
 `,
 		want: false,
 	},
@@ -2009,7 +2009,7 @@ let io = 42
 
 import "encoding/json"
 
-let _ json.Encoder
+var _ json.Encoder
 `,
 		want: true,
 	},
@@ -2029,7 +2029,7 @@ import "encoding/json"
 
 import "encoding/json"
 
-let json = 42
+var json = 42
 `,
 		want: false,
 	},
@@ -2040,7 +2040,7 @@ let json = 42
 
 import j "encoding/json"
 
-let _ j.Encoder
+var _ j.Encoder
 `,
 		want: true,
 	},
@@ -2060,8 +2060,8 @@ import j "encoding/json"
 
 import j "encoding/json"
 
-let j = 42
-let json = 42
+var j = 42
+var json = 42
 `,
 		want: false,
 	},

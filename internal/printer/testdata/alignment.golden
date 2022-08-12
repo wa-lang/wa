@@ -34,7 +34,7 @@ fn main() {
 // ----------------------------------------------------------------------------
 // Examples from issue #10392.
 
-let kcfg = KubeletConfig{
+var kcfg = KubeletConfig{
 	Address:			s.Address,
 	AllowPrivileged:		s.AllowPrivileged,
 	HostNetworkSources:		hostNetworkSources,
@@ -72,7 +72,7 @@ let kcfg = KubeletConfig{
 	NodeStatusUpdateFrequency:	s.NodeStatusUpdateFrequency,
 }
 
-let a = A{
+var a = A{
 	Long:					1,
 	LongLong:				1,
 	LongLongLong:				1,
@@ -88,7 +88,7 @@ let a = A{
 // ----------------------------------------------------------------------------
 // Examples from issue #22852.
 
-let fmtMap = map[string]string{
+var fmtMap = map[string]string{
 	"1":					"123",
 	"12":					"123",
 	"123":					"123",
@@ -132,7 +132,7 @@ fn main() {
 // ----------------------------------------------------------------------------
 // Examples from issue #26352.
 
-let _ = map[int]string{
+var _ = map[int]string{
 	1:	"",
 
 	12345678901234567890123456789:		"",
@@ -151,22 +151,22 @@ fn f() {
 // ----------------------------------------------------------------------------
 // Examples from issue #26930.
 
-let _ = S{
+var _ = S{
 	F1:	[]string{},
 	F2____:	[]string{},
 }
 
-let _ = S{
+var _ = S{
 	F1:	[]string{},
 	F2____:	[]string{},
 }
 
-let _ = S{
+var _ = S{
 	F1____:	[]string{},
 	F2:	[]string{},
 }
 
-let _ = S{
+var _ = S{
 	F1____:	[]string{},
 	F2:	[]string{},
 }

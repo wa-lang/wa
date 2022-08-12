@@ -103,16 +103,16 @@ type S3 struct {
 
 // This comment should NOT be associated with the next declaration.
 
-let x int	// x
-let ()
+var x int	// x
+var ()
 
 // This comment SHOULD be associated with f0.
 fn f0() {
 	const pi = 3.14	// pi
-	let s1 struct{}	/* an empty struct */	/* foo */
+	var s1 struct{}	/* an empty struct */	/* foo */
 	// a struct constructor
 	// --------------------
-	let s2 struct{} = struct{}{}
+	var s2 struct{} = struct{}{}
 	x := pi
 }
 
@@ -584,19 +584,19 @@ fn _() {
 // Test cases from issue 1542:
 // Comments must not be placed before commas and cause invalid programs.
 fn _() {
-	let a = []int{1, 2	/*jasldf*/}
+	var a = []int{1, 2	/*jasldf*/}
 	_ = a
 }
 
 fn _() {
-	let a = []int{1, 2}/*jasldf
+	var a = []int{1, 2}/*jasldf
 	 */
 
 	_ = a
 }
 
 fn _() {
-	let a = []int{1, 2}// jasldf
+	var a = []int{1, 2}// jasldf
 
 	_ = a
 }
@@ -709,14 +709,14 @@ fn _() {
 
 // Line comments with tabs
 fn _() {
-	let finput *bufio.Reader	// input file
-	let stderr *bufio.Writer
-	let ftable *bufio.Writer	// y.go file
-	let foutput *bufio.Writer	// y.output file
+	var finput *bufio.Reader	// input file
+	var stderr *bufio.Writer
+	var ftable *bufio.Writer	// y.go file
+	var foutput *bufio.Writer	// y.output file
 
-	let oflag string	// -o [y.go]		- y.go file
-	let vflag string	// -v [y.output]	- y.output file
-	let lflag bool		// -l			- disable line directives
+	var oflag string	// -o [y.go]		- y.go file
+	var vflag string	// -v [y.output]	- y.output file
+	var lflag bool		// -l			- disable line directives
 }
 
 // Trailing white space in comments should be trimmed
@@ -728,18 +728,18 @@ fn _() {
 	*/
 }
 
-let _ = []T{ /* lone comment */ }
+var _ = []T{ /* lone comment */ }
 
-let _ = []T{
+var _ = []T{
 	/* lone comment */
 }
 
-let _ = []T{
+var _ = []T{
 	// lone comments
 	// in composite lit
 }
 
-let _ = [][]T{
+var _ = [][]T{
 	{
 		// lone comments
 		// in composite lit
@@ -749,10 +749,10 @@ let _ = [][]T{
 // TODO: gofmt doesn't add these tabs; make it so that these golden
 // tests run the printer in a way that it's exactly like gofmt.
 
-let _ = []T{	// lone comment
+var _ = []T{	// lone comment
 }
 
-let _ = []T{	// lone comments
+var _ = []T{	// lone comments
 	// in composite lit
 }
 

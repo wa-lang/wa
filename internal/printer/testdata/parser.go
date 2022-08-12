@@ -1797,7 +1797,7 @@ func (p *parser) parseStmt() (s ast.Stmt) {
 	}
 
 	switch p.tok {
-	case token.CONST, token.TYPE, token.LET:
+	case token.CONST, token.TYPE, token.VAR:
 		s = &ast.DeclStmt{p.parseDecl()}
 	case
 		// tokens that may start a top-level expression
@@ -2053,7 +2053,7 @@ func (p *parser) parseDecl() ast.Decl {
 	case token.TYPE:
 		f = parseTypeSpec
 
-	case token.LET:
+	case token.VAR:
 		f = parseVarSpec
 
 	case token.FN:

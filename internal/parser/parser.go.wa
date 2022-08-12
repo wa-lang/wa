@@ -73,7 +73,7 @@ type parser struct {
 
 fn (p *parser) init(fset *token.FileSet, filename string, src []byte, mode Mode) {
 	p.file = fset.AddFile(filename, -1, len(src))
-	let m scanner.Mode
+	var m scanner.Mode
 	if mode&ParseComments != 0 {
 		m = scanner.ScanComments
 	}
@@ -169,7 +169,7 @@ fn (p *parser) shortVarDecl(decl *ast.AssignStmt, list []ast.Expr) {
 // The unresolved object is a sentinel to mark identifiers that have been added
 // to the list of unresolved identifiers. The sentinel is only used for verifying
 // internal consistency.
-let unresolved = new(ast.Object)
+var unresolved = new(ast.Object)
 
 // If x is an identifier, tryResolve attempts to resolve x by looking up
 // the object it denotes. If no object is found and collectUnresolved is
@@ -284,10 +284,10 @@ fn (p *parser) consumeComment() (comment *ast.Comment, endline int) {
 // empty lines terminate a comment group.
 //
 fn (p *parser) consumeCommentGroup(n int) (comments *ast.CommentGroup, endline int) {
-	let list []*ast.Comment
+	var list []*ast.Comment
 	endline = p.file.Line(p.pos)
 	for p.tok == token.COMMENT && p.file.Line(p.pos) <= endline+n {
-		let comment *ast.Comment
+		var comment *ast.Comment
 		comment, endline = p.consumeComment()
 		list = append(list, comment)
 	}
@@ -321,8 +321,8 @@ fn (p *parser) next() {
 	p.next0()
 
 	if p.tok == token.COMMENT {
-		let comment *ast.CommentGroup
-		let endline int
+		var comment *ast.CommentGroup
+		var endline int
 
 		if p.file.Line(p.pos) == p.file.Line(prev) {
 			// The comment is on same line as the previous token; it
@@ -477,7 +477,7 @@ fn (p *parser) advance(to map[token.Token]bool) {
 	}
 }
 
-let stmtStart = map[token.Token]bool{
+var stmtStart = map[token.Token]bool{
 	token.BREAK:    true,
 	token.CONST:    true,
 	token.CONTINUE: true,
@@ -487,16 +487,16 @@ let stmtStart = map[token.Token]bool{
 	token.RETURN:   true,
 	token.SWITCH:   true,
 	token.TYPE:     true,
-	token.LET:      true,
+	token.VAR:      true,
 }
 
-let declStart = map[token.Token]bool{
+var declStart = map[token.Token]bool{
 	token.CONST: true,
 	token.TYPE:  true,
-	token.LET:   true,
+	token.VAR:   true,
 }
 
-let exprEnd = map[token.Token]bool{
+var exprEnd = map[token.Token]bool{
 	token.COMMA:     true,
 	token.COLON:     true,
 	token.SEMICOLON: true,
@@ -655,7 +655,7 @@ fn (p *parser) parseArrayType() ast.Expr {
 
 	lbrack := p.expect(token.LBRACK)
 	p.exprLev++
-	let len ast.Expr
+	var len ast.Expr
 	// always permit ellipsis for more fault-tolerant parsing
 	if p.tok == token.ELLIPSIS {
 		len = &ast.Ellipsis{Ellipsis: p.pos}
@@ -695,7 +695,7 @@ fn (p *parser) parseFieldDecl(scope *ast.Scope) *ast.Field {
 
 	// 1st FieldDecl
 	// A type name used as an anonymous field looks like a field identifier.
-	let list []ast.Expr
+	var list []ast.Expr
 	for {
 		list = append(list, p.parseVarType(false))
 		if p.tok != token.COMMA {
@@ -707,7 +707,7 @@ fn (p *parser) parseFieldDecl(scope *ast.Scope) *ast.Field {
 	typ := p.tryVarType(false)
 
 	// analyze case
-	let idents []*ast.Ident
+	var idents []*ast.Ident
 	if typ != nil {
 		// IdentifierList Type
 		idents = p.makeIdentList(list)
@@ -724,7 +724,7 @@ fn (p *parser) parseFieldDecl(scope *ast.Scope) *ast.Field {
 	}
 
 	// Tag
-	let tag *ast.BasicLit
+	var tag *ast.BasicLit
 	if p.tok == token.STRING {
 		tag = &ast.BasicLit{ValuePos: p.pos, Kind: p.tok, Value: p.lit}
 		p.next()
@@ -747,7 +747,7 @@ fn (p *parser) parseStructType() *ast.StructType {
 	pos := p.expect(token.STRUCT)
 	lbrace := p.expect(token.LBRACE)
 	scope := ast.NewScope(nil) // struct scope
-	let list []*ast.Field
+	var list []*ast.Field
 	for p.tok == token.IDENT || p.tok == token.MUL || p.tok == token.LPAREN {
 		// a field declaration cannot start with a '(' but we accept
 		// it here for more robust parsing and better error messages
@@ -813,7 +813,7 @@ fn (p *parser) parseParameterList(scope *ast.Scope, ellipsisOk bool) (params []*
 
 	// 1st ParameterDecl
 	// A list of identifiers looks like a list of type names.
-	let list []ast.Expr
+	var list []ast.Expr
 	for {
 		list = append(list, p.parseVarType(ellipsisOk))
 		if p.tok != token.COMMA {
@@ -870,7 +870,7 @@ fn (p *parser) parseParameters(scope *ast.Scope, ellipsisOk bool) *ast.FieldList
 		defer un(trace(p, "Parameters"))
 	}
 
-	let params []*ast.Field
+	var params []*ast.Field
 	lparen := p.expect(token.LPAREN)
 	if p.tok != token.RPAREN {
 		params = p.parseParameterList(scope, ellipsisOk)
@@ -928,8 +928,8 @@ fn (p *parser) parseMethodSpec(scope *ast.Scope) *ast.Field {
 	}
 
 	doc := p.leadComment
-	let idents []*ast.Ident
-	let typ ast.Expr
+	var idents []*ast.Ident
+	var typ ast.Expr
 	x := p.parseTypeName()
 	if ident, isIdent := x.(*ast.Ident); isIdent && p.tok == token.LPAREN {
 		// method
@@ -958,7 +958,7 @@ fn (p *parser) parseInterfaceType() *ast.InterfaceType {
 	pos := p.expect(token.INTERFACE)
 	lbrace := p.expect(token.LBRACE)
 	scope := ast.NewScope(nil) // interface scope
-	let list []*ast.Field
+	var list []*ast.Field
 	for p.tok == token.IDENT {
 		list = append(list, p.parseMethodSpec(scope))
 	}
@@ -1157,7 +1157,7 @@ fn (p *parser) parseTypeAssertion(x ast.Expr) ast.Expr {
 	}
 
 	lparen := p.expect(token.LPAREN)
-	let typ ast.Expr
+	var typ ast.Expr
 	if p.tok == token.TYPE {
 		// type switch: typ == nil
 		p.next()
@@ -1177,8 +1177,8 @@ fn (p *parser) parseIndexOrSlice(x ast.Expr) ast.Expr {
 	const N = 3 // change the 3 to 2 to disable 3-index slices
 	lbrack := p.expect(token.LBRACK)
 	p.exprLev++
-	let index [N]ast.Expr
-	let colons [N - 1]token.Pos
+	var index [N]ast.Expr
+	var colons [N - 1]token.Pos
 	if p.tok != token.COLON {
 		index[0] = p.parseRhs()
 	}
@@ -1223,8 +1223,8 @@ fn (p *parser) parseCallOrConversion(fun ast.Expr) *ast.CallExpr {
 
 	lparen := p.expect(token.LPAREN)
 	p.exprLev++
-	let list []ast.Expr
-	let ellipsis token.Pos
+	var list []ast.Expr
+	var ellipsis token.Pos
 	for p.tok != token.RPAREN && p.tok != token.EOF && !ellipsis.IsValid() {
 		list = append(list, p.parseRhsOrType()) // builtins may expect a type: make(some type, ...)
 		if p.tok == token.ELLIPSIS {
@@ -1321,7 +1321,7 @@ fn (p *parser) parseLiteralValue(typ ast.Expr) ast.Expr {
 	}
 
 	lbrace := p.expect(token.LBRACE)
-	let elts []ast.Expr
+	var elts []ast.Expr
 	p.exprLev++
 	if p.tok != token.RBRACE {
 		elts = p.parseElementList()
@@ -1595,7 +1595,7 @@ fn (p *parser) parseSimpleStmt(mode int) (ast.Stmt, bool) {
 		// assignment statement, possibly part of a range clause
 		pos, tok := p.pos, p.tok
 		p.next()
-		let y []ast.Expr
+		var y []ast.Expr
 		isRange := false
 		if mode == rangeOk && p.tok == token.RANGE && (tok == token.DEFINE || tok == token.ASSIGN) {
 			pos := p.pos
@@ -1684,7 +1684,7 @@ fn (p *parser) parseReturnStmt() *ast.ReturnStmt {
 
 	pos := p.pos
 	p.expect(token.RETURN)
-	let x []ast.Expr
+	var x []ast.Expr
 	if p.tok != token.SEMICOLON && p.tok != token.RBRACE {
 		x = p.parseRhsList()
 	}
@@ -1699,7 +1699,7 @@ fn (p *parser) parseBranchStmt(tok token.Token) *ast.BranchStmt {
 	}
 
 	pos := p.expect(tok)
-	let label *ast.Ident
+	var label *ast.Ident
 	if p.tok == token.IDENT {
 		label = p.parseIdent()
 		// add to list of unresolved targets
@@ -1742,15 +1742,15 @@ fn (p *parser) parseIfHeader() (init ast.Stmt, cond ast.Expr) {
 
 	if p.tok != token.SEMICOLON {
 		// accept potential variable declaration but complain
-		if p.tok == token.LET {
+		if p.tok == token.VAR {
 			p.next()
-			p.error(p.pos, fmt.Sprintf("let declaration not allowed in 'IF' initializer"))
+			p.error(p.pos, fmt.Sprintf("var declaration not allowed in 'IF' initializer"))
 		}
 		init, _ = p.parseSimpleStmt(basic)
 	}
 
-	let condStmt ast.Stmt
-	let semi struct {
+	var condStmt ast.Stmt
+	var semi struct {
 		pos token.Pos
 		lit string // ";" or "\n"; valid if pos.IsValid()
 	}
@@ -1801,7 +1801,7 @@ fn (p *parser) parseIfStmt() *ast.IfStmt {
 	init, cond := p.parseIfHeader()
 	body := p.parseBlockStmt()
 
-	let else_ ast.Stmt
+	var else_ ast.Stmt
 	if p.tok == token.ELSE {
 		p.next()
 		switch p.tok {
@@ -1841,7 +1841,7 @@ fn (p *parser) parseCaseClause(typeSwitch bool) *ast.CaseClause {
 	}
 
 	pos := p.pos
-	let list []ast.Expr
+	var list []ast.Expr
 	if p.tok == token.CASE {
 		p.next()
 		if typeSwitch {
@@ -1896,7 +1896,7 @@ fn (p *parser) parseSwitchStmt() ast.Stmt {
 	p.openScope()
 	defer p.closeScope()
 
-	let s1, s2 ast.Stmt
+	var s1, s2 ast.Stmt
 	if p.tok != token.LBRACE {
 		prevLev := p.exprLev
 		p.exprLev = -1
@@ -1930,7 +1930,7 @@ fn (p *parser) parseSwitchStmt() ast.Stmt {
 
 	typeSwitch := p.isTypeSwitchGuard(s2)
 	lbrace := p.expect(token.LBRACE)
-	let list []ast.Stmt
+	var list []ast.Stmt
 	for p.tok == token.CASE || p.tok == token.DEFAULT {
 		list = append(list, p.parseCaseClause(typeSwitch))
 	}
@@ -1952,7 +1952,7 @@ fn (p *parser) parseCommClause() *ast.CommClause {
 
 	p.openScope()
 	pos := p.pos
-	let comm ast.Stmt
+	var comm ast.Stmt
 	if p.tok == token.CASE {
 		p.next()
 		lhs := p.parseLhsList()
@@ -2000,8 +2000,8 @@ fn (p *parser) parseForStmt() ast.Stmt {
 	p.openScope()
 	defer p.closeScope()
 
-	let s1, s2, s3 ast.Stmt
-	let isRange bool
+	var s1, s2, s3 ast.Stmt
+	var isRange bool
 	if p.tok != token.LBRACE {
 		prevLev := p.exprLev
 		p.exprLev = -1
@@ -2038,7 +2038,7 @@ fn (p *parser) parseForStmt() ast.Stmt {
 	if isRange {
 		as := s2.(*ast.AssignStmt)
 		// check lhs
-		let key, value ast.Expr
+		var key, value ast.Expr
 		switch len(as.Lhs) {
 		case 0:
 			// nothing to do
@@ -2080,7 +2080,7 @@ fn (p *parser) parseStmt() (s ast.Stmt) {
 	}
 
 	switch p.tok {
-	case token.CONST, token.TYPE, token.LET:
+	case token.CONST, token.TYPE, token.VAR:
 		s = &ast.DeclStmt{Decl: p.parseDecl(stmtStart)}
 	case
 		// tokens that may start an expression
@@ -2150,7 +2150,7 @@ fn (p *parser) parseImportSpec(doc *ast.CommentGroup, _ token.Token, _ int) ast.
 		defer un(trace(p, "ImportSpec"))
 	}
 
-	let ident *ast.Ident
+	var ident *ast.Ident
 	switch p.tok {
 	case token.PERIOD:
 		ident = &ast.Ident{NamePos: p.pos, Name: "."}
@@ -2160,7 +2160,7 @@ fn (p *parser) parseImportSpec(doc *ast.CommentGroup, _ token.Token, _ int) ast.
 	}
 
 	pos := p.pos
-	let path string
+	var path string
 	if p.tok == token.STRING {
 		path = p.lit
 		if !isValidImport(path) {
@@ -2192,7 +2192,7 @@ fn (p *parser) parseValueSpec(doc *ast.CommentGroup, keyword token.Token, iota i
 	pos := p.pos
 	idents := p.parseIdentList()
 	typ := p.tryType()
-	let values []ast.Expr
+	var values []ast.Expr
 	// always permit optional initialization for more tolerant parsing
 	if p.tok == token.ASSIGN {
 		p.next()
@@ -2201,7 +2201,7 @@ fn (p *parser) parseValueSpec(doc *ast.CommentGroup, keyword token.Token, iota i
 	p.expectSemi() // call before accessing p.linecomment
 
 	switch keyword {
-	case token.LET:
+	case token.VAR:
 		if typ == nil && values == nil {
 			p.error(pos, "missing variable type or initialization")
 		}
@@ -2223,7 +2223,7 @@ fn (p *parser) parseValueSpec(doc *ast.CommentGroup, keyword token.Token, iota i
 		Comment: p.lineComment,
 	}
 	kind := ast.Con
-	if keyword == token.LET {
+	if keyword == token.VAR {
 		kind = ast.Var
 	}
 	p.declare(spec, iota, p.topScope, kind, idents...)
@@ -2262,8 +2262,8 @@ fn (p *parser) parseGenDecl(keyword token.Token, f parseSpecFunction) *ast.GenDe
 
 	doc := p.leadComment
 	pos := p.expect(keyword)
-	let lparen, rparen token.Pos
-	let list []ast.Spec
+	var lparen, rparen token.Pos
+	var list []ast.Spec
 	if p.tok == token.LPAREN {
 		lparen = p.pos
 		p.next()
@@ -2295,7 +2295,7 @@ fn (p *parser) parseFuncDecl() *ast.FuncDecl {
 	pos := p.expect(token.FN)
 	scope := ast.NewScope(p.topScope) // function scope
 
-	let recv *ast.FieldList
+	var recv *ast.FieldList
 	if p.tok == token.LPAREN {
 		recv = p.parseParameters(scope, false)
 	}
@@ -2304,7 +2304,7 @@ fn (p *parser) parseFuncDecl() *ast.FuncDecl {
 
 	params, results := p.parseSignature(scope)
 
-	let body *ast.BlockStmt
+	var body *ast.BlockStmt
 	if p.tok == token.LBRACE {
 		body = p.parseBody(scope)
 	}
@@ -2341,9 +2341,9 @@ fn (p *parser) parseDecl(sync map[token.Token]bool) ast.Decl {
 		defer un(trace(p, "Declaration"))
 	}
 
-	let f parseSpecFunction
+	var f parseSpecFunction
 	switch p.tok {
-	case token.CONST, token.LET:
+	case token.CONST, token.VAR:
 		f = p.parseValueSpec
 
 	case token.TYPE:
@@ -2395,7 +2395,7 @@ fn (p *parser) parseFile() *ast.File {
 
 	p.openScope()
 	p.pkgScope = p.topScope
-	let decls []ast.Decl
+	var decls []ast.Decl
 	if p.mode&PackageClauseOnly == 0 {
 		// import decls
 		for p.tok == token.IMPORT {

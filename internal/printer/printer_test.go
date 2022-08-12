@@ -313,7 +313,7 @@ func TestBadComments(t *testing.T) {
 package p
 import "fmt"
 const pi = 3.14 // rough circle
-let (
+var (
 	x, y, z int = 1, 2, 3
 	u, v float64
 )
@@ -377,7 +377,7 @@ func TestSourcePos(t *testing.T) {
 	const src = `
 package p
 import ( "github.com/wa-lang/wa/internal/printer"; "math" )
-const pi = 3.14; let x = 0
+const pi = 3.14; var x = 0
 type t struct{ x, y, z int; u, v, w float32 }
 fn (t *t) foo(a, b, c int) int {
 	return a*t.x + b*t.y +
@@ -449,7 +449,7 @@ func TestIssue5945(t *testing.T) {
 package p   // line 2
 fn f() {} // line 3
 
-let x, y, z int
+var x, y, z int
 
 
 fn g() { // line 8
@@ -462,7 +462,7 @@ package p
 //line src.go:3
 fn f() {}
 
-let x, y, z int
+var x, y, z int
 
 //line src.go:8
 fn g() {
@@ -517,7 +517,7 @@ func TestDeclLists(t *testing.T) {
 
 var stmts = []string{
 	"i := 0",
-	"let a, b = 1, 2\nreturn a + b",
+	"var a, b = 1, 2\nreturn a + b",
 	"f()\ndefer fn() {}()",
 }
 
@@ -746,7 +746,7 @@ func TestIssue11151(t *testing.T) {
 // declaration must be printed even if Lparen is token.NoPos.
 func TestParenthesizedDecl(t *testing.T) {
 	// a package with multiple specs in a single declaration
-	const src = "package p; let ( a float64; b int )"
+	const src = "package p; var ( a float64; b int )"
 	fset := token.NewFileSet()
 	f, err := parser.ParseFile(nil, fset, "", src, 0)
 	if err != nil {

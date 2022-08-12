@@ -4,7 +4,7 @@
 
 package statements
 
-let expr bool
+var expr bool
 
 fn use(x interface{}) {}
 
@@ -356,8 +356,8 @@ fn _() {
 	type _ int
 	type _ float
 
-	let _ = 0
-	let x = 1
+	var _ = 0
+	var x = 1
 
 	// Each use(x) call below should have at most one empty line before and after.
 	// Known bug: The first use call may have more than one empty line before

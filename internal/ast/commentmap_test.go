@@ -41,7 +41,7 @@ type T struct {
 // also associated with T
 
 // x
-let x = 0 // x = 0
+var x = 0 // x = 0
 // also associated with x
 
 // f1

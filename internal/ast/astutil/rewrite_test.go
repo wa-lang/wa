@@ -25,11 +25,11 @@ var rewriteTests = [...]struct {
 	{name: "replace",
 		orig: `package p
 
-let x int
+var x int
 `,
 		want: `package p
 
-let t T
+var t T
 `,
 		post: func(c *astutil.Cursor) bool {
 			if _, ok := c.Node().(*ast.ValueSpec); ok {
@@ -47,7 +47,7 @@ const z = 0
 
 type T struct{}
 
-let x int
+var x int
 `,
 		want: `package p
 // a foo is a foo
@@ -55,7 +55,7 @@ const z = 0
 // a foo is a foo
 type T struct{}
 // a foo is a foo
-let x int
+var x int
 `,
 		post: func(c *astutil.Cursor) bool {
 			if _, ok := c.Parent().(*ast.GenDecl); ok && c.Name() == "Doc" && c.Node() == nil {
@@ -92,22 +92,22 @@ const a, b, c = 1, 2, 3
 	{name: "insert",
 		orig: `package p
 
-let (
+var (
 	x int
 	y int
 )
 `,
 		want: `package p
 
-let before1 int
-let before2 int
+var before1 int
+var before2 int
 
-let (
+var (
 	x int
 	y int
 )
-let after2 int
-let after1 int
+var after2 int
+var after1 int
 `,
 		pre: func(c *astutil.Cursor) bool {
 			if _, ok := c.Node().(*ast.GenDecl); ok {
@@ -123,14 +123,14 @@ let after1 int
 	{name: "delete",
 		orig: `package p
 
-let x int
-let y int
-let z int
+var x int
+var y int
+var z int
 `,
 		want: `package p
 
-let y int
-let z int
+var y int
+var z int
 `,
 		pre: func(c *astutil.Cursor) bool {
 			n := c.Node()
@@ -144,16 +144,16 @@ let z int
 	{name: "insertafter-delete",
 		orig: `package p
 
-let x int
-let y int
-let z int
+var x int
+var y int
+var z int
 `,
 		want: `package p
 
-let x1 int
+var x1 int
 
-let y int
-let z int
+var y int
+var z int
 `,
 		pre: func(c *astutil.Cursor) bool {
 			n := c.Node()
@@ -168,21 +168,21 @@ let z int
 	{name: "delete-insertafter",
 		orig: `package p
 
-let x int
-let y int
-let z int
+var x int
+var y int
+var z int
 `,
 		want: `package p
 
-let y int
-let x1 int
-let z int
+var y int
+var x1 int
+var z int
 `,
 		pre: func(c *astutil.Cursor) bool {
 			n := c.Node()
 			if d, ok := n.(*ast.GenDecl); ok && d.Specs[0].(*ast.ValueSpec).Names[0].Name == "x" {
 				c.Delete()
-				// The cursor is now effectively atop the 'let y int' node.
+				// The cursor is now effectively atop the 'var y int' node.
 				c.InsertAfter(vardecl("x1", "int"))
 			}
 			return true
@@ -198,7 +198,7 @@ func valspec(name, typ string) *ast.ValueSpec {
 
 func vardecl(name, typ string) *ast.GenDecl {
 	return &ast.GenDecl{
-		Tok:   token.LET,
+		Tok:   token.VAR,
 		Specs: []ast.Spec{valspec(name, typ)},
 	}
 }

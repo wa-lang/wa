@@ -536,7 +536,7 @@ func NodeDescription(n ast.Node) string {
 			return "constant declaration"
 		case token.TYPE:
 			return "type declaration"
-		case token.LET:
+		case token.VAR:
 			return "variable declaration"
 		}
 	case *ast.Ident:

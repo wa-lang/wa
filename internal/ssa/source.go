@@ -77,8 +77,8 @@ func findEnclosingPackageLevelFunction(pkg *Package, path []ast.Node) *Function 
 	if n := len(path); n >= 2 { // [... {Gen,Func}Decl File]
 		switch decl := path[n-2].(type) {
 		case *ast.GenDecl:
-			if decl.Tok == token.LET && n >= 3 {
-				// Package-level 'let' initializer.
+			if decl.Tok == token.VAR && n >= 3 {
+				// Package-level 'var' initializer.
 				return pkg.init
 			}
 

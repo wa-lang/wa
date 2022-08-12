@@ -77,8 +77,8 @@ func TestSource(t *testing.T) {
 var tests = []string{
 	// declaration lists
 	`import "github.com/wa-lang/wa/internal/format"`,
-	"let x int",
-	"let x int\n\ntype T struct{}",
+	"var x int",
+	"var x int\n\ntype T struct{}",
 
 	// statement lists
 	"x := 0",

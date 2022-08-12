@@ -5,7 +5,7 @@
 //     (&cli.App{}).Run(os.Args)
 //   }
 //
-// Of course this application does not do much, so let's make this an actual application:
+// Of course this application does not do much, so var's make this an actual application:
 //   func main() {
 //     app := &cli.App{
 //			 Name: "greet",

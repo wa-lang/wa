@@ -1722,7 +1722,7 @@ start:
 
 	case *ast.DeclStmt: // Con, Var or Typ
 		d := s.Decl.(*ast.GenDecl)
-		if d.Tok == token.LET {
+		if d.Tok == token.VAR {
 			for _, spec := range d.Specs {
 				if vs, ok := spec.(*ast.ValueSpec); ok {
 					b.localValueSpec(fn, vs)

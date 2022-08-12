@@ -487,13 +487,13 @@ var stmtStart = map[token.Token]bool{
 	token.RETURN:   true,
 	token.SWITCH:   true,
 	token.TYPE:     true,
-	token.LET:      true,
+	token.VAR:      true,
 }
 
 var declStart = map[token.Token]bool{
 	token.CONST: true,
 	token.TYPE:  true,
-	token.LET:   true,
+	token.VAR:   true,
 }
 
 var exprEnd = map[token.Token]bool{
@@ -1742,9 +1742,9 @@ func (p *parser) parseIfHeader() (init ast.Stmt, cond ast.Expr) {
 
 	if p.tok != token.SEMICOLON {
 		// accept potential variable declaration but complain
-		if p.tok == token.LET {
+		if p.tok == token.VAR {
 			p.next()
-			p.error(p.pos, fmt.Sprintf("let declaration not allowed in 'IF' initializer"))
+			p.error(p.pos, fmt.Sprintf("var declaration not allowed in 'IF' initializer"))
 		}
 		init, _ = p.parseSimpleStmt(basic)
 	}
@@ -2080,7 +2080,7 @@ func (p *parser) parseStmt() (s ast.Stmt) {
 	}
 
 	switch p.tok {
-	case token.CONST, token.TYPE, token.LET:
+	case token.CONST, token.TYPE, token.VAR:
 		s = &ast.DeclStmt{Decl: p.parseDecl(stmtStart)}
 	case
 		// tokens that may start an expression
@@ -2201,7 +2201,7 @@ func (p *parser) parseValueSpec(doc *ast.CommentGroup, keyword token.Token, iota
 	p.expectSemi() // call before accessing p.linecomment
 
 	switch keyword {
-	case token.LET:
+	case token.VAR:
 		if typ == nil && values == nil {
 			p.error(pos, "missing variable type or initialization")
 		}
@@ -2223,7 +2223,7 @@ func (p *parser) parseValueSpec(doc *ast.CommentGroup, keyword token.Token, iota
 		Comment: p.lineComment,
 	}
 	kind := ast.Con
-	if keyword == token.LET {
+	if keyword == token.VAR {
 		kind = ast.Var
 	}
 	p.declare(spec, iota, p.topScope, kind, idents...)
@@ -2343,7 +2343,7 @@ func (p *parser) parseDecl(sync map[token.Token]bool) ast.Decl {
 
 	var f parseSpecFunction
 	switch p.tok {
-	case token.CONST, token.LET:
+	case token.CONST, token.VAR:
 		f = p.parseValueSpec
 
 	case token.TYPE:

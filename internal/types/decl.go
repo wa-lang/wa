@@ -615,7 +615,7 @@ func (check *Checker) declStmt(decl ast.Decl) {
 						check.declare(check.scope, name, lhs[i], scopePos)
 					}
 
-				case token.LET:
+				case token.VAR:
 					top := len(check.delayed)
 
 					lhs0 := make([]*Var, len(s.Names))

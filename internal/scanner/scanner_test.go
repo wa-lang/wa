@@ -175,7 +175,7 @@ var tokens = [...]elt{
 	{token.STRUCT, "struct", keyword},
 	{token.SWITCH, "switch", keyword},
 	{token.TYPE, "type", keyword},
-	{token.LET, "let", keyword},
+	{token.VAR, "var", keyword},
 }
 
 const whitespace = "  \t  \n\n\n" // to separate tokens
@@ -455,7 +455,7 @@ var lines = []string{
 	"struct\n",
 	"switch\n",
 	"type\n",
-	"let\n",
+	"var\n",
 
 	"foo$//comment\n",
 	"foo$//comment",

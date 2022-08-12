@@ -63,7 +63,7 @@ fn getPos(fset *token.FileSet, filename string, offset int) token.Pos {
 // messages that appear immediately after a token, rather than at
 // a token's position.
 //
-let errRx = regexp.MustCompile(`^/\* *ERROR *(HERE)? *"([^"]*)" *\*/$`)
+var errRx = regexp.MustCompile(`^/\* *ERROR *(HERE)? *"([^"]*)" *\*/$`)
 
 // expectedErrors collects the regular expressions of ERROR comments found
 // in files and returns them as a map of error positions to error messages.
@@ -71,13 +71,13 @@ let errRx = regexp.MustCompile(`^/\* *ERROR *(HERE)? *"([^"]*)" *\*/$`)
 fn expectedErrors(fset *token.FileSet, filename string, src []byte) map[token.Pos]string {
 	errors := make(map[token.Pos]string)
 
-	let s scanner.Scanner
+	var s scanner.Scanner
 	// file was parsed already - do not add it again to the file
 	// set otherwise the position information returned here will
 	// not match the position information collected by the parser
 	s.Init(getFile(fset, filename), src, nil, scanner.ScanComments)
-	let prev token.Pos // position of last non-comment, non-semicolon token
-	let here token.Pos // position immediately after the token at position prev
+	var prev token.Pos // position of last non-comment, non-semicolon token
+	var here token.Pos // position immediately after the token at position prev
 
 	for {
 		pos, tok, lit := s.Scan()
@@ -101,7 +101,7 @@ fn expectedErrors(fset *token.FileSet, filename string, src []byte) map[token.Po
 			fallthrough
 		default:
 			prev = pos
-			let l int // token length
+			var l int // token length
 			if tok.IsLiteral() {
 				l = len(lit)
 			} else {

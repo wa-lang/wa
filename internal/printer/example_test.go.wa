@@ -42,7 +42,7 @@ fn ExampleFprint() {
 	// The file set is provided to the printer so that it knows
 	// about the original source formatting and can add additional
 	// line breaks where they were present in the source.
-	let buf bytes.Buffer
+	var buf bytes.Buffer
 	printer.Fprint(&buf, fset, funcAST.Body)
 
 	// Remove braces {} enclosing the function body, unindent,
@@ -57,7 +57,7 @@ fn ExampleFprint() {
 	// output:
 	// funcAST, fset := parseFunc("example_test.go", "ExampleFprint")
 	//
-	// let buf bytes.Buffer
+	// var buf bytes.Buffer
 	// printer.Fprint(&buf, fset, funcAST.Body)
 	//
 	// s := buf.String()

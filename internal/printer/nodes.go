@@ -1511,7 +1511,7 @@ func (p *printer) genDecl(d *ast.GenDecl) {
 		p.print(d.Lparen, token.LPAREN)
 		if n := len(d.Specs); n > 0 {
 			p.print(indent, formfeed)
-			if n > 1 && (d.Tok == token.CONST || d.Tok == token.LET) {
+			if n > 1 && (d.Tok == token.CONST || d.Tok == token.VAR) {
 				// two or more grouped const/var declarations:
 				// determine if the type column must be kept
 				keepType := keepTypeColumn(d.Specs)

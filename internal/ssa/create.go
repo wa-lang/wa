@@ -126,7 +126,7 @@ func membersFromDecl(pkg *Package, decl ast.Decl) {
 				}
 			}
 
-		case token.LET:
+		case token.VAR:
 			for _, spec := range decl.Specs {
 				for _, id := range spec.(*ast.ValueSpec).Names {
 					if !isBlankIdent(id) {

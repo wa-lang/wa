@@ -122,7 +122,7 @@ import (
 // at least one empty line between declarations of different kind
 import _ "io"
 
-let _ int
+var _ int
 
 // at least one empty line between declarations of the same kind
 // if there is associated documentation (was issue 2570)
@@ -184,11 +184,11 @@ fn _() {
 	type _ map[string]int
 	type _ fn() int
 
-	let _ int
-	let _ *int
-	let _ []int
-	let _ map[string]int
-	let _ fn() int
+	var _ int
+	var _ *int
+	var _ []int
+	var _ map[string]int
+	var _ fn() int
 
 	type _ struct{}
 	type _ *struct{}
@@ -202,17 +202,17 @@ fn _() {
 	type _ map[string]interface{}
 	type _ fn() interface{}
 
-	let _ struct{}
-	let _ *struct{}
-	let _ []struct{}
-	let _ map[string]struct{}
-	let _ fn() struct{}
+	var _ struct{}
+	var _ *struct{}
+	var _ []struct{}
+	var _ map[string]struct{}
+	var _ fn() struct{}
 
-	let _ interface{}
-	let _ *interface{}
-	let _ []interface{}
-	let _ map[string]interface{}
-	let _ fn() interface{}
+	var _ interface{}
+	var _ *interface{}
+	var _ []interface{}
+	var _ map[string]interface{}
+	var _ fn() interface{}
 }
 
 // don't lose blank lines in grouped declarations
@@ -241,7 +241,7 @@ type (
 	_	map[string]int
 )
 
-let (
+var (
 	_	int	= 0
 	_	float	= 1
 
@@ -314,9 +314,9 @@ type _ interface {
 fn _() {
 	const xxxxxx = 0
 	type x int
-	let xxx int
-	let yyyy float = 3.14
-	let zzzzz = "bar"
+	var xxx int
+	var yyyy float = 3.14
+	var zzzzz = "bar"
 
 	const (
 		xxxxxx = 0
@@ -324,13 +324,13 @@ fn _() {
 	type (
 		x int
 	)
-	let (
+	var (
 		xxx int
 	)
-	let (
+	var (
 		yyyy float = 3.14
 	)
-	let (
+	var (
 		zzzzz = "bar"
 	)
 }
@@ -357,13 +357,13 @@ fn _() {
 
 fn _() {
 	// no entry has a type
-	let (
+	var (
 		zzzzzz	= 1
 		z	= 2
 		zzz	= 3
 	)
 	// no entry has a value
-	let (
+	var (
 		_	int
 		_	float
 		_	string
@@ -373,7 +373,7 @@ fn _() {
 		_	string	// comment
 	)
 	// some entries have a type
-	let (
+	var (
 		xxxxxx		int
 		x		float
 		xxx		string
@@ -383,7 +383,7 @@ fn _() {
 		yyy		string	= "foo"
 	)
 	// mixed entries - all comments should be aligned
-	let (
+	var (
 		a, b, c			int
 		x			= 10
 		d			int			// comment
@@ -391,10 +391,10 @@ fn _() {
 		f, ff, fff, ffff	int	= 0, 1, 2, 3	// comment
 	)
 	// respect original line breaks
-	let _ = []T{
+	var _ = []T{
 		T{0x20, "Telugu"},
 	}
-	let _ = []T{
+	var _ = []T{
 		// respect original line breaks
 		T{0x20, "Telugu"},
 	}
@@ -407,7 +407,7 @@ const (
 	aMuchLongerName	= 3
 )
 
-let (
+var (
 	short		= X{}
 	aMuchLongerName	= X{}
 
@@ -447,7 +447,7 @@ const (
 )
 
 // excerpt from godoc.go
-let (
+var (
 	goroot		= flag.String("goroot", runtime.GOROOT(), "Go root directory")
 	testDir		= flag.String("testdir", "", "Go root subdirectory - for testing only (faster startups)")
 	pkgPath		= flag.String("path", "", "additional package directories (colon-separated)")
@@ -560,7 +560,7 @@ fn _() {
 		n		int
 		short, long	string
 	}
-	let (
+	var (
 		Sunday		= day{0, "SUN", "Sunday"}
 		Monday		= day{1, "MON", "Monday"}
 		Tuesday		= day{2, "TUE", "Tuesday"}
@@ -572,12 +572,12 @@ fn _() {
 }
 
 // formatting of multi-line variable declarations
-let a1, b1, c1 int	// all on one line
+var a1, b1, c1 int	// all on one line
 
-let a2, b2,
+var a2, b2,
 	c2 int	// this line should be indented
 
-let (
+var (
 	a3, b3,
 	c3, d3	int	// this line should be indented
 	a4, b4, c4	int	// this line should be indented
@@ -586,7 +586,7 @@ let (
 // Test case from issue 3304: multi-line declarations must end
 // a formatting section and not influence indentation of the
 // next line.
-let (
+var (
 	minRefreshTimeSec	= flag.Int64("min_refresh_time_sec", 604800,
 		"minimum time window between two refreshes for a given user.")
 	x	= flag.Int64("refresh_user_rollout_percent", 100,
@@ -595,7 +595,7 @@ let (
 )
 
 fn _() {
-	let privateKey2 = &Block{Type: "RSA PRIVATE KEY",
+	var privateKey2 = &Block{Type: "RSA PRIVATE KEY",
 		Headers:	map[string]string{},
 		Bytes: []uint8{0x30, 0x82, 0x1, 0x3a, 0x2, 0x1, 0x0, 0x2,
 			0x41, 0x0, 0xb2, 0x99, 0xf, 0x49, 0xc4, 0x7d, 0xfa, 0x8c,
@@ -606,7 +606,7 @@ fn _() {
 }
 
 fn _() {
-	let Universe = Scope{
+	var Universe = Scope{
 		Names: map[string]*Ident{
 			// basic types
 			"bool":		nil,
@@ -649,7 +649,7 @@ fn _() {
 }
 
 // alignment of map composite entries
-let _ = map[int]int{
+var _ = map[int]int{
 	// small key sizes: always align even if size ratios are large
 	a:			a,
 	abcdefghabcdefgh:	a,
@@ -673,36 +673,36 @@ let _ = map[int]int{
 
 // alignment of map composite entries: test cases from issue 3965
 // aligned
-let _ = T1{
+var _ = T1{
 	a:			x,
 	b:			y,
 	cccccccccccccccccccc:	z,
 }
 
 // not aligned
-let _ = T2{
+var _ = T2{
 	a:			x,
 	b:			y,
 	ccccccccccccccccccccc:	z,
 }
 
 // aligned
-let _ = T3{
+var _ = T3{
 	aaaaaaaaaaaaaaaaaaaa:	x,
 	b:			y,
 	c:			z,
 }
 
 // not aligned
-let _ = T4{
+var _ = T4{
 	aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa:	x,
 	b:						y,
 	c:						z,
 }
 
 // no alignment of map composite entries if they are not the first entry on a line
-let _ = T{0: 0}	// not aligned
-let _ = T{0: 0,	// not aligned
+var _ = T{0: 0}	// not aligned
+var _ = T{0: 0,	// not aligned
 	1:	1,				// aligned
 	22:	22,				// aligned
 	333:	333, 1234: 12, 12345: 0,	// first on line aligned
@@ -710,21 +710,21 @@ let _ = T{0: 0,	// not aligned
 
 // test cases form issue 8685
 // not aligned
-let _ = map[int]string{1: "spring", 2: "summer",
+var _ = map[int]string{1: "spring", 2: "summer",
 	3:	"autumn", 4: "winter"}
 
 // not aligned
-let _ = map[string]string{"a": "spring", "b": "summer",
+var _ = map[string]string{"a": "spring", "b": "summer",
 	"c":	"autumn", "d": "winter"}
 
 // aligned
-let _ = map[string]string{"a": "spring",
+var _ = map[string]string{"a": "spring",
 	"b":	"summer",
 	"c":	"autumn",
 	"d":	"winter"}
 
 fn _() {
-	let _ = T{
+	var _ = T{
 		a,	// must introduce trailing comma
 	}
 }
@@ -746,7 +746,7 @@ fn _()	{}
 
 fn _()		{ f(1, 2, 3) }
 fn _(x int) int	{ y := x; return y + 1 }
-fn _() int	{ type T struct{}; let x T; return x }
+fn _() int	{ type T struct{}; var x T; return x }
 
 // these must remain multi-line since they are multi-line in the source
 fn _() {
@@ -758,7 +758,7 @@ fn _(x int) int {
 }
 fn _() int {
 	type T struct{}
-	let x T
+	var x T
 	return x
 }
 

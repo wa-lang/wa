@@ -312,7 +312,7 @@ fn (p *printer) writeString(pos token.Position, s string, isLit bool) {
 
 	// update positions
 	nlines := 0
-	let li int // index of last newline; valid if nlines > 0
+	var li int // index of last newline; valid if nlines > 0
 	for i := 0; i < len(s); i++ {
 		// Raw string literals may contain any character except back quote (`).
 		if ch := s[i]; ch == '\n' || ch == '\f' {
@@ -654,7 +654,7 @@ fn (p *printer) writeComment(comment *ast.Comment) {
 		return
 	}
 
-	// for /*-style comments, print line by line and let the
+	// for /*-style comments, print line by line and var the
 	// write function take care of the proper indentation
 	lines := strings.Split(text, "\n")
 
@@ -742,7 +742,7 @@ fn (p *printer) containsLinebreak() bool {
 // newline was written or if a formfeed was dropped from the whitespace buffer.
 //
 fn (p *printer) intersperseComments(next token.Position, tok token.Token) (wroteNewline, droppedFF bool) {
-	let last *ast.Comment
+	var last *ast.Comment
 	for p.commentBefore(next) {
 		for _, c := range p.comment.List {
 			p.writeCommentPrefix(p.posFor(c.Pos()), next, last, tok)
@@ -877,9 +877,9 @@ fn mayCombine(prev token.Token, next byte) (b bool) {
 fn (p *printer) print(args ...interface{}) {
 	for _, arg := range args {
 		// information about the current arg
-		let data string
-		let isLit bool
-		let impliedSemi bool // value for p.impliedSemi after this arg
+		var data string
+		var isLit bool
+		var impliedSemi bool // value for p.impliedSemi after this arg
 
 		// record previous opening token, if any
 		switch p.lastTok {
@@ -1073,7 +1073,7 @@ fn getLastComment(n ast.Node) *ast.CommentGroup {
 
 fn (p *printer) printNode(node interface{}) error {
 	// unpack *CommentedNode, if any
-	let comments []*ast.CommentGroup
+	var comments []*ast.CommentGroup
 	if cnode, ok := node.(*CommentedNode); ok {
 		node = cnode.Node
 		comments = cnode.Comments
@@ -1195,7 +1195,7 @@ fn (p *trimmer) resetSpace() {
 //              However, this would mess up any formatting done by
 //              the tabwriter.
 
-let aNewline = []byte("\n")
+var aNewline = []byte("\n")
 
 fn (p *trimmer) Write(data []byte) (n int, err error) {
 	// invariants:
@@ -1204,7 +1204,7 @@ fn (p *trimmer) Write(data []byte) (n int, err error) {
 	// p.state == inEscape, inText:
 	//	data[m:n] is unwritten
 	m := 0
-	let b byte
+	var b byte
 	for n, b = range data {
 		if b == '\v' {
 			b = '\t' // convert to htab
@@ -1289,7 +1289,7 @@ type Config struct {
 // fprint implements Fprint and takes a nodesSizes map for setting up the printer state.
 fn (cfg *Config) fprint(output io.Writer, fset *token.FileSet, node interface{}, nodeSizes map[ast.Node]int) (err error) {
 	// print node
-	let p printer
+	var p printer
 	p.init(cfg, fset, nodeSizes)
 	if err = p.printNode(node); err != nil {
 		return

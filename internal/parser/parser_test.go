@@ -152,7 +152,7 @@ func TestColonEqualsScope(t *testing.T) {
 }
 
 func TestVarScope(t *testing.T) {
-	f, err := ParseFile(nil, token.NewFileSet(), "", `package p; fn f() { let x, y, z = x, y, z }`, 0)
+	f, err := ParseFile(nil, token.NewFileSet(), "", `package p; fn f() { var x, y, z = x, y, z }`, 0)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -178,7 +178,7 @@ package p
 import fmt "fmt"
 const pi = 3.14
 type T struct{}
-let x int
+var x int
 fn f() { L: }
 `
 
@@ -499,8 +499,8 @@ func TestIssue9979(t *testing.T) {
 // *ast.BadExpr.
 func TestIncompleteSelection(t *testing.T) {
 	for _, src := range []string{
-		"package p; let _ = fmt.",             // at EOF
-		"package p; let _ = fmt.\ntype X int", // not at EOF
+		"package p; var _ = fmt.",             // at EOF
+		"package p; var _ = fmt.\ntype X int", // not at EOF
 	} {
 		fset := token.NewFileSet()
 		f, err := ParseFile(nil, fset, "", src, 0)

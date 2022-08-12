@@ -533,7 +533,7 @@ type (
 
 	// A DeclStmt node represents a declaration in a statement list.
 	DeclStmt struct {
-		Decl Decl // *GenDecl with CONST, TYPE, or LET token
+		Decl Decl // *GenDecl with CONST, TYPE, or VAR token
 	}
 
 	// An EmptyStmt node represents an empty statement.
@@ -858,12 +858,12 @@ type (
 	//	token.IMPORT  *ImportSpec
 	//	token.CONST   *ValueSpec
 	//	token.TYPE    *TypeSpec
-	//	token.LET     *ValueSpec
+	//	token.VAR     *ValueSpec
 	//
 	GenDecl struct {
 		Doc    *CommentGroup // associated documentation; or nil
 		TokPos token.Pos     // position of Tok
-		Tok    token.Token   // IMPORT, CONST, TYPE, LET
+		Tok    token.Token   // IMPORT, CONST, TYPE, VAR
 		Lparen token.Pos     // position of '(', if any
 		Specs  []Spec
 		Rparen token.Pos // position of ')', if any

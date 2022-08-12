@@ -15,7 +15,7 @@ import (
 	"github.com/wa-lang/wa/internal/token"
 )
 
-let validFiles = []string{
+var validFiles = []string{
 	"parser.go.wa",
 	"parser_test.go.wa",
 	"error_test.go.wa",
@@ -152,7 +152,7 @@ fn TestColonEqualsScope(t *testing.T) {
 }
 
 fn TestVarScope(t *testing.T) {
-	f, err := ParseFile(nil, token.NewFileSet(), "", `package p; fn f() { let x, y, z = x, y, z }`, 0)
+	f, err := ParseFile(nil, token.NewFileSet(), "", `package p; fn f() { var x, y, z = x, y, z }`, 0)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -178,7 +178,7 @@ package p
 import fmt "fmt"
 const pi = 3.14
 type T struct{}
-let x int
+var x int
 fn f() { L: }
 `
 
@@ -268,7 +268,7 @@ type s3b struct { a, b *s3b; c []float }
 		"float " // s3a
 
 	// collect unresolved identifiers
-	let buf bytes.Buffer
+	var buf bytes.Buffer
 	for _, u := range f.Unresolved {
 		buf.WriteString(u.Name)
 		buf.WriteByte(' ')
@@ -280,7 +280,7 @@ type s3b struct { a, b *s3b; c []float }
 	}
 }
 
-let imports = map[string]bool{
+var imports = map[string]bool{
 	`"a"`:        true,
 	"`a`":        true,
 	`"a/b"`:      true,
@@ -397,7 +397,7 @@ fn getField(file *ast.File, fieldname string) *ast.Field {
 
 // Don't use ast.CommentGroup.Text() - we want to see exact comment text.
 fn commentText(c *ast.CommentGroup) string {
-	let buf bytes.Buffer
+	var buf bytes.Buffer
 	if c != nil {
 		for _, c := range c.List {
 			buf.WriteString(c.Text)
@@ -467,7 +467,7 @@ fn TestIssue9979(t *testing.T) {
 			t.Fatal(err)
 		}
 
-		let pos, end token.Pos
+		var pos, end token.Pos
 		ast.Inspect(f, fn(x ast.Node) bool {
 			switch s := x.(type) {
 			case *ast.BlockStmt:
@@ -499,8 +499,8 @@ fn TestIssue9979(t *testing.T) {
 // *ast.BadExpr.
 fn TestIncompleteSelection(t *testing.T) {
 	for _, src := range []string{
-		"package p; let _ = fmt.",             // at EOF
-		"package p; let _ = fmt.\ntype X int", // not at EOF
+		"package p; var _ = fmt.",             // at EOF
+		"package p; var _ = fmt.\ntype X int", // not at EOF
 	} {
 		fset := token.NewFileSet()
 		f, err := ParseFile(nil, fset, "", src, 0)
@@ -514,7 +514,7 @@ fn TestIncompleteSelection(t *testing.T) {
 			t.Errorf("ParseFile returned wrong error %q, want %q", err, wantErr)
 		}
 
-		let sel *ast.SelectorExpr
+		var sel *ast.SelectorExpr
 		ast.Inspect(f, fn(n ast.Node) bool {
 			if n, ok := n.(*ast.SelectorExpr); ok {
 				sel = n

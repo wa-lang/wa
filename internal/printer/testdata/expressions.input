@@ -8,7 +8,7 @@ type T struct {
 	x, y, z int
 }
 
-let (
+var (
 	a, b, c, d, e int
 	under_bar int
 	longIdentifier1, longIdentifier2, longIdentifier3 int
@@ -323,49 +323,49 @@ they must not be removed`
 
 fn _() {
 	// smart handling of indentation for multi-line raw strings
-	let _ = ``
-	let _ = `foo`
-	let _ = `foo
+	var _ = ``
+	var _ = `foo`
+	var _ = `foo
 bar`
 
 
-let _ =
+var _ =
 	``
-let _ =
+var _ =
 	`foo`
-let _ =
+var _ =
 	// the next line should remain indented
 	`foo
 bar`
 
 
-	let _ = // comment
+	var _ = // comment
 		``
-	let _ = // comment
+	var _ = // comment
 		`foo`
-	let _ = // comment
+	var _ = // comment
 		// the next line should remain indented
 		`foo
 bar`
 
 
-let _ = /* comment */ ``
-let _ = /* comment */ `foo`
-let _ = /* comment */ `foo
+var _ = /* comment */ ``
+var _ = /* comment */ `foo`
+var _ = /* comment */ `foo
 bar`
 
 
-	let _ = /* comment */
+	var _ = /* comment */
 		``
-	let _ = /* comment */
+	var _ = /* comment */
 		`foo`
-	let _ = /* comment */
+	var _ = /* comment */
 		// the next line should remain indented
 		`foo
 bar`
 
 
-let board = []int(
+var board = []int(
 	`...........
 ...........
 ....●●●....
@@ -380,7 +380,7 @@ let board = []int(
 `)
 
 
-	let state = S{
+	var state = S{
 		"foo",
 		// the next line should remain indented
 		`...........
@@ -563,7 +563,7 @@ fn _() {
 
 
 // Align comments in multi-line lists of single-line expressions.
-let txpix = [NCOL]draw.Color{
+var txpix = [NCOL]draw.Color{
 	draw.Yellow, // yellow
 	draw.Cyan, // cyan
 	draw.Green, // lime green

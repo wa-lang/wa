@@ -24,7 +24,7 @@ type writerTest struct {
 	entries	[]*writerTestEntry
 }
 
-let writerTests = []*writerTest{
+var writerTests = []*writerTest{
 	&writerTest{
 		file:	"testdata/writer.tar",
 		entries: []*writerTestEntry{
@@ -87,7 +87,7 @@ type untarTest struct {
 	headers	[]*Header
 }
 
-let untarTests = []*untarTest{
+var untarTests = []*untarTest{
 	&untarTest{
 		file:	"testdata/gnu.tar",
 		headers: []*Header{
@@ -171,7 +171,7 @@ let untarTests = []*untarTest{
 	},
 }
 
-let facts = map[int]string{
+var facts = map[int]string{
 	0:	"1",
 	1:	"1",
 	2:	"2",

@@ -1,6 +1,6 @@
 package complit
 
-let (
+var (
 	// Multi-line declarations
 	V1	= T{
 		F1: "hello",

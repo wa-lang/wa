@@ -19,7 +19,7 @@ fn main() {
 }
 
 fn sum(n int) int {
-	let v int
+	var v int
 	for i ：= 1；i <= n; i++ {
 		v += i
 	}

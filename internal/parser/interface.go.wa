@@ -93,7 +93,7 @@ fn ParseFile(vfs fs.FS, fset *token.FileSet, filename string, src interface{}, m
 		return nil, err
 	}
 
-	let p parser
+	var p parser
 	defer fn() {
 		if e := recover(); e != nil {
 			// resume same panic if it's not a bailout
@@ -200,7 +200,7 @@ fn ParseExprFrom(fset *token.FileSet, filename string, src interface{}, mode Mod
 		return nil, err
 	}
 
-	let p parser
+	var p parser
 	defer fn() {
 		if e := recover(); e != nil {
 			// resume same panic if it's not a bailout
