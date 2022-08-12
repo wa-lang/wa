@@ -46,17 +46,17 @@ func LoadProgram(cfg *config.Config, appPath string) (*Program, error) {
 	logger.Tracef(&config.EnableTrace_loader, "cfg: %+v", cfg)
 	logger.Tracef(&config.EnableTrace_loader, "appPath: %s", appPath)
 
-	menifest, err := config.LoadManifest(appPath)
+	manifest, err := config.LoadManifest(appPath)
 	if err != nil {
 		logger.Tracef(&config.EnableTrace_loader, "err: %v", err)
 		return nil, err
 	}
 
-	logger.Tracef(&config.EnableTrace_loader, "menifest: %s", menifest.JSONString())
+	logger.Tracef(&config.EnableTrace_loader, "menifest: %s", manifest.JSONString())
 
 	p := &Program{
 		Cfg:      cfg,
-		Manifest: menifest,
+		Manifest: manifest,
 
 		Fset: token.NewFileSet(),
 		Pkgs: make(map[string]*Package),
@@ -71,17 +71,14 @@ func LoadProgram(cfg *config.Config, appPath string) (*Program, error) {
 
 	// import "main"
 	// TODO: 触发递归导入?
-	logger.Trace(&config.EnableTrace_loader, "import "+menifest.MainPkg)
-	if _, err := p.Import(menifest.MainPkg); err != nil {
+	logger.Trace(&config.EnableTrace_loader, "import "+manifest.MainPkg)
+	if _, err := p.Import(manifest.MainPkg); err != nil {
 		logger.Tracef(&config.EnableTrace_loader, "err: %v", err)
 		return nil, err
 	}
 
 	// 转为 SSA
 	p.SSAProgram = ssa.NewProgram(p.Fset, ssa.SanityCheckFunctions)
-
-	// TODO: 偶发 panic
-	// panic: Package("myapp").Build(): unsatisfied import: Program.CreatePackage("myapp/pkg") was not called
 
 	for pkgpath, pkg := range p.Pkgs {
 		logger.Tracef(&config.EnableTrace_loader, "build SSA; pkgpath: %v", pkgpath)
@@ -90,7 +87,7 @@ func LoadProgram(cfg *config.Config, appPath string) (*Program, error) {
 			return p, err
 		}
 
-		if pkgpath == menifest.MainPkg {
+		if pkgpath == manifest.MainPkg {
 			p.SSAMainPkg = pkg.SSAPkg
 		}
 	}
