@@ -3,6 +3,7 @@
 package config
 
 import (
+	"io/fs"
 	"os"
 	"runtime"
 )
@@ -15,6 +16,7 @@ type StdSizes struct {
 
 // 通用配置信息
 type Config struct {
+	VFS      fs.FS    // 虚拟文件系统, 为空时从本地文件系统读取
 	WaRoot   string   // 凹 程序根目录, src 目录下是包代码
 	WaArch   string   // 目标 CPU
 	WaOS     string   // 目标 OS

@@ -55,70 +55,38 @@ func (p *Manifest) Clone() *Manifest {
 }
 
 // 加载 WaModFile 文件
-func LoadManifest(appPath string) (*Manifest, error) {
-	workDir := appPath
-	if workDir == "" {
-		wd, err := os.Getwd()
-		if err != nil {
-			return nil, fmt.Errorf("loader.LoadManifest: workDir is empty")
-		}
-		workDir = wd
+// 如果 vfs 为空则从本地文件系统读取
+func LoadManifest(vfs fs.FS, appPath string) (p *Manifest, err error) {
+	if appPath == "" {
+		return nil, fmt.Errorf("loader.LoadManifest: appPath is empty")
 	}
 
 	// 查找 WaModFile 路径
-	kManifestPath, err := findManifestPath(nil, workDir)
+	kManifestPath, err := findManifestPath(vfs, appPath)
 	if err != nil {
 		return nil, fmt.Errorf("loader.LoadManifest: find '%s' failed : %w", WaModFile, err)
 	}
 
 	// 读取 WaModFile 文件
-	data, err := os.ReadFile(kManifestPath)
+	var data []byte
+	if vfs != nil {
+		data, err = fs.ReadFile(vfs, kManifestPath)
+	} else {
+		data, err = os.ReadFile(kManifestPath)
+	}
 	if err != nil {
 		return nil, fmt.Errorf("loader.LoadManifest: read %s failed: %w", kManifestPath, err)
 	}
 
 	// 解码 JSON
-	p := new(Manifest)
+	p = new(Manifest)
 	if err := json.Unmarshal(data, &p.Pkg); err != nil {
 		return nil, fmt.Errorf("loader.LoadManifest: json.Unmarshal %s failed: %w", kManifestPath, err)
 	}
 
 	// 当前 app 默认目录
 	p.Root = filepath.Dir(kManifestPath)
-	p.MainPkg, _ = filepath.Rel(p.Root, workDir)
-
-	if p.MainPkg == "" || p.MainPkg == "." {
-		p.MainPkg = p.Pkg.Pkgpath
-	}
-
-	return p, nil
-}
-
-// 从 vfs 加载 WaModFile 文件
-func LoadManifestVFS(vfs fs.FS, appPath string) (*Manifest, error) {
-	workDir := appPath
-
-	// 查找 WaModFile 路径
-	kManifestPath, err := findManifestPath(vfs, workDir)
-	if err != nil {
-		return nil, fmt.Errorf("loader.LoadManifestVFS: find '%s' failed : %w", WaModFile, err)
-	}
-
-	// 读取 WaModFile 文件
-	data, err := fs.ReadFile(vfs, kManifestPath)
-	if err != nil {
-		return nil, fmt.Errorf("loader.LoadManifestVFS: read %s failed: %w", kManifestPath, err)
-	}
-
-	// 解码 JSON
-	p := new(Manifest)
-	if err := json.Unmarshal(data, &p.Pkg); err != nil {
-		return nil, fmt.Errorf("loader.LoadManifestVFS: json.Unmarshal %s failed: %w", kManifestPath, err)
-	}
-
-	// 当前 app 默认目录
-	p.Root = filepath.Dir(kManifestPath)
-	p.MainPkg, _ = filepath.Rel(p.Root, workDir)
+	p.MainPkg, _ = filepath.Rel(p.Root, appPath)
 
 	if p.MainPkg == "" || p.MainPkg == "." {
 		p.MainPkg = p.Pkg.Pkgpath
