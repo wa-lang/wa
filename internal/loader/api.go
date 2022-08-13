@@ -42,6 +42,6 @@ func LoadProgram(cfg *config.Config, appPath string) (*Program, error) {
 
 // 从 VFS 加载程序
 // 入口 pkgPath 是包的导入路径
-func LoadProgramVFS(cfg *config.Config, pkgPath string, vfs fs.FS) (*Program, error) {
-	return newLoaderVFS(vfs).LoadProgram(cfg, pkgPath)
+func LoadProgramVFS(vfs fs.FS, cfg *config.Config, appPath string) (*Program, error) {
+	return newLoaderVFS(vfs).LoadProgram(cfg, appPath)
 }
