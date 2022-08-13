@@ -3,8 +3,6 @@
 package loader
 
 import (
-	"io/fs"
-
 	"github.com/wa-lang/wa/internal/ast"
 	"github.com/wa-lang/wa/internal/config"
 	"github.com/wa-lang/wa/internal/ssa"
@@ -37,11 +35,5 @@ type Package struct {
 // 加载程序
 // 入口 appPath 是包对应目录的路径
 func LoadProgram(cfg *config.Config, appPath string) (*Program, error) {
-	return newLoader().LoadProgram(cfg, appPath)
-}
-
-// 从 VFS 加载程序
-// 入口 pkgPath 是包的导入路径
-func LoadProgramVFS(vfs fs.FS, cfg *config.Config, appPath string) (*Program, error) {
-	return newLoaderVFS(vfs).LoadProgram(cfg, appPath)
+	return newLoader(cfg).LoadProgram(appPath)
 }

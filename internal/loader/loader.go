@@ -20,23 +20,31 @@ import (
 )
 
 type _Loader struct {
-	*Program
+	cfg  *config.Config
+	prog *Program
+
+	appFs    fs.FS
+	stdFs    fs.FS
+	vednorFs fs.FS
 }
 
-func newLoader() *_Loader {
-	return &_Loader{
-		Program: &Program{
+func newLoader(cfg *config.Config) *_Loader {
+	p := &_Loader{
+		cfg: cfg.Clone(),
+		prog: &Program{
 			Pkgs: make(map[string]*Package),
 		},
 	}
+
+	return p
 }
 
 // 加载程序
-func (p *_Loader) LoadProgram(cfg *config.Config, appPath string) (*Program, error) {
-	logger.Tracef(&config.EnableTrace_loader, "cfg: %+v", cfg)
+func (p *_Loader) LoadProgram(appPath string) (*Program, error) {
+	logger.Tracef(&config.EnableTrace_loader, "cfg: %+v", p.cfg)
 	logger.Tracef(&config.EnableTrace_loader, "appPath: %s", appPath)
 
-	manifest, err := config.LoadManifest(appPath)
+	manifest, err := config.LoadManifest(nil, appPath)
 	if err != nil {
 		logger.Tracef(&config.EnableTrace_loader, "err: %v", err)
 		return nil, err
@@ -44,9 +52,30 @@ func (p *_Loader) LoadProgram(cfg *config.Config, appPath string) (*Program, err
 
 	logger.Tracef(&config.EnableTrace_loader, "manifest: %s", manifest.JSONString())
 
-	p.Cfg = cfg
-	p.Manifest = manifest
-	p.Fset = token.NewFileSet()
+	p.prog.Cfg = p.cfg
+	p.prog.Manifest = manifest
+	p.prog.Fset = token.NewFileSet()
+
+	if p.cfg.VFS != nil {
+		var err error
+		p.appFs, err = fs.Sub(p.cfg.VFS, p.prog.Manifest.Root)
+		if err != nil {
+			return nil, err
+		}
+	} else {
+		p.appFs = os.DirFS(p.prog.Manifest.Root)
+	}
+
+	if p.cfg.WaRoot != "" {
+		p.stdFs = os.DirFS(p.cfg.WaRoot)
+	} else {
+		p.stdFs = waroot.GetFS()
+	}
+
+	p.vednorFs, err = fs.Sub(p.appFs, "vendor")
+	if err != nil {
+		return nil, err
+	}
 
 	// import "runtime"
 	logger.Trace(&config.EnableTrace_loader, "import runtime")
@@ -64,39 +93,39 @@ func (p *_Loader) LoadProgram(cfg *config.Config, appPath string) (*Program, err
 	}
 
 	// 转为 SSA
-	p.SSAProgram = ssa.NewProgram(p.Fset, ssa.SanityCheckFunctions)
+	p.prog.SSAProgram = ssa.NewProgram(p.prog.Fset, ssa.SanityCheckFunctions)
 
-	for pkgpath, pkg := range p.Pkgs {
+	for pkgpath, pkg := range p.prog.Pkgs {
 		logger.Tracef(&config.EnableTrace_loader, "build SSA; pkgpath: %v", pkgpath)
 
 		if err := p.buildSSA(pkgpath); err != nil {
-			return p.Program, err
+			return p.prog, err
 		}
 
 		if pkgpath == manifest.MainPkg {
-			p.SSAMainPkg = pkg.SSAPkg
+			p.prog.SSAMainPkg = pkg.SSAPkg
 		}
 	}
 
 	logger.Tracef(&config.EnableTrace_loader, "return ok")
-	return p.Program, nil
+	return p.prog, nil
 }
 
 func (p *_Loader) buildSSA(pkgpath string) error {
-	pkg := p.Pkgs[pkgpath]
+	pkg := p.prog.Pkgs[pkgpath]
 	if pkg.SSAPkg != nil {
 		return nil
 	}
 
 	for _, importPkg := range pkg.Pkg.Imports() {
-		if p.Pkgs[importPkg.Path()].SSAPkg == nil {
+		if p.prog.Pkgs[importPkg.Path()].SSAPkg == nil {
 			if err := p.buildSSA(importPkg.Path()); err != nil {
 				return err
 			}
 		}
 	}
 
-	pkg.SSAPkg = p.SSAProgram.CreatePackage(pkg.Pkg, pkg.Files, pkg.Info, true)
+	pkg.SSAPkg = p.prog.SSAProgram.CreatePackage(pkg.Pkg, pkg.Files, pkg.Info, true)
 	pkg.SSAPkg.Build()
 
 	return nil
@@ -105,7 +134,7 @@ func (p *_Loader) buildSSA(pkgpath string) error {
 func (p *_Loader) Import(pkgpath string) (*types.Package, error) {
 	logger.Tracef(&config.EnableTrace_loader, "pkgpath: %v", pkgpath)
 
-	if pkg, ok := p.Pkgs[pkgpath]; ok {
+	if pkg, ok := p.prog.Pkgs[pkgpath]; ok {
 		return pkg.Pkg, nil
 	}
 
@@ -122,7 +151,7 @@ func (p *_Loader) Import(pkgpath string) (*types.Package, error) {
 	// 修复 pkg 名称(wa 是可选)
 	for _, f := range pkg.Files {
 		if f.Name.Name == "" {
-			if pkgpath == p.Manifest.MainPkg {
+			if pkgpath == p.prog.Manifest.MainPkg {
 				f.Name.Name = "main"
 			} else {
 				pkgname := pkgpath
@@ -147,7 +176,7 @@ func (p *_Loader) Import(pkgpath string) (*types.Package, error) {
 		Importer: p,
 		Sizes:    p.getSizes(),
 	}
-	pkg.Pkg, err = conf.Check(pkgpath, p.Fset, pkg.Files, pkg.Info)
+	pkg.Pkg, err = conf.Check(pkgpath, p.prog.Fset, pkg.Files, pkg.Info)
 	if err != nil {
 		logger.Tracef(&config.EnableTrace_loader, "err: %v", err)
 		return nil, err
@@ -155,7 +184,7 @@ func (p *_Loader) Import(pkgpath string) (*types.Package, error) {
 
 	logger.Tracef(&config.EnableTrace_loader, "save pkgpath: %v", pkgpath)
 
-	p.Pkgs[pkgpath] = &pkg
+	p.prog.Pkgs[pkgpath] = &pkg
 	return pkg.Pkg, nil
 }
 
@@ -173,22 +202,22 @@ func (p *_Loader) ParseDir(pkgpath string) ([]*ast.File, error) {
 		dirpath := "src/" + pkgpath
 		logger.Tracef(&config.EnableTrace_loader, "isStdPkg; dirpath: %v", dirpath)
 
-		filenames, datas, err = p.readDirFiles(p.getWaRootFS(), dirpath)
+		filenames, datas, err = p.readDirFiles(p.stdFs, dirpath)
 		if err != nil {
 			return nil, err
 		}
 	case p.isSelfPkg(pkgpath):
 		var dirpath string
-		if pkgpath == p.Manifest.Pkg.Pkgpath {
+		if pkgpath == p.prog.Manifest.Pkg.Pkgpath {
 			dirpath = "src"
 		} else {
-			relpkg := strings.TrimPrefix(pkgpath, p.Manifest.Pkg.Pkgpath)
+			relpkg := strings.TrimPrefix(pkgpath, p.prog.Manifest.Pkg.Pkgpath)
 			dirpath = pathpkg.Join("src", relpkg)
 		}
 
 		logger.Tracef(&config.EnableTrace_loader, "isSelfPkg; dirpath: %v", dirpath)
 
-		filenames, datas, err = p.readDirFiles(os.DirFS(p.Manifest.Root), dirpath)
+		filenames, datas, err = p.readDirFiles(p.appFs, dirpath)
 		if err != nil {
 			return nil, err
 		}
@@ -196,8 +225,8 @@ func (p *_Loader) ParseDir(pkgpath string) ([]*ast.File, error) {
 		logger.Trace(&config.EnableTrace_loader, "isSelfPkg; return ok")
 
 	default: // vendor
-		dirpath := "vendor/" + strings.TrimPrefix(pkgpath, p.Manifest.Pkg.Pkgpath)
-		filenames, datas, err = p.readDirFiles(os.DirFS(p.Manifest.Root), dirpath)
+		dirpath := strings.TrimPrefix(pkgpath, p.prog.Manifest.Pkg.Pkgpath)
+		filenames, datas, err = p.readDirFiles(p.vednorFs, dirpath)
 		if err != nil {
 			return nil, err
 		}
@@ -207,7 +236,7 @@ func (p *_Loader) ParseDir(pkgpath string) ([]*ast.File, error) {
 
 	var files []*ast.File
 	for i, filename := range filenames {
-		f, err := parser.ParseFile(nil, p.Fset, filename, datas[i], parser.AllErrors)
+		f, err := parser.ParseFile(nil, p.prog.Fset, filename, datas[i], parser.AllErrors)
 		if err != nil {
 			logger.Tracef(&config.EnableTrace_loader, "filename: %v", filename)
 			logger.Tracef(&config.EnableTrace_loader, "datas[i]: %s", datas[i])
@@ -275,31 +304,23 @@ func (p *_Loader) isStdPkg(pkgpath string) bool {
 }
 
 func (p *_Loader) isSelfPkg(pkgpath string) bool {
-	if pkgpath == p.Manifest.Pkg.Pkgpath {
+	if pkgpath == p.prog.Manifest.Pkg.Pkgpath {
 		return true
 	}
-	if strings.HasPrefix(pkgpath, p.Manifest.Pkg.Pkgpath+"/") {
+	if strings.HasPrefix(pkgpath, p.prog.Manifest.Pkg.Pkgpath+"/") {
 		return true
 	}
 	return false
 }
 
-func (p *_Loader) getWaRootFS() fs.FS {
-	if p.Cfg.WaRoot != "" {
-		return os.DirFS(p.Cfg.WaRoot)
-	}
-	return waroot.GetFS()
-}
-
 func (p *_Loader) getSizes() types.Sizes {
 	var zero config.StdSizes
-	//types.StdSizes
-	if p == nil || p.Cfg.WaSizes == zero {
-		return types.SizesFor(p.Cfg.WaArch)
+	if p == nil || p.cfg.WaSizes == zero {
+		return types.SizesFor(p.cfg.WaArch)
 	} else {
 		return &types.StdSizes{
-			WordSize: p.Cfg.WaSizes.WordSize,
-			MaxAlign: p.Cfg.WaSizes.MaxAlign,
+			WordSize: p.cfg.WaSizes.WordSize,
+			MaxAlign: p.cfg.WaSizes.MaxAlign,
 		}
 	}
 }
