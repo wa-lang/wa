@@ -19,8 +19,20 @@ import (
 	"github.com/wa-lang/wa/internal/waroot"
 )
 
+type _Loader struct {
+	*Program
+}
+
+func newLoader() *_Loader {
+	return &_Loader{
+		Program: &Program{
+			Pkgs: make(map[string]*Package),
+		},
+	}
+}
+
 // 加载程序
-func _LoadProgram(cfg *config.Config, appPath string) (*Program, error) {
+func (p *_Loader) LoadProgram(cfg *config.Config, appPath string) (*Program, error) {
 	logger.Tracef(&config.EnableTrace_loader, "cfg: %+v", cfg)
 	logger.Tracef(&config.EnableTrace_loader, "appPath: %s", appPath)
 
@@ -30,15 +42,11 @@ func _LoadProgram(cfg *config.Config, appPath string) (*Program, error) {
 		return nil, err
 	}
 
-	logger.Tracef(&config.EnableTrace_loader, "menifest: %s", manifest.JSONString())
+	logger.Tracef(&config.EnableTrace_loader, "manifest: %s", manifest.JSONString())
 
-	p := &Program{
-		Cfg:      cfg,
-		Manifest: manifest,
-
-		Fset: token.NewFileSet(),
-		Pkgs: make(map[string]*Package),
-	}
+	p.Cfg = cfg
+	p.Manifest = manifest
+	p.Fset = token.NewFileSet()
 
 	// import "runtime"
 	logger.Trace(&config.EnableTrace_loader, "import runtime")
@@ -62,7 +70,7 @@ func _LoadProgram(cfg *config.Config, appPath string) (*Program, error) {
 		logger.Tracef(&config.EnableTrace_loader, "build SSA; pkgpath: %v", pkgpath)
 
 		if err := p.buildSSA(pkgpath); err != nil {
-			return p, err
+			return p.Program, err
 		}
 
 		if pkgpath == manifest.MainPkg {
@@ -71,10 +79,10 @@ func _LoadProgram(cfg *config.Config, appPath string) (*Program, error) {
 	}
 
 	logger.Tracef(&config.EnableTrace_loader, "return ok")
-	return p, nil
+	return p.Program, nil
 }
 
-func (p *Program) buildSSA(pkgpath string) error {
+func (p *_Loader) buildSSA(pkgpath string) error {
 	pkg := p.Pkgs[pkgpath]
 	if pkg.SSAPkg != nil {
 		return nil
@@ -94,7 +102,7 @@ func (p *Program) buildSSA(pkgpath string) error {
 	return nil
 }
 
-func (p *Program) Import(pkgpath string) (*types.Package, error) {
+func (p *_Loader) Import(pkgpath string) (*types.Package, error) {
 	logger.Tracef(&config.EnableTrace_loader, "pkgpath: %v", pkgpath)
 
 	if pkg, ok := p.Pkgs[pkgpath]; ok {
@@ -126,8 +134,6 @@ func (p *Program) Import(pkgpath string) (*types.Package, error) {
 		}
 	}
 
-	//menifest.MainPkg
-
 	pkg.Info = &types.Info{
 		Types:      make(map[ast.Expr]types.TypeAndValue),
 		Defs:       make(map[*ast.Ident]types.Object),
@@ -153,7 +159,7 @@ func (p *Program) Import(pkgpath string) (*types.Package, error) {
 	return pkg.Pkg, nil
 }
 
-func (p *Program) ParseDir(pkgpath string) ([]*ast.File, error) {
+func (p *_Loader) ParseDir(pkgpath string) ([]*ast.File, error) {
 	logger.Tracef(&config.EnableTrace_loader, "pkgpath: %v", pkgpath)
 
 	var (
@@ -214,7 +220,7 @@ func (p *Program) ParseDir(pkgpath string) ([]*ast.File, error) {
 	return files, nil
 }
 
-func (p *Program) readDirFiles(fileSystem fs.FS, path string) (filenames []string, datas [][]byte, err error) {
+func (p *_Loader) readDirFiles(fileSystem fs.FS, path string) (filenames []string, datas [][]byte, err error) {
 	logger.Tracef(&config.EnableTrace_loader, "path: %v", path)
 
 	dirEntries, err := fs.ReadDir(fileSystem, path)
@@ -255,7 +261,7 @@ func (p *Program) readDirFiles(fileSystem fs.FS, path string) (filenames []strin
 	return filenames, datas, nil
 }
 
-func (p *Program) hasExt(name string, extensions ...string) bool {
+func (p *_Loader) hasExt(name string, extensions ...string) bool {
 	for _, ext := range extensions {
 		if strings.HasSuffix(name, ext) {
 			return true
@@ -264,11 +270,11 @@ func (p *Program) hasExt(name string, extensions ...string) bool {
 	return false
 }
 
-func (p *Program) isStdPkg(pkgpath string) bool {
+func (p *_Loader) isStdPkg(pkgpath string) bool {
 	return waroot.IsStdPkg(pkgpath)
 }
 
-func (p *Program) isSelfPkg(pkgpath string) bool {
+func (p *_Loader) isSelfPkg(pkgpath string) bool {
 	if pkgpath == p.Manifest.Pkg.Pkgpath {
 		return true
 	}
@@ -278,14 +284,14 @@ func (p *Program) isSelfPkg(pkgpath string) bool {
 	return false
 }
 
-func (p *Program) getWaRootFS() fs.FS {
+func (p *_Loader) getWaRootFS() fs.FS {
 	if p.Cfg.WaRoot != "" {
 		return os.DirFS(p.Cfg.WaRoot)
 	}
 	return waroot.GetFS()
 }
 
-func (p *Program) getSizes() types.Sizes {
+func (p *_Loader) getSizes() types.Sizes {
 	var zero config.StdSizes
 	//types.StdSizes
 	if p == nil || p.Cfg.WaSizes == zero {

@@ -3,12 +3,26 @@
 package loader
 
 import (
+	"fmt"
 	"io/fs"
 
 	"github.com/wa-lang/wa/internal/config"
 )
 
-// 从 VFS 加载程序
-func _LoadProgramVFS(cfg *config.Config, pkgPath string, vfs fs.FS) (*Program, error) {
-	panic("TODO")
+type _LoaderVFS struct {
+	vfs fs.FS
+	*Program
+}
+
+func newLoaderVFS(vfs fs.FS) *_LoaderVFS {
+	return &_LoaderVFS{
+		vfs: vfs,
+		Program: &Program{
+			Pkgs: make(map[string]*Package),
+		},
+	}
+}
+
+func (p *_LoaderVFS) LoadProgram(cfg *config.Config, pkgPath string) (*Program, error) {
+	return p.Program, fmt.Errorf("TODO")
 }

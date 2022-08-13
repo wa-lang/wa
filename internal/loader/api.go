@@ -37,11 +37,11 @@ type Package struct {
 // 加载程序
 // 入口 appPath 是包对应目录的路径
 func LoadProgram(cfg *config.Config, appPath string) (*Program, error) {
-	return _LoadProgram(cfg, appPath)
+	return newLoader().LoadProgram(cfg, appPath)
 }
 
 // 从 VFS 加载程序
 // 入口 pkgPath 是包的导入路径
 func LoadProgramVFS(cfg *config.Config, pkgPath string, vfs fs.FS) (*Program, error) {
-	return LoadProgramVFS(cfg, pkgPath, vfs)
+	return newLoaderVFS(vfs).LoadProgram(cfg, pkgPath)
 }
