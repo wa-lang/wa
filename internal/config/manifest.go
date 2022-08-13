@@ -7,6 +7,7 @@ import (
 	"encoding/gob"
 	"encoding/json"
 	"fmt"
+	"io/fs"
 	"os"
 	"path/filepath"
 )
@@ -65,7 +66,7 @@ func LoadManifest(appPath string) (*Manifest, error) {
 	}
 
 	// 查找 WaModFile 路径
-	kManifestPath, err := findManifestPath(workDir)
+	kManifestPath, err := findManifestPath(nil, workDir)
 	if err != nil {
 		return nil, fmt.Errorf("loader.LoadManifest: find '%s' failed : %w", WaModFile, err)
 	}
@@ -93,13 +94,46 @@ func LoadManifest(appPath string) (*Manifest, error) {
 	return p, nil
 }
 
+// 从 vfs 加载 WaModFile 文件
+func LoadManifestVFS(vfs fs.FS, appPath string) (*Manifest, error) {
+	workDir := appPath
+
+	// 查找 WaModFile 路径
+	kManifestPath, err := findManifestPath(vfs, workDir)
+	if err != nil {
+		return nil, fmt.Errorf("loader.LoadManifestVFS: find '%s' failed : %w", WaModFile, err)
+	}
+
+	// 读取 WaModFile 文件
+	data, err := fs.ReadFile(vfs, kManifestPath)
+	if err != nil {
+		return nil, fmt.Errorf("loader.LoadManifestVFS: read %s failed: %w", kManifestPath, err)
+	}
+
+	// 解码 JSON
+	p := new(Manifest)
+	if err := json.Unmarshal(data, &p.Pkg); err != nil {
+		return nil, fmt.Errorf("loader.LoadManifestVFS: json.Unmarshal %s failed: %w", kManifestPath, err)
+	}
+
+	// 当前 app 默认目录
+	p.Root = filepath.Dir(kManifestPath)
+	p.MainPkg, _ = filepath.Rel(p.Root, workDir)
+
+	if p.MainPkg == "" || p.MainPkg == "." {
+		p.MainPkg = p.Pkg.Pkgpath
+	}
+
+	return p, nil
+}
+
 func (p *Manifest) JSONString() string {
 	d, _ := json.MarshalIndent(p, "", "\t")
 	return string(d)
 }
 
 // 查找 WaModFile 文件路径
-func findManifestPath(pkgpath string) (string, error) {
+func findManifestPath(vfs fs.FS, pkgpath string) (string, error) {
 	if pkgpath == "" {
 		return "", fmt.Errorf("empty pkgpath")
 	}
@@ -108,8 +142,14 @@ func findManifestPath(pkgpath string) (string, error) {
 	pkgroot := pkgpath
 	for pkgroot != "" {
 		kManifestPath := filepath.Join(pkgroot, WaModFile)
-		if fi, _ := os.Stat(kManifestPath); fi != nil {
-			return kManifestPath, nil
+		if vfs != nil {
+			if fi, _ := fs.Stat(vfs, kManifestPath); fi != nil {
+				return kManifestPath, nil
+			}
+		} else {
+			if fi, _ := os.Stat(kManifestPath); fi != nil {
+				return kManifestPath, nil
+			}
 		}
 
 		// 是否已经到根目录
