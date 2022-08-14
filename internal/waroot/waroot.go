@@ -5,6 +5,7 @@ package waroot
 import (
 	"embed"
 	"io/fs"
+	"path/filepath"
 	"strings"
 )
 
@@ -12,7 +13,7 @@ import (
 var _warootFS embed.FS
 
 func GetFS() fs.FS {
-	fs, err := fs.Sub(_warootFS, "_waroot")
+	fs, err := fs.Sub(_warootFS, filepath.Join("_waroot", "src"))
 	if err != nil {
 		panic(err)
 	}
