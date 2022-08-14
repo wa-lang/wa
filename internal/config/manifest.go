@@ -54,6 +54,18 @@ func (p *Manifest) Clone() *Manifest {
 	return &v
 }
 
+// 简版 Manifest
+func SimpleManifest(mainPkg, appName string) *Manifest {
+	p := &Manifest{
+		MainPkg: mainPkg,
+		Pkg: Manifest_package{
+			Name:    appName,
+			Pkgpath: mainPkg,
+		},
+	}
+	return p
+}
+
 // 加载 WaModFile 文件
 // 如果 vfs 为空则从本地文件系统读取
 func LoadManifest(vfs fs.FS, appPath string) (p *Manifest, err error) {

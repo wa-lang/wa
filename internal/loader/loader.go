@@ -1,16 +1,12 @@
 // 版权 @2021 凹语言 作者。保留所有权利。
 
-// TODO: 解析 ast/语义/SSA 分阶段解析
-
 package loader
 
 import (
 	"io/fs"
-	"os"
 	"path/filepath"
 	"sort"
 	"strings"
-	"testing/fstest"
 
 	"github.com/wa-lang/wa/internal/ast"
 	"github.com/wa-lang/wa/internal/config"
@@ -29,52 +25,46 @@ type _Loader struct {
 }
 
 func newLoader(cfg *config.Config) *_Loader {
-	p := &_Loader{
+	return &_Loader{
 		cfg: *cfg.Clone(),
 		prog: &Program{
 			Pkgs: make(map[string]*Package),
 		},
 	}
-
-	return p
 }
 
-// 加载程序
 func (p *_Loader) LoadProgram(appPath string) (*Program, error) {
 	logger.Tracef(&config.EnableTrace_loader, "cfg: %+v", p.cfg)
 	logger.Tracef(&config.EnableTrace_loader, "appPath: %s", appPath)
 
+	vfs, manifest, err := loadProgramMeta(&p.cfg, appPath)
+	if err != nil {
+		logger.Tracef(&config.EnableTrace_loader, "err: %v", err)
+		return nil, err
+	}
+
+	return p.loadProgram(vfs, manifest)
+}
+
+func (p *_Loader) LoadProgramVFS(vfs *config.PkgVFS, appPath string) (*Program, error) {
 	manifest, err := config.LoadManifest(nil, appPath)
 	if err != nil {
 		logger.Tracef(&config.EnableTrace_loader, "err: %v", err)
 		return nil, err
 	}
 
+	return p.loadProgram(vfs, manifest)
+}
+
+// 加载程序
+func (p *_Loader) loadProgram(vfs *config.PkgVFS, manifest *config.Manifest) (*Program, error) {
+	logger.DumpFS(&config.EnableTrace_loader, "vfs.app", vfs.App, ".")
 	logger.Tracef(&config.EnableTrace_loader, "manifest: %s", manifest.JSONString())
 
+	p.vfs = *vfs
 	p.prog.Cfg = &p.cfg
 	p.prog.Manifest = manifest
 	p.prog.Fset = token.NewFileSet()
-
-	if p.vfs.App == nil {
-		p.vfs.App = os.DirFS(filepath.Join(p.prog.Manifest.Root, "src"))
-	}
-
-	logger.DumpFS(&config.EnableTrace_loader, "p.vfs.App", p.vfs.App, ".")
-
-	if p.vfs.Std == nil {
-		if p.cfg.WaRoot != "" {
-			p.vfs.Std = os.DirFS(filepath.Join(p.cfg.WaRoot, "src"))
-		} else {
-			p.vfs.Std = waroot.GetFS()
-		}
-	}
-	if p.vfs.Vendor == nil {
-		p.vfs.Vendor = os.DirFS(filepath.Join(p.prog.Manifest.Root, "vendor"))
-		if p.vfs.Vendor == nil {
-			p.vfs.Vendor = make(fstest.MapFS) // empty fs
-		}
-	}
 
 	// import "runtime"
 	logger.Trace(&config.EnableTrace_loader, "import runtime")
