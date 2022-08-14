@@ -37,6 +37,8 @@
 
 > 项目尚处于原型开源阶段，如果有共建和PR需求请 [入群交流](https://wa-lang.org/community/index.html)。
 
+> [VS Code 插件支持](https://marketplace.visualstudio.com/items?itemName=xxxDeveloper.vscode-wa)
+
 ## 设计目标
 
 - 披着 Go 语法外衣的 C 语言；
