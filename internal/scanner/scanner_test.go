@@ -339,7 +339,7 @@ func checkSemi(t *testing.T, line string, mode Mode) {
 			// the illegal token literal indicates what
 			// kind of semicolon literal to expect
 			semiLit := "\n"
-			if lit[0] == '#' {
+			if lit[0] == '@' {
 				semiLit = ";"
 			}
 			// next token must be a semicolon
@@ -363,11 +363,11 @@ func checkSemi(t *testing.T, line string, mode Mode) {
 }
 
 var lines = []string{
-	// # indicates a semicolon present in the source
+	// @ indicates a semicolon present in the source
 	// $ indicates an automatically inserted semicolon
 	"",
-	"\ufeff#;", // first BOM is ignored
-	"#;",
+	"\ufeff@;", // first BOM is ignored
+	"@;",
 	"foo$\n",
 	"123$\n",
 	"1.2$\n",
@@ -428,7 +428,7 @@ var lines = []string{
 	")$\n",
 	"]$\n",
 	"}$\n",
-	"#;\n",
+	"@;\n",
 	":\n",
 
 	"break$\n",
@@ -735,7 +735,7 @@ var errors = []struct {
 	err string
 }{
 	{"\a", token.ILLEGAL, 0, "", "illegal character U+0007"},
-	{`#`, token.ILLEGAL, 0, "", "illegal character U+0023 '#'"},
+	//{`#`, token.ILLEGAL, 0, "", "illegal character U+0023 '#'"},
 	{`…`, token.ILLEGAL, 0, "", "illegal character U+2026 '…'"},
 	{"..", token.PERIOD, 0, "", ""}, // two periods, not invalid token (issue #28112)
 	{`' '`, token.CHAR, 0, `' '`, ""},
