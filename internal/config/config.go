@@ -14,10 +14,16 @@ type StdSizes struct {
 	MaxAlign int64 // maximum alignment in bytes - must be >= 1
 }
 
+// 包虚拟文件系统
+type PkgVFS struct {
+	App    fs.FS // 当前工程的 src 目录, 导入路径去掉前缀对应目录
+	Std    fs.FS // 标准库, 导入路径对应目录
+	Vendor fs.FS // 第三方库, 导入路径目录
+}
+
 // 通用配置信息
 type Config struct {
-	VFS      fs.FS    // 虚拟文件系统, 为空时从本地文件系统读取
-	WaRoot   string   // 凹 程序根目录, src 目录下是包代码
+	WaRoot   string   // 凹 程序根目录, src 目录下是包代码, 为空时用内置标准库实现
 	WaArch   string   // 目标 CPU
 	WaOS     string   // 目标 OS
 	WaSizes  StdSizes // 指针大小
