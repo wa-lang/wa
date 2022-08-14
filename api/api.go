@@ -22,6 +22,9 @@ type Manifest_package = config.Manifest_package
 // 程序对象, 包含全量的 AST 和 SSA 信息, 经过语义检查
 type Program = loader.Program
 
+// 包虚拟文件系统
+type PkgVFS = config.PkgVFS
+
 // 指针和整数大小
 type StdSize = config.StdSizes
 
@@ -37,4 +40,11 @@ func LoadProgram(cfg *config.Config, appPath string) (*Program, error) {
 	return loader.LoadProgram(cfg, appPath)
 }
 
+// 基于 VFS 加载程序
+// 入口 pkgPath 是包路径, 必须是 vfs.App 子包
+func LoadProgramVFS(vfs config.PkgVFS, cfg *config.Config, pkgPath string) (*Program, error) {
+	panic("TODO")
+}
+
+// TODO: 解析 ast/语义/SSA 分阶段解析
 // TODO: Program 编译到不同后端的函数
