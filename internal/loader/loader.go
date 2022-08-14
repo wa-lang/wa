@@ -4,6 +4,7 @@ package loader
 
 import (
 	"io/fs"
+	"os"
 	"path/filepath"
 	"sort"
 	"strings"
@@ -47,7 +48,7 @@ func (p *_Loader) LoadProgram(appPath string) (*Program, error) {
 }
 
 func (p *_Loader) LoadProgramVFS(vfs *config.PkgVFS, appPath string) (*Program, error) {
-	manifest, err := config.LoadManifest(nil, appPath)
+	manifest, err := config.LoadManifest(vfs.App, appPath)
 	if err != nil {
 		logger.Tracef(&config.EnableTrace_loader, "err: %v", err)
 		return nil, err
@@ -65,6 +66,14 @@ func (p *_Loader) loadProgram(vfs *config.PkgVFS, manifest *config.Manifest) (*P
 	p.prog.Cfg = &p.cfg
 	p.prog.Manifest = manifest
 	p.prog.Fset = token.NewFileSet()
+
+	if p.vfs.Std == nil {
+		if p.cfg.WaRoot != "" {
+			p.vfs.Std = os.DirFS(filepath.Join(p.cfg.WaRoot, "src"))
+		} else {
+			p.vfs.Std = waroot.GetFS()
+		}
+	}
 
 	// import "runtime"
 	logger.Trace(&config.EnableTrace_loader, "import runtime")
@@ -97,7 +106,7 @@ func (p *_Loader) loadProgram(vfs *config.PkgVFS, manifest *config.Manifest) (*P
 		}
 	}
 
-	logger.Tracef(&config.EnableTrace_loader, "return ok")
+	logger.Trace(&config.EnableTrace_loader, "return ok")
 	return p.prog, nil
 }
 

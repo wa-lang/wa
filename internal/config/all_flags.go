@@ -9,6 +9,7 @@ import (
 var (
 	DebugMode = false
 
+	EnableTrace_api      bool
 	EnableTrace_app      bool
 	EnableTrace_compiler bool
 	EnableTrace_loader   bool
