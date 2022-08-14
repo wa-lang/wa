@@ -5,6 +5,7 @@ package logger
 import (
 	"bytes"
 	"fmt"
+	"io/fs"
 	"os"
 	"path/filepath"
 	"runtime"
@@ -182,6 +183,27 @@ func Tracef(flagEnabled *bool, format string, a ...interface{}) {
 			msg += "\n"
 		}
 		fmt.Printf("trace %s:%d: func %s\n%s", filename, line, fn, msg)
+	}
+}
+
+func DumpFS(flagEnabled *bool, name string, fileSystem fs.FS, root string) {
+	if flagEnabled == nil {
+		flagEnabled = &DebugMode
+	}
+	if *flagEnabled {
+		fmt.Printf("dumpfs: fileSystem: %s\n", name)
+		fs.WalkDir(fileSystem, root, func(path string, d fs.DirEntry, err error) error {
+			if err != nil {
+				fmt.Printf("\t%s: %v\n", path, err)
+				return err
+			}
+			if d.IsDir() {
+				fmt.Printf("\t%s # %s\n", path, "dir")
+			} else {
+				fmt.Printf("\t%s # %s\n", path, "file")
+			}
+			return nil
+		})
 	}
 }
 
