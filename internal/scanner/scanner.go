@@ -705,7 +705,8 @@ func (s *Scanner) scanRawString() string {
 }
 
 func (s *Scanner) skipWhitespace() {
-	for s.ch == ' ' || s.ch == '\t' || s.ch == '\n' && !s.insertSemi || s.ch == '\r' {
+	// '#' 作为空格处理
+	for s.ch == ' ' || s.ch == '\t' || s.ch == '\n' && !s.insertSemi || s.ch == '\r' || s.ch == '#' {
 		s.next()
 	}
 }
