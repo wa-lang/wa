@@ -24,9 +24,8 @@ type Compiler struct {
 	module   *module.Module
 	mainBody *module.CodeEntry
 
-	builtinMainIndex  uint32
-	builtinReadIndex  uint32
-	builtinWriteIndex uint32
+	builtinFdWriteIndex uint32
+	builtinMainIndex    uint32
 }
 
 func New() *Compiler {
@@ -87,15 +86,35 @@ func (p *Compiler) initModule() error {
 	}
 
 	// init types
-	p.builtinReadIndex = 0
-	p.builtinWriteIndex = 1
-	p.builtinMainIndex = 2
+	p.builtinFdWriteIndex = 0
+	p.builtinMainIndex = 1
 
+	/*
+		// (import "wasi_unstable" "fd_write" (func $fd_write (param i32 i32 i32 i32) (result i32)))
+
+		struct iov_t {
+			const char* base;
+			int len;
+		};
+
+		WASM_IMPORT("wasi_unstable")
+		int fd_write(
+			int fd, const struct iov_t* iovs, int iovs_len, int* nwritten
+		);
+	*/
 	p.module.Type.Functions = []module.FunctionType{
 		// func __wa_builtin_read() int32
-		{Results: []types.ValueType{types.I32}},
-		// func __wa_builtin_write(x int32)
-		{Params: []types.ValueType{types.I32}},
+		{
+			Params: []types.ValueType{
+				types.I32,
+				types.I32,
+				types.I32,
+				types.I32,
+			},
+			Results: []types.ValueType{
+				types.I32,
+			},
+		},
 		// func _start
 		{},
 	}
@@ -103,17 +122,11 @@ func (p *Compiler) initModule() error {
 	// import
 	p.module.Import.Imports = []module.Import{
 		{
-			Module: "env",
-			Name:   "__wa_builtin_read",
+
+			Module: "wasi_unstable",
+			Name:   "fd_write",
 			Descriptor: module.FunctionImport{
-				Func: p.builtinReadIndex,
-			},
-		},
-		{
-			Module: "env",
-			Name:   "__wa_builtin_write",
-			Descriptor: module.FunctionImport{
-				Func: p.builtinWriteIndex,
+				Func: p.builtinFdWriteIndex,
 			},
 		},
 	}
@@ -134,8 +147,8 @@ func (p *Compiler) initModule() error {
 				Locals: []module.LocalDeclaration{},
 				Expr: module.Expr{
 					Instrs: []instruction.Instruction{
-						instruction.I32Const{Value: 42},
-						instruction.Call{Index: p.builtinWriteIndex},
+						// instruction.I32Const{Value: 42},
+						// instruction.Call{Index: p.builtinFdWriteIndex},
 						instruction.Return{},
 					},
 				},
@@ -168,7 +181,22 @@ func (p *Compiler) emitGlobals() error {
 	if len(p.module.Global.Globals) > 0 {
 		return nil
 	}
-	// panic("TODO: support WASM")
+
+	// default global
+	defauleGlobal := module.Global{
+		Type: types.I32,
+		Init: module.Expr{
+			Instrs: []instruction.Instruction{
+				instruction.I32Const{Value: 0},
+			},
+		},
+	}
+
+	// global[0] is nil
+	p.module.Global.Globals = []module.Global{
+		defauleGlobal,
+	}
+
 	return nil
 }
 
