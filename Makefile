@@ -10,6 +10,8 @@ prime:
 	go run main.go run _examples/prime
 
 wasm:
+	go run main.go ssa _examples/hi
 	go run main.go wasm _examples/hi
+	wasm2wat a.out.wasm -o a.out.wast
 
 clean:

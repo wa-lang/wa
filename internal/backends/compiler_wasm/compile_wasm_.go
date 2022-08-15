@@ -24,9 +24,9 @@ type Compiler struct {
 	module   *module.Module
 	mainBody *module.CodeEntry
 
-	tinyMainIndex  uint32
-	tinyReadIndex  uint32
-	tinyWriteIndex uint32
+	builtinMainIndex  uint32
+	builtinReadIndex  uint32
+	builtinWriteIndex uint32
 }
 
 func New() *Compiler {
@@ -87,14 +87,14 @@ func (p *Compiler) initModule() error {
 	}
 
 	// init types
-	p.tinyReadIndex = 0
-	p.tinyWriteIndex = 1
-	p.tinyMainIndex = 2
+	p.builtinReadIndex = 0
+	p.builtinWriteIndex = 1
+	p.builtinMainIndex = 2
 
 	p.module.Type.Functions = []module.FunctionType{
-		// func __tiny_read() int32
+		// func __wa_builtin_read() int32
 		{Results: []types.ValueType{types.I32}},
-		// func __tiny_write(x int32)
+		// func __wa_builtin_write(x int32)
 		{Params: []types.ValueType{types.I32}},
 		// func _start
 		{},
@@ -104,26 +104,26 @@ func (p *Compiler) initModule() error {
 	p.module.Import.Imports = []module.Import{
 		{
 			Module: "env",
-			Name:   "__tiny_read",
+			Name:   "__wa_builtin_read",
 			Descriptor: module.FunctionImport{
-				Func: p.tinyReadIndex,
+				Func: p.builtinReadIndex,
 			},
 		},
 		{
 			Module: "env",
-			Name:   "__tiny_write",
+			Name:   "__wa_builtin_write",
 			Descriptor: module.FunctionImport{
-				Func: p.tinyWriteIndex,
+				Func: p.builtinWriteIndex,
 			},
 		},
 	}
 
 	// _start func
 	p.module.Function.TypeIndices = []uint32{
-		p.tinyMainIndex,
+		p.builtinMainIndex,
 	}
 	p.module.Names.Functions = append(p.module.Names.Functions, module.NameMap{
-		Index: p.tinyMainIndex,
+		Index: p.builtinMainIndex,
 		Name:  "_start",
 	})
 
@@ -135,7 +135,7 @@ func (p *Compiler) initModule() error {
 				Expr: module.Expr{
 					Instrs: []instruction.Instruction{
 						instruction.I32Const{Value: 42},
-						instruction.Call{Index: p.tinyWriteIndex},
+						instruction.Call{Index: p.builtinWriteIndex},
 						instruction.Return{},
 					},
 				},
@@ -157,7 +157,7 @@ func (p *Compiler) initModule() error {
 		Name: "_start",
 		Descriptor: module.ExportDescriptor{
 			Type:  module.FunctionExportType,
-			Index: p.tinyMainIndex,
+			Index: p.builtinMainIndex,
 		},
 	})
 
@@ -168,7 +168,8 @@ func (p *Compiler) emitGlobals() error {
 	if len(p.module.Global.Globals) > 0 {
 		return nil
 	}
-	panic("TODO: support WASM")
+	// panic("TODO: support WASM")
+	return nil
 }
 
 func (p *Compiler) emitMainBody() error {
@@ -178,7 +179,7 @@ func (p *Compiler) emitMainBody() error {
 			Expr: module.Expr{
 				Instrs: []instruction.Instruction{
 					// instruction.I32Const{Value: 42 + 1},
-					// instruction.Call{Index: p.tinyWriteIndex},
+					// instruction.Call{Index: p.builtinWriteIndex},
 				},
 			},
 		},

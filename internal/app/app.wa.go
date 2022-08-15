@@ -323,8 +323,8 @@ func (p *App) WASM(filename string) error {
 		return err
 	}
 
-	fmt.Print(output)
-	return nil
+	a_out := "a.out.wasm"
+	return os.WriteFile(a_out, []byte(output), 0666)
 }
 
 func (p *App) Build(filename string, src interface{}, outfile string) (output []byte, err error) {
