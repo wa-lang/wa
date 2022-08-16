@@ -13,9 +13,7 @@ wasm:
 	go run main.go ssa _examples/hi
 	go run main.go wasm _examples/hi
 
-run-wasm:
-	make wasm
 	wasm2wat a.out.wasm -o a.out.wast
-	wasmer a.out.wasm
+	cd ./tools/wa-wasmer-run && go run main.go -file=../../a.out.wasm
 
 clean:

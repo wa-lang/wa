@@ -24,7 +24,7 @@ type Compiler struct {
 	module   *module.Module
 	mainBody *module.CodeEntry
 
-	builtinFdWriteIndex uint32
+	builtinPrintIntndex uint32
 	builtinMainIndex    uint32
 }
 
@@ -86,34 +86,14 @@ func (p *Compiler) initModule() error {
 	}
 
 	// init types
-	p.builtinFdWriteIndex = 0
+	p.builtinPrintIntndex = 0
 	p.builtinMainIndex = 1
 
-	/*
-		// (import "wasi_unstable" "fd_write" (func $fd_write (param i32 i32 i32 i32) (result i32)))
-
-		struct iov_t {
-			const char* base;
-			int len;
-		};
-
-		WASM_IMPORT("wasi_unstable")
-		int fd_write(
-			int fd, const struct iov_t* iovs, int iovs_len, int* nwritten
-		);
-	*/
 	p.module.Type.Functions = []module.FunctionType{
-		// func __wa_builtin_read() int32
+		// func __wa_builtin_print_int32(int32 x)
 		{
-			Params: []types.ValueType{
-				types.I32,
-				types.I32,
-				types.I32,
-				types.I32,
-			},
-			Results: []types.ValueType{
-				types.I32,
-			},
+			Params:  []types.ValueType{types.I32},
+			Results: []types.ValueType{},
 		},
 		// func _start
 		{},
@@ -122,11 +102,10 @@ func (p *Compiler) initModule() error {
 	// import
 	p.module.Import.Imports = []module.Import{
 		{
-
-			Module: "wasi_unstable",
-			Name:   "fd_write",
+			Module: "env",
+			Name:   "__wa_builtin_print_int32",
 			Descriptor: module.FunctionImport{
-				Func: p.builtinFdWriteIndex,
+				Func: p.builtinPrintIntndex,
 			},
 		},
 	}
@@ -147,8 +126,8 @@ func (p *Compiler) initModule() error {
 				Locals: []module.LocalDeclaration{},
 				Expr: module.Expr{
 					Instrs: []instruction.Instruction{
-						// instruction.I32Const{Value: 42},
-						// instruction.Call{Index: p.builtinFdWriteIndex},
+						instruction.I32Const{Value: 42},
+						instruction.Call{Index: p.builtinPrintIntndex},
 						instruction.Return{},
 					},
 				},
@@ -206,8 +185,8 @@ func (p *Compiler) emitMainBody() error {
 			Locals: []module.LocalDeclaration{},
 			Expr: module.Expr{
 				Instrs: []instruction.Instruction{
-					// instruction.I32Const{Value: 42 + 1},
-					// instruction.Call{Index: p.builtinWriteIndex},
+					instruction.I32Const{Value: 42 + 1},
+					instruction.Call{Index: p.builtinPrintIntndex},
 				},
 			},
 		},
