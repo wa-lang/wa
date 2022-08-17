@@ -13,6 +13,11 @@ import (
 	"github.com/wa-lang/wa/internal/loader"
 )
 
+const (
+	// 0 <--- stack pointer | heap base ---> |
+	Default_HeapBase = 1000 * 1000 // 默认 Heap 基址
+)
+
 type Compiler struct {
 	stages []func() error
 
@@ -23,6 +28,13 @@ type Compiler struct {
 
 	module   *module.Module
 	mainBody *module.CodeEntry
+
+	__heap_base_index     int // Heap 基地址
+	__stack_pointer_index int // 当前 SP 地址
+
+	__stackSaveFn    int // 保存 SP
+	__stackRestoreFn int // 恢复 SP
+	__stackAllocFn   int // 调整 SP
 
 	builtinPrintIntndex uint32
 	builtinMainIndex    uint32
@@ -84,6 +96,10 @@ func (p *Compiler) initModule() error {
 			},
 		},
 	}
+
+	// init global
+	p.__heap_base_index = 0
+	p.__stack_pointer_index = 1
 
 	// init types
 	p.builtinPrintIntndex = 0
@@ -162,18 +178,27 @@ func (p *Compiler) emitGlobals() error {
 	}
 
 	// default global
-	defauleGlobal := module.Global{
+	__heap_base := module.Global{
 		Type: types.I32,
 		Init: module.Expr{
 			Instrs: []instruction.Instruction{
-				instruction.I32Const{Value: 0},
+				instruction.I32Const{Value: Default_HeapBase},
+			},
+		},
+	}
+	__stack_pointer := module.Global{
+		Type: types.I32,
+		Init: module.Expr{
+			Instrs: []instruction.Instruction{
+				instruction.I32Const{Value: Default_HeapBase},
 			},
 		},
 	}
 
 	// global[0] is nil
 	p.module.Global.Globals = []module.Global{
-		defauleGlobal,
+		__heap_base,
+		__stack_pointer,
 	}
 
 	return nil
