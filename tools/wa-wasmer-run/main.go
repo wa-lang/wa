@@ -3,6 +3,7 @@
 package main
 
 import (
+	"encoding/binary"
 	"flag"
 	"fmt"
 	"os"
@@ -34,8 +35,31 @@ func Run(wasmBytes []byte) error {
 		return err
 	}
 
+	var memory *wasmer.Memory
+
+	// type iov struct { iov_base, iov_len int32 }
+	// func fd_write(fd int32, id *iov, iovs_len int32, nwritten *int32) (errno int32)
+
+	wasiFdWrite := wasmer.NewFunction(store,
+		wasmer.NewFunctionType(
+			wasmer.NewValueTypes(wasmer.I32, wasmer.I32, wasmer.I32, wasmer.I32),
+			wasmer.NewValueTypes(wasmer.I32),
+		),
+		func(args []wasmer.Value) ([]wasmer.Value, error) {
+			iov := args[1].I32()
+			iov_base := binary.LittleEndian.Uint32(memory.Data()[iov : iov+4])
+			iov_len := binary.LittleEndian.Uint32(memory.Data()[iov+4 : iov+8])
+			msg := string(memory.Data()[iov_base:][:iov_len])
+
+			fmt.Print(msg)
+			return []wasmer.Value{wasmer.NewI32(0)}, nil
+		},
+	)
 	waBuiltinWrite := wasmer.NewFunction(store,
-		wasmer.NewFunctionType(wasmer.NewValueTypes(wasmer.I32), wasmer.NewValueTypes()),
+		wasmer.NewFunctionType(
+			wasmer.NewValueTypes(wasmer.I32),
+			wasmer.NewValueTypes(),
+		),
 		func(args []wasmer.Value) ([]wasmer.Value, error) {
 			if len(args) > 0 {
 				fmt.Println(args[0].I32())
@@ -45,11 +69,19 @@ func Run(wasmBytes []byte) error {
 	)
 
 	importObject := wasmer.NewImportObject()
+	importObject.Register("wasi_snapshot_preview1", map[string]wasmer.IntoExtern{
+		"fd_write": wasiFdWrite,
+	})
 	importObject.Register("env", map[string]wasmer.IntoExtern{
 		"__wa_builtin_print_int32": waBuiltinWrite,
 	})
 
 	instance, err := wasmer.NewInstance(module, importObject)
+	if err != nil {
+		return err
+	}
+
+	memory, err = instance.Exports.GetMemory("memory")
 	if err != nil {
 		return err
 	}
