@@ -137,12 +137,31 @@
 	)
 
 	;; 打印整数
-	(func $putint (param $x i32)
-		;; todo
-	)
-
 	(func $print_i32 (param $x i32)
-		;; todo
+		(local $div i32)
+		(local $rem i32)
+
+		;; if $x == 0 { print '0'; return }
+		(i32.eq (get_local $x) (i32.const 0))
+		if
+			(call $putchar (i32.const 48)) ;; '0'
+			(call $putchar (i32.const 10)) ;; '\n'
+			(return)
+		end
+
+		;; if $x < 0 { $x = 0-$x; print '-'; }
+		(i32.lt_s (get_local $x) (i32.const 0))
+		if 
+			(set_local $x (i32.sub (i32.const 0) (get_local $x)))
+			(call $putchar (i32.const 45)) ;; '-'
+		end
+
+		;; print_i32($x / 10)
+		;; puchar($x%10 + '0')
+		(set_local $div (i32.div_s (get_local $x) (i32.const 10)))
+		(set_local $rem (i32.rem_s (get_local $x) (i32.const 10)))
+		(call $print_i32 (get_local $div))
+		(call $putchar (i32.add (get_local $rem) (get_global $k_0)))
 	)
 
 	;; 字符串常量
@@ -155,6 +174,9 @@
 		(call $putchar (get_global $k_A))
 		(call $putchar (get_global $k_a))
 		(call $putchar (get_global $k_A))
+		(call $putchar (get_global $k_new_line))
+
+		(call $print_i32 (i32.const 123))
 		(call $putchar (get_global $k_new_line))
 	)
 )
