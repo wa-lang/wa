@@ -46,13 +46,19 @@ func Run(wasmBytes []byte) error {
 			wasmer.NewValueTypes(wasmer.I32),
 		),
 		func(args []wasmer.Value) ([]wasmer.Value, error) {
-			iov := args[1].I32()
-			iov_base := binary.LittleEndian.Uint32(memory.Data()[iov : iov+4])
-			iov_len := binary.LittleEndian.Uint32(memory.Data()[iov+4 : iov+8])
-			msg := string(memory.Data()[iov_base:][:iov_len])
+			var argv []int
+			for _, arg := range args {
+				argv = append(argv, int(arg.I32()))
+			}
 
+			iov := argv[1]
+			iov_base := binary.LittleEndian.Uint32(memory.Data()[iov:][:4])
+			iov_len := binary.LittleEndian.Uint32(memory.Data()[iov+4:][:4])
+
+			msg := string(memory.Data()[iov_base:][:iov_len])
 			fmt.Print(msg)
-			return []wasmer.Value{wasmer.NewI32(0)}, nil
+
+			return []wasmer.Value{wasmer.NewI32(len(msg))}, nil
 		},
 	)
 	waBuiltinWrite := wasmer.NewFunction(store,
