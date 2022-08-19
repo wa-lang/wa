@@ -20,17 +20,6 @@
 	(global $__heap_ptr (mut i32) (i32.const 1024)) ;; index=3
 	(global $__heap_top (mut i32) (i32.const 1024)) ;; index=4
 
-	;; ASCII值
-	(global $k_new_line i32 (i32.const 10)) ;; '\n'
-	(global $k_space i32 (i32.const 32))    ;; ' '
-	(global $k_0 i32 (i32.const 48))        ;; '0'
-	(global $k_a i32 (i32.const 97))        ;; 'a'
-	(global $k_A i32 (i32.const 65))        ;; 'A'
-
-	(global $stdin i32 (i32.const 0))
-	(global $stdout i32 (i32.const 1))
-	(global $stderr i32 (i32.const 2))
-
 	;; 获取栈顶
 	(func $waStackPtr (result i32)
 		(return (get_global $__stack_ptr))
@@ -91,6 +80,7 @@
 		(local $sp i32)
 		(local $p_iov i32)
 		(local $p_nwritten i32)
+		(local $stdout i32)
 
 		;; 保存栈指针状态
 		(set_local $sp (call $waStackPtr))
@@ -105,9 +95,12 @@
 		(i32.store offset=0 align=1 (get_local $p_iov) (get_local $str))
 		(i32.store offset=4 align=1 (get_local $p_iov) (get_local $len))
 
+		;; 标准输出
+		(set_local $stdout (i32.const 1))
+
 		;; 输出字符串
 		(call $fd_write
-			(get_global $stdout)
+			(get_local $stdout)
 			(get_local $p_iov) (i32.const 1)
 			(get_local $p_nwritten)
 		)
@@ -161,7 +154,7 @@
 		(set_local $div (i32.div_s (get_local $x) (i32.const 10)))
 		(set_local $rem (i32.rem_s (get_local $x) (i32.const 10)))
 		(call $print_i32 (get_local $div))
-		(call $putchar (i32.add (get_local $rem) (get_global $k_0)))
+		(call $putchar (i32.add (get_local $rem) (i32.const 48))) ;; '0'
 	)
 
 	;; 字符串常量
@@ -171,12 +164,12 @@
 
 	(func $_start
 		(call $puts (get_global $str.hello.ptr) (get_global $str.hello.len))
-		(call $putchar (get_global $k_A))
-		(call $putchar (get_global $k_a))
-		(call $putchar (get_global $k_A))
-		(call $putchar (get_global $k_new_line))
+		(call $putchar (i32.const 65)) ;; 'A'
+		(call $putchar (i32.const 97)) ;; 'a'
+		(call $putchar (i32.const 65)) ;; 'A'
+		(call $putchar (i32.const 10)) ;; '\n'
 
 		(call $print_i32 (i32.const 123))
-		(call $putchar (get_global $k_new_line))
+		(call $putchar (i32.const 10)) ;; '\n'
 	)
 )
