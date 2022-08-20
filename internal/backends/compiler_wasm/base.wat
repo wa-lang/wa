@@ -1,33 +1,38 @@
 ;; 版权 @2022 凹语言 作者。保留所有权利。
 
 (module $walang
+	;; ----------------------------------------------------
 	;; WASI
+	;; ----------------------------------------------------
+
 	(import "wasi_snapshot_preview1" "fd_write"
 		(func $fd_write (param i32 i32 i32 i32) (result i32))
 	)
+
+	;; ----------------------------------------------------
 
 	(memory $memory 1)
 
 	(export "memory" (memory $memory))
 	(export "_start" (func $_start))
 
-	;; stack 状态
-	(global $__stack_base i32 (i32.const 1024))      ;; index=0
-	(global $__stack_ptr (mut i32) (i32.const 1024)) ;; index=1
+	;; ----------------------------------------------------
+	;; WASM 约定栈和内存管理
+	;; 相关全局变量地址必须和 base_wasm.go 保持一致
+	;; ----------------------------------------------------
 
-	;; heap 状态
-	(global $__heap_base i32 (i32.const 1024))      ;; index=2
-	(global $__heap_ptr (mut i32) (i32.const 1024)) ;; index=3
-	(global $__heap_top (mut i32) (i32.const 1024)) ;; index=4
+	;; heap 和 stack 状态(__heap_base 只读)
+	;; | 0 <-- stack --> | <-- static-data --> | <-- heap --> |
+	(global $__stack_ptr (mut i32) (i32.const 1024)) ;; index=0
+	(global $__heap_base i32 (i32.const 2048))       ;; index=1
 
-	;; 获取栈顶
+	;; ----------------------------------------------------
+	;; Stack 辅助函数
+	;; ----------------------------------------------------
+
+	;; 获取栈顶地址
 	(func $waStackPtr (result i32)
-		(return (global.get $__stack_ptr))
-	)
-
-	;; 重置栈
-	(func $waStackReset (param $sp i32)
-		(global.set $__stack_ptr (local.get $sp))
+		(global.get $__stack_ptr)
 	)
 
 	;; 栈上分配空间
@@ -44,36 +49,33 @@
 		(global.set $__stack_ptr (i32.add (global.get $__stack_ptr) (local.get $size)))
 	)
 
+	;; ----------------------------------------------------
+	;; Heap 辅助函数
+	;; ----------------------------------------------------
+
+	;; 获取堆地址
+	(func $waHeapPtr (result i32)
+		(global.get $__heap_base)
+	)
+
 	;; 堆上分配内存(没有记录大小)
-	(func $waHeapAlloc (param $size i32) (result i32)
-		;; local $ptr = $__heap_ptr
-		(local $ptr i32) (local.get $ptr (global.get $__heap_ptr))
-		;; $__heap_ptr = $__heap_ptr + $size
-		(global.set $__heap_ptr (i32.add (global.get $__heap_ptr) (local.get $size)))
-		;; return $ptr
-		(return (local.get $ptr))
-	)
-
-	;; 重置堆上的内存
-	(func $waHeapReset (param $ptr i32)
-		;; $__heap_ptr = $ptr
-		(global.set $__heap_ptr (local.get $ptr))
-	)
-
-	;; 分配内存
-	(func $waBlockAlloc (param $size i32) (result i32)
-		(return (i32.const 0)) ;; todo
+	(func $waAlloc (param $size i32) (result i32)
+		unreachable
 	)
 
 	;; 内存复用(引用加一)
-	(func $waBlockRetain(param $ptr i32) (result i32)
-		(return (local.get $ptr)) ;; todo
+	(func $waRetain(param $ptr i32) (result i32)
+		unreachable
 	)
 
 	;; 释放内存(引用减一)
-	(func $waBlockFree (param $ptr i32)
-		;; todo
+	(func $waFree (param $ptr i32)
+		unreachable
 	)
+
+	;; ----------------------------------------------------
+	;; 输出函数
+	;; ----------------------------------------------------
 
 	;; 打印字符串
 	(func $puts (param $str i32) (param $len i32)
@@ -83,7 +85,7 @@
 		(local $stdout i32)
 
 		;; 保存栈指针状态
-		(local.set $sp (call $waStackPtr))
+		(local.set $sp (global.get $__stack_ptr))
 
 		;; 分配 iov 结构体
 		(local.set $p_iov (call $waStackAlloc (i32.const 8)))
@@ -106,7 +108,7 @@
 		)
 
 		;; 重置栈指针
-		(call $waStackReset (local.get $sp))
+		(global.set $__stack_ptr (local.get $sp))
 		drop
 	)
 
@@ -116,7 +118,7 @@
 		(local $p_ch i32)
 
 		;; 保存栈指针状态
-		(local.set $sp (call $waStackPtr))
+		(local.set $sp (global.get $__stack_ptr))
 
 		;; 分配字符
 		(local.set $p_ch (call $waStackAlloc (i32.const 4)))
@@ -126,7 +128,7 @@
 		(call $puts (local.get $p_ch) (i32.const 1))
 
 		;; 重置栈指针
-		(call $waStackReset (local.get $sp))
+		(global.set $__stack_ptr (local.get $sp))
 	)
 
 	;; 打印整数
@@ -157,18 +159,41 @@
 		(call $putchar (i32.add (local.get $rem) (i32.const 48))) ;; '0'
 	)
 
-	;; 字符串常量
-	(global $str.hello.ptr i32 (i32.const 10))
-	(global $str.hello.len i32 (i32.const 12))
-	(data $str.hello (i32.const 10) "hello world\n")
+	;; ----------------------------------------------------
+	;; _start 函数
+	;; ----------------------------------------------------
 
 	(func $_start
-		(call $puts (global.get $str.hello.ptr) (global.get $str.hello.len))
+		(local $str.hello.ptr i32)
+		(local $str.hello.len i32)
+
+		;; println("AaA")
 		(call $putchar (i32.const 65)) ;; 'A'
 		(call $putchar (i32.const 97)) ;; 'a'
 		(call $putchar (i32.const 65)) ;; 'A'
 		(call $putchar (i32.const 10)) ;; '\n'
 
+		;; print("hello world\n")
+		;; [104 101 108 108 111 32 119 111 114 108 100 10]
+		(local.set $str.hello.ptr (global.get $__heap_base))
+		(local.set $str.hello.len (i32.const 12))
+
+		(i32.store offset=0 align=1 (local.get $str.hello.ptr) (i32.const 104))
+		(i32.store offset=1 align=1 (local.get $str.hello.ptr) (i32.const 101))
+		(i32.store offset=2 align=1 (local.get $str.hello.ptr) (i32.const 108))
+		(i32.store offset=3 align=1 (local.get $str.hello.ptr) (i32.const 108))
+		(i32.store offset=4 align=1 (local.get $str.hello.ptr) (i32.const 111))
+		(i32.store offset=5 align=1 (local.get $str.hello.ptr) (i32.const 32))
+		(i32.store offset=6 align=1 (local.get $str.hello.ptr) (i32.const 119))
+		(i32.store offset=7 align=1 (local.get $str.hello.ptr) (i32.const 111))
+		(i32.store offset=8 align=1 (local.get $str.hello.ptr) (i32.const 114))
+		(i32.store offset=9 align=1 (local.get $str.hello.ptr) (i32.const 108))
+		(i32.store offset=10 align=1 (local.get $str.hello.ptr) (i32.const 100))
+		(i32.store offset=11 align=1 (local.get $str.hello.ptr) (i32.const 10))
+
+		(call $puts (local.get $str.hello.ptr) (local.get $str.hello.len))
+
+		;; println(123)
 		(call $print_i32 (i32.const 123))
 		(call $putchar (i32.const 10)) ;; '\n'
 	)
