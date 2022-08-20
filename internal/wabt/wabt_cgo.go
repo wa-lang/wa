@@ -1,7 +1,9 @@
 // 版权 @2022 凹语言 作者。保留所有权利。
 
-//go:build cgo
-// +build cgo
+// go build -tags="wabt_cgo"
+
+//go:build wabt_cgo
+// +build wabt_cgo
 
 package wabt
 

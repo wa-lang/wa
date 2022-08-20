@@ -272,6 +272,7 @@ func main() {
 		{
 			Name:  "wat2wasm",
 			Usage: "convert wat to the wasm",
+			Hidden: true,
 			Action: func(c *cli.Context) error {
 				wabt.Wat2WasmCmd(c.Args().Slice()...)
 				return nil

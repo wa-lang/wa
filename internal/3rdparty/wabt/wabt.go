@@ -15,7 +15,10 @@ package wabt
 extern int wat2wasmMain(int argc, char** argv);
 */
 import "C"
-import "unsafe"
+import (
+	"fmt"
+	"unsafe"
+)
 
 func Wat2WasmCmd(args ...string) error {
 	args = append([]string{"wat2wasm"}, args...)
@@ -29,7 +32,7 @@ func Wat2WasmCmd(args ...string) error {
 	}
 
 	rv := C.wat2wasmMain(C.int(argc), (**C.char)(&argv[0]))
-	if rv != nil {
+	if rv != 0 {
 		return fmt.Errorf("wat2wasm failed: err-code=%d", rv)
 	}
 
