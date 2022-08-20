@@ -5,7 +5,7 @@ default: base.wasm
 	wa-wasmer-run -file=base.wasm
 
 base.wasm: base.wat
-	wat2wasm base.wat -o base.wasm
+	wat2wasm --debug-names -o base.wasm base.wat
 
 clean:
 	rm base.wasm
