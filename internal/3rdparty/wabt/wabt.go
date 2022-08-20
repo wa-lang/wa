@@ -9,7 +9,29 @@ package wabt
 #cgo LDFLAGS:
 #cgo CPPFLAGS: -I./internal/wabt-1.0.29
 #cgo CXXFLAGS: -std=c++17
+
+#include <stdlib.h>
+
+extern int wat2wasmMain(int argc, char** argv);
 */
 import "C"
+import "unsafe"
 
-// TDOO
+func Wat2WasmCmd(args ...string) error {
+	args = append([]string{"wat2wasm"}, args...)
+
+	argc := len(args)
+	argv := make([]*C.char, argc, argc+1)
+
+	for i, s := range args {
+		argv[i] = C.CString(s)
+		defer C.free(unsafe.Pointer(argv[i]))
+	}
+
+	rv := C.wat2wasmMain(C.int(argc), (**C.char)(&argv[0]))
+	if rv != nil {
+		return fmt.Errorf("wat2wasm failed: err-code=%d", rv)
+	}
+
+	return nil
+}
