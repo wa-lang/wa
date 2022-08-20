@@ -5,6 +5,11 @@
 
 package wabt
 
+/*
+#cgo LDFLAGS:
+#cgo CPPFLAGS: -I./internal/wabt-1.0.29
+#cgo CXXFLAGS: -std=c++17
+*/
 import "C"
 
 // TDOO
