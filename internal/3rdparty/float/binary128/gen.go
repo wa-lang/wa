@@ -4,6 +4,7 @@
 package main
 
 import (
+	"errors"
 	"flag"
 	"fmt"
 	"log"
@@ -13,7 +14,6 @@ import (
 	"os"
 	"sort"
 	"text/template"
-	"errors"
 )
 
 func main() {

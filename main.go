@@ -11,9 +11,9 @@ import (
 	"runtime/debug"
 
 	"github.com/wa-lang/wa/internal/3rdparty/cli"
+	"github.com/wa-lang/wa/internal/3rdparty/wabt"
 	"github.com/wa-lang/wa/internal/app"
 	"github.com/wa-lang/wa/internal/config"
-	"github.com/wa-lang/wa/internal/wabt"
 )
 
 func main() {
@@ -270,11 +270,15 @@ func main() {
 			},
 		},
 		{
-			Name:  "wat2wasm",
-			Usage: "convert wat to the wasm",
+			Name:   "wat2wasm",
+			Usage:  "convert wat to the wasm",
 			Hidden: true,
 			Action: func(c *cli.Context) error {
-				wabt.Wat2WasmCmd(c.Args().Slice()...)
+				err := wabt.Wat2WasmCmd(c.Args().Slice()...)
+				if err != nil {
+					fmt.Println(err)
+					os.Exit(1)
+				}
 				return nil
 			},
 		},

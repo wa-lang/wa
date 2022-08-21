@@ -28,12 +28,14 @@
 +------------+
 ```
 
-安装和测试:
+安装和测试（默认使用了 CGO，可选择关闭）:
 
 1. 安装 [Clang](https://clang.llvm.org), 确保本地 `clang` 命令有效
 2. `go install github.com/wa-lang/wa@latest`
 3. `wa init -name=_examples/hi`
 4. `wa run _examples/hi`
+
+> 如果本地安装了 `wabt` 工具，可以通过设置 `CGO_ENABLED` 环境变量为 `0` 关闭 CGO 特性，提升 `go build` 编译性能。
 
 > 项目尚处于原型开源阶段，如果有共建和PR需求请 [入群交流](https://wa-lang.org/community/index.html)。
 
