@@ -189,12 +189,14 @@
 	;; _start 函数
 	(func $_start
 		;; {{$_start/body/begin}}
+		(call $main.init)
 		(call $main.main)
 		;; {{$_start/body/end}}
 	)
 
 	(func $main.init
 		;; {{$main.init/body/begin}}
+		;; 需要有防止重入的措施
 		;; {{$main.init/body/end}}
 	)
 
