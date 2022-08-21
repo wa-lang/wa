@@ -37,18 +37,18 @@
 
 using namespace wabt;
 
-static const char* s_infile;
-static std::string s_outfile;
-static bool s_dump_module;
-static int s_verbose;
-static WriteBinaryOptions s_write_binary_options;
-static bool s_validate = true;
-static bool s_debug_parsing;
-static Features s_features;
+static const char* wat2wasm_s_infile;
+static std::string wat2wasm_s_outfile;
+static bool wat2wasm_s_dump_module;
+static int wat2wasm_s_verbose;
+static WriteBinaryOptions wat2wasm_s_write_binary_options;
+static bool wat2wasm_s_validate = true;
+static bool wat2wasm_s_debug_parsing;
+static Features wat2wasm_s_features;
 
-static std::unique_ptr<FileStream> s_log_stream;
+static std::unique_ptr<FileStream> wat2wasm_s_log_stream;
 
-static const char s_description[] =
+static const char wat2wasm_s_description[] =
     R"(  read a file in the wasm text format, check it for errors, and
   convert it to the wasm binary format.
 
@@ -65,45 +65,45 @@ examples:
 )";
 
 static void ParseOptions(int argc, char* argv[]) {
-  OptionParser parser("wat2wasm", s_description);
+  OptionParser parser("wat2wasm", wat2wasm_s_description);
 
   parser.AddOption('v', "verbose", "Use multiple times for more info", []() {
-    s_verbose++;
-    s_log_stream = FileStream::CreateStderr();
+    wat2wasm_s_verbose++;
+    wat2wasm_s_log_stream = FileStream::CreateStderr();
   });
   parser.AddOption("debug-parser", "Turn on debugging the parser of wat files",
-                   []() { s_debug_parsing = true; });
+                   []() { wat2wasm_s_debug_parsing = true; });
   parser.AddOption('d', "dump-module",
                    "Print a hexdump of the module to stdout",
-                   []() { s_dump_module = true; });
-  s_features.AddOptions(&parser);
+                   []() { wat2wasm_s_dump_module = true; });
+  wat2wasm_s_features.AddOptions(&parser);
   parser.AddOption('o', "output", "FILE",
                    "Output wasm binary file. Use \"-\" to write to stdout.",
-                   [](const char* argument) { s_outfile = argument; });
+                   [](const char* argument) { wat2wasm_s_outfile = argument; });
   parser.AddOption(
       'r', "relocatable",
       "Create a relocatable wasm binary (suitable for linking with e.g. lld)",
-      []() { s_write_binary_options.relocatable = true; });
+      []() { wat2wasm_s_write_binary_options.relocatable = true; });
   parser.AddOption(
       "no-canonicalize-leb128s",
       "Write all LEB128 sizes as 5-bytes instead of their minimal size",
-      []() { s_write_binary_options.canonicalize_lebs = false; });
+      []() { wat2wasm_s_write_binary_options.canonicalize_lebs = false; });
   parser.AddOption("debug-names",
                    "Write debug names to the generated binary file",
-                   []() { s_write_binary_options.write_debug_names = true; });
+                   []() { wat2wasm_s_write_binary_options.write_debug_names = true; });
   parser.AddOption("no-check", "Don't check for invalid modules",
-                   []() { s_validate = false; });
+                   []() { wat2wasm_s_validate = false; });
   parser.AddArgument("filename", OptionParser::ArgumentCount::One,
-                     [](const char* argument) { s_infile = argument; });
+                     [](const char* argument) { wat2wasm_s_infile = argument; });
 
   parser.Parse(argc, argv);
 }
 
 static void WriteBufferToFile(std::string_view filename,
                               const OutputBuffer& buffer) {
-  if (s_dump_module) {
+  if (wat2wasm_s_dump_module) {
     std::unique_ptr<FileStream> stream = FileStream::CreateStdout();
-    if (s_verbose) {
+    if (wat2wasm_s_verbose) {
       stream->Writef(";; dump\n");
     }
     if (!buffer.data.empty()) {
@@ -126,39 +126,39 @@ static std::string DefaultOuputName(std::string_view input_name) {
   return result;
 }
 
-int ProgramMain(int argc, char** argv) {
+static int ProgramMain(int argc, char** argv) {
   InitStdio();
 
   ParseOptions(argc, argv);
 
   std::vector<uint8_t> file_data;
-  Result result = ReadFile(s_infile, &file_data);
+  Result result = ReadFile(wat2wasm_s_infile, &file_data);
   std::unique_ptr<WastLexer> lexer = WastLexer::CreateBufferLexer(
-      s_infile, file_data.data(), file_data.size());
+      wat2wasm_s_infile, file_data.data(), file_data.size());
   if (Failed(result)) {
-    WABT_FATAL("unable to read file: %s\n", s_infile);
+    WABT_FATAL("unable to read file: %s\n", wat2wasm_s_infile);
   }
 
   Errors errors;
   std::unique_ptr<Module> module;
-  WastParseOptions parse_wast_options(s_features);
+  WastParseOptions parse_wast_options(wat2wasm_s_features);
   result = ParseWatModule(lexer.get(), &module, &errors, &parse_wast_options);
 
-  if (Succeeded(result) && s_validate) {
-    ValidateOptions options(s_features);
+  if (Succeeded(result) && wat2wasm_s_validate) {
+    ValidateOptions options(wat2wasm_s_features);
     result = ValidateModule(module.get(), &errors, options);
   }
 
   if (Succeeded(result)) {
-    MemoryStream stream(s_log_stream.get());
-    s_write_binary_options.features = s_features;
-    result = WriteBinaryModule(&stream, module.get(), s_write_binary_options);
+    MemoryStream stream(wat2wasm_s_log_stream.get());
+    wat2wasm_s_write_binary_options.features = wat2wasm_s_features;
+    result = WriteBinaryModule(&stream, module.get(), wat2wasm_s_write_binary_options);
 
     if (Succeeded(result)) {
-      if (s_outfile.empty()) {
-        s_outfile = DefaultOuputName(s_infile);
+      if (wat2wasm_s_outfile.empty()) {
+        wat2wasm_s_outfile = DefaultOuputName(wat2wasm_s_infile);
       }
-      WriteBufferToFile(s_outfile.c_str(), stream.output_buffer());
+      WriteBufferToFile(wat2wasm_s_outfile.c_str(), stream.output_buffer());
     }
   }
 

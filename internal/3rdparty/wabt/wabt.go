@@ -20,6 +20,8 @@ import (
 	"unsafe"
 )
 
+const Version = "1.0.29"
+
 func Wat2WasmCmd(args ...string) error {
 	args = append([]string{"wat2wasm"}, args...)
 
