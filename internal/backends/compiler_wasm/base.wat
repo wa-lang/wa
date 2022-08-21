@@ -2,19 +2,24 @@
 
 (module $walang
 	;; ----------------------------------------------------
-	;; WASI
+	;; import 必须最先定义
 	;; ----------------------------------------------------
 
+	;; WASI 最小子集
+	;; 用于输出字符串
 	(import "wasi_snapshot_preview1" "fd_write"
 		(func $fd_write (param i32 i32 i32 i32) (result i32))
 	)
 
+	;; ----------------------------------------------------
+	;; 内存和入口
 	;; ----------------------------------------------------
 
 	(memory $memory 1)
 
 	(export "memory" (memory $memory))
 	(export "_start" (func $_start))
+	(export "main.main" (func $main.main))
 
 	;; ----------------------------------------------------
 	;; WASM 约定栈和内存管理
@@ -60,17 +65,23 @@
 
 	;; 堆上分配内存(没有记录大小)
 	(func $waAlloc (param $size i32) (result i32)
+		;; {{$waAlloc/body/begin}}
 		unreachable
+		;; {{$waAlloc/body/end}}
 	)
 
 	;; 内存复用(引用加一)
 	(func $waRetain(param $ptr i32) (result i32)
+		;; {{$waRetain/body/begin}}
 		unreachable
+		;; {{$waRetain/body/end}}
 	)
 
 	;; 释放内存(引用减一)
 	(func $waFree (param $ptr i32)
+		;; {{$waFree/body/begin}}
 		unreachable
+		;; {{$waFree/body/end}}
 	)
 
 	;; ----------------------------------------------------
@@ -79,6 +90,8 @@
 
 	;; 打印字符串
 	(func $puts (param $str i32) (param $len i32)
+		;; {{$puts/body/begin}}
+
 		(local $sp i32)
 		(local $p_iov i32)
 		(local $p_nwritten i32)
@@ -110,10 +123,14 @@
 		;; 重置栈指针
 		(global.set $__stack_ptr (local.get $sp))
 		drop
+
+		;; {{$puts/body/end}}
 	)
 
 	;; 打印字符
 	(func $putchar (param $ch i32)
+		;; {{$putchar/body/begin}}
+
 		(local $sp i32)
 		(local $p_ch i32)
 
@@ -129,10 +146,14 @@
 
 		;; 重置栈指针
 		(global.set $__stack_ptr (local.get $sp))
+
+		;; {{$putchar/body/begin}}
 	)
 
 	;; 打印整数
 	(func $print_i32 (param $x i32)
+		;; {{$print_i32/body/begin}}
+	
 		(local $div i32)
 		(local $rem i32)
 
@@ -157,13 +178,29 @@
 		(local.set $rem (i32.rem_s (local.get $x) (i32.const 10)))
 		(call $print_i32 (local.get $div))
 		(call $putchar (i32.add (local.get $rem) (i32.const 48))) ;; '0'
+
+		;; {{$print_i32/body/end}}
 	)
 
 	;; ----------------------------------------------------
 	;; _start 函数
 	;; ----------------------------------------------------
 
+	;; _start 函数
 	(func $_start
+		;; {{$_start/body/begin}}
+		(call $main.main)
+		;; {{$_start/body/end}}
+	)
+
+	(func $main.init
+		;; {{$main.init/body/begin}}
+		;; {{$main.init/body/end}}
+	)
+
+	(func $main.main
+		;; {{$main.main/body/begin}}
+
 		(local $str.hello.ptr i32)
 		(local $str.hello.len i32)
 
@@ -196,5 +233,17 @@
 		;; println(123)
 		(call $print_i32 (i32.const 123))
 		(call $putchar (i32.const 10)) ;; '\n'
+
+		;; {{$main.main/body/end}}
 	)
+
+	;; ----------------------------------------------------
+	;; 编译器填充的代码
+	;; ----------------------------------------------------
+
+	;; {{$wa.compiler.output.code}}
+
+	;; ----------------------------------------------------
+	;; END
+	;; ----------------------------------------------------
 )
