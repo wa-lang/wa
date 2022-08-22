@@ -11,7 +11,6 @@ import (
 	"runtime/debug"
 
 	"github.com/wa-lang/wa/internal/3rdparty/cli"
-	"github.com/wa-lang/wa/internal/3rdparty/wabt"
 	"github.com/wa-lang/wa/internal/app"
 	"github.com/wa-lang/wa/internal/config"
 )
@@ -253,7 +252,7 @@ func main() {
 		},
 		{
 			Name:  "wasm",
-			Usage: "parse Wa and print ouput WebAssembly code",
+			Usage: "parse Wa and print ouput WebAssembly text",
 			Action: func(c *cli.Context) error {
 				if c.NArg() == 0 {
 					fmt.Fprintf(os.Stderr, "no input file")
@@ -262,19 +261,6 @@ func main() {
 
 				ctx := app.NewApp(build_Options(c))
 				err := ctx.WASM(c.Args().First())
-				if err != nil {
-					fmt.Println(err)
-					os.Exit(1)
-				}
-				return nil
-			},
-		},
-		{
-			Name:   "wat2wasm",
-			Usage:  "convert wat to the wasm",
-			Hidden: true,
-			Action: func(c *cli.Context) error {
-				err := wabt.Wat2WasmCmd(c.Args().Slice()...)
 				if err != nil {
 					fmt.Println(err)
 					os.Exit(1)

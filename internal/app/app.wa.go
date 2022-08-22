@@ -323,7 +323,7 @@ func (p *App) WASM(filename string) error {
 		return err
 	}
 
-	a_out := "a.out.wasm"
+	a_out := "a.out.wat"
 	return os.WriteFile(a_out, []byte(output), 0666)
 }
 

@@ -6,8 +6,8 @@ import (
 	_ "embed"
 )
 
-//go:embed base.wasm
-var __base_wasm_data string
+//go:embed base.wat
+var __base_wat_data string
 
 // wasm 内存 1 页大小
 const _WASM_PAGE_SIZE = 65536
