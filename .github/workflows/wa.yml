@@ -26,19 +26,24 @@ jobs:
           version: latest
           platform: x64
 
+      - run: curl https://get.wasmer.io -sSfL | sh
+      - run: wasmer -V
+
       - run: go version
       - run: go env
 
       - run: clang --version
 
-      - run: CGO_ENABLED=0 go test -v -coverprofile=profile.cov ./...
+      - run: go test -v -coverprofile=profile.cov ./...
 
-      - run: CGO_ENABLED=0 go install
-      - run: CGO_ENABLED=1 go install
+      - run: go install
 
       - run: wa
       - run: wa run _examples/hello
       - run: wa run _examples/prime
+
+      - run: wa wasm _examples/hi
+      - run: wasmer run a.out.wat
 
       - uses: shogo82148/actions-goveralls@v1
         with:
