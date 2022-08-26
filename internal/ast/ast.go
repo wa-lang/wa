@@ -381,9 +381,10 @@ type (
 
 	// A FuncType node represents a function type.
 	FuncType struct {
-		Func    token.Pos  // position of "func" keyword (token.NoPos if there is no "func")
-		Params  *FieldList // (incoming) parameters; non-nil
-		Results *FieldList // (outgoing) results; or nil
+		Func     token.Pos  // position of "func" keyword (token.NoPos if there is no "func")
+		Params   *FieldList // (incoming) parameters; non-nil
+		ArrowPos token.Pos  // position of "=>" operator (token.NoPos if there is no "=>")
+		Results  *FieldList // (outgoing) results; or nil
 	}
 
 	// An InterfaceType node represents an interface type.
@@ -774,11 +775,12 @@ type (
 
 	// An ImportSpec node represents a single package import.
 	ImportSpec struct {
-		Doc     *CommentGroup // associated documentation; or nil
-		Name    *Ident        // local package name (including "."); or nil
-		Path    *BasicLit     // import path
-		Comment *CommentGroup // line comments; or nil
-		EndPos  token.Pos     // end of spec (overrides Path.Pos if nonzero)
+		Doc      *CommentGroup // associated documentation; or nil
+		Name     *Ident        // local package name (including "."); or nil
+		Path     *BasicLit     // import path
+		ArrowPos token.Pos     // position of "=>" operator (token.NoPos if there is no "=>")
+		Comment  *CommentGroup // line comments; or nil
+		EndPos   token.Pos     // end of spec (overrides Path.Pos if nonzero)
 	}
 
 	// A ValueSpec node represents a constant or variable declaration
