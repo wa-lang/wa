@@ -156,11 +156,12 @@ func (g *CommentGroup) Text() string {
 // and embedded struct fields. In the latter case, the field name is the type name.
 //
 type Field struct {
-	Doc     *CommentGroup // associated documentation; or nil
-	Names   []*Ident      // field/method/parameter names; or nil
-	Type    Expr          // field/method/parameter type
-	Tag     *BasicLit     // field tag; or nil
-	Comment *CommentGroup // line comments; or nil
+	Doc      *CommentGroup // associated documentation; or nil
+	Names    []*Ident      // field/method/parameter names; or nil
+	ColonPos token.Pos     // position of ":" operator (token.NoPos if there is no ":")
+	Type     Expr          // field/method/parameter type
+	Tag      *BasicLit     // field tag; or nil
+	Comment  *CommentGroup // line comments; or nil
 }
 
 func (f *Field) Pos() token.Pos {
@@ -787,11 +788,12 @@ type (
 	// (ConstSpec or VarSpec production).
 	//
 	ValueSpec struct {
-		Doc     *CommentGroup // associated documentation; or nil
-		Names   []*Ident      // value names (len(Names) > 0)
-		Type    Expr          // value type; or nil
-		Values  []Expr        // initial values; or nil
-		Comment *CommentGroup // line comments; or nil
+		Doc      *CommentGroup // associated documentation; or nil
+		Names    []*Ident      // value names (len(Names) > 0)
+		ColonPos token.Pos     // position of ":" operator (token.NoPos if there is no ":")
+		Type     Expr          // value type; or nil
+		Values   []Expr        // initial values; or nil
+		Comment  *CommentGroup // line comments; or nil
 	}
 
 	// A TypeSpec node represents a type declaration (TypeSpec production).
