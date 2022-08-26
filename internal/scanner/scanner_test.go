@@ -150,6 +150,7 @@ var tokens = [...]elt{
 	{token.RBRACE, "}", operator},
 	{token.SEMICOLON, ";", operator},
 	{token.COLON, ":", operator},
+	{token.ARROW, "=>", operator},
 
 	// Keywords
 	{token.BREAK, "break", keyword},
