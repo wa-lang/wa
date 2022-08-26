@@ -34,6 +34,10 @@ func newLoader(cfg *config.Config) *_Loader {
 	}
 }
 
+func (p *_Loader) LoadProgramFile(appPath string, src interface{}) (*Program, error) {
+	panic("TODO")
+}
+
 func (p *_Loader) LoadProgram(appPath string) (*Program, error) {
 	logger.Tracef(&config.EnableTrace_loader, "cfg: %+v", p.cfg)
 	logger.Tracef(&config.EnableTrace_loader, "appPath: %s", appPath)

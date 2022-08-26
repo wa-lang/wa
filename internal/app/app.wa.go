@@ -333,9 +333,18 @@ func (p *App) Build(filename string, src interface{}, outfile string) (output []
 
 func (p *App) build(filename string, src interface{}, outfile, goos, goarch string) (output []byte, err error) {
 	cfg := config.DefaultConfig()
-	prog, err := loader.LoadProgram(cfg, filename)
-	if err != nil {
-		return nil, err
+
+	var prog *loader.Program
+	if src != nil || p.isWaFile(filename) {
+		prog, err = loader.LoadProgramFile(cfg, filename, src)
+		if err != nil {
+			return nil, err
+		}
+	} else {
+		prog, err = loader.LoadProgram(cfg, filename)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	llOutput, err := compiler_ll.New().Compile(prog)
@@ -426,4 +435,11 @@ func (p *App) readSource(filename string, src interface{}) ([]byte, error) {
 
 	d, err := os.ReadFile(filename)
 	return d, err
+}
+
+func (p *App) isWaFile(path string) bool {
+	if fi, err := os.Lstat(path); err == nil && fi.Mode().IsRegular() {
+		return strings.HasSuffix(strings.ToLower(path), ".wa")
+	}
+	return false
 }

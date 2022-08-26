@@ -38,6 +38,12 @@ func LoadProgram(cfg *config.Config, appPath string) (*Program, error) {
 	return newLoader(cfg).LoadProgram(appPath)
 }
 
+// 加载单文件程序
+// 入口 appPath 是包对应目录的路径
+func LoadProgramFile(cfg *config.Config, filename string, src interface{}) (*Program, error) {
+	return newLoader(cfg).LoadProgramFile(filename, src)
+}
+
 // 基于 VFS 加载程序
 // 入口 pkgPath 是包路径, 必须是 vfs.App 子包
 func LoadProgramVFS(vfs *config.PkgVFS, cfg *config.Config, pkgPath string) (*Program, error) {
