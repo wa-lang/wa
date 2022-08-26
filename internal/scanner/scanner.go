@@ -158,14 +158,33 @@ func (s *Scanner) errorf(offs int, format string, args ...interface{}) {
 	s.error(offs, fmt.Sprintf(format, args...))
 }
 
-func (s *Scanner) scanComment() string {
+func (s *Scanner) scanComment(firstRune rune) string {
 	// initial '/' already consumed; s.ch == '/' || s.ch == '*'
 	offs := s.offset - 1 // position of initial '/'
 	next := -1           // position immediately following the comment; < 0 means invalid comment
 	numCR := 0
 
+	// #-style comment
+	if firstRune == '#' {
+		offs = s.offset // position of initial '#'
+
+		// (the final '\n' is not considered part of the comment)
+		for s.ch != '\n' && s.ch >= 0 {
+			if s.ch == '\r' {
+				numCR++
+			}
+			s.next()
+		}
+		// if we are at '\n', the position following the comment is afterwards
+		next = s.offset
+		if s.ch == '\n' {
+			next++
+		}
+		goto exit
+	}
+
+	//-style comment
 	if s.ch == '/' {
-		//-style comment
 		// (the final '\n' is not considered part of the comment)
 		s.next()
 		for s.ch != '\n' && s.ch >= 0 {
@@ -201,6 +220,14 @@ func (s *Scanner) scanComment() string {
 
 exit:
 	lit := s.src[offs:s.offset]
+
+	// #-style comment
+	if firstRune == '#' {
+		if numCR > 0 && lit[len(lit)-1] == '\r' {
+			lit = lit[:len(lit)-1]
+		}
+		return string(lit)
+	}
 
 	// On Windows, a (//-comment) line may end in "\r\n".
 	// Remove the final '\r' before analyzing the text for
@@ -299,7 +326,12 @@ func trailingDigits(text []byte) (int, int, bool) {
 	return i + 1, int(n), err == nil
 }
 
-func (s *Scanner) findLineEnd() bool {
+func (s *Scanner) findLineEnd(startRune rune) bool {
+	// #-style comment always contains a newline
+	if startRune == '#' {
+		return true
+	}
+
 	// initial '/' already consumed
 
 	defer func(offs int) {
@@ -705,8 +737,7 @@ func (s *Scanner) scanRawString() string {
 }
 
 func (s *Scanner) skipWhitespace() {
-	// '#' 作为空格处理
-	for s.ch == ' ' || s.ch == '\t' || s.ch == '\n' && !s.insertSemi || s.ch == '\r' || s.ch == '#' {
+	for s.ch == ' ' || s.ch == '\t' || s.ch == '\n' && !s.insertSemi || s.ch == '\r' {
 		s.next()
 	}
 }
@@ -879,10 +910,28 @@ scanAgain:
 			}
 		case '*':
 			tok = s.switch2(token.MUL, token.MUL_ASSIGN)
+		case '#':
+			// #-style comment
+			if s.insertSemi && s.findLineEnd('#') {
+				// reset position to the beginning of the comment
+				s.ch = '#'
+				s.offset = s.file.Offset(pos)
+				s.rdOffset = s.offset + 0
+				s.insertSemi = false // newline consumed
+				return pos, token.SEMICOLON, "\n"
+			}
+			comment := s.scanComment('#')
+			if s.mode&ScanComments == 0 {
+				// skip comment
+				s.insertSemi = false // newline consumed
+				goto scanAgain
+			}
+			tok = token.COMMENT
+			lit = comment
 		case '/':
 			if s.ch == '/' || s.ch == '*' {
 				// comment
-				if s.insertSemi && s.findLineEnd() {
+				if s.insertSemi && s.findLineEnd('/') {
 					// reset position to the beginning of the comment
 					s.ch = '/'
 					s.offset = s.file.Offset(pos)
@@ -890,7 +939,7 @@ scanAgain:
 					s.insertSemi = false // newline consumed
 					return pos, token.SEMICOLON, "\n"
 				}
-				comment := s.scanComment()
+				comment := s.scanComment('/')
 				if s.mode&ScanComments == 0 {
 					// skip comment
 					s.insertSemi = false // newline consumed

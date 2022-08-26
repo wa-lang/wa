@@ -1,4 +1,4 @@
-// 版权 @2022 _examples/hello 作者。保留所有权利。
+# 版权 @2022 _examples/hello 作者。保留所有权利。
 
 导入 "fmt"
 
@@ -8,7 +8,7 @@ import (
 	"myapp/mypkg"
 )
 
-函数#main() {
+函数 main() {
 	fmt.Println(42)
 	pkg.Println(42 + 1)
 

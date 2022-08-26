@@ -13,7 +13,7 @@ import (
 
 func ExampleScanner_Scan() {
 	// src is the input that we want to tokenize.
-	src := []byte("cos(x) + 1i*sin(x) // Euler")
+	src := []byte("cos(x) + 1i*sin(x) # Euler")
 
 	// Initialize the scanner.
 	var s scanner.Scanner
@@ -43,5 +43,5 @@ func ExampleScanner_Scan() {
 	// 1:17	IDENT	"x"
 	// 1:18	)	""
 	// 1:20	;	"\n"
-	// 1:20	COMMENT	"// Euler"
+	// 1:20	COMMENT	"# Euler"
 }
