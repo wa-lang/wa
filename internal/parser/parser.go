@@ -899,12 +899,18 @@ func (p *parser) parseResult(scope *ast.Scope) *ast.FieldList {
 	return nil
 }
 
-func (p *parser) parseSignature(scope *ast.Scope) (params, results *ast.FieldList) {
+func (p *parser) parseSignature(scope *ast.Scope) (params, results *ast.FieldList, arrowPos token.Pos) {
 	if p.trace {
 		defer un(trace(p, "Signature"))
 	}
 
 	params = p.parseParameters(scope, true)
+
+	if p.tok == token.ARROW {
+		arrowPos = p.pos
+		p.next()
+	}
+
 	results = p.parseResult(scope)
 
 	return
@@ -917,9 +923,14 @@ func (p *parser) parseFuncType() (*ast.FuncType, *ast.Scope) {
 
 	pos := p.expect(token.FN)
 	scope := ast.NewScope(p.topScope) // function scope
-	params, results := p.parseSignature(scope)
+	params, results, arrowPos := p.parseSignature(scope)
 
-	return &ast.FuncType{Func: pos, Params: params, Results: results}, scope
+	return &ast.FuncType{
+		Func:     pos,
+		Params:   params,
+		ArrowPos: arrowPos,
+		Results:  results,
+	}, scope
 }
 
 func (p *parser) parseMethodSpec(scope *ast.Scope) *ast.Field {
@@ -935,8 +946,13 @@ func (p *parser) parseMethodSpec(scope *ast.Scope) *ast.Field {
 		// method
 		idents = []*ast.Ident{ident}
 		scope := ast.NewScope(nil) // method scope
-		params, results := p.parseSignature(scope)
-		typ = &ast.FuncType{Func: token.NoPos, Params: params, Results: results}
+		params, results, arrowPos := p.parseSignature(scope)
+		typ = &ast.FuncType{
+			Func:     token.NoPos,
+			Params:   params,
+			ArrowPos: arrowPos,
+			Results:  results,
+		}
 	} else {
 		// embedded interface
 		typ = x
@@ -2321,7 +2337,7 @@ func (p *parser) parseFuncDecl() *ast.FuncDecl {
 
 	ident := p.parseIdent()
 
-	params, results := p.parseSignature(scope)
+	params, results, arrowPos := p.parseSignature(scope)
 
 	var body *ast.BlockStmt
 	if p.tok == token.LBRACE {
@@ -2334,9 +2350,10 @@ func (p *parser) parseFuncDecl() *ast.FuncDecl {
 		Recv: recv,
 		Name: ident,
 		Type: &ast.FuncType{
-			Func:    pos,
-			Params:  params,
-			Results: results,
+			Func:     pos,
+			Params:   params,
+			ArrowPos: arrowPos,
+			Results:  results,
 		},
 		Body: body,
 	}

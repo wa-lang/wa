@@ -12,13 +12,13 @@ import (
 	fmt.Println(42)
 	pkg.Println(42 + 1)
 
-	mypkg.Println(求和(100))
+	mypkg.Println(sum(100))
 	mymath.PrintPrime(30)
 
 	heart()
 }
 
-函数 求和(n int) int {
+fn sum(n int) => int {
 	var v int
 	for i := 1; i <= n; i++ {
 		v += i
