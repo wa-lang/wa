@@ -3,9 +3,9 @@
 导入 "fmt"
 
 import (
-	"3rdparty/pkg"
-	"myapp/mymath"
-	"myapp/mypkg"
+	"3rdparty/pkg" => pkg 
+	"myapp/mymath" => mymath
+	"myapp/mypkg" => mypkg
 )
 
 函数 main() {
