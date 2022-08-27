@@ -436,7 +436,7 @@ func Object(pkg *types.Package, p Path) (types.Object, error) {
 		case opElem:
 			hasElem, ok := t.(hasElem) // Pointer, Slice, Array, Map
 			if !ok {
-				return nil, fmt.Errorf("cannot apply %q to %s (got %T, want pointer, slice, array, chan or map)", code, t, t)
+				return nil, fmt.Errorf("cannot apply %q to %s (got %T, want pointer, slice, array or map)", code, t, t)
 			}
 			t = hasElem.Elem()
 

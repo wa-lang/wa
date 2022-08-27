@@ -818,29 +818,6 @@ func (p *parser) parseMapType() *ast.MapType {
 	return &ast.MapType{pos, key, value}
 }
 
-func (p *parser) parseChanType() *ast.ChanType {
-	if p.trace {
-		defer un(trace(p, "ChanType"))
-	}
-
-	pos := p.pos
-	dir := ast.SEND | ast.RECV
-	if p.tok == token.CHAN {
-		p.next()
-		if p.tok == token.ARROW {
-			p.next()
-			dir = ast.SEND
-		}
-	} else {
-		p.expect(token.ARROW)
-		p.expect(token.CHAN)
-		dir = ast.RECV
-	}
-	value := p.parseType()
-
-	return &ast.ChanType{pos, dir, value}
-}
-
 // If the result is an identifier, it is not resolved.
 func (p *parser) tryIdentOrType(ellipsisOk bool) ast.Expr {
 	switch p.tok {
@@ -859,8 +836,6 @@ func (p *parser) tryIdentOrType(ellipsisOk bool) ast.Expr {
 		return p.parseInterfaceType()
 	case token.MAP:
 		return p.parseMapType()
-	case token.CHAN, token.ARROW:
-		return p.parseChanType()
 	case token.LPAREN:
 		lparen := p.pos
 		p.next()
