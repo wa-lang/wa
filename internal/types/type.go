@@ -29,15 +29,11 @@ const (
 	Int16
 	Int32
 	Int64
-	Int128
-	Int256
 	Uint
 	Uint8
 	Uint16
 	Uint32
 	Uint64
-	Uint128
-	Uint256
 	Uintptr
 	Float32
 	Float64
