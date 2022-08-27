@@ -39,7 +39,7 @@ jobs:
 
       - run: go install
 
-      - run: wa
+      - run: wa -h
       - run: wa run _examples/hello
       - run: wa run _examples/prime
 
