@@ -34,13 +34,32 @@ func newLoader(cfg *config.Config) *_Loader {
 	}
 }
 
-func (p *_Loader) LoadProgramFile(appPath string, src interface{}) (*Program, error) {
-	panic("TODO")
+func (p *_Loader) LoadProgramFile(filename string, src interface{}) (*Program, error) {
+	logger.Tracef(&config.EnableTrace_loader, "cfg: %+v", p.cfg)
+	logger.Tracef(&config.EnableTrace_loader, "filename: %v", filename)
+
+	vfs, manifest, err := loadProgramFileMeta(&p.cfg, filename, src)
+	if err != nil {
+		logger.Tracef(&config.EnableTrace_loader, "err: %v", err)
+		return nil, err
+	}
+
+	return p.loadProgram(vfs, manifest)
 }
 
 func (p *_Loader) LoadProgram(appPath string) (*Program, error) {
 	logger.Tracef(&config.EnableTrace_loader, "cfg: %+v", p.cfg)
 	logger.Tracef(&config.EnableTrace_loader, "appPath: %s", appPath)
+
+	if isWaFile(appPath) {
+		vfs, manifest, err := loadProgramFileMeta(&p.cfg, appPath, nil)
+		if err != nil {
+			logger.Tracef(&config.EnableTrace_loader, "err: %v", err)
+			return nil, err
+		}
+
+		return p.loadProgram(vfs, manifest)
+	}
 
 	vfs, manifest, err := loadProgramMeta(&p.cfg, appPath)
 	if err != nil {
@@ -87,7 +106,6 @@ func (p *_Loader) loadProgram(vfs *config.PkgVFS, manifest *config.Manifest) (*P
 	}
 
 	// import "main"
-	// TODO: 触发递归导入?
 	logger.Trace(&config.EnableTrace_loader, "import "+manifest.MainPkg)
 	if _, err := p.Import(manifest.MainPkg); err != nil {
 		logger.Tracef(&config.EnableTrace_loader, "err: %v", err)
