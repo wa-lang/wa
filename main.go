@@ -49,6 +49,27 @@ func main() {
 		return nil
 	}
 
+	// 没有参数时对应 run 命令
+	cliApp.Action = func(c *cli.Context) error {
+		if c.NArg() == 0 {
+			fmt.Fprintf(os.Stderr, "no input file")
+			os.Exit(1)
+		}
+
+		waApp := app.NewApp(build_Options(c))
+		data, err := waApp.Run(c.Args().First(), nil)
+		if len(data) != 0 {
+			fmt.Print(string(data))
+		}
+		if errx, ok := err.(*exec.ExitError); ok {
+			os.Exit(errx.ExitCode())
+		}
+		if err != nil {
+			fmt.Println(err)
+		}
+		return nil
+	}
+
 	cliApp.Commands = []*cli.Command{
 		{
 			Name:      "init",
