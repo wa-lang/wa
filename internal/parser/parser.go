@@ -2244,6 +2244,11 @@ func (p *parser) parseValueSpec(doc *ast.CommentGroup, keyword token.Token, iota
 
 	pos := p.pos
 	idents := p.parseIdentList()
+	var colonPos token.Pos
+	if p.tok == token.COLON {
+		colonPos = p.pos
+		p.next()
+	}
 	typ := p.tryType()
 	var values []ast.Expr
 	// always permit optional initialization for more tolerant parsing
@@ -2269,11 +2274,12 @@ func (p *parser) parseValueSpec(doc *ast.CommentGroup, keyword token.Token, iota
 	// the end of the innermost containing block.
 	// (Global identifiers are resolved in a separate phase after parsing.)
 	spec := &ast.ValueSpec{
-		Doc:     doc,
-		Names:   idents,
-		Type:    typ,
-		Values:  values,
-		Comment: p.lineComment,
+		Doc:      doc,
+		Names:    idents,
+		ColonPos: colonPos,
+		Type:     typ,
+		Values:   values,
+		Comment:  p.lineComment,
 	}
 	kind := ast.Con
 	if keyword == token.VAR {

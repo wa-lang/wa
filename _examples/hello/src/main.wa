@@ -18,8 +18,8 @@ import (
 	heart()
 }
 
-fn sum(n int) => int {
-	var v int
+fn sum(n: int) => int {
+	var v: int
 	for i := 1; i <= n; i++ {
 		v += i
 	}

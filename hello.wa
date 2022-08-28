@@ -2,10 +2,9 @@
 
 fn main() {
 	println("凹凹，吃了吗")
-	println(answer())
+	println(add(40, 2))
 }
 
-fn answer() => (x:int) {
-	x = 40 + 2
-	return
+fn add(a:i32, b:i32) => i32 {
+	return a + b
 }
