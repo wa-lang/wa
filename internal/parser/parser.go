@@ -704,6 +704,12 @@ func (p *parser) parseFieldDecl(scope *ast.Scope) *ast.Field {
 		p.next()
 	}
 
+	var colonPos token.Pos
+	if p.tok == token.COLON {
+		colonPos = p.pos
+		p.next()
+	}
+
 	typ := p.tryVarType(false)
 
 	// analyze case
@@ -732,7 +738,14 @@ func (p *parser) parseFieldDecl(scope *ast.Scope) *ast.Field {
 
 	p.expectSemi() // call before accessing p.linecomment
 
-	field := &ast.Field{Doc: doc, Names: idents, Type: typ, Tag: tag, Comment: p.lineComment}
+	field := &ast.Field{
+		Doc:      doc,
+		Names:    idents,
+		ColonPos: colonPos,
+		Type:     typ,
+		Tag:      tag,
+		Comment:  p.lineComment,
+	}
 	p.declare(field, nil, scope, ast.Var, idents...)
 	p.resolve(typ)
 
