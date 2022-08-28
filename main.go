@@ -52,8 +52,7 @@ func main() {
 	// 没有参数时对应 run 命令
 	cliApp.Action = func(c *cli.Context) error {
 		if c.NArg() == 0 {
-			fmt.Fprintf(os.Stderr, "no input file")
-			os.Exit(1)
+			cli.ShowAppHelpAndExit(c, 0)
 		}
 
 		waApp := app.NewApp(build_Options(c))
