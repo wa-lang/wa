@@ -2297,7 +2297,10 @@ func (p *parser) parseTypeSpec(doc *ast.CommentGroup, _ token.Token, _ int) ast.
 	// (Global identifiers are resolved in a separate phase after parsing.)
 	spec := &ast.TypeSpec{Doc: doc, Name: ident}
 	p.declare(spec, nil, p.topScope, ast.Typ, ident)
-	if p.tok == token.ASSIGN {
+	if p.tok == token.COLON {
+		spec.ColonPos = p.pos
+		p.next()
+	} else if p.tok == token.ASSIGN {
 		spec.Assign = p.pos
 		p.next()
 	}
