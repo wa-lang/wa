@@ -21,7 +21,7 @@ import (
 	"github.com/wa-lang/wa/internal/backends/compiler_c"
 	"github.com/wa-lang/wa/internal/backends/compiler_ll"
 	"github.com/wa-lang/wa/internal/backends/compiler_ll/builtin"
-	"github.com/wa-lang/wa/internal/backends/compiler_wasm"
+	"github.com/wa-lang/wa/internal/backends/compiler_wat"
 	"github.com/wa-lang/wa/internal/config"
 	"github.com/wa-lang/wa/internal/format"
 	"github.com/wa-lang/wa/internal/loader"
@@ -318,7 +318,7 @@ func (p *App) WASM(filename string) error {
 		return err
 	}
 
-	output, err := compiler_wasm.New().Compile(prog)
+	output, err := compiler_wat.New().Compile(prog)
 	if err != nil {
 		return err
 	}
