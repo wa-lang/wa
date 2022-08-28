@@ -40,6 +40,7 @@ jobs:
       - run: go install
 
       - run: wa -h
+      - run: wa hello.wa
       - run: wa run _examples/hello
       - run: wa run _examples/prime
 

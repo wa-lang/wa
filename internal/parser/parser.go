@@ -816,6 +816,7 @@ func (p *parser) parseParameterList(scope *ast.Scope, ellipsisOk bool) (params [
 	var list []ast.Expr
 	for {
 		list = append(list, p.parseVarType(ellipsisOk))
+		// 开头的 Ident 列表, 遇到非 ',' 时结束
 		if p.tok != token.COMMA {
 			break
 		}
@@ -825,11 +826,18 @@ func (p *parser) parseParameterList(scope *ast.Scope, ellipsisOk bool) (params [
 		}
 	}
 
+	// 解析可选的 ':'
+	var colonPos token.Pos
+	if p.tok == token.COLON {
+		colonPos = p.pos
+		p.next()
+	}
+
 	// analyze case
 	if typ := p.tryVarType(ellipsisOk); typ != nil {
 		// IdentifierList Type
 		idents := p.makeIdentList(list)
-		field := &ast.Field{Names: idents, Type: typ}
+		field := &ast.Field{Names: idents, ColonPos: colonPos, Type: typ}
 		params = append(params, field)
 		// Go spec: The scope of an identifier denoting a function
 		// parameter or result variable is the function body.
@@ -841,8 +849,12 @@ func (p *parser) parseParameterList(scope *ast.Scope, ellipsisOk bool) (params [
 		p.next()
 		for p.tok != token.RPAREN && p.tok != token.EOF {
 			idents := p.parseIdentList()
+			if p.tok == token.COLON {
+				colonPos = p.pos
+				p.next()
+			}
 			typ := p.parseVarType(ellipsisOk)
-			field := &ast.Field{Names: idents, Type: typ}
+			field := &ast.Field{Names: idents, ColonPos: colonPos, Type: typ}
 			params = append(params, field)
 			// Go spec: The scope of an identifier denoting a function
 			// parameter or result variable is the function body.
@@ -853,6 +865,12 @@ func (p *parser) parseParameterList(scope *ast.Scope, ellipsisOk bool) (params [
 			}
 			p.next()
 		}
+		return
+	}
+
+	// 缺少类型信息
+	if colonPos != token.NoPos {
+		p.errorExpected(p.pos, "type")
 		return
 	}
 
