@@ -969,6 +969,10 @@ func (p *parser) parseMethodSpec(scope *ast.Scope) *ast.Field {
 		defer un(trace(p, "MethodSpec"))
 	}
 
+	if p.tok == token.FN {
+		p.next()
+	}
+
 	doc := p.leadComment
 	var idents []*ast.Ident
 	var typ ast.Expr
@@ -1006,7 +1010,7 @@ func (p *parser) parseInterfaceType() *ast.InterfaceType {
 	lbrace := p.expect(token.LBRACE)
 	scope := ast.NewScope(nil) // interface scope
 	var list []*ast.Field
-	for p.tok == token.IDENT {
+	for p.tok == token.FN || p.tok == token.IDENT {
 		list = append(list, p.parseMethodSpec(scope))
 	}
 	rbrace := p.expect(token.RBRACE)
