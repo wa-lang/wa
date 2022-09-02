@@ -1,10 +1,10 @@
 // 版权 @2021 凹语言 作者。保留所有权利。
 
-package compiler_wasm
+package compiler_wat
 
 import (
-	"github.com/wa-lang/wa/internal/backends/compiler_wasm/wir"
-	"github.com/wa-lang/wa/internal/backends/compiler_wasm/wir/wtypes"
+	"github.com/wa-lang/wa/internal/backends/compiler_wat/wir"
+	"github.com/wa-lang/wa/internal/backends/compiler_wat/wir/wtypes"
 	"github.com/wa-lang/wa/internal/loader"
 	"github.com/wa-lang/wa/internal/ssa"
 )

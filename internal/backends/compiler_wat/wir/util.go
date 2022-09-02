@@ -3,7 +3,7 @@ package wir
 import (
 	"github.com/wa-lang/wa/internal/types"
 
-	"github.com/wa-lang/wa/internal/backends/compiler_wasm/wir/wtypes"
+	"github.com/wa-lang/wa/internal/backends/compiler_wat/wir/wtypes"
 	"github.com/wa-lang/wa/internal/logger"
 )
 

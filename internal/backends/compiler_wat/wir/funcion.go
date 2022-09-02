@@ -1,6 +1,6 @@
 package wir
 
-import "github.com/wa-lang/wa/internal/backends/compiler_wasm/wir/wtypes"
+import "github.com/wa-lang/wa/internal/backends/compiler_wat/wir/wtypes"
 
 func (f *Function) Format(indent string) string {
 	s := indent + "(func $" + f.Name + " (export \"" + f.Name + "\")"
