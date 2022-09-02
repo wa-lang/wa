@@ -1,7 +1,7 @@
 package wir
 
 func (m *Module) String() string {
-	s := "(module\n"
+	s := "(module $__walang__\n"
 
 	for _, i := range m.Imports {
 		s += i.Format("  ") + "\n"

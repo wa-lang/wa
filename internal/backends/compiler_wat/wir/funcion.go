@@ -8,7 +8,7 @@ func (f *Function) Format(indent string) string {
 	for _, param := range f.Params {
 		rps := param.Raw()
 		for _, rp := range rps {
-			s += " (param " + rp.Name() + " " + rp.Type().Name() + ")"
+			s += " (param $" + rp.Name() + " " + rp.Type().Name() + ")"
 		}
 	}
 
@@ -26,7 +26,7 @@ func (f *Function) Format(indent string) string {
 		rls := local.Raw()
 		s += indent + " "
 		for _, rl := range rls {
-			s += " (local " + rl.Name() + " " + rl.Type().Name() + ")"
+			s += " (local $" + rl.Name() + " " + rl.Type().Name() + ")"
 		}
 		s += "\n"
 	}

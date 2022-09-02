@@ -48,7 +48,7 @@ type InstGetLocal struct {
 }
 
 func NewInstGetLocal(name string) *InstGetLocal     { return &InstGetLocal{name: name} }
-func (i *InstGetLocal) Format(indent string) string { return indent + "local.get " + i.name }
+func (i *InstGetLocal) Format(indent string) string { return indent + "local.get $" + i.name }
 
 /**************************************
 instSetLocal:
@@ -59,7 +59,7 @@ type InstSetLocal struct {
 }
 
 func NewInstSetLocal(name string) *InstSetLocal     { return &InstSetLocal{name: name} }
-func (i *InstSetLocal) Format(indent string) string { return indent + "local.set " + i.name }
+func (i *InstSetLocal) Format(indent string) string { return indent + "local.set $" + i.name }
 
 /**************************************
 InstAdd:
@@ -233,7 +233,7 @@ type InstCall struct {
 }
 
 func NewInstCall(name string) *InstCall         { return &InstCall{name: name} }
-func (i *InstCall) Format(indent string) string { return indent + "call " + i.name }
+func (i *InstCall) Format(indent string) string { return indent + "call $" + i.name }
 
 /**************************************
 InstBlock:
@@ -246,7 +246,7 @@ type InstBlock struct {
 
 func NewInstBlock(name string) *InstBlock { return &InstBlock{name: name} }
 func (i *InstBlock) Format(indent string) string {
-	s := indent + "(block "
+	s := indent + "(block $"
 	s += i.name + "\n"
 	for _, v := range i.Insts {
 		s += v.Format(indent+"  ") + "\n"
@@ -266,7 +266,7 @@ type InstLoop struct {
 
 func NewInstLoop(name string) *InstLoop { return &InstLoop{name: name} }
 func (i *InstLoop) Format(indent string) string {
-	s := indent + "(loop "
+	s := indent + "(loop $"
 	s += i.name + "\n"
 	for _, v := range i.Insts {
 		s += v.Format(indent+"  ") + "\n"
@@ -284,7 +284,7 @@ type InstBr struct {
 }
 
 func NewInstBr(name string) *InstBr           { return &InstBr{Name: name} }
-func (i *InstBr) Format(indent string) string { return indent + "br " + i.Name }
+func (i *InstBr) Format(indent string) string { return indent + "br $" + i.Name }
 
 /**************************************
 InstBrTable:
