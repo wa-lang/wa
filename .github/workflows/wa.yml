@@ -44,8 +44,8 @@ jobs:
       - run: wa run _examples/hello
       - run: wa run _examples/prime
 
-      - run: wa wasm _examples/hi
-      - run: wasmer run a.out.wat
+      - run: wa wasm hello.wa
+      # - run: wasmer a.out.wat
 
       - uses: shogo82148/actions-goveralls@v1
         with:

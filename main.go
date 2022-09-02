@@ -273,18 +273,39 @@ func main() {
 		{
 			Name:  "wasm",
 			Usage: "parse Wa and print ouput WebAssembly text",
+			Flags: []cli.Flag{
+				&cli.StringFlag{
+					Name:    "output",
+					Aliases: []string{"o"},
+					Usage:   "set output file",
+					Value:   "a.out.wat",
+				},
+			},
 			Action: func(c *cli.Context) error {
+				outfile := c.String("output")
+
 				if c.NArg() == 0 {
 					fmt.Fprintf(os.Stderr, "no input file")
 					os.Exit(1)
 				}
 
 				ctx := app.NewApp(build_Options(c))
-				err := ctx.WASM(c.Args().First())
+				output, err := ctx.WASM(c.Args().First())
 				if err != nil {
 					fmt.Println(err)
 					os.Exit(1)
 				}
+
+				if outfile != "" && outfile != "-" {
+					err := os.WriteFile(outfile, []byte(output), 0666)
+					if err != nil {
+						fmt.Println(err)
+						os.Exit(1)
+					}
+				} else {
+					fmt.Println(string(output))
+				}
+
 				return nil
 			},
 		},

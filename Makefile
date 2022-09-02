@@ -13,9 +13,7 @@ prime:
 	go run main.go run _examples/prime
 
 wasm:
-	go run main.go ssa _examples/hi
-	go run main.go wasm _examples/hi
-
-	wasmer run a.out.wat
+	go run main.go wasm hello.wa
+	wasmer a.out.wat
 
 clean:

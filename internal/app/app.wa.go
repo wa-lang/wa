@@ -311,20 +311,19 @@ func (p *App) ASM(filename string) error {
 	return nil
 }
 
-func (p *App) WASM(filename string) error {
+func (p *App) WASM(filename string) ([]byte, error) {
 	cfg := config.DefaultConfig()
 	prog, err := loader.LoadProgram(cfg, filename)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	output, err := compiler_wat.New().Compile(prog)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
-	a_out := "a.out.wat"
-	return os.WriteFile(a_out, []byte(output), 0666)
+	return []byte(output), nil
 }
 
 func (p *App) Build(filename string, src interface{}, outfile string) (output []byte, err error) {
