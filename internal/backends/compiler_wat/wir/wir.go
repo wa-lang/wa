@@ -5,6 +5,7 @@ import (
 )
 
 type Module struct {
+	BaseWat string
 	Imports []Import
 	Funcs   []*Function
 }

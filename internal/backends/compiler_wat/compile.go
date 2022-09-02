@@ -17,6 +17,7 @@ type Compiler struct {
 
 func New() *Compiler {
 	p := new(Compiler)
+	p.module.BaseWat = modBaseWat
 	return p
 }
 
@@ -38,8 +39,8 @@ func (p *Compiler) CompilePackage(ssaPkg *ssa.Package) {
 	{
 		var sig wir.FuncSig
 		sig.Params = append(sig.Params, wtypes.Int32{})
-		p.module.Imports = append(p.module.Imports, wir.NewImpFunc("js", "print_i32", "__print_i32", sig))
-		p.module.Imports = append(p.module.Imports, wir.NewImpFunc("js", "print_char", "__print_char", sig))
+		//p.module.Imports = append(p.module.Imports, wir.NewImpFunc("js", "print_i32", "__print_i32", sig))
+		//p.module.Imports = append(p.module.Imports, wir.NewImpFunc("js", "print_char", "__print_char", sig))
 	}
 
 	for _, m := range p.ssaPkg.Members {
