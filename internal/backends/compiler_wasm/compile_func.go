@@ -29,7 +29,7 @@ type functionGenerator struct {
 }
 
 func newFunctionGenerator(p *Compiler) *functionGenerator {
-	return &functionGenerator{module: p.module, locals_map: make(map[ssa.Value]wir.Value)}
+	return &functionGenerator{module: &p.module, locals_map: make(map[ssa.Value]wir.Value)}
 }
 
 func (g *functionGenerator) getValue(i ssa.Value) wir.Value {
@@ -151,7 +151,6 @@ func (g *functionGenerator) genFunction(f *ssa.Function) *wir.Function {
 	wir_fn.Insts = append(wir_fn.Insts, block_temp)
 	wir_fn.Locals = g.registers
 
-	println(wir_fn.Format("  "))
 	return &wir_fn
 }
 

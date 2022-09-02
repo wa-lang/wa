@@ -35,6 +35,24 @@ func (f *Function) Format(indent string) string {
 		s += inst.Format(indent+"  ") + "\n"
 	}
 
-	s += indent + ") ;;" + f.Name + "\n"
+	s += indent + ") ;;" + f.Name
 	return s
+}
+
+func (sig *FuncSig) String() string {
+	str := ""
+	for _, param := range sig.Params {
+		rps := param.Raw()
+		for _, rp := range rps {
+			str += " (param " + rp.Name() + ")"
+		}
+	}
+
+	for _, ret := range sig.Results {
+		rrs := ret.Raw()
+		for _, rp := range rrs {
+			str += " (result " + rp.Name() + ")"
+		}
+	}
+	return str
 }

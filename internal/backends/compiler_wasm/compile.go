@@ -4,6 +4,7 @@ package compiler_wasm
 
 import (
 	"github.com/wa-lang/wa/internal/backends/compiler_wasm/wir"
+	"github.com/wa-lang/wa/internal/backends/compiler_wasm/wir/wtypes"
 	"github.com/wa-lang/wa/internal/loader"
 	"github.com/wa-lang/wa/internal/ssa"
 )
@@ -11,7 +12,7 @@ import (
 type Compiler struct {
 	ssaPkg *ssa.Package
 
-	module *wir.Module
+	module wir.Module
 }
 
 func New() *Compiler {
@@ -33,6 +34,13 @@ func (p *Compiler) CompilePackage(ssaPkg *ssa.Package) {
 	var cs []*ssa.NamedConst
 	var gs []*ssa.Global
 	var fns []*ssa.Function
+
+	{
+		var sig wir.FuncSig
+		sig.Params = append(sig.Params, wtypes.Int32{})
+		p.module.Imports = append(p.module.Imports, wir.NewImpFunc("js", "print_i32", "$$print_i32", sig))
+		p.module.Imports = append(p.module.Imports, wir.NewImpFunc("js", "print_char", "$$print_char", sig))
+	}
 
 	for _, m := range p.ssaPkg.Members {
 		switch member := m.(type) {
@@ -76,9 +84,10 @@ func (p *Compiler) CompilePackage(ssaPkg *ssa.Package) {
 		}
 	}
 	for _, v := range fns {
-		newFunctionGenerator(p).genFunction(v)
+		p.module.Funcs = append(p.module.Funcs, newFunctionGenerator(p).genFunction(v))
 	}
 
+	println(p.module.String())
 }
 
 func (p *Compiler) String() string {

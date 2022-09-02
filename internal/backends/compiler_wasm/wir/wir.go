@@ -1,9 +1,22 @@
 package wir
 
-import "github.com/wa-lang/wa/internal/backends/compiler_wasm/wir/wtypes"
+import (
+	"github.com/wa-lang/wa/internal/backends/compiler_wasm/wir/wtypes"
+)
 
 type Module struct {
-	Funcs []Function
+	Imports []Import
+	Funcs   []*Function
+}
+
+/**************************************
+Import:
+**************************************/
+type Import interface {
+	Format(indent string) string
+	ModuleName() string
+	ObjName() string
+	Type() ObjType
 }
 
 /**************************************
@@ -16,6 +29,14 @@ type Function struct {
 	Locals []Value
 
 	Insts []Instruction
+}
+
+/**************************************
+FuncSig:
+**************************************/
+type FuncSig struct {
+	Params  []wtypes.ValueType
+	Results []wtypes.ValueType
 }
 
 /**************************************
@@ -44,6 +65,9 @@ type Value interface {
 	Raw() []Value
 }
 
+/**************************************
+OpCode:
+**************************************/
 type OpCode int32
 
 const (
@@ -58,4 +82,16 @@ const (
 	OpCodeGt
 	OpCodeLe
 	OpCodeGe
+)
+
+/**************************************
+ObjType:
+**************************************/
+type ObjType int32
+
+const (
+	ObjTypeFunc ObjType = iota
+	ObjTypeMem
+	ObjTypeTable
+	ObjTypeGlobal
 )
