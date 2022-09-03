@@ -31,7 +31,6 @@ func main() {
 	cliApp.Flags = []cli.Flag{
 		&cli.StringFlag{Name: "os", Usage: "set target OS", Value: runtime.GOOS},
 		&cli.StringFlag{Name: "arch", Usage: "set target Arch", Value: runtime.GOARCH},
-		&cli.StringFlag{Name: "backend", Usage: "set backend code generator"},
 		&cli.StringFlag{Name: "clang", Usage: "set clang"},
 		&cli.BoolFlag{Name: "debug", Aliases: []string{"d"}, Usage: "set debug mode"},
 		&cli.StringFlag{Name: "trace", Aliases: []string{"t"}, Usage: "set trace mode (*|app|compiler|loader)"},
