@@ -3,6 +3,7 @@
 package app
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"os"
@@ -10,6 +11,10 @@ import (
 	"path/filepath"
 	"runtime"
 	"strings"
+
+	"github.com/tetratelabs/wazero"
+	"github.com/tetratelabs/wazero/api"
+	"github.com/tetratelabs/wazero/imports/wasi_snapshot_preview1"
 
 	"github.com/wa-lang/wa/internal/config"
 	"github.com/wa-lang/wa/internal/logger"
@@ -27,7 +32,41 @@ func RunWasm(filename string) (stdoutStderr []byte, err error) {
 		}
 	}
 
-	return nil, fmt.Errorf("TODO: run wasm")
+	wasmBytes, err := os.ReadFile(dst)
+	if err != nil {
+		return nil, err
+	}
+
+	ctx := context.Background()
+	r := wazero.NewRuntimeWithConfig(ctx,
+		wazero.NewRuntimeConfig().WithWasmCore2(),
+	)
+	defer r.Close(ctx)
+
+	if false {
+		if _, err := wasi_snapshot_preview1.Instantiate(ctx, r); err != nil {
+			return nil, err
+		}
+	}
+	_, err = r.NewModuleBuilder("wasi_snapshot_preview1").
+		ExportFunction("fd_write", func(m api.Module, fd, iov, iov_len, p_nwritten uint32) uint32 {
+			pos, _ := m.Memory().ReadUint32Le(ctx, iov)
+			n, _ := m.Memory().ReadUint32Le(ctx, iov+4)
+			bytes, _ := m.Memory().Read(ctx, pos, n)
+			fmt.Print(string(bytes))
+			return 0
+		}).
+		Instantiate(ctx, r)
+	if err != nil {
+		return nil, err
+	}
+
+	_, err = r.InstantiateModuleFromBinary(ctx, wasmBytes)
+	if err != nil {
+		return nil, err
+	}
+
+	return nil, nil
 }
 
 func InstallWat2wasm(path string) error {
