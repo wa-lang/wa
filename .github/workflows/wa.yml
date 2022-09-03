@@ -20,25 +20,17 @@ jobs:
         with:
           go-version: 1.17
 
-      - name: Set up Clang
-        uses: egor-tensin/setup-clang@v1
-        with:
-          version: latest
-          platform: x64
-
       - run: go version
       - run: go env
-
-      - run: clang --version
 
       - run: go test -v -coverprofile=profile.cov ./...
 
       - run: go install
 
       - run: wa -h
-      - run: wa hello.wa
-      - run: wa run _examples/hello
-      - run: wa run _examples/prime
+      #- run: wa hello.wa
+      #- run: wa run _examples/hello
+      #- run: wa run _examples/prime
 
       - run: wa wasm hello.wa
       - run: wa wasm -run hello.wa
