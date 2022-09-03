@@ -19,16 +19,12 @@ jobs:
         uses: actions/setup-go@v2
         with:
           go-version: 1.17
-      - name: Setup Wasmer
-        uses: wasmerio/setup-wasmer@v1
 
       - name: Set up Clang
         uses: egor-tensin/setup-clang@v1
         with:
           version: latest
           platform: x64
-
-      - run: wasmer -V
 
       - run: go version
       - run: go env
@@ -45,7 +41,7 @@ jobs:
       - run: wa run _examples/prime
 
       - run: wa wasm hello.wa
-      - run: wasmer a.out.wat
+      - run: wa wasm -run hello.wa
 
       - uses: shogo82148/actions-goveralls@v1
         with:
@@ -61,10 +57,6 @@ jobs:
         uses: actions/setup-go@v2
         with:
           go-version: 1.17
-      - name: Setup Wasmer
-        uses: wasmerio/setup-wasmer@v1
-
-      - run: wasmer -V
 
       - run: go version
       - run: go env
@@ -79,8 +71,6 @@ jobs:
       #- run: wa run _examples/prime
 
       - run: wa wasm hello.wa
-      - run: wasmer a.out.wat
-
       - run: wa wasm -run hello.wa
 
 
@@ -94,10 +84,6 @@ jobs:
         uses: actions/setup-go@v2
         with:
           go-version: 1.17
-      - name: Setup Wasmer
-        uses: wasmerio/setup-wasmer@v1
-
-      - run: wasmer -V
 
       - run: go version
       - run: go env
@@ -112,4 +98,4 @@ jobs:
       #- run: wa run _examples/prime
 
       - run: wa wasm hello.wa
-      - run: wasmer a.out.wat
+      - run: wa wasm -run hello.wa
