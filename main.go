@@ -72,7 +72,7 @@ func main() {
 	cliApp.Commands = []*cli.Command{
 		{
 			Name:      "init",
-			Usage:     "init a sketch app",
+			Usage:     "init a sketch wa module",
 			ArgsUsage: "app-name",
 			Flags: []cli.Flag{
 				&cli.StringFlag{
@@ -280,6 +280,10 @@ func main() {
 					Usage:   "set output file",
 					Value:   "a.out.wat",
 				},
+				&cli.BoolFlag{
+					Name:  "run",
+					Usage: "run wat or wasm",
+				},
 			},
 			Action: func(c *cli.Context) error {
 				outfile := c.String("output")
@@ -303,7 +307,30 @@ func main() {
 						os.Exit(1)
 					}
 				} else {
-					fmt.Println(string(output))
+					if c.Bool("run") {
+						outfile = "a.out.wat"
+						err := os.WriteFile(outfile, []byte(output), 0666)
+						if err != nil {
+							fmt.Println(err)
+							os.Exit(1)
+						}
+					} else {
+						fmt.Println(string(output))
+					}
+				}
+
+				if c.Bool("run") {
+					stdoutStderr, err := app.RunWasm(outfile)
+					if err != nil {
+						if len(stdoutStderr) > 0 {
+							fmt.Println(stdoutStderr)
+						}
+						fmt.Println(err)
+						os.Exit(1)
+					}
+					if len(stdoutStderr) > 0 {
+						fmt.Println(string(stdoutStderr))
+					}
 				}
 
 				return nil
@@ -322,6 +349,26 @@ func main() {
 			Usage: "show documentation for package or symbol",
 			Action: func(c *cli.Context) error {
 				fmt.Println("TODO")
+				return nil
+			},
+		},
+		{
+			Hidden: true,
+			Name:   "install-wat2wasm",
+			Usage:  "install-wat2wasm tool",
+			Flags: []cli.Flag{
+				&cli.StringFlag{
+					Name:  "dir",
+					Usage: "set output dir",
+					Value: "",
+				},
+			},
+			Action: func(c *cli.Context) error {
+				outdir := c.String("dir")
+				if err := app.InstallWat2wasm(outdir); err != nil {
+					fmt.Println(err)
+					os.Exit(1)
+				}
 				return nil
 			},
 		},
