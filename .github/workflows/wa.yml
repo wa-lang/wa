@@ -81,6 +81,8 @@ jobs:
       - run: wa wasm hello.wa
       - run: wasmer a.out.wat
 
+      - run: wa wasm -run hello.wa
+
 
   build-and-test-macos:
     runs-on: macos-12
