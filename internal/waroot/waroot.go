@@ -5,7 +5,6 @@ package waroot
 import (
 	"embed"
 	"io/fs"
-	"path/filepath"
 	"strings"
 )
 
@@ -13,7 +12,8 @@ import (
 var _warootFS embed.FS
 
 func GetFS() fs.FS {
-	fs, err := fs.Sub(_warootFS, filepath.Join("_waroot", "src"))
+	// embed.FS 均采用 Unix 风格路径
+	fs, err := fs.Sub(_warootFS, "_waroot/src")
 	if err != nil {
 		panic(err)
 	}

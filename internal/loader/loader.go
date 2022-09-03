@@ -5,6 +5,7 @@ package loader
 import (
 	"io/fs"
 	"os"
+	pathpkg "path"
 	"path/filepath"
 	"sort"
 	"strings"
@@ -273,6 +274,7 @@ func (p *_Loader) ParseDir(pkgpath string) ([]*ast.File, error) {
 }
 
 func (p *_Loader) readDirFiles(fileSystem fs.FS, path string) (filenames []string, datas [][]byte, err error) {
+	path = filepath.ToSlash(path)
 	path = strings.TrimPrefix(path, "/")
 
 	logger.Tracef(&config.EnableTrace_loader, "path: %v", path)
@@ -306,7 +308,8 @@ func (p *_Loader) readDirFiles(fileSystem fs.FS, path string) (filenames []strin
 	for _, name := range filenames {
 		var fpath string
 		if path != "" && path != "." {
-			fpath = strings.TrimPrefix(filepath.Join(path, name), "/")
+			// embed.FS 采用 Unix 风格路径
+			fpath = strings.TrimPrefix(pathpkg.Join(path, name), "/")
 		} else {
 			fpath = strings.TrimPrefix(name, "/")
 		}
