@@ -5,6 +5,9 @@
 // This file implements a simple printer performance benchmark:
 // go test -bench=BenchmarkPrint
 
+//go:build !windows
+// +build !windows
+
 package printer
 
 import (
