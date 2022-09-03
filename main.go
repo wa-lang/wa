@@ -33,8 +33,6 @@ func main() {
 		&cli.StringFlag{Name: "arch", Usage: "set target Arch", Value: runtime.GOARCH},
 		&cli.StringFlag{Name: "backend", Usage: "set backend code generator"},
 		&cli.StringFlag{Name: "clang", Usage: "set clang"},
-		&cli.StringFlag{Name: "wasm-llc", Usage: "set wasm-llc"},
-		&cli.StringFlag{Name: "wasm-ld", Usage: "set wasm-ld"},
 		&cli.BoolFlag{Name: "debug", Aliases: []string{"d"}, Usage: "set debug mode"},
 		&cli.StringFlag{Name: "trace", Aliases: []string{"t"}, Usage: "set trace mode (*|app|compiler|loader)"},
 	}
@@ -383,7 +381,5 @@ func build_Options(c *cli.Context) *app.Option {
 		TargetOS:   c.String("os"),
 		TargetArch: c.String("arch"),
 		Clang:      c.String("clang"),
-		WasmLLC:    c.String("wasm-llc"),
-		WasmLD:     c.String("wasm-ld"),
 	}
 }
