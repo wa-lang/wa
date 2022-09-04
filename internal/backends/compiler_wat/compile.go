@@ -87,4 +87,6 @@ func (p *Compiler) CompilePackage(ssaPkg *ssa.Package) {
 	for _, v := range fns {
 		p.module.Funcs = append(p.module.Funcs, newFunctionGenerator(p).genFunction(v))
 	}
+
+	println(p.module.String())
 }

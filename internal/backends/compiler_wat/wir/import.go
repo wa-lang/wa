@@ -25,5 +25,5 @@ func NewImpFunc(moduleName string, objName string, funcName string, sig FuncSig)
 }
 func (o *ImpFunc) Type() ObjType { return ObjTypeFunc }
 func (o *ImpFunc) Format(indent string) string {
-	return "(import \"" + o.moduleName + "\" \"" + o.objName + "\" (func $" + o.funcName + o.sig.String() + "))"
+	return indent + "(import \"" + o.moduleName + "\" \"" + o.objName + "\" (func $" + o.funcName + o.sig.String() + "))"
 }
