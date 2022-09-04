@@ -195,18 +195,16 @@ const modBaseWat = `
 	;; {{$putchar/body/begin}}
 )
 
-;; 打印整数
-(func $__print_i32 (param $x i32)
-	;; {{$print_i32/body/begin}}
 
-	(local $div i32)
-	(local $rem i32)
-
+(func $putchar (param $ch i32)
+	local.get $ch
+	call $__print_char
+)
+(func $print_i32 (param $x i32)
 	;; if $x == 0 { print '0'; return }
 	(i32.eq (local.get $x) (i32.const 0))
 	if
 		(call $putchar (i32.const 48)) ;; '0'
-		(call $putchar (i32.const 10)) ;; '\n'
 		(return)
 	end
 
@@ -217,23 +215,31 @@ const modBaseWat = `
 		(call $putchar (i32.const 45)) ;; '-'
 	end
 
+	local.get $x
+	call $__print_i32
+)
+
+;; 打印整数
+(func $__print_i32 (param $x i32)
+	;; {{$print_i32/body/begin}}
+
+	(local $div i32)
+	(local $rem i32)
+
+	;; if $x == 0 { print '0'; return }
+	(i32.eq (local.get $x) (i32.const 0))
+	if
+		(return)
+	end
+
 	;; print_i32($x / 10)
 	;; puchar($x%10 + '0')
 	(local.set $div (i32.div_s (local.get $x) (i32.const 10)))
 	(local.set $rem (i32.rem_s (local.get $x) (i32.const 10)))
-	(call $print_i32 (local.get $div))
+	(call $__print_i32 (local.get $div))
 	(call $putchar (i32.add (local.get $rem) (i32.const 48))) ;; '0'
 
 	;; {{$print_i32/body/end}}
-)
-
-(func $putchar (param $ch i32)
-	local.get $ch
-	call $__print_char
-)
-(func $print_i32 (param $ch i32)
-	local.get $ch
-	call $__print_i32
 )
 
 ;; ----------------------------------------------------

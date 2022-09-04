@@ -338,7 +338,7 @@ func (g *functionGenerator) genBuiltin(call *ssa.CallCommon) ([]wir.Instruction,
 			switch arg.Type().(type) {
 			case wtypes.Int32:
 				insts = append(insts, wir.EmitPushValue(arg)...)
-				insts = append(insts, wir.NewInstCall("__print_i32"))
+				insts = append(insts, wir.NewInstCall("print_i32"))
 
 			default:
 				logger.Fatalf("Todo: print(%s)", arg.Type().Name())
