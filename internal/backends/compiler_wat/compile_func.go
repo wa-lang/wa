@@ -225,7 +225,7 @@ func (g *functionGenerator) genInstruction(inst ssa.Instruction) []wir.Instructi
 
 func (g *functionGenerator) genValue(v ssa.Value) ([]wir.Instruction, wtypes.ValueType) {
 	if _, ok := g.locals_map[v]; ok {
-		logger.Printf("Instruction already exist：%s\n", v)
+		logger.Printf("Instruction already exist：%v\n", v)
 	}
 
 	switch v := v.(type) {

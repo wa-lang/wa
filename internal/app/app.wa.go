@@ -39,8 +39,6 @@ type Option struct {
 	TargetArch string
 	TargetOS   string
 	Clang      string
-	WasmLLC    string
-	WasmLD     string
 }
 
 // 命令行程序对象
@@ -66,26 +64,6 @@ func NewApp(opt *Option) *App {
 		}
 		if p.opt.Clang == "" {
 			p.opt.Clang = "clang"
-		}
-	}
-	if p.opt.WasmLLC == "" {
-		if runtime.GOOS == "windows" {
-			p.opt.WasmLLC, _ = exec.LookPath("llc.exe")
-		} else {
-			p.opt.WasmLLC, _ = exec.LookPath("llc")
-		}
-		if p.opt.WasmLLC == "" {
-			p.opt.WasmLLC = "llc"
-		}
-	}
-	if p.opt.WasmLD == "" {
-		if runtime.GOOS == "windows" {
-			p.opt.WasmLD, _ = exec.LookPath("wasm-ld.exe")
-		} else {
-			p.opt.WasmLD, _ = exec.LookPath("wasm-ld")
-		}
-		if p.opt.WasmLD == "" {
-			p.opt.WasmLD = "wasm-ld"
 		}
 	}
 	if p.opt.TargetOS == "" {

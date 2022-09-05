@@ -31,10 +31,7 @@ func main() {
 	cliApp.Flags = []cli.Flag{
 		&cli.StringFlag{Name: "os", Usage: "set target OS", Value: runtime.GOOS},
 		&cli.StringFlag{Name: "arch", Usage: "set target Arch", Value: runtime.GOARCH},
-		&cli.StringFlag{Name: "backend", Usage: "set backend code generator"},
 		&cli.StringFlag{Name: "clang", Usage: "set clang"},
-		&cli.StringFlag{Name: "wasm-llc", Usage: "set wasm-llc"},
-		&cli.StringFlag{Name: "wasm-ld", Usage: "set wasm-ld"},
 		&cli.BoolFlag{Name: "debug", Aliases: []string{"d"}, Usage: "set debug mode"},
 		&cli.StringFlag{Name: "trace", Aliases: []string{"t"}, Usage: "set trace mode (*|app|compiler|loader)"},
 	}
@@ -72,7 +69,7 @@ func main() {
 	cliApp.Commands = []*cli.Command{
 		{
 			Name:      "init",
-			Usage:     "init a sketch app",
+			Usage:     "init a sketch wa module",
 			ArgsUsage: "app-name",
 			Flags: []cli.Flag{
 				&cli.StringFlag{
@@ -280,6 +277,10 @@ func main() {
 					Usage:   "set output file",
 					Value:   "a.out.wat",
 				},
+				&cli.BoolFlag{
+					Name:  "run",
+					Usage: "run wat or wasm",
+				},
 			},
 			Action: func(c *cli.Context) error {
 				outfile := c.String("output")
@@ -303,7 +304,30 @@ func main() {
 						os.Exit(1)
 					}
 				} else {
-					fmt.Println(string(output))
+					if c.Bool("run") {
+						outfile = "a.out.wat"
+						err := os.WriteFile(outfile, []byte(output), 0666)
+						if err != nil {
+							fmt.Println(err)
+							os.Exit(1)
+						}
+					} else {
+						fmt.Println(string(output))
+					}
+				}
+
+				if c.Bool("run") {
+					stdoutStderr, err := app.RunWasm(outfile)
+					if err != nil {
+						if len(stdoutStderr) > 0 {
+							fmt.Println(string(stdoutStderr))
+						}
+						fmt.Println(err)
+						os.Exit(1)
+					}
+					if len(stdoutStderr) > 0 {
+						fmt.Println(string(stdoutStderr))
+					}
 				}
 
 				return nil
@@ -325,6 +349,26 @@ func main() {
 				return nil
 			},
 		},
+		{
+			Hidden: true,
+			Name:   "install-wat2wasm",
+			Usage:  "install-wat2wasm tool",
+			Flags: []cli.Flag{
+				&cli.StringFlag{
+					Name:  "dir",
+					Usage: "set output dir",
+					Value: "",
+				},
+			},
+			Action: func(c *cli.Context) error {
+				outdir := c.String("dir")
+				if err := app.InstallWat2wasm(outdir); err != nil {
+					fmt.Println(err)
+					os.Exit(1)
+				}
+				return nil
+			},
+		},
 	}
 
 	cliApp.Run(os.Args)
@@ -336,7 +380,5 @@ func build_Options(c *cli.Context) *app.Option {
 		TargetOS:   c.String("os"),
 		TargetArch: c.String("arch"),
 		Clang:      c.String("clang"),
-		WasmLLC:    c.String("wasm-llc"),
-		WasmLD:     c.String("wasm-ld"),
 	}
 }
