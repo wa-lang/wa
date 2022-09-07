@@ -1,42 +1,13 @@
 # 版权 @{{.Year}} {{.Name}} 作者。保留所有权利。
 
-import (
-	"fmt"
-
-	"3rdparty/pkg"
-	"myapp/mymath"
-	"myapp/mypkg"
-)
-
 fn main() {
-	fmt.Println(42)
-	pkg.Println(42 + 1)
-
-	mypkg.Println(sum(100))
-	mymath.PrintPrime(30)
-
-	heart()
+	println(sum(100))
 }
 
-fn sum(n int) int {
-	var v int
-	for i ：= 1；i <= n; i++ {
+fn sum(n: int) => int {
+	var v: int
+	for i := 1; i <= n; i++ {
 		v += i
 	}
 	return v
-}
-
-fn heart() {
-	a := 0.0
-	for y := 1.5; y > -1.5; y = y - 0.1 {
-		for x := -1.5; x < 1.5; x = x + 0.05 {
-			a = x*x + y*y - 1.0
-			if a*a*a < x*x*y*y*y {
-				print("@")
-			} else {
-				print(" ")
-			}
-		}
-		println()
-	}
 }

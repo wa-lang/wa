@@ -1,21 +1,7 @@
 # 版权 @2022 _examples/hello 作者。保留所有权利。
 
-导入 "fmt"
-
-import (
-	"3rdparty/pkg" => pkg 
-	"myapp/mymath" => mymath
-	"myapp/mypkg" => mypkg
-)
-
-函数 main() {
-	fmt.Println(42)
-	pkg.Println(42 + 1)
-
-	mypkg.Println(sum(100))
-	mymath.PrintPrime(30)
-
-	heart()
+fn main() {
+	println(sum(100))
 }
 
 fn sum(n: int) => int {
@@ -24,19 +10,4 @@ fn sum(n: int) => int {
 		v += i
 	}
 	return v
-}
-
-fn heart() {
-	a := 0.0
-	for y := 1.5; y > -1.5; y = y - 0.1 {
-		for x := -1.5; x < 1.5; x = x + 0.05 {
-			a = x*x + y*y - 1.0
-			if a*a*a < x*x*y*y*y {
-				print("@")
-			} else {
-				print(" ")
-			}
-		}
-		println()
-	}
 }
