@@ -77,7 +77,7 @@ func EmitBinOp(x, y Value, op wat.OpCode) ([]wat.Inst, ValueType) {
 	var insts []wat.Inst
 	r := binOpMatchType(x.Type(), y.Type())
 	if len(r.Raw()) != 1 {
-		logger.Fatal("Todo %T", r)
+		logger.Fatalf("Todo %T", r)
 		return nil, nil
 	}
 	rtype := r.Raw()[0]
