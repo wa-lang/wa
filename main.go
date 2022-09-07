@@ -1,5 +1,8 @@
 // 版权 @2019 凹语言 作者。保留所有权利。
 
+//go:build !wasm
+// +build !wasm
+
 // 凹语言™ 命令行程序。
 package main
 
@@ -10,6 +13,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/wa-lang/wa/api"
 	"github.com/wa-lang/wa/internal/3rdparty/cli"
 	"github.com/wa-lang/wa/internal/app"
 	"github.com/wa-lang/wa/internal/config"
@@ -89,6 +93,24 @@ func main() {
 	}
 
 	cliApp.Commands = []*cli.Command{
+		{
+			// go run main.go debug
+			Hidden: true,
+			Name:   "debug",
+			Usage:  "only for dev/debug",
+			Action: func(c *cli.Context) error {
+				wat, err := api.BuildFile("hello.wa", "fn main() { println(123) }")
+				if err != nil {
+					if len(wat) != 0 {
+						fmt.Println(string(wat))
+					}
+					fmt.Println(err)
+					os.Exit(1)
+				}
+				fmt.Println(string(wat))
+				return nil
+			},
+		},
 		{
 			Name:      "init",
 			Usage:     "init a sketch wa module",

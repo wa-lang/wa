@@ -5,12 +5,8 @@ package api
 
 import (
 	"io/fs"
-	"os"
-	"os/exec"
-	"runtime"
 
-	"github.com/wa-lang/wa/internal/backends/compiler_ll"
-	"github.com/wa-lang/wa/internal/backends/compiler_ll/builtin"
+	"github.com/wa-lang/wa/internal/backends/compiler_wat"
 	"github.com/wa-lang/wa/internal/config"
 	"github.com/wa-lang/wa/internal/loader"
 	"github.com/wa-lang/wa/internal/logger"
@@ -56,14 +52,33 @@ func LoadProgram(cfg *config.Config, appPath string) (*Program, error) {
 	return loader.LoadProgram(cfg, appPath)
 }
 
+// 加载单文件程序
+// 入口 appPath 是包对应目录的路径
+func LoadProgramFile(cfg *config.Config, filename string, src interface{}) (*Program, error) {
+	return loader.LoadProgramFile(cfg, filename, src)
+}
+
 // 基于 VFS 加载程序
 // 入口 pkgPath 是包路径, 必须是 vfs.App 子包
 func LoadProgramVFS(vfs *config.PkgVFS, cfg *config.Config, pkgPath string) (*Program, error) {
 	return loader.LoadProgramVFS(vfs, cfg, pkgPath)
 }
 
-// 执行 vfs 中的程序
-func RunVFS(vfs *config.PkgVFS, appPkg string, arg ...string) (output []byte, err error) {
+// 构建 wat 目标
+func BuildFile(filename string, src interface{}) (wat []byte, err error) {
+	cfg := config.DefaultConfig()
+	prog, err := LoadProgramFile(cfg, filename, src)
+	if err != nil || prog == nil {
+		logger.Tracef(&config.EnableTrace_api, "LoadProgramVFS failed, err = %v", err)
+		return nil, err
+	}
+
+	watOut, err := compiler_wat.New().Compile(prog)
+	return []byte(watOut), err
+}
+
+// 构建 wat 目标
+func BuildVFS(vfs *config.PkgVFS, appPkg string) (wat []byte, err error) {
 	cfg := config.DefaultConfig()
 	prog, err := LoadProgramVFS(vfs, cfg, appPkg)
 	if err != nil || prog == nil {
@@ -71,70 +86,6 @@ func RunVFS(vfs *config.PkgVFS, appPkg string, arg ...string) (output []byte, er
 		return nil, err
 	}
 
-	a_out := "a.out"
-	if runtime.GOOS == "windows" {
-		a_out = "a.exe"
-	}
-	output, err = buildProgram(prog, a_out)
-	if err != nil {
-		logger.Tracef(&config.EnableTrace_api, "buildProgram failed, err = %v", err)
-		logger.Tracef(&config.EnableTrace_api, "buildProgram failed, output = %v", string(output))
-		return nil, err
-	}
-
-	output, err = exec.Command(a_out, arg...).CombinedOutput()
-	if err != nil {
-		return output, err
-	}
-
-	return output, nil
+	watOut, err := compiler_wat.New().Compile(prog)
+	return []byte(watOut), err
 }
-
-func buildProgram(prog *Program, outfile string) (output []byte, err error) {
-	llOutput, err := compiler_ll.New().Compile(prog)
-	if err != nil {
-		return nil, err
-	}
-
-	const (
-		_a_out_ll     = "_a.out.ll"
-		_a_builtin_ll = "_a_builtin.out.ll"
-	)
-
-	defer func() {
-		if err == nil {
-			os.Remove(_a_out_ll)
-			os.Remove(_a_builtin_ll)
-		}
-	}()
-
-	llButiltin := builtin.GetBuiltinLL(prog.Cfg.WaOS, prog.Cfg.WaArch)
-	if err := os.WriteFile(_a_builtin_ll, []byte(llButiltin), 0666); err != nil {
-		return nil, err
-	}
-
-	if err := os.WriteFile(_a_out_ll, []byte(llOutput), 0666); err != nil {
-		return nil, err
-	}
-
-	args := []string{
-		"-Wno-override-module", "-o", outfile,
-		_a_out_ll, _a_builtin_ll,
-	}
-
-	clangExe := "clang"
-	if runtime.GOOS == "windows" {
-		clangExe += ".exe"
-	}
-	clangPath, err := exec.LookPath(clangExe)
-	if err != nil {
-		return nil, err
-	}
-
-	cmd := exec.Command(clangPath, args...)
-	data, err := cmd.CombinedOutput()
-	return data, err
-}
-
-// TODO: 解析 ast/语义/SSA 分阶段解析, 放到 Program 中
-// TODO: Program 编译到不同后端的函数
