@@ -6,7 +6,6 @@ package main
 import (
 	"fmt"
 	"os"
-	"os/exec"
 	"runtime/debug"
 	"strings"
 	"time"
@@ -58,16 +57,33 @@ func main() {
 			cli.ShowAppHelpAndExit(c, 0)
 		}
 
-		waApp := app.NewApp(build_Options(c))
-		data, err := waApp.Run(c.Args().First(), nil)
-		if len(data) != 0 {
-			fmt.Print(string(data))
-		}
-		if errx, ok := err.(*exec.ExitError); ok {
-			os.Exit(errx.ExitCode())
-		}
+		ctx := app.NewApp(build_Options(c))
+		output, err := ctx.WASM(c.Args().First())
 		if err != nil {
 			fmt.Println(err)
+			os.Exit(1)
+		}
+
+		outfile := "a.out.wat"
+		if !c.Bool("debug") {
+			defer os.Remove(outfile)
+		}
+
+		if err = os.WriteFile(outfile, []byte(output), 0666); err != nil {
+			fmt.Println(err)
+			os.Exit(1)
+		}
+
+		stdoutStderr, err := app.RunWasm(outfile)
+		if err != nil {
+			if len(stdoutStderr) > 0 {
+				fmt.Println(string(stdoutStderr))
+			}
+			fmt.Println(err)
+			os.Exit(1)
+		}
+		if len(stdoutStderr) > 0 {
+			fmt.Println(string(stdoutStderr))
 		}
 		return nil
 	}
