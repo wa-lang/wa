@@ -18,6 +18,13 @@
 
 凹语言™（凹读音“Wa”）是[柴树杉](https://github.com/chai2010)、[丁尔男](https://github.com/3dgen)和[史斌](https://github.com/benshi001)设计的专注于 WASM 平台的实验性通用编程语言。
 
+开发组成员：
+- [柴树杉](https://github.com/chai2010)
+- [丁尔男](https://github.com/3dgen)
+- [史斌](https://github.com/benshi001)
+- [扈梦明](https://github.com/xxxDeveloper)
+- [刘云峰](https://github.com/leaftree)
+
 ```
 +---+    +---+
 | o |    | o |
@@ -30,10 +37,9 @@
 
 安装和测试:
 
-1. 安装 [Clang](https://clang.llvm.org), 确保本地 `clang` 命令有效
-2. `go install github.com/wa-lang/wa@latest`
-3. `wa init -name=_examples/hi`
-4. `wa run _examples/hi`
+1. `go install github.com/wa-lang/wa@latest`
+2. `wa init -name=_examples/hi`
+3. `wa run _examples/hi`
 
 > 项目尚处于原型开源阶段，如果有共建和PR需求请 [入群交流](https://wa-lang.org/community/index.html)。
 
@@ -48,25 +54,6 @@
 
 更多细节请参考 [凹语言™项目目标](docs/goals.md)
 
-## 例子: 老凹，吃了吗
-
-hello.wa:
-
-```
-# 版权 @2019 凹语言 作者。保留所有权利。
-
-fn main() {
-	println("老凹，吃了吗")
-}
-```
-
-运行：
-
-```
-$ wa hello.wa 
-老凹，吃了吗
-```
-
 ## 例子: 打印素数
 
 打印 30 以内的素数：
@@ -74,9 +61,9 @@ $ wa hello.wa
 ```
 # 版权 @2021 凹语言™ 作者。保留所有权利。
 
-函数 main() {
+fn main() {
 	for n := 2; n <= 30; n = n + 1 {
-		变量 isPrime int = 1
+		var isPrime int = 1
 		for i := 2; i*i <= n; i = i + 1 {
 			if x := n % i; x == 0 {
 				isPrime = 0
