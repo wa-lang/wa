@@ -20,11 +20,6 @@ jobs:
         with:
           go-version: 1.17
 
-      - name: Setup Wasmer
-        uses: wasmerio/setup-wasmer@v1
-
-      - run: wasmer -V
-
       - run: go version
       - run: go env
 
@@ -36,9 +31,6 @@ jobs:
       - run: wa hello.wa
       - run: wa run _examples/prime
       - run: wa run hello.wa
-
-      - run: wa build -o a.out.wat hello.wa
-      - run: wasmer a.out.wat
 
       - uses: shogo82148/actions-goveralls@v1
         with:
@@ -54,10 +46,6 @@ jobs:
         uses: actions/setup-go@v2
         with:
           go-version: 1.17
-      - name: Setup Wasmer
-        uses: wasmerio/setup-wasmer@v1
-
-      - run: wasmer -V
 
       - run: go version
       - run: go env
@@ -70,10 +58,6 @@ jobs:
       - run: wa hello.wa
       - run: wa run _examples/prime
       - run: wa run hello.wa
-
-      - run: wa build -o a.out.wat hello.wa
-      - run: wasmer a.out.wat
-
 
   build-and-test-macos:
     runs-on: macos-12
@@ -85,10 +69,6 @@ jobs:
         uses: actions/setup-go@v2
         with:
           go-version: 1.17
-      - name: Setup Wasmer
-        uses: wasmerio/setup-wasmer@v1
-
-      - run: wasmer -V
 
       - run: go version
       - run: go env
@@ -101,6 +81,3 @@ jobs:
       - run: wa hello.wa
       - run: wa run _examples/prime
       - run: wa run hello.wa
-
-      - run: wa build -o a.out.wat hello.wa
-      - run: wasmer a.out.wat
