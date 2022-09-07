@@ -1,4 +1,4 @@
-package wir
+package wat
 
 /**************************************
 ImpObj:

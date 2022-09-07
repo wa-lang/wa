@@ -1,136 +1,132 @@
 package wir
 
 import (
-	"github.com/wa-lang/wa/internal/backends/compiler_wat/wir/wtypes"
+	"github.com/wa-lang/wa/internal/backends/compiler_wat/wir/wat"
 	"github.com/wa-lang/wa/internal/logger"
 )
 
-func EmitPushValue(x Value) []Instruction {
-	var insts []Instruction
-	vs := x.Raw()
-	if len(vs) > 1 {
-		for _, v := range vs {
-			insts = append(insts, EmitPushValue(v)...)
-		}
-	}
+//func EmitPushValue(x Value) []Instruction {
+//	var insts []Instruction
+//	vs := x.Raw()
+//	if len(vs) > 1 {
+//		for _, v := range vs {
+//			insts = append(insts, EmitPushValue(v)...)
+//		}
+//	}
+//
+//	switch x.Kind() {
+//	case ValueKindConst:
+//		insts = append(insts, NewInstConst(x))
+//
+//	case ValueKindLocal:
+//		insts = append(insts, NewInstGetLocal(x.Name()))
+//
+//	case ValueKindGlobal:
+//		logger.Fatal("Todo")
+//	}
+//
+//	return insts
+//}
 
-	switch x.Kind() {
-	case ValueKindConst:
-		insts = append(insts, NewInstConst(x))
+//func EmitPopValue(x Value) []Instruction {
+//	var insts []Instruction
+//	vs := x.Raw()
+//	if len(vs) > 1 {
+//		for _, v := range vs {
+//			insts = append(insts, EmitPopValue(v)...)
+//		}
+//	}
+//
+//	switch x.Kind() {
+//	case ValueKindConst:
+//		logger.Fatal("不可Pop至常数")
+//
+//	case ValueKindLocal:
+//		insts = append(insts, NewInstSetLocal(x.Name()))
+//
+//	case ValueKindGlobal:
+//		logger.Fatal("Todo")
+//	}
+//
+//	return insts
+//}
 
-	case ValueKindLocal:
-		insts = append(insts, NewInstGetLocal(x.Name()))
-
-	case ValueKindGlobal:
-		logger.Fatal("Todo")
-	}
-
-	return insts
-}
-
-func EmitPopValue(x Value) []Instruction {
-	var insts []Instruction
-	vs := x.Raw()
-	if len(vs) > 1 {
-		for _, v := range vs {
-			insts = append(insts, EmitPopValue(v)...)
-		}
-	}
-
-	switch x.Kind() {
-	case ValueKindConst:
-		logger.Fatal("不可Pop至常数")
-
-	case ValueKindLocal:
-		insts = append(insts, NewInstSetLocal(x.Name()))
-
-	case ValueKindGlobal:
-		logger.Fatal("Todo")
-	}
-
-	return insts
-}
-
-func EmitAssginValue(lh, rh Value) []Instruction {
-	var insts []Instruction
+func EmitAssginValue(lh, rh Value) []wat.Inst {
+	var insts []wat.Inst
 
 	if rh == nil {
-		ls := lh.Raw()
-		for _, v := range ls {
-			c := NewConst(v.Type(), nil)
-			insts = append(insts, EmitPushValue(c)...)
-			insts = append(insts, EmitPopValue(v)...)
-		}
+		insts = append(insts, lh.EmitRelease()...)
+		insts = append(insts, lh.EmitInit()...)
 	} else {
 		if !lh.Type().Equal(rh.Type()) {
 			logger.Fatal("x.Type() != y.Type()")
 		}
 
-		ls := lh.Raw()
-		rs := rh.Raw()
-
-		for i := range ls {
-			insts = append(insts, EmitPushValue(rs[i])...)
-			insts = append(insts, EmitPopValue(ls[i])...)
-		}
+		insts = append(insts, rh.EmitGet()...)
+		insts = append(insts, lh.EmitSet()...)
 	}
 
 	return insts
 }
 
-func EmitConvertValueType(from, to wtypes.ValueType) {
+func EmitConvertValueType(from, to ValueType) {
 	logger.Fatal("Todo")
 }
 
-func EmitBinOp(x, y Value, op OpCode) ([]Instruction, wtypes.ValueType) {
-	var insts []Instruction
-	rtype := binOpMatchType(x.Type(), y.Type())
+func EmitBinOp(x, y Value, op wat.OpCode) ([]wat.Inst, ValueType) {
+	var insts []wat.Inst
+	r := binOpMatchType(x.Type(), y.Type())
+	if len(r.Raw()) != 1 {
+		logger.Fatal("Todo %T", r)
+		return nil, nil
+	}
+	rtype := r.Raw()[0]
 
-	insts = append(insts, EmitPushValue(x)...)
-	insts = append(insts, EmitPushValue(y)...)
+	insts = append(insts, x.EmitGet()...)
+	insts = append(insts, y.EmitGet()...)
 
 	switch op {
-	case OpCodeAdd:
-		insts = append(insts, NewInstAdd(rtype))
+	case wat.OpCodeAdd:
+		insts = append(insts, wat.NewInstAdd(rtype))
 
-	case OpCodeSub:
-		insts = append(insts, NewInstSub(rtype))
+	case wat.OpCodeSub:
+		insts = append(insts, wat.NewInstSub(rtype))
 
-	case OpCodeMul:
-		insts = append(insts, NewInstMul(rtype))
+	case wat.OpCodeMul:
+		insts = append(insts, wat.NewInstMul(rtype))
 
-	case OpCodeQuo:
-		insts = append(insts, NewInstDiv(rtype))
+	case wat.OpCodeQuo:
+		insts = append(insts, wat.NewInstDiv(rtype))
 
-	case OpCodeRem:
-		insts = append(insts, NewInstRem(rtype))
+	case wat.OpCodeRem:
+		insts = append(insts, wat.NewInstRem(rtype))
 
-	case OpCodeEql:
-		insts = append(insts, NewInstEq(rtype))
+	case wat.OpCodeEql:
+		insts = append(insts, wat.NewInstEq(rtype))
 
-	case OpCodeNe:
-		insts = append(insts, NewInstNe(rtype))
+	case wat.OpCodeNe:
+		insts = append(insts, wat.NewInstNe(rtype))
 
-	case OpCodeLt:
-		insts = append(insts, NewInstLt(rtype))
+	case wat.OpCodeLt:
+		insts = append(insts, wat.NewInstLt(rtype))
 
-	case OpCodeGt:
-		insts = append(insts, NewInstGt(rtype))
+	case wat.OpCodeGt:
+		insts = append(insts, wat.NewInstGt(rtype))
 
-	case OpCodeLe:
-		insts = append(insts, NewInstLe(rtype))
+	case wat.OpCodeLe:
+		insts = append(insts, wat.NewInstLe(rtype))
 
-	case OpCodeGe:
-		insts = append(insts, NewInstGe(rtype))
+	case wat.OpCodeGe:
+		insts = append(insts, wat.NewInstGe(rtype))
 
 	default:
 		logger.Fatal("Todo")
 	}
 
-	return insts, rtype
+	return insts, r
 }
 
-func binOpMatchType(x, y wtypes.ValueType) wtypes.ValueType {
+func binOpMatchType(x, y ValueType) ValueType {
 	if x.Equal(y) {
 		return x
 	}

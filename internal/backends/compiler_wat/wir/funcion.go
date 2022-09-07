@@ -1,58 +1,24 @@
 package wir
 
-import "github.com/wa-lang/wa/internal/backends/compiler_wat/wir/wtypes"
+import "github.com/wa-lang/wa/internal/backends/compiler_wat/wir/wat"
 
-func (f *Function) Format(indent string) string {
-	s := indent + "(func $" + f.Name + " (export \"" + f.Name + "\")"
+func (f *Function) ToWatFunc() *wat.Function {
+	var wat_func wat.Function
+
+	wat_func.Name = f.Name
+
+	wat_func.Results = f.Result.Raw()
 
 	for _, param := range f.Params {
-		rps := param.Raw()
-		for _, rp := range rps {
-			s += " (param $" + rp.Name() + " " + rp.Type().Name() + ")"
-		}
+		raw := param.raw()
+		wat_func.Params = append(wat_func.Params, raw...)
 	}
-
-	if !f.Result.Equal(wtypes.Void{}) {
-		s += " (result"
-		rrs := f.Result.Raw()
-		for _, rr := range rrs {
-			s += " " + rr.Name()
-		}
-		s += ")"
-	}
-	s += "\n"
 
 	for _, local := range f.Locals {
-		rls := local.Raw()
-		s += indent + " "
-		for _, rl := range rls {
-			s += " (local $" + rl.Name() + " " + rl.Type().Name() + ")"
-		}
-		s += "\n"
+		raw := local.raw()
+		wat_func.Locals = append(wat_func.Locals, raw...)
 	}
 
-	for _, inst := range f.Insts {
-		s += inst.Format(indent+"  ") + "\n"
-	}
-
-	s += indent + ") ;;" + f.Name
-	return s
-}
-
-func (sig *FuncSig) String() string {
-	str := ""
-	for _, param := range sig.Params {
-		rps := param.Raw()
-		for _, rp := range rps {
-			str += " (param " + rp.Name() + ")"
-		}
-	}
-
-	for _, ret := range sig.Results {
-		rrs := ret.Raw()
-		for _, rp := range rrs {
-			str += " (result " + rp.Name() + ")"
-		}
-	}
-	return str
+	wat_func.Insts = f.Insts
+	return &wat_func
 }

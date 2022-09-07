@@ -1,9 +1,8 @@
-package wir
+package wat
 
 import (
 	"strconv"
 
-	"github.com/wa-lang/wa/internal/backends/compiler_wat/wir/wtypes"
 	"github.com/wa-lang/wa/internal/logger"
 )
 
@@ -17,26 +16,15 @@ InstConst:
 **************************************/
 type InstConst struct {
 	anInstruction
-	value Value
+	typ  ValueType
+	name string
 }
 
-func NewInstConst(v Value) *InstConst {
-	if v.Kind() != ValueKindConst {
-		logger.Fatal("newInstructionConst()只能接受常数")
-	}
-	return &InstConst{value: v}
+func NewInstConst(typ ValueType, name string) *InstConst {
+	return &InstConst{typ: typ, name: name}
 }
 func (i *InstConst) Format(indent string) string {
-	switch i.value.Type().(type) {
-	case wtypes.Int32:
-		return indent + "i32.const " + i.value.Name()
-
-	case wtypes.Int64:
-		return indent + "i64.const " + i.value.Name()
-	}
-
-	logger.Fatalf("Todo %T", i.value.Type())
-	return ""
+	return indent + i.typ.Name() + ".const " + i.name
 }
 
 /**************************************
@@ -66,46 +54,46 @@ InstAdd:
 **************************************/
 type InstAdd struct {
 	anInstruction
-	typ wtypes.ValueType
+	typ ValueType
 }
 
-func NewInstAdd(t wtypes.ValueType) *InstAdd   { return &InstAdd{typ: t} }
-func (i *InstAdd) Format(indent string) string { return indent + i.typ.String() + ".add" }
+func NewInstAdd(t ValueType) *InstAdd          { return &InstAdd{typ: t} }
+func (i *InstAdd) Format(indent string) string { return indent + i.typ.Name() + ".add" }
 
 /**************************************
 InstSub:
 **************************************/
 type InstSub struct {
 	anInstruction
-	typ wtypes.ValueType
+	typ ValueType
 }
 
-func NewInstSub(t wtypes.ValueType) *InstSub   { return &InstSub{typ: t} }
-func (i *InstSub) Format(indent string) string { return indent + i.typ.String() + ".sub" }
+func NewInstSub(t ValueType) *InstSub          { return &InstSub{typ: t} }
+func (i *InstSub) Format(indent string) string { return indent + i.typ.Name() + ".sub" }
 
 /**************************************
 InstMul:
 **************************************/
 type InstMul struct {
 	anInstruction
-	typ wtypes.ValueType
+	typ ValueType
 }
 
-func NewInstMul(t wtypes.ValueType) *InstMul   { return &InstMul{typ: t} }
-func (i *InstMul) Format(indent string) string { return indent + i.typ.String() + ".mul" }
+func NewInstMul(t ValueType) *InstMul          { return &InstMul{typ: t} }
+func (i *InstMul) Format(indent string) string { return indent + i.typ.Name() + ".mul" }
 
 /**************************************
 InstDiv:
 **************************************/
 type InstDiv struct {
 	anInstruction
-	typ wtypes.ValueType
+	typ ValueType
 }
 
-func NewInstDiv(t wtypes.ValueType) *InstDiv { return &InstDiv{typ: t} }
+func NewInstDiv(t ValueType) *InstDiv { return &InstDiv{typ: t} }
 func (i *InstDiv) Format(indent string) string {
 	switch i.typ.(type) {
-	case wtypes.Int32:
+	case I32:
 		return indent + "i32.div_s"
 	}
 	logger.Fatal("Todo")
@@ -117,13 +105,13 @@ InstRem:
 **************************************/
 type InstRem struct {
 	anInstruction
-	typ wtypes.ValueType
+	typ ValueType
 }
 
-func NewInstRem(t wtypes.ValueType) *InstRem { return &InstRem{typ: t} }
+func NewInstRem(t ValueType) *InstRem { return &InstRem{typ: t} }
 func (i *InstRem) Format(indent string) string {
 	switch i.typ.(type) {
-	case wtypes.Int32:
+	case I32:
 		return indent + "i32.rem_s"
 	}
 	logger.Fatal("Todo")
@@ -135,35 +123,35 @@ InstEq:
 **************************************/
 type InstEq struct {
 	anInstruction
-	typ wtypes.ValueType
+	typ ValueType
 }
 
-func NewInstEq(t wtypes.ValueType) *InstEq    { return &InstEq{typ: t} }
-func (i *InstEq) Format(indent string) string { return indent + i.typ.String() + ".eq" }
+func NewInstEq(t ValueType) *InstEq           { return &InstEq{typ: t} }
+func (i *InstEq) Format(indent string) string { return indent + i.typ.Name() + ".eq" }
 
 /**************************************
 InstNe:
 **************************************/
 type InstNe struct {
 	anInstruction
-	typ wtypes.ValueType
+	typ ValueType
 }
 
-func NewInstNe(t wtypes.ValueType) *InstNe    { return &InstNe{typ: t} }
-func (i *InstNe) Format(indent string) string { return indent + i.typ.String() + ".ne" }
+func NewInstNe(t ValueType) *InstNe           { return &InstNe{typ: t} }
+func (i *InstNe) Format(indent string) string { return indent + i.typ.Name() + ".ne" }
 
 /**************************************
 InstLt:
 **************************************/
 type InstLt struct {
 	anInstruction
-	typ wtypes.ValueType
+	typ ValueType
 }
 
-func NewInstLt(t wtypes.ValueType) *InstLt { return &InstLt{typ: t} }
+func NewInstLt(t ValueType) *InstLt { return &InstLt{typ: t} }
 func (i *InstLt) Format(indent string) string {
 	switch i.typ.(type) {
-	case wtypes.Int32:
+	case I32:
 		return indent + "i32.lt_s"
 	}
 	logger.Fatal("Todo")
@@ -175,13 +163,13 @@ InstGt:
 **************************************/
 type InstGt struct {
 	anInstruction
-	typ wtypes.ValueType
+	typ ValueType
 }
 
-func NewInstGt(t wtypes.ValueType) *InstGt { return &InstGt{typ: t} }
+func NewInstGt(t ValueType) *InstGt { return &InstGt{typ: t} }
 func (i *InstGt) Format(indent string) string {
 	switch i.typ.(type) {
-	case wtypes.Int32:
+	case I32:
 		return indent + "i32.gt_s"
 	}
 	logger.Fatal("Todo")
@@ -193,13 +181,13 @@ InstLe:
 **************************************/
 type InstLe struct {
 	anInstruction
-	typ wtypes.ValueType
+	typ ValueType
 }
 
-func NewInstLe(t wtypes.ValueType) *InstLe { return &InstLe{typ: t} }
+func NewInstLe(t ValueType) *InstLe { return &InstLe{typ: t} }
 func (i *InstLe) Format(indent string) string {
 	switch i.typ.(type) {
-	case wtypes.Int32:
+	case I32:
 		return indent + "i32.le_s"
 	}
 	logger.Fatal("Todo")
@@ -211,13 +199,13 @@ InstGe:
 **************************************/
 type InstGe struct {
 	anInstruction
-	typ wtypes.ValueType
+	typ ValueType
 }
 
-func NewInstGe(t wtypes.ValueType) *InstGe { return &InstGe{typ: t} }
+func NewInstGe(t ValueType) *InstGe { return &InstGe{typ: t} }
 func (i *InstGe) Format(indent string) string {
 	switch i.typ.(type) {
-	case wtypes.Int32:
+	case I32:
 		return indent + "i32.ge_s"
 	}
 	logger.Fatal("Todo")
@@ -241,7 +229,7 @@ InstBlock:
 type InstBlock struct {
 	anInstruction
 	name  string
-	Insts []Instruction
+	Insts []Inst
 }
 
 func NewInstBlock(name string) *InstBlock { return &InstBlock{name: name} }
@@ -261,7 +249,7 @@ InstLoop:
 type InstLoop struct {
 	anInstruction
 	name  string
-	Insts []Instruction
+	Insts []Inst
 }
 
 func NewInstLoop(name string) *InstLoop { return &InstLoop{name: name} }
@@ -308,21 +296,20 @@ InstIf:
 **************************************/
 type InstIf struct {
 	anInstruction
-	True  []Instruction
-	False []Instruction
-	Ret   wtypes.ValueType
+	True  []Inst
+	False []Inst
+	Ret   []ValueType
 }
 
-func NewInstIf(instsTrue, instsFalse []Instruction, ret wtypes.ValueType) *InstIf {
+func NewInstIf(instsTrue, instsFalse []Inst, ret []ValueType) *InstIf {
 	return &InstIf{True: instsTrue, False: instsFalse, Ret: ret}
 }
 func (i *InstIf) Format(indent string) string {
 	s := indent + "if"
-	if !i.Ret.Equal(wtypes.Void{}) {
+	if len(i.Ret) > 0 {
 		s += " (result"
-		rrs := i.Ret.Raw()
-		for _, rr := range rrs {
-			s += " " + rr.Name()
+		for _, r := range i.Ret {
+			s += " " + r.Name()
 		}
 		s += ")"
 	}

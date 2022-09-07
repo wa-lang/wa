@@ -1,4 +1,4 @@
-package wir
+package wat
 
 func (m *Module) String() string {
 	s := "(module $__walang__\n"

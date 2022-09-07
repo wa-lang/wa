@@ -3,16 +3,15 @@ package wir
 import (
 	"github.com/wa-lang/wa/internal/types"
 
-	"github.com/wa-lang/wa/internal/backends/compiler_wat/wir/wtypes"
 	"github.com/wa-lang/wa/internal/logger"
 )
 
-func ToWType(from types.Type) wtypes.ValueType {
+func ToWType(from types.Type) ValueType {
 	switch t := from.(type) {
 	case *types.Basic:
 		switch t.Kind() {
 		case types.Bool:
-			return wtypes.Int32{}
+			return Int32{}
 
 		case types.Int8, types.UntypedBool:
 			logger.Fatalf("ToWType Todo:%T", t)
@@ -27,7 +26,7 @@ func ToWType(from types.Type) wtypes.ValueType {
 			logger.Fatalf("ToWType Todo:%T", t)
 
 		case types.Int, types.Int32, types.UntypedInt:
-			return wtypes.Int32{}
+			return Int32{}
 
 		case types.Uint, types.Uint32:
 			logger.Fatalf("ToWType Todo:%T", t)
@@ -55,7 +54,7 @@ func ToWType(from types.Type) wtypes.ValueType {
 	case *types.Tuple:
 		switch t.Len() {
 		case 0:
-			return wtypes.Void{}
+			return Void{}
 
 		case 1:
 			return ToWType(t.At(0).Type())

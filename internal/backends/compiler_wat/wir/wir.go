@@ -1,52 +1,26 @@
 package wir
 
-import (
-	"github.com/wa-lang/wa/internal/backends/compiler_wat/wir/wtypes"
-)
-
-type Module struct {
-	BaseWat string
-	Imports []Import
-	Funcs   []*Function
-}
-
-/**************************************
-Import:
-**************************************/
-type Import interface {
-	Format(indent string) string
-	ModuleName() string
-	ObjName() string
-	Type() ObjType
-}
+import "github.com/wa-lang/wa/internal/backends/compiler_wat/wir/wat"
 
 /**************************************
 Function:
 **************************************/
 type Function struct {
 	Name   string
-	Result wtypes.ValueType
+	Result ValueType
 	Params []Value
 	Locals []Value
 
-	Insts []Instruction
+	Insts []wat.Inst
 }
 
 /**************************************
 FuncSig:
 **************************************/
-type FuncSig struct {
-	Params  []wtypes.ValueType
-	Results []wtypes.ValueType
-}
-
-/**************************************
-Instruction:
-**************************************/
-type Instruction interface {
-	Format(indent string) string
-	isInstruction()
-}
+//type FuncSig struct {
+//	Params  []ValueType
+//	Results []ValueType
+//}
 
 type ValueKind uint8
 
@@ -62,37 +36,19 @@ Value:
 type Value interface {
 	Name() string
 	Kind() ValueKind
-	Type() wtypes.ValueType
-	Raw() []Value
+	Type() ValueType
+	raw() []wat.Value
+	EmitInit() []wat.Inst
+	EmitGet() []wat.Inst
+	EmitSet() []wat.Inst
+	EmitRelease() []wat.Inst
 }
 
 /**************************************
-OpCode:
+ValueType:
 **************************************/
-type OpCode int32
-
-const (
-	OpCodeAdd OpCode = iota
-	OpCodeSub
-	OpCodeMul
-	OpCodeQuo
-	OpCodeRem
-	OpCodeEql
-	OpCodeNe
-	OpCodeLt
-	OpCodeGt
-	OpCodeLe
-	OpCodeGe
-)
-
-/**************************************
-ObjType:
-**************************************/
-type ObjType int32
-
-const (
-	ObjTypeFunc ObjType = iota
-	ObjTypeMem
-	ObjTypeTable
-	ObjTypeGlobal
-)
+type ValueType interface {
+	byteSize() int
+	Raw() []wat.ValueType
+	Equal(ValueType) bool
+}
