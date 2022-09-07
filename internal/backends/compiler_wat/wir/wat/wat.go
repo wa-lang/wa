@@ -1,10 +1,6 @@
-package wat
+// 版权 @2022 凹语言 作者。保留所有权利。
 
-type Module struct {
-	BaseWat string
-	Imports []Import
-	Funcs   []*Function
-}
+package wat
 
 /**************************************
 Import:

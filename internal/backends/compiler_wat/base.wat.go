@@ -200,7 +200,7 @@ const modBaseWat = `
 	local.get $ch
 	call $__print_char
 )
-(func $$print_char (param $ch i32)
+(func $$print_rune (param $ch i32)
 	local.get $ch
 	call $__print_char
 )
