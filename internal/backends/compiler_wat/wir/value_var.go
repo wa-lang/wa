@@ -59,7 +59,7 @@ func NewVarI32(name string, kind ValueKind) *VarI32 {
 }
 func (v *VarI32) raw() []wat.Value { return []wat.Value{wat.NewVarI32(v.name)} }
 func (v *VarI32) EmitInit() []wat.Inst {
-	return []wat.Inst{wat.NewInstConst(wat.I32{}, "0"), v.rawGet(v.name)}
+	return []wat.Inst{wat.NewInstConst(wat.I32{}, "0"), v.rawSet(v.name)}
 }
 func (v *VarI32) EmitGet() []wat.Inst     { return []wat.Inst{v.rawGet(v.name)} }
 func (v *VarI32) EmitSet() []wat.Inst     { return []wat.Inst{v.rawSet(v.name)} }
