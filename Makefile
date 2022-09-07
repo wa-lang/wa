@@ -7,6 +7,6 @@ prime:
 	go run main.go run _examples/prime
 
 build-wasm:
-	GOARCH=wasm GOOS=js go build -o wasm.wasm ./main_wasm.go
+	GOARCH=wasm GOOS=js go build -o wa.out.wasm ./main_wasm.go
 
 clean:
