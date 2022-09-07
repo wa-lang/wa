@@ -30,6 +30,7 @@ func RunWasm(filename string) (stdoutStderr []byte, err error) {
 		if stdoutStderr, err = RunWat2Wasm(filename, "-o", dst); err != nil {
 			return stdoutStderr, err
 		}
+		defer os.Remove(dst)
 	}
 
 	wasmBytes, err := os.ReadFile(dst)

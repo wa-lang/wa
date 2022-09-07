@@ -7,8 +7,9 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
-	"runtime"
 	"runtime/debug"
+	"strings"
+	"time"
 
 	"github.com/wa-lang/wa/internal/3rdparty/cli"
 	"github.com/wa-lang/wa/internal/app"
@@ -25,15 +26,20 @@ func main() {
 				return info.Main.Version
 			}
 		}
-		return "(devel)"
+		return "devel:" + time.Now().Format("2006-01-02+15:04:05")
 	}()
 
 	cliApp.Flags = []cli.Flag{
-		&cli.StringFlag{Name: "os", Usage: "set target OS", Value: runtime.GOOS},
-		&cli.StringFlag{Name: "arch", Usage: "set target Arch", Value: runtime.GOARCH},
-		&cli.StringFlag{Name: "clang", Usage: "set clang"},
-		&cli.BoolFlag{Name: "debug", Aliases: []string{"d"}, Usage: "set debug mode"},
-		&cli.StringFlag{Name: "trace", Aliases: []string{"t"}, Usage: "set trace mode (*|app|compiler|loader)"},
+		&cli.BoolFlag{
+			Name:    "debug",
+			Aliases: []string{"d"},
+			Usage:   "set debug mode",
+		},
+		&cli.StringFlag{
+			Name:    "trace",
+			Aliases: []string{"t"},
+			Usage:   "set trace mode (*|app|compiler|loader)",
+		},
 	}
 
 	cliApp.Before = func(c *cli.Context) error {
@@ -102,38 +108,49 @@ func main() {
 			},
 		},
 		{
-			Name:  "fmt",
-			Usage: "format Wa package sources",
-			Action: func(c *cli.Context) error {
-				waApp := app.NewApp(build_Options(c))
-				err := waApp.Fmt(c.Args().First())
-				if err != nil {
-					fmt.Println(err)
-					os.Exit(1)
-				}
-				return nil
-			},
-		},
-		{
 			Name:  "run",
 			Usage: "compile and run Wa program",
+			Flags: []cli.Flag{
+				&cli.BoolFlag{
+					Name:  "html",
+					Usage: "output html",
+				},
+			},
 			Action: func(c *cli.Context) error {
 				if c.NArg() == 0 {
 					fmt.Fprintf(os.Stderr, "no input file")
 					os.Exit(1)
 				}
 
-				waApp := app.NewApp(build_Options(c))
-				data, err := waApp.Run(c.Args().First(), nil)
-				if len(data) != 0 {
-					fmt.Print(string(data))
-				}
-				if errx, ok := err.(*exec.ExitError); ok {
-					os.Exit(errx.ExitCode())
-				}
+				ctx := app.NewApp(build_Options(c))
+				output, err := ctx.WASM(c.Args().First())
 				if err != nil {
 					fmt.Println(err)
+					os.Exit(1)
 				}
+
+				outfile := "a.out.wat"
+				if !c.Bool("debug") {
+					defer os.Remove(outfile)
+				}
+
+				if err = os.WriteFile(outfile, []byte(output), 0666); err != nil {
+					fmt.Println(err)
+					os.Exit(1)
+				}
+
+				stdoutStderr, err := app.RunWasm(outfile)
+				if err != nil {
+					if len(stdoutStderr) > 0 {
+						fmt.Println(string(stdoutStderr))
+					}
+					fmt.Println(err)
+					os.Exit(1)
+				}
+				if len(stdoutStderr) > 0 {
+					fmt.Println(string(stdoutStderr))
+				}
+
 				return nil
 			},
 		},
@@ -146,140 +163,9 @@ func main() {
 					Aliases: []string{"o"},
 					Usage:   "set output file",
 				},
-			},
-			Action: func(c *cli.Context) error {
-				if c.NArg() == 0 {
-					fmt.Fprintf(os.Stderr, "no input file")
-					os.Exit(1)
-				}
-
-				opt := build_Options(c)
-
-				outfile := c.String("output")
-				if outfile == "" {
-					outfile = "a.out"
-					if opt.TargetOS == "windows" {
-						outfile += ".exe"
-					}
-				}
-
-				waApp := app.NewApp(opt)
-				data, err := waApp.Build(c.Args().First(), nil, outfile)
-				if len(data) != 0 {
-					fmt.Print(string(data))
-				}
-				if errx, ok := err.(*exec.ExitError); ok {
-					os.Exit(errx.ExitCode())
-				}
-				if err != nil {
-					fmt.Println(err)
-				}
-				return nil
-			},
-		},
-		{
-			Name:  "lex",
-			Usage: "lex Wa source code and print token list",
-			Action: func(c *cli.Context) error {
-				if c.NArg() == 0 {
-					fmt.Fprintf(os.Stderr, "no input file")
-					os.Exit(1)
-				}
-
-				waApp := app.NewApp(build_Options(c))
-				err := waApp.Lex(c.Args().First())
-				if err != nil {
-					fmt.Println(err)
-					os.Exit(1)
-				}
-				return nil
-			},
-		},
-		{
-			Name:  "ast",
-			Usage: "parse Wa source code and print ast",
-			Action: func(c *cli.Context) error {
-				if c.NArg() == 0 {
-					fmt.Fprintf(os.Stderr, "no input file")
-					os.Exit(1)
-				}
-
-				waApp := app.NewApp(build_Options(c))
-				err := waApp.AST(c.Args().First())
-				if err != nil {
-					fmt.Println(err)
-					os.Exit(1)
-				}
-				return nil
-			},
-		},
-		{
-			Name:  "ssa",
-			Usage: "print Wa ssa code",
-			Action: func(c *cli.Context) error {
-				if c.NArg() == 0 {
-					fmt.Fprintf(os.Stderr, "no input file")
-					os.Exit(1)
-				}
-
-				ctx := app.NewApp(build_Options(c))
-				err := ctx.SSA(c.Args().First())
-				if err != nil {
-					fmt.Println(err)
-					os.Exit(1)
-				}
-				return nil
-			},
-		},
-		{
-			Name:  "cir",
-			Usage: "print cir code",
-			Action: func(c *cli.Context) error {
-				if c.NArg() == 0 {
-					fmt.Fprintf(os.Stderr, "no input file")
-					os.Exit(1)
-				}
-
-				ctx := app.NewApp(build_Options(c))
-				err := ctx.CIR(c.Args().First())
-				if err != nil {
-					fmt.Println(err)
-					os.Exit(1)
-				}
-				return nil
-			},
-		},
-		{
-			Name:  "asm",
-			Usage: "parse Wa and print ouput assembly code",
-			Action: func(c *cli.Context) error {
-				if c.NArg() == 0 {
-					fmt.Fprintf(os.Stderr, "no input file")
-					os.Exit(1)
-				}
-
-				ctx := app.NewApp(build_Options(c))
-				err := ctx.ASM(c.Args().First())
-				if err != nil {
-					fmt.Println(err)
-					os.Exit(1)
-				}
-				return nil
-			},
-		},
-		{
-			Name:  "wasm",
-			Usage: "parse Wa and print ouput WebAssembly text",
-			Flags: []cli.Flag{
-				&cli.StringFlag{
-					Name:    "output",
-					Aliases: []string{"o"},
-					Usage:   "set output file",
-					Value:   "a.out.wat",
-				},
 				&cli.BoolFlag{
-					Name:  "run",
-					Usage: "run wat or wasm",
+					Name:  "html",
+					Usage: "output html",
 				},
 			},
 			Action: func(c *cli.Context) error {
@@ -298,38 +184,113 @@ func main() {
 				}
 
 				if outfile != "" && outfile != "-" {
+					if !strings.HasSuffix(outfile, ".wat") {
+						outfile += ".wat"
+					}
 					err := os.WriteFile(outfile, []byte(output), 0666)
 					if err != nil {
 						fmt.Println(err)
 						os.Exit(1)
 					}
 				} else {
-					if c.Bool("run") {
-						outfile = "a.out.wat"
-						err := os.WriteFile(outfile, []byte(output), 0666)
-						if err != nil {
-							fmt.Println(err)
-							os.Exit(1)
-						}
-					} else {
-						fmt.Println(string(output))
-					}
+					fmt.Println(string(output))
 				}
 
-				if c.Bool("run") {
-					stdoutStderr, err := app.RunWasm(outfile)
-					if err != nil {
-						if len(stdoutStderr) > 0 {
-							fmt.Println(string(stdoutStderr))
-						}
-						fmt.Println(err)
-						os.Exit(1)
-					}
-					if len(stdoutStderr) > 0 {
-						fmt.Println(string(stdoutStderr))
-					}
+				return nil
+			},
+		},
+		{
+			Hidden: true,
+			Name:   "lex",
+			Usage:  "lex Wa source code and print token list",
+			Action: func(c *cli.Context) error {
+				if c.NArg() == 0 {
+					fmt.Fprintf(os.Stderr, "no input file")
+					os.Exit(1)
 				}
 
+				waApp := app.NewApp(build_Options(c))
+				err := waApp.Lex(c.Args().First())
+				if err != nil {
+					fmt.Println(err)
+					os.Exit(1)
+				}
+				return nil
+			},
+		},
+		{
+			Hidden: true,
+			Name:   "ast",
+			Usage:  "parse Wa source code and print ast",
+			Action: func(c *cli.Context) error {
+				if c.NArg() == 0 {
+					fmt.Fprintf(os.Stderr, "no input file")
+					os.Exit(1)
+				}
+
+				waApp := app.NewApp(build_Options(c))
+				err := waApp.AST(c.Args().First())
+				if err != nil {
+					fmt.Println(err)
+					os.Exit(1)
+				}
+				return nil
+			},
+		},
+		{
+			Hidden: true,
+			Name:   "ssa",
+			Usage:  "print Wa ssa code",
+			Action: func(c *cli.Context) error {
+				if c.NArg() == 0 {
+					fmt.Fprintf(os.Stderr, "no input file")
+					os.Exit(1)
+				}
+
+				ctx := app.NewApp(build_Options(c))
+				err := ctx.SSA(c.Args().First())
+				if err != nil {
+					fmt.Println(err)
+					os.Exit(1)
+				}
+				return nil
+			},
+		},
+		{
+			Hidden: true,
+			Name:   "cir",
+			Usage:  "print cir code",
+			Action: func(c *cli.Context) error {
+				if c.NArg() == 0 {
+					fmt.Fprintf(os.Stderr, "no input file")
+					os.Exit(1)
+				}
+
+				ctx := app.NewApp(build_Options(c))
+				err := ctx.CIR(c.Args().First())
+				if err != nil {
+					fmt.Println(err)
+					os.Exit(1)
+				}
+				return nil
+			},
+		},
+		{
+			Hidden: true,
+			Name:   "asm",
+			Usage:  "parse Wa and print ouput assembly code",
+			Action: func(c *cli.Context) error {
+				if c.NArg() == 0 {
+					fmt.Fprintf(os.Stderr, "no input file")
+					os.Exit(1)
+				}
+
+				ctx := app.NewApp(build_Options(c))
+				err := ctx.ASM(c.Args().First())
+				if err != nil {
+					fmt.Println(err)
+					os.Exit(1)
+				}
 				return nil
 			},
 		},
@@ -338,6 +299,19 @@ func main() {
 			Usage: "test packages",
 			Action: func(c *cli.Context) error {
 				fmt.Println("TODO")
+				return nil
+			},
+		},
+		{
+			Name:  "fmt",
+			Usage: "format Wa package sources",
+			Action: func(c *cli.Context) error {
+				waApp := app.NewApp(build_Options(c))
+				err := waApp.Fmt(c.Args().First())
+				if err != nil {
+					fmt.Println(err)
+					os.Exit(1)
+				}
 				return nil
 			},
 		},
@@ -376,9 +350,6 @@ func main() {
 
 func build_Options(c *cli.Context) *app.Option {
 	return &app.Option{
-		Debug:      c.Bool("debug"),
-		TargetOS:   c.String("os"),
-		TargetArch: c.String("arch"),
-		Clang:      c.String("clang"),
+		Debug: c.Bool("debug"),
 	}
 }
