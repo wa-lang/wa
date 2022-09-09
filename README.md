@@ -16,14 +16,9 @@
 
 </div>
 
-凹语言™（凹读音“Wa”）是[柴树杉](https://github.com/chai2010)、[丁尔男](https://github.com/3dgen)和[史斌](https://github.com/benshi001)设计的专注于 WASM 平台的实验性通用编程语言。
+凹语言™（凹读音“Wa”）是 [柴树杉](https://github.com/chai2010)、[丁尔男](https://github.com/3dgen)、[史斌](https://github.com/benshi001) 针对 WASM 平台设计的的通用编程语言，支持 Linux、macOS 和 Windows 等主流操作系统和 Chrome 等浏览器环境。
 
-开发组成员：
-- [柴树杉](https://github.com/chai2010)
-- [丁尔男](https://github.com/3dgen)
-- [史斌](https://github.com/benshi001)
-- [扈梦明](https://github.com/xxxDeveloper)
-- [刘云峰](https://github.com/leaftree)
+开发组成员：[柴树杉](https://github.com/chai2010)、[丁尔男](https://github.com/3dgen)、[史斌](https://github.com/benshi001)、[扈梦明](https://github.com/xxxDeveloper)、[刘云峰](https://github.com/leaftree)
 
 ```
 +---+    +---+
