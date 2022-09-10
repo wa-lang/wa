@@ -2,6 +2,7 @@
 
 fn main() {
 	println(sum(100))
+	heart()
 }
 
 fn sum(n: int) => int {
@@ -10,4 +11,19 @@ fn sum(n: int) => int {
 		v += i
 	}
 	return v
+}
+
+fn heart() {
+	a := 0.0
+	for y := 1.5; y > -1.5; y = y - 0.1 {
+		for x := -1.5; x < 1.5; x = x + 0.05 {
+			a = x*x + y*y - 1.0
+			if a*a*a < x*x*y*y*y {
+				print('@')
+			} else {
+				print(' ')
+			}
+		}
+		println()
+	}
 }
