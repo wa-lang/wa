@@ -8,47 +8,74 @@ import (
 /**************************************
 Void:
 **************************************/
-type Void struct {
-}
+type Void struct{}
 
-func (t Void) byteSize() int        { return 0 }
-func (t Void) Raw() []wat.ValueType { return []wat.ValueType{} }
-func (t Void) Equal(u ValueType) bool {
-	if _, ok := u.(Void); ok {
-		return true
-	}
-	return false
-}
+func (t Void) byteSize() int          { return 0 }
+func (t Void) Raw() []wat.ValueType   { return []wat.ValueType{} }
+func (t Void) Equal(u ValueType) bool { _, ok := u.(Void); return ok }
 
 /**************************************
-Int32:
+RUNE:
 **************************************/
-type Int32 struct {
-}
+type RUNE struct{}
 
-func (t Int32) byteSize() int        { return 4 }
-func (t Int32) Raw() []wat.ValueType { return []wat.ValueType{wat.I32{}} }
-func (t Int32) Equal(u ValueType) bool {
-	if _, ok := u.(Int32); ok {
-		return true
-	}
-	return false
-}
+func (t RUNE) byteSize() int          { return 4 }
+func (t RUNE) Raw() []wat.ValueType   { return []wat.ValueType{wat.I32{}} }
+func (t RUNE) Equal(u ValueType) bool { _, ok := u.(RUNE); return ok }
 
 /**************************************
-Int64:
+I32:
 **************************************/
-type Int64 struct {
-}
+type I32 struct{}
 
-func (t Int64) byteSize() int        { return 8 }
-func (t Int64) Raw() []wat.ValueType { return []wat.ValueType{wat.I64{}} }
-func (t Int64) Equal(u ValueType) bool {
-	if _, ok := u.(Int64); ok {
-		return true
-	}
-	return false
-}
+func (t I32) byteSize() int          { return 4 }
+func (t I32) Raw() []wat.ValueType   { return []wat.ValueType{wat.I32{}} }
+func (t I32) Equal(u ValueType) bool { _, ok := u.(I32); return ok }
+
+/**************************************
+U32:
+**************************************/
+type U32 struct{}
+
+func (t U32) byteSize() int          { return 4 }
+func (t U32) Raw() []wat.ValueType   { return []wat.ValueType{wat.U32{}} }
+func (t U32) Equal(u ValueType) bool { _, ok := u.(U32); return ok }
+
+/**************************************
+I64:
+**************************************/
+type I64 struct{}
+
+func (t I64) byteSize() int          { return 8 }
+func (t I64) Raw() []wat.ValueType   { return []wat.ValueType{wat.I64{}} }
+func (t I64) Equal(u ValueType) bool { _, ok := u.(I64); return ok }
+
+/**************************************
+Uint64:
+**************************************/
+type U64 struct{}
+
+func (t U64) byteSize() int          { return 8 }
+func (t U64) Raw() []wat.ValueType   { return []wat.ValueType{wat.U64{}} }
+func (t U64) Equal(u ValueType) bool { _, ok := u.(U64); return ok }
+
+/**************************************
+F32:
+**************************************/
+type F32 struct{}
+
+func (t F32) byteSize() int          { return 4 }
+func (t F32) Raw() []wat.ValueType   { return []wat.ValueType{wat.F32{}} }
+func (t F32) Equal(u ValueType) bool { _, ok := u.(F32); return ok }
+
+/**************************************
+F64:
+**************************************/
+type F64 struct{}
+
+func (t F64) byteSize() int          { return 8 }
+func (t F64) Raw() []wat.ValueType   { return []wat.ValueType{wat.F64{}} }
+func (t F64) Equal(u ValueType) bool { _, ok := u.(F64); return ok }
 
 /**************************************
 Pointer:

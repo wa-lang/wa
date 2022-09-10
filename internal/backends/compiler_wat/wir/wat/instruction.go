@@ -97,6 +97,22 @@ func (i *InstDiv) Format(indent string) string {
 	switch i.typ.(type) {
 	case I32:
 		return indent + "i32.div_s"
+
+	case U32:
+		return indent + "i32.div_u"
+
+	case I64:
+		return indent + "i64.div_s"
+
+	case U64:
+		return indent + "i64.div_u"
+
+	case F32:
+		return indent + "f32.div"
+
+	case F64:
+		return indent + "f64.div"
+
 	}
 	logger.Fatal("Todo")
 	return ""
@@ -115,6 +131,15 @@ func (i *InstRem) Format(indent string) string {
 	switch i.typ.(type) {
 	case I32:
 		return indent + "i32.rem_s"
+
+	case U32:
+		return indent + "i32.rem_u"
+
+	case I64:
+		return indent + "i64.rem_s"
+
+	case U64:
+		return indent + "i64.rem_u"
 	}
 	logger.Fatal("Todo")
 	return ""
@@ -155,6 +180,21 @@ func (i *InstLt) Format(indent string) string {
 	switch i.typ.(type) {
 	case I32:
 		return indent + "i32.lt_s"
+
+	case U32:
+		return indent + "i32.lt_u"
+
+	case I64:
+		return indent + "i64.lt_s"
+
+	case U64:
+		return indent + "i64.lt_u"
+
+	case F32:
+		return indent + "f32.lt"
+
+	case F64:
+		return indent + "f64.lt"
 	}
 	logger.Fatal("Todo")
 	return ""
@@ -173,6 +213,21 @@ func (i *InstGt) Format(indent string) string {
 	switch i.typ.(type) {
 	case I32:
 		return indent + "i32.gt_s"
+
+	case U32:
+		return indent + "i32.gt_u"
+
+	case I64:
+		return indent + "i64.gt_s"
+
+	case U64:
+		return indent + "i64.gt_u"
+
+	case F32:
+		return indent + "f32.gt"
+
+	case F64:
+		return indent + "f64.gt"
 	}
 	logger.Fatal("Todo")
 	return ""
@@ -191,6 +246,21 @@ func (i *InstLe) Format(indent string) string {
 	switch i.typ.(type) {
 	case I32:
 		return indent + "i32.le_s"
+
+	case U32:
+		return indent + "i32.le_u"
+
+	case I64:
+		return indent + "i64.le_s"
+
+	case U64:
+		return indent + "i64.le_u"
+
+	case F32:
+		return indent + "f32.le"
+
+	case F64:
+		return indent + "f64.le"
 	}
 	logger.Fatal("Todo")
 	return ""
@@ -209,6 +279,21 @@ func (i *InstGe) Format(indent string) string {
 	switch i.typ.(type) {
 	case I32:
 		return indent + "i32.ge_s"
+
+	case U32:
+		return indent + "i32.ge_u"
+
+	case I64:
+		return indent + "i64.ge_s"
+
+	case U64:
+		return indent + "i64.ge_u"
+
+	case F32:
+		return indent + "f32.ge"
+
+	case F64:
+		return indent + "f64.ge"
 	}
 	logger.Fatal("Todo")
 	return ""

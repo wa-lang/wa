@@ -46,22 +46,29 @@ func (g *functionGenerator) getValue(i ssa.Value) wir.Value {
 		switch t := v.Type().(type) {
 		case *types.Basic:
 			switch t.Kind() {
+
 			case types.Bool:
 				logger.Fatalf("Todo:%T", t)
 
 			case types.Int:
 				val, _ := constant.Int64Val(v.Value)
-				return wir.NewConstI32(int32(val))
+				return wir.NewConst(wir.I32{}, strconv.Itoa(int(val)))
 
 			case types.Int32:
 				val, _ := constant.Int64Val(v.Value)
-				return wir.NewConstI32(int32(val))
+				if t.Name() == "rune" {
+					return wir.NewConst(wir.RUNE{}, strconv.Itoa(int(val)))
+				} else {
+					return wir.NewConst(wir.I32{}, strconv.Itoa(int(val)))
+				}
 
 			case types.Float32:
-				logger.Fatalf("Todo:%T", t)
+				val, _ := constant.Float64Val(v.Value)
+				return wir.NewConst(wir.F32{}, strconv.FormatFloat(val, 'f', -1, 32))
 
 			case types.Float64:
-				logger.Fatalf("Todo:%T", t)
+				val, _ := constant.Float64Val(v.Value)
+				return wir.NewConst(wir.F64{}, strconv.FormatFloat(val, 'f', -1, 64))
 
 			case types.String, types.UntypedString:
 				logger.Fatalf("Todo:%T", t)
@@ -103,11 +110,11 @@ func (g *functionGenerator) genFunction(f *ssa.Function) *wat.Function {
 		g.locals_map[i] = pa
 	}
 
-	g.var_block_selector = wir.NewVar("$block_selector", wir.ValueKindLocal, wir.Int32{})
+	g.var_block_selector = wir.NewVar("$block_selector", wir.ValueKindLocal, wir.I32{})
 	g.registers = append(g.registers, g.var_block_selector)
 	wir_fn.Insts = append(wir_fn.Insts, g.var_block_selector.EmitInit()...)
 
-	g.var_current_block = wir.NewVar("$current_block", wir.ValueKindLocal, wir.Int32{})
+	g.var_current_block = wir.NewVar("$current_block", wir.ValueKindLocal, wir.I32{})
 	g.registers = append(g.registers, g.var_current_block)
 	wir_fn.Insts = append(wir_fn.Insts, g.var_current_block.EmitInit()...)
 
@@ -173,7 +180,7 @@ func (g *functionGenerator) genBlock(block *ssa.BasicBlock) []wat.Inst {
 	for _, inst := range block.Instrs {
 		if _, ok := inst.(*ssa.Phi); !ok {
 			if !cur_block_assigned {
-				b = append(b, wir.EmitAssginValue(g.var_current_block, wir.NewConstI32(int32(block.Index)))...)
+				b = append(b, wir.EmitAssginValue(g.var_current_block, wir.NewConst(wir.I32{}, strconv.Itoa(block.Index)))...)
 				cur_block_assigned = true
 			}
 		}
@@ -341,9 +348,13 @@ func (g *functionGenerator) genBuiltin(call *ssa.CallCommon) ([]wat.Inst, wir.Va
 		for _, arg := range call.Args {
 			arg := g.getValue(arg)
 			switch arg.Type().(type) {
-			case wir.Int32:
+			case wir.I32:
 				insts = append(insts, arg.EmitGet()...)
 				insts = append(insts, wat.NewInstCall("$print_i32"))
+
+			case wir.RUNE:
+				insts = append(insts, arg.EmitGet()...)
+				insts = append(insts, wat.NewInstCall("$print_rune"))
 
 			default:
 				logger.Fatalf("Todo: print(%T)", arg.Type())
@@ -351,7 +362,7 @@ func (g *functionGenerator) genBuiltin(call *ssa.CallCommon) ([]wat.Inst, wir.Va
 		}
 
 		if call.Value.Name() == "println" {
-			insts = append(insts, wir.NewConstI32('\n').EmitGet()...)
+			insts = append(insts, wir.NewConst(wir.I32{}, strconv.Itoa('\n')).EmitGet()...)
 			insts = append(insts, wat.NewInstCall("$print_rune"))
 		}
 
@@ -364,7 +375,7 @@ func (g *functionGenerator) genBuiltin(call *ssa.CallCommon) ([]wat.Inst, wir.Va
 func (g *functionGenerator) genPhiIter(preds []int, values []wir.Value) []wat.Inst {
 	var insts []wat.Inst
 
-	cond, _ := wir.EmitBinOp(g.var_current_block, wir.NewConstI32(int32(preds[0])), wat.OpCodeEql)
+	cond, _ := wir.EmitBinOp(g.var_current_block, wir.NewConst(wir.I32{}, strconv.Itoa(preds[0])), wat.OpCodeEql)
 	insts = append(insts, cond...)
 
 	trueInsts := values[0].EmitGet()
@@ -408,7 +419,7 @@ func (g *functionGenerator) genReturn(inst *ssa.Return) []wat.Inst {
 
 func (g *functionGenerator) genIf(inst *ssa.If) []wat.Inst {
 	cond := g.getValue(inst.Cond)
-	if !cond.Type().Equal(wir.Int32{}) {
+	if !cond.Type().Equal(wir.I32{}) {
 		logger.Fatal("cond.type() != i32")
 	}
 
@@ -428,7 +439,7 @@ func (g *functionGenerator) genJumpID(cur, dest int) []wat.Inst {
 	var insts []wat.Inst
 
 	if cur >= dest {
-		insts = wir.EmitAssginValue(g.var_block_selector, wir.NewConstI32(int32(dest)))
+		insts = wir.EmitAssginValue(g.var_block_selector, wir.NewConst(wir.I32{}, strconv.Itoa(dest)))
 		insts = append(insts, wat.NewInstBr("$BlockDisp"))
 	} else {
 		insts = append(insts, wat.NewInstBr("$Block_"+strconv.Itoa(dest-1)))

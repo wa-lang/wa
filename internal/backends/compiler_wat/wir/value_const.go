@@ -1,8 +1,6 @@
 package wir
 
 import (
-	"strconv"
-
 	"github.com/wa-lang/wa/internal/backends/compiler_wat/wir/wat"
 	"github.com/wa-lang/wa/internal/logger"
 )
@@ -24,27 +22,28 @@ func (c *ConstZero) Type() wtypes.ValueType { return wtypes.Void{} }
 func (c *ConstZero) Raw() []Value           { return append([]Value(nil), c) }
 //*/
 
-func NewConst(t ValueType, v interface{}) Const {
+func NewConst(t ValueType, lit string) Const {
 	switch t.(type) {
-	case Int32:
-		if v == nil {
-			return NewConstI32(0)
-		}
+	case RUNE:
+		return &constRune{aConst: aConst{typ: t, lit: lit}}
 
-		if c, ok := v.(int); ok {
-			return NewConstI32(int32(c))
-		}
-		logger.Fatal("Todo")
+	case I32:
+		return &constI32{aConst: aConst{typ: t, lit: lit}}
 
-	case Int64:
-		if v == nil {
-			return NewConstI64(0)
-		}
+	case U32:
+		return &constU32{aConst: aConst{typ: t, lit: lit}}
 
-		if c, ok := v.(int); ok {
-			return NewConstI64(int64(c))
-		}
-		logger.Fatal("Todo")
+	case I64:
+		return &constI64{aConst: aConst{typ: t, lit: lit}}
+
+	case U64:
+		return &constU64{aConst: aConst{typ: t, lit: lit}}
+
+	case F32:
+		return &constF32{aConst: aConst{typ: t, lit: lit}}
+
+	case F64:
+		return &constF64{aConst: aConst{typ: t, lit: lit}}
 
 	default:
 		logger.Fatal("Todo")
@@ -54,39 +53,80 @@ func NewConst(t ValueType, v interface{}) Const {
 }
 
 /**************************************
-ConstInt32:
+aConst:
 **************************************/
-type ConstI32 struct {
-	x int32
+type aConst struct {
+	typ ValueType
+	lit string
 }
 
-func NewConstI32(x int32) *ConstI32         { return &ConstI32{x: x} }
-func (c *ConstI32) Name() string            { return strconv.FormatInt(int64(c.x), 10) }
-func (c *ConstI32) Kind() ValueKind         { return ValueKindConst }
-func (c *ConstI32) Type() ValueType         { return Int32{} }
-func (c *ConstI32) raw() []wat.Value        { logger.Fatal("Todo"); return nil }
-func (c *ConstI32) EmitInit() []wat.Inst    { logger.Fatal("不可0值化常数"); return nil }
-func (c *ConstI32) EmitSet() []wat.Inst     { logger.Fatal("不可Pop至常数"); return nil }
-func (c *ConstI32) EmitRelease() []wat.Inst { logger.Fatal("不可清除常数"); return nil }
-func (c *ConstI32) EmitGet() []wat.Inst {
-	return []wat.Inst{wat.NewInstConst(wat.I32{}, strconv.Itoa(int(int32(c.x))))}
-}
+func (c *aConst) Name() string            { return c.lit }
+func (c *aConst) Kind() ValueKind         { return ValueKindConst }
+func (c *aConst) Type() ValueType         { return c.typ }
+func (c *aConst) raw() []wat.Value        { logger.Fatal("Todo"); return nil }
+func (c *aConst) EmitInit() []wat.Inst    { logger.Fatal("不可0值化常数"); return nil }
+func (c *aConst) EmitSet() []wat.Inst     { logger.Fatal("不可Pop至常数"); return nil }
+func (c *aConst) EmitRelease() []wat.Inst { logger.Fatal("不可清除常数"); return nil }
 
 /**************************************
-ConstInt64:
+constRune:
 **************************************/
-type ConstI64 struct {
-	x int64
+type constRune struct {
+	aConst
 }
 
-func NewConstI64(x int64) *ConstI64         { return &ConstI64{x: x} }
-func (c *ConstI64) Name() string            { return strconv.FormatInt(c.x, 10) }
-func (c *ConstI64) Kind() ValueKind         { return ValueKindConst }
-func (c *ConstI64) Type() ValueType         { return Int64{} }
-func (c *ConstI64) raw() []wat.Value        { logger.Fatal("Todo"); return nil }
-func (c *ConstI64) EmitInit() []wat.Inst    { logger.Fatal("不可0值化常数"); return nil }
-func (c *ConstI64) EmitSet() []wat.Inst     { logger.Fatal("不可Pop至常数"); return nil }
-func (c *ConstI64) EmitRelease() []wat.Inst { logger.Fatal("不可清除常数"); return nil }
-func (c *ConstI64) EmitGet() []wat.Inst {
-	return []wat.Inst{wat.NewInstConst(wat.I64{}, strconv.Itoa(int(c.x)))}
+func (c *constRune) EmitGet() []wat.Inst { return []wat.Inst{wat.NewInstConst(wat.I32{}, c.lit)} }
+
+/**************************************
+constI32:
+**************************************/
+type constI32 struct {
+	aConst
 }
+
+func (c *constI32) EmitGet() []wat.Inst { return []wat.Inst{wat.NewInstConst(wat.I32{}, c.lit)} }
+
+/**************************************
+constU32:
+**************************************/
+type constU32 struct {
+	aConst
+}
+
+func (c *constU32) EmitGet() []wat.Inst { return []wat.Inst{wat.NewInstConst(wat.U32{}, c.lit)} }
+
+/**************************************
+constI64:
+**************************************/
+type constI64 struct {
+	aConst
+}
+
+func (c *constI64) EmitGet() []wat.Inst { return []wat.Inst{wat.NewInstConst(wat.I64{}, c.lit)} }
+
+/**************************************
+constU64:
+**************************************/
+type constU64 struct {
+	aConst
+}
+
+func (c *constU64) EmitGet() []wat.Inst { return []wat.Inst{wat.NewInstConst(wat.U64{}, c.lit)} }
+
+/**************************************
+constF32:
+**************************************/
+type constF32 struct {
+	aConst
+}
+
+func (c *constF32) EmitGet() []wat.Inst { return []wat.Inst{wat.NewInstConst(wat.F32{}, c.lit)} }
+
+/**************************************
+constF64:
+**************************************/
+type constF64 struct {
+	aConst
+}
+
+func (c *constF64) EmitGet() []wat.Inst { return []wat.Inst{wat.NewInstConst(wat.F64{}, c.lit)} }
