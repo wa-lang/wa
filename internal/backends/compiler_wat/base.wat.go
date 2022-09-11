@@ -46,19 +46,9 @@ const (
 )
 
 const modBaseWat = `
-;; ----------------------------------------------------
-;; import 必须最先定义
-;; ----------------------------------------------------
-
-;; WASI 最小子集
-;; 用于输出字符串
 (import "wasi_snapshot_preview1" "fd_write"
 	(func $fd_write (param i32 i32 i32 i32) (result i32))
 )
-
-;; ----------------------------------------------------
-;; 内存和入口
-;; ----------------------------------------------------
 
 (memory $memory 1)
 
@@ -66,26 +56,14 @@ const modBaseWat = `
 (export "_start" (func $_start))
 ;; (export "main.main" (func $main.main))
 
-;; ----------------------------------------------------
-;; WASM 约定栈和内存管理
-;; 相关全局变量地址必须和 base_wasm.go 保持一致
-;; ----------------------------------------------------
-
-;; heap 和 stack 状态(__heap_base 只读)
 ;; | 0 <-- stack --> | <-- static-data --> | <-- heap --> |
 (global $__stack_ptr (mut i32) (i32.const 1024)) ;; index=0
 (global $__heap_base i32 (i32.const 2048))       ;; index=1
 
-;; ----------------------------------------------------
-;; Stack 辅助函数
-;; ----------------------------------------------------
-
-;; 获取栈顶地址
 (func $waStackPtr (result i32)
 	(global.get $__stack_ptr)
 )
 
-;; 栈上分配空间
 (func $waStackAlloc (param $size i32) (result i32)
 	;; $__stack_ptr -= $size
 	(global.set $__stack_ptr (i32.sub (global.get $__stack_ptr) (local.get  $size)))
@@ -93,47 +71,33 @@ const modBaseWat = `
 	(return (global.get $__stack_ptr))
 )
 
-;; 释放栈上的空间
 (func $waStackFree (param $size i32)
 	;; $__stack_ptr += $size
 	(global.set $__stack_ptr (i32.add (global.get $__stack_ptr) (local.get $size)))
 )
 
-;; ----------------------------------------------------
-;; Heap 辅助函数
-;; ----------------------------------------------------
-
-;; 获取堆地址
 (func $waHeapPtr (result i32)
 	(global.get $__heap_base)
 )
 
-;; 堆上分配内存(没有记录大小)
 (func $waAlloc (param $size i32) (result i32)
 	;; {{$waAlloc/body/begin}}
 	unreachable
 	;; {{$waAlloc/body/end}}
 )
 
-;; 内存复用(引用加一)
 (func $waRetain(param $ptr i32) (result i32)
 	;; {{$waRetain/body/begin}}
 	unreachable
 	;; {{$waRetain/body/end}}
 )
 
-;; 释放内存(引用减一)
 (func $waFree (param $ptr i32)
 	;; {{$waFree/body/begin}}
 	unreachable
 	;; {{$waFree/body/end}}
 )
 
-;; ----------------------------------------------------
-;; 输出函数
-;; ----------------------------------------------------
-
-;; 打印字符串
 (func $puts (param $str i32) (param $len i32)
 	;; {{$puts/body/begin}}
 
@@ -142,54 +106,42 @@ const modBaseWat = `
 	(local $p_nwritten i32)
 	(local $stdout i32)
 
-	;; 保存栈指针状态
 	(local.set $sp (global.get $__stack_ptr))
 
-	;; 分配 iov 结构体
 	(local.set $p_iov (call $waStackAlloc (i32.const 8)))
 
-	;; 返回地址
 	(local.set $p_nwritten (call $waStackAlloc (i32.const 4)))
 
-	;; 设置字符串指针和长度
 	(i32.store offset=0 align=1 (local.get $p_iov) (local.get $str))
 	(i32.store offset=4 align=1 (local.get $p_iov) (local.get $len))
 
-	;; 标准输出
 	(local.set $stdout (i32.const 1))
 
-	;; 输出字符串
 	(call $fd_write
 		(local.get $stdout)
 		(local.get $p_iov) (i32.const 1)
 		(local.get $p_nwritten)
 	)
 
-	;; 重置栈指针
 	(global.set $__stack_ptr (local.get $sp))
 	drop
 
 	;; {{$puts/body/end}}
 )
 
-;; 打印字符
 (func $__print_char (param $ch i32)
 	;; {{$putchar/body/begin}}
 
 	(local $sp i32)
 	(local $p_ch i32)
 
-	;; 保存栈指针状态
 	(local.set $sp (global.get $__stack_ptr))
 
-	;; 分配字符
 	(local.set $p_ch (call $waStackAlloc (i32.const 4)))
 	(i32.store offset=0 align=1 (local.get $p_ch) (local.get $ch))
 
-	;; 输出字符
 	(call $puts (local.get $p_ch) (i32.const 1))
 
-	;; 重置栈指针
 	(global.set $__stack_ptr (local.get $sp))
 
 	;; {{$putchar/body/begin}}
@@ -223,7 +175,6 @@ const modBaseWat = `
 	call $__print_i32
 )
 
-;; 打印整数
 (func $__print_i32 (param $x i32)
 	;; {{$print_i32/body/begin}}
 
@@ -246,16 +197,10 @@ const modBaseWat = `
 	;; {{$print_i32/body/end}}
 )
 
-;; ----------------------------------------------------
-;; _start 函数
-;; ----------------------------------------------------
-
-;; _start 函数
 (func $_start
 	;; {{$_start/body/begin}}
 	;; (call $main.init)
 	(call $main)
 	;; {{$_start/body/end}}
 )
-
 `
