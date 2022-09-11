@@ -45,7 +45,7 @@ const (
 
 const modBaseWat = `
 (import "wasi_snapshot_preview1" "fd_write"
-	(func $fd_write (param i32 i32 i32 i32) (result i32))
+	(func $$FdWrite (param i32 i32 i32 i32) (result i32))
 )
 
 (memory $memory 1)
@@ -104,7 +104,7 @@ const modBaseWat = `
 
 	(local.set $stdout (i32.const 1))
 
-	(call $fd_write
+	(call $$FdWrite
 		(local.get $stdout)
 		(local.get $p_iov) (i32.const 1)
 		(local.get $p_nwritten)
