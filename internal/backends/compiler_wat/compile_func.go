@@ -350,11 +350,11 @@ func (g *functionGenerator) genBuiltin(call *ssa.CallCommon) ([]wat.Inst, wir.Va
 			switch arg.Type().(type) {
 			case wir.I32:
 				insts = append(insts, arg.EmitGet()...)
-				insts = append(insts, wat.NewInstCall("$print_i32"))
+				insts = append(insts, wat.NewInstCall("$PrintI32"))
 
 			case wir.RUNE:
 				insts = append(insts, arg.EmitGet()...)
-				insts = append(insts, wat.NewInstCall("$print_rune"))
+				insts = append(insts, wat.NewInstCall("$PrintRune"))
 
 			default:
 				logger.Fatalf("Todo: print(%T)", arg.Type())
@@ -363,7 +363,7 @@ func (g *functionGenerator) genBuiltin(call *ssa.CallCommon) ([]wat.Inst, wir.Va
 
 		if call.Value.Name() == "println" {
 			insts = append(insts, wir.NewConst(wir.I32{}, strconv.Itoa('\n')).EmitGet()...)
-			insts = append(insts, wat.NewInstCall("$print_rune"))
+			insts = append(insts, wat.NewInstCall("$PrintRune"))
 		}
 
 		return insts, wir.Void{}
