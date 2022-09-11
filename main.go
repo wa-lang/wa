@@ -205,6 +205,7 @@ func main() {
 					Name:    "output",
 					Aliases: []string{"o"},
 					Usage:   "set output file",
+					Value:   "a.out",
 				},
 				&cli.BoolFlag{
 					Name:  "html",

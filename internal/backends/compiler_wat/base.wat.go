@@ -35,17 +35,20 @@ const (
 	_waHeapFree  = "$$HeapFree"
 
 	// 输出函数
-	_waPrintString = "$$Puts"
-	_waPrintRune   = "$$PrintRune"
-	_waPrintInt32  = "$$PrintI32"
+	_waPrintString = "$$waPuts"
+	_waPrintRune   = "$$waPrintRune"
+	_waPrintInt32  = "$$waPrintI32"
 
 	// 开始函数
 	_waStart = "_start"
 )
 
+// todo: PrintI32 => waPrintI32, 以 wa 开头
+
 const modBaseWat_wa = `
-(import "wasi_snapshot_preview1" "PrintI32" (func $$PrintI32 (param $x i32)))
-(import "wasi_snapshot_preview1" "PrintRune" (func $$PrintRune (param $ch i32)))
+(import "wasi_snapshot_preview1" "waPrintI32" (func $$waPrintI32 (param $x i32)))
+(import "wasi_snapshot_preview1" "waPrintRune" (func $$waPrintRune (param $ch i32)))
+(import "wasi_snapshot_preview1" "waPuts" (func $$waPuts (param $str i32) (param $len i32)))
 
 (memory $memory 1)
 
@@ -133,8 +136,8 @@ const modBaseWat_wasi = `
 	;; {{$$Puts/body/end}}
 )
 
-(func $$PrintRune (param $ch i32)
-	;; {{$$PrintRune/body/begin}}
+(func $$waPrintRune (param $ch i32)
+	;; {{$$waPrintRune/body/begin}}
 
 	(local $sp i32)
 	(local $p_ch i32)
@@ -148,14 +151,14 @@ const modBaseWat_wasi = `
 
 	(global.set $$stack_prt (local.get $sp))
 
-	;; {{$$PrintRune/body/begin}}
+	;; {{$$waPrintRune/body/begin}}
 )
 
-(func $$PrintI32 (param $x i32)
+(func $$waPrintI32 (param $x i32)
 	;; if $x == 0 { print '0'; return }
 	(i32.eq (local.get $x) (i32.const 0))
 	if
-		(call $$PrintRune (i32.const 48)) ;; '0'
+		(call $$waPrintRune (i32.const 48)) ;; '0'
 		(return)
 	end
 
@@ -163,7 +166,7 @@ const modBaseWat_wasi = `
 	(i32.lt_s (local.get $x) (i32.const 0))
 	if 
 		(local.set $x (i32.sub (i32.const 0) (local.get $x)))
-		(call $$PrintRune (i32.const 45)) ;; '-'
+		(call $$waPrintRune (i32.const 45)) ;; '-'
 	end
 
 	local.get $x
@@ -187,7 +190,7 @@ const modBaseWat_wasi = `
 	(local.set $div (i32.div_s (local.get $x) (i32.const 10)))
 	(local.set $rem (i32.rem_s (local.get $x) (i32.const 10)))
 	(call $$$print_i32 (local.get $div))
-	(call $$PrintRune (i32.add (local.get $rem) (i32.const 48))) ;; '0'
+	(call $$waPrintRune (i32.add (local.get $rem) (i32.const 48))) ;; '0'
 
 	;; {{$$$print_i32/body/end}}
 )

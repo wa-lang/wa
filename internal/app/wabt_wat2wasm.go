@@ -51,11 +51,16 @@ func RunWasm(filename string) (stdoutStderr []byte, err error) {
 			fmt.Print(string(bytes))
 			return 0
 		}).
-		ExportFunction("PrintI32", func(m api.Module, v uint32) {
+		ExportFunction("waPuts", func(m api.Module, pos, len uint32) {
+			bytes, _ := m.Memory().Read(ctx, pos, len)
+			fmt.Print(string(bytes))
+			return
+		}).
+		ExportFunction("waPrintI32", func(m api.Module, v uint32) {
 			fmt.Print(v)
 			return
 		}).
-		ExportFunction("PrintRune", func(m api.Module, ch uint32) {
+		ExportFunction("waPrintRune", func(m api.Module, ch uint32) {
 			fmt.Printf("%c", rune(ch))
 			return
 		}).
