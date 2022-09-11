@@ -6,9 +6,6 @@ package target_spec
 type Machine string
 
 const (
-	// 默认输出的目标类型
-	Machine_default = Machine_Wasm32_wa
-
 	Machine_Wasm32_wa   Machine = "wasm32-wa"   // 凹语言定义的 WASM 规范
 	Machine_Wasm32_wasi Machine = "wasm32-wasi" // WASI 定义的 WASM 规范
 	Machine_llir_64bit  Machine = "llir-64bit"  // LLVM IR 64 位

@@ -62,13 +62,8 @@ func main() {
 			cli.ShowAppHelpAndExit(c, 0)
 		}
 
-		var target = target_spec.Machine_Wasm32_wasi
-		if c.Bool("html") {
-			target = target_spec.Machine_Wasm32_wa
-		}
-
 		ctx := app.NewApp(build_Options(c))
-		output, err := ctx.WASM(c.Args().First(), target)
+		output, err := ctx.WASM(c.Args().First(), target_spec.Machine_Wasm32_wa)
 		if err != nil {
 			fmt.Println(err)
 			os.Exit(1)
@@ -159,10 +154,6 @@ func main() {
 					Name:  "html",
 					Usage: "output html",
 				},
-				&cli.StringFlag{
-					Name:  "target",
-					Usage: "set target",
-				},
 			},
 			Action: func(c *cli.Context) error {
 				if c.NArg() == 0 {
@@ -170,25 +161,8 @@ func main() {
 					os.Exit(1)
 				}
 
-				var target target_spec.Machine
-				if s := c.String("target"); s != "" {
-					if t, ok := api.ParseMachine(s); ok {
-						target = t
-					} else {
-						fmt.Printf("imvalid target: %q", s)
-						os.Exit(1)
-					}
-				}
-				if target == "" {
-					if c.Bool("html") {
-						target = target_spec.Machine_Wasm32_wa
-					} else {
-						target = target_spec.Machine_Wasm32_wasi
-					}
-				}
-
 				ctx := app.NewApp(build_Options(c))
-				output, err := ctx.WASM(c.Args().First(), target)
+				output, err := ctx.WASM(c.Args().First(), target_spec.Machine_Wasm32_wa)
 				if err != nil {
 					fmt.Println(err)
 					os.Exit(1)
@@ -204,16 +178,20 @@ func main() {
 					os.Exit(1)
 				}
 
-				stdoutStderr, err := app.RunWasm(outfile)
-				if err != nil {
+				if c.Bool("html") {
+					// todo
+				} else {
+					stdoutStderr, err := app.RunWasm(outfile)
+					if err != nil {
+						if len(stdoutStderr) > 0 {
+							fmt.Println(string(stdoutStderr))
+						}
+						fmt.Println(err)
+						os.Exit(1)
+					}
 					if len(stdoutStderr) > 0 {
 						fmt.Println(string(stdoutStderr))
 					}
-					fmt.Println(err)
-					os.Exit(1)
-				}
-				if len(stdoutStderr) > 0 {
-					fmt.Println(string(stdoutStderr))
 				}
 
 				return nil
@@ -255,11 +233,7 @@ func main() {
 					}
 				}
 				if target == "" {
-					if c.Bool("html") {
-						target = target_spec.Machine_Wasm32_wa
-					} else {
-						target = target_spec.Machine_Wasm32_wasi
-					}
+					target = target_spec.Machine_Wasm32_wa
 				}
 
 				ctx := app.NewApp(build_Options(c))

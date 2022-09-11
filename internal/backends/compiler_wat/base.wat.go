@@ -43,7 +43,24 @@ const (
 	_waStart = "_start"
 )
 
-const modBaseWat = `
+const modBaseWat_wa = `
+(import "wasi_snapshot_preview1" "PrintI32" (func $$PrintI32 (param $x i32)))
+(import "wasi_snapshot_preview1" "PrintRune" (func $$PrintRune (param $ch i32)))
+
+(memory $memory 1)
+
+(export "memory" (memory $memory))
+(export "_start" (func $_start))
+
+(func $_start
+	;; {{$_start/body/begin}}
+	;; (call $main.init)
+	(call $main)
+	;; {{$_start/body/end}}
+)
+`
+
+const modBaseWat_wasi = `
 (import "wasi_snapshot_preview1" "fd_write"
 	(func $$FdWrite (param i32 i32 i32 i32) (result i32))
 )

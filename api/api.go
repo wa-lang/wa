@@ -45,8 +45,7 @@ type StdSize = config.StdSizes
 type Machine = target_spec.Machine
 
 const (
-	// 默认输出的目标类型
-	Machine_default = target_spec.Machine_Wasm32_wa
+	Machine_default = Machine_Wasm32_wa // 默认输出的目标类型
 
 	Machine_Wasm32_wa   = target_spec.Machine_Wasm32_wa   // 凹语言定义的 WASM 规范
 	Machine_Wasm32_wasi = target_spec.Machine_Wasm32_wasi // WASI 定义的 WASM 规范

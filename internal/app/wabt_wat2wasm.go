@@ -14,7 +14,6 @@ import (
 
 	"github.com/tetratelabs/wazero"
 	"github.com/tetratelabs/wazero/api"
-	"github.com/tetratelabs/wazero/imports/wasi_snapshot_preview1"
 
 	"github.com/wa-lang/wa/internal/config"
 	"github.com/wa-lang/wa/internal/logger"
@@ -44,11 +43,6 @@ func RunWasm(filename string) (stdoutStderr []byte, err error) {
 	)
 	defer r.Close(ctx)
 
-	if false {
-		if _, err := wasi_snapshot_preview1.Instantiate(ctx, r); err != nil {
-			return nil, err
-		}
-	}
 	_, err = r.NewModuleBuilder("wasi_snapshot_preview1").
 		ExportFunction("fd_write", func(m api.Module, fd, iov, iov_len, p_nwritten uint32) uint32 {
 			pos, _ := m.Memory().ReadUint32Le(ctx, iov)
@@ -56,6 +50,14 @@ func RunWasm(filename string) (stdoutStderr []byte, err error) {
 			bytes, _ := m.Memory().Read(ctx, pos, n)
 			fmt.Print(string(bytes))
 			return 0
+		}).
+		ExportFunction("PrintI32", func(m api.Module, v uint32) {
+			fmt.Print(v)
+			return
+		}).
+		ExportFunction("PrintRune", func(m api.Module, ch uint32) {
+			fmt.Printf("%c", rune(ch))
+			return
 		}).
 		Instantiate(ctx, r)
 	if err != nil {
