@@ -17,8 +17,8 @@ const _WASM_PAGE_SIZE = 65536
 const (
 	// ;; heap 和 stack 状态(__heap_base 只读)
 	// ;; | 0 <-- stack --> | <-- static-data --> | <-- heap --> |
-	// (global $__stack_ptr (mut i32) (i32.const 1024)) ;; index=0
-	// (global $__heap_base i32 (i32.const 2048))       ;; index=1
+	// (global $$stack_prt (mut i32) (i32.const 1024)) ;; index=0
+	// (global $$heap_base i32 (i32.const 2048))       ;; index=1
 	__stack_ptr_index = 0
 	__heap_base_index = 1
 )
@@ -26,20 +26,18 @@ const (
 // 内置函数名字
 const (
 	// 栈函数
-	_waStackPtr   = "waStackPtr"
-	_waStackAlloc = "waStackAlloc"
-	_waStackFree  = "waStackFree"
+	_waStackPtr   = "$$StackPtr"
+	_waStackAlloc = "$$StackAlloc"
 
 	// 堆管理函数
-	_waHeapPtr = "waHeapPtr"
-	_waAlloc   = "waAlloc"
-	_waRetain  = "waRetain"
-	_waFree    = "waFree"
+	_waHeapPtr   = "$$HeapPtr"
+	_waHeapAlloc = "$$HeapAlloc"
+	_waHeapFree  = "$$HeapFree"
 
 	// 输出函数
-	_waPrintChar   = "putchar"
-	_waPrintString = "puts"
-	_waPrintInt32  = "print_i32"
+	_waPrintString = "$$Puts"
+	_waPrintRune   = "$$PrintRune"
+	_waPrintInt32  = "$$PrintI32"
 
 	// 开始函数
 	_waStart = "_start"
@@ -57,60 +55,49 @@ const modBaseWat = `
 ;; (export "main.main" (func $main.main))
 
 ;; | 0 <-- stack --> | <-- static-data --> | <-- heap --> |
-(global $__stack_ptr (mut i32) (i32.const 1024)) ;; index=0
-(global $__heap_base i32 (i32.const 2048))       ;; index=1
+(global $$stack_prt (mut i32) (i32.const 1024)) ;; index=0
+(global $$heap_base i32 (i32.const 2048))       ;; index=1
 
-(func $waStackPtr (result i32)
-	(global.get $__stack_ptr)
+(func $$StackPtr (result i32)
+	(global.get $$stack_prt)
 )
 
-(func $waStackAlloc (param $size i32) (result i32)
-	;; $__stack_ptr -= $size
-	(global.set $__stack_ptr (i32.sub (global.get $__stack_ptr) (local.get  $size)))
-	;; return $__stack_ptr
-	(return (global.get $__stack_ptr))
+(func $$StackAlloc (param $size i32) (result i32)
+	;; $$stack_prt -= $size
+	(global.set $$stack_prt (i32.sub (global.get $$stack_prt) (local.get  $size)))
+	;; return $$stack_prt
+	(return (global.get $$stack_prt))
 )
 
-(func $waStackFree (param $size i32)
-	;; $__stack_ptr += $size
-	(global.set $__stack_ptr (i32.add (global.get $__stack_ptr) (local.get $size)))
+(func $$HeapPtr (result i32)
+	(global.get $$heap_base)
 )
 
-(func $waHeapPtr (result i32)
-	(global.get $__heap_base)
-)
-
-(func $waAlloc (param $size i32) (result i32)
-	;; {{$waAlloc/body/begin}}
+(func $$HeapAlloc (param $size i32) (result i32)
+	;; {{$$HeapAlloc/body/begin}}
 	unreachable
-	;; {{$waAlloc/body/end}}
+	;; {{$$HeapAlloc/body/end}}
 )
 
-(func $waRetain(param $ptr i32) (result i32)
-	;; {{$waRetain/body/begin}}
+(func $$HeapFree (param $ptr i32)
+	;; {{$$HeapFree/body/begin}}
 	unreachable
-	;; {{$waRetain/body/end}}
+	;; {{$$HeapFree/body/end}}
 )
 
-(func $waFree (param $ptr i32)
-	;; {{$waFree/body/begin}}
-	unreachable
-	;; {{$waFree/body/end}}
-)
-
-(func $puts (param $str i32) (param $len i32)
-	;; {{$puts/body/begin}}
+(func $$Puts (param $str i32) (param $len i32)
+	;; {{$$Puts/body/begin}}
 
 	(local $sp i32)
 	(local $p_iov i32)
 	(local $p_nwritten i32)
 	(local $stdout i32)
 
-	(local.set $sp (global.get $__stack_ptr))
+	(local.set $sp (global.get $$stack_prt))
 
-	(local.set $p_iov (call $waStackAlloc (i32.const 8)))
+	(local.set $p_iov (call $$StackAlloc (i32.const 8)))
 
-	(local.set $p_nwritten (call $waStackAlloc (i32.const 4)))
+	(local.set $p_nwritten (call $$StackAlloc (i32.const 4)))
 
 	(i32.store offset=0 align=1 (local.get $p_iov) (local.get $str))
 	(i32.store offset=4 align=1 (local.get $p_iov) (local.get $len))
@@ -123,44 +110,35 @@ const modBaseWat = `
 		(local.get $p_nwritten)
 	)
 
-	(global.set $__stack_ptr (local.get $sp))
+	(global.set $$stack_prt (local.get $sp))
 	drop
 
-	;; {{$puts/body/end}}
+	;; {{$$Puts/body/end}}
 )
 
-(func $__print_char (param $ch i32)
-	;; {{$putchar/body/begin}}
+(func $$PrintRune (param $ch i32)
+	;; {{$$PrintRune/body/begin}}
 
 	(local $sp i32)
 	(local $p_ch i32)
 
-	(local.set $sp (global.get $__stack_ptr))
+	(local.set $sp (global.get $$stack_prt))
 
-	(local.set $p_ch (call $waStackAlloc (i32.const 4)))
+	(local.set $p_ch (call $$StackAlloc (i32.const 4)))
 	(i32.store offset=0 align=1 (local.get $p_ch) (local.get $ch))
 
-	(call $puts (local.get $p_ch) (i32.const 1))
+	(call $$Puts (local.get $p_ch) (i32.const 1))
 
-	(global.set $__stack_ptr (local.get $sp))
+	(global.set $$stack_prt (local.get $sp))
 
-	;; {{$putchar/body/begin}}
+	;; {{$$PrintRune/body/begin}}
 )
 
-
-(func $putchar (param $ch i32)
-	local.get $ch
-	call $__print_char
-)
-(func $$print_rune (param $ch i32)
-	local.get $ch
-	call $__print_char
-)
-(func $$print_i32 (param $x i32)
+(func $$PrintI32 (param $x i32)
 	;; if $x == 0 { print '0'; return }
 	(i32.eq (local.get $x) (i32.const 0))
 	if
-		(call $putchar (i32.const 48)) ;; '0'
+		(call $$PrintRune (i32.const 48)) ;; '0'
 		(return)
 	end
 
@@ -168,15 +146,15 @@ const modBaseWat = `
 	(i32.lt_s (local.get $x) (i32.const 0))
 	if 
 		(local.set $x (i32.sub (i32.const 0) (local.get $x)))
-		(call $putchar (i32.const 45)) ;; '-'
+		(call $$PrintRune (i32.const 45)) ;; '-'
 	end
 
 	local.get $x
-	call $__print_i32
+	call $$$print_i32
 )
 
-(func $__print_i32 (param $x i32)
-	;; {{$print_i32/body/begin}}
+(func $$$print_i32 (param $x i32)
+	;; {{$$$print_i32/body/begin}}
 
 	(local $div i32)
 	(local $rem i32)
@@ -191,10 +169,10 @@ const modBaseWat = `
 	;; puchar($x%10 + '0')
 	(local.set $div (i32.div_s (local.get $x) (i32.const 10)))
 	(local.set $rem (i32.rem_s (local.get $x) (i32.const 10)))
-	(call $__print_i32 (local.get $div))
-	(call $putchar (i32.add (local.get $rem) (i32.const 48))) ;; '0'
+	(call $$$print_i32 (local.get $div))
+	(call $$PrintRune (i32.add (local.get $rem) (i32.const 48))) ;; '0'
 
-	;; {{$print_i32/body/end}}
+	;; {{$$$print_i32/body/end}}
 )
 
 (func $_start
