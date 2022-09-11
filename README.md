@@ -49,6 +49,33 @@
 
 更多细节请参考 [凹语言™项目目标](docs/goals.md)
 
+## 例子: 你好, 凹语言
+
+打印字符和调用函数：
+
+```
+fn main() {
+	print('凹')
+	print('语')
+	print('言')
+	print('\n')
+
+	println(add(40, 2))
+}
+
+fn add(a: i32, b: i32) => i32 {
+	return a+b
+}
+```
+
+运行并输出结果:
+
+```
+$ go run main.go hello.wa 
+凹语言
+42
+```
+
 ## 例子: 打印素数
 
 打印 30 以内的素数：

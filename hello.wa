@@ -1,5 +1,14 @@
 # 版权 @2019 凹语言 作者。保留所有权利。
 
 fn main() {
-	println(40+2)
+	print('凹')
+	print('语')
+	print('言')
+	print('\n')
+
+	println(add(40, 2))
+}
+
+fn add(a: i32, b: i32) => i32 {
+	return a+b
 }
