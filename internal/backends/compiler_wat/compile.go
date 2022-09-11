@@ -4,6 +4,7 @@ package compiler_wat
 
 import (
 	"github.com/wa-lang/wa/internal/backends/compiler_wat/wir/wat"
+	"github.com/wa-lang/wa/internal/backends/target_spec"
 	"github.com/wa-lang/wa/internal/loader"
 	"github.com/wa-lang/wa/internal/ssa"
 )
@@ -20,7 +21,7 @@ func New() *Compiler {
 	return p
 }
 
-func (p *Compiler) Compile(prog *loader.Program) (output string, err error) {
+func (p *Compiler) Compile(prog *loader.Program, target target_spec.Machine) (output string, err error) {
 	p.CompilePackage(prog.SSAMainPkg)
 
 	return p.module.String(), nil

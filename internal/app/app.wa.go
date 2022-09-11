@@ -22,6 +22,7 @@ import (
 	"github.com/wa-lang/wa/internal/backends/compiler_ll"
 	"github.com/wa-lang/wa/internal/backends/compiler_ll/builtin"
 	"github.com/wa-lang/wa/internal/backends/compiler_wat"
+	"github.com/wa-lang/wa/internal/backends/target_spec"
 	"github.com/wa-lang/wa/internal/config"
 	"github.com/wa-lang/wa/internal/format"
 	"github.com/wa-lang/wa/internal/loader"
@@ -289,14 +290,14 @@ func (p *App) ASM(filename string) error {
 	return nil
 }
 
-func (p *App) WASM(filename string) ([]byte, error) {
+func (p *App) WASM(filename string, target target_spec.Machine) ([]byte, error) {
 	cfg := config.DefaultConfig()
 	prog, err := loader.LoadProgram(cfg, filename)
 	if err != nil {
 		return nil, err
 	}
 
-	output, err := compiler_wat.New().Compile(prog)
+	output, err := compiler_wat.New().Compile(prog, target)
 	if err != nil {
 		return nil, err
 	}

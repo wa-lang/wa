@@ -16,6 +16,7 @@ import (
 	"github.com/wa-lang/wa/api"
 	"github.com/wa-lang/wa/internal/3rdparty/cli"
 	"github.com/wa-lang/wa/internal/app"
+	"github.com/wa-lang/wa/internal/backends/target_spec"
 	"github.com/wa-lang/wa/internal/config"
 )
 
@@ -61,8 +62,13 @@ func main() {
 			cli.ShowAppHelpAndExit(c, 0)
 		}
 
+		var target = target_spec.Machine_Wasm32_wasi
+		if c.Bool("html") {
+			target = target_spec.Machine_Wasm32_wa
+		}
+
 		ctx := app.NewApp(build_Options(c))
-		output, err := ctx.WASM(c.Args().First())
+		output, err := ctx.WASM(c.Args().First(), target)
 		if err != nil {
 			fmt.Println(err)
 			os.Exit(1)
@@ -99,7 +105,7 @@ func main() {
 			Name:   "debug",
 			Usage:  "only for dev/debug",
 			Action: func(c *cli.Context) error {
-				wat, err := api.BuildFile("hello.wa", "fn main() { println(123) }")
+				wat, err := api.BuildFile("hello.wa", "fn main() { println(123) }", "")
 				if err != nil {
 					if len(wat) != 0 {
 						fmt.Println(string(wat))
@@ -153,6 +159,10 @@ func main() {
 					Name:  "html",
 					Usage: "output html",
 				},
+				&cli.StringFlag{
+					Name:  "target",
+					Usage: "set target",
+				},
 			},
 			Action: func(c *cli.Context) error {
 				if c.NArg() == 0 {
@@ -160,8 +170,25 @@ func main() {
 					os.Exit(1)
 				}
 
+				var target target_spec.Machine
+				if s := c.String("target"); s != "" {
+					if t, ok := api.ParseMachine(s); ok {
+						target = t
+					} else {
+						fmt.Printf("imvalid target: %q", s)
+						os.Exit(1)
+					}
+				}
+				if target == "" {
+					if c.Bool("html") {
+						target = target_spec.Machine_Wasm32_wa
+					} else {
+						target = target_spec.Machine_Wasm32_wasi
+					}
+				}
+
 				ctx := app.NewApp(build_Options(c))
-				output, err := ctx.WASM(c.Args().First())
+				output, err := ctx.WASM(c.Args().First(), target)
 				if err != nil {
 					fmt.Println(err)
 					os.Exit(1)
@@ -205,6 +232,10 @@ func main() {
 					Name:  "html",
 					Usage: "output html",
 				},
+				&cli.StringFlag{
+					Name:  "target",
+					Usage: "set target",
+				},
 			},
 			Action: func(c *cli.Context) error {
 				outfile := c.String("output")
@@ -214,8 +245,25 @@ func main() {
 					os.Exit(1)
 				}
 
+				var target target_spec.Machine
+				if s := c.String("target"); s != "" {
+					if t, ok := api.ParseMachine(s); ok {
+						target = t
+					} else {
+						fmt.Printf("imvalid target: %q", s)
+						os.Exit(1)
+					}
+				}
+				if target == "" {
+					if c.Bool("html") {
+						target = target_spec.Machine_Wasm32_wa
+					} else {
+						target = target_spec.Machine_Wasm32_wasi
+					}
+				}
+
 				ctx := app.NewApp(build_Options(c))
-				output, err := ctx.WASM(c.Args().First())
+				output, err := ctx.WASM(c.Args().First(), target)
 				if err != nil {
 					fmt.Println(err)
 					os.Exit(1)
