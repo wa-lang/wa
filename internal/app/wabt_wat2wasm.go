@@ -43,14 +43,7 @@ func RunWasm(filename string) (stdoutStderr []byte, err error) {
 	)
 	defer r.Close(ctx)
 
-	_, err = r.NewModuleBuilder("wasi_snapshot_preview1").
-		ExportFunction("fd_write", func(m api.Module, fd, iov, iov_len, p_nwritten uint32) uint32 {
-			pos, _ := m.Memory().ReadUint32Le(ctx, iov)
-			n, _ := m.Memory().ReadUint32Le(ctx, iov+4)
-			bytes, _ := m.Memory().Read(ctx, pos, n)
-			fmt.Print(string(bytes))
-			return 0
-		}).
+	_, err = r.NewModuleBuilder("wa_js_env").
 		ExportFunction("waPuts", func(m api.Module, pos, len uint32) {
 			bytes, _ := m.Memory().Read(ctx, pos, len)
 			fmt.Print(string(bytes))
