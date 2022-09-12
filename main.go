@@ -404,6 +404,21 @@ func main() {
 				return nil
 			},
 		},
+
+		{
+			Name:  "logo",
+			Usage: "print logo",
+			Flags: []cli.Flag{
+				&cli.BoolFlag{
+					Name:  "more",
+					Usage: "print more logos",
+				},
+			},
+			Action: func(c *cli.Context) error {
+				app.PrintLogo(c.Bool("more"))
+				return nil
+			},
+		},
 	}
 
 	cliApp.Run(os.Args)
