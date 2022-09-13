@@ -9,6 +9,7 @@ import (
 	"github.com/wa-lang/wa/internal/backends/compiler_wat"
 	"github.com/wa-lang/wa/internal/backends/target_spec"
 	"github.com/wa-lang/wa/internal/config"
+	"github.com/wa-lang/wa/internal/format"
 	"github.com/wa-lang/wa/internal/loader"
 	"github.com/wa-lang/wa/internal/logger"
 )
@@ -114,4 +115,13 @@ func BuildVFS(vfs *config.PkgVFS, appPkg string, target Machine) (wat []byte, er
 
 	watOut, err := compiler_wat.New().Compile(prog, target)
 	return []byte(watOut), err
+}
+
+// 格式化代码
+func FormatCode(filename, code string) (string, error) {
+	data, err := format.File(nil, filename, code)
+	if err != nil {
+		return "", err
+	}
+	return string(data), nil
 }

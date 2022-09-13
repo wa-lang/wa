@@ -4,6 +4,9 @@
 
 // To avoid a cyclic dependency with github.com/wa-lang/wa/internal/parser, this file is in a separate package.
 
+//go:build ignore
+// +build ignore
+
 package ast_test
 
 import (
