@@ -363,6 +363,7 @@ func (p *printer) parameters(fields *ast.FieldList) {
 				// by a linebreak call after a type, or in the next multi-line identList
 				// will do the right thing.
 				p.identList(par.Names, ws == indent)
+				p.print(token.COLON)
 				p.print(blank)
 			}
 			// parameter type
@@ -393,6 +394,9 @@ func (p *printer) signature(params, result *ast.FieldList) {
 	if n > 0 {
 		// result != nil
 		p.print(blank)
+		p.print(token.ARROW)
+		p.print(blank)
+
 		if n == 1 && result.List[0].Names == nil {
 			// single anonymous result; no ()'s
 			p.expr(stripParensAlways(result.List[0].Type))
@@ -1459,11 +1463,14 @@ func (p *printer) spec(spec ast.Spec, n int, doIndent bool) {
 	switch s := spec.(type) {
 	case *ast.ImportSpec:
 		p.setComment(s.Doc)
-		if s.Name != nil {
-			p.expr(s.Name)
-			p.print(blank)
-		}
 		p.expr(sanitizeImportPath(s.Path))
+		if s.Name != nil {
+			p.print(blank)
+			p.print(token.ARROW)
+			p.print(blank)
+
+			p.expr(s.Name)
+		}
 		p.setComment(s.Comment)
 		p.print(s.EndPos)
 
@@ -1474,6 +1481,7 @@ func (p *printer) spec(spec ast.Spec, n int, doIndent bool) {
 		p.setComment(s.Doc)
 		p.identList(s.Names, doIndent) // always present
 		if s.Type != nil {
+			p.print(token.COLON)
 			p.print(blank)
 			p.expr(s.Type)
 		}

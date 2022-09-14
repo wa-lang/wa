@@ -166,7 +166,7 @@ func (s *Scanner) scanComment(firstRune rune) string {
 
 	// #-style comment
 	if firstRune == '#' {
-		offs = s.offset // position of initial '#'
+		offs = s.offset - 1 // position of initial '#'
 
 		// (the final '\n' is not considered part of the comment)
 		for s.ch != '\n' && s.ch >= 0 {
@@ -916,7 +916,7 @@ scanAgain:
 				// reset position to the beginning of the comment
 				s.ch = '#'
 				s.offset = s.file.Offset(pos)
-				s.rdOffset = s.offset + 0
+				s.rdOffset = s.offset + 1
 				s.insertSemi = false // newline consumed
 				return pos, token.SEMICOLON, "\n"
 			}
