@@ -2,6 +2,14 @@
 
 package wat
 
+func NewVar(name string, typ ValueType) Value { return &aVar{name: name, typ: typ} }
+func NewVarI32(name string) Value             { return &aVar{typ: I32{}, name: name} }
+func NewVarU32(name string) Value             { return &aVar{typ: U32{}, name: name} }
+func NewVarI64(name string) Value             { return &aVar{typ: I64{}, name: name} }
+func NewVarU64(name string) Value             { return &aVar{typ: U64{}, name: name} }
+func NewVarF32(name string) Value             { return &aVar{typ: F32{}, name: name} }
+func NewVarF64(name string) Value             { return &aVar{typ: F64{}, name: name} }
+
 /**************************************
 I32:
 **************************************/
@@ -60,75 +68,9 @@ func (t F64) Equal(u ValueType) bool { _, ok := u.(F64); return ok }
 aVar:
 **************************************/
 type aVar struct {
-	typ  ValueType
 	name string
+	typ  ValueType
 }
 
 func (v *aVar) Name() string    { return v.name }
 func (v *aVar) Type() ValueType { return v.typ }
-
-/**************************************
-VarI32:
-**************************************/
-type VarI32 struct {
-	aVar
-}
-
-func NewVarI32(name string) *VarI32 {
-	return &VarI32{aVar: aVar{typ: I32{}, name: name}}
-}
-
-/**************************************
-VarU32:
-**************************************/
-type VarU32 struct {
-	aVar
-}
-
-func NewVarU32(name string) *VarU32 {
-	return &VarU32{aVar: aVar{typ: U32{}, name: name}}
-}
-
-/**************************************
-VarI64:
-**************************************/
-type VarI64 struct {
-	aVar
-}
-
-func NewVarI64(name string) *VarI64 {
-	return &VarI64{aVar: aVar{typ: I64{}, name: name}}
-}
-
-/**************************************
-VarU64:
-**************************************/
-type VarU64 struct {
-	aVar
-}
-
-func NewVarU64(name string) *VarU64 {
-	return &VarU64{aVar: aVar{typ: U64{}, name: name}}
-}
-
-/**************************************
-VarF32:
-**************************************/
-type VarF32 struct {
-	aVar
-}
-
-func NewVarF32(name string) *VarF32 {
-	return &VarF32{aVar: aVar{typ: F32{}, name: name}}
-}
-
-/**************************************
-VarF64:
-**************************************/
-type VarF64 struct {
-	aVar
-}
-
-func NewVarF64(name string) *VarF64 {
-	return &VarF64{aVar: aVar{typ: F64{}, name: name}}
-}
