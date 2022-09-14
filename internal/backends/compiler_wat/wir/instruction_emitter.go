@@ -5,52 +5,6 @@ import (
 	"github.com/wa-lang/wa/internal/logger"
 )
 
-//func EmitPushValue(x Value) []Instruction {
-//	var insts []Instruction
-//	vs := x.Raw()
-//	if len(vs) > 1 {
-//		for _, v := range vs {
-//			insts = append(insts, EmitPushValue(v)...)
-//		}
-//	}
-//
-//	switch x.Kind() {
-//	case ValueKindConst:
-//		insts = append(insts, NewInstConst(x))
-//
-//	case ValueKindLocal:
-//		insts = append(insts, NewInstGetLocal(x.Name()))
-//
-//	case ValueKindGlobal:
-//		logger.Fatal("Todo")
-//	}
-//
-//	return insts
-//}
-
-//func EmitPopValue(x Value) []Instruction {
-//	var insts []Instruction
-//	vs := x.Raw()
-//	if len(vs) > 1 {
-//		for _, v := range vs {
-//			insts = append(insts, EmitPopValue(v)...)
-//		}
-//	}
-//
-//	switch x.Kind() {
-//	case ValueKindConst:
-//		logger.Fatal("不可Pop至常数")
-//
-//	case ValueKindLocal:
-//		insts = append(insts, NewInstSetLocal(x.Name()))
-//
-//	case ValueKindGlobal:
-//		logger.Fatal("Todo")
-//	}
-//
-//	return insts
-//}
-
 func EmitAssginValue(lh, rh Value) []wat.Inst {
 	var insts []wat.Inst
 
@@ -133,4 +87,16 @@ func binOpMatchType(x, y ValueType) ValueType {
 
 	logger.Fatalf("Todo %T %T", x, y)
 	return nil
+}
+
+func EmitLoad(addr Value) (insts []wat.Inst, ret_type ValueType) {
+	switch addr := addr.(type) {
+	case *VarRef:
+		ret_type = addr.Type().(Ref).Base
+		insts = addr.EmitLoad()
+
+	default:
+		logger.Fatalf("Todo %v", addr)
+	}
+	return
 }

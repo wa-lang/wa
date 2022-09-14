@@ -1,3 +1,5 @@
+// 版权 @2022 凹语言 作者。保留所有权利。
+
 package wir
 
 import "github.com/wa-lang/wa/internal/backends/compiler_wat/wir/wat"
@@ -42,6 +44,8 @@ type Value interface {
 	EmitGet() []wat.Inst
 	EmitSet() []wat.Inst
 	EmitRelease() []wat.Inst
+	emitLoad(addr Value) []wat.Inst
+	emitStore(addr Value) []wat.Inst
 }
 
 /**************************************

@@ -1,3 +1,5 @@
+// 版权 @2022 凹语言 作者。保留所有权利。
+
 package wir
 
 import (
@@ -60,13 +62,15 @@ type aConst struct {
 	lit string
 }
 
-func (c *aConst) Name() string            { return c.lit }
-func (c *aConst) Kind() ValueKind         { return ValueKindConst }
-func (c *aConst) Type() ValueType         { return c.typ }
-func (c *aConst) raw() []wat.Value        { logger.Fatal("Todo"); return nil }
-func (c *aConst) EmitInit() []wat.Inst    { logger.Fatal("不可0值化常数"); return nil }
-func (c *aConst) EmitSet() []wat.Inst     { logger.Fatal("不可Pop至常数"); return nil }
-func (c *aConst) EmitRelease() []wat.Inst { logger.Fatal("不可清除常数"); return nil }
+func (c *aConst) Name() string                    { return c.lit }
+func (c *aConst) Kind() ValueKind                 { return ValueKindConst }
+func (c *aConst) Type() ValueType                 { return c.typ }
+func (c *aConst) raw() []wat.Value                { logger.Fatal("Todo"); return nil }
+func (c *aConst) EmitInit() []wat.Inst            { logger.Fatal("不可0值化常数"); return nil }
+func (c *aConst) EmitSet() []wat.Inst             { logger.Fatal("不可Pop至常数"); return nil }
+func (c *aConst) EmitRelease() []wat.Inst         { logger.Fatal("不可清除常数"); return nil }
+func (v *aConst) emitLoad(addr Value) []wat.Inst  { logger.Fatal("不可Load常数"); return nil }
+func (v *aConst) emitStore(addr Value) []wat.Inst { logger.Fatal("不可Store常数"); return nil }
 
 /**************************************
 constRune:

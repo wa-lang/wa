@@ -237,7 +237,7 @@ func (g *functionGenerator) genValue(v ssa.Value) ([]wat.Inst, wir.ValueType) {
 
 	switch v := v.(type) {
 	case *ssa.UnOp:
-		logger.Fatalf("Todo: %v, type: %T", v, v)
+		return g.genUnOp(v)
 
 	case *ssa.BinOp:
 		return g.genBinOp(v)
@@ -259,6 +259,16 @@ func (g *functionGenerator) genValue(v ssa.Value) ([]wat.Inst, wir.ValueType) {
 	}
 
 	logger.Fatalf("Todo: %v, type: %T", v, v)
+	return nil, nil
+}
+
+func (g *functionGenerator) genUnOp(inst *ssa.UnOp) ([]wat.Inst, wir.ValueType) {
+	switch inst.Op {
+	case token.MUL: //*x
+		return wir.EmitLoad(g.getValue(inst.X))
+	}
+
+	logger.Fatal("Todo")
 	return nil, nil
 }
 

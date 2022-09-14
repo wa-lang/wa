@@ -1,9 +1,44 @@
+// 版权 @2022 凹语言 作者。保留所有权利。
+
 package wir
 
 import (
 	"github.com/wa-lang/wa/internal/backends/compiler_wat/wir/wat"
 	"github.com/wa-lang/wa/internal/logger"
 )
+
+func toWatType(t ValueType) wat.ValueType {
+	switch t.(type) {
+	case RUNE:
+		return wat.I32{}
+
+	case I32:
+		return wat.I32{}
+
+	case U32:
+		return wat.U32{}
+
+	case I64:
+		return wat.I64{}
+
+	case U64:
+		return wat.U64{}
+
+	case F32:
+		return wat.F32{}
+
+	case F64:
+		return wat.F64{}
+
+	case Pointer:
+		return wat.I32{}
+
+	default:
+		logger.Fatalf("Todo:%v\n", t)
+	}
+
+	return nil
+}
 
 /**************************************
 Void:
@@ -95,6 +130,23 @@ func (t Pointer) Equal(u ValueType) bool {
 }
 
 /**************************************
+Block:
+**************************************/
+type Block struct {
+	Base ValueType
+}
+
+func NewBlock(base ValueType) Block  { return Block{Base: base} }
+func (t Block) byteSize() int        { return 4 }
+func (t Block) Raw() []wat.ValueType { return []wat.ValueType{wat.I32{}} }
+func (t Block) Equal(u ValueType) bool {
+	if ut, ok := u.(Block); ok {
+		return t.Base.Equal(ut.Base)
+	}
+	return false
+}
+
+/**************************************
 Struct:
 **************************************/
 type Struct struct {
@@ -107,15 +159,14 @@ type Field struct {
 	typ  ValueType
 }
 
-func NewField(n string, t ValueType) *Field { return &Field{name: n, typ: t} }
-func (i Field) Name() string                { return i.name }
-func (i Field) Type() ValueType             { return i.typ }
-func (i Field) Equal(u Field) bool          { return i.name == u.name && i.typ.Equal(u.typ) }
+func NewField(n string, t ValueType) Field { return Field{name: n, typ: t} }
+func (i Field) Name() string               { return i.name }
+func (i Field) Type() ValueType            { return i.typ }
+func (i Field) Equal(u Field) bool         { return i.name == u.name && i.typ.Equal(u.typ) }
 
-func NewStruct(name string, m []Field) *Struct {
-	return &Struct{name: name, Members: m}
+func NewStruct(name string, m []Field) Struct {
+	return Struct{name: name, Members: m}
 }
-
 func (t Struct) byteSize() int { logger.Fatal("Todo"); return 0 }
 func (t Struct) Raw() []wat.ValueType {
 	var r []wat.ValueType
@@ -145,12 +196,21 @@ func (t Struct) Equal(u ValueType) bool {
 Ref:
 **************************************/
 type Ref struct {
-	Base ValueType
+	Base       ValueType
+	underlying Struct
 }
 
-func NewRef(base ValueType) Ref    { return Ref{Base: base} }
+func NewRef(base ValueType) Ref {
+	var v Ref
+	v.Base = base
+	var m []Field
+	m = append(m, NewField("data", NewPointer(base)))
+	m = append(m, NewField("block", NewBlock(base)))
+	v.underlying = NewStruct("", m)
+	return v
+}
 func (t Ref) byteSize() int        { return 8 }
-func (t Ref) Raw() []wat.ValueType { return []wat.ValueType{wat.I32{}, wat.I32{}} }
+func (t Ref) Raw() []wat.ValueType { return t.underlying.Raw() }
 func (t Ref) Equal(u ValueType) bool {
 	if ut, ok := u.(Ref); ok {
 		return t.Base.Equal(ut.Base)
