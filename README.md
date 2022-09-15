@@ -16,7 +16,7 @@
 
 </div>
 
-凹语言™（凹读音“Wa”）是 [柴树杉](https://github.com/chai2010)、[丁尔男](https://github.com/3dgen)、[史斌](https://github.com/benshi001) 针对 WASM 平台设计的的通用编程语言，支持 Linux、macOS 和 Windows 等主流操作系统和 Chrome 等浏览器环境。
+凹语言™（凹读音“Wa”）是 [柴树杉](https://github.com/chai2010)、[丁尔男](https://github.com/3dgen)、[史斌](https://github.com/benshi001) 针对 WASM 平台设计的的通用编程语言，支持 Linux、macOS 和 Windows 等主流操作系统和 Chrome 等浏览器环境，同时也支持脚本模式执行。
 
 开发组成员：[柴树杉](https://github.com/chai2010)、[丁尔男](https://github.com/3dgen)、[史斌](https://github.com/benshi001)、[扈梦明](https://github.com/xxxDeveloper)、[刘云峰](https://github.com/leaftree)
 
@@ -115,6 +115,26 @@ $ go run main.go run _examples/prime
 ```
 
 更多例子 [_examples](_examples)
+
+## 作为脚本执行
+
+凹语言本身也可以像 Lua 语言被嵌入 Go 宿主语言环境执行：
+
+```go
+package main
+
+import (
+	"fmt"
+	"github.com/wa-lang/wa/api"
+)
+
+func main() {
+	output, err := api.RunCode("hello.wa", "fn main() { println(40+2) }")
+	fmt.Print(string(output), err)
+}
+```
+
+注：作为脚本执行目前只支持本地环境。
 
 ## 版权
 
