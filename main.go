@@ -16,6 +16,7 @@ import (
 	"github.com/wa-lang/wa/api"
 	"github.com/wa-lang/wa/internal/3rdparty/cli"
 	"github.com/wa-lang/wa/internal/app"
+	"github.com/wa-lang/wa/internal/app/apputil"
 	"github.com/wa-lang/wa/internal/backends/target_spec"
 	"github.com/wa-lang/wa/internal/config"
 )
@@ -79,7 +80,7 @@ func main() {
 			os.Exit(1)
 		}
 
-		stdoutStderr, err := app.RunWasm(outfile)
+		stdoutStderr, err := apputil.RunWasm(outfile)
 		if err != nil {
 			if len(stdoutStderr) > 0 {
 				fmt.Println(string(stdoutStderr))
@@ -181,7 +182,7 @@ func main() {
 				if c.Bool("html") {
 					// todo
 				} else {
-					stdoutStderr, err := app.RunWasm(outfile)
+					stdoutStderr, err := apputil.RunWasm(outfile)
 					if err != nil {
 						if len(stdoutStderr) > 0 {
 							fmt.Println(string(stdoutStderr))
@@ -397,7 +398,7 @@ func main() {
 			},
 			Action: func(c *cli.Context) error {
 				outdir := c.String("dir")
-				if err := app.InstallWat2wasm(outdir); err != nil {
+				if err := apputil.InstallWat2wasm(outdir); err != nil {
 					fmt.Println(err)
 					os.Exit(1)
 				}

@@ -8,7 +8,7 @@ package api
 import (
 	"os"
 
-	"github.com/wa-lang/wa/internal/app"
+	"github.com/wa-lang/wa/internal/app/apputil"
 )
 
 // 执行凹代码
@@ -26,6 +26,6 @@ func RunCode(filename, code string) (stdoutStderr []byte, err error) {
 	}
 
 	// 执行 wat 文件
-	stdoutStderr, err = app.RunWasm(outfile)
+	stdoutStderr, err = apputil.RunWasm(outfile)
 	return
 }
