@@ -5,37 +5,37 @@ package wat
 import "github.com/wa-lang/wa/internal/logger"
 
 /**************************************
-InstEq:
+instEq:
 **************************************/
-type InstEq struct {
+type instEq struct {
 	anInstruction
 	typ ValueType
 }
 
-func NewInstEq(t ValueType) *InstEq           { return &InstEq{typ: t} }
-func (i *InstEq) Format(indent string) string { return indent + i.typ.Name() + ".eq" }
+func NewInstEq(t ValueType) *instEq           { return &instEq{typ: t} }
+func (i *instEq) Format(indent string) string { return indent + i.typ.Name() + ".eq" }
 
 /**************************************
-InstNe:
+instNe:
 **************************************/
-type InstNe struct {
+type instNe struct {
 	anInstruction
 	typ ValueType
 }
 
-func NewInstNe(t ValueType) *InstNe           { return &InstNe{typ: t} }
-func (i *InstNe) Format(indent string) string { return indent + i.typ.Name() + ".ne" }
+func NewInstNe(t ValueType) *instNe           { return &instNe{typ: t} }
+func (i *instNe) Format(indent string) string { return indent + i.typ.Name() + ".ne" }
 
 /**************************************
-InstLt:
+instLt:
 **************************************/
-type InstLt struct {
+type instLt struct {
 	anInstruction
 	typ ValueType
 }
 
-func NewInstLt(t ValueType) *InstLt { return &InstLt{typ: t} }
-func (i *InstLt) Format(indent string) string {
+func NewInstLt(t ValueType) *instLt { return &instLt{typ: t} }
+func (i *instLt) Format(indent string) string {
 	switch i.typ.(type) {
 	case I32:
 		return indent + "i32.lt_s"
@@ -60,15 +60,15 @@ func (i *InstLt) Format(indent string) string {
 }
 
 /**************************************
-InstGt:
+instGt:
 **************************************/
-type InstGt struct {
+type instGt struct {
 	anInstruction
 	typ ValueType
 }
 
-func NewInstGt(t ValueType) *InstGt { return &InstGt{typ: t} }
-func (i *InstGt) Format(indent string) string {
+func NewInstGt(t ValueType) *instGt { return &instGt{typ: t} }
+func (i *instGt) Format(indent string) string {
 	switch i.typ.(type) {
 	case I32:
 		return indent + "i32.gt_s"
@@ -93,15 +93,15 @@ func (i *InstGt) Format(indent string) string {
 }
 
 /**************************************
-InstLe:
+instLe:
 **************************************/
-type InstLe struct {
+type instLe struct {
 	anInstruction
 	typ ValueType
 }
 
-func NewInstLe(t ValueType) *InstLe { return &InstLe{typ: t} }
-func (i *InstLe) Format(indent string) string {
+func NewInstLe(t ValueType) *instLe { return &instLe{typ: t} }
+func (i *instLe) Format(indent string) string {
 	switch i.typ.(type) {
 	case I32:
 		return indent + "i32.le_s"
@@ -126,15 +126,15 @@ func (i *InstLe) Format(indent string) string {
 }
 
 /**************************************
-InstGe:
+instGe:
 **************************************/
-type InstGe struct {
+type instGe struct {
 	anInstruction
 	typ ValueType
 }
 
-func NewInstGe(t ValueType) *InstGe { return &InstGe{typ: t} }
-func (i *InstGe) Format(indent string) string {
+func NewInstGe(t ValueType) *instGe { return &instGe{typ: t} }
+func (i *instGe) Format(indent string) string {
 	switch i.typ.(type) {
 	case I32:
 		return indent + "i32.ge_s"

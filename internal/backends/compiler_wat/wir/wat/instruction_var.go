@@ -3,45 +3,45 @@
 package wat
 
 /**************************************
-InstGetLocal:
+instGetLocal:
 **************************************/
-type InstGetLocal struct {
+type instGetLocal struct {
 	anInstruction
 	name string
 }
 
-func NewInstGetLocal(name string) *InstGetLocal     { return &InstGetLocal{name: name} }
-func (i *InstGetLocal) Format(indent string) string { return indent + "local.get $" + i.name }
+func NewInstGetLocal(name string) *instGetLocal     { return &instGetLocal{name: name} }
+func (i *instGetLocal) Format(indent string) string { return indent + "local.get $" + i.name }
 
 /**************************************
-InstSetLocal:
+instSetLocal:
 **************************************/
-type InstSetLocal struct {
+type instSetLocal struct {
 	anInstruction
 	name string
 }
 
-func NewInstSetLocal(name string) *InstSetLocal     { return &InstSetLocal{name: name} }
-func (i *InstSetLocal) Format(indent string) string { return indent + "local.set $" + i.name }
+func NewInstSetLocal(name string) *instSetLocal     { return &instSetLocal{name: name} }
+func (i *instSetLocal) Format(indent string) string { return indent + "local.set $" + i.name }
 
 /**************************************
-InstGetGlobal:
+instGetGlobal:
 **************************************/
-type InstGetGlobal struct {
+type instGetGlobal struct {
 	anInstruction
 	name string
 }
 
-func NewInstGetGlobal(name string) *InstGetGlobal    { return &InstGetGlobal{name: name} }
-func (i *InstGetGlobal) Format(indent string) string { return indent + "global.get $" + i.name }
+func NewInstGetGlobal(name string) *instGetGlobal    { return &instGetGlobal{name: name} }
+func (i *instGetGlobal) Format(indent string) string { return indent + "global.get $" + i.name }
 
 /**************************************
-InstSetGlobal:
+instSetGlobal:
 **************************************/
-type InstSetGlobal struct {
+type instSetGlobal struct {
 	anInstruction
 	name string
 }
 
-func NewInstSetGlobal(name string) *InstSetGlobal    { return &InstSetGlobal{name: name} }
-func (i *InstSetGlobal) Format(indent string) string { return indent + "global.set $" + i.name }
+func NewInstSetGlobal(name string) *instSetGlobal    { return &instSetGlobal{name: name} }
+func (i *instSetGlobal) Format(indent string) string { return indent + "global.set $" + i.name }

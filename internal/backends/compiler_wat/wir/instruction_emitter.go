@@ -1,3 +1,5 @@
+// 版权 @2022 凹语言 作者。保留所有权利。
+
 package wir
 
 import (
@@ -98,5 +100,17 @@ func EmitLoad(addr Value) (insts []wat.Inst, ret_type ValueType) {
 	default:
 		logger.Fatalf("Todo %v", addr)
 	}
+	return
+}
+
+func EmitStore(value, addr Value) (insts []wat.Inst) {
+	switch addr := addr.(type) {
+	case *VarRef:
+		insts = addr.EmitStore(value)
+
+	default:
+		logger.Fatalf("Todo %v", addr)
+	}
+
 	return
 }

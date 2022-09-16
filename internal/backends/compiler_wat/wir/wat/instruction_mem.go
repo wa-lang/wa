@@ -5,33 +5,33 @@ package wat
 import "strconv"
 
 /**************************************
-InstLoad:
+instLoad:
 **************************************/
-type InstLoad struct {
+type instLoad struct {
 	anInstruction
 	typ           ValueType
 	offset, align int
 }
 
-func NewInstLoad(typ ValueType, offset int, align int) *InstLoad {
-	return &InstLoad{typ: typ, offset: offset, align: align}
+func NewInstLoad(typ ValueType, offset int, align int) *instLoad {
+	return &instLoad{typ: typ, offset: offset, align: align}
 }
-func (i *InstLoad) Format(indent string) string {
+func (i *instLoad) Format(indent string) string {
 	return indent + i.typ.Name() + ".load offset=" + strconv.Itoa(i.offset) + " align=" + strconv.Itoa(i.align)
 }
 
 /**************************************
-InstStore:
+instStore:
 **************************************/
-type InstStore struct {
+type instStore struct {
 	anInstruction
 	typ           ValueType
 	offset, align int
 }
 
-func NewInstStore(typ ValueType, offset int, align int) *InstStore {
-	return &InstStore{typ: typ, offset: offset, align: align}
+func NewInstStore(typ ValueType, offset int, align int) *instStore {
+	return &instStore{typ: typ, offset: offset, align: align}
 }
-func (i *InstStore) Format(indent string) string {
+func (i *instStore) Format(indent string) string {
 	return indent + i.typ.Name() + ".store offset=" + strconv.Itoa(i.offset) + " align=" + strconv.Itoa(i.align)
 }

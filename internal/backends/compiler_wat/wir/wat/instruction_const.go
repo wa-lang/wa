@@ -3,17 +3,17 @@
 package wat
 
 /**************************************
-InstConst:
+instConst:
 **************************************/
-type InstConst struct {
+type instConst struct {
 	anInstruction
 	typ     ValueType
 	literal string
 }
 
-func NewInstConst(typ ValueType, literal string) *InstConst {
-	return &InstConst{typ: typ, literal: literal}
+func NewInstConst(typ ValueType, literal string) *instConst {
+	return &instConst{typ: typ, literal: literal}
 }
-func (i *InstConst) Format(indent string) string {
+func (i *instConst) Format(indent string) string {
 	return indent + i.typ.Name() + ".const " + i.literal
 }

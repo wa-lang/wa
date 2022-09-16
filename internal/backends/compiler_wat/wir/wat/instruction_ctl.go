@@ -5,27 +5,27 @@ package wat
 import "strconv"
 
 /**************************************
-InstCall:
+instCall:
 **************************************/
-type InstCall struct {
+type instCall struct {
 	anInstruction
 	name string
 }
 
-func NewInstCall(name string) *InstCall         { return &InstCall{name: name} }
-func (i *InstCall) Format(indent string) string { return indent + "call $" + i.name }
+func NewInstCall(name string) *instCall         { return &instCall{name: name} }
+func (i *instCall) Format(indent string) string { return indent + "call $" + i.name }
 
 /**************************************
-InstBlock:
+instBlock:
 **************************************/
-type InstBlock struct {
+type instBlock struct {
 	anInstruction
 	name  string
 	Insts []Inst
 }
 
-func NewInstBlock(name string) *InstBlock { return &InstBlock{name: name} }
-func (i *InstBlock) Format(indent string) string {
+func NewInstBlock(name string) *instBlock { return &instBlock{name: name} }
+func (i *instBlock) Format(indent string) string {
 	s := indent + "(block $"
 	s += i.name + "\n"
 	for _, v := range i.Insts {
@@ -36,16 +36,16 @@ func (i *InstBlock) Format(indent string) string {
 }
 
 /**************************************
-InstLoop:
+instLoop:
 **************************************/
-type InstLoop struct {
+type instLoop struct {
 	anInstruction
 	name  string
 	Insts []Inst
 }
 
-func NewInstLoop(name string) *InstLoop { return &InstLoop{name: name} }
-func (i *InstLoop) Format(indent string) string {
+func NewInstLoop(name string) *instLoop { return &instLoop{name: name} }
+func (i *instLoop) Format(indent string) string {
 	s := indent + "(loop $"
 	s += i.name + "\n"
 	for _, v := range i.Insts {
@@ -56,26 +56,26 @@ func (i *InstLoop) Format(indent string) string {
 }
 
 /**************************************
-InstBr:
+instBr:
 **************************************/
-type InstBr struct {
+type instBr struct {
 	anInstruction
 	Name string
 }
 
-func NewInstBr(name string) *InstBr           { return &InstBr{Name: name} }
-func (i *InstBr) Format(indent string) string { return indent + "br $" + i.Name }
+func NewInstBr(name string) *instBr           { return &instBr{Name: name} }
+func (i *instBr) Format(indent string) string { return indent + "br $" + i.Name }
 
 /**************************************
-InstBrTable:
+instBrTable:
 **************************************/
-type InstBrTable struct {
+type instBrTable struct {
 	anInstruction
 	Table []int
 }
 
-func NewInstBrTable(t []int) *InstBrTable { return &InstBrTable{Table: t} }
-func (i *InstBrTable) Format(indent string) string {
+func NewInstBrTable(t []int) *instBrTable { return &instBrTable{Table: t} }
+func (i *instBrTable) Format(indent string) string {
 	s := indent + "br_table"
 	for _, v := range i.Table {
 		s += " " + strconv.Itoa(v)
@@ -84,19 +84,19 @@ func (i *InstBrTable) Format(indent string) string {
 }
 
 /**************************************
-InstIf:
+instIf:
 **************************************/
-type InstIf struct {
+type instIf struct {
 	anInstruction
 	True  []Inst
 	False []Inst
 	Ret   []ValueType
 }
 
-func NewInstIf(instsTrue, instsFalse []Inst, ret []ValueType) *InstIf {
-	return &InstIf{True: instsTrue, False: instsFalse, Ret: ret}
+func NewInstIf(instsTrue, instsFalse []Inst, ret []ValueType) *instIf {
+	return &instIf{True: instsTrue, False: instsFalse, Ret: ret}
 }
-func (i *InstIf) Format(indent string) string {
+func (i *instIf) Format(indent string) string {
 	s := indent + "if"
 	if len(i.Ret) > 0 {
 		s += " (result"
@@ -119,11 +119,11 @@ func (i *InstIf) Format(indent string) string {
 }
 
 /**************************************
-InstReturn:
+instReturn:
 **************************************/
-type InstReturn struct {
+type instReturn struct {
 	anInstruction
 }
 
-func NewInstReturn() *InstReturn                  { return &InstReturn{} }
-func (i *InstReturn) Format(indent string) string { return indent + "return" }
+func NewInstReturn() *instReturn                  { return &instReturn{} }
+func (i *instReturn) Format(indent string) string { return indent + "return" }

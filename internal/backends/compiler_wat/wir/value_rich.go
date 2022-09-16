@@ -35,12 +35,33 @@ func (v *varBlock) EmitRelease() []wat.Inst {
 	return insts
 }
 func (v *varBlock) emitLoad(addr Value) []wat.Inst {
-	logger.Fatal("Todo")
-	return nil
+	//if !addr.Type().(Pointer).Base.Equal(v.Type()) {
+	//	logger.Fatal("Type not match")
+	//	return nil
+	//}
+
+	insts := addr.EmitGet()
+	insts = append(insts, wat.NewInstLoad(wat.I32{}, 0, 1))
+	return insts
 }
 func (v *varBlock) emitStore(addr Value) []wat.Inst {
-	logger.Fatal("Todo")
-	return nil
+	//if !addr.Type().(Pointer).Base.Equal(v.Type()) {
+	//	logger.Fatal("Type not match")
+	//	return nil
+	//}
+
+	insts := v.EmitGet()
+	insts = append(insts, wat.NewInstCall("$wa.RT.Block.Retain"))
+	insts = append(insts, wat.NewInstDrop())
+
+	NewVar("", v.kind, v.Type()).emitLoad(addr)
+	insts = append(insts, wat.NewInstCall("$wa.RT.Block.Release"))
+
+	insts = append(insts, addr.EmitGet()...)
+	insts = append(insts, v.EmitGet()...)
+	insts = append(insts, wat.NewInstStore(toWatType(v.Type()), 0, 1))
+
+	return insts
 }
 
 /**************************************
@@ -139,18 +160,19 @@ func (v *VarRef) EmitGet() []wat.Inst     { return v.underlying.EmitGet() }
 func (v *VarRef) EmitSet() []wat.Inst     { return v.underlying.EmitSet() }
 func (v *VarRef) EmitRelease() []wat.Inst { return v.underlying.EmitRelease() }
 func (v *VarRef) emitLoad(addr Value) []wat.Inst {
-	logger.Fatal("Todo")
-	return nil
+	return v.underlying.emitLoad(addr)
 }
 func (v *VarRef) emitStore(addr Value) []wat.Inst {
-	logger.Fatal("Todo")
-	return nil
+	return v.underlying.emitStore(addr)
 }
 func (v *VarRef) EmitLoad() []wat.Inst {
 	t := NewVar("", v.kind, v.Type().(Ref).Base)
 	return t.emitLoad(v.underlying.Extract("data"))
 }
-func (v *VarRef) EmitStore() []wat.Inst {
-	t := NewVar("", v.kind, v.Type().(Ref).Base)
-	return t.emitStore(v.underlying.Extract("data"))
+func (v *VarRef) EmitStore(d Value) []wat.Inst {
+	if !d.Type().Equal(v.Type().(Ref).Base) {
+		logger.Fatal("Type not match")
+		return nil
+	}
+	return d.emitStore(v.underlying.Extract("data"))
 }

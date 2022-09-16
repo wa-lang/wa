@@ -12,48 +12,48 @@ type anInstruction struct {
 func (i *anInstruction) isInstruction() {}
 
 /**************************************
-InstAdd:
+instAdd:
 **************************************/
-type InstAdd struct {
+type instAdd struct {
 	anInstruction
 	typ ValueType
 }
 
-func NewInstAdd(t ValueType) *InstAdd          { return &InstAdd{typ: t} }
-func (i *InstAdd) Format(indent string) string { return indent + i.typ.Name() + ".add" }
+func NewInstAdd(t ValueType) *instAdd          { return &instAdd{typ: t} }
+func (i *instAdd) Format(indent string) string { return indent + i.typ.Name() + ".add" }
 
 /**************************************
-InstSub:
+instSub:
 **************************************/
-type InstSub struct {
+type instSub struct {
 	anInstruction
 	typ ValueType
 }
 
-func NewInstSub(t ValueType) *InstSub          { return &InstSub{typ: t} }
-func (i *InstSub) Format(indent string) string { return indent + i.typ.Name() + ".sub" }
+func NewInstSub(t ValueType) *instSub          { return &instSub{typ: t} }
+func (i *instSub) Format(indent string) string { return indent + i.typ.Name() + ".sub" }
 
 /**************************************
-InstMul:
+instMul:
 **************************************/
-type InstMul struct {
+type instMul struct {
 	anInstruction
 	typ ValueType
 }
 
-func NewInstMul(t ValueType) *InstMul          { return &InstMul{typ: t} }
-func (i *InstMul) Format(indent string) string { return indent + i.typ.Name() + ".mul" }
+func NewInstMul(t ValueType) *instMul          { return &instMul{typ: t} }
+func (i *instMul) Format(indent string) string { return indent + i.typ.Name() + ".mul" }
 
 /**************************************
-InstDiv:
+instDiv:
 **************************************/
-type InstDiv struct {
+type instDiv struct {
 	anInstruction
 	typ ValueType
 }
 
-func NewInstDiv(t ValueType) *InstDiv { return &InstDiv{typ: t} }
-func (i *InstDiv) Format(indent string) string {
+func NewInstDiv(t ValueType) *instDiv { return &instDiv{typ: t} }
+func (i *instDiv) Format(indent string) string {
 	switch i.typ.(type) {
 	case I32:
 		return indent + "i32.div_s"
@@ -79,15 +79,15 @@ func (i *InstDiv) Format(indent string) string {
 }
 
 /**************************************
-InstRem:
+instRem:
 **************************************/
-type InstRem struct {
+type instRem struct {
 	anInstruction
 	typ ValueType
 }
 
-func NewInstRem(t ValueType) *InstRem { return &InstRem{typ: t} }
-func (i *InstRem) Format(indent string) string {
+func NewInstRem(t ValueType) *instRem { return &instRem{typ: t} }
+func (i *instRem) Format(indent string) string {
 	switch i.typ.(type) {
 	case I32:
 		return indent + "i32.rem_s"
