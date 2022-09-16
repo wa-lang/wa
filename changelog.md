@@ -1,5 +1,10 @@
 # 版本日志
 
+- v0.2.1 (2022-09-16)
+  - 支持纯浏览器编译执行: [https://wa-lang.org/playground](https://wa-lang.org/playground)
+  - 命令行增加打印 logo 子命令
+  - 本地支持被嵌入脚本模式执行
+  - 修复格式化问题
 - v0.2.0 (2022-09-07)
   - 全面切换到 WAT 后端, 支持 Linux/macOS/Windows 平台
   - 简化命令行字命令, 不依赖任何第三方工具
