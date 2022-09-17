@@ -1,7 +1,4 @@
 <div align="center">
-<p>
-    <img width="80" src="https://raw.githubusercontent.com/wa-lang/wa/master/docs/images/logo/logo-animate1-blue.svg?sanitize=true">
-</p>
 <h1>🇨🇳 凹语言™ The Wa Programming Language</h1>
 
 [主页](https://wa-lang.org) | [Playground](https://wa-lang.org/playground) | [目标](https://wa-lang.org/goals.html) | [路线](https://wa-lang.org/smalltalk/st0002.html) | [社区](https://wa-lang.org/community) | [日志](https://wa-lang.org/changelog.html) | [论坛](https://github.com/wa-lang/wa/discussions)
@@ -18,19 +15,11 @@
 
 凹语言™（凹读音“Wa”）是 [柴树杉](https://github.com/chai2010)、[丁尔男](https://github.com/3dgen)、[史斌](https://github.com/benshi001) 针对 WASM 平台设计的的通用编程语言，支持 Linux、macOS 和 Windows 等主流操作系统和 Chrome 等浏览器环境，同时也支持作为独立Shell脚本和被嵌入脚本模式执行。
 
+![](docs/images/logo/logo-animate1-blue.svg)
+
 - 主页：[https://wa-lang.org](https://wa-lang.org)
 - 扩展工具：[Playground](https://wa-lang.org/playground), [VSCode 插件](https://marketplace.visualstudio.com/items?itemName=xxxDeveloper.vscode-wa)
 - 开发组成员：[柴树杉](https://github.com/chai2010)、[丁尔男](https://github.com/3dgen)、[史斌](https://github.com/benshi001)、[扈梦明](https://github.com/xxxDeveloper)、[刘云峰](https://github.com/leaftree)
-
-```
-+---+    +---+
-| o |    | o |
-|   +----+   |
-|            |
-|     Wa     |
-|            |
-+------------+
-```
 
 安装和测试:
 
