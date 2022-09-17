@@ -1,6 +1,6 @@
 <div align="center">
 <p>
-    <img width="80" src="https://raw.githubusercontent.com/wa-lang/wa/master/docs/images/logo/logo-round.svg?sanitize=true">
+    <img width="80" src="https://raw.githubusercontent.com/wa-lang/wa/master/docs/images/logo/logo-animate1-blue.svg?sanitize=true">
 </p>
 <h1>🇨🇳 凹语言™ The Wa Programming Language</h1>
 
