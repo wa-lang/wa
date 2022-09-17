@@ -55,7 +55,7 @@ func loadProgramFileMeta(cfg *config.Config, filename string, src interface{}) (
 	vfs = new(config.PkgVFS)
 	if vfs.App == nil {
 		vfs.App = fstest.MapFS{
-			"app.wa": &fstest.MapFile{
+			filename: &fstest.MapFile{
 				Data: srcData,
 			},
 		}
