@@ -204,8 +204,8 @@ func NewRef(base ValueType) Ref {
 	var v Ref
 	v.Base = base
 	var m []Field
-	m = append(m, NewField("data", NewPointer(base)))
 	m = append(m, NewField("block", NewBlock(base)))
+	m = append(m, NewField("data", NewPointer(base)))
 	v.underlying = NewStruct("", m)
 	return v
 }

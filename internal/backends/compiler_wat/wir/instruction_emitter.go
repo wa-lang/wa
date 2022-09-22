@@ -103,7 +103,7 @@ func EmitLoad(addr Value) (insts []wat.Inst, ret_type ValueType) {
 	return
 }
 
-func EmitStore(value, addr Value) (insts []wat.Inst) {
+func EmitStore(addr, value Value) (insts []wat.Inst) {
 	switch addr := addr.(type) {
 	case *VarRef:
 		insts = addr.EmitStore(value)
@@ -112,5 +112,17 @@ func EmitStore(value, addr Value) (insts []wat.Inst) {
 		logger.Fatalf("Todo %v", addr)
 	}
 
+	return
+}
+
+func EmitHeapAlloc(typ ValueType) (insts []wat.Inst, ret_type ValueType) {
+	ret_type = NewRef(typ)
+	insts = NewVarRef("", ValueKindLocal, ret_type).emitHeapAlloc()
+	return
+}
+
+func EmitStackAlloc(typ ValueType) (insts []wat.Inst, ret_type ValueType) {
+	ret_type = NewRef(typ)
+	insts = NewVarRef("", ValueKindLocal, ret_type).emitStackAlloc()
 	return
 }

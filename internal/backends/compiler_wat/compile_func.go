@@ -194,9 +194,6 @@ func (g *functionGenerator) genBlock(block *ssa.BasicBlock) []wat.Inst {
 func (g *functionGenerator) genInstruction(inst ssa.Instruction) []wat.Inst {
 	switch inst := inst.(type) {
 
-	case *ssa.Alloc:
-		logger.Fatalf("Todo:%T", inst)
-
 	case *ssa.If:
 		return g.genIf(inst)
 
@@ -247,6 +244,9 @@ func (g *functionGenerator) genValue(v ssa.Value) ([]wat.Inst, wir.ValueType) {
 
 	case *ssa.Phi:
 		return g.genPhi(v)
+
+	case *ssa.Alloc:
+		return g.genAlloc(v)
 
 	case *ssa.FieldAddr:
 		logger.Fatalf("Todo: %v, type: %T", v, v)
@@ -456,6 +456,14 @@ func (g *functionGenerator) genJumpID(cur, dest int) []wat.Inst {
 	}
 
 	return insts
+}
+
+func (g *functionGenerator) genAlloc(inst *ssa.Alloc) ([]wat.Inst, wir.ValueType) {
+	if inst.Heap {
+		return wir.EmitHeapAlloc(wir.ToWType(inst.Type().(*types.Pointer).Elem()))
+	} else {
+		return wir.EmitStackAlloc(wir.ToWType(inst.Type().(*types.Pointer).Elem()))
+	}
 }
 
 func (g *functionGenerator) addRegister(typ wir.ValueType) wir.Value {
