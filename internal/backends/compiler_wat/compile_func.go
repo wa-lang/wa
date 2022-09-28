@@ -112,23 +112,18 @@ func (g *functionGenerator) genFunction(f *ssa.Function) *wat.Function {
 
 	g.var_block_selector = wir.NewVar("$block_selector", wir.ValueKindLocal, wir.I32{})
 	g.registers = append(g.registers, g.var_block_selector)
-	wir_fn.Insts = append(wir_fn.Insts, g.var_block_selector.EmitInit()...)
-
 	g.var_current_block = wir.NewVar("$current_block", wir.ValueKindLocal, wir.I32{})
 	g.registers = append(g.registers, g.var_current_block)
-	wir_fn.Insts = append(wir_fn.Insts, g.var_current_block.EmitInit()...)
-
 	if !wir_fn.Result.Equal(wir.Void{}) {
 		g.var_ret = wir.NewVar("$ret", wir.ValueKindLocal, wir_fn.Result)
 		g.registers = append(g.registers, g.var_ret)
-		wir_fn.Insts = append(wir_fn.Insts, g.var_ret.EmitInit()...)
 	}
 
 	var block_temp wat.Inst
 	//BlockSel:
 	{
 		inst := wat.NewInstBlock("$BlockSel")
-		inst.Insts = append(inst.Insts, g.var_block_selector.EmitGet()...)
+		inst.Insts = append(inst.Insts, g.var_block_selector.EmitPush()...)
 		t := make([]int, len(f.Blocks)+1)
 		for i := range f.Blocks {
 			t[i] = i
@@ -159,10 +154,18 @@ func (g *functionGenerator) genFunction(f *ssa.Function) *wat.Function {
 		block_temp = inst
 	}
 
+	for _, i := range g.registers {
+		wir_fn.Insts = append(wir_fn.Insts, i.EmitInit()...)
+	}
+
 	wir_fn.Insts = append(wir_fn.Insts, block_temp)
 
 	if !wir_fn.Result.Equal(wir.Void{}) {
-		wir_fn.Insts = append(wir_fn.Insts, g.var_ret.EmitGet()...)
+		wir_fn.Insts = append(wir_fn.Insts, g.var_ret.EmitPush()...)
+	}
+
+	for _, i := range g.registers {
+		wir_fn.Insts = append(wir_fn.Insts, i.EmitRelease()...)
 	}
 
 	wir_fn.Locals = g.registers
@@ -198,7 +201,7 @@ func (g *functionGenerator) genInstruction(inst ssa.Instruction) []wat.Inst {
 		return g.genIf(inst)
 
 	case *ssa.Store:
-		logger.Fatalf("Todo:%T", inst)
+		return g.genStore(inst)
 
 	case *ssa.Jump:
 		return g.genJump(inst)
@@ -216,7 +219,7 @@ func (g *functionGenerator) genInstruction(inst ssa.Instruction) []wat.Inst {
 		s, t := g.genValue(inst)
 		if !t.Equal(wir.Void{}) {
 			v := g.getValue(inst)
-			s = append(s, v.EmitSet()...)
+			s = append(s, v.EmitPop()...)
 			g.locals_map[inst] = v
 		}
 		return s
@@ -331,7 +334,7 @@ func (g *functionGenerator) genCall(inst *ssa.Call) ([]wat.Inst, wir.ValueType) 
 		ret_type := wir.ToWType(inst.Call.Signature().Results())
 		var insts []wat.Inst
 		for _, v := range inst.Call.Args {
-			insts = append(insts, g.getValue(v).EmitGet()...)
+			insts = append(insts, g.getValue(v).EmitPush()...)
 		}
 		insts = append(insts, wat.NewInstCall(inst.Call.StaticCallee().Name()))
 		return insts, ret_type
@@ -359,11 +362,11 @@ func (g *functionGenerator) genBuiltin(call *ssa.CallCommon) ([]wat.Inst, wir.Va
 			arg := g.getValue(arg)
 			switch arg.Type().(type) {
 			case wir.I32:
-				insts = append(insts, arg.EmitGet()...)
+				insts = append(insts, arg.EmitPush()...)
 				insts = append(insts, wat.NewInstCall("$waPrintI32"))
 
 			case wir.RUNE:
-				insts = append(insts, arg.EmitGet()...)
+				insts = append(insts, arg.EmitPush()...)
 				insts = append(insts, wat.NewInstCall("$waPrintRune"))
 
 			default:
@@ -372,7 +375,7 @@ func (g *functionGenerator) genBuiltin(call *ssa.CallCommon) ([]wat.Inst, wir.Va
 		}
 
 		if call.Value.Name() == "println" {
-			insts = append(insts, wir.NewConst(wir.I32{}, strconv.Itoa('\n')).EmitGet()...)
+			insts = append(insts, wir.NewConst(wir.I32{}, strconv.Itoa('\n')).EmitPush()...)
 			insts = append(insts, wat.NewInstCall("$waPrintRune"))
 		}
 
@@ -388,10 +391,10 @@ func (g *functionGenerator) genPhiIter(preds []int, values []wir.Value) []wat.In
 	cond, _ := wir.EmitBinOp(g.var_current_block, wir.NewConst(wir.I32{}, strconv.Itoa(preds[0])), wat.OpCodeEql)
 	insts = append(insts, cond...)
 
-	trueInsts := values[0].EmitGet()
+	trueInsts := values[0].EmitPush()
 	var falseInsts []wat.Inst
 	if len(preds) == 2 {
-		falseInsts = values[1].EmitGet()
+		falseInsts = values[1].EmitPush()
 	} else {
 		falseInsts = g.genPhiIter(preds[1:], values[1:])
 	}
@@ -427,13 +430,17 @@ func (g *functionGenerator) genReturn(inst *ssa.Return) []wat.Inst {
 	return insts
 }
 
+func (g *functionGenerator) genStore(inst *ssa.Store) []wat.Inst {
+	return wir.EmitStore(g.getValue(inst.Addr), g.getValue(inst.Val))
+}
+
 func (g *functionGenerator) genIf(inst *ssa.If) []wat.Inst {
 	cond := g.getValue(inst.Cond)
 	if !cond.Type().Equal(wir.I32{}) {
 		logger.Fatal("cond.type() != i32")
 	}
 
-	insts := cond.EmitGet()
+	insts := cond.EmitPush()
 	instsTrue := g.genJumpID(inst.Block().Index, inst.Block().Succs[0].Index)
 	instsFalse := g.genJumpID(inst.Block().Index, inst.Block().Succs[1].Index)
 	insts = append(insts, wat.NewInstIf(instsTrue, instsFalse, nil))

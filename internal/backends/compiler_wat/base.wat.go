@@ -61,6 +61,31 @@ const modBaseWat_wa = `
 	(call $main)
 	;; {{$_start/body/end}}
 )
+
+(func $$waHeapAlloc (param $size i32) (result i32) ;;result = ptr
+	;;Todo
+	i32.const 0
+)
+
+(func $$wa.RT.Block.Init (param $ptr i32) (param $item_count i32) (param $release_func i32) (result i32) ;;result = ptr
+  ;;Todo
+  local.get $ptr
+)
+
+(func $$wa.RT.DupWatStack (param $p i32) (result i32) (result i32) ;;result0 = result1 = p
+  local.get $p
+  local.get $p
+)
+
+(func $$wa.RT.Block.Retain (param $ptr i32) (result i32) ;;result = ptr
+  ;;Todo
+  local.get $ptr
+)
+
+(func $$wa.RT.Block.Release (param $ptr i32)
+  ;;Todo
+)
+
 `
 
 const modBaseWat_wasi = `

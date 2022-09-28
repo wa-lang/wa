@@ -41,8 +41,8 @@ type Value interface {
 	Type() ValueType
 	raw() []wat.Value
 	EmitInit() []wat.Inst
-	EmitGet() []wat.Inst
-	EmitSet() []wat.Inst
+	EmitPush() []wat.Inst
+	EmitPop() []wat.Inst
 	EmitRelease() []wat.Inst
 	emitLoad(addr Value) []wat.Inst
 	emitStore(addr Value) []wat.Inst

@@ -18,12 +18,12 @@ func (m *Module) String() string {
 		s += i.Format("  ") + "\n"
 	}
 
-	s += m.BaseWat + "\n"
+	s += m.BaseWat
 
 	for _, f := range m.Funcs {
-		s += f.Format("  ") + "\n"
+		s += "\n\n" + f.Format("")
 	}
 
-	s += ") ;;module"
+	s += "\n) ;;module"
 	return s
 }

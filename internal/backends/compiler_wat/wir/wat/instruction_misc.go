@@ -20,3 +20,13 @@ type comment struct {
 
 func NewComment(name string) *comment          { return &comment{name: name} }
 func (i *comment) Format(indent string) string { return indent + ";;" + i.name }
+
+/**************************************
+blank:
+**************************************/
+type blank struct {
+	anInstruction
+}
+
+func NewBlank() *blank                       { return &blank{} }
+func (i *blank) Format(indent string) string { return "" }

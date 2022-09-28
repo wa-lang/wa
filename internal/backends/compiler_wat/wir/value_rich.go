@@ -21,52 +21,45 @@ func newVarBlock(name string, kind ValueKind, base_type ValueType) *varBlock {
 }
 func (v *varBlock) raw() []wat.Value { return []wat.Value{wat.NewVarI32(v.name)} }
 func (v *varBlock) EmitInit() []wat.Inst {
-	return []wat.Inst{wat.NewInstConst(wat.I32{}, "0"), v.set(v.name)}
+	return []wat.Inst{wat.NewInstConst(wat.I32{}, "0"), v.pop(v.name)}
 }
-func (v *varBlock) EmitGet() []wat.Inst { return []wat.Inst{v.get(v.name)} }
-func (v *varBlock) EmitSet() []wat.Inst {
-	var insts []wat.Inst
+func (v *varBlock) EmitPush() (insts []wat.Inst) {
+	insts = append(insts, v.push(v.name))
 	insts = append(insts, wat.NewInstCall("$wa.RT.Block.Retain"))
+	return
+}
+func (v *varBlock) EmitPop() (insts []wat.Inst) {
 	insts = append(insts, v.EmitRelease()...)
-	insts = append(insts, v.set(v.name))
-	return insts
+	insts = append(insts, v.pop(v.name))
+	return
 }
 
-func (v *varBlock) EmitRelease() []wat.Inst {
-	insts := v.EmitGet()
+func (v *varBlock) EmitRelease() (insts []wat.Inst) {
+	insts = append(insts, v.push(v.name))
 	insts = append(insts, wat.NewInstCall("$wa.RT.Block.Release"))
-	return insts
+	return
 }
 
-func (v *varBlock) emitLoad(addr Value) []wat.Inst {
-	//if !addr.Type().(Pointer).Base.Equal(v.Type()) {
-	//	logger.Fatal("Type not match")
-	//	return nil
-	//}
-
-	insts := addr.EmitGet()
+func (v *varBlock) emitLoad(addr Value) (insts []wat.Inst) {
+	insts = append(insts, addr.EmitPush()...)
 	insts = append(insts, wat.NewInstLoad(wat.I32{}, 0, 1))
-	return insts
+	insts = append(insts, wat.NewInstCall("$wa.RT.Block.Retain"))
+	return
 }
 
-func (v *varBlock) emitStore(addr Value) []wat.Inst {
-	//if !addr.Type().(Pointer).Base.Equal(v.Type()) {
-	//	logger.Fatal("Type not match")
-	//	return nil
-	//}
-
-	insts := v.EmitGet()
+func (v *varBlock) emitStore(addr Value) (insts []wat.Inst) {
+	insts = append(insts, v.push(v.name))
 	insts = append(insts, wat.NewInstCall("$wa.RT.Block.Retain"))
 	insts = append(insts, wat.NewInstDrop())
 
-	NewVar("", v.kind, v.Type()).emitLoad(addr)
+	insts = append(insts, addr.EmitPush()...)
+	insts = append(insts, wat.NewInstLoad(wat.I32{}, 0, 1))
 	insts = append(insts, wat.NewInstCall("$wa.RT.Block.Release"))
 
-	insts = append(insts, addr.EmitGet()...)
-	insts = append(insts, v.EmitGet()...)
+	insts = append(insts, addr.EmitPush()...)
+	insts = append(insts, v.push(v.name))
 	insts = append(insts, wat.NewInstStore(toWatType(v.Type()), 0, 1))
-
-	return insts
+	return
 }
 
 func (v *varBlock) emitHeapAlloc(item_count Value) (insts []wat.Inst) {
@@ -77,11 +70,11 @@ func (v *varBlock) emitHeapAlloc(item_count Value) (insts []wat.Inst) {
 			logger.Fatalf("%v\n", err)
 			return nil
 		}
-		insts = NewConst(I32{}, strconv.Itoa(v.Type().(Block).Base.byteSize()*c+16)).EmitGet()
+		insts = append(insts, NewConst(I32{}, strconv.Itoa(v.Type().(Block).Base.byteSize()*c+16)).EmitPush()...)
 		insts = append(insts, wat.NewInstCall("$waHeapAlloc"))
 
-		insts = append(insts, item_count.EmitGet()...)           //item_count
-		insts = append(insts, NewConst(I32{}, "0").EmitGet()...) //release_method
+		insts = append(insts, item_count.EmitPush()...)           //item_count
+		insts = append(insts, NewConst(I32{}, "0").EmitPush()...) //release_method
 		insts = append(insts, wat.NewInstCall("$wa.RT.Block.Init"))
 
 	default:
@@ -90,15 +83,15 @@ func (v *varBlock) emitHeapAlloc(item_count Value) (insts []wat.Inst) {
 			return nil
 		}
 
-		insts = item_count.EmitGet()
-		insts = append(insts, NewConst(I32{}, strconv.Itoa(v.Type().(Block).Base.byteSize())).EmitGet()...)
+		insts = append(insts, item_count.EmitPush()...)
+		insts = append(insts, NewConst(I32{}, strconv.Itoa(v.Type().(Block).Base.byteSize())).EmitPush()...)
 		insts = append(insts, wat.NewInstMul(wat.I32{}))
-		insts = append(insts, NewConst(I32{}, "16").EmitGet()...)
+		insts = append(insts, NewConst(I32{}, "16").EmitPush()...)
 		insts = append(insts, wat.NewInstAdd(wat.I32{}))
 		insts = append(insts, wat.NewInstCall("$waHeapAlloc"))
 
-		insts = append(insts, item_count.EmitGet()...)
-		insts = append(insts, NewConst(I32{}, "0").EmitGet()...) //release_method
+		insts = append(insts, item_count.EmitPush()...)
+		insts = append(insts, NewConst(I32{}, "0").EmitPush()...) //release_method
 		insts = append(insts, wat.NewInstCall("$wa.RT.Block.Init"))
 	}
 
@@ -128,27 +121,27 @@ func (v *VarStruct) EmitInit() []wat.Inst {
 	var insts []wat.Inst
 	st := v.Type().(Struct)
 	for _, m := range st.Members {
-		t := NewVar(m.Name(), v.kind, m.Type())
+		t := NewVar(v.Name()+"."+m.Name(), v.kind, m.Type())
 		insts = append(insts, t.EmitInit()...)
 	}
 	return insts
 }
-func (v *VarStruct) EmitGet() []wat.Inst {
+func (v *VarStruct) EmitPush() []wat.Inst {
 	var insts []wat.Inst
 	st := v.Type().(Struct)
 	for _, m := range st.Members {
-		t := NewVar(m.Name(), v.kind, m.Type())
-		insts = append(insts, t.EmitGet()...)
+		t := NewVar(v.Name()+"."+m.Name(), v.kind, m.Type())
+		insts = append(insts, t.EmitPush()...)
 	}
 	return insts
 }
-func (v *VarStruct) EmitSet() []wat.Inst {
+func (v *VarStruct) EmitPop() []wat.Inst {
 	var insts []wat.Inst
 	st := v.Type().(Struct)
 	for i := range st.Members {
 		m := st.Members[len(st.Members)-i-1]
-		t := NewVar(m.Name(), v.kind, m.Type())
-		insts = append(insts, t.EmitSet()...)
+		t := NewVar(v.Name()+"."+m.Name(), v.kind, m.Type())
+		insts = append(insts, t.EmitPop()...)
 	}
 	return insts
 }
@@ -157,7 +150,7 @@ func (v *VarStruct) EmitRelease() []wat.Inst {
 	st := v.Type().(Struct)
 	for i := range st.Members {
 		m := st.Members[len(st.Members)-i-1]
-		t := NewVar(m.Name(), v.kind, m.Type())
+		t := NewVar(v.Name()+"."+m.Name(), v.kind, m.Type())
 		insts = append(insts, t.EmitRelease()...)
 	}
 	return insts
@@ -198,8 +191,8 @@ func NewVarRef(name string, kind ValueKind, base_type ValueType) *VarRef {
 
 func (v *VarRef) raw() []wat.Value                { return v.underlying.raw() }
 func (v *VarRef) EmitInit() []wat.Inst            { return v.underlying.EmitInit() }
-func (v *VarRef) EmitGet() []wat.Inst             { return v.underlying.EmitGet() }
-func (v *VarRef) EmitSet() []wat.Inst             { return v.underlying.EmitSet() }
+func (v *VarRef) EmitPush() []wat.Inst            { return v.underlying.EmitPush() }
+func (v *VarRef) EmitPop() []wat.Inst             { return v.underlying.EmitPop() }
 func (v *VarRef) EmitRelease() []wat.Inst         { return v.underlying.EmitRelease() }
 func (v *VarRef) emitLoad(addr Value) []wat.Inst  { return v.underlying.emitLoad(addr) }
 func (v *VarRef) emitStore(addr Value) []wat.Inst { return v.underlying.emitStore(addr) }
@@ -218,16 +211,29 @@ func (v *VarRef) EmitStore(d Value) []wat.Inst {
 }
 
 func (v *VarRef) emitHeapAlloc() (insts []wat.Inst) {
-	insts = newVarBlock("", v.Kind(), v.Type().(Ref).Base).emitHeapAlloc(NewConst(I32{}, "1"))
+	insts = append(insts, wat.NewBlank())
+	insts = append(insts, wat.NewComment(v.name+" Ref.emitHeapAlloc start"))
+
+	insts = append(insts, newVarBlock("", v.Kind(), v.Type().(Ref).Base).emitHeapAlloc(NewConst(I32{}, "1"))...)
 	insts = append(insts, wat.NewInstCall("$wa.RT.DupWatStack"))
-	insts = append(insts, NewConst(I32{}, "16").EmitGet()...)
+	insts = append(insts, NewConst(I32{}, "16").EmitPush()...)
 	insts = append(insts, wat.NewInstAdd(wat.I32{}))
+
+	insts = append(insts, wat.NewComment(v.name+" Ref.emitHeapAlloc end"))
+	insts = append(insts, wat.NewBlank())
+
 	return
 }
 
 func (v *VarRef) emitStackAlloc() (insts []wat.Inst) {
-	insts = NewConst(I32{}, "0").EmitGet()
-	insts = append(insts, NewConst(I32{}, strconv.Itoa(v.Type().(Ref).Base.byteSize())).EmitGet()...)
+	insts = append(insts, wat.NewBlank())
+	insts = append(insts, wat.NewComment(v.name+" Ref.emitStackAlloc start"))
+
+	insts = append(insts, NewConst(I32{}, "0").EmitPush()...)
+	insts = append(insts, NewConst(I32{}, strconv.Itoa(v.Type().(Ref).Base.byteSize())).EmitPush()...)
 	insts = append(insts, wat.NewInstCall("$waStackAlloc"))
+
+	insts = append(insts, wat.NewComment(v.name+" Ref.emitStackAlloc end"))
+	insts = append(insts, wat.NewBlank())
 	return
 }

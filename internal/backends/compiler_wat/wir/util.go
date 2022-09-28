@@ -62,6 +62,9 @@ func ToWType(from types.Type) ValueType {
 			logger.Fatalf("Todo type:%s", t)
 		}
 
+	case *types.Pointer:
+		return NewRef(ToWType(t.Elem()))
+
 	default:
 		logger.Fatalf("Todo:%T", t)
 	}

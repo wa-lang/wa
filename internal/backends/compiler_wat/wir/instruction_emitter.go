@@ -18,8 +18,8 @@ func EmitAssginValue(lh, rh Value) []wat.Inst {
 			logger.Fatal("x.Type() != y.Type()")
 		}
 
-		insts = append(insts, rh.EmitGet()...)
-		insts = append(insts, lh.EmitSet()...)
+		insts = append(insts, rh.EmitPush()...)
+		insts = append(insts, lh.EmitPop()...)
 	}
 
 	return insts
@@ -38,8 +38,8 @@ func EmitBinOp(x, y Value, op wat.OpCode) ([]wat.Inst, ValueType) {
 	}
 	rtype := r.Raw()[0]
 
-	insts = append(insts, x.EmitGet()...)
-	insts = append(insts, y.EmitGet()...)
+	insts = append(insts, x.EmitPush()...)
+	insts = append(insts, y.EmitPush()...)
 
 	switch op {
 	case wat.OpCodeAdd:
@@ -117,12 +117,12 @@ func EmitStore(addr, value Value) (insts []wat.Inst) {
 
 func EmitHeapAlloc(typ ValueType) (insts []wat.Inst, ret_type ValueType) {
 	ret_type = NewRef(typ)
-	insts = NewVarRef("", ValueKindLocal, ret_type).emitHeapAlloc()
+	insts = NewVarRef("", ValueKindLocal, typ).emitHeapAlloc()
 	return
 }
 
 func EmitStackAlloc(typ ValueType) (insts []wat.Inst, ret_type ValueType) {
 	ret_type = NewRef(typ)
-	insts = NewVarRef("", ValueKindLocal, ret_type).emitStackAlloc()
+	insts = NewVarRef("", ValueKindLocal, typ).emitStackAlloc()
 	return
 }
