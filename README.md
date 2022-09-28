@@ -33,6 +33,10 @@ Instead of requiring complex toolchains to set up, you can simply go install it 
 2. `wa init -name=_examples/hi`
 3. `wa run _examples/hi`
 
+> 项目尚处于原型开源阶段，如果有共建和PR需求请 [入群交流](https://wa-lang.org/community/index.html)。
+
+> The Wa project is still in very early stage. If you want to submit PR, please join the [Wechat Group(Speak Chinese)](https://wa-lang.org/community/index.html) at first.
+
 ## 例子: 凹语言 (Example: Print 凹语言)
 
 打印字符和调用函数(Print rune and call function)：
