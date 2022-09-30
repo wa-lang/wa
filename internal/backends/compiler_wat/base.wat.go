@@ -62,14 +62,40 @@ const modBaseWat_wa = `
 	;; {{$_start/body/end}}
 )
 
+(global $$heap_ptr (mut i32) (i32.const 2048))
 (func $$waHeapAlloc (param $size i32) (result i32) ;;result = ptr
 	;;Todo
-	i32.const 0
+	global.get $$heap_ptr
+
+	global.get $$heap_ptr
+	local.get $size
+	i32.add
+	global.set $$heap_ptr
+)
+(func $$waHeapFree (param $ptr i32)
+	;;Todo
+	i32.const 126
+	call $$waPrintRune
+	local.get $ptr
+	call $$waPrintI32
+	i32.const 10
+	call $$waPrintRune
 )
 
 (func $$wa.RT.Block.Init (param $ptr i32) (param $item_count i32) (param $release_func i32) (result i32) ;;result = ptr
-  ;;Todo
   local.get $ptr
+
+  local.get $ptr
+  i32.const 1
+  i32.store offset=0 align=1
+
+  local.get $ptr
+  local.get $item_count
+  i32.store offset=4 align=1
+
+  local.get $ptr
+  local.get $release_func
+  i32.store offset=8 align=1
 )
 
 (func $$wa.RT.DupWatStack (param $p i32) (result i32) (result i32) ;;result0 = result1 = p
@@ -78,12 +104,52 @@ const modBaseWat_wa = `
 )
 
 (func $$wa.RT.Block.Retain (param $ptr i32) (result i32) ;;result = ptr
-  ;;Todo
   local.get $ptr
+
+  local.get $ptr
+  local.get $ptr
+  i32.load offset=0 align=1
+  i32.const 1
+  i32.add
+  i32.store offset=0 align=1
 )
 
 (func $$wa.RT.Block.Release (param $ptr i32)
   ;;Todo
+  (local $count i32)
+  (local $release_func i32)
+
+  local.get $ptr
+  i32.load offset=0 align=1
+  i32.const 1
+  i32.sub
+  local.set $count
+
+  local.get $count
+  i32.const 0
+  i32.eq
+
+  if
+    local.get $ptr
+	i32.load offset=8 align=1
+	local.set $release_func
+
+	local.get $release_func
+	i32.const 0
+	i32.ne
+
+	if
+	  ;;Todo
+	  nop
+	end
+
+	local.get $ptr
+	call $$waHeapFree
+  else
+    local.get $ptr
+    local.get $count
+	i32.store offset=0 align=1
+  end
 )
 
 `
