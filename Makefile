@@ -9,4 +9,7 @@ prime:
 build-wasm:
 	GOARCH=wasm GOOS=js go build -o wa.out.wasm ./main_wasm.go
 
+win-exe-icon:
+	windres -o main_rc_windows.syso main.rc
+
 clean:

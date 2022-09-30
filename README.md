@@ -16,7 +16,7 @@
 
 </div>
 
-凹语言™（凹读音“Wa”）是 针对 WASM 平台设计的的通用编程语言，支持 Linux、macOS 和 Windows 等主流操作系统和 Chrome 等浏览器环境，同时也支持作为独立Shell脚本和被嵌入脚本模式执行。
+凹语言™（凹读音“Wa”）是 针对 WASM 平台设计的通用编程语言，同时支持 Linux、macOS 和 Windows 等主流操作系统和 Chrome 等浏览器环境，同时也支持作为独立Shell脚本和被嵌入脚本模式执行。
 
 Wa is a general-purpose programming language designed for developing robustness and maintainability WebAssembly software.
 Instead of requiring complex toolchains to set up, you can simply go install it - or run it in a browser.
@@ -24,7 +24,9 @@ Instead of requiring complex toolchains to set up, you can simply go install it 
 ![](docs/images/logo/logo-animate1-blue.svg)
 
 - 主页 (Homepage): [https://wa-lang.org](https://wa-lang.org)
-- 开发工具 (Develop Tools): [Playground](https://wa-lang.org/playground), [VSCode](https://marketplace.visualstudio.com/items?itemName=xxxDeveloper.vscode-wa)
+- 代码仓库 (Github): [https://github.com/wa-lang/wa](https://github.com/wa-lang/wa)
+- 代码仓库 (Gitee):  [https://gitee.com/wa-lang/wa](https://gitee.com/wa-lang/wa)
+- 开发工具 (Develop Tools): [Playground](https://wa-lang.org/playground), [VSCode 插件](https://marketplace.visualstudio.com/items?itemName=xxxDeveloper.vscode-wa), [Notepad++ 插件](https://github.com/wa-lang/notepadplus-wa)
 - 开发组 (Core Team): [柴树杉(chai2010)](https://github.com/chai2010)、[丁尔男(Ending)](https://github.com/3dgen)、[史斌(Benshi)](https://github.com/benshi001)、[扈梦明(xxxDeveloper)](https://github.com/xxxDeveloper)、[刘云峰(leaftree)](https://github.com/leaftree)
 
 安装和测试 (Install and Run):
