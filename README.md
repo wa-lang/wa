@@ -44,7 +44,7 @@ Instead of requiring complex toolchains to set up, you can simply go install it 
 打印字符和调用函数(Print rune and call function)：
 
 ```
-fn main() {
+fn main {
 	print('凹')
 	print('语')
 	print('言')
@@ -73,7 +73,7 @@ $ go run main.go hello.wa
 ```
 # 版权 @2021 凹语言™ 作者。保留所有权利。
 
-fn main() {
+fn main {
 	for n := 2; n <= 30; n = n + 1 {
 		var isPrime int = 1
 		for i := 2; i*i <= n; i = i + 1 {
