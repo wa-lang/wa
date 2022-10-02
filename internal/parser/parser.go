@@ -944,11 +944,17 @@ func (p *parser) parseSignature(scope *ast.Scope) (params, results *ast.FieldLis
 		return
 	}
 
-	params = p.parseParameters(scope, true)
-
+	// fn answer => i32 {}
 	if p.tok == token.ARROW {
-		arrowPos = p.pos
+		params = new(ast.FieldList)
 		p.next()
+	} else {
+		params = p.parseParameters(scope, true)
+
+		if p.tok == token.ARROW {
+			arrowPos = p.pos
+			p.next()
+		}
 	}
 
 	results = p.parseResult(scope)
