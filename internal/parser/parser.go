@@ -938,7 +938,7 @@ func (p *parser) parseSignature(scope *ast.Scope) (params, results *ast.FieldLis
 	// 无参数和返回值时可省略 `()`
 	// fn main
 	// fn main { ... }
-	if p.tok == token.LBRACE || p.tok == token.EOF {
+	if p.tok == token.LBRACE || p.tok == token.SEMICOLON {
 		params = new(ast.FieldList)
 		results = new(ast.FieldList)
 		return
