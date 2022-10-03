@@ -8,6 +8,7 @@ import (
 	"bytes"
 	"fmt"
 
+	"github.com/wa-lang/wa/internal/ast"
 	"github.com/wa-lang/wa/internal/constant"
 	"github.com/wa-lang/wa/internal/token"
 )
@@ -17,6 +18,7 @@ import (
 // All objects implement the Object interface.
 //
 type Object interface {
+	Node() ast.Node // 获取对应的 ast.Node
 	Parent() *Scope // scope in which this object is declared; nil for methods and struct fields
 	Pos() token.Pos // position of object identifier in declaration
 	Pkg() *Package  // package to which this object belongs; nil for labels and objects in the Universe scope
@@ -42,6 +44,9 @@ type Object interface {
 
 	// setColor sets the object's color. It must not be white.
 	setColor(color color)
+
+	// 设置 ast.Node
+	setNode(ast.Node)
 
 	// setParent sets the parent scope of the object.
 	setParent(*Scope)
@@ -78,6 +83,7 @@ func Id(pkg *Package, name string) string {
 
 // An object implements the common parts of an Object.
 type object struct {
+	node      ast.Node
 	parent    *Scope
 	pos       token.Pos
 	pkg       *Package
@@ -119,6 +125,9 @@ func colorFor(t Type) color {
 	return white
 }
 
+// 获取对应的 ast.Node
+func (obj *object) Node() ast.Node { return obj.node }
+
 // Parent returns the scope in which the object is declared.
 // The result is nil for methods and struct fields.
 func (obj *object) Parent() *Scope { return obj.parent }
@@ -149,6 +158,7 @@ func (obj *object) order() uint32       { return obj.order_ }
 func (obj *object) color() color        { return obj.color_ }
 func (obj *object) scopePos() token.Pos { return obj.scopePos_ }
 
+func (obj *object) setNode(node ast.Node)     { obj.node = node }
 func (obj *object) setParent(parent *Scope)   { obj.parent = parent }
 func (obj *object) setOrder(order uint32)     { assert(order > 0); obj.order_ = order }
 func (obj *object) setColor(color color)      { assert(color != white); obj.color_ = color }
@@ -187,7 +197,7 @@ type PkgName struct {
 // NewPkgName returns a new PkgName object representing an imported package.
 // The remaining arguments set the attributes found with all Objects.
 func NewPkgName(pos token.Pos, pkg *Package, name string, imported *Package) *PkgName {
-	return &PkgName{object{nil, pos, pkg, name, Typ[Invalid], 0, black, token.NoPos}, imported, false}
+	return &PkgName{object{nil, nil, pos, pkg, name, Typ[Invalid], 0, black, token.NoPos}, imported, false}
 }
 
 // Imported returns the package that was imported.
@@ -203,7 +213,7 @@ type Const struct {
 // NewConst returns a new constant with value val.
 // The remaining arguments set the attributes found with all Objects.
 func NewConst(pos token.Pos, pkg *Package, name string, typ Type, val constant.Value) *Const {
-	return &Const{object{nil, pos, pkg, name, typ, 0, colorFor(typ), token.NoPos}, val}
+	return &Const{object{nil, nil, pos, pkg, name, typ, 0, colorFor(typ), token.NoPos}, val}
 }
 
 // Val returns the constant's value.
@@ -224,7 +234,7 @@ type TypeName struct {
 // argument for NewNamed, which will set the TypeName's type as a side-
 // effect.
 func NewTypeName(pos token.Pos, pkg *Package, name string, typ Type) *TypeName {
-	return &TypeName{object{nil, pos, pkg, name, typ, 0, colorFor(typ), token.NoPos}}
+	return &TypeName{object{nil, nil, pos, pkg, name, typ, 0, colorFor(typ), token.NoPos}}
 }
 
 // IsAlias reports whether obj is an alias name for a type.
@@ -262,19 +272,19 @@ type Var struct {
 // NewVar returns a new variable.
 // The arguments set the attributes found with all Objects.
 func NewVar(pos token.Pos, pkg *Package, name string, typ Type) *Var {
-	return &Var{object: object{nil, pos, pkg, name, typ, 0, colorFor(typ), token.NoPos}}
+	return &Var{object: object{nil, nil, pos, pkg, name, typ, 0, colorFor(typ), token.NoPos}}
 }
 
 // NewParam returns a new variable representing a function parameter.
 func NewParam(pos token.Pos, pkg *Package, name string, typ Type) *Var {
-	return &Var{object: object{nil, pos, pkg, name, typ, 0, colorFor(typ), token.NoPos}, used: true} // parameters are always 'used'
+	return &Var{object: object{nil, nil, pos, pkg, name, typ, 0, colorFor(typ), token.NoPos}, used: true} // parameters are always 'used'
 }
 
 // NewField returns a new variable representing a struct field.
 // For embedded fields, the name is the unqualified type name
 /// under which the field is accessible.
 func NewField(pos token.Pos, pkg *Package, name string, typ Type, embedded bool) *Var {
-	return &Var{object: object{nil, pos, pkg, name, typ, 0, colorFor(typ), token.NoPos}, embedded: embedded, isField: true}
+	return &Var{object: object{nil, nil, pos, pkg, name, typ, 0, colorFor(typ), token.NoPos}, embedded: embedded, isField: true}
 }
 
 // Anonymous reports whether the variable is an embedded field.
@@ -305,7 +315,7 @@ func NewFunc(pos token.Pos, pkg *Package, name string, sig *Signature) *Func {
 	if sig != nil {
 		typ = sig
 	}
-	return &Func{object{nil, pos, pkg, name, typ, 0, colorFor(typ), token.NoPos}, false}
+	return &Func{object{nil, nil, pos, pkg, name, typ, 0, colorFor(typ), token.NoPos}, false}
 }
 
 // FullName returns the package- or receiver-type-qualified name of

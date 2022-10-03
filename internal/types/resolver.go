@@ -283,6 +283,7 @@ func (check *Checker) collectObjects() {
 						}
 
 						obj := NewPkgName(s.Pos(), pkg, name, imp)
+						obj.setNode(s)
 						if s.Name != nil {
 							// in a dot-import, the dot represents the package
 							check.recordDef(s.Name, obj)
@@ -336,6 +337,7 @@ func (check *Checker) collectObjects() {
 							// declare all constants
 							for i, name := range s.Names {
 								obj := NewConst(name.Pos(), pkg, name.Name, nil, constant.MakeInt64(int64(iota)))
+								obj.setNode(s)
 
 								var init ast.Expr
 								if i < len(last.Values) {
@@ -365,6 +367,7 @@ func (check *Checker) collectObjects() {
 							// declare all variables
 							for i, name := range s.Names {
 								obj := NewVar(name.Pos(), pkg, name.Name, nil)
+								obj.setNode(s)
 								lhs[i] = obj
 
 								d := d1
@@ -388,6 +391,7 @@ func (check *Checker) collectObjects() {
 
 					case *ast.TypeSpec:
 						obj := NewTypeName(s.Name.Pos(), pkg, s.Name.Name, nil)
+						obj.setNode(s)
 						check.declarePkgObj(s.Name, obj, &declInfo{file: fileScope, typ: s.Type, alias: s.Assign.IsValid()})
 
 					default:
@@ -398,6 +402,7 @@ func (check *Checker) collectObjects() {
 			case *ast.FuncDecl:
 				name := d.Name.Name
 				obj := NewFunc(d.Name.Pos(), pkg, name, nil)
+				obj.setNode(d)
 				if d.Recv == nil {
 					// regular function
 					if name == "init" {
