@@ -3,9 +3,11 @@
 package main
 
 import (
+	"fmt"
 	"os"
 
 	"github.com/wa-lang/wa/internal/ast"
+	"github.com/wa-lang/wa/internal/ast/astutil"
 	"github.com/wa-lang/wa/internal/parser"
 	"github.com/wa-lang/wa/internal/ssa"
 	"github.com/wa-lang/wa/internal/token"
@@ -15,17 +17,26 @@ import (
 func main() {
 	prog := NewProgram(map[string]string{
 		"main": `
-			package main
+			var (
+				//wa:linkname $g_linkname
+				g i32 // aa2
+			)
 
-			func main() {
+			//wa:linkname $foo_linkname
+			fn foo() {}
+
+			fn main() {
 				for i := 0; i < 3; i++ {
-					println(i, "hello chai2010")
+					println(i, "hello wa-lang")
 				}
 			}
 		`,
 	})
 
-	pkg, f, info, _ := prog.LoadPackage("main")
+	pkg, f, info, err := prog.LoadPackage("main")
+	if err != nil {
+		panic(err)
+	}
 
 	var ssaProg = ssa.NewProgram(prog.fset, ssa.SanityCheckFunctions)
 	var ssaPkg = ssaProg.CreatePackage(pkg, []*ast.File{f}, info, true)
@@ -33,7 +44,33 @@ func main() {
 
 	ssaPkg.WriteTo(os.Stdout)
 
-	ssaPkg.Func("main").WriteTo(os.Stdout)
+	fnMain := ssaPkg.Func("main")
+	fnMain.WriteTo(os.Stdout)
+
+	{
+		gVar := ssaPkg.Var("g")
+
+		var n ast.Node = gVar.Object().Node()
+		fmt.Printf("aa %T\n", n)
+		var doc = astutil.NodeDoc(n)
+		fmt.Printf("doc %+v\n", doc)
+
+		var info = astutil.ParseCommentInfo(doc)
+
+		fmt.Println("== var g doc ==")
+		fmt.Printf("link-name: %+v\n", info.LinkName)
+	}
+
+	{
+		fooFunc := ssaPkg.Func("foo")
+
+		var n ast.Node = fooFunc.Object().Node()
+		var doc = astutil.NodeDoc(n)
+		var info = astutil.ParseCommentInfo(doc)
+
+		fmt.Println("== fn foo doc ==")
+		fmt.Printf("link-name: %+v\n", info.LinkName)
+	}
 }
 
 type Program struct {
@@ -59,7 +96,7 @@ func (p *Program) LoadPackage(path string) (pkg *types.Package, f *ast.File, inf
 		return pkg, p.ast[path], p.infos[path], nil
 	}
 
-	f, err = parser.ParseFile(nil, p.fset, path, p.fs[path], parser.AllErrors)
+	f, err = parser.ParseFile(nil, p.fset, path, p.fs[path], parser.AllErrors|parser.ParseComments)
 	if err != nil {
 		return nil, nil, nil, err
 	}

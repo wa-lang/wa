@@ -259,7 +259,7 @@ func (p *_Loader) ParseDir(pkgpath string) ([]*ast.File, error) {
 
 	var files []*ast.File
 	for i, filename := range filenames {
-		f, err := parser.ParseFile(nil, p.prog.Fset, filename, datas[i], parser.AllErrors)
+		f, err := parser.ParseFile(nil, p.prog.Fset, filename, datas[i], parser.AllErrors|parser.ParseComments)
 		if err != nil {
 			logger.Tracef(&config.EnableTrace_loader, "filename: %v", filename)
 			logger.Tracef(&config.EnableTrace_loader, "datas[i]: %s", datas[i])
