@@ -18,6 +18,28 @@ type CommentInfo struct {
 	LinkName string // //wa:linkname xxx
 }
 
+// 获取节点关联文档
+func NodeDoc(n ast.Node) *ast.CommentGroup {
+	switch n := n.(type) {
+	case *ast.File:
+		return n.Doc
+	case *ast.ImportSpec:
+		return n.Doc
+	case *ast.GenDecl:
+		return n.Doc
+	case *ast.FuncDecl:
+		return n.Doc
+	case *ast.TypeSpec:
+		return n.Doc
+	case *ast.ValueSpec:
+		return n.Doc
+	case *ast.Field:
+		return n.Doc
+	}
+	return nil
+}
+
+// 解析注释信息
 func ParseCommentInfo(docList ...*ast.CommentGroup) (info CommentInfo) {
 	for _, doc := range docList {
 		if doc == nil {
