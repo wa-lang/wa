@@ -7,7 +7,6 @@ import (
 	"os"
 
 	"github.com/wa-lang/wa/internal/ast"
-	"github.com/wa-lang/wa/internal/ast/astutil"
 	"github.com/wa-lang/wa/internal/parser"
 	"github.com/wa-lang/wa/internal/ssa"
 	"github.com/wa-lang/wa/internal/token"
@@ -46,23 +45,13 @@ func main() {
 	fnMain.WriteTo(os.Stdout)
 
 	{
+		fmt.Println("=== link-name ===")
+
 		gVar := ssaPkg.Var("g")
+		fmt.Printf("g link-name: %+v\n", gVar.LinkName())
 
-		var doc = gVar.Object().NodeDoc()
-		var info = astutil.ParseCommentInfo(doc)
-
-		fmt.Println("== var g doc ==")
-		fmt.Printf("link-name: %+v\n", info.LinkName)
-	}
-
-	{
 		fooFunc := ssaPkg.Func("foo")
-
-		var doc = fooFunc.Object().NodeDoc()
-		var info = astutil.ParseCommentInfo(doc)
-
-		fmt.Println("== fn foo doc ==")
-		fmt.Printf("link-name: %+v\n", info.LinkName)
+		fmt.Printf("foo link-name: %+v\n", fooFunc.LinkName())
 	}
 }
 
