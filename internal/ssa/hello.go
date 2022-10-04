@@ -51,10 +51,7 @@ func main() {
 		gVar := ssaPkg.Var("g")
 
 		var n ast.Node = gVar.Object().Node()
-		fmt.Printf("aa %T\n", n)
 		var doc = astutil.NodeDoc(n)
-		fmt.Printf("doc %+v\n", doc)
-
 		var info = astutil.ParseCommentInfo(doc)
 
 		fmt.Println("== var g doc ==")
