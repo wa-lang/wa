@@ -339,6 +339,12 @@ func (check *Checker) collectObjects() {
 								obj := NewConst(name.Pos(), pkg, name.Name, nil, constant.MakeInt64(int64(iota)))
 								obj.setNode(s)
 
+								if s.Doc == nil {
+									if d.Lparen == token.NoPos && d.Doc != nil {
+										obj.setNodeDoc(d.Doc)
+									}
+								}
+
 								var init ast.Expr
 								if i < len(last.Values) {
 									init = last.Values[i]
@@ -370,6 +376,12 @@ func (check *Checker) collectObjects() {
 								obj.setNode(s)
 								lhs[i] = obj
 
+								if s.Doc == nil {
+									if d.Lparen == token.NoPos && d.Doc != nil {
+										obj.setNodeDoc(d.Doc)
+									}
+								}
+
 								d := d1
 								if d == nil {
 									// individual assignments
@@ -393,6 +405,12 @@ func (check *Checker) collectObjects() {
 						obj := NewTypeName(s.Name.Pos(), pkg, s.Name.Name, nil)
 						obj.setNode(s)
 						check.declarePkgObj(s.Name, obj, &declInfo{file: fileScope, typ: s.Type, alias: s.Assign.IsValid()})
+
+						if s.Doc == nil {
+							if d.Lparen == token.NoPos && d.Doc != nil {
+								obj.setNodeDoc(d.Doc)
+							}
+						}
 
 					default:
 						check.invalidAST(s.Pos(), "unknown ast.Spec node %T", s)

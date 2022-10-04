@@ -17,10 +17,8 @@ import (
 func main() {
 	prog := NewProgram(map[string]string{
 		"main": `
-			var (
-				//wa:linkname $g_linkname
-				g i32 // aa2
-			)
+			//wa:linkname $g_linkname
+			var g i32 // line comment
 
 			//wa:linkname $foo_linkname
 			fn foo() {}
@@ -50,8 +48,7 @@ func main() {
 	{
 		gVar := ssaPkg.Var("g")
 
-		var n ast.Node = gVar.Object().Node()
-		var doc = astutil.NodeDoc(n)
+		var doc = gVar.Object().NodeDoc()
 		var info = astutil.ParseCommentInfo(doc)
 
 		fmt.Println("== var g doc ==")
@@ -61,8 +58,7 @@ func main() {
 	{
 		fooFunc := ssaPkg.Func("foo")
 
-		var n ast.Node = fooFunc.Object().Node()
-		var doc = astutil.NodeDoc(n)
+		var doc = fooFunc.Object().NodeDoc()
 		var info = astutil.ParseCommentInfo(doc)
 
 		fmt.Println("== fn foo doc ==")
