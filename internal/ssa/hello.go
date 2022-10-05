@@ -21,6 +21,7 @@ func main() {
 			#wa:linkname $g_linkname
 			var g i32 // line comment
 
+			#wa:export foo_export
 			#wa:linkname $foo_linkname
 			fn foo() {}
 
@@ -54,6 +55,7 @@ func main() {
 
 		fooFunc := ssaPkg.Func("foo")
 		fmt.Printf("foo link-name: %+v\n", fooFunc.LinkName())
+		fmt.Printf("foo export-name: %+v\n", fooFunc.ExportName())
 	}
 }
 
