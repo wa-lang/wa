@@ -1,3 +1,5 @@
+// 版权 @2022 凹语言 作者。保留所有权利。
+
 //go:build ignore
 
 package main
@@ -16,10 +18,10 @@ import (
 func main() {
 	prog := NewProgram(map[string]string{
 		"main": `
-			//wa:linkname $g_linkname
+			#wa:linkname $g_linkname
 			var g i32 // line comment
 
-			//wa:linkname $foo_linkname
+			#wa:linkname $foo_linkname
 			fn foo() {}
 
 			fn main() {

@@ -10,12 +10,13 @@ import (
 
 // 注释中的指令
 type CommentInfo struct {
-	BuildIgnore bool     // //wa:build ignore
-	BuildTags   []string // //wa:build s1 s2 ...
+	BuildIgnore bool     // #wa:build ignore
+	BuildTags   []string // #wa:build s1 s2 ...
 
-	Inline   bool   // //wa:inline
-	Nobounds bool   // //wa:nobounds
-	LinkName string // //wa:linkname xxx
+	Inline     bool   // #wa:inline
+	Nobounds   bool   // #wa:nobounds
+	LinkName   string // #wa:linkname xxx
+	ExportName string // #wa:export xxx
 }
 
 // 获取节点关联文档
@@ -46,26 +47,42 @@ func ParseCommentInfo(docList ...*ast.CommentGroup) (info CommentInfo) {
 			return
 		}
 		for _, comment := range doc.List {
-			if !strings.HasPrefix(comment.Text, "//wa:") {
+			if !strContainPrefix(comment.Text, "#wa:", "//wa:") {
 				continue
 			}
 			parts := strings.Fields(comment.Text)
 			switch parts[0] {
-			case "//wa:build":
+			case "#wa:build", "//wa:build":
 				if len(parts) >= 2 {
 					info.BuildIgnore = parts[1] == "ignore"
 				}
 				info.BuildTags = parts[1:]
-			case "//wa:inline":
+			case "#wa:inline", "//wa:inline":
 				info.Inline = true
-			case "//wa:nobounds":
+			case "#wa:nobounds", "//wa:nobounds":
 				info.Nobounds = true
-			case "//wa:linkname":
+			case "#wa:linkname", "//wa:linkname":
 				if len(parts) >= 2 {
 					info.LinkName = parts[1]
+				}
+			case "#wa:export", "//wa:export":
+				if len(parts) >= 2 {
+					info.ExportName = parts[1]
 				}
 			}
 		}
 	}
 	return
+}
+
+func strContainPrefix(s string, prefixList ...string) bool {
+	if len(prefixList) == 0 {
+		return true
+	}
+	for _, prefix := range prefixList {
+		if !strings.HasPrefix(s, prefix) {
+			return true
+		}
+	}
+	return false
 }
