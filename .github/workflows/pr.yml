@@ -13,4 +13,4 @@ jobs:
     - uses: superbrothers/close-pull-request@v3
       with:
         # Optional. Post a issue comment just before closing a pull request.
-        comment: "We do not accept PRs, please join the dev team at first."
+        comment: "暂不收补丁，如果有共建需求请入群交流。We do not accept PRs, please join the dev team at first."

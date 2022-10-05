@@ -110,7 +110,7 @@ $ go run main.go run _examples/prime
 
 凹语言本身也可以像 Lua 语言被嵌入 Go 宿主语言环境执行 (The Wa language itself can also be executed like the Lua language embedded in the Go host locale):
 
-```go
+```
 package main
 
 import (
