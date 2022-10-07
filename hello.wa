@@ -1,6 +1,6 @@
 # 版权 @2019 凹语言 作者。保留所有权利。
 
-fn main() {
+fn main {
 	print('凹')
 	print('语')
 	print('言')

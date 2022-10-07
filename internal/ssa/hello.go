@@ -1,8 +1,11 @@
+// 版权 @2022 凹语言 作者。保留所有权利。
+
 //go:build ignore
 
 package main
 
 import (
+	"fmt"
 	"os"
 
 	"github.com/wa-lang/wa/internal/ast"
@@ -15,17 +18,25 @@ import (
 func main() {
 	prog := NewProgram(map[string]string{
 		"main": `
-			package main
+			#wa:linkname $g_linkname
+			var g i32 // line comment
 
-			func main() {
+			#wa:export foo_export
+			#wa:linkname $foo_linkname
+			fn foo() {}
+
+			fn main() {
 				for i := 0; i < 3; i++ {
-					println(i, "hello chai2010")
+					println(i, "hello wa-lang")
 				}
 			}
 		`,
 	})
 
-	pkg, f, info, _ := prog.LoadPackage("main")
+	pkg, f, info, err := prog.LoadPackage("main")
+	if err != nil {
+		panic(err)
+	}
 
 	var ssaProg = ssa.NewProgram(prog.fset, ssa.SanityCheckFunctions)
 	var ssaPkg = ssaProg.CreatePackage(pkg, []*ast.File{f}, info, true)
@@ -33,7 +44,19 @@ func main() {
 
 	ssaPkg.WriteTo(os.Stdout)
 
-	ssaPkg.Func("main").WriteTo(os.Stdout)
+	fnMain := ssaPkg.Func("main")
+	fnMain.WriteTo(os.Stdout)
+
+	{
+		fmt.Println("=== link-name ===")
+
+		gVar := ssaPkg.Var("g")
+		fmt.Printf("g link-name: %+v\n", gVar.LinkName())
+
+		fooFunc := ssaPkg.Func("foo")
+		fmt.Printf("foo link-name: %+v\n", fooFunc.LinkName())
+		fmt.Printf("foo export-name: %+v\n", fooFunc.ExportName())
+	}
 }
 
 type Program struct {
@@ -59,7 +82,7 @@ func (p *Program) LoadPackage(path string) (pkg *types.Package, f *ast.File, inf
 		return pkg, p.ast[path], p.infos[path], nil
 	}
 
-	f, err = parser.ParseFile(nil, p.fset, path, p.fs[path], parser.AllErrors)
+	f, err = parser.ParseFile(nil, p.fset, path, p.fs[path], parser.AllErrors|parser.ParseComments)
 	if err != nil {
 		return nil, nil, nil, err
 	}

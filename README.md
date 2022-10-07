@@ -27,7 +27,7 @@ Instead of requiring complex toolchains to set up, you can simply go install it 
 - 代码仓库 (Github): [https://github.com/wa-lang/wa](https://github.com/wa-lang/wa)
 - 代码仓库 (Gitee):  [https://gitee.com/wa-lang/wa](https://gitee.com/wa-lang/wa)
 - 开发工具 (Develop Tools): [Playground](https://wa-lang.org/playground), [VSCode 插件](https://marketplace.visualstudio.com/items?itemName=xxxDeveloper.vscode-wa), [Notepad++ 插件](https://github.com/wa-lang/notepadplus-wa)
-- 开发组 (Core Team): [柴树杉(chai2010)](https://github.com/chai2010)、[丁尔男(Ending)](https://github.com/3dgen)、[史斌(Benshi)](https://github.com/benshi001)、[扈梦明(xxxDeveloper)](https://github.com/xxxDeveloper)、[刘云峰(leaftree)](https://github.com/leaftree)
+- 开发组 (Core Team): [柴树杉(chai2010)](https://github.com/chai2010)、[丁尔男(Ending)](https://github.com/3dgen)、[史斌(Benshi)](https://github.com/benshi001)、[扈梦明(xxxDeveloper)](https://github.com/xxxDeveloper)、[刘云峰(leaftree)](https://github.com/leaftree)、[宋汝阳(ShiinaOrez)](https://github.com/ShiinaOrez)
 
 安装和测试 (Install and Run):
 
@@ -44,7 +44,7 @@ Instead of requiring complex toolchains to set up, you can simply go install it 
 打印字符和调用函数(Print rune and call function)：
 
 ```
-fn main() {
+fn main {
 	print('凹')
 	print('语')
 	print('言')
@@ -73,7 +73,7 @@ $ go run main.go hello.wa
 ```
 # 版权 @2021 凹语言™ 作者。保留所有权利。
 
-fn main() {
+fn main {
 	for n := 2; n <= 30; n = n + 1 {
 		var isPrime int = 1
 		for i := 2; i*i <= n; i = i + 1 {
@@ -110,7 +110,7 @@ $ go run main.go run _examples/prime
 
 凹语言本身也可以像 Lua 语言被嵌入 Go 宿主语言环境执行 (The Wa language itself can also be executed like the Lua language embedded in the Go host locale):
 
-```go
+```
 package main
 
 import (

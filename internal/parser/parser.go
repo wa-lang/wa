@@ -935,11 +935,26 @@ func (p *parser) parseSignature(scope *ast.Scope) (params, results *ast.FieldLis
 		defer un(trace(p, "Signature"))
 	}
 
-	params = p.parseParameters(scope, true)
+	// 无参数和返回值时可省略 `()`
+	// fn main
+	// fn main { ... }
+	if p.tok == token.LBRACE || p.tok == token.SEMICOLON {
+		params = new(ast.FieldList)
+		results = new(ast.FieldList)
+		return
+	}
 
+	// fn answer => i32 {}
 	if p.tok == token.ARROW {
-		arrowPos = p.pos
+		params = new(ast.FieldList)
 		p.next()
+	} else {
+		params = p.parseParameters(scope, true)
+
+		if p.tok == token.ARROW {
+			arrowPos = p.pos
+			p.next()
+		}
 	}
 
 	results = p.parseResult(scope)

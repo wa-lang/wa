@@ -12,6 +12,7 @@ import (
 	"sync"
 
 	"github.com/wa-lang/wa/internal/ast"
+	"github.com/wa-lang/wa/internal/ast/astutil"
 	"github.com/wa-lang/wa/internal/constant"
 	"github.com/wa-lang/wa/internal/token"
 	"github.com/wa-lang/wa/internal/types"
@@ -294,11 +295,12 @@ type Node interface {
 // Type() returns the function's Signature.
 //
 type Function struct {
-	name      string
-	object    types.Object     // a declared *types.Func or one of its wrappers
-	method    *types.Selection // info about provenance of synthetic methods
-	Signature *types.Signature
-	pos       token.Pos
+	name        string
+	commentInfo *astutil.CommentInfo
+	object      types.Object     // a declared *types.Func or one of its wrappers
+	method      *types.Selection // info about provenance of synthetic methods
+	Signature   *types.Signature
+	pos         token.Pos
 
 	Synthetic string        // provenance of synthetic function; "" for true source functions
 	syntax    ast.Node      // *ast.Func{Decl,Lit}; replaced with simple ast.Node after build, unless debug mode
@@ -426,10 +428,11 @@ type Const struct {
 // identifier.
 //
 type Global struct {
-	name   string
-	object types.Object // a *types.Var; may be nil for synthetics e.g. init$guard
-	typ    types.Type
-	pos    token.Pos
+	name        string
+	commentInfo *astutil.CommentInfo
+	object      types.Object // a *types.Var; may be nil for synthetics e.g. init$guard
+	typ         types.Type
+	pos         token.Pos
 
 	Pkg *Package
 }
@@ -1319,6 +1322,32 @@ func (v *Global) String() string                       { return v.RelString(nil)
 func (v *Global) Package() *Package                    { return v.Pkg }
 func (v *Global) RelString(from *types.Package) string { return relString(v, from) }
 
+// 返回链接名字, 默认为空
+func (v *Global) LinkName() string {
+	if v.commentInfo != nil {
+		return v.commentInfo.LinkName
+	}
+
+	doc := v.Object().NodeDoc()
+	info := astutil.ParseCommentInfo(doc)
+
+	v.commentInfo = &info
+	return info.LinkName
+}
+
+// 返回导出名字, 默认为空
+func (v *Global) ExportName() string {
+	if v.commentInfo != nil {
+		return v.commentInfo.ExportName
+	}
+
+	doc := v.Object().NodeDoc()
+	info := astutil.ParseCommentInfo(doc)
+
+	v.commentInfo = &info
+	return info.ExportName
+}
+
 func (v *Function) Name() string         { return v.name }
 func (v *Function) Type() types.Type     { return v.Signature }
 func (v *Function) Pos() token.Pos       { return v.pos }
@@ -1332,6 +1361,32 @@ func (v *Function) Referrers() *[]Instruction {
 		return &v.referrers
 	}
 	return nil
+}
+
+// 返回链接名字, 默认为空
+func (v *Function) LinkName() string {
+	if v.commentInfo != nil {
+		return v.commentInfo.LinkName
+	}
+
+	doc := v.Object().NodeDoc()
+	info := astutil.ParseCommentInfo(doc)
+
+	v.commentInfo = &info
+	return info.LinkName
+}
+
+// 返回导出名字, 默认为空
+func (v *Function) ExportName() string {
+	if v.commentInfo != nil {
+		return v.commentInfo.ExportName
+	}
+
+	doc := v.Object().NodeDoc()
+	info := astutil.ParseCommentInfo(doc)
+
+	v.commentInfo = &info
+	return info.ExportName
 }
 
 func (v *Parameter) Type() types.Type          { return v.typ }

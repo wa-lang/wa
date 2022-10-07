@@ -9,7 +9,10 @@ import (
 )
 
 func ExampleFormatCode() {
-	s, _ := api.FormatCode("hello.wa", "fn add(a i32, b i32) i32 {return a+b}")
+	s, err := api.FormatCode("hello.wa", "fn add(a:i32, b:i32)=>i32 {return a+b}")
+	if err != nil {
+		panic(err)
+	}
 	fmt.Println(s)
 
 	// Output:
