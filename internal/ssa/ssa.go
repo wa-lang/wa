@@ -1327,6 +1327,10 @@ func (v *Global) LinkName() string {
 	if v.commentInfo != nil {
 		return v.commentInfo.LinkName
 	}
+	if v.Object() == nil {
+		v.commentInfo = new(astutil.CommentInfo)
+		return v.commentInfo.LinkName
+	}
 
 	doc := v.Object().NodeDoc()
 	info := astutil.ParseCommentInfo(doc)
@@ -1338,6 +1342,10 @@ func (v *Global) LinkName() string {
 // 返回导出名字, 默认为空
 func (v *Global) ExportName() string {
 	if v.commentInfo != nil {
+		return v.commentInfo.ExportName
+	}
+	if v.Object() == nil {
+		v.commentInfo = new(astutil.CommentInfo)
 		return v.commentInfo.ExportName
 	}
 
@@ -1368,6 +1376,10 @@ func (v *Function) LinkName() string {
 	if v.commentInfo != nil {
 		return v.commentInfo.LinkName
 	}
+	if v.Object() == nil {
+		v.commentInfo = new(astutil.CommentInfo)
+		return v.commentInfo.LinkName
+	}
 
 	doc := v.Object().NodeDoc()
 	info := astutil.ParseCommentInfo(doc)
@@ -1379,6 +1391,10 @@ func (v *Function) LinkName() string {
 // 返回导出名字, 默认为空
 func (v *Function) ExportName() string {
 	if v.commentInfo != nil {
+		return v.commentInfo.ExportName
+	}
+	if v.Object() == nil {
+		v.commentInfo = new(astutil.CommentInfo)
 		return v.commentInfo.ExportName
 	}
 
