@@ -16,7 +16,7 @@ import (
 )
 
 type functionGenerator struct {
-	module *wat.Module
+	module *wir.Module
 
 	locals_map map[ssa.Value]wir.Value
 
@@ -29,7 +29,7 @@ type functionGenerator struct {
 }
 
 func newFunctionGenerator(p *Compiler) *functionGenerator {
-	return &functionGenerator{module: &p.module, locals_map: make(map[ssa.Value]wir.Value)}
+	return &functionGenerator{module: p.module, locals_map: make(map[ssa.Value]wir.Value)}
 }
 
 func (g *functionGenerator) getValue(i ssa.Value) wir.Value {
@@ -94,7 +94,7 @@ func (g *functionGenerator) getValue(i ssa.Value) wir.Value {
 	return nil
 }
 
-func (g *functionGenerator) genFunction(f *ssa.Function) *wat.Function {
+func (g *functionGenerator) genFunction(f *ssa.Function) *wir.Function {
 	var wir_fn wir.Function
 	wir_fn.Name = f.Name()
 
@@ -114,7 +114,7 @@ func (g *functionGenerator) genFunction(f *ssa.Function) *wat.Function {
 	g.registers = append(g.registers, g.var_block_selector)
 	g.var_current_block = wir.NewVar("$current_block", wir.ValueKindLocal, wir.I32{})
 	g.registers = append(g.registers, g.var_current_block)
-	if !wir_fn.Result.Equal(wir.Void{}) {
+	if !wir_fn.Result.Equal(wir.VOID{}) {
 		g.var_ret = wir.NewVar("$ret", wir.ValueKindLocal, wir_fn.Result)
 		g.registers = append(g.registers, g.var_ret)
 	}
@@ -160,7 +160,7 @@ func (g *functionGenerator) genFunction(f *ssa.Function) *wat.Function {
 
 	wir_fn.Insts = append(wir_fn.Insts, block_temp)
 
-	if !wir_fn.Result.Equal(wir.Void{}) {
+	if !wir_fn.Result.Equal(wir.VOID{}) {
 		wir_fn.Insts = append(wir_fn.Insts, g.var_ret.EmitPush()...)
 	}
 
@@ -170,7 +170,7 @@ func (g *functionGenerator) genFunction(f *ssa.Function) *wat.Function {
 
 	wir_fn.Locals = g.registers
 
-	return wir_fn.ToWatFunc()
+	return &wir_fn
 }
 
 func (g *functionGenerator) genBlock(block *ssa.BasicBlock) []wat.Inst {
@@ -217,7 +217,7 @@ func (g *functionGenerator) genInstruction(inst ssa.Instruction) []wat.Inst {
 
 	case ssa.Value:
 		s, t := g.genValue(inst)
-		if !t.Equal(wir.Void{}) {
+		if !t.Equal(wir.VOID{}) {
 			v := g.getValue(inst)
 			s = append(s, v.EmitPop()...)
 			g.locals_map[inst] = v
@@ -379,7 +379,7 @@ func (g *functionGenerator) genBuiltin(call *ssa.CallCommon) ([]wat.Inst, wir.Va
 			insts = append(insts, wat.NewInstCall("$waPrintRune"))
 		}
 
-		return insts, wir.Void{}
+		return insts, wir.VOID{}
 	}
 	logger.Fatal("Todo:", call.Value)
 	return nil, nil
@@ -467,9 +467,9 @@ func (g *functionGenerator) genJumpID(cur, dest int) []wat.Inst {
 
 func (g *functionGenerator) genAlloc(inst *ssa.Alloc) ([]wat.Inst, wir.ValueType) {
 	if inst.Heap {
-		return wir.EmitHeapAlloc(wir.ToWType(inst.Type().(*types.Pointer).Elem()))
+		return wir.EmitHeapAlloc(wir.ToWType(inst.Type().(*types.Pointer).Elem()), g.module)
 	} else {
-		return wir.EmitStackAlloc(wir.ToWType(inst.Type().(*types.Pointer).Elem()))
+		return wir.EmitStackAlloc(wir.ToWType(inst.Type().(*types.Pointer).Elem()), g.module)
 	}
 }
 

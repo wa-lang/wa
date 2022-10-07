@@ -5,6 +5,7 @@ package compiler_wat
 import (
 	"fmt"
 
+	"github.com/wa-lang/wa/internal/backends/compiler_wat/wir"
 	"github.com/wa-lang/wa/internal/backends/compiler_wat/wir/wat"
 	"github.com/wa-lang/wa/internal/backends/target_spec"
 	"github.com/wa-lang/wa/internal/loader"
@@ -14,11 +15,12 @@ import (
 type Compiler struct {
 	ssaPkg *ssa.Package
 
-	module wat.Module
+	module *wir.Module
 }
 
 func New() *Compiler {
 	p := new(Compiler)
+	p.module = wir.NewModule()
 	return p
 }
 
@@ -34,7 +36,7 @@ func (p *Compiler) Compile(prog *loader.Program, target target_spec.Machine) (ou
 
 	p.CompilePackage(prog.SSAMainPkg)
 
-	return p.module.String(), nil
+	return p.module.ToWatModule().String(), nil
 }
 
 func (p *Compiler) CompilePackage(ssaPkg *ssa.Package) {

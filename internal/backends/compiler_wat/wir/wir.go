@@ -19,10 +19,10 @@ type Function struct {
 /**************************************
 FuncSig:
 **************************************/
-//type FuncSig struct {
-//	Params  []ValueType
-//	Results []ValueType
-//}
+type FuncSig struct {
+	Params  []ValueType
+	Results []ValueType
+}
 
 type ValueKind uint8
 
@@ -52,7 +52,10 @@ type Value interface {
 ValueType:
 **************************************/
 type ValueType interface {
-	byteSize() int
+	Name() string
+	size() int
+	align() int
+	onFree(module *Module) int
 	Raw() []wat.ValueType
 	Equal(ValueType) bool
 }

@@ -53,7 +53,7 @@ func ToWType(from types.Type) ValueType {
 	case *types.Tuple:
 		switch t.Len() {
 		case 0:
-			return Void{}
+			return VOID{}
 
 		case 1:
 			return ToWType(t.At(0).Type())
@@ -70,4 +70,10 @@ func ToWType(from types.Type) ValueType {
 	}
 
 	return nil
+}
+
+func addTable(f *Function, module *Module) int {
+	//Todo
+	logger.Fatal("Todo")
+	return 0
 }

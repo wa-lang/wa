@@ -62,7 +62,7 @@ func (v *varBlock) emitStore(addr Value) (insts []wat.Inst) {
 	return
 }
 
-func (v *varBlock) emitHeapAlloc(item_count Value) (insts []wat.Inst) {
+func (v *varBlock) emitHeapAlloc(item_count Value, module *Module) (insts []wat.Inst) {
 	switch item_count.Kind() {
 	case ValueKindConst:
 		c, err := strconv.Atoi(item_count.Name())
@@ -70,11 +70,11 @@ func (v *varBlock) emitHeapAlloc(item_count Value) (insts []wat.Inst) {
 			logger.Fatalf("%v\n", err)
 			return nil
 		}
-		insts = append(insts, NewConst(I32{}, strconv.Itoa(v.Type().(Block).Base.byteSize()*c+16)).EmitPush()...)
+		insts = append(insts, NewConst(I32{}, strconv.Itoa(v.Type().(Block).Base.size()*c+16)).EmitPush()...)
 		insts = append(insts, wat.NewInstCall("$waHeapAlloc"))
 
-		insts = append(insts, item_count.EmitPush()...)           //item_count
-		insts = append(insts, NewConst(I32{}, "0").EmitPush()...) //release_method
+		insts = append(insts, item_count.EmitPush()...)                                                          //item_count
+		insts = append(insts, NewConst(I32{}, strconv.Itoa(v.Type().(Block).Base.onFree(module))).EmitPush()...) //free_method
 		insts = append(insts, wat.NewInstCall("$wa.RT.Block.Init"))
 
 	default:
@@ -84,14 +84,14 @@ func (v *varBlock) emitHeapAlloc(item_count Value) (insts []wat.Inst) {
 		}
 
 		insts = append(insts, item_count.EmitPush()...)
-		insts = append(insts, NewConst(I32{}, strconv.Itoa(v.Type().(Block).Base.byteSize())).EmitPush()...)
+		insts = append(insts, NewConst(I32{}, strconv.Itoa(v.Type().(Block).Base.size())).EmitPush()...)
 		insts = append(insts, wat.NewInstMul(wat.I32{}))
 		insts = append(insts, NewConst(I32{}, "16").EmitPush()...)
 		insts = append(insts, wat.NewInstAdd(wat.I32{}))
 		insts = append(insts, wat.NewInstCall("$waHeapAlloc"))
 
 		insts = append(insts, item_count.EmitPush()...)
-		insts = append(insts, NewConst(I32{}, "0").EmitPush()...) //release_method
+		insts = append(insts, NewConst(I32{}, strconv.Itoa(v.Type().(Block).Base.onFree(module))).EmitPush()...) //free_method
 		insts = append(insts, wat.NewInstCall("$wa.RT.Block.Init"))
 	}
 
@@ -210,11 +210,11 @@ func (v *VarRef) EmitStore(d Value) []wat.Inst {
 	return d.emitStore(v.underlying.Extract("data"))
 }
 
-func (v *VarRef) emitHeapAlloc() (insts []wat.Inst) {
+func (v *VarRef) emitHeapAlloc(module *Module) (insts []wat.Inst) {
 	insts = append(insts, wat.NewBlank())
 	insts = append(insts, wat.NewComment(v.name+" Ref.emitHeapAlloc start"))
 
-	insts = append(insts, newVarBlock("", v.Kind(), v.Type().(Ref).Base).emitHeapAlloc(NewConst(I32{}, "1"))...)
+	insts = append(insts, newVarBlock("", v.Kind(), v.Type().(Ref).Base).emitHeapAlloc(NewConst(I32{}, "1"), module)...)
 	insts = append(insts, wat.NewInstCall("$wa.RT.DupWatStack"))
 	insts = append(insts, NewConst(I32{}, "16").EmitPush()...)
 	insts = append(insts, wat.NewInstAdd(wat.I32{}))
@@ -225,12 +225,12 @@ func (v *VarRef) emitHeapAlloc() (insts []wat.Inst) {
 	return
 }
 
-func (v *VarRef) emitStackAlloc() (insts []wat.Inst) {
+func (v *VarRef) emitStackAlloc(module *Module) (insts []wat.Inst) {
 	insts = append(insts, wat.NewBlank())
 	insts = append(insts, wat.NewComment(v.name+" Ref.emitStackAlloc start"))
 
 	insts = append(insts, NewConst(I32{}, "0").EmitPush()...)
-	insts = append(insts, NewConst(I32{}, strconv.Itoa(v.Type().(Ref).Base.byteSize())).EmitPush()...)
+	insts = append(insts, NewConst(I32{}, strconv.Itoa(v.Type().(Ref).Base.size())).EmitPush()...)
 	insts = append(insts, wat.NewInstCall("$waStackAlloc"))
 
 	insts = append(insts, wat.NewComment(v.name+" Ref.emitStackAlloc end"))
