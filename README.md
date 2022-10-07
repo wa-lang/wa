@@ -29,7 +29,14 @@ Instead of requiring complex toolchains to set up, you can simply go install it 
 - 开发工具 (Develop Tools): [Playground](https://wa-lang.org/playground), [VSCode 插件](https://marketplace.visualstudio.com/items?itemName=xxxDeveloper.vscode-wa), [Notepad++ 插件](https://github.com/wa-lang/notepadplus-wa)
 - 开发组 (Core Team): [柴树杉(chai2010)](https://github.com/chai2010)、[丁尔男(Ending)](https://github.com/3dgen)、[史斌(Benshi)](https://github.com/benshi001)、[扈梦明(xxxDeveloper)](https://github.com/xxxDeveloper)、[刘云峰(leaftree)](https://github.com/leaftree)、[宋汝阳(ShiinaOrez)](https://github.com/ShiinaOrez)
 
-安装和测试 (Install and Run):
+## Playground 在线预览
+
+[https://wa-lang.org/playground](https://wa-lang.org/playground)
+
+![[![](https://wa-lang.org/smalltalk/images/st0011-01.png)](https://wa-lang.org/playground)](https://wa-lang.org/static/images/playground.gif)
+
+
+## 本地安装和测试 (Install and Run):
 
 1. `go install github.com/wa-lang/wa@latest`
 2. `wa init -name=_examples/hi`
