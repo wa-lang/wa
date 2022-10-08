@@ -9,6 +9,7 @@ import (
 
 type Const interface {
 	Value
+	isConst()
 }
 
 /**************************************
@@ -66,6 +67,7 @@ func (c *aConst) Name() string                   { return c.lit }
 func (c *aConst) Kind() ValueKind                { return ValueKindConst }
 func (c *aConst) Type() ValueType                { return c.typ }
 func (c *aConst) raw() []wat.Value               { logger.Fatal("Todo"); return nil }
+func (c *aConst) isConst()                       {}
 func (c *aConst) EmitInit() []wat.Inst           { logger.Fatal("不可0值化常数"); return nil }
 func (c *aConst) EmitPop() []wat.Inst            { logger.Fatal("不可Pop至常数"); return nil }
 func (c *aConst) EmitRelease() []wat.Inst        { logger.Fatal("不可清除常数"); return nil }

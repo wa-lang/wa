@@ -25,21 +25,23 @@ func (m *Module) String() string {
 	//	s += i.Format("  ") + "\n"
 	//}
 
+	s += m.BaseWat
+
 	for _, g := range m.Globals {
-		s += "(global "
+		s += "(global $"
 		s += g.V.Name()
 		if g.IsMut {
-			s += "(mut " + g.V.Type().Name() + ") "
+			s += " (mut " + g.V.Type().Name() + ")"
 		} else {
-			s += "(" + g.V.Type().Name() + ") "
+			s += " (" + g.V.Type().Name() + ")"
 		}
 		if len(g.InitValue) > 0 {
-			s += "(" + g.V.Type().Name() + ".const " + g.InitValue + ")"
+			s += " (" + g.V.Type().Name() + ".const " + g.InitValue + ")"
+		} else {
+			s += " (" + g.V.Type().Name() + ".const 0)"
 		}
 		s += ")\n"
 	}
-
-	s += m.BaseWat
 
 	for _, f := range m.Funcs {
 		s += "\n\n" + f.Format("")

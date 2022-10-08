@@ -41,6 +41,10 @@ func (g *functionGenerator) getValue(i ssa.Value) wir.Value {
 		return v
 	}
 
+	if v, ok := g.module.Globals_map[i]; ok {
+		return v
+	}
+
 	switch v := i.(type) {
 	case *ssa.Const:
 		switch t := v.Type().(type) {
@@ -48,7 +52,11 @@ func (g *functionGenerator) getValue(i ssa.Value) wir.Value {
 			switch t.Kind() {
 
 			case types.Bool:
-				logger.Fatalf("Todo:%T", t)
+				if constant.BoolVal(v.Value) {
+					return wir.NewConst(wir.I32{}, "1")
+				} else {
+					return wir.NewConst(wir.I32{}, "0")
+				}
 
 			case types.Int:
 				val, _ := constant.Int64Val(v.Value)
@@ -96,7 +104,11 @@ func (g *functionGenerator) getValue(i ssa.Value) wir.Value {
 
 func (g *functionGenerator) genFunction(f *ssa.Function) *wir.Function {
 	var wir_fn wir.Function
-	wir_fn.Name = f.Name()
+	if len(f.LinkName()) > 0 {
+		wir_fn.Name = f.LinkName()
+	} else {
+		wir_fn.Name = f.Name()
+	}
 
 	rets := f.Signature.Results()
 	wir_fn.Result = wir.ToWType(rets)
@@ -336,7 +348,12 @@ func (g *functionGenerator) genCall(inst *ssa.Call) ([]wat.Inst, wir.ValueType) 
 		for _, v := range inst.Call.Args {
 			insts = append(insts, g.getValue(v).EmitPush()...)
 		}
-		insts = append(insts, wat.NewInstCall(inst.Call.StaticCallee().Name()))
+		callee := inst.Call.StaticCallee()
+		if len(callee.LinkName()) > 0 {
+			insts = append(insts, wat.NewInstCall(callee.LinkName()))
+		} else {
+			insts = append(insts, wat.NewInstCall(callee.Name()))
+		}
 		return insts, ret_type
 
 	case *ssa.Builtin:

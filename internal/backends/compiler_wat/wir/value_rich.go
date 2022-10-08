@@ -181,7 +181,7 @@ type VarRef struct {
 	underlying VarStruct
 }
 
-func NewVarRef(name string, kind ValueKind, base_type ValueType) *VarRef {
+func newVarRef(name string, kind ValueKind, base_type ValueType) *VarRef {
 	var v VarRef
 	ref_type := NewRef(base_type)
 	v.aVar = aVar{name: name, kind: kind, typ: ref_type}

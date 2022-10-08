@@ -57,11 +57,13 @@ const modBaseWat_wa = `
 
 (func $_start
 	;; {{$_start/body/begin}}
+	(call $init)
 	;; (call $main.init)
 	(call $main)
 	;; {{$_start/body/end}}
 )
 
+;;Remove these functions if they've been implemented in .wa
 (global $$heap_ptr (mut i32) (i32.const 2048))
 (func $$waHeapAlloc (param $size i32) (result i32) ;;result = ptr
 	;;Todo
@@ -118,6 +120,13 @@ const modBaseWat_wa = `
   ;;Todo
   (local $count i32)
   (local $release_func i32)
+
+  local.get $ptr
+  i32.const 0
+  i32.eq
+  if
+    return
+  end
 
   local.get $ptr
   i32.load offset=0 align=1

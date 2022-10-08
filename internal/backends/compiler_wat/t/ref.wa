@@ -1,0 +1,29 @@
+// 版权 @2021 凹语言 作者。保留所有权利。
+
+package main
+
+#wa:linkname $heap_ptr
+var heap_ptr int32 = 2048
+#wa:linkname $waHeapAlloc
+fn HeapAlloc(size: i32) => (ptr: i32) {
+	ptr = heap_ptr
+	heap_ptr += size
+	return
+}
+
+#wa:linkname $waHeapFree
+fn HeapFree(ptr: i32) {
+	print('~')
+	println(ptr)
+}
+
+fn new_int() => *i32 {
+	var i i32
+	i = 42
+	return &i
+}
+
+fn main() {
+	println(*new_int())
+	println(*new_int())
+}

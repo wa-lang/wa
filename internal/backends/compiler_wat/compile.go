@@ -64,7 +64,7 @@ func (p *Compiler) CompilePackage(ssaPkg *ssa.Package) {
 		case *ssa.Global:
 			gs = append(gs, member)
 		case *ssa.Function:
-			//fns = append(fns, member)
+			fns = append(fns, member)
 		default:
 			panic("Unreachable")
 		}

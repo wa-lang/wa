@@ -19,7 +19,7 @@ func NewVar(name string, kind ValueKind, typ ValueType) Value {
 		return newVarStruct(name, kind, typ)
 
 	case Ref:
-		return NewVarRef(name, kind, typ.Base)
+		return newVarRef(name, kind, typ.Base)
 
 	default:
 		logger.Fatalf("Todo: %T", typ)
@@ -45,7 +45,7 @@ func (v *aVar) push(name string) wat.Inst {
 	case ValueKindLocal:
 		return wat.NewInstGetLocal(name)
 
-	case ValueKindGlobal:
+	case ValueKindGlobal_Value, ValueKindGlobal_Pointer:
 		return wat.NewInstGetGlobal(name)
 
 	default:
@@ -58,7 +58,7 @@ func (v *aVar) pop(name string) wat.Inst {
 	case ValueKindLocal:
 		return wat.NewInstSetLocal(name)
 
-	case ValueKindGlobal:
+	case ValueKindGlobal_Value, ValueKindGlobal_Pointer:
 		return wat.NewInstSetGlobal(name)
 
 	default:

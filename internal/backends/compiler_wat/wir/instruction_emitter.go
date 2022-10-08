@@ -92,24 +92,43 @@ func binOpMatchType(x, y ValueType) ValueType {
 }
 
 func EmitLoad(addr Value) (insts []wat.Inst, ret_type ValueType) {
-	switch addr := addr.(type) {
-	case *VarRef:
-		ret_type = addr.Type().(Ref).Base
-		insts = addr.EmitLoad()
+	switch addr.Kind() {
+	case ValueKindGlobal_Value:
+		insts = addr.EmitPush()
+		ret_type = addr.Type()
 
 	default:
-		logger.Fatalf("Todo %v", addr)
+		switch addr := addr.(type) {
+		case *VarRef:
+			insts = addr.EmitLoad()
+			ret_type = addr.Type().(Ref).Base
+
+		default:
+			logger.Fatalf("Todo %v", addr)
+		}
 	}
+
 	return
 }
 
 func EmitStore(addr, value Value) (insts []wat.Inst) {
-	switch addr := addr.(type) {
-	case *VarRef:
-		insts = addr.EmitStore(value)
+	switch addr.Kind() {
+	case ValueKindGlobal_Value:
+		if !addr.Type().Equal(value.Type()) {
+			logger.Fatal("Type not match")
+			return nil
+		}
+		insts = append(insts, value.EmitPush()...)
+		insts = append(insts, addr.EmitPop()...)
 
 	default:
-		logger.Fatalf("Todo %v", addr)
+		switch addr := addr.(type) {
+		case *VarRef:
+			insts = addr.EmitStore(value)
+
+		default:
+			logger.Fatalf("Todo %v", addr)
+		}
 	}
 
 	return
@@ -117,12 +136,12 @@ func EmitStore(addr, value Value) (insts []wat.Inst) {
 
 func EmitHeapAlloc(typ ValueType, module *Module) (insts []wat.Inst, ret_type ValueType) {
 	ret_type = NewRef(typ)
-	insts = NewVarRef("", ValueKindLocal, typ).emitHeapAlloc(module)
+	insts = newVarRef("", ValueKindLocal, typ).emitHeapAlloc(module)
 	return
 }
 
 func EmitStackAlloc(typ ValueType, module *Module) (insts []wat.Inst, ret_type ValueType) {
 	ret_type = NewRef(typ)
-	insts = NewVarRef("", ValueKindLocal, typ).emitStackAlloc(module)
+	insts = newVarRef("", ValueKindLocal, typ).emitStackAlloc(module)
 	return
 }

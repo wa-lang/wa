@@ -11,16 +11,29 @@ Module:
 type Module struct {
 	Funcs []*Function
 
-	Globals     []Value
-	globals_map map[ssa.Value]Value
+	globals     []Value
+	Globals_map map[ssa.Value]Value
 
 	BaseWat string
 }
 
 func NewModule() *Module {
 	var m Module
-	m.globals_map = make(map[ssa.Value]Value)
+	m.Globals_map = make(map[ssa.Value]Value)
 	return &m
+}
+
+func (m *Module) AddGlobal(name string, typ ValueType, is_pointer bool, ssa_value ssa.Value) Value {
+	var kind ValueKind
+	if is_pointer {
+		kind = ValueKindGlobal_Pointer
+	} else {
+		kind = ValueKindGlobal_Value
+	}
+	v := NewVar(name, kind, typ)
+	m.globals = append(m.globals, v)
+	m.Globals_map[ssa_value] = v
+	return v
 }
 
 func (m *Module) ToWatModule() *wat.Module {
@@ -31,7 +44,7 @@ func (m *Module) ToWatModule() *wat.Module {
 		wat_module.Funcs = append(wat_module.Funcs, f.ToWatFunc())
 	}
 
-	for _, g := range m.Globals {
+	for _, g := range m.globals {
 		raw := g.raw()
 		for _, r := range raw {
 			var wat_global wat.Global
