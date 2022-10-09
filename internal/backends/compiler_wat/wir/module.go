@@ -1,6 +1,8 @@
 package wir
 
 import (
+	"strconv"
+
 	"github.com/wa-lang/wa/internal/backends/compiler_wat/wir/wat"
 	"github.com/wa-lang/wa/internal/ssa"
 )
@@ -36,9 +38,29 @@ func (m *Module) AddGlobal(name string, typ ValueType, is_pointer bool, ssa_valu
 	return v
 }
 
+func (m *Module) genGlobalAlloc() *Function {
+	var f Function
+	f.Name = "$waGlobalAlloc"
+
+	for _, g := range m.globals {
+		if g.Kind() != ValueKindGlobal_Pointer {
+			continue
+		}
+
+		t := g.Type()
+		f.Insts = append(f.Insts, wat.NewInstConst(wat.I32{}, strconv.Itoa(t.size())))
+		f.Insts = append(f.Insts, wat.NewInstCall("$waHeapAlloc"))
+		f.Insts = append(f.Insts, g.EmitPop()...)
+	}
+
+	return &f
+}
+
 func (m *Module) ToWatModule() *wat.Module {
 	var wat_module wat.Module
 	wat_module.BaseWat = m.BaseWat
+
+	wat_module.Funcs = append(wat_module.Funcs, m.genGlobalAlloc().ToWatFunc())
 
 	for _, f := range m.Funcs {
 		wat_module.Funcs = append(wat_module.Funcs, f.ToWatFunc())

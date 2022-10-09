@@ -63,19 +63,22 @@ type aConst struct {
 	lit string
 }
 
-func (c *aConst) Name() string                   { return c.lit }
-func (c *aConst) Kind() ValueKind                { return ValueKindConst }
-func (c *aConst) Type() ValueType                { return c.typ }
-func (c *aConst) raw() []wat.Value               { logger.Fatal("Todo"); return nil }
-func (c *aConst) isConst()                       {}
-func (c *aConst) EmitInit() []wat.Inst           { logger.Fatal("不可0值化常数"); return nil }
-func (c *aConst) EmitPop() []wat.Inst            { logger.Fatal("不可Pop至常数"); return nil }
-func (c *aConst) EmitRelease() []wat.Inst        { logger.Fatal("不可清除常数"); return nil }
-func (c *aConst) emitLoad(addr Value) []wat.Inst { logger.Fatal("不可Load常数"); return nil }
+func (c *aConst) Name() string            { return c.lit }
+func (c *aConst) Kind() ValueKind         { return ValueKindConst }
+func (c *aConst) Type() ValueType         { return c.typ }
+func (c *aConst) raw() []wat.Value        { logger.Fatal("Todo"); return nil }
+func (c *aConst) isConst()                {}
+func (c *aConst) EmitInit() []wat.Inst    { logger.Fatal("不可0值化常数"); return nil }
+func (c *aConst) EmitPop() []wat.Inst     { logger.Fatal("不可Pop至常数"); return nil }
+func (c *aConst) EmitRelease() []wat.Inst { logger.Fatal("不可清除常数"); return nil }
+func (c *aConst) emitLoadFromAddr(addr Value) []wat.Inst {
+	logger.Fatal("不可Load常数")
+	return nil
+}
 func (c *aConst) EmitPush() []wat.Inst {
 	return []wat.Inst{wat.NewInstConst(toWatType(c.Type()), c.lit)}
 }
-func (c *aConst) emitStore(addr Value) []wat.Inst {
+func (c *aConst) emitStoreToAddr(addr Value) []wat.Inst {
 	if !addr.Type().(Pointer).Base.Equal(c.Type()) {
 		logger.Fatal("Type not match")
 		return nil

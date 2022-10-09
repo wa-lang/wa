@@ -45,8 +45,8 @@ type Value interface {
 	EmitPush() []wat.Inst
 	EmitPop() []wat.Inst
 	EmitRelease() []wat.Inst
-	emitLoad(addr Value) []wat.Inst
-	emitStore(addr Value) []wat.Inst
+	emitLoadFromAddr(addr Value) []wat.Inst
+	emitStoreToAddr(addr Value) []wat.Inst
 }
 
 /**************************************

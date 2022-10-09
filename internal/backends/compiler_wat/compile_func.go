@@ -280,7 +280,7 @@ func (g *functionGenerator) genValue(v ssa.Value) ([]wat.Inst, wir.ValueType) {
 func (g *functionGenerator) genUnOp(inst *ssa.UnOp) ([]wat.Inst, wir.ValueType) {
 	switch inst.Op {
 	case token.MUL: //*x
-		return wir.EmitLoad(g.getValue(inst.X))
+		return g.genLoad(inst.X)
 	}
 
 	logger.Fatal("Todo")
@@ -445,6 +445,10 @@ func (g *functionGenerator) genReturn(inst *ssa.Return) []wat.Inst {
 
 	insts = append(insts, wat.NewInstBr("$BlockFnBody"))
 	return insts
+}
+
+func (g *functionGenerator) genLoad(addr ssa.Value) ([]wat.Inst, wir.ValueType) {
+	return wir.EmitLoad(g.getValue(addr))
 }
 
 func (g *functionGenerator) genStore(inst *ssa.Store) []wat.Inst {

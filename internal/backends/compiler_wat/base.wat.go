@@ -57,6 +57,7 @@ const modBaseWat_wa = `
 
 (func $_start
 	;; {{$_start/body/begin}}
+	(call $$waGlobalAlloc)
 	(call $init)
 	;; (call $main.init)
 	(call $main)

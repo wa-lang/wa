@@ -100,8 +100,12 @@ func EmitLoad(addr Value) (insts []wat.Inst, ret_type ValueType) {
 	default:
 		switch addr := addr.(type) {
 		case *VarRef:
-			insts = addr.EmitLoad()
+			insts = addr.emitGetValue()
 			ret_type = addr.Type().(Ref).Base
+
+		case *VarPointer:
+			insts = addr.emitGetValue()
+			ret_type = addr.Type().(Pointer).Base
 
 		default:
 			logger.Fatalf("Todo %v", addr)
@@ -124,7 +128,10 @@ func EmitStore(addr, value Value) (insts []wat.Inst) {
 	default:
 		switch addr := addr.(type) {
 		case *VarRef:
-			insts = addr.EmitStore(value)
+			insts = addr.emitSetValue(value)
+
+		case *VarPointer:
+			insts = addr.emitSetValue(value)
 
 		default:
 			logger.Fatalf("Todo %v", addr)

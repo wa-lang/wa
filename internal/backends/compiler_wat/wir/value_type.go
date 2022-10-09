@@ -144,7 +144,7 @@ type Pointer struct {
 }
 
 func NewPointer(base ValueType) Pointer { return Pointer{Base: base} }
-func (t Pointer) Name() string          { return "p$" + t.Base.Name() }
+func (t Pointer) Name() string          { return "pointer$" + t.Base.Name() }
 func (t Pointer) size() int             { return 4 }
 func (t Pointer) align() int            { return 4 }
 func (t Pointer) onFree(m *Module) int  { return 0 }

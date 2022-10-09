@@ -9,7 +9,9 @@ func (f *Function) ToWatFunc() *wat.Function {
 
 	wat_func.Name = f.Name
 
-	wat_func.Results = f.Result.Raw()
+	if f.Result != nil {
+		wat_func.Results = f.Result.Raw()
+	}
 
 	for _, param := range f.Params {
 		raw := param.raw()

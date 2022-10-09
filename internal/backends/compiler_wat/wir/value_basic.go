@@ -9,8 +9,11 @@ import (
 
 func NewVar(name string, kind ValueKind, typ ValueType) Value {
 	switch typ := typ.(type) {
-	case I32, U32, I64, U64, F32, F64, Pointer:
+	case I32, U32, I64, U64, F32, F64:
 		return newVarBasic(name, kind, typ)
+
+	case Pointer:
+		return newVarPointer(name, kind, typ.Base)
 
 	case Block:
 		return newVarBlock(name, kind, typ.Base)
@@ -84,7 +87,7 @@ func (v *varBasic) EmitInit() []wat.Inst {
 func (v *varBasic) EmitPush() []wat.Inst    { return []wat.Inst{v.push(v.name)} }
 func (v *varBasic) EmitPop() []wat.Inst     { return []wat.Inst{v.pop(v.name)} }
 func (v *varBasic) EmitRelease() []wat.Inst { return nil }
-func (v *varBasic) emitLoad(addr Value) []wat.Inst {
+func (v *varBasic) emitLoadFromAddr(addr Value) []wat.Inst {
 	if !addr.Type().(Pointer).Base.Equal(v.Type()) {
 		logger.Fatal("Type not match")
 		return nil
@@ -93,7 +96,7 @@ func (v *varBasic) emitLoad(addr Value) []wat.Inst {
 	insts = append(insts, wat.NewInstLoad(toWatType(v.Type()), 0, 1))
 	return insts
 }
-func (v *varBasic) emitStore(addr Value) []wat.Inst {
+func (v *varBasic) emitStoreToAddr(addr Value) []wat.Inst {
 	if !addr.Type().(Pointer).Base.Equal(v.Type()) {
 		logger.Fatal("Type not match")
 		return nil

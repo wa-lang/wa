@@ -40,14 +40,14 @@ func (v *varBlock) EmitRelease() (insts []wat.Inst) {
 	return
 }
 
-func (v *varBlock) emitLoad(addr Value) (insts []wat.Inst) {
+func (v *varBlock) emitLoadFromAddr(addr Value) (insts []wat.Inst) {
 	insts = append(insts, addr.EmitPush()...)
 	insts = append(insts, wat.NewInstLoad(wat.I32{}, 0, 1))
 	insts = append(insts, wat.NewInstCall("$wa.RT.Block.Retain"))
 	return
 }
 
-func (v *varBlock) emitStore(addr Value) (insts []wat.Inst) {
+func (v *varBlock) emitStoreToAddr(addr Value) (insts []wat.Inst) {
 	insts = append(insts, v.push(v.name))
 	insts = append(insts, wat.NewInstCall("$wa.RT.Block.Retain"))
 	insts = append(insts, wat.NewInstDrop())
@@ -164,13 +164,40 @@ func (v *VarStruct) Extract(member_name string) Value {
 	}
 	return nil
 }
-func (v *VarStruct) emitLoad(addr Value) []wat.Inst {
+func (v *VarStruct) emitLoadFromAddr(addr Value) []wat.Inst {
 	logger.Fatal("Todo")
 	return nil
 }
-func (v *VarStruct) emitStore(addr Value) []wat.Inst {
+func (v *VarStruct) emitStoreToAddr(addr Value) []wat.Inst {
 	logger.Fatal("Todo")
 	return nil
+}
+
+/**************************************
+VarPointer:
+**************************************/
+type VarPointer struct {
+	varBasic
+}
+
+func newVarPointer(name string, kind ValueKind, base_type ValueType) *VarPointer {
+	var v VarPointer
+	pointer_type := NewPointer(base_type)
+	v.aVar = aVar{name: name, kind: kind, typ: pointer_type}
+	return &v
+}
+
+func (v *VarPointer) emitGetValue() []wat.Inst {
+	t := NewVar("", v.kind, v.Type().(Pointer).Base)
+	return t.emitLoadFromAddr(v)
+}
+
+func (v *VarPointer) emitSetValue(d Value) []wat.Inst {
+	if !d.Type().Equal(v.Type().(Pointer).Base) {
+		logger.Fatal("Type not match")
+		return nil
+	}
+	return d.emitStoreToAddr(v)
 }
 
 /**************************************
@@ -189,25 +216,25 @@ func newVarRef(name string, kind ValueKind, base_type ValueType) *VarRef {
 	return &v
 }
 
-func (v *VarRef) raw() []wat.Value                { return v.underlying.raw() }
-func (v *VarRef) EmitInit() []wat.Inst            { return v.underlying.EmitInit() }
-func (v *VarRef) EmitPush() []wat.Inst            { return v.underlying.EmitPush() }
-func (v *VarRef) EmitPop() []wat.Inst             { return v.underlying.EmitPop() }
-func (v *VarRef) EmitRelease() []wat.Inst         { return v.underlying.EmitRelease() }
-func (v *VarRef) emitLoad(addr Value) []wat.Inst  { return v.underlying.emitLoad(addr) }
-func (v *VarRef) emitStore(addr Value) []wat.Inst { return v.underlying.emitStore(addr) }
+func (v *VarRef) raw() []wat.Value                       { return v.underlying.raw() }
+func (v *VarRef) EmitInit() []wat.Inst                   { return v.underlying.EmitInit() }
+func (v *VarRef) EmitPush() []wat.Inst                   { return v.underlying.EmitPush() }
+func (v *VarRef) EmitPop() []wat.Inst                    { return v.underlying.EmitPop() }
+func (v *VarRef) EmitRelease() []wat.Inst                { return v.underlying.EmitRelease() }
+func (v *VarRef) emitLoadFromAddr(addr Value) []wat.Inst { return v.underlying.emitLoadFromAddr(addr) }
+func (v *VarRef) emitStoreToAddr(addr Value) []wat.Inst  { return v.underlying.emitStoreToAddr(addr) }
 
-func (v *VarRef) EmitLoad() []wat.Inst {
+func (v *VarRef) emitGetValue() []wat.Inst {
 	t := NewVar("", v.kind, v.Type().(Ref).Base)
-	return t.emitLoad(v.underlying.Extract("data"))
+	return t.emitLoadFromAddr(v.underlying.Extract("data"))
 }
 
-func (v *VarRef) EmitStore(d Value) []wat.Inst {
+func (v *VarRef) emitSetValue(d Value) []wat.Inst {
 	if !d.Type().Equal(v.Type().(Ref).Base) {
 		logger.Fatal("Type not match")
 		return nil
 	}
-	return d.emitStore(v.underlying.Extract("data"))
+	return d.emitStoreToAddr(v.underlying.Extract("data"))
 }
 
 func (v *VarRef) emitHeapAlloc(module *Module) (insts []wat.Inst) {
