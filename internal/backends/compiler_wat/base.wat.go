@@ -89,16 +89,19 @@ const modBaseWat_wa = `
   local.get $ptr
 
   local.get $ptr
-  i32.const 1
-  i32.store offset=0 align=1
+  if
+    local.get $ptr
+    i32.const 1
+    i32.store offset=0 align=1
 
-  local.get $ptr
-  local.get $item_count
-  i32.store offset=4 align=1
+    local.get $ptr
+    local.get $item_count
+    i32.store offset=4 align=1
 
-  local.get $ptr
-  local.get $release_func
-  i32.store offset=8 align=1
+    local.get $ptr
+    local.get $release_func
+    i32.store offset=8 align=1
+  end
 )
 
 (func $$wa.RT.DupWatStack (param $p i32) (result i32) (result i32) ;;result0 = result1 = p
@@ -110,11 +113,14 @@ const modBaseWat_wa = `
   local.get $ptr
 
   local.get $ptr
-  local.get $ptr
-  i32.load offset=0 align=1
-  i32.const 1
-  i32.add
-  i32.store offset=0 align=1
+  if
+    local.get $ptr
+    local.get $ptr
+    i32.load offset=0 align=1
+    i32.const 1
+    i32.add
+    i32.store offset=0 align=1
+  end
 )
 
 (func $$wa.RT.Block.Release (param $ptr i32)

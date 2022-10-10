@@ -56,16 +56,13 @@ func (v *varBlock) emitLoadFromAddr(addr Value, offset int) (insts []wat.Inst) {
 }
 
 func (v *varBlock) emitStoreToAddr(addr Value, offset int) (insts []wat.Inst) {
-	insts = append(insts, v.push(v.name))
-	insts = append(insts, wat.NewInstCall("$wa.RT.Block.Retain"))
-	insts = append(insts, wat.NewInstDrop())
+	insts = append(insts, addr.EmitPush()...)
+	insts = append(insts, v.EmitPush()...)
 
 	insts = append(insts, addr.EmitPush()...)
 	insts = append(insts, wat.NewInstLoad(wat.I32{}, offset, 1))
 	insts = append(insts, wat.NewInstCall("$wa.RT.Block.Release"))
 
-	insts = append(insts, addr.EmitPush()...)
-	insts = append(insts, v.push(v.name))
 	insts = append(insts, wat.NewInstStore(toWatType(v.Type()), offset, 1))
 	return
 }
