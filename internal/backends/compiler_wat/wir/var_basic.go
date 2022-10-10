@@ -87,23 +87,23 @@ func (v *varBasic) EmitInit() []wat.Inst {
 func (v *varBasic) EmitPush() []wat.Inst    { return []wat.Inst{v.push(v.name)} }
 func (v *varBasic) EmitPop() []wat.Inst     { return []wat.Inst{v.pop(v.name)} }
 func (v *varBasic) EmitRelease() []wat.Inst { return nil }
-func (v *varBasic) emitLoadFromAddr(addr Value) []wat.Inst {
-	if !addr.Type().(Pointer).Base.Equal(v.Type()) {
-		logger.Fatal("Type not match")
-		return nil
-	}
+func (v *varBasic) emitLoadFromAddr(addr Value, offset int) []wat.Inst {
+	//if !addr.Type().(Pointer).Base.Equal(v.Type()) {
+	//	logger.Fatal("Type not match")
+	//	return nil
+	//}
 	insts := addr.EmitPush()
-	insts = append(insts, wat.NewInstLoad(toWatType(v.Type()), 0, 1))
+	insts = append(insts, wat.NewInstLoad(toWatType(v.Type()), offset, 1))
 	return insts
 }
-func (v *varBasic) emitStoreToAddr(addr Value) []wat.Inst {
-	if !addr.Type().(Pointer).Base.Equal(v.Type()) {
-		logger.Fatal("Type not match")
-		return nil
-	}
+func (v *varBasic) emitStoreToAddr(addr Value, offset int) []wat.Inst {
+	//if !addr.Type().(Pointer).Base.Equal(v.Type()) {
+	//	logger.Fatal("Type not match")
+	//	return nil
+	//}
 	insts := addr.EmitPush()
 	insts = append(insts, v.EmitPush()...)
-	insts = append(insts, wat.NewInstStore(toWatType(v.Type()), 0, 1))
+	insts = append(insts, wat.NewInstStore(toWatType(v.Type()), offset, 1))
 	return insts
 }
 
@@ -123,7 +123,7 @@ func newVarPointer(name string, kind ValueKind, base_type ValueType) *VarPointer
 
 func (v *VarPointer) emitGetValue() []wat.Inst {
 	t := NewVar("", v.kind, v.Type().(Pointer).Base)
-	return t.emitLoadFromAddr(v)
+	return t.emitLoadFromAddr(v, 0)
 }
 
 func (v *VarPointer) emitSetValue(d Value) []wat.Inst {
@@ -131,5 +131,5 @@ func (v *VarPointer) emitSetValue(d Value) []wat.Inst {
 		logger.Fatal("Type not match")
 		return nil
 	}
-	return d.emitStoreToAddr(v)
+	return d.emitStoreToAddr(v, 0)
 }

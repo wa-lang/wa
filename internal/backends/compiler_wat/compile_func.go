@@ -85,6 +85,9 @@ func (g *functionGenerator) getValue(i ssa.Value) wir.Value {
 				logger.Fatalf("Todo:%T", t)
 			}
 
+		case *types.Pointer:
+			logger.Fatalf("Todo:%T", t)
+
 		case *types.Slice:
 			logger.Fatalf("Todo:%T", t)
 

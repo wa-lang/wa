@@ -41,13 +41,14 @@ func (m *Module) AddGlobal(name string, typ ValueType, is_pointer bool, ssa_valu
 func (m *Module) genGlobalAlloc() *Function {
 	var f Function
 	f.Name = "$waGlobalAlloc"
+	f.Result = VOID{}
 
 	for _, g := range m.globals {
 		if g.Kind() != ValueKindGlobal_Pointer {
 			continue
 		}
 
-		t := g.Type()
+		t := g.Type().(Pointer).Base
 		f.Insts = append(f.Insts, wat.NewInstConst(wat.I32{}, strconv.Itoa(t.size())))
 		f.Insts = append(f.Insts, wat.NewInstCall("$waHeapAlloc"))
 		f.Insts = append(f.Insts, g.EmitPop()...)

@@ -2,7 +2,6 @@ package wir
 
 import (
 	"github.com/wa-lang/wa/internal/backends/compiler_wat/wir/wat"
-	"github.com/wa-lang/wa/internal/logger"
 )
 
 /**************************************
@@ -78,12 +77,21 @@ func (v *VarStruct) Extract(member_name string) Value {
 	return nil
 }
 
-func (v *VarStruct) emitLoadFromAddr(addr Value) []wat.Inst {
-	logger.Fatal("Todo")
-	return nil
+func (v *VarStruct) emitLoadFromAddr(addr Value, offset int) (insts []wat.Inst) {
+	st := v.Type().(Struct)
+	for _, m := range st.Members {
+		t := NewVar(v.Name()+"."+m.Name(), v.kind, m.Type())
+		insts = append(insts, t.emitLoadFromAddr(addr, m._start+offset)...)
+	}
+	return
 }
 
-func (v *VarStruct) emitStoreToAddr(addr Value) []wat.Inst {
-	logger.Fatal("Todo")
-	return nil
+func (v *VarStruct) emitStoreToAddr(addr Value, offset int) (insts []wat.Inst) {
+	st := v.Type().(Struct)
+	for i := range st.Members {
+		m := st.Members[len(st.Members)-i-1]
+		t := NewVar(v.Name()+"."+m.Name(), v.kind, m.Type())
+		insts = append(insts, t.emitStoreToAddr(addr, m._start+offset)...)
+	}
+	return
 }

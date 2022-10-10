@@ -25,17 +25,23 @@ func newVarRef(name string, kind ValueKind, base_type ValueType) *VarRef {
 	return &v
 }
 
-func (v *VarRef) raw() []wat.Value                       { return v.underlying.raw() }
-func (v *VarRef) EmitInit() []wat.Inst                   { return v.underlying.EmitInit() }
-func (v *VarRef) EmitPush() []wat.Inst                   { return v.underlying.EmitPush() }
-func (v *VarRef) EmitPop() []wat.Inst                    { return v.underlying.EmitPop() }
-func (v *VarRef) EmitRelease() []wat.Inst                { return v.underlying.EmitRelease() }
-func (v *VarRef) emitLoadFromAddr(addr Value) []wat.Inst { return v.underlying.emitLoadFromAddr(addr) }
-func (v *VarRef) emitStoreToAddr(addr Value) []wat.Inst  { return v.underlying.emitStoreToAddr(addr) }
+func (v *VarRef) raw() []wat.Value        { return v.underlying.raw() }
+func (v *VarRef) EmitInit() []wat.Inst    { return v.underlying.EmitInit() }
+func (v *VarRef) EmitPush() []wat.Inst    { return v.underlying.EmitPush() }
+func (v *VarRef) EmitPop() []wat.Inst     { return v.underlying.EmitPop() }
+func (v *VarRef) EmitRelease() []wat.Inst { return v.underlying.EmitRelease() }
+
+func (v *VarRef) emitLoadFromAddr(addr Value, offset int) []wat.Inst {
+	return v.underlying.emitLoadFromAddr(addr, offset)
+}
+
+func (v *VarRef) emitStoreToAddr(addr Value, offset int) []wat.Inst {
+	return v.underlying.emitStoreToAddr(addr, offset)
+}
 
 func (v *VarRef) emitGetValue() []wat.Inst {
 	t := NewVar("", v.kind, v.Type().(Ref).Base)
-	return t.emitLoadFromAddr(v.underlying.Extract("data"))
+	return t.emitLoadFromAddr(v.underlying.Extract("data"), 0)
 }
 
 func (v *VarRef) emitSetValue(d Value) []wat.Inst {
@@ -43,7 +49,7 @@ func (v *VarRef) emitSetValue(d Value) []wat.Inst {
 		logger.Fatal("Type not match")
 		return nil
 	}
-	return d.emitStoreToAddr(v.underlying.Extract("data"))
+	return d.emitStoreToAddr(v.underlying.Extract("data"), 0)
 }
 
 func (v *VarRef) emitHeapAlloc(module *Module) (insts []wat.Inst) {

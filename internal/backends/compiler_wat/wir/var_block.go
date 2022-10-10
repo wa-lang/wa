@@ -48,25 +48,25 @@ func (v *varBlock) EmitRelease() (insts []wat.Inst) {
 	return
 }
 
-func (v *varBlock) emitLoadFromAddr(addr Value) (insts []wat.Inst) {
+func (v *varBlock) emitLoadFromAddr(addr Value, offset int) (insts []wat.Inst) {
 	insts = append(insts, addr.EmitPush()...)
-	insts = append(insts, wat.NewInstLoad(wat.I32{}, 0, 1))
+	insts = append(insts, wat.NewInstLoad(wat.I32{}, offset, 1))
 	insts = append(insts, wat.NewInstCall("$wa.RT.Block.Retain"))
 	return
 }
 
-func (v *varBlock) emitStoreToAddr(addr Value) (insts []wat.Inst) {
+func (v *varBlock) emitStoreToAddr(addr Value, offset int) (insts []wat.Inst) {
 	insts = append(insts, v.push(v.name))
 	insts = append(insts, wat.NewInstCall("$wa.RT.Block.Retain"))
 	insts = append(insts, wat.NewInstDrop())
 
 	insts = append(insts, addr.EmitPush()...)
-	insts = append(insts, wat.NewInstLoad(wat.I32{}, 0, 1))
+	insts = append(insts, wat.NewInstLoad(wat.I32{}, offset, 1))
 	insts = append(insts, wat.NewInstCall("$wa.RT.Block.Release"))
 
 	insts = append(insts, addr.EmitPush()...)
 	insts = append(insts, v.push(v.name))
-	insts = append(insts, wat.NewInstStore(toWatType(v.Type()), 0, 1))
+	insts = append(insts, wat.NewInstStore(toWatType(v.Type()), offset, 1))
 	return
 }
 

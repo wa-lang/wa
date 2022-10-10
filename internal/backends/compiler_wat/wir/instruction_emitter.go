@@ -94,17 +94,17 @@ func binOpMatchType(x, y ValueType) ValueType {
 func EmitLoad(addr Value) (insts []wat.Inst, ret_type ValueType) {
 	switch addr.Kind() {
 	case ValueKindGlobal_Value:
-		insts = addr.EmitPush()
+		insts = append(insts, addr.EmitPush()...)
 		ret_type = addr.Type()
 
 	default:
 		switch addr := addr.(type) {
 		case *VarRef:
-			insts = addr.emitGetValue()
+			insts = append(insts, addr.emitGetValue()...)
 			ret_type = addr.Type().(Ref).Base
 
 		case *VarPointer:
-			insts = addr.emitGetValue()
+			insts = append(insts, addr.emitGetValue()...)
 			ret_type = addr.Type().(Pointer).Base
 
 		default:
@@ -128,10 +128,10 @@ func EmitStore(addr, value Value) (insts []wat.Inst) {
 	default:
 		switch addr := addr.(type) {
 		case *VarRef:
-			insts = addr.emitSetValue(value)
+			insts = append(insts, addr.emitSetValue(value)...)
 
 		case *VarPointer:
-			insts = addr.emitSetValue(value)
+			insts = append(insts, addr.emitSetValue(value)...)
 
 		default:
 			logger.Fatalf("Todo %v", addr)
