@@ -142,13 +142,15 @@ func EmitStore(addr, value Value) (insts []wat.Inst) {
 }
 
 func EmitHeapAlloc(typ ValueType, module *Module) (insts []wat.Inst, ret_type ValueType) {
-	ret_type = NewRef(typ)
-	insts = newVarRef("", ValueKindLocal, typ).emitHeapAlloc(module)
+	ref_typ := NewRef(typ)
+	ret_type = ref_typ
+	insts = ref_typ.emitHeapAlloc(module)
 	return
 }
 
 func EmitStackAlloc(typ ValueType, module *Module) (insts []wat.Inst, ret_type ValueType) {
-	ret_type = NewRef(typ)
-	insts = newVarRef("", ValueKindLocal, typ).emitStackAlloc(module)
+	ref_typ := NewRef(typ)
+	ret_type = ref_typ
+	insts = ref_typ.emitStackAlloc(module)
 	return
 }

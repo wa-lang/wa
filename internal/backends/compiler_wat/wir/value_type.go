@@ -54,6 +54,10 @@ func (t VOID) align() int             { return 0 }
 func (t VOID) onFree(m *Module) int   { return 0 }
 func (t VOID) Raw() []wat.ValueType   { return []wat.ValueType{} }
 func (t VOID) Equal(u ValueType) bool { _, ok := u.(VOID); return ok }
+func (t VOID) emitLoadFromAddr(addr Value, offset int) []wat.Inst {
+	logger.Fatal("Unreachable")
+	return nil
+}
 
 /**************************************
 RUNE:
@@ -66,6 +70,15 @@ func (t RUNE) align() int             { return 4 }
 func (t RUNE) onFree(m *Module) int   { return 0 }
 func (t RUNE) Raw() []wat.ValueType   { return []wat.ValueType{wat.I32{}} }
 func (t RUNE) Equal(u ValueType) bool { _, ok := u.(RUNE); return ok }
+func (t RUNE) emitLoadFromAddr(addr Value, offset int) []wat.Inst {
+	if !addr.Type().(Pointer).Base.Equal(t) {
+		logger.Fatal("Type not match")
+		return nil
+	}
+	insts := addr.EmitPush()
+	insts = append(insts, wat.NewInstLoad(toWatType(t), offset, 1))
+	return insts
+}
 
 /**************************************
 I32:
@@ -78,6 +91,15 @@ func (t I32) align() int             { return 4 }
 func (t I32) onFree(m *Module) int   { return 0 }
 func (t I32) Raw() []wat.ValueType   { return []wat.ValueType{wat.I32{}} }
 func (t I32) Equal(u ValueType) bool { _, ok := u.(I32); return ok }
+func (t I32) emitLoadFromAddr(addr Value, offset int) []wat.Inst {
+	if !addr.Type().(Pointer).Base.Equal(t) {
+		logger.Fatal("Type not match")
+		return nil
+	}
+	insts := addr.EmitPush()
+	insts = append(insts, wat.NewInstLoad(toWatType(t), offset, 1))
+	return insts
+}
 
 /**************************************
 U32:
@@ -90,6 +112,15 @@ func (t U32) align() int             { return 4 }
 func (t U32) onFree(m *Module) int   { return 0 }
 func (t U32) Raw() []wat.ValueType   { return []wat.ValueType{wat.U32{}} }
 func (t U32) Equal(u ValueType) bool { _, ok := u.(U32); return ok }
+func (t U32) emitLoadFromAddr(addr Value, offset int) []wat.Inst {
+	if !addr.Type().(Pointer).Base.Equal(t) {
+		logger.Fatal("Type not match")
+		return nil
+	}
+	insts := addr.EmitPush()
+	insts = append(insts, wat.NewInstLoad(toWatType(t), offset, 1))
+	return insts
+}
 
 /**************************************
 I64:
@@ -102,6 +133,15 @@ func (t I64) align() int             { return 8 }
 func (t I64) onFree(m *Module) int   { return 0 }
 func (t I64) Raw() []wat.ValueType   { return []wat.ValueType{wat.I64{}} }
 func (t I64) Equal(u ValueType) bool { _, ok := u.(I64); return ok }
+func (t I64) emitLoadFromAddr(addr Value, offset int) []wat.Inst {
+	if !addr.Type().(Pointer).Base.Equal(t) {
+		logger.Fatal("Type not match")
+		return nil
+	}
+	insts := addr.EmitPush()
+	insts = append(insts, wat.NewInstLoad(toWatType(t), offset, 1))
+	return insts
+}
 
 /**************************************
 Uint64:
@@ -114,6 +154,15 @@ func (t U64) align() int             { return 8 }
 func (t U64) onFree(m *Module) int   { return 0 }
 func (t U64) Raw() []wat.ValueType   { return []wat.ValueType{wat.U64{}} }
 func (t U64) Equal(u ValueType) bool { _, ok := u.(U64); return ok }
+func (t U64) emitLoadFromAddr(addr Value, offset int) []wat.Inst {
+	if !addr.Type().(Pointer).Base.Equal(t) {
+		logger.Fatal("Type not match")
+		return nil
+	}
+	insts := addr.EmitPush()
+	insts = append(insts, wat.NewInstLoad(toWatType(t), offset, 1))
+	return insts
+}
 
 /**************************************
 F32:
@@ -126,6 +175,15 @@ func (t F32) align() int             { return 4 }
 func (t F32) onFree(m *Module) int   { return 0 }
 func (t F32) Raw() []wat.ValueType   { return []wat.ValueType{wat.F32{}} }
 func (t F32) Equal(u ValueType) bool { _, ok := u.(F32); return ok }
+func (t F32) emitLoadFromAddr(addr Value, offset int) []wat.Inst {
+	if !addr.Type().(Pointer).Base.Equal(t) {
+		logger.Fatal("Type not match")
+		return nil
+	}
+	insts := addr.EmitPush()
+	insts = append(insts, wat.NewInstLoad(toWatType(t), offset, 1))
+	return insts
+}
 
 /**************************************
 F64:
@@ -138,165 +196,12 @@ func (t F64) align() int             { return 8 }
 func (t F64) onFree(m *Module) int   { return 0 }
 func (t F64) Raw() []wat.ValueType   { return []wat.ValueType{wat.F64{}} }
 func (t F64) Equal(u ValueType) bool { _, ok := u.(F64); return ok }
-
-/**************************************
-Pointer:
-**************************************/
-type Pointer struct {
-	Base ValueType
-}
-
-func NewPointer(base ValueType) Pointer { return Pointer{Base: base} }
-func (t Pointer) Name() string          { return "pointer$" + t.Base.Name() }
-func (t Pointer) size() int             { return 4 }
-func (t Pointer) align() int            { return 4 }
-func (t Pointer) onFree(m *Module) int  { return 0 }
-func (t Pointer) Raw() []wat.ValueType  { return []wat.ValueType{wat.I32{}} }
-func (t Pointer) Equal(u ValueType) bool {
-	if ut, ok := u.(Pointer); ok {
-		return t.Base.Equal(ut.Base)
+func (t F64) emitLoadFromAddr(addr Value, offset int) []wat.Inst {
+	if !addr.Type().(Pointer).Base.Equal(t) {
+		logger.Fatal("Type not match")
+		return nil
 	}
-	return false
-}
-
-/**************************************
-Block:
-**************************************/
-type Block struct {
-	Base ValueType
-}
-
-func NewBlock(base ValueType) Block  { return Block{Base: base} }
-func (t Block) Name() string         { return "block$" + t.Base.Name() }
-func (t Block) size() int            { return 4 }
-func (t Block) align() int           { return 4 }
-func (t Block) Raw() []wat.ValueType { return []wat.ValueType{wat.I32{}} }
-func (t Block) Equal(u ValueType) bool {
-	if ut, ok := u.(Block); ok {
-		return t.Base.Equal(ut.Base)
-	}
-	return false
-}
-func (t Block) onFree(m *Module) int {
-	var f Function
-	f.Name = "$$onFree_" + t.Name()
-	f.Result = VOID{}
-	ptr := newVarBasic("$ptr", ValueKindLocal, I32{})
-	f.Params = append(f.Params, ptr)
-
-	f.Insts = append(f.Insts, ptr.EmitPush()...)
-	f.Insts = append(f.Insts, wat.NewInstLoad(wat.I32{}, 0, 1))
-	f.Insts = append(f.Insts, wat.NewInstCall("$wa.RT.Block.Release"))
-	f.Insts = append(f.Insts, ptr.EmitPush()...)
-	f.Insts = append(f.Insts, wat.NewInstConst(wat.I32{}, "0"))
-	f.Insts = append(f.Insts, wat.NewInstStore(wat.I32{}, 0, 1))
-
-	return addTable(&f, m)
-}
-
-/**************************************
-Struct:
-**************************************/
-type Struct struct {
-	name    string
-	Members []Field
-	_size   int
-	_align  int
-}
-
-type Field struct {
-	name   string
-	typ    ValueType
-	_start int
-}
-
-func NewField(n string, t ValueType) Field { return Field{name: n, typ: t} }
-func (i Field) Name() string               { return i.name }
-func (i Field) Type() ValueType            { return i.typ }
-func (i Field) Equal(u Field) bool         { return i.name == u.name && i.typ.Equal(u.typ) }
-
-func makeAlign(i, a int) int {
-	return (i + a - 1) / a * a
-}
-
-func NewStruct(name string, members []Field) Struct {
-	var s Struct
-	s.name = name
-
-	for _, m := range members {
-		ma := m.Type().align()
-		m._start = makeAlign(s._size, ma)
-		s.Members = append(s.Members, m)
-
-		s._size = m._start + m.Type().size()
-		if ma > s._align {
-			s._align += ma
-		}
-	}
-	s._size = makeAlign(s._size, s._align)
-
-	return s
-}
-
-func (t Struct) Name() string { return t.name }
-func (t Struct) size() int    { return t._size }
-func (t Struct) align() int   { return t._align }
-
-func (t Struct) onFree(m *Module) int {
-	logger.Fatal("Todo")
-	return 0
-}
-
-func (t Struct) Raw() []wat.ValueType {
-	var r []wat.ValueType
-	for _, f := range t.Members {
-		r = append(r, f.Type().Raw()...)
-	}
-	return r
-}
-
-func (t Struct) Equal(u ValueType) bool {
-	if u, ok := u.(Struct); ok {
-		if len(t.Members) != len(u.Members) {
-			return false
-		}
-
-		for i := range t.Members {
-			if !t.Members[i].Equal(u.Members[i]) {
-				return false
-			}
-		}
-
-		return true
-	}
-	return false
-}
-
-/**************************************
-Ref:
-**************************************/
-type Ref struct {
-	Base       ValueType
-	underlying Struct
-}
-
-func NewRef(base ValueType) Ref {
-	var v Ref
-	v.Base = base
-	var m []Field
-	m = append(m, NewField("block", NewBlock(base)))
-	m = append(m, NewField("data", NewPointer(base)))
-	v.underlying = NewStruct("", m)
-	return v
-}
-func (t Ref) Name() string         { return "ref$" + t.Base.Name() }
-func (t Ref) size() int            { return 8 }
-func (t Ref) align() int           { return 4 }
-func (t Ref) onFree(m *Module) int { return t.underlying.onFree(m) }
-func (t Ref) Raw() []wat.ValueType { return t.underlying.Raw() }
-func (t Ref) Equal(u ValueType) bool {
-	if ut, ok := u.(Ref); ok {
-		return t.Base.Equal(ut.Base)
-	}
-	return false
+	insts := addr.EmitPush()
+	insts = append(insts, wat.NewInstLoad(toWatType(t), offset, 1))
+	return insts
 }

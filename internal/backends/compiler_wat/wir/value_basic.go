@@ -115,16 +115,6 @@ func (v *varBasic) EmitInit() (insts []wat.Inst) {
 	return
 }
 
-func (v *varBasic) emitLoadFromAddr(addr Value, offset int) []wat.Inst {
-	if !addr.Type().(Pointer).Base.Equal(v.Type()) {
-		logger.Fatal("Type not match")
-		return nil
-	}
-	insts := addr.EmitPush()
-	insts = append(insts, wat.NewInstLoad(toWatType(v.Type()), offset, 1))
-	return insts
-}
-
 func (v *varBasic) emitStoreToAddr(addr Value, offset int) []wat.Inst {
 	if !addr.Type().(Pointer).Base.Equal(v.Type()) {
 		logger.Fatal("Type not match")
@@ -134,31 +124,4 @@ func (v *varBasic) emitStoreToAddr(addr Value, offset int) []wat.Inst {
 	insts = append(insts, v.EmitPush()...)
 	insts = append(insts, wat.NewInstStore(toWatType(v.Type()), offset, 1))
 	return insts
-}
-
-/**************************************
-VarPointer:
-**************************************/
-type VarPointer struct {
-	varBasic
-}
-
-func newVarPointer(name string, kind ValueKind, base_type ValueType) *VarPointer {
-	var v VarPointer
-	pointer_type := NewPointer(base_type)
-	v.aVar = aVar{name: name, kind: kind, typ: pointer_type}
-	return &v
-}
-
-func (v *VarPointer) emitGetValue() []wat.Inst {
-	t := newValue("", v.kind, v.Type().(Pointer).Base)
-	return t.emitLoadFromAddr(v, 0)
-}
-
-func (v *VarPointer) emitSetValue(d Value) []wat.Inst {
-	if !d.Type().Equal(v.Type().(Pointer).Base) {
-		logger.Fatal("Type not match")
-		return nil
-	}
-	return d.emitStoreToAddr(v, 0)
 }

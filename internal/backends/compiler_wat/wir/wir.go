@@ -45,7 +45,6 @@ type Value interface {
 	EmitPush() []wat.Inst
 	EmitPop() []wat.Inst
 	EmitRelease() []wat.Inst
-	emitLoadFromAddr(addr Value, offset int) []wat.Inst
 	emitStoreToAddr(addr Value, offset int) []wat.Inst
 }
 
@@ -59,4 +58,5 @@ type ValueType interface {
 	onFree(module *Module) int
 	Raw() []wat.ValueType
 	Equal(ValueType) bool
+	emitLoadFromAddr(addr Value, offset int) []wat.Inst
 }
