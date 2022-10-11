@@ -99,11 +99,11 @@ func EmitLoad(addr Value) (insts []wat.Inst, ret_type ValueType) {
 
 	default:
 		switch addr := addr.(type) {
-		case *VarRef:
+		case *aRef:
 			insts = append(insts, addr.emitGetValue()...)
 			ret_type = addr.Type().(Ref).Base
 
-		case *VarPointer:
+		case *aPointer:
 			insts = append(insts, addr.emitGetValue()...)
 			ret_type = addr.Type().(Pointer).Base
 
@@ -118,20 +118,36 @@ func EmitLoad(addr Value) (insts []wat.Inst, ret_type ValueType) {
 func EmitStore(addr, value Value) (insts []wat.Inst) {
 	switch addr.Kind() {
 	case ValueKindGlobal_Value:
-		if !addr.Type().Equal(value.Type()) {
-			logger.Fatal("Type not match")
-			return nil
+		if value == nil {
+			zero_value := NewConst("0", addr.Type())
+			insts = append(insts, zero_value.EmitPush()...)
+			insts = append(insts, addr.EmitPop()...)
+		} else {
+			if !addr.Type().Equal(value.Type()) {
+				logger.Fatal("Type not match")
+				return nil
+			}
+			insts = append(insts, value.EmitPush()...)
+			insts = append(insts, addr.EmitPop()...)
 		}
-		insts = append(insts, value.EmitPush()...)
-		insts = append(insts, addr.EmitPop()...)
 
 	default:
 		switch addr := addr.(type) {
-		case *VarRef:
-			insts = append(insts, addr.emitSetValue(value)...)
+		case *aRef:
+			if value == nil {
+				zero_value := NewConst("0", addr.Type().(Ref).Base)
+				insts = append(insts, addr.emitSetValue(zero_value)...)
+			} else {
+				insts = append(insts, addr.emitSetValue(value)...)
+			}
 
-		case *VarPointer:
-			insts = append(insts, addr.emitSetValue(value)...)
+		case *aPointer:
+			if value == nil {
+				zero_value := NewConst("0", addr.Type().(Pointer).Base)
+				insts = append(insts, addr.emitSetValue(zero_value)...)
+			} else {
+				insts = append(insts, addr.emitSetValue(value)...)
+			}
 
 		default:
 			logger.Fatalf("Todo %v", addr)

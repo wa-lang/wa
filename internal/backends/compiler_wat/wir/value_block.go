@@ -31,7 +31,7 @@ func (t Block) onFree(m *Module) int {
 	var f Function
 	f.Name = "$$onFree_" + t.Name()
 	f.Result = VOID{}
-	ptr := newVarBasic("$ptr", ValueKindLocal, I32{})
+	ptr := NewLocal("$ptr", I32{})
 	f.Params = append(f.Params, ptr)
 
 	f.Insts = append(f.Insts, ptr.EmitPush()...)
@@ -88,45 +88,45 @@ func (t Block) emitLoadFromAddr(addr Value, offset int) (insts []wat.Inst) {
 }
 
 /**************************************
-varBlock:
+aBlock:
 **************************************/
-type varBlock struct {
-	aVar
+type aBlock struct {
+	aValue
 }
 
-func newVarBlock(name string, kind ValueKind, base_type ValueType) *varBlock {
-	return &varBlock{aVar: aVar{name: name, kind: kind, typ: NewBlock(base_type)}}
+func newValueBlock(name string, kind ValueKind, base_type ValueType) *aBlock {
+	return &aBlock{aValue: aValue{name: name, kind: kind, typ: NewBlock(base_type)}}
 }
 
-func (v *varBlock) raw() []wat.Value {
+func (v *aBlock) raw() []wat.Value {
 	return []wat.Value{wat.NewVarI32(v.name)}
 }
 
-func (v *varBlock) EmitInit() (insts []wat.Inst) {
+func (v *aBlock) EmitInit() (insts []wat.Inst) {
 	insts = append(insts, wat.NewInstConst(wat.I32{}, "0"))
 	insts = append(insts, v.pop(v.name))
 	return
 }
 
-func (v *varBlock) EmitPush() (insts []wat.Inst) {
+func (v *aBlock) EmitPush() (insts []wat.Inst) {
 	insts = append(insts, v.push(v.name))
 	insts = append(insts, wat.NewInstCall("$wa.RT.Block.Retain"))
 	return
 }
 
-func (v *varBlock) EmitPop() (insts []wat.Inst) {
+func (v *aBlock) EmitPop() (insts []wat.Inst) {
 	insts = append(insts, v.EmitRelease()...)
 	insts = append(insts, v.pop(v.name))
 	return
 }
 
-func (v *varBlock) EmitRelease() (insts []wat.Inst) {
+func (v *aBlock) EmitRelease() (insts []wat.Inst) {
 	insts = append(insts, v.push(v.name))
 	insts = append(insts, wat.NewInstCall("$wa.RT.Block.Release"))
 	return
 }
 
-func (v *varBlock) emitStoreToAddr(addr Value, offset int) (insts []wat.Inst) {
+func (v *aBlock) emitStoreToAddr(addr Value, offset int) (insts []wat.Inst) {
 	insts = append(insts, addr.EmitPush()...)
 	insts = append(insts, v.EmitPush()...)
 

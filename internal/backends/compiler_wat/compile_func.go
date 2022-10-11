@@ -47,6 +47,10 @@ func (g *functionGenerator) getValue(i ssa.Value) wir.Value {
 
 	switch v := i.(type) {
 	case *ssa.Const:
+		if v.Value == nil {
+			return nil
+		}
+
 		switch t := v.Type().(type) {
 		case *types.Basic:
 			switch t.Kind() {

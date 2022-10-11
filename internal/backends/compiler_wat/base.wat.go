@@ -70,6 +70,15 @@ const modBaseWat_wa = `
 	;;Todo
 	global.get $$heap_ptr
 
+	;; global.get $$heap_ptr
+	;; call $$waPrintI32
+	;; i32.const 32
+	;; call $$waPrintRune
+	;; local.get $size
+	;; call $$waPrintI32
+	;; i32.const 10
+	;; call $$waPrintRune
+
 	global.get $$heap_ptr
 	local.get $size
 	i32.add

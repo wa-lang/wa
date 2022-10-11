@@ -3,10 +3,9 @@
 package compiler_wat
 
 import (
-	"github.com/wa-lang/wa/internal/logger"
 	"github.com/wa-lang/wa/internal/ssa"
 )
 
 func (p *Compiler) compileType(t *ssa.Type) {
-	logger.Fatal("Todo")
+	//logger.Fatal("Todo")
 }

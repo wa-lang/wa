@@ -26,19 +26,19 @@ func NewGlobal(name string, typ ValueType, as_pointer bool) Value {
 func newValue(name string, kind ValueKind, typ ValueType) Value {
 	switch typ := typ.(type) {
 	case I32, U32, I64, U64, F32, F64, RUNE:
-		return newVarBasic(name, kind, typ)
+		return newValueBasic(name, kind, typ)
 
 	case Pointer:
-		return newVarPointer(name, kind, typ.Base)
+		return newValuePointer(name, kind, typ.Base)
 
 	case Block:
-		return newVarBlock(name, kind, typ.Base)
+		return newValueBlock(name, kind, typ.Base)
 
 	case Struct:
-		return newVarStruct(name, kind, typ)
+		return newValueStruct(name, kind, typ)
 
 	case Ref:
-		return newVarRef(name, kind, typ.Base)
+		return newValueRef(name, kind, typ.Base)
 
 	default:
 		logger.Fatalf("Todo: %T", typ)
@@ -48,18 +48,18 @@ func newValue(name string, kind ValueKind, typ ValueType) Value {
 }
 
 /**************************************
-aVar:
+aValue:
 **************************************/
-type aVar struct {
+type aValue struct {
 	name string
 	kind ValueKind
 	typ  ValueType
 }
 
-func (v *aVar) Name() string    { return v.name }
-func (v *aVar) Kind() ValueKind { return v.kind }
-func (v *aVar) Type() ValueType { return v.typ }
-func (v *aVar) push(name string) wat.Inst {
+func (v *aValue) Name() string    { return v.name }
+func (v *aValue) Kind() ValueKind { return v.kind }
+func (v *aValue) Type() ValueType { return v.typ }
+func (v *aValue) push(name string) wat.Inst {
 	switch v.kind {
 	case ValueKindLocal:
 		return wat.NewInstGetLocal(name)
@@ -75,7 +75,7 @@ func (v *aVar) push(name string) wat.Inst {
 		return nil
 	}
 }
-func (v *aVar) pop(name string) wat.Inst {
+func (v *aValue) pop(name string) wat.Inst {
 	switch v.kind {
 	case ValueKindLocal:
 		return wat.NewInstSetLocal(name)
@@ -94,28 +94,28 @@ func (v *aVar) pop(name string) wat.Inst {
 }
 
 /**************************************
-varBasic:
+aBasic:
 **************************************/
-type varBasic struct {
-	aVar
+type aBasic struct {
+	aValue
 }
 
-func newVarBasic(name string, kind ValueKind, typ ValueType) *varBasic {
-	return &varBasic{aVar: aVar{name: name, kind: kind, typ: typ}}
+func newValueBasic(name string, kind ValueKind, typ ValueType) *aBasic {
+	return &aBasic{aValue: aValue{name: name, kind: kind, typ: typ}}
 }
 
-func (v *varBasic) raw() []wat.Value        { return []wat.Value{wat.NewVar(v.name, toWatType(v.Type()))} }
-func (v *varBasic) EmitPush() []wat.Inst    { return []wat.Inst{v.push(v.name)} }
-func (v *varBasic) EmitPop() []wat.Inst     { return []wat.Inst{v.pop(v.name)} }
-func (v *varBasic) EmitRelease() []wat.Inst { return nil }
+func (v *aBasic) raw() []wat.Value        { return []wat.Value{wat.NewVar(v.name, toWatType(v.Type()))} }
+func (v *aBasic) EmitPush() []wat.Inst    { return []wat.Inst{v.push(v.name)} }
+func (v *aBasic) EmitPop() []wat.Inst     { return []wat.Inst{v.pop(v.name)} }
+func (v *aBasic) EmitRelease() []wat.Inst { return nil }
 
-func (v *varBasic) EmitInit() (insts []wat.Inst) {
+func (v *aBasic) EmitInit() (insts []wat.Inst) {
 	insts = append(insts, wat.NewInstConst(toWatType(v.Type()), "0"))
 	insts = append(insts, v.pop(v.name))
 	return
 }
 
-func (v *varBasic) emitStoreToAddr(addr Value, offset int) []wat.Inst {
+func (v *aBasic) emitStoreToAddr(addr Value, offset int) []wat.Inst {
 	if !addr.Type().(Pointer).Base.Equal(v.Type()) {
 		logger.Fatal("Type not match")
 		return nil

@@ -85,91 +85,99 @@ func (t Struct) Equal(u ValueType) bool {
 
 func (t Struct) emitLoadFromAddr(addr Value, offset int) (insts []wat.Inst) {
 	for _, m := range t.Members {
-		ptr := newVarPointer(addr.Name(), addr.Kind(), m.Type())
+		ptr := newValuePointer(addr.Name(), addr.Kind(), m.Type())
 		insts = append(insts, m.Type().emitLoadFromAddr(ptr, m._start+offset)...)
 	}
 	return
 }
 
 /**************************************
-VarStruct:
+aStruct:
 **************************************/
-type VarStruct struct {
-	aVar
+type aStruct struct {
+	aValue
 }
 
-func newVarStruct(name string, kind ValueKind, typ ValueType) *VarStruct {
-	return &VarStruct{aVar: aVar{name: name, kind: kind, typ: typ}}
+func newValueStruct(name string, kind ValueKind, typ ValueType) *aStruct {
+	return &aStruct{aValue: aValue{name: name, kind: kind, typ: typ}}
 }
 
-func (v *VarStruct) raw() []wat.Value {
+func (v *aStruct) genSubValue(m Field) Value {
+	if v.Kind() != ValueKindConst {
+		return newValue(v.Name()+"."+m.Name(), v.Kind(), m.Type())
+	} else {
+		return newValue(v.Name(), v.Kind(), m.Type())
+	}
+}
+
+func (v *aStruct) raw() []wat.Value {
 	var r []wat.Value
 	st := v.Type().(Struct)
 	for _, m := range st.Members {
-		t := newValue(v.Name()+"."+m.Name(), v.kind, m.Type())
+		t := v.genSubValue(m)
 		r = append(r, t.raw()...)
 	}
 	return r
 }
 
-func (v *VarStruct) EmitInit() []wat.Inst {
+func (v *aStruct) EmitInit() []wat.Inst {
 	var insts []wat.Inst
 	st := v.Type().(Struct)
 	for _, m := range st.Members {
-		t := newValue(v.Name()+"."+m.Name(), v.kind, m.Type())
+		t := v.genSubValue(m)
 		insts = append(insts, t.EmitInit()...)
 	}
 	return insts
 }
 
-func (v *VarStruct) EmitPush() []wat.Inst {
+func (v *aStruct) EmitPush() []wat.Inst {
 	var insts []wat.Inst
 	st := v.Type().(Struct)
 	for _, m := range st.Members {
-		t := newValue(v.Name()+"."+m.Name(), v.kind, m.Type())
+		t := v.genSubValue(m)
 		insts = append(insts, t.EmitPush()...)
 	}
 	return insts
 }
 
-func (v *VarStruct) EmitPop() []wat.Inst {
+func (v *aStruct) EmitPop() []wat.Inst {
 	var insts []wat.Inst
 	st := v.Type().(Struct)
 	for i := range st.Members {
 		m := st.Members[len(st.Members)-i-1]
-		t := newValue(v.Name()+"."+m.Name(), v.kind, m.Type())
+		t := v.genSubValue(m)
 		insts = append(insts, t.EmitPop()...)
 	}
 	return insts
 }
 
-func (v *VarStruct) EmitRelease() []wat.Inst {
+func (v *aStruct) EmitRelease() []wat.Inst {
 	var insts []wat.Inst
 	st := v.Type().(Struct)
 	for i := range st.Members {
 		m := st.Members[len(st.Members)-i-1]
-		t := newValue(v.Name()+"."+m.Name(), v.kind, m.Type())
+		t := v.genSubValue(m)
 		insts = append(insts, t.EmitRelease()...)
 	}
 	return insts
 }
 
-func (v *VarStruct) Extract(member_name string) Value {
+func (v *aStruct) Extract(member_name string) Value {
 	st := v.Type().(Struct)
 	for _, m := range st.Members {
 		if m.Name() == member_name {
-			return newValue(v.Name()+"."+m.Name(), v.kind, m.Type())
+			return v.genSubValue(m)
 		}
 	}
 	return nil
 }
 
-func (v *VarStruct) emitStoreToAddr(addr Value, offset int) (insts []wat.Inst) {
+func (v *aStruct) emitStoreToAddr(addr Value, offset int) (insts []wat.Inst) {
 	st := v.Type().(Struct)
 	for i := range st.Members {
 		m := st.Members[len(st.Members)-i-1]
-		t := newValue(v.Name()+"."+m.Name(), v.kind, m.Type())
-		a := newVarPointer(addr.Name(), addr.Kind(), m.Type())
+		t := v.genSubValue(m)
+		a := newValuePointer(addr.Name(), addr.Kind(), m.Type())
 		insts = append(insts, t.emitStoreToAddr(a, m._start+offset)...)
 	}
 	return

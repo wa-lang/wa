@@ -73,37 +73,37 @@ func (t Ref) emitLoadFromAddr(addr Value, offset int) []wat.Inst {
 }
 
 /**************************************
-VarRef:
+aRef:
 **************************************/
-type VarRef struct {
-	aVar
-	underlying VarStruct
+type aRef struct {
+	aValue
+	underlying aStruct
 }
 
-func newVarRef(name string, kind ValueKind, base_type ValueType) *VarRef {
-	var v VarRef
+func newValueRef(name string, kind ValueKind, base_type ValueType) *aRef {
+	var v aRef
 	ref_type := NewRef(base_type)
-	v.aVar = aVar{name: name, kind: kind, typ: ref_type}
-	v.underlying = *newVarStruct(name, kind, ref_type.underlying)
+	v.aValue = aValue{name: name, kind: kind, typ: ref_type}
+	v.underlying = *newValueStruct(name, kind, ref_type.underlying)
 	return &v
 }
 
-func (v *VarRef) raw() []wat.Value        { return v.underlying.raw() }
-func (v *VarRef) EmitInit() []wat.Inst    { return v.underlying.EmitInit() }
-func (v *VarRef) EmitPush() []wat.Inst    { return v.underlying.EmitPush() }
-func (v *VarRef) EmitPop() []wat.Inst     { return v.underlying.EmitPop() }
-func (v *VarRef) EmitRelease() []wat.Inst { return v.underlying.EmitRelease() }
+func (v *aRef) raw() []wat.Value        { return v.underlying.raw() }
+func (v *aRef) EmitInit() []wat.Inst    { return v.underlying.EmitInit() }
+func (v *aRef) EmitPush() []wat.Inst    { return v.underlying.EmitPush() }
+func (v *aRef) EmitPop() []wat.Inst     { return v.underlying.EmitPop() }
+func (v *aRef) EmitRelease() []wat.Inst { return v.underlying.EmitRelease() }
 
-func (v *VarRef) emitStoreToAddr(addr Value, offset int) []wat.Inst {
+func (v *aRef) emitStoreToAddr(addr Value, offset int) []wat.Inst {
 	return v.underlying.emitStoreToAddr(addr, offset)
 }
 
-func (v *VarRef) emitGetValue() []wat.Inst {
+func (v *aRef) emitGetValue() []wat.Inst {
 	t := v.Type().(Ref).Base
 	return t.emitLoadFromAddr(v.underlying.Extract("data"), 0)
 }
 
-func (v *VarRef) emitSetValue(d Value) []wat.Inst {
+func (v *aRef) emitSetValue(d Value) []wat.Inst {
 	if !d.Type().Equal(v.Type().(Ref).Base) {
 		logger.Fatal("Type not match")
 		return nil
