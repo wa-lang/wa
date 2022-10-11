@@ -40,7 +40,7 @@ func (v *VarRef) emitStoreToAddr(addr Value, offset int) []wat.Inst {
 }
 
 func (v *VarRef) emitGetValue() []wat.Inst {
-	t := NewVar("", v.kind, v.Type().(Ref).Base)
+	t := newValue("", v.kind, v.Type().(Ref).Base)
 	return t.emitLoadFromAddr(v.underlying.Extract("data"), 0)
 }
 
@@ -56,9 +56,9 @@ func (v *VarRef) emitHeapAlloc(module *Module) (insts []wat.Inst) {
 	insts = append(insts, wat.NewBlank())
 	insts = append(insts, wat.NewComment(v.name+" Ref.emitHeapAlloc start"))
 
-	insts = append(insts, newVarBlock("", v.Kind(), v.Type().(Ref).Base).emitHeapAlloc(NewConst(I32{}, "1"), module)...)
+	insts = append(insts, newVarBlock("", v.Kind(), v.Type().(Ref).Base).emitHeapAlloc(NewConst("1", I32{}), module)...)
 	insts = append(insts, wat.NewInstCall("$wa.RT.DupWatStack"))
-	insts = append(insts, NewConst(I32{}, "16").EmitPush()...)
+	insts = append(insts, NewConst("16", I32{}).EmitPush()...)
 	insts = append(insts, wat.NewInstAdd(wat.I32{}))
 
 	insts = append(insts, wat.NewComment(v.name+" Ref.emitHeapAlloc end"))
@@ -71,8 +71,8 @@ func (v *VarRef) emitStackAlloc(module *Module) (insts []wat.Inst) {
 	insts = append(insts, wat.NewBlank())
 	insts = append(insts, wat.NewComment(v.name+" Ref.emitStackAlloc start"))
 
-	insts = append(insts, NewConst(I32{}, "0").EmitPush()...)
-	insts = append(insts, NewConst(I32{}, strconv.Itoa(v.Type().(Ref).Base.size())).EmitPush()...)
+	insts = append(insts, NewConst("0", I32{}).EmitPush()...)
+	insts = append(insts, NewConst(strconv.Itoa(v.Type().(Ref).Base.size()), I32{}).EmitPush()...)
 	insts = append(insts, wat.NewInstCall("$waStackAlloc"))
 
 	insts = append(insts, wat.NewComment(v.name+" Ref.emitStackAlloc end"))

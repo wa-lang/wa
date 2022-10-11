@@ -26,13 +26,7 @@ func NewModule() *Module {
 }
 
 func (m *Module) AddGlobal(name string, typ ValueType, is_pointer bool, ssa_value ssa.Value) Value {
-	var kind ValueKind
-	if is_pointer {
-		kind = ValueKindGlobal_Pointer
-	} else {
-		kind = ValueKindGlobal_Value
-	}
-	v := NewVar(name, kind, typ)
+	v := NewGlobal(name, typ, is_pointer)
 	m.globals = append(m.globals, v)
 	m.Globals_map[ssa_value] = v
 	return v

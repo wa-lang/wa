@@ -75,11 +75,11 @@ func (v *varBlock) emitHeapAlloc(item_count Value, module *Module) (insts []wat.
 			logger.Fatalf("%v\n", err)
 			return nil
 		}
-		insts = append(insts, NewConst(I32{}, strconv.Itoa(v.Type().(Block).Base.size()*c+16)).EmitPush()...)
+		insts = append(insts, NewConst(strconv.Itoa(v.Type().(Block).Base.size()*c+16), I32{}).EmitPush()...)
 		insts = append(insts, wat.NewInstCall("$waHeapAlloc"))
 
 		insts = append(insts, item_count.EmitPush()...)                                                          //item_count
-		insts = append(insts, NewConst(I32{}, strconv.Itoa(v.Type().(Block).Base.onFree(module))).EmitPush()...) //free_method
+		insts = append(insts, NewConst(strconv.Itoa(v.Type().(Block).Base.onFree(module)), I32{}).EmitPush()...) //free_method
 		insts = append(insts, wat.NewInstCall("$wa.RT.Block.Init"))
 
 	default:
@@ -89,14 +89,14 @@ func (v *varBlock) emitHeapAlloc(item_count Value, module *Module) (insts []wat.
 		}
 
 		insts = append(insts, item_count.EmitPush()...)
-		insts = append(insts, NewConst(I32{}, strconv.Itoa(v.Type().(Block).Base.size())).EmitPush()...)
+		insts = append(insts, NewConst(strconv.Itoa(v.Type().(Block).Base.size()), I32{}).EmitPush()...)
 		insts = append(insts, wat.NewInstMul(wat.I32{}))
-		insts = append(insts, NewConst(I32{}, "16").EmitPush()...)
+		insts = append(insts, NewConst("16", I32{}).EmitPush()...)
 		insts = append(insts, wat.NewInstAdd(wat.I32{}))
 		insts = append(insts, wat.NewInstCall("$waHeapAlloc"))
 
 		insts = append(insts, item_count.EmitPush()...)
-		insts = append(insts, NewConst(I32{}, strconv.Itoa(v.Type().(Block).Base.onFree(module))).EmitPush()...) //free_method
+		insts = append(insts, NewConst(strconv.Itoa(v.Type().(Block).Base.onFree(module)), I32{}).EmitPush()...) //free_method
 		insts = append(insts, wat.NewInstCall("$wa.RT.Block.Init"))
 	}
 
