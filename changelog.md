@@ -1,5 +1,12 @@
 # 版本日志
 
+- v0.2.2 (2022-10-11)
+  - Windows 增加 exe 图标
+  - Windows 平台增加 Notepad++ 语法高亮支持
+  - Playground 改进异步加载wasm资源, 支持多个例子
+  - Wat 后端改善全局变量支持
+  - 增加 `#wa:xxx` 模式注释, 支持通过凹语言实现底层的 runtime 函数
+  - 实验特性: 简化无参数和返回值函数定义
 - v0.2.1 (2022-09-16)
   - 支持纯浏览器编译执行: [https://wa-lang.org/playground](https://wa-lang.org/playground)
   - 命令行增加打印 logo 子命令
