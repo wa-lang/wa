@@ -11,8 +11,10 @@ import (
 
 func ExampleRunCode() {
 	const code = `
+		var gBase: i32 = 1000
+
 		fn main() {
-			println(add(40, 2))
+			println(add(40, 2) + gBase)
 		}
 
 		fn add(a: i32, b: i32) => i32 {
@@ -28,5 +30,5 @@ func ExampleRunCode() {
 	fmt.Print(string(output))
 
 	// Output:
-	// 42
+	// 1042
 }
