@@ -88,19 +88,19 @@ func (v *varBasic) EmitPush() []wat.Inst    { return []wat.Inst{v.push(v.name)} 
 func (v *varBasic) EmitPop() []wat.Inst     { return []wat.Inst{v.pop(v.name)} }
 func (v *varBasic) EmitRelease() []wat.Inst { return nil }
 func (v *varBasic) emitLoadFromAddr(addr Value, offset int) []wat.Inst {
-	//if !addr.Type().(Pointer).Base.Equal(v.Type()) {
-	//	logger.Fatal("Type not match")
-	//	return nil
-	//}
+	if !addr.Type().(Pointer).Base.Equal(v.Type()) {
+		logger.Fatal("Type not match")
+		return nil
+	}
 	insts := addr.EmitPush()
 	insts = append(insts, wat.NewInstLoad(toWatType(v.Type()), offset, 1))
 	return insts
 }
 func (v *varBasic) emitStoreToAddr(addr Value, offset int) []wat.Inst {
-	//if !addr.Type().(Pointer).Base.Equal(v.Type()) {
-	//	logger.Fatal("Type not match")
-	//	return nil
-	//}
+	if !addr.Type().(Pointer).Base.Equal(v.Type()) {
+		logger.Fatal("Type not match")
+		return nil
+	}
 	insts := addr.EmitPush()
 	insts = append(insts, v.EmitPush()...)
 	insts = append(insts, wat.NewInstStore(toWatType(v.Type()), offset, 1))
