@@ -278,6 +278,28 @@ func (tok Token) String() string {
 	return s
 }
 
+func (tok Token) WaGoString() string {
+	if tok == FN {
+		return "func"
+	}
+	return tok.String()
+}
+
+func (tok Token) WaZhString() string {
+	s := ""
+	if 0 <= tok && tok < Token(len(tokens)) {
+		if tok > keyword_beg && tok < keyword_end {
+			s = tokens_zh[tok]
+		} else {
+			s = tokens[tok]
+		}
+	}
+	if s == "" {
+		s = "token(" + strconv.Itoa(int(tok)) + ")"
+	}
+	return s
+}
+
 // 返回 WaGo 关键字名字
 func (tok Token) WaGoKeykword() string {
 	if tok.IsKeyword() {
