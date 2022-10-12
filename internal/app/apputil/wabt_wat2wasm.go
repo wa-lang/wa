@@ -11,6 +11,7 @@ import (
 	"path/filepath"
 	"runtime"
 	"strings"
+	"sync"
 
 	"github.com/tetratelabs/wazero"
 	"github.com/tetratelabs/wazero/api"
@@ -97,7 +98,12 @@ func InstallWat2wasm(path string) error {
 	return nil
 }
 
+var muRunWat2Wasm sync.Mutex
+
 func RunWat2Wasm(args ...string) (stdoutStderr []byte, err error) {
+	muRunWat2Wasm.Lock()
+	defer muRunWat2Wasm.Unlock()
+
 	if wat2wasmPath == "" {
 		logger.Tracef(&config.EnableTrace_app, "wat2wasm not found")
 		return nil, errors.New("wat2wasm not found")
