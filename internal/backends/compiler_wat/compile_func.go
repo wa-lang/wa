@@ -271,7 +271,7 @@ func (g *functionGenerator) genValue(v ssa.Value) ([]wat.Inst, wir.ValueType) {
 		return g.genAlloc(v)
 
 	case *ssa.FieldAddr:
-		logger.Fatalf("Todo: %v, type: %T", v, v)
+		return g.genFieldAddr(v)
 
 	case *ssa.IndexAddr:
 		logger.Fatalf("Todo: %v, type: %T", v, v)
@@ -499,6 +499,16 @@ func (g *functionGenerator) genAlloc(inst *ssa.Alloc) ([]wat.Inst, wir.ValueType
 	} else {
 		return wir.EmitStackAlloc(wir.ToWType(inst.Type().(*types.Pointer).Elem()), g.module)
 	}
+}
+
+func (g *functionGenerator) genFieldAddr(inst *ssa.FieldAddr) ([]wat.Inst, wir.ValueType) {
+	field := inst.X.Type().Underlying().(*types.Pointer).Elem().Underlying().(*types.Struct).Field(inst.Field)
+	fieldname := field.Name()
+	if field.Embedded() {
+		fieldname = "$" + fieldname
+	}
+
+	return wir.EmitGenFieldAddr(g.getValue(inst.X), fieldname)
 }
 
 func (g *functionGenerator) addRegister(typ wir.ValueType) wir.Value {

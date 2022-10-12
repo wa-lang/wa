@@ -25,6 +25,22 @@ type Function struct {
 }
 
 /**************************************
+Table:
+**************************************/
+type Table struct {
+	Elems []string
+}
+
+/**************************************
+FuncType:
+**************************************/
+type FuncType struct {
+	Name    string
+	Params  []ValueType
+	Results []ValueType
+}
+
+/**************************************
 FuncSig:
 **************************************/
 type FuncSig struct {
@@ -85,3 +101,12 @@ const (
 	ObjTypeTable
 	ObjTypeGlobal
 )
+
+/**************************************
+Global:
+**************************************/
+type Global struct {
+	V         Value
+	IsMut     bool
+	InitValue string
+}

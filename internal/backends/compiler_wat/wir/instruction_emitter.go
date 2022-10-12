@@ -3,6 +3,8 @@
 package wir
 
 import (
+	"strconv"
+
 	"github.com/wa-lang/wa/internal/backends/compiler_wat/wir/wat"
 	"github.com/wa-lang/wa/internal/logger"
 )
@@ -165,8 +167,29 @@ func EmitHeapAlloc(typ ValueType, module *Module) (insts []wat.Inst, ret_type Va
 }
 
 func EmitStackAlloc(typ ValueType, module *Module) (insts []wat.Inst, ret_type ValueType) {
-	ref_typ := NewRef(typ)
-	ret_type = ref_typ
-	insts = ref_typ.emitStackAlloc(module)
+	return EmitHeapAlloc(typ, module)
+	//ref_typ := NewRef(typ)
+	//ret_type = ref_typ
+	//insts = ref_typ.emitStackAlloc(module)
+	//return
+}
+
+func EmitGenFieldAddr(x Value, field_name string) (insts []wat.Inst, ret_type ValueType) {
+	insts = append(insts, x.EmitPush()...)
+	var field *Field
+	switch addr := x.(type) {
+	case *aRef:
+		field = addr.Type().(Ref).Base.(Struct).findFieldByName(field_name)
+
+		ret_type = NewRef(field.Type())
+	case *aPointer:
+		field = addr.Type().(Pointer).Base.(Struct).findFieldByName(field_name)
+
+	default:
+		logger.Fatalf("Todo:%T", x.Type())
+	}
+
+	insts = append(insts, wat.NewInstConst(wat.I32{}, strconv.Itoa(field._start)))
+	insts = append(insts, wat.NewInstAdd(wat.I32{}))
 	return
 }

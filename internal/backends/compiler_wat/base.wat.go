@@ -94,7 +94,7 @@ const modBaseWat_wa = `
 	call $$waPrintRune
 )
 
-(func $$wa.RT.Block.Init (param $ptr i32) (param $item_count i32) (param $release_func i32) (result i32) ;;result = ptr
+(func $$wa.RT.Block.Init (param $ptr i32) (param $item_count i32) (param $release_func i32) (param $item_size i32) (result i32) ;;result = ptr
   local.get $ptr
 
   local.get $ptr
@@ -110,6 +110,10 @@ const modBaseWat_wa = `
     local.get $ptr
     local.get $release_func
     i32.store offset=8 align=1
+
+	local.get $ptr
+	local.get $item_size
+    i32.store offset=12 align=1
   end
 )
 
@@ -134,8 +138,11 @@ const modBaseWat_wa = `
 
 (func $$wa.RT.Block.Release (param $ptr i32)
   ;;Todo
-  (local $count i32)
-  (local $release_func i32)
+  (local $ref_count i32)
+  (local $item_count i32)
+  (local $free_func i32)
+  (local $item_size i32)
+  (local $data_ptr i32)
 
   local.get $ptr
   i32.const 0
@@ -148,33 +155,64 @@ const modBaseWat_wa = `
   i32.load offset=0 align=1
   i32.const 1
   i32.sub
-  local.set $count
+  local.set $ref_count
 
-  local.get $count
-  i32.const 0
-  i32.eq
-
+  local.get $ref_count
   if
     local.get $ptr
+    local.get $ref_count
+	i32.store offset=0 align=1
+
+  else  ;;ref_count == 0
+    local.get $ptr
 	i32.load offset=8 align=1
-	local.set $release_func
+	local.set $free_func
 
-	local.get $release_func
-	i32.const 0
-	i32.ne
+	local.get $free_func
+	if  ;;free_func != 0
+	  local.get $ptr
+	  i32.load offset=4 align=1
+	  local.set $item_count
 
-	if
-	  ;;Todo
-	  nop
-	end
+	  local.get $ptr
+	  i32.load offset=12 align=1
+	  local.set $item_size
+
+	  local.get $ptr
+	  i32.const 16
+	  i32.add
+	  local.set $data_ptr
+
+	  loop $free_next
+	    ;; onFree(data_ptr)
+	    local.get $data_ptr
+		local.get $free_func
+		call_indirect (type $$onFree)
+
+		;; item_count--
+		local.get $item_count
+		i32.const 1
+		i32.sub
+		local.set $item_count
+
+		local.get $item_count
+		if  ;;item_count>0
+		  ;; data_ptr += item_size
+		  local.get $data_ptr
+		  local.get $item_size
+		  i32.add
+		  local.set $data_ptr
+
+		  br $free_next  ;;continue
+		end  ;;item_count>0
+
+	  end  ;;loop $free_next
+
+	end  ;;block free_func != 0
 
 	local.get $ptr
 	call $$waHeapFree
-  else
-    local.get $ptr
-    local.get $count
-	i32.store offset=0 align=1
-  end
+  end  ;;ref_count == 0
 )
 
 `

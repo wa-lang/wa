@@ -16,6 +16,21 @@ func NewInstCall(name string) *instCall         { return &instCall{name: name} }
 func (i *instCall) Format(indent string) string { return indent + "call $" + i.name }
 
 /**************************************
+instCallIndirect:
+**************************************/
+type instCallIndirect struct {
+	anInstruction
+	func_type string
+}
+
+func NewInstCallIndirect(func_type string) *instCallIndirect {
+	return &instCallIndirect{func_type: func_type}
+}
+func (i *instCallIndirect) Format(indent string) string {
+	return indent + "call_indirect (type $" + i.func_type + ")"
+}
+
+/**************************************
 instBlock:
 **************************************/
 type instBlock struct {

@@ -13,8 +13,8 @@ import (
 Ref:
 **************************************/
 type Ref struct {
-	Base       ValueType
-	underlying Struct
+	Base ValueType
+	Struct
 }
 
 func NewRef(base ValueType) Ref {
@@ -23,14 +23,14 @@ func NewRef(base ValueType) Ref {
 	var m []Field
 	m = append(m, NewField("block", NewBlock(base)))
 	m = append(m, NewField("data", NewPointer(base)))
-	v.underlying = NewStruct("", m)
+	v.Struct = NewStruct(base.Name()+".$$ref", m)
 	return v
 }
-func (t Ref) Name() string         { return "ref$" + t.Base.Name() }
+func (t Ref) Name() string         { return t.Base.Name() + ".$$ref" }
 func (t Ref) size() int            { return 8 }
 func (t Ref) align() int           { return 4 }
-func (t Ref) onFree(m *Module) int { return t.underlying.onFree(m) }
-func (t Ref) Raw() []wat.ValueType { return t.underlying.Raw() }
+func (t Ref) onFree(m *Module) int { return t.Struct.onFree(m) }
+func (t Ref) Raw() []wat.ValueType { return t.Struct.Raw() }
 func (t Ref) Equal(u ValueType) bool {
 	if ut, ok := u.(Ref); ok {
 		return t.Base.Equal(ut.Base)
@@ -69,7 +69,7 @@ func (t Ref) emitStackAlloc(module *Module) (insts []wat.Inst) {
 }
 
 func (t Ref) emitLoadFromAddr(addr Value, offset int) []wat.Inst {
-	return t.underlying.emitLoadFromAddr(addr, offset)
+	return t.Struct.emitLoadFromAddr(addr, offset)
 }
 
 /**************************************
@@ -84,7 +84,7 @@ func newValueRef(name string, kind ValueKind, base_type ValueType) *aRef {
 	var v aRef
 	ref_type := NewRef(base_type)
 	v.aValue = aValue{name: name, kind: kind, typ: ref_type}
-	v.underlying = *newValueStruct(name, kind, ref_type.underlying)
+	v.underlying = *newValueStruct(name, kind, ref_type.Struct)
 	return &v
 }
 

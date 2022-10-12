@@ -2,20 +2,19 @@
 
 package wat
 
+import "strconv"
+
 // 模块对象
 type Module struct {
 	Name string
 	//Imports []Import
-	Globals []Global
-	Funcs   []*Function
+
+	Tables    Table
+	FuncTypes []FuncType
+	Globals   []Global
+	Funcs     []*Function
 
 	BaseWat string
-}
-
-type Global struct {
-	V         Value
-	IsMut     bool
-	InitValue string
 }
 
 func (m *Module) String() string {
@@ -26,6 +25,12 @@ func (m *Module) String() string {
 	//}
 
 	s += m.BaseWat
+
+	s += m.Tables.String()
+
+	for _, ft := range m.FuncTypes {
+		s += ft.String()
+	}
 
 	for _, g := range m.Globals {
 		s += "(global $"
@@ -48,5 +53,34 @@ func (m *Module) String() string {
 	}
 
 	s += "\n) ;;module"
+	return s
+}
+
+func (t Table) String() string {
+	s := "(table " + strconv.Itoa(len(t.Elems)) + " funcref)\n"
+
+	for i, e := range t.Elems {
+		if len(e) == 0 {
+			continue
+		}
+
+		s += "(elem (i32.const " + strconv.Itoa(i) + ") $" + e + ")\n"
+	}
+
+	return s
+}
+
+func (t FuncType) String() string {
+	s := "(type $" + t.Name + " (func"
+
+	for _, p := range t.Params {
+		s += " (param " + p.Name() + ")"
+	}
+
+	for _, r := range t.Results {
+		s += " (result " + r.Name() + ")"
+	}
+
+	s += "))\n"
 	return s
 }

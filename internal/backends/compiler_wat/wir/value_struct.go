@@ -1,8 +1,9 @@
 package wir
 
 import (
+	"strconv"
+
 	"github.com/wa-lang/wa/internal/backends/compiler_wat/wir/wat"
-	"github.com/wa-lang/wa/internal/logger"
 )
 
 /**************************************
@@ -13,6 +14,11 @@ type Struct struct {
 	Members []Field
 	_size   int
 	_align  int
+}
+
+type iStruct interface {
+	ValueType
+	genRawFree(module *Module) (ret []fn_offset_pair)
 }
 
 type Field struct {
@@ -53,9 +59,79 @@ func (t Struct) Name() string { return t.name }
 func (t Struct) size() int    { return t._size }
 func (t Struct) align() int   { return t._align }
 
-func (t Struct) onFree(m *Module) int {
-	logger.Fatal("Todo")
-	return 0
+type fn_offset_pair struct {
+	fn     int
+	offset int
+}
+
+func (t Struct) genRawFree(module *Module) (ret []fn_offset_pair) {
+	for _, member := range t.Members {
+		member_type := member.Type()
+		if istruct, ok := member_type.(iStruct); ok {
+			rfs := istruct.genRawFree(module)
+			for _, rf := range rfs {
+				ret = append(ret, fn_offset_pair{fn: rf.fn, offset: rf.offset + member._start})
+			}
+		} else {
+			mff := member_type.onFree(module)
+			if mff != 0 {
+				ret = append(ret, fn_offset_pair{fn: mff, offset: member._start})
+			}
+		}
+	}
+
+	return
+}
+
+func (t Struct) onFree(module *Module) int {
+	var f Function
+	f.Name = "$" + t.Name() + ".$$onFree"
+
+	if i := module.findTableElem(f.Name); i != 0 {
+		return i
+	}
+
+	f.Result = VOID{}
+	ptr := NewLocal("$ptr", I32{})
+	f.Params = append(f.Params, ptr)
+
+	rfs := t.genRawFree(module)
+	if len(rfs) == 0 {
+		return 0
+	}
+	for _, rf := range rfs {
+		f.Insts = append(f.Insts, ptr.EmitPush()...)
+		if rf.offset != 0 {
+			f.Insts = append(f.Insts, wat.NewInstConst(wat.I32{}, strconv.Itoa(rf.offset)))
+			f.Insts = append(f.Insts, wat.NewInstAdd(wat.I32{}))
+		}
+
+		f.Insts = append(f.Insts, wat.NewInstConst(wat.I32{}, strconv.Itoa(rf.fn)))
+		f.Insts = append(f.Insts, wat.NewInstCallIndirect("$onFree"))
+	}
+	return module.addTableFunc(&f)
+
+	/*	has_free := false
+		for _, member := range t.Members {
+			member_free_func := member.Type().onFree(module)
+			if member_free_func == 0 {
+				continue
+			}
+
+			f.Insts = append(f.Insts, ptr.EmitPush()...)
+			f.Insts = append(f.Insts, wat.NewInstConst(wat.I32{}, strconv.Itoa(member._start)))
+			f.Insts = append(f.Insts, wat.NewInstAdd(wat.I32{}))
+
+			f.Insts = append(f.Insts, wat.NewInstConst(wat.I32{}, strconv.Itoa(member_free_func)))
+			f.Insts = append(f.Insts, wat.NewInstCallIndirect("$onFree"))
+			has_free = true
+		}
+
+		if has_free {
+			return module.addTableFunc(&f)
+		}
+
+		return 0  //*/
 }
 
 func (t Struct) Raw() []wat.ValueType {
@@ -89,6 +165,15 @@ func (t Struct) emitLoadFromAddr(addr Value, offset int) (insts []wat.Inst) {
 		insts = append(insts, m.Type().emitLoadFromAddr(ptr, m._start+offset)...)
 	}
 	return
+}
+
+func (t Struct) findFieldByName(field_name string) *Field {
+	for _, m := range t.Members {
+		if m.Name() == field_name {
+			return &m
+		}
+	}
+	return nil
 }
 
 /**************************************

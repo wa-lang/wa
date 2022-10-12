@@ -17,7 +17,7 @@ type Block struct {
 }
 
 func NewBlock(base ValueType) Block  { return Block{Base: base} }
-func (t Block) Name() string         { return "block$" + t.Base.Name() }
+func (t Block) Name() string         { return t.Base.Name() + ".$$block" }
 func (t Block) size() int            { return 4 }
 func (t Block) align() int           { return 4 }
 func (t Block) Raw() []wat.ValueType { return []wat.ValueType{wat.I32{}} }
@@ -29,7 +29,11 @@ func (t Block) Equal(u ValueType) bool {
 }
 func (t Block) onFree(m *Module) int {
 	var f Function
-	f.Name = "$$onFree_" + t.Name()
+	f.Name = "$" + t.Name() + ".$$onFree"
+	if i := m.findTableElem(f.Name); i != 0 {
+		return i
+	}
+
 	f.Result = VOID{}
 	ptr := NewLocal("$ptr", I32{})
 	f.Params = append(f.Params, ptr)
@@ -41,7 +45,7 @@ func (t Block) onFree(m *Module) int {
 	f.Insts = append(f.Insts, wat.NewInstConst(wat.I32{}, "0"))
 	f.Insts = append(f.Insts, wat.NewInstStore(wat.I32{}, 0, 1))
 
-	return addTable(&f, m)
+	return m.addTableFunc(&f)
 }
 
 func (t Block) emitHeapAlloc(item_count Value, module *Module) (insts []wat.Inst) {
@@ -54,10 +58,6 @@ func (t Block) emitHeapAlloc(item_count Value, module *Module) (insts []wat.Inst
 		}
 		insts = append(insts, NewConst(strconv.Itoa(t.Base.size()*c+16), I32{}).EmitPush()...)
 		insts = append(insts, wat.NewInstCall("$waHeapAlloc"))
-
-		insts = append(insts, item_count.EmitPush()...)                                           //item_count
-		insts = append(insts, NewConst(strconv.Itoa(t.Base.onFree(module)), I32{}).EmitPush()...) //free_method
-		insts = append(insts, wat.NewInstCall("$wa.RT.Block.Init"))
 
 	default:
 		if !item_count.Type().Equal(I32{}) {
@@ -72,10 +72,12 @@ func (t Block) emitHeapAlloc(item_count Value, module *Module) (insts []wat.Inst
 		insts = append(insts, wat.NewInstAdd(wat.I32{}))
 		insts = append(insts, wat.NewInstCall("$waHeapAlloc"))
 
-		insts = append(insts, item_count.EmitPush()...)
-		insts = append(insts, NewConst(strconv.Itoa(t.Base.onFree(module)), I32{}).EmitPush()...) //free_method
-		insts = append(insts, wat.NewInstCall("$wa.RT.Block.Init"))
 	}
+
+	insts = append(insts, item_count.EmitPush()...)                                           //item_count
+	insts = append(insts, NewConst(strconv.Itoa(t.Base.onFree(module)), I32{}).EmitPush()...) //free_method
+	insts = append(insts, NewConst(strconv.Itoa(t.Base.size()), I32{}).EmitPush()...)         //item_size
+	insts = append(insts, wat.NewInstCall("$wa.RT.Block.Init"))
 
 	return
 }

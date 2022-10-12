@@ -65,15 +65,28 @@ func ToWType(from types.Type) ValueType {
 	case *types.Pointer:
 		return NewRef(ToWType(t.Elem()))
 
+	case *types.Named:
+		switch ut := t.Underlying().(type) {
+		case *types.Struct:
+			var fs []Field
+			for i := 0; i < ut.NumFields(); i++ {
+				f := ut.Field(i)
+				wtyp := ToWType(f.Type())
+				if f.Embedded() {
+					fs = append(fs, NewField("$"+wtyp.Name(), wtyp))
+				} else {
+					fs = append(fs, NewField(f.Name(), wtyp))
+				}
+			}
+			return NewStruct(t.Obj().Name(), fs)
+
+		default:
+			logger.Fatalf("Todo:%T", ut)
+		}
+
 	default:
 		logger.Fatalf("Todo:%T", t)
 	}
 
 	return nil
-}
-
-func addTable(f *Function, module *Module) int {
-	//Todo
-	logger.Fatal("Todo")
-	return 0
 }

@@ -13,6 +13,9 @@ Module:
 type Module struct {
 	Funcs []*Function
 
+	table     []string
+	table_map map[string]int
+
 	globals     []Value
 	Globals_map map[ssa.Value]Value
 
@@ -21,8 +24,32 @@ type Module struct {
 
 func NewModule() *Module {
 	var m Module
+
+	//table中先行插入一条记录，防止产生0值（无效值）id
+	m.table = append(m.table, "")
+	m.table_map = make(map[string]int)
+
 	m.Globals_map = make(map[ssa.Value]Value)
 	return &m
+}
+
+func (m *Module) findTableElem(elem string) int {
+	if i, ok := m.table_map[elem]; ok {
+		return i
+	}
+	return 0
+}
+
+func (m *Module) addTableFunc(f *Function) int {
+	if i := m.findTableElem(f.Name); i != 0 {
+		return i
+	}
+
+	m.Funcs = append(m.Funcs, f)
+	i := len(m.table)
+	m.table = append(m.table, f.Name)
+	m.table_map[f.Name] = i
+	return i
 }
 
 func (m *Module) AddGlobal(name string, typ ValueType, is_pointer bool, ssa_value ssa.Value) Value {
@@ -54,6 +81,17 @@ func (m *Module) genGlobalAlloc() *Function {
 func (m *Module) ToWatModule() *wat.Module {
 	var wat_module wat.Module
 	wat_module.BaseWat = m.BaseWat
+
+	{
+		var onFreeFnType wat.FuncType
+		onFreeFnType.Name = "$onFree"
+		onFreeFnType.Params = append(onFreeFnType.Params, wat.I32{})
+		wat_module.FuncTypes = append(wat_module.FuncTypes, onFreeFnType)
+	}
+
+	{
+		wat_module.Tables.Elems = m.table
+	}
 
 	wat_module.Funcs = append(wat_module.Funcs, m.genGlobalAlloc().ToWatFunc())
 
