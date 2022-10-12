@@ -224,6 +224,11 @@ var tokens = [...]string{
 	ENUM:  "enum",
 }
 
+// WaGo 关键字补丁
+var tokens_wago = map[Token]string{
+	FN: "func",
+}
+
 // 中文关键字(最终通过海选选择前几名, 凹开发者最终决定)
 var tokens_zh = map[Token]string{
 	IMPORT: "导入",
@@ -271,6 +276,17 @@ func (tok Token) String() string {
 		s = "token(" + strconv.Itoa(int(tok)) + ")"
 	}
 	return s
+}
+
+// 返回 WaGo 关键字名字
+func (tok Token) WaGoKeykword() string {
+	if tok.IsKeyword() {
+		if x, ok := tokens_wago[tok]; ok {
+			return x
+		}
+		return tokens[tok]
+	}
+	return ""
 }
 
 // 返回中文关键字名字
@@ -323,14 +339,25 @@ func init() {
 	for k, name := range tokens_zh {
 		keywords[name] = k
 	}
-
-	// TODO: import 改为 require?
-	keywords["require"] = IMPORT
 }
 
 // Lookup maps an identifier to its keyword token or IDENT (if not a keyword).
 //
 func Lookup(ident string) Token {
+	if tok, is_keyword := keywords[ident]; is_keyword {
+		return tok
+	}
+	return IDENT
+}
+
+// 解析 WaGo 关键字
+func LookupWaGo(ident string) Token {
+	if ident == "fn" {
+		return IDENT
+	}
+	if ident == "func" {
+		return FN
+	}
 	if tok, is_keyword := keywords[ident]; is_keyword {
 		return tok
 	}
