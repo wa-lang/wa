@@ -1,0 +1,14 @@
+// 版权 @2021 凹语言 作者。保留所有权利。
+
+package main
+
+fn new_int() => *i32 {
+	var i i32
+	i = 42
+	return &i
+}
+
+fn main() {
+	println(*new_int())
+	println(*new_int())
+}

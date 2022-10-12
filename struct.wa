@@ -1,0 +1,31 @@
+// 版权 @2021 凹语言 作者。保留所有权利。
+
+package main
+
+type sp struct {
+	a: *i32
+}
+
+type sc struct {
+	b: i32
+	sp
+}
+
+fn gen_sc() => *sc {
+	var v sc
+	var i i32
+	i = 13
+	v.a = &i
+	v.b = 42
+	return &v
+}
+
+fn gen(p: i32) => i32 {
+	return p
+}
+
+fn main() {
+	i := gen_sc()
+	println(*i.a)
+	println(i.b)
+}
