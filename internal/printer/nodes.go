@@ -1743,6 +1743,17 @@ func (p *printer) declList(list []ast.Decl) {
 }
 
 func (p *printer) file(src *ast.File) {
+	// 强制设置 WaGo 模式
+	if src.Name != nil && strings.HasSuffix(src.Name.Name, ".wa.go") {
+		p.Mode |= WaGo
+	}
+
+	// #!...
+	if src.Shebang != "" {
+		p.print(src.Shebang)
+		p.print(newline)
+	}
+
 	p.setComment(src.Doc)
 	if src.Name != nil && src.Name.Name != "" {
 		p.print(src.Pos(), token.PACKAGE, blank)
