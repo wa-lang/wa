@@ -329,15 +329,20 @@ func (op Token) Precedence() int {
 	return LowestPrec
 }
 
-var keywords map[string]Token
+var (
+	keywords    map[string]Token
+	keywords_zh map[string]Token
+)
 
 func init() {
 	keywords = make(map[string]Token)
+	keywords_zh = make(map[string]Token)
+
 	for i := keyword_beg + 1; i < keyword_end; i++ {
 		keywords[tokens[i]] = i
 	}
 	for k, name := range tokens_zh {
-		keywords[name] = k
+		keywords_zh[name] = k
 	}
 }
 
@@ -347,10 +352,15 @@ func Lookup(ident string) Token {
 	if tok, is_keyword := keywords[ident]; is_keyword {
 		return tok
 	}
+	// wa 支持中文关键字
+	if tok, is_keyword := keywords_zh[ident]; is_keyword {
+		return tok
+	}
 	return IDENT
 }
 
 // 解析 WaGo 关键字
+// WaGo 不支持中文关键字
 func LookupWaGo(ident string) Token {
 	if ident == "fn" {
 		return IDENT

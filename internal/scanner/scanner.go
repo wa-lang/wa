@@ -31,6 +31,8 @@ type ErrorHandler func(pos token.Position, msg string)
 // structure but must be initialized via Init before use.
 //
 type Scanner struct {
+	WagoMode bool // WaGo 模式, 解析 func
+
 	// immutable state
 	file *token.File  // source file handle
 	dir  string       // directory portion of file.Name()
@@ -829,7 +831,11 @@ scanAgain:
 		lit = s.scanIdentifier()
 		if len(lit) > 1 {
 			// keywords are longer than one letter - avoid lookup otherwise
-			tok = token.Lookup(lit)
+			if s.WagoMode {
+				tok = token.LookupWaGo(lit)
+			} else {
+				tok = token.Lookup(lit)
+			}
 			switch tok {
 			case token.IDENT, token.BREAK, token.CONTINUE, token.RETURN:
 				insertSemi = true
