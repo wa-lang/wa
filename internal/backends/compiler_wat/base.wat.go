@@ -62,6 +62,8 @@ const modBaseWat_wa = `
 	;; (call $main.init)
 	(call $main)
 	;; {{$_start/body/end}}
+
+	;; (call $$test_entry)
 )
 
 ;;Remove these functions if they've been implemented in .wa
@@ -174,41 +176,42 @@ const modBaseWat_wa = `
 	  i32.load offset=4 align=1
 	  local.set $item_count
 
-	  local.get $ptr
-	  i32.load offset=12 align=1
-	  local.set $item_size
+	  local.get $item_count
+	  if  ;;item_count > 0
+        local.get $ptr
+        i32.load offset=12 align=1
+        local.set $item_size
 
-	  local.get $ptr
-	  i32.const 16
-	  i32.add
-	  local.set $data_ptr
+        local.get $ptr
+        i32.const 16
+        i32.add
+        local.set $data_ptr
 
-	  loop $free_next
-	    ;; onFree(data_ptr)
-	    local.get $data_ptr
-		local.get $free_func
-		call_indirect (type $$onFree)
+        loop $free_next
+          ;; onFree(data_ptr)
+          local.get $data_ptr
+          local.get $free_func
+          call_indirect (type $$onFree)
 
-		;; item_count--
-		local.get $item_count
-		i32.const 1
-		i32.sub
-		local.set $item_count
+          ;; item_count--
+          local.get $item_count
+          i32.const 1
+          i32.sub
+          local.set $item_count
 
-		local.get $item_count
-		if  ;;item_count>0
-		  ;; data_ptr += item_size
-		  local.get $data_ptr
-		  local.get $item_size
-		  i32.add
-		  local.set $data_ptr
+          local.get $item_count
+          if  ;;while item_count>0
+            ;; data_ptr += item_size
+            local.get $data_ptr
+            local.get $item_size
+            i32.add
+            local.set $data_ptr
 
-		  br $free_next  ;;continue
-		end  ;;item_count>0
-
-	  end  ;;loop $free_next
-
-	end  ;;block free_func != 0
+            br $free_next  ;;continue
+          end  ;;while item_count>0        
+        end  ;;loop $free_next
+	  end  ;;if item_count > 0
+	end  ;;free_func != 0
 
 	local.get $ptr
 	call $$waHeapFree

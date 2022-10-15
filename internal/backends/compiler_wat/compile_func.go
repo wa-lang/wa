@@ -187,6 +187,10 @@ func (g *functionGenerator) genFunction(f *ssa.Function) *wir.Function {
 		wir_fn.Insts = append(wir_fn.Insts, i.EmitRelease()...)
 	}
 
+	for _, i := range wir_fn.Params {
+		wir_fn.Insts = append(wir_fn.Insts, i.EmitRelease()...)
+	}
+
 	wir_fn.Locals = g.registers
 
 	return &wir_fn
@@ -213,20 +217,22 @@ func (g *functionGenerator) genBlock(block *ssa.BasicBlock) []wat.Inst {
 
 }
 
-func (g *functionGenerator) genInstruction(inst ssa.Instruction) []wat.Inst {
+func (g *functionGenerator) genInstruction(inst ssa.Instruction) (insts []wat.Inst) {
+	insts = append(insts, wat.NewComment(inst.String()))
+
 	switch inst := inst.(type) {
 
 	case *ssa.If:
-		return g.genIf(inst)
+		insts = append(insts, g.genIf(inst)...)
 
 	case *ssa.Store:
-		return g.genStore(inst)
+		insts = append(insts, g.genStore(inst)...)
 
 	case *ssa.Jump:
-		return g.genJump(inst)
+		insts = append(insts, g.genJump(inst)...)
 
 	case *ssa.Return:
-		return g.genReturn(inst)
+		insts = append(insts, g.genReturn(inst)...)
 
 	case *ssa.Extract:
 		logger.Fatalf("Todo:%T", inst)
@@ -237,16 +243,24 @@ func (g *functionGenerator) genInstruction(inst ssa.Instruction) []wat.Inst {
 	case ssa.Value:
 		s, t := g.genValue(inst)
 		if !t.Equal(wir.VOID{}) {
-			v := g.getValue(inst)
-			s = append(s, v.EmitPop()...)
-			g.locals_map[inst] = v
+			if v, ok := g.locals_map[inst]; ok {
+				if !v.Type().Equal(t) {
+					panic("Type not match")
+				}
+				s = append(s, v.EmitPop()...)
+			} else {
+				nv := g.addRegister(t)
+				g.locals_map[inst] = nv
+				s = append(s, nv.EmitPop()...)
+			}
 		}
-		return s
+		insts = append(insts, s...)
 
 	default:
 		logger.Fatal("Todo:", inst.String())
 	}
-	return nil
+	insts = append(insts, wat.NewBlank())
+	return
 }
 
 func (g *functionGenerator) genValue(v ssa.Value) ([]wat.Inst, wir.ValueType) {
@@ -274,7 +288,7 @@ func (g *functionGenerator) genValue(v ssa.Value) ([]wat.Inst, wir.ValueType) {
 		return g.genFieldAddr(v)
 
 	case *ssa.IndexAddr:
-		logger.Fatalf("Todo: %v, type: %T", v, v)
+		return g.genIndexAddr(v)
 
 	case *ssa.Slice:
 		logger.Fatalf("Todo: %v, type: %T", v, v)
@@ -509,6 +523,13 @@ func (g *functionGenerator) genFieldAddr(inst *ssa.FieldAddr) ([]wat.Inst, wir.V
 	}
 
 	return wir.EmitGenFieldAddr(g.getValue(inst.X), fieldname)
+}
+
+func (g *functionGenerator) genIndexAddr(inst *ssa.IndexAddr) ([]wat.Inst, wir.ValueType) {
+	x := g.getValue(inst.X)
+	id := g.getValue(inst.Index)
+
+	return wir.EmitGenIndexAddr(x, id)
 }
 
 func (g *functionGenerator) addRegister(typ wir.ValueType) wir.Value {

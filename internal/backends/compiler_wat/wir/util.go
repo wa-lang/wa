@@ -84,6 +84,9 @@ func ToWType(from types.Type) ValueType {
 			logger.Fatalf("Todo:%T", ut)
 		}
 
+	case *types.Array:
+		return NewArray(ToWType(t.Elem()), int(t.Len()))
+
 	default:
 		logger.Fatalf("Todo:%T", t)
 	}

@@ -40,6 +40,9 @@ func newValue(name string, kind ValueKind, typ ValueType) Value {
 	case Ref:
 		return newValueRef(name, kind, typ.Base)
 
+	case Array:
+		return newValueArray(name, kind, typ.Base, typ.Capacity)
+
 	default:
 		logger.Fatalf("Todo: %T", typ)
 	}

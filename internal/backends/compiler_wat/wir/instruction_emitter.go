@@ -189,7 +189,48 @@ func EmitGenFieldAddr(x Value, field_name string) (insts []wat.Inst, ret_type Va
 		logger.Fatalf("Todo:%T", x.Type())
 	}
 
-	insts = append(insts, wat.NewInstConst(wat.I32{}, strconv.Itoa(field._start)))
+	insts = append(insts, NewConst(strconv.Itoa(field._start), I32{}).EmitPush()...)
 	insts = append(insts, wat.NewInstAdd(wat.I32{}))
+	return
+}
+
+func EmitGenIndexAddr(x, id Value) (insts []wat.Inst, ret_type ValueType) {
+	if !id.Type().Equal(I32{}) {
+		panic("index should be i32")
+	}
+
+	switch x := x.(type) {
+	case *aPointer:
+		switch typ := x.Type().(Pointer).Base.(type) {
+		case Array:
+			insts = append(insts, x.EmitPush()...)
+			insts = append(insts, NewConst(strconv.Itoa(typ.Base.size()), I32{}).EmitPush()...)
+			insts = append(insts, id.EmitPush()...)
+			insts = append(insts, wat.NewInstMul(wat.I32{}))
+			insts = append(insts, wat.NewInstAdd(wat.I32{}))
+			ret_type = NewPointer(typ.Base)
+
+		default:
+			logger.Fatalf("Todo: %T", typ)
+		}
+
+	case *aRef:
+		switch typ := x.Type().(Ref).Base.(type) {
+		case Array:
+			insts = append(insts, x.EmitPush()...)
+			insts = append(insts, NewConst(strconv.Itoa(typ.Base.size()), I32{}).EmitPush()...)
+			insts = append(insts, id.EmitPush()...)
+			insts = append(insts, wat.NewInstMul(wat.I32{}))
+			insts = append(insts, wat.NewInstAdd(wat.I32{}))
+			ret_type = NewRef(typ.Base)
+
+		default:
+			logger.Fatal("Todo: %T", typ)
+		}
+
+	default:
+		logger.Fatalf("Todo: %T", x)
+	}
+
 	return
 }

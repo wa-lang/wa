@@ -48,6 +48,13 @@ func (t Block) onFree(m *Module) int {
 	return m.addTableFunc(&f)
 }
 
+func (t Block) emitLoadFromAddr(addr Value, offset int) (insts []wat.Inst) {
+	insts = append(insts, addr.EmitPush()...)
+	insts = append(insts, wat.NewInstLoad(wat.I32{}, offset, 1))
+	insts = append(insts, wat.NewInstCall("$wa.RT.Block.Retain"))
+	return
+}
+
 func (t Block) emitHeapAlloc(item_count Value, module *Module) (insts []wat.Inst) {
 	switch item_count.Kind() {
 	case ValueKindConst:
@@ -79,13 +86,6 @@ func (t Block) emitHeapAlloc(item_count Value, module *Module) (insts []wat.Inst
 	insts = append(insts, NewConst(strconv.Itoa(t.Base.size()), I32{}).EmitPush()...)         //item_size
 	insts = append(insts, wat.NewInstCall("$wa.RT.Block.Init"))
 
-	return
-}
-
-func (t Block) emitLoadFromAddr(addr Value, offset int) (insts []wat.Inst) {
-	insts = append(insts, addr.EmitPush()...)
-	insts = append(insts, wat.NewInstLoad(wat.I32{}, offset, 1))
-	insts = append(insts, wat.NewInstCall("$wa.RT.Block.Retain"))
 	return
 }
 
