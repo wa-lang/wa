@@ -61,21 +61,27 @@ func EmitBinOp(x, y Value, op wat.OpCode) ([]wat.Inst, ValueType) {
 
 	case wat.OpCodeEql:
 		insts = append(insts, wat.NewInstEq(rtype))
+		r = I32{}
 
 	case wat.OpCodeNe:
 		insts = append(insts, wat.NewInstNe(rtype))
+		r = I32{}
 
 	case wat.OpCodeLt:
 		insts = append(insts, wat.NewInstLt(rtype))
+		r = I32{}
 
 	case wat.OpCodeGt:
 		insts = append(insts, wat.NewInstGt(rtype))
+		r = I32{}
 
 	case wat.OpCodeLe:
 		insts = append(insts, wat.NewInstLe(rtype))
+		r = I32{}
 
 	case wat.OpCodeGe:
 		insts = append(insts, wat.NewInstGe(rtype))
+		r = I32{}
 
 	default:
 		logger.Fatal("Todo")
