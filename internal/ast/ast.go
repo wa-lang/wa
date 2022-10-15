@@ -934,6 +934,7 @@ func (*FuncDecl) declNode() {}
 // are "free-floating" (see also issues #18593, #20744).
 //
 type File struct {
+	Shebang    string          // `#!` 第一行开头的 Shebang 模式注释
 	Doc        *CommentGroup   // associated documentation; or nil
 	Package    token.Pos       // position of "package" keyword
 	Name       *Ident          // package name

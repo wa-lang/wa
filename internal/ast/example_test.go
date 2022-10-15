@@ -78,65 +78,66 @@ fn main() {
 
 	// Output:
 	//      0  *ast.File {
-	//      1  .  Package: 2:1
-	//      2  .  Name: *ast.Ident {
-	//      3  .  .  NamePos: 2:9
-	//      4  .  .  Name: "main"
-	//      5  .  }
-	//      6  .  Decls: []ast.Decl (len = 1) {
-	//      7  .  .  0: *ast.FuncDecl {
-	//      8  .  .  .  Name: *ast.Ident {
-	//      9  .  .  .  .  NamePos: 3:4
-	//     10  .  .  .  .  Name: "main"
-	//     11  .  .  .  .  Obj: *ast.Object {
-	//     12  .  .  .  .  .  Kind: func
-	//     13  .  .  .  .  .  Name: "main"
-	//     14  .  .  .  .  .  Decl: *(obj @ 7)
-	//     15  .  .  .  .  }
-	//     16  .  .  .  }
-	//     17  .  .  .  Type: *ast.FuncType {
-	//     18  .  .  .  .  Func: 3:1
-	//     19  .  .  .  .  Params: *ast.FieldList {
-	//     20  .  .  .  .  .  Opening: 3:8
-	//     21  .  .  .  .  .  Closing: 3:9
-	//     22  .  .  .  .  }
-	//     23  .  .  .  .  ArrowPos: -
-	//     24  .  .  .  }
-	//     25  .  .  .  Body: *ast.BlockStmt {
-	//     26  .  .  .  .  Lbrace: 3:11
-	//     27  .  .  .  .  List: []ast.Stmt (len = 1) {
-	//     28  .  .  .  .  .  0: *ast.ExprStmt {
-	//     29  .  .  .  .  .  .  X: *ast.CallExpr {
-	//     30  .  .  .  .  .  .  .  Fun: *ast.Ident {
-	//     31  .  .  .  .  .  .  .  .  NamePos: 4:2
-	//     32  .  .  .  .  .  .  .  .  Name: "println"
-	//     33  .  .  .  .  .  .  .  }
-	//     34  .  .  .  .  .  .  .  Lparen: 4:9
-	//     35  .  .  .  .  .  .  .  Args: []ast.Expr (len = 1) {
-	//     36  .  .  .  .  .  .  .  .  0: *ast.BasicLit {
-	//     37  .  .  .  .  .  .  .  .  .  ValuePos: 4:10
-	//     38  .  .  .  .  .  .  .  .  .  Kind: STRING
-	//     39  .  .  .  .  .  .  .  .  .  Value: "\"Hello, World!\""
-	//     40  .  .  .  .  .  .  .  .  }
-	//     41  .  .  .  .  .  .  .  }
-	//     42  .  .  .  .  .  .  .  Ellipsis: -
-	//     43  .  .  .  .  .  .  .  Rparen: 4:25
-	//     44  .  .  .  .  .  .  }
-	//     45  .  .  .  .  .  }
-	//     46  .  .  .  .  }
-	//     47  .  .  .  .  Rbrace: 5:1
-	//     48  .  .  .  }
-	//     49  .  .  }
-	//     50  .  }
-	//     51  .  Scope: *ast.Scope {
-	//     52  .  .  Objects: map[string]*ast.Object (len = 1) {
-	//     53  .  .  .  "main": *(obj @ 11)
-	//     54  .  .  }
-	//     55  .  }
-	//     56  .  Unresolved: []*ast.Ident (len = 1) {
-	//     57  .  .  0: *(obj @ 30)
-	//     58  .  }
-	//     59  }
+	//      1  .  Shebang: ""
+	//      2  .  Package: 2:1
+	//      3  .  Name: *ast.Ident {
+	//      4  .  .  NamePos: 2:9
+	//      5  .  .  Name: "main"
+	//      6  .  }
+	//      7  .  Decls: []ast.Decl (len = 1) {
+	//      8  .  .  0: *ast.FuncDecl {
+	//      9  .  .  .  Name: *ast.Ident {
+	//     10  .  .  .  .  NamePos: 3:4
+	//     11  .  .  .  .  Name: "main"
+	//     12  .  .  .  .  Obj: *ast.Object {
+	//     13  .  .  .  .  .  Kind: func
+	//     14  .  .  .  .  .  Name: "main"
+	//     15  .  .  .  .  .  Decl: *(obj @ 8)
+	//     16  .  .  .  .  }
+	//     17  .  .  .  }
+	//     18  .  .  .  Type: *ast.FuncType {
+	//     19  .  .  .  .  Func: 3:1
+	//     20  .  .  .  .  Params: *ast.FieldList {
+	//     21  .  .  .  .  .  Opening: 3:8
+	//     22  .  .  .  .  .  Closing: 3:9
+	//     23  .  .  .  .  }
+	//     24  .  .  .  .  ArrowPos: -
+	//     25  .  .  .  }
+	//     26  .  .  .  Body: *ast.BlockStmt {
+	//     27  .  .  .  .  Lbrace: 3:11
+	//     28  .  .  .  .  List: []ast.Stmt (len = 1) {
+	//     29  .  .  .  .  .  0: *ast.ExprStmt {
+	//     30  .  .  .  .  .  .  X: *ast.CallExpr {
+	//     31  .  .  .  .  .  .  .  Fun: *ast.Ident {
+	//     32  .  .  .  .  .  .  .  .  NamePos: 4:2
+	//     33  .  .  .  .  .  .  .  .  Name: "println"
+	//     34  .  .  .  .  .  .  .  }
+	//     35  .  .  .  .  .  .  .  Lparen: 4:9
+	//     36  .  .  .  .  .  .  .  Args: []ast.Expr (len = 1) {
+	//     37  .  .  .  .  .  .  .  .  0: *ast.BasicLit {
+	//     38  .  .  .  .  .  .  .  .  .  ValuePos: 4:10
+	//     39  .  .  .  .  .  .  .  .  .  Kind: STRING
+	//     40  .  .  .  .  .  .  .  .  .  Value: "\"Hello, World!\""
+	//     41  .  .  .  .  .  .  .  .  }
+	//     42  .  .  .  .  .  .  .  }
+	//     43  .  .  .  .  .  .  .  Ellipsis: -
+	//     44  .  .  .  .  .  .  .  Rparen: 4:25
+	//     45  .  .  .  .  .  .  }
+	//     46  .  .  .  .  .  }
+	//     47  .  .  .  .  }
+	//     48  .  .  .  .  Rbrace: 5:1
+	//     49  .  .  .  }
+	//     50  .  .  }
+	//     51  .  }
+	//     52  .  Scope: *ast.Scope {
+	//     53  .  .  Objects: map[string]*ast.Object (len = 1) {
+	//     54  .  .  .  "main": *(obj @ 12)
+	//     55  .  .  }
+	//     56  .  }
+	//     57  .  Unresolved: []*ast.Ident (len = 1) {
+	//     58  .  .  0: *(obj @ 31)
+	//     59  .  }
+	//     60  }
 }
 
 // This example illustrates how to remove a variable declaration
