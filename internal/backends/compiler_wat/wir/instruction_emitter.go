@@ -231,7 +231,7 @@ func EmitGenIndexAddr(x, id Value) (insts []wat.Inst, ret_type ValueType) {
 			ret_type = NewRef(typ.Base)
 
 		default:
-			logger.Fatal("Todo: %T", typ)
+			logger.Fatalf("Todo: %T", typ)
 		}
 
 	default:
