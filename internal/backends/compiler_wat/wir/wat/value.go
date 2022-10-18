@@ -10,10 +10,15 @@ func NewVarU64(name string) Value             { return &aVar{typ: U64{}, name: n
 func NewVarF32(name string) Value             { return &aVar{typ: F32{}, name: name} }
 func NewVarF64(name string) Value             { return &aVar{typ: F64{}, name: name} }
 
+type aValueType struct{}
+
+func (t aValueType) isValueType() {}
+
 /**************************************
 I32:
 **************************************/
 type I32 struct {
+	aValueType
 }
 
 func (t I32) Name() string           { return "i32" }
@@ -23,6 +28,7 @@ func (t I32) Equal(u ValueType) bool { _, ok := u.(I32); return ok }
 U32:
 **************************************/
 type U32 struct {
+	aValueType
 }
 
 func (t U32) Name() string           { return "i32" }
@@ -32,6 +38,7 @@ func (t U32) Equal(u ValueType) bool { _, ok := u.(U32); return ok }
 I64:
 **************************************/
 type I64 struct {
+	aValueType
 }
 
 func (t I64) Name() string           { return "i64" }
@@ -41,6 +48,7 @@ func (t I64) Equal(u ValueType) bool { _, ok := u.(I64); return ok }
 U64:
 **************************************/
 type U64 struct {
+	aValueType
 }
 
 func (t U64) Name() string           { return "i64" }
@@ -50,6 +58,7 @@ func (t U64) Equal(u ValueType) bool { _, ok := u.(U64); return ok }
 F32:
 **************************************/
 type F32 struct {
+	aValueType
 }
 
 func (t F32) Name() string           { return "f32" }
@@ -59,6 +68,7 @@ func (t F32) Equal(u ValueType) bool { _, ok := u.(F32); return ok }
 F64:
 **************************************/
 type F64 struct {
+	aValueType
 }
 
 func (t F64) Name() string           { return "f64" }

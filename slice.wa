@@ -1,0 +1,24 @@
+// 版权 @2021 凹语言 作者。保留所有权利。
+
+package main
+
+fn main() {
+	a := [4]i32{12, 34, 56, 78}
+	s := a[0:1]
+	s[0] = 42
+	println(a[0])			//42
+	s = append(s, 13)
+	println(a[1])			//13
+	println(len(s))			//2
+
+	var k []i32
+	k = append(k, 99, 81, 170)
+	println(k[0])			//99
+	
+	l := k[:]
+	l[2] = 64
+	println(k[2])			//64
+	
+	l = append(l, 55)
+	println(l[3])			//55
+}

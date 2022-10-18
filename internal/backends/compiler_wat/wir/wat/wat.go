@@ -69,6 +69,7 @@ ValueType:
 **************************************/
 type ValueType interface {
 	Name() string
+	isValueType()
 }
 
 /**************************************

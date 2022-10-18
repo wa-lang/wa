@@ -165,15 +165,15 @@ func EmitStore(addr, value Value) (insts []wat.Inst) {
 	return
 }
 
-func EmitHeapAlloc(typ ValueType, module *Module) (insts []wat.Inst, ret_type ValueType) {
+func EmitHeapAlloc(typ ValueType) (insts []wat.Inst, ret_type ValueType) {
 	ref_typ := NewRef(typ)
 	ret_type = ref_typ
-	insts = ref_typ.emitHeapAlloc(module)
+	insts = ref_typ.emitHeapAlloc()
 	return
 }
 
-func EmitStackAlloc(typ ValueType, module *Module) (insts []wat.Inst, ret_type ValueType) {
-	return EmitHeapAlloc(typ, module)
+func EmitStackAlloc(typ ValueType) (insts []wat.Inst, ret_type ValueType) {
+	return EmitHeapAlloc(typ)
 	//ref_typ := NewRef(typ)
 	//ret_type = ref_typ
 	//insts = ref_typ.emitStackAlloc(module)
@@ -234,9 +234,83 @@ func EmitGenIndexAddr(x, id Value) (insts []wat.Inst, ret_type ValueType) {
 			logger.Fatalf("Todo: %T", typ)
 		}
 
+	case *aSlice:
+		base_type := x.Type().(Slice).Base
+		insts = append(insts, x.underlying.Extract("block").EmitPush()...)
+		insts = append(insts, x.underlying.Extract("data").EmitPush()...)
+		insts = append(insts, NewConst(strconv.Itoa(base_type.size()), I32{}).EmitPush()...)
+		insts = append(insts, id.EmitPush()...)
+		insts = append(insts, wat.NewInstMul(wat.I32{}))
+		insts = append(insts, wat.NewInstAdd(wat.I32{}))
+		ret_type = NewRef(base_type)
+
 	default:
 		logger.Fatalf("Todo: %T", x)
 	}
 
 	return
+}
+
+func EmitGenSlice(x, low, high Value) (insts []wat.Inst, ret_type ValueType) {
+	switch x := x.(type) {
+	case *aSlice:
+		insts = x.emitSub(low, high)
+		ret_type = x.Type()
+
+	case *aRef:
+		switch btype := x.Type().(Ref).Base.(type) {
+		case Slice:
+			slt := NewSlice(btype.Base)
+			insts = slt.emitGenFromRefOfSlice(x, low, high)
+			ret_type = slt
+
+		case Array:
+			slt := NewSlice(btype.Base)
+			insts = slt.emitGenFromRefOfArray(x, low, high)
+			ret_type = slt
+
+		default:
+			logger.Fatalf("Todo: %T", btype)
+		}
+
+	default:
+		logger.Fatalf("Todo: %T", x)
+	}
+
+	return
+}
+
+func EmitGenAppend(x, y Value) (insts []wat.Inst, ret_type ValueType) {
+	if !x.Type().Equal(y.Type()) {
+		logger.Fatal("Type not match")
+		return
+	}
+
+	stype := x.Type().(Slice)
+	insts = append(insts, x.EmitPush()...)
+	insts = append(insts, y.EmitPush()...)
+	insts = append(insts, wat.NewInstCall(stype.genAppendFunc()))
+	ret_type = stype
+
+	return
+}
+
+func EmitGenLen(x Value) (insts []wat.Inst) {
+	switch x := x.(type) {
+	case *aArray:
+		insts = NewConst(strconv.Itoa(x.Type().(Array).Capacity), I32{}).EmitPush()
+
+	case *aSlice:
+		insts = x.underlying.Extract("len").EmitPush()
+
+	default:
+		logger.Fatalf("Todo: %T", x)
+	}
+
+	return
+}
+
+func emitPrintValue(v Value) (insts []wat.Inst) {
+
+	panic("Todo")
 }

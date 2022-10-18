@@ -8,7 +8,13 @@ fn new_int() => *i32 {
 	return &i
 }
 
+fn proc(i *i32){
+	*i = 13
+}
+
 fn main() {
-	println(*new_int())
-	println(*new_int())
+	p := new_int()
+	println(*p)
+	proc(p)
+	println(*p)
 }

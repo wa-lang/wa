@@ -530,7 +530,7 @@ func (g *functionGenerator) genSlice(inst *ssa.Slice) cir.Expr {
 			if inst.High != nil {
 				high = g.getValue(inst.High)
 			} else {
-				high = cir.NewRawExpr(x.CIRString()+".GetRaw()->Len()", ctypes.Uint64)
+				high = cir.NewRawExpr(x.CIRString()+".GetRaw()->Cap()", ctypes.Uint64)
 			}
 			s := x.CIRString() + ".GetRaw()->Sub("
 			s += low.CIRString() + ", "

@@ -27,15 +27,15 @@ func (t Block) Equal(u ValueType) bool {
 	}
 	return false
 }
-func (t Block) onFree(m *Module) int {
+func (t Block) onFree() int {
 	var f Function
 	f.Name = "$" + t.Name() + ".$$onFree"
-	if i := m.findTableElem(f.Name); i != 0 {
+	if i := currentModule.findTableElem(f.Name); i != 0 {
 		return i
 	}
 
 	f.Result = VOID{}
-	ptr := NewLocal("$ptr", I32{})
+	ptr := NewLocal("ptr", I32{})
 	f.Params = append(f.Params, ptr)
 
 	f.Insts = append(f.Insts, ptr.EmitPush()...)
@@ -45,7 +45,7 @@ func (t Block) onFree(m *Module) int {
 	f.Insts = append(f.Insts, wat.NewInstConst(wat.I32{}, "0"))
 	f.Insts = append(f.Insts, wat.NewInstStore(wat.I32{}, 0, 1))
 
-	return m.addTableFunc(&f)
+	return currentModule.addTableFunc(&f)
 }
 
 func (t Block) emitLoadFromAddr(addr Value, offset int) (insts []wat.Inst) {
@@ -55,7 +55,7 @@ func (t Block) emitLoadFromAddr(addr Value, offset int) (insts []wat.Inst) {
 	return
 }
 
-func (t Block) emitHeapAlloc(item_count Value, module *Module) (insts []wat.Inst) {
+func (t Block) emitHeapAlloc(item_count Value) (insts []wat.Inst) {
 	switch item_count.Kind() {
 	case ValueKindConst:
 		c, err := strconv.Atoi(item_count.Name())
@@ -81,9 +81,9 @@ func (t Block) emitHeapAlloc(item_count Value, module *Module) (insts []wat.Inst
 
 	}
 
-	insts = append(insts, item_count.EmitPush()...)                                           //item_count
-	insts = append(insts, NewConst(strconv.Itoa(t.Base.onFree(module)), I32{}).EmitPush()...) //free_method
-	insts = append(insts, NewConst(strconv.Itoa(t.Base.size()), I32{}).EmitPush()...)         //item_size
+	insts = append(insts, item_count.EmitPush()...)                                     //item_count
+	insts = append(insts, NewConst(strconv.Itoa(t.Base.onFree()), I32{}).EmitPush()...) //free_method
+	insts = append(insts, NewConst(strconv.Itoa(t.Base.size()), I32{}).EmitPush()...)   //item_size
 	insts = append(insts, wat.NewInstCall("$wa.RT.Block.Init"))
 
 	return

@@ -21,6 +21,7 @@ type Compiler struct {
 func New() *Compiler {
 	p := new(Compiler)
 	p.module = wir.NewModule()
+	wir.SetCurrentModule(p.module)
 	return p
 }
 
@@ -97,7 +98,7 @@ func (p *Compiler) CompilePackage(ssaPkg *ssa.Package) {
 		}
 	}
 	for _, v := range fns {
-		p.module.Funcs = append(p.module.Funcs, newFunctionGenerator(p).genFunction(v))
+		p.module.AddFunc(newFunctionGenerator(p).genFunction(v))
 	}
 
 	//println(p.module.String())

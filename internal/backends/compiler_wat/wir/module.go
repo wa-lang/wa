@@ -11,7 +11,8 @@ import (
 Module:
 **************************************/
 type Module struct {
-	Funcs []*Function
+	funcs     []*Function
+	funcs_map map[string]*Function
 
 	table     []string
 	table_map map[string]int
@@ -24,6 +25,8 @@ type Module struct {
 
 func NewModule() *Module {
 	var m Module
+
+	m.funcs_map = make(map[string]*Function)
 
 	//table中先行插入一条记录，防止产生0值（无效值）id
 	m.table = append(m.table, "")
@@ -45,11 +48,25 @@ func (m *Module) addTableFunc(f *Function) int {
 		return i
 	}
 
-	m.Funcs = append(m.Funcs, f)
+	m.AddFunc(f)
 	i := len(m.table)
 	m.table = append(m.table, f.Name)
 	m.table_map[f.Name] = i
 	return i
+}
+
+func (m *Module) findFunc(fn_name string) *Function {
+	if f, ok := m.funcs_map[fn_name]; ok {
+		return f
+	}
+	return nil
+}
+
+func (m *Module) AddFunc(f *Function) {
+	if m.findFunc(f.Name) == nil {
+		m.funcs = append(m.funcs, f)
+		m.funcs_map[f.Name] = f
+	}
 }
 
 func (m *Module) AddGlobal(name string, typ ValueType, is_pointer bool, ssa_value ssa.Value) Value {
@@ -95,7 +112,7 @@ func (m *Module) ToWatModule() *wat.Module {
 
 	wat_module.Funcs = append(wat_module.Funcs, m.genGlobalAlloc().ToWatFunc())
 
-	for _, f := range m.Funcs {
+	for _, f := range m.funcs {
 		wat_module.Funcs = append(wat_module.Funcs, f.ToWatFunc())
 	}
 

@@ -4,6 +4,10 @@ package wir
 
 import "github.com/wa-lang/wa/internal/backends/compiler_wat/wir/wat"
 
+func SetCurrentModule(m *Module) { currentModule = m }
+
+var currentModule *Module
+
 /**************************************
 Function:
 **************************************/
@@ -55,7 +59,7 @@ type ValueType interface {
 	Name() string
 	size() int
 	align() int
-	onFree(module *Module) int
+	onFree() int
 	Raw() []wat.ValueType
 	Equal(ValueType) bool
 	emitLoadFromAddr(addr Value, offset int) []wat.Inst

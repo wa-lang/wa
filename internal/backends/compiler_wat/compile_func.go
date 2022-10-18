@@ -47,9 +47,9 @@ func (g *functionGenerator) getValue(i ssa.Value) wir.Value {
 
 	switch v := i.(type) {
 	case *ssa.Const:
-		if v.Value == nil {
-			return nil
-		}
+		//if v.Value == nil {
+		//	return nil
+		//}
 
 		switch t := v.Type().(type) {
 		case *types.Basic:
@@ -93,6 +93,9 @@ func (g *functionGenerator) getValue(i ssa.Value) wir.Value {
 			logger.Fatalf("Todo:%T", t)
 
 		case *types.Slice:
+			if v.Value == nil {
+				return wir.NewConst("0", wir.NewSlice(wir.ToWType(t.Elem())))
+			}
 			logger.Fatalf("Todo:%T", t)
 
 		default:
@@ -291,7 +294,7 @@ func (g *functionGenerator) genValue(v ssa.Value) ([]wat.Inst, wir.ValueType) {
 		return g.genIndexAddr(v)
 
 	case *ssa.Slice:
-		logger.Fatalf("Todo: %v, type: %T", v, v)
+		return g.genSlice(v)
 	}
 
 	logger.Fatalf("Todo: %v, type: %T", v, v)
@@ -392,10 +395,9 @@ func (g *functionGenerator) genCall(inst *ssa.Call) ([]wat.Inst, wir.ValueType) 
 	return nil, nil
 }
 
-func (g *functionGenerator) genBuiltin(call *ssa.CallCommon) ([]wat.Inst, wir.ValueType) {
+func (g *functionGenerator) genBuiltin(call *ssa.CallCommon) (insts []wat.Inst, ret_type wir.ValueType) {
 	switch call.Value.Name() {
 	case "print", "println":
-		var insts []wat.Inst
 		for _, arg := range call.Args {
 			arg := g.getValue(arg)
 			switch arg.Type().(type) {
@@ -416,11 +418,25 @@ func (g *functionGenerator) genBuiltin(call *ssa.CallCommon) ([]wat.Inst, wir.Va
 			insts = append(insts, wir.NewConst(strconv.Itoa('\n'), wir.I32{}).EmitPush()...)
 			insts = append(insts, wat.NewInstCall("$waPrintRune"))
 		}
+		ret_type = wir.VOID{}
 
-		return insts, wir.VOID{}
+	case "append":
+		if len(call.Args) != 2 {
+			panic("len(call.Args) != 2")
+		}
+		insts, ret_type = wir.EmitGenAppend(g.getValue(call.Args[0]), g.getValue(call.Args[1]))
+
+	case "len":
+		if len(call.Args) != 1 {
+			panic("len(call.Args) != 1")
+		}
+		insts = wir.EmitGenLen(g.getValue(call.Args[0]))
+		ret_type = wir.I32{}
+
+	default:
+		logger.Fatal("Todo:", call.Value)
 	}
-	logger.Fatal("Todo:", call.Value)
-	return nil, nil
+	return
 }
 
 func (g *functionGenerator) genPhiIter(preds []int, values []wir.Value) []wat.Inst {
@@ -509,9 +525,9 @@ func (g *functionGenerator) genJumpID(cur, dest int) []wat.Inst {
 
 func (g *functionGenerator) genAlloc(inst *ssa.Alloc) ([]wat.Inst, wir.ValueType) {
 	if inst.Heap {
-		return wir.EmitHeapAlloc(wir.ToWType(inst.Type().(*types.Pointer).Elem()), g.module)
+		return wir.EmitHeapAlloc(wir.ToWType(inst.Type().(*types.Pointer).Elem()))
 	} else {
-		return wir.EmitStackAlloc(wir.ToWType(inst.Type().(*types.Pointer).Elem()), g.module)
+		return wir.EmitStackAlloc(wir.ToWType(inst.Type().(*types.Pointer).Elem()))
 	}
 }
 
@@ -530,6 +546,19 @@ func (g *functionGenerator) genIndexAddr(inst *ssa.IndexAddr) ([]wat.Inst, wir.V
 	id := g.getValue(inst.Index)
 
 	return wir.EmitGenIndexAddr(x, id)
+}
+
+func (g *functionGenerator) genSlice(inst *ssa.Slice) ([]wat.Inst, wir.ValueType) {
+	x := g.getValue(inst.X)
+	var low, high wir.Value
+	if inst.Low != nil {
+		low = g.getValue(inst.Low)
+	}
+	if inst.High != nil {
+		high = g.getValue(inst.High)
+	}
+
+	return wir.EmitGenSlice(x, low, high)
 }
 
 func (g *functionGenerator) addRegister(typ wir.ValueType) wir.Value {

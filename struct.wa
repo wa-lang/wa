@@ -11,7 +11,7 @@ type sc struct {
 	sp
 }
 
-fn gen_sc() => *sc {
+fn gen_scref() => *sc {
 	var v sc
 	var i i32
 	i = 13
@@ -20,12 +20,20 @@ fn gen_sc() => *sc {
 	return &v
 }
 
-fn gen(p: i32) => i32 {
-	return p
+fn gen_sc() => sc {
+	var i i32 = 26
+	var v sc
+	v.a = &i
+	v.b = 58
+	return v
 }
 
 fn main() {
-	i := gen_sc()
+	i := gen_scref()
 	println(*i.a)
 	println(i.b)
+	
+	j := gen_sc()
+	println(*j.a)
+	println(j.b)
 }

@@ -1,0 +1,19 @@
+// 版权 @2021 凹语言 作者。保留所有权利。
+
+package main
+
+var I [8]i32
+
+fn Gen_arr(param: [8]i32) => [8]i32 {
+	param[3] += 2
+	return param
+}
+
+fn main() {
+	var j [8]i32
+	j[3] = 40
+	I = Gen_arr(j)
+
+	println(j[3])
+	println(I[3])
+}

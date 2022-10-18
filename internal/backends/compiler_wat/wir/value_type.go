@@ -51,7 +51,7 @@ type VOID struct{}
 func (t VOID) Name() string           { return "void" }
 func (t VOID) size() int              { return 0 }
 func (t VOID) align() int             { return 0 }
-func (t VOID) onFree(m *Module) int   { return 0 }
+func (t VOID) onFree() int            { return 0 }
 func (t VOID) Raw() []wat.ValueType   { return []wat.ValueType{} }
 func (t VOID) Equal(u ValueType) bool { _, ok := u.(VOID); return ok }
 func (t VOID) emitLoadFromAddr(addr Value, offset int) []wat.Inst {
@@ -67,7 +67,7 @@ type RUNE struct{}
 func (t RUNE) Name() string           { return "rune" }
 func (t RUNE) size() int              { return 4 }
 func (t RUNE) align() int             { return 4 }
-func (t RUNE) onFree(m *Module) int   { return 0 }
+func (t RUNE) onFree() int            { return 0 }
 func (t RUNE) Raw() []wat.ValueType   { return []wat.ValueType{wat.I32{}} }
 func (t RUNE) Equal(u ValueType) bool { _, ok := u.(RUNE); return ok }
 func (t RUNE) emitLoadFromAddr(addr Value, offset int) []wat.Inst {
@@ -88,7 +88,7 @@ type I32 struct{}
 func (t I32) Name() string           { return "i32" }
 func (t I32) size() int              { return 4 }
 func (t I32) align() int             { return 4 }
-func (t I32) onFree(m *Module) int   { return 0 }
+func (t I32) onFree() int            { return 0 }
 func (t I32) Raw() []wat.ValueType   { return []wat.ValueType{wat.I32{}} }
 func (t I32) Equal(u ValueType) bool { _, ok := u.(I32); return ok }
 func (t I32) emitLoadFromAddr(addr Value, offset int) []wat.Inst {
@@ -109,7 +109,7 @@ type U32 struct{}
 func (t U32) Name() string           { return "u32" }
 func (t U32) size() int              { return 4 }
 func (t U32) align() int             { return 4 }
-func (t U32) onFree(m *Module) int   { return 0 }
+func (t U32) onFree() int            { return 0 }
 func (t U32) Raw() []wat.ValueType   { return []wat.ValueType{wat.U32{}} }
 func (t U32) Equal(u ValueType) bool { _, ok := u.(U32); return ok }
 func (t U32) emitLoadFromAddr(addr Value, offset int) []wat.Inst {
@@ -130,7 +130,7 @@ type I64 struct{}
 func (t I64) Name() string           { return "i64" }
 func (t I64) size() int              { return 8 }
 func (t I64) align() int             { return 8 }
-func (t I64) onFree(m *Module) int   { return 0 }
+func (t I64) onFree() int            { return 0 }
 func (t I64) Raw() []wat.ValueType   { return []wat.ValueType{wat.I64{}} }
 func (t I64) Equal(u ValueType) bool { _, ok := u.(I64); return ok }
 func (t I64) emitLoadFromAddr(addr Value, offset int) []wat.Inst {
@@ -151,7 +151,7 @@ type U64 struct{}
 func (t U64) Name() string           { return "u64" }
 func (t U64) size() int              { return 8 }
 func (t U64) align() int             { return 8 }
-func (t U64) onFree(m *Module) int   { return 0 }
+func (t U64) onFree() int            { return 0 }
 func (t U64) Raw() []wat.ValueType   { return []wat.ValueType{wat.U64{}} }
 func (t U64) Equal(u ValueType) bool { _, ok := u.(U64); return ok }
 func (t U64) emitLoadFromAddr(addr Value, offset int) []wat.Inst {
@@ -172,7 +172,7 @@ type F32 struct{}
 func (t F32) Name() string           { return "f32" }
 func (t F32) size() int              { return 4 }
 func (t F32) align() int             { return 4 }
-func (t F32) onFree(m *Module) int   { return 0 }
+func (t F32) onFree() int            { return 0 }
 func (t F32) Raw() []wat.ValueType   { return []wat.ValueType{wat.F32{}} }
 func (t F32) Equal(u ValueType) bool { _, ok := u.(F32); return ok }
 func (t F32) emitLoadFromAddr(addr Value, offset int) []wat.Inst {
@@ -193,7 +193,7 @@ type F64 struct{}
 func (t F64) Name() string           { return "f64" }
 func (t F64) size() int              { return 8 }
 func (t F64) align() int             { return 8 }
-func (t F64) onFree(m *Module) int   { return 0 }
+func (t F64) onFree() int            { return 0 }
 func (t F64) Raw() []wat.ValueType   { return []wat.ValueType{wat.F64{}} }
 func (t F64) Equal(u ValueType) bool { _, ok := u.(F64); return ok }
 func (t F64) emitLoadFromAddr(addr Value, offset int) []wat.Inst {

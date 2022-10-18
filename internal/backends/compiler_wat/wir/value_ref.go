@@ -29,7 +29,7 @@ func NewRef(base ValueType) Ref {
 func (t Ref) Name() string         { return t.Base.Name() + ".$$ref" }
 func (t Ref) size() int            { return 8 }
 func (t Ref) align() int           { return 4 }
-func (t Ref) onFree(m *Module) int { return t.Struct.onFree(m) }
+func (t Ref) onFree() int          { return t.Struct.onFree() }
 func (t Ref) Raw() []wat.ValueType { return t.Struct.Raw() }
 func (t Ref) Equal(u ValueType) bool {
 	if ut, ok := u.(Ref); ok {
@@ -38,11 +38,11 @@ func (t Ref) Equal(u ValueType) bool {
 	return false
 }
 
-func (t Ref) emitHeapAlloc(module *Module) (insts []wat.Inst) {
+func (t Ref) emitHeapAlloc() (insts []wat.Inst) {
 	//insts = append(insts, wat.NewBlank())
 	//insts = append(insts, wat.NewComment("Ref.emitHeapAlloc start"))
 
-	insts = append(insts, NewBlock(t.Base).emitHeapAlloc(NewConst("1", I32{}), module)...)
+	insts = append(insts, NewBlock(t.Base).emitHeapAlloc(NewConst("1", I32{}))...)
 	insts = append(insts, wat.NewInstCall("$wa.RT.DupWatStack"))
 	insts = append(insts, NewConst("16", I32{}).EmitPush()...)
 	insts = append(insts, wat.NewInstAdd(wat.I32{}))
@@ -53,7 +53,7 @@ func (t Ref) emitHeapAlloc(module *Module) (insts []wat.Inst) {
 	return
 }
 
-func (t Ref) emitStackAlloc(module *Module) (insts []wat.Inst) {
+func (t Ref) emitStackAlloc() (insts []wat.Inst) {
 	//insts = append(insts, wat.NewBlank())
 	//insts = append(insts, wat.NewComment("Ref.emitStackAlloc start"))
 

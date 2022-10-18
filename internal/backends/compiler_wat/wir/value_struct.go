@@ -18,7 +18,7 @@ type Struct struct {
 
 type iStruct interface {
 	ValueType
-	genRawFree(module *Module) (ret []fn_offset_pair)
+	genRawFree() (ret []fn_offset_pair)
 }
 
 type Field struct {
@@ -64,16 +64,16 @@ type fn_offset_pair struct {
 	offset int
 }
 
-func (t Struct) genRawFree(module *Module) (ret []fn_offset_pair) {
+func (t Struct) genRawFree() (ret []fn_offset_pair) {
 	for _, member := range t.Members {
 		member_type := member.Type()
 		if istruct, ok := member_type.(iStruct); ok {
-			rfs := istruct.genRawFree(module)
+			rfs := istruct.genRawFree()
 			for _, rf := range rfs {
 				ret = append(ret, fn_offset_pair{fn: rf.fn, offset: rf.offset + member._start})
 			}
 		} else {
-			mff := member_type.onFree(module)
+			mff := member_type.onFree()
 			if mff != 0 {
 				ret = append(ret, fn_offset_pair{fn: mff, offset: member._start})
 			}
@@ -83,11 +83,11 @@ func (t Struct) genRawFree(module *Module) (ret []fn_offset_pair) {
 	return
 }
 
-func (t Struct) onFree(module *Module) int {
+func (t Struct) onFree() int {
 	var f Function
 	f.Name = "$" + t.Name() + ".$$onFree"
 
-	if i := module.findTableElem(f.Name); i != 0 {
+	if i := currentModule.findTableElem(f.Name); i != 0 {
 		return i
 	}
 
@@ -95,7 +95,7 @@ func (t Struct) onFree(module *Module) int {
 	ptr := NewLocal("$ptr", I32{})
 	f.Params = append(f.Params, ptr)
 
-	rfs := t.genRawFree(module)
+	rfs := t.genRawFree()
 	if len(rfs) == 0 {
 		return 0
 	}
@@ -109,7 +109,7 @@ func (t Struct) onFree(module *Module) int {
 		f.Insts = append(f.Insts, wat.NewInstConst(wat.I32{}, strconv.Itoa(rf.fn)))
 		f.Insts = append(f.Insts, wat.NewInstCallIndirect("$onFree"))
 	}
-	return module.addTableFunc(&f)
+	return currentModule.addTableFunc(&f)
 
 	/*	has_free := false
 		for _, member := range t.Members {

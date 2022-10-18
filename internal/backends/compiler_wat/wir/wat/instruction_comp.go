@@ -5,6 +5,17 @@ package wat
 import "github.com/wa-lang/wa/internal/logger"
 
 /**************************************
+instEqz:
+**************************************/
+type instEqz struct {
+	anInstruction
+	typ ValueType
+}
+
+func NewInstEqz(t ValueType) *instEqz          { return &instEqz{typ: t} }
+func (i *instEqz) Format(indent string) string { return indent + i.typ.Name() + ".eqz" }
+
+/**************************************
 instEq:
 **************************************/
 type instEq struct {

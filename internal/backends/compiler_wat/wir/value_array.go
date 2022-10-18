@@ -35,7 +35,7 @@ func (t Array) Name() string         { return t.Base.Name() + ".$$array" + strco
 func (t Array) size() int            { return t.Struct.size() }
 func (t Array) align() int           { return t.Struct.align() }
 func (t Array) Raw() []wat.ValueType { return t.Struct.Raw() }
-func (t Array) onFree(m *Module) int { return t.Struct.onFree(m) }
+func (t Array) onFree() int          { return t.Struct.onFree() }
 
 func (t Array) Equal(u ValueType) bool {
 	if ut, ok := u.(Array); ok {
