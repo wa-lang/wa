@@ -1,20 +1,18 @@
-// 版权 @2021 凹语言 作者。保留所有权利。
-
-package main
-
-fn new_int() => *i32 {
-	var i i32
-	i = 42
-	return &i
-}
-
-fn proc(i *i32){
-	*i = 13
-}
+# 版权 @2021 凹语言 作者。保留所有权利。
 
 fn main() {
 	p := new_int()
 	println(*p)
 	proc(p)
 	println(*p)
+}
+
+fn new_int() => *i32 {
+	var i: i32
+	i = 42
+	return &i
+}
+
+fn proc(i: *i32) {
+	*i = 13
 }

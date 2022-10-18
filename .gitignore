@@ -1,3 +1,6 @@
+/.fleet
+/.vscode
+
 wa
 wa.exe
 wat2wasm
