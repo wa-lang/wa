@@ -1,5 +1,8 @@
 # 版本日志
 
+- v0.2.3 (2022-10-18)
+  - 支持 JetBrains Fleet 语法高亮
+  - Wat 后端改善对 Slice 支持
 - v0.2.2 (2022-10-11)
   - Windows 增加 exe 图标
   - Playground 改进异步加载wasm资源, 支持多个例子
