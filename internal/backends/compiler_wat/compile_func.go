@@ -210,6 +210,7 @@ func (g *functionGenerator) genBlock(block *ssa.BasicBlock) []wat.Inst {
 		if _, ok := inst.(*ssa.Phi); !ok {
 			if !cur_block_assigned {
 				b = append(b, wir.EmitAssginValue(g.var_current_block, wir.NewConst(strconv.Itoa(block.Index), wir.I32{}))...)
+				b = append(b, wat.NewBlank())
 				cur_block_assigned = true
 			}
 		}
@@ -238,9 +239,6 @@ func (g *functionGenerator) genInstruction(inst ssa.Instruction) (insts []wat.In
 		insts = append(insts, g.genReturn(inst)...)
 
 	case *ssa.Extract:
-		logger.Fatalf("Todo:%T", inst)
-
-	case *ssa.Field:
 		logger.Fatalf("Todo:%T", inst)
 
 	case ssa.Value:
@@ -286,6 +284,9 @@ func (g *functionGenerator) genValue(v ssa.Value) ([]wat.Inst, wir.ValueType) {
 
 	case *ssa.Alloc:
 		return g.genAlloc(v)
+
+	case *ssa.Field:
+		return g.genFiled(v)
 
 	case *ssa.FieldAddr:
 		return g.genFieldAddr(v)
@@ -529,6 +530,17 @@ func (g *functionGenerator) genAlloc(inst *ssa.Alloc) ([]wat.Inst, wir.ValueType
 	} else {
 		return wir.EmitStackAlloc(wir.ToWType(inst.Type().(*types.Pointer).Elem()))
 	}
+}
+
+func (g *functionGenerator) genFiled(inst *ssa.Field) ([]wat.Inst, wir.ValueType) {
+	x := g.getValue(inst.X)
+	field := inst.X.Type().Underlying().(*types.Struct).Field(inst.Field)
+	fieldname := field.Name()
+	if field.Embedded() {
+		fieldname = "$" + fieldname
+	}
+
+	return wir.EmitGenField(x, fieldname)
 }
 
 func (g *functionGenerator) genFieldAddr(inst *ssa.FieldAddr) ([]wat.Inst, wir.ValueType) {

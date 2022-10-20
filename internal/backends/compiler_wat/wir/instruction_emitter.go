@@ -180,6 +180,20 @@ func EmitStackAlloc(typ ValueType) (insts []wat.Inst, ret_type ValueType) {
 	//return
 }
 
+func EmitGenField(x Value, field_name string) (insts []wat.Inst, ret_type ValueType) {
+	switch x := x.(type) {
+	case *aStruct:
+		field := x.Extract(field_name)
+		insts = append(insts, field.EmitPush()...)
+		ret_type = field.Type()
+
+	default:
+		logger.Fatalf("Todo:%T", x)
+	}
+
+	return
+}
+
 func EmitGenFieldAddr(x Value, field_name string) (insts []wat.Inst, ret_type ValueType) {
 	insts = append(insts, x.EmitPush()...)
 	var field *Field
