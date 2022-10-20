@@ -13,6 +13,7 @@
 [![Go Report Card](https://goreportcard.com/badge/github.com/wa-lang/wa)](https://goreportcard.com/report/github.com/wa-lang/wa)
 [![Coverage Status](https://coveralls.io/repos/github/wa-lang/wa/badge.svg)](https://coveralls.io/github/wa-lang/wa)
 [![GitHub release](https://img.shields.io/github/v/tag/wa-lang/wa.svg?label=release)](https://github.com/wa-lang/wa/releases)
+[![license](https://img.shields.io/github/license/wa-lang/wa.svg)](https://github.com/wa-lang/wa/blob/master/LICENSE)
 
 </div>
 
@@ -26,7 +27,7 @@ Instead of requiring complex toolchains to set up, you can simply go install it 
 - 主页 (Homepage): [https://wa-lang.org](https://wa-lang.org)
 - 代码仓库 (Github): [https://github.com/wa-lang/wa](https://github.com/wa-lang/wa)
 - 代码仓库 (Gitee):  [https://gitee.com/wa-lang/wa](https://gitee.com/wa-lang/wa)
-- 开发工具 (Develop Tools): [Playground](https://wa-lang.org/playground), [VSCode 插件](https://marketplace.visualstudio.com/items?itemName=xxxDeveloper.vscode-wa), [Vim 插件](https://github.com/wa-lang/vim-wa)
+- 开发工具 (Develop Tools): [Playground](https://wa-lang.org/playground), [VSCode 插件](https://marketplace.visualstudio.com/items?itemName=xxxDeveloper.vscode-wa), [Fleet 插件](https://github.com/wa-lang/fleet-wa), [Vim 插件](https://github.com/wa-lang/vim-wa)
 - 开发组 (Core Team): [柴树杉(chai2010)](https://github.com/chai2010)、[丁尔男(Ending)](https://github.com/3dgen)、[史斌(Benshi)](https://github.com/benshi001)、[扈梦明(xxxDeveloper)](https://github.com/xxxDeveloper)、[刘云峰(leaftree)](https://github.com/leaftree)、[宋汝阳(ShiinaOrez)](https://github.com/ShiinaOrez)
 
 ## Playground 在线预览
