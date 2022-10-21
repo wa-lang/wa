@@ -43,9 +43,9 @@ Instead of requiring complex toolchains to set up, you can simply go install it 
 2. `wa init -name=_examples/hi`
 3. `wa run _examples/hi`
 
-> 项目尚处于原型开源阶段，如果有共建和PR需求请 [入群交流](https://wa-lang.org/community/index.html)。
+> 项目尚处于原型开源阶段，如果有共建和PR需求请参考 [如何贡献代码](https://wa-lang.org/community/contribute.html)。
 
-> The Wa project is still in very early stage. If you want to submit PR, please join the [Wechat Group(Speak Chinese)](https://wa-lang.org/community/index.html) at first.
+> The Wa project is still in very early stage. If you want to submit PR, please read the [Contribution Guide(Chinese)](https://wa-lang.org/community/contribute.html).
 
 ## 例子: 凹语言 (Example: Print 凹语言)
 
