@@ -17,6 +17,8 @@ fn main() {
 	l[2] = 64
 	println(k[2]) # 64
 
-	l = append(l, 55)
-	println(l[3]) # 55
-}
+	l = append(l, l...)
+	l = append(l, l...)
+	l[0] = 111
+	println(l[0]) #111
+	println(k[0]) #99
