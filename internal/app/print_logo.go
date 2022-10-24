@@ -4,14 +4,25 @@ package app
 
 import (
 	"fmt"
+	"time"
 )
 
 func PrintLogo(more bool) {
-	fmt.Print(logo)
+	if is1024Day() {
+		fmt.Print(logo1024)
+	} else {
+		fmt.Print(logo)
+	}
+
 	if more {
 		fmt.Print(moreLogos)
 	}
 	fmt.Println()
+}
+
+func is1024Day() bool {
+	_, month, day := time.Now().Date()
+	return month == 10 && day == 24
 }
 
 const logo = `
@@ -20,6 +31,16 @@ const logo = `
 |   +----+   |
 |            |
 |     Wa     |
+|            |
++------------+
+`
+
+const logo1024 = `
++---+    +---+
+| o |    | o |
+|   +----+   |
+|            |
+|    1024    |
 |            |
 +------------+
 `
