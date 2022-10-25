@@ -21,6 +21,7 @@ import (
 	"github.com/wa-lang/wa/internal/backends/compiler_c"
 	"github.com/wa-lang/wa/internal/backends/compiler_ll"
 	"github.com/wa-lang/wa/internal/backends/compiler_ll/builtin"
+	"github.com/wa-lang/wa/internal/backends/compiler_llvm"
 	"github.com/wa-lang/wa/internal/backends/compiler_wat"
 	"github.com/wa-lang/wa/internal/backends/target_spec"
 	"github.com/wa-lang/wa/internal/config"
@@ -287,6 +288,20 @@ func (p *App) ASM(filename string) error {
 	}
 
 	fmt.Print(output)
+	return nil
+}
+
+func (p *App) LLVM(infile string, outfile string, target string) error {
+	cfg := config.DefaultConfig()
+	prog, err := loader.LoadProgram(cfg, infile)
+	if err != nil {
+		return err
+	}
+	output, err := compiler_llvm.New(target).Compile(prog)
+	if err != nil {
+		return err
+	}
+	_ = output
 	return nil
 }
 

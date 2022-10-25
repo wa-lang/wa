@@ -230,7 +230,7 @@ func main() {
 					if t, ok := api.ParseMachine(s); ok {
 						target = t
 					} else {
-						fmt.Printf("imvalid target: %q", s)
+						fmt.Printf("invalid target: %q", s)
 						os.Exit(1)
 					}
 				}
@@ -256,6 +256,46 @@ func main() {
 					}
 				} else {
 					fmt.Println(string(output))
+				}
+
+				return nil
+			},
+		},
+		{
+			Name:  "native",
+			Usage: "compile wa source code to native executable",
+			Flags: []cli.Flag{
+				&cli.StringFlag{
+					Name:    "output",
+					Aliases: []string{"o"},
+					Usage:   "set output file",
+					Value:   "",
+				},
+				&cli.StringFlag{
+					Name:  "target",
+					Usage: "set native target",
+					Value: "",
+				},
+			},
+			Action: func(c *cli.Context) error {
+				outfile := c.String("output")
+				target := c.String("target")
+				infile := ""
+
+				if c.NArg() == 0 {
+					fmt.Fprintf(os.Stderr, "no input file")
+					os.Exit(1)
+				}
+				infile = c.Args().First()
+
+				if outfile == "" {
+					outfile = infile + ".exe"
+				}
+
+				ctx := app.NewApp(build_Options(c))
+				if err := ctx.LLVM(infile, outfile, target); err != nil {
+					fmt.Println(err)
+					os.Exit(1)
 				}
 
 				return nil
