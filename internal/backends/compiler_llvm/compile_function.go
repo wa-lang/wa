@@ -4,6 +4,7 @@ package compiler_llvm
 
 import (
 	"errors"
+	"fmt"
 
 	"github.com/wa-lang/wa/internal/ssa"
 )
@@ -31,12 +32,45 @@ func (p *Compiler) compileFunction(fn *ssa.Function) error {
 	}
 	p.output.WriteString(") {\n")
 
-	// Emit fake function body.
-	p.output.WriteString("  ret " + retType)
-	if retType != "void" {
-		p.output.WriteString(" 0")
+	// Translate Go SSA intermediate instructions.
+	for i, b := range fn.Blocks {
+		p.output.WriteString(fmt.Sprintf("; __basic_block_%d:\n", i+1))
+		for _, instr := range b.Instrs {
+			if err := p.compileInstr(instr); err != nil {
+				return err
+			}
+		}
+		p.output.WriteString("\n")
 	}
 
-	p.output.WriteString("\n}\n\n")
+	p.output.WriteString("}\n\n")
+	return nil
+}
+
+func (p *Compiler) compileInstr(instr ssa.Instruction) error {
+	switch instr := instr.(type) {
+	case *ssa.Return:
+		switch len(instr.Results) {
+		case 0:
+			p.output.WriteString("  ret void\n")
+		case 1: // ret %type %value
+			p.output.WriteString("  ; ret ")
+			p.output.WriteString(getTypeStr(instr.Results[0].Type(), p.target))
+			p.output.WriteString(" %" + instr.Results[0].Name())
+			p.output.WriteString("\n")
+			p.output.WriteString("  ret " + getTypeStr(instr.Results[0].Type(), p.target) + " 1")
+			p.output.WriteString("\n")
+		default:
+			return errors.New("multiple return values are not supported")
+		}
+
+	case ssa.Value:
+		p.output.WriteString("  ; " + instr.Name() + " = " + instr.String() + "\n")
+
+	default:
+		p.output.WriteString("  ; " + instr.String() + "\n")
+		// panic("unsupported IR '" + instr.String() + "'")
+	}
+
 	return nil
 }

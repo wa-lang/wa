@@ -35,10 +35,10 @@ func (p *Compiler) Compile(prog *loader.Program) (output string, err error) {
 }
 
 func (p *Compiler) compilePackage() error {
-	var ts []*ssa.Type
-	var cs []*ssa.NamedConst
-	var gs []*ssa.Global
-	var fns []*ssa.Function
+	var ts []*ssa.Type       // global types
+	var cs []*ssa.NamedConst // global constants
+	var gs []*ssa.Global     // global variables
+	var fns []*ssa.Function  // global functions & methods
 
 	for _, m := range p.ssaPkg.Members {
 		switch member := m.(type) {
@@ -66,6 +66,10 @@ func (p *Compiler) compilePackage() error {
 
 	// Generate LLVM-IR for each global function.
 	for _, v := range fns {
+		// TODO: Support the builtin function 'init'.
+		if v.Name() == "init" {
+			continue
+		}
 		if err := p.compileFunction(v); err != nil {
 			return err
 		}
