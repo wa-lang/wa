@@ -4,6 +4,8 @@ package compiler_llvm
 
 import (
 	"errors"
+	"strings"
+
 	"github.com/wa-lang/wa/internal/loader"
 	"github.com/wa-lang/wa/internal/ssa"
 )
@@ -11,7 +13,7 @@ import (
 type Compiler struct {
 	ssaPkg *ssa.Package
 	target string
-	output string
+	output strings.Builder
 }
 
 func New(target string) *Compiler {
@@ -25,23 +27,14 @@ func (p *Compiler) Compile(prog *loader.Program) (output string, err error) {
 		return "", errors.New("invalid or empty input program")
 	}
 	p.ssaPkg = prog.SSAMainPkg
-	p.output = "define i32 @main() {\nret i32 0\n}\n"
-	if err := p.CompilePackage(); err != nil {
+	p.output.WriteString("declare i32 @printf(i8* readonly, ...)\n\n")
+	if err := p.compilePackage(); err != nil {
 		return "", err
 	}
-	return p.output, nil
+	return p.output.String(), nil
 }
 
-func findFunc(f *ssa.Function, fns []*ssa.Function) bool {
-	for _, m := range fns {
-		if m.Object() == f.Object() {
-			return true
-		}
-	}
-	return false
-}
-
-func (p *Compiler) CompilePackage() error {
+func (p *Compiler) compilePackage() error {
 	var ts []*ssa.Type
 	var cs []*ssa.NamedConst
 	var gs []*ssa.Global
@@ -62,6 +55,7 @@ func (p *Compiler) CompilePackage() error {
 		}
 	}
 
+	// Collect methods which are not treated as functions.
 	for _, v := range p.ssaPkg.GetValues() {
 		if f, ok := v.(*ssa.Function); ok {
 			if !findFunc(f, fns) {
@@ -70,5 +64,21 @@ func (p *Compiler) CompilePackage() error {
 		}
 	}
 
+	// Generate LLVM-IR for each global function.
+	for _, v := range fns {
+		if err := p.compileFunction(v); err != nil {
+			return err
+		}
+	}
+
 	return nil
+}
+
+func findFunc(f *ssa.Function, fns []*ssa.Function) bool {
+	for _, m := range fns {
+		if m.Object() == f.Object() {
+			return true
+		}
+	}
+	return false
 }
