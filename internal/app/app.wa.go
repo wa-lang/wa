@@ -301,7 +301,34 @@ func (p *App) LLVM(infile string, outfile string, target string) error {
 	if err != nil {
 		return err
 	}
-	_ = output
+	if err := os.WriteFile(infile+".ll", []byte(output), 0644); err != nil {
+		return err
+	}
+
+	// Invoke command `llc infile.ll -mtriple=xxx`.
+	llc := []string{infile + ".ll"}
+	if target != "" {
+		llc = append(llc, "-mtriple", target)
+	}
+	cmd0 := exec.Command("llc", llc...)
+	cmd0.Stderr = os.Stderr
+	if err := cmd0.Run(); err != nil {
+		fmt.Fprintf(os.Stderr, "**** failed to invoke LLVM ****\n")
+		return err
+	}
+
+	// Invoke command `clang infile.s -o outfile --target=xxx`.
+	clang := []string{infile + ".s", "-o", outfile}
+	if target != "" {
+		clang = append(clang, "-target", target)
+	}
+	cmd1 := exec.Command("clang", clang...)
+	cmd1.Stderr = os.Stderr
+	if err := cmd1.Run(); err != nil {
+		fmt.Fprintf(os.Stderr, "**** failed to invoke CLANG ****\n")
+		return err
+	}
+
 	return nil
 }
 
