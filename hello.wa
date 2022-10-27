@@ -6,9 +6,13 @@ fn main {
 	print('言')
 	print('\n')
 
-	println(add(40, 2))
+	println(calc0(42, 5, 3))
 }
 
-fn add(a: i32, b: i32) => i32 {
-	return a + b
+fn calc0(a: i32, b: i32, c: i32) => i32 {
+	return a * 5 / (b - c + 1)
+}
+
+fn calc2(a: float32, b: float32, c: float32) => float32 {
+     return a * 5 / (b - c + 1)
 }

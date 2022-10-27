@@ -3,8 +3,11 @@
 package compiler_llvm
 
 import (
+	"fmt"
+	"strconv"
 	"strings"
 
+	"github.com/wa-lang/wa/internal/ssa"
 	"github.com/wa-lang/wa/internal/types"
 )
 
@@ -14,6 +17,26 @@ func getArch(arch string) string {
 		return arch
 	}
 	return arch[0:pos]
+}
+
+func checkType(from types.Type) (isFloat bool, isSigned bool) {
+	switch t := from.(type) {
+	case *types.Basic:
+		switch t.Kind() {
+		case types.Float32, types.Float64, types.UntypedFloat:
+			return true, true
+		case types.Uint8, types.Uint16, types.Uint32, types.Uint64,
+			types.Uint:
+			return false, false
+		case types.Bool, types.UntypedBool, types.Int8, types.Int16,
+			types.Int32, types.Int64, types.Int, types.UntypedInt:
+			return false, true
+		default:
+			panic("unknown basic type")
+		}
+	default:
+		panic("basic type is expected")
+	}
 }
 
 func getTypeStr(from types.Type, target string) string {
@@ -41,9 +64,9 @@ func getTypeStr(from types.Type, target string) string {
 		types.Uint32:       "i32",
 		types.Int64:        "i64",
 		types.Uint64:       "i64",
-		types.Float32:      "f32",
-		types.Float64:      "f64",
-		types.UntypedFloat: "f32",
+		types.Float32:      "float",
+		types.Float64:      "double",
+		types.UntypedFloat: "float",
 	}
 
 	switch t := from.(type) {
@@ -66,5 +89,26 @@ func getTypeStr(from types.Type, target string) string {
 	default:
 		// TODO: support pointer, array and struct types
 		panic("unknown type")
+	}
+}
+
+func getValueStr(val ssa.Value) string {
+	switch val.(type) {
+	case *ssa.Const:
+		name := val.Name()
+		if pos := strings.Index(name, ":"); pos > 0 {
+			name = name[0:pos]
+			// Special form for float32/float64 constants as LLVM-IR requested.
+			if isFloat, _ := checkType(val.Type()); isFloat {
+				if f, err := strconv.ParseFloat(name, 64); err == nil {
+					name = fmt.Sprintf("%e", f)
+				}
+			}
+		}
+		return name
+	case *ssa.Parameter:
+		return "%" + val.Name()
+	default:
+		return "%" + val.Name()
 	}
 }

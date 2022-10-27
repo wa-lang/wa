@@ -54,18 +54,19 @@ func (p *Compiler) compileInstr(instr ssa.Instruction) error {
 		case 0:
 			p.output.WriteString("  ret void\n")
 		case 1: // ret %type %value
-			p.output.WriteString("  ; ret ")
+			p.output.WriteString("  ret ")
 			p.output.WriteString(getTypeStr(instr.Results[0].Type(), p.target))
-			p.output.WriteString(" %" + instr.Results[0].Name())
-			p.output.WriteString("\n")
-			p.output.WriteString("  ret " + getTypeStr(instr.Results[0].Type(), p.target) + " 1")
+			p.output.WriteString(" ")
+			p.output.WriteString(getValueStr(instr.Results[0]))
 			p.output.WriteString("\n")
 		default:
 			return errors.New("multiple return values are not supported")
 		}
 
 	case ssa.Value:
-		p.output.WriteString("  ; " + instr.Name() + " = " + instr.String() + "\n")
+		if err := p.compileValue(instr); err != nil {
+			return err
+		}
 
 	default:
 		p.output.WriteString("  ; " + instr.String() + "\n")
