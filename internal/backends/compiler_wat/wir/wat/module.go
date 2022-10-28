@@ -13,6 +13,7 @@ type Module struct {
 	FuncTypes []FuncType
 	Globals   []Global
 	Funcs     []*Function
+	DataSeg   []byte
 
 	BaseWat string
 }
@@ -57,6 +58,15 @@ func (m *Module) String() string {
 	//}
 
 	s += m.BaseWat
+
+	if len(m.DataSeg) > 0 {
+		s += "(data (i32.const 0) \""
+		for _, d := range m.DataSeg {
+			s += "\\"
+			s += strconv.FormatInt(int64(d), 16)
+		}
+		s += "\")\n"
+	}
 
 	s += m.Tables.String()
 

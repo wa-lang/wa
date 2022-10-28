@@ -20,6 +20,8 @@ type Module struct {
 	globals     []Value
 	Globals_map map[ssa.Value]Value
 
+	data_seg []byte
+
 	BaseWat string
 }
 
@@ -31,6 +33,9 @@ func NewModule() *Module {
 	//table中先行插入一条记录，防止产生0值（无效值）id
 	m.table = append(m.table, "")
 	m.table_map = make(map[string]int)
+
+	//data_seg中先插入标志，防止产生0值
+	m.data_seg = append(m.data_seg, []byte("$$wads$$")...)
 
 	m.Globals_map = make(map[ssa.Value]Value)
 	return &m
@@ -74,6 +79,12 @@ func (m *Module) AddGlobal(name string, typ ValueType, is_pointer bool, ssa_valu
 	m.globals = append(m.globals, v)
 	m.Globals_map[ssa_value] = v
 	return v
+}
+
+func (m *Module) AddDataSeg(data []byte) (ptr int) {
+	ptr = len(m.data_seg)
+	m.data_seg = append(m.data_seg, data...)
+	return
 }
 
 func (m *Module) genGlobalAlloc() *Function {
@@ -125,6 +136,8 @@ func (m *Module) ToWatModule() *wat.Module {
 			wat_module.Globals = append(wat_module.Globals, wat_global)
 		}
 	}
+
+	wat_module.DataSeg = m.data_seg
 
 	return &wat_module
 }
