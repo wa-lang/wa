@@ -1,22 +1,10 @@
 # 版权 @2019 凹语言 作者。保留所有权利。
 
 fn main {
-	print('凹')
-	print('语')
-	print('言')
-	print('\n')
-
-	println(calc0(42, 5, 3))
+	println("你好，凹语言！")
+	println(add(40, 2))
 }
 
-fn calc0(a: i32, b: i32, c: i32) => i32 {
-	return a * 5 / (b - c + 1)
-}
-
-fn calc1(a: i32, b: i32, c: i32) => i32 {
-	return calc0(a, b, c)
-}
-
-fn calc2(a: float32, b: float32, c: float32) => float32 {
-     return a * 5 / (b - c + 1)
+fn add(a: i32, b: i32) => i32 {
+	return a+b
 }

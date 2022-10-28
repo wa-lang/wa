@@ -53,11 +53,7 @@ Instead of requiring complex toolchains to set up, you can simply go install it 
 
 ```
 fn main {
-	print('凹')
-	print('语')
-	print('言')
-	print('\n')
-
+	println("你好，凹语言！")
 	println(add(40, 2))
 }
 
@@ -70,7 +66,7 @@ fn add(a: i32, b: i32) => i32 {
 
 ```
 $ go run main.go hello.wa 
-凹语言
+你好，凹语言！
 42
 ```
 
