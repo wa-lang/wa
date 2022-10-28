@@ -3,7 +3,7 @@
 //go:build !wasm
 // +build !wasm
 
-// 凹语言™ 命令行程序。
+// 凹语言，The Wa Programming Language.
 package main
 
 import (
