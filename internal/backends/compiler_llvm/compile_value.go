@@ -112,6 +112,34 @@ func (p *Compiler) compileBinOp(val *ssa.BinOp) error {
 }
 
 func (p *Compiler) compileCall(val *ssa.Call) error {
-	p.output.WriteString("  ; " + val.Name() + " = " + val.String() + "\n")
-	return nil
+	switch val.Call.Value.(type) {
+	case *ssa.Function:
+		p.output.WriteString("  %")
+		p.output.WriteString(val.Name())
+		p.output.WriteString(" = call ")
+		p.output.WriteString(getTypeStr(val.Type(), p.target))
+		p.output.WriteString(" @")
+		p.output.WriteString(val.Call.StaticCallee().Name())
+		p.output.WriteString("(")
+		// Emit parameters.
+		for i, v := range val.Call.Args {
+			p.output.WriteString(getTypeStr(v.Type(), p.target))
+			p.output.WriteString(" ")
+			p.output.WriteString(getValueStr(v))
+			if i < len(val.Call.Args)-1 {
+				p.output.WriteString(", ")
+			}
+		}
+		p.output.WriteString(")\n")
+		return nil
+
+	case *ssa.Builtin:
+		p.output.WriteString("  ; " + val.Name() + " = " + val.String() + "\n")
+		return nil
+
+	default:
+		p.output.WriteString("  ; " + val.Name() + " = " + val.String() + "\n")
+		return nil
+		// panic("unsupported Value '" + val.Name() + " = " + val.String() + "'")
+	}
 }

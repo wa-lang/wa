@@ -40,7 +40,9 @@ func (p *Compiler) compileFunction(fn *ssa.Function) error {
 				return err
 			}
 		}
-		p.output.WriteString("\n")
+		if i < len(fn.Blocks)-1 {
+			p.output.WriteString("\n")
+		}
 	}
 
 	p.output.WriteString("}\n\n")
