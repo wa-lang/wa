@@ -21,6 +21,66 @@ func (i *instLoad) Format(indent string) string {
 }
 
 /**************************************
+instLoad8s:
+**************************************/
+type instLoad8s struct {
+	anInstruction
+	offset, align int
+}
+
+func NewInstLoad8s(offset int, align int) *instLoad8s {
+	return &instLoad8s{offset: offset, align: align}
+}
+func (i *instLoad8s) Format(indent string) string {
+	return indent + "i32.load8_s offset=" + strconv.Itoa(i.offset) + " align=" + strconv.Itoa(i.align)
+}
+
+/**************************************
+instLoad8u:
+**************************************/
+type instLoad8u struct {
+	anInstruction
+	offset, align int
+}
+
+func NewInstLoad8u(offset int, align int) *instLoad8u {
+	return &instLoad8u{offset: offset, align: align}
+}
+func (i *instLoad8u) Format(indent string) string {
+	return indent + "i32.load8_u offset=" + strconv.Itoa(i.offset) + " align=" + strconv.Itoa(i.align)
+}
+
+/**************************************
+instLoad16s:
+**************************************/
+type instLoad16s struct {
+	anInstruction
+	offset, align int
+}
+
+func NewInstLoad16s(offset int, align int) *instLoad16s {
+	return &instLoad16s{offset: offset, align: align}
+}
+func (i *instLoad16s) Format(indent string) string {
+	return indent + "i32.load16_s offset=" + strconv.Itoa(i.offset) + " align=" + strconv.Itoa(i.align)
+}
+
+/**************************************
+instLoad16u:
+**************************************/
+type instLoad16u struct {
+	anInstruction
+	offset, align int
+}
+
+func NewInstLoad16u(offset int, align int) *instLoad16u {
+	return &instLoad16u{offset: offset, align: align}
+}
+func (i *instLoad16u) Format(indent string) string {
+	return indent + "i32.load16_u offset=" + strconv.Itoa(i.offset) + " align=" + strconv.Itoa(i.align)
+}
+
+/**************************************
 instStore:
 **************************************/
 type instStore struct {

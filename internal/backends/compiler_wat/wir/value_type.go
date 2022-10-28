@@ -9,13 +9,10 @@ import (
 
 func toWatType(t ValueType) wat.ValueType {
 	switch t.(type) {
-	case RUNE:
+	case I32, RUNE, I8, I16:
 		return wat.I32{}
 
-	case I32:
-		return wat.I32{}
-
-	case U32:
+	case U32, U8, U16:
 		return wat.U32{}
 
 	case I64:
@@ -77,6 +74,90 @@ func (t RUNE) emitLoadFromAddr(addr Value, offset int) []wat.Inst {
 	}
 	insts := addr.EmitPush()
 	insts = append(insts, wat.NewInstLoad(toWatType(t), offset, 1))
+	return insts
+}
+
+/**************************************
+I8:
+**************************************/
+type I8 struct{}
+
+func (t I8) Name() string           { return "i8" }
+func (t I8) size() int              { return 1 }
+func (t I8) align() int             { return 1 }
+func (t I8) onFree() int            { return 0 }
+func (t I8) Raw() []wat.ValueType   { return []wat.ValueType{wat.I32{}} }
+func (t I8) Equal(u ValueType) bool { _, ok := u.(I8); return ok }
+func (t I8) emitLoadFromAddr(addr Value, offset int) []wat.Inst {
+	if !addr.Type().(Pointer).Base.Equal(t) {
+		logger.Fatal("Type not match")
+		return nil
+	}
+	insts := addr.EmitPush()
+	insts = append(insts, wat.NewInstLoad8s(offset, 1))
+	return insts
+}
+
+/**************************************
+U8:
+**************************************/
+type U8 struct{}
+
+func (t U8) Name() string           { return "u8" }
+func (t U8) size() int              { return 1 }
+func (t U8) align() int             { return 1 }
+func (t U8) onFree() int            { return 0 }
+func (t U8) Raw() []wat.ValueType   { return []wat.ValueType{wat.I32{}} }
+func (t U8) Equal(u ValueType) bool { _, ok := u.(U8); return ok }
+func (t U8) emitLoadFromAddr(addr Value, offset int) []wat.Inst {
+	if !addr.Type().(Pointer).Base.Equal(t) {
+		logger.Fatal("Type not match")
+		return nil
+	}
+	insts := addr.EmitPush()
+	insts = append(insts, wat.NewInstLoad8u(offset, 1))
+	return insts
+}
+
+/**************************************
+I16:
+**************************************/
+type I16 struct{}
+
+func (t I16) Name() string           { return "i16" }
+func (t I16) size() int              { return 2 }
+func (t I16) align() int             { return 2 }
+func (t I16) onFree() int            { return 0 }
+func (t I16) Raw() []wat.ValueType   { return []wat.ValueType{wat.I32{}} }
+func (t I16) Equal(u ValueType) bool { _, ok := u.(I16); return ok }
+func (t I16) emitLoadFromAddr(addr Value, offset int) []wat.Inst {
+	if !addr.Type().(Pointer).Base.Equal(t) {
+		logger.Fatal("Type not match")
+		return nil
+	}
+	insts := addr.EmitPush()
+	insts = append(insts, wat.NewInstLoad16s(offset, 1))
+	return insts
+}
+
+/**************************************
+U16:
+**************************************/
+type U16 struct{}
+
+func (t U16) Name() string           { return "u16" }
+func (t U16) size() int              { return 2 }
+func (t U16) align() int             { return 2 }
+func (t U16) onFree() int            { return 0 }
+func (t U16) Raw() []wat.ValueType   { return []wat.ValueType{wat.I32{}} }
+func (t U16) Equal(u ValueType) bool { _, ok := u.(U16); return ok }
+func (t U16) emitLoadFromAddr(addr Value, offset int) []wat.Inst {
+	if !addr.Type().(Pointer).Base.Equal(t) {
+		logger.Fatal("Type not match")
+		return nil
+	}
+	insts := addr.EmitPush()
+	insts = append(insts, wat.NewInstLoad16u(offset, 1))
 	return insts
 }
 
