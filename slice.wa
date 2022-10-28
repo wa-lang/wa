@@ -22,3 +22,4 @@ fn main() {
 	l[0] = 111
 	println(l[0]) #111
 	println(k[0]) #99
+}
