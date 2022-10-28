@@ -83,7 +83,8 @@ func (g *functionGenerator) getValue(i ssa.Value) wir.Value {
 				return wir.NewConst(strconv.FormatFloat(val, 'f', -1, 64), wir.F64{})
 
 			case types.String, types.UntypedString:
-				logger.Fatalf("Todo:%T", t)
+				val := constant.StringVal(v.Value)
+				return wir.NewConst(val, wir.NewString())
 
 			default:
 				logger.Fatalf("Todo:%T", t)
@@ -296,20 +297,27 @@ func (g *functionGenerator) genValue(v ssa.Value) ([]wat.Inst, wir.ValueType) {
 
 	case *ssa.Slice:
 		return g.genSlice(v)
+
 	}
 
 	logger.Fatalf("Todo: %v, type: %T", v, v)
 	return nil, nil
 }
 
-func (g *functionGenerator) genUnOp(inst *ssa.UnOp) ([]wat.Inst, wir.ValueType) {
+func (g *functionGenerator) genUnOp(inst *ssa.UnOp) (insts []wat.Inst, ret_type wir.ValueType) {
 	switch inst.Op {
 	case token.MUL: //*x
 		return g.genLoad(inst.X)
+
+	case token.SUB:
+		x := g.getValue(inst.X)
+		return wir.EmitUnOp(x, wat.OpCodeSub)
+
+	default:
+		logger.Fatal("Todo")
 	}
 
-	logger.Fatal("Todo")
-	return nil, nil
+	return
 }
 
 func (g *functionGenerator) genBinOp(inst *ssa.BinOp) ([]wat.Inst, wir.ValueType) {
@@ -409,6 +417,9 @@ func (g *functionGenerator) genBuiltin(call *ssa.CallCommon) (insts []wat.Inst, 
 			case wir.RUNE:
 				insts = append(insts, arg.EmitPush()...)
 				insts = append(insts, wat.NewInstCall("$waPrintRune"))
+
+			case wir.String:
+				insts = append(insts, wir.EmitPrintString(arg)...)
 
 			default:
 				logger.Fatalf("Todo: print(%T)", arg.Type())

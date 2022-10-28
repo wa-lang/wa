@@ -12,7 +12,7 @@ func ToWType(from types.Type) ValueType {
 	switch t := from.(type) {
 	case *types.Basic:
 		switch t.Kind() {
-		case types.Bool, types.Int, types.Int32, types.UntypedInt:
+		case types.Bool, types.UntypedBool, types.Int, types.Int32, types.UntypedInt:
 			return I32{}
 
 		case types.Uint32:
@@ -30,20 +30,20 @@ func ToWType(from types.Type) ValueType {
 		case types.Float64:
 			return F64{}
 
-		case types.Int8, types.UntypedBool:
-			logger.Fatalf("ToWType Todo:%T", t)
+		case types.Int8:
+			return I8{}
 
 		case types.Uint8:
-			logger.Fatalf("ToWType Todo:%T", t)
+			return U8{}
 
 		case types.Int16:
-			logger.Fatalf("ToWType Todo:%T", t)
+			return I16{}
 
 		case types.Uint16:
-			logger.Fatalf("ToWType Todo:%T", t)
+			return U16{}
 
 		case types.String:
-			logger.Fatalf("ToWType Todo:%T", t)
+			return NewString()
 
 		default:
 			logger.Fatalf("Unknown type:%s", t)
@@ -95,4 +95,13 @@ func ToWType(from types.Type) ValueType {
 	}
 
 	return nil
+}
+
+func IsNumber(v Value) bool {
+	switch v.Type().(type) {
+	case I8, U8, I16, U16, I32, U32, I64, U64, F32, F64:
+		return true
+	}
+
+	return false
 }

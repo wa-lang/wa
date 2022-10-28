@@ -31,63 +31,78 @@ func EmitConvertValueType(from, to ValueType) {
 	logger.Fatal("Todo")
 }
 
-func EmitBinOp(x, y Value, op wat.OpCode) ([]wat.Inst, ValueType) {
-	var insts []wat.Inst
-	r := binOpMatchType(x.Type(), y.Type())
-	if len(r.Raw()) != 1 {
-		logger.Fatalf("Todo %T", r)
-		return nil, nil
+func EmitUnOp(x Value, op wat.OpCode) (insts []wat.Inst, ret_type ValueType) {
+	if !IsNumber(x) {
+		logger.Fatal("Todo")
 	}
-	rtype := r.Raw()[0]
+	ret_type = x.Type()
+	insts = append(insts, NewConst("0", ret_type).EmitPush()...)
+	insts = append(insts, x.EmitPush()...)
+	insts = append(insts, wat.NewInstSub(toWatType(ret_type)))
+	return
+}
+
+func EmitBinOp(x, y Value, op wat.OpCode) (insts []wat.Inst, ret_type ValueType) {
+	rtype := binOpMatchType(x.Type(), y.Type())
 
 	insts = append(insts, x.EmitPush()...)
 	insts = append(insts, y.EmitPush()...)
 
 	switch op {
 	case wat.OpCodeAdd:
-		insts = append(insts, wat.NewInstAdd(rtype))
+		string_type := NewString()
+		if rtype.Equal(string_type) {
+			insts = append(insts, wat.NewInstCall(string_type.genAppendStrFunc()))
+		} else {
+			insts = append(insts, wat.NewInstAdd(toWatType(rtype)))
+		}
+		ret_type = rtype
 
 	case wat.OpCodeSub:
-		insts = append(insts, wat.NewInstSub(rtype))
+		insts = append(insts, wat.NewInstSub(toWatType(rtype)))
+		ret_type = rtype
 
 	case wat.OpCodeMul:
-		insts = append(insts, wat.NewInstMul(rtype))
+		insts = append(insts, wat.NewInstMul(toWatType(rtype)))
+		ret_type = rtype
 
 	case wat.OpCodeQuo:
-		insts = append(insts, wat.NewInstDiv(rtype))
+		insts = append(insts, wat.NewInstDiv(toWatType(rtype)))
+		ret_type = rtype
 
 	case wat.OpCodeRem:
-		insts = append(insts, wat.NewInstRem(rtype))
+		insts = append(insts, wat.NewInstRem(toWatType(rtype)))
+		ret_type = rtype
 
 	case wat.OpCodeEql:
-		insts = append(insts, wat.NewInstEq(rtype))
-		r = I32{}
+		insts = append(insts, wat.NewInstEq(toWatType(rtype)))
+		ret_type = I32{}
 
 	case wat.OpCodeNe:
-		insts = append(insts, wat.NewInstNe(rtype))
-		r = I32{}
+		insts = append(insts, wat.NewInstNe(toWatType(rtype)))
+		ret_type = I32{}
 
 	case wat.OpCodeLt:
-		insts = append(insts, wat.NewInstLt(rtype))
-		r = I32{}
+		insts = append(insts, wat.NewInstLt(toWatType(rtype)))
+		ret_type = I32{}
 
 	case wat.OpCodeGt:
-		insts = append(insts, wat.NewInstGt(rtype))
-		r = I32{}
+		insts = append(insts, wat.NewInstGt(toWatType(rtype)))
+		ret_type = I32{}
 
 	case wat.OpCodeLe:
-		insts = append(insts, wat.NewInstLe(rtype))
-		r = I32{}
+		insts = append(insts, wat.NewInstLe(toWatType(rtype)))
+		ret_type = I32{}
 
 	case wat.OpCodeGe:
-		insts = append(insts, wat.NewInstGe(rtype))
-		r = I32{}
+		insts = append(insts, wat.NewInstGe(toWatType(rtype)))
+		ret_type = I32{}
 
 	default:
 		logger.Fatal("Todo")
 	}
 
-	return insts, r
+	return
 }
 
 func binOpMatchType(x, y ValueType) ValueType {
@@ -271,6 +286,10 @@ func EmitGenSlice(x, low, high Value) (insts []wat.Inst, ret_type ValueType) {
 		insts = x.emitSub(low, high)
 		ret_type = x.Type()
 
+	case *aString:
+		insts = x.emitSub(low, high)
+		ret_type = x.Type()
+
 	case *aRef:
 		switch btype := x.Type().(Ref).Base.(type) {
 		case Slice:
@@ -317,10 +336,22 @@ func EmitGenLen(x Value) (insts []wat.Inst) {
 	case *aSlice:
 		insts = x.underlying.Extract("len").EmitPush()
 
+	case *aString:
+		insts = x.underlying.Extract("len").EmitPush()
+
 	default:
 		logger.Fatalf("Todo: %T", x)
 	}
 
+	return
+}
+
+func EmitPrintString(v Value) (insts []wat.Inst) {
+	s := v.(*aString)
+
+	insts = append(insts, s.underlying.Extract("data").EmitPush()...)
+	insts = append(insts, s.underlying.Extract("len").EmitPush()...)
+	insts = append(insts, wat.NewInstCall("$waPuts"))
 	return
 }
 

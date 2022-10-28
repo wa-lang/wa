@@ -25,7 +25,7 @@ func NewGlobal(name string, typ ValueType, as_pointer bool) Value {
 
 func newValue(name string, kind ValueKind, typ ValueType) Value {
 	switch typ := typ.(type) {
-	case I32, U32, I64, U64, F32, F64, RUNE:
+	case I8, U8, I16, U16, I32, U32, I64, U64, F32, F64, RUNE:
 		return newValueBasic(name, kind, typ)
 
 	case Pointer:
@@ -45,6 +45,9 @@ func newValue(name string, kind ValueKind, typ ValueType) Value {
 
 	case Slice:
 		return newValueSlice(name, kind, typ.Base)
+
+	case String:
+		return newValueString(name, kind)
 
 	default:
 		logger.Fatalf("Todo: %T", typ)
