@@ -22,9 +22,10 @@ type iStruct interface {
 }
 
 type Field struct {
-	name   string
-	typ    ValueType
-	_start int
+	name      string
+	typ       ValueType
+	const_val Value
+	_start    int
 }
 
 func NewField(n string, t ValueType) Field { return Field{name: n, typ: t} }
@@ -33,6 +34,9 @@ func (i Field) Type() ValueType            { return i.typ }
 func (i Field) Equal(u Field) bool         { return i.name == u.name && i.typ.Equal(u.typ) }
 
 func makeAlign(i, a int) int {
+	if a == 1 || a == 0 {
+		return i
+	}
 	return (i + a - 1) / a * a
 }
 
@@ -168,9 +172,9 @@ func (t Struct) emitLoadFromAddr(addr Value, offset int) (insts []wat.Inst) {
 }
 
 func (t Struct) findFieldByName(field_name string) *Field {
-	for _, m := range t.Members {
-		if m.Name() == field_name {
-			return &m
+	for i := range t.Members {
+		if t.Members[i].Name() == field_name {
+			return &t.Members[i]
 		}
 	}
 	return nil
@@ -191,7 +195,11 @@ func (v *aStruct) genSubValue(m Field) Value {
 	if v.Kind() != ValueKindConst {
 		return newValue(v.Name()+"."+m.Name(), v.Kind(), m.Type())
 	} else {
-		return newValue(v.Name(), v.Kind(), m.Type())
+		if m.const_val != nil {
+			return m.const_val
+		} else {
+			return newValue(v.Name(), v.Kind(), m.Type())
+		}
 	}
 }
 
