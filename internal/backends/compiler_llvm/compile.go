@@ -10,10 +10,16 @@ import (
 	"github.com/wa-lang/wa/internal/ssa"
 )
 
+type FmtStr struct {
+	fmt  string
+	size int
+}
+
 type Compiler struct {
 	ssaPkg *ssa.Package
 	target string
 	output strings.Builder
+	fmts   []FmtStr
 }
 
 func New(target string) *Compiler {

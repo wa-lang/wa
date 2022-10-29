@@ -3,6 +3,8 @@
 package compiler_llvm
 
 import (
+	"fmt"
+
 	"github.com/wa-lang/wa/internal/ssa"
 	"github.com/wa-lang/wa/internal/token"
 )
@@ -131,15 +133,77 @@ func (p *Compiler) compileCall(val *ssa.Call) error {
 			}
 		}
 		p.output.WriteString(")\n")
-		return nil
 
 	case *ssa.Builtin:
-		p.output.WriteString("  ; " + val.Name() + " = " + val.String() + "\n")
-		return nil
+		if err := p.compileBuiltin(val.Common()); err != nil {
+			return err
+		}
 
 	default:
 		p.output.WriteString("  ; " + val.Name() + " = " + val.String() + "\n")
-		return nil
 		// panic("unsupported Value '" + val.Name() + " = " + val.String() + "'")
 	}
+
+	return nil
+}
+
+func (p *Compiler) compileBuiltin(val *ssa.CallCommon) error {
+	switch val.Value.Name() {
+	case "println":
+		if err := p.compilePrint(val, true); err != nil {
+			return err
+		}
+
+	case "print":
+		if err := p.compilePrint(val, false); err != nil {
+			return err
+		}
+
+	default:
+		p.output.WriteString("  ; " + val.String() + "\n")
+		// panic("unsupported builtin '" + val.String() + "'")
+	}
+
+	return nil
+}
+
+func (p *Compiler) compilePrint(val *ssa.CallCommon, ln bool) error {
+	index := len(p.fmts)
+	size := int(0)
+	format := ""
+
+	// Formulate the format string.
+	for _, arg := range val.Args {
+		f, s := getTypeFmt(arg.Type(), p.target)
+		format += f
+		size += s
+	}
+	// Add a new line to the format string.
+	if ln {
+		format += "\\0A"
+		size += 1
+	}
+	// End the format string.
+	format += "\\00"
+	size += 1
+
+	// Emit the call instruction and the first parameter.
+	p.output.WriteString("  call i32 (i8*, ...) @printf(i8* getelementptr inbounds (")
+	p.output.WriteString(fmt.Sprintf("[%d x i8], [%d x i8]* @printfmt%d, i16 0, i16 0), ", size, size, index))
+
+	// Emit other parameters and finish the call instruction.
+	for i, arg := range val.Args {
+		p.output.WriteString(getTypeStr(arg.Type(), p.target))
+		p.output.WriteString(" ")
+		p.output.WriteString(getValueStr(arg))
+		if i < len(val.Args)-1 {
+			p.output.WriteString(", ")
+		}
+	}
+	p.output.WriteString(")\n")
+
+	// Collect all format strings, and emit them as global variables later.
+	p.fmts = append(p.fmts, FmtStr{format, size})
+
+	return nil
 }

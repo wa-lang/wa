@@ -10,6 +10,9 @@ import (
 )
 
 func (p *Compiler) compileFunction(fn *ssa.Function) error {
+	// Clear the format string slice.
+	p.fmts = []FmtStr{}
+
 	// Translate return type.
 	var retType string
 	rets := fn.Signature.Results()
@@ -44,8 +47,17 @@ func (p *Compiler) compileFunction(fn *ssa.Function) error {
 			p.output.WriteString("\n")
 		}
 	}
-
 	p.output.WriteString("}\n\n")
+
+	// Emit each format strings as a global variable.
+	for i, f := range p.fmts {
+		fvar := fmt.Sprintf("@printfmt%d = private constant [%d x i8] c\"%s\"\n", i, f.size, f.fmt)
+		p.output.WriteString(fvar)
+		if i == len(p.fmts)-1 {
+			p.output.WriteString("\n")
+		}
+	}
+
 	return nil
 }
 

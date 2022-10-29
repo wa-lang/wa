@@ -39,6 +39,57 @@ func checkType(from types.Type) (isFloat bool, isSigned bool) {
 	}
 }
 
+type fmtInfo struct {
+	str string
+	sz  int
+}
+
+func getTypeFmt(from types.Type, target string) (string, int) {
+	defIntFmt := map[string]fmtInfo{
+		"avr":     {"%d", 2},
+		"thumb":   {"%d", 2},
+		"arm":     {"%d", 2},
+		"aarch64": {"%ld", 3},
+		"riscv32": {"%d", 2},
+		"riscv64": {"%ld", 3},
+		"x86":     {"%d", 2},
+		"x86_64":  {"%ld", 3},
+	}
+
+	switch t := from.(type) {
+	case *types.Basic:
+		switch t.Kind() {
+		// Handle fixed types.
+		case types.Int8, types.Int16, types.Int32,
+			types.Bool, types.UntypedBool:
+			return "%d", 2
+		case types.Uint8, types.Uint16, types.Uint32:
+			return "%u", 2
+		case types.Int64:
+			return "%ld", 3
+		case types.Uint64:
+			return "%lu", 3
+		case types.Float32, types.Float64, types.UntypedFloat:
+			return "%lf", 3
+		// Handle feasible types.
+		case types.Int, types.Uint, types.UntypedInt:
+			if fmt, ok := defIntFmt[getArch(target)]; ok {
+				return fmt.str, fmt.sz
+			}
+			return "%ld", 3
+		// TODO: How to format string variables properly?
+		case types.String:
+			return "", 0
+		// should never reach here
+		default:
+			panic("unknown basic type")
+		}
+	default:
+		// TODO: How to print complex tpyes, such arrays and structs?
+		panic("unknown type")
+	}
+}
+
 func getTypeStr(from types.Type, target string) string {
 	// feasible types on different targets
 	defInt := map[string]string{
