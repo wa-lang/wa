@@ -50,7 +50,6 @@ const (
 
 	Machine_Wasm32_wa   = target_spec.Machine_Wasm32_wa   // 凹语言定义的 WASM 规范
 	Machine_Wasm32_wasi = target_spec.Machine_Wasm32_wasi // WASI 定义的 WASM 规范
-	Machine_llir_64bit  = target_spec.Machine_llir_64bit  // LLVM IR 64 位
 )
 
 // 解析字符串类型
@@ -59,8 +58,6 @@ func ParseMachine(s string) (target Machine, ok bool) {
 	case Machine_Wasm32_wa:
 		return t, true
 	case Machine_Wasm32_wasi:
-		return t, true
-	case Machine_llir_64bit:
 		return t, true
 	default:
 		return "", false

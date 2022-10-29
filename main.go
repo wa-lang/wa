@@ -378,25 +378,6 @@ func main() {
 			},
 		},
 		{
-			Hidden: true,
-			Name:   "asm",
-			Usage:  "parse Wa and print ouput assembly code",
-			Action: func(c *cli.Context) error {
-				if c.NArg() == 0 {
-					fmt.Fprintf(os.Stderr, "no input file")
-					os.Exit(1)
-				}
-
-				ctx := app.NewApp(build_Options(c))
-				err := ctx.ASM(c.Args().First())
-				if err != nil {
-					fmt.Println(err)
-					os.Exit(1)
-				}
-				return nil
-			},
-		},
-		{
 			Name:  "test",
 			Usage: "test packages",
 			Action: func(c *cli.Context) error {
