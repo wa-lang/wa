@@ -1,0 +1,22 @@
+# 版权 @2022 凹语言 作者。保留所有权利。
+
+fn main {
+  println("你好，凹语言", '！')
+  println("your lucky numbers:", calc1(6, 9, 8), ", ", 5, ", ", 5.44, ", ", calc3(6, 9, 8))
+}
+
+fn calc0(a: i32, b: i32, c: i32) i32 {
+  return (-a) * 5 / (b - c + 2)
+}
+
+fn calc1(a: i32, b: i32, c: i32) i32 {
+  return calc0(a, b, c)
+}
+
+fn calc2(a: float32, b: float32, c: float32) float32 {
+  return (-a) * 5 / (b - c + 2)
+}
+
+fn calc3(a: float32, b: float32, c: float32) float32 {
+  return calc2(a, b, c)
+}

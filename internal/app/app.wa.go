@@ -318,7 +318,7 @@ func (p *App) LLVM(infile string, outfile string, target string) error {
 	}
 
 	// Invoke command `clang infile.s -o outfile --target=xxx`.
-	clang := []string{infile + ".s", "-o", outfile}
+	clang := []string{infile + ".s", "-static", "-o", outfile}
 	if target != "" {
 		clang = append(clang, "-target", target)
 	}
