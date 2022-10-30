@@ -1,9 +1,9 @@
 # 版权 @2022 凹语言 作者。保留所有权利。
 
 fn main {
-  println("你好，凹语言！")
-  println("your lucky numbers:", calc1(6, 9, 8), ", ", 5, ", ", calc5(6, 9, 8))
-  println("your lucky numbers:", 5.44, ", ", calc3(6, 9, 8))
+  println("您好，凹语言！\nHello, wa-lang!")
+  println("幸运整数：", calc1(6, 9, 8), ", ", 5, ", ", calc5(6, 9, 8))
+  println("幸运浮点数：", 5.44, ", ", calc3(6, 9, 8))
 }
 
 fn calc0(a: i32, b: i32, c: i32) i32 {
@@ -14,11 +14,11 @@ fn calc1(a: i32, b: i32, c: i32) i32 {
   return calc0(a, b, c)
 }
 
-fn calc2(a: float32, b: float32, c: float32) float32 {
+fn calc2(a: float64, b: float64, c: float64) float64 {
   return (-a) * 5 / (b - c + 2)
 }
 
-fn calc3(a: float32, b: float32, c: float32) float32 {
+fn calc3(a: float64, b: float64, c: float64) float64 {
   return calc2(a, b, c)
 }
 

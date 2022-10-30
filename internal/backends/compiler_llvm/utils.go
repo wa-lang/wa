@@ -7,6 +7,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/wa-lang/wa/internal/constant"
 	"github.com/wa-lang/wa/internal/ssa"
 	"github.com/wa-lang/wa/internal/types"
 )
@@ -19,8 +20,20 @@ func getArch(arch string) string {
 	return arch[0:pos]
 }
 
-func checkType(from types.Type) (isFloat bool, isSigned bool) {
-	switch t := from.(type) {
+func isConstString(val ssa.Value) bool {
+	if _, ok := val.(*ssa.Const); !ok {
+		return false
+	}
+	if t, ok := val.Type().(*types.Basic); ok {
+		if t.Kind() == types.String {
+			return true
+		}
+	}
+	return false
+}
+
+func checkType(ty types.Type) (isFloat bool, isSigned bool) {
+	switch t := ty.(type) {
 	case *types.Basic:
 		switch t.Kind() {
 		case types.Float32, types.Float64, types.UntypedFloat:
@@ -31,6 +44,8 @@ func checkType(from types.Type) (isFloat bool, isSigned bool) {
 		case types.Bool, types.UntypedBool, types.Int8, types.Int16,
 			types.Int32, types.Int64, types.Int, types.UntypedInt:
 			return false, true
+		case types.String:
+			return false, false
 		default:
 			panic("unknown basic type")
 		}
@@ -44,7 +59,7 @@ type fmtInfo struct {
 	sz  int
 }
 
-func getTypeFmt(from types.Type, target string) (string, int) {
+func getValueFmt(val ssa.Value, target string) (string, int) {
 	defIntFmt := map[string]fmtInfo{
 		"avr":     {"%d", 2},
 		"thumb":   {"%d", 2},
@@ -56,7 +71,13 @@ func getTypeFmt(from types.Type, target string) (string, int) {
 		"x86_64":  {"%ld", 3},
 	}
 
-	switch t := from.(type) {
+	// Directly combine constant strings to the format string.
+	if isConstString(val) {
+		str := getValueStr(val)
+		return str, len(str)
+	}
+
+	switch t := val.Type().(type) {
 	case *types.Basic:
 		switch t.Kind() {
 		// Handle fixed types.
@@ -90,7 +111,7 @@ func getTypeFmt(from types.Type, target string) (string, int) {
 	}
 }
 
-func getTypeStr(from types.Type, target string) string {
+func getTypeStr(ty types.Type, target string) string {
 	// feasible types on different targets
 	defInt := map[string]string{
 		"avr":     "i16",
@@ -120,7 +141,7 @@ func getTypeStr(from types.Type, target string) string {
 		types.UntypedFloat: "float",
 	}
 
-	switch t := from.(type) {
+	switch t := ty.(type) {
 	case *types.Basic:
 		// return fixed types
 		if ty, ok := expTy[t.Kind()]; ok {
@@ -144,21 +165,28 @@ func getTypeStr(from types.Type, target string) string {
 }
 
 func getValueStr(val ssa.Value) string {
-	switch val.(type) {
+	switch c := val.(type) {
 	case *ssa.Const:
-		name := val.Name()
-		if pos := strings.Index(name, ":"); pos > 0 {
-			name = name[0:pos]
-			// Special form for float32/float64 constants as LLVM-IR requested.
-			if isFloat, _ := checkType(val.Type()); isFloat {
-				if f, err := strconv.ParseFloat(name, 64); err == nil {
-					name = fmt.Sprintf("%e", f)
-				}
+		// Get the full content of the constant string.
+		if isConstString(val) {
+			return constant.StringVal(c.Value)
+		}
+		// Drop the type information for non-string constants.
+		valStr := val.String()
+		if pos := strings.Index(valStr, ":"); pos > 0 {
+			valStr = valStr[0:pos]
+		}
+		// Special form for float32/float64 constants as LLVM-IR requested.
+		if isFloat, _ := checkType(val.Type()); isFloat {
+			if f, err := strconv.ParseFloat(valStr, 64); err == nil {
+				valStr = fmt.Sprintf("%e", f)
 			}
 		}
-		return name
+		return valStr
+
 	case *ssa.Parameter:
 		return "%" + val.Name()
+
 	default:
 		return "%" + val.Name()
 	}

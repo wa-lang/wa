@@ -174,7 +174,7 @@ func (p *Compiler) compilePrint(val *ssa.CallCommon, ln bool) error {
 
 	// Formulate the format string.
 	for _, arg := range val.Args {
-		f, s := getTypeFmt(arg.Type(), p.target)
+		f, s := getValueFmt(arg, p.target)
 		format += f
 		size += s
 	}
@@ -189,15 +189,16 @@ func (p *Compiler) compilePrint(val *ssa.CallCommon, ln bool) error {
 
 	// Emit the call instruction and the first parameter.
 	p.output.WriteString("  call i32 (i8*, ...) @printf(i8* getelementptr inbounds (")
-	p.output.WriteString(fmt.Sprintf("[%d x i8], [%d x i8]* @printfmt%d, i16 0, i16 0), ", size, size, index))
+	p.output.WriteString(fmt.Sprintf("[%d x i8], [%d x i8]* @printfmt%d, i16 0, i16 0)", size, size, index))
 
 	// Emit other parameters and finish the call instruction.
-	for i, arg := range val.Args {
-		p.output.WriteString(getTypeStr(arg.Type(), p.target))
-		p.output.WriteString(" ")
-		p.output.WriteString(getValueStr(arg))
-		if i < len(val.Args)-1 {
+	for _, arg := range val.Args {
+		// Omit constant strings.
+		if !isConstString(arg) {
 			p.output.WriteString(", ")
+			p.output.WriteString(getTypeStr(arg.Type(), p.target))
+			p.output.WriteString(" ")
+			p.output.WriteString(getValueStr(arg))
 		}
 	}
 	p.output.WriteString(")\n")
