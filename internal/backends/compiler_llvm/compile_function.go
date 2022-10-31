@@ -34,7 +34,7 @@ func (p *Compiler) compileFunction(fn *ssa.Function) error {
 
 	// Translate Go SSA intermediate instructions.
 	for i, b := range fn.Blocks {
-		p.output.WriteString(fmt.Sprintf("; __basic_block_%d:\n", i))
+		p.output.WriteString(fmt.Sprintf("__basic_block_%d:\n", i))
 		for _, instr := range b.Instrs {
 			if err := p.compileInstr(instr); err != nil {
 				return err
@@ -69,6 +69,9 @@ func (p *Compiler) compileInstr(instr ssa.Instruction) error {
 		if err := p.compileValue(instr); err != nil {
 			return err
 		}
+
+	case *ssa.Jump:
+		p.output.WriteString(fmt.Sprintf("  br label %%__basic_block_%d\n", instr.Block().Succs[0].Index))
 
 	default:
 		p.output.WriteString("  ; " + instr.String() + "\n")
