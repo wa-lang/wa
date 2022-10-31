@@ -20,6 +20,10 @@ func getArch(arch string) string {
 	return arch[0:pos]
 }
 
+func isVoidFunc(val *ssa.Call) bool {
+	return val.Type().String() == "()"
+}
+
 func isConstString(val ssa.Value) bool {
 	if _, ok := val.(*ssa.Const); !ok {
 		return false

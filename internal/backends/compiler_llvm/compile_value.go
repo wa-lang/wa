@@ -116,10 +116,14 @@ func (p *Compiler) compileBinOp(val *ssa.BinOp) error {
 func (p *Compiler) compileCall(val *ssa.Call) error {
 	switch val.Call.Value.(type) {
 	case *ssa.Function:
-		p.output.WriteString("  %")
-		p.output.WriteString(val.Name())
-		p.output.WriteString(" = call ")
-		p.output.WriteString(getTypeStr(val.Type(), p.target))
+		if !isVoidFunc(val) {
+			p.output.WriteString("  %")
+			p.output.WriteString(val.Name())
+			p.output.WriteString(" = call ")
+			p.output.WriteString(getTypeStr(val.Type(), p.target))
+		} else {
+			p.output.WriteString("  call void")
+		}
 		p.output.WriteString(" @")
 		p.output.WriteString(val.Call.StaticCallee().Name())
 		p.output.WriteString("(")
