@@ -1,5 +1,8 @@
 # 版本日志
 
+- v0.3.1 (dev)
+  - LLVM 后端支持基本数值运算 (依赖 clang 和 llc)
+  - wazero 更新到 v1.0.0-pre.3 [#37](https://github.com/wa-lang/wa/pull/37)
 - v0.3.0 (2022-10-28)
   - 启用 AGPLv3 开源协议
   - 增加 如何贡献代码 机制
