@@ -39,25 +39,29 @@ func RunWasm(filename string) (stdoutStderr []byte, err error) {
 	}
 
 	ctx := context.Background()
-	r := wazero.NewRuntimeWithConfig(ctx,
-		wazero.NewRuntimeConfig().WithWasmCore2(),
-	)
+	r := wazero.NewRuntime(ctx)
 	defer r.Close(ctx)
 
-	_, err = r.NewModuleBuilder("wa_js_env").
-		ExportFunction("waPuts", func(m api.Module, pos, len uint32) {
+	_, err = r.NewHostModuleBuilder("wa_js_env").
+		NewFunctionBuilder().
+		WithFunc(func(ctx context.Context, m api.Module, pos, len uint32) {
 			bytes, _ := m.Memory().Read(ctx, pos, len)
 			fmt.Print(string(bytes))
-			return
 		}).
-		ExportFunction("waPrintI32", func(m api.Module, v uint32) {
+		WithParameterNames("pos", "len").
+		Export("waPuts").
+		NewFunctionBuilder().
+		WithFunc(func(ctx context.Context, v uint32) {
 			fmt.Print(v)
-			return
 		}).
-		ExportFunction("waPrintRune", func(m api.Module, ch uint32) {
+		WithParameterNames("v").
+		Export("waPrintI32").
+		NewFunctionBuilder().
+		WithFunc(func(ctx context.Context, ch uint32) {
 			fmt.Printf("%c", rune(ch))
-			return
 		}).
+		WithParameterNames("ch").
+		Export("waPrintRune").
 		Instantiate(ctx, r)
 	if err != nil {
 		return nil, err
