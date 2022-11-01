@@ -4,6 +4,14 @@ fn main {
   println("您好，凹语言！\nHello, wa-lang!")
   println("幸运整数：", calc1(6, 9, 8), ", ", 5, ", ", calc5(6, 9, 8))
   println("幸运浮点数：", 5.44, ", ", calc3(6, 9, 8))
+
+  cmp0(20, 19)
+  cmp0(20, 20)
+  cmp1(-3, -3)
+  cmp1(-3, -4)
+  cmp2(10, 10)
+  cmp2(10, 10.0001)
+
   bye()
 }
 
@@ -33,4 +41,28 @@ fn calc4(a: u16, b: u16, c: u16) u16 {
 
 fn calc5(a: u16, b: u16, c: u16) u16 {
   return calc4(-a, b, c)
+}
+
+fn cmp0(a: u16, b: u16) {
+  if a > b {
+    println(a, " >  ", b)
+  } else {
+    println(a, " <= ", b)
+  }
+}
+
+fn cmp1(a: i64, b: i64) {
+  if a <= b {
+    println(a, " <= ", b)
+  } else {
+    println(a, " >  ", b)
+  }
+}
+
+fn cmp2(a: float64, b: float64) {
+  if a != b {
+    println(a, " != ", b)
+  } else {
+    println(a, " == ", b)
+  }
 }

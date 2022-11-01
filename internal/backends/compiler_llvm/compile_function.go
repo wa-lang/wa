@@ -73,6 +73,9 @@ func (p *Compiler) compileInstr(instr ssa.Instruction) error {
 	case *ssa.Jump:
 		p.output.WriteString(fmt.Sprintf("  br label %%__basic_block_%d\n", instr.Block().Succs[0].Index))
 
+	case *ssa.If:
+		p.output.WriteString(fmt.Sprintf("  br i1 %s, label %%__basic_block_%d, label %%__basic_block_%d\n", getValueStr(instr.Cond), instr.Block().Succs[0].Index, instr.Block().Succs[1].Index))
+
 	default:
 		p.output.WriteString("  ; " + instr.String() + "\n")
 		// panic("unsupported IR '" + instr.String() + "'")

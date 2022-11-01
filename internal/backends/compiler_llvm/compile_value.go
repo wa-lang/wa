@@ -67,6 +67,12 @@ func (p *Compiler) compileBinOp(val *ssa.BinOp) error {
 		token.MUL: "mul",
 		token.QUO: "sdiv",
 		token.REM: "srem",
+		token.EQL: "icmp eq",
+		token.NEQ: "icmp ne",
+		token.LSS: "icmp slt",
+		token.GTR: "icmp sgt",
+		token.LEQ: "icmp sle",
+		token.GEQ: "icmp sge",
 	}
 	uintOpMap := map[token.Token]string{
 		token.ADD: "add",
@@ -74,12 +80,24 @@ func (p *Compiler) compileBinOp(val *ssa.BinOp) error {
 		token.MUL: "mul",
 		token.QUO: "udiv",
 		token.REM: "urem",
+		token.EQL: "icmp eq",
+		token.NEQ: "icmp ne",
+		token.LSS: "icmp ult",
+		token.GTR: "icmp ugt",
+		token.LEQ: "icmp ule",
+		token.GEQ: "icmp uge",
 	}
 	floatOpMap := map[token.Token]string{
 		token.ADD: "fadd",
 		token.SUB: "fsub",
 		token.MUL: "fmul",
 		token.QUO: "fdiv",
+		token.EQL: "fcmp oeq",
+		token.NEQ: "fcmp une",
+		token.LSS: "fcmp olt",
+		token.GTR: "fcmp ogt",
+		token.LEQ: "fcmp ole",
+		token.GEQ: "fcmp oge",
 	}
 
 	// Type float, signed int, unsigned int each has its own LLVM-IR.
