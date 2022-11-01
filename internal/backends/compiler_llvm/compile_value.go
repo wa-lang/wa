@@ -26,6 +26,19 @@ func (p *Compiler) compileValue(val ssa.Value) error {
 			return err
 		}
 
+	case *ssa.Phi:
+		p.output.WriteString("  ")
+		p.output.WriteString(getValueStr(val))
+		p.output.WriteString(" = phi ")
+		p.output.WriteString(getTypeStr(val.Type(), p.target))
+		for i, v := range val.Edges {
+			p.output.WriteString(fmt.Sprintf(" [ %s, %%__basic_block_%d ]", getValueStr(v), val.Block().Preds[i].Index))
+			if i < len(val.Edges)-1 {
+				p.output.WriteString(",")
+			}
+		}
+		p.output.WriteString("\n")
+
 	default:
 		p.output.WriteString("  ; " + val.Name() + " = " + val.String() + "\n")
 		// panic("unsupported Value '" + val.Name() + " = " + val.String() + "'")

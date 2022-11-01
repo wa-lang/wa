@@ -2,15 +2,19 @@
 
 fn main {
   println("您好，凹语言！\nHello, wa-lang!")
-  println("幸运整数：", calc1(6, 9, 8), ", ", 5, ", ", calc5(6, 9, 8))
-  println("幸运浮点数：", 5.44, ", ", calc3(6, 9, 8))
+  println("幸运整数：", test_calc1(6, 9, 8), ", ", 5, ", ", test_calc5(6, 9, 8))
+  println("幸运浮点数：", 5.44, ", ", test_calc3(6, 9, 8))
 
-  cmp0(20, 19)
-  cmp0(20, 20)
-  cmp1(-3, -3)
-  cmp1(-3, -4)
-  cmp2(10, 10)
-  cmp2(10, 10.0001)
+  test_cmp0(20, 19)
+  test_cmp0(20, 20)
+  test_cmp1(-3, -3)
+  test_cmp1(-3, -4)
+  test_cmp2(10, 10)
+  test_cmp2(10, 10.0001)
+
+  test_jmp(4)
+  test_loop0(10)
+  test_loop1(10, 10)
 
   bye()
 }
@@ -19,31 +23,31 @@ fn bye() {
   println("再见！\nbye!")
 }
 
-fn calc0(a: i32, b: i32, c: i32) i32 {
+fn test_calc0(a: i32, b: i32, c: i32) i32 {
   return (-a) * 5 / (b - c + 2)
 }
 
-fn calc1(a: i32, b: i32, c: i32) i32 {
-  return calc0(a, b, c)
+fn test_calc1(a: i32, b: i32, c: i32) i32 {
+  return test_calc0(a, b, c)
 }
 
-fn calc2(a: float64, b: float64, c: float64) float64 {
+fn test_calc2(a: float64, b: float64, c: float64) float64 {
   return (-a) * 5 / (b - c + 2)
 }
 
-fn calc3(a: float64, b: float64, c: float64) float64 {
-  return calc2(a, b, c)
+fn test_calc3(a: float64, b: float64, c: float64) float64 {
+  return test_calc2(a, b, c)
 }
 
-fn calc4(a: u16, b: u16, c: u16) u16 {
+fn test_calc4(a: u16, b: u16, c: u16) u16 {
   return (-a) * 5 / (b - c + 2)
 }
 
-fn calc5(a: u16, b: u16, c: u16) u16 {
-  return calc4(-a, b, c)
+fn test_calc5(a: u16, b: u16, c: u16) u16 {
+  return test_calc4(-a, b, c)
 }
 
-fn cmp0(a: u16, b: u16) {
+fn test_cmp0(a: u16, b: u16) {
   if a > b {
     println(a, " >  ", b)
   } else {
@@ -51,7 +55,7 @@ fn cmp0(a: u16, b: u16) {
   }
 }
 
-fn cmp1(a: i64, b: i64) {
+fn test_cmp1(a: i64, b: i64) {
   if a <= b {
     println(a, " <= ", b)
   } else {
@@ -59,10 +63,34 @@ fn cmp1(a: i64, b: i64) {
   }
 }
 
-fn cmp2(a: float64, b: float64) {
+fn test_cmp2(a: float64, b: float64) {
   if a != b {
     println(a, " != ", b)
   } else {
     println(a, " == ", b)
+  }
+}
+
+fn test_jmp(a: i32) {
+  for {
+    if a > 10 {
+      return
+    }
+    println(a)
+    a++
+  }
+}
+
+fn test_loop0(a: i16) {
+  for i := i16(0); i < a; i++ {
+    println(i, " * ", i, " = ", i * i)
+  }
+}
+
+fn test_loop1(a: u64, b: u64) {
+  for i := u64(0); i < a; i++ {
+    for j := u64(0); j < b; j++ {
+      println(i, " * ", j, " = ", i * j)
+    }
   }
 }
