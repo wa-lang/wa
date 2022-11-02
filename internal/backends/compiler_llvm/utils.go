@@ -127,7 +127,6 @@ func getTypeStr(ty types.Type, target string) string {
 		"x86":     "i32",
 		"x86_64":  "i64",
 	}
-
 	// fixed types
 	expTy := map[types.BasicKind]string{
 		types.Bool:         "i1",
@@ -162,6 +161,13 @@ func getTypeStr(ty types.Type, target string) string {
 		default:
 			panic("unknown basic type")
 		}
+
+	case *types.Array:
+		return fmt.Sprintf("[%d x %s]", t.Len(), getTypeStr(t.Elem(), target))
+
+	case *types.Pointer:
+		return getTypeStr(t.Elem(), target) + "*"
+
 	default:
 		// TODO: support pointer, array and struct types
 		panic("unknown type")

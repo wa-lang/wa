@@ -7,6 +7,7 @@ import (
 
 	"github.com/wa-lang/wa/internal/ssa"
 	"github.com/wa-lang/wa/internal/token"
+	"github.com/wa-lang/wa/internal/types"
 )
 
 func (p *Compiler) compileValue(val ssa.Value) error {
@@ -38,6 +39,25 @@ func (p *Compiler) compileValue(val ssa.Value) error {
 			}
 		}
 		p.output.WriteString("\n")
+
+	case *ssa.Alloc:
+		if !val.Heap {
+			p.output.WriteString("  ")
+			p.output.WriteString(getValueStr(val))
+			p.output.WriteString(" = alloca ")
+			if pt, ok := val.Type().(*types.Pointer); ok {
+				p.output.WriteString(getTypeStr(pt.Elem(), p.target))
+			} else {
+				p.output.WriteString(getTypeStr(val.Type(), p.target))
+			}
+		} else {
+			// TODO: Support heap allocation.
+			p.output.WriteString("  ; " + val.Name() + " = " + val.String())
+		}
+		p.output.WriteString("\n")
+
+	case *ssa.IndexAddr:
+		p.output.WriteString("  ; " + val.Name() + " = " + val.String() + "\n")
 
 	default:
 		p.output.WriteString("  ; " + val.Name() + " = " + val.String() + "\n")
