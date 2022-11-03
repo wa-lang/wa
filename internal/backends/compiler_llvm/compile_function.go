@@ -7,6 +7,7 @@ import (
 	"fmt"
 
 	"github.com/wa-lang/wa/internal/ssa"
+	"github.com/wa-lang/wa/internal/types"
 )
 
 func (p *Compiler) compileFunction(fn *ssa.Function) error {
@@ -56,8 +57,12 @@ func (p *Compiler) compileInstr(instr ssa.Instruction) error {
 		case 0:
 			p.output.WriteString("  ret void\n")
 		case 1: // ret %type %value
+			tyStr := getTypeStr(instr.Results[0].Type(), p.target)
+			if _, ok := instr.Results[0].Type().(*types.Basic); !ok {
+				return errors.New("type '" + tyStr + "' can not be returned")
+			}
 			p.output.WriteString("  ret ")
-			p.output.WriteString(getTypeStr(instr.Results[0].Type(), p.target))
+			p.output.WriteString(tyStr)
 			p.output.WriteString(" ")
 			p.output.WriteString(getValueStr(instr.Results[0]))
 			p.output.WriteString("\n")
@@ -75,6 +80,17 @@ func (p *Compiler) compileInstr(instr ssa.Instruction) error {
 
 	case *ssa.If:
 		p.output.WriteString(fmt.Sprintf("  br i1 %s, label %%__basic_block_%d, label %%__basic_block_%d\n", getValueStr(instr.Cond), instr.Block().Succs[0].Index, instr.Block().Succs[1].Index))
+
+	case *ssa.Store:
+		p.output.WriteString("  store ")
+		p.output.WriteString(getTypeStr(instr.Val.Type(), p.target))
+		p.output.WriteString(" ")
+		p.output.WriteString(getValueStr(instr.Val))
+		p.output.WriteString(", ")
+		p.output.WriteString(getTypeStr(instr.Addr.Type(), p.target))
+		p.output.WriteString(" ")
+		p.output.WriteString(getValueStr(instr.Addr))
+		p.output.WriteString("\n")
 
 	default:
 		p.output.WriteString("  ; " + instr.String() + "\n")

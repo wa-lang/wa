@@ -1,0 +1,18 @@
+# 版权 @2022 凹语言 作者。保留所有权利。
+
+fn main {
+  test_array(2, 4)
+  test_array(7, 9)
+}
+
+fn test_array(a: int, b: int) {
+  var arr [10][10]int
+  for i := 0; i < 10; i++ {
+    for j := 0; j < 10; j++ {
+      arr[i][j] = i * j
+    }
+  }
+
+  println("arr[", a, "][", b, "] = ", arr[a][b])
+  println("arr[", b, "][", a, "] = ", arr[b][a])
+}

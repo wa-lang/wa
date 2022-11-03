@@ -16,6 +16,9 @@ fn main {
   test_loop0(10)
   test_loop1(10, 10)
 
+  test_array(2, 4)
+  test_array(7, 9)
+
   bye()
 }
 
@@ -93,4 +96,16 @@ fn test_loop1(a: u64, b: u64) {
       println(i, " * ", j, " = ", i * j)
     }
   }
+}
+
+fn test_array(a: int, b: int) {
+  var arr [10][10]int
+  for i := 0; i < 10; i++ {
+    for j := 0; j < 10; j++ {
+      arr[i][j] = i * j
+    }
+  }
+
+  println("arr[", a, "][", b, "] = ", arr[a][b])
+  println("arr[", b, "][", a, "] = ", arr[b][a])
 }

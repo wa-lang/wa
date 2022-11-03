@@ -57,7 +57,27 @@ func (p *Compiler) compileValue(val ssa.Value) error {
 		p.output.WriteString("\n")
 
 	case *ssa.IndexAddr:
-		p.output.WriteString("  ; " + val.Name() + " = " + val.String() + "\n")
+		p.output.WriteString("  ")
+		p.output.WriteString(getValueStr(val))
+		p.output.WriteString(" = getelementptr inbounds ")
+		if t, ok := val.X.Type().(*types.Pointer); ok {
+			TyStr := getTypeStr(t, p.target)
+			TyStr = TyStr[0 : len(TyStr)-1]
+			p.output.WriteString(TyStr)
+			p.output.WriteString(", ")
+		} else {
+			panic("a pointer type value is expected")
+		}
+		p.output.WriteString(getTypeStr(val.X.Type(), p.target))
+		p.output.WriteString(" ")
+		p.output.WriteString(getValueStr(val.X))
+		p.output.WriteString(", ")
+		p.output.WriteString(getTypeStr(val.Index.Type(), p.target))
+		p.output.WriteString(" 0, ")
+		p.output.WriteString(getTypeStr(val.Index.Type(), p.target))
+		p.output.WriteString(" ")
+		p.output.WriteString(getValueStr(val.Index))
+		p.output.WriteString("\n")
 
 	default:
 		p.output.WriteString("  ; " + val.Name() + " = " + val.String() + "\n")
@@ -68,11 +88,12 @@ func (p *Compiler) compileValue(val ssa.Value) error {
 }
 
 func (p *Compiler) compileUnOp(val *ssa.UnOp) error {
+	p.output.WriteString("  ")
+	p.output.WriteString(getValueStr(val))
+	p.output.WriteString(" = ")
+
 	switch val.Op {
 	case token.SUB:
-		p.output.WriteString("  ")
-		p.output.WriteString("%" + val.Name())
-		p.output.WriteString(" = ")
 		if isFloat, _ := checkType(val.X.Type()); isFloat {
 			p.output.WriteString("fneg ")
 			p.output.WriteString(getTypeStr(val.X.Type(), p.target))
@@ -83,13 +104,21 @@ func (p *Compiler) compileUnOp(val *ssa.UnOp) error {
 			p.output.WriteString(" 0, ")
 		}
 		p.output.WriteString(getValueStr(val.X))
-		p.output.WriteString("\n")
+
+	case token.MUL:
+		p.output.WriteString("load ")
+		p.output.WriteString(getTypeStr(val.Type(), p.target))
+		p.output.WriteString(", ")
+		p.output.WriteString(getTypeStr(val.X.Type(), p.target))
+		p.output.WriteString(" ")
+		p.output.WriteString(getValueStr(val.X))
 
 	default:
-		p.output.WriteString("  ; " + val.Name() + " = " + val.String() + "\n")
+		p.output.WriteString("  ; " + val.Name() + " = " + val.String())
 		// panic("unsupported Value '" + val.Name() + " = " + val.String() + "'")
 	}
 
+	p.output.WriteString("\n")
 	return nil
 }
 
