@@ -102,9 +102,8 @@ func getValueFmt(val ssa.Value, target string) (string, int) {
 				return fmt.str, fmt.sz
 			}
 			return "%ld", 3
-		// TODO: How to format string variables properly?
 		case types.String:
-			return "", 0
+			return "%s", 2
 		// should never reach here
 		default:
 			panic("unknown basic type")
@@ -167,6 +166,21 @@ func getTypeStr(ty types.Type, target string) string {
 
 	case *types.Pointer:
 		return getTypeStr(t.Elem(), target) + "*"
+
+	case *types.Struct:
+		var retTy strings.Builder
+		retTy.WriteString("{")
+		for i := 0; i < t.NumFields(); i++ {
+			retTy.WriteString(getTypeStr(t.Field(i).Type(), target))
+			if i != t.NumFields()-1 {
+				retTy.WriteString(", ")
+			}
+		}
+		retTy.WriteString("}")
+		return retTy.String()
+
+	case *types.Named:
+		return getTypeStr(t.Underlying(), target)
 
 	default:
 		// TODO: support pointer, array and struct types

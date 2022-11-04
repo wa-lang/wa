@@ -19,6 +19,18 @@ fn main {
   test_array(2, 4)
   test_array(7, 9)
 
+  test_struct0(10)
+  test_struct0(11)
+  test_struct0(2)
+  test_struct0(13)
+  test_struct0(0)
+
+  test_struct1(10, 0, 0)
+  test_struct1(11, 1, 0)
+  test_struct1(2, 0, 1)
+  test_struct1(13, 1, 0)
+  test_struct1(2, 1, 0)
+
   bye()
 }
 
@@ -108,4 +120,39 @@ fn test_array(a: int, b: int) {
 
   println("arr[", a, "][", b, "] = ", arr[a][b])
   println("arr[", b, "][", a, "] = ", arr[b][a])
+}
+
+type t0 struct {
+  a int64
+  b int32
+  c [4]float64
+  d uint32
+}
+
+fn test_struct0(a: int) {
+  s0 := t0{17, -668, [4]float64{2.71828, 0.717, 3.14159}, 234}
+  switch a {
+  case 10:
+    println(s0.a)
+  case 11:
+    println(s0.b)
+  case 13:
+    println(s0.d)
+  default:
+    println(s0.c[a])
+  }
+}
+
+fn test_struct1(a: int, b: int, c: int) {
+  s0 := [2]t0{{11, -12, [4]float64{0.1, -0.2}, 13}, {21, -22, [4]float64{1.1, -1.2}, 24}}
+  switch a {
+  case 10:
+    println(s0[b].a)
+  case 11:
+    println(s0[b].b)
+  case 13:
+    println(s0[b].d)
+  default:
+    println(s0[b].c[c])
+  }
 }

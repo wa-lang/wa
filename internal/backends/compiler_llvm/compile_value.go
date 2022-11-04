@@ -4,6 +4,7 @@ package compiler_llvm
 
 import (
 	"fmt"
+	"strconv"
 
 	"github.com/wa-lang/wa/internal/ssa"
 	"github.com/wa-lang/wa/internal/token"
@@ -77,6 +78,27 @@ func (p *Compiler) compileValue(val ssa.Value) error {
 		p.output.WriteString(getTypeStr(val.Index.Type(), p.target))
 		p.output.WriteString(" ")
 		p.output.WriteString(getValueStr(val.Index))
+		p.output.WriteString("\n")
+
+	case *ssa.FieldAddr:
+		p.output.WriteString("  ")
+		p.output.WriteString(getValueStr(val))
+		p.output.WriteString(" = getelementptr inbounds ")
+		if t, ok := val.X.Type().(*types.Pointer); ok {
+			TyStr := getTypeStr(t, p.target)
+			TyStr = TyStr[0 : len(TyStr)-1]
+			p.output.WriteString(TyStr)
+			p.output.WriteString(", ")
+		} else {
+			panic("a pointer type value is expected")
+		}
+		p.output.WriteString(getTypeStr(val.X.Type(), p.target))
+		p.output.WriteString(" ")
+		p.output.WriteString(getValueStr(val.X))
+		p.output.WriteString(", ")
+		p.output.WriteString(getTypeStr(types.Typ[types.Int], p.target))
+		p.output.WriteString(" 0, i32 ")
+		p.output.WriteString(strconv.Itoa(val.Field))
 		p.output.WriteString("\n")
 
 	default:
