@@ -31,6 +31,8 @@ fn main {
   test_struct1(13, 1, 0)
   test_struct1(2, 1, 0)
 
+  test_pointer()
+
   bye()
 }
 
@@ -155,4 +157,21 @@ fn test_struct1(a: int, b: int, c: int) {
   default:
     println(s0[b].c[c])
   }
+}
+
+fn test_pointer() {
+  p := new_int()
+  println(*p)
+  set_int(p)
+  println(*p)
+}
+
+fn new_int() *i32 {
+  var i: i32
+  i = 42
+  return &i
+}
+
+fn set_int(p: *i32) {
+  *p = 13
 }

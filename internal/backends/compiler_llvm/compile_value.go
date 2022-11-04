@@ -42,18 +42,13 @@ func (p *Compiler) compileValue(val ssa.Value) error {
 		p.output.WriteString("\n")
 
 	case *ssa.Alloc:
-		if !val.Heap {
-			p.output.WriteString("  ")
-			p.output.WriteString(getValueStr(val))
-			p.output.WriteString(" = alloca ")
-			if pt, ok := val.Type().(*types.Pointer); ok {
-				p.output.WriteString(getTypeStr(pt.Elem(), p.target))
-			} else {
-				p.output.WriteString(getTypeStr(val.Type(), p.target))
-			}
+		p.output.WriteString("  ")
+		p.output.WriteString(getValueStr(val))
+		p.output.WriteString(" = alloca ")
+		if pt, ok := val.Type().(*types.Pointer); ok {
+			p.output.WriteString(getTypeStr(pt.Elem(), p.target))
 		} else {
-			// TODO: Support heap allocation.
-			p.output.WriteString("  ; " + val.Name() + " = " + val.String())
+			panic("unsupported type '" + getTypeStr(val.Type(), p.target) + "' in IR Alloc")
 		}
 		p.output.WriteString("\n")
 

@@ -58,8 +58,10 @@ func (p *Compiler) compileInstr(instr ssa.Instruction) error {
 			p.output.WriteString("  ret void\n")
 		case 1: // ret %type %value
 			tyStr := getTypeStr(instr.Results[0].Type(), p.target)
-			if _, ok := instr.Results[0].Type().(*types.Basic); !ok {
+			switch instr.Results[0].Type().(type) {
+			default:
 				return errors.New("type '" + tyStr + "' can not be returned")
+			case *types.Basic, *types.Pointer:
 			}
 			p.output.WriteString("  ret ")
 			p.output.WriteString(tyStr)
