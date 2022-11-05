@@ -3,6 +3,7 @@
 package compiler_llvm
 
 import (
+	"errors"
 	"fmt"
 	"strconv"
 
@@ -288,11 +289,18 @@ func (p *Compiler) compileBinOp(val *ssa.BinOp) error {
 func (p *Compiler) compileCall(val *ssa.Call) error {
 	switch val.Call.Value.(type) {
 	case *ssa.Function:
+		// Emit the call instruction.
 		if !isVoidFunc(val) {
+			tyStr := getTypeStr(val.Type(), p.target)
+			switch val.Type().(type) {
+			default:
+				return errors.New("type '" + tyStr + "' can not be returned")
+			case *types.Basic, *types.Pointer:
+			}
 			p.output.WriteString("  %")
 			p.output.WriteString(val.Name())
 			p.output.WriteString(" = call ")
-			p.output.WriteString(getTypeStr(val.Type(), p.target))
+			p.output.WriteString(tyStr)
 		} else {
 			p.output.WriteString("  call void")
 		}
@@ -301,7 +309,13 @@ func (p *Compiler) compileCall(val *ssa.Call) error {
 		p.output.WriteString("(")
 		// Emit parameters.
 		for i, v := range val.Call.Args {
-			p.output.WriteString(getTypeStr(v.Type(), p.target))
+			tyStr := getTypeStr(v.Type(), p.target)
+			switch v.Type().(type) {
+			default:
+				return errors.New("type '" + tyStr + "' can not be used as parameter")
+			case *types.Basic, *types.Pointer, *types.Array, *types.Struct:
+			}
+			p.output.WriteString(tyStr)
 			p.output.WriteString(" ")
 			p.output.WriteString(getValueStr(v))
 			if i < len(val.Call.Args)-1 {

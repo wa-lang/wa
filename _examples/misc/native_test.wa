@@ -45,31 +45,31 @@ fn bye() {
   println("再见！\nbye!")
 }
 
-fn test_calc0(a: i32, b: i32, c: i32) i32 {
+fn test_calc0(a i32, b i32, c i32) i32 {
   return (-a) * 5 / (b - c + 2)
 }
 
-fn test_calc1(a: i32, b: i32, c: i32) i32 {
+fn test_calc1(a i32, b i32, c i32) i32 {
   return test_calc0(a, b, c)
 }
 
-fn test_calc2(a: float64, b: float64, c: float64) float64 {
+fn test_calc2(a f64, b f64, c f64) f64 {
   return (-a) * 5 / (b - c + 2)
 }
 
-fn test_calc3(a: float64, b: float64, c: float64) float64 {
+fn test_calc3(a f64, b f64, c f64) f64 {
   return test_calc2(a, b, c)
 }
 
-fn test_calc4(a: u16, b: u16, c: u16) u16 {
+fn test_calc4(a u16, b u16, c u16) u16 {
   return (-a) * 5 / (b - c + 2)
 }
 
-fn test_calc5(a: u16, b: u16, c: u16) u16 {
+fn test_calc5(a u16, b u16, c u16) u16 {
   return test_calc4(-a, b, c)
 }
 
-fn test_cmp0(a: u16, b: u16) {
+fn test_cmp0(a u16, b u16) {
   if a > b {
     println(a, " >  ", b)
   } else {
@@ -77,7 +77,7 @@ fn test_cmp0(a: u16, b: u16) {
   }
 }
 
-fn test_cmp1(a: i64, b: i64) {
+fn test_cmp1(a i64, b i64) {
   if a <= b {
     println(a, " <= ", b)
   } else {
@@ -85,7 +85,7 @@ fn test_cmp1(a: i64, b: i64) {
   }
 }
 
-fn test_cmp2(a: float64, b: float64) {
+fn test_cmp2(a f64, b f64) {
   if a != b {
     println(a, " != ", b)
   } else {
@@ -93,7 +93,7 @@ fn test_cmp2(a: float64, b: float64) {
   }
 }
 
-fn test_jmp(a: i32) {
+fn test_jmp(a i32) {
   for {
     if a > 10 {
       return
@@ -103,13 +103,13 @@ fn test_jmp(a: i32) {
   }
 }
 
-fn test_loop0(a: i16) {
+fn test_loop0(a i16) {
   for i := i16(0); i < a; i++ {
     println(i, " * ", i, " = ", i * i)
   }
 }
 
-fn test_loop1(a: u64, b: u64) {
+fn test_loop1(a u64, b u64) {
   for i := u64(0); i < a; i++ {
     for j := u64(0); j < b; j++ {
       println(i, " * ", j, " = ", i * j)
@@ -117,7 +117,7 @@ fn test_loop1(a: u64, b: u64) {
   }
 }
 
-fn test_array(a: int, b: int) {
+fn test_array(a int, b int) {
   var arr [10][10]int
   for i := 0; i < 10; i++ {
     for j := 0; j < 10; j++ {
@@ -132,12 +132,12 @@ fn test_array(a: int, b: int) {
 type t0 struct {
   a int64
   b int32
-  c [4]float64
+  c [4]f64
   d uint32
 }
 
-fn test_struct0(a: int) {
-  s0 := t0{17, -668, [4]float64{2.71828, 0.717, 3.14159}, 234}
+fn test_struct0(a int) {
+  s0 := t0{17, -668, [4]f64{2.71828, 0.717, 3.14159}, 234}
   switch a {
   case 10:
     println(s0.a)
@@ -150,8 +150,8 @@ fn test_struct0(a: int) {
   }
 }
 
-fn test_struct1(a: int, b: int, c: int) {
-  s0 := [2]t0{{11, -12, [4]float64{0.1, -0.2}, 13}, {21, -22, [4]float64{1.1, -1.2}, 24}}
+fn test_struct1(a int, b int, c int) {
+  s0 := [2]t0{{11, -12, [4]f64{0.1, -0.2}, 13}, {21, -22, [4]f64{1.1, -1.2}, 24}}
   switch a {
   case 10:
     println(s0[b].a)
@@ -172,28 +172,28 @@ fn test_pointer() {
 }
 
 fn new_int() *i32 {
-  var i: i32
+  var i i32
   i = 42
   return &i
 }
 
-fn set_int(p: *i32) {
+fn set_int(p *i32) {
   *p = 13
 }
 
-fn convert_i32_to_i16(a: i32) i16 {
+fn convert_i32_to_i16(a i32) i16 {
   return i16(a)
 }
 
-fn convert_i32_to_u16(a: i32) u16 {
+fn convert_i32_to_u16(a i32) u16 {
   return u16(a)
 }
 
-fn convert_i16_to_i32(a: i16) i32 {
+fn convert_i16_to_i32(a i16) i32 {
   return i32(a)
 }
 
-fn convert_u16_to_i32(a: u16) i32 {
+fn convert_u16_to_i32(a u16) i32 {
   return i32(a)
 }
 
@@ -206,19 +206,19 @@ fn test_convert0() {
   println(convert_u16_to_i32(65530))
 }
 
-fn convert_f64_to_f32(a: f64) f32 {
+fn convert_f64_to_f32(a f64) f32 {
   return f32(a)
 }
 
 fn test_convert1() {
-  println(float64(convert_f64_to_f32(3.1415926535)))
+  println(f64(convert_f64_to_f32(3.1415926535)))
 }
 
-fn convert_i16_to_f64(a: i16) f64 {
+fn convert_i16_to_f64(a i16) f64 {
   return f64(a)
 }
 
-fn convert_u16_to_f64(a: u16) f64 {
+fn convert_u16_to_f64(a u16) f64 {
   return f64(a)
 }
 
@@ -229,11 +229,11 @@ fn test_convert2() {
   println(convert_u16_to_f64(65530))
 }
 
-fn convert_f64_to_i32(a: f64) i32 {
+fn convert_f64_to_i32(a f64) i32 {
   return i32(a)
 }
 
-fn convert_f64_to_u32(a: f64) u32 {
+fn convert_f64_to_u32(a f64) u32 {
   return u32(a)
 }
 
