@@ -5,6 +5,8 @@ fn main {
   println("幸运整数：", test_calc1(6, 9, 8), ", ", 5, ", ", test_calc5(6, 9, 8))
   println("幸运浮点数：", 5.44, ", ", test_calc3(6, 9, 8))
 
+  test_print(-100, 100, -100, 100, 5)
+
   test_cmp0(20, 19)
   test_cmp0(20, 20)
   test_cmp1(-3, -3)
@@ -244,4 +246,8 @@ fn test_convert3() {
   println(convert_f64_to_u32(99.99))
   println(convert_f64_to_i32(-100.001))
   println(convert_f64_to_u32(-100.001))
+}
+
+fn test_print(a i16, b u16, c i8, d u8, e f32) {
+  println(a, ", ", b, ", ", c, ", ", d, ", ", e/2)
 }
