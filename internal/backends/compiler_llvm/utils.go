@@ -183,7 +183,58 @@ func getTypeStr(ty types.Type, target string) string {
 		return getTypeStr(t.Underlying(), target)
 
 	default:
-		// TODO: support pointer, array and struct types
+		panic("unknown type")
+	}
+}
+
+func getTypeSize(ty types.Type, target string) int {
+	// feasible types on different targets
+	defInt := map[string]int{
+		"avr":     2,
+		"thumb":   2,
+		"arm":     4,
+		"aarch64": 8,
+		"riscv32": 4,
+		"riscv64": 8,
+		"x86":     4,
+		"x86_64":  8,
+	}
+	// fixed types
+	expTy := map[types.BasicKind]int{
+		types.Bool:         1,
+		types.UntypedBool:  1,
+		types.Int8:         1,
+		types.Uint8:        1,
+		types.Int16:        2,
+		types.Uint16:       2,
+		types.Int32:        4,
+		types.Uint32:       4,
+		types.Int64:        8,
+		types.Uint64:       8,
+		types.Float32:      4,
+		types.Float64:      8,
+		types.UntypedFloat: 4,
+	}
+
+	switch t := ty.(type) {
+	case *types.Basic:
+		// return size of a fixed type
+		if sz, ok := expTy[t.Kind()]; ok {
+			return sz
+		}
+		// return size of a feasible type
+		switch t.Kind() {
+		case types.Int, types.Uint, types.UntypedInt:
+			if sz, ok := defInt[getArch(target)]; ok {
+				return sz
+			}
+			return 8
+		// should never reach here
+		default:
+			panic("unknown basic type")
+		}
+
+	default:
 		panic("unknown type")
 	}
 }

@@ -96,11 +96,86 @@ func (p *Compiler) compileValue(val ssa.Value) error {
 		p.output.WriteString(strconv.Itoa(val.Field))
 		p.output.WriteString("\n")
 
+	case *ssa.Convert:
+		if err := p.compileConvert(val); err != nil {
+			return err
+		}
+
 	default:
 		p.output.WriteString("  ; " + val.Name() + " = " + val.String() + "\n")
 		// panic("unsupported Value '" + val.Name() + " = " + val.String() + "'")
 	}
 
+	return nil
+}
+
+func (p *Compiler) compileConvert(val *ssa.Convert) error {
+	frIsFloat, frIsSigned := checkType(val.X.Type())
+	toIsFloat, toIsSigned := checkType(val.Type())
+	frSize := getTypeSize(val.X.Type(), p.target)
+	toSize := getTypeSize(val.Type(), p.target)
+
+	p.output.WriteString("  ")
+	p.output.WriteString(getValueStr(val))
+	p.output.WriteString(" = ")
+
+	switch {
+	case !frIsFloat && !toIsFloat: // integral type -> integral type
+		switch {
+		case frSize == toSize:
+			p.output.WriteString("add ")
+			p.output.WriteString(getTypeStr(val.Type(), p.target))
+			p.output.WriteString(" ")
+			p.output.WriteString(getValueStr(val.X))
+			p.output.WriteString(", 0\n")
+			return nil
+
+		case frSize > toSize:
+			p.output.WriteString("trunc ")
+		case frSize < toSize:
+			if !toIsSigned || !frIsSigned {
+				p.output.WriteString("zext ")
+			} else {
+				p.output.WriteString("sext ")
+			}
+		default:
+			panic("unkown type convert: " + val.String())
+		}
+
+	case frIsFloat && toIsFloat: // float point type -> float point type
+		switch {
+		case frSize > toSize:
+			p.output.WriteString("fptrunc ")
+		case frSize < toSize:
+			p.output.WriteString("fpext ")
+		default:
+			panic("unkown type convert: " + val.String())
+		}
+
+	case !frIsFloat && toIsFloat: // integeral type -> float point type
+		if frIsSigned {
+			p.output.WriteString("sitofp ")
+		} else {
+			p.output.WriteString("uitofp ")
+		}
+
+	case frIsFloat && !toIsFloat: //float point type -> integral type
+		if toIsSigned {
+			p.output.WriteString("fptosi ")
+		} else {
+			p.output.WriteString("fptoui ")
+		}
+
+	default:
+		panic("unkown type convert: " + val.String())
+	}
+
+	p.output.WriteString(getTypeStr(val.X.Type(), p.target))
+	p.output.WriteString(" ")
+	p.output.WriteString(getValueStr(val.X))
+	p.output.WriteString(" to ")
+	p.output.WriteString(getTypeStr(val.Type(), p.target))
+	p.output.WriteString("\n")
 	return nil
 }
 
