@@ -215,10 +215,10 @@ func EmitGenFieldAddr(x Value, field_name string) (insts []wat.Inst, ret_type Va
 	switch addr := x.(type) {
 	case *aRef:
 		field = addr.Type().(Ref).Base.(Struct).findFieldByName(field_name)
-
 		ret_type = NewRef(field.Type())
 	case *aPointer:
 		field = addr.Type().(Pointer).Base.(Struct).findFieldByName(field_name)
+		ret_type = NewPointer(field.Type())
 
 	default:
 		logger.Fatalf("Todo:%T", x.Type())

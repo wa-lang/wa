@@ -3,6 +3,8 @@
 package wir
 
 import (
+	"strings"
+
 	"github.com/wa-lang/wa/internal/types"
 
 	"github.com/wa-lang/wa/internal/logger"
@@ -78,7 +80,7 @@ func ToWType(from types.Type) ValueType {
 					fs = append(fs, NewField(f.Name(), wtyp))
 				}
 			}
-			return NewStruct(t.Obj().Name(), fs)
+			return NewStruct(GetPkgMangleName(t.Obj().Pkg().Path())+t.Obj().Name(), fs)
 
 		default:
 			logger.Fatalf("Todo:%T", ut)
@@ -104,4 +106,8 @@ func IsNumber(v Value) bool {
 	}
 
 	return false
+}
+
+func GetPkgMangleName(pkg_path string) string {
+	return strings.ReplaceAll(pkg_path, "/", "$") + "."
 }

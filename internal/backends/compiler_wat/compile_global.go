@@ -13,9 +13,9 @@ func (p *Compiler) compileGlobal(g *ssa.Global) {
 		p.module.AddGlobal(g.LinkName(), wir.ToWType(g.Type().(*types.Pointer).Elem()), false, g)
 	} else {
 		if g.Name() == "init$guard" {
-			p.module.AddGlobal(g.Name(), wir.ToWType(g.Type().(*types.Pointer).Elem()), false, g)
+			p.module.AddGlobal(wir.GetPkgMangleName(g.Pkg.Pkg.Path())+g.Name(), wir.ToWType(g.Type().(*types.Pointer).Elem()), false, g)
 		} else {
-			p.module.AddGlobal(g.Name(), wir.NewPointer(wir.ToWType(g.Type().(*types.Pointer).Elem())), true, g)
+			p.module.AddGlobal(wir.GetPkgMangleName(g.Pkg.Pkg.Path())+g.Name(), wir.NewPointer(wir.ToWType(g.Type().(*types.Pointer).Elem())), true, g)
 		}
 	}
 	//logger.Fatal("Todo")

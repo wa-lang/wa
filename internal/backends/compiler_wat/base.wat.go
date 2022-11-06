@@ -53,18 +53,6 @@ const modBaseWat_wa = `
 (memory $memory 1)
 
 (export "memory" (memory $memory))
-(export "_start" (func $_start))
-
-(func $_start
-	;; {{$_start/body/begin}}
-	(call $$waGlobalAlloc)
-	(call $init)
-	;; (call $main.init)
-	(call $main)
-	;; {{$_start/body/end}}
-
-	;; (call $$test_entry)
-)
 
 ;;Remove these functions if they've been implemented in .wa
 (global $$heap_ptr (mut i32) (i32.const 2048))

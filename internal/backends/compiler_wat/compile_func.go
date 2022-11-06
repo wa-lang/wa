@@ -116,9 +116,9 @@ func (g *functionGenerator) getValue(i ssa.Value) wir.Value {
 func (g *functionGenerator) genFunction(f *ssa.Function) *wir.Function {
 	var wir_fn wir.Function
 	if len(f.LinkName()) > 0 {
-		wir_fn.Name = f.LinkName()
+		wir_fn.Name = wir.GetPkgMangleName(f.Pkg.Pkg.Path()) + f.LinkName()
 	} else {
-		wir_fn.Name = f.Name()
+		wir_fn.Name = wir.GetPkgMangleName(f.Pkg.Pkg.Path()) + f.Name()
 	}
 
 	rets := f.Signature.Results()
@@ -383,9 +383,9 @@ func (g *functionGenerator) genCall(inst *ssa.Call) ([]wat.Inst, wir.ValueType) 
 		}
 		callee := inst.Call.StaticCallee()
 		if len(callee.LinkName()) > 0 {
-			insts = append(insts, wat.NewInstCall(callee.LinkName()))
+			insts = append(insts, wat.NewInstCall(wir.GetPkgMangleName(callee.Pkg.Pkg.Path())+callee.LinkName()))
 		} else {
-			insts = append(insts, wat.NewInstCall(callee.Name()))
+			insts = append(insts, wat.NewInstCall(wir.GetPkgMangleName(callee.Pkg.Pkg.Path())+callee.Name()))
 		}
 		return insts, ret_type
 
@@ -413,6 +413,14 @@ func (g *functionGenerator) genBuiltin(call *ssa.CallCommon) (insts []wat.Inst, 
 			case wir.I32:
 				insts = append(insts, arg.EmitPush()...)
 				insts = append(insts, wat.NewInstCall("$waPrintI32"))
+
+			case wir.F32:
+				insts = append(insts, arg.EmitPush()...)
+				insts = append(insts, wat.NewInstCall("$waPrintF32"))
+
+			case wir.F64:
+				insts = append(insts, arg.EmitPush()...)
+				insts = append(insts, wat.NewInstCall("$waPrintF64"))
 
 			case wir.RUNE:
 				insts = append(insts, arg.EmitPush()...)

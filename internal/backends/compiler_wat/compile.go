@@ -35,52 +35,58 @@ func (p *Compiler) Compile(prog *loader.Program, target target_spec.Machine) (ou
 		return "", fmt.Errorf("compiler_wat.Compiler: unsupport target: %v", target)
 	}
 
-	p.CompilePackage(prog.SSAMainPkg)
+	for _, pkg := range prog.Pkgs {
+		p.ssaPkg = pkg.SSAPkg
+		p.CompilePkgConst(pkg.SSAPkg)
+	}
+
+	for _, pkg := range prog.Pkgs {
+		p.ssaPkg = pkg.SSAPkg
+		p.CompilePkgGlocal(pkg.SSAPkg)
+	}
+
+	for _, pkg := range prog.Pkgs {
+		p.ssaPkg = pkg.SSAPkg
+		p.CompilePkgFunc(pkg.SSAPkg)
+	}
+
+	{
+		var f wir.Function
+		f.Name = "_start"
+		f.Insts = append(f.Insts, wat.NewInstCall("$waGlobalAlloc"))
+		n := wir.GetPkgMangleName(prog.SSAMainPkg.Pkg.Path()) + "init"
+		f.Insts = append(f.Insts, wat.NewInstCall(n))
+		n = wir.GetPkgMangleName(prog.SSAMainPkg.Pkg.Path()) + "main"
+		f.Insts = append(f.Insts, wat.NewInstCall(n))
+		p.module.AddFunc(&f)
+	}
 
 	return p.module.ToWatModule().String(), nil
 }
 
-func (p *Compiler) CompilePackage(ssaPkg *ssa.Package) {
-
-	p.ssaPkg = ssaPkg
-
-	var ts []*ssa.Type
-	var cs []*ssa.NamedConst
-	var gs []*ssa.Global
-	var fns []*ssa.Function
-
-	{
-		var sig wat.FuncSig
-		sig.Params = []wat.ValueType{wat.I32{}}
-		//p.module.Imports = append(p.module.Imports, wat.NewImpFunc("js", "print_i32", "$$print_i32", sig))
-		//p.module.Imports = append(p.module.Imports, wat.NewImpFunc("js", "print_rune", "$$print_rune", sig))
-	}
-
+func (p *Compiler) CompilePkgConst(ssaPkg *ssa.Package) {
 	for _, m := range p.ssaPkg.Members {
-		switch member := m.(type) {
-		case *ssa.Type:
-			ts = append(ts, member)
-		case *ssa.NamedConst:
-			cs = append(cs, member)
-		case *ssa.Global:
-			gs = append(gs, member)
-		case *ssa.Function:
-			fns = append(fns, member)
-		default:
-			panic("Unreachable")
+		if con, ok := m.(*ssa.NamedConst); ok {
+			p.compileConst(con)
 		}
 	}
+}
 
-	for _, v := range ts {
-		p.compileType(v)
+func (p *Compiler) CompilePkgGlocal(ssaPkg *ssa.Package) {
+	for _, m := range p.ssaPkg.Members {
+		if global, ok := m.(*ssa.Global); ok {
+			p.compileGlobal(global)
+		}
 	}
+}
 
-	for _, v := range cs {
-		p.compileConst(v)
-	}
+func (p *Compiler) CompilePkgFunc(ssaPkg *ssa.Package) {
+	var fns []*ssa.Function
 
-	for _, v := range gs {
-		p.compileGlobal(v)
+	for _, m := range p.ssaPkg.Members {
+		if fn, ok := m.(*ssa.Function); ok {
+			fns = append(fns, fn)
+		}
 	}
 
 	for _, v := range ssaPkg.GetValues() {
@@ -97,9 +103,8 @@ func (p *Compiler) CompilePackage(ssaPkg *ssa.Package) {
 			fns = append(fns, f)
 		}
 	}
+
 	for _, v := range fns {
 		p.module.AddFunc(newFunctionGenerator(p).genFunction(v))
 	}
-
-	//println(p.module.String())
 }

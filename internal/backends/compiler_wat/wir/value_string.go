@@ -182,9 +182,9 @@ func newValueString(name string, kind ValueKind) *aString {
 	var v aString
 	string_type := NewString()
 	if kind == ValueKindConst {
-		string_type.findFieldByName("block").const_val = NewConst("0", I32{})
+		string_type.findFieldByName("block").const_val = NewConst("0", NewBlock(U8{}))
 		ptr := currentModule.AddDataSeg([]byte(name))
-		string_type.findFieldByName("data").const_val = NewConst(strconv.Itoa(ptr), I32{})
+		string_type.findFieldByName("data").const_val = NewConst(strconv.Itoa(ptr), NewPointer(U8{}))
 		string_type.findFieldByName("len").const_val = NewConst(strconv.Itoa(len(name)), I32{})
 	}
 	v.aValue = aValue{name: name, kind: kind, typ: string_type}

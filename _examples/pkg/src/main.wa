@@ -1,0 +1,30 @@
+# 版权 @2022 _examples/hello 作者。保留所有权利。
+
+import (
+	"pkg/mypkg"
+)
+
+type ST struct {
+	A: string
+	B: i32
+}
+
+var G ST
+
+fn Do() {
+	G.A = "13"
+	G.B = 1024
+}
+
+fn main() {
+	mypkg.Do(42)
+	println(mypkg.G.A)
+	println(mypkg.G.B)
+
+	Do()
+	println(G.A)
+	println(G.B)
+	
+	println(mypkg.G.A)
+	println(mypkg.G.B)
+}

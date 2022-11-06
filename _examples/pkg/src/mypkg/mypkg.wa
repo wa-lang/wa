@@ -1,0 +1,13 @@
+// 版权 @2022 _examples/hello 作者。保留所有权利。
+
+type ST struct {
+	A: i32
+	B: string
+}
+
+var G ST
+
+fn Do(x i32) {
+	G.A = x
+	G.B = "Hellow wa"
+}
