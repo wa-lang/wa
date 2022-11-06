@@ -262,7 +262,16 @@ func getValueStr(val ssa.Value) string {
 	case *ssa.Parameter:
 		return "%" + val.Name()
 
+	case *ssa.Global:
+		return "@" + getNormalName(val.Name())
+
 	default:
 		return "%" + val.Name()
 	}
+}
+
+func getNormalName(name string) string {
+	name = strings.ReplaceAll(name, ".", "__")
+	name = strings.ReplaceAll(name, "$", "___")
+	return name
 }

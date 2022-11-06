@@ -71,12 +71,21 @@ func (p *Compiler) compilePackage() error {
 		}
 	}
 
+	// Emit all global variables.
+	for _, gv := range gs {
+		p.output.WriteString("@")
+		p.output.WriteString(getNormalName(gv.Name()))
+		p.output.WriteString(" = global ")
+		tys := getTypeStr(gv.Type(), p.target)
+		p.output.WriteString(tys[0:(len(tys) - 1)])
+		p.output.WriteString(" zeroinitializer\n")
+	}
+	if len(gs) > 0 {
+		p.output.WriteString("\n")
+	}
+
 	// Generate LLVM-IR for each global function.
 	for _, v := range fns {
-		// TODO: Support the builtin function 'init'.
-		if v.Name() == "init" {
-			continue
-		}
 		if err := p.compileFunction(v); err != nil {
 			return err
 		}
