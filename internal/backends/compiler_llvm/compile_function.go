@@ -46,6 +46,13 @@ func (p *Compiler) compileFunction(fn *ssa.Function) error {
 	}
 	p.output.WriteString(") {\n")
 
+	// Initialize all global variables at the beginning of the main function.
+	if fn.Name() == "main" {
+		p.output.WriteString("__basic_block_init:\n")
+		p.output.WriteString("  call void @init()\n")
+		p.output.WriteString("  br label %__basic_block_0\n\n")
+	}
+
 	// Translate Go SSA intermediate instructions.
 	for i, b := range fn.Blocks {
 		p.output.WriteString(fmt.Sprintf("__basic_block_%d:\n", i))
