@@ -20,12 +20,14 @@ type Compiler struct {
 	ssaPkg *ssa.Package
 	target string
 	output strings.Builder
+	debug  bool
 	fmts   []FmtStr
 }
 
-func New(target string) *Compiler {
+func New(target string, debug bool) *Compiler {
 	p := new(Compiler)
 	p.target = target
+	p.debug = debug
 	return p
 }
 
@@ -69,6 +71,13 @@ func (p *Compiler) compilePackage() error {
 
 	// Emit all global variables.
 	for _, gv := range gs {
+		// Dump each global variable in IR form.
+		if p.debug {
+			p.output.WriteString("; ")
+			p.output.WriteString(gv.String())
+			p.output.WriteString("\n")
+		}
+		// Compile each global variable to LLVM-IR form.
 		p.output.WriteString("@")
 		p.output.WriteString(getNormalName(gv.Name()))
 		p.output.WriteString(" = global ")

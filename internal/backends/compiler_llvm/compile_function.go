@@ -57,6 +57,17 @@ func (p *Compiler) compileFunction(fn *ssa.Function) error {
 	for i, b := range fn.Blocks {
 		p.output.WriteString(fmt.Sprintf("__basic_block_%d:\n", i))
 		for _, instr := range b.Instrs {
+			// Dump each IR.
+			if p.debug {
+				p.output.WriteString("  ; ")
+				if t, ok := instr.(ssa.Value); ok {
+					p.output.WriteString(t.Name())
+					p.output.WriteString(" = ")
+				}
+				p.output.WriteString(instr.String())
+				p.output.WriteString("\n")
+			}
+			// Compile each IR to real LLVM-IR.
 			if err := p.compileInstr(instr); err != nil {
 				return err
 			}

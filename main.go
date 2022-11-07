@@ -276,10 +276,15 @@ func main() {
 					Usage: "set native target",
 					Value: "",
 				},
+				&cli.BoolFlag{
+					Name:  "debug",
+					Usage: "dump orginal intermediate representation",
+				},
 			},
 			Action: func(c *cli.Context) error {
 				outfile := c.String("output")
 				target := c.String("target")
+				debug := c.Bool("debug")
 				infile := ""
 
 				if c.NArg() == 0 {
@@ -293,7 +298,7 @@ func main() {
 				}
 
 				ctx := app.NewApp(build_Options(c))
-				if err := ctx.LLVM(infile, outfile, target); err != nil {
+				if err := ctx.LLVM(infile, outfile, target, debug); err != nil {
 					fmt.Println(err)
 					os.Exit(1)
 				}
