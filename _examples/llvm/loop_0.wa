@@ -1,0 +1,12 @@
+// Test the llvm backend.
+// Test loops.
+
+fn main() {
+  test_loop(10)
+}
+
+fn test_loop(a i16) {
+  for i := i16(0); i < a; i++ {
+    println(i, " * ", i, " = ", i * i)
+  }
+}

@@ -191,7 +191,7 @@ var st1 struct_t0
 fn test_struct2() {
   for i := 0; i < 16; i++ {
     st0.arr0[i] = i * i
-    st0.arr1[i] = float32(i) * 2.0
+    st0.arr1[i] = f32(i) * 2.0
   }
 }
 

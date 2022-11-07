@@ -1,0 +1,6 @@
+// Test the llvm backend.
+// Test printing strings.
+
+fn main() {
+  println("您好，凹语言！\n\"Hello, wa-lang!\"")
+}

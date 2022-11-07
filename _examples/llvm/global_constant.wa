@@ -1,0 +1,15 @@
+// Test the llvm backend.
+// Test global constants.
+
+const gbegin = 10
+const gend = 20
+
+fn test_global_consts() {
+  for i := gbegin; i < gend; i++ {
+    println(i, " - ", gbegin, " = ", i - gbegin)
+  }
+}
+
+fn main() {
+  test_global_consts()
+}

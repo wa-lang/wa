@@ -1,0 +1,10 @@
+// Test the llvm backend.
+// Test 'floating point' -> 'floating point' convertion.
+
+fn convert_f64_to_f32(a f64) f32 {
+  return f32(a)
+}
+
+fn main() {
+  println(convert_f64_to_f32(3.1415926535))
+}

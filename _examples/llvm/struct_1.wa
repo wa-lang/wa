@@ -1,0 +1,31 @@
+// Test the llvm backend.
+// Test read/write structs.
+
+fn main() {
+  test_struct1(10, 0, 0)
+  test_struct1(11, 1, 0)
+  test_struct1(2, 0, 1)
+  test_struct1(13, 1, 0)
+  test_struct1(2, 1, 0)
+}
+
+type t0 struct {
+  a int64
+  b int32
+  c [4]f64
+  d uint32
+}
+
+fn test_struct1(a int, b int, c int) {
+  s0 := [2]t0{{11, -12, [4]f64{0.1, -0.2}, 13}, {21, -22, [4]f64{1.1, -1.2}, 24}}
+  switch a {
+  case 10:
+    println(s0[b].a)
+  case 11:
+    println(s0[b].b)
+  case 13:
+    println(s0[b].d)
+  default:
+    println(s0[b].c[c])
+  }
+}
