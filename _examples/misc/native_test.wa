@@ -47,6 +47,14 @@ fn main {
 
   test_f32()
 
+  test_struct2()
+  test_struct3()
+  test_struct4()
+
+  test_array2()
+  test_array3()
+  test_array4()
+
   bye()
 }
 
@@ -170,6 +178,104 @@ fn test_struct1(a int, b int, c int) {
     println(s0[b].d)
   default:
     println(s0[b].c[c])
+  }
+}
+
+type struct_t0 struct {
+  arr0 [16]int
+  arr1 [16]f32
+}
+var st0 struct_t0
+var st1 struct_t0
+
+fn test_struct2() {
+  for i := 0; i < 16; i++ {
+    st0.arr0[i] = i * i
+    st0.arr1[i] = float32(i) * 2.0
+  }
+}
+
+fn getst0int(st0 struct_t0, i int) int {
+  return st0.arr0[i]
+}
+
+fn getst0f32(st0 *struct_t0, i int) f32 {
+  return st0.arr1[i]
+}
+
+fn test_struct3() {
+  for i := 6; i < 14; i += 2 {
+    println(getst0int(st0, i), ", ", getst0f32(&st0, i + 1))
+  }
+}
+
+fn maket0a(i int) struct_t0 {
+  var r struct_t0
+  for j := 0; j < 16; j++ {
+    r.arr0[j] = 100 - j - i
+    r.arr1[j] = 200.0 - f32(j + i)
+  }
+  return r
+}
+
+fn maket0b(i int) *struct_t0 {
+  for j := 0; j < 16; j++ {
+    st1.arr0[j] = 100 - j - i
+    st1.arr1[j] = 200.0 - f32(j + i)
+  }
+  return &st1
+}
+
+fn test_struct4() {
+  r0, r1 := maket0a(20), maket0b(30)
+  for i := 0; i < 16; i++ {
+    println(r0.arr0[i], ", ", r0.arr1[i], " : ", r1.arr0[i], ", ", r1.arr1[i])
+  }
+}
+
+type fff32 f32
+var arr0 [32]fff32
+var arr1 [32]fff32
+
+fn test_array2() {
+  for i := 0; i < 32; i++ {
+    arr0[i] = fff32(i * i)
+  }
+}
+
+fn getarr0a(arr [32]fff32, i int) fff32 {
+  return arr[i]
+}
+
+fn getarr0b(arr *[32]fff32, i int) fff32 {
+  return arr[i]
+}
+
+fn makearr0a(i int) [32]fff32 {
+  var r [32]fff32
+  for j := 0; j < 32; j++ {
+    r[j] = fff32(i * j)
+  }
+  return r
+}
+
+fn makearr0b(i int) *[32]fff32 {
+  for j := 0; j < 32; j++ {
+    arr1[j] = 2000 - fff32(i * j)
+  }
+  return &arr1
+}
+
+fn test_array3() {
+  for i := 6; i < 20; i += 2 {
+    println(getarr0a(arr0, i), ", ", getarr0b(&arr0, i + 1))
+  }
+}
+
+fn test_array4() {
+  r0, r1 := makearr0a(10), makearr0b(20)
+  for i := 6; i < 20; i += 2 {
+    println(r0[i], ", ", r1[i])
   }
 }
 

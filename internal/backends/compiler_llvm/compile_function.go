@@ -12,30 +12,34 @@ import (
 
 func (p *Compiler) compileFunction(fn *ssa.Function) error {
 	// Translate return type.
-	var retType string
+	var retTyStr string
 	rets := fn.Signature.Results()
 	switch rets.Len() {
 	case 0:
-		retType = "void"
+		retTyStr = "void"
 	case 1:
-		retType = getTypeStr(rets.At(0).Type(), p.target)
-		switch rets.At(0).Type().(type) {
+		ty := getRealType(rets.At(0).Type())
+		retTyStr = getTypeStr(ty, p.target)
+		switch ty.(type) {
 		default:
-			return errors.New("type '" + retType + "' can not be returned")
+			return errors.New("type '" + retTyStr + "' can not be returned")
 		case *types.Basic, *types.Pointer, *types.Array, *types.Struct:
+			// Only allow scalar/pointer/array/struct types.
 		}
 	default:
 		return errors.New("multiple return values are not supported")
 	}
-	p.output.WriteString("define " + retType + " @" + fn.Name() + "(")
+	p.output.WriteString("define " + retTyStr + " @" + fn.Name() + "(")
 
 	// Translate arguments.
 	for i, v := range fn.Params {
-		tyStr := getTypeStr(v.Type(), p.target)
-		switch v.Type().(type) {
+		ty := getRealType(v.Type())
+		tyStr := getTypeStr(ty, p.target)
+		switch ty.(type) {
 		default:
 			return errors.New("type '" + tyStr + "' can not be used as argument")
 		case *types.Basic, *types.Pointer, *types.Struct, *types.Array:
+			// Only allow scalar/pointer/array/struct types.
 		}
 		p.output.WriteString(tyStr)
 		p.output.WriteString(" ")

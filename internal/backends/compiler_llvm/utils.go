@@ -28,7 +28,8 @@ func isConstString(val ssa.Value) bool {
 	if _, ok := val.(*ssa.Const); !ok {
 		return false
 	}
-	if t, ok := val.Type().(*types.Basic); ok {
+	ty := getRealType(val.Type())
+	if t, ok := ty.(*types.Basic); ok {
 		if t.Kind() == types.String {
 			return true
 		}
@@ -40,14 +41,16 @@ func isConstFloat32(val ssa.Value) bool {
 	if _, ok := val.(*ssa.Const); !ok {
 		return false
 	}
-	if t, ok := val.Type().(*types.Basic); ok {
+	ty := getRealType(val.Type())
+	if t, ok := ty.(*types.Basic); ok {
 		return t.Kind() == types.Float32
 	}
 	return false
 }
 
 func checkType(ty types.Type) (isFloat bool, isSigned bool) {
-	switch t := ty.(type) {
+	typ := getRealType(ty)
+	switch t := typ.(type) {
 	case *types.Basic:
 		switch t.Kind() {
 		case types.Float32, types.Float64, types.UntypedFloat:
@@ -93,7 +96,8 @@ func getValueFmt(val ssa.Value, target string) (string, int) {
 		return str, siz
 	}
 
-	switch t := val.Type().(type) {
+	ty := getRealType(val.Type())
+	switch t := ty.(type) {
 	case *types.Basic:
 		switch t.Kind() {
 		// Handle fixed types.
@@ -228,7 +232,8 @@ func getTypeSize(ty types.Type, target string) int {
 		types.UntypedFloat: 4,
 	}
 
-	switch t := ty.(type) {
+	typ := getRealType(ty)
+	switch t := typ.(type) {
 	case *types.Basic:
 		// return size of a fixed type
 		if sz, ok := expTy[t.Kind()]; ok {
@@ -286,4 +291,14 @@ func getNormalName(name string) string {
 	name = strings.ReplaceAll(name, ".", "__")
 	name = strings.ReplaceAll(name, "$", "___")
 	return name
+}
+
+func getRealType(ty types.Type) types.Type {
+	for {
+		if t, ok := ty.(*types.Named); ok {
+			ty = t.Underlying()
+		} else {
+			return ty
+		}
+	}
 }
