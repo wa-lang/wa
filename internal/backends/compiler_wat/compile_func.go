@@ -116,7 +116,7 @@ func (g *functionGenerator) getValue(i ssa.Value) wir.Value {
 func (g *functionGenerator) genFunction(f *ssa.Function) *wir.Function {
 	var wir_fn wir.Function
 	if len(f.LinkName()) > 0 {
-		wir_fn.Name = wir.GetPkgMangleName(f.Pkg.Pkg.Path()) + f.LinkName()
+		wir_fn.Name = f.LinkName()
 	} else {
 		wir_fn.Name = wir.GetPkgMangleName(f.Pkg.Pkg.Path()) + f.Name()
 	}
@@ -383,7 +383,7 @@ func (g *functionGenerator) genCall(inst *ssa.Call) ([]wat.Inst, wir.ValueType) 
 		}
 		callee := inst.Call.StaticCallee()
 		if len(callee.LinkName()) > 0 {
-			insts = append(insts, wat.NewInstCall(wir.GetPkgMangleName(callee.Pkg.Pkg.Path())+callee.LinkName()))
+			insts = append(insts, wat.NewInstCall(callee.LinkName()))
 		} else {
 			insts = append(insts, wat.NewInstCall(wir.GetPkgMangleName(callee.Pkg.Pkg.Path())+callee.Name()))
 		}
