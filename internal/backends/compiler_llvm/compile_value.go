@@ -267,6 +267,20 @@ func (p *Compiler) compileBinOp(val *ssa.BinOp) error {
 		opMap = uintOpMap
 	}
 
+	// Special process for float32 constants.
+	xStr, yStr := "", ""
+	if isConstFloat32(val.X) {
+		xStr = p.wrapConstFloat32(val.X)
+	} else {
+		xStr = getValueStr(val.X)
+	}
+	if isConstFloat32(val.Y) {
+		yStr = p.wrapConstFloat32(val.Y)
+	} else {
+		yStr = getValueStr(val.Y)
+	}
+
+	// Emit the binary-operator instruction.
 	if op, ok := opMap[val.Op]; ok {
 		p.output.WriteString("  ")
 		p.output.WriteString("%" + val.Name())
@@ -275,9 +289,9 @@ func (p *Compiler) compileBinOp(val *ssa.BinOp) error {
 		p.output.WriteString(" ")
 		p.output.WriteString(getTypeStr(val.X.Type(), p.target))
 		p.output.WriteString(" ")
-		p.output.WriteString(getValueStr(val.X))
+		p.output.WriteString(xStr)
 		p.output.WriteString(", ")
-		p.output.WriteString(getValueStr(val.Y))
+		p.output.WriteString(yStr)
 		p.output.WriteString("\n")
 		return nil
 	}
@@ -290,13 +304,22 @@ func (p *Compiler) compileBinOp(val *ssa.BinOp) error {
 func (p *Compiler) compileCall(val *ssa.Call) error {
 	switch val.Call.Value.(type) {
 	case *ssa.Function:
+		// Special process for float32 constants.
+		paf32 := map[int]string{}
+		for i, v := range val.Call.Args {
+			if isConstFloat32(v) {
+				paf32[i] = p.wrapConstFloat32(v)
+			}
+		}
 		// Emit the call instruction.
 		if !isVoidFunc(val) {
-			tyStr := getTypeStr(val.Type(), p.target)
-			switch val.Type().(type) {
+			ty := getRealType(val.Type())
+			tyStr := getTypeStr(ty, p.target)
+			switch ty.(type) {
 			default:
 				return errors.New("type '" + tyStr + "' can not be returned")
-			case *types.Basic, *types.Pointer:
+			case *types.Basic, *types.Pointer, *types.Array, *types.Struct:
+				// Only allow scalar/pointer/array/struct types.
 			}
 			p.output.WriteString("  %")
 			p.output.WriteString(val.Name())
@@ -310,15 +333,21 @@ func (p *Compiler) compileCall(val *ssa.Call) error {
 		p.output.WriteString("(")
 		// Emit parameters.
 		for i, v := range val.Call.Args {
-			tyStr := getTypeStr(v.Type(), p.target)
-			switch v.Type().(type) {
+			ty := getRealType(v.Type())
+			tyStr := getTypeStr(ty, p.target)
+			switch ty.(type) {
 			default:
 				return errors.New("type '" + tyStr + "' can not be used as parameter")
 			case *types.Basic, *types.Pointer, *types.Array, *types.Struct:
+				// Only allow scalar/pointer/array/struct types.
 			}
 			p.output.WriteString(tyStr)
 			p.output.WriteString(" ")
-			p.output.WriteString(getValueStr(v))
+			if pv, ok := paf32[i]; ok {
+				p.output.WriteString(pv)
+			} else {
+				p.output.WriteString(getValueStr(v))
+			}
 			if i < len(val.Call.Args)-1 {
 				p.output.WriteString(", ")
 			}
@@ -370,7 +399,8 @@ func (p *Compiler) compilePrint(val *ssa.CallCommon, ln bool) error {
 
 	// Formulate the format string.
 	for _, arg := range val.Args {
-		if _, ok := arg.Type().(*types.Basic); !ok {
+		ty := getRealType(arg.Type())
+		if _, ok := ty.(*types.Basic); !ok {
 			return errors.New("can only print scalar typed values")
 		}
 		f, s := getValueFmt(arg, p.target)
@@ -389,7 +419,8 @@ func (p *Compiler) compilePrint(val *ssa.CallCommon, ln bool) error {
 	// Emit some type promote instructions for f32/i16/i8/u16/u8 parameters.
 	varMap := map[int]printArg{}
 	for i, arg := range val.Args {
-		if t, ok := arg.Type().(*types.Basic); ok {
+		argty := getRealType(arg.Type())
+		if t, ok := argty.(*types.Basic); ok {
 			instr, ty := "", ""
 			switch t.Kind() {
 			case types.Float32:
@@ -432,7 +463,8 @@ func (p *Compiler) compilePrint(val *ssa.CallCommon, ln bool) error {
 				p.output.WriteString(" ")
 				p.output.WriteString(vn.name)
 			} else {
-				p.output.WriteString(getTypeStr(arg.Type(), p.target))
+				ty := getRealType(arg.Type())
+				p.output.WriteString(getTypeStr(ty, p.target))
 				p.output.WriteString(" ")
 				p.output.WriteString(getValueStr(arg))
 			}
@@ -444,4 +476,18 @@ func (p *Compiler) compilePrint(val *ssa.CallCommon, ln bool) error {
 	p.fmts = append(p.fmts, FmtStr{format, size})
 
 	return nil
+}
+
+func (p *Compiler) wrapConstFloat32(val ssa.Value) string {
+	if !isConstFloat32(val) {
+		panic("a float32 constant is expected")
+	}
+	valStr := getValueStr(val)
+	ret := fmt.Sprintf("%%tmp%d", rand.Int())
+	p.output.WriteString("  ")
+	p.output.WriteString(ret)
+	p.output.WriteString(" = fptrunc double ")
+	p.output.WriteString(valStr)
+	p.output.WriteString(" to float\n")
+	return ret
 }

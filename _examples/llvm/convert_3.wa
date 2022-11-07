@@ -1,0 +1,19 @@
+// Test the llvm backend.
+// Test 'floating point' -> integer convertion.
+
+fn main() {
+  println(convert_f64_to_i32(100.001))
+  println(convert_f64_to_u32(100.001))
+  println(convert_f64_to_i32(99.99))
+  println(convert_f64_to_u32(99.99))
+  println(convert_f64_to_i32(-100.001))
+  println(convert_f64_to_u32(-100.001))
+}
+
+fn convert_f64_to_i32(a f64) i32 {
+  return i32(a)
+}
+
+fn convert_f64_to_u32(a f64) u32 {
+  return u32(a)
+}

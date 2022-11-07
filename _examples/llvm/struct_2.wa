@@ -1,0 +1,35 @@
+// Test the llvm backend.
+// Test passing struct type parameters.
+
+type fff32 f32
+
+const size = 16
+
+type struct_t0 struct {
+  arr0 [size]int
+  arr1 [size]fff32
+}
+
+var st0 struct_t0
+
+fn test_init() {
+  for i := 0; i < size; i++ {
+    st0.arr0[i] = i * i
+    st0.arr1[i] = fff32(i) * 2.0
+  }
+}
+
+fn getst0int(st0 struct_t0, i int) int {
+  return st0.arr0[i]
+}
+
+fn getst0f32(st0 *struct_t0, i int) fff32 {
+  return st0.arr1[i]
+}
+
+fn main() {
+  test_init()
+  for i := 6; i < 14; i += 2 {
+    println(getst0int(st0, i), ", ", getst0f32(&st0, i + 1))
+  }
+}

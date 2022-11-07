@@ -12,30 +12,34 @@ import (
 
 func (p *Compiler) compileFunction(fn *ssa.Function) error {
 	// Translate return type.
-	var retType string
+	var retTyStr string
 	rets := fn.Signature.Results()
 	switch rets.Len() {
 	case 0:
-		retType = "void"
+		retTyStr = "void"
 	case 1:
-		retType = getTypeStr(rets.At(0).Type(), p.target)
-		switch rets.At(0).Type().(type) {
+		ty := getRealType(rets.At(0).Type())
+		retTyStr = getTypeStr(ty, p.target)
+		switch ty.(type) {
 		default:
-			return errors.New("type '" + retType + "' can not be returned")
-		case *types.Basic, *types.Pointer:
+			return errors.New("type '" + retTyStr + "' can not be returned")
+		case *types.Basic, *types.Pointer, *types.Array, *types.Struct:
+			// Only allow scalar/pointer/array/struct types.
 		}
 	default:
 		return errors.New("multiple return values are not supported")
 	}
-	p.output.WriteString("define " + retType + " @" + fn.Name() + "(")
+	p.output.WriteString("define " + retTyStr + " @" + fn.Name() + "(")
 
 	// Translate arguments.
 	for i, v := range fn.Params {
-		tyStr := getTypeStr(v.Type(), p.target)
-		switch v.Type().(type) {
+		ty := getRealType(v.Type())
+		tyStr := getTypeStr(ty, p.target)
+		switch ty.(type) {
 		default:
 			return errors.New("type '" + tyStr + "' can not be used as argument")
 		case *types.Basic, *types.Pointer, *types.Struct, *types.Array:
+			// Only allow scalar/pointer/array/struct types.
 		}
 		p.output.WriteString(tyStr)
 		p.output.WriteString(" ")
@@ -57,6 +61,17 @@ func (p *Compiler) compileFunction(fn *ssa.Function) error {
 	for i, b := range fn.Blocks {
 		p.output.WriteString(fmt.Sprintf("__basic_block_%d:\n", i))
 		for _, instr := range b.Instrs {
+			// Dump each IR.
+			if p.debug {
+				p.output.WriteString("  ; ")
+				if t, ok := instr.(ssa.Value); ok {
+					p.output.WriteString(t.Name())
+					p.output.WriteString(" = ")
+				}
+				p.output.WriteString(instr.String())
+				p.output.WriteString("\n")
+			}
+			// Compile each IR to real LLVM-IR.
 			if err := p.compileInstr(instr); err != nil {
 				return err
 			}
@@ -77,10 +92,17 @@ func (p *Compiler) compileInstr(instr ssa.Instruction) error {
 		case 0:
 			p.output.WriteString("  ret void\n")
 		case 1: // ret %type %value
+			val, ret := instr.Results[0], ""
+			// Special process for float32 constants.
+			if isConstFloat32(val) {
+				ret = p.wrapConstFloat32(val)
+			} else {
+				ret = getValueStr(val)
+			}
 			p.output.WriteString("  ret ")
-			p.output.WriteString(getTypeStr(instr.Results[0].Type(), p.target))
+			p.output.WriteString(getTypeStr(val.Type(), p.target))
 			p.output.WriteString(" ")
-			p.output.WriteString(getValueStr(instr.Results[0]))
+			p.output.WriteString(ret)
 			p.output.WriteString("\n")
 		default:
 			return errors.New("multiple return values are not supported")

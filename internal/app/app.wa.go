@@ -273,13 +273,13 @@ func (p *App) CIR(filename string) error {
 	return nil
 }
 
-func (p *App) LLVM(infile string, outfile string, target string) error {
+func (p *App) LLVM(infile string, outfile string, target string, debug bool) error {
 	cfg := config.DefaultConfig()
 	prog, err := loader.LoadProgram(cfg, infile)
 	if err != nil {
 		return err
 	}
-	output, err := compiler_llvm.New(target).Compile(prog)
+	output, err := compiler_llvm.New(target, debug).Compile(prog)
 	if err != nil {
 		return err
 	}
