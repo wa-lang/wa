@@ -45,6 +45,8 @@ fn main {
   test_pointer(1)
   test_pointer(-1)
 
+  test_f32()
+
   bye()
 }
 
@@ -292,4 +294,29 @@ fn test_pointer(a int) {
   p := get_int_addr(a)
   set_int(p)
   println(gint0, ", ", gint1)
+}
+
+fn getPi() f32 {
+  return 3.1415926535
+}
+
+fn getE() f32 {
+  return 2.71828
+}
+
+fn minusf32(a f32) f32 {
+  return 0 - a
+}
+
+fn circle_area(r f32) f32 {
+  return r * r * 3.1415926
+}
+
+fn test_f32() {
+  println(getPi())
+  println(getE())
+  println(minusf32(getPi()))
+  println(minusf32(-1.3))
+  println(circle_area(1.1))
+  println(circle_area(getE()))
 }

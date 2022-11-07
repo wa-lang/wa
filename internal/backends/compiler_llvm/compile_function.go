@@ -22,7 +22,7 @@ func (p *Compiler) compileFunction(fn *ssa.Function) error {
 		switch rets.At(0).Type().(type) {
 		default:
 			return errors.New("type '" + retType + "' can not be returned")
-		case *types.Basic, *types.Pointer:
+		case *types.Basic, *types.Pointer, *types.Array, *types.Struct:
 		}
 	default:
 		return errors.New("multiple return values are not supported")
@@ -77,10 +77,17 @@ func (p *Compiler) compileInstr(instr ssa.Instruction) error {
 		case 0:
 			p.output.WriteString("  ret void\n")
 		case 1: // ret %type %value
+			val, ret := instr.Results[0], ""
+			// Special process for float32 constants.
+			if isConstFloat32(val) {
+				ret = p.wrapConstFloat32(val)
+			} else {
+				ret = getValueStr(val)
+			}
 			p.output.WriteString("  ret ")
-			p.output.WriteString(getTypeStr(instr.Results[0].Type(), p.target))
+			p.output.WriteString(getTypeStr(val.Type(), p.target))
 			p.output.WriteString(" ")
-			p.output.WriteString(getValueStr(instr.Results[0]))
+			p.output.WriteString(ret)
 			p.output.WriteString("\n")
 		default:
 			return errors.New("multiple return values are not supported")

@@ -36,6 +36,16 @@ func isConstString(val ssa.Value) bool {
 	return false
 }
 
+func isConstFloat32(val ssa.Value) bool {
+	if _, ok := val.(*ssa.Const); !ok {
+		return false
+	}
+	if t, ok := val.Type().(*types.Basic); ok {
+		return t.Kind() == types.Float32
+	}
+	return false
+}
+
 func checkType(ty types.Type) (isFloat bool, isSigned bool) {
 	switch t := ty.(type) {
 	case *types.Basic:
@@ -78,7 +88,9 @@ func getValueFmt(val ssa.Value, target string) (string, int) {
 	// Directly combine constant strings to the format string.
 	if isConstString(val) {
 		str := getValueStr(val)
-		return str, len(str)
+		siz := len(str)
+		str = strings.ReplaceAll(str, "\"", "\\22")
+		return str, siz
 	}
 
 	switch t := val.Type().(type) {

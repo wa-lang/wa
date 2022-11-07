@@ -42,21 +42,17 @@ func (p *Compiler) Compile(prog *loader.Program) (output string, err error) {
 }
 
 func (p *Compiler) compilePackage() error {
-	var ts []*ssa.Type       // global types
-	var cs []*ssa.NamedConst // global constants
-	var gs []*ssa.Global     // global variables
-	var fns []*ssa.Function  // global functions & methods
+	var gs []*ssa.Global    // global variables
+	var fns []*ssa.Function // global functions & methods
 
 	for _, m := range p.ssaPkg.Members {
 		switch member := m.(type) {
-		case *ssa.Type:
-			ts = append(ts, member)
-		case *ssa.NamedConst:
-			cs = append(cs, member)
 		case *ssa.Global:
 			gs = append(gs, member)
 		case *ssa.Function:
 			fns = append(fns, member)
+		case *ssa.Type, *ssa.NamedConst:
+			// Omit name consts and type definitions
 		default:
 			panic("unknown global object")
 		}

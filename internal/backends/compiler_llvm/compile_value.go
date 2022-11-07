@@ -267,6 +267,20 @@ func (p *Compiler) compileBinOp(val *ssa.BinOp) error {
 		opMap = uintOpMap
 	}
 
+	// Special process for float32 constants.
+	xStr, yStr := "", ""
+	if isConstFloat32(val.X) {
+		xStr = p.wrapConstFloat32(val.X)
+	} else {
+		xStr = getValueStr(val.X)
+	}
+	if isConstFloat32(val.Y) {
+		yStr = p.wrapConstFloat32(val.Y)
+	} else {
+		yStr = getValueStr(val.Y)
+	}
+
+	// Emit the binary-operator instruction.
 	if op, ok := opMap[val.Op]; ok {
 		p.output.WriteString("  ")
 		p.output.WriteString("%" + val.Name())
@@ -275,9 +289,9 @@ func (p *Compiler) compileBinOp(val *ssa.BinOp) error {
 		p.output.WriteString(" ")
 		p.output.WriteString(getTypeStr(val.X.Type(), p.target))
 		p.output.WriteString(" ")
-		p.output.WriteString(getValueStr(val.X))
+		p.output.WriteString(xStr)
 		p.output.WriteString(", ")
-		p.output.WriteString(getValueStr(val.Y))
+		p.output.WriteString(yStr)
 		p.output.WriteString("\n")
 		return nil
 	}
@@ -290,13 +304,20 @@ func (p *Compiler) compileBinOp(val *ssa.BinOp) error {
 func (p *Compiler) compileCall(val *ssa.Call) error {
 	switch val.Call.Value.(type) {
 	case *ssa.Function:
+		// Special process for float32 constants.
+		paf32 := map[int]string{}
+		for i, v := range val.Call.Args {
+			if isConstFloat32(v) {
+				paf32[i] = p.wrapConstFloat32(v)
+			}
+		}
 		// Emit the call instruction.
 		if !isVoidFunc(val) {
 			tyStr := getTypeStr(val.Type(), p.target)
 			switch val.Type().(type) {
 			default:
 				return errors.New("type '" + tyStr + "' can not be returned")
-			case *types.Basic, *types.Pointer:
+			case *types.Basic, *types.Pointer, *types.Array, *types.Struct:
 			}
 			p.output.WriteString("  %")
 			p.output.WriteString(val.Name())
@@ -318,7 +339,11 @@ func (p *Compiler) compileCall(val *ssa.Call) error {
 			}
 			p.output.WriteString(tyStr)
 			p.output.WriteString(" ")
-			p.output.WriteString(getValueStr(v))
+			if pv, ok := paf32[i]; ok {
+				p.output.WriteString(pv)
+			} else {
+				p.output.WriteString(getValueStr(v))
+			}
 			if i < len(val.Call.Args)-1 {
 				p.output.WriteString(", ")
 			}
@@ -444,4 +469,18 @@ func (p *Compiler) compilePrint(val *ssa.CallCommon, ln bool) error {
 	p.fmts = append(p.fmts, FmtStr{format, size})
 
 	return nil
+}
+
+func (p *Compiler) wrapConstFloat32(val ssa.Value) string {
+	if !isConstFloat32(val) {
+		panic("a float32 constant is expected")
+	}
+	valStr := getValueStr(val)
+	ret := fmt.Sprintf("%%tmp%d", rand.Int())
+	p.output.WriteString("  ")
+	p.output.WriteString(ret)
+	p.output.WriteString(" = fptrunc double ")
+	p.output.WriteString(valStr)
+	p.output.WriteString(" to float\n")
+	return ret
 }
