@@ -293,10 +293,6 @@ func main() {
 				}
 				infile = c.Args().First()
 
-				if outfile == "" {
-					outfile = infile + ".exe"
-				}
-
 				ctx := app.NewApp(build_Options(c))
 				if err := ctx.LLVM(infile, outfile, target, debug); err != nil {
 					fmt.Println(err)

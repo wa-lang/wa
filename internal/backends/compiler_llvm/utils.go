@@ -174,7 +174,7 @@ func getTypeStr(ty types.Type, target string) string {
 			return "i64"
 		// should never reach here
 		default:
-			panic("unknown basic type")
+			panic("type '" + ty.String() + "' is not supported")
 		}
 
 	case *types.Array:
@@ -199,7 +199,7 @@ func getTypeStr(ty types.Type, target string) string {
 		return getTypeStr(t.Underlying(), target)
 
 	default:
-		panic("unknown type")
+		panic("type '" + ty.String() + "' is not supported")
 	}
 }
 
