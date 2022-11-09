@@ -280,7 +280,7 @@ func getValueStr(val ssa.Value) string {
 		return "%" + val.Name()
 
 	case *ssa.Global:
-		return "@" + getNormalName(val.Name())
+		return "@" + getNormalName(c.Pkg.Pkg.Path()+"."+val.Name())
 
 	default:
 		return "%" + val.Name()
@@ -289,7 +289,8 @@ func getValueStr(val ssa.Value) string {
 
 func getNormalName(name string) string {
 	name = strings.ReplaceAll(name, ".", "__")
-	name = strings.ReplaceAll(name, "$", "___")
+	name = strings.ReplaceAll(name, "$", "__")
+	name = strings.ReplaceAll(name, "/", "__")
 	return name
 }
 

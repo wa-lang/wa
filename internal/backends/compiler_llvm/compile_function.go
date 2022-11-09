@@ -29,7 +29,13 @@ func (p *Compiler) compileFunction(fn *ssa.Function) error {
 	default:
 		return errors.New("multiple return values are not supported")
 	}
-	p.output.WriteString("define " + retTyStr + " @" + fn.Name() + "(")
+
+	// Emit a proper function name.
+	p.output.WriteString("define ")
+	p.output.WriteString(retTyStr)
+	p.output.WriteString(" @")
+	p.output.WriteString(getNormalName(fn.Pkg.Pkg.Path() + "." + fn.Name()))
+	p.output.WriteString("(")
 
 	// Translate arguments.
 	for i, v := range fn.Params {
@@ -49,13 +55,6 @@ func (p *Compiler) compileFunction(fn *ssa.Function) error {
 		}
 	}
 	p.output.WriteString(") {\n")
-
-	// Initialize all global variables at the beginning of the main function.
-	if fn.Name() == "main" {
-		p.output.WriteString("__basic_block_init:\n")
-		p.output.WriteString("  call void @init()\n")
-		p.output.WriteString("  br label %__basic_block_0\n\n")
-	}
 
 	// Translate Go SSA intermediate instructions.
 	for i, b := range fn.Blocks {

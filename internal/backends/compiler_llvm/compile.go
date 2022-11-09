@@ -17,7 +17,6 @@ type FmtStr struct {
 }
 
 type Compiler struct {
-	ssaPkg *ssa.Package
 	target string
 	output strings.Builder
 	debug  bool
@@ -35,19 +34,52 @@ func (p *Compiler) Compile(prog *loader.Program) (output string, err error) {
 	if prog == nil || prog.SSAMainPkg == nil {
 		return "", errors.New("invalid or empty input program")
 	}
-	p.ssaPkg = prog.SSAMainPkg
-	p.output.WriteString("declare i32 @printf(i8* readonly, ...)\n\n")
-	if err := p.compilePackage(); err != nil {
-		return "", err
+
+	// Compile each package.
+	for _, pkg := range prog.Pkgs {
+		// TODO: need a better way to supress the useless 'runtime' package.
+		if pkg.Pkg.Name() == "runtime" {
+			continue
+		}
+		if err := p.compilePackage(pkg.SSAPkg); err != nil {
+			return "", err
+		}
 	}
+
+	// Emit each format string as a global variable.
+	for i, f := range p.fmts {
+		fvar := fmt.Sprintf("@printfmt%d = private constant [%d x i8] c\"%s\"\n", i, f.size, f.fmt)
+		p.output.WriteString(fvar)
+		if i == len(p.fmts)-1 {
+			p.output.WriteString("\n")
+		}
+	}
+
+	// Emit some auxiliary functions.
+	p.output.WriteString("define void @main() {\n")
+	p.output.WriteString("  call void @")
+	p.output.WriteString(getNormalName(prog.SSAMainPkg.Pkg.Path() + ".init()\n"))
+	p.output.WriteString("  call void @")
+	p.output.WriteString(getNormalName(prog.SSAMainPkg.Pkg.Path() + ".main()\n"))
+	p.output.WriteString("  ret void\n")
+	p.output.WriteString("}\n\n")
+
+	// Emit some target specific functions.
+	switch getArch(p.target) {
+	case "", "x86_64", "aarch64":
+		p.output.WriteString("declare i32 @printf(i8* readonly, ...)\n")
+	case "avr":
+	default:
+	}
+
 	return p.output.String(), nil
 }
 
-func (p *Compiler) compilePackage() error {
+func (p *Compiler) compilePackage(pkg *ssa.Package) error {
 	var gs []*ssa.Global    // global variables
 	var fns []*ssa.Function // global functions & methods
 
-	for _, m := range p.ssaPkg.Members {
+	for _, m := range pkg.Members {
 		switch member := m.(type) {
 		case *ssa.Global:
 			gs = append(gs, member)
@@ -61,7 +93,7 @@ func (p *Compiler) compilePackage() error {
 	}
 
 	// Collect methods which are not treated as functions.
-	for _, v := range p.ssaPkg.GetValues() {
+	for _, v := range pkg.GetValues() {
 		if f, ok := v.(*ssa.Function); ok {
 			if !findFunc(f, fns) {
 				fns = append(fns, f)
@@ -79,7 +111,7 @@ func (p *Compiler) compilePackage() error {
 		}
 		// Compile each global variable to LLVM-IR form.
 		p.output.WriteString("@")
-		p.output.WriteString(getNormalName(gv.Name()))
+		p.output.WriteString(getNormalName(gv.Pkg.Pkg.Path() + "." + gv.Name()))
 		p.output.WriteString(" = global ")
 		tys := getTypeStr(gv.Type(), p.target)
 		p.output.WriteString(tys[0:(len(tys) - 1)])
@@ -93,15 +125,6 @@ func (p *Compiler) compilePackage() error {
 	for _, v := range fns {
 		if err := p.compileFunction(v); err != nil {
 			return err
-		}
-	}
-
-	// Emit each format strings as a global variable.
-	for i, f := range p.fmts {
-		fvar := fmt.Sprintf("@printfmt%d = private constant [%d x i8] c\"%s\"\n", i, f.size, f.fmt)
-		p.output.WriteString(fvar)
-		if i == len(p.fmts)-1 {
-			p.output.WriteString("\n")
 		}
 	}
 

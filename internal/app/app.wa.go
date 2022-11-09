@@ -279,7 +279,7 @@ func (p *App) LLVM(infile string, outfile string, target string, debug bool) err
 
 	instat, err := os.Stat(infile)
 	if err != nil {
-		return nil
+		return err
 	}
 
 	// Calculate the outfile path if not given.
