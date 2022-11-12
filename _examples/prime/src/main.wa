@@ -1,15 +1,20 @@
-// 版权 @2021 凹语言™ 作者。保留所有权利。
+// 版权 @2022 凹语言™ 作者。保留所有权利。
+
+import "examples/prime/benpkg"
+import "joypkg"
 
 fn main() {
-	for n := 2; n <= 30; n = n + 1 {
-		var isPrime int = 1
-		for i := 2; i*i <= n; i = i + 1 {
-			if x := n % i; x == 0 {
-				isPrime = 0
-			}
-		}
-		if isPrime != 0 {
-			println(n)
-		}
-	}
+  for n := 2; n <= 100; n = n + 1 {
+    if isPrime(n) {
+      benpkg.PrintInt(n)
+    }
+  }
+  println("")
+
+  for n := 2; n <= 100; n = n + 1 {
+    if isPrime(n) {
+      joypkg.PrintIntComma(n)
+    }
+  }
+  println("")
 }

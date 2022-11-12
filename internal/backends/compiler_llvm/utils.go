@@ -174,7 +174,7 @@ func getTypeStr(ty types.Type, target string) string {
 			return "i64"
 		// should never reach here
 		default:
-			panic("unknown basic type")
+			panic("type '" + ty.String() + "' is not supported")
 		}
 
 	case *types.Array:
@@ -199,7 +199,7 @@ func getTypeStr(ty types.Type, target string) string {
 		return getTypeStr(t.Underlying(), target)
 
 	default:
-		panic("unknown type")
+		panic("type '" + ty.String() + "' is not supported")
 	}
 }
 
@@ -280,7 +280,7 @@ func getValueStr(val ssa.Value) string {
 		return "%" + val.Name()
 
 	case *ssa.Global:
-		return "@" + getNormalName(val.Name())
+		return "@" + getNormalName(c.Pkg.Pkg.Path()+"."+val.Name())
 
 	default:
 		return "%" + val.Name()
@@ -289,7 +289,8 @@ func getValueStr(val ssa.Value) string {
 
 func getNormalName(name string) string {
 	name = strings.ReplaceAll(name, ".", "__")
-	name = strings.ReplaceAll(name, "$", "___")
+	name = strings.ReplaceAll(name, "$", "__")
+	name = strings.ReplaceAll(name, "/", "__")
 	return name
 }
 

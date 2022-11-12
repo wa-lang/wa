@@ -328,8 +328,14 @@ func (p *Compiler) compileCall(val *ssa.Call) error {
 		} else {
 			p.output.WriteString("  call void")
 		}
+		// Emit the function name.
 		p.output.WriteString(" @")
-		p.output.WriteString(val.Call.StaticCallee().Name())
+		callee := val.Call.StaticCallee()
+		if len(callee.LinkName()) > 0 {
+			p.output.WriteString(callee.LinkName())
+		} else {
+			p.output.WriteString(getNormalName(callee.Pkg.Pkg.Path() + "." + callee.Name()))
+		}
 		p.output.WriteString("(")
 		// Emit parameters.
 		for i, v := range val.Call.Args {

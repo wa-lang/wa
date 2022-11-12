@@ -1,0 +1,3 @@
+fn PrintIntComma(x int) {
+  print(x, ",")
+}

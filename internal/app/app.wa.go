@@ -10,6 +10,7 @@ import (
 	"io/fs"
 	"os"
 	"os/exec"
+	"path"
 	"path/filepath"
 	"runtime"
 	"sort"
@@ -275,6 +276,41 @@ func (p *App) CIR(filename string) error {
 
 func (p *App) LLVM(infile string, outfile string, target string, debug bool) error {
 	cfg := config.DefaultConfig()
+
+	instat, err := os.Stat(infile)
+	if err != nil {
+		return err
+	}
+
+	// Calculate the outfile path if not given.
+	if len(outfile) == 0 {
+		if instat.IsDir() {
+			dir := path.Base(infile)
+			outfile = infile + dir + ".exe"
+		} else {
+			ext := path.Ext(infile)
+			if len(ext) == 0 {
+				outfile = infile + ".exe"
+			} else {
+				pos := strings.Index(infile, ext)
+				outfile = infile[0:pos] + ".exe"
+			}
+		}
+	}
+
+	// Calculate the outfile LLVM-IR file path and the output assembly file path.
+	llfile, asmfile := "", ""
+	ext := path.Ext(outfile)
+	if len(ext) == 0 {
+		llfile = outfile + ".ll"
+		asmfile = outfile + ".s"
+	} else {
+		pos := strings.Index(outfile, ext)
+		llfile = outfile[0:pos] + ".ll"
+		asmfile = outfile[0:pos] + ".s"
+	}
+
+	// Do the real compile work.
 	prog, err := loader.LoadProgram(cfg, infile)
 	if err != nil {
 		return err
@@ -283,12 +319,14 @@ func (p *App) LLVM(infile string, outfile string, target string, debug bool) err
 	if err != nil {
 		return err
 	}
-	if err := os.WriteFile(infile+".ll", []byte(output), 0644); err != nil {
+
+	// Write the outfile LLVM-IR to an intermediate .ll file.
+	if err := os.WriteFile(llfile, []byte(output), 0644); err != nil {
 		return err
 	}
 
-	// Invoke command `llc infile.ll -mtriple=xxx`.
-	llc := []string{infile + ".ll"}
+	// Invoke command `llc xxx.ll -mtriple=xxx`.
+	llc := []string{llfile}
 	if target != "" {
 		llc = append(llc, "-mtriple", target)
 	}
@@ -299,8 +337,8 @@ func (p *App) LLVM(infile string, outfile string, target string, debug bool) err
 		return err
 	}
 
-	// Invoke command `clang infile.s -o outfile --target=xxx`.
-	clang := []string{infile + ".s", "-static", "-o", outfile}
+	// Invoke command `clang xxx.s -o outfile --target=xxx`.
+	clang := []string{asmfile, "-static", "-o", outfile}
 	if target != "" {
 		clang = append(clang, "-target", target)
 	}

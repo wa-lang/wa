@@ -1,0 +1,3 @@
+fn PrintInt(x int) {
+  print(x, " ")
+}
