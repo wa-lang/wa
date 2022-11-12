@@ -22,8 +22,8 @@ func NewSlice(base ValueType) Slice {
 	var m []Field
 	m = append(m, NewField("block", NewBlock(base)))
 	m = append(m, NewField("data", NewPointer(base)))
-	m = append(m, NewField("len", I32{}))
-	m = append(m, NewField("cap", I32{}))
+	m = append(m, NewField("len", U32{}))
+	m = append(m, NewField("cap", U32{}))
 	v.Struct = NewStruct(base.Name()+".$$slice", m)
 	return v
 }
@@ -47,35 +47,35 @@ func (t Slice) emitLoadFromAddr(addr Value, offset int) []wat.Inst {
 func (t Slice) emitGenFromRefOfSlice(x *aRef, low, high Value) (insts []wat.Inst) {
 	//block
 	insts = append(insts, x.underlying.Extract("data").EmitPush()...)
-	insts = append(insts, wat.NewInstLoad(wat.I32{}, 0, 1))
+	insts = append(insts, wat.NewInstLoad(wat.U32{}, 0, 1))
 	insts = append(insts, wat.NewInstCall("$wa.RT.Block.Retain"))
 
 	//data
 	if low == nil {
-		low = NewConst("0", I32{})
+		low = NewConst("0", U32{})
 	}
 	insts = append(insts, x.underlying.Extract("data").EmitPush()...)
-	insts = append(insts, wat.NewInstLoad(wat.I32{}, 4, 1))
-	insts = append(insts, NewConst(strconv.Itoa(x.Type().(Ref).Base.(Array).Base.size()), I32{}).EmitPush()...)
+	insts = append(insts, wat.NewInstLoad(wat.U32{}, 4, 1))
+	insts = append(insts, NewConst(strconv.Itoa(x.Type().(Ref).Base.(Array).Base.size()), U32{}).EmitPush()...)
 	insts = append(insts, low.EmitPush()...)
-	insts = append(insts, wat.NewInstMul(wat.I32{}))
-	insts = append(insts, wat.NewInstAdd(wat.I32{}))
+	insts = append(insts, wat.NewInstMul(wat.U32{}))
+	insts = append(insts, wat.NewInstAdd(wat.U32{}))
 
 	//len:
 	if high == nil {
 		insts = append(insts, x.underlying.Extract("data").EmitPush()...)
-		insts = append(insts, wat.NewInstLoad(wat.I32{}, 12, 1))
+		insts = append(insts, wat.NewInstLoad(wat.U32{}, 12, 1))
 	} else {
 		insts = append(insts, high.EmitPush()...)
 	}
 	insts = append(insts, low.EmitPush()...)
-	insts = append(insts, wat.NewInstSub(wat.I32{}))
+	insts = append(insts, wat.NewInstSub(wat.U32{}))
 
 	//cap:
 	insts = append(insts, x.underlying.Extract("data").EmitPush()...)
-	insts = append(insts, wat.NewInstLoad(wat.I32{}, 12, 1))
+	insts = append(insts, wat.NewInstLoad(wat.U32{}, 12, 1))
 	insts = append(insts, low.EmitPush()...)
-	insts = append(insts, wat.NewInstSub(wat.I32{}))
+	insts = append(insts, wat.NewInstSub(wat.U32{}))
 
 	return
 }
@@ -86,15 +86,15 @@ func (t Slice) emitGenFromRefOfArray(x *aRef, low, high Value) (insts []wat.Inst
 
 	//data
 	if low == nil {
-		low = NewConst("0", I32{})
+		low = NewConst("0", U32{})
 	}
 	insts = append(insts, x.underlying.Extract("data").EmitPush()...)
-	insts = append(insts, NewConst(strconv.Itoa(x.Type().(Ref).Base.(Array).Base.size()), I32{}).EmitPush()...)
+	insts = append(insts, NewConst(strconv.Itoa(x.Type().(Ref).Base.(Array).Base.size()), U32{}).EmitPush()...)
 	insts = append(insts, low.EmitPush()...)
-	insts = append(insts, wat.NewInstMul(wat.I32{}))
-	insts = append(insts, wat.NewInstAdd(wat.I32{}))
+	insts = append(insts, wat.NewInstMul(wat.U32{}))
+	insts = append(insts, wat.NewInstAdd(wat.U32{}))
 
-	array_len := NewConst(strconv.Itoa(x.Type().(Ref).Base.(Array).Capacity), I32{})
+	array_len := NewConst(strconv.Itoa(x.Type().(Ref).Base.(Array).Capacity), U32{})
 
 	//len:
 	if high == nil {
@@ -102,12 +102,12 @@ func (t Slice) emitGenFromRefOfArray(x *aRef, low, high Value) (insts []wat.Inst
 	}
 	insts = append(insts, high.EmitPush()...)
 	insts = append(insts, low.EmitPush()...)
-	insts = append(insts, wat.NewInstSub(wat.I32{}))
+	insts = append(insts, wat.NewInstSub(wat.U32{}))
 
 	//cap:
 	insts = append(insts, array_len.EmitPush()...)
 	insts = append(insts, low.EmitPush()...)
-	insts = append(insts, wat.NewInstSub(wat.I32{}))
+	insts = append(insts, wat.NewInstSub(wat.U32{}))
 
 	return
 }
@@ -141,13 +141,13 @@ func (t Slice) genAppendFunc() string {
 	f.Locals = append(f.Locals, new_len)
 	f.Insts = append(f.Insts, x_len.EmitPush()...)
 	f.Insts = append(f.Insts, y_len.EmitPush()...)
-	f.Insts = append(f.Insts, wat.NewInstAdd(wat.I32{}))
+	f.Insts = append(f.Insts, wat.NewInstAdd(wat.U32{}))
 	f.Insts = append(f.Insts, new_len.EmitPop()...)
 
 	//if_new_len_le_cap
 	f.Insts = append(f.Insts, new_len.EmitPush()...)
 	f.Insts = append(f.Insts, x.underlying.Extract("cap").EmitPush()...)
-	f.Insts = append(f.Insts, wat.NewInstLe(wat.I32{}))
+	f.Insts = append(f.Insts, wat.NewInstLe(wat.U32{}))
 
 	item := NewLocal("item", t.Base)
 	f.Locals = append(f.Locals, item)
@@ -155,7 +155,7 @@ func (t Slice) genAppendFunc() string {
 	f.Locals = append(f.Locals, src)
 	dest := NewLocal("dest", NewPointer(t.Base))
 	f.Locals = append(f.Locals, dest)
-	item_size := NewConst(strconv.Itoa(t.Base.size()), I32{})
+	item_size := NewConst(strconv.Itoa(t.Base.size()), U32{})
 
 	inst_if := wat.NewInstIf(nil, nil, t.Raw())
 	{ //if_true
@@ -174,15 +174,15 @@ func (t Slice) genAppendFunc() string {
 		if_true = append(if_true, x.underlying.Extract("data").EmitPush()...)
 		if_true = append(if_true, item_size.EmitPush()...)
 		if_true = append(if_true, x_len.EmitPush()...)
-		if_true = append(if_true, wat.NewInstMul(wat.I32{}))
-		if_true = append(if_true, wat.NewInstAdd(wat.I32{}))
+		if_true = append(if_true, wat.NewInstMul(wat.U32{}))
+		if_true = append(if_true, wat.NewInstAdd(wat.U32{}))
 		if_true = append(if_true, dest.EmitPop()...)
 
 		block := wat.NewInstBlock("block1")
 		loop := wat.NewInstLoop("loop1")
 		{
 			loop.Insts = append(loop.Insts, y_len.EmitPush()...)
-			loop.Insts = append(loop.Insts, wat.NewInstEqz(wat.I32{}))
+			loop.Insts = append(loop.Insts, wat.NewInstEqz(wat.U32{}))
 			loop.Insts = append(loop.Insts, wat.NewInstIf([]wat.Inst{wat.NewInstBr("block1")}, nil, nil))
 
 			//*dest = *src
@@ -192,17 +192,17 @@ func (t Slice) genAppendFunc() string {
 
 			loop.Insts = append(loop.Insts, src.EmitPush()...)
 			loop.Insts = append(loop.Insts, item_size.EmitPush()...)
-			loop.Insts = append(loop.Insts, wat.NewInstAdd(wat.I32{}))
+			loop.Insts = append(loop.Insts, wat.NewInstAdd(wat.U32{}))
 			loop.Insts = append(loop.Insts, src.EmitPop()...)
 
 			loop.Insts = append(loop.Insts, dest.EmitPush()...)
 			loop.Insts = append(loop.Insts, item_size.EmitPush()...)
-			loop.Insts = append(loop.Insts, wat.NewInstAdd(wat.I32{}))
+			loop.Insts = append(loop.Insts, wat.NewInstAdd(wat.U32{}))
 			loop.Insts = append(loop.Insts, dest.EmitPop()...)
 
 			loop.Insts = append(loop.Insts, y_len.EmitPush()...)
-			loop.Insts = append(loop.Insts, NewConst("1", I32{}).EmitPush()...)
-			loop.Insts = append(loop.Insts, wat.NewInstSub(wat.I32{}))
+			loop.Insts = append(loop.Insts, NewConst("1", U32{}).EmitPush()...)
+			loop.Insts = append(loop.Insts, wat.NewInstSub(wat.U32{}))
 			loop.Insts = append(loop.Insts, y_len.EmitPop()...)
 
 			loop.Insts = append(loop.Insts, wat.NewInstBr("loop1"))
@@ -216,18 +216,18 @@ func (t Slice) genAppendFunc() string {
 	{ //if_false
 		var if_false []wat.Inst
 
-		new_cap := NewLocal("new_cap", I32{})
+		new_cap := NewLocal("new_cap", U32{})
 		f.Locals = append(f.Locals, new_cap)
 		//gen new slice
 		if_false = append(if_false, new_len.EmitPush()...)
-		if_false = append(if_false, NewConst("2", I32{}).EmitPush()...)
-		if_false = append(if_false, wat.NewInstMul(wat.I32{}))
+		if_false = append(if_false, NewConst("2", U32{}).EmitPush()...)
+		if_false = append(if_false, wat.NewInstMul(wat.U32{}))
 		if_false = append(if_false, new_cap.EmitPop()...)
 		if_false = append(if_false, NewBlock(t.Base).emitHeapAlloc(new_cap)...) //block
 
 		if_false = append(if_false, wat.NewInstCall("$wa.RT.DupWatStack"))
-		if_false = append(if_false, NewConst("16", I32{}).EmitPush()...)
-		if_false = append(if_false, wat.NewInstAdd(wat.I32{})) //data
+		if_false = append(if_false, NewConst("16", U32{}).EmitPush()...)
+		if_false = append(if_false, wat.NewInstAdd(wat.U32{})) //data
 		if_false = append(if_false, wat.NewInstCall("$wa.RT.DupWatStack"))
 		if_false = append(if_false, dest.EmitPop()...)     //dest
 		if_false = append(if_false, new_len.EmitPush()...) //len
@@ -242,7 +242,7 @@ func (t Slice) genAppendFunc() string {
 			loop := wat.NewInstLoop("loop2")
 			{
 				loop.Insts = append(loop.Insts, x_len.EmitPush()...)
-				loop.Insts = append(loop.Insts, wat.NewInstEqz(wat.I32{}))
+				loop.Insts = append(loop.Insts, wat.NewInstEqz(wat.U32{}))
 				loop.Insts = append(loop.Insts, wat.NewInstIf([]wat.Inst{wat.NewInstBr("block2")}, nil, nil))
 
 				//*dest = *src
@@ -252,17 +252,17 @@ func (t Slice) genAppendFunc() string {
 
 				loop.Insts = append(loop.Insts, src.EmitPush()...)
 				loop.Insts = append(loop.Insts, item_size.EmitPush()...)
-				loop.Insts = append(loop.Insts, wat.NewInstAdd(wat.I32{}))
+				loop.Insts = append(loop.Insts, wat.NewInstAdd(wat.U32{}))
 				loop.Insts = append(loop.Insts, src.EmitPop()...)
 
 				loop.Insts = append(loop.Insts, dest.EmitPush()...)
 				loop.Insts = append(loop.Insts, item_size.EmitPush()...)
-				loop.Insts = append(loop.Insts, wat.NewInstAdd(wat.I32{}))
+				loop.Insts = append(loop.Insts, wat.NewInstAdd(wat.U32{}))
 				loop.Insts = append(loop.Insts, dest.EmitPop()...)
 
 				loop.Insts = append(loop.Insts, x_len.EmitPush()...)
-				loop.Insts = append(loop.Insts, NewConst("1", I32{}).EmitPush()...)
-				loop.Insts = append(loop.Insts, wat.NewInstSub(wat.I32{}))
+				loop.Insts = append(loop.Insts, NewConst("1", U32{}).EmitPush()...)
+				loop.Insts = append(loop.Insts, wat.NewInstSub(wat.U32{}))
 				loop.Insts = append(loop.Insts, x_len.EmitPop()...)
 
 				loop.Insts = append(loop.Insts, wat.NewInstBr("loop2"))
@@ -280,7 +280,7 @@ func (t Slice) genAppendFunc() string {
 			loop := wat.NewInstLoop("loop3")
 			{
 				loop.Insts = append(loop.Insts, y_len.EmitPush()...)
-				loop.Insts = append(loop.Insts, wat.NewInstEqz(wat.I32{}))
+				loop.Insts = append(loop.Insts, wat.NewInstEqz(wat.U32{}))
 				loop.Insts = append(loop.Insts, wat.NewInstIf([]wat.Inst{wat.NewInstBr("block3")}, nil, nil))
 
 				//*dest = *src
@@ -290,17 +290,17 @@ func (t Slice) genAppendFunc() string {
 
 				loop.Insts = append(loop.Insts, src.EmitPush()...)
 				loop.Insts = append(loop.Insts, item_size.EmitPush()...)
-				loop.Insts = append(loop.Insts, wat.NewInstAdd(wat.I32{}))
+				loop.Insts = append(loop.Insts, wat.NewInstAdd(wat.U32{}))
 				loop.Insts = append(loop.Insts, src.EmitPop()...)
 
 				loop.Insts = append(loop.Insts, dest.EmitPush()...)
 				loop.Insts = append(loop.Insts, item_size.EmitPush()...)
-				loop.Insts = append(loop.Insts, wat.NewInstAdd(wat.I32{}))
+				loop.Insts = append(loop.Insts, wat.NewInstAdd(wat.U32{}))
 				loop.Insts = append(loop.Insts, dest.EmitPop()...)
 
 				loop.Insts = append(loop.Insts, y_len.EmitPush()...)
-				loop.Insts = append(loop.Insts, NewConst("1", I32{}).EmitPush()...)
-				loop.Insts = append(loop.Insts, wat.NewInstSub(wat.I32{}))
+				loop.Insts = append(loop.Insts, NewConst("1", U32{}).EmitPush()...)
+				loop.Insts = append(loop.Insts, wat.NewInstSub(wat.U32{}))
 				loop.Insts = append(loop.Insts, y_len.EmitPop()...)
 
 				loop.Insts = append(loop.Insts, wat.NewInstBr("loop3"))
@@ -352,13 +352,13 @@ func (v *aSlice) emitSub(low, high Value) (insts []wat.Inst) {
 
 	//data:
 	if low == nil {
-		low = NewConst("0", I32{})
+		low = NewConst("0", U32{})
 	}
 	insts = append(insts, v.underlying.Extract("data").EmitPush()...)
-	insts = append(insts, NewConst(strconv.Itoa(v.Type().(Slice).Base.size()), I32{}).EmitPush()...)
+	insts = append(insts, NewConst(strconv.Itoa(v.Type().(Slice).Base.size()), U32{}).EmitPush()...)
 	insts = append(insts, low.EmitPush()...)
-	insts = append(insts, wat.NewInstMul(wat.I32{}))
-	insts = append(insts, wat.NewInstAdd(wat.I32{}))
+	insts = append(insts, wat.NewInstMul(wat.U32{}))
+	insts = append(insts, wat.NewInstAdd(wat.U32{}))
 
 	//len:
 	if high == nil {
@@ -366,12 +366,12 @@ func (v *aSlice) emitSub(low, high Value) (insts []wat.Inst) {
 	}
 	insts = append(insts, high.EmitPush()...)
 	insts = append(insts, low.EmitPush()...)
-	insts = append(insts, wat.NewInstSub(wat.I32{}))
+	insts = append(insts, wat.NewInstSub(wat.U32{}))
 
 	//cap:
 	insts = append(insts, v.underlying.Extract("cap").EmitPush()...)
 	insts = append(insts, low.EmitPush()...)
-	insts = append(insts, wat.NewInstSub(wat.I32{}))
+	insts = append(insts, wat.NewInstSub(wat.U32{}))
 
 	return
 }

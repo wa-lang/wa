@@ -1405,6 +1405,54 @@ func (v *Function) ExportName() string {
 	return info.ExportName
 }
 
+// 返回强制寄存器，默认为false
+func (v *Function) ForceRegister() bool {
+	if v.commentInfo != nil {
+		return v.commentInfo.ForceRegister
+	}
+	if v.Object() == nil {
+		v.commentInfo = new(astutil.CommentInfo)
+		return v.commentInfo.ForceRegister
+	}
+
+	doc := v.Object().NodeDoc()
+	info := astutil.ParseCommentInfo(doc)
+
+	v.commentInfo = &info
+	return info.ForceRegister
+}
+
+func (v *Function) RuntimeGetter() bool {
+	if v.commentInfo != nil {
+		return v.commentInfo.RuntimeGetter
+	}
+	if v.Object() == nil {
+		v.commentInfo = new(astutil.CommentInfo)
+		return v.commentInfo.RuntimeGetter
+	}
+
+	doc := v.Object().NodeDoc()
+	info := astutil.ParseCommentInfo(doc)
+
+	v.commentInfo = &info
+	return info.RuntimeGetter
+}
+func (v *Function) RuntimeSetter() bool {
+	if v.commentInfo != nil {
+		return v.commentInfo.RuntimeSetter
+	}
+	if v.Object() == nil {
+		v.commentInfo = new(astutil.CommentInfo)
+		return v.commentInfo.RuntimeSetter
+	}
+
+	doc := v.Object().NodeDoc()
+	info := astutil.ParseCommentInfo(doc)
+
+	v.commentInfo = &info
+	return info.RuntimeSetter
+}
+
 func (v *Parameter) Type() types.Type          { return v.typ }
 func (v *Parameter) Name() string              { return v.name }
 func (v *Parameter) Object() types.Object      { return v.object }

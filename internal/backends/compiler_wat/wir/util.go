@@ -111,3 +111,15 @@ func IsNumber(v Value) bool {
 func GetPkgMangleName(pkg_path string) string {
 	return strings.ReplaceAll(pkg_path, "/", "$") + "."
 }
+
+func ExtractField(x Value, field_name string) Value {
+	switch x := x.(type) {
+	case *aStruct:
+		return x.Extract(field_name)
+
+	default:
+		logger.Fatalf("Todo:%T", x)
+	}
+
+	return nil
+}

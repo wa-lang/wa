@@ -96,7 +96,7 @@ func (t Struct) onFree() int {
 	}
 
 	f.Result = VOID{}
-	ptr := NewLocal("$ptr", I32{})
+	ptr := NewLocal("$ptr", U32{})
 	f.Params = append(f.Params, ptr)
 
 	rfs := t.genRawFree()
@@ -106,11 +106,11 @@ func (t Struct) onFree() int {
 	for _, rf := range rfs {
 		f.Insts = append(f.Insts, ptr.EmitPush()...)
 		if rf.offset != 0 {
-			f.Insts = append(f.Insts, wat.NewInstConst(wat.I32{}, strconv.Itoa(rf.offset)))
-			f.Insts = append(f.Insts, wat.NewInstAdd(wat.I32{}))
+			f.Insts = append(f.Insts, wat.NewInstConst(wat.U32{}, strconv.Itoa(rf.offset)))
+			f.Insts = append(f.Insts, wat.NewInstAdd(wat.U32{}))
 		}
 
-		f.Insts = append(f.Insts, wat.NewInstConst(wat.I32{}, strconv.Itoa(rf.fn)))
+		f.Insts = append(f.Insts, wat.NewInstConst(wat.U32{}, strconv.Itoa(rf.fn)))
 		f.Insts = append(f.Insts, wat.NewInstCallIndirect("$onFree"))
 	}
 	return currentModule.addTableFunc(&f)
@@ -267,8 +267,7 @@ func (v *aStruct) Extract(member_name string) Value {
 
 func (v *aStruct) emitStoreToAddr(addr Value, offset int) (insts []wat.Inst) {
 	st := v.Type().(Struct)
-	for i := range st.Members {
-		m := st.Members[len(st.Members)-i-1]
+	for _, m := range st.Members {
 		t := v.genSubValue(m)
 		a := newValuePointer(addr.Name(), addr.Kind(), m.Type())
 		insts = append(insts, t.emitStoreToAddr(a, m._start+offset)...)

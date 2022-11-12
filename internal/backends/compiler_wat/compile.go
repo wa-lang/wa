@@ -105,6 +105,14 @@ func (p *Compiler) CompilePkgFunc(ssaPkg *ssa.Package) {
 	}
 
 	for _, v := range fns {
+		if len(v.Blocks) < 1 {
+			if v.RuntimeGetter() {
+				p.module.AddFunc(newFunctionGenerator(p).genGetter(v))
+			} else if v.RuntimeSetter() {
+				p.module.AddFunc(newFunctionGenerator(p).genSetter(v))
+			}
+			continue
+		}
 		p.module.AddFunc(newFunctionGenerator(p).genFunction(v))
 	}
 }

@@ -20,7 +20,7 @@ func NewString() String {
 	var m []Field
 	m = append(m, NewField("block", NewBlock(U8{})))
 	m = append(m, NewField("data", NewPointer(U8{})))
-	m = append(m, NewField("len", I32{}))
+	m = append(m, NewField("len", U32{}))
 	v.Struct = NewStruct("string", m)
 	return v
 }
@@ -64,7 +64,7 @@ func (t String) genAppendStrFunc() string {
 	f.Locals = append(f.Locals, new_len)
 	f.Insts = append(f.Insts, x_len.EmitPush()...)
 	f.Insts = append(f.Insts, y_len.EmitPush()...)
-	f.Insts = append(f.Insts, wat.NewInstAdd(wat.I32{}))
+	f.Insts = append(f.Insts, wat.NewInstAdd(wat.U32{}))
 	f.Insts = append(f.Insts, new_len.EmitPop()...)
 
 	item := NewLocal("item", U8{})
@@ -73,15 +73,15 @@ func (t String) genAppendStrFunc() string {
 	f.Locals = append(f.Locals, src)
 	dest := NewLocal("dest", NewPointer(U8{}))
 	f.Locals = append(f.Locals, dest)
-	item_size := NewConst(strconv.Itoa(U8{}.size()), I32{})
+	item_size := NewConst(strconv.Itoa(U8{}.size()), U32{})
 
 	{ //if_false
 		//gen new slice
 		f.Insts = append(f.Insts, NewBlock(U8{}).emitHeapAlloc(new_len)...) //block
 
 		f.Insts = append(f.Insts, wat.NewInstCall("$wa.RT.DupWatStack"))
-		f.Insts = append(f.Insts, NewConst("16", I32{}).EmitPush()...)
-		f.Insts = append(f.Insts, wat.NewInstAdd(wat.I32{})) //data
+		f.Insts = append(f.Insts, NewConst("16", U32{}).EmitPush()...)
+		f.Insts = append(f.Insts, wat.NewInstAdd(wat.U32{})) //data
 		f.Insts = append(f.Insts, wat.NewInstCall("$wa.RT.DupWatStack"))
 		f.Insts = append(f.Insts, dest.EmitPop()...)     //dest
 		f.Insts = append(f.Insts, new_len.EmitPush()...) //len
@@ -95,7 +95,7 @@ func (t String) genAppendStrFunc() string {
 			loop := wat.NewInstLoop("loop2")
 			{
 				loop.Insts = append(loop.Insts, x_len.EmitPush()...)
-				loop.Insts = append(loop.Insts, wat.NewInstEqz(wat.I32{}))
+				loop.Insts = append(loop.Insts, wat.NewInstEqz(wat.U32{}))
 				loop.Insts = append(loop.Insts, wat.NewInstIf([]wat.Inst{wat.NewInstBr("block2")}, nil, nil))
 
 				//*dest = *src
@@ -105,17 +105,17 @@ func (t String) genAppendStrFunc() string {
 
 				loop.Insts = append(loop.Insts, src.EmitPush()...)
 				loop.Insts = append(loop.Insts, item_size.EmitPush()...)
-				loop.Insts = append(loop.Insts, wat.NewInstAdd(wat.I32{}))
+				loop.Insts = append(loop.Insts, wat.NewInstAdd(wat.U32{}))
 				loop.Insts = append(loop.Insts, src.EmitPop()...)
 
 				loop.Insts = append(loop.Insts, dest.EmitPush()...)
 				loop.Insts = append(loop.Insts, item_size.EmitPush()...)
-				loop.Insts = append(loop.Insts, wat.NewInstAdd(wat.I32{}))
+				loop.Insts = append(loop.Insts, wat.NewInstAdd(wat.U32{}))
 				loop.Insts = append(loop.Insts, dest.EmitPop()...)
 
 				loop.Insts = append(loop.Insts, x_len.EmitPush()...)
-				loop.Insts = append(loop.Insts, NewConst("1", I32{}).EmitPush()...)
-				loop.Insts = append(loop.Insts, wat.NewInstSub(wat.I32{}))
+				loop.Insts = append(loop.Insts, NewConst("1", U32{}).EmitPush()...)
+				loop.Insts = append(loop.Insts, wat.NewInstSub(wat.U32{}))
 				loop.Insts = append(loop.Insts, x_len.EmitPop()...)
 
 				loop.Insts = append(loop.Insts, wat.NewInstBr("loop2"))
@@ -133,7 +133,7 @@ func (t String) genAppendStrFunc() string {
 			loop := wat.NewInstLoop("loop3")
 			{
 				loop.Insts = append(loop.Insts, y_len.EmitPush()...)
-				loop.Insts = append(loop.Insts, wat.NewInstEqz(wat.I32{}))
+				loop.Insts = append(loop.Insts, wat.NewInstEqz(wat.U32{}))
 				loop.Insts = append(loop.Insts, wat.NewInstIf([]wat.Inst{wat.NewInstBr("block3")}, nil, nil))
 
 				//*dest = *src
@@ -143,17 +143,17 @@ func (t String) genAppendStrFunc() string {
 
 				loop.Insts = append(loop.Insts, src.EmitPush()...)
 				loop.Insts = append(loop.Insts, item_size.EmitPush()...)
-				loop.Insts = append(loop.Insts, wat.NewInstAdd(wat.I32{}))
+				loop.Insts = append(loop.Insts, wat.NewInstAdd(wat.U32{}))
 				loop.Insts = append(loop.Insts, src.EmitPop()...)
 
 				loop.Insts = append(loop.Insts, dest.EmitPush()...)
 				loop.Insts = append(loop.Insts, item_size.EmitPush()...)
-				loop.Insts = append(loop.Insts, wat.NewInstAdd(wat.I32{}))
+				loop.Insts = append(loop.Insts, wat.NewInstAdd(wat.U32{}))
 				loop.Insts = append(loop.Insts, dest.EmitPop()...)
 
 				loop.Insts = append(loop.Insts, y_len.EmitPush()...)
-				loop.Insts = append(loop.Insts, NewConst("1", I32{}).EmitPush()...)
-				loop.Insts = append(loop.Insts, wat.NewInstSub(wat.I32{}))
+				loop.Insts = append(loop.Insts, NewConst("1", U32{}).EmitPush()...)
+				loop.Insts = append(loop.Insts, wat.NewInstSub(wat.U32{}))
 				loop.Insts = append(loop.Insts, y_len.EmitPop()...)
 
 				loop.Insts = append(loop.Insts, wat.NewInstBr("loop3"))
@@ -185,7 +185,7 @@ func newValueString(name string, kind ValueKind) *aString {
 		string_type.findFieldByName("block").const_val = NewConst("0", NewBlock(U8{}))
 		ptr := currentModule.AddDataSeg([]byte(name))
 		string_type.findFieldByName("data").const_val = NewConst(strconv.Itoa(ptr), NewPointer(U8{}))
-		string_type.findFieldByName("len").const_val = NewConst(strconv.Itoa(len(name)), I32{})
+		string_type.findFieldByName("len").const_val = NewConst(strconv.Itoa(len(name)), U32{})
 	}
 	v.aValue = aValue{name: name, kind: kind, typ: string_type}
 	v.underlying = *newValueStruct(name, kind, string_type.Struct)
@@ -208,11 +208,11 @@ func (v *aString) emitSub(low, high Value) (insts []wat.Inst) {
 
 	//data:
 	if low == nil {
-		low = NewConst("0", I32{})
+		low = NewConst("0", U32{})
 	}
 	insts = append(insts, v.underlying.Extract("data").EmitPush()...)
 	insts = append(insts, low.EmitPush()...)
-	insts = append(insts, wat.NewInstAdd(wat.I32{}))
+	insts = append(insts, wat.NewInstAdd(wat.U32{}))
 
 	//len:
 	if high == nil {
@@ -220,7 +220,7 @@ func (v *aString) emitSub(low, high Value) (insts []wat.Inst) {
 	}
 	insts = append(insts, high.EmitPush()...)
 	insts = append(insts, low.EmitPush()...)
-	insts = append(insts, wat.NewInstSub(wat.I32{}))
+	insts = append(insts, wat.NewInstSub(wat.U32{}))
 
 	return
 }

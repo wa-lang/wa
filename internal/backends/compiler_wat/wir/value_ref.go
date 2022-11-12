@@ -42,10 +42,10 @@ func (t Ref) emitHeapAlloc() (insts []wat.Inst) {
 	//insts = append(insts, wat.NewBlank())
 	//insts = append(insts, wat.NewComment("Ref.emitHeapAlloc start"))
 
-	insts = append(insts, NewBlock(t.Base).emitHeapAlloc(NewConst("1", I32{}))...)
+	insts = append(insts, NewBlock(t.Base).emitHeapAlloc(NewConst("1", U32{}))...)
 	insts = append(insts, wat.NewInstCall("$wa.RT.DupWatStack"))
-	insts = append(insts, NewConst("16", I32{}).EmitPush()...)
-	insts = append(insts, wat.NewInstAdd(wat.I32{}))
+	insts = append(insts, NewConst("16", U32{}).EmitPush()...)
+	insts = append(insts, wat.NewInstAdd(wat.U32{}))
 
 	//insts = append(insts, wat.NewComment("Ref.emitHeapAlloc end"))
 	//insts = append(insts, wat.NewBlank())
@@ -59,8 +59,8 @@ func (t Ref) emitStackAlloc() (insts []wat.Inst) {
 
 	logger.Fatal("Todo")
 
-	insts = append(insts, NewConst("0", I32{}).EmitPush()...)
-	insts = append(insts, NewConst(strconv.Itoa(t.Base.size()), I32{}).EmitPush()...)
+	insts = append(insts, NewConst("0", U32{}).EmitPush()...)
+	insts = append(insts, NewConst(strconv.Itoa(t.Base.size()), U32{}).EmitPush()...)
 	insts = append(insts, wat.NewInstCall("$waStackAlloc"))
 
 	//insts = append(insts, wat.NewComment("Ref.emitStackAlloc end"))

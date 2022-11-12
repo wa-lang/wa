@@ -15,10 +15,15 @@ import (
 	"github.com/wa-lang/wa/internal/ssa"
 )
 
+type valueWrap struct {
+	value          wir.Value
+	force_register bool
+}
+
 type functionGenerator struct {
 	module *wir.Module
 
-	locals_map map[ssa.Value]wir.Value
+	locals_map map[ssa.Value]valueWrap
 
 	registers    []wir.Value
 	cur_local_id int
@@ -29,12 +34,12 @@ type functionGenerator struct {
 }
 
 func newFunctionGenerator(p *Compiler) *functionGenerator {
-	return &functionGenerator{module: p.module, locals_map: make(map[ssa.Value]wir.Value)}
+	return &functionGenerator{module: p.module, locals_map: make(map[ssa.Value]valueWrap)}
 }
 
-func (g *functionGenerator) getValue(i ssa.Value) wir.Value {
+func (g *functionGenerator) getValue(i ssa.Value) valueWrap {
 	if i == nil {
-		return nil
+		return valueWrap{}
 	}
 
 	if v, ok := g.locals_map[i]; ok {
@@ -42,7 +47,7 @@ func (g *functionGenerator) getValue(i ssa.Value) wir.Value {
 	}
 
 	if v, ok := g.module.Globals_map[i]; ok {
-		return v
+		return valueWrap{value: v}
 	}
 
 	switch v := i.(type) {
@@ -57,45 +62,53 @@ func (g *functionGenerator) getValue(i ssa.Value) wir.Value {
 
 			case types.Bool:
 				if constant.BoolVal(v.Value) {
-					return wir.NewConst("1", wir.I32{})
+					return valueWrap{value: wir.NewConst("1", wir.I32{})}
 				} else {
-					return wir.NewConst("0", wir.I32{})
+					return valueWrap{value: wir.NewConst("0", wir.I32{})}
 				}
 
 			case types.Int:
 				val, _ := constant.Int64Val(v.Value)
-				return wir.NewConst(strconv.Itoa(int(val)), wir.I32{})
+				return valueWrap{value: wir.NewConst(strconv.Itoa(int(val)), wir.I32{})}
+
+			case types.Uint32:
+				val, _ := constant.Uint64Val(v.Value)
+				return valueWrap{value: wir.NewConst(strconv.Itoa(int(val)), wir.U32{})}
 
 			case types.Int32:
 				val, _ := constant.Int64Val(v.Value)
 				if t.Name() == "rune" {
-					return wir.NewConst(strconv.Itoa(int(val)), wir.RUNE{})
+					return valueWrap{value: wir.NewConst(strconv.Itoa(int(val)), wir.RUNE{})}
 				} else {
-					return wir.NewConst(strconv.Itoa(int(val)), wir.I32{})
+					return valueWrap{value: wir.NewConst(strconv.Itoa(int(val)), wir.I32{})}
 				}
 
 			case types.Float32:
 				val, _ := constant.Float64Val(v.Value)
-				return wir.NewConst(strconv.FormatFloat(val, 'f', -1, 32), wir.F32{})
+				return valueWrap{value: wir.NewConst(strconv.FormatFloat(val, 'f', -1, 32), wir.F32{})}
 
 			case types.Float64:
 				val, _ := constant.Float64Val(v.Value)
-				return wir.NewConst(strconv.FormatFloat(val, 'f', -1, 64), wir.F64{})
+				return valueWrap{value: wir.NewConst(strconv.FormatFloat(val, 'f', -1, 64), wir.F64{})}
 
 			case types.String, types.UntypedString:
 				val := constant.StringVal(v.Value)
-				return wir.NewConst(val, wir.NewString())
+				return valueWrap{value: wir.NewConst(val, wir.NewString())}
 
 			default:
-				logger.Fatalf("Todo:%T", t)
+				logger.Fatalf("Todo:%T %v", t, t.Kind())
 			}
 
 		case *types.Pointer:
-			logger.Fatalf("Todo:%T", t)
+			if v.Value == nil {
+				return valueWrap{}
+			} else {
+				logger.Fatalf("Todo:%T", t)
+			}
 
 		case *types.Slice:
 			if v.Value == nil {
-				return wir.NewConst("0", wir.NewSlice(wir.ToWType(t.Elem())))
+				return valueWrap{value: wir.NewConst("0", wir.NewSlice(wir.ToWType(t.Elem())))}
 			}
 			logger.Fatalf("Todo:%T", t)
 
@@ -104,13 +117,13 @@ func (g *functionGenerator) getValue(i ssa.Value) wir.Value {
 		}
 
 	case ssa.Instruction:
-		nv := g.addRegister(wir.ToWType(i.Type()))
+		nv := valueWrap{value: g.addRegister(wir.ToWType(i.Type()))}
 		g.locals_map[i] = nv
 		return nv
 	}
 
 	logger.Fatal("Value not found:", i)
-	return nil
+	return valueWrap{}
 }
 
 func (g *functionGenerator) genFunction(f *ssa.Function) *wir.Function {
@@ -128,8 +141,8 @@ func (g *functionGenerator) genFunction(f *ssa.Function) *wir.Function {
 	}
 
 	for _, i := range f.Params {
-		pa := wir.NewLocal(i.Name(), wir.ToWType(i.Type()))
-		wir_fn.Params = append(wir_fn.Params, pa)
+		pa := valueWrap{value: wir.NewLocal(i.Name(), wir.ToWType(i.Type()))}
+		wir_fn.Params = append(wir_fn.Params, pa.value)
 		g.locals_map[i] = pa
 	}
 
@@ -244,15 +257,15 @@ func (g *functionGenerator) genInstruction(inst ssa.Instruction) (insts []wat.In
 
 	case ssa.Value:
 		s, t := g.genValue(inst)
-		if !t.Equal(wir.VOID{}) {
+		if t != nil && !t.Equal(wir.VOID{}) {
 			if v, ok := g.locals_map[inst]; ok {
-				if !v.Type().Equal(t) {
+				if !v.value.Type().Equal(t) {
 					panic("Type not match")
 				}
-				s = append(s, v.EmitPop()...)
+				s = append(s, v.value.EmitPop()...)
 			} else {
 				nv := g.addRegister(t)
-				g.locals_map[inst] = nv
+				g.locals_map[inst] = valueWrap{value: nv}
 				s = append(s, nv.EmitPop()...)
 			}
 		}
@@ -311,7 +324,7 @@ func (g *functionGenerator) genUnOp(inst *ssa.UnOp) (insts []wat.Inst, ret_type 
 
 	case token.SUB:
 		x := g.getValue(inst.X)
-		return wir.EmitUnOp(x, wat.OpCodeSub)
+		return wir.EmitUnOp(x.value, wat.OpCodeSub)
 
 	default:
 		logger.Fatal("Todo")
@@ -328,37 +341,37 @@ func (g *functionGenerator) genBinOp(inst *ssa.BinOp) ([]wat.Inst, wir.ValueType
 	case *types.Basic:
 		switch inst.Op {
 		case token.ADD:
-			return wir.EmitBinOp(x, y, wat.OpCodeAdd)
+			return wir.EmitBinOp(x.value, y.value, wat.OpCodeAdd)
 
 		case token.SUB:
-			return wir.EmitBinOp(x, y, wat.OpCodeSub)
+			return wir.EmitBinOp(x.value, y.value, wat.OpCodeSub)
 
 		case token.MUL:
-			return wir.EmitBinOp(x, y, wat.OpCodeMul)
+			return wir.EmitBinOp(x.value, y.value, wat.OpCodeMul)
 
 		case token.QUO:
-			return wir.EmitBinOp(x, y, wat.OpCodeQuo)
+			return wir.EmitBinOp(x.value, y.value, wat.OpCodeQuo)
 
 		case token.REM:
-			return wir.EmitBinOp(x, y, wat.OpCodeRem)
+			return wir.EmitBinOp(x.value, y.value, wat.OpCodeRem)
 
 		case token.EQL:
-			return wir.EmitBinOp(x, y, wat.OpCodeEql)
+			return wir.EmitBinOp(x.value, y.value, wat.OpCodeEql)
 
 		case token.NEQ:
-			return wir.EmitBinOp(x, y, wat.OpCodeNe)
+			return wir.EmitBinOp(x.value, y.value, wat.OpCodeNe)
 
 		case token.LSS:
-			return wir.EmitBinOp(x, y, wat.OpCodeLt)
+			return wir.EmitBinOp(x.value, y.value, wat.OpCodeLt)
 
 		case token.GTR:
-			return wir.EmitBinOp(x, y, wat.OpCodeGt)
+			return wir.EmitBinOp(x.value, y.value, wat.OpCodeGt)
 
 		case token.LEQ:
-			return wir.EmitBinOp(x, y, wat.OpCodeLe)
+			return wir.EmitBinOp(x.value, y.value, wat.OpCodeLe)
 
 		case token.GEQ:
-			return wir.EmitBinOp(x, y, wat.OpCodeGe)
+			return wir.EmitBinOp(x.value, y.value, wat.OpCodeGe)
 		}
 
 	default:
@@ -379,7 +392,7 @@ func (g *functionGenerator) genCall(inst *ssa.Call) ([]wat.Inst, wir.ValueType) 
 		ret_type := wir.ToWType(inst.Call.Signature().Results())
 		var insts []wat.Inst
 		for _, v := range inst.Call.Args {
-			insts = append(insts, g.getValue(v).EmitPush()...)
+			insts = append(insts, g.getValue(v).value.EmitPush()...)
 		}
 		callee := inst.Call.StaticCallee()
 		if len(callee.LinkName()) > 0 {
@@ -409,28 +422,28 @@ func (g *functionGenerator) genBuiltin(call *ssa.CallCommon) (insts []wat.Inst, 
 	case "print", "println":
 		for _, arg := range call.Args {
 			arg := g.getValue(arg)
-			switch arg.Type().(type) {
+			switch arg.value.Type().(type) {
 			case wir.I32:
-				insts = append(insts, arg.EmitPush()...)
+				insts = append(insts, arg.value.EmitPush()...)
 				insts = append(insts, wat.NewInstCall("$waPrintI32"))
 
 			case wir.F32:
-				insts = append(insts, arg.EmitPush()...)
+				insts = append(insts, arg.value.EmitPush()...)
 				insts = append(insts, wat.NewInstCall("$waPrintF32"))
 
 			case wir.F64:
-				insts = append(insts, arg.EmitPush()...)
+				insts = append(insts, arg.value.EmitPush()...)
 				insts = append(insts, wat.NewInstCall("$waPrintF64"))
 
 			case wir.RUNE:
-				insts = append(insts, arg.EmitPush()...)
+				insts = append(insts, arg.value.EmitPush()...)
 				insts = append(insts, wat.NewInstCall("$waPrintRune"))
 
 			case wir.String:
-				insts = append(insts, wir.EmitPrintString(arg)...)
+				insts = append(insts, wir.EmitPrintString(arg.value)...)
 
 			default:
-				logger.Fatalf("Todo: print(%T)", arg.Type())
+				logger.Fatalf("Todo: print(%T)", arg.value.Type())
 			}
 		}
 
@@ -444,13 +457,13 @@ func (g *functionGenerator) genBuiltin(call *ssa.CallCommon) (insts []wat.Inst, 
 		if len(call.Args) != 2 {
 			panic("len(call.Args) != 2")
 		}
-		insts, ret_type = wir.EmitGenAppend(g.getValue(call.Args[0]), g.getValue(call.Args[1]))
+		insts, ret_type = wir.EmitGenAppend(g.getValue(call.Args[0]).value, g.getValue(call.Args[1]).value)
 
 	case "len":
 		if len(call.Args) != 1 {
 			panic("len(call.Args) != 1")
 		}
-		insts = wir.EmitGenLen(g.getValue(call.Args[0]))
+		insts = wir.EmitGenLen(g.getValue(call.Args[0]).value)
 		ret_type = wir.I32{}
 
 	default:
@@ -481,7 +494,7 @@ func (g *functionGenerator) genPhi(inst *ssa.Phi) ([]wat.Inst, wir.ValueType) {
 	var values []wir.Value
 	for i, v := range inst.Edges {
 		preds = append(preds, inst.Block().Preds[i].Index)
-		values = append(values, g.getValue(v))
+		values = append(values, g.getValue(v).value)
 	}
 	return g.genPhiIter(preds, values), wir.ToWType(inst.Type())
 }
@@ -494,7 +507,7 @@ func (g *functionGenerator) genReturn(inst *ssa.Return) []wat.Inst {
 		break
 
 	case 1:
-		insts = append(insts, wir.EmitAssginValue(g.var_ret, g.getValue(inst.Results[0]))...)
+		insts = append(insts, wir.EmitAssginValue(g.var_ret, g.getValue(inst.Results[0]).value)...)
 
 	default:
 		logger.Fatal("Todo")
@@ -504,21 +517,37 @@ func (g *functionGenerator) genReturn(inst *ssa.Return) []wat.Inst {
 	return insts
 }
 
-func (g *functionGenerator) genLoad(addr ssa.Value) ([]wat.Inst, wir.ValueType) {
-	return wir.EmitLoad(g.getValue(addr))
+func (g *functionGenerator) genLoad(Addr ssa.Value) (insts []wat.Inst, ret_type wir.ValueType) {
+	addr := g.getValue(Addr)
+
+	if addr.force_register {
+		insts = append(insts, addr.value.EmitPush()...)
+		ret_type = addr.value.Type()
+	} else {
+		insts, ret_type = wir.EmitLoad(addr.value)
+	}
+
+	return
 }
 
 func (g *functionGenerator) genStore(inst *ssa.Store) []wat.Inst {
-	return wir.EmitStore(g.getValue(inst.Addr), g.getValue(inst.Val))
+	addr := g.getValue(inst.Addr)
+	val := g.getValue(inst.Val)
+
+	if addr.force_register {
+		return wir.EmitAssginValue(addr.value, val.value)
+	} else {
+		return wir.EmitStore(addr.value, val.value)
+	}
 }
 
 func (g *functionGenerator) genIf(inst *ssa.If) []wat.Inst {
 	cond := g.getValue(inst.Cond)
-	if !cond.Type().Equal(wir.I32{}) {
+	if !cond.value.Type().Equal(wir.I32{}) {
 		logger.Fatal("cond.type() != i32")
 	}
 
-	insts := cond.EmitPush()
+	insts := cond.value.EmitPush()
 	instsTrue := g.genJumpID(inst.Block().Index, inst.Block().Succs[0].Index)
 	instsFalse := g.genJumpID(inst.Block().Index, inst.Block().Succs[1].Index)
 	insts = append(insts, wat.NewInstIf(instsTrue, instsFalse, nil))
@@ -543,12 +572,23 @@ func (g *functionGenerator) genJumpID(cur, dest int) []wat.Inst {
 	return insts
 }
 
-func (g *functionGenerator) genAlloc(inst *ssa.Alloc) ([]wat.Inst, wir.ValueType) {
-	if inst.Heap {
-		return wir.EmitHeapAlloc(wir.ToWType(inst.Type().(*types.Pointer).Elem()))
+func (g *functionGenerator) genAlloc(inst *ssa.Alloc) (insts []wat.Inst, ret_type wir.ValueType) {
+	typ := wir.ToWType(inst.Type().(*types.Pointer).Elem())
+	if inst.Parent().ForceRegister() {
+		nv := g.addRegister(typ)
+		g.locals_map[inst] = valueWrap{value: nv, force_register: true}
+		insts = append(insts, nv.EmitRelease()...)
+		insts = append(insts, nv.EmitInit()...)
+		ret_type = nil
 	} else {
-		return wir.EmitStackAlloc(wir.ToWType(inst.Type().(*types.Pointer).Elem()))
+		if inst.Heap {
+			insts, ret_type = wir.EmitHeapAlloc(typ)
+		} else {
+			insts, ret_type = wir.EmitStackAlloc(typ)
+		}
 	}
+
+	return
 }
 
 func (g *functionGenerator) genFiled(inst *ssa.Field) ([]wat.Inst, wir.ValueType) {
@@ -556,40 +596,63 @@ func (g *functionGenerator) genFiled(inst *ssa.Field) ([]wat.Inst, wir.ValueType
 	field := inst.X.Type().Underlying().(*types.Struct).Field(inst.Field)
 	fieldname := field.Name()
 	if field.Embedded() {
+		if _, ok := field.Type().(*types.Named); ok {
+			fieldname = wir.GetPkgMangleName(field.Pkg().Path()) + fieldname
+		}
 		fieldname = "$" + fieldname
 	}
 
-	return wir.EmitGenField(x, fieldname)
+	return wir.EmitGenField(x.value, fieldname)
 }
 
 func (g *functionGenerator) genFieldAddr(inst *ssa.FieldAddr) ([]wat.Inst, wir.ValueType) {
 	field := inst.X.Type().Underlying().(*types.Pointer).Elem().Underlying().(*types.Struct).Field(inst.Field)
 	fieldname := field.Name()
 	if field.Embedded() {
+		if _, ok := field.Type().(*types.Named); ok {
+			fieldname = wir.GetPkgMangleName(field.Pkg().Path()) + fieldname
+		}
 		fieldname = "$" + fieldname
 	}
 
-	return wir.EmitGenFieldAddr(g.getValue(inst.X), fieldname)
+	x := g.getValue(inst.X)
+	if x.force_register {
+		nv := wir.ExtractField(x.value, fieldname)
+		g.locals_map[inst] = valueWrap{value: nv, force_register: true}
+		return nil, nil
+	} else {
+		return wir.EmitGenFieldAddr(x.value, fieldname)
+	}
 }
 
 func (g *functionGenerator) genIndexAddr(inst *ssa.IndexAddr) ([]wat.Inst, wir.ValueType) {
+	if inst.Parent().ForceRegister() {
+		logger.Fatal("ssa.IndexAddr is not available in ForceRegister-mode")
+		return nil, nil
+	}
+
 	x := g.getValue(inst.X)
 	id := g.getValue(inst.Index)
 
-	return wir.EmitGenIndexAddr(x, id)
+	return wir.EmitGenIndexAddr(x.value, id.value)
 }
 
 func (g *functionGenerator) genSlice(inst *ssa.Slice) ([]wat.Inst, wir.ValueType) {
+	if inst.Parent().ForceRegister() {
+		logger.Fatal("ssa.Slice is not available in ForceRegister-mode")
+		return nil, nil
+	}
+
 	x := g.getValue(inst.X)
 	var low, high wir.Value
 	if inst.Low != nil {
-		low = g.getValue(inst.Low)
+		low = g.getValue(inst.Low).value
 	}
 	if inst.High != nil {
-		high = g.getValue(inst.High)
+		high = g.getValue(inst.High).value
 	}
 
-	return wir.EmitGenSlice(x, low, high)
+	return wir.EmitGenSlice(x.value, low, high)
 }
 
 func (g *functionGenerator) addRegister(typ wir.ValueType) wir.Value {
@@ -598,4 +661,74 @@ func (g *functionGenerator) addRegister(typ wir.ValueType) wir.Value {
 	v := wir.NewLocal(name, typ)
 	g.registers = append(g.registers, v)
 	return v
+}
+
+func (g *functionGenerator) genGetter(f *ssa.Function) *wir.Function {
+	var wir_fn wir.Function
+	if len(f.LinkName()) > 0 {
+		wir_fn.Name = f.LinkName()
+	} else {
+		wir_fn.Name = wir.GetPkgMangleName(f.Pkg.Pkg.Path()) + f.Name()
+	}
+
+	rets := f.Signature.Results()
+	wir_fn.Result = wir.ToWType(rets)
+	if rets.Len() > 1 {
+		logger.Fatal("rets.Len() > 1")
+		return nil
+	}
+
+	if len(f.Params) != 1 {
+		logger.Fatal("len(f.Params) != 1")
+		return nil
+	}
+	if !wir.ToWType(f.Params[0].Type()).Equal(wir.U32{}) {
+		logger.Fatal("addr_type != U32")
+		return nil
+	}
+	addr := wir.NewLocal("addr", wir.NewPointer(wir_fn.Result))
+	wir_fn.Params = append(wir_fn.Params, addr)
+
+	insts, _ := wir.EmitLoad(addr)
+	wir_fn.Insts = append(wir_fn.Insts, insts...)
+
+	return &wir_fn
+}
+
+func (g *functionGenerator) genSetter(f *ssa.Function) *wir.Function {
+	var wir_fn wir.Function
+	if len(f.LinkName()) > 0 {
+		wir_fn.Name = f.LinkName()
+	} else {
+		wir_fn.Name = wir.GetPkgMangleName(f.Pkg.Pkg.Path()) + f.Name()
+	}
+
+	rets := f.Signature.Results()
+	wir_fn.Result = wir.ToWType(rets)
+	if rets.Len() > 0 {
+		logger.Fatal("rets.Len() > 0")
+		return nil
+	}
+
+	if len(f.Params) != 2 {
+		logger.Fatal("len(f.Params) != 2")
+		return nil
+	}
+	if !wir.ToWType(f.Params[0].Type()).Equal(wir.U32{}) {
+		logger.Fatal("addr_type != U32")
+		return nil
+	}
+
+	value_type := wir.ToWType(f.Params[1].Type())
+
+	addr := wir.NewLocal("addr", wir.NewPointer(value_type))
+	wir_fn.Params = append(wir_fn.Params, addr)
+
+	value := wir.NewLocal("data", value_type)
+	wir_fn.Params = append(wir_fn.Params, value)
+
+	insts := wir.EmitStore(addr, value)
+	wir_fn.Insts = append(wir_fn.Insts, insts...)
+
+	return &wir_fn
 }
