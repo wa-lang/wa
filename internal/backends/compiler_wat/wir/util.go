@@ -61,7 +61,11 @@ func ToWType(from types.Type) ValueType {
 			return ToWType(t.At(0).Type())
 
 		default:
-			logger.Fatalf("Todo type:%s", t)
+			var feilds []ValueType
+			for i := 0; i < t.Len(); i++ {
+				feilds = append(feilds, ToWType(t.At(i).Type()))
+			}
+			return NewTuple(feilds)
 		}
 
 	case *types.Pointer:

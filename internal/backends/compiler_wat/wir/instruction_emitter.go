@@ -195,6 +195,13 @@ func EmitStackAlloc(typ ValueType) (insts []wat.Inst, ret_type ValueType) {
 	//return
 }
 
+func EmitGenExtract(x Value, id int) (insts []wat.Inst, ret_type ValueType) {
+	f := x.(*aTuple).Extract(id)
+	insts = append(insts, f.EmitPush()...)
+	ret_type = f.Type()
+	return
+}
+
 func EmitGenField(x Value, field_name string) (insts []wat.Inst, ret_type ValueType) {
 	switch x := x.(type) {
 	case *aStruct:

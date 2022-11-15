@@ -30,7 +30,7 @@ type functionGenerator struct {
 
 	var_block_selector wir.Value
 	var_current_block  wir.Value
-	var_ret            wir.Value
+	var_rets           []wir.Value
 }
 
 func newFunctionGenerator(p *Compiler) *functionGenerator {
@@ -135,9 +135,18 @@ func (g *functionGenerator) genFunction(f *ssa.Function) *wir.Function {
 	}
 
 	rets := f.Signature.Results()
-	wir_fn.Result = wir.ToWType(rets)
-	if rets.Len() > 1 {
-		logger.Fatal("Todo")
+	switch rets.Len() {
+	case 0:
+		break
+
+	case 1:
+		wir_fn.Results = append(wir_fn.Results, wir.ToWType(rets.At(0).Type()))
+
+	default:
+		typ := wir.ToWType(rets).(wir.Tuple)
+		for _, f := range typ.Members {
+			wir_fn.Results = append(wir_fn.Results, f.Type())
+		}
 	}
 
 	for _, i := range f.Params {
@@ -150,9 +159,11 @@ func (g *functionGenerator) genFunction(f *ssa.Function) *wir.Function {
 	g.registers = append(g.registers, g.var_block_selector)
 	g.var_current_block = wir.NewLocal("$current_block", wir.I32{})
 	g.registers = append(g.registers, g.var_current_block)
-	if !wir_fn.Result.Equal(wir.VOID{}) {
-		g.var_ret = wir.NewLocal("$ret", wir_fn.Result)
-		g.registers = append(g.registers, g.var_ret)
+	for i, rt := range wir_fn.Results {
+		rname := "$ret_" + strconv.Itoa(i)
+		r := wir.NewLocal(rname, rt)
+		g.var_rets = append(g.var_rets, r)
+		g.registers = append(g.registers, r)
 	}
 
 	var block_temp wat.Inst
@@ -196,8 +207,8 @@ func (g *functionGenerator) genFunction(f *ssa.Function) *wir.Function {
 
 	wir_fn.Insts = append(wir_fn.Insts, block_temp)
 
-	if !wir_fn.Result.Equal(wir.VOID{}) {
-		wir_fn.Insts = append(wir_fn.Insts, g.var_ret.EmitPush()...)
+	for _, r := range g.var_rets {
+		wir_fn.Insts = append(wir_fn.Insts, r.EmitPush()...)
 	}
 
 	for _, i := range g.registers {
@@ -252,9 +263,6 @@ func (g *functionGenerator) genInstruction(inst ssa.Instruction) (insts []wat.In
 	case *ssa.Return:
 		insts = append(insts, g.genReturn(inst)...)
 
-	case *ssa.Extract:
-		logger.Fatalf("Todo:%T", inst)
-
 	case ssa.Value:
 		s, t := g.genValue(inst)
 		if t != nil && !t.Equal(wir.VOID{}) {
@@ -298,6 +306,9 @@ func (g *functionGenerator) genValue(v ssa.Value) ([]wat.Inst, wir.ValueType) {
 
 	case *ssa.Alloc:
 		return g.genAlloc(v)
+
+	case *ssa.Extract:
+		return g.genExtract(v)
 
 	case *ssa.Field:
 		return g.genFiled(v)
@@ -502,15 +513,12 @@ func (g *functionGenerator) genPhi(inst *ssa.Phi) ([]wat.Inst, wir.ValueType) {
 func (g *functionGenerator) genReturn(inst *ssa.Return) []wat.Inst {
 	var insts []wat.Inst
 
-	switch len(inst.Results) {
-	case 0:
-		break
+	if len(inst.Results) != len(g.var_rets) {
+		panic("len(inst.Results) != len(g.var_rets)")
+	}
 
-	case 1:
-		insts = append(insts, wir.EmitAssginValue(g.var_ret, g.getValue(inst.Results[0]).value)...)
-
-	default:
-		logger.Fatal("Todo")
+	for i := range inst.Results {
+		insts = append(insts, wir.EmitAssginValue(g.var_rets[i], g.getValue(inst.Results[i]).value)...)
 	}
 
 	insts = append(insts, wat.NewInstBr("$BlockFnBody"))
@@ -589,6 +597,11 @@ func (g *functionGenerator) genAlloc(inst *ssa.Alloc) (insts []wat.Inst, ret_typ
 	}
 
 	return
+}
+
+func (g *functionGenerator) genExtract(inst *ssa.Extract) ([]wat.Inst, wir.ValueType) {
+	v := g.getValue(inst.Tuple)
+	return wir.EmitGenExtract(v.value, inst.Index)
 }
 
 func (g *functionGenerator) genFiled(inst *ssa.Field) ([]wat.Inst, wir.ValueType) {
@@ -672,11 +685,12 @@ func (g *functionGenerator) genGetter(f *ssa.Function) *wir.Function {
 	}
 
 	rets := f.Signature.Results()
-	wir_fn.Result = wir.ToWType(rets)
 	if rets.Len() > 1 {
 		logger.Fatal("rets.Len() > 1")
 		return nil
 	}
+	rtype := wir.ToWType(rets)
+	wir_fn.Results = append(wir_fn.Results, rtype)
 
 	if len(f.Params) != 1 {
 		logger.Fatal("len(f.Params) != 1")
@@ -686,7 +700,7 @@ func (g *functionGenerator) genGetter(f *ssa.Function) *wir.Function {
 		logger.Fatal("addr_type != U32")
 		return nil
 	}
-	addr := wir.NewLocal("addr", wir.NewPointer(wir_fn.Result))
+	addr := wir.NewLocal("addr", wir.NewPointer(rtype))
 	wir_fn.Params = append(wir_fn.Params, addr)
 
 	insts, _ := wir.EmitLoad(addr)
@@ -704,7 +718,6 @@ func (g *functionGenerator) genSetter(f *ssa.Function) *wir.Function {
 	}
 
 	rets := f.Signature.Results()
-	wir_fn.Result = wir.ToWType(rets)
 	if rets.Len() > 0 {
 		logger.Fatal("rets.Len() > 0")
 		return nil

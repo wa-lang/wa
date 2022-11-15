@@ -9,8 +9,8 @@ func (f *Function) ToWatFunc() *wat.Function {
 
 	wat_func.Name = f.Name
 
-	if f.Result != nil {
-		wat_func.Results = f.Result.Raw()
+	for _, r := range f.Results {
+		wat_func.Results = append(wat_func.Results, r.Raw()...)
 	}
 
 	for _, param := range f.Params {
