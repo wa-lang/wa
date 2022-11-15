@@ -53,10 +53,14 @@ Instead of requiring complex toolchains to set up, you can simply go install it 
 
 打印字符和调用函数(Print rune and call function)：
 
-```
+```wa
+import "fmt"
+
 fn main {
 	println("你好，凹语言！")
 	println(add(40, 2))
+
+	fmt.Println(1+1)
 }
 
 fn add(a: i32, b: i32) => i32 {
@@ -70,6 +74,7 @@ fn add(a: i32, b: i32) => i32 {
 $ go run main.go hello.wa 
 你好，凹语言！
 42
+2
 ```
 
 ## 例子: 打印素数 (Example: Print Prime)
