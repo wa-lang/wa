@@ -47,7 +47,7 @@ func (t String) genAppendStrFunc() string {
 	y := newValueString("y", ValueKindLocal)
 	f.Params = append(f.Params, x)
 	f.Params = append(f.Params, y)
-	f.Result = t
+	f.Results = append(f.Results, t)
 
 	x_len := NewLocal("x_len", x.underlying.Extract("len").Type())
 	f.Locals = append(f.Locals, x_len)

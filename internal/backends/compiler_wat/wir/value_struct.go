@@ -95,7 +95,6 @@ func (t Struct) onFree() int {
 		return i
 	}
 
-	f.Result = VOID{}
 	ptr := NewLocal("$ptr", U32{})
 	f.Params = append(f.Params, ptr)
 

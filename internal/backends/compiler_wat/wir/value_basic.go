@@ -34,6 +34,9 @@ func newValue(name string, kind ValueKind, typ ValueType) Value {
 	case Block:
 		return newValueBlock(name, kind, typ.Base)
 
+	case Tuple:
+		return newValueTuple(name, kind, typ)
+
 	case Struct:
 		return newValueStruct(name, kind, typ)
 

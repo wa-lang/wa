@@ -90,7 +90,6 @@ func (m *Module) AddDataSeg(data []byte) (ptr int) {
 func (m *Module) genGlobalAlloc() *Function {
 	var f Function
 	f.Name = "$waGlobalAlloc"
-	f.Result = VOID{}
 
 	for _, g := range m.globals {
 		if g.Kind() != ValueKindGlobal_Pointer {
