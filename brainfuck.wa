@@ -1,0 +1,56 @@
+# 版权 @2019 凹语言 作者。保留所有权利。
+
+fn main() {
+	vm := NewMachine("++++++++++[>++++++++++<-]>++++.+.") # print hi
+	vm.Run()
+}
+
+type Machine struct {
+	mem  : [30000]byte
+	code : string
+	pos  : int
+	pc   : int
+}
+
+fn NewMachine(code: string) => *Machine {
+	return &Machine{code: code}
+}
+
+fn (p: *Machine) Run() {
+	for ; p.pc != len(p.code); p.pc++ {
+		switch x := p.code[p.pc]; x {
+		case '>':
+			p.pos++
+		case '<':
+			p.pos--
+		case '+':
+			p.mem[p.pos]++
+		case '-':
+			p.mem[p.pos]--
+		case '[':
+			if p.mem[p.pos] == 0 {
+				p.loop(1)
+			}
+		case ']':
+			if p.mem[p.pos] != 0 {
+				p.loop(-1)
+			}
+		case '.':
+			print(rune(p.mem[p.pos]))
+		case ',':
+			# TODO: support read byte
+		}
+	}
+	return
+}
+
+fn (p: *Machine) loop(inc: int) {
+	for i := inc; i != 0; p.pc += inc {
+		switch p.code[p.pc+inc] {
+		case '[':
+			i++
+		case ']':
+			i--
+		}
+	}
+}
