@@ -45,6 +45,14 @@ func main() {
 			Aliases: []string{"t"},
 			Usage:   "set trace mode (*|app|compiler|loader)",
 		},
+		&cli.StringFlag{
+			Name:  "clang",
+			Usage: "set llvm/clang path",
+		},
+		&cli.StringFlag{
+			Name:  "llc",
+			Usage: "set llvm/llc path",
+		},
 	}
 
 	cliApp.Before = func(c *cli.Context) error {
@@ -450,5 +458,7 @@ func main() {
 func build_Options(c *cli.Context) *app.Option {
 	return &app.Option{
 		Debug: c.Bool("debug"),
+		Clang: c.String("clang"),
+		Llc:   c.String("llc"),
 	}
 }

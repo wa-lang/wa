@@ -40,6 +40,7 @@ type Option struct {
 	TargetArch string
 	TargetOS   string
 	Clang      string
+	Llc        string
 }
 
 // 命令行程序对象
@@ -65,6 +66,16 @@ func NewApp(opt *Option) *App {
 		}
 		if p.opt.Clang == "" {
 			p.opt.Clang = "clang"
+		}
+	}
+	if p.opt.Llc == "" {
+		if runtime.GOOS == "windows" {
+			p.opt.Llc, _ = exec.LookPath("llc.exe")
+		} else {
+			p.opt.Llc, _ = exec.LookPath("llc")
+		}
+		if p.opt.Llc == "" {
+			p.opt.Llc = "llc"
 		}
 	}
 	if p.opt.TargetOS == "" {
@@ -330,7 +341,7 @@ func (p *App) LLVM(infile string, outfile string, target string, debug bool) err
 	if target != "" {
 		llc = append(llc, "-mtriple", target)
 	}
-	cmd0 := exec.Command("llc", llc...)
+	cmd0 := exec.Command(p.opt.Llc, llc...)
 	cmd0.Stderr = os.Stderr
 	if err := cmd0.Run(); err != nil {
 		fmt.Fprintf(os.Stderr, "**** failed to invoke LLVM ****\n")
@@ -338,12 +349,16 @@ func (p *App) LLVM(infile string, outfile string, target string, debug bool) err
 	}
 
 	// Invoke command `clang xxx.s -o outfile --target=xxx`.
-	clang := []string{asmfile, "-static", "-o", outfile}
+	clangArgs := []string{asmfile, "-static", "-o", outfile}
 	if target != "" {
-		clang = append(clang, "-target", target)
+		clangArgs = append(clangArgs, "-target", target)
 	}
-	cmd1 := exec.Command("clang", clang...)
+	if p.opt.Debug {
+		clangArgs = append(clangArgs, "-v")
+	}
+	cmd1 := exec.Command(p.opt.Clang, clangArgs...)
 	cmd1.Stderr = os.Stderr
+	cmd1.Stdout = os.Stdout
 	if err := cmd1.Run(); err != nil {
 		fmt.Fprintf(os.Stderr, "**** failed to invoke CLANG ****\n")
 		return err

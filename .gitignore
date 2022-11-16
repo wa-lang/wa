@@ -11,6 +11,8 @@ wat2wasm.exe
 *.a
 *.so
 *.dylib
-
+*.ll
+*.s
 *.out*
+
 _target

@@ -1,6 +1,7 @@
 # 版本日志
 
-- v0.3.1 (dev)
+- v0.3.1 (2022-11-16)
+  - 完善 WAT 后端, 支持多包
   - LLVM 后端支持基本数值运算 (依赖 clang 和 llc)
   - wazero 更新到 v1.0.0-pre.3 [#37](https://github.com/wa-lang/wa/pull/37)
 - v0.3.0 (2022-10-28)
