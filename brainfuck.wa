@@ -6,10 +6,10 @@ fn main() {
 }
 
 type Machine struct {
-	mem  : [30000]byte
-	code : string
-	pos  : int
-	pc   : int
+	mem  :[30000]byte
+	code :string
+	pos  :int
+	pc   :int
 }
 
 fn NewMachine(code: string) => *Machine {
