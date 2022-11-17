@@ -470,6 +470,7 @@ func (p *printer) fieldList(fields *ast.FieldList, isStruct, isIncomplete bool) 
 				if len(f.Names) > 0 {
 					p.print(blank)
 				}
+				p.print(token.COLON)
 				p.expr(f.Type)
 			} else { // interface
 				if ftyp, isFtyp := f.Type.(*ast.FuncType); isFtyp {
@@ -510,6 +511,7 @@ func (p *printer) fieldList(fields *ast.FieldList, isStruct, isIncomplete bool) 
 				// named fields
 				p.identList(f.Names, false)
 				p.print(sep)
+				p.print(token.COLON)
 				p.expr(f.Type)
 				extraTabs = 1
 			} else {
