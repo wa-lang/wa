@@ -95,3 +95,33 @@ func NewInstStore(typ ValueType, offset int, align int) *instStore {
 func (i *instStore) Format(indent string) string {
 	return indent + i.typ.Name() + ".store offset=" + strconv.Itoa(i.offset) + " align=" + strconv.Itoa(i.align)
 }
+
+/**************************************
+instStore8:
+**************************************/
+type instStore8 struct {
+	anInstruction
+	offset, align int
+}
+
+func NewInstStore8(offset int, align int) *instStore8 {
+	return &instStore8{offset: offset, align: align}
+}
+func (i *instStore8) Format(indent string) string {
+	return indent + "i32.store8 offset=" + strconv.Itoa(i.offset) + " align=" + strconv.Itoa(i.align)
+}
+
+/**************************************
+instStore16:
+**************************************/
+type instStore16 struct {
+	anInstruction
+	offset, align int
+}
+
+func NewInstStore16(offset int, align int) *instStore16 {
+	return &instStore16{offset: offset, align: align}
+}
+func (i *instStore16) Format(indent string) string {
+	return indent + "i32.store16 offset=" + strconv.Itoa(i.offset) + " align=" + strconv.Itoa(i.align)
+}
