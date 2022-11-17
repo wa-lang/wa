@@ -71,6 +71,22 @@ func (g *functionGenerator) getValue(i ssa.Value) valueWrap {
 				val, _ := constant.Int64Val(v.Value)
 				return valueWrap{value: wir.NewConst(strconv.Itoa(int(val)), wir.I32{})}
 
+			case types.Uint8:
+				val, _ := constant.Uint64Val(v.Value)
+				return valueWrap{value: wir.NewConst(strconv.Itoa(int(val)), wir.U8{})}
+
+			case types.Int8:
+				val, _ := constant.Uint64Val(v.Value)
+				return valueWrap{value: wir.NewConst(strconv.Itoa(int(val)), wir.I8{})}
+
+			case types.Uint16:
+				val, _ := constant.Uint64Val(v.Value)
+				return valueWrap{value: wir.NewConst(strconv.Itoa(int(val)), wir.U16{})}
+
+			case types.Int16:
+				val, _ := constant.Uint64Val(v.Value)
+				return valueWrap{value: wir.NewConst(strconv.Itoa(int(val)), wir.I16{})}
+
 			case types.Uint32:
 				val, _ := constant.Uint64Val(v.Value)
 				return valueWrap{value: wir.NewConst(strconv.Itoa(int(val)), wir.U32{})}
@@ -321,6 +337,12 @@ func (g *functionGenerator) genValue(v ssa.Value) ([]wat.Inst, wir.ValueType) {
 
 	case *ssa.Slice:
 		return g.genSlice(v)
+
+	case *ssa.Lookup:
+		return g.genLookup(v)
+
+	case *ssa.Convert:
+		return g.genConvert(v)
 
 	}
 
@@ -666,6 +688,20 @@ func (g *functionGenerator) genSlice(inst *ssa.Slice) ([]wat.Inst, wir.ValueType
 	}
 
 	return wir.EmitGenSlice(x.value, low, high)
+}
+
+func (g *functionGenerator) genLookup(inst *ssa.Lookup) ([]wat.Inst, wir.ValueType) {
+	x := g.getValue(inst.X)
+	index := g.getValue(inst.Index)
+
+	return wir.EmitGenLookup(x.value, index.value, inst.CommaOk)
+}
+
+func (g *functionGenerator) genConvert(inst *ssa.Convert) (insts []wat.Inst, ret_type wir.ValueType) {
+	x := g.getValue(inst.X)
+	ret_type = wir.ToWType(inst.Type())
+	insts = wir.EmitGenConvert(x.value, ret_type)
+	return
 }
 
 func (g *functionGenerator) addRegister(typ wir.ValueType) wir.Value {

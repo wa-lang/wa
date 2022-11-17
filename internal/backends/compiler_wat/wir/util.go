@@ -14,8 +14,15 @@ func ToWType(from types.Type) ValueType {
 	switch t := from.(type) {
 	case *types.Basic:
 		switch t.Kind() {
-		case types.Bool, types.UntypedBool, types.Int, types.Int32, types.UntypedInt:
+		case types.Bool, types.UntypedBool, types.Int, types.UntypedInt:
 			return I32{}
+
+		case types.Int32:
+			if t.Name() == "rune" {
+				return RUNE{}
+			} else {
+				return I32{}
+			}
 
 		case types.Uint32:
 			return U32{}
@@ -85,6 +92,9 @@ func ToWType(from types.Type) ValueType {
 				}
 			}
 			return NewStruct(GetPkgMangleName(t.Obj().Pkg().Path())+t.Obj().Name(), fs)
+
+		//case *types.Signature:
+		//	ut.
 
 		default:
 			logger.Fatalf("Todo:%T", ut)

@@ -320,6 +320,43 @@ func EmitGenSlice(x, low, high Value) (insts []wat.Inst, ret_type ValueType) {
 	return
 }
 
+func EmitGenLookup(x, index Value, CommaOk bool) (insts []wat.Inst, ret_type ValueType) {
+	switch x := x.(type) {
+	case *aString:
+		if CommaOk {
+			insts = x.emitAt_CommaOk(index)
+			fileds := []ValueType{U8{}, I32{}}
+			ret_type = NewTuple(fileds)
+		} else {
+			insts = x.emitAt(index)
+			ret_type = U8{}
+		}
+
+	default:
+		logger.Fatalf("Todo: %T", x)
+	}
+
+	return
+}
+
+func EmitGenConvert(x Value, typ ValueType) (insts []wat.Inst) {
+	src_raw_type := x.Type().Raw()
+	dest_raw_type := typ.Raw()
+	if len(src_raw_type) != len(dest_raw_type) {
+		logger.Fatalf("Todo: %T %T", x, typ)
+		panic("Todo")
+	}
+	for i := range src_raw_type {
+		if src_raw_type[i].Name() != dest_raw_type[i].Name() {
+			logger.Fatalf("Todo: %T %T", x, typ)
+			panic("Todo")
+		}
+	}
+
+	insts = append(insts, x.EmitPush()...)
+	return
+}
+
 func EmitGenAppend(x, y Value) (insts []wat.Inst, ret_type ValueType) {
 	if !x.Type().Equal(y.Type()) {
 		logger.Fatal("Type not match")

@@ -28,7 +28,7 @@ func toWatType(t ValueType) wat.ValueType {
 		return wat.F64{}
 
 	case Pointer:
-		return wat.I32{}
+		return wat.U32{}
 
 	case Block:
 		return wat.I32{}

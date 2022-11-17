@@ -25,8 +25,8 @@ func NewString() String {
 	return v
 }
 func (t String) Name() string           { return "string" }
-func (t String) size() int              { return 12 }
-func (t String) align() int             { return 4 }
+func (t String) size() int              { return t.Struct.size() }
+func (t String) align() int             { return t.Struct.align() }
 func (t String) onFree() int            { return t.Struct.onFree() }
 func (t String) Raw() []wat.ValueType   { return t.Struct.Raw() }
 func (t String) Equal(u ValueType) bool { _, ok := u.(String); return ok }
@@ -221,6 +221,36 @@ func (v *aString) emitSub(low, high Value) (insts []wat.Inst) {
 	insts = append(insts, high.EmitPush()...)
 	insts = append(insts, low.EmitPush()...)
 	insts = append(insts, wat.NewInstSub(wat.U32{}))
+
+	return
+}
+
+func (v *aString) emitAt(index Value) (insts []wat.Inst) {
+	insts = append(insts, v.underlying.Extract("data").EmitPush()...)
+	insts = append(insts, index.EmitPush()...)
+	insts = append(insts, wat.NewInstAdd(wat.I32{}))
+	insts = append(insts, wat.NewInstLoad8u(0, 1))
+	return
+}
+
+func (v *aString) emitAt_CommaOk(index Value) (insts []wat.Inst) {
+	insts = append(insts, v.underlying.Extract("len").EmitPush()...)
+	insts = append(insts, index.EmitPush()...)
+	insts = append(insts, wat.NewInstGt(wat.U32{}))
+
+	{
+		var instsTrue, instsFalse []wat.Inst
+		instsTrue = append(instsTrue, v.underlying.Extract("data").EmitPush()...)
+		instsTrue = append(instsTrue, index.EmitPush()...)
+		instsTrue = append(instsTrue, wat.NewInstAdd(wat.I32{}))
+		instsTrue = append(instsTrue, wat.NewInstLoad8u(0, 1))
+		instsTrue = append(instsTrue, wat.NewInstConst(wat.I32{}, "1"))
+
+		instsFalse = append(instsFalse, wat.NewInstConst(wat.I32{}, "0"))
+		instsFalse = append(instsFalse, wat.NewInstConst(wat.I32{}, "0"))
+		inst_if := wat.NewInstIf(instsTrue, instsFalse, []wat.ValueType{wat.I32{}, wat.I32{}})
+		insts = append(insts, inst_if)
+	}
 
 	return
 }

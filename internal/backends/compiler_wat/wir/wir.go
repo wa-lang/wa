@@ -20,14 +20,6 @@ type Function struct {
 	Insts []wat.Inst
 }
 
-/**************************************
-FuncSig:
-**************************************/
-type FuncSig struct {
-	Params  []ValueType
-	Results []ValueType
-}
-
 type ValueKind uint8
 
 const (

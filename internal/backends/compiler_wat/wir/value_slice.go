@@ -28,8 +28,8 @@ func NewSlice(base ValueType) Slice {
 	return v
 }
 func (t Slice) Name() string         { return t.Base.Name() + ".$$slice" }
-func (t Slice) size() int            { return 16 }
-func (t Slice) align() int           { return 4 }
+func (t Slice) size() int            { return t.Struct.size() }
+func (t Slice) align() int           { return t.Struct.align() }
 func (t Slice) onFree() int          { return t.Struct.onFree() }
 func (t Slice) Raw() []wat.ValueType { return t.Struct.Raw() }
 func (t Slice) Equal(u ValueType) bool {

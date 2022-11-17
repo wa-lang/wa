@@ -27,8 +27,8 @@ func NewRef(base ValueType) Ref {
 	return v
 }
 func (t Ref) Name() string         { return t.Base.Name() + ".$$ref" }
-func (t Ref) size() int            { return 8 }
-func (t Ref) align() int           { return 4 }
+func (t Ref) size() int            { return t.Struct.size() }
+func (t Ref) align() int           { return t.Struct.align() }
 func (t Ref) onFree() int          { return t.Struct.onFree() }
 func (t Ref) Raw() []wat.ValueType { return t.Struct.Raw() }
 func (t Ref) Equal(u ValueType) bool {

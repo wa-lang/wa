@@ -31,6 +31,9 @@ func newValue(name string, kind ValueKind, typ ValueType) Value {
 	case Pointer:
 		return newValuePointer(name, kind, typ.Base)
 
+	//case FnPtr:
+	//	return newValueFnPtr(name, kind, typ.Sig)
+
 	case Block:
 		return newValueBlock(name, kind, typ.Base)
 
