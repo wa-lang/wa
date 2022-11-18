@@ -198,6 +198,18 @@ func getTypeStr(ty types.Type, target string) string {
 	case *types.Named:
 		return getTypeStr(t.Underlying(), target)
 
+	case *types.Tuple: // Pack tuple elements to a struct.
+		var retTy strings.Builder
+		retTy.WriteString("{")
+		for i := 0; i < t.Len(); i++ {
+			retTy.WriteString(getTypeStr(t.At(i).Type(), target))
+			if i < t.Len()-1 {
+				retTy.WriteString(", ")
+			}
+		}
+		retTy.WriteString("}")
+		return retTy.String()
+
 	default:
 		panic("type '" + ty.String() + "' is not supported")
 	}

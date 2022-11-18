@@ -103,6 +103,17 @@ func (p *Compiler) compileValue(val ssa.Value) error {
 			return err
 		}
 
+	case *ssa.Extract:
+		p.output.WriteString("  ")
+		p.output.WriteString(getValueStr(val))
+		p.output.WriteString(" = extractvalue ")
+		p.output.WriteString(getTypeStr(val.Tuple.Type(), p.target))
+		p.output.WriteString(" ")
+		p.output.WriteString(getValueStr(val.Tuple))
+		p.output.WriteString(", ")
+		p.output.WriteString(fmt.Sprintf("%d", val.Index))
+		p.output.WriteString("\n")
+
 	default:
 		p.output.WriteString("  ; " + val.Name() + " = " + val.String() + "\n")
 		// panic("unsupported Value '" + val.Name() + " = " + val.String() + "'")
@@ -318,8 +329,8 @@ func (p *Compiler) compileCall(val *ssa.Call) error {
 			switch ty.(type) {
 			default:
 				return errors.New("type '" + tyStr + "' can not be returned")
-			case *types.Basic, *types.Pointer, *types.Array, *types.Struct:
-				// Only allow scalar/pointer/array/struct types.
+			case *types.Basic, *types.Pointer, *types.Array, *types.Struct, *types.Tuple:
+				// Only allow scalar/pointer/array/struct/tuple types.
 			}
 			p.output.WriteString("  %")
 			p.output.WriteString(val.Name())

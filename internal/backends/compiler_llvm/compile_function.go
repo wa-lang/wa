@@ -5,6 +5,7 @@ package compiler_llvm
 import (
 	"errors"
 	"fmt"
+	"math/rand"
 
 	"github.com/wa-lang/wa/internal/ssa"
 	"github.com/wa-lang/wa/internal/types"
@@ -26,8 +27,23 @@ func (p *Compiler) compileFunction(fn *ssa.Function) error {
 		case *types.Basic, *types.Pointer, *types.Array, *types.Struct:
 			// Only allow scalar/pointer/array/struct types.
 		}
-	default:
-		return errors.New("multiple return values are not supported")
+	default: // Multiple values will be packed into a struct.
+		retTyStr = "{"
+		for i := 0; i < rets.Len(); i++ {
+			ty := getRealType(rets.At(i).Type())
+			TyStr := getTypeStr(ty, p.target)
+			switch ty.(type) {
+			default:
+				return errors.New("type '" + TyStr + "' can not be returned")
+			case *types.Basic, *types.Pointer, *types.Array, *types.Struct:
+				// Only allow scalar/pointer/array/struct types.
+				retTyStr += TyStr
+			}
+			if i < rets.Len()-1 {
+				retTyStr += ", "
+			}
+		}
+		retTyStr += "}"
 	}
 
 	// Emit a proper function name.
@@ -103,8 +119,83 @@ func (p *Compiler) compileInstr(instr ssa.Instruction) error {
 			p.output.WriteString(" ")
 			p.output.WriteString(ret)
 			p.output.WriteString("\n")
-		default:
-			return errors.New("multiple return values are not supported")
+		default: // Multiple values will be packed into a struct.
+			var retTypes []string
+			var retVals []string
+			for _, val := range instr.Results {
+				rv := ""
+				// Special process for float32 constants.
+				if isConstFloat32(val) {
+					rv = p.wrapConstFloat32(val)
+				} else {
+					rv = getValueStr(val)
+				}
+				retTypes = append(retTypes, getTypeStr(val.Type(), p.target))
+				retVals = append(retVals, rv)
+			}
+			if len(retTypes) != len(retVals) {
+				panic("unkown internal error in '" + instr.String() + "'")
+			}
+			// Formulate the return type.
+			typeRet := "{"
+			for i, t := range retTypes {
+				typeRet += t
+				if i < len(retTypes)-1 {
+					typeRet += ", "
+				}
+			}
+			typeRet += "}"
+			// Emit "alloca {...}".
+			varAlloca := fmt.Sprintf("%%tmp%d", rand.Int())
+			p.output.WriteString("  ")
+			p.output.WriteString(varAlloca)
+			p.output.WriteString(" = alloca ")
+			p.output.WriteString(typeRet)
+			p.output.WriteString("\n")
+			// Pack stand alone values into a big struct.
+			for i := 0; i < len(retTypes); i++ {
+				// Emit "getelementptr inbounds ...".
+				varTmp := fmt.Sprintf("%%tmp%d", rand.Int())
+				p.output.WriteString("  ")
+				p.output.WriteString(varTmp)
+				p.output.WriteString(" = getelementptr inbounds ")
+				p.output.WriteString(typeRet)
+				p.output.WriteString(", ")
+				p.output.WriteString(typeRet)
+				p.output.WriteString("* ")
+				p.output.WriteString(varAlloca)
+				p.output.WriteString(", ")
+				p.output.WriteString(getTypeStr(types.Typ[types.Int], p.target))
+				p.output.WriteString(" 0, ")
+				p.output.WriteString(fmt.Sprintf("i32 %d\n", i))
+				// Emit "store ...".
+				p.output.WriteString("  store ")
+				p.output.WriteString(retTypes[i])
+				p.output.WriteString(" ")
+				p.output.WriteString(retVals[i])
+				p.output.WriteString(", ")
+				p.output.WriteString(retTypes[i])
+				p.output.WriteString("* ")
+				p.output.WriteString(varTmp)
+				p.output.WriteString("\n")
+			}
+			// Emit "load ...".
+			varRet := fmt.Sprintf("%%tmp%d", rand.Int())
+			p.output.WriteString("  ")
+			p.output.WriteString(varRet)
+			p.output.WriteString(" = load ")
+			p.output.WriteString(typeRet)
+			p.output.WriteString(", ")
+			p.output.WriteString(typeRet)
+			p.output.WriteString("* ")
+			p.output.WriteString(varAlloca)
+			p.output.WriteString("\n")
+			// Emit the final "ret ...".
+			p.output.WriteString("  ret ")
+			p.output.WriteString(typeRet)
+			p.output.WriteString(" ")
+			p.output.WriteString(varRet)
+			p.output.WriteString("\n")
 		}
 
 	case ssa.Value:
@@ -119,10 +210,17 @@ func (p *Compiler) compileInstr(instr ssa.Instruction) error {
 		p.output.WriteString(fmt.Sprintf("  br i1 %s, label %%__basic_block_%d, label %%__basic_block_%d\n", getValueStr(instr.Cond), instr.Block().Succs[0].Index, instr.Block().Succs[1].Index))
 
 	case *ssa.Store:
+		// Special process for float32 constants.
+		v := ""
+		if isConstFloat32(instr.Val) {
+			v = p.wrapConstFloat32(instr.Val)
+		} else {
+			v = getValueStr(instr.Val)
+		}
 		p.output.WriteString("  store ")
 		p.output.WriteString(getTypeStr(instr.Val.Type(), p.target))
 		p.output.WriteString(" ")
-		p.output.WriteString(getValueStr(instr.Val))
+		p.output.WriteString(v)
 		p.output.WriteString(", ")
 		p.output.WriteString(getTypeStr(instr.Addr.Type(), p.target))
 		p.output.WriteString(" ")
