@@ -3,42 +3,42 @@
 fn main() {
 	# print hi
 	const code = "++++++++++[>++++++++++<-]>++++.+."
-	vm := NewBrainFuckVM(code)
-	runVM(vm)
+	vm := NewBrainFuck(code)
+	vm.Run()
 }
 
-type BrainFuckVM struct {
+type BrainFuck struct {
 	mem  :[30000]byte
 	code :string
 	pos  :int
 	pc   :int
 }
 
-fn NewBrainFuckVM(code: string) => *BrainFuckVM {
-	return &BrainFuckVM{code: code}
+fn NewBrainFuck(code: string) => *BrainFuck {
+	return &BrainFuck{code: code}
 }
 
-fn runVM(p: *BrainFuckVM) {
-	for ; p.pc != len(p.code); p.pc++ {
-		switch x := p.code[p.pc]; x {
+fn BrainFuck.Run() {
+	for ; this.pc != len(this.code); this.pc++ {
+		switch x := this.code[this.pc]; x {
 		case '>':
-			p.pos++
+			this.pos++
 		case '<':
-			p.pos--
+			this.pos--
 		case '+':
-			p.mem[p.pos]++
+			this.mem[this.pos]++
 		case '-':
-			p.mem[p.pos]--
+			this.mem[this.pos]--
 		case '[':
-			if p.mem[p.pos] == 0 {
-				runVM_loop(p, 1)
+			if this.mem[this.pos] == 0 {
+				this.loop(1)
 			}
 		case ']':
-			if p.mem[p.pos] != 0 {
-				runVM_loop(p, -1)
+			if this.mem[this.pos] != 0 {
+				this.loop(-1)
 			}
 		case '.':
-			print(rune(p.mem[p.pos]))
+			print(rune(this.mem[this.pos]))
 		case ',':
 			# TODO: support read byte
 		}
@@ -46,9 +46,9 @@ fn runVM(p: *BrainFuckVM) {
 	return
 }
 
-fn runVM_loop(p: *BrainFuckVM, inc: int) {
-	for i := inc; i != 0; p.pc += inc {
-		switch p.code[p.pc+inc] {
+fn BrainFuck.loop(inc: int) {
+	for i := inc; i != 0; this.pc += inc {
+		switch this.code[this.pc+inc] {
 		case '[':
 			i++
 		case ']':
