@@ -2396,6 +2396,23 @@ func (p *parser) parseFuncDecl() *ast.FuncDecl {
 
 	ident := p.parseIdent()
 
+	// fn Type.method()
+	if recv == nil && p.tok == token.PERIOD {
+		thisIdent := &ast.Ident{Name: "this"}
+		thisField := &ast.Field{
+			Names: []*ast.Ident{thisIdent},
+			Type:  ident,
+		}
+		recv = &ast.FieldList{
+			List: []*ast.Field{thisField},
+		}
+
+		p.declare(thisField, nil, scope, ast.Var, thisIdent)
+
+		p.next()
+		ident = p.parseIdent()
+	}
+
 	params, results, arrowPos := p.parseSignature(scope)
 
 	var body *ast.BlockStmt
