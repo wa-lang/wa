@@ -1682,8 +1682,21 @@ func (p *printer) funcDecl(d *ast.FuncDecl) {
 	p.setComment(d.Doc)
 	p.print(d.Pos(), token.FN, blank)
 	if d.Recv != nil {
-		p.parameters(d.Recv) // method: print receiver
-		p.print(blank)
+		var thisTypeIdent *ast.Ident
+		if d.Recv.List[0].Names[0].Name == "this" {
+			if typ, ok := d.Recv.List[0].Type.(*ast.StarExpr); ok {
+				if ident, ok := typ.X.(*ast.Ident); ok {
+					thisTypeIdent = ident
+				}
+			}
+		}
+		if thisTypeIdent != nil {
+			p.print(thisTypeIdent.Name)
+			p.print(".")
+		} else {
+			p.parameters(d.Recv) // method: print receiver
+			p.print(blank)
+		}
 	}
 	p.expr(d.Name)
 	p.signature(d.Type.Params, d.Type.Results)
