@@ -20,6 +20,7 @@ type CommentInfo struct {
 	ForceRegister bool   // #wa:force_register
 	RuntimeGetter bool   // #wa:runtime_getter
 	RuntimeSetter bool   // #wa:runtime_setter
+	WasmModule    string // #wa:wasm-module xxx
 }
 
 // 获取节点关联文档
@@ -78,6 +79,11 @@ func ParseCommentInfo(docList ...*ast.CommentGroup) (info CommentInfo) {
 				info.RuntimeGetter = true
 			case "#wa:runtime_setter", "//wa:runtime_setter":
 				info.RuntimeSetter = true
+
+			case "#wa:wasm-module", "//wa:wasm-module":
+				if len(parts) >= 2 {
+					info.WasmModule = parts[1]
+				}
 			}
 		}
 	}
