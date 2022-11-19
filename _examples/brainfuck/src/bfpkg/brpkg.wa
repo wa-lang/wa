@@ -1,0 +1,50 @@
+
+type BrainFuck struct {
+	mem  :[30000]byte
+	code :string
+	pos  :int
+	pc   :int
+}
+
+fn NewBrainFuck(code: string) => *BrainFuck {
+	return &BrainFuck{code: code}
+}
+
+fn BrainFuck.Run() {
+	for ; this.pc != len(this.code); this.pc++ {
+		switch x := this.code[this.pc]; x {
+		case '>':
+			this.pos++
+		case '<':
+			this.pos--
+		case '+':
+			this.mem[this.pos]++
+		case '-':
+			this.mem[this.pos]--
+		case '[':
+			if this.mem[this.pos] == 0 {
+				this.loop(1)
+			}
+		case ']':
+			if this.mem[this.pos] != 0 {
+				this.loop(-1)
+			}
+		case '.':
+			print(rune(this.mem[this.pos]))
+		case ',':
+			# TODO: support read byte
+		}
+	}
+	return
+}
+
+fn BrainFuck.loop(inc: int) {
+	for i := inc; i != 0; this.pc += inc {
+		switch this.code[this.pc+inc] {
+		case '[':
+			i++
+		case ']':
+			i--
+		}
+	}
+}
