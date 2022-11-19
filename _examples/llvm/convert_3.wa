@@ -1,5 +1,5 @@
-// Test the llvm backend.
-// Test 'floating point' -> integer convertion.
+# Test the llvm backend.
+# Test 'floating point' -> integer convertion.
 
 fn main() {
   println(convert_f64_to_i32(100.001))

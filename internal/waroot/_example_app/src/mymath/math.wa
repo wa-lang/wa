@@ -1,6 +1,6 @@
-// 版权 @{{.Year}} {{.Name}} 作者。保留所有权利。
+# 版权 @{{.Year}} {{.Name}} 作者。保留所有权利。
 
-// 打印素数
+# 打印素数
 fn PrintPrime(max int) {
 	for n := 2; n <= max; n = n + 1 {
 		isPrime := 1

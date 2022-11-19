@@ -1,57 +1,57 @@
 # 版权 @2022 凹语言 作者。保留所有权利。
 
 const (
-    LOW  = 0
-    HIGH = 1
+	LOW  = 0
+	HIGH = 1
 
-    INPUT           =  0
-    OUTPUT          =  1
-    INPUT_PULLUP    =  2
+	INPUT        = 0
+	OUTPUT       = 1
+	INPUT_PULLUP = 2
 )
 
 #wa:wasm-module arduino
 #wa:linkname millis
-fn Millis() uint
+fn Millis() => uint
 
 #wa:wasm-module arduino
 #wa:linkname delay
-fn Delay(ms uint)
+fn Delay(ms: uint)
 
 #wa:wasm-module arduino
 #wa:linkname pinMode
-fn PinMode(pin, mode uint)
+fn PinMode(pin, mode: uint)
 
 #wa:wasm-module arduino
 #wa:linkname digitalWrite
-fn DigitalWrite(pin, value uint)
+fn DigitalWrite(pin, value: uint)
 
 #wa:wasm-module arduino
 #wa:linkname getPinLED
-fn GetPinLED() uint
+fn GetPinLED() => uint
 
 #wa:wasm-module arduino
 #wa:linkname print
-fn Print(s string)
+fn Print(s: string)
 
 #wa:wasm-module arduino
 #wa:linkname getGreeting
-fn _getGreeting(buf *byte, maxlen uint)
+fn _getGreeting(buf: *byte, maxlen: uint)
 
-fn Println(s string) {
-    Print(s)
-    Print("\n")
+fn Println(s: string) {
+	Print(s)
+	Print("\n")
 }
 
-fn GetGreeting() string {
-    var buf = make([]byte, 64)
-    _getGreeting(&buf[0], 64)
-    // Find '\0'
-    n := -1
-    for i, b := range buf {
-        if b == 0 {
-            break
-        }
-        n = i
-    }
-    return string(buf[:n+1])
+fn GetGreeting() => string {
+	var buf = make([]byte, 64)
+	_getGreeting(&buf[0], 64)
+	# Find '\0'
+	n := -1
+	for i, b := range buf {
+		if b == 0 {
+			break
+		}
+		n = i
+	}
+	return string(buf[:n+1])
 }

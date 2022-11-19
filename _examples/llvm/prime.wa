@@ -1,4 +1,4 @@
-// Test the llvm backend.
+# Test the llvm backend.
 
 fn main() {
   for n := 2; n <= 30; n = n + 1 {

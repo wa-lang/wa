@@ -1,5 +1,5 @@
-// Test the llvm backend.
-// Test loops.
+# Test the llvm backend.
+# Test loops.
 
 fn main() {
   test_loop(10)

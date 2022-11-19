@@ -1,5 +1,5 @@
-// Test the llvm backend.
-// Test global constants.
+# Test the llvm backend.
+# Test global constants.
 
 const gbegin = 10
 const gend = 20

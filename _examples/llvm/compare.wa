@@ -1,5 +1,5 @@
-// Test the llvm backend.
-// Test comparasions.
+# Test the llvm backend.
+# Test comparasions.
 
 fn main() {
   test_cmp0(20, 19)

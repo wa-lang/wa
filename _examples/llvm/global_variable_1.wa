@@ -1,5 +1,5 @@
-// Test the llvm backend.
-// Test read/write global variables.
+# Test the llvm backend.
+# Test read/write global variables.
 
 type ty0 struct {
   v0 int

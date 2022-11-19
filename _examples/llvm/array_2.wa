@@ -1,5 +1,5 @@
-// Test the llvm backend.
-// Test return array type values.
+# Test the llvm backend.
+# Test return array type values.
 
 const size = 32
 

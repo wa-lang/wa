@@ -1,5 +1,5 @@
-// Test the llvm backend.
-// Test passing array type parameters.
+# Test the llvm backend.
+# Test passing array type parameters.
 
 const size = 32
 

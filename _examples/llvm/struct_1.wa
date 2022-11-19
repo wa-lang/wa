@@ -1,5 +1,5 @@
-// Test the llvm backend.
-// Test read/write structs.
+# Test the llvm backend.
+# Test read/write structs.
 
 fn main() {
   test_struct1(10, 0, 0)

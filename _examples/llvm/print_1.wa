@@ -1,5 +1,5 @@
-// Test the llvm backend.
-// Test printing integers.
+# Test the llvm backend.
+# Test printing integers.
 
 fn main() {
   println(test_calc1(6, 9, 8), ", ", 5, ", ", test_calc5(6, 9, 8))

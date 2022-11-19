@@ -1,5 +1,5 @@
-// Test the llvm backend.
-// Test printing float64 values.
+# Test the llvm backend.
+# Test printing float64 values.
 
 fn main() {
   println(5.44, ", ", test_calc3(6, 9, 8))

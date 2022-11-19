@@ -1,5 +1,5 @@
-// Test the llvm backend.
-// Test read/write via a pointer.
+# Test the llvm backend.
+# Test read/write via a pointer.
 
 var gint0 int = 100
 var gint1 int = 200

@@ -1,5 +1,5 @@
-// Test the llvm backend.
-// Test printing small type values.
+# Test the llvm backend.
+# Test printing small type values.
 
 fn main() {
   test_print(-100, 100, -100, 100, 5)
