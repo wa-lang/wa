@@ -29,6 +29,13 @@ type Config struct {
 	WaSizes  StdSizes // 指针大小
 	Optimize bool     // 是否优化
 	Debug    bool     // 调试模式
+	LDFlags           // 链接参数
+}
+
+// 链接参数
+type LDFlags struct {
+	StackSize int // 栈大小
+	MaxMemory int // 最大内存
 }
 
 func (p *Config) Clone() *Config {

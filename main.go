@@ -224,6 +224,14 @@ func main() {
 					Name:  "target",
 					Usage: "set target",
 				},
+				&cli.IntFlag{
+					Name:  "ld-stack-size",
+					Usage: "set stack size",
+				},
+				&cli.IntFlag{
+					Name:  "ld-max-memory",
+					Usage: "set max memory size",
+				},
 			},
 			Action: func(c *cli.Context) error {
 				outfile := c.String("output")
