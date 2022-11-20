@@ -21,6 +21,7 @@ type Compiler struct {
 func New() *Compiler {
 	p := new(Compiler)
 	p.module = wir.NewModule()
+	p.module.AddGlobal("$wa.RT.closure_data", wir.NewRef(wir.VOID{}), false, nil)
 	wir.SetCurrentModule(p.module)
 	return p
 }
@@ -110,6 +111,34 @@ func (p *Compiler) CompilePkgFunc(ssaPkg *ssa.Package) {
 				p.module.AddFunc(newFunctionGenerator(p).genGetter(v))
 			} else if v.RuntimeSetter() {
 				p.module.AddFunc(newFunctionGenerator(p).genSetter(v))
+			} else if iname0, iname1 := v.ImportName(); len(iname0) > 0 && len(iname1) > 0 {
+				var fn_name string
+				if len(v.LinkName()) > 0 {
+					fn_name = v.LinkName()
+				} else {
+					fn_name = GetFnMangleName(v)
+				}
+
+				var sig wir.FnType
+				{
+					rets := v.Signature.Results()
+					switch rets.Len() {
+					case 0:
+						break
+					case 1:
+						sig.Results = append(sig.Results, wir.ToWType(rets.At(0).Type()))
+					default:
+						typ := wir.ToWType(rets).(wir.Tuple)
+						for _, f := range typ.Members {
+							sig.Results = append(sig.Results, f.Type())
+						}
+					}
+					for _, i := range v.Params {
+						sig.Params = append(sig.Params, wir.ToWType(i.Type()))
+					}
+
+				}
+				p.module.AddImportFunc(iname0, iname1, fn_name, sig)
 			}
 			continue
 		}

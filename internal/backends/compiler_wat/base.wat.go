@@ -46,10 +46,6 @@ const (
 // todo: PrintI32 => waPrintI32, 以 wa 开头
 
 const modBaseWat_wa = `
-(import "wa_js_env" "waPrintI32" (func $$waPrintI32 (param $x i32)))
-(import "wa_js_env" "waPrintRune" (func $$waPrintRune (param $ch i32)))
-(import "wa_js_env" "waPuts" (func $$waPuts (param $str i32) (param $len i32)))
-
 (memory $memory 1)
 
 (export "memory" (memory $memory))

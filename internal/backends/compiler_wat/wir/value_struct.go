@@ -112,7 +112,8 @@ func (t Struct) onFree() int {
 		f.Insts = append(f.Insts, wat.NewInstConst(wat.U32{}, strconv.Itoa(rf.fn)))
 		f.Insts = append(f.Insts, wat.NewInstCallIndirect("$onFree"))
 	}
-	return currentModule.addTableFunc(&f)
+	currentModule.AddFunc(&f)
+	return currentModule.addTableElem(f.Name)
 
 	/*	has_free := false
 		for _, member := range t.Members {

@@ -35,9 +35,8 @@ type Table struct {
 FuncType:
 **************************************/
 type FuncType struct {
-	Name    string
-	Params  []ValueType
-	Results []ValueType
+	Name string
+	FuncSig
 }
 
 /**************************************

@@ -6,14 +6,15 @@ import (
 )
 
 /**************************************
-FnSig:
+FnType:
 **************************************/
-type FnSig struct {
+type FnType struct {
+	Name    string
 	Params  []ValueType
 	Results []ValueType
 }
 
-func (s *FnSig) Equal(u *FnSig) bool {
+func (s *FnType) Equal(u *FnType) bool {
 	if len(s.Params) != len(u.Params) {
 		return false
 	}
@@ -36,33 +37,34 @@ func (s *FnSig) Equal(u *FnSig) bool {
 }
 
 /**************************************
-FnValue:
+Closure:
 **************************************/
-type FnValue struct {
+type Closure struct {
 	Struct
-	Sig FnSig
+	Sig FnType
 }
 
-func NewFnValue(sig FnSig) FnValue {
-	var v FnValue
+func NewClosure(sig FnType) Closure {
+	var v Closure
 	var fields []Field
 	fields = append(fields, NewField("fn_index", U32{}))
-	fields = append(fields, NewField("free_var", NewRef(VOID{})))
+	fields = append(fields, NewField("data", NewRef(VOID{})))
+	v.Struct = NewStruct("closure$", fields)
 	v.Sig = sig
 
 	return v
 }
 
-func (t FnValue) Name() string { return "fnptr$" }
+func (t Closure) Name() string { return "closure$" }
 
-func (t FnValue) Equal(u ValueType) bool {
-	if ut, ok := u.(FnValue); ok {
+func (t Closure) Equal(u ValueType) bool {
+	if ut, ok := u.(Closure); ok {
 		return t.Sig.Equal(&ut.Sig)
 	}
 	return false
 }
 
-func (t FnValue) emitLoadFromAddr(addr Value, offset int) []wat.Inst {
+func (t Closure) emitLoadFromAddr(addr Value, offset int) []wat.Inst {
 	if !addr.Type().(Pointer).Base.Equal(t) {
 		logger.Fatal("Type not match")
 		return nil
@@ -72,18 +74,18 @@ func (t FnValue) emitLoadFromAddr(addr Value, offset int) []wat.Inst {
 }
 
 /**************************************
-aFnValue:
+aClosure:
 **************************************/
-type aFnValue struct {
+type aClosure struct {
 	aStruct
-	typ FnValue
+	typ Closure
 }
 
-func newValueFnValue(name string, kind ValueKind, sig FnSig) *aFnValue {
-	var v aFnValue
-	v.typ = NewFnValue(sig)
+func newValueClosure(name string, kind ValueKind, sig FnType) *aClosure {
+	var v aClosure
+	v.typ = NewClosure(sig)
 	v.aStruct = *newValueStruct(name, kind, v.typ.Struct)
 	return &v
 }
 
-func (v *aFnValue) Type() ValueType { return v.typ }
+func (v *aClosure) Type() ValueType { return v.typ }

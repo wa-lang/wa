@@ -31,9 +31,6 @@ func newValue(name string, kind ValueKind, typ ValueType) Value {
 	case Pointer:
 		return newValuePointer(name, kind, typ.Base)
 
-	//case FnPtr:
-	//	return newValueFnPtr(name, kind, typ.Sig)
-
 	case Block:
 		return newValueBlock(name, kind, typ.Base)
 
@@ -54,6 +51,9 @@ func newValue(name string, kind ValueKind, typ ValueType) Value {
 
 	case String:
 		return newValueString(name, kind)
+
+	case Closure:
+		return newValueClosure(name, kind, typ.Sig)
 
 	default:
 		logger.Fatalf("Todo: %T", typ)

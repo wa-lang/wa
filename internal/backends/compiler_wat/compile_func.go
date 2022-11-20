@@ -136,6 +136,9 @@ func (g *functionGenerator) getValue(i ssa.Value) valueWrap {
 		nv := valueWrap{value: g.addRegister(wir.ToWType(i.Type()))}
 		g.locals_map[i] = nv
 		return nv
+
+	case *ssa.Function:
+		panic("Todo")
 	}
 
 	logger.Fatal("Value not found:", i)
@@ -147,7 +150,7 @@ func (g *functionGenerator) genFunction(f *ssa.Function) *wir.Function {
 	if len(f.LinkName()) > 0 {
 		wir_fn.Name = f.LinkName()
 	} else {
-		wir_fn.Name = wir.GetPkgMangleName(f.Pkg.Pkg.Path()) + f.Name()
+		wir_fn.Name = GetFnMangleName(f)
 	}
 
 	rets := f.Signature.Results()
@@ -344,6 +347,8 @@ func (g *functionGenerator) genValue(v ssa.Value) ([]wat.Inst, wir.ValueType) {
 	case *ssa.Convert:
 		return g.genConvert(v)
 
+	case *ssa.ChangeType:
+		return g.genChangeType(v)
 	}
 
 	logger.Fatalf("Todo: %v, type: %T", v, v)
@@ -431,7 +436,7 @@ func (g *functionGenerator) genCall(inst *ssa.Call) ([]wat.Inst, wir.ValueType) 
 		if len(callee.LinkName()) > 0 {
 			insts = append(insts, wat.NewInstCall(callee.LinkName()))
 		} else {
-			insts = append(insts, wat.NewInstCall(wir.GetPkgMangleName(callee.Pkg.Pkg.Path())+callee.Name()))
+			insts = append(insts, wat.NewInstCall(GetFnMangleName(callee)))
 		}
 		return insts, ret_type
 
@@ -704,6 +709,13 @@ func (g *functionGenerator) genConvert(inst *ssa.Convert) (insts []wat.Inst, ret
 	return
 }
 
+func (g *functionGenerator) genChangeType(inst *ssa.ChangeType) (insts []wat.Inst, ret_type wir.ValueType) {
+	ret_type = wir.ToWType(inst.Type())
+	x := g.getValue(inst.X)
+	insts = append(insts, x.value.EmitPush()...)
+	return
+}
+
 func (g *functionGenerator) addRegister(typ wir.ValueType) wir.Value {
 	defer func() { g.cur_local_id++ }()
 	name := "$T_" + strconv.Itoa(g.cur_local_id)
@@ -717,7 +729,7 @@ func (g *functionGenerator) genGetter(f *ssa.Function) *wir.Function {
 	if len(f.LinkName()) > 0 {
 		wir_fn.Name = f.LinkName()
 	} else {
-		wir_fn.Name = wir.GetPkgMangleName(f.Pkg.Pkg.Path()) + f.Name()
+		wir_fn.Name = GetFnMangleName(f)
 	}
 
 	rets := f.Signature.Results()
@@ -750,7 +762,7 @@ func (g *functionGenerator) genSetter(f *ssa.Function) *wir.Function {
 	if len(f.LinkName()) > 0 {
 		wir_fn.Name = f.LinkName()
 	} else {
-		wir_fn.Name = wir.GetPkgMangleName(f.Pkg.Pkg.Path()) + f.Name()
+		wir_fn.Name = GetFnMangleName(f)
 	}
 
 	rets := f.Signature.Results()

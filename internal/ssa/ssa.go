@@ -1405,6 +1405,22 @@ func (v *Function) ExportName() string {
 	return info.ExportName
 }
 
+func (v *Function) ImportName() (string, string) {
+	if v.commentInfo != nil {
+		return v.commentInfo.ImportName[0], v.commentInfo.ImportName[1]
+	}
+	if v.Object() == nil {
+		v.commentInfo = new(astutil.CommentInfo)
+		return v.commentInfo.ImportName[0], v.commentInfo.ImportName[1]
+	}
+
+	doc := v.Object().NodeDoc()
+	info := astutil.ParseCommentInfo(doc)
+
+	v.commentInfo = &info
+	return v.commentInfo.ImportName[0], v.commentInfo.ImportName[1]
+}
+
 // 返回强制寄存器，默认为false
 func (v *Function) ForceRegister() bool {
 	if v.commentInfo != nil {

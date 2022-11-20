@@ -44,7 +44,8 @@ func (t Block) onFree() int {
 	f.Insts = append(f.Insts, wat.NewInstConst(wat.U32{}, "0"))
 	f.Insts = append(f.Insts, wat.NewInstStore(wat.U32{}, 0, 1))
 
-	return currentModule.addTableFunc(&f)
+	currentModule.AddFunc(&f)
+	return currentModule.addTableElem(f.Name)
 }
 
 func (t Block) emitLoadFromAddr(addr Value, offset int) (insts []wat.Inst) {

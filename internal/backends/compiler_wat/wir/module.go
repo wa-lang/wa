@@ -11,6 +11,11 @@ import (
 Module:
 **************************************/
 type Module struct {
+	imports []wat.Import
+
+	fn_types     []*FnType
+	fn_types_map map[string]int
+
 	funcs     []*Function
 	funcs_map map[string]*Function
 
@@ -28,6 +33,14 @@ type Module struct {
 func NewModule() *Module {
 	var m Module
 
+	m.fn_types_map = make(map[string]int)
+	{
+		var free_type FnType
+		free_type.Name = "$onFree"
+		free_type.Params = []ValueType{I32{}}
+		m.addFnType(&free_type)
+	}
+
 	m.funcs_map = make(map[string]*Function)
 
 	//table中先行插入一条记录，防止产生0值（无效值）id
@@ -41,6 +54,35 @@ func NewModule() *Module {
 	return &m
 }
 
+func (m *Module) AddImportFunc(moduleName string, objName string, funcName string, sig FnType) {
+	var wat_sig wat.FuncSig
+	for _, i := range sig.Params {
+		wat_sig.Params = append(wat_sig.Params, i.Raw()...)
+	}
+	for _, r := range sig.Results {
+		wat_sig.Results = append(wat_sig.Results, r.Raw()...)
+	}
+
+	m.imports = append(m.imports, wat.NewImpFunc(moduleName, objName, funcName, wat_sig))
+}
+
+func (m *Module) findFnType(name string) int {
+	if i, ok := m.fn_types_map[name]; ok {
+		return i
+	}
+	return 0
+}
+
+func (m *Module) addFnType(typ *FnType) int {
+	if i := m.findFnType(typ.Name); i != 0 {
+		return i
+	}
+	i := len(m.fn_types)
+	m.fn_types = append(m.fn_types, typ)
+	m.fn_types_map[typ.Name] = i
+	return i
+}
+
 func (m *Module) findTableElem(elem string) int {
 	if i, ok := m.table_map[elem]; ok {
 		return i
@@ -48,15 +90,13 @@ func (m *Module) findTableElem(elem string) int {
 	return 0
 }
 
-func (m *Module) addTableFunc(f *Function) int {
-	if i := m.findTableElem(f.Name); i != 0 {
+func (m *Module) addTableElem(elem string) int {
+	if i := m.findTableElem(elem); i != 0 {
 		return i
 	}
-
-	m.AddFunc(f)
 	i := len(m.table)
-	m.table = append(m.table, f.Name)
-	m.table_map[f.Name] = i
+	m.table = append(m.table, elem)
+	m.table_map[elem] = i
 	return i
 }
 
@@ -77,8 +117,19 @@ func (m *Module) AddFunc(f *Function) {
 func (m *Module) AddGlobal(name string, typ ValueType, is_pointer bool, ssa_value ssa.Value) Value {
 	v := NewGlobal(name, typ, is_pointer)
 	m.globals = append(m.globals, v)
-	m.Globals_map[ssa_value] = v
+	if ssa_value != nil {
+		m.Globals_map[ssa_value] = v
+	}
 	return v
+}
+
+func (m *Module) FindGlobal(name string) Value {
+	for _, g := range m.globals {
+		if g.Name() == name {
+			return g
+		}
+	}
+	return nil
 }
 
 func (m *Module) AddDataSeg(data []byte) (ptr int) {
@@ -107,13 +158,19 @@ func (m *Module) genGlobalAlloc() *Function {
 
 func (m *Module) ToWatModule() *wat.Module {
 	var wat_module wat.Module
+	wat_module.Imports = m.imports
 	wat_module.BaseWat = m.BaseWat
 
-	{
-		var onFreeFnType wat.FuncType
-		onFreeFnType.Name = "$onFree"
-		onFreeFnType.Params = append(onFreeFnType.Params, wat.I32{})
-		wat_module.FuncTypes = append(wat_module.FuncTypes, onFreeFnType)
+	for _, t := range m.fn_types {
+		var fn_type wat.FuncType
+		fn_type.Name = t.Name
+		for _, i := range t.Params {
+			fn_type.Params = append(fn_type.Params, i.Raw()...)
+		}
+		for _, r := range t.Results {
+			fn_type.Results = append(fn_type.Results, r.Raw()...)
+		}
+		wat_module.FuncTypes = append(wat_module.FuncTypes, fn_type)
 	}
 
 	{

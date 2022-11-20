@@ -13,14 +13,15 @@ type CommentInfo struct {
 	BuildIgnore bool     // #wa:build ignore
 	BuildTags   []string // #wa:build s1 s2 ...
 
-	Inline        bool   // #wa:inline
-	Nobounds      bool   // #wa:nobounds
-	LinkName      string // #wa:linkname xxx
-	ExportName    string // #wa:export xxx
-	ForceRegister bool   // #wa:force_register
-	RuntimeGetter bool   // #wa:runtime_getter
-	RuntimeSetter bool   // #wa:runtime_setter
-	WasmModule    string // #wa:wasm-module xxx
+	Inline        bool      // #wa:inline
+	Nobounds      bool      // #wa:nobounds
+	LinkName      string    // #wa:linkname xxx
+	ExportName    string    // #wa:export xxx
+	ImportName    [2]string // #wa:import xxx yyy
+	ForceRegister bool      // #wa:force_register
+	RuntimeGetter bool      // #wa:runtime_getter
+	RuntimeSetter bool      // #wa:runtime_setter
+	WasmModule    string    // #wa:wasm-module xxx
 }
 
 // 获取节点关联文档
@@ -72,6 +73,11 @@ func ParseCommentInfo(docList ...*ast.CommentGroup) (info CommentInfo) {
 			case "#wa:export", "//wa:export":
 				if len(parts) >= 2 {
 					info.ExportName = parts[1]
+				}
+			case "#wa:import", "//wa:import":
+				if len(parts) >= 3 {
+					info.ImportName[0] = parts[1]
+					info.ImportName[1] = parts[2]
 				}
 			case "#wa:force_register", "//wa:force_register":
 				info.ForceRegister = true

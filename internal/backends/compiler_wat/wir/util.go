@@ -93,8 +93,17 @@ func ToWType(from types.Type) ValueType {
 			}
 			return NewStruct(GetPkgMangleName(t.Obj().Pkg().Path())+t.Obj().Name(), fs)
 
-		//case *types.Signature:
-		//	ut.
+		case *types.Signature:
+			var sig FnType
+			for i := 0; i < ut.Params().Len(); i++ {
+				typ := ToWType(ut.Params().At(i).Type())
+				sig.Params = append(sig.Params, typ)
+			}
+			for i := 0; i < ut.Results().Len(); i++ {
+				typ := ToWType(ut.Results().At(i).Type())
+				sig.Results = append(sig.Results, typ)
+			}
+			return NewClosure(sig)
 
 		default:
 			logger.Fatalf("Todo:%T", ut)

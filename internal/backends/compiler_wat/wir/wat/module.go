@@ -6,8 +6,8 @@ import "strconv"
 
 // 模块对象
 type Module struct {
-	Name string
-	//Imports []Import
+	Name    string
+	Imports []Import
 
 	Tables    Table
 	FuncTypes []FuncType
@@ -53,9 +53,9 @@ func (m *Module) String() string {
 
 	s := "(module $__walang__\n"
 
-	//for _, i := range m.Imports {
-	//	s += i.Format("  ") + "\n"
-	//}
+	for _, i := range m.Imports {
+		s += i.Format("  ") + "\n"
+	}
 
 	s += m.BaseWat
 
