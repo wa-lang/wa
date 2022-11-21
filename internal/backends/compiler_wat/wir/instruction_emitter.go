@@ -395,7 +395,7 @@ func EmitPrintString(v Value) (insts []wat.Inst) {
 
 	insts = append(insts, s.underlying.Extract("data").EmitPush()...)
 	insts = append(insts, s.underlying.Extract("len").EmitPush()...)
-	insts = append(insts, wat.NewInstCall("$waPuts"))
+	insts = append(insts, wat.NewInstCall("$runtime.waPuts"))
 	return
 }
 

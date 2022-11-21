@@ -57,13 +57,13 @@ const modBaseWat_wa = `
 	global.get $$heap_ptr
 
 	;; global.get $$heap_ptr
-	;; call $$waPrintI32
+	;; call $$runtime.waPrintI32
 	;; i32.const 32
-	;; call $$waPrintRune
+	;; call $$runtime.waPrintRune
 	;; local.get $size
-	;; call $$waPrintI32
+	;; call $$runtime.waPrintI32
 	;; i32.const 10
-	;; call $$waPrintRune
+	;; call $$runtime.waPrintRune
 
 	global.get $$heap_ptr
 	local.get $size
@@ -73,11 +73,11 @@ const modBaseWat_wa = `
 (func $$waHeapFree (param $ptr i32)
 	;;Todo
 	;; i32.const 126
-	;; call $$waPrintRune
+	;; call $$runtime.waPrintRune
 	;; local.get $ptr
-	;; call $$waPrintI32
+	;; call $$runtime.waPrintI32
 	;; i32.const 10
-	;; call $$waPrintRune
+	;; call $$runtime.waPrintRune
 )
 
 (func $$wa.RT.Block.Init (param $ptr i32) (param $item_count i32) (param $release_func i32) (param $item_size i32) (result i32) ;;result = ptr

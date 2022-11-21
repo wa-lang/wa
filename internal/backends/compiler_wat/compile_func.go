@@ -463,19 +463,19 @@ func (g *functionGenerator) genBuiltin(call *ssa.CallCommon) (insts []wat.Inst, 
 			switch arg.value.Type().(type) {
 			case wir.I32:
 				insts = append(insts, arg.value.EmitPush()...)
-				insts = append(insts, wat.NewInstCall("$waPrintI32"))
+				insts = append(insts, wat.NewInstCall("$runtime.waPrintI32"))
 
 			case wir.F32:
 				insts = append(insts, arg.value.EmitPush()...)
-				insts = append(insts, wat.NewInstCall("$waPrintF32"))
+				insts = append(insts, wat.NewInstCall("$runtime.waPrintF32"))
 
 			case wir.F64:
 				insts = append(insts, arg.value.EmitPush()...)
-				insts = append(insts, wat.NewInstCall("$waPrintF64"))
+				insts = append(insts, wat.NewInstCall("$runtime.waPrintF64"))
 
 			case wir.RUNE:
 				insts = append(insts, arg.value.EmitPush()...)
-				insts = append(insts, wat.NewInstCall("$waPrintRune"))
+				insts = append(insts, wat.NewInstCall("$runtime.waPrintRune"))
 
 			case wir.String:
 				insts = append(insts, wir.EmitPrintString(arg.value)...)
@@ -487,7 +487,7 @@ func (g *functionGenerator) genBuiltin(call *ssa.CallCommon) (insts []wat.Inst, 
 
 		if call.Value.Name() == "println" {
 			insts = append(insts, wir.NewConst(strconv.Itoa('\n'), wir.I32{}).EmitPush()...)
-			insts = append(insts, wat.NewInstCall("$waPrintRune"))
+			insts = append(insts, wat.NewInstCall("$runtime.waPrintRune"))
 		}
 		ret_type = wir.VOID{}
 
