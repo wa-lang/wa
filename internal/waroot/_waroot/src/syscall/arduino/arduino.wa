@@ -9,32 +9,32 @@ const (
 	INPUT_PULLUP = 2
 )
 
-#wa:wasm-module arduino
-#wa:linkname millis
+#wa:import arduino millis
+#wa:linkname $waMillis
 fn Millis() => uint
 
-#wa:wasm-module arduino
-#wa:linkname delay
+#wa:import arduino delay
+#wa:linkname $waDelay
 fn Delay(ms: uint)
 
-#wa:wasm-module arduino
-#wa:linkname pinMode
+#wa:import arduino pinMode
+#wa:linkname $waPinMode
 fn PinMode(pin, mode: uint)
 
-#wa:wasm-module arduino
-#wa:linkname digitalWrite
+#wa:import arduino digitalWrite
+#wa:linkname $waDigitalWrite
 fn DigitalWrite(pin, value: uint)
 
-#wa:wasm-module arduino
-#wa:linkname getPinLED
+#wa:import arduino getPinLED
+#wa:linkname $waGetPinLED
 fn GetPinLED() => uint
 
-#wa:wasm-module arduino
-#wa:linkname print
+#wa:import arduino print
+#wa:linkname $waPrint
 fn Print(s: string)
 
-#wa:wasm-module arduino
-#wa:linkname getGreeting
+#wa:import arduino getGreeting
+#wa:linkname $waGetGreeting
 fn _getGreeting(buf: *byte, maxlen: uint)
 
 fn Println(s: string) {
@@ -54,4 +54,19 @@ fn GetGreeting() => string {
 		n = i
 	}
 	return string(buf[:n+1])
+}
+
+#wa:linkname $waPrintI32
+fn waPrintI32(i: i32) {
+	# TODO
+}
+
+#wa:linkname $waPrintRune
+fn waPrintRune(ch: i32) {
+	# TODO
+}
+
+#wa:linkname $waPuts
+fn waPuts(ptr: i32, len: i32) {
+	# TODO
 }
