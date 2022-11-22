@@ -22,7 +22,6 @@ import (
 	"github.com/wa-lang/wa/internal/backends/compiler_c"
 	"github.com/wa-lang/wa/internal/backends/compiler_llvm"
 	"github.com/wa-lang/wa/internal/backends/compiler_wat"
-	"github.com/wa-lang/wa/internal/backends/target_spec"
 	"github.com/wa-lang/wa/internal/config"
 	"github.com/wa-lang/wa/internal/format"
 	"github.com/wa-lang/wa/internal/loader"
@@ -33,15 +32,6 @@ import (
 	"github.com/wa-lang/wa/internal/token"
 	"github.com/wa-lang/wa/internal/waroot"
 )
-
-// 命令行选项
-type Option struct {
-	Debug      bool
-	TargetArch string
-	TargetOS   string
-	Clang      string
-	Llc        string
-}
 
 // 命令行程序对象
 type App struct {
@@ -367,14 +357,14 @@ func (p *App) LLVM(infile string, outfile string, target string, debug bool) err
 	return nil
 }
 
-func (p *App) WASM(filename string, target target_spec.Machine) ([]byte, error) {
+func (p *App) WASM(filename string) ([]byte, error) {
 	cfg := config.DefaultConfig()
 	prog, err := loader.LoadProgram(cfg, filename)
 	if err != nil {
 		return nil, err
 	}
 
-	output, err := compiler_wat.New().Compile(prog, target)
+	output, err := compiler_wat.New().Compile(prog)
 	if err != nil {
 		return nil, err
 	}

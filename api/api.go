@@ -7,7 +7,6 @@ import (
 	"io/fs"
 
 	"github.com/wa-lang/wa/internal/backends/compiler_wat"
-	"github.com/wa-lang/wa/internal/backends/target_spec"
 	"github.com/wa-lang/wa/internal/config"
 	"github.com/wa-lang/wa/internal/format"
 	"github.com/wa-lang/wa/internal/loader"
@@ -42,28 +41,6 @@ type PkgVFS = config.PkgVFS
 // 指针和整数大小
 type StdSize = config.StdSizes
 
-// 目标机器
-type Machine = target_spec.Machine
-
-const (
-	Machine_default = Machine_Wasm32_wa // 默认输出的目标类型
-
-	Machine_Wasm32_wa   = target_spec.Machine_Wasm32_wa   // 凹语言定义的 WASM 规范
-	Machine_Wasm32_wasi = target_spec.Machine_Wasm32_wasi // WASI 定义的 WASM 规范
-)
-
-// 解析字符串类型
-func ParseMachine(s string) (target Machine, ok bool) {
-	switch t := Machine(s); t {
-	case Machine_Wasm32_wa:
-		return t, true
-	case Machine_Wasm32_wasi:
-		return t, true
-	default:
-		return "", false
-	}
-}
-
 // 加载 WaModFile 文件
 // 如果 vfs 为空则从本地文件系统读取
 func LoadManifest(vfs fs.FS, appPath string) (p *Manifest, err error) {
@@ -89,28 +66,26 @@ func LoadProgramVFS(vfs *config.PkgVFS, cfg *config.Config, pkgPath string) (*Pr
 }
 
 // 构建 wat 目标
-func BuildFile(filename string, src interface{}, target Machine) (wat []byte, err error) {
-	cfg := config.DefaultConfig()
+func BuildFile(cfg *config.Config, filename string, src interface{}) (wat []byte, err error) {
 	prog, err := LoadProgramFile(cfg, filename, src)
 	if err != nil || prog == nil {
 		logger.Tracef(&config.EnableTrace_api, "LoadProgramVFS failed, err = %v", err)
 		return nil, err
 	}
 
-	watOut, err := compiler_wat.New().Compile(prog, target)
+	watOut, err := compiler_wat.New().Compile(prog)
 	return []byte(watOut), err
 }
 
 // 构建 wat 目标
-func BuildVFS(vfs *config.PkgVFS, appPkg string, target Machine) (wat []byte, err error) {
-	cfg := config.DefaultConfig()
+func BuildVFS(cfg *config.Config, vfs *config.PkgVFS, appPkg string) (wat []byte, err error) {
 	prog, err := LoadProgramVFS(vfs, cfg, appPkg)
 	if err != nil || prog == nil {
 		logger.Tracef(&config.EnableTrace_api, "LoadProgramVFS failed, err = %v", err)
 		return nil, err
 	}
 
-	watOut, err := compiler_wat.New().Compile(prog, target)
+	watOut, err := compiler_wat.New().Compile(prog)
 	return []byte(watOut), err
 }
 
