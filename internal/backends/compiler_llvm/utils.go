@@ -303,6 +303,7 @@ func getNormalName(name string) string {
 	name = strings.ReplaceAll(name, ".", "__")
 	name = strings.ReplaceAll(name, "$", "__")
 	name = strings.ReplaceAll(name, "/", "__")
+	name = strings.ReplaceAll(name, "#", "__")
 	return name
 }
 
@@ -314,4 +315,25 @@ func getRealType(ty types.Type) types.Type {
 			return ty
 		}
 	}
+}
+
+func isTargetBuiltin(fn string, target string) bool {
+	avr := []string{"__avr_write_port__", "__avr_read_port__"}
+	other := []string{"printf"}
+	var ts []string
+
+	switch getArch(target) {
+	case "avr":
+		ts = avr
+	default:
+		ts = other
+	}
+
+	for _, v := range ts {
+		if v == fn {
+			return true
+		}
+	}
+
+	return false
 }

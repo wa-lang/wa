@@ -12,6 +12,10 @@ import (
 )
 
 func (p *Compiler) compileFunction(fn *ssa.Function) error {
+	if isTargetBuiltin(fn.LinkName(), p.target) || isTargetBuiltin(fn.Name(), p.target) {
+		return nil
+	}
+
 	// Translate return type.
 	var retTyStr string
 	rets := fn.Signature.Results()
@@ -47,10 +51,18 @@ func (p *Compiler) compileFunction(fn *ssa.Function) error {
 	}
 
 	// Emit a proper function name.
-	p.output.WriteString("define ")
+	if len(fn.Blocks) == 0 {
+		p.output.WriteString("declare ")
+	} else {
+		p.output.WriteString("define ")
+	}
 	p.output.WriteString(retTyStr)
 	p.output.WriteString(" @")
-	p.output.WriteString(getNormalName(fn.Pkg.Pkg.Path() + "." + fn.Name()))
+	if len(fn.LinkName()) > 0 {
+		p.output.WriteString(fn.LinkName())
+	} else {
+		p.output.WriteString(getNormalName(fn.Pkg.Pkg.Path() + "." + fn.Name()))
+	}
 	p.output.WriteString("(")
 
 	// Translate arguments.
@@ -70,7 +82,12 @@ func (p *Compiler) compileFunction(fn *ssa.Function) error {
 			p.output.WriteString(", ")
 		}
 	}
-	p.output.WriteString(") {\n")
+	if len(fn.Blocks) == 0 {
+		p.output.WriteString(")\n\n")
+		return nil
+	} else {
+		p.output.WriteString(") {\n")
+	}
 
 	// Translate Go SSA intermediate instructions.
 	for i, b := range fn.Blocks {

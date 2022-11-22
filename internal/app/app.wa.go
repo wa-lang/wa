@@ -331,11 +331,46 @@ func (p *App) LLVM(infile string, outfile string, target string, debug bool) err
 	if target != "" {
 		llc = append(llc, "-mtriple", target)
 	}
+	// Add target specific options.
+	switch target {
+	case "avr":
+		llc = append(llc, "-mcpu=atmega328")
+	default:
+	}
 	cmd0 := exec.Command(p.opt.Llc, llc...)
 	cmd0.Stderr = os.Stderr
 	if err := cmd0.Run(); err != nil {
 		fmt.Fprintf(os.Stderr, "**** failed to invoke LLVM ****\n")
 		return err
+	}
+
+	// TODO: This is a temporary solution for AVR-Arduino. We generate
+	// an Arduino project instead of an ELF.
+	if target == "avr" {
+		// Create a new directory for the output Arduino project.
+		ext, outdir := path.Ext(outfile), ""
+		if len(ext) > 0 {
+			pos := strings.Index(outfile, ext)
+			outdir = outfile[0:pos]
+		}
+		if err := os.RemoveAll(outdir); err != nil {
+			return err
+		}
+		if err := os.Mkdir(outdir, 0755); err != nil {
+			return err
+		}
+		// Move the assembly file to the project directory.
+		newAsmFile := strings.ReplaceAll(asmfile, ".s", ".S")
+		if err := os.Rename(asmfile, path.Join(outdir, newAsmFile)); err != nil {
+			return err
+		}
+		// Create the project main '.ino' file.
+		inoFile := path.Join(outdir, path.Base(outdir)+".ino")
+		inoStr := "void setup(void) {}\nextern \"C\" { extern void wa_main(void); }\nvoid loop(void) { wa_main(); }\n"
+		if err := os.WriteFile(inoFile, []byte(inoStr), 0644); err != nil {
+			return err
+		}
+		return nil
 	}
 
 	// Invoke command `clang xxx.s -o outfile --target=xxx`.
