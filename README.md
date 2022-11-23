@@ -45,7 +45,7 @@ Instead of requiring complex toolchains to set up, you can simply go install it 
 
 ## Example: Print Wa
 
-打印字符和调用函数(Print rune and call function)：
+Print rune and call function：
 
 ```wa
 # Copyrighe @2019-2022 The Wa author. All rights reserved.
