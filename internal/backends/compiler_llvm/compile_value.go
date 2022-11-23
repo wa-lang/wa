@@ -218,9 +218,15 @@ func (p *Compiler) compileUnOp(val *ssa.UnOp) error {
 		p.output.WriteString(" ")
 		p.output.WriteString(getValueStr(val.X))
 
+	case token.XOR:
+		p.output.WriteString("xor ")
+		p.output.WriteString(getTypeStr(val.X.Type(), p.target))
+		p.output.WriteString(" ")
+		p.output.WriteString(getValueStr(val.X))
+		p.output.WriteString(", -1")
+
 	default:
-		p.output.WriteString("  ; " + val.Name() + " = " + val.String())
-		// panic("unsupported Value '" + val.Name() + " = " + val.String() + "'")
+		panic("unsupported Value '" + val.Name() + " = " + val.String() + "'")
 	}
 
 	p.output.WriteString("\n")
@@ -240,6 +246,11 @@ func (p *Compiler) compileBinOp(val *ssa.BinOp) error {
 		token.GTR: "icmp sgt",
 		token.LEQ: "icmp sle",
 		token.GEQ: "icmp sge",
+		token.AND: "and",
+		token.OR:  "or",
+		token.XOR: "xor",
+		token.SHL: "shl",
+		token.SHR: "ashr",
 	}
 	uintOpMap := map[token.Token]string{
 		token.ADD: "add",
@@ -253,6 +264,11 @@ func (p *Compiler) compileBinOp(val *ssa.BinOp) error {
 		token.GTR: "icmp ugt",
 		token.LEQ: "icmp ule",
 		token.GEQ: "icmp uge",
+		token.AND: "and",
+		token.OR:  "or",
+		token.XOR: "xor",
+		token.SHL: "shl",
+		token.SHR: "lshr",
 	}
 	floatOpMap := map[token.Token]string{
 		token.ADD: "fadd",
@@ -278,8 +294,39 @@ func (p *Compiler) compileBinOp(val *ssa.BinOp) error {
 		opMap = uintOpMap
 	}
 
-	// Special process for float32 constants.
+	// Special process for shift operations.
 	xStr, yStr := "", ""
+	if val.Op == token.SHL || val.Op == token.SHR {
+		tyCOp := ""
+		switch {
+		case getTypeSize(val.X.Type(), p.target) < getTypeSize(val.Y.Type(), p.target):
+			tyCOp = "trunc"
+		case getTypeSize(val.X.Type(), p.target) > getTypeSize(val.Y.Type(), p.target):
+			_, yIsSigned := checkType(val.Y.Type())
+			if !isSigned || !yIsSigned {
+				tyCOp = "zext"
+			} else {
+				tyCOp = "sext"
+			}
+		default:
+		}
+		if tyCOp != "" {
+			yStr = fmt.Sprintf("%%tmp%d", rand.Int())
+			p.output.WriteString("  ")
+			p.output.WriteString(yStr)
+			p.output.WriteString(" = ")
+			p.output.WriteString(tyCOp)
+			p.output.WriteString(" ")
+			p.output.WriteString(getTypeStr(val.Y.Type(), p.target))
+			p.output.WriteString(" ")
+			p.output.WriteString(getValueStr(val.Y))
+			p.output.WriteString(" to ")
+			p.output.WriteString(getTypeStr(val.X.Type(), p.target))
+			p.output.WriteString("\n")
+		}
+	}
+
+	// Special process for float32 constants.
 	if isConstFloat32(val.X) {
 		xStr = p.wrapConstFloat32(val.X)
 	} else {
@@ -287,7 +334,7 @@ func (p *Compiler) compileBinOp(val *ssa.BinOp) error {
 	}
 	if isConstFloat32(val.Y) {
 		yStr = p.wrapConstFloat32(val.Y)
-	} else {
+	} else if yStr == "" {
 		yStr = getValueStr(val.Y)
 	}
 
@@ -307,9 +354,7 @@ func (p *Compiler) compileBinOp(val *ssa.BinOp) error {
 		return nil
 	}
 
-	p.output.WriteString("  ; " + val.Name() + " = " + val.String() + "\n")
-	return nil
-	// panic("unsupported Value '" + val.Name() + " = " + val.String() + "'")
+	panic("unsupported Value '" + val.Name() + " = " + val.String() + "'")
 }
 
 func (p *Compiler) compileCall(val *ssa.Call) error {

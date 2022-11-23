@@ -1,0 +1,33 @@
+# Test the llvm backend.
+# Test bitwise logic.
+
+var a i64 = 0x55555555
+var b i64 = 0x33333333
+var c i16 = 0x5555
+var d i16 = 0x3333
+var e u8 = 0x55
+var f u8 = 0x33
+
+fn main() {
+  println("not ", 0x55555555, " = ", bw_not(0x55555555))
+  println("not ", 0xaaaaaaaa, " = ", bw_not(0xaaaaaaaa))
+  println(a, " and ", b, " = ", bw_and(a, b), "(", 0x11111111, ")")
+  println(c, " or ", d, " = ", bw_or(c, d), "(", 0x7777, ")")
+  println(e, " xor ", f, " = ", bw_xor(e, f), "(", 0x66, ")")
+}
+
+fn bw_not(a u32) u32 {
+  return ^a
+}
+
+fn bw_and(a i64, b i64) i64 {
+  return a & b
+}
+
+fn bw_or(a i16, b i16) i16 {
+  return a | b
+}
+
+fn bw_xor(a u8, b u8) u8 {
+  return a ^ b
+}
