@@ -5,26 +5,26 @@ const size = 32
 
 type fff32 f32
 
-var arr1 [size]fff32
+var arr1: [size]fff32
 
-fn makearr0a(i int) [size]fff32 {
-  var r [size]fff32
-  for j := 0; j < size; j++ {
-    r[j] = fff32(i * j)
-  }
-  return r
+fn makearr0a(i: int) => [size]fff32 {
+	var r: [size]fff32
+	for j := 0; j < size; j++ {
+		r[j] = fff32(i * j)
+	}
+	return r
 }
 
-fn makearr0b(i int) *[size]fff32 {
-  for j := 0; j < size; j++ {
-    arr1[j] = 2000 - fff32(i * j)
-  }
-  return &arr1
+fn makearr0b(i: int) => *[size]fff32 {
+	for j := 0; j < size; j++ {
+		arr1[j] = 2000 - fff32(i*j)
+	}
+	return &arr1
 }
 
 fn main() {
-  r0, r1 := makearr0a(10), makearr0b(20)
-  for i := 6; i < 20; i += 2 {
-    println(r0[i], ", ", r1[i])
-  }
+	r0, r1 := makearr0a(10), makearr0b(20)
+	for i := 6; i < 20; i += 2 {
+		println(r0[i], ", ", r1[i])
+	}
 }

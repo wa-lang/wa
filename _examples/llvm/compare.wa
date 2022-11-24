@@ -2,34 +2,34 @@
 # Test comparasions.
 
 fn main() {
-  test_cmp0(20, 19)
-  test_cmp0(20, 20)
-  test_cmp1(-3, -3)
-  test_cmp1(-3, -4)
-  test_cmp2(10, 10)
-  test_cmp2(10, 10.0001)
+	test_cmp0(20, 19)
+	test_cmp0(20, 20)
+	test_cmp1(-3, -3)
+	test_cmp1(-3, -4)
+	test_cmp2(10, 10)
+	test_cmp2(10, 10.0001)
 }
 
-fn test_cmp0(a u16, b u16) {
-  if a > b {
-    println(a, " >  ", b)
-  } else {
-    println(a, " <= ", b)
-  }
+fn test_cmp0(a: u16, b: u16) {
+	if a > b {
+		println(a, " >  ", b)
+	} else {
+		println(a, " <= ", b)
+	}
 }
 
-fn test_cmp1(a i64, b i64) {
-  if a <= b {
-    println(a, " <= ", b)
-  } else {
-    println(a, " >  ", b)
-  }
+fn test_cmp1(a: i64, b: i64) {
+	if a <= b {
+		println(a, " <= ", b)
+	} else {
+		println(a, " >  ", b)
+	}
 }
 
-fn test_cmp2(a f64, b f64) {
-  if a != b {
-    println(a, " != ", b)
-  } else {
-    println(a, " == ", b)
-  }
+fn test_cmp2(a: f64, b: f64) {
+	if a != b {
+		println(a, " != ", b)
+	} else {
+		println(a, " == ", b)
+	}
 }

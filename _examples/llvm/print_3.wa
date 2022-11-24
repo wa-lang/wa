@@ -2,9 +2,9 @@
 # Test printing small type values.
 
 fn main() {
-  test_print(-100, 100, -100, 100, 5)
+	test_print(-100, 100, -100, 100, 5)
 }
 
-fn test_print(a i16, b u16, c i8, d u8, e f32) {
-  println(a, ", ", b, ", ", c, ", ", d, ", ", e/2)
+fn test_print(a: i16, b: u16, c: i8, d: u8, e: f32) {
+	println(a, ", ", b, ", ", c, ", ", d, ", ", e/2)
 }
