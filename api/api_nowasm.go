@@ -9,12 +9,13 @@ import (
 	"os"
 
 	"github.com/wa-lang/wa/internal/app/apputil"
+	"github.com/wa-lang/wa/internal/config"
 )
 
 // 执行凹代码
-func RunCode(filename, code string) (stdoutStderr []byte, err error) {
+func RunCode(cfg *config.Config, filename, code string) (stdoutStderr []byte, err error) {
 	// 编译为 wat 格式
-	wat, err := BuildFile(filename, code, Machine_Wasm32_wa)
+	wat, err := BuildFile(cfg, filename, code)
 
 	// wat 写到临时文件
 	outfile := "a.out.wat"

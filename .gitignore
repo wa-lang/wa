@@ -14,5 +14,6 @@ wat2wasm.exe
 *.ll
 *.s
 *.out*
+*.wasm
 
 _target

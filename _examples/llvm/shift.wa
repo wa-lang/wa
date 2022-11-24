@@ -1,0 +1,46 @@
+# Test the llvm backend.
+# Test logical/arithmetic shift operations.
+
+var ga i32 = -15
+var gb i32 = 15
+var gc i64 = -15
+var gd i64 = 15
+var ge u16 = 0xffcc
+
+fn main() {
+  println(ga, " << ", 2, " = ", test_shl_0(ga, 2))
+  println(gb, " << ", 2, " = ", test_shl_1(gb, 2))
+  println(ga, " << ", 2, " = ", test_shl_2(ga, 2))
+  println(gc, " >> ", 2, " = ", test_ashr_0(gc, 2))
+  println(gd, " >> ", 2, " = ", test_ashr_1(gd, 2))
+  println(ge, " >> ", 2, " = ", test_lshr_0(ge, 2), "(", 0x3ff3, ")")
+  println(ge, " >> ", 2, " = ", test_lshr_1(ge, 2), "(", 0x3ff3, ")")
+}
+
+fn test_shl_0(a i32, b i64) i32 {
+  return a << b
+}
+
+fn test_shl_1(a i32, b i16) i32 {
+  return a << b
+}
+
+fn test_shl_2(a i32, b u16) i32 {
+  return a << b
+}
+
+fn test_ashr_0(a i64, b i64) i64 {
+  return a >> b
+}
+
+fn test_ashr_1(a i64, b u32) i64 {
+  return a >> b
+}
+
+fn test_lshr_0(a u16, b i32) u16 {
+  return a >> b
+}
+
+fn test_lshr_1(a u16, b u8) u16 {
+  return a >> b
+}

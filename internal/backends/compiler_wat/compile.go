@@ -3,11 +3,8 @@
 package compiler_wat
 
 import (
-	"fmt"
-
 	"github.com/wa-lang/wa/internal/backends/compiler_wat/wir"
 	"github.com/wa-lang/wa/internal/backends/compiler_wat/wir/wat"
-	"github.com/wa-lang/wa/internal/backends/target_spec"
 	"github.com/wa-lang/wa/internal/loader"
 	"github.com/wa-lang/wa/internal/ssa"
 )
@@ -26,15 +23,8 @@ func New() *Compiler {
 	return p
 }
 
-func (p *Compiler) Compile(prog *loader.Program, target target_spec.Machine) (output string, err error) {
-	switch target {
-	case target_spec.Machine_Wasm32_wa, "":
-		p.module.BaseWat = modBaseWat_wa
-	case target_spec.Machine_Wasm32_wasi:
-		p.module.BaseWat = modBaseWat_wasi
-	default:
-		return "", fmt.Errorf("compiler_wat.Compiler: unsupport target: %v", target)
-	}
+func (p *Compiler) Compile(prog *loader.Program) (output string, err error) {
+	p.module.BaseWat = modBaseWat_wa
 
 	for _, pkg := range prog.Pkgs {
 		p.ssaPkg = pkg.SSAPkg

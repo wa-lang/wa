@@ -22,7 +22,6 @@ import (
 	"github.com/wa-lang/wa/internal/backends/compiler_c"
 	"github.com/wa-lang/wa/internal/backends/compiler_llvm"
 	"github.com/wa-lang/wa/internal/backends/compiler_wat"
-	"github.com/wa-lang/wa/internal/backends/target_spec"
 	"github.com/wa-lang/wa/internal/config"
 	"github.com/wa-lang/wa/internal/format"
 	"github.com/wa-lang/wa/internal/loader"
@@ -33,15 +32,6 @@ import (
 	"github.com/wa-lang/wa/internal/token"
 	"github.com/wa-lang/wa/internal/waroot"
 )
-
-// 命令行选项
-type Option struct {
-	Debug      bool
-	TargetArch string
-	TargetOS   string
-	Clang      string
-	Llc        string
-}
 
 // 命令行程序对象
 type App struct {
@@ -341,11 +331,46 @@ func (p *App) LLVM(infile string, outfile string, target string, debug bool) err
 	if target != "" {
 		llc = append(llc, "-mtriple", target)
 	}
+	// Add target specific options.
+	switch target {
+	case "avr":
+		llc = append(llc, "-mcpu=atmega328")
+	default:
+	}
 	cmd0 := exec.Command(p.opt.Llc, llc...)
 	cmd0.Stderr = os.Stderr
 	if err := cmd0.Run(); err != nil {
 		fmt.Fprintf(os.Stderr, "**** failed to invoke LLVM ****\n")
 		return err
+	}
+
+	// TODO: This is a temporary solution for AVR-Arduino. We generate
+	// an Arduino project instead of an ELF.
+	if target == "avr" {
+		// Create a new directory for the output Arduino project.
+		ext, outdir := path.Ext(outfile), ""
+		if len(ext) > 0 {
+			pos := strings.Index(outfile, ext)
+			outdir = outfile[0:pos]
+		}
+		if err := os.RemoveAll(outdir); err != nil {
+			return err
+		}
+		if err := os.Mkdir(outdir, 0755); err != nil {
+			return err
+		}
+		// Move the assembly file to the project directory.
+		newAsmFile := strings.ReplaceAll(asmfile, ".s", ".S")
+		if err := os.Rename(asmfile, path.Join(outdir, newAsmFile)); err != nil {
+			return err
+		}
+		// Create the project main '.ino' file.
+		inoFile := path.Join(outdir, path.Base(outdir)+".ino")
+		inoStr := "void setup(void) {}\nextern \"C\" { extern void wa_main(void); }\nvoid loop(void) { wa_main(); }\n"
+		if err := os.WriteFile(inoFile, []byte(inoStr), 0644); err != nil {
+			return err
+		}
+		return nil
 	}
 
 	// Invoke command `clang xxx.s -o outfile --target=xxx`.
@@ -367,14 +392,14 @@ func (p *App) LLVM(infile string, outfile string, target string, debug bool) err
 	return nil
 }
 
-func (p *App) WASM(filename string, target target_spec.Machine) ([]byte, error) {
+func (p *App) WASM(filename string) ([]byte, error) {
 	cfg := config.DefaultConfig()
 	prog, err := loader.LoadProgram(cfg, filename)
 	if err != nil {
 		return nil, err
 	}
 
-	output, err := compiler_wat.New().Compile(prog, target)
+	output, err := compiler_wat.New().Compile(prog)
 	if err != nil {
 		return nil, err
 	}

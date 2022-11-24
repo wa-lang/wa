@@ -56,7 +56,7 @@ func (p *Compiler) Compile(prog *loader.Program) (output string, err error) {
 	}
 
 	// Emit some auxiliary functions.
-	p.output.WriteString("define void @main() {\n")
+	p.output.WriteString("define void @wa_main() {\n")
 	p.output.WriteString("  call void @")
 	p.output.WriteString(getNormalName(prog.SSAMainPkg.Pkg.Path() + ".init()\n"))
 	p.output.WriteString("  call void @")
@@ -67,8 +67,22 @@ func (p *Compiler) Compile(prog *loader.Program) (output string, err error) {
 	// Emit some target specific functions.
 	switch getArch(p.target) {
 	case "", "x86_64", "aarch64":
+		p.output.WriteString("define void @main() {\n")
+		p.output.WriteString("  call void @wa_main()\n")
+		p.output.WriteString("  ret void\n")
+		p.output.WriteString("}\n\n")
 		p.output.WriteString("declare i32 @printf(i8* readonly, ...)\n")
 	case "avr":
+		p.output.WriteString("define void @__avr_write_port__(i16 %0, i8 zeroext %1) {\n")
+		p.output.WriteString("  %3 = inttoptr i16 %0 to i8*\n")
+		p.output.WriteString("  store volatile i8 %1, i8* %3, align 1\n")
+		p.output.WriteString("  ret void\n")
+		p.output.WriteString("}\n\n")
+		p.output.WriteString("define zeroext i8 @__avr_read_port__(i16 %0) {\n")
+		p.output.WriteString("  %2 = inttoptr i16 %0 to i8*\n")
+		p.output.WriteString("  %3 = load volatile i8, i8* %2, align 1\n")
+		p.output.WriteString("  ret i8 %3\n")
+		p.output.WriteString("}\n\n")
 	default:
 	}
 
