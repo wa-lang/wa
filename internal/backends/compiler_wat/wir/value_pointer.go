@@ -24,7 +24,7 @@ func (t Pointer) Equal(u ValueType) bool {
 	}
 	return false
 }
-func (t Pointer) emitLoadFromAddr(addr Value, offset int) []wat.Inst {
+func (t Pointer) EmitLoadFromAddr(addr Value, offset int) []wat.Inst {
 	if !addr.Type().(Pointer).Base.Equal(t) {
 		logger.Fatal("Type not match")
 		return nil
@@ -50,7 +50,7 @@ func newValuePointer(name string, kind ValueKind, base_type ValueType) *aPointer
 
 func (v *aPointer) emitGetValue() []wat.Inst {
 	t := v.Type().(Pointer).Base
-	return t.emitLoadFromAddr(v, 0)
+	return t.EmitLoadFromAddr(v, 0)
 }
 
 func (v *aPointer) emitSetValue(d Value) []wat.Inst {

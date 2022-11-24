@@ -54,7 +54,7 @@ func NewModule() *Module {
 	return &m
 }
 
-func (m *Module) AddImportFunc(moduleName string, objName string, funcName string, sig FnType) {
+func (m *Module) AddImportFunc(moduleName string, objName string, funcName string, sig FnSig) {
 	var wat_sig wat.FuncSig
 	for _, i := range sig.Params {
 		wat_sig.Params = append(wat_sig.Params, i.Raw()...)
@@ -90,7 +90,7 @@ func (m *Module) findTableElem(elem string) int {
 	return 0
 }
 
-func (m *Module) addTableElem(elem string) int {
+func (m *Module) AddTableElem(elem string) int {
 	if i := m.findTableElem(elem); i != 0 {
 		return i
 	}

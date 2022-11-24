@@ -68,45 +68,46 @@ func (t Ref) emitStackAlloc() (insts []wat.Inst) {
 	return
 }
 
-func (t Ref) emitLoadFromAddr(addr Value, offset int) []wat.Inst {
-	return t.Struct.emitLoadFromAddr(addr, offset)
+func (t Ref) EmitLoadFromAddr(addr Value, offset int) []wat.Inst {
+	return t.Struct.EmitLoadFromAddr(addr, offset)
 }
 
 /**************************************
 aRef:
 **************************************/
 type aRef struct {
-	aValue
-	underlying aStruct
+	aStruct
+	typ Ref
 }
 
 func newValueRef(name string, kind ValueKind, base_type ValueType) *aRef {
 	var v aRef
-	ref_type := NewRef(base_type)
-	v.aValue = aValue{name: name, kind: kind, typ: ref_type}
-	v.underlying = *newValueStruct(name, kind, ref_type.Struct)
+	v.typ = NewRef(base_type)
+	v.aStruct = *newValueStruct(name, kind, v.typ.Struct)
 	return &v
 }
 
-func (v *aRef) raw() []wat.Value        { return v.underlying.raw() }
-func (v *aRef) EmitInit() []wat.Inst    { return v.underlying.EmitInit() }
-func (v *aRef) EmitPush() []wat.Inst    { return v.underlying.EmitPush() }
-func (v *aRef) EmitPop() []wat.Inst     { return v.underlying.EmitPop() }
-func (v *aRef) EmitRelease() []wat.Inst { return v.underlying.EmitRelease() }
+func (v *aRef) Type() ValueType { return v.typ }
+
+func (v *aRef) raw() []wat.Value        { return v.aStruct.raw() }
+func (v *aRef) EmitInit() []wat.Inst    { return v.aStruct.EmitInit() }
+func (v *aRef) EmitPush() []wat.Inst    { return v.aStruct.EmitPush() }
+func (v *aRef) EmitPop() []wat.Inst     { return v.aStruct.EmitPop() }
+func (v *aRef) EmitRelease() []wat.Inst { return v.aStruct.EmitRelease() }
 
 func (v *aRef) emitStoreToAddr(addr Value, offset int) []wat.Inst {
-	return v.underlying.emitStoreToAddr(addr, offset)
+	return v.aStruct.emitStoreToAddr(addr, offset)
 }
 
 func (v *aRef) emitGetValue() []wat.Inst {
 	t := v.Type().(Ref).Base
-	return t.emitLoadFromAddr(v.underlying.Extract("data"), 0)
+	return t.EmitLoadFromAddr(v.aStruct.Extract("data"), 0)
 }
 
 func (v *aRef) emitSetValue(d Value) []wat.Inst {
-	if !d.Type().Equal(v.Type().(Ref).Base) {
+	if !d.Type().Equal(v.typ.Base) && !v.typ.Base.Equal(VOID{}) {
 		logger.Fatal("Type not match")
 		return nil
 	}
-	return d.emitStoreToAddr(v.underlying.Extract("data"), 0)
+	return d.emitStoreToAddr(v.aStruct.Extract("data"), 0)
 }

@@ -31,8 +31,8 @@ func (t String) onFree() int            { return t.Struct.onFree() }
 func (t String) Raw() []wat.ValueType   { return t.Struct.Raw() }
 func (t String) Equal(u ValueType) bool { _, ok := u.(String); return ok }
 
-func (t String) emitLoadFromAddr(addr Value, offset int) []wat.Inst {
-	return t.Struct.emitLoadFromAddr(addr, offset)
+func (t String) EmitLoadFromAddr(addr Value, offset int) []wat.Inst {
+	return t.Struct.EmitLoadFromAddr(addr, offset)
 }
 
 func (t String) genAppendStrFunc() string {
@@ -99,7 +99,7 @@ func (t String) genAppendStrFunc() string {
 				loop.Insts = append(loop.Insts, wat.NewInstIf([]wat.Inst{wat.NewInstBr("block2")}, nil, nil))
 
 				//*dest = *src
-				loop.Insts = append(loop.Insts, U8{}.emitLoadFromAddr(src, 0)...)
+				loop.Insts = append(loop.Insts, U8{}.EmitLoadFromAddr(src, 0)...)
 				loop.Insts = append(loop.Insts, item.EmitPop()...)
 				loop.Insts = append(loop.Insts, item.emitStoreToAddr(dest, 0)...)
 
@@ -137,7 +137,7 @@ func (t String) genAppendStrFunc() string {
 				loop.Insts = append(loop.Insts, wat.NewInstIf([]wat.Inst{wat.NewInstBr("block3")}, nil, nil))
 
 				//*dest = *src
-				loop.Insts = append(loop.Insts, U8{}.emitLoadFromAddr(src, 0)...)
+				loop.Insts = append(loop.Insts, U8{}.EmitLoadFromAddr(src, 0)...)
 				loop.Insts = append(loop.Insts, item.EmitPop()...)
 				loop.Insts = append(loop.Insts, item.emitStoreToAddr(dest, 0)...)
 

@@ -54,5 +54,5 @@ type ValueType interface {
 	onFree() int
 	Raw() []wat.ValueType
 	Equal(ValueType) bool
-	emitLoadFromAddr(addr Value, offset int) []wat.Inst
+	EmitLoadFromAddr(addr Value, offset int) []wat.Inst
 }

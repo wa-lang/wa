@@ -94,15 +94,7 @@ func ToWType(from types.Type) ValueType {
 			return NewStruct(GetPkgMangleName(t.Obj().Pkg().Path())+t.Obj().Name(), fs)
 
 		case *types.Signature:
-			var sig FnType
-			for i := 0; i < ut.Params().Len(); i++ {
-				typ := ToWType(ut.Params().At(i).Type())
-				sig.Params = append(sig.Params, typ)
-			}
-			for i := 0; i < ut.Results().Len(); i++ {
-				typ := ToWType(ut.Results().At(i).Type())
-				sig.Results = append(sig.Results, typ)
-			}
+			sig := NewFnSigFromSignature(ut)
 			return NewClosure(sig)
 
 		default:
@@ -114,6 +106,10 @@ func ToWType(from types.Type) ValueType {
 
 	case *types.Slice:
 		return NewSlice(ToWType(t.Elem()))
+
+	case *types.Signature:
+		sig := NewFnSigFromSignature(t)
+		return NewClosure(sig)
 
 	default:
 		logger.Fatalf("Todo:%T", t)
@@ -138,6 +134,12 @@ func GetPkgMangleName(pkg_path string) string {
 func ExtractField(x Value, field_name string) Value {
 	switch x := x.(type) {
 	case *aStruct:
+		return x.Extract(field_name)
+
+	case *aRef:
+		return x.Extract(field_name)
+
+	case *aClosure:
 		return x.Extract(field_name)
 
 	default:

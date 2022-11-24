@@ -38,8 +38,8 @@ func (t Tuple) Equal(u ValueType) bool {
 	return t.Struct.Equal(ut.Struct)
 }
 
-func (t Tuple) emitLoadFromAddr(addr Value, offset int) []wat.Inst {
-	return t.Struct.emitLoadFromAddr(addr, offset)
+func (t Tuple) EmitLoadFromAddr(addr Value, offset int) []wat.Inst {
+	return t.Struct.EmitLoadFromAddr(addr, offset)
 }
 
 /**************************************

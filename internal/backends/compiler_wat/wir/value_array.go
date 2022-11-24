@@ -44,8 +44,8 @@ func (t Array) Equal(u ValueType) bool {
 	return false
 }
 
-func (t Array) emitLoadFromAddr(addr Value, offset int) (insts []wat.Inst) {
-	return t.Struct.emitLoadFromAddr(addr, offset)
+func (t Array) EmitLoadFromAddr(addr Value, offset int) (insts []wat.Inst) {
+	return t.Struct.EmitLoadFromAddr(addr, offset)
 }
 
 /**************************************

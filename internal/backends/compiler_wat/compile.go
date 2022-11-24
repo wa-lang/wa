@@ -108,9 +108,9 @@ func (p *Compiler) CompilePkgFunc(ssaPkg *ssa.Package) {
 	for _, v := range fns {
 		if len(v.Blocks) < 1 {
 			if v.RuntimeGetter() {
-				p.module.AddFunc(newFunctionGenerator(p).genGetter(v))
+				p.module.AddFunc(newFunctionGenerator(p.module).genGetter(v))
 			} else if v.RuntimeSetter() {
-				p.module.AddFunc(newFunctionGenerator(p).genSetter(v))
+				p.module.AddFunc(newFunctionGenerator(p.module).genSetter(v))
 			} else if iname0, iname1 := v.ImportName(); len(iname0) > 0 && len(iname1) > 0 {
 				var fn_name string
 				if len(v.LinkName()) > 0 {
@@ -119,29 +119,11 @@ func (p *Compiler) CompilePkgFunc(ssaPkg *ssa.Package) {
 					fn_name = GetFnMangleName(v)
 				}
 
-				var sig wir.FnType
-				{
-					rets := v.Signature.Results()
-					switch rets.Len() {
-					case 0:
-						break
-					case 1:
-						sig.Results = append(sig.Results, wir.ToWType(rets.At(0).Type()))
-					default:
-						typ := wir.ToWType(rets).(wir.Tuple)
-						for _, f := range typ.Members {
-							sig.Results = append(sig.Results, f.Type())
-						}
-					}
-					for _, i := range v.Params {
-						sig.Params = append(sig.Params, wir.ToWType(i.Type()))
-					}
-
-				}
+				sig := wir.NewFnSigFromSignature(v.Signature)
 				p.module.AddImportFunc(iname0, iname1, fn_name, sig)
 			}
 			continue
 		}
-		p.module.AddFunc(newFunctionGenerator(p).genFunction(v))
+		p.module.AddFunc(newFunctionGenerator(p.module).genFunction(v))
 	}
 }

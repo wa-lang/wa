@@ -39,14 +39,14 @@ func (t Slice) Equal(u ValueType) bool {
 	return false
 }
 
-func (t Slice) emitLoadFromAddr(addr Value, offset int) []wat.Inst {
-	return t.Struct.emitLoadFromAddr(addr, offset)
+func (t Slice) EmitLoadFromAddr(addr Value, offset int) []wat.Inst {
+	return t.Struct.EmitLoadFromAddr(addr, offset)
 }
 
 /*这个函数极其不优雅*/
 func (t Slice) emitGenFromRefOfSlice(x *aRef, low, high Value) (insts []wat.Inst) {
 	//block
-	insts = append(insts, x.underlying.Extract("data").EmitPush()...)
+	insts = append(insts, x.Extract("data").EmitPush()...)
 	insts = append(insts, wat.NewInstLoad(wat.U32{}, 0, 1))
 	insts = append(insts, wat.NewInstCall("$wa.RT.Block.Retain"))
 
@@ -54,7 +54,7 @@ func (t Slice) emitGenFromRefOfSlice(x *aRef, low, high Value) (insts []wat.Inst
 	if low == nil {
 		low = NewConst("0", U32{})
 	}
-	insts = append(insts, x.underlying.Extract("data").EmitPush()...)
+	insts = append(insts, x.Extract("data").EmitPush()...)
 	insts = append(insts, wat.NewInstLoad(wat.U32{}, 4, 1))
 	insts = append(insts, NewConst(strconv.Itoa(x.Type().(Ref).Base.(Array).Base.size()), U32{}).EmitPush()...)
 	insts = append(insts, low.EmitPush()...)
@@ -63,7 +63,7 @@ func (t Slice) emitGenFromRefOfSlice(x *aRef, low, high Value) (insts []wat.Inst
 
 	//len:
 	if high == nil {
-		insts = append(insts, x.underlying.Extract("data").EmitPush()...)
+		insts = append(insts, x.Extract("data").EmitPush()...)
 		insts = append(insts, wat.NewInstLoad(wat.U32{}, 12, 1))
 	} else {
 		insts = append(insts, high.EmitPush()...)
@@ -72,7 +72,7 @@ func (t Slice) emitGenFromRefOfSlice(x *aRef, low, high Value) (insts []wat.Inst
 	insts = append(insts, wat.NewInstSub(wat.U32{}))
 
 	//cap:
-	insts = append(insts, x.underlying.Extract("data").EmitPush()...)
+	insts = append(insts, x.Extract("data").EmitPush()...)
 	insts = append(insts, wat.NewInstLoad(wat.U32{}, 12, 1))
 	insts = append(insts, low.EmitPush()...)
 	insts = append(insts, wat.NewInstSub(wat.U32{}))
@@ -82,13 +82,13 @@ func (t Slice) emitGenFromRefOfSlice(x *aRef, low, high Value) (insts []wat.Inst
 
 func (t Slice) emitGenFromRefOfArray(x *aRef, low, high Value) (insts []wat.Inst) {
 	//block
-	insts = append(insts, x.underlying.Extract("block").EmitPush()...)
+	insts = append(insts, x.Extract("block").EmitPush()...)
 
 	//data
 	if low == nil {
 		low = NewConst("0", U32{})
 	}
-	insts = append(insts, x.underlying.Extract("data").EmitPush()...)
+	insts = append(insts, x.Extract("data").EmitPush()...)
 	insts = append(insts, NewConst(strconv.Itoa(x.Type().(Ref).Base.(Array).Base.size()), U32{}).EmitPush()...)
 	insts = append(insts, low.EmitPush()...)
 	insts = append(insts, wat.NewInstMul(wat.U32{}))
@@ -186,7 +186,7 @@ func (t Slice) genAppendFunc() string {
 			loop.Insts = append(loop.Insts, wat.NewInstIf([]wat.Inst{wat.NewInstBr("block1")}, nil, nil))
 
 			//*dest = *src
-			loop.Insts = append(loop.Insts, t.Base.emitLoadFromAddr(src, 0)...)
+			loop.Insts = append(loop.Insts, t.Base.EmitLoadFromAddr(src, 0)...)
 			loop.Insts = append(loop.Insts, item.EmitPop()...)
 			loop.Insts = append(loop.Insts, item.emitStoreToAddr(dest, 0)...)
 
@@ -246,7 +246,7 @@ func (t Slice) genAppendFunc() string {
 				loop.Insts = append(loop.Insts, wat.NewInstIf([]wat.Inst{wat.NewInstBr("block2")}, nil, nil))
 
 				//*dest = *src
-				loop.Insts = append(loop.Insts, t.Base.emitLoadFromAddr(src, 0)...)
+				loop.Insts = append(loop.Insts, t.Base.EmitLoadFromAddr(src, 0)...)
 				loop.Insts = append(loop.Insts, item.EmitPop()...)
 				loop.Insts = append(loop.Insts, item.emitStoreToAddr(dest, 0)...)
 
@@ -284,7 +284,7 @@ func (t Slice) genAppendFunc() string {
 				loop.Insts = append(loop.Insts, wat.NewInstIf([]wat.Inst{wat.NewInstBr("block3")}, nil, nil))
 
 				//*dest = *src
-				loop.Insts = append(loop.Insts, t.Base.emitLoadFromAddr(src, 0)...)
+				loop.Insts = append(loop.Insts, t.Base.EmitLoadFromAddr(src, 0)...)
 				loop.Insts = append(loop.Insts, item.EmitPop()...)
 				loop.Insts = append(loop.Insts, item.emitStoreToAddr(dest, 0)...)
 

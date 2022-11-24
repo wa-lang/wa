@@ -45,10 +45,10 @@ func (t Block) onFree() int {
 	f.Insts = append(f.Insts, wat.NewInstStore(wat.U32{}, 0, 1))
 
 	currentModule.AddFunc(&f)
-	return currentModule.addTableElem(f.Name)
+	return currentModule.AddTableElem(f.Name)
 }
 
-func (t Block) emitLoadFromAddr(addr Value, offset int) (insts []wat.Inst) {
+func (t Block) EmitLoadFromAddr(addr Value, offset int) (insts []wat.Inst) {
 	insts = append(insts, addr.EmitPush()...)
 	insts = append(insts, wat.NewInstLoad(wat.U32{}, offset, 1))
 	insts = append(insts, wat.NewInstCall("$wa.RT.Block.Retain"))

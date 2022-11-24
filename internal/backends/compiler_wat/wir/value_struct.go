@@ -113,7 +113,7 @@ func (t Struct) onFree() int {
 		f.Insts = append(f.Insts, wat.NewInstCallIndirect("$onFree"))
 	}
 	currentModule.AddFunc(&f)
-	return currentModule.addTableElem(f.Name)
+	return currentModule.AddTableElem(f.Name)
 
 	/*	has_free := false
 		for _, member := range t.Members {
@@ -163,10 +163,10 @@ func (t Struct) Equal(u ValueType) bool {
 	return false
 }
 
-func (t Struct) emitLoadFromAddr(addr Value, offset int) (insts []wat.Inst) {
+func (t Struct) EmitLoadFromAddr(addr Value, offset int) (insts []wat.Inst) {
 	for _, m := range t.Members {
 		ptr := newValuePointer(addr.Name(), addr.Kind(), m.Type())
-		insts = append(insts, m.Type().emitLoadFromAddr(ptr, m._start+offset)...)
+		insts = append(insts, m.Type().EmitLoadFromAddr(ptr, m._start+offset)...)
 	}
 	return
 }
