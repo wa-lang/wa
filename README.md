@@ -48,7 +48,7 @@ Instead of requiring complex toolchains to set up, you can simply go install it 
 Print rune and call function：
 
 ```wa
-# Copyrighe @2019-2022 The Wa author. All rights reserved.
+# Copyright @2019-2022 The Wa author. All rights reserved.
 
 import "fmt"
 
@@ -134,4 +134,4 @@ Note: Executing as a script currently only supports native environments.
 
 ## License
 
-Copyrighe @2019-2022 The Wa author. All rights reserved.
+Copyright @2019-2022 The Wa author. All rights reserved.

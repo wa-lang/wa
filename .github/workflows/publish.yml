@@ -30,5 +30,6 @@ jobs:
           personal_token: ${{ secrets.WA_DEPLOY }}
           publish_dir: docs
           publish_branch: gh-pages
+          force_orphan: true
           user_name: "github-actions[bot]"
           user_email: "github-actions[bot]@users.noreply.github.com"
