@@ -4,17 +4,17 @@ import "examples/prime/benpkg"
 import "joypkg"
 
 fn main() {
-  for n := 2; n <= 100; n = n + 1 {
-    if isPrime(n) {
-      benpkg.PrintInt(n)
-    }
-  }
-  println("")
+	for n := 2; n <= 100; n = n + 1 {
+		if isPrime(n) {
+			benpkg.PrintInt(n)
+		}
+	}
+	println("")
 
-  for n := 2; n <= 100; n = n + 1 {
-    if isPrime(n) {
-      joypkg.PrintIntComma(n)
-    }
-  }
-  println("")
+	for n := 2; n <= 100; n = n + 1 {
+		if isPrime(n) {
+			joypkg.PrintIntComma(n)
+		}
+	}
+	println("")
 }

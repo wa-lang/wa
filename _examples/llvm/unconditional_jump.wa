@@ -2,15 +2,15 @@
 # Test unconditional jump.
 
 fn main() {
-  test_jmp(4)
+	test_jmp(4)
 }
 
-fn test_jmp(a i32) {
-  for {
-    if a > 10 {
-      return
-    }
-    println(a)
-    a++
-  }
+fn test_jmp(a: i32) {
+	for {
+		if a > 10 {
+			return
+		}
+		println(a)
+		a++
+	}
 }

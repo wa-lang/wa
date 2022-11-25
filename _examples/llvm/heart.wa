@@ -1,16 +1,16 @@
 # Test the llvm backend.
 
-fn main {
-  a := 0.0
-  for y := 1.5; y > -1.5; y = y - 0.2 {
-    for x := -1.5; x < 1.5; x = x + 0.1 {
-      a = x*x + y*y - 1.0
-      if a*a*a < x*x*y*y*y {
-        print("@")
-      } else {
-        print(" ")
-      }
-    }
-    println()
-  }
+fn main() {
+	a := 0.0
+	for y := 1.5; y > -1.5; y = y - 0.2 {
+		for x := -1.5; x < 1.5; x = x + 0.1 {
+			a = x*x + y*y - 1.0
+			if a*a*a < x*x*y*y*y {
+				print("@")
+			} else {
+				print(" ")
+			}
+		}
+		println()
+	}
 }

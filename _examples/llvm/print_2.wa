@@ -2,13 +2,13 @@
 # Test printing float64 values.
 
 fn main() {
-  println(5.44, ", ", test_calc3(6, 9, 8))
+	println(5.44, ", ", test_calc3(6, 9, 8))
 }
 
-fn test_calc2(a f64, b f64, c f64) f64 {
-  return (-a) * 5 / (b - c + 2)
+fn test_calc2(a: f64, b: f64, c: f64) => f64 {
+	return (-a) * 5 / (b - c + 2)
 }
 
-fn test_calc3(a f64, b f64, c f64) f64 {
-  return test_calc2(a, b, c)
+fn test_calc3(a: f64, b: f64, c: f64) => f64 {
+	return test_calc2(a, b, c)
 }
