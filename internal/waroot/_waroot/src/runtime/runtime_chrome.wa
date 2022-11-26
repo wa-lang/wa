@@ -1,3 +1,15 @@
 # 版权 @2022 凹语言 作者。保留所有权利。
 
 var WAOS = "chrome"
+
+#wa:import wa_js_env waPrintI32
+#wa:linkname $runtime.waPrintI32
+fn waPrintI32(i: i32)
+
+#wa:import wa_js_env waPrintRune
+#wa:linkname $runtime.waPrintRune
+fn waPrintRune(ch: i32)
+
+#wa:import wa_js_env waPuts
+#wa:linkname $runtime.waPuts
+fn waPuts(ptr: i32, len: i32)

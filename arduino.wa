@@ -1,0 +1,19 @@
+# 版权 @2022 凹语言 作者。保留所有权利。
+
+import "syscall/arduino"
+
+var LED = arduino.GetPinLED()
+
+fn init() {
+	arduino.PinMode(LED, 1)
+	arduino.Println("Wa is running 😎")
+}
+
+fn main() {
+	for {
+		arduino.DigitalWrite(LED, arduino.HIGH)
+		arduino.Delay(100)
+		arduino.DigitalWrite(LED, arduino.LOW)
+		arduino.Delay(900)
+	}
+}

@@ -1,33 +1,33 @@
 # 版权 @2022 凹语言 作者。保留所有权利。
 
-const (
-	LOW  = 0
-	HIGH = 1
+var (
+	LOW  :i32 = 0
+	HIGH :i32 = 1
 
-	INPUT        = 0
-	OUTPUT       = 1
-	INPUT_PULLUP = 2
+	INPUT        :i32 = 0
+	OUTPUT       :i32 = 1
+	INPUT_PULLUP :i32 = 2
 )
 
 #wa:import arduino millis
 #wa:linkname $waMillis
-fn Millis() => uint
+fn Millis() => i32
 
 #wa:import arduino delay
 #wa:linkname $waDelay
-fn Delay(ms: uint)
+fn Delay(ms: i32)
 
 #wa:import arduino pinMode
 #wa:linkname $waPinMode
-fn PinMode(pin, mode: uint)
+fn PinMode(pin, mode: i32)
 
 #wa:import arduino digitalWrite
 #wa:linkname $waDigitalWrite
-fn DigitalWrite(pin, value: uint)
+fn DigitalWrite(pin, value: i32)
 
 #wa:import arduino getPinLED
 #wa:linkname $waGetPinLED
-fn GetPinLED() => uint
+fn GetPinLED() => i32
 
 #wa:import arduino print
 #wa:linkname $waPrint
@@ -35,25 +35,11 @@ fn Print(s: string)
 
 #wa:import arduino getGreeting
 #wa:linkname $waGetGreeting
-fn _getGreeting(buf: *byte, maxlen: uint)
+fn _getGreeting(buf: *byte, maxlen: i32)
 
 fn Println(s: string) {
 	Print(s)
 	Print("\n")
-}
-
-fn GetGreeting() => string {
-	var buf = make([]byte, 64)
-	_getGreeting(&buf[0], 64)
-	# Find '\0'
-	n := -1
-	for i, b := range buf {
-		if b == 0 {
-			break
-		}
-		n = i
-	}
-	return string(buf[:n+1])
 }
 
 #wa:linkname $waPrintI32
