@@ -30,7 +30,7 @@
 
 [https://wa-lang.org/playground](https://wa-lang.org/playground)
 
-![[![](https://wa-lang.org/smalltalk/images/st0011-01.png)](https://wa-lang.org/playground)](https://wa-lang.org/static/images/playground.gif)
+![[![](https://wa-lang.org/smalltalk/images/st0011-01.png)](https://wa-lang.org/playground)](https://wa-lang.org/st0011-03.png)
 
 
 ## 本地安装和测试:
@@ -122,8 +122,7 @@ import (
 )
 
 func main() {
-	# TODO: fix example
-	output, err := api.RunCode("hello.wa", "fn main() { println(40+2) }")
+	output, err := api.RunCode(api.DefaultConfig(), "hello.wa", code)
 	fmt.Print(string(output), err)
 }
 ```

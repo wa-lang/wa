@@ -124,8 +124,7 @@ import (
 )
 
 func main() {
-	# TODO: fix example
-	output, err := api.RunCode("hello.wa", "fn main() { println(40+2) }")
+	output, err := api.RunCode(api.DefaultConfig(), "hello.wa", code)
 	fmt.Print(string(output), err)
 }
 ```

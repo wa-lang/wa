@@ -5,7 +5,6 @@ package config
 import (
 	"io/fs"
 	"os"
-	"runtime"
 )
 
 // 字长和指针大小
@@ -50,14 +49,14 @@ func DefaultConfig() *Config {
 		if s := os.Getenv("WAARCH"); s != "" {
 			p.WaArch = s
 		} else {
-			p.WaArch = runtime.GOARCH
+			p.WaArch = WaArch_Wasm
 		}
 	}
 	if p.WaOS == "" {
 		if s := os.Getenv("WAOS"); s != "" {
 			p.WaOS = s
 		} else {
-			p.WaOS = runtime.GOOS
+			p.WaOS = WaOS_Walang
 		}
 	}
 	if p.WaRoot == "" {

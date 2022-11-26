@@ -1,13 +1,14 @@
 # 版本日志
 
-- v0.3.2 (dev)
-  - 改进类型方法语法
-  - WAT 后端支持多返回值
-  - LLVM 后端支持多返回值
+- v0.4.0 (dev)
+  - 改进类型方法语法, 支持平台特定源文件
+  - WAT 后端支持多返回值, 支持闭包和方法值
+  - LLVM 后端支持多返回值, [点亮 Arduino 单片机](https://wa-lang.org/smalltalk/st0014.html)
+  - 已经初步 [图灵完备](https://wa-lang.org/smalltalk/st0013.html)
 - v0.3.1 (2022-11-16)
   - 完善 WAT 后端, 支持多包
   - LLVM 后端支持基本数值运算 (依赖 clang 和 llc)
-  - wazero 更新到 v1.0.0-pre.3 [#37](https://github.com/wa-lang/wa/pull/37)
+  - wazero 更新到 v1.0.0-pre.3
 - v0.3.0 (2022-10-28)
   - 启用 AGPLv3 开源协议
   - 增加 如何贡献代码 机制

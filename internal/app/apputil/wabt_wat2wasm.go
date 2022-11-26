@@ -5,7 +5,6 @@ package apputil
 import (
 	"context"
 	"errors"
-	"fmt"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -14,8 +13,8 @@ import (
 	"sync"
 
 	"github.com/tetratelabs/wazero"
-	"github.com/tetratelabs/wazero/api"
 
+	"github.com/wa-lang/wa/internal/app/waruntime"
 	"github.com/wa-lang/wa/internal/config"
 	"github.com/wa-lang/wa/internal/logger"
 	"github.com/wa-lang/wabt-go"
@@ -23,7 +22,7 @@ import (
 
 var wat2wasmPath string
 
-func RunWasm(filename string) (stdoutStderr []byte, err error) {
+func RunWasm(cfg *config.Config, filename string) (stdoutStderr []byte, err error) {
 	dst := filename
 	if strings.HasSuffix(filename, ".wat") {
 		dst += ".wasm"
@@ -42,28 +41,7 @@ func RunWasm(filename string) (stdoutStderr []byte, err error) {
 	r := wazero.NewRuntime(ctx)
 	defer r.Close(ctx)
 
-	_, err = r.NewHostModuleBuilder("wa_js_env").
-		NewFunctionBuilder().
-		WithFunc(func(ctx context.Context, m api.Module, pos, len uint32) {
-			bytes, _ := m.Memory().Read(ctx, pos, len)
-			fmt.Print(string(bytes))
-		}).
-		WithParameterNames("pos", "len").
-		Export("waPuts").
-		NewFunctionBuilder().
-		WithFunc(func(ctx context.Context, v uint32) {
-			fmt.Print(v)
-		}).
-		WithParameterNames("v").
-		Export("waPrintI32").
-		NewFunctionBuilder().
-		WithFunc(func(ctx context.Context, ch uint32) {
-			fmt.Printf("%c", rune(ch))
-		}).
-		WithParameterNames("ch").
-		Export("waPrintRune").
-		Instantiate(ctx, r)
-	if err != nil {
+	if _, err = waruntime.WalangInstantiate(ctx, r); err != nil {
 		return nil, err
 	}
 
