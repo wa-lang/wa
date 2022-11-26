@@ -3,10 +3,9 @@
 package compiler_wat
 
 import (
-	"github.com/wa-lang/wa/internal/logger"
 	"github.com/wa-lang/wa/internal/ssa"
 )
 
 func (p *Compiler) compileConst(c *ssa.NamedConst) {
-	logger.Fatal("Todo")
+	//logger.Fatal("Todo")
 }

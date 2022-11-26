@@ -444,6 +444,10 @@ func (g *functionGenerator) genCall(inst *ssa.Call) (insts []wat.Inst, ret_type 
 			insts = append(insts, g.getValue(v).value.EmitPush()...)
 		}
 		callee := inst.Call.StaticCallee()
+		if callee.Parent() != nil {
+			g.module.AddFunc(newFunctionGenerator(g.module).genFunction(callee))
+		}
+
 		if len(callee.LinkName()) > 0 {
 			insts = append(insts, wat.NewInstCall(callee.LinkName()))
 		} else {

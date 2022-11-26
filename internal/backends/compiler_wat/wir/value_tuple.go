@@ -46,25 +46,27 @@ func (t Tuple) EmitLoadFromAddr(addr Value, offset int) []wat.Inst {
 aTuple:
 **************************************/
 type aTuple struct {
-	aValue
-	underlying aStruct
+	aStruct
+	typ Tuple
 }
 
 func newValueTuple(name string, kind ValueKind, typ Tuple) *aTuple {
 	var v aTuple
-	v.aValue = aValue{name: name, kind: kind, typ: typ}
-	v.underlying = *newValueStruct(name, kind, typ.Struct)
+	v.typ = typ
+	v.aStruct = *newValueStruct(name, kind, typ.Struct)
 	return &v
 }
 
-func (v *aTuple) raw() []wat.Value        { return v.underlying.raw() }
-func (v *aTuple) EmitInit() []wat.Inst    { return v.underlying.EmitInit() }
-func (v *aTuple) EmitPush() []wat.Inst    { return v.underlying.EmitPush() }
-func (v *aTuple) EmitPop() []wat.Inst     { return v.underlying.EmitPop() }
-func (v *aTuple) EmitRelease() []wat.Inst { return v.underlying.EmitRelease() }
+func (v *aTuple) Type() ValueType { return v.typ }
+
+func (v *aTuple) raw() []wat.Value        { return v.aStruct.raw() }
+func (v *aTuple) EmitInit() []wat.Inst    { return v.aStruct.EmitInit() }
+func (v *aTuple) EmitPush() []wat.Inst    { return v.aStruct.EmitPush() }
+func (v *aTuple) EmitPop() []wat.Inst     { return v.aStruct.EmitPop() }
+func (v *aTuple) EmitRelease() []wat.Inst { return v.aStruct.EmitRelease() }
 
 func (v *aTuple) emitStoreToAddr(addr Value, offset int) []wat.Inst {
-	return v.underlying.emitStoreToAddr(addr, offset)
+	return v.aStruct.emitStoreToAddr(addr, offset)
 }
 
 func (v *aTuple) Extract(id int) Value {
@@ -73,5 +75,5 @@ func (v *aTuple) Extract(id int) Value {
 		panic("id >= len(st.Members)")
 	}
 
-	return v.underlying.genSubValue(st.Members[id])
+	return v.genSubValue(st.Members[id])
 }

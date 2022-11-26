@@ -272,8 +272,8 @@ func EmitGenIndexAddr(x, id Value) (insts []wat.Inst, ret_type ValueType) {
 
 	case *aSlice:
 		base_type := x.Type().(Slice).Base
-		insts = append(insts, x.underlying.Extract("block").EmitPush()...)
-		insts = append(insts, x.underlying.Extract("data").EmitPush()...)
+		insts = append(insts, x.Extract("block").EmitPush()...)
+		insts = append(insts, x.Extract("data").EmitPush()...)
 		insts = append(insts, NewConst(strconv.Itoa(base_type.size()), I32{}).EmitPush()...)
 		insts = append(insts, id.EmitPush()...)
 		insts = append(insts, wat.NewInstMul(wat.I32{}))
@@ -378,10 +378,10 @@ func EmitGenLen(x Value) (insts []wat.Inst) {
 		insts = NewConst(strconv.Itoa(x.Type().(Array).Capacity), I32{}).EmitPush()
 
 	case *aSlice:
-		insts = x.underlying.Extract("len").EmitPush()
+		insts = x.Extract("len").EmitPush()
 
 	case *aString:
-		insts = x.underlying.Extract("len").EmitPush()
+		insts = x.Extract("len").EmitPush()
 
 	default:
 		logger.Fatalf("Todo: %T", x)
@@ -393,8 +393,8 @@ func EmitGenLen(x Value) (insts []wat.Inst) {
 func EmitPrintString(v Value) (insts []wat.Inst) {
 	s := v.(*aString)
 
-	insts = append(insts, s.underlying.Extract("data").EmitPush()...)
-	insts = append(insts, s.underlying.Extract("len").EmitPush()...)
+	insts = append(insts, s.Extract("data").EmitPush()...)
+	insts = append(insts, s.Extract("len").EmitPush()...)
 	insts = append(insts, wat.NewInstCall("$runtime.waPuts"))
 	return
 }
