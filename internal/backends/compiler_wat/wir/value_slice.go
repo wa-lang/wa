@@ -126,14 +126,14 @@ func (t Slice) genAppendFunc() string {
 	f.Params = append(f.Params, y)
 	f.Results = append(f.Results, t)
 
-	x_len := NewLocal("x_len", x.underlying.Extract("len").Type())
+	x_len := NewLocal("x_len", x.Extract("len").Type())
 	f.Locals = append(f.Locals, x_len)
-	f.Insts = append(f.Insts, x.underlying.Extract("len").EmitPush()...)
+	f.Insts = append(f.Insts, x.Extract("len").EmitPush()...)
 	f.Insts = append(f.Insts, x_len.EmitPop()...)
 
-	y_len := NewLocal("y_len", y.underlying.Extract("len").Type())
+	y_len := NewLocal("y_len", y.Extract("len").Type())
 	f.Locals = append(f.Locals, y_len)
-	f.Insts = append(f.Insts, y.underlying.Extract("len").EmitPush()...)
+	f.Insts = append(f.Insts, y.Extract("len").EmitPush()...)
 	f.Insts = append(f.Insts, y_len.EmitPop()...)
 
 	//gen new_len:
@@ -146,7 +146,7 @@ func (t Slice) genAppendFunc() string {
 
 	//if_new_len_le_cap
 	f.Insts = append(f.Insts, new_len.EmitPush()...)
-	f.Insts = append(f.Insts, x.underlying.Extract("cap").EmitPush()...)
+	f.Insts = append(f.Insts, x.Extract("cap").EmitPush()...)
 	f.Insts = append(f.Insts, wat.NewInstLe(wat.U32{}))
 
 	item := NewLocal("item", t.Base)
@@ -161,17 +161,17 @@ func (t Slice) genAppendFunc() string {
 	{ //if_true
 		var if_true []wat.Inst
 
-		if_true = append(if_true, x.underlying.Extract("block").EmitPush()...)
-		if_true = append(if_true, x.underlying.Extract("data").EmitPush()...)
+		if_true = append(if_true, x.Extract("block").EmitPush()...)
+		if_true = append(if_true, x.Extract("data").EmitPush()...)
 		if_true = append(if_true, new_len.EmitPush()...)
-		if_true = append(if_true, x.underlying.Extract("cap").EmitPush()...)
+		if_true = append(if_true, x.Extract("cap").EmitPush()...)
 
 		//get src
-		if_true = append(if_true, y.underlying.Extract("data").EmitPush()...)
+		if_true = append(if_true, y.Extract("data").EmitPush()...)
 		if_true = append(if_true, src.EmitPop()...)
 
 		//get dest
-		if_true = append(if_true, x.underlying.Extract("data").EmitPush()...)
+		if_true = append(if_true, x.Extract("data").EmitPush()...)
 		if_true = append(if_true, item_size.EmitPush()...)
 		if_true = append(if_true, x_len.EmitPush()...)
 		if_true = append(if_true, wat.NewInstMul(wat.U32{}))
@@ -235,7 +235,7 @@ func (t Slice) genAppendFunc() string {
 
 		//x->new
 		{
-			if_false = append(if_false, x.underlying.Extract("data").EmitPush()...)
+			if_false = append(if_false, x.Extract("data").EmitPush()...)
 			if_false = append(if_false, src.EmitPop()...)
 
 			block := wat.NewInstBlock("block2")
@@ -273,7 +273,7 @@ func (t Slice) genAppendFunc() string {
 
 		//y->new
 		{
-			if_false = append(if_false, y.underlying.Extract("data").EmitPush()...)
+			if_false = append(if_false, y.Extract("data").EmitPush()...)
 			if_false = append(if_false, src.EmitPop()...)
 
 			block := wat.NewInstBlock("block3")
@@ -324,37 +324,36 @@ func (t Slice) genAppendFunc() string {
 aSlice:
 **************************************/
 type aSlice struct {
-	aValue
-	underlying aStruct
+	aStruct
+	typ Slice
 }
 
 func newValueSlice(name string, kind ValueKind, base_type ValueType) *aSlice {
 	var v aSlice
-	slice_type := NewSlice(base_type)
-	v.aValue = aValue{name: name, kind: kind, typ: slice_type}
-	v.underlying = *newValueStruct(name, kind, slice_type.Struct)
+	v.typ = NewSlice(base_type)
+	v.aStruct = *newValueStruct(name, kind, v.typ.Struct)
 	return &v
 }
 
-func (v *aSlice) raw() []wat.Value        { return v.underlying.raw() }
-func (v *aSlice) EmitInit() []wat.Inst    { return v.underlying.EmitInit() }
-func (v *aSlice) EmitPush() []wat.Inst    { return v.underlying.EmitPush() }
-func (v *aSlice) EmitPop() []wat.Inst     { return v.underlying.EmitPop() }
-func (v *aSlice) EmitRelease() []wat.Inst { return v.underlying.EmitRelease() }
+func (v *aSlice) raw() []wat.Value        { return v.aStruct.raw() }
+func (v *aSlice) EmitInit() []wat.Inst    { return v.aStruct.EmitInit() }
+func (v *aSlice) EmitPush() []wat.Inst    { return v.aStruct.EmitPush() }
+func (v *aSlice) EmitPop() []wat.Inst     { return v.aStruct.EmitPop() }
+func (v *aSlice) EmitRelease() []wat.Inst { return v.aStruct.EmitRelease() }
 
 func (v *aSlice) emitStoreToAddr(addr Value, offset int) []wat.Inst {
-	return v.underlying.emitStoreToAddr(addr, offset)
+	return v.aStruct.emitStoreToAddr(addr, offset)
 }
 
 func (v *aSlice) emitSub(low, high Value) (insts []wat.Inst) {
 	//block
-	insts = append(insts, v.underlying.Extract("block").EmitPush()...)
+	insts = append(insts, v.Extract("block").EmitPush()...)
 
 	//data:
 	if low == nil {
 		low = NewConst("0", U32{})
 	}
-	insts = append(insts, v.underlying.Extract("data").EmitPush()...)
+	insts = append(insts, v.Extract("data").EmitPush()...)
 	insts = append(insts, NewConst(strconv.Itoa(v.Type().(Slice).Base.size()), U32{}).EmitPush()...)
 	insts = append(insts, low.EmitPush()...)
 	insts = append(insts, wat.NewInstMul(wat.U32{}))
@@ -362,14 +361,14 @@ func (v *aSlice) emitSub(low, high Value) (insts []wat.Inst) {
 
 	//len:
 	if high == nil {
-		high = v.underlying.Extract("len")
+		high = v.Extract("len")
 	}
 	insts = append(insts, high.EmitPush()...)
 	insts = append(insts, low.EmitPush()...)
 	insts = append(insts, wat.NewInstSub(wat.U32{}))
 
 	//cap:
-	insts = append(insts, v.underlying.Extract("cap").EmitPush()...)
+	insts = append(insts, v.Extract("cap").EmitPush()...)
 	insts = append(insts, low.EmitPush()...)
 	insts = append(insts, wat.NewInstSub(wat.U32{}))
 
