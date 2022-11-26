@@ -41,6 +41,11 @@ type PkgVFS = config.PkgVFS
 // 指针和整数大小
 type StdSize = config.StdSizes
 
+// 默认配置
+func DefaultConfig() *Config {
+	return config.DefaultConfig()
+}
+
 // 加载 WaModFile 文件
 // 如果 vfs 为空则从本地文件系统读取
 func LoadManifest(vfs fs.FS, appPath string) (p *Manifest, err error) {

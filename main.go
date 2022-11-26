@@ -74,8 +74,8 @@ func main() {
 			cli.ShowAppHelpAndExit(c, 0)
 		}
 
-		ctx := app.NewApp(build_Options(c))
-		output, err := ctx.WASM(c.Args().First())
+		app := app.NewApp(build_Options(c))
+		output, err := app.WASM(c.Args().First())
 		if err != nil {
 			fmt.Println(err)
 			os.Exit(1)
@@ -91,7 +91,7 @@ func main() {
 			os.Exit(1)
 		}
 
-		stdoutStderr, err := apputil.RunWasm(outfile)
+		stdoutStderr, err := apputil.RunWasm(app.GetConfig(), outfile)
 		if err != nil {
 			if len(stdoutStderr) > 0 {
 				fmt.Println(string(stdoutStderr))
@@ -177,8 +177,8 @@ func main() {
 					os.Exit(1)
 				}
 
-				ctx := app.NewApp(build_Options(c))
-				output, err := ctx.WASM(c.Args().First())
+				app := app.NewApp(build_Options(c))
+				output, err := app.WASM(c.Args().First())
 				if err != nil {
 					fmt.Println(err)
 					os.Exit(1)
@@ -194,20 +194,16 @@ func main() {
 					os.Exit(1)
 				}
 
-				if c.Bool("html") {
-					// todo
-				} else {
-					stdoutStderr, err := apputil.RunWasm(outfile)
-					if err != nil {
-						if len(stdoutStderr) > 0 {
-							fmt.Println(string(stdoutStderr))
-						}
-						fmt.Println(err)
-						os.Exit(1)
-					}
+				stdoutStderr, err := apputil.RunWasm(app.GetConfig(), outfile)
+				if err != nil {
 					if len(stdoutStderr) > 0 {
 						fmt.Println(string(stdoutStderr))
 					}
+					fmt.Println(err)
+					os.Exit(1)
+				}
+				if len(stdoutStderr) > 0 {
+					fmt.Println(string(stdoutStderr))
 				}
 
 				return nil

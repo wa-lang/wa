@@ -7,7 +7,6 @@ import (
 	"log"
 
 	"github.com/wa-lang/wa/api"
-	"github.com/wa-lang/wa/internal/config"
 )
 
 func ExampleRunCode() {
@@ -23,7 +22,7 @@ func ExampleRunCode() {
 		}
 	`
 
-	output, err := api.RunCode(config.DefaultConfig(), "hello.wa", code)
+	output, err := api.RunCode(api.DefaultConfig(), "hello.wa", code)
 	if err != nil {
 		log.Fatal(err)
 	}

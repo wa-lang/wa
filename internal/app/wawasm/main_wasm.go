@@ -6,14 +6,13 @@ import (
 	"syscall/js"
 
 	"github.com/wa-lang/wa/api"
-	"github.com/wa-lang/wa/internal/config"
 )
 
 func main() {
 	window := js.Global().Get("window")
 	waCode := window.Get("waCode").String()
 
-	wat, err := api.BuildFile(config.DefaultConfig(), "hello.wa", waCode)
+	wat, err := api.BuildFile(api.DefaultConfig(), "hello.wa", waCode)
 	if err != nil {
 		window.Set("waWat", err.Error())
 	} else {

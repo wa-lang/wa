@@ -78,6 +78,10 @@ func NewApp(opt *Option) *App {
 	return p
 }
 
+func (p *App) GetConfig() *config.Config {
+	return p.opt.Config()
+}
+
 func (p *App) InitApp(name, pkgpath string, update bool) error {
 	if name == "" {
 		return fmt.Errorf("init failed: <%s> is empty", name)

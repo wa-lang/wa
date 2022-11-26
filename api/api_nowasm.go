@@ -27,6 +27,6 @@ func RunCode(cfg *config.Config, filename, code string) (stdoutStderr []byte, er
 	}
 
 	// 执行 wat 文件
-	stdoutStderr, err = apputil.RunWasm(outfile)
+	stdoutStderr, err = apputil.RunWasm(cfg, outfile)
 	return
 }
