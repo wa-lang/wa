@@ -15,6 +15,7 @@ wa native global_constant.wa
 wa native global_variable_0.wa
 wa native global_variable_1.wa
 wa native heart.wa
+wa native internal_function.wa
 wa native loop_0.wa
 wa native loop_1.wa
 wa native multi_ret.wa

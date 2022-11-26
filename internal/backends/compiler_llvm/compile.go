@@ -21,6 +21,7 @@ type Compiler struct {
 	output strings.Builder
 	debug  bool
 	fmts   []FmtStr
+	anofn  []*ssa.Function
 }
 
 func New(target string, debug bool) *Compiler {
@@ -141,6 +142,14 @@ func (p *Compiler) compilePackage(pkg *ssa.Package) error {
 			return err
 		}
 	}
+
+	// Generate LLVM-IR for each internal function.
+	for _, v := range p.anofn {
+		if err := p.compileFunction(v); err != nil {
+			return err
+		}
+	}
+	p.anofn = []*ssa.Function{}
 
 	return nil
 }
