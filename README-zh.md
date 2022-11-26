@@ -30,7 +30,7 @@
 
 [https://wa-lang.org/playground](https://wa-lang.org/playground)
 
-![[![](https://wa-lang.org/smalltalk/images/st0011-01.png)](https://wa-lang.org/playground)](https://wa-lang.org/static/images/playground.gif)
+![[![](https://wa-lang.org/smalltalk/images/st0011-01.png)](https://wa-lang.org/playground)](https://wa-lang.org/st0011-03.png)
 
 
 ## 本地安装和测试:
