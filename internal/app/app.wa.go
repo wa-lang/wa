@@ -69,10 +69,10 @@ func NewApp(opt *Option) *App {
 		}
 	}
 	if p.opt.TargetOS == "" {
-		p.opt.TargetOS = runtime.GOOS
+		p.opt.TargetOS = config.WaOS_Walang
 	}
 	if p.opt.TargetArch == "" {
-		p.opt.TargetArch = runtime.GOARCH
+		p.opt.TargetArch = config.WaArch_Wasm
 	}
 
 	return p
@@ -238,7 +238,7 @@ func (p *App) AST(filename string) error {
 }
 
 func (p *App) SSA(filename string) error {
-	cfg := config.DefaultConfig()
+	cfg := p.opt.Config()
 	prog, err := loader.LoadProgram(cfg, filename)
 	if err != nil {
 		return err
@@ -261,7 +261,7 @@ func (p *App) SSA(filename string) error {
 }
 
 func (p *App) CIR(filename string) error {
-	cfg := config.DefaultConfig()
+	cfg := p.opt.Config()
 	prog, err := loader.LoadProgram(cfg, filename)
 	if err != nil {
 		return err
@@ -276,7 +276,7 @@ func (p *App) CIR(filename string) error {
 }
 
 func (p *App) LLVM(infile string, outfile string, target string, debug bool) error {
-	cfg := config.DefaultConfig()
+	cfg := p.opt.Config()
 
 	instat, err := os.Stat(infile)
 	if err != nil {
@@ -393,7 +393,7 @@ func (p *App) LLVM(infile string, outfile string, target string, debug bool) err
 }
 
 func (p *App) WASM(filename string) ([]byte, error) {
-	cfg := config.DefaultConfig()
+	cfg := p.opt.Config()
 	prog, err := loader.LoadProgram(cfg, filename)
 	if err != nil {
 		return nil, err

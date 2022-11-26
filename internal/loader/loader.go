@@ -292,10 +292,8 @@ func (p *_Loader) readDirFiles(fileSystem fs.FS, path string) (filenames []strin
 		if entry.IsDir() {
 			continue
 		}
-		if strings.HasPrefix(entry.Name(), "_") {
-			continue
-		}
-		if !p.hasExt(entry.Name(), ".go", ".ugo", ".wa") {
+
+		if p.isSkipedSouceFile(entry.Name()) {
 			continue
 		}
 
@@ -361,4 +359,39 @@ func (p *_Loader) getSizes() types.Sizes {
 			MaxAlign: p.cfg.WaSizes.MaxAlign,
 		}
 	}
+}
+
+func (p *_Loader) isSkipedSouceFile(filename string) bool {
+	if strings.HasPrefix(filename, "_") {
+		return true
+	}
+	if !p.hasExt(filename, ".wa", ".wa.go", ".ugo") {
+		return true
+	}
+
+	if p.cfg.WaOS != "" {
+		var isTargetFile bool
+		for _, ext := range []string{".wa", ".wa.go", ".ugo"} {
+			for _, os := range []string{"walang", "wasi", "arduino", "chrome"} {
+				if strings.HasSuffix(filename, "_"+os+ext) {
+					isTargetFile = true
+					break
+				}
+			}
+		}
+		if isTargetFile {
+			var shouildSkip = true
+			for _, ext := range []string{".wa", ".wa.go", ".ugo"} {
+				if strings.HasSuffix(filename, "_"+p.cfg.WaOS+ext) {
+					shouildSkip = false
+					break
+				}
+			}
+			if shouildSkip {
+				return true
+			}
+		}
+	}
+
+	return false
 }

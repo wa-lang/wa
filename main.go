@@ -34,6 +34,11 @@ func main() {
 	}()
 
 	cliApp.Flags = []cli.Flag{
+		&cli.StringFlag{
+			Name:  "target",
+			Usage: "set target os (walang|wasi|arduino|chrome)",
+			Value: config.WaOS_Walang,
+		},
 		&cli.BoolFlag{
 			Name:    "debug",
 			Aliases: []string{"d"},
@@ -47,6 +52,13 @@ func main() {
 	}
 
 	cliApp.Before = func(c *cli.Context) error {
+		switch c.String("target") {
+		case "wa", "walang", "wasi", "arduino", "chrome":
+			// OK
+		default:
+			fmt.Printf("unknown target: %s\n", c.String("target"))
+			os.Exit(1)
+		}
 		if c.Bool("debug") {
 			config.SetDebugMode()
 		}
@@ -153,9 +165,10 @@ func main() {
 			Name:  "run",
 			Usage: "compile and run Wa program",
 			Flags: []cli.Flag{
-				&cli.BoolFlag{
-					Name:  "html",
-					Usage: "output html",
+				&cli.StringFlag{
+					Name:  "target",
+					Usage: "set target os (walang|wasi|arduino|chrome)",
+					Value: config.WaOS_Walang,
 				},
 			},
 			Action: func(c *cli.Context) error {
@@ -210,13 +223,10 @@ func main() {
 					Usage:   "set output file",
 					Value:   "a.out",
 				},
-				&cli.BoolFlag{
-					Name:  "html",
-					Usage: "output html",
-				},
 				&cli.StringFlag{
 					Name:  "target",
-					Usage: "set target (*wa|wasi|arduino)",
+					Usage: "set target os (walang|wasi|arduino|chrome)",
+					Value: config.WaOS_Walang,
 				},
 				&cli.IntFlag{
 					Name:  "ld-stack-size",
@@ -384,8 +394,9 @@ func main() {
 			},
 		},
 		{
-			Name:  "test",
-			Usage: "test packages",
+			Hidden: true,
+			Name:   "test",
+			Usage:  "test packages",
 			Action: func(c *cli.Context) error {
 				fmt.Println("TODO")
 				return nil
@@ -405,8 +416,9 @@ func main() {
 			},
 		},
 		{
-			Name:  "doc",
-			Usage: "show documentation for package or symbol",
+			Hidden: true,
+			Name:   "doc",
+			Usage:  "show documentation for package or symbol",
 			Action: func(c *cli.Context) error {
 				fmt.Println("TODO")
 				return nil
@@ -452,7 +464,7 @@ func main() {
 	cliApp.Run(os.Args)
 }
 
-func build_Options(c *cli.Context) *app.Option {
+func build_Options(c *cli.Context, isLLVMBackend ...bool) *app.Option {
 	opt := &app.Option{
 		Debug:        c.Bool("debug"),
 		Clang:        c.String("clang"),
@@ -460,19 +472,23 @@ func build_Options(c *cli.Context) *app.Option {
 		LD_StackSize: c.Int("ld-stack-size"),
 		LD_MaxMemory: c.Int("ld-max-memory"),
 	}
+
+	opt.TargetArch = "wasm"
+	if len(isLLVMBackend) > 0 && isLLVMBackend[0] {
+		opt.TargetArch = "native"
+	}
 	switch c.String("target") {
-	case "", "wa":
-		opt.TargetArch = "wasm"
-		opt.TargetOS = "wa"
-	case "wasi":
-		opt.TargetArch = "wasm"
-		opt.TargetOS = "wasi"
-	case "arduino":
-		opt.TargetArch = "wasm"
-		opt.TargetOS = "arduino"
+	case "wa", config.WaOS_Walang:
+		opt.TargetOS = config.WaOS_Walang
+	case config.WaOS_Wasi:
+		opt.TargetOS = config.WaOS_Wasi
+	case config.WaOS_Arduino:
+		opt.TargetOS = config.WaOS_Arduino
+	case config.WaOS_Chrome:
+		opt.TargetOS = config.WaOS_Chrome
 	default:
-		opt.TargetArch = "wasm"
-		opt.TargetOS = "unknown"
+		fmt.Printf("unknown target: %s\n", c.String("target"))
+		os.Exit(1)
 	}
 	return opt
 }
