@@ -335,6 +335,8 @@ func newValueSlice(name string, kind ValueKind, base_type ValueType) *aSlice {
 	return &v
 }
 
+func (v *aSlice) Type() ValueType { return v.typ }
+
 func (v *aSlice) raw() []wat.Value        { return v.aStruct.raw() }
 func (v *aSlice) EmitInit() []wat.Inst    { return v.aStruct.EmitInit() }
 func (v *aSlice) EmitPush() []wat.Inst    { return v.aStruct.EmitPush() }
