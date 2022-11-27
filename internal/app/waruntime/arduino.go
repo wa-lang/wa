@@ -32,17 +32,24 @@ func ArduinoInstantiate(ctx context.Context, rt wazero.Runtime) (api.Closer, err
 		Export("delay").
 		NewFunctionBuilder().
 		WithFunc(func(ctx context.Context, pin, mode int32) {
-			if mode == 0 {
-				fmt.Printf("arduino.pinMode(%d, %s)\n", pin, "LOW")
-			} else {
-				fmt.Printf("arduino.pinMode(%d, %s)\n", pin, "HIGH")
+			switch mode {
+			case 0:
+				fmt.Printf("arduino.pinMode(%d, %s)\n", pin, "INPUT")
+			case 1:
+				fmt.Printf("arduino.pinMode(%d, %s)\n", pin, "OUTPUT")
+			default:
+				fmt.Printf("arduino.pinMode(%d, %s)\n", pin, "INPUT_PULLUP")
 			}
 		}).
 		WithParameterNames("pin", "mode").
 		Export("pinMode").
 		NewFunctionBuilder().
 		WithFunc(func(ctx context.Context, pin, value int32) {
-			fmt.Printf("arduino.digitalWrite(%d, %d)\n", pin, value)
+			if value == 0 {
+				fmt.Printf("arduino.digitalWrite(%d, %s)\n", pin, "LOW")
+			} else {
+				fmt.Printf("arduino.digitalWrite(%d, %s)\n", pin, "HIGH")
+			}
 		}).
 		WithParameterNames("pin", "value").
 		Export("digitalWrite").

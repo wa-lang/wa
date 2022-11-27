@@ -5,7 +5,7 @@ import "syscall/arduino"
 var LED = arduino.GetPinLED()
 
 fn init() {
-	arduino.PinMode(LED, 1)
+	arduino.PinMode(LED, arduino.OUTPUT)
 	arduino.Println("Wa/Arduino is running 😎")
 }
 
