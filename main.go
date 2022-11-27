@@ -304,7 +304,7 @@ func main() {
 				}
 				infile = c.Args().First()
 
-				ctx := app.NewApp(build_Options(c))
+				ctx := app.NewApp(build_Options(c, true))
 				if err := ctx.LLVM(infile, outfile, target, debug); err != nil {
 					fmt.Println(err)
 					os.Exit(1)
@@ -472,6 +472,7 @@ func build_Options(c *cli.Context, isLLVMBackend ...bool) *app.Option {
 	opt.TargetArch = "wasm"
 	if len(isLLVMBackend) > 0 && isLLVMBackend[0] {
 		opt.TargetArch = "native"
+		return opt
 	}
 	switch c.String("target") {
 	case "wa", config.WaOS_Walang:

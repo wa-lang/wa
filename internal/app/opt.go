@@ -44,6 +44,9 @@ func (opt *Option) Config() *config.Config {
 	case "arm64":
 		cfg.WaSizes.MaxAlign = 8
 		cfg.WaSizes.WordSize = 8
+	case "native":
+		cfg.WaSizes.MaxAlign = 8
+		cfg.WaSizes.WordSize = 8
 	default:
 		panic("todo")
 	}

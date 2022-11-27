@@ -387,6 +387,10 @@ func (p *Compiler) compileCall(val *ssa.Call) error {
 		// Emit the function name.
 		p.output.WriteString(" @")
 		callee := val.Call.StaticCallee()
+		// This callee is an internal function, whose body will be genereated later.
+		if callee.Parent() != nil {
+			p.anofn = append(p.anofn, callee)
+		}
 		if len(callee.LinkName()) > 0 {
 			p.output.WriteString(callee.LinkName())
 		} else {
