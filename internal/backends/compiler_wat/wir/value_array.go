@@ -52,23 +52,24 @@ func (t Array) EmitLoadFromAddr(addr Value, offset int) (insts []wat.Inst) {
 aArray:
 **************************************/
 type aArray struct {
-	aValue
-	underlying aStruct
+	aStruct
+	typ Array
 }
 
 func newValueArray(name string, kind ValueKind, base_type ValueType, capacity int) *aArray {
 	var v aArray
-	array_typ := NewArray(base_type, capacity)
-	v.aValue = aValue{name: name, kind: kind, typ: array_typ}
-	v.underlying = *newValueStruct(name, kind, array_typ.Struct)
+	v.typ = NewArray(base_type, capacity)
+	v.aStruct = *newValueStruct(name, kind, v.typ.Struct)
 	return &v
 }
 
-func (v *aArray) raw() []wat.Value                { return v.underlying.raw() }
-func (v *aArray) EmitInit() (insts []wat.Inst)    { return v.underlying.EmitInit() }
-func (v *aArray) EmitPush() (insts []wat.Inst)    { return v.underlying.EmitPush() }
-func (v *aArray) EmitPop() (insts []wat.Inst)     { return v.underlying.EmitPop() }
-func (v *aArray) EmitRelease() (insts []wat.Inst) { return v.underlying.EmitRelease() }
+func (v *aArray) Type() ValueType { return v.typ }
+
+func (v *aArray) raw() []wat.Value                { return v.aStruct.raw() }
+func (v *aArray) EmitInit() (insts []wat.Inst)    { return v.aStruct.EmitInit() }
+func (v *aArray) EmitPush() (insts []wat.Inst)    { return v.aStruct.EmitPush() }
+func (v *aArray) EmitPop() (insts []wat.Inst)     { return v.aStruct.EmitPop() }
+func (v *aArray) EmitRelease() (insts []wat.Inst) { return v.aStruct.EmitRelease() }
 
 func (v *aArray) emitStoreToAddr(addr Value, offset int) (insts []wat.Inst) {
 	if !addr.Type().(Pointer).Base.Equal(v.Type()) {
@@ -76,5 +77,5 @@ func (v *aArray) emitStoreToAddr(addr Value, offset int) (insts []wat.Inst) {
 		return nil
 	}
 
-	return v.underlying.emitStoreToAddr(addr, offset)
+	return v.aStruct.emitStoreToAddr(addr, offset)
 }

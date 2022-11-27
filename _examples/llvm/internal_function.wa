@@ -1,0 +1,18 @@
+# Test the llvm backend.
+# Test anonymous functions and closure functions.
+
+fn main() {
+	print("Hello, ")
+	fn() {
+		println("World!")
+	}()
+
+	var i: int
+	show := fn() {
+		println("i = ", i)
+	}
+
+	for i = 0; i < 10; i++ {
+		show()
+	}
+}
