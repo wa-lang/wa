@@ -12,8 +12,12 @@ build-wasm:
 win-exe-icon:
 	windres -o main_rc_windows.syso main.rc
 
-arduino:
+arduino-run:
+	go run main.go -target=arduino arduino.wa
+
+arduino-build:
 	go run main.go build -target=arduino arduino.wa
 	wat2wasm a.out.wat -o a.out.wasm
+	xxd -i a.out.wasm > app.wasm.h
 
 clean:

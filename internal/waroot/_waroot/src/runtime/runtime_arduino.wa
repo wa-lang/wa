@@ -1,5 +1,7 @@
 # 版权 @2022 凹语言 作者。保留所有权利。
 
+import "syscall/arduino"
+
 var WAOS = "arduino"
 
 #wa:linkname $runtime.waPrintI32
@@ -9,4 +11,6 @@ fn waPrintI32(i: i32) {}
 fn waPrintRune(ch: i32) {}
 
 #wa:linkname $runtime.waPuts
-fn waPuts(ptr: i32, len: i32) {}
+fn waPuts(ptr: i32, len: i32) {
+	arduino.PrintRawString(ptr, len)
+}

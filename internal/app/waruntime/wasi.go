@@ -6,9 +6,10 @@ import (
 	"context"
 
 	"github.com/tetratelabs/wazero"
+	"github.com/tetratelabs/wazero/api"
 	"github.com/tetratelabs/wazero/imports/wasi_snapshot_preview1"
 )
 
-func WasiInstantiate(ctx context.Context, rt wazero.Runtime) {
-	wasi_snapshot_preview1.MustInstantiate(ctx, rt)
+func WasiInstantiate(ctx context.Context, rt wazero.Runtime) (api.Closer, error) {
+	return wasi_snapshot_preview1.Instantiate(ctx, rt)
 }

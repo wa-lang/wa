@@ -12,7 +12,7 @@ import (
 
 const envWalang = "wa_js_env"
 
-func WalangInstantiate(ctx context.Context, rt wazero.Runtime) (api.Module, error) {
+func WalangInstantiate(ctx context.Context, rt wazero.Runtime) (api.Closer, error) {
 	return rt.NewHostModuleBuilder(envWalang).
 		NewFunctionBuilder().
 		WithFunc(func(ctx context.Context, m api.Module, pos, len uint32) {

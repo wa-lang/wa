@@ -10,6 +10,6 @@ import (
 	"github.com/wa-lang/wa/internal/config"
 )
 
-func ChromeInstantiate(ctx context.Context, rt wazero.Runtime) (api.Module, error) {
+func ChromeInstantiate(ctx context.Context, rt wazero.Runtime) (api.Closer, error) {
 	return rt.NewHostModuleBuilder(config.WaOS_Chrome).Instantiate(ctx, rt)
 }

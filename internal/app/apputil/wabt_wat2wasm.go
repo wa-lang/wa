@@ -41,8 +41,24 @@ func RunWasm(cfg *config.Config, filename string) (stdoutStderr []byte, err erro
 	r := wazero.NewRuntime(ctx)
 	defer r.Close(ctx)
 
-	if _, err = waruntime.WalangInstantiate(ctx, r); err != nil {
-		return nil, err
+	switch cfg.WaOS {
+	case config.WaOS_Arduino:
+		if _, err = waruntime.ArduinoInstantiate(ctx, r); err != nil {
+			return nil, err
+		}
+	case config.WaOS_Chrome:
+		if _, err = waruntime.ChromeInstantiate(ctx, r); err != nil {
+			return nil, err
+		}
+
+	case config.WaOS_Walang:
+		if _, err = waruntime.WalangInstantiate(ctx, r); err != nil {
+			return nil, err
+		}
+	case config.WaOS_Wasi:
+		if _, err = waruntime.WasiInstantiate(ctx, r); err != nil {
+			return nil, err
+		}
 	}
 
 	_, err = r.InstantiateModuleFromBinary(ctx, wasmBytes)

@@ -10,49 +10,27 @@ var (
 )
 
 #wa:import arduino millis
-#wa:linkname $waMillis
 fn Millis() => i32
 
 #wa:import arduino delay
-#wa:linkname $waDelay
 fn Delay(ms: i32)
 
 #wa:import arduino pinMode
-#wa:linkname $waPinMode
 fn PinMode(pin, mode: i32)
 
 #wa:import arduino digitalWrite
-#wa:linkname $waDigitalWrite
 fn DigitalWrite(pin, value: i32)
 
 #wa:import arduino getPinLED
-#wa:linkname $waGetPinLED
 fn GetPinLED() => i32
 
 #wa:import arduino print
-#wa:linkname $waPrint
-fn Print(s: string)
+fn PrintRawString(ptr: i32, len: i32)
 
-#wa:import arduino getGreeting
-#wa:linkname $waGetGreeting
-fn _getGreeting(buf: *byte, maxlen: i32)
+fn Print(s: string) {
+	print(s)
+}
 
 fn Println(s: string) {
-	Print(s)
-	Print("\n")
-}
-
-#wa:linkname $waPrintI32
-fn waPrintI32(i: i32) {
-	# TODO
-}
-
-#wa:linkname $waPrintRune
-fn waPrintRune(ch: i32) {
-	# TODO
-}
-
-#wa:linkname $waPuts
-fn waPuts(ptr: i32, len: i32) {
-	# TODO
+	println(s)
 }

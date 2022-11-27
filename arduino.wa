@@ -6,7 +6,7 @@ var LED = arduino.GetPinLED()
 
 fn init() {
 	arduino.PinMode(LED, 1)
-	arduino.Println("Wa is running 😎")
+	arduino.Println("Wa/Arduino is running 😎")
 }
 
 fn main() {
