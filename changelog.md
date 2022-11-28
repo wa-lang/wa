@@ -1,6 +1,7 @@
 # 版本日志
 
 - v0.4.0 (dev)
+  - 包路径调整为 wa-lang.org/wa
   - 改进类型方法语法, 支持平台特定源文件
   - WAT 后端支持多返回值, 支持闭包和方法值
   - LLVM 后端支持多返回值, [点亮 Arduino 单片机](https://wa-lang.org/smalltalk/st0014.html)
