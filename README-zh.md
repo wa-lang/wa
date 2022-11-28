@@ -17,7 +17,7 @@
 
 凹语言™（凹读音“Wa”）是 针对 WASM 平台设计的通用编程语言，同时支持 Linux、macOS 和 Windows 等主流操作系统和 Chrome 等浏览器环境，同时也支持作为独立Shell脚本和被嵌入脚本模式执行。
 
-![](docs/images/logo/logo-animate1-blue.svg)
+![](docs/images/logo/logo-animate1.svg)
 
 - 主页: [https://wa-lang.org](https://wa-lang.org)
 - 代码仓库 (Gitee):  [https://gitee.com/wa-lang/wa](https://gitee.com/wa-lang/wa)
@@ -128,7 +128,3 @@ func main() {
 ```
 
 注：作为脚本执行目前只支持本地环境。
-
-## 版权(License)
-
-版权 @2019-2022 凹语言™ 作者。保留所有权利。

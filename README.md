@@ -19,7 +19,7 @@
 Wa is a general-purpose programming language designed for developing robustness and maintainability WebAssembly software.
 Instead of requiring complex toolchains to set up, you can simply go install it - or run it in a browser.
 
-![](docs/images/logo/logo-animate1-blue.svg)
+![](docs/images/logo/logo-animate1.svg)
 
 - Homepage: [https://wa-lang.org](https://wa-lang.org)
 - Github: [https://github.com/wa-lang/wa](https://github.com/wa-lang/wa)
@@ -130,7 +130,3 @@ func main() {
 ```
 
 Note: Executing as a script currently only supports native environments.
-
-## License
-
-Copyright @2019-2022 The Wa author. All rights reserved.
