@@ -13,11 +13,11 @@ import (
 	"sync"
 
 	"github.com/tetratelabs/wazero"
-
-	"github.com/wa-lang/wa/internal/app/waruntime"
-	"github.com/wa-lang/wa/internal/config"
-	"github.com/wa-lang/wa/internal/logger"
 	"github.com/wa-lang/wabt-go"
+
+	"wa-lang.org/wa/internal/app/waruntime"
+	"wa-lang.org/wa/internal/config"
+	"wa-lang.org/wa/internal/logger"
 )
 
 var wat2wasmPath string

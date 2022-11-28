@@ -11,8 +11,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/wa-lang/wa/internal/ast"
-	"github.com/wa-lang/wa/internal/token"
+	"wa-lang.org/wa/internal/ast"
+	"wa-lang.org/wa/internal/token"
 )
 
 var validFiles = []string{

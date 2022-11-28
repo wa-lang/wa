@@ -10,8 +10,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/wa-lang/wa/internal/parser"
-	"github.com/wa-lang/wa/internal/token"
+	"wa-lang.org/wa/internal/parser"
+	"wa-lang.org/wa/internal/token"
 )
 
 const testfile = "format_test.go.wa"
@@ -76,7 +76,7 @@ fn TestSource(t *testing.T) {
 // The formatted result must look the same as the input for successful tests.
 var tests = []string{
 	// declaration lists
-	`import "github.com/wa-lang/wa/internal/format"`,
+	`import "wa-lang.org/wa/internal/format"`,
 	"var x int",
 	"var x int\n\ntype T struct{}",
 

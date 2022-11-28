@@ -9,9 +9,9 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/wa-lang/wa/internal/format"
-	"github.com/wa-lang/wa/internal/parser"
-	"github.com/wa-lang/wa/internal/token"
+	"wa-lang.org/wa/internal/format"
+	"wa-lang.org/wa/internal/parser"
+	"wa-lang.org/wa/internal/token"
 )
 
 func ExampleNode() {

@@ -3,6 +3,6 @@
 
 package ssa
 
-import "github.com/wa-lang/wa/internal/types"
+import "wa-lang.org/wa/internal/types"
 
 var structTypesIdentical = types.IdenticalIgnoreTags

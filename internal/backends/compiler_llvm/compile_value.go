@@ -8,9 +8,9 @@ import (
 	"math/rand"
 	"strconv"
 
-	"github.com/wa-lang/wa/internal/ssa"
-	"github.com/wa-lang/wa/internal/token"
-	"github.com/wa-lang/wa/internal/types"
+	"wa-lang.org/wa/internal/ssa"
+	"wa-lang.org/wa/internal/token"
+	"wa-lang.org/wa/internal/types"
 )
 
 func (p *Compiler) compileValue(val ssa.Value) error {

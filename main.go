@@ -13,11 +13,11 @@ import (
 	"strings"
 	"time"
 
-	"github.com/wa-lang/wa/api"
-	"github.com/wa-lang/wa/internal/3rdparty/cli"
-	"github.com/wa-lang/wa/internal/app"
-	"github.com/wa-lang/wa/internal/app/apputil"
-	"github.com/wa-lang/wa/internal/config"
+	"wa-lang.org/wa/api"
+	"wa-lang.org/wa/internal/3rdparty/cli"
+	"wa-lang.org/wa/internal/app"
+	"wa-lang.org/wa/internal/app/apputil"
+	"wa-lang.org/wa/internal/config"
 )
 
 func main() {

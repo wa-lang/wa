@@ -9,7 +9,7 @@ import (
 	"io"
 	"sort"
 
-	"github.com/wa-lang/wa/internal/token"
+	"wa-lang.org/wa/internal/token"
 )
 
 // In an ErrorList, an error is represented by an *Error.

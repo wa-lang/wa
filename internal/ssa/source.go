@@ -11,9 +11,9 @@ package ssa
 // the originating syntax, as specified.
 
 import (
-	"github.com/wa-lang/wa/internal/ast"
-	"github.com/wa-lang/wa/internal/token"
-	"github.com/wa-lang/wa/internal/types"
+	"wa-lang.org/wa/internal/ast"
+	"wa-lang.org/wa/internal/token"
+	"wa-lang.org/wa/internal/types"
 )
 
 // EnclosingFunction returns the function that contains the syntax

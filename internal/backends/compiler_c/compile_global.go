@@ -3,10 +3,10 @@
 package compiler_c
 
 import (
-	"github.com/wa-lang/wa/internal/backends/compiler_c/cir"
-	"github.com/wa-lang/wa/internal/backends/compiler_c/cir/ctypes"
-	"github.com/wa-lang/wa/internal/ssa"
-	"github.com/wa-lang/wa/internal/types"
+	"wa-lang.org/wa/internal/backends/compiler_c/cir"
+	"wa-lang.org/wa/internal/backends/compiler_c/cir/ctypes"
+	"wa-lang.org/wa/internal/ssa"
+	"wa-lang.org/wa/internal/types"
 )
 
 func (p *CompilerC) compileGlobal(g *ssa.Global) {

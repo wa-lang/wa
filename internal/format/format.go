@@ -23,10 +23,10 @@ import (
 	"io/ioutil"
 	"os"
 
-	"github.com/wa-lang/wa/internal/ast"
-	"github.com/wa-lang/wa/internal/parser"
-	"github.com/wa-lang/wa/internal/printer"
-	"github.com/wa-lang/wa/internal/token"
+	"wa-lang.org/wa/internal/ast"
+	"wa-lang.org/wa/internal/parser"
+	"wa-lang.org/wa/internal/printer"
+	"wa-lang.org/wa/internal/token"
 )
 
 var config = printer.Config{Mode: printer.UseSpaces | printer.TabIndent, Tabwidth: 8}

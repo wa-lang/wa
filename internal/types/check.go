@@ -7,9 +7,9 @@
 package types
 
 import (
-	"github.com/wa-lang/wa/internal/ast"
-	"github.com/wa-lang/wa/internal/constant"
-	"github.com/wa-lang/wa/internal/token"
+	"wa-lang.org/wa/internal/ast"
+	"wa-lang.org/wa/internal/constant"
+	"wa-lang.org/wa/internal/token"
 )
 
 // debugging/development support
@@ -197,7 +197,7 @@ func (check *Checker) initFiles(files []*ast.File) {
 	// ifaceInfos repeatedly (due to multiple check.Files calls) because when
 	// they are recomputed, they are not used in the context of their original
 	// declaration (because those types are already type-checked, typically) and
-	// then they will get the wrong receiver types, which matters for github.com/wa-lang/wa/internal/types
+	// then they will get the wrong receiver types, which matters for wa-lang.org/wa/internal/types
 	// clients. It is also safe to not reset the interfaces cache because files
 	// added to a package cannot change (add methods to) existing interface types;
 	// they can only add new interfaces. See also the respective comment in

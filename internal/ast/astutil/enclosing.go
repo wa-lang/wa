@@ -10,8 +10,8 @@ import (
 	"fmt"
 	"sort"
 
-	"github.com/wa-lang/wa/internal/ast"
-	"github.com/wa-lang/wa/internal/token"
+	"wa-lang.org/wa/internal/ast"
+	"wa-lang.org/wa/internal/token"
 )
 
 // PathEnclosingInterval returns the node that encloses the source

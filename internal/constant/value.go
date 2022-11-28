@@ -21,7 +21,7 @@ import (
 	"sync"
 	"unicode/utf8"
 
-	"github.com/wa-lang/wa/internal/token"
+	"wa-lang.org/wa/internal/token"
 )
 
 // Kind specifies the kind of value represented by a Value.

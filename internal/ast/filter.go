@@ -7,7 +7,7 @@ package ast
 import (
 	"sort"
 
-	"github.com/wa-lang/wa/internal/token"
+	"wa-lang.org/wa/internal/token"
 )
 
 // ----------------------------------------------------------------------------

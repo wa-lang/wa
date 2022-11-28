@@ -7,7 +7,7 @@ package types
 import (
 	"fmt"
 
-	"github.com/wa-lang/wa/internal/token"
+	"wa-lang.org/wa/internal/token"
 )
 
 // A Package describes a Go package.

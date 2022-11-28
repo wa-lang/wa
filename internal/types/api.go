@@ -30,9 +30,9 @@ import (
 	"bytes"
 	"fmt"
 
-	"github.com/wa-lang/wa/internal/ast"
-	"github.com/wa-lang/wa/internal/constant"
-	"github.com/wa-lang/wa/internal/token"
+	"wa-lang.org/wa/internal/ast"
+	"wa-lang.org/wa/internal/constant"
+	"wa-lang.org/wa/internal/token"
 )
 
 // An Error describes a type-checking error; it implements the error interface.
@@ -69,7 +69,7 @@ type ImportMode int
 
 // An ImporterFrom resolves import paths to packages; it
 // supports vendoring per https://golang.org/s/go15vendor.
-// Use github.com/wa-lang/wa/internal/importer to obtain an ImporterFrom implementation.
+// Use wa-lang.org/wa/internal/importer to obtain an ImporterFrom implementation.
 type ImporterFrom interface {
 	// Importer is present for backward-compatibility. Calling
 	// Import(path) is the same as calling ImportFrom(path, "", 0);

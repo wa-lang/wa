@@ -13,7 +13,7 @@ import (
 	"os"
 	"strings"
 
-	"github.com/wa-lang/wa/internal/types"
+	"wa-lang.org/wa/internal/types"
 )
 
 type sanity struct {

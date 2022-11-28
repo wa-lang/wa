@@ -13,8 +13,8 @@ import (
 	"text/tabwriter"
 	"unicode"
 
-	"github.com/wa-lang/wa/internal/ast"
-	"github.com/wa-lang/wa/internal/token"
+	"wa-lang.org/wa/internal/ast"
+	"wa-lang.org/wa/internal/token"
 )
 
 const (
@@ -106,7 +106,7 @@ fn (p *printer) internalError(msg ...interface{}) {
 	if debug {
 		fmt.Print(p.pos.String() + ": ")
 		fmt.Println(msg...)
-		panic("github.com/wa-lang/wa/internal/printer")
+		panic("wa-lang.org/wa/internal/printer")
 	}
 }
 
@@ -975,7 +975,7 @@ fn (p *printer) print(args ...interface{}) {
 
 		default:
 			fmt.Fprintf(os.Stderr, "print: unsupported argument %v (%T)\n", arg, arg)
-			panic("github.com/wa-lang/wa/internal/printer type")
+			panic("wa-lang.org/wa/internal/printer type")
 		}
 		// data != ""
 
@@ -1158,7 +1158,7 @@ fn (p *printer) printNode(node interface{}) error {
 	return nil
 
 unsupported:
-	return fmt.Errorf("github.com/wa-lang/wa/internal/printer: unsupported node type %T", node)
+	return fmt.Errorf("wa-lang.org/wa/internal/printer: unsupported node type %T", node)
 }
 
 // ----------------------------------------------------------------------------

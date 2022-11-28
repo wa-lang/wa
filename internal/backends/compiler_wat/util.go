@@ -3,9 +3,9 @@
 package compiler_wat
 
 import (
-	"github.com/wa-lang/wa/internal/backends/compiler_wat/wir"
-	"github.com/wa-lang/wa/internal/ssa"
-	"github.com/wa-lang/wa/internal/types"
+	"wa-lang.org/wa/internal/backends/compiler_wat/wir"
+	"wa-lang.org/wa/internal/ssa"
+	"wa-lang.org/wa/internal/types"
 )
 
 func GetFnMangleName(v interface{}) string {

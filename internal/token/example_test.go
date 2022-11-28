@@ -7,9 +7,9 @@ package token_test
 import (
 	"fmt"
 
-	"github.com/wa-lang/wa/internal/ast"
-	"github.com/wa-lang/wa/internal/parser"
-	"github.com/wa-lang/wa/internal/token"
+	"wa-lang.org/wa/internal/ast"
+	"wa-lang.org/wa/internal/parser"
+	"wa-lang.org/wa/internal/token"
 )
 
 func _Example_retrievePositionInfo() {
@@ -19,7 +19,7 @@ func _Example_retrievePositionInfo() {
 
 import "fmt"
 
-import "github.com/wa-lang/wa/inetrnal/token"
+import "wa-lang.org/wa/inetrnal/token"
 
 //line :1:5
 type p = token.Pos

@@ -43,8 +43,8 @@ import (
 	"math/big"
 	"os"
 
-	"github.com/wa-lang/wa/internal/token"
-	"github.com/wa-lang/wa/internal/types"
+	"wa-lang.org/wa/internal/token"
+	"wa-lang.org/wa/internal/types"
 )
 
 // If true, show diagnostic information at each step of lifting.

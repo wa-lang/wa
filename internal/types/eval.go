@@ -7,9 +7,9 @@ package types
 import (
 	"fmt"
 
-	"github.com/wa-lang/wa/internal/ast"
-	"github.com/wa-lang/wa/internal/parser"
-	"github.com/wa-lang/wa/internal/token"
+	"wa-lang.org/wa/internal/ast"
+	"wa-lang.org/wa/internal/parser"
+	"wa-lang.org/wa/internal/token"
 )
 
 // Eval returns the type and, if constant, the value for the

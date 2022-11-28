@@ -8,9 +8,9 @@ package ssa
 // expressions.
 
 import (
-	"github.com/wa-lang/wa/internal/ast"
-	"github.com/wa-lang/wa/internal/token"
-	"github.com/wa-lang/wa/internal/types"
+	"wa-lang.org/wa/internal/ast"
+	"wa-lang.org/wa/internal/token"
+	"wa-lang.org/wa/internal/types"
 )
 
 // An lvalue represents an assignable location that may appear on the

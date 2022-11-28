@@ -88,12 +88,12 @@ import (
 	"sync"
 	"time"
 
-	"github.com/wa-lang/wa/internal/ast"
-	"github.com/wa-lang/wa/internal/importer"
-	"github.com/wa-lang/wa/internal/parser"
-	"github.com/wa-lang/wa/internal/scanner"
-	"github.com/wa-lang/wa/internal/token"
-	"github.com/wa-lang/wa/internal/types"
+	"wa-lang.org/wa/internal/ast"
+	"wa-lang.org/wa/internal/importer"
+	"wa-lang.org/wa/internal/parser"
+	"wa-lang.org/wa/internal/scanner"
+	"wa-lang.org/wa/internal/token"
+	"wa-lang.org/wa/internal/types"
 )
 
 var (
@@ -222,7 +222,7 @@ func parseFiles(dir string, filenames []string) ([]*ast.File, error) {
 		if err != nil {
 			first = err
 			// If we have an error, some files may be nil.
-			// Remove them. (The github.com/wa-lang/wa/internal/parser always returns
+			// Remove them. (The wa-lang.org/wa/internal/parser always returns
 			// a possibly partial AST even in the presence
 			// of errors, except if the file doesn't exist
 			// in the first place, in which case it cannot

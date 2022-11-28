@@ -9,7 +9,7 @@ package typeutil
 import (
 	"sync"
 
-	"github.com/wa-lang/wa/internal/types"
+	"wa-lang.org/wa/internal/types"
 )
 
 // A MethodSetCache records the method set of each type T for which

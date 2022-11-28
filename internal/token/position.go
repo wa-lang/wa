@@ -512,7 +512,7 @@ func searchInts(a []int, x int) int {
 	//   return sort.Search(len(a), func(i int) bool { return a[i] > x }) - 1
 	//
 	// With better compiler optimizations, this may not be needed in the
-	// future, but at the moment this change improves the github.com/wa-lang/wa/internal/printer
+	// future, but at the moment this change improves the wa-lang.org/wa/internal/printer
 	// benchmark performance by ~30%. This has a direct impact on the
 	// speed of gofmt and thus seems worthwhile (2011-04-29).
 	// TODO(gri): Remove this when compilers have caught up.

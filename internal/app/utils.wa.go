@@ -7,7 +7,7 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/wa-lang/wa/internal/config"
+	"wa-lang.org/wa/internal/config"
 )
 
 func findPkgInfo(workDir string) (pkgroot, pkgpath string, err error) {

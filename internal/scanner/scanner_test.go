@@ -12,7 +12,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/wa-lang/wa/internal/token"
+	"wa-lang.org/wa/internal/token"
 )
 
 var fset = token.NewFileSet()

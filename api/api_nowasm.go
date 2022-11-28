@@ -8,8 +8,8 @@ package api
 import (
 	"os"
 
-	"github.com/wa-lang/wa/internal/app/apputil"
-	"github.com/wa-lang/wa/internal/config"
+	"wa-lang.org/wa/internal/app/apputil"
+	"wa-lang.org/wa/internal/config"
 )
 
 // 执行凹代码

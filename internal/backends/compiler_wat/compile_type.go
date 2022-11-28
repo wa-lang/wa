@@ -3,7 +3,7 @@
 package compiler_wat
 
 import (
-	"github.com/wa-lang/wa/internal/ssa"
+	"wa-lang.org/wa/internal/ssa"
 )
 
 func (p *Compiler) compileType(t *ssa.Type) {

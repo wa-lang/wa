@@ -34,10 +34,10 @@ import (
 	"os"
 	"sync"
 
-	"github.com/wa-lang/wa/internal/ast"
-	"github.com/wa-lang/wa/internal/constant"
-	"github.com/wa-lang/wa/internal/token"
-	"github.com/wa-lang/wa/internal/types"
+	"wa-lang.org/wa/internal/ast"
+	"wa-lang.org/wa/internal/constant"
+	"wa-lang.org/wa/internal/token"
+	"wa-lang.org/wa/internal/types"
 )
 
 type opaqueType struct {

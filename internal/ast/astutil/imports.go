@@ -10,8 +10,8 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/wa-lang/wa/internal/ast"
-	"github.com/wa-lang/wa/internal/token"
+	"wa-lang.org/wa/internal/ast"
+	"wa-lang.org/wa/internal/token"
 )
 
 // AddImport adds the import path to the file f, if absent.

@@ -3,7 +3,7 @@ package cir
 import (
 	"strings"
 
-	"github.com/wa-lang/wa/internal/backends/compiler_c/cir/ctypes"
+	"wa-lang.org/wa/internal/backends/compiler_c/cir/ctypes"
 )
 
 /**************************************

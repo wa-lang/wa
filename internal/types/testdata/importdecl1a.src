@@ -6,7 +6,7 @@
 
 package importdecl1
 
-import "github.com/wa-lang/wa/internal/ast"
+import "wa-lang.org/wa/internal/ast"
 import . "unsafe"
 
 var _ Pointer // use dot-imported package unsafe

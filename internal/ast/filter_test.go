@@ -2,7 +2,7 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-// To avoid a cyclic dependency with github.com/wa-lang/wa/internal/parser, this file is in a separate package.
+// To avoid a cyclic dependency with wa-lang.org/wa/internal/parser, this file is in a separate package.
 
 //go:build ignore
 // +build ignore
@@ -13,10 +13,10 @@ import (
 	"bytes"
 	"testing"
 
-	"github.com/wa-lang/wa/internal/ast"
-	"github.com/wa-lang/wa/internal/format"
-	"github.com/wa-lang/wa/internal/parser"
-	"github.com/wa-lang/wa/internal/token"
+	"wa-lang.org/wa/internal/ast"
+	"wa-lang.org/wa/internal/format"
+	"wa-lang.org/wa/internal/parser"
+	"wa-lang.org/wa/internal/token"
 )
 
 const input = `package p

@@ -10,14 +10,14 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/wa-lang/wa/internal/ast"
-	"github.com/wa-lang/wa/internal/config"
-	"github.com/wa-lang/wa/internal/logger"
-	"github.com/wa-lang/wa/internal/parser"
-	"github.com/wa-lang/wa/internal/ssa"
-	"github.com/wa-lang/wa/internal/token"
-	"github.com/wa-lang/wa/internal/types"
-	"github.com/wa-lang/wa/internal/waroot"
+	"wa-lang.org/wa/internal/ast"
+	"wa-lang.org/wa/internal/config"
+	"wa-lang.org/wa/internal/logger"
+	"wa-lang.org/wa/internal/parser"
+	"wa-lang.org/wa/internal/ssa"
+	"wa-lang.org/wa/internal/token"
+	"wa-lang.org/wa/internal/types"
+	"wa-lang.org/wa/internal/waroot"
 )
 
 type _Loader struct {

@@ -1,9 +1,9 @@
 package cir
 
 import (
-	"github.com/wa-lang/wa/internal/backends/compiler_c/cir/ctypes"
-	"github.com/wa-lang/wa/internal/logger"
-	"github.com/wa-lang/wa/internal/types"
+	"wa-lang.org/wa/internal/backends/compiler_c/cir/ctypes"
+	"wa-lang.org/wa/internal/logger"
+	"wa-lang.org/wa/internal/types"
 )
 
 func ToCType(from types.Type) ctypes.Type {

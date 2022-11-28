@@ -2,7 +2,7 @@
 
 package app
 
-import "github.com/wa-lang/wa/internal/config"
+import "wa-lang.org/wa/internal/config"
 
 // 命令行选项
 type Option struct {

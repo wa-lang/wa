@@ -7,7 +7,7 @@ import (
 
 	"github.com/tetratelabs/wazero"
 	"github.com/tetratelabs/wazero/api"
-	"github.com/wa-lang/wa/internal/config"
+	"wa-lang.org/wa/internal/config"
 )
 
 func ChromeInstantiate(ctx context.Context, rt wazero.Runtime) (api.Closer, error) {

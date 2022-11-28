@@ -11,11 +11,11 @@ import (
 	"bytes"
 	"testing"
 
-	"github.com/wa-lang/wa/internal/ast"
-	"github.com/wa-lang/wa/internal/ast/astutil"
-	"github.com/wa-lang/wa/internal/format"
-	"github.com/wa-lang/wa/internal/parser"
-	"github.com/wa-lang/wa/internal/token"
+	"wa-lang.org/wa/internal/ast"
+	"wa-lang.org/wa/internal/ast/astutil"
+	"wa-lang.org/wa/internal/format"
+	"wa-lang.org/wa/internal/parser"
+	"wa-lang.org/wa/internal/token"
 )
 
 var rewriteTests = [...]struct {

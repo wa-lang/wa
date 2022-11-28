@@ -17,8 +17,8 @@ import (
 	"log"
 	"testing"
 
-	"github.com/wa-lang/wa/internal/ast"
-	"github.com/wa-lang/wa/internal/parser"
+	"wa-lang.org/wa/internal/ast"
+	"wa-lang.org/wa/internal/parser"
 )
 
 var testfile *ast.File

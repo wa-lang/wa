@@ -9,7 +9,7 @@ import (
 	"fmt"
 	"sort"
 
-	"github.com/wa-lang/wa/internal/token"
+	"wa-lang.org/wa/internal/token"
 )
 
 type byPos []*CommentGroup

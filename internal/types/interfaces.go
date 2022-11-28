@@ -8,8 +8,8 @@ import (
 	"bytes"
 	"fmt"
 
-	"github.com/wa-lang/wa/internal/ast"
-	"github.com/wa-lang/wa/internal/token"
+	"wa-lang.org/wa/internal/ast"
+	"wa-lang.org/wa/internal/token"
 )
 
 // This file implements the collection of an interface's methods
@@ -342,7 +342,7 @@ typenameLoop:
 			// be in the check.interfaces cache as well, which will be hit when we
 			// call infoFromTypeLit below, and which will be faster. It is important
 			// that we use that previously computed interface because its methods
-			// have the correct receiver type (for github.com/wa-lang/wa/internal/types clients). Thus, the
+			// have the correct receiver type (for wa-lang.org/wa/internal/types clients). Thus, the
 			// check.interfaces cache must be up-to-date across even across multiple
 			// check.Files calls (was bug - see issue #29029).
 			return check.infoFromTypeLit(decl.file, typ, tname, path)

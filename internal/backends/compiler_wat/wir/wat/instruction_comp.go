@@ -2,7 +2,7 @@
 
 package wat
 
-import "github.com/wa-lang/wa/internal/logger"
+import "wa-lang.org/wa/internal/logger"
 
 /**************************************
 instEqz:

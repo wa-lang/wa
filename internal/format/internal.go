@@ -13,10 +13,10 @@ import (
 	"bytes"
 	"strings"
 
-	"github.com/wa-lang/wa/internal/ast"
-	"github.com/wa-lang/wa/internal/parser"
-	"github.com/wa-lang/wa/internal/printer"
-	"github.com/wa-lang/wa/internal/token"
+	"wa-lang.org/wa/internal/ast"
+	"wa-lang.org/wa/internal/parser"
+	"wa-lang.org/wa/internal/printer"
+	"wa-lang.org/wa/internal/token"
 )
 
 type sourceType int

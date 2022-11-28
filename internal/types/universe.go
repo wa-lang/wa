@@ -9,8 +9,8 @@ package types
 import (
 	"strings"
 
-	"github.com/wa-lang/wa/internal/constant"
-	"github.com/wa-lang/wa/internal/token"
+	"wa-lang.org/wa/internal/constant"
+	"wa-lang.org/wa/internal/token"
 )
 
 // The Universe scope contains all predeclared objects of Go.

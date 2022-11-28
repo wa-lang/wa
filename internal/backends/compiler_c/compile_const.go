@@ -5,7 +5,7 @@ package compiler_c
 import (
 	"fmt"
 
-	"github.com/wa-lang/wa/internal/ssa"
+	"wa-lang.org/wa/internal/ssa"
 )
 
 func (p *CompilerC) compileConst(c *ssa.NamedConst) {

@@ -7,8 +7,8 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/wa-lang/wa/internal/loader"
-	"github.com/wa-lang/wa/internal/ssa"
+	"wa-lang.org/wa/internal/loader"
+	"wa-lang.org/wa/internal/ssa"
 )
 
 type FmtStr struct {

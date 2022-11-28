@@ -26,7 +26,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/wa-lang/wa/internal/types"
+	"wa-lang.org/wa/internal/types"
 )
 
 // A Path is an opaque name that identifies a types.Object

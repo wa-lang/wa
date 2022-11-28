@@ -2,7 +2,7 @@
 
 package wir
 
-import "github.com/wa-lang/wa/internal/backends/compiler_wat/wir/wat"
+import "wa-lang.org/wa/internal/backends/compiler_wat/wir/wat"
 
 func SetCurrentModule(m *Module) { currentModule = m }
 

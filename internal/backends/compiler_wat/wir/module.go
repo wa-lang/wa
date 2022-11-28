@@ -3,8 +3,8 @@ package wir
 import (
 	"strconv"
 
-	"github.com/wa-lang/wa/internal/backends/compiler_wat/wir/wat"
-	"github.com/wa-lang/wa/internal/ssa"
+	"wa-lang.org/wa/internal/backends/compiler_wat/wir/wat"
+	"wa-lang.org/wa/internal/ssa"
 )
 
 /**************************************

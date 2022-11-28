@@ -8,7 +8,7 @@ import (
 	"sort"
 	"strconv"
 
-	"github.com/wa-lang/wa/internal/token"
+	"wa-lang.org/wa/internal/token"
 )
 
 // SortImports sorts runs of consecutive import lines in import blocks in f.

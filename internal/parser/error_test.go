@@ -30,8 +30,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/wa-lang/wa/internal/scanner"
-	"github.com/wa-lang/wa/internal/token"
+	"wa-lang.org/wa/internal/scanner"
+	"wa-lang.org/wa/internal/token"
 )
 
 const testdata = "testdata"

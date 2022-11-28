@@ -5,7 +5,7 @@ package main
 import (
 	"syscall/js"
 
-	"github.com/wa-lang/wa/api"
+	"wa-lang.org/wa/api"
 )
 
 func main() {

@@ -35,7 +35,7 @@ package inspector
 // and found to degrade performance significantly (30%).
 
 import (
-	"github.com/wa-lang/wa/internal/ast"
+	"wa-lang.org/wa/internal/ast"
 )
 
 // An Inspector provides methods for inspecting

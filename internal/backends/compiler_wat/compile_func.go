@@ -6,14 +6,14 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/wa-lang/wa/internal/constant"
-	"github.com/wa-lang/wa/internal/token"
-	"github.com/wa-lang/wa/internal/types"
+	"wa-lang.org/wa/internal/constant"
+	"wa-lang.org/wa/internal/token"
+	"wa-lang.org/wa/internal/types"
 
-	"github.com/wa-lang/wa/internal/backends/compiler_wat/wir"
-	"github.com/wa-lang/wa/internal/backends/compiler_wat/wir/wat"
-	"github.com/wa-lang/wa/internal/logger"
-	"github.com/wa-lang/wa/internal/ssa"
+	"wa-lang.org/wa/internal/backends/compiler_wat/wir"
+	"wa-lang.org/wa/internal/backends/compiler_wat/wir/wat"
+	"wa-lang.org/wa/internal/logger"
+	"wa-lang.org/wa/internal/ssa"
 )
 
 type valueWrap struct {

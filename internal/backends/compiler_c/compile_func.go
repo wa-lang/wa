@@ -5,14 +5,14 @@ package compiler_c
 import (
 	"strconv"
 
-	"github.com/wa-lang/wa/internal/backends/compiler_c/cir"
-	"github.com/wa-lang/wa/internal/backends/compiler_c/cir/cconstant"
-	"github.com/wa-lang/wa/internal/backends/compiler_c/cir/ctypes"
-	"github.com/wa-lang/wa/internal/constant"
-	"github.com/wa-lang/wa/internal/logger"
-	"github.com/wa-lang/wa/internal/ssa"
-	"github.com/wa-lang/wa/internal/token"
-	"github.com/wa-lang/wa/internal/types"
+	"wa-lang.org/wa/internal/backends/compiler_c/cir"
+	"wa-lang.org/wa/internal/backends/compiler_c/cir/cconstant"
+	"wa-lang.org/wa/internal/backends/compiler_c/cir/ctypes"
+	"wa-lang.org/wa/internal/constant"
+	"wa-lang.org/wa/internal/logger"
+	"wa-lang.org/wa/internal/ssa"
+	"wa-lang.org/wa/internal/token"
+	"wa-lang.org/wa/internal/types"
 )
 
 type functionGenerator struct {

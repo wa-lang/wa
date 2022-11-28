@@ -6,7 +6,7 @@
 
 package types
 
-import "github.com/wa-lang/wa/internal/constant"
+import "wa-lang.org/wa/internal/constant"
 
 // Conversion type-checks the conversion T(x).
 // The result is in x.

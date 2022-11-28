@@ -5,7 +5,7 @@ package api_test
 import (
 	"fmt"
 
-	"github.com/wa-lang/wa/api"
+	"wa-lang.org/wa/api"
 )
 
 func ExampleFormatCode() {

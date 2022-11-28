@@ -12,7 +12,7 @@ import (
 	"os"
 	"reflect"
 
-	"github.com/wa-lang/wa/internal/token"
+	"wa-lang.org/wa/internal/token"
 )
 
 // A FieldFilter may be provided to Fprint to control the output.

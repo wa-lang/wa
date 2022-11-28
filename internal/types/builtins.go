@@ -7,9 +7,9 @@
 package types
 
 import (
-	"github.com/wa-lang/wa/internal/ast"
-	"github.com/wa-lang/wa/internal/constant"
-	"github.com/wa-lang/wa/internal/token"
+	"wa-lang.org/wa/internal/ast"
+	"wa-lang.org/wa/internal/constant"
+	"wa-lang.org/wa/internal/token"
 )
 
 // builtin type-checks a call to the built-in specified by id and
@@ -578,7 +578,7 @@ func (check *Checker) builtin(x *operand, call *ast.CallExpr, id builtinId) (_ b
 			// TODO(gri) Using derefStructPtr may result in methods being found
 			// that don't actually exist. An error either way, but the error
 			// message is confusing. See: https://play.golang.org/p/al75v23kUy ,
-			// but github.com/wa-lang/wa/internal/types reports: "invalid argument: x.m is a method value".
+			// but wa-lang.org/wa/internal/types reports: "invalid argument: x.m is a method value".
 			check.invalidArg(arg0.Pos(), "%s is a method value", arg0)
 			return
 		}

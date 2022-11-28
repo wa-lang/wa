@@ -9,7 +9,7 @@ package types
 import (
 	"bytes"
 
-	"github.com/wa-lang/wa/internal/ast"
+	"wa-lang.org/wa/internal/ast"
 )
 
 // ExprString returns the (possibly shortened) string representation for x.

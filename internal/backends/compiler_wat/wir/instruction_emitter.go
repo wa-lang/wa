@@ -5,8 +5,8 @@ package wir
 import (
 	"strconv"
 
-	"github.com/wa-lang/wa/internal/backends/compiler_wat/wir/wat"
-	"github.com/wa-lang/wa/internal/logger"
+	"wa-lang.org/wa/internal/backends/compiler_wat/wir/wat"
+	"wa-lang.org/wa/internal/logger"
 )
 
 func EmitAssginValue(lh, rh Value) []wat.Inst {

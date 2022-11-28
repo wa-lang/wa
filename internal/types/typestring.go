@@ -53,7 +53,7 @@ func RelativeTo(pkg *Package) Qualifier {
 // It is only provided for testing in conjunction with
 // gc-generated data.
 //
-// This flag is exported in the x/tools/github.com/wa-lang/wa/internal/types package. We don't
+// This flag is exported in the x/tools/wa-lang.org/wa/internal/types package. We don't
 // need it at the moment in the std repo and so we don't export it
 // anymore. We should eventually try to remove it altogether.
 // TODO(gri) remove this

@@ -22,9 +22,9 @@ import (
 	"strings"
 	"unicode"
 
-	"github.com/wa-lang/wa/internal/ast"
-	"github.com/wa-lang/wa/internal/scanner"
-	"github.com/wa-lang/wa/internal/token"
+	"wa-lang.org/wa/internal/ast"
+	"wa-lang.org/wa/internal/scanner"
+	"wa-lang.org/wa/internal/token"
 )
 
 // The parser structure holds the parser's internal state.
@@ -443,7 +443,7 @@ func (p *parser) atComma(context string, follow token.Token) bool {
 
 func assert(cond bool, msg string) {
 	if !cond {
-		panic("github.com/wa-lang/wa/internal/parser internal error: " + msg)
+		panic("wa-lang.org/wa/internal/parser internal error: " + msg)
 	}
 }
 
@@ -2202,7 +2202,7 @@ type parseSpecFunction func(doc *ast.CommentGroup, keyword token.Token, iota int
 
 func isValidImport(lit string) bool {
 	const illegalChars = `!"#$%&'()*,:;<=>?[\]^{|}` + "`\uFFFD"
-	s, _ := strconv.Unquote(lit) // github.com/wa-lang/wa/internal/scanner returns a legal string literal
+	s, _ := strconv.Unquote(lit) // wa-lang.org/wa/internal/scanner returns a legal string literal
 	for _, r := range s {
 		if !unicode.IsGraphic(r) || unicode.IsSpace(r) || strings.ContainsRune(illegalChars, r) {
 			return false

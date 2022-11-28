@@ -7,9 +7,9 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/wa-lang/wa/internal/constant"
-	"github.com/wa-lang/wa/internal/ssa"
-	"github.com/wa-lang/wa/internal/types"
+	"wa-lang.org/wa/internal/constant"
+	"wa-lang.org/wa/internal/ssa"
+	"wa-lang.org/wa/internal/types"
 )
 
 func getArch(arch string) string {

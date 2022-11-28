@@ -14,8 +14,8 @@ import (
 	"reflect"
 	"sort"
 
-	"github.com/wa-lang/wa/internal/types"
-	"github.com/wa-lang/wa/internal/types/typeutil"
+	"wa-lang.org/wa/internal/types"
+	"wa-lang.org/wa/internal/types/typeutil"
 )
 
 // relName returns the name of v relative to i.

@@ -7,8 +7,8 @@ import (
 	"fmt"
 	"math/rand"
 
-	"github.com/wa-lang/wa/internal/ssa"
-	"github.com/wa-lang/wa/internal/types"
+	"wa-lang.org/wa/internal/ssa"
+	"wa-lang.org/wa/internal/types"
 )
 
 func (p *Compiler) compileFunction(fn *ssa.Function, extraArgs []Argument) error {

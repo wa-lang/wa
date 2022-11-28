@@ -5,7 +5,7 @@ package astutil
 import (
 	"strings"
 
-	"github.com/wa-lang/wa/internal/ast"
+	"wa-lang.org/wa/internal/ast"
 )
 
 // 注释中的指令

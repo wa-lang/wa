@@ -3,8 +3,8 @@
 package compiler_wat
 
 import (
-	"github.com/wa-lang/wa/internal/ast"
-	"github.com/wa-lang/wa/internal/loader"
+	"wa-lang.org/wa/internal/ast"
+	"wa-lang.org/wa/internal/loader"
 )
 
 const (

@@ -7,8 +7,8 @@ package parser_test
 import (
 	"fmt"
 
-	"github.com/wa-lang/wa/internal/parser"
-	"github.com/wa-lang/wa/internal/token"
+	"wa-lang.org/wa/internal/parser"
+	"wa-lang.org/wa/internal/token"
 )
 
 func ExampleParseFile() {

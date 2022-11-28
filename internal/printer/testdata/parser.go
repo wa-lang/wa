@@ -12,11 +12,11 @@ package parser
 import (
 	"fmt"
 
-	"github.com/wa-lang/wa/internal/scanner"
+	"wa-lang.org/wa/internal/scanner"
 
-	"github.com/wa-lang/wa/internal/ast"
+	"wa-lang.org/wa/internal/ast"
 
-	"github.com/wa-lang/wa/internal/token"
+	"wa-lang.org/wa/internal/token"
 )
 
 // The mode parameter to the Parse* functions is a set of flags (or 0).
@@ -379,7 +379,7 @@ func (p *parser) expectSemi() {
 
 func assert(cond bool, msg string) {
 	if !cond {
-		panic("github.com/wa-lang/wa/internal/parser internal error: " + msg)
+		panic("wa-lang.org/wa/internal/parser internal error: " + msg)
 	}
 }
 

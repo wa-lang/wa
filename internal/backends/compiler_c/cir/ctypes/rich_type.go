@@ -3,7 +3,7 @@ package ctypes
 import (
 	"strconv"
 
-	"github.com/wa-lang/wa/internal/logger"
+	"wa-lang.org/wa/internal/logger"
 )
 
 /**************************************

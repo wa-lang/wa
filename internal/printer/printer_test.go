@@ -18,9 +18,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/wa-lang/wa/internal/ast"
-	"github.com/wa-lang/wa/internal/parser"
-	"github.com/wa-lang/wa/internal/token"
+	"wa-lang.org/wa/internal/ast"
+	"wa-lang.org/wa/internal/parser"
+	"wa-lang.org/wa/internal/token"
 )
 
 const (
@@ -379,7 +379,7 @@ func identCount(f *ast.File) int {
 func TestSourcePos(t *testing.T) {
 	const src = `
 package p
-import ( "github.com/wa-lang/wa/internal/printer"; "math" )
+import ( "wa-lang.org/wa/internal/printer"; "math" )
 const pi = 3.14; var x = 0
 type t struct{ x, y, z int; u, v, w float32 }
 fn (t *t) foo(a, b, c int) int {
@@ -589,7 +589,7 @@ func TestBaseIndent(t *testing.T) {
 }
 
 // TestFuncType tests that an ast.FuncType with a nil Params field
-// can be printed (per github.com/wa-lang/wa/internal/ast specification). Test case for issue 3870.
+// can be printed (per wa-lang.org/wa/internal/ast specification). Test case for issue 3870.
 func TestFuncType(t *testing.T) {
 	src := &ast.File{
 		Name: &ast.Ident{Name: "p"},

@@ -10,9 +10,9 @@ import (
 	"sort"
 	"strconv"
 
-	"github.com/wa-lang/wa/internal/ast"
-	"github.com/wa-lang/wa/internal/constant"
-	"github.com/wa-lang/wa/internal/token"
+	"wa-lang.org/wa/internal/ast"
+	"wa-lang.org/wa/internal/constant"
+	"wa-lang.org/wa/internal/token"
 )
 
 // ident type-checks identifier e and initializes x with the value or type of e.
@@ -567,7 +567,7 @@ func (check *Checker) interfaceType(ityp *Interface, iface *ast.InterfaceType, d
 			// declared the methods. This doesn't matter for type-
 			// checking (we only care about the receiver type for
 			// the ptrRecv predicate, and it's never a pointer recv
-			// for interfaces), but it matters for github.com/wa-lang/wa/internal/types clients
+			// for interfaces), but it matters for wa-lang.org/wa/internal/types clients
 			// and for printing. We correct the receiver after type-
 			// checking.
 			//

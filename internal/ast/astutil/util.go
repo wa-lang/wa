@@ -4,7 +4,7 @@
 
 package astutil
 
-import "github.com/wa-lang/wa/internal/ast"
+import "wa-lang.org/wa/internal/ast"
 
 // Unparen returns e with any enclosing parentheses stripped.
 func Unparen(e ast.Expr) ast.Expr {

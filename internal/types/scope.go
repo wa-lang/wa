@@ -13,7 +13,7 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/wa-lang/wa/internal/token"
+	"wa-lang.org/wa/internal/token"
 )
 
 // A Scope maintains a set of objects and links to its containing

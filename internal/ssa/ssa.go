@@ -11,12 +11,12 @@ import (
 	"fmt"
 	"sync"
 
-	"github.com/wa-lang/wa/internal/ast"
-	"github.com/wa-lang/wa/internal/ast/astutil"
-	"github.com/wa-lang/wa/internal/constant"
-	"github.com/wa-lang/wa/internal/token"
-	"github.com/wa-lang/wa/internal/types"
-	"github.com/wa-lang/wa/internal/types/typeutil"
+	"wa-lang.org/wa/internal/ast"
+	"wa-lang.org/wa/internal/ast/astutil"
+	"wa-lang.org/wa/internal/constant"
+	"wa-lang.org/wa/internal/token"
+	"wa-lang.org/wa/internal/types"
+	"wa-lang.org/wa/internal/types/typeutil"
 )
 
 // A Program is a partial or complete Go program converted to SSA form.

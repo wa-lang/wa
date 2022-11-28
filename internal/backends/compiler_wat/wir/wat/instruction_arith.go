@@ -3,7 +3,7 @@
 package wat
 
 import (
-	"github.com/wa-lang/wa/internal/logger"
+	"wa-lang.org/wa/internal/logger"
 )
 
 type anInstruction struct {

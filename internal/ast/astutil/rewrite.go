@@ -9,7 +9,7 @@ import (
 	"reflect"
 	"sort"
 
-	"github.com/wa-lang/wa/internal/ast"
+	"wa-lang.org/wa/internal/ast"
 )
 
 // An ApplyFunc is invoked by Apply for each node n, even if n is nil,

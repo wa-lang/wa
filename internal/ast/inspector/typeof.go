@@ -9,7 +9,7 @@ package inspector
 // The initial map-based implementation was too slow;
 // see https://go-review.googlesource.com/c/tools/+/135655/1/go/ast/inspector/inspector.go#196
 
-import "github.com/wa-lang/wa/internal/ast"
+import "wa-lang.org/wa/internal/ast"
 
 const (
 	nArrayType = iota

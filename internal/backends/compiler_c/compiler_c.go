@@ -3,8 +3,8 @@
 package compiler_c
 
 import (
-	"github.com/wa-lang/wa/internal/backends/compiler_c/cir"
-	"github.com/wa-lang/wa/internal/ssa"
+	"wa-lang.org/wa/internal/backends/compiler_c/cir"
+	"wa-lang.org/wa/internal/ssa"
 )
 
 type CompilerC struct {

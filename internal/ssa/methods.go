@@ -9,7 +9,7 @@ package ssa
 import (
 	"fmt"
 
-	"github.com/wa-lang/wa/internal/types"
+	"wa-lang.org/wa/internal/types"
 )
 
 // MethodValue returns the Function implementing method sel, building

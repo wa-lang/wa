@@ -13,10 +13,10 @@ import (
 	"strconv"
 	"testing"
 
-	"github.com/wa-lang/wa/internal/ast"
-	"github.com/wa-lang/wa/internal/format"
-	"github.com/wa-lang/wa/internal/parser"
-	"github.com/wa-lang/wa/internal/token"
+	"wa-lang.org/wa/internal/ast"
+	"wa-lang.org/wa/internal/format"
+	"wa-lang.org/wa/internal/parser"
+	"wa-lang.org/wa/internal/token"
 )
 
 var fset = token.NewFileSet()
@@ -1052,7 +1052,7 @@ import (
 	"os"
 	"utf8"
 
-	"github.com/wa-lang/wa/internal/format"
+	"wa-lang.org/wa/internal/format"
 )
 `,
 		out: `package main
@@ -1063,7 +1063,7 @@ import (
 	"os"
 	"utf8"
 
-	"github.com/wa-lang/wa/internal/format"
+	"wa-lang.org/wa/internal/format"
 )
 `,
 	},
@@ -1079,7 +1079,7 @@ import (
 	"os"   // c
 	"utf8" // d
 
-	"github.com/wa-lang/wa/internal/format" // e
+	"wa-lang.org/wa/internal/format" // e
 )
 `,
 		out: `package main
@@ -1091,7 +1091,7 @@ import (
 	"os"   // c
 	"utf8" // d
 
-	"github.com/wa-lang/wa/internal/format" // e
+	"wa-lang.org/wa/internal/format" // e
 )
 `,
 	},

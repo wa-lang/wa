@@ -11,9 +11,9 @@ import (
 	"strings"
 	"testing/fstest"
 
-	"github.com/wa-lang/wa/internal/config"
-	"github.com/wa-lang/wa/internal/logger"
-	"github.com/wa-lang/wa/internal/waroot"
+	"wa-lang.org/wa/internal/config"
+	"wa-lang.org/wa/internal/logger"
+	"wa-lang.org/wa/internal/waroot"
 )
 
 // 根据路径加载需要的 vfs 和 manifest

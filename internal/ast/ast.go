@@ -10,7 +10,7 @@ package ast
 import (
 	"strings"
 
-	"github.com/wa-lang/wa/internal/token"
+	"wa-lang.org/wa/internal/token"
 )
 
 // ----------------------------------------------------------------------------
@@ -921,7 +921,7 @@ func (*FuncDecl) declNode() {}
 // via Doc and Comment fields.
 //
 // For correct printing of source code containing comments (using packages
-// github.com/wa-lang/wa/internal/format and github.com/wa-lang/wa/internal/printer), special care must be taken to update comments
+// wa-lang.org/wa/internal/format and wa-lang.org/wa/internal/printer), special care must be taken to update comments
 // when a File's syntax tree is modified: For printing, comments are interspersed
 // between tokens based on their position. If syntax tree nodes are
 // removed or moved, relevant comments in their vicinity must also be removed

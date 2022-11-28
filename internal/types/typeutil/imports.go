@@ -4,7 +4,7 @@
 
 package typeutil
 
-import "github.com/wa-lang/wa/internal/types"
+import "wa-lang.org/wa/internal/types"
 
 // Dependencies returns all dependencies of the specified packages.
 //

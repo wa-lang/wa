@@ -6,11 +6,11 @@ package api
 import (
 	"io/fs"
 
-	"github.com/wa-lang/wa/internal/backends/compiler_wat"
-	"github.com/wa-lang/wa/internal/config"
-	"github.com/wa-lang/wa/internal/format"
-	"github.com/wa-lang/wa/internal/loader"
-	"github.com/wa-lang/wa/internal/logger"
+	"wa-lang.org/wa/internal/backends/compiler_wat"
+	"wa-lang.org/wa/internal/config"
+	"wa-lang.org/wa/internal/format"
+	"wa-lang.org/wa/internal/loader"
+	"wa-lang.org/wa/internal/logger"
 )
 
 // 调试参数

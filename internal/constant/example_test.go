@@ -9,8 +9,8 @@ import (
 	"math"
 	"sort"
 
-	"github.com/wa-lang/wa/internal/constant"
-	"github.com/wa-lang/wa/internal/token"
+	"wa-lang.org/wa/internal/constant"
+	"wa-lang.org/wa/internal/token"
 )
 
 func Example_complexNumbers() {
@@ -35,14 +35,14 @@ func Example_complexNumbers() {
 	C := complex(Ar, Ai)
 
 	fmt.Println("literal", 25.3+55i)
-	fmt.Println("github.com/wa-lang/wa/internal/constant", c)
+	fmt.Println("wa-lang.org/wa/internal/constant", c)
 	fmt.Println("complex128", C)
 
 	// Output:
 	//
 	// Could not represent real part 25.3 exactly as float64
 	// literal (25.3+55i)
-	// github.com/wa-lang/wa/internal/constant (25.3 + 55i)
+	// wa-lang.org/wa/internal/constant (25.3 + 55i)
 	// complex128 (25.299999999999997+55i)
 }
 

@@ -14,7 +14,7 @@ import (
 	"io/ioutil"
 	"testing"
 
-	"github.com/wa-lang/wa/internal/format"
+	"wa-lang.org/wa/internal/format"
 )
 
 var debug = flag.Bool("debug", false, "write .src files containing formatting input; for debugging")

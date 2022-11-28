@@ -118,7 +118,7 @@ package main
 
 import (
 	"fmt"
-	"github.com/wa-lang/wa/api"
+	"wa-lang.org/wa/api"
 )
 
 func main() {

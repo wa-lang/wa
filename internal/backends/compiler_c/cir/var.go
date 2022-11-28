@@ -1,6 +1,6 @@
 package cir
 
-import "github.com/wa-lang/wa/internal/backends/compiler_c/cir/ctypes"
+import "wa-lang.org/wa/internal/backends/compiler_c/cir/ctypes"
 
 /**************************************
 Var:
