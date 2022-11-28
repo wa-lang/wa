@@ -1,18 +1,30 @@
 # Test the llvm backend.
 # Test anonymous functions and closure functions.
 
+type pair struct {
+	i :f32
+	j :f32
+}
+
 fn main() {
 	print("Hello, ")
 	fn() {
 		println("World!")
 	}()
 
-	var i: int
-	show := fn() {
-		println("i = ", i)
+	var i: int = 31
+	var j: [4]f32 = [4]f32{1, 2.2, 5.5, 9.8}
+	var k: pair = pair{3.14, 2.718}
+	show := fn(q: int) {
+		println(i, " + ", q, " = ", i+q)
+		println("{", j[0], ", ", j[1], ", ", j[2], ", ", j[3], "}")
+		println("{", k.i, ", ", k.j, "}")
 	}
 
-	for i = 0; i < 10; i++ {
-		show()
+	for i := int(0); i < 4; i++ {
+		j[i] += 1.0
+		k.i += 0.1
+		k.j -= 0.1
+		show(i)
 	}
 }
