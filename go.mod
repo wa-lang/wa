@@ -6,5 +6,5 @@ go 1.17
 
 require (
 	github.com/tetratelabs/wazero v1.0.0-pre.3
-	github.com/wa-lang/wabt-go v1.1.0
+	wa-lang.org/wabt-go v1.2.2
 )
