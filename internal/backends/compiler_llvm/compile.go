@@ -16,12 +16,22 @@ type FmtStr struct {
 	size int
 }
 
+type Argument struct {
+	AType string
+	AName string
+}
+
+type InnerFunc struct {
+	fn   *ssa.Function
+	args []Argument
+}
+
 type Compiler struct {
 	target string
 	output strings.Builder
 	debug  bool
 	fmts   []FmtStr
-	anofn  []*ssa.Function
+	anofn  []InnerFunc
 }
 
 func New(target string, debug bool) *Compiler {
@@ -138,18 +148,18 @@ func (p *Compiler) compilePackage(pkg *ssa.Package) error {
 
 	// Generate LLVM-IR for each global function.
 	for _, v := range fns {
-		if err := p.compileFunction(v); err != nil {
+		if err := p.compileFunction(v, []Argument{}); err != nil {
 			return err
 		}
 	}
 
 	// Generate LLVM-IR for each internal function.
 	for _, v := range p.anofn {
-		if err := p.compileFunction(v); err != nil {
+		if err := p.compileFunction(v.fn, v.args); err != nil {
 			return err
 		}
 	}
-	p.anofn = []*ssa.Function{}
+	p.anofn = []InnerFunc{}
 
 	return nil
 }

@@ -114,6 +114,10 @@ func (p *Compiler) compileValue(val ssa.Value) error {
 		p.output.WriteString(fmt.Sprintf("%d", val.Index))
 		p.output.WriteString("\n")
 
+	case *ssa.MakeClosure:
+		// We postpone the process of closure functions to the fist call of them.
+		break
+
 	default:
 		p.output.WriteString("  ; " + val.Name() + " = " + val.String() + "\n")
 		// panic("unsupported Value '" + val.Name() + " = " + val.String() + "'")
@@ -359,7 +363,7 @@ func (p *Compiler) compileBinOp(val *ssa.BinOp) error {
 
 func (p *Compiler) compileCall(val *ssa.Call) error {
 	switch val.Call.Value.(type) {
-	case *ssa.Function:
+	case *ssa.Function, *ssa.MakeClosure:
 		// Special process for float32 constants.
 		paf32 := map[int]string{}
 		for i, v := range val.Call.Args {
@@ -389,16 +393,42 @@ func (p *Compiler) compileCall(val *ssa.Call) error {
 		callee := val.Call.StaticCallee()
 		// This callee is an internal function, whose body will be genereated later.
 		if callee.Parent() != nil {
-			p.anofn = append(p.anofn, callee)
+			found := false
+			for _, f := range p.anofn {
+				if f.fn == callee {
+					found = true
+				}
+			}
+			if !found {
+				inner := InnerFunc{callee, []Argument{}}
+				// Collect all binded values for closure functions, then emit them as implicit arguments.
+				if cl, ok := val.Call.Value.(*ssa.MakeClosure); ok {
+					for _, v := range cl.Bindings {
+						if al, ok := v.(*ssa.Alloc); ok {
+							arg := Argument{getTypeStr(v.Type(), p.target), "%" + al.Comment}
+							inner.args = append(inner.args, arg)
+						}
+					}
+				}
+				p.anofn = append(p.anofn, inner)
+			}
 		}
+		// Emit link name for external functions.
 		if len(callee.LinkName()) > 0 {
 			p.output.WriteString(callee.LinkName())
 		} else {
 			p.output.WriteString(getNormalName(callee.Pkg.Pkg.Path() + "." + callee.Name()))
 		}
 		p.output.WriteString("(")
+		// Collect all binded values for closure functions, then pass them as implicit parameters.
+		params := val.Call.Args[0:]
+		if cl, ok := val.Call.Value.(*ssa.MakeClosure); ok {
+			for _, v := range cl.Bindings {
+				params = append(params, v)
+			}
+		}
 		// Emit parameters.
-		for i, v := range val.Call.Args {
+		for i, v := range params {
 			ty := getRealType(v.Type())
 			tyStr := getTypeStr(ty, p.target)
 			switch ty.(type) {
@@ -414,7 +444,7 @@ func (p *Compiler) compileCall(val *ssa.Call) error {
 			} else {
 				p.output.WriteString(getValueStr(v))
 			}
-			if i < len(val.Call.Args)-1 {
+			if i < len(params)-1 {
 				p.output.WriteString(", ")
 			}
 		}
