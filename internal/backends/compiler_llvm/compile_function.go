@@ -11,7 +11,7 @@ import (
 	"github.com/wa-lang/wa/internal/types"
 )
 
-func (p *Compiler) compileFunction(fn *ssa.Function) error {
+func (p *Compiler) compileFunction(fn *ssa.Function, extraArgs []Argument) error {
 	if isTargetBuiltin(fn.LinkName(), p.target) || isTargetBuiltin(fn.Name(), p.target) {
 		return nil
 	}
@@ -82,6 +82,14 @@ func (p *Compiler) compileFunction(fn *ssa.Function) error {
 			p.output.WriteString(", ")
 		}
 	}
+	// Emit binded values as extra arguments for closure functions.
+	for _, v := range extraArgs {
+		p.output.WriteString(", ")
+		p.output.WriteString(v.AType)
+		p.output.WriteString(" ")
+		p.output.WriteString(v.AName)
+	}
+	// Finish emitting function header.
 	if len(fn.Blocks) == 0 {
 		p.output.WriteString(")\n\n")
 		return nil
