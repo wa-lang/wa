@@ -8,45 +8,63 @@ import (
 	"wa-lang.org/wa/internal/types"
 )
 
-func GetFnMangleName(v interface{}) string {
-	var name string
-
+func GetFnMangleName(v interface{}) (internal string, external string) {
 	switch f := v.(type) {
 	case *ssa.Function:
-		name = wir.GetPkgMangleName(f.Pkg.Pkg.Path())
+		internal, external = wir.GetPkgMangleName(f.Pkg.Pkg.Path())
 		if recv := f.Signature.Recv(); recv != nil {
+			internal += "."
+			external += "."
 			switch rt := recv.Type().(type) {
 			case *types.Named:
-				name += rt.Obj().Name()
+				internal += wir.GenSymbolName(rt.Obj().Name())
+				external += rt.Obj().Name()
+
 			case *types.Pointer:
 				btype, ok := rt.Elem().(*types.Named)
 				if !ok {
 					panic("Unreachable")
 				}
-				name += btype.Obj().Name()
+				internal += wir.GenSymbolName(btype.Obj().Name())
+				external += btype.Obj().Name()
+
+			default:
+				panic("Unreachable")
 			}
-			name += "."
 		}
-		name += f.Name()
+		internal += "."
+		external += "."
+		internal += wir.GenSymbolName(f.Name())
+		external += f.Name()
 
 	case *types.Func:
-		name = wir.GetPkgMangleName(f.Pkg().Path())
+		internal, external = wir.GetPkgMangleName(f.Pkg().Path())
 		sig := f.Type().(*types.Signature)
 		if recv := sig.Recv(); recv != nil {
+			internal += "."
+			external += "."
 			switch rt := recv.Type().(type) {
 			case *types.Named:
-				name += rt.Obj().Name()
+				internal += wir.GenSymbolName(rt.Obj().Name())
+				external += rt.Obj().Name()
+
 			case *types.Pointer:
 				btype, ok := rt.Elem().(*types.Named)
 				if !ok {
 					panic("Unreachable")
 				}
-				name += btype.Obj().Name()
+				internal += wir.GenSymbolName(btype.Obj().Name())
+				external += btype.Obj().Name()
+
+			default:
+				panic("Unreachable")
 			}
-			name += "."
 		}
-		name += f.Name()
+		internal += "."
+		external += "."
+		internal += wir.GenSymbolName(f.Name())
+		external += f.Name()
 	}
 
-	return name
+	return internal, external
 }

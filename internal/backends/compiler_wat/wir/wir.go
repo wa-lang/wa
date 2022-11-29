@@ -12,10 +12,11 @@ var currentModule *Module
 Function:
 **************************************/
 type Function struct {
-	Name    string
-	Results []ValueType
-	Params  []Value
-	Locals  []Value
+	InternalName string
+	ExternalName string
+	Results      []ValueType
+	Params       []Value
+	Locals       []Value
 
 	Insts []wat.Inst
 }

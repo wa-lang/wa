@@ -108,9 +108,9 @@ func (m *Module) findFunc(fn_name string) *Function {
 }
 
 func (m *Module) AddFunc(f *Function) {
-	if m.findFunc(f.Name) == nil {
+	if m.findFunc(f.InternalName) == nil {
 		m.funcs = append(m.funcs, f)
-		m.funcs_map[f.Name] = f
+		m.funcs_map[f.InternalName] = f
 	}
 }
 
@@ -140,7 +140,7 @@ func (m *Module) AddDataSeg(data []byte) (ptr int) {
 
 func (m *Module) genGlobalAlloc() *Function {
 	var f Function
-	f.Name = "$waGlobalAlloc"
+	f.InternalName = "$waGlobalAlloc"
 
 	for _, g := range m.globals {
 		if g.Kind() != ValueKindGlobal_Pointer {

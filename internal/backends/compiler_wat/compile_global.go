@@ -12,10 +12,11 @@ func (p *Compiler) compileGlobal(g *ssa.Global) {
 	if len(g.LinkName()) > 0 {
 		p.module.AddGlobal(g.LinkName(), wir.ToWType(g.Type().(*types.Pointer).Elem()), false, g)
 	} else {
+		pkg_name, _ := wir.GetPkgMangleName(g.Pkg.Pkg.Path())
 		if g.Name() == "init$guard" {
-			p.module.AddGlobal(wir.GetPkgMangleName(g.Pkg.Pkg.Path())+g.Name(), wir.ToWType(g.Type().(*types.Pointer).Elem()), false, g)
+			p.module.AddGlobal(pkg_name+"."+g.Name(), wir.ToWType(g.Type().(*types.Pointer).Elem()), false, g)
 		} else {
-			p.module.AddGlobal(wir.GetPkgMangleName(g.Pkg.Pkg.Path())+g.Name(), wir.NewPointer(wir.ToWType(g.Type().(*types.Pointer).Elem())), true, g)
+			p.module.AddGlobal(pkg_name+"."+wir.GenSymbolName(g.Name()), wir.NewPointer(wir.ToWType(g.Type().(*types.Pointer).Elem())), true, g)
 		}
 	}
 	//logger.Fatal("Todo")

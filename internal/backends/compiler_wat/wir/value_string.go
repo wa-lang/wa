@@ -42,7 +42,7 @@ func (t String) genAppendStrFunc() string {
 	}
 
 	var f Function
-	f.Name = fn_name
+	f.InternalName = fn_name
 	x := newValueString("x", ValueKindLocal)
 	y := newValueString("y", ValueKindLocal)
 	f.Params = append(f.Params, x)

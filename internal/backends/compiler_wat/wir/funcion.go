@@ -7,7 +7,7 @@ import "wa-lang.org/wa/internal/backends/compiler_wat/wir/wat"
 func (f *Function) ToWatFunc() *wat.Function {
 	var wat_func wat.Function
 
-	wat_func.Name = f.Name
+	wat_func.InternalName, wat_func.ExternalName = f.InternalName, f.ExternalName
 
 	for _, r := range f.Results {
 		wat_func.Results = append(wat_func.Results, r.Raw()...)
