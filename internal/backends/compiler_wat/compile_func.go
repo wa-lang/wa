@@ -661,7 +661,7 @@ func (g *functionGenerator) genExtract(inst *ssa.Extract) ([]wat.Inst, wir.Value
 func (g *functionGenerator) genFiled(inst *ssa.Field) ([]wat.Inst, wir.ValueType) {
 	x := g.getValue(inst.X)
 	field := inst.X.Type().Underlying().(*types.Struct).Field(inst.Field)
-	fieldname := field.Name()
+	fieldname := wir.GenSymbolName(field.Name())
 	if field.Embedded() {
 		if _, ok := field.Type().(*types.Named); ok {
 			pkgname, _ := wir.GetPkgMangleName(field.Pkg().Path())
@@ -675,7 +675,7 @@ func (g *functionGenerator) genFiled(inst *ssa.Field) ([]wat.Inst, wir.ValueType
 
 func (g *functionGenerator) genFieldAddr(inst *ssa.FieldAddr) ([]wat.Inst, wir.ValueType) {
 	field := inst.X.Type().Underlying().(*types.Pointer).Elem().Underlying().(*types.Struct).Field(inst.Field)
-	fieldname := field.Name()
+	fieldname := wir.GenSymbolName(field.Name())
 	if field.Embedded() {
 		if _, ok := field.Type().(*types.Named); ok {
 			pkgname, _ := wir.GetPkgMangleName(field.Pkg().Path())
