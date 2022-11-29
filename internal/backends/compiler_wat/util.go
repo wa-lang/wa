@@ -13,10 +13,13 @@ func GetFnMangleName(v interface{}) (internal string, external string) {
 	case *ssa.Function:
 		internal, external = wir.GetPkgMangleName(f.Pkg.Pkg.Path())
 		if recv := f.Signature.Recv(); recv != nil {
+			internal += "."
+			external += "."
 			switch rt := recv.Type().(type) {
 			case *types.Named:
 				internal += wir.GenSymbolName(rt.Obj().Name())
 				external += rt.Obj().Name()
+
 			case *types.Pointer:
 				btype, ok := rt.Elem().(*types.Named)
 				if !ok {
@@ -24,6 +27,9 @@ func GetFnMangleName(v interface{}) (internal string, external string) {
 				}
 				internal += wir.GenSymbolName(btype.Obj().Name())
 				external += btype.Obj().Name()
+
+			default:
+				panic("Unreachable")
 			}
 		}
 		internal += "."
@@ -35,10 +41,13 @@ func GetFnMangleName(v interface{}) (internal string, external string) {
 		internal, external = wir.GetPkgMangleName(f.Pkg().Path())
 		sig := f.Type().(*types.Signature)
 		if recv := sig.Recv(); recv != nil {
+			internal += "."
+			external += "."
 			switch rt := recv.Type().(type) {
 			case *types.Named:
 				internal += wir.GenSymbolName(rt.Obj().Name())
 				external += rt.Obj().Name()
+
 			case *types.Pointer:
 				btype, ok := rt.Elem().(*types.Named)
 				if !ok {
@@ -46,6 +55,9 @@ func GetFnMangleName(v interface{}) (internal string, external string) {
 				}
 				internal += wir.GenSymbolName(btype.Obj().Name())
 				external += btype.Obj().Name()
+
+			default:
+				panic("Unreachable")
 			}
 		}
 		internal += "."
