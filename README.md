@@ -22,11 +22,9 @@ Instead of requiring complex toolchains to set up, you can simply go install it 
 ![](docs/images/logo/logo-animate1.svg)
 
 - Homepage: [https://wa-lang.org](https://wa-lang.org)
-- Github: [https://github.com/wa-lang/wa](https://github.com/wa-lang/wa)
-- Gitee:  [https://gitee.com/wa-lang/wa](https://gitee.com/wa-lang/wa)
-- Go Doc: [https://pkg.go.dev/github.com/wa-lang/wa](https://pkg.go.dev/github.com/wa-lang/wa)
-- Develop Tools: [Playground](https://wa-lang.org/playground), [VSCode](https://marketplace.visualstudio.com/items?itemName=xxxDeveloper.vscode-wa), [Fleet](https://github.com/wa-lang/fleet-wa), [Vim](https://github.com/wa-lang/vim-wa)
 - Core Team: [柴树杉(chai2010)](https://github.com/chai2010)、[丁尔男(Ending)](https://github.com/3dgen)、[史斌(Benshi)](https://github.com/benshi001)、[扈梦明(xxxDeveloper)](https://github.com/xxxDeveloper)、[刘云峰(leaftree)](https://github.com/leaftree)、[宋汝阳(ShiinaOrez)](https://github.com/ShiinaOrez)
+
+> Note: Our canonical Git repository is located at https://gitee.com/wa-lang/wa. There is a mirror of the repository at https://github.com/wa-lang/wa. Unless otherwise noted, the Wa source files are distributed under the AGPL-v3 license found in the LICENSE file.
 
 ## Playground
 
