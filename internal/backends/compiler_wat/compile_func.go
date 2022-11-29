@@ -139,7 +139,7 @@ func (g *functionGenerator) getValue(i ssa.Value) valueWrap {
 		return nv
 
 	case *ssa.Function:
-		fn_name := GetFnMangleName(v)
+		fn_name, _ := GetFnMangleName(v)
 		fn_sig := wir.NewFnSigFromSignature(v.Signature)
 
 		return valueWrap{value: wir.GenConstFnValue(fn_name, fn_sig)}
@@ -152,9 +152,10 @@ func (g *functionGenerator) getValue(i ssa.Value) valueWrap {
 func (g *functionGenerator) genFunction(f *ssa.Function) *wir.Function {
 	var wir_fn wir.Function
 	if len(f.LinkName()) > 0 {
-		wir_fn.Name = f.LinkName()
+		wir_fn.InternalName = f.LinkName()
+		wir_fn.ExternalName = f.LinkName()
 	} else {
-		wir_fn.Name = GetFnMangleName(f)
+		wir_fn.InternalName, wir_fn.ExternalName = GetFnMangleName(f)
 	}
 
 	rets := f.Signature.Results()
@@ -451,7 +452,8 @@ func (g *functionGenerator) genCall(inst *ssa.Call) (insts []wat.Inst, ret_type 
 		if len(callee.LinkName()) > 0 {
 			insts = append(insts, wat.NewInstCall(callee.LinkName()))
 		} else {
-			insts = append(insts, wat.NewInstCall(GetFnMangleName(callee)))
+			fn_internal_name, _ := GetFnMangleName(callee)
+			insts = append(insts, wat.NewInstCall(fn_internal_name))
 		}
 
 	case *ssa.Builtin:
@@ -662,7 +664,8 @@ func (g *functionGenerator) genFiled(inst *ssa.Field) ([]wat.Inst, wir.ValueType
 	fieldname := field.Name()
 	if field.Embedded() {
 		if _, ok := field.Type().(*types.Named); ok {
-			fieldname = wir.GetPkgMangleName(field.Pkg().Path()) + fieldname
+			pkgname, _ := wir.GetPkgMangleName(field.Pkg().Path())
+			fieldname = pkgname + "." + fieldname
 		}
 		fieldname = "$" + fieldname
 	}
@@ -675,7 +678,8 @@ func (g *functionGenerator) genFieldAddr(inst *ssa.FieldAddr) ([]wat.Inst, wir.V
 	fieldname := field.Name()
 	if field.Embedded() {
 		if _, ok := field.Type().(*types.Named); ok {
-			fieldname = wir.GetPkgMangleName(field.Pkg().Path()) + fieldname
+			pkgname, _ := wir.GetPkgMangleName(field.Pkg().Path())
+			fieldname = pkgname + "." + fieldname
 		}
 		fieldname = "$" + fieldname
 	}
@@ -772,14 +776,16 @@ func (g *functionGenerator) genMakeClosre_Anonymous(inst *ssa.MakeClosure) (inst
 			feild := wir.NewField(freevar.Name(), wir.ToWType(freevar.Type()))
 			fields = append(fields, feild)
 		}
-		st_name := GetFnMangleName(f) + ".$warpdata"
+		fn_internal_name, _ := GetFnMangleName(f)
+		st_name := fn_internal_name + ".$warpdata"
 		st_free_data = wir.NewStruct(st_name, fields)
 	}
 
 	var warp_fn_index int
 	{
 		var warp_fn wir.Function
-		warp_fn.Name = GetFnMangleName(f) + ".$warpfn"
+		fn_name, _ := GetFnMangleName(f)
+		warp_fn.InternalName = fn_name + ".$warpfn"
 		for _, i := range f.Params {
 			pa := valueWrap{value: wir.NewLocal(i.Name(), wir.ToWType(i.Type()))}
 			warp_fn.Params = append(warp_fn.Params, pa.value)
@@ -797,10 +803,10 @@ func (g *functionGenerator) genMakeClosre_Anonymous(inst *ssa.MakeClosure) (inst
 			warp_fn.Insts = append(warp_fn.Insts, i.EmitPush()...)
 		}
 
-		warp_fn.Insts = append(warp_fn.Insts, wat.NewInstCall(GetFnMangleName(f)))
+		warp_fn.Insts = append(warp_fn.Insts, wat.NewInstCall(fn_name))
 
 		g.module.AddFunc(&warp_fn)
-		warp_fn_index = g.module.AddTableElem(warp_fn.Name)
+		warp_fn_index = g.module.AddTableElem(warp_fn.InternalName)
 	}
 
 	closure := g.addRegister(wir.NewClosure(wir.NewFnSigFromSignature(f.Signature)))
@@ -842,7 +848,8 @@ func (g *functionGenerator) genMakeClosre_Bound(inst *ssa.MakeClosure) (insts []
 	var warp_fn_index int
 	{
 		var warp_fn wir.Function
-		warp_fn.Name = GetFnMangleName(f.Object()) + ".$bound"
+		fn_name, _ := GetFnMangleName(f.Object())
+		warp_fn.InternalName = fn_name + ".$bound"
 		for _, i := range f.Params {
 			pa := valueWrap{value: wir.NewLocal(i.Name(), wir.ToWType(i.Type()))}
 			warp_fn.Params = append(warp_fn.Params, pa.value)
@@ -860,10 +867,10 @@ func (g *functionGenerator) genMakeClosre_Bound(inst *ssa.MakeClosure) (insts []
 			warp_fn.Insts = append(warp_fn.Insts, i.EmitPush()...)
 		}
 
-		warp_fn.Insts = append(warp_fn.Insts, wat.NewInstCall(GetFnMangleName(f.Object())))
+		warp_fn.Insts = append(warp_fn.Insts, wat.NewInstCall(fn_name))
 
 		g.module.AddFunc(&warp_fn)
-		warp_fn_index = g.module.AddTableElem(warp_fn.Name)
+		warp_fn_index = g.module.AddTableElem(warp_fn.InternalName)
 	}
 
 	closure := g.addRegister(wir.NewClosure(wir.NewFnSigFromSignature(f.Signature)))
@@ -894,9 +901,10 @@ func (g *functionGenerator) addRegister(typ wir.ValueType) wir.Value {
 func (g *functionGenerator) genGetter(f *ssa.Function) *wir.Function {
 	var wir_fn wir.Function
 	if len(f.LinkName()) > 0 {
-		wir_fn.Name = f.LinkName()
+		wir_fn.InternalName = f.LinkName()
+		wir_fn.ExternalName = f.LinkName()
 	} else {
-		wir_fn.Name = GetFnMangleName(f)
+		wir_fn.InternalName, wir_fn.ExternalName = GetFnMangleName(f)
 	}
 
 	rets := f.Signature.Results()
@@ -927,9 +935,10 @@ func (g *functionGenerator) genGetter(f *ssa.Function) *wir.Function {
 func (g *functionGenerator) genSetter(f *ssa.Function) *wir.Function {
 	var wir_fn wir.Function
 	if len(f.LinkName()) > 0 {
-		wir_fn.Name = f.LinkName()
+		wir_fn.InternalName = f.LinkName()
+		wir_fn.ExternalName = f.LinkName()
 	} else {
-		wir_fn.Name = GetFnMangleName(f)
+		wir_fn.InternalName, wir_fn.ExternalName = GetFnMangleName(f)
 	}
 
 	rets := f.Signature.Results()

@@ -89,9 +89,9 @@ func (t Struct) genRawFree() (ret []fn_offset_pair) {
 
 func (t Struct) onFree() int {
 	var f Function
-	f.Name = "$" + t.Name() + ".$$onFree"
+	f.InternalName = "$" + GenSymbolName(t.Name()) + ".$$onFree"
 
-	if i := currentModule.findTableElem(f.Name); i != 0 {
+	if i := currentModule.findTableElem(f.InternalName); i != 0 {
 		return i
 	}
 
@@ -113,29 +113,7 @@ func (t Struct) onFree() int {
 		f.Insts = append(f.Insts, wat.NewInstCallIndirect("$onFree"))
 	}
 	currentModule.AddFunc(&f)
-	return currentModule.AddTableElem(f.Name)
-
-	/*	has_free := false
-		for _, member := range t.Members {
-			member_free_func := member.Type().onFree(module)
-			if member_free_func == 0 {
-				continue
-			}
-
-			f.Insts = append(f.Insts, ptr.EmitPush()...)
-			f.Insts = append(f.Insts, wat.NewInstConst(wat.I32{}, strconv.Itoa(member._start)))
-			f.Insts = append(f.Insts, wat.NewInstAdd(wat.I32{}))
-
-			f.Insts = append(f.Insts, wat.NewInstConst(wat.I32{}, strconv.Itoa(member_free_func)))
-			f.Insts = append(f.Insts, wat.NewInstCallIndirect("$onFree"))
-			has_free = true
-		}
-
-		if has_free {
-			return module.addTableFunc(&f)
-		}
-
-		return 0  //*/
+	return currentModule.AddTableElem(f.InternalName)
 }
 
 func (t Struct) Raw() []wat.ValueType {

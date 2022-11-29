@@ -3,7 +3,10 @@
 package wat
 
 func (f *Function) Format(indent string) string {
-	s := indent + "(func $" + f.Name + " (export \"" + f.Name + "\")"
+	s := indent + "(func $" + f.InternalName
+	if len(f.ExternalName) > 0 {
+		s += " (export \"" + f.ExternalName + "\")"
+	}
 
 	for _, param := range f.Params {
 		s += " (param $" + param.Name() + " " + param.Type().Name() + ")"
@@ -28,7 +31,7 @@ func (f *Function) Format(indent string) string {
 		s += inst.Format(indent+"  ") + "\n"
 	}
 
-	s += indent + ") ;;" + f.Name
+	s += indent + ") ;;" + f.InternalName
 	return s
 }
 

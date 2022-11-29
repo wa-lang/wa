@@ -3,7 +3,9 @@
 package wir
 
 import (
+	"strconv"
 	"strings"
+	"unicode/utf8"
 
 	"wa-lang.org/wa/internal/types"
 
@@ -91,7 +93,8 @@ func ToWType(from types.Type) ValueType {
 					fs = append(fs, NewField(f.Name(), wtyp))
 				}
 			}
-			return NewStruct(GetPkgMangleName(t.Obj().Pkg().Path())+t.Obj().Name(), fs)
+			sname, _ := GetPkgMangleName(t.Obj().Pkg().Path())
+			return NewStruct(sname+"."+t.Obj().Name(), fs)
 
 		case *types.Signature:
 			sig := NewFnSigFromSignature(ut)
@@ -127,8 +130,33 @@ func IsNumber(v Value) bool {
 	return false
 }
 
-func GetPkgMangleName(pkg_path string) string {
-	return strings.ReplaceAll(pkg_path, "/", "$") + "."
+func GetPkgMangleName(pkg_path string) (string, string) {
+	var symbol_name, exp_name string
+	for i := strings.IndexAny(pkg_path, "/\\"); i != -1; i = strings.IndexAny(pkg_path, "/\\") {
+		p := pkg_path[:i]
+		pkg_path = pkg_path[i+1:]
+
+		exp_name += p
+		exp_name += "$"
+
+		symbol_name += GenSymbolName(p)
+		symbol_name += "$"
+	}
+	exp_name += pkg_path
+	symbol_name += GenSymbolName(pkg_path)
+	return symbol_name, exp_name
+}
+
+func GenSymbolName(src string) string {
+	if len(src) == utf8.RuneCountInString(src) {
+		return src
+	}
+
+	s := "$0x"
+	for i := 0; i < len(src); i++ {
+		s += strconv.FormatUint(uint64(src[i]), 16)
+	}
+	return s
 }
 
 func ExtractField(x Value, field_name string) Value {

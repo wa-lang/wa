@@ -113,13 +113,13 @@ func (t Slice) emitGenFromRefOfArray(x *aRef, low, high Value) (insts []wat.Inst
 }
 
 func (t Slice) genAppendFunc() string {
-	fn_name := "$" + t.Name() + ".append"
+	fn_name := "$" + GenSymbolName(t.Name()) + ".append"
 	if currentModule.findFunc(fn_name) != nil {
 		return fn_name
 	}
 
 	var f Function
-	f.Name = fn_name
+	f.InternalName = fn_name
 	x := newValueSlice("x", ValueKindLocal, t.Base)
 	y := newValueSlice("y", ValueKindLocal, t.Base)
 	f.Params = append(f.Params, x)

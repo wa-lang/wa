@@ -43,11 +43,13 @@ func (p *Compiler) Compile(prog *loader.Program) (output string, err error) {
 
 	{
 		var f wir.Function
-		f.Name = "_start"
+		f.InternalName, f.ExternalName = "_start", "_start"
 		f.Insts = append(f.Insts, wat.NewInstCall("$waGlobalAlloc"))
-		n := wir.GetPkgMangleName(prog.SSAMainPkg.Pkg.Path()) + "init"
+		n, _ := wir.GetPkgMangleName(prog.SSAMainPkg.Pkg.Path())
+		n += ".init"
 		f.Insts = append(f.Insts, wat.NewInstCall(n))
-		n = wir.GetPkgMangleName(prog.SSAMainPkg.Pkg.Path()) + "main"
+		n, _ = wir.GetPkgMangleName(prog.SSAMainPkg.Pkg.Path())
+		n += ".main"
 		f.Insts = append(f.Insts, wat.NewInstCall(n))
 		p.module.AddFunc(&f)
 	}
@@ -106,7 +108,7 @@ func (p *Compiler) CompilePkgFunc(ssaPkg *ssa.Package) {
 				if len(v.LinkName()) > 0 {
 					fn_name = v.LinkName()
 				} else {
-					fn_name = GetFnMangleName(v)
+					fn_name, _ = GetFnMangleName(v)
 				}
 
 				sig := wir.NewFnSigFromSignature(v.Signature)

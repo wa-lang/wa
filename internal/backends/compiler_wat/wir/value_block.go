@@ -29,8 +29,8 @@ func (t Block) Equal(u ValueType) bool {
 }
 func (t Block) onFree() int {
 	var f Function
-	f.Name = "$" + t.Name() + ".$$onFree"
-	if i := currentModule.findTableElem(f.Name); i != 0 {
+	f.InternalName = "$" + GenSymbolName(t.Name()) + ".$$onFree"
+	if i := currentModule.findTableElem(f.InternalName); i != 0 {
 		return i
 	}
 
@@ -45,7 +45,7 @@ func (t Block) onFree() int {
 	f.Insts = append(f.Insts, wat.NewInstStore(wat.U32{}, 0, 1))
 
 	currentModule.AddFunc(&f)
-	return currentModule.AddTableElem(f.Name)
+	return currentModule.AddTableElem(f.InternalName)
 }
 
 func (t Block) EmitLoadFromAddr(addr Value, offset int) (insts []wat.Inst) {
