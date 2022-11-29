@@ -90,11 +90,12 @@ func ToWType(from types.Type) ValueType {
 				if f.Embedded() {
 					fs = append(fs, NewField("$"+wtyp.Name(), wtyp))
 				} else {
-					fs = append(fs, NewField(f.Name(), wtyp))
+					fs = append(fs, NewField(GenSymbolName(f.Name()), wtyp))
 				}
 			}
-			sname, _ := GetPkgMangleName(t.Obj().Pkg().Path())
-			return NewStruct(sname+"."+t.Obj().Name(), fs)
+			pkg_name, _ := GetPkgMangleName(t.Obj().Pkg().Path())
+			obj_name := GenSymbolName(t.Obj().Name())
+			return NewStruct(pkg_name+"."+obj_name, fs)
 
 		case *types.Signature:
 			sig := NewFnSigFromSignature(ut)
