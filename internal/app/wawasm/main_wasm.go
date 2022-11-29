@@ -12,18 +12,16 @@ func waGenerateWat(code string) string {
 	wat, err := api.BuildFile(api.DefaultConfig(), "hello.wa", code)
 	if err != nil {
 		return err.Error()
-	} else {
-		return string(wat)
 	}
+	return string(wat)
 }
 
 func waFormatCode(code string) string {
-	code, err := api.FormatCode("hello.wa", code)
+	newCode, err := api.FormatCode("hello.wa", code)
 	if err != nil {
 		return err.Error()
-	} else {
-		return code
 	}
+	return newCode
 }
 
 func main() {
