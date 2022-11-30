@@ -2,7 +2,9 @@
 
 package wat
 
-import "strconv"
+import (
+	"strconv"
+)
 
 // 模块对象
 type Module struct {
@@ -63,7 +65,11 @@ func (m *Module) String() string {
 		s += "(data (i32.const 0) \""
 		for _, d := range m.DataSeg {
 			s += "\\"
-			s += strconv.FormatInt(int64(d), 16)
+			i := strconv.FormatInt(int64(d), 16)
+			if len(i) < 2 {
+				i = "0" + i
+			}
+			s += i
 		}
 		s += "\")\n"
 	}
