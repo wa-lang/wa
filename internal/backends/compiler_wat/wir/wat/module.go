@@ -21,38 +21,6 @@ type Module struct {
 }
 
 func (m *Module) String() string {
-
-	/*
-		{
-			cnt := 1024
-			{
-				var f Function
-				f.Name = "$test_entry"
-				for i := 0; i < cnt; i++ {
-					f.Insts = append(f.Insts, NewInstConst(I32{}, strconv.Itoa(i)))
-				}
-				f.Insts = append(f.Insts, NewInstCall("$test_stack"))
-				for i := 0; i < cnt; i++ {
-					f.Insts = append(f.Insts, NewInstCall("$waPrintI32"))
-				}
-				m.Funcs = append(m.Funcs, &f)
-			}
-
-			{
-				var s Function
-				s.Name = "$test_stack"
-				for i := 0; i < cnt; i++ {
-					s.Params = append(s.Params, NewVarI32("$p"+strconv.Itoa(i)))
-					s.Results = append(s.Results, I32{})
-
-					s.Insts = append(s.Insts, NewInstGetLocal("$p"+strconv.Itoa(i)))
-					s.Insts = append(s.Insts, NewInstGetLocal("$p"+strconv.Itoa(i)))
-					s.Insts = append(s.Insts, NewInstAdd(I32{}))
-				}
-				m.Funcs = append(m.Funcs, &s)
-			}
-		} //*/
-
 	s := "(module $__walang__\n"
 
 	for _, i := range m.Imports {
