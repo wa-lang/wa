@@ -11,7 +11,7 @@
 [![Go Report Card](https://goreportcard.com/badge/github.com/wa-lang/wa)](https://goreportcard.com/report/github.com/wa-lang/wa)
 [![Coverage Status](https://coveralls.io/repos/github/wa-lang/wa/badge.svg)](https://coveralls.io/github/wa-lang/wa)
 [![GitHub release](https://img.shields.io/github/v/tag/wa-lang/wa.svg?label=release)](https://github.com/wa-lang/wa/releases)
-[![Go Reference](https://pkg.go.dev/badge/github.com/wa-lang/wa.svg)](https://pkg.go.dev/github.com/wa-lang/wa)
+[![Go Reference](https://pkg.go.dev/badge/wa-lang.org/wa.svg)](https://pkg.go.dev/wa-lang.org/wa)
 [![license](https://img.shields.io/github/license/wa-lang/wa.svg)](https://github.com/wa-lang/wa/blob/master/LICENSE)
 
 </div>
@@ -22,11 +22,9 @@ Instead of requiring complex toolchains to set up, you can simply go install it 
 ![](docs/images/logo/logo-animate1.svg)
 
 - Homepage: [https://wa-lang.org](https://wa-lang.org)
-- Github: [https://github.com/wa-lang/wa](https://github.com/wa-lang/wa)
-- Gitee:  [https://gitee.com/wa-lang/wa](https://gitee.com/wa-lang/wa)
-- Go Doc: [https://pkg.go.dev/github.com/wa-lang/wa](https://pkg.go.dev/github.com/wa-lang/wa)
-- Develop Tools: [Playground](https://wa-lang.org/playground), [VSCode](https://marketplace.visualstudio.com/items?itemName=xxxDeveloper.vscode-wa), [Fleet](https://github.com/wa-lang/fleet-wa), [Vim](https://github.com/wa-lang/vim-wa)
 - Core Team: [柴树杉(chai2010)](https://github.com/chai2010)、[丁尔男(Ending)](https://github.com/3dgen)、[史斌(Benshi)](https://github.com/benshi001)、[扈梦明(xxxDeveloper)](https://github.com/xxxDeveloper)、[刘云峰(leaftree)](https://github.com/leaftree)、[宋汝阳(ShiinaOrez)](https://github.com/ShiinaOrez)
+
+> Note: Our canonical Git repository is located at https://gitee.com/wa-lang/wa. There is a mirror of the repository at https://github.com/wa-lang/wa. Unless otherwise noted, the Wa source files are distributed under the AGPL-v3 license found in the LICENSE file.
 
 ## Playground
 
@@ -37,7 +35,7 @@ Instead of requiring complex toolchains to set up, you can simply go install it 
 
 ## Install and Run:
 
-1. `go install github.com/wa-lang/wa@latest`
+1. `go install wa-lang.org/wa@latest`
 2. `wa init -name=_examples/hi`
 3. `wa run _examples/hi`
 

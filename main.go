@@ -70,38 +70,7 @@ func main() {
 
 	// 没有参数时对应 run 命令
 	cliApp.Action = func(c *cli.Context) error {
-		if c.NArg() == 0 {
-			cli.ShowAppHelpAndExit(c, 0)
-		}
-
-		app := app.NewApp(build_Options(c))
-		output, err := app.WASM(c.Args().First())
-		if err != nil {
-			fmt.Println(err)
-			os.Exit(1)
-		}
-
-		outfile := "a.out.wat"
-		if !c.Bool("debug") {
-			defer os.Remove(outfile)
-		}
-
-		if err = os.WriteFile(outfile, []byte(output), 0666); err != nil {
-			fmt.Println(err)
-			os.Exit(1)
-		}
-
-		stdoutStderr, err := apputil.RunWasm(app.GetConfig(), outfile)
-		if err != nil {
-			if len(stdoutStderr) > 0 {
-				fmt.Println(string(stdoutStderr))
-			}
-			fmt.Println(err)
-			os.Exit(1)
-		}
-		if len(stdoutStderr) > 0 {
-			fmt.Println(string(stdoutStderr))
-		}
+		cliRun(c)
 		return nil
 	}
 
@@ -172,40 +141,7 @@ func main() {
 				},
 			},
 			Action: func(c *cli.Context) error {
-				if c.NArg() == 0 {
-					fmt.Fprintf(os.Stderr, "no input file")
-					os.Exit(1)
-				}
-
-				app := app.NewApp(build_Options(c))
-				output, err := app.WASM(c.Args().First())
-				if err != nil {
-					fmt.Println(err)
-					os.Exit(1)
-				}
-
-				outfile := "a.out.wat"
-				if !c.Bool("debug") {
-					defer os.Remove(outfile)
-				}
-
-				if err = os.WriteFile(outfile, []byte(output), 0666); err != nil {
-					fmt.Println(err)
-					os.Exit(1)
-				}
-
-				stdoutStderr, err := apputil.RunWasm(app.GetConfig(), outfile)
-				if err != nil {
-					if len(stdoutStderr) > 0 {
-						fmt.Println(string(stdoutStderr))
-					}
-					fmt.Println(err)
-					os.Exit(1)
-				}
-				if len(stdoutStderr) > 0 {
-					fmt.Println(string(stdoutStderr))
-				}
-
+				cliRun(c)
 				return nil
 			},
 		},
@@ -488,4 +424,56 @@ func build_Options(c *cli.Context, isLLVMBackend ...bool) *app.Option {
 		os.Exit(1)
 	}
 	return opt
+}
+
+func cliRun(c *cli.Context) {
+	if c.NArg() == 0 {
+		cli.ShowAppHelpAndExit(c, 0)
+	}
+
+	var app = app.NewApp(build_Options(c))
+	var infile = c.Args().First()
+	var outfile string
+	var output []byte
+	var err error
+
+	if !c.Bool("debug") {
+		defer os.Remove(outfile)
+	}
+
+	switch {
+	case strings.HasSuffix(infile, ".wat"):
+		outfile = infile
+		output, err = os.ReadFile(infile)
+		if err != nil {
+			fmt.Println(err)
+			os.Exit(1)
+		}
+	case strings.HasSuffix(infile, ".wasm"):
+		outfile = infile
+		output, err = os.ReadFile(infile)
+		if err != nil {
+			fmt.Println(err)
+			os.Exit(1)
+		}
+	default:
+		outfile = "a.out.wat"
+		output, err = app.WASM(infile)
+		if err = os.WriteFile(outfile, []byte(output), 0666); err != nil {
+			fmt.Println(err)
+			os.Exit(1)
+		}
+	}
+
+	stdoutStderr, err := apputil.RunWasm(app.GetConfig(), outfile)
+	if err != nil {
+		if len(stdoutStderr) > 0 {
+			fmt.Println(string(stdoutStderr))
+		}
+		fmt.Println(err)
+		os.Exit(1)
+	}
+	if len(stdoutStderr) > 0 {
+		fmt.Println(string(stdoutStderr))
+	}
 }
