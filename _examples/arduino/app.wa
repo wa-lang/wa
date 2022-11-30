@@ -2,20 +2,15 @@
 
 import "syscall/arduino"
 
+var LED = arduino.GetPinLED()
+
 fn init() {
 	arduino.PinMode(LED, 1)
-
-	arduino.Println("Wa is running 😎")
-	arduino.Println("Greeting: " + GetGreeting())
+	arduino.Println("凹语言(Wa)/Arduino is running ...")
 }
 
 fn main() {
-	LED := arduino.GetPinLED()
-
 	for {
-		time := arduino.Millis()
-		arduino.Println(time)
-
 		arduino.DigitalWrite(LED, arduino.HIGH)
 		arduino.Delay(100)
 		arduino.DigitalWrite(LED, arduino.LOW)
