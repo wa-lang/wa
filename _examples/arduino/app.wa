@@ -6,7 +6,8 @@ var LED = arduino.GetPinLED()
 
 fn init() {
 	arduino.PinMode(LED, 1)
-	arduino.Println("凹语言(Wa)/Arduino is running ...")
+	arduino.Print("凹语言(Wa)/Arduino is running ...\n")
+	arduino.Print("https://wa-lang.org\n")
 }
 
 fn main() {

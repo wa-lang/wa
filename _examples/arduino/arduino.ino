@@ -22,14 +22,8 @@
 // For (most) devices that cannot allocate a 64KiB wasm page
 #define WASM_MEMORY_LIMIT   8096
 
-/*
- * WebAssembly app
- *
- * This is essentially a simple "Blink" sketch, compiled to WebAssembly
- * You can build a wasm binary using C/C++, Rust, AssemblyScript, TinyGo, ...
- * See https://github.com/wasm3/wasm3-arduino/tree/master/wasm_apps for details
- */
-
+// Wa/Arduino
+// https://gitee.com/wa-lang/wa/tree/master/_examples/arduino
 #include "app.wasm.h"
 
 /*
