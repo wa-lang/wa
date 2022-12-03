@@ -39,7 +39,7 @@
 2. `wa init -name=_examples/hi`
 3. `wa run _examples/hi`
 
-> 项目尚处于原型开源阶段，如果有共建和PR需求请参考 [如何贡献代码](https://wa-lang.org/community/contribute.html)。
+> 项目尚处于原型开源阶段，如果有共建和PR需求请参考 [如何贡献代码](https://wa-lang.org/community/contribute.html)。我们不再接受针对第三方依赖库修改的 PR。
 
 ## 例子: 凹语言
 

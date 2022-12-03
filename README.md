@@ -39,7 +39,7 @@ Instead of requiring complex toolchains to set up, you can simply go install it 
 2. `wa init -name=_examples/hi`
 3. `wa run _examples/hi`
 
-> The Wa project is still in very early stage. If you want to submit PR, please read the [Contribution Guide(Chinese)](https://wa-lang.org/community/contribute.html).
+> The Wa project is still in very early stage. If you want to submit PR, please read the [Contribution Guide(Chinese)](https://wa-lang.org/community/contribute.html). We do not accpet PR only about 3rdparty changes.
 
 ## Example: Print Wa
 
