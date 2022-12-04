@@ -1,8 +1,5 @@
 <div align="center">
-<h1>🇨🇳 The Wa Programming Language</h1>
-
-[Document](https://wa-lang.org) | [Playground](https://wa-lang.org/playground) | [Goals](https://wa-lang.org/goals.html) | [Roadmap](https://wa-lang.org/smalltalk/st0002.html) | [Community](https://wa-lang.org/community) | [Changelog](https://wa-lang.org/changelog.html) | [Discussions](https://github.com/wa-lang/wa/discussions)
-
+<h1>The Wa Programming Language</h1>
 
 </div>
 <div align="center">
@@ -21,7 +18,7 @@ Instead of requiring complex toolchains to set up, you can simply go install it 
 
 ![](docs/images/logo/logo-animate1.svg)
 
-- Homepage: [https://wa-lang.org](https://wa-lang.org)
+- Playground: [https://wa-lang.org/playground](https://wa-lang.org/playground)
 - Core Team: [柴树杉(chai2010)](https://github.com/chai2010)、[丁尔男(Ending)](https://github.com/3dgen)、[史斌(Benshi)](https://github.com/benshi001)、[扈梦明(xxxDeveloper)](https://github.com/xxxDeveloper)、[刘云峰(leaftree)](https://github.com/leaftree)、[宋汝阳(ShiinaOrez)](https://github.com/ShiinaOrez)
 
 > Note: Our canonical Git repository is located at https://gitee.com/wa-lang/wa. There is a mirror of the repository at https://github.com/wa-lang/wa. Unless otherwise noted, the Wa source files are distributed under the AGPL-v3 license found in the LICENSE file.
@@ -39,7 +36,7 @@ Instead of requiring complex toolchains to set up, you can simply go install it 
 2. `wa init -name=_examples/hi`
 3. `wa run _examples/hi`
 
-> The Wa project is still in very early stage. If you want to submit PR, please read the [Contribution Guide(Chinese)](https://wa-lang.org/community/contribute.html). We do not accpet PR only about 3rdparty changes.
+> The Wa project is still in very early stage. If you want to submit PR, please read the [Contribution Guide(Chinese)](https://wa-lang.org/community/contribute.html). We do not accept PR only about 3rdparty changes.
 
 ## Example: Print Wa
 

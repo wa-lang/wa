@@ -380,14 +380,14 @@ func (p *_Loader) isSkipedSouceFile(filename string) bool {
 			}
 		}
 		if isTargetFile {
-			var shouildSkip = true
+			var shouldSkip = true
 			for _, ext := range []string{".wa", ".wa.go", ".ugo"} {
 				if strings.HasSuffix(filename, "_"+p.cfg.WaOS+ext) {
-					shouildSkip = false
+					shouldSkip = false
 					break
 				}
 			}
-			if shouildSkip {
+			if shouldSkip {
 				return true
 			}
 		}
