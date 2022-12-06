@@ -151,11 +151,18 @@ func (g *functionGenerator) getValue(i ssa.Value) valueWrap {
 
 func (g *functionGenerator) genFunction(f *ssa.Function) *wir.Function {
 	var wir_fn wir.Function
-	if len(f.LinkName()) > 0 {
-		wir_fn.InternalName = f.LinkName()
-		wir_fn.ExternalName = f.LinkName()
-	} else {
-		wir_fn.InternalName, wir_fn.ExternalName = GetFnMangleName(f)
+	{
+		internal, external := GetFnMangleName(f)
+		if len(f.LinkName()) > 0 {
+			wir_fn.InternalName = f.LinkName()
+		} else {
+			wir_fn.InternalName = internal
+		}
+		if len(f.ExportName()) > 0 {
+			wir_fn.ExternalName = f.ExportName()
+		} else {
+			wir_fn.ExternalName = external
+		}
 	}
 
 	rets := f.Signature.Results()
