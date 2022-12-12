@@ -181,12 +181,12 @@ func (g *functionGenerator) genFunction(f *ssa.Function) *wir.Function {
 	}
 
 	for _, i := range f.FreeVars {
-		fv := valueWrap{value: wir.NewLocal(i.Name(), wir.ToWType(i.Type()))}
+		fv := valueWrap{value: wir.NewLocal(wir.GenSymbolName(i.Name()), wir.ToWType(i.Type()))}
 		wir_fn.Params = append(wir_fn.Params, fv.value)
 		g.locals_map[i] = fv
 	}
 	for _, i := range f.Params {
-		pv := valueWrap{value: wir.NewLocal(i.Name(), wir.ToWType(i.Type()))}
+		pv := valueWrap{value: wir.NewLocal(wir.GenSymbolName(i.Name()), wir.ToWType(i.Type()))}
 		wir_fn.Params = append(wir_fn.Params, pv.value)
 		g.locals_map[i] = pv
 	}
