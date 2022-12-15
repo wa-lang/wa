@@ -1,5 +1,99 @@
 # 版权 @2022 凹语言 作者。保留所有权利。
 
+/*
+创建html.canvas的函数，由JS环境导入
+w、h为画布以像素为单位的宽高
+返回值为画布对象对应的网页DOM对象id
+*/
+#wa:import wa_js_env newCanvas
+fn newCanvas_JS(w, h: u32) => u32
+
+/*
+将帧缓存更新至html.canvas的函数，由JS环境导入
+id为画布对象对应的网页DOM对象id
+buf为帧缓存指针
+*/
+#wa:import wa_js_env updateCanvas
+fn updateCanvas_JS(id: u32, buf: *u32)
+
+
+
 fn Test(){
 	println(42)
+
+	canvas := NewCanvas(255, 255)
+	var i, j u32
+	for i = 0; i < 255; i++ {
+		for j = 0; j < 255; j++ {
+			canvas.SetPixel(i, j, 0xFF000000 + i + j * 256)
+		}
+	}
+	canvas.Flush()
+}
+
+#画布事件回调函数原型
+type OnTouch fn (x, y: u32)
+
+#画布对象
+type Canvas struct{
+    device_id: u32     //画布对象对应的网页DOM对象id
+    width:     u32     //画布宽度，以像素为单位
+    height:    u32     //画布高度，以像素为单位
+    frame_buf: []u32   //画布帧缓存，容量为Width * Height * 4
+    FnOnDown:  OnTouch //鼠标按下或触屏按下时的回调处理函数，输入参数为画布内的像素坐标
+    FnOnUp:    OnTouch //鼠标松开或触屏松开时的回调处理函数，输入参数为画布内的像素坐标
+}
+
+#创建一个宽度为w像素、高度为h像素的画布对象
+fn NewCanvas(w, h: u32) => *Canvas {
+    var canvas Canvas
+	canvas.device_id = newCanvas_JS(w, h)
+	canvas.width = w
+	canvas.height = h
+	canvas.frame_buf = make([]u32, w * h)
+
+	return &canvas
+}
+
+#获取画布宽度
+fn Canvas.GetWidth() => u32 {
+	return this.width
+}
+
+#获取画布高度
+fn Canvas.GetHeight() => u32 {
+	return this.height
+}
+
+#获取画布对象坐标为(x, y)处的像素颜色值
+fn Canvas.GetPixel(x, y: u32) => u32 {
+    return this.frame_buf[y * this.width + x]
+}
+
+#设置画布对象坐标(x, y)处的颜色值为color
+fn Canvas.SetPixel(x, y, color: u32) {
+    this.frame_buf[y * this.width + x] = color
+}
+
+#将画布对象的帧缓存更新至网页DOM对象
+fn Canvas.Flush() {
+    updateCanvas_JS(this.device_id, &this.frame_buf[0])
+}
+
+/*
+供外部JS调用的按下事件响应函数
+id为画布对象对应的网页DOM对象id
+(x, y)为画布像素坐标系坐标
+*/
+fn OnCanvasDown(id: u32, x, y:u32) {
+    //...
+}
+
+/*
+供外部JS调用的弹起事件响应函数
+id为画布对象对应的网页DOM对象id
+(x, y)为画布像素坐标系坐标
+*/
+fn OnCanvasUp(id: u32, x, y:u32) {
+    //...
 }

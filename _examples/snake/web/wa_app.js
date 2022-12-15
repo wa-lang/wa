@@ -10,7 +10,7 @@
         let importsObject = {
           wa_js_env: new function () {
             this.waPrintI32 = (i) => {
-                app._wa_print_buf += i
+              app._wa_print_buf += i
             }
             this.waPrintRune = (c) => {
               let ch = String.fromCodePoint(c);
@@ -26,20 +26,31 @@
               let s = app.getString(prt, len);
               app._wa_print_buf += s
             }
-            this.newCanvas_JS = (w, h) => {
-              const canvas = document.createElement('canvas');
-              canvas.id = id;
+            this.newCanvas = (w, h) => {
+              let canvas = document.createElement('canvas');
               canvas.width = w;
               canvas.height = h;
               const waContent = document.getElementById('wa-content');
               waContent.appendChild(canvas);
+              this._ctx = canvas.getContext('2d');
+              this._canvas = canvas;
+              canvas.id = 0;
               return 0  //!!!!!
+            }
+            this.updateCanvas = (id, block, data) => {
+              let img = this._ctx.createImageData(this._canvas.width, this._canvas.height);
+              let buf_len = this._canvas.width * this._canvas.height * 4
+              let buf = app.memUint8Array(data, buf_len);
+              for (var i = 0; i < buf_len; i++){
+                img.data[i] = buf[i];
+              }
+              this._ctx.putImageData(img, 0, 0);
             }
           }
         }
         WebAssembly.instantiateStreaming(fetch(url), importsObject).then(res => {
-            this._inst = res.instance;
-            this._inst.exports._start();
+          this._inst = res.instance;
+          this._inst.exports._start();
         })
       }
   
@@ -52,7 +63,7 @@
       }
   
       memUint8Array(addr, len) {
-        return new Uint8Array(this.Mem().buffer, addr, len)
+        return new Uint8Array(this.mem().buffer, addr, len)
       }
   
       getString(addr, len) {
