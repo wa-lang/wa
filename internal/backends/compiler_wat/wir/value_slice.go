@@ -6,6 +6,7 @@ import (
 	"strconv"
 
 	"wa-lang.org/wa/internal/backends/compiler_wat/wir/wat"
+	"wa-lang.org/wa/internal/logger"
 )
 
 /**************************************
@@ -108,6 +109,28 @@ func (t Slice) emitGenFromRefOfArray(x *aRef, low, high Value) (insts []wat.Inst
 	insts = append(insts, array_len.EmitPush()...)
 	insts = append(insts, low.EmitPush()...)
 	insts = append(insts, wat.NewInstSub(wat.U32{}))
+
+	return
+}
+
+func (t Slice) emitGenMake(Len, Cap Value) (insts []wat.Inst) {
+	//block:
+	insts = append(insts, NewBlock(t.Base).emitHeapAlloc(Cap)...)
+
+	//data
+	insts = append(insts, wat.NewInstCall("$wa.RT.DupWatStack"))
+	insts = append(insts, NewConst("16", U32{}).EmitPush()...)
+	insts = append(insts, wat.NewInstAdd(wat.U32{}))
+
+	//len:
+	if !Len.Type().Equal(U32{}) {
+		logger.Fatal("Len should be u32")
+		return nil
+	}
+	insts = append(insts, Len.EmitPush()...)
+
+	//cap:
+	insts = append(insts, Cap.EmitPush()...)
 
 	return
 }

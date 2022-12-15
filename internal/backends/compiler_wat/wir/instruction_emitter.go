@@ -320,6 +320,13 @@ func EmitGenSlice(x, low, high Value) (insts []wat.Inst, ret_type ValueType) {
 	return
 }
 
+func EmitGenMakeSlice(base_type ValueType, Len, Cap Value) (insts []wat.Inst, ret_type ValueType) {
+	slice_type := NewSlice(base_type)
+	insts = slice_type.emitGenMake(Len, Cap)
+	ret_type = slice_type
+	return
+}
+
 func EmitGenLookup(x, index Value, CommaOk bool) (insts []wat.Inst, ret_type ValueType) {
 	switch x := x.(type) {
 	case *aString:

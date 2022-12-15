@@ -358,6 +358,9 @@ func (g *functionGenerator) genValue(v ssa.Value) ([]wat.Inst, wir.ValueType) {
 	case *ssa.Slice:
 		return g.genSlice(v)
 
+	case *ssa.MakeSlice:
+		return g.genMakeSlice(v)
+
 	case *ssa.Lookup:
 		return g.genLookup(v)
 
@@ -729,6 +732,19 @@ func (g *functionGenerator) genSlice(inst *ssa.Slice) ([]wat.Inst, wir.ValueType
 	}
 
 	return wir.EmitGenSlice(x.value, low, high)
+}
+
+func (g *functionGenerator) genMakeSlice(inst *ssa.MakeSlice) ([]wat.Inst, wir.ValueType) {
+	if inst.Parent().ForceRegister() {
+		logger.Fatal("ssa.MakeSlice is not available in ForceRegister-mode")
+		return nil, nil
+	}
+
+	elem := inst.Type().(*types.Slice).Elem()
+	base_type := wir.ToWType(elem)
+	Len := g.getValue(inst.Len)
+	Cap := g.getValue(inst.Cap)
+	return wir.EmitGenMakeSlice(base_type, Len.value, Cap.value)
 }
 
 func (g *functionGenerator) genLookup(inst *ssa.Lookup) ([]wat.Inst, wir.ValueType) {
