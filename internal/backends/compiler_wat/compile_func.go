@@ -61,7 +61,7 @@ func (g *functionGenerator) getValue(i ssa.Value) valueWrap {
 		case *types.Basic:
 			switch t.Kind() {
 
-			case types.Bool:
+			case types.Bool, types.UntypedBool:
 				if constant.BoolVal(v.Value) {
 					return valueWrap{value: wir.NewConst("1", wir.I32{})}
 				} else {

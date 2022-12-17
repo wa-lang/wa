@@ -1,1 +1,166 @@
 # 版权 @2019 凹语言 作者。保留所有权利。
+
+# K&R 第8章 首次适配算法的 malloc 实现
+
+# sizeof(knr_Header) 大小
+const sizeof_Header = 8
+
+# 内存大小
+const knr_mem_limit = 8 << 20
+
+# 16 MB 的内存
+var knr_mem [knr_mem_limit]byte
+
+# #wa:linkname $knr_basep
+var knr_basep uint32
+
+# #wa:linkname $knr_freep
+var knr_freep uint32
+
+# K&R malloc 实现, Block 头部
+type knr_Header struct {
+	ptr  uint32
+	size uint32
+}
+# Heap 开始地址
+#wa:linkname $waGetHeapPtr
+fn waGetHeapPtr() => i32
+
+#wa:linkname $waLoadI32
+fn waLoadI32(offset: i32) => i32
+
+#wa:linkname $waStoreI32
+fn waStoreI32(offset, value: i32)
+
+fn knr_getBlockHeader(p uint32) (hdr knr_Header) {
+	hdr.ptr = u32(waLoadI32(i32(p + 0)))
+	hdr.size = u32(waLoadI32(i32(p + 4)))
+	return
+}
+
+fn knr_setBlockHeader(p uint32, hdr knr_Header) {
+	waStoreI32(i32(p+0), i32(hdr.ptr))
+	waStoreI32(i32(p+4), i32(hdr.size))
+}
+
+# 分配 nbytes 字节, 返回地址
+fn malloc(nbytes uint32) uint32 {
+	if nbytes == 0 || nbytes > knr_mem_limit {
+		return 0
+	}
+	if knr_basep == 0 {
+		knr_basep = u32(waGetHeapPtr())
+		knr_freep = knr_basep
+
+		base := knr_Header{
+			ptr:  knr_basep,
+			size: (knr_mem_limit-knr_basep)/sizeof_Header - 1,
+		}
+
+		knr_setBlockHeader(knr_basep, base)
+	}
+
+	# round up to allocate in units of sizeof(Header)
+	var nunits = (nbytes+sizeof_Header-1)/sizeof_Header + 1
+	var prevp_addr = knr_freep
+
+	# no free list yet
+	if prevp_addr == 0 && false {
+		# point all to base
+		knr_freep = knr_basep
+		prevp_addr = knr_basep
+
+		base := knr_getBlockHeader(knr_basep)
+		base.ptr = knr_basep
+		base.size = 0
+		knr_setBlockHeader(knr_basep, base)
+	}
+
+	# search free linked-list
+	prevp := knr_getBlockHeader(prevp_addr)
+	p_addr := prevp.ptr
+	p := knr_getBlockHeader(p_addr)
+	for {
+		if p.size >= nunits { # big enough
+			if p.size == nunits { # exactly
+				prevp.ptr = p.ptr
+				knr_setBlockHeader(prevp_addr, prevp)
+			} else {
+				p.size -= nunits
+				knr_setBlockHeader(p_addr, p)
+
+				# allocate at tail-end
+				p_addr += p.size * sizeof_Header
+				p = knr_getBlockHeader(p_addr)
+				p.size = nunits
+				knr_setBlockHeader(p_addr, p)
+			}
+
+			knr_freep = prevp_addr
+			return p_addr + sizeof_Header
+		}
+		if p_addr == knr_freep {
+			return 0 # none left
+		}
+
+		prevp_addr = p_addr
+		prevp = knr_getBlockHeader(prevp_addr)
+
+		p_addr = p.ptr
+		p = knr_getBlockHeader(p_addr)
+	}
+}
+
+# 回收内存, 释放到空闲列表
+fn free(ap uint32) {
+	if ap == 0 || ap%sizeof_Header != 0 {
+		return
+	}
+
+	# point to block header
+	bp_addr := ap - sizeof_Header
+	bp := knr_getBlockHeader(bp_addr)
+
+	# must be at least 2 units:
+	# 1 for header, 1 for mem block
+	if bp.size <= 1 {
+		# panic
+		return
+	}
+
+	p_addr := knr_freep
+	p := knr_getBlockHeader(p_addr)
+
+	for !(bp_addr > p_addr && bp_addr < p.ptr) {
+		# free block at start or end of arena
+		if (p_addr >= p.ptr) && (bp_addr > p_addr || bp_addr < p.ptr) {
+			break
+		}
+
+		p_addr = p.ptr
+		p = knr_getBlockHeader(p_addr)
+	}
+
+	# join to upper nbr
+	if bp_addr+bp.size*sizeof_Header == p.ptr {
+		p_ptr := knr_getBlockHeader(p.ptr)
+		bp.size += p_ptr.size
+		bp.ptr = p_ptr.ptr
+		knr_setBlockHeader(bp_addr, bp)
+	} else {
+		bp.ptr = p.ptr
+		knr_setBlockHeader(bp_addr, bp)
+	}
+
+	# join to lower nbr
+	if p_addr+p.size*sizeof_Header == bp_addr {
+		p.size += bp.size
+		p.ptr = bp.ptr
+		knr_setBlockHeader(p_addr, p)
+	} else {
+		p.ptr = bp_addr
+		knr_setBlockHeader(p_addr, p)
+	}
+
+	knr_freep = p_addr
+}

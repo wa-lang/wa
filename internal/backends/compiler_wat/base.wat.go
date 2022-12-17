@@ -52,6 +52,22 @@ const modBaseWat_wa = `
 
 ;;Remove these functions if they've been implemented in .wa
 (global $$heap_ptr (mut i32) (i32.const 2048))
+
+(func $$waGetHeapPtr(result i32)
+	global.get $$heap_ptr
+)
+
+(func $$waLoadI32(param $ptr i32) (result i32)
+	local.get $ptr
+	i32.load offset=0 align=1
+)
+(func $$waStoreI32(param $ptr i32) (param $value i32)
+	local.get $ptr
+	i32.const 1
+	i32.store offset=0 align=1
+)
+
+
 (func $$waHeapAlloc (param $size i32) (result i32) ;;result = ptr
 	;;Todo
 	global.get $$heap_ptr
