@@ -8,13 +8,10 @@ const sizeof_Header = 8
 # 内存大小
 const knr_mem_limit = 8 << 20
 
-# 16 MB 的内存
-var knr_mem [knr_mem_limit]byte
-
-# #wa:linkname $knr_basep
+#wa:linkname $knr_basep
 var knr_basep uint32
 
-# #wa:linkname $knr_freep
+#wa:linkname $knr_freep
 var knr_freep uint32
 
 # K&R malloc 实现, Block 头部

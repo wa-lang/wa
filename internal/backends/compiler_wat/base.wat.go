@@ -46,7 +46,7 @@ const (
 // todo: PrintI32 => waPrintI32, 以 wa 开头
 
 const modBaseWat_wa = `
-(memory $memory 1)
+(memory $memory 1024)
 
 (export "memory" (memory $memory))
 
