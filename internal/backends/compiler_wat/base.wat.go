@@ -83,8 +83,8 @@ const modBaseWat_wa = `
 ;; --------------------------------------------------------
 
 (func $$waHeapAlloc (param $nbytes i32) (result i32) ;;result = ptr
-	;; local.get $nbytes
-	;; call $runtime.malloc
+	local.get $nbytes
+	call $runtime.malloc
 
 	;;Todo
 	;; global.get $__heap_base
@@ -98,15 +98,15 @@ const modBaseWat_wa = `
 	;; i32.const 10
 	;; call $$runtime.waPrintRune
 
-	global.get $__heap_base
-	global.get $__heap_base
-	local.get $nbytes
-	i32.add
-	global.set $__heap_base
+	;; global.get $__heap_base
+	;; global.get $__heap_base
+	;; local.get $nbytes
+	;; i32.add
+	;; global.set $__heap_base
 )
 (func $$waHeapFree (param $ptr i32)
-	;; local.get $ptr
-	;; call $runtime.free
+	local.get $ptr
+	call $runtime.free
 
 	;;Todo
 	;; i32.const 126

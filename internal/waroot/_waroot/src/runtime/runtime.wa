@@ -6,10 +6,10 @@
 const sizeof_Header = 8
 
 #wa:linkname $knr_basep
-var knr_basep u32
+var knr_basep: u32
 
 #wa:linkname $knr_freep
-var knr_freep u32
+var knr_freep: u32
 
 # K&R malloc 实现, Block 头部
 type knr_Header struct {
@@ -26,7 +26,7 @@ fn waHeapBase() => u32
 fn waHeapMax() => u32
 
 #wa:runtime_getter
-fn knr_getBlockHeader(p u32) => knr_Header
+fn knr_getBlockHeader(p: u32) => knr_Header
 
 #wa:runtime_setter
 fn knr_setBlockHeader(p: u32, hdr: knr_Header)
@@ -34,7 +34,7 @@ fn knr_setBlockHeader(p: u32, hdr: knr_Header)
 # 分配 nbytes 字节, 返回地址
 #wa:force_register
 fn malloc(nbytes: u32) => u32 {
-	if nbytes == 0 {
+	if nbytes == 0 || nbytes >= (waHeapMax()-knr_basep) {
 		return 0
 	}
 	if knr_basep == 0 {
