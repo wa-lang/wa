@@ -50,11 +50,32 @@ const modBaseWat_wa = `
 
 (export "memory" (memory $memory))
 
-;;Remove these functions if they've been implemented in .wa
-(global $$heap_ptr (mut i32) (i32.const 2048))
+;; --------------------------------------------------------
+;; | 0 <-- stack --> | <-- static-data --> | <-- heap --> |
+;; --------------------------------------------------------
 
-(func $$waGetHeapPtr(result i32)
-	global.get $$heap_ptr
+(global $__stack_ptr (mut i32) (i32.const 1024))     ;; index=0
+(global $__heap_base (mut i32) (i32.const 2048))     ;; index=1
+(global $__heap_max  i32       (i32.const 67108864)) ;; 64MB, 1024 page
+
+;; --------------------------------------------------------
+;; Stack/Heap/Memory helper functions
+;; --------------------------------------------------------
+
+(func $$waGetStackPtr (result i32)
+	(global.get $__stack_ptr)
+)
+(func $$waSetStackPtr (param $sp i32)
+	local.get $sp
+	global.set $__stack_ptr
+)
+
+(func $$waHeapBase(result i32)
+	global.get $__heap_base
+)
+
+(func $$waHeapMax(result i32)
+	global.get $__heap_max
 )
 
 (func $$waLoadI32(param $ptr i32) (result i32)
@@ -67,12 +88,18 @@ const modBaseWat_wa = `
 	i32.store offset=0 align=1
 )
 
+;; --------------------------------------------------------
+;; heap alloc/free
+;; --------------------------------------------------------
 
-(func $$waHeapAlloc (param $size i32) (result i32) ;;result = ptr
+(func $$waHeapAlloc (param $nbytes i32) (result i32) ;;result = ptr
+	;; local.get $nbytes
+	;; call $runtime.malloc
+
 	;;Todo
-	global.get $$heap_ptr
+	;; global.get $__heap_base
 
-	;; global.get $$heap_ptr
+	;; global.get $__heap_base
 	;; call $$runtime.waPrintI32
 	;; i32.const 32
 	;; call $$runtime.waPrintRune
@@ -81,12 +108,16 @@ const modBaseWat_wa = `
 	;; i32.const 10
 	;; call $$runtime.waPrintRune
 
-	global.get $$heap_ptr
-	local.get $size
+	global.get $__heap_base
+	global.get $__heap_base
+	local.get $nbytes
 	i32.add
-	global.set $$heap_ptr
+	global.set $__heap_base
 )
 (func $$waHeapFree (param $ptr i32)
+	;; local.get $ptr
+	;; call $runtime.free
+
 	;;Todo
 	;; i32.const 126
 	;; call $$runtime.waPrintRune
@@ -95,6 +126,8 @@ const modBaseWat_wa = `
 	;; i32.const 10
 	;; call $$runtime.waPrintRune
 )
+
+;; --------------------------------------------------------
 
 (func $$wa.RT.Block.Init (param $ptr i32) (param $item_count i32) (param $release_func i32) (param $item_size i32) (result i32) ;;result = ptr
   local.get $ptr
