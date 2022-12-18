@@ -33,15 +33,14 @@ fn Test(){
 
 #画布事件回调函数原型
 type OnTouch fn (x, y: u32)
+type OnKey fn(key: u32)
 
 #画布对象
-type Canvas struct{
-    device_id: u32     //画布对象对应的网页DOM对象id
-    width:     u32     //画布宽度，以像素为单位
-    height:    u32     //画布高度，以像素为单位
-    frame_buf: []u32   //画布帧缓存，容量为Width * Height * 4
-    FnOnDown:  OnTouch //鼠标按下或触屏按下时的回调处理函数，输入参数为画布内的像素坐标
-    FnOnUp:    OnTouch //鼠标松开或触屏松开时的回调处理函数，输入参数为画布内的像素坐标
+type Canvas struct {
+    device_id: u32   //画布对象对应的网页DOM对象id
+    width:     u32   //画布宽度，以像素为单位
+    height:    u32   //画布高度，以像素为单位
+    frame_buf: []u32 //画布帧缓存，容量为Width * Height * 4
 }
 
 #创建一个宽度为w像素、高度为h像素的画布对象
@@ -53,6 +52,11 @@ fn NewCanvas(w, h: u32) => *Canvas {
 	canvas.frame_buf = make([]u32, w * h)
 
 	return &canvas
+}
+
+#获取画布设备ID
+fn Canvas.GetDeviceID() => u32 {
+	return this.device_id
 }
 
 #获取画布宽度
@@ -80,13 +84,40 @@ fn Canvas.Flush() {
     updateCanvas_JS(this.device_id, &this.frame_buf[0])
 }
 
+#画布事件
+type CanvasEvents struct {
+	device_id:   u32     //画布设备ID
+    FnOnDown:    OnTouch //鼠标按下或触屏按下时的回调处理函数，输入参数为画布内的像素坐标
+    FnOnUp:      OnTouch //鼠标松开或触屏松开时的回调处理函数，输入参数为画布内的像素坐标
+	FnOnKeyDown: OnKey   //键盘按下，参数为键位
+	FnOnKeyUp:   OnKey   //键盘弹起，参数为键位
+}
+
+var canvas_events: []CanvasEvents
+
+fn AttachCanvasEvents(e: CanvasEvents) {
+	for i := range canvas_events {
+		if canvas_events[i].device_id == e.device_id {
+			canvas_events[i] = e
+			return
+		}
+	}
+
+	canvas_events = append(canvas_events, e)
+}
+
 /*
 供外部JS调用的按下事件响应函数
 id为画布对象对应的网页DOM对象id
 (x, y)为画布像素坐标系坐标
 */
 fn OnCanvasDown(id: u32, x, y:u32) {
-    //...
+    for _, i := range canvas_events {
+		if i.device_id == id {
+			i.FnOnDown(x, y)
+			return
+		}
+	}
 }
 
 /*
@@ -95,5 +126,38 @@ id为画布对象对应的网页DOM对象id
 (x, y)为画布像素坐标系坐标
 */
 fn OnCanvasUp(id: u32, x, y:u32) {
-    //...
+    for _, i := range canvas_events {
+		if i.device_id == id {
+			i.FnOnUp(x, y)
+			return
+		}
+	}
+}
+
+/*
+供外部JS调用的键盘按下事件响应函数
+id为画布对象对应的网页DOM对象id
+key为键位
+*/
+fn OnKeyDown(id, key:u32) {
+    for _, i := range canvas_events {
+		if i.device_id == id {
+			i.FnOnKeyDown(key)
+			return
+		}
+	}
+}
+
+/*
+供外部JS调用的键盘弹起事件响应函数
+id为画布对象对应的网页DOM对象id
+key为键位
+*/
+fn OnKeyUp(id, key:u32) {
+    for _, i := range canvas_events {
+		if i.device_id == id {
+			i.FnOnKeyUp(key)
+			return
+		}
+	}
 }
