@@ -6,44 +6,34 @@
 const sizeof_Header = 8
 
 #wa:linkname $knr_basep
-var knr_basep i32
+var knr_basep u32
 
 #wa:linkname $knr_freep
-var knr_freep i32
+var knr_freep u32
 
 # K&R malloc 实现, Block 头部
 type knr_Header struct {
-	ptr  :i32
-	size :i32
+	ptr  :u32
+	size :u32
 }
 
 # Heap 开始地址
 #wa:linkname $waHeapBase
-fn waHeapBase() => i32
+fn waHeapBase() => u32
 
 # Heap 最大地址(闭区间)
 #wa:linkname $waHeapMax
-fn waHeapMax() => i32
+fn waHeapMax() => u32
 
-#wa:linkname $waLoadI32
-fn waLoadI32(offset: i32) => i32
+#wa:runtime_getter
+fn knr_getBlockHeader(p u32) => knr_Header
 
-#wa:linkname $waStoreI32
-fn waStoreI32(offset, value: i32)
-
-fn knr_getBlockHeader(p i32) (hdr knr_Header) {
-	hdr.ptr = waLoadI32(p + 0)
-	hdr.size = waLoadI32(p + 4)
-	return
-}
-
-fn knr_setBlockHeader(p: i32, hdr: knr_Header) {
-	waStoreI32(p+0, hdr.ptr)
-	waStoreI32(p+4, hdr.size)
-}
+#wa:runtime_setter
+fn knr_setBlockHeader(p: u32, hdr: knr_Header)
 
 # 分配 nbytes 字节, 返回地址
-fn malloc(nbytes: i32) => i32 {
+#wa:force_register
+fn malloc(nbytes: u32) => u32 {
 	if nbytes == 0 {
 		return 0
 	}
@@ -99,7 +89,8 @@ fn malloc(nbytes: i32) => i32 {
 }
 
 # 回收内存, 释放到空闲列表
-fn free(ap: i32) {
+#wa:force_register
+fn free(ap: u32) {
 	if ap == 0 || ap%sizeof_Header != 0 {
 		return
 	}
