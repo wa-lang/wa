@@ -30,12 +30,47 @@
               let canvas = document.createElement('canvas');
               canvas.width = w;
               canvas.height = h;
+              canvas.id = 0;  //!!!!!
+
               const waContent = document.getElementById('wa-content');
               waContent.appendChild(canvas);
+
+              function getPointOnCanvas(x, y) {
+                var bbox = canvas.getBoundingClientRect();
+                return {
+                  x: parseInt((x - bbox.left) * (canvas.width / bbox.width)),
+                  y: parseInt((y - bbox.top) * (canvas.height / bbox.height))
+                };
+              }
+
+              function onMouseDown(ev) {
+                let pt = getPointOnCanvas(ev.clientX, ev.clientY);
+                app._inst.exports['snake$canvas.OnMouseDown'](canvas.id, pt.x, pt.y);
+              }
+
+              function onMouseUp(ev) {
+                let pt = getPointOnCanvas(ev.clientX, ev.clientY);
+                app._inst.exports['snake$canvas.OnMouseUp'](canvas.id, pt.x, pt.y);
+              }
+
+              function onKeyDown(ev){
+                app._inst.exports['snake$canvas.OnKeyDown'](canvas.id, ev.keyCode);
+              }
+
+              function onKeyUp(ev){
+                app._inst.exports['snake$canvas.OnKeyUp'](canvas.id, ev.keyCode);
+              }
+
+              canvas.addEventListener('mousedown', onMouseDown, true);
+              canvas.addEventListener('mouseup', onMouseUp, true);
+              canvas.addEventListener('keydown', onKeyDown, true);
+              canvas.addEventListener('keyup', onKeyUp, true);
+              canvas.tabIndex = -1;  //tabindex
+              canvas.focus();
+
               this._ctx = canvas.getContext('2d');
               this._canvas = canvas;
-              canvas.id = 0;
-              return 0  //!!!!!
+              return canvas.id;
             }
             this.updateCanvas = (id, block, data) => {
               let img = this._ctx.createImageData(this._canvas.width, this._canvas.height);
