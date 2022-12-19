@@ -112,6 +112,11 @@
       }
     }
   
+    function gameLoop() {
+      window['waApp']._inst.exports['snake.Step']();
+    }
+
     window['waApp'] = new WaApp();
     window['waApp'].init("./snake.wasm")
+    const timer = setInterval(gameLoop, 160);
   })()

@@ -34,6 +34,9 @@ fn Test(){
 	canvas.AttachCanvasEvents(caev)
 }
 
+fn Step() {
+}
+
 fn main() {
 	Test()
 }
