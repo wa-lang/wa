@@ -142,6 +142,12 @@ func (g *functionGenerator) getValue(i ssa.Value) valueWrap {
 		fn_name, _ := GetFnMangleName(v)
 		fn_sig := wir.NewFnSigFromSignature(v.Signature)
 
+		if v.Parent() != nil {
+			if g.module.FindFunc(fn_name) == nil {
+				g.module.AddFunc(newFunctionGenerator(g.module).genFunction(v))
+			}
+		}
+
 		return valueWrap{value: wir.GenConstFnValue(fn_name, fn_sig)}
 	}
 
@@ -498,7 +504,7 @@ func (g *functionGenerator) genBuiltin(call *ssa.CallCommon) (insts []wat.Inst, 
 		for _, arg := range call.Args {
 			arg := g.getValue(arg)
 			switch arg.value.Type().(type) {
-			case wir.I32:
+			case wir.I32, wir.U32:
 				insts = append(insts, arg.value.EmitPush()...)
 				insts = append(insts, wat.NewInstCall("$runtime.waPrintI32"))
 
