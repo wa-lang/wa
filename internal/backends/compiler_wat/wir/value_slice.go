@@ -137,7 +137,7 @@ func (t Slice) emitGenMake(Len, Cap Value) (insts []wat.Inst) {
 
 func (t Slice) genAppendFunc() string {
 	fn_name := "$" + GenSymbolName(t.Name()) + ".append"
-	if currentModule.findFunc(fn_name) != nil {
+	if currentModule.FindFunc(fn_name) != nil {
 		return fn_name
 	}
 

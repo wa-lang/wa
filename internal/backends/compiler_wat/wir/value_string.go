@@ -37,7 +37,7 @@ func (t String) EmitLoadFromAddr(addr Value, offset int) []wat.Inst {
 
 func (t String) genAppendStrFunc() string {
 	fn_name := "$" + t.Name() + ".appendstr"
-	if currentModule.findFunc(fn_name) != nil {
+	if currentModule.FindFunc(fn_name) != nil {
 		return fn_name
 	}
 

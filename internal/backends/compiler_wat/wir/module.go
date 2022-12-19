@@ -100,7 +100,7 @@ func (m *Module) AddTableElem(elem string) int {
 	return i
 }
 
-func (m *Module) findFunc(fn_name string) *Function {
+func (m *Module) FindFunc(fn_name string) *Function {
 	if f, ok := m.funcs_map[fn_name]; ok {
 		return f
 	}
@@ -108,7 +108,7 @@ func (m *Module) findFunc(fn_name string) *Function {
 }
 
 func (m *Module) AddFunc(f *Function) {
-	if m.findFunc(f.InternalName) == nil {
+	if m.FindFunc(f.InternalName) == nil {
 		m.funcs = append(m.funcs, f)
 		m.funcs_map[f.InternalName] = f
 	}
