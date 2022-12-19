@@ -16,21 +16,6 @@ buf为帧缓存指针
 #wa:import wa_js_env updateCanvas
 fn updateCanvas_JS(id: u32, buf: *u32)
 
-
-
-fn Test(){
-	println(42)
-
-	canvas := NewCanvas(255, 255)
-	var i, j u32
-	for i = 0; i < 255; i++ {
-		for j = 0; j < 255; j++ {
-			canvas.SetPixel(i, j, 0xFF000000 + i + j * 256)
-		}
-	}
-	canvas.Flush()
-}
-
 #画布事件回调函数原型
 type OnTouch fn (x, y: u32)
 type OnKey fn(key: u32)
@@ -40,7 +25,16 @@ type Canvas struct {
     device_id: u32   //画布对象对应的网页DOM对象id
     width:     u32   //画布宽度，以像素为单位
     height:    u32   //画布高度，以像素为单位
-    frame_buf: []u32 //画布帧缓存，容量为Width * Height * 4
+    frame_buf: []u32 //画布帧缓存，容量为Width * Height
+}
+
+#画布事件
+type CanvasEvents struct {
+	Device_id:   u32     //画布设备ID
+    OnMouseDown: OnTouch //鼠标按下或触屏按下时的回调处理函数，输入参数为画布内的像素坐标
+    OnMouseUp:   OnTouch //鼠标松开或触屏松开时的回调处理函数，输入参数为画布内的像素坐标
+	OnKeyDown:   OnKey   //键盘按下，参数为键位。37=← 38=↑ 39=→ 40=↓
+	OnKeyUp:     OnKey   //键盘弹起，参数为键位
 }
 
 #创建一个宽度为w像素、高度为h像素的画布对象
@@ -84,20 +78,11 @@ fn Canvas.Flush() {
     updateCanvas_JS(this.device_id, &this.frame_buf[0])
 }
 
-#画布事件
-type CanvasEvents struct {
-	device_id:   u32     //画布设备ID
-    FnOnDown:    OnTouch //鼠标按下或触屏按下时的回调处理函数，输入参数为画布内的像素坐标
-    FnOnUp:      OnTouch //鼠标松开或触屏松开时的回调处理函数，输入参数为画布内的像素坐标
-	FnOnKeyDown: OnKey   //键盘按下，参数为键位
-	FnOnKeyUp:   OnKey   //键盘弹起，参数为键位
-}
-
 var canvas_events: []CanvasEvents
 
 fn AttachCanvasEvents(e: CanvasEvents) {
 	for i := range canvas_events {
-		if canvas_events[i].device_id == e.device_id {
+		if canvas_events[i].Device_id == e.Device_id {
 			canvas_events[i] = e
 			return
 		}
@@ -111,10 +96,10 @@ fn AttachCanvasEvents(e: CanvasEvents) {
 id为画布对象对应的网页DOM对象id
 (x, y)为画布像素坐标系坐标
 */
-fn OnCanvasDown(id: u32, x, y:u32) {
+fn OnMouseDown(id: u32, x, y:u32) {
     for _, i := range canvas_events {
-		if i.device_id == id {
-			i.FnOnDown(x, y)
+		if i.Device_id == id {
+			i.OnMouseDown(x, y)
 			return
 		}
 	}
@@ -125,10 +110,10 @@ fn OnCanvasDown(id: u32, x, y:u32) {
 id为画布对象对应的网页DOM对象id
 (x, y)为画布像素坐标系坐标
 */
-fn OnCanvasUp(id: u32, x, y:u32) {
+fn OnMouseUp(id: u32, x, y:u32) {
     for _, i := range canvas_events {
-		if i.device_id == id {
-			i.FnOnUp(x, y)
+		if i.Device_id == id {
+			i.OnMouseUp(x, y)
 			return
 		}
 	}
@@ -141,8 +126,8 @@ key为键位
 */
 fn OnKeyDown(id, key:u32) {
     for _, i := range canvas_events {
-		if i.device_id == id {
-			i.FnOnKeyDown(key)
+		if i.Device_id == id {
+			i.OnKeyDown(key)
 			return
 		}
 	}
@@ -155,8 +140,8 @@ key为键位
 */
 fn OnKeyUp(id, key:u32) {
     for _, i := range canvas_events {
-		if i.device_id == id {
-			i.FnOnKeyUp(key)
+		if i.Device_id == id {
+			i.OnKeyUp(key)
 			return
 		}
 	}
