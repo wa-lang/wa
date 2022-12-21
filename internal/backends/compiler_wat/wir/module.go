@@ -147,10 +147,11 @@ func (m *Module) genGlobalAlloc() *Function {
 			continue
 		}
 
-		t := g.Type().(Pointer).Base
+		ref := g.(*aRef)
+		t := g.Type().(Ref).Base
 		f.Insts = append(f.Insts, wat.NewInstConst(wat.I32{}, strconv.Itoa(t.size())))
 		f.Insts = append(f.Insts, wat.NewInstCall("$waHeapAlloc"))
-		f.Insts = append(f.Insts, g.EmitPop()...)
+		f.Insts = append(f.Insts, ref.Extract("data").EmitPop()...)
 	}
 
 	return &f
