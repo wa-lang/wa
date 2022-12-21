@@ -73,6 +73,13 @@ fn Canvas.SetPixel(x, y, color: u32) {
     this.frame_buf[y * this.width + x] = color
 }
 
+#用color指定的颜色清除整个画布
+fn Canvas.Clear(color: u32) {
+	for i := range this.frame_buf {
+		this.frame_buf[i] = color
+	}
+}
+
 #将画布对象的帧缓存更新至网页DOM对象
 fn Canvas.Flush() {
     updateCanvas_JS(this.device_id, &this.frame_buf[0])

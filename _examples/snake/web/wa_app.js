@@ -12,6 +12,7 @@
             this.waPrintI32 = (i) => {
               app._wa_print_buf += i
             }
+
             this.waPrintRune = (c) => {
               let ch = String.fromCodePoint(c);
               if (ch == '\n') {
@@ -22,10 +23,16 @@
                 app._wa_print_buf += ch
               }
             }
+
             this.waPuts = (prt, len) => {
               let s = app.getString(prt, len);
               app._wa_print_buf += s
             }
+
+            this.rand = (m) => {
+              return parseInt(Math.random() * m)
+            }
+
             this.newCanvas = (w, h) => {
               let canvas = document.createElement('canvas');
               canvas.width = w;
@@ -118,5 +125,5 @@
 
     window['waApp'] = new WaApp();
     window['waApp'].init("./snake.wasm")
-    const timer = setInterval(gameLoop, 160);
+    const timer = setInterval(gameLoop, 100);
   })()

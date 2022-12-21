@@ -3,7 +3,6 @@
 import "snake/canvas"
 
 var ca *canvas.Canvas
-
 fn Test(){
 	println(42)
 
@@ -34,9 +33,182 @@ fn Test(){
 	canvas.AttachCanvasEvents(caev)
 }
 
+type Position struct {
+	x, y: i32
+}
+
+const BodyColor = 0xFF0000FF
+const FoodColor = 0xFF00FF00
+
+const (
+	GridNull i8 = iota
+	GridBody
+	GridFood
+)
+
+const (
+	DirNull i32 = iota
+	DirLeft
+	DirUp
+	DirRight
+	DirDown
+)
+
+var Dirs [5]Position
+
+type GameState struct {
+	w, h: i32
+	scale: i32
+	grid: []i8
+	body: []Position
+	dir: i32
+
+	ca: *canvas.Canvas
+}
+
+var gameState GameState
+
+fn GameState.Init(w, h: i32, scale: i32) {
+	this.w = w
+	this.h = h
+	this.scale = scale
+	this.grid = make([]i8, u32(w * h))
+	this.ca = canvas.NewCanvas(u32(w * scale), u32(h * scale))
+
+	var caev canvas.CanvasEvents
+	caev.Device_id = this.ca.GetDeviceID()
+	caev.OnMouseDown = fn(x, y: u32) {}
+	caev.OnMouseUp = fn(x, y: u32) {}
+	caev.OnKeyUp = fn(key: u32) {}
+	caev.OnKeyDown = this.OnKeyDown
+
+	Dirs[DirNull] = Position{x: 0, y: 0}
+	Dirs[DirLeft] = Position{x: -1, y: 0}
+	Dirs[DirUp] = Position{x: 0, y: -1}
+	Dirs[DirRight] = Position{x: 1, y: 0}
+	Dirs[DirDown] = Position{x: 0, y: 1}
+
+	canvas.AttachCanvasEvents(caev)
+}
+
+fn GameState.Start() {
+	for i := range this.grid {
+		this.grid[i] = GridNull
+	}
+	this.ca.Clear(0xFFFFFFFF)
+	this.dir = DirNull
+
+	this.body = []Position{Position{x: this.w / 2, y: this.h / 2}}
+	this.SetGridType(this.body[0], GridBody)
+
+	this.GenFood()
+
+	this.ca.Flush()
+}
+
+fn GameState.SetGridType(p: Position, t: i8) {
+	this.grid[p.y * this.w + p.x] = t
+	var color u32
+	switch t {
+	case GridBody:
+		color = BodyColor
+
+	case GridFood:
+		color = FoodColor
+
+	default:
+		color = 0xFFFFFFFF
+	}
+
+	var x, y: i32
+	for y = 0; y < this.scale; y++ {
+		for x = 0; x < this.scale; x++ {
+			this.ca.SetPixel(u32(p.x * this.scale + x), u32(p.y * this.scale + y), color)
+		}
+	}
+}
+
+#wa:import wa_js_env rand
+fn rand_JS(i32) => i32
+fn GameState.GenFood() => Position {
+	var p Position
+	for {
+		p = Position{x: rand_JS(this.w), y: rand_JS(this.h)}
+		if this.grid[p.y * this.w + p.x] == GridNull {
+			this.SetGridType(p, GridFood)
+			return p
+		}
+	}
+}
+
+fn GameState.OnKeyDown(key: u32) {
+	switch key {
+	case 37:
+		this.dir = DirLeft
+
+	case 38:
+		this.dir = DirUp
+
+	case 39:
+		this.dir = DirRight
+
+	case 40:
+		this.dir = DirDown
+	}
+}
+
+fn GameState.Step() {
+	if this.dir == DirNull {
+		return
+	}
+
+	newHead := this.body[len(this.body) - 1]
+	newHead.x += Dirs[this.dir].x
+	newHead.y += Dirs[this.dir].y
+
+	if newHead.x < 0 {
+		newHead.x = this.w - 1
+	}
+	if newHead.x >= this.w {
+		newHead.x = 0
+	}
+	if newHead.y < 0 {
+		newHead.y = this.h - 1
+	}
+	if newHead.y >= this.h {
+		newHead.y = 0
+	}
+
+	//if newHead.x < 0 || newHead.x >= this.w || newHead.y < 0 || newHead.y >= this.h {
+	//	this.Start()
+	//	return
+	//}
+
+	switch this.grid[newHead.y * this.w + newHead.x] {
+	case GridBody:
+		this.Start()
+		return
+
+	case GridFood:
+		this.SetGridType(newHead, GridBody)
+		this.body = append(this.body, newHead)
+		this.GenFood()
+
+	default:
+		this.SetGridType(newHead, GridBody)
+		this.SetGridType(this.body[0], GridNull)
+		this.body = append(this.body, newHead)
+		this.body = this.body[1:]
+	}
+
+	this.ca.Flush()
+}
+
 fn Step() {
+	gameState.Step()
 }
 
 fn main() {
-	Test()
+	gameState.Init(50, 50, 10)
+	gameState.Start()
 }
