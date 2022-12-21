@@ -12,7 +12,7 @@
 - 开发工具: [Playground](https://wa-lang.org/playground), [VSCode 插件](https://marketplace.visualstudio.com/items?itemName=xxxDeveloper.vscode-wa), [Fleet 插件](https://github.com/wa-lang/fleet-wa), [Vim 插件](https://github.com/wa-lang/vim-wa)
 - 开发组: [柴树杉(chai2010)](https://github.com/chai2010)、[丁尔男(Ending)](https://github.com/3dgen)、[史斌(Benshi)](https://github.com/benshi001)、[扈梦明(xxxDeveloper)](https://github.com/xxxDeveloper)、[刘云峰(leaftree)](https://github.com/leaftree)、[宋汝阳(ShiinaOrez)](https://github.com/ShiinaOrez)
 
-> 说明: 凹语言的主仓库在 https://gitee.com/wa-lang/wa. 在 Github 同时有一个镜像仓库 https://github.com/wa-lang/wa. 凹语言代码除非特别声明，均以 AGPL-v3 开源协议授权, 具体可以参考 LICENSE 文件.
+> 说明: 凹语言的主仓库位于： https://gitee.com/wa-lang/wa ，镜像仓库位于： https://github.com/wa-lang/wa 。凹语言代码除非特别声明，均以 AGPL-v3 开源协议授权, 具体可以参考 LICENSE 文件。
 
 ## Playground 在线预览
 
@@ -27,7 +27,11 @@
 2. `wa init -name=_examples/hi`
 3. `wa run _examples/hi`
 
-> 项目尚处于原型开源阶段，如果有共建和PR需求请参考 [如何贡献代码](https://wa-lang.org/community/contribute.html)。我们不再接受针对第三方依赖库修改的 PR。
+## 如何参与开发
+
+项目尚处于原型开源阶段，如果有共建和PR需求请参考 [如何贡献代码](https://wa-lang.org/community/contribute.html)。我们不再接受针对第三方依赖库修改的 PR。
+
+> 特别注意：向本仓库提交PR视同您认可并接受[凹语言贡献者协议](https://wa-lang.org/community/wca.html)，但在实际签署之前，您的PR不会被审阅或接受。
 
 ## 例子: 凹语言
 
