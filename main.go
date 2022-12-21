@@ -185,13 +185,21 @@ func main() {
 				}
 
 				if outfile != "" && outfile != "-" {
-					if !strings.HasSuffix(outfile, ".wat") {
-						outfile += ".wat"
+					watFilename := outfile
+					if !strings.HasSuffix(watFilename, ".wat") {
+						watFilename += ".wat"
 					}
-					err := os.WriteFile(outfile, []byte(output), 0666)
+					err := os.WriteFile(watFilename, []byte(output), 0666)
 					if err != nil {
 						fmt.Println(err)
 						os.Exit(1)
+					}
+					if strings.HasSuffix(outfile, ".wasm") {
+						if stdoutStderr, err := apputil.RunWat2Wasm(watFilename, "-o", outfile); err != nil {
+							fmt.Println(string(stdoutStderr))
+							os.Exit(1)
+						}
+						os.Remove(watFilename)
 					}
 				} else {
 					fmt.Println(string(output))
