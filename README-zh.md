@@ -16,6 +16,13 @@
 
 > 说明: 凹语言的主仓库位于： https://gitee.com/wa-lang/wa ，镜像仓库位于： https://github.com/wa-lang/wa 。凹语言代码除非特别声明，均以 AGPL-v3 开源协议授权, 具体可以参考 LICENSE 文件。
 
+## 如何参与开发
+
+项目尚处于原型开源阶段，如果有共建和PR需求请参考 [如何贡献代码](https://wa-lang.org/community/contribute.html)。我们不再接受针对第三方依赖库修改的 PR。
+
+> 特别注意：向本仓库提交PR视同您认可并接受[凹语言贡献者协议](https://gitee.com/organizations/wa-lang/cla/wca)，但在实际签署之前，您的PR不会被评审或接受。
+
+
 ## Playground 在线预览
 
 [https://wa-lang.org/playground](https://wa-lang.org/playground)
@@ -28,12 +35,6 @@
 1. `go install wa-lang.org/wa@latest`
 2. `wa init -name=_examples/hi`
 3. `wa run _examples/hi`
-
-## 如何参与开发
-
-项目尚处于原型开源阶段，如果有共建和PR需求请参考 [如何贡献代码](https://wa-lang.org/community/contribute.html)。我们不再接受针对第三方依赖库修改的 PR。
-
-> 特别注意：向本仓库提交PR视同您认可并接受[凹语言贡献者协议](https://wa-lang.org/community/wca.html)，但在实际签署之前，您的PR不会被审阅或接受。
 
 ## 例子: 凹语言
 
