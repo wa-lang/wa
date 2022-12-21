@@ -7,6 +7,6 @@ publish:
 	-rm -rf ../../docs/snake/
 	mkdir -p ../../docs/snake
 	cp -r ./web/ ../../docs/snake/
-	mv ../../docs/snake/snake.html ../../docs/snake/index.html
+	#mv ../../docs/snake/snake.html ../../docs/snake/index.html
 
 clean:
