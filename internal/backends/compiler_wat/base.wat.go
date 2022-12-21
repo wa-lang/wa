@@ -83,8 +83,46 @@ const modBaseWat_wa = `
 ;; --------------------------------------------------------
 
 (func $$waHeapAlloc (param $nbytes i32) (result i32) ;;result = ptr
+	(local $ptr i32)
+
+	local.get $nbytes
+	i32.eqz
+	if
+		i32.const 0
+		return
+	end
+
+	local.get $nbytes
+	i32.const 7
+	i32.add
+	i32.const 8
+	i32.div_u
+	i32.const 8
+	i32.mul
+	local.set $nbytes
+
 	local.get $nbytes
 	call $runtime.malloc
+	local.set $ptr
+
+	loop $zero
+		local.get $nbytes
+		i32.const 8
+		i32.sub
+		local.tee $nbytes
+		local.get $ptr
+		i32.add
+
+		i64.const 0
+		i64.store
+
+		local.get $nbytes
+		if
+			br $zero
+		end
+	end ;;loop $zero
+
+	local.get $ptr
 
 	;;Todo
 	;; global.get $__heap_base
@@ -101,8 +139,18 @@ const modBaseWat_wa = `
 	;; global.get $__heap_base
 	;; global.get $__heap_base
 	;; local.get $nbytes
+	;; i32.const 7
+	;; i32.add
+	;; i32.const 8
+	;; i32.div_u
+	;; i32.const 8
+	;; i32.mul
 	;; i32.add
 	;; global.set $__heap_base
+	;; call $$wa.RT.DupWatStack
+	;; call $$runtime.waPrintI32
+	;; i32.const 10
+	;; call $$runtime.waPrintRune
 )
 (func $$waHeapFree (param $ptr i32)
 	local.get $ptr
