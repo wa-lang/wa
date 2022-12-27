@@ -12,6 +12,7 @@ import (
 
 	"wa-lang.org/wa/internal/ast"
 	"wa-lang.org/wa/internal/config"
+	wzparser "wa-lang.org/wa/internal/frontend/wz/parser"
 	"wa-lang.org/wa/internal/logger"
 	"wa-lang.org/wa/internal/parser"
 	"wa-lang.org/wa/internal/ssa"
@@ -52,7 +53,7 @@ func (p *_Loader) LoadProgram(appPath string) (*Program, error) {
 	logger.Tracef(&config.EnableTrace_loader, "cfg: %+v", p.cfg)
 	logger.Tracef(&config.EnableTrace_loader, "appPath: %s", appPath)
 
-	if isWaFile(appPath) {
+	if isWaFile(appPath) || isWzFile(appPath) {
 		vfs, manifest, err := loadProgramFileMeta(&p.cfg, appPath, nil)
 		if err != nil {
 			logger.Tracef(&config.EnableTrace_loader, "err: %v", err)
@@ -259,7 +260,12 @@ func (p *_Loader) ParseDir(pkgpath string) ([]*ast.File, error) {
 
 	var files []*ast.File
 	for i, filename := range filenames {
-		f, err := parser.ParseFile(nil, p.prog.Fset, filename, datas[i], parser.AllErrors|parser.ParseComments)
+		var f *ast.File
+		if p.hasExt(filename, ".wz") {
+			f, err = wzparser.ParseFile(nil, p.prog.Fset, filename, datas[i], wzparser.AllErrors|wzparser.ParseComments)
+		} else {
+			f, err = parser.ParseFile(nil, p.prog.Fset, filename, datas[i], parser.AllErrors|parser.ParseComments)
+		}
 		if err != nil {
 			logger.Tracef(&config.EnableTrace_loader, "filename: %v", filename)
 			logger.Tracef(&config.EnableTrace_loader, "datas[i]: %s", datas[i])
@@ -365,13 +371,13 @@ func (p *_Loader) isSkipedSouceFile(filename string) bool {
 	if strings.HasPrefix(filename, "_") {
 		return true
 	}
-	if !p.hasExt(filename, ".wa", ".wa.go", ".ugo") {
+	if !p.hasExt(filename, ".wa", ".wa.go", ".ugo", ".wz") {
 		return true
 	}
 
 	if p.cfg.WaOS != "" {
 		var isTargetFile bool
-		for _, ext := range []string{".wa", ".wa.go", ".ugo"} {
+		for _, ext := range []string{".wa", ".wa.go", ".ugo", ".wz"} {
 			for _, os := range []string{"walang", "wasi", "arduino", "chrome"} {
 				if strings.HasSuffix(filename, "_"+os+ext) {
 					isTargetFile = true
@@ -381,7 +387,7 @@ func (p *_Loader) isSkipedSouceFile(filename string) bool {
 		}
 		if isTargetFile {
 			var shouldSkip = true
-			for _, ext := range []string{".wa", ".wa.go", ".ugo"} {
+			for _, ext := range []string{".wa", ".wa.go", ".ugo", ".wz"} {
 				if strings.HasSuffix(filename, "_"+p.cfg.WaOS+ext) {
 					shouldSkip = false
 					break

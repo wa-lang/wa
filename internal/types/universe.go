@@ -72,6 +72,7 @@ var aliases = [...]*Basic{
 	{Int16, IsInteger, "i16"},
 	{Int32, IsInteger, "i32"},
 	{Int64, IsInteger, "i64"},
+	{Int, IsInteger, "数"},
 
 	{Uint8, IsInteger | IsUnsigned, "u8"},
 	{Uint16, IsInteger | IsUnsigned, "u16"},
@@ -85,6 +86,8 @@ var aliases = [...]*Basic{
 
 	{Float32, IsFloat, "float"},
 	{Float64, IsFloat, "double"},
+
+	{String, IsString, "文"},
 }
 
 func defPredeclaredTypes() {
@@ -228,6 +231,10 @@ func init() {
 // a scope. Objects with exported names are inserted in the unsafe package
 // scope; other objects are inserted in the universe scope.
 //
+func isCNKeyword(name string) bool {
+	return name == "数" || name == "文"
+}
+
 func def(obj Object) {
 	assert(obj.color() == black)
 	name := obj.Name()
@@ -240,7 +247,8 @@ func def(obj Object) {
 	}
 	// exported identifiers go into package unsafe
 	scope := Universe
-	if obj.Exported() {
+	// 这里中文的关键字被obj.Exported给过滤了，所以被放进了Unsafe的scope
+	if !isCNKeyword(obj.Name()) && obj.Exported() {
 		scope = Unsafe.scope
 		// set Pkg field
 		switch obj := obj.(type) {
