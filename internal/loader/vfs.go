@@ -147,3 +147,10 @@ func isWaFile(path string) bool {
 	}
 	return false
 }
+
+func isWzFile(path string) bool {
+	if fi, err := os.Lstat(path); err == nil && fi.Mode().IsRegular() {
+		return strings.HasSuffix(strings.ToLower(path), ".wz")
+	}
+	return false
+}

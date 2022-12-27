@@ -23,7 +23,7 @@ func New() *Compiler {
 	return p
 }
 
-func (p *Compiler) Compile(prog *loader.Program) (output string, err error) {
+func (p *Compiler) Compile(prog *loader.Program, mainFunc string) (output string, err error) {
 	p.module.BaseWat = modBaseWat_wa
 
 	for _, pkg := range prog.Pkgs {
@@ -49,7 +49,8 @@ func (p *Compiler) Compile(prog *loader.Program) (output string, err error) {
 		n += ".init"
 		f.Insts = append(f.Insts, wat.NewInstCall(n))
 		n, _ = wir.GetPkgMangleName(prog.SSAMainPkg.Pkg.Path())
-		n += ".main"
+		n += "."
+		n += mainFunc
 		f.Insts = append(f.Insts, wat.NewInstCall(n))
 		p.module.AddFunc(&f)
 	}
