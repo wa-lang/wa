@@ -25,6 +25,7 @@ var (
 	universeIota *Const
 	universeByte *Basic // uint8 alias, but has name "byte"
 	universeRune *Basic // int32 alias, but has name "rune"
+	universeAny  Object
 )
 
 // Typ contains the predeclared *Basic types indexed by their
@@ -97,6 +98,12 @@ func defPredeclaredTypes() {
 	for _, t := range aliases {
 		def(NewTypeName(token.NoPos, nil, t.name, t))
 	}
+
+	// type any = interface{}
+	// Note: don't use &emptyInterface for the type of any. Using a unique
+	// pointer allows us to detect any and format it as "any" rather than
+	// interface{}, which clarifies user-facing error messages significantly.
+	def(NewTypeName(token.NoPos, nil, "any", &Interface{}))
 
 	// Error has a nil package in its qualified name since it is in no package
 	res := NewVar(token.NoPos, nil, "", Typ[String])
@@ -225,6 +232,7 @@ func init() {
 	universeIota = Universe.Lookup("iota").(*Const)
 	universeByte = Universe.Lookup("byte").(*TypeName).typ.(*Basic)
 	universeRune = Universe.Lookup("rune").(*TypeName).typ.(*Basic)
+	universeAny = Universe.Lookup("any")
 }
 
 // Objects with names containing blanks are internal and not entered into
