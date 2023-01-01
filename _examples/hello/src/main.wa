@@ -1,6 +1,14 @@
 # 版权 @2022 _examples/hello 作者。保留所有权利。
 
+import "fmt"
+import "3rdparty/pkg"
+import "myapp/mymath"
+
 fn main() {
+	fmt.Println(40+2)
+	pkg.Println(100+2)
+	println(mymath.I8Max)
+
 	println(sum(100))
 	heart()
 }
