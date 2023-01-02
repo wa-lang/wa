@@ -38,7 +38,8 @@ type Position struct {
 	x, y :i32
 }
 
-const BodyColor = 0xFF0000FF
+const DefaultColor = 0x00000000
+const BodyColor = 0xFF202020
 const FoodColor = 0xFF00FF00
 
 const (
@@ -96,7 +97,7 @@ fn GameState.Start() {
 	for i := range this.grid {
 		this.grid[i] = GridNull
 	}
-	this.ca.Clear(0xFFFFFFFF)
+	this.ca.Clear(DefaultColor)
 	this.dir = DirNull
 
 	this.body = []Position{Position{x: this.w / 2, y: this.h / 2}}
@@ -118,7 +119,7 @@ fn GameState.SetGridType(p: Position, t: i8) {
 		color = FoodColor
 
 	default:
-		color = 0xFFFFFFFF
+		color = DefaultColor
 	}
 
 	var x, y: i32
@@ -210,6 +211,6 @@ fn Step() {
 }
 
 fn main() {
-	gameState.Init(50, 50, 10)
+	gameState.Init(32, 32, 10)
 	gameState.Start()
 }
