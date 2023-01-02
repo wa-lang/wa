@@ -4,29 +4,39 @@
 <head>
   <meta charset="UTF-8">
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0">
   <title>Wa: Snack Game</title>
-  <style>
-    * {
-      margin: 0;
-      padding: 0;
-    }
-
-    #wa-content {
-      width: 500px;
-      height: 500px;
-      border: 1px solid black;
-      position: fixed;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-    }
-  </style>
+  <link rel="stylesheet" href="index.css">
 </head>
 
 <body>
-  <div id="wa-content"></div>
+  <span class="tips">Please use the keyboard to control</span>
+  <div id="box">
+    <span class="game__title">
+      Wa Snack Game
+      <sup><em>2022</em></sup>
+    </span>
+    <div id="game">
+      <div id="game__screen">
+        <div id="game__screen-content"></div>
+      </div>
+      <div id="game__operate">
+        <div class="game__operate-ghost"><span></span><span></span><span></span><span></span></div>
+        <div class="game__operate-assist">
+          <span class="game__operate-assist--btns"><span></span><span></span></span>
+          <span class="game__operate-assist--audio"></span>
+        </div>
+        <div id="game__operate-direction">
+          <span id="game__operate-direction--up" class="direction__item"></span>
+          <span id="game__operate-direction--right" class="direction__item"></span>
+          <span id="game__operate-direction--down" class="direction__item"></span>
+          <span id="game__operate-direction--left" class="direction__item"></span>
+        </div>
+      </div>
+    </div>
+  </div>
 </body>
+<script type="text/javascript" src="./index.js"></script>
 <script type="text/javascript" src="./wa_app.js"></script>
 
 </html>
