@@ -25,6 +25,7 @@ var (
 	universeIota *Const
 	universeByte *Basic // uint8 alias, but has name "byte"
 	universeRune *Basic // int32 alias, but has name "rune"
+	universeAny  Object
 )
 
 // Typ contains the predeclared *Basic types indexed by their
@@ -72,6 +73,7 @@ var aliases = [...]*Basic{
 	{Int16, IsInteger, "i16"},
 	{Int32, IsInteger, "i32"},
 	{Int64, IsInteger, "i64"},
+	{Int, IsInteger, "数"},
 
 	{Uint8, IsInteger | IsUnsigned, "u8"},
 	{Uint16, IsInteger | IsUnsigned, "u16"},
@@ -85,6 +87,8 @@ var aliases = [...]*Basic{
 
 	{Float32, IsFloat, "float"},
 	{Float64, IsFloat, "double"},
+
+	{String, IsString, "文"},
 }
 
 func defPredeclaredTypes() {
@@ -94,6 +98,12 @@ func defPredeclaredTypes() {
 	for _, t := range aliases {
 		def(NewTypeName(token.NoPos, nil, t.name, t))
 	}
+
+	// type any = interface{}
+	// Note: don't use &emptyInterface for the type of any. Using a unique
+	// pointer allows us to detect any and format it as "any" rather than
+	// interface{}, which clarifies user-facing error messages significantly.
+	def(NewTypeName(token.NoPos, nil, "any", &Interface{}))
 
 	// Error has a nil package in its qualified name since it is in no package
 	res := NewVar(token.NoPos, nil, "", Typ[String])
@@ -222,12 +232,17 @@ func init() {
 	universeIota = Universe.Lookup("iota").(*Const)
 	universeByte = Universe.Lookup("byte").(*TypeName).typ.(*Basic)
 	universeRune = Universe.Lookup("rune").(*TypeName).typ.(*Basic)
+	universeAny = Universe.Lookup("any")
 }
 
 // Objects with names containing blanks are internal and not entered into
 // a scope. Objects with exported names are inserted in the unsafe package
 // scope; other objects are inserted in the universe scope.
 //
+func isCNKeyword(name string) bool {
+	return name == "数" || name == "文"
+}
+
 func def(obj Object) {
 	assert(obj.color() == black)
 	name := obj.Name()
@@ -240,7 +255,8 @@ func def(obj Object) {
 	}
 	// exported identifiers go into package unsafe
 	scope := Universe
-	if obj.Exported() {
+	// 这里中文的关键字被obj.Exported给过滤了，所以被放进了Unsafe的scope
+	if !isCNKeyword(obj.Name()) && obj.Exported() {
 		scope = Unsafe.scope
 		// set Pkg field
 		switch obj := obj.(type) {

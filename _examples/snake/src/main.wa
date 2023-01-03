@@ -2,20 +2,21 @@
 
 import "snake/canvas"
 
-var ca *canvas.Canvas
-fn Test(){
+var ca: *canvas.Canvas
+
+fn Test() {
 	println(42)
 
 	ca = canvas.NewCanvas(255, 255)
-	var i, j u32
+	var i, j: u32
 	for i = 0; i < 255; i++ {
 		for j = 0; j < 255; j++ {
-			ca.SetPixel(i, j, 0xFF000000 + i + j * 256)
+			ca.SetPixel(i, j, 0xFF000000+i+j*256)
 		}
 	}
 	ca.Flush()
 
-	var caev canvas.CanvasEvents
+	var caev: canvas.CanvasEvents
 	caev.Device_id = ca.GetDeviceID()
 	caev.OnMouseDown = fn(x, y: u32) {
 		println("OnMouseDown: ", x, " ", y)
@@ -34,10 +35,11 @@ fn Test(){
 }
 
 type Position struct {
-	x, y: i32
+	x, y :i32
 }
 
-const BodyColor = 0xFF0000FF
+const DefaultColor = 0x00000000
+const BodyColor = 0xFF202020
 const FoodColor = 0xFF00FF00
 
 const (
@@ -54,28 +56,28 @@ const (
 	DirDown
 )
 
-var Dirs [5]Position
+var Dirs: [5]Position
 
 type GameState struct {
-	w, h: i32
-	scale: i32
-	grid: []i8
-	body: []Position
-	dir: i32
+	w, h  :i32
+	scale :i32
+	grid  :[]i8
+	body  :[]Position
+	dir   :i32
 
-	ca: *canvas.Canvas
+	ca :*canvas.Canvas
 }
 
-var gameState GameState
+var gameState: GameState
 
 fn GameState.Init(w, h: i32, scale: i32) {
 	this.w = w
 	this.h = h
 	this.scale = scale
-	this.grid = make([]i8, u32(w * h))
-	this.ca = canvas.NewCanvas(u32(w * scale), u32(h * scale))
+	this.grid = make([]i8, u32(w*h))
+	this.ca = canvas.NewCanvas(u32(w*scale), u32(h*scale))
 
-	var caev canvas.CanvasEvents
+	var caev: canvas.CanvasEvents
 	caev.Device_id = this.ca.GetDeviceID()
 	caev.OnMouseDown = fn(x, y: u32) {}
 	caev.OnMouseUp = fn(x, y: u32) {}
@@ -95,7 +97,7 @@ fn GameState.Start() {
 	for i := range this.grid {
 		this.grid[i] = GridNull
 	}
-	this.ca.Clear(0xFFFFFFFF)
+	this.ca.Clear(DefaultColor)
 	this.dir = DirNull
 
 	this.body = []Position{Position{x: this.w / 2, y: this.h / 2}}
@@ -107,8 +109,8 @@ fn GameState.Start() {
 }
 
 fn GameState.SetGridType(p: Position, t: i8) {
-	this.grid[p.y * this.w + p.x] = t
-	var color u32
+	this.grid[p.y*this.w+p.x] = t
+	var color: u32
 	switch t {
 	case GridBody:
 		color = BodyColor
@@ -117,13 +119,13 @@ fn GameState.SetGridType(p: Position, t: i8) {
 		color = FoodColor
 
 	default:
-		color = 0xFFFFFFFF
+		color = DefaultColor
 	}
 
 	var x, y: i32
 	for y = 0; y < this.scale; y++ {
 		for x = 0; x < this.scale; x++ {
-			this.ca.SetPixel(u32(p.x * this.scale + x), u32(p.y * this.scale + y), color)
+			this.ca.SetPixel(u32(p.x*this.scale+x), u32(p.y*this.scale+y), color)
 		}
 	}
 }
@@ -131,10 +133,10 @@ fn GameState.SetGridType(p: Position, t: i8) {
 #wa:import wa_js_env rand
 fn rand_JS(i32) => i32
 fn GameState.GenFood() => Position {
-	var p Position
+	var p: Position
 	for {
 		p = Position{x: rand_JS(this.w), y: rand_JS(this.h)}
-		if this.grid[p.y * this.w + p.x] == GridNull {
+		if this.grid[p.y*this.w+p.x] == GridNull {
 			this.SetGridType(p, GridFood)
 			return p
 		}
@@ -170,7 +172,7 @@ fn GameState.Step() {
 		return
 	}
 
-	newHead := this.body[len(this.body) - 1]
+	newHead := this.body[len(this.body)-1]
 	newHead.x += Dirs[this.dir].x
 	newHead.y += Dirs[this.dir].y
 
@@ -192,7 +194,7 @@ fn GameState.Step() {
 	//	return
 	//}
 
-	switch this.grid[newHead.y * this.w + newHead.x] {
+	switch this.grid[newHead.y*this.w+newHead.x] {
 	case GridBody:
 		this.Start()
 		return
@@ -217,6 +219,6 @@ fn Step() {
 }
 
 fn main() {
-	gameState.Init(50, 50, 10)
+	gameState.Init(32, 32, 10)
 	gameState.Start()
 }

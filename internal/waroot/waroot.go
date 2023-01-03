@@ -29,6 +29,14 @@ func IsStdPkg(pkgpath string) bool {
 			return true
 		}
 	}
+	for _, s := range wzStdPkgs {
+		if s == pkgpath {
+			return true
+		}
+		if strings.HasPrefix(pkgpath, s+"/") {
+			return true
+		}
+	}
 	return false
 }
 
@@ -37,4 +45,8 @@ var stdPkgs = []string{
 	"fmt",
 	"runtime",
 	"syscall",
+}
+
+var wzStdPkgs = []string{
+	"书",
 }

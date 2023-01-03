@@ -648,8 +648,13 @@ func (p *printer) writeComment(comment *ast.Comment) {
 		p.indent = 0
 	}
 
+	// shortcut common case of #-style comments
+	if text[0] == '#' {
+		p.writeString(pos, trimRight(text), true)
+		return
+	}
 	// shortcut common case of //-style comments
-	if text[1] == '/' {
+	if text[0] == '/' && text[1] == '/' {
 		p.writeString(pos, trimRight(text), true)
 		return
 	}
