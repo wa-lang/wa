@@ -16,7 +16,7 @@ buf为帧缓存指针
 #wa:import wa_js_env updateCanvas
 fn updateCanvas_JS(id: u32, buf: *u32)
 
-#画布事件回调函数原型
+//画布事件回调函数原型
 type OnTouch fn (x, y: u32)
 type OnKey fn(key: u32)
 
