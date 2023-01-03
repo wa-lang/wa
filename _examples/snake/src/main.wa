@@ -144,16 +144,24 @@ fn GameState.GenFood() => Position {
 fn GameState.OnKeyDown(key: u32) {
 	switch key {
 	case 37:
-		this.dir = DirLeft
+		if this.dir == DirNull || this.dir == DirUp || this.dir == DirDown {
+			this.dir = DirLeft
+		}
 
 	case 38:
-		this.dir = DirUp
+		if this.dir == DirNull || this.dir == DirLeft || this.dir == DirRight {
+			this.dir = DirUp
+		}
 
 	case 39:
-		this.dir = DirRight
+		if this.dir == DirNull || this.dir == DirUp || this.dir == DirDown {
+			this.dir = DirRight
+		}
 
 	case 40:
-		this.dir = DirDown
+		if this.dir == DirNull || this.dir == DirLeft || this.dir == DirRight {
+			this.dir = DirDown
+		}
 	}
 }
 

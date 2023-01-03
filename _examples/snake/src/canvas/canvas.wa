@@ -31,10 +31,10 @@ type Canvas struct {
 #画布事件
 type CanvasEvents struct {
 	Device_id:   u32     //画布设备ID
-    OnMouseDown: OnTouch //鼠标按下或触屏按下时的回调处理函数，输入参数为画布内的像素坐标
-    OnMouseUp:   OnTouch //鼠标松开或触屏松开时的回调处理函数，输入参数为画布内的像素坐标
-	OnKeyDown:   OnKey   //键盘按下，参数为键位。37=← 38=↑ 39=→ 40=↓
-	OnKeyUp:     OnKey   //键盘弹起，参数为键位
+    OnMouseDown: OnTouch //鼠标按下时的回调处理函数
+    OnMouseUp:   OnTouch //鼠标松开时的回调处理函数
+	OnKeyDown:   OnKey   //键盘按下时的回调处理函数
+	OnKeyUp:     OnKey   //键盘弹起时的回调处理函数
 }
 
 #创建一个宽度为w像素、高度为h像素的画布对象
@@ -99,8 +99,8 @@ fn AttachCanvasEvents(e: CanvasEvents) {
 }
 
 /*
-供外部JS调用的按下事件响应函数
-id为画布对象对应的网页DOM对象id
+供外部JS调用的鼠标按下事件响应函数
+id为画布DOM对象对应的Canvas对象id
 (x, y)为画布像素坐标系坐标
 */
 fn OnMouseDown(id: u32, x, y:u32) {
@@ -113,8 +113,8 @@ fn OnMouseDown(id: u32, x, y:u32) {
 }
 
 /*
-供外部JS调用的弹起事件响应函数
-id为画布对象对应的网页DOM对象id
+供外部JS调用的鼠标弹起事件响应函数
+id为画布DOM对象对应的Canvas对象id
 (x, y)为画布像素坐标系坐标
 */
 fn OnMouseUp(id: u32, x, y:u32) {
@@ -128,8 +128,8 @@ fn OnMouseUp(id: u32, x, y:u32) {
 
 /*
 供外部JS调用的键盘按下事件响应函数
-id为画布对象对应的网页DOM对象id
-key为键位
+id为画布DOM对象对应的Canvas对象id
+key为键位。37=← 38=↑ 39=→ 40=↓
 */
 fn OnKeyDown(id, key:u32) {
     for _, i := range canvas_events {
@@ -142,7 +142,7 @@ fn OnKeyDown(id, key:u32) {
 
 /*
 供外部JS调用的键盘弹起事件响应函数
-id为画布对象对应的网页DOM对象id
+id为画布DOM对象对应的Canvas对象id
 key为键位
 */
 fn OnKeyUp(id, key:u32) {
