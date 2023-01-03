@@ -67,7 +67,9 @@
   height: 100%;
   box-shadow:
     10px 10px 30px #006E67,
+    -10px -10px 40px #006E67,
     inset -10px -10px 10px #008880,
+    inset 10px 10px 10px #008880,
     inset 10px 10px 10px var(--wa-color);
   filter: blur(3px);
 }
@@ -355,25 +357,19 @@
   width: 5em;
   height: 3em;
   margin: 0 0 0.6em 0.6em;
-  background: red;
 }
 
 .game__operate-assist--audio::before {
-  --s: 0.5em; 
-  --_g: conic-gradient(var(--wa-color) 25%,#0000 0) 0 0;
+  --s: 6px;
   content: "";
   position: absolute;
   top: 0;
   left: 0;
   width: 100%;
   height: 100%;
-  background:
-    var(--_g)/calc(2*var(--s)) calc(var(--s)/9.5),
-    var(--_g)/calc(var(--s)/9.5) calc(2*var(--s)),
-    repeating-conic-gradient(#0000 0 25%,var(--wa-color) 0 50%) var(--s) 0 /calc(2*var(--s)) calc(2*var(--s)),
-    radial-gradient(50% 50%,var(--wa-bg) 98%,var(--wa-color)) 0 0/var(--s) var(--s);
+  background:radial-gradient(var(--wa-bg) 24%,#0000 15%);
+  background-size: var(--s) var(--s); 
 }
-
 
 @media screen and (min-width: 768px) {
   #box {
