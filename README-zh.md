@@ -29,6 +29,13 @@
 
 ![[![](https://wa-lang.org/smalltalk/images/st0011-01.png)](https://wa-lang.org/playground)](https://wa-lang.org/st0011-03.png)
 
+## 贪吃蛇游戏
+
+- [https://wa-lang.org/wa/snake/](https://wa-lang.org/wa/snake/)
+- [https://wa-lang.org/smalltalk/st0018.html](https://wa-lang.org/smalltalk/st0018.html)
+
+![](_examples/snake/web/snake.jpg)
+
 
 ## 本地安装和测试:
 

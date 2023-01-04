@@ -29,6 +29,13 @@ Instead of requiring complex toolchains to set up, you can simply go install it 
 
 ![[![](https://wa-lang.org/smalltalk/images/st0011-01.png)](https://wa-lang.org/playground)](https://wa-lang.org/static/images/playground.gif)
 
+## Snake Game
+
+- [https://wa-lang.org/wa/snake/](https://wa-lang.org/wa/snake/)
+- [https://wa-lang.org/smalltalk/st0018.html](https://wa-lang.org/smalltalk/st0018.html)
+
+![](_examples/snake/web/snake.jpg)
+
 
 ## Install and Run:
 
