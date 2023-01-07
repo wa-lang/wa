@@ -32,8 +32,8 @@ Instead of requiring complex toolchains to set up, you can simply go install it 
 
 ## Snake Game
 
-- [https://wa-lang.org/wa/snake/](https://wa-lang.org/wa/snake/)
-- [https://wa-lang.org/smalltalk/st0018.html](https://wa-lang.org/smalltalk/st0018.html)
+- Play: [https://wa-lang.org/wa/snake/](https://wa-lang.org/wa/snake/)
+- Code: [_examples/snake/README-en.md](_examples/snake/README-en.md)
 
 ![](_examples/snake/web/snake.jpg)
 
