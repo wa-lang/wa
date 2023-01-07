@@ -10,9 +10,9 @@
 ![](docs/images/logo/logo-animate1.svg)
 
 - 主页: [https://wa-lang.org](https://wa-lang.org)
-- 仓库: [https://gitee.com/wa-lang/wa](https://gitee.com/wa-lang/wa)
-- 开发工具: [Playground](https://wa-lang.org/playground), [VSCode 插件](https://marketplace.visualstudio.com/items?itemName=xxxDeveloper.vscode-wa), [Fleet 插件](https://github.com/wa-lang/fleet-wa), [Vim 插件](https://github.com/wa-lang/vim-wa)
-- 开发组: [柴树杉(chai2010)](https://github.com/chai2010)、[丁尔男(Ending)](https://github.com/3dgen)、[史斌(Benshi)](https://github.com/benshi001)、[扈梦明(xxx)](https://github.com/ohxxx)、[刘云峰(leaftree)](https://github.com/leaftree)、[宋汝阳(ShiinaOrez)](https://github.com/ShiinaOrez)
+- 仓库(Gitee): [https://gitee.com/wa-lang/wa](https://gitee.com/wa-lang/wa)
+- 仓库(Github): [https://github.com/wa-lang/wa](https://github.com/wa-lang/wa)
+- Playground: [https://wa-lang.org/playground](https://wa-lang.org/playground)
 
 > 说明: 凹语言的主仓库位于： https://gitee.com/wa-lang/wa ，镜像仓库位于： https://github.com/wa-lang/wa 。凹语言代码除非特别声明，均以 AGPL-v3 开源协议授权, 具体可以参考 LICENSE 文件。
 
