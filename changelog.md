@@ -1,7 +1,10 @@
 # 版本日志
 
-- v0.4.1 (dev)
-  - TODO
+- v0.5.0 (dev)
+  - 根据 5号 提案将 `fn` 改成 `func`，`#` 作为特殊指令而非注释
+- v0.4.1 (2023-01-08)
+  - 完善内存管理
+  - [完成贪吃蛇游戏](https://wa-lang.org/smalltalk/st0018.html)
 - v0.4.0 (2022-12-03)
   - 开通 [开源中国机构号](https://my.oschina.net/walang) 和 [微信公众号](https://wa-lang.org/community/), 主仓库迁到 Gitee
   - 包路径调整为 wa-lang.org/wa
