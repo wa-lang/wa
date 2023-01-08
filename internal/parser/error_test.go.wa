@@ -16,7 +16,7 @@
 // error should be reported for the undeclared variable x:
 //
 //	package p
-//	fn f() {
+//	func f() {
 //		_ = x /* ERROR "not declared" */ + 1
 //	}
 
@@ -37,8 +37,8 @@ import (
 const testdata = "testdata"
 
 // getFile assumes that each filename occurs at most once
-fn getFile(fset *token.FileSet, filename string) (file *token.File) {
-	fset.Iterate(fn(f *token.File) bool {
+func getFile(fset *token.FileSet, filename string) (file *token.File) {
+	fset.Iterate(func(f *token.File) bool {
 		if f.Name() == filename {
 			if file != nil {
 				panic(filename + " used multiple times")
@@ -50,7 +50,7 @@ fn getFile(fset *token.FileSet, filename string) (file *token.File) {
 	return file
 }
 
-fn getPos(fset *token.FileSet, filename string, offset int) token.Pos {
+func getPos(fset *token.FileSet, filename string, offset int) token.Pos {
 	if f := getFile(fset, filename); f != nil {
 		return f.Pos(offset)
 	}
@@ -68,7 +68,7 @@ var errRx = regexp.MustCompile(`^/\* *ERROR *(HERE)? *"([^"]*)" *\*/$`)
 // expectedErrors collects the regular expressions of ERROR comments found
 // in files and returns them as a map of error positions to error messages.
 //
-fn expectedErrors(fset *token.FileSet, filename string, src []byte) map[token.Pos]string {
+func expectedErrors(fset *token.FileSet, filename string, src []byte) map[token.Pos]string {
 	errors := make(map[token.Pos]string)
 
 	var s scanner.Scanner
@@ -115,7 +115,7 @@ fn expectedErrors(fset *token.FileSet, filename string, src []byte) map[token.Po
 // compareErrors compares the map of expected error messages with the list
 // of found errors and reports discrepancies.
 //
-fn compareErrors(t *testing.T, fset *token.FileSet, expected map[token.Pos]string, found scanner.ErrorList) {
+func compareErrors(t *testing.T, fset *token.FileSet, expected map[token.Pos]string, found scanner.ErrorList) {
 	for _, error := range found {
 		// error.Pos is a token.Position, but we want
 		// a token.Pos so we can do a map lookup
@@ -151,7 +151,7 @@ fn compareErrors(t *testing.T, fset *token.FileSet, expected map[token.Pos]strin
 	}
 }
 
-fn checkErrors(vfs fs.FS, t *testing.T, filename string, input interface{}) {
+func checkErrors(vfs fs.FS, t *testing.T, filename string, input interface{}) {
 	src, err := readSource(vfs, filename, input)
 	if err != nil {
 		t.Error(err)
@@ -175,7 +175,7 @@ fn checkErrors(vfs fs.FS, t *testing.T, filename string, input interface{}) {
 	compareErrors(t, fset, expected, found)
 }
 
-fn TestErrors(t *testing.T) {
+func TestErrors(t *testing.T) {
 	list, err := ioutil.ReadDir(testdata)
 	if err != nil {
 		t.Fatal(err)

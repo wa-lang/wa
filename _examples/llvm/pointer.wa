@@ -4,7 +4,7 @@
 var gint0: int = 100
 var gint1: int = 200
 
-fn get_int_addr(a: int) => *int {
+func get_int_addr(a: int) => *int {
 	if a > 0 {
 		return &gint0
 	} else {
@@ -12,18 +12,18 @@ fn get_int_addr(a: int) => *int {
 	}
 }
 
-fn set_int(a: *int) {
+func set_int(a: *int) {
 	*a += 10
 }
 
-fn test_pointer(a: int) {
+func test_pointer(a: int) {
 	println(gint0, ", ", gint1)
 	p := get_int_addr(a)
 	set_int(p)
 	println(gint0, ", ", gint1)
 }
 
-fn main() {
+func main() {
 	test_pointer(1)
 	test_pointer(-1)
 }

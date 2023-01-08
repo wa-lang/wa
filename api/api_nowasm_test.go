@@ -13,11 +13,11 @@ func ExampleRunCode() {
 	const code = `
 		var gBase: i32 = 1000
 
-		fn main() {
+		func main() {
 			println(add(40, 2) + gBase)
 		}
 
-		fn add(a: i32, b: i32) => i32 {
+		func add(a: i32, b: i32) => i32 {
 			return a+b
 		}
 	`

@@ -1,6 +1,6 @@
 # 版权 @2019 凹语言 作者。保留所有权利。
 
-fn main() {
+func main() {
 	# print hi
 	const code = "++++++++++[>++++++++++<-]>++++.+."
 	vm := NewBrainFuck(code)
@@ -14,11 +14,11 @@ type BrainFuck struct {
 	pc   :int
 }
 
-fn NewBrainFuck(code: string) => *BrainFuck {
+func NewBrainFuck(code: string) => *BrainFuck {
 	return &BrainFuck{code: code}
 }
 
-fn BrainFuck.Run() {
+func BrainFuck.Run() {
 	for ; this.pc != len(this.code); this.pc++ {
 		switch x := this.code[this.pc]; x {
 		case '>':
@@ -46,7 +46,7 @@ fn BrainFuck.Run() {
 	return
 }
 
-fn BrainFuck.loop(inc: int) {
+func BrainFuck.loop(inc: int) {
 	for i := inc; i != 0; this.pc += inc {
 		switch this.code[this.pc+inc] {
 		case '[':

@@ -1,6 +1,6 @@
 # 版权 @2021 凹语言 作者。保留所有权利。
 
-fn main() {
+func main() {
 	i := gen_scref()
 	println(*i.a)
 	println(i.b)
@@ -19,7 +19,7 @@ type sc struct {
 	sp
 }
 
-fn gen_scref() => *sc {
+func gen_scref() => *sc {
 	var v: sc
 	var i: i32
 	i = 13
@@ -28,7 +28,7 @@ fn gen_scref() => *sc {
 	return &v
 }
 
-fn gen_sc() => sc {
+func gen_sc() => sc {
 	var i: i32 = 26
 	var v: sc
 	v.a = &i

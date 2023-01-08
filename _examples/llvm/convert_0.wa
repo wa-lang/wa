@@ -1,7 +1,7 @@
 # Test the llvm backend.
 # Test integer -> integer convertion.
 
-fn main() {
+func main() {
 	println(i32(convert_i32_to_i16(65537)))
 	println(u32(convert_i32_to_u16(65537)))
 	println(convert_i16_to_i32(100))
@@ -10,18 +10,18 @@ fn main() {
 	println(convert_u16_to_i32(65530))
 }
 
-fn convert_i32_to_i16(a: i32) => i16 {
+func convert_i32_to_i16(a: i32) => i16 {
 	return i16(a)
 }
 
-fn convert_i32_to_u16(a: i32) => u16 {
+func convert_i32_to_u16(a: i32) => u16 {
 	return u16(a)
 }
 
-fn convert_i16_to_i32(a: i16) => i32 {
+func convert_i16_to_i32(a: i16) => i32 {
 	return i32(a)
 }
 
-fn convert_u16_to_i32(a: u16) => i32 {
+func convert_u16_to_i32(a: u16) => i32 {
 	return i32(a)
 }

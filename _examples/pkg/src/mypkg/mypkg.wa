@@ -7,7 +7,7 @@ type ST struct {
 
 var G ST
 
-fn Do(x i32) {
+func Do(x i32) {
 	G.A = x
 	G.B = "Hellow wa"
 }

@@ -1,22 +1,22 @@
 # Test the llvm backend.
 # Test printing integers.
 
-fn main() {
+func main() {
 	println(test_calc1(6, 9, 8), ", ", 5, ", ", test_calc5(6, 9, 8))
 }
 
-fn test_calc0(a: i32, b: i32, c: i32) => i32 {
+func test_calc0(a: i32, b: i32, c: i32) => i32 {
 	return (-a) * 5 / (b - c + 2)
 }
 
-fn test_calc1(a: i32, b: i32, c: i32) => i32 {
+func test_calc1(a: i32, b: i32, c: i32) => i32 {
 	return test_calc0(a, b, c)
 }
 
-fn test_calc4(a: u16, b: u16, c: u16) => u16 {
+func test_calc4(a: u16, b: u16, c: u16) => u16 {
 	return (-a) * 5 / (b - c + 2)
 }
 
-fn test_calc5(a: u16, b: u16, c: u16) => u16 {
+func test_calc5(a: u16, b: u16, c: u16) => u16 {
 	return test_calc4(-a, b, c)
 }

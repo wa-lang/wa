@@ -4,7 +4,7 @@ import "fmt"
 import "3rdparty/pkg"
 import "myapp/mymath"
 
-fn main() {
+func main() {
 	fmt.Println(40+2)
 	pkg.Println(100+2)
 	println(mymath.I8Max)
@@ -13,7 +13,7 @@ fn main() {
 	heart()
 }
 
-fn sum(n: int) => int {
+func sum(n: int) => int {
 	var v: int
 	for i := 1; i <= n; i++ {
 		v += i
@@ -21,7 +21,7 @@ fn sum(n: int) => int {
 	return v
 }
 
-fn heart() {
+func heart() {
 	a := 0.0
 	for y := 1.5; y > -1.5; y = y - 0.1 {
 		for x := -1.5; x < 1.5; x = x + 0.05 {

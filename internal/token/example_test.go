@@ -27,7 +27,7 @@ type p = token.Pos
 const bad = token.NoPos
 
 //line fake.go:42:11
-fn ok(pos p) bool {
+func ok(pos p) bool {
 	return pos != bad
 }
 

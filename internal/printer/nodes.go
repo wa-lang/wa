@@ -945,7 +945,7 @@ func (p *printer) expr1(expr ast.Expr, prec1, depth int) {
 		p.fieldList(x.Fields, true, x.Incomplete)
 
 	case *ast.FuncType:
-		p.print(token.FN)
+		p.print(token.FUNC)
 		p.signature(x.Params, x.Results)
 
 	case *ast.InterfaceType:
@@ -1680,7 +1680,7 @@ func (p *printer) distanceFrom(from token.Pos) int {
 
 func (p *printer) funcDecl(d *ast.FuncDecl) {
 	p.setComment(d.Doc)
-	p.print(d.Pos(), token.FN, blank)
+	p.print(d.Pos(), token.FUNC, blank)
 	if d.Recv != nil {
 		var thisTypeIdent *ast.Ident
 		if d.Recv.List[0].Names[0].Name == "this" {
@@ -1725,7 +1725,7 @@ func declToken(decl ast.Decl) (tok token.Token) {
 	case *ast.GenDecl:
 		tok = d.Tok
 	case *ast.FuncDecl:
-		tok = token.FN
+		tok = token.FUNC
 	}
 	return
 }
@@ -1751,7 +1751,7 @@ func (p *printer) declList(list []ast.Decl) {
 			}
 			// start a new section if the next declaration is a function
 			// that spans multiple lines (see also issue #19544)
-			p.linebreak(p.lineFor(d.Pos()), min, ignore, tok == token.FN && p.numLines(d) > 1)
+			p.linebreak(p.lineFor(d.Pos()), min, ignore, tok == token.FUNC && p.numLines(d) > 1)
 		}
 		p.decl(d)
 	}

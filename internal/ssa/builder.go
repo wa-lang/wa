@@ -71,7 +71,7 @@ var (
 // Its methods contain all the logic for AST-to-SSA conversion.
 type builder struct{}
 
-// cond emits to fn code to evaluate boolean condition e and jump
+// cond emits to func code to evaluate boolean condition e and jump
 // to t or f depending on its value, performing various simplifications.
 //
 // Postcondition: fn.currentBlock is nil.

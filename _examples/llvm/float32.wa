@@ -3,23 +3,23 @@
 
 type fff32 f32
 
-fn getPi() => fff32 {
+func getPi() => fff32 {
 	return 3.1415926535
 }
 
-fn getE() => fff32 {
+func getE() => fff32 {
 	return 2.71828
 }
 
-fn minusf32(a: fff32) => fff32 {
+func minusf32(a: fff32) => fff32 {
 	return 0 - a
 }
 
-fn circle_area(r: fff32) => fff32 {
+func circle_area(r: fff32) => fff32 {
 	return r * r * 3.1415926
 }
 
-fn main() {
+func main() {
 	println(getPi())
 	println(getE())
 	println(minusf32(getPi()))

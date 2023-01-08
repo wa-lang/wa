@@ -1,9 +1,9 @@
 
-fn gen_str() => string {
+func gen_str() => string {
 	return "123456"
 }
 
-fn main() {
+func main() {
 	println("你好，凹语言！")
 	
 	s1 := gen_str()

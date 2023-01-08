@@ -18,7 +18,7 @@ var (
 )
 
 
-fn _() {
+func _() {
 	// no spaces around simple or parenthesized expressions
 	_ = (a+0)
 	_ = a+b
@@ -122,7 +122,7 @@ fn _() {
 
 
 // slice expressions with cap
-fn _() {
+func _() {
 	_ = x[a:b:c]
 	_ = x[a:b:c+d]
 	_ = x[a:b+d:c]
@@ -138,7 +138,7 @@ fn _() {
 	_ = x[:b+d:c+d]
 }
 
-fn issue22111() {
+func issue22111() {
 	_ = x[:]
 
 	_ = x[:b]
@@ -167,7 +167,7 @@ fn issue22111() {
 	_ = x[a+1:b+1:c+1]
 }
 
-fn _() {
+func _() {
 	_ = a+b
 	_ = a+b+c
 	_ = a+b*c
@@ -239,7 +239,7 @@ fn _() {
 }
 
 
-fn f(x int, args ...int) {
+func f(x int, args ...int) {
 	f(0, args...)
 	f(1, args)
 	f(2, args[0])
@@ -277,7 +277,7 @@ fn f(x int, args ...int) {
 }
 
 
-fn _() {
+func _() {
 	_ = T{}
 	_ = struct{}{}
 	_ = [10]T{}
@@ -288,7 +288,7 @@ fn _() {
 
 
 // one-line structs/interfaces in composite literals (up to a threshold)
-fn _() {
+func _() {
 	_ = struct{}{}
 	_ = struct{ x int }{0}
 	_ = struct{ x, y, z int }{0, 1, 2}
@@ -306,7 +306,7 @@ fn _() {
 	})(nil)
 }
 
-fn _() {
+func _() {
 	// do not modify literals
 	_ = "tab1	tab2	tab3	end"  // string contains 3 tabs
 	_ = "tab1 tab2 tab3 end"  // same string with 3 blanks - may be unaligned because editors see tabs in strings
@@ -321,7 +321,7 @@ they must not be removed`
 }
 
 
-fn _() {
+func _() {
 	// smart handling of indentation for multi-line raw strings
 	var _ = ``
 	var _ = `foo`
@@ -400,32 +400,32 @@ var board = []int(
 }
 
 
-fn _() {
+func _() {
 	// one-line function literals (body is on a single line)
-	_ = fn() {}
-	_ = fn() int { return 0 }
-	_ = fn(x, y int) bool { m := (x+y)/2; return m < 0 }
+	_ = func() {}
+	_ = func() int { return 0 }
+	_ = func(x, y int) bool { m := (x+y)/2; return m < 0 }
 
 	// multi-line function literals (body is not on one line)
-	_ = fn() {
+	_ = func() {
 	}
-	_ = fn() int {
+	_ = func() int {
 		return 0
 	}
-	_ = fn(x, y int) bool {
+	_ = func(x, y int) bool {
 		m := (x+y)/2; return x < y }
 
-	f(fn() {
+	f(func() {
 	})
-	f(fn() int {
+	f(func() int {
 		return 0
 	})
-	f(fn(x, y int) bool {
+	f(func(x, y int) bool {
 		m := (x+y)/2; return x < y })
 }
 
 
-fn _() {
+func _() {
 	_ = [][]int {
 		[]int{1},
 		[]int{1, 2},
@@ -446,7 +446,7 @@ fn _() {
 
 
 // various multi-line expressions
-fn _() {
+func _() {
 	// do not add extra indentation to multi-line string lists
 	_ = "foo" + "bar"
 	_ = "foo" +
@@ -480,7 +480,7 @@ const _ = `datafmt "datafmt";` +
 `datafmt.T3 = s  {" " a a / ","};`
 
 
-fn _() {
+func _() {
 	_ = F1 +
 		`string = "%s";` +
 		`ptr = *;` +
@@ -499,7 +499,7 @@ fn _() {
 }
 
 
-fn _() {
+func _() {
 	// respect source lines in multi-line expressions
 	_ = a+
 	b+
@@ -525,7 +525,7 @@ const (
 
 
 // Correct placement of operators and comments in multi-line expressions
-fn _() {
+func _() {
 	_ = a +  // comment
 		b +  // comment
 		c
@@ -537,7 +537,7 @@ fn _() {
 
 
 // Correct placement of terminating comma/closing parentheses in multi-line calls.
-fn _() {
+func _() {
 	f(1,
 		2,
 		3)
@@ -577,7 +577,7 @@ var txpix = [NCOL]draw.Color{
 }
 
 
-fn same(t, u *Time) bool {
+func same(t, u *Time) bool {
 	// respect source lines in multi-line expressions
 	return t.Year == u.Year &&
 		t.Month == u.Month &&
@@ -591,7 +591,7 @@ fn same(t, u *Time) bool {
 }
 
 
-fn (p *parser) charClass() {
+func (p *parser) charClass() {
 	// respect source lines in multi-line expressions
 	if cc.negate && len(cc.ranges) == 2 &&
 		cc.ranges[0] == '\n' && cc.ranges[1] == '\n' {
@@ -601,7 +601,7 @@ fn (p *parser) charClass() {
 }
 
 
-fn addState(s []state, inst instr, match []int) {
+func addState(s []state, inst instr, match []int) {
 	// handle comments correctly in multi-line expressions
 	for i := 0; i < l; i++ {
 		if s[i].inst.index() == index && // same instruction
@@ -611,11 +611,11 @@ fn addState(s []state, inst instr, match []int) {
 	}
 }
 
-fn (self *T) foo(x int) *T { return self }
+func (self *T) foo(x int) *T { return self }
 
-fn _() { module.Func1().Func2() }
+func _() { module.Func1().Func2() }
 
-fn _() {
+func _() {
 	_ = new(T).
 		foo(1).
 			foo(2).
@@ -706,7 +706,7 @@ baz()
 
 
 // Don't introduce extra newlines in strangely formatted expression lists.
-fn f() {
+func f() {
 	// os.Open parameters should remain on two lines
 	if writer, err = os.Open(outfile, s.O_WRONLY|os.O_CREATE|
 		os.O_TRUNC, 0666); err != nil {
@@ -716,7 +716,7 @@ fn f() {
 
 // Handle multi-line argument lists ending in ... correctly.
 // Was issue 3130.
-fn _() {
+func _() {
 	_ = append(s, a...)
 	_ = append(
 		s, a...)
@@ -739,21 +739,21 @@ fn _() {
 // Literal function types in conversions must be parenthesized;
 // for now github.com/wa-lang/wa/internal/parser accepts the unparenthesized form where it
 // is non-ambiguous.
-fn _() {
+func _() {
 	// these conversions should be rewritten to look
 	// the same as the parenthesized conversions below
-	_ = fn()()(nil)
-	_ = fn(x int)(float)(nil)
-	_ = fn() fn() fn()()(nil)
+	_ = func()()(nil)
+	_ = func(x int)(float)(nil)
+	_ = func() func() func()()(nil)
 
-	_ = (fn()())(nil)
-	_ = (fn(x int)(float))(nil)
-	_ = (fn() fn() fn()())(nil)
+	_ = (func()())(nil)
+	_ = (func(x int)(float))(nil)
+	_ = (func() func() func()())(nil)
 }
 
-fn _() {
+func _() {
 	_ = f().
-	f(fn() {
+	f(func() {
 		f()
 	}).
 	f(map[int]int{
@@ -763,7 +763,7 @@ fn _() {
 
 	_ = f().
 	f(
-	fn() {
+	func() {
 		f()
 	},
 	)

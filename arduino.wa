@@ -4,12 +4,12 @@ import "syscall/arduino"
 
 var LED = arduino.GetPinLED()
 
-fn init() {
+func init() {
 	arduino.PinMode(LED, arduino.OUTPUT)
 	arduino.Println("Wa/Arduino is running 😎")
 }
 
-fn main() {
+func main() {
 	for {
 		arduino.DigitalWrite(LED, arduino.HIGH)
 		arduino.Delay(100)

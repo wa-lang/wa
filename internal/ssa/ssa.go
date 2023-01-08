@@ -71,7 +71,7 @@ type Member interface {
 	Object() types.Object            // typechecker's object for this member, if any
 	Pos() token.Pos                  // position of member's declaration, if known
 	Type() types.Type                // type of the package member
-	Token() token.Token              // token.{VAR,FN,CONST,TYPE}
+	Token() token.Token              // token.{VAR,FUNC,CONST,TYPE}
 	Package() *Package               // the containing package
 }
 
@@ -1359,7 +1359,7 @@ func (v *Global) ExportName() string {
 func (v *Function) Name() string         { return v.name }
 func (v *Function) Type() types.Type     { return v.Signature }
 func (v *Function) Pos() token.Pos       { return v.pos }
-func (v *Function) Token() token.Token   { return token.FN }
+func (v *Function) Token() token.Token   { return token.FUNC }
 func (v *Function) Object() types.Object { return v.object }
 func (v *Function) String() string       { return v.RelString(nil) }
 func (v *Function) Package() *Package    { return v.Pkg }

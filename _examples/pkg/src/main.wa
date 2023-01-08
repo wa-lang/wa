@@ -11,12 +11,12 @@ type ST struct {
 
 var G ST
 
-fn Do() {
+func Do() {
 	G.A = "13"
 	G.B = 1024
 }
 
-fn main() {
+func main() {
 	mypkg.Do(42)
 	println(mypkg.G.A)
 	println(mypkg.G.B)

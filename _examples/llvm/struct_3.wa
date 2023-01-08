@@ -10,7 +10,7 @@ type struct_t0 struct {
 
 var st1: struct_t0
 
-fn maket0a(i: int) => struct_t0 {
+func maket0a(i: int) => struct_t0 {
 	var r: struct_t0
 	for j := 0; j < 16; j++ {
 		r.arr0[j] = 100 - j - i
@@ -19,7 +19,7 @@ fn maket0a(i: int) => struct_t0 {
 	return r
 }
 
-fn maket0b(i: int) => *struct_t0 {
+func maket0b(i: int) => *struct_t0 {
 	for j := 0; j < 16; j++ {
 		st1.arr0[j] = 100 - j - i
 		st1.arr1[j] = 200.0 - f32(j+i)
@@ -27,7 +27,7 @@ fn maket0b(i: int) => *struct_t0 {
 	return &st1
 }
 
-fn main() {
+func main() {
 	r0, r1 := maket0a(20), maket0b(30)
 	for i := 0; i < 16; i++ {
 		println(r0.arr0[i], ", ", r0.arr1[i], " : ", r1.arr0[i], ", ", r1.arr1[i])

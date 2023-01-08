@@ -163,7 +163,7 @@ var tokens = [...]elt{
 	{token.ELSE, "else", keyword},
 	{token.FOR, "for", keyword},
 
-	{token.FN, "fn", keyword},
+	{token.FUNC, "func", keyword},
 	{token.IF, "if", keyword},
 	{token.IMPORT, "import", keyword},
 
@@ -443,7 +443,7 @@ var lines = []string{
 	"fallthrough$\n",
 	"for\n",
 
-	"fn\n",
+	"func\n",
 	"if\n",
 	"import\n",
 

@@ -1,12 +1,12 @@
 # 版权 @{{.Year}} {{.Name}} 作者。保留所有权利。
 
-fn main() {
+func main() {
 	println("你好，凹语言！")
 	println(sum(100))
 	heart()
 }
 
-fn sum(n: int) => int {
+func sum(n: int) => int {
 	var v: int
 	for i := 1; i <= n; i++ {
 		v += i
@@ -14,7 +14,7 @@ fn sum(n: int) => int {
 	return v
 }
 
-fn heart() {
+func heart() {
 	a := 0.0
 	for y := 1.5; y > -1.5; y = y - 0.1 {
 		for x := -1.5; x < 1.5; x = x + 0.05 {

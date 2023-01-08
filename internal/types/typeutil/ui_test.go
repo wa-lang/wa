@@ -20,8 +20,8 @@ func TestIntuitiveMethodSet(t *testing.T) {
 	const source = `
 package P
 type A int
-fn (A) f()
-fn (*A) g()
+func (A) f()
+func (*A) g()
 `
 
 	fset := token.NewFileSet()

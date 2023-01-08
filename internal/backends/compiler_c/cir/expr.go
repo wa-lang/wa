@@ -230,7 +230,7 @@ type CallExpr struct {
 
 func NewCallExpr(fn Expr, args []Expr) *CallExpr {
 	if _, ok := fn.Type().(*ctypes.FuncType); !ok {
-		logger.Fatal("fn is not a valid Function")
+		logger.Fatal("func is not a valid Function")
 		return nil
 	}
 	return &CallExpr{Func: fn, Args: args}

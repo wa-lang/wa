@@ -17,9 +17,9 @@ import (
 )
 
 // Dummy test function so that godoc does not use the entire file as example.
-fn Test(*testing.T) {}
+func Test(*testing.T) {}
 
-fn parseFunc(filename, functionname string) (fun *ast.FuncDecl, fset *token.FileSet) {
+func parseFunc(filename, functionname string) (fun *ast.FuncDecl, fset *token.FileSet) {
 	fset = token.NewFileSet()
 	if file, err := parser.ParseFile(nil, fset, filename, nil, 0); err == nil {
 		for _, d := range file.Decls {
@@ -32,7 +32,7 @@ fn parseFunc(filename, functionname string) (fun *ast.FuncDecl, fset *token.File
 	panic("function not found")
 }
 
-fn ExampleFprint() {
+func ExampleFprint() {
 	// Parse source file and extract the AST without comments for
 	// this function, with position information referring to the
 	// file set fset.

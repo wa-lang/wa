@@ -1,17 +1,17 @@
 # Test the llvm backend.
 # Test integer -> 'floating point' convertion.
 
-fn main() {
+func main() {
 	println(convert_i16_to_f64(100))
 	println(convert_i16_to_f64(-100))
 	println(convert_u16_to_f64(100))
 	println(convert_u16_to_f64(65530))
 }
 
-fn convert_i16_to_f64(a: i16) => f64 {
+func convert_i16_to_f64(a: i16) => f64 {
 	return f64(a)
 }
 
-fn convert_u16_to_f64(a: u16) => f64 {
+func convert_u16_to_f64(a: u16) => f64 {
 	return f64(a)
 }

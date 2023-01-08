@@ -9,7 +9,7 @@ type ty0 struct {
 var gv0: ty0 = ty0{5555, 3.1415926}
 var gv1: [4]int = [4]int{81, 82, 17, 76}
 
-fn test_global_variable() {
+func test_global_variable() {
 	gv0.v0 = 8888
 	gv0.v1 = 2.71828
 	gv1[0] += 2
@@ -20,6 +20,6 @@ fn test_global_variable() {
 	println("gv1: {", gv1[0], ", ", gv1[1], ", ", gv1[2], ", ", gv1[3], "}")
 }
 
-fn main() {
+func main() {
 	test_global_variable()
 }

@@ -76,7 +76,7 @@ func parse(fset *token.FileSet, filename string, src []byte, fragmentOk bool, sr
 	// Insert using a ';', not a newline, so that the line numbers
 	// in fsrc match the ones in src. Add an extra '\n' before the '}'
 	// to make sure comments are flushed before the '}'.
-	fsrc := append(append([]byte("package p; fn _() {"), src...), '\n', '\n', '}')
+	fsrc := append(append([]byte("package p; func _() {"), src...), '\n', '\n', '}')
 	file, err = parser.ParseFile(nil, fset, filename, fsrc, parserMode)
 	if err == nil {
 		sourceAdj = func(src []byte, indent int) []byte {

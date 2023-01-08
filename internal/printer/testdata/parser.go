@@ -752,7 +752,7 @@ func (p *parser) parseFuncType() (*ast.FuncType, *ast.Scope) {
 		defer un(trace(p, "FuncType"))
 	}
 
-	pos := p.expect(token.FN)
+	pos := p.expect(token.FUNC)
 	scope := ast.NewScope(p.topScope) // function scope
 	params, results := p.parseSignature(scope)
 
@@ -829,7 +829,7 @@ func (p *parser) tryIdentOrType(ellipsisOk bool) ast.Expr {
 		return p.parseStructType()
 	case token.MUL:
 		return p.parsePointerType()
-	case token.FN:
+	case token.FUNC:
 		typ, _ := p.parseFuncType()
 		return typ
 	case token.INTERFACE:
@@ -953,7 +953,7 @@ func (p *parser) parseOperand(lhs bool) ast.Expr {
 		rparen := p.expect(token.RPAREN)
 		return &ast.ParenExpr{lparen, x, rparen}
 
-	case token.FN:
+	case token.FUNC:
 		return p.parseFuncTypeOrLit()
 
 	default:
@@ -1776,7 +1776,7 @@ func (p *parser) parseStmt() (s ast.Stmt) {
 		s = &ast.DeclStmt{p.parseDecl()}
 	case
 		// tokens that may start a top-level expression
-		token.IDENT, token.INT, token.FLOAT, token.CHAR, token.STRING, token.FN, token.LPAREN, // operand
+		token.IDENT, token.INT, token.FLOAT, token.CHAR, token.STRING, token.FUNC, token.LPAREN, // operand
 		token.LBRACK, token.STRUCT, // composite type
 		token.MUL, token.AND, token.ARROW, token.ADD, token.SUB, token.XOR: // unary operators
 		s = p.parseSimpleStmt(true)
@@ -1981,7 +1981,7 @@ func (p *parser) parseFuncDecl() *ast.FuncDecl {
 	}
 
 	doc := p.leadComment
-	pos := p.expect(token.FN)
+	pos := p.expect(token.FUNC)
 	scope := ast.NewScope(p.topScope) // function scope
 
 	var recv *ast.FieldList
@@ -2031,7 +2031,7 @@ func (p *parser) parseDecl() ast.Decl {
 	case token.VAR:
 		f = parseVarSpec
 
-	case token.FN:
+	case token.FUNC:
 		return p.parseFuncDecl()
 
 	default:

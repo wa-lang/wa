@@ -61,7 +61,7 @@ func ExamplePrint() {
 	// src is the input for which we want to print the AST.
 	src := `
 package main
-fn main() {
+func main() {
 	println("Hello, World!")
 }
 `
@@ -87,7 +87,7 @@ fn main() {
 	//      7  .  Decls: []ast.Decl (len = 1) {
 	//      8  .  .  0: *ast.FuncDecl {
 	//      9  .  .  .  Name: *ast.Ident {
-	//     10  .  .  .  .  NamePos: 3:4
+	//     10  .  .  .  .  NamePos: 3:6
 	//     11  .  .  .  .  Name: "main"
 	//     12  .  .  .  .  Obj: *ast.Object {
 	//     13  .  .  .  .  .  Kind: func
@@ -98,13 +98,13 @@ fn main() {
 	//     18  .  .  .  Type: *ast.FuncType {
 	//     19  .  .  .  .  Func: 3:1
 	//     20  .  .  .  .  Params: *ast.FieldList {
-	//     21  .  .  .  .  .  Opening: 3:8
-	//     22  .  .  .  .  .  Closing: 3:9
+	//     21  .  .  .  .  .  Opening: 3:10
+	//     22  .  .  .  .  .  Closing: 3:11
 	//     23  .  .  .  .  }
 	//     24  .  .  .  .  ArrowPos: -
 	//     25  .  .  .  }
 	//     26  .  .  .  Body: *ast.BlockStmt {
-	//     27  .  .  .  .  Lbrace: 3:11
+	//     27  .  .  .  .  Lbrace: 3:13
 	//     28  .  .  .  .  List: []ast.Stmt (len = 1) {
 	//     29  .  .  .  .  .  0: *ast.ExprStmt {
 	//     30  .  .  .  .  .  .  X: *ast.CallExpr {
@@ -157,7 +157,7 @@ const hello = "Hello, World!" // line comment 1
 var foo = hello // line comment 2
 
 // This comment is associated with the main function.
-fn main() {
+func main() {
 	fmt.Println(hello) // line comment 3
 }
 `
@@ -203,7 +203,7 @@ fn main() {
 	// const hello = "Hello, World!" // line comment 1
 	//
 	// // This comment is associated with the main function.
-	// fn main() {
+	// func main() {
 	// 	fmt.Println(hello) // line comment 3
 	// }
 }

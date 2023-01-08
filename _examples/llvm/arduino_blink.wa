@@ -3,18 +3,18 @@
 # `wa native --target=avr arduino_blink.wa`
 
 #wa:linkname __avr_write_port__
-fn write_port(p: i16, v: i8)
+func write_port(p: i16, v: i8)
 
 # Delay a period of time
 var cnt: i8
 
-fn delay(n: i32) {
+func delay(n: i32) {
 	for i := i32(0); i < n; i++ {
 		cnt++
 	}
 }
 
-fn main() {
+func main() {
 	# Set Pin #5 (connected with the builtin LED) of Port B to output mode.
 	write_port(0x24, 0x20)
 	for b := 0; ; b++ {

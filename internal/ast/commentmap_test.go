@@ -45,7 +45,7 @@ var x = 0 // x = 0
 // also associated with x
 
 // f1
-fn f1() {
+func f1() {
 	/* associated with s1 */
 	s1()
 	// also associated with s1
@@ -61,10 +61,10 @@ fn f1() {
 // associated with f2
 
 // f2
-fn f2() {
+func f2() {
 }
 
-fn f3() {
+func f3() {
 	i := 1 /* 1 */ + 2 // addition
 	_ = i
 }

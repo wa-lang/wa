@@ -4,7 +4,7 @@ import "snake/canvas"
 
 var ca: *canvas.Canvas
 
-fn Test() {
+func Test() {
 	println(42)
 
 	ca = canvas.NewCanvas(255, 255)
@@ -18,16 +18,16 @@ fn Test() {
 
 	var caev: canvas.CanvasEvents
 	caev.Device_id = ca.GetDeviceID()
-	caev.OnMouseDown = fn(x, y: u32) {
+	caev.OnMouseDown = func(x, y: u32) {
 		println("OnMouseDown: ", x, " ", y)
 	}
-	caev.OnMouseUp = fn(x, y: u32) {
+	caev.OnMouseUp = func(x, y: u32) {
 		println("OnMouseUp: ", x, " ", y)
 	}
-	caev.OnKeyDown = fn(key: u32) {
+	caev.OnKeyDown = func(key: u32) {
 		println("OnKeyDown: ", key)
 	}
-	caev.OnKeyUp = fn(key: u32) {
+	caev.OnKeyUp = func(key: u32) {
 		println("OnKeyUp: ", key)
 	}
 
@@ -70,7 +70,7 @@ type GameState struct {
 
 var gameState: GameState
 
-fn GameState.Init(w, h: i32, scale: i32) {
+func GameState.Init(w, h: i32, scale: i32) {
 	this.w = w
 	this.h = h
 	this.scale = scale
@@ -79,9 +79,9 @@ fn GameState.Init(w, h: i32, scale: i32) {
 
 	var caev: canvas.CanvasEvents
 	caev.Device_id = this.ca.GetDeviceID()
-	caev.OnMouseDown = fn(x, y: u32) {}
-	caev.OnMouseUp = fn(x, y: u32) {}
-	caev.OnKeyUp = fn(key: u32) {}
+	caev.OnMouseDown = func(x, y: u32) {}
+	caev.OnMouseUp = func(x, y: u32) {}
+	caev.OnKeyUp = func(key: u32) {}
 	caev.OnKeyDown = this.OnKeyDown
 
 	Dirs[DirNull] = Position{x: 0, y: 0}
@@ -93,7 +93,7 @@ fn GameState.Init(w, h: i32, scale: i32) {
 	canvas.AttachCanvasEvents(caev)
 }
 
-fn GameState.Start() {
+func GameState.Start() {
 	for i := range this.grid {
 		this.grid[i] = GridNull
 	}
@@ -108,7 +108,7 @@ fn GameState.Start() {
 	this.ca.Flush()
 }
 
-fn GameState.SetGridType(p: Position, t: i8) {
+func GameState.SetGridType(p: Position, t: i8) {
 	this.grid[p.y*this.w+p.x] = t
 	var color: u32
 	switch t {
@@ -131,8 +131,8 @@ fn GameState.SetGridType(p: Position, t: i8) {
 }
 
 #wa:import wa_js_env rand
-fn rand_JS(i32) => i32
-fn GameState.GenFood() => Position {
+func rand_JS(i32) => i32
+func GameState.GenFood() => Position {
 	var p: Position
 	for {
 		p = Position{x: rand_JS(this.w), y: rand_JS(this.h)}
@@ -143,7 +143,7 @@ fn GameState.GenFood() => Position {
 	}
 }
 
-fn GameState.OnKeyDown(key: u32) {
+func GameState.OnKeyDown(key: u32) {
 	switch key {
 	case 37:
 		if this.dir == DirNull || this.dir == DirUp || this.dir == DirDown {
@@ -167,7 +167,7 @@ fn GameState.OnKeyDown(key: u32) {
 	}
 }
 
-fn GameState.Step() {
+func GameState.Step() {
 	if this.dir == DirNull {
 		return
 	}
@@ -214,11 +214,11 @@ fn GameState.Step() {
 	this.ca.Flush()
 }
 
-fn Step() {
+func Step() {
 	gameState.Step()
 }
 
-fn main() {
+func main() {
 	gameState.Init(32, 32, 10)
 	gameState.Start()
 }

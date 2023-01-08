@@ -7,4 +7,4 @@ type iov_t struct {
 
 #wa:import wasi_snapshot_preview1 fd_write
 #wa:linkname $$FdWrite
-fn waFdWrite(fd: i32, io: *iov_t, iovs_len: i32, nwritten: *i32) => (written: i32)
+func waFdWrite(fd: i32, io: *iov_t, iovs_len: i32, nwritten: *i32) => (written: i32)

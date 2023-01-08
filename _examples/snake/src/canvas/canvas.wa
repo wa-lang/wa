@@ -6,7 +6,7 @@ w、h为画布以像素为单位的宽高
 返回值为画布对象对应的网页DOM对象id
 */
 #wa:import wa_js_env newCanvas
-fn newCanvas_JS(w, h: u32) => u32
+func newCanvas_JS(w, h: u32) => u32
 
 /*
 将帧缓存更新至html.canvas的函数，由JS环境导入
@@ -14,11 +14,11 @@ id为画布对象对应的网页DOM对象id
 buf为帧缓存指针
 */
 #wa:import wa_js_env updateCanvas
-fn updateCanvas_JS(id: u32, buf: *u32)
+func updateCanvas_JS(id: u32, buf: *u32)
 
 //画布事件回调函数原型
-type OnTouch fn (x, y: u32)
-type OnKey fn(key: u32)
+type OnTouch func (x, y: u32)
+type OnKey func(key: u32)
 
 //画布对象
 type Canvas struct {
@@ -38,7 +38,7 @@ type CanvasEvents struct {
 }
 
 //创建一个宽度为w像素、高度为h像素的画布对象
-fn NewCanvas(w, h: u32) => *Canvas {
+func NewCanvas(w, h: u32) => *Canvas {
     var canvas Canvas
 	canvas.device_id = newCanvas_JS(w, h)
 	canvas.width = w
@@ -49,45 +49,45 @@ fn NewCanvas(w, h: u32) => *Canvas {
 }
 
 //获取画布设备ID
-fn Canvas.GetDeviceID() => u32 {
+func Canvas.GetDeviceID() => u32 {
 	return this.device_id
 }
 
 //获取画布宽度
-fn Canvas.GetWidth() => u32 {
+func Canvas.GetWidth() => u32 {
 	return this.width
 }
 
 //获取画布高度
-fn Canvas.GetHeight() => u32 {
+func Canvas.GetHeight() => u32 {
 	return this.height
 }
 
 //获取画布对象坐标为(x, y)处的像素颜色值
-fn Canvas.GetPixel(x, y: u32) => u32 {
+func Canvas.GetPixel(x, y: u32) => u32 {
     return this.frame_buf[y * this.width + x]
 }
 
 //设置画布对象坐标(x, y)处的颜色值为color
-fn Canvas.SetPixel(x, y, color: u32) {
+func Canvas.SetPixel(x, y, color: u32) {
     this.frame_buf[y * this.width + x] = color
 }
 
 //用color指定的颜色清除整个画布
-fn Canvas.Clear(color: u32) {
+func Canvas.Clear(color: u32) {
 	for i := range this.frame_buf {
 		this.frame_buf[i] = color
 	}
 }
 
 //将画布对象的帧缓存更新至网页DOM对象
-fn Canvas.Flush() {
+func Canvas.Flush() {
     updateCanvas_JS(this.device_id, &this.frame_buf[0])
 }
 
 var canvas_events: []CanvasEvents
 
-fn AttachCanvasEvents(e: CanvasEvents) {
+func AttachCanvasEvents(e: CanvasEvents) {
 	for i := range canvas_events {
 		if canvas_events[i].Device_id == e.Device_id {
 			canvas_events[i] = e
@@ -103,7 +103,7 @@ fn AttachCanvasEvents(e: CanvasEvents) {
 id为画布DOM对象对应的Canvas对象id
 (x, y)为画布像素坐标系坐标
 */
-fn OnMouseDown(id: u32, x, y:u32) {
+func OnMouseDown(id: u32, x, y:u32) {
     for _, i := range canvas_events {
 		if i.Device_id == id {
 			i.OnMouseDown(x, y)
@@ -117,7 +117,7 @@ fn OnMouseDown(id: u32, x, y:u32) {
 id为画布DOM对象对应的Canvas对象id
 (x, y)为画布像素坐标系坐标
 */
-fn OnMouseUp(id: u32, x, y:u32) {
+func OnMouseUp(id: u32, x, y:u32) {
     for _, i := range canvas_events {
 		if i.Device_id == id {
 			i.OnMouseUp(x, y)
@@ -131,7 +131,7 @@ fn OnMouseUp(id: u32, x, y:u32) {
 id为画布DOM对象对应的Canvas对象id
 key为键位。37=← 38=↑ 39=→ 40=↓
 */
-fn OnKeyDown(id, key:u32) {
+func OnKeyDown(id, key:u32) {
     for _, i := range canvas_events {
 		if i.Device_id == id {
 			i.OnKeyDown(key)
@@ -145,7 +145,7 @@ fn OnKeyDown(id, key:u32) {
 id为画布DOM对象对应的Canvas对象id
 key为键位
 */
-fn OnKeyUp(id, key:u32) {
+func OnKeyUp(id, key:u32) {
     for _, i := range canvas_events {
 		if i.Device_id == id {
 			i.OnKeyUp(key)

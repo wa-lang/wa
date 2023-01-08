@@ -83,7 +83,7 @@ func main() {
 			Action: func(c *cli.Context) error {
 				wat, err := api.BuildFile(
 					config.DefaultConfig(),
-					"hello.wa", "fn main() { println(123) }",
+					"hello.wa", "func main() { println(123) }",
 				)
 				if err != nil {
 					if len(wat) != 0 {

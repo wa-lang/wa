@@ -1,7 +1,7 @@
 # Test the llvm backend.
 # Test read/write structs.
 
-fn main() {
+func main() {
 	test_struct(10)
 	test_struct(11)
 	test_struct(2)
@@ -16,7 +16,7 @@ type t0 struct {
 	d :uint32
 }
 
-fn test_struct(a: int) {
+func test_struct(a: int) {
 	s0 := t0{17, -668, [4]f64{2.71828, 0.717, 3.14159}, 234}
 	switch a {
 	case 10:

@@ -4,14 +4,14 @@ package main
 
 var counter i32 = 13
 var G *i32
-fn gen_i() => *i32{
+func gen_i() => *i32{
 	var i i32
 	i = counter
 	counter++
 	return &i
 }
 
-fn main() {
+func main() {
 	G = gen_i()
 	println(*G)
 	G = gen_i()

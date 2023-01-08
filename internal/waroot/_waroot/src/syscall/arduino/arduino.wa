@@ -10,27 +10,27 @@ var (
 )
 
 #wa:import arduino millis
-fn Millis() => i32
+func Millis() => i32
 
 #wa:import arduino delay
-fn Delay(ms: i32)
+func Delay(ms: i32)
 
 #wa:import arduino pinMode
-fn PinMode(pin, mode: i32)
+func PinMode(pin, mode: i32)
 
 #wa:import arduino digitalWrite
-fn DigitalWrite(pin, value: i32)
+func DigitalWrite(pin, value: i32)
 
 #wa:import arduino getPinLED
-fn GetPinLED() => i32
+func GetPinLED() => i32
 
 #wa:import arduino print
-fn PrintRawString(ptr: i32, len: i32)
+func PrintRawString(ptr: i32, len: i32)
 
-fn Print(s: string) {
+func Print(s: string) {
 	print(s)
 }
 
-fn Println(s: string) {
+func Println(s: string) {
 	println(s)
 }

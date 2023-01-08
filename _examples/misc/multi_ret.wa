@@ -1,6 +1,6 @@
 # 版权 @2021 凹语言 作者。保留所有权利。
 
-fn main() {
+func main() {
 	i := ST{i: 1, j:2}
 	j := ST{i: 3, j:4}
 	i, j = Swap(i, j)
@@ -10,7 +10,7 @@ fn main() {
 	println(j.j)
 }
 
-fn Swap(i, j: ST) => (ST, ST){
+func Swap(i, j: ST) => (ST, ST){
 	return j, i
 }
 

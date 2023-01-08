@@ -6,16 +6,16 @@ type pair struct {
 	j :f32
 }
 
-fn main() {
+func main() {
 	print("Hello, ")
-	fn() {
+	func() {
 		println("World!")
 	}()
 
 	var i: int = 31
 	var j: [4]f32 = [4]f32{1, 2.2, 5.5, 9.8}
 	var k: pair = pair{3.14, 2.718}
-	show := fn(q: int) {
+	show := func(q: int) {
 		println(i, " + ", q, " = ", i+q)
 		println("{", j[0], ", ", j[1], ", ", j[2], ", ", j[3], "}")
 		println("{", k.i, ", ", k.j, "}")

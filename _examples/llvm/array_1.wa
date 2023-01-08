@@ -8,21 +8,21 @@ type fff32 f32
 var arr0: [size]fff32
 var arr1: [size]fff32
 
-fn test_init() {
+func test_init() {
 	for i := 0; i < size; i++ {
 		arr0[i] = fff32(i * i)
 	}
 }
 
-fn getarr0a(arr: [size]fff32, i: int) => fff32 {
+func getarr0a(arr: [size]fff32, i: int) => fff32 {
 	return arr[i]
 }
 
-fn getarr0b(arr: *[size]fff32, i: int) => fff32 {
+func getarr0b(arr: *[size]fff32, i: int) => fff32 {
 	return arr[i]
 }
 
-fn main() {
+func main() {
 	test_init()
 	for i := 6; i < 20; i += 2 {
 		println(getarr0a(arr0, i), ", ", getarr0b(&arr0, i+1))

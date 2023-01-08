@@ -320,7 +320,7 @@ var (
 	x, y, z int = 1, 2, 3
 	u, v float64
 )
-fn fibo(n int) {
+func fibo(n int) {
 	if n < 2 {
 		return n /* seed values */
 	}
@@ -382,7 +382,7 @@ package p
 import ( "wa-lang.org/wa/internal/printer"; "math" )
 const pi = 3.14; var x = 0
 type t struct{ x, y, z int; u, v, w float32 }
-fn (t *t) foo(a, b, c int) int {
+func (t *t) foo(a, b, c int) int {
 	return a*t.x + b*t.y +
 		// two extra lines here
 		// ...
@@ -450,12 +450,12 @@ fn (t *t) foo(a, b, c int) int {
 func TestIssue5945(t *testing.T) {
 	const orig = `
 package p   // line 2
-fn f() {} // line 3
+func f() {} // line 3
 
 var x, y, z int
 
 
-fn g() { // line 8
+func g() { // line 8
 }
 `
 
@@ -463,12 +463,12 @@ fn g() { // line 8
 package p
 
 //line src.go:3
-fn f() {}
+func f() {}
 
 var x, y, z int
 
 //line src.go:8
-fn g() {
+func g() {
 }
 `
 
@@ -495,7 +495,7 @@ fn g() {
 var decls = []string{
 	`import "fmt"`,
 	"const pi = 3.1415\nconst e = 2.71828\n\nvar x = pi",
-	"fn sum(x, y int) int\t{ return x + y }",
+	"func sum(x, y int) int\t{ return x + y }",
 }
 
 func TestDeclLists(t *testing.T) {
@@ -526,7 +526,7 @@ var stmts = []string{
 
 func TestStmtLists(t *testing.T) {
 	for _, src := range stmts {
-		file, err := parser.ParseFile(nil, fset, "", "package p; fn _() {"+src+"}", parser.ParseComments)
+		file, err := parser.ParseFile(nil, fset, "", "package p; func _() {"+src+"}", parser.ParseComments)
 		if err != nil {
 			panic(err) // error in test
 		}
@@ -609,7 +609,7 @@ func TestFuncType(t *testing.T) {
 
 	const want = `package p
 
-fn f()
+func f()
 `
 
 	if got != want {
@@ -663,7 +663,7 @@ func TestWriteErrors(t *testing.T) {
 func TestX(t *testing.T) {
 	const src = `
 package p
-fn _() {}
+func _() {}
 `
 	_, err := format([]byte(src), 0)
 	if err != nil {
@@ -675,7 +675,7 @@ func TestCommentedNode(t *testing.T) {
 	const (
 		input = `package main
 
-fn foo() {
+func foo() {
 	// comment inside func
 }
 
@@ -684,7 +684,7 @@ type bar int // comment2
 
 `
 
-		foo = `fn foo() {
+		foo = `func foo() {
 	// comment inside func
 }`
 

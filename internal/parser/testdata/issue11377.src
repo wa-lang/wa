@@ -7,7 +7,7 @@
 
 package p
 
-fn bad1() {
+func bad1() {
     if f()) /* ERROR "expected ';', found '\)'" */ {
         return
     }
@@ -15,13 +15,13 @@ fn bad1() {
 
 // There shouldn't be any errors down below.
 
-fn F1() {}
-fn F2() {}
-fn F3() {}
-fn F4() {}
-fn F5() {}
-fn F6() {}
-fn F7() {}
-fn F8() {}
-fn F9() {}
-fn F10() {}
+func F1() {}
+func F2() {}
+func F3() {}
+func F4() {}
+func F5() {}
+func F6() {}
+func F7() {}
+func F8() {}
+func F9() {}
+func F10() {}

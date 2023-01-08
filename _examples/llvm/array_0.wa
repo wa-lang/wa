@@ -1,12 +1,12 @@
 # Test the llvm backend.
 # Test read/write arrays.
 
-fn main() {
+func main() {
 	test_array(2, 4)
 	test_array(7, 9)
 }
 
-fn test_array(a: int, b: int) {
+func test_array(a: int, b: int) {
 	var arr: [10][10]int
 	for i := 0; i < 10; i++ {
 		for j := 0; j < 10; j++ {

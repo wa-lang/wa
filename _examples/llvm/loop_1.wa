@@ -1,11 +1,11 @@
 # Test the llvm backend.
 # Test loops.
 
-fn main() {
+func main() {
 	test_loop(10, 10)
 }
 
-fn test_loop(a: u64, b: u64) {
+func test_loop(a: u64, b: u64) {
 	for i := u64(0); i < a; i++ {
 		for j := u64(0); j < b; j++ {
 			println(i, " * ", j, " = ", i*j)

@@ -4,12 +4,12 @@
 const gbegin = 10
 const gend = 20
 
-fn test_global_consts() {
+func test_global_consts() {
 	for i := gbegin; i < gend; i++ {
 		println(i, " - ", gbegin, " = ", i-gbegin)
 	}
 }
 
-fn main() {
+func main() {
 	test_global_consts()
 }

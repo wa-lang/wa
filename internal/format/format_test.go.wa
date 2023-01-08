@@ -16,7 +16,7 @@ import (
 
 const testfile = "format_test.go.wa"
 
-fn diff(t *testing.T, dst, src []byte) {
+func diff(t *testing.T, dst, src []byte) {
 	line := 1
 	offs := 0 // line offset
 	for i := 0; i < len(dst) && i < len(src); i++ {
@@ -37,7 +37,7 @@ fn diff(t *testing.T, dst, src []byte) {
 	}
 }
 
-fn TestNode(t *testing.T) {
+func TestNode(t *testing.T) {
 	src, err := ioutil.ReadFile(testfile)
 	if err != nil {
 		t.Fatal(err)
@@ -58,7 +58,7 @@ fn TestNode(t *testing.T) {
 	diff(t, buf.Bytes(), src)
 }
 
-fn TestSource(t *testing.T) {
+func TestSource(t *testing.T) {
 	src, err := ioutil.ReadFile(testfile)
 	if err != nil {
 		t.Fatal(err)
@@ -112,7 +112,7 @@ var tests = []string{
 	"ERRORx :=  0",
 }
 
-fn String(s string) (string, error) {
+func String(s string) (string, error) {
 	res, err := Source([]byte(s))
 	if err != nil {
 		return "", err
@@ -120,7 +120,7 @@ fn String(s string) (string, error) {
 	return string(res), nil
 }
 
-fn TestPartial(t *testing.T) {
+func TestPartial(t *testing.T) {
 	for _, src := range tests {
 		if strings.HasPrefix(src, "ERROR") {
 			// test expected to fail

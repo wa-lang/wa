@@ -105,7 +105,7 @@ const (
 	ELSE
 	FOR
 
-	FN
+	FUNC
 	IF
 	IMPORT
 
@@ -205,7 +205,7 @@ var tokens = [...]string{
 	ELSE:    "else",
 	FOR:     "for",
 
-	FN:     "fn",
+	FUNC:   "func",
 	IF:     "if",
 	IMPORT: "import",
 
@@ -226,7 +226,7 @@ var tokens = [...]string{
 
 // WaGo 关键字补丁
 var tokens_wago = map[Token]string{
-	FN: "func",
+	FUNC: "func",
 }
 
 // 中文关键字(最终通过海选选择前几名, 凹开发者最终决定)
@@ -243,7 +243,7 @@ var tokens_zh = map[Token]string{
 	ENUM:      "枚举",
 	INTERFACE: "接口",
 
-	FN:     "函数",
+	FUNC:   "函数",
 	DEFER:  "善后",
 	RETURN: "返回",
 
@@ -279,7 +279,7 @@ func (tok Token) String() string {
 }
 
 func (tok Token) WaGoString() string {
-	if tok == FN {
+	if tok == FUNC {
 		return "func"
 	}
 	return tok.String()
@@ -371,6 +371,10 @@ func init() {
 // Lookup maps an identifier to its keyword token or IDENT (if not a keyword).
 //
 func Lookup(ident string) Token {
+	// 临时过渡
+	if ident == "fn" {
+		return FUNC
+	}
 	if tok, is_keyword := keywords[ident]; is_keyword {
 		return tok
 	}
@@ -384,12 +388,6 @@ func Lookup(ident string) Token {
 // 解析 WaGo 关键字
 // WaGo 不支持中文关键字
 func LookupWaGo(ident string) Token {
-	if ident == "fn" {
-		return IDENT
-	}
-	if ident == "func" {
-		return FN
-	}
 	if tok, is_keyword := keywords[ident]; is_keyword {
 		return tok
 	}

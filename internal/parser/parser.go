@@ -936,15 +936,15 @@ func (p *parser) parseSignature(scope *ast.Scope) (params, results *ast.FieldLis
 	}
 
 	// 无参数和返回值时可省略 `()`
-	// fn main
-	// fn main { ... }
+	// func main
+	// func main { ... }
 	if p.tok == token.LBRACE || p.tok == token.SEMICOLON {
 		params = new(ast.FieldList)
 		results = new(ast.FieldList)
 		return
 	}
 
-	// fn answer => i32 {}
+	// func answer => i32 {}
 	if p.tok == token.ARROW {
 		params = new(ast.FieldList)
 		p.next()
@@ -967,7 +967,7 @@ func (p *parser) parseFuncType() (*ast.FuncType, *ast.Scope) {
 		defer un(trace(p, "FuncType"))
 	}
 
-	pos := p.expect(token.FN)
+	pos := p.expect(token.FUNC)
 	scope := ast.NewScope(p.topScope) // function scope
 	params, results, arrowPos := p.parseSignature(scope)
 
@@ -984,7 +984,7 @@ func (p *parser) parseMethodSpec(scope *ast.Scope) *ast.Field {
 		defer un(trace(p, "MethodSpec"))
 	}
 
-	if p.tok == token.FN {
+	if p.tok == token.FUNC {
 		p.next()
 	}
 
@@ -1025,7 +1025,7 @@ func (p *parser) parseInterfaceType() *ast.InterfaceType {
 	lbrace := p.expect(token.LBRACE)
 	scope := ast.NewScope(nil) // interface scope
 	var list []*ast.Field
-	for p.tok == token.FN || p.tok == token.IDENT {
+	for p.tok == token.FUNC || p.tok == token.IDENT {
 		list = append(list, p.parseMethodSpec(scope))
 	}
 	rbrace := p.expect(token.RBRACE)
@@ -1065,7 +1065,7 @@ func (p *parser) tryIdentOrType() ast.Expr {
 		return p.parseStructType()
 	case token.MUL:
 		return p.parsePointerType()
-	case token.FN:
+	case token.FUNC:
 		typ, _ := p.parseFuncType()
 		return typ
 	case token.INTERFACE:
@@ -1189,7 +1189,7 @@ func (p *parser) parseOperand(lhs bool) ast.Expr {
 		rparen := p.expect(token.RPAREN)
 		return &ast.ParenExpr{Lparen: lparen, X: x, Rparen: rparen}
 
-	case token.FN:
+	case token.FUNC:
 		return p.parseFuncTypeOrLit()
 	}
 
@@ -2150,7 +2150,7 @@ func (p *parser) parseStmt() (s ast.Stmt) {
 		s = &ast.DeclStmt{Decl: p.parseDecl(stmtStart)}
 	case
 		// tokens that may start an expression
-		token.IDENT, token.INT, token.FLOAT, token.IMAG, token.CHAR, token.STRING, token.FN, token.LPAREN, // operands
+		token.IDENT, token.INT, token.FLOAT, token.IMAG, token.CHAR, token.STRING, token.FUNC, token.LPAREN, // operands
 		token.LBRACK, token.STRUCT, token.MAP, token.INTERFACE, // composite types
 		token.ADD, token.SUB, token.MUL, token.AND, token.XOR, token.NOT: // unary operators
 		s, _ = p.parseSimpleStmt(labelOk)
@@ -2386,7 +2386,7 @@ func (p *parser) parseFuncDecl() *ast.FuncDecl {
 	}
 
 	doc := p.leadComment
-	pos := p.expect(token.FN)
+	pos := p.expect(token.FUNC)
 	scope := ast.NewScope(p.topScope) // function scope
 
 	var recv *ast.FieldList
@@ -2396,7 +2396,7 @@ func (p *parser) parseFuncDecl() *ast.FuncDecl {
 
 	ident := p.parseIdent()
 
-	// fn Type.method()
+	// func Type.method()
 	if recv == nil && p.tok == token.PERIOD {
 		thisIdent := &ast.Ident{Name: "this"}
 		thisField := &ast.Field{
@@ -2461,7 +2461,7 @@ func (p *parser) parseDecl(sync map[token.Token]bool) ast.Decl {
 	case token.TYPE:
 		f = p.parseTypeSpec
 
-	case token.FN:
+	case token.FUNC:
 		return p.parseFuncDecl()
 
 	default:
