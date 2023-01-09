@@ -28,15 +28,14 @@ Instead of requiring complex toolchains to set up, you can simply go install it 
 
 [https://wa-lang.org/playground](https://wa-lang.org/playground)
 
-![[![](https://wa-lang.org/smalltalk/images/st0011-01.png)](https://wa-lang.org/playground)](https://wa-lang.org/st0011-03.png)
+![](https://wa-lang.org/st0011-03.png)
 
 ## Snake Game
 
 - Play: [https://wa-lang.org/wa/snake/](https://wa-lang.org/wa/snake/)
 - Code: [_examples/snake/README-en.md](_examples/snake/README-en.md)
 
-![](_examples/snake/web/snake.jpg)
-
+![](https://wa-lang.org/st0018-03.jpg)
 
 ## Install and Run:
 
