@@ -101,6 +101,7 @@
       WebAssembly.instantiateStreaming(fetch(url), importsObject).then(res => {
         this._inst = res.instance;
         this._inst.exports._start();
+        const timer = setInterval(gameLoop, 150);
       })
     }
 
@@ -133,5 +134,4 @@
 
   window['waApp'] = new WaApp();
   window['waApp'].init("./snake.wasm")
-  const timer = setInterval(gameLoop, IS_MOBILE ? 150 : 100);
 })()

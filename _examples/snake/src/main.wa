@@ -4,36 +4,6 @@ import "snake/canvas"
 
 var ca: *canvas.Canvas
 
-func Test() {
-	println(42)
-
-	ca = canvas.NewCanvas(255, 255)
-	var i, j: u32
-	for i = 0; i < 255; i++ {
-		for j = 0; j < 255; j++ {
-			ca.SetPixel(i, j, 0xFF000000+i+j*256)
-		}
-	}
-	ca.Flush()
-
-	var caev: canvas.CanvasEvents
-	caev.Device_id = ca.GetDeviceID()
-	caev.OnMouseDown = func(x, y: u32) {
-		println("OnMouseDown: ", x, " ", y)
-	}
-	caev.OnMouseUp = func(x, y: u32) {
-		println("OnMouseUp: ", x, " ", y)
-	}
-	caev.OnKeyDown = func(key: u32) {
-		println("OnKeyDown: ", key)
-	}
-	caev.OnKeyUp = func(key: u32) {
-		println("OnKeyUp: ", key)
-	}
-
-	canvas.AttachCanvasEvents(caev)
-}
-
 type Position struct {
 	x, y :i32
 }
