@@ -54,14 +54,14 @@ Print rune and call function：
 
 import "fmt"
 
-fn main {
+func main {
 	println("hello, Wa!")
 	println(add(40, 2))
 
 	fmt.Println(1+1)
 }
 
-fn add(a: i32, b: i32) => i32 {
+func add(a: i32, b: i32) => i32 {
 	return a+b
 }
 ```
@@ -80,7 +80,7 @@ hello, Wa!
 Print prime numbers up to 30:
 
 ```
-fn main {
+func main {
 	for n := 2; n <= 30; n = n + 1 {
 		var isPrime int = 1
 		for i := 2; i*i <= n; i = i + 1 {
