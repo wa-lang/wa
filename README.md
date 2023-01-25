@@ -1,6 +1,9 @@
 <div align="center">
 <h1>The Wa Programming Language</h1>
 
+[简体中文](https://github.com/wa-lang/wa/blob/master/README-zh.md) | [English](https://github.com/wa-lang/wa/blob/master/README.md) 
+
+
 </div>
 <div align="center">
 
