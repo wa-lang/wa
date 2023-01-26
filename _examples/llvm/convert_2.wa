@@ -1,5 +1,5 @@
-# Test the llvm backend.
-# Test integer -> 'floating point' convertion.
+// Test the llvm backend.
+// Test integer -> 'floating point' convertion.
 
 func main() {
 	println(convert_i16_to_f64(100))

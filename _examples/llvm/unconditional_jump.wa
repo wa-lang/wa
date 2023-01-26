@@ -1,5 +1,5 @@
-# Test the llvm backend.
-# Test unconditional jump.
+// Test the llvm backend.
+// Test unconditional jump.
 
 func main() {
 	test_jmp(4)

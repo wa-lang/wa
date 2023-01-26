@@ -1,6 +1,6 @@
-# 版权 @2022 凹语言 作者。保留所有权利。
+// 版权 @2022 凹语言 作者。保留所有权利。
 
-# BF 虚拟机
+// BF 虚拟机
 type BrainFuck struct {
 	mem  :[30000]byte
 	code :string
@@ -34,7 +34,7 @@ func BrainFuck.Run() {
 		case '.':
 			print(rune(this.mem[this.pos]))
 		case ',':
-			# TODO: support read byte
+			// TODO: support read byte
 		}
 	}
 	return

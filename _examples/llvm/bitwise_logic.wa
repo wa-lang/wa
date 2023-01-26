@@ -1,5 +1,5 @@
-# Test the llvm backend.
-# Test bitwise logic.
+// Test the llvm backend.
+// Test bitwise logic.
 
 var a: i64 = 0x55555555
 var b: i64 = 0x33333333

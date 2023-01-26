@@ -1,5 +1,5 @@
-# Test the llvm backend.
-# Test return struct type values.
+// Test the llvm backend.
+// Test return struct type values.
 
 const size = 16
 

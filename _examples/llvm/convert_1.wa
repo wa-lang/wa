@@ -1,5 +1,5 @@
-# Test the llvm backend.
-# Test 'floating point' -> 'floating point' convertion.
+// Test the llvm backend.
+// Test 'floating point' -> 'floating point' convertion.
 
 func convert_f64_to_f32(a: f64) => f32 {
 	return f32(a)

@@ -1,4 +1,4 @@
-# Test the llvm backend.
+// Test the llvm backend.
 
 func main() {
 	a := 0.0

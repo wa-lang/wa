@@ -1,8 +1,8 @@
-# 版权 @2019 凹语言 作者。保留所有权利。
+// 版权 @2019 凹语言 作者。保留所有权利。
 
-# K&R 第8章 首次适配算法的 malloc 实现
+// K&R 第8章 首次适配算法的 malloc 实现
 
-# sizeof(knr_Header) 大小
+// sizeof(knr_Header) 大小
 const sizeof_Header = 8
 
 #wa:linkname $knr_basep
@@ -11,17 +11,17 @@ var knr_basep: u32
 #wa:linkname $knr_freep
 var knr_freep: u32
 
-# K&R malloc 实现, Block 头部
+// K&R malloc 实现, Block 头部
 type knr_Header struct {
 	ptr  :u32
 	size :u32
 }
 
-# Heap 开始地址
+// Heap 开始地址
 #wa:linkname $waHeapBase
 func waHeapBase() => u32
 
-# Heap 最大地址(闭区间)
+// Heap 最大地址(闭区间)
 #wa:linkname $waHeapMax
 func waHeapMax() => u32
 
@@ -31,7 +31,7 @@ func knr_getBlockHeader(p: u32) => knr_Header
 #wa:runtime_setter
 func knr_setBlockHeader(p: u32, hdr: knr_Header)
 
-# 分配 nbytes 字节, 返回地址
+// 分配 nbytes 字节, 返回地址
 #wa:force_register
 func malloc(nbytes: u32) => u32 {
 	if nbytes == 0 || nbytes >= (waHeapMax()-knr_basep) {
@@ -49,24 +49,24 @@ func malloc(nbytes: u32) => u32 {
 		knr_setBlockHeader(knr_basep, base)
 	}
 
-	# round up to allocate in units of sizeof(Header)
+	// round up to allocate in units of sizeof(Header)
 	var nunits = (nbytes+sizeof_Header-1)/sizeof_Header + 1
 	var prevp_addr = knr_freep
 
-	# search free linked-list
+	// search free linked-list
 	prevp := knr_getBlockHeader(prevp_addr)
 	p_addr := prevp.ptr
 	p := knr_getBlockHeader(p_addr)
 	for {
-		if p.size >= nunits { # big enough
-			if p.size == nunits { # exactly
+		if p.size >= nunits { // big enough
+			if p.size == nunits { // exactly
 				prevp.ptr = p.ptr
 				knr_setBlockHeader(prevp_addr, prevp)
 			} else {
 				p.size -= nunits
 				knr_setBlockHeader(p_addr, p)
 
-				# allocate at tail-end
+				// allocate at tail-end
 				p_addr += p.size * sizeof_Header
 				p = knr_getBlockHeader(p_addr)
 				p.size = nunits
@@ -77,7 +77,7 @@ func malloc(nbytes: u32) => u32 {
 			return p_addr + sizeof_Header
 		}
 		if p_addr == knr_freep {
-			return 0 # none left
+			return 0 // none left
 		}
 
 		prevp_addr = p_addr
@@ -88,21 +88,21 @@ func malloc(nbytes: u32) => u32 {
 	}
 }
 
-# 回收内存, 释放到空闲列表
+// 回收内存, 释放到空闲列表
 #wa:force_register
 func free(ap: u32) {
 	if ap == 0 || ap%sizeof_Header != 0 {
 		return
 	}
 
-	# point to block header
+	// point to block header
 	bp_addr := ap - sizeof_Header
 	bp := knr_getBlockHeader(bp_addr)
 
-	# must be at least 2 units:
-	# 1 for header, 1 for mem block
+	// must be at least 2 units:
+	// 1 for header, 1 for mem block
 	if bp.size <= 1 {
-		# panic
+		// panic
 		return
 	}
 
@@ -110,7 +110,7 @@ func free(ap: u32) {
 	p := knr_getBlockHeader(p_addr)
 
 	for !(bp_addr > p_addr && bp_addr < p.ptr) {
-		# free block at start or end of arena
+		// free block at start or end of arena
 		if (p_addr >= p.ptr) && (bp_addr > p_addr || bp_addr < p.ptr) {
 			break
 		}
@@ -119,7 +119,7 @@ func free(ap: u32) {
 		p = knr_getBlockHeader(p_addr)
 	}
 
-	# join to upper nbr
+	// join to upper nbr
 	if bp_addr+bp.size*sizeof_Header == p.ptr {
 		p_ptr := knr_getBlockHeader(p.ptr)
 		bp.size += p_ptr.size
@@ -130,7 +130,7 @@ func free(ap: u32) {
 		knr_setBlockHeader(bp_addr, bp)
 	}
 
-	# join to lower nbr
+	// join to lower nbr
 	if p_addr+p.size*sizeof_Header == bp_addr {
 		p.size += bp.size
 		p.ptr = bp.ptr

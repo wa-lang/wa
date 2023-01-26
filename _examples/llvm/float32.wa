@@ -1,5 +1,5 @@
-# Test the llvm backend.
-# Test float32 operations.
+// Test the llvm backend.
+// Test float32 operations.
 
 type fff32 f32
 

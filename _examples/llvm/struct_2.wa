@@ -1,5 +1,5 @@
-# Test the llvm backend.
-# Test passing struct type parameters.
+// Test the llvm backend.
+// Test passing struct type parameters.
 
 type fff32 f32
 

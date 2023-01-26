@@ -1,5 +1,5 @@
-# Test the llvm backend.
-# Test printing strings.
+// Test the llvm backend.
+// Test printing strings.
 
 func main() {
 	println("您好，凹语言！\n\"Hello, wa-lang!\"")

@@ -387,7 +387,16 @@ func isDigit(ch rune) bool {
 
 func (s *Scanner) scanIdentifier() string {
 	offs := s.offset
+	maybeZhKeyword := true
+	if ch := lower(s.ch); ('a' <= ch && ch <= 'z') || ch == '_' {
+		maybeZhKeyword = false
+	}
 	for isLetter(s.ch) || isDigit(s.ch) {
+		if maybeZhKeyword {
+			if token.IsZhKeyword(string(s.src[offs:s.offset])) {
+				return string(s.src[offs:s.offset])
+			}
+		}
 		s.next()
 	}
 	return string(s.src[offs:s.offset])

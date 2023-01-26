@@ -120,9 +120,6 @@ const (
 	TYPE
 	VAR
 
-	// reserved keywords
-	CLASS
-	ENUM
 	keyword_end
 )
 
@@ -219,17 +216,9 @@ var tokens = [...]string{
 	SWITCH: "switch",
 	TYPE:   "type",
 	VAR:    "var",
-
-	CLASS: "class",
-	ENUM:  "enum",
 }
 
-// WaGo 关键字补丁
-var tokens_wago = map[Token]string{
-	FUNC: "func",
-}
-
-// 中文关键字(最终通过海选选择前几名, 凹开发者最终决定)
+// 关键字中文别名
 var tokens_zh = map[Token]string{
 	IMPORT: "导入",
 
@@ -239,8 +228,6 @@ var tokens_zh = map[Token]string{
 	TYPE:      "类型",
 	MAP:       "字典",
 	STRUCT:    "结构",
-	CLASS:     "类", // 有 2 个字吗
-	ENUM:      "枚举",
 	INTERFACE: "接口",
 
 	FUNC:   "函数",
@@ -259,6 +246,20 @@ var tokens_zh = map[Token]string{
 	DEFAULT: "没辙",
 
 	PACKAGE: "包", // 废弃
+}
+
+var zhKeykwordMap = map[string]Token{}
+
+func init() {
+	for k, v := range tokens_zh {
+		zhKeykwordMap[v] = k
+	}
+}
+
+// 是否为中文关键字
+func IsZhKeyword(s string) bool {
+	_, ok := zhKeykwordMap[s]
+	return ok
 }
 
 // String returns the string corresponding to the token tok.
@@ -303,9 +304,6 @@ func (tok Token) WaZhString() string {
 // 返回 WaGo 关键字名字
 func (tok Token) WaGoKeykword() string {
 	if tok.IsKeyword() {
-		if x, ok := tokens_wago[tok]; ok {
-			return x
-		}
 		return tokens[tok]
 	}
 	return ""

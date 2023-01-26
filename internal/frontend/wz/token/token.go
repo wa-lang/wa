@@ -623,9 +623,6 @@ var waTokMap = map[Token]watoken.Token{
 	SWITCH: watoken.SWITCH,
 	TYPE:   watoken.TYPE,
 	VAR:    watoken.VAR,
-
-	CLASS: watoken.CLASS,
-	ENUM:  watoken.ENUM,
 }
 
 func ToWaTok(tok Token) watoken.Token {

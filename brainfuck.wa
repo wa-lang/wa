@@ -1,7 +1,7 @@
-# 版权 @2019 凹语言 作者。保留所有权利。
+// 版权 @2019 凹语言 作者。保留所有权利。
 
 func main() {
-	# print hi
+	// print hi
 	const code = "++++++++++[>++++++++++<-]>++++.+."
 	vm := NewBrainFuck(code)
 	vm.Run()
@@ -40,7 +40,7 @@ func BrainFuck.Run() {
 		case '.':
 			print(rune(this.mem[this.pos]))
 		case ',':
-			# TODO: support read byte
+			// TODO: support read byte
 		}
 	}
 	return

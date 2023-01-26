@@ -1,5 +1,5 @@
-# Test the llvm backend.
-# Test logical/arithmetic shift operations.
+// Test the llvm backend.
+// Test logical/arithmetic shift operations.
 
 var ga: i32 = -15
 var gb: i32 = 15

@@ -1,5 +1,5 @@
-# Test the llvm backend.
-# Test multiple return values.
+// Test the llvm backend.
+// Test multiple return values.
 
 type pair struct {
 	a :f32

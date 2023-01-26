@@ -1,11 +1,11 @@
-# Test the llvm backend.
-# Make Arduino's builtin LED blinking.
-# `wa native --target=avr arduino_blink.wa`
+// Test the llvm backend.
+// Make Arduino's builtin LED blinking.
+// `wa native --target=avr arduino_blink.wa`
 
 #wa:linkname __avr_write_port__
 func write_port(p: i16, v: i8)
 
-# Delay a period of time
+// Delay a period of time
 var cnt: i8
 
 func delay(n: i32) {
@@ -15,17 +15,17 @@ func delay(n: i32) {
 }
 
 func main() {
-	# Set Pin #5 (connected with the builtin LED) of Port B to output mode.
+	// Set Pin #5 (connected with the builtin LED) of Port B to output mode.
 	write_port(0x24, 0x20)
 	for b := 0; ; b++ {
 		if (b % 2) == 0 {
-			# Turn on the LED.
+			// Turn on the LED.
 			write_port(0x25, 0x20)
 		} else {
-			# Turn off the LED.
+			// Turn off the LED.
 			write_port(0x25, 0x00)
 		}
-		# Delay a period of time
+		// Delay a period of time
 		delay(99999)
 	}
 }

@@ -1,5 +1,5 @@
-# Test the llvm backend.
-# Test integer -> integer convertion.
+// Test the llvm backend.
+// Test integer -> integer convertion.
 
 func main() {
 	println(i32(convert_i32_to_i16(65537)))

@@ -1,5 +1,5 @@
-# Test the llvm backend.
-# Test read/write arrays.
+// Test the llvm backend.
+// Test read/write arrays.
 
 func main() {
 	test_array(2, 4)
