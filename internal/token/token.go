@@ -218,50 +218,6 @@ var tokens = [...]string{
 	VAR:    "var",
 }
 
-// 关键字中文别名
-var tokens_zh = map[Token]string{
-	IMPORT: "导入",
-
-	CONST: "常量",
-	VAR:   "变量",
-
-	TYPE:      "类型",
-	MAP:       "字典",
-	STRUCT:    "结构",
-	INTERFACE: "接口",
-
-	FUNC:   "函数",
-	DEFER:  "善后",
-	RETURN: "返回",
-
-	IF:       "如果",
-	ELSE:     "否则",
-	FOR:      "循环",
-	RANGE:    "区间",
-	CONTINUE: "继续",
-	BREAK:    "跳出",
-
-	SWITCH:  "找辙",
-	CASE:    "有辙",
-	DEFAULT: "没辙",
-
-	PACKAGE: "包", // 废弃
-}
-
-var zhKeykwordMap = map[string]Token{}
-
-func init() {
-	for k, v := range tokens_zh {
-		zhKeykwordMap[v] = k
-	}
-}
-
-// 是否为中文关键字
-func IsZhKeyword(s string) bool {
-	_, ok := zhKeykwordMap[s]
-	return ok
-}
-
 // String returns the string corresponding to the token tok.
 // For operators, delimiters, and keywords the string is the actual
 // token character sequence (e.g., for the token ADD, the string is
@@ -280,41 +236,11 @@ func (tok Token) String() string {
 }
 
 func (tok Token) WaGoString() string {
-	if tok == FUNC {
-		return "func"
-	}
 	return tok.String()
 }
 
 func (tok Token) WaZhString() string {
-	s := ""
-	if 0 <= tok && tok < Token(len(tokens)) {
-		if tok > keyword_beg && tok < keyword_end {
-			s = tokens_zh[tok]
-		} else {
-			s = tokens[tok]
-		}
-	}
-	if s == "" {
-		s = "token(" + strconv.Itoa(int(tok)) + ")"
-	}
-	return s
-}
-
-// 返回 WaGo 关键字名字
-func (tok Token) WaGoKeykword() string {
-	if tok.IsKeyword() {
-		return tokens[tok]
-	}
-	return ""
-}
-
-// 返回中文关键字名字
-func (tok Token) ZhKeykword() string {
-	if tok.IsKeyword() {
-		return tokens_zh[tok]
-	}
-	return ""
+	return tok.String()
 }
 
 // A set of constants for precedence-based expression parsing.
@@ -349,42 +275,30 @@ func (op Token) Precedence() int {
 	return LowestPrec
 }
 
-var (
-	keywords    map[string]Token
-	keywords_zh map[string]Token
-)
+var keywords map[string]Token
 
 func init() {
 	keywords = make(map[string]Token)
-	keywords_zh = make(map[string]Token)
 
 	for i := keyword_beg + 1; i < keyword_end; i++ {
 		keywords[tokens[i]] = i
-	}
-	for k, name := range tokens_zh {
-		keywords_zh[name] = k
 	}
 }
 
 // Lookup maps an identifier to its keyword token or IDENT (if not a keyword).
 //
 func Lookup(ident string) Token {
-	// 临时过渡
+	// TODO: 临时过渡, 在合适的时候删除
 	if ident == "fn" {
 		return FUNC
 	}
 	if tok, is_keyword := keywords[ident]; is_keyword {
 		return tok
 	}
-	// wa 支持中文关键字
-	if tok, is_keyword := keywords_zh[ident]; is_keyword {
-		return tok
-	}
 	return IDENT
 }
 
-// 解析 WaGo 关键字
-// WaGo 不支持中文关键字
+// 是否为Go关键字
 func LookupWaGo(ident string) Token {
 	if tok, is_keyword := keywords[ident]; is_keyword {
 		return tok
