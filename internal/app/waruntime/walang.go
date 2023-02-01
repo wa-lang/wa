@@ -16,7 +16,7 @@ func WalangInstantiate(ctx context.Context, rt wazero.Runtime) (api.Closer, erro
 	return rt.NewHostModuleBuilder(envWalang).
 		NewFunctionBuilder().
 		WithFunc(func(ctx context.Context, m api.Module, pos, len uint32) {
-			bytes, _ := m.Memory().Read(ctx, pos, len)
+			bytes, _ := m.Memory().Read(pos, len)
 			fmt.Print(string(bytes))
 		}).
 		WithParameterNames("pos", "len").
@@ -33,5 +33,5 @@ func WalangInstantiate(ctx context.Context, rt wazero.Runtime) (api.Closer, erro
 		}).
 		WithParameterNames("ch").
 		Export("waPrintRune").
-		Instantiate(ctx, rt)
+		Instantiate(ctx)
 }

@@ -5,6 +5,6 @@ module wa-lang.org/wa
 go 1.17
 
 require (
-	github.com/tetratelabs/wazero v1.0.0-pre.4
+	github.com/tetratelabs/wazero v1.0.0-pre.8
 	wa-lang.org/wabt-go v1.2.3
 )
