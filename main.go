@@ -467,6 +467,10 @@ func cliRun(c *cli.Context) {
 	default:
 		outfile = "a.out.wat"
 		output, err = app.WASM(infile)
+		if err != nil {
+			fmt.Println(err)
+			os.Exit(1)
+		}
 		if err = os.WriteFile(outfile, []byte(output), 0666); err != nil {
 			fmt.Println(err)
 			os.Exit(1)
