@@ -27,11 +27,11 @@ stages:
           GOOS=windows GOARCH=amd64 go build -o output/wa-lang-win64/wa.exe main.go
 
           chmod +X output/wa-lang-linux64/wa
-          ./output/wa-lang-linux64/wa.linux64
-          ./output/wa-lang-linux64/wa.linux64 -h
-          ./output/wa-lang-linux64/wa.linux64 hello.wa
-          ./output/wa-lang-linux64/wa.linux64 run _examples/prime
-          ./output/wa-lang-linux64/wa.linux64 run hello.wa
+          ./output/wa-lang-linux64/wa
+          ./output/wa-lang-linux64/wa -h
+          ./output/wa-lang-linux64/wa hello.wa
+          ./output/wa-lang-linux64/wa run _examples/prime
+          ./output/wa-lang-linux64/wa run hello.wa
 
         # 非必填字段，开启后表示将构建产物暂存，但不会上传到制品库中，7天后自动清除
         artifacts:
