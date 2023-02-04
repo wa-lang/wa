@@ -10,7 +10,7 @@ stages:
         name: build_golang
         displayName: Golang 构建
         # 支持1.8、1.10、1.11、1.12、1.13、1.14、1.15、1.16八个版本
-        golangVersion: 1.12
+        golangVersion: 1.17
         # 构建命令
         commands: |
           mkdir output
