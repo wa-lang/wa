@@ -15,12 +15,10 @@ stages:
         commands: |
           mkdir output
           GOOS=linux GOARCH=amd64 go build -o output/main.amd64 main.go
-          GOOS=linux GOARCH=386 go build -o output/main.linux32 main.go
           GOOS=windows GOARCH=amd64 go build -o output/main.win64.exe main.go
-          GOOS=windows GOARCH=386 go build -o output/main.win32.exe main.go
           GOOS=darwin GOARCH=amd64 go build -o output/main.darwin main.go 
-          chmod +X output/main.linux32
-          ./output/main.linux32
+          chmod +X output/main.linux64
+          ./output/main.linux64
         # 非必填字段，开启后表示将构建产物暂存，但不会上传到制品库中，24小时后自动清除
         artifacts:
             # 构建产物名字，作为产物的唯一标识可向下传递，支持自定义，默认为BUILD_ARTIFACT。在下游可以通过${BUILD_ARTIFACT}方式引用来获取构建物地址
