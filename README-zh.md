@@ -27,7 +27,7 @@
 
 [https://wa-lang.org/playground](https://wa-lang.org/playground)
 
-![](https://wa-lang.org/st0011-03.png)
+![](https://wa-lang.org/playground-01.png)
 
 ## 贪吃蛇游戏
 

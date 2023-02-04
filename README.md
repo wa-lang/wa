@@ -31,7 +31,7 @@ Instead of requiring complex toolchains to set up, you can simply go install it 
 
 [https://wa-lang.org/playground](https://wa-lang.org/playground)
 
-![](https://wa-lang.org/st0011-03.png)
+![](https://wa-lang.org/playground-01.png)
 
 ## Snake Game
 
