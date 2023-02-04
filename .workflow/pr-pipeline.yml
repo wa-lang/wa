@@ -1,0 +1,43 @@
+version: '1.0'
+name: pr-pipeline
+displayName: PRPipeline
+stages:
+  - stage: 
+    name: compile
+    displayName: 编译
+    steps:
+      - step: build@golang
+        name: build_golang
+        displayName: Golang 构建
+        # 支持1.8、1.10、1.11、1.12、1.13、1.14、1.15、1.16八个版本
+        golangVersion: 1.12
+        # 构建命令
+        commands: |
+          mkdir output
+          GOOS=linux GOARCH=amd64 go build -o output/main.amd64 main.go
+          GOOS=linux GOARCH=386 go build -o output/main.linux32 main.go
+          GOOS=windows GOARCH=amd64 go build -o output/main.win64.exe main.go
+          GOOS=windows GOARCH=386 go build -o output/main.win32.exe main.go
+          GOOS=darwin GOARCH=amd64 go build -o output/main.darwin main.go 
+          chmod +X output/main.linux32
+          ./output/main.linux32
+        # 非必填字段，开启后表示将构建产物暂存，但不会上传到制品库中，7天后自动清除
+        artifacts:
+            # 构建产物名字，作为产物的唯一标识可向下传递，支持自定义，默认为BUILD_ARTIFACT。在下游可以通过${BUILD_ARTIFACT}方式引用来获取构建物地址
+          - name: BUILD_ARTIFACT
+            # 构建产物获取路径，是指代码编译完毕之后构建物的所在路径
+            path:
+              - ./output
+      - step: publish@general_artifacts
+        name: publish_general_artifacts
+        displayName: 上传制品
+        # 上游构建任务定义的产物名，默认BUILD_ARTIFACT
+        dependArtifact: BUILD_ARTIFACT
+        # 上传到制品库时的制品命名，默认output
+        artifactName: output
+        dependsOn: build_golang
+triggers:
+  pr:
+    branches:
+      include:
+        - master
