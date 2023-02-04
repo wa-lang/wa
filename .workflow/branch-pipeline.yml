@@ -13,6 +13,8 @@ stages:
         golangVersion: 1.17
         # 构建命令
         commands: |
+          go env -w GO111MODULE=on
+          go env -w GOPROXY=https://goproxy.cn,direct
           mkdir output
           GOOS=linux GOARCH=amd64 go build -o output/main.amd64 main.go
           GOOS=windows GOARCH=amd64 go build -o output/main.win64.exe main.go
