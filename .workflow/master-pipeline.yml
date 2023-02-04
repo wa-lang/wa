@@ -16,7 +16,7 @@ stages:
           go env -w GO111MODULE=on
           go env -w GOPROXY=https://goproxy.cn,direct
           mkdir output
-          GOOS=linux GOARCH=amd64 go build -o output/main.amd64 main.go
+          GOOS=linux GOARCH=amd64 go build -o output/main.linux64 main.go
           GOOS=windows GOARCH=amd64 go build -o output/main.win64.exe main.go
           GOOS=darwin GOARCH=amd64 go build -o output/main.darwin main.go 
           chmod +X output/main.linux64
