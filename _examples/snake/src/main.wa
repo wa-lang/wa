@@ -146,23 +146,8 @@ func GameState.Step() {
 	newHead.x += Dirs[this.dir].x
 	newHead.y += Dirs[this.dir].y
 
-	if newHead.x < 0 {
-		newHead.x = this.w - 1
-	}
-	if newHead.x >= this.w {
-		newHead.x = 0
-	}
-	if newHead.y < 0 {
-		newHead.y = this.h - 1
-	}
-	if newHead.y >= this.h {
-		newHead.y = 0
-	}
-
-	//if newHead.x < 0 || newHead.x >= this.w || newHead.y < 0 || newHead.y >= this.h {
-	//	this.Start()
-	//	return
-	//}
+	newHead.x = (newHead.x + this.w) % this.w
+	newHead.y = (newHead.y + this.h) % this.h
 
 	switch this.grid[newHead.y*this.w+newHead.x] {
 	case GridBody:

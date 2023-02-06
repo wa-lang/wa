@@ -5,7 +5,7 @@
 
 </div>
 
-凹语言™（凹读音“Wa”）是 针对 WASM 平台设计的通用编程语言，同时支持 Linux、macOS 和 Windows 等主流操作系统和 Chrome 等浏览器环境，同时也支持作为独立 Shell 脚本和被嵌入脚本模式执行。
+凹语言（凹读音“Wā”）是 针对 WASM 平台设计的通用编程语言，同时支持 Linux、macOS 和 Windows 等主流操作系统和 Chrome 等浏览器环境，同时也支持作为独立 Shell 脚本和被嵌入脚本模式执行。
 
 ![](docs/images/logo/logo-animate1.svg)
 
@@ -14,7 +14,7 @@
 - 仓库(Github): [https://github.com/wa-lang/wa](https://github.com/wa-lang/wa)
 - Playground: [https://wa-lang.org/playground](https://wa-lang.org/playground)
 
-> 说明: 凹语言的主仓库位于： https://gitee.com/wa-lang/wa ，镜像仓库位于： https://github.com/wa-lang/wa 。凹语言代码除非特别声明，均以 AGPL-v3 开源协议授权, 具体可以参考 LICENSE 文件。
+> 说明: 除非特别声明，凹语言代码均以 AGPL-v3 开源协议授权, 具体可以参考 LICENSE 文件。
 
 ## 如何参与开发
 
