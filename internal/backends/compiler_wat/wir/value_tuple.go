@@ -12,33 +12,48 @@ import (
 Tuple:
 **************************************/
 type Tuple struct {
-	Struct
+	*Struct
+	_fields []ValueType
 }
 
-func NewTuple(fields []ValueType) Tuple {
-	var m []Field
+func (m *Module) GenValueType_Tuple(fields []ValueType) *Tuple {
+	tuple_t := Tuple{_fields: fields}
+	t, ok := m.findValueType(tuple_t.Name())
+	if ok {
+		return t.(*Tuple)
+	}
+
+	var members []Field
 	for i, t := range fields {
 		fname := "m" + strconv.Itoa(i)
-		m = append(m, NewField(fname, t))
+		members = append(members, NewField(fname, t))
 	}
-	var v Tuple
-	v.Struct = NewStruct("tuple", m)
-	return v
+	tuple_t.Struct = m.GenValueType_Struct(tuple_t.Name()+".underlying", members)
+	m.regValueType(&tuple_t)
+	return &tuple_t
 }
-func (t Tuple) Name() string         { return t.Struct.Name() }
-func (t Tuple) size() int            { return t.Struct.size() }
-func (t Tuple) align() int           { return t.Struct.align() }
-func (t Tuple) onFree() int          { return t.Struct.onFree() }
-func (t Tuple) Raw() []wat.ValueType { return t.Struct.Raw() }
-func (t Tuple) Equal(u ValueType) bool {
-	ut, ok := u.(Tuple)
+
+func (t *Tuple) Name() string {
+	s := "$"
+	for _, t := range t._fields {
+		s += t.Name()
+	}
+	return s
+}
+
+func (t *Tuple) size() int            { return t.Struct.size() }
+func (t *Tuple) align() int           { return t.Struct.align() }
+func (t *Tuple) onFree() int          { return t.Struct.onFree() }
+func (t *Tuple) Raw() []wat.ValueType { return t.Struct.Raw() }
+func (t *Tuple) Equal(u ValueType) bool {
+	ut, ok := u.(*Tuple)
 	if !ok {
 		return false
 	}
 	return t.Struct.Equal(ut.Struct)
 }
 
-func (t Tuple) EmitLoadFromAddr(addr Value, offset int) []wat.Inst {
+func (t *Tuple) EmitLoadFromAddr(addr Value, offset int) []wat.Inst {
 	return t.Struct.EmitLoadFromAddr(addr, offset)
 }
 
@@ -47,13 +62,13 @@ aTuple:
 **************************************/
 type aTuple struct {
 	aStruct
-	typ Tuple
+	typ *Tuple
 }
 
-func newValueTuple(name string, kind ValueKind, typ Tuple) *aTuple {
+func newValue_Tuple(name string, kind ValueKind, typ *Tuple) *aTuple {
 	var v aTuple
 	v.typ = typ
-	v.aStruct = *newValueStruct(name, kind, typ.Struct)
+	v.aStruct = *newValue_Struct(name, kind, typ.Struct)
 	return &v
 }
 
@@ -70,10 +85,10 @@ func (v *aTuple) emitStoreToAddr(addr Value, offset int) []wat.Inst {
 }
 
 func (v *aTuple) Extract(id int) Value {
-	st := v.Type().(Tuple).Struct
+	st := v.typ.Struct
 	if id >= len(st.Members) {
 		panic("id >= len(st.Members)")
 	}
 
-	return v.genSubValue(st.Members[id])
+	return v.aStruct.genSubValue(st.Members[id])
 }

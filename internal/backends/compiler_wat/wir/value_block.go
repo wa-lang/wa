@@ -14,27 +14,39 @@ Block:
 **************************************/
 type Block struct {
 	Base ValueType
+	_u32 ValueType
 }
 
-func NewBlock(base ValueType) Block  { return Block{Base: base} }
-func (t Block) Name() string         { return t.Base.Name() + ".$$block" }
-func (t Block) size() int            { return 4 }
-func (t Block) align() int           { return 4 }
-func (t Block) Raw() []wat.ValueType { return []wat.ValueType{wat.U32{}} }
-func (t Block) Equal(u ValueType) bool {
-	if ut, ok := u.(Block); ok {
+func (m *Module) GenValueType_Block(base ValueType) *Block {
+	block_t := Block{Base: base}
+	t, ok := m.findValueType(block_t.Name())
+	if ok {
+		return t.(*Block)
+	}
+
+	block_t._u32 = m.U32
+	m.regValueType(&block_t)
+	return &block_t
+}
+
+func (t *Block) Name() string         { return t.Base.Name() + ".$$block" }
+func (t *Block) size() int            { return 4 }
+func (t *Block) align() int           { return 4 }
+func (t *Block) Raw() []wat.ValueType { return []wat.ValueType{wat.U32{}} }
+func (t *Block) Equal(u ValueType) bool {
+	if ut, ok := u.(*Block); ok {
 		return t.Base.Equal(ut.Base)
 	}
 	return false
 }
-func (t Block) onFree() int {
+func (t *Block) onFree() int {
 	var f Function
 	f.InternalName = "$" + GenSymbolName(t.Name()) + ".$$onFree"
 	if i := currentModule.findTableElem(f.InternalName); i != 0 {
 		return i
 	}
 
-	ptr := NewLocal("ptr", U32{})
+	ptr := NewLocal("ptr", t._u32)
 	f.Params = append(f.Params, ptr)
 
 	f.Insts = append(f.Insts, ptr.EmitPush()...)
@@ -48,14 +60,14 @@ func (t Block) onFree() int {
 	return currentModule.AddTableElem(f.InternalName)
 }
 
-func (t Block) EmitLoadFromAddr(addr Value, offset int) (insts []wat.Inst) {
+func (t *Block) EmitLoadFromAddr(addr Value, offset int) (insts []wat.Inst) {
 	insts = append(insts, addr.EmitPush()...)
 	insts = append(insts, wat.NewInstLoad(wat.U32{}, offset, 1))
 	insts = append(insts, wat.NewInstCall("$wa.RT.Block.Retain"))
 	return
 }
 
-func (t Block) emitHeapAlloc(item_count Value) (insts []wat.Inst) {
+func (t *Block) emitHeapAlloc(item_count Value) (insts []wat.Inst) {
 	switch item_count.Kind() {
 	case ValueKindConst:
 		c, err := strconv.Atoi(item_count.Name())
@@ -63,27 +75,27 @@ func (t Block) emitHeapAlloc(item_count Value) (insts []wat.Inst) {
 			logger.Fatalf("%v\n", err)
 			return nil
 		}
-		insts = append(insts, NewConst(strconv.Itoa(t.Base.size()*c+16), U32{}).EmitPush()...)
+		insts = append(insts, NewConst(strconv.Itoa(t.Base.size()*c+16), t._u32).EmitPush()...)
 		insts = append(insts, wat.NewInstCall("$waHeapAlloc"))
 
 	default:
-		if !item_count.Type().Equal(U32{}) {
+		if !item_count.Type().Equal(t._u32) {
 			logger.Fatal("item_count should be u32")
 			return nil
 		}
 
 		insts = append(insts, item_count.EmitPush()...)
-		insts = append(insts, NewConst(strconv.Itoa(t.Base.size()), U32{}).EmitPush()...)
+		insts = append(insts, NewConst(strconv.Itoa(t.Base.size()), t._u32).EmitPush()...)
 		insts = append(insts, wat.NewInstMul(wat.U32{}))
-		insts = append(insts, NewConst("16", U32{}).EmitPush()...)
+		insts = append(insts, NewConst("16", t._u32).EmitPush()...)
 		insts = append(insts, wat.NewInstAdd(wat.U32{}))
 		insts = append(insts, wat.NewInstCall("$waHeapAlloc"))
 
 	}
 
-	insts = append(insts, item_count.EmitPush()...)                                     //item_count
-	insts = append(insts, NewConst(strconv.Itoa(t.Base.onFree()), U32{}).EmitPush()...) //free_method
-	insts = append(insts, NewConst(strconv.Itoa(t.Base.size()), U32{}).EmitPush()...)   //item_size
+	insts = append(insts, item_count.EmitPush()...)                                      //item_count
+	insts = append(insts, NewConst(strconv.Itoa(t.Base.onFree()), t._u32).EmitPush()...) //free_method
+	insts = append(insts, NewConst(strconv.Itoa(t.Base.size()), t._u32).EmitPush()...)   //item_size
 	insts = append(insts, wat.NewInstCall("$wa.RT.Block.Init"))
 
 	return
@@ -96,8 +108,8 @@ type aBlock struct {
 	aValue
 }
 
-func newValueBlock(name string, kind ValueKind, base_type ValueType) *aBlock {
-	return &aBlock{aValue: aValue{name: name, kind: kind, typ: NewBlock(base_type)}}
+func newValue_Block(name string, kind ValueKind, typ *Block) *aBlock {
+	return &aBlock{aValue: aValue{name: name, kind: kind, typ: typ}}
 }
 
 func (v *aBlock) raw() []wat.Value {

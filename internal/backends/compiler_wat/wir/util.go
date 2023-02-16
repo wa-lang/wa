@@ -7,54 +7,53 @@ import (
 	"strings"
 	"unicode/utf8"
 
-	"wa-lang.org/wa/internal/types"
-
 	"wa-lang.org/wa/internal/logger"
+	"wa-lang.org/wa/internal/types"
 )
 
-func ToWType(from types.Type) ValueType {
+func (m *Module) GenValueType(from types.Type) ValueType {
 	switch t := from.(type) {
 	case *types.Basic:
 		switch t.Kind() {
 		case types.Bool, types.UntypedBool, types.Int, types.UntypedInt:
-			return I32{}
+			return m.I32
 
 		case types.Int32:
 			if t.Name() == "rune" {
-				return RUNE{}
+				return m.RUNE
 			} else {
-				return I32{}
+				return m.I32
 			}
 
 		case types.Uint32:
-			return U32{}
+			return m.U32
 
 		case types.Int64:
-			return I64{}
+			return m.I64
 
 		case types.Uint64:
-			return U64{}
+			return m.U64
 
 		case types.Float32, types.UntypedFloat:
-			return F32{}
+			return m.F32
 
 		case types.Float64:
-			return F64{}
+			return m.F64
 
 		case types.Int8:
-			return I8{}
+			return m.I8
 
 		case types.Uint8:
-			return U8{}
+			return m.U8
 
 		case types.Int16:
-			return I16{}
+			return m.I16
 
 		case types.Uint16:
-			return U16{}
+			return m.U16
 
 		case types.String:
-			return NewString()
+			return m.STRING
 
 		default:
 			logger.Fatalf("Unknown type:%s", t)
@@ -64,21 +63,21 @@ func ToWType(from types.Type) ValueType {
 	case *types.Tuple:
 		switch t.Len() {
 		case 0:
-			return VOID{}
+			return m.VOID
 
 		case 1:
-			return ToWType(t.At(0).Type())
+			return m.GenValueType(t.At(0).Type())
 
 		default:
 			var feilds []ValueType
 			for i := 0; i < t.Len(); i++ {
-				feilds = append(feilds, ToWType(t.At(i).Type()))
+				feilds = append(feilds, m.GenValueType(t.At(i).Type()))
 			}
-			return NewTuple(feilds)
+			return m.GenValueType_Tuple(feilds)
 		}
 
 	case *types.Pointer:
-		return NewRef(ToWType(t.Elem()))
+		return m.GenValueType_Ref(m.GenValueType(t.Elem()))
 
 	case *types.Named:
 		switch ut := t.Underlying().(type) {
@@ -86,7 +85,7 @@ func ToWType(from types.Type) ValueType {
 			var fs []Field
 			for i := 0; i < ut.NumFields(); i++ {
 				f := ut.Field(i)
-				wtyp := ToWType(f.Type())
+				wtyp := m.GenValueType(f.Type())
 				if f.Embedded() {
 					fs = append(fs, NewField("$"+wtyp.Name(), wtyp))
 				} else {
@@ -95,25 +94,23 @@ func ToWType(from types.Type) ValueType {
 			}
 			pkg_name, _ := GetPkgMangleName(t.Obj().Pkg().Path())
 			obj_name := GenSymbolName(t.Obj().Name())
-			return NewStruct(pkg_name+"."+obj_name, fs)
+			return m.GenValueType_Struct(pkg_name+"."+obj_name, fs)
 
 		case *types.Signature:
-			sig := NewFnSigFromSignature(ut)
-			return NewClosure(sig)
+			return m.GenValueType_Closure(ut)
 
 		default:
 			logger.Fatalf("Todo:%T", ut)
 		}
 
 	case *types.Array:
-		return NewArray(ToWType(t.Elem()), int(t.Len()))
+		return m.GenValueType_Array(m.GenValueType(t.Elem()), int(t.Len()))
 
 	case *types.Slice:
-		return NewSlice(ToWType(t.Elem()))
+		return m.genValueType_Slice(m.GenValueType(t.Elem()))
 
 	case *types.Signature:
-		sig := NewFnSigFromSignature(t)
-		return NewClosure(sig)
+		return m.GenValueType_Closure(t)
 
 	default:
 		logger.Fatalf("Todo:%T", t)
@@ -124,7 +121,7 @@ func ToWType(from types.Type) ValueType {
 
 func IsNumber(v Value) bool {
 	switch v.Type().(type) {
-	case I8, U8, I16, U16, I32, U32, I64, U64, F32, F64:
+	case *tI8, *tU8, *tI16, *tU16, *tI32, *tU32, *tI64, *tU64, *tF32, *tF64:
 		return true
 	}
 

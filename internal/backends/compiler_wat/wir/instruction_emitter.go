@@ -9,7 +9,7 @@ import (
 	"wa-lang.org/wa/internal/logger"
 )
 
-func EmitAssginValue(lh, rh Value) []wat.Inst {
+func (m *Module) EmitAssginValue(lh, rh Value) []wat.Inst {
 	var insts []wat.Inst
 
 	if rh == nil {
@@ -27,11 +27,11 @@ func EmitAssginValue(lh, rh Value) []wat.Inst {
 	return insts
 }
 
-func EmitConvertValueType(from, to ValueType) {
+func (m *Module) EmitConvertValueType(from, to ValueType) {
 	logger.Fatal("Todo")
 }
 
-func EmitUnOp(x Value, op wat.OpCode) (insts []wat.Inst, ret_type ValueType) {
+func (m *Module) EmitUnOp(x Value, op wat.OpCode) (insts []wat.Inst, ret_type ValueType) {
 	if !IsNumber(x) {
 		logger.Fatal("Todo")
 	}
@@ -42,17 +42,16 @@ func EmitUnOp(x Value, op wat.OpCode) (insts []wat.Inst, ret_type ValueType) {
 	return
 }
 
-func EmitBinOp(x, y Value, op wat.OpCode) (insts []wat.Inst, ret_type ValueType) {
-	rtype := binOpMatchType(x.Type(), y.Type())
+func (m *Module) EmitBinOp(x, y Value, op wat.OpCode) (insts []wat.Inst, ret_type ValueType) {
+	rtype := m.binOpMatchType(x.Type(), y.Type())
 
 	insts = append(insts, x.EmitPush()...)
 	insts = append(insts, y.EmitPush()...)
 
 	switch op {
 	case wat.OpCodeAdd:
-		string_type := NewString()
-		if rtype.Equal(string_type) {
-			insts = append(insts, wat.NewInstCall(string_type.genAppendStrFunc()))
+		if rtype.Equal(m.STRING) {
+			insts = append(insts, wat.NewInstCall(m.STRING.(*String).genAppendStrFunc()))
 		} else {
 			insts = append(insts, wat.NewInstAdd(toWatType(rtype)))
 		}
@@ -76,27 +75,27 @@ func EmitBinOp(x, y Value, op wat.OpCode) (insts []wat.Inst, ret_type ValueType)
 
 	case wat.OpCodeEql:
 		insts = append(insts, wat.NewInstEq(toWatType(rtype)))
-		ret_type = I32{}
+		ret_type = m.I32
 
 	case wat.OpCodeNe:
 		insts = append(insts, wat.NewInstNe(toWatType(rtype)))
-		ret_type = I32{}
+		ret_type = m.I32
 
 	case wat.OpCodeLt:
 		insts = append(insts, wat.NewInstLt(toWatType(rtype)))
-		ret_type = I32{}
+		ret_type = m.I32
 
 	case wat.OpCodeGt:
 		insts = append(insts, wat.NewInstGt(toWatType(rtype)))
-		ret_type = I32{}
+		ret_type = m.I32
 
 	case wat.OpCodeLe:
 		insts = append(insts, wat.NewInstLe(toWatType(rtype)))
-		ret_type = I32{}
+		ret_type = m.I32
 
 	case wat.OpCodeGe:
 		insts = append(insts, wat.NewInstGe(toWatType(rtype)))
-		ret_type = I32{}
+		ret_type = m.I32
 
 	default:
 		logger.Fatal("Todo")
@@ -105,7 +104,7 @@ func EmitBinOp(x, y Value, op wat.OpCode) (insts []wat.Inst, ret_type ValueType)
 	return
 }
 
-func binOpMatchType(x, y ValueType) ValueType {
+func (m *Module) binOpMatchType(x, y ValueType) ValueType {
 	if x.Equal(y) {
 		return x
 	}
@@ -114,7 +113,7 @@ func binOpMatchType(x, y ValueType) ValueType {
 	return nil
 }
 
-func EmitLoad(addr Value) (insts []wat.Inst, ret_type ValueType) {
+func (m *Module) EmitLoad(addr Value) (insts []wat.Inst, ret_type ValueType) {
 	switch addr.Kind() {
 	case ValueKindGlobal_Value:
 		insts = append(insts, addr.EmitPush()...)
@@ -124,11 +123,11 @@ func EmitLoad(addr Value) (insts []wat.Inst, ret_type ValueType) {
 		switch addr := addr.(type) {
 		case *aRef:
 			insts = append(insts, addr.emitGetValue()...)
-			ret_type = addr.Type().(Ref).Base
+			ret_type = addr.Type().(*Ref).Base
 
-		case *aPointer:
+		case *aPtr:
 			insts = append(insts, addr.emitGetValue()...)
-			ret_type = addr.Type().(Pointer).Base
+			ret_type = addr.Type().(*Ptr).Base
 
 		default:
 			logger.Fatalf("Todo %v", addr)
@@ -138,7 +137,7 @@ func EmitLoad(addr Value) (insts []wat.Inst, ret_type ValueType) {
 	return
 }
 
-func EmitStore(addr, value Value) (insts []wat.Inst) {
+func (m *Module) EmitStore(addr, value Value) (insts []wat.Inst) {
 	switch addr.Kind() {
 	case ValueKindGlobal_Value:
 		if value == nil {
@@ -158,15 +157,15 @@ func EmitStore(addr, value Value) (insts []wat.Inst) {
 		switch addr := addr.(type) {
 		case *aRef:
 			if value == nil {
-				zero_value := NewConst("0", addr.Type().(Ref).Base)
+				zero_value := NewConst("0", addr.Type().(*Ref).Base)
 				insts = append(insts, addr.emitSetValue(zero_value)...)
 			} else {
 				insts = append(insts, addr.emitSetValue(value)...)
 			}
 
-		case *aPointer:
+		case *aPtr:
 			if value == nil {
-				zero_value := NewConst("0", addr.Type().(Pointer).Base)
+				zero_value := NewConst("0", addr.Type().(*Ptr).Base)
 				insts = append(insts, addr.emitSetValue(zero_value)...)
 			} else {
 				insts = append(insts, addr.emitSetValue(value)...)
@@ -180,29 +179,29 @@ func EmitStore(addr, value Value) (insts []wat.Inst) {
 	return
 }
 
-func EmitHeapAlloc(typ ValueType) (insts []wat.Inst, ret_type ValueType) {
-	ref_typ := NewRef(typ)
+func (m *Module) EmitHeapAlloc(typ ValueType) (insts []wat.Inst, ret_type ValueType) {
+	ref_typ := m.GenValueType_Ref(typ)
 	ret_type = ref_typ
 	insts = ref_typ.emitHeapAlloc()
 	return
 }
 
-func EmitStackAlloc(typ ValueType) (insts []wat.Inst, ret_type ValueType) {
-	return EmitHeapAlloc(typ)
+func (m *Module) EmitStackAlloc(typ ValueType) (insts []wat.Inst, ret_type ValueType) {
+	return m.EmitHeapAlloc(typ)
 	//ref_typ := NewRef(typ)
 	//ret_type = ref_typ
 	//insts = ref_typ.emitStackAlloc(module)
 	//return
 }
 
-func EmitGenExtract(x Value, id int) (insts []wat.Inst, ret_type ValueType) {
+func (m *Module) EmitGenExtract(x Value, id int) (insts []wat.Inst, ret_type ValueType) {
 	f := x.(*aTuple).Extract(id)
 	insts = append(insts, f.EmitPush()...)
 	ret_type = f.Type()
 	return
 }
 
-func EmitGenField(x Value, field_name string) (insts []wat.Inst, ret_type ValueType) {
+func (m *Module) EmitGenField(x Value, field_name string) (insts []wat.Inst, ret_type ValueType) {
 	switch x := x.(type) {
 	case *aStruct:
 		field := x.Extract(field_name)
@@ -216,69 +215,69 @@ func EmitGenField(x Value, field_name string) (insts []wat.Inst, ret_type ValueT
 	return
 }
 
-func EmitGenFieldAddr(x Value, field_name string) (insts []wat.Inst, ret_type ValueType) {
+func (m *Module) EmitGenFieldAddr(x Value, field_name string) (insts []wat.Inst, ret_type ValueType) {
 	insts = append(insts, x.EmitPush()...)
 	var field *Field
 	switch addr := x.(type) {
 	case *aRef:
-		field = addr.Type().(Ref).Base.(Struct).findFieldByName(field_name)
-		ret_type = NewRef(field.Type())
-	case *aPointer:
-		field = addr.Type().(Pointer).Base.(Struct).findFieldByName(field_name)
-		ret_type = NewPointer(field.Type())
+		field = addr.Type().(*Ref).Base.(*Struct).findFieldByName(field_name)
+		ret_type = m.GenValueType_Ref(field.Type())
+	case *aPtr:
+		field = addr.Type().(*Ptr).Base.(*Struct).findFieldByName(field_name)
+		ret_type = m.GenValueType_Ptr(field.Type())
 
 	default:
 		logger.Fatalf("Todo:%T", x.Type())
 	}
 
-	insts = append(insts, NewConst(strconv.Itoa(field._start), I32{}).EmitPush()...)
+	insts = append(insts, NewConst(strconv.Itoa(field._start), m.I32).EmitPush()...)
 	insts = append(insts, wat.NewInstAdd(wat.I32{}))
 	return
 }
 
-func EmitGenIndexAddr(x, id Value) (insts []wat.Inst, ret_type ValueType) {
-	if !id.Type().Equal(I32{}) {
+func (m *Module) EmitGenIndexAddr(x, id Value) (insts []wat.Inst, ret_type ValueType) {
+	if !id.Type().Equal(m.I32) {
 		panic("index should be i32")
 	}
 
 	switch x := x.(type) {
-	case *aPointer:
-		switch typ := x.Type().(Pointer).Base.(type) {
-		case Array:
+	case *aPtr:
+		switch typ := x.Type().(*Ptr).Base.(type) {
+		case *Array:
 			insts = append(insts, x.EmitPush()...)
-			insts = append(insts, NewConst(strconv.Itoa(typ.Base.size()), I32{}).EmitPush()...)
+			insts = append(insts, NewConst(strconv.Itoa(typ.Base.size()), m.I32).EmitPush()...)
 			insts = append(insts, id.EmitPush()...)
 			insts = append(insts, wat.NewInstMul(wat.I32{}))
 			insts = append(insts, wat.NewInstAdd(wat.I32{}))
-			ret_type = NewPointer(typ.Base)
+			ret_type = m.GenValueType_Ptr(typ.Base)
 
 		default:
 			logger.Fatalf("Todo: %T", typ)
 		}
 
 	case *aRef:
-		switch typ := x.Type().(Ref).Base.(type) {
-		case Array:
+		switch typ := x.Type().(*Ref).Base.(type) {
+		case *Array:
 			insts = append(insts, x.EmitPush()...)
-			insts = append(insts, NewConst(strconv.Itoa(typ.Base.size()), I32{}).EmitPush()...)
+			insts = append(insts, NewConst(strconv.Itoa(typ.Base.size()), m.I32).EmitPush()...)
 			insts = append(insts, id.EmitPush()...)
 			insts = append(insts, wat.NewInstMul(wat.I32{}))
 			insts = append(insts, wat.NewInstAdd(wat.I32{}))
-			ret_type = NewRef(typ.Base)
+			ret_type = m.GenValueType_Ref(typ.Base)
 
 		default:
 			logger.Fatalf("Todo: %T", typ)
 		}
 
 	case *aSlice:
-		base_type := x.Type().(Slice).Base
+		base_type := x.Type().(*Slice).Base
 		insts = append(insts, x.Extract("block").EmitPush()...)
 		insts = append(insts, x.Extract("data").EmitPush()...)
-		insts = append(insts, NewConst(strconv.Itoa(base_type.size()), I32{}).EmitPush()...)
+		insts = append(insts, NewConst(strconv.Itoa(base_type.size()), m.I32).EmitPush()...)
 		insts = append(insts, id.EmitPush()...)
 		insts = append(insts, wat.NewInstMul(wat.I32{}))
 		insts = append(insts, wat.NewInstAdd(wat.I32{}))
-		ret_type = NewRef(base_type)
+		ret_type = m.GenValueType_Ref(base_type)
 
 	default:
 		logger.Fatalf("Todo: %T", x)
@@ -287,7 +286,7 @@ func EmitGenIndexAddr(x, id Value) (insts []wat.Inst, ret_type ValueType) {
 	return
 }
 
-func EmitGenSlice(x, low, high Value) (insts []wat.Inst, ret_type ValueType) {
+func (m *Module) EmitGenSlice(x, low, high Value) (insts []wat.Inst, ret_type ValueType) {
 	switch x := x.(type) {
 	case *aSlice:
 		insts = x.emitSub(low, high)
@@ -298,14 +297,14 @@ func EmitGenSlice(x, low, high Value) (insts []wat.Inst, ret_type ValueType) {
 		ret_type = x.Type()
 
 	case *aRef:
-		switch btype := x.Type().(Ref).Base.(type) {
-		case Slice:
-			slt := NewSlice(btype.Base)
+		switch btype := x.Type().(*Ref).Base.(type) {
+		case *Slice:
+			slt := m.genValueType_Slice(btype.Base)
 			insts = slt.emitGenFromRefOfSlice(x, low, high)
 			ret_type = slt
 
-		case Array:
-			slt := NewSlice(btype.Base)
+		case *Array:
+			slt := m.genValueType_Slice(btype.Base)
 			insts = slt.emitGenFromRefOfArray(x, low, high)
 			ret_type = slt
 
@@ -320,23 +319,23 @@ func EmitGenSlice(x, low, high Value) (insts []wat.Inst, ret_type ValueType) {
 	return
 }
 
-func EmitGenMakeSlice(base_type ValueType, Len, Cap Value) (insts []wat.Inst, ret_type ValueType) {
-	slice_type := NewSlice(base_type)
+func (m *Module) EmitGenMakeSlice(base_type ValueType, Len, Cap Value) (insts []wat.Inst, ret_type ValueType) {
+	slice_type := m.genValueType_Slice(base_type)
 	insts = slice_type.emitGenMake(Len, Cap)
 	ret_type = slice_type
 	return
 }
 
-func EmitGenLookup(x, index Value, CommaOk bool) (insts []wat.Inst, ret_type ValueType) {
+func (m *Module) EmitGenLookup(x, index Value, CommaOk bool) (insts []wat.Inst, ret_type ValueType) {
 	switch x := x.(type) {
 	case *aString:
 		if CommaOk {
 			insts = x.emitAt_CommaOk(index)
-			fileds := []ValueType{U8{}, I32{}}
-			ret_type = NewTuple(fileds)
+			fileds := []ValueType{m.U8, m.I32}
+			ret_type = m.GenValueType_Tuple(fileds)
 		} else {
 			insts = x.emitAt(index)
-			ret_type = U8{}
+			ret_type = m.U8
 		}
 
 	default:
@@ -346,7 +345,7 @@ func EmitGenLookup(x, index Value, CommaOk bool) (insts []wat.Inst, ret_type Val
 	return
 }
 
-func EmitGenConvert(x Value, typ ValueType) (insts []wat.Inst) {
+func (m *Module) EmitGenConvert(x Value, typ ValueType) (insts []wat.Inst) {
 	src_raw_type := x.Type().Raw()
 	dest_raw_type := typ.Raw()
 	if len(src_raw_type) != len(dest_raw_type) {
@@ -364,13 +363,13 @@ func EmitGenConvert(x Value, typ ValueType) (insts []wat.Inst) {
 	return
 }
 
-func EmitGenAppend(x, y Value) (insts []wat.Inst, ret_type ValueType) {
+func (m *Module) EmitGenAppend(x, y Value) (insts []wat.Inst, ret_type ValueType) {
 	if !x.Type().Equal(y.Type()) {
 		logger.Fatal("Type not match")
 		return
 	}
 
-	stype := x.Type().(Slice)
+	stype := x.Type().(*Slice)
 	insts = append(insts, x.EmitPush()...)
 	insts = append(insts, y.EmitPush()...)
 	insts = append(insts, wat.NewInstCall(stype.genAppendFunc()))
@@ -379,10 +378,10 @@ func EmitGenAppend(x, y Value) (insts []wat.Inst, ret_type ValueType) {
 	return
 }
 
-func EmitGenLen(x Value) (insts []wat.Inst) {
+func (m *Module) EmitGenLen(x Value) (insts []wat.Inst) {
 	switch x := x.(type) {
 	case *aArray:
-		insts = NewConst(strconv.Itoa(x.Type().(Array).Capacity), I32{}).EmitPush()
+		insts = NewConst(strconv.Itoa(x.Type().(*Array).Capacity), m.I32).EmitPush()
 
 	case *aSlice:
 		insts = x.Extract("len").EmitPush()
@@ -397,7 +396,7 @@ func EmitGenLen(x Value) (insts []wat.Inst) {
 	return
 }
 
-func EmitPrintString(v Value) (insts []wat.Inst) {
+func (m *Module) EmitPrintString(v Value) (insts []wat.Inst) {
 	s := v.(*aString)
 
 	insts = append(insts, s.Extract("data").EmitPush()...)
@@ -406,7 +405,7 @@ func EmitPrintString(v Value) (insts []wat.Inst) {
 	return
 }
 
-func emitPrintValue(v Value) (insts []wat.Inst) {
+func (m *Module) emitPrintValue(v Value) (insts []wat.Inst) {
 
 	panic("Todo")
 }

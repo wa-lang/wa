@@ -13,38 +13,41 @@ import (
 Array:
 **************************************/
 type Array struct {
-	Base     ValueType
+	Base ValueType
+	*Struct
 	Capacity int
-	Struct
 }
 
-func NewArray(base ValueType, capacity int) Array {
-	var v Array
-	v.Base = base
-	v.Capacity = capacity
-
-	var m []Field
-	for i := 0; i < capacity; i++ {
-		m = append(m, NewField("m"+strconv.Itoa(i), base))
+func (m *Module) GenValueType_Array(base ValueType, capacity int) *Array {
+	arr_t := Array{Base: base, Capacity: capacity}
+	t, ok := m.findValueType(arr_t.Name())
+	if ok {
+		return t.(*Array)
 	}
-	v.Struct = NewStruct(v.Name()+".underlying", m)
 
-	return v
+	var members []Field
+	for i := 0; i < capacity; i++ {
+		members = append(members, NewField("m"+strconv.Itoa(i), base))
+	}
+	arr_t.Struct = m.GenValueType_Struct(arr_t.Name()+".underlying", members)
+	m.regValueType(&arr_t)
+	return &arr_t
 }
-func (t Array) Name() string         { return t.Base.Name() + ".$$array" + strconv.Itoa(t.Capacity) }
-func (t Array) size() int            { return t.Struct.size() }
-func (t Array) align() int           { return t.Struct.align() }
-func (t Array) Raw() []wat.ValueType { return t.Struct.Raw() }
-func (t Array) onFree() int          { return t.Struct.onFree() }
 
-func (t Array) Equal(u ValueType) bool {
-	if ut, ok := u.(Array); ok {
+func (t *Array) Name() string         { return t.Base.Name() + ".$array" + strconv.Itoa(t.Capacity) }
+func (t *Array) size() int            { return t.Struct.size() }
+func (t *Array) align() int           { return t.Struct.align() }
+func (t *Array) Raw() []wat.ValueType { return t.Struct.Raw() }
+func (t *Array) onFree() int          { return t.Struct.onFree() }
+
+func (t *Array) Equal(u ValueType) bool {
+	if ut, ok := u.(*Array); ok {
 		return t.Base.Equal(ut.Base) && t.Capacity == ut.Capacity
 	}
 	return false
 }
 
-func (t Array) EmitLoadFromAddr(addr Value, offset int) (insts []wat.Inst) {
+func (t *Array) EmitLoadFromAddr(addr Value, offset int) (insts []wat.Inst) {
 	return t.Struct.EmitLoadFromAddr(addr, offset)
 }
 
@@ -53,13 +56,13 @@ aArray:
 **************************************/
 type aArray struct {
 	aStruct
-	typ Array
+	typ *Array
 }
 
-func newValueArray(name string, kind ValueKind, base_type ValueType, capacity int) *aArray {
+func newValue_Array(name string, kind ValueKind, typ *Array) *aArray {
 	var v aArray
-	v.typ = NewArray(base_type, capacity)
-	v.aStruct = *newValueStruct(name, kind, v.typ.Struct)
+	v.typ = typ
+	v.aStruct = *newValue_Struct(name, kind, typ.Struct)
 	return &v
 }
 
@@ -72,7 +75,7 @@ func (v *aArray) EmitPop() (insts []wat.Inst)     { return v.aStruct.EmitPop() }
 func (v *aArray) EmitRelease() (insts []wat.Inst) { return v.aStruct.EmitRelease() }
 
 func (v *aArray) emitStoreToAddr(addr Value, offset int) (insts []wat.Inst) {
-	if !addr.Type().(Pointer).Base.Equal(v.Type()) {
+	if !addr.Type().(*Ptr).Base.Equal(v.Type()) {
 		logger.Fatal("Type not match")
 		return nil
 	}

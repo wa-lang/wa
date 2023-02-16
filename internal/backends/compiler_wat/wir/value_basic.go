@@ -25,35 +25,35 @@ func NewGlobal(name string, typ ValueType, as_pointer bool) Value {
 
 func newValue(name string, kind ValueKind, typ ValueType) Value {
 	switch typ := typ.(type) {
-	case I8, U8, I16, U16, I32, U32, I64, U64, F32, F64, RUNE:
-		return newValueBasic(name, kind, typ)
+	case *tI8, *tU8, *tI16, *tU16, *tI32, *tU32, *tI64, *tU64, *tF32, *tF64, *tRune:
+		return newValue_Basic(name, kind, typ)
 
-	case Pointer:
-		return newValuePointer(name, kind, typ.Base)
+	case *Ptr:
+		return newValue_Ptr(name, kind, typ)
 
-	case Block:
-		return newValueBlock(name, kind, typ.Base)
+	case *Block:
+		return newValue_Block(name, kind, typ)
 
-	case Tuple:
-		return newValueTuple(name, kind, typ)
+	case *Ref:
+		return newValue_Ref(name, kind, typ)
 
-	case Struct:
-		return newValueStruct(name, kind, typ)
+	case *Array:
+		return newValue_Array(name, kind, typ)
 
-	case Ref:
-		return newValueRef(name, kind, typ.Base)
+	case *Slice:
+		return newValue_Slice(name, kind, typ)
 
-	case Array:
-		return newValueArray(name, kind, typ.Base, typ.Capacity)
+	case *String:
+		return newValue_String(name, kind, typ)
 
-	case Slice:
-		return newValueSlice(name, kind, typ.Base)
+	case *Closure:
+		return newValue_Closure(name, kind, typ)
 
-	case String:
-		return newValueString(name, kind)
+	case *Tuple:
+		return newValue_Tuple(name, kind, typ)
 
-	case Closure:
-		return newValueClosure(name, kind, typ.Sig)
+	case *Struct:
+		return newValue_Struct(name, kind, typ)
 
 	default:
 		logger.Fatalf("Todo: %T", typ)
@@ -115,7 +115,7 @@ type aBasic struct {
 	aValue
 }
 
-func newValueBasic(name string, kind ValueKind, typ ValueType) *aBasic {
+func newValue_Basic(name string, kind ValueKind, typ ValueType) *aBasic {
 	return &aBasic{aValue: aValue{name: name, kind: kind, typ: typ}}
 }
 
@@ -131,17 +131,17 @@ func (v *aBasic) EmitInit() (insts []wat.Inst) {
 }
 
 func (v *aBasic) emitStoreToAddr(addr Value, offset int) []wat.Inst {
-	if !addr.Type().(Pointer).Base.Equal(v.Type()) {
+	if !addr.Type().(*Ptr).Base.Equal(v.Type()) {
 		logger.Fatal("Type not match")
 		return nil
 	}
 	insts := addr.EmitPush()
 	insts = append(insts, v.EmitPush()...)
 	switch v.Type().(type) {
-	case U8, I8:
+	case *tU8, *tI8:
 		insts = append(insts, wat.NewInstStore8(offset, 1))
 
-	case U16, I16:
+	case *tU16, *tI16:
 		insts = append(insts, wat.NewInstStore16(offset, 1))
 
 	default:

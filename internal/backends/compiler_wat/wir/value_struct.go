@@ -4,7 +4,23 @@ import (
 	"strconv"
 
 	"wa-lang.org/wa/internal/backends/compiler_wat/wir/wat"
+	"wa-lang.org/wa/internal/logger"
 )
+
+/**************************************
+Field:
+**************************************/
+type Field struct {
+	name     string
+	typ      ValueType
+	_start   int
+	_typ_ptr *Ptr //type of *typ
+}
+
+func NewField(n string, t ValueType) Field { return Field{name: n, typ: t} }
+func (i *Field) Name() string              { return i.name }
+func (i *Field) Type() ValueType           { return i.typ }
+func (i *Field) Equal(u Field) bool        { return i.name == u.name && i.typ.Equal(u.typ) }
 
 /**************************************
 Struct:
@@ -14,24 +30,13 @@ type Struct struct {
 	Members []Field
 	_size   int
 	_align  int
+	_u32    ValueType
 }
 
 type iStruct interface {
 	ValueType
 	genRawFree() (ret []fn_offset_pair)
 }
-
-type Field struct {
-	name      string
-	typ       ValueType
-	const_val Value
-	_start    int
-}
-
-func NewField(n string, t ValueType) Field { return Field{name: n, typ: t} }
-func (i Field) Name() string               { return i.name }
-func (i Field) Type() ValueType            { return i.typ }
-func (i Field) Equal(u Field) bool         { return i.name == u.name && i.typ.Equal(u.typ) }
 
 func makeAlign(i, a int) int {
 	if a == 1 || a == 0 {
@@ -40,35 +45,42 @@ func makeAlign(i, a int) int {
 	return (i + a - 1) / a * a
 }
 
-func NewStruct(name string, members []Field) Struct {
-	var s Struct
-	s.name = name
+func (m *Module) GenValueType_Struct(name string, members []Field) *Struct {
+	t, ok := m.findValueType(name)
+	if ok {
+		return t.(*Struct)
+	}
 
-	for _, m := range members {
-		ma := m.Type().align()
-		m._start = makeAlign(s._size, ma)
-		s.Members = append(s.Members, m)
+	var struct_type Struct
+	struct_type.name = name
+	struct_type._u32 = m.U32
+	m.regValueType(&struct_type)
 
-		s._size = m._start + m.Type().size()
-		if ma > s._align {
-			s._align += ma
+	for _, f := range members {
+		ma := f.Type().align()
+		f._start = makeAlign(struct_type._size, ma)
+		f._typ_ptr = m.GenValueType_Ptr(f.typ)
+		struct_type.Members = append(struct_type.Members, f)
+
+		struct_type._size = f._start + f.Type().size()
+		if ma > struct_type._align {
+			struct_type._align = ma
 		}
 	}
-	s._size = makeAlign(s._size, s._align)
-
-	return s
+	struct_type._size = makeAlign(struct_type._size, struct_type._align)
+	return &struct_type
 }
 
-func (t Struct) Name() string { return t.name }
-func (t Struct) size() int    { return t._size }
-func (t Struct) align() int   { return t._align }
+func (t *Struct) Name() string { return t.name }
+func (t *Struct) size() int    { return t._size }
+func (t *Struct) align() int   { return t._align }
 
 type fn_offset_pair struct {
 	fn     int
 	offset int
 }
 
-func (t Struct) genRawFree() (ret []fn_offset_pair) {
+func (t *Struct) genRawFree() (ret []fn_offset_pair) {
 	for _, member := range t.Members {
 		member_type := member.Type()
 		if istruct, ok := member_type.(iStruct); ok {
@@ -87,7 +99,7 @@ func (t Struct) genRawFree() (ret []fn_offset_pair) {
 	return
 }
 
-func (t Struct) onFree() int {
+func (t *Struct) onFree() int {
 	var f Function
 	f.InternalName = "$" + GenSymbolName(t.Name()) + ".$$onFree"
 
@@ -95,7 +107,7 @@ func (t Struct) onFree() int {
 		return i
 	}
 
-	ptr := NewLocal("$ptr", U32{})
+	ptr := NewLocal("$ptr", t._u32)
 	f.Params = append(f.Params, ptr)
 
 	rfs := t.genRawFree()
@@ -116,7 +128,7 @@ func (t Struct) onFree() int {
 	return currentModule.AddTableElem(f.InternalName)
 }
 
-func (t Struct) Raw() []wat.ValueType {
+func (t *Struct) Raw() []wat.ValueType {
 	var r []wat.ValueType
 	for _, f := range t.Members {
 		r = append(r, f.Type().Raw()...)
@@ -124,8 +136,8 @@ func (t Struct) Raw() []wat.ValueType {
 	return r
 }
 
-func (t Struct) Equal(u ValueType) bool {
-	if u, ok := u.(Struct); ok {
+func (t *Struct) Equal(u ValueType) bool {
+	if u, ok := u.(*Struct); ok {
 		if len(t.Members) != len(u.Members) {
 			return false
 		}
@@ -141,15 +153,15 @@ func (t Struct) Equal(u ValueType) bool {
 	return false
 }
 
-func (t Struct) EmitLoadFromAddr(addr Value, offset int) (insts []wat.Inst) {
+func (t *Struct) EmitLoadFromAddr(addr Value, offset int) (insts []wat.Inst) {
 	for _, m := range t.Members {
-		ptr := newValuePointer(addr.Name(), addr.Kind(), m.Type())
+		ptr := newValue_Ptr(addr.Name(), addr.Kind(), m._typ_ptr)
 		insts = append(insts, m.Type().EmitLoadFromAddr(ptr, m._start+offset)...)
 	}
 	return
 }
 
-func (t Struct) findFieldByName(field_name string) *Field {
+func (t *Struct) findFieldByName(field_name string) *Field {
 	for i := range t.Members {
 		if t.Members[i].Name() == field_name {
 			return &t.Members[i]
@@ -163,9 +175,10 @@ aStruct:
 **************************************/
 type aStruct struct {
 	aValue
+	field_const_vals map[string]Value
 }
 
-func newValueStruct(name string, kind ValueKind, typ ValueType) *aStruct {
+func newValue_Struct(name string, kind ValueKind, typ *Struct) *aStruct {
 	return &aStruct{aValue: aValue{name: name, kind: kind, typ: typ}}
 }
 
@@ -173,17 +186,28 @@ func (v *aStruct) genSubValue(m Field) Value {
 	if v.Kind() != ValueKindConst {
 		return newValue(v.Name()+"."+m.Name(), v.Kind(), m.Type())
 	} else {
-		if m.const_val != nil {
-			return m.const_val
+		fv, ok := v.field_const_vals[m.Name()]
+		if ok {
+			return fv
 		} else {
 			return newValue(v.Name(), v.Kind(), m.Type())
 		}
 	}
 }
 
+func (v *aStruct) setFieldConstValue(field string, sv Value) {
+	if v.Kind() != ValueKindConst {
+		logger.Fatal("Can't set field-val of none-const value")
+	}
+	if v.field_const_vals == nil {
+		v.field_const_vals = make(map[string]Value)
+	}
+	v.field_const_vals[field] = sv
+}
+
 func (v *aStruct) raw() []wat.Value {
 	var r []wat.Value
-	st := v.Type().(Struct)
+	st := v.Type().(*Struct)
 	for _, m := range st.Members {
 		t := v.genSubValue(m)
 		r = append(r, t.raw()...)
@@ -193,7 +217,7 @@ func (v *aStruct) raw() []wat.Value {
 
 func (v *aStruct) EmitInit() []wat.Inst {
 	var insts []wat.Inst
-	st := v.Type().(Struct)
+	st := v.Type().(*Struct)
 	for _, m := range st.Members {
 		t := v.genSubValue(m)
 		insts = append(insts, t.EmitInit()...)
@@ -203,7 +227,7 @@ func (v *aStruct) EmitInit() []wat.Inst {
 
 func (v *aStruct) EmitPush() []wat.Inst {
 	var insts []wat.Inst
-	st := v.Type().(Struct)
+	st := v.Type().(*Struct)
 	for _, m := range st.Members {
 		t := v.genSubValue(m)
 		insts = append(insts, t.EmitPush()...)
@@ -213,7 +237,7 @@ func (v *aStruct) EmitPush() []wat.Inst {
 
 func (v *aStruct) EmitPop() []wat.Inst {
 	var insts []wat.Inst
-	st := v.Type().(Struct)
+	st := v.Type().(*Struct)
 	for i := range st.Members {
 		m := st.Members[len(st.Members)-i-1]
 		t := v.genSubValue(m)
@@ -224,7 +248,7 @@ func (v *aStruct) EmitPop() []wat.Inst {
 
 func (v *aStruct) EmitRelease() []wat.Inst {
 	var insts []wat.Inst
-	st := v.Type().(Struct)
+	st := v.Type().(*Struct)
 	for i := range st.Members {
 		m := st.Members[len(st.Members)-i-1]
 		t := v.genSubValue(m)
@@ -234,7 +258,7 @@ func (v *aStruct) EmitRelease() []wat.Inst {
 }
 
 func (v *aStruct) Extract(member_name string) Value {
-	st := v.Type().(Struct)
+	st := v.Type().(*Struct)
 	for _, m := range st.Members {
 		if m.Name() == member_name {
 			return v.genSubValue(m)
@@ -244,11 +268,11 @@ func (v *aStruct) Extract(member_name string) Value {
 }
 
 func (v *aStruct) emitStoreToAddr(addr Value, offset int) (insts []wat.Inst) {
-	st := v.Type().(Struct)
+	st := v.Type().(*Struct)
 	for _, m := range st.Members {
 		t := v.genSubValue(m)
-		a := newValuePointer(addr.Name(), addr.Kind(), m.Type())
-		insts = append(insts, t.emitStoreToAddr(a, m._start+offset)...)
+		ptr := newValue_Ptr(addr.Name(), addr.Kind(), m._typ_ptr)
+		insts = append(insts, t.emitStoreToAddr(ptr, m._start+offset)...)
 	}
 	return
 }

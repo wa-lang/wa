@@ -16,14 +16,14 @@ type FnSig struct {
 	Results []ValueType
 }
 
-func NewFnSigFromSignature(s *types.Signature) FnSig {
+func (m *Module) GenFnSig(s *types.Signature) FnSig {
 	var sig FnSig
 	for i := 0; i < s.Params().Len(); i++ {
-		typ := ToWType(s.Params().At(i).Type())
+		typ := m.GenValueType(s.Params().At(i).Type())
 		sig.Params = append(sig.Params, typ)
 	}
 	for i := 0; i < s.Results().Len(); i++ {
-		typ := ToWType(s.Results().At(i).Type())
+		typ := m.GenValueType(s.Results().At(i).Type())
 		sig.Results = append(sig.Results, typ)
 	}
 	return sig
@@ -52,14 +52,17 @@ func (s *FnSig) Equal(u *FnSig) bool {
 }
 
 func (s *FnSig) String() string {
-	var n string
+	n := "$"
 	for _, i := range s.Params {
 		n += i.Name()
+		n += "$"
 	}
 	n += "$$"
 	for _, r := range s.Results {
 		n += r.Name()
+		n += "$"
 	}
+	n += "$"
 	return n
 }
 
@@ -75,32 +78,45 @@ type FnType struct {
 Closure:
 **************************************/
 type Closure struct {
-	Struct
-	Sig FnSig
+	*Struct
+	_fn_type FnType
+	_u32     ValueType
 }
 
-func NewClosure(sig FnSig) Closure {
-	var v Closure
+var _closure_id int
+
+func (m *Module) GenValueType_Closure(s *types.Signature) *Closure {
+	var closure_t Closure
+	closure_t._fn_type.FnSig = m.GenFnSig(s)
+	t, ok := m.findValueType(closure_t.Name())
+	if ok {
+		return t.(*Closure)
+	}
+
+	closure_t._u32 = m.U32
+	closure_t._fn_type.Name = "closure$" + strconv.Itoa(_closure_id)
+	_closure_id++
+	m.addFnType(&closure_t._fn_type)
 	var fields []Field
-	fields = append(fields, NewField("fn_index", U32{}))
-	fields = append(fields, NewField("data", NewRef(VOID{})))
-	v.Struct = NewStruct("closure$", fields)
-	v.Sig = sig
+	fields = append(fields, NewField("fn_index", m.U32))
+	fields = append(fields, NewField("data", m.GenValueType_Ref(m.VOID)))
+	closure_t.Struct = m.GenValueType_Struct(closure_t.Name()+".underlying", fields)
 
-	return v
+	m.regValueType(&closure_t)
+	return &closure_t
 }
 
-func (t Closure) Name() string { return "closure$" }
+func (t *Closure) Name() string { return t._fn_type.String() }
 
-func (t Closure) Equal(u ValueType) bool {
-	if ut, ok := u.(Closure); ok {
-		return t.Sig.Equal(&ut.Sig)
+func (t *Closure) Equal(u ValueType) bool {
+	if ut, ok := u.(*Closure); ok {
+		return t._fn_type.FnSig.Equal(&ut._fn_type.FnSig)
 	}
 	return false
 }
 
-func (t Closure) EmitLoadFromAddr(addr Value, offset int) []wat.Inst {
-	if !addr.Type().(Pointer).Base.Equal(t) {
+func (t *Closure) EmitLoadFromAddr(addr Value, offset int) []wat.Inst {
+	if !addr.Type().(*Ptr).Base.Equal(t) {
 		logger.Fatal("Type not match")
 		return nil
 	}
@@ -113,27 +129,26 @@ aClosure:
 **************************************/
 type aClosure struct {
 	aStruct
-	typ Closure
+	typ *Closure
 }
 
-func newValueClosure(name string, kind ValueKind, sig FnSig) *aClosure {
+func newValue_Closure(name string, kind ValueKind, typ *Closure) *aClosure {
 	var v aClosure
-	v.typ = NewClosure(sig)
-	v.aStruct = *newValueStruct(name, kind, v.typ.Struct)
+	v.typ = typ
+	v.aStruct = *newValue_Struct(name, kind, typ.Struct)
 	return &v
 }
 
 func (v *aClosure) Type() ValueType { return v.typ }
 
-func GenConstFnValue(fn_name string, fn_sig FnSig) Value {
+func (m *Module) GenConstFnValue(fn_name string, s *types.Signature) Value {
 	fn_index := currentModule.AddTableElem(fn_name)
 
-	var v aClosure
-	v.typ = NewClosure(fn_sig)
-	v.typ.findFieldByName("fn_index").const_val = NewConst(strconv.Itoa(fn_index), U32{})
-	v.aStruct = *newValueStruct("0", ValueKindConst, v.typ.Struct)
+	closure_t := m.GenValueType_Closure(s)
+	aClosure := newValue_Closure("0", ValueKindConst, closure_t)
+	aClosure.aStruct.setFieldConstValue("fn_index", NewConst(strconv.Itoa(fn_index), m.U32))
 
-	return &v
+	return aClosure
 }
 
 func EmitCallClosure(c Value, params []Value) (insts []wat.Inst) {
@@ -146,11 +161,6 @@ func EmitCallClosure(c Value, params []Value) (insts []wat.Inst) {
 	insts = append(insts, closure.Extract("data").EmitPush()...)
 	insts = append(insts, currentModule.FindGlobal("$wa.RT.closure_data").EmitPop()...)
 
-	var fn_type FnType
-	fn_type.FnSig = closure.typ.Sig
-	fn_type.Name = fn_type.FnSig.String()
-	currentModule.addFnType(&fn_type)
-
-	insts = append(insts, wat.NewInstCallIndirect(fn_type.Name))
+	insts = append(insts, wat.NewInstCallIndirect(closure.typ._fn_type.Name))
 	return
 }
