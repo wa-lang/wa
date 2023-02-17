@@ -412,16 +412,22 @@ func main() {
 					Usage: "create parsing tables",
 					Value: "y.output",
 				},
+				&cli.StringFlag{
+					Name:  "c",
+					Usage: "set copyright file",
+					Value: "",
+				},
 			},
 			Action: func(c *cli.Context) error {
 				if c.NArg() != 1 {
 					cli.ShowSubcommandHelpAndExit(c, 1)
 				}
 				yacc.InitFlags(yacc.Flags{
-					Oflag:  c.String("o"),
-					Vflag:  c.String("v"),
-					Lflag:  c.Bool("l"),
-					Prefix: c.String("p"),
+					Oflag:     c.String("o"),
+					Vflag:     c.String("v"),
+					Lflag:     c.Bool("l"),
+					Prefix:    c.String("p"),
+					Copyright: loadCopyright(c.String("c")),
 				})
 				yacc.Main(c.Args().First())
 				return nil
@@ -531,4 +537,9 @@ func cliRun(c *cli.Context) {
 	if len(stdoutStderr) > 0 {
 		fmt.Println(string(stdoutStderr))
 	}
+}
+
+func loadCopyright(filename string) string {
+	data, _ := os.ReadFile(filename)
+	return string(data)
 }
