@@ -17,6 +17,7 @@ import (
 	"wa-lang.org/wa/internal/3rdparty/cli"
 	"wa-lang.org/wa/internal/app"
 	"wa-lang.org/wa/internal/app/apputil"
+	"wa-lang.org/wa/internal/app/yacc"
 	"wa-lang.org/wa/internal/config"
 )
 
@@ -209,8 +210,9 @@ func main() {
 			},
 		},
 		{
-			Name:  "native",
-			Usage: "compile wa source code to native executable",
+			Hidden: true,
+			Name:   "native",
+			Usage:  "compile wa source code to native executable",
 			Flags: []cli.Flag{
 				&cli.StringFlag{
 					Name:    "output",
@@ -257,6 +259,7 @@ func main() {
 				return nil
 			},
 		},
+
 		{
 			Hidden: true,
 			Name:   "lex",
@@ -386,8 +389,48 @@ func main() {
 		},
 
 		{
+			Name:      "yacc",
+			Usage:     "generates parsers for LALR(1) grammars",
+			ArgsUsage: "<intput>",
+			Flags: []cli.Flag{
+				&cli.BoolFlag{
+					Name:  "l",
+					Usage: "disable line directives",
+				},
+				&cli.StringFlag{
+					Name:  "o",
+					Usage: "set parser output file",
+					Value: "y.wa",
+				},
+				&cli.StringFlag{
+					Name:  "p",
+					Usage: "name prefix to use in generated code",
+					Value: "yy",
+				},
+				&cli.StringFlag{
+					Name:  "v",
+					Usage: "create parsing tables",
+					Value: "y.output",
+				},
+			},
+			Action: func(c *cli.Context) error {
+				if c.NArg() != 1 {
+					cli.ShowSubcommandHelpAndExit(c, 1)
+				}
+				yacc.InitFlags(yacc.Flags{
+					Oflag:  c.String("o"),
+					Vflag:  c.String("v"),
+					Lflag:  c.Bool("l"),
+					Prefix: c.String("p"),
+				})
+				yacc.Main(c.Args().First())
+				return nil
+			},
+		},
+
+		{
 			Name:  "logo",
-			Usage: "print logo",
+			Usage: "print wa-lang text format logo",
 			Flags: []cli.Flag{
 				&cli.BoolFlag{
 					Name:  "more",
