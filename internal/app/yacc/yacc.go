@@ -51,7 +51,6 @@ import (
 	"os"
 	"strconv"
 	"strings"
-	"unicode"
 
 	"wa-lang.org/wa/internal/format"
 )
@@ -1145,63 +1144,23 @@ func cpycode() {
 //
 // emits code saved up from between %{ and %}
 // called by cpycode
-// adds an import for __yyfmt__ after the package clause
 //
 func emitcode(code []rune, lineno int) {
-	for i, line := range lines(code) {
+	for _, line := range lines(code) {
 		writecode(line)
-		if !fmtImported && isPackageClause(line) {
-			fmt.Fprintln(ftable, `import __yyfmt__ "fmt"`)
-			if !lflag {
-				fmt.Fprintf(ftable, "//line %v:%v\n\t\t", infile, lineno+i)
-			}
-			fmtImported = true
+	}
+
+	fmt.Fprintln(ftable, "")
+
+	if !fmtImported {
+		fmt.Fprintln(ftable, `import __yystrconv__ "strconv"`)
+		if !lflag {
+			fmt.Fprintf(ftable, "//line %v:%v\n\t\t", infile, lineno+len(lines(code)))
 		}
-	}
-}
-
-//
-// does this line look like a package clause?  not perfect: might be confused by early comments.
-//
-func isPackageClause(line []rune) bool {
-	line = skipspace(line)
-
-	// must be big enough.
-	if len(line) < len("package X\n") {
-		return false
+		fmtImported = true
 	}
 
-	// must start with "package"
-	for i, r := range []rune("package") {
-		if line[i] != r {
-			return false
-		}
-	}
-	line = skipspace(line[len("package"):])
-
-	// must have another identifier.
-	if len(line) == 0 || (!unicode.IsLetter(line[0]) && line[0] != '_') {
-		return false
-	}
-	for len(line) > 0 {
-		if !unicode.IsLetter(line[0]) && !unicode.IsDigit(line[0]) && line[0] != '_' {
-			break
-		}
-		line = line[1:]
-	}
-	line = skipspace(line)
-
-	// eol, newline, or comment must follow
-	if len(line) == 0 {
-		return true
-	}
-	if line[0] == '\r' || line[0] == '\n' {
-		return true
-	}
-	if len(line) >= 2 {
-		return line[0] == '/' && (line[1] == '/' || line[1] == '*')
-	}
-	return false
+	fmt.Fprintln(ftable, "")
 }
 
 //
@@ -3311,7 +3270,7 @@ func $$Tokname(c int) string {
 			return $$Toknames[c-1]
 		}
 	}
-	return __yyfmt__.Sprintf("tok-%v", c)
+	return "tok-" + __yystrconv__.Itoa(c)
 }
 
 func $$Statname(s int) string {
@@ -3320,7 +3279,7 @@ func $$Statname(s int) string {
 			return $$Statenames[s]
 		}
 	}
-	return __yyfmt__.Sprintf("state-%v", s)
+	return "state-" + __yystrconv__.Itoa(s)
 }
 
 func $$ErrorMessage(state, lookAhead int) string {
@@ -3390,34 +3349,38 @@ func $$ErrorMessage(state, lookAhead int) string {
 func $$lex1(lex *$$Lexer, lval *$$SymType) (char, token int) {
 	token = 0
 	char = lex.Lex(lval)
-	if char <= 0 {
-		token = $$Tok1[0]
-		goto out
-	}
-	if char < len($$Tok1) {
-		token = $$Tok1[char]
-		goto out
-	}
-	if char >= $$Private {
-		if char < $$Private+len($$Tok2) {
-			token = $$Tok2[char-$$Private]
-			goto out
-		}
-	}
-	for i := 0; i < len($$Tok3); i += 2 {
-		token = $$Tok3[i+0]
-		if token == char {
-			token = $$Tok3[i+1]
-			goto out
-		}
-	}
 
 out:
+	for {
+		if char <= 0 {
+			token = $$Tok1[0]
+			break out
+		}
+		if char < len($$Tok1) {
+			token = $$Tok1[char]
+			break out
+		}
+		if char >= $$Private {
+			if char < $$Private+len($$Tok2) {
+				token = $$Tok2[char-$$Private]
+				break out
+			}
+		}
+		for i := 0; i < len($$Tok3); i += 2 {
+			token = $$Tok3[i+0]
+			if token == char {
+				token = $$Tok3[i+1]
+				break out
+			}
+		}
+		break out
+	}
+
 	if token == 0 {
 		token = $$Tok2[1] /* unknown char */
 	}
 	if $$Debug >= 3 {
-		__yyfmt__.Printf("lex %s(%d)\n", $$Tokname(token), uint(char))
+		println("lex " + $$Tokname(token) + "(" + __yystrconv__.Itoa(char) + ")")
 	}
 	return char, token
 }
@@ -3438,25 +3401,12 @@ func ($$rcvr *$$Parser) Parse($$lex *$$Lexer) int {
 	$$state := 0
 	$$rcvr.char = -1
 	$$token := -1 // $$rcvr.char translated into internal numbering
-	defer func() {
-		// Make sure we report no lookahead when not parsing.
-		$$state = -1
-		$$rcvr.char = -1
-		$$token = -1
-	}()
 	$$p := -1
-	goto $$stack
-
-ret0:
-	return 0
-
-ret1:
-	return 1
 
 $$stack:
 	/* put a state and value onto the stack */
 	if $$Debug >= 4 {
-		__yyfmt__.Printf("char %v in %v\n", $$Tokname($$token), $$Statname($$state))
+		println("char " + $$Tokname($$token) + " in " + $$Statname($$state))
 	}
 
 	$$p++
@@ -3516,7 +3466,12 @@ $$default:
 		}
 		$$n = $$Exca[xi+1]
 		if $$n < 0 {
-			goto ret0
+			// Make sure we report no lookahead when not parsing.
+			$$state = -1
+			$$rcvr.char = -1
+			$$token = -1
+
+			return 0
 		}
 	}
 	if $$n == 0 {
@@ -3526,8 +3481,7 @@ $$default:
 			$$lex.Error($$ErrorMessage($$state, $$token))
 			Nerrs++
 			if $$Debug >= 1 {
-				__yyfmt__.Printf("%s", $$Statname($$state))
-				__yyfmt__.Printf(" saw %s\n", $$Tokname($$token))
+				println($$Statname($$state) + " saw " + $$Tokname($$token))
 			}
 			fallthrough
 
@@ -3546,19 +3500,30 @@ $$default:
 
 				/* the current p has no shift on "error", pop stack */
 				if $$Debug >= 2 {
-					__yyfmt__.Printf("error recovery pops state %d\n", $$S[$$p].yys)
+					println("error recovery pops state " + __yystrconv__.Itoa($$S[$$p].yys))
 				}
 				$$p--
 			}
+
+			// Make sure we report no lookahead when not parsing.
+			$$state = -1
+			$$rcvr.char = -1
+			$$token = -1
+
 			/* there is no state on the stack with an error shift ... abort */
-			goto ret1
+			return 1
 
 		case 3: /* no shift yet; clobber input char */
 			if $$Debug >= 2 {
-				__yyfmt__.Printf("error recovery discards %s\n", $$Tokname($$token))
+				println("error recovery discards " + $$Tokname($$token))
 			}
 			if $$token == $$EofCode {
-				goto ret1
+				// Make sure we report no lookahead when not parsing.
+				$$state = -1
+				$$rcvr.char = -1
+				$$token = -1
+
+				return 1
 			}
 			$$rcvr.char = -1
 			$$token = -1
@@ -3568,7 +3533,8 @@ $$default:
 
 	/* reduction by production $$n */
 	if $$Debug >= 2 {
-		__yyfmt__.Printf("reduce %v in:\n\t%v\n", $$n, $$Statname($$state))
+		println("reduce " + __yystrconv__.Itoa($$n) + " in:")
+		println("\t" + $$Statname($$state))
 	}
 
 	$$nt := $$n
