@@ -48,6 +48,7 @@ import (
 	"bufio"
 	"bytes"
 	"fmt"
+	goformat "go/format"
 	"os"
 	"strconv"
 	"strings"
@@ -1228,23 +1229,25 @@ func skipcom() int {
 	c = getrune(finput)
 
 l1:
-	switch c {
-	case '*':
-		c = getrune(finput)
-		if c == '/' {
-			break
+	for {
+		switch c {
+		case '*':
+			c = getrune(finput)
+			if c == '/' {
+				break
+			}
+			continue l1
+
+		case '\n':
+			nl++
+			fallthrough
+
+		default:
+			c = getrune(finput)
+			continue l1
 		}
-		goto l1
-
-	case '\n':
-		nl++
-		fallthrough
-
-	default:
-		c = getrune(finput)
-		goto l1
+		return nl
 	}
-	return nl
 }
 
 //
@@ -2945,50 +2948,52 @@ func runMachine(tokens []string) (state, token int) {
 	token = -1
 
 Loop:
-	if token < 0 {
-		token = chfind(2, tokens[i])
-		i++
-	}
+	for {
+		if token < 0 {
+			token = chfind(2, tokens[i])
+			i++
+		}
 
-	row := stateTable[state]
+		row := stateTable[state]
 
-	c := token
-	if token >= NTBASE {
-		c = token - NTBASE + ntokens
-	}
-	action := row.actions[c]
-	if action == 0 {
-		action = row.defaultAction
-	}
-
-	switch {
-	case action == ACCEPTCODE:
-		errorf("tokens are accepted")
-		return
-	case action == ERRCODE:
+		c := token
 		if token >= NTBASE {
-			errorf("error at non-terminal token %s", symnam(token))
+			c = token - NTBASE + ntokens
 		}
-		return
-	case action > 0:
-		// Shift to state action.
-		stack = append(stack, state)
-		state = action
-		token = -1
-		goto Loop
-	default:
-		// Reduce by production -action.
-		prod := prdptr[-action]
-		if rhsLen := len(prod) - 2; rhsLen > 0 {
-			n := len(stack) - rhsLen
-			state = stack[n]
-			stack = stack[:n]
+		action := row.actions[c]
+		if action == 0 {
+			action = row.defaultAction
 		}
-		if token >= 0 {
-			i--
+
+		switch {
+		case action == ACCEPTCODE:
+			errorf("tokens are accepted")
+			return
+		case action == ERRCODE:
+			if token >= NTBASE {
+				errorf("error at non-terminal token %s", symnam(token))
+			}
+			return
+		case action > 0:
+			// Shift to state action.
+			stack = append(stack, state)
+			state = action
+			token = -1
+			continue Loop
+		default:
+			// Reduce by production -action.
+			prod := prdptr[-action]
+			if rhsLen := len(prod) - 2; rhsLen > 0 {
+				n := len(stack) - rhsLen
+				state = stack[n]
+				stack = stack[:n]
+			}
+			if token >= 0 {
+				i--
+			}
+			token = prod[0]
+			continue Loop
 		}
-		token = prod[0]
-		goto Loop
 	}
 }
 
@@ -3214,7 +3219,7 @@ func exit(status int) {
 	if ftable != nil {
 		ftable.Flush()
 		ftable = nil
-		gofmt()
+		wafmt()
 	}
 	if foutput != nil {
 		foutput.Flush()
@@ -3227,14 +3232,21 @@ func exit(status int) {
 	os.Exit(status)
 }
 
-func gofmt() {
+func wafmt() {
 	src, err := os.ReadFile(oflag)
 	if err != nil {
 		return
 	}
-	src, err = format.SourceFile(src)
-	if err != nil {
-		return
+	if strings.HasSuffix(oflag, ".go") {
+		src, err = goformat.Source(src)
+		if err != nil {
+			return
+		}
+	} else {
+		src, err = format.SourceFile(src)
+		if err != nil {
+			return
+		}
 	}
 	os.WriteFile(oflag, src, 0666)
 }
@@ -3403,7 +3415,14 @@ func ($$rcvr *$$Parser) Parse($$lex *$$Lexer) int {
 	$$token := -1 // $$rcvr.char translated into internal numbering
 	$$p := -1
 
-$$stack:
+	const __goto_$$stack = -1
+	const __goto_$$newstate = -2
+	const __goto_$$default = -3
+	var __goto_x = __goto_$$stack
+
+Loop:
+	for { switch __goto_x {
+case __goto_$$stack:
 	/* put a state and value onto the stack */
 	if $$Debug >= 4 {
 		println("char " + $$Tokname($$token) + " in " + $$Statname($$state))
@@ -3418,17 +3437,23 @@ $$stack:
 	$$S[$$p] = $$VAL
 	$$S[$$p].yys = $$state
 
-$$newstate:
+	__goto_x = __goto_$$newstate
+	continue Loop
+
+case __goto_$$newstate:
 	$$n = $$Pact[$$state]
 	if $$n <= $$Flag {
-		goto $$default /* simple state */
+		/* simple state */
+		__goto_x = __goto_$$default
+		continue Loop
 	}
 	if $$rcvr.char < 0 {
 		$$rcvr.char, $$token = $$lex1($$lex, &$$rcvr.lval)
 	}
 	$$n += $$token
 	if $$n < 0 || $$n >= $$Last {
-		goto $$default
+		__goto_x = __goto_$$default
+		continue Loop
 	}
 	$$n = $$Act[$$n]
 	if $$Chk[$$n] == $$token { /* valid shift */
@@ -3439,10 +3464,14 @@ $$newstate:
 		if Errflag > 0 {
 			Errflag--
 		}
-		goto $$stack
+		__goto_x = __goto_$$stack
+		continue Loop
 	}
 
-$$default:
+	__goto_x = __goto_$$default
+	continue Loop
+
+case __goto_$$default:
 	/* default state action */
 	$$n = $$Def[$$state]
 	if $$n == -2 {
@@ -3477,15 +3506,14 @@ $$default:
 	if $$n == 0 {
 		/* error ... attempt to resume parsing */
 		switch Errflag {
-		case 0: /* brand new error */
-			$$lex.Error($$ErrorMessage($$state, $$token))
-			Nerrs++
-			if $$Debug >= 1 {
-				println($$Statname($$state) + " saw " + $$Tokname($$token))
+		case 0, 1, 2: /* incompletely recovered error ... try again */
+			if Errflag == 0 {
+				$$lex.Error($$ErrorMessage($$state, $$token))
+				Nerrs++
+				if $$Debug >= 1 {
+					println($$Statname($$state) + " saw " + $$Tokname($$token))
+				}
 			}
-			fallthrough
-
-		case 1, 2: /* incompletely recovered error ... try again */
 			Errflag = 3
 
 			/* find a state where "error" is a legal shift action */
@@ -3494,7 +3522,8 @@ $$default:
 				if $$n >= 0 && $$n < $$Last {
 					$$state = $$Act[$$n] /* simulate a shift of "error" */
 					if $$Chk[$$state] == $$ErrCode {
-						goto $$stack
+						__goto_x = __goto_$$stack
+						continue Loop
 					}
 				}
 
@@ -3527,7 +3556,9 @@ $$default:
 			}
 			$$rcvr.char = -1
 			$$token = -1
-			goto $$newstate /* try again in the same state */
+
+			__goto_x = __goto_$$newstate /* try again in the same state */
+			continue Loop
 		}
 	}
 
@@ -3566,6 +3597,11 @@ $$default:
 	}
 	// dummy call; replaced with literal code
 	$$run()
-	goto $$stack /* stack new state and value */
+
+	__goto_x = __goto_$$stack /* stack new state and value */
+	continue Loop
+
+} // switch
+} // for
 }
 `
