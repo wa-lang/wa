@@ -44,6 +44,7 @@ var stdPkgs = []string{
 	"arduino",
 	"fmt",
 	"runtime",
+	"strconv",
 	"syscall",
 }
 
