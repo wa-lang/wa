@@ -1148,6 +1148,9 @@ func cpycode() {
 //
 func emitcode(code []rune, lineno int) {
 	for _, line := range lines(code) {
+		if strings.HasPrefix(string(line), "package ") && !strings.HasSuffix(oflag, ".go") {
+			continue
+		}
 		writecode(line)
 	}
 
