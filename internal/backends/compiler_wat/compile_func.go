@@ -545,6 +545,13 @@ func (g *functionGenerator) genBuiltin(call *ssa.CallCommon) (insts []wat.Inst, 
 		insts = g.module.EmitGenLen(g.getValue(call.Args[0]).value)
 		ret_type = g.module.I32
 
+	case "cap":
+		if len(call.Args) != 1 {
+			panic("len(cap.Args) != 1")
+		}
+		insts = g.module.EmitGenCap(g.getValue(call.Args[0]).value)
+		ret_type = g.module.I32
+
 	default:
 		logger.Fatal("Todo:", call.Value)
 	}

@@ -423,6 +423,21 @@ func (m *Module) EmitGenLen(x Value) (insts []wat.Inst) {
 	return
 }
 
+func (m *Module) EmitGenCap(x Value) (insts []wat.Inst) {
+	switch x := x.(type) {
+	case *aArray:
+		insts = NewConst(strconv.Itoa(x.Type().(*Array).Capacity), m.I32).EmitPush()
+
+	case *aSlice:
+		insts = x.Extract("cap").EmitPush()
+
+	default:
+		logger.Fatalf("Todo: %T", x)
+	}
+
+	return
+}
+
 func (m *Module) EmitPrintString(v Value) (insts []wat.Inst) {
 	s := v.(*aString)
 
