@@ -86,14 +86,20 @@ func (x *exprLexer) Error(s string) {
 }
 
 func main() {
+	print("1+2*(3+4)-10 = ")
 	exprParse(&exprLexer{
 		tokens: []exprToken{
-			// 1+2*3
 			{Kind: NUM, Value: 1},
 			{Kind: '+'},
 			{Kind: NUM, Value: 2},
 			{Kind: '*'},
+			{Kind: '('},
 			{Kind: NUM, Value: 3},
+			{Kind: '+'},
+			{Kind: NUM, Value: 4},
+			{Kind: ')'},
+			{Kind: '-'},
+			{Kind: NUM, Value: 10},
 		},
 	})
 }
