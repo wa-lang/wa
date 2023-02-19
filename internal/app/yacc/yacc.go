@@ -2915,11 +2915,13 @@ func others() {
 
 	// Custom error messages.
 	fmt.Fprintf(ftable, "\n")
-	fmt.Fprintf(ftable, "var %sErrorMessages = [...]struct {\n", prefix)
+	fmt.Fprintf(ftable, "type %sErrorMessageInfo struct {\n", prefix)
 	fmt.Fprintf(ftable, "\tstate int\n")
 	fmt.Fprintf(ftable, "\ttoken int\n")
 	fmt.Fprintf(ftable, "\tmsg   string\n")
-	fmt.Fprintf(ftable, "}{\n")
+	fmt.Fprintf(ftable, "}\n")
+
+	fmt.Fprintf(ftable, "var %sErrorMessages = [...]%sErrorMessageInfo {\n", prefix, prefix)
 	for _, error := range errors {
 		lineno = error.lineno
 		state, token := runMachine(error.tokens)
