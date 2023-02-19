@@ -45,18 +45,18 @@ type exprLexer struct {
 	pos    :int
 }
 
-func (p: *exprLexer) Lex(yylval: *exprSymType) => int {
-	if p.pos >= len(p.tokens) {
+func exprLexer.Lex(yylval: *exprSymType) => int {
+	if this.pos >= len(this.tokens) {
 		return eof
 	}
-	tok := p.tokens[p.pos]
-	p.pos++
+	tok := this.tokens[this.pos]
+	this.pos++
 
 	yylval.num = tok.Value
 	return tok.Kind
 }
 
-func (x: *exprLexer) Error(s: string) {
+func exprLexer.Error(s: string) {
 	println("ERROR:", s)
 }
 
@@ -164,8 +164,8 @@ type exprParser struct {
 	char  :int
 }
 
-func (p: *exprParser) Lookahead() => int {
-	return p.char
+func exprParser.Lookahead() => int {
+	return this.char
 }
 
 func exprNewParser() => *exprParser {
@@ -299,18 +299,18 @@ func exprParse(exprlex: *exprLexer) => int {
 	return exprNewParser().Parse(exprlex)
 }
 
-func (exprrcvr: *exprParser) Parse(exprlex: *exprLexer) => int {
+func exprParser.Parse(exprlex: *exprLexer) => int {
 	var exprn: int
 	var exprVAL: exprSymType
 	var exprDollar: []exprSymType
 	_ = exprDollar // silence set and not used
-	exprS := exprrcvr.stack[:]
+	exprS := this.stack[:]
 
 	Nerrs := 0   /* number of errors */
 	Errflag := 0 /* error recovery flag */
 	exprstate := 0
-	exprrcvr.char = -1
-	exprtoken := -1 // exprrcvr.char translated into internal numbering
+	this.char = -1
+	exprtoken := -1 // this.char translated into internal numbering
 	exprp := -1
 
 	const __goto_exprstack = -1
@@ -348,8 +348,8 @@ Loop:
 				__goto_x = __goto_exprdefault
 				continue Loop
 			}
-			if exprrcvr.char < 0 {
-				exprrcvr.char, exprtoken = exprlex1(exprlex, &exprrcvr.lval)
+			if this.char < 0 {
+				this.char, exprtoken = exprlex1(exprlex, &this.lval)
 			}
 			exprn += exprtoken
 			if exprn < 0 || exprn >= exprLast {
@@ -358,9 +358,9 @@ Loop:
 			}
 			exprn = exprAct[exprn]
 			if exprChk[exprn] == exprtoken { /* valid shift */
-				exprrcvr.char = -1
+				this.char = -1
 				exprtoken = -1
-				exprVAL = exprrcvr.lval
+				exprVAL = this.lval
 				exprstate = exprn
 				if Errflag > 0 {
 					Errflag--
@@ -376,8 +376,8 @@ Loop:
 			/* default state action */
 			exprn = exprDef[exprstate]
 			if exprn == -2 {
-				if exprrcvr.char < 0 {
-					exprrcvr.char, exprtoken = exprlex1(exprlex, &exprrcvr.lval)
+				if this.char < 0 {
+					this.char, exprtoken = exprlex1(exprlex, &this.lval)
 				}
 
 				/* look through exception table */
@@ -398,7 +398,7 @@ Loop:
 				if exprn < 0 {
 					// Make sure we report no lookahead when not parsing.
 					exprstate = -1
-					exprrcvr.char = -1
+					this.char = -1
 					exprtoken = -1
 
 					return 0
@@ -437,7 +437,7 @@ Loop:
 
 					// Make sure we report no lookahead when not parsing.
 					exprstate = -1
-					exprrcvr.char = -1
+					this.char = -1
 					exprtoken = -1
 
 					/* there is no state on the stack with an error shift ... abort */
@@ -450,12 +450,12 @@ Loop:
 					if exprtoken == exprEofCode {
 						// Make sure we report no lookahead when not parsing.
 						exprstate = -1
-						exprrcvr.char = -1
+						this.char = -1
 						exprtoken = -1
 
 						return 1
 					}
-					exprrcvr.char = -1
+					this.char = -1
 					exprtoken = -1
 
 					__goto_x = __goto_exprnewstate /* try again in the same state */

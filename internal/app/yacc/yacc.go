@@ -3271,8 +3271,8 @@ type $$Parser struct {
 	char  int
 }
 
-func (p *$$Parser) Lookahead() int {
-	return p.char
+func $$Parser.Lookahead() int {
+	return this.char
 }
 
 func $$NewParser() *$$Parser {
@@ -3406,18 +3406,18 @@ func $$Parse($$lex *$$Lexer) int {
 	return $$NewParser().Parse($$lex)
 }
 
-func ($$rcvr *$$Parser) Parse($$lex *$$Lexer) int {
+func $$Parser.Parse($$lex *$$Lexer) int {
 	var $$n int
 	var $$VAL $$SymType
 	var $$Dollar []$$SymType
 	_ = $$Dollar // silence set and not used
-	$$S := $$rcvr.stack[:]
+	$$S := this.stack[:]
 
 	Nerrs := 0   /* number of errors */
 	Errflag := 0 /* error recovery flag */
 	$$state := 0
-	$$rcvr.char = -1
-	$$token := -1 // $$rcvr.char translated into internal numbering
+	this.char = -1
+	$$token := -1 // this.char translated into internal numbering
 	$$p := -1
 
 	const __goto_$$stack = -1
@@ -3454,8 +3454,8 @@ case __goto_$$newstate:
 		__goto_x = __goto_$$default
 		continue Loop
 	}
-	if $$rcvr.char < 0 {
-		$$rcvr.char, $$token = $$lex1($$lex, &$$rcvr.lval)
+	if this.char < 0 {
+		this.char, $$token = $$lex1($$lex, &this.lval)
 	}
 	$$n += $$token
 	if $$n < 0 || $$n >= $$Last {
@@ -3464,9 +3464,9 @@ case __goto_$$newstate:
 	}
 	$$n = $$Act[$$n]
 	if $$Chk[$$n] == $$token { /* valid shift */
-		$$rcvr.char = -1
+		this.char = -1
 		$$token = -1
-		$$VAL = $$rcvr.lval
+		$$VAL = this.lval
 		$$state = $$n
 		if Errflag > 0 {
 			Errflag--
@@ -3482,8 +3482,8 @@ case __goto_$$default:
 	/* default state action */
 	$$n = $$Def[$$state]
 	if $$n == -2 {
-		if $$rcvr.char < 0 {
-			$$rcvr.char, $$token = $$lex1($$lex, &$$rcvr.lval)
+		if this.char < 0 {
+			this.char, $$token = $$lex1($$lex, &this.lval)
 		}
 
 		/* look through exception table */
@@ -3504,7 +3504,7 @@ case __goto_$$default:
 		if $$n < 0 {
 			// Make sure we report no lookahead when not parsing.
 			$$state = -1
-			$$rcvr.char = -1
+			this.char = -1
 			$$token = -1
 
 			return 0
@@ -3543,7 +3543,7 @@ case __goto_$$default:
 
 			// Make sure we report no lookahead when not parsing.
 			$$state = -1
-			$$rcvr.char = -1
+			this.char = -1
 			$$token = -1
 
 			/* there is no state on the stack with an error shift ... abort */
@@ -3556,12 +3556,12 @@ case __goto_$$default:
 			if $$token == $$EofCode {
 				// Make sure we report no lookahead when not parsing.
 				$$state = -1
-				$$rcvr.char = -1
+				this.char = -1
 				$$token = -1
 
 				return 1
 			}
-			$$rcvr.char = -1
+			this.char = -1
 			$$token = -1
 
 			__goto_x = __goto_$$newstate /* try again in the same state */
