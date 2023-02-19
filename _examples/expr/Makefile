@@ -9,3 +9,4 @@ dev:
 	go run y.wa.go
 
 clean:
+	-rm y.* a.out*

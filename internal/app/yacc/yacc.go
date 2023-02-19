@@ -3436,7 +3436,9 @@ case __goto_$$stack:
 	$$p++
 	if $$p >= len($$S) {
 		nyys := make([]$$SymType, len($$S)*2)
-		copy(nyys, $$S)
+		for i := 0; i < len($$S); i++ {
+			nyys[i] = $$S[i]
+		}
 		$$S = nyys
 	}
 	$$S[$$p] = $$VAL
@@ -3582,7 +3584,9 @@ case __goto_$$default:
 	// reduced production is ε, $1 is possibly out of range.
 	if $$p+1 >= len($$S) {
 		nyys := make([]$$SymType, len($$S)*2)
-		copy(nyys, $$S)
+		for i := 0; i < len($$S); i++ {
+			nyys[i] = $$S[i]
+		}
 		$$S = nyys
 	}
 	$$VAL = $$S[$$p+1]
