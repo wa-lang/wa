@@ -15,6 +15,7 @@ Slice:
 type Slice struct {
 	Base ValueType
 	*Struct
+	_i32        ValueType
 	_u32        ValueType
 	_base_block *Block
 	_base_ptr   *Ptr
@@ -27,6 +28,7 @@ func (m *Module) genValueType_Slice(base ValueType) *Slice {
 		return t.(*Slice)
 	}
 
+	slice_t._i32 = m.I32
 	slice_t._u32 = m.U32
 	slice_t._base_block = m.GenValueType_Block(base)
 	slice_t._base_ptr = m.GenValueType_Ptr(base)
@@ -139,7 +141,7 @@ func (t *Slice) emitGenMake(Len, Cap Value) (insts []wat.Inst) {
 	insts = append(insts, wat.NewInstAdd(wat.U32{}))
 
 	//len:
-	if !Len.Type().Equal(t._u32) {
+	if !Len.Type().Equal(t._u32) && !Len.Type().Equal(t._i32) {
 		logger.Fatal("Len should be u32")
 		return nil
 	}

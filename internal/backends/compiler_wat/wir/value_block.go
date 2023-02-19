@@ -14,6 +14,7 @@ Block:
 **************************************/
 type Block struct {
 	Base ValueType
+	_i32 ValueType
 	_u32 ValueType
 }
 
@@ -24,6 +25,7 @@ func (m *Module) GenValueType_Block(base ValueType) *Block {
 		return t.(*Block)
 	}
 
+	block_t._i32 = m.I32
 	block_t._u32 = m.U32
 	m.regValueType(&block_t)
 	return &block_t
@@ -79,8 +81,8 @@ func (t *Block) emitHeapAlloc(item_count Value) (insts []wat.Inst) {
 		insts = append(insts, wat.NewInstCall("$waHeapAlloc"))
 
 	default:
-		if !item_count.Type().Equal(t._u32) {
-			logger.Fatal("item_count should be u32")
+		if !item_count.Type().Equal(t._u32) && !item_count.Type().Equal(t._i32) {
+			logger.Fatal("item_count should be u32|i32")
 			return nil
 		}
 

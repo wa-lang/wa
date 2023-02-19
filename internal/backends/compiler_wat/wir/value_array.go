@@ -136,6 +136,8 @@ func (v *aArray) emitStoreToAddr(addr Value, offset int) (insts []wat.Inst) {
 func (v *aArray) emitIndexOf(id Value) (insts []wat.Inst) {
 	fn_name := v.typ.genFunc_IndexOf()
 	if len(fn_name) == 0 {
+		zero_value := NewConst("0", v.typ.Base)
+		insts = append(insts, zero_value.EmitPush()...)
 		return
 	}
 
