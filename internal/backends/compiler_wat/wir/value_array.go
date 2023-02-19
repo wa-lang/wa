@@ -51,6 +51,56 @@ func (t *Array) EmitLoadFromAddr(addr Value, offset int) (insts []wat.Inst) {
 	return t.Struct.EmitLoadFromAddr(addr, offset)
 }
 
+func (t *Array) genFunc_IndexOf() string {
+	if t.Capacity == 0 {
+		return ""
+	}
+
+	fn_name := "$" + t.Name() + ".$IndexOf"
+	if currentModule.FindFunc(fn_name) != nil {
+		return fn_name
+	}
+
+	var f Function
+	f.InternalName = fn_name
+	x := newValue_Array("x", ValueKindLocal, t)
+	id := newValue_Basic("id", ValueKindLocal, t._u32)
+	f.Params = append(f.Params, x)
+	f.Params = append(f.Params, id)
+	f.Results = append(f.Results, t.Base)
+
+	ret := NewLocal("ret", t.Base)
+	f.Locals = append(f.Locals, ret)
+
+	var block_pre wat.Inst
+	{
+		table := make([]int, t.Capacity+1)
+		for i := 0; i < t.Capacity; i++ {
+			table[i] = i
+		}
+		table[t.Capacity] = t.Capacity - 1
+		block_sel := wat.NewInstBlock("block_sel")
+		block_sel.Insts = append(block_sel.Insts, id.EmitPush()...)
+		block_sel.Insts = append(block_sel.Insts, wat.NewInstBrTable(table))
+		block_pre = block_sel
+	}
+	for i := 0; i < t.Capacity; i++ {
+		block := wat.NewInstBlock("block" + strconv.Itoa(i))
+		block.Insts = append(block.Insts, block_pre)
+
+		block.Insts = append(block.Insts, x.Extract("m"+strconv.Itoa(i)).EmitPush()...)
+		block.Insts = append(block.Insts, ret.EmitPop()...)
+		block.Insts = append(block.Insts, wat.NewInstBr("block"+strconv.Itoa(t.Capacity-1)))
+
+		block_pre = block
+	}
+
+	f.Insts = append(f.Insts, block_pre)
+	f.Insts = append(f.Insts, ret.EmitPush()...)
+	currentModule.AddFunc(&f)
+	return fn_name
+}
+
 /**************************************
 aArray:
 **************************************/
@@ -81,4 +131,17 @@ func (v *aArray) emitStoreToAddr(addr Value, offset int) (insts []wat.Inst) {
 	}
 
 	return v.aStruct.emitStoreToAddr(addr, offset)
+}
+
+func (v *aArray) emitIndexOf(id Value) (insts []wat.Inst) {
+	fn_name := v.typ.genFunc_IndexOf()
+	if len(fn_name) == 0 {
+		return
+	}
+
+	insts = append(insts, v.EmitPush()...)
+	insts = append(insts, id.EmitPush()...)
+	insts = append(insts, wat.NewInstCall(fn_name))
+
+	return
 }

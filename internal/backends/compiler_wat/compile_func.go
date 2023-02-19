@@ -360,6 +360,9 @@ func (g *functionGenerator) genValue(v ssa.Value) ([]wat.Inst, wir.ValueType) {
 	case *ssa.IndexAddr:
 		return g.genIndexAddr(v)
 
+	case *ssa.Index:
+		return g.genIndex(v)
+
 	case *ssa.Slice:
 		return g.genSlice(v)
 
@@ -715,6 +718,13 @@ func (g *functionGenerator) genIndexAddr(inst *ssa.IndexAddr) ([]wat.Inst, wir.V
 	id := g.getValue(inst.Index)
 
 	return g.module.EmitGenIndexAddr(x.value, id.value)
+}
+
+func (g *functionGenerator) genIndex(inst *ssa.Index) (insts []wat.Inst, ret_type wir.ValueType) {
+	x := g.getValue(inst.X)
+	id := g.getValue(inst.Index)
+
+	return g.module.EmitGenIndex(x.value, id.value)
 }
 
 func (g *functionGenerator) genSlice(inst *ssa.Slice) ([]wat.Inst, wir.ValueType) {

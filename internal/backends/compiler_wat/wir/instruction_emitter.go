@@ -296,6 +296,23 @@ func (m *Module) EmitGenIndexAddr(x, id Value) (insts []wat.Inst, ret_type Value
 	return
 }
 
+func (m *Module) EmitGenIndex(x, id Value) (insts []wat.Inst, ret_type ValueType) {
+	if !id.Type().Equal(m.I32) {
+		panic("index should be i32")
+	}
+
+	switch x := x.(type) {
+	case *aArray:
+		ret_type = x.Type().(*Array).Base
+		insts = append(insts, x.emitIndexOf(id)...)
+
+	default:
+		logger.Fatalf("Todo: %T", x)
+	}
+
+	return
+}
+
 func (m *Module) EmitGenSlice(x, low, high Value) (insts []wat.Inst, ret_type ValueType) {
 	switch x := x.(type) {
 	case *aSlice:
