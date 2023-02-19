@@ -15,6 +15,7 @@ type String struct {
 	*Struct
 	_u8       ValueType
 	_u32      ValueType
+	_i32      ValueType
 	_u8_block *Block
 	_u8_ptr   ValueType
 }
@@ -28,6 +29,7 @@ func (m *Module) GenValueType_String() *String {
 
 	str_t._u8 = m.U8
 	str_t._u32 = m.U32
+	str_t._i32 = m.I32
 	str_t._u8_block = m.GenValueType_Block(m.U8)
 	str_t._u8_ptr = m.GenValueType_Ptr(m.U8)
 
@@ -52,7 +54,7 @@ func (t *String) EmitLoadFromAddr(addr Value, offset int) []wat.Inst {
 	return t.Struct.EmitLoadFromAddr(addr, offset)
 }
 
-func (t *String) genAppendStrFunc() string {
+func (t *String) genFunc_Append() string {
 	fn_name := "$" + t.Name() + ".appendstr"
 	if currentModule.FindFunc(fn_name) != nil {
 		return fn_name
@@ -182,6 +184,81 @@ func (t *String) genAppendStrFunc() string {
 
 	f.Insts = append(f.Insts, x.EmitRelease()...)
 	f.Insts = append(f.Insts, y.EmitRelease()...)
+
+	currentModule.AddFunc(&f)
+	return fn_name
+}
+
+func (t *String) genFunc_Equal() string {
+	fn_name := "$" + t.Name() + ".equal"
+	if currentModule.FindFunc(fn_name) != nil {
+		return fn_name
+	}
+
+	var f Function
+	f.InternalName = fn_name
+	x := newValue_String("x", ValueKindLocal, t)
+	y := newValue_String("y", ValueKindLocal, t)
+	f.Params = append(f.Params, x)
+	f.Params = append(f.Params, y)
+	f.Results = append(f.Results, t._i32)
+
+	ret := NewLocal("ret", t._u32)
+	f.Locals = append(f.Locals, ret)
+
+	f.Insts = append(f.Insts, wat.NewInstConst(wat.I32{}, "1"))
+	f.Insts = append(f.Insts, ret.EmitPop()...)
+
+	f.Insts = append(f.Insts, x.Extract("len").EmitPush()...)
+	f.Insts = append(f.Insts, y.Extract("len").EmitPush()...)
+	f.Insts = append(f.Insts, wat.NewInstNe(wat.I32{}))
+
+	inst_if := wat.NewInstIf(nil, nil, nil)
+	{
+		inst_if.True = append(inst_if.True, wat.NewInstConst(wat.I32{}, "0"))
+		inst_if.True = append(inst_if.True, ret.EmitPop()...)
+	}
+	{
+		loop := wat.NewInstLoop("loop1")
+		{
+			loop.Insts = append(loop.Insts, x.Extract("len").EmitPush()...)
+			{
+				if1 := wat.NewInstIf(nil, nil, nil)
+
+				if1.True = append(if1.True, x.Extract("data").EmitPush()...)
+				if1.True = append(if1.True, x.Extract("len").EmitPush()...)
+				if1.True = append(if1.True, wat.NewInstAdd(wat.I32{}))
+				if1.True = append(if1.True, wat.NewInstLoad8u(0, 1))
+
+				if1.True = append(if1.True, y.Extract("data").EmitPush()...)
+				if1.True = append(if1.True, x.Extract("len").EmitPush()...)
+				if1.True = append(if1.True, wat.NewInstAdd(wat.I32{}))
+				if1.True = append(if1.True, wat.NewInstLoad8u(0, 1))
+
+				if1.True = append(if1.True, wat.NewInstEq(wat.I32{}))
+
+				if2 := wat.NewInstIf(nil, nil, nil)
+				{
+					if2.True = append(if2.True, x.Extract("len").EmitPush()...)
+					if2.True = append(if2.True, wat.NewInstConst(wat.I32{}, "1"))
+					if2.True = append(if2.True, wat.NewInstSub(wat.I32{}))
+					if2.True = append(if2.True, x.Extract("len").EmitPop()...)
+					if2.True = append(if2.True, wat.NewInstBr("loop1"))
+				}
+				if1.True = append(if1.True, if2)
+
+				loop.Insts = append(loop.Insts, if1)
+			}
+		}
+		inst_if.False = append(inst_if.False, loop)
+	}
+
+	f.Insts = append(f.Insts, inst_if)
+
+	f.Insts = append(f.Insts, x.EmitRelease()...)
+	f.Insts = append(f.Insts, y.EmitRelease()...)
+
+	f.Insts = append(f.Insts, ret.EmitPush()...)
 
 	currentModule.AddFunc(&f)
 	return fn_name

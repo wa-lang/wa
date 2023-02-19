@@ -51,7 +51,7 @@ func (m *Module) EmitBinOp(x, y Value, op wat.OpCode) (insts []wat.Inst, ret_typ
 	switch op {
 	case wat.OpCodeAdd:
 		if rtype.Equal(m.STRING) {
-			insts = append(insts, wat.NewInstCall(m.STRING.(*String).genAppendStrFunc()))
+			insts = append(insts, wat.NewInstCall(m.STRING.(*String).genFunc_Append()))
 		} else {
 			insts = append(insts, wat.NewInstAdd(toWatType(rtype)))
 		}
@@ -74,11 +74,21 @@ func (m *Module) EmitBinOp(x, y Value, op wat.OpCode) (insts []wat.Inst, ret_typ
 		ret_type = rtype
 
 	case wat.OpCodeEql:
-		insts = append(insts, wat.NewInstEq(toWatType(rtype)))
+		if rtype.Equal(m.STRING) {
+			insts = append(insts, wat.NewInstCall(m.STRING.(*String).genFunc_Equal()))
+		} else {
+			insts = append(insts, wat.NewInstEq(toWatType(rtype)))
+		}
 		ret_type = m.I32
 
 	case wat.OpCodeNe:
-		insts = append(insts, wat.NewInstNe(toWatType(rtype)))
+		if rtype.Equal(m.STRING) {
+			insts = append(insts, wat.NewInstCall(m.STRING.(*String).genFunc_Equal()))
+			insts = append(insts, wat.NewInstConst(wat.I32{}, "1"))
+			insts = append(insts, wat.NewInstXor(wat.I32{}))
+		} else {
+			insts = append(insts, wat.NewInstNe(toWatType(rtype)))
+		}
 		ret_type = m.I32
 
 	case wat.OpCodeLt:
