@@ -5,14 +5,12 @@
 %}
 
 %union {
-	num int
+	num :int
 }
 
-%type	<num>	expr expr1 expr2 expr3
-
+%type  <num> expr expr1 expr2 expr3
 %token '+' '-' '*' '/' '(' ')'
-
-%token	<num>	NUM
+%token <num> NUM
 
 %%
 
@@ -61,16 +59,16 @@ expr3:
 const eof = 0
 
 type exprToken struct {
-	Kind  int
-	Value int
+	Kind  :int
+	Value :int
 }
 
 type exprLexer struct {
-	tokens []exprToken
-	pos    int 
+	tokens :[]exprToken
+	pos    :int 
 }
 
-func exprLexer.Lex(yylval *exprSymType) int {
+func exprLexer.Lex(yylval *exprSymType) => int {
 	if this.pos >= len(this.tokens) {
 		return eof
 	}
@@ -85,7 +83,7 @@ func exprLexer.Error(s string) {
 	println("ERROR:", s)
 }
 
-func main() {
+func main {
 	print("1+2*(3+4)-10 = ")
 	exprParse(&exprLexer{
 		tokens: []exprToken{
