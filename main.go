@@ -341,7 +341,12 @@ func main() {
 			Name:   "test",
 			Usage:  "test packages",
 			Action: func(c *cli.Context) error {
-				fmt.Println("TODO")
+				waApp := app.NewApp(build_Options(c))
+				err := waApp.RunTest(c.Args().First())
+				if err != nil {
+					fmt.Println(err)
+					os.Exit(1)
+				}
 				return nil
 			},
 		},
