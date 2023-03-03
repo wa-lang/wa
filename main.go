@@ -140,6 +140,10 @@ func main() {
 					Usage: "set target os (walang|wasi|arduino|chrome)",
 					Value: config.WaOS_Walang,
 				},
+				&cli.StringFlag{
+					Name:  "tags",
+					Usage: "set build tags",
+				},
 			},
 			Action: func(c *cli.Context) error {
 				cliRun(c)
@@ -160,6 +164,10 @@ func main() {
 					Name:  "target",
 					Usage: "set target os (walang|wasi|arduino|chrome)",
 					Value: config.WaOS_Walang,
+				},
+				&cli.StringFlag{
+					Name:  "tags",
+					Usage: "set build tags",
 				},
 				&cli.IntFlag{
 					Name:  "ld-stack-size",
@@ -224,6 +232,10 @@ func main() {
 					Name:  "target",
 					Usage: "set native target",
 					Value: "",
+				},
+				&cli.StringFlag{
+					Name:  "tags",
+					Usage: "set build tags",
 				},
 				&cli.BoolFlag{
 					Name:  "debug",
@@ -461,6 +473,7 @@ func main() {
 func build_Options(c *cli.Context, isLLVMBackend ...bool) *app.Option {
 	opt := &app.Option{
 		Debug:        c.Bool("debug"),
+		BuilgTags:    strings.Fields(c.String("tags")),
 		Clang:        c.String("clang"),
 		Llc:          c.String("llc"),
 		LD_StackSize: c.Int("ld-stack-size"),
