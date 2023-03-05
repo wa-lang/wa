@@ -46,7 +46,7 @@ func NewApp(opt *Option) *App {
 		}
 	}
 	if p.opt.TargetOS == "" {
-		p.opt.TargetOS = config.WaOS_Walang
+		p.opt.TargetOS = config.WaOS_Default
 	}
 	if p.opt.TargetArch == "" {
 		p.opt.TargetArch = config.WaArch_Wasm

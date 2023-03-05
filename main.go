@@ -37,8 +37,8 @@ func main() {
 	cliApp.Flags = []cli.Flag{
 		&cli.StringFlag{
 			Name:  "target",
-			Usage: "set target os (walang|wasi|arduino|chrome)",
-			Value: config.WaOS_Walang,
+			Usage: "set target os (wasi|arduino|chrome)",
+			Value: config.WaOS_Default,
 		},
 		&cli.BoolFlag{
 			Name:    "debug",
@@ -54,7 +54,7 @@ func main() {
 
 	cliApp.Before = func(c *cli.Context) error {
 		switch c.String("target") {
-		case "wa", "walang", "wasi", "arduino", "chrome":
+		case "wasi", "arduino", "chrome":
 			// OK
 		default:
 			fmt.Printf("unknown target: %s\n", c.String("target"))
@@ -137,8 +137,8 @@ func main() {
 			Flags: []cli.Flag{
 				&cli.StringFlag{
 					Name:  "target",
-					Usage: "set target os (walang|wasi|arduino|chrome)",
-					Value: config.WaOS_Walang,
+					Usage: "set target os (wasi|arduino|chrome)",
+					Value: config.WaOS_Default,
 				},
 				&cli.StringFlag{
 					Name:  "tags",
@@ -158,12 +158,12 @@ func main() {
 					Name:    "output",
 					Aliases: []string{"o"},
 					Usage:   "set output file",
-					Value:   "a.out",
+					Value:   "a.out.wasm",
 				},
 				&cli.StringFlag{
 					Name:  "target",
-					Usage: "set target os (walang|wasi|arduino|chrome)",
-					Value: config.WaOS_Walang,
+					Usage: "set target os (wasi|arduino|chrome)",
+					Value: config.WaOS_Default,
 				},
 				&cli.StringFlag{
 					Name:  "tags",
@@ -486,8 +486,8 @@ func build_Options(c *cli.Context, isLLVMBackend ...bool) *app.Option {
 		return opt
 	}
 	switch c.String("target") {
-	case "wa", config.WaOS_Walang:
-		opt.TargetOS = config.WaOS_Walang
+	case "", "wa", "walang":
+		opt.TargetOS = config.WaOS_Default
 	case config.WaOS_Wasi:
 		opt.TargetOS = config.WaOS_Wasi
 	case config.WaOS_Arduino:

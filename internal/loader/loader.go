@@ -443,14 +443,14 @@ func (p *_Loader) isSkipedSouceFile(filename string) bool {
 	if strings.HasPrefix(filename, "_") {
 		return true
 	}
-	if !p.hasExt(filename, ".wa", ".wa.go", ".ugo", ".wz") {
+	if !p.hasExt(filename, ".wa", ".wa.go", ".wz") {
 		return true
 	}
 
 	if p.cfg.WaOS != "" {
 		var isTargetFile bool
-		for _, ext := range []string{".wa", ".wa.go", ".ugo", ".wz"} {
-			for _, os := range []string{"walang", "wasi", "arduino", "chrome"} {
+		for _, ext := range []string{".wa", ".wa.go", ".wz"} {
+			for _, os := range []string{"wasi", "arduino", "chrome"} {
 				if strings.HasSuffix(filename, "_"+os+ext) {
 					isTargetFile = true
 					break
@@ -459,7 +459,7 @@ func (p *_Loader) isSkipedSouceFile(filename string) bool {
 		}
 		if isTargetFile {
 			var shouldSkip = true
-			for _, ext := range []string{".wa", ".wa.go", ".ugo", ".wz"} {
+			for _, ext := range []string{".wa", ".wa.go", ".wz"} {
 				if strings.HasSuffix(filename, "_"+p.cfg.WaOS+ext) {
 					shouldSkip = false
 					break
