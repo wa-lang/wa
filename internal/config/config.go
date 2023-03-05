@@ -56,7 +56,7 @@ func DefaultConfig() *Config {
 		if s := os.Getenv("WAOS"); s != "" {
 			p.WaOS = s
 		} else {
-			p.WaOS = WaOS_Walang
+			p.WaOS = WaOS_Default
 		}
 	}
 	if p.WaRoot == "" {

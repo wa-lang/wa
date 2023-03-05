@@ -4,7 +4,7 @@ package config
 
 // 目标平台类型, 可管理后缀名
 const (
-	WaOS_Walang = "walang" // 默认
+	WaOS_Default = WaOS_Wasi // 默认
 
 	WaOS_Arduino = "arduino" // Arduino 平台
 	WaOS_Chrome  = "chrome"  // Chrome 浏览器

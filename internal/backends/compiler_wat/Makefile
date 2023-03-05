@@ -3,7 +3,7 @@
 # wasmer
 # https://github.com/wasmerio/wasmer/releases
 
-default: base.wasm
+default:
 	wasmer run base.wat
 
 clean:

@@ -4,6 +4,11 @@ import "syscall/arduino"
 
 var WAOS = "arduino"
 
+#wa:linkname $runtime.fdWrite
+func fdWrite(fd: i32, io: i32, iovs_len: i32, nwritten: i32) => (written: i32) {
+	return
+}
+
 #wa:linkname $runtime.waPrintI32
 func waPrintI32(i: i32) {}
 
