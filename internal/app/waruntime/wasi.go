@@ -18,7 +18,7 @@ import (
 const wasiModuleName = "wasi_snapshot_preview1"
 
 func WasiInstantiate(ctx context.Context, rt wazero.Runtime) (api.Closer, error) {
-	if false {
+	if true {
 		return wasi.Instantiate(ctx, rt)
 	}
 	return rt.NewHostModuleBuilder(wasiModuleName).

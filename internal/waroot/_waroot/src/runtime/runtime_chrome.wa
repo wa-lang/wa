@@ -2,6 +2,16 @@
 
 var WAOS = "chrome"
 
+#wa:linkname $runtime.argsSizesGet
+func argsSizesGet(result_argc: i32, result_argv_len: i32) => (errno: i32) {
+	return
+}
+
+#wa:linkname $runtime.argsGet
+func argsGet(result_argv: i32, result_argv_buf: i32) => (errno: i32) {
+	return
+}
+
 #wa:linkname $runtime.fdWrite
 func fdWrite(fd: i32, io: i32, iovs_len: i32, nwritten: i32) => (written: i32) {
 	return
