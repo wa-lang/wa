@@ -1,18 +1,16 @@
 // 版权 @2023 凹语言 作者。保留所有权利。
 
 %{
-package main
+// 这是 凹语言 yacc 的例子, 用于对表达式进行解析, 为了简化词法部分暂时通过手工录入.
 %}
 
 %union {
-	num int
+	num :int
 }
 
-%type	<num>	expr expr1 expr2 expr3
-
+%type  <num> expr expr1 expr2 expr3
 %token '+' '-' '*' '/' '(' ')'
-
-%token	<num>	NUM
+%token <num> NUM
 
 %%
 
@@ -61,39 +59,45 @@ expr3:
 const eof = 0
 
 type exprToken struct {
-	Kind  int
-	Value int
+	Kind  :int
+	Value :int
 }
 
 type exprLexer struct {
-	tokens []exprToken
-	pos    int 
+	tokens :[]exprToken
+	pos    :int 
 }
 
-func (p *exprLexer) Lex(yylval *exprSymType) int {
-	if p.pos >= len(p.tokens) {
+func exprLexer.Lex(yylval *exprSymType) => int {
+	if this.pos >= len(this.tokens) {
 		return eof
 	}
-	tok := p.tokens[p.pos]
-	p.pos++
+	tok := this.tokens[this.pos]
+	this.pos++
 
 	yylval.num = tok.Value
 	return tok.Kind
 }
 
-func (x *exprLexer) Error(s string) {
+func exprLexer.Error(s string) {
 	println("ERROR:", s)
 }
 
-func main() {
+func main {
+	print("1+2*(3+4)-10 = ")
 	exprParse(&exprLexer{
 		tokens: []exprToken{
-			// 1+2*3
 			{Kind: NUM, Value: 1},
 			{Kind: '+'},
 			{Kind: NUM, Value: 2},
 			{Kind: '*'},
+			{Kind: '('},
 			{Kind: NUM, Value: 3},
+			{Kind: '+'},
+			{Kind: NUM, Value: 4},
+			{Kind: ')'},
+			{Kind: '-'},
+			{Kind: NUM, Value: 10},
 		},
 	})
 }

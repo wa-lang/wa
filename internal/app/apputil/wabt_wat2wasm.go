@@ -4,6 +4,7 @@ package apputil
 
 import (
 	"context"
+	"crypto/rand"
 	"errors"
 	"os"
 	"os/exec"
@@ -22,7 +23,7 @@ import (
 
 var wat2wasmPath string
 
-func RunWasm(cfg *config.Config, filename string) (stdoutStderr []byte, err error) {
+func RunWasm(cfg *config.Config, filename string, wasmArgs ...string) (stdoutStderr []byte, err error) {
 	dst := filename
 	if strings.HasSuffix(filename, ".wat") {
 		dst += ".wasm"
@@ -37,9 +38,26 @@ func RunWasm(cfg *config.Config, filename string) (stdoutStderr []byte, err erro
 		return nil, err
 	}
 
+	wasmExe := filepath.Base(filename)
+
+	conf := wazero.NewModuleConfig().
+		WithStdout(os.Stdout).
+		WithStderr(os.Stderr).
+		WithStdin(os.Stdin).
+		WithRandSource(rand.Reader).
+		WithSysNanosleep().
+		WithSysNanotime().
+		WithSysWalltime().
+		WithArgs(append([]string{wasmExe}, wasmArgs...)...)
+
 	ctx := context.Background()
 	r := wazero.NewRuntime(ctx)
 	defer r.Close(ctx)
+
+	code, err := r.CompileModule(ctx, wasmBytes)
+	if err != nil {
+		return nil, err
+	}
 
 	switch cfg.WaOS {
 	case config.WaOS_Arduino:
@@ -50,18 +68,13 @@ func RunWasm(cfg *config.Config, filename string) (stdoutStderr []byte, err erro
 		if _, err = waruntime.ChromeInstantiate(ctx, r); err != nil {
 			return nil, err
 		}
-
-	case config.WaOS_Walang:
-		if _, err = waruntime.WalangInstantiate(ctx, r); err != nil {
-			return nil, err
-		}
 	case config.WaOS_Wasi:
 		if _, err = waruntime.WasiInstantiate(ctx, r); err != nil {
 			return nil, err
 		}
 	}
 
-	_, err = r.InstantiateModuleFromBinary(ctx, wasmBytes)
+	_, err = r.InstantiateModule(ctx, code, conf)
 	if err != nil {
 		return nil, err
 	}

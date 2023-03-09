@@ -1,15 +1,49 @@
 // 版权 @2022 凹语言 作者。保留所有权利。
 
-var WAOS = "wasi"
+var WAOS = "wasi" 
 
-#wa:import wa_js_env waPrintI32
+#wa:import wasi_snapshot_preview1 args_sizes_get
+#wa:linkname $runtime.argsSizesGet
+func argsSizesGet(result_argc: i32, result_argv_len: i32) => (errno: i32)
+
+#wa:import wasi_snapshot_preview1 args_get
+#wa:linkname $runtime.argsGet
+func argsGet(result_argv: i32, result_argv_buf: i32) => (errno: i32)
+
+#wa:import wasi_snapshot_preview1 fd_write
+#wa:linkname $runtime.fdWrite
+func fdWrite(fd: i32, io: i32, iovs_len: i32, nwritten: i32) => (errno: i32)
+
+#wa:linkname puts
+func puts(ptr: i32, len: i32)
+
+#wa:linkname putchar
+func putchar(ch: i32)
+
 #wa:linkname $runtime.waPrintI32
-func waPrintI32(i: i32)
+func waPrintI32(i: i32) {
+	print_i32(i)
+}
 
-#wa:import wa_js_env waPrintRune
 #wa:linkname $runtime.waPrintRune
-func waPrintRune(ch: i32)
+func waPrintRune(ch: i32) {
+	putchar(ch)
+}
 
-#wa:import wa_js_env waPuts
 #wa:linkname $runtime.waPuts
-func waPuts(ptr: i32, len: i32)
+func waPuts(ptr: i32, len: i32) {
+	puts(ptr, len)
+}
+
+func print_i32(i: i32) {
+	if i < 0 {
+		print('-')
+		i = -i
+	}
+	if i < 10 {
+		putchar(i+'0')
+		return
+	}
+	print_i32(i/10)
+	print_i32(i%10)
+}

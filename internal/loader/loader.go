@@ -3,6 +3,7 @@
 package loader
 
 import (
+	"fmt"
 	"io/fs"
 	"os"
 	pathpkg "path"
@@ -13,6 +14,7 @@ import (
 	"wa-lang.org/wa/internal/ast"
 	"wa-lang.org/wa/internal/config"
 	wzparser "wa-lang.org/wa/internal/frontend/wz/parser"
+	"wa-lang.org/wa/internal/loader/buildtag"
 	"wa-lang.org/wa/internal/logger"
 	"wa-lang.org/wa/internal/parser"
 	"wa-lang.org/wa/internal/ssa"
@@ -170,6 +172,22 @@ func (p *_Loader) Import(pkgpath string) (*types.Package, error) {
 	if err != nil {
 		logger.Tracef(&config.EnableTrace_loader, "err: %v", err)
 		return nil, err
+	}
+
+	// 过滤 build-tag, main 包忽略
+	if pkgpath != p.prog.Manifest.MainPkg {
+		var pkgFiles = make([]*ast.File, 0, len(pkg.Files))
+		for _, f := range pkg.Files {
+			skiped, err := p.isSkipedAstFile(f)
+			if err != nil {
+				return nil, err
+			}
+			if skiped {
+				continue
+			}
+			pkgFiles = append(pkgFiles, f)
+		}
+		pkg.Files = pkgFiles
 	}
 
 	// 修复 pkg 名称(wa 是可选)
@@ -367,18 +385,72 @@ func (p *_Loader) getSizes() types.Sizes {
 	}
 }
 
+func (p *_Loader) isSkipedAstFile(f *ast.File) (bool, error) {
+	// 1. 找 buildExpr
+	var buildExpr *ast.Comment
+	if f.Doc != nil {
+		for _, x := range f.Doc.List {
+			if buildtag.IsWaBuild(x.Text) {
+				buildExpr = x
+				break
+			}
+		}
+	}
+	if buildExpr == nil {
+		for _, comment := range f.Comments {
+			if buildExpr != nil {
+				break
+			}
+			for _, x := range comment.List {
+				if buildtag.IsWaBuild(x.Text) {
+					buildExpr = x
+					break
+				}
+			}
+		}
+	}
+
+	// 没有 build-tag
+	if buildExpr == nil {
+		return false, nil
+	}
+
+	// 解析 build-tag
+	expr, err := buildtag.Parse(buildExpr.Text)
+	if err != nil {
+		err = fmt.Errorf("%v: parsing #wa:build line: %w",
+			p.prog.Fset.Position(buildExpr.Slash),
+			err,
+		)
+		return false, err
+	}
+	ok := expr.Eval(func(tag string) bool {
+		if tag == p.cfg.WaOS || tag == p.cfg.WaArch {
+			return true
+		}
+		for _, x := range p.cfg.BuilgTags {
+			if x == tag {
+				return true
+			}
+		}
+		return false
+	})
+
+	return !ok, err
+}
+
 func (p *_Loader) isSkipedSouceFile(filename string) bool {
 	if strings.HasPrefix(filename, "_") {
 		return true
 	}
-	if !p.hasExt(filename, ".wa", ".wa.go", ".ugo", ".wz") {
+	if !p.hasExt(filename, ".wa", ".wa.go", ".wz") {
 		return true
 	}
 
 	if p.cfg.WaOS != "" {
 		var isTargetFile bool
-		for _, ext := range []string{".wa", ".wa.go", ".ugo", ".wz"} {
-			for _, os := range []string{"walang", "wasi", "arduino", "chrome"} {
+		for _, ext := range []string{".wa", ".wa.go", ".wz"} {
+			for _, os := range []string{"wasi", "arduino", "chrome"} {
 				if strings.HasSuffix(filename, "_"+os+ext) {
 					isTargetFile = true
 					break
@@ -387,7 +459,7 @@ func (p *_Loader) isSkipedSouceFile(filename string) bool {
 		}
 		if isTargetFile {
 			var shouldSkip = true
-			for _, ext := range []string{".wa", ".wa.go", ".ugo", ".wz"} {
+			for _, ext := range []string{".wa", ".wa.go", ".wz"} {
 				if strings.HasSuffix(filename, "_"+p.cfg.WaOS+ext) {
 					shouldSkip = false
 					break

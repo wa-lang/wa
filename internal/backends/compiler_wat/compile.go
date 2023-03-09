@@ -24,7 +24,7 @@ func New() *Compiler {
 }
 
 func (p *Compiler) Compile(prog *loader.Program, mainFunc string) (output string, err error) {
-	p.module.BaseWat = modBaseWat_wa
+	p.module.BaseWat = modBaseWat_wasi
 
 	for _, pkg := range prog.Pkgs {
 		p.ssaPkg = pkg.SSAPkg

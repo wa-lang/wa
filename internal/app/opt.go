@@ -7,6 +7,7 @@ import "wa-lang.org/wa/internal/config"
 // 命令行选项
 type Option struct {
 	Debug        bool
+	BuilgTags    []string
 	TargetArch   string
 	TargetOS     string
 	Clang        string
@@ -20,6 +21,9 @@ func (opt *Option) Config() *config.Config {
 
 	if opt.Debug {
 		cfg.Debug = true
+	}
+	if len(opt.BuilgTags) > 0 {
+		cfg.BuilgTags = append(cfg.BuilgTags, opt.BuilgTags...)
 	}
 	if opt.TargetArch != "" {
 		cfg.WaArch = opt.TargetArch

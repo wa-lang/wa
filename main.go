@@ -37,8 +37,8 @@ func main() {
 	cliApp.Flags = []cli.Flag{
 		&cli.StringFlag{
 			Name:  "target",
-			Usage: "set target os (walang|wasi|arduino|chrome)",
-			Value: config.WaOS_Walang,
+			Usage: "set target os (wasi|arduino|chrome)",
+			Value: config.WaOS_Default,
 		},
 		&cli.BoolFlag{
 			Name:    "debug",
@@ -54,7 +54,7 @@ func main() {
 
 	cliApp.Before = func(c *cli.Context) error {
 		switch c.String("target") {
-		case "wa", "walang", "wasi", "arduino", "chrome":
+		case "wasi", "arduino", "chrome":
 			// OK
 		default:
 			fmt.Printf("unknown target: %s\n", c.String("target"))
@@ -137,8 +137,12 @@ func main() {
 			Flags: []cli.Flag{
 				&cli.StringFlag{
 					Name:  "target",
-					Usage: "set target os (walang|wasi|arduino|chrome)",
-					Value: config.WaOS_Walang,
+					Usage: "set target os (wasi|arduino|chrome)",
+					Value: config.WaOS_Default,
+				},
+				&cli.StringFlag{
+					Name:  "tags",
+					Usage: "set build tags",
 				},
 			},
 			Action: func(c *cli.Context) error {
@@ -154,12 +158,16 @@ func main() {
 					Name:    "output",
 					Aliases: []string{"o"},
 					Usage:   "set output file",
-					Value:   "a.out",
+					Value:   "a.out.wasm",
 				},
 				&cli.StringFlag{
 					Name:  "target",
-					Usage: "set target os (walang|wasi|arduino|chrome)",
-					Value: config.WaOS_Walang,
+					Usage: "set target os (wasi|arduino|chrome)",
+					Value: config.WaOS_Default,
+				},
+				&cli.StringFlag{
+					Name:  "tags",
+					Usage: "set build tags",
 				},
 				&cli.IntFlag{
 					Name:  "ld-stack-size",
@@ -224,6 +232,10 @@ func main() {
 					Name:  "target",
 					Usage: "set native target",
 					Value: "",
+				},
+				&cli.StringFlag{
+					Name:  "tags",
+					Usage: "set build tags",
 				},
 				&cli.BoolFlag{
 					Name:  "debug",
@@ -341,7 +353,12 @@ func main() {
 			Name:   "test",
 			Usage:  "test packages",
 			Action: func(c *cli.Context) error {
-				fmt.Println("TODO")
+				waApp := app.NewApp(build_Options(c))
+				err := waApp.RunTest(c.Args().First())
+				if err != nil {
+					fmt.Println(err)
+					os.Exit(1)
+				}
 				return nil
 			},
 		},
@@ -456,6 +473,7 @@ func main() {
 func build_Options(c *cli.Context, isLLVMBackend ...bool) *app.Option {
 	opt := &app.Option{
 		Debug:        c.Bool("debug"),
+		BuilgTags:    strings.Fields(c.String("tags")),
 		Clang:        c.String("clang"),
 		Llc:          c.String("llc"),
 		LD_StackSize: c.Int("ld-stack-size"),
@@ -468,8 +486,8 @@ func build_Options(c *cli.Context, isLLVMBackend ...bool) *app.Option {
 		return opt
 	}
 	switch c.String("target") {
-	case "wa", config.WaOS_Walang:
-		opt.TargetOS = config.WaOS_Walang
+	case "", "wa", "walang":
+		opt.TargetOS = config.WaOS_Default
 	case config.WaOS_Wasi:
 		opt.TargetOS = config.WaOS_Wasi
 	case config.WaOS_Arduino:

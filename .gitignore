@@ -16,7 +16,7 @@ wat2wasm.exe
 *.out*
 *.wasm
 *.wasm.*
-y.*
+y.wa.*
 
 /docs/snake/*
 

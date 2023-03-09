@@ -8,6 +8,17 @@
     init(url) {
       let app = this;
       let importsObject = {
+        wasi_snapshot_preview1: new function () {
+            this.args_sizes_get = (arg0, arg1) => {
+                return 0;
+            }
+            this.args_get = (arg0, arg1) => {
+                return 0;
+            }
+            this.fd_write = (fd, iovs, iovsCount, resultSize) => {
+                return 0;
+            }
+        },
         wa_js_env: new function () {
           this.waPrintI32 = (i) => {
             app._wa_print_buf += i
