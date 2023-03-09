@@ -1,12 +1,16 @@
 // 版权 @2019 凹语言 作者。保留所有权利。
 
-import "runtime"
+#wa:linkname runtime.refToPtr_i32
+func refToPtr_i32(p: *i32) => i32
+
+#wa:linkname runtime.refToPtr_byteSlice
+func refToPtr_byteSlice(t: []byte) => i32
 
 func main() {
-	var i i32
-	var j []u8
-	println(runtime.I32_ref_to_ptr(&i))
-	println(runtime.U8_slice_to_ptr(j))
+	var i: i32
+	var j: []byte
+	println(refToPtr_i32(&i))
+	println(refToPtr_byteSlice(j))
 	j = append(j, 33)
-	println(runtime.U8_slice_to_ptr(j))
+	println(refToPtr_byteSlice(j))
 }

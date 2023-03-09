@@ -502,7 +502,7 @@ func build_Options(c *cli.Context, isLLVMBackend ...bool) *app.Option {
 }
 
 func cliRun(c *cli.Context) {
-	if c.NArg() == 0 {
+	if c.NArg() < 1 {
 		cli.ShowAppHelpAndExit(c, 0)
 	}
 
@@ -544,7 +544,8 @@ func cliRun(c *cli.Context) {
 		}
 	}
 
-	stdoutStderr, err := apputil.RunWasm(app.GetConfig(), outfile)
+	appArgs := c.Args().Slice()[1:]
+	stdoutStderr, err := apputil.RunWasm(app.GetConfig(), outfile, appArgs...)
 	if err != nil {
 		if len(stdoutStderr) > 0 {
 			fmt.Println(string(stdoutStderr))
