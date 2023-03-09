@@ -289,6 +289,14 @@ const modBaseWat_wa = `
   end  ;;ref_count == 0
 )
 
+(func $$wa.RT.i32_ref_to_ptr (param $b i32) (param $d i32) (result i32) ;;result = ptr
+  local.get $d
+)
+
+(func $$wa.RT.slice_to_ptr (param $b i32) (param $d i32) (param $l i32) (param $c i32) (result i32) ;;result = ptr
+  local.get $d
+)
+
 `
 
 const modBaseWat_wasi = `
