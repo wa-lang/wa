@@ -43,6 +43,7 @@ func IsStdPkg(pkgpath string) bool {
 var stdPkgs = []string{
 	"arduino",
 	"fmt",
+	"os",
 	"runtime",
 	"strconv",
 	"syscall",

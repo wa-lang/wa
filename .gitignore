@@ -1,5 +1,6 @@
 /.fleet
 /.vscode
+/_build*
 
 wa
 wa.exe

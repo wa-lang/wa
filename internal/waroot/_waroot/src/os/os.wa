@@ -1,0 +1,10 @@
+// 版权 @2023 凹语言 作者。保留所有权利。
+
+var Args []string
+
+#wa:linkname runtime.os_get_args
+func os_get_args() => []string
+
+func init {
+	Args = os_get_args()
+}
