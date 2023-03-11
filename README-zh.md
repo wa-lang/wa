@@ -112,22 +112,3 @@ $ go run main.go run _examples/prime
 
 更多例子 [_examples](_examples)
 
-## 作为脚本执行
-
-凹语言本身也可以像 Lua 语言被嵌入 Go 宿主语言环境执行:
-
-```
-package main
-
-import (
-	"fmt"
-	"wa-lang.org/wa/api"
-)
-
-func main() {
-	output, err := api.RunCode(api.DefaultConfig(), "hello.wa", code)
-	fmt.Print(string(output), err)
-}
-```
-
-注：作为脚本执行目前只支持本地环境。
