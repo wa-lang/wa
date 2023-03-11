@@ -2493,6 +2493,9 @@ func (p *parser) parseFile() *ast.File {
 	pos := p.pos
 	ident := &ast.Ident{}
 	if p.tok == token.PACKAGE {
+		if strings.HasSuffix(p.file.Name(), ".wa") && !strings.HasSuffix(p.file.Name(), ".go.wa") {
+			p.error(p.pos, "expected declaration, found package")
+		}
 		p.next()
 		// Go spec: The package clause is not a declaration;
 		// the package name does not appear in any scope.
