@@ -408,7 +408,7 @@ func main() {
 		{
 			Name:      "yacc",
 			Usage:     "generates parsers for LALR(1) grammars",
-			ArgsUsage: "<intput>",
+			ArgsUsage: "<input>",
 			Flags: []cli.Flag{
 				&cli.BoolFlag{
 					Name:  "l",
