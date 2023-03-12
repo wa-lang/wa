@@ -13,7 +13,7 @@ import (
 )
 
 // 执行凹代码
-func RunCode(cfg *config.Config, filename, code string) (stdoutStderr []byte, err error) {
+func RunCode(cfg *config.Config, filename, code string, arg ...string) (stdoutStderr []byte, err error) {
 	// 编译为 wat 格式
 	wat, err := BuildFile(cfg, filename, code)
 
@@ -27,6 +27,6 @@ func RunCode(cfg *config.Config, filename, code string) (stdoutStderr []byte, er
 	}
 
 	// 执行 wat 文件
-	stdoutStderr, err = apputil.RunWasm(cfg, outfile)
+	stdoutStderr, err = apputil.RunWasm(cfg, outfile, arg...)
 	return
 }

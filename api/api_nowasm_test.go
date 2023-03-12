@@ -32,3 +32,27 @@ func ExampleRunCode() {
 	// Output:
 	// 1042
 }
+
+func _ExampleRunCode_args() {
+	const code = `
+		import "os"
+
+		func main {
+			for i, s := range os.Args[1:] {
+				println(i, ":", s)
+			}
+		}
+	`
+
+	args := []string{"aa", "bb"}
+	output, err := api.RunCode(api.DefaultConfig(), "hello.wa", code, args...)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	fmt.Print(string(output))
+
+	// Output:
+	// 0:aa
+	// 1:bb
+}

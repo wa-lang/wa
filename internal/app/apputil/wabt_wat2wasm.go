@@ -3,6 +3,7 @@
 package apputil
 
 import (
+	"bytes"
 	"context"
 	"crypto/rand"
 	"errors"
@@ -39,10 +40,11 @@ func RunWasm(cfg *config.Config, filename string, wasmArgs ...string) (stdoutStd
 	}
 
 	wasmExe := filepath.Base(filename)
+	outputBuffer := new(bytes.Buffer)
 
 	conf := wazero.NewModuleConfig().
-		WithStdout(os.Stdout).
-		WithStderr(os.Stderr).
+		WithStdout(outputBuffer).
+		WithStderr(outputBuffer).
 		WithStdin(os.Stdin).
 		WithRandSource(rand.Reader).
 		WithSysNanosleep().
@@ -56,30 +58,30 @@ func RunWasm(cfg *config.Config, filename string, wasmArgs ...string) (stdoutStd
 
 	code, err := r.CompileModule(ctx, wasmBytes)
 	if err != nil {
-		return nil, err
+		return outputBuffer.Bytes(), err
 	}
 
 	switch cfg.WaOS {
 	case config.WaOS_Arduino:
 		if _, err = waruntime.ArduinoInstantiate(ctx, r); err != nil {
-			return nil, err
+			return outputBuffer.Bytes(), err
 		}
 	case config.WaOS_Chrome:
 		if _, err = waruntime.ChromeInstantiate(ctx, r); err != nil {
-			return nil, err
+			return outputBuffer.Bytes(), err
 		}
 	case config.WaOS_Wasi:
 		if _, err = waruntime.WasiInstantiate(ctx, r); err != nil {
-			return nil, err
+			return outputBuffer.Bytes(), err
 		}
 	}
 
 	_, err = r.InstantiateModule(ctx, code, conf)
 	if err != nil {
-		return nil, err
+		return outputBuffer.Bytes(), err
 	}
 
-	return nil, nil
+	return outputBuffer.Bytes(), nil
 }
 
 func InstallWat2wasm(path string) error {
