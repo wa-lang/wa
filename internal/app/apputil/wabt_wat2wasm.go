@@ -15,6 +15,7 @@ import (
 	"sync"
 
 	"github.com/tetratelabs/wazero"
+	"github.com/tetratelabs/wazero/sys"
 
 	"wa-lang.org/wa/internal/app/waruntime"
 	"wa-lang.org/wa/internal/config"
@@ -78,6 +79,11 @@ func RunWasm(cfg *config.Config, filename string, wasmArgs ...string) (stdoutStd
 
 	_, err = r.InstantiateModule(ctx, code, conf)
 	if err != nil {
+		if exitErr, ok := err.(*sys.ExitError); ok {
+			if exitErr.ExitCode() == 0 {
+				return outputBuffer.Bytes(), nil
+			}
+		}
 		return outputBuffer.Bytes(), err
 	}
 

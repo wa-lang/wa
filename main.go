@@ -13,6 +13,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/tetratelabs/wazero/sys"
+
 	"wa-lang.org/wa/api"
 	"wa-lang.org/wa/internal/3rdparty/cli"
 	"wa-lang.org/wa/internal/app"
@@ -550,8 +552,10 @@ func cliRun(c *cli.Context) {
 		if len(stdoutStderr) > 0 {
 			fmt.Println(string(stdoutStderr))
 		}
+		if exitErr, ok := err.(*sys.ExitError); ok {
+			os.Exit(int(exitErr.ExitCode()))
+		}
 		fmt.Println(err)
-		os.Exit(1)
 	}
 	if len(stdoutStderr) > 0 {
 		fmt.Println(string(stdoutStderr))

@@ -5,6 +5,9 @@ var Args []string
 #wa:linkname runtime.os_get_args
 func os_get_args() => []string
 
+#wa:linkname $runtime.procExit
+func Exit(code: i32)
+
 func init {
 	Args = os_get_args()
 }

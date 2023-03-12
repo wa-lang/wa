@@ -14,6 +14,10 @@ func argsGet(result_argv: i32, result_argv_buf: i32) => (errno: i32)
 #wa:linkname $runtime.fdWrite
 func fdWrite(fd: i32, io: i32, iovs_len: i32, nwritten: i32) => (errno: i32)
 
+#wa:import wasi_snapshot_preview1 proc_exit
+#wa:linkname $runtime.procExit
+func procExit(code: i32)
+
 #wa:linkname puts
 func puts(ptr: i32, len: i32)
 
