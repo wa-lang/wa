@@ -33,7 +33,7 @@ func ExampleRunCode() {
 	// 1042
 }
 
-func _ExampleRunCode_args() {
+func ExampleRunCode_args() {
 	const code = `
 		import "os"
 

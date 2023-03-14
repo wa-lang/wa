@@ -174,6 +174,15 @@ func (p *_Loader) Import(pkgpath string) (*types.Package, error) {
 		return nil, err
 	}
 
+	// main 包隐式导入 runtime
+	if pkgpath == p.prog.Manifest.MainPkg {
+		f, err := wzparser.ParseFile(nil, p.prog.Fset, "_$main$runtime.wa", `import "runtime" => _`, wzparser.AllErrors)
+		if err != nil {
+			panic(err)
+		}
+		pkg.Files[0].Decls = append(f.Decls, pkg.Files[0].Decls...)
+	}
+
 	// 过滤 build-tag, main 包忽略
 	if pkgpath != p.prog.Manifest.MainPkg {
 		var pkgFiles = make([]*ast.File, 0, len(pkg.Files))
