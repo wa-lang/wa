@@ -243,21 +243,25 @@ func (p *_Loader) ParseDir(pkgpath string) ([]*ast.File, error) {
 	logger.Tracef(&config.EnableTrace_loader, "pkgpath: %v", pkgpath)
 
 	var (
-		filenames []string
-		datas     [][]byte
-		err       error
+		unitTestMode bool = false
+		filenames    []string
+		datas        [][]byte
+		err          error
 	)
 
 	switch {
 	case p.isStdPkg(pkgpath):
 		logger.Tracef(&config.EnableTrace_loader, "isStdPkg; pkgpath: %v", pkgpath)
 
-		filenames, datas, err = p.readDirFiles(p.vfs.Std, pkgpath)
+		filenames, datas, err = p.readDirFiles(p.vfs.Std, pkgpath, unitTestMode)
 		if err != nil {
 			logger.Tracef(&config.EnableTrace_loader, "err: %v", err)
 			return nil, err
 		}
 	case p.isSelfPkg(pkgpath):
+		if pkgpath == p.prog.Manifest.MainPkg && p.cfg.UnitTest {
+			unitTestMode = true
+		}
 		relpkg := strings.TrimPrefix(pkgpath, p.prog.Manifest.Pkg.Pkgpath)
 		if relpkg == "" {
 			relpkg = "."
@@ -265,7 +269,7 @@ func (p *_Loader) ParseDir(pkgpath string) ([]*ast.File, error) {
 
 		logger.Tracef(&config.EnableTrace_loader, "isSelfPkg; pkgpath=%v, relpkg=%v", pkgpath, relpkg)
 
-		filenames, datas, err = p.readDirFiles(p.vfs.App, relpkg)
+		filenames, datas, err = p.readDirFiles(p.vfs.App, relpkg, unitTestMode)
 		if err != nil {
 			logger.Tracef(&config.EnableTrace_loader, "err: %v", err)
 			return nil, err
@@ -276,7 +280,7 @@ func (p *_Loader) ParseDir(pkgpath string) ([]*ast.File, error) {
 	default: // vendor
 		logger.Tracef(&config.EnableTrace_loader, "vendorPkg; pkgpath: %v", pkgpath)
 
-		filenames, datas, err = p.readDirFiles(p.vfs.Vendor, pkgpath)
+		filenames, datas, err = p.readDirFiles(p.vfs.Vendor, pkgpath, unitTestMode)
 		if err != nil {
 			logger.Tracef(&config.EnableTrace_loader, "err: %v", err)
 			return nil, err
@@ -306,7 +310,7 @@ func (p *_Loader) ParseDir(pkgpath string) ([]*ast.File, error) {
 	return files, nil
 }
 
-func (p *_Loader) readDirFiles(fileSystem fs.FS, path string) (filenames []string, datas [][]byte, err error) {
+func (p *_Loader) readDirFiles(fileSystem fs.FS, path string, unitTestMode bool) (filenames []string, datas [][]byte, err error) {
 	path = filepath.ToSlash(path)
 	path = strings.TrimPrefix(path, "/")
 
@@ -326,7 +330,7 @@ func (p *_Loader) readDirFiles(fileSystem fs.FS, path string) (filenames []strin
 			continue
 		}
 
-		if p.isSkipedSouceFile(entry.Name()) {
+		if p.isSkipedSouceFile(entry.Name(), unitTestMode) {
 			continue
 		}
 
@@ -448,12 +452,27 @@ func (p *_Loader) isSkipedAstFile(f *ast.File) (bool, error) {
 	return !ok, err
 }
 
-func (p *_Loader) isSkipedSouceFile(filename string) bool {
+func (p *_Loader) isSkipedSouceFile(filename string, unitTestMode bool) bool {
 	if strings.HasPrefix(filename, "_") {
 		return true
 	}
 	if !p.hasExt(filename, ".wa", ".wa.go", ".wz") {
 		return true
+	}
+
+	if !unitTestMode {
+		if strings.HasPrefix(filename, "test_") {
+			return true
+		}
+		if strings.HasSuffix(filename, "_test.wa") {
+			return true
+		}
+		if strings.HasSuffix(filename, "_test.wz") {
+			return true
+		}
+		if strings.HasSuffix(filename, "_test.wa.go") {
+			return true
+		}
 	}
 
 	if p.cfg.WaOS != "" {

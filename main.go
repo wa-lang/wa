@@ -355,8 +355,12 @@ func main() {
 			Name:   "test",
 			Usage:  "test packages",
 			Action: func(c *cli.Context) error {
+				if c.NArg() < 1 {
+					cli.ShowAppHelpAndExit(c, 0)
+				}
+				appArgs := c.Args().Slice()[1:]
 				waApp := app.NewApp(build_Options(c))
-				err := waApp.RunTest(c.Args().First())
+				err := waApp.RunTest(c.Args().First(), appArgs...)
 				if err != nil {
 					fmt.Println(err)
 					os.Exit(1)
