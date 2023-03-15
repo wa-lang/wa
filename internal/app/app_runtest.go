@@ -22,7 +22,7 @@ func (p *App) RunTest(filename string, appArgs ...string) error {
 	}
 
 	// 凹中文的源码启动函数为【启】，对应的wat函数名应当是"$0xe590af"
-	main := "main"
+	main := "TestMain"
 	if strings.HasSuffix(filename, ".wz") {
 		main = "$0xe590af"
 	}

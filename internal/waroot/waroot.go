@@ -47,6 +47,7 @@ var stdPkgs = []string{
 	"runtime",
 	"strconv",
 	"syscall",
+	"testing",
 }
 
 var wzStdPkgs = []string{
