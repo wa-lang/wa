@@ -3,23 +3,9 @@
 import "testing"
 
 func init {
-	println("test_zz.wa")
+	// init work
 }
 
-func TestMain {
-	t := new(testing.T)
-
-	TestFoo(t)
-	println("TestFoo ok")
-
-	TestBar(t)
-	println("TestBar ok")
-}
-
-func TestFoo(t: *testing.T) {
-	t.Assert(true)
-}
-
-func TestBar(t: *testing.T) {
-	t.Assert(true)
+func TestFailed {
+	testing.Assert(false)
 }

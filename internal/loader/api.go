@@ -29,7 +29,14 @@ type Package struct {
 	Info  *types.Info    // 包的类型检查信息
 	Files []*ast.File    // AST语法树
 
-	SSAPkg *ssa.Package
+	SSAPkg   *ssa.Package
+	TestInfo TestInfo
+}
+
+// 单元测试信息
+type TestInfo struct {
+	Files []string // 测试文件
+	Funcs []string // 测试函数
 }
 
 // 加载程序

@@ -166,9 +166,10 @@ func (p *_Loader) Import(pkgpath string) (*types.Package, error) {
 
 	var err error
 	var pkg Package
+	var filenames []string
 
 	// 解析当前包到 AST
-	pkg.Files, err = p.ParseDir(pkgpath)
+	filenames, pkg.Files, err = p.ParseDir(pkgpath)
 	if err != nil {
 		logger.Tracef(&config.EnableTrace_loader, "err: %v", err)
 		return nil, err
@@ -185,6 +186,7 @@ func (p *_Loader) Import(pkgpath string) (*types.Package, error) {
 
 	// 过滤 build-tag, main 包忽略
 	if pkgpath != p.prog.Manifest.MainPkg {
+		var pkgFileNames = make([]string, 0, len(filenames))
 		var pkgFiles = make([]*ast.File, 0, len(pkg.Files))
 		for _, f := range pkg.Files {
 			skiped, err := p.isSkipedAstFile(f)
@@ -194,8 +196,10 @@ func (p *_Loader) Import(pkgpath string) (*types.Package, error) {
 			if skiped {
 				continue
 			}
+			pkgFileNames = append(pkgFileNames)
 			pkgFiles = append(pkgFiles, f)
 		}
+		filenames = pkgFileNames
 		pkg.Files = pkgFiles
 	}
 
@@ -233,20 +237,44 @@ func (p *_Loader) Import(pkgpath string) (*types.Package, error) {
 		return nil, err
 	}
 
+	// 提取测试信息
+	if p.cfg.UnitTest {
+		for _, filename := range filenames {
+			if !p.isTestFile(filename) {
+				continue
+			}
+			pkg.TestInfo.Files = append(pkg.TestInfo.Files, filename)
+		}
+		for _, name := range pkg.Pkg.Scope().Names() {
+			if len(name) < len("Test?") {
+				continue
+			}
+			if !strings.HasPrefix(name, "Test") {
+				continue
+			}
+			obj := pkg.Pkg.Scope().Lookup(name)
+			if fn, ok := obj.(*types.Func); ok {
+				if sig, ok := fn.Type().(*types.Signature); ok {
+					if sig.Recv() == nil && sig.Params().Len() == 0 && sig.Results().Len() == 0 {
+						pkg.TestInfo.Funcs = append(pkg.TestInfo.Funcs, name)
+					}
+				}
+			}
+		}
+	}
+
 	logger.Tracef(&config.EnableTrace_loader, "save pkgpath: %v", pkgpath)
 
 	p.prog.Pkgs[pkgpath] = &pkg
 	return pkg.Pkg, nil
 }
 
-func (p *_Loader) ParseDir(pkgpath string) ([]*ast.File, error) {
+func (p *_Loader) ParseDir(pkgpath string) (filenames []string, files []*ast.File, err error) {
 	logger.Tracef(&config.EnableTrace_loader, "pkgpath: %v", pkgpath)
 
 	var (
 		unitTestMode bool = false
-		filenames    []string
 		datas        [][]byte
-		err          error
 	)
 
 	switch {
@@ -256,7 +284,7 @@ func (p *_Loader) ParseDir(pkgpath string) ([]*ast.File, error) {
 		filenames, datas, err = p.readDirFiles(p.vfs.Std, pkgpath, unitTestMode)
 		if err != nil {
 			logger.Tracef(&config.EnableTrace_loader, "err: %v", err)
-			return nil, err
+			return nil, nil, err
 		}
 	case p.isSelfPkg(pkgpath):
 		if pkgpath == p.prog.Manifest.MainPkg && p.cfg.UnitTest {
@@ -272,7 +300,7 @@ func (p *_Loader) ParseDir(pkgpath string) ([]*ast.File, error) {
 		filenames, datas, err = p.readDirFiles(p.vfs.App, relpkg, unitTestMode)
 		if err != nil {
 			logger.Tracef(&config.EnableTrace_loader, "err: %v", err)
-			return nil, err
+			return nil, nil, err
 		}
 
 		logger.Trace(&config.EnableTrace_loader, "isSelfPkg; return ok")
@@ -283,13 +311,12 @@ func (p *_Loader) ParseDir(pkgpath string) ([]*ast.File, error) {
 		filenames, datas, err = p.readDirFiles(p.vfs.Vendor, pkgpath, unitTestMode)
 		if err != nil {
 			logger.Tracef(&config.EnableTrace_loader, "err: %v", err)
-			return nil, err
+			return nil, nil, err
 		}
 	}
 
 	logger.Tracef(&config.EnableTrace_loader, "filenames: %v", filenames)
 
-	var files []*ast.File
 	for i, filename := range filenames {
 		var f *ast.File
 		if p.hasExt(filename, ".wz") {
@@ -302,12 +329,12 @@ func (p *_Loader) ParseDir(pkgpath string) ([]*ast.File, error) {
 			logger.Tracef(&config.EnableTrace_loader, "datas[i]: %s", datas[i])
 			logger.Tracef(&config.EnableTrace_loader, "err: %v", err)
 
-			return nil, err
+			return nil, nil, err
 		}
 		files = append(files, f)
 	}
 
-	return files, nil
+	return filenames, files, nil
 }
 
 func (p *_Loader) readDirFiles(fileSystem fs.FS, path string, unitTestMode bool) (filenames []string, datas [][]byte, err error) {
@@ -461,16 +488,7 @@ func (p *_Loader) isSkipedSouceFile(filename string, unitTestMode bool) bool {
 	}
 
 	if !unitTestMode {
-		if strings.HasPrefix(filename, "test_") {
-			return true
-		}
-		if strings.HasSuffix(filename, "_test.wa") {
-			return true
-		}
-		if strings.HasSuffix(filename, "_test.wz") {
-			return true
-		}
-		if strings.HasSuffix(filename, "_test.wa.go") {
+		if p.isTestFile(filename) {
 			return true
 		}
 	}
@@ -499,5 +517,24 @@ func (p *_Loader) isSkipedSouceFile(filename string, unitTestMode bool) bool {
 		}
 	}
 
+	return false
+}
+
+func (p *_Loader) isTestFile(filename string) bool {
+	if i := strings.LastIndexAny(filename, "/\\"); i >= 0 {
+		filename = filename[i+1:]
+	}
+	if strings.HasPrefix(filename, "test_") {
+		return true
+	}
+	if strings.HasSuffix(filename, "_test.wa") {
+		return true
+	}
+	if strings.HasSuffix(filename, "_test.wz") {
+		return true
+	}
+	if strings.HasSuffix(filename, "_test.wa.go") {
+		return true
+	}
 	return false
 }

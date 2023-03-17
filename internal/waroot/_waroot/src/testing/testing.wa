@@ -1,7 +1,16 @@
 // 版权 @2023 凹语言 作者。保留所有权利。
 
+import "os"
+
 type T struct {}
 
 func T.Assert(ok: bool) {
 	// todo
+}
+
+func Assert(ok: bool) {
+	if !ok {
+		println("assert failed")
+		os.Exit(1)
+	}
 }
