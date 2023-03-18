@@ -1,10 +1,3 @@
 // 版权 @2022 凹语言 作者。保留所有权利。
 
-type iov_t struct {
-	iov_base :i32
-	iov_len  :i32
-}
-
-#wa:import wasi_snapshot_preview1 fd_write
-#wa:linkname $$FdWrite
-func waFdWrite(fd: i32, io: *iov_t, iovs_len: i32, nwritten: *i32) => (written: i32)
+// https://github.com/WebAssembly/WASI/blob/snapshot-01/phases/snapshot/docs.md#functions

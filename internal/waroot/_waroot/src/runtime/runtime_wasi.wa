@@ -1,30 +1,38 @@
 // 版权 @2022 凹语言 作者。保留所有权利。
 
+import "syscall/wasi"
+
 var WAOS = "wasi" 
 
-#wa:import wasi_snapshot_preview1 args_sizes_get
 #wa:linkname $runtime.argsSizesGet
-func argsSizesGet(result_argc: i32, result_argv_len: i32) => (errno: i32)
+func argsSizesGet(result_argc: i32, result_argv_len: i32) => (errno: i32) {
+	return wasi.ArgsSizesGet(result_argc, result_argv_len)
+}
 
-#wa:import wasi_snapshot_preview1 args_get
 #wa:linkname $runtime.argsGet
-func argsGet(result_argv: i32, result_argv_buf: i32) => (errno: i32)
+func argsGet(result_argv: i32, result_argv_buf: i32) => (errno: i32) {
+	return wasi.ArgsGet(result_argv, result_argv_buf)
+}
 
-#wa:import wasi_snapshot_preview1 environ_sizes_get
-#wa:linkname $runtime.environSizesGet
-func environSizesGet(result_environc: i32, result_environv_len: i32) => (errno: i32)
-
-#wa:import wasi_snapshot_preview1 environ_get
 #wa:linkname $runtime.environGet
-func environGet(result_environv: i32, result_environv_buf: i32) => (errno: i32)
+func environGet(result_environv: i32, result_environv_buf: i32) => (errno: i32) {
+	return wasi.EnvironGet(result_environv, result_environv_buf)
+}
 
-#wa:import wasi_snapshot_preview1 fd_write
+#wa:linkname $runtime.environSizesGet
+func environSizesGet(result_environc: i32, result_environv_len: i32) => (errno: i32) {
+	return wasi.EnvironSizesGet(result_environc, result_environv_len)
+}
+
 #wa:linkname $runtime.fdWrite
-func fdWrite(fd: i32, io: i32, iovs_len: i32, nwritten: i32) => (errno: i32)
+func fdWrite(fd: i32, io: i32, iovs_len: i32, nwritten: i32) => (errno: i32) {
+	return wasi.FdWrite(fd, io, iovs_len, nwritten)
+}
 
-#wa:import wasi_snapshot_preview1 proc_exit
 #wa:linkname $runtime.procExit
-func procExit(code: i32)
+func procExit(code: i32) {
+	wasi.ProcExit(code)
+}
 
 #wa:linkname puts
 func puts(ptr: i32, len: i32)
