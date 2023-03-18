@@ -53,6 +53,17 @@ func RunWasm(cfg *config.Config, filename string, wasmArgs ...string) (stdoutStd
 		WithSysWalltime().
 		WithArgs(append([]string{wasmExe}, wasmArgs...)...)
 
+	for _, s := range os.Environ() {
+		var key, value string
+		if kv := strings.Split(s, "="); len(kv) >= 2 {
+			key = kv[0]
+			value = kv[1]
+		} else if len(kv) >= 1 {
+			key = kv[0]
+		}
+		conf = conf.WithEnv(key, value)
+	}
+
 	ctx := context.Background()
 	r := wazero.NewRuntime(ctx)
 	defer r.Close(ctx)

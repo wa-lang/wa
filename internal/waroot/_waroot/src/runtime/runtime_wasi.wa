@@ -10,6 +10,14 @@ func argsSizesGet(result_argc: i32, result_argv_len: i32) => (errno: i32)
 #wa:linkname $runtime.argsGet
 func argsGet(result_argv: i32, result_argv_buf: i32) => (errno: i32)
 
+#wa:import wasi_snapshot_preview1 environ_sizes_get
+#wa:linkname $runtime.environSizesGet
+func environSizesGet(result_environc: i32, result_environv_len: i32) => (errno: i32)
+
+#wa:import wasi_snapshot_preview1 environ_get
+#wa:linkname $runtime.environGet
+func environGet(result_environv: i32, result_environv_buf: i32) => (errno: i32)
+
 #wa:import wasi_snapshot_preview1 fd_write
 #wa:linkname $runtime.fdWrite
 func fdWrite(fd: i32, io: i32, iovs_len: i32, nwritten: i32) => (errno: i32)
