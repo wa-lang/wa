@@ -1,4 +1,94 @@
 // 版权 @2022 凹语言 作者。保留所有权利。
 
+//#wa:import wasi_snapshot_preview1 fd_advise
+func fd_advise() => (errno: i32)
+
+//#wa:import wasi_snapshot_preview1 fd_allocate
+func fd_allocate() => (errno: i32)
+
+//#wa:import wasi_snapshot_preview1 fd_close
+func fd_close() => (errno: i32)
+
+//#wa:import wasi_snapshot_preview1 fd_datasync
+func fd_datasync() => (errno: i32)
+
+//#wa:import wasi_snapshot_preview1 fd_fdstat_get
+func fd_fdstat_get() => (errno: i32)
+
+//#wa:import wasi_snapshot_preview1 fd_fdstat_set_flags
+func fd_fdstat_set_flags() => (errno: i32)
+
+//#wa:import wasi_snapshot_preview1 fd_fdstat_set_rights
+func fd_fdstat_set_rights() => (errno: i32)
+
+//#wa:import wasi_snapshot_preview1 fd_filestat_get
+func fd_filestat_get() => (errno: i32)
+
+//#wa:import wasi_snapshot_preview1 fd_filestat_set_size
+func fd_filestat_set_size() => (errno: i32)
+
+//#wa:import wasi_snapshot_preview1 fd_filestat_set_times
+func fd_filestat_set_times() => (errno: i32)
+
+//#wa:import wasi_snapshot_preview1 fd_pread
+func fd_pread() => (errno: i32)
+
+//#wa:import wasi_snapshot_preview1 fd_prestat_get
+func fd_prestat_get() => (errno: i32)
+
+//#wa:import wasi_snapshot_preview1 fd_prestat_dir_name
+func fd_prestat_dir_name() => (errno: i32)
+
+//#wa:import wasi_snapshot_preview1 fd_pwrite
+func fd_pwrite() => (errno: i32)
+
+//#wa:import wasi_snapshot_preview1 fd_read
+func fd_read() => (errno: i32)
+
+//#wa:import wasi_snapshot_preview1 fd_readdir
+func fd_readdir() => (errno: i32)
+
+//#wa:import wasi_snapshot_preview1 fd_renumber
+func fd_renumber() => (errno: i32)
+
+//#wa:import wasi_snapshot_preview1 fd_seek
+func fd_seek() => (errno: i32)
+
+//#wa:import wasi_snapshot_preview1 fd_sync
+func fd_sync() => (errno: i32)
+
+//#wa:import wasi_snapshot_preview1 fd_tell
+func fd_tell() => (errno: i32)
+
 #wa:import wasi_snapshot_preview1 fd_write
 func FdWrite(fd: i32, io: i32, iovs_len: i32, nwritten: i32) => (errno: i32)
+
+//#wa:import wasi_snapshot_preview1 path_create_directory
+func path_create_directory() => (errno: i32)
+
+//#wa:import wasi_snapshot_preview1 path_filestat_get
+func path_filestat_get() => (errno: i32)
+
+//#wa:import wasi_snapshot_preview1 path_filestat_set_times
+func path_filestat_set_times() => (errno: i32)
+
+//#wa:import wasi_snapshot_preview1 path_link
+func path_link() => (errno: i32)
+
+//#wa:import wasi_snapshot_preview1 path_open
+func path_open() => (errno: i32)
+
+//#wa:import wasi_snapshot_preview1 path_readlink
+func path_readlink() => (errno: i32)
+
+//#wa:import wasi_snapshot_preview1 path_remove_directory
+func path_remove_directory() => (errno: i32)
+
+//#wa:import wasi_snapshot_preview1 path_rename
+func path_rename() => (errno: i32)
+
+//#wa:import wasi_snapshot_preview1 path_symlink
+func path_symlink() => (errno: i32)
+
+//#wa:import wasi_snapshot_preview1 path_unlink_file
+func path_unlink_file() => (errno: i32)
