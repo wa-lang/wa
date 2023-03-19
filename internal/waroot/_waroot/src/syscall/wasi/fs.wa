@@ -1,64 +1,64 @@
 // 版权 @2022 凹语言 作者。保留所有权利。
 
-//#wa:import wasi_snapshot_preview1 fd_advise
-func fd_advise() => (errno: i32)
+#wa:import wasi_snapshot_preview1 fd_advise
+func fd_advise(fd: i32, offset: i64, len: i64, result_advice: i32) => (errno: i32)
 
-//#wa:import wasi_snapshot_preview1 fd_allocate
-func fd_allocate() => (errno: i32)
+#wa:import wasi_snapshot_preview1 fd_allocate
+func fd_allocate(fd: i32, offset: i64, len: i64) => (errno: i32)
 
-//#wa:import wasi_snapshot_preview1 fd_close
-func fd_close() => (errno: i32)
+#wa:import wasi_snapshot_preview1 fd_close
+func fd_close(fd: i32) => (errno: i32)
 
-//#wa:import wasi_snapshot_preview1 fd_datasync
-func fd_datasync() => (errno: i32)
+#wa:import wasi_snapshot_preview1 fd_datasync
+func fd_datasync(fd: i32) => (errno: i32)
 
-//#wa:import wasi_snapshot_preview1 fd_fdstat_get
-func fd_fdstat_get() => (errno: i32)
+#wa:import wasi_snapshot_preview1 fd_fdstat_get
+func fd_fdstat_get(fd: i32, result_stat: i32) => (errno: i32)
 
-//#wa:import wasi_snapshot_preview1 fd_fdstat_set_flags
-func fd_fdstat_set_flags() => (errno: i32)
+#wa:import wasi_snapshot_preview1 fd_fdstat_set_flags
+func fd_fdstat_set_flags(fd: i32, flags: i32) => (errno: i32)
 
-//#wa:import wasi_snapshot_preview1 fd_fdstat_set_rights
-func fd_fdstat_set_rights() => (errno: i32)
+#wa:import wasi_snapshot_preview1 fd_fdstat_set_rights
+func fd_fdstat_set_rights(fd: i32, fs_rights_base: i64, fs_rights_inheriting: i64) => (errno: i32)
 
-//#wa:import wasi_snapshot_preview1 fd_filestat_get
-func fd_filestat_get() => (errno: i32)
+#wa:import wasi_snapshot_preview1 fd_filestat_get
+func fd_filestat_get(fd: i32, result_buf: i32) => (errno: i32)
 
-//#wa:import wasi_snapshot_preview1 fd_filestat_set_size
-func fd_filestat_set_size() => (errno: i32)
+#wa:import wasi_snapshot_preview1 fd_filestat_set_size
+func fd_filestat_set_size(fd: i32, size: i64) => (errno: i32)
 
-//#wa:import wasi_snapshot_preview1 fd_filestat_set_times
-func fd_filestat_set_times() => (errno: i32)
+#wa:import wasi_snapshot_preview1 fd_filestat_set_times
+func fd_filestat_set_times(fd: i32, atim: i64, mtim: i64, fst_flags: i32) => (errno: i32)
 
-//#wa:import wasi_snapshot_preview1 fd_pread
-func fd_pread() => (errno: i32)
+#wa:import wasi_snapshot_preview1 fd_pread
+func fd_pread(fd: i32, iovs: i32, iovs_len: i32, offset: i64, result_size: i32) => (errno: i32)
 
-//#wa:import wasi_snapshot_preview1 fd_prestat_get
-func fd_prestat_get() => (errno: i32)
+#wa:import wasi_snapshot_preview1 fd_prestat_get
+func fd_prestat_get(fd: i32, result_prestat: i32) => (errno: i32)
 
-//#wa:import wasi_snapshot_preview1 fd_prestat_dir_name
-func fd_prestat_dir_name() => (errno: i32)
+#wa:import wasi_snapshot_preview1 fd_prestat_dir_name
+func fd_prestat_dir_name(fd: i32, path: i32, path_len: i32) => (errno: i32)
 
-//#wa:import wasi_snapshot_preview1 fd_pwrite
-func fd_pwrite() => (errno: i32)
+#wa:import wasi_snapshot_preview1 fd_pwrite
+func fd_pwrite(fd: i32, iovs: i32, iovs_len: i32, offset: i64, result_nwritten: i32) => (errno: i32)
 
-//#wa:import wasi_snapshot_preview1 fd_read
-func fd_read() => (errno: i32)
+#wa:import wasi_snapshot_preview1 fd_read
+func fd_read(fdL i32, iovs: i32, iovs_len: i32, result_size: i32) => (errno: i32)
 
-//#wa:import wasi_snapshot_preview1 fd_readdir
-func fd_readdir() => (errno: i32)
+#wa:import wasi_snapshot_preview1 fd_readdir
+func fd_readdir(fd: i32, buf: i32, buf_len: i32, cookie: i64, result_bufused: i32) => (errno: i32)
 
-//#wa:import wasi_snapshot_preview1 fd_renumber
-func fd_renumber() => (errno: i32)
+#wa:import wasi_snapshot_preview1 fd_renumber
+func fd_renumber(fd: i32, to: i32) => (errno: i32)
 
-//#wa:import wasi_snapshot_preview1 fd_seek
-func fd_seek() => (errno: i32)
+#wa:import wasi_snapshot_preview1 fd_seek
+func fd_seek(fd: i32, offset: i64, whence: i32, result_newoffset: i32) => (errno: i32)
 
-//#wa:import wasi_snapshot_preview1 fd_sync
-func fd_sync() => (errno: i32)
+#wa:import wasi_snapshot_preview1 fd_sync
+func fd_sync(fd: i32) => (errno: i32)
 
-//#wa:import wasi_snapshot_preview1 fd_tell
-func fd_tell() => (errno: i32)
+#wa:import wasi_snapshot_preview1 fd_tell
+func fd_tell(fd: i32, result_offset: i32) => (errno: i32)
 
 #wa:import wasi_snapshot_preview1 fd_write
 func FdWrite(fd: i32, io: i32, iovs_len: i32, nwritten: i32) => (errno: i32)
