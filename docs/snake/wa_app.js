@@ -8,6 +8,56 @@
     init(url) {
       let app = this;
       let importsObject = {
+        wasi_snapshot_preview1: new function () {
+            this.args_get = () => { return 0; }
+            this.args_sizes_get = () => { return 0; }
+
+			this.clock_res_get = () => { return 0; }
+			this.clock_time_get = () => { return 0; }
+			this.environ_get = () => { return 0; }
+			this.environ_sizes_get = () => { return 0; }
+
+			this.fd_advise = () => { return 0; }
+			this.fd_allocate = () => { return 0; }
+			this.fd_close = () => { return 0; }
+			this.fd_datasync = () => { return 0; }
+			this.fd_fdstat_get = () => { return 0; }
+			this.fd_fdstat_set_flags = () => { return 0; }
+			this.fd_fdstat_set_rights = () => { return 0; }
+			this.fd_filestat_get = () => { return 0; }
+			this.fd_filestat_set_size = () => { return 0; }
+			this.fd_filestat_set_times = () => { return 0; }
+			this.fd_pread = () => { return 0; }
+			this.fd_prestat_get = () => { return 0; }
+			this.fd_prestat_dir_name = () => { return 0; }
+			this.fd_pwrite = () => { return 0; }
+			this.fd_read = () => { return 0; }
+			this.fd_readdir = () => { return 0; }
+			this.fd_renumber = () => { return 0; }
+			this.fd_seek = () => { return 0; }
+			this.fd_sync = () => { return 0; }
+			this.fd_tell = () => { return 0; }
+			this.fd_write = () => { return 0; }
+			this.path_create_directory = () => { return 0; }
+			this.path_filestat_get = () => { return 0; }
+			this.path_filestat_set_times = () => { return 0; }
+			this.path_link = () => { return 0; }
+			this.path_open = () => { return 0; }
+			this.path_readlink = () => { return 0; }
+			this.path_remove_directory = () => { return 0; }
+			this.path_rename = () => { return 0; }
+			this.path_symlink = () => { return 0; }
+			this.path_unlink_file = () => { return 0; }
+			
+			this.poll_oneoff = () => { return 0; }
+			this.proc_exit = () => { return 0; }
+			this.random_get = () => { return 0; }
+			this.sched_yield = () => { return 0; }
+			this.sock_accept = () => { return 0; }
+			this.sock_recv = () => { return 0; }
+			this.sock_send = () => { return 0; }
+			this.sock_shutdown = () => { return 0; }
+        },
         wa_js_env: new function () {
           this.waPrintI32 = (i) => {
             app._wa_print_buf += i
@@ -101,6 +151,7 @@
       WebAssembly.instantiateStreaming(fetch(url), importsObject).then(res => {
         this._inst = res.instance;
         this._inst.exports._start();
+        const timer = setInterval(gameLoop, 150);
       })
     }
 
@@ -133,5 +184,4 @@
 
   window['waApp'] = new WaApp();
   window['waApp'].init("./snake.wasm")
-  const timer = setInterval(gameLoop, IS_MOBILE ? 150 : 100);
 })()
