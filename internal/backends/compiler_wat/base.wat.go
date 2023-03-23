@@ -27,7 +27,6 @@ const modBaseWat_wasi = `
 	global.set $__stack_ptr
 )
 
-;; 栈上分配空间
 (func $$waStackAlloc (param $size i32) (result i32)
 	;; $__stack_ptr -= $size
 	(global.set $__stack_ptr (i32.sub (global.get $__stack_ptr) (local.get  $size)))
@@ -35,7 +34,6 @@ const modBaseWat_wasi = `
 	(return (global.get $__stack_ptr))
 )
 
-;; 释放栈上的空间
 (func $$waStackFree (param $size i32)
 	;; $__stack_ptr += $size
 	(global.set $__stack_ptr (i32.add (global.get $__stack_ptr) (local.get $size)))
