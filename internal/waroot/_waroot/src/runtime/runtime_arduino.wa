@@ -36,6 +36,9 @@ func procExit(code: i32) {}
 #wa:linkname $runtime.waPrintI32
 func waPrintI32(i: i32) {}
 
+#wa:linkname $runtime.waPrintF64
+func waPrintF64(v: f64) {}
+
 #wa:linkname $runtime.waPrintRune
 func waPrintRune(ch: i32) {}
 

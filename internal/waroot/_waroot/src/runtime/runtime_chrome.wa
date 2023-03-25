@@ -38,3 +38,6 @@ func waPrintRune(ch: i32) {}
 
 #wa:linkname $runtime.waPuts
 func waPuts(ptr: i32, len: i32) {}
+
+#wa:linkname $runtime.waPrintF64
+func waPrintF64(v: f64) {}

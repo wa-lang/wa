@@ -55,6 +55,11 @@ func waPuts(ptr: i32, len: i32) {
 	puts(ptr, len)
 }
 
+#wa:linkname $runtime.waPrintF64
+func waPrintF64(v: f64) {
+	// todo
+}
+
 func print_i32(i: i32) {
 	if i < 0 {
 		print('-')
