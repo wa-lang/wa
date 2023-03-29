@@ -51,7 +51,7 @@ func DefaultConfig() *Config {
 		if s := os.Getenv("WAARCH"); s != "" {
 			p.WaArch = s
 		} else {
-			p.WaArch = WaArch_Wasm
+			p.WaArch = WaArch_Default
 		}
 	}
 	if p.WaOS == "" {

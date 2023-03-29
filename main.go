@@ -494,12 +494,12 @@ func build_Options(c *cli.Context, isLLVMBackend ...bool) *app.Option {
 	switch c.String("target") {
 	case "", "wa", "walang":
 		opt.TargetOS = config.WaOS_Default
-	case config.WaOS_Wasi:
-		opt.TargetOS = config.WaOS_Wasi
-	case config.WaOS_Arduino:
-		opt.TargetOS = config.WaOS_Arduino
-	case config.WaOS_Chrome:
-		opt.TargetOS = config.WaOS_Chrome
+	case config.WaOS_wasi:
+		opt.TargetOS = config.WaOS_wasi
+	case config.WaOS_arduino:
+		opt.TargetOS = config.WaOS_arduino
+	case config.WaOS_chrome:
+		opt.TargetOS = config.WaOS_chrome
 	default:
 		fmt.Printf("unknown target: %s\n", c.String("target"))
 		os.Exit(1)

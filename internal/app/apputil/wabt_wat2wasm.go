@@ -74,15 +74,15 @@ func RunWasm(cfg *config.Config, filename string, wasmArgs ...string) (stdoutStd
 	}
 
 	switch cfg.WaOS {
-	case config.WaOS_Arduino:
+	case config.WaOS_arduino:
 		if _, err = waruntime.ArduinoInstantiate(ctx, r); err != nil {
 			return outputBuffer.Bytes(), err
 		}
-	case config.WaOS_Chrome:
+	case config.WaOS_chrome:
 		if _, err = waruntime.ChromeInstantiate(ctx, r); err != nil {
 			return outputBuffer.Bytes(), err
 		}
-	case config.WaOS_Wasi:
+	case config.WaOS_wasi:
 		if _, err = waruntime.WasiInstantiate(ctx, r); err != nil {
 			return outputBuffer.Bytes(), err
 		}

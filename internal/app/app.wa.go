@@ -49,7 +49,7 @@ func NewApp(opt *Option) *App {
 		p.opt.TargetOS = config.WaOS_Default
 	}
 	if p.opt.TargetArch == "" {
-		p.opt.TargetArch = config.WaArch_Wasm
+		p.opt.TargetArch = config.WaArch_Default
 	}
 
 	return p
