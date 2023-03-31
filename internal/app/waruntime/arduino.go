@@ -63,10 +63,10 @@ func ArduinoInstantiate(ctx context.Context, rt wazero.Runtime) (api.Closer, err
 		Export("getPinLED").
 		NewFunctionBuilder().
 		WithFunc(func(ctx context.Context, m api.Module, ptr, len uint32) {
-			bytes, _ := m.Memory().Read(ctx, ptr, len)
+			bytes, _ := m.Memory().Read(ptr, len)
 			fmt.Printf("arduino.print(%q)\n", string(bytes))
 		}).
 		WithParameterNames("ptr", "len").
 		Export("print").
-		Instantiate(ctx, rt)
+		Instantiate(ctx)
 }

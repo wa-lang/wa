@@ -1,4 +1,4 @@
-github.com/tetratelabs/wazero v1.0.0-pre.4 h1:RBJQT5OzmORkSp6MmZDWoFEr0zXjk4pmvMKAdeUnsaI=
-github.com/tetratelabs/wazero v1.0.0-pre.4/go.mod h1:u8wrFmpdrykiFK0DFPiFm5a4+0RzsdmXYVtijBKqUVo=
+github.com/tetratelabs/wazero v1.0.1 h1:xyWBoGyMjYekG3mEQ/W7xm9E05S89kJ/at696d/9yuc=
+github.com/tetratelabs/wazero v1.0.1/go.mod h1:wYx2gNRg8/WihJfSDxA1TIL8H+GkfLYm+bIfbblu9VQ=
 wa-lang.org/wabt-go v1.2.3 h1:xwGW3+IrCMAPDx+ngQFx7vl0xBc1vuooRNql7i2yCiA=
 wa-lang.org/wabt-go v1.2.3/go.mod h1:v4fKY/p4oMiKwQ2S2aC/wOXvJ2bk2MgtLmwK0TKTNx0=

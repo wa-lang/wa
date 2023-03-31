@@ -11,5 +11,5 @@ import (
 )
 
 func ChromeInstantiate(ctx context.Context, rt wazero.Runtime) (api.Closer, error) {
-	return rt.NewHostModuleBuilder(config.WaOS_chrome).Instantiate(ctx, rt)
+	return rt.NewHostModuleBuilder(config.WaOS_chrome).Instantiate(ctx)
 }
