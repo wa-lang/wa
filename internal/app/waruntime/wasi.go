@@ -29,7 +29,7 @@ func WasiInstantiate(ctx context.Context, rt wazero.Runtime) (api.Closer, error)
 		// ----
 		NewFunctionBuilder().
 		WithFunc(func(ctx context.Context, m api.Module, pos, len uint32) {
-			bytes, _ := m.Memory().Read(pos, len)
+			bytes, _ := m.Memory().Read(ctx, pos, len)
 			fmt.Print(string(bytes))
 		}).
 		WithParameterNames("pos", "len").
@@ -46,58 +46,44 @@ func WasiInstantiate(ctx context.Context, rt wazero.Runtime) (api.Closer, error)
 		}).
 		WithParameterNames("ch").
 		Export("waPrintRune").
-		Instantiate(ctx)
+		Instantiate(ctx, rt)
 }
 
-// errno is neither uint16 nor an alias for parity with wasm.ValueType.
-type errno = uint32
-
-const (
-	// ErrnoSuccess No error occurred. System call completed successfully.
-	errnoSuccess errno = 0
-
-	// errnoFault Bad address.
-	errnoFault errno = 21
-
-	// errnoIo I/O error.
-	errnoIo errno = 29
-)
-
-func wasi_fdWriteFn(ctx context.Context, mod api.Module, fd, iovs, iovsCount, resultSize uint32) errno {
+func wasi_fdWriteFn(ctx context.Context, mod api.Module, fd, iovs, iovsCount, resultSize uint32) wasi.Errno {
 	var err error
 	var nwritten uint32
 	var writer = os.Stdout
 
 	for i := uint32(0); i < iovsCount; i++ {
 		iov := iovs + i*8
-		offset, ok := mod.Memory().ReadUint32Le(iov)
+		offset, ok := mod.Memory().ReadUint32Le(ctx, iov)
 		if !ok {
-			return errnoFault
+			return wasi.ErrnoFault
 		}
 		// Note: emscripten has been known to write zero length iovec. However,
 		// it is not common in other compilers, so we don't optimize for it.
-		l, ok := mod.Memory().ReadUint32Le(iov + 4)
+		l, ok := mod.Memory().ReadUint32Le(ctx, iov+4)
 		if !ok {
-			return errnoFault
+			return wasi.ErrnoFault
 		}
 
 		var n int
 		if writer == io.Discard { // special-case default
 			n = int(l)
 		} else {
-			b, ok := mod.Memory().Read(offset, l)
+			b, ok := mod.Memory().Read(ctx, offset, l)
 			if !ok {
-				return errnoFault
+				return wasi.ErrnoFault
 			}
 			n, err = writer.Write(b)
 			if err != nil {
-				return errnoIo
+				return wasi.ErrnoIo
 			}
 		}
 		nwritten += uint32(n)
 	}
-	if !mod.Memory().WriteUint32Le(resultSize, nwritten) {
-		return errnoFault
+	if !mod.Memory().WriteUint32Le(ctx, resultSize, nwritten) {
+		return wasi.ErrnoFault
 	}
-	return errnoSuccess
+	return wasi.ErrnoSuccess
 }
