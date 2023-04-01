@@ -82,8 +82,6 @@ func (p *Compiler) CompileWsFiles(prog *loader.Program) {
 			sb.WriteString("\n")
 			sb.WriteString(fmt.Sprintf(";; ---- %s:%s end ----\n\n", pkgpath, sf.Name))
 		}
-		p.ssaPkg = pkg.SSAPkg
-		p.CompilePkgConst(pkg.SSAPkg)
 	}
 
 	p.module.BaseWat = sb.String()
