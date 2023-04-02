@@ -39,7 +39,7 @@ func main() {
 	cliApp.Flags = []cli.Flag{
 		&cli.StringFlag{
 			Name:  "target",
-			Usage: "set target os (wasi|arduino|chrome)",
+			Usage: "set target os (arduino|chrome|wasi)",
 			Value: config.WaOS_Default,
 		},
 		&cli.BoolFlag{
@@ -264,7 +264,7 @@ func main() {
 				}
 				infile = c.Args().First()
 
-				ctx := app.NewApp(build_Options(c, true))
+				ctx := app.NewApp(build_Options(c, config.WaBackend_llvm))
 				if err := ctx.LLVM(infile, outfile, target, debug); err != nil {
 					fmt.Println(err)
 					os.Exit(1)
@@ -476,9 +476,10 @@ func main() {
 	cliApp.Run(os.Args)
 }
 
-func build_Options(c *cli.Context, isLLVMBackend ...bool) *app.Option {
+func build_Options(c *cli.Context, waBackend ...string) *app.Option {
 	opt := &app.Option{
 		Debug:        c.Bool("debug"),
+		WaBackend:    config.WaBackend_Default,
 		BuilgTags:    strings.Fields(c.String("tags")),
 		Clang:        c.String("clang"),
 		Llc:          c.String("llc"),
@@ -487,9 +488,8 @@ func build_Options(c *cli.Context, isLLVMBackend ...bool) *app.Option {
 	}
 
 	opt.TargetArch = "wasm"
-	if len(isLLVMBackend) > 0 && isLLVMBackend[0] {
-		opt.TargetArch = "native"
-		return opt
+	if len(waBackend) > 0 {
+		opt.WaBackend = waBackend[0]
 	}
 	switch c.String("target") {
 	case "", "wa", "walang":

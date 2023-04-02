@@ -168,7 +168,14 @@ func (p *_Loader) Import(pkgpath string) (*types.Package, error) {
 	var pkg Package
 	var filenames []string
 
-	// 解析当前包到 AST
+	// 解析当前包的汇编代码
+	pkg.WsFiles, err = p.ParseDir_wsFiles(pkgpath)
+	if err != nil {
+		logger.Tracef(&config.EnableTrace_loader, "err: %v", err)
+		return nil, err
+	}
+
+	// 解析当前包的 AST
 	filenames, pkg.Files, err = p.ParseDir(pkgpath)
 	if err != nil {
 		logger.Tracef(&config.EnableTrace_loader, "err: %v", err)
@@ -269,10 +276,70 @@ func (p *_Loader) Import(pkgpath string) (*types.Package, error) {
 	return pkg.Pkg, nil
 }
 
+func (p *_Loader) ParseDir_wsFiles(pkgpath string) (files []WsFile, err error) {
+	logger.Tracef(&config.EnableTrace_loader, "pkgpath: %v", pkgpath)
+
+	if p.cfg.WaBackend == "" {
+		panic("unreachable")
+	}
+
+	var (
+		extNames          = []string{fmt.Sprintf(".%s.ws", p.cfg.WaBackend)}
+		unitTestMode bool = false
+
+		filenames []string
+		datas     [][]byte
+	)
+
+	switch {
+	case p.isStdPkg(pkgpath):
+		logger.Tracef(&config.EnableTrace_loader, "isStdPkg; pkgpath: %v", pkgpath)
+
+		filenames, datas, err = p.readDirFiles(p.vfs.Std, pkgpath, unitTestMode, extNames)
+		if err != nil {
+			logger.Tracef(&config.EnableTrace_loader, "err: %v", err)
+			return nil, err
+		}
+	case p.isSelfPkg(pkgpath):
+		relpkg := strings.TrimPrefix(pkgpath, p.prog.Manifest.Pkg.Pkgpath)
+		if relpkg == "" {
+			relpkg = "."
+		}
+
+		logger.Tracef(&config.EnableTrace_loader, "isSelfPkg; pkgpath=%v, relpkg=%v", pkgpath, relpkg)
+
+		filenames, datas, err = p.readDirFiles(p.vfs.App, relpkg, unitTestMode, extNames)
+		if err != nil {
+			logger.Tracef(&config.EnableTrace_loader, "err: %v", err)
+			return nil, err
+		}
+
+		logger.Trace(&config.EnableTrace_loader, "isSelfPkg; return ok")
+
+	default: // vendor
+		logger.Tracef(&config.EnableTrace_loader, "vendorPkg; pkgpath: %v", pkgpath)
+
+		filenames, datas, err = p.readDirFiles(p.vfs.Vendor, pkgpath, unitTestMode, extNames)
+		if err != nil {
+			logger.Tracef(&config.EnableTrace_loader, "err: %v", err)
+			return nil, err
+		}
+	}
+
+	for i := 0; i < len(filenames); i++ {
+		files = append(files, WsFile{
+			Name: filenames[i],
+			Code: string(datas[i]),
+		})
+	}
+	return
+}
+
 func (p *_Loader) ParseDir(pkgpath string) (filenames []string, files []*ast.File, err error) {
 	logger.Tracef(&config.EnableTrace_loader, "pkgpath: %v", pkgpath)
 
 	var (
+		extNames          = []string{".wa", ".wz", ".wa.go"}
 		unitTestMode bool = false
 		datas        [][]byte
 	)
@@ -281,7 +348,7 @@ func (p *_Loader) ParseDir(pkgpath string) (filenames []string, files []*ast.Fil
 	case p.isStdPkg(pkgpath):
 		logger.Tracef(&config.EnableTrace_loader, "isStdPkg; pkgpath: %v", pkgpath)
 
-		filenames, datas, err = p.readDirFiles(p.vfs.Std, pkgpath, unitTestMode)
+		filenames, datas, err = p.readDirFiles(p.vfs.Std, pkgpath, unitTestMode, extNames)
 		if err != nil {
 			logger.Tracef(&config.EnableTrace_loader, "err: %v", err)
 			return nil, nil, err
@@ -297,7 +364,7 @@ func (p *_Loader) ParseDir(pkgpath string) (filenames []string, files []*ast.Fil
 
 		logger.Tracef(&config.EnableTrace_loader, "isSelfPkg; pkgpath=%v, relpkg=%v", pkgpath, relpkg)
 
-		filenames, datas, err = p.readDirFiles(p.vfs.App, relpkg, unitTestMode)
+		filenames, datas, err = p.readDirFiles(p.vfs.App, relpkg, unitTestMode, extNames)
 		if err != nil {
 			logger.Tracef(&config.EnableTrace_loader, "err: %v", err)
 			return nil, nil, err
@@ -308,7 +375,7 @@ func (p *_Loader) ParseDir(pkgpath string) (filenames []string, files []*ast.Fil
 	default: // vendor
 		logger.Tracef(&config.EnableTrace_loader, "vendorPkg; pkgpath: %v", pkgpath)
 
-		filenames, datas, err = p.readDirFiles(p.vfs.Vendor, pkgpath, unitTestMode)
+		filenames, datas, err = p.readDirFiles(p.vfs.Vendor, pkgpath, unitTestMode, extNames)
 		if err != nil {
 			logger.Tracef(&config.EnableTrace_loader, "err: %v", err)
 			return nil, nil, err
@@ -337,7 +404,11 @@ func (p *_Loader) ParseDir(pkgpath string) (filenames []string, files []*ast.Fil
 	return filenames, files, nil
 }
 
-func (p *_Loader) readDirFiles(fileSystem fs.FS, path string, unitTestMode bool) (filenames []string, datas [][]byte, err error) {
+func (p *_Loader) readDirFiles(fileSystem fs.FS, path string, unitTestMode bool, extNames []string) (filenames []string, datas [][]byte, err error) {
+	if len(extNames) == 0 {
+		panic("unreachable")
+	}
+
 	path = filepath.ToSlash(path)
 	path = strings.TrimPrefix(path, "/")
 
@@ -357,7 +428,7 @@ func (p *_Loader) readDirFiles(fileSystem fs.FS, path string, unitTestMode bool)
 			continue
 		}
 
-		if p.isSkipedSouceFile(entry.Name(), unitTestMode) {
+		if p.isSkipedSouceFile(entry.Name(), unitTestMode, extNames) {
 			continue
 		}
 
@@ -479,11 +550,14 @@ func (p *_Loader) isSkipedAstFile(f *ast.File) (bool, error) {
 	return !ok, err
 }
 
-func (p *_Loader) isSkipedSouceFile(filename string, unitTestMode bool) bool {
+func (p *_Loader) isSkipedSouceFile(filename string, unitTestMode bool, extNames []string) bool {
+	if len(extNames) == 0 {
+		panic("unreachable")
+	}
 	if strings.HasPrefix(filename, "_") {
 		return true
 	}
-	if !p.hasExt(filename, ".wa", ".wa.go", ".wz") {
+	if !p.hasExt(filename, extNames...) {
 		return true
 	}
 
@@ -495,8 +569,8 @@ func (p *_Loader) isSkipedSouceFile(filename string, unitTestMode bool) bool {
 
 	if p.cfg.WaOS != "" {
 		var isTargetFile bool
-		for _, ext := range []string{".wa", ".wa.go", ".wz"} {
-			for _, os := range []string{"wasi", "arduino", "chrome"} {
+		for _, ext := range extNames {
+			for _, os := range config.WaOS_List {
 				if strings.HasSuffix(filename, "_"+os+ext) {
 					isTargetFile = true
 					break
@@ -505,7 +579,7 @@ func (p *_Loader) isSkipedSouceFile(filename string, unitTestMode bool) bool {
 		}
 		if isTargetFile {
 			var shouldSkip = true
-			for _, ext := range []string{".wa", ".wa.go", ".wz"} {
+			for _, ext := range extNames {
 				if strings.HasSuffix(filename, "_"+p.cfg.WaOS+ext) {
 					shouldSkip = false
 					break

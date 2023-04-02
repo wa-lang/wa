@@ -48,3 +48,26 @@ const (
 	WaArch_riscv64 = "riscv64" // riscv64 平台
 	WaArch_wasm    = "wasm"    // wasm 平台
 )
+
+// 后端列表
+var WaBackend_List = []string{
+	WaBackend_clang,
+	WaBackend_llvm,
+	WaBackend_wat,
+}
+
+// OS 列表
+var WaOS_List = []string{
+	WaOS_arduino,
+	WaOS_chrome,
+	WaOS_wasi,
+}
+
+// CPU 列表
+var WaArch_List = []string{
+	WaArch_386,
+	WaArch_amd64,
+	WaArch_arm64,
+	WaArch_riscv64,
+	WaArch_wasm,
+}
