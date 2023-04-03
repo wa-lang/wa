@@ -7,3 +7,7 @@
 【说】(s: 文)：
 	println(s)
 。
+
+【字】(s: byte)：
+	print(rune(s))
+。

@@ -22,6 +22,15 @@ func (p *App) WASM(filename string) ([]byte, error) {
 		main = "$0xe590af"
 	}
 
+	// 如果是运行整个package，则判断主包里是否有名为【启】的函数，如果有，则将其作为启动函数
+	if filename == "." {
+		for k := range prog.SSAMainPkg.Members {
+			if k == "启" && prog.SSAMainPkg.Members[k].Type().Underlying().String() == "func()" {
+				main = "$0xe590af"
+			}
+		}
+	}
+
 	output, err := compiler_wat.New().Compile(prog, main)
 
 	if err != nil {

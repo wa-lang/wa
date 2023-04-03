@@ -13,7 +13,6 @@
 // treated like an ordinary parameter list and thus may contain multiple
 // entries where the spec permits exactly one. Consequently, the corresponding
 // field in the AST (ast.FuncDecl.Recv) field is not restricted to one entry.
-//
 package parser
 
 import (
@@ -149,6 +148,9 @@ func (p *parser) shortVarDecl(decl *ast.AssignStmt, list []ast.Expr) {
 	n := 0 // number of new variables
 	for _, x := range list {
 		if ident, isIdent := x.(*ast.Ident); isIdent {
+			if ident.Obj == unresolved {
+				ident.Obj = nil
+			}
 			assert(ident.Obj == nil, "identifier already declared or resolved")
 			obj := ast.NewObj(ast.Var, ident.Name)
 			// remember corresponding assignment for other tools
@@ -179,7 +181,6 @@ var unresolved = new(ast.Object)
 // the object it denotes. If no object is found and collectUnresolved is
 // set, x is marked as unresolved and collected in the list of unresolved
 // identifiers.
-//
 func (p *parser) tryResolve(x ast.Expr, collectUnresolved bool) {
 	// nothing to do if x is not an identifier or the blank identifier
 	ident, _ := x.(*ast.Ident)
@@ -286,7 +287,6 @@ func (p *parser) consumeComment() (comment *ast.Comment, endline int) {
 // comments list, and return it together with the line at which
 // the last comment in the group ends. A non-comment token or n
 // empty lines terminate a comment group.
-//
 func (p *parser) consumeCommentGroup(n int) (comments *ast.CommentGroup, endline int) {
 	var list []*ast.Comment
 	endline = p.file.Line(p.pos)
@@ -317,7 +317,6 @@ func (p *parser) consumeCommentGroup(n int) (comments *ast.CommentGroup, endline
 //
 // Lead and line comments may be considered documentation that is
 // stored in the AST.
-//
 func (p *parser) next() {
 	p.leadComment = nil
 	p.lineComment = nil
@@ -404,7 +403,6 @@ func (p *parser) expect(tok token.Token) watoken.Pos {
 
 // expectClosing is like expect but provides a better error message
 // for the common case of a missing comma before a newline.
-//
 func (p *parser) expectClosing(tok token.Token, context string) watoken.Pos {
 	if p.tok != tok && p.tok == token.SEMICOLON && p.lit == "\n" {
 		p.error(p.pos, "missing ',' before newline in "+context)
@@ -528,7 +526,6 @@ var exprEnd = map[token.Token]bool{
 // token positions are invalid due to parse errors, the resulting end position
 // may be past the file's EOF position, which would lead to panics if used
 // later on.
-//
 func (p *parser) safePos(pos watoken.Pos) (res watoken.Pos) {
 	defer func() {
 		if recover() != nil {
@@ -1178,7 +1175,6 @@ func (p *parser) parseFuncTypeOrLit() ast.Expr {
 // parseOperand may return an expression or a raw type (incl. array
 // types of the form [...]T. Callers must verify the result.
 // If lhs is set and the result is an identifier, it is not resolved.
-//
 func (p *parser) parseOperand(lhs bool) ast.Expr {
 	if p.trace {
 		defer un(trace(p, "Operand"))
@@ -1494,7 +1490,6 @@ func unparen(x ast.Expr) ast.Expr {
 
 // checkExprOrType checks that x is an expression or a type
 // (and not a raw type such as [...]T).
-//
 func (p *parser) checkExprOrType(x ast.Expr) ast.Expr {
 	switch t := unparen(x).(type) {
 	case *ast.ParenExpr:
@@ -1661,6 +1656,7 @@ const (
 	basic = iota
 	labelOk
 	rangeOk
+	initDefine
 )
 
 // parseSimpleStmt returns true as 2nd result if it parsed the assignment
@@ -1672,7 +1668,12 @@ func (p *parser) parseSimpleStmt(mode int) (ast.Stmt, bool) {
 		defer un(trace(p, "SimpleStmt"))
 	}
 
-	x := p.parseLhsList()
+	var x []ast.Expr
+	if mode == initDefine {
+		x = p.parseExprList(true)
+	} else {
+		x = p.parseLhsList()
+	}
 
 	switch p.tok {
 	case
@@ -1692,6 +1693,9 @@ func (p *parser) parseSimpleStmt(mode int) (ast.Stmt, bool) {
 			isRange = true
 		} else {
 			y = p.parseRhsList()
+		}
+		if mode == initDefine && tok == token.ASSIGN {
+			tok = token.DEFINE
 		}
 		as := &ast.AssignStmt{Lhs: x, TokPos: pos, Tok: token.ToWaTok(tok), Rhs: y}
 		if tok == token.DEFINE {
@@ -2259,7 +2263,11 @@ func (p *parser) parseStmt() (s ast.Stmt) {
 		s = p.解析择路语句()
 	case token.FOR:
 		s = p.parseForStmt()
-	case token.TK_行:
+	case token.TK_从:
+		s = p.解析三段循环语句()
+	case token.TK_直:
+		s = p.解析直到语句()
+	case token.TK_自:
 		s = p.解析循环语句()
 	case token.SEMICOLON:
 		// Is it ever possible to have an implicit semicolon
@@ -2901,16 +2909,81 @@ func (p *parser) 解析类型定义() *ast.GenDecl {
 	}
 }
 
-func (p *parser) 解析循环语句() ast.Stmt {
+func (p *parser) 解析直到语句() ast.Stmt {
+	if p.trace {
+		defer un(trace(p, "UntilStmt"))
+	}
+
+	pos := p.expect(token.TK_直)
+	p.expect(token.TK_到)
+	p.openScope()
+	defer p.closeScope()
+
+	cond, _ := p.parseSimpleStmt(basic)
+	p.expect(token.TK_逗号)
+	p.expect(token.TK_有)
+	var post ast.Stmt
+	if p.tok != token.TK_冒号 {
+		post, _ = p.parseSimpleStmt(basic)
+	}
+
+	body := p.解析语句块()
+
+	// regular for statement
+	return &ast.ForStmt{
+		For: pos,
+		// Hack here
+		Cond: &ast.UnaryExpr{Op: watoken.Token(token.NOT), X: p.makeExpr(cond, "boolean or range expression")},
+		Post: post,
+		Body: body,
+	}
+}
+
+func (p *parser) 解析三段循环语句() ast.Stmt {
 	if p.trace {
 		defer un(trace(p, "ForStmt"))
 	}
 
-	pos := p.expect(token.TK_行)
+	pos := p.expect(token.TK_从)
 	p.openScope()
 	defer p.closeScope()
 
-	p.expect(token.TK_自)
+	init, _ := p.parseSimpleStmt(initDefine)
+	/*
+		if as, ok := init.(*ast.AssignStmt); ok {
+			as.Tok = token.ToWaTok(token.DEFINE)
+			p.shortVarDecl(as, as.Lhs)
+		}
+	*/
+	p.expect(token.TK_逗号)
+	p.expect(token.TK_到)
+	cond, _ := p.parseSimpleStmt(basic)
+	p.expect(token.TK_逗号)
+	p.expect(token.TK_有)
+	post, _ := p.parseSimpleStmt(basic)
+
+	body := p.解析语句块()
+
+	// regular for statement
+	return &ast.ForStmt{
+		For:  pos,
+		Init: init,
+		// Hack here
+		Cond: &ast.UnaryExpr{Op: watoken.Token(token.NOT), X: p.makeExpr(cond, "boolean or range expression")},
+		Post: post,
+		Body: body,
+	}
+}
+
+func (p *parser) 解析循环语句() ast.Stmt {
+	if p.trace {
+		defer un(trace(p, "ForRangeStmt"))
+	}
+
+	pos := p.expect(token.TK_自)
+	p.openScope()
+	defer p.closeScope()
+
 	frm := p.parseExpr(false)
 	p.expect(token.TK_至)
 	tu := p.parseExpr(false)
