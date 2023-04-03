@@ -22,11 +22,13 @@ type PkgVFS struct {
 
 // 通用配置信息
 type Config struct {
-	BuilgTags []string // 条件编译的标志
+	WaBackend string   // 编译器后端
 	WaRoot    string   // 凹 程序根目录, src 目录下是包代码, 为空时用内置标准库实现
 	WaArch    string   // 目标 CPU
 	WaOS      string   // 目标 OS
 	WaSizes   StdSizes // 指针大小
+	BuilgTags []string // 条件编译的标志
+	UnitTest  bool     // 单元测试模式
 	Optimize  bool     // 是否优化
 	Debug     bool     // 调试模式
 	LDFlags            // 链接参数
@@ -46,11 +48,15 @@ func (p *Config) Clone() *Config {
 func DefaultConfig() *Config {
 	p := &Config{}
 
+	if p.WaBackend == "" {
+		p.WaBackend = WaBackend_Default
+	}
+
 	if p.WaArch == "" {
 		if s := os.Getenv("WAARCH"); s != "" {
 			p.WaArch = s
 		} else {
-			p.WaArch = WaArch_Wasm
+			p.WaArch = WaArch_Default
 		}
 	}
 	if p.WaOS == "" {

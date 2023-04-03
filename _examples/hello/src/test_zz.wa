@@ -1,0 +1,11 @@
+// 版权 @2023 _examples/hello 作者。保留所有权利。
+
+import "testing"
+
+func init {
+	// init work
+}
+
+func TestFailed {
+	testing.Assert(false)
+}

@@ -7,6 +7,7 @@ import "wa-lang.org/wa/internal/config"
 // 命令行选项
 type Option struct {
 	Debug        bool
+	WaBackend    string
 	BuilgTags    []string
 	TargetArch   string
 	TargetOS     string
@@ -21,6 +22,9 @@ func (opt *Option) Config() *config.Config {
 
 	if opt.Debug {
 		cfg.Debug = true
+	}
+	if opt.WaBackend != "" {
+		cfg.WaBackend = opt.WaBackend
 	}
 	if len(opt.BuilgTags) > 0 {
 		cfg.BuilgTags = append(cfg.BuilgTags, opt.BuilgTags...)
@@ -40,8 +44,11 @@ func (opt *Option) Config() *config.Config {
 
 	switch cfg.WaArch {
 	case "wasm":
-		cfg.WaSizes.MaxAlign = 4
+		cfg.WaSizes.MaxAlign = 8
 		cfg.WaSizes.WordSize = 4
+	case "wasm64":
+		cfg.WaSizes.MaxAlign = 8
+		cfg.WaSizes.WordSize = 8
 	case "amd64":
 		cfg.WaSizes.MaxAlign = 8
 		cfg.WaSizes.WordSize = 8

@@ -6,10 +6,39 @@ import (
 	"embed"
 	"io/fs"
 	"strings"
+
+	"wa-lang.org/wa/internal/config"
 )
 
 //go:embed _waroot
 var _warootFS embed.FS
+
+//go:embed base.clang.ws
+var baseWsFile_clang string
+
+//go:embed base.llvm.ws
+var baseWsFile_llvm string
+
+//go:embed base.wat.ws
+var baseWsFile_wat string
+
+// 获取汇编基础代码
+func GetBaseWsCode(backend string) string {
+	switch backend {
+	case config.WaBackend_clang:
+		return baseWsFile_clang
+	case config.WaBackend_llvm:
+		return baseWsFile_llvm
+	case config.WaBackend_wat:
+		return baseWsFile_wat
+	}
+	for _, s := range config.WaBackend_List {
+		if s == backend {
+			return ""
+		}
+	}
+	panic("unreachable")
+}
 
 func GetFS() fs.FS {
 	// embed.FS 均采用 Unix 风格路径
@@ -43,10 +72,12 @@ func IsStdPkg(pkgpath string) bool {
 var stdPkgs = []string{
 	"arduino",
 	"fmt",
+	"math",
 	"os",
 	"runtime",
 	"strconv",
 	"syscall",
+	"testing",
 }
 
 var wzStdPkgs = []string{

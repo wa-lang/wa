@@ -3,6 +3,7 @@
 package apputil
 
 import (
+	"bytes"
 	"context"
 	"crypto/rand"
 	"errors"
@@ -14,6 +15,7 @@ import (
 	"sync"
 
 	"github.com/tetratelabs/wazero"
+	"github.com/tetratelabs/wazero/sys"
 
 	"wa-lang.org/wa/internal/app/waruntime"
 	"wa-lang.org/wa/internal/config"
@@ -39,10 +41,11 @@ func RunWasm(cfg *config.Config, filename string, wasmArgs ...string) (stdoutStd
 	}
 
 	wasmExe := filepath.Base(filename)
+	outputBuffer := new(bytes.Buffer)
 
 	conf := wazero.NewModuleConfig().
-		WithStdout(os.Stdout).
-		WithStderr(os.Stderr).
+		WithStdout(outputBuffer).
+		WithStderr(outputBuffer).
 		WithStdin(os.Stdin).
 		WithRandSource(rand.Reader).
 		WithSysNanosleep().
@@ -50,36 +53,52 @@ func RunWasm(cfg *config.Config, filename string, wasmArgs ...string) (stdoutStd
 		WithSysWalltime().
 		WithArgs(append([]string{wasmExe}, wasmArgs...)...)
 
+	for _, s := range os.Environ() {
+		var key, value string
+		if kv := strings.Split(s, "="); len(kv) >= 2 {
+			key = kv[0]
+			value = kv[1]
+		} else if len(kv) >= 1 {
+			key = kv[0]
+		}
+		conf = conf.WithEnv(key, value)
+	}
+
 	ctx := context.Background()
 	r := wazero.NewRuntime(ctx)
 	defer r.Close(ctx)
 
 	code, err := r.CompileModule(ctx, wasmBytes)
 	if err != nil {
-		return nil, err
+		return outputBuffer.Bytes(), err
 	}
 
 	switch cfg.WaOS {
-	case config.WaOS_Arduino:
+	case config.WaOS_arduino:
 		if _, err = waruntime.ArduinoInstantiate(ctx, r); err != nil {
-			return nil, err
+			return outputBuffer.Bytes(), err
 		}
-	case config.WaOS_Chrome:
+	case config.WaOS_chrome:
 		if _, err = waruntime.ChromeInstantiate(ctx, r); err != nil {
-			return nil, err
+			return outputBuffer.Bytes(), err
 		}
-	case config.WaOS_Wasi:
+	case config.WaOS_wasi:
 		if _, err = waruntime.WasiInstantiate(ctx, r); err != nil {
-			return nil, err
+			return outputBuffer.Bytes(), err
 		}
 	}
 
 	_, err = r.InstantiateModule(ctx, code, conf)
 	if err != nil {
-		return nil, err
+		if exitErr, ok := err.(*sys.ExitError); ok {
+			if exitErr.ExitCode() == 0 {
+				return outputBuffer.Bytes(), nil
+			}
+		}
+		return outputBuffer.Bytes(), err
 	}
 
-	return nil, nil
+	return outputBuffer.Bytes(), nil
 }
 
 func InstallWat2wasm(path string) error {

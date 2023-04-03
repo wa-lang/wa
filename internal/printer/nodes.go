@@ -386,7 +386,9 @@ func (p *printer) parameters(fields *ast.FieldList) {
 
 func (p *printer) signature(params, result *ast.FieldList) {
 	if params != nil {
-		p.parameters(params)
+		if params.Opening != token.NoPos {
+			p.parameters(params)
+		}
 	} else {
 		p.print(token.LPAREN, token.RPAREN)
 	}

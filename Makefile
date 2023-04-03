@@ -20,4 +20,7 @@ arduino-build:
 	wat2wasm a.out.wat -o a.out.wasm
 	xxd -i a.out.wasm > app.wasm.h
 
+ci-test-all:
+	go test ./...
+
 clean:

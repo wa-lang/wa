@@ -3,10 +3,15 @@
 package compiler_wat
 
 import (
+	"sort"
+	"strings"
+
 	"wa-lang.org/wa/internal/backends/compiler_wat/wir"
 	"wa-lang.org/wa/internal/backends/compiler_wat/wir/wat"
+	"wa-lang.org/wa/internal/config"
 	"wa-lang.org/wa/internal/loader"
 	"wa-lang.org/wa/internal/ssa"
+	"wa-lang.org/wa/internal/waroot"
 )
 
 type Compiler struct {
@@ -24,7 +29,7 @@ func New() *Compiler {
 }
 
 func (p *Compiler) Compile(prog *loader.Program, mainFunc string) (output string, err error) {
-	p.module.BaseWat = modBaseWat_wasi
+	p.CompileWsFiles(prog)
 
 	for _, pkg := range prog.Pkgs {
 		p.ssaPkg = pkg.SSAPkg
@@ -56,6 +61,45 @@ func (p *Compiler) Compile(prog *loader.Program, mainFunc string) (output string
 	}
 
 	return p.module.ToWatModule().String(), nil
+}
+
+func (p *Compiler) CompileWsFiles(prog *loader.Program) {
+	var sb strings.Builder
+
+	sb.WriteString(waroot.GetBaseWsCode(config.WaBackend_wat))
+	sb.WriteString("\n")
+
+	var pkgpathList = make([]string, 0, len(prog.Pkgs))
+	for pkgpath := range prog.Pkgs {
+		pkgpathList = append(pkgpathList, pkgpath)
+	}
+	sort.Strings(pkgpathList)
+
+	var lineCommentSep = ";; -" + strings.Repeat("-", 60-4) + "\n"
+
+	for _, pkgpath := range pkgpathList {
+		pkg := prog.Pkgs[pkgpath]
+		if len(pkg.WsFiles) == 0 {
+			continue
+		}
+
+		func() {
+			sb.WriteString(lineCommentSep)
+			sb.WriteString(";; package: " + pkgpath + "\n")
+			sb.WriteString(lineCommentSep)
+			sb.WriteString("\n")
+
+			for _, sf := range pkg.WsFiles {
+				sb.WriteString(";; file: " + sf.Name + "\n")
+				sb.WriteString("\n")
+
+				sb.WriteString(strings.TrimSpace(sf.Code))
+				sb.WriteString("\n")
+			}
+		}()
+	}
+
+	p.module.BaseWat = sb.String()
 }
 
 func (p *Compiler) CompilePkgConst(ssaPkg *ssa.Package) {

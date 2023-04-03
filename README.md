@@ -55,7 +55,7 @@ Go >= 1.17
 Print rune and call function：
 
 ```wa
-# Copyright @2019-2022 The Wa author. All rights reserved.
+// Copyright @2019-2022 The Wa author. All rights reserved.
 
 import "fmt"
 
@@ -118,22 +118,3 @@ $ go run main.go run _examples/prime
 
 More examples [_examples](_examples)
 
-## Execut as a script
-
-The Wa language itself can also be executed like the Lua language embedded in the Go host locale:
-
-```
-package main
-
-import (
-	"fmt"
-	"wa-lang.org/wa/api"
-)
-
-func main() {
-	output, err := api.RunCode(api.DefaultConfig(), "hello.wa", code)
-	fmt.Print(string(output), err)
-}
-```
-
-Note: Executing as a script currently only supports native environments.
