@@ -55,7 +55,7 @@ Go >= 1.17
 Print rune and call function：
 
 ```wa
-# Copyright @2019-2022 The Wa author. All rights reserved.
+// Copyright @2019-2022 The Wa author. All rights reserved.
 
 import "fmt"
 
