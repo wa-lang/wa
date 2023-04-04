@@ -611,23 +611,41 @@ func (check *Checker) builtin(x *operand, call *ast.CallExpr, id builtinId) (_ b
 		// result is constant - no need to record signature
 
 	case _Assert:
-		// assert 语义变化:
-		// 变成 testing 环境使用的运行时函数
+		filename := check.fset.Position(x.pos()).Filename
 
 		// 必须是在测试代码中有效
-		filename := check.fset.Position(x.pos()).Filename
 		if !strings.Contains(filename, "_test.") && !strings.HasPrefix(filename, "test_") {
 			check.errorf(x.pos(), "assert only for testing")
 			return
 		}
 
-		// 放松检查, bool 变量放到运行时处理
-		if !isBoolean(x.typ) {
-			check.invalidArg(x.pos(), "%s is not a boolean type", x)
-			return
-		}
+		// assert 语义变化:
+		// 变成 testing 环境使用的运行时函数
+		if strings.HasSuffix(filename, ".wa") {
+			// 放松检查, bool 变量放到运行时处理
+			if !isBoolean(x.typ) {
+				check.invalidArg(x.pos(), "%s is not a boolean type", x)
+				return
+			}
+			if nargs > 2 {
+				check.errorf(call.Pos(), "%v expects %d or %d arguments; found %d", call, 1, 2, nargs)
+				return
+			}
+			// assert(ok, message)
+			if nargs == 2 {
+				var xArg1 operand
+				check.expr(&xArg1, call.Args[1])
+				if !isString(xArg1.typ) {
+					check.invalidArg(x.pos(), "%s is not a string type", &xArg1)
+					return
+				}
+			}
 
-		if false {
+			x.mode = novalue
+			if check.Types != nil {
+				check.recordBuiltinType(call.Fun, makeSig(nil, x.typ))
+			}
+		} else if strings.HasSuffix(filename, ".wa.go") {
 			// assert(pred) causes a typechecker error if pred is false.
 			// The result of assert is the value of pred if there is no error.
 			// Note: assert is only available in self-test mode.

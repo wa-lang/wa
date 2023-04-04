@@ -502,6 +502,16 @@ func (g *functionGenerator) genCall(inst *ssa.Call) (insts []wat.Inst, ret_type 
 
 func (g *functionGenerator) genBuiltin(call *ssa.CallCommon) (insts []wat.Inst, ret_type wir.ValueType) {
 	switch call.Value.Name() {
+	case "assert":
+		// TODO: 支持字符串参数
+		arg := call.Args[0]
+		av := g.getValue(arg).value
+		avt := av.Type()
+		if avt.Equal(g.module.I32) || avt.Equal(g.module.U32) {
+			insts = append(insts, av.EmitPush()...)
+			insts = append(insts, wat.NewInstCall("$runtime.assert"))
+		}
+
 	case "print", "println":
 		for _, arg := range call.Args {
 			av := g.getValue(arg).value

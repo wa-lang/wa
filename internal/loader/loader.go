@@ -89,6 +89,11 @@ func (p *_Loader) loadProgram(vfs *config.PkgVFS, manifest *config.Manifest) (*P
 	logger.DumpFS(&config.EnableTrace_loader, "vfs.app", vfs.App, ".")
 	logger.Tracef(&config.EnableTrace_loader, "manifest: %s", manifest.JSONString())
 
+	// 注册 assert 函数
+	if p.cfg.UnitTest {
+		types.DefPredeclaredTestFuncs()
+	}
+
 	p.vfs = *vfs
 	p.prog.Cfg = &p.cfg
 	p.prog.Manifest = manifest

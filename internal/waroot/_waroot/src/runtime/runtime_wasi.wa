@@ -34,6 +34,14 @@ func procExit(code: i32) {
 	wasi.ProcExit(code)
 }
 
+#wa:linkname $runtime.assert
+func assert(ok: i32) {
+	if ok == 0 {
+		println("assert failed")
+		procExit(1)
+	}
+}
+
 #wa:linkname puts
 func puts(ptr: i32, len: i32)
 
