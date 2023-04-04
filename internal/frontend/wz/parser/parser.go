@@ -1963,7 +1963,7 @@ func (p *parser) 解析条件语句() *ast.IfStmt {
 			else_ = &ast.BadStmt{From: p.pos, To: p.pos}
 		}
 	} else {
-		p.expectSemi()
+		// p.expectSemi()
 	}
 
 	return &ast.IfStmt{If: pos, Init: init, Cond: cond, Body: body, Else: else_}
@@ -2668,7 +2668,25 @@ func (p *parser) 解析函数定义() *ast.FuncDecl {
 		recv = p.parseParameters(scope, false)
 	}
 
+	// 函数名
 	ident := p.parseIdent()
+
+	if recv == nil && p.tok == token.PERIOD {
+		thisIdent := &ast.Ident{Name: "此"}
+		thisField := &ast.Field{
+			Names: []*ast.Ident{thisIdent},
+			Type:  &ast.StarExpr{X: ident},
+		}
+		recv = &ast.FieldList{
+			List: []*ast.Field{thisField},
+		}
+
+		p.declare(thisField, nil, scope, ast.Var, thisIdent)
+
+		p.next()
+		ident = p.parseIdent()
+	}
+
 	pos := p.expect(token.TK_右方)
 
 	params, results, arrowPos := p.parseSignature(scope)
@@ -2952,18 +2970,16 @@ func (p *parser) 解析三段循环语句() ast.Stmt {
 	defer p.closeScope()
 
 	init, _ := p.parseSimpleStmt(initDefine)
-	/*
-		if as, ok := init.(*ast.AssignStmt); ok {
-			as.Tok = token.ToWaTok(token.DEFINE)
-			p.shortVarDecl(as, as.Lhs)
-		}
-	*/
+
 	p.expect(token.TK_逗号)
 	p.expect(token.TK_到)
 	cond, _ := p.parseSimpleStmt(basic)
 	p.expect(token.TK_逗号)
 	p.expect(token.TK_有)
-	post, _ := p.parseSimpleStmt(basic)
+	var post ast.Stmt
+	if p.tok != token.TK_冒号 {
+		post, _ = p.parseSimpleStmt(basic)
+	}
 
 	body := p.解析语句块()
 
@@ -3032,7 +3048,6 @@ func (p *parser) 解析择路语句() ast.Stmt {
 		list = append(list, p.解析择路分支())
 	}
 	rbrace := p.expect(token.TK_句号)
-	p.expectSemi()
 	body := &ast.BlockStmt{Lbrace: lbrace, List: list, Rbrace: rbrace}
 
 	return &ast.SwitchStmt{Switch: pos, Init: nil, Tag: id, Body: body}
