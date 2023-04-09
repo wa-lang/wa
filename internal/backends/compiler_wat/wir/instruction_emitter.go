@@ -447,6 +447,13 @@ func (m *Module) EmitPrintString(v Value) (insts []wat.Inst) {
 	return
 }
 
+func (m *Module) EmitStringValue(v Value) (insts []wat.Inst) {
+	s := v.(*aString)
+	insts = append(insts, s.Extract("data").EmitPush()...)
+	insts = append(insts, s.Extract("len").EmitPush()...)
+	return
+}
+
 func (m *Module) emitPrintValue(v Value) (insts []wat.Inst) {
 
 	panic("Todo")

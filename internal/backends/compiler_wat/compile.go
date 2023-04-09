@@ -15,6 +15,7 @@ import (
 )
 
 type Compiler struct {
+	prog   *loader.Program
 	ssaPkg *ssa.Package
 
 	module *wir.Module
@@ -29,6 +30,7 @@ func New() *Compiler {
 }
 
 func (p *Compiler) Compile(prog *loader.Program, mainFunc string) (output string, err error) {
+	p.prog = prog
 	p.CompileWsFiles(prog)
 
 	for _, pkg := range prog.Pkgs {
@@ -145,9 +147,9 @@ func (p *Compiler) CompilePkgFunc(ssaPkg *ssa.Package) {
 	for _, v := range fns {
 		if len(v.Blocks) < 1 {
 			if v.RuntimeGetter() {
-				p.module.AddFunc(newFunctionGenerator(p.module).genGetter(v))
+				p.module.AddFunc(newFunctionGenerator(p.prog, p.module).genGetter(v))
 			} else if v.RuntimeSetter() {
-				p.module.AddFunc(newFunctionGenerator(p.module).genSetter(v))
+				p.module.AddFunc(newFunctionGenerator(p.prog, p.module).genSetter(v))
 			} else if iname0, iname1 := v.ImportName(); len(iname0) > 0 && len(iname1) > 0 {
 				var fn_name string
 				if len(v.LinkName()) > 0 {
@@ -161,6 +163,6 @@ func (p *Compiler) CompilePkgFunc(ssaPkg *ssa.Package) {
 			}
 			continue
 		}
-		p.module.AddFunc(newFunctionGenerator(p.module).genFunction(v))
+		p.module.AddFunc(newFunctionGenerator(p.prog, p.module).genFunction(v))
 	}
 }

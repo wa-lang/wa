@@ -35,9 +35,25 @@ func procExit(code: i32) {
 }
 
 #wa:linkname $runtime.assert
-func assert(ok: i32) {
+func assert(ok: i32, pos_msg_ptr: i32, pos_msg_len: i32) {
 	if ok == 0 {
-		println("assert failed")
+		print("assert failed (")
+		puts(pos_msg_ptr, pos_msg_len)
+		putchar(')')
+		putchar('\n')
+		procExit(1)
+	}
+}
+
+#wa:linkname $runtime.assertWithMessage
+func assertWithMessage(ok: i32, msg_ptr: i32, msg_len: i32, pos_msg_ptr: i32, pos_msg_len: i32) {
+	if ok == 0 {
+		print("assert failed: ")
+		puts(msg_ptr, msg_len)
+		print(" (")
+		puts(pos_msg_ptr, pos_msg_len)
+		putchar(')')
+		putchar('\n')
 		procExit(1)
 	}
 }

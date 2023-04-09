@@ -1,15 +1,13 @@
 // 版权 @2023 _examples/hello 作者。保留所有权利。
 
-import "testing"
-
 func init {
 	// println("zz_test.wa")
 }
 
 func TestFoo {
-	testing.Assert(true)
+	assert(true, "foo ok")
 }
 
 func TestBar {
-	testing.Assert(true)
+	assert(true, "bar ok")
 }

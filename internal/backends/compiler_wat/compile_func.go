@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"wa-lang.org/wa/internal/constant"
+	"wa-lang.org/wa/internal/loader"
 	"wa-lang.org/wa/internal/token"
 	"wa-lang.org/wa/internal/types"
 
@@ -22,6 +23,7 @@ type valueWrap struct {
 }
 
 type functionGenerator struct {
+	prog   *loader.Program
 	module *wir.Module
 
 	locals_map map[ssa.Value]valueWrap
@@ -34,8 +36,8 @@ type functionGenerator struct {
 	var_rets           []wir.Value
 }
 
-func newFunctionGenerator(module *wir.Module) *functionGenerator {
-	return &functionGenerator{module: module, locals_map: make(map[ssa.Value]valueWrap)}
+func newFunctionGenerator(prog *loader.Program, module *wir.Module) *functionGenerator {
+	return &functionGenerator{prog: prog, module: module, locals_map: make(map[ssa.Value]valueWrap)}
 }
 
 func (g *functionGenerator) getValue(i ssa.Value) valueWrap {
@@ -143,7 +145,7 @@ func (g *functionGenerator) getValue(i ssa.Value) valueWrap {
 
 		if v.Parent() != nil {
 			if g.module.FindFunc(fn_name) == nil {
-				g.module.AddFunc(newFunctionGenerator(g.module).genFunction(v))
+				g.module.AddFunc(newFunctionGenerator(g.prog, g.module).genFunction(v))
 			}
 		}
 
@@ -464,7 +466,7 @@ func (g *functionGenerator) genCall(inst *ssa.Call) (insts []wat.Inst, ret_type 
 		}
 		callee := inst.Call.StaticCallee()
 		if callee.Parent() != nil {
-			g.module.AddFunc(newFunctionGenerator(g.module).genFunction(callee))
+			g.module.AddFunc(newFunctionGenerator(g.prog, g.module).genFunction(callee))
 		}
 
 		if len(callee.LinkName()) > 0 {
@@ -503,13 +505,45 @@ func (g *functionGenerator) genCall(inst *ssa.Call) (insts []wat.Inst, ret_type 
 func (g *functionGenerator) genBuiltin(call *ssa.CallCommon) (insts []wat.Inst, ret_type wir.ValueType) {
 	switch call.Value.Name() {
 	case "assert":
-		// TODO: 支持字符串参数
-		arg := call.Args[0]
-		av := g.getValue(arg).value
-		avt := av.Type()
-		if avt.Equal(g.module.I32) || avt.Equal(g.module.U32) {
-			insts = append(insts, av.EmitPush()...)
+		for i, arg := range call.Args {
+			av := g.getValue(arg).value
+			avt := av.Type()
+
+			// assert(ok: bool, ...)
+			if i == 0 {
+				if !avt.Equal(g.module.I32) && !avt.Equal(g.module.U32) {
+					panic("call.Args[0] is not bool")
+				}
+				insts = append(insts, av.EmitPush()...)
+				continue
+			}
+
+			// assert(ok: bool, messag: string)
+			if i == 1 {
+				if !avt.Equal(g.module.STRING) {
+					panic("call.Args[1] is not string")
+				}
+				insts = append(insts, g.module.EmitStringValue(av)...)
+				continue
+			}
+
+			panic("unreachable")
+		}
+
+		// 位置信息
+		{
+			callPos := g.prog.Fset.Position(call.Pos())
+			s := wir.NewConst(callPos.String(), g.module.STRING)
+			insts = append(insts, g.module.EmitStringValue(s)...)
+		}
+
+		switch len(call.Args) {
+		case 1:
 			insts = append(insts, wat.NewInstCall("$runtime.assert"))
+		case 2:
+			insts = append(insts, wat.NewInstCall("$runtime.assertWithMessage"))
+		default:
+			panic("len(call.Args) == 1 or 2")
 		}
 
 	case "print", "println":
@@ -813,7 +847,7 @@ func (g *functionGenerator) genMakeClosre(inst *ssa.MakeClosure) (insts []wat.In
 func (g *functionGenerator) genMakeClosre_Anonymous(inst *ssa.MakeClosure) (insts []wat.Inst, ret_type wir.ValueType) {
 	f := inst.Fn.(*ssa.Function)
 
-	g.module.AddFunc(newFunctionGenerator(g.module).genFunction(f))
+	g.module.AddFunc(newFunctionGenerator(g.prog, g.module).genFunction(f))
 
 	ret_type = g.module.GenValueType_Closure(f.Signature)
 	if !ret_type.Equal(g.module.GenValueType(inst.Type())) {
