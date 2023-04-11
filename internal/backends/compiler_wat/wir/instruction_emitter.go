@@ -255,7 +255,7 @@ func (m *Module) EmitGenIndexAddr(x, id Value) (insts []wat.Inst, ret_type Value
 		switch typ := x.Type().(*Ptr).Base.(type) {
 		case *Array:
 			insts = append(insts, x.EmitPush()...)
-			insts = append(insts, NewConst(strconv.Itoa(typ.Base.size()), m.I32).EmitPush()...)
+			insts = append(insts, NewConst(strconv.Itoa(typ.Base.Size()), m.I32).EmitPush()...)
 			insts = append(insts, id.EmitPush()...)
 			insts = append(insts, wat.NewInstMul(wat.I32{}))
 			insts = append(insts, wat.NewInstAdd(wat.I32{}))
@@ -269,7 +269,7 @@ func (m *Module) EmitGenIndexAddr(x, id Value) (insts []wat.Inst, ret_type Value
 		switch typ := x.Type().(*Ref).Base.(type) {
 		case *Array:
 			insts = append(insts, x.EmitPush()...)
-			insts = append(insts, NewConst(strconv.Itoa(typ.Base.size()), m.I32).EmitPush()...)
+			insts = append(insts, NewConst(strconv.Itoa(typ.Base.Size()), m.I32).EmitPush()...)
 			insts = append(insts, id.EmitPush()...)
 			insts = append(insts, wat.NewInstMul(wat.I32{}))
 			insts = append(insts, wat.NewInstAdd(wat.I32{}))
@@ -283,7 +283,7 @@ func (m *Module) EmitGenIndexAddr(x, id Value) (insts []wat.Inst, ret_type Value
 		base_type := x.Type().(*Slice).Base
 		insts = append(insts, x.Extract("block").EmitPush()...)
 		insts = append(insts, x.Extract("data").EmitPush()...)
-		insts = append(insts, NewConst(strconv.Itoa(base_type.size()), m.I32).EmitPush()...)
+		insts = append(insts, NewConst(strconv.Itoa(base_type.Size()), m.I32).EmitPush()...)
 		insts = append(insts, id.EmitPush()...)
 		insts = append(insts, wat.NewInstMul(wat.I32{}))
 		insts = append(insts, wat.NewInstAdd(wat.I32{}))
@@ -326,12 +326,12 @@ func (m *Module) EmitGenSlice(x, low, high Value) (insts []wat.Inst, ret_type Va
 	case *aRef:
 		switch btype := x.Type().(*Ref).Base.(type) {
 		case *Slice:
-			slt := m.genValueType_Slice(btype.Base)
+			slt := m.GenValueType_Slice(btype.Base)
 			insts = slt.emitGenFromRefOfSlice(x, low, high)
 			ret_type = slt
 
 		case *Array:
-			slt := m.genValueType_Slice(btype.Base)
+			slt := m.GenValueType_Slice(btype.Base)
 			insts = slt.emitGenFromRefOfArray(x, low, high)
 			ret_type = slt
 
@@ -347,7 +347,7 @@ func (m *Module) EmitGenSlice(x, low, high Value) (insts []wat.Inst, ret_type Va
 }
 
 func (m *Module) EmitGenMakeSlice(base_type ValueType, Len, Cap Value) (insts []wat.Inst, ret_type ValueType) {
-	slice_type := m.genValueType_Slice(base_type)
+	slice_type := m.GenValueType_Slice(base_type)
 	insts = slice_type.emitGenMake(Len, Cap)
 	ret_type = slice_type
 	return
@@ -435,6 +435,29 @@ func (m *Module) EmitGenCap(x Value) (insts []wat.Inst) {
 		logger.Fatalf("Todo: %T", x)
 	}
 
+	return
+}
+
+func (m *Module) EmitGenMakeInterface(x Value, interfaceType ValueType) (insts []wat.Inst) {
+	x_type := x.Type()
+	x_ref_type := m.GenValueType_Ref(x_type)
+
+	return interfaceType.(*Interface).emitGenMake(x, x_ref_type)
+}
+
+func (m *Module) EmitInvoke(i Value, params []Value, mid int, typeName string) (insts []wat.Inst) {
+	iface := i.(*aInterface)
+	insts = append(insts, iface.Extract("data").(*aRef).emitGetValue()...)
+
+	for _, v := range params {
+		insts = append(insts, v.EmitPush()...)
+	}
+
+	insts = append(insts, iface.Extract("itab").EmitPush()...)
+	insts = append(insts, wat.NewInstLoad(wat.I32{}, 0, 4))
+	insts = append(insts, wat.NewInstLoad(wat.I32{}, 8+mid*4, 4))
+
+	insts = append(insts, wat.NewInstCallIndirect(typeName))
 	return
 }
 

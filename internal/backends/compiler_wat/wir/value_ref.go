@@ -13,8 +13,9 @@ import (
 Ref:
 **************************************/
 type Ref struct {
-	Base ValueType
-	*Struct
+	tCommon
+	Base        ValueType
+	underlying  *Struct
 	_base_block *Block
 	_void       ValueType
 }
@@ -32,16 +33,16 @@ func (m *Module) GenValueType_Ref(base ValueType) *Ref {
 	var members []Field
 	members = append(members, NewField("block", ref_t._base_block))
 	members = append(members, NewField("data", base_ptr))
-	ref_t.Struct = m.GenValueType_Struct(ref_t.Name()+".underlying", members)
-	m.regValueType(&ref_t)
+	ref_t.underlying = m.GenValueType_Struct(ref_t.Name()+".underlying", members)
+	m.addValueType(&ref_t)
 	return &ref_t
 }
 
 func (t *Ref) Name() string         { return t.Base.Name() + ".$ref" }
-func (t *Ref) size() int            { return t.Struct.size() }
-func (t *Ref) align() int           { return t.Struct.align() }
-func (t *Ref) onFree() int          { return t.Struct.onFree() }
-func (t *Ref) Raw() []wat.ValueType { return t.Struct.Raw() }
+func (t *Ref) Size() int            { return t.underlying.Size() }
+func (t *Ref) align() int           { return t.underlying.align() }
+func (t *Ref) onFree() int          { return t.underlying.onFree() }
+func (t *Ref) Raw() []wat.ValueType { return t.underlying.Raw() }
 func (t *Ref) Equal(u ValueType) bool {
 	if ut, ok := u.(*Ref); ok {
 		return t.Base.Equal(ut.Base)
@@ -53,9 +54,9 @@ func (t *Ref) emitHeapAlloc() (insts []wat.Inst) {
 	//insts = append(insts, wat.NewBlank())
 	//insts = append(insts, wat.NewComment("Ref.emitHeapAlloc start"))
 
-	insts = append(insts, t._base_block.emitHeapAlloc(NewConst("1", t._u32))...)
-	insts = append(insts, wat.NewInstCall("$wa.RT.DupWatStack"))
-	insts = append(insts, NewConst("16", t._u32).EmitPush()...)
+	insts = append(insts, t._base_block.emitHeapAlloc(NewConst("1", t.underlying._u32))...)
+	insts = append(insts, wat.NewInstCall("$wa.RT.DupI32"))
+	insts = append(insts, NewConst("16", t.underlying._u32).EmitPush()...)
 	insts = append(insts, wat.NewInstAdd(wat.U32{}))
 
 	//insts = append(insts, wat.NewComment("Ref.emitHeapAlloc end"))
@@ -70,8 +71,8 @@ func (t *Ref) emitStackAlloc() (insts []wat.Inst) {
 
 	logger.Fatal("Todo")
 
-	insts = append(insts, NewConst("0", t._u32).EmitPush()...)
-	insts = append(insts, NewConst(strconv.Itoa(t.Base.size()), t._u32).EmitPush()...)
+	insts = append(insts, NewConst("0", t.underlying._u32).EmitPush()...)
+	insts = append(insts, NewConst(strconv.Itoa(t.Base.Size()), t.underlying._u32).EmitPush()...)
 	insts = append(insts, wat.NewInstCall("$waStackAlloc"))
 
 	//insts = append(insts, wat.NewComment("Ref.emitStackAlloc end"))
@@ -80,7 +81,7 @@ func (t *Ref) emitStackAlloc() (insts []wat.Inst) {
 }
 
 func (t *Ref) EmitLoadFromAddr(addr Value, offset int) []wat.Inst {
-	return t.Struct.EmitLoadFromAddr(addr, offset)
+	return t.underlying.EmitLoadFromAddr(addr, offset)
 }
 
 /**************************************
@@ -94,7 +95,7 @@ type aRef struct {
 func newValue_Ref(name string, kind ValueKind, typ *Ref) *aRef {
 	var v aRef
 	v.typ = typ
-	v.aStruct = *newValue_Struct(name, kind, typ.Struct)
+	v.aStruct = *newValue_Struct(name, kind, typ.underlying)
 	return &v
 }
 

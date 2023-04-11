@@ -26,6 +26,7 @@ func (i *Field) Equal(u Field) bool        { return i.name == u.name && i.typ.Eq
 Struct:
 **************************************/
 type Struct struct {
+	tCommon
 	name    string
 	Members []Field
 	_size   int
@@ -38,14 +39,14 @@ type iStruct interface {
 	genRawFree() (ret []fn_offset_pair)
 }
 
-func makeAlign(i, a int) int {
-	if a == 1 || a == 0 {
+func makeAlign(i, align int) int {
+	if align == 1 || align == 0 {
 		return i
 	}
-	return (i + a - 1) / a * a
+	return (i + align - 1) / align * align
 }
 
-func (m *Module) GenValueType_Struct(name string, members []Field) *Struct {
+func (m *Module) GenValueType_Struct(name string, fields []Field) *Struct {
 	t, ok := m.findValueType(name)
 	if ok {
 		return t.(*Struct)
@@ -54,15 +55,15 @@ func (m *Module) GenValueType_Struct(name string, members []Field) *Struct {
 	var struct_type Struct
 	struct_type.name = name
 	struct_type._u32 = m.U32
-	m.regValueType(&struct_type)
+	m.addValueType(&struct_type)
 
-	for _, f := range members {
+	for _, f := range fields {
 		ma := f.Type().align()
 		f._start = makeAlign(struct_type._size, ma)
 		f._typ_ptr = m.GenValueType_Ptr(f.typ)
 		struct_type.Members = append(struct_type.Members, f)
 
-		struct_type._size = f._start + f.Type().size()
+		struct_type._size = f._start + f.Type().Size()
 		if ma > struct_type._align {
 			struct_type._align = ma
 		}
@@ -72,7 +73,7 @@ func (m *Module) GenValueType_Struct(name string, members []Field) *Struct {
 }
 
 func (t *Struct) Name() string { return t.name }
-func (t *Struct) size() int    { return t._size }
+func (t *Struct) Size() int    { return t._size }
 func (t *Struct) align() int   { return t._align }
 
 type fn_offset_pair struct {
@@ -137,20 +138,22 @@ func (t *Struct) Raw() []wat.ValueType {
 }
 
 func (t *Struct) Equal(u ValueType) bool {
-	if u, ok := u.(*Struct); ok {
-		if len(t.Members) != len(u.Members) {
+	ut, ok := u.(*Struct)
+	if !ok {
+		return false
+	}
+
+	if len(t.Members) != len(ut.Members) {
+		return false
+	}
+
+	for i := range t.Members {
+		if !t.Members[i].Equal(ut.Members[i]) {
 			return false
 		}
-
-		for i := range t.Members {
-			if !t.Members[i].Equal(u.Members[i]) {
-				return false
-			}
-		}
-
-		return true
 	}
-	return false
+
+	return true
 }
 
 func (t *Struct) EmitLoadFromAddr(addr Value, offset int) (insts []wat.Inst) {
@@ -175,11 +178,17 @@ aStruct:
 **************************************/
 type aStruct struct {
 	aValue
+	typ              *Struct
 	field_const_vals map[string]Value
 }
 
 func newValue_Struct(name string, kind ValueKind, typ *Struct) *aStruct {
-	return &aStruct{aValue: aValue{name: name, kind: kind, typ: typ}}
+	var v aStruct
+	v.typ = typ
+	v.aValue.name = name
+	v.aValue.kind = kind
+	v.aValue.typ = typ
+	return &v
 }
 
 func (v *aStruct) genSubValue(m Field) Value {
@@ -274,5 +283,28 @@ func (v *aStruct) emitStoreToAddr(addr Value, offset int) (insts []wat.Inst) {
 		ptr := newValue_Ptr(addr.Name(), addr.Kind(), m._typ_ptr)
 		insts = append(insts, t.emitStoreToAddr(ptr, m._start+offset)...)
 	}
+	return
+}
+
+func (v *aStruct) emitStore(offset int) (insts []wat.Inst) {
+	st := v.Type().(*Struct)
+	for _, m := range st.Members {
+		t := v.genSubValue(m)
+		insts = append(insts, t.emitStore(m._start+offset)...)
+	}
+	return
+}
+
+func (v *aStruct) Bin() (b []byte) {
+	if v.Kind() != ValueKindConst {
+		panic("Value.bin(): const only!")
+	}
+
+	b = make([]byte, v.typ.Size())
+	for _, m := range v.typ.Members {
+		d := b[m._start:]
+		copy(d, v.genSubValue(m).Bin())
+	}
+
 	return
 }

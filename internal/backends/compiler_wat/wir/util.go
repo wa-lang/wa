@@ -8,9 +8,11 @@ import (
 	"unicode/utf8"
 
 	"wa-lang.org/wa/internal/logger"
+	"wa-lang.org/wa/internal/ssa"
 	"wa-lang.org/wa/internal/types"
 )
 
+/*
 func (m *Module) GenValueType(from types.Type) ValueType {
 	switch t := from.(type) {
 	case *types.Basic:
@@ -25,7 +27,7 @@ func (m *Module) GenValueType(from types.Type) ValueType {
 				return m.I32
 			}
 
-		case types.Uint32:
+		case types.Uint32, types.Uintptr:
 			return m.U32
 
 		case types.Int64:
@@ -77,7 +79,21 @@ func (m *Module) GenValueType(from types.Type) ValueType {
 		}
 
 	case *types.Pointer:
-		return m.GenValueType_Ref(m.GenValueType(t.Elem()))
+		tRef := m.GenValueType_Ref(m.GenValueType(t.Elem()))
+		{
+			methodset := m.ssaProg.MethodSets.MethodSet(t)
+			for i := 0; i < methodset.Len(); i++ {
+				sel := methodset.At(i)
+				method := m.ssaProg.MethodValue(sel)
+
+				var mtype FnType
+				mtype.Name, _ = GetFnMangleName(method)
+				mtype.FnSig = m.GenFnSig(method.Signature)
+
+				tRef.AddMethodEntry(mtype)
+			}
+		}
+		return tRef
 
 	case *types.Named:
 		switch ut := t.Underlying().(type) {
@@ -94,7 +110,30 @@ func (m *Module) GenValueType(from types.Type) ValueType {
 			}
 			pkg_name, _ := GetPkgMangleName(t.Obj().Pkg().Path())
 			obj_name := GenSymbolName(t.Obj().Name())
-			return m.GenValueType_Struct(pkg_name+"."+obj_name, fs)
+			tStruct := m.GenValueType_Struct(pkg_name+"."+obj_name, fs)
+			{
+				methodset := m.ssaProg.MethodSets.MethodSet(t)
+				for i := 0; i < methodset.Len(); i++ {
+					sel := methodset.At(i)
+					method := m.ssaProg.MethodValue(sel)
+
+					var mtype FnType
+					mtype.Name, _ = GetFnMangleName(method)
+					mtype.FnSig = m.GenFnSig(method.Signature)
+
+					tStruct.AddMethodEntry(mtype)
+				}
+			}
+
+			return tStruct
+
+		case *types.Interface:
+			if ut.NumMethods() == 0 {
+				return m.GenValueType(ut)
+			}
+			pkg_name, _ := GetPkgMangleName(t.Obj().Pkg().Path())
+			obj_name := GenSymbolName(t.Obj().Name())
+			return m.GenValueType_Interface(pkg_name+"."+obj_name, ut)
 
 		case *types.Signature:
 			return m.GenValueType_Closure(ut)
@@ -107,17 +146,23 @@ func (m *Module) GenValueType(from types.Type) ValueType {
 		return m.GenValueType_Array(m.GenValueType(t.Elem()), int(t.Len()))
 
 	case *types.Slice:
-		return m.genValueType_Slice(m.GenValueType(t.Elem()))
+		return m.GenValueType_Slice(m.GenValueType(t.Elem()))
 
 	case *types.Signature:
 		return m.GenValueType_Closure(t)
+
+	case *types.Interface:
+		if t.NumMethods() != 0 {
+			panic("NumMethods of interface{} != 0")
+		}
+		return m.GenValueType_Interface("interface", t)
 
 	default:
 		logger.Fatalf("Todo:%T", t)
 	}
 
 	return nil
-}
+} //*/
 
 func IsNumber(v Value) bool {
 	switch v.Type().(type) {
@@ -126,6 +171,72 @@ func IsNumber(v Value) bool {
 	}
 
 	return false
+}
+
+func GetFnMangleName(v interface{}) (internal string, external string) {
+	switch f := v.(type) {
+	case *ssa.Function:
+		if recv := f.Signature.Recv(); recv != nil {
+			internal, external = GetPkgMangleName(recv.Pkg().Path())
+
+			internal += "."
+			external += "."
+			switch rt := recv.Type().(type) {
+			case *types.Named:
+				internal += GenSymbolName(rt.Obj().Name())
+				external += rt.Obj().Name()
+
+			case *types.Pointer:
+				btype, ok := rt.Elem().(*types.Named)
+				if !ok {
+					panic("Unreachable")
+				}
+				internal += GenSymbolName(btype.Obj().Name())
+				external += btype.Obj().Name()
+
+			default:
+				panic("Unreachable")
+			}
+		} else {
+			if f.Pkg != nil {
+				internal, external = GetPkgMangleName(f.Pkg.Pkg.Path())
+			}
+		}
+		internal += "."
+		external += "."
+		internal += GenSymbolName(f.Name())
+		external += f.Name()
+
+	case *types.Func:
+		internal, external = GetPkgMangleName(f.Pkg().Path())
+		sig := f.Type().(*types.Signature)
+		if recv := sig.Recv(); recv != nil {
+			internal += "."
+			external += "."
+			switch rt := recv.Type().(type) {
+			case *types.Named:
+				internal += GenSymbolName(rt.Obj().Name())
+				external += rt.Obj().Name()
+
+			case *types.Pointer:
+				btype, ok := rt.Elem().(*types.Named)
+				if !ok {
+					panic("Unreachable")
+				}
+				internal += GenSymbolName(btype.Obj().Name())
+				external += btype.Obj().Name()
+
+			default:
+				panic("Unreachable")
+			}
+		}
+		internal += "."
+		external += "."
+		internal += GenSymbolName(f.Name())
+		external += f.Name()
+	}
+
+	return internal, external
 }
 
 func GetPkgMangleName(pkg_path string) (string, string) {

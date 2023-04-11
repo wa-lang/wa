@@ -13,15 +13,16 @@ import (
 Slice:
 **************************************/
 type Slice struct {
-	Base ValueType
-	*Struct
+	tCommon
+	Base        ValueType
+	underlying  *Struct
 	_i32        ValueType
 	_u32        ValueType
 	_base_block *Block
 	_base_ptr   *Ptr
 }
 
-func (m *Module) genValueType_Slice(base ValueType) *Slice {
+func (m *Module) GenValueType_Slice(base ValueType) *Slice {
 	slice_t := Slice{Base: base}
 	t, ok := m.findValueType(slice_t.Name())
 	if ok {
@@ -38,16 +39,16 @@ func (m *Module) genValueType_Slice(base ValueType) *Slice {
 	members = append(members, NewField("data", slice_t._base_ptr))
 	members = append(members, NewField("len", slice_t._u32))
 	members = append(members, NewField("cap", slice_t._u32))
-	slice_t.Struct = m.GenValueType_Struct(slice_t.Name()+".underlying", members)
-	m.regValueType(&slice_t)
+	slice_t.underlying = m.GenValueType_Struct(slice_t.Name()+".underlying", members)
+	m.addValueType(&slice_t)
 	return &slice_t
 }
 
 func (t *Slice) Name() string         { return t.Base.Name() + ".$slice" }
-func (t *Slice) size() int            { return t.Struct.size() }
-func (t *Slice) align() int           { return t.Struct.align() }
-func (t *Slice) onFree() int          { return t.Struct.onFree() }
-func (t *Slice) Raw() []wat.ValueType { return t.Struct.Raw() }
+func (t *Slice) Size() int            { return t.underlying.Size() }
+func (t *Slice) align() int           { return t.underlying.align() }
+func (t *Slice) onFree() int          { return t.underlying.onFree() }
+func (t *Slice) Raw() []wat.ValueType { return t.underlying.Raw() }
 func (t *Slice) Equal(u ValueType) bool {
 	if ut, ok := u.(*Slice); ok {
 		return t.Base.Equal(ut.Base)
@@ -56,7 +57,7 @@ func (t *Slice) Equal(u ValueType) bool {
 }
 
 func (t *Slice) EmitLoadFromAddr(addr Value, offset int) []wat.Inst {
-	return t.Struct.EmitLoadFromAddr(addr, offset)
+	return t.underlying.EmitLoadFromAddr(addr, offset)
 }
 
 /*这个函数极其不优雅*/
@@ -73,8 +74,8 @@ func (t *Slice) emitGenFromRefOfSlice(x *aRef, low, high Value) (insts []wat.Ins
 	insts = append(insts, x.Extract("data").EmitPush()...)
 	insts = append(insts, wat.NewInstLoad(wat.U32{}, 4, 1))
 
-	//insts = append(insts, NewConst(strconv.Itoa(x.Type().(*Ref).Base.(*Slice).Base.size()), t._u32).EmitPush()...)
-	insts = append(insts, NewConst(strconv.Itoa(t.Base.size()), t._u32).EmitPush()...)
+	//insts = append(insts, NewConst(strconv.Itoa(x.Type().(*Ref).Base.(*Slice).Base.Size()), t._u32).EmitPush()...)
+	insts = append(insts, NewConst(strconv.Itoa(t.Base.Size()), t._u32).EmitPush()...)
 	insts = append(insts, low.EmitPush()...)
 	insts = append(insts, wat.NewInstMul(wat.U32{}))
 	insts = append(insts, wat.NewInstAdd(wat.U32{}))
@@ -107,8 +108,8 @@ func (t *Slice) emitGenFromRefOfArray(x *aRef, low, high Value) (insts []wat.Ins
 		low = NewConst("0", t._u32)
 	}
 	insts = append(insts, x.Extract("data").EmitPush()...)
-	//insts = append(insts, NewConst(strconv.Itoa(x.Type().(*Ref).Base.(*Array).Base.size()), t._u32).EmitPush()...)
-	insts = append(insts, NewConst(strconv.Itoa(t.Base.size()), t._u32).EmitPush()...)
+	//insts = append(insts, NewConst(strconv.Itoa(x.Type().(*Ref).Base.(*Array).Base.Size()), t._u32).EmitPush()...)
+	insts = append(insts, NewConst(strconv.Itoa(t.Base.Size()), t._u32).EmitPush()...)
 	insts = append(insts, low.EmitPush()...)
 	insts = append(insts, wat.NewInstMul(wat.U32{}))
 	insts = append(insts, wat.NewInstAdd(wat.U32{}))
@@ -136,7 +137,7 @@ func (t *Slice) emitGenMake(Len, Cap Value) (insts []wat.Inst) {
 	insts = append(insts, t._base_block.emitHeapAlloc(Cap)...)
 
 	//data
-	insts = append(insts, wat.NewInstCall("$wa.RT.DupWatStack"))
+	insts = append(insts, wat.NewInstCall("$wa.RT.DupI32"))
 	insts = append(insts, NewConst("16", t._u32).EmitPush()...)
 	insts = append(insts, wat.NewInstAdd(wat.U32{}))
 
@@ -196,7 +197,7 @@ func (t *Slice) genAppendFunc() string {
 	f.Locals = append(f.Locals, src)
 	dest := NewLocal("dest", t._base_ptr)
 	f.Locals = append(f.Locals, dest)
-	item_size := NewConst(strconv.Itoa(t.Base.size()), t._u32)
+	item_size := NewConst(strconv.Itoa(t.Base.Size()), t._u32)
 
 	inst_if := wat.NewInstIf(nil, nil, t.Raw())
 	{ //if_true
@@ -266,10 +267,10 @@ func (t *Slice) genAppendFunc() string {
 		if_false = append(if_false, new_cap.EmitPop()...)
 		if_false = append(if_false, t._base_block.emitHeapAlloc(new_cap)...) //block
 
-		if_false = append(if_false, wat.NewInstCall("$wa.RT.DupWatStack"))
+		if_false = append(if_false, wat.NewInstCall("$wa.RT.DupI32"))
 		if_false = append(if_false, NewConst("16", t._u32).EmitPush()...)
 		if_false = append(if_false, wat.NewInstAdd(wat.U32{})) //data
-		if_false = append(if_false, wat.NewInstCall("$wa.RT.DupWatStack"))
+		if_false = append(if_false, wat.NewInstCall("$wa.RT.DupI32"))
 		if_false = append(if_false, dest.EmitPop()...)     //dest
 		if_false = append(if_false, new_len.EmitPush()...) //len
 		if_false = append(if_false, new_cap.EmitPush()...) //cap
@@ -372,7 +373,7 @@ type aSlice struct {
 func newValue_Slice(name string, kind ValueKind, typ *Slice) *aSlice {
 	var v aSlice
 	v.typ = typ
-	v.aStruct = *newValue_Struct(name, kind, typ.Struct)
+	v.aStruct = *newValue_Struct(name, kind, typ.underlying)
 	return &v
 }
 
@@ -397,7 +398,7 @@ func (v *aSlice) emitSub(low, high Value) (insts []wat.Inst) {
 		low = NewConst("0", v.typ._u32)
 	}
 	insts = append(insts, v.Extract("data").EmitPush()...)
-	insts = append(insts, NewConst(strconv.Itoa(v.typ.Base.size()), v.typ._u32).EmitPush()...)
+	insts = append(insts, NewConst(strconv.Itoa(v.typ.Base.Size()), v.typ._u32).EmitPush()...)
 	insts = append(insts, low.EmitPush()...)
 	insts = append(insts, wat.NewInstMul(wat.U32{}))
 	insts = append(insts, wat.NewInstAdd(wat.U32{}))

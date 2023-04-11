@@ -25,6 +25,7 @@ type valueWrap struct {
 type functionGenerator struct {
 	prog   *loader.Program
 	module *wir.Module
+	tLib   *typeLib
 
 	locals_map map[ssa.Value]valueWrap
 
@@ -36,8 +37,8 @@ type functionGenerator struct {
 	var_rets           []wir.Value
 }
 
-func newFunctionGenerator(prog *loader.Program, module *wir.Module) *functionGenerator {
-	return &functionGenerator{prog: prog, module: module, locals_map: make(map[ssa.Value]valueWrap)}
+func newFunctionGenerator(prog *loader.Program, module *wir.Module, tLib *typeLib) *functionGenerator {
+	return &functionGenerator{prog:prog, module: module, tLib: tLib, locals_map: make(map[ssa.Value]valueWrap)}
 }
 
 func (g *functionGenerator) getValue(i ssa.Value) valueWrap {
@@ -49,16 +50,12 @@ func (g *functionGenerator) getValue(i ssa.Value) valueWrap {
 		return v
 	}
 
-	if v, ok := g.module.Globals_map[i]; ok {
+	if v := g.module.FindGlobalByValue(i); v != nil {
 		return valueWrap{value: v}
 	}
 
 	switch v := i.(type) {
 	case *ssa.Const:
-		//if v.Value == nil {
-		//	return nil
-		//}
-
 		switch t := v.Type().(type) {
 		case *types.Basic:
 			switch t.Kind() {
@@ -90,7 +87,7 @@ func (g *functionGenerator) getValue(i ssa.Value) valueWrap {
 				val, _ := constant.Uint64Val(v.Value)
 				return valueWrap{value: wir.NewConst(strconv.Itoa(int(val)), g.module.I16)}
 
-			case types.Uint32:
+			case types.Uint32, types.Uintptr:
 				val, _ := constant.Uint64Val(v.Value)
 				return valueWrap{value: wir.NewConst(strconv.Itoa(int(val)), g.module.U32)}
 
@@ -120,14 +117,15 @@ func (g *functionGenerator) getValue(i ssa.Value) valueWrap {
 
 		case *types.Pointer:
 			if v.Value == nil {
-				return valueWrap{}
+				p_type := g.tLib.compile(t)
+				return valueWrap{value: wir.NewConst("0", p_type)}
 			} else {
 				logger.Fatalf("Todo:%T", t)
 			}
 
 		case *types.Slice:
 			if v.Value == nil {
-				return valueWrap{value: wir.NewConst("0", g.module.GenValueType(t))}
+				return valueWrap{value: wir.NewConst("0", g.tLib.compile(t))}
 			}
 			logger.Fatalf("Todo:%T", t)
 
@@ -136,20 +134,20 @@ func (g *functionGenerator) getValue(i ssa.Value) valueWrap {
 		}
 
 	case ssa.Instruction:
-		nv := valueWrap{value: g.addRegister(g.module.GenValueType(i.Type()))}
+		nv := valueWrap{value: g.addRegister(g.tLib.compile(i.Type()))}
 		g.locals_map[i] = nv
 		return nv
 
 	case *ssa.Function:
-		fn_name, _ := GetFnMangleName(v)
+		fn_name, _ := wir.GetFnMangleName(v)
 
 		if v.Parent() != nil {
 			if g.module.FindFunc(fn_name) == nil {
-				g.module.AddFunc(newFunctionGenerator(g.prog, g.module).genFunction(v))
+				g.module.AddFunc(newFunctionGenerator(g.prog, g.module, g.tLib).genFunction(v))
 			}
 		}
 
-		return valueWrap{value: g.module.GenConstFnValue(fn_name, v.Signature)}
+		return valueWrap{value: g.module.GenConstFnValue(fn_name, g.tLib.GenFnSig(v.Signature))}
 	}
 
 	logger.Fatal("Value not found:", i)
@@ -159,7 +157,7 @@ func (g *functionGenerator) getValue(i ssa.Value) valueWrap {
 func (g *functionGenerator) genFunction(f *ssa.Function) *wir.Function {
 	var wir_fn wir.Function
 	{
-		internal, external := GetFnMangleName(f)
+		internal, external := wir.GetFnMangleName(f)
 		if len(f.LinkName()) > 0 {
 			wir_fn.InternalName = f.LinkName()
 		} else {
@@ -178,22 +176,20 @@ func (g *functionGenerator) genFunction(f *ssa.Function) *wir.Function {
 		break
 
 	case 1:
-		wir_fn.Results = append(wir_fn.Results, g.module.GenValueType(rets.At(0).Type()))
+		wir_fn.Results = append(wir_fn.Results, g.tLib.compile(rets.At(0).Type()))
 
 	default:
-		typ := g.module.GenValueType(rets).(*wir.Tuple)
-		for _, f := range typ.Members {
-			wir_fn.Results = append(wir_fn.Results, f.Type())
-		}
+		typ := g.tLib.compile(rets).(*wir.Tuple)
+		wir_fn.Results = append(wir_fn.Results, typ.Fields...)
 	}
 
 	for _, i := range f.FreeVars {
-		fv := valueWrap{value: wir.NewLocal(wir.GenSymbolName(i.Name()), g.module.GenValueType(i.Type()))}
+		fv := valueWrap{value: wir.NewLocal(wir.GenSymbolName(i.Name()), g.tLib.compile(i.Type()))}
 		wir_fn.Params = append(wir_fn.Params, fv.value)
 		g.locals_map[i] = fv
 	}
 	for _, i := range f.Params {
-		pv := valueWrap{value: wir.NewLocal(wir.GenSymbolName(i.Name()), g.module.GenValueType(i.Type()))}
+		pv := valueWrap{value: wir.NewLocal(wir.GenSymbolName(i.Name()), g.tLib.compile(i.Type()))}
 		wir_fn.Params = append(wir_fn.Params, pv.value)
 		g.locals_map[i] = pv
 	}
@@ -334,6 +330,9 @@ func (g *functionGenerator) genValue(v ssa.Value) ([]wat.Inst, wir.ValueType) {
 	//	logger.Printf("Instruction already exist：%s\n", v)
 	//}
 
+	//Todo: 下面的做法过于粗暴
+	g.tLib.compile(v.Type())
+
 	switch v := v.(type) {
 	case *ssa.UnOp:
 		return g.genUnOp(v)
@@ -382,6 +381,9 @@ func (g *functionGenerator) genValue(v ssa.Value) ([]wat.Inst, wir.ValueType) {
 
 	case *ssa.MakeClosure:
 		return g.genMakeClosre(v)
+
+	case *ssa.MakeInterface:
+		return g.genInterface(v)
 	}
 
 	logger.Fatalf("Todo: %v, type: %T", v, v)
@@ -455,24 +457,43 @@ func (g *functionGenerator) genBinOp(inst *ssa.BinOp) ([]wat.Inst, wir.ValueType
 
 func (g *functionGenerator) genCall(inst *ssa.Call) (insts []wat.Inst, ret_type wir.ValueType) {
 	if inst.Call.IsInvoke() {
-		logger.Fatal("Todo: genCall(), Invoke")
+		ret_type = g.tLib.compile(inst.Call.Signature().Results())
+
+		t := g.tLib.find(inst.Call.Value.Type())
+		for id, m := range t.methods {
+			if m.name == inst.Call.Method.Name() {
+				iface := g.getValue(inst.Call.Value)
+
+				var params []wir.Value
+				for _, v := range inst.Call.Args {
+					params = append(params, g.getValue(v).value)
+				}
+
+				insts = append(insts, g.module.EmitInvoke(iface.value, params, id, m.fullFnName)...)
+
+				break
+			}
+		}
+
+		return
+		//logger.Fatal("Todo: genCall(), Invoke")
 	}
 
 	switch inst.Call.Value.(type) {
 	case *ssa.Function:
-		ret_type = g.module.GenValueType(inst.Call.Signature().Results())
+		ret_type = g.tLib.compile(inst.Call.Signature().Results())
 		for _, v := range inst.Call.Args {
 			insts = append(insts, g.getValue(v).value.EmitPush()...)
 		}
 		callee := inst.Call.StaticCallee()
 		if callee.Parent() != nil {
-			g.module.AddFunc(newFunctionGenerator(g.prog, g.module).genFunction(callee))
+			g.module.AddFunc(newFunctionGenerator(g.prog, g.module, g.tLib).genFunction(callee))
 		}
 
 		if len(callee.LinkName()) > 0 {
 			insts = append(insts, wat.NewInstCall(callee.LinkName()))
 		} else {
-			fn_internal_name, _ := GetFnMangleName(callee)
+			fn_internal_name, _ := wir.GetFnMangleName(callee)
 			insts = append(insts, wat.NewInstCall(fn_internal_name))
 		}
 
@@ -480,7 +501,7 @@ func (g *functionGenerator) genCall(inst *ssa.Call) (insts []wat.Inst, ret_type 
 		return g.genBuiltin(inst.Common())
 
 	case *ssa.MakeClosure:
-		ret_type = g.module.GenValueType(inst.Type())
+		ret_type = g.tLib.compile(inst.Type())
 		var params []wir.Value
 		for _, v := range inst.Call.Args {
 			params = append(params, g.getValue(v).value)
@@ -489,7 +510,7 @@ func (g *functionGenerator) genCall(inst *ssa.Call) (insts []wat.Inst, ret_type 
 		insts = wir.EmitCallClosure(closure.value, params)
 
 	default:
-		ret_type = g.module.GenValueType(inst.Type())
+		ret_type = g.tLib.compile(inst.Type())
 		var params []wir.Value
 		for _, v := range inst.Call.Args {
 			params = append(params, g.getValue(v).value)
@@ -626,7 +647,7 @@ func (g *functionGenerator) genPhi(inst *ssa.Phi) ([]wat.Inst, wir.ValueType) {
 		preds = append(preds, inst.Block().Preds[i].Index)
 		values = append(values, g.getValue(v).value)
 	}
-	return g.genPhiIter(preds, values), g.module.GenValueType(inst.Type())
+	return g.genPhiIter(preds, values), g.tLib.compile(inst.Type())
 }
 
 func (g *functionGenerator) genReturn(inst *ssa.Return) []wat.Inst {
@@ -700,7 +721,7 @@ func (g *functionGenerator) genJumpID(cur, dest int) []wat.Inst {
 }
 
 func (g *functionGenerator) genAlloc(inst *ssa.Alloc) (insts []wat.Inst, ret_type wir.ValueType) {
-	typ := g.module.GenValueType(inst.Type().(*types.Pointer).Elem())
+	typ := g.tLib.compile(inst.Type().(*types.Pointer).Elem())
 	if inst.Parent().ForceRegister() {
 		nv := g.addRegister(typ)
 		g.locals_map[inst] = valueWrap{value: nv, force_register: true}
@@ -803,7 +824,7 @@ func (g *functionGenerator) genMakeSlice(inst *ssa.MakeSlice) ([]wat.Inst, wir.V
 	}
 
 	elem := inst.Type().(*types.Slice).Elem()
-	base_type := g.module.GenValueType(elem)
+	base_type := g.tLib.compile(elem)
 	Len := g.getValue(inst.Len)
 	Cap := g.getValue(inst.Cap)
 	return g.module.EmitGenMakeSlice(base_type, Len.value, Cap.value)
@@ -818,13 +839,13 @@ func (g *functionGenerator) genLookup(inst *ssa.Lookup) ([]wat.Inst, wir.ValueTy
 
 func (g *functionGenerator) genConvert(inst *ssa.Convert) (insts []wat.Inst, ret_type wir.ValueType) {
 	x := g.getValue(inst.X)
-	ret_type = g.module.GenValueType(inst.Type())
+	ret_type = g.tLib.compile(inst.Type())
 	insts = g.module.EmitGenConvert(x.value, ret_type)
 	return
 }
 
 func (g *functionGenerator) genChangeType(inst *ssa.ChangeType) (insts []wat.Inst, ret_type wir.ValueType) {
-	ret_type = g.module.GenValueType(inst.Type())
+	ret_type = g.tLib.compile(inst.Type())
 	x := g.getValue(inst.X)
 	insts = append(insts, x.value.EmitPush()...)
 	return
@@ -847,10 +868,10 @@ func (g *functionGenerator) genMakeClosre(inst *ssa.MakeClosure) (insts []wat.In
 func (g *functionGenerator) genMakeClosre_Anonymous(inst *ssa.MakeClosure) (insts []wat.Inst, ret_type wir.ValueType) {
 	f := inst.Fn.(*ssa.Function)
 
-	g.module.AddFunc(newFunctionGenerator(g.prog, g.module).genFunction(f))
+	g.module.AddFunc(newFunctionGenerator(g.prog, g.module, g.tLib).genFunction(f))
 
-	ret_type = g.module.GenValueType_Closure(f.Signature)
-	if !ret_type.Equal(g.module.GenValueType(inst.Type())) {
+	ret_type = g.module.GenValueType_Closure(g.tLib.GenFnSig(f.Signature))
+	if !ret_type.Equal(g.tLib.compile(inst.Type())) {
 		panic("ret_type != inst.Type()")
 	}
 
@@ -858,10 +879,10 @@ func (g *functionGenerator) genMakeClosre_Anonymous(inst *ssa.MakeClosure) (inst
 	{
 		var fields []wir.Field
 		for _, freevar := range f.FreeVars {
-			feild := wir.NewField(freevar.Name(), g.module.GenValueType(freevar.Type()))
+			feild := wir.NewField(freevar.Name(), g.tLib.compile(freevar.Type()))
 			fields = append(fields, feild)
 		}
-		fn_internal_name, _ := GetFnMangleName(f)
+		fn_internal_name, _ := wir.GetFnMangleName(f)
 		st_name := fn_internal_name + ".$warpdata"
 		st_free_data = g.module.GenValueType_Struct(st_name, fields)
 	}
@@ -869,15 +890,15 @@ func (g *functionGenerator) genMakeClosre_Anonymous(inst *ssa.MakeClosure) (inst
 	var warp_fn_index int
 	{
 		var warp_fn wir.Function
-		fn_name, _ := GetFnMangleName(f)
+		fn_name, _ := wir.GetFnMangleName(f)
 		warp_fn.InternalName = fn_name + ".$warpfn"
 		for _, i := range f.Params {
-			pa := valueWrap{value: wir.NewLocal(i.Name(), g.module.GenValueType(i.Type()))}
+			pa := valueWrap{value: wir.NewLocal(i.Name(), g.tLib.compile(i.Type()))}
 			warp_fn.Params = append(warp_fn.Params, pa.value)
 		}
-		warp_fn.Results = g.module.GenFnSig(f.Signature).Results
+		warp_fn.Results = g.tLib.GenFnSig(f.Signature).Results
 
-		dx := g.module.FindGlobal("$wa.RT.closure_data")
+		dx := g.module.FindGlobalByName("$wa.RT.closure_data")
 		data_ptr := wir.ExtractField(dx, "data")
 
 		warp_fn.Insts = append(warp_fn.Insts, st_free_data.EmitLoadFromAddr(data_ptr, 0)...)
@@ -894,7 +915,7 @@ func (g *functionGenerator) genMakeClosre_Anonymous(inst *ssa.MakeClosure) (inst
 		warp_fn_index = g.module.AddTableElem(warp_fn.InternalName)
 	}
 
-	closure := g.addRegister(g.module.GenValueType_Closure(f.Signature))
+	closure := g.addRegister(g.module.GenValueType_Closure(g.tLib.GenFnSig(f.Signature)))
 
 	free_data := g.addRegister(st_free_data)
 	{
@@ -923,25 +944,25 @@ func (g *functionGenerator) genMakeClosre_Anonymous(inst *ssa.MakeClosure) (inst
 func (g *functionGenerator) genMakeClosre_Bound(inst *ssa.MakeClosure) (insts []wat.Inst, ret_type wir.ValueType) {
 	f := inst.Fn.(*ssa.Function)
 
-	ret_type = g.module.GenValueType_Closure(f.Signature)
-	if !ret_type.Equal(g.module.GenValueType(inst.Type())) {
+	ret_type = g.module.GenValueType_Closure(g.tLib.GenFnSig(f.Signature))
+	if !ret_type.Equal(g.tLib.compile(inst.Type())) {
 		panic("ret_type != inst.Type()")
 	}
 
-	recv_type := g.module.GenValueType(f.FreeVars[0].Type())
+	recv_type := g.tLib.compile(f.FreeVars[0].Type())
 
 	var warp_fn_index int
 	{
 		var warp_fn wir.Function
-		fn_name, _ := GetFnMangleName(f.Object())
+		fn_name, _ := wir.GetFnMangleName(f.Object())
 		warp_fn.InternalName = fn_name + ".$bound"
 		for _, i := range f.Params {
-			pa := valueWrap{value: wir.NewLocal(i.Name(), g.module.GenValueType(i.Type()))}
+			pa := valueWrap{value: wir.NewLocal(i.Name(), g.tLib.compile(i.Type()))}
 			warp_fn.Params = append(warp_fn.Params, pa.value)
 		}
-		warp_fn.Results = g.module.GenFnSig(f.Signature).Results
+		warp_fn.Results = g.tLib.GenFnSig(f.Signature).Results
 
-		dx := g.module.FindGlobal("$wa.RT.closure_data")
+		dx := g.module.FindGlobalByName("$wa.RT.closure_data")
 		data_ptr := wir.ExtractField(dx, "data")
 
 		warp_fn.Insts = append(warp_fn.Insts, recv_type.EmitLoadFromAddr(data_ptr, 0)...)
@@ -958,7 +979,7 @@ func (g *functionGenerator) genMakeClosre_Bound(inst *ssa.MakeClosure) (insts []
 		warp_fn_index = g.module.AddTableElem(warp_fn.InternalName)
 	}
 
-	closure := g.addRegister(g.module.GenValueType_Closure(f.Signature))
+	closure := g.addRegister(g.module.GenValueType_Closure(g.tLib.GenFnSig(f.Signature)))
 
 	insts = append(insts, wir.NewConst(strconv.Itoa(warp_fn_index), g.module.U32).EmitPush()...)
 	insts = append(insts, wir.ExtractField(closure, "fn_index").EmitPop()...)
@@ -972,6 +993,16 @@ func (g *functionGenerator) genMakeClosre_Bound(inst *ssa.MakeClosure) (insts []
 	insts = append(insts, g.module.EmitStore(wir.ExtractField(closure, "data"), recv.value)...)
 
 	insts = append(insts, closure.EmitPush()...)
+	return
+}
+
+func (g *functionGenerator) genInterface(inst *ssa.MakeInterface) (insts []wat.Inst, ret_type wir.ValueType) {
+	x := g.getValue(inst.X)
+	g.tLib.markConcreteTypeUsed(inst.X.Type())
+
+	ret_type = g.tLib.compile(inst.Type())
+	g.tLib.markInterfaceUsed(inst.Type())
+	insts = g.module.EmitGenMakeInterface(x.value, ret_type)
 	return
 }
 
@@ -989,7 +1020,7 @@ func (g *functionGenerator) genGetter(f *ssa.Function) *wir.Function {
 		wir_fn.InternalName = f.LinkName()
 		wir_fn.ExternalName = f.LinkName()
 	} else {
-		wir_fn.InternalName, wir_fn.ExternalName = GetFnMangleName(f)
+		wir_fn.InternalName, wir_fn.ExternalName = wir.GetFnMangleName(f)
 	}
 
 	rets := f.Signature.Results()
@@ -997,14 +1028,14 @@ func (g *functionGenerator) genGetter(f *ssa.Function) *wir.Function {
 		logger.Fatal("rets.Len() > 1")
 		return nil
 	}
-	rtype := g.module.GenValueType(rets)
+	rtype := g.tLib.compile(rets)
 	wir_fn.Results = append(wir_fn.Results, rtype)
 
 	if len(f.Params) != 1 {
 		logger.Fatal("len(f.Params) != 1")
 		return nil
 	}
-	if !g.module.GenValueType(f.Params[0].Type()).Equal(g.module.U32) {
+	if !g.tLib.compile(f.Params[0].Type()).Equal(g.module.U32) {
 		logger.Fatal("addr_type != U32")
 		return nil
 	}
@@ -1023,7 +1054,7 @@ func (g *functionGenerator) genSetter(f *ssa.Function) *wir.Function {
 		wir_fn.InternalName = f.LinkName()
 		wir_fn.ExternalName = f.LinkName()
 	} else {
-		wir_fn.InternalName, wir_fn.ExternalName = GetFnMangleName(f)
+		wir_fn.InternalName, wir_fn.ExternalName = wir.GetFnMangleName(f)
 	}
 
 	rets := f.Signature.Results()
@@ -1036,12 +1067,12 @@ func (g *functionGenerator) genSetter(f *ssa.Function) *wir.Function {
 		logger.Fatal("len(f.Params) != 2")
 		return nil
 	}
-	if !g.module.GenValueType(f.Params[0].Type()).Equal(g.module.U32) {
+	if !g.tLib.compile(f.Params[0].Type()).Equal(g.module.U32) {
 		logger.Fatal("addr_type != U32")
 		return nil
 	}
 
-	value_type := g.module.GenValueType(f.Params[1].Type())
+	value_type := g.tLib.compile(f.Params[1].Type())
 
 	addr := wir.NewLocal("addr", g.module.GenValueType_Ptr(value_type))
 	wir_fn.Params = append(wir_fn.Params, addr)
@@ -1051,6 +1082,35 @@ func (g *functionGenerator) genSetter(f *ssa.Function) *wir.Function {
 
 	insts := g.module.EmitStore(addr, value)
 	wir_fn.Insts = append(wir_fn.Insts, insts...)
+
+	return &wir_fn
+}
+
+func (g *functionGenerator) genSizer(f *ssa.Function) *wir.Function {
+	var wir_fn wir.Function
+	if len(f.LinkName()) > 0 {
+		wir_fn.InternalName = f.LinkName()
+		wir_fn.ExternalName = f.LinkName()
+	} else {
+		wir_fn.InternalName, wir_fn.ExternalName = wir.GetFnMangleName(f)
+	}
+
+	rets := f.Signature.Results()
+	if rets.Len() != 1 {
+		logger.Fatal("rets.Len() != 1")
+		return nil
+	}
+	rtype := g.tLib.compile(rets)
+	wir_fn.Results = append(wir_fn.Results, rtype)
+
+	if len(f.Params) != 1 {
+		logger.Fatal("len(f.Params) != 1")
+		return nil
+	}
+	value_type := g.tLib.compile(f.Params[0].Type())
+	t_size := value_type.(*wir.Ref).Base.Size()
+
+	wir_fn.Insts = append(wir_fn.Insts, wir.NewConst(strconv.Itoa(t_size), g.module.I32).EmitPush()...)
 
 	return &wir_fn
 }

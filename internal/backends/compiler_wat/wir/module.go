@@ -27,10 +27,16 @@ type Module struct {
 	table     []string
 	table_map map[string]int
 
-	globals     []Value
-	Globals_map map[ssa.Value]Value
+	globals []struct {
+		v        Value
+		init_val string
+	}
+	globalsMapByValue map[ssa.Value]int
+	globalsMapByName  map[string]int
 
-	data_seg []byte
+	constGlobals []wat.Global
+
+	DataSeg *DataSeg
 
 	BaseWat string
 }
@@ -52,18 +58,18 @@ func NewModule() *Module {
 	m.F64 = &tF64{}
 
 	m.types_map = make(map[string]ValueType)
-	m.regValueType(m.VOID)
-	m.regValueType(m.RUNE)
-	m.regValueType(m.I8)
-	m.regValueType(m.U8)
-	m.regValueType(m.I16)
-	m.regValueType(m.U16)
-	m.regValueType(m.I32)
-	m.regValueType(m.U32)
-	m.regValueType(m.I64)
-	m.regValueType(m.U64)
-	m.regValueType(m.F32)
-	m.regValueType(m.F64)
+	m.addValueType(m.VOID)
+	m.addValueType(m.RUNE)
+	m.addValueType(m.I8)
+	m.addValueType(m.U8)
+	m.addValueType(m.I16)
+	m.addValueType(m.U16)
+	m.addValueType(m.I32)
+	m.addValueType(m.U32)
+	m.addValueType(m.I64)
+	m.addValueType(m.U64)
+	m.addValueType(m.F32)
+	m.addValueType(m.F64)
 
 	m.STRING = m.GenValueType_String()
 
@@ -72,7 +78,7 @@ func NewModule() *Module {
 		var free_type FnType
 		free_type.Name = "$onFree"
 		free_type.Params = []ValueType{m.I32}
-		m.addFnType(&free_type)
+		m.AddFnType(&free_type)
 	}
 
 	m.funcs_map = make(map[string]*Function)
@@ -82,9 +88,11 @@ func NewModule() *Module {
 	m.table_map = make(map[string]int)
 
 	//data_seg中先插入标志，防止产生0值
-	m.data_seg = append(m.data_seg, []byte("$$wads$$")...)
+	m.DataSeg = newDataSeg(0)
+	m.DataSeg.Append([]byte("$$wads$$"), 8)
 
-	m.Globals_map = make(map[ssa.Value]Value)
+	m.globalsMapByValue = make(map[ssa.Value]int)
+	m.globalsMapByName = make(map[string]int)
 	return &m
 }
 
@@ -107,7 +115,7 @@ func (m *Module) findFnType(name string) int {
 	return 0
 }
 
-func (m *Module) addFnType(typ *FnType) int {
+func (m *Module) AddFnType(typ *FnType) int {
 	if i := m.findFnType(typ.Name); i != 0 {
 		return i
 	}
@@ -149,27 +157,53 @@ func (m *Module) AddFunc(f *Function) {
 }
 
 func (m *Module) AddGlobal(name string, typ ValueType, is_pointer bool, ssa_value ssa.Value) Value {
-	v := NewGlobal(name, typ, is_pointer)
-	m.globals = append(m.globals, v)
+	v := struct {
+		v        Value
+		init_val string
+	}{v: NewGlobal(name, typ, is_pointer)}
+
 	if ssa_value != nil {
-		m.Globals_map[ssa_value] = v
+		m.globalsMapByValue[ssa_value] = len(m.globals)
 	}
-	return v
+	m.globalsMapByName[name] = len(m.globals)
+	m.globals = append(m.globals, v)
+	return v.v
 }
 
-func (m *Module) FindGlobal(name string) Value {
-	for _, g := range m.globals {
-		if g.Name() == name {
-			return g
-		}
-	}
-	return nil
+func (m *Module) AddConstGlobal(name string, init_val string, typ ValueType) {
+	var v wat.Global
+	v.V = wat.NewVar(name, toWatType(typ))
+	v.IsMut = false
+	v.InitValue = init_val
+
+	m.constGlobals = append(m.constGlobals, v)
 }
 
-func (m *Module) AddDataSeg(data []byte) (ptr int) {
-	ptr = len(m.data_seg)
-	m.data_seg = append(m.data_seg, data...)
-	return
+func (m *Module) FindGlobalByName(name string) Value {
+	id, ok := m.globalsMapByName[name]
+	if !ok {
+		return nil
+	}
+
+	return m.globals[id].v
+}
+
+func (m *Module) FindGlobalByValue(v ssa.Value) Value {
+	id, ok := m.globalsMapByValue[v]
+	if !ok {
+		return nil
+	}
+
+	return m.globals[id].v
+}
+
+func (m *Module) SetGlobalInitValue(name string, val string) {
+	id, ok := m.globalsMapByName[name]
+	if !ok {
+		logger.Fatalf("Global not found:%s", name)
+	}
+
+	m.globals[id].init_val = val
 }
 
 func (m *Module) genGlobalAlloc() *Function {
@@ -177,13 +211,13 @@ func (m *Module) genGlobalAlloc() *Function {
 	f.InternalName = "$waGlobalAlloc"
 
 	for _, g := range m.globals {
-		if g.Kind() != ValueKindGlobal_Pointer {
+		if g.v.Kind() != ValueKindGlobal_Pointer {
 			continue
 		}
 
-		ref := g.(*aRef)
+		ref := g.v.(*aRef)
 		t := ref.Type().(*Ref).Base
-		f.Insts = append(f.Insts, wat.NewInstConst(wat.I32{}, strconv.Itoa(t.size())))
+		f.Insts = append(f.Insts, wat.NewInstConst(wat.I32{}, strconv.Itoa(t.Size())))
 		f.Insts = append(f.Insts, wat.NewInstCall("$waHeapAlloc"))
 		f.Insts = append(f.Insts, ref.Extract("data").EmitPop()...)
 	}
@@ -219,21 +253,24 @@ func (m *Module) ToWatModule() *wat.Module {
 	}
 
 	for _, g := range m.globals {
-		raw := g.raw()
+		raw := g.v.raw()
 		for _, r := range raw {
 			var wat_global wat.Global
 			wat_global.V = r
 			wat_global.IsMut = true
+			wat_global.InitValue = g.init_val
 			wat_module.Globals = append(wat_module.Globals, wat_global)
 		}
 	}
 
-	wat_module.DataSeg = m.data_seg
+	wat_module.Globals = append(wat_module.Globals, m.constGlobals...)
+
+	wat_module.DataSeg = m.DataSeg.data
 
 	return &wat_module
 }
 
-func (m *Module) regValueType(t ValueType) {
+func (m *Module) addValueType(t ValueType) {
 	_, ok := m.types_map[t.Name()]
 	if ok {
 		logger.Fatalf("ValueType:%T already registered.", t)

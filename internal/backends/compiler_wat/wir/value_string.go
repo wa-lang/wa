@@ -12,12 +12,13 @@ import (
 String:
 **************************************/
 type String struct {
-	*Struct
-	_u8       ValueType
-	_u32      ValueType
-	_i32      ValueType
-	_u8_block *Block
-	_u8_ptr   ValueType
+	tCommon
+	underlying *Struct
+	_u8        ValueType
+	_u32       ValueType
+	_i32       ValueType
+	_u8_block  *Block
+	_u8_ptr    ValueType
 }
 
 func (m *Module) GenValueType_String() *String {
@@ -37,21 +38,21 @@ func (m *Module) GenValueType_String() *String {
 	members = append(members, NewField("block", str_t._u8_block))
 	members = append(members, NewField("data", str_t._u8_ptr))
 	members = append(members, NewField("len", str_t._u32))
-	str_t.Struct = m.GenValueType_Struct(str_t.Name()+".underlying", members)
-	m.regValueType(&str_t)
+	str_t.underlying = m.GenValueType_Struct(str_t.Name()+".underlying", members)
+	m.addValueType(&str_t)
 	return &str_t
 
 }
 
 func (t *String) Name() string           { return "string" }
-func (t *String) size() int              { return t.Struct.size() }
-func (t *String) align() int             { return t.Struct.align() }
-func (t *String) onFree() int            { return t.Struct.onFree() }
-func (t *String) Raw() []wat.ValueType   { return t.Struct.Raw() }
+func (t *String) Size() int              { return t.underlying.Size() }
+func (t *String) align() int             { return t.underlying.align() }
+func (t *String) onFree() int            { return t.underlying.onFree() }
+func (t *String) Raw() []wat.ValueType   { return t.underlying.Raw() }
 func (t *String) Equal(u ValueType) bool { _, ok := u.(*String); return ok }
 
 func (t *String) EmitLoadFromAddr(addr Value, offset int) []wat.Inst {
-	return t.Struct.EmitLoadFromAddr(addr, offset)
+	return t.underlying.EmitLoadFromAddr(addr, offset)
 }
 
 func (t *String) genFunc_Append() string {
@@ -92,16 +93,16 @@ func (t *String) genFunc_Append() string {
 	f.Locals = append(f.Locals, src)
 	dest := NewLocal("dest", t._u8_ptr)
 	f.Locals = append(f.Locals, dest)
-	item_size := NewConst(strconv.Itoa(t._u8.size()), t._u32)
+	item_size := NewConst(strconv.Itoa(t._u8.Size()), t._u32)
 
 	{ //if_false
 		//gen new slice
 		f.Insts = append(f.Insts, t._u8_block.emitHeapAlloc(new_len)...) //block
 
-		f.Insts = append(f.Insts, wat.NewInstCall("$wa.RT.DupWatStack"))
+		f.Insts = append(f.Insts, wat.NewInstCall("$wa.RT.DupI32"))
 		f.Insts = append(f.Insts, NewConst("16", t._u32).EmitPush()...)
 		f.Insts = append(f.Insts, wat.NewInstAdd(wat.U32{})) //data
-		f.Insts = append(f.Insts, wat.NewInstCall("$wa.RT.DupWatStack"))
+		f.Insts = append(f.Insts, wat.NewInstCall("$wa.RT.DupI32"))
 		f.Insts = append(f.Insts, dest.EmitPop()...)     //dest
 		f.Insts = append(f.Insts, new_len.EmitPush()...) //len
 
@@ -275,10 +276,10 @@ type aString struct {
 func newValue_String(name string, kind ValueKind, typ *String) *aString {
 	var v aString
 	v.typ = typ
-	v.aStruct = *newValue_Struct(name, kind, typ.Struct)
+	v.aStruct = *newValue_Struct(name, kind, typ.underlying)
 	if kind == ValueKindConst {
 		v.aStruct.setFieldConstValue("block", NewConst("0", typ._u8_block))
-		ptr := currentModule.AddDataSeg([]byte(name))
+		ptr := currentModule.DataSeg.Append([]byte(name), 1)
 		v.aStruct.setFieldConstValue("data", NewConst(strconv.Itoa(ptr), typ._u8_ptr))
 		v.aStruct.setFieldConstValue("len", NewConst(strconv.Itoa(len(name)), typ._u32))
 	}

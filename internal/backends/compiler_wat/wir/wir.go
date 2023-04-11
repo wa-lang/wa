@@ -43,6 +43,8 @@ type Value interface {
 	EmitPop() []wat.Inst
 	EmitRelease() []wat.Inst
 	emitStoreToAddr(addr Value, offset int) []wat.Inst
+	emitStore(offset int) []wat.Inst
+	Bin() []byte
 }
 
 /**************************************
@@ -50,10 +52,15 @@ ValueType:
 **************************************/
 type ValueType interface {
 	Name() string
-	size() int
+	Size() int
 	align() int
 	onFree() int
 	Raw() []wat.ValueType
 	Equal(ValueType) bool
 	EmitLoadFromAddr(addr Value, offset int) []wat.Inst
+
+	//AddMethodEntry(m FnType)
+	//
+	Hash() int
+	SetHash(h int)
 }

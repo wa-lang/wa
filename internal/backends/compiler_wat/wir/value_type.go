@@ -41,12 +41,36 @@ func toWatType(t ValueType) wat.ValueType {
 }
 
 /**************************************
+tCommon:
+**************************************/
+type tCommon struct {
+	_hash int
+}
+
+func (t *tCommon) Hash() int     { return t._hash }
+func (t *tCommon) SetHash(h int) { t._hash = h }
+
+//func (t *tCommon) AddMethodEntry(m FnType) { logger.Fatal("Can't add method for common type.") }
+//
+///**************************************
+//tUncommon:
+//**************************************/
+//type tUncommon struct {
+//	tCommon
+//	methodTab []FnType
+//}
+//
+//func (t *tUncommon) AddMethodEntry(m FnType) { t.methodTab = append(t.methodTab, m) }
+
+/**************************************
 tVoid:
 **************************************/
-type tVoid struct{}
+type tVoid struct {
+	tCommon
+}
 
 func (t *tVoid) Name() string           { return "void" }
-func (t *tVoid) size() int              { return 0 }
+func (t *tVoid) Size() int              { return 0 }
 func (t *tVoid) align() int             { return 0 }
 func (t *tVoid) onFree() int            { return 0 }
 func (t *tVoid) Raw() []wat.ValueType   { return []wat.ValueType{} }
@@ -59,10 +83,12 @@ func (t *tVoid) EmitLoadFromAddr(addr Value, offset int) []wat.Inst {
 /**************************************
 tRune:
 **************************************/
-type tRune struct{}
+type tRune struct {
+	tCommon
+}
 
 func (t *tRune) Name() string           { return "rune" }
-func (t *tRune) size() int              { return 4 }
+func (t *tRune) Size() int              { return 4 }
 func (t *tRune) align() int             { return 4 }
 func (t *tRune) onFree() int            { return 0 }
 func (t *tRune) Raw() []wat.ValueType   { return []wat.ValueType{wat.I32{}} }
@@ -80,10 +106,12 @@ func (t *tRune) EmitLoadFromAddr(addr Value, offset int) []wat.Inst {
 /**************************************
 tI8:
 **************************************/
-type tI8 struct{}
+type tI8 struct {
+	tCommon
+}
 
 func (t *tI8) Name() string           { return "i8" }
-func (t *tI8) size() int              { return 1 }
+func (t *tI8) Size() int              { return 1 }
 func (t *tI8) align() int             { return 1 }
 func (t *tI8) onFree() int            { return 0 }
 func (t *tI8) Raw() []wat.ValueType   { return []wat.ValueType{wat.I32{}} }
@@ -101,10 +129,12 @@ func (t *tI8) EmitLoadFromAddr(addr Value, offset int) []wat.Inst {
 /**************************************
 tU8:
 **************************************/
-type tU8 struct{}
+type tU8 struct {
+	tCommon
+}
 
 func (t *tU8) Name() string           { return "u8" }
-func (t *tU8) size() int              { return 1 }
+func (t *tU8) Size() int              { return 1 }
 func (t *tU8) align() int             { return 1 }
 func (t *tU8) onFree() int            { return 0 }
 func (t *tU8) Raw() []wat.ValueType   { return []wat.ValueType{wat.I32{}} }
@@ -122,10 +152,12 @@ func (t *tU8) EmitLoadFromAddr(addr Value, offset int) []wat.Inst {
 /**************************************
 tI16:
 **************************************/
-type tI16 struct{}
+type tI16 struct {
+	tCommon
+}
 
 func (t *tI16) Name() string           { return "i16" }
-func (t *tI16) size() int              { return 2 }
+func (t *tI16) Size() int              { return 2 }
 func (t *tI16) align() int             { return 2 }
 func (t *tI16) onFree() int            { return 0 }
 func (t *tI16) Raw() []wat.ValueType   { return []wat.ValueType{wat.I32{}} }
@@ -143,10 +175,12 @@ func (t *tI16) EmitLoadFromAddr(addr Value, offset int) []wat.Inst {
 /**************************************
 tU16:
 **************************************/
-type tU16 struct{}
+type tU16 struct {
+	tCommon
+}
 
 func (t *tU16) Name() string           { return "u16" }
-func (t *tU16) size() int              { return 2 }
+func (t *tU16) Size() int              { return 2 }
 func (t *tU16) align() int             { return 2 }
 func (t *tU16) onFree() int            { return 0 }
 func (t *tU16) Raw() []wat.ValueType   { return []wat.ValueType{wat.I32{}} }
@@ -164,10 +198,12 @@ func (t *tU16) EmitLoadFromAddr(addr Value, offset int) []wat.Inst {
 /**************************************
 tI32:
 **************************************/
-type tI32 struct{}
+type tI32 struct {
+	tCommon
+}
 
 func (t *tI32) Name() string           { return "i32" }
-func (t *tI32) size() int              { return 4 }
+func (t *tI32) Size() int              { return 4 }
 func (t *tI32) align() int             { return 4 }
 func (t *tI32) onFree() int            { return 0 }
 func (t *tI32) Raw() []wat.ValueType   { return []wat.ValueType{wat.I32{}} }
@@ -185,10 +221,12 @@ func (t *tI32) EmitLoadFromAddr(addr Value, offset int) []wat.Inst {
 /**************************************
 tU32:
 **************************************/
-type tU32 struct{}
+type tU32 struct {
+	tCommon
+}
 
 func (t *tU32) Name() string           { return "u32" }
-func (t *tU32) size() int              { return 4 }
+func (t *tU32) Size() int              { return 4 }
 func (t *tU32) align() int             { return 4 }
 func (t *tU32) onFree() int            { return 0 }
 func (t *tU32) Raw() []wat.ValueType   { return []wat.ValueType{wat.U32{}} }
@@ -206,10 +244,12 @@ func (t *tU32) EmitLoadFromAddr(addr Value, offset int) []wat.Inst {
 /**************************************
 tI64:
 **************************************/
-type tI64 struct{}
+type tI64 struct {
+	tCommon
+}
 
 func (t *tI64) Name() string           { return "i64" }
-func (t *tI64) size() int              { return 8 }
+func (t *tI64) Size() int              { return 8 }
 func (t *tI64) align() int             { return 8 }
 func (t *tI64) onFree() int            { return 0 }
 func (t *tI64) Raw() []wat.ValueType   { return []wat.ValueType{wat.I64{}} }
@@ -227,10 +267,12 @@ func (t *tI64) EmitLoadFromAddr(addr Value, offset int) []wat.Inst {
 /**************************************
 tUint64:
 **************************************/
-type tU64 struct{}
+type tU64 struct {
+	tCommon
+}
 
 func (t *tU64) Name() string           { return "u64" }
-func (t *tU64) size() int              { return 8 }
+func (t *tU64) Size() int              { return 8 }
 func (t *tU64) align() int             { return 8 }
 func (t *tU64) onFree() int            { return 0 }
 func (t *tU64) Raw() []wat.ValueType   { return []wat.ValueType{wat.U64{}} }
@@ -248,10 +290,12 @@ func (t *tU64) EmitLoadFromAddr(addr Value, offset int) []wat.Inst {
 /**************************************
 tF32:
 **************************************/
-type tF32 struct{}
+type tF32 struct {
+	tCommon
+}
 
 func (t *tF32) Name() string           { return "f32" }
-func (t *tF32) size() int              { return 4 }
+func (t *tF32) Size() int              { return 4 }
 func (t *tF32) align() int             { return 4 }
 func (t *tF32) onFree() int            { return 0 }
 func (t *tF32) Raw() []wat.ValueType   { return []wat.ValueType{wat.F32{}} }
@@ -269,10 +313,12 @@ func (t *tF32) EmitLoadFromAddr(addr Value, offset int) []wat.Inst {
 /**************************************
 tF64:
 **************************************/
-type tF64 struct{}
+type tF64 struct {
+	tCommon
+}
 
 func (t *tF64) Name() string           { return "f64" }
-func (t *tF64) size() int              { return 8 }
+func (t *tF64) Size() int              { return 8 }
 func (t *tF64) align() int             { return 8 }
 func (t *tF64) onFree() int            { return 0 }
 func (t *tF64) Raw() []wat.ValueType   { return []wat.ValueType{wat.F64{}} }
