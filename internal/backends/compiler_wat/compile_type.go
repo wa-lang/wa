@@ -6,14 +6,15 @@ import (
 	"strconv"
 
 	"wa-lang.org/wa/internal/backends/compiler_wat/wir"
+	"wa-lang.org/wa/internal/loader"
 	"wa-lang.org/wa/internal/logger"
 	"wa-lang.org/wa/internal/ssa"
 	"wa-lang.org/wa/internal/types"
 )
 
 type typeLib struct {
+	prog      *loader.Program
 	module    *wir.Module
-	ssaProg   *ssa.Program
 	typeTable map[string]*wrapType
 
 	usedConcreteTypes []*wrapType
@@ -31,8 +32,8 @@ type wrapType struct {
 	methods []wrapMethod
 }
 
-func newTypeLib(m *wir.Module, prog *ssa.Program) *typeLib {
-	te := typeLib{module: m, ssaProg: prog}
+func newTypeLib(m *wir.Module, prog *loader.Program) *typeLib {
+	te := typeLib{module: m, prog: prog}
 	te.typeTable = make(map[string]*wrapType)
 	return &te
 }
@@ -196,12 +197,12 @@ func (tLib *typeLib) compile(from types.Type) wir.ValueType {
 	}
 
 	if uncommanFlag {
-		methodset := tLib.ssaProg.MethodSets.MethodSet(from)
+		methodset := tLib.prog.SSAProgram.MethodSets.MethodSet(from)
 		for i := 0; i < methodset.Len(); i++ {
 			sel := methodset.At(i)
-			mfn := tLib.ssaProg.MethodValue(sel)
+			mfn := tLib.prog.SSAProgram.MethodValue(sel)
 
-			CompileFunc(mfn, tLib, tLib.module)
+			CompileFunc(mfn, tLib.prog, tLib, tLib.module)
 
 			var method wrapMethod
 			method.name = mfn.Name()

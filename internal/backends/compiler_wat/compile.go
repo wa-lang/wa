@@ -34,7 +34,7 @@ func (p *Compiler) Compile(prog *loader.Program, mainFunc string) (output string
 	p.prog = prog
 	p.CompileWsFiles(prog)
 
-	p.tLib = newTypeLib(p.module, prog.SSAProgram)
+	p.tLib = newTypeLib(p.module, prog)
 
 	for _, pkg := range prog.Pkgs {
 		p.ssaPkg = pkg.SSAPkg
@@ -141,19 +141,19 @@ func (p *Compiler) CompilePkgGlobal(ssaPkg *ssa.Package) {
 func (p *Compiler) CompilePkgFunc(ssaPkg *ssa.Package) {
 	for _, m := range p.ssaPkg.Members {
 		if fn, ok := m.(*ssa.Function); ok {
-			p.CompileFunc(fn, p.tLib, p.module)
+			CompileFunc(fn, p.prog, p.tLib, p.module)
 		}
 	}
 }
 
-func (p *Compiler) CompileFunc(f *ssa.Function, tLib *typeLib, module *wir.Module) {
+func CompileFunc(f *ssa.Function, prog *loader.Program, tLib *typeLib, module *wir.Module) {
 	if len(f.Blocks) < 1 {
 		if f.RuntimeGetter() {
-			module.AddFunc(newFunctionGenerator(module, tLib).genGetter(f))
+			module.AddFunc(newFunctionGenerator(prog, module, tLib).genGetter(f))
 		} else if f.RuntimeSetter() {
-			module.AddFunc(newFunctionGenerator(p.prog, module, tLib).genSetter(f))
+			module.AddFunc(newFunctionGenerator(prog, module, tLib).genSetter(f))
 		} else if f.RuntimeSizer() {
-			module.AddFunc(newFunctionGenerator(p.prog, module, tLib).genSizer(f))
+			module.AddFunc(newFunctionGenerator(prog, module, tLib).genSizer(f))
 		} else if iname0, iname1 := f.ImportName(); len(iname0) > 0 && len(iname1) > 0 {
 			var fn_name string
 			if len(f.LinkName()) > 0 {
@@ -167,5 +167,5 @@ func (p *Compiler) CompileFunc(f *ssa.Function, tLib *typeLib, module *wir.Modul
 		}
 		return
 	}
-	module.AddFunc(newFunctionGenerator(p.prog, module, tLib).genFunction(f))
+	module.AddFunc(newFunctionGenerator(prog, module, tLib).genFunction(f))
 }
