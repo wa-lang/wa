@@ -38,7 +38,7 @@ type functionGenerator struct {
 }
 
 func newFunctionGenerator(prog *loader.Program, module *wir.Module, tLib *typeLib) *functionGenerator {
-	return &functionGenerator{prog:prog, module: module, tLib: tLib, locals_map: make(map[ssa.Value]valueWrap)}
+	return &functionGenerator{prog: prog, module: module, tLib: tLib, locals_map: make(map[ssa.Value]valueWrap)}
 }
 
 func (g *functionGenerator) getValue(i ssa.Value) valueWrap {
