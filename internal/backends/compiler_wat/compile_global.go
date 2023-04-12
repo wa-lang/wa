@@ -16,7 +16,7 @@ func (p *Compiler) compileGlobal(g *ssa.Global) {
 		if g.Name() == "init$guard" {
 			p.module.AddGlobal(pkg_name+"."+g.Name(), p.tLib.compile(g.Type().(*types.Pointer).Elem()), false, g)
 		} else {
-			p.module.AddGlobal(pkg_name+"."+wir.GenSymbolName(g.Name()), p.module.GenValueType_Ref(p.tLib.compile(g.Type().(*types.Pointer).Elem())), true, g)
+			p.module.AddGlobal(pkg_name+"."+wir.GenSymbolName(g.Name()), p.tLib.compile(g.Type()), true, g)
 		}
 	}
 	//logger.Fatal("Todo")
