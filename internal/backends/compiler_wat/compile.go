@@ -15,9 +15,11 @@ import (
 )
 
 type Compiler struct {
+	prog   *loader.Program
 	ssaPkg *ssa.Package
 
 	module *wir.Module
+	tLib   *typeLib
 }
 
 func New() *Compiler {
@@ -29,7 +31,10 @@ func New() *Compiler {
 }
 
 func (p *Compiler) Compile(prog *loader.Program, mainFunc string) (output string, err error) {
+	p.prog = prog
 	p.CompileWsFiles(prog)
+
+	p.tLib = newTypeLib(p.module, prog)
 
 	for _, pkg := range prog.Pkgs {
 		p.ssaPkg = pkg.SSAPkg
@@ -38,13 +43,20 @@ func (p *Compiler) Compile(prog *loader.Program, mainFunc string) (output string
 
 	for _, pkg := range prog.Pkgs {
 		p.ssaPkg = pkg.SSAPkg
-		p.CompilePkgGlocal(pkg.SSAPkg)
+		p.CompilePkgType(pkg.SSAPkg)
+	}
+
+	for _, pkg := range prog.Pkgs {
+		p.ssaPkg = pkg.SSAPkg
+		p.CompilePkgGlobal(pkg.SSAPkg)
 	}
 
 	for _, pkg := range prog.Pkgs {
 		p.ssaPkg = pkg.SSAPkg
 		p.CompilePkgFunc(pkg.SSAPkg)
 	}
+
+	p.tLib.buildItab()
 
 	{
 		var f wir.Function
@@ -110,7 +122,15 @@ func (p *Compiler) CompilePkgConst(ssaPkg *ssa.Package) {
 	}
 }
 
-func (p *Compiler) CompilePkgGlocal(ssaPkg *ssa.Package) {
+func (p *Compiler) CompilePkgType(ssaPkg *ssa.Package) {
+	for _, m := range p.ssaPkg.Members {
+		if t, ok := m.(*ssa.Type); ok {
+			p.compileType(t)
+		}
+	}
+}
+
+func (p *Compiler) CompilePkgGlobal(ssaPkg *ssa.Package) {
 	for _, m := range p.ssaPkg.Members {
 		if global, ok := m.(*ssa.Global); ok {
 			p.compileGlobal(global)
@@ -119,48 +139,33 @@ func (p *Compiler) CompilePkgGlocal(ssaPkg *ssa.Package) {
 }
 
 func (p *Compiler) CompilePkgFunc(ssaPkg *ssa.Package) {
-	var fns []*ssa.Function
-
 	for _, m := range p.ssaPkg.Members {
 		if fn, ok := m.(*ssa.Function); ok {
-			fns = append(fns, fn)
+			CompileFunc(fn, p.prog, p.tLib, p.module)
 		}
 	}
+}
 
-	for _, v := range ssaPkg.GetValues() {
-		if f, ok := v.(*ssa.Function); ok {
-			found := false
-			for _, m := range fns {
-				if m.Object() == f.Object() {
-					found = true
-				}
+func CompileFunc(f *ssa.Function, prog *loader.Program, tLib *typeLib, module *wir.Module) {
+	if len(f.Blocks) < 1 {
+		if f.RuntimeGetter() {
+			module.AddFunc(newFunctionGenerator(prog, module, tLib).genGetter(f))
+		} else if f.RuntimeSetter() {
+			module.AddFunc(newFunctionGenerator(prog, module, tLib).genSetter(f))
+		} else if f.RuntimeSizer() {
+			module.AddFunc(newFunctionGenerator(prog, module, tLib).genSizer(f))
+		} else if iname0, iname1 := f.ImportName(); len(iname0) > 0 && len(iname1) > 0 {
+			var fn_name string
+			if len(f.LinkName()) > 0 {
+				fn_name = f.LinkName()
+			} else {
+				fn_name, _ = wir.GetFnMangleName(f)
 			}
-			if found {
-				continue
-			}
-			fns = append(fns, f)
+
+			sig := tLib.GenFnSig(f.Signature)
+			module.AddImportFunc(iname0, iname1, fn_name, sig)
 		}
+		return
 	}
-
-	for _, v := range fns {
-		if len(v.Blocks) < 1 {
-			if v.RuntimeGetter() {
-				p.module.AddFunc(newFunctionGenerator(p.module).genGetter(v))
-			} else if v.RuntimeSetter() {
-				p.module.AddFunc(newFunctionGenerator(p.module).genSetter(v))
-			} else if iname0, iname1 := v.ImportName(); len(iname0) > 0 && len(iname1) > 0 {
-				var fn_name string
-				if len(v.LinkName()) > 0 {
-					fn_name = v.LinkName()
-				} else {
-					fn_name, _ = GetFnMangleName(v)
-				}
-
-				sig := p.module.GenFnSig(v.Signature)
-				p.module.AddImportFunc(iname0, iname1, fn_name, sig)
-			}
-			continue
-		}
-		p.module.AddFunc(newFunctionGenerator(p.module).genFunction(v))
-	}
+	module.AddFunc(newFunctionGenerator(prog, module, tLib).genFunction(f))
 }

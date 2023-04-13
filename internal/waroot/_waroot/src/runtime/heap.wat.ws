@@ -136,9 +136,14 @@
 	end
 )
 
-(func $$wa.RT.DupWatStack (param $p i32) (result i32) (result i32) ;;result0 = result1 = p
-	local.get $p
-	local.get $p
+(func $$wa.RT.DupI32 (param i32) (result i32 i32) ;;r0 = r1 = p0
+	local.get 0
+	local.get 0
+)
+
+(func $$wa.RT.SwapI32 (param i32 i32) (result i32 i32) ;;r0 = p1, r1 = p0
+	local.get 1
+	local.get 0
 )
 
 (func $$wa.RT.Block.Retain (param $ptr i32) (result i32) ;;result = ptr

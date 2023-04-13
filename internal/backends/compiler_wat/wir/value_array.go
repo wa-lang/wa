@@ -13,9 +13,10 @@ import (
 Array:
 **************************************/
 type Array struct {
-	Base ValueType
-	*Struct
-	Capacity int
+	tCommon
+	Base       ValueType
+	underlying *Struct
+	Capacity   int
 }
 
 func (m *Module) GenValueType_Array(base ValueType, capacity int) *Array {
@@ -29,16 +30,16 @@ func (m *Module) GenValueType_Array(base ValueType, capacity int) *Array {
 	for i := 0; i < capacity; i++ {
 		members = append(members, NewField("m"+strconv.Itoa(i), base))
 	}
-	arr_t.Struct = m.GenValueType_Struct(arr_t.Name()+".underlying", members)
-	m.regValueType(&arr_t)
+	arr_t.underlying = m.GenValueType_Struct(arr_t.Name()+".underlying", members)
+	m.addValueType(&arr_t)
 	return &arr_t
 }
 
 func (t *Array) Name() string         { return t.Base.Name() + ".$array" + strconv.Itoa(t.Capacity) }
-func (t *Array) size() int            { return t.Struct.size() }
-func (t *Array) align() int           { return t.Struct.align() }
-func (t *Array) Raw() []wat.ValueType { return t.Struct.Raw() }
-func (t *Array) onFree() int          { return t.Struct.onFree() }
+func (t *Array) Size() int            { return t.underlying.Size() }
+func (t *Array) align() int           { return t.underlying.align() }
+func (t *Array) Raw() []wat.ValueType { return t.underlying.Raw() }
+func (t *Array) onFree() int          { return t.underlying.onFree() }
 
 func (t *Array) Equal(u ValueType) bool {
 	if ut, ok := u.(*Array); ok {
@@ -48,7 +49,7 @@ func (t *Array) Equal(u ValueType) bool {
 }
 
 func (t *Array) EmitLoadFromAddr(addr Value, offset int) (insts []wat.Inst) {
-	return t.Struct.EmitLoadFromAddr(addr, offset)
+	return t.underlying.EmitLoadFromAddr(addr, offset)
 }
 
 func (t *Array) genFunc_IndexOf() string {
@@ -64,7 +65,7 @@ func (t *Array) genFunc_IndexOf() string {
 	var f Function
 	f.InternalName = fn_name
 	x := newValue_Array("x", ValueKindLocal, t)
-	id := newValue_Basic("id", ValueKindLocal, t._u32)
+	id := newValue_Basic("id", ValueKindLocal, t.underlying._u32)
 	f.Params = append(f.Params, x)
 	f.Params = append(f.Params, id)
 	f.Results = append(f.Results, t.Base)
@@ -112,7 +113,7 @@ type aArray struct {
 func newValue_Array(name string, kind ValueKind, typ *Array) *aArray {
 	var v aArray
 	v.typ = typ
-	v.aStruct = *newValue_Struct(name, kind, typ.Struct)
+	v.aStruct = *newValue_Struct(name, kind, typ.underlying)
 	return &v
 }
 

@@ -194,14 +194,14 @@ var predeclaredFuncs = [...]struct {
 	_Offsetof: {"Offsetof", 1, false, expression},
 	_Sizeof:   {"Sizeof", 1, false, expression},
 
-	_Assert: {"assert", 1, false, statement},
+	_Assert: {"assert", 1, true, statement},
 	_Trace:  {"trace", 0, true, statement},
 }
 
 func defPredeclaredFuncs() {
 	for i := range predeclaredFuncs {
 		id := builtinId(i)
-		if id == _Trace {
+		if id == _Assert || id == _Trace {
 			continue // only define these in testing environment
 		}
 		def(newBuiltin(id))

@@ -7,6 +7,8 @@
 package types
 
 import (
+	"strings"
+
 	"wa-lang.org/wa/internal/ast"
 	"wa-lang.org/wa/internal/constant"
 	"wa-lang.org/wa/internal/token"
@@ -609,23 +611,58 @@ func (check *Checker) builtin(x *operand, call *ast.CallExpr, id builtinId) (_ b
 		// result is constant - no need to record signature
 
 	case _Assert:
-		// assert(pred) causes a typechecker error if pred is false.
-		// The result of assert is the value of pred if there is no error.
-		// Note: assert is only available in self-test mode.
-		if x.mode != constant_ || !isBoolean(x.typ) {
-			check.invalidArg(x.pos(), "%s is not a boolean constant", x)
-			return
-		}
-		if x.val.Kind() != constant.Bool {
-			check.errorf(x.pos(), "internal error: value of %s should be a boolean constant", x)
-			return
-		}
-		if !constant.BoolVal(x.val) {
-			check.errorf(call.Pos(), "%v failed", call)
-			// compile-time assertion failure - safe to continue
-		}
-		// result is constant - no need to record signature
+		filename := check.fset.Position(x.pos()).Filename
 
+		// 必须是在测试代码中有效
+		if !strings.Contains(filename, "_test.") && !strings.HasPrefix(filename, "test_") {
+			check.errorf(x.pos(), "assert only for testing")
+			return
+		}
+
+		// assert 语义变化:
+		// 变成 testing 环境使用的运行时函数
+		if strings.HasSuffix(filename, ".wa") {
+			// 放松检查, bool 变量放到运行时处理
+			if !isBoolean(x.typ) {
+				check.invalidArg(x.pos(), "%s is not a boolean type", x)
+				return
+			}
+			if nargs > 2 {
+				check.errorf(call.Pos(), "%v expects %d or %d arguments; found %d", call, 1, 2, nargs)
+				return
+			}
+			// assert(ok, message)
+			if nargs == 2 {
+				var xArg1 operand
+				check.expr(&xArg1, call.Args[1])
+				if !isString(xArg1.typ) {
+					check.invalidArg(x.pos(), "%s is not a string type", &xArg1)
+					return
+				}
+			}
+
+			x.mode = novalue
+			if check.Types != nil {
+				check.recordBuiltinType(call.Fun, makeSig(nil, x.typ))
+			}
+		} else if strings.HasSuffix(filename, ".wa.go") {
+			// assert(pred) causes a typechecker error if pred is false.
+			// The result of assert is the value of pred if there is no error.
+			// Note: assert is only available in self-test mode.
+			if x.mode != constant_ || !isBoolean(x.typ) {
+				check.invalidArg(x.pos(), "%s is not a boolean constant", x)
+				return
+			}
+			if x.val.Kind() != constant.Bool {
+				check.errorf(x.pos(), "internal error: value of %s should be a boolean constant", x)
+				return
+			}
+			if !constant.BoolVal(x.val) {
+				check.errorf(call.Pos(), "%v failed", call)
+				// compile-time assertion failure - safe to continue
+			}
+			// result is constant - no need to record signature
+		}
 	case _Trace:
 		// trace(x, y, z, ...) dumps the positions, expressions, and
 		// values of its arguments. The result of trace is the value

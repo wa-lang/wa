@@ -3,6 +3,8 @@
 package wir
 
 import (
+	"strconv"
+
 	"wa-lang.org/wa/internal/backends/compiler_wat/wir/wat"
 	"wa-lang.org/wa/internal/logger"
 )
@@ -48,6 +50,9 @@ func newValue(name string, kind ValueKind, typ ValueType) Value {
 
 	case *Closure:
 		return newValue_Closure(name, kind, typ)
+
+	case *Interface:
+		return newValue_Interface(name, kind, typ)
 
 	case *Tuple:
 		return newValue_Tuple(name, kind, typ)
@@ -148,4 +153,53 @@ func (v *aBasic) emitStoreToAddr(addr Value, offset int) []wat.Inst {
 		insts = append(insts, wat.NewInstStore(toWatType(v.Type()), offset, 1))
 	}
 	return insts
+}
+
+func (v *aBasic) emitStore(offset int) (insts []wat.Inst) {
+	insts = append(insts, wat.NewInstCall("$wa.RT.DupI32"))
+	insts = append(insts, v.EmitPush()...)
+	switch v.Type().(type) {
+	case *tU8, *tI8:
+		insts = append(insts, wat.NewInstStore8(offset, 1))
+
+	case *tU16, *tI16:
+		insts = append(insts, wat.NewInstStore16(offset, 1))
+
+	default:
+		insts = append(insts, wat.NewInstStore(toWatType(v.Type()), offset, 1))
+	}
+
+	return
+}
+
+func (v *aBasic) Bin() (b []byte) {
+	if v.Kind() != ValueKindConst {
+		panic("Value.bin(): const only!")
+	}
+
+	switch v.Type().(type) {
+	case *tU8, *tI8:
+		b = make([]byte, 1)
+		i, _ := strconv.Atoi(v.Name())
+		b[0] = byte(i & 0xFF)
+
+	case *tU16, *tI16:
+		b = make([]byte, 2)
+		i, _ := strconv.Atoi(v.Name())
+		b[0] = byte(i & 0xFF)
+		b[1] = byte((i >> 8) & 0xFF)
+
+	case *tU32, *tI32:
+		b = make([]byte, 4)
+		i, _ := strconv.Atoi(v.Name())
+		b[0] = byte(i & 0xFF)
+		b[1] = byte((i >> 8) & 0xFF)
+		b[2] = byte((i >> 16) & 0xFF)
+		b[3] = byte((i >> 24) & 0xFF)
+
+	default:
+		panic("todo")
+	}
+
+	return
 }

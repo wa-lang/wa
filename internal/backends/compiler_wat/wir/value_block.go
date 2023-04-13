@@ -13,6 +13,7 @@ import (
 Block:
 **************************************/
 type Block struct {
+	tCommon
 	Base ValueType
 	_i32 ValueType
 	_u32 ValueType
@@ -27,12 +28,12 @@ func (m *Module) GenValueType_Block(base ValueType) *Block {
 
 	block_t._i32 = m.I32
 	block_t._u32 = m.U32
-	m.regValueType(&block_t)
+	m.addValueType(&block_t)
 	return &block_t
 }
 
 func (t *Block) Name() string         { return t.Base.Name() + ".$$block" }
-func (t *Block) size() int            { return 4 }
+func (t *Block) Size() int            { return 4 }
 func (t *Block) align() int           { return 4 }
 func (t *Block) Raw() []wat.ValueType { return []wat.ValueType{wat.U32{}} }
 func (t *Block) Equal(u ValueType) bool {
@@ -77,7 +78,7 @@ func (t *Block) emitHeapAlloc(item_count Value) (insts []wat.Inst) {
 			logger.Fatalf("%v\n", err)
 			return nil
 		}
-		insts = append(insts, NewConst(strconv.Itoa(t.Base.size()*c+16), t._u32).EmitPush()...)
+		insts = append(insts, NewConst(strconv.Itoa(t.Base.Size()*c+16), t._u32).EmitPush()...)
 		insts = append(insts, wat.NewInstCall("$waHeapAlloc"))
 
 	default:
@@ -87,7 +88,7 @@ func (t *Block) emitHeapAlloc(item_count Value) (insts []wat.Inst) {
 		}
 
 		insts = append(insts, item_count.EmitPush()...)
-		insts = append(insts, NewConst(strconv.Itoa(t.Base.size()), t._u32).EmitPush()...)
+		insts = append(insts, NewConst(strconv.Itoa(t.Base.Size()), t._u32).EmitPush()...)
 		insts = append(insts, wat.NewInstMul(wat.U32{}))
 		insts = append(insts, NewConst("16", t._u32).EmitPush()...)
 		insts = append(insts, wat.NewInstAdd(wat.U32{}))
@@ -97,7 +98,7 @@ func (t *Block) emitHeapAlloc(item_count Value) (insts []wat.Inst) {
 
 	insts = append(insts, item_count.EmitPush()...)                                      //item_count
 	insts = append(insts, NewConst(strconv.Itoa(t.Base.onFree()), t._u32).EmitPush()...) //free_method
-	insts = append(insts, NewConst(strconv.Itoa(t.Base.size()), t._u32).EmitPush()...)   //item_size
+	insts = append(insts, NewConst(strconv.Itoa(t.Base.Size()), t._u32).EmitPush()...)   //item_size
 	insts = append(insts, wat.NewInstCall("$wa.RT.Block.Init"))
 
 	return
@@ -143,13 +144,39 @@ func (v *aBlock) EmitRelease() (insts []wat.Inst) {
 }
 
 func (v *aBlock) emitStoreToAddr(addr Value, offset int) (insts []wat.Inst) {
-	insts = append(insts, addr.EmitPush()...)
-	insts = append(insts, v.EmitPush()...)
-
-	insts = append(insts, addr.EmitPush()...)
-	insts = append(insts, wat.NewInstLoad(wat.U32{}, offset, 1))
-	insts = append(insts, wat.NewInstCall("$wa.RT.Block.Release"))
+	insts = append(insts, addr.EmitPush()...)                      // a
+	insts = append(insts, v.EmitPush()...)                         // a v
+	insts = append(insts, addr.EmitPush()...)                      // a v a
+	insts = append(insts, wat.NewInstLoad(wat.U32{}, offset, 1))   // a v o
+	insts = append(insts, wat.NewInstCall("$wa.RT.Block.Release")) // a v
 
 	insts = append(insts, wat.NewInstStore(toWatType(v.Type()), offset, 1))
+	return
+}
+
+func (v *aBlock) emitStore(offset int) (insts []wat.Inst) {
+	insts = append(insts, wat.NewInstCall("$wa.RT.DupI32"))        // a
+	insts = append(insts, wat.NewInstCall("$wa.RT.DupI32"))        // a a
+	insts = append(insts, v.EmitPush()...)                         // a a v
+	insts = append(insts, wat.NewInstCall("$wa.RT.SwapI32"))       // a v a
+	insts = append(insts, wat.NewInstLoad(wat.U32{}, offset, 1))   // a v o
+	insts = append(insts, wat.NewInstCall("$wa.RT.Block.Release")) // a v
+
+	insts = append(insts, wat.NewInstStore(toWatType(v.Type()), offset, 1))
+	return
+}
+
+func (v *aBlock) Bin() (b []byte) {
+	if v.Kind() != ValueKindConst {
+		panic("Value.bin(): const only!")
+	}
+
+	b = make([]byte, 4)
+	i, _ := strconv.Atoi(v.Name())
+	b[0] = byte(i & 0xFF)
+	b[1] = byte((i >> 8) & 0xFF)
+	b[2] = byte((i >> 16) & 0xFF)
+	b[3] = byte((i >> 24) & 0xFF)
+
 	return
 }

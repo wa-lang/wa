@@ -1468,6 +1468,21 @@ func (v *Function) RuntimeSetter() bool {
 	v.commentInfo = &info
 	return info.RuntimeSetter
 }
+func (v *Function) RuntimeSizer() bool {
+	if v.commentInfo != nil {
+		return v.commentInfo.RuntimeSizer
+	}
+	if v.Object() == nil {
+		v.commentInfo = new(astutil.CommentInfo)
+		return v.commentInfo.RuntimeSizer
+	}
+
+	doc := v.Object().NodeDoc()
+	info := astutil.ParseCommentInfo(doc)
+
+	v.commentInfo = &info
+	return info.RuntimeSizer
+}
 
 func (v *Parameter) Type() types.Type          { return v.typ }
 func (v *Parameter) Name() string              { return v.name }

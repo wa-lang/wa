@@ -5,7 +5,6 @@ import (
 
 	"wa-lang.org/wa/internal/backends/compiler_wat/wir/wat"
 	"wa-lang.org/wa/internal/logger"
-	"wa-lang.org/wa/internal/types"
 )
 
 /**************************************
@@ -14,19 +13,6 @@ FnSig:
 type FnSig struct {
 	Params  []ValueType
 	Results []ValueType
-}
-
-func (m *Module) GenFnSig(s *types.Signature) FnSig {
-	var sig FnSig
-	for i := 0; i < s.Params().Len(); i++ {
-		typ := m.GenValueType(s.Params().At(i).Type())
-		sig.Params = append(sig.Params, typ)
-	}
-	for i := 0; i < s.Results().Len(); i++ {
-		typ := m.GenValueType(s.Results().At(i).Type())
-		sig.Results = append(sig.Results, typ)
-	}
-	return sig
 }
 
 func (s *FnSig) Equal(u *FnSig) bool {
@@ -78,16 +64,17 @@ type FnType struct {
 Closure:
 **************************************/
 type Closure struct {
-	*Struct
-	_fn_type FnType
-	_u32     ValueType
+	tCommon
+	underlying *Struct
+	_fn_type   FnType
+	_u32       ValueType
 }
 
 var _closure_id int
 
-func (m *Module) GenValueType_Closure(s *types.Signature) *Closure {
+func (m *Module) GenValueType_Closure(sig FnSig) *Closure {
 	var closure_t Closure
-	closure_t._fn_type.FnSig = m.GenFnSig(s)
+	closure_t._fn_type.FnSig = sig
 	t, ok := m.findValueType(closure_t.Name())
 	if ok {
 		return t.(*Closure)
@@ -96,17 +83,21 @@ func (m *Module) GenValueType_Closure(s *types.Signature) *Closure {
 	closure_t._u32 = m.U32
 	closure_t._fn_type.Name = "closure$" + strconv.Itoa(_closure_id)
 	_closure_id++
-	m.addFnType(&closure_t._fn_type)
+	m.AddFnType(&closure_t._fn_type)
 	var fields []Field
 	fields = append(fields, NewField("fn_index", m.U32))
 	fields = append(fields, NewField("data", m.GenValueType_Ref(m.VOID)))
-	closure_t.Struct = m.GenValueType_Struct(closure_t.Name()+".underlying", fields)
+	closure_t.underlying = m.GenValueType_Struct(closure_t.Name()+".underlying", fields)
 
-	m.regValueType(&closure_t)
+	m.addValueType(&closure_t)
 	return &closure_t
 }
 
-func (t *Closure) Name() string { return t._fn_type.String() }
+func (t *Closure) Name() string         { return t._fn_type.String() }
+func (t *Closure) Size() int            { return t.underlying.Size() }
+func (t *Closure) align() int           { return t.underlying.align() }
+func (t *Closure) onFree() int          { return t.underlying.onFree() }
+func (t *Closure) Raw() []wat.ValueType { return t.underlying.Raw() }
 
 func (t *Closure) Equal(u ValueType) bool {
 	if ut, ok := u.(*Closure); ok {
@@ -121,7 +112,7 @@ func (t *Closure) EmitLoadFromAddr(addr Value, offset int) []wat.Inst {
 		return nil
 	}
 
-	return t.Struct.EmitLoadFromAddr(addr, offset)
+	return t.underlying.EmitLoadFromAddr(addr, offset)
 }
 
 /**************************************
@@ -135,16 +126,16 @@ type aClosure struct {
 func newValue_Closure(name string, kind ValueKind, typ *Closure) *aClosure {
 	var v aClosure
 	v.typ = typ
-	v.aStruct = *newValue_Struct(name, kind, typ.Struct)
+	v.aStruct = *newValue_Struct(name, kind, typ.underlying)
 	return &v
 }
 
 func (v *aClosure) Type() ValueType { return v.typ }
 
-func (m *Module) GenConstFnValue(fn_name string, s *types.Signature) Value {
+func (m *Module) GenConstFnValue(fn_name string, sig FnSig) Value {
 	fn_index := currentModule.AddTableElem(fn_name)
 
-	closure_t := m.GenValueType_Closure(s)
+	closure_t := m.GenValueType_Closure(sig)
 	aClosure := newValue_Closure("0", ValueKindConst, closure_t)
 	aClosure.aStruct.setFieldConstValue("fn_index", NewConst(strconv.Itoa(fn_index), m.U32))
 
@@ -159,7 +150,7 @@ func EmitCallClosure(c Value, params []Value) (insts []wat.Inst) {
 	insts = append(insts, closure.Extract("fn_index").EmitPush()...)
 
 	insts = append(insts, closure.Extract("data").EmitPush()...)
-	insts = append(insts, currentModule.FindGlobal("$wa.RT.closure_data").EmitPop()...)
+	insts = append(insts, currentModule.FindGlobalByName("$wa.RT.closure_data").EmitPop()...)
 
 	insts = append(insts, wat.NewInstCallIndirect(closure.typ._fn_type.Name))
 	return

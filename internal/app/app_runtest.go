@@ -36,6 +36,7 @@ func (p *App) RunTest(filename string, appArgs ...string) error {
 		return nil
 	}
 
+	var lastError error
 	for _, main := range mainPkg.TestInfo.Funcs {
 		output, err := compiler_wat.New().Compile(prog, main)
 		if err != nil {
@@ -51,17 +52,25 @@ func (p *App) RunTest(filename string, appArgs ...string) error {
 			continue
 		}
 
-		if exitErr, ok := err.(*sys.ExitError); ok {
-			fmt.Printf("---- %s.%s [%v]\n", prog.Manifest.MainPkg, main, time.Now().Sub(startTime))
-			if s := sWithPrefix(string(stdoutStderr), "    "); s != "" {
-				fmt.Println(s)
+		if err != nil {
+			lastError = err
+			if _, ok := err.(*sys.ExitError); ok {
+				fmt.Printf("---- %s.%s\n", prog.Manifest.MainPkg, main)
+				if s := sWithPrefix(string(stdoutStderr), "    "); s != "" {
+					fmt.Println(s)
+				}
+			} else {
+				fmt.Println(err)
 			}
-			os.Exit(int(exitErr.ExitCode()))
 		}
-		fmt.Println(err)
 	}
 
-	fmt.Printf("ok   %s %v\n", prog.Manifest.MainPkg, time.Now().Sub(startTime))
+	if lastError != nil {
+		fmt.Printf("FAIL %s %v\n", prog.Manifest.MainPkg, time.Now().Sub(startTime).Round(time.Microsecond))
+		os.Exit(1)
+	}
+	fmt.Printf("ok   %s %v\n", prog.Manifest.MainPkg, time.Now().Sub(startTime).Round(time.Microsecond))
+
 	return nil
 }
 

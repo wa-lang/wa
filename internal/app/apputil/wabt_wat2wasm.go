@@ -53,15 +53,18 @@ func RunWasm(cfg *config.Config, filename string, wasmArgs ...string) (stdoutStd
 		WithSysWalltime().
 		WithArgs(append([]string{wasmExe}, wasmArgs...)...)
 
-	for _, s := range os.Environ() {
-		var key, value string
-		if kv := strings.Split(s, "="); len(kv) >= 2 {
-			key = kv[0]
-			value = kv[1]
-		} else if len(kv) >= 1 {
-			key = kv[0]
+	// TODO: Windows 可能导致异常, 临时屏蔽
+	if runtime.GOOS != "windows" {
+		for _, s := range os.Environ() {
+			var key, value string
+			if kv := strings.Split(s, "="); len(kv) >= 2 {
+				key = kv[0]
+				value = kv[1]
+			} else if len(kv) >= 1 {
+				key = kv[0]
+			}
+			conf = conf.WithEnv(key, value)
 		}
-		conf = conf.WithEnv(key, value)
 	}
 
 	ctx := context.Background()

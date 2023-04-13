@@ -21,6 +21,7 @@ type CommentInfo struct {
 	ForceRegister bool      // #wa:force_register
 	RuntimeGetter bool      // #wa:runtime_getter
 	RuntimeSetter bool      // #wa:runtime_setter
+	RuntimeSizer  bool      // #wa:runtime_sizer
 	WasmModule    string    // #wa:wasm-module xxx
 }
 
@@ -85,6 +86,8 @@ func ParseCommentInfo(docList ...*ast.CommentGroup) (info CommentInfo) {
 				info.RuntimeGetter = true
 			case "#wa:runtime_setter", "//wa:runtime_setter":
 				info.RuntimeSetter = true
+			case "#wa:runtime_sizer":
+				info.RuntimeSizer = true
 
 			case "#wa:wasm-module", "//wa:wasm-module":
 				if len(parts) >= 2 {

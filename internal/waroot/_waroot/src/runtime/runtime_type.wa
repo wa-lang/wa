@@ -1,0 +1,103 @@
+// 版权 @2019 凹语言 作者。保留所有权利。
+// 不要轻易修改本文件！
+// Don't modify this file unless you know what you're doing!
+
+type _type struct {
+	size: u32
+	hash: i32
+	kind: u8
+	align: u8
+	flag: u16
+	name: string
+}
+
+type _refType struct {
+	_type
+	uncommon: uintptr  //@_uncommonType
+	elemType: uintptr  //@_type
+}
+
+type _arrayType struct {
+	_type
+	elemType: uintptr  //@_type
+	cap:      uintptr
+}
+
+type _sliceType struct {
+	_type
+	elemType: uintptr  //@_type
+}
+
+type _structType struct {
+	_type
+	uncommon:   uintptr  //@_uncommonType
+	fieldCount: i32
+	fieldPtr:   uintptr  //@_structField, len==fieldCount
+}
+
+type _structField struct {
+	name: string
+	typ:  uintptr  //@_type
+}
+
+type _uncommonType struct {
+	pkgName:     string
+	methodCount: i32
+	methodPtr:   uintptr  //@_method, len==methodCount
+}
+
+type _method struct {
+	name:   string
+	fnType: uintptr  //@_fntype
+	fnID:   u32      //id for call_indirect
+}
+
+type _fnType struct {
+	_type
+	paramCount:  i32
+	paramPtr:    uintptr  //@@_type, len==paramCount
+	resultCount: i32
+	resultPtr:   uintptr  //@@_type, len==resultCount
+}
+
+type _interfaceType struct {
+	_type
+	pkgName:     string
+	methodCount: i32
+	methodPtr:   uintptr  //@_imethod, len==methodCount
+}
+
+type _imethod struct {
+	name:   string
+	fnType: uintptr  //@_fntype
+}
+
+type _itab struct {
+	dtype: uintptr  //@_type, ptr of (*data).(type)
+	itype: uintptr  //@_interfacetype
+}  //紧接[itype.methodCound]fnID, fnID=id for call_indirect
+
+type _iface struct {
+	data: *i32
+	itab: uintptr  //@_itab
+}
+
+#wa:linkname $wa.RT.getTypePtr
+func getTypePtr(hash i32) uintptr {
+	return 0
+}
+
+#wa:linkname $wa.RT.getItab
+func getItab(dhash i32, ihash i32, commanok i32) i32 {
+	itab := _itabsPtr + ((dhash - 1) * _interfaceCount - ihash - 1) * 4
+	return itab
+}
+
+#wa:linkname $wa.RT._itabsPtr
+var _itabsPtr i32
+
+#wa:linkname $wa.RT._interfaceCount
+var _interfaceCount i32
+
+#wa:linkname $wa.RT._concretTypeCount
+var _concretTypeCount i32
