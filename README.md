@@ -116,5 +116,31 @@ $ go run main.go run _examples/prime
 29
 ```
 
+## Example: Print Prime with Chinese syntax
+
+Print prime numbers up to 30:
+
+```wz
+引于 "书"
+
+【启】：
+    // 输出30以内的素数
+    从n=2，到n>30，有n++：
+        设素=1
+        从i=2，到i*i>n，有i++：
+            设x=n%i
+            若x==0则：
+                素=0
+            。
+        。
+        若素!=0则：
+            书·曰：n
+        。
+     。
+。
+```
+
+Output is the same as the previous example.
+
 More examples [_examples](_examples)
 
