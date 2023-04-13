@@ -67,6 +67,7 @@ var Typ = []*Basic{
 
 var aliases = [...]*Basic{
 	{Byte, IsInteger | IsUnsigned, "byte"},
+	{Byte, IsInteger | IsUnsigned, "字"},
 	{Rune, IsInteger, "rune"},
 
 	{Int8, IsInteger, "i8"},
@@ -157,6 +158,9 @@ const (
 	// wa
 	_Printf
 
+	// wz
+	_长
+
 	// package unsafe
 	_Alignof
 	_Offsetof
@@ -189,6 +193,8 @@ var predeclaredFuncs = [...]struct {
 	_Recover: {"recover", 0, false, statement},
 
 	_Printf: {"printf", 1, true, statement},
+
+	_长: {"长", 1, false, expression},
 
 	_Alignof:  {"Alignof", 1, false, expression},
 	_Offsetof: {"Offsetof", 1, false, expression},
@@ -238,9 +244,8 @@ func init() {
 // Objects with names containing blanks are internal and not entered into
 // a scope. Objects with exported names are inserted in the unsafe package
 // scope; other objects are inserted in the universe scope.
-//
 func isCNKeyword(name string) bool {
-	return name == "数" || name == "文"
+	return name == "数" || name == "文" || name == "字" || name == "长"
 }
 
 func def(obj Object) {

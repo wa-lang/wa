@@ -18,7 +18,6 @@ import (
 // reports whether the call is valid, with *x holding the result;
 // but x.expr is not set. If the call is invalid, the result is
 // false, and *x is undefined.
-//
 func (check *Checker) builtin(x *operand, call *ast.CallExpr, id builtinId) (_ bool) {
 	// append is the only built-in that permits the use of ... for the last argument
 	bin := predeclaredFuncs[id]
@@ -33,7 +32,7 @@ func (check *Checker) builtin(x *operand, call *ast.CallExpr, id builtinId) (_ b
 	// false for the evaluation of x so that we can check it afterwards.
 	// Note: We must do this _before_ calling unpack because unpack evaluates the
 	//       first argument before we even call arg(x, 0)!
-	if id == _Len || id == _Cap {
+	if id == _Len || id == _Cap || id == _长 {
 		defer func(b bool) {
 			check.hasCallOrRecv = b
 		}(check.hasCallOrRecv)
@@ -135,7 +134,7 @@ func (check *Checker) builtin(x *operand, call *ast.CallExpr, id builtinId) (_ b
 			check.recordBuiltinType(call.Fun, sig)
 		}
 
-	case _Cap, _Len:
+	case _Cap, _Len, _长:
 		// cap(x)
 		// len(x)
 		mode := invalid
@@ -143,7 +142,7 @@ func (check *Checker) builtin(x *operand, call *ast.CallExpr, id builtinId) (_ b
 		var val constant.Value
 		switch typ = implicitArrayDeref(x.typ.Underlying()); t := typ.(type) {
 		case *Basic:
-			if isString(t) && id == _Len {
+			if isString(t) && (id == _Len || id == _长) {
 				if x.mode == constant_ {
 					mode = constant_
 					val = constant.MakeInt64(int64(len(constant.StringVal(x.val))))
@@ -171,7 +170,7 @@ func (check *Checker) builtin(x *operand, call *ast.CallExpr, id builtinId) (_ b
 			mode = value
 
 		case *Map:
-			if id == _Len {
+			if id == _Len || id == _长 {
 				mode = value
 			}
 		}
@@ -708,7 +707,6 @@ func makeSig(res Type, args ...Type) *Signature {
 
 // implicitArrayDeref returns A if typ is of the form *A and A is an array;
 // otherwise it returns typ.
-//
 func implicitArrayDeref(typ Type) Type {
 	if p, ok := typ.(*Pointer); ok {
 		if a, ok := p.base.Underlying().(*Array); ok {
