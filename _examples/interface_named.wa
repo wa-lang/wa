@@ -16,11 +16,11 @@ func S1.f() {
 	println("This is S1, this.a==", this.a)
 }
 
-func S2.f(){
+func S2.f() {
 	println("This is S2, this.a==", this.a)
 }
 
-fn main() {
+func main {
 	v1 := S1{a: 13}
 	v2 := S2{a: 42}
 
