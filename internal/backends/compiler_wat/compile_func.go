@@ -603,7 +603,7 @@ func (g *functionGenerator) genBuiltin(call *ssa.CallCommon) (insts []wat.Inst, 
 		}
 		insts, ret_type = g.module.EmitGenAppend(g.getValue(call.Args[0]).value, g.getValue(call.Args[1]).value)
 
-	case "len":
+	case "len", "长":
 		if len(call.Args) != 1 {
 			panic("len(call.Args) != 1")
 		}
