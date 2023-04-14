@@ -19,6 +19,7 @@ type typeLib struct {
 
 	usedConcreteTypes []*wrapType
 	usedInterfaces    []*wrapType
+	pendingMethods    []*ssa.Function
 }
 
 type wrapMethod struct {
@@ -202,7 +203,7 @@ func (tLib *typeLib) compile(from types.Type) wir.ValueType {
 			sel := methodset.At(i)
 			mfn := tLib.prog.SSAProgram.MethodValue(sel)
 
-			CompileFunc(mfn, tLib.prog, tLib, tLib.module)
+			tLib.pendingMethods = append(tLib.pendingMethods, mfn)
 
 			var method wrapMethod
 			method.name = mfn.Name()
@@ -255,6 +256,16 @@ func (tLib *typeLib) markInterfaceUsed(t types.Type) {
 
 	tLib.usedInterfaces = append(tLib.usedInterfaces, v)
 	v.wirType.SetHash(-len(tLib.usedInterfaces))
+}
+
+func (tLib *typeLib) finish() {
+	for len(tLib.pendingMethods) > 0 {
+		mfn := tLib.pendingMethods[0]
+		tLib.pendingMethods = tLib.pendingMethods[1:]
+		CompileFunc(mfn, tLib.prog, tLib, tLib.module)
+	}
+
+	tLib.buildItab()
 }
 
 func (tLib *typeLib) buildItab() {

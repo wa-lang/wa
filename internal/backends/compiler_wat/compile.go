@@ -56,7 +56,7 @@ func (p *Compiler) Compile(prog *loader.Program, mainFunc string) (output string
 		p.CompilePkgFunc(pkg.SSAPkg)
 	}
 
-	p.tLib.buildItab()
+	p.tLib.finish()
 
 	{
 		var f wir.Function
