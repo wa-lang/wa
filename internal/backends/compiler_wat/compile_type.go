@@ -15,33 +15,22 @@ import (
 type typeLib struct {
 	prog      *loader.Program
 	module    *wir.Module
-	typeTable map[string]*wrapType
+	typeTable map[string]*wir.ValueType
 
-	usedConcreteTypes []*wrapType
-	usedInterfaces    []*wrapType
+	usedConcreteTypes []wir.ValueType
+	usedInterfaces    []wir.ValueType
 	pendingMethods    []*ssa.Function
-}
-
-type wrapMethod struct {
-	sig        wir.FnSig
-	name       string
-	fullFnName string
-}
-
-type wrapType struct {
-	wirType wir.ValueType
-	methods []wrapMethod
 }
 
 func newTypeLib(m *wir.Module, prog *loader.Program) *typeLib {
 	te := typeLib{module: m, prog: prog}
-	te.typeTable = make(map[string]*wrapType)
+	te.typeTable = make(map[string]*wir.ValueType)
 	return &te
 }
 
-func (tLib *typeLib) find(v types.Type) *wrapType {
+func (tLib *typeLib) find(v types.Type) wir.ValueType {
 	if v, ok := tLib.typeTable[v.String()]; ok {
-		return v
+		return *v
 	}
 
 	return nil
@@ -49,13 +38,13 @@ func (tLib *typeLib) find(v types.Type) *wrapType {
 
 func (tLib *typeLib) compile(from types.Type) wir.ValueType {
 	if v, ok := tLib.typeTable[from.String()]; ok {
-		return v.wirType
+		return *v
 	}
 
 	//s := from.String()
 	//println(s)
 
-	var newType wrapType
+	var newType wir.ValueType
 	tLib.typeTable[from.String()] = &newType
 	uncommanFlag := false
 
@@ -63,44 +52,44 @@ func (tLib *typeLib) compile(from types.Type) wir.ValueType {
 	case *types.Basic:
 		switch t.Kind() {
 		case types.Bool, types.UntypedBool, types.Int, types.UntypedInt:
-			newType.wirType = tLib.module.I32
+			newType = tLib.module.I32
 
 		case types.Int32:
 			if t.Name() == "rune" {
-				newType.wirType = tLib.module.RUNE
+				newType = tLib.module.RUNE
 			} else {
-				newType.wirType = tLib.module.I32
+				newType = tLib.module.I32
 			}
 
 		case types.Uint32, types.Uintptr:
-			newType.wirType = tLib.module.U32
+			newType = tLib.module.U32
 
 		case types.Int64:
-			newType.wirType = tLib.module.I64
+			newType = tLib.module.I64
 
 		case types.Uint64:
-			newType.wirType = tLib.module.U64
+			newType = tLib.module.U64
 
 		case types.Float32, types.UntypedFloat:
-			newType.wirType = tLib.module.F32
+			newType = tLib.module.F32
 
 		case types.Float64:
-			newType.wirType = tLib.module.F64
+			newType = tLib.module.F64
 
 		case types.Int8:
-			newType.wirType = tLib.module.I8
+			newType = tLib.module.I8
 
 		case types.Uint8:
-			newType.wirType = tLib.module.U8
+			newType = tLib.module.U8
 
 		case types.Int16:
-			newType.wirType = tLib.module.I16
+			newType = tLib.module.I16
 
 		case types.Uint16:
-			newType.wirType = tLib.module.U16
+			newType = tLib.module.U16
 
 		case types.String:
-			newType.wirType = tLib.module.STRING
+			newType = tLib.module.STRING
 
 		default:
 			logger.Fatalf("Unknown type:%s", t)
@@ -110,21 +99,21 @@ func (tLib *typeLib) compile(from types.Type) wir.ValueType {
 	case *types.Tuple:
 		switch t.Len() {
 		case 0:
-			newType.wirType = tLib.module.VOID
+			newType = tLib.module.VOID
 
 		case 1:
-			newType.wirType = tLib.compile(t.At(0).Type())
+			newType = tLib.compile(t.At(0).Type())
 
 		default:
 			var feilds []wir.ValueType
 			for i := 0; i < t.Len(); i++ {
 				feilds = append(feilds, tLib.compile(t.At(i).Type()))
 			}
-			newType.wirType = tLib.module.GenValueType_Tuple(feilds)
+			newType = tLib.module.GenValueType_Tuple(feilds)
 		}
 
 	case *types.Pointer:
-		newType.wirType = tLib.module.GenValueType_Ref(tLib.compile(t.Elem()))
+		newType = tLib.module.GenValueType_Ref(tLib.compile(t.Elem()))
 		uncommanFlag = true
 
 	case *types.Named:
@@ -145,7 +134,7 @@ func (tLib *typeLib) compile(from types.Type) wir.ValueType {
 			obj_name := wir.GenSymbolName(t.Obj().Name())
 			tStruct := tLib.module.GenValueType_Struct(pkg_name+"."+obj_name, fs)
 
-			newType.wirType = tStruct
+			newType = tStruct
 			uncommanFlag = true
 
 		case *types.Interface:
@@ -155,43 +144,45 @@ func (tLib *typeLib) compile(from types.Type) wir.ValueType {
 			pkg_name, _ := wir.GetPkgMangleName(t.Obj().Pkg().Path())
 			obj_name := wir.GenSymbolName(t.Obj().Name())
 
+			newType = tLib.module.GenValueType_Interface(pkg_name + "." + obj_name)
+
 			for i := 0; i < ut.NumMethods(); i++ {
-				var method wrapMethod
-				method.sig = tLib.GenFnSig(ut.Method(i).Type().(*types.Signature))
-				method.name = ut.Method(i).Name()
-				method.fullFnName = pkg_name + "." + obj_name + "." + method.name
-				newType.methods = append(newType.methods, method)
+				var method wir.Method
+				method.Sig = tLib.GenFnSig(ut.Method(i).Type().(*types.Signature))
+				method.Name = ut.Method(i).Name()
+				method.FullFnName = pkg_name + "." + obj_name + "." + method.Name
+
+				newType.AddMethod(method)
 
 				var fntype wir.FnType
 				fntype.FnSig.Params = append(fntype.FnSig.Params, tLib.module.GenValueType_Ref(tLib.module.VOID))
-				fntype.FnSig.Params = append(fntype.FnSig.Params, method.sig.Params...)
-				fntype.FnSig.Results = method.sig.Results
-				fntype.Name = method.fullFnName
+				fntype.FnSig.Params = append(fntype.FnSig.Params, method.Sig.Params...)
+				fntype.FnSig.Results = method.Sig.Results
+				fntype.Name = method.FullFnName
 				tLib.module.AddFnType(&fntype)
 			}
-			newType.wirType = tLib.module.GenValueType_Interface(pkg_name + "." + obj_name)
 
 		case *types.Signature:
-			newType.wirType = tLib.module.GenValueType_Closure(tLib.GenFnSig(ut))
+			newType = tLib.module.GenValueType_Closure(tLib.GenFnSig(ut))
 
 		default:
 			logger.Fatalf("Todo:%T", ut)
 		}
 
 	case *types.Array:
-		newType.wirType = tLib.module.GenValueType_Array(tLib.compile(t.Elem()), int(t.Len()))
+		newType = tLib.module.GenValueType_Array(tLib.compile(t.Elem()), int(t.Len()))
 
 	case *types.Slice:
-		newType.wirType = tLib.module.GenValueType_Slice(tLib.compile(t.Elem()))
+		newType = tLib.module.GenValueType_Slice(tLib.compile(t.Elem()))
 
 	case *types.Signature:
-		newType.wirType = tLib.module.GenValueType_Closure(tLib.GenFnSig(t))
+		newType = tLib.module.GenValueType_Closure(tLib.GenFnSig(t))
 
 	case *types.Interface:
 		if t.NumMethods() != 0 {
 			panic("NumMethods of interface{} != 0")
 		}
-		newType.wirType = tLib.module.GenValueType_Interface("interface")
+		newType = tLib.module.GenValueType_Interface("interface")
 
 	default:
 		logger.Fatalf("Todo:%T", t)
@@ -205,16 +196,16 @@ func (tLib *typeLib) compile(from types.Type) wir.ValueType {
 
 			tLib.pendingMethods = append(tLib.pendingMethods, mfn)
 
-			var method wrapMethod
-			method.name = mfn.Name()
-			method.sig = tLib.GenFnSig(mfn.Signature)
-			method.fullFnName, _ = wir.GetFnMangleName(mfn)
+			var method wir.Method
+			method.Sig = tLib.GenFnSig(mfn.Signature)
+			method.Name = mfn.Name()
+			method.FullFnName, _ = wir.GetFnMangleName(mfn)
 
-			newType.methods = append(newType.methods, method)
+			newType.AddMethod(method)
 		}
 	}
 
-	return newType.wirType
+	return newType
 }
 
 func (tl *typeLib) GenFnSig(s *types.Signature) wir.FnSig {
@@ -236,12 +227,12 @@ func (tLib *typeLib) markConcreteTypeUsed(t types.Type) {
 		logger.Fatal("Type not found.")
 	}
 
-	if v.wirType.Hash() != 0 {
+	if (*v).Hash() != 0 {
 		return
 	}
 
-	tLib.usedConcreteTypes = append(tLib.usedConcreteTypes, v)
-	v.wirType.SetHash(len(tLib.usedConcreteTypes))
+	tLib.usedConcreteTypes = append(tLib.usedConcreteTypes, *v)
+	(*v).SetHash(len(tLib.usedConcreteTypes))
 }
 
 func (tLib *typeLib) markInterfaceUsed(t types.Type) {
@@ -250,12 +241,12 @@ func (tLib *typeLib) markInterfaceUsed(t types.Type) {
 		logger.Fatal("Type not found.")
 	}
 
-	if v.wirType.Hash() != 0 {
+	if (*v).Hash() != 0 {
 		return
 	}
 
-	tLib.usedInterfaces = append(tLib.usedInterfaces, v)
-	v.wirType.SetHash(-len(tLib.usedInterfaces))
+	tLib.usedInterfaces = append(tLib.usedInterfaces, *v)
+	(*v).SetHash(-len(tLib.usedInterfaces))
 }
 
 func (tLib *typeLib) finish() {
@@ -270,22 +261,25 @@ func (tLib *typeLib) finish() {
 
 func (tLib *typeLib) buildItab() {
 	var itabs []byte
-	t_itab := tLib.typeTable["runtime._itab"].wirType
+	t_itab := *tLib.typeTable["runtime._itab"]
 
 	for _, conrete := range tLib.usedConcreteTypes {
 		for _, iface := range tLib.usedInterfaces {
 			fits := true
 
-			vtable := make([]int, len(iface.methods))
+			vtable := make([]int, iface.NumMethods())
 
-			for mid, method := range iface.methods {
+			for mid := 0; mid < iface.NumMethods(); mid++ {
+				method := iface.Method(mid)
 				found := false
-				for _, d := range conrete.methods {
-					if d.name == method.name && d.sig.Equal(&method.sig) {
+				for fid := 0; fid < conrete.NumMethods(); fid++ {
+					d := conrete.Method(fid)
+					if d.Name == method.Name && d.Sig.Equal(&method.Sig) {
 						found = true
-						vtable[mid] = tLib.module.AddTableElem(d.fullFnName)
+						vtable[mid] = tLib.module.AddTableElem(d.FullFnName)
 						break
 					}
+
 				}
 
 				if !found {

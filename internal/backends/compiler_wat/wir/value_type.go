@@ -44,11 +44,15 @@ func toWatType(t ValueType) wat.ValueType {
 tCommon:
 **************************************/
 type tCommon struct {
-	_hash int
+	hash    int
+	methods []Method
 }
 
-func (t *tCommon) Hash() int     { return t._hash }
-func (t *tCommon) SetHash(h int) { t._hash = h }
+func (t *tCommon) Hash() int           { return t.hash }
+func (t *tCommon) SetHash(h int)       { t.hash = h }
+func (t *tCommon) AddMethod(m Method)  { t.methods = append(t.methods, m) }
+func (t *tCommon) NumMethods() int     { return len(t.methods) }
+func (t *tCommon) Method(i int) Method { return t.methods[i] }
 
 //func (t *tCommon) AddMethodEntry(m FnType) { logger.Fatal("Can't add method for common type.") }
 //

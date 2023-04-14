@@ -460,8 +460,9 @@ func (g *functionGenerator) genCall(inst *ssa.Call) (insts []wat.Inst, ret_type 
 		ret_type = g.tLib.compile(inst.Call.Signature().Results())
 
 		t := g.tLib.find(inst.Call.Value.Type())
-		for id, m := range t.methods {
-			if m.name == inst.Call.Method.Name() {
+		for id := 0; id < t.NumMethods(); id++ {
+			m := t.Method(id)
+			if m.Name == inst.Call.Method.Name() {
 				iface := g.getValue(inst.Call.Value)
 
 				var params []wir.Value
@@ -469,7 +470,7 @@ func (g *functionGenerator) genCall(inst *ssa.Call) (insts []wat.Inst, ret_type 
 					params = append(params, g.getValue(v).value)
 				}
 
-				insts = append(insts, g.module.EmitInvoke(iface.value, params, id, m.fullFnName)...)
+				insts = append(insts, g.module.EmitInvoke(iface.value, params, id, m.FullFnName)...)
 
 				break
 			}

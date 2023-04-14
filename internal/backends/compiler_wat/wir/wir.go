@@ -59,8 +59,19 @@ type ValueType interface {
 	Equal(ValueType) bool
 	EmitLoadFromAddr(addr Value, offset int) []wat.Inst
 
-	//AddMethodEntry(m FnType)
-	//
 	Hash() int
 	SetHash(h int)
+
+	AddMethod(m Method)
+	NumMethods() int
+	Method(i int) Method
+}
+
+/**************************************
+Method:
+**************************************/
+type Method struct {
+	Sig        FnSig
+	Name       string
+	FullFnName string
 }

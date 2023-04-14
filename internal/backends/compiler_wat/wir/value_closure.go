@@ -133,7 +133,7 @@ func newValue_Closure(name string, kind ValueKind, typ *Closure) *aClosure {
 func (v *aClosure) Type() ValueType { return v.typ }
 
 func (m *Module) GenConstFnValue(fn_name string, sig FnSig) Value {
-	fn_index := currentModule.AddTableElem(fn_name)
+	fn_index := m.AddTableElem(fn_name)
 
 	closure_t := m.GenValueType_Closure(sig)
 	aClosure := newValue_Closure("0", ValueKindConst, closure_t)
