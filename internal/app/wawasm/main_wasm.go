@@ -24,8 +24,12 @@ func waClearError() {
 	waError = ""
 }
 
-func waGenerateWat(code string) string {
-	wat, err := api.BuildFile(api.DefaultConfig(), "hello.wa", code)
+func waGenerateWat(filename, code string) string {
+	cfg := api.DefaultConfig()
+	cfg.WaArch = api.WaArch_wasm
+	cfg.WaOS = api.WaOS_chrome
+
+	wat, err := api.BuildFile(cfg, filename, code)
 	if err != nil {
 		waSetError(err)
 		return ""
@@ -33,8 +37,8 @@ func waGenerateWat(code string) string {
 	return string(wat)
 }
 
-func waFormatCode(code string) string {
-	newCode, err := api.FormatCode("hello.wa", code)
+func waFormatCode(filename, code string) string {
+	newCode, err := api.FormatCode(filename, code)
 	if err != nil {
 		waSetError(err)
 		return code
@@ -42,12 +46,25 @@ func waFormatCode(code string) string {
 	return newCode
 }
 
+func getJsValue(x js.Value, key, defaultValue string) string {
+	window := js.Global().Get("window")
+	if x := window.Get(key); x.IsNull() {
+		return defaultValue
+	} else {
+		return x.String()
+	}
+}
+
 func main() {
 	window := js.Global().Get("window")
-	waCode := window.Get("__WA_CODE__").String()
+
+	// __WA_FILE_NAME__ 表示文件名, 用于区分中英文语法
+	// __WA_CODE__ 代码内容
+	waName := getJsValue(window, "__WA_FILE_NAME__", "hello.wa")
+	waCode := getJsValue(window, "__WA_CODE__", "")
 
 	waClearError()
-	window.Set("__WA_WAT__", waGenerateWat(waCode))
-	window.Set("__WA_FMT_CODE__", waFormatCode(waCode))
+	window.Set("__WA_WAT__", waGenerateWat(waName, waCode))
+	window.Set("__WA_FMT_CODE__", waFormatCode(waName, waCode))
 	window.Set("__WA_ERROR__", waGetError())
 }

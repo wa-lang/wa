@@ -4,7 +4,6 @@ package waruntime
 
 import (
 	"context"
-	"fmt"
 	"io"
 	"os"
 
@@ -18,35 +17,7 @@ import (
 const wasiModuleName = "wasi_snapshot_preview1"
 
 func WasiInstantiate(ctx context.Context, rt wazero.Runtime) (api.Closer, error) {
-	if true {
-		return wasi.Instantiate(ctx, rt)
-	}
-	return rt.NewHostModuleBuilder(wasiModuleName).
-		NewFunctionBuilder().
-		WithFunc(wasi_fdWriteFn).
-		WithParameterNames("fd", "iovs", "iovsCount", "resultSize").
-		Export("fd_write").
-		// ----
-		NewFunctionBuilder().
-		WithFunc(func(ctx context.Context, m api.Module, pos, len uint32) {
-			bytes, _ := m.Memory().Read(ctx, pos, len)
-			fmt.Print(string(bytes))
-		}).
-		WithParameterNames("pos", "len").
-		Export("waPuts").
-		NewFunctionBuilder().
-		WithFunc(func(ctx context.Context, v uint32) {
-			fmt.Print(v)
-		}).
-		WithParameterNames("v").
-		Export("waPrintI32").
-		NewFunctionBuilder().
-		WithFunc(func(ctx context.Context, ch uint32) {
-			fmt.Printf("%c", rune(ch))
-		}).
-		WithParameterNames("ch").
-		Export("waPrintRune").
-		Instantiate(ctx, rt)
+	return wasi.Instantiate(ctx, rt)
 }
 
 func wasi_fdWriteFn(ctx context.Context, mod api.Module, fd, iovs, iovsCount, resultSize uint32) wasi.Errno {
