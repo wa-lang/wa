@@ -189,11 +189,13 @@ func (p *_Loader) Import(pkgpath string) (*types.Package, error) {
 
 	// main 包隐式导入 runtime
 	if pkgpath == p.prog.Manifest.MainPkg {
-		f, err := parser.ParseFile(nil, p.prog.Fset, "_$main$runtime.wa", `import "runtime" => _`, parser.AllErrors)
-		if err != nil {
-			panic(err)
+		if len(pkg.Files) > 0 {
+			f, err := parser.ParseFile(nil, p.prog.Fset, "_$main$runtime.wa", `import "runtime" => _`, parser.AllErrors)
+			if err != nil {
+				panic(err)
+			}
+			pkg.Files[0].Decls = append(f.Decls, pkg.Files[0].Decls...)
 		}
-		pkg.Files[0].Decls = append(f.Decls, pkg.Files[0].Decls...)
 	}
 
 	// 过滤 build-tag, main 包忽略
