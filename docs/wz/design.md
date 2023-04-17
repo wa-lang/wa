@@ -545,7 +545,7 @@ func Point.Length() => int {
   return math.sqrt(this.x*this.x + this.y*this.y)
 }
 
-fn main {
+func main {
   p := Point{x:1, y:2}
   println(p.Length())
 }
@@ -777,4 +777,4 @@ type duck interface {
 
 届时就可以考虑给中文语法扩充更贴近中文用户使用习惯的特殊新语法了。
 
-凹中文版的目标，不是让人人都用中文版语法、抛弃英文版语法，而是想抛砖引玉，启发所有人都来设计与开发更适合总国人的编程语言。
+凹中文版的目标，不是让人人都用中文版语法、抛弃英文版语法，而是想抛砖引玉，启发所有人都来设计与开发更适合中国人的编程语言。
