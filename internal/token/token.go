@@ -288,18 +288,6 @@ func init() {
 // Lookup maps an identifier to its keyword token or IDENT (if not a keyword).
 //
 func Lookup(ident string) Token {
-	// TODO: 临时过渡, 在合适的时候删除
-	if ident == "fn" {
-		return FUNC
-	}
-	if tok, is_keyword := keywords[ident]; is_keyword {
-		return tok
-	}
-	return IDENT
-}
-
-// 是否为Go关键字
-func LookupWaGo(ident string) Token {
 	if tok, is_keyword := keywords[ident]; is_keyword {
 		return tok
 	}
