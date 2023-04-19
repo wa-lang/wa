@@ -227,7 +227,7 @@ func (m *Module) EmitGenField(x Value, field_name string) (insts []wat.Inst, ret
 
 func (m *Module) EmitGenFieldAddr(x Value, field_name string) (insts []wat.Inst, ret_type ValueType) {
 	insts = append(insts, x.EmitPush()...)
-	var field *Field
+	var field *StructField
 	switch addr := x.(type) {
 	case *aRef:
 		field = addr.Type().(*Ref).Base.(*Struct).findFieldByName(field_name)

@@ -41,9 +41,6 @@ func (tLib *typeLib) compile(from types.Type) wir.ValueType {
 		return *v
 	}
 
-	//s := from.String()
-	//println(s)
-
 	var newType wir.ValueType
 	tLib.typeTable[from.String()] = &newType
 	uncommanFlag := false
@@ -119,20 +116,23 @@ func (tLib *typeLib) compile(from types.Type) wir.ValueType {
 	case *types.Named:
 		switch ut := t.Underlying().(type) {
 		case *types.Struct:
-			//Todo: 待解决类型嵌套包含的问题
-			var fs []wir.Field
-			for i := 0; i < ut.NumFields(); i++ {
-				f := ut.Field(i)
-				wtyp := tLib.compile(f.Type())
-				if f.Embedded() {
-					fs = append(fs, wir.NewField("$"+wtyp.Name(), wtyp))
-				} else {
-					fs = append(fs, wir.NewField(wir.GenSymbolName(f.Name()), wtyp))
-				}
-			}
 			pkg_name, _ := wir.GetPkgMangleName(t.Obj().Pkg().Path())
 			obj_name := wir.GenSymbolName(t.Obj().Name())
-			tStruct := tLib.module.GenValueType_Struct(pkg_name+"."+obj_name, fs)
+			tStruct, found := tLib.module.GenValueType_Struct(pkg_name + "." + obj_name)
+			if !found {
+				for i := 0; i < ut.NumFields(); i++ {
+					sf := ut.Field(i)
+					dtyp := tLib.compile(sf.Type())
+					if sf.Embedded() {
+						df := tLib.module.NewStructField("$"+dtyp.Name(), dtyp)
+						tStruct.AppendField(df)
+					} else {
+						df := tLib.module.NewStructField(wir.GenSymbolName(sf.Name()), dtyp)
+						tStruct.AppendField(df)
+					}
+				}
+				tStruct.Finish()
+			}
 
 			newType = tStruct
 			uncommanFlag = true

@@ -6,6 +6,7 @@ import (
 	"strconv"
 
 	"wa-lang.org/wa/internal/backends/compiler_wat/wir/wat"
+	"wa-lang.org/wa/internal/logger"
 )
 
 /**************************************
@@ -26,20 +27,16 @@ func (m *Module) GenValueType_Interface(name string) *Interface {
 	var interface_t Interface
 	interface_t.name = name
 
-	//interface_t.methodTab = make([]FnType, len(methods))
-	//copy(interface_t.methodTab, methods)
-	//
-	//for i := 0; i < s.NumMethods(); i++ {
-	//	var method FnType
-	//	method.Name = s.Method(i).Name()
-	//	method.FnSig = m.GenFnSig(s.Method(i).Type().(*types.Signature))
-	//	interface_t.methods = append(interface_t.methods, method)
-	//}
+	var found bool
+	interface_t.underlying, found = m.GenValueType_Struct(interface_t.Name() + ".underlying")
+	if found {
+		logger.Fatalf("Type: %s already registered.", interface_t.Name()+".underlying")
+	}
 
-	var fields []Field
-	fields = append(fields, NewField("data", m.GenValueType_Ref(m.GenValueType_Ref(m.VOID))))
-	fields = append(fields, NewField("itab", m.U32))
-	interface_t.underlying = m.GenValueType_Struct(interface_t.Name()+".underlying", fields)
+	interface_t.underlying.AppendField(m.NewStructField("data", m.GenValueType_Ref(m.GenValueType_Ref(m.VOID))))
+	interface_t.underlying.AppendField(m.NewStructField("itab", m.U32))
+	interface_t.underlying.Finish()
+
 	m.addValueType(&interface_t)
 	return &interface_t
 }

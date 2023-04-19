@@ -6,6 +6,7 @@ import (
 	"strconv"
 
 	"wa-lang.org/wa/internal/backends/compiler_wat/wir/wat"
+	"wa-lang.org/wa/internal/logger"
 )
 
 /**************************************
@@ -24,12 +25,18 @@ func (m *Module) GenValueType_Tuple(fields []ValueType) *Tuple {
 		return t.(*Tuple)
 	}
 
-	var members []Field
-	for i, t := range fields {
-		fname := "m" + strconv.Itoa(i)
-		members = append(members, NewField(fname, t))
+	var found bool
+	tuple_t.underlying, found = m.GenValueType_Struct(tuple_t.Name() + ".underlying")
+	if found {
+		logger.Fatalf("Type: %s already registered.", tuple_t.Name()+".underlying")
 	}
-	tuple_t.underlying = m.GenValueType_Struct(tuple_t.Name()+".underlying", members)
+
+	for i, t := range fields {
+		name := "m" + strconv.Itoa(i)
+		tuple_t.underlying.AppendField(m.NewStructField(name, t))
+	}
+	tuple_t.underlying.Finish()
+
 	m.addValueType(&tuple_t)
 	return &tuple_t
 }
@@ -98,9 +105,9 @@ func (v *aTuple) emitStoreToAddr(addr Value, offset int) []wat.Inst {
 
 func (v *aTuple) Extract(id int) Value {
 	st := v.typ.underlying
-	if id >= len(st.Members) {
+	if id >= len(st.fields) {
 		panic("id >= len(st.Members)")
 	}
 
-	return v.aStruct.genSubValue(st.Members[id])
+	return v.aStruct.genSubValue(st.fields[id])
 }

@@ -876,16 +876,23 @@ func (g *functionGenerator) genMakeClosre_Anonymous(inst *ssa.MakeClosure) (inst
 		panic("ret_type != inst.Type()")
 	}
 
-	var st_free_data wir.ValueType
+	var st_free_data *wir.Struct
 	{
-		var fields []wir.Field
-		for _, freevar := range f.FreeVars {
-			feild := wir.NewField(freevar.Name(), g.tLib.compile(freevar.Type()))
-			fields = append(fields, feild)
-		}
 		fn_internal_name, _ := wir.GetFnMangleName(f)
 		st_name := fn_internal_name + ".$warpdata"
-		st_free_data = g.module.GenValueType_Struct(st_name, fields)
+
+		var found bool
+		st_free_data, found = g.module.GenValueType_Struct(st_name)
+		if found {
+			logger.Fatalf("Type: %s already registered.", st_name)
+		}
+
+		for _, freevar := range f.FreeVars {
+			vtype := g.tLib.compile(freevar.Type())
+			field := g.module.NewStructField(freevar.Name(), vtype)
+			st_free_data.AppendField(field)
+		}
+		st_free_data.Finish()
 	}
 
 	var warp_fn_index int

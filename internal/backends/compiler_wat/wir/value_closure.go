@@ -84,10 +84,15 @@ func (m *Module) GenValueType_Closure(sig FnSig) *Closure {
 	closure_t._fn_type.Name = "closure$" + strconv.Itoa(_closure_id)
 	_closure_id++
 	m.AddFnType(&closure_t._fn_type)
-	var fields []Field
-	fields = append(fields, NewField("fn_index", m.U32))
-	fields = append(fields, NewField("data", m.GenValueType_Ref(m.VOID)))
-	closure_t.underlying = m.GenValueType_Struct(closure_t.Name()+".underlying", fields)
+
+	var found bool
+	closure_t.underlying, found = m.GenValueType_Struct(closure_t.Name() + ".underlying")
+	if found {
+		logger.Fatalf("Type: %s already registered.", closure_t.Name()+".underlying")
+	}
+	closure_t.underlying.AppendField(m.NewStructField("fn_index", m.U32))
+	closure_t.underlying.AppendField(m.NewStructField("data", m.GenValueType_Ref(m.VOID)))
+	closure_t.underlying.Finish()
 
 	m.addValueType(&closure_t)
 	return &closure_t
