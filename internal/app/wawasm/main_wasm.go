@@ -2,49 +2,7 @@
 
 package main
 
-import (
-	"syscall/js"
-
-	"wa-lang.org/wa/api"
-)
-
-var waError string
-
-func waGetError() string {
-	return waError
-}
-func waSetError(err error) {
-	if err != nil {
-		waError = err.Error()
-	} else {
-		waError = ""
-	}
-}
-func waClearError() {
-	waError = ""
-}
-
-func waGenerateWat(filename, code string) string {
-	cfg := api.DefaultConfig()
-	cfg.WaArch = api.WaArch_wasm
-	cfg.WaOS = api.WaOS_chrome
-
-	wat, err := api.BuildFile(cfg, filename, code)
-	if err != nil {
-		waSetError(err)
-		return ""
-	}
-	return string(wat)
-}
-
-func waFormatCode(filename, code string) string {
-	newCode, err := api.FormatCode(filename, code)
-	if err != nil {
-		waSetError(err)
-		return code
-	}
-	return newCode
-}
+import "syscall/js"
 
 func getJsValue(window js.Value, key, defaultValue string) string {
 	if x := window.Get(key); x.IsNull() {
@@ -63,7 +21,11 @@ func main() {
 	waCode := getJsValue(window, "__WA_CODE__", "// no code")
 
 	waClearError()
-	window.Set("__WA_WAT__", waGenerateWat(waName, waCode))
-	window.Set("__WA_FMT_CODE__", waFormatCode(waName, waCode))
-	window.Set("__WA_ERROR__", waGetError())
+
+	outWat := waGenerateWat(waName, waCode)
+	outFmt := waFormatCode(waName, waCode)
+
+	window.Set("__WA_WAT__", outWat)
+	window.Set("__WA_FMT_CODE__", outFmt)
+	window.Set("__WA_ERROR__", waGetErrorText())
 }
