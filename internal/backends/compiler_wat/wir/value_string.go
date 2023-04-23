@@ -6,6 +6,7 @@ import (
 	"strconv"
 
 	"wa-lang.org/wa/internal/backends/compiler_wat/wir/wat"
+	"wa-lang.org/wa/internal/logger"
 )
 
 /**************************************
@@ -34,11 +35,17 @@ func (m *Module) GenValueType_String() *String {
 	str_t._u8_block = m.GenValueType_Block(m.U8)
 	str_t._u8_ptr = m.GenValueType_Ptr(m.U8)
 
-	var members []Field
-	members = append(members, NewField("block", str_t._u8_block))
-	members = append(members, NewField("data", str_t._u8_ptr))
-	members = append(members, NewField("len", str_t._u32))
-	str_t.underlying = m.GenValueType_Struct(str_t.Name()+".underlying", members)
+	var found bool
+	str_t.underlying, found = m.GenValueType_Struct(str_t.Name() + ".underlying")
+	if found {
+		logger.Fatalf("Type: %s already registered.", str_t.Name()+".underlying")
+	}
+
+	str_t.underlying.AppendField(m.NewStructField("block", str_t._u8_block))
+	str_t.underlying.AppendField(m.NewStructField("data", str_t._u8_ptr))
+	str_t.underlying.AppendField(m.NewStructField("len", str_t._u32))
+	str_t.underlying.Finish()
+
 	m.addValueType(&str_t)
 	return &str_t
 

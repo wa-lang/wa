@@ -8,30 +8,35 @@ import (
 )
 
 /**************************************
-Field:
+StructField:
 **************************************/
-type Field struct {
+type StructField struct {
 	name     string
 	typ      ValueType
 	_start   int
 	_typ_ptr *Ptr //type of *typ
 }
 
-func NewField(n string, t ValueType) Field { return Field{name: n, typ: t} }
-func (i *Field) Name() string              { return i.name }
-func (i *Field) Type() ValueType           { return i.typ }
-func (i *Field) Equal(u Field) bool        { return i.name == u.name && i.typ.Equal(u.typ) }
+func (m *Module) NewStructField(name string, typ ValueType) *StructField {
+	f := StructField{name: name, typ: typ}
+	f._typ_ptr = m.GenValueType_Ptr(typ)
+	return &f
+}
+
+func (i *StructField) Name() string              { return i.name }
+func (i *StructField) Type() ValueType           { return i.typ }
+func (i *StructField) Equal(u *StructField) bool { return i.name == u.name && i.typ.Equal(u.typ) }
 
 /**************************************
 Struct:
 **************************************/
 type Struct struct {
 	tCommon
-	name    string
-	Members []Field
-	_size   int
-	_align  int
-	_u32    ValueType
+	name   string
+	fields []*StructField
+	_size  int
+	_align int
+	_u32   ValueType
 }
 
 type iStruct interface {
@@ -46,10 +51,10 @@ func makeAlign(i, align int) int {
 	return (i + align - 1) / align * align
 }
 
-func (m *Module) GenValueType_Struct(name string, fields []Field) *Struct {
+func (m *Module) GenValueType_Struct(name string) (*Struct, bool) {
 	t, ok := m.findValueType(name)
 	if ok {
-		return t.(*Struct)
+		return t.(*Struct), true
 	}
 
 	var struct_type Struct
@@ -57,24 +62,30 @@ func (m *Module) GenValueType_Struct(name string, fields []Field) *Struct {
 	struct_type._u32 = m.U32
 	m.addValueType(&struct_type)
 
-	for _, f := range fields {
-		ma := f.Type().align()
-		f._start = makeAlign(struct_type._size, ma)
-		f._typ_ptr = m.GenValueType_Ptr(f.typ)
-		struct_type.Members = append(struct_type.Members, f)
-
-		struct_type._size = f._start + f.Type().Size()
-		if ma > struct_type._align {
-			struct_type._align = ma
-		}
-	}
-	struct_type._size = makeAlign(struct_type._size, struct_type._align)
-	return &struct_type
+	return &struct_type, false
 }
 
 func (t *Struct) Name() string { return t.name }
 func (t *Struct) Size() int    { return t._size }
 func (t *Struct) align() int   { return t._align }
+
+func (t *Struct) AppendField(f *StructField) {
+	t.fields = append(t.fields, f)
+}
+
+func (t *Struct) Finish() {
+	t._size = 0
+	for _, field := range t.fields {
+		fa := field.Type().align()
+		field._start = makeAlign(t._size, fa)
+
+		t._size = field._start + field.Type().Size()
+		if fa > t._align {
+			t._align = fa
+		}
+	}
+	t._size = makeAlign(t._size, t._align)
+}
 
 type fn_offset_pair struct {
 	fn     int
@@ -82,7 +93,7 @@ type fn_offset_pair struct {
 }
 
 func (t *Struct) genRawFree() (ret []fn_offset_pair) {
-	for _, member := range t.Members {
+	for _, member := range t.fields {
 		member_type := member.Type()
 		if istruct, ok := member_type.(iStruct); ok {
 			rfs := istruct.genRawFree()
@@ -131,7 +142,7 @@ func (t *Struct) onFree() int {
 
 func (t *Struct) Raw() []wat.ValueType {
 	var r []wat.ValueType
-	for _, f := range t.Members {
+	for _, f := range t.fields {
 		r = append(r, f.Type().Raw()...)
 	}
 	return r
@@ -143,12 +154,12 @@ func (t *Struct) Equal(u ValueType) bool {
 		return false
 	}
 
-	if len(t.Members) != len(ut.Members) {
+	if len(t.fields) != len(ut.fields) {
 		return false
 	}
 
-	for i := range t.Members {
-		if !t.Members[i].Equal(ut.Members[i]) {
+	for i := range t.fields {
+		if !t.fields[i].Equal(ut.fields[i]) {
 			return false
 		}
 	}
@@ -157,17 +168,17 @@ func (t *Struct) Equal(u ValueType) bool {
 }
 
 func (t *Struct) EmitLoadFromAddr(addr Value, offset int) (insts []wat.Inst) {
-	for _, m := range t.Members {
+	for _, m := range t.fields {
 		ptr := newValue_Ptr(addr.Name(), addr.Kind(), m._typ_ptr)
 		insts = append(insts, m.Type().EmitLoadFromAddr(ptr, m._start+offset)...)
 	}
 	return
 }
 
-func (t *Struct) findFieldByName(field_name string) *Field {
-	for i := range t.Members {
-		if t.Members[i].Name() == field_name {
-			return &t.Members[i]
+func (t *Struct) findFieldByName(field_name string) *StructField {
+	for i := range t.fields {
+		if t.fields[i].Name() == field_name {
+			return t.fields[i]
 		}
 	}
 	return nil
@@ -191,7 +202,7 @@ func newValue_Struct(name string, kind ValueKind, typ *Struct) *aStruct {
 	return &v
 }
 
-func (v *aStruct) genSubValue(m Field) Value {
+func (v *aStruct) genSubValue(m *StructField) Value {
 	if v.Kind() != ValueKindConst {
 		return newValue(v.Name()+"."+m.Name(), v.Kind(), m.Type())
 	} else {
@@ -217,7 +228,7 @@ func (v *aStruct) setFieldConstValue(field string, sv Value) {
 func (v *aStruct) raw() []wat.Value {
 	var r []wat.Value
 	st := v.Type().(*Struct)
-	for _, m := range st.Members {
+	for _, m := range st.fields {
 		t := v.genSubValue(m)
 		r = append(r, t.raw()...)
 	}
@@ -227,7 +238,7 @@ func (v *aStruct) raw() []wat.Value {
 func (v *aStruct) EmitInit() []wat.Inst {
 	var insts []wat.Inst
 	st := v.Type().(*Struct)
-	for _, m := range st.Members {
+	for _, m := range st.fields {
 		t := v.genSubValue(m)
 		insts = append(insts, t.EmitInit()...)
 	}
@@ -237,7 +248,7 @@ func (v *aStruct) EmitInit() []wat.Inst {
 func (v *aStruct) EmitPush() []wat.Inst {
 	var insts []wat.Inst
 	st := v.Type().(*Struct)
-	for _, m := range st.Members {
+	for _, m := range st.fields {
 		t := v.genSubValue(m)
 		insts = append(insts, t.EmitPush()...)
 	}
@@ -247,8 +258,8 @@ func (v *aStruct) EmitPush() []wat.Inst {
 func (v *aStruct) EmitPop() []wat.Inst {
 	var insts []wat.Inst
 	st := v.Type().(*Struct)
-	for i := range st.Members {
-		m := st.Members[len(st.Members)-i-1]
+	for i := range st.fields {
+		m := st.fields[len(st.fields)-i-1]
 		t := v.genSubValue(m)
 		insts = append(insts, t.EmitPop()...)
 	}
@@ -258,8 +269,8 @@ func (v *aStruct) EmitPop() []wat.Inst {
 func (v *aStruct) EmitRelease() []wat.Inst {
 	var insts []wat.Inst
 	st := v.Type().(*Struct)
-	for i := range st.Members {
-		m := st.Members[len(st.Members)-i-1]
+	for i := range st.fields {
+		m := st.fields[len(st.fields)-i-1]
 		t := v.genSubValue(m)
 		insts = append(insts, t.EmitRelease()...)
 	}
@@ -268,7 +279,7 @@ func (v *aStruct) EmitRelease() []wat.Inst {
 
 func (v *aStruct) Extract(member_name string) Value {
 	st := v.Type().(*Struct)
-	for _, m := range st.Members {
+	for _, m := range st.fields {
 		if m.Name() == member_name {
 			return v.genSubValue(m)
 		}
@@ -278,7 +289,7 @@ func (v *aStruct) Extract(member_name string) Value {
 
 func (v *aStruct) emitStoreToAddr(addr Value, offset int) (insts []wat.Inst) {
 	st := v.Type().(*Struct)
-	for _, m := range st.Members {
+	for _, m := range st.fields {
 		t := v.genSubValue(m)
 		ptr := newValue_Ptr(addr.Name(), addr.Kind(), m._typ_ptr)
 		insts = append(insts, t.emitStoreToAddr(ptr, m._start+offset)...)
@@ -288,7 +299,7 @@ func (v *aStruct) emitStoreToAddr(addr Value, offset int) (insts []wat.Inst) {
 
 func (v *aStruct) emitStore(offset int) (insts []wat.Inst) {
 	st := v.Type().(*Struct)
-	for _, m := range st.Members {
+	for _, m := range st.fields {
 		t := v.genSubValue(m)
 		insts = append(insts, t.emitStore(m._start+offset)...)
 	}
@@ -301,7 +312,7 @@ func (v *aStruct) Bin() (b []byte) {
 	}
 
 	b = make([]byte, v.typ.Size())
-	for _, m := range v.typ.Members {
+	for _, m := range v.typ.fields {
 		d := b[m._start:]
 		copy(d, v.genSubValue(m).Bin())
 	}

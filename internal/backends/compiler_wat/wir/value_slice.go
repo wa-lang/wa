@@ -34,12 +34,18 @@ func (m *Module) GenValueType_Slice(base ValueType) *Slice {
 	slice_t._base_block = m.GenValueType_Block(base)
 	slice_t._base_ptr = m.GenValueType_Ptr(base)
 
-	var members []Field
-	members = append(members, NewField("block", slice_t._base_block))
-	members = append(members, NewField("data", slice_t._base_ptr))
-	members = append(members, NewField("len", slice_t._u32))
-	members = append(members, NewField("cap", slice_t._u32))
-	slice_t.underlying = m.GenValueType_Struct(slice_t.Name()+".underlying", members)
+	var found bool
+	slice_t.underlying, found = m.GenValueType_Struct(slice_t.Name() + ".underlying")
+	if found {
+		logger.Fatalf("Type: %s already registered.", slice_t.Name()+".underlying")
+	}
+
+	slice_t.underlying.AppendField(m.NewStructField("block", slice_t._base_block))
+	slice_t.underlying.AppendField(m.NewStructField("data", slice_t._base_ptr))
+	slice_t.underlying.AppendField(m.NewStructField("len", slice_t._u32))
+	slice_t.underlying.AppendField(m.NewStructField("cap", slice_t._u32))
+	slice_t.underlying.Finish()
+
 	m.addValueType(&slice_t)
 	return &slice_t
 }
