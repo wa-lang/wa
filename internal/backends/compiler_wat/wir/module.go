@@ -14,7 +14,9 @@ Module:
 type Module struct {
 	VOID, RUNE, I8, U8, I16, U16, I32, U32, I64, U64, F32, F64, STRING ValueType
 
-	types_map map[string]ValueType
+	types_map         map[string]ValueType
+	usedConcreteTypes []ValueType
+	usedInterfaces    []ValueType
 
 	imports []wat.Import
 
@@ -226,6 +228,8 @@ func (m *Module) genGlobalAlloc() *Function {
 }
 
 func (m *Module) ToWatModule() *wat.Module {
+	m.buildItab()
+
 	var wat_module wat.Module
 	wat_module.Imports = m.imports
 	wat_module.BaseWat = m.BaseWat
@@ -281,4 +285,73 @@ func (m *Module) addValueType(t ValueType) {
 func (m *Module) findValueType(name string) (ValueType, bool) {
 	t, ok := m.types_map[name]
 	return t, ok
+}
+
+func (m *Module) markConcreteTypeUsed(t ValueType) {
+	if t.Hash() != 0 {
+		return
+	}
+
+	m.usedConcreteTypes = append(m.usedConcreteTypes, t)
+	t.SetHash(len(m.usedConcreteTypes))
+}
+
+func (m *Module) markInterfaceUsed(t ValueType) {
+	if t.Hash() != 0 {
+		return
+	}
+
+	m.usedInterfaces = append(m.usedInterfaces, t)
+	t.SetHash(-len(m.usedInterfaces))
+}
+
+func (m *Module) buildItab() {
+	var itabs []byte
+	t_itab := m.types_map["runtime._itab"]
+
+	for _, conrete := range m.usedConcreteTypes {
+		for _, iface := range m.usedInterfaces {
+			fits := true
+
+			vtable := make([]int, iface.NumMethods())
+
+			for mid := 0; mid < iface.NumMethods(); mid++ {
+				method := iface.Method(mid)
+				found := false
+				for fid := 0; fid < conrete.NumMethods(); fid++ {
+					d := conrete.Method(fid)
+					if d.Name == method.Name && d.Sig.Equal(&method.Sig) {
+						found = true
+						vtable[mid] = m.AddTableElem(d.FullFnName)
+						break
+					}
+				}
+
+				if !found {
+					fits = false
+					break
+				}
+			}
+
+			var addr int
+			if fits {
+				var itab []byte
+				header := NewConst("0", t_itab)
+				itab = append(itab, header.Bin()...)
+				for _, v := range vtable {
+					fnid := NewConst(strconv.Itoa(v), m.U32)
+					itab = append(itab, fnid.Bin()...)
+				}
+
+				addr = m.DataSeg.Append(itab, 8)
+			}
+
+			itabs = append(itabs, NewConst(strconv.Itoa(addr), m.U32).Bin()...)
+		}
+	}
+
+	itabs_ptr := m.DataSeg.Append(itabs, 8)
+	m.SetGlobalInitValue("$wa.RT._itabsPtr", strconv.Itoa(itabs_ptr))
+	m.SetGlobalInitValue("$wa.RT._interfaceCount", strconv.Itoa(len(m.usedInterfaces)))
+	m.SetGlobalInitValue("$wa.RT._concretTypeCount", strconv.Itoa(len(m.usedConcreteTypes)))
 }

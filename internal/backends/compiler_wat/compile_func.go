@@ -1006,10 +1006,7 @@ func (g *functionGenerator) genMakeClosre_Bound(inst *ssa.MakeClosure) (insts []
 
 func (g *functionGenerator) genInterface(inst *ssa.MakeInterface) (insts []wat.Inst, ret_type wir.ValueType) {
 	x := g.getValue(inst.X)
-	g.tLib.markConcreteTypeUsed(inst.X.Type())
-
 	ret_type = g.tLib.compile(inst.Type())
-	g.tLib.markInterfaceUsed(inst.Type())
 	insts = g.module.EmitGenMakeInterface(x.value, ret_type)
 	return
 }
