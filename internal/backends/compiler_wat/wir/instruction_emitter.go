@@ -438,11 +438,13 @@ func (m *Module) EmitGenCap(x Value) (insts []wat.Inst) {
 	return
 }
 
-func (m *Module) EmitGenMakeInterface(x Value, interfaceType ValueType) (insts []wat.Inst) {
+func (m *Module) EmitGenMakeInterface(x Value, itype ValueType) (insts []wat.Inst) {
 	x_type := x.Type()
+	m.markConcreteTypeUsed(x_type)
+	m.markInterfaceUsed(itype)
 	x_ref_type := m.GenValueType_Ref(x_type)
 
-	return interfaceType.(*Interface).emitGenMake(x, x_ref_type)
+	return itype.(*Interface).emitGenMake(x, x_ref_type)
 }
 
 func (m *Module) EmitInvoke(i Value, params []Value, mid int, typeName string) (insts []wat.Inst) {

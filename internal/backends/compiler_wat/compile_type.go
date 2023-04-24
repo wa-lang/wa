@@ -3,8 +3,6 @@
 package compiler_wat
 
 import (
-	"strconv"
-
 	"wa-lang.org/wa/internal/backends/compiler_wat/wir"
 	"wa-lang.org/wa/internal/loader"
 	"wa-lang.org/wa/internal/logger"
@@ -17,9 +15,7 @@ type typeLib struct {
 	module    *wir.Module
 	typeTable map[string]*wir.ValueType
 
-	usedConcreteTypes []wir.ValueType
-	usedInterfaces    []wir.ValueType
-	pendingMethods    []*ssa.Function
+	pendingMethods []*ssa.Function
 }
 
 func newTypeLib(m *wir.Module, prog *loader.Program) *typeLib {
@@ -221,94 +217,12 @@ func (tl *typeLib) GenFnSig(s *types.Signature) wir.FnSig {
 	return sig
 }
 
-func (tLib *typeLib) markConcreteTypeUsed(t types.Type) {
-	v, ok := tLib.typeTable[t.String()]
-	if !ok {
-		logger.Fatal("Type not found.")
-	}
-
-	if (*v).Hash() != 0 {
-		return
-	}
-
-	tLib.usedConcreteTypes = append(tLib.usedConcreteTypes, *v)
-	(*v).SetHash(len(tLib.usedConcreteTypes))
-}
-
-func (tLib *typeLib) markInterfaceUsed(t types.Type) {
-	v, ok := tLib.typeTable[t.String()]
-	if !ok {
-		logger.Fatal("Type not found.")
-	}
-
-	if (*v).Hash() != 0 {
-		return
-	}
-
-	tLib.usedInterfaces = append(tLib.usedInterfaces, *v)
-	(*v).SetHash(-len(tLib.usedInterfaces))
-}
-
 func (tLib *typeLib) finish() {
 	for len(tLib.pendingMethods) > 0 {
 		mfn := tLib.pendingMethods[0]
 		tLib.pendingMethods = tLib.pendingMethods[1:]
 		CompileFunc(mfn, tLib.prog, tLib, tLib.module)
 	}
-
-	tLib.buildItab()
-}
-
-func (tLib *typeLib) buildItab() {
-	var itabs []byte
-	t_itab := *tLib.typeTable["runtime._itab"]
-
-	for _, conrete := range tLib.usedConcreteTypes {
-		for _, iface := range tLib.usedInterfaces {
-			fits := true
-
-			vtable := make([]int, iface.NumMethods())
-
-			for mid := 0; mid < iface.NumMethods(); mid++ {
-				method := iface.Method(mid)
-				found := false
-				for fid := 0; fid < conrete.NumMethods(); fid++ {
-					d := conrete.Method(fid)
-					if d.Name == method.Name && d.Sig.Equal(&method.Sig) {
-						found = true
-						vtable[mid] = tLib.module.AddTableElem(d.FullFnName)
-						break
-					}
-
-				}
-
-				if !found {
-					fits = false
-					break
-				}
-			}
-
-			var addr int
-			if fits {
-				var itab []byte
-				header := wir.NewConst("0", t_itab)
-				itab = append(itab, header.Bin()...)
-				for _, v := range vtable {
-					fnid := wir.NewConst(strconv.Itoa(v), tLib.module.U32)
-					itab = append(itab, fnid.Bin()...)
-				}
-
-				addr = tLib.module.DataSeg.Append(itab, 8)
-			}
-
-			itabs = append(itabs, wir.NewConst(strconv.Itoa(addr), tLib.module.U32).Bin()...)
-		}
-	}
-
-	itabs_ptr := tLib.module.DataSeg.Append(itabs, 8)
-	tLib.module.SetGlobalInitValue("$wa.RT._itabsPtr", strconv.Itoa(itabs_ptr))
-	tLib.module.SetGlobalInitValue("$wa.RT._interfaceCount", strconv.Itoa(len(tLib.usedInterfaces)))
-	tLib.module.SetGlobalInitValue("$wa.RT._concretTypeCount", strconv.Itoa(len(tLib.usedConcreteTypes)))
 }
 
 func (p *Compiler) compileType(t *ssa.Type) {
