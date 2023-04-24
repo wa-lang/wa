@@ -2,10 +2,16 @@
 
 package main
 
-import "syscall/js"
+import (
+	"fmt"
+	"syscall/js"
+)
 
 func getJsValue(window js.Value, key, defaultValue string) string {
-	if x := window.Get(key); x.IsNull() {
+	if window.IsNull() || window.IsUndefined() {
+		return defaultValue
+	}
+	if x := window.Get(key); x.IsNull() || x.IsUndefined() {
 		return defaultValue
 	} else {
 		return x.String()
@@ -25,7 +31,11 @@ func main() {
 	outWat := waGenerateWat(waName, waCode)
 	outFmt := waFormatCode(waName, waCode)
 
-	window.Set("__WA_WAT__", outWat)
-	window.Set("__WA_FMT_CODE__", outFmt)
-	window.Set("__WA_ERROR__", waGetErrorText())
+	if !window.IsNull() && !window.IsUndefined() {
+		window.Set("__WA_WAT__", outWat)
+		window.Set("__WA_FMT_CODE__", outFmt)
+		window.Set("__WA_ERROR__", waGetErrorText())
+	} else {
+		fmt.Println(outWat)
+	}
 }
