@@ -335,15 +335,15 @@ func (m *Module) buildItab() {
 
 			var addr int
 			if fits {
-				var itab []byte
+				var itab_bin []byte
 				header := NewConst("0", t_itab)
-				itab = append(itab, header.Bin()...)
+				itab_bin = append(itab_bin, header.Bin()...)
 				for _, v := range vtable {
 					fnid := NewConst(strconv.Itoa(v), m.U32)
-					itab = append(itab, fnid.Bin()...)
+					itab_bin = append(itab_bin, fnid.Bin()...)
 				}
 
-				addr = m.DataSeg.Append(itab, 8)
+				addr = m.DataSeg.Append(itab_bin, 8)
 			}
 
 			itabs = append(itabs, NewConst(strconv.Itoa(addr), m.U32).Bin()...)
