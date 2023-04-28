@@ -11,6 +11,7 @@ import (
 	"io"
 	"os"
 	"reflect"
+	"sort"
 
 	"wa-lang.org/wa/internal/token"
 )
@@ -144,6 +145,30 @@ func (p *printer) printf(format string, args ...interface{}) {
 func (p *printer) print(x reflect.Value) {
 	if !NotNilFilter("", x) {
 		p.printf("nil")
+		return
+	}
+
+	// 特别处理, key 有序输出
+	if m, ok := x.Interface().(map[string]*Object); ok {
+		p.printf("%s (len = %d) {", x.Type(), x.Len())
+		if len(m) > 0 {
+			var keys = make([]string, 0, len(m))
+			for key := range m {
+				keys = append(keys, key)
+			}
+			sort.Strings(keys)
+
+			p.indent++
+			p.printf("\n")
+			for _, key := range keys {
+				p.print(reflect.ValueOf(key))
+				p.printf(": ")
+				p.print(reflect.ValueOf(m[key]))
+				p.printf("\n")
+			}
+			p.indent--
+		}
+		p.printf("}")
 		return
 	}
 
