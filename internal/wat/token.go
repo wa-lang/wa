@@ -2,18 +2,16 @@
 
 package wat
 
+import (
+	"fmt"
+	"strconv"
+)
+
 // Token 结构
 type Token struct {
-	Pos   TokenPos  // 位置
-	Kind  TokenKind // 类型
-	Value string    // 面值
-}
-
-// 位置信息
-type TokenPos struct {
-	Offset int // offset, 从 0 开始
-	Line   int // 行号, 从 1 开始
-	Column int // 列号, 从 1 开始的字节数
+	Pos     Pos       // 位置
+	Kind    TokenKind // 类型
+	Literal string    // 程序中原始的字符串
 }
 
 // 记号类型
@@ -69,7 +67,54 @@ const (
 	keyword_end
 )
 
-// 将 wat 转化为 token 列表
-func Tokenize(input []byte) []Token {
-	return nil
+var tokens = [...]string{
+	// TODO
+}
+
+func (tok Token) String() string {
+	return fmt.Sprintf("%v:%q", tok.Kind, tok.Literal)
+}
+
+func (tokType TokenKind) String() string {
+	s := ""
+	if 0 <= tokType && tokType < TokenKind(len(tokens)) {
+		s = tokens[tokType]
+	}
+	if s == "" {
+		s = "token(" + strconv.Itoa(int(tokType)) + ")"
+	}
+	return s
+}
+
+var keywords = map[string]TokenKind{
+	// TODO
+}
+
+func watLookup(ident string) TokenKind {
+	if tok, isKeyword := keywords[ident]; isKeyword {
+		return tok
+	}
+	return IDENT
+}
+
+func (i Token) IntValue() int64 {
+	x, err := strconv.ParseInt(i.Literal, 10, 64)
+	if err != nil {
+		panic(err)
+	}
+	return x
+}
+func (i Token) FloatValue() float64 {
+	x, err := strconv.ParseFloat(i.Literal, 64)
+	if err != nil {
+		panic(err)
+	}
+	return x
+}
+func (i Token) StrValue() string {
+	x, err := strconv.Unquote(i.Literal)
+	if err != nil {
+		panic(err)
+	}
+	return x
 }
