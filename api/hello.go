@@ -13,7 +13,15 @@ import (
 )
 
 func main() {
-	output, err := api.RunCode("hello.wa", code)
+	output, err := api.RunCode(api.DefaultConfig(), "hello.wa", code)
+	if err != nil {
+		fmt.Println(err)
+		os.Exit(1)
+	}
+
+	fmt.Print(string(output))
+
+	output, err = api.RunCode(api.DefaultConfig(), "hello-zh.wz", code_zh)
 	if err != nil {
 		fmt.Println(err)
 		os.Exit(1)
@@ -30,4 +38,13 @@ func main() {
 func add(a: i32, b: i32) => i32 {
 	return a+b
 }
+`
+
+const code_zh = `// 版权 @2022 _examples/hello 作者。保留所有权利。
+
+引于 "书"
+
+【启】：
+  书·说："你好，凹语言！"
+。
 `
