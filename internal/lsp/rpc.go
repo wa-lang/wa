@@ -3,25 +3,29 @@
 package lsp
 
 import (
-	"bytes"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
-	"net/http"
+	"io"
 )
 
+type lspChannel struct {
+	r   io.Reader
+	w   io.Writer
+	dec *json.Decoder
+}
+
 type lspRequest struct {
-	ID      int           `json:"id"`
-	JSONRPC string        `json:"jsonrpc"`
-	Method  string        `json:"method"`
-	Params  []interface{} `json:"params"`
+	ID      int               `json:"id"`
+	JSONRPC string            `json:"jsonrpc"`
+	Method  string            `json:"method"`
+	Params  []json.RawMessage `json:"params"`
 }
 
 type lspResponse struct {
-	ID      int             `json:"id"`
-	JSONRPC string          `json:"jsonrpc"`
-	Result  json.RawMessage `json:"result"`
-	Error   *lspError       `json:"error"`
+	ID      int         `json:"id"`
+	JSONRPC string      `json:"jsonrpc"`
+	Result  interface{} `json:"result"`
+	Error   *lspError   `json:"error"`
 }
 
 // JSONRPC错误
@@ -34,52 +38,22 @@ func (err *lspError) Error() string {
 	return fmt.Sprintf("lsp.Error{code:%d, message: %q}", err.Code, err.Message)
 }
 
-// 原生调用方法
-func lspCall(host, method string, args ...interface{}) (result json.RawMessage, err error) {
-	return jsonrpcCall(host, method, args...)
+func (p *lspChannel) RecvRequest() (req *lspRequest, err error) {
+	if p.dec == nil {
+		p.dec = json.NewDecoder(p.r)
+	}
+	req = new(lspRequest)
+	err = p.dec.Decode(&req)
+	return
 }
 
-// jsonrpc 调用
-func jsonrpcCall(host, method string, args ...interface{}) (result json.RawMessage, err error) {
-	reqBody, err := json.Marshal(&lspRequest{
-		JSONRPC: "2.0",
-		Method:  method,
-		Params:  args,
-		ID:      1,
-	})
-	if err != nil {
-		return nil, err
-	}
-
-	r, err := http.Post(host, "application/json", bytes.NewReader(reqBody))
-	if err != nil {
-		return nil, err
-	}
-	defer r.Body.Close()
-
-	respBody, err := ioutil.ReadAll(r.Body)
-	if err != nil {
-		return nil, err
-	}
-
-	var resp = new(lspResponse)
-	if err := json.Unmarshal(respBody, resp); err != nil {
-		return nil, err
-	}
-	if resp.Error != nil {
-		return nil, resp.Error
-	}
-
-	return resp.Result, nil
-}
-
-// JSONRPC调用, 需要通过response提供返回类型
-func lsprpcCall(host, method string, response interface{}, args ...interface{}) (err error) {
-	resp_Result, err := jsonrpcCall(host, method, args...)
+func (p *lspChannel) SendRespose(resp *lspResponse) error {
+	reqBody, err := json.Marshal(resp)
 	if err != nil {
 		return err
 	}
-	if err := json.Unmarshal(resp_Result, response); err != nil {
+	_, err = p.w.Write(reqBody)
+	if err != nil {
 		return err
 	}
 	return nil

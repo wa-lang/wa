@@ -6,16 +6,51 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"os"
 )
 
-type LSPServer struct{}
-
-func NewLSPServer() *LSPServer {
-	return &LSPServer{}
+type LSPServer struct {
+	conn *lspChannel
 }
 
-func (p *LSPServer) handleMethod(ctx context.Context, reqMethod string, argsData []byte) (result interface{}, err error) {
-	switch reqMethod {
+func NewLSPServer() *LSPServer {
+	return &LSPServer{
+		conn: &lspChannel{r: os.Stdin, w: os.Stdout},
+	}
+}
+
+func (p *LSPServer) Run() error {
+	ctx := context.Background()
+	for {
+		req, err := p.conn.RecvRequest()
+		if err != nil {
+			return err
+		}
+
+		var resp = &lspResponse{
+			ID:      req.ID,
+			JSONRPC: req.JSONRPC,
+		}
+		resp.Result, err = p.handleMethod(ctx, req)
+		if err != nil {
+			resp.Error = &lspError{
+				Message: err.Error(),
+			}
+		}
+
+		if err = p.conn.SendRespose(resp); err != nil {
+			// log
+		}
+	}
+}
+
+func (p *LSPServer) handleMethod(ctx context.Context, req *lspRequest) (result interface{}, err error) {
+	var argsData []byte
+	if len(req.Params) > 0 {
+		argsData = []byte(req.Params[0])
+	}
+
+	switch req.Method {
 	case "initialized":
 		return
 	case "textDocument/didOpen":
