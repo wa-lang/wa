@@ -4,6 +4,14 @@
 
 package lsp
 
+type DocumentURI string
+
+type File struct {
+	LanguageID string
+	Text       string
+	Version    int
+}
+
 type InitializeParams struct {
 	ProcessID             int                `json:"processId,omitempty"`
 	RootURI               string             `json:"rootUri,omitempty"`

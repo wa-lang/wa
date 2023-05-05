@@ -24,4 +24,6 @@ const (
 	k_textDocument_references     = "textDocument/references"
 	k_textDocument_hover          = "textDocument/hover"
 	k_textDocument_codeAction     = "textDocument/codeAction"
+
+	k_window_logMessage = "window/logMessage"
 )

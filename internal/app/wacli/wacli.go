@@ -21,6 +21,7 @@ import (
 	"wa-lang.org/wa/internal/app/apputil"
 	"wa-lang.org/wa/internal/app/yacc"
 	"wa-lang.org/wa/internal/config"
+	"wa-lang.org/wa/internal/lsp"
 )
 
 func Main() {
@@ -453,6 +454,22 @@ func Main() {
 					Copyright: loadCopyright(c.String("c")),
 				})
 				yacc.Main(c.Args().First())
+				return nil
+			},
+		},
+
+		{
+			Name:  "lsp",
+			Usage: "run wa lang server",
+			Flags: []cli.Flag{
+				&cli.StringFlag{
+					Name:  "log-file",
+					Usage: "set log file",
+					Value: "",
+				},
+			},
+			Action: func(c *cli.Context) error {
+				lsp.NewLSPServer(&lsp.Option{}).Run()
 				return nil
 			},
 		},
