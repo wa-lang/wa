@@ -180,7 +180,7 @@ func (p *_Loader) Import(pkgpath string) (*types.Package, error) {
 		return nil, err
 	}
 
-	// 解析当前包的 AST
+	// 解析当前包的 AST, 隐含了是否测试模式
 	filenames, pkg.Files, err = p.ParseDir(pkgpath)
 	if err != nil {
 		logger.Tracef(&config.EnableTrace_loader, "err: %v", err)
@@ -253,27 +253,9 @@ func (p *_Loader) Import(pkgpath string) (*types.Package, error) {
 
 	// 提取测试信息
 	if p.cfg.UnitTest {
-		for _, filename := range filenames {
-			if !p.isTestFile(filename) {
-				continue
-			}
-			pkg.TestInfo.Files = append(pkg.TestInfo.Files, filename)
-		}
-		for _, name := range pkg.Pkg.Scope().Names() {
-			if len(name) < len("Test?") {
-				continue
-			}
-			if !strings.HasPrefix(name, "Test") {
-				continue
-			}
-			obj := pkg.Pkg.Scope().Lookup(name)
-			if fn, ok := obj.(*types.Func); ok {
-				if sig, ok := fn.Type().(*types.Signature); ok {
-					if sig.Recv() == nil && sig.Params().Len() == 0 && sig.Results().Len() == 0 {
-						pkg.TestInfo.Funcs = append(pkg.TestInfo.Funcs, name)
-					}
-				}
-			}
+		pkg.TestInfo, err = p.parseTestInfo(&pkg, filenames)
+		if err != nil {
+			return nil, err
 		}
 	}
 
@@ -283,7 +265,98 @@ func (p *_Loader) Import(pkgpath string) (*types.Package, error) {
 	return pkg.Pkg, nil
 }
 
-func (p *_Loader) ParseDir_wsFiles(pkgpath string) (files []WsFile, err error) {
+func (p *_Loader) parseTestInfo(pkg *Package, filenames []string) (*TestInfo, error) {
+	tInfo := &TestInfo{
+		Tests:    make(map[string]TestFuncInfo),
+		Benchs:   make(map[string]BenchFuncInfo),
+		Examples: make(map[string]ExampleFuncInfo),
+	}
+
+	for i, filename := range filenames {
+		if !p.isTestFile(filename) {
+			continue
+		}
+
+		file := pkg.Files[i]
+		tInfo.Files = append(tInfo.Files, filename)
+
+		// 提取测试/基准/示例函数
+		for _, decl := range file.Decls {
+			if fn, ok := decl.(*ast.FuncDecl); ok {
+				name := fn.Name.Name
+
+				// 函数参数均为空
+				obj := pkg.Pkg.Scope().Lookup(name)
+				{
+					var bValidFuncType = false
+					if fn, ok := obj.(*types.Func); ok {
+						if sig, ok := fn.Type().(*types.Signature); ok {
+							if sig.Recv() == nil && sig.Params().Len() == 0 && sig.Results().Len() == 0 {
+								bValidFuncType = true
+							}
+						}
+					}
+					if !bValidFuncType {
+						continue // skip
+					}
+				}
+
+				switch {
+				case strings.HasPrefix(name, "Test"):
+					tInfo.Funcs = append(tInfo.Funcs, name)
+					tInfo.Tests[name] = TestFuncInfo{
+						FuncPos: obj.Pos(),
+						Name:    name,
+					}
+				case strings.HasPrefix(name, "Bench"):
+					tInfo.Benchs[name] = BenchFuncInfo{
+						FuncPos: obj.Pos(),
+						Name:    name,
+					}
+				case strings.HasPrefix(name, "Example"):
+					tInfo.Examples[name] = ExampleFuncInfo{
+						FuncPos: obj.Pos(),
+						Name:    name,
+						Output:  p.parseExampleOutputComment(file, fn),
+					}
+				}
+			}
+		}
+	}
+
+	return tInfo, nil
+}
+
+func (p *_Loader) parseExampleOutputComment(f *ast.File, fn *ast.FuncDecl) string {
+	for _, commentGroup := range f.Comments {
+		if commentGroup.Pos() <= fn.Body.Pos() {
+			continue
+		}
+		if commentGroup.End() > fn.Body.End() {
+			break
+		}
+
+		for j, comment := range commentGroup.List {
+			if comment.Text != "// Output:" {
+				continue
+			}
+
+			var lineTexts []string
+			for _, x := range commentGroup.List[j+1:] {
+				if !strings.HasPrefix(x.Text, "//") {
+					break
+				}
+				lineTexts = append(lineTexts, strings.TrimSpace(x.Text[2:]))
+			}
+
+			return strings.Join(lineTexts, "\n")
+		}
+	}
+
+	return ""
+}
+
+func (p *_Loader) ParseDir_wsFiles(pkgpath string) (files []*WsFile, err error) {
 	logger.Tracef(&config.EnableTrace_loader, "pkgpath: %v", pkgpath)
 
 	if p.cfg.WaBackend == "" {
@@ -334,7 +407,7 @@ func (p *_Loader) ParseDir_wsFiles(pkgpath string) (files []WsFile, err error) {
 	}
 
 	for i := 0; i < len(filenames); i++ {
-		files = append(files, WsFile{
+		files = append(files, &WsFile{
 			Name: filenames[i],
 			Code: string(datas[i]),
 		})
