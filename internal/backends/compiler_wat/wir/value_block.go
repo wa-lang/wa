@@ -35,6 +35,7 @@ func (m *Module) GenValueType_Block(base ValueType) *Block {
 func (t *Block) Name() string         { return t.Base.Name() + ".$$block" }
 func (t *Block) Size() int            { return 4 }
 func (t *Block) align() int           { return 4 }
+func (t *Block) Kind() TypeKind       { return kBlock }
 func (t *Block) Raw() []wat.ValueType { return []wat.ValueType{wat.U32{}} }
 func (t *Block) Equal(u ValueType) bool {
 	if ut, ok := u.(*Block); ok {

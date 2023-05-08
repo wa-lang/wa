@@ -45,6 +45,7 @@ func (m *Module) GenValueType_Array(base ValueType, capacity int) *Array {
 func (t *Array) Name() string         { return t.Base.Name() + ".$array" + strconv.Itoa(t.Capacity) }
 func (t *Array) Size() int            { return t.underlying.Size() }
 func (t *Array) align() int           { return t.underlying.align() }
+func (t *Array) Kind() TypeKind       { return kArray }
 func (t *Array) Raw() []wat.ValueType { return t.underlying.Raw() }
 func (t *Array) onFree() int          { return t.underlying.onFree() }
 

@@ -65,9 +65,10 @@ func (m *Module) GenValueType_Struct(name string) (*Struct, bool) {
 	return &struct_type, false
 }
 
-func (t *Struct) Name() string { return t.name }
-func (t *Struct) Size() int    { return t._size }
-func (t *Struct) align() int   { return t._align }
+func (t *Struct) Name() string   { return t.name }
+func (t *Struct) Size() int      { return t._size }
+func (t *Struct) align() int     { return t._align }
+func (t *Struct) Kind() TypeKind { return kStruct }
 
 func (t *Struct) AppendField(f *StructField) {
 	t.fields = append(t.fields, f)

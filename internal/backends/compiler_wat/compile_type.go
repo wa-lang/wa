@@ -146,16 +146,15 @@ func (tLib *typeLib) compile(from types.Type) wir.ValueType {
 				var method wir.Method
 				method.Sig = tLib.GenFnSig(ut.Method(i).Type().(*types.Signature))
 				method.Name = ut.Method(i).Name()
-				method.FullFnName = pkg_name + "." + obj_name + "." + method.Name
+
+				var fnSig wir.FnSig
+				fnSig.Params = append(fnSig.Params, tLib.module.GenValueType_Ref(tLib.module.VOID))
+				fnSig.Params = append(fnSig.Params, method.Sig.Params...)
+				fnSig.Results = method.Sig.Results
+
+				method.FullFnName = tLib.module.AddFnSig(&fnSig)
 
 				newType.AddMethod(method)
-
-				var fntype wir.FnType
-				fntype.FnSig.Params = append(fntype.FnSig.Params, tLib.module.GenValueType_Ref(tLib.module.VOID))
-				fntype.FnSig.Params = append(fntype.FnSig.Params, method.Sig.Params...)
-				fntype.FnSig.Results = method.Sig.Results
-				fntype.Name = method.FullFnName
-				tLib.module.AddFnType(&fntype)
 			}
 
 		case *types.Signature:

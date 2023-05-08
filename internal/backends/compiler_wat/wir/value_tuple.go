@@ -51,6 +51,7 @@ func (t *Tuple) Name() string {
 
 func (t *Tuple) Size() int            { return t.underlying.Size() }
 func (t *Tuple) align() int           { return t.underlying.align() }
+func (t *Tuple) Kind() TypeKind       { return kTuple }
 func (t *Tuple) onFree() int          { return t.underlying.onFree() }
 func (t *Tuple) Raw() []wat.ValueType { return t.underlying.Raw() }
 func (t *Tuple) Equal(u ValueType) bool {

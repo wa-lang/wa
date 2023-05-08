@@ -7,6 +7,34 @@ import (
 	"wa-lang.org/wa/internal/logger"
 )
 
+type TypeKind uint8
+
+const (
+	kUnknown TypeKind = iota
+	kVoid
+	kU8
+	kU16
+	kU32
+	kU64
+	kI8
+	kI16
+	kI32
+	kI64
+	kF32
+	kF64
+	kRune
+	kPtr
+	kBlock
+	kStruct
+	kTuple
+	kRef
+	kString
+	kSlice
+	kArray
+	kMap
+	kInterface
+)
+
 func toWatType(t ValueType) wat.ValueType {
 	switch t.(type) {
 	case *tI32, *tRune, *tI8, *tI16:
@@ -44,6 +72,7 @@ func toWatType(t ValueType) wat.ValueType {
 tCommon:
 **************************************/
 type tCommon struct {
+	addr    int
 	hash    int
 	methods []Method
 }
@@ -76,6 +105,7 @@ type tVoid struct {
 func (t *tVoid) Name() string           { return "void" }
 func (t *tVoid) Size() int              { return 0 }
 func (t *tVoid) align() int             { return 0 }
+func (t *tVoid) Kind() TypeKind         { return kVoid }
 func (t *tVoid) onFree() int            { return 0 }
 func (t *tVoid) Raw() []wat.ValueType   { return []wat.ValueType{} }
 func (t *tVoid) Equal(u ValueType) bool { _, ok := u.(*tVoid); return ok }
@@ -94,6 +124,7 @@ type tRune struct {
 func (t *tRune) Name() string           { return "rune" }
 func (t *tRune) Size() int              { return 4 }
 func (t *tRune) align() int             { return 4 }
+func (t *tRune) Kind() TypeKind         { return kRune }
 func (t *tRune) onFree() int            { return 0 }
 func (t *tRune) Raw() []wat.ValueType   { return []wat.ValueType{wat.I32{}} }
 func (t *tRune) Equal(u ValueType) bool { _, ok := u.(*tRune); return ok }
@@ -117,6 +148,7 @@ type tI8 struct {
 func (t *tI8) Name() string           { return "i8" }
 func (t *tI8) Size() int              { return 1 }
 func (t *tI8) align() int             { return 1 }
+func (t *tI8) Kind() TypeKind         { return kI8 }
 func (t *tI8) onFree() int            { return 0 }
 func (t *tI8) Raw() []wat.ValueType   { return []wat.ValueType{wat.I32{}} }
 func (t *tI8) Equal(u ValueType) bool { _, ok := u.(*tI8); return ok }
@@ -140,6 +172,7 @@ type tU8 struct {
 func (t *tU8) Name() string           { return "u8" }
 func (t *tU8) Size() int              { return 1 }
 func (t *tU8) align() int             { return 1 }
+func (t *tU8) Kind() TypeKind         { return kU8 }
 func (t *tU8) onFree() int            { return 0 }
 func (t *tU8) Raw() []wat.ValueType   { return []wat.ValueType{wat.I32{}} }
 func (t *tU8) Equal(u ValueType) bool { _, ok := u.(*tU8); return ok }
@@ -163,6 +196,7 @@ type tI16 struct {
 func (t *tI16) Name() string           { return "i16" }
 func (t *tI16) Size() int              { return 2 }
 func (t *tI16) align() int             { return 2 }
+func (t *tI16) Kind() TypeKind         { return kI16 }
 func (t *tI16) onFree() int            { return 0 }
 func (t *tI16) Raw() []wat.ValueType   { return []wat.ValueType{wat.I32{}} }
 func (t *tI16) Equal(u ValueType) bool { _, ok := u.(*tI16); return ok }
@@ -186,6 +220,7 @@ type tU16 struct {
 func (t *tU16) Name() string           { return "u16" }
 func (t *tU16) Size() int              { return 2 }
 func (t *tU16) align() int             { return 2 }
+func (t *tU16) Kind() TypeKind         { return kU16 }
 func (t *tU16) onFree() int            { return 0 }
 func (t *tU16) Raw() []wat.ValueType   { return []wat.ValueType{wat.I32{}} }
 func (t *tU16) Equal(u ValueType) bool { _, ok := u.(*tU16); return ok }
@@ -209,6 +244,7 @@ type tI32 struct {
 func (t *tI32) Name() string           { return "i32" }
 func (t *tI32) Size() int              { return 4 }
 func (t *tI32) align() int             { return 4 }
+func (t *tI32) Kind() TypeKind         { return kI32 }
 func (t *tI32) onFree() int            { return 0 }
 func (t *tI32) Raw() []wat.ValueType   { return []wat.ValueType{wat.I32{}} }
 func (t *tI32) Equal(u ValueType) bool { _, ok := u.(*tI32); return ok }
@@ -232,6 +268,7 @@ type tU32 struct {
 func (t *tU32) Name() string           { return "u32" }
 func (t *tU32) Size() int              { return 4 }
 func (t *tU32) align() int             { return 4 }
+func (t *tU32) Kind() TypeKind         { return kU32 }
 func (t *tU32) onFree() int            { return 0 }
 func (t *tU32) Raw() []wat.ValueType   { return []wat.ValueType{wat.U32{}} }
 func (t *tU32) Equal(u ValueType) bool { _, ok := u.(*tU32); return ok }
@@ -255,6 +292,7 @@ type tI64 struct {
 func (t *tI64) Name() string           { return "i64" }
 func (t *tI64) Size() int              { return 8 }
 func (t *tI64) align() int             { return 8 }
+func (t *tI64) Kind() TypeKind         { return kI64 }
 func (t *tI64) onFree() int            { return 0 }
 func (t *tI64) Raw() []wat.ValueType   { return []wat.ValueType{wat.I64{}} }
 func (t *tI64) Equal(u ValueType) bool { _, ok := u.(*tI64); return ok }
@@ -278,6 +316,7 @@ type tU64 struct {
 func (t *tU64) Name() string           { return "u64" }
 func (t *tU64) Size() int              { return 8 }
 func (t *tU64) align() int             { return 8 }
+func (t *tU64) Kind() TypeKind         { return kU64 }
 func (t *tU64) onFree() int            { return 0 }
 func (t *tU64) Raw() []wat.ValueType   { return []wat.ValueType{wat.U64{}} }
 func (t *tU64) Equal(u ValueType) bool { _, ok := u.(*tU64); return ok }
@@ -301,6 +340,7 @@ type tF32 struct {
 func (t *tF32) Name() string           { return "f32" }
 func (t *tF32) Size() int              { return 4 }
 func (t *tF32) align() int             { return 4 }
+func (t *tF32) Kind() TypeKind         { return kF32 }
 func (t *tF32) onFree() int            { return 0 }
 func (t *tF32) Raw() []wat.ValueType   { return []wat.ValueType{wat.F32{}} }
 func (t *tF32) Equal(u ValueType) bool { _, ok := u.(*tF32); return ok }
@@ -324,6 +364,7 @@ type tF64 struct {
 func (t *tF64) Name() string           { return "f64" }
 func (t *tF64) Size() int              { return 8 }
 func (t *tF64) align() int             { return 8 }
+func (t *tF64) Kind() TypeKind         { return kF64 }
 func (t *tF64) onFree() int            { return 0 }
 func (t *tF64) Raw() []wat.ValueType   { return []wat.ValueType{wat.F64{}} }
 func (t *tF64) Equal(u ValueType) bool { _, ok := u.(*tF64); return ok }

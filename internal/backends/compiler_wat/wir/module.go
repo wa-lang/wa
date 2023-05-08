@@ -12,7 +12,7 @@ import (
 Module:
 **************************************/
 type Module struct {
-	VOID, RUNE, I8, U8, I16, U16, I32, U32, I64, U64, F32, F64, STRING ValueType
+	VOID, RUNE, I8, U8, I16, U16, I32, U32, UPTR, I64, U64, F32, F64, STRING ValueType
 
 	types_map         map[string]ValueType
 	usedConcreteTypes []ValueType
@@ -20,8 +20,8 @@ type Module struct {
 
 	imports []wat.Import
 
-	fn_types     []*FnType
-	fn_types_map map[string]int
+	fnSigs     []*FnSig
+	fnSigsName map[string]string
 
 	funcs     []*Function
 	funcs_map map[string]*Function
@@ -54,6 +54,7 @@ func NewModule() *Module {
 	m.U16 = &tU16{}
 	m.I32 = &tI32{}
 	m.U32 = &tU32{}
+	m.UPTR = m.U32
 	m.I64 = &tI64{}
 	m.U64 = &tU64{}
 	m.F32 = &tF32{}
@@ -75,13 +76,7 @@ func NewModule() *Module {
 
 	m.STRING = m.GenValueType_String()
 
-	m.fn_types_map = make(map[string]int)
-	{
-		var free_type FnType
-		free_type.Name = "$onFree"
-		free_type.Params = []ValueType{m.I32}
-		m.AddFnType(&free_type)
-	}
+	m.fnSigsName = make(map[string]string)
 
 	m.funcs_map = make(map[string]*Function)
 
@@ -110,21 +105,23 @@ func (m *Module) AddImportFunc(moduleName string, objName string, funcName strin
 	m.imports = append(m.imports, wat.NewImpFunc(moduleName, objName, funcName, wat_sig))
 }
 
-func (m *Module) findFnType(name string) int {
-	if i, ok := m.fn_types_map[name]; ok {
-		return i
+func (m *Module) FindFnSig(sig *FnSig) string {
+	if s, ok := m.fnSigsName[sig.String()]; ok {
+		return s
 	}
-	return 0
+	return ""
 }
 
-func (m *Module) AddFnType(typ *FnType) int {
-	if i := m.findFnType(typ.Name); i != 0 {
-		return i
+func (m *Module) AddFnSig(sig *FnSig) string {
+	if s, ok := m.fnSigsName[sig.String()]; ok {
+		return s
 	}
-	i := len(m.fn_types)
-	m.fn_types = append(m.fn_types, typ)
-	m.fn_types_map[typ.Name] = i
-	return i
+
+	m.fnSigs = append(m.fnSigs, sig)
+	s := "$$fnSig" + strconv.Itoa(len(m.fnSigs))
+
+	m.fnSigsName[sig.String()] = s
+	return s
 }
 
 func (m *Module) findTableElem(elem string) int {
@@ -234,9 +231,15 @@ func (m *Module) ToWatModule() *wat.Module {
 	wat_module.Imports = m.imports
 	wat_module.BaseWat = m.BaseWat
 
-	for _, t := range m.fn_types {
+	{
+		var onfree_type wat.FuncType
+		onfree_type.Name = "$onFree"
+		onfree_type.Params = m.I32.Raw()
+		wat_module.FuncTypes = append(wat_module.FuncTypes, onfree_type)
+	}
+	for _, t := range m.fnSigs {
 		var fn_type wat.FuncType
-		fn_type.Name = t.Name
+		fn_type.Name = m.fnSigsName[t.String()]
 		for _, i := range t.Params {
 			fn_type.Params = append(fn_type.Params, i.Raw()...)
 		}
@@ -354,4 +357,159 @@ func (m *Module) buildItab() {
 	m.SetGlobalInitValue("$wa.RT._itabsPtr", strconv.Itoa(itabs_ptr))
 	m.SetGlobalInitValue("$wa.RT._interfaceCount", strconv.Itoa(len(m.usedInterfaces)))
 	m.SetGlobalInitValue("$wa.RT._concretTypeCount", strconv.Itoa(len(m.usedConcreteTypes)))
+}
+
+func (m *Module) genTypeInfo(t ValueType) int {
+
+	_type := NewConst("0", m.types_map["runtime._type"]).(*aStruct)
+	_type.setFieldConstValue("size", NewConst(strconv.Itoa(t.Size()), m.U32))
+	_type.setFieldConstValue("hash", NewConst(strconv.Itoa(t.Hash()), m.I32))
+	_type.setFieldConstValue("kind", NewConst(strconv.Itoa(int(t.Kind())), m.U8))
+	_type.setFieldConstValue("align", NewConst(strconv.Itoa(t.align()), m.U8))
+	_type.setFieldConstValue("flag", NewConst("0", m.U16))
+	_type.setFieldConstValue("name", NewConst(t.Name(), m.STRING))
+
+	switch typ := t.(type) {
+	case *tI8:
+		if typ.addr != 0 {
+			return typ.addr
+		}
+		typ.addr = m.DataSeg.Append(_type.Bin(), 8)
+		return typ.addr
+
+	case *tU8:
+		if typ.addr != 0 {
+			return typ.addr
+		}
+		typ.addr = m.DataSeg.Append(_type.Bin(), 8)
+		return typ.addr
+
+	case *tI16:
+		if typ.addr != 0 {
+			return typ.addr
+		}
+		typ.addr = m.DataSeg.Append(_type.Bin(), 8)
+		return typ.addr
+
+	case *tU16:
+		if typ.addr != 0 {
+			return typ.addr
+		}
+		typ.addr = m.DataSeg.Append(_type.Bin(), 8)
+		return typ.addr
+
+	case *tI32:
+		if typ.addr != 0 {
+			return typ.addr
+		}
+		typ.addr = m.DataSeg.Append(_type.Bin(), 8)
+		return typ.addr
+
+	case *tU32:
+		if typ.addr != 0 {
+			return typ.addr
+		}
+		typ.addr = m.DataSeg.Append(_type.Bin(), 8)
+		return typ.addr
+
+	case *tI64:
+		if typ.addr != 0 {
+			return typ.addr
+		}
+		typ.addr = m.DataSeg.Append(_type.Bin(), 8)
+		return typ.addr
+
+	case *tU64:
+		if typ.addr != 0 {
+			return typ.addr
+		}
+		typ.addr = m.DataSeg.Append(_type.Bin(), 8)
+		return typ.addr
+
+	case *tF32:
+		if typ.addr != 0 {
+			return typ.addr
+		}
+		typ.addr = m.DataSeg.Append(_type.Bin(), 8)
+		return typ.addr
+
+	case *tF64:
+		if typ.addr != 0 {
+			return typ.addr
+		}
+		typ.addr = m.DataSeg.Append(_type.Bin(), 8)
+		return typ.addr
+
+	case *tRune:
+		if typ.addr != 0 {
+			return typ.addr
+		}
+		typ.addr = m.DataSeg.Append(_type.Bin(), 8)
+		return typ.addr
+
+	case *String:
+		if typ.addr != 0 {
+			return typ.addr
+		}
+		typ.addr = m.DataSeg.Append(_type.Bin(), 8)
+		return typ.addr
+
+	case *Ptr:
+		if typ.addr != 0 {
+			return typ.addr
+		}
+		typ.addr = m.DataSeg.Append(_type.Bin(), 8)
+		return typ.addr
+
+	case *Block:
+		if typ.addr != 0 {
+			return typ.addr
+		}
+		typ.addr = m.DataSeg.Append(_type.Bin(), 8)
+		return typ.addr
+
+	case *Array:
+		if typ.addr != 0 {
+			return typ.addr
+		}
+		_array := NewConst("0", m.types_map["runtime._arrayType"]).(*aStruct)
+		_array.setFieldConstValue("$_type", _type)
+		_array.setFieldConstValue("elemType", NewConst(strconv.Itoa(m.genTypeInfo(typ.Base)), m.UPTR))
+		_array.setFieldConstValue("cap", NewConst(strconv.Itoa(typ.Capacity), m.UPTR))
+		typ.addr = m.DataSeg.Append(_array.Bin(), 8)
+		return typ.addr
+
+	case *Slice:
+		if typ.addr != 0 {
+			return typ.addr
+		}
+		_slice := NewConst("0", m.types_map["runtime._arrayType"]).(*aStruct)
+		_slice.setFieldConstValue("$_type", _type)
+		_slice.setFieldConstValue("elemType", NewConst(strconv.Itoa(m.genTypeInfo(typ.Base)), m.UPTR))
+		typ.addr = m.DataSeg.Append(_slice.Bin(), 8)
+		return typ.addr
+
+		/*
+			case *Ref:
+				if typ.addr != 0 {
+					return typ.addr
+				}
+				_ref := NewConst("0", m.types_map["runtime._refType"]).(*aStruct)
+				_ref.setFieldConstValue("$_type", _type)
+				_ref.setFieldConstValue("elemType", NewConst(strconv.Itoa(m.genTypeInfo(typ.Base)), m.UPTR))
+				if len(typ.methods) > 0 {
+					_uncommon := NewConst("0", m.types_map["runtime._uncommonType"]).(*aStruct)
+					_uncommon.setFieldConstValue("methodCount", NewConst(strconv.Itoa(len(typ.methods)), m.U32))
+					_uncommon_bin := _uncommon.Bin()
+					for _, method := range typ.methods {
+						_method := NewConst("0", m.types_map["runtime._method"]).(*aStruct)
+						_method.setFieldConstValue("name", NewConst(method.Name, m.STRING))
+					}
+
+				}  //*/
+
+	default:
+		logger.Fatalf("Todo: %t", t)
+		return 0
+	}
 }
