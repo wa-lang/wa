@@ -66,6 +66,8 @@ type ValueType interface {
 	AddMethod(m Method)
 	NumMethods() int
 	Method(i int) Method
+
+	typeInfoAddr() int
 }
 
 /**************************************

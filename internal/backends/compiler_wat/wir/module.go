@@ -8,6 +8,11 @@ import (
 	"wa-lang.org/wa/internal/ssa"
 )
 
+type fnSigWrap struct {
+	name     string
+	typeAddr int
+}
+
 /**************************************
 Module:
 **************************************/
@@ -21,7 +26,7 @@ type Module struct {
 	imports []wat.Import
 
 	fnSigs     []*FnSig
-	fnSigsName map[string]string
+	fnSigsName map[string]fnSigWrap
 
 	funcs     []*Function
 	funcs_map map[string]*Function
@@ -76,7 +81,7 @@ func NewModule() *Module {
 
 	m.STRING = m.GenValueType_String()
 
-	m.fnSigsName = make(map[string]string)
+	m.fnSigsName = make(map[string]fnSigWrap)
 
 	m.funcs_map = make(map[string]*Function)
 
@@ -107,20 +112,20 @@ func (m *Module) AddImportFunc(moduleName string, objName string, funcName strin
 
 func (m *Module) FindFnSig(sig *FnSig) string {
 	if s, ok := m.fnSigsName[sig.String()]; ok {
-		return s
+		return s.name
 	}
 	return ""
 }
 
 func (m *Module) AddFnSig(sig *FnSig) string {
 	if s, ok := m.fnSigsName[sig.String()]; ok {
-		return s
+		return s.name
 	}
 
 	m.fnSigs = append(m.fnSigs, sig)
 	s := "$$fnSig" + strconv.Itoa(len(m.fnSigs))
 
-	m.fnSigsName[sig.String()] = s
+	m.fnSigsName[sig.String()] = fnSigWrap{name: s}
 	return s
 }
 
@@ -226,6 +231,7 @@ func (m *Module) genGlobalAlloc() *Function {
 
 func (m *Module) ToWatModule() *wat.Module {
 	m.buildItab()
+	m.buildTypesInfo()
 
 	var wat_module wat.Module
 	wat_module.Imports = m.imports
@@ -239,7 +245,7 @@ func (m *Module) ToWatModule() *wat.Module {
 	}
 	for _, t := range m.fnSigs {
 		var fn_type wat.FuncType
-		fn_type.Name = m.fnSigsName[t.String()]
+		fn_type.Name = m.fnSigsName[t.String()].name
 		for _, i := range t.Params {
 			fn_type.Params = append(fn_type.Params, i.Raw()...)
 		}
@@ -359,7 +365,16 @@ func (m *Module) buildItab() {
 	m.SetGlobalInitValue("$wa.RT._concretTypeCount", strconv.Itoa(len(m.usedConcreteTypes)))
 }
 
-func (m *Module) genTypeInfo(t ValueType) int {
+func (m *Module) buildTypesInfo() {
+	for _, t := range m.types_map {
+		m.buildTypeInfo(t)
+	}
+}
+
+func (m *Module) buildTypeInfo(t ValueType) int {
+	if t.typeInfoAddr() != 0 {
+		return t.typeInfoAddr()
+	}
 
 	_type := NewConst("0", m.types_map["runtime._type"]).(*aStruct)
 	_type.setFieldConstValue("size", NewConst(strconv.Itoa(t.Size()), m.U32))
@@ -370,146 +385,167 @@ func (m *Module) genTypeInfo(t ValueType) int {
 	_type.setFieldConstValue("name", NewConst(t.Name(), m.STRING))
 
 	switch typ := t.(type) {
+	case *tVoid:
+		typ.addr = m.DataSeg.Append(_type.Bin(), 8)
+		return typ.addr
+
 	case *tI8:
-		if typ.addr != 0 {
-			return typ.addr
-		}
 		typ.addr = m.DataSeg.Append(_type.Bin(), 8)
 		return typ.addr
 
 	case *tU8:
-		if typ.addr != 0 {
-			return typ.addr
-		}
 		typ.addr = m.DataSeg.Append(_type.Bin(), 8)
 		return typ.addr
 
 	case *tI16:
-		if typ.addr != 0 {
-			return typ.addr
-		}
 		typ.addr = m.DataSeg.Append(_type.Bin(), 8)
 		return typ.addr
 
 	case *tU16:
-		if typ.addr != 0 {
-			return typ.addr
-		}
 		typ.addr = m.DataSeg.Append(_type.Bin(), 8)
 		return typ.addr
 
 	case *tI32:
-		if typ.addr != 0 {
-			return typ.addr
-		}
 		typ.addr = m.DataSeg.Append(_type.Bin(), 8)
 		return typ.addr
 
 	case *tU32:
-		if typ.addr != 0 {
-			return typ.addr
-		}
 		typ.addr = m.DataSeg.Append(_type.Bin(), 8)
 		return typ.addr
 
 	case *tI64:
-		if typ.addr != 0 {
-			return typ.addr
-		}
 		typ.addr = m.DataSeg.Append(_type.Bin(), 8)
 		return typ.addr
 
 	case *tU64:
-		if typ.addr != 0 {
-			return typ.addr
-		}
 		typ.addr = m.DataSeg.Append(_type.Bin(), 8)
 		return typ.addr
 
 	case *tF32:
-		if typ.addr != 0 {
-			return typ.addr
-		}
 		typ.addr = m.DataSeg.Append(_type.Bin(), 8)
 		return typ.addr
 
 	case *tF64:
-		if typ.addr != 0 {
-			return typ.addr
-		}
 		typ.addr = m.DataSeg.Append(_type.Bin(), 8)
 		return typ.addr
 
 	case *tRune:
-		if typ.addr != 0 {
-			return typ.addr
-		}
 		typ.addr = m.DataSeg.Append(_type.Bin(), 8)
 		return typ.addr
 
 	case *String:
-		if typ.addr != 0 {
-			return typ.addr
-		}
 		typ.addr = m.DataSeg.Append(_type.Bin(), 8)
 		return typ.addr
 
 	case *Ptr:
-		if typ.addr != 0 {
-			return typ.addr
-		}
 		typ.addr = m.DataSeg.Append(_type.Bin(), 8)
 		return typ.addr
 
 	case *Block:
-		if typ.addr != 0 {
-			return typ.addr
-		}
 		typ.addr = m.DataSeg.Append(_type.Bin(), 8)
 		return typ.addr
 
 	case *Array:
-		if typ.addr != 0 {
-			return typ.addr
-		}
 		_array := NewConst("0", m.types_map["runtime._arrayType"]).(*aStruct)
 		_array.setFieldConstValue("$_type", _type)
-		_array.setFieldConstValue("elemType", NewConst(strconv.Itoa(m.genTypeInfo(typ.Base)), m.UPTR))
+		_array.setFieldConstValue("elemType", NewConst(strconv.Itoa(m.buildTypeInfo(typ.Base)), m.UPTR))
 		_array.setFieldConstValue("cap", NewConst(strconv.Itoa(typ.Capacity), m.UPTR))
 		typ.addr = m.DataSeg.Append(_array.Bin(), 8)
 		return typ.addr
 
 	case *Slice:
-		if typ.addr != 0 {
-			return typ.addr
-		}
 		_slice := NewConst("0", m.types_map["runtime._arrayType"]).(*aStruct)
 		_slice.setFieldConstValue("$_type", _type)
-		_slice.setFieldConstValue("elemType", NewConst(strconv.Itoa(m.genTypeInfo(typ.Base)), m.UPTR))
+		_slice.setFieldConstValue("elemType", NewConst(strconv.Itoa(m.buildTypeInfo(typ.Base)), m.UPTR))
 		typ.addr = m.DataSeg.Append(_slice.Bin(), 8)
 		return typ.addr
 
-		/*
-			case *Ref:
-				if typ.addr != 0 {
-					return typ.addr
-				}
-				_ref := NewConst("0", m.types_map["runtime._refType"]).(*aStruct)
-				_ref.setFieldConstValue("$_type", _type)
-				_ref.setFieldConstValue("elemType", NewConst(strconv.Itoa(m.genTypeInfo(typ.Base)), m.UPTR))
-				if len(typ.methods) > 0 {
-					_uncommon := NewConst("0", m.types_map["runtime._uncommonType"]).(*aStruct)
-					_uncommon.setFieldConstValue("methodCount", NewConst(strconv.Itoa(len(typ.methods)), m.U32))
-					_uncommon_bin := _uncommon.Bin()
-					for _, method := range typ.methods {
-						_method := NewConst("0", m.types_map["runtime._method"]).(*aStruct)
-						_method.setFieldConstValue("name", NewConst(method.Name, m.STRING))
-					}
+	case *Ref:
+		_ref := NewConst("0", m.types_map["runtime._refType"]).(*aStruct)
+		typ.addr = m.DataSeg.Alloc(len(_ref.Bin()), 8)
 
-				}  //*/
+		_ref.setFieldConstValue("$_type", _type)
+		_ref.setFieldConstValue("elemType", NewConst(strconv.Itoa(m.buildTypeInfo(typ.Base)), m.UPTR))
+		if len(typ.methods) > 0 {
+			_uncommon := NewConst("0", m.types_map["runtime._uncommonType"]).(*aStruct)
+			_uncommon.setFieldConstValue("methodCount", NewConst(strconv.Itoa(len(typ.methods)), m.U32))
+			_uncommon_bin := _uncommon.Bin()
+			for _, method := range typ.methods {
+				_method := NewConst("0", m.types_map["runtime._method"]).(*aStruct)
+				_method.setFieldConstValue("name", NewConst(method.Name, m.STRING))
+				_method.setFieldConstValue("fnType", NewConst(strconv.Itoa(m.buildFnTypeInfo(&method.Sig)), m.UPTR))
+				_method.setFieldConstValue("fnID", NewConst(strconv.Itoa(m.AddTableElem(method.FullFnName)), m.U32))
+				_uncommon_bin = append(_uncommon_bin, _method.Bin()...)
+			}
+			_ref.setFieldConstValue("uncommon", NewConst(strconv.Itoa(m.DataSeg.Append(_uncommon_bin, 8)), m.UPTR))
+		}
+
+		m.DataSeg.Set(_ref.Bin(), typ.addr)
+		return typ.addr
+
+	case *Struct:
+		_struct := NewConst("0", m.types_map["runtime._structType"]).(*aStruct)
+		_structField := NewConst("0", m.types_map["runtime._structField"]).(*aStruct)
+		typ.addr = m.DataSeg.Alloc(len(_struct.Bin())+len(_structField.Bin())*len(typ.fields), 8)
+
+		_struct.setFieldConstValue("$_type", _type)
+		_struct.setFieldConstValue("fieldCount", NewConst(strconv.Itoa(len(typ.fields)), m.U32))
+		_struct_bin := _struct.Bin()
+		for _, f := range typ.fields {
+			_structField.setFieldConstValue("name", NewConst(f.Name(), m.STRING))
+			_structField.setFieldConstValue("typ", NewConst(strconv.Itoa(m.buildTypeInfo(f.Type())), m.UPTR))
+			_struct_bin = append(_struct_bin, _structField.Bin()...)
+		}
+
+		m.DataSeg.Set(_struct_bin, typ.addr)
+		return typ.addr
+
+	case *Interface:
+		_interface := NewConst("0", m.types_map["runtime._interfaceType"]).(*aStruct)
+		_imethod := NewConst("0", m.types_map["runtime._imethod"]).(*aStruct)
+		typ.addr = m.DataSeg.Alloc(len(_interface.Bin())+len(_imethod.Bin())*typ.NumMethods(), 8)
+
+		_interface.setFieldConstValue("methodCount", NewConst(strconv.Itoa(typ.NumMethods()), m.U32))
+		_interface_bin := _interface.Bin()
+		for _, method := range typ.methods {
+			_imethod.setFieldConstValue("name", NewConst(method.Name, m.STRING))
+			_imethod.setFieldConstValue("fnType", NewConst(strconv.Itoa(m.buildFnTypeInfo(&method.Sig)), m.UPTR))
+			_interface_bin = append(_interface_bin, _imethod.Bin()...)
+		}
+
+		m.DataSeg.Set(_interface_bin, typ.addr)
+		return typ.addr
 
 	default:
 		logger.Fatalf("Todo: %t", t)
 		return 0
 	}
+}
+
+func (m *Module) buildFnTypeInfo(sig *FnSig) int {
+	s, ok := m.fnSigsName[sig.String()]
+	if ok && s.typeAddr != 0 {
+		return s.typeAddr
+	}
+
+	_fnType := NewConst("0", m.types_map["runtime._fnType"]).(*aStruct)
+	_fnType.setFieldConstValue("paramCount", NewConst(strconv.Itoa(len(sig.Params)), m.U32))
+	_fnType.setFieldConstValue("resultCount", NewConst(strconv.Itoa(len(sig.Results)), m.U32))
+	_fnType_bin := _fnType.Bin()
+
+	for _, p := range sig.Params {
+		typaddr := m.buildTypeInfo(p)
+		typaddr_bin := NewConst(strconv.Itoa(typaddr), m.UPTR).Bin()
+		_fnType_bin = append(_fnType_bin, typaddr_bin...)
+	}
+
+	for _, p := range sig.Results {
+		typaddr := m.buildTypeInfo(p)
+		typaddr_bin := NewConst(strconv.Itoa(typaddr), m.UPTR).Bin()
+		_fnType_bin = append(_fnType_bin, typaddr_bin...)
+	}
+
+	s.typeAddr = m.DataSeg.Append(_fnType_bin, 8)
+	m.fnSigsName[sig.String()] = s
+	return s.typeAddr
 }

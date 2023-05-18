@@ -82,6 +82,7 @@ func (t *tCommon) SetHash(h int)       { t.hash = h }
 func (t *tCommon) AddMethod(m Method)  { t.methods = append(t.methods, m) }
 func (t *tCommon) NumMethods() int     { return len(t.methods) }
 func (t *tCommon) Method(i int) Method { return t.methods[i] }
+func (t *tCommon) typeInfoAddr() int   { return t.addr }
 
 //func (t *tCommon) AddMethodEntry(m FnType) { logger.Fatal("Can't add method for common type.") }
 //

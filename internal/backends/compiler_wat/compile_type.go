@@ -131,13 +131,16 @@ func (tLib *typeLib) compile(from types.Type) wir.ValueType {
 			}
 
 			newType = tStruct
-			uncommanFlag = true
+			//uncommanFlag = true
 
 		case *types.Interface:
 			if ut.NumMethods() == 0 {
 				return tLib.compile(ut)
 			}
-			pkg_name, _ := wir.GetPkgMangleName(t.Obj().Pkg().Path())
+			pkg_name := ""
+			if t.Obj().Pkg() != nil {
+				pkg_name, _ = wir.GetPkgMangleName(t.Obj().Pkg().Path())
+			}
 			obj_name := wir.GenSymbolName(t.Obj().Name())
 
 			newType = tLib.module.GenValueType_Interface(pkg_name + "." + obj_name)
@@ -145,6 +148,7 @@ func (tLib *typeLib) compile(from types.Type) wir.ValueType {
 			for i := 0; i < ut.NumMethods(); i++ {
 				var method wir.Method
 				method.Sig = tLib.GenFnSig(ut.Method(i).Type().(*types.Signature))
+
 				method.Name = ut.Method(i).Name()
 
 				var fnSig wir.FnSig
