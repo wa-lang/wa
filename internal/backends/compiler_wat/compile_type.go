@@ -131,7 +131,6 @@ func (tLib *typeLib) compile(from types.Type) wir.ValueType {
 			}
 
 			newType = tStruct
-			//uncommanFlag = true
 
 		case *types.Interface:
 			if ut.NumMethods() == 0 {
