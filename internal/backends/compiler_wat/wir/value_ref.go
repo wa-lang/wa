@@ -31,12 +31,7 @@ func (m *Module) GenValueType_Ref(base ValueType) *Ref {
 	ref_t._void = m.VOID
 	base_ptr := m.GenValueType_Ptr(base)
 
-	var found bool
-	ref_t.underlying, found = m.GenValueType_Struct(ref_t.Name() + ".underlying")
-	if found {
-		logger.Fatalf("Type: %s already registered.", ref_t.Name()+".underlying")
-	}
-
+	ref_t.underlying = m.genInternalStruct(ref_t.Name() + ".underlying")
 	ref_t.underlying.AppendField(m.NewStructField("block", ref_t._base_block))
 	ref_t.underlying.AppendField(m.NewStructField("data", base_ptr))
 	ref_t.underlying.Finish()
@@ -48,6 +43,7 @@ func (m *Module) GenValueType_Ref(base ValueType) *Ref {
 func (t *Ref) Name() string         { return t.Base.Name() + ".$ref" }
 func (t *Ref) Size() int            { return t.underlying.Size() }
 func (t *Ref) align() int           { return t.underlying.align() }
+func (t *Ref) Kind() TypeKind       { return kRef }
 func (t *Ref) onFree() int          { return t.underlying.onFree() }
 func (t *Ref) Raw() []wat.ValueType { return t.underlying.Raw() }
 func (t *Ref) Equal(u ValueType) bool {

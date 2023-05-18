@@ -54,6 +54,7 @@ type ValueType interface {
 	Name() string
 	Size() int
 	align() int
+	Kind() TypeKind
 	onFree() int
 	Raw() []wat.ValueType
 	Equal(ValueType) bool
@@ -65,6 +66,8 @@ type ValueType interface {
 	AddMethod(m Method)
 	NumMethods() int
 	Method(i int) Method
+
+	typeInfoAddr() int
 }
 
 /**************************************

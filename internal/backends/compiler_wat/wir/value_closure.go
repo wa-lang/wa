@@ -53,43 +53,28 @@ func (s *FnSig) String() string {
 }
 
 /**************************************
-FnType:
-**************************************/
-type FnType struct {
-	Name string
-	FnSig
-}
-
-/**************************************
 Closure:
 **************************************/
 type Closure struct {
 	tCommon
-	underlying *Struct
-	_fn_type   FnType
-	_u32       ValueType
+	underlying  *Struct
+	_fnSig      FnSig
+	_fnTypeName string
+	_u32        ValueType
 }
-
-var _closure_id int
 
 func (m *Module) GenValueType_Closure(sig FnSig) *Closure {
 	var closure_t Closure
-	closure_t._fn_type.FnSig = sig
+	closure_t._fnSig = sig
 	t, ok := m.findValueType(closure_t.Name())
 	if ok {
 		return t.(*Closure)
 	}
 
 	closure_t._u32 = m.U32
-	closure_t._fn_type.Name = "closure$" + strconv.Itoa(_closure_id)
-	_closure_id++
-	m.AddFnType(&closure_t._fn_type)
+	closure_t._fnTypeName = m.AddFnSig(&sig)
 
-	var found bool
-	closure_t.underlying, found = m.GenValueType_Struct(closure_t.Name() + ".underlying")
-	if found {
-		logger.Fatalf("Type: %s already registered.", closure_t.Name()+".underlying")
-	}
+	closure_t.underlying = m.genInternalStruct(closure_t.Name() + ".underlying")
 	closure_t.underlying.AppendField(m.NewStructField("fn_index", m.U32))
 	closure_t.underlying.AppendField(m.NewStructField("data", m.GenValueType_Ref(m.VOID)))
 	closure_t.underlying.Finish()
@@ -98,15 +83,16 @@ func (m *Module) GenValueType_Closure(sig FnSig) *Closure {
 	return &closure_t
 }
 
-func (t *Closure) Name() string         { return t._fn_type.String() }
+func (t *Closure) Name() string         { return t._fnSig.String() }
 func (t *Closure) Size() int            { return t.underlying.Size() }
 func (t *Closure) align() int           { return t.underlying.align() }
+func (t *Closure) Kind() TypeKind       { return kStruct }
 func (t *Closure) onFree() int          { return t.underlying.onFree() }
 func (t *Closure) Raw() []wat.ValueType { return t.underlying.Raw() }
 
 func (t *Closure) Equal(u ValueType) bool {
 	if ut, ok := u.(*Closure); ok {
-		return t._fn_type.FnSig.Equal(&ut._fn_type.FnSig)
+		return t._fnSig.Equal(&ut._fnSig)
 	}
 	return false
 }
@@ -157,6 +143,6 @@ func EmitCallClosure(c Value, params []Value) (insts []wat.Inst) {
 	insts = append(insts, closure.Extract("data").EmitPush()...)
 	insts = append(insts, currentModule.FindGlobalByName("$wa.RT.closure_data").EmitPop()...)
 
-	insts = append(insts, wat.NewInstCallIndirect(closure.typ._fn_type.Name))
+	insts = append(insts, wat.NewInstCallIndirect(closure.typ._fnTypeName))
 	return
 }

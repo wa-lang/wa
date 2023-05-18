@@ -6,7 +6,6 @@ import (
 	"strconv"
 
 	"wa-lang.org/wa/internal/backends/compiler_wat/wir/wat"
-	"wa-lang.org/wa/internal/logger"
 )
 
 /**************************************
@@ -25,12 +24,7 @@ func (m *Module) GenValueType_Tuple(fields []ValueType) *Tuple {
 		return t.(*Tuple)
 	}
 
-	var found bool
-	tuple_t.underlying, found = m.GenValueType_Struct(tuple_t.Name() + ".underlying")
-	if found {
-		logger.Fatalf("Type: %s already registered.", tuple_t.Name()+".underlying")
-	}
-
+	tuple_t.underlying = m.genInternalStruct(tuple_t.Name() + ".underlying")
 	for i, t := range fields {
 		name := "m" + strconv.Itoa(i)
 		tuple_t.underlying.AppendField(m.NewStructField(name, t))
@@ -51,6 +45,7 @@ func (t *Tuple) Name() string {
 
 func (t *Tuple) Size() int            { return t.underlying.Size() }
 func (t *Tuple) align() int           { return t.underlying.align() }
+func (t *Tuple) Kind() TypeKind       { return kTuple }
 func (t *Tuple) onFree() int          { return t.underlying.onFree() }
 func (t *Tuple) Raw() []wat.ValueType { return t.underlying.Raw() }
 func (t *Tuple) Equal(u ValueType) bool {

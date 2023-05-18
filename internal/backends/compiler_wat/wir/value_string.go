@@ -6,7 +6,6 @@ import (
 	"strconv"
 
 	"wa-lang.org/wa/internal/backends/compiler_wat/wir/wat"
-	"wa-lang.org/wa/internal/logger"
 )
 
 /**************************************
@@ -35,12 +34,7 @@ func (m *Module) GenValueType_String() *String {
 	str_t._u8_block = m.GenValueType_Block(m.U8)
 	str_t._u8_ptr = m.GenValueType_Ptr(m.U8)
 
-	var found bool
-	str_t.underlying, found = m.GenValueType_Struct(str_t.Name() + ".underlying")
-	if found {
-		logger.Fatalf("Type: %s already registered.", str_t.Name()+".underlying")
-	}
-
+	str_t.underlying = m.genInternalStruct(str_t.Name() + ".underlying")
 	str_t.underlying.AppendField(m.NewStructField("block", str_t._u8_block))
 	str_t.underlying.AppendField(m.NewStructField("data", str_t._u8_ptr))
 	str_t.underlying.AppendField(m.NewStructField("len", str_t._u32))
@@ -54,6 +48,7 @@ func (m *Module) GenValueType_String() *String {
 func (t *String) Name() string           { return "string" }
 func (t *String) Size() int              { return t.underlying.Size() }
 func (t *String) align() int             { return t.underlying.align() }
+func (t *String) Kind() TypeKind         { return kString }
 func (t *String) onFree() int            { return t.underlying.onFree() }
 func (t *String) Raw() []wat.ValueType   { return t.underlying.Raw() }
 func (t *String) Equal(u ValueType) bool { _, ok := u.(*String); return ok }

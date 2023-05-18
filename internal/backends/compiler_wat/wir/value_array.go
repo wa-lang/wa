@@ -26,12 +26,7 @@ func (m *Module) GenValueType_Array(base ValueType, capacity int) *Array {
 		return t.(*Array)
 	}
 
-	var found bool
-	arr_t.underlying, found = m.GenValueType_Struct(arr_t.Name() + ".underlying")
-	if found {
-		logger.Fatalf("Type: %s already registered.", arr_t.Name()+".underlying")
-	}
-
+	arr_t.underlying = m.genInternalStruct(arr_t.Name() + ".underlying")
 	for i := 0; i < capacity; i++ {
 		field := m.NewStructField("m"+strconv.Itoa(i), base)
 		arr_t.underlying.AppendField(field)
@@ -45,6 +40,7 @@ func (m *Module) GenValueType_Array(base ValueType, capacity int) *Array {
 func (t *Array) Name() string         { return t.Base.Name() + ".$array" + strconv.Itoa(t.Capacity) }
 func (t *Array) Size() int            { return t.underlying.Size() }
 func (t *Array) align() int           { return t.underlying.align() }
+func (t *Array) Kind() TypeKind       { return kArray }
 func (t *Array) Raw() []wat.ValueType { return t.underlying.Raw() }
 func (t *Array) onFree() int          { return t.underlying.onFree() }
 

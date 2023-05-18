@@ -21,27 +21,35 @@ type Block struct {
 
 func (m *Module) GenValueType_Block(base ValueType) *Block {
 	block_t := Block{Base: base}
-	t, ok := m.findValueType(block_t.Name())
-	if ok {
-		return t.(*Block)
-	}
+	//t, ok := m.findValueType(block_t.Name())
+	//if ok {
+	//	return t.(*Block)
+	//}
+	//m.addValueType(&block_t)
 
 	block_t._i32 = m.I32
 	block_t._u32 = m.U32
-	m.addValueType(&block_t)
 	return &block_t
 }
 
 func (t *Block) Name() string         { return t.Base.Name() + ".$$block" }
 func (t *Block) Size() int            { return 4 }
 func (t *Block) align() int           { return 4 }
+func (t *Block) Kind() TypeKind       { return kBlock }
 func (t *Block) Raw() []wat.ValueType { return []wat.ValueType{wat.U32{}} }
+
+func (t *Block) typeInfoAddr() int {
+	logger.Fatalf("Internal type: %s shouldn't have typeInfo.", t.Name())
+	return 0
+}
+
 func (t *Block) Equal(u ValueType) bool {
 	if ut, ok := u.(*Block); ok {
 		return t.Base.Equal(ut.Base)
 	}
 	return false
 }
+
 func (t *Block) onFree() int {
 	var f Function
 	f.InternalName = "$" + GenSymbolName(t.Name()) + ".$$onFree"

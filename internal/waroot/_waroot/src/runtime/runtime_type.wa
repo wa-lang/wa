@@ -13,8 +13,8 @@ type _type struct {
 
 type _refType struct {
 	_type
-	uncommon: uintptr  //@_uncommonType
 	elemType: uintptr  //@_type
+	uncommon: uintptr  //@_uncommonType
 }
 
 type _arrayType struct {
@@ -30,10 +30,8 @@ type _sliceType struct {
 
 type _structType struct {
 	_type
-	uncommon:   uintptr  //@_uncommonType
-	fieldCount: i32
-	fieldPtr:   uintptr  //@_structField, len==fieldCount
-}
+	fieldCount: u32
+}  //followed by [fieldCount]_structField
 
 type _structField struct {
 	name: string
@@ -42,9 +40,8 @@ type _structField struct {
 
 type _uncommonType struct {
 	pkgName:     string
-	methodCount: i32
-	methodPtr:   uintptr  //@_method, len==methodCount
-}
+	methodCount: u32
+}  //followed by [methodCount]_method
 
 type _method struct {
 	name:   string
@@ -53,19 +50,16 @@ type _method struct {
 }
 
 type _fnType struct {
-	_type
-	paramCount:  i32
-	paramPtr:    uintptr  //@@_type, len==paramCount
-	resultCount: i32
-	resultPtr:   uintptr  //@@_type, len==resultCount
-}
+	//_type  //Todo
+	paramCount:  u32
+	resultCount: u32
+}  //followed by [paramCount]@_type + [resultCount]@_type
 
 type _interfaceType struct {
 	_type
 	pkgName:     string
-	methodCount: i32
-	methodPtr:   uintptr  //@_imethod, len==methodCount
-}
+	methodCount: u32
+}  //followed by [methodCount]_imethod
 
 type _imethod struct {
 	name:   string
@@ -75,7 +69,7 @@ type _imethod struct {
 type _itab struct {
 	dtype: uintptr  //@_type, ptr of (*data).(type)
 	itype: uintptr  //@_interfacetype
-}  //紧接[itype.methodCound]fnID, fnID=id for call_indirect
+}  //followed by [itype.methodCound]fnID, fnID=>id for call_indirect
 
 type _iface struct {
 	data: *i32
