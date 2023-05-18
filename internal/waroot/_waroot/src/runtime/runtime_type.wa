@@ -11,7 +11,7 @@ type _type struct {
 	name: string
 }
 
-type _refType struct {
+type _sptrType struct {
 	_type
 	elemType: uintptr  //@_type
 	uncommon: uintptr  //@_uncommonType

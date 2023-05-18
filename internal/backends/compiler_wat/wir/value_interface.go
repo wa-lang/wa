@@ -27,7 +27,7 @@ func (m *Module) GenValueType_Interface(name string) *Interface {
 	interface_t.name = name
 
 	interface_t.underlying = m.genInternalStruct(interface_t.Name() + ".underlying")
-	interface_t.underlying.AppendField(m.NewStructField("data", m.GenValueType_Ref(m.GenValueType_Ref(m.VOID))))
+	interface_t.underlying.AppendField(m.NewStructField("data", m.GenValueType_SPtr(m.GenValueType_SPtr(m.VOID))))
 	interface_t.underlying.AppendField(m.NewStructField("itab", m.U32))
 	interface_t.underlying.Finish()
 
@@ -52,7 +52,7 @@ func (t *Interface) EmitLoadFromAddr(addr Value, offset int) []wat.Inst {
 	return t.underlying.EmitLoadFromAddr(addr, offset)
 }
 
-func (t *Interface) emitGenMake(x Value, x_ref *Ref) (insts []wat.Inst) {
+func (t *Interface) emitGenMake(x Value, x_ref *SPtr) (insts []wat.Inst) {
 	insts = append(insts, x_ref.emitHeapAlloc()...)
 	insts = append(insts, x.emitStore(0)...)
 
