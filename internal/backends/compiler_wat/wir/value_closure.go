@@ -74,11 +74,7 @@ func (m *Module) GenValueType_Closure(sig FnSig) *Closure {
 	closure_t._u32 = m.U32
 	closure_t._fnTypeName = m.AddFnSig(&sig)
 
-	var found bool
-	closure_t.underlying, found = m.GenValueType_Struct(closure_t.Name() + ".underlying")
-	if found {
-		logger.Fatalf("Type: %s already registered.", closure_t.Name()+".underlying")
-	}
+	closure_t.underlying = m.genInternalStruct(closure_t.Name() + ".underlying")
 	closure_t.underlying.AppendField(m.NewStructField("fn_index", m.U32))
 	closure_t.underlying.AppendField(m.NewStructField("data", m.GenValueType_Ref(m.VOID)))
 	closure_t.underlying.Finish()

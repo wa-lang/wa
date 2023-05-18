@@ -30,8 +30,7 @@ type _sliceType struct {
 
 type _structType struct {
 	_type
-	uncommon:   uintptr  //@_uncommonType
-	fieldCount: i32
+	fieldCount: u32
 }  //followed by [fieldCount]_structField
 
 type _structField struct {
@@ -52,14 +51,14 @@ type _method struct {
 
 type _fnType struct {
 	//_type  //Todo
-	paramCount:  i32
-	resultCount: i32
+	paramCount:  u32
+	resultCount: u32
 }  //followed by [paramCount]@_type + [resultCount]@_type
 
 type _interfaceType struct {
 	_type
 	pkgName:     string
-	methodCount: i32
+	methodCount: u32
 }  //followed by [methodCount]_imethod
 
 type _imethod struct {

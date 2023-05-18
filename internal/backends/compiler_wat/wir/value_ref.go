@@ -31,12 +31,7 @@ func (m *Module) GenValueType_Ref(base ValueType) *Ref {
 	ref_t._void = m.VOID
 	base_ptr := m.GenValueType_Ptr(base)
 
-	var found bool
-	ref_t.underlying, found = m.GenValueType_Struct(ref_t.Name() + ".underlying")
-	if found {
-		logger.Fatalf("Type: %s already registered.", ref_t.Name()+".underlying")
-	}
-
+	ref_t.underlying = m.genInternalStruct(ref_t.Name() + ".underlying")
 	ref_t.underlying.AppendField(m.NewStructField("block", ref_t._base_block))
 	ref_t.underlying.AppendField(m.NewStructField("data", base_ptr))
 	ref_t.underlying.Finish()

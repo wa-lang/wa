@@ -2,6 +2,7 @@ package wir
 
 import (
 	"strconv"
+	"strings"
 
 	"wa-lang.org/wa/internal/backends/compiler_wat/wir/wat"
 	"wa-lang.org/wa/internal/logger"
@@ -366,7 +367,10 @@ func (m *Module) buildItab() {
 }
 
 func (m *Module) buildTypesInfo() {
-	for _, t := range m.types_map {
+	for name, t := range m.types_map {
+		if strings.HasPrefix(name, "runtime.") {
+			continue
+		}
 		m.buildTypeInfo(t)
 	}
 }

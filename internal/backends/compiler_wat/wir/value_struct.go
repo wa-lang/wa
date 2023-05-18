@@ -65,6 +65,14 @@ func (m *Module) GenValueType_Struct(name string) (*Struct, bool) {
 	return &struct_type, false
 }
 
+func (m *Module) genInternalStruct(name string) *Struct {
+	var struct_type Struct
+	struct_type.name = name
+	struct_type._u32 = m.U32
+
+	return &struct_type
+}
+
 func (t *Struct) Name() string   { return t.name }
 func (t *Struct) Size() int      { return t._size }
 func (t *Struct) align() int     { return t._align }

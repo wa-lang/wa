@@ -34,12 +34,7 @@ func (m *Module) GenValueType_Slice(base ValueType) *Slice {
 	slice_t._base_block = m.GenValueType_Block(base)
 	slice_t._base_ptr = m.GenValueType_Ptr(base)
 
-	var found bool
-	slice_t.underlying, found = m.GenValueType_Struct(slice_t.Name() + ".underlying")
-	if found {
-		logger.Fatalf("Type: %s already registered.", slice_t.Name()+".underlying")
-	}
-
+	slice_t.underlying = m.genInternalStruct(slice_t.Name() + ".underlying")
 	slice_t.underlying.AppendField(m.NewStructField("block", slice_t._base_block))
 	slice_t.underlying.AppendField(m.NewStructField("data", slice_t._base_ptr))
 	slice_t.underlying.AppendField(m.NewStructField("len", slice_t._u32))

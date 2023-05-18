@@ -17,12 +17,11 @@ type Ptr struct {
 
 func (m *Module) GenValueType_Ptr(base ValueType) *Ptr {
 	ptr_t := Ptr{Base: base}
-	t, ok := m.findValueType(ptr_t.Name())
-	if ok {
-		return t.(*Ptr)
-	}
-
-	m.addValueType(&ptr_t)
+	//t, ok := m.findValueType(ptr_t.Name())
+	//if ok {
+	//	return t.(*Ptr)
+	//}
+	//m.addValueType(&ptr_t)
 	return &ptr_t
 }
 
@@ -32,12 +31,19 @@ func (t *Ptr) align() int           { return 4 }
 func (t *Ptr) Kind() TypeKind       { return kPtr }
 func (t *Ptr) onFree() int          { return 0 }
 func (t *Ptr) Raw() []wat.ValueType { return []wat.ValueType{toWatType(t)} }
+
+func (t *Ptr) typeInfoAddr() int {
+	logger.Fatalf("Internal type: %s shouldn't have typeInfo.", t.Name())
+	return 0
+}
+
 func (t *Ptr) Equal(u ValueType) bool {
 	if ut, ok := u.(*Ptr); ok {
 		return t.Base.Equal(ut.Base)
 	}
 	return false
 }
+
 func (t *Ptr) EmitLoadFromAddr(addr Value, offset int) []wat.Inst {
 	if !addr.Type().(*Ptr).Base.Equal(t) {
 		logger.Fatal("Type not match")
