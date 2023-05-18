@@ -487,6 +487,10 @@ func (m *Module) buildTypeInfo(t ValueType) int {
 		m.DataSeg.Set(_ref.Bin(), typ.addr)
 		return typ.addr
 
+	case *Closure:
+		typ.addr = m.DataSeg.Append(_type.Bin(), 8)
+		return typ.addr
+
 	case *Struct:
 		_struct := NewConst("0", m.types_map["runtime._structType"]).(*aStruct)
 		_structField := NewConst("0", m.types_map["runtime._structField"]).(*aStruct)
