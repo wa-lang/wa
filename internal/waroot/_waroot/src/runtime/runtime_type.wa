@@ -67,14 +67,9 @@ type _imethod struct {
 }
 
 type _itab struct {
-	dtype: uintptr  //@_type, ptr of (*data).(type)
-	itype: uintptr  //@_interfacetype
+	dhash: i32  //hash of data's type
+	ihash: i32  //hash of interface
 }  //followed by [itype.methodCound]fnID, fnID=>id for call_indirect
-
-type _iface struct {
-	data: *i32
-	itab: uintptr  //@_itab
-}
 
 #wa:linkname $wa.RT.getTypePtr
 func getTypePtr(hash i32) uintptr {
@@ -82,10 +77,13 @@ func getTypePtr(hash i32) uintptr {
 }
 
 #wa:linkname $wa.RT.getItab
-func getItab(dhash i32, ihash i32, commanok i32) i32 {
+func getItab(dhash i32, ihash i32, commanok i32) u32 {
 	itab := _itabsPtr + ((dhash - 1) * _interfaceCount - ihash - 1) * 4
-	return itab
+	return getU32(u32(itab))
 }
+
+#wa:runtime_getter
+func getU32(p: u32) => u32
 
 #wa:linkname $wa.RT._itabsPtr
 var _itabsPtr i32

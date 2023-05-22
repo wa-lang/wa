@@ -442,21 +442,44 @@ func (m *Module) EmitGenMakeInterface(x Value, itype ValueType) (insts []wat.Ins
 	x_type := x.Type()
 	m.markConcreteTypeUsed(x_type)
 	m.markInterfaceUsed(itype)
-	x_ref_type := m.GenValueType_SPtr(x_type)
 
-	return itype.(*Interface).emitGenMake(x, x_ref_type)
+	switch x := x.(type) {
+	case *aSPtr:
+		return itype.(*Interface).emitGenFromSPtr(x)
+
+	default:
+		logger.Fatalf("Todo: %T", x)
+		return
+	}
+}
+
+func (m *Module) EmitGenChangeInterface(x Value, destType ValueType) (insts []wat.Inst) {
+	m.markInterfaceUsed(x.Type())
+	m.markInterfaceUsed(destType)
+	return destType.(*Interface).emitGenFromInterface(x.(*aInterface))
+}
+
+func (m *Module) EmitGenTypeAssert(x Value, destType ValueType, commaOk bool) (insts []wat.Inst) {
+	si := x.(*aInterface)
+	m.markInterfaceUsed(x.Type())
+	if di, ok := destType.(*Interface); ok {
+		m.markInterfaceUsed(di)
+		return si.emitQueryInterface(destType, commaOk)
+	} else {
+		m.markConcreteTypeUsed(destType)
+		return si.emitGetData(destType, commaOk)
+	}
 }
 
 func (m *Module) EmitInvoke(i Value, params []Value, mid int, typeName string) (insts []wat.Inst) {
 	iface := i.(*aInterface)
-	insts = append(insts, iface.Extract("data").(*aSPtr).emitGetValue()...)
+	insts = append(insts, iface.Extract("data").EmitPush()...)
 
 	for _, v := range params {
 		insts = append(insts, v.EmitPush()...)
 	}
 
 	insts = append(insts, iface.Extract("itab").EmitPush()...)
-	insts = append(insts, wat.NewInstLoad(wat.I32{}, 0, 4))
 	insts = append(insts, wat.NewInstLoad(wat.I32{}, 8+mid*4, 4))
 
 	insts = append(insts, wat.NewInstCallIndirect(typeName))

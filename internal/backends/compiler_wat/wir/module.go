@@ -319,7 +319,7 @@ func (m *Module) buildItab() {
 	var itabs []byte
 	t_itab := m.types_map["runtime._itab"]
 
-	for _, conrete := range m.usedConcreteTypes {
+	for _, concrete := range m.usedConcreteTypes {
 		for _, iface := range m.usedInterfaces {
 			fits := true
 
@@ -328,8 +328,8 @@ func (m *Module) buildItab() {
 			for mid := 0; mid < iface.NumMethods(); mid++ {
 				method := iface.Method(mid)
 				found := false
-				for fid := 0; fid < conrete.NumMethods(); fid++ {
-					d := conrete.Method(fid)
+				for fid := 0; fid < concrete.NumMethods(); fid++ {
+					d := concrete.Method(fid)
 					if d.Name == method.Name && d.Sig.Equal(&method.Sig) {
 						found = true
 						vtable[mid] = m.AddTableElem(d.FullFnName)
@@ -346,7 +346,9 @@ func (m *Module) buildItab() {
 			var addr int
 			if fits {
 				var itab_bin []byte
-				header := NewConst("0", t_itab)
+				header := NewConst("0", t_itab).(*aStruct)
+				header.setFieldConstValue("dhash", NewConst(strconv.Itoa(concrete.Hash()), m.I32))
+				header.setFieldConstValue("ihash", NewConst(strconv.Itoa(iface.Hash()), m.I32))
 				itab_bin = append(itab_bin, header.Bin()...)
 				for _, v := range vtable {
 					fnid := NewConst(strconv.Itoa(v), m.U32)
