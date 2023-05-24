@@ -1,32 +1,64 @@
-// 版权 @2021 凹语言 作者。保留所有权利。
+# 版权 @2021 凹语言 作者。保留所有权利。
 
 type S1 struct {
 	a: i32
 }
 
 type S2 struct {
-	a: i32
+	b: i32
 }
 
-type i1 interface {
+type I1 interface {
 	f()
+}
+
+type I2 interface {
+	f2()
 }
 
 func S1.f() {
 	println("This is S1, this.a==", this.a)
 }
 
-func S2.f() {
-	println("This is S2, this.a==", this.a)
+func S2.f(){
+	println("This is S2, this.b==", this.b)
 }
 
-func main {
+func main() {
 	v1 := S1{a: 13}
-	v2 := S2{a: 42}
 
-	var i: i1 = &v1
-	i.f()
+	var i1: I1 = &v1  //具体类型到具名接口
+	i1.f()  //接口调用
+	doConcreteType(i1)
+	i1.f()
+	
+	v2 := S2{b: 42}
+	i1 = &v2  //具体类型到具名接口
+	i1.f()
+	doConcreteType(i1)
+	i1.f()
+	
+	var ni interface{} = &v1  //具体类型到空接口
+	i1 = ni.(I1)  //接口动态互转
+	i1.f()
+	
+	ni = &v2  //具体类型到空接口
+	i1 = ni.(I1)  //接口动态互转
+	i1.f()
+	
+	//i2 := ni.(I2)  //接口互转，由于v2未实现I2，这会触发异常
+	//i2.f2()
+}
 
-	i = &v2
-	i.f()
+func doConcreteType(i I1) {
+	//接口到具体类型断言
+	switch c := i.(type){
+		case *S1:
+			println("*S1")
+			c.a *= 2
+			
+		case *S2:
+			println("*S2")
+			c.b *= 2
+	}
 }
