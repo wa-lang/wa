@@ -383,7 +383,13 @@ func (g *functionGenerator) genValue(v ssa.Value) ([]wat.Inst, wir.ValueType) {
 		return g.genMakeClosre(v)
 
 	case *ssa.MakeInterface:
-		return g.genInterface(v)
+		return g.genMakeInterface(v)
+
+	case *ssa.ChangeInterface:
+		return g.genChangeInterface(v)
+
+	case *ssa.TypeAssert:
+		return g.genTypeAssert(v)
 	}
 
 	logger.Fatalf("Todo: %v, type: %T", v, v)
@@ -1004,10 +1010,29 @@ func (g *functionGenerator) genMakeClosre_Bound(inst *ssa.MakeClosure) (insts []
 	return
 }
 
-func (g *functionGenerator) genInterface(inst *ssa.MakeInterface) (insts []wat.Inst, ret_type wir.ValueType) {
+func (g *functionGenerator) genMakeInterface(inst *ssa.MakeInterface) (insts []wat.Inst, ret_type wir.ValueType) {
 	x := g.getValue(inst.X)
 	ret_type = g.tLib.compile(inst.Type())
 	insts = g.module.EmitGenMakeInterface(x.value, ret_type)
+	return
+}
+
+func (g *functionGenerator) genChangeInterface(inst *ssa.ChangeInterface) (insts []wat.Inst, ret_type wir.ValueType) {
+	x := g.getValue(inst.X)
+	ret_type = g.tLib.compile(inst.Type())
+	insts = g.module.EmitGenChangeInterface(x.value, ret_type)
+	return
+}
+
+func (g *functionGenerator) genTypeAssert(inst *ssa.TypeAssert) (insts []wat.Inst, ret_type wir.ValueType) {
+	x := g.getValue(inst.X)
+	destType := g.tLib.compile(inst.AssertedType)
+	if inst.CommaOk {
+		ret_type = g.module.GenValueType_Tuple([]wir.ValueType{destType, g.module.I32})
+	} else {
+		ret_type = destType
+	}
+	insts = g.module.EmitGenTypeAssert(x.value, destType, inst.CommaOk)
 	return
 }
 
@@ -1113,7 +1138,7 @@ func (g *functionGenerator) genSizer(f *ssa.Function) *wir.Function {
 		return nil
 	}
 	value_type := g.tLib.compile(f.Params[0].Type())
-	t_size := value_type.(*wir.Ref).Base.Size()
+	t_size := value_type.(*wir.SPtr).Base.Size()
 
 	wir_fn.Insts = append(wir_fn.Insts, wir.NewConst(strconv.Itoa(t_size), g.module.I32).EmitPush()...)
 

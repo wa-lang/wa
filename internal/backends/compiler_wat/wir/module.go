@@ -220,8 +220,8 @@ func (m *Module) genGlobalAlloc() *Function {
 			continue
 		}
 
-		ref := g.v.(*aRef)
-		t := ref.Type().(*Ref).Base
+		ref := g.v.(*aSPtr)
+		t := ref.Type().(*SPtr).Base
 		f.Insts = append(f.Insts, wat.NewInstConst(wat.I32{}, strconv.Itoa(t.Size())))
 		f.Insts = append(f.Insts, wat.NewInstCall("$waHeapAlloc"))
 		f.Insts = append(f.Insts, ref.Extract("data").EmitPop()...)
@@ -319,7 +319,7 @@ func (m *Module) buildItab() {
 	var itabs []byte
 	t_itab := m.types_map["runtime._itab"]
 
-	for _, conrete := range m.usedConcreteTypes {
+	for _, concrete := range m.usedConcreteTypes {
 		for _, iface := range m.usedInterfaces {
 			fits := true
 
@@ -328,8 +328,8 @@ func (m *Module) buildItab() {
 			for mid := 0; mid < iface.NumMethods(); mid++ {
 				method := iface.Method(mid)
 				found := false
-				for fid := 0; fid < conrete.NumMethods(); fid++ {
-					d := conrete.Method(fid)
+				for fid := 0; fid < concrete.NumMethods(); fid++ {
+					d := concrete.Method(fid)
 					if d.Name == method.Name && d.Sig.Equal(&method.Sig) {
 						found = true
 						vtable[mid] = m.AddTableElem(d.FullFnName)
@@ -346,7 +346,9 @@ func (m *Module) buildItab() {
 			var addr int
 			if fits {
 				var itab_bin []byte
-				header := NewConst("0", t_itab)
+				header := NewConst("0", t_itab).(*aStruct)
+				header.setFieldConstValue("dhash", NewConst(strconv.Itoa(concrete.Hash()), m.I32))
+				header.setFieldConstValue("ihash", NewConst(strconv.Itoa(iface.Hash()), m.I32))
 				itab_bin = append(itab_bin, header.Bin()...)
 				for _, v := range vtable {
 					fnid := NewConst(strconv.Itoa(v), m.U32)
@@ -367,6 +369,7 @@ func (m *Module) buildItab() {
 }
 
 func (m *Module) buildTypesInfo() {
+	return
 	for name, t := range m.types_map {
 		if strings.HasPrefix(name, "runtime.") {
 			continue
@@ -464,12 +467,12 @@ func (m *Module) buildTypeInfo(t ValueType) int {
 		typ.addr = m.DataSeg.Append(_slice.Bin(), 8)
 		return typ.addr
 
-	case *Ref:
-		_ref := NewConst("0", m.types_map["runtime._refType"]).(*aStruct)
-		typ.addr = m.DataSeg.Alloc(len(_ref.Bin()), 8)
+	case *SPtr:
+		_sptr := NewConst("0", m.types_map["runtime._sptrType"]).(*aStruct)
+		typ.addr = m.DataSeg.Alloc(len(_sptr.Bin()), 8)
 
-		_ref.setFieldConstValue("$_type", _type)
-		_ref.setFieldConstValue("elemType", NewConst(strconv.Itoa(m.buildTypeInfo(typ.Base)), m.UPTR))
+		_sptr.setFieldConstValue("$_type", _type)
+		_sptr.setFieldConstValue("elemType", NewConst(strconv.Itoa(m.buildTypeInfo(typ.Base)), m.UPTR))
 		if len(typ.methods) > 0 {
 			_uncommon := NewConst("0", m.types_map["runtime._uncommonType"]).(*aStruct)
 			_uncommon.setFieldConstValue("methodCount", NewConst(strconv.Itoa(len(typ.methods)), m.U32))
@@ -481,13 +484,17 @@ func (m *Module) buildTypeInfo(t ValueType) int {
 				_method.setFieldConstValue("fnID", NewConst(strconv.Itoa(m.AddTableElem(method.FullFnName)), m.U32))
 				_uncommon_bin = append(_uncommon_bin, _method.Bin()...)
 			}
-			_ref.setFieldConstValue("uncommon", NewConst(strconv.Itoa(m.DataSeg.Append(_uncommon_bin, 8)), m.UPTR))
+			_sptr.setFieldConstValue("uncommon", NewConst(strconv.Itoa(m.DataSeg.Append(_uncommon_bin, 8)), m.UPTR))
 		}
 
-		m.DataSeg.Set(_ref.Bin(), typ.addr)
+		m.DataSeg.Set(_sptr.Bin(), typ.addr)
 		return typ.addr
 
 	case *Closure:
+		typ.addr = m.DataSeg.Append(_type.Bin(), 8)
+		return typ.addr
+
+	case *Tuple:
 		typ.addr = m.DataSeg.Append(_type.Bin(), 8)
 		return typ.addr
 

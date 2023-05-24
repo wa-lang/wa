@@ -131,9 +131,9 @@ func (m *Module) EmitLoad(addr Value) (insts []wat.Inst, ret_type ValueType) {
 
 	default:
 		switch addr := addr.(type) {
-		case *aRef:
+		case *aSPtr:
 			insts = append(insts, addr.emitGetValue()...)
-			ret_type = addr.Type().(*Ref).Base
+			ret_type = addr.Type().(*SPtr).Base
 
 		case *aPtr:
 			insts = append(insts, addr.emitGetValue()...)
@@ -165,9 +165,9 @@ func (m *Module) EmitStore(addr, value Value) (insts []wat.Inst) {
 
 	default:
 		switch addr := addr.(type) {
-		case *aRef:
+		case *aSPtr:
 			if value == nil {
-				zero_value := NewConst("0", addr.Type().(*Ref).Base)
+				zero_value := NewConst("0", addr.Type().(*SPtr).Base)
 				insts = append(insts, addr.emitSetValue(zero_value)...)
 			} else {
 				insts = append(insts, addr.emitSetValue(value)...)
@@ -190,7 +190,7 @@ func (m *Module) EmitStore(addr, value Value) (insts []wat.Inst) {
 }
 
 func (m *Module) EmitHeapAlloc(typ ValueType) (insts []wat.Inst, ret_type ValueType) {
-	ref_typ := m.GenValueType_Ref(typ)
+	ref_typ := m.GenValueType_SPtr(typ)
 	ret_type = ref_typ
 	insts = ref_typ.emitHeapAlloc()
 	return
@@ -229,9 +229,9 @@ func (m *Module) EmitGenFieldAddr(x Value, field_name string) (insts []wat.Inst,
 	insts = append(insts, x.EmitPush()...)
 	var field *StructField
 	switch addr := x.(type) {
-	case *aRef:
-		field = addr.Type().(*Ref).Base.(*Struct).findFieldByName(field_name)
-		ret_type = m.GenValueType_Ref(field.Type())
+	case *aSPtr:
+		field = addr.Type().(*SPtr).Base.(*Struct).findFieldByName(field_name)
+		ret_type = m.GenValueType_SPtr(field.Type())
 	case *aPtr:
 		field = addr.Type().(*Ptr).Base.(*Struct).findFieldByName(field_name)
 		ret_type = m.GenValueType_Ptr(field.Type())
@@ -265,15 +265,15 @@ func (m *Module) EmitGenIndexAddr(x, id Value) (insts []wat.Inst, ret_type Value
 			logger.Fatalf("Todo: %T", typ)
 		}
 
-	case *aRef:
-		switch typ := x.Type().(*Ref).Base.(type) {
+	case *aSPtr:
+		switch typ := x.Type().(*SPtr).Base.(type) {
 		case *Array:
 			insts = append(insts, x.EmitPush()...)
 			insts = append(insts, NewConst(strconv.Itoa(typ.Base.Size()), m.I32).EmitPush()...)
 			insts = append(insts, id.EmitPush()...)
 			insts = append(insts, wat.NewInstMul(wat.I32{}))
 			insts = append(insts, wat.NewInstAdd(wat.I32{}))
-			ret_type = m.GenValueType_Ref(typ.Base)
+			ret_type = m.GenValueType_SPtr(typ.Base)
 
 		default:
 			logger.Fatalf("Todo: %T", typ)
@@ -287,7 +287,7 @@ func (m *Module) EmitGenIndexAddr(x, id Value) (insts []wat.Inst, ret_type Value
 		insts = append(insts, id.EmitPush()...)
 		insts = append(insts, wat.NewInstMul(wat.I32{}))
 		insts = append(insts, wat.NewInstAdd(wat.I32{}))
-		ret_type = m.GenValueType_Ref(base_type)
+		ret_type = m.GenValueType_SPtr(base_type)
 
 	default:
 		logger.Fatalf("Todo: %T", x)
@@ -323,8 +323,8 @@ func (m *Module) EmitGenSlice(x, low, high Value) (insts []wat.Inst, ret_type Va
 		insts = x.emitSub(low, high)
 		ret_type = x.Type()
 
-	case *aRef:
-		switch btype := x.Type().(*Ref).Base.(type) {
+	case *aSPtr:
+		switch btype := x.Type().(*SPtr).Base.(type) {
 		case *Slice:
 			slt := m.GenValueType_Slice(btype.Base)
 			insts = slt.emitGenFromRefOfSlice(x, low, high)
@@ -442,21 +442,44 @@ func (m *Module) EmitGenMakeInterface(x Value, itype ValueType) (insts []wat.Ins
 	x_type := x.Type()
 	m.markConcreteTypeUsed(x_type)
 	m.markInterfaceUsed(itype)
-	x_ref_type := m.GenValueType_Ref(x_type)
 
-	return itype.(*Interface).emitGenMake(x, x_ref_type)
+	switch x := x.(type) {
+	case *aSPtr:
+		return itype.(*Interface).emitGenFromSPtr(x)
+
+	default:
+		logger.Fatalf("Todo: %T", x)
+		return
+	}
+}
+
+func (m *Module) EmitGenChangeInterface(x Value, destType ValueType) (insts []wat.Inst) {
+	m.markInterfaceUsed(x.Type())
+	m.markInterfaceUsed(destType)
+	return destType.(*Interface).emitGenFromInterface(x.(*aInterface))
+}
+
+func (m *Module) EmitGenTypeAssert(x Value, destType ValueType, commaOk bool) (insts []wat.Inst) {
+	si := x.(*aInterface)
+	m.markInterfaceUsed(x.Type())
+	if di, ok := destType.(*Interface); ok {
+		m.markInterfaceUsed(di)
+		return si.emitQueryInterface(destType, commaOk)
+	} else {
+		m.markConcreteTypeUsed(destType)
+		return si.emitGetData(destType, commaOk)
+	}
 }
 
 func (m *Module) EmitInvoke(i Value, params []Value, mid int, typeName string) (insts []wat.Inst) {
 	iface := i.(*aInterface)
-	insts = append(insts, iface.Extract("data").(*aRef).emitGetValue()...)
+	insts = append(insts, iface.Extract("data").EmitPush()...)
 
 	for _, v := range params {
 		insts = append(insts, v.EmitPush()...)
 	}
 
 	insts = append(insts, iface.Extract("itab").EmitPush()...)
-	insts = append(insts, wat.NewInstLoad(wat.I32{}, 0, 4))
 	insts = append(insts, wat.NewInstLoad(wat.I32{}, 8+mid*4, 4))
 
 	insts = append(insts, wat.NewInstCallIndirect(typeName))

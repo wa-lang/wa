@@ -273,7 +273,7 @@ func ExtractField(x Value, field_name string) Value {
 	case *aStruct:
 		return x.Extract(field_name)
 
-	case *aRef:
+	case *aSPtr:
 		return x.Extract(field_name)
 
 	case *aClosure:

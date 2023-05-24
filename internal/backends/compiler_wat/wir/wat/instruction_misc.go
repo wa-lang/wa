@@ -30,3 +30,13 @@ type blank struct {
 
 func NewBlank() *blank                       { return &blank{} }
 func (i *blank) Format(indent string) string { return "" }
+
+/**************************************
+instUnreachable:
+**************************************/
+type instUnreachable struct {
+	anInstruction
+}
+
+func NewInstUnreachable() *instUnreachable             { return &instUnreachable{} }
+func (i *instUnreachable) Format(indent string) string { return indent + "unreachable" }

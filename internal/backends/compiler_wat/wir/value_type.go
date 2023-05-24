@@ -27,12 +27,13 @@ const (
 	kBlock
 	kStruct
 	kTuple
-	kRef
+	kSPtr
 	kString
 	kSlice
 	kArray
 	kMap
 	kInterface
+	kRef
 )
 
 func toWatType(t ValueType) wat.ValueType {

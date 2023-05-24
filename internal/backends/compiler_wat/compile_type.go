@@ -106,7 +106,7 @@ func (tLib *typeLib) compile(from types.Type) wir.ValueType {
 		}
 
 	case *types.Pointer:
-		newType = tLib.module.GenValueType_Ref(tLib.compile(t.Elem()))
+		newType = tLib.module.GenValueType_SPtr(tLib.compile(t.Elem()))
 		uncommanFlag = true
 
 	case *types.Named:
@@ -131,7 +131,6 @@ func (tLib *typeLib) compile(from types.Type) wir.ValueType {
 			}
 
 			newType = tStruct
-			//uncommanFlag = true
 
 		case *types.Interface:
 			if ut.NumMethods() == 0 {
@@ -152,7 +151,7 @@ func (tLib *typeLib) compile(from types.Type) wir.ValueType {
 				method.Name = ut.Method(i).Name()
 
 				var fnSig wir.FnSig
-				fnSig.Params = append(fnSig.Params, tLib.module.GenValueType_Ref(tLib.module.VOID))
+				fnSig.Params = append(fnSig.Params, tLib.module.GenValueType_SPtr(tLib.module.VOID))
 				fnSig.Params = append(fnSig.Params, method.Sig.Params...)
 				fnSig.Results = method.Sig.Results
 
