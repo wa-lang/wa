@@ -38,5 +38,5 @@ type instUnreachable struct {
 	anInstruction
 }
 
-func NewInstinstUnreachable() *instUnreachable         { return &instUnreachable{} }
+func NewInstUnreachable() *instUnreachable             { return &instUnreachable{} }
 func (i *instUnreachable) Format(indent string) string { return indent + "unreachable" }

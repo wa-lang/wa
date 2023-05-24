@@ -6,7 +6,6 @@ import (
 	"strconv"
 
 	"wa-lang.org/wa/internal/backends/compiler_wat/wir/wat"
-	"wa-lang.org/wa/internal/logger"
 )
 
 /**************************************
@@ -106,7 +105,6 @@ func (v *aInterface) emitStoreToAddr(addr Value, offset int) []wat.Inst {
 func (v *aInterface) emitGetData(destType ValueType, commaOk bool) (insts []wat.Inst) {
 	insts = append(insts, v.Extract("itab").EmitPush()...)
 	insts = append(insts, wat.NewInstLoad(wat.I32{}, 0, 4))
-
 	insts = append(insts, wat.NewInstConst(wat.I32{}, strconv.Itoa(destType.Hash())))
 	insts = append(insts, wat.NewInstEq(wat.I32{}))
 
@@ -128,7 +126,7 @@ func (v *aInterface) emitGetData(destType ValueType, commaOk bool) (insts []wat.
 		ifBlock.True = append(ifBlock.True, wat.NewInstConst(wat.I32{}, "1"))
 		ifBlock.False = append(ifBlock.False, wat.NewInstConst(wat.I32{}, "0"))
 	} else {
-		ifBlock.False = append(ifBlock.False, wat.NewInstinstUnreachable())
+		ifBlock.False = append(ifBlock.False, wat.NewInstUnreachable())
 	}
 
 	insts = append(insts, ifBlock)
@@ -136,6 +134,28 @@ func (v *aInterface) emitGetData(destType ValueType, commaOk bool) (insts []wat.
 }
 
 func (v *aInterface) emitQueryInterface(destType ValueType, commaOk bool) (insts []wat.Inst) {
-	logger.Fatal("Todo")
+	insts = append(insts, v.Extract("data").EmitPush()...) //data, todo: nil check
+
+	insts = append(insts, v.Extract("itab").EmitPush()...)
+	insts = append(insts, wat.NewInstLoad(wat.I32{}, 0, 4))
+	insts = append(insts, wat.NewInstConst(wat.I32{}, strconv.Itoa(destType.Hash())))
+	if commaOk {
+		insts = append(insts, wat.NewInstConst(wat.I32{}, "1"))
+	} else {
+		insts = append(insts, wat.NewInstConst(wat.I32{}, "0"))
+	}
+	insts = append(insts, wat.NewInstCall("$wa.RT.getItab")) //itab
+
+	insts = append(insts, wat.NewInstCall("$wa.RT.DupI32"))
+	ifBlock := wat.NewInstIf(nil, nil, nil)
+	if commaOk {
+		ifBlock.Ret = append(ifBlock.Ret, wat.I32{})
+		ifBlock.True = append(ifBlock.True, wat.NewInstConst(wat.I32{}, "1"))
+		ifBlock.False = append(ifBlock.False, wat.NewInstConst(wat.I32{}, "0"))
+	} else {
+		ifBlock.False = append(ifBlock.False, wat.NewInstUnreachable())
+	}
+
+	insts = append(insts, ifBlock)
 	return
 }

@@ -369,6 +369,7 @@ func (m *Module) buildItab() {
 }
 
 func (m *Module) buildTypesInfo() {
+	return
 	for name, t := range m.types_map {
 		if strings.HasPrefix(name, "runtime.") {
 			continue
@@ -490,6 +491,10 @@ func (m *Module) buildTypeInfo(t ValueType) int {
 		return typ.addr
 
 	case *Closure:
+		typ.addr = m.DataSeg.Append(_type.Bin(), 8)
+		return typ.addr
+
+	case *Tuple:
 		typ.addr = m.DataSeg.Append(_type.Bin(), 8)
 		return typ.addr
 
