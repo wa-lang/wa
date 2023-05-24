@@ -188,7 +188,7 @@ func (p *_Loader) Import(pkgpath string) (*types.Package, error) {
 	}
 
 	// main 包隐式导入 runtime
-	if pkgpath == p.prog.Manifest.MainPkg {
+	if pkgpath == p.prog.Manifest.MainPkg && pkgpath != "runtime" {
 		if len(pkg.Files) > 0 {
 			f, err := parser.ParseFile(nil, p.prog.Fset, "_$main$runtime.wa", `import "runtime" => _`, parser.AllErrors)
 			if err != nil {
@@ -199,10 +199,10 @@ func (p *_Loader) Import(pkgpath string) (*types.Package, error) {
 	}
 
 	// 过滤 build-tag, main 包忽略
-	if pkgpath != p.prog.Manifest.MainPkg {
+	if pkgpath != p.prog.Manifest.MainPkg || p.prog.Manifest.IsStd {
 		var pkgFileNames = make([]string, 0, len(filenames))
 		var pkgFiles = make([]*ast.File, 0, len(pkg.Files))
-		for _, f := range pkg.Files {
+		for i, f := range pkg.Files {
 			skiped, err := p.isSkipedAstFile(f)
 			if err != nil {
 				return nil, err
@@ -210,7 +210,7 @@ func (p *_Loader) Import(pkgpath string) (*types.Package, error) {
 			if skiped {
 				continue
 			}
-			pkgFileNames = append(pkgFileNames)
+			pkgFileNames = append(pkgFileNames, filenames[i])
 			pkgFiles = append(pkgFiles, f)
 		}
 		filenames = pkgFileNames
@@ -423,6 +423,9 @@ func (p *_Loader) ParseDir(pkgpath string) (filenames []string, files []*ast.Fil
 		unitTestMode bool = false
 		datas        [][]byte
 	)
+	if pkgpath == p.prog.Manifest.MainPkg && p.cfg.UnitTest {
+		unitTestMode = true
+	}
 
 	switch {
 	case p.isStdPkg(pkgpath):
@@ -434,9 +437,6 @@ func (p *_Loader) ParseDir(pkgpath string) (filenames []string, files []*ast.Fil
 			return nil, nil, err
 		}
 	case p.isSelfPkg(pkgpath):
-		if pkgpath == p.prog.Manifest.MainPkg && p.cfg.UnitTest {
-			unitTestMode = true
-		}
 		relpkg := strings.TrimPrefix(pkgpath, p.prog.Manifest.Pkg.Pkgpath)
 		if relpkg == "" {
 			relpkg = "."

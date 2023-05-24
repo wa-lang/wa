@@ -14,18 +14,16 @@ import (
 	"wa-lang.org/wa/internal/loader"
 )
 
-func (p *App) RunTest(filename string, appArgs ...string) error {
+func (p *App) RunTest(pkgpath string, appArgs ...string) error {
 	cfg := p.opt.Config()
 	cfg.UnitTest = true
-	prog, err := loader.LoadProgram(cfg, filename)
+	prog, err := loader.LoadProgram(cfg, pkgpath)
 	if err != nil {
 		return err
 	}
 
 	startTime := time.Now()
 	mainPkg := prog.Pkgs[prog.Manifest.MainPkg]
-
-	// TODO: 测试指定路径的包
 
 	if len(mainPkg.TestInfo.Files) == 0 {
 		fmt.Printf("?    %s [no test files]\n", prog.Manifest.MainPkg)

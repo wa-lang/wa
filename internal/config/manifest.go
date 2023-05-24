@@ -19,6 +19,7 @@ const WaModFile = "wa.mod.json"
 type Manifest struct {
 	Root    string `json:"root"` // WaModFile 所在目录
 	MainPkg string `json:"main"` // 主包路径
+	IsStd   bool   `json:"-"`    // 是标准库
 
 	Pkg Manifest_package `json:"package"`
 }

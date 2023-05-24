@@ -89,6 +89,26 @@ func loadProgramMeta(cfg *config.Config, appPath string) (
 	logger.Tracef(&config.EnableTrace_loader, "cfg: %+v", cfg)
 	logger.Tracef(&config.EnableTrace_loader, "appPath: %s", appPath)
 
+	if waroot.IsStdPkg(appPath) {
+		manifest = &config.Manifest{
+			Root:    "",
+			MainPkg: appPath,
+			IsStd:   true,
+			Pkg: config.Manifest_package{
+				Name:    appPath[strings.LastIndex(appPath, "/")+1:],
+				Pkgpath: appPath,
+			},
+		}
+
+		vfs = new(config.PkgVFS)
+		if cfg.WaRoot != "" {
+			vfs.Std = os.DirFS(filepath.Join(cfg.WaRoot, "src"))
+		} else {
+			vfs.Std = waroot.GetFS()
+		}
+		return
+	}
+
 	manifest, err = config.LoadManifest(nil, appPath)
 	if err != nil {
 		logger.Tracef(&config.EnableTrace_loader, "err: %v", err)
