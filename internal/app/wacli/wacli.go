@@ -391,26 +391,6 @@ func Main() {
 				return nil
 			},
 		},
-		{
-			Hidden: true,
-			Name:   "install-wat2wasm",
-			Usage:  "install-wat2wasm tool",
-			Flags: []cli.Flag{
-				&cli.StringFlag{
-					Name:  "dir",
-					Usage: "set output dir",
-					Value: "",
-				},
-			},
-			Action: func(c *cli.Context) error {
-				outdir := c.String("dir")
-				if err := apputil.InstallWat2wasm(outdir); err != nil {
-					fmt.Println(err)
-					os.Exit(1)
-				}
-				return nil
-			},
-		},
 
 		{
 			Name:      "yacc",
