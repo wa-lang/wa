@@ -58,7 +58,7 @@ func (t *SPtr) emitHeapAlloc() (insts []wat.Inst) {
 	//insts = append(insts, wat.NewComment("Ref.emitHeapAlloc start"))
 
 	insts = append(insts, t._base_block.emitHeapAlloc(NewConst("1", t.underlying._u32))...)
-	insts = append(insts, wat.NewInstCall("$wa.RT.DupI32"))
+	insts = append(insts, wat.NewInstCall("$wa.runtime.DupI32"))
 	insts = append(insts, NewConst("16", t.underlying._u32).EmitPush()...)
 	insts = append(insts, wat.NewInstAdd(wat.U32{}))
 

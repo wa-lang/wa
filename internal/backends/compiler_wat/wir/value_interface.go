@@ -58,7 +58,7 @@ func (t *Interface) emitGenFromSPtr(x *aSPtr) (insts []wat.Inst) {
 	insts = append(insts, wat.NewInstConst(wat.I32{}, strconv.Itoa(x.Type().Hash())))
 	insts = append(insts, wat.NewInstConst(wat.I32{}, strconv.Itoa(t.Hash())))
 	insts = append(insts, wat.NewInstConst(wat.I32{}, "0"))
-	insts = append(insts, wat.NewInstCall("$wa.RT.getItab")) //itab
+	insts = append(insts, wat.NewInstCall("$wa.runtime.getItab")) //itab
 
 	return
 }
@@ -70,7 +70,7 @@ func (t *Interface) emitGenFromInterface(x *aInterface) (insts []wat.Inst) {
 	insts = append(insts, wat.NewInstLoad(wat.I32{}, 0, 4))
 	insts = append(insts, wat.NewInstConst(wat.I32{}, strconv.Itoa(t.Hash())))
 	insts = append(insts, wat.NewInstConst(wat.I32{}, "0"))
-	insts = append(insts, wat.NewInstCall("$wa.RT.getItab")) //itab
+	insts = append(insts, wat.NewInstCall("$wa.runtime.getItab")) //itab
 
 	return
 }
@@ -144,9 +144,9 @@ func (v *aInterface) emitQueryInterface(destType ValueType, commaOk bool) (insts
 	} else {
 		insts = append(insts, wat.NewInstConst(wat.I32{}, "0"))
 	}
-	insts = append(insts, wat.NewInstCall("$wa.RT.getItab")) //itab
+	insts = append(insts, wat.NewInstCall("$wa.runtime.getItab")) //itab
 
-	insts = append(insts, wat.NewInstCall("$wa.RT.DupI32"))
+	insts = append(insts, wat.NewInstCall("$wa.runtime.DupI32"))
 	ifBlock := wat.NewInstIf(nil, nil, nil)
 	if commaOk {
 		ifBlock.Ret = append(ifBlock.Ret, wat.I32{})

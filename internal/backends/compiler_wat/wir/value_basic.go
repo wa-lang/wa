@@ -159,7 +159,7 @@ func (v *aBasic) emitStoreToAddr(addr Value, offset int) []wat.Inst {
 }
 
 func (v *aBasic) emitStore(offset int) (insts []wat.Inst) {
-	insts = append(insts, wat.NewInstCall("$wa.RT.DupI32"))
+	insts = append(insts, wat.NewInstCall("$wa.runtime.DupI32"))
 	insts = append(insts, v.EmitPush()...)
 	switch v.Type().(type) {
 	case *tU8, *tI8:

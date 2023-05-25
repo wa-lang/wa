@@ -28,6 +28,7 @@ func main() {
 	v1 := S1{a: 13}
 
 	var i1: I1 = &v1  //具体类型到具名接口
+	v1.f()  //直接调用
 	i1.f()  //接口调用
 	doConcreteType(i1)
 	i1.f()

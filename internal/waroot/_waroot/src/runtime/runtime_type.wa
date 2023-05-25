@@ -71,12 +71,12 @@ type _itab struct {
 	ihash: i32  //hash of interface
 }  //followed by [itype.methodCound]fnID, fnID=>id for call_indirect
 
-#wa:linkname $wa.RT.getTypePtr
+#wa:linkname $wa.runtime.getTypePtr
 func getTypePtr(hash i32) uintptr {
 	return 0
 }
 
-#wa:linkname $wa.RT.getItab
+#wa:linkname $wa.runtime.getItab
 func getItab(dhash i32, ihash i32, commanok i32) u32 {
 	itab := _itabsPtr + ((dhash - 1) * _interfaceCount - ihash - 1) * 4
 	return getU32(u32(itab))
@@ -85,11 +85,11 @@ func getItab(dhash i32, ihash i32, commanok i32) u32 {
 #wa:runtime_getter
 func getU32(p: u32) => u32
 
-#wa:linkname $wa.RT._itabsPtr
+#wa:linkname $wa.runtime._itabsPtr
 var _itabsPtr i32
 
-#wa:linkname $wa.RT._interfaceCount
+#wa:linkname $wa.runtime._interfaceCount
 var _interfaceCount i32
 
-#wa:linkname $wa.RT._concretTypeCount
+#wa:linkname $wa.runtime._concretTypeCount
 var _concretTypeCount i32

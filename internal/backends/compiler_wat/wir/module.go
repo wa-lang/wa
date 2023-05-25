@@ -363,9 +363,9 @@ func (m *Module) buildItab() {
 	}
 
 	itabs_ptr := m.DataSeg.Append(itabs, 8)
-	m.SetGlobalInitValue("$wa.RT._itabsPtr", strconv.Itoa(itabs_ptr))
-	m.SetGlobalInitValue("$wa.RT._interfaceCount", strconv.Itoa(len(m.usedInterfaces)))
-	m.SetGlobalInitValue("$wa.RT._concretTypeCount", strconv.Itoa(len(m.usedConcreteTypes)))
+	m.SetGlobalInitValue("$wa.runtime._itabsPtr", strconv.Itoa(itabs_ptr))
+	m.SetGlobalInitValue("$wa.runtime._interfaceCount", strconv.Itoa(len(m.usedInterfaces)))
+	m.SetGlobalInitValue("$wa.runtime._concretTypeCount", strconv.Itoa(len(m.usedConcreteTypes)))
 }
 
 func (m *Module) buildTypesInfo() {

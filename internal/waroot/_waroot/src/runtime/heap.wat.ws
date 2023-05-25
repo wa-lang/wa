@@ -70,50 +70,14 @@
 	end ;;loop $zero
 
 	local.get $ptr
-
-	;;Todo
-	;; global.get $__heap_base
-
-	;; global.get $__heap_base
-	;; call $$runtime.waPrintI32
-	;; i32.const 32
-	;; call $$runtime.waPrintRune
-	;; local.get $size
-	;; call $$runtime.waPrintI32
-	;; i32.const 10
-	;; call $$runtime.waPrintRune
-
-	;; global.get $__heap_base
-	;; global.get $__heap_base
-	;; local.get $nbytes
-	;; i32.const 7
-	;; i32.add
-	;; i32.const 8
-	;; i32.div_u
-	;; i32.const 8
-	;; i32.mul
-	;; i32.add
-	;; global.set $__heap_base
-	;; call $$wa.RT.DupWatStack
-	;; call $$runtime.waPrintI32
-	;; i32.const 10
-	;; call $$runtime.waPrintRune
 )
 
 (func $$waHeapFree (param $ptr i32)
 	local.get $ptr
 	call $runtime.free
-
-	;;Todo
-	;; i32.const 126
-	;; call $$runtime.waPrintRune
-	;; local.get $ptr
-	;; call $$runtime.waPrintI32
-	;; i32.const 10
-	;; call $$runtime.waPrintRune
 )
 
-(func $$wa.RT.Block.Init (param $ptr i32) (param $item_count i32) (param $release_func i32) (param $item_size i32) (result i32) ;;result = ptr
+(func $$wa.runtime.Block.Init (param $ptr i32) (param $item_count i32) (param $release_func i32) (param $item_size i32) (result i32) ;;result = ptr
 	local.get $ptr
 
 	local.get $ptr
@@ -136,17 +100,17 @@
 	end
 )
 
-(func $$wa.RT.DupI32 (param i32) (result i32 i32) ;;r0 = r1 = p0
+(func $$wa.runtime.DupI32 (param i32) (result i32 i32) ;;r0 = r1 = p0
 	local.get 0
 	local.get 0
 )
 
-(func $$wa.RT.SwapI32 (param i32 i32) (result i32 i32) ;;r0 = p1, r1 = p0
+(func $$wa.runtime.SwapI32 (param i32 i32) (result i32 i32) ;;r0 = p1, r1 = p0
 	local.get 1
 	local.get 0
 )
 
-(func $$wa.RT.Block.Retain (param $ptr i32) (result i32) ;;result = ptr
+(func $$wa.runtime.Block.Retain (param $ptr i32) (result i32) ;;result = ptr
 	local.get $ptr
 
 	local.get $ptr
@@ -160,8 +124,7 @@
 	end
 )
 
-(func $$wa.RT.Block.Release (param $ptr i32)
-	;;Todo
+(func $$wa.runtime.Block.Release (param $ptr i32)
 	(local $ref_count i32)
 	(local $item_count i32)
 	(local $free_func i32)
@@ -240,10 +203,10 @@
 	end  ;;ref_count == 0
 )
 
-(func $$wa.RT.i32_ref_to_ptr (param $b i32) (param $d i32) (result i32) ;;result = ptr
+(func $$wa.runtime.i32_ref_to_ptr (param $b i32) (param $d i32) (result i32) ;;result = ptr
   local.get $d
 )
 
-(func $$wa.RT.slice_to_ptr (param $b i32) (param $d i32) (param $l i32) (param $c i32) (result i32) ;;result = ptr
+(func $$wa.runtime.slice_to_ptr (param $b i32) (param $d i32) (param $l i32) (param $c i32) (result i32) ;;result = ptr
   local.get $d
 )

@@ -143,10 +143,10 @@ func free(ap: u32) {
 	knr_freep = p_addr
 }
 
-#wa:linkname $wa.RT.i32_ref_to_ptr
+#wa:linkname $wa.runtime.i32_ref_to_ptr
 func I32_ref_to_ptr(t: *i32) => i32
 
-#wa:linkname $wa.RT.slice_to_ptr
+#wa:linkname $wa.runtime.slice_to_ptr
 func U8_slice_to_ptr(t: []byte) => i32
 
 func refToPtr_i32(p: *i32) => i32 {

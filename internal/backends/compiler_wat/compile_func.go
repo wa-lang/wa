@@ -912,7 +912,7 @@ func (g *functionGenerator) genMakeClosre_Anonymous(inst *ssa.MakeClosure) (inst
 		}
 		warp_fn.Results = g.tLib.GenFnSig(f.Signature).Results
 
-		dx := g.module.FindGlobalByName("$wa.RT.closure_data")
+		dx := g.module.FindGlobalByName("$wa.runtime.closure_data")
 		data_ptr := wir.ExtractField(dx, "data")
 
 		warp_fn.Insts = append(warp_fn.Insts, st_free_data.EmitLoadFromAddr(data_ptr, 0)...)
@@ -976,7 +976,7 @@ func (g *functionGenerator) genMakeClosre_Bound(inst *ssa.MakeClosure) (insts []
 		}
 		warp_fn.Results = g.tLib.GenFnSig(f.Signature).Results
 
-		dx := g.module.FindGlobalByName("$wa.RT.closure_data")
+		dx := g.module.FindGlobalByName("$wa.runtime.closure_data")
 		data_ptr := wir.ExtractField(dx, "data")
 
 		warp_fn.Insts = append(warp_fn.Insts, recv_type.EmitLoadFromAddr(data_ptr, 0)...)
