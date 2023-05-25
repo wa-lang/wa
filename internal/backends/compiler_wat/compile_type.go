@@ -3,6 +3,8 @@
 package compiler_wat
 
 import (
+	"strconv"
+
 	"wa-lang.org/wa/internal/backends/compiler_wat/wir"
 	"wa-lang.org/wa/internal/loader"
 	"wa-lang.org/wa/internal/logger"
@@ -16,6 +18,9 @@ type typeLib struct {
 	typeTable map[string]*wir.ValueType
 
 	pendingMethods []*ssa.Function
+
+	anonStructCount    int
+	anonInterfaceCount int
 }
 
 func newTypeLib(m *wir.Module, prog *loader.Program) *typeLib {
@@ -115,6 +120,7 @@ func (tLib *typeLib) compile(from types.Type) wir.ValueType {
 			pkg_name, _ := wir.GetPkgMangleName(t.Obj().Pkg().Path())
 			obj_name := wir.GenSymbolName(t.Obj().Name())
 			tStruct, found := tLib.module.GenValueType_Struct(pkg_name + "." + obj_name)
+			newType = tStruct
 			if !found {
 				for i := 0; i < ut.NumFields(); i++ {
 					sf := ut.Field(i)
@@ -130,12 +136,7 @@ func (tLib *typeLib) compile(from types.Type) wir.ValueType {
 				tStruct.Finish()
 			}
 
-			newType = tStruct
-
 		case *types.Interface:
-			if ut.NumMethods() == 0 {
-				return tLib.compile(ut)
-			}
 			pkg_name := ""
 			if t.Obj().Pkg() != nil {
 				pkg_name, _ = wir.GetPkgMangleName(t.Obj().Pkg().Path())
@@ -177,41 +178,48 @@ func (tLib *typeLib) compile(from types.Type) wir.ValueType {
 		newType = tLib.module.GenValueType_Closure(tLib.GenFnSig(t))
 
 	case *types.Interface:
-		if t.NumMethods() != 0 {
-			panic("NumMethods of interface{} != 0")
+		newType = tLib.module.GenValueType_Interface("i`" + strconv.Itoa(tLib.anonInterfaceCount) + "`")
+		tLib.anonInterfaceCount++
+
+		for i := 0; i < t.NumMethods(); i++ {
+			var method wir.Method
+			method.Sig = tLib.GenFnSig(t.Method(i).Type().(*types.Signature))
+
+			method.Name = t.Method(i).Name()
+
+			var fnSig wir.FnSig
+			fnSig.Params = append(fnSig.Params, tLib.module.GenValueType_SPtr(tLib.module.VOID))
+			fnSig.Params = append(fnSig.Params, method.Sig.Params...)
+			fnSig.Results = method.Sig.Results
+
+			method.FullFnName = tLib.module.AddFnSig(&fnSig)
+
+			newType.AddMethod(method)
 		}
-		newType = tLib.module.GenValueType_Interface("interface")
 
 	case *types.Struct:
-		sname := "`"
-		var fields []*wir.StructField
+		tStruct, found := tLib.module.GenValueType_Struct("s`" + strconv.Itoa(tLib.anonStructCount) + "`")
+		newType = tStruct
+		tLib.anonStructCount++
 
-		for i := 0; i < t.NumFields(); i++ {
-			sf := t.Field(i)
-			dtyp := tLib.compile(sf.Type())
-			var fname string
-			if sf.Embedded() {
-				fname = "$" + dtyp.Name()
-			} else {
-				fname = sf.Name()
-			}
-			df := tLib.module.NewStructField(fname, dtyp)
-			fields = append(fields, df)
-
-			sname += fname + "@" + dtyp.Name()
-			if i != t.NumFields()-1 {
-				sname += "|"
-			}
-		}
-
-		tStruct, found := tLib.module.GenValueType_Struct(sname)
 		if !found {
-			for _, f := range fields {
-				tStruct.AppendField(f)
+			for i := 0; i < t.NumFields(); i++ {
+				sf := t.Field(i)
+				dtyp := tLib.compile(sf.Type())
+				var fname string
+				if sf.Embedded() {
+					fname = "$" + dtyp.Name()
+				} else {
+					fname = sf.Name()
+				}
+				df := tLib.module.NewStructField(fname, dtyp)
+				tStruct.AppendField(df)
+
 			}
 			tStruct.Finish()
+		} else {
+			panic("???")
 		}
-		newType = tStruct
 
 	default:
 		logger.Fatalf("Todo:%T", t)

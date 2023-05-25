@@ -49,6 +49,10 @@ func main() {
 	
 	//i2 := ni.(I2)  //接口互转，由于v2未实现I2，这会触发异常
 	//i2.f2()
+	
+	var anoi interface{ f() } = &v1  //具体类型到匿名接口
+	doConcreteType(anoi) //匿名接口向具名接口转换
+	anoi.f()
 }
 
 func doConcreteType(i I1) {
