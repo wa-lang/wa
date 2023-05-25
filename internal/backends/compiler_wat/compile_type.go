@@ -182,6 +182,37 @@ func (tLib *typeLib) compile(from types.Type) wir.ValueType {
 		}
 		newType = tLib.module.GenValueType_Interface("interface")
 
+	case *types.Struct:
+		sname := "`"
+		var fields []*wir.StructField
+
+		for i := 0; i < t.NumFields(); i++ {
+			sf := t.Field(i)
+			dtyp := tLib.compile(sf.Type())
+			var fname string
+			if sf.Embedded() {
+				fname = "$" + dtyp.Name()
+			} else {
+				fname = sf.Name()
+			}
+			df := tLib.module.NewStructField(fname, dtyp)
+			fields = append(fields, df)
+
+			sname += fname + "@" + dtyp.Name()
+			if i != t.NumFields()-1 {
+				sname += "|"
+			}
+		}
+
+		tStruct, found := tLib.module.GenValueType_Struct(sname)
+		if !found {
+			for _, f := range fields {
+				tStruct.AppendField(f)
+			}
+			tStruct.Finish()
+		}
+		newType = tStruct
+
 	default:
 		logger.Fatalf("Todo:%T", t)
 	}

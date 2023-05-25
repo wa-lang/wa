@@ -1,0 +1,54 @@
+# 版权 @2021 凹语言 作者。保留所有权利。
+
+var Info struct{
+	name: string
+	age: i32
+}
+
+func main() {
+	i := gen_scref()
+	println(*i.a)  //13
+	println(i.b)  //42
+
+	j := gen_sc()
+	println(*j.a)  //26
+	println(j.b)  //58
+
+	//全局匿名结构体变量
+	Info.name = "张三"
+	Info.age = 88
+	println(Info.name, " ", Info.age)  //张三 88
+
+	//局部匿名结构体变量
+	k := struct {name: string; age: i32}{"李四", 66}
+	println(k.name, " ", k.age)  //李四 66
+
+	Info = k
+	println(Info.name, " ", Info.age)  //李四 66
+}
+
+type sp struct {
+	a: *i32
+}
+
+type sc struct {
+	b: i32
+	sp
+}
+
+func gen_scref() => *sc {
+	var v: sc
+	var i: i32
+	i = 13
+	v.a = &i
+	v.b = 42
+	return &v
+}
+
+func gen_sc() => sc {
+	var i: i32 = 26
+	var v: sc
+	v.a = &i
+	v.b = 58
+	return v
+}
