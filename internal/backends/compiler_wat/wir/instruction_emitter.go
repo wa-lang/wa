@@ -448,8 +448,8 @@ func (m *Module) EmitGenMakeInterface(x Value, itype ValueType) (insts []wat.Ins
 		return itype.(*Interface).emitGenFromSPtr(x)
 
 	default:
-		logger.Fatalf("Todo: %T", x)
-		return
+		sptr_t := m.GenValueType_SPtr(x.Type())
+		return itype.(*Interface).emitGenFromValue(x, sptr_t)
 	}
 }
 

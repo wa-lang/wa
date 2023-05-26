@@ -46,6 +46,14 @@ func main() {
 	ni = &v2  //具体类型到空接口
 	i1 = ni.(I1)  //接口动态互转
 	i1.f()
+
+	var ival i32 = 777
+	ni = ival
+	doConcreteType(ni)
+
+	doConcreteType(v1)
+	doConcreteType(v2)
+	doConcreteType("你好凹语言")
 	
 	//i2 := ni.(I2)  //接口互转，由于v2未实现I2，这会触发异常
 	//i2.f2()
@@ -55,7 +63,7 @@ func main() {
 	anoi.f()
 }
 
-func doConcreteType(i I1) {
+func doConcreteType(i interface{}) {
 	//接口到具体类型断言
 	switch c := i.(type){
 		case *S1:
@@ -65,5 +73,17 @@ func doConcreteType(i I1) {
 		case *S2:
 			println("*S2")
 			c.b *= 2
+
+		case i32:
+			println("i32: ", c)
+
+		case string:
+			println("string: ", c)
+
+		case S1:
+			println("S1, S1.a==", c.a)
+
+		case S2:
+			println("S2, S2.b==", c.b)
 	}
 }
