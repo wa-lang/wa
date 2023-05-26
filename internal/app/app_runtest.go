@@ -29,14 +29,10 @@ func (p *App) RunTest(pkgpath string, appArgs ...string) error {
 		fmt.Printf("?    %s [no test files]\n", prog.Manifest.MainPkg)
 		return nil
 	}
-	if len(mainPkg.TestInfo.Funcs) == 0 {
-		fmt.Printf("ok   %s %v\n", prog.Manifest.MainPkg, time.Now().Sub(startTime))
-		return nil
-	}
 
-	var lastError error
-	for _, main := range mainPkg.TestInfo.Funcs {
-		output, err := compiler_wat.New().Compile(prog, main)
+	var firstError error
+	for _, t := range mainPkg.TestInfo.Tests {
+		output, err := compiler_wat.New().Compile(prog, t.Name)
 		if err != nil {
 			return err
 		}
@@ -51,9 +47,11 @@ func (p *App) RunTest(pkgpath string, appArgs ...string) error {
 		}
 
 		if err != nil {
-			lastError = err
+			if firstError == nil {
+				firstError = err
+			}
 			if _, ok := err.(*sys.ExitError); ok {
-				fmt.Printf("---- %s.%s\n", prog.Manifest.MainPkg, main)
+				fmt.Printf("---- %s.%s\n", prog.Manifest.MainPkg, t.Name)
 				if s := sWithPrefix(string(stdoutStderr), "    "); s != "" {
 					fmt.Println(s)
 				}
@@ -62,11 +60,40 @@ func (p *App) RunTest(pkgpath string, appArgs ...string) error {
 			}
 		}
 	}
+	for _, t := range mainPkg.TestInfo.Examples {
+		output, err := compiler_wat.New().Compile(prog, t.Name)
+		if err != nil {
+			return err
+		}
 
-	if lastError != nil {
+		if err = os.WriteFile("a.out.wat", []byte(output), 0666); err != nil {
+			return err
+		}
+
+		stdoutStderr, err := apputil.RunWasm(cfg, "a.out.wat", appArgs...)
+		if err == nil {
+			continue
+		}
+
+		if err != nil {
+			if firstError == nil {
+				firstError = err
+			}
+			if _, ok := err.(*sys.ExitError); ok {
+				fmt.Printf("---- %s.%s\n", prog.Manifest.MainPkg, t.Name)
+				if s := sWithPrefix(string(stdoutStderr), "    "); s != "" {
+					fmt.Println(s)
+				}
+			} else {
+				fmt.Println(err)
+			}
+		}
+	}
+	if firstError != nil {
 		fmt.Printf("FAIL %s %v\n", prog.Manifest.MainPkg, time.Now().Sub(startTime).Round(time.Microsecond))
 		os.Exit(1)
 	}
+
 	fmt.Printf("ok   %s %v\n", prog.Manifest.MainPkg, time.Now().Sub(startTime).Round(time.Microsecond))
 
 	return nil

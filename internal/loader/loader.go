@@ -266,11 +266,7 @@ func (p *_Loader) Import(pkgpath string) (*types.Package, error) {
 }
 
 func (p *_Loader) parseTestInfo(pkg *Package, filenames []string) (*TestInfo, error) {
-	tInfo := &TestInfo{
-		Tests:    make(map[string]TestFuncInfo),
-		Benchs:   make(map[string]BenchFuncInfo),
-		Examples: make(map[string]ExampleFuncInfo),
-	}
+	tInfo := new(TestInfo)
 
 	for i, filename := range filenames {
 		if !p.isTestFile(filename) {
@@ -303,22 +299,22 @@ func (p *_Loader) parseTestInfo(pkg *Package, filenames []string) (*TestInfo, er
 
 				switch {
 				case strings.HasPrefix(name, "Test"):
-					tInfo.Funcs = append(tInfo.Funcs, name)
-					tInfo.Tests[name] = TestFuncInfo{
-						FuncPos: obj.Pos(),
-						Name:    name,
-					}
-				case strings.HasPrefix(name, "Bench"):
-					tInfo.Benchs[name] = BenchFuncInfo{
-						FuncPos: obj.Pos(),
-						Name:    name,
-					}
-				case strings.HasPrefix(name, "Example"):
-					tInfo.Examples[name] = ExampleFuncInfo{
+					tInfo.Tests = append(tInfo.Tests, TestFuncInfo{
 						FuncPos: obj.Pos(),
 						Name:    name,
 						Output:  p.parseExampleOutputComment(file, fn),
-					}
+					})
+				case strings.HasPrefix(name, "Bench"):
+					tInfo.Benchs = append(tInfo.Benchs, TestFuncInfo{
+						FuncPos: obj.Pos(),
+						Name:    name,
+					})
+				case strings.HasPrefix(name, "Example"):
+					tInfo.Examples = append(tInfo.Examples, TestFuncInfo{
+						FuncPos: obj.Pos(),
+						Name:    name,
+						Output:  p.parseExampleOutputComment(file, fn),
+					})
 				}
 			}
 		}

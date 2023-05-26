@@ -36,28 +36,14 @@ type Package struct {
 
 // 单元测试信息
 type TestInfo struct {
-	Files []string // 测试文件
-	Funcs []string // 测试函数
-
-	Tests    map[string]TestFuncInfo
-	Benchs   map[string]BenchFuncInfo
-	Examples map[string]ExampleFuncInfo
+	Files    []string // 测试文件
+	Tests    []TestFuncInfo
+	Benchs   []TestFuncInfo
+	Examples []TestFuncInfo
 }
 
 // 测试函数信息
 type TestFuncInfo struct {
-	FuncPos token.Pos // 函数位置
-	Name    string    // 函数名, 不含包路径
-}
-
-// 基准函数信息
-type BenchFuncInfo struct {
-	FuncPos token.Pos // 函数位置
-	Name    string    // 函数名, 不含包路径
-}
-
-// 示例函数信息
-type ExampleFuncInfo struct {
 	FuncPos token.Pos // 函数位置
 	Name    string    // 函数名, 不含包路径
 	Output  string    // 期望输出, 为空表示不验证
