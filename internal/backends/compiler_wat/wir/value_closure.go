@@ -98,9 +98,12 @@ func (t *Closure) Equal(u ValueType) bool {
 }
 
 func (t *Closure) EmitLoadFromAddr(addr Value, offset int) []wat.Inst {
-	if !addr.Type().(*Ptr).Base.Equal(t) {
-		logger.Fatal("Type not match")
-		return nil
+	//if !addr.Type().(*Ptr).Base.Equal(t) {
+	//	logger.Fatal("Type not match")
+	//	return nil
+	//}
+	if _, ok := addr.(*aPtr); !ok {
+		logger.Fatal("addr should be `*aPtr`")
 	}
 
 	return t.underlying.EmitLoadFromAddr(addr, offset)

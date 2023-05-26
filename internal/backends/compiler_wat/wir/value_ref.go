@@ -26,7 +26,7 @@ func (m *Module) GenValueType_Ref(name string, base ValueType) *Ref {
 	return &ref_t
 }
 
-func (t *Ref) Name() string         { return t.Base.Name() + ".$ref" }
+func (t *Ref) Name() string         { return t.name }
 func (t *Ref) Size() int            { return t.Base.Size() }
 func (t *Ref) align() int           { return t.Base.align() }
 func (t *Ref) Kind() TypeKind       { return kRef }
