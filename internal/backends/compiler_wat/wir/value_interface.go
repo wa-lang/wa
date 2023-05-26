@@ -63,6 +63,18 @@ func (t *Interface) emitGenFromSPtr(x *aSPtr) (insts []wat.Inst) {
 	return
 }
 
+func (t *Interface) emitGenFromValue(x Value, xSptrType *SPtr) (insts []wat.Inst) {
+	insts = append(insts, xSptrType.emitHeapAlloc()...)
+	insts = append(insts, x.emitStore(0)...) //data
+
+	insts = append(insts, wat.NewInstConst(wat.I32{}, strconv.Itoa(x.Type().Hash())))
+	insts = append(insts, wat.NewInstConst(wat.I32{}, strconv.Itoa(t.Hash())))
+	insts = append(insts, wat.NewInstConst(wat.I32{}, "0"))
+	insts = append(insts, wat.NewInstCall("$wa.runtime.getItab")) //itab
+
+	return
+}
+
 func (t *Interface) emitGenFromInterface(x *aInterface) (insts []wat.Inst) {
 	insts = append(insts, x.Extract("data").EmitPush()...) //data
 
@@ -115,7 +127,7 @@ func (v *aInterface) emitGetData(destType ValueType, commaOk bool) (insts []wat.
 	if _, ok := destType.(*SPtr); ok {
 		ifBlock.True = v.Extract("data").EmitPush()
 	} else {
-		ifBlock.True = destType.EmitLoadFromAddr(v.Extract("data"), 0)
+		ifBlock.True = destType.EmitLoadFromAddr(v.Extract("data").(*aSPtr).Extract("data"), 0)
 	}
 
 	// false:
