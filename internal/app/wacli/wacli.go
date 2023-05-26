@@ -207,8 +207,16 @@ func Main() {
 						os.Exit(1)
 					}
 					if strings.HasSuffix(outfile, ".wasm") {
-						if stdoutStderr, err := apputil.RunWat2Wasm(watFilename, "-o", outfile); err != nil {
-							fmt.Println(string(stdoutStderr))
+						stdout, stderr, err := apputil.RunWat2Wasm(watFilename)
+						if err != nil {
+							if len(stderr) != 0 {
+								fmt.Println(string(stderr))
+							}
+							fmt.Println(err)
+							os.Exit(1)
+						}
+						if err := os.WriteFile(outfile, stdout, 0666); err != nil {
+							fmt.Println(err)
 							os.Exit(1)
 						}
 						os.Remove(watFilename)

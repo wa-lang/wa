@@ -16,7 +16,7 @@ import (
 
 	"wa-lang.org/wa/internal/app/waruntime"
 	"wa-lang.org/wa/internal/config"
-	"wa-lang.org/wabt-go/wabt-wasm"
+	wabt_wasm "wa-lang.org/wabt-go/wabt-wasm"
 )
 
 func getWatAbsDir(filename string) string {
@@ -34,9 +34,9 @@ func RunWasm(cfg *config.Config, filename string, wasmArgs ...string) (stdoutStd
 	return
 }
 
-func RunWat2Wasm(dir string, args ...string) (stdoutStderr []byte, err error) {
-	stdout, strerr, err := runWat2Wasm(dir, args...)
-	stdoutStderr = append(stdout, strerr...)
+func RunWat2Wasm(filename string) (stdout, stderr []byte, err error) {
+	watDir := getWatAbsDir(filename)
+	stdout, stderr, err = runWat2Wasm(watDir, "/"+filepath.Base(filename), "--output=-")
 	return
 }
 
