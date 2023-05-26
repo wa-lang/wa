@@ -3,6 +3,7 @@
 package app
 
 import (
+	"bytes"
 	"fmt"
 	"os"
 	"strings"
@@ -41,8 +42,12 @@ func (p *App) RunTest(pkgpath string, appArgs ...string) error {
 			return err
 		}
 
-		stdoutStderr, err := apputil.RunWasm(cfg, "a.out.wat", appArgs...)
-		if err == nil {
+		stdout, stderr, err := apputil.RunWasmEx(cfg, "a.out.wat", appArgs...)
+
+		stdout = bytes.TrimSpace(stdout)
+		bOutputOK := t.Output == string(stdout)
+
+		if err == nil && bOutputOK {
 			continue
 		}
 
@@ -52,11 +57,24 @@ func (p *App) RunTest(pkgpath string, appArgs ...string) error {
 			}
 			if _, ok := err.(*sys.ExitError); ok {
 				fmt.Printf("---- %s.%s\n", prog.Manifest.MainPkg, t.Name)
-				if s := sWithPrefix(string(stdoutStderr), "    "); s != "" {
+				if s := sWithPrefix(string(stdout), "    "); s != "" {
+					fmt.Println(s)
+				}
+				if s := sWithPrefix(string(stderr), "    "); s != "" {
 					fmt.Println(s)
 				}
 			} else {
 				fmt.Println(err)
+			}
+		}
+
+		if t.Output != "" {
+			if expect, got := t.Output, string(stdout); expect != got {
+				if firstError == nil {
+					firstError = fmt.Errorf("expect = %q, got = %q", expect, got)
+				}
+				fmt.Printf("---- %s.%s\n", prog.Manifest.MainPkg, t.Name)
+				fmt.Printf("    expect = %q, got = %q\n", expect, got)
 			}
 		}
 	}
@@ -70,8 +88,12 @@ func (p *App) RunTest(pkgpath string, appArgs ...string) error {
 			return err
 		}
 
-		stdoutStderr, err := apputil.RunWasm(cfg, "a.out.wat", appArgs...)
-		if err == nil {
+		stdout, stderr, err := apputil.RunWasmEx(cfg, "a.out.wat", appArgs...)
+
+		stdout = bytes.TrimSpace(stdout)
+		bOutputOK := t.Output == string(stdout)
+
+		if err == nil && bOutputOK {
 			continue
 		}
 
@@ -81,20 +103,33 @@ func (p *App) RunTest(pkgpath string, appArgs ...string) error {
 			}
 			if _, ok := err.(*sys.ExitError); ok {
 				fmt.Printf("---- %s.%s\n", prog.Manifest.MainPkg, t.Name)
-				if s := sWithPrefix(string(stdoutStderr), "    "); s != "" {
+				if s := sWithPrefix(string(stdout), "    "); s != "" {
+					fmt.Println(s)
+				}
+				if s := sWithPrefix(string(stderr), "    "); s != "" {
 					fmt.Println(s)
 				}
 			} else {
 				fmt.Println(err)
 			}
 		}
+
+		if t.Output != "" {
+			if expect, got := t.Output, string(stdout); expect != got {
+				if firstError == nil {
+					firstError = fmt.Errorf("expect = %q, got = %q", expect, got)
+				}
+				fmt.Printf("---- %s.%s\n", prog.Manifest.MainPkg, t.Name)
+				fmt.Printf("    expect = %q, got = %q\n", expect, got)
+			}
+		}
 	}
 	if firstError != nil {
-		fmt.Printf("FAIL %s %v\n", prog.Manifest.MainPkg, time.Now().Sub(startTime).Round(time.Microsecond))
+		fmt.Printf("FAIL %s %v\n", prog.Manifest.MainPkg, time.Now().Sub(startTime).Round(time.Millisecond))
 		os.Exit(1)
 	}
 
-	fmt.Printf("ok   %s %v\n", prog.Manifest.MainPkg, time.Now().Sub(startTime).Round(time.Microsecond))
+	fmt.Printf("ok   %s %v\n", prog.Manifest.MainPkg, time.Now().Sub(startTime).Round(time.Millisecond))
 
 	return nil
 }

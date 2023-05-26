@@ -29,8 +29,13 @@ func getWatAbsDir(filename string) string {
 }
 
 func RunWasm(cfg *config.Config, filename string, wasmArgs ...string) (stdoutStderr []byte, err error) {
-	stdout, strerr, err := runWasm(cfg, filename, wasmArgs...)
-	stdoutStderr = append(stdout, strerr...)
+	stdout, stderr, err := runWasm(cfg, filename, wasmArgs...)
+	stdoutStderr = append(stdout, stderr...)
+	return
+}
+
+func RunWasmEx(cfg *config.Config, filename string, wasmArgs ...string) (stdout, stderr []byte, err error) {
+	stdout, stderr, err = runWasm(cfg, filename, wasmArgs...)
 	return
 }
 
