@@ -17,6 +17,7 @@ ci-test-all:
 	cd ./reftoptr && make
 
 	# snake
+	cd ./snake && make publish
 
 	go run ../main.go interface_named.wa
 	go run ../main.go struct.wa

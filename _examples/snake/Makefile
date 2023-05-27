@@ -1,7 +1,7 @@
 build:
 	-@rm ./web/*.wasm
-	go run ../../main.go fmt ./src/main.wa
-	go run ../../main.go fmt ./src/canvas/canvas.wa
+	#go run ../../main.go fmt ./src/main.wa
+	#go run ../../main.go fmt ./src/canvas/canvas.wa
 
 	go run ../../main.go build -o ./web/snake.wasm .
 

@@ -23,6 +23,10 @@ arduino-build:
 ci-test-all:
 	go test ./...
 
+	@echo "== std test begin =="
+	go run main.go test fmt
+	@echo "== std ok =="
+
 	go run main.go hello.wa
 
 	make -C ./_examples ci-test-all

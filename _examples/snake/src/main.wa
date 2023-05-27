@@ -13,13 +13,13 @@ const BodyColor = 0xFF202020
 const FoodColor = 0xFF00FF00
 
 const (
-	GridNull i8 = iota
+	GridNull: i8 = iota
 	GridBody
 	GridFood
 )
 
 const (
-	DirNull i32 = iota
+	DirNull: i32 = iota
 	DirLeft
 	DirUp
 	DirRight
@@ -101,7 +101,7 @@ func GameState.SetGridType(p: Position, t: i8) {
 }
 
 #wa:import wa_js_env rand
-func rand_JS(i32) => i32
+func rand_JS(_: i32) => i32
 func GameState.GenFood() => Position {
 	var p: Position
 	for {

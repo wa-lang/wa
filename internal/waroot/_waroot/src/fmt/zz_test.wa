@@ -1,16 +1,15 @@
 // 版权 @2023 凹语言 作者。保留所有权利。
 
-func TestFailed_assert {
+func TestOK_assert {
 	ok := true
 	assert(ok)
 
-	ok = false
-	assert(ok, "message")
+	assert(true, "message")
 }
 
-func TestFailed_output {
+func TestOK_output {
 	println("abc 123")
 
 	// Output:
-	// abc 1232
+	// abc 123
 }

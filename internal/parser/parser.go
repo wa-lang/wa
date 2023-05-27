@@ -2306,7 +2306,7 @@ func (p *parser) parseValueSpec(doc *ast.CommentGroup, keyword token.Token, iota
 			colonPos = p.pos
 			p.next()
 		} else {
-			if p.tok != token.ASSIGN {
+			if p.tok != token.ASSIGN && p.tok != token.SEMICOLON {
 				p.expect(token.COLON)
 			}
 		}
