@@ -2,6 +2,6 @@
 
 #wa:build !fmt_tag
 
-func Println(x int) {
+func Println(x: int) {
 	println(x)
 }

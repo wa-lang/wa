@@ -2306,7 +2306,9 @@ func (p *parser) parseValueSpec(doc *ast.CommentGroup, keyword token.Token, iota
 			colonPos = p.pos
 			p.next()
 		} else {
-			p.expect(token.COLON)
+			if p.tok != token.ASSIGN {
+				p.expect(token.COLON)
+			}
 		}
 	}
 	typ := p.tryType()

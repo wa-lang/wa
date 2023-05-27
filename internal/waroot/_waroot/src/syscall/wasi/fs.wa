@@ -43,7 +43,7 @@ func FdPrestatDirName(fd: i32, path: i32, path_len: i32) => (errno: i32)
 func FdPwrite(fd: i32, iovs: i32, iovs_len: i32, offset: i64, result_nwritten: i32) => (errno: i32)
 
 #wa:import wasi_snapshot_preview1 fd_read
-func FdRead(fdL i32, iovs: i32, iovs_len: i32, result_size: i32) => (errno: i32)
+func FdRead(fd: i32, iovs: i32, iovs_len: i32, result_size: i32) => (errno: i32)
 
 #wa:import wasi_snapshot_preview1 fd_readdir
 func FdReaddir(fd: i32, buf: i32, buf_len: i32, cookie: i64, result_bufused: i32) => (errno: i32)
@@ -64,7 +64,7 @@ func FdTell(fd: i32, result_offset: i32) => (errno: i32)
 func FdWrite(fd: i32, io: i32, iovs_len: i32, nwritten: i32) => (errno: i32)
 
 #wa:import wasi_snapshot_preview1 path_create_directory
-func PathCreateDirectory(fd i32, path: i32, path_len: i32) => (errno: i32)
+func PathCreateDirectory(fd: i32, path: i32, path_len: i32) => (errno: i32)
 
 #wa:import wasi_snapshot_preview1 path_filestat_get
 func PathFilestatGet(fd: i32, flags: i32, path: i32, path_len: i32, result_buf: i32) => (errno: i32)

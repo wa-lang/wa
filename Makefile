@@ -23,4 +23,8 @@ arduino-build:
 ci-test-all:
 	go test ./...
 
+	go run main.go hello.wa
+
+	make -C ./_examples ci-test-all
+
 clean:

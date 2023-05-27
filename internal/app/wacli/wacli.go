@@ -184,13 +184,15 @@ func Main() {
 			Action: func(c *cli.Context) error {
 				outfile := c.String("output")
 
-				if c.NArg() == 0 {
-					fmt.Fprintf(os.Stderr, "no input file")
-					os.Exit(1)
+				var input string
+				if c.NArg() > 0 {
+					input = c.Args().First()
+				} else {
+					input, _ = os.Getwd()
 				}
 
 				ctx := app.NewApp(build_Options(c))
-				output, err := ctx.WASM(c.Args().First())
+				output, err := ctx.WASM(input)
 				if err != nil {
 					fmt.Println(err)
 					os.Exit(1)
@@ -513,12 +515,14 @@ func build_Options(c *cli.Context, waBackend ...string) *app.Option {
 }
 
 func cliRun(c *cli.Context) {
-	if c.NArg() < 1 {
-		cli.ShowAppHelpAndExit(c, 0)
+	var infile string
+	if c.NArg() > 0 {
+		infile = c.Args().First()
+	} else {
+		infile, _ = os.Getwd()
 	}
 
 	var app = app.NewApp(build_Options(c))
-	var infile = c.Args().First()
 	var outfile string
 	var output []byte
 	var err error
@@ -555,7 +559,11 @@ func cliRun(c *cli.Context) {
 		}
 	}
 
-	appArgs := c.Args().Slice()[1:]
+	var appArgs []string
+	if c.NArg() > 1 {
+		appArgs = c.Args().Slice()[1:]
+	}
+
 	stdoutStderr, err := apputil.RunWasm(app.GetConfig(), outfile, appArgs...)
 	if err != nil {
 		if len(stdoutStderr) > 0 {

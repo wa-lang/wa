@@ -24,7 +24,6 @@ func environGet(result_environv: i32, result_environv_buf: i32) => (errno: i32) 
 	return
 }
 
-
 #wa:linkname $runtime.fdWrite
 func fdWrite(fd: i32, io: i32, iovs_len: i32, nwritten: i32) => (written: i32) {
 	return

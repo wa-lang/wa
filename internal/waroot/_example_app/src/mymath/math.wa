@@ -1,7 +1,7 @@
 // 版权 @{{.Year}} {{.Name}} 作者。保留所有权利。
 
 // 打印素数
-func PrintPrime(max int) {
+func PrintPrime(max: int) {
 	for n := 2; n <= max; n = n + 1 {
 		isPrime := 1
 		for i := 2; i*i <= n; i = i + 1 {

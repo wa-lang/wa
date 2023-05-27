@@ -9,14 +9,14 @@ type ST struct {
 	B: i32
 }
 
-var G ST
+var G: ST
 
-func Do() {
+func Do {
 	G.A = "13"
 	G.B = 1024
 }
 
-func main() {
+func main {
 	mypkg.Do(42)
 	println(mypkg.G.A)
 	println(mypkg.G.B)

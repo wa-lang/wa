@@ -68,7 +68,7 @@ type exprLexer struct {
 	pos    :int 
 }
 
-func exprLexer.Lex(yylval *exprSymType) => int {
+func exprLexer.Lex(yylval: *exprSymType) => int {
 	if this.pos >= len(this.tokens) {
 		return eof
 	}
@@ -79,7 +79,7 @@ func exprLexer.Lex(yylval *exprSymType) => int {
 	return tok.Kind
 }
 
-func exprLexer.Error(s string) {
+func exprLexer.Error(s: string) {
 	println("ERROR:", s)
 }
 

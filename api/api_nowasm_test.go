@@ -47,6 +47,9 @@ func ExampleRunCode_args() {
 	args := []string{"aa", "bb"}
 	output, err := api.RunCode(api.DefaultConfig(), "hello.wa", code, args...)
 	if err != nil {
+		if len(output) != 0 {
+			log.Println(string(output))
+		}
 		log.Fatal(err)
 	}
 

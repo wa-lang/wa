@@ -1,6 +1,6 @@
 // 版权 @{{.Year}} {{.Name}} 作者。保留所有权利。
 
-func main() {
+func main {
 	println("你好，凹语言！")
 	println(sum(100))
 	heart()
@@ -14,7 +14,7 @@ func sum(n: int) => int {
 	return v
 }
 
-func heart() {
+func heart {
 	a := 0.0
 	for y := 1.5; y > -1.5; y = y - 0.1 {
 		for x := -1.5; x < 1.5; x = x + 0.05 {

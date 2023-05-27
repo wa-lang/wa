@@ -3,7 +3,7 @@
 import "examples/prime/benpkg"
 import "joypkg"
 
-func main() {
+func main {
 	for n := 2; n <= 100; n = n + 1 {
 		if isPrime(n) {
 			benpkg.PrintInt(n)

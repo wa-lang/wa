@@ -18,6 +18,7 @@ file such as NOTICE, LICENCE or COPYING.
 	Portions Copyright © 2005-2007 C H Forsyth (forsyth@terzarima.net)
 	Revisions Copyright © 2000-2007 Lucent Technologies Inc. and others
 	Portions Copyright © 2009 The Go Authors. All rights reserved.
+	Portions Copyright © 2018 The Wa Authors. All rights reserved.
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -1157,7 +1158,7 @@ func emitcode(code []rune, lineno int) {
 	fmt.Fprintln(ftable, "")
 
 	if !fmtImported {
-		fmt.Fprintln(ftable, `import __yystrconv__ "strconv"`)
+		fmt.Fprintln(ftable, `import "strconv" => __yystrconv__`)
 		if !lflag {
 			fmt.Fprintf(ftable, "//line %v:%v\n\t\t", infile, lineno+len(lines(code)))
 		}
@@ -3266,22 +3267,22 @@ var (
 )
 
 type $$Parser struct {
-	lval  $$SymType
-	stack [$$InitialStackSize]$$SymType
-	char  int
+	lval  :$$SymType
+	stack :[$$InitialStackSize]$$SymType
+	char  :int
 }
 
-func $$Parser.Lookahead() int {
+func $$Parser.Lookahead => int {
 	return this.char
 }
 
-func $$NewParser() *$$Parser {
+func $$NewParser => *$$Parser {
 	return &$$Parser{}
 }
 
 const $$Flag = -1000
 
-func $$Tokname(c int) string {
+func $$Tokname(c: int) => string {
 	if c >= 1 && c-1 < len($$Toknames) {
 		if $$Toknames[c-1] != "" {
 			return $$Toknames[c-1]
@@ -3290,7 +3291,7 @@ func $$Tokname(c int) string {
 	return "tok-" + __yystrconv__.Itoa(c)
 }
 
-func $$Statname(s int) string {
+func $$Statname(s: int) => string {
 	if s >= 0 && s < len($$Statenames) {
 		if $$Statenames[s] != "" {
 			return $$Statenames[s]
@@ -3299,7 +3300,7 @@ func $$Statname(s int) string {
 	return "state-" + __yystrconv__.Itoa(s)
 }
 
-func $$ErrorMessage(state, lookAhead int) string {
+func $$ErrorMessage(state, lookAhead: int) => string {
 	const TOKSTART = 4
 
 	if !$$ErrorVerbose {
@@ -3363,7 +3364,7 @@ func $$ErrorMessage(state, lookAhead int) string {
 	return res
 }
 
-func $$lex1(lex *$$Lexer, lval *$$SymType) (char, token int) {
+func $$lex1(lex: *$$Lexer, lval: *$$SymType) => (char, token: int) {
 	token = 0
 	char = lex.Lex(lval)
 
@@ -3402,14 +3403,14 @@ out:
 	return char, token
 }
 
-func $$Parse($$lex *$$Lexer) int {
+func $$Parse($$lex: *$$Lexer) => int {
 	return $$NewParser().Parse($$lex)
 }
 
-func $$Parser.Parse($$lex *$$Lexer) int {
-	var $$n int
-	var $$VAL $$SymType
-	var $$Dollar []$$SymType
+func $$Parser.Parse($$lex: *$$Lexer) => int {
+	var $$n: int
+	var $$VAL: $$SymType
+	var $$Dollar: []$$SymType
 	_ = $$Dollar // silence set and not used
 	$$S := this.stack[:]
 

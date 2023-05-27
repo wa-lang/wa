@@ -60,7 +60,7 @@ func exprLexer.Error(s: string) {
 	println("ERROR:", s)
 }
 
-func main() {
+func main {
 	print("1+2*(3+4)-10 = ")
 	exprParse(&exprLexer{
 		tokens: []exprToken{
@@ -164,11 +164,11 @@ type exprParser struct {
 	char  :int
 }
 
-func exprParser.Lookahead() => int {
+func exprParser.Lookahead => int {
 	return this.char
 }
 
-func exprNewParser() => *exprParser {
+func exprNewParser => *exprParser {
 	return &exprParser{}
 }
 

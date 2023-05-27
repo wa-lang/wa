@@ -1,0 +1,27 @@
+# 版权 @2023 凹语言 作者。保留所有权利。
+
+default:
+
+ci-test-all:
+	@echo "== _examples test begin =="
+
+	# loop forever
+	# cd ./arduino && make
+	# cd ./arduino-wat && make
+
+	cd ./brainfuck && make
+	cd ./expr && make
+	cd ./hello && make
+	cd ./pkg && make
+	cd ./prime && make
+	cd ./reftoptr && make
+
+	# snake
+
+	go run ../main.go interface_named.wa
+	go run ../main.go struct.wa
+
+	@echo "== _examples ok =="
+
+clean:
+
