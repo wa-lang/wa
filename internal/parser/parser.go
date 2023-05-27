@@ -2418,27 +2418,34 @@ func (p *parser) parseFuncDecl() *ast.FuncDecl {
 	scope := ast.NewScope(p.topScope) // function scope
 
 	var recv *ast.FieldList
-	if p.tok == token.LPAREN {
-		recv = p.parseParameters(scope, false)
+	if p.wagoMode {
+		if p.tok == token.LPAREN {
+			recv = p.parseParameters(scope, false)
+		}
 	}
 
 	ident := p.parseIdent()
 
 	// func Type.method()
-	if recv == nil && p.tok == token.PERIOD {
-		thisIdent := &ast.Ident{Name: "this"}
-		thisField := &ast.Field{
-			Names: []*ast.Ident{thisIdent},
-			Type:  &ast.StarExpr{X: ident},
+	if !p.wagoMode {
+		if recv != nil {
+			panic("unreachable")
 		}
-		recv = &ast.FieldList{
-			List: []*ast.Field{thisField},
+		if p.tok == token.PERIOD {
+			thisIdent := &ast.Ident{Name: "this"}
+			thisField := &ast.Field{
+				Names: []*ast.Ident{thisIdent},
+				Type:  &ast.StarExpr{X: ident},
+			}
+			recv = &ast.FieldList{
+				List: []*ast.Field{thisField},
+			}
+
+			p.declare(thisField, nil, scope, ast.Var, thisIdent)
+
+			p.next()
+			ident = p.parseIdent()
 		}
-
-		p.declare(thisField, nil, scope, ast.Var, thisIdent)
-
-		p.next()
-		ident = p.parseIdent()
 	}
 
 	params, results, arrowPos := p.parseSignature(scope)

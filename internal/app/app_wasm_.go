@@ -3,6 +3,8 @@
 package app
 
 import (
+	"fmt"
+	"os"
 	"strings"
 
 	"wa-lang.org/wa/internal/backends/compiler_wat"
@@ -10,6 +12,9 @@ import (
 )
 
 func (p *App) WASM(filename string) ([]byte, error) {
+	if _, err := os.Lstat(filename); err != nil {
+		return nil, fmt.Errorf("%q not found", filename)
+	}
 	cfg := p.opt.Config()
 	prog, err := loader.LoadProgram(cfg, filename)
 	if err != nil {
