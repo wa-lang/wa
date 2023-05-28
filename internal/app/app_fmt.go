@@ -3,7 +3,10 @@
 package app
 
 import (
+	"fmt"
 	"os"
+	"path/filepath"
+	"sort"
 	"strings"
 
 	"wa-lang.org/wa/internal/format"
@@ -14,22 +17,54 @@ func (p *App) Fmt(path string) error {
 		path, _ = os.Getwd()
 	}
 
+	var waFileList []string
 	if strings.HasSuffix(path, "...") {
-		panic("TODO: fmt dir/...")
+		waFileList = getDirWaFileList(strings.TrimSuffix(path, "..."))
 	}
 
-	fi, err := os.Lstat(path)
+	var changedFileList []string
+	for _, s := range waFileList {
+		changed, err := p.fmtFile(s)
+		if err != nil {
+			return err
+		}
+		if changed {
+			changedFileList = append(changedFileList, s)
+		}
+	}
+	for _, s := range changedFileList {
+		fmt.Println(s)
+	}
+	return nil
+}
+
+func (p *App) fmtFile(path string) (changed bool, err error) {
+	code, changed, err := format.File(nil, path, nil)
 	if err != nil {
-		return err
+		return false, err
 	}
-	if fi.IsDir() {
-		panic("TODO: fmt dir")
+	if changed {
+		if err = os.WriteFile(path, code, 0666); err != nil {
+			return false, err
+		}
 	}
+	return true, nil
+}
 
-	code, err := format.File(nil, path, nil)
-	if err != nil {
-		return err
-	}
-
-	return os.WriteFile(path, code, 0666)
+func getDirWaFileList(dir string) []string {
+	var waFileList []string
+	filepath.Walk(dir, func(path string, info os.FileInfo, err error) error {
+		if err != nil {
+			return err
+		}
+		if info.IsDir() {
+			return nil
+		}
+		if strings.HasSuffix(path, ".wa") {
+			waFileList = append(waFileList, path)
+		}
+		return nil
+	})
+	sort.Strings(waFileList)
+	return waFileList
 }

@@ -60,12 +60,16 @@ func readSource(vfs fs.FS, filename string, src interface{}) ([]byte, error) {
 	return os.ReadFile(filename)
 }
 
-func File(vfs fs.FS, filename string, src interface{}) ([]byte, error) {
-	text, err := readSource(vfs, filename, src)
+func File(vfs fs.FS, filename string, src interface{}) (text []byte, changed bool, err error) {
+	text, err = readSource(vfs, filename, src)
 	if err != nil {
-		return nil, err
+		return nil, false, err
 	}
-	return SourceFile(text)
+	golden, err := SourceFile(text)
+	if !bytes.Equal(text, golden) {
+		return text, false, nil
+	}
+	return golden, true, nil
 }
 
 // Node formats node in canonical gofmt style and writes the result to dst.

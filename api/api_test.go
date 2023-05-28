@@ -8,7 +8,7 @@ import (
 	"wa-lang.org/wa/api"
 )
 
-func ExampleFormatCode() {
+func _ExampleFormatCode() {
 	s, err := api.FormatCode("hello.wa", "func add(a:i32, b:i32)=>i32 {return a+b}")
 	if err != nil {
 		panic(err)

@@ -96,7 +96,7 @@ func BuildVFS(cfg *config.Config, vfs *config.PkgVFS, appPkg string) (wat []byte
 
 // 格式化代码
 func FormatCode(filename, code string) (string, error) {
-	data, err := format.File(nil, filename, code)
+	data, _, err := format.File(nil, filename, code)
 	if err != nil {
 		return "", err
 	}
