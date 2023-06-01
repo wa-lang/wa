@@ -144,3 +144,16 @@ Output is the same as the previous example.
 
 More examples [_examples](_examples)
 
+## Contributors
+
+|Contributor|Contribution points|
+| --- | --- |
+|柴树杉| 25000|
+|丁尔男| 25000|
+|史斌|25000|
+|扈梦明|10000|
+|赵普明|10000|
+|宋汝阳|2000|
+|刘云峰|1000|
+|王湘南|1000|
+|王泽龙|1000|
