@@ -74,6 +74,7 @@ var stdPkgs = []string{
 	"fmt",
 	"math",
 	"os",
+	"regexp",
 	"runtime",
 	"strconv",
 	"syscall",

@@ -1,0 +1,27 @@
+// 版权 @2023 凹语言 作者。保留所有权利。
+
+func TestMatch {
+	if true {
+		assert(Match("wa", "wa"))
+		return
+	}
+	for _, t := range tests {
+		assert(Match(t.regexp, t.text) == t.ok, "Match(" + t.regexp + ", " + t.text + ") failed")
+	}
+}
+
+var tests = []struct {
+	regexp :string
+	text   :string
+	ok     :bool
+} {
+	{"", "", true},
+	{"", "wa", true},
+	{"wa", "", false},
+
+	{"wa", "wa", true},
+	{"wa", "the wa language", true},
+	{"wa", "fb", false},
+
+	{"^wa.*$", "wa-lang", true},
+}
