@@ -77,7 +77,7 @@ func (g *functionGenerator) getValue(i ssa.Value) valueWrap {
 				return valueWrap{value: wir.NewConst(strconv.Itoa(int(val)), g.module.U8)}
 
 			case types.Int8:
-				val, _ := constant.Uint64Val(v.Value)
+				val, _ := constant.Int64Val(v.Value)
 				return valueWrap{value: wir.NewConst(strconv.Itoa(int(val)), g.module.I8)}
 
 			case types.Uint16:
@@ -85,7 +85,7 @@ func (g *functionGenerator) getValue(i ssa.Value) valueWrap {
 				return valueWrap{value: wir.NewConst(strconv.Itoa(int(val)), g.module.U16)}
 
 			case types.Int16:
-				val, _ := constant.Uint64Val(v.Value)
+				val, _ := constant.Int64Val(v.Value)
 				return valueWrap{value: wir.NewConst(strconv.Itoa(int(val)), g.module.I16)}
 
 			case types.Uint32, types.Uintptr:
@@ -99,6 +99,14 @@ func (g *functionGenerator) getValue(i ssa.Value) valueWrap {
 				} else {
 					return valueWrap{value: wir.NewConst(strconv.Itoa(int(val)), g.module.I32)}
 				}
+
+			case types.Int64:
+				val, _ := constant.Int64Val(v.Value)
+				return valueWrap{value: wir.NewConst(strconv.Itoa(int(val)), g.module.I64)}
+
+			case types.Uint64:
+				val, _ := constant.Uint64Val(v.Value)
+				return valueWrap{value: wir.NewConst(strconv.Itoa(int(val)), g.module.U64)}
 
 			case types.Float32:
 				val, _ := constant.Float64Val(v.Value)
