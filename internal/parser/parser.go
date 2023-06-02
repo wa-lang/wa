@@ -852,7 +852,9 @@ func (p *parser) parseParameterList(scope *ast.Scope, ellipsisOk bool) (params [
 			colonPos = p.pos
 			p.next()
 		} else {
-			p.expect(token.COLON)
+			if p.tok != token.RPAREN {
+				p.expect(token.COLON)
+			}
 		}
 	}
 
