@@ -79,6 +79,7 @@ var stdPkgs = []string{
 	"runtime",
 	"strconv",
 	"syscall",
+	"unicode/utf8",
 }
 
 var wzStdPkgs = []string{
