@@ -79,6 +79,7 @@ var stdPkgs = []string{
 	"runtime",
 	"strconv",
 	"syscall",
+	"unicode",
 	"unicode/utf8",
 }
 
