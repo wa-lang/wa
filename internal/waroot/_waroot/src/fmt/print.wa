@@ -2,6 +2,17 @@
 
 #wa:build !fmt_tag
 
-func Println(x: int) {
-	println(x)
+func Println(a: ...interface{}) {
+	for i, v := range a {
+		if i > 0 {
+			print(" ")
+		}
+		switch v:= v.(type) {
+		case int:
+			print(v)
+		case string:
+			print(v)
+		}
+	}
+	println()
 }
