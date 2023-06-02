@@ -56,7 +56,8 @@ func (g *functionGenerator) getValue(i ssa.Value) valueWrap {
 
 	switch v := i.(type) {
 	case *ssa.Const:
-		switch t := v.Type().(type) {
+		vt := v.Type()
+		switch t := vt.(type) {
 		case *types.Basic:
 			switch t.Kind() {
 
@@ -126,6 +127,12 @@ func (g *functionGenerator) getValue(i ssa.Value) valueWrap {
 		case *types.Slice:
 			if v.Value == nil {
 				return valueWrap{value: wir.NewConst("0", g.tLib.compile(t))}
+			}
+			logger.Fatalf("Todo:%T", t)
+
+		case *types.Named:
+			if _, ok := t.Underlying().(*types.Basic); ok {
+				return valueWrap{value: wir.NewConst(v.Value.String(), g.tLib.compile(t))}
 			}
 			logger.Fatalf("Todo:%T", t)
 
@@ -578,6 +585,10 @@ func (g *functionGenerator) genBuiltin(call *ssa.CallCommon) (insts []wat.Inst, 
 		for _, arg := range call.Args {
 			av := g.getValue(arg).value
 			avt := av.Type()
+			if ut, ok := avt.(*wir.Dup); ok {
+				avt = ut.Base
+			}
+
 			if avt.Equal(g.module.I32) || avt.Equal(g.module.U32) {
 				insts = append(insts, av.EmitPush()...)
 				insts = append(insts, wat.NewInstCall("$runtime.waPrintI32"))
