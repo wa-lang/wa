@@ -15,7 +15,7 @@ func Sin(x: f64) => f64 {
 // Special cases are:
 //	Cos(±Inf) = NaN
 //	Cos(NaN) = NaN
-func Cos(x: float64) => float64 {
+func Cos(x: f64) => f64 {
 	return cos(x)
 }
 
@@ -117,8 +117,8 @@ func cos(x: f64) => f64 {
 	//	j, z = trigReduce(x)
 	//} else 
 	{
-		j = uint64(x * (4 / Pi)) // integer part of x/(Pi/4), as integer for tests on the phase angle
-		y = float64(j)           // integer part of x/(Pi/4), as float
+		j = u64(x * (4 / Pi)) // integer part of x/(Pi/4), as integer for tests on the phase angle
+		y = f64(j)           // integer part of x/(Pi/4), as float
 
 		// map zeros to origin
 		if j&1 == 1 {

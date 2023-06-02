@@ -3,7 +3,7 @@
 
 type ty0 struct {
 	v0 :int
-	v1 :float64
+	v1 :f64
 }
 
 var gv0: ty0 = ty0{5555, 3.1415926}
