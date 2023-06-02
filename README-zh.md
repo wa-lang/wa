@@ -38,7 +38,9 @@
 
 ## 本地安装和测试:
 
-Go >= 1.17
+有 2 种安装方式: 1 是直接从 Github [下载最新的二进制文件](https://github.com/wa-lang/wa/releases); 2 是通过 Go 语言从源码安装.
+
+通过 Go 语言安装需要执行以下命令 (Go >= 1.17):
 
 1. `go install wa-lang.org/wa@latest`
 2. `wa init -name=_examples/hi`

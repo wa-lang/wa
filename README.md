@@ -42,7 +42,9 @@ Instead of requiring complex toolchains to set up, you can simply go install it 
 
 ## Install and Run:
 
-Go >= 1.17
+Install from binary: download `wa` command from https://github.com/wa-lang/wa/releases, and set `$PATH` env.
+
+Or install form Go (Go >= 1.17):
 
 1. `go install wa-lang.org/wa@latest`
 2. `wa init -name=_examples/hi`
