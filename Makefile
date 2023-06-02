@@ -25,6 +25,7 @@ ci-test-all:
 
 	@echo "== std test begin =="
 	go run main.go test fmt
+	go run main.go test regexp
 	@echo "== std ok =="
 
 	go run main.go hello.wa

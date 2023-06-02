@@ -9,7 +9,6 @@ func Match(regexp, text: string) => bool {
 
 // match reports whether regexp matches anywhere in text.
 func match(regexp, text: string) => bool {
-	println("match", regexp, text)
 	if regexp != "" && regexp[0] == '^' {
 		return matchHere(regexp[1:], text)
 	}
@@ -26,20 +25,14 @@ func match(regexp, text: string) => bool {
 
 // matchHere reports whether regexp matches at beginning of text.
 func matchHere(regexp, text: string) => bool {
-	println("matchHere#", regexp,":", text)
-
 	switch {
 	case regexp == "":
-		println("matchHere 1")
 		return true
 	case regexp == "$":
-		println("matchHere 2:", regexp, "='$':", regexp == "$")
 		return text == ""
 	case len(regexp) >= 2 && regexp[1] == '*':
-		println("matchHere 3:", rune(regexp[0]),":", regexp[2:],":", text)
 		return matchStar(regexp[0], regexp[2:], text)
 	case text != "" && (regexp[0] == '.' || regexp[0] == text[0]):
-		println("matchHere 4:",regexp[1:],":", text[1:])
 		return matchHere(regexp[1:], text[1:])
 	}
 	return false
