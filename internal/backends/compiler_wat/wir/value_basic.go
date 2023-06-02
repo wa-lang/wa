@@ -60,8 +60,8 @@ func newValue(name string, kind ValueKind, typ ValueType) Value {
 	case *Struct:
 		return newValue_Struct(name, kind, typ)
 
-	case *Ref:
-		return newValue_Ref(name, kind, typ)
+	case *Dup:
+		return newValue_Dup(name, kind, typ)
 
 	default:
 		logger.Fatalf("Todo: %T", typ)
@@ -139,10 +139,10 @@ func (v *aBasic) EmitInit() (insts []wat.Inst) {
 }
 
 func (v *aBasic) emitStoreToAddr(addr Value, offset int) []wat.Inst {
-	if !addr.Type().(*Ptr).Base.Equal(v.Type()) {
-		logger.Fatal("Type not match")
-		return nil
-	}
+	//if !addr.Type().(*Ptr).Base.Equal(v.Type()) {
+	//	logger.Fatal("Type not match")
+	//	return nil
+	//}
 	insts := addr.EmitPush()
 	insts = append(insts, v.EmitPush()...)
 	switch v.Type().(type) {

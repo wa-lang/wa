@@ -164,6 +164,14 @@ func (tLib *typeLib) compile(from types.Type) wir.ValueType {
 		case *types.Signature:
 			newType = tLib.module.GenValueType_Closure(tLib.GenFnSig(ut))
 
+		case *types.Basic:
+			pkg_name := ""
+			if t.Obj().Pkg() != nil {
+				pkg_name, _ = wir.GetPkgMangleName(t.Obj().Pkg().Path())
+			}
+			obj_name := wir.GenSymbolName(t.Obj().Name())
+			newType = tLib.module.GenValueType_Dup(pkg_name+"."+obj_name, tLib.compile(ut))
+
 		default:
 			logger.Fatalf("Todo:%T", ut)
 		}

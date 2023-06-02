@@ -33,7 +33,7 @@ const (
 	kArray
 	kMap
 	kInterface
-	kRef
+	kDup
 )
 
 func toWatType(t ValueType) wat.ValueType {
