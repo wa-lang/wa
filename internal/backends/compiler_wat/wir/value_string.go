@@ -231,11 +231,15 @@ func (t *String) genFunc_Equal() string {
 				if1.True = append(if1.True, x.Extract("data").EmitPush()...)
 				if1.True = append(if1.True, x.Extract("len").EmitPush()...)
 				if1.True = append(if1.True, wat.NewInstAdd(wat.I32{}))
+				if1.True = append(if1.True, wat.NewInstConst(wat.I32{}, "1"))
+				if1.True = append(if1.True, wat.NewInstSub(wat.I32{}))
 				if1.True = append(if1.True, wat.NewInstLoad8u(0, 1))
 
 				if1.True = append(if1.True, y.Extract("data").EmitPush()...)
 				if1.True = append(if1.True, x.Extract("len").EmitPush()...)
 				if1.True = append(if1.True, wat.NewInstAdd(wat.I32{}))
+				if1.True = append(if1.True, wat.NewInstConst(wat.I32{}, "1"))
+				if1.True = append(if1.True, wat.NewInstSub(wat.I32{}))
 				if1.True = append(if1.True, wat.NewInstLoad8u(0, 1))
 
 				if1.True = append(if1.True, wat.NewInstEq(wat.I32{}))
@@ -247,6 +251,9 @@ func (t *String) genFunc_Equal() string {
 					if2.True = append(if2.True, wat.NewInstSub(wat.I32{}))
 					if2.True = append(if2.True, x.Extract("len").EmitPop()...)
 					if2.True = append(if2.True, wat.NewInstBr("loop1"))
+
+					if2.False = append(if2.False, wat.NewInstConst(wat.I32{}, "0"))
+					if2.False = append(if2.False, ret.EmitPop()...)
 				}
 				if1.True = append(if1.True, if2)
 
