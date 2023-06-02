@@ -27,7 +27,7 @@ const (
 	kBlock
 	kStruct
 	kTuple
-	kSPtr
+	kRef
 	kString
 	kSlice
 	kArray

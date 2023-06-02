@@ -10,9 +10,9 @@ import (
 )
 
 /**************************************
-SPtr:
+Ref:
 **************************************/
-type SPtr struct {
+type Ref struct {
 	tCommon
 	Base        ValueType
 	underlying  *Struct
@@ -20,40 +20,40 @@ type SPtr struct {
 	_void       ValueType
 }
 
-func (m *Module) GenValueType_SPtr(base ValueType) *SPtr {
-	sptr_t := SPtr{Base: base}
-	t, ok := m.findValueType(sptr_t.Name())
+func (m *Module) GenValueType_Ref(base ValueType) *Ref {
+	ref_t := Ref{Base: base}
+	t, ok := m.findValueType(ref_t.Name())
 	if ok {
-		return t.(*SPtr)
+		return t.(*Ref)
 	}
 
-	sptr_t._base_block = m.GenValueType_Block(base)
-	sptr_t._void = m.VOID
+	ref_t._base_block = m.GenValueType_Block(base)
+	ref_t._void = m.VOID
 	base_ptr := m.GenValueType_Ptr(base)
 
-	sptr_t.underlying = m.genInternalStruct(sptr_t.Name() + ".underlying")
-	sptr_t.underlying.AppendField(m.NewStructField("block", sptr_t._base_block))
-	sptr_t.underlying.AppendField(m.NewStructField("data", base_ptr))
-	sptr_t.underlying.Finish()
+	ref_t.underlying = m.genInternalStruct(ref_t.Name() + ".underlying")
+	ref_t.underlying.AppendField(m.NewStructField("block", ref_t._base_block))
+	ref_t.underlying.AppendField(m.NewStructField("data", base_ptr))
+	ref_t.underlying.Finish()
 
-	m.addValueType(&sptr_t)
-	return &sptr_t
+	m.addValueType(&ref_t)
+	return &ref_t
 }
 
-func (t *SPtr) Name() string         { return t.Base.Name() + ".$sptr" }
-func (t *SPtr) Size() int            { return t.underlying.Size() }
-func (t *SPtr) align() int           { return t.underlying.align() }
-func (t *SPtr) Kind() TypeKind       { return kSPtr }
-func (t *SPtr) onFree() int          { return t.underlying.onFree() }
-func (t *SPtr) Raw() []wat.ValueType { return t.underlying.Raw() }
-func (t *SPtr) Equal(u ValueType) bool {
-	if ut, ok := u.(*SPtr); ok {
+func (t *Ref) Name() string         { return t.Base.Name() + ".$ref" }
+func (t *Ref) Size() int            { return t.underlying.Size() }
+func (t *Ref) align() int           { return t.underlying.align() }
+func (t *Ref) Kind() TypeKind       { return kRef }
+func (t *Ref) onFree() int          { return t.underlying.onFree() }
+func (t *Ref) Raw() []wat.ValueType { return t.underlying.Raw() }
+func (t *Ref) Equal(u ValueType) bool {
+	if ut, ok := u.(*Ref); ok {
 		return t.Base.Equal(ut.Base)
 	}
 	return false
 }
 
-func (t *SPtr) emitHeapAlloc() (insts []wat.Inst) {
+func (t *Ref) emitHeapAlloc() (insts []wat.Inst) {
 	//insts = append(insts, wat.NewBlank())
 	//insts = append(insts, wat.NewComment("Ref.emitHeapAlloc start"))
 
@@ -68,7 +68,7 @@ func (t *SPtr) emitHeapAlloc() (insts []wat.Inst) {
 	return
 }
 
-func (t *SPtr) emitStackAlloc() (insts []wat.Inst) {
+func (t *Ref) emitStackAlloc() (insts []wat.Inst) {
 	//insts = append(insts, wat.NewBlank())
 	//insts = append(insts, wat.NewComment("Ref.emitStackAlloc start"))
 
@@ -83,42 +83,42 @@ func (t *SPtr) emitStackAlloc() (insts []wat.Inst) {
 	return
 }
 
-func (t *SPtr) EmitLoadFromAddr(addr Value, offset int) []wat.Inst {
+func (t *Ref) EmitLoadFromAddr(addr Value, offset int) []wat.Inst {
 	return t.underlying.EmitLoadFromAddr(addr, offset)
 }
 
 /**************************************
-aSPtr:
+aRef:
 **************************************/
-type aSPtr struct {
+type aRef struct {
 	aStruct
-	typ *SPtr
+	typ *Ref
 }
 
-func newValue_SPtr(name string, kind ValueKind, typ *SPtr) *aSPtr {
-	var v aSPtr
+func newValue_Ref(name string, kind ValueKind, typ *Ref) *aRef {
+	var v aRef
 	v.typ = typ
 	v.aStruct = *newValue_Struct(name, kind, typ.underlying)
 	return &v
 }
 
-func (v *aSPtr) Type() ValueType { return v.typ }
+func (v *aRef) Type() ValueType { return v.typ }
 
-func (v *aSPtr) raw() []wat.Value        { return v.aStruct.raw() }
-func (v *aSPtr) EmitInit() []wat.Inst    { return v.aStruct.EmitInit() }
-func (v *aSPtr) EmitPush() []wat.Inst    { return v.aStruct.EmitPush() }
-func (v *aSPtr) EmitPop() []wat.Inst     { return v.aStruct.EmitPop() }
-func (v *aSPtr) EmitRelease() []wat.Inst { return v.aStruct.EmitRelease() }
+func (v *aRef) raw() []wat.Value        { return v.aStruct.raw() }
+func (v *aRef) EmitInit() []wat.Inst    { return v.aStruct.EmitInit() }
+func (v *aRef) EmitPush() []wat.Inst    { return v.aStruct.EmitPush() }
+func (v *aRef) EmitPop() []wat.Inst     { return v.aStruct.EmitPop() }
+func (v *aRef) EmitRelease() []wat.Inst { return v.aStruct.EmitRelease() }
 
-func (v *aSPtr) emitStoreToAddr(addr Value, offset int) []wat.Inst {
+func (v *aRef) emitStoreToAddr(addr Value, offset int) []wat.Inst {
 	return v.aStruct.emitStoreToAddr(addr, offset)
 }
 
-func (v *aSPtr) emitGetValue() []wat.Inst {
+func (v *aRef) emitGetValue() []wat.Inst {
 	return v.typ.Base.EmitLoadFromAddr(v.aStruct.Extract("data"), 0)
 }
 
-func (v *aSPtr) emitSetValue(d Value) []wat.Inst {
+func (v *aRef) emitSetValue(d Value) []wat.Inst {
 	if !d.Type().Equal(v.typ.Base) && !v.typ.Base.Equal(v.typ._void) {
 		logger.Fatal("Type not match")
 		return nil

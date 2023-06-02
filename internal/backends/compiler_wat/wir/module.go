@@ -220,8 +220,8 @@ func (m *Module) genGlobalAlloc() *Function {
 			continue
 		}
 
-		ref := g.v.(*aSPtr)
-		t := ref.Type().(*SPtr).Base
+		ref := g.v.(*aRef)
+		t := ref.Type().(*Ref).Base
 		f.Insts = append(f.Insts, wat.NewInstConst(wat.I32{}, strconv.Itoa(t.Size())))
 		f.Insts = append(f.Insts, wat.NewInstCall("$waHeapAlloc"))
 		f.Insts = append(f.Insts, ref.Extract("data").EmitPop()...)
@@ -467,7 +467,7 @@ func (m *Module) buildTypeInfo(t ValueType) int {
 		typ.addr = m.DataSeg.Append(_slice.Bin(), 8)
 		return typ.addr
 
-	case *SPtr:
+	case *Ref:
 		_sptr := NewConst("0", m.types_map["runtime._sptrType"]).(*aStruct)
 		typ.addr = m.DataSeg.Alloc(len(_sptr.Bin()), 8)
 

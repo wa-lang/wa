@@ -63,7 +63,7 @@ func (t *Slice) EmitLoadFromAddr(addr Value, offset int) []wat.Inst {
 }
 
 /*这个函数极其不优雅*/
-func (t *Slice) emitGenFromRefOfSlice(x *aSPtr, low, high Value) (insts []wat.Inst) {
+func (t *Slice) emitGenFromRefOfSlice(x *aRef, low, high Value) (insts []wat.Inst) {
 	//block
 	insts = append(insts, x.Extract("data").EmitPush()...)
 	insts = append(insts, wat.NewInstLoad(wat.U32{}, 0, 1))
@@ -101,7 +101,7 @@ func (t *Slice) emitGenFromRefOfSlice(x *aSPtr, low, high Value) (insts []wat.In
 	return
 }
 
-func (t *Slice) emitGenFromRefOfArray(x *aSPtr, low, high Value) (insts []wat.Inst) {
+func (t *Slice) emitGenFromRefOfArray(x *aRef, low, high Value) (insts []wat.Inst) {
 	//block
 	insts = append(insts, x.Extract("block").EmitPush()...)
 
@@ -116,7 +116,7 @@ func (t *Slice) emitGenFromRefOfArray(x *aSPtr, low, high Value) (insts []wat.In
 	insts = append(insts, wat.NewInstMul(wat.U32{}))
 	insts = append(insts, wat.NewInstAdd(wat.U32{}))
 
-	array_len := NewConst(strconv.Itoa(x.Type().(*SPtr).Base.(*Array).Capacity), t._u32)
+	array_len := NewConst(strconv.Itoa(x.Type().(*Ref).Base.(*Array).Capacity), t._u32)
 
 	//len:
 	if high == nil {

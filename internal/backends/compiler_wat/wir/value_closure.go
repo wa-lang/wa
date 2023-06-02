@@ -76,7 +76,7 @@ func (m *Module) GenValueType_Closure(sig FnSig) *Closure {
 
 	closure_t.underlying = m.genInternalStruct(closure_t.Name() + ".underlying")
 	closure_t.underlying.AppendField(m.NewStructField("fn_index", m.U32))
-	closure_t.underlying.AppendField(m.NewStructField("data", m.GenValueType_SPtr(m.VOID)))
+	closure_t.underlying.AppendField(m.NewStructField("data", m.GenValueType_Ref(m.VOID)))
 	closure_t.underlying.Finish()
 
 	m.addValueType(&closure_t)

@@ -36,8 +36,8 @@ func newValue(name string, kind ValueKind, typ ValueType) Value {
 	case *Block:
 		return newValue_Block(name, kind, typ)
 
-	case *SPtr:
-		return newValue_SPtr(name, kind, typ)
+	case *Ref:
+		return newValue_Ref(name, kind, typ)
 
 	case *Array:
 		return newValue_Array(name, kind, typ)

@@ -1149,7 +1149,7 @@ func (g *functionGenerator) genSizer(f *ssa.Function) *wir.Function {
 		return nil
 	}
 	value_type := g.tLib.compile(f.Params[0].Type())
-	t_size := value_type.(*wir.SPtr).Base.Size()
+	t_size := value_type.(*wir.Ref).Base.Size()
 
 	wir_fn.Insts = append(wir_fn.Insts, wir.NewConst(strconv.Itoa(t_size), g.module.I32).EmitPush()...)
 

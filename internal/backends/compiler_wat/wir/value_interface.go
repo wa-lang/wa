@@ -27,7 +27,7 @@ func (m *Module) GenValueType_Interface(name string) *Interface {
 	interface_t.name = name
 
 	interface_t.underlying = m.genInternalStruct(interface_t.Name() + ".underlying")
-	interface_t.underlying.AppendField(m.NewStructField("data", m.GenValueType_SPtr(m.VOID)))
+	interface_t.underlying.AppendField(m.NewStructField("data", m.GenValueType_Ref(m.VOID)))
 	interface_t.underlying.AppendField(m.NewStructField("itab", m.UPTR))
 	interface_t.underlying.Finish()
 
@@ -52,7 +52,7 @@ func (t *Interface) EmitLoadFromAddr(addr Value, offset int) []wat.Inst {
 	return t.underlying.EmitLoadFromAddr(addr, offset)
 }
 
-func (t *Interface) emitGenFromSPtr(x *aSPtr) (insts []wat.Inst) {
+func (t *Interface) emitGenFromSPtr(x *aRef) (insts []wat.Inst) {
 	insts = append(insts, x.EmitPush()...) //data
 
 	insts = append(insts, wat.NewInstConst(wat.I32{}, strconv.Itoa(x.Type().Hash())))
@@ -63,8 +63,8 @@ func (t *Interface) emitGenFromSPtr(x *aSPtr) (insts []wat.Inst) {
 	return
 }
 
-func (t *Interface) emitGenFromValue(x Value, xSptrType *SPtr) (insts []wat.Inst) {
-	insts = append(insts, xSptrType.emitHeapAlloc()...)
+func (t *Interface) emitGenFromValue(x Value, xRefType *Ref) (insts []wat.Inst) {
+	insts = append(insts, xRefType.emitHeapAlloc()...)
 	insts = append(insts, x.emitStore(0)...) //data
 
 	insts = append(insts, wat.NewInstConst(wat.I32{}, strconv.Itoa(x.Type().Hash())))
@@ -124,10 +124,10 @@ func (v *aInterface) emitGetData(destType ValueType, commaOk bool) (insts []wat.
 	ifBlock.Ret = destType.Raw()
 
 	// true:
-	if _, ok := destType.(*SPtr); ok {
+	if _, ok := destType.(*Ref); ok {
 		ifBlock.True = v.Extract("data").EmitPush()
 	} else {
-		ifBlock.True = destType.EmitLoadFromAddr(v.Extract("data").(*aSPtr).Extract("data"), 0)
+		ifBlock.True = destType.EmitLoadFromAddr(v.Extract("data").(*aRef).Extract("data"), 0)
 	}
 
 	// false:
