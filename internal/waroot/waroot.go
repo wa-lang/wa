@@ -71,6 +71,7 @@ func IsStdPkg(pkgpath string) bool {
 
 var stdPkgs = []string{
 	"arduino",
+	"binary",
 	"errors",
 	"fmt",
 	"io",
