@@ -2697,6 +2697,10 @@ func (p *parser) 解析函数定义() *ast.FuncDecl {
 	}
 	// p.expectSemi()
 
+	// 统一将【启】函数改名为【main】，注：其他函数不能直接调用【启】函数
+	if ident.Name == "启" {
+		ident.Name = "main"
+	}
 	decl := &ast.FuncDecl{
 		Doc:  doc,
 		Recv: recv,
