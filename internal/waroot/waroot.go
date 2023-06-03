@@ -75,6 +75,7 @@ var stdPkgs = []string{
 	"errors",
 	"fmt",
 	"image",
+	"image/bmp",
 	"image/color",
 	"image/color/palette",
 	"io",
