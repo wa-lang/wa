@@ -73,6 +73,7 @@ var stdPkgs = []string{
 	"arduino",
 	"errors",
 	"fmt",
+	"io",
 	"math",
 	"os",
 	"regexp",
