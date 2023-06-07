@@ -71,14 +71,29 @@ func IsStdPkg(pkgpath string) bool {
 
 var stdPkgs = []string{
 	"arduino",
+	"binary",
+	"bytes",
 	"errors",
+	"encoding",
 	"fmt",
+	"hash",
+	"image",
+	"image/bmp",
+	"image/color",
+	"image/color/palette",
+	"io",
 	"math",
 	"os",
+	"reflect",
 	"regexp",
 	"runtime",
+	"sort",
 	"strconv",
+	"strings",
 	"syscall",
+	"text",
+	"unicode",
+	"unicode/utf8",
 }
 
 var wzStdPkgs = []string{

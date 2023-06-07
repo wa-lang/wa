@@ -10,7 +10,7 @@ build-wasm:
 	GOARCH=wasm GOOS=js go build -o wa.out.wasm ./main_wasm.go
 
 win-exe-icon:
-	windres -o main_rc_windows.syso main.rc
+	windres -o exe_rc_windows.syso exe.rc
 
 arduino-run:
 	go run main.go -target=arduino arduino.wa

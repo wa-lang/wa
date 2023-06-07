@@ -40,11 +40,10 @@ func add(a: i32, b: i32) => i32 {
 }
 `
 
-const code_zh = `// 版权 @2022 _examples/hello 作者。保留所有权利。
-
+const code_zh = `
 引于 "书"
 
 【启】：
-  书·说："你好，凹语言！"
+  书·说："你好，凹语言中文版！"
 。
 `
