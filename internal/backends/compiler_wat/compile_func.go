@@ -138,6 +138,12 @@ func (g *functionGenerator) getValue(i ssa.Value) valueWrap {
 			}
 			logger.Fatalf("Todo:%T", t)
 
+		case *types.Interface:
+			if v.Value == nil {
+				return valueWrap{value: wir.NewConst("0", g.tLib.compile(t))}
+			}
+			logger.Fatalf("Todo:%T", t)
+
 		case *types.Named:
 			if v.Value == nil {
 				return valueWrap{value: wir.NewConst("0", g.tLib.compile(t))}

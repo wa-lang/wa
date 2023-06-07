@@ -50,6 +50,19 @@ func main() {
 	}
 
 	var i1, i2: interface{}
+	i1 = "abc"
+	if i1 == nil{
+		println("i1 == nil:eq")
+	} else {
+		println("i1 == nil:ne")
+	}
+	i1 = nil
+	if i1 == nil{
+		println("i1 == nil:eq")
+	} else {
+		println("i1 == nil:ne")
+	}	
+	
 	i1 = i32(13)
 	i2 = i32(42)
 	if i1 == i2 {
