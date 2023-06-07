@@ -493,7 +493,7 @@ func (m *Module) EmitGenConvert(x Value, typ ValueType) (insts []wat.Inst) {
 		insts = append(insts, wat.NewInstAnd(wat.I32{}))
 		return
 
-	case typ.Equal(m.I32), typ.Equal(m.U32):
+	case typ.Equal(m.I32), typ.Equal(m.U32), typ.Equal(m.RUNE):
 		insts = append(insts, x.EmitPush()...)
 		switch {
 		case xt.Equal(m.I8), xt.Equal(m.U8), xt.Equal(m.I16), xt.Equal(m.U16), xt.Equal(m.I32), xt.Equal(m.U32):
