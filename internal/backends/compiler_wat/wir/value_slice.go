@@ -420,3 +420,8 @@ func (v *aSlice) emitSub(low, high Value) (insts []wat.Inst) {
 
 	return
 }
+
+func (v *aSlice) emitEq(r Value) ([]wat.Inst, bool) {
+	//logger.Fatal("aSlice can't be compared.")
+	return nil, false
+}

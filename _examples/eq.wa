@@ -1,0 +1,123 @@
+// 版权 @2021 凹语言 作者。保留所有权利。
+
+type T1 struct {
+	a: i32
+	b: string
+}
+
+func T1.print(){
+	println("a: ", this.a)
+}
+
+type I interface {
+	print()
+}
+
+type T2 struct {
+	a: []i32
+}
+
+func main() {
+	var v1, v2: T1
+	
+	v1.a = 13
+	v2.a = 42
+	if v1 == v2 {
+		println("eq")
+	} else {
+		println("ne")
+	}
+	
+	v2.a = 13
+	if v1 == v2 {
+		println("eq")
+	} else {
+		println("ne")
+	}
+	
+	v1.b = "abc"
+	if v1 == v2 {
+		println("eq")
+	} else {
+		println("ne")
+	}
+	
+	v2.b = "abc"
+	if v1 == v2 {
+		println("eq")
+	} else {
+		println("ne")
+	}
+
+	var i1, i2: interface{}
+	i1 = i32(13)
+	i2 = i32(42)
+	if i1 == i2 {
+		println("eq")
+	} else {
+		println("ne")
+	}
+	i2 = i32(13)
+	if i1 == i2 {
+		println("eq")
+	} else {
+		println("ne")
+	}
+	
+	i2 = "abc"
+	if i1 == i2 {
+		println("eq")
+	} else {
+		println("ne")
+	}
+	i1 = "abc"	
+	if i1 == i2 {
+		println("eq")
+	} else {
+		println("ne")
+	}
+	
+	i1 = v1
+	if i1 == i2 {
+		println("eq")
+	} else {
+		println("ne")
+	}
+	i2 = v1
+	if i1 == i2 {
+		println("eq")
+	} else {
+		println("ne")
+	}
+	
+	var i3: I
+	i3 = &v1
+	if i1 == i3 {		
+		println("eq")
+	} else {
+		println("ne")
+	}
+	i1 = &v1
+	if i1 == i3 {		
+		println("eq")
+	} else {
+		println("ne")
+	}
+	
+	var v3, v4: T2
+	//if v3 == v4 {
+	//	println("eq")
+	//} else {
+	//	println("ne")
+	//}
+	
+	i1 = v3
+	i2 = v4
+	if i1 == i2 {  //panic
+		println("eq")
+	} else {
+		println("ne")
+	}
+}
+
+

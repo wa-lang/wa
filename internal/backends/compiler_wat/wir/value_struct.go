@@ -328,3 +328,29 @@ func (v *aStruct) Bin() (b []byte) {
 
 	return
 }
+
+func (v *aStruct) emitEq(r Value) (insts []wat.Inst, ok bool) {
+	if !v.Type().Equal(r.Type()) {
+		logger.Fatal("v.Type() != r.Type()")
+	}
+
+	d := r.(*aStruct)
+	for i := range v.typ.fields {
+		t1 := v.genSubValue(v.typ.fields[i])
+		t2 := d.genSubValue(d.typ.fields[i])
+
+		if ins, o := t1.emitEq(t2); !o {
+			return nil, false
+		} else {
+			insts = append(insts, ins...)
+		}
+
+		if i > 0 {
+			insts = append(insts, wat.NewInstAnd(wat.I32{}))
+		}
+	}
+
+	ok = true
+
+	return
+}

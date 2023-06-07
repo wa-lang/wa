@@ -6,6 +6,7 @@ import (
 	"strconv"
 
 	"wa-lang.org/wa/internal/backends/compiler_wat/wir/wat"
+	"wa-lang.org/wa/internal/logger"
 )
 
 /**************************************
@@ -357,6 +358,19 @@ func (v *aString) emitAt_CommaOk(index Value) (insts []wat.Inst) {
 		inst_if := wat.NewInstIf(instsTrue, instsFalse, []wat.ValueType{wat.I32{}, wat.I32{}})
 		insts = append(insts, inst_if)
 	}
+
+	return
+}
+
+func (v *aString) emitEq(r Value) (insts []wat.Inst, ok bool) {
+	if !v.Type().Equal(r.Type()) {
+		logger.Fatal("v.Type() != r.Type()")
+	}
+	insts = append(insts, v.EmitPush()...)
+	insts = append(insts, r.EmitPush()...)
+	insts = append(insts, wat.NewInstCall(v.typ.genFunc_Equal()))
+
+	ok = true
 
 	return
 }

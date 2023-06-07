@@ -43,13 +43,28 @@ func (m *Module) EmitUnOp(x Value, op wat.OpCode) (insts []wat.Inst, ret_type Va
 }
 
 func (m *Module) EmitBinOp(x, y Value, op wat.OpCode) (insts []wat.Inst, ret_type ValueType) {
-	rtype := m.binOpMatchType(x.Type(), y.Type())
+	for {
+		if ut, ok := x.(*aDup); ok {
+			x = ut.underlying
+		} else {
+			break
+		}
+	}
 
-	insts = append(insts, x.EmitPush()...)
-	insts = append(insts, y.EmitPush()...)
+	for {
+		if ut, ok := y.(*aDup); ok {
+			y = ut.underlying
+		} else {
+			break
+		}
+	}
+
+	rtype := m.binOpMatchType(x.Type(), y.Type())
 
 	switch op {
 	case wat.OpCodeAdd:
+		insts = append(insts, x.EmitPush()...)
+		insts = append(insts, y.EmitPush()...)
 		if rtype.Equal(m.STRING) {
 			insts = append(insts, wat.NewInstCall(m.STRING.(*String).genFunc_Append()))
 		} else {
@@ -58,52 +73,61 @@ func (m *Module) EmitBinOp(x, y Value, op wat.OpCode) (insts []wat.Inst, ret_typ
 		ret_type = rtype
 
 	case wat.OpCodeSub:
+		insts = append(insts, x.EmitPush()...)
+		insts = append(insts, y.EmitPush()...)
 		insts = append(insts, wat.NewInstSub(toWatType(rtype)))
 		ret_type = rtype
 
 	case wat.OpCodeMul:
+		insts = append(insts, x.EmitPush()...)
+		insts = append(insts, y.EmitPush()...)
 		insts = append(insts, wat.NewInstMul(toWatType(rtype)))
 		ret_type = rtype
 
 	case wat.OpCodeQuo:
+		insts = append(insts, x.EmitPush()...)
+		insts = append(insts, y.EmitPush()...)
 		insts = append(insts, wat.NewInstDiv(toWatType(rtype)))
 		ret_type = rtype
 
 	case wat.OpCodeRem:
+		insts = append(insts, x.EmitPush()...)
+		insts = append(insts, y.EmitPush()...)
 		insts = append(insts, wat.NewInstRem(toWatType(rtype)))
 		ret_type = rtype
 
 	case wat.OpCodeEql:
-		if rtype.Equal(m.STRING) {
-			insts = append(insts, wat.NewInstCall(m.STRING.(*String).genFunc_Equal()))
-		} else {
-			insts = append(insts, wat.NewInstEq(toWatType(rtype)))
-		}
+		ins, _ := x.emitEq(y)
+		insts = append(insts, ins...)
 		ret_type = m.I32
 
 	case wat.OpCodeNe:
-		if rtype.Equal(m.STRING) {
-			insts = append(insts, wat.NewInstCall(m.STRING.(*String).genFunc_Equal()))
-			insts = append(insts, wat.NewInstConst(wat.I32{}, "1"))
-			insts = append(insts, wat.NewInstXor(wat.I32{}))
-		} else {
-			insts = append(insts, wat.NewInstNe(toWatType(rtype)))
-		}
+		ins, _ := x.emitEq(y)
+		insts = append(insts, ins...)
+		insts = append(insts, wat.NewInstEqz(wat.I32{}))
 		ret_type = m.I32
 
 	case wat.OpCodeLt:
+		insts = append(insts, x.EmitPush()...)
+		insts = append(insts, y.EmitPush()...)
 		insts = append(insts, wat.NewInstLt(toWatType(rtype)))
 		ret_type = m.I32
 
 	case wat.OpCodeGt:
+		insts = append(insts, x.EmitPush()...)
+		insts = append(insts, y.EmitPush()...)
 		insts = append(insts, wat.NewInstGt(toWatType(rtype)))
 		ret_type = m.I32
 
 	case wat.OpCodeLe:
+		insts = append(insts, x.EmitPush()...)
+		insts = append(insts, y.EmitPush()...)
 		insts = append(insts, wat.NewInstLe(toWatType(rtype)))
 		ret_type = m.I32
 
 	case wat.OpCodeGe:
+		insts = append(insts, x.EmitPush()...)
+		insts = append(insts, y.EmitPush()...)
 		insts = append(insts, wat.NewInstGe(toWatType(rtype)))
 		ret_type = m.I32
 
@@ -445,11 +469,50 @@ func (m *Module) EmitGenMakeInterface(x Value, itype ValueType) (insts []wat.Ins
 
 	switch x := x.(type) {
 	case *aRef:
-		return itype.(*Interface).emitGenFromSPtr(x)
+		return itype.(*Interface).emitGenFromRef(x)
 
 	default:
-		sptr_t := m.GenValueType_Ref(x.Type())
-		return itype.(*Interface).emitGenFromValue(x, sptr_t)
+		compID := x_type.OnComp()
+		if compID == 0 {
+			var f Function
+			f.InternalName = "$" + GenSymbolName(x_type.Name()) + ".$$compAddr"
+			p0 := NewLocal("p0", m.GenValueType_Ptr(x_type))
+			p1 := NewLocal("p1", m.GenValueType_Ptr(x_type))
+			f.Params = append(f.Params, p0)
+			f.Params = append(f.Params, p1)
+			f.Results = append(f.Results, m.I32)
+
+			v0 := NewLocal("v0", x_type)
+			v1 := NewLocal("v1", x_type)
+			f.Locals = append(f.Locals, v0)
+			f.Locals = append(f.Locals, v1)
+
+			f.Insts = append(f.Insts, v0.EmitInit()...)
+			f.Insts = append(f.Insts, v1.EmitInit()...)
+
+			f.Insts = append(f.Insts, x_type.EmitLoadFromAddr(p0, 0)...)
+			f.Insts = append(f.Insts, v0.EmitPop()...)
+			f.Insts = append(f.Insts, x_type.EmitLoadFromAddr(p1, 0)...)
+			f.Insts = append(f.Insts, v1.EmitPop()...)
+
+			if ins, ok := v0.emitEq(v1); ok {
+				f.Insts = append(f.Insts, ins...)
+
+				f.Insts = append(f.Insts, v0.EmitRelease()...)
+				f.Insts = append(f.Insts, v1.EmitRelease()...)
+
+				m.AddFunc(&f)
+				compID = m.AddTableElem(f.InternalName)
+
+			} else {
+				compID = -1
+			}
+
+			x_type.setOnComp(compID)
+		}
+
+		ref_t := m.GenValueType_Ref(x_type)
+		return itype.(*Interface).emitGenFromValue(x, ref_t, compID)
 	}
 }
 

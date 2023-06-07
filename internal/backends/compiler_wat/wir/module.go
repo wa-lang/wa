@@ -244,6 +244,17 @@ func (m *Module) ToWatModule() *wat.Module {
 		onfree_type.Params = m.I32.Raw()
 		wat_module.FuncTypes = append(wat_module.FuncTypes, onfree_type)
 	}
+
+	{
+		var comp_type wat.FuncType
+		comp_type.Name = "$wa.runtime.comp"
+		ptr_t := m.GenValueType_Ptr(m.VOID)
+		comp_type.Params = append(comp_type.Params, ptr_t.Raw()...)
+		comp_type.Params = append(comp_type.Params, ptr_t.Raw()...)
+		comp_type.Results = append(comp_type.Results, m.I32.Raw()...)
+		wat_module.FuncTypes = append(wat_module.FuncTypes, comp_type)
+	}
+
 	for _, t := range m.fnSigs {
 		var fn_type wat.FuncType
 		fn_type.Name = m.fnSigsName[t.String()].name

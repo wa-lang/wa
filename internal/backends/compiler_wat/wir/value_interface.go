@@ -6,6 +6,7 @@ import (
 	"strconv"
 
 	"wa-lang.org/wa/internal/backends/compiler_wat/wir/wat"
+	"wa-lang.org/wa/internal/logger"
 )
 
 /**************************************
@@ -29,6 +30,7 @@ func (m *Module) GenValueType_Interface(name string) *Interface {
 	interface_t.underlying = m.genInternalStruct(interface_t.Name() + ".underlying")
 	interface_t.underlying.AppendField(m.NewStructField("data", m.GenValueType_Ref(m.VOID)))
 	interface_t.underlying.AppendField(m.NewStructField("itab", m.UPTR))
+	interface_t.underlying.AppendField(m.NewStructField("eq", m.I32))
 	interface_t.underlying.Finish()
 
 	m.addValueType(&interface_t)
@@ -52,7 +54,7 @@ func (t *Interface) EmitLoadFromAddr(addr Value, offset int) []wat.Inst {
 	return t.underlying.EmitLoadFromAddr(addr, offset)
 }
 
-func (t *Interface) emitGenFromSPtr(x *aRef) (insts []wat.Inst) {
+func (t *Interface) emitGenFromRef(x *aRef) (insts []wat.Inst) {
 	insts = append(insts, x.EmitPush()...) //data
 
 	insts = append(insts, wat.NewInstConst(wat.I32{}, strconv.Itoa(x.Type().Hash())))
@@ -60,10 +62,12 @@ func (t *Interface) emitGenFromSPtr(x *aRef) (insts []wat.Inst) {
 	insts = append(insts, wat.NewInstConst(wat.I32{}, "0"))
 	insts = append(insts, wat.NewInstCall("$wa.runtime.getItab")) //itab
 
+	insts = append(insts, wat.NewInstConst(wat.I32{}, "0")) //eq
+
 	return
 }
 
-func (t *Interface) emitGenFromValue(x Value, xRefType *Ref) (insts []wat.Inst) {
+func (t *Interface) emitGenFromValue(x Value, xRefType *Ref, compID int) (insts []wat.Inst) {
 	insts = append(insts, xRefType.emitHeapAlloc()...)
 	insts = append(insts, x.emitStore(0)...) //data
 
@@ -71,6 +75,8 @@ func (t *Interface) emitGenFromValue(x Value, xRefType *Ref) (insts []wat.Inst) 
 	insts = append(insts, wat.NewInstConst(wat.I32{}, strconv.Itoa(t.Hash())))
 	insts = append(insts, wat.NewInstConst(wat.I32{}, "0"))
 	insts = append(insts, wat.NewInstCall("$wa.runtime.getItab")) //itab
+
+	insts = append(insts, wat.NewInstConst(wat.I32{}, strconv.Itoa(compID))) //eq
 
 	return
 }
@@ -83,6 +89,8 @@ func (t *Interface) emitGenFromInterface(x *aInterface) (insts []wat.Inst) {
 	insts = append(insts, wat.NewInstConst(wat.I32{}, strconv.Itoa(t.Hash())))
 	insts = append(insts, wat.NewInstConst(wat.I32{}, "0"))
 	insts = append(insts, wat.NewInstCall("$wa.runtime.getItab")) //itab
+
+	insts = append(insts, x.Extract("eq").EmitPush()...) //eq
 
 	return
 }
@@ -160,6 +168,7 @@ func (v *aInterface) emitQueryInterface(destType ValueType, commaOk bool) (insts
 
 	insts = append(insts, wat.NewInstCall("$wa.runtime.DupI32"))
 	ifBlock := wat.NewInstIf(nil, nil, nil)
+	insts = append(insts, ifBlock)
 	if commaOk {
 		ifBlock.Ret = append(ifBlock.Ret, wat.I32{})
 		ifBlock.True = append(ifBlock.True, wat.NewInstConst(wat.I32{}, "1"))
@@ -168,6 +177,55 @@ func (v *aInterface) emitQueryInterface(destType ValueType, commaOk bool) (insts
 		ifBlock.False = append(ifBlock.False, wat.NewInstUnreachable())
 	}
 
-	insts = append(insts, ifBlock)
+	insts = append(insts, v.Extract("eq").EmitPush()...)
+	return
+}
+
+func (v *aInterface) emitEq(r Value) (insts []wat.Inst, ok bool) {
+	if !v.Type().Equal(r.Type()) {
+		logger.Fatal("v.Type() != r.Type()")
+	}
+
+	d := r.(*aInterface)
+	ins, _ := v.Extract("eq").emitEq(d.Extract("eq"))
+	insts = append(insts, ins...)
+
+	compEq := wat.NewInstIf(nil, nil, nil)
+	compEq.Ret = append(compEq.Ret, wat.I32{})
+	{
+		compEq.True = append(compEq.True, v.Extract("eq").EmitPush()...)
+		compEq.True = append(compEq.True, wat.NewInstConst(wat.I32{}, "-1"))
+		compEq.True = append(compEq.True, wat.NewInstNe(wat.I32{}))
+
+		compable := wat.NewInstIf(nil, nil, nil)
+		compable.Ret = append(compable.Ret, wat.I32{})
+		{
+			compable.True = append(compable.True, v.Extract("eq").EmitPush()...)
+			compable.True = append(compable.True, wat.NewInstEqz(wat.I32{}))
+
+			isRef := wat.NewInstIf(nil, nil, nil)
+			isRef.Ret = append(isRef.Ret, wat.I32{})
+
+			ins, _ = v.Extract("data").emitEq(d.Extract("data"))
+			isRef.True = ins
+
+			isRef.False = append(isRef.False, v.Extract("data").(*aRef).Extract("data").EmitPush()...)
+			isRef.False = append(isRef.False, d.Extract("data").(*aRef).Extract("data").EmitPush()...)
+			isRef.False = append(isRef.False, v.Extract("eq").EmitPush()...)
+			isRef.False = append(isRef.False, wat.NewInstCallIndirect("$wa.runtime.comp"))
+
+			compable.True = append(compable.True, isRef)
+		}
+		compable.False = append(compable.False, wat.NewInstConst(wat.I32{}, "0"))
+		compable.False = append(compable.False, wat.NewInstUnreachable())
+
+		compEq.True = append(compEq.True, compable)
+	}
+
+	compEq.False = append(compEq.False, wat.NewInstConst(wat.I32{}, "0"))
+
+	insts = append(insts, compEq)
+	ok = true
+
 	return
 }

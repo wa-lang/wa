@@ -434,49 +434,44 @@ func (g *functionGenerator) genBinOp(inst *ssa.BinOp) ([]wat.Inst, wir.ValueType
 	x := g.getValue(inst.X)
 	y := g.getValue(inst.Y)
 
-	switch inst.X.Type().Underlying().(type) {
-	case *types.Basic:
-		switch inst.Op {
-		case token.ADD:
-			return g.module.EmitBinOp(x.value, y.value, wat.OpCodeAdd)
+	switch inst.Op {
+	case token.ADD:
+		return g.module.EmitBinOp(x.value, y.value, wat.OpCodeAdd)
 
-		case token.SUB:
-			return g.module.EmitBinOp(x.value, y.value, wat.OpCodeSub)
+	case token.SUB:
+		return g.module.EmitBinOp(x.value, y.value, wat.OpCodeSub)
 
-		case token.MUL:
-			return g.module.EmitBinOp(x.value, y.value, wat.OpCodeMul)
+	case token.MUL:
+		return g.module.EmitBinOp(x.value, y.value, wat.OpCodeMul)
 
-		case token.QUO:
-			return g.module.EmitBinOp(x.value, y.value, wat.OpCodeQuo)
+	case token.QUO:
+		return g.module.EmitBinOp(x.value, y.value, wat.OpCodeQuo)
 
-		case token.REM:
-			return g.module.EmitBinOp(x.value, y.value, wat.OpCodeRem)
+	case token.REM:
+		return g.module.EmitBinOp(x.value, y.value, wat.OpCodeRem)
 
-		case token.EQL:
-			return g.module.EmitBinOp(x.value, y.value, wat.OpCodeEql)
+	case token.EQL:
+		return g.module.EmitBinOp(x.value, y.value, wat.OpCodeEql)
 
-		case token.NEQ:
-			return g.module.EmitBinOp(x.value, y.value, wat.OpCodeNe)
+	case token.NEQ:
+		return g.module.EmitBinOp(x.value, y.value, wat.OpCodeNe)
 
-		case token.LSS:
-			return g.module.EmitBinOp(x.value, y.value, wat.OpCodeLt)
+	case token.LSS:
+		return g.module.EmitBinOp(x.value, y.value, wat.OpCodeLt)
 
-		case token.GTR:
-			return g.module.EmitBinOp(x.value, y.value, wat.OpCodeGt)
+	case token.GTR:
+		return g.module.EmitBinOp(x.value, y.value, wat.OpCodeGt)
 
-		case token.LEQ:
-			return g.module.EmitBinOp(x.value, y.value, wat.OpCodeLe)
+	case token.LEQ:
+		return g.module.EmitBinOp(x.value, y.value, wat.OpCodeLe)
 
-		case token.GEQ:
-			return g.module.EmitBinOp(x.value, y.value, wat.OpCodeGe)
-		}
+	case token.GEQ:
+		return g.module.EmitBinOp(x.value, y.value, wat.OpCodeGe)
 
 	default:
-		logger.Fatalf("Todo: %v, type: %T, token:%v", inst, inst, inst.Op)
+		logger.Fatalf("Todo: %v, type: %T, token:%v", inst, x.value, inst.Op)
+		return nil, nil
 	}
-
-	logger.Fatalf("Todo: %v, type: %T, token:%v", inst, inst, inst.Op)
-	return nil, nil
 }
 
 func (g *functionGenerator) genCall(inst *ssa.Call) (insts []wat.Inst, ret_type wir.ValueType) {

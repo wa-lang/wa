@@ -149,3 +149,8 @@ func EmitCallClosure(c Value, params []Value) (insts []wat.Inst) {
 	insts = append(insts, wat.NewInstCallIndirect(closure.typ._fnTypeName))
 	return
 }
+
+func (v *aClosure) emitEq(r Value) ([]wat.Inst, bool) {
+	//logger.Fatal("aClosure can't be compared.")
+	return nil, false
+}

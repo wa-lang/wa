@@ -188,3 +188,8 @@ func (v *aBlock) Bin() (b []byte) {
 
 	return
 }
+
+func (v *aBlock) emitEq(r Value) ([]wat.Inst, bool) {
+	//logger.Fatal("aBlock shouldn't be compared.")
+	return nil, false
+}

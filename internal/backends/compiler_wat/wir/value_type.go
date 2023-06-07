@@ -75,6 +75,7 @@ tCommon:
 type tCommon struct {
 	addr    int
 	hash    int
+	comp    int
 	methods []Method
 }
 
@@ -84,6 +85,8 @@ func (t *tCommon) AddMethod(m Method)  { t.methods = append(t.methods, m) }
 func (t *tCommon) NumMethods() int     { return len(t.methods) }
 func (t *tCommon) Method(i int) Method { return t.methods[i] }
 func (t *tCommon) typeInfoAddr() int   { return t.addr }
+func (t *tCommon) OnComp() int         { return t.comp }
+func (t *tCommon) setOnComp(c int)     { t.comp = c }
 
 //func (t *tCommon) AddMethodEntry(m FnType) { logger.Fatal("Can't add method for common type.") }
 //
@@ -131,10 +134,10 @@ func (t *tRune) onFree() int            { return 0 }
 func (t *tRune) Raw() []wat.ValueType   { return []wat.ValueType{wat.I32{}} }
 func (t *tRune) Equal(u ValueType) bool { _, ok := u.(*tRune); return ok }
 func (t *tRune) EmitLoadFromAddr(addr Value, offset int) []wat.Inst {
-	if !addr.Type().(*Ptr).Base.Equal(t) {
-		logger.Fatal("Type not match")
-		return nil
-	}
+	//if !addr.Type().(*Ptr).Base.Equal(t) {
+	//	logger.Fatal("Type not match")
+	//	return nil
+	//}
 	insts := addr.EmitPush()
 	insts = append(insts, wat.NewInstLoad(toWatType(t), offset, 1))
 	return insts

@@ -45,6 +45,8 @@ type Value interface {
 	emitStoreToAddr(addr Value, offset int) []wat.Inst
 	emitStore(offset int) []wat.Inst
 	Bin() []byte
+
+	emitEq(r Value) ([]wat.Inst, bool)
 }
 
 /**************************************
@@ -68,6 +70,9 @@ type ValueType interface {
 	Method(i int) Method
 
 	typeInfoAddr() int
+
+	OnComp() int
+	setOnComp(c int)
 }
 
 /**************************************

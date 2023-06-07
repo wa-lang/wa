@@ -206,3 +206,16 @@ func (v *aBasic) Bin() (b []byte) {
 
 	return
 }
+
+func (v *aBasic) emitEq(r Value) (insts []wat.Inst, ok bool) {
+	if !v.Type().Equal(r.Type()) {
+		logger.Fatal("v.Type() != r.Type()")
+	}
+	insts = append(insts, v.EmitPush()...)
+	insts = append(insts, r.EmitPush()...)
+	insts = append(insts, wat.NewInstEq(toWatType(v.Type())))
+
+	ok = true
+
+	return
+}

@@ -125,3 +125,11 @@ func (v *aRef) emitSetValue(d Value) []wat.Inst {
 	}
 	return d.emitStoreToAddr(v.aStruct.Extract("data"), 0)
 }
+
+func (v *aRef) emitEq(r Value) (insts []wat.Inst, ok bool) {
+	if !v.Type().Equal(r.Type()) {
+		logger.Fatal("v.Type() != r.Type()")
+	}
+
+	return v.Extract("data").emitEq(r.(*aRef).Extract("data"))
+}

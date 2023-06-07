@@ -4,6 +4,7 @@ package wir
 
 import (
 	"wa-lang.org/wa/internal/backends/compiler_wat/wir/wat"
+	"wa-lang.org/wa/internal/logger"
 )
 
 /**************************************
@@ -78,4 +79,11 @@ func (v *aDup) emitStore(offset int) []wat.Inst {
 
 func (v *aDup) Bin() []byte {
 	return v.underlying.Bin()
+}
+
+func (v *aDup) emitEq(r Value) (insts []wat.Inst, ok bool) {
+	if !v.Type().Equal(r.Type()) {
+		logger.Fatal("v.Type() != r.Type()")
+	}
+	return v.underlying.emitEq(r.(*aDup).underlying)
 }
