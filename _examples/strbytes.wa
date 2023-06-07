@@ -1,0 +1,11 @@
+func main() {
+	str := "hello"
+	bytes := []byte(str)
+	for _, c := range bytes {
+		println(c)
+	}
+	bytes[0] = 113
+	
+	str = string(bytes)
+	println(str)
+}

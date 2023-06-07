@@ -397,20 +397,226 @@ func (m *Module) EmitGenLookup(x, index Value, CommaOk bool) (insts []wat.Inst, 
 }
 
 func (m *Module) EmitGenConvert(x Value, typ ValueType) (insts []wat.Inst) {
-	src_raw_type := x.Type().Raw()
-	dest_raw_type := typ.Raw()
-	if len(src_raw_type) != len(dest_raw_type) {
-		logger.Fatalf("Todo: %T %T", x, typ)
-		panic("Todo")
-	}
-	for i := range src_raw_type {
-		if src_raw_type[i].Name() != dest_raw_type[i].Name() {
-			logger.Fatalf("Todo: %T %T", x, typ)
-			panic("Todo")
+	for {
+		if u, ok := x.(*aDup); ok {
+			x = u.underlying
+		} else {
+			break
 		}
 	}
 
-	insts = append(insts, x.EmitPush()...)
+	for {
+		if ut, ok := typ.(*Dup); ok {
+			typ = ut.Base
+		} else {
+			break
+		}
+	}
+
+	if x.Type().Equal(typ) {
+		insts = append(insts, x.EmitPush()...)
+		return
+	}
+
+	xt := x.Type()
+
+	switch {
+	case typ.Equal(m.I8):
+		insts = append(insts, x.EmitPush()...)
+		switch {
+		case xt.Equal(m.I8), xt.Equal(m.U8), xt.Equal(m.I16), xt.Equal(m.U16), xt.Equal(m.I32), xt.Equal(m.U32):
+			break
+
+		case xt.Equal(m.I64), xt.Equal(m.U64):
+			insts = append(insts, wat.NewInstConvert_i32_wrap_i64())
+
+		case xt.Equal(m.F32):
+			insts = append(insts, wat.NewInstConvert_i32_truncs_f32())
+
+		case xt.Equal(m.F64):
+			insts = append(insts, wat.NewInstConvert_i32_truncs_f64())
+		}
+		return
+
+	case typ.Equal(m.U8):
+		insts = append(insts, x.EmitPush()...)
+		switch {
+		case xt.Equal(m.I8), xt.Equal(m.U8), xt.Equal(m.I16), xt.Equal(m.U16), xt.Equal(m.I32), xt.Equal(m.U32):
+			break
+
+		case xt.Equal(m.I64), xt.Equal(m.U64):
+			insts = append(insts, wat.NewInstConvert_i32_wrap_i64())
+
+		case xt.Equal(m.F32):
+			insts = append(insts, wat.NewInstConvert_i32_truncs_f32())
+
+		case xt.Equal(m.F64):
+			insts = append(insts, wat.NewInstConvert_i32_truncs_f64())
+		}
+		insts = append(insts, wat.NewInstConst(wat.I32{}, "255"))
+		insts = append(insts, wat.NewInstAnd(wat.I32{}))
+		return
+
+	case typ.Equal(m.I16):
+		insts = append(insts, x.EmitPush()...)
+		switch {
+		case xt.Equal(m.I8), xt.Equal(m.U8), xt.Equal(m.I16), xt.Equal(m.U16), xt.Equal(m.I32), xt.Equal(m.U32):
+			break
+
+		case xt.Equal(m.I64), xt.Equal(m.U64):
+			insts = append(insts, wat.NewInstConvert_i32_wrap_i64())
+
+		case xt.Equal(m.F32):
+			insts = append(insts, wat.NewInstConvert_i32_truncs_f32())
+
+		case xt.Equal(m.F64):
+			insts = append(insts, wat.NewInstConvert_i32_truncs_f64())
+		}
+		return
+
+	case typ.Equal(m.U16):
+		insts = append(insts, x.EmitPush()...)
+		switch {
+		case xt.Equal(m.I8), xt.Equal(m.U8), xt.Equal(m.I16), xt.Equal(m.U16), xt.Equal(m.I32), xt.Equal(m.U32):
+			break
+
+		case xt.Equal(m.I64), xt.Equal(m.U64):
+			insts = append(insts, wat.NewInstConvert_i32_wrap_i64())
+
+		case xt.Equal(m.F32):
+			insts = append(insts, wat.NewInstConvert_i32_truncs_f32())
+
+		case xt.Equal(m.F64):
+			insts = append(insts, wat.NewInstConvert_i32_truncs_f64())
+		}
+		insts = append(insts, wat.NewInstConst(wat.I32{}, "65535"))
+		insts = append(insts, wat.NewInstAnd(wat.I32{}))
+		return
+
+	case typ.Equal(m.I32), typ.Equal(m.U32):
+		insts = append(insts, x.EmitPush()...)
+		switch {
+		case xt.Equal(m.I8), xt.Equal(m.U8), xt.Equal(m.I16), xt.Equal(m.U16), xt.Equal(m.I32), xt.Equal(m.U32):
+			break
+
+		case xt.Equal(m.I64), xt.Equal(m.U64):
+			insts = append(insts, wat.NewInstConvert_i32_wrap_i64())
+
+		case xt.Equal(m.F32):
+			insts = append(insts, wat.NewInstConvert_i32_truncs_f32())
+
+		case xt.Equal(m.F64):
+			insts = append(insts, wat.NewInstConvert_i32_truncs_f64())
+		}
+		return
+
+	case typ.Equal(m.I64):
+		insts = append(insts, x.EmitPush()...)
+		switch {
+		case xt.Equal(m.I8), xt.Equal(m.I16), xt.Equal(m.I32):
+			insts = append(insts, wat.NewInstConvert_i64_extends_i32())
+
+		case xt.Equal(m.U8), xt.Equal(m.U16), xt.Equal(m.U32):
+			insts = append(insts, wat.NewInstConvert_i64_extendu_i32())
+
+		case xt.Equal(m.I64), xt.Equal(m.U64):
+			break
+
+		case xt.Equal(m.F32):
+			insts = append(insts, wat.NewInstConvert_i64_truncs_f32())
+
+		case xt.Equal(m.F64):
+			insts = append(insts, wat.NewInstConvert_i64_truncs_f64())
+		}
+		return
+
+	case typ.Equal(m.U64):
+		insts = append(insts, x.EmitPush()...)
+		switch {
+		case xt.Equal(m.I8), xt.Equal(m.I16), xt.Equal(m.I32):
+			insts = append(insts, wat.NewInstConvert_i64_extendu_i32())
+
+		case xt.Equal(m.U8), xt.Equal(m.U16), xt.Equal(m.U32):
+			insts = append(insts, wat.NewInstConvert_i64_extendu_i32())
+
+		case xt.Equal(m.I64), xt.Equal(m.U64):
+			break
+
+		case xt.Equal(m.F32):
+			insts = append(insts, wat.NewInstConvert_i64_truncs_f32())
+
+		case xt.Equal(m.F64):
+			insts = append(insts, wat.NewInstConvert_i64_truncs_f64())
+		}
+		return
+
+	case typ.Equal(m.F32):
+		insts = append(insts, x.EmitPush()...)
+		switch {
+		case xt.Equal(m.I8), xt.Equal(m.I16), xt.Equal(m.I32):
+			insts = append(insts, wat.NewInstConvert_f32_converts_i32())
+
+		case xt.Equal(m.U8), xt.Equal(m.U16), xt.Equal(m.U32):
+			insts = append(insts, wat.NewInstConvert_f32_convertu_i32())
+
+		case xt.Equal(m.I64):
+			insts = append(insts, wat.NewInstConvert_f32_converts_i64())
+
+		case xt.Equal(m.U64):
+			insts = append(insts, wat.NewInstConvert_f32_convertu_i64())
+
+		case xt.Equal(m.F64):
+			insts = append(insts, wat.NewInstConvert_f32_demote_f64())
+		}
+		return
+
+	case typ.Equal(m.F64):
+		insts = append(insts, x.EmitPush()...)
+		switch {
+		case xt.Equal(m.I8), xt.Equal(m.I16), xt.Equal(m.I32):
+			insts = append(insts, wat.NewInstConvert_f64_converts_i32())
+
+		case xt.Equal(m.U8), xt.Equal(m.U16), xt.Equal(m.U32):
+			insts = append(insts, wat.NewInstConvert_f64_convertu_i32())
+
+		case xt.Equal(m.I64):
+			insts = append(insts, wat.NewInstConvert_f64_converts_i64())
+
+		case xt.Equal(m.U64):
+			insts = append(insts, wat.NewInstConvert_f64_convertu_i64())
+
+		case xt.Equal(m.F32):
+			insts = append(insts, wat.NewInstConvert_f64_promote_f32())
+		}
+		return
+
+	case typ.Equal(m.STRING):
+		switch {
+		case xt.Equal(m.BYTES):
+			x := x.(*aSlice)
+			insts = append(insts, NewConst("", m.STRING).EmitPush()...)
+			insts = append(insts, x.Extract("block").EmitPush()...)
+			insts = append(insts, x.Extract("data").EmitPush()...)
+			insts = append(insts, x.Extract("len").EmitPush()...)
+			insts = append(insts, wat.NewInstCall(m.STRING.(*String).genFunc_Append()))
+		}
+		return
+
+	case typ.Equal(m.BYTES):
+		switch {
+		case xt.Equal(m.STRING):
+			x := x.(*aString)
+			insts = append(insts, NewConst("0", m.BYTES).EmitPush()...)
+			insts = append(insts, x.Extract("block").EmitPush()...)
+			insts = append(insts, x.Extract("data").EmitPush()...)
+			insts = append(insts, x.Extract("len").EmitPush()...)
+			insts = append(insts, x.Extract("len").EmitPush()...)
+			insts = append(insts, wat.NewInstCall(m.BYTES.(*Slice).genAppendFunc()))
+		}
+		return
+	}
+
+	logger.Fatal("Todo: %T %T", x, typ)
 	return
 }
 

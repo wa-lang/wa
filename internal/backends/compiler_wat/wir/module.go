@@ -18,7 +18,7 @@ type fnSigWrap struct {
 Module:
 **************************************/
 type Module struct {
-	VOID, RUNE, I8, U8, I16, U16, I32, U32, UPTR, I64, U64, F32, F64, STRING ValueType
+	VOID, RUNE, I8, U8, I16, U16, I32, U32, UPTR, I64, U64, F32, F64, STRING, BYTES ValueType
 
 	types_map         map[string]ValueType
 	usedConcreteTypes []ValueType
@@ -81,6 +81,7 @@ func NewModule() *Module {
 	m.addValueType(m.F64)
 
 	m.STRING = m.GenValueType_String()
+	m.BYTES = m.GenValueType_Slice(m.U8)
 
 	m.fnSigsName = make(map[string]fnSigWrap)
 

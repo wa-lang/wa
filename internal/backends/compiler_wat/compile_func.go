@@ -601,7 +601,9 @@ func (g *functionGenerator) genBuiltin(call *ssa.CallCommon) (insts []wat.Inst, 
 				avt = ut.Base
 			}
 
-			if avt.Equal(g.module.I32) || avt.Equal(g.module.U32) {
+			if avt.Equal(g.module.U8) || avt.Equal(g.module.I8) ||
+				avt.Equal(g.module.U16) || avt.Equal(g.module.I16) ||
+				avt.Equal(g.module.I32) || avt.Equal(g.module.U32) {
 				insts = append(insts, av.EmitPush()...)
 				insts = append(insts, wat.NewInstCall("$runtime.waPrintI32"))
 			} else if avt.Equal(g.module.F32) {
