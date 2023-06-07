@@ -594,11 +594,16 @@ func (g *functionGenerator) genBuiltin(call *ssa.CallCommon) (insts []wat.Inst, 
 		}
 
 	case "print", "println":
-		for _, arg := range call.Args {
+		for i, arg := range call.Args {
 			av := g.getValue(arg).value
 			avt := av.Type()
 			if ut, ok := avt.(*wir.Dup); ok {
 				avt = ut.Base
+			}
+
+			if i > 0 {
+				insts = append(insts, wat.NewInstConst(wat.I32{}, "32"))
+				insts = append(insts, wat.NewInstCall("$runtime.waPrintRune"))
 			}
 
 			if avt.Equal(g.module.U8) || avt.Equal(g.module.I8) ||
@@ -620,7 +625,6 @@ func (g *functionGenerator) genBuiltin(call *ssa.CallCommon) (insts []wat.Inst, 
 			} else {
 				logger.Fatalf("Todo: print(%T)", avt)
 			}
-
 		}
 
 		if call.Value.Name() == "println" {

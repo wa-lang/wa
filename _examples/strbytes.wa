@@ -1,4 +1,5 @@
 func main() {
+	println("a:", 42)
 	str := "hello"
 	bytes := []byte(str)
 	for _, c := range bytes {
