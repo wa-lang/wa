@@ -147,23 +147,14 @@ type instGe struct {
 func NewInstGe(t ValueType) *instGe { return &instGe{typ: t} }
 func (i *instGe) Format(indent string) string {
 	switch i.typ.(type) {
-	case I32:
-		return indent + "i32.ge_s"
+	case I32, I64:
+		return indent + i.typ.Name() + ".ge_s"
 
-	case U32:
-		return indent + "i32.ge_u"
+	case U32, U64:
+		return indent + i.typ.Name() + ".ge_u"
 
-	case I64:
-		return indent + "i64.ge_s"
-
-	case U64:
-		return indent + "i64.ge_u"
-
-	case F32:
-		return indent + "f32.ge"
-
-	case F64:
-		return indent + "f64.ge"
+	case F32, F64:
+		return indent + i.typ.Name() + ".ge"
 	}
 	logger.Fatal("Todo")
 	return ""

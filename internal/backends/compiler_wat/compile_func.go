@@ -474,6 +474,21 @@ func (g *functionGenerator) genBinOp(inst *ssa.BinOp) ([]wat.Inst, wir.ValueType
 	case token.GEQ:
 		return g.module.EmitBinOp(x.value, y.value, wat.OpCodeGe)
 
+	case token.AND:
+		return g.module.EmitBinOp(x.value, y.value, wat.OpCodeAnd)
+
+	case token.OR:
+		return g.module.EmitBinOp(x.value, y.value, wat.OpCodeOr)
+
+	case token.XOR:
+		return g.module.EmitBinOp(x.value, y.value, wat.OpCodeXor)
+
+	case token.SHL:
+		return g.module.EmitBinOp(x.value, y.value, wat.OpCodeShl)
+
+	case token.SHR:
+		return g.module.EmitBinOp(x.value, y.value, wat.OpCodeShr)
+
 	default:
 		logger.Fatalf("Todo: %v, type: %T, token:%v", inst, x.value, inst.Op)
 		return nil, nil

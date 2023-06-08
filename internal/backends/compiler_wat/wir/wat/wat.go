@@ -89,6 +89,11 @@ const (
 	OpCodeGt
 	OpCodeLe
 	OpCodeGe
+	OpCodeAnd
+	OpCodeOr
+	OpCodeXor
+	OpCodeShl
+	OpCodeShr
 )
 
 /**************************************
