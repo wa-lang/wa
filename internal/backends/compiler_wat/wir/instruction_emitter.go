@@ -136,19 +136,19 @@ func (m *Module) EmitBinOp(x, y Value, op wat.OpCode) (insts []wat.Inst, ret_typ
 		insts = append(insts, x.EmitPush()...)
 		insts = append(insts, y.EmitPush()...)
 		insts = append(insts, wat.NewInstAnd(toWatType(rtype)))
-		ret_type = m.I32
+		ret_type = rtype
 
 	case wat.OpCodeOr:
 		insts = append(insts, x.EmitPush()...)
 		insts = append(insts, y.EmitPush()...)
 		insts = append(insts, wat.NewInstOr(toWatType(rtype)))
-		ret_type = m.I32
+		ret_type = rtype
 
 	case wat.OpCodeXor:
 		insts = append(insts, x.EmitPush()...)
 		insts = append(insts, y.EmitPush()...)
 		insts = append(insts, wat.NewInstXor(toWatType(rtype)))
-		ret_type = m.I32
+		ret_type = rtype
 
 	case wat.OpCodeShl:
 		insts = append(insts, x.EmitPush()...)
@@ -158,7 +158,7 @@ func (m *Module) EmitBinOp(x, y Value, op wat.OpCode) (insts []wat.Inst, ret_typ
 			insts = append(insts, y.EmitPush()...)
 		}
 		insts = append(insts, wat.NewInstShl(toWatType(rtype)))
-		ret_type = m.I32
+		ret_type = rtype
 
 	case wat.OpCodeShr:
 		insts = append(insts, x.EmitPush()...)
@@ -168,7 +168,7 @@ func (m *Module) EmitBinOp(x, y Value, op wat.OpCode) (insts []wat.Inst, ret_typ
 			insts = append(insts, y.EmitPush()...)
 		}
 		insts = append(insts, wat.NewInstShr(toWatType(rtype)))
-		ret_type = m.I32
+		ret_type = rtype
 
 	case wat.OpCodeAndNot:
 		insts = append(insts, x.EmitPush()...)
@@ -176,6 +176,7 @@ func (m *Module) EmitBinOp(x, y Value, op wat.OpCode) (insts []wat.Inst, ret_typ
 		insts = append(insts, NewConst("-1", y.Type()).EmitPush()...)
 		insts = append(insts, wat.NewInstXor(toWatType(rtype)))
 		insts = append(insts, wat.NewInstAnd(toWatType(rtype)))
+		ret_type = rtype
 
 	default:
 		logger.Fatal("Todo")
