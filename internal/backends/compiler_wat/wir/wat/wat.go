@@ -94,6 +94,7 @@ const (
 	OpCodeXor
 	OpCodeShl
 	OpCodeShr
+	OpCodeAndNot
 )
 
 /**************************************

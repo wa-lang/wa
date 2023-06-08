@@ -170,6 +170,13 @@ func (m *Module) EmitBinOp(x, y Value, op wat.OpCode) (insts []wat.Inst, ret_typ
 		insts = append(insts, wat.NewInstShr(toWatType(rtype)))
 		ret_type = m.I32
 
+	case wat.OpCodeAndNot:
+		insts = append(insts, x.EmitPush()...)
+		insts = append(insts, y.EmitPush()...)
+		insts = append(insts, NewConst("-1", y.Type()).EmitPush()...)
+		insts = append(insts, wat.NewInstXor(toWatType(rtype)))
+		insts = append(insts, wat.NewInstAnd(toWatType(rtype)))
+
 	default:
 		logger.Fatal("Todo")
 	}
