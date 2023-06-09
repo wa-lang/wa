@@ -640,6 +640,8 @@ func (g *functionGenerator) genBuiltin(call *ssa.CallCommon) (insts []wat.Inst, 
 				insts = append(insts, wat.NewInstCall("$runtime.waPrintRune"))
 			} else if avt.Equal(g.module.STRING) {
 				insts = append(insts, g.module.EmitPrintString(av)...)
+			} else if _, ok := avt.(*wir.Interface); ok {
+				insts = append(insts, g.module.EmitPrintInterface(av)...)
 			} else {
 				logger.Fatalf("Todo: print(%T)", avt)
 			}
