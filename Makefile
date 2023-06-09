@@ -24,9 +24,19 @@ ci-test-all:
 	go test ./...
 
 	@echo "== std test begin =="
+	go run main.go test binary
+	#go run main.go test errors
 	go run main.go test fmt
+	go run main.go test image
+	go run main.go test image/bmp
+	go run main.go test image/color
+	go run main.go test io
+	go run main.go test math
+	go run main.go test os
 	go run main.go test regexp
 	go run main.go test strconv
+	go run main.go test unicode
+	go run main.go test unicode/utf8
 	@echo "== std ok =="
 
 	go run main.go hello.wa
