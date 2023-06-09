@@ -1,5 +1,7 @@
 // 版权 @2023 凹语言 作者。保留所有权利。
 
+import "fmt"
+
 func TestNewEqual {
 	// Different allocations should not be equal.
 	if New("abc") == New("abc") {
@@ -26,8 +28,9 @@ func TestErrorMethod {
 func ExampleNew() {
 	err := New("emit macho dwarf: elf header corrupted")
 	if err != nil {
-		print(err.Error())
+		fmt.Println(err)
 	}
-	// Output: emit macho dwarf: elf header corrupted
+	// Output:
+	// emit macho dwarf: elf header corrupted
 }
 

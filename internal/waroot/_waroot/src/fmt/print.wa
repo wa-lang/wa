@@ -12,6 +12,8 @@ func Println(a: ...interface{}) {
 			print(v)
 		case string:
 			print(v)
+		case error:
+			print(v.Error())
 		}
 	}
 	println()
