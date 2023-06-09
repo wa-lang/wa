@@ -26,7 +26,7 @@ func TestErrorMethod {
 func ExampleNew() {
 	err := New("emit macho dwarf: elf header corrupted")
 	if err != nil {
-		print(err)
+		print(err.Error())
 	}
 	// Output: emit macho dwarf: elf header corrupted
 }

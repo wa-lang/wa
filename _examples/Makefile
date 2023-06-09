@@ -19,7 +19,10 @@ ci-test-all:
 	# snake
 	cd ./snake && make publish
 
+	go run ../main.go copy.wa
+	go run ../main.go eq.wa
 	go run ../main.go interface_named.wa
+	go run ../main.go strbytes.wa
 	go run ../main.go struct.wa
 
 	@echo "== _examples ok =="
