@@ -25,7 +25,7 @@ ci-test-all:
 
 	@echo "== std test begin =="
 	go run main.go test binary
-	#go run main.go test errors
+	go run main.go test errors
 	go run main.go test fmt
 	go run main.go test image
 	go run main.go test image/bmp
