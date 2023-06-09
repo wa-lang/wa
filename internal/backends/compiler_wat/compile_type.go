@@ -59,7 +59,7 @@ func (tLib *typeLib) compile(from types.Type) wir.ValueType {
 				newType = tLib.module.I32
 			}
 
-		case types.Uint32, types.Uintptr:
+		case types.Uint32, types.Uintptr, types.Uint:
 			newType = tLib.module.U32
 
 		case types.Int64:

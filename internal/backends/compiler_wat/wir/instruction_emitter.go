@@ -668,16 +668,21 @@ func (m *Module) EmitGenConvert(x Value, typ ValueType) (insts []wat.Inst) {
 }
 
 func (m *Module) EmitGenAppend(x, y Value) (insts []wat.Inst, ret_type ValueType) {
-	if !x.Type().Equal(y.Type()) {
-		logger.Fatal("Type not match")
-		return
-	}
-
-	stype := x.Type().(*Slice)
+	xtype := x.Type().(*Slice)
 	insts = append(insts, x.EmitPush()...)
 	insts = append(insts, y.EmitPush()...)
-	insts = append(insts, wat.NewInstCall(stype.genAppendFunc()))
-	ret_type = stype
+
+	if !x.Type().Equal(y.Type()) {
+		if _, ok := y.Type().(*String); ok && xtype.Base.Equal(m.U8) {
+			insts = append(insts, y.(*aString).Extract("len").EmitPush()...)
+		} else {
+			logger.Fatal("Type not match")
+			return
+		}
+	}
+
+	insts = append(insts, wat.NewInstCall(xtype.genAppendFunc()))
+	ret_type = xtype
 
 	return
 }
@@ -712,6 +717,24 @@ func (m *Module) EmitGenCap(x Value) (insts []wat.Inst) {
 		logger.Fatalf("Todo: %T", x)
 	}
 
+	return
+}
+
+func (m *Module) EmitGenCopy(x, y Value) (insts []wat.Inst) {
+	xtype := x.Type().(*Slice)
+	insts = append(insts, x.EmitPush()...)
+	insts = append(insts, y.EmitPush()...)
+
+	if !x.Type().Equal(y.Type()) {
+		if _, ok := y.Type().(*String); ok && xtype.Base.Equal(m.U8) {
+			insts = append(insts, y.(*aString).Extract("len").EmitPush()...)
+		} else {
+			logger.Fatal("Type not match")
+			return
+		}
+	}
+
+	insts = append(insts, wat.NewInstCall(xtype.genCopyFunc()))
 	return
 }
 

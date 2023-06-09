@@ -170,6 +170,10 @@ func (t *Slice) genAppendFunc() string {
 	f.Params = append(f.Params, y)
 	f.Results = append(f.Results, t)
 
+	item := NewLocal("item", t.Base)
+	f.Locals = append(f.Locals, item)
+	f.Insts = append(f.Insts, item.EmitInit()...)
+
 	x_len := NewLocal("x_len", x.Extract("len").Type())
 	f.Locals = append(f.Locals, x_len)
 	f.Insts = append(f.Insts, x.Extract("len").EmitPush()...)
@@ -193,8 +197,6 @@ func (t *Slice) genAppendFunc() string {
 	f.Insts = append(f.Insts, x.Extract("cap").EmitPush()...)
 	f.Insts = append(f.Insts, wat.NewInstLe(wat.U32{}))
 
-	item := NewLocal("item", t.Base)
-	f.Locals = append(f.Locals, item)
 	src := NewLocal("src", t._base_ptr)
 	f.Locals = append(f.Locals, src)
 	dest := NewLocal("dest", t._base_ptr)
@@ -359,9 +361,133 @@ func (t *Slice) genAppendFunc() string {
 	f.Insts = append(f.Insts, inst_if)
 	f.Insts = append(f.Insts, x.EmitRelease()...)
 	f.Insts = append(f.Insts, y.EmitRelease()...)
+	f.Insts = append(f.Insts, item.EmitRelease()...)
 
 	currentModule.AddFunc(&f)
 	return fn_name
+}
+
+func (t *Slice) genCopyFunc() string {
+	var f Function
+	f.InternalName = "$" + GenSymbolName(t.Name()) + ".copy"
+	if currentModule.FindFunc(f.InternalName) != nil {
+		return f.InternalName
+	}
+
+	d := newValue_Slice("d", ValueKindLocal, t)
+	s := newValue_Slice("s", ValueKindLocal, t)
+	f.Params = append(f.Params, d)
+	f.Params = append(f.Params, s)
+	f.Results = append(f.Results, t._u32)
+
+	item := NewLocal("item", t.Base)
+	f.Locals = append(f.Locals, item)
+	f.Insts = append(f.Insts, item.EmitInit()...)
+
+	count := NewLocal("count", d.Extract("len").Type())
+	f.Locals = append(f.Locals, count)
+	{
+		f.Insts = append(f.Insts, d.Extract("len").EmitPush()...)
+		f.Insts = append(f.Insts, s.Extract("len").EmitPush()...)
+		f.Insts = append(f.Insts, wat.NewInstGt(toWatType(count.Type())))
+
+		ifs := wat.NewInstIf(nil, nil, nil)
+		f.Insts = append(f.Insts, ifs)
+
+		ifs.True = append(ifs.True, s.Extract("len").EmitPush()...)
+		ifs.True = append(ifs.True, count.EmitPop()...)
+		ifs.False = append(ifs.False, d.Extract("len").EmitPush()...)
+		ifs.False = append(ifs.False, count.EmitPop()...)
+	}
+	f.Insts = append(f.Insts, count.EmitPush()...) //ret size
+
+	dp := NewLocal("dp", d.Extract("data").Type())
+	f.Locals = append(f.Locals, dp)
+	sp := NewLocal("sp", s.Extract("data").Type())
+	f.Locals = append(f.Locals, sp)
+	item_size := NewLocal("item_size", d.Extract("len").Type())
+	f.Locals = append(f.Locals, item_size)
+	{
+		f.Insts = append(f.Insts, d.Extract("data").EmitPush()...)
+		f.Insts = append(f.Insts, s.Extract("data").EmitPush()...)
+		f.Insts = append(f.Insts, wat.NewInstLt(toWatType(d.Extract("data").Type())))
+
+		ifs := wat.NewInstIf(nil, nil, nil)
+		f.Insts = append(f.Insts, ifs)
+		// dp<sp
+		ifs.True = append(ifs.True, d.Extract("data").EmitPush()...)
+		ifs.True = append(ifs.True, dp.EmitPop()...)
+		ifs.True = append(ifs.True, s.Extract("data").EmitPush()...)
+		ifs.True = append(ifs.True, sp.EmitPop()...)
+		ifs.True = append(ifs.True, wat.NewInstConst(wat.I32{}, strconv.Itoa(t.Base.Size())))
+		ifs.True = append(ifs.True, item_size.EmitPop()...)
+
+		// dp>sp
+		ifs.False = append(ifs.False, count.EmitPush()...)
+		ifs.False = append(ifs.False, wat.NewInstConst(wat.I32{}, "1"))
+		ifs.False = append(ifs.False, wat.NewInstSub(wat.I32{}))
+		ifs.False = append(ifs.False, wat.NewInstConst(wat.I32{}, strconv.Itoa(t.Base.Size())))
+		ifs.False = append(ifs.False, wat.NewInstMul(wat.I32{}))
+		ifs.False = append(ifs.False, item_size.EmitPop()...)
+
+		ifs.False = append(ifs.False, d.Extract("data").EmitPush()...)
+		ifs.False = append(ifs.False, item_size.EmitPush()...)
+		ifs.False = append(ifs.False, wat.NewInstAdd(wat.I32{}))
+		ifs.False = append(ifs.False, dp.EmitPop()...)
+
+		ifs.False = append(ifs.False, s.Extract("data").EmitPush()...)
+		ifs.False = append(ifs.False, item_size.EmitPush()...)
+		ifs.False = append(ifs.False, wat.NewInstAdd(wat.I32{}))
+		ifs.False = append(ifs.False, sp.EmitPop()...)
+
+		ifs.False = append(ifs.False, wat.NewInstConst(wat.I32{}, "0"))
+		ifs.False = append(ifs.False, wat.NewInstConst(wat.I32{}, strconv.Itoa(t.Base.Size())))
+		ifs.False = append(ifs.False, wat.NewInstSub(wat.I32{}))
+		ifs.False = append(ifs.False, item_size.EmitPop()...)
+	}
+
+	b0 := wat.NewInstBlock("b0")
+	f.Insts = append(f.Insts, b0)
+
+	l0 := wat.NewInstLoop("l0")
+	b0.Insts = append(b0.Insts, l0)
+
+	l0.Insts = append(l0.Insts, count.EmitPush()...)
+	l0.Insts = append(l0.Insts, wat.NewInstEqz(wat.I32{}))
+	{
+		ifs := wat.NewInstIf(nil, nil, nil)
+		l0.Insts = append(l0.Insts, ifs)
+
+		ifs.True = append(ifs.True, wat.NewInstBr("b0"))
+
+		ifs.False = append(ifs.False, t.Base.EmitLoadFromAddr(sp, 0)...)
+		ifs.False = append(ifs.False, item.EmitPop()...)
+		ifs.False = append(ifs.False, item.emitStoreToAddr(dp, 0)...)
+
+		ifs.False = append(ifs.False, sp.EmitPush()...)
+		ifs.False = append(ifs.False, item_size.EmitPush()...)
+		ifs.False = append(ifs.False, wat.NewInstAdd(wat.I32{}))
+		ifs.False = append(ifs.False, sp.EmitPop()...)
+
+		ifs.False = append(ifs.False, dp.EmitPush()...)
+		ifs.False = append(ifs.False, item_size.EmitPush()...)
+		ifs.False = append(ifs.False, wat.NewInstAdd(wat.I32{}))
+		ifs.False = append(ifs.False, dp.EmitPop()...)
+
+		ifs.False = append(ifs.False, count.EmitPush()...)
+		ifs.False = append(ifs.False, wat.NewInstConst(wat.I32{}, "1"))
+		ifs.False = append(ifs.False, wat.NewInstSub(wat.I32{}))
+		ifs.False = append(ifs.False, count.EmitPop()...)
+
+		ifs.False = append(ifs.False, wat.NewInstBr("l0"))
+	}
+
+	f.Insts = append(f.Insts, d.EmitRelease()...)
+	f.Insts = append(f.Insts, s.EmitRelease()...)
+	f.Insts = append(f.Insts, item.EmitRelease()...)
+
+	currentModule.AddFunc(&f)
+	return f.InternalName
 }
 
 /**************************************

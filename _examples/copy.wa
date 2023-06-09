@@ -1,0 +1,22 @@
+# 版权 @2021 凹语言 作者。保留所有权利。
+
+var s = []int{1, 2, 3, 4, 5, 6}
+func main() {
+	d := make([]int, 3)
+	copy(d, s)
+	for i, v := range d {
+		println("d[", i, "]=", v)
+	}
+	
+	a := s[0:4]	
+	b := s[1:5]
+	copy(a, b)
+	for i, v := range s {
+		println("s[", i, "]=", v)
+	}
+	
+	copy(b, a)
+	for i, v := range s {
+		println("s[", i, "]=", v)
+	}
+}

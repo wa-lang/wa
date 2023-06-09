@@ -671,6 +671,13 @@ func (g *functionGenerator) genBuiltin(call *ssa.CallCommon) (insts []wat.Inst, 
 		insts = g.module.EmitGenCap(g.getValue(call.Args[0]).value)
 		ret_type = g.module.I32
 
+	case "copy":
+		if len(call.Args) != 2 {
+			logger.Fatal("len(copy.Args) != 2")
+		}
+		insts = g.module.EmitGenCopy(g.getValue(call.Args[0]).value, g.getValue(call.Args[1]).value)
+		ret_type = g.module.I32
+
 	default:
 		logger.Fatal("Todo:", call.Value)
 	}
