@@ -56,6 +56,6 @@ func ExampleRunCode_args() {
 	fmt.Print(string(output))
 
 	// Output:
-	// 0:aa
-	// 1:bb
+	// 0 : aa
+	// 1 : bb
 }

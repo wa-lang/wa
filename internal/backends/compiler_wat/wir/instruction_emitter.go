@@ -663,7 +663,7 @@ func (m *Module) EmitGenConvert(x Value, typ ValueType) (insts []wat.Inst) {
 		return
 	}
 
-	logger.Fatal("Todo: %T %T", x, typ)
+	logger.Fatalf("Todo: %+v %+v", x, typ)
 	return
 }
 
