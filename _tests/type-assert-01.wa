@@ -6,6 +6,7 @@ func main {
 
 	println("ok:", ok) // BUG: OK 始终返回 false
 	println("xerr:", xerr)
+	println("err.MyError():", err.MyError())
 }
 
 type myIface interface {

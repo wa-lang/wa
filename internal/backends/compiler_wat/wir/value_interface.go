@@ -167,17 +167,20 @@ func (v *aInterface) emitQueryInterface(destType ValueType, commaOk bool) (insts
 	insts = append(insts, wat.NewInstCall("$wa.runtime.getItab")) //itab
 
 	insts = append(insts, wat.NewInstCall("$wa.runtime.DupI32"))
-	ifBlock := wat.NewInstIf(nil, nil, nil)
-	insts = append(insts, ifBlock)
+	ifs := wat.NewInstIf(nil, nil, nil)
+	insts = append(insts, ifs)
 	if commaOk {
-		ifBlock.Ret = append(ifBlock.Ret, wat.I32{})
-		ifBlock.True = append(ifBlock.True, wat.NewInstConst(wat.I32{}, "1"))
-		ifBlock.False = append(ifBlock.False, wat.NewInstConst(wat.I32{}, "0"))
+		ifs.Ret = []wat.ValueType{wat.I32{}, wat.I32{}}
+		ifs.True = append(ifs.True, v.Extract("eq").EmitPush()...)    //eq
+		ifs.True = append(ifs.True, wat.NewInstConst(wat.I32{}, "1")) //ok:true
+
+		ifs.False = append(ifs.False, v.Extract("eq").EmitPush()...)    //eq
+		ifs.False = append(ifs.False, wat.NewInstConst(wat.I32{}, "0")) //ok:false
 	} else {
-		ifBlock.False = append(ifBlock.False, wat.NewInstUnreachable())
+		ifs.False = append(ifs.False, wat.NewInstUnreachable())
+		insts = append(insts, v.Extract("eq").EmitPush()...) //eq
 	}
 
-	insts = append(insts, v.Extract("eq").EmitPush()...)
 	return
 }
 
