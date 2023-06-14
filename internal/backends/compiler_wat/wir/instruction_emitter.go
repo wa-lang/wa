@@ -763,8 +763,8 @@ func (m *Module) EmitGenMakeInterface(x Value, itype ValueType) (insts []wat.Ins
 			f.Locals = append(f.Locals, v0)
 			f.Locals = append(f.Locals, v1)
 
-			f.Insts = append(f.Insts, v0.EmitInit()...)
-			f.Insts = append(f.Insts, v1.EmitInit()...)
+			//f.Insts = append(f.Insts, v0.EmitInit()...)
+			//f.Insts = append(f.Insts, v1.EmitInit()...)
 
 			f.Insts = append(f.Insts, x_type.EmitLoadFromAddr(p0, 0)...)
 			f.Insts = append(f.Insts, v0.EmitPop()...)

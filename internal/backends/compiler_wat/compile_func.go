@@ -264,9 +264,9 @@ func (g *functionGenerator) genFunction(f *ssa.Function) *wir.Function {
 		block_temp = inst
 	}
 
-	for _, i := range g.registers {
-		wir_fn.Insts = append(wir_fn.Insts, i.EmitInit()...)
-	}
+	//for _, i := range g.registers {
+	//	wir_fn.Insts = append(wir_fn.Insts, i.EmitInit()...)
+	//}
 
 	wir_fn.Insts = append(wir_fn.Insts, block_temp)
 

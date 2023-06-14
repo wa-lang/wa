@@ -172,7 +172,7 @@ func (t *Slice) genAppendFunc() string {
 
 	item := NewLocal("item", t.Base)
 	f.Locals = append(f.Locals, item)
-	f.Insts = append(f.Insts, item.EmitInit()...)
+	//f.Insts = append(f.Insts, item.EmitInit()...)
 
 	x_len := NewLocal("x_len", x.Extract("len").Type())
 	f.Locals = append(f.Locals, x_len)
@@ -382,7 +382,7 @@ func (t *Slice) genCopyFunc() string {
 
 	item := NewLocal("item", t.Base)
 	f.Locals = append(f.Locals, item)
-	f.Insts = append(f.Insts, item.EmitInit()...)
+	//f.Insts = append(f.Insts, item.EmitInit()...)
 
 	count := NewLocal("count", d.Extract("len").Type())
 	f.Locals = append(f.Locals, count)
