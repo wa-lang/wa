@@ -969,7 +969,7 @@ func (g *functionGenerator) genMakeClosre_Anonymous(inst *ssa.MakeClosure) (inst
 		warp_fn.Results = g.tLib.GenFnSig(f.Signature).Results
 
 		dx := g.module.FindGlobalByName("$wa.runtime.closure_data")
-		data_ptr := wir.ExtractField(dx, "data")
+		data_ptr := wir.ExtractField(dx, "d")
 
 		warp_fn.Insts = append(warp_fn.Insts, st_free_data.EmitLoadFromAddr(data_ptr, 0)...)
 		warp_fn.Insts = append(warp_fn.Insts, dx.EmitRelease()...)
@@ -1001,9 +1001,9 @@ func (g *functionGenerator) genMakeClosre_Anonymous(inst *ssa.MakeClosure) (inst
 	{
 		i, _ := g.module.EmitHeapAlloc(st_free_data)
 		insts = append(insts, i...)
-		insts = append(insts, wir.ExtractField(closure, "data").EmitPop()...)
+		insts = append(insts, wir.ExtractField(closure, "d").EmitPop()...)
 	}
-	insts = append(insts, g.module.EmitStore(wir.ExtractField(closure, "data"), free_data)...)
+	insts = append(insts, g.module.EmitStore(wir.ExtractField(closure, "d"), free_data)...)
 	insts = append(insts, free_data.EmitRelease()...)
 	insts = append(insts, free_data.EmitInit()...)
 
@@ -1033,7 +1033,7 @@ func (g *functionGenerator) genMakeClosre_Bound(inst *ssa.MakeClosure) (insts []
 		warp_fn.Results = g.tLib.GenFnSig(f.Signature).Results
 
 		dx := g.module.FindGlobalByName("$wa.runtime.closure_data")
-		data_ptr := wir.ExtractField(dx, "data")
+		data_ptr := wir.ExtractField(dx, "d")
 
 		warp_fn.Insts = append(warp_fn.Insts, recv_type.EmitLoadFromAddr(data_ptr, 0)...)
 		warp_fn.Insts = append(warp_fn.Insts, dx.EmitRelease()...)
@@ -1056,11 +1056,11 @@ func (g *functionGenerator) genMakeClosre_Bound(inst *ssa.MakeClosure) (insts []
 	{
 		i, _ := g.module.EmitHeapAlloc(recv_type)
 		insts = append(insts, i...)
-		insts = append(insts, wir.ExtractField(closure, "data").EmitPop()...)
+		insts = append(insts, wir.ExtractField(closure, "d").EmitPop()...)
 	}
 
 	recv := g.getValue(inst.Bindings[0])
-	insts = append(insts, g.module.EmitStore(wir.ExtractField(closure, "data"), recv.value)...)
+	insts = append(insts, g.module.EmitStore(wir.ExtractField(closure, "d"), recv.value)...)
 
 	insts = append(insts, closure.EmitPush()...)
 	return
@@ -1094,7 +1094,7 @@ func (g *functionGenerator) genTypeAssert(inst *ssa.TypeAssert) (insts []wat.Ins
 
 func (g *functionGenerator) addRegister(typ wir.ValueType) wir.Value {
 	defer func() { g.cur_local_id++ }()
-	name := "$T_" + strconv.Itoa(g.cur_local_id)
+	name := "$t" + strconv.Itoa(g.cur_local_id)
 	v := wir.NewLocal(name, typ)
 	g.registers = append(g.registers, v)
 	return v

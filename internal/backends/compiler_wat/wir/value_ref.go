@@ -32,8 +32,8 @@ func (m *Module) GenValueType_Ref(base ValueType) *Ref {
 	base_ptr := m.GenValueType_Ptr(base)
 
 	ref_t.underlying = m.genInternalStruct(ref_t.Name() + ".underlying")
-	ref_t.underlying.AppendField(m.NewStructField("block", ref_t._base_block))
-	ref_t.underlying.AppendField(m.NewStructField("data", base_ptr))
+	ref_t.underlying.AppendField(m.NewStructField("b", ref_t._base_block))
+	ref_t.underlying.AppendField(m.NewStructField("d", base_ptr))
 	ref_t.underlying.Finish()
 
 	m.addValueType(&ref_t)
@@ -115,7 +115,7 @@ func (v *aRef) emitStoreToAddr(addr Value, offset int) []wat.Inst {
 }
 
 func (v *aRef) emitGetValue() []wat.Inst {
-	return v.typ.Base.EmitLoadFromAddr(v.aStruct.Extract("data"), 0)
+	return v.typ.Base.EmitLoadFromAddr(v.aStruct.Extract("d"), 0)
 }
 
 func (v *aRef) emitSetValue(d Value) []wat.Inst {
@@ -123,7 +123,7 @@ func (v *aRef) emitSetValue(d Value) []wat.Inst {
 		logger.Fatal("Type not match")
 		return nil
 	}
-	return d.emitStoreToAddr(v.aStruct.Extract("data"), 0)
+	return d.emitStoreToAddr(v.aStruct.Extract("d"), 0)
 }
 
 func (v *aRef) emitEq(r Value) (insts []wat.Inst, ok bool) {
@@ -131,5 +131,5 @@ func (v *aRef) emitEq(r Value) (insts []wat.Inst, ok bool) {
 		logger.Fatal("v.Type() != r.Type()")
 	}
 
-	return v.Extract("data").emitEq(r.(*aRef).Extract("data"))
+	return v.Extract("d").emitEq(r.(*aRef).Extract("d"))
 }

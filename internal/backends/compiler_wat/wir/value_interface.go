@@ -28,7 +28,7 @@ func (m *Module) GenValueType_Interface(name string) *Interface {
 	interface_t.name = name
 
 	interface_t.underlying = m.genInternalStruct(interface_t.Name() + ".underlying")
-	interface_t.underlying.AppendField(m.NewStructField("data", m.GenValueType_Ref(m.VOID)))
+	interface_t.underlying.AppendField(m.NewStructField("d", m.GenValueType_Ref(m.VOID)))
 	interface_t.underlying.AppendField(m.NewStructField("itab", m.UPTR))
 	interface_t.underlying.AppendField(m.NewStructField("eq", m.I32))
 	interface_t.underlying.Finish()
@@ -82,7 +82,7 @@ func (t *Interface) emitGenFromValue(x Value, xRefType *Ref, compID int) (insts 
 }
 
 func (t *Interface) emitGenFromInterface(x *aInterface) (insts []wat.Inst) {
-	insts = append(insts, x.Extract("data").EmitPush()...) //data
+	insts = append(insts, x.Extract("d").EmitPush()...) //data
 
 	insts = append(insts, x.Extract("itab").EmitPush()...)
 	insts = append(insts, wat.NewInstLoad(wat.I32{}, 0, 4))
@@ -133,9 +133,9 @@ func (v *aInterface) emitGetData(destType ValueType, commaOk bool) (insts []wat.
 
 	// true:
 	if _, ok := destType.(*Ref); ok {
-		ifBlock.True = v.Extract("data").EmitPush()
+		ifBlock.True = v.Extract("d").EmitPush()
 	} else {
-		ifBlock.True = destType.EmitLoadFromAddr(v.Extract("data").(*aRef).Extract("data"), 0)
+		ifBlock.True = destType.EmitLoadFromAddr(v.Extract("d").(*aRef).Extract("d"), 0)
 	}
 
 	// false:
@@ -154,7 +154,7 @@ func (v *aInterface) emitGetData(destType ValueType, commaOk bool) (insts []wat.
 }
 
 func (v *aInterface) emitQueryInterface(destType ValueType, commaOk bool) (insts []wat.Inst) {
-	insts = append(insts, v.Extract("data").EmitPush()...) //data, todo: nil check
+	insts = append(insts, v.Extract("d").EmitPush()...) //data, todo: nil check
 
 	insts = append(insts, v.Extract("itab").EmitPush()...)
 	insts = append(insts, wat.NewInstLoad(wat.I32{}, 0, 4))
@@ -209,11 +209,11 @@ func (v *aInterface) emitEq(r Value) (insts []wat.Inst, ok bool) {
 			isRef := wat.NewInstIf(nil, nil, nil)
 			isRef.Ret = append(isRef.Ret, wat.I32{})
 
-			ins, _ = v.Extract("data").emitEq(d.Extract("data"))
+			ins, _ = v.Extract("d").emitEq(d.Extract("d"))
 			isRef.True = ins
 
-			isRef.False = append(isRef.False, v.Extract("data").(*aRef).Extract("data").EmitPush()...)
-			isRef.False = append(isRef.False, d.Extract("data").(*aRef).Extract("data").EmitPush()...)
+			isRef.False = append(isRef.False, v.Extract("d").(*aRef).Extract("d").EmitPush()...)
+			isRef.False = append(isRef.False, d.Extract("d").(*aRef).Extract("d").EmitPush()...)
 			isRef.False = append(isRef.False, v.Extract("eq").EmitPush()...)
 			isRef.False = append(isRef.False, wat.NewInstCallIndirect("$wa.runtime.comp"))
 

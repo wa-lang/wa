@@ -76,7 +76,7 @@ func (m *Module) GenValueType_Closure(sig FnSig) *Closure {
 
 	closure_t.underlying = m.genInternalStruct(closure_t.Name() + ".underlying")
 	closure_t.underlying.AppendField(m.NewStructField("fn_index", m.U32))
-	closure_t.underlying.AppendField(m.NewStructField("data", m.GenValueType_Ref(m.VOID)))
+	closure_t.underlying.AppendField(m.NewStructField("d", m.GenValueType_Ref(m.VOID)))
 	closure_t.underlying.Finish()
 
 	m.addValueType(&closure_t)
@@ -143,7 +143,7 @@ func EmitCallClosure(c Value, params []Value) (insts []wat.Inst) {
 	closure := c.(*aClosure)
 	insts = append(insts, closure.Extract("fn_index").EmitPush()...)
 
-	insts = append(insts, closure.Extract("data").EmitPush()...)
+	insts = append(insts, closure.Extract("d").EmitPush()...)
 	insts = append(insts, currentModule.FindGlobalByName("$wa.runtime.closure_data").EmitPop()...)
 
 	insts = append(insts, wat.NewInstCallIndirect(closure.typ._fnTypeName))

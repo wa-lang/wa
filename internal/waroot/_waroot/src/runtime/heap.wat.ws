@@ -110,7 +110,7 @@
 	local.get 0
 )
 
-(func $$wa.runtime.Block.Retain (param $ptr i32) (result i32) ;;result = ptr
+(func $$Retain (param $ptr i32) (result i32) ;;result = ptr
 	local.get $ptr
 
 	local.get $ptr
@@ -124,7 +124,7 @@
 	end
 )
 
-(func $$wa.runtime.Block.Release (param $ptr i32)
+(func $$Release (param $ptr i32)
 	(local $ref_count i32)
 	(local $item_count i32)
 	(local $free_func i32)

@@ -35,10 +35,10 @@ func (m *Module) GenValueType_Slice(base ValueType) *Slice {
 	slice_t._base_ptr = m.GenValueType_Ptr(base)
 
 	slice_t.underlying = m.genInternalStruct(slice_t.Name() + ".underlying")
-	slice_t.underlying.AppendField(m.NewStructField("block", slice_t._base_block))
-	slice_t.underlying.AppendField(m.NewStructField("data", slice_t._base_ptr))
-	slice_t.underlying.AppendField(m.NewStructField("len", slice_t._u32))
-	slice_t.underlying.AppendField(m.NewStructField("cap", slice_t._u32))
+	slice_t.underlying.AppendField(m.NewStructField("b", slice_t._base_block))
+	slice_t.underlying.AppendField(m.NewStructField("d", slice_t._base_ptr))
+	slice_t.underlying.AppendField(m.NewStructField("l", slice_t._u32))
+	slice_t.underlying.AppendField(m.NewStructField("c", slice_t._u32))
 	slice_t.underlying.Finish()
 
 	m.addValueType(&slice_t)
@@ -65,15 +65,15 @@ func (t *Slice) EmitLoadFromAddr(addr Value, offset int) []wat.Inst {
 /*这个函数极其不优雅*/
 func (t *Slice) emitGenFromRefOfSlice(x *aRef, low, high Value) (insts []wat.Inst) {
 	//block
-	insts = append(insts, x.Extract("data").EmitPush()...)
+	insts = append(insts, x.Extract("d").EmitPush()...)
 	insts = append(insts, wat.NewInstLoad(wat.U32{}, 0, 1))
-	insts = append(insts, wat.NewInstCall("$wa.runtime.Block.Retain"))
+	insts = append(insts, wat.NewInstCall("$Retain"))
 
 	//data
 	if low == nil {
 		low = NewConst("0", t._u32)
 	}
-	insts = append(insts, x.Extract("data").EmitPush()...)
+	insts = append(insts, x.Extract("d").EmitPush()...)
 	insts = append(insts, wat.NewInstLoad(wat.U32{}, 4, 1))
 
 	//insts = append(insts, NewConst(strconv.Itoa(x.Type().(*Ref).Base.(*Slice).Base.Size()), t._u32).EmitPush()...)
@@ -84,7 +84,7 @@ func (t *Slice) emitGenFromRefOfSlice(x *aRef, low, high Value) (insts []wat.Ins
 
 	//len:
 	if high == nil {
-		insts = append(insts, x.Extract("data").EmitPush()...)
+		insts = append(insts, x.Extract("d").EmitPush()...)
 		insts = append(insts, wat.NewInstLoad(wat.U32{}, 12, 1))
 	} else {
 		insts = append(insts, high.EmitPush()...)
@@ -93,7 +93,7 @@ func (t *Slice) emitGenFromRefOfSlice(x *aRef, low, high Value) (insts []wat.Ins
 	insts = append(insts, wat.NewInstSub(wat.U32{}))
 
 	//cap:
-	insts = append(insts, x.Extract("data").EmitPush()...)
+	insts = append(insts, x.Extract("d").EmitPush()...)
 	insts = append(insts, wat.NewInstLoad(wat.U32{}, 12, 1))
 	insts = append(insts, low.EmitPush()...)
 	insts = append(insts, wat.NewInstSub(wat.U32{}))
@@ -103,13 +103,13 @@ func (t *Slice) emitGenFromRefOfSlice(x *aRef, low, high Value) (insts []wat.Ins
 
 func (t *Slice) emitGenFromRefOfArray(x *aRef, low, high Value) (insts []wat.Inst) {
 	//block
-	insts = append(insts, x.Extract("block").EmitPush()...)
+	insts = append(insts, x.Extract("b").EmitPush()...)
 
 	//data
 	if low == nil {
 		low = NewConst("0", t._u32)
 	}
-	insts = append(insts, x.Extract("data").EmitPush()...)
+	insts = append(insts, x.Extract("d").EmitPush()...)
 	//insts = append(insts, NewConst(strconv.Itoa(x.Type().(*Ref).Base.(*Array).Base.Size()), t._u32).EmitPush()...)
 	insts = append(insts, NewConst(strconv.Itoa(t.Base.Size()), t._u32).EmitPush()...)
 	insts = append(insts, low.EmitPush()...)
@@ -174,14 +174,14 @@ func (t *Slice) genAppendFunc() string {
 	f.Locals = append(f.Locals, item)
 	//f.Insts = append(f.Insts, item.EmitInit()...)
 
-	x_len := NewLocal("x_len", x.Extract("len").Type())
+	x_len := NewLocal("x_len", x.Extract("l").Type())
 	f.Locals = append(f.Locals, x_len)
-	f.Insts = append(f.Insts, x.Extract("len").EmitPush()...)
+	f.Insts = append(f.Insts, x.Extract("l").EmitPush()...)
 	f.Insts = append(f.Insts, x_len.EmitPop()...)
 
-	y_len := NewLocal("y_len", y.Extract("len").Type())
+	y_len := NewLocal("y_len", y.Extract("l").Type())
 	f.Locals = append(f.Locals, y_len)
-	f.Insts = append(f.Insts, y.Extract("len").EmitPush()...)
+	f.Insts = append(f.Insts, y.Extract("l").EmitPush()...)
 	f.Insts = append(f.Insts, y_len.EmitPop()...)
 
 	//gen new_len:
@@ -194,7 +194,7 @@ func (t *Slice) genAppendFunc() string {
 
 	//if_new_len_le_cap
 	f.Insts = append(f.Insts, new_len.EmitPush()...)
-	f.Insts = append(f.Insts, x.Extract("cap").EmitPush()...)
+	f.Insts = append(f.Insts, x.Extract("c").EmitPush()...)
 	f.Insts = append(f.Insts, wat.NewInstLe(wat.U32{}))
 
 	src := NewLocal("src", t._base_ptr)
@@ -207,17 +207,17 @@ func (t *Slice) genAppendFunc() string {
 	{ //if_true
 		var if_true []wat.Inst
 
-		if_true = append(if_true, x.Extract("block").EmitPush()...)
-		if_true = append(if_true, x.Extract("data").EmitPush()...)
+		if_true = append(if_true, x.Extract("b").EmitPush()...)
+		if_true = append(if_true, x.Extract("d").EmitPush()...)
 		if_true = append(if_true, new_len.EmitPush()...)
-		if_true = append(if_true, x.Extract("cap").EmitPush()...)
+		if_true = append(if_true, x.Extract("c").EmitPush()...)
 
 		//get src
-		if_true = append(if_true, y.Extract("data").EmitPush()...)
+		if_true = append(if_true, y.Extract("d").EmitPush()...)
 		if_true = append(if_true, src.EmitPop()...)
 
 		//get dest
-		if_true = append(if_true, x.Extract("data").EmitPush()...)
+		if_true = append(if_true, x.Extract("d").EmitPush()...)
 		if_true = append(if_true, item_size.EmitPush()...)
 		if_true = append(if_true, x_len.EmitPush()...)
 		if_true = append(if_true, wat.NewInstMul(wat.U32{}))
@@ -281,7 +281,7 @@ func (t *Slice) genAppendFunc() string {
 
 		//x->new
 		{
-			if_false = append(if_false, x.Extract("data").EmitPush()...)
+			if_false = append(if_false, x.Extract("d").EmitPush()...)
 			if_false = append(if_false, src.EmitPop()...)
 
 			block := wat.NewInstBlock("block2")
@@ -319,7 +319,7 @@ func (t *Slice) genAppendFunc() string {
 
 		//y->new
 		{
-			if_false = append(if_false, y.Extract("data").EmitPush()...)
+			if_false = append(if_false, y.Extract("d").EmitPush()...)
 			if_false = append(if_false, src.EmitPop()...)
 
 			block := wat.NewInstBlock("block3")
@@ -384,40 +384,40 @@ func (t *Slice) genCopyFunc() string {
 	f.Locals = append(f.Locals, item)
 	//f.Insts = append(f.Insts, item.EmitInit()...)
 
-	count := NewLocal("count", d.Extract("len").Type())
+	count := NewLocal("count", d.Extract("l").Type())
 	f.Locals = append(f.Locals, count)
 	{
-		f.Insts = append(f.Insts, d.Extract("len").EmitPush()...)
-		f.Insts = append(f.Insts, s.Extract("len").EmitPush()...)
+		f.Insts = append(f.Insts, d.Extract("l").EmitPush()...)
+		f.Insts = append(f.Insts, s.Extract("l").EmitPush()...)
 		f.Insts = append(f.Insts, wat.NewInstGt(toWatType(count.Type())))
 
 		ifs := wat.NewInstIf(nil, nil, nil)
 		f.Insts = append(f.Insts, ifs)
 
-		ifs.True = append(ifs.True, s.Extract("len").EmitPush()...)
+		ifs.True = append(ifs.True, s.Extract("l").EmitPush()...)
 		ifs.True = append(ifs.True, count.EmitPop()...)
-		ifs.False = append(ifs.False, d.Extract("len").EmitPush()...)
+		ifs.False = append(ifs.False, d.Extract("l").EmitPush()...)
 		ifs.False = append(ifs.False, count.EmitPop()...)
 	}
 	f.Insts = append(f.Insts, count.EmitPush()...) //ret size
 
-	dp := NewLocal("dp", d.Extract("data").Type())
+	dp := NewLocal("dp", d.Extract("d").Type())
 	f.Locals = append(f.Locals, dp)
-	sp := NewLocal("sp", s.Extract("data").Type())
+	sp := NewLocal("sp", s.Extract("d").Type())
 	f.Locals = append(f.Locals, sp)
-	item_size := NewLocal("item_size", d.Extract("len").Type())
+	item_size := NewLocal("item_size", d.Extract("l").Type())
 	f.Locals = append(f.Locals, item_size)
 	{
-		f.Insts = append(f.Insts, d.Extract("data").EmitPush()...)
-		f.Insts = append(f.Insts, s.Extract("data").EmitPush()...)
-		f.Insts = append(f.Insts, wat.NewInstLt(toWatType(d.Extract("data").Type())))
+		f.Insts = append(f.Insts, d.Extract("d").EmitPush()...)
+		f.Insts = append(f.Insts, s.Extract("d").EmitPush()...)
+		f.Insts = append(f.Insts, wat.NewInstLt(toWatType(d.Extract("d").Type())))
 
 		ifs := wat.NewInstIf(nil, nil, nil)
 		f.Insts = append(f.Insts, ifs)
 		// dp<sp
-		ifs.True = append(ifs.True, d.Extract("data").EmitPush()...)
+		ifs.True = append(ifs.True, d.Extract("d").EmitPush()...)
 		ifs.True = append(ifs.True, dp.EmitPop()...)
-		ifs.True = append(ifs.True, s.Extract("data").EmitPush()...)
+		ifs.True = append(ifs.True, s.Extract("d").EmitPush()...)
 		ifs.True = append(ifs.True, sp.EmitPop()...)
 		ifs.True = append(ifs.True, wat.NewInstConst(wat.I32{}, strconv.Itoa(t.Base.Size())))
 		ifs.True = append(ifs.True, item_size.EmitPop()...)
@@ -430,12 +430,12 @@ func (t *Slice) genCopyFunc() string {
 		ifs.False = append(ifs.False, wat.NewInstMul(wat.I32{}))
 		ifs.False = append(ifs.False, item_size.EmitPop()...)
 
-		ifs.False = append(ifs.False, d.Extract("data").EmitPush()...)
+		ifs.False = append(ifs.False, d.Extract("d").EmitPush()...)
 		ifs.False = append(ifs.False, item_size.EmitPush()...)
 		ifs.False = append(ifs.False, wat.NewInstAdd(wat.I32{}))
 		ifs.False = append(ifs.False, dp.EmitPop()...)
 
-		ifs.False = append(ifs.False, s.Extract("data").EmitPush()...)
+		ifs.False = append(ifs.False, s.Extract("d").EmitPush()...)
 		ifs.False = append(ifs.False, item_size.EmitPush()...)
 		ifs.False = append(ifs.False, wat.NewInstAdd(wat.I32{}))
 		ifs.False = append(ifs.False, sp.EmitPop()...)
@@ -519,13 +519,13 @@ func (v *aSlice) emitStoreToAddr(addr Value, offset int) []wat.Inst {
 
 func (v *aSlice) emitSub(low, high Value) (insts []wat.Inst) {
 	//block
-	insts = append(insts, v.Extract("block").EmitPush()...)
+	insts = append(insts, v.Extract("b").EmitPush()...)
 
 	//data:
 	if low == nil {
 		low = NewConst("0", v.typ._u32)
 	}
-	insts = append(insts, v.Extract("data").EmitPush()...)
+	insts = append(insts, v.Extract("d").EmitPush()...)
 	insts = append(insts, NewConst(strconv.Itoa(v.typ.Base.Size()), v.typ._u32).EmitPush()...)
 	insts = append(insts, low.EmitPush()...)
 	insts = append(insts, wat.NewInstMul(wat.U32{}))
@@ -533,14 +533,14 @@ func (v *aSlice) emitSub(low, high Value) (insts []wat.Inst) {
 
 	//len:
 	if high == nil {
-		high = v.Extract("len")
+		high = v.Extract("l")
 	}
 	insts = append(insts, high.EmitPush()...)
 	insts = append(insts, low.EmitPush()...)
 	insts = append(insts, wat.NewInstSub(wat.U32{}))
 
 	//cap:
-	insts = append(insts, v.Extract("cap").EmitPush()...)
+	insts = append(insts, v.Extract("c").EmitPush()...)
 	insts = append(insts, low.EmitPush()...)
 	insts = append(insts, wat.NewInstSub(wat.U32{}))
 

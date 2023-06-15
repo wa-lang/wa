@@ -62,7 +62,7 @@ func (t *Block) onFree() int {
 
 	f.Insts = append(f.Insts, ptr.EmitPush()...)
 	f.Insts = append(f.Insts, wat.NewInstLoad(wat.U32{}, 0, 1))
-	f.Insts = append(f.Insts, wat.NewInstCall("$wa.runtime.Block.Release"))
+	f.Insts = append(f.Insts, wat.NewInstCall("$Release"))
 	f.Insts = append(f.Insts, ptr.EmitPush()...)
 	f.Insts = append(f.Insts, wat.NewInstConst(wat.U32{}, "0"))
 	f.Insts = append(f.Insts, wat.NewInstStore(wat.U32{}, 0, 1))
@@ -74,7 +74,7 @@ func (t *Block) onFree() int {
 func (t *Block) EmitLoadFromAddr(addr Value, offset int) (insts []wat.Inst) {
 	insts = append(insts, addr.EmitPush()...)
 	insts = append(insts, wat.NewInstLoad(wat.U32{}, offset, 1))
-	insts = append(insts, wat.NewInstCall("$wa.runtime.Block.Retain"))
+	insts = append(insts, wat.NewInstCall("$Retain"))
 	return
 }
 
@@ -135,7 +135,11 @@ func (v *aBlock) EmitInit() (insts []wat.Inst) {
 
 func (v *aBlock) EmitPush() (insts []wat.Inst) {
 	insts = append(insts, v.push(v.name))
-	insts = append(insts, wat.NewInstCall("$wa.runtime.Block.Retain"))
+	if v.Kind() == ValueKindConst && v.Name() == "0" {
+		return
+	}
+
+	insts = append(insts, wat.NewInstCall("$Retain"))
 	return
 }
 
@@ -146,29 +150,37 @@ func (v *aBlock) EmitPop() (insts []wat.Inst) {
 }
 
 func (v *aBlock) EmitRelease() (insts []wat.Inst) {
+	if v.Kind() == ValueKindConst && v.Name() == "0" {
+		return
+	}
 	insts = append(insts, v.push(v.name))
-	insts = append(insts, wat.NewInstCall("$wa.runtime.Block.Release"))
+	insts = append(insts, wat.NewInstCall("$Release"))
 	return
 }
 
 func (v *aBlock) emitStoreToAddr(addr Value, offset int) (insts []wat.Inst) {
-	insts = append(insts, addr.EmitPush()...)                           // a
-	insts = append(insts, v.EmitPush()...)                              // a v
-	insts = append(insts, addr.EmitPush()...)                           // a v a
-	insts = append(insts, wat.NewInstLoad(wat.U32{}, offset, 1))        // a v o
-	insts = append(insts, wat.NewInstCall("$wa.runtime.Block.Release")) // a v
+	//if addr.Kind() == ValueKindGlobal_Pointer {
+	//	if v.Kind() == ValueKindConst && v.Name() == "0" {
+	//		return
+	//	}
+	//}
+	insts = append(insts, addr.EmitPush()...)                    // a
+	insts = append(insts, v.EmitPush()...)                       // a v
+	insts = append(insts, addr.EmitPush()...)                    // a v a
+	insts = append(insts, wat.NewInstLoad(wat.U32{}, offset, 1)) // a v o
+	insts = append(insts, wat.NewInstCall("$Release"))           // a v
 
 	insts = append(insts, wat.NewInstStore(toWatType(v.Type()), offset, 1))
 	return
 }
 
 func (v *aBlock) emitStore(offset int) (insts []wat.Inst) {
-	insts = append(insts, wat.NewInstCall("$wa.runtime.DupI32"))        // a
-	insts = append(insts, wat.NewInstCall("$wa.runtime.DupI32"))        // a a
-	insts = append(insts, v.EmitPush()...)                              // a a v
-	insts = append(insts, wat.NewInstCall("$wa.runtime.SwapI32"))       // a v a
-	insts = append(insts, wat.NewInstLoad(wat.U32{}, offset, 1))        // a v o
-	insts = append(insts, wat.NewInstCall("$wa.runtime.Block.Release")) // a v
+	insts = append(insts, wat.NewInstCall("$wa.runtime.DupI32"))  // a
+	insts = append(insts, wat.NewInstCall("$wa.runtime.DupI32"))  // a a
+	insts = append(insts, v.EmitPush()...)                        // a a v
+	insts = append(insts, wat.NewInstCall("$wa.runtime.SwapI32")) // a v a
+	insts = append(insts, wat.NewInstLoad(wat.U32{}, offset, 1))  // a v o
+	insts = append(insts, wat.NewInstCall("$Release"))            // a v
 
 	insts = append(insts, wat.NewInstStore(toWatType(v.Type()), offset, 1))
 	return
