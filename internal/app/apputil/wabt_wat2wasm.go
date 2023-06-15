@@ -46,7 +46,7 @@ func RunWasmEx(cfg *config.Config, filename string, wasmArgs ...string) (stdout,
 
 func RunWat2Wasm(filename string) (stdout, stderr []byte, err error) {
 	watDir := getWatAbsDir(filename)
-	stdout, stderr, err = xRunWat2Wasm_exe(watDir, filepath.Base(filename), "--output=-")
+	stdout, stderr, err = xRunWat2Wasm_exe(watDir, filename, "--output=-")
 	return
 }
 
