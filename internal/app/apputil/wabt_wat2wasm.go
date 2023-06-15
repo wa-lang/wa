@@ -183,33 +183,6 @@ func xRunWat2Wasm_wasm(dir string, args ...string) (stdout, stderr []byte, err e
 	return stdoutBuffer.Bytes(), stderrBuffer.Bytes(), nil
 }
 
-func xInstallWat2wasm(path string) error {
-	if path == "" {
-		path, _ = os.Getwd()
-	}
-
-	var exePath string
-	if isDir(path) {
-		if runtime.GOOS == "windows" {
-			exePath = filepath.Join(path, "wat2wasm.exe")
-		} else {
-			exePath = filepath.Join(path, "wat2wasm")
-		}
-	} else {
-		exePath = path
-	}
-
-	if err := os.MkdirAll(filepath.Dir(exePath), 0777); err != nil {
-		logger.Tracef(&config.EnableTrace_app, "install wat2wasm failed: %+v", err)
-	}
-	if err := os.WriteFile(exePath, wabt.LoadWat2Wasm(), 0777); err != nil {
-		logger.Tracef(&config.EnableTrace_app, "install wat2wasm failed: %+v", err)
-		return err
-	}
-
-	return nil
-}
-
 var muRunWat2Wasm sync.Mutex
 var wat2wasmPath string
 
