@@ -74,6 +74,9 @@ func Main() {
 
 	// 没有参数时对应 run 命令
 	cliApp.Action = func(c *cli.Context) error {
+		if c.NArg() < 1 {
+			cli.ShowAppHelpAndExit(c, 0)
+		}
 		cliRun(c)
 		return nil
 	}

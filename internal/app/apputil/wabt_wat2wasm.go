@@ -6,16 +6,21 @@ import (
 	"bytes"
 	"context"
 	"crypto/rand"
+	"errors"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"runtime"
 	"strings"
+	"sync"
 
 	"github.com/tetratelabs/wazero"
 	"github.com/tetratelabs/wazero/sys"
 
 	"wa-lang.org/wa/internal/app/waruntime"
 	"wa-lang.org/wa/internal/config"
+	"wa-lang.org/wa/internal/logger"
+	"wa-lang.org/wabt-go"
 	wabt_wasm "wa-lang.org/wabt-go/wabt-wasm"
 )
 
@@ -41,23 +46,21 @@ func RunWasmEx(cfg *config.Config, filename string, wasmArgs ...string) (stdout,
 
 func RunWat2Wasm(filename string) (stdout, stderr []byte, err error) {
 	watDir := getWatAbsDir(filename)
-	stdout, stderr, err = runWat2Wasm(watDir, "/"+filepath.Base(filename), "--output=-")
+	stdout, stderr, err = xRunWat2Wasm_exe(watDir, filepath.Base(filename), "--output=-")
 	return
 }
 
 func runWasm(cfg *config.Config, filename string, wasmArgs ...string) (stdout, stderr []byte, err error) {
 	dst := filename
 	if strings.HasSuffix(filename, ".wat") {
-		dst = filename[:len(filename)-len(".wat")] + ".wasm"
+		dst = filename + ".wasm"
 		defer func() {
 			if err == nil {
 				os.Remove(dst)
 			}
 		}()
 
-		// 将目录 wat 文件目录映射到根目录
-		watDir := getWatAbsDir(filename)
-		if stdout, stderr, err = runWat2Wasm(watDir, "/"+filepath.Base(filename), "--output=-"); err != nil {
+		if stdout, stderr, err = xRunWat2Wasm_exe("", filename, "--output=-"); err != nil {
 			return stdout, stderr, err
 		}
 
@@ -135,7 +138,11 @@ func runWasm(cfg *config.Config, filename string, wasmArgs ...string) (stdout, s
 	return stdoutBuffer.Bytes(), stderrBuffer.Bytes(), nil
 }
 
-func runWat2Wasm(dir string, args ...string) (stdout, stderr []byte, err error) {
+func xRunWat2Wasm_wasm(dir string, args ...string) (stdout, stderr []byte, err error) {
+	if true {
+		panic("disabled")
+	}
+
 	stdoutBuffer := new(bytes.Buffer)
 	stderrBuffer := new(bytes.Buffer)
 
@@ -174,4 +181,115 @@ func runWat2Wasm(dir string, args ...string) (stdout, stderr []byte, err error) 
 	}
 
 	return stdoutBuffer.Bytes(), stderrBuffer.Bytes(), nil
+}
+
+func xInstallWat2wasm(path string) error {
+	if path == "" {
+		path, _ = os.Getwd()
+	}
+
+	var exePath string
+	if isDir(path) {
+		if runtime.GOOS == "windows" {
+			exePath = filepath.Join(path, "wat2wasm.exe")
+		} else {
+			exePath = filepath.Join(path, "wat2wasm")
+		}
+	} else {
+		exePath = path
+	}
+
+	if err := os.MkdirAll(filepath.Dir(exePath), 0777); err != nil {
+		logger.Tracef(&config.EnableTrace_app, "install wat2wasm failed: %+v", err)
+	}
+	if err := os.WriteFile(exePath, wabt.LoadWat2Wasm(), 0777); err != nil {
+		logger.Tracef(&config.EnableTrace_app, "install wat2wasm failed: %+v", err)
+		return err
+	}
+
+	return nil
+}
+
+var muRunWat2Wasm sync.Mutex
+var wat2wasmPath string
+
+func xRunWat2Wasm_exe(_ string, args ...string) (stdout, stderr []byte, err error) {
+	muRunWat2Wasm.Lock()
+	defer muRunWat2Wasm.Unlock()
+
+	if wat2wasmPath == "" {
+		logger.Tracef(&config.EnableTrace_app, "wat2wasm not found")
+		return nil, nil, errors.New("wat2wasm not found")
+	}
+
+	var bufStdout bytes.Buffer
+	var bufStderr bytes.Buffer
+
+	cmd := exec.Command(wat2wasmPath, args...)
+	cmd.Stdout = &bufStdout
+	cmd.Stderr = &bufStderr
+
+	err = cmd.Run()
+	stdout = bufStdout.Bytes()
+	stderr = bufStderr.Bytes()
+	return
+}
+
+func init() {
+	const baseName = "wa.wat2wasm.exe"
+
+	// 1. exe 同级目录存在 wat2wasm ?
+	wat2wasmPath = filepath.Join(curExeDir(), baseName)
+	if exeExists(wat2wasmPath) {
+		return
+	}
+
+	// 2. 当前目录存在 wat2wasm ?
+	cwd, _ := os.Getwd()
+	wat2wasmPath = filepath.Join(cwd, baseName)
+	if exeExists(wat2wasmPath) {
+		return
+	}
+
+	// 3. 本地系统存在 wat2wasm ?
+	if s, _ := exec.LookPath(baseName); s != "" {
+		wat2wasmPath = s
+		return
+	}
+
+	// 4. wat2wasm 安装到 exe 所在目录 ?
+	wat2wasmPath = filepath.Join(curExeDir(), baseName)
+	if err := os.WriteFile(wat2wasmPath, wabt.LoadWat2Wasm(), 0777); err != nil {
+		logger.Tracef(&config.EnableTrace_app, "install wat2wasm failed: %+v", err)
+		return
+	}
+}
+
+// 是否为目录
+func isDir(path string) bool {
+	if fi, _ := os.Lstat(path); fi != nil && fi.IsDir() {
+		return true
+	}
+	return false
+}
+
+// exe 文件存在
+func exeExists(path string) bool {
+	fi, err := os.Lstat(path)
+	if err != nil {
+		return false
+	}
+	if !fi.Mode().IsRegular() {
+		return false
+	}
+	return true
+}
+
+// 当前执行程序所在目录
+func curExeDir() string {
+	s, err := os.Executable()
+	if err != nil {
+		logger.Panicf("os.Executable() failed: %+v", err)
+	}
+	return filepath.Dir(s)
 }
