@@ -154,4 +154,4 @@ $ go run main.go run _examples/prime
 |吴烜  |  3000|
 |刘斌  |  2500|
 
-贡献点变更记录见 _cplog 目录。
+贡献点变更记录见 [_cplog](_cplog) 目录。
