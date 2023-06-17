@@ -1,7 +1,7 @@
 // 版权 @2023 凹语言 作者。保留所有权利。
 
 func main {
-	var err: myIface = &errorString{"myError"}
+	err: myIface = &errorString{"myError"}
 	xerr, ok := err.(myIface)
 
 	println("ok:", ok) // BUG: OK 始终返回 false

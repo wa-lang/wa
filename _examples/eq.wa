@@ -18,7 +18,7 @@ type T2 struct {
 }
 
 func main() {
-	var v1, v2: T1
+	v1, v2: T1
 	
 	v1.a = 13
 	v2.a = 42
@@ -49,7 +49,7 @@ func main() {
 		println("ne")
 	}
 
-	var i1, i2: interface{}
+	i1, i2: interface{}
 	i1 = "abc"
 	if i1 == nil{
 		println("i1 == nil:eq")
@@ -103,7 +103,7 @@ func main() {
 		println("ne")
 	}
 	
-	var i3: I
+	i3: I
 	i3 = &v1
 	if i1 == i3 {		
 		println("eq")
@@ -117,7 +117,7 @@ func main() {
 		println("ne")
 	}
 	
-	var v3, v4: T2
+	v3, v4: T2
 	//if v3 == v4 {
 	//	println("eq")
 	//} else {

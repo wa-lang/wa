@@ -27,7 +27,7 @@ func T2.f(){
 func main() {
 	v1 := T1{a: 13}
 
-	var i1: I1 = &v1  //具体类型到具名接口
+	i1: I1 = &v1  //具体类型到具名接口
 	v1.f()  //直接调用
 	i1.f()  //接口调用
 	doConcreteType(i1)
@@ -39,7 +39,7 @@ func main() {
 	doConcreteType(i1)
 	i1.f()
 	
-	var ni: interface{} = &v1  //具体类型到空接口
+	ni: interface{} = &v1  //具体类型到空接口
 	i1 = ni.(I1)  //接口动态互转
 	i1.f()
 	
@@ -47,7 +47,7 @@ func main() {
 	i1 = ni.(I1)  //接口动态互转
 	i1.f()
 
-	var ival: i32 = 777
+	ival: i32 = 777
 	ni = ival
 	doConcreteType(ni)
 	doConcreteType(v1)
@@ -57,7 +57,7 @@ func main() {
 	//i2 := ni.(I2)  //接口互转，由于v2未实现I2，这会触发异常
 	//i2.f2()
 	
-	var anoni: interface{ f() } = &v1  //具体类型到匿名接口
+	anoni: interface{ f() } = &v1  //具体类型到匿名接口
 	anoni.f()
 	i1 = anoni //匿名接口向具名接口转换
 	i1.f()

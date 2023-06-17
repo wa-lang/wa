@@ -135,7 +135,7 @@ func test_loop1(a u64, b u64) {
 }
 
 func test_array(a int, b int) {
-  var arr [10][10]int
+  arr: [10][10]int
   for i := 0; i < 10; i++ {
     for j := 0; j < 10; j++ {
       arr[i][j] = i * j
@@ -185,8 +185,9 @@ type struct_t0 struct {
   arr0 [16]int
   arr1 [16]f32
 }
-var st0 struct_t0
-var st1 struct_t0
+
+var st0: struct_t0
+var st1: struct_t0
 
 func test_struct2() {
   for i := 0; i < 16; i++ {
@@ -210,7 +211,7 @@ func test_struct3() {
 }
 
 func maket0a(i int) struct_t0 {
-  var r struct_t0
+  r: struct_t0
   for j := 0; j < 16; j++ {
     r.arr0[j] = 100 - j - i
     r.arr1[j] = 200.0 - f32(j + i)
@@ -234,8 +235,9 @@ func test_struct4() {
 }
 
 type fff32 f32
-var arr0 [32]fff32
-var arr1 [32]fff32
+
+var arr0: [32]fff32
+var arr1: [32]fff32
 
 func test_array2() {
   for i := 0; i < 32; i++ {
@@ -252,7 +254,7 @@ func getarr0b(arr *[32]fff32, i int) fff32 {
 }
 
 func makearr0a(i int) [32]fff32 {
-  var r [32]fff32
+  r: [32]fff32
   for j := 0; j < 32; j++ {
     r[j] = fff32(i * j)
   }
@@ -361,8 +363,9 @@ type ty0 struct {
   v0 int
   v1 f64
 }
-var gv0 ty0 = ty0{5555, 3.1415926}
-var gv1 [4]int = [4]int{81, 82, 17, 76}
+
+var gv0: ty0 = ty0{5555, 3.1415926}
+var gv1: [4]int = [4]int{81, 82, 17, 76}
 
 func test_global_variables_0() {
   println("gv0: {", gv0.v0, ", ", gv0.v1, "}")
@@ -380,8 +383,8 @@ func test_global_variables_1() {
   println("gv1: {", gv1[0], ", ", gv1[1], ", ", gv1[2], ", ", gv1[3], "}")
 }
 
-var gint0 int = 100
-var gint1 int = 200
+var gint0: int = 100
+var gint1: int = 200
 
 func get_int_addr(a int) *int {
   if a > 0 {

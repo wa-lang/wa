@@ -11,7 +11,7 @@ type struct_t0 struct {
 var st1: struct_t0
 
 func maket0a(i: int) => struct_t0 {
-	var r: struct_t0
+	r: struct_t0
 	for j := 0; j < 16; j++ {
 		r.arr0[j] = 100 - j - i
 		r.arr1[j] = 200.0 - f32(j+i)

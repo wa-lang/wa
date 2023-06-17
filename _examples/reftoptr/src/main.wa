@@ -7,8 +7,8 @@ func refToPtr_i32(p: *i32) => i32
 func refToPtr_byteSlice(t: []byte) => i32
 
 func main() {
-	var i: i32
-	var j: []byte
+	i: i32
+	j: []byte
 	println(refToPtr_i32(&i))
 	println(refToPtr_byteSlice(j))
 	j = append(j, 33)

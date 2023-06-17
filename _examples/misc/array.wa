@@ -2,7 +2,7 @@
 
 package main
 
-var I [8]i32
+var I: [8]i32
 
 func Gen_arr(param: [8]i32) => [8]i32 {
 	param[3] += 2
@@ -10,7 +10,7 @@ func Gen_arr(param: [8]i32) => [8]i32 {
 }
 
 func main() {
-	var j [8]i32
+	j: [8]i32
 	j[3] = 40
 	I = Gen_arr(j)
 

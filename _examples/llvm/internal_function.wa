@@ -12,9 +12,9 @@ func main() {
 		println("World!")
 	}()
 
-	var i: int = 31
-	var j: [4]f32 = [4]f32{1, 2.2, 5.5, 9.8}
-	var k: pair = pair{3.14, 2.718}
+	i: int = 31
+	j: [4]f32 = [4]f32{1, 2.2, 5.5, 9.8}
+	k: pair = pair{3.14, 2.718}
 	show := func(q: int) {
 		println(i, " + ", q, " = ", i+q)
 		println("{", j[0], ", ", j[1], ", ", j[2], ", ", j[3], "}")
