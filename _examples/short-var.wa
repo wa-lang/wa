@@ -1,0 +1,12 @@
+// 版权 @2023 凹语言 作者。保留所有权利。
+
+func main {
+	L0: bool
+	L: int = 123
+
+Loop:
+	for 1 > 0 {
+		println(L0, L)
+		break Loop
+	}
+}

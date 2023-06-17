@@ -1672,9 +1672,72 @@ func (p *parser) parseSimpleStmt(mode int) (ast.Stmt, bool) {
 		defer un(trace(p, "SimpleStmt"))
 	}
 
-	x := p.parseLhsList()
+	var x = p.parseLhsList()
+	var colonPos token.Pos
 
 	switch p.tok {
+	case token.COLON:
+		colonPos = p.pos
+		p.next()
+
+		// Wa 只有 for 和 switch 有 Label
+		if p.tok == token.FOR || p.tok == token.SWITCH {
+			break // 继续后面的 Label 解析
+		}
+
+		// x: int
+		// x: int = 123
+		// END: int = 123 // 这里的 END 是 变量
+		// a, b: int
+		// a, b: int = 123, 456
+
+		// 解析 idents 列表
+		var idents = make([]*ast.Ident, 0, len(x))
+		for _, xi := range x {
+			if ident, ok := xi.(*ast.Ident); ok {
+				idents = append(idents, ident)
+			} else {
+				p.errorExpected(xi.Pos(), "identifier on left side of :type")
+				break
+			}
+		}
+
+		typ := p.tryType()
+		if typ == nil {
+			p.error(colonPos, "missing variable type")
+		}
+
+		var values []ast.Expr
+		// always permit optional initialization for more tolerant parsing
+		if p.tok == token.ASSIGN {
+			p.next()
+			values = p.parseRhsList()
+		}
+
+		// Go spec: The scope of a constant or variable identifier declared inside
+		// a function begins at the end of the ConstSpec or VarSpec and ends at
+		// the end of the innermost containing block.
+		// (Global identifiers are resolved in a separate phase after parsing.)
+		spec := &ast.ValueSpec{
+			Names:    idents,
+			ColonPos: colonPos,
+			Type:     typ,
+			Values:   values,
+			Comment:  p.lineComment,
+		}
+
+		p.declare(spec, nil, p.topScope, ast.Var, idents...)
+
+		declStmt := &ast.DeclStmt{
+			Decl: &ast.GenDecl{
+				TokPos: x[0].Pos(),
+				Tok:    token.VAR,
+				Specs:  []ast.Spec{spec},
+			},
+		}
+
+		return declStmt, false
+
 	case
 		token.DEFINE, token.ASSIGN, token.ADD_ASSIGN,
 		token.SUB_ASSIGN, token.MUL_ASSIGN, token.QUO_ASSIGN,
@@ -1705,11 +1768,15 @@ func (p *parser) parseSimpleStmt(mode int) (ast.Stmt, bool) {
 		// continue with first expression
 	}
 
-	switch p.tok {
-	case token.COLON:
+	if colonPos != token.NoPos {
 		// labeled statement
-		colon := p.pos
-		p.next()
+		colon := colonPos
+
+		// 只有 for 和 switch 有 Label
+		if p.tok != token.FOR && p.tok != token.SWITCH {
+			p.errorExpected(p.pos, "for or switch")
+		}
+
 		if label, isIdent := x[0].(*ast.Ident); mode == labelOk && isIdent {
 			// Go spec: The scope of a label is the body of the function
 			// in which it is declared and excludes the body of any nested
@@ -1726,12 +1793,14 @@ func (p *parser) parseSimpleStmt(mode int) (ast.Stmt, bool) {
 		// position for error reporting.
 		p.error(colon, "illegal label declaration")
 		return &ast.BadStmt{From: x[0].Pos(), To: colon + 1}, false
-
-	case token.INC, token.DEC:
-		// increment or decrement
-		s := &ast.IncDecStmt{X: x[0], TokPos: p.pos, Tok: p.tok}
-		p.next()
-		return s, false
+	} else {
+		switch p.tok {
+		case token.INC, token.DEC:
+			// increment or decrement
+			s := &ast.IncDecStmt{X: x[0], TokPos: p.pos, Tok: p.tok}
+			p.next()
+			return s, false
+		}
 	}
 
 	// expression
@@ -2169,6 +2238,7 @@ func (p *parser) parseStmt() (s ast.Stmt) {
 
 	switch p.tok {
 	case token.CONST, token.TYPE, token.VAR:
+		// TODO(chai2010): var declaration not allowed in func body
 		s = &ast.DeclStmt{Decl: p.parseDecl(stmtStart)}
 	case
 		// tokens that may start an expression
