@@ -1,0 +1,39 @@
+// 版权 @2023 凹语言 作者。保留所有权利。
+
+// Equal reports whether a and b
+// are the same length and contain the same bytes.
+// A nil argument is equivalent to an empty slice.
+func Equal(a, b: []byte) => bool {
+	// Neither cmd/compile nor gccgo allocates for these string conversions.
+	return string(a) == string(b)
+}
+
+// 忽略英文大小写比较
+func EqualFold(s, t: []byte) => bool {
+	if len(s) != len(t) {
+		return false
+	}
+	if len(s) == 0 {
+		return true
+	}
+	for i := 0; i < len(s); i++ {
+		if toupper(s[i]) != toupper(t[i]) {
+			return false
+		}
+	}
+	return true
+}
+
+func toupper(c: byte) => byte {
+	if c >= 'a' && c <= 'z' {
+		return c - 32
+	}
+	return c
+}
+
+func tolower(c: byte) => byte {
+	if c >= 'A' && c <= 'Z' {
+		return c + 32
+	}
+	return c
+}

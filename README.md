@@ -44,7 +44,7 @@ Instead of requiring complex toolchains to set up, you can simply go install it 
 
 Install from binary: download `wa` command from https://github.com/wa-lang/wa/releases, and set `$PATH` env.
 
-Or install form Go (Go >= 1.17):
+Or install from Go (Go >= 1.17):
 
 1. `go install wa-lang.org/wa@latest`
 2. `cd waroot`
@@ -58,8 +58,6 @@ Or install form Go (Go >= 1.17):
 Print rune and call function：
 
 ```wa
-// Copyright @2019-2022 The Wa author. All rights reserved.
-
 import "fmt"
 
 func main {
@@ -87,7 +85,7 @@ hello, Wa!
 
 Print prime numbers up to 30:
 
-```
+```wa
 func main {
 	for n := 2; n <= 30; n = n + 1 {
 		isPrime: int = 1

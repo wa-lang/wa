@@ -43,3 +43,4 @@ ci-test-all:
 	make -C ./waroot/examples ci-test-all
 
 clean:
+	-rm a.out*

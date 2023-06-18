@@ -1,0 +1,10 @@
+// 版权 @2023 凹语言 作者。保留所有权利。
+
+#wa:import wa_js_env waPrintI32
+func PrintI32(i: i32)
+
+#wa:import wa_js_env waPrintRune
+func PrintRune(ch: i32)
+
+#wa:import wa_js_env waPuts
+func Puts(ptr: i32, len: i32)

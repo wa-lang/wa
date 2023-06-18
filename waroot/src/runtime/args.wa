@@ -1,0 +1,59 @@
+// 版权 @2023 凹语言 作者。保留所有权利。
+
+var assciiTable = [...]string {
+	"\x00", "\x01", "\x02", "\x03", "\x04", "\x05", "\x06", "\a", "\b", "\t", "\n", "\v", "\f", "\r", "\x0e", "\x0f", "\x10", "\x11", "\x12", "\x13", "\x14", "\x15", "\x16", "\x17", "\x18", "\x19", "\x1a", "\x1b", "\x1c", "\x1d", "\x1e", "\x1f", " ", "!", "\"", "#", "$", "%", "&", "'", "(", ")", "*", "+", ",", "-", ".", "/", "0", "1", "2", "3", "4", "5", "6", "7", "8", "9", ":", ";", "<", "=", ">", "?", "@", "A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P", "Q", "R", "S", "T", "U", "V", "W", "X", "Y", "Z", "[", "\\", "]", "^", "_", "`", "a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k", "l", "m", "n", "o", "p", "q", "r", "s", "t", "u", "v", "w", "x", "y", "z", "{", "|", "}", "~", "\u007f",
+	"\x80", "\x81", "\x82", "\x83", "\x84", "\x85", "\x86", "\x87", "\x88", "\x89", "\x8a", "\x8b", "\x8c", "\x8d", "\x8e", "\x8f", "\x90", "\x91", "\x92", "\x93", "\x94", "\x95", "\x96", "\x97", "\x98", "\x99", "\x9a", "\x9b", "\x9c", "\x9d", "\x9e", "\x9f", "\xa0", "\xa1", "\xa2", "\xa3", "\xa4", "\xa5", "\xa6", "\xa7", "\xa8", "\xa9", "\xaa", "\xab", "\xac", "\xad", "\xae", "\xaf", "\xb0", "\xb1", "\xb2", "\xb3", "\xb4", "\xb5", "\xb6", "\xb7", "\xb8", "\xb9", "\xba", "\xbb", "\xbc", "\xbd", "\xbe", "\xbf", "\xc0", "\xc1", "\xc2", "\xc3", "\xc4", "\xc5", "\xc6", "\xc7", "\xc8", "\xc9", "\xca", "\xcb", "\xcc", "\xcd", "\xce", "\xcf", "\xd0", "\xd1", "\xd2", "\xd3", "\xd4", "\xd5", "\xd6", "\xd7", "\xd8", "\xd9", "\xda", "\xdb", "\xdc", "\xdd", "\xde", "\xdf", "\xe0", "\xe1", "\xe2", "\xe3", "\xe4", "\xe5", "\xe6", "\xe7", "\xe8", "\xe9", "\xea", "\xeb", "\xec", "\xed", "\xee", "\xef", "\xf0", "\xf1", "\xf2", "\xf3", "\xf4", "\xf5", "\xf6", "\xf7", "\xf8", "\xf9", "\xfa", "\xfb", "\xfc", "\xfd", "\xfe", "\xff",
+}
+
+func bytes2str(b: []byte) => string {
+	var s: string
+	for _, x := range b {
+		s += assciiTable[x]
+	}
+	return s
+}
+
+func getCStr(b: []byte, start: i32) => string {
+	var end: i32 = i32(len(b))
+	for i := start; i < end; i++ {
+		if b[i] == 0 {
+			end = i32(i);
+			break
+		}
+	}
+	return bytes2str(b[start:end])
+}
+
+func os_get_args() => []string {
+	var argc: i32
+	var argv_buf_size: i32
+
+	argsSizesGet(refToPtr_i32(&argc), refToPtr_i32(&argv_buf_size))
+	if argc == 0 {
+		return nil
+	}
+
+	var argvBytes = make([]byte, argc*4)
+	var argvU32 = make([]u32, argc)
+
+	var argv_buf = make([]byte, argv_buf_size)
+	var argv_buf_ptr: i32 = refToPtr_byteSlice(argv_buf)
+
+	argsGet(refToPtr_byteSlice(argvBytes), argv_buf_ptr)
+
+	for i := 0; i < len(argvBytes); i += 4 {
+		a0 := u32(argvBytes[i+0]);
+		a1 := u32(argvBytes[i+1]);
+		a2 := u32(argvBytes[i+2]);
+		a3 := u32(argvBytes[i+3]);
+		argvU32[i/4] = a0 + a1*256 + a2*256*256 + a3*256*256*256
+	}
+
+	var args = make([]string, argc)
+	for i := 0; i < int(argc); i++ {
+		var off = i32(argvU32[i]) - argv_buf_ptr
+		args[i] = getCStr(argv_buf, off)
+	}
+
+	return args
+}

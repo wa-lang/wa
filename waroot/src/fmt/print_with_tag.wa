@@ -1,0 +1,7 @@
+// 版权 @2023 凹语言 作者。保留所有权利。
+
+#wa:build fmt_tag
+
+func Println(x: int) {
+	println("fmt_tag:", x)
+}
