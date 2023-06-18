@@ -23,7 +23,7 @@ jobs:
           go-version: 1.17
 
       - run: make -C internal/app/wawasm
-      - run: make -C _examples/snake publish
+      - run: make -C waroot/examples/snake publish
 
       - name: Deploy
         uses: peaceiris/actions-gh-pages@v3

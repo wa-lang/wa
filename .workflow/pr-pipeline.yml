@@ -29,9 +29,9 @@ stages:
           chmod +X output/wa-lang-linux64/wa
           ./output/wa-lang-linux64/wa
           ./output/wa-lang-linux64/wa -h
-          ./output/wa-lang-linux64/wa hello.wa
-          ./output/wa-lang-linux64/wa run _examples/prime
-          ./output/wa-lang-linux64/wa run hello.wa
+          #./output/wa-lang-linux64/wa waroot/hello.wa
+          #./output/wa-lang-linux64/wa run waroot/examples/prime
+          #./output/wa-lang-linux64/wa run waroot/hello.wa
 
         # 非必填字段，开启后表示将构建产物暂存，但不会上传到制品库中，7天后自动清除
         artifacts:

@@ -1,10 +1,11 @@
 # 版权 @2019 凹语言 作者。保留所有权利。
 
 hello:
-	go run main.go run hello.wa
+	go install
+	cd waroot && go run ../main.go run hello.wa
 
 prime:
-	go run main.go run _examples/prime
+	cd waroot && go run ../main.go run examples/prime
 
 build-wasm:
 	GOARCH=wasm GOOS=js go build -o wa.out.wasm ./main_wasm.go
@@ -21,6 +22,7 @@ arduino-build:
 	xxd -i a.out.wasm > app.wasm.h
 
 ci-test-all:
+	go install
 	go test ./...
 
 	@echo "== std test begin =="
@@ -39,8 +41,8 @@ ci-test-all:
 	go run main.go test unicode/utf8
 	@echo "== std ok =="
 
-	go run main.go hello.wa
+	cd waroot && go run ../main.go hello.wa
 
-	make -C ./_examples ci-test-all
+	make -C ./waroot/examples ci-test-all
 
 clean:

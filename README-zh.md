@@ -43,8 +43,9 @@
 通过 Go 语言安装需要执行以下命令 (Go >= 1.17):
 
 1. `go install wa-lang.org/wa@latest`
-2. `wa init -name=_examples/hi`
-3. `wa run _examples/hi`
+2. `cd waroot`
+3. `wa init -name=examples/hi`
+4. `wa run examples/hi`
 
 ## 例子: 凹语言
 
@@ -99,7 +100,7 @@ func main {
 运行并输出结果:
 
 ```
-$ go run main.go run _examples/prime
+$ cd waroot && go run ../main.go run examples/prime
 2
 3
 5
@@ -136,7 +137,7 @@ $ go run main.go run _examples/prime
 
 运行的结果和英文语法的示例相同。
 
-更多例子 [_examples](_examples)
+更多例子 [waroot/examples](waroot/examples)
 
 ## 贡献者名单
 

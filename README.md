@@ -36,7 +36,7 @@ Instead of requiring complex toolchains to set up, you can simply go install it 
 ## Snake Game
 
 - Play: [https://wa-lang.org/wa/snake/](https://wa-lang.org/wa/snake/)
-- Code: [_examples/snake/README-en.md](_examples/snake/README-en.md)
+- Code: [waroot/examples/snake/README-en.md](waroot/examples/snake/README-en.md)
 
 ![](https://wa-lang.org/st0018-03.jpg)
 
@@ -47,8 +47,9 @@ Install from binary: download `wa` command from https://github.com/wa-lang/wa/re
 Or install form Go (Go >= 1.17):
 
 1. `go install wa-lang.org/wa@latest`
-2. `wa init -name=_examples/hi`
-3. `wa run _examples/hi`
+2. `cd waroot`
+2. `wa init -name=examples/hi`
+3. `wa run examples/hi`
 
 > The Wa project is still in very early stage. If you want to submit PR, please read the [Contribution Guide(Chinese)](https://wa-lang.org/community/contribute.html). We do not accept PR only about 3rdparty changes.
 
@@ -105,7 +106,7 @@ func main {
 Execute the program:
 
 ```
-$ go run main.go run _examples/prime
+$ cd waroot && go run ../main.go run examples/prime
 2
 3
 5
@@ -144,7 +145,7 @@ Print prime numbers up to 30:
 
 Output is the same as the previous example.
 
-More examples [_examples](_examples)
+More examples [waroot/examples](waroot/examples)
 
 ## Contributors
 

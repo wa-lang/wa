@@ -30,10 +30,10 @@ jobs:
       - run: go install
 
       - run: wa -h
-      - run: wa hello.wa
-      - run: wa run _examples/prime
-      - run: wa run hello.wa
-      - run: wa run -target=chrome hello.wa 
+      - run: cd waroot && wa hello.wa
+      - run: cd waroot && wa run examples/prime
+      - run: cd waroot && wa run hello.wa
+      - run: cd waroot && wa run -target=chrome hello.wa 
 
       - uses: shogo82148/actions-goveralls@v1
         with:
@@ -60,10 +60,10 @@ jobs:
       - run: go install
 
       - run: wa -h
-      - run: wa hello.wa
-      - run: wa run _examples/prime
-      - run: wa run hello.wa
-      - run: wa run -target=chrome hello.wa 
+      - run: cd waroot && wa hello.wa
+      - run: cd waroot && wa run examples/prime
+      - run: cd waroot && wa run hello.wa
+      - run: cd waroot && wa run -target=chrome hello.wa 
 
   build-and-test-macos:
     runs-on: macos-12
@@ -86,7 +86,7 @@ jobs:
       - run: go install
 
       - run: wa -h
-      - run: wa hello.wa
-      - run: wa run _examples/prime
-      - run: wa run hello.wa
-      - run: wa run -target=chrome hello.wa 
+      - run: cd waroot && wa hello.wa
+      - run: cd waroot && wa run examples/prime
+      - run: cd waroot && wa run hello.wa
+      - run: cd waroot && wa run -target=chrome hello.wa 

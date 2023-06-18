@@ -27,7 +27,7 @@
 
 我们计划在完成凹中文前端的重构（即完全脱离现有的Go前端）之时，得到一套稳定的中文语法。
 
-现在可运行的示例，请参考凹语言工程中的[可执行示例](https://gitee.com/wa-lang/wa/tree/frontend_wz/_examples/wz/)。
+现在可运行的示例，请参考凹语言工程中的[可执行示例](https://gitee.com/wa-lang/wa/tree/frontend_wz/waroot/examples/wz/)。
 
 ## 简单示例
 
