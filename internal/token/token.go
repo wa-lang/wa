@@ -106,6 +106,7 @@ const (
 	FOR
 
 	FUNC
+	GLOBAL
 	IF
 	IMPORT
 
@@ -203,6 +204,7 @@ var tokens = [...]string{
 	FOR:     "for",
 
 	FUNC:   "func",
+	GLOBAL: "global",
 	IF:     "if",
 	IMPORT: "import",
 

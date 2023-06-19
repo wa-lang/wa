@@ -60,9 +60,11 @@ Print rune and call function：
 ```wa
 import "fmt"
 
+global year: i32 = 2023
+
 func main {
 	println("hello, Wa!")
-	println(add(40, 2))
+	println(add(40, 2), year)
 
 	fmt.Println(1+1)
 }
@@ -77,7 +79,7 @@ Execute the program:
 ```
 $ go run main.go hello.wa 
 hello, Wa!
-42
+42 2023
 2
 ```
 

@@ -54,9 +54,11 @@
 ```wa
 import "fmt"
 
+global year: i32 = 2023
+
 func main {
-	println("你好，凹语言！")
-	println(add(40, 2))
+	println("hello, Wa!")
+	println(add(40, 2), year)
 
 	fmt.Println(1+1)
 }
@@ -71,7 +73,7 @@ func add(a: i32, b: i32) => i32 {
 ```
 $ go run main.go hello.wa 
 你好，凹语言！
-42
+42 2023
 2
 ```
 

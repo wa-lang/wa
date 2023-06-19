@@ -497,9 +497,10 @@ var stmtStart = map[token.Token]bool{
 }
 
 var declStart = map[token.Token]bool{
-	token.CONST: true,
-	token.TYPE:  true,
-	token.VAR:   true,
+	token.CONST:  true,
+	token.TYPE:   true,
+	token.VAR:    true,
+	token.GLOBAL: true,
 }
 
 var exprEnd = map[token.Token]bool{
@@ -2458,6 +2459,11 @@ func (p *parser) parseGenDecl(keyword token.Token, f parseSpecFunction) *ast.Gen
 
 	doc := p.leadComment
 	pos := p.expect(keyword)
+
+	if keyword == token.GLOBAL {
+		keyword = token.VAR // TODO(chai2010): AST 支持 global
+	}
+
 	var lparen, rparen token.Pos
 	var list []ast.Spec
 	if p.tok == token.LPAREN {
@@ -2564,7 +2570,7 @@ func (p *parser) parseDecl(sync map[token.Token]bool) ast.Decl {
 
 	var f parseSpecFunction
 	switch p.tok {
-	case token.CONST, token.VAR:
+	case token.CONST, token.VAR, token.GLOBAL:
 		f = p.parseValueSpec
 
 	case token.TYPE:
