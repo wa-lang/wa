@@ -39,8 +39,8 @@ var Typ = []*Basic{
 
 	Bool:          {Bool, IsBoolean, "bool"},
 	Int:           {Int, IsInteger, "int"},
-	Int8:          {Int8, IsInteger, "int8"},
-	Int16:         {Int16, IsInteger, "int16"},
+	Int8:          {Int8, IsInteger, "__wa_int8"},
+	Int16:         {Int16, IsInteger, "__wa_int16"},
 	Int32:         {Int32, IsInteger, "int32"},
 	Int64:         {Int64, IsInteger, "int64"},
 	Uint:          {Uint, IsInteger | IsUnsigned, "uint"},
@@ -70,8 +70,8 @@ var aliases = [...]*Basic{
 	{Byte, IsInteger | IsUnsigned, "字"},
 	{Rune, IsInteger, "rune"},
 
-	{Int8, IsInteger, "i8"},
-	{Int16, IsInteger, "i16"},
+	{Int8, IsInteger, "__wa_i8"},
+	{Int16, IsInteger, "__wa_i16"},
 	{Int32, IsInteger, "i32"},
 	{Int64, IsInteger, "i64"},
 	{Int, IsInteger, "数"},
