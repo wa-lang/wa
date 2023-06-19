@@ -76,17 +76,17 @@ func (g *functionGenerator) getValue(i ssa.Value) valueWrap {
 				val, _ := constant.Uint64Val(v.Value)
 				return valueWrap{value: wir.NewConst(strconv.Itoa(int(val)), g.module.U8)}
 
-			case types.Int8:
-				val, _ := constant.Int64Val(v.Value)
-				return valueWrap{value: wir.NewConst(strconv.Itoa(int(val)), g.module.I8)}
+			//case types.Int8:
+			//	val, _ := constant.Int64Val(v.Value)
+			//	return valueWrap{value: wir.NewConst(strconv.Itoa(int(val)), g.module.I8)}
 
 			case types.Uint16:
 				val, _ := constant.Uint64Val(v.Value)
 				return valueWrap{value: wir.NewConst(strconv.Itoa(int(val)), g.module.U16)}
 
-			case types.Int16:
-				val, _ := constant.Int64Val(v.Value)
-				return valueWrap{value: wir.NewConst(strconv.Itoa(int(val)), g.module.I16)}
+			//case types.Int16:
+			//	val, _ := constant.Int64Val(v.Value)
+			//	return valueWrap{value: wir.NewConst(strconv.Itoa(int(val)), g.module.I16)}
 
 			case types.Uint32, types.Uintptr:
 				val, _ := constant.Uint64Val(v.Value)
@@ -624,8 +624,7 @@ func (g *functionGenerator) genBuiltin(call *ssa.CallCommon) (insts []wat.Inst, 
 				insts = append(insts, wat.NewInstCall("$runtime.waPrintRune"))
 			}
 
-			if avt.Equal(g.module.U8) || avt.Equal(g.module.I8) ||
-				avt.Equal(g.module.U16) || avt.Equal(g.module.I16) ||
+			if avt.Equal(g.module.U8) || avt.Equal(g.module.U16) ||
 				avt.Equal(g.module.I32) || avt.Equal(g.module.U32) {
 				insts = append(insts, av.EmitPush()...)
 				insts = append(insts, wat.NewInstCall("$runtime.waPrintI32"))

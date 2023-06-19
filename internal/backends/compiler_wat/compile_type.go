@@ -74,14 +74,14 @@ func (tLib *typeLib) compile(from types.Type) wir.ValueType {
 		case types.Float64:
 			newType = tLib.module.F64
 
-		case types.Int8:
-			newType = tLib.module.I8
+		//case types.Int8:
+		//	newType = tLib.module.I8
 
 		case types.Uint8:
 			newType = tLib.module.U8
 
-		case types.Int16:
-			newType = tLib.module.I16
+		//case types.Int16:
+		//	newType = tLib.module.I16
 
 		case types.Uint16:
 			newType = tLib.module.U16
