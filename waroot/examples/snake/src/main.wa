@@ -13,7 +13,7 @@ const BodyColor = 0xFF202020
 const FoodColor = 0xFF00FF00
 
 const (
-	GridNull: i8 = iota
+	GridNull: u8 = iota
 	GridBody
 	GridFood
 )
@@ -31,7 +31,7 @@ var Dirs: [5]Position
 type GameState struct {
 	w, h  :i32
 	scale :i32
-	grid  :[]i8
+	grid  :[]u8
 	body  :[]Position
 	dir   :i32
 
@@ -44,7 +44,7 @@ func GameState.Init(w, h: i32, scale: i32) {
 	this.w = w
 	this.h = h
 	this.scale = scale
-	this.grid = make([]i8, u32(w*h))
+	this.grid = make([]u8, u32(w*h))
 	this.ca = canvas.NewCanvas(u32(w*scale), u32(h*scale))
 
 	caev: canvas.CanvasEvents
@@ -78,7 +78,7 @@ func GameState.Start() {
 	this.ca.Flush()
 }
 
-func GameState.SetGridType(p: Position, t: i8) {
+func GameState.SetGridType(p: Position, t: u8) {
 	this.grid[p.y*this.w+p.x] = t
 	color: u32
 	switch t {
