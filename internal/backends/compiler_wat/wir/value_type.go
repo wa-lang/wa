@@ -38,7 +38,7 @@ const (
 
 func toWatType(t ValueType) wat.ValueType {
 	switch t.(type) {
-	case *tI32, *tRune, *tI8, *tI16:
+	case *tI32, *tRune: //Todo: *tI8, *tI16*
 		return wat.I32{}
 
 	case *tU32, *tU8, *tU16:

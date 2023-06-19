@@ -71,18 +71,45 @@ func (m *Module) EmitBinOp(x, y Value, op wat.OpCode) (insts []wat.Inst, ret_typ
 		} else {
 			insts = append(insts, wat.NewInstAdd(toWatType(rtype)))
 		}
+
+		if rtype.Equal(m.U8) {
+			insts = append(insts, wat.NewInstConst(wat.I32{}, "255"))
+			insts = append(insts, wat.NewInstAnd(wat.I32{}))
+		} else if rtype.Equal(m.U16) {
+			insts = append(insts, wat.NewInstConst(wat.I32{}, "65535"))
+			insts = append(insts, wat.NewInstAnd(wat.I32{}))
+		}
+
 		ret_type = rtype
 
 	case wat.OpCodeSub:
 		insts = append(insts, x.EmitPush()...)
 		insts = append(insts, y.EmitPush()...)
 		insts = append(insts, wat.NewInstSub(toWatType(rtype)))
+
+		if rtype.Equal(m.U8) {
+			insts = append(insts, wat.NewInstConst(wat.I32{}, "255"))
+			insts = append(insts, wat.NewInstAnd(wat.I32{}))
+		} else if rtype.Equal(m.U16) {
+			insts = append(insts, wat.NewInstConst(wat.I32{}, "65535"))
+			insts = append(insts, wat.NewInstAnd(wat.I32{}))
+		}
+
 		ret_type = rtype
 
 	case wat.OpCodeMul:
 		insts = append(insts, x.EmitPush()...)
 		insts = append(insts, y.EmitPush()...)
 		insts = append(insts, wat.NewInstMul(toWatType(rtype)))
+
+		if rtype.Equal(m.U8) {
+			insts = append(insts, wat.NewInstConst(wat.I32{}, "255"))
+			insts = append(insts, wat.NewInstAnd(wat.I32{}))
+		} else if rtype.Equal(m.U16) {
+			insts = append(insts, wat.NewInstConst(wat.I32{}, "65535"))
+			insts = append(insts, wat.NewInstAnd(wat.I32{}))
+		}
+
 		ret_type = rtype
 
 	case wat.OpCodeQuo:
@@ -158,6 +185,15 @@ func (m *Module) EmitBinOp(x, y Value, op wat.OpCode) (insts []wat.Inst, ret_typ
 			insts = append(insts, y.EmitPush()...)
 		}
 		insts = append(insts, wat.NewInstShl(toWatType(rtype)))
+
+		if rtype.Equal(m.U8) {
+			insts = append(insts, wat.NewInstConst(wat.I32{}, "255"))
+			insts = append(insts, wat.NewInstAnd(wat.I32{}))
+		} else if rtype.Equal(m.U16) {
+			insts = append(insts, wat.NewInstConst(wat.I32{}, "65535"))
+			insts = append(insts, wat.NewInstAnd(wat.I32{}))
+		}
+
 		ret_type = rtype
 
 	case wat.OpCodeShr:
@@ -468,27 +504,27 @@ func (m *Module) EmitGenConvert(x Value, typ ValueType) (insts []wat.Inst) {
 	xt := x.Type()
 
 	switch {
-	case typ.Equal(m.I8):
-		insts = append(insts, x.EmitPush()...)
-		switch {
-		case xt.Equal(m.I8), xt.Equal(m.U8), xt.Equal(m.I16), xt.Equal(m.U16), xt.Equal(m.I32), xt.Equal(m.U32), xt.Equal(m.RUNE):
-			break
+	/*case typ.Equal(m.I8):
+	insts = append(insts, x.EmitPush()...)
+	switch {
+	case xt.Equal(m.I8), xt.Equal(m.U8), xt.Equal(m.I16), xt.Equal(m.U16), xt.Equal(m.I32), xt.Equal(m.U32), xt.Equal(m.RUNE):
+		break
 
-		case xt.Equal(m.I64), xt.Equal(m.U64):
-			insts = append(insts, wat.NewInstConvert_i32_wrap_i64())
+	case xt.Equal(m.I64), xt.Equal(m.U64):
+		insts = append(insts, wat.NewInstConvert_i32_wrap_i64())
 
-		case xt.Equal(m.F32):
-			insts = append(insts, wat.NewInstConvert_i32_trunc_f32_s())
+	case xt.Equal(m.F32):
+		insts = append(insts, wat.NewInstConvert_i32_trunc_f32_s())
 
-		case xt.Equal(m.F64):
-			insts = append(insts, wat.NewInstConvert_i32_trunc_f64_s())
-		}
-		return
+	case xt.Equal(m.F64):
+		insts = append(insts, wat.NewInstConvert_i32_trunc_f64_s())
+	}
+	return  */
 
 	case typ.Equal(m.U8):
 		insts = append(insts, x.EmitPush()...)
 		switch {
-		case xt.Equal(m.I8), xt.Equal(m.U8), xt.Equal(m.I16), xt.Equal(m.U16), xt.Equal(m.I32), xt.Equal(m.U32), xt.Equal(m.RUNE):
+		case xt.Equal(m.U8), xt.Equal(m.U16), xt.Equal(m.I32), xt.Equal(m.U32), xt.Equal(m.RUNE): //Todo: xt.Equal(m.I8), xt.Equal(m.I16)
 			break
 
 		case xt.Equal(m.I64), xt.Equal(m.U64):
@@ -504,27 +540,27 @@ func (m *Module) EmitGenConvert(x Value, typ ValueType) (insts []wat.Inst) {
 		insts = append(insts, wat.NewInstAnd(wat.I32{}))
 		return
 
-	case typ.Equal(m.I16):
-		insts = append(insts, x.EmitPush()...)
-		switch {
-		case xt.Equal(m.I8), xt.Equal(m.U8), xt.Equal(m.I16), xt.Equal(m.U16), xt.Equal(m.I32), xt.Equal(m.U32), xt.Equal(m.RUNE):
-			break
+	/*case typ.Equal(m.I16):
+	insts = append(insts, x.EmitPush()...)
+	switch {
+	case xt.Equal(m.I8), xt.Equal(m.U8), xt.Equal(m.I16), xt.Equal(m.U16), xt.Equal(m.I32), xt.Equal(m.U32), xt.Equal(m.RUNE):
+		break
 
-		case xt.Equal(m.I64), xt.Equal(m.U64):
-			insts = append(insts, wat.NewInstConvert_i32_wrap_i64())
+	case xt.Equal(m.I64), xt.Equal(m.U64):
+		insts = append(insts, wat.NewInstConvert_i32_wrap_i64())
 
-		case xt.Equal(m.F32):
-			insts = append(insts, wat.NewInstConvert_i32_trunc_f32_s())
+	case xt.Equal(m.F32):
+		insts = append(insts, wat.NewInstConvert_i32_trunc_f32_s())
 
-		case xt.Equal(m.F64):
-			insts = append(insts, wat.NewInstConvert_i32_trunc_f64_s())
-		}
-		return
+	case xt.Equal(m.F64):
+		insts = append(insts, wat.NewInstConvert_i32_trunc_f64_s())
+	}
+	return  */
 
 	case typ.Equal(m.U16):
 		insts = append(insts, x.EmitPush()...)
 		switch {
-		case xt.Equal(m.I8), xt.Equal(m.U8), xt.Equal(m.I16), xt.Equal(m.U16), xt.Equal(m.I32), xt.Equal(m.U32), xt.Equal(m.RUNE):
+		case xt.Equal(m.U8), xt.Equal(m.U16), xt.Equal(m.I32), xt.Equal(m.U32), xt.Equal(m.RUNE): //Todo:xt.Equal(m.I8), xt.Equal(m.I16)
 			break
 
 		case xt.Equal(m.I64), xt.Equal(m.U64):
@@ -543,7 +579,7 @@ func (m *Module) EmitGenConvert(x Value, typ ValueType) (insts []wat.Inst) {
 	case typ.Equal(m.I32), typ.Equal(m.U32), typ.Equal(m.RUNE):
 		insts = append(insts, x.EmitPush()...)
 		switch {
-		case xt.Equal(m.I8), xt.Equal(m.U8), xt.Equal(m.I16), xt.Equal(m.U16), xt.Equal(m.I32), xt.Equal(m.U32), xt.Equal(m.RUNE):
+		case xt.Equal(m.U8), xt.Equal(m.U16), xt.Equal(m.I32), xt.Equal(m.U32), xt.Equal(m.RUNE): //Todo:xt.Equal(m.I8), xt.Equal(m.I16),
 			break
 
 		case xt.Equal(m.I64), xt.Equal(m.U64):
@@ -560,7 +596,7 @@ func (m *Module) EmitGenConvert(x Value, typ ValueType) (insts []wat.Inst) {
 	case typ.Equal(m.I64):
 		insts = append(insts, x.EmitPush()...)
 		switch {
-		case xt.Equal(m.I8), xt.Equal(m.I16), xt.Equal(m.I32):
+		case xt.Equal(m.I32): //Todo: xt.Equal(m.I8), xt.Equal(m.I16)
 			insts = append(insts, wat.NewInstConvert_i64_extend_i32_s())
 
 		case xt.Equal(m.U8), xt.Equal(m.U16), xt.Equal(m.U32), xt.Equal(m.RUNE):
@@ -580,7 +616,7 @@ func (m *Module) EmitGenConvert(x Value, typ ValueType) (insts []wat.Inst) {
 	case typ.Equal(m.U64):
 		insts = append(insts, x.EmitPush()...)
 		switch {
-		case xt.Equal(m.I8), xt.Equal(m.I16), xt.Equal(m.I32):
+		case xt.Equal(m.I32): //Todo: xt.Equal(m.I8), xt.Equal(m.I16)
 			insts = append(insts, wat.NewInstConvert_i64_extend_i32_u())
 
 		case xt.Equal(m.U8), xt.Equal(m.U16), xt.Equal(m.U32), xt.Equal(m.RUNE):
@@ -600,7 +636,7 @@ func (m *Module) EmitGenConvert(x Value, typ ValueType) (insts []wat.Inst) {
 	case typ.Equal(m.F32):
 		insts = append(insts, x.EmitPush()...)
 		switch {
-		case xt.Equal(m.I8), xt.Equal(m.I16), xt.Equal(m.I32):
+		case xt.Equal(m.I32): //Todo: xt.Equal(m.I8), xt.Equal(m.I16)
 			insts = append(insts, wat.NewInstConvert_f32_convert_i32_s())
 
 		case xt.Equal(m.U8), xt.Equal(m.U16), xt.Equal(m.U32):
@@ -620,7 +656,7 @@ func (m *Module) EmitGenConvert(x Value, typ ValueType) (insts []wat.Inst) {
 	case typ.Equal(m.F64):
 		insts = append(insts, x.EmitPush()...)
 		switch {
-		case xt.Equal(m.I8), xt.Equal(m.I16), xt.Equal(m.I32):
+		case xt.Equal(m.I32): //Todo: xt.Equal(m.I8), xt.Equal(m.I16)
 			insts = append(insts, wat.NewInstConvert_f64_convert_i32_s())
 
 		case xt.Equal(m.U8), xt.Equal(m.U16), xt.Equal(m.U32):
