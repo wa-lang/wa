@@ -13,11 +13,11 @@ import (
 
 	"github.com/tetratelabs/wazero"
 	"github.com/tetratelabs/wazero/sys"
-	"wa-lang.org/wa/internal/app/apputil"
 	"wa-lang.org/wa/internal/app/waruntime"
 	"wa-lang.org/wa/internal/backends/compiler_wat"
 	"wa-lang.org/wa/internal/config"
 	"wa-lang.org/wa/internal/loader"
+	"wa-lang.org/wa/internal/wabt"
 )
 
 func (p *App) RunTest(pkgpath string, appArgs ...string) error {
@@ -42,18 +42,14 @@ func (p *App) RunTest(pkgpath string, appArgs ...string) error {
 		return err
 	}
 
+	// wat 落盘(仅用于调试)
+	os.WriteFile("a.out.wat", []byte(watOutput), 0666)
+
 	// 编译为 wasm
-	if err = os.WriteFile("a.out.wat", []byte(watOutput), 0666); err != nil {
-		return err
-	}
-	wasmBytes, stderr, err := apputil.RunWat2Wasm("a.out.wat")
+	wasmBytes, err := wabt.Wat2Wasm([]byte(watOutput))
 	if err != nil {
-		if s := sWithPrefix(string(stderr), "    "); s != "" {
-			fmt.Println(s)
-		}
 		return err
 	}
-	// os.WriteFile("a.out.wasm", wasmBytes, 0666)
 
 	// 构建 wasm 可执行实例
 	// https://pkg.go.dev/github.com/tetratelabs/wazero@v1.0.0-pre.4#section-readme
@@ -166,21 +162,22 @@ func (p *App) RunTest(pkgpath string, appArgs ...string) error {
 		}
 	}
 	for _, t := range mainPkg.TestInfo.Examples {
-		output, err := compiler_wat.New().Compile(prog, t.Name)
+		stdoutBuffer.Reset()
+		stderrBuffer.Reset()
+
+		_, err := wasmIns.ExportedFunction(mainPkg.Pkg.Path() + "." + t.Name).Call(ctx)
 		if err != nil {
+			if s := sWithPrefix(stderrBuffer.String(), "    "); s != "" {
+				fmt.Println(s)
+			}
 			return err
 		}
 
-		if err = os.WriteFile("a.out.wat", []byte(output), 0666); err != nil {
-			return err
-		}
-
-		stdout, stderr, err := apputil.RunWasmEx(cfg, "a.out.wat", appArgs...)
+		stdout := stdoutBuffer.Bytes()
+		stderr := stderrBuffer.Bytes()
 
 		stdout = bytes.TrimSpace(stdout)
-		bOutputOK := t.Output == string(stdout)
-
-		if err == nil && bOutputOK {
+		if t.Output != "" && t.Output == string(stdout) {
 			continue
 		}
 

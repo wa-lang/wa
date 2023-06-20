@@ -18,10 +18,11 @@ import (
 	"wa-lang.org/wa/api"
 	"wa-lang.org/wa/internal/3rdparty/cli"
 	"wa-lang.org/wa/internal/app"
-	"wa-lang.org/wa/internal/app/apputil"
 	"wa-lang.org/wa/internal/app/yacc"
 	"wa-lang.org/wa/internal/config"
 	"wa-lang.org/wa/internal/lsp"
+	"wa-lang.org/wa/internal/wabt"
+	"wa-lang.org/wa/internal/wazero"
 )
 
 func Main() {
@@ -195,7 +196,7 @@ func Main() {
 				}
 
 				ctx := app.NewApp(build_Options(c))
-				output, err := ctx.WASM(input)
+				watOutput, err := ctx.WASM(input)
 				if err != nil {
 					fmt.Println(err)
 					os.Exit(1)
@@ -206,28 +207,25 @@ func Main() {
 					if !strings.HasSuffix(watFilename, ".wat") {
 						watFilename += ".wat"
 					}
-					err := os.WriteFile(watFilename, []byte(output), 0666)
+					err := os.WriteFile(watFilename, []byte(watOutput), 0666)
 					if err != nil {
 						fmt.Println(err)
 						os.Exit(1)
 					}
 					if strings.HasSuffix(outfile, ".wasm") {
-						stdout, stderr, err := apputil.RunWat2Wasm(watFilename)
+						wasmBytes, err := wabt.Wat2Wasm(watOutput)
 						if err != nil {
-							if len(stderr) != 0 {
-								fmt.Println(string(stderr))
-							}
 							fmt.Println(err)
 							os.Exit(1)
 						}
-						if err := os.WriteFile(outfile, stdout, 0666); err != nil {
+						if err := os.WriteFile(outfile, wasmBytes, 0666); err != nil {
 							fmt.Println(err)
 							os.Exit(1)
 						}
 						os.Remove(watFilename)
 					}
 				} else {
-					fmt.Println(string(output))
+					fmt.Println(string(watOutput))
 				}
 
 				return nil
@@ -526,37 +524,36 @@ func cliRun(c *cli.Context) {
 	}
 
 	var app = app.NewApp(build_Options(c))
-	var outfile string
-	var output []byte
+	var watBytes []byte
+	var wasmBytes []byte
 	var err error
-
-	if !c.Bool("debug") {
-		defer os.Remove(outfile)
-	}
 
 	switch {
 	case strings.HasSuffix(infile, ".wat"):
-		outfile = infile
-		output, err = os.ReadFile(infile)
+		watBytes, err = os.ReadFile(infile)
 		if err != nil {
 			fmt.Println(err)
 			os.Exit(1)
 		}
+		wasmBytes, err = wabt.Wat2Wasm(watBytes)
+		if err != nil {
+			fmt.Println(err)
+			os.Exit(1)
+		}
+
 	case strings.HasSuffix(infile, ".wasm"):
-		outfile = infile
-		output, err = os.ReadFile(infile)
+		wasmBytes, err = os.ReadFile(infile)
 		if err != nil {
 			fmt.Println(err)
 			os.Exit(1)
 		}
 	default:
-		outfile = "a.out.wat"
-		output, err = app.WASM(infile)
+		watBytes, err = app.WASM(infile)
 		if err != nil {
 			fmt.Println(err)
 			os.Exit(1)
 		}
-		if err = os.WriteFile(outfile, []byte(output), 0666); err != nil {
+		if err = os.WriteFile("a.out.wat", watBytes, 0666); err != nil {
 			fmt.Println(err)
 			os.Exit(1)
 		}
@@ -567,18 +564,24 @@ func cliRun(c *cli.Context) {
 		appArgs = c.Args().Slice()[1:]
 	}
 
-	stdoutStderr, err := apputil.RunWasm(app.GetConfig(), outfile, appArgs...)
+	stdout, stderr, err := wazero.RunWasm(app.GetConfig(), infile, wasmBytes, appArgs...)
 	if err != nil {
-		if len(stdoutStderr) > 0 {
-			fmt.Println(string(stdoutStderr))
+		if len(stdout) > 0 {
+			fmt.Fprint(os.Stdout, (stdout))
+		}
+		if len(stderr) > 0 {
+			fmt.Fprint(os.Stderr, (stderr))
 		}
 		if exitErr, ok := err.(*sys.ExitError); ok {
 			os.Exit(int(exitErr.ExitCode()))
 		}
 		fmt.Println(err)
 	}
-	if len(stdoutStderr) > 0 {
-		fmt.Println(string(stdoutStderr))
+	if len(stdout) > 0 {
+		fmt.Fprint(os.Stdout, (stdout))
+	}
+	if len(stderr) > 0 {
+		fmt.Fprint(os.Stderr, (stderr))
 	}
 }
 
