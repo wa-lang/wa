@@ -55,8 +55,11 @@ func BuildModule(
 }
 
 // 执行初始化, 仅执行一次
-func (p *Module) RunInitOnce() (stdout, stderr []byte, err error) {
-	p.wazeroOnce.Do(func() { p.runInitFunc() })
+func (p *Module) RunMain() (stdout, stderr []byte, err error) {
+	p.wazeroModule, p.wazeroInitErr = p.wazeroRuntime.InstantiateModule(
+		p.wazeroCtx, p.wazeroCompileModule, p.wazeroConf,
+	)
+
 	stdout = p.stdoutBuffer.Bytes()
 	stderr = p.stderrBuffer.Bytes()
 	err = p.wazeroInitErr
@@ -65,8 +68,15 @@ func (p *Module) RunInitOnce() (stdout, stderr []byte, err error) {
 
 // 执行指定函数(init会被强制执行一次)
 func (p *Module) RunFunc(name string, args ...uint64) (result []uint64, stdout, stderr []byte, err error) {
-	stdout, stderr, err = p.RunInitOnce()
-	if err != nil {
+	if p.wazeroModule == nil {
+		p.wazeroModule, p.wazeroInitErr = p.wazeroRuntime.InstantiateModule(
+			p.wazeroCtx, p.wazeroCompileModule, p.wazeroConf,
+		)
+	}
+	if p.wazeroInitErr != nil {
+		stdout = p.stdoutBuffer.Bytes()
+		stderr = p.stderrBuffer.Bytes()
+		err = p.wazeroInitErr
 		return
 	}
 
@@ -149,16 +159,4 @@ func (p *Module) buildModule() error {
 	}
 
 	return nil
-}
-
-func (p *Module) runInitFunc() {
-	if err := p.wazeroInitErr; err != nil {
-		return
-	}
-	if p.wazeroModule != nil {
-		return
-	}
-	p.wazeroModule, p.wazeroInitErr = p.wazeroRuntime.InstantiateModule(
-		p.wazeroCtx, p.wazeroCompileModule, p.wazeroConf,
-	)
 }

@@ -11,7 +11,7 @@ import (
 
 func ExampleRunCode() {
 	const code = `
-		var gBase: i32 = 1000
+		global gBase: i32 = 1000
 
 		func main() {
 			println(add(40, 2) + gBase)

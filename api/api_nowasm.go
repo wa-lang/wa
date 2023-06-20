@@ -6,27 +6,27 @@
 package api
 
 import (
-	"os"
-
-	"wa-lang.org/wa/internal/app/apputil"
 	"wa-lang.org/wa/internal/config"
+	"wa-lang.org/wa/internal/wabt"
+	"wa-lang.org/wa/internal/wazero"
 )
 
 // 执行凹代码
-func RunCode(cfg *config.Config, filename, code string, arg ...string) (stdoutStderr []byte, err error) {
+func RunCode(cfg *config.Config, filename, code string, args ...string) (stdoutStderr []byte, err error) {
 	// 编译为 wat 格式
-	wat, err := BuildFile(cfg, filename, code)
-
-	// wat 写到临时文件
-	outfile := "a.out.wat"
-	if !*FlagDebugMode {
-		defer os.Remove(outfile)
-	}
-	if err = os.WriteFile(outfile, []byte(wat), 0666); err != nil {
-		return nil, err
+	watBytes, err := BuildFile(cfg, filename, code)
+	if err != nil {
+		return
 	}
 
-	// 执行 wat 文件
-	stdoutStderr, err = apputil.RunWasm(cfg, outfile, arg...)
+	// wat 编译为 wasm
+	wasmBytes, err := wabt.Wat2Wasm(watBytes)
+	if err != nil {
+		return
+	}
+
+	// main 执行
+	stdout, stderr, err := wazero.RunWasm(cfg, filename, wasmBytes, args...)
+	stdoutStderr = append(stdout, stderr...)
 	return
 }

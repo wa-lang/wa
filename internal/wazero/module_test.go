@@ -32,8 +32,8 @@ func add(a:i32, b:i32) => i32 {
 	}
 	defer m.Close()
 
-	// init+main 执行
-	stdout, _, err := m.RunInitOnce()
+	// main 执行
+	stdout, _, err := m.RunMain()
 	if err != nil {
 		t.Fatal(err)
 	}

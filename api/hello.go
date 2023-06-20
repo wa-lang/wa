@@ -31,7 +31,7 @@ func main() {
 }
 
 const code = `
-func main() {
+func main {
 	println(add(40, 2))
 }
 
