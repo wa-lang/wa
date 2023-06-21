@@ -157,4 +157,4 @@ $ cd waroot && go run ../main.go run examples/prime
 |吴烜  |  3000|
 |刘斌  |  2500|
 
-贡献点变更记录见 [_cplog](_cplog) 目录。
+贡献点变更记录见 [waroot/cplog](waroot/cplog) 目录。
