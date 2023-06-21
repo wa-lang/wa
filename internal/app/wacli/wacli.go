@@ -557,6 +557,11 @@ func cliRun(c *cli.Context) {
 			fmt.Println(err)
 			os.Exit(1)
 		}
+		wasmBytes, err = wabt.Wat2Wasm(watBytes)
+		if err != nil {
+			fmt.Println(err)
+			os.Exit(1)
+		}
 	}
 
 	var appArgs []string
@@ -567,10 +572,10 @@ func cliRun(c *cli.Context) {
 	stdout, stderr, err := wazero.RunWasm(app.GetConfig(), infile, wasmBytes, appArgs...)
 	if err != nil {
 		if len(stdout) > 0 {
-			fmt.Fprint(os.Stdout, (stdout))
+			fmt.Fprint(os.Stdout, string(stdout))
 		}
 		if len(stderr) > 0 {
-			fmt.Fprint(os.Stderr, (stderr))
+			fmt.Fprint(os.Stderr, string(stderr))
 		}
 		if exitErr, ok := err.(*sys.ExitError); ok {
 			os.Exit(int(exitErr.ExitCode()))
@@ -578,10 +583,10 @@ func cliRun(c *cli.Context) {
 		fmt.Println(err)
 	}
 	if len(stdout) > 0 {
-		fmt.Fprint(os.Stdout, (stdout))
+		fmt.Fprint(os.Stdout, string(stdout))
 	}
 	if len(stderr) > 0 {
-		fmt.Fprint(os.Stderr, (stderr))
+		fmt.Fprint(os.Stderr, string(stderr))
 	}
 }
 
