@@ -725,7 +725,7 @@ outer:
 
 	// put out names of tokens
 	ftable.WriteRune('\n')
-	fmt.Fprintf(ftable, "var %sToknames = [...]string{\n", prefix)
+	fmt.Fprintf(ftable, "global %sToknames = [...]string{\n", prefix)
 	for i := 1; i <= ntokens; i++ {
 		fmt.Fprintf(ftable, "\t%q,\n", tokset[i].name)
 	}
@@ -735,7 +735,7 @@ outer:
 	// commented out to avoid a huge table just for debugging.
 	// re-enable to have the names in the binary.
 	ftable.WriteRune('\n')
-	fmt.Fprintf(ftable, "var %sStatenames = [...]string{\n", prefix)
+	fmt.Fprintf(ftable, "global %sStatenames = [...]string{\n", prefix)
 	//	for i:=TOKSTART; i<=ntokens; i++ {
 	//		fmt.Fprintf(ftable, "\t%q,\n", tokset[i].name);
 	//	}
@@ -1094,7 +1094,7 @@ out:
 			lineno++
 		case '{':
 			if level == 0 {
-				fmt.Fprintf(ftable, "\n\tyys int")
+				fmt.Fprintf(ftable, "\n\tyys :int")
 			}
 			level++
 		case '}':
@@ -2889,7 +2889,7 @@ func others() {
 
 	// table 3 has everything else
 	ftable.WriteRune('\n')
-	fmt.Fprintf(ftable, "var %sTok3 = [...]int{\n\t", prefix)
+	fmt.Fprintf(ftable, "global %sTok3 = [...]int{\n\t", prefix)
 	c = 0
 	for i = 1; i <= ntokens; i++ {
 		j = tokset[i].value
@@ -2917,12 +2917,12 @@ func others() {
 	// Custom error messages.
 	fmt.Fprintf(ftable, "\n")
 	fmt.Fprintf(ftable, "type %sErrorMessageInfo struct {\n", prefix)
-	fmt.Fprintf(ftable, "\tstate int\n")
-	fmt.Fprintf(ftable, "\ttoken int\n")
-	fmt.Fprintf(ftable, "\tmsg   string\n")
+	fmt.Fprintf(ftable, "\tstate :int\n")
+	fmt.Fprintf(ftable, "\ttoken :int\n")
+	fmt.Fprintf(ftable, "\tmsg   :string\n")
 	fmt.Fprintf(ftable, "}\n")
 
-	fmt.Fprintf(ftable, "var %sErrorMessages = [...]%sErrorMessageInfo {\n", prefix, prefix)
+	fmt.Fprintf(ftable, "global %sErrorMessages = [...]%sErrorMessageInfo {\n", prefix, prefix)
 	for _, error := range errors {
 		lineno = error.lineno
 		state, token := runMachine(error.tokens)
@@ -3006,7 +3006,7 @@ Loop:
 func arout(s string, v []int, n int) {
 	s = prefix + s
 	ftable.WriteRune('\n')
-	fmt.Fprintf(ftable, "var %v = [...]int{", s)
+	fmt.Fprintf(ftable, "global %v = [...]int{", s)
 	for i := 0; i < n; i++ {
 		if i%10 == 0 {
 			fmt.Fprintf(ftable, "\n\t")
@@ -3249,6 +3249,7 @@ func wafmt() {
 			return
 		}
 	} else {
+		// todo: fix fmt yacc output.wa
 		src, err = format.SourceFile(src)
 		if err != nil {
 			return
@@ -3261,7 +3262,7 @@ var yaccpar string // will be processed version of yaccpartext: s/$$/prefix/g
 var yaccpartext = `
 /*	parser for yacc output	*/
 
-var (
+global (
 	$$Debug        = 0
 	$$ErrorVerbose = false
 )
@@ -3408,9 +3409,9 @@ func $$Parse($$lex: *$$Lexer) => int {
 }
 
 func $$Parser.Parse($$lex: *$$Lexer) => int {
-	var $$n: int
-	var $$VAL: $$SymType
-	var $$Dollar: []$$SymType
+	$$n: int
+	$$VAL: $$SymType
+	$$Dollar: []$$SymType
 	_ = $$Dollar // silence set and not used
 	$$S := this.stack[:]
 
@@ -3424,7 +3425,7 @@ func $$Parser.Parse($$lex: *$$Lexer) => int {
 	const __goto_$$stack = -1
 	const __goto_$$newstate = -2
 	const __goto_$$default = -3
-	var __goto_x = __goto_$$stack
+	__goto_x := __goto_$$stack
 
 Loop:
 	for { switch __goto_x {

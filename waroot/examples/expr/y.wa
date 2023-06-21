@@ -316,7 +316,7 @@ func exprParser.Parse(exprlex: *exprLexer) => int {
 	const __goto_exprstack = -1
 	const __goto_exprnewstate = -2
 	const __goto_exprdefault = -3
-	var __goto_x = __goto_exprstack
+	__goto_x := __goto_exprstack
 
 Loop:
 	for {
