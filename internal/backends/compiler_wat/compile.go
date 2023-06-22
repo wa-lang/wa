@@ -11,7 +11,7 @@ import (
 	"wa-lang.org/wa/internal/config"
 	"wa-lang.org/wa/internal/loader"
 	"wa-lang.org/wa/internal/ssa"
-	"wa-lang.org/wa/internal/waroot"
+	"wa-lang.org/wa/waroot"
 )
 
 type Compiler struct {

@@ -20,7 +20,7 @@ import (
 	"wa-lang.org/wa/internal/ssa"
 	"wa-lang.org/wa/internal/token"
 	"wa-lang.org/wa/internal/types"
-	"wa-lang.org/wa/internal/waroot"
+	"wa-lang.org/wa/waroot"
 )
 
 type _Loader struct {

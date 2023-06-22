@@ -10,7 +10,7 @@ import (
 	"text/template"
 	"time"
 
-	"wa-lang.org/wa/internal/waroot"
+	"wa-lang.org/wa/waroot"
 )
 
 func (p *App) InitApp(name, pkgpath string, update bool) error {

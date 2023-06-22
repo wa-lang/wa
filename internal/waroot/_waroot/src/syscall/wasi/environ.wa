@@ -1,7 +1,0 @@
-// 版权 @2022 凹语言 作者。保留所有权利。
-
-#wa:import wasi_snapshot_preview1 environ_get
-func EnvironGet(result_environv: i32, result_environv_buf: i32) => (errno: i32)
-
-#wa:import wasi_snapshot_preview1 environ_sizes_get
-func EnvironSizesGet(result_environc: i32, result_environv_len: i32) => (errno: i32)

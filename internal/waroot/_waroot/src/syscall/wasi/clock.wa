@@ -1,7 +1,0 @@
-// 版权 @2022 凹语言 作者。保留所有权利。
-
-#wa:import wasi_snapshot_preview1 clock_res_get
-func ClockResGet(id: i32, result_resolution: i32) => (errno: i32)
-
-#wa:import wasi_snapshot_preview1 clock_time_get
-func ClockTimeGet(id: i32, precision: i64, result_timestamp: i32) => (errno: i32)
