@@ -14,7 +14,6 @@ import (
 
 	"github.com/tetratelabs/wazero"
 	"github.com/tetratelabs/wazero/api"
-	"wa-lang.org/wa/internal/app/waruntime"
 	"wa-lang.org/wa/internal/config"
 )
 
@@ -142,17 +141,17 @@ func (p *Module) buildModule() error {
 
 	switch p.cfg.WaOS {
 	case config.WaOS_arduino:
-		if _, err = waruntime.ArduinoInstantiate(p.wazeroCtx, p.wazeroRuntime); err != nil {
+		if _, err = ArduinoInstantiate(p.wazeroCtx, p.wazeroRuntime); err != nil {
 			p.wazeroInitErr = err
 			return err
 		}
 	case config.WaOS_chrome:
-		if _, err = waruntime.ChromeInstantiate(p.wazeroCtx, p.wazeroRuntime); err != nil {
+		if _, err = ChromeInstantiate(p.wazeroCtx, p.wazeroRuntime); err != nil {
 			p.wazeroInitErr = err
 			return err
 		}
 	case config.WaOS_wasi:
-		if _, err = waruntime.WasiInstantiate(p.wazeroCtx, p.wazeroRuntime); err != nil {
+		if _, err = WasiInstantiate(p.wazeroCtx, p.wazeroRuntime); err != nil {
 			p.wazeroInitErr = err
 			return err
 		}

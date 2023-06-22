@@ -4,20 +4,16 @@ package app
 
 import (
 	"bytes"
-	"context"
-	"crypto/rand"
 	"fmt"
 	"os"
 	"strings"
 	"time"
 
-	"github.com/tetratelabs/wazero"
 	"github.com/tetratelabs/wazero/sys"
-	"wa-lang.org/wa/internal/app/waruntime"
 	"wa-lang.org/wa/internal/backends/compiler_wat"
-	"wa-lang.org/wa/internal/config"
 	"wa-lang.org/wa/internal/loader"
 	"wa-lang.org/wa/internal/wabt"
+	"wa-lang.org/wa/internal/wazero"
 )
 
 func (p *App) RunTest(pkgpath string, appArgs ...string) error {
@@ -30,6 +26,8 @@ func (p *App) RunTest(pkgpath string, appArgs ...string) error {
 
 	startTime := time.Now()
 	mainPkg := prog.Pkgs[prog.Manifest.MainPkg]
+	wasmName := "unittest://" + pkgpath
+	wasmArgs := []string{}
 
 	if len(mainPkg.TestInfo.Files) == 0 {
 		fmt.Printf("?    %s [no test files]\n", prog.Manifest.MainPkg)
@@ -51,83 +49,24 @@ func (p *App) RunTest(pkgpath string, appArgs ...string) error {
 		return err
 	}
 
-	// 构建 wasm 可执行实例
-	// https://pkg.go.dev/github.com/tetratelabs/wazero@v1.0.0-pre.4#section-readme
-
-	var r wazero.Runtime
-	var ctx = context.Background()
-	var stdoutBuffer = new(bytes.Buffer)
-	var stderrBuffer = new(bytes.Buffer)
-	{
-		r = wazero.NewRuntime(ctx)
-		defer r.Close(ctx)
-
-		switch cfg.WaOS {
-		case config.WaOS_arduino:
-			if _, err = waruntime.ArduinoInstantiate(ctx, r); err != nil {
-				if s := sWithPrefix(stderrBuffer.String(), "    "); s != "" {
-					fmt.Println(s)
-				}
-				return err
-			}
-		case config.WaOS_chrome:
-			if _, err = waruntime.ChromeInstantiate(ctx, r); err != nil {
-				if s := sWithPrefix(stderrBuffer.String(), "    "); s != "" {
-					fmt.Println(s)
-				}
-				return err
-			}
-		case config.WaOS_wasi:
-			if _, err = waruntime.WasiInstantiate(ctx, r); err != nil {
-				if s := sWithPrefix(stderrBuffer.String(), "    "); s != "" {
-					fmt.Println(s)
-				}
-				return err
-			}
-		}
-	}
-
-	conf := wazero.NewModuleConfig().
-		WithStdout(stdoutBuffer).
-		WithStderr(stderrBuffer).
-		WithStdin(os.Stdin).
-		WithRandSource(rand.Reader).
-		WithSysNanosleep().
-		WithSysNanotime().
-		WithSysWalltime().
-		WithArgs("a.out.wasm").
-		WithName("unittest")
-
-	// 执行 init 函数
-	compiled, err := r.CompileModule(ctx, wasmBytes)
+	m, err := wazero.BuildModule(cfg, wasmName, wasmBytes, wasmArgs...)
 	if err != nil {
 		return err
 	}
-
-	wasmIns, err := r.InstantiateModule(ctx, compiled, conf)
-	if err != nil {
-		if s := sWithPrefix(stderrBuffer.String(), "    "); s != "" {
-			fmt.Println(s)
-		}
-		return err
-	}
+	defer m.Close()
 
 	// 执行测试函数
 	var firstError error
 	for _, t := range mainPkg.TestInfo.Tests {
-		stdoutBuffer.Reset()
-		stderrBuffer.Reset()
-
-		_, err := wasmIns.ExportedFunction(mainPkg.Pkg.Path() + "." + t.Name).Call(ctx)
+		_, stdout, stderr, err := m.RunFunc(mainPkg.Pkg.Path() + "." + t.Name)
 		if err != nil {
-			if s := sWithPrefix(stderrBuffer.String(), "    "); s != "" {
-				fmt.Println(s)
+			if len(stderr) > 0 {
+				if s := sWithPrefix(string(stderr), "    "); s != "" {
+					fmt.Println(s)
+				}
 			}
 			return err
 		}
-
-		stdout := stdoutBuffer.Bytes()
-		stderr := stderrBuffer.Bytes()
 
 		stdout = bytes.TrimSpace(stdout)
 		if t.Output != "" && t.Output == string(stdout) {
@@ -162,19 +101,15 @@ func (p *App) RunTest(pkgpath string, appArgs ...string) error {
 		}
 	}
 	for _, t := range mainPkg.TestInfo.Examples {
-		stdoutBuffer.Reset()
-		stderrBuffer.Reset()
-
-		_, err := wasmIns.ExportedFunction(mainPkg.Pkg.Path() + "." + t.Name).Call(ctx)
+		_, stdout, stderr, err := m.RunFunc(mainPkg.Pkg.Path() + "." + t.Name)
 		if err != nil {
-			if s := sWithPrefix(stderrBuffer.String(), "    "); s != "" {
-				fmt.Println(s)
+			if len(stderr) > 0 {
+				if s := sWithPrefix(string(stderr), "    "); s != "" {
+					fmt.Println(s)
+				}
 			}
 			return err
 		}
-
-		stdout := stdoutBuffer.Bytes()
-		stderr := stderrBuffer.Bytes()
 
 		stdout = bytes.TrimSpace(stdout)
 		if t.Output != "" && t.Output == string(stdout) {
