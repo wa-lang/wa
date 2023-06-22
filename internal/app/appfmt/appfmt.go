@@ -1,6 +1,6 @@
 // 版权 @2023 凹语言 作者。保留所有权利。
 
-package app
+package appfmt
 
 import (
 	"fmt"
@@ -12,7 +12,7 @@ import (
 	"wa-lang.org/wa/internal/format"
 )
 
-func (p *App) Fmt(path string) error {
+func Fmt(path string) error {
 	if path == "" {
 		path, _ = os.Getwd()
 	}
@@ -24,7 +24,7 @@ func (p *App) Fmt(path string) error {
 
 	var changedFileList []string
 	for _, s := range waFileList {
-		changed, err := p.fmtFile(s)
+		changed, err := fmtFile(s)
 		if err != nil {
 			return err
 		}
@@ -38,7 +38,7 @@ func (p *App) Fmt(path string) error {
 	return nil
 }
 
-func (p *App) fmtFile(path string) (changed bool, err error) {
+func fmtFile(path string) (changed bool, err error) {
 	code, changed, err := format.File(nil, path, nil)
 	if err != nil {
 		return false, err

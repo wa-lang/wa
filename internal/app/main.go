@@ -4,7 +4,7 @@
 // +build !wasm
 
 // 凹语言，The Wa Programming Language.
-package wacli
+package app
 
 import (
 	"fmt"
@@ -13,11 +13,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/tetratelabs/wazero/sys"
-
 	"wa-lang.org/wa/api"
 	"wa-lang.org/wa/internal/3rdparty/cli"
-	"wa-lang.org/wa/internal/app"
 	"wa-lang.org/wa/internal/app/yacc"
 	"wa-lang.org/wa/internal/config"
 	"wa-lang.org/wa/internal/lsp"
@@ -129,7 +126,7 @@ func Main() {
 			},
 
 			Action: func(c *cli.Context) error {
-				waApp := app.NewApp(build_Options(c))
+				waApp := NewApp(build_Options(c))
 				err := waApp.InitApp(c.String("name"), c.String("pkgpath"), c.Bool("update"))
 				if err != nil {
 					fmt.Println(err)
@@ -195,7 +192,7 @@ func Main() {
 					input, _ = os.Getwd()
 				}
 
-				ctx := app.NewApp(build_Options(c))
+				ctx := NewApp(build_Options(c))
 				watOutput, err := ctx.WASM(input)
 				if err != nil {
 					fmt.Println(err)
@@ -276,7 +273,7 @@ func Main() {
 				}
 				infile = c.Args().First()
 
-				ctx := app.NewApp(build_Options(c, config.WaBackend_llvm))
+				ctx := NewApp(build_Options(c, config.WaBackend_llvm))
 				if err := ctx.LLVM(infile, outfile, target, debug); err != nil {
 					fmt.Println(err)
 					os.Exit(1)
@@ -296,7 +293,7 @@ func Main() {
 					os.Exit(1)
 				}
 
-				waApp := app.NewApp(build_Options(c))
+				waApp := NewApp(build_Options(c))
 				err := waApp.Lex(c.Args().First())
 				if err != nil {
 					fmt.Println(err)
@@ -315,7 +312,7 @@ func Main() {
 					os.Exit(1)
 				}
 
-				waApp := app.NewApp(build_Options(c))
+				waApp := NewApp(build_Options(c))
 				err := waApp.AST(c.Args().First())
 				if err != nil {
 					fmt.Println(err)
@@ -334,7 +331,7 @@ func Main() {
 					os.Exit(1)
 				}
 
-				ctx := app.NewApp(build_Options(c))
+				ctx := NewApp(build_Options(c))
 				err := ctx.SSA(c.Args().First())
 				if err != nil {
 					fmt.Println(err)
@@ -353,7 +350,7 @@ func Main() {
 					os.Exit(1)
 				}
 
-				ctx := app.NewApp(build_Options(c))
+				ctx := NewApp(build_Options(c))
 				err := ctx.CIR(c.Args().First())
 				if err != nil {
 					fmt.Println(err)
@@ -371,7 +368,7 @@ func Main() {
 					cli.ShowAppHelpAndExit(c, 0)
 				}
 				appArgs := c.Args().Slice()[1:]
-				waApp := app.NewApp(build_Options(c))
+				waApp := NewApp(build_Options(c))
 				waApp.RunTest(c.Args().First(), appArgs...)
 				return nil
 			},
@@ -380,7 +377,7 @@ func Main() {
 			Name:  "fmt",
 			Usage: "format Wa package sources",
 			Action: func(c *cli.Context) error {
-				waApp := app.NewApp(build_Options(c))
+				waApp := NewApp(build_Options(c))
 				err := waApp.Fmt(c.Args().First())
 				if err != nil {
 					fmt.Println(err)
@@ -471,7 +468,7 @@ func Main() {
 				},
 			},
 			Action: func(c *cli.Context) error {
-				app.PrintLogo(c.Bool("more"))
+				PrintLogo(c.Bool("more"))
 				return nil
 			},
 		},
@@ -480,8 +477,8 @@ func Main() {
 	cliApp.Run(os.Args)
 }
 
-func build_Options(c *cli.Context, waBackend ...string) *app.Option {
-	opt := &app.Option{
+func build_Options(c *cli.Context, waBackend ...string) *Option {
+	opt := &Option{
 		Debug:        c.Bool("debug"),
 		WaBackend:    config.WaBackend_Default,
 		BuilgTags:    strings.Fields(c.String("tags")),
@@ -519,7 +516,7 @@ func cliRun(c *cli.Context) {
 		infile, _ = os.Getwd()
 	}
 
-	var app = app.NewApp(build_Options(c))
+	var app = NewApp(build_Options(c))
 	var watBytes []byte
 	var wasmBytes []byte
 	var err error
@@ -573,8 +570,8 @@ func cliRun(c *cli.Context) {
 		if len(stderr) > 0 {
 			fmt.Fprint(os.Stderr, string(stderr))
 		}
-		if exitErr, ok := err.(*sys.ExitError); ok {
-			os.Exit(int(exitErr.ExitCode()))
+		if exitCode, ok := wazero.AsExitError(err); ok {
+			os.Exit(exitCode)
 		}
 		fmt.Println(err)
 	}

@@ -1,6 +1,6 @@
 // 版权 @2023 凹语言 作者。保留所有权利。
 
-package app
+package apptest
 
 import (
 	"bytes"
@@ -10,13 +10,13 @@ import (
 	"time"
 
 	"wa-lang.org/wa/internal/backends/compiler_wat"
+	"wa-lang.org/wa/internal/config"
 	"wa-lang.org/wa/internal/loader"
 	"wa-lang.org/wa/internal/wabt"
 	"wa-lang.org/wa/internal/wazero"
 )
 
-func (p *App) RunTest(pkgpath string, appArgs ...string) {
-	cfg := p.opt.Config()
+func RunTest(cfg *config.Config, pkgpath string, appArgs ...string) {
 	cfg.UnitTest = true
 	prog, err := loader.LoadProgram(cfg, pkgpath)
 	if err != nil {

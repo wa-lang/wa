@@ -1,6 +1,6 @@
 // 版权 @2023 凹语言 作者。保留所有权利。
 
-package app
+package appinit
 
 import (
 	"fmt"
@@ -13,7 +13,7 @@ import (
 	"wa-lang.org/wa/waroot"
 )
 
-func (p *App) InitApp(name, pkgpath string, update bool) error {
+func InitApp(name, pkgpath string, update bool) error {
 	if name == "" {
 		return fmt.Errorf("init failed: <%s> is empty", name)
 	}
