@@ -372,11 +372,7 @@ func Main() {
 				}
 				appArgs := c.Args().Slice()[1:]
 				waApp := app.NewApp(build_Options(c))
-				err := waApp.RunTest(c.Args().First(), appArgs...)
-				if err != nil {
-					fmt.Println(err)
-					os.Exit(1)
-				}
+				waApp.RunTest(c.Args().First(), appArgs...)
 				return nil
 			},
 		},

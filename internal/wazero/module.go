@@ -114,7 +114,8 @@ func (p *Module) buildModule() error {
 		WithSysNanosleep().
 		WithSysNanotime().
 		WithSysWalltime().
-		WithArgs(append([]string{p.wasmName}, p.wasmArgs...)...)
+		WithArgs(append([]string{p.wasmName}, p.wasmArgs...)...).
+		WithName(p.wasmName)
 
 	// TODO: Windows 可能导致异常, 临时屏蔽
 	if runtime.GOOS != "windows" {
