@@ -10,6 +10,7 @@ import (
 	"wa-lang.org/wa/internal/app/appfmt"
 	"wa-lang.org/wa/internal/app/appinit"
 	"wa-lang.org/wa/internal/app/applex"
+	"wa-lang.org/wa/internal/app/appplay"
 	"wa-lang.org/wa/internal/app/apptest"
 	"wa-lang.org/wa/internal/ast"
 	"wa-lang.org/wa/internal/backends/compiler_c"
@@ -99,6 +100,10 @@ func (p *App) CIR(filename string) error {
 
 func (p *App) Fmt(path string) error {
 	return appfmt.Fmt(path)
+}
+
+func (p *App) Playground(addr string) error {
+	return appplay.RunPlayground(addr)
 }
 
 func (p *App) InitApp(name, pkgpath string, update bool) error {

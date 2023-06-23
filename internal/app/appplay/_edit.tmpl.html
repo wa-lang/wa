@@ -1,0 +1,82 @@
+<!doctype html>
+<html>
+  <head>
+    <link rel="icon" href="/static/logo.svg">
+
+    <title>凹语言游乐场</title>
+    <link rel="stylesheet" href="/static/playground/playground-full.css">
+
+    <script src="/static/playground/jquery/1.8.2/jquery.min.js"></script>
+    <script src="/static/playground/playground-full.js"></script>
+
+    <style>
+    .cm-tab {
+      background: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADAAAAAMCAYAAAAkuj5RAAAAAXNSR0IArs4c6QAAAGFJREFUSMft1LsRQFAQheHPowAKoACx3IgEKtaEHujDjORSgWTH/ZOdnZOcM/sgk/kFFWY0qV8foQwS4MKBCS3qR6ixBJvElOobYAtivseIE120FaowJPN75GMu8j/LfMwNjh4HUpwg4LUAAAAASUVORK5CYII=);
+      background-position: right;
+      background-repeat: no-repeat;
+    }
+    </style>
+    <script>
+    $(document).ready(function() {
+      playground({
+        'theme':        'default',
+        'codeEl':       '#code',
+        'outputEl':     '#output',
+        'runEl':        '#run',
+        'fmtEl':        '#fmt',
+        'enableHistory': true
+      });
+      // Avoid line wrapping.
+      var about = $('#about');
+      about.click(function(e) {
+        if ($(e.target).is('a')) {
+          return;
+        }
+        about.hide();
+      });
+      $('#homeButton').click(function() {
+        $(location).attr('href','/')
+      })
+      $('#aboutButton').click(function() {
+        if (about.is(':visible')) {
+          about.hide();
+          return;
+        }
+        about.show();
+      })
+      // Fire Google Analytics events for Run/Share button clicks.
+      if (window.trackEvent) {
+        $('#run').click(function() {
+          window.trackEvent('playground', 'click', 'run-button');
+        });
+        $('#fmt').click(function() {
+          window.trackEvent('playground', 'click', 'fmt-button');
+        });
+      }
+    });
+    </script>
+  </head>
+  <body itemscope itemtype="http://schema.org/CreativeWork">
+    <div id="banner">
+      <div id="head" itemprop="name">凹语言游乐场</div>
+      <div id="controls">
+        <input type="button" value="运行" id="run">
+        <input type="button" value="格式化" id="fmt">
+      </div>
+      <div id="aboutControls">
+        <input type="button" value="关于" id="aboutButton">
+      </div>
+    </div>
+    <div id="wrap">
+      <textarea itemprop="description" id="code" name="code" autocorrect="off" autocomplete="off" autocapitalize="off" spellcheck="false">{{printf "%s" .Snippet.Body}}</textarea>
+    </div>
+    <div id="output"></div>
+    <div id="about">
+      <p><b>凹语言 (The Wa Programming Language)</b></p>
+
+      <a target="_blank" href="https://wa-lang.org">https://wa-lang.org</a>
+
+    </div>
+
+  </body>
+</html>

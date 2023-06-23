@@ -386,6 +386,27 @@ func Main() {
 				return nil
 			},
 		},
+
+		{
+			Name:  "play",
+			Usage: "run wa playground server",
+			Flags: []cli.Flag{
+				&cli.StringFlag{
+					Name:  "http",
+					Value: ":2023",
+					Usage: "set http address",
+				},
+			},
+			Action: func(c *cli.Context) error {
+				waApp := NewApp(build_Options(c))
+				err := waApp.Playground(c.String("http"))
+				if err != nil {
+					fmt.Println(err)
+					os.Exit(1)
+				}
+				return nil
+			},
+		},
 		{
 			Hidden: true,
 			Name:   "doc",
