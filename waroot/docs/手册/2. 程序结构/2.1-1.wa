@@ -1,0 +1,20 @@
+// 版权 @2023 凹语言 作者。保留所有权利。
+
+import "errors"
+
+const PI = 3.1415926
+
+global 终极问题的答案: i32
+
+func main {
+	终极问题的答案 = getAnswer()
+	println("宇宙的答案：", 终极问题的答案)
+	println("π:", PI)
+
+	err := errors.New("!!!")
+	println("err:", err.Error())
+}
+
+func getAnswer => i32 {
+	return 42
+}
