@@ -3,6 +3,7 @@
 package appplay
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -28,7 +29,12 @@ func (p *WebServer) fmtHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func (p *WebServer) fmtCode(code []byte) (*fmtResponse, error) {
-	output, err := api.FormatCode("prog.wa", string(code))
+	filename := "prog.wa"
+	if bytes.Contains(code, []byte("【启】：")) {
+		filename = "prog.wz"
+	}
+
+	output, err := api.FormatCode(filename, string(code))
 	if err != nil {
 		resp := &fmtResponse{
 			Error: err.Error(),
