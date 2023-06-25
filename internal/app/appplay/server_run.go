@@ -3,6 +3,7 @@
 package appplay
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -41,7 +42,12 @@ func (p *WebServer) compileAndRun(req *Request) (*Response, error) {
 	}
 	defer os.RemoveAll(tmpDir)
 
-	result, err := api.RunCode(api.DefaultConfig(), "prog.wa", req.Body)
+	filename := "prog.wa"
+	if bytes.Contains([]byte(req.Body), []byte("【启】：")) {
+		filename = "prog.wz"
+	}
+
+	result, err := api.RunCode(api.DefaultConfig(), filename, req.Body)
 	if err != nil {
 		resp := &Response{Errors: err.Error()}
 		return resp, nil
