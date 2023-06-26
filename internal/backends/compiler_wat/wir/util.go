@@ -184,7 +184,7 @@ func GetFnMangleName(v interface{}) (internal string, external string) {
 			switch rt := recv.Type().(type) {
 			case *types.Named:
 				internal += GenSymbolName(rt.Obj().Name())
-				external += rt.Obj().Name()
+				external += GenSymbolName(rt.Obj().Name())
 
 			case *types.Pointer:
 				btype, ok := rt.Elem().(*types.Named)
@@ -192,7 +192,7 @@ func GetFnMangleName(v interface{}) (internal string, external string) {
 					panic("Unreachable")
 				}
 				internal += GenSymbolName(btype.Obj().Name())
-				external += btype.Obj().Name()
+				external += GenSymbolName(btype.Obj().Name())
 
 			default:
 				panic("Unreachable")
@@ -205,7 +205,7 @@ func GetFnMangleName(v interface{}) (internal string, external string) {
 		internal += "."
 		external += "."
 		internal += GenSymbolName(f.Name())
-		external += f.Name()
+		external += GenSymbolName(f.Name())
 
 	case *types.Func:
 		internal, external = GetPkgMangleName(f.Pkg().Path())
@@ -216,7 +216,7 @@ func GetFnMangleName(v interface{}) (internal string, external string) {
 			switch rt := recv.Type().(type) {
 			case *types.Named:
 				internal += GenSymbolName(rt.Obj().Name())
-				external += rt.Obj().Name()
+				external += GenSymbolName(rt.Obj().Name())
 
 			case *types.Pointer:
 				btype, ok := rt.Elem().(*types.Named)
@@ -224,7 +224,7 @@ func GetFnMangleName(v interface{}) (internal string, external string) {
 					panic("Unreachable")
 				}
 				internal += GenSymbolName(btype.Obj().Name())
-				external += btype.Obj().Name()
+				external += GenSymbolName(btype.Obj().Name())
 
 			default:
 				panic("Unreachable")
@@ -233,7 +233,7 @@ func GetFnMangleName(v interface{}) (internal string, external string) {
 		internal += "."
 		external += "."
 		internal += GenSymbolName(f.Name())
-		external += f.Name()
+		external += GenSymbolName(f.Name())
 	}
 
 	return internal, external
@@ -251,7 +251,7 @@ func GetPkgMangleName(pkg_path string) (string, string) {
 		symbol_name += GenSymbolName(p)
 		symbol_name += "$"
 	}
-	exp_name += pkg_path
+	exp_name += GenSymbolName(pkg_path)
 	symbol_name += GenSymbolName(pkg_path)
 	return symbol_name, exp_name
 }
