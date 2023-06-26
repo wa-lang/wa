@@ -3,7 +3,6 @@
 package appplay
 
 import (
-	"bytes"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -11,6 +10,7 @@ import (
 	"os"
 
 	"wa-lang.org/wa/api"
+	"wa-lang.org/wa/internal/wamime"
 )
 
 func (p *WebServer) runHandler(w http.ResponseWriter, r *http.Request) {
@@ -43,7 +43,7 @@ func (p *WebServer) compileAndRun(req *Request) (*Response, error) {
 	defer os.RemoveAll(tmpDir)
 
 	filename := "prog.wa"
-	if bytes.Contains([]byte(req.Body), []byte("【启】：")) {
+	if wamime.GetCodeMime(filename, []byte(req.Body)) == "wz" {
 		filename = "prog.wz"
 	}
 

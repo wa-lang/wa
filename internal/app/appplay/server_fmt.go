@@ -3,12 +3,12 @@
 package appplay
 
 import (
-	"bytes"
 	"encoding/json"
 	"fmt"
 	"net/http"
 
 	"wa-lang.org/wa/api"
+	"wa-lang.org/wa/internal/wamime"
 )
 
 func (p *WebServer) fmtHandler(w http.ResponseWriter, r *http.Request) {
@@ -30,7 +30,7 @@ func (p *WebServer) fmtHandler(w http.ResponseWriter, r *http.Request) {
 
 func (p *WebServer) fmtCode(code []byte) (*fmtResponse, error) {
 	filename := "prog.wa"
-	if bytes.Contains(code, []byte("【启】：")) {
+	if wamime.GetCodeMime(filename, code) == "wz" {
 		filename = "prog.wz"
 	}
 
