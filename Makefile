@@ -38,6 +38,7 @@ ci-test-all:
 	go run main.go test unicode/utf8
 	@echo "== std ok =="
 
+	go run main.go ./waroot/hello.wa
 	cd waroot && go run ../main.go hello.wa
 
 	make -C ./waroot/examples ci-test-all
