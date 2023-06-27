@@ -3,8 +3,6 @@
 package main
 
 import (
-	"fmt"
-
 	"wa-lang.org/wa/api"
 	"wa-lang.org/wa/internal/backends/compiler_wat"
 	"wa-lang.org/wa/internal/config"
@@ -64,8 +62,6 @@ func waBuildFile(cfg *config.Config, filename string, src interface{}) (wat []by
 		logger.Tracef(&config.EnableTrace_api, "LoadProgramVFS failed, err = %v", err)
 		return nil, err
 	}
-
-	fmt.Println(prog.DebugString())
 
 	watOut, err := compiler_wat.New().Compile(prog, "main")
 	return []byte(watOut), err

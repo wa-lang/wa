@@ -59,3 +59,28 @@ func ExampleRunCode_args() {
 	// 0 : aa
 	// 1 : bb
 }
+
+func ExampleRunCode_wz() {
+	const code = `
+		#syntax=wz
+
+		引于 "书"
+
+		【启】：
+		  书·说："你好，凹语言中文版！"
+		。
+	`
+
+	output, err := api.RunCode(api.DefaultConfig(), "hello.wa", code)
+	if err != nil {
+		if len(output) != 0 {
+			log.Println(string(output))
+		}
+		log.Fatal(err)
+	}
+
+	fmt.Print(string(output))
+
+	// Output:
+	// 你好，凹语言中文版！
+}
