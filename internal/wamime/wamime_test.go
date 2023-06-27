@@ -26,13 +26,13 @@ var tests = []struct {
 	{"prog.wz", "", "wz"},
 
 	{"x.wa", "#", "wa"},
-	{"", "#syntax=wx", "wx"},
+	{"", "#wa:syntax=wx", "wx"},
 
 	{
 		"",
 		`// 版权 @2019 凹语言 作者。保留所有权利。
 
-#syntax=wa
+#wa:syntax=wa
 
 import "fmt"
 import "runtime"
@@ -58,7 +58,7 @@ func add(a: i32, b: i32) => i32 {
 		"",
 		`// 版权 @2019 凹语言 作者。保留所有权利。
 
-#syntax=wz
+#wa:syntax=wz
 
 引于 "书"
 

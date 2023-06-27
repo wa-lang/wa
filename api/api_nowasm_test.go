@@ -62,7 +62,7 @@ func ExampleRunCode_args() {
 
 func ExampleRunCode_wz() {
 	const code = `
-		#syntax=wz
+		#wa:syntax=wz
 
 		引于 "书"
 

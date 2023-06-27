@@ -9,7 +9,8 @@ import (
 	"wa-lang.org/wa/internal/token"
 )
 
-const mimePrefix = "#syntax=" // #syntax=wa, #syntax=wz
+const mimePrefix0 = "#syntax="   // 旧语法, 先保持兼容
+const mimePrefix = "#wa:syntax=" // #wa:syntax=wa, #wa:syntax=wz
 
 func GetCodeMime(filename string, code []byte) string {
 	var s scanner.Scanner
@@ -17,12 +18,20 @@ func GetCodeMime(filename string, code []byte) string {
 	file := fset.AddFile(filename, fset.Base(), len(code))
 	s.Init(file, code, nil, scanner.ScanComments)
 
-	// 解析 #syntax=xx
+	// 解析 #wa:syntax=xx
 	for {
 		_, tok, lit := s.Scan()
 		if tok != token.COMMENT {
 			break
 		}
+		// 旧语法 #syntax=
+		if strings.HasPrefix(lit, mimePrefix0) {
+			if mime := lit[len(mimePrefix0):]; mime != "" {
+				return mime
+			}
+			return ""
+		}
+		// 新语法 #wa:syntax=
 		if strings.HasPrefix(lit, mimePrefix) {
 			if mime := lit[len(mimePrefix):]; mime != "" {
 				return mime
