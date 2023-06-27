@@ -38,7 +38,7 @@ func Main() {
 	cliApp.Flags = []cli.Flag{
 		&cli.StringFlag{
 			Name:  "target",
-			Usage: "set target os (arduino|chrome|wasi)",
+			Usage: fmt.Sprintf("set target os (%s)", strings.Join(config.WaOS_List, "|")),
 			Value: config.WaOS_Default,
 		},
 		&cli.BoolFlag{
@@ -54,10 +54,7 @@ func Main() {
 	}
 
 	cliApp.Before = func(c *cli.Context) error {
-		switch c.String("target") {
-		case "wasi", "arduino", "chrome":
-			// OK
-		default:
+		if !config.CheckWaOS(c.String("target")) {
 			fmt.Printf("unknown target: %s\n", c.String("target"))
 			os.Exit(1)
 		}
@@ -141,7 +138,7 @@ func Main() {
 			Flags: []cli.Flag{
 				&cli.StringFlag{
 					Name:  "target",
-					Usage: "set target os (wasi|arduino|chrome)",
+					Usage: fmt.Sprintf("set target os (%s)", strings.Join(config.WaOS_List, "|")),
 					Value: config.WaOS_Default,
 				},
 				&cli.StringFlag{
@@ -166,7 +163,7 @@ func Main() {
 				},
 				&cli.StringFlag{
 					Name:  "target",
-					Usage: "set target os (wasi|arduino|chrome)",
+					Usage: fmt.Sprintf("set target os (%s)", strings.Join(config.WaOS_List, "|")),
 					Value: config.WaOS_Default,
 				},
 				&cli.StringFlag{
