@@ -356,7 +356,7 @@ func (check *Checker) collectObjects() {
 
 							check.arityMatch(s, last)
 
-						case token.VAR:
+						case token.VAR, token.GLOBAL:
 							lhs := make([]*Var, len(s.Names))
 							// If there's exactly one rhs initializer, use
 							// the same declInfo d1 for all lhs variables

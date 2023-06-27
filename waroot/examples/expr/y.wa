@@ -13,7 +13,7 @@ type exprSymType struct {
 
 const NUM = 57346
 
-var exprToknames = [...]string{
+global exprToknames = [...]string{
 	"$end",
 	"error",
 	"$unk",
@@ -26,7 +26,7 @@ var exprToknames = [...]string{
 	"NUM",
 }
 
-var exprStatenames = [...]string{}
+global exprStatenames = [...]string{}
 
 const exprEofCode = 1
 const exprErrCode = 2
@@ -79,7 +79,7 @@ func main {
 	})
 }
 
-var exprExca = [...]int{
+global exprExca = [...]int{
 	-1, 1,
 	1, -1,
 	-2, 0,
@@ -89,45 +89,45 @@ const exprPrivate = 57344
 
 const exprLast = 23
 
-var exprAct = [...]int{
+global exprAct = [...]int{
 	7, 4, 5, 2, 21, 9, 6, 8, 12, 13,
 	9, 1, 8, 16, 3, 19, 20, 17, 18, 14,
 	15, 10, 11,
 }
 
-var exprPact = [...]int{
+global exprPact = [...]int{
 	-3, -1000, -1000, 17, -3, -3, 13, -1000, -1000, -3,
 	2, 2, -1000, -1000, 2, 2, -5, 13, 13, -1000,
 	-1000, -1000,
 }
 
-var exprPgo = [...]int{
+global exprPgo = [...]int{
 	0, 3, 14, 6, 0, 11,
 }
 
-var exprR1 = [...]int{
+global exprR1 = [...]int{
 	0, 5, 1, 1, 1, 2, 2, 2, 3, 3,
 	3, 4, 4,
 }
 
-var exprR2 = [...]int{
+global exprR2 = [...]int{
 	0, 1, 1, 2, 2, 1, 3, 3, 1, 3,
 	3, 1, 3,
 }
 
-var exprChk = [...]int{
+global exprChk = [...]int{
 	-1000, -5, -1, -2, 4, 5, -3, -4, 10, 8,
 	4, 5, -1, -1, 6, 7, -1, -3, -3, -4,
 	-4, 9,
 }
 
-var exprDef = [...]int{
+global exprDef = [...]int{
 	0, -2, 1, 2, 0, 0, 5, 8, 11, 0,
 	0, 0, 3, 4, 0, 0, 0, 6, 7, 9,
 	10, 12,
 }
 
-var exprTok1 = [...]int{
+global exprTok1 = [...]int{
 	1, 3, 3, 3, 3, 3, 3, 3, 3, 3,
 	3, 3, 3, 3, 3, 3, 3, 3, 3, 3,
 	3, 3, 3, 3, 3, 3, 3, 3, 3, 3,
@@ -135,11 +135,11 @@ var exprTok1 = [...]int{
 	8, 9, 6, 4, 3, 5, 3, 7,
 }
 
-var exprTok2 = [...]int{
+global exprTok2 = [...]int{
 	2, 3, 10,
 }
 
-var exprTok3 = [...]int{
+global exprTok3 = [...]int{
 	0,
 }
 
@@ -149,11 +149,11 @@ type exprErrorMessageInfo struct {
 	msg   :string
 }
 
-var exprErrorMessages = [...]exprErrorMessageInfo{}
+global exprErrorMessages = [...]exprErrorMessageInfo{}
 
 /*	parser for yacc output	*/
 
-var (
+global (
 	exprDebug        = 0
 	exprErrorVerbose = false
 )

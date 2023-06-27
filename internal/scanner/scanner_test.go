@@ -164,6 +164,7 @@ var tokens = [...]elt{
 	{token.FOR, "for", keyword},
 
 	{token.FUNC, "func", keyword},
+	{token.GLOBAL, "global", keyword},
 	{token.IF, "if", keyword},
 	{token.IMPORT, "import", keyword},
 

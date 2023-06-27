@@ -2394,7 +2394,7 @@ func (p *parser) parseValueSpec(doc *ast.CommentGroup, keyword token.Token, iota
 	p.expectSemi() // call before accessing p.linecomment
 
 	switch keyword {
-	case token.VAR:
+	case token.VAR, token.GLOBAL:
 		if typ == nil && values == nil {
 			p.error(pos, "missing variable type or initialization")
 		}
@@ -2417,7 +2417,7 @@ func (p *parser) parseValueSpec(doc *ast.CommentGroup, keyword token.Token, iota
 		Comment:  p.lineComment,
 	}
 	kind := ast.Con
-	if keyword == token.VAR {
+	if keyword == token.VAR || keyword == token.GLOBAL {
 		kind = ast.Var
 	}
 	p.declare(spec, iota, p.topScope, kind, idents...)
@@ -2459,10 +2459,6 @@ func (p *parser) parseGenDecl(keyword token.Token, f parseSpecFunction) *ast.Gen
 
 	doc := p.leadComment
 	pos := p.expect(keyword)
-
-	if keyword == token.GLOBAL {
-		keyword = token.VAR // TODO(chai2010): AST 支持 global
-	}
 
 	var lparen, rparen token.Pos
 	var list []ast.Spec
