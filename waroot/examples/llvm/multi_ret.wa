@@ -2,8 +2,8 @@
 // Test multiple return values.
 
 type pair struct {
-	a :f32
-	b :f32
+	a: f32
+	b: f32
 }
 
 func calc() => ([4]f32, pair, f32) {

@@ -3,6 +3,9 @@
 default:
 
 ci-test-all:
+	@echo "== fmt examples/... =="
+	go run ../../main.go fmt ./...
+
 	@echo "== examples test begin =="
 
 	# loop forever
@@ -12,6 +15,7 @@ ci-test-all:
 	cd ./brainfuck && make
 	cd ./expr && make
 	cd ./hello && make
+	cd ./misc && make
 	cd ./pkg && make
 	cd ./prime && make
 	cd ./reftoptr && make

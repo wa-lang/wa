@@ -7,9 +7,9 @@ func main {
 	println("你好，凹语言！", runtime.WAOS)
 	println(add(40, 2))
 
-	fmt.Println(1+1)
+	fmt.Println(1 + 1)
 }
 
 func add(a: i32, b: i32) => i32 {
-	return a+b
+	return a + b
 }

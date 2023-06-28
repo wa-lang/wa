@@ -7,8 +7,8 @@
 import "strconv" => __yystrconv__
 
 type exprSymType struct {
-	yys :int
-	num :int
+	yys: int
+	num: int
 }
 
 const NUM = 57346
@@ -36,13 +36,13 @@ const exprInitialStackSize = 16
 const eof = 0
 
 type exprToken struct {
-	Kind  :int
-	Value :int
+	Kind:  int
+	Value: int
 }
 
 type exprLexer struct {
-	tokens :[]exprToken
-	pos    :int
+	tokens: []exprToken
+	pos:    int
 }
 
 func exprLexer.Lex(yylval: *exprSymType) => int {
@@ -144,9 +144,9 @@ global exprTok3 = [...]int{
 }
 
 type exprErrorMessageInfo struct {
-	state :int
-	token :int
-	msg   :string
+	state: int
+	token: int
+	msg:   string
 }
 
 global exprErrorMessages = [...]exprErrorMessageInfo{}
@@ -159,9 +159,9 @@ global (
 )
 
 type exprParser struct {
-	lval  :exprSymType
-	stack :[exprInitialStackSize]exprSymType
-	char  :int
+	lval:  exprSymType
+	stack: [exprInitialStackSize]exprSymType
+	char:  int
 }
 
 func exprParser.Lookahead => int {

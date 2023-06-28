@@ -10,10 +10,10 @@ func main() {
 }
 
 type t0 struct {
-	a :i64
-	b :i32
-	c :[4]f64
-	d :u32
+	a: i64
+	b: i32
+	c: [4]f64
+	d: u32
 }
 
 func test_struct1(a: int, b: int, c: int) {

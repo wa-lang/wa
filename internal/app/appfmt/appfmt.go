@@ -39,7 +39,7 @@ func Fmt(path string) error {
 	for _, s := range waFileList {
 		changed, err := fmtFile(s)
 		if err != nil {
-			return err
+			return fmt.Errorf("%s: %w", s, err)
 		}
 		if changed {
 			changedFileList = append(changedFileList, s)

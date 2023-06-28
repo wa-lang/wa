@@ -24,7 +24,7 @@ func main {
 	Do()
 	println(G.A)
 	println(G.B)
-	
+
 	println(mypkg.G.A)
 	println(mypkg.G.B)
 }

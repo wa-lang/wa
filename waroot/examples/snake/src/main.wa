@@ -5,7 +5,7 @@ import "snake/canvas"
 var ca: *canvas.Canvas
 
 type Position struct {
-	x, y :i32
+	x, y: i32
 }
 
 const DefaultColor = 0x00000000
@@ -13,13 +13,13 @@ const BodyColor = 0xFF202020
 const FoodColor = 0xFF00FF00
 
 const (
-	GridNull: u8 = iota
+	GridNull :u8 = iota
 	GridBody
 	GridFood
 )
 
 const (
-	DirNull: i32 = iota
+	DirNull :i32 = iota
 	DirLeft
 	DirUp
 	DirRight
@@ -29,13 +29,13 @@ const (
 var Dirs: [5]Position
 
 type GameState struct {
-	w, h  :i32
-	scale :i32
-	grid  :[]u8
-	body  :[]Position
-	dir   :i32
+	w, h:  i32
+	scale: i32
+	grid:  []u8
+	body:  []Position
+	dir:   i32
 
-	ca :*canvas.Canvas
+	ca: *canvas.Canvas
 }
 
 var gameState: GameState
@@ -47,7 +47,7 @@ func GameState.Init(w, h: i32, scale: i32) {
 	this.grid = make([]u8, u32(w*h))
 	this.ca = canvas.NewCanvas(u32(w*scale), u32(h*scale))
 
-	caev: canvas.CanvasEvents
+	var caev: canvas.CanvasEvents
 	caev.Device_id = this.ca.GetDeviceID()
 	caev.OnMouseDown = func(x, y: u32) {}
 	caev.OnMouseUp = func(x, y: u32) {}
@@ -80,7 +80,7 @@ func GameState.Start() {
 
 func GameState.SetGridType(p: Position, t: u8) {
 	this.grid[p.y*this.w+p.x] = t
-	color: u32
+	var color: u32
 	switch t {
 	case GridBody:
 		color = BodyColor
@@ -92,7 +92,7 @@ func GameState.SetGridType(p: Position, t: u8) {
 		color = DefaultColor
 	}
 
-	x, y: i32
+	var x, y: i32
 	for y = 0; y < this.scale; y++ {
 		for x = 0; x < this.scale; x++ {
 			this.ca.SetPixel(u32(p.x*this.scale+x), u32(p.y*this.scale+y), color)
@@ -103,7 +103,7 @@ func GameState.SetGridType(p: Position, t: u8) {
 #wa:import wa_js_env rand
 func rand_JS(_: i32) => i32
 func GameState.GenFood() => Position {
-	p: Position
+	var p: Position
 	for {
 		p = Position{x: rand_JS(this.w), y: rand_JS(this.h)}
 		if this.grid[p.y*this.w+p.x] == GridNull {

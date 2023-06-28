@@ -8,10 +8,10 @@ func main() {
 }
 
 type BrainFuck struct {
-	mem  :[30000]byte
-	code :string
-	pos  :int
-	pc   :int
+	mem:  [30000]byte
+	code: string
+	pos:  int
+	pc:   int
 }
 
 func NewBrainFuck(code: string) => *BrainFuck {
