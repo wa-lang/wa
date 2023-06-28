@@ -9,9 +9,7 @@ package app
 import (
 	"fmt"
 	"os"
-	"runtime/debug"
 	"strings"
-	"time"
 
 	"wa-lang.org/wa/api"
 	"wa-lang.org/wa/internal/3rdparty/cli"
@@ -20,20 +18,14 @@ import (
 	"wa-lang.org/wa/internal/lsp"
 	"wa-lang.org/wa/internal/wabt"
 	"wa-lang.org/wa/internal/wazero"
+	"wa-lang.org/wa/waroot"
 )
 
 func Main() {
 	cliApp := cli.NewApp()
 	cliApp.Name = "Wa"
 	cliApp.Usage = "Wa is a tool for managing Wa source code."
-	cliApp.Version = func() string {
-		if info, ok := debug.ReadBuildInfo(); ok {
-			if info.Main.Version != "" {
-				return info.Main.Version
-			}
-		}
-		return "devel:" + time.Now().Format("2006-01-02+15:04:05")
-	}()
+	cliApp.Version = waroot.GetVersion()
 
 	cliApp.Flags = []cli.Flag{
 		&cli.StringFlag{
