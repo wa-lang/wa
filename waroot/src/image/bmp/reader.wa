@@ -2,9 +2,9 @@
 
 import (
 	"errors"
-	//"image"
+	"image"
 	//"image/color"
-	//"io"
+	"io"
 )
 
 // ErrUnsupported means that the input BMP image uses a valid but unsupported
@@ -20,7 +20,6 @@ func readUint32(b: []byte) => uint32 {
 }
 
 
-/*
 
 // decodeRGB reads a 24 bit-per-pixel BMP image from r.
 // If topDown is false, the image rows will be read bottom-up.
@@ -52,6 +51,7 @@ func decodeRGB(r: io.Reader, c: image.Config, topDown: bool) => (m: image.Image,
 }
 
 
+/*
 // decodePaletted reads an 8 bit-per-pixel BMP image from r.
 // If topDown is false, the image rows will be read bottom-up.
 func decodePaletted(r: io.Reader, c: image.Config, topDown: bool) => (m: image.Image, err: error) {

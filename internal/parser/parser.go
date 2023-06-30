@@ -2494,19 +2494,19 @@ func (p *parser) parseFuncDecl() *ast.FuncDecl {
 	scope := ast.NewScope(p.topScope) // function scope
 
 	var recv *ast.FieldList
-	if p.wagoMode {
-		if p.tok == token.LPAREN {
-			recv = p.parseParameters(scope, false)
-		}
+	//if p.wagoMode {
+	if p.tok == token.LPAREN {
+		recv = p.parseParameters(scope, false)
 	}
+	//}
 
 	ident := p.parseIdent()
 
 	// func Type.method()
 	if !p.wagoMode {
-		if recv != nil {
-			panic("unreachable")
-		}
+		//if recv != nil {
+		//	panic("unreachable")
+		//}
 		if p.tok == token.PERIOD {
 			thisIdent := &ast.Ident{Name: "this"}
 			thisField := &ast.Field{

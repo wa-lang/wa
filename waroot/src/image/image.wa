@@ -46,6 +46,8 @@ type PalettedImage interface {
 
 /*
 
+*/
+
 // pixelBufferLength returns the length of the []uint8 typed Pix slice field
 // for the NewXxx functions. Conceptually, this is just (bpp * width * height),
 // but this function panics if at least one of those is negative or if the
@@ -61,6 +63,7 @@ func pixelBufferLength(bytesPerPixel :int, r :Rectangle, imageTypeName :string) 
 	return totalLength
 }
 
+
 // RGBA is an in-memory image whose At method returns color.RGBA values.
 type RGBA struct {
 	// Pix holds the image's pixels, in R, G, B, A order. The pixel at
@@ -73,16 +76,18 @@ type RGBA struct {
 }
 
 
-func (p *RGBA) ColorModel() color.Model { return color.RGBAModel }
+func (p: *RGBA) ColorModel => color.Model { return color.RGBAModel }
 
-func (p *RGBA) Bounds() Rectangle { return p.Rect }
+func (p: *RGBA) Bounds => Rectangle { return p.Rect }
 
-func (p *RGBA) At(x, y int) color.Color {
-	return p.RGBAAt(x, y)
+func (p: *RGBA) At(x, y: int) => color.Color {
+	c := p.RGBAAt(x, y)
+	return &c
 }
 
-func (p *RGBA) RGBA64At(x, y int) color.RGBA64 {
-	if !(Point{x, y}.In(p.Rect)) {
+func (p: *RGBA) RGBA64At(x, y: int) => color.RGBA64 {
+	pt := Point{x, y}
+	if !(pt.In(p.Rect)) {
 		return color.RGBA64{}
 	}
 	i := p.PixOffset(x, y)
@@ -99,8 +104,9 @@ func (p *RGBA) RGBA64At(x, y int) color.RGBA64 {
 	}
 }
 
-func (p *RGBA) RGBAAt(x, y int) color.RGBA {
-	if !(Point{x, y}.In(p.Rect)) {
+func (p: *RGBA) RGBAAt(x, y: int) => color.RGBA {
+	pt := Point{x, y}
+	if !(pt.In(p.Rect)) {
 		return color.RGBA{}
 	}
 	i := p.PixOffset(x, y)
@@ -110,16 +116,17 @@ func (p *RGBA) RGBAAt(x, y int) color.RGBA {
 
 // PixOffset returns the index of the first element of Pix that corresponds to
 // the pixel at (x, y).
-func (p *RGBA) PixOffset(x, y int) int {
+func (p: *RGBA) PixOffset(x, y: int) => int {
 	return (y-p.Rect.Min.Y)*p.Stride + (x-p.Rect.Min.X)*4
 }
 
-func (p *RGBA) Set(x, y int, c color.Color) {
-	if !(Point{x, y}.In(p.Rect)) {
+func (p: *RGBA) Set(x, y: int, c: color.Color) {
+	pt := Point{x, y}
+	if !(pt.In(p.Rect)) {
 		return
 	}
 	i := p.PixOffset(x, y)
-	c1 := color.RGBAModel.Convert(c).(color.RGBA)
+	c1 := color.RGBAModel.Convert(c).(*color.RGBA)
 	s := p.Pix[i : i+4 : i+4] // Small cap improves performance, see https://golang.org/issue/27857
 	s[0] = c1.R
 	s[1] = c1.G
@@ -127,8 +134,9 @@ func (p *RGBA) Set(x, y int, c color.Color) {
 	s[3] = c1.A
 }
 
-func (p *RGBA) SetRGBA64(x, y int, c color.RGBA64) {
-	if !(Point{x, y}.In(p.Rect)) {
+func (p: *RGBA) SetRGBA64(x, y: int, c: color.RGBA64) {
+	pt := Point{x, y}
+	if !pt.In(p.Rect) {
 		return
 	}
 	i := p.PixOffset(x, y)
@@ -139,8 +147,9 @@ func (p *RGBA) SetRGBA64(x, y int, c color.RGBA64) {
 	s[3] = uint8(c.A >> 8)
 }
 
-func (p *RGBA) SetRGBA(x, y int, c color.RGBA) {
-	if !(Point{x, y}.In(p.Rect)) {
+func (p: *RGBA) SetRGBA(x, y: int, c: color.RGBA) {
+	pt := Point{x, y}
+	if !(pt.In(p.Rect)) {
 		return
 	}
 	i := p.PixOffset(x, y)
@@ -153,7 +162,7 @@ func (p *RGBA) SetRGBA(x, y int, c color.RGBA) {
 
 // SubImage returns an image representing the portion of the image p visible
 // through r. The returned value shares pixels with the original image.
-func (p *RGBA) SubImage(r Rectangle) Image {
+func (p: *RGBA) SubImage(r: Rectangle) => Image {
 	r = r.Intersect(p.Rect)
 	// If r1 and r2 are Rectangles, r1.Intersect(r2) is not guaranteed to be inside
 	// either r1 or r2 if the intersection is empty. Without explicitly checking for
@@ -170,7 +179,7 @@ func (p *RGBA) SubImage(r Rectangle) Image {
 }
 
 // Opaque scans the entire image and reports whether it is fully opaque.
-func (p *RGBA) Opaque() bool {
+func (p: *RGBA) Opaque => bool {
 	if p.Rect.Empty() {
 		return true
 	}
@@ -188,13 +197,16 @@ func (p *RGBA) Opaque() bool {
 }
 
 // NewRGBA returns a new RGBA image with the given bounds.
-func NewRGBA(r Rectangle) *RGBA {
+func NewRGBA(r: Rectangle) => *RGBA {
 	return &RGBA{
 		Pix:    make([]uint8, pixelBufferLength(4, r, "RGBA")),
 		Stride: 4 * r.Dx(),
 		Rect:   r,
 	}
 }
+
+
+/*
 
 // RGBA64 is an in-memory image whose At method returns color.RGBA64 values.
 type RGBA64 struct {
