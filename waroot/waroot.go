@@ -99,8 +99,11 @@ func IsStdPkg(pkgpath string) bool {
 	return false
 }
 
+func GetStdPkgList() []string {
+	return append([]string{}, stdPkgs...)
+}
+
 var stdPkgs = []string{
-	"arduino",
 	"binary",
 	"bytes",
 	"errors",
@@ -121,7 +124,7 @@ var stdPkgs = []string{
 	"strconv",
 	"strings",
 	"syscall",
-	"text",
+	"text/template",
 	"unicode",
 	"unicode/utf8",
 }
