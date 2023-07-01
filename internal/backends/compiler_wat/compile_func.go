@@ -691,6 +691,10 @@ func (g *functionGenerator) genBuiltin(call *ssa.CallCommon) (insts []wat.Inst, 
 		insts = g.module.EmitGenCopy(g.getValue(call.Args[0]).value, g.getValue(call.Args[1]).value)
 		ret_type = g.module.I32
 
+	case "ssa:wrapnilchk":
+		insts = g.getValue(call.Args[0]).value.EmitPush()
+		ret_type = g.getValue(call.Args[0]).value.Type()
+
 	default:
 		logger.Fatal("Todo:", call.Value)
 	}
