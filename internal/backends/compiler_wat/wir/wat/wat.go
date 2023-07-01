@@ -92,6 +92,7 @@ const (
 	OpCodeAnd
 	OpCodeOr
 	OpCodeXor
+	OpCodeNot
 	OpCodeShl
 	OpCodeShr
 	OpCodeAndNot

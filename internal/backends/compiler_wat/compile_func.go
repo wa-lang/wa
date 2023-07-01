@@ -68,10 +68,6 @@ func (g *functionGenerator) getValue(i ssa.Value) valueWrap {
 					return valueWrap{value: wir.NewConst("0", g.module.I32)}
 				}
 
-			case types.Int:
-				val, _ := constant.Int64Val(v.Value)
-				return valueWrap{value: wir.NewConst(strconv.Itoa(int(val)), g.module.I32)}
-
 			case types.Uint8:
 				val, _ := constant.Uint64Val(v.Value)
 				return valueWrap{value: wir.NewConst(strconv.Itoa(int(val)), g.module.U8)}
@@ -88,11 +84,11 @@ func (g *functionGenerator) getValue(i ssa.Value) valueWrap {
 			//	val, _ := constant.Int64Val(v.Value)
 			//	return valueWrap{value: wir.NewConst(strconv.Itoa(int(val)), g.module.I16)}
 
-			case types.Uint32, types.Uintptr:
+			case types.Uint32, types.Uintptr, types.Uint:
 				val, _ := constant.Uint64Val(v.Value)
 				return valueWrap{value: wir.NewConst(strconv.Itoa(int(val)), g.module.U32)}
 
-			case types.Int32:
+			case types.Int32, types.Int:
 				val, _ := constant.Int64Val(v.Value)
 				if t.Name() == "rune" {
 					return valueWrap{value: wir.NewConst(strconv.Itoa(int(val)), g.module.RUNE)}
@@ -343,7 +339,7 @@ func (g *functionGenerator) genInstruction(inst ssa.Instruction) (insts []wat.In
 		insts = append(insts, s...)
 
 	default:
-		logger.Fatal("Todo:", inst.String())
+		logger.Fatalf("Todo: %[1]v: %[1]T", inst)
 	}
 	insts = append(insts, wat.NewBlank())
 	return
@@ -428,6 +424,14 @@ func (g *functionGenerator) genUnOp(inst *ssa.UnOp) (insts []wat.Inst, ret_type 
 	case token.SUB:
 		x := g.getValue(inst.X)
 		return g.module.EmitUnOp(x.value, wat.OpCodeSub)
+
+	case token.XOR:
+		x := g.getValue(inst.X)
+		return g.module.EmitUnOp(x.value, wat.OpCodeXor)
+
+	case token.NOT:
+		x := g.getValue(inst.X)
+		return g.module.EmitUnOp(x.value, wat.OpCodeNot)
 
 	default:
 		logger.Fatalf("Todo: %[1]v: %[1]T", inst)

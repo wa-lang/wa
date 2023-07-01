@@ -36,9 +36,26 @@ func (m *Module) EmitUnOp(x Value, op wat.OpCode) (insts []wat.Inst, ret_type Va
 		logger.Fatal("Todo")
 	}
 	ret_type = x.Type()
-	insts = append(insts, NewConst("0", ret_type).EmitPush()...)
-	insts = append(insts, x.EmitPush()...)
-	insts = append(insts, wat.NewInstSub(toWatType(ret_type)))
+
+	switch op {
+	case wat.OpCodeSub:
+		insts = append(insts, NewConst("0", ret_type).EmitPush()...)
+		insts = append(insts, x.EmitPush()...)
+		insts = append(insts, wat.NewInstSub(toWatType(ret_type)))
+
+	case wat.OpCodeXor:
+		insts = append(insts, NewConst("-1", ret_type).EmitPush()...)
+		insts = append(insts, x.EmitPush()...)
+		insts = append(insts, wat.NewInstXor(toWatType(ret_type)))
+
+	case wat.OpCodeNot:
+		insts = append(insts, x.EmitPush()...)
+		insts = append(insts, wat.NewInstEqz(toWatType(ret_type)))
+
+	default:
+		logger.Fatal("Todo: %[1]v: %[1]T", op)
+
+	}
 	return
 }
 
