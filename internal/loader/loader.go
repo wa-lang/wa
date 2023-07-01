@@ -20,6 +20,7 @@ import (
 	"wa-lang.org/wa/internal/ssa"
 	"wa-lang.org/wa/internal/token"
 	"wa-lang.org/wa/internal/types"
+	"wa-lang.org/wa/internal/wamime"
 	"wa-lang.org/wa/waroot"
 )
 
@@ -462,7 +463,7 @@ func (p *_Loader) ParseDir(pkgpath string) (filenames []string, files []*ast.Fil
 
 	for i, filename := range filenames {
 		var f *ast.File
-		if p.hasExt(filename, ".wz") {
+		if wamime.GetCodeMime(filename, datas[i]) == "wz" {
 			f, err = wzparser.ParseFile(nil, p.prog.Fset, filename, datas[i], wzparser.AllErrors|wzparser.ParseComments)
 		} else {
 			f, err = parser.ParseFile(nil, p.prog.Fset, filename, datas[i], parser.AllErrors|parser.ParseComments)

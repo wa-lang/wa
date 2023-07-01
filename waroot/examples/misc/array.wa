@@ -1,7 +1,5 @@
 // 版权 @2021 凹语言 作者。保留所有权利。
 
-package main
-
 var I: [8]i32
 
 func Gen_arr(param: [8]i32) => [8]i32 {
@@ -10,7 +8,7 @@ func Gen_arr(param: [8]i32) => [8]i32 {
 }
 
 func main() {
-	j: [8]i32
+	var j: [8]i32
 	j[3] = 40
 	I = Gen_arr(j)
 

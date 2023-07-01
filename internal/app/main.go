@@ -9,9 +9,7 @@ package app
 import (
 	"fmt"
 	"os"
-	"runtime/debug"
 	"strings"
-	"time"
 
 	"wa-lang.org/wa/api"
 	"wa-lang.org/wa/internal/3rdparty/cli"
@@ -20,25 +18,19 @@ import (
 	"wa-lang.org/wa/internal/lsp"
 	"wa-lang.org/wa/internal/wabt"
 	"wa-lang.org/wa/internal/wazero"
+	"wa-lang.org/wa/waroot"
 )
 
 func Main() {
 	cliApp := cli.NewApp()
 	cliApp.Name = "Wa"
 	cliApp.Usage = "Wa is a tool for managing Wa source code."
-	cliApp.Version = func() string {
-		if info, ok := debug.ReadBuildInfo(); ok {
-			if info.Main.Version != "" {
-				return info.Main.Version
-			}
-		}
-		return "devel:" + time.Now().Format("2006-01-02+15:04:05")
-	}()
+	cliApp.Version = waroot.GetVersion()
 
 	cliApp.Flags = []cli.Flag{
 		&cli.StringFlag{
 			Name:  "target",
-			Usage: "set target os (arduino|chrome|wasi)",
+			Usage: fmt.Sprintf("set target os (%s)", strings.Join(config.WaOS_List, "|")),
 			Value: config.WaOS_Default,
 		},
 		&cli.BoolFlag{
@@ -54,10 +46,7 @@ func Main() {
 	}
 
 	cliApp.Before = func(c *cli.Context) error {
-		switch c.String("target") {
-		case "wasi", "arduino", "chrome":
-			// OK
-		default:
+		if !config.CheckWaOS(c.String("target")) {
 			fmt.Printf("unknown target: %s\n", c.String("target"))
 			os.Exit(1)
 		}
@@ -141,7 +130,7 @@ func Main() {
 			Flags: []cli.Flag{
 				&cli.StringFlag{
 					Name:  "target",
-					Usage: "set target os (wasi|arduino|chrome)",
+					Usage: fmt.Sprintf("set target os (%s)", strings.Join(config.WaOS_List, "|")),
 					Value: config.WaOS_Default,
 				},
 				&cli.StringFlag{
@@ -166,7 +155,7 @@ func Main() {
 				},
 				&cli.StringFlag{
 					Name:  "target",
-					Usage: "set target os (wasi|arduino|chrome)",
+					Usage: fmt.Sprintf("set target os (%s)", strings.Join(config.WaOS_List, "|")),
 					Value: config.WaOS_Default,
 				},
 				&cli.StringFlag{

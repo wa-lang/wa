@@ -2143,7 +2143,7 @@ func output() {
 	if !lflag {
 		fmt.Fprintf(ftable, "\n//line yacctab:1")
 	}
-	fmt.Fprintf(ftable, "\nvar %sExca = [...]int{\n", prefix)
+	fmt.Fprintf(ftable, "\nglobal %sExca = [...]int{\n", prefix)
 
 	if len(errors) > 0 {
 		stateTable = make([]Row, nstate)

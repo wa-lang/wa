@@ -124,7 +124,7 @@ func (check *Checker) blockBranches(all *Scope, parent *block, lstmt *ast.Labele
 	stmtBranches = func(s ast.Stmt) {
 		switch s := s.(type) {
 		case *ast.DeclStmt:
-			if d, _ := s.Decl.(*ast.GenDecl); d != nil && d.Tok == token.VAR {
+			if d, _ := s.Decl.(*ast.GenDecl); d != nil && (d.Tok == token.VAR || d.Tok == token.GLOBAL) {
 				recordVarDecl(d.Pos())
 			}
 

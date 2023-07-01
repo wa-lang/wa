@@ -36,6 +36,7 @@ const (
 	WaOS_arduino = "arduino" // Arduino 平台
 	WaOS_chrome  = "chrome"  // Chrome 浏览器
 	WaOS_wasi    = "wasi"    // WASI 接口
+	WaOS_mvp     = "mvp"     // MVP 接口, 最小可用
 )
 
 // 体系结构类型
@@ -61,6 +62,7 @@ var WaOS_List = []string{
 	WaOS_arduino,
 	WaOS_chrome,
 	WaOS_wasi,
+	WaOS_mvp,
 }
 
 // CPU 列表
@@ -70,4 +72,14 @@ var WaArch_List = []string{
 	WaArch_arm64,
 	WaArch_riscv64,
 	WaArch_wasm,
+}
+
+// 检查 OS 值是否 OK
+func CheckWaOS(os string) bool {
+	for _, x := range WaOS_List {
+		if x == os {
+			return true
+		}
+	}
+	return false
 }

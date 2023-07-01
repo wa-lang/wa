@@ -1,0 +1,25 @@
+// 版权 @2023 凹语言 作者。保留所有权利。
+
+#wa:import mvp waPrintI32
+func PrintI32(i: i32)
+
+#wa:import mvp waPrintU32
+func PrintU32(i: u32)
+
+#wa:import mvp waPrintI64
+func PrintI64(i: i64)
+
+#wa:import mvp waPrintU64
+func PrintU64(i: u64)
+
+#wa:import mvp waPrintF32
+func PrintF32(i: f32)
+
+#wa:import mvp waPrintF64
+func PrintF64(i: f64)
+
+#wa:import mvp waPrintRune
+func PrintRune(ch: i32)
+
+#wa:import mvp waPuts
+func Puts(ptr: i32, len: i32)

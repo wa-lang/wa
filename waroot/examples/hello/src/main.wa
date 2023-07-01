@@ -5,8 +5,8 @@ import "3rdparty/pkg"
 import "myapp/mymath"
 
 func main {
-	fmt.Println(40+2)
-	pkg.Println(100+2)
+	fmt.Println(40 + 2)
+	pkg.Println(100 + 2)
 	println(mymath.I8Max)
 
 	println(sum(100))
@@ -14,7 +14,7 @@ func main {
 }
 
 func sum(n: int) => int {
-	v: int
+	var v: int
 	for i := 1; i <= n; i++ {
 		v += i
 	}

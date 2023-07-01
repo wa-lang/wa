@@ -10,6 +10,7 @@ import (
 	"os"
 
 	"wa-lang.org/wa/api"
+	"wa-lang.org/wa/internal/wamime"
 )
 
 func (p *WebServer) runHandler(w http.ResponseWriter, r *http.Request) {
@@ -41,7 +42,12 @@ func (p *WebServer) compileAndRun(req *Request) (*Response, error) {
 	}
 	defer os.RemoveAll(tmpDir)
 
-	result, err := api.RunCode(api.DefaultConfig(), "prog.wa", req.Body)
+	filename := "prog.wa"
+	if wamime.GetCodeMime(filename, []byte(req.Body)) == "wz" {
+		filename = "prog.wz"
+	}
+
+	result, err := api.RunCode(api.DefaultConfig(), filename, req.Body)
 	if err != nil {
 		resp := &Response{Errors: err.Error()}
 		return resp, nil

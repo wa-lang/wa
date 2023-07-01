@@ -1,14 +1,13 @@
-
 func gen_str() => string {
 	return "123456"
 }
 
 func main() {
 	println("你好，凹语言！")
-	
+
 	s1 := gen_str()
 	s2 := s1[0:3]
 	s2 = s2 + "abc"
 	println(s1)
-	println(s2)	
+	println(s2)
 }

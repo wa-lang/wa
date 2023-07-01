@@ -43,7 +43,7 @@ func loadProgramFileMeta(cfg *config.Config, filename string, src interface{}) (
 			Root:    "__main__",
 			MainPkg: "__main__",
 			Pkg: config.Manifest_package{
-				Name:    filename,
+				Name:    filepath.Base(filename),
 				Pkgpath: "__main__",
 			},
 		}
@@ -55,7 +55,7 @@ func loadProgramFileMeta(cfg *config.Config, filename string, src interface{}) (
 	vfs = new(config.PkgVFS)
 	if vfs.App == nil {
 		vfs.App = fstest.MapFS{
-			filename: &fstest.MapFile{
+			filepath.Base(filename): &fstest.MapFile{
 				Data: srcData,
 			},
 		}

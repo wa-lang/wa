@@ -156,6 +156,14 @@ func (p *Module) buildModule() error {
 			p.wazeroInitErr = err
 			return err
 		}
+	case config.WaOS_mvp:
+		if _, err = MvpInstantiate(p.wazeroCtx, p.wazeroRuntime); err != nil {
+			p.wazeroInitErr = err
+			return err
+		}
+
+	default:
+		return fmt.Errorf("unknown waos: %q", p.cfg.WaOS)
 	}
 
 	return nil

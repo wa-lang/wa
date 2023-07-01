@@ -14,19 +14,32 @@ import (
 
 func Fmt(path string) error {
 	if path == "" {
-		path, _ = os.Getwd()
+		path = "."
 	}
 
 	var waFileList []string
-	if strings.HasSuffix(path, "...") {
-		waFileList = getDirWaFileList(strings.TrimSuffix(path, "..."))
+	switch {
+	case strings.HasSuffix(path, ".wa"):
+		waFileList = append(waFileList, path)
+	case strings.HasSuffix(path, ".wz"):
+		waFileList = append(waFileList, path)
+	case strings.HasSuffix(path, "..."):
+		waFileList = getDirWaFileList(
+			strings.TrimSuffix(path, "..."),
+			true, ".wa", ".wz", // 包含子目录
+		)
+	default:
+		// 不包含子目录
+		waFileList = getDirWaFileList(
+			path, false, ".wa", ".wz",
+		)
 	}
 
 	var changedFileList []string
 	for _, s := range waFileList {
 		changed, err := fmtFile(s)
 		if err != nil {
-			return err
+			return fmt.Errorf("%s: %w", s, err)
 		}
 		if changed {
 			changedFileList = append(changedFileList, s)
@@ -51,8 +64,28 @@ func fmtFile(path string) (changed bool, err error) {
 	return true, nil
 }
 
-func getDirWaFileList(dir string) []string {
+func getDirWaFileList(dir string, walkSubDir bool, extList ...string) []string {
 	var waFileList []string
+	if !walkSubDir {
+		files, err := os.ReadDir(".")
+		if err != nil {
+			return nil
+		}
+		for _, file := range files {
+			if file.IsDir() {
+				continue
+			}
+			for _, ext := range extList {
+				if strings.HasSuffix(file.Name(), ext) {
+					waFileList = append(waFileList, filepath.Join(dir, file.Name()))
+				}
+			}
+		}
+
+		sort.Strings(waFileList)
+		return waFileList
+	}
+
 	filepath.Walk(dir, func(path string, info os.FileInfo, err error) error {
 		if err != nil {
 			return err
@@ -60,8 +93,11 @@ func getDirWaFileList(dir string) []string {
 		if info.IsDir() {
 			return nil
 		}
-		if strings.HasSuffix(path, ".wa") {
-			waFileList = append(waFileList, path)
+		for _, ext := range extList {
+			if strings.HasSuffix(path, ext) {
+				waFileList = append(waFileList, path)
+				return nil
+			}
 		}
 		return nil
 	})

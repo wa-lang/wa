@@ -14,9 +14,20 @@ import (
 	"wa-lang.org/wa/internal/loader"
 	"wa-lang.org/wa/internal/wabt"
 	"wa-lang.org/wa/internal/wazero"
+	"wa-lang.org/wa/waroot"
 )
 
 func RunTest(cfg *config.Config, pkgpath string, appArgs ...string) {
+	var pkgList = []string{pkgpath}
+	if pkgpath == "std" {
+		pkgList = waroot.GetStdPkgList()
+	}
+	for _, p := range pkgList {
+		runTest(cfg, p, appArgs...)
+	}
+}
+
+func runTest(cfg *config.Config, pkgpath string, appArgs ...string) {
 	cfg.UnitTest = true
 	prog, err := loader.LoadProgram(cfg, pkgpath)
 	if err != nil {

@@ -6,8 +6,8 @@ type fff32 f32
 const size = 16
 
 type struct_t0 struct {
-	arr0 :[size]int
-	arr1 :[size]fff32
+	arr0: [size]int
+	arr1: [size]fff32
 }
 
 var st0: struct_t0

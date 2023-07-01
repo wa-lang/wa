@@ -5,7 +5,7 @@ type T1 struct {
 	b: string
 }
 
-func T1.print(){
+func T1.print() {
 	println("a: ", this.a)
 }
 
@@ -18,8 +18,8 @@ type T2 struct {
 }
 
 func main() {
-	v1, v2: T1
-	
+	var v1, v2: T1
+
 	v1.a = 13
 	v2.a = 42
 	if v1 == v2 {
@@ -27,21 +27,21 @@ func main() {
 	} else {
 		println("ne")
 	}
-	
+
 	v2.a = 13
 	if v1 == v2 {
 		println("eq")
 	} else {
 		println("ne")
 	}
-	
+
 	v1.b = "abc"
 	if v1 == v2 {
 		println("eq")
 	} else {
 		println("ne")
 	}
-	
+
 	v2.b = "abc"
 	if v1 == v2 {
 		println("eq")
@@ -49,20 +49,20 @@ func main() {
 		println("ne")
 	}
 
-	i1, i2: interface{}
+	var i1, i2: interface{}
 	i1 = "abc"
-	if i1 == nil{
+	if i1 == nil {
 		println("i1 == nil:eq")
 	} else {
 		println("i1 == nil:ne")
 	}
 	i1 = nil
-	if i1 == nil{
+	if i1 == nil {
 		println("i1 == nil:eq")
 	} else {
 		println("i1 == nil:ne")
-	}	
-	
+	}
+
 	i1 = i32(13)
 	i2 = i32(42)
 	if i1 == i2 {
@@ -76,20 +76,20 @@ func main() {
 	} else {
 		println("ne")
 	}
-	
+
 	i2 = "abc"
 	if i1 == i2 {
 		println("eq")
 	} else {
 		println("ne")
 	}
-	i1 = "abc"	
+	i1 = "abc"
 	if i1 == i2 {
 		println("eq")
 	} else {
 		println("ne")
 	}
-	
+
 	i1 = v1
 	if i1 == i2 {
 		println("eq")
@@ -102,35 +102,33 @@ func main() {
 	} else {
 		println("ne")
 	}
-	
-	i3: I
+
+	var i3: I
 	i3 = &v1
-	if i1 == i3 {		
+	if i1 == i3 {
 		println("eq")
 	} else {
 		println("ne")
 	}
 	i1 = &v1
-	if i1 == i3 {		
+	if i1 == i3 {
 		println("eq")
 	} else {
 		println("ne")
 	}
-	
-	v3, v4: T2
+
+	var v3, v4: T2
 	//if v3 == v4 {
 	//	println("eq")
 	//} else {
 	//	println("ne")
 	//}
-	
+
 	i1 = v3
 	i2 = v4
-	if i1 == i2 {  //panic
+	if i1 == i2 { //panic
 		println("eq")
 	} else {
 		println("ne")
 	}
 }
-
-

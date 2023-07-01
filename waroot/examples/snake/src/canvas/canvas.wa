@@ -22,24 +22,24 @@ type OnKey func(key: u32)
 
 //画布对象
 type Canvas struct {
-	device_id :u32   //画布对象对应的网页DOM对象id
-	width     :u32   //画布宽度，以像素为单位
-	height    :u32   //画布高度，以像素为单位
-	frame_buf :[]u32 //画布帧缓存，容量为Width * Height
+	device_id: u32   //画布对象对应的网页DOM对象id
+	width:     u32   //画布宽度，以像素为单位
+	height:    u32   //画布高度，以像素为单位
+	frame_buf: []u32 //画布帧缓存，容量为Width * Height
 }
 
 //画布事件
 type CanvasEvents struct {
-	Device_id   :u32     //画布设备ID
-	OnMouseDown :OnTouch //鼠标按下时的回调处理函数
-	OnMouseUp   :OnTouch //鼠标松开时的回调处理函数
-	OnKeyDown   :OnKey   //键盘按下时的回调处理函数
-	OnKeyUp     :OnKey   //键盘弹起时的回调处理函数
+	Device_id:   u32     //画布设备ID
+	OnMouseDown: OnTouch //鼠标按下时的回调处理函数
+	OnMouseUp:   OnTouch //鼠标松开时的回调处理函数
+	OnKeyDown:   OnKey   //键盘按下时的回调处理函数
+	OnKeyUp:     OnKey   //键盘弹起时的回调处理函数
 }
 
 //创建一个宽度为w像素、高度为h像素的画布对象
 func NewCanvas(w, h: u32) => *Canvas {
-	canvas: Canvas
+	var canvas: Canvas
 	canvas.device_id = newCanvas_JS(w, h)
 	canvas.width = w
 	canvas.height = h

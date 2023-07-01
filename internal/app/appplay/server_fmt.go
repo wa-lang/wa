@@ -8,6 +8,7 @@ import (
 	"net/http"
 
 	"wa-lang.org/wa/api"
+	"wa-lang.org/wa/internal/wamime"
 )
 
 func (p *WebServer) fmtHandler(w http.ResponseWriter, r *http.Request) {
@@ -28,7 +29,12 @@ func (p *WebServer) fmtHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func (p *WebServer) fmtCode(code []byte) (*fmtResponse, error) {
-	output, err := api.FormatCode("prog.wa", string(code))
+	filename := "prog.wa"
+	if wamime.GetCodeMime(filename, code) == "wz" {
+		filename = "prog.wz"
+	}
+
+	output, err := api.FormatCode(filename, string(code))
 	if err != nil {
 		resp := &fmtResponse{
 			Error: err.Error(),

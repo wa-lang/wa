@@ -9,7 +9,7 @@ func main() {
 	println(a[1])   # 13
 	println(len(s)) # 2
 
-	k: []i32
+	var k: []i32
 	k = append(k, 99, 81, 170)
 	println(k[0]) # 99
 

@@ -469,10 +469,10 @@ func (p *printer) fieldList(fields *ast.FieldList, isStruct, isIncomplete bool) 
 					}
 					p.expr(x)
 				}
+				p.print(token.COLON)
 				if len(f.Names) > 0 {
 					p.print(blank)
 				}
-				p.print(token.COLON)
 				p.expr(f.Type)
 			} else { // interface
 				if ftyp, isFtyp := f.Type.(*ast.FuncType); isFtyp {
@@ -512,8 +512,8 @@ func (p *printer) fieldList(fields *ast.FieldList, isStruct, isIncomplete bool) 
 			if len(f.Names) > 0 {
 				// named fields
 				p.identList(f.Names, false)
-				p.print(sep)
 				p.print(token.COLON)
+				p.print(sep)
 				p.expr(f.Type)
 				extraTabs = 1
 			} else {
@@ -1401,6 +1401,7 @@ func (p *printer) valueSpec(s *ast.ValueSpec, keepType bool) {
 		extraTabs--
 	}
 	if s.Type != nil {
+		p.print(token.COLON)
 		p.expr(s.Type)
 	}
 	if s.Values != nil {
@@ -1523,7 +1524,7 @@ func (p *printer) genDecl(d *ast.GenDecl) {
 		p.print(d.Lparen, token.LPAREN)
 		if n := len(d.Specs); n > 0 {
 			p.print(indent, formfeed)
-			if n > 1 && (d.Tok == token.CONST || d.Tok == token.VAR) {
+			if n > 1 && (d.Tok == token.CONST || d.Tok == token.VAR || d.Tok == token.GLOBAL) {
 				// two or more grouped const/var declarations:
 				// determine if the type column must be kept
 				keepType := keepTypeColumn(d.Specs)

@@ -430,7 +430,7 @@ func (g *functionGenerator) genUnOp(inst *ssa.UnOp) (insts []wat.Inst, ret_type 
 		return g.module.EmitUnOp(x.value, wat.OpCodeSub)
 
 	default:
-		logger.Fatal("Todo")
+		logger.Fatalf("Todo: %[1]v: %[1]T", inst)
 	}
 
 	return
