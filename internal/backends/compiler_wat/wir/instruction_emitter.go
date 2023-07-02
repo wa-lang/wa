@@ -53,7 +53,7 @@ func (m *Module) EmitUnOp(x Value, op wat.OpCode) (insts []wat.Inst, ret_type Va
 		insts = append(insts, wat.NewInstEqz(toWatType(ret_type)))
 
 	default:
-		logger.Fatal("Todo: %[1]v: %[1]T", op)
+		logger.Fatalf("Todo: %[1]v: %[1]T", op)
 
 	}
 	return

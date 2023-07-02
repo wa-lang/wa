@@ -457,6 +457,20 @@ func (check *Checker) builtin(x *operand, call *ast.CallExpr, id builtinId) (_ b
 		}
 
 	case _Panic:
+		filename := check.fset.Position(x.pos()).Filename
+
+		// panic 语义变化: func panic(msg: string)
+		if strings.HasSuffix(filename, ".wa") {
+			// 放松检查, bool 变量放到运行时处理
+			if !isString(x.typ) {
+				check.invalidArg(x.pos(), "%s is not a string type", x)
+				return
+			}
+			if nargs != 1 {
+				check.errorf(call.Pos(), "%v expects %d or %d arguments; found %d", call, 1, 2, nargs)
+				return
+			}
+		}
 		// panic(x)
 		// record panic call if inside a function with result parameters
 		// (for use in Checker.isTerminating)
