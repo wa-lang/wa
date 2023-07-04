@@ -74,6 +74,16 @@ func waPrintU32(i: u32) {
 	print_u32(i)
 }
 
+#wa:linkname $runtime.waPrintI64
+func waPrintI64(i: i64) {
+	// todo
+}
+
+#wa:linkname $runtime.waPrintU64
+func waPrintU64(i: u64) {
+	// todo
+}
+
 #wa:linkname $runtime.waPrintRune
 func waPrintRune(ch: i32) {
 	putchar(ch)

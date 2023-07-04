@@ -335,6 +335,10 @@ func (v *aString) emitSub(low, high Value) (insts []wat.Inst) {
 func (v *aString) emitAt(index Value) (insts []wat.Inst) {
 	insts = append(insts, v.Extract("d").EmitPush()...)
 	insts = append(insts, index.EmitPush()...)
+	//Todo: 强制类型
+	if index.Type().Size() == 8 {
+		insts = append(insts, wat.NewInstConvert_i32_wrap_i64())
+	}
 	insts = append(insts, wat.NewInstAdd(wat.I32{}))
 	insts = append(insts, wat.NewInstLoad8u(0, 1))
 	return
@@ -343,12 +347,20 @@ func (v *aString) emitAt(index Value) (insts []wat.Inst) {
 func (v *aString) emitAt_CommaOk(index Value) (insts []wat.Inst) {
 	insts = append(insts, v.Extract("l").EmitPush()...)
 	insts = append(insts, index.EmitPush()...)
+	//Todo: 强制类型
+	if index.Type().Size() == 8 {
+		insts = append(insts, wat.NewInstConvert_i32_wrap_i64())
+	}
 	insts = append(insts, wat.NewInstGt(wat.U32{}))
 
 	{
 		var instsTrue, instsFalse []wat.Inst
 		instsTrue = append(instsTrue, v.Extract("d").EmitPush()...)
 		instsTrue = append(instsTrue, index.EmitPush()...)
+		//Todo: 强制类型
+		if index.Type().Size() == 8 {
+			insts = append(insts, wat.NewInstConvert_i32_wrap_i64())
+		}
 		instsTrue = append(instsTrue, wat.NewInstAdd(wat.I32{}))
 		instsTrue = append(instsTrue, wat.NewInstLoad8u(0, 1))
 		instsTrue = append(instsTrue, wat.NewInstConst(wat.I32{}, "1"))

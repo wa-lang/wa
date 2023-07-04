@@ -76,70 +76,64 @@ func (m *Module) EmitBinOp(x, y Value, op wat.OpCode) (insts []wat.Inst, ret_typ
 		}
 	}
 
-	//rtype := m.binOpMatchType(x.Type(), y.Type())
-	rtype := x.Type()
-
 	switch op {
 	case wat.OpCodeAdd:
+		ret_type = x.Type()
 		insts = append(insts, x.EmitPush()...)
 		insts = append(insts, y.EmitPush()...)
-		if rtype.Equal(m.STRING) {
+		if ret_type.Equal(m.STRING) {
 			insts = append(insts, wat.NewInstCall(m.STRING.(*String).genFunc_Append()))
 		} else {
-			insts = append(insts, wat.NewInstAdd(toWatType(rtype)))
+			insts = append(insts, wat.NewInstAdd(toWatType(ret_type)))
 		}
 
-		if rtype.Equal(m.U8) {
+		if ret_type.Equal(m.U8) {
 			insts = append(insts, wat.NewInstConst(wat.I32{}, "255"))
 			insts = append(insts, wat.NewInstAnd(wat.I32{}))
-		} else if rtype.Equal(m.U16) {
+		} else if ret_type.Equal(m.U16) {
 			insts = append(insts, wat.NewInstConst(wat.I32{}, "65535"))
 			insts = append(insts, wat.NewInstAnd(wat.I32{}))
 		}
-
-		ret_type = rtype
 
 	case wat.OpCodeSub:
+		ret_type = x.Type()
 		insts = append(insts, x.EmitPush()...)
 		insts = append(insts, y.EmitPush()...)
-		insts = append(insts, wat.NewInstSub(toWatType(rtype)))
+		insts = append(insts, wat.NewInstSub(toWatType(ret_type)))
 
-		if rtype.Equal(m.U8) {
+		if ret_type.Equal(m.U8) {
 			insts = append(insts, wat.NewInstConst(wat.I32{}, "255"))
 			insts = append(insts, wat.NewInstAnd(wat.I32{}))
-		} else if rtype.Equal(m.U16) {
+		} else if ret_type.Equal(m.U16) {
 			insts = append(insts, wat.NewInstConst(wat.I32{}, "65535"))
 			insts = append(insts, wat.NewInstAnd(wat.I32{}))
 		}
-
-		ret_type = rtype
 
 	case wat.OpCodeMul:
+		ret_type = x.Type()
 		insts = append(insts, x.EmitPush()...)
 		insts = append(insts, y.EmitPush()...)
-		insts = append(insts, wat.NewInstMul(toWatType(rtype)))
+		insts = append(insts, wat.NewInstMul(toWatType(ret_type)))
 
-		if rtype.Equal(m.U8) {
+		if ret_type.Equal(m.U8) {
 			insts = append(insts, wat.NewInstConst(wat.I32{}, "255"))
 			insts = append(insts, wat.NewInstAnd(wat.I32{}))
-		} else if rtype.Equal(m.U16) {
+		} else if ret_type.Equal(m.U16) {
 			insts = append(insts, wat.NewInstConst(wat.I32{}, "65535"))
 			insts = append(insts, wat.NewInstAnd(wat.I32{}))
 		}
 
-		ret_type = rtype
-
 	case wat.OpCodeQuo:
+		ret_type = x.Type()
 		insts = append(insts, x.EmitPush()...)
 		insts = append(insts, y.EmitPush()...)
-		insts = append(insts, wat.NewInstDiv(toWatType(rtype)))
-		ret_type = rtype
+		insts = append(insts, wat.NewInstDiv(toWatType(ret_type)))
 
 	case wat.OpCodeRem:
+		ret_type = x.Type()
 		insts = append(insts, x.EmitPush()...)
 		insts = append(insts, y.EmitPush()...)
-		insts = append(insts, wat.NewInstRem(toWatType(rtype)))
-		ret_type = rtype
+		insts = append(insts, wat.NewInstRem(toWatType(ret_type)))
 
 	case wat.OpCodeEql:
 		ins, _ := x.emitEq(y)
@@ -155,81 +149,104 @@ func (m *Module) EmitBinOp(x, y Value, op wat.OpCode) (insts []wat.Inst, ret_typ
 	case wat.OpCodeLt:
 		insts = append(insts, x.EmitPush()...)
 		insts = append(insts, y.EmitPush()...)
-		insts = append(insts, wat.NewInstLt(toWatType(rtype)))
+		insts = append(insts, wat.NewInstLt(toWatType(x.Type())))
 		ret_type = m.I32
 
 	case wat.OpCodeGt:
 		insts = append(insts, x.EmitPush()...)
 		insts = append(insts, y.EmitPush()...)
-		insts = append(insts, wat.NewInstGt(toWatType(rtype)))
+		insts = append(insts, wat.NewInstGt(toWatType(x.Type())))
 		ret_type = m.I32
 
 	case wat.OpCodeLe:
 		insts = append(insts, x.EmitPush()...)
 		insts = append(insts, y.EmitPush()...)
-		insts = append(insts, wat.NewInstLe(toWatType(rtype)))
+		insts = append(insts, wat.NewInstLe(toWatType(x.Type())))
 		ret_type = m.I32
 
 	case wat.OpCodeGe:
 		insts = append(insts, x.EmitPush()...)
 		insts = append(insts, y.EmitPush()...)
-		insts = append(insts, wat.NewInstGe(toWatType(rtype)))
+		insts = append(insts, wat.NewInstGe(toWatType(x.Type())))
 		ret_type = m.I32
 
 	case wat.OpCodeAnd:
+		ret_type = x.Type()
 		insts = append(insts, x.EmitPush()...)
 		insts = append(insts, y.EmitPush()...)
-		insts = append(insts, wat.NewInstAnd(toWatType(rtype)))
-		ret_type = rtype
+		insts = append(insts, wat.NewInstAnd(toWatType(ret_type)))
 
 	case wat.OpCodeOr:
+		ret_type = x.Type()
 		insts = append(insts, x.EmitPush()...)
 		insts = append(insts, y.EmitPush()...)
-		insts = append(insts, wat.NewInstOr(toWatType(rtype)))
-		ret_type = rtype
+		insts = append(insts, wat.NewInstOr(toWatType(ret_type)))
 
 	case wat.OpCodeXor:
+		ret_type = x.Type()
 		insts = append(insts, x.EmitPush()...)
 		insts = append(insts, y.EmitPush()...)
-		insts = append(insts, wat.NewInstXor(toWatType(rtype)))
-		ret_type = rtype
+		insts = append(insts, wat.NewInstXor(toWatType(ret_type)))
 
 	case wat.OpCodeShl:
-		insts = append(insts, x.EmitPush()...)
-		if x.Type().Size() <= 4 {
-			insts = append(insts, m.EmitGenConvert(y, m.U32)...)
-		} else {
-			insts = append(insts, y.EmitPush()...)
-		}
-		insts = append(insts, wat.NewInstShl(toWatType(rtype)))
+		ret_type = x.Type()
 
-		if rtype.Equal(m.U8) {
+		if x.Type().Size() <= 4 && y.Type().Size() == 8 {
+			insts = append(insts, x.EmitPush()...)
+			insts = append(insts, wat.NewInstConvert_i64_extend_i32_u())
+			insts = append(insts, y.EmitPush()...)
+			insts = append(insts, wat.NewInstShl(toWatType(y.Type())))
+			insts = append(insts, wat.NewInstConvert_i32_wrap_i64())
+		} else if x.Type().Size() == 8 && y.Type().Size() <= 4 {
+			insts = append(insts, x.EmitPush()...)
+			insts = append(insts, y.EmitPush()...)
+			insts = append(insts, wat.NewInstConvert_i64_extend_i32_u())
+			insts = append(insts, wat.NewInstShl(toWatType(ret_type)))
+		} else if (x.Type().Size() <= 4 && y.Type().Size() <= 4) || (x.Type().Size() == 8 && y.Type().Size() == 8) {
+			insts = append(insts, x.EmitPush()...)
+			insts = append(insts, y.EmitPush()...)
+			insts = append(insts, wat.NewInstShl(toWatType(ret_type)))
+		} else {
+			logger.Fatal("Unreachable")
+		}
+
+		if ret_type.Equal(m.U8) {
 			insts = append(insts, wat.NewInstConst(wat.I32{}, "255"))
 			insts = append(insts, wat.NewInstAnd(wat.I32{}))
-		} else if rtype.Equal(m.U16) {
+		} else if ret_type.Equal(m.U16) {
 			insts = append(insts, wat.NewInstConst(wat.I32{}, "65535"))
 			insts = append(insts, wat.NewInstAnd(wat.I32{}))
 		}
 
-		ret_type = rtype
-
 	case wat.OpCodeShr:
-		insts = append(insts, x.EmitPush()...)
-		if x.Type().Size() <= 4 {
-			insts = append(insts, m.EmitGenConvert(y, m.U32)...)
-		} else {
+		ret_type = x.Type()
+
+		if x.Type().Size() <= 4 && y.Type().Size() == 8 {
+			insts = append(insts, x.EmitPush()...)
+			insts = append(insts, wat.NewInstConvert_i64_extend_i32_u())
 			insts = append(insts, y.EmitPush()...)
+			insts = append(insts, wat.NewInstShr(toWatType(y.Type())))
+			insts = append(insts, wat.NewInstConvert_i32_wrap_i64())
+		} else if x.Type().Size() == 8 && y.Type().Size() <= 4 {
+			insts = append(insts, x.EmitPush()...)
+			insts = append(insts, y.EmitPush()...)
+			insts = append(insts, wat.NewInstConvert_i64_extend_i32_u())
+			insts = append(insts, wat.NewInstShr(toWatType(ret_type)))
+		} else if (x.Type().Size() <= 4 && y.Type().Size() <= 4) || (x.Type().Size() == 8 && y.Type().Size() == 8) {
+			insts = append(insts, x.EmitPush()...)
+			insts = append(insts, y.EmitPush()...)
+			insts = append(insts, wat.NewInstShr(toWatType(ret_type)))
+		} else {
+			logger.Fatal("Unreachable")
 		}
-		insts = append(insts, wat.NewInstShr(toWatType(rtype)))
-		ret_type = rtype
 
 	case wat.OpCodeAndNot:
+		ret_type = x.Type()
 		insts = append(insts, x.EmitPush()...)
 		insts = append(insts, y.EmitPush()...)
 		insts = append(insts, NewConst("-1", y.Type()).EmitPush()...)
-		insts = append(insts, wat.NewInstXor(toWatType(rtype)))
-		insts = append(insts, wat.NewInstAnd(toWatType(rtype)))
-		ret_type = rtype
+		insts = append(insts, wat.NewInstXor(toWatType(ret_type)))
+		insts = append(insts, wat.NewInstAnd(toWatType(ret_type)))
 
 	default:
 		logger.Fatal("Todo")
