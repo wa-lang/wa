@@ -1,5 +1,7 @@
 package wir
 
+import "bytes"
+
 /**************************************
 DataSeg:
 **************************************/
@@ -13,6 +15,12 @@ func newDataSeg(start int) *DataSeg {
 }
 
 func (s *DataSeg) Append(data []byte, align int) (ptr int) {
+	ptr = bytes.Index(s.data, data)
+	if ptr != -1 {
+		ptr += s.start
+		return
+	}
+
 	ptr = s.Alloc(len(data), align)
 	s.Set(data, ptr)
 	return
