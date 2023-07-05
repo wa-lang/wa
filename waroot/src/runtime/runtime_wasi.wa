@@ -76,11 +76,13 @@ func waPrintU32(i: u32) {
 
 #wa:linkname $runtime.waPrintI64
 func waPrintI64(i: i64) {
+	print_i32(i32(i))
 	// todo
 }
 
 #wa:linkname $runtime.waPrintU64
 func waPrintU64(i: u64) {
+	print_u32(u32(i))
 	// todo
 }
 
@@ -96,7 +98,7 @@ func waPuts(ptr: i32, len: i32) {
 
 #wa:linkname $runtime.waPrintF64
 func waPrintF64(v: f64) {
-	// todo
+	print_f64(v)
 }
 
 func print_i32(i: i32) {
@@ -120,3 +122,36 @@ func print_u32(i: u32) {
 	print_u32(i/10)
 	print_u32(i%10)
 }
+
+func print_f64(f: f64) {
+	// ipart := i64(f)
+	// fpart := f - f64(ipart)
+
+	// todo(chai2010): 打印 float
+}
+
+/*
+void ftoa(float n, char* res, int afterpoint)
+{
+    // Extract integer part
+    int ipart = (int)n;
+ 
+    // Extract floating part
+    float fpart = n - (float)ipart;
+ 
+    // convert integer part to string
+    int i = intToStr(ipart, res, 0);
+ 
+    // check for display option after point
+    if (afterpoint != 0) {
+        res[i] = '.'; // add dot
+ 
+        // Get the value of fraction part upto given no.
+        // of points after dot. The third parameter
+        // is needed to handle cases like 233.007
+        fpart = fpart * pow(10, afterpoint);
+ 
+        intToStr((int)fpart, res + i + 1, afterpoint);
+    }
+}
+*/
