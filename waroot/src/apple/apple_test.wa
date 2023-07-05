@@ -1,0 +1,15 @@
+// 版权 @2023 凹语言 作者。保留所有权利。
+
+import "runtime"
+
+// wa test apple
+// wa test -target=mvp apple
+
+func TestApple {
+	apple := Apple()
+	if runtime.WAOS == "mvp" {
+		assert(apple == "apple-mvp", apple)
+	} else {
+		assert(apple == "apple", apple)
+	}
+}

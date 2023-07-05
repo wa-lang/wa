@@ -219,6 +219,32 @@ func Main() {
 		},
 		{
 			Hidden: true,
+			Name:   "test",
+			Usage:  "test packages",
+			Flags: []cli.Flag{
+				&cli.StringFlag{
+					Name:  "target",
+					Usage: fmt.Sprintf("set target os (%s)", strings.Join(config.WaOS_List, "|")),
+					Value: config.WaOS_Default,
+				},
+				&cli.StringFlag{
+					Name:  "tags",
+					Usage: "set build tags",
+				},
+			},
+			Action: func(c *cli.Context) error {
+				if c.NArg() < 1 {
+					cli.ShowAppHelpAndExit(c, 0)
+				}
+				appArgs := c.Args().Slice()[1:]
+				waApp := NewApp(build_Options(c))
+				waApp.RunTest(c.Args().First(), appArgs...)
+				return nil
+			},
+		},
+
+		{
+			Hidden: true,
 			Name:   "native",
 			Usage:  "compile wa source code to native executable",
 			Flags: []cli.Flag{
@@ -345,20 +371,6 @@ func Main() {
 					fmt.Println(err)
 					os.Exit(1)
 				}
-				return nil
-			},
-		},
-		{
-			Hidden: true,
-			Name:   "test",
-			Usage:  "test packages",
-			Action: func(c *cli.Context) error {
-				if c.NArg() < 1 {
-					cli.ShowAppHelpAndExit(c, 0)
-				}
-				appArgs := c.Args().Slice()[1:]
-				waApp := NewApp(build_Options(c))
-				waApp.RunTest(c.Args().First(), appArgs...)
 				return nil
 			},
 		},
@@ -502,6 +514,12 @@ func build_Options(c *cli.Context, waBackend ...string) *Option {
 	if len(waBackend) > 0 {
 		opt.WaBackend = waBackend[0]
 	}
+
+	if target := c.String("target"); !config.CheckWaOS(target) {
+		fmt.Printf("unknown target: %s\n", c.String("target"))
+		os.Exit(1)
+	}
+
 	switch c.String("target") {
 	case "", "wa", "walang":
 		opt.TargetOS = config.WaOS_Default
@@ -511,8 +529,10 @@ func build_Options(c *cli.Context, waBackend ...string) *Option {
 		opt.TargetOS = config.WaOS_arduino
 	case config.WaOS_chrome:
 		opt.TargetOS = config.WaOS_chrome
+	case config.WaOS_mvp:
+		opt.TargetOS = config.WaOS_mvp
 	default:
-		fmt.Printf("unknown target: %s\n", c.String("target"))
+		fmt.Printf("unreachable: target: %s\n", c.String("target"))
 		os.Exit(1)
 	}
 	return opt

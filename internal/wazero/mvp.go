@@ -8,6 +8,7 @@ import (
 
 	"github.com/tetratelabs/wazero"
 	"github.com/tetratelabs/wazero/api"
+	"github.com/tetratelabs/wazero/sys"
 	"wa-lang.org/wa/internal/config"
 )
 
@@ -77,6 +78,14 @@ func MvpInstantiate(ctx context.Context, rt wazero.Runtime) (api.Closer, error) 
 		}).
 		WithParameterNames("ptr", "len").
 		Export("waPuts").
+
+		// func ProcExit(code: i32)
+		NewFunctionBuilder().
+		WithFunc(func(ctx context.Context, m api.Module, exitCode uint32) {
+			panic(sys.NewExitError(m.Name(), exitCode))
+		}).
+		WithParameterNames("code").
+		Export("proc_exit").
 
 		// Done
 		Instantiate(ctx, rt)

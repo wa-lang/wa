@@ -104,6 +104,7 @@ func GetStdPkgList() []string {
 }
 
 var stdPkgs = []string{
+	"apple",
 	"binary",
 	"bytes",
 	"errors",
