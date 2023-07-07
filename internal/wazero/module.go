@@ -12,9 +12,9 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/tetratelabs/wazero"
-	"github.com/tetratelabs/wazero/api"
 	"wa-lang.org/wa/internal/config"
+	"wa-lang.org/wazero"
+	"wa-lang.org/wazero/api"
 )
 
 // wasm 模块, 可多次执行

@@ -6,8 +6,8 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/tetratelabs/wazero"
-	"github.com/tetratelabs/wazero/api"
+	"wa-lang.org/wazero"
+	"wa-lang.org/wazero/api"
 )
 
 const chromeModuleName = "wa_js_env"

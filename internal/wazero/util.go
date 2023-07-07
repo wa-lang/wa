@@ -1,8 +1,8 @@
 package wazero
 
 import (
-	"github.com/tetratelabs/wazero/sys"
 	"wa-lang.org/wa/internal/config"
+	"wa-lang.org/wazero/sys"
 )
 
 // 单次执行 wasm

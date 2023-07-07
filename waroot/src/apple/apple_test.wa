@@ -13,3 +13,14 @@ func TestApple {
 		assert(apple == "apple", apple)
 	}
 }
+
+func ExampleApple {
+	if runtime.WAOS == "mvp" {
+		println(Apple())
+	} else {
+		println(Apple()+"-mvp")
+	}
+
+	// Output:
+	// apple-mvp
+}

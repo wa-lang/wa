@@ -7,9 +7,9 @@ import (
 	"io"
 	"os"
 
-	"github.com/tetratelabs/wazero"
-	"github.com/tetratelabs/wazero/api"
-	wasi "github.com/tetratelabs/wazero/imports/wasi_snapshot_preview1"
+	"wa-lang.org/wazero"
+	"wa-lang.org/wazero/api"
+	wasi "wa-lang.org/wazero/imports/wasi_snapshot_preview1"
 )
 
 // https://github.com/WebAssembly/WASI/blob/snapshot-01/phases/snapshot/docs.md
