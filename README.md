@@ -151,7 +151,7 @@ More examples [waroot/examples](waroot/examples)
 
 |Contributor|Contribution points|
 | --- | --- |
-|柴树杉| 37000|
+|柴树杉| 35000|
 |丁尔男| 42500|
 |史斌  | 29000|
 |扈梦明| 14000|
@@ -162,3 +162,4 @@ More examples [waroot/examples](waroot/examples)
 |王泽龙|  1000|
 |吴烜  |  3000|
 |刘斌  |  2500|
+|尹贻浩|  2000|
