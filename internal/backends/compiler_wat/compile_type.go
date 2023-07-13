@@ -49,7 +49,10 @@ func (tLib *typeLib) compile(from types.Type) wir.ValueType {
 	switch t := from.(type) {
 	case *types.Basic:
 		switch t.Kind() {
-		case types.Bool, types.UntypedBool, types.Int, types.UntypedInt:
+		case types.Bool, types.UntypedBool:
+			newType = tLib.module.BOOL
+
+		case types.Int, types.UntypedInt:
 			newType = tLib.module.I32
 
 		case types.Int32:
@@ -173,6 +176,12 @@ func (tLib *typeLib) compile(from types.Type) wir.ValueType {
 			newType = tLib.module.GenValueType_Dup(pkg_name+"."+obj_name, tLib.compile(ut))
 
 		default:
+			//pkg_name := ""
+			//if t.Obj().Pkg() != nil {
+			//	pkg_name, _ = wir.GetPkgMangleName(t.Obj().Pkg().Path())
+			//}
+			//obj_name := wir.GenSymbolName(t.Obj().Name())
+			//newType = tLib.module.GenValueType_Dup(pkg_name+"."+obj_name, tLib.compile(ut))
 			logger.Fatalf("Todo:%T", ut)
 		}
 

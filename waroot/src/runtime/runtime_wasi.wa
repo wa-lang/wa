@@ -64,6 +64,22 @@ func puts(ptr: i32, len: i32)
 #wa:linkname putchar
 func putchar(ch: i32)
 
+#wa:linkname $runtime.waPrintBool
+func waPrintBool(i: bool) {
+	if i {
+		waPrintRune('t')
+		waPrintRune('r')
+		waPrintRune('u')
+		waPrintRune('e')
+	} else {
+		waPrintRune('f')
+		waPrintRune('a')
+		waPrintRune('l')
+		waPrintRune('s')
+		waPrintRune('e')
+	}
+}
+
 #wa:linkname $runtime.waPrintI32
 func waPrintI32(i: i32) {
 	print_i32(i)

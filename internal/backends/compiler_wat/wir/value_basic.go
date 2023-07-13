@@ -27,7 +27,7 @@ func NewGlobal(name string, typ ValueType, as_pointer bool) Value {
 
 func newValue(name string, kind ValueKind, typ ValueType) Value {
 	switch typ := typ.(type) {
-	case *tI8, *tU8, *tI16, *tU16, *tI32, *tU32, *tI64, *tU64, *tF32, *tF64, *tRune:
+	case *tI8, *tU8, *tI16, *tU16, *tI32, *tU32, *tI64, *tU64, *tF32, *tF64, *tRune, *tBool:
 		return newValue_Basic(name, kind, typ)
 
 	case *Ptr:

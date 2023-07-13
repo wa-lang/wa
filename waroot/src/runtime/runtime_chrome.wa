@@ -38,6 +38,11 @@ func assert(ok: i32, pos_msg_ptr: i32, pos_msg_len: i32) {}
 #wa:linkname $runtime.assertMessage
 func assertMessage(ok: i32, msg_ptr: i32, msg_len: i32, pos_msg_ptr: i32, pos_msg_len: i32) {}
 
+#wa:linkname $runtime.waPrintBool
+func waPrintBool(i: bool) {
+	chrome.PrintBool(i)
+}
+
 #wa:linkname $runtime.waPrintI32
 func waPrintI32(i: i32) {
 	chrome.PrintI32(i)

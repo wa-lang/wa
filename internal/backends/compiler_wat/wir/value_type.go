@@ -12,6 +12,7 @@ type TypeKind uint8
 const (
 	kUnknown TypeKind = iota
 	kVoid
+	kBool
 	kU8
 	kU16
 	kU32
@@ -41,7 +42,7 @@ func toWatType(t ValueType) wat.ValueType {
 	case *tI32, *tRune: //Todo: *tI8, *tI16*
 		return wat.I32{}
 
-	case *tU32, *tU8, *tU16:
+	case *tU32, *tU8, *tU16, *tBool:
 		return wat.U32{}
 
 	case *tI64:
@@ -117,6 +118,30 @@ func (t *tVoid) Equal(u ValueType) bool { _, ok := u.(*tVoid); return ok }
 func (t *tVoid) EmitLoadFromAddr(addr Value, offset int) []wat.Inst {
 	logger.Fatal("Unreachable")
 	return nil
+}
+
+/**************************************
+tBool:
+**************************************/
+type tBool struct {
+	tCommon
+}
+
+func (t *tBool) Name() string           { return "bool" }
+func (t *tBool) Size() int              { return 1 }
+func (t *tBool) align() int             { return 1 }
+func (t *tBool) Kind() TypeKind         { return kBool }
+func (t *tBool) onFree() int            { return 0 }
+func (t *tBool) Raw() []wat.ValueType   { return []wat.ValueType{wat.I32{}} }
+func (t *tBool) Equal(u ValueType) bool { _, ok := u.(*tBool); return ok }
+func (t *tBool) EmitLoadFromAddr(addr Value, offset int) []wat.Inst {
+	//if !addr.Type().(*Ptr).Base.Equal(t) {
+	//	logger.Fatal("Type not match")
+	//	return nil
+	//}
+	insts := addr.EmitPush()
+	insts = append(insts, wat.NewInstLoad(toWatType(t), offset, 1))
+	return insts
 }
 
 /**************************************

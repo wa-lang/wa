@@ -63,9 +63,9 @@ func (g *functionGenerator) getValue(i ssa.Value) valueWrap {
 
 			case types.Bool, types.UntypedBool:
 				if constant.BoolVal(v.Value) {
-					return valueWrap{value: wir.NewConst("1", g.module.I32)}
+					return valueWrap{value: wir.NewConst("1", g.module.BOOL)}
 				} else {
-					return valueWrap{value: wir.NewConst("0", g.module.I32)}
+					return valueWrap{value: wir.NewConst("0", g.module.BOOL)}
 				}
 
 			case types.Uint8:
@@ -628,7 +628,10 @@ func (g *functionGenerator) genBuiltin(call *ssa.CallCommon) (insts []wat.Inst, 
 				insts = append(insts, wat.NewInstCall("$runtime.waPrintRune"))
 			}
 
-			if avt.Equal(g.module.I32) {
+			if avt.Equal(g.module.BOOL) {
+				insts = append(insts, av.EmitPush()...)
+				insts = append(insts, wat.NewInstCall("$runtime.waPrintBool"))
+			} else if avt.Equal(g.module.I32) {
 				insts = append(insts, av.EmitPush()...)
 				insts = append(insts, wat.NewInstCall("$runtime.waPrintI32"))
 			} else if avt.Equal(g.module.U8) || avt.Equal(g.module.U16) || avt.Equal(g.module.U32) {
@@ -769,8 +772,8 @@ func (g *functionGenerator) genStore(inst *ssa.Store) []wat.Inst {
 
 func (g *functionGenerator) genIf(inst *ssa.If) []wat.Inst {
 	cond := g.getValue(inst.Cond)
-	if !cond.value.Type().Equal(g.module.I32) {
-		logger.Fatal("cond.type() != i32")
+	if !cond.value.Type().Equal(g.module.BOOL) {
+		logger.Fatal("cond.type() != bool")
 	}
 
 	insts := cond.value.EmitPush()

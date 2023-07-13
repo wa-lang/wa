@@ -15,6 +15,16 @@ import (
 
 func MvpInstantiate(ctx context.Context, rt wazero.Runtime) (api.Closer, error) {
 	return rt.NewHostModuleBuilder(config.WaOS_mvp).
+		// func waPrintBool(v: bool)
+		NewFunctionBuilder().
+		WithFunc(func(ctx context.Context, m api.Module, v uint32) {
+			w := walang.ModCallContextSys(m).Stdout()
+			b := v != 0
+			fmt.Fprint(w, b)
+		}).
+		WithParameterNames("v").
+		Export("waPrintBool").
+
 		// func waPrintI32(v: i32)
 		NewFunctionBuilder().
 		WithFunc(func(ctx context.Context, m api.Module, v int32) {

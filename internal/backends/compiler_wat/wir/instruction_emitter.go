@@ -42,11 +42,25 @@ func (m *Module) EmitUnOp(x Value, op wat.OpCode) (insts []wat.Inst, ret_type Va
 		insts = append(insts, NewConst("0", ret_type).EmitPush()...)
 		insts = append(insts, x.EmitPush()...)
 		insts = append(insts, wat.NewInstSub(toWatType(ret_type)))
+		if ret_type.Equal(m.U8) {
+			insts = append(insts, wat.NewInstConst(wat.I32{}, "255"))
+			insts = append(insts, wat.NewInstAnd(wat.I32{}))
+		} else if ret_type.Equal(m.U16) {
+			insts = append(insts, wat.NewInstConst(wat.I32{}, "65535"))
+			insts = append(insts, wat.NewInstAnd(wat.I32{}))
+		}
 
 	case wat.OpCodeXor:
 		insts = append(insts, NewConst("-1", ret_type).EmitPush()...)
 		insts = append(insts, x.EmitPush()...)
 		insts = append(insts, wat.NewInstXor(toWatType(ret_type)))
+		if ret_type.Equal(m.U8) {
+			insts = append(insts, wat.NewInstConst(wat.I32{}, "255"))
+			insts = append(insts, wat.NewInstAnd(wat.I32{}))
+		} else if ret_type.Equal(m.U16) {
+			insts = append(insts, wat.NewInstConst(wat.I32{}, "65535"))
+			insts = append(insts, wat.NewInstAnd(wat.I32{}))
+		}
 
 	case wat.OpCodeNot:
 		insts = append(insts, x.EmitPush()...)
@@ -56,6 +70,7 @@ func (m *Module) EmitUnOp(x Value, op wat.OpCode) (insts []wat.Inst, ret_type Va
 		logger.Fatalf("Todo: %[1]v: %[1]T", op)
 
 	}
+
 	return
 }
 
@@ -138,37 +153,37 @@ func (m *Module) EmitBinOp(x, y Value, op wat.OpCode) (insts []wat.Inst, ret_typ
 	case wat.OpCodeEql:
 		ins, _ := x.emitEq(y)
 		insts = append(insts, ins...)
-		ret_type = m.I32
+		ret_type = m.BOOL
 
 	case wat.OpCodeNe:
 		ins, _ := x.emitEq(y)
 		insts = append(insts, ins...)
 		insts = append(insts, wat.NewInstEqz(wat.I32{}))
-		ret_type = m.I32
+		ret_type = m.BOOL
 
 	case wat.OpCodeLt:
 		insts = append(insts, x.EmitPush()...)
 		insts = append(insts, y.EmitPush()...)
 		insts = append(insts, wat.NewInstLt(toWatType(x.Type())))
-		ret_type = m.I32
+		ret_type = m.BOOL
 
 	case wat.OpCodeGt:
 		insts = append(insts, x.EmitPush()...)
 		insts = append(insts, y.EmitPush()...)
 		insts = append(insts, wat.NewInstGt(toWatType(x.Type())))
-		ret_type = m.I32
+		ret_type = m.BOOL
 
 	case wat.OpCodeLe:
 		insts = append(insts, x.EmitPush()...)
 		insts = append(insts, y.EmitPush()...)
 		insts = append(insts, wat.NewInstLe(toWatType(x.Type())))
-		ret_type = m.I32
+		ret_type = m.BOOL
 
 	case wat.OpCodeGe:
 		insts = append(insts, x.EmitPush()...)
 		insts = append(insts, y.EmitPush()...)
 		insts = append(insts, wat.NewInstGe(toWatType(x.Type())))
-		ret_type = m.I32
+		ret_type = m.BOOL
 
 	case wat.OpCodeAnd:
 		ret_type = x.Type()
