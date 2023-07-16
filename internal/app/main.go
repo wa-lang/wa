@@ -376,7 +376,7 @@ func Main() {
 		},
 		{
 			Name:  "fmt",
-			Usage: "format Wa package sources",
+			Usage: "format Wa source code file",
 			Action: func(c *cli.Context) error {
 				waApp := NewApp(build_Options(c))
 				err := waApp.Fmt(c.Args().First())

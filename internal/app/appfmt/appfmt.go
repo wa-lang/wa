@@ -14,7 +14,14 @@ import (
 
 func Fmt(path string) error {
 	if path == "" {
-		path = "."
+		if _, err := os.Lstat("wa.mod.json"); err == nil {
+			path = "./..."
+		} else {
+			path = "."
+		}
+	}
+	if !filepath.IsAbs(path) && !strings.HasPrefix(path, ".") {
+		return fmt.Errorf("%q is not valid path", path)
 	}
 
 	var waFileList []string
@@ -61,7 +68,7 @@ func fmtFile(path string) (changed bool, err error) {
 			return false, err
 		}
 	}
-	return true, nil
+	return changed, nil
 }
 
 func getDirWaFileList(dir string, walkSubDir bool, extList ...string) []string {
