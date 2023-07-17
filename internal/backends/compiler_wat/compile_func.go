@@ -1102,7 +1102,7 @@ func (g *functionGenerator) genTypeAssert(inst *ssa.TypeAssert) (insts []wat.Ins
 	x := g.getValue(inst.X)
 	destType := g.tLib.compile(inst.AssertedType)
 	if inst.CommaOk {
-		ret_type = g.module.GenValueType_Tuple([]wir.ValueType{destType, g.module.I32})
+		ret_type = g.module.GenValueType_Tuple([]wir.ValueType{destType, g.module.BOOL})
 	} else {
 		ret_type = destType
 	}
