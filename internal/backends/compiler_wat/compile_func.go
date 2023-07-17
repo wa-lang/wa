@@ -580,7 +580,7 @@ func (g *functionGenerator) genBuiltin(call *ssa.CallCommon) (insts []wat.Inst, 
 
 			// assert(ok: bool, ...)
 			if i == 0 {
-				if !avt.Equal(g.module.I32) && !avt.Equal(g.module.U32) {
+				if !avt.Equal(g.module.BOOL) {
 					panic("call.Args[0] is not bool")
 				}
 				insts = append(insts, av.EmitPush()...)
