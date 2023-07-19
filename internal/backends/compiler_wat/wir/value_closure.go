@@ -151,6 +151,18 @@ func EmitCallClosure(c Value, params []Value) (insts []wat.Inst) {
 }
 
 func (v *aClosure) emitEq(r Value) ([]wat.Inst, bool) {
-	//logger.Fatal("aClosure can't be compared.")
-	return nil, false
+	if r.Kind() != ValueKindConst {
+		return nil, false
+	}
+
+	r_c, ok := r.(*aClosure)
+	if !ok {
+		logger.Fatal("r is not a Closure")
+	}
+
+	insts, ok := v.Extract("fn_index").emitEq(r_c.Extract("fn_index"))
+	if !ok {
+		logger.Fatal("fn_index is not comparable")
+	}
+	return insts, ok
 }
