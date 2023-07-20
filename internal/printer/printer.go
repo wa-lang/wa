@@ -1146,7 +1146,7 @@ func (p *printer) printNode(node interface{}) error {
 		}
 		p.stmt(n, false)
 	case ast.Decl:
-		p.decl(n)
+		p.decl(n, false)
 	case ast.Spec:
 		p.spec(n, 1, false)
 	case []ast.Stmt:
@@ -1159,7 +1159,7 @@ func (p *printer) printNode(node interface{}) error {
 		}
 		p.stmtList(n, 0, false)
 	case []ast.Decl:
-		p.declList(n)
+		p.declList(n, false)
 	case *ast.File:
 		p.file(n)
 	default:

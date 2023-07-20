@@ -1169,7 +1169,7 @@ func (p *printer) stmt(stmt ast.Stmt, nextIsRBrace bool) {
 		p.print("BadStmt")
 
 	case *ast.DeclStmt:
-		p.decl(s.Decl)
+		p.decl(s.Decl, false)
 
 	case *ast.EmptyStmt:
 		// nothing to do
@@ -1515,9 +1515,13 @@ func (p *printer) spec(spec ast.Spec, n int, doIndent bool) {
 	}
 }
 
-func (p *printer) genDecl(d *ast.GenDecl) {
+func (p *printer) genDecl(d *ast.GenDecl, isFileScope bool) {
 	p.setComment(d.Doc)
-	p.print(d.Pos(), d.Tok, blank)
+
+	// 内部省略 var
+	if isFileScope || d.Tok != token.VAR || d.Lparen != token.NoPos {
+		p.print(d.Pos(), d.Tok, blank)
+	}
 
 	if d.Lparen.IsValid() || len(d.Specs) > 1 {
 		// group of parenthesized declarations
@@ -1706,12 +1710,12 @@ func (p *printer) funcDecl(d *ast.FuncDecl) {
 	p.funcBody(p.distanceFrom(d.Pos()), vtab, d.Body)
 }
 
-func (p *printer) decl(decl ast.Decl) {
+func (p *printer) decl(decl ast.Decl, isFileScope bool) {
 	switch d := decl.(type) {
 	case *ast.BadDecl:
 		p.print(d.Pos(), "BadDecl")
 	case *ast.GenDecl:
-		p.genDecl(d)
+		p.genDecl(d, isFileScope)
 	case *ast.FuncDecl:
 		p.funcDecl(d)
 	default:
@@ -1733,7 +1737,7 @@ func declToken(decl ast.Decl) (tok token.Token) {
 	return
 }
 
-func (p *printer) declList(list []ast.Decl) {
+func (p *printer) declList(list []ast.Decl, isFileScope bool) {
 	tok := token.ILLEGAL
 	for _, d := range list {
 		prev := tok
@@ -1756,7 +1760,7 @@ func (p *printer) declList(list []ast.Decl) {
 			// that spans multiple lines (see also issue #19544)
 			p.linebreak(p.lineFor(d.Pos()), min, ignore, tok == token.FUNC && p.numLines(d) > 1)
 		}
-		p.decl(d)
+		p.decl(d, isFileScope)
 	}
 }
 
@@ -1777,6 +1781,6 @@ func (p *printer) file(src *ast.File) {
 		p.print(src.Pos(), token.PACKAGE, blank)
 		p.expr(src.Name)
 	}
-	p.declList(src.Decls)
+	p.declList(src.Decls, true)
 	p.print(newline)
 }
