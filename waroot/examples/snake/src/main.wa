@@ -47,7 +47,7 @@ func GameState.Init(w, h: i32, scale: i32) {
 	this.grid = make([]u8, u32(w*h))
 	this.ca = canvas.NewCanvas(u32(w*scale), u32(h*scale))
 
-	var caev: canvas.CanvasEvents
+	caev: canvas.CanvasEvents
 	caev.Device_id = this.ca.GetDeviceID()
 	caev.OnMouseDown = func(x, y: u32) {}
 	caev.OnMouseUp = func(x, y: u32) {}
@@ -80,7 +80,7 @@ func GameState.Start() {
 
 func GameState.SetGridType(p: Position, t: u8) {
 	this.grid[p.y*this.w+p.x] = t
-	var color: u32
+	color: u32
 	switch t {
 	case GridBody:
 		color = BodyColor
@@ -92,7 +92,7 @@ func GameState.SetGridType(p: Position, t: u8) {
 		color = DefaultColor
 	}
 
-	var x, y: i32
+	x, y: i32
 	for y = 0; y < this.scale; y++ {
 		for x = 0; x < this.scale; x++ {
 			this.ca.SetPixel(u32(p.x*this.scale+x), u32(p.y*this.scale+y), color)
@@ -103,7 +103,7 @@ func GameState.SetGridType(p: Position, t: u8) {
 #wa:import wa_js_env rand
 func rand_JS(_: i32) => i32
 func GameState.GenFood() => Position {
-	var p: Position
+	p: Position
 	for {
 		p = Position{x: rand_JS(this.w), y: rand_JS(this.h)}
 		if this.grid[p.y*this.w+p.x] == GridNull {

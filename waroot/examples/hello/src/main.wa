@@ -14,7 +14,7 @@ func main {
 }
 
 func sum(n: int) => int {
-	var v: int
+	v: int
 	for i := 1; i <= n; i++ {
 		v += i
 	}

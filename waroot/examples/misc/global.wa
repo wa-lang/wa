@@ -4,7 +4,7 @@ var counter: i32 = 13
 var G: *i32
 
 func gen_i() => *i32 {
-	var i: i32
+	i: i32
 	i = counter
 	counter++
 	return &i

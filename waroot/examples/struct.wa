@@ -40,8 +40,8 @@ type sc struct {
 }
 
 func gen_scref() => *sc {
-	var v: sc
-	var i: i32
+	v: sc
+	i: i32
 	i = 13
 	v.a = &i
 	v.b = 42
@@ -49,8 +49,8 @@ func gen_scref() => *sc {
 }
 
 func gen_sc() => sc {
-	var i: i32 = 26
-	var v: sc
+	i: i32 = 26
+	v: sc
 	v.a = &i
 	v.b = 58
 	return v

@@ -39,7 +39,7 @@ type CanvasEvents struct {
 
 //创建一个宽度为w像素、高度为h像素的画布对象
 func NewCanvas(w, h: u32) => *Canvas {
-	var canvas: Canvas
+	canvas: Canvas
 	canvas.device_id = newCanvas_JS(w, h)
 	canvas.width = w
 	canvas.height = h

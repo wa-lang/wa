@@ -135,7 +135,7 @@ func test_loop1(a: u64, b: u64) {
 }
 
 func test_array(a: int, b: int) {
-	var arr: [10][10]int
+	arr: [10][10]int
 	for i := 0; i < 10; i++ {
 		for j := 0; j < 10; j++ {
 			arr[i][j] = i * j
@@ -211,7 +211,7 @@ func test_struct3 {
 }
 
 func maket0a(i: int) => struct_t0 {
-	var r: struct_t0
+	r: struct_t0
 	for j := 0; j < 16; j++ {
 		r.arr0[j] = 100 - j - i
 		r.arr1[j] = 200.0 - f32(j+i)
@@ -254,7 +254,7 @@ func getarr0b(arr: *[32]fff32, i: int) => fff32 {
 }
 
 func makearr0a(i: int) => [32]fff32 {
-	var r: [32]fff32
+	r: [32]fff32
 	for j := 0; j < 32; j++ {
 		r[j] = fff32(i * j)
 	}
