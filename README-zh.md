@@ -57,7 +57,7 @@ import "fmt"
 global year: i32 = 2023
 
 func main {
-	println("hello, Wa!")
+	println("你好，凹语言！")
 	println(add(40, 2), year)
 
 	fmt.Println(1+1)
