@@ -7,6 +7,7 @@ import (
 	"os/exec"
 	"runtime"
 
+	"wa-lang.org/wa/internal/app/appbase"
 	"wa-lang.org/wa/internal/app/appfmt"
 	"wa-lang.org/wa/internal/app/appinit"
 	"wa-lang.org/wa/internal/app/applex"
@@ -23,13 +24,13 @@ import (
 
 // 命令行程序对象
 type App struct {
-	opt  Option
+	opt  appbase.Option
 	path string
 	src  string
 }
 
 // 构建命令行程序对象
-func NewApp(opt *Option) *App {
+func NewApp(opt *appbase.Option) *App {
 	logger.Tracef(&config.EnableTrace_app, "opt: %+v", opt)
 
 	p := &App{}

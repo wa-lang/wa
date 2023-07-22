@@ -1,6 +1,6 @@
 // 版权 @2019 凹语言 作者。保留所有权利。
 
-package app
+package appllvm
 
 import (
 	"fmt"
@@ -9,12 +9,13 @@ import (
 	"path"
 	"strings"
 
+	"wa-lang.org/wa/internal/app/appbase"
 	"wa-lang.org/wa/internal/backends/compiler_llvm"
 	"wa-lang.org/wa/internal/loader"
 )
 
-func (p *App) LLVM(infile string, outfile string, target string, debug bool) error {
-	cfg := p.opt.Config()
+func LLVMRun(opt *appbase.Option, infile string, outfile string, target string, debug bool) error {
+	cfg := opt.Config()
 
 	instat, err := os.Stat(infile)
 	if err != nil {
@@ -75,7 +76,7 @@ func (p *App) LLVM(infile string, outfile string, target string, debug bool) err
 		llc = append(llc, "-mcpu=atmega328")
 	default:
 	}
-	cmd0 := exec.Command(p.opt.Llc, llc...)
+	cmd0 := exec.Command(opt.Llc, llc...)
 	cmd0.Stderr = os.Stderr
 	if err := cmd0.Run(); err != nil {
 		fmt.Fprintf(os.Stderr, "**** failed to invoke LLVM ****\n")
@@ -116,10 +117,10 @@ func (p *App) LLVM(infile string, outfile string, target string, debug bool) err
 	if target != "" {
 		clangArgs = append(clangArgs, "-target", target)
 	}
-	if p.opt.Debug {
+	if opt.Debug {
 		clangArgs = append(clangArgs, "-v")
 	}
-	cmd1 := exec.Command(p.opt.Clang, clangArgs...)
+	cmd1 := exec.Command(opt.Clang, clangArgs...)
 	cmd1.Stderr = os.Stderr
 	cmd1.Stdout = os.Stdout
 	if err := cmd1.Run(); err != nil {

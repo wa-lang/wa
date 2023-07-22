@@ -39,7 +39,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 */
 
-package yacc
+package appyacc
 
 // yacc
 // major difference is lack of stem ("y" variable)
@@ -49,7 +49,6 @@ import (
 	"bufio"
 	"bytes"
 	"fmt"
-	goformat "go/format"
 	"os"
 	"strconv"
 	"strings"
@@ -3243,17 +3242,9 @@ func wafmt() {
 	if err != nil {
 		return
 	}
-	if strings.HasSuffix(oflag, ".go") {
-		src, err = goformat.Source(src)
-		if err != nil {
-			return
-		}
-	} else {
-		// todo: fix fmt yacc output.wa
-		src, err = format.SourceFile(src)
-		if err != nil {
-			return
-		}
+	src, err = format.SourceFile(src)
+	if err != nil {
+		return
 	}
 	os.WriteFile(oflag, src, 0666)
 }

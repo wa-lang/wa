@@ -1,6 +1,6 @@
 // 版权 @2019 凹语言 作者。保留所有权利。
 
-package app
+package appbase
 
 import "wa-lang.org/wa/internal/config"
 

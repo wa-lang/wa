@@ -13,7 +13,12 @@ import (
 
 	"wa-lang.org/wa/api"
 	"wa-lang.org/wa/internal/3rdparty/cli"
-	"wa-lang.org/wa/internal/app/yacc"
+	"wa-lang.org/wa/internal/app/appbase"
+	"wa-lang.org/wa/internal/app/appbuild"
+	"wa-lang.org/wa/internal/app/appllvm"
+	"wa-lang.org/wa/internal/app/applogo"
+	"wa-lang.org/wa/internal/app/appssa"
+	"wa-lang.org/wa/internal/app/appyacc"
 	"wa-lang.org/wa/internal/config"
 	"wa-lang.org/wa/internal/lsp"
 	"wa-lang.org/wa/internal/wabt"
@@ -156,7 +161,7 @@ func Main() {
 					Name:    "output",
 					Aliases: []string{"o"},
 					Usage:   "set output file",
-					Value:   "a.out.wasm",
+					Value:   "",
 				},
 				&cli.StringFlag{
 					Name:  "target",
@@ -177,8 +182,6 @@ func Main() {
 				},
 			},
 			Action: func(c *cli.Context) error {
-				outfile := c.String("output")
-
 				var input string
 				if c.NArg() > 0 {
 					input = c.Args().First()
@@ -186,8 +189,18 @@ func Main() {
 					input, _ = os.Getwd()
 				}
 
+				outfile := c.String("output")
+				if outfile == "" {
+					if fi, _ := os.Lstat(input); fi != nil && fi.IsDir() {
+						// /xxx/yyy/ => /xxx/yyy/output/yyy.wat
+					} else {
+						// /xxx/yyy/zzz.wa => /xxx/yyy/zzz.wat
+					}
+					outfile = "a.out.wasm"
+				}
+
 				ctx := NewApp(build_Options(c))
-				watOutput, err := ctx.WASM(input)
+				watOutput, err := appbuild.Build(&ctx.opt, input)
 				if err != nil {
 					fmt.Println(err)
 					os.Exit(1)
@@ -245,7 +258,7 @@ func Main() {
 			Name:  "fmt",
 			Usage: "format Wa source code file",
 			Action: func(c *cli.Context) error {
-				waApp := NewApp(new(Option))
+				waApp := NewApp(new(appbase.Option))
 				err := waApp.Fmt(c.Args().First())
 				if err != nil {
 					fmt.Println(err)
@@ -326,7 +339,7 @@ func Main() {
 				infile = c.Args().First()
 
 				ctx := NewApp(build_Options(c, config.WaBackend_llvm))
-				if err := ctx.LLVM(infile, outfile, target, debug); err != nil {
+				if err := appllvm.LLVMRun(&ctx.opt, infile, outfile, target, debug); err != nil {
 					fmt.Println(err)
 					os.Exit(1)
 				}
@@ -384,7 +397,7 @@ func Main() {
 				}
 
 				ctx := NewApp(build_Options(c))
-				err := ctx.SSA(c.Args().First())
+				err := appssa.SSARun(&ctx.opt, c.Args().First())
 				if err != nil {
 					fmt.Println(err)
 					os.Exit(1)
@@ -456,14 +469,14 @@ func Main() {
 				if c.NArg() != 1 {
 					cli.ShowSubcommandHelpAndExit(c, 1)
 				}
-				yacc.InitFlags(yacc.Flags{
+				appyacc.InitFlags(appyacc.Flags{
 					Oflag:     c.String("o"),
 					Vflag:     c.String("v"),
 					Lflag:     c.Bool("l"),
 					Prefix:    c.String("p"),
 					Copyright: loadCopyright(c.String("c")),
 				})
-				yacc.Main(c.Args().First())
+				appyacc.Main(c.Args().First())
 				return nil
 			},
 		},
@@ -496,7 +509,7 @@ func Main() {
 				},
 			},
 			Action: func(c *cli.Context) error {
-				PrintLogo(c.Bool("more"))
+				applogo.PrintLogo(c.Bool("more"))
 				return nil
 			},
 		},
@@ -505,8 +518,8 @@ func Main() {
 	cliApp.Run(os.Args)
 }
 
-func build_Options(c *cli.Context, waBackend ...string) *Option {
-	opt := &Option{
+func build_Options(c *cli.Context, waBackend ...string) *appbase.Option {
+	opt := &appbase.Option{
 		Debug:        c.Bool("debug"),
 		WaBackend:    config.WaBackend_Default,
 		BuilgTags:    strings.Fields(c.String("tags")),
@@ -577,7 +590,7 @@ func cliRun(c *cli.Context) {
 			os.Exit(1)
 		}
 	default:
-		watBytes, err = app.WASM(infile)
+		watBytes, err = appbuild.Build(&app.opt, infile)
 		if err != nil {
 			fmt.Println(err)
 			os.Exit(1)

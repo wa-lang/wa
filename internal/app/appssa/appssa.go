@@ -1,17 +1,18 @@
 // 版权 @2023 凹语言 作者。保留所有权利。
 
-package app
+package appssa
 
 import (
 	"os"
 	"sort"
 
+	"wa-lang.org/wa/internal/app/appbase"
 	"wa-lang.org/wa/internal/loader"
 	"wa-lang.org/wa/internal/ssa"
 )
 
-func (p *App) SSA(filename string) error {
-	cfg := p.opt.Config()
+func SSARun(opt *appbase.Option, filename string) error {
+	cfg := opt.Config()
 	prog, err := loader.LoadProgram(cfg, filename)
 	if err != nil {
 		return err
