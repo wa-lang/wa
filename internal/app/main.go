@@ -25,7 +25,12 @@ func Main() {
 	cliApp := cli.NewApp()
 	cliApp.Name = "Wa"
 	cliApp.Usage = "Wa is a tool for managing Wa source code."
+	cliApp.Copyright = "Copyright 2018 The Wa Authors. All rights reserved."
 	cliApp.Version = waroot.GetVersion()
+	cliApp.EnableBashCompletion = true
+
+	cliApp.CustomAppHelpTemplate = cli.AppHelpTemplate +
+		"\nSee \"https://wa-lang.org\" for more information.\n"
 
 	cliApp.Flags = []cli.Flag{
 		&cli.BoolFlag{
@@ -485,8 +490,9 @@ func Main() {
 			Usage: "print Wa text format logo",
 			Flags: []cli.Flag{
 				&cli.BoolFlag{
-					Name:  "more",
-					Usage: "print more logos",
+					Name:    "more",
+					Aliases: []string{"m"},
+					Usage:   "print more logos",
 				},
 			},
 			Action: func(c *cli.Context) error {
