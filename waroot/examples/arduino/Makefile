@@ -1,5 +1,5 @@
 default:
-	go run ../../../main.go -target=arduino app.wa
+	go run ../../../main.go run -target=arduino app.wa
 
 build:
 	go run ../../../main.go build -target=arduino app.wa

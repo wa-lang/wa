@@ -28,11 +28,6 @@ func Main() {
 	cliApp.Version = waroot.GetVersion()
 
 	cliApp.Flags = []cli.Flag{
-		&cli.StringFlag{
-			Name:  "target",
-			Usage: fmt.Sprintf("set target os (%s)", strings.Join(config.WaOS_List, "|")),
-			Value: config.WaOS_Default,
-		},
 		&cli.BoolFlag{
 			Name:    "debug",
 			Aliases: []string{"d"},
@@ -46,10 +41,6 @@ func Main() {
 	}
 
 	cliApp.Before = func(c *cli.Context) error {
-		if !config.CheckWaOS(c.String("target")) {
-			fmt.Printf("unknown target: %s\n", c.String("target"))
-			os.Exit(1)
-		}
 		if c.Bool("debug") {
 			config.SetDebugMode()
 		}
@@ -59,12 +50,9 @@ func Main() {
 		return nil
 	}
 
-	// 没有参数时对应 run 命令
+	// 没有参数时显示 help 信息
 	cliApp.Action = func(c *cli.Context) error {
-		if c.NArg() < 1 {
-			cli.ShowAppHelpAndExit(c, 0)
-		}
-		cliRun(c)
+		cli.ShowAppHelpAndExit(c, 0)
 		return nil
 	}
 
@@ -90,9 +78,40 @@ func Main() {
 				return nil
 			},
 		},
+
+		{
+			Name:  "play",
+			Usage: "the Wa playground",
+			Flags: []cli.Flag{
+				&cli.StringFlag{
+					Name:  "http",
+					Value: ":2023",
+					Usage: "set http address",
+				},
+				&cli.StringFlag{
+					Name:  "target",
+					Usage: fmt.Sprintf("set target os (%s)", strings.Join(config.WaOS_List, "|")),
+					Value: config.WaOS_Default,
+				},
+				&cli.StringFlag{
+					Name:  "tags",
+					Usage: "set build tags",
+				},
+			},
+			Action: func(c *cli.Context) error {
+				waApp := NewApp(build_Options(c))
+				err := waApp.Playground(c.String("http"))
+				if err != nil {
+					fmt.Println(err)
+					os.Exit(1)
+				}
+				return nil
+			},
+		},
+
 		{
 			Name:      "init",
-			Usage:     "init a sketch wa module",
+			Usage:     "init a sketch Wa module",
 			ArgsUsage: "app-name",
 			Flags: []cli.Flag{
 				&cli.StringFlag{
@@ -121,25 +140,6 @@ func Main() {
 					fmt.Println(err)
 					os.Exit(1)
 				}
-				return nil
-			},
-		},
-		{
-			Name:  "run",
-			Usage: "compile and run Wa program",
-			Flags: []cli.Flag{
-				&cli.StringFlag{
-					Name:  "target",
-					Usage: fmt.Sprintf("set target os (%s)", strings.Join(config.WaOS_List, "|")),
-					Value: config.WaOS_Default,
-				},
-				&cli.StringFlag{
-					Name:  "tags",
-					Usage: "set build tags",
-				},
-			},
-			Action: func(c *cli.Context) error {
-				cliRun(c)
 				return nil
 			},
 		},
@@ -218,9 +218,41 @@ func Main() {
 			},
 		},
 		{
-			Hidden: true,
-			Name:   "test",
-			Usage:  "test packages",
+			Name:  "run",
+			Usage: "compile and run Wa program",
+			Flags: []cli.Flag{
+				&cli.StringFlag{
+					Name:  "target",
+					Usage: fmt.Sprintf("set target os (%s)", strings.Join(config.WaOS_List, "|")),
+					Value: config.WaOS_Default,
+				},
+				&cli.StringFlag{
+					Name:  "tags",
+					Usage: "set build tags",
+				},
+			},
+			Action: func(c *cli.Context) error {
+				cliRun(c)
+				return nil
+			},
+		},
+		{
+			Name:  "fmt",
+			Usage: "format Wa source code file",
+			Action: func(c *cli.Context) error {
+				waApp := NewApp(new(Option))
+				err := waApp.Fmt(c.Args().First())
+				if err != nil {
+					fmt.Println(err)
+					os.Exit(1)
+				}
+				return nil
+			},
+		},
+
+		{
+			Name:  "test",
+			Usage: "test Wa packages",
 			Flags: []cli.Flag{
 				&cli.StringFlag{
 					Name:  "target",
@@ -246,7 +278,7 @@ func Main() {
 		{
 			Hidden: true,
 			Name:   "native",
-			Usage:  "compile wa source code to native executable",
+			Usage:  "compile Wa source code to native executable",
 			Flags: []cli.Flag{
 				&cli.StringFlag{
 					Name:    "output",
@@ -374,40 +406,7 @@ func Main() {
 				return nil
 			},
 		},
-		{
-			Name:  "fmt",
-			Usage: "format Wa source code file",
-			Action: func(c *cli.Context) error {
-				waApp := NewApp(build_Options(c))
-				err := waApp.Fmt(c.Args().First())
-				if err != nil {
-					fmt.Println(err)
-					os.Exit(1)
-				}
-				return nil
-			},
-		},
 
-		{
-			Name:  "play",
-			Usage: "run wa playground server",
-			Flags: []cli.Flag{
-				&cli.StringFlag{
-					Name:  "http",
-					Value: ":2023",
-					Usage: "set http address",
-				},
-			},
-			Action: func(c *cli.Context) error {
-				waApp := NewApp(build_Options(c))
-				err := waApp.Playground(c.String("http"))
-				if err != nil {
-					fmt.Println(err)
-					os.Exit(1)
-				}
-				return nil
-			},
-		},
 		{
 			Hidden: true,
 			Name:   "doc",
@@ -465,8 +464,9 @@ func Main() {
 		},
 
 		{
-			Name:  "lsp",
-			Usage: "run wa lang server",
+			Hidden: true,
+			Name:   "lsp",
+			Usage:  "run Wa langugage server",
 			Flags: []cli.Flag{
 				&cli.StringFlag{
 					Name:  "log-file",
@@ -482,7 +482,7 @@ func Main() {
 
 		{
 			Name:  "logo",
-			Usage: "print wa-lang text format logo",
+			Usage: "print Wa text format logo",
 			Flags: []cli.Flag{
 				&cli.BoolFlag{
 					Name:  "more",

@@ -2,7 +2,7 @@
 
 default:
 	go run ../../../main.go yacc -l -p=expr -c="copyright.txt" -o="y.wa" expr.y
-	go run ../../../main.go y.wa
+	go run ../../../main.go run y.wa
 
 clean:
 	-rm y.* a.out*

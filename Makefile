@@ -26,8 +26,8 @@ ci-test-all:
 	go run main.go test std
 	@echo "== std ok =="
 
-	go run main.go ./waroot/hello.wa
-	cd waroot && go run ../main.go hello.wa
+	go run main.go run ./waroot/hello.wa
+	cd waroot && go run ../main.go run hello.wa
 
 	make -C ./waroot/examples ci-test-all
 
