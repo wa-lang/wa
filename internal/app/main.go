@@ -13,16 +13,23 @@ import (
 
 	"wa-lang.org/wa/api"
 	"wa-lang.org/wa/internal/3rdparty/cli"
+	"wa-lang.org/wa/internal/app/appast"
 	"wa-lang.org/wa/internal/app/appbase"
 	"wa-lang.org/wa/internal/app/appbuild"
+	"wa-lang.org/wa/internal/app/appcir"
+	"wa-lang.org/wa/internal/app/appfmt"
+	"wa-lang.org/wa/internal/app/appinit"
+	"wa-lang.org/wa/internal/app/applex"
 	"wa-lang.org/wa/internal/app/appllvm"
 	"wa-lang.org/wa/internal/app/applogo"
+	"wa-lang.org/wa/internal/app/appplay"
+	"wa-lang.org/wa/internal/app/apprun"
 	"wa-lang.org/wa/internal/app/appssa"
+	"wa-lang.org/wa/internal/app/apptest"
 	"wa-lang.org/wa/internal/app/appyacc"
 	"wa-lang.org/wa/internal/config"
 	"wa-lang.org/wa/internal/lsp"
 	"wa-lang.org/wa/internal/wabt"
-	"wa-lang.org/wa/internal/wazero"
 	"wa-lang.org/wa/waroot"
 )
 
@@ -109,8 +116,7 @@ func Main() {
 				},
 			},
 			Action: func(c *cli.Context) error {
-				waApp := NewApp(build_Options(c))
-				err := waApp.Playground(c.String("http"))
+				err := appplay.RunPlayground(c.String("http"))
 				if err != nil {
 					fmt.Println(err)
 					os.Exit(1)
@@ -144,8 +150,7 @@ func Main() {
 			},
 
 			Action: func(c *cli.Context) error {
-				waApp := NewApp(build_Options(c))
-				err := waApp.InitApp(c.String("name"), c.String("pkgpath"), c.Bool("update"))
+				err := appinit.InitApp(c.String("name"), c.String("pkgpath"), c.Bool("update"))
 				if err != nil {
 					fmt.Println(err)
 					os.Exit(1)
@@ -199,8 +204,8 @@ func Main() {
 					outfile = "a.out.wasm"
 				}
 
-				ctx := NewApp(build_Options(c))
-				watOutput, err := appbuild.Build(&ctx.opt, input)
+				opt := appbase.BuildOptions(c)
+				watOutput, err := appbuild.Build(opt, input)
 				if err != nil {
 					fmt.Println(err)
 					os.Exit(1)
@@ -250,7 +255,7 @@ func Main() {
 				},
 			},
 			Action: func(c *cli.Context) error {
-				cliRun(c)
+				apprun.Run(c)
 				return nil
 			},
 		},
@@ -258,8 +263,7 @@ func Main() {
 			Name:  "fmt",
 			Usage: "format Wa source code file",
 			Action: func(c *cli.Context) error {
-				waApp := NewApp(new(appbase.Option))
-				err := waApp.Fmt(c.Args().First())
+				err := appfmt.Fmt(c.Args().First())
 				if err != nil {
 					fmt.Println(err)
 					os.Exit(1)
@@ -287,8 +291,8 @@ func Main() {
 					cli.ShowAppHelpAndExit(c, 0)
 				}
 				appArgs := c.Args().Slice()[1:]
-				waApp := NewApp(build_Options(c))
-				waApp.RunTest(c.Args().First(), appArgs...)
+				opt := appbase.BuildOptions(c)
+				apptest.RunTest(opt.Config(), c.Args().First(), appArgs...)
 				return nil
 			},
 		},
@@ -338,8 +342,8 @@ func Main() {
 				}
 				infile = c.Args().First()
 
-				ctx := NewApp(build_Options(c, config.WaBackend_llvm))
-				if err := appllvm.LLVMRun(&ctx.opt, infile, outfile, target, debug); err != nil {
+				opt := appbase.BuildOptions(c, config.WaBackend_llvm)
+				if err := appllvm.LLVMRun(opt, infile, outfile, target, debug); err != nil {
 					fmt.Println(err)
 					os.Exit(1)
 				}
@@ -358,8 +362,7 @@ func Main() {
 					os.Exit(1)
 				}
 
-				waApp := NewApp(build_Options(c))
-				err := waApp.Lex(c.Args().First())
+				err := applex.Lex(c.Args().First())
 				if err != nil {
 					fmt.Println(err)
 					os.Exit(1)
@@ -377,8 +380,7 @@ func Main() {
 					os.Exit(1)
 				}
 
-				waApp := NewApp(build_Options(c))
-				err := waApp.AST(c.Args().First())
+				err := appast.PrintAST(c.Args().First())
 				if err != nil {
 					fmt.Println(err)
 					os.Exit(1)
@@ -396,8 +398,8 @@ func Main() {
 					os.Exit(1)
 				}
 
-				ctx := NewApp(build_Options(c))
-				err := appssa.SSARun(&ctx.opt, c.Args().First())
+				opt := appbase.BuildOptions(c)
+				err := appssa.SSARun(opt, c.Args().First())
 				if err != nil {
 					fmt.Println(err)
 					os.Exit(1)
@@ -415,8 +417,8 @@ func Main() {
 					os.Exit(1)
 				}
 
-				ctx := NewApp(build_Options(c))
-				err := ctx.CIR(c.Args().First())
+				opt := appbase.BuildOptions(c)
+				err := appcir.PrintCIR(opt, c.Args().First())
 				if err != nil {
 					fmt.Println(err)
 					os.Exit(1)
@@ -516,120 +518,6 @@ func Main() {
 	}
 
 	cliApp.Run(os.Args)
-}
-
-func build_Options(c *cli.Context, waBackend ...string) *appbase.Option {
-	opt := &appbase.Option{
-		Debug:        c.Bool("debug"),
-		WaBackend:    config.WaBackend_Default,
-		BuilgTags:    strings.Fields(c.String("tags")),
-		Clang:        c.String("clang"),
-		Llc:          c.String("llc"),
-		LD_StackSize: c.Int("ld-stack-size"),
-		LD_MaxMemory: c.Int("ld-max-memory"),
-	}
-
-	opt.TargetArch = "wasm"
-	if len(waBackend) > 0 {
-		opt.WaBackend = waBackend[0]
-	}
-
-	if target := c.String("target"); !config.CheckWaOS(target) {
-		fmt.Printf("unknown target: %s\n", c.String("target"))
-		os.Exit(1)
-	}
-
-	switch c.String("target") {
-	case "", "wa", "walang":
-		opt.TargetOS = config.WaOS_Default
-	case config.WaOS_wasi:
-		opt.TargetOS = config.WaOS_wasi
-	case config.WaOS_arduino:
-		opt.TargetOS = config.WaOS_arduino
-	case config.WaOS_chrome:
-		opt.TargetOS = config.WaOS_chrome
-	case config.WaOS_mvp:
-		opt.TargetOS = config.WaOS_mvp
-	default:
-		fmt.Printf("unreachable: target: %s\n", c.String("target"))
-		os.Exit(1)
-	}
-	return opt
-}
-
-func cliRun(c *cli.Context) {
-	var infile string
-	if c.NArg() > 0 {
-		infile = c.Args().First()
-	} else {
-		infile, _ = os.Getwd()
-	}
-
-	var app = NewApp(build_Options(c))
-	var watBytes []byte
-	var wasmBytes []byte
-	var err error
-
-	switch {
-	case strings.HasSuffix(infile, ".wat"):
-		watBytes, err = os.ReadFile(infile)
-		if err != nil {
-			fmt.Println(err)
-			os.Exit(1)
-		}
-		wasmBytes, err = wabt.Wat2Wasm(watBytes)
-		if err != nil {
-			fmt.Println(err)
-			os.Exit(1)
-		}
-
-	case strings.HasSuffix(infile, ".wasm"):
-		wasmBytes, err = os.ReadFile(infile)
-		if err != nil {
-			fmt.Println(err)
-			os.Exit(1)
-		}
-	default:
-		watBytes, err = appbuild.Build(&app.opt, infile)
-		if err != nil {
-			fmt.Println(err)
-			os.Exit(1)
-		}
-		if err = os.WriteFile("a.out.wat", watBytes, 0666); err != nil {
-			fmt.Println(err)
-			os.Exit(1)
-		}
-		wasmBytes, err = wabt.Wat2Wasm(watBytes)
-		if err != nil {
-			fmt.Println(err)
-			os.Exit(1)
-		}
-	}
-
-	var appArgs []string
-	if c.NArg() > 1 {
-		appArgs = c.Args().Slice()[1:]
-	}
-
-	stdout, stderr, err := wazero.RunWasm(app.GetConfig(), infile, wasmBytes, appArgs...)
-	if err != nil {
-		if len(stdout) > 0 {
-			fmt.Fprint(os.Stdout, string(stdout))
-		}
-		if len(stderr) > 0 {
-			fmt.Fprint(os.Stderr, string(stderr))
-		}
-		if exitCode, ok := wazero.AsExitError(err); ok {
-			os.Exit(exitCode)
-		}
-		fmt.Println(err)
-	}
-	if len(stdout) > 0 {
-		fmt.Fprint(os.Stdout, string(stdout))
-	}
-	if len(stderr) > 0 {
-		fmt.Fprint(os.Stderr, string(stderr))
-	}
 }
 
 func loadCopyright(filename string) string {

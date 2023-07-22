@@ -2,7 +2,16 @@
 
 package appbase
 
-import "wa-lang.org/wa/internal/config"
+import (
+	"fmt"
+	"os"
+	"os/exec"
+	"runtime"
+	"strings"
+
+	"wa-lang.org/wa/internal/3rdparty/cli"
+	"wa-lang.org/wa/internal/config"
+)
 
 // 命令行选项
 type Option struct {
@@ -63,4 +72,75 @@ func (opt *Option) Config() *config.Config {
 	}
 
 	return cfg
+}
+
+// 构建命令行程序对象
+func (opt *Option) Adjust() {
+	if opt.Clang == "" {
+		if runtime.GOOS == "windows" {
+			opt.Clang, _ = exec.LookPath("clang.exe")
+		} else {
+			opt.Clang, _ = exec.LookPath("clang")
+		}
+		if opt.Clang == "" {
+			opt.Clang = "clang"
+		}
+	}
+	if opt.Llc == "" {
+		if runtime.GOOS == "windows" {
+			opt.Llc, _ = exec.LookPath("llc.exe")
+		} else {
+			opt.Llc, _ = exec.LookPath("llc")
+		}
+		if opt.Llc == "" {
+			opt.Llc = "llc"
+		}
+	}
+	if opt.TargetOS == "" {
+		opt.TargetOS = config.WaOS_Default
+	}
+	if opt.TargetArch == "" {
+		opt.TargetArch = config.WaArch_Default
+	}
+}
+
+func BuildOptions(c *cli.Context, waBackend ...string) *Option {
+	opt := &Option{
+		Debug:        c.Bool("debug"),
+		WaBackend:    config.WaBackend_Default,
+		BuilgTags:    strings.Fields(c.String("tags")),
+		Clang:        c.String("clang"),
+		Llc:          c.String("llc"),
+		LD_StackSize: c.Int("ld-stack-size"),
+		LD_MaxMemory: c.Int("ld-max-memory"),
+	}
+
+	opt.TargetArch = "wasm"
+	if len(waBackend) > 0 {
+		opt.WaBackend = waBackend[0]
+	}
+
+	if target := c.String("target"); !config.CheckWaOS(target) {
+		fmt.Printf("unknown target: %s\n", c.String("target"))
+		os.Exit(1)
+	}
+
+	switch c.String("target") {
+	case "", "wa", "walang":
+		opt.TargetOS = config.WaOS_Default
+	case config.WaOS_wasi:
+		opt.TargetOS = config.WaOS_wasi
+	case config.WaOS_arduino:
+		opt.TargetOS = config.WaOS_arduino
+	case config.WaOS_chrome:
+		opt.TargetOS = config.WaOS_chrome
+	case config.WaOS_mvp:
+		opt.TargetOS = config.WaOS_mvp
+	default:
+		fmt.Printf("unreachable: target: %s\n", c.String("target"))
+		os.Exit(1)
+	}
+
+	opt.Adjust()
+	return opt
 }
