@@ -98,21 +98,12 @@ func Main() {
 
 		{
 			Name:  "play",
-			Usage: "the Wa playground",
+			Usage: "start Wa playground",
 			Flags: []cli.Flag{
 				&cli.StringFlag{
 					Name:  "http",
 					Value: ":2023",
 					Usage: "set http address",
-				},
-				&cli.StringFlag{
-					Name:  "target",
-					Usage: fmt.Sprintf("set target os (%s)", strings.Join(config.WaOS_List, "|")),
-					Value: config.WaOS_Default,
-				},
-				&cli.StringFlag{
-					Name:  "tags",
-					Usage: "set build tags",
 				},
 			},
 			Action: func(c *cli.Context) error {
@@ -126,15 +117,14 @@ func Main() {
 		},
 
 		{
-			Name:      "init",
-			Usage:     "init a sketch Wa module",
-			ArgsUsage: "app-name",
+			Name:  "init",
+			Usage: "init a sketch Wa module",
 			Flags: []cli.Flag{
 				&cli.StringFlag{
 					Name:    "name",
 					Aliases: []string{"n"},
 					Usage:   "set app name",
-					Value:   "_examples/hello",
+					Value:   "hello",
 				},
 				&cli.StringFlag{
 					Name:    "pkgpath",

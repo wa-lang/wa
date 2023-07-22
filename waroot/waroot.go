@@ -25,7 +25,7 @@ func GetVersion() string {
 }
 
 func GetExampleAppFS() fs.FS {
-	fs, err := fs.Sub(_exampleAppFS, "_example_app")
+	fs, err := fs.Sub(_exampleAppFS, "misc/_example_app")
 	if err != nil {
 		panic(err)
 	}
@@ -33,7 +33,7 @@ func GetExampleAppFS() fs.FS {
 }
 
 func GetExampleVendorFS() fs.FS {
-	fs, err := fs.Sub(_exampleVendorFS, "_example_vendor")
+	fs, err := fs.Sub(_exampleVendorFS, "misc/_example_vendor")
 	if err != nil {
 		panic(err)
 	}
