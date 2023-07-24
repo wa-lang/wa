@@ -9,9 +9,29 @@ import (
 	"io"
 	"os"
 
+	"wa-lang.org/wa/internal/3rdparty/cli"
 	"wa-lang.org/wa/internal/scanner"
 	"wa-lang.org/wa/internal/token"
 )
+
+var CmdLex = &cli.Command{
+	Hidden: true,
+	Name:   "lex",
+	Usage:  "lex Wa source code and print token list",
+	Action: func(c *cli.Context) error {
+		if c.NArg() == 0 {
+			fmt.Fprintf(os.Stderr, "no input file")
+			os.Exit(1)
+		}
+
+		err := Lex(c.Args().First())
+		if err != nil {
+			fmt.Println(err)
+			os.Exit(1)
+		}
+		return nil
+	},
+}
 
 func Lex(filename string) error {
 	src, err := readSource(filename, nil)

@@ -9,6 +9,8 @@ import (
 	"strings"
 	"time"
 
+	"wa-lang.org/wa/internal/3rdparty/cli"
+	"wa-lang.org/wa/internal/app/appbase"
 	"wa-lang.org/wa/internal/backends/compiler_wat"
 	"wa-lang.org/wa/internal/config"
 	"wa-lang.org/wa/internal/loader"
@@ -16,6 +18,31 @@ import (
 	"wa-lang.org/wa/internal/wazero"
 	"wa-lang.org/wa/waroot"
 )
+
+var CmdTest = &cli.Command{
+	Name:  "test",
+	Usage: "test Wa packages",
+	Flags: []cli.Flag{
+		&cli.StringFlag{
+			Name:  "target",
+			Usage: fmt.Sprintf("set target os (%s)", strings.Join(config.WaOS_List, "|")),
+			Value: config.WaOS_Default,
+		},
+		&cli.StringFlag{
+			Name:  "tags",
+			Usage: "set build tags",
+		},
+	},
+	Action: func(c *cli.Context) error {
+		if c.NArg() < 1 {
+			cli.ShowAppHelpAndExit(c, 0)
+		}
+		appArgs := c.Args().Slice()[1:]
+		opt := appbase.BuildOptions(c)
+		RunTest(opt.Config(), c.Args().First(), appArgs...)
+		return nil
+	},
+}
 
 func RunTest(cfg *config.Config, pkgpath string, appArgs ...string) {
 	var pkgList = []string{pkgpath}

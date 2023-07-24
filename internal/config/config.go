@@ -22,6 +22,7 @@ type PkgVFS struct {
 
 // 通用配置信息
 type Config struct {
+	WatOutput string   // 输出的 wat 文件路径
 	WaBackend string   // 编译器后端
 	WaRoot    string   // 凹 程序根目录, src 目录下是包代码, 为空时用内置标准库实现
 	WaArch    string   // 目标 CPU

@@ -4,11 +4,34 @@ package appplay
 
 import (
 	"fmt"
+	"os"
 	"os/exec"
 	"runtime"
 	"strings"
 	"time"
+
+	"wa-lang.org/wa/internal/3rdparty/cli"
 )
+
+var CmdPlay = &cli.Command{
+	Name:  "play",
+	Usage: "start Wa playground",
+	Flags: []cli.Flag{
+		&cli.StringFlag{
+			Name:  "http",
+			Value: ":2023",
+			Usage: "set http address",
+		},
+	},
+	Action: func(c *cli.Context) error {
+		err := RunPlayground(c.String("http"))
+		if err != nil {
+			fmt.Println(err)
+			os.Exit(1)
+		}
+		return nil
+	},
+}
 
 func RunPlayground(addr string) error {
 	if strings.HasPrefix(addr, ":") {

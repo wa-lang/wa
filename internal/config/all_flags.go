@@ -43,5 +43,7 @@ func setEnableTrace(parten string) {
 		EnableTrace_app = true
 		EnableTrace_compiler = true
 		EnableTrace_loader = true
+	default:
+		panic("unknown trace flag: " + parten)
 	}
 }

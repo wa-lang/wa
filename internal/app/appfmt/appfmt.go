@@ -9,8 +9,22 @@ import (
 	"sort"
 	"strings"
 
+	"wa-lang.org/wa/internal/3rdparty/cli"
 	"wa-lang.org/wa/internal/format"
 )
+
+var CmdFmt = &cli.Command{
+	Name:  "fmt",
+	Usage: "format Wa source code file",
+	Action: func(c *cli.Context) error {
+		err := Fmt(c.Args().First())
+		if err != nil {
+			fmt.Println(err)
+			os.Exit(1)
+		}
+		return nil
+	},
+}
 
 func Fmt(path string) error {
 	if path == "" {

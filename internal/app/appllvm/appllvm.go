@@ -9,10 +9,67 @@ import (
 	"path"
 	"strings"
 
+	"wa-lang.org/wa/internal/3rdparty/cli"
 	"wa-lang.org/wa/internal/app/appbase"
 	"wa-lang.org/wa/internal/backends/compiler_llvm"
+	"wa-lang.org/wa/internal/config"
 	"wa-lang.org/wa/internal/loader"
 )
+
+var CmdNative = &cli.Command{
+	Hidden: true,
+	Name:   "native",
+	Usage:  "compile Wa source code to native executable",
+	Flags: []cli.Flag{
+		&cli.StringFlag{
+			Name:    "output",
+			Aliases: []string{"o"},
+			Usage:   "set output file",
+			Value:   "",
+		},
+		&cli.StringFlag{
+			Name:  "target",
+			Usage: "set native target",
+			Value: "",
+		},
+		&cli.StringFlag{
+			Name:  "tags",
+			Usage: "set build tags",
+		},
+		&cli.BoolFlag{
+			Name:  "debug",
+			Usage: "dump orginal intermediate representation",
+		},
+		&cli.StringFlag{
+			Name:  "clang",
+			Usage: "set llvm/clang path",
+		},
+		&cli.StringFlag{
+			Name:  "llc",
+			Usage: "set llvm/llc path",
+		},
+	},
+	Action: func(c *cli.Context) error {
+		outfile := c.String("output")
+		target := c.String("target")
+		debug := c.Bool("debug")
+		infile := ""
+
+		if c.NArg() == 0 {
+			fmt.Fprintf(os.Stderr, "no input file")
+			os.Exit(1)
+		}
+		infile = c.Args().First()
+
+		opt := appbase.BuildOptions(c, config.WaBackend_llvm)
+		if err := LLVMRun(opt, infile, outfile, target, debug); err != nil {
+			fmt.Println(err)
+			os.Exit(1)
+		}
+
+		return nil
+	},
+}
 
 func LLVMRun(opt *appbase.Option, infile string, outfile string, target string, debug bool) error {
 	cfg := opt.Config()
