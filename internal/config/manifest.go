@@ -10,6 +10,8 @@ import (
 	"io/fs"
 	"os"
 	"path/filepath"
+	"strings"
+	"unicode"
 )
 
 // 模块文件
@@ -108,9 +110,61 @@ func LoadManifest(vfs fs.FS, appPath string) (p *Manifest, err error) {
 	return p, nil
 }
 
+func (p *Manifest) Valid() bool {
+	if p.Root == "" || p.MainPkg == "" {
+		return false
+	}
+	if p.Pkg.Name == "" || p.Pkg.Pkgpath == "" {
+		return false
+	}
+
+	if !isValidAppName(p.Pkg.Name) {
+		return false
+	}
+	if !isValidPkgpath(p.Pkg.Pkgpath) {
+		return false
+	}
+
+	return true
+}
+
 func (p *Manifest) JSONString() string {
 	d, _ := json.MarshalIndent(p, "", "\t")
 	return string(d)
+}
+
+func isValidAppName(s string) bool {
+	if s == "" || s[0] == '_' || (s[0] >= '0' && s[0] <= '9') {
+		return false
+	}
+	for _, c := range []rune(s) {
+		if c == '_' || (c >= '0' && c <= '9') || unicode.IsLetter(c) {
+			continue
+		}
+		return false
+	}
+	return true
+}
+
+func isValidPkgpath(s string) bool {
+	if s == "" || s[0] == '_' || (s[0] >= '0' && s[0] <= '9') {
+		return false
+	}
+	for _, c := range []rune(s) {
+		if c == '_' || c == '.' || c == '/' || (c >= '0' && c <= '9') {
+			continue
+		}
+		if unicode.IsLetter(c) {
+			continue
+		}
+		return false
+	}
+
+	var pkgname = s
+	if i := strings.LastIndex(s, "/"); i >= 0 {
+		pkgname = s[i+1:]
+	}
+	return isValidAppName(pkgname)
 }
 
 // 查找 WaModFile 文件路径

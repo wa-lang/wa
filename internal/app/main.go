@@ -7,7 +7,9 @@
 package app
 
 import (
+	"fmt"
 	"os"
+	"strings"
 
 	"wa-lang.org/wa/internal/3rdparty/cli"
 	"wa-lang.org/wa/internal/app/appast"
@@ -67,6 +69,10 @@ func Main() {
 
 	// 没有参数时显示 help 信息
 	cliApp.Action = func(c *cli.Context) error {
+		if c.NArg() > 0 {
+			fmt.Println("unknown args:", strings.Join(c.Args().Slice(), " "))
+			os.Exit(1)
+		}
 		cli.ShowAppHelpAndExit(c, 0)
 		return nil
 	}
