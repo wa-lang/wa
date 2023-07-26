@@ -21,21 +21,10 @@ var CmdNative = &cli.Command{
 	Name:   "native",
 	Usage:  "compile Wa source code to native executable",
 	Flags: []cli.Flag{
-		&cli.StringFlag{
-			Name:    "output",
-			Aliases: []string{"o"},
-			Usage:   "set output file",
-			Value:   "",
-		},
-		&cli.StringFlag{
-			Name:  "target",
-			Usage: "set native target",
-			Value: "",
-		},
-		&cli.StringFlag{
-			Name:  "tags",
-			Usage: "set build tags",
-		},
+		appbase.MakeFlag_output(),
+		appbase.MakeFlag_target(),
+		appbase.MakeFlag_tags(),
+
 		&cli.BoolFlag{
 			Name:  "debug",
 			Usage: "dump orginal intermediate representation",

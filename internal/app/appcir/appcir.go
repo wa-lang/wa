@@ -16,6 +16,11 @@ var CmdCir = &cli.Command{
 	Hidden: true,
 	Name:   "cir",
 	Usage:  "print cir code",
+	Flags: []cli.Flag{
+		appbase.MakeFlag_output(),
+		appbase.MakeFlag_target(),
+		appbase.MakeFlag_tags(),
+	},
 	Action: func(c *cli.Context) error {
 		if c.NArg() == 0 {
 			fmt.Fprintf(os.Stderr, "no input file")

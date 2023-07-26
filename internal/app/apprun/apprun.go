@@ -5,12 +5,10 @@ package apprun
 import (
 	"fmt"
 	"os"
-	"strings"
 
 	"wa-lang.org/wa/internal/3rdparty/cli"
 	"wa-lang.org/wa/internal/app/appbase"
 	"wa-lang.org/wa/internal/app/appbuild"
-	"wa-lang.org/wa/internal/config"
 	"wa-lang.org/wa/internal/wazero"
 )
 
@@ -18,15 +16,8 @@ var CmdRun = &cli.Command{
 	Name:  "run",
 	Usage: "compile and run Wa program",
 	Flags: []cli.Flag{
-		&cli.StringFlag{
-			Name:  "target",
-			Usage: fmt.Sprintf("set target os (%s)", strings.Join(config.WaOS_List, "|")),
-			Value: config.WaOS_Default,
-		},
-		&cli.StringFlag{
-			Name:  "tags",
-			Usage: "set build tags",
-		},
+		appbase.MakeFlag_target(),
+		appbase.MakeFlag_tags(),
 	},
 	Action: CmdRunAction,
 }

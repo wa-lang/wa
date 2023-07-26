@@ -1,5 +1,5 @@
 {
-	"name": "_examples/hello",
+	"name": "hello",
 	"pkgpath": "myapp",
 	"version": "0.0.1",
 	"authors": ["author", "author2"],

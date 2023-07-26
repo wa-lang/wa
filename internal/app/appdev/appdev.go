@@ -10,7 +10,6 @@ import (
 )
 
 var CmdDev = &cli.Command{
-	// go run main.go debug
 	Hidden: true,
 	Name:   "debug",
 	Usage:  "only for dev/debug",

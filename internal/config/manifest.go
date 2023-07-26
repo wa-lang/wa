@@ -110,22 +110,22 @@ func LoadManifest(vfs fs.FS, appPath string) (p *Manifest, err error) {
 	return p, nil
 }
 
-func (p *Manifest) Valid() bool {
-	if p.Root == "" || p.MainPkg == "" {
-		return false
+func (p *Manifest) Valid() error {
+	if p.Root == "" {
+		return fmt.Errorf("root is empty")
 	}
-	if p.Pkg.Name == "" || p.Pkg.Pkgpath == "" {
-		return false
+	if p.MainPkg == "" {
+		return fmt.Errorf("main package is empty")
 	}
 
 	if !isValidAppName(p.Pkg.Name) {
-		return false
+		return fmt.Errorf("%q is invalid app name", p.Pkg.Name)
 	}
 	if !isValidPkgpath(p.Pkg.Pkgpath) {
-		return false
+		return fmt.Errorf("%q is invalid pkg path", p.Pkg.Pkgpath)
 	}
 
-	return true
+	return nil
 }
 
 func (p *Manifest) JSONString() string {

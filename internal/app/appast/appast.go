@@ -5,10 +5,9 @@ package appast
 import (
 	"fmt"
 	"os"
-	"path/filepath"
-	"strings"
 
 	"wa-lang.org/wa/internal/3rdparty/cli"
+	"wa-lang.org/wa/internal/app/appbase"
 	"wa-lang.org/wa/internal/ast"
 	"wa-lang.org/wa/internal/parser"
 	"wa-lang.org/wa/internal/token"
@@ -36,15 +35,18 @@ func CmdAstAction(c *cli.Context) error {
 }
 
 func PrintAST(filename string) error {
-	ext := strings.ToLower(filepath.Ext(filename))
-	if ext != ".wa" && ext != ".wz" {
+	if !appbase.HasExt(filename, ".wa", ".wz") {
 		return fmt.Errorf("%q is not Wa file", filename)
 	}
-	if fi, _ := os.Lstat(filename); fi == nil || fi.IsDir() {
+
+	if !appbase.PathExists(filename) {
 		return fmt.Errorf("%q not found", filename)
 	}
+	if !appbase.IsNativeFile(filename) {
+		return fmt.Errorf("%q must be file", filename)
+	}
 
-	fset := token.NewFileSet() // positions are relative to fset
+	fset := token.NewFileSet()
 	f, err := parser.ParseFile(nil, fset, filename, nil, 0)
 	if err != nil {
 		return err
