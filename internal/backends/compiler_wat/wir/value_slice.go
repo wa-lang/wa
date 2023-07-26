@@ -548,6 +548,18 @@ func (v *aSlice) emitSub(low, high Value) (insts []wat.Inst) {
 }
 
 func (v *aSlice) emitEq(r Value) ([]wat.Inst, bool) {
-	//logger.Fatal("aSlice can't be compared.")
-	return nil, false
+	if r.Kind() != ValueKindConst {
+		return nil, false
+	}
+
+	r_s, ok := r.(*aSlice)
+	if !ok {
+		logger.Fatal("r is not a Slice")
+	}
+
+	if r_s.Name() != "0" {
+		logger.Fatal("r should be nil")
+	}
+
+	return v.Extract("d").emitEq(r_s.Extract("d"))
 }
