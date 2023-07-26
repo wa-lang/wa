@@ -7,12 +7,11 @@ import (
 	"io/fs"
 	"os"
 	"path/filepath"
-	"strings"
 	"text/template"
 	"time"
-	"unicode"
 
 	"wa-lang.org/wa/internal/3rdparty/cli"
+	"wa-lang.org/wa/internal/app/appbase"
 	"wa-lang.org/wa/waroot"
 )
 
@@ -53,11 +52,11 @@ func InitApp(name, pkgpath string, update bool) error {
 	if name == "" {
 		return fmt.Errorf("init failed: <%s> is empty", name)
 	}
-	if !isValidAppName(name) {
+	if !appbase.IsValidAppName(name) {
 		return fmt.Errorf("init failed: <%s> is invalid name", name)
 	}
 
-	if !isValidPkgpath(pkgpath) {
+	if !appbase.IsValidPkgpath(pkgpath) {
 		return fmt.Errorf("init failed: <%s> is invalid pkgpath", pkgpath)
 	}
 
@@ -156,38 +155,4 @@ func InitApp(name, pkgpath string, update bool) error {
 	}
 
 	return nil
-}
-
-func isValidAppName(s string) bool {
-	if s == "" || s[0] == '_' || (s[0] >= '0' && s[0] <= '9') {
-		return false
-	}
-	for _, c := range []rune(s) {
-		if c == '_' || (c >= '0' && c <= '9') || unicode.IsLetter(c) {
-			continue
-		}
-		return false
-	}
-	return true
-}
-
-func isValidPkgpath(s string) bool {
-	if s == "" || s[0] == '_' || (s[0] >= '0' && s[0] <= '9') {
-		return false
-	}
-	for _, c := range []rune(s) {
-		if c == '_' || c == '.' || c == '/' || (c >= '0' && c <= '9') {
-			continue
-		}
-		if unicode.IsLetter(c) {
-			continue
-		}
-		return false
-	}
-
-	var pkgname = s
-	if i := strings.LastIndex(s, "/"); i >= 0 {
-		pkgname = s[i+1:]
-	}
-	return isValidAppName(pkgname)
 }

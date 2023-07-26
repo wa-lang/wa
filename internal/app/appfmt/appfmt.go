@@ -10,6 +10,7 @@ import (
 	"strings"
 
 	"wa-lang.org/wa/internal/3rdparty/cli"
+	"wa-lang.org/wa/internal/app/appbase"
 	"wa-lang.org/wa/internal/format"
 )
 
@@ -27,6 +28,11 @@ var CmdFmt = &cli.Command{
 }
 
 func Fmt(path string) error {
+	if appbase.IsNativeFile(path, ".wa", ".wz") {
+		_, err := fmtFile(path)
+		return err
+	}
+
 	if path == "" {
 		if _, err := os.Lstat("wa.mod.json"); err == nil {
 			path = "./..."

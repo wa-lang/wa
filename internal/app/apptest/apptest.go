@@ -23,15 +23,8 @@ var CmdTest = &cli.Command{
 	Name:  "test",
 	Usage: "test Wa packages",
 	Flags: []cli.Flag{
-		&cli.StringFlag{
-			Name:  "target",
-			Usage: fmt.Sprintf("set target os (%s)", strings.Join(config.WaOS_List, "|")),
-			Value: config.WaOS_Default,
-		},
-		&cli.StringFlag{
-			Name:  "tags",
-			Usage: "set build tags",
-		},
+		appbase.MakeFlag_target(),
+		appbase.MakeFlag_tags(),
 	},
 	Action: func(c *cli.Context) error {
 		if c.NArg() < 1 {

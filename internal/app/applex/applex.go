@@ -3,13 +3,11 @@
 package applex
 
 import (
-	"bytes"
-	"errors"
 	"fmt"
-	"io"
 	"os"
 
 	"wa-lang.org/wa/internal/3rdparty/cli"
+	"wa-lang.org/wa/internal/app/appbase"
 	"wa-lang.org/wa/internal/scanner"
 	"wa-lang.org/wa/internal/token"
 )
@@ -34,7 +32,11 @@ var CmdLex = &cli.Command{
 }
 
 func Lex(filename string) error {
-	src, err := readSource(filename, nil)
+	if !appbase.IsNativeFile(filename, ".wa", ".wz") {
+		return fmt.Errorf("%q is not valid path", filename)
+	}
+
+	src, err := os.ReadFile(filename)
 	if err != nil {
 		return err
 	}
@@ -53,26 +55,4 @@ func Lex(filename string) error {
 	}
 
 	return nil
-}
-
-func readSource(filename string, src interface{}) ([]byte, error) {
-	if src != nil {
-		switch s := src.(type) {
-		case string:
-			return []byte(s), nil
-		case []byte:
-			return s, nil
-		case *bytes.Buffer:
-			if s != nil {
-				return s.Bytes(), nil
-			}
-		case io.Reader:
-			d, err := io.ReadAll(s)
-			return d, err
-		}
-		return nil, errors.New("invalid source")
-	}
-
-	d, err := os.ReadFile(filename)
-	return d, err
 }
