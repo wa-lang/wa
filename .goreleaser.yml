@@ -74,7 +74,7 @@ scoop:
   bucket:
     owner: wa-lang
     name: scoop-bucket
-    branch: main
+    branch: master
     token: "{{ .Env.GITHUB_TOKEN }}"
   folder: Scoops
   commit_author:
