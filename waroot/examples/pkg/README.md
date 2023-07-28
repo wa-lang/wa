@@ -1,4 +1,4 @@
-# Pkg: _examples/hello
+# Pkg: hello
 
 欢迎使用 Wa 语言!
 

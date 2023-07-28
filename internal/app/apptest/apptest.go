@@ -27,12 +27,19 @@ var CmdTest = &cli.Command{
 		appbase.MakeFlag_tags(),
 	},
 	Action: func(c *cli.Context) error {
-		if c.NArg() < 1 {
-			cli.ShowAppHelpAndExit(c, 0)
-		}
-		appArgs := c.Args().Slice()[1:]
 		opt := appbase.BuildOptions(c)
-		RunTest(opt.Config(), c.Args().First(), appArgs...)
+
+		var pkgpath = "."
+		var appArgs []string
+
+		if c.Args().Len() > 0 {
+			pkgpath = c.Args().First()
+		}
+		if c.Args().Len() > 1 {
+			appArgs = c.Args().Slice()[1:]
+		}
+
+		RunTest(opt.Config(), pkgpath, appArgs...)
 		return nil
 	},
 }

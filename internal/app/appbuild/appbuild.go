@@ -57,6 +57,11 @@ func BuildApp(opt *appbase.Option, input, outfile string) (wasmBytes []byte, err
 		os.Exit(1)
 	}
 
+	// 已经是 wasm, 直接返回
+	if appbase.HasExt(input, ".wasm") {
+		return os.ReadFile(input)
+	}
+
 	// 只编译 wat 文件, 输出路径相同, 后缀名调整
 	if appbase.HasExt(input, ".wat") {
 		// 设置默认输出目标

@@ -1,0 +1,16 @@
+// 版权 @2023 hello 作者。保留所有权利。
+
+func init {
+	// println("zz_test.wa")
+}
+
+func TestSum {
+	assert(sum(100) == 5050, "sum(100) failed")
+}
+
+func ExampleSum {
+	println(sum(100))
+
+	// Output:
+	// 5050
+}

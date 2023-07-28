@@ -15,13 +15,15 @@ import (
 )
 
 var CmdFmt = &cli.Command{
-	Name:  "fmt",
-	Usage: "format Wa source code file",
+	Name:      "fmt",
+	Usage:     "format Wa source code file",
+	ArgsUsage: "[<file.wa>|<path>|<path>/...]",
 	Action: func(c *cli.Context) error {
-		err := Fmt(c.Args().First())
-		if err != nil {
-			fmt.Println(err)
-			os.Exit(1)
+		for _, path := range c.Args().Slice() {
+			if err := Fmt(path); err != nil {
+				fmt.Println(err)
+				os.Exit(1)
+			}
 		}
 		return nil
 	},
@@ -50,7 +52,7 @@ func Fmt(path string) error {
 		waFileList = append(waFileList, path)
 	case strings.HasSuffix(path, ".wz"):
 		waFileList = append(waFileList, path)
-	case strings.HasSuffix(path, "..."):
+	case strings.HasSuffix(path, "/..."):
 		waFileList = getDirWaFileList(
 			strings.TrimSuffix(path, "..."),
 			true, ".wa", ".wz", // 包含子目录
