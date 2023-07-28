@@ -119,11 +119,11 @@ func waPrintF64(v: f64) {
 
 func print_i32(i: i32) {
 	if i < 0 {
-		print('-')
+		waPrintRune('-')
 		i = -i
 	}
 	if i < 10 {
-		putchar(i+'0')
+		waPrintRune(i+'0')
 		return
 	}
 	print_i32(i/10)
@@ -140,10 +140,23 @@ func print_u32(i: u32) {
 }
 
 func print_f64(f: f64) {
-	// ipart := i64(f)
-	// fpart := f - f64(ipart)
+	ipart := i64(f)
+	fpart := f - f64(ipart)
 
-	// todo(chai2010): 打印 float
+	print_i32(i32(ipart))
+
+	fpart_1000 := i32(fpart * 1000)
+	if fpart_1000 < 10 {
+		waPrintRune('.')
+		waPrintRune('0')
+		waPrintRune('0')
+	} else if fpart_1000 < 100 {
+		waPrintRune('.')
+		waPrintRune('0')
+	} else {
+		waPrintRune('.')
+	}
+	print_i32(fpart_1000)
 }
 
 /*
