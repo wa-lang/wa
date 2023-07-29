@@ -1,11 +1,11 @@
 // 版权 @2023 凹语言 作者。保留所有权利。
 
 // 十进制整数 x 转为字符串
-func Itoa(x: int) => string {
-	return itoa(x)
+func __Itoa(x: int) => string {
+	return __itoa(x)
 }
 
-func itoa(num: int) => string {
+func __itoa(num: int) => string {
 	if num == 0 {
 		return "0"
 	}
