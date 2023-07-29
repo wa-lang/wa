@@ -1,0 +1,8 @@
+// 版权 @2023 凹语言 作者。保留所有权利。
+
+// Copysign returns a value with the magnitude
+// of x and the sign of y.
+func Copysign(x, y: f64) => f64 {
+	const sign = 1 << 63
+	return Float64frombits(Float64bits(x)&^sign | Float64bits(y)&sign)
+}

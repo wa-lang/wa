@@ -1,0 +1,35 @@
+// 版权 @2023 凹语言 作者。保留所有权利。
+
+// Modf returns integer and fractional floating-point numbers
+// that sum to f. Both values have the same sign as f.
+//
+// Special cases are:
+//	Modf(±Inf) = ±Inf, NaN
+//	Modf(NaN) = NaN, NaN
+func Modf(f: f64) => (i: f64, frac: f64) {
+	return modf(f)
+}
+
+func modf(f: f64) => (i: f64, frac: f64) {
+	if f < 1 {
+		switch {
+		case f < 0:
+			i, frac = Modf(-f)
+			return -i, -frac
+		case f == 0:
+			return f, f // Return -0, -0 when f == -0
+		}
+		return 0, f
+	}
+
+	x := Float64bits(f)
+	e := uint(x>>shift)&mask - bias
+
+	// Keep the top 12+e bits, the integer part; clear the rest.
+	if e < 64-12 {
+		x &^= 1<<(64-12-e) - 1
+	}
+	i = Float64frombits(x)
+	frac = f - i
+	return
+}
