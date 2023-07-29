@@ -15,7 +15,7 @@ var CmdLogo = &cli.Command{
 		},
 		&cli.BoolFlag{
 			Name:  "svg",
-			Usage: "print svf logos",
+			Usage: "print svg logo",
 		},
 	},
 	Action: func(c *cli.Context) error {
