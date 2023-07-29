@@ -11,10 +11,18 @@ var CmdLogo = &cli.Command{
 		&cli.BoolFlag{
 			Name:    "more",
 			Aliases: []string{"m"},
-			Usage:   "print more logos",
+			Usage:   "print more text logos",
+		},
+		&cli.BoolFlag{
+			Name:  "svg",
+			Usage: "print svf logos",
 		},
 	},
 	Action: func(c *cli.Context) error {
+		if c.Bool("svg") {
+			PrintLogoSvg()
+			return nil
+		}
 		PrintLogo(c.Bool("more"))
 		return nil
 	},
