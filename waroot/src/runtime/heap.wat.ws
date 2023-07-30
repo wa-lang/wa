@@ -204,9 +204,13 @@
 )
 
 (func $$wa.runtime.i32_ref_to_ptr (param $b i32) (param $d i32) (result i32) ;;result = ptr
-  local.get $d
+	local.get $d
 )
 
 (func $$wa.runtime.slice_to_ptr (param $b i32) (param $d i32) (param $l i32) (param $c i32) (result i32) ;;result = ptr
-  local.get $d
+	local.get $d
+)
+
+(func $$wa.runtime.string_to_ptr (param $b i32) (param $d i32) (param $l i32) (result i32) ;;result = ptr
+	local.get $d
 )

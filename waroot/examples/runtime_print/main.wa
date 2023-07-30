@@ -1,0 +1,84 @@
+// 版权 @2023 凹语言 作者。保留所有权利。
+
+#wa:linkname runtime.printBytes
+func runtime_printBytes(b: []byte)
+
+#wa:linkname runtime.printString
+func runtime_printString(s: string)
+
+#wa:linkname runtime.printSpace
+func runtime_printSpace
+
+#wa:linkname runtime.printNewline
+func runtime_printNewline
+
+#wa:linkname runtime.printBool
+func runtime_printBool(b: bool)
+
+#wa:linkname runtime.printF64
+func runtime_printF64(f: f64)
+
+#wa:linkname runtime.printU64
+func runtime_printU64(v: u64)
+
+#wa:linkname runtime.printI64
+func runtime_printI64(v: i64)
+
+#wa:linkname runtime.printHex
+func runtime_printHex(v: u64)
+
+#wa:linkname runtime.printSlice
+func runtime_printSlice(x: []byte)
+
+const (
+	MaxInt64  = 1<<63 - 1
+	MinInt64  = -1 << 63
+	MaxUint64 = 1<<64 - 1
+)
+
+func main {
+	runtime_printBytes([]byte{ 'a', 'b', '\n'})
+	runtime_printString("hello\n")
+
+	runtime_printString("== printBool ==\n")
+	runtime_printBool(true)
+	runtime_printSpace()
+	runtime_printBool(false)
+	runtime_printNewline()
+
+	runtime_printString("== printF64 ==\n")
+	runtime_printF64(123.45)
+	runtime_printNewline()
+
+	runtime_printString("== printI64 ==\n")
+	runtime_printI64(12345)
+	runtime_printNewline()
+	runtime_printI64(MinInt64)
+	runtime_printNewline()
+	runtime_printI64(MaxInt64)
+	runtime_printNewline()
+
+	runtime_printString("== printU64 ==\n")
+	runtime_printU64(12345)
+	runtime_printNewline()
+	runtime_printU64(0)
+	runtime_printNewline()
+	runtime_printU64(MaxUint64)
+	runtime_printNewline()
+	runtime_printU64(MaxUint64/2)
+	runtime_printNewline()
+
+	runtime_printString("== printHex ==\n")
+	runtime_printHex(0)
+	runtime_printNewline()
+	runtime_printHex(127)
+	runtime_printNewline()
+	runtime_printHex(255)
+	runtime_printNewline()
+
+	runtime_printString("== printSlice ==\n")
+	runtime_printSlice([]byte{'a', 'b', 'c'})
+	runtime_printNewline()
+	runtime_printSlice([]byte("cba123"))
+	runtime_printNewline()
+}
