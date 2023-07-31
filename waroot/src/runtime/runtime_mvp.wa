@@ -37,10 +37,10 @@ func procExit(code: i32) {
 #wa:linkname $runtime.assert
 func assert(ok: i32, pos_msg_ptr: i32, pos_msg_len: i32) {
 	if ok == 0 {
-		print("assert failed (")
+		printString("assert failed (")
 		waPuts(pos_msg_ptr, pos_msg_len)
-		mvp.PrintRune(')')
-		mvp.PrintRune('\n')
+		waPrintRune(')')
+		waPrintRune('\n')
 		procExit(1)
 	}
 }
@@ -48,12 +48,12 @@ func assert(ok: i32, pos_msg_ptr: i32, pos_msg_len: i32) {
 #wa:linkname $runtime.assertWithMessage
 func assertWithMessage(ok: i32, msg_ptr: i32, msg_len: i32, pos_msg_ptr: i32, pos_msg_len: i32) {
 	if ok == 0 {
-		print("assert failed: ")
+		printString("assert failed: ")
 		waPuts(msg_ptr, msg_len)
-		print(" (")
+		printString(" (")
 		waPuts(pos_msg_ptr, pos_msg_len)
-		mvp.PrintRune(')')
-		mvp.PrintRune('\n')
+		waPrintRune(')')
+		waPrintRune('\n')
 		procExit(1)
 	}
 }
@@ -91,6 +91,11 @@ func waPrintF32(i: f32) {
 #wa:linkname $runtime.waPrintF64
 func waPrintF64(i: f64) {
 	mvp.PrintF64(i)
+}
+
+#wa:linkname $runtime.waPrintString
+func waPrintString(s: string) {
+	printString(s)
 }
 
 #wa:linkname $runtime.waPrintRune

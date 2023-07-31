@@ -1,15 +1,19 @@
 // 版权 @2023 凹语言 作者。保留所有权利。
 
+// 依赖以下函数(不同平台实现不同)
+// waPuts
+// waPrintRune
+
 func printBytes(b: []byte) {
 	if n := len(b); n > 0 {
-		puts(refToPtr_byteSlice(b), i32(n))
+		waPuts(refToPtr_byteSlice(b), i32(n))
 		return
 	}
 }
 
 func printString(s: string) {
 	if n := len(s); n > 0 {
-		puts(refToPtr_string(s), i32(n))
+		waPuts(refToPtr_string(s), i32(n))
 		return
 	}
 }

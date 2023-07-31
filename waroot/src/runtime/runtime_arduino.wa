@@ -38,11 +38,45 @@ func assert(ok: i32, pos_msg_ptr: i32, pos_msg_len: i32) {}
 #wa:linkname $runtime.assertWithMessage
 func assertWithMessage(ok: i32, msg_ptr: i32, msg_len: i32, pos_msg_ptr: i32, pos_msg_len: i32) {}
 
+#wa:linkname $runtime.waPrintBool
+func waPrintBool(i: bool) {
+	printBool(i)
+}
+
 #wa:linkname $runtime.waPrintI32
-func waPrintI32(i: i32) {}
+func waPrintI32(i: i32) {
+	printI64(i64(i))
+}
+
+#wa:linkname $runtime.waPrintU32
+func waPrintU32(i: u32) {
+	printU64(u64(i))
+}
+
+#wa:linkname $runtime.waPrintI64
+func waPrintI64(i: i32) {
+	printI64(i64(i))
+}
+
+#wa:linkname $runtime.waPrintU64
+func waPrintU64(i: i32) {
+	printU64(u64(i))
+}
+
+#wa:linkname $runtime.waPrintF32
+func waPrintF32(i: f32) {
+	printF64(f64(i))
+}
 
 #wa:linkname $runtime.waPrintF64
-func waPrintF64(v: f64) {}
+func waPrintF64(i: f64) {
+	printF64(f64(i))
+}
+
+#wa:linkname $runtime.waPrintString
+func waPrintString(s: string) {
+	printString(s)
+}
 
 #wa:linkname $runtime.waPrintRune
 func waPrintRune(ch: i32) {}

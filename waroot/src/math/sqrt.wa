@@ -1,6 +1,6 @@
 // 版权 @2023 凹语言 作者。保留所有权利。
 
-#wa:linkname $$waSqrtF64
+#wa:linkname $math.waSqrtF64
 func waSqrtF64(x: f64) => f64
 
 // Sqrt returns the square root of x.

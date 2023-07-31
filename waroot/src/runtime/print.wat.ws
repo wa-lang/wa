@@ -1,8 +1,8 @@
 ;; Copyright 2023 The Wa Authors. All rights reserved.
 
 ;; 打印字符串
-(func $puts (param $str i32) (param $len i32)
-	;; {{$puts/body/begin}}
+(func $$runtime.waPuts (param $str i32) (param $len i32)
+	;; {{$$runtime.waPuts/body/begin}}
 
 	(local $sp i32)
 	(local $p_iov i32)
@@ -36,12 +36,12 @@
 	(global.set $__stack_ptr (local.get $sp))
 	drop
 
-	;; {{$puts/body/end}}
+	;; {{$$runtime.waPuts/body/end}}
 )
 
 ;; 打印字符
-(func $putchar (param $ch i32)
-	;; {{$putchar/body/begin}}
+(func $$runtime.waPrintRune (param $ch i32)
+	;; {{$$runtime.waPrintRune/body/begin}}
 
 	(local $sp i32)
 	(local $p_ch i32)
@@ -54,10 +54,10 @@
 	(i32.store offset=0 align=1 (local.get $p_ch) (local.get $ch))
 
 	;; 输出字符
-	(call $puts (local.get $p_ch) (i32.const 1))
+	(call $$runtime.waPuts (local.get $p_ch) (i32.const 1))
 
 	;; 重置栈指针
 	(global.set $__stack_ptr (local.get $sp))
 
-	;; {{$putchar/body/begin}}
+	;; {{$$runtime.waPrintRune/body/begin}}
 )

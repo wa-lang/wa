@@ -19,6 +19,7 @@ ci-test-all:
 	cd ./pkg && make
 	cd ./prime && make
 	cd ./reftoptr && make
+	cd ./surface && make
 
 	# snake
 	cd ./snake && make publish
