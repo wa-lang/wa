@@ -85,7 +85,7 @@ func Canvas.Flush() {
 	updateCanvas_JS(this.device_id, &this.frame_buf[0])
 }
 
-var canvas_events: []CanvasEvents
+global canvas_events: []CanvasEvents
 
 func AttachCanvasEvents(e: CanvasEvents) {
 	for i := range canvas_events {

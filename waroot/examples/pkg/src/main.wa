@@ -9,7 +9,7 @@ type ST struct {
 	B: i32
 }
 
-var G: ST
+global G: ST
 
 func Do {
 	G.A = "13"

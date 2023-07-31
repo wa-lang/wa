@@ -5,7 +5,7 @@ type ST struct {
 	B: string
 }
 
-var G: ST
+global G: ST
 
 func Do(x: i32) {
 	G.A = x

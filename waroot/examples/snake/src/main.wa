@@ -2,7 +2,7 @@
 
 import "snake/canvas"
 
-var ca: *canvas.Canvas
+global ca: *canvas.Canvas
 
 type Position struct {
 	x, y: i32
@@ -26,7 +26,7 @@ const (
 	DirDown
 )
 
-var Dirs: [5]Position
+global Dirs: [5]Position
 
 type GameState struct {
 	w, h:  i32
@@ -38,7 +38,7 @@ type GameState struct {
 	ca: *canvas.Canvas
 }
 
-var gameState: GameState
+global gameState: GameState
 
 func GameState.Init(w, h: i32, scale: i32) {
 	this.w = w

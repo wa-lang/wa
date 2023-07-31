@@ -11,13 +11,13 @@ const (
 
 // ErrShortWrite means that a write accepted fewer bytes than requested
 // but failed to return an explicit error.
-var ErrShortWrite = errors.New("short write")
+global ErrShortWrite = errors.New("short write")
 
 // errInvalidWrite means that a write returned an impossible count.
-var errInvalidWrite = errors.New("invalid write result")
+global errInvalidWrite = errors.New("invalid write result")
 
 // ErrShortBuffer means that a read required a longer buffer than was provided.
-var ErrShortBuffer = errors.New("short buffer")
+global ErrShortBuffer = errors.New("short buffer")
 
 // EOF is the error returned by Read when no more input is available.
 // (Read must return EOF itself, not an error wrapping EOF,
@@ -26,16 +26,16 @@ var ErrShortBuffer = errors.New("short buffer")
 // If the EOF occurs unexpectedly in a structured data stream,
 // the appropriate error is either ErrUnexpectedEOF or some other error
 // giving more detail.
-var EOF = errors.New("EOF")
+global EOF = errors.New("EOF")
 
 // ErrUnexpectedEOF means that EOF was encountered in the
 // middle of reading a fixed-size block or data structure.
-var ErrUnexpectedEOF = errors.New("unexpected EOF")
+global ErrUnexpectedEOF = errors.New("unexpected EOF")
 
 // ErrNoProgress is returned by some clients of an Reader when
 // many calls to Read have failed to return any data or error,
 // usually the sign of a broken Reader implementation.
-var ErrNoProgress = errors.New("multiple Read calls return no data or error")
+global ErrNoProgress = errors.New("multiple Read calls return no data or error")
 
 // Reader is the interface that wraps the basic Read method.
 //
@@ -309,7 +309,7 @@ func ReadAtLeast(r: Reader, buf: []byte, min: int) => (n: int, err: error) {
 		return 0, ErrShortBuffer
 	}
 	for n < min && err == nil {
-		var nn :int
+		global nn :int
 		nn, err = r.Read(buf[n:])
 		n += nn
 	}
@@ -487,8 +487,8 @@ func SectionReader.Read(p: []byte) => (n: int, err: error) {
 	return
 }
 
-var errWhence = errors.New("Seek: invalid whence")
-var errOffset = errors.New("Seek: invalid offset")
+global errWhence = errors.New("Seek: invalid whence")
+global errOffset = errors.New("Seek: invalid offset")
 
 func SectionReader.Seek(offset: i64, whence: int) => (i64, error) {
 	switch whence {
@@ -553,13 +553,13 @@ func teeReader.Read(p: []byte) => (n: int, err: error) {
 
 // Discard is a Writer on which all Write calls succeed
 // without doing anything.
-var Discard :Writer = &discard{}
+global Discard :Writer = &discard{}
 
 type discard struct{}
 
 // discard implements ReaderFrom as an optimization so Copy to
 // io.Discard can avoid doing unnecessary work.
-var _ :ReaderFrom = &discard{}
+global _ :ReaderFrom = &discard{}
 
 func discard.Write(p: []byte) => (int, error) {
 	return len(p), nil

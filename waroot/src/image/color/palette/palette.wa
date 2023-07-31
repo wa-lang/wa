@@ -16,7 +16,7 @@ import "image/color"
 //
 // This palette was used in the Plan 9 Operating System, described at
 // https://9p.io/magic/man2html/6/color
-var Plan9 = []color.Color{
+global Plan9 = []color.Color{
 	&color.RGBA{0x00, 0x00, 0x00, 0xff},
 	&color.RGBA{0x00, 0x00, 0x44, 0xff},
 	&color.RGBA{0x00, 0x00, 0x88, 0xff},
@@ -279,7 +279,7 @@ var Plan9 = []color.Color{
 // of Netscape Navigator. It is also known as the Netscape Color Cube.
 //
 // See https://en.wikipedia.org/wiki/Web_colors#Web-safe_colors for details.
-var WebSafe = []color.Color{
+global WebSafe = []color.Color{
 	&color.RGBA{0x00, 0x00, 0x00, 0xff},
 	&color.RGBA{0x00, 0x00, 0x33, 0xff},
 	&color.RGBA{0x00, 0x00, 0x66, 0xff},

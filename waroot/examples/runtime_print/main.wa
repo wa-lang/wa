@@ -37,7 +37,7 @@ const (
 )
 
 func main {
-	runtime_printBytes([]byte{ 'a', 'b', '\n'})
+	runtime_printBytes([]byte{'a', 'b', '\n'})
 	runtime_printString("hello\n")
 
 	runtime_printString("== printBool ==\n")
@@ -65,7 +65,7 @@ func main {
 	runtime_printNewline()
 	runtime_printU64(MaxUint64)
 	runtime_printNewline()
-	runtime_printU64(MaxUint64/2)
+	runtime_printU64(MaxUint64 / 2)
 	runtime_printNewline()
 
 	runtime_printString("== printHex ==\n")

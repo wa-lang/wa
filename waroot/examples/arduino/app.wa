@@ -2,7 +2,7 @@
 
 import "syscall/arduino"
 
-var LED = arduino.GetPinLED()
+global LED = arduino.GetPinLED()
 
 func init {
 	arduino.PinMode(LED, 1)

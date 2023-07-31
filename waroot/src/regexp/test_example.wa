@@ -6,7 +6,7 @@ func TestMatch {
 	}
 }
 
-var tests = []struct {
+global tests = []struct {
 	name   :string
 	regexp :string
 	text   :string

@@ -1,15 +1,15 @@
 // 版权 @2023 凹语言 作者。保留所有权利。
 
-#wa:linkname $waFloat64bits
+#wa:linkname $math.waFloat64bits
 func waFloat64bits(x: f64) => u64
 
-#wa:linkname $waFloat64frombits
+#wa:linkname $math.waFloat64frombits
 func waFloat64frombits(x: u64) => f64
 
-#wa:linkname $waFloat32bits
+#wa:linkname $math.waFloat32bits
 func waFloat32bits(x: f32) => u32
 
-#wa:linkname $waFloat32frombits
+#wa:linkname $math.waFloat32frombits
 func waFloat32frombits(x: u32) => f32
 
 // Float64bits returns the IEEE 754 binary representation of f,

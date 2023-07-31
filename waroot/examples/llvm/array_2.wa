@@ -5,7 +5,7 @@ const size = 32
 
 type fff32 f32
 
-var arr1: [size]fff32
+global arr1: [size]fff32
 
 func makearr0a(i: int) => [size]fff32 {
 	r: [size]fff32

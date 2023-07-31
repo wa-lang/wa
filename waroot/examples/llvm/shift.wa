@@ -1,13 +1,13 @@
 // Test the llvm backend.
 // Test logical/arithmetic shift operations.
 
-var ga: i32 = -15
-var gb: i32 = 15
-var gc: i64 = -15
-var gd: i64 = 15
-var ge: u16 = 0xffcc
+global ga: i32 = -15
+global gb: i32 = 15
+global gc: i64 = -15
+global gd: i64 = 15
+global ge: u16 = 0xffcc
 
-func main() {
+func main {
 	println(ga, " << ", 2, " = ", test_shl_0(ga, 2))
 	println(gb, " << ", 2, " = ", test_shl_1(gb, 2))
 	println(ga, " << ", 2, " = ", test_shl_2(ga, 2))

@@ -1230,7 +1230,7 @@ func (p *Paletted) SubImage(r Rectangle) Image {
 
 // Opaque scans the entire image and reports whether it is fully opaque.
 func (p *Paletted) Opaque() bool {
-	var present [256]bool
+	present: [256]bool
 	i0, i1 := 0, p.Rect.Dx()
 	for y := p.Rect.Min.Y; y < p.Rect.Max.Y; y++ {
 		for _, c := range p.Pix[i0:i1] {

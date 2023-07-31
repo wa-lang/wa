@@ -16,13 +16,13 @@ const (
 )
 
 // GraphicRanges defines the set of graphic characters according to Unicode.
-var GraphicRanges = []*RangeTable{
+global GraphicRanges = []*RangeTable{
 	L, M, N, P, S, Zs,
 }
 
 // PrintRanges defines the set of printable characters according to Go.
 // ASCII space, U+0020, is handled separately.
-var PrintRanges = []*RangeTable{
+global PrintRanges = []*RangeTable{
 	L, M, N, P, S,
 }
 

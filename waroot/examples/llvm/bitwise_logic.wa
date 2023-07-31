@@ -1,12 +1,12 @@
 // Test the llvm backend.
 // Test bitwise logic.
 
-var a: i64 = 0x55555555
-var b: i64 = 0x33333333
-var c: i16 = 0x5555
-var d: i16 = 0x3333
-var e: u8 = 0x55
-var f: u8 = 0x33
+global a: i64 = 0x55555555
+global b: i64 = 0x33333333
+global c: i16 = 0x5555
+global d: i16 = 0x3333
+global e: u8 = 0x55
+global f: u8 = 0x33
 
 func main() {
 	println("not ", 0x55555555, " = ", bw_not(0x55555555))

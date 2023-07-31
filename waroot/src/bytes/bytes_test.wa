@@ -23,7 +23,7 @@ func TestEqualFold {
 	}
 }
 
-var EqualFoldTests = []struct {
+global EqualFoldTests = []struct {
 	s, t string
 	out  bool
 }{
@@ -35,7 +35,7 @@ var EqualFoldTests = []struct {
 	{"abcdefghijk", "abcdefghijX", false},
 }
 
-var compareTests = []struct {
+global compareTests = []struct {
 	a, b []byte
 	i    int
 }{

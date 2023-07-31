@@ -6,7 +6,7 @@
 func write_port(p: i16, v: i8)
 
 // Delay a period of time
-var cnt: i8
+global cnt: i8
 
 func delay(n: i32) {
 	for i := i32(0); i < n; i++ {

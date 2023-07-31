@@ -59,7 +59,7 @@ const (
 )
 
 // first is information about the first byte in a UTF-8 sequence.
-var first = [256]u8{
+global first = [256]u8{
 	//   1   2   3   4   5   6   7   8   9   A   B   C   D   E   F
 	as, as, as, as, as, as, as, as, as, as, as, as, as, as, as, as, // 0x00-0x0F
 	as, as, as, as, as, as, as, as, as, as, as, as, as, as, as, as, // 0x10-0x1F
@@ -90,7 +90,7 @@ type acceptRange struct {
 }
 
 // acceptRanges has size 16 to avoid bounds checks in the code that uses it.
-var acceptRanges = [16]acceptRange{
+global acceptRanges = [16]acceptRange{
 	0: {locb, hicb},
 	1: {0xA0, hicb},
 	2: {locb, 0x9F},
@@ -385,7 +385,7 @@ func EncodeRune(p: []byte, r: rune) => int {
 // encodings are treated as single runes of width 1 byte.
 func RuneCount(p: []byte) => int {
 	np := len(p)
-	var n :int
+	n :int
 	for i := 0; i < np; {
 		n++
 		c := p[i]

@@ -6,8 +6,8 @@ type ty0 struct {
 	v1: f64
 }
 
-var gv0: ty0 = ty0{5555, 3.1415926}
-var gv1: [4]int = [4]int{81, 82, 17, 76}
+global gv0: ty0 = ty0{5555, 3.1415926}
+global gv1: [4]int = [4]int{81, 82, 17, 76}
 
 func test_global_variable() {
 	println("gv0: {", gv0.v0, ", ", gv0.v1, "}")

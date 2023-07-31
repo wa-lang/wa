@@ -9,7 +9,7 @@ import (
 
 // ErrUnsupported means that the input BMP image uses a valid but unsupported
 // feature.
-var ErrUnsupported = errors.New("bmp: unsupported BMP image")
+global ErrUnsupported = errors.New("bmp: unsupported BMP image")
 
 func readUint16(b: []byte) => uint16 {
 	return uint16(b[0]) | uint16(b[1])<<8

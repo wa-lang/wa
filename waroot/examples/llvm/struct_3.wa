@@ -8,7 +8,7 @@ type struct_t0 struct {
 	arr1: [size]f32
 }
 
-var st1: struct_t0
+global st1: struct_t0
 
 func maket0a(i: int) => struct_t0 {
 	r: struct_t0

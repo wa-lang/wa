@@ -10,7 +10,7 @@ type struct_t0 struct {
 	arr1: [size]fff32
 }
 
-var st0: struct_t0
+global st0: struct_t0
 
 func test_init() {
 	for i := 0; i < size; i++ {

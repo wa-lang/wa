@@ -11,7 +11,7 @@ const (
 	angle         = math.Pi / 6         // angle of x, y axes (=30°)
 )
 
-var sin30, cos30 = math.Sin(angle), math.Cos(angle) // sin(30°), cos(30°)
+global sin30, cos30 = math.Sin(angle), math.Cos(angle) // sin(30°), cos(30°)
 
 func main {
 	print("<svg xmlns='http://www.w3.org/2000/svg' style='stroke: grey; fill: white; stroke-width: 0.7' ")
