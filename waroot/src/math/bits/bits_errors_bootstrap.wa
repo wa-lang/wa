@@ -12,7 +12,7 @@ type errorString struct {
 	msg string
 }
 
-func (e: errorString) RuntimeError() {}
+func (e: errorString) RuntimeError {}
 
 func (e: errorString) Error => string {
 	return "runtime error: " + string(e.msg)

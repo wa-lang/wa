@@ -1,6 +1,6 @@
 // 版权 @2021 凹语言 作者。保留所有权利。
 
-func main() {
+func main {
 	p := new_int()
 	println(*p)
 	proc(p)

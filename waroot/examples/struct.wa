@@ -5,7 +5,7 @@ global Info: struct {
 	age:  i32
 }
 
-func main() {
+func main {
 	i := gen_scref()
 	println(*i.a) //13
 	println(i.b)  //42

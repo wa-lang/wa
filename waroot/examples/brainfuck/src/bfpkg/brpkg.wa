@@ -12,7 +12,7 @@ func NewBrainFuck(code: string) => *BrainFuck {
 	return &BrainFuck{code: code}
 }
 
-func BrainFuck.Run() {
+func BrainFuck.Run {
 	for ; this.pc != len(this.code); this.pc++ {
 		switch x := this.code[this.pc]; x {
 		case '>':

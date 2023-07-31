@@ -309,7 +309,7 @@ func ReadAtLeast(r: Reader, buf: []byte, min: int) => (n: int, err: error) {
 		return 0, ErrShortBuffer
 	}
 	for n < min && err == nil {
-		global nn :int
+		nn :int
 		nn, err = r.Read(buf[n:])
 		n += nn
 	}

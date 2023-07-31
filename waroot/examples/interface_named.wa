@@ -16,15 +16,15 @@ type I2 interface {
 	f2()
 }
 
-func T1.f() {
+func T1.f {
 	println("This is T1, this.a==", this.a)
 }
 
-func T2.f() {
+func T2.f {
 	println("This is T2, this.b==", this.b)
 }
 
-func main() {
+func main {
 	v1 := T1{a: 13}
 
 	i1: I1 = &v1 //具体类型到具名接口

@@ -1,7 +1,7 @@
 // Test the llvm backend.
 // Test printing small type values.
 
-func main() {
+func main {
 	test_print(-100, 100, -100, 100, 5)
 }
 

@@ -19,7 +19,7 @@ func circle_area(r: fff32) => fff32 {
 	return r * r * 3.1415926
 }
 
-func main() {
+func main {
 	println(getPi())
 	println(getE())
 	println(minusf32(getPi()))

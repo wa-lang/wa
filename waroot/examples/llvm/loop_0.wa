@@ -1,7 +1,7 @@
 // Test the llvm backend.
 // Test loops.
 
-func main() {
+func main {
 	test_loop(10)
 }
 

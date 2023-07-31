@@ -1,7 +1,7 @@
 // Test the llvm backend.
 // Test 'floating point' -> integer convertion.
 
-func main() {
+func main {
 	println(convert_f64_to_i32(100.001))
 	println(convert_f64_to_u32(100.001))
 	println(convert_f64_to_i32(99.99))

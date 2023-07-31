@@ -23,7 +23,7 @@ func test_pointer(a: int) {
 	println(gint0, ", ", gint1)
 }
 
-func main() {
+func main {
 	test_pointer(1)
 	test_pointer(-1)
 }

@@ -1,7 +1,7 @@
 // Test the llvm backend.
 // Test comparasions.
 
-func main() {
+func main {
 	test_cmp0(20, 19)
 	test_cmp0(20, 20)
 	test_cmp1(-3, -3)

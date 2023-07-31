@@ -1,7 +1,7 @@
 // Test the llvm backend.
 // Test integer -> integer convertion.
 
-func main() {
+func main {
 	println(i32(convert_i32_to_i16(65537)))
 	println(u32(convert_i32_to_u16(65537)))
 	println(convert_i16_to_i32(100))

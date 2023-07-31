@@ -5,7 +5,7 @@ type T1 struct {
 	b: string
 }
 
-func T1.print() {
+func T1.print {
 	println("a: ", this.a)
 }
 
@@ -17,7 +17,7 @@ type T2 struct {
 	a: []i32
 }
 
-func main() {
+func main {
 	v1, v2: T1
 
 	v1.a = 13

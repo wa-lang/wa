@@ -7,7 +7,7 @@ func Gen_arr(param: [8]i32) => [8]i32 {
 	return param
 }
 
-func main() {
+func main {
 	j: [8]i32
 	j[3] = 40
 	I = Gen_arr(j)

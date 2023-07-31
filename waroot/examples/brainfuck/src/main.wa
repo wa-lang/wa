@@ -2,7 +2,7 @@
 
 import "brainfuck/bfpkg"
 
-func main() {
+func main {
 	// print hi
 	const code = "++++++++++[>++++++++++<-]>++++.+."
 	vm := bfpkg.NewBrainFuck(code)

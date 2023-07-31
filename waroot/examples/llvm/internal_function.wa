@@ -6,7 +6,7 @@ type pair struct {
 	j: f32
 }
 
-func main() {
+func main {
 	print("Hello, ")
 	func() {
 		println("World!")

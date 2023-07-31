@@ -1,7 +1,7 @@
 // Test the llvm backend.
 // Test printing f64 values.
 
-func main() {
+func main {
 	println(5.44, ", ", test_calc3(6, 9, 8))
 }
 

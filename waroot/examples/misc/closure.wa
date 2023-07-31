@@ -18,7 +18,7 @@ func ST.meth_v(p: i32) => i32 {
 
 global g_f: FP
 
-func main() {
+func main {
 	o: ST
 	o.i = 11
 	g_f = o.meth_p

@@ -173,7 +173,7 @@ func Step() {
 	gameState.Step()
 }
 
-func main() {
+func main {
 	gameState.Init(32, 32, 10)
 	gameState.Start()
 }

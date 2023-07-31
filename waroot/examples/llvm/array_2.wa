@@ -22,7 +22,7 @@ func makearr0b(i: int) => *[size]fff32 {
 	return &arr1
 }
 
-func main() {
+func main {
 	r0, r1 := makearr0a(10), makearr0b(20)
 	for i := 6; i < 20; i += 2 {
 		println(r0[i], ", ", r1[i])

@@ -6,7 +6,7 @@ func refToPtr_i32(p: *i32) => i32
 #wa:linkname runtime.refToPtr_byteSlice
 func refToPtr_byteSlice(t: []byte) => i32
 
-func main() {
+func main {
 	i: i32
 	j: []byte
 	println(refToPtr_i32(&i))

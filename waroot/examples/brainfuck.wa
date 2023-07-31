@@ -1,6 +1,6 @@
 // 版权 @2019 凹语言 作者。保留所有权利。
 
-func main() {
+func main {
 	// print hi
 	const code = "++++++++++[>++++++++++<-]>++++.+."
 	vm := NewBrainFuck(code)
@@ -18,7 +18,7 @@ func NewBrainFuck(code: string) => *BrainFuck {
 	return &BrainFuck{code: code}
 }
 
-func BrainFuck.Run() {
+func BrainFuck.Run {
 	for ; this.pc != len(this.code); this.pc++ {
 		switch x := this.code[this.pc]; x {
 		case '>':

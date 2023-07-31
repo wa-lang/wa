@@ -1,7 +1,7 @@
 // Test the llvm backend.
 // Test printing integers.
 
-func main() {
+func main {
 	println(test_calc1(6, 9, 8), ", ", 5, ", ", test_calc5(6, 9, 8))
 }
 

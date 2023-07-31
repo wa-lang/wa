@@ -27,7 +27,7 @@ func maket0b(i: int) => *struct_t0 {
 	return &st1
 }
 
-func main() {
+func main {
 	r0, r1 := maket0a(20), maket0b(30)
 	for i := 0; i < 16; i++ {
 		println(r0.arr0[i], ", ", r0.arr1[i], " : ", r1.arr0[i], ", ", r1.arr1[i])

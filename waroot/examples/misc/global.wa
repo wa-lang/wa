@@ -10,7 +10,7 @@ func gen_i() => *i32 {
 	return &i
 }
 
-func main() {
+func main {
 	G = gen_i()
 	println(*G)
 	G = gen_i()

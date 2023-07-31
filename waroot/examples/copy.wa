@@ -2,7 +2,7 @@
 
 global s = []int{1, 2, 3, 4, 5, 6}
 
-func main() {
+func main {
 	d := make([]int, 3)
 	copy(d, s)
 	for i, v := range d {

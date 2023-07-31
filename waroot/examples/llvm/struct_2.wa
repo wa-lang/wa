@@ -27,7 +27,7 @@ func getst0f32(st0: *struct_t0, i: int) => fff32 {
 	return st0.arr1[i]
 }
 
-func main() {
+func main {
 	test_init()
 	for i := 6; i < 14; i += 2 {
 		println(getst0int(st0, i), ", ", getst0f32(&st0, i+1))

@@ -8,7 +8,7 @@ global d: i16 = 0x3333
 global e: u8 = 0x55
 global f: u8 = 0x33
 
-func main() {
+func main {
 	println("not ", 0x55555555, " = ", bw_not(0x55555555))
 	println("not ", 0xaaaaaaaa, " = ", bw_not(0xaaaaaaaa))
 	println(a, " and ", b, " = ", bw_and(a, b), "(", 0x11111111, ")")
