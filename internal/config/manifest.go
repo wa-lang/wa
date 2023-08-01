@@ -12,10 +12,12 @@ import (
 	"path/filepath"
 	"strings"
 	"unicode"
+
+	"github.com/BurntSushi/toml"
 )
 
 // 模块文件
-const WaModFile = "wa.mod.json"
+const WaModFile = "wa.mod"
 
 // WaModFile 文件结构
 type Manifest struct {
@@ -77,9 +79,12 @@ func LoadManifest(vfs fs.FS, appPath string) (p *Manifest, err error) {
 	}
 
 	// 查找 WaModFile 路径
-	kManifestPath, err := findManifestPath(vfs, appPath)
+	kManifestPath, err := findManifestPath(vfs, appPath, WaModFile)
 	if err != nil {
-		return nil, fmt.Errorf("loader.LoadManifest: find '%s' failed : %w", WaModFile, err)
+		kManifestPath, _ = findManifestPath(vfs, appPath, WaModFile+".json")
+		if kManifestPath == "" {
+			return nil, fmt.Errorf("loader.LoadManifest: find '%s' failed : %w", WaModFile, err)
+		}
 	}
 
 	// 读取 WaModFile 文件
@@ -93,10 +98,20 @@ func LoadManifest(vfs fs.FS, appPath string) (p *Manifest, err error) {
 		return nil, fmt.Errorf("loader.LoadManifest: read %s failed: %w", kManifestPath, err)
 	}
 
-	// 解码 JSON
-	p = new(Manifest)
-	if err := json.Unmarshal(data, &p.Pkg); err != nil {
-		return nil, fmt.Errorf("loader.LoadManifest: json.Unmarshal %s failed: %w", kManifestPath, err)
+	if strings.HasSuffix(kManifestPath, ".json") {
+		// 解码 JSON
+		p = new(Manifest)
+		if err := json.Unmarshal(data, &p.Pkg); err != nil {
+			return nil, fmt.Errorf("loader.LoadManifest: json.Unmarshal %s failed: %w", kManifestPath, err)
+		}
+	} else {
+		// TOML 解码
+		p = new(Manifest)
+		if err := toml.Unmarshal(data, &p.Pkg); err != nil {
+			return nil, fmt.Errorf("loader.LoadManifest: toml.Unmarshal %s failed: %w", kManifestPath, err)
+		}
+
+		fmt.Println("manifest:", p.JSONString())
 	}
 
 	// 当前 app 默认目录
@@ -168,15 +183,15 @@ func isValidPkgpath(s string) bool {
 }
 
 // 查找 WaModFile 文件路径
-func findManifestPath(vfs fs.FS, pkgpath string) (string, error) {
+func findManifestPath(vfs fs.FS, pkgpath, waModFileName string) (string, error) {
 	if pkgpath == "" {
 		return "", fmt.Errorf("empty pkgpath")
 	}
 
-	// 依次向上查找 WaModFile
+	// 依次向上查找 waModFileName
 	pkgroot := pkgpath
 	for pkgroot != "" {
-		kManifestPath := filepath.Join(pkgroot, WaModFile)
+		kManifestPath := filepath.Join(pkgroot, waModFileName)
 		if vfs != nil {
 			if fi, _ := fs.Stat(vfs, kManifestPath); fi != nil {
 				return kManifestPath, nil
@@ -197,5 +212,5 @@ func findManifestPath(vfs fs.FS, pkgpath string) (string, error) {
 	}
 
 	// 查找失败
-	return "", fmt.Errorf("%s: '%s' not found", WaModFile, pkgpath)
+	return "", fmt.Errorf("%s: '%s' not found", waModFileName, pkgpath)
 }

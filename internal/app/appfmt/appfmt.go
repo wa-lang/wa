@@ -11,6 +11,7 @@ import (
 
 	"wa-lang.org/wa/internal/3rdparty/cli"
 	"wa-lang.org/wa/internal/app/appbase"
+	"wa-lang.org/wa/internal/config"
 	"wa-lang.org/wa/internal/format"
 )
 
@@ -36,7 +37,9 @@ func Fmt(path string) error {
 	}
 
 	if path == "" {
-		if _, err := os.Lstat("wa.mod.json"); err == nil {
+		if _, err := os.Lstat(config.WaModFile); err == nil {
+			path = "./..."
+		} else if _, err := os.Lstat(config.WaModFile + ".json"); err == nil {
 			path = "./..."
 		} else {
 			path = "."
