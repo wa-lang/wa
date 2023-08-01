@@ -110,8 +110,6 @@ func LoadManifest(vfs fs.FS, appPath string) (p *Manifest, err error) {
 		if err := toml.Unmarshal(data, &p.Pkg); err != nil {
 			return nil, fmt.Errorf("loader.LoadManifest: toml.Unmarshal %s failed: %w", kManifestPath, err)
 		}
-
-		fmt.Println("manifest:", p.JSONString())
 	}
 
 	// 当前 app 默认目录
