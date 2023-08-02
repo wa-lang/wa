@@ -18,3 +18,7 @@ func init {
 func Environ() => []string {
 	return os_get_environs()
 }
+
+func ReadFile(name: string) => ([]byte, error) {
+	return nil, nil
+}

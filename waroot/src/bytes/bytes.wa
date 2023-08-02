@@ -24,6 +24,22 @@ func EqualFold(s, t: []byte) => bool {
 	return true
 }
 
+func IndexByte(d: []byte, x: rune) => int {
+	return 0
+}
+
+func Index(d: []byte, x: []byte) => int {
+	return 0
+}
+
+func HasPrefix(d, prefix: []byte) => bool {
+	return false
+}
+
+func HasSuffix(d, suffix: []byte) => bool {
+	return false
+}
+
 func toupper(c: byte) => byte {
 	if c >= 'a' && c <= 'z' {
 		return c - 32
