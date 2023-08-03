@@ -104,8 +104,7 @@ func GetStdPkgList() []string {
 }
 
 var stdPkgs = []string{
-	"builtin", // 不需要测试
-	"apple",   // 测试已覆盖
+	"apple", // 测试已覆盖
 	"archive/txtar",
 	"binary",
 	"bytes",
