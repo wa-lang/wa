@@ -344,6 +344,9 @@ func (g *functionGenerator) genInstruction(inst ssa.Instruction) (insts []wat.In
 		}
 		insts = append(insts, s...)
 
+	case *ssa.Panic:
+		insts = append(insts, g.genPanic(inst)...)
+
 	default:
 		logger.Fatalf("Todo: %[1]v: %[1]T", inst)
 	}
@@ -707,6 +710,26 @@ func (g *functionGenerator) genBuiltin(call *ssa.CallCommon) (insts []wat.Inst, 
 	default:
 		logger.Fatal("Todo:", call.Value)
 	}
+	return
+}
+
+func (g *functionGenerator) genPanic(panic_ *ssa.Panic) (insts []wat.Inst) {
+	av := g.getValue(panic_.X).value
+	avt := av.Type()
+
+	if !avt.Equal(g.module.STRING) {
+		panic("panic message is not string")
+	}
+	insts = append(insts, g.module.EmitStringValue(av)...)
+
+	// 位置信息
+	{
+		callPos := g.prog.Fset.Position(panic_.Pos())
+		s := wir.NewConst(callPos.String(), g.module.STRING)
+		insts = append(insts, g.module.EmitStringValue(s)...)
+	}
+
+	insts = append(insts, wat.NewInstCall("$runtime.panic_"))
 	return
 }
 

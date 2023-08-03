@@ -282,7 +282,7 @@ func (b *builder) builtin(fn *Function, obj *types.Builtin, args []ast.Expr, typ
 
 	case "panic":
 		fn.emit(&Panic{
-			X:   emitConv(fn, b.expr(fn, args[0]), tEface),
+			X:   b.expr(fn, args[0]),
 			pos: pos,
 		})
 		fn.currentBlock = fn.newBasicBlock("unreachable")

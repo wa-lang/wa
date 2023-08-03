@@ -34,6 +34,17 @@ func procExit(code: i32) {
 	mvp.ProcExit(code)
 }
 
+#wa:linkname $runtime.panic_
+func panic_(msg_ptr: i32, msg_len: i32, pos_msg_ptr: i32, pos_msg_len: i32) {
+	waPrintString("panic: ")
+	waPuts(msg_ptr, msg_len)
+	waPrintString(" (")
+	waPuts(pos_msg_ptr, pos_msg_len)
+	waPrintRune(')')
+	waPrintRune('\n')
+	procExit(1)
+}
+
 #wa:linkname $runtime.assert
 func assert(ok: i32, pos_msg_ptr: i32, pos_msg_len: i32) {
 	if ok == 0 {
