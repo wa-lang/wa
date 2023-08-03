@@ -3,7 +3,7 @@
 import "fmt"
 
 func TestNewEqual {
-	// Different allocations should not be equal.
+	// 不同的错误对象不相等
 	if New("abc") == New("abc") {
 		assert(false, `New("abc") == New("abc")`)
 	}
@@ -11,7 +11,7 @@ func TestNewEqual {
 		assert(false, `New("abc") == New("xyz")`)
 	}
 
-	// Same allocation should be equal to itself (not crash).
+	// 可以和自身比较
 	err := New("jkl")
 	if err != err {
 		assert(false, `err != err`)
