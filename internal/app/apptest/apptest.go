@@ -99,7 +99,9 @@ func runTest(cfg *config.Config, pkgpath string, appArgs ...string) {
 	// 执行测试函数
 	var firstError error
 	for _, t := range mainPkg.TestInfo.Tests {
-		_, stdout, stderr, err := m.RunFunc(mainPkg.Pkg.Path() + "." + t.Name)
+		tFuncName := mainPkg.Pkg.Path() + "." + t.Name
+		tFuncName = strings.ReplaceAll(tFuncName, "/", "$")
+		_, stdout, stderr, err := m.RunFunc(tFuncName)
 		if err != nil {
 			if len(stdout) > 0 {
 				if s := sWithPrefix(string(stdout), "    "); s != "" {
@@ -110,7 +112,12 @@ func runTest(cfg *config.Config, pkgpath string, appArgs ...string) {
 				if s := sWithPrefix(string(stderr), "    "); s != "" {
 					fmt.Println(s)
 				}
+			} else {
+				if s := sWithPrefix(err.Error(), "    "); s != "" {
+					fmt.Println(s)
+				}
 			}
+
 			os.Exit(1)
 		}
 
@@ -146,8 +153,11 @@ func runTest(cfg *config.Config, pkgpath string, appArgs ...string) {
 			}
 		}
 	}
+
 	for _, t := range mainPkg.TestInfo.Examples {
-		_, stdout, stderr, err := m.RunFunc(mainPkg.Pkg.Path() + "." + t.Name)
+		tFuncName := mainPkg.Pkg.Path() + "." + t.Name
+		tFuncName = strings.ReplaceAll(tFuncName, "/", "$")
+		_, stdout, stderr, err := m.RunFunc(tFuncName)
 		if err != nil {
 			if len(stdout) > 0 {
 				if s := sWithPrefix(string(stdout), "    "); s != "" {
