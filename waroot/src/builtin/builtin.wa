@@ -12,40 +12,32 @@ const (
 // u8 is the set of all unsigned 8-bit integers.
 // Range: 0 through 255.
 type u8: u8
-type uint8: u8
 
 // u16 is the set of all unsigned 16-bit integers.
 // Range: 0 through 65535.
 type u16: u16
-type uint16: u16
 
 // u32 is the set of all unsigned 32-bit integers.
 // Range: 0 through 4294967295.
 type u32: u32
-type uint32: u32
 
 // u64 is the set of all unsigned 64-bit integers.
 // Range: 0 through 18446744073709551615.
 type u64: u64
-type uint64: u64
 
 // int32 is the set of all signed 32-bit integers.
 // Range: -2147483648 through 2147483647.
 type i32: i32
-type int32: i32
 
 // int64 is the set of all signed 64-bit integers.
 // Range: -9223372036854775808 through 9223372036854775807.
 type i64: i64
-type int64: i64
 
 // float32 is the set of all IEEE-754 32-bit floating-point numbers.
 type f32: f32
-type float32: f32
 
 // float64 is the set of all IEEE-754 64-bit floating-point numbers.
 type f64: f64
-type float64: f64
 
 // string is the set of all strings of 8-bit bytes, conventionally but not
 // necessarily representing UTF-8-encoded text. A string may be empty, but
@@ -60,10 +52,6 @@ type int: int
 // distinct type, however, and not an alias for, say, u32.
 type uint: uint
 
-// uintptr is an integer type that is large enough to hold the bit pattern of
-// any pointer.
-type uintptr uintptr
-
 // byte is an alias for u8 and is equivalent to u8 in all ways. It is
 // used, by convention, to distinguish byte values from 8-bit unsigned
 // integer values.
@@ -73,24 +61,14 @@ type byte = u8
 // used, by convention, to distinguish character values from integer values.
 type rune = i32
 
-// iota is a predeclared identifier representing the untyped integer ordinal
-// number of the current const specification in a (usually parenthesized)
-// const declaration. It is zero-indexed.
-const iota = 0 // Untyped int.
-
-// nil is a predeclared identifier representing the zero value for a
-// pointer, channel, func, interface, map, or slice type.
-global nil: Type // Type must be a pointer, channel, func, interface, map, or slice type
-
 // Type is here for the purposes of documentation only. It is a stand-in
-// for any Go type, but represents the same type for any given function
+// for any Wa type, but represents the same type for any given function
 // invocation.
 type Type: int
 
-// Type1 is here for the purposes of documentation only. It is a stand-in
-// for any Go type, but represents the same type for any given function
-// invocation.
-type Type1: int
+// nil is a predeclared identifier representing the zero value for a
+// pointer, func, interface, map, or slice type.
+global nil: Type // Type must be a pointer, func, interface, map, or slice type
 
 // IntegerType is here for the purposes of documentation only. It is a stand-in
 // for any integer type: int, uint, int8 etc.
@@ -123,10 +101,8 @@ func copy(dst, src: []Type) => int
 //	Pointer to array: the number of elements in *v (even if v is nil).
 //	Slice, or map: the number of elements in v; if v is nil, len(v) is zero.
 //	String: the number of bytes in v.
-//	Channel: the number of elements queued (unread) in the channel buffer;
-//	         if v is nil, len(v) is zero.
 // For some arguments, such as a string literal or a simple array expression, the
-// result can be a constant. See the Go language specification's "Length and
+// result can be a constant. See the Wa language specification's "Length and
 // capacity" section for details.
 func len(v: Type) => int
 
@@ -135,15 +111,13 @@ func len(v: Type) => int
 //	Pointer to array: the number of elements in *v (same as len(v)).
 //	Slice: the maximum length the slice can reach when resliced;
 //	if v is nil, cap(v) is zero.
-//	Channel: the channel buffer capacity, in units of elements;
-//	if v is nil, cap(v) is zero.
 // For some arguments, such as a simple array expression, the result can be a
-// constant. See the Go language specification's "Length and capacity" section for
+// constant. See the Wa language specification's "Length and capacity" section for
 // details.
 func cap(v: Type) => int
 
 // The make built-in function allocates and initializes an object of type
-// slice, map, or chan (only). Like new, the first argument is a type, not a
+// slice, or map. Like new, the first argument is a type, not a
 // value. Unlike new, make's return type is the same as the type of its
 // argument, not a pointer to it. The specification of the result depends on
 // the type:
@@ -156,9 +130,6 @@ func cap(v: Type) => int
 //	Map: An empty map is allocated with enough space to hold the
 //	specified number of elements. The size may be omitted, in which case
 //	a small starting size is allocated.
-//	Channel: The channel's buffer is initialized with the specified
-//	buffer capacity. If zero, or the size is omitted, the channel is
-//	unbuffered.
 func make(t: Type, size: ...IntegerType) => Type
 
 // The new built-in function allocates memory. The first argument is a type,
@@ -167,15 +138,7 @@ func make(t: Type, size: ...IntegerType) => Type
 func new(Type) => *Type
 
 // The panic built-in function stops normal execution of the current
-// goroutine. When a function F calls panic, normal execution of F stops
-// immediately. Any functions whose execution was deferred by F are run in
-// the usual way, and then F returns to its caller. To the caller G, the
-// invocation of F then behaves like a call to panic, terminating G's
-// execution and running any deferred functions. This continues until all
-// functions in the executing goroutine have stopped, in reverse order. At
-// that point, the program is terminated with a non-zero exit code. This
-// termination sequence is called panicking and can be controlled by the
-// built-in function recover.
+// application.
 func panic(msg: string)
 
 // The print built-in function formats its arguments in an

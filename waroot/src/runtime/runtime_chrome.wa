@@ -2,7 +2,7 @@
 
 import "syscall/chrome"
 
-var WAOS = "chrome"
+const WAOS = "chrome"
 
 #wa:linkname $runtime.argsSizesGet
 func argsSizesGet(result_argc: i32, result_argv_len: i32) => (errno: i32) {
