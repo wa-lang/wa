@@ -1,0 +1,83 @@
+// 版权 @2023 凹语言 作者。保留所有权利。
+
+const (
+	divZeroError = "runtime error: integer divide by zero"
+)
+
+func _TestDivPanicOverflow {
+	// Expect a panic
+	// defer func() {
+	// 	if err := recover(); err == nil {
+	// 		t.Error("Div should have panicked when y<=hi")
+	// 	} else if e, ok := err.(runtime.Error); !ok || e.Error() != overflowError {
+	// 		t.Errorf("Div expected panic: %q, got: %q ", overflowError, e.Error())
+	// 	}
+	// }()
+	// q, r := Div(1, 0, 1)
+	// t.Errorf("undefined q, r = %v, %v calculated when Div should have panicked", q, r)
+}
+
+func _TestDiv32PanicOverflow {
+	// Expect a panic
+	// defer func() {
+	// 	if err := recover(); err == nil {
+	// 		t.Error("Div32 should have panicked when y<=hi")
+	// 	} else if e, ok := err.(runtime.Error); !ok || e.Error() != overflowError {
+	// 		t.Errorf("Div32 expected panic: %q, got: %q ", overflowError, e.Error())
+	// 	}
+	// }()
+	// q, r := Div32(1, 0, 1)
+	// t.Errorf("undefined q, r = %v, %v calculated when Div32 should have panicked", q, r)
+}
+
+func _TestDiv64PanicOverflow {
+	// Expect a panic
+	// defer func() {
+	// 	if err := recover(); err == nil {
+	// 		t.Error("Div64 should have panicked when y<=hi")
+	// 	} else if e, ok := err.(runtime.Error); !ok || e.Error() != overflowError {
+	// 		t.Errorf("Div64 expected panic: %q, got: %q ", overflowError, e.Error())
+	// 	}
+	// }()
+	// q, r := Div64(1, 0, 1)
+	// t.Errorf("undefined q, r = %v, %v calculated when Div64 should have panicked", q, r)
+}
+
+func _TestDivPanicZero {
+	// Expect a panic
+	// defer func() {
+	// 	if err := recover(); err == nil {
+	// 		t.Error("Div should have panicked when y==0")
+	// 	} else if e, ok := err.(runtime.Error); !ok || e.Error() != divZeroError {
+	// 		t.Errorf("Div expected panic: %q, got: %q ", divZeroError, e.Error())
+	// 	}
+	// }()
+	// q, r := Div(1, 1, 0)
+	// t.Errorf("undefined q, r = %v, %v calculated when Div should have panicked", q, r)
+}
+
+func _TestDiv32PanicZero {
+	// Expect a panic
+	// defer func() {
+	// 	if err := recover(); err == nil {
+	// 		t.Error("Div32 should have panicked when y==0")
+	// 	} else if e, ok := err.(runtime.Error); !ok || e.Error() != divZeroError {
+	// 		t.Errorf("Div32 expected panic: %q, got: %q ", divZeroError, e.Error())
+	// 	}
+	// }()
+	// q, r := Div32(1, 1, 0)
+	// t.Errorf("undefined q, r = %v, %v calculated when Div32 should have panicked", q, r)
+}
+
+func _TestDiv64PanicZero {
+	// Expect a panic
+	//defer func() {
+	//	if err := recover(); err == nil {
+	//		t.Error("Div64 should have panicked when y==0")
+	//	} else if e, ok := err.(runtime.Error); !ok || e.Error() != divZeroError {
+	//		t.Errorf("Div64 expected panic: %q, got: %q ", divZeroError, e.Error())
+	//	}
+	//}()
+	// q, r := Div64(1, 1, 0)
+	//t.Errorf("undefined q, r = %v, %v calculated when Div64 should have panicked", q, r)
+}

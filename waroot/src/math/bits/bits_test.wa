@@ -489,3 +489,72 @@ func TestLen {
 		}
 	}
 }
+
+func TestRem32 {
+	// Sanity check: for non-oveflowing dividends, the result is the
+	// same as the rem returned by Div32
+	hi, lo, y := u32(510510), u32(9699690), u32(510510+1) // ensure hi < y
+	for i := 0; i < 1000; i++ {
+		r := Rem32(hi, lo, y)
+		_, r2 := Div32(hi, lo, y)
+		if r != r2 {
+			assert(false, "Rem32 failed")
+		}
+		y += 13
+	}
+}
+
+func TestRem32Overflow {
+	// To trigger a quotient overflow, we need y <= hi
+	hi, lo, y := u32(510510), u32(9699690), u32(7)
+	for i := 0; i < 1000; i++ {
+		r := Rem32(hi, lo, y)
+		_, r2 := Div64(0, u64(hi)<<32|u64(lo), u64(y))
+		if r != u32(r2) {
+			assert(false, "Rem32 failed")
+		}
+		y += 13
+	}
+}
+
+func TestRem64 {
+	// Sanity check: for non-oveflowing dividends, the result is the
+	// same as the rem returned by Div64
+	hi, lo, y := u64(510510), u64(9699690), u64(510510+1) // ensure hi < y
+	for i := 0; i < 1000; i++ {
+		r := Rem64(hi, lo, y)
+		_, r2 := Div64(hi, lo, y)
+		if r != r2 {
+			assert(false, "Rem64 failed")
+		}
+		y += 13
+	}
+}
+
+func TestRem64Overflow {
+	Rem64Tests := []struct {
+		hi, lo, y: u64
+		rem:       u64
+	}{
+		// Testcases computed using Python 3, as:
+		//   >>> hi = 42; lo = 1119; y = 42
+		//   >>> ((hi<<64)+lo) % y
+		{42, 1119, 42, 27},
+		{42, 1119, 38, 9},
+		{42, 1119, 26, 23},
+		{469, 0, 467, 271},
+		{469, 0, 113, 58},
+		{111111, 111111, 1171, 803},
+		{3968194946088682615, 3192705705065114702, 1000037, 56067},
+	}
+
+	for _, rt := range Rem64Tests {
+		if rt.hi < rt.y {
+			assert(false, "Rem64 is not a test with quo overflow")
+		}
+		rem := Rem64(rt.hi, rt.lo, rt.y)
+		if rem != rt.rem {
+			assert(false, "Rem64 failed")
+		}
+	}
+}
