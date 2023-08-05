@@ -102,6 +102,23 @@ func runTest(cfg *config.Config, pkgpath string, appArgs ...string) {
 		tFuncName := mainPkg.Pkg.Path() + "." + t.Name
 		tFuncName = strings.ReplaceAll(tFuncName, "/", "$")
 		_, stdout, stderr, err := m.RunFunc(tFuncName)
+		if t.OutputPanic {
+			if exitCode, _ := wazero.AsExitError(err); exitCode == 0 {
+				fmt.Printf("---- %s.%s\n", prog.Manifest.MainPkg, t.Name)
+				fmt.Printf("    expect panic, got = nil\n")
+			}
+
+			stdout = bytes.TrimSpace(stdout)
+			expect, got := t.Output, string(stdout)
+
+			// panic: ${expect} (pos)
+			if !strings.HasPrefix(got, "panic: "+expect) {
+				fmt.Printf("---- %s.%s\n", prog.Manifest.MainPkg, t.Name)
+				fmt.Printf("    expect(panic) = %q, got = %q\n", expect, got)
+			}
+
+			continue
+		}
 		if err != nil {
 			if len(stdout) > 0 {
 				if s := sWithPrefix(string(stdout), "    "); s != "" {
@@ -158,6 +175,23 @@ func runTest(cfg *config.Config, pkgpath string, appArgs ...string) {
 		tFuncName := mainPkg.Pkg.Path() + "." + t.Name
 		tFuncName = strings.ReplaceAll(tFuncName, "/", "$")
 		_, stdout, stderr, err := m.RunFunc(tFuncName)
+		if t.OutputPanic {
+			if exitCode, _ := wazero.AsExitError(err); exitCode == 0 {
+				fmt.Printf("---- %s.%s\n", prog.Manifest.MainPkg, t.Name)
+				fmt.Printf("    expect panic, got = nil\n")
+			}
+
+			stdout = bytes.TrimSpace(stdout)
+			expect, got := t.Output, string(stdout)
+
+			// panic: ${expect} (pos)
+			if !strings.HasPrefix(got, "panic: "+expect) {
+				fmt.Printf("---- %s.%s\n", prog.Manifest.MainPkg, t.Name)
+				fmt.Printf("    expect(panic) = %q, got = %q\n", expect, got)
+			}
+
+			continue
+		}
 		if err != nil {
 			if len(stdout) > 0 {
 				if s := sWithPrefix(string(stdout), "    "); s != "" {

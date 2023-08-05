@@ -44,9 +44,10 @@ type TestInfo struct {
 
 // 测试函数信息
 type TestFuncInfo struct {
-	FuncPos token.Pos // 函数位置
-	Name    string    // 函数名, 不含包路径
-	Output  string    // 期望输出, 为空表示不验证
+	FuncPos     token.Pos // 函数位置
+	Name        string    // 函数名, 不含包路径
+	Output      string    // 期望输出, 为空表示不验证
+	OutputPanic bool      // 异常信息
 }
 
 // 汇编代码文件
