@@ -22,6 +22,7 @@ Instead of requiring complex toolchains to set up, you can simply go install it 
 ![](docs/images/logo/logo-animate1.svg)
 
 - Home: [https://wa-lang.org](https://wa-lang.org)
+- Manual(Chinese): [https://wa-lang.org/man/](https://wa-lang.org/man/)
 - Github: [https://github.com/wa-lang/wa](https://github.com/wa-lang/wa)
 - Playground: [https://wa-lang.org/playground](https://wa-lang.org/playground)
 
