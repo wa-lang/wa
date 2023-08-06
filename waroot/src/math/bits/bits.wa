@@ -501,6 +501,9 @@ func Div32(hi, lo, y: u32) => (quo, rem: u32) {
 	if y != 0 && y <= hi {
 		panic(overflowError)
 	}
+	if y == 0 {
+		panic(divideError)
+	}
 	z := u64(hi)<<32 | u64(lo)
 	quo, rem = u32(z/u64(y)), u32(z%u64(y))
 	return

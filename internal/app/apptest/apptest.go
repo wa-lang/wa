@@ -111,12 +111,20 @@ func runTest(cfg *config.Config, pkgpath string, appArgs ...string) {
 			if exitCode, _ := wazero.AsExitError(err); exitCode == 0 {
 				fmt.Printf("---- %s.%s\n", prog.Manifest.MainPkg, t.Name)
 				fmt.Printf("    expect panic, got = nil\n")
+
+				if firstError == nil {
+					firstError = fmt.Errorf("expect(panic) = %q, got = %q", expect, "nil")
+				}
 				continue
 			}
 
 			if !strings.HasPrefix(got, "panic: "+expect) { // panic: ${expect} (pos)
 				fmt.Printf("---- %s.%s\n", prog.Manifest.MainPkg, t.Name)
 				fmt.Printf("    expect(panic) = %q, got = %q\n", expect, got)
+
+				if firstError == nil {
+					firstError = fmt.Errorf("expect(panic) = %q, got = %q", expect, got)
+				}
 			}
 
 			// 重新加载
@@ -198,12 +206,20 @@ func runTest(cfg *config.Config, pkgpath string, appArgs ...string) {
 			if exitCode, _ := wazero.AsExitError(err); exitCode == 0 {
 				fmt.Printf("---- %s.%s\n", prog.Manifest.MainPkg, t.Name)
 				fmt.Printf("    expect panic, got = nil\n")
+
+				if firstError == nil {
+					firstError = fmt.Errorf("expect panic, got = nil")
+				}
 				continue
 			}
 
 			if !strings.HasPrefix(got, "panic: "+expect) { // panic: ${expect} (pos)
 				fmt.Printf("---- %s.%s\n", prog.Manifest.MainPkg, t.Name)
 				fmt.Printf("    expect(panic) = %q, got = %q\n", expect, got)
+
+				if firstError == nil {
+					firstError = fmt.Errorf("expect(panic) = %q, got = %q", expect, got)
+				}
 			}
 
 			// 重新加载
