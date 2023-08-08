@@ -9,6 +9,9 @@ func PrintI32(i: i32)
 #wa:import mvp waPrintU32
 func PrintU32(i: u32)
 
+#wa:import mvp waPrintU32Ptr
+func PrintU32Ptr(i: u32)
+
 #wa:import mvp waPrintI64
 func PrintI64(i: i64)
 

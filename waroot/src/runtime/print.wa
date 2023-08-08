@@ -150,11 +150,3 @@ func printSlice(s: []byte) {
 	print("[", len(s), "/", cap(s), "]")
 	printHex(u64(refToPtr_byteSlice(s)))
 }
-
-func printEface() {
-	// todo(chai2010)
-}
-
-func printIface() {
-	// todo(chai2010)
-}

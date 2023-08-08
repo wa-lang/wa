@@ -79,6 +79,11 @@ func waPrintI32(i: i32) {
 	mvp.PrintI32(i)
 }
 
+#wa:linkname $runtime.waPrintU32Ptr
+func waPrintU32Ptr(i: u32) {
+	mvp.PrintU32Ptr(i)
+}
+
 #wa:linkname $runtime.waPrintU32
 func waPrintU32(i: u32) {
 	mvp.PrintU32(i)
