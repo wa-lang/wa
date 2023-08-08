@@ -43,6 +43,15 @@ func MvpInstantiate(ctx context.Context, rt wazero.Runtime) (api.Closer, error) 
 		WithParameterNames("v").
 		Export("waPrintU32").
 
+		// func waPrintU32Ptr(v: u32)
+		NewFunctionBuilder().
+		WithFunc(func(ctx context.Context, m api.Module, v uint32) {
+			w := walang.ModCallContextSys(m).Stdout()
+			fmt.Fprintf(w, "0x%x", v)
+		}).
+		WithParameterNames("v").
+		Export("waPrintU32Ptr").
+
 		// func waPrintI64(v: i64)
 		NewFunctionBuilder().
 		WithFunc(func(ctx context.Context, m api.Module, v int64) {
