@@ -6,6 +6,7 @@ import (
 	"bytes"
 	"fmt"
 	"os"
+	"path/filepath"
 	"strings"
 	"time"
 
@@ -25,11 +26,17 @@ var CmdTest = &cli.Command{
 	Flags: []cli.Flag{
 		appbase.MakeFlag_target(),
 		appbase.MakeFlag_tags(),
+		&cli.StringFlag{
+			Name:  "run",
+			Usage: "set run func file name pattern",
+			Value: "",
+		},
 	},
 	Action: func(c *cli.Context) error {
 		opt := appbase.BuildOptions(c)
 
 		var pkgpath = "."
+		var runPattern = c.String("run")
 		var appArgs []string
 
 		if c.Args().Len() > 0 {
@@ -39,22 +46,22 @@ var CmdTest = &cli.Command{
 			appArgs = c.Args().Slice()[1:]
 		}
 
-		RunTest(opt.Config(), pkgpath, appArgs...)
+		RunTest(opt.Config(), pkgpath, runPattern, appArgs...)
 		return nil
 	},
 }
 
-func RunTest(cfg *config.Config, pkgpath string, appArgs ...string) {
+func RunTest(cfg *config.Config, pkgpath, runPattern string, appArgs ...string) {
 	var pkgList = []string{pkgpath}
 	if pkgpath == "std" {
 		pkgList = waroot.GetStdPkgList()
 	}
 	for _, p := range pkgList {
-		runTest(cfg, p, appArgs...)
+		runTest(cfg, p, runPattern, appArgs...)
 	}
 }
 
-func runTest(cfg *config.Config, pkgpath string, appArgs ...string) {
+func runTest(cfg *config.Config, pkgpath, runPattern string, appArgs ...string) {
 	cfg.UnitTest = true
 	prog, err := loader.LoadProgram(cfg, pkgpath)
 	if err != nil {
@@ -100,6 +107,17 @@ func runTest(cfg *config.Config, pkgpath string, appArgs ...string) {
 	var firstError error
 	for i := 0; i < len(mainPkg.TestInfo.Tests); i++ {
 		t := mainPkg.TestInfo.Tests[i]
+
+		if runPattern != "" {
+			matched, err := filepath.Match(runPattern, t.Name)
+			if err != nil {
+				fmt.Println(err)
+				os.Exit(1)
+			}
+			if !matched {
+				continue
+			}
+		}
 
 		tFuncName := mainPkg.Pkg.Path() + "." + t.Name
 		tFuncName = strings.ReplaceAll(tFuncName, "/", "$")
@@ -195,6 +213,17 @@ func runTest(cfg *config.Config, pkgpath string, appArgs ...string) {
 
 	for i := 0; i < len(mainPkg.TestInfo.Examples); i++ {
 		t := mainPkg.TestInfo.Examples[i]
+
+		if runPattern != "" {
+			matched, err := filepath.Match(runPattern, t.Name)
+			if err != nil {
+				fmt.Println(err)
+				os.Exit(1)
+			}
+			if !matched {
+				continue
+			}
+		}
 
 		tFuncName := mainPkg.Pkg.Path() + "." + t.Name
 		tFuncName = strings.ReplaceAll(tFuncName, "/", "$")
