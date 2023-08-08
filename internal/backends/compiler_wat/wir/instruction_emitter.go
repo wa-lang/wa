@@ -924,7 +924,7 @@ func (m *Module) EmitPrintInterface(v Value) (insts []wat.Inst) {
 	insts = append(insts, wat.NewInstConst(wat.I32{}, "123")) // {
 	insts = append(insts, wat.NewInstCall("$runtime.waPrintRune"))
 
-	insts = append(insts, i.Extract("d").EmitPush()...)
+	insts = append(insts, i.Extract("d").(*aRef).Extract("d").EmitPush()...)
 	insts = append(insts, wat.NewInstCall("$runtime.waPrintI32")) // data
 
 	insts = append(insts, wat.NewInstConst(wat.I32{}, "44")) // ,
