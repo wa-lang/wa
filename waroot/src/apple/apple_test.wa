@@ -24,3 +24,10 @@ func ExampleApple {
 	// Output:
 	// apple-mvp
 }
+
+func ExamplePanic {
+	panic("fuck panic")
+
+	// Output(panic):
+	// fuck panic
+}

@@ -2,7 +2,7 @@
 
 import "syscall/arduino"
 
-var WAOS = "arduino"
+const WAOS = "arduino"
 
 #wa:linkname $runtime.argsSizesGet
 func argsSizesGet(result_argc: i32, result_argv_len: i32) => (errno: i32) {
@@ -70,8 +70,8 @@ func waPrintI64(i: i32) {
 }
 
 #wa:linkname $runtime.waPrintU64
-func waPrintU64(i: i32) {
-	printU64(u64(i))
+func waPrintU64(i: u64) {
+	printU64(i)
 }
 
 #wa:linkname $runtime.waPrintF32

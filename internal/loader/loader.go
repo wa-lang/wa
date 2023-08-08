@@ -300,10 +300,12 @@ func (p *_Loader) parseTestInfo(pkg *Package, filenames []string) (*TestInfo, er
 
 				switch {
 				case strings.HasPrefix(name, "Test"):
+					output, isPanic := p.parseExampleOutputComment(file, fn)
 					tInfo.Tests = append(tInfo.Tests, TestFuncInfo{
-						FuncPos: obj.Pos(),
-						Name:    name,
-						Output:  p.parseExampleOutputComment(file, fn),
+						FuncPos:     obj.Pos(),
+						Name:        name,
+						Output:      output,
+						OutputPanic: isPanic,
 					})
 				case strings.HasPrefix(name, "Bench"):
 					tInfo.Benchs = append(tInfo.Benchs, TestFuncInfo{
@@ -311,10 +313,12 @@ func (p *_Loader) parseTestInfo(pkg *Package, filenames []string) (*TestInfo, er
 						Name:    name,
 					})
 				case strings.HasPrefix(name, "Example"):
+					output, isPanic := p.parseExampleOutputComment(file, fn)
 					tInfo.Examples = append(tInfo.Examples, TestFuncInfo{
-						FuncPos: obj.Pos(),
-						Name:    name,
-						Output:  p.parseExampleOutputComment(file, fn),
+						FuncPos:     obj.Pos(),
+						Name:        name,
+						Output:      output,
+						OutputPanic: isPanic,
 					})
 				}
 			}
@@ -324,7 +328,7 @@ func (p *_Loader) parseTestInfo(pkg *Package, filenames []string) (*TestInfo, er
 	return tInfo, nil
 }
 
-func (p *_Loader) parseExampleOutputComment(f *ast.File, fn *ast.FuncDecl) string {
+func (p *_Loader) parseExampleOutputComment(f *ast.File, fn *ast.FuncDecl) (output string, isPanic bool) {
 	for _, commentGroup := range f.Comments {
 		if commentGroup.Pos() <= fn.Body.Pos() {
 			continue
@@ -334,23 +338,33 @@ func (p *_Loader) parseExampleOutputComment(f *ast.File, fn *ast.FuncDecl) strin
 		}
 
 		for j, comment := range commentGroup.List {
-			if comment.Text != "// Output:" {
-				continue
-			}
-
-			var lineTexts []string
-			for _, x := range commentGroup.List[j+1:] {
-				if !strings.HasPrefix(x.Text, "//") {
-					break
+			switch comment.Text {
+			case "// Output:":
+				var lineTexts []string
+				for _, x := range commentGroup.List[j+1:] {
+					if !strings.HasPrefix(x.Text, "//") {
+						break
+					}
+					lineTexts = append(lineTexts, strings.TrimSpace(x.Text[2:]))
 				}
-				lineTexts = append(lineTexts, strings.TrimSpace(x.Text[2:]))
-			}
 
-			return strings.Join(lineTexts, "\n")
+				return strings.Join(lineTexts, "\n"), false
+
+			case "// Output(panic):":
+				var lineTexts []string
+				for _, x := range commentGroup.List[j+1:] {
+					if !strings.HasPrefix(x.Text, "//") {
+						break
+					}
+					lineTexts = append(lineTexts, strings.TrimSpace(x.Text[2:]))
+				}
+
+				return strings.Join(lineTexts, "\n"), true
+			}
 		}
 	}
 
-	return ""
+	return "", false
 }
 
 func (p *_Loader) ParseDir_wsFiles(pkgpath string) (files []*WsFile, err error) {

@@ -98,8 +98,49 @@ func runTest(cfg *config.Config, pkgpath string, appArgs ...string) {
 
 	// 执行测试函数
 	var firstError error
-	for _, t := range mainPkg.TestInfo.Tests {
-		_, stdout, stderr, err := m.RunFunc(mainPkg.Pkg.Path() + "." + t.Name)
+	for i := 0; i < len(mainPkg.TestInfo.Tests); i++ {
+		t := mainPkg.TestInfo.Tests[i]
+
+		tFuncName := mainPkg.Pkg.Path() + "." + t.Name
+		tFuncName = strings.ReplaceAll(tFuncName, "/", "$")
+		_, stdout, stderr, err := m.RunFunc(tFuncName)
+		if t.OutputPanic {
+			stdout = bytes.TrimSpace(stdout)
+			expect, got := t.Output, string(stdout)
+
+			if exitCode, _ := wazero.AsExitError(err); exitCode == 0 {
+				fmt.Printf("---- %s.%s\n", prog.Manifest.MainPkg, t.Name)
+				fmt.Printf("    expect panic, got = nil\n")
+
+				if firstError == nil {
+					firstError = fmt.Errorf("expect(panic) = %q, got = %q", expect, "nil")
+				}
+				continue
+			}
+
+			if !strings.HasPrefix(got, "panic: "+expect) { // panic: ${expect} (pos)
+				fmt.Printf("---- %s.%s\n", prog.Manifest.MainPkg, t.Name)
+				fmt.Printf("    expect(panic) = %q, got = %q\n", expect, got)
+
+				if firstError == nil {
+					firstError = fmt.Errorf("expect(panic) = %q, got = %q", expect, got)
+				}
+			}
+
+			// 重新加载
+			{
+				m, err = wazero.BuildModule(cfg, wasmName, wasmBytes, wasmArgs...)
+				if err != nil {
+					fmt.Println(err)
+					os.Exit(1)
+				}
+
+				// 临时方案: defer 太多
+				defer m.Close()
+			}
+
+			continue
+		}
 		if err != nil {
 			if len(stdout) > 0 {
 				if s := sWithPrefix(string(stdout), "    "); s != "" {
@@ -110,7 +151,12 @@ func runTest(cfg *config.Config, pkgpath string, appArgs ...string) {
 				if s := sWithPrefix(string(stderr), "    "); s != "" {
 					fmt.Println(s)
 				}
+			} else {
+				if s := sWithPrefix(err.Error(), "    "); s != "" {
+					fmt.Println(s)
+				}
 			}
+
 			os.Exit(1)
 		}
 
@@ -146,8 +192,50 @@ func runTest(cfg *config.Config, pkgpath string, appArgs ...string) {
 			}
 		}
 	}
-	for _, t := range mainPkg.TestInfo.Examples {
-		_, stdout, stderr, err := m.RunFunc(mainPkg.Pkg.Path() + "." + t.Name)
+
+	for i := 0; i < len(mainPkg.TestInfo.Examples); i++ {
+		t := mainPkg.TestInfo.Examples[i]
+
+		tFuncName := mainPkg.Pkg.Path() + "." + t.Name
+		tFuncName = strings.ReplaceAll(tFuncName, "/", "$")
+		_, stdout, stderr, err := m.RunFunc(tFuncName)
+		if t.OutputPanic {
+			stdout = bytes.TrimSpace(stdout)
+			expect, got := t.Output, string(stdout)
+
+			if exitCode, _ := wazero.AsExitError(err); exitCode == 0 {
+				fmt.Printf("---- %s.%s\n", prog.Manifest.MainPkg, t.Name)
+				fmt.Printf("    expect panic, got = nil\n")
+
+				if firstError == nil {
+					firstError = fmt.Errorf("expect panic, got = nil")
+				}
+				continue
+			}
+
+			if !strings.HasPrefix(got, "panic: "+expect) { // panic: ${expect} (pos)
+				fmt.Printf("---- %s.%s\n", prog.Manifest.MainPkg, t.Name)
+				fmt.Printf("    expect(panic) = %q, got = %q\n", expect, got)
+
+				if firstError == nil {
+					firstError = fmt.Errorf("expect(panic) = %q, got = %q", expect, got)
+				}
+			}
+
+			// 重新加载
+			{
+				m, err = wazero.BuildModule(cfg, wasmName, wasmBytes, wasmArgs...)
+				if err != nil {
+					fmt.Println(err)
+					os.Exit(1)
+				}
+
+				// 临时方案: defer 太多
+				defer m.Close()
+			}
+
+			continue
+		}
 		if err != nil {
 			if len(stdout) > 0 {
 				if s := sWithPrefix(string(stdout), "    "); s != "" {

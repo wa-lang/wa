@@ -1,0 +1,141 @@
+// 版权 @2023 凹语言 作者。保留所有权利。
+
+func TestLeadingZeros8 {
+	assert(0b00000001 == 1)
+	assert(7 == LeadingZeros8(1))
+}
+
+func TestLeadingZeros16 {
+	assert(0b0000000000000001 == 1)
+	assert(15 == LeadingZeros16(1))
+}
+
+func TestLeadingZeros32 {
+	assert(0b00000000000000000000000000000001 == 1)
+	assert(31 == LeadingZeros32(1))
+}
+
+func TestLeadingZeros64 {
+	assert(0b0000000000000000000000000000000000000000000000000000000000000001 == 1)
+	assert(63 == LeadingZeros64(1))
+}
+
+func TestTrailingZeros8 {
+	assert(0b00001110 == 14)
+	assert(1 == TrailingZeros8(14))
+}
+
+func TestTrailingZeros16 {
+	assert(0b0000000000001110 == 14)
+	assert(1 == TrailingZeros16(14))
+}
+
+func TestTrailingZeros32 {
+	assert(0b00000000000000000000000000001110 == 14)
+	assert(1 == TrailingZeros32(14))
+}
+
+func TestTrailingZeros64 {
+	assert(0b0000000000000000000000000000000000000000000000000000000000001110 == 14)
+	assert(1 == TrailingZeros64(14))
+}
+
+func TestOnesCount8 {
+	assert(0b00001110 == 14)
+	assert(3 == OnesCount8(14))
+}
+
+func TestOnesCount16 {
+	assert(0b0000000000001110 == 14)
+	assert(3 == OnesCount16(14))
+}
+
+func TestOnesCount32 {
+	assert(0b00000000000000000000000000001110 == 14)
+	assert(3 == OnesCount32(14))
+}
+
+func TestOnesCount64 {
+	assert(0b0000000000000000000000000000000000000000000000000000000000001110 == 14)
+	assert(3 == OnesCount64(14))
+}
+
+func TestRotateLeft8 {
+	assert(0b00001111 == 15)
+	assert(0b00111100 == RotateLeft8(15, 2))
+	assert(0b11000011 == RotateLeft8(15, -2))
+}
+
+func TestRotateLeft16 {
+	assert(0b0000000000001111 == 15)
+	assert(0b0000000000111100 == RotateLeft16(15, 2))
+	assert(0b1100000000000011 == RotateLeft16(15, -2))
+}
+
+func TestRotateLeft32 {
+	assert(0b00000000000000000000000000001111 == 15)
+	assert(0b00000000000000000000000000111100 == RotateLeft32(15, 2))
+	assert(0b11000000000000000000000000000011 == RotateLeft32(15, -2))
+}
+
+
+func TestRotateLeft64 {
+	assert(0b0000000000000000000000000000000000000000000000000000000000001111 == 15)
+	assert(0b0000000000000000000000000000000000000000000000000000000000111100 == RotateLeft64(15, 2))
+	assert(0b1100000000000000000000000000000000000000000000000000000000000011 == RotateLeft64(15, -2))
+}
+
+func TestReverse8 {
+	assert(0b00010011 == 19)
+	assert(0b11001000 == Reverse8(19))
+}
+
+func TestReverse16 {
+	assert(0b0000000000010011 == 19)
+	assert(0b1100100000000000 == Reverse16(19))
+}
+
+func TestReverse32 {
+	assert(0b00000000000000000000000000010011 == 19)
+	assert(0b11001000000000000000000000000000 == Reverse32(19))
+}
+
+func TestReverse64 {
+	assert(0b0000000000000000000000000000000000000000000000000000000000010011 == 19)
+	assert(0b1100100000000000000000000000000000000000000000000000000000000000 == Reverse64(19))
+}
+
+func TestReverseBytes16 {
+	assert(0b0000000000001111 == 15)
+	assert(0b0000111100000000 == ReverseBytes16(15))
+}
+
+func TestReverseBytes32 {
+	assert(0b00000000000000000000000000001111 == 15)
+	assert(0b00001111000000000000000000000000 == ReverseBytes32(15))
+}
+
+func TestReverseBytes64 {
+	assert(0b0000000000000000000000000000000000000000000000000000000000001111 == 15)
+	assert(0b0000111100000000000000000000000000000000000000000000000000000000 == ReverseBytes64(15))
+}
+
+func TestLen8 {
+	assert(0b00001000 == 8)
+	assert(4 == Len8(8))
+}
+
+func TestLen16 {
+	assert(0b0000000000001000 == 8)
+	assert(4 == Len16(8))
+}
+
+func TestLen32 {
+	assert(0b00000000000000000000000000001000 == 8)
+	assert(4 == Len32(8))
+}
+
+func TestLen64 {
+	assert(0b0000000000000000000000000000000000000000000000000000000000001000 == 8)
+	assert(4 == Len64(8))
+}

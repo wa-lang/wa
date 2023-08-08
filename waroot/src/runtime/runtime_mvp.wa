@@ -2,7 +2,7 @@
 
 import "syscall/mvp"
 
-var WAOS = "mvp"
+const WAOS = "mvp"
 
 #wa:linkname $runtime.argsSizesGet
 func argsSizesGet(result_argc: i32, result_argv_len: i32) => (errno: i32) {
