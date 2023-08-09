@@ -293,6 +293,14 @@ func (m *Module) ToWatModule() *wat.Module {
 
 	wat_module.Globals = append(wat_module.Globals, m.constGlobals...)
 
+	{
+		var heap_base wat.Global
+		heap_base.V = wat.NewVar("__heap_base", wat.I32{})
+		heap_base.IsMut = false
+		heap_base.InitValue = strconv.Itoa(m.DataSeg.Size())
+		wat_module.Globals = append(wat_module.Globals, heap_base)
+	}
+
 	wat_module.DataSeg = m.DataSeg.data
 
 	return &wat_module

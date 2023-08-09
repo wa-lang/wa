@@ -39,3 +39,7 @@ func (s *DataSeg) Set(data []byte, ptr int) {
 		panic("len(dst) < len(src)")
 	}
 }
+
+func (s *DataSeg) Size() int {
+	return s.start + len(s.data)
+}

@@ -9,6 +9,6 @@
 ;; +-----------------+---------------------+--------------+
 
 (global $__stack_ptr (mut i32) (i32.const 1024))     ;; index=0
-(global $__heap_base (mut i32) (i32.const 2048))     ;; index=1
+;;(global $__heap_base i32 (i32.const 1048576))     ;; index=1
 (global $__heap_max  i32       (i32.const 67108864)) ;; 64MB, 1024 page
 

@@ -54,8 +54,8 @@ func (m *Module) String() string {
 		if g.IsMut {
 			s += " (mut " + g.V.Type().Name() + ")"
 		} else {
-			s += " (" + g.V.Type().Name() + ")"
-		}
+			s += " " + g.V.Type().Name()
+		} //
 		if len(g.InitValue) > 0 {
 			s += " (" + g.V.Type().Name() + ".const " + g.InitValue + ")"
 		} else {
