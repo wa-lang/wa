@@ -36,24 +36,27 @@ func (p *Compiler) Compile(prog *loader.Program, mainFunc string) (output string
 
 	p.tLib = newTypeLib(p.module, prog)
 
-	for _, pkg := range prog.Pkgs {
-		p.ssaPkg = pkg.SSAPkg
-		p.CompilePkgConst(pkg.SSAPkg)
+	var pkgnames []string
+	for n := range prog.Pkgs {
+		pkgnames = append(pkgnames, n)
 	}
+	sort.Strings(pkgnames)
 
-	for _, pkg := range prog.Pkgs {
-		p.ssaPkg = pkg.SSAPkg
-		p.CompilePkgType(pkg.SSAPkg)
+	for _, n := range pkgnames {
+		p.ssaPkg = prog.Pkgs[n].SSAPkg
+		p.CompilePkgConst(p.ssaPkg)
 	}
-
-	for _, pkg := range prog.Pkgs {
-		p.ssaPkg = pkg.SSAPkg
-		p.CompilePkgGlobal(pkg.SSAPkg)
+	for _, n := range pkgnames {
+		p.ssaPkg = prog.Pkgs[n].SSAPkg
+		p.CompilePkgType(p.ssaPkg)
 	}
-
-	for _, pkg := range prog.Pkgs {
-		p.ssaPkg = pkg.SSAPkg
-		p.CompilePkgFunc(pkg.SSAPkg)
+	for _, n := range pkgnames {
+		p.ssaPkg = prog.Pkgs[n].SSAPkg
+		p.CompilePkgGlobal(p.ssaPkg)
+	}
+	for _, n := range pkgnames {
+		p.ssaPkg = prog.Pkgs[n].SSAPkg
+		p.CompilePkgFunc(p.ssaPkg)
 	}
 
 	p.tLib.finish()
@@ -119,15 +122,22 @@ func (p *Compiler) CompileWsFiles(prog *loader.Program) {
 }
 
 func (p *Compiler) CompilePkgConst(ssaPkg *ssa.Package) {
-	for _, m := range p.ssaPkg.Members {
-		if con, ok := m.(*ssa.NamedConst); ok {
-			p.compileConst(con)
-		}
-	}
+	//for _, m := range p.ssaPkg.Members {
+	//	if con, ok := m.(*ssa.NamedConst); ok {
+	//		p.compileConst(con)
+	//	}
+	//}
 }
 
 func (p *Compiler) CompilePkgType(ssaPkg *ssa.Package) {
-	for _, m := range p.ssaPkg.Members {
+	var memnames []string
+	for name := range p.ssaPkg.Members {
+		memnames = append(memnames, name)
+	}
+	sort.Strings(memnames)
+
+	for _, name := range memnames {
+		m := p.ssaPkg.Members[name]
 		if t, ok := m.(*ssa.Type); ok {
 			p.compileType(t)
 		}
@@ -135,7 +145,14 @@ func (p *Compiler) CompilePkgType(ssaPkg *ssa.Package) {
 }
 
 func (p *Compiler) CompilePkgGlobal(ssaPkg *ssa.Package) {
-	for _, m := range p.ssaPkg.Members {
+	var memnames []string
+	for name := range p.ssaPkg.Members {
+		memnames = append(memnames, name)
+	}
+	sort.Strings(memnames)
+
+	for _, name := range memnames {
+		m := p.ssaPkg.Members[name]
 		if global, ok := m.(*ssa.Global); ok {
 			p.compileGlobal(global)
 		}
@@ -143,7 +160,14 @@ func (p *Compiler) CompilePkgGlobal(ssaPkg *ssa.Package) {
 }
 
 func (p *Compiler) CompilePkgFunc(ssaPkg *ssa.Package) {
-	for _, m := range p.ssaPkg.Members {
+	var memnames []string
+	for name := range p.ssaPkg.Members {
+		memnames = append(memnames, name)
+	}
+	sort.Strings(memnames)
+
+	for _, name := range memnames {
+		m := p.ssaPkg.Members[name]
 		if fn, ok := m.(*ssa.Function); ok {
 			CompileFunc(fn, p.prog, p.tLib, p.module)
 		}
