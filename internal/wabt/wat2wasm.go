@@ -61,7 +61,12 @@ func Wat2Wasm(watBytes []byte) (wasmBytes []byte, err error) {
 	var bufStderr bytes.Buffer
 
 	// wat2wasm - --output=-
-	cmd := exec.Command(wat2wasmPath, "-", "--output=-")
+	var args = []string{"-", "--output=-"}
+	if config.DebugMode {
+		args = append(args, "--debug-names")
+	}
+
+	cmd := exec.Command(wat2wasmPath, args...)
 	cmd.Stdin = bytes.NewReader(watBytes)
 	cmd.Stdout = &bufStdout
 	cmd.Stderr = &bufStderr
