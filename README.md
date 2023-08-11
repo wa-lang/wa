@@ -8,10 +8,8 @@
 <div align="center">
 
 [![Build Status](https://github.com/wa-lang/wa/actions/workflows/wa.yml/badge.svg)](https://github.com/wa-lang/wa/actions/workflows/wa.yml)
-[![Go Report Card](https://goreportcard.com/badge/github.com/wa-lang/wa)](https://goreportcard.com/report/github.com/wa-lang/wa)
 [![Coverage Status](https://coveralls.io/repos/github/wa-lang/wa/badge.svg)](https://coveralls.io/github/wa-lang/wa)
 [![GitHub release](https://img.shields.io/github/v/tag/wa-lang/wa.svg?label=release)](https://github.com/wa-lang/wa/releases)
-[![Go Reference](https://pkg.go.dev/badge/wa-lang.org/wa.svg)](https://pkg.go.dev/wa-lang.org/wa)
 [![license](https://img.shields.io/github/license/wa-lang/wa.svg)](https://github.com/wa-lang/wa/blob/master/LICENSE)
 
 </div>
@@ -41,19 +39,6 @@ Instead of requiring complex toolchains to set up, you can simply go install it 
 
 ![](https://wa-lang.org/st0018-03.jpg)
 
-## Install and Run:
-
-Install from binary: download `wa` command from https://github.com/wa-lang/wa/releases, and set `$PATH` env.
-
-Or install from Go (Go >= 1.17):
-
-1. `go install wa-lang.org/wa@latest`
-2. `cd waroot`
-2. `wa init -name=examples/hi`
-3. `wa run examples/hi`
-
-> The Wa project is still in very early stage. If you want to submit PR, please read the [Contribution Guide(Chinese)](https://wa-lang.org/community/contribute.html). We do not accept PR only about 3rdparty changes.
-
 ## Example: Print Wa
 
 Print rune and call function：
@@ -78,7 +63,7 @@ func add(a: i32, b: i32) => i32 {
 Execute the program:
 
 ```
-$ go run main.go hello.wa 
+$ wa run hello.wa 
 hello, Wa!
 42 2023
 2
@@ -107,7 +92,7 @@ func main {
 Execute the program:
 
 ```
-$ cd waroot && go run ../main.go run examples/prime
+$ cd waroot && wa run examples/prime
 2
 3
 5

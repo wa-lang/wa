@@ -37,17 +37,6 @@
 
 ![](https://wa-lang.org/st0018-03.jpg)
 
-## 本地安装和测试:
-
-有 2 种安装方式: 1 是直接从 Github [下载最新的二进制文件](https://github.com/wa-lang/wa/releases); 2 是通过 Go 语言从源码安装.
-
-通过 Go 语言安装需要执行以下命令 (Go >= 1.17):
-
-1. `go install wa-lang.org/wa@latest`
-2. `cd waroot`
-3. `wa init -name=examples/hi`
-4. `wa run examples/hi`
-
 ## 例子: 凹语言
 
 打印字符和调用函数：
@@ -72,7 +61,7 @@ func add(a: i32, b: i32) => i32 {
 运行并输出结果:
 
 ```
-$ go run main.go hello.wa 
+$ wa run hello.wa 
 你好，凹语言！
 42 2023
 2
@@ -103,7 +92,7 @@ func main {
 运行并输出结果:
 
 ```
-$ cd waroot && go run ../main.go run examples/prime
+$ cd waroot && wa run examples/prime
 2
 3
 5
