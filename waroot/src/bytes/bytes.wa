@@ -24,12 +24,27 @@ func EqualFold(s, t: []byte) => bool {
 	return true
 }
 
-func IndexByte(d: []byte, x: rune) => int {
+func Index(d: []byte, x: []byte) => int {
 	return 0
 }
 
-func Index(d: []byte, x: []byte) => int {
-	return 0
+func IndexByte(b: []byte, c: byte) => int {
+	for i := 0; i < len(b); i++ {
+		if b[i] == c {
+			return i
+		}
+	}
+	return -1
+}
+
+func IndexByteString(s: string, c: byte) => int {
+	// TODO(chai2010): 字符串 range 尚不支持
+	//for i := 0; i < len(s); i++ {
+	//	if s[i] == c {
+	//		return i
+	//	}
+	//}
+	return -1
 }
 
 func HasPrefix(d, prefix: []byte) => bool {
