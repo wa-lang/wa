@@ -14,5 +14,6 @@ publish:
 	-rm -rf ../../../docs/snake/
 	mkdir -p ../../../docs/snake
 	cp ./web/* ../../../docs/snake/
+	cp ./output/snake.wasm ../../../docs/snake/snake.wasm
 
 clean:
