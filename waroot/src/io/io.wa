@@ -453,7 +453,7 @@ func LimitedReader.Read(p: []byte) => (n: int, err: error) {
 		return 0, EOF
 	}
 	if int64(len(p)) > this.N {
-		p = p[0:this.N]
+		p = p[0:int(this.N)]
 	}
 	n, err = this.R.Read(p)
 	this.N -= int64(n)
@@ -480,7 +480,7 @@ func SectionReader.Read(p: []byte) => (n: int, err: error) {
 		return 0, EOF
 	}
 	if max := this.limit - this.off; int64(len(p)) > max {
-		p = p[0:max]
+		p = p[0:int(max)]
 	}
 	n, err = this.r.ReadAt(p, this.off)
 	this.off += int64(n)
@@ -514,7 +514,7 @@ func SectionReader.ReadAt(p: []byte, off: i64) => (n: int, err: error) {
 	}
 	off += this.base
 	if max := this.limit - off; int64(len(p)) > max {
-		p = p[0:max]
+		p = p[0:int(max)]
 		n, err = this.r.ReadAt(p, off)
 		if err == nil {
 			err = EOF
