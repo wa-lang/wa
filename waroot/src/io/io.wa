@@ -167,7 +167,7 @@ type ReadWriteSeeker interface {
 //
 // The Copy function uses ReaderFrom if available.
 type ReaderFrom interface {
-	ReadFrom(r: Reader) => (n: int64, err: error)
+	ReadFrom(r: Reader) => (n: i64, err: error)
 }
 
 // WriterTo is the interface that wraps the WriteTo method.
@@ -395,7 +395,7 @@ func copyBuffer(dst: Writer, src: Reader, buf: []byte) => (written: i64, err: er
 	}
 	if buf == nil {
 		size := 32 * 1024
-		if l, ok := src.(*LimitedReader); ok && int64(size) > l.N {
+		if l, ok := src.(*LimitedReader); ok && i64(size) > l.N {
 			if l.N < 1 {
 				size = 1
 			} else {
@@ -414,7 +414,7 @@ func copyBuffer(dst: Writer, src: Reader, buf: []byte) => (written: i64, err: er
 					ew = errInvalidWrite
 				}
 			}
-			written += int64(nw)
+			written += i64(nw)
 			if ew != nil {
 				err = ew
 				break
@@ -452,11 +452,11 @@ func LimitedReader.Read(p: []byte) => (n: int, err: error) {
 	if this.N <= 0 {
 		return 0, EOF
 	}
-	if int64(len(p)) > this.N {
+	if i64(len(p)) > this.N {
 		p = p[0:int(this.N)]
 	}
 	n, err = this.R.Read(p)
-	this.N -= int64(n)
+	this.N -= i64(n)
 	return
 }
 
@@ -479,11 +479,11 @@ func SectionReader.Read(p: []byte) => (n: int, err: error) {
 	if this.off >= this.limit {
 		return 0, EOF
 	}
-	if max := this.limit - this.off; int64(len(p)) > max {
+	if max := this.limit - this.off; i64(len(p)) > max {
 		p = p[0:int(max)]
 	}
 	n, err = this.r.ReadAt(p, this.off)
-	this.off += int64(n)
+	this.off += i64(n)
 	return
 }
 
@@ -513,7 +513,7 @@ func SectionReader.ReadAt(p: []byte, off: i64) => (n: int, err: error) {
 		return 0, EOF
 	}
 	off += this.base
-	if max := this.limit - off; int64(len(p)) > max {
+	if max := this.limit - off; i64(len(p)) > max {
 		p = p[0:int(max)]
 		n, err = this.r.ReadAt(p, off)
 		if err == nil {
@@ -570,7 +570,18 @@ func discard.WriteString(s: string) => (int, error) {
 }
 
 func discard.ReadFrom(r: Reader) => (n: i64, err: error) {
-	panic("TODO")
+	buf := make([]byte, 64)
+	readSize := 0
+	for {
+		readSize, err = r.Read(buf)
+		n += i64(readSize)
+		if err != nil {
+			if err == EOF {
+				return n, nil
+			}
+			return
+		}
+	}
 }
 
 
