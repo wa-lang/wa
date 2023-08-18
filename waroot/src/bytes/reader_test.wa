@@ -211,7 +211,6 @@ func TestReaderDoubleUnreadRune {
 	}
 }
 
-/*
 // verify that copying from an empty reader always has the same results,
 // regardless of the presence of a WriteTo method.
 func TestReaderCopyNothing {
@@ -229,13 +228,12 @@ func TestReaderCopyNothing {
 
 	with, withOut: nErr
 	with.n, with.err = io.Copy(discard, NewReader(nil))
-	withOut.n, withOut.err = io.Copy(discard, justReader{NewReader(nil)})
+	withOut.n, withOut.err = io.Copy(discard, &justReader{NewReader(nil)})
 	if with != withOut {
 		assert(false)
 		//t.Errorf("behavior differs: with = %#v; without: %#v", with, withOut)
 	}
 }
-*/
 
 // tests that Len is affected by reads, but Size is not.
 func TestReaderLenSize {
