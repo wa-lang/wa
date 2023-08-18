@@ -224,7 +224,7 @@ func TestReaderCopyNothing {
 	type justWriter struct {
 		io.Writer
 	}
-	discard := justWriter{io.Discard} // hide ReadFrom
+	discard := &justWriter{io.Discard} // hide ReadFrom
 
 	with, withOut: nErr
 	with.n, with.err = io.Copy(discard, NewReader(nil))
