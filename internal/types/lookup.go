@@ -266,6 +266,12 @@ func (check *Checker) missingMethod(V Type, T *Interface, static bool) (method *
 		return
 	}
 
+	if len(T.allMethods) != 0 {
+		if _, ok := V.(*Pointer); !ok {
+			return T.allMethods[0], false
+		}
+	}
+
 	// TODO(gri) Consider using method sets here. Might be more efficient.
 
 	if ityp, _ := V.Underlying().(*Interface); ityp != nil {
