@@ -129,7 +129,8 @@ func (tLib *typeLib) compile(from types.Type) wir.ValueType {
 					sf := ut.Field(i)
 					dtyp := tLib.compile(sf.Type())
 					if sf.Embedded() {
-						df := tLib.module.NewStructField("$"+dtyp.Name(), dtyp)
+						//df := tLib.module.NewStructField("$"+dtyp.Name(), dtyp)
+						df := tLib.module.NewStructField("$"+wir.GenSymbolName(sf.Name()), dtyp)
 						tStruct.AppendField(df)
 					} else {
 						df := tLib.module.NewStructField(wir.GenSymbolName(sf.Name()), dtyp)
@@ -225,7 +226,8 @@ func (tLib *typeLib) compile(from types.Type) wir.ValueType {
 				dtyp := tLib.compile(sf.Type())
 				var fname string
 				if sf.Embedded() {
-					fname = "$" + dtyp.Name()
+					//fname = "$" + dtyp.Name()
+					fname = "$" + sf.Name()
 				} else {
 					fname = sf.Name()
 				}

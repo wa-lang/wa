@@ -859,10 +859,10 @@ func (g *functionGenerator) genFiled(inst *ssa.Field) ([]wat.Inst, wir.ValueType
 	field := inst.X.Type().Underlying().(*types.Struct).Field(inst.Field)
 	fieldname := wir.GenSymbolName(field.Name())
 	if field.Embedded() {
-		if _, ok := field.Type().(*types.Named); ok {
-			pkgname, _ := wir.GetPkgMangleName(field.Pkg().Path())
-			fieldname = pkgname + "." + fieldname
-		}
+		//if _, ok := field.Type().(*types.Named); ok {
+		//	pkgname, _ := wir.GetPkgMangleName(field.Pkg().Path())
+		//	fieldname = pkgname + "." + fieldname
+		//}
 		fieldname = "$" + fieldname
 	}
 
@@ -873,10 +873,10 @@ func (g *functionGenerator) genFieldAddr(inst *ssa.FieldAddr) ([]wat.Inst, wir.V
 	field := inst.X.Type().Underlying().(*types.Pointer).Elem().Underlying().(*types.Struct).Field(inst.Field)
 	fieldname := wir.GenSymbolName(field.Name())
 	if field.Embedded() {
-		if _, ok := field.Type().(*types.Named); ok {
-			pkgname, _ := wir.GetPkgMangleName(field.Pkg().Path())
-			fieldname = pkgname + "." + fieldname
-		}
+		//if _, ok := field.Type().(*types.Named); ok {
+		//	pkgname, _ := wir.GetPkgMangleName(field.Pkg().Path())
+		//	fieldname = pkgname + "." + fieldname
+		//}
 		fieldname = "$" + fieldname
 	}
 
