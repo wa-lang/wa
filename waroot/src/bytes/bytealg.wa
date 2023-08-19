@@ -1,0 +1,35 @@
+// 版权 @2023 凹语言 作者。保留所有权利。
+
+
+// MaxLen is the maximum length of the string to be searched for (argument b) in Index.
+// If MaxLen is not 0, make sure MaxLen >= 4.
+global bytealg_MaxLen: int
+
+// FIXME: the logic of HashStrBytes, HashStrRevBytes, IndexRabinKarpBytes and HashStr, HashStrRev,
+// IndexRabinKarp are exactly the same, except that the types are different. Can we eliminate
+// three of them without causing allocation?
+
+// PrimeRK is the prime base used in Rabin-Karp algorithm.
+const bytealg_PrimeRK = 16777619
+
+const bytealg_MaxBruteForce = 0
+
+// Index returns the index of the first instance of b in a, or -1 if b is not present in a.
+// Requires 2 <= len(b) <= MaxLen.
+func bytealg_Index(a, b: []byte) => int {
+	panic("unimplemented")
+}
+
+// IndexString returns the index of the first instance of b in a, or -1 if b is not present in a.
+// Requires 2 <= len(b) <= MaxLen.
+func bytealg_IndexString(a, b: string) => int {
+	panic("unimplemented")
+}
+
+// Cutover reports the number of failures of IndexByte we should tolerate
+// before switching over to Index.
+// n is the number of bytes processed so far.
+// See the bytes.Index implementation for details.
+func bytealg_Cutover(n: int) => int {
+	panic("unimplemented")
+}

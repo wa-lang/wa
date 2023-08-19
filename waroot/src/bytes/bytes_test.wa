@@ -1,11 +1,322 @@
 // 版权 @2023 凹语言 作者。保留所有权利。
 
+import (
+	"unicode/utf8"
+)
+
+type BinOpTest struct {
+	a: string
+	b: string
+	i: int
+}
+
 func TestEqual {
 	for _, tt := range compareTests {
 		eql := Equal(tt.a, tt.b)
 		if eql != (tt.i == 0) {
 			println(string(tt.a), string(tt.b), eql)
 			assert(false, `Equal failed`)
+		}
+	}
+}
+
+func TestEqualExhaustive {
+	size := 128
+	//if testing.Short() {
+	size = 32
+	//}
+	a := make([]byte, size)
+	b := make([]byte, size)
+	b_init := make([]byte, size)
+	// randomish but deterministic data
+	for i := 0; i < size; i++ {
+		a[i] = byte(17 * i)
+		b_init[i] = byte(23*i + 100)
+	}
+
+	for len := 0; len <= size; len++ {
+		for x := 0; x <= size-len; x++ {
+			for y := 0; y <= size-len; y++ {
+				copy(b, b_init)
+				copy(b[y:y+len], a[x:x+len])
+				if !Equal(a[x:x+len], b[y:y+len]) || !Equal(b[y:y+len], a[x:x+len]) {
+					assert(false)
+					//t.Errorf("Equal(%d, %d, %d) = false", len, x, y)
+				}
+			}
+		}
+	}
+}
+
+// make sure Equal returns false for minimally different strings. The data
+// is all zeros except for a single one in one location.
+func TestNotEqual {
+	size := 128
+	//if testing.Short() {
+		size = 32
+	//}
+	a := make([]byte, size)
+	b := make([]byte, size)
+
+	for len := 0; len <= size; len++ {
+		for x := 0; x <= size-len; x++ {
+			for y := 0; y <= size-len; y++ {
+				for diffpos := x; diffpos < x+len; diffpos++ {
+					a[diffpos] = 1
+					if Equal(a[x:x+len], b[y:y+len]) || Equal(b[y:y+len], a[x:x+len]) {
+						assert(false)
+						//t.Errorf("NotEqual(%d, %d, %d, %d) = true", len, x, y, diffpos)
+					}
+					a[diffpos] = 0
+				}
+			}
+		}
+	}
+}
+
+
+var indexTests = []BinOpTest{
+	{"", "", 0},
+	{"", "a", -1},
+	{"", "foo", -1},
+	{"fo", "foo", -1},
+	{"foo", "baz", -1},
+	{"foo", "foo", 0},
+	{"oofofoofooo", "f", 2},
+	{"oofofoofooo", "foo", 4},
+	{"barfoobarfoo", "foo", 3},
+	{"foo", "", 0},
+	{"foo", "o", 1},
+	{"abcABCabc", "A", 3},
+	// cases with one byte strings - test IndexByte and special case in Index()
+	{"", "a", -1},
+	{"x", "a", -1},
+	{"x", "x", 0},
+	{"abc", "a", 0},
+	{"abc", "b", 1},
+	{"abc", "c", 2},
+	{"abc", "x", -1},
+	{"barfoobarfooyyyzzzyyyzzzyyyzzzyyyxxxzzzyyy", "x", 33},
+	{"foofyfoobarfoobar", "y", 4},
+	{"oooooooooooooooooooooo", "r", -1},
+	{"oxoxoxoxoxoxoxoxoxoxoxoy", "oy", 22},
+	{"oxoxoxoxoxoxoxoxoxoxoxox", "oy", -1},
+	// test fallback to Rabin-Karp.
+	{"000000000000000000000000000000000000000000000000000000000000000000000001", "0000000000000000000000000000000000000000000000000000000000000000001", 5},
+}
+
+func TestIndex {
+	// todo
+}
+
+func TestLastIndex {
+	// todo
+}
+func TestIndexAny {
+	// todo
+}
+
+func TestLastIndexAny {
+	// todo
+}
+
+func TestIndexByte{
+	for _, tt := range indexTests {
+		if len(tt.b) != 1 {
+			continue
+		}
+		a := []byte(tt.a)
+		b := tt.b[0]
+		pos := IndexByte(a, b)
+		if pos != tt.i {
+			assert(false)
+			// t.Errorf(`IndexByte(%q, '%c') = %v`, tt.a, b, pos)
+		}
+		posp := indexBytePortable(a, b)
+		if posp != tt.i {
+			assert(false)
+			//t.Errorf(`indexBytePortable(%q, '%c') = %v`, tt.a, b, posp)
+		}
+	}
+}
+
+func indexBytePortable(s: []byte, c: byte) => int {
+	for i, b := range s {
+		if b == c {
+			return i
+		}
+	}
+	return -1
+}
+
+func TestLastIndexByte {
+	testCases := []BinOpTest{
+		{"", "q", -1},
+		{"abcdef", "q", -1},
+		{"abcdefabcdef", "a", len("abcdef")},      // something in the middle
+		{"abcdefabcdef", "f", len("abcdefabcde")}, // last byte
+		{"zabcdefabcdef", "z", 0},                 // first byte
+		{"a☺b☻c☹d", "b", len("a☺")},               // non-ascii
+	}
+	for _, test := range testCases {
+		actual := LastIndexByte([]byte(test.a), test.b[0])
+		if actual != test.i {
+			assert(false)
+			//t.Errorf("LastIndexByte(%q,%c) = %v; want %v", test.a, test.b[0], actual, test.i)
+		}
+	}
+}
+
+// test a larger buffer with different sizes and alignments
+func TestIndexByteBig {
+	n := 1024
+	//if testing.Short() {
+	n = 128
+	//}
+	b := make([]byte, n)
+	for i := 0; i < n; i++ {
+		// different start alignments
+		b1 := b[i:]
+		for j := 0; j < len(b1); j++ {
+			b1[j] = 'x'
+			pos := IndexByte(b1, 'x')
+			if pos != j {
+				assert(false)
+				//t.Errorf("IndexByte(%q, 'x') = %v", b1, pos)
+			}
+			b1[j] = 0
+			pos = IndexByte(b1, 'x')
+			if pos != -1 {
+				assert(false)
+				//t.Errorf("IndexByte(%q, 'x') = %v", b1, pos)
+			}
+		}
+		// different end alignments
+		b1 = b[:i]
+		for j := 0; j < len(b1); j++ {
+			b1[j] = 'x'
+			pos := IndexByte(b1, 'x')
+			if pos != j {
+				assert(false)
+				//t.Errorf("IndexByte(%q, 'x') = %v", b1, pos)
+			}
+			b1[j] = 0
+			pos = IndexByte(b1, 'x')
+			if pos != -1 {
+				assert(false)
+				//t.Errorf("IndexByte(%q, 'x') = %v", b1, pos)
+			}
+		}
+		// different start and end alignments
+		b1 = b[i/2 : n-(i+1)/2]
+		for j := 0; j < len(b1); j++ {
+			b1[j] = 'x'
+			pos := IndexByte(b1, 'x')
+			if pos != j {
+				assert(false)
+				//t.Errorf("IndexByte(%q, 'x') = %v", b1, pos)
+			}
+			b1[j] = 0
+			pos = IndexByte(b1, 'x')
+			if pos != -1 {
+				assert(false)
+				//t.Errorf("IndexByte(%q, 'x') = %v", b1, pos)
+			}
+		}
+	}
+}
+
+// test a small index across all page offsets
+func TestIndexByteSmall {
+	b := make([]byte, 5015) // bigger than a page
+	// Make sure we find the correct byte even when straddling a page.
+	for i := 0; i <= len(b)-15; i++ {
+		for j := 0; j < 15; j++ {
+			b[i+j] = byte(100 + j)
+		}
+		for j := 0; j < 15; j++ {
+			p := IndexByte(b[i:i+15], byte(100+j))
+			if p != j {
+				assert(false)
+				//t.Errorf("IndexByte(%q, %d) = %d", b[i:i+15], 100+j, p)
+			}
+		}
+		for j := 0; j < 15; j++ {
+			b[i+j] = 0
+		}
+	}
+	// Make sure matches outside the slice never trigger.
+	for i := 0; i <= len(b)-15; i++ {
+		for j := 0; j < 15; j++ {
+			b[i+j] = 1
+		}
+		for j := 0; j < 15; j++ {
+			p := IndexByte(b[i:i+15], byte(0))
+			if p != -1 {
+				assert(false)
+				//t.Errorf("IndexByte(%q, %d) = %d", b[i:i+15], 0, p)
+			}
+		}
+		for j := 0; j < 15; j++ {
+			b[i+j] = 0
+		}
+	}
+}
+
+func TestIndexRune {
+	if true {
+		//x := IndexRune([]byte("foo"), 'o')
+		//if x != 1 {
+		//	println(x)
+		//	assert(false)
+		//}
+	}
+	tests := []struct {
+		in:   string
+		rune: rune
+		want: int
+	}{
+		{"", 'a', -1},
+		{"", '☺', -1},
+		{"foo", '☹', -1},
+		{"foo", 'o', 1},
+		{"foo☺bar", '☺', 3},
+		//{"foo☺☻☹bar", '☹', 9},
+		{"a A x", 'A', 2},
+		{"some_text=some_value", '=', 9},
+		{"☺a", 'a', 3},
+		{"a☻☺b", '☺', 4},
+
+		// RuneError should match any invalid UTF-8 byte sequence.
+		{"�", '�', 0},
+		//{"\xff", '�', 0},
+		{"☻x�", '�', len("☻x")},
+		{"☻x\xe2\x98", '�', len("☻x")},
+		{"☻x\xe2\x98�", '�', len("☻x")},
+		{"☻x\xe2\x98x", '�', len("☻x")},
+
+		// Invalid rune values should never match.
+		{"a☺b☻c☹d\xe2\x98�\xff�\xed\xa0\x80", -1, -1},
+		{"a☺b☻c☹d\xe2\x98�\xff�\xed\xa0\x80", 0xD800, -1}, // Surrogate pair
+		{"a☺b☻c☹d\xe2\x98�\xff�\xed\xa0\x80", utf8.MaxRune + 1, -1},
+	}
+	for i, tt := range tests {
+		if got := IndexRune([]byte(tt.in), tt.rune); got != tt.want {
+			println(i, tt.in, tt.rune, got, tt.want)
+			assert(false)
+			//t.Errorf("IndexRune(%q, %d) = %v; want %v", tt.in, tt.rune, got, tt.want)
+		}
+	}
+
+	haystack := []byte("test世界")
+	{
+		if i := IndexRune(haystack, 's'); i != 2 {
+			assert(false)
+			//t.Fatalf("'s' at %d; want 2", i)
+		}
+		if i := IndexRune(haystack, '世'); i != 4 {
+			assert(false)
+			//t.Fatalf("'世' at %d; want 4", i)
 		}
 	}
 }

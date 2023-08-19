@@ -1,5 +1,9 @@
 // 版权 @2023 凹语言 作者。保留所有权利。
 
+import (
+	"unicode/utf8"
+)
+
 // Equal reports whether a and b
 // are the same length and contain the same bytes.
 // A nil argument is equivalent to an empty slice.
@@ -24,8 +28,96 @@ func EqualFold(s, t: []byte) => bool {
 	return true
 }
 
-func Index(d: []byte, x: []byte) => int {
-	return 0
+
+// Index returns the index of the first instance of sep in s, or -1 if sep is not present in s.
+func Index(s, sep: []byte) => int {
+	n := len(sep)
+	switch {
+	case n == 0:
+		return 0
+	case n == 1:
+		return IndexByte(s, sep[0])
+	case n == len(s):
+		if Equal(sep, s) {
+			return 0
+		}
+		return -1
+	case n > len(s):
+		return -1
+	case n <= bytealg_MaxLen:
+		// Use brute force when s and sep both are small
+		//if len(s) <= bytealg.MaxBruteForce {
+		//	return bytealg.Index(s, sep)
+		//}
+		c0 := sep[0]
+		c1 := sep[1]
+		i := 0
+		t := len(s) - n + 1
+		fails := 0
+		for i < t {
+			if s[i] != c0 {
+				// IndexByte is faster than bytealg.Index, so use it as long as
+				// we're not getting lots of false positives.
+				o := IndexByte(s[i+1:t], c0)
+				if o < 0 {
+					return -1
+				}
+				i += o + 1
+			}
+			if s[i+1] == c1 && Equal(s[i:i+n], sep) {
+				return i
+			}
+			fails++
+			i++
+			// Switch to bytealg.Index when IndexByte produces too many false positives.
+			//if fails > bytealg.Cutover(i) {
+			//	r := bytealg.Index(s[i:], sep)
+			//	if r >= 0 {
+			//		return r + i
+			//	}
+			//	return -1
+			//}
+		}
+		return -1
+	}
+	c0 := sep[0]
+	c1 := sep[1]
+	i := 0
+	fails := 0
+	t := len(s) - n + 1
+	for i < t {
+		if s[i] != c0 {
+			o := IndexByte(s[i+1:t], c0)
+			if o < 0 {
+				break
+			}
+			i += o + 1
+		}
+		if s[i+1] == c1 && Equal(s[i:i+n], sep) {
+			return i
+		}
+		i++
+		fails++
+		if fails >= 4+i>>4 && i < t {
+			// Give up on IndexByte, it isn't skipping ahead
+			// far enough to be better than Rabin-Karp.
+			// Experiments (using IndexPeriodic) suggest
+			// the cutover is about 16 byte skips.
+			// TODO: if large prefixes of sep are matching
+			// we should cutover at even larger average skips,
+			// because Equal becomes that much more expensive.
+			// This code does not take that effect into account.
+
+			//j := bytealg.IndexRabinKarpBytes(s[i:], sep)
+			//if j < 0 {
+			//	return -1
+			//}
+			//return i + j
+
+			return -1
+		}
+	}
+	return -1
 }
 
 func IndexByte(b: []byte, c: byte) => int {
@@ -131,4 +223,41 @@ func Compare(a, b: []byte) => int {
 		return +1
 	}
 	return 0
+}
+
+// LastIndexByte returns the index of the last instance of c in s, or -1 if c is not present in s.
+func LastIndexByte(s: []byte, c: byte) => int {
+	for i := len(s) - 1; i >= 0; i-- {
+		if s[i] == c {
+			return i
+		}
+	}
+	return -1
+}
+
+// IndexRune interprets s as a sequence of UTF-8-encoded code points.
+// It returns the byte index of the first occurrence in s of the given rune.
+// It returns -1 if rune is not present in s.
+// If r is utf8.RuneError, it returns the first instance of any
+// invalid UTF-8 byte sequence.
+func IndexRune(s: []byte, r: rune) => int {
+	switch {
+	case 0 <= r && r < utf8.RuneSelf:
+		return IndexByte(s, byte(r))
+	case r == utf8.RuneError:
+		for i := 0; i < len(s); {
+			r1, n := utf8.DecodeRune(s[i:])
+			if r1 == utf8.RuneError {
+				return i
+			}
+			i += n
+		}
+		return -1
+	case !utf8.ValidRune(r):
+		return -1
+	default:
+		b: [utf8.UTFMax]byte
+		n := utf8.EncodeRune(b[:], r)
+		return Index(s, b[:n])
+	}
 }
