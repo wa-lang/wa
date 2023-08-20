@@ -33,3 +33,23 @@ func bytealg_IndexString(a, b: string) => int {
 func bytealg_Cutover(n: int) => int {
 	panic("unimplemented")
 }
+
+func bytealg_Count(b: []byte, c: byte) => int {
+	n := 0
+	for _, x := range b {
+		if x == c {
+			n++
+		}
+	}
+	return n
+}
+
+func bytealg_CountString(s: string, c: byte) => int {
+	n := 0
+	for i := 0; i < len(s); i++ {
+		if s[i] == c {
+			n++
+		}
+	}
+	return n
+}

@@ -261,3 +261,113 @@ func IndexRune(s: []byte, r: rune) => int {
 		return Index(s, b[:n])
 	}
 }
+
+
+// Count counts the number of non-overlapping instances of sep in s.
+// If sep is an empty slice, Count returns 1 + the number of UTF-8-encoded code points in s.
+func Count(s, sep: []byte) => int {
+	// special case
+	if len(sep) == 0 {
+		return utf8.RuneCount(s) + 1
+	}
+	if len(sep) == 1 {
+		return bytealg_Count(s, sep[0])
+	}
+	n := 0
+	for {
+		i := Index(s, sep)
+		if i == -1 {
+			return n
+		}
+		n++
+		s = s[i+len(sep):]
+	}
+}
+
+// SplitN slices s into subslices separated by sep and returns a slice of
+// the subslices between those separators.
+// If sep is empty, SplitN splits after each UTF-8 sequence.
+// The count determines the number of subslices to return:
+//   n > 0: at most n subslices; the last subslice will be the unsplit remainder.
+//   n == 0: the result is nil (zero subslices)
+//   n < 0: all subslices
+func SplitN(s, sep: []byte, n: int) => [][]byte {
+	return genSplit(s, sep, 0, n)
+}
+
+// Generic split: splits after each instance of sep,
+// including sepSave bytes of sep in the subslices.
+func genSplit(s, sep: []byte, sepSave, n: int) => [][]byte {
+	if n == 0 {
+		return nil
+	}
+	if len(sep) == 0 {
+		return explode(s, n)
+	}
+	if n < 0 {
+		n = Count(s, sep) + 1
+	}
+
+	a := make([][]byte, n)
+	n--
+	i := 0
+	for i < n {
+		m := Index(s, sep)
+		if m < 0 {
+			break
+		}
+		a[i] = s[: m+sepSave : m+sepSave]
+		s = s[m+len(sep):]
+		i++
+	}
+	a[i] = s
+	return a[:i+1]
+}
+
+
+// explode splits s into a slice of UTF-8 sequences, one per Unicode code point (still slices of bytes),
+// up to a maximum of n byte slices. Invalid UTF-8 sequences are chopped into individual bytes.
+func explode(s: []byte, n: int) => [][]byte {
+	if n <= 0 {
+		n = len(s)
+	}
+	a := make([][]byte, n)
+	size: int
+	na := 0
+	for len(s) > 0 {
+		if na+1 >= n {
+			a[na] = s
+			na++
+			break
+		}
+		_, size = utf8.DecodeRune(s)
+		a[na] = s[0:size:size]
+		s = s[size:]
+		na++
+	}
+	return a[0:na]
+}
+
+// Join concatenates the elements of s to create a new byte slice. The separator
+// sep is placed between elements in the resulting slice.
+func Join(s: [][]byte, sep: []byte) => []byte {
+	if len(s) == 0 {
+		return []byte{}
+	}
+	if len(s) == 1 {
+		// Just return a copy.
+		return append([]byte(nil), s[0]...)
+	}
+	n := len(sep) * (len(s) - 1)
+	for _, v := range s {
+		n += len(v)
+	}
+
+	b := make([]byte, n)
+	bp := copy(b, s[0])
+	for _, v := range s[1:] {
+		bp += copy(b[bp:], sep)
+		bp += copy(b[bp:], v)
+	}
+	return b
+}
