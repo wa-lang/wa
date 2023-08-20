@@ -916,15 +916,18 @@ func (g *functionGenerator) genSlice(inst *ssa.Slice) ([]wat.Inst, wir.ValueType
 	}
 
 	x := g.getValue(inst.X)
-	var low, high wir.Value
+	var low, high, max wir.Value
 	if inst.Low != nil {
 		low = g.getValue(inst.Low).value
 	}
 	if inst.High != nil {
 		high = g.getValue(inst.High).value
 	}
+	if inst.Max != nil {
+		max = g.getValue(inst.Max).value
+	}
 
-	return g.module.EmitGenSlice(x.value, low, high)
+	return g.module.EmitGenSlice(x.value, low, high, max)
 }
 
 func (g *functionGenerator) genMakeSlice(inst *ssa.MakeSlice) ([]wat.Inst, wir.ValueType) {

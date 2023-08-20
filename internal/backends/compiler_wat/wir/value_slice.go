@@ -63,7 +63,7 @@ func (t *Slice) EmitLoadFromAddr(addr Value, offset int) []wat.Inst {
 }
 
 /*这个函数极其不优雅*/
-func (t *Slice) emitGenFromRefOfSlice(x *aRef, low, high Value) (insts []wat.Inst) {
+func (t *Slice) emitGenFromRefOfSlice(x *aRef, low, high, max Value) (insts []wat.Inst) {
 	//block
 	insts = append(insts, x.Extract("d").EmitPush()...)
 	insts = append(insts, wat.NewInstLoad(wat.U32{}, 0, 1))
@@ -93,15 +93,19 @@ func (t *Slice) emitGenFromRefOfSlice(x *aRef, low, high Value) (insts []wat.Ins
 	insts = append(insts, wat.NewInstSub(wat.U32{}))
 
 	//cap:
-	insts = append(insts, x.Extract("d").EmitPush()...)
-	insts = append(insts, wat.NewInstLoad(wat.U32{}, 12, 1))
+	if max == nil {
+		insts = append(insts, x.Extract("d").EmitPush()...)
+		insts = append(insts, wat.NewInstLoad(wat.U32{}, 12, 1))
+	} else {
+		insts = append(insts, max.EmitPush()...)
+	}
 	insts = append(insts, low.EmitPush()...)
 	insts = append(insts, wat.NewInstSub(wat.U32{}))
 
 	return
 }
 
-func (t *Slice) emitGenFromRefOfArray(x *aRef, low, high Value) (insts []wat.Inst) {
+func (t *Slice) emitGenFromRefOfArray(x *aRef, low, high, max Value) (insts []wat.Inst) {
 	//block
 	insts = append(insts, x.Extract("b").EmitPush()...)
 
@@ -127,7 +131,11 @@ func (t *Slice) emitGenFromRefOfArray(x *aRef, low, high Value) (insts []wat.Ins
 	insts = append(insts, wat.NewInstSub(wat.U32{}))
 
 	//cap:
-	insts = append(insts, array_len.EmitPush()...)
+	if max == nil {
+		insts = append(insts, array_len.EmitPush()...)
+	} else {
+		insts = append(insts, max.EmitPush()...)
+	}
 	insts = append(insts, low.EmitPush()...)
 	insts = append(insts, wat.NewInstSub(wat.U32{}))
 
@@ -517,7 +525,7 @@ func (v *aSlice) emitStoreToAddr(addr Value, offset int) []wat.Inst {
 	return v.aStruct.emitStoreToAddr(addr, offset)
 }
 
-func (v *aSlice) emitSub(low, high Value) (insts []wat.Inst) {
+func (v *aSlice) emitSub(low, high, max Value) (insts []wat.Inst) {
 	//block
 	insts = append(insts, v.Extract("b").EmitPush()...)
 
@@ -540,7 +548,11 @@ func (v *aSlice) emitSub(low, high Value) (insts []wat.Inst) {
 	insts = append(insts, wat.NewInstSub(wat.U32{}))
 
 	//cap:
-	insts = append(insts, v.Extract("c").EmitPush()...)
+	if max == nil {
+		insts = append(insts, v.Extract("c").EmitPush()...)
+	} else {
+		insts = append(insts, max.EmitPush()...)
+	}
 	insts = append(insts, low.EmitPush()...)
 	insts = append(insts, wat.NewInstSub(wat.U32{}))
 

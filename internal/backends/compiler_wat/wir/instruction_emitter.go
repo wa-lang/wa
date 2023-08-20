@@ -469,10 +469,10 @@ func (m *Module) EmitGenIndex(x, id Value) (insts []wat.Inst, ret_type ValueType
 	return
 }
 
-func (m *Module) EmitGenSlice(x, low, high Value) (insts []wat.Inst, ret_type ValueType) {
+func (m *Module) EmitGenSlice(x, low, high, max Value) (insts []wat.Inst, ret_type ValueType) {
 	switch x := x.(type) {
 	case *aSlice:
-		insts = x.emitSub(low, high)
+		insts = x.emitSub(low, high, max)
 		ret_type = x.Type()
 
 	case *aString:
@@ -483,12 +483,12 @@ func (m *Module) EmitGenSlice(x, low, high Value) (insts []wat.Inst, ret_type Va
 		switch btype := x.Type().(*Ref).Base.(type) {
 		case *Slice:
 			slt := m.GenValueType_Slice(btype.Base)
-			insts = slt.emitGenFromRefOfSlice(x, low, high)
+			insts = slt.emitGenFromRefOfSlice(x, low, high, max)
 			ret_type = slt
 
 		case *Array:
 			slt := m.GenValueType_Slice(btype.Base)
-			insts = slt.emitGenFromRefOfArray(x, low, high)
+			insts = slt.emitGenFromRefOfArray(x, low, high, max)
 			ret_type = slt
 
 		default:
