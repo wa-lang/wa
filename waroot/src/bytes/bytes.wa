@@ -1,7 +1,6 @@
 // 版权 @2023 凹语言 作者。保留所有权利。
 
 import (
-	//"unicode" => _
 	"unicode/utf8"
 )
 
@@ -339,16 +338,31 @@ func genSplit(s, sep: []byte, sepSave, n: int) => [][]byte {
 global asciiSpace = [256]uint8{'\t': 1, '\n': 1, '\v': 1, '\f': 1, '\r': 1, ' ': 1}
 
 
+const (
+	unicode_MaxRune         = '\U0010FFFF' // Maximum valid Unicode code point.
+	unicode_ReplacementChar = '\uFFFD'     // Represents invalid code points.
+	unicode_MaxASCII        = '\u007F'     // maximum ASCII value.
+	unicode_MaxLatin1       = '\u00FF'     // maximum Latin-1 value.
+)
+
+// 简化版本, 不支持 unicode 空白
+func unicode_IsSpace(r: rune) => bool {
+	// This property isn't the same as Z; special-case it.
+	if u32(r) <= unicode_MaxLatin1 {
+		switch r {
+		case '\t', '\n', '\v', '\f', '\r', ' ', 0x85, 0xA0:
+			return true
+		}
+		return false
+	}
+	return false
+}
+
 // Fields interprets s as a sequence of UTF-8-encoded code points.
 // It splits the slice s around each instance of one or more consecutive white space
 // characters, as defined by unicode.IsSpace, returning a slice of subslices of s or an
 // empty slice if s contains only white space.
 func Fields(s: []byte) => [][]byte {
-	if true {
-		return nil
-	}
-
-	/*
 	// First count the fields.
 	// This is an exact count if s is ASCII, otherwise it is an approximation.
 	n := 0
@@ -365,7 +379,7 @@ func Fields(s: []byte) => [][]byte {
 
 	if setBits >= utf8.RuneSelf {
 		// Some runes in the input slice are not ASCII.
-		return FieldsFunc(s, unicode.IsSpace)
+		return FieldsFunc(s, unicode_IsSpace)
 	}
 
 	// ASCII fast path
@@ -396,9 +410,6 @@ func Fields(s: []byte) => [][]byte {
 		a[na] = s[fieldStart:len(s):len(s)]
 	}
 	return a
-
-	*/
-	return nil
 }
 
 
@@ -410,10 +421,6 @@ func Fields(s: []byte) => [][]byte {
 // FieldsFunc makes no guarantees about the order in which it calls f(c)
 // and assumes that f always returns the same value for a given c.
 func FieldsFunc(s: []byte, f: func(rune) => bool) => [][]byte {
-	if true {
-		return nil
-	}
-	/*
 	// A span is used to record a slice of s of the form s[start:end].
 	// The start index is inclusive and the end index is exclusive.
 	type span struct {
@@ -458,9 +465,6 @@ func FieldsFunc(s: []byte, f: func(rune) => bool) => [][]byte {
 	}
 
 	return a
-	*/
-
-	return nil
 }
 
 // explode splits s into a slice of UTF-8 sequences, one per Unicode code point (still slices of bytes),
