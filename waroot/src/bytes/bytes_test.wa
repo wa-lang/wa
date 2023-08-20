@@ -471,8 +471,7 @@ func TestSplit {
 		if tt.n < 0 {
 			//b := Split([]byte(tt.s), []byte(tt.sep))
 			//if !reflect.DeepEqual(a, b) {
-				assert(false)
-				//t.Errorf("Split disagrees withSplitN(%q, %q, %d) = %v; want %v", tt.s, tt.sep, tt.n, b, a)
+			//	t.Errorf("Split disagrees withSplitN(%q, %q, %d) = %v; want %v", tt.s, tt.sep, tt.n, b, a)
 			//}
 		}
 		if len(a) > 0 {
