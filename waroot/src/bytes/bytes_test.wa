@@ -484,6 +484,109 @@ func TestSplit {
 	}
 }
 
+global splitaftertests = []SplitTest{
+	{abcd, "a", -1, []string{"a", "bcd"}},
+	{abcd, "z", -1, []string{"abcd"}},
+	{abcd, "", -1, []string{"a", "b", "c", "d"}},
+	{commas, ",", -1, []string{"1,", "2,", "3,", "4"}},
+	{dots, "...", -1, []string{"1...", ".2...", ".3...", ".4"}},
+	{faces, "☹", -1, []string{"☺☻☹", ""}},
+	{faces, "~", -1, []string{faces}},
+	{faces, "", -1, []string{"☺", "☻", "☹"}},
+	{"1 2 3 4", " ", 3, []string{"1 ", "2 ", "3 4"}},
+	{"1 2 3", " ", 3, []string{"1 ", "2 ", "3"}},
+	{"1 2", " ", 3, []string{"1 ", "2"}},
+	{"123", "", 2, []string{"1", "23"}},
+	{"123", "", 17, []string{"1", "2", "3"}},
+}
+
+
+func TestSplitAfter {
+	for _, tt := range splitaftertests {
+		a := SplitAfterN([]byte(tt.s), []byte(tt.sep), tt.n)
+
+		// Appending to the results should not change future results.
+		x: []byte
+		for _, v := range a {
+			x = append(v, 'z')
+		}
+
+		result := sliceOfString(a)
+		if !eq(result, tt.a) {
+			assert(false)
+			//t.Errorf(`Split(%q, %q, %d) = %v; want %v`, tt.s, tt.sep, tt.n, result, tt.a)
+			//continue
+		}
+
+		if want := tt.a[len(tt.a)-1] + "z"; string(x) != want {
+			assert(false)
+			//t.Errorf("last appended result was %s; want %s", x, want)
+		}
+
+		s := Join(a, nil)
+		if string(s) != tt.s {
+			assert(false)
+			//t.Errorf(`Join(Split(%q, %q, %d), %q) = %q`, tt.s, tt.sep, tt.n, tt.sep, s)
+		}
+		if tt.n < 0 {
+			//b := SplitAfter([]byte(tt.s), []byte(tt.sep))
+			//if !reflect.DeepEqual(a, b) {
+			//	t.Errorf("SplitAfter disagrees withSplitAfterN(%q, %q, %d) = %v; want %v", tt.s, tt.sep, tt.n, b, a)
+			//}
+		}
+	}
+}
+
+type FieldsTest struct {
+	s: string
+	a: []string
+}
+
+global fieldstests = []FieldsTest{
+	{"", []string{}},
+	{" ", []string{}},
+	{" \t ", []string{}},
+	{"  abc  ", []string{"abc"}},
+	{"1 2 3 4", []string{"1", "2", "3", "4"}},
+	{"1  2  3  4", []string{"1", "2", "3", "4"}},
+	{"1\t\t2\t\t3\t4", []string{"1", "2", "3", "4"}},
+	{"1\u20002\u20013\u20024", []string{"1", "2", "3", "4"}},
+	{"\u2000\u2001\u2002", []string{}},
+	{"\n™\t™\n", []string{"™", "™"}},
+	{faces, []string{faces}},
+}
+
+func _TestFields {
+	for _, tt := range fieldstests {
+		b := []byte(tt.s)
+		a := Fields(b)
+
+		// Appending to the results should not change future results.
+		x: []byte
+		for _, v := range a {
+			x = append(v, 'z')
+		}
+
+		result := sliceOfString(a)
+		if !eq(result, tt.a) {
+			assert(false)
+			//t.Errorf("Fields(%q) = %v; want %v", tt.s, a, tt.a)
+			//continue
+		}
+
+		if string(b) != tt.s {
+			//t.Errorf("slice changed to %s; want %s", string(b), tt.s)
+		}
+		if len(tt.a) > 0 {
+			assert(false)
+			if want := tt.a[len(tt.a)-1] + "z"; string(x) != want {
+				assert(false)
+				// t.Errorf("last appended result was %s; want %s", x, want)
+			}
+		}
+	}
+}
+
 func TestEqualFold {
 	for _, tt := range EqualFoldTests {
 		if out := EqualFold([]byte(tt.s), []byte(tt.t)); out != tt.out {
