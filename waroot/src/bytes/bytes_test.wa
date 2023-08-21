@@ -1,6 +1,8 @@
 // 版权 @2023 凹语言 作者。保留所有权利。
 
 import (
+	"unicode"
+	"unicode/ctypes"
 	"unicode/utf8"
 )
 
@@ -53,7 +55,7 @@ func TestEqualExhaustive {
 func TestNotEqual {
 	size := 128
 	//if testing.Short() {
-		size = 32
+	size = 32
 	//}
 	a := make([]byte, size)
 	b := make([]byte, size)
@@ -73,7 +75,6 @@ func TestNotEqual {
 		}
 	}
 }
-
 
 var indexTests = []BinOpTest{
 	{"", "", 0},
@@ -120,7 +121,7 @@ func TestLastIndexAny {
 	// todo
 }
 
-func TestIndexByte{
+func TestIndexByte {
 	for _, tt := range indexTests {
 		if len(tt.b) != 1 {
 			continue
@@ -500,7 +501,6 @@ global splitaftertests = []SplitTest{
 	{"123", "", 17, []string{"1", "2", "3"}},
 }
 
-
 func TestSplitAfter {
 	for _, tt := range splitaftertests {
 		a := SplitAfterN([]byte(tt.s), []byte(tt.sep), tt.n)
@@ -586,6 +586,398 @@ func TestFields {
 	}
 }
 
+func TestFieldsFunc {
+	for _, tt := range fieldstests {
+		a := FieldsFunc([]byte(tt.s), ctypes.IsSpace)
+		result := sliceOfString(a)
+		if !eq(result, tt.a) {
+			assert(false)
+			//t.Errorf("FieldsFunc(%q, unicode.IsSpace) = %v; want %v", tt.s, a, tt.a)
+			//continue
+		}
+	}
+	pred := func(c: rune) => bool { return c == 'X' }
+	fieldsFuncTests := []FieldsTest{
+		{"", []string{}},
+		{"XX", []string{}},
+		{"XXhiXXX", []string{"hi"}},
+		{"aXXbXXXcX", []string{"a", "b", "c"}},
+	}
+	for _, tt := range fieldsFuncTests {
+		b := []byte(tt.s)
+		a := FieldsFunc(b, pred)
+
+		// Appending to the results should not change future results.
+		x: []byte
+		for _, v := range a {
+			x = append(v, 'z')
+		}
+
+		result := sliceOfString(a)
+		if !eq(result, tt.a) {
+			assert(false)
+			//t.Errorf("FieldsFunc(%q) = %v, want %v", tt.s, a, tt.a)
+		}
+
+		if string(b) != tt.s {
+			assert(false)
+			//t.Errorf("slice changed to %s; want %s", b, tt.s)
+		}
+		if len(tt.a) > 0 {
+			if want := tt.a[len(tt.a)-1] + "z"; string(x) != want {
+				assert(false)
+				//t.Errorf("last appended result was %s; want %s", x, want)
+			}
+		}
+	}
+}
+
+// Test case for any function which accepts and returns a byte slice.
+// For ease of creation, we write the input byte slice as a string.
+type StringTest struct {
+	in:  string
+	out: []byte
+}
+
+global upperTests = []StringTest{
+	{"", []byte("")},
+	{"ONLYUPPER", []byte("ONLYUPPER")},
+	{"abc", []byte("ABC")},
+	{"AbC123", []byte("ABC123")},
+	{"azAZ09_", []byte("AZAZ09_")},
+	{"longStrinGwitHmixofsmaLLandcAps", []byte("LONGSTRINGWITHMIXOFSMALLANDCAPS")},
+	//{"long\u0250string\u0250with\u0250nonascii\u2C6Fchars", []byte("LONG\u2C6FSTRING\u2C6FWITH\u2C6FNONASCII\u2C6FCHARS")},
+	//{"\u0250\u0250\u0250\u0250\u0250", []byte("\u2C6F\u2C6F\u2C6F\u2C6F\u2C6F")}, // grows one byte per char
+	//{"a\u0080\U0010FFFF", []byte("A\u0080\U0010FFFF")},                           // test utf8.RuneSelf and utf8.MaxRune
+}
+
+global lowerTests = []StringTest{
+	{"", []byte("")},
+	{"abc", []byte("abc")},
+	{"AbC123", []byte("abc123")},
+	{"azAZ09_", []byte("azaz09_")},
+	{"longStrinGwitHmixofsmaLLandcAps", []byte("longstringwithmixofsmallandcaps")},
+	//{"LONG\u2C6FSTRING\u2C6FWITH\u2C6FNONASCII\u2C6FCHARS", []byte("long\u0250string\u0250with\u0250nonascii\u0250chars")},
+	//{"\u2C6D\u2C6D\u2C6D\u2C6D\u2C6D", []byte("\u0251\u0251\u0251\u0251\u0251")}, // shrinks one byte per char
+	//{"A\u0080\U0010FFFF", []byte("a\u0080\U0010FFFF")},                           // test utf8.RuneSelf and utf8.MaxRune
+}
+
+const space = "\t\v\r\f\n"
+
+global trimSpaceTests = []StringTest{
+	{"", nil},
+	{"  a", []byte("a")},
+	{"b  ", []byte("b")},
+	{"abc", []byte("abc")},
+	{space + "abc" + space, []byte("abc")},
+	{" ", nil},
+	//{"\u3000 ", nil},
+	//{" \u3000", nil},
+	{" \t\r\n \t\t\r\r\n\n ", nil},
+	{" \t\r\n x\t\t\r\r\n\n ", []byte("x")},
+	//{" \u2000\t\r\n x\t\t\r\r\ny\n \u3000", []byte("x\t\t\r\r\ny")},
+	{"1 \t\r\n2", []byte("1 \t\r\n2")},
+	{" x\x80", []byte("x\x80")},
+	{" x\xc0", []byte("x\xc0")},
+	{"x \xc0\xc0 ", []byte("x \xc0\xc0")},
+	{"x \xc0", []byte("x \xc0")},
+	{"x \xc0 ", []byte("x \xc0")},
+	{"x \xc0\xc0 ", []byte("x \xc0\xc0")},
+	{"x ☺\xc0\xc0 ", []byte("x ☺\xc0\xc0")},
+	{"x ☺ ", []byte("x ☺")},
+}
+
+// Execute f on each test case.  funcName should be the name of f; it's used
+// in failure reports.
+func runStringTests(f: func([]byte) => []byte, funcName: string, testCases: []StringTest) {
+	for _, tc := range testCases {
+		actual := f([]byte(tc.in))
+		if actual == nil && tc.out != nil {
+			assert(false)
+			// t.Errorf("%s(%q) = nil; want %q", funcName, tc.in, tc.out)
+		}
+		if actual != nil && tc.out == nil {
+			assert(false)
+			//t.Errorf("%s(%q) = %q; want nil", funcName, tc.in, actual)
+		}
+		if !Equal(actual, tc.out) {
+			assert(false)
+			//t.Errorf("%s(%q) = %q; want %q", funcName, tc.in, actual, tc.out)
+		}
+	}
+}
+
+func tenRunes(r: rune) => string {
+	runes := make([]byte, 10)
+	for i := range runes {
+		runes[i] = byte(r)
+	}
+	return string(runes)
+}
+
+// User-defined self-inverse mapping function
+func rot13(r: rune) => rune {
+	const step = 13
+	if r >= 'a' && r <= 'z' {
+		return ((r - 'a' + step) % 26) + 'a'
+	}
+	if r >= 'A' && r <= 'Z' {
+		return ((r - 'A' + step) % 26) + 'A'
+	}
+	return r
+}
+
+func TestMap {
+	// Run a couple of awful growth/shrinkage tests
+	a := tenRunes('a')
+
+	// 1.  Grow. This triggers two reallocations in Map.
+	//maxRune := func(r: rune) => rune { return unicode.MaxRune }
+	//m := Map(maxRune, []byte(a))
+	//expect := tenRunes(unicode.MaxRune)
+	//if string(m) != expect {
+	//	t.Errorf("growing: expected %q got %q", expect, m)
+	//}
+
+	// 2. Shrink
+	minRune := func(r: rune) => rune { return 'a' }
+	m := Map(minRune, []byte(tenRunes(unicode.MaxRune)))
+	expect := a
+	if string(m) != expect {
+		assert(false)
+		//t.Errorf("shrinking: expected %q got %q", expect, m)
+	}
+
+	// 3. Rot13
+	m = Map(rot13, []byte("a to zed"))
+	expect = "n gb mrq"
+	if string(m) != expect {
+		assert(false)
+		//t.Errorf("rot13: expected %q got %q", expect, m)
+	}
+
+	// 4. Rot13^2
+	m = Map(rot13, Map(rot13, []byte("a to zed")))
+	expect = "a to zed"
+	if string(m) != expect {
+		assert(false)
+		//t.Errorf("rot13: expected %q got %q", expect, m)
+	}
+
+	// 5. Drop
+	dropNotLatin := func(r: rune) => rune {
+		// add by chai2010
+		if r < unicode.MaxLatin1 {
+			return r
+		}
+		//if unicode.Is(unicode.Latin, r) {
+		//	return r
+		//}
+		return -1
+	}
+	m = Map(dropNotLatin, []byte("Hello凹凹"))
+	expect = "Hello"
+	if string(m) != expect {
+		assert(false)
+		//t.Errorf("drop: expected %q got %q", expect, m)
+	}
+
+	// 6. Invalid rune
+	//invalidRune := func(r: rune) => rune {
+	//	return utf8.MaxRune + 1
+	//}
+	//m = Map(invalidRune, []byte("x"))
+	//expect = "\uFFFD"
+	//if string(m) != expect {
+	//	t.Errorf("invalidRune: expected %q got %q", expect, m)
+	//}
+}
+
+func TestToUpper { runStringTests(ToUpper, "ToUpper", upperTests) }
+
+func TestToLower { runStringTests(ToLower, "ToLower", lowerTests) }
+
+global toValidUTF8Tests = []struct {
+	in:   string
+	repl: string
+	out:  string
+}{
+	{"", "\uFFFD", ""},
+	{"abc", "\uFFFD", "abc"},
+	{"\uFDDD", "\uFFFD", "\uFDDD"},
+	{"a\xffb", "\uFFFD", "a\uFFFDb"},
+	{"a\xffb\uFFFD", "X", "aXb\uFFFD"},
+	{"a☺\xffb☺\xC0\xAFc☺\xff", "", "a☺b☺c☺"},
+	{"\xC0\xAF", "\uFFFD", "\uFFFD"},
+	{"\xE0\x80\xAF", "\uFFFD", "\uFFFD"},
+	{"\xed\xa0\x80", "abc", "abc"},
+	{"\xed\xbf\xbf", "\uFFFD", "\uFFFD"},
+	{"\xF0\x80\x80\xaf", "☺", "☺"},
+	{"\xF8\x80\x80\x80\xAF", "\uFFFD", "\uFFFD"},
+	{"\xFC\x80\x80\x80\x80\xAF", "\uFFFD", "\uFFFD"},
+}
+
+func TestToValidUTF8 {
+	for _, tc := range toValidUTF8Tests {
+		got := ToValidUTF8([]byte(tc.in), []byte(tc.repl))
+		if !Equal(got, []byte(tc.out)) {
+			assert(false)
+			// t.Errorf("ToValidUTF8(%q, %q) = %q; want %q", tc.in, tc.repl, got, tc.out)
+		}
+	}
+}
+
+func TestTrimSpace {
+	runStringTests(TrimSpace, "TrimSpace", trimSpaceTests)
+}
+
+type RepeatTest struct {
+	in, out: string
+	count:   int
+}
+
+global RepeatTests = []RepeatTest{
+	{"", "", 0},
+	{"", "", 1},
+	{"", "", 2},
+	{"-", "", 0},
+	{"-", "-", 1},
+	{"-", "----------", 10},
+	{"abc ", "abc abc abc ", 3},
+}
+
+func TestRepeat {
+	for _, tt := range RepeatTests {
+		tin := []byte(tt.in)
+		tout := []byte(tt.out)
+		a := Repeat(tin, tt.count)
+		if !Equal(a, tout) {
+			assert(false)
+			//t.Errorf("Repeat(%q, %d) = %q; want %q", tin, tt.count, a, tout)
+			//continue
+		}
+	}
+}
+
+func runesEqual(a, b: []rune) => bool {
+	if len(a) != len(b) {
+		return false
+	}
+	for i, r := range a {
+		if r != b[i] {
+			return false
+		}
+	}
+	return true
+}
+
+type RunesTest struct {
+	in:    string
+	out:   []rune
+	lossy: bool
+}
+
+global RunesTests = []RunesTest{
+	{"", []rune{}, false},
+	{" ", []rune{32}, false},
+	{"ABC", []rune{65, 66, 67}, false},
+	{"abc", []rune{97, 98, 99}, false},
+	//{"\u65e5\u672c\u8a9e", []rune{26085, 26412, 35486}, false},
+	//{"ab\x80c", []rune{97, 98, 0xFFFD, 99}, true},
+	//{"ab\xc0c", []rune{97, 98, 0xFFFD, 99}, true},
+}
+
+func TestRunes {
+	for _, tt := range RunesTests {
+		tin := []byte(tt.in)
+		a := Runes(tin)
+
+		if !runesEqual(a, tt.out) {
+			assert(false)
+			//t.Errorf("Runes(%q) = %v; want %v", tin, a, tt.out)
+			//continue
+		}
+		if !tt.lossy {
+			// can only test reassembly if we didn't lose information
+			//s := string(a)
+			//if s != tt.in {
+			//	assert(false)
+			//t.Errorf("string(Runes(%q)) = %x; want %x", tin, s, tin)
+			//}
+		}
+	}
+}
+
+type TrimTest struct {
+	f:            string
+	in, arg, out: string
+}
+
+global trimTests = []TrimTest{
+	{"Trim", "abba", "a", "bb"},
+	{"Trim", "abba", "ab", ""},
+	{"TrimLeft", "abba", "ab", ""},
+	{"TrimRight", "abba", "ab", ""},
+	{"TrimLeft", "abba", "a", "bba"},
+	{"TrimRight", "abba", "a", "abb"},
+	{"Trim", "<tag>", "<>", "tag"},
+	{"Trim", "* listitem", " *", "listitem"},
+	{"Trim", `"quote"`, `"`, "quote"},
+	//{"Trim", "\u2C6F\u2C6F\u0250\u0250\u2C6F\u2C6F", "\u2C6F", "\u0250\u0250"},
+	//{"Trim", "\x80test\xff", "\xff", "test"},
+	//{"Trim", " Ġ ", " ", "Ġ"},
+	//{"Trim", " Ġİ0", "0 ", "Ġİ"},
+	//empty string tests
+	{"Trim", "abba", "", "abba"},
+	{"Trim", "", "123", ""},
+	{"Trim", "", "", ""},
+	{"TrimLeft", "abba", "", "abba"},
+	{"TrimLeft", "", "123", ""},
+	{"TrimLeft", "", "", ""},
+	{"TrimRight", "abba", "", "abba"},
+	{"TrimRight", "", "123", ""},
+	{"TrimRight", "", "", ""},
+	//{"TrimRight", "☺\xc0", "☺", "☺\xc0"},
+	//{"TrimPrefix", "aabb", "a", "abb"}, // todo(chai2010): bug
+	//{"TrimPrefix", "aabb", "b", "aabb"},
+	//{"TrimSuffix", "aabb", "a", "aabb"},
+	//{"TrimSuffix", "aabb", "b", "aab"},
+}
+
+func TestTrim {
+	for i, tc := range trimTests {
+		name := tc.f
+		f: func([]byte, string) => []byte
+		fb: func([]byte, []byte) => []byte
+		switch name {
+		case "Trim":
+			f = Trim
+		case "TrimLeft":
+			f = TrimLeft
+		case "TrimRight":
+			f = TrimRight
+		case "TrimPrefix":
+			fb = TrimPrefix
+		case "TrimSuffix":
+			fb = TrimSuffix
+		default:
+			assert(false)
+			//t.Errorf("Undefined trim function %s", name)
+		}
+		actual: string
+		if f != nil {
+			actual = string(f([]byte(tc.in), tc.arg))
+		} else {
+			actual = string(fb([]byte(tc.in), []byte(tc.arg)))
+		}
+		if actual != tc.out {
+			println(i, actual, tc.out)
+			assert(false)
+			//t.Errorf("%s(%q, %q) = %q; want %q", name, tc.in, tc.arg, actual, tc.out)
+		}
+	}
+}
+
 func TestEqualFold {
 	for _, tt := range EqualFoldTests {
 		if out := EqualFold([]byte(tt.s), []byte(tt.t)); out != tt.out {
@@ -600,8 +992,8 @@ func TestEqualFold {
 }
 
 global EqualFoldTests = []struct {
-	s, t string
-	out  bool
+	s, t: string
+	out:  bool
 }{
 	{"abc", "abc", true},
 	{"ABcd", "ABcd", true},
