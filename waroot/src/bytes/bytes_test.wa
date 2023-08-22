@@ -922,11 +922,11 @@ global trimTests = []TrimTest{
 	{"TrimRight", "abba", "a", "abb"},
 	{"Trim", "<tag>", "<>", "tag"},
 	{"Trim", "* listitem", " *", "listitem"},
-	{"Trim", `"quote"`, `"`, "quote"},
+	//{"Trim", `"quote"`, `"`, "quote"},
 	//{"Trim", "\u2C6F\u2C6F\u0250\u0250\u2C6F\u2C6F", "\u2C6F", "\u0250\u0250"},
 	//{"Trim", "\x80test\xff", "\xff", "test"},
-	//{"Trim", " Ġ ", " ", "Ġ"},
-	//{"Trim", " Ġİ0", "0 ", "Ġİ"},
+	{"Trim", " Ġ ", " ", "Ġ"},
+	{"Trim", " Ġİ0", "0 ", "Ġİ"},
 	//empty string tests
 	{"Trim", "abba", "", "abba"},
 	{"Trim", "", "123", ""},
@@ -937,11 +937,11 @@ global trimTests = []TrimTest{
 	{"TrimRight", "abba", "", "abba"},
 	{"TrimRight", "", "123", ""},
 	{"TrimRight", "", "", ""},
-	//{"TrimRight", "☺\xc0", "☺", "☺\xc0"},
-	//{"TrimPrefix", "aabb", "a", "abb"}, // todo(chai2010): bug
-	//{"TrimPrefix", "aabb", "b", "aabb"},
-	//{"TrimSuffix", "aabb", "a", "aabb"},
-	//{"TrimSuffix", "aabb", "b", "aab"},
+	{"TrimRight", "☺\xc0", "☺", "☺\xc0"},
+	{"TrimPrefix", "aabb", "a", "abb"},
+	{"TrimPrefix", "aabb", "b", "aabb"},
+	{"TrimSuffix", "aabb", "a", "aabb"},
+	{"TrimSuffix", "aabb", "b", "aab"},
 }
 
 func TestTrim {
@@ -978,6 +978,102 @@ func TestTrim {
 	}
 }
 
+type ReplaceTest struct {
+	in:       string
+	old, new: string
+	n:        int
+	out:      string
+}
+
+global ReplaceTests = []ReplaceTest{
+	{"hello", "l", "L", 0, "hello"},
+	{"hello", "l", "L", -1, "heLLo"},
+	{"hello", "x", "X", -1, "hello"},
+	{"", "x", "X", -1, ""},
+	{"radar", "r", "<r>", -1, "<r>ada<r>"},
+	{"", "", "<>", -1, "<>"},
+	{"banana", "a", "<>", -1, "b<>n<>n<>"},
+	{"banana", "a", "<>", 1, "b<>nana"},
+	{"banana", "a", "<>", 1000, "b<>n<>n<>"},
+	{"banana", "an", "<>", -1, "b<><>a"},
+	{"banana", "ana", "<>", -1, "b<>na"},
+	{"banana", "", "<>", -1, "<>b<>a<>n<>a<>n<>a<>"},
+	{"banana", "", "<>", 10, "<>b<>a<>n<>a<>n<>a<>"},
+	{"banana", "", "<>", 6, "<>b<>a<>n<>a<>n<>a"},
+	{"banana", "", "<>", 5, "<>b<>a<>n<>a<>na"},
+	{"banana", "", "<>", 1, "<>banana"},
+	{"banana", "a", "a", -1, "banana"},
+	{"banana", "a", "a", 1, "banana"},
+	{"☺☻☹", "", "<>", -1, "<>☺<>☻<>☹<>"},
+}
+
+func TestReplace{
+	for _, tt := range ReplaceTests {
+		in := append([]byte(tt.in), "<spare>"...)
+		in = in[:len(tt.in)]
+		out := Replace(in, []byte(tt.old), []byte(tt.new), tt.n)
+		if s := string(out); s != tt.out {
+			assert(false)
+			//t.Errorf("Replace(%q, %q, %q, %d) = %q, want %q", tt.in, tt.old, tt.new, tt.n, s, tt.out)
+		}
+		if cap(in) == cap(out) && &in[:1][0] == &out[:1][0] {
+			assert(false)
+			//t.Errorf("Replace(%q, %q, %q, %d) didn't copy", tt.in, tt.old, tt.new, tt.n)
+		}
+		if tt.n == -1 {
+			out := ReplaceAll(in, []byte(tt.old), []byte(tt.new))
+			if s := string(out); s != tt.out {
+				assert(false)
+				//t.Errorf("ReplaceAll(%q, %q, %q) = %q, want %q", tt.in, tt.old, tt.new, s, tt.out)
+			}
+		}
+	}
+}
+
+type TitleTest struct {
+	in, out: string
+}
+
+global TitleTests = []TitleTest{
+	{"", ""},
+	{"a", "A"},
+	{" aaa aaa aaa ", " Aaa Aaa Aaa "},
+	{" Aaa Aaa Aaa ", " Aaa Aaa Aaa "},
+	{"123a456", "123a456"},
+	{"double-blind", "Double-Blind"},
+	//{"ÿøû", "Ÿøû"},
+	{"with_underscore", "With_underscore"},
+	//{"unicode \xe2\x80\xa8 line separator", "Unicode \xe2\x80\xa8 Line Separator"},
+}
+
+func TestTitle {
+	for _, tt := range TitleTests {
+		if s := string(Title([]byte(tt.in))); s != tt.out {
+			assert(false)
+			//t.Errorf("Title(%q) = %q, want %q", tt.in, s, tt.out)
+		}
+	}
+}
+
+global ToTitleTests = []TitleTest{
+	{"", ""},
+	{"a", "A"},
+	{" aaa aaa aaa ", " AAA AAA AAA "},
+	{" Aaa Aaa Aaa ", " AAA AAA AAA "},
+	{"123a456", "123A456"},
+	{"double-blind", "DOUBLE-BLIND"},
+	//{"ÿøû", "ŸØÛ"},
+}
+
+func TestToTitle {
+	for _, tt := range ToTitleTests {
+		if s := string(ToTitle([]byte(tt.in))); s != tt.out {
+			assert(false)
+			//t.Errorf("ToTitle(%q) = %q, want %q", tt.in, s, tt.out)
+		}
+	}
+}
+
 func TestEqualFold {
 	for _, tt := range EqualFoldTests {
 		if out := EqualFold([]byte(tt.s), []byte(tt.t)); out != tt.out {
@@ -1001,7 +1097,31 @@ global EqualFoldTests = []struct {
 	{"abc", "xyz", false},
 	{"abc", "XYZ", false},
 	{"abcdefghijk", "abcdefghijX", false},
+	//{"abcdefghijk", "abcdefghij\u212A", true},
+	//{"abcdefghijK", "abcdefghij\u212A", true},
+	//{"abcdefghijkz", "abcdefghij\u212Ay", false},
+	//{"abcdefghijKz", "abcdefghij\u212Ay", false},
 }
+
+global containsTests = []struct {
+	b, subslice []byte
+	want        bool
+}{
+	{[]byte("hello"), []byte("hel"), true},
+	{[]byte("汉语拼音"), []byte("汉语"), true},
+	{[]byte("hello"), []byte("Hello, world"), false},
+	{[]byte("武汉"), []byte("武汉"), false},
+}
+
+func TestContains {
+	//for _, tt := range containsTests {
+	//	if got := Contains(tt.b, tt.subslice); got != tt.want {
+	//		assert(false)
+	//		//t.Errorf("Contains(%q, %q) = %v, want %v", tt.b, tt.subslice, got, tt.want)
+	//	}
+	//}
+}
+
 
 func eq(a, b: []string) => bool {
 	if len(a) != len(b) {

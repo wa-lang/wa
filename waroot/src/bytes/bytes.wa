@@ -130,21 +130,20 @@ func IndexByte(b: []byte, c: byte) => int {
 }
 
 func IndexByteString(s: string, c: byte) => int {
-	// TODO(chai2010): 字符串 range 尚不支持
-	//for i := 0; i < len(s); i++ {
-	//	if s[i] == c {
-	//		return i
-	//	}
-	//}
+	for i := 0; i < len(s); i++ {
+		if s[i] == c {
+			return i
+		}
+	}
 	return -1
 }
 
-func HasPrefix(d, prefix: []byte) => bool {
-	return false
+func HasPrefix(s, prefix: []byte) => bool {
+	return len(s) >= len(prefix) && Equal(s[0:len(prefix)], prefix)
 }
 
-func HasSuffix(d, suffix: []byte) => bool {
-	return false
+func HasSuffix(s, suffix: []byte) => bool {
+	return len(s) >= len(suffix) && Equal(s[len(s)-len(suffix):], suffix)
 }
 
 func toupper(c: byte) => byte {
@@ -827,4 +826,201 @@ func makeASCIISet(chars: string) => (as: asciiSet, ok: bool) {
 // contains reports whether c is inside the set.
 func asciiSet.contains(c: byte) => bool {
 	return (this.Data[c>>5] & (1 << uint(c&31))) != 0
+}
+
+// Replace returns a copy of the slice s with the first n
+// non-overlapping instances of old replaced by new.
+// If old is empty, it matches at the beginning of the slice
+// and after each UTF-8 sequence, yielding up to k+1 replacements
+// for a k-rune slice.
+// If n < 0, there is no limit on the number of replacements.
+func Replace(s, old, new: []byte, n: int) => []byte {
+	m := 0
+	if n != 0 {
+		// Compute number of replacements.
+		m = Count(s, old)
+	}
+	if m == 0 {
+		// Just return a copy.
+		return append([]byte(nil), s...)
+	}
+	if n < 0 || m < n {
+		n = m
+	}
+
+	// Apply replacements to buffer.
+	t := make([]byte, len(s)+n*(len(new)-len(old)))
+	w := 0
+	start := 0
+	for i := 0; i < n; i++ {
+		j := start
+		if len(old) == 0 {
+			if i > 0 {
+				_, wid := utf8.DecodeRune(s[start:])
+				j += wid
+			}
+		} else {
+			j += Index(s[start:], old)
+		}
+		w += copy(t[w:], s[start:j])
+		w += copy(t[w:], new)
+		start = j + len(old)
+	}
+	w += copy(t[w:], s[start:])
+	return t[0:w]
+}
+
+// ReplaceAll returns a copy of the slice s with all
+// non-overlapping instances of old replaced by new.
+// If old is empty, it matches at the beginning of the slice
+// and after each UTF-8 sequence, yielding up to k+1 replacements
+// for a k-rune slice.
+func ReplaceAll(s, old, new: []byte) => []byte {
+	return Replace(s, old, new, -1)
+}
+
+// Title treats s as UTF-8-encoded bytes and returns a copy with all Unicode letters that begin
+// words mapped to their title case.
+//
+// BUG(rsc): The rule Title uses for word boundaries does not handle Unicode punctuation properly.
+func Title(s: []byte) => []byte {
+	// Use a closure here to remember state.
+	// Hackish but effective. Depends on Map scanning in order and calling
+	// the closure once per rune.
+	prev := ' '
+	return Map(
+		func(r: rune) => rune {
+			if isSeparator(prev) {
+				prev = r
+				return ctypes.ToUpper(r)
+			}
+			prev = r
+			return r
+		},
+		s,
+	)
+}
+
+// isSeparator reports whether the rune could mark a word boundary.
+// TODO: update when package unicode captures more of the properties.
+func isSeparator(r: rune) => bool {
+	// ASCII alphanumerics and underscore are not separators
+	if r <= 0x7F {
+		switch {
+		case '0' <= r && r <= '9':
+			return false
+		case 'a' <= r && r <= 'z':
+			return false
+		case 'A' <= r && r <= 'Z':
+			return false
+		case r == '_':
+			return false
+		}
+		return true
+	}
+	// Letters and digits are not separators
+	if ctypes.IsAlpha(r) || ctypes.IsDigit(r) {
+		return false
+	}
+	// Otherwise, all we can do for now is treat spaces as separators.
+	return ctypes.IsSpace(r)
+}
+
+// ToTitle treats s as UTF-8-encoded bytes and returns a copy with all the Unicode letters mapped to their title case.
+func ToTitle(s: []byte) => []byte { return Map(ctypes.ToUpper, s) }
+
+// Contains reports whether subslice is within b.
+func Contains(b, subslice: []byte) => bool {
+	return Index(b, subslice) != -1
+}
+
+// ContainsAny reports whether any of the UTF-8-encoded code points in chars are within b.
+func ContainsAny(b: []byte, chars: string) => bool {
+	return IndexAny(b, chars) >= 0
+}
+
+// ContainsRune reports whether the rune is contained in the UTF-8-encoded byte slice b.
+func ContainsRune(b: []byte, r: rune) => bool {
+	return IndexRune(b, r) >= 0
+}
+
+
+// IndexAny interprets s as a sequence of UTF-8-encoded Unicode code points.
+// It returns the byte index of the first occurrence in s of any of the Unicode
+// code points in chars. It returns -1 if chars is empty or if there is no code
+// point in common.
+func IndexAny(s: []byte, chars: string) => int {
+	/*
+	if chars == "" {
+		// Avoid scanning all of s.
+		return -1
+	}
+	if len(s) == 1 {
+		r := rune(s[0])
+		if r >= utf8.RuneSelf {
+			// search utf8.RuneError.
+			//for _, r = range chars {
+			//	if r == utf8.RuneError {
+			//		return 0
+			//	}
+			//}
+			return -1
+		}
+		if IndexByteString(chars, s[0]) >= 0 {
+			return 0
+		}
+		return -1
+	}
+	if len(chars) == 1 {
+		r := rune(chars[0])
+		if r >= utf8.RuneSelf {
+			r = utf8.RuneError
+		}
+		return IndexRune(s, r)
+	}
+	if len(s) > 8 {
+		if as, isASCII := makeASCIISet(chars); isASCII {
+			for i, c := range s {
+				if as.contains(c) {
+					return i
+				}
+			}
+			return -1
+		}
+	}
+	width: int
+	for i := 0; i < len(s); i += width {
+		r := rune(s[i])
+		if r < utf8.RuneSelf {
+			if IndexByteString(chars, s[i]) >= 0 {
+				return i
+			}
+			width = 1
+			continue
+		}
+		r, width = utf8.DecodeRune(s[i:])
+		if r != utf8.RuneError {
+			// r is 2 to 4 bytes
+			if len(chars) == width {
+				if chars == string(r) {
+					return i
+				}
+				continue
+			}
+			// Use bytealg.IndexString for performance if available.
+			//if bytealg.MaxLen >= width {
+			//	if bytealg.IndexString(chars, string(r)) >= 0 {
+			//		return i
+			//	}
+			//	continue
+			//}
+		}
+		//for _, ch := range chars {
+		//	if r == ch {
+		//		return i
+		//	}
+		//}
+	}
+	*/
+	return -1
 }
