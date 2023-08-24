@@ -124,7 +124,7 @@
 	end
 )
 
-(func $$Release (param $ptr i32)
+(func $$Release (export "$runtime.Release") (param $ptr i32)
 	(local $ref_count i32)
 	(local $item_count i32)
 	(local $free_func i32)
