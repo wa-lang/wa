@@ -29,7 +29,7 @@
 	global.get $__heap_max
 )
 
-(func $$waHeapAlloc (param $nbytes i32) (result i32) ;;result = ptr
+(func $$waHeapAlloc (export "$runtime.waHeapAlloc") (param $nbytes i32) (result i32) ;;result = ptr
 	(local $ptr i32)
 
 	local.get $nbytes
@@ -72,7 +72,7 @@
 	local.get $ptr
 )
 
-(func $$waHeapFree (param $ptr i32)
+(func $$waHeapFree (export "$runtime.waHeapFree") (param $ptr i32)
 	local.get $ptr
 	call $runtime.free
 )
