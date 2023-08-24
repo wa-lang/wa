@@ -1110,18 +1110,62 @@ global containsTests = []struct {
 	{[]byte("hello"), []byte("hel"), true},
 	{[]byte("汉语拼音"), []byte("汉语"), true},
 	{[]byte("hello"), []byte("Hello, world"), false},
-	{[]byte("武汉"), []byte("武汉"), false},
+	{[]byte("武汉"), []byte("武汉"), true},
 }
 
 func TestContains {
-	//for _, tt := range containsTests {
-	//	if got := Contains(tt.b, tt.subslice); got != tt.want {
-	//		assert(false)
-	//		//t.Errorf("Contains(%q, %q) = %v, want %v", tt.b, tt.subslice, got, tt.want)
-	//	}
-	//}
+	for _, tt := range containsTests {
+		if got := Contains(tt.b, tt.subslice); got != tt.want {
+			println(string(tt.b), string(tt.subslice), got, tt.want)
+			assert(false)
+			//t.Errorf("Contains(%q, %q) = %v, want %v", tt.b, tt.subslice, got, tt.want)
+		}
+	}
 }
 
+global ContainsAnyTests = []struct {
+	b:        []byte
+	substr:   string
+	expected: bool
+}{
+	{[]byte(""), "", false},
+	{[]byte(""), "a", false},
+	{[]byte(""), "abc", false},
+	{[]byte("a"), "", false},
+	{[]byte("a"), "a", true},
+	{[]byte("aaa"), "a", true},
+	{[]byte("abc"), "xyz", false},
+	{[]byte("abc"), "xcz", true},
+	//{[]byte("a☺b☻c☹d"), "uvw☻xyz", true}, // TODO(chai2010)
+	{[]byte("aRegExp*"), ".(|)*+?^$[]", true},
+	{[]byte(dots + dots + dots), " ", false},
+}
+
+func TestContainsAny {
+	for _, ct := range ContainsAnyTests {
+		if ContainsAny(ct.b, ct.substr) != ct.expected {
+			println(string(ct.b), string(ct.substr))
+			assert(false)
+			//t.Errorf("ContainsAny(%s, %s) = %v, want %v",
+			//	ct.b, ct.substr, !ct.expected, ct.expected)
+		}
+	}
+}
+
+global ContainsRuneTests = []struct {
+	b        []byte
+	r        rune
+	expected bool
+}{
+	{[]byte(""), 'a', false},
+	{[]byte("a"), 'a', true},
+	{[]byte("aaa"), 'a', true},
+	{[]byte("abc"), 'y', false},
+	{[]byte("abc"), 'c', true},
+	{[]byte("a☺b☻c☹d"), 'x', false},
+	{[]byte("a☺b☻c☹d"), '☻', true},
+	{[]byte("aRegExp*"), '*', true},
+}
 
 func eq(a, b: []string) => bool {
 	if len(a) != len(b) {

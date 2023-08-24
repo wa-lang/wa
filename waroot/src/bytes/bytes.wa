@@ -950,7 +950,7 @@ func ContainsRune(b: []byte, r: rune) => bool {
 // code points in chars. It returns -1 if chars is empty or if there is no code
 // point in common.
 func IndexAny(s: []byte, chars: string) => int {
-	/*
+
 	if chars == "" {
 		// Avoid scanning all of s.
 		return -1
@@ -1002,10 +1002,11 @@ func IndexAny(s: []byte, chars: string) => int {
 		if r != utf8.RuneError {
 			// r is 2 to 4 bytes
 			if len(chars) == width {
-				if chars == string(r) {
-					return i
-				}
-				continue
+				panic("TODO") // 字符串支持
+				//if chars == string(r) {
+				//	return i
+				//}
+				//continue
 			}
 			// Use bytealg.IndexString for performance if available.
 			//if bytealg.MaxLen >= width {
@@ -1021,6 +1022,5 @@ func IndexAny(s: []byte, chars: string) => int {
 		//	}
 		//}
 	}
-	*/
 	return -1
 }
