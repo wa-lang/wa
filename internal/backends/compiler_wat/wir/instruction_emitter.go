@@ -208,10 +208,9 @@ func (m *Module) EmitBinOp(x, y Value, op wat.OpCode) (insts []wat.Inst, ret_typ
 
 		if x.Type().Size() <= 4 && y.Type().Size() == 8 {
 			insts = append(insts, x.EmitPush()...)
-			insts = append(insts, wat.NewInstConvert_i64_extend_i32_u())
 			insts = append(insts, y.EmitPush()...)
-			insts = append(insts, wat.NewInstShl(toWatType(y.Type())))
 			insts = append(insts, wat.NewInstConvert_i32_wrap_i64())
+			insts = append(insts, wat.NewInstShl(toWatType(ret_type)))
 		} else if x.Type().Size() == 8 && y.Type().Size() <= 4 {
 			insts = append(insts, x.EmitPush()...)
 			insts = append(insts, y.EmitPush()...)
@@ -238,10 +237,9 @@ func (m *Module) EmitBinOp(x, y Value, op wat.OpCode) (insts []wat.Inst, ret_typ
 
 		if x.Type().Size() <= 4 && y.Type().Size() == 8 {
 			insts = append(insts, x.EmitPush()...)
-			insts = append(insts, wat.NewInstConvert_i64_extend_i32_u())
 			insts = append(insts, y.EmitPush()...)
-			insts = append(insts, wat.NewInstShr(toWatType(y.Type())))
 			insts = append(insts, wat.NewInstConvert_i32_wrap_i64())
+			insts = append(insts, wat.NewInstShr(toWatType(ret_type)))
 		} else if x.Type().Size() == 8 && y.Type().Size() <= 4 {
 			insts = append(insts, x.EmitPush()...)
 			insts = append(insts, y.EmitPush()...)
