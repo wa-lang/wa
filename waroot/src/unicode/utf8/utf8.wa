@@ -80,13 +80,11 @@ global first = [256]u8{
 	s5, s6, s6, s6, s7, xx, xx, xx, xx, xx, xx, xx, xx, xx, xx, xx, // 0xF0-0xFF
 }
 
-
-
 // acceptRange gives the range of valid values for the second byte in a UTF-8
 // sequence.
 type acceptRange struct {
-	lo :u8 // lowest value for second byte.
-	hi :u8 // highest value for second byte.
+	lo: u8 // lowest value for second byte.
+	hi: u8 // highest value for second byte.
 }
 
 // acceptRanges has size 16 to avoid bounds checks in the code that uses it.
@@ -97,7 +95,6 @@ global acceptRanges = [16]acceptRange{
 	3: {0x90, hicb},
 	4: {locb, 0x8F},
 }
-
 
 // FullRune reports whether the bytes in p begin with a full UTF-8 encoding of a rune.
 // An invalid encoding is considered a full Rune since it will convert as a width-1 error rune.
@@ -341,6 +338,12 @@ func RuneLen(r: rune) => int {
 	return -1
 }
 
+func EncodeRuneString(r: rune) => string {
+	p := make([]byte, 0, 4)
+	n := EncodeRune(p, r)
+	return string(p[:n])
+}
+
 // EncodeRune writes into p (which must be large enough) the UTF-8 encoding of the rune.
 // If the rune is out of range, it writes the encoding of RuneError.
 // It returns the number of bytes written.
@@ -385,7 +388,7 @@ func EncodeRune(p: []byte, r: rune) => int {
 // encodings are treated as single runes of width 1 byte.
 func RuneCount(p: []byte) => int {
 	np := len(p)
-	n :int
+	n: int
 	for i := 0; i < np; {
 		n++
 		c := p[i]
