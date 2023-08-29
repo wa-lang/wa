@@ -3,6 +3,7 @@
 default:
 	GOOS=js GOARCH=wasm go build -o wa.wasm
 	mv wa.wasm ../../../docs
+	cd ../../../docs && zip wa.wasm.zip wa.wasm
 
 dev-chai:
 	-rm wa.wasm

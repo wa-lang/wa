@@ -118,6 +118,7 @@ var stdPkgs = []string{
 	"image/color/palette",
 	"io",
 	"math",
+	"math/big",
 	"math/bits",
 	"os",
 	"reflect",

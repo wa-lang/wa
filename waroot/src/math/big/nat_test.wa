@@ -1,0 +1,144 @@
+// Author: TrueAbc
+// Note:
+//  The implementation refers to the go language "math/big" lib.
+
+// test好像并不执行该文件夹, 改为导出方法放在外层执行
+func Test_Norm {
+	t := nat{Data: []uint{1, 0, 0, 0}}
+	t = t.norm()
+	if len(t.Data) == 1 && t.Data[0] == 1 {
+		println("NORM TEST PASS!")
+	} else {
+		println("NORM TEST FAILED!")
+	}
+}
+
+func Test_setWord {
+	t := nat{Data: []uint{1, 2, 3, 4}}
+	z := t.setWord(0)
+	println("set zero:", len(z.Data))
+
+	z = t.setWord(10)
+	println("set to 10:", z.Data[0], " ", t.Data[0])
+}
+
+func Test_set {
+	t := nat{Data: []uint{1, 2, 3, 4}}
+	z := t.set(t)
+	println(len(z.Data) == len(t.Data))
+	for i := 0; i < len(z.Data); i++ {
+		println("item:", z.Data[i], "===", t.Data[i])
+	}
+}
+
+// 参考go单元测试的内容
+type funNN func(z: nat, x: nat, y: nat) => nat
+type argNN struct {
+	z: nat
+	x: nat
+	y: nat
+}
+
+var sumNN = []argNN{
+	{},
+	{z: nat{[]uint{1}}, x: nat{nil}, y: nat{[]uint{1}}},
+	{z: nat{[]uint{1111111110}}, x: nat{[]uint{123456789}}, y: nat{[]uint{987654321}}},
+	{z: nat{[]uint{0, 0, 0, 1}}, x: nat{nil}, y: nat{[]uint{0, 0, 0, 1}}},
+	{z: nat{[]uint{0, 0, 0, 1111111110}}, x: nat{[]uint{0, 0, 0, 123456789}}, y: nat{Data: []uint{0, 0, 0, 987654321}}},
+	{z: nat{[]uint{0, 0, 0, 1}}, x: nat{[]uint{0, 0, _M}}, y: nat{[]uint{0, 0, 1}}},
+}
+
+var prodNN = []argNN{
+	{},
+	{z: nat{nil}, x: nat{nil}, y: nat{nil}},
+	{z: nat{nil}, x: nat{[]uint{991}}, y: nat{nil}},
+	{z: nat{[]uint{991}}, x: nat{[]uint{991}}, y: nat{[]uint{1}}},
+	{z: nat{[]uint{991 * 991}}, x: nat{[]uint{991}}, y: nat{[]uint{991}}},
+	{z: nat{[]uint{0, 0, 991 * 991}}, x: nat{[]uint{0, 991}}, y: nat{[]uint{0, 991}}},
+	{z: nat{[]uint{1 * 991, 2 * 991, 3 * 991, 4 * 991}}, x: nat{[]uint{1, 2, 3, 4}}, y: nat{[]uint{991}}},
+	{z: nat{[]uint{4, 11, 20, 30, 20, 11, 4}}, x: nat{[]uint{1, 2, 3, 4}}, y: nat{[]uint{4, 3, 2, 1}}},
+	{
+		z: natFromString("11790184577738583171520872861412518665678211592275841109096961"),
+		x: natFromString("515377520732011331036461129765621272702107522001"),
+		y: natFromString("22876792454961"),
+	},
+}
+
+func testAdd(a: argNN) {
+	temp := &nat{Data: nil}
+	z := temp.add(a.x, a.y)
+	if z.cmp(a.z) != 0 {
+		println("Error for add result")
+	}
+}
+
+func testSub(a: argNN) {
+	temp := &nat{Data: nil}
+	z := temp.sub(a.x, a.y)
+	if z.cmp(a.z) != 0 {
+		println("Error for sub result")
+	}
+}
+
+func testMul(a: argNN) {
+	temp := &nat{Data: nil}
+	z := temp.mul(a.x, a.y)
+	if z.cmp(a.z) != 0 {
+		println("Error for mul result")
+	}
+}
+
+func Test_add {
+	println("start test add")
+	for _, a := range sumNN {
+		testAdd(a)
+	}
+}
+
+func Test_sub {
+	println("start test sub")
+	for _, a := range sumNN {
+		arg := argNN{a.x, a.z, a.y}
+		testSub(arg)
+	}
+}
+
+func Test_mul {
+	println("start test mul")
+	for _, a := range prodNN {
+		arg := a
+		testMul(arg)
+
+		arg = argNN{a.z, a.y, a.x}
+		testMul(arg)
+	}
+}
+
+func Test_div {
+	u := natFromString("11790184577738583171520872861412518665678211592275841109096961")
+	v := natFromString("515377520732011331036461129765621272702107522001")
+	w := natFromString("22876792454961") // 商
+	r := natFromString("0")              // 余数
+
+	q := &nat{nil}
+	q2, r2 := q.div(nat{nil}, u, v)
+
+	if q2.cmp(w) != 0 {
+		println("wrong div result")
+	} else {
+		println("ok div result")
+	}
+	if r2.cmp(r) != 0 {
+		println("wrong div remainder result")
+	} else {
+		println("ok div remainder result")
+	}
+
+}
+
+func Test_setString {
+	n := natFromString("22876792454961")
+	for _, i := range n.Data {
+		println(i)
+	}
+}
