@@ -16,8 +16,8 @@ func (m *Module) EmitAssginValue(lh, rh Value) []wat.Inst {
 		insts = append(insts, lh.EmitRelease()...)
 		insts = append(insts, lh.EmitInit()...)
 	} else {
-		if !lh.Type().Equal(rh.Type()) {
-			logger.Fatal("x.Type() != y.Type()")
+		if !lh.Type().Equal(rh.Type()) && !(lh.Type().Equal(m.I32) && rh.Type().Equal(m.RUNE) || lh.Type().Equal(m.RUNE) && rh.Type().Equal(m.I32)) {
+			logger.Fatal("x.Type:", lh.Type().Name(), ", y.Type():", rh.Type().Name())
 		}
 
 		insts = append(insts, rh.EmitPush()...)
@@ -891,6 +891,28 @@ func (m *Module) EmitGenTypeAssert(x Value, destType ValueType, commaOk bool) (i
 		m.markConcreteTypeUsed(destType)
 		return si.emitGetData(destType, commaOk)
 	}
+}
+
+func (m *Module) EmitGenRange(x Value) (insts []wat.Inst, ret_type ValueType) {
+	switch x := x.(type) {
+	case *aString:
+		ret_type, _ = m.findValueType("runtime.stringIter")
+		insts = append(insts, x.Extract("d").EmitPush()...)
+		insts = append(insts, x.Extract("l").EmitPush()...)
+		insts = append(insts, wat.NewInstConst(wat.I32{}, "0"))
+
+	default:
+		logger.Fatalf("Todo:%T", x)
+	}
+
+	return
+}
+
+func (m *Module) EmitGenNext_String(iter Value) (insts []wat.Inst) {
+	insts = append(insts, iter.EmitPush()...)
+	insts = append(insts, wat.NewInstCall("runtime.next_rune"))
+	insts = append(insts, iter.(*aStruct).Extract("pos").EmitPop()...)
+	return
 }
 
 func (m *Module) EmitInvoke(i Value, params []Value, mid int, typeName string) (insts []wat.Inst) {

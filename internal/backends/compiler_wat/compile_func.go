@@ -359,6 +359,10 @@ func (g *functionGenerator) genValue(v ssa.Value) ([]wat.Inst, wir.ValueType) {
 	//	logger.Printf("Instruction already exist：%s\n", v)
 	//}
 
+	if v, ok := v.(*ssa.Range); ok {
+		return g.genRange(v)
+	}
+
 	//Todo: 下面的做法过于粗暴
 	g.tLib.compile(v.Type())
 
@@ -419,6 +423,9 @@ func (g *functionGenerator) genValue(v ssa.Value) ([]wat.Inst, wir.ValueType) {
 
 	case *ssa.TypeAssert:
 		return g.genTypeAssert(v)
+
+	case *ssa.Next:
+		return g.genNext(v)
 	}
 
 	logger.Fatalf("Todo: %v, type: %T", v, v)
@@ -1139,6 +1146,22 @@ func (g *functionGenerator) genTypeAssert(inst *ssa.TypeAssert) (insts []wat.Ins
 		ret_type = destType
 	}
 	insts = g.module.EmitGenTypeAssert(x.value, destType, inst.CommaOk)
+	return
+}
+
+func (g *functionGenerator) genRange(inst *ssa.Range) (insts []wat.Inst, ret_type wir.ValueType) {
+	x := g.getValue(inst.X)
+	return g.module.EmitGenRange(x.value)
+}
+
+func (g *functionGenerator) genNext(inst *ssa.Next) (insts []wat.Inst, ret_type wir.ValueType) {
+	if inst.IsString {
+		ret_type = g.tLib.compile(inst.Type())
+		iter := g.getValue(inst.Iter).value
+		insts = g.module.EmitGenNext_String(iter)
+	} else {
+		logger.Fatalf("Todo:%T", inst.Type())
+	}
 	return
 }
 
