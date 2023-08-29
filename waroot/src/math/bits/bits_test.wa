@@ -384,7 +384,7 @@ func testReverse(x64, want64: u64) {
 
 func TestReverseBytes {
 	for _, test := range []struct {
-		x, r uint64
+		x, r: uint64
 	}{
 		{0, 0},
 		{0x01, 0x01 << 56},
