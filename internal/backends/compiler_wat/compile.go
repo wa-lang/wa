@@ -42,6 +42,13 @@ func (p *Compiler) Compile(prog *loader.Program, mainFunc string) (output string
 	}
 	sort.Strings(pkgnames)
 
+	for i, v := range pkgnames {
+		if v == "runtime" && i != 0 {
+			pkgnames[i] = pkgnames[0]
+			pkgnames[0] = "runtime"
+		}
+	}
+
 	for _, n := range pkgnames {
 		p.ssaPkg = prog.Pkgs[n].SSAPkg
 		p.CompilePkgConst(p.ssaPkg)
