@@ -123,7 +123,7 @@ func runTest(cfg *config.Config, pkgpath, runPattern string, appArgs ...string) 
 		tFuncName = strings.ReplaceAll(tFuncName, "/", "$")
 		_, stdout, stderr, err := m.RunFunc(tFuncName)
 		if t.OutputPanic {
-			stdout = bytes.TrimSpace(stdout)
+			stdout = fmtGotOutput(stdout)
 			expect, got := t.Output, string(stdout)
 
 			if exitCode, _ := wazero.AsExitError(err); exitCode == 0 {
@@ -178,7 +178,7 @@ func runTest(cfg *config.Config, pkgpath, runPattern string, appArgs ...string) 
 			os.Exit(1)
 		}
 
-		stdout = bytes.TrimSpace(stdout)
+		stdout = fmtGotOutput(stdout)
 		if t.Output != "" && t.Output == string(stdout) {
 			continue
 		}
@@ -229,7 +229,7 @@ func runTest(cfg *config.Config, pkgpath, runPattern string, appArgs ...string) 
 		tFuncName = strings.ReplaceAll(tFuncName, "/", "$")
 		_, stdout, stderr, err := m.RunFunc(tFuncName)
 		if t.OutputPanic {
-			stdout = bytes.TrimSpace(stdout)
+			stdout = fmtGotOutput(stdout)
 			expect, got := t.Output, string(stdout)
 
 			if exitCode, _ := wazero.AsExitError(err); exitCode == 0 {
@@ -280,7 +280,7 @@ func runTest(cfg *config.Config, pkgpath, runPattern string, appArgs ...string) 
 			os.Exit(1)
 		}
 
-		stdout = bytes.TrimSpace(stdout)
+		stdout = fmtGotOutput(stdout)
 		if t.Output != "" && t.Output == string(stdout) {
 			continue
 		}
@@ -328,4 +328,13 @@ func sWithPrefix(s, prefix string) string {
 		lines[i] = prefix + strings.TrimSpace(line)
 	}
 	return strings.Join(lines, "\n")
+}
+
+func fmtGotOutput(stdout []byte) []byte {
+	stdout = bytes.TrimSpace(stdout)
+	lines := bytes.Split(stdout, []byte("\n"))
+	for i, s := range lines {
+		lines[i] = bytes.TrimSpace(s)
+	}
+	return bytes.Join(lines, []byte("\n"))
 }
