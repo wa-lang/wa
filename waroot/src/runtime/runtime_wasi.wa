@@ -129,46 +129,10 @@ const (
 	rune2Max = 1<<11 - 1
 	rune3Max = 1<<16 - 1
 )
+
 #wa:linkname $runtime.waPrintRune
 func waPrintRune(r: i32) {
-	p := make([]byte, 0, 4)
-	n : int
-
-	switch i := uint32(r); {
-	case i <= rune1Max:
-		p[0] = byte(r)
-		n = 1
-	case i <= rune2Max:
-		_ = p[1] // eliminate bounds checks
-		p[0] = t2 | byte(r>>6)
-		p[1] = tx | byte(r)&maskx
-		n = 2
-	case i > MaxRune, surrogateMin <= i && i <= surrogateMax:
-		r = RuneError
-		// fallthrough
-		{
-			_ = p[2] // eliminate bounds checks
-			p[0] = t3 | byte(r>>12)
-			p[1] = tx | byte(r>>6)&maskx
-			p[2] = tx | byte(r)&maskx
-			n = 3
-		}
-	case i <= rune3Max:
-		_ = p[2] // eliminate bounds checks
-		p[0] = t3 | byte(r>>12)
-		p[1] = tx | byte(r>>6)&maskx
-		p[2] = tx | byte(r)&maskx
-		n = 3
-	default:
-		_ = p[3] // eliminate bounds checks
-		p[0] = t4 | byte(r>>18)
-		p[1] = tx | byte(r>>12)&maskx
-		p[2] = tx | byte(r>>6)&maskx
-		p[3] = tx | byte(r)&maskx
-		n = 4
-	}
-
-	printString(string(p[:n]))
+	printString(stringFromRune(r))
 }
 
 #wa:linkname $runtime.waPuts

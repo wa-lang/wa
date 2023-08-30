@@ -27,10 +27,6 @@ func (m *Module) EmitAssginValue(lh, rh Value) []wat.Inst {
 	return insts
 }
 
-func (m *Module) EmitConvertValueType(from, to ValueType) {
-	logger.Fatal("Todo")
-}
-
 func (m *Module) EmitUnOp(x Value, op wat.OpCode) (insts []wat.Inst, ret_type ValueType) {
 	if !IsNumber(x) {
 		logger.Fatal("Todo")
@@ -729,8 +725,13 @@ func (m *Module) EmitGenConvert(x Value, typ ValueType) (insts []wat.Inst) {
 			insts = append(insts, x.Extract("d").EmitPush()...)
 			insts = append(insts, x.Extract("l").EmitPush()...)
 			insts = append(insts, wat.NewInstCall(m.STRING.(*String).genFunc_Append()))
+			return
+
+		case xt.Equal(m.GenValueType_Slice(m.RUNE)):
+			insts = append(insts, x.EmitPush()...)
+			insts = append(insts, wat.NewInstCall("runtime.stringFromRuneSlice"))
+			return
 		}
-		return
 
 	case typ.Equal(m.BYTES):
 		switch {
@@ -742,11 +743,19 @@ func (m *Module) EmitGenConvert(x Value, typ ValueType) (insts []wat.Inst) {
 			insts = append(insts, x.Extract("l").EmitPush()...)
 			insts = append(insts, x.Extract("l").EmitPush()...)
 			insts = append(insts, wat.NewInstCall(m.BYTES.(*Slice).genAppendFunc()))
+			return
 		}
-		return
+
+	case typ.Equal(m.GenValueType_Slice(m.RUNE)):
+		switch {
+		case xt.Equal(m.STRING):
+			insts = append(insts, x.EmitPush()...)
+			insts = append(insts, wat.NewInstCall("runtime.runeSliceFromString"))
+			return
+		}
 	}
 
-	logger.Fatalf("Todo: %+v %+v", x, typ)
+	logger.Fatalf("Todo: x.type: %s, dest_type: %s", x.Type().Name(), typ.Name())
 	return
 }
 
@@ -908,7 +917,10 @@ func (m *Module) EmitGenRange(x Value) (insts []wat.Inst, ret_type ValueType) {
 	return
 }
 
-func (m *Module) EmitGenNext_String(iter Value) (insts []wat.Inst) {
+func (m *Module) EmitGenNext_String(iter Value) (insts []wat.Inst, ret_type ValueType) {
+	fields := []ValueType{m.BOOL, m.I32, m.RUNE}
+	ret_type = m.GenValueType_Tuple(fields)
+
 	insts = append(insts, iter.EmitPush()...)
 	insts = append(insts, wat.NewInstCall("runtime.next_rune"))
 	insts = append(insts, iter.(*aStruct).Extract("pos").EmitPop()...)
