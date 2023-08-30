@@ -192,7 +192,7 @@ func next_rune(iter: stringIter) => (ok: bool, k: int, v: rune, pos: int) {
 		p0 = (p0 & 0b1111) << 12
 		p1 := (i32(get_u8(u32(iter.ptr) + u32(iter.pos) + 1)) & 0b00111111) << 6
 		p2 := (i32(get_u8(u32(iter.ptr) + u32(iter.pos) + 2)) & 0b00111111)
-		return true, iter.pos, rune(p0 | p1 | p2), iter.pos + 3		
+		return true, iter.pos, rune(p0 | p1 | p2), iter.pos + 3
 	} else if p0 & 0b11111000 == 0b11110000 {
 		p0 = (p0 & 0b111) << 18
 		p1 := (i32(get_u8(u32(iter.ptr) + u32(iter.pos) + 1)) & 0b00111111) << 12

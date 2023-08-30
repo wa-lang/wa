@@ -44,7 +44,7 @@ type Module struct {
 
 	constGlobals []wat.Global
 
-	DataSeg *DataSeg
+	DataSeg *wat.DataSeg
 
 	BaseWat string
 }
@@ -94,7 +94,7 @@ func NewModule() *Module {
 	m.table_map = make(map[string]int)
 
 	//data_seg中先插入标志，防止产生0值
-	m.DataSeg = newDataSeg(0)
+	m.DataSeg = wat.NewDataSeg(2048)
 	m.DataSeg.Append([]byte("$$wads$$"), 8)
 
 	m.globalsMapByValue = make(map[ssa.Value]int)
@@ -301,7 +301,7 @@ func (m *Module) ToWatModule() *wat.Module {
 		wat_module.Globals = append(wat_module.Globals, heap_base)
 	}
 
-	wat_module.DataSeg = m.DataSeg.data
+	wat_module.DataSeg = m.DataSeg
 
 	return &wat_module
 }

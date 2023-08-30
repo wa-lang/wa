@@ -1,6 +1,13 @@
-package wir
+package wat
 
 import "bytes"
+
+func makeAlign(i, align int) int {
+	if align == 1 || align == 0 {
+		return i
+	}
+	return (i + align - 1) / align * align
+}
 
 /**************************************
 DataSeg:
@@ -10,7 +17,7 @@ type DataSeg struct {
 	data  []byte
 }
 
-func newDataSeg(start int) *DataSeg {
+func NewDataSeg(start int) *DataSeg {
 	return &DataSeg{start: start}
 }
 
