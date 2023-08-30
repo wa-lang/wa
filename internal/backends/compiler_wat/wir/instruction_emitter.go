@@ -918,7 +918,7 @@ func (m *Module) EmitGenRange(x Value) (insts []wat.Inst, ret_type ValueType) {
 }
 
 func (m *Module) EmitGenNext_String(iter Value) (insts []wat.Inst, ret_type ValueType) {
-	fields := []ValueType{m.BOOL, m.I32, m.RUNE}
+	fields := []ValueType{m.BOOL, m.INT, m.RUNE}
 	ret_type = m.GenValueType_Tuple(fields)
 
 	insts = append(insts, iter.EmitPush()...)

@@ -18,7 +18,7 @@ type fnSigWrap struct {
 Module:
 **************************************/
 type Module struct {
-	VOID, BOOL, RUNE, U8, U16, I32, U32, UPTR, I64, U64, F32, F64, STRING, BYTES ValueType
+	VOID, BOOL, RUNE, U8, U16, I32, U32, UPTR, I64, U64, INT, UINT, F32, F64, STRING, BYTES ValueType
 
 	types_map         map[string]ValueType
 	usedConcreteTypes []ValueType
@@ -60,6 +60,8 @@ func NewModule() *Module {
 	//m.I16 = &tI16{}
 	m.U16 = &tU16{}
 	m.I32 = &tI32{}
+	m.INT = m.I32
+	m.UINT = m.U32
 	m.U32 = &tU32{}
 	m.UPTR = m.U32
 	m.I64 = &tI64{}
