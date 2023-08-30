@@ -38,26 +38,3 @@
 
 	;; {{$$runtime.waPuts/body/end}}
 )
-
-;; 打印字符
-(func $$runtime.waPrintRune (param $ch i32)
-	;; {{$$runtime.waPrintRune/body/begin}}
-
-	(local $sp i32)
-	(local $p_ch i32)
-
-	;; 保存栈指针状态
-	(local.set $sp (global.get $__stack_ptr))
-
-	;; 分配字符
-	(local.set $p_ch (call $$waStackAlloc (i32.const 4)))
-	(i32.store offset=0 align=1 (local.get $p_ch) (local.get $ch))
-
-	;; 输出字符
-	(call $$runtime.waPuts (local.get $p_ch) (i32.const 1))
-
-	;; 重置栈指针
-	(global.set $__stack_ptr (local.get $sp))
-
-	;; {{$$runtime.waPrintRune/body/begin}}
-)
