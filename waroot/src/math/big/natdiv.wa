@@ -1,6 +1,4 @@
-// Author: TrueAbc
-// Note:
-//  The implementation refers to the go language "math/big" lib.
+// 版权 @2023 凹语言 作者。保留所有权利。
 
 import "math/bits"
 

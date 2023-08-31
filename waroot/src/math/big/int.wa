@@ -1,13 +1,11 @@
-// Author: TrueAbc
-// Note:
-//  The implementation refers to the go language "math/big" lib.
+// 版权 @2023 凹语言 作者。保留所有权利。
 
 type Int struct {
 	neg: bool // sign
 	abs: nat  // absolute value of the integer
 }
 
-var intOne = &Int{false, natOne}
+global intOne = &Int{false, natOne}
 
 // 测试用
 func NewInt(x: string) => *Int {
