@@ -1,8 +1,6 @@
-// Author: TrueAbc
-// Note:
-//  The implementation refers to the go language "math/big" lib.
+// 版权 @2023 凹语言 作者。保留所有权利。
 
-// 暂时把go的大端转换代码copy过来
+// 暂时把go的大端转换代码copy过来, 待binary库提供相关支持
 
 func Buf2Uint64(b: []byte) => uint64 {
 	_ = b[7] // bounds check hint to compiler; see golang.org/issue/14808
