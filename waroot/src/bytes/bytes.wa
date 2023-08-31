@@ -785,17 +785,11 @@ func makeCutsetFunc(cutset: string) => func(r: rune) => bool {
 		}
 	}
 	return func(r: rune) => bool {
-		for _, c := range []byte(cutset) {
-			if rune(c) == r {
+		for _, c := range cutset {
+			if c == r {
 				return true
 			}
 		}
-		// todo(chai2010)
-		//for _, c := range cutset {
-		//	if c == r {
-		//		return true
-		//	}
-		//}
 		return false
 	}
 }
@@ -944,7 +938,6 @@ func ContainsRune(b: []byte, r: rune) => bool {
 	return IndexRune(b, r) >= 0
 }
 
-
 // IndexAny interprets s as a sequence of UTF-8-encoded Unicode code points.
 // It returns the byte index of the first occurrence in s of any of the Unicode
 // code points in chars. It returns -1 if chars is empty or if there is no code
@@ -1002,11 +995,10 @@ func IndexAny(s: []byte, chars: string) => int {
 		if r != utf8.RuneError {
 			// r is 2 to 4 bytes
 			if len(chars) == width {
-				panic("TODO") // 字符串支持
-				//if chars == string(r) {
-				//	return i
-				//}
-				//continue
+				if chars == string(r) {
+					return i
+				}
+				continue
 			}
 			// Use bytealg.IndexString for performance if available.
 			//if bytealg.MaxLen >= width {
@@ -1016,11 +1008,11 @@ func IndexAny(s: []byte, chars: string) => int {
 			//	continue
 			//}
 		}
-		//for _, ch := range chars {
-		//	if r == ch {
-		//		return i
-		//	}
-		//}
+		for _, ch := range chars {
+			if r == ch {
+				return i
+			}
+		}
 	}
 	return -1
 }

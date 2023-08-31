@@ -265,13 +265,6 @@ func TestIndexByteSmall {
 }
 
 func TestIndexRune {
-	if true {
-		//x := IndexRune([]byte("foo"), 'o')
-		//if x != 1 {
-		//	println(x)
-		//	assert(false)
-		//}
-	}
 	tests := []struct {
 		in:   string
 		rune: rune
@@ -282,7 +275,7 @@ func TestIndexRune {
 		{"foo", '☹', -1},
 		{"foo", 'o', 1},
 		{"foo☺bar", '☺', 3},
-		//{"foo☺☻☹bar", '☹', 9},
+		{"foo☺☻☹bar", '☹', 9},
 		{"a A x", 'A', 2},
 		{"some_text=some_value", '=', 9},
 		{"☺a", 'a', 3},
@@ -290,7 +283,7 @@ func TestIndexRune {
 
 		// RuneError should match any invalid UTF-8 byte sequence.
 		{"�", '�', 0},
-		//{"\xff", '�', 0},
+		{"\xff", '�', 0},
 		{"☻x�", '�', len("☻x")},
 		{"☻x\xe2\x98", '�', len("☻x")},
 		{"☻x\xe2\x98�", '�', len("☻x")},
@@ -659,7 +652,7 @@ global lowerTests = []StringTest{
 	{"longStrinGwitHmixofsmaLLandcAps", []byte("longstringwithmixofsmallandcaps")},
 	//{"LONG\u2C6FSTRING\u2C6FWITH\u2C6FNONASCII\u2C6FCHARS", []byte("long\u0250string\u0250with\u0250nonascii\u0250chars")},
 	//{"\u2C6D\u2C6D\u2C6D\u2C6D\u2C6D", []byte("\u0251\u0251\u0251\u0251\u0251")}, // shrinks one byte per char
-	//{"A\u0080\U0010FFFF", []byte("a\u0080\U0010FFFF")},                           // test utf8.RuneSelf and utf8.MaxRune
+	{"A\u0080\U0010FFFF", []byte("a\u0080\U0010FFFF")}, // test utf8.RuneSelf and utf8.MaxRune
 }
 
 const space = "\t\v\r\f\n"
@@ -882,9 +875,9 @@ global RunesTests = []RunesTest{
 	{" ", []rune{32}, false},
 	{"ABC", []rune{65, 66, 67}, false},
 	{"abc", []rune{97, 98, 99}, false},
-	//{"\u65e5\u672c\u8a9e", []rune{26085, 26412, 35486}, false},
-	//{"ab\x80c", []rune{97, 98, 0xFFFD, 99}, true},
-	//{"ab\xc0c", []rune{97, 98, 0xFFFD, 99}, true},
+	{"\u65e5\u672c\u8a9e", []rune{26085, 26412, 35486}, false},
+	{"ab\x80c", []rune{97, 98, 0xFFFD, 99}, true},
+	{"ab\xc0c", []rune{97, 98, 0xFFFD, 99}, true},
 }
 
 func TestRunes {
@@ -899,11 +892,11 @@ func TestRunes {
 		}
 		if !tt.lossy {
 			// can only test reassembly if we didn't lose information
-			//s := string(a)
-			//if s != tt.in {
-			//	assert(false)
-			//t.Errorf("string(Runes(%q)) = %x; want %x", tin, s, tin)
-			//}
+			s := string(a)
+			if s != tt.in {
+				assert(false)
+				//t.Errorf("string(Runes(%q)) = %x; want %x", tin, s, tin)
+			}
 		}
 	}
 }
@@ -922,8 +915,8 @@ global trimTests = []TrimTest{
 	{"TrimRight", "abba", "a", "abb"},
 	{"Trim", "<tag>", "<>", "tag"},
 	{"Trim", "* listitem", " *", "listitem"},
-	//{"Trim", `"quote"`, `"`, "quote"},
-	//{"Trim", "\u2C6F\u2C6F\u0250\u0250\u2C6F\u2C6F", "\u2C6F", "\u0250\u0250"},
+	{"Trim", "\"quote\"", "\"", "quote"},
+	{"Trim", "\u2C6F\u2C6F\u0250\u0250\u2C6F\u2C6F", "\u2C6F", "\u0250\u0250"},
 	//{"Trim", "\x80test\xff", "\xff", "test"},
 	{"Trim", " Ġ ", " ", "Ġ"},
 	{"Trim", " Ġİ0", "0 ", "Ġİ"},
@@ -1007,7 +1000,7 @@ global ReplaceTests = []ReplaceTest{
 	{"☺☻☹", "", "<>", -1, "<>☺<>☻<>☹<>"},
 }
 
-func TestReplace{
+func TestReplace {
 	for _, tt := range ReplaceTests {
 		in := append([]byte(tt.in), "<spare>"...)
 		in = in[:len(tt.in)]
@@ -1043,7 +1036,7 @@ global TitleTests = []TitleTest{
 	{"double-blind", "Double-Blind"},
 	//{"ÿøû", "Ÿøû"},
 	{"with_underscore", "With_underscore"},
-	//{"unicode \xe2\x80\xa8 line separator", "Unicode \xe2\x80\xa8 Line Separator"},
+	{"unicode \xe2\x80\xa8 line separator", "Unicode \xe2\x80\xa8 Line Separator"},
 }
 
 func TestTitle {
@@ -1104,8 +1097,8 @@ global EqualFoldTests = []struct {
 }
 
 global containsTests = []struct {
-	b, subslice []byte
-	want        bool
+	b, subslice: []byte
+	want:        bool
 }{
 	{[]byte("hello"), []byte("hel"), true},
 	{[]byte("汉语拼音"), []byte("汉语"), true},
@@ -1136,7 +1129,7 @@ global ContainsAnyTests = []struct {
 	{[]byte("aaa"), "a", true},
 	{[]byte("abc"), "xyz", false},
 	{[]byte("abc"), "xcz", true},
-	//{[]byte("a☺b☻c☹d"), "uvw☻xyz", true}, // TODO(chai2010)
+	{[]byte("a☺b☻c☹d"), "uvw☻xyz", true},
 	{[]byte("aRegExp*"), ".(|)*+?^$[]", true},
 	{[]byte(dots + dots + dots), " ", false},
 }
@@ -1153,9 +1146,9 @@ func TestContainsAny {
 }
 
 global ContainsRuneTests = []struct {
-	b        []byte
-	r        rune
-	expected bool
+	b:        []byte
+	r:        rune
+	expected: bool
 }{
 	{[]byte(""), 'a', false},
 	{[]byte("a"), 'a', true},
