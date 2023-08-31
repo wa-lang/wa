@@ -731,6 +731,11 @@ func (m *Module) EmitGenConvert(x Value, typ ValueType) (insts []wat.Inst) {
 			insts = append(insts, x.EmitPush()...)
 			insts = append(insts, wat.NewInstCall("runtime.stringFromRuneSlice"))
 			return
+
+		case xt.Equal(m.RUNE) || xt.Equal(m.I32):
+			insts = append(insts, x.EmitPush()...)
+			insts = append(insts, wat.NewInstCall("runtime.stringFromRune"))
+			return
 		}
 
 	case typ.Equal(m.BYTES):
