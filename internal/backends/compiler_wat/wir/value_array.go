@@ -19,14 +19,21 @@ type Array struct {
 	Capacity   int
 }
 
-func (m *Module) GenValueType_Array(base ValueType, capacity int) *Array {
+func (m *Module) GenValueType_Array(base ValueType, capacity int, name string) *Array {
+
 	arr_t := Array{Base: base, Capacity: capacity}
-	t, ok := m.findValueType(arr_t.Name())
+	if len(name) > 0 {
+		arr_t.name = name
+	} else {
+		arr_t.name = base.Named() + ".$array" + strconv.Itoa(capacity)
+	}
+
+	t, ok := m.findValueType(arr_t.name)
 	if ok {
 		return t.(*Array)
 	}
 
-	arr_t.underlying = m.genInternalStruct(arr_t.Name() + ".underlying")
+	arr_t.underlying = m.genInternalStruct(arr_t.name + ".underlying")
 	for i := 0; i < capacity; i++ {
 		field := m.NewStructField("m"+strconv.Itoa(i), base)
 		arr_t.underlying.AppendField(field)
@@ -37,7 +44,6 @@ func (m *Module) GenValueType_Array(base ValueType, capacity int) *Array {
 	return &arr_t
 }
 
-func (t *Array) Name() string         { return t.Base.Name() + ".$array" + strconv.Itoa(t.Capacity) }
 func (t *Array) Size() int            { return t.underlying.Size() }
 func (t *Array) align() int           { return t.underlying.align() }
 func (t *Array) Kind() TypeKind       { return kArray }
@@ -60,7 +66,7 @@ func (t *Array) genFunc_IndexOf() string {
 		return ""
 	}
 
-	fn_name := "$" + t.Name() + ".$IndexOf"
+	fn_name := "$" + t.Named() + ".$IndexOf"
 	if currentModule.FindFunc(fn_name) != nil {
 		return fn_name
 	}

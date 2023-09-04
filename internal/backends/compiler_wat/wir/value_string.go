@@ -22,9 +22,14 @@ type String struct {
 	_u8_ptr    ValueType
 }
 
-func (m *Module) GenValueType_String() *String {
+func (m *Module) GenValueType_String(name string) *String {
 	var str_t String
-	t, ok := m.findValueType(str_t.Name())
+	if len(name) > 0 {
+		str_t.name = name
+	} else {
+		str_t.name = "string"
+	}
+	t, ok := m.findValueType(str_t.name)
 	if ok {
 		return t.(*String)
 	}
@@ -35,7 +40,7 @@ func (m *Module) GenValueType_String() *String {
 	str_t._u8_block = m.GenValueType_Block(m.U8)
 	str_t._u8_ptr = m.GenValueType_Ptr(m.U8)
 
-	str_t.underlying = m.genInternalStruct(str_t.Name() + ".underlying")
+	str_t.underlying = m.genInternalStruct(str_t.name + ".underlying")
 	str_t.underlying.AppendField(m.NewStructField("b", str_t._u8_block))
 	str_t.underlying.AppendField(m.NewStructField("d", str_t._u8_ptr))
 	str_t.underlying.AppendField(m.NewStructField("l", str_t._u32))
@@ -46,7 +51,6 @@ func (m *Module) GenValueType_String() *String {
 
 }
 
-func (t *String) Name() string           { return "string" }
 func (t *String) Size() int              { return t.underlying.Size() }
 func (t *String) align() int             { return t.underlying.align() }
 func (t *String) Kind() TypeKind         { return kString }
@@ -59,7 +63,7 @@ func (t *String) EmitLoadFromAddr(addr Value, offset int) []wat.Inst {
 }
 
 func (t *String) genFunc_Append() string {
-	fn_name := "$" + t.Name() + ".appendstr"
+	fn_name := "$" + t.Named() + ".appendstr"
 	if currentModule.FindFunc(fn_name) != nil {
 		return fn_name
 	}
@@ -194,7 +198,7 @@ func (t *String) genFunc_Append() string {
 }
 
 func (t *String) genFunc_Equal() string {
-	fn_name := "$" + t.Name() + ".equal"
+	fn_name := "$" + t.Named() + ".equal"
 	if currentModule.FindFunc(fn_name) != nil {
 		return fn_name
 	}

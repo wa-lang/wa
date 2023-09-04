@@ -22,9 +22,14 @@ type Slice struct {
 	_base_ptr   *Ptr
 }
 
-func (m *Module) GenValueType_Slice(base ValueType) *Slice {
+func (m *Module) GenValueType_Slice(base ValueType, name string) *Slice {
 	slice_t := Slice{Base: base}
-	t, ok := m.findValueType(slice_t.Name())
+	if len(name) > 0 {
+		slice_t.name = name
+	} else {
+		slice_t.name = base.Named() + ".$slice"
+	}
+	t, ok := m.findValueType(slice_t.name)
 	if ok {
 		return t.(*Slice)
 	}
@@ -34,7 +39,7 @@ func (m *Module) GenValueType_Slice(base ValueType) *Slice {
 	slice_t._base_block = m.GenValueType_Block(base)
 	slice_t._base_ptr = m.GenValueType_Ptr(base)
 
-	slice_t.underlying = m.genInternalStruct(slice_t.Name() + ".underlying")
+	slice_t.underlying = m.genInternalStruct(slice_t.name + ".underlying")
 	slice_t.underlying.AppendField(m.NewStructField("b", slice_t._base_block))
 	slice_t.underlying.AppendField(m.NewStructField("d", slice_t._base_ptr))
 	slice_t.underlying.AppendField(m.NewStructField("l", slice_t._u32))
@@ -45,7 +50,6 @@ func (m *Module) GenValueType_Slice(base ValueType) *Slice {
 	return &slice_t
 }
 
-func (t *Slice) Name() string         { return t.Base.Name() + ".$slice" }
 func (t *Slice) Size() int            { return t.underlying.Size() }
 func (t *Slice) align() int           { return t.underlying.align() }
 func (t *Slice) Kind() TypeKind       { return kSlice }
@@ -165,7 +169,7 @@ func (t *Slice) emitGenMake(Len, Cap Value) (insts []wat.Inst) {
 }
 
 func (t *Slice) genAppendFunc() string {
-	fn_name := "$" + GenSymbolName(t.Name()) + ".append"
+	fn_name := "$" + GenSymbolName(t.Named()) + ".append"
 	if currentModule.FindFunc(fn_name) != nil {
 		return fn_name
 	}
@@ -377,7 +381,7 @@ func (t *Slice) genAppendFunc() string {
 
 func (t *Slice) genCopyFunc() string {
 	var f Function
-	f.InternalName = "$" + GenSymbolName(t.Name()) + ".copy"
+	f.InternalName = "$" + GenSymbolName(t.Named()) + ".copy"
 	if currentModule.FindFunc(f.InternalName) != nil {
 		return f.InternalName
 	}

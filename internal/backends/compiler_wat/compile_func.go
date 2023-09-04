@@ -636,9 +636,6 @@ func (g *functionGenerator) genBuiltin(call *ssa.CallCommon) (insts []wat.Inst, 
 		for i, arg := range call.Args {
 			av := g.getValue(arg).value
 			avt := av.Type()
-			if ut, ok := avt.(*wir.Dup); ok {
-				avt = ut.Base
-			}
 
 			if i > 0 {
 				insts = append(insts, wat.NewInstConst(wat.I32{}, "32"))

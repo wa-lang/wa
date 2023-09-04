@@ -74,12 +74,14 @@ func toWatType(t ValueType) wat.ValueType {
 tCommon:
 **************************************/
 type tCommon struct {
+	name    string
 	addr    int
 	hash    int
 	comp    int
 	methods []Method
 }
 
+func (t *tCommon) Named() string       { return t.name }
 func (t *tCommon) Hash() int           { return t.hash }
 func (t *tCommon) SetHash(h int)       { t.hash = h }
 func (t *tCommon) AddMethod(m Method)  { t.methods = append(t.methods, m) }
@@ -89,18 +91,6 @@ func (t *tCommon) typeInfoAddr() int   { return t.addr }
 func (t *tCommon) OnComp() int         { return t.comp }
 func (t *tCommon) setOnComp(c int)     { t.comp = c }
 
-//func (t *tCommon) AddMethodEntry(m FnType) { logger.Fatal("Can't add method for common type.") }
-//
-///**************************************
-//tUncommon:
-//**************************************/
-//type tUncommon struct {
-//	tCommon
-//	methodTab []FnType
-//}
-//
-//func (t *tUncommon) AddMethodEntry(m FnType) { t.methodTab = append(t.methodTab, m) }
-
 /**************************************
 tVoid:
 **************************************/
@@ -108,7 +98,21 @@ type tVoid struct {
 	tCommon
 }
 
-func (t *tVoid) Name() string           { return "void" }
+func (m *Module) GenValueType_void(name string) *tVoid {
+	nt := tVoid{}
+	if len(name) > 0 {
+		nt.name = name
+	} else {
+		nt.name = "void"
+	}
+	t, ok := m.findValueType(nt.name)
+	if ok {
+		return t.(*tVoid)
+	}
+
+	m.addValueType(&nt)
+	return &nt
+}
 func (t *tVoid) Size() int              { return 0 }
 func (t *tVoid) align() int             { return 0 }
 func (t *tVoid) Kind() TypeKind         { return kVoid }
@@ -127,7 +131,21 @@ type tBool struct {
 	tCommon
 }
 
-func (t *tBool) Name() string           { return "bool" }
+func (m *Module) GenValueType_bool(name string) *tBool {
+	nt := tBool{}
+	if len(name) > 0 {
+		nt.name = name
+	} else {
+		nt.name = "bool"
+	}
+	t, ok := m.findValueType(nt.name)
+	if ok {
+		return t.(*tBool)
+	}
+
+	m.addValueType(&nt)
+	return &nt
+}
 func (t *tBool) Size() int              { return 1 }
 func (t *tBool) align() int             { return 1 }
 func (t *tBool) Kind() TypeKind         { return kBool }
@@ -151,7 +169,21 @@ type tRune struct {
 	tCommon
 }
 
-func (t *tRune) Name() string           { return "rune" }
+func (m *Module) GenValueType_Rune(name string) *tRune {
+	nt := tRune{}
+	if len(name) > 0 {
+		nt.name = name
+	} else {
+		nt.name = "rune"
+	}
+	t, ok := m.findValueType(nt.name)
+	if ok {
+		return t.(*tRune)
+	}
+
+	m.addValueType(&nt)
+	return &nt
+}
 func (t *tRune) Size() int              { return 4 }
 func (t *tRune) align() int             { return 4 }
 func (t *tRune) Kind() TypeKind         { return kRune }
@@ -175,7 +207,21 @@ type tI8 struct {
 	tCommon
 }
 
-func (t *tI8) Name() string           { return "i8" }
+func (m *Module) GenValueType_i8(name string) *tI8 {
+	nt := tI8{}
+	if len(name) > 0 {
+		nt.name = name
+	} else {
+		nt.name = "i8"
+	}
+	t, ok := m.findValueType(nt.name)
+	if ok {
+		return t.(*tI8)
+	}
+
+	m.addValueType(&nt)
+	return &nt
+}
 func (t *tI8) Size() int              { return 1 }
 func (t *tI8) align() int             { return 1 }
 func (t *tI8) Kind() TypeKind         { return kI8 }
@@ -203,7 +249,21 @@ type tU8 struct {
 	tCommon
 }
 
-func (t *tU8) Name() string           { return "u8" }
+func (m *Module) GenValueType_u8(name string) *tU8 {
+	nt := tU8{}
+	if len(name) > 0 {
+		nt.name = name
+	} else {
+		nt.name = "u8"
+	}
+	t, ok := m.findValueType(nt.name)
+	if ok {
+		return t.(*tU8)
+	}
+
+	m.addValueType(&nt)
+	return &nt
+}
 func (t *tU8) Size() int              { return 1 }
 func (t *tU8) align() int             { return 1 }
 func (t *tU8) Kind() TypeKind         { return kU8 }
@@ -230,7 +290,21 @@ type tI16 struct {
 	tCommon
 }
 
-func (t *tI16) Name() string           { return "i16" }
+func (m *Module) GenValueType_i16(name string) *tI16 {
+	nt := tI16{}
+	if len(name) > 0 {
+		nt.name = name
+	} else {
+		nt.name = "i16"
+	}
+	t, ok := m.findValueType(nt.name)
+	if ok {
+		return t.(*tI16)
+	}
+
+	m.addValueType(&nt)
+	return &nt
+}
 func (t *tI16) Size() int              { return 2 }
 func (t *tI16) align() int             { return 2 }
 func (t *tI16) Kind() TypeKind         { return kI16 }
@@ -257,7 +331,21 @@ type tU16 struct {
 	tCommon
 }
 
-func (t *tU16) Name() string           { return "u16" }
+func (m *Module) GenValueType_u16(name string) *tU16 {
+	nt := tU16{}
+	if len(name) > 0 {
+		nt.name = name
+	} else {
+		nt.name = "u16"
+	}
+	t, ok := m.findValueType(nt.name)
+	if ok {
+		return t.(*tU16)
+	}
+
+	m.addValueType(&nt)
+	return &nt
+}
 func (t *tU16) Size() int              { return 2 }
 func (t *tU16) align() int             { return 2 }
 func (t *tU16) Kind() TypeKind         { return kU16 }
@@ -284,7 +372,21 @@ type tI32 struct {
 	tCommon
 }
 
-func (t *tI32) Name() string           { return "i32" }
+func (m *Module) GenValueType_i32(name string) *tI32 {
+	nt := tI32{}
+	if len(name) > 0 {
+		nt.name = name
+	} else {
+		nt.name = "i32"
+	}
+	t, ok := m.findValueType(nt.name)
+	if ok {
+		return t.(*tI32)
+	}
+
+	m.addValueType(&nt)
+	return &nt
+}
 func (t *tI32) Size() int              { return 4 }
 func (t *tI32) align() int             { return 4 }
 func (t *tI32) Kind() TypeKind         { return kI32 }
@@ -311,7 +413,21 @@ type tU32 struct {
 	tCommon
 }
 
-func (t *tU32) Name() string           { return "u32" }
+func (m *Module) GenValueType_u32(name string) *tU32 {
+	nt := tU32{}
+	if len(name) > 0 {
+		nt.name = name
+	} else {
+		nt.name = "u32"
+	}
+	t, ok := m.findValueType(nt.name)
+	if ok {
+		return t.(*tU32)
+	}
+
+	m.addValueType(&nt)
+	return &nt
+}
 func (t *tU32) Size() int              { return 4 }
 func (t *tU32) align() int             { return 4 }
 func (t *tU32) Kind() TypeKind         { return kU32 }
@@ -338,7 +454,21 @@ type tI64 struct {
 	tCommon
 }
 
-func (t *tI64) Name() string           { return "i64" }
+func (m *Module) GenValueType_i64(name string) *tI64 {
+	nt := tI64{}
+	if len(name) > 0 {
+		nt.name = name
+	} else {
+		nt.name = "i64"
+	}
+	t, ok := m.findValueType(nt.name)
+	if ok {
+		return t.(*tI64)
+	}
+
+	m.addValueType(&nt)
+	return &nt
+}
 func (t *tI64) Size() int              { return 8 }
 func (t *tI64) align() int             { return 8 }
 func (t *tI64) Kind() TypeKind         { return kI64 }
@@ -359,13 +489,27 @@ func (t *tI64) EmitLoadFromAddr(addr Value, offset int) []wat.Inst {
 }
 
 /**************************************
-tUint64:
+tU64:
 **************************************/
 type tU64 struct {
 	tCommon
 }
 
-func (t *tU64) Name() string           { return "u64" }
+func (m *Module) GenValueType_u64(name string) *tU64 {
+	nt := tU64{}
+	if len(name) > 0 {
+		nt.name = name
+	} else {
+		nt.name = "u64"
+	}
+	t, ok := m.findValueType(nt.name)
+	if ok {
+		return t.(*tU64)
+	}
+
+	m.addValueType(&nt)
+	return &nt
+}
 func (t *tU64) Size() int              { return 8 }
 func (t *tU64) align() int             { return 8 }
 func (t *tU64) Kind() TypeKind         { return kU64 }
@@ -392,7 +536,21 @@ type tF32 struct {
 	tCommon
 }
 
-func (t *tF32) Name() string           { return "f32" }
+func (m *Module) GenValueType_f32(name string) *tF32 {
+	nt := tF32{}
+	if len(name) > 0 {
+		nt.name = name
+	} else {
+		nt.name = "f32"
+	}
+	t, ok := m.findValueType(nt.name)
+	if ok {
+		return t.(*tF32)
+	}
+
+	m.addValueType(&nt)
+	return &nt
+}
 func (t *tF32) Size() int              { return 4 }
 func (t *tF32) align() int             { return 4 }
 func (t *tF32) Kind() TypeKind         { return kF32 }
@@ -419,7 +577,21 @@ type tF64 struct {
 	tCommon
 }
 
-func (t *tF64) Name() string           { return "f64" }
+func (m *Module) GenValueType_f64(name string) *tF64 {
+	nt := tF64{}
+	if len(name) > 0 {
+		nt.name = name
+	} else {
+		nt.name = "f64"
+	}
+	t, ok := m.findValueType(nt.name)
+	if ok {
+		return t.(*tF64)
+	}
+
+	m.addValueType(&nt)
+	return &nt
+}
 func (t *tF64) Size() int              { return 8 }
 func (t *tF64) align() int             { return 8 }
 func (t *tF64) Kind() TypeKind         { return kF64 }

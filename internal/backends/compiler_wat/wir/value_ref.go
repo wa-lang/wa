@@ -22,7 +22,8 @@ type Ref struct {
 
 func (m *Module) GenValueType_Ref(base ValueType) *Ref {
 	ref_t := Ref{Base: base}
-	t, ok := m.findValueType(ref_t.Name())
+	ref_t.name = base.Named() + ".$ref"
+	t, ok := m.findValueType(ref_t.name)
 	if ok {
 		return t.(*Ref)
 	}
@@ -31,7 +32,7 @@ func (m *Module) GenValueType_Ref(base ValueType) *Ref {
 	ref_t._void = m.VOID
 	base_ptr := m.GenValueType_Ptr(base)
 
-	ref_t.underlying = m.genInternalStruct(ref_t.Name() + ".underlying")
+	ref_t.underlying = m.genInternalStruct(ref_t.name + ".underlying")
 	ref_t.underlying.AppendField(m.NewStructField("b", ref_t._base_block))
 	ref_t.underlying.AppendField(m.NewStructField("d", base_ptr))
 	ref_t.underlying.Finish()
@@ -40,7 +41,6 @@ func (m *Module) GenValueType_Ref(base ValueType) *Ref {
 	return &ref_t
 }
 
-func (t *Ref) Name() string         { return t.Base.Name() + ".$ref" }
 func (t *Ref) Size() int            { return t.underlying.Size() }
 func (t *Ref) align() int           { return t.underlying.align() }
 func (t *Ref) Kind() TypeKind       { return kRef }

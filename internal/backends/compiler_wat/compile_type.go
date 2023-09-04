@@ -168,13 +168,13 @@ func (tLib *typeLib) compile(from types.Type) wir.ValueType {
 		case *types.Signature:
 			newType = tLib.module.GenValueType_Closure(tLib.GenFnSig(ut))
 
-		case *types.Basic:
-			pkg_name := ""
-			if t.Obj().Pkg() != nil {
-				pkg_name, _ = wir.GetPkgMangleName(t.Obj().Pkg().Path())
-			}
-			obj_name := wir.GenSymbolName(t.Obj().Name())
-			newType = tLib.module.GenValueType_Dup(pkg_name+"."+obj_name, tLib.compile(ut))
+		//case *types.Basic:
+		//	pkg_name := ""
+		//	if t.Obj().Pkg() != nil {
+		//		pkg_name, _ = wir.GetPkgMangleName(t.Obj().Pkg().Path())
+		//	}
+		//	obj_name := wir.GenSymbolName(t.Obj().Name())
+		//	newType = tLib.module.GenValueType_Dup(pkg_name+"."+obj_name, tLib.compile(ut))
 
 		default:
 			//pkg_name := ""
@@ -187,10 +187,10 @@ func (tLib *typeLib) compile(from types.Type) wir.ValueType {
 		}
 
 	case *types.Array:
-		newType = tLib.module.GenValueType_Array(tLib.compile(t.Elem()), int(t.Len()))
+		newType = tLib.module.GenValueType_Array(tLib.compile(t.Elem()), int(t.Len()), "")
 
 	case *types.Slice:
-		newType = tLib.module.GenValueType_Slice(tLib.compile(t.Elem()))
+		newType = tLib.module.GenValueType_Slice(tLib.compile(t.Elem()), "")
 
 	case *types.Signature:
 		newType = tLib.module.GenValueType_Closure(tLib.GenFnSig(t))
