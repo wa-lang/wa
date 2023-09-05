@@ -55,7 +55,7 @@ func NewModule() *Module {
 
 	m.VOID = m.GenValueType_void("")
 	m.BOOL = m.GenValueType_bool("")
-	m.RUNE = m.GenValueType_Rune("")
+	m.RUNE = m.GenValueType_rune("")
 	m.U8 = m.GenValueType_u8("")
 	m.U16 = m.GenValueType_u16("")
 	m.I32 = m.GenValueType_i32("")
@@ -68,7 +68,7 @@ func NewModule() *Module {
 	m.UINT = m.U32
 	m.UPTR = m.U32
 
-	m.STRING = m.GenValueType_String("")
+	m.STRING = m.GenValueType_string("")
 	m.BYTES = m.GenValueType_Slice(m.U8, "")
 
 	m.fnSigsName = make(map[string]fnSigWrap)

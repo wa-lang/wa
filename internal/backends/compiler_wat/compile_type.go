@@ -52,8 +52,20 @@ func (tLib *typeLib) compile(from types.Type) wir.ValueType {
 		case types.Bool, types.UntypedBool:
 			newType = tLib.module.BOOL
 
-		case types.Int, types.UntypedInt:
-			newType = tLib.module.I32
+		case types.Uint8:
+			newType = tLib.module.U8
+
+		//case types.Int8:
+		//	newType = tLib.module.I8
+
+		case types.Uint16:
+			newType = tLib.module.U16
+
+		//case types.Int16:
+		//	newType = tLib.module.I16
+
+		case types.Uint32:
+			newType = tLib.module.U32
 
 		case types.Int32:
 			if t.Name() == "rune" {
@@ -62,32 +74,26 @@ func (tLib *typeLib) compile(from types.Type) wir.ValueType {
 				newType = tLib.module.I32
 			}
 
-		case types.Uint32, types.Uintptr, types.Uint:
-			newType = tLib.module.U32
+		case types.Uint64:
+			newType = tLib.module.U64
 
 		case types.Int64:
 			newType = tLib.module.I64
 
-		case types.Uint64:
-			newType = tLib.module.U64
-
-		case types.Float32, types.UntypedFloat:
+		case types.Float32:
 			newType = tLib.module.F32
 
-		case types.Float64:
+		case types.Float64, types.UntypedFloat:
 			newType = tLib.module.F64
 
-		//case types.Int8:
-		//	newType = tLib.module.I8
+		case types.Uint:
+			newType = tLib.module.UINT
 
-		case types.Uint8:
-			newType = tLib.module.U8
+		case types.Int, types.UntypedInt:
+			newType = tLib.module.INT
 
-		//case types.Int16:
-		//	newType = tLib.module.I16
-
-		case types.Uint16:
-			newType = tLib.module.U16
+		case types.Uintptr:
+			newType = tLib.module.UPTR
 
 		case types.String:
 			newType = tLib.module.STRING
@@ -117,75 +123,6 @@ func (tLib *typeLib) compile(from types.Type) wir.ValueType {
 		newType = tLib.module.GenValueType_Ref(tLib.compile(t.Elem()))
 		uncommanFlag = true
 
-	case *types.Named:
-		switch ut := t.Underlying().(type) {
-		case *types.Struct:
-			pkg_name, _ := wir.GetPkgMangleName(t.Obj().Pkg().Path())
-			obj_name := wir.GenSymbolName(t.Obj().Name())
-			tStruct, found := tLib.module.GenValueType_Struct(pkg_name + "." + obj_name)
-			newType = tStruct
-			if !found {
-				for i := 0; i < ut.NumFields(); i++ {
-					sf := ut.Field(i)
-					dtyp := tLib.compile(sf.Type())
-					if sf.Embedded() {
-						//df := tLib.module.NewStructField("$"+dtyp.Name(), dtyp)
-						df := tLib.module.NewStructField("$"+wir.GenSymbolName(sf.Name()), dtyp)
-						tStruct.AppendField(df)
-					} else {
-						df := tLib.module.NewStructField(wir.GenSymbolName(sf.Name()), dtyp)
-						tStruct.AppendField(df)
-					}
-				}
-				tStruct.Finish()
-			}
-
-		case *types.Interface:
-			pkg_name := ""
-			if t.Obj().Pkg() != nil {
-				pkg_name, _ = wir.GetPkgMangleName(t.Obj().Pkg().Path())
-			}
-			obj_name := wir.GenSymbolName(t.Obj().Name())
-
-			newType = tLib.module.GenValueType_Interface(pkg_name + "." + obj_name)
-
-			for i := 0; i < ut.NumMethods(); i++ {
-				var method wir.Method
-				method.Sig = tLib.GenFnSig(ut.Method(i).Type().(*types.Signature))
-
-				method.Name = ut.Method(i).Name()
-
-				var fnSig wir.FnSig
-				fnSig.Params = append(fnSig.Params, tLib.module.GenValueType_Ref(tLib.module.VOID))
-				fnSig.Params = append(fnSig.Params, method.Sig.Params...)
-				fnSig.Results = method.Sig.Results
-
-				method.FullFnName = tLib.module.AddFnSig(&fnSig)
-
-				newType.AddMethod(method)
-			}
-
-		case *types.Signature:
-			newType = tLib.module.GenValueType_Closure(tLib.GenFnSig(ut))
-
-		//case *types.Basic:
-		//	pkg_name := ""
-		//	if t.Obj().Pkg() != nil {
-		//		pkg_name, _ = wir.GetPkgMangleName(t.Obj().Pkg().Path())
-		//	}
-		//	obj_name := wir.GenSymbolName(t.Obj().Name())
-		//	newType = tLib.module.GenValueType_Dup(pkg_name+"."+obj_name, tLib.compile(ut))
-
-		default:
-			//pkg_name := ""
-			//if t.Obj().Pkg() != nil {
-			//	pkg_name, _ = wir.GetPkgMangleName(t.Obj().Pkg().Path())
-			//}
-			//obj_name := wir.GenSymbolName(t.Obj().Name())
-			//newType = tLib.module.GenValueType_Dup(pkg_name+"."+obj_name, tLib.compile(ut))
-			logger.Fatalf("Todo:%T", ut)
-		}
-
 	case *types.Array:
 		newType = tLib.module.GenValueType_Array(tLib.compile(t.Elem()), int(t.Len()), "")
 
@@ -196,7 +133,7 @@ func (tLib *typeLib) compile(from types.Type) wir.ValueType {
 		newType = tLib.module.GenValueType_Closure(tLib.GenFnSig(t))
 
 	case *types.Interface:
-		newType = tLib.module.GenValueType_Interface("i`" + strconv.Itoa(tLib.anonInterfaceCount) + "`")
+		newType, _ = tLib.module.GenValueType_Interface("i`" + strconv.Itoa(tLib.anonInterfaceCount) + "`")
 		tLib.anonInterfaceCount++
 
 		for i := 0; i < t.NumMethods(); i++ {
@@ -238,6 +175,126 @@ func (tLib *typeLib) compile(from types.Type) wir.ValueType {
 			tStruct.Finish()
 		} else {
 			panic("???")
+		}
+	case *types.Named:
+		pkg_name := ""
+		if t.Obj().Pkg() != nil {
+			pkg_name, _ = wir.GetPkgMangleName(t.Obj().Pkg().Path())
+		}
+		obj_name := wir.GenSymbolName(t.Obj().Name())
+		type_name := pkg_name + "." + obj_name
+
+		switch ut := t.Underlying().(type) {
+		case *types.Basic:
+			switch ut.Kind() {
+			case types.Bool, types.UntypedBool:
+				newType = tLib.module.GenValueType_bool(type_name)
+
+			case types.Uint8:
+				newType = tLib.module.GenValueType_u8(type_name)
+
+			//case types.Int8:
+			//	newType = tLib.module.GenValueType_i8(type_name)
+
+			case types.Uint16:
+				newType = tLib.module.GenValueType_u16(type_name)
+
+			//case types.Int16:
+			//	newType = tLib.module.GenValueType_i16(type_name)
+
+			case types.Uint32:
+				newType = tLib.module.GenValueType_u32(type_name)
+
+			case types.Int32:
+				if ut.Name() == "rune" {
+					newType = tLib.module.GenValueType_rune(type_name)
+				} else {
+					newType = tLib.module.GenValueType_i32(type_name)
+				}
+
+			case types.Uint64:
+				newType = tLib.module.GenValueType_u64(type_name)
+
+			case types.Int64:
+				newType = tLib.module.GenValueType_i64(type_name)
+
+			case types.Float32:
+				newType = tLib.module.GenValueType_f32(type_name)
+
+			case types.Float64, types.UntypedFloat:
+				newType = tLib.module.GenValueType_f64(type_name)
+
+			case types.Uint:
+				newType = tLib.module.GenValueType_uint(type_name)
+
+			case types.Int, types.UntypedInt:
+				newType = tLib.module.GenValueType_int(type_name)
+
+			case types.String:
+				newType = tLib.module.GenValueType_string(type_name)
+
+			default:
+				logger.Fatalf("Unknown type:%s", t)
+				return nil
+			}
+
+		case *types.Array:
+			newType = tLib.module.GenValueType_Array(tLib.compile(ut.Elem()), int(ut.Len()), type_name)
+
+		case *types.Slice:
+			newType = tLib.module.GenValueType_Slice(tLib.compile(ut.Elem()), type_name)
+
+		case *types.Struct:
+			tStruct, found := tLib.module.GenValueType_Struct(type_name)
+			newType = tStruct
+			if !found {
+				for i := 0; i < ut.NumFields(); i++ {
+					sf := ut.Field(i)
+					dtyp := tLib.compile(sf.Type())
+					if sf.Embedded() {
+						//df := tLib.module.NewStructField("$"+dtyp.Name(), dtyp)
+						df := tLib.module.NewStructField("$"+wir.GenSymbolName(sf.Name()), dtyp)
+						tStruct.AppendField(df)
+					} else {
+						df := tLib.module.NewStructField(wir.GenSymbolName(sf.Name()), dtyp)
+						tStruct.AppendField(df)
+					}
+				}
+				tStruct.Finish()
+			}
+
+		case *types.Interface:
+			itype, found := tLib.module.GenValueType_Interface(type_name)
+			newType = itype
+			if !found {
+				for i := 0; i < ut.NumMethods(); i++ {
+					var method wir.Method
+					method.Sig = tLib.GenFnSig(ut.Method(i).Type().(*types.Signature))
+
+					method.Name = ut.Method(i).Name()
+
+					var fnSig wir.FnSig
+					fnSig.Params = append(fnSig.Params, tLib.module.GenValueType_Ref(tLib.module.VOID))
+					fnSig.Params = append(fnSig.Params, method.Sig.Params...)
+					fnSig.Results = method.Sig.Results
+
+					method.FullFnName = tLib.module.AddFnSig(&fnSig)
+
+					itype.AddMethod(method)
+				}
+			}
+
+		case *types.Signature:
+			newType = tLib.module.GenValueType_Closure(tLib.GenFnSig(ut))
+
+		default:
+			//pkg_name := ""
+			//if t.Obj().Pkg() != nil {
+			//	pkg_name, _ = wir.GetPkgMangleName(t.Obj().Pkg().Path())
+			//}
+			//obj_name := wir.GenSymbolName(t.Obj().Name())
+			//newType = tLib.module.GenValueType_Dup(pkg_name+"."+obj_name, tLib.compile(ut))
+			logger.Fatalf("Todo:%T", ut)
 		}
 
 	default:

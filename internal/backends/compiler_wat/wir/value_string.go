@@ -22,7 +22,7 @@ type String struct {
 	_u8_ptr    ValueType
 }
 
-func (m *Module) GenValueType_String(name string) *String {
+func (m *Module) GenValueType_string(name string) *String {
 	var str_t String
 	if len(name) > 0 {
 		str_t.name = name

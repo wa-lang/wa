@@ -17,10 +17,10 @@ type Interface struct {
 	underlying *Struct
 }
 
-func (m *Module) GenValueType_Interface(name string) *Interface {
+func (m *Module) GenValueType_Interface(name string) (typ *Interface, found bool) {
 	t, ok := m.findValueType(name)
 	if ok {
-		return t.(*Interface)
+		return t.(*Interface), true
 	}
 
 	var interface_t Interface
@@ -33,7 +33,7 @@ func (m *Module) GenValueType_Interface(name string) *Interface {
 	interface_t.underlying.Finish()
 
 	m.addValueType(&interface_t)
-	return &interface_t
+	return &interface_t, false
 }
 
 func (t *Interface) Size() int            { return t.underlying.Size() }

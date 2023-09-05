@@ -169,7 +169,7 @@ type tRune struct {
 	tCommon
 }
 
-func (m *Module) GenValueType_Rune(name string) *tRune {
+func (m *Module) GenValueType_rune(name string) *tRune {
 	nt := tRune{}
 	if len(name) > 0 {
 		nt.name = name
@@ -372,6 +372,10 @@ type tI32 struct {
 	tCommon
 }
 
+func (m *Module) GenValueType_int(name string) ValueType {
+	return m.GenValueType_i32(name)
+}
+
 func (m *Module) GenValueType_i32(name string) *tI32 {
 	nt := tI32{}
 	if len(name) > 0 {
@@ -411,6 +415,10 @@ tU32:
 **************************************/
 type tU32 struct {
 	tCommon
+}
+
+func (m *Module) GenValueType_uint(name string) ValueType {
+	return m.GenValueType_u32(name)
 }
 
 func (m *Module) GenValueType_u32(name string) *tU32 {
