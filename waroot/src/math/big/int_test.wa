@@ -1,13 +1,11 @@
-// Author: TrueAbc
-// Note:
-//  The implementation refers to the go language "math/big" lib.
+// 版权 @2023 凹语言 作者。保留所有权利。
 
 type funZZ func(z, x, y: *Int) => *Int
 type argZZ struct {
 	z, x, y: *Int
 }
 
-var sumZZ = []argZZ{
+global sumZZ = []argZZ{
 	{NewInt("0"), NewInt("0"), NewInt("0")},
 	{NewInt("1"), NewInt("1"), NewInt("0")},
 	{NewInt("1111111110"), NewInt("123456789"), NewInt("987654321")},
@@ -17,13 +15,10 @@ var sumZZ = []argZZ{
 }
 
 func Test_Int_Set() {
-	println("start test set")
 	for _, a := range sumZZ {
 		z: Int
 		z.Set(a.z)
-		if (&z).Cmp(a.z) != 0 {
-			println("error for Int Set")
-		}
+		assert((&z).Cmp(a.z) == 0, "error for int set")
 	}
 }
 
@@ -31,13 +26,10 @@ func testFunZZ(msg: string, f: funZZ, a: argZZ) {
 	z: Int
 	f(&z, a.x, a.y)
 	t := (&z).Cmp(a.z)
-	if t != 0 {
-		println(msg, " compute error ", t, ".")
-	}
+	assert(t == 0, "error for "+msg)
 }
 
 func Test_Int_Sum() {
-	println("start test int add and sub")
 	AddZZ := func(z, x, y: *Int) => *Int { return z.Add(x, y) }
 	SubZZ := func(z, x, y: *Int) => *Int { return z.Sub(x, y) }
 
@@ -56,7 +48,7 @@ func Test_Int_Sum() {
 	}
 }
 
-var quoTests = []struct {
+global quoTests = []struct {
 	x, y: string
 	q, r: string
 }{
@@ -75,7 +67,6 @@ var quoTests = []struct {
 }
 
 func Test_Quo() {
-	println("start test int quo")
 
 	for _, test := range quoTests {
 		x := NewInt(test.x)
@@ -85,9 +76,7 @@ func Test_Quo() {
 
 		r := NewInt("0")
 		q, r := NewInt("0").QuoRem(x, y, r)
-
-		if q.Cmp(expectedQ) != 0 || r.Cmp(expectedR) != 0 {
-			println("error for Int quo")
-		}
+		assert(q.Cmp(expectedQ) == 0, "error for Int quotient")
+		assert(r.Cmp(expectedR) == 0, "error for Int remainder")
 	}
 }
