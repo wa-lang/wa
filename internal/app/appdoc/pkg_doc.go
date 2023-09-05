@@ -18,22 +18,6 @@ type PkgDoc struct {
 	Funcs   []*types.Func
 }
 
-type TypeDoc struct {
-	Name    string
-	Type    types.Object
-	Methods []FuncDoc
-}
-
-type GlobalDoc struct {
-	Name string
-	Type types.Object
-}
-
-type FuncDoc struct {
-	Name string
-	Type types.Object
-}
-
 func BuildPkgDoc(prog *loader.Program) (p *PkgDoc) {
 	p = &PkgDoc{Prog: prog}
 	p.buildDoc()
@@ -45,8 +29,6 @@ func (p *PkgDoc) Show(names ...string) {
 		fmt.Println("TODO:", names)
 		return
 	}
-
-	fmt.Printf("aaaa====:%q\n", names)
 
 	for _, c := range p.Consts {
 		// typ := c.Type().(*types.Basic)
