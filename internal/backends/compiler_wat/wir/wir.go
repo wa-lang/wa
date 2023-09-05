@@ -53,7 +53,7 @@ type Value interface {
 ValueType:
 **************************************/
 type ValueType interface {
-	Name() string
+	Named() string
 	Size() int
 	align() int
 	Kind() TypeKind

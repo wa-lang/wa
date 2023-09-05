@@ -14,32 +14,26 @@ Block:
 **************************************/
 type Block struct {
 	tCommon
-	Base ValueType
-	_i32 ValueType
-	_u32 ValueType
+	Base  ValueType
+	_int  ValueType
+	_uint ValueType
 }
 
 func (m *Module) GenValueType_Block(base ValueType) *Block {
 	block_t := Block{Base: base}
-	//t, ok := m.findValueType(block_t.Name())
-	//if ok {
-	//	return t.(*Block)
-	//}
-	//m.addValueType(&block_t)
-
-	block_t._i32 = m.I32
-	block_t._u32 = m.U32
+	block_t.name = base.Named() + ".$$block"
+	block_t._int = m.INT
+	block_t._uint = m.UINT
 	return &block_t
 }
 
-func (t *Block) Name() string         { return t.Base.Name() + ".$$block" }
 func (t *Block) Size() int            { return 4 }
 func (t *Block) align() int           { return 4 }
 func (t *Block) Kind() TypeKind       { return kBlock }
 func (t *Block) Raw() []wat.ValueType { return []wat.ValueType{wat.U32{}} }
 
 func (t *Block) typeInfoAddr() int {
-	logger.Fatalf("Internal type: %s shouldn't have typeInfo.", t.Name())
+	logger.Fatalf("Internal type: %s shouldn't have typeInfo.", t.Named())
 	return 0
 }
 
@@ -52,12 +46,12 @@ func (t *Block) Equal(u ValueType) bool {
 
 func (t *Block) onFree() int {
 	var f Function
-	f.InternalName = "$" + GenSymbolName(t.Name()) + ".$$onFree"
+	f.InternalName = "$" + GenSymbolName(t.Named()) + ".$$onFree"
 	if i := currentModule.findTableElem(f.InternalName); i != 0 {
 		return i
 	}
 
-	ptr := NewLocal("ptr", t._u32)
+	ptr := NewLocal("ptr", t._uint)
 	f.Params = append(f.Params, ptr)
 
 	f.Insts = append(f.Insts, ptr.EmitPush()...)
@@ -86,27 +80,27 @@ func (t *Block) emitHeapAlloc(item_count Value) (insts []wat.Inst) {
 			logger.Fatalf("%v\n", err)
 			return nil
 		}
-		insts = append(insts, NewConst(strconv.Itoa(t.Base.Size()*c+16), t._u32).EmitPush()...)
+		insts = append(insts, NewConst(strconv.Itoa(t.Base.Size()*c+16), t._uint).EmitPush()...)
 		insts = append(insts, wat.NewInstCall("$waHeapAlloc"))
 
 	default:
-		if !item_count.Type().Equal(t._u32) && !item_count.Type().Equal(t._i32) {
-			logger.Fatal("item_count should be u32|i32")
+		if !item_count.Type().Equal(t._uint) && !item_count.Type().Equal(t._int) {
+			logger.Fatal("item_count should be uint|int")
 			return nil
 		}
 
 		insts = append(insts, item_count.EmitPush()...)
-		insts = append(insts, NewConst(strconv.Itoa(t.Base.Size()), t._u32).EmitPush()...)
+		insts = append(insts, NewConst(strconv.Itoa(t.Base.Size()), t._uint).EmitPush()...)
 		insts = append(insts, wat.NewInstMul(wat.U32{}))
-		insts = append(insts, NewConst("16", t._u32).EmitPush()...)
+		insts = append(insts, NewConst("16", t._uint).EmitPush()...)
 		insts = append(insts, wat.NewInstAdd(wat.U32{}))
 		insts = append(insts, wat.NewInstCall("$waHeapAlloc"))
 
 	}
 
-	insts = append(insts, item_count.EmitPush()...)                                      //item_count
-	insts = append(insts, NewConst(strconv.Itoa(t.Base.onFree()), t._u32).EmitPush()...) //free_method
-	insts = append(insts, NewConst(strconv.Itoa(t.Base.Size()), t._u32).EmitPush()...)   //item_size
+	insts = append(insts, item_count.EmitPush()...)                                       //item_count
+	insts = append(insts, NewConst(strconv.Itoa(t.Base.onFree()), t._uint).EmitPush()...) //free_method
+	insts = append(insts, NewConst(strconv.Itoa(t.Base.Size()), t._uint).EmitPush()...)   //item_size
 	insts = append(insts, wat.NewInstCall("$wa.runtime.Block.Init"))
 
 	return

@@ -51,41 +51,25 @@ type Module struct {
 
 func NewModule() *Module {
 	var m Module
+	m.types_map = make(map[string]ValueType)
 
-	m.VOID = &tVoid{}
-	m.BOOL = &tBool{}
-	m.RUNE = &tRune{}
-	//m.I8 = &tI8{}
-	m.U8 = &tU8{}
-	//m.I16 = &tI16{}
-	m.U16 = &tU16{}
-	m.I32 = &tI32{}
+	m.VOID = m.GenValueType_void("")
+	m.BOOL = m.GenValueType_bool("")
+	m.RUNE = m.GenValueType_rune("")
+	m.U8 = m.GenValueType_u8("")
+	m.U16 = m.GenValueType_u16("")
+	m.I32 = m.GenValueType_i32("")
+	m.U32 = m.GenValueType_u32("")
+	m.I64 = m.GenValueType_i64("")
+	m.U64 = m.GenValueType_u64("")
+	m.F32 = m.GenValueType_f32("")
+	m.F64 = m.GenValueType_f64("")
 	m.INT = m.I32
 	m.UINT = m.U32
-	m.U32 = &tU32{}
 	m.UPTR = m.U32
-	m.I64 = &tI64{}
-	m.U64 = &tU64{}
-	m.F32 = &tF32{}
-	m.F64 = &tF64{}
 
-	m.types_map = make(map[string]ValueType)
-	m.addValueType(m.VOID)
-	m.addValueType(m.BOOL)
-	m.addValueType(m.RUNE)
-	//m.addValueType(m.I8)
-	m.addValueType(m.U8)
-	//m.addValueType(m.I16)
-	m.addValueType(m.U16)
-	m.addValueType(m.I32)
-	m.addValueType(m.U32)
-	m.addValueType(m.I64)
-	m.addValueType(m.U64)
-	m.addValueType(m.F32)
-	m.addValueType(m.F64)
-
-	m.STRING = m.GenValueType_String()
-	m.BYTES = m.GenValueType_Slice(m.U8)
+	m.STRING = m.GenValueType_string("")
+	m.BYTES = m.GenValueType_Slice(m.U8, "")
 
 	m.fnSigsName = make(map[string]fnSigWrap)
 
@@ -309,11 +293,11 @@ func (m *Module) ToWatModule() *wat.Module {
 }
 
 func (m *Module) addValueType(t ValueType) {
-	_, ok := m.types_map[t.Name()]
+	_, ok := m.types_map[t.Named()]
 	if ok {
 		logger.Fatalf("ValueType:%T already registered.", t)
 	}
-	m.types_map[t.Name()] = t
+	m.types_map[t.Named()] = t
 }
 
 func (m *Module) findValueType(name string) (ValueType, bool) {
@@ -413,7 +397,7 @@ func (m *Module) buildTypeInfo(t ValueType) int {
 	_type.setFieldConstValue("kind", NewConst(strconv.Itoa(int(t.Kind())), m.U8))
 	_type.setFieldConstValue("align", NewConst(strconv.Itoa(t.align()), m.U8))
 	_type.setFieldConstValue("flag", NewConst("0", m.U16))
-	_type.setFieldConstValue("name", NewConst(t.Name(), m.STRING))
+	_type.setFieldConstValue("name", NewConst(t.Named(), m.STRING))
 
 	switch typ := t.(type) {
 	case *tVoid:

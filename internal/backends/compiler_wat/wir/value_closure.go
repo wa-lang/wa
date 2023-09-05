@@ -40,12 +40,12 @@ func (s *FnSig) Equal(u *FnSig) bool {
 func (s *FnSig) String() string {
 	n := "$"
 	for _, i := range s.Params {
-		n += i.Name()
+		n += i.Named()
 		n += "$"
 	}
 	n += "$$"
 	for _, r := range s.Results {
-		n += r.Name()
+		n += r.Named()
 		n += "$"
 	}
 	n += "$"
@@ -66,7 +66,9 @@ type Closure struct {
 func (m *Module) GenValueType_Closure(sig FnSig) *Closure {
 	var closure_t Closure
 	closure_t._fnSig = sig
-	t, ok := m.findValueType(closure_t.Name())
+	closure_t.name = sig.String()
+
+	t, ok := m.findValueType(closure_t.name)
 	if ok {
 		return t.(*Closure)
 	}
@@ -74,7 +76,7 @@ func (m *Module) GenValueType_Closure(sig FnSig) *Closure {
 	closure_t._u32 = m.U32
 	closure_t._fnTypeName = m.AddFnSig(&sig)
 
-	closure_t.underlying = m.genInternalStruct(closure_t.Name() + ".underlying")
+	closure_t.underlying = m.genInternalStruct(closure_t.name + ".underlying")
 	closure_t.underlying.AppendField(m.NewStructField("fn_index", m.U32))
 	closure_t.underlying.AppendField(m.NewStructField("d", m.GenValueType_Ref(m.VOID)))
 	closure_t.underlying.Finish()
@@ -83,7 +85,6 @@ func (m *Module) GenValueType_Closure(sig FnSig) *Closure {
 	return &closure_t
 }
 
-func (t *Closure) Name() string         { return t._fnSig.String() }
 func (t *Closure) Size() int            { return t.underlying.Size() }
 func (t *Closure) align() int           { return t.underlying.align() }
 func (t *Closure) Kind() TypeKind       { return kStruct }

@@ -636,9 +636,6 @@ func (g *functionGenerator) genBuiltin(call *ssa.CallCommon) (insts []wat.Inst, 
 		for i, arg := range call.Args {
 			av := g.getValue(arg).value
 			avt := av.Type()
-			if ut, ok := avt.(*wir.Dup); ok {
-				avt = ut.Base
-			}
 
 			if i > 0 {
 				insts = append(insts, wat.NewInstConst(wat.I32{}, "32"))
@@ -938,17 +935,19 @@ func (g *functionGenerator) genSlice(inst *ssa.Slice) ([]wat.Inst, wir.ValueType
 	return g.module.EmitGenSlice(x.value, low, high, max)
 }
 
-func (g *functionGenerator) genMakeSlice(inst *ssa.MakeSlice) ([]wat.Inst, wir.ValueType) {
+func (g *functionGenerator) genMakeSlice(inst *ssa.MakeSlice) (insts []wat.Inst, ret_type wir.ValueType) {
 	if inst.Parent().ForceRegister() {
 		logger.Fatal("ssa.MakeSlice is not available in ForceRegister-mode")
 		return nil, nil
 	}
 
-	elem := inst.Type().(*types.Slice).Elem()
-	base_type := g.tLib.compile(elem)
+	src_type := inst.Type()
+	ret_type = g.tLib.compile(src_type)
 	Len := g.getValue(inst.Len)
 	Cap := g.getValue(inst.Cap)
-	return g.module.EmitGenMakeSlice(base_type, Len.value, Cap.value)
+
+	insts = g.module.EmitGenMakeSlice(ret_type, Len.value, Cap.value)
+	return
 }
 
 func (g *functionGenerator) genLookup(inst *ssa.Lookup) ([]wat.Inst, wir.ValueType) {

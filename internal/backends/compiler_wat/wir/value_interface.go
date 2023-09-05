@@ -14,30 +14,28 @@ Interface:
 **************************************/
 type Interface struct {
 	tCommon
-	name       string
 	underlying *Struct
 }
 
-func (m *Module) GenValueType_Interface(name string) *Interface {
+func (m *Module) GenValueType_Interface(name string) (typ *Interface, found bool) {
 	t, ok := m.findValueType(name)
 	if ok {
-		return t.(*Interface)
+		return t.(*Interface), true
 	}
 
 	var interface_t Interface
 	interface_t.name = name
 
-	interface_t.underlying = m.genInternalStruct(interface_t.Name() + ".underlying")
+	interface_t.underlying = m.genInternalStruct(interface_t.name + ".underlying")
 	interface_t.underlying.AppendField(m.NewStructField("d", m.GenValueType_Ref(m.VOID)))
 	interface_t.underlying.AppendField(m.NewStructField("itab", m.UPTR))
 	interface_t.underlying.AppendField(m.NewStructField("eq", m.I32))
 	interface_t.underlying.Finish()
 
 	m.addValueType(&interface_t)
-	return &interface_t
+	return &interface_t, false
 }
 
-func (t *Interface) Name() string         { return t.name }
 func (t *Interface) Size() int            { return t.underlying.Size() }
 func (t *Interface) align() int           { return t.underlying.align() }
 func (t *Interface) Kind() TypeKind       { return kInterface }

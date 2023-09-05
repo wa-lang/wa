@@ -19,12 +19,17 @@ type Tuple struct {
 
 func (m *Module) GenValueType_Tuple(fields []ValueType) *Tuple {
 	tuple_t := Tuple{Fields: fields}
-	t, ok := m.findValueType(tuple_t.Name())
+	tuple_t.name = "$"
+	for _, t := range fields {
+		tuple_t.name += t.Named()
+	}
+
+	t, ok := m.findValueType(tuple_t.name)
 	if ok {
 		return t.(*Tuple)
 	}
 
-	tuple_t.underlying = m.genInternalStruct(tuple_t.Name() + ".underlying")
+	tuple_t.underlying = m.genInternalStruct(tuple_t.name + ".underlying")
 	for i, t := range fields {
 		name := "m" + strconv.Itoa(i)
 		tuple_t.underlying.AppendField(m.NewStructField(name, t))
@@ -33,14 +38,6 @@ func (m *Module) GenValueType_Tuple(fields []ValueType) *Tuple {
 
 	m.addValueType(&tuple_t)
 	return &tuple_t
-}
-
-func (t *Tuple) Name() string {
-	s := "$"
-	for _, t := range t.Fields {
-		s += t.Name()
-	}
-	return s
 }
 
 func (t *Tuple) Size() int            { return t.underlying.Size() }

@@ -17,7 +17,7 @@ func (m *Module) EmitAssginValue(lh, rh Value) []wat.Inst {
 		insts = append(insts, lh.EmitInit()...)
 	} else {
 		if !lh.Type().Equal(rh.Type()) && !(lh.Type().Equal(m.I32) && rh.Type().Equal(m.RUNE) || lh.Type().Equal(m.RUNE) && rh.Type().Equal(m.I32)) {
-			logger.Fatal("x.Type:", lh.Type().Name(), ", y.Type():", rh.Type().Name())
+			logger.Fatal("x.Type:", lh.Type().Named(), ", y.Type():", rh.Type().Named())
 		}
 
 		insts = append(insts, rh.EmitPush()...)
@@ -71,22 +71,6 @@ func (m *Module) EmitUnOp(x Value, op wat.OpCode) (insts []wat.Inst, ret_type Va
 }
 
 func (m *Module) EmitBinOp(x, y Value, op wat.OpCode) (insts []wat.Inst, ret_type ValueType) {
-	for {
-		if ut, ok := x.(*aDup); ok {
-			x = ut.underlying
-		} else {
-			break
-		}
-	}
-
-	for {
-		if ut, ok := y.(*aDup); ok {
-			y = ut.underlying
-		} else {
-			break
-		}
-	}
-
 	switch op {
 	case wat.OpCodeAdd:
 		ret_type = x.Type()
@@ -476,12 +460,11 @@ func (m *Module) EmitGenSlice(x, low, high, max Value) (insts []wat.Inst, ret_ty
 	case *aRef:
 		switch btype := x.Type().(*Ref).Base.(type) {
 		case *Slice:
-			slt := m.GenValueType_Slice(btype.Base)
-			insts = slt.emitGenFromRefOfSlice(x, low, high, max)
-			ret_type = slt
+			insts = btype.emitGenFromRefOfSlice(x, low, high, max)
+			ret_type = btype
 
 		case *Array:
-			slt := m.GenValueType_Slice(btype.Base)
+			slt := m.GenValueType_Slice(btype.Base, "")
 			insts = slt.emitGenFromRefOfArray(x, low, high, max)
 			ret_type = slt
 
@@ -496,10 +479,8 @@ func (m *Module) EmitGenSlice(x, low, high, max Value) (insts []wat.Inst, ret_ty
 	return
 }
 
-func (m *Module) EmitGenMakeSlice(base_type ValueType, Len, Cap Value) (insts []wat.Inst, ret_type ValueType) {
-	slice_type := m.GenValueType_Slice(base_type)
-	insts = slice_type.emitGenMake(Len, Cap)
-	ret_type = slice_type
+func (m *Module) EmitGenMakeSlice(slice_type ValueType, Len, Cap Value) (insts []wat.Inst) {
+	insts = slice_type.(*Slice).emitGenMake(Len, Cap)
 	return
 }
 
@@ -523,22 +504,6 @@ func (m *Module) EmitGenLookup(x, index Value, CommaOk bool) (insts []wat.Inst, 
 }
 
 func (m *Module) EmitGenConvert(x Value, typ ValueType) (insts []wat.Inst) {
-	for {
-		if u, ok := x.(*aDup); ok {
-			x = u.underlying
-		} else {
-			break
-		}
-	}
-
-	for {
-		if ut, ok := typ.(*Dup); ok {
-			typ = ut.Base
-		} else {
-			break
-		}
-	}
-
 	if x.Type().Equal(typ) {
 		insts = append(insts, x.EmitPush()...)
 		return
@@ -727,7 +692,7 @@ func (m *Module) EmitGenConvert(x Value, typ ValueType) (insts []wat.Inst) {
 			insts = append(insts, wat.NewInstCall(m.STRING.(*String).genFunc_Append()))
 			return
 
-		case xt.Equal(m.GenValueType_Slice(m.RUNE)):
+		case xt.Equal(m.GenValueType_Slice(m.RUNE, "")):
 			insts = append(insts, x.EmitPush()...)
 			insts = append(insts, wat.NewInstCall("runtime.stringFromRuneSlice"))
 			return
@@ -751,7 +716,7 @@ func (m *Module) EmitGenConvert(x Value, typ ValueType) (insts []wat.Inst) {
 			return
 		}
 
-	case typ.Equal(m.GenValueType_Slice(m.RUNE)):
+	case typ.Equal(m.GenValueType_Slice(m.RUNE, "")):
 		switch {
 		case xt.Equal(m.STRING):
 			insts = append(insts, x.EmitPush()...)
@@ -760,7 +725,7 @@ func (m *Module) EmitGenConvert(x Value, typ ValueType) (insts []wat.Inst) {
 		}
 	}
 
-	logger.Fatalf("Todo: x.type: %s, dest_type: %s", x.Type().Name(), typ.Name())
+	logger.Fatalf("Todo: x.type: %s, dest_type: %s", x.Type().Named(), typ.Named())
 	return
 }
 
@@ -848,7 +813,7 @@ func (m *Module) EmitGenMakeInterface(x Value, itype ValueType) (insts []wat.Ins
 		compID := x_type.OnComp()
 		if compID == 0 {
 			var f Function
-			f.InternalName = "$" + GenSymbolName(x_type.Name()) + ".$$compAddr"
+			f.InternalName = "$" + GenSymbolName(x_type.Named()) + ".$$compAddr"
 			p0 := NewLocal("p0", m.GenValueType_Ptr(x_type))
 			p1 := NewLocal("p1", m.GenValueType_Ptr(x_type))
 			f.Params = append(f.Params, p0)

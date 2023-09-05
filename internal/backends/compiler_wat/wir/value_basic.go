@@ -60,9 +60,6 @@ func newValue(name string, kind ValueKind, typ ValueType) Value {
 	case *Struct:
 		return newValue_Struct(name, kind, typ)
 
-	case *Dup:
-		return newValue_Dup(name, kind, typ)
-
 	default:
 		logger.Fatalf("Todo: %T", typ)
 	}

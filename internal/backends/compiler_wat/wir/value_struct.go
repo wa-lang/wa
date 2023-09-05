@@ -32,7 +32,6 @@ Struct:
 **************************************/
 type Struct struct {
 	tCommon
-	name   string
 	fields []*StructField
 	_size  int
 	_align int
@@ -73,7 +72,6 @@ func (m *Module) genInternalStruct(name string) *Struct {
 	return &struct_type
 }
 
-func (t *Struct) Name() string   { return t.name }
 func (t *Struct) Size() int      { return t._size }
 func (t *Struct) align() int     { return t._align }
 func (t *Struct) Kind() TypeKind { return kStruct }
@@ -122,7 +120,7 @@ func (t *Struct) genRawFree() (ret []fn_offset_pair) {
 
 func (t *Struct) onFree() int {
 	var f Function
-	f.InternalName = "$" + GenSymbolName(t.Name()) + ".$$onFree"
+	f.InternalName = "$" + GenSymbolName(t.Named()) + ".$$onFree"
 
 	if i := currentModule.findTableElem(f.InternalName); i != 0 {
 		return i
