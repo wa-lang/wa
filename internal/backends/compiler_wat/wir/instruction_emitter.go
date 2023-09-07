@@ -77,7 +77,7 @@ func (m *Module) EmitBinOp(x, y Value, op wat.OpCode) (insts []wat.Inst, ret_typ
 		insts = append(insts, x.EmitPush()...)
 		insts = append(insts, y.EmitPush()...)
 		if ret_type.Equal(m.STRING) {
-			insts = append(insts, wat.NewInstCall(m.STRING.(*String).genFunc_Append()))
+			insts = append(insts, wat.NewInstCall(m.STRING.(*String).fnName_append))
 		} else {
 			insts = append(insts, wat.NewInstAdd(toWatType(ret_type)))
 		}
@@ -438,7 +438,7 @@ func (m *Module) EmitGenIndex(x, id Value) (insts []wat.Inst, ret_type ValueType
 	switch x := x.(type) {
 	case *aArray:
 		ret_type = x.Type().(*Array).Base
-		insts = append(insts, x.emitIndexOf(id)...)
+		insts = append(insts, x.emitIndexOf(m, id)...)
 
 	default:
 		logger.Fatalf("Todo: %T", x)
@@ -689,7 +689,7 @@ func (m *Module) EmitGenConvert(x Value, typ ValueType) (insts []wat.Inst) {
 			insts = append(insts, x.Extract("b").EmitPush()...)
 			insts = append(insts, x.Extract("d").EmitPush()...)
 			insts = append(insts, x.Extract("l").EmitPush()...)
-			insts = append(insts, wat.NewInstCall(m.STRING.(*String).genFunc_Append()))
+			insts = append(insts, wat.NewInstCall(m.STRING.(*String).fnName_append))
 			return
 
 		case xt.Equal(m.GenValueType_Slice(m.RUNE, "")):
@@ -712,7 +712,7 @@ func (m *Module) EmitGenConvert(x Value, typ ValueType) (insts []wat.Inst) {
 			insts = append(insts, x.Extract("d").EmitPush()...)
 			insts = append(insts, x.Extract("l").EmitPush()...)
 			insts = append(insts, x.Extract("l").EmitPush()...)
-			insts = append(insts, wat.NewInstCall(m.BYTES.(*Slice).genAppendFunc()))
+			insts = append(insts, wat.NewInstCall(m.BYTES.(*Slice).genAppendFunc(m)))
 			return
 		}
 
@@ -743,7 +743,7 @@ func (m *Module) EmitGenAppend(x, y Value) (insts []wat.Inst, ret_type ValueType
 		}
 	}
 
-	insts = append(insts, wat.NewInstCall(xtype.genAppendFunc()))
+	insts = append(insts, wat.NewInstCall(xtype.genAppendFunc(m)))
 	ret_type = xtype
 
 	return
@@ -796,7 +796,7 @@ func (m *Module) EmitGenCopy(x, y Value) (insts []wat.Inst) {
 		}
 	}
 
-	insts = append(insts, wat.NewInstCall(xtype.genCopyFunc()))
+	insts = append(insts, wat.NewInstCall(xtype.genCopyFunc(m)))
 	return
 }
 

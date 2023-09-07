@@ -168,9 +168,9 @@ func (t *Slice) emitGenMake(Len, Cap Value) (insts []wat.Inst) {
 	return
 }
 
-func (t *Slice) genAppendFunc() string {
+func (t *Slice) genAppendFunc(m *Module) string {
 	fn_name := "$" + GenSymbolName(t.Named()) + ".append"
-	if currentModule.FindFunc(fn_name) != nil {
+	if m.FindFunc(fn_name) != nil {
 		return fn_name
 	}
 
@@ -375,14 +375,14 @@ func (t *Slice) genAppendFunc() string {
 	f.Insts = append(f.Insts, y.EmitRelease()...)
 	f.Insts = append(f.Insts, item.EmitRelease()...)
 
-	currentModule.AddFunc(&f)
+	m.AddFunc(&f)
 	return fn_name
 }
 
-func (t *Slice) genCopyFunc() string {
+func (t *Slice) genCopyFunc(m *Module) string {
 	var f Function
 	f.InternalName = "$" + GenSymbolName(t.Named()) + ".copy"
-	if currentModule.FindFunc(f.InternalName) != nil {
+	if m.FindFunc(f.InternalName) != nil {
 		return f.InternalName
 	}
 
@@ -498,7 +498,7 @@ func (t *Slice) genCopyFunc() string {
 	f.Insts = append(f.Insts, s.EmitRelease()...)
 	f.Insts = append(f.Insts, item.EmitRelease()...)
 
-	currentModule.AddFunc(&f)
+	m.AddFunc(&f)
 	return f.InternalName
 }
 
