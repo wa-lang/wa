@@ -1,0 +1,167 @@
+// 版权 @2023 凹语言 作者。保留所有权利。
+
+import (
+	"errors"
+	"io"
+	"unicode/utf8"
+)
+
+// A Reader implements the io.Reader, io.ReaderAt, io.ByteReader, io.ByteScanner,
+// io.RuneReader, io.RuneScanner, io.Seeker, and io.WriterTo interfaces by reading
+// from a string.
+// The zero value for Reader operates like a Reader of an empty string.
+type Reader struct {
+	s:        string
+	i:        int // current reading index
+	prevRune: int // index of previous rune; or < 0
+}
+
+// Len returns the number of bytes of the unread portion of the
+// string.
+func Reader.Len => int {
+	r := this
+	if r.i >= len(r.s) {
+		return 0
+	}
+	return len(r.s) - r.i
+}
+
+// Size returns the original length of the underlying string.
+// Size is the number of bytes available for reading via ReadAt.
+// The returned value is always the same and is not affected by calls
+// to any other method.
+func Reader.Size() => i64 {
+	return i64(len(this.s))
+}
+
+// Read implements the io.Reader interface.
+func Reader.Read(b: []byte) => (n: int, err: error) {
+	r := this
+	if r.i >= len(r.s) {
+		return 0, io.EOF
+	}
+	r.prevRune = -1
+	n = copy(b, r.s[r.i:])
+	r.i += n
+	return
+}
+
+// ReadAt implements the io.ReaderAt interface.
+func Reader.ReadAt(b: []byte, off: i64) => (n: int, err: error) {
+	r := this
+	// cannot modify state - see io.ReaderAt
+	if off < 0 {
+		return 0, errors.New("strings.Reader.ReadAt: negative offset")
+	}
+	if off >= i64(len(r.s)) {
+		return 0, io.EOF
+	}
+	n = copy(b, r.s[int(off):])
+	if n < len(b) {
+		err = io.EOF
+	}
+	return
+}
+
+// ReadByte implements the io.ByteReader interface.
+func Reader.ReadByte => (byte, error) {
+	r := this
+	r.prevRune = -1
+	if r.i >= len(r.s) {
+		return 0, io.EOF
+	}
+	b := r.s[r.i]
+	r.i++
+	return b, nil
+}
+
+// UnreadByte implements the io.ByteScanner interface.
+func Reader.UnreadByte => error {
+	r := this
+	if r.i <= 0 {
+		return errors.New("strings.Reader.UnreadByte: at beginning of string")
+	}
+	r.prevRune = -1
+	r.i--
+	return nil
+}
+
+// ReadRune implements the io.RuneReader interface.
+func Reader.ReadRune => (ch: rune, size: int, err: error) {
+	r := this
+	if r.i >= len(r.s) {
+		r.prevRune = -1
+		return 0, 0, io.EOF
+	}
+	r.prevRune = int(r.i)
+	if c := r.s[r.i]; c < utf8.RuneSelf {
+		r.i++
+		return rune(c), 1, nil
+	}
+	ch, size = utf8.DecodeRuneInString(r.s[r.i:])
+	r.i += size
+	return
+}
+
+// UnreadRune implements the io.RuneScanner interface.
+func Reader.UnreadRune => error {
+	r := this
+	if r.i <= 0 {
+		return errors.New("strings.Reader.UnreadRune: at beginning of string")
+	}
+	if r.prevRune < 0 {
+		return errors.New("strings.Reader.UnreadRune: previous operation was not ReadRune")
+	}
+	r.i = int(r.prevRune)
+	r.prevRune = -1
+	return nil
+}
+
+// Seek implements the io.Seeker interface.
+func Reader.Seek(offset: i64, whence: int) => (i64, error) {
+	r := this
+	r.prevRune = -1
+	abs: i64
+	switch whence {
+	case io.SeekStart:
+		abs = offset
+	case io.SeekCurrent:
+		abs = i64(r.i) + offset
+	case io.SeekEnd:
+		abs = i64(len(r.s)) + offset
+	default:
+		return 0, errors.New("strings.Reader.Seek: invalid whence")
+	}
+	if abs < 0 {
+		return 0, errors.New("strings.Reader.Seek: negative position")
+	}
+	r.i = int(abs)
+	return abs, nil
+}
+
+// WriteTo implements the io.WriterTo interface.
+func Reader.WriteTo(w: io.Writer) => (n: i64, err: error) {
+	r := this
+	r.prevRune = -1
+	if r.i >= len(r.s) {
+		return 0, nil
+	}
+	s := r.s[r.i:]
+	m, err := io.WriteString(w, s)
+	if m > len(s) {
+		panic("strings.Reader.WriteTo: invalid WriteString count")
+	}
+	r.i += m
+	n = i64(m)
+	if m != len(s) && err == nil {
+		err = io.ErrShortWrite
+	}
+	return
+}
+
+// Reset resets the Reader to be reading from s.
+func Reader.Reset(s: string) { *this = Reader{s, 0, -1} }
+
+// NewReader returns a new Reader reading from s.
+// It is similar to bytes.NewBufferString but more efficient and non-writable.
+func NewReader(s: string) => *Reader { return &Reader{s, 0, -1} }
