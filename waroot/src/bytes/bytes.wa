@@ -1105,3 +1105,104 @@ func CutSuffix(s, suffix: []byte) => (before: []byte, found: bool) {
 	}
 	return s[:len(s)-len(suffix)], true
 }
+
+// LastIndexAny interprets s as a sequence of UTF-8-encoded Unicode code
+// points. It returns the byte index of the last occurrence in s of any of
+// the Unicode code points in chars. It returns -1 if chars is empty or if
+// there is no code point in common.
+func LastIndexAny(s: []byte, chars: string) => int {
+	if chars == "" {
+		// Avoid scanning all of s.
+		return -1
+	}
+	if len(s) > 8 {
+		if as, isASCII := makeASCIISet(chars); isASCII {
+			for i := len(s) - 1; i >= 0; i-- {
+				if as.contains(s[i]) {
+					return i
+				}
+			}
+			return -1
+		}
+	}
+	if len(s) == 1 {
+		r := rune(s[0])
+		if r >= utf8.RuneSelf {
+			for _, r = range chars {
+				if r == utf8.RuneError {
+					return 0
+				}
+			}
+			return -1
+		}
+		if bytealg_IndexByteString(chars, s[0]) >= 0 {
+			return 0
+		}
+		return -1
+	}
+	if len(chars) == 1 {
+		cr := rune(chars[0])
+		if cr >= utf8.RuneSelf {
+			cr = utf8.RuneError
+		}
+		for i := len(s); i > 0; {
+			r, size := utf8.DecodeLastRune(s[:i])
+			i -= size
+			if r == cr {
+				return i
+			}
+		}
+		return -1
+	}
+	for i := len(s); i > 0; {
+		r := rune(s[i-1])
+		if r < utf8.RuneSelf {
+			if bytealg_IndexByteString(chars, s[i-1]) >= 0 {
+				return i - 1
+			}
+			i--
+			continue
+		}
+		r, size := utf8.DecodeLastRune(s[:i])
+		i -= size
+		if r != utf8.RuneError {
+			// r is 2 to 4 bytes
+			if len(chars) == size {
+				if chars == string(r) {
+					return i
+				}
+				continue
+			}
+			// Use bytealg.IndexString for performance if available.
+			if bytealg_MaxLen >= size {
+				if bytealg_IndexString(chars, string(r)) >= 0 {
+					return i
+				}
+				continue
+			}
+		}
+		for _, ch := range chars {
+			if r == ch {
+				return i
+			}
+		}
+	}
+	return -1
+}
+
+// LastIndexFunc interprets s as a sequence of UTF-8-encoded code points.
+// It returns the byte index in s of the last Unicode
+// code point satisfying f(c), or -1 if none do.
+func LastIndexFunc(s: []byte, f: func(r: rune) => bool) => int {
+	return lastIndexFunc(s, f, true)
+}
+
+// Split slices s into all subslices separated by sep and returns a slice of
+// the subslices between those separators.
+// If sep is empty, Split splits after each UTF-8 sequence.
+// It is equivalent to SplitN with a count of -1.
+//
+// To split around the first instance of a separator, see Cut.
+func Split(s, sep: []byte) => [][]byte {
+	return genSplit(s, sep, 0, -1)
+}
