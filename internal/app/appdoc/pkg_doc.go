@@ -34,9 +34,16 @@ func (p *PkgDoc) Show(names ...string) {
 		// typ := c.Type().(*types.Basic)
 		fmt.Printf("const %s %v\n", c.Name(), c.Type())
 	}
+	for _, c := range p.Globals {
+		fmt.Printf("global %s %v\n", c.Name(), c.Type())
+	}
 	for _, fn := range p.Funcs {
 		sig := fn.Type().(*types.Signature)
-		fmt.Printf("func %s%v\n", fn.Name(), sig.Params())
+		if sig.Results().Len() > 0 {
+			fmt.Printf("func %s%v => %v\n", fn.Name(), sig.Params(), sig.Results())
+		} else {
+			fmt.Printf("func %s%v\n", fn.Name(), sig.Params())
+		}
 	}
 }
 

@@ -129,15 +129,6 @@ func IndexByte(b: []byte, c: byte) => int {
 	return -1
 }
 
-func IndexByteString(s: string, c: byte) => int {
-	for i := 0; i < len(s); i++ {
-		if s[i] == c {
-			return i
-		}
-	}
-	return -1
-}
-
 func HasPrefix(s, prefix: []byte) => bool {
 	return len(s) >= len(prefix) && Equal(s[0:len(prefix)], prefix)
 }
@@ -222,6 +213,43 @@ func Compare(a, b: []byte) => int {
 		return +1
 	}
 	return 0
+}
+
+// LastIndex returns the index of the last instance of sep in s, or -1 if sep is not present in s.
+func LastIndex(s, sep: []byte) => int {
+	n := len(sep)
+	switch {
+	case n == 0:
+		return len(s)
+	case n == 1:
+		return LastIndexByte(s, sep[0])
+	case n == len(s):
+		if Equal(s, sep) {
+			return 0
+		}
+		return -1
+	case n > len(s):
+		return -1
+	}
+	// Rabin-Karp search from the end of the string
+	hashss, pow := bytealg_HashStrRevBytes(sep)
+	last := len(s) - n
+	h: u32
+	for i := len(s) - 1; i >= last; i-- {
+		h = h*bytealg_PrimeRK + uint32(s[i])
+	}
+	if h == hashss && Equal(s[last:], sep) {
+		return last
+	}
+	for i := last - 1; i >= 0; i-- {
+		h *= bytealg_PrimeRK
+		h += uint32(s[i])
+		h -= pow * uint32(s[i+n])
+		if h == hashss && Equal(s[i:i+n], sep) {
+			return i
+		}
+	}
+	return -1
 }
 
 // LastIndexByte returns the index of the last instance of c in s, or -1 if c is not present in s.
@@ -952,14 +980,14 @@ func IndexAny(s: []byte, chars: string) => int {
 		r := rune(s[0])
 		if r >= utf8.RuneSelf {
 			// search utf8.RuneError.
-			//for _, r = range chars {
-			//	if r == utf8.RuneError {
-			//		return 0
-			//	}
-			//}
+			for _, r = range chars {
+				if r == utf8.RuneError {
+					return 0
+				}
+			}
 			return -1
 		}
-		if IndexByteString(chars, s[0]) >= 0 {
+		if bytealg_IndexByteString(chars, s[0]) >= 0 {
 			return 0
 		}
 		return -1
@@ -985,7 +1013,7 @@ func IndexAny(s: []byte, chars: string) => int {
 	for i := 0; i < len(s); i += width {
 		r := rune(s[i])
 		if r < utf8.RuneSelf {
-			if IndexByteString(chars, s[i]) >= 0 {
+			if bytealg_IndexByteString(chars, s[i]) >= 0 {
 				return i
 			}
 			width = 1
@@ -1015,4 +1043,65 @@ func IndexAny(s: []byte, chars: string) => int {
 		}
 	}
 	return -1
+}
+
+// Clone returns a copy of b[:len(b)].
+// The result may have additional unused capacity.
+// Clone(nil) returns nil.
+func Clone(b: []byte) => []byte {
+	if b == nil {
+		return nil
+	}
+	return append([]byte{}, b...)
+}
+
+// ContainsFunc reports whether any of the UTF-8-encoded code points r within b satisfy f(r).
+func ContainsFunc(b: []byte, f: func(r: rune) => bool) => bool {
+	return IndexFunc(b, f) >= 0
+}
+
+// IndexFunc interprets s as a sequence of UTF-8-encoded code points.
+// It returns the byte index in s of the first Unicode
+// code point satisfying f(c), or -1 if none do.
+func IndexFunc(s: []byte, f: func(r: rune) => bool) => int {
+	return indexFunc(s, f, true)
+}
+
+// Cut slices s around the first instance of sep,
+// returning the text before and after sep.
+// The found result reports whether sep appears in s.
+// If sep does not appear in s, cut returns s, nil, false.
+//
+// Cut returns slices of the original slice s, not copies.
+func Cut(s, sep: []byte) => (before, after: []byte, found: bool) {
+	if i := Index(s, sep); i >= 0 {
+		return s[:i], s[i+len(sep):], true
+	}
+	return s, nil, false
+}
+
+// CutPrefix returns s without the provided leading prefix byte slice
+// and reports whether it found the prefix.
+// If s doesn't start with prefix, CutPrefix returns s, false.
+// If prefix is the empty byte slice, CutPrefix returns s, true.
+//
+// CutPrefix returns slices of the original slice s, not copies.
+func CutPrefix(s, prefix: []byte) => (after: []byte, found: bool) {
+	if !HasPrefix(s, prefix) {
+		return s, false
+	}
+	return s[len(prefix):], true
+}
+
+// CutSuffix returns s without the provided ending suffix byte slice
+// and reports whether it found the suffix.
+// If s doesn't end with suffix, CutSuffix returns s, false.
+// If suffix is the empty byte slice, CutSuffix returns s, true.
+//
+// CutSuffix returns slices of the original slice s, not copies.
+func CutSuffix(s, suffix: []byte) => (before: []byte, found: bool) {
+	if !HasSuffix(s, suffix) {
+		return s, false
+	}
+	return s[:len(s)-len(suffix)], true
 }

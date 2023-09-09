@@ -1,6 +1,5 @@
 // 版权 @2023 凹语言 作者。保留所有权利。
 
-
 // MaxLen is the maximum length of the string to be searched for (argument b) in Index.
 // If MaxLen is not 0, make sure MaxLen >= 4.
 global bytealg_MaxLen: int
@@ -52,4 +51,30 @@ func bytealg_CountString(s: string, c: byte) => int {
 		}
 	}
 	return n
+}
+
+func bytealg_IndexByteString(s: string, c: byte) => int {
+	for i := 0; i < len(s); i++ {
+		if s[i] == c {
+			return i
+		}
+	}
+	return -1
+}
+
+// HashStrRevBytes returns the hash of the reverse of sep and the
+// appropriate multiplicative factor for use in Rabin-Karp algorithm.
+func bytealg_HashStrRevBytes(sep: []byte) => (u32, u32) {
+	hash := uint32(0)
+	for i := len(sep) - 1; i >= 0; i-- {
+		hash = hash*bytealg_PrimeRK + uint32(sep[i])
+	}
+	pow, sq: u32 = 1, bytealg_PrimeRK
+	for i := len(sep); i > 0; i >>= 1 {
+		if i&1 != 0 {
+			pow *= sq
+		}
+		sq *= sq
+	}
+	return hash, pow
 }
