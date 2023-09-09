@@ -558,3 +558,16 @@ func bytes_Equal(a, b: []byte) => bool {
 	// Neither cmd/compile nor gccgo allocates for these string conversions.
 	return string(a) == string(b)
 }
+
+func TestAppendRune {
+	for _, m := range utf8map {
+		if buf := AppendRune(nil, m.r); string(buf) != m.str {
+			assert(false)
+			//t.Errorf("AppendRune(nil, %#04x) = %s, want %s", m.r, buf, m.str)
+		}
+		if buf := AppendRune([]byte("init"), m.r); string(buf) != "init"+m.str {
+			assert(false)
+			//t.Errorf("AppendRune(init, %#04x) = %s, want %s", m.r, buf, "init"+m.str)
+		}
+	}
+}

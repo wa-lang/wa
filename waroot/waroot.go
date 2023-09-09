@@ -130,7 +130,7 @@ var stdPkgs = []string{
 	"syscall",
 	"text/template",
 	"unicode",
-	"unicode/utf8",
+	"unicode/utf8", // API 完整, 测试已覆盖
 }
 
 var wzStdPkgs = []string{
