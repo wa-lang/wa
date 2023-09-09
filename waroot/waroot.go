@@ -107,8 +107,8 @@ var stdPkgs = []string{
 	"apple", // 测试已覆盖
 	"archive/txtar",
 	"binary",
-	"bytes",
-	"errors", // 测试已覆盖
+	"bytes",  // API 完整
+	"errors", // API 完整, 测试已覆盖
 	"encoding",
 	"fmt",
 	"hash",
@@ -125,7 +125,7 @@ var stdPkgs = []string{
 	"regexp",
 	"runtime",
 	"sort",
-	"strconv",
+	"strconv", // API 完整
 	"strings",
 	"syscall",
 	"text/template",

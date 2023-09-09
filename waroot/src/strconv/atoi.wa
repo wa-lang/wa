@@ -11,16 +11,16 @@ func lower(c: byte) => byte {
 }
 
 // ErrRange indicates that a value is out of range for the target type.
-var ErrRange = errors.New("value out of range")
+global ErrRange = errors.New("value out of range")
 
 // ErrSyntax indicates that a value does not have the right syntax for the target type.
-var ErrSyntax = errors.New("invalid syntax")
+global ErrSyntax = errors.New("invalid syntax")
 
 // A NumError records a failed conversion.
 type NumError struct {
-	Func :string // the failing function (ParseBool, ParseInt, ParseUint, ParseFloat, ParseComplex)
-	Num  :string // the input
-	Err  :error  // the reason the conversion failed (e.g. ErrRange, ErrSyntax, etc.)
+	Func: string // the failing function (ParseBool, ParseInt, ParseUint, ParseFloat, ParseComplex)
+	Num:  string // the input
+	Err:  error  // the reason the conversion failed (e.g. ErrRange, ErrSyntax, etc.)
 }
 
 func NumError.Error => string {
@@ -35,17 +35,6 @@ func rangeError(fn, str: string) => *NumError {
 	return &NumError{fn, str, ErrRange}
 }
 
-/*
-
-
-func baseError(fn, str string, base int) *NumError {
-	return &NumError{fn, str, errors.New("invalid base " + Itoa(base))}
-}
-
-func bitSizeError(fn, str string, bitSize int) *NumError {
-	return &NumError{fn, str, errors.New("invalid bit size " + Itoa(bitSize))}
-}
-
 const intSize = 32 << (^uint(0) >> 63)
 
 // IntSize is the size in bits of an int or uint value.
@@ -53,10 +42,18 @@ const IntSize = intSize
 
 const maxUint64 = 1<<64 - 1
 
+func baseError(fn, str: string, base: int) => *NumError {
+	return &NumError{fn, str, errors.New("invalid base " + Itoa(base))}
+}
+
+func bitSizeError(fn, str: string, bitSize: int) => *NumError {
+	return &NumError{fn, str, errors.New("invalid bit size " + Itoa(bitSize))}
+}
+
 // ParseUint is like ParseInt but for unsigned numbers.
 //
 // A sign prefix is not permitted.
-func ParseUint(s string, base int, bitSize int) (uint64, error) {
+func ParseUint(s: string, base: int, bitSize: int) => (uint64, error) {
 	const fnParseUint = "ParseUint"
 
 	if s == "" {
@@ -102,7 +99,7 @@ func ParseUint(s string, base int, bitSize int) (uint64, error) {
 
 	// Cutoff is the smallest number such that cutoff*base > maxUint64.
 	// Use compile-time constants for common cases.
-	var cutoff uint64
+	cutoff: u64
 	switch base {
 	case 10:
 		cutoff = maxUint64/10 + 1
@@ -115,9 +112,9 @@ func ParseUint(s string, base int, bitSize int) (uint64, error) {
 	maxVal := uint64(1)<<uint(bitSize) - 1
 
 	underscores := false
-	var n uint64
+	n: u64
 	for _, c := range []byte(s) {
-		var d byte
+		d: byte
 		switch {
 		case c == '_' && base0:
 			underscores = true
@@ -178,7 +175,7 @@ func ParseUint(s string, base int, bitSize int) (uint64, error) {
 // signed integer of the given size, err.Err = ErrRange and the
 // returned value is the maximum magnitude integer of the
 // appropriate bitSize and sign.
-func ParseInt(s string, base int, bitSize int) (i int64, err error) {
+func ParseInt(s: string, base: int, bitSize: int) => (i: int64, err: error) {
 	const fnParseInt = "ParseInt"
 
 	if s == "" {
@@ -196,7 +193,7 @@ func ParseInt(s string, base int, bitSize int) (i int64, err error) {
 	}
 
 	// Convert unsigned and check range.
-	var un uint64
+	un: uint64
 	un, err = ParseUint(s, base, bitSize)
 	if err != nil && err.(*NumError).Err != ErrRange {
 		err.(*NumError).Func = fnParseInt
@@ -223,7 +220,7 @@ func ParseInt(s string, base int, bitSize int) (i int64, err error) {
 }
 
 // Atoi is equivalent to ParseInt(s, 10, 0), converted to type int.
-func Atoi(s string) (int, error) {
+func Atoi(s: string) => (int, error) {
 	const fnAtoi = "Atoi"
 
 	sLen := len(s)
@@ -263,7 +260,7 @@ func Atoi(s string) (int, error) {
 // underscoreOK reports whether the underscores in s are allowed.
 // Checking them in this one function lets all the parsers skip over them simply.
 // Underscore must appear only between digits or between a base prefix and a digit.
-func underscoreOK(s string) bool {
+func underscoreOK(s: string) => bool {
 	// saw tracks the last character (class) we saw:
 	// ^ for beginning of number,
 	// 0 for a digit or base prefix,
@@ -309,5 +306,3 @@ func underscoreOK(s string) bool {
 	}
 	return saw != '_'
 }
-
-*/
