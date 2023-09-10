@@ -112,7 +112,7 @@ var stdPkgs = []string{
 	"encoding",
 	"fmt",
 	"hash",
-	"hash/crc32",
+	"hash/crc32", // API 完整
 	"image",
 	"image/bmp",
 	"image/color",
