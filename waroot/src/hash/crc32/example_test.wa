@@ -1,0 +1,19 @@
+// 版权 @2023 凹语言 作者。保留所有权利。
+
+func ExampleMakeTable() {
+	// In this package, the CRC polynomial is represented in reversed notation,
+	// or LSB-first representation.
+	//
+	// LSB-first representation is a hexadecimal number with n bits, in which the
+	// most significant bit represents the coefficient of x⁰ and the least significant
+	// bit represents the coefficient of xⁿ⁻¹ (the coefficient for xⁿ is implicit).
+	//
+	// For example, CRC32-Q, as defined by the following polynomial,
+	//	x³²+ x³¹+ x²⁴+ x²²+ x¹⁶+ x¹⁴+ x⁸+ x⁷+ x⁵+ x³+ x¹+ x⁰
+	// has the reversed notation 0b11010101100000101000001010000001, so the value
+	// that should be passed to MakeTable is 0xD5828281.
+	crc32q := MakeTable(0xD5828281)
+	println(Checksum([]byte("Hello world"), crc32q))
+	// Output:
+	// 694472804
+}

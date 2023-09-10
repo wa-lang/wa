@@ -112,6 +112,7 @@ var stdPkgs = []string{
 	"encoding",
 	"fmt",
 	"hash",
+	"hash/crc32",
 	"image",
 	"image/bmp",
 	"image/color",
