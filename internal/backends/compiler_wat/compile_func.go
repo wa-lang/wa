@@ -280,10 +280,6 @@ func (g *functionGenerator) genFunction(f *ssa.Function) *wir.Function {
 		wir_fn.Insts = append(wir_fn.Insts, i.EmitRelease()...)
 	}
 
-	for _, i := range wir_fn.Params {
-		wir_fn.Insts = append(wir_fn.Insts, i.EmitRelease()...)
-	}
-
 	wir_fn.Locals = g.registers
 
 	return &wir_fn
@@ -548,7 +544,7 @@ func (g *functionGenerator) genCall(inst *ssa.Call) (insts []wat.Inst, ret_type 
 	case *ssa.Function:
 		ret_type = g.tLib.compile(inst.Call.Signature().Results())
 		for _, v := range inst.Call.Args {
-			insts = append(insts, g.getValue(v).value.EmitPush()...)
+			insts = append(insts, g.getValue(v).value.EmitPushNoRetain()...)
 		}
 		callee := inst.Call.StaticCallee()
 		if callee.Parent() != nil {
@@ -600,7 +596,7 @@ func (g *functionGenerator) genBuiltin(call *ssa.CallCommon) (insts []wat.Inst, 
 				if !avt.Equal(g.module.BOOL) {
 					panic("call.Args[0] is not bool")
 				}
-				insts = append(insts, av.EmitPush()...)
+				insts = append(insts, av.EmitPushNoRetain()...)
 				continue
 			}
 
@@ -643,28 +639,28 @@ func (g *functionGenerator) genBuiltin(call *ssa.CallCommon) (insts []wat.Inst, 
 			}
 
 			if avt.Equal(g.module.BOOL) {
-				insts = append(insts, av.EmitPush()...)
+				insts = append(insts, av.EmitPushNoRetain()...)
 				insts = append(insts, wat.NewInstCall("$runtime.waPrintBool"))
 			} else if avt.Equal(g.module.I32) {
-				insts = append(insts, av.EmitPush()...)
+				insts = append(insts, av.EmitPushNoRetain()...)
 				insts = append(insts, wat.NewInstCall("$runtime.waPrintI32"))
 			} else if avt.Equal(g.module.U8) || avt.Equal(g.module.U16) || avt.Equal(g.module.U32) {
-				insts = append(insts, av.EmitPush()...)
+				insts = append(insts, av.EmitPushNoRetain()...)
 				insts = append(insts, wat.NewInstCall("$runtime.waPrintU32"))
 			} else if avt.Equal(g.module.I64) {
-				insts = append(insts, av.EmitPush()...)
+				insts = append(insts, av.EmitPushNoRetain()...)
 				insts = append(insts, wat.NewInstCall("$runtime.waPrintI64"))
 			} else if avt.Equal(g.module.U64) {
-				insts = append(insts, av.EmitPush()...)
+				insts = append(insts, av.EmitPushNoRetain()...)
 				insts = append(insts, wat.NewInstCall("$runtime.waPrintU64"))
 			} else if avt.Equal(g.module.F32) {
-				insts = append(insts, av.EmitPush()...)
+				insts = append(insts, av.EmitPushNoRetain()...)
 				insts = append(insts, wat.NewInstCall("$runtime.waPrintF32"))
 			} else if avt.Equal(g.module.F64) {
-				insts = append(insts, av.EmitPush()...)
+				insts = append(insts, av.EmitPushNoRetain()...)
 				insts = append(insts, wat.NewInstCall("$runtime.waPrintF64"))
 			} else if avt.Equal(g.module.RUNE) {
-				insts = append(insts, av.EmitPush()...)
+				insts = append(insts, av.EmitPushNoRetain()...)
 				insts = append(insts, wat.NewInstCall("$runtime.waPrintRune"))
 			} else if avt.Equal(g.module.STRING) {
 				insts = append(insts, g.module.EmitPrintString(av)...)
@@ -676,7 +672,7 @@ func (g *functionGenerator) genBuiltin(call *ssa.CallCommon) (insts []wat.Inst, 
 		}
 
 		if call.Value.Name() == "println" {
-			insts = append(insts, wir.NewConst(strconv.Itoa('\n'), g.module.I32).EmitPush()...)
+			insts = append(insts, wir.NewConst(strconv.Itoa('\n'), g.module.I32).EmitPushNoRetain()...)
 			insts = append(insts, wat.NewInstCall("$runtime.waPrintRune"))
 		}
 		ret_type = g.module.VOID
@@ -709,7 +705,7 @@ func (g *functionGenerator) genBuiltin(call *ssa.CallCommon) (insts []wat.Inst, 
 		ret_type = g.module.I32
 
 	case "ssa:wrapnilchk":
-		insts = g.getValue(call.Args[0]).value.EmitPush()
+		insts = g.getValue(call.Args[0]).value.EmitPushNoRetain()
 		ret_type = g.getValue(call.Args[0]).value.Type()
 
 	default:
@@ -1033,7 +1029,7 @@ func (g *functionGenerator) genMakeClosre_Anonymous(inst *ssa.MakeClosure) (inst
 		warp_fn.Insts = append(warp_fn.Insts, dx.EmitInit()...)
 
 		for _, i := range warp_fn.Params {
-			warp_fn.Insts = append(warp_fn.Insts, i.EmitPush()...)
+			warp_fn.Insts = append(warp_fn.Insts, i.EmitPushNoRetain()...)
 		}
 
 		warp_fn.Insts = append(warp_fn.Insts, wat.NewInstCall(fn_name))
@@ -1097,7 +1093,7 @@ func (g *functionGenerator) genMakeClosre_Bound(inst *ssa.MakeClosure) (insts []
 		warp_fn.Insts = append(warp_fn.Insts, dx.EmitInit()...)
 
 		for _, i := range warp_fn.Params {
-			warp_fn.Insts = append(warp_fn.Insts, i.EmitPush()...)
+			warp_fn.Insts = append(warp_fn.Insts, i.EmitPushNoRetain()...)
 		}
 
 		warp_fn.Insts = append(warp_fn.Insts, wat.NewInstCall(fn_name))

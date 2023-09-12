@@ -104,12 +104,6 @@ func newValue_Ref(name string, kind ValueKind, typ *Ref) *aRef {
 
 func (v *aRef) Type() ValueType { return v.typ }
 
-func (v *aRef) raw() []wat.Value        { return v.aStruct.raw() }
-func (v *aRef) EmitInit() []wat.Inst    { return v.aStruct.EmitInit() }
-func (v *aRef) EmitPush() []wat.Inst    { return v.aStruct.EmitPush() }
-func (v *aRef) EmitPop() []wat.Inst     { return v.aStruct.EmitPop() }
-func (v *aRef) EmitRelease() []wat.Inst { return v.aStruct.EmitRelease() }
-
 func (v *aRef) emitStoreToAddr(addr Value, offset int) []wat.Inst {
 	return v.aStruct.emitStoreToAddr(addr, offset)
 }

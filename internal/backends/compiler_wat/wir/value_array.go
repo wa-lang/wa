@@ -128,12 +128,6 @@ func newValue_Array(name string, kind ValueKind, typ *Array) *aArray {
 
 func (v *aArray) Type() ValueType { return v.typ }
 
-func (v *aArray) raw() []wat.Value                { return v.aStruct.raw() }
-func (v *aArray) EmitInit() (insts []wat.Inst)    { return v.aStruct.EmitInit() }
-func (v *aArray) EmitPush() (insts []wat.Inst)    { return v.aStruct.EmitPush() }
-func (v *aArray) EmitPop() (insts []wat.Inst)     { return v.aStruct.EmitPop() }
-func (v *aArray) EmitRelease() (insts []wat.Inst) { return v.aStruct.EmitRelease() }
-
 func (v *aArray) emitStoreToAddr(addr Value, offset int) (insts []wat.Inst) {
 	if !addr.Type().(*Ptr).Base.Equal(v.Type()) {
 		logger.Fatal("Type not match")
@@ -151,8 +145,8 @@ func (v *aArray) emitIndexOf(m *Module, id Value) (insts []wat.Inst) {
 		return
 	}
 
-	insts = append(insts, v.EmitPush()...)
-	insts = append(insts, id.EmitPush()...)
+	insts = append(insts, v.EmitPushNoRetain()...)
+	insts = append(insts, id.EmitPushNoRetain()...)
 	insts = append(insts, wat.NewInstCall(fn_name))
 
 	return

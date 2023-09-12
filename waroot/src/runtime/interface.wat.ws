@@ -13,12 +13,11 @@
 	  local.get $t
 	  if (result i32 i32 i32 i32)
 	    local.get $d.b
+		call $$Retain
 	    local.get $d.d
 	    local.get $t
 	    local.get $eq
 	  else
-	    local.get $d.b
-	    call $$Release
 	    i32.const 0
 	    i32.const 0
 	    i32.const 0
@@ -26,8 +25,6 @@
 	    unreachable
 	  end
 	else
-	  local.get $d.b
-	  call $$Release
 	  i32.const 0
 	  i32.const 0
 	  i32.const 0
@@ -50,13 +47,12 @@
 	  local.get $t
 	  if (result i32 i32 i32 i32 i32)
 	    local.get $d.b
+		call $$Retain
 	    local.get $d.d
 	    local.get $t
 	    local.get $eq
 	    i32.const 1
 	  else
-	    local.get $d.b
-	    call $$Release
 	    i32.const 0
 	    i32.const 0
 	    i32.const 0
@@ -64,8 +60,6 @@
 	    i32.const 0
 	  end
 	else
-	  local.get $d.b
-	  call $$Release
 	  i32.const 0
 	  i32.const 0
 	  i32.const 0

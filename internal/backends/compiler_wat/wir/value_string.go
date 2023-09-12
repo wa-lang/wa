@@ -193,9 +193,6 @@ func (t *String) genFunc_append(m *Module) string {
 		}
 	}
 
-	f.Insts = append(f.Insts, x.EmitRelease()...)
-	f.Insts = append(f.Insts, y.EmitRelease()...)
-
 	m.AddFunc(&f)
 	return fn_name
 }
@@ -273,9 +270,6 @@ func (t *String) genFunc_equal(m *Module) string {
 
 	f.Insts = append(f.Insts, inst_if)
 
-	f.Insts = append(f.Insts, x.EmitRelease()...)
-	f.Insts = append(f.Insts, y.EmitRelease()...)
-
 	f.Insts = append(f.Insts, ret.EmitPush()...)
 
 	m.AddFunc(&f)
@@ -305,12 +299,6 @@ func newValue_String(name string, kind ValueKind, typ *String) *aString {
 }
 
 func (v *aString) Type() ValueType { return v.typ }
-
-func (v *aString) raw() []wat.Value        { return v.aStruct.raw() }
-func (v *aString) EmitInit() []wat.Inst    { return v.aStruct.EmitInit() }
-func (v *aString) EmitPush() []wat.Inst    { return v.aStruct.EmitPush() }
-func (v *aString) EmitPop() []wat.Inst     { return v.aStruct.EmitPop() }
-func (v *aString) EmitRelease() []wat.Inst { return v.aStruct.EmitRelease() }
 
 func (v *aString) emitStoreToAddr(addr Value, offset int) []wat.Inst {
 	return v.aStruct.emitStoreToAddr(addr, offset)
@@ -385,8 +373,8 @@ func (v *aString) emitEq(r Value) (insts []wat.Inst, ok bool) {
 	if !v.Type().Equal(r.Type()) {
 		logger.Fatal("v.Type() != r.Type()")
 	}
-	insts = append(insts, v.EmitPush()...)
-	insts = append(insts, r.EmitPush()...)
+	insts = append(insts, v.EmitPushNoRetain()...)
+	insts = append(insts, r.EmitPushNoRetain()...)
 	insts = append(insts, wat.NewInstCall(v.typ.fnName_equal))
 
 	ok = true

@@ -74,8 +74,8 @@ func (m *Module) EmitBinOp(x, y Value, op wat.OpCode) (insts []wat.Inst, ret_typ
 	switch op {
 	case wat.OpCodeAdd:
 		ret_type = x.Type()
-		insts = append(insts, x.EmitPush()...)
-		insts = append(insts, y.EmitPush()...)
+		insts = append(insts, x.EmitPushNoRetain()...)
+		insts = append(insts, y.EmitPushNoRetain()...)
 		if ret_type.Equal(m.STRING) {
 			insts = append(insts, wat.NewInstCall(m.STRING.(*String).fnName_append))
 		} else {
@@ -92,8 +92,8 @@ func (m *Module) EmitBinOp(x, y Value, op wat.OpCode) (insts []wat.Inst, ret_typ
 
 	case wat.OpCodeSub:
 		ret_type = x.Type()
-		insts = append(insts, x.EmitPush()...)
-		insts = append(insts, y.EmitPush()...)
+		insts = append(insts, x.EmitPushNoRetain()...)
+		insts = append(insts, y.EmitPushNoRetain()...)
 		insts = append(insts, wat.NewInstSub(toWatType(ret_type)))
 
 		if ret_type.Equal(m.U8) {
@@ -106,8 +106,8 @@ func (m *Module) EmitBinOp(x, y Value, op wat.OpCode) (insts []wat.Inst, ret_typ
 
 	case wat.OpCodeMul:
 		ret_type = x.Type()
-		insts = append(insts, x.EmitPush()...)
-		insts = append(insts, y.EmitPush()...)
+		insts = append(insts, x.EmitPushNoRetain()...)
+		insts = append(insts, y.EmitPushNoRetain()...)
 		insts = append(insts, wat.NewInstMul(toWatType(ret_type)))
 
 		if ret_type.Equal(m.U8) {
@@ -120,14 +120,14 @@ func (m *Module) EmitBinOp(x, y Value, op wat.OpCode) (insts []wat.Inst, ret_typ
 
 	case wat.OpCodeQuo:
 		ret_type = x.Type()
-		insts = append(insts, x.EmitPush()...)
-		insts = append(insts, y.EmitPush()...)
+		insts = append(insts, x.EmitPushNoRetain()...)
+		insts = append(insts, y.EmitPushNoRetain()...)
 		insts = append(insts, wat.NewInstDiv(toWatType(ret_type)))
 
 	case wat.OpCodeRem:
 		ret_type = x.Type()
-		insts = append(insts, x.EmitPush()...)
-		insts = append(insts, y.EmitPush()...)
+		insts = append(insts, x.EmitPushNoRetain()...)
+		insts = append(insts, y.EmitPushNoRetain()...)
 		insts = append(insts, wat.NewInstRem(toWatType(ret_type)))
 
 	case wat.OpCodeEql:
@@ -142,63 +142,63 @@ func (m *Module) EmitBinOp(x, y Value, op wat.OpCode) (insts []wat.Inst, ret_typ
 		ret_type = m.BOOL
 
 	case wat.OpCodeLt:
-		insts = append(insts, x.EmitPush()...)
-		insts = append(insts, y.EmitPush()...)
+		insts = append(insts, x.EmitPushNoRetain()...)
+		insts = append(insts, y.EmitPushNoRetain()...)
 		insts = append(insts, wat.NewInstLt(toWatType(x.Type())))
 		ret_type = m.BOOL
 
 	case wat.OpCodeGt:
-		insts = append(insts, x.EmitPush()...)
-		insts = append(insts, y.EmitPush()...)
+		insts = append(insts, x.EmitPushNoRetain()...)
+		insts = append(insts, y.EmitPushNoRetain()...)
 		insts = append(insts, wat.NewInstGt(toWatType(x.Type())))
 		ret_type = m.BOOL
 
 	case wat.OpCodeLe:
-		insts = append(insts, x.EmitPush()...)
-		insts = append(insts, y.EmitPush()...)
+		insts = append(insts, x.EmitPushNoRetain()...)
+		insts = append(insts, y.EmitPushNoRetain()...)
 		insts = append(insts, wat.NewInstLe(toWatType(x.Type())))
 		ret_type = m.BOOL
 
 	case wat.OpCodeGe:
-		insts = append(insts, x.EmitPush()...)
-		insts = append(insts, y.EmitPush()...)
+		insts = append(insts, x.EmitPushNoRetain()...)
+		insts = append(insts, y.EmitPushNoRetain()...)
 		insts = append(insts, wat.NewInstGe(toWatType(x.Type())))
 		ret_type = m.BOOL
 
 	case wat.OpCodeAnd:
 		ret_type = x.Type()
-		insts = append(insts, x.EmitPush()...)
-		insts = append(insts, y.EmitPush()...)
+		insts = append(insts, x.EmitPushNoRetain()...)
+		insts = append(insts, y.EmitPushNoRetain()...)
 		insts = append(insts, wat.NewInstAnd(toWatType(ret_type)))
 
 	case wat.OpCodeOr:
 		ret_type = x.Type()
-		insts = append(insts, x.EmitPush()...)
-		insts = append(insts, y.EmitPush()...)
+		insts = append(insts, x.EmitPushNoRetain()...)
+		insts = append(insts, y.EmitPushNoRetain()...)
 		insts = append(insts, wat.NewInstOr(toWatType(ret_type)))
 
 	case wat.OpCodeXor:
 		ret_type = x.Type()
-		insts = append(insts, x.EmitPush()...)
-		insts = append(insts, y.EmitPush()...)
+		insts = append(insts, x.EmitPushNoRetain()...)
+		insts = append(insts, y.EmitPushNoRetain()...)
 		insts = append(insts, wat.NewInstXor(toWatType(ret_type)))
 
 	case wat.OpCodeShl:
 		ret_type = x.Type()
 
 		if x.Type().Size() <= 4 && y.Type().Size() == 8 {
-			insts = append(insts, x.EmitPush()...)
-			insts = append(insts, y.EmitPush()...)
+			insts = append(insts, x.EmitPushNoRetain()...)
+			insts = append(insts, y.EmitPushNoRetain()...)
 			insts = append(insts, wat.NewInstConvert_i32_wrap_i64())
 			insts = append(insts, wat.NewInstShl(toWatType(ret_type)))
 		} else if x.Type().Size() == 8 && y.Type().Size() <= 4 {
-			insts = append(insts, x.EmitPush()...)
-			insts = append(insts, y.EmitPush()...)
+			insts = append(insts, x.EmitPushNoRetain()...)
+			insts = append(insts, y.EmitPushNoRetain()...)
 			insts = append(insts, wat.NewInstConvert_i64_extend_i32_u())
 			insts = append(insts, wat.NewInstShl(toWatType(ret_type)))
 		} else if (x.Type().Size() <= 4 && y.Type().Size() <= 4) || (x.Type().Size() == 8 && y.Type().Size() == 8) {
-			insts = append(insts, x.EmitPush()...)
-			insts = append(insts, y.EmitPush()...)
+			insts = append(insts, x.EmitPushNoRetain()...)
+			insts = append(insts, y.EmitPushNoRetain()...)
 			insts = append(insts, wat.NewInstShl(toWatType(ret_type)))
 		} else {
 			logger.Fatal("Unreachable")
@@ -216,18 +216,18 @@ func (m *Module) EmitBinOp(x, y Value, op wat.OpCode) (insts []wat.Inst, ret_typ
 		ret_type = x.Type()
 
 		if x.Type().Size() <= 4 && y.Type().Size() == 8 {
-			insts = append(insts, x.EmitPush()...)
-			insts = append(insts, y.EmitPush()...)
+			insts = append(insts, x.EmitPushNoRetain()...)
+			insts = append(insts, y.EmitPushNoRetain()...)
 			insts = append(insts, wat.NewInstConvert_i32_wrap_i64())
 			insts = append(insts, wat.NewInstShr(toWatType(ret_type)))
 		} else if x.Type().Size() == 8 && y.Type().Size() <= 4 {
-			insts = append(insts, x.EmitPush()...)
-			insts = append(insts, y.EmitPush()...)
+			insts = append(insts, x.EmitPushNoRetain()...)
+			insts = append(insts, y.EmitPushNoRetain()...)
 			insts = append(insts, wat.NewInstConvert_i64_extend_i32_u())
 			insts = append(insts, wat.NewInstShr(toWatType(ret_type)))
 		} else if (x.Type().Size() <= 4 && y.Type().Size() <= 4) || (x.Type().Size() == 8 && y.Type().Size() == 8) {
-			insts = append(insts, x.EmitPush()...)
-			insts = append(insts, y.EmitPush()...)
+			insts = append(insts, x.EmitPushNoRetain()...)
+			insts = append(insts, y.EmitPushNoRetain()...)
 			insts = append(insts, wat.NewInstShr(toWatType(ret_type)))
 		} else {
 			logger.Fatal("Unreachable")
@@ -235,9 +235,9 @@ func (m *Module) EmitBinOp(x, y Value, op wat.OpCode) (insts []wat.Inst, ret_typ
 
 	case wat.OpCodeAndNot:
 		ret_type = x.Type()
-		insts = append(insts, x.EmitPush()...)
-		insts = append(insts, y.EmitPush()...)
-		insts = append(insts, NewConst("-1", y.Type()).EmitPush()...)
+		insts = append(insts, x.EmitPushNoRetain()...)
+		insts = append(insts, y.EmitPushNoRetain()...)
+		insts = append(insts, NewConst("-1", y.Type()).EmitPushNoRetain()...)
 		insts = append(insts, wat.NewInstXor(toWatType(ret_type)))
 		insts = append(insts, wat.NewInstAnd(toWatType(ret_type)))
 
@@ -685,20 +685,20 @@ func (m *Module) EmitGenConvert(x Value, typ ValueType) (insts []wat.Inst) {
 		switch {
 		case xt.Equal(m.BYTES):
 			x := x.(*aSlice)
-			insts = append(insts, NewConst("", m.STRING).EmitPush()...)
-			insts = append(insts, x.Extract("b").EmitPush()...)
-			insts = append(insts, x.Extract("d").EmitPush()...)
-			insts = append(insts, x.Extract("l").EmitPush()...)
+			insts = append(insts, NewConst("", m.STRING).EmitPushNoRetain()...)
+			insts = append(insts, x.Extract("b").EmitPushNoRetain()...)
+			insts = append(insts, x.Extract("d").EmitPushNoRetain()...)
+			insts = append(insts, x.Extract("l").EmitPushNoRetain()...)
 			insts = append(insts, wat.NewInstCall(m.STRING.(*String).fnName_append))
 			return
 
 		case xt.Equal(m.GenValueType_Slice(m.RUNE, "")):
-			insts = append(insts, x.EmitPush()...)
+			insts = append(insts, x.EmitPushNoRetain()...)
 			insts = append(insts, wat.NewInstCall("runtime.stringFromRuneSlice"))
 			return
 
 		case xt.Equal(m.RUNE) || xt.Equal(m.I32):
-			insts = append(insts, x.EmitPush()...)
+			insts = append(insts, x.EmitPushNoRetain()...)
 			insts = append(insts, wat.NewInstCall("runtime.stringFromRune"))
 			return
 		}
@@ -707,11 +707,11 @@ func (m *Module) EmitGenConvert(x Value, typ ValueType) (insts []wat.Inst) {
 		switch {
 		case xt.Equal(m.STRING):
 			x := x.(*aString)
-			insts = append(insts, NewConst("0", m.BYTES).EmitPush()...)
-			insts = append(insts, x.Extract("b").EmitPush()...)
-			insts = append(insts, x.Extract("d").EmitPush()...)
-			insts = append(insts, x.Extract("l").EmitPush()...)
-			insts = append(insts, x.Extract("l").EmitPush()...)
+			insts = append(insts, NewConst("0", m.BYTES).EmitPushNoRetain()...)
+			insts = append(insts, x.Extract("b").EmitPushNoRetain()...)
+			insts = append(insts, x.Extract("d").EmitPushNoRetain()...)
+			insts = append(insts, x.Extract("l").EmitPushNoRetain()...)
+			insts = append(insts, x.Extract("l").EmitPushNoRetain()...)
 			insts = append(insts, wat.NewInstCall(m.BYTES.(*Slice).genAppendFunc(m)))
 			return
 		}
@@ -719,7 +719,7 @@ func (m *Module) EmitGenConvert(x Value, typ ValueType) (insts []wat.Inst) {
 	case typ.Equal(m.GenValueType_Slice(m.RUNE, "")):
 		switch {
 		case xt.Equal(m.STRING):
-			insts = append(insts, x.EmitPush()...)
+			insts = append(insts, x.EmitPushNoRetain()...)
 			insts = append(insts, wat.NewInstCall("runtime.runeSliceFromString"))
 			return
 		}
@@ -731,12 +731,12 @@ func (m *Module) EmitGenConvert(x Value, typ ValueType) (insts []wat.Inst) {
 
 func (m *Module) EmitGenAppend(x, y Value) (insts []wat.Inst, ret_type ValueType) {
 	xtype := x.Type().(*Slice)
-	insts = append(insts, x.EmitPush()...)
-	insts = append(insts, y.EmitPush()...)
+	insts = append(insts, x.EmitPushNoRetain()...)
+	insts = append(insts, y.EmitPushNoRetain()...)
 
 	if !x.Type().Equal(y.Type()) {
 		if _, ok := y.Type().(*String); ok && xtype.Base.Equal(m.U8) {
-			insts = append(insts, y.(*aString).Extract("l").EmitPush()...)
+			insts = append(insts, y.(*aString).Extract("l").EmitPushNoRetain()...)
 		} else {
 			logger.Fatal("Type not match")
 			return
@@ -784,12 +784,12 @@ func (m *Module) EmitGenCap(x Value) (insts []wat.Inst) {
 
 func (m *Module) EmitGenCopy(x, y Value) (insts []wat.Inst) {
 	xtype := x.Type().(*Slice)
-	insts = append(insts, x.EmitPush()...)
-	insts = append(insts, y.EmitPush()...)
+	insts = append(insts, x.EmitPushNoRetain()...)
+	insts = append(insts, y.EmitPushNoRetain()...)
 
 	if !x.Type().Equal(y.Type()) {
 		if _, ok := y.Type().(*String); ok && xtype.Base.Equal(m.U8) {
-			insts = append(insts, y.(*aString).Extract("l").EmitPush()...)
+			insts = append(insts, y.(*aString).Extract("l").EmitPushNoRetain()...)
 		} else {
 			logger.Fatal("Type not match")
 			return
@@ -891,7 +891,7 @@ func (m *Module) EmitGenNext_String(iter Value) (insts []wat.Inst, ret_type Valu
 	fields := []ValueType{m.BOOL, m.INT, m.RUNE}
 	ret_type = m.GenValueType_Tuple(fields)
 
-	insts = append(insts, iter.EmitPush()...)
+	insts = append(insts, iter.EmitPushNoRetain()...)
 	insts = append(insts, wat.NewInstCall("runtime.next_rune"))
 	insts = append(insts, iter.(*aStruct).Extract("pos").EmitPop()...)
 	return
@@ -899,13 +899,13 @@ func (m *Module) EmitGenNext_String(iter Value) (insts []wat.Inst, ret_type Valu
 
 func (m *Module) EmitInvoke(i Value, params []Value, mid int, typeName string) (insts []wat.Inst) {
 	iface := i.(*aInterface)
-	insts = append(insts, iface.Extract("d").EmitPush()...)
+	insts = append(insts, iface.Extract("d").EmitPushNoRetain()...)
 
 	for _, v := range params {
-		insts = append(insts, v.EmitPush()...)
+		insts = append(insts, v.EmitPushNoRetain()...)
 	}
 
-	insts = append(insts, iface.Extract("itab").EmitPush()...)
+	insts = append(insts, iface.Extract("itab").EmitPushNoRetain()...)
 	insts = append(insts, wat.NewInstLoad(wat.I32{}, 8+mid*4, 4))
 
 	insts = append(insts, wat.NewInstCallIndirect(typeName))
@@ -915,8 +915,8 @@ func (m *Module) EmitInvoke(i Value, params []Value, mid int, typeName string) (
 func (m *Module) EmitPrintString(v Value) (insts []wat.Inst) {
 	s := v.(*aString)
 
-	insts = append(insts, s.Extract("d").EmitPush()...)
-	insts = append(insts, s.Extract("l").EmitPush()...)
+	insts = append(insts, s.Extract("d").EmitPushNoRetain()...)
+	insts = append(insts, s.Extract("l").EmitPushNoRetain()...)
 	insts = append(insts, wat.NewInstCall("$runtime.waPuts"))
 	return
 }
@@ -926,13 +926,13 @@ func (m *Module) EmitPrintInterface(v Value) (insts []wat.Inst) {
 	insts = append(insts, wat.NewInstConst(wat.I32{}, strconv.Itoa('(')))
 	insts = append(insts, wat.NewInstCall("$runtime.waPrintRune"))
 
-	insts = append(insts, i.Extract("d").(*aRef).Extract("d").EmitPush()...)
+	insts = append(insts, i.Extract("d").(*aRef).Extract("d").EmitPushNoRetain()...)
 	insts = append(insts, wat.NewInstCall("$runtime.waPrintU32Ptr")) // data
 
 	insts = append(insts, wat.NewInstConst(wat.I32{}, strconv.Itoa(',')))
 	insts = append(insts, wat.NewInstCall("$runtime.waPrintRune"))
 
-	insts = append(insts, i.Extract("itab").EmitPush()...)
+	insts = append(insts, i.Extract("itab").EmitPushNoRetain()...)
 	insts = append(insts, wat.NewInstCall("$runtime.waPrintU32Ptr")) // itab
 
 	insts = append(insts, wat.NewInstConst(wat.I32{}, strconv.Itoa(')')))

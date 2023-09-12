@@ -124,10 +124,11 @@ func newValue_Basic(name string, kind ValueKind, typ ValueType) *aBasic {
 	return &aBasic{aValue: aValue{name: name, kind: kind, typ: typ}}
 }
 
-func (v *aBasic) raw() []wat.Value        { return []wat.Value{wat.NewVar(v.name, toWatType(v.Type()))} }
-func (v *aBasic) EmitPush() []wat.Inst    { return []wat.Inst{v.push(v.name)} }
-func (v *aBasic) EmitPop() []wat.Inst     { return []wat.Inst{v.pop(v.name)} }
-func (v *aBasic) EmitRelease() []wat.Inst { return nil }
+func (v *aBasic) raw() []wat.Value             { return []wat.Value{wat.NewVar(v.name, toWatType(v.Type()))} }
+func (v *aBasic) EmitPush() []wat.Inst         { return []wat.Inst{v.push(v.name)} }
+func (v *aBasic) EmitPushNoRetain() []wat.Inst { return []wat.Inst{v.push(v.name)} }
+func (v *aBasic) EmitPop() []wat.Inst          { return []wat.Inst{v.pop(v.name)} }
+func (v *aBasic) EmitRelease() []wat.Inst      { return nil }
 
 func (v *aBasic) EmitInit() (insts []wat.Inst) {
 	insts = append(insts, wat.NewInstConst(toWatType(v.Type()), "0"))

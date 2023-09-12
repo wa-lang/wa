@@ -139,10 +139,10 @@ func (m *Module) GenConstFnValue(fn_name string, sig FnSig) Value {
 
 func EmitCallClosure(c Value, params []Value) (insts []wat.Inst) {
 	for _, p := range params {
-		insts = append(insts, p.EmitPush()...)
+		insts = append(insts, p.EmitPushNoRetain()...)
 	}
 	closure := c.(*aClosure)
-	insts = append(insts, closure.Extract("fn_index").EmitPush()...)
+	insts = append(insts, closure.Extract("fn_index").EmitPushNoRetain()...)
 
 	insts = append(insts, closure.Extract("d").EmitPush()...)
 	insts = append(insts, currentModule.FindGlobalByName("$wa.runtime.closure_data").EmitPop()...)
