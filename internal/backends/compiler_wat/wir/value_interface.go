@@ -115,12 +115,6 @@ func newValue_Interface(name string, kind ValueKind, typ *Interface) *aInterface
 
 func (v *aInterface) Type() ValueType { return v.typ }
 
-func (v *aInterface) raw() []wat.Value        { return v.aStruct.raw() }
-func (v *aInterface) EmitInit() []wat.Inst    { return v.aStruct.EmitInit() }
-func (v *aInterface) EmitPush() []wat.Inst    { return v.aStruct.EmitPush() }
-func (v *aInterface) EmitPop() []wat.Inst     { return v.aStruct.EmitPop() }
-func (v *aInterface) EmitRelease() []wat.Inst { return v.aStruct.EmitRelease() }
-
 func (v *aInterface) emitStoreToAddr(addr Value, offset int) []wat.Inst {
 	return v.aStruct.emitStoreToAddr(addr, offset)
 }
@@ -157,9 +151,9 @@ func (v *aInterface) emitGetData(destType ValueType, commaOk bool) (insts []wat.
 }
 
 func (v *aInterface) emitQueryInterface(destType ValueType, commaOk bool) (insts []wat.Inst) {
-	insts = append(insts, v.Extract("d").EmitPush()...)
-	insts = append(insts, v.Extract("itab").EmitPush()...)
-	insts = append(insts, v.Extract("eq").EmitPush()...)
+	insts = append(insts, v.Extract("d").EmitPushNoRetain()...)
+	insts = append(insts, v.Extract("itab").EmitPushNoRetain()...)
+	insts = append(insts, v.Extract("eq").EmitPushNoRetain()...)
 	insts = append(insts, wat.NewInstConst(wat.I32{}, strconv.Itoa(destType.Hash())))
 	if commaOk {
 		insts = append(insts, wat.NewInstCall("$wa.runtime.queryIface_CommaOk"))
@@ -198,8 +192,8 @@ func (v *aInterface) emitEq(r Value) (insts []wat.Inst, ok bool) {
 			ins, _ = v.Extract("d").emitEq(d.Extract("d"))
 			isRef.True = ins
 
-			isRef.False = append(isRef.False, v.Extract("d").(*aRef).Extract("d").EmitPush()...)
-			isRef.False = append(isRef.False, d.Extract("d").(*aRef).Extract("d").EmitPush()...)
+			isRef.False = append(isRef.False, v.Extract("d").(*aRef).Extract("d").EmitPushNoRetain()...)
+			isRef.False = append(isRef.False, d.Extract("d").(*aRef).Extract("d").EmitPushNoRetain()...)
 			isRef.False = append(isRef.False, v.Extract("eq").EmitPush()...)
 			isRef.False = append(isRef.False, wat.NewInstCallIndirect("$wa.runtime.comp"))
 

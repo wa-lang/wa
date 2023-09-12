@@ -40,6 +40,7 @@ type Value interface {
 	raw() []wat.Value
 	EmitInit() []wat.Inst
 	EmitPush() []wat.Inst
+	EmitPushNoRetain() []wat.Inst
 	EmitPop() []wat.Inst
 	EmitRelease() []wat.Inst
 	emitStoreToAddr(addr Value, offset int) []wat.Inst

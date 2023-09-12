@@ -252,14 +252,22 @@ func (v *aStruct) EmitInit() []wat.Inst {
 	return insts
 }
 
-func (v *aStruct) EmitPush() []wat.Inst {
-	var insts []wat.Inst
+func (v *aStruct) EmitPush() (insts []wat.Inst) {
 	st := v.Type().(*Struct)
 	for _, m := range st.fields {
 		t := v.genSubValue(m)
 		insts = append(insts, t.EmitPush()...)
 	}
-	return insts
+	return
+}
+
+func (v *aStruct) EmitPushNoRetain() (insts []wat.Inst) {
+	st := v.Type().(*Struct)
+	for _, m := range st.fields {
+		t := v.genSubValue(m)
+		insts = append(insts, t.EmitPushNoRetain()...)
+	}
+	return
 }
 
 func (v *aStruct) EmitPop() []wat.Inst {

@@ -52,6 +52,11 @@ type Module struct {
 func NewModule() *Module {
 	var m Module
 	m.types_map = make(map[string]ValueType)
+	m.fnSigsName = make(map[string]fnSigWrap)
+	m.funcs_map = make(map[string]*Function)
+	m.table_map = make(map[string]int)
+	m.globalsMapByValue = make(map[ssa.Value]int)
+	m.globalsMapByName = make(map[string]int)
 
 	m.VOID = m.GenValueType_void("")
 	m.BOOL = m.GenValueType_bool("")
@@ -71,20 +76,13 @@ func NewModule() *Module {
 	m.STRING = m.GenValueType_string("")
 	m.BYTES = m.GenValueType_Slice(m.U8, "")
 
-	m.fnSigsName = make(map[string]fnSigWrap)
-
-	m.funcs_map = make(map[string]*Function)
-
 	//table中先行插入一条记录，防止产生0值（无效值）id
 	m.table = append(m.table, "")
-	m.table_map = make(map[string]int)
 
 	//data_seg中先插入标志，防止产生0值
 	m.DataSeg = wat.NewDataSeg(2048)
 	m.DataSeg.Append([]byte("$$wads$$"), 8)
 
-	m.globalsMapByValue = make(map[ssa.Value]int)
-	m.globalsMapByName = make(map[string]int)
 	return &m
 }
 

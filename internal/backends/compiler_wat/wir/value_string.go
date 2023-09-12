@@ -14,12 +14,14 @@ String:
 **************************************/
 type String struct {
 	tCommon
-	underlying *Struct
-	_u8        ValueType
-	_u32       ValueType
-	_i32       ValueType
-	_u8_block  *Block
-	_u8_ptr    ValueType
+	underlying    *Struct
+	_u8           ValueType
+	_u32          ValueType
+	_i32          ValueType
+	_u8_block     *Block
+	_u8_ptr       ValueType
+	fnName_append string
+	fnName_equal  string
 }
 
 func (m *Module) GenValueType_string(name string) *String {
@@ -46,9 +48,10 @@ func (m *Module) GenValueType_string(name string) *String {
 	str_t.underlying.AppendField(m.NewStructField("l", str_t._u32))
 	str_t.underlying.Finish()
 
+	str_t.fnName_append = str_t.genFunc_append(m)
+	str_t.fnName_equal = str_t.genFunc_equal(m)
 	m.addValueType(&str_t)
 	return &str_t
-
 }
 
 func (t *String) Size() int              { return t.underlying.Size() }
@@ -62,9 +65,9 @@ func (t *String) EmitLoadFromAddr(addr Value, offset int) []wat.Inst {
 	return t.underlying.EmitLoadFromAddr(addr, offset)
 }
 
-func (t *String) genFunc_Append() string {
-	fn_name := "$" + t.Named() + ".appendstr"
-	if currentModule.FindFunc(fn_name) != nil {
+func (t *String) genFunc_append(m *Module) string {
+	fn_name := "$string.appendstr"
+	if m.FindFunc(fn_name) != nil {
 		return fn_name
 	}
 
@@ -190,16 +193,13 @@ func (t *String) genFunc_Append() string {
 		}
 	}
 
-	f.Insts = append(f.Insts, x.EmitRelease()...)
-	f.Insts = append(f.Insts, y.EmitRelease()...)
-
-	currentModule.AddFunc(&f)
+	m.AddFunc(&f)
 	return fn_name
 }
 
-func (t *String) genFunc_Equal() string {
-	fn_name := "$" + t.Named() + ".equal"
-	if currentModule.FindFunc(fn_name) != nil {
+func (t *String) genFunc_equal(m *Module) string {
+	fn_name := "$string.equal"
+	if m.FindFunc(fn_name) != nil {
 		return fn_name
 	}
 
@@ -270,12 +270,9 @@ func (t *String) genFunc_Equal() string {
 
 	f.Insts = append(f.Insts, inst_if)
 
-	f.Insts = append(f.Insts, x.EmitRelease()...)
-	f.Insts = append(f.Insts, y.EmitRelease()...)
-
 	f.Insts = append(f.Insts, ret.EmitPush()...)
 
-	currentModule.AddFunc(&f)
+	m.AddFunc(&f)
 	return fn_name
 }
 
@@ -302,12 +299,6 @@ func newValue_String(name string, kind ValueKind, typ *String) *aString {
 }
 
 func (v *aString) Type() ValueType { return v.typ }
-
-func (v *aString) raw() []wat.Value        { return v.aStruct.raw() }
-func (v *aString) EmitInit() []wat.Inst    { return v.aStruct.EmitInit() }
-func (v *aString) EmitPush() []wat.Inst    { return v.aStruct.EmitPush() }
-func (v *aString) EmitPop() []wat.Inst     { return v.aStruct.EmitPop() }
-func (v *aString) EmitRelease() []wat.Inst { return v.aStruct.EmitRelease() }
 
 func (v *aString) emitStoreToAddr(addr Value, offset int) []wat.Inst {
 	return v.aStruct.emitStoreToAddr(addr, offset)
@@ -382,9 +373,9 @@ func (v *aString) emitEq(r Value) (insts []wat.Inst, ok bool) {
 	if !v.Type().Equal(r.Type()) {
 		logger.Fatal("v.Type() != r.Type()")
 	}
-	insts = append(insts, v.EmitPush()...)
-	insts = append(insts, r.EmitPush()...)
-	insts = append(insts, wat.NewInstCall(v.typ.genFunc_Equal()))
+	insts = append(insts, v.EmitPushNoRetain()...)
+	insts = append(insts, r.EmitPushNoRetain()...)
+	insts = append(insts, wat.NewInstCall(v.typ.fnName_equal))
 
 	ok = true
 

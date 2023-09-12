@@ -168,9 +168,9 @@ func (t *Slice) emitGenMake(Len, Cap Value) (insts []wat.Inst) {
 	return
 }
 
-func (t *Slice) genAppendFunc() string {
+func (t *Slice) genAppendFunc(m *Module) string {
 	fn_name := "$" + GenSymbolName(t.Named()) + ".append"
-	if currentModule.FindFunc(fn_name) != nil {
+	if m.FindFunc(fn_name) != nil {
 		return fn_name
 	}
 
@@ -371,18 +371,16 @@ func (t *Slice) genAppendFunc() string {
 	}
 
 	f.Insts = append(f.Insts, inst_if)
-	f.Insts = append(f.Insts, x.EmitRelease()...)
-	f.Insts = append(f.Insts, y.EmitRelease()...)
 	f.Insts = append(f.Insts, item.EmitRelease()...)
 
-	currentModule.AddFunc(&f)
+	m.AddFunc(&f)
 	return fn_name
 }
 
-func (t *Slice) genCopyFunc() string {
+func (t *Slice) genCopyFunc(m *Module) string {
 	var f Function
-	f.InternalName = "$" + GenSymbolName(t.Named()) + ".copy"
-	if currentModule.FindFunc(f.InternalName) != nil {
+	f.InternalName = "$" + GenSymbolName(t.Base.Named()+".$slice") + ".copy"
+	if m.FindFunc(f.InternalName) != nil {
 		return f.InternalName
 	}
 
@@ -494,11 +492,9 @@ func (t *Slice) genCopyFunc() string {
 		ifs.False = append(ifs.False, wat.NewInstBr("l0"))
 	}
 
-	f.Insts = append(f.Insts, d.EmitRelease()...)
-	f.Insts = append(f.Insts, s.EmitRelease()...)
 	f.Insts = append(f.Insts, item.EmitRelease()...)
 
-	currentModule.AddFunc(&f)
+	m.AddFunc(&f)
 	return f.InternalName
 }
 
@@ -518,12 +514,6 @@ func newValue_Slice(name string, kind ValueKind, typ *Slice) *aSlice {
 }
 
 func (v *aSlice) Type() ValueType { return v.typ }
-
-func (v *aSlice) raw() []wat.Value        { return v.aStruct.raw() }
-func (v *aSlice) EmitInit() []wat.Inst    { return v.aStruct.EmitInit() }
-func (v *aSlice) EmitPush() []wat.Inst    { return v.aStruct.EmitPush() }
-func (v *aSlice) EmitPop() []wat.Inst     { return v.aStruct.EmitPop() }
-func (v *aSlice) EmitRelease() []wat.Inst { return v.aStruct.EmitRelease() }
 
 func (v *aSlice) emitStoreToAddr(addr Value, offset int) []wat.Inst {
 	return v.aStruct.emitStoreToAddr(addr, offset)

@@ -137,6 +137,11 @@ func (v *aBlock) EmitPush() (insts []wat.Inst) {
 	return
 }
 
+func (v *aBlock) EmitPushNoRetain() (insts []wat.Inst) {
+	insts = append(insts, v.push(v.name))
+	return insts
+}
+
 func (v *aBlock) EmitPop() (insts []wat.Inst) {
 	insts = append(insts, v.EmitRelease()...)
 	insts = append(insts, v.pop(v.name))

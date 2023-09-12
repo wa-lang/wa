@@ -61,13 +61,13 @@ func (t *Array) EmitLoadFromAddr(addr Value, offset int) (insts []wat.Inst) {
 	return t.underlying.EmitLoadFromAddr(addr, offset)
 }
 
-func (t *Array) genFunc_IndexOf() string {
+func (t *Array) genFunc_IndexOf(m *Module) string {
 	if t.Capacity == 0 {
 		return ""
 	}
 
 	fn_name := "$" + t.Named() + ".$IndexOf"
-	if currentModule.FindFunc(fn_name) != nil {
+	if m.FindFunc(fn_name) != nil {
 		return fn_name
 	}
 
@@ -107,7 +107,7 @@ func (t *Array) genFunc_IndexOf() string {
 
 	f.Insts = append(f.Insts, block_pre)
 	f.Insts = append(f.Insts, ret.EmitPush()...)
-	currentModule.AddFunc(&f)
+	m.AddFunc(&f)
 	return fn_name
 }
 
@@ -128,12 +128,6 @@ func newValue_Array(name string, kind ValueKind, typ *Array) *aArray {
 
 func (v *aArray) Type() ValueType { return v.typ }
 
-func (v *aArray) raw() []wat.Value                { return v.aStruct.raw() }
-func (v *aArray) EmitInit() (insts []wat.Inst)    { return v.aStruct.EmitInit() }
-func (v *aArray) EmitPush() (insts []wat.Inst)    { return v.aStruct.EmitPush() }
-func (v *aArray) EmitPop() (insts []wat.Inst)     { return v.aStruct.EmitPop() }
-func (v *aArray) EmitRelease() (insts []wat.Inst) { return v.aStruct.EmitRelease() }
-
 func (v *aArray) emitStoreToAddr(addr Value, offset int) (insts []wat.Inst) {
 	if !addr.Type().(*Ptr).Base.Equal(v.Type()) {
 		logger.Fatal("Type not match")
@@ -143,16 +137,16 @@ func (v *aArray) emitStoreToAddr(addr Value, offset int) (insts []wat.Inst) {
 	return v.aStruct.emitStoreToAddr(addr, offset)
 }
 
-func (v *aArray) emitIndexOf(id Value) (insts []wat.Inst) {
-	fn_name := v.typ.genFunc_IndexOf()
+func (v *aArray) emitIndexOf(m *Module, id Value) (insts []wat.Inst) {
+	fn_name := v.typ.genFunc_IndexOf(m)
 	if len(fn_name) == 0 {
 		zero_value := NewConst("0", v.typ.Base)
 		insts = append(insts, zero_value.EmitPush()...)
 		return
 	}
 
-	insts = append(insts, v.EmitPush()...)
-	insts = append(insts, id.EmitPush()...)
+	insts = append(insts, v.EmitPushNoRetain()...)
+	insts = append(insts, id.EmitPushNoRetain()...)
 	insts = append(insts, wat.NewInstCall(fn_name))
 
 	return
