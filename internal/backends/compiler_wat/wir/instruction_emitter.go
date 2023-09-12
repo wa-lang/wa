@@ -144,25 +144,47 @@ func (m *Module) EmitBinOp(x, y Value, op wat.OpCode) (insts []wat.Inst, ret_typ
 	case wat.OpCodeLt:
 		insts = append(insts, x.EmitPushNoRetain()...)
 		insts = append(insts, y.EmitPushNoRetain()...)
-		insts = append(insts, wat.NewInstLt(toWatType(x.Type())))
+
+		if x.Type().Equal(m.STRING) {
+			insts = append(insts, wat.NewInstCall("$wa.runtime.string_LSS"))
+		} else {
+			insts = append(insts, wat.NewInstLt(toWatType(x.Type())))
+		}
+
 		ret_type = m.BOOL
 
 	case wat.OpCodeGt:
 		insts = append(insts, x.EmitPushNoRetain()...)
 		insts = append(insts, y.EmitPushNoRetain()...)
-		insts = append(insts, wat.NewInstGt(toWatType(x.Type())))
+
+		if x.Type().Equal(m.STRING) {
+			insts = append(insts, wat.NewInstCall("$wa.runtime.string_GTR"))
+		} else {
+			insts = append(insts, wat.NewInstGt(toWatType(x.Type())))
+		}
+
 		ret_type = m.BOOL
 
 	case wat.OpCodeLe:
 		insts = append(insts, x.EmitPushNoRetain()...)
 		insts = append(insts, y.EmitPushNoRetain()...)
-		insts = append(insts, wat.NewInstLe(toWatType(x.Type())))
+
+		if x.Type().Equal(m.STRING) {
+			insts = append(insts, wat.NewInstCall("$wa.runtime.string_LEQ"))
+		} else {
+			insts = append(insts, wat.NewInstLe(toWatType(x.Type())))
+		}
 		ret_type = m.BOOL
 
 	case wat.OpCodeGe:
 		insts = append(insts, x.EmitPushNoRetain()...)
 		insts = append(insts, y.EmitPushNoRetain()...)
-		insts = append(insts, wat.NewInstGe(toWatType(x.Type())))
+
+		if x.Type().Equal(m.STRING) {
+			insts = append(insts, wat.NewInstCall("$wa.runtime.string_GEQ"))
+		} else {
+			insts = append(insts, wat.NewInstGe(toWatType(x.Type())))
+		}
 		ret_type = m.BOOL
 
 	case wat.OpCodeAnd:
