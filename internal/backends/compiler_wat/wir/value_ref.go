@@ -48,7 +48,16 @@ func (t *Ref) onFree() int          { return t.underlying.onFree() }
 func (t *Ref) Raw() []wat.ValueType { return t.underlying.Raw() }
 func (t *Ref) Equal(u ValueType) bool {
 	if ut, ok := u.(*Ref); ok {
-		return t.Base.Equal(ut.Base)
+		// 在包含自身引用的结构体中，比较 Base 会引发无限嵌套
+		//return t.Base.Equal(ut.Base)
+
+		// 如果按照 wir.Module 的假设，任一种实类型均只存在一个实例，那么可用下列判断提前解除嵌套
+		//if t == ut {
+		//	return true
+		//}
+
+		// 存在风险，依赖于Name的唯一性
+		return t.Base.Named() == ut.Base.Named()
 	}
 	return false
 }
