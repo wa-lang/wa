@@ -84,8 +84,7 @@ const digits = "0123456789abcdefghijklmnopqrstuvwxyz"
 //
 func formatBits(dst: []byte, u: u64, base: int, neg, append_: bool) => (d: []byte, s: string) {
 	if base < 2 || base > len(digits) {
-		// todo(chai2010): 暂时不支持 panic
-		// panic("strconv: illegal AppendInt/FormatInt base")
+		panic("strconv: illegal AppendInt/FormatInt base")
 	}
 	// 2 <= base && base <= len(digits)
 

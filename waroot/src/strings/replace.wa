@@ -5,7 +5,7 @@ import "io"
 // Replacer replaces a list of strings with replacements.
 // It is safe for concurrent use by multiple goroutines.
 type Replacer struct {
-	//r:      replacer
+	r:      replacer
 	oldnew: []string
 }
 
@@ -22,97 +22,82 @@ type replacer interface {
 //
 // NewReplacer panics if given an odd number of arguments.
 func NewReplacer(oldnew: ...string) => *Replacer {
-	/*
-		if len(oldnew)%2 == 1 {
-			panic("strings.NewReplacer: odd argument count")
-		}
-		return &Replacer{oldnew: append([]string(nil), oldnew...)}
-	*/
-	panic("TODO")
+	if len(oldnew)%2 == 1 {
+		panic("strings.NewReplacer: odd argument count")
+	}
+	return &Replacer{oldnew: append([]string(nil), oldnew...)}
 }
 
 func Replacer.buildOnce {
-	/*
-		r := this
-		if r.r == nil {
-			r.r = r.build()
-			r.oldnew = nil
-		}
-	*/
-	panic("TODO")
+	r := this
+	if r.r == nil {
+		r.r = r.build()
+		r.oldnew = nil
+	}
 }
 
 func Replacer.build => replacer {
-	/*
-		b := this
-		oldnew := b.oldnew
-		if len(oldnew) == 2 && len(oldnew[0]) > 1 {
-			return makeSingleStringReplacer(oldnew[0], oldnew[1])
-		}
+	b := this
+	oldnew := b.oldnew
+	if len(oldnew) == 2 && len(oldnew[0]) > 1 {
+		return makeSingleStringReplacer(oldnew[0], oldnew[1])
+	}
 
-		allNewBytes := true
-		for i := 0; i < len(oldnew); i += 2 {
-			if len(oldnew[i]) != 1 {
-				return makeGenericReplacer(oldnew)
-			}
-			if len(oldnew[i+1]) != 1 {
-				allNewBytes = false
-			}
+	allNewBytes := true
+	for i := 0; i < len(oldnew); i += 2 {
+		if len(oldnew[i]) != 1 {
+			return makeGenericReplacer(oldnew)
 		}
-
-		if allNewBytes {
-			r := byteReplacer{}
-			for i := range r {
-				r[i] = byte(i)
-			}
-			// The first occurrence of old->new map takes precedence
-			// over the others with the same old string.
-			for i := len(oldnew) - 2; i >= 0; i -= 2 {
-				o := oldnew[i][0]
-				n := oldnew[i+1][0]
-				r[o] = n
-			}
-			return &r
+		if len(oldnew[i+1]) != 1 {
+			allNewBytes = false
 		}
+	}
 
-		r := byteStringReplacer{toReplace: make([]string, 0, len(oldnew)/2)}
+	if allNewBytes {
+		r := byteReplacer{}
+		for i := range r {
+			r[i] = byte(i)
+		}
 		// The first occurrence of old->new map takes precedence
 		// over the others with the same old string.
 		for i := len(oldnew) - 2; i >= 0; i -= 2 {
 			o := oldnew[i][0]
-			n := oldnew[i+1]
-			// To avoid counting repetitions multiple times.
-			if r.replacements[o] == nil {
-				// We need to use string([]byte{o}) instead of string(o),
-				// to avoid utf8 encoding of o.
-				// E. g. byte(150) produces string of length 2.
-				r.toReplace = append(r.toReplace, string([]byte{o}))
-			}
-			r.replacements[o] = []byte(n)
-
+			n := oldnew[i+1][0]
+			r[o] = n
 		}
 		return &r
-	*/
-	panic("TODO")
+	}
+
+	r := byteStringReplacer{toReplace: make([]string, 0, len(oldnew)/2)}
+	// The first occurrence of old->new map takes precedence
+	// over the others with the same old string.
+	for i := len(oldnew) - 2; i >= 0; i -= 2 {
+		o := oldnew[i][0]
+		n := oldnew[i+1]
+		// To avoid counting repetitions multiple times.
+		if r.replacements[o] == nil {
+			// We need to use string([]byte{o}) instead of string(o),
+			// to avoid utf8 encoding of o.
+			// E. g. byte(150) produces string of length 2.
+			r.toReplace = append(r.toReplace, string([]byte{o}))
+		}
+		r.replacements[o] = []byte(n)
+
+	}
+	return &r
 }
 
 // Replace returns a copy of s with all replacements performed.
 func Replacer.Replace(s: string) => string {
-	/*
-		r := this
-		r.buildOnce()
-		return r.r.Replace(s)
-	*/
-	panic("TODO")
+	r := this
+	r.buildOnce()
+	return r.r.Replace(s)
 }
 
 // WriteString writes s to w with all replacements performed.
 func Replacer.WriteString(w: io.Writer, s: string) => (n: int, err: error) {
-	/*
-		this.buildOnce()
-		return this.r.WriteString(w, s)
-	*/
-	panic("TODO")
+	this.buildOnce()
+	return this.r.WriteString(w, s)
 }
 
 // trieNode is a node in a lookup trie for prioritized key/value pairs. Keys
@@ -155,7 +140,7 @@ type trieNode struct {
 	// In the example above, node n4 has prefix "cbc" and n4's next node is n5.
 	// Node n5 has no children and so has zero prefix, next and table fields.
 	prefix: string
-	//next:   *trieNode // todo(chai2010)
+	next:   *trieNode
 
 	// table is a lookup table indexed by the next byte in the key, after
 	// remapping that byte through genericReplacer.mapping to create a dense
@@ -164,114 +149,108 @@ type trieNode struct {
 	// genericReplacer.tableSize will be 5. Node n0's table will be
 	// []*trieNode{ 0:n1, 1:n4, 3:n6 }, where the 0, 1 and 3 are the remapped
 	// 'a', 'b' and 'x'.
-	//table: []*trieNode // todo(chai2010)
+	table: []*trieNode
 }
 
 func trieNode.add(key, val: string, priority: int, r: *genericReplacer) {
-	/*
-		t := this
-		if key == "" {
-			if t.priority == 0 {
-				t.value = val
-				t.priority = priority
-			}
-			return
+	t := this
+	if key == "" {
+		if t.priority == 0 {
+			t.value = val
+			t.priority = priority
 		}
+		return
+	}
 
-		if t.prefix != "" {
-			// Need to split the prefix among multiple nodes.
-			n: int // length of the longest common prefix
-			for ; n < len(t.prefix) && n < len(key); n++ {
-				if t.prefix[n] != key[n] {
-					break
-				}
+	if t.prefix != "" {
+		// Need to split the prefix among multiple nodes.
+		n: int // length of the longest common prefix
+		for ; n < len(t.prefix) && n < len(key); n++ {
+			if t.prefix[n] != key[n] {
+				break
 			}
-			if n == len(t.prefix) {
-				t.next.add(key[n:], val, priority, r)
-			} else if n == 0 {
-				// First byte differs, start a new lookup table here. Looking up
-				// what is currently t.prefix[0] will lead to prefixNode, and
-				// looking up key[0] will lead to keyNode.
-				prefixNode: *trieNode
-				if len(t.prefix) == 1 {
-					prefixNode = t.next
-				} else {
-					prefixNode = &trieNode{
-						prefix: t.prefix[1:],
-						next:   t.next,
-					}
-				}
-				keyNode := new(trieNode)
-				t.table = make([]*trieNode, r.tableSize)
-				t.table[r.mapping[t.prefix[0]]] = prefixNode
-				t.table[r.mapping[key[0]]] = keyNode
-				t.prefix = ""
-				t.next = nil
-				keyNode.add(key[1:], val, priority, r)
+		}
+		if n == len(t.prefix) {
+			t.next.add(key[n:], val, priority, r)
+		} else if n == 0 {
+			// First byte differs, start a new lookup table here. Looking up
+			// what is currently t.prefix[0] will lead to prefixNode, and
+			// looking up key[0] will lead to keyNode.
+			prefixNode: *trieNode
+			if len(t.prefix) == 1 {
+				prefixNode = t.next
 			} else {
-				// Insert new node after the common section of the prefix.
-				next := &trieNode{
-					prefix: t.prefix[n:],
+				prefixNode = &trieNode{
+					prefix: t.prefix[1:],
 					next:   t.next,
 				}
-				t.prefix = t.prefix[:n]
-				t.next = next
-				next.add(key[n:], val, priority, r)
 			}
-		} else if t.table != nil {
-			// Insert into existing table.
-			m := r.mapping[key[0]]
-			if t.table[m] == nil {
-				t.table[m] = new(trieNode)
-			}
-			t.table[m].add(key[1:], val, priority, r)
+			keyNode := new(trieNode)
+			t.table = make([]*trieNode, r.tableSize)
+			t.table[r.mapping[t.prefix[0]]] = prefixNode
+			t.table[r.mapping[key[0]]] = keyNode
+			t.prefix = ""
+			t.next = nil
+			keyNode.add(key[1:], val, priority, r)
 		} else {
-			t.prefix = key
-			t.next = new(trieNode)
-			t.next.add("", val, priority, r)
+			// Insert new node after the common section of the prefix.
+			next := &trieNode{
+				prefix: t.prefix[n:],
+				next:   t.next,
+			}
+			t.prefix = t.prefix[:n]
+			t.next = next
+			next.add(key[n:], val, priority, r)
 		}
-	*/
-	panic("TODO")
+	} else if t.table != nil {
+		// Insert into existing table.
+		m := r.mapping[key[0]]
+		if t.table[m] == nil {
+			t.table[m] = new(trieNode)
+		}
+		t.table[m].add(key[1:], val, priority, r)
+	} else {
+		t.prefix = key
+		t.next = new(trieNode)
+		t.next.add("", val, priority, r)
+	}
 }
 
 func genericReplacer.lookup(s: string, ignoreRoot: bool) => (val: string, keylen: int, found: bool) {
-	/*
-		r := this
-		// Iterate down the trie to the end, and grab the value and keylen with
-		// the highest priority.
-		bestPriority := 0
-		node := &r.root
-		n := 0
-		for node != nil {
-			if node.priority > bestPriority && !(ignoreRoot && node == &r.root) {
-				bestPriority = node.priority
-				val = node.value
-				keylen = n
-				found = true
-			}
-
-			if s == "" {
-				break
-			}
-			if node.table != nil {
-				index := r.mapping[s[0]]
-				if int(index) == r.tableSize {
-					break
-				}
-				node = node.table[index]
-				s = s[1:]
-				n++
-			} else if node.prefix != "" && HasPrefix(s, node.prefix) {
-				n += len(node.prefix)
-				s = s[len(node.prefix):]
-				node = node.next
-			} else {
-				break
-			}
+	r := this
+	// Iterate down the trie to the end, and grab the value and keylen with
+	// the highest priority.
+	bestPriority := 0
+	node := &r.root
+	n := 0
+	for node != nil {
+		if node.priority > bestPriority && !(ignoreRoot && node == &r.root) {
+			bestPriority = node.priority
+			val = node.value
+			keylen = n
+			found = true
 		}
-		return
-	*/
-	panic("TODO")
+
+		if s == "" {
+			break
+		}
+		if node.table != nil {
+			index := r.mapping[s[0]]
+			if int(index) == r.tableSize {
+				break
+			}
+			node = node.table[index]
+			s = s[1:]
+			n++
+		} else if node.prefix != "" && HasPrefix(s, node.prefix) {
+			n += len(node.prefix)
+			s = s[len(node.prefix):]
+			node = node.next
+		} else {
+			break
+		}
+	}
+	return
 }
 
 // genericReplacer is the fully generic algorithm.
@@ -286,38 +265,35 @@ type genericReplacer struct {
 }
 
 func makeGenericReplacer(oldnew: []string) => *genericReplacer {
-	/*
-		r := new(genericReplacer)
-		// Find each byte used, then assign them each an index.
-		for i := 0; i < len(oldnew); i += 2 {
-			key := oldnew[i]
-			for j := 0; j < len(key); j++ {
-				r.mapping[key[j]] = 1
-			}
+	r := new(genericReplacer)
+	// Find each byte used, then assign them each an index.
+	for i := 0; i < len(oldnew); i += 2 {
+		key := oldnew[i]
+		for j := 0; j < len(key); j++ {
+			r.mapping[key[j]] = 1
 		}
+	}
 
-		for _, b := range r.mapping {
-			r.tableSize += int(b)
-		}
+	for _, b := range r.mapping {
+		r.tableSize += int(b)
+	}
 
-		index: byte
-		for i, b := range r.mapping {
-			if b == 0 {
-				r.mapping[i] = byte(r.tableSize)
-			} else {
-				r.mapping[i] = index
-				index++
-			}
+	index: byte
+	for i, b := range r.mapping {
+		if b == 0 {
+			r.mapping[i] = byte(r.tableSize)
+		} else {
+			r.mapping[i] = index
+			index++
 		}
-		// Ensure root node uses a lookup table (for performance).
-		r.root.table = make([]*trieNode, r.tableSize)
+	}
+	// Ensure root node uses a lookup table (for performance).
+	r.root.table = make([]*trieNode, r.tableSize)
 
-		for i := 0; i < len(oldnew); i += 2 {
-			r.root.add(oldnew[i], oldnew[i+1], len(oldnew)-i, r)
-		}
-		return r
-	*/
-	panic("TODO")
+	for i := 0; i < len(oldnew); i += 2 {
+		r.root.add(oldnew[i], oldnew[i+1], len(oldnew)-i, r)
+	}
+	return r
 }
 
 type appendSliceWriter []byte
@@ -358,115 +334,105 @@ func genericReplacer.Replace(s: string) => string {
 }
 
 func genericReplacer.WriteString(w: io.Writer, s: string) => (n: int, err: error) {
-	/*
-		r := this
-		sw := getStringWriter(w)
-		last, wn: int
-		prevMatchEmpty: bool
-		for i := 0; i <= len(s); {
-			// Fast path: s[i] is not a prefix of any pattern.
-			if i != len(s) && r.root.priority == 0 {
-				index := int(r.mapping[s[i]])
-				if index == r.tableSize || r.root.table[index] == nil {
-					i++
-					continue
-				}
-			}
-
-			// Ignore the empty match iff the previous loop found the empty match.
-			val, keylen, match := r.lookup(s[i:], prevMatchEmpty)
-			prevMatchEmpty = match && keylen == 0
-			if match {
-				wn, err = sw.WriteString(s[last:i])
-				n += wn
-				if err != nil {
-					return
-				}
-				wn, err = sw.WriteString(val)
-				n += wn
-				if err != nil {
-					return
-				}
-				i += keylen
-				last = i
+	r := this
+	sw := getStringWriter(w)
+	last, wn: int
+	prevMatchEmpty: bool
+	for i := 0; i <= len(s); {
+		// Fast path: s[i] is not a prefix of any pattern.
+		if i != len(s) && r.root.priority == 0 {
+			index := int(r.mapping[s[i]])
+			if index == r.tableSize || r.root.table[index] == nil {
+				i++
 				continue
 			}
-			i++
 		}
-		if last != len(s) {
-			wn, err = sw.WriteString(s[last:])
+
+		// Ignore the empty match iff the previous loop found the empty match.
+		val, keylen, match := r.lookup(s[i:], prevMatchEmpty)
+		prevMatchEmpty = match && keylen == 0
+		if match {
+			wn, err = sw.WriteString(s[last:i])
 			n += wn
+			if err != nil {
+				return
+			}
+			wn, err = sw.WriteString(val)
+			n += wn
+			if err != nil {
+				return
+			}
+			i += keylen
+			last = i
+			continue
 		}
-		return
-	*/
-	panic("TODO")
+		i++
+	}
+	if last != len(s) {
+		wn, err = sw.WriteString(s[last:])
+		n += wn
+	}
+	return
 }
 
 // singleStringReplacer is the implementation that's used when there is only
 // one string to replace (and that string has more than one byte).
 type singleStringReplacer struct {
-	//finder: *stringFinder // todo(chai2010)
+	finder: *stringFinder
 	// value is the new string that replaces that pattern when it's found.
 	value: string
 }
 
 func makeSingleStringReplacer(pattern: string, value: string) => *singleStringReplacer {
-	//return &singleStringReplacer{finder: makeStringFinder(pattern), value: value}
-	panic("TODO")
+	return &singleStringReplacer{finder: makeStringFinder(pattern), value: value}
 }
 
 func singleStringReplacer.Replace(s: string) => string {
-	/*
-		r := this
-		buf: Builder
-		i, matched := 0, false
-		for {
-			match := r.finder.next(s[i:])
-			if match == -1 {
-				break
-			}
-			matched = true
-			buf.Grow(match + len(r.value))
-			buf.WriteString(s[i : i+match])
-			buf.WriteString(r.value)
-			i += match + len(r.finder.pattern)
+	r := this
+	buf: Builder
+	i, matched := 0, false
+	for {
+		match := r.finder.next(s[i:])
+		if match == -1 {
+			break
 		}
-		if !matched {
-			return s
-		}
-		buf.WriteString(s[i:])
-		return buf.String()
-	*/
-	panic("TODO")
+		matched = true
+		buf.Grow(match + len(r.value))
+		buf.WriteString(s[i : i+match])
+		buf.WriteString(r.value)
+		i += match + len(r.finder.pattern)
+	}
+	if !matched {
+		return s
+	}
+	buf.WriteString(s[i:])
+	return buf.String()
 }
 
 func singleStringReplacer.WriteString(w: io.Writer, s: string) => (n: int, err: error) {
-	/*
-		r := this
-		sw := getStringWriter(w)
-		i, wn: int
-		for {
-			match := r.finder.next(s[i:])
-			if match == -1 {
-				break
-			}
-			wn, err = sw.WriteString(s[i : i+match])
-			n += wn
-			if err != nil {
-				return
-			}
-			wn, err = sw.WriteString(r.value)
-			n += wn
-			if err != nil {
-				return
-			}
-			i += match + len(r.finder.pattern)
+	r := this
+	sw := getStringWriter(w)
+	i, wn: int
+	for {
+		match := r.finder.next(s[i:])
+		if match == -1 {
+			break
 		}
-		wn, err = sw.WriteString(s[i:])
+		wn, err = sw.WriteString(s[i : i+match])
 		n += wn
-		return
-	*/
-	panic("TODO")
+		if err != nil {
+			return
+		}
+		wn, err = sw.WriteString(r.value)
+		n += wn
+		if err != nil {
+			return
+		}
+		i += match + len(r.finder.pattern)
+	}
+	wn, err = sw.WriteString(s[i:])
+	n += wn
+	return
 }
 
 // byteReplacer is the implementation that's used when all the "old"

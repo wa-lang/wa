@@ -15,12 +15,10 @@ import (
 // ryuFtoaFixed32 formats mant*(2^exp) with prec decimal digits.
 func ryuFtoaFixed32(d: *decimalSlice, mant: u32, exp: int, prec: int) {
 	if prec < 0 {
-		// todo(chai2010): 暂时不支持 panic
-		// panic("ryuFtoaFixed32 called with negative prec")
+		panic("ryuFtoaFixed32 called with negative prec")
 	}
 	if prec > 9 {
-		// todo(chai2010): 暂时不支持 panic
-		// panic("ryuFtoaFixed32 called with prec > 9")
+		panic("ryuFtoaFixed32 called with prec > 9")
 	}
 	// Zero input.
 	if mant == 0 {
@@ -48,8 +46,7 @@ func ryuFtoaFixed32(d: *decimalSlice, mant: u32, exp: int, prec: int) {
 
 	di, dexp2, d0 := mult64bitPow10(mant, e2, q)
 	if dexp2 >= 0 {
-		// todo(chai2010): 暂时不支持 panic
-		// panic("not enough significant bits after mult64bitPow10")
+		panic("not enough significant bits after mult64bitPow10")
 	}
 	// As a special case, computation might still be exact, if exponent
 	// was negative and if it amounts to computing an exact division.
@@ -88,8 +85,7 @@ func ryuFtoaFixed32(d: *decimalSlice, mant: u32, exp: int, prec: int) {
 // ryuFtoaFixed64 formats mant*(2^exp) with prec decimal digits.
 func ryuFtoaFixed64(d: *decimalSlice, mant: u64, exp: int, prec: int) {
 	if prec > 18 {
-		// todo(chai2010): 暂时不支持 panic
-		// panic("ryuFtoaFixed64 called with prec > 18")
+		panic("ryuFtoaFixed64 called with prec > 18")
 	}
 	// Zero input.
 	if mant == 0 {
@@ -120,8 +116,7 @@ func ryuFtoaFixed64(d: *decimalSlice, mant: u64, exp: int, prec: int) {
 
 	di, dexp2, d0 := mult128bitPow10(mant, e2, q)
 	if dexp2 >= 0 {
-		// todo(chai2010): 暂时不支持 panic
-		// panic("not enough significant bits after mult128bitPow10")
+		panic("not enough significant bits after mult128bitPow10")
 	}
 	// As a special case, computation might still be exact, if exponent
 	// was negative and if it amounts to computing an exact division.
@@ -261,8 +256,7 @@ func ryuFtoaShortest(d: *decimalSlice, mant: u64, exp: int, flt: *floatInfo) {
 		du, e2, du0 = mult128bitPow10(mu, e2, q)
 	}
 	if e2 >= 0 {
-		// todo(chai2010): 暂时不支持 panic
-		// panic("not enough significant bits after mult128bitPow10")
+		panic("not enough significant bits after mult128bitPow10")
 	}
 	// Is it an exact computation?
 	if q > 55 {
@@ -497,9 +491,8 @@ func mult64bitPow10(m: u32, e2, q: int) => (resM: u32, resE: int, exact: bool) {
 		return m << 6, e2 - 6, true
 	}
 	if q < detailedPowersOfTenMinExp10 || detailedPowersOfTenMaxExp10 < q {
-		// todo(chai2010): 暂时不支持 panic
 		// This never happens due to the range of float32/float64 exponent
-		// panic("mult64bitPow10: power of 10 is out of range")
+		panic("mult64bitPow10: power of 10 is out of range")
 	}
 	pow := detailedPowersOfTen[q-detailedPowersOfTenMinExp10][1]
 	if q < 0 {
@@ -526,9 +519,8 @@ func mult128bitPow10(m: u64, e2, q: int) => (resM: u64, resE: int, exact: bool) 
 		return m << 8, e2 - 8, true
 	}
 	if q < detailedPowersOfTenMinExp10 || detailedPowersOfTenMaxExp10 < q {
-		// todo(chai2010): 暂时不支持 panic
 		// This never happens due to the range of float32/float64 exponent
-		// panic("mult128bitPow10: power of 10 is out of range")
+		panic("mult128bitPow10: power of 10 is out of range")
 	}
 	pow := detailedPowersOfTen[q-detailedPowersOfTenMinExp10]
 	if q < 0 {

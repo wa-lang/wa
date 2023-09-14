@@ -61,8 +61,7 @@ func genericFtoa(dst: []byte, val: f64, fmt: byte, prec, bitSize: int) => []byte
 		bits = math.Float64bits(val)
 		flt = &f64info
 	default:
-		// todo(chai2010): 暂时不支持 panic
-		// panic("strconv: illegal AppendFloat/FormatFloat bitSize")
+		panic("strconv: illegal AppendFloat/FormatFloat bitSize")
 	}
 
 	neg := bits>>(flt.expbits+flt.mantbits) != 0

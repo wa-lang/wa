@@ -17,12 +17,8 @@ func Compare(a, b: string) => int {
 	if a == b {
 		return 0
 	}
-	// todo(chai2010)
-	//if a < b {
-	//	return -1
-	//}
-	if true {
-		panic("TODO")
+	if a < b {
+		return -1
 	}
 
 	return +1
