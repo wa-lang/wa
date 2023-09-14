@@ -110,6 +110,8 @@ var stdPkgs = []string{
 	"bytes",  // API 完整
 	"errors", // API 完整, 测试已覆盖
 	"encoding",
+	"encoding/binary",
+	"encoding/hex", // API 完整
 	"fmt",
 	"hash",
 	"hash/crc32", // API 完整
