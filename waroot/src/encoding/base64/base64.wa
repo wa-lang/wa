@@ -77,7 +77,7 @@ func NewEncoding(encoder: string) => *Encoding {
 // Padding characters above '\x7f' are encoded as their exact byte value
 // rather than using the UTF-8 representation of the codepoint.
 func Encoding.WithPadding(padding: rune) => *Encoding {
-	enc := this
+	enc := *this
 	if padding == '\r' || padding == '\n' || padding > 0xff {
 		panic("invalid padding")
 	}
@@ -89,7 +89,7 @@ func Encoding.WithPadding(padding: rune) => *Encoding {
 	}
 
 	enc.padChar = padding
-	return enc
+	return &enc
 }
 
 // Strict creates a new encoding identical to enc except with
@@ -99,8 +99,9 @@ func Encoding.WithPadding(padding: rune) => *Encoding {
 // Note that the input is still malleable, as new line characters
 // (CR and LF) are still ignored.
 func Encoding.Strict => *Encoding {
-	this.strict = true
-	return this
+	e := *this
+	e.strict = true
+	return &e
 }
 
 // StdEncoding is the standard base64 encoding, as defined in

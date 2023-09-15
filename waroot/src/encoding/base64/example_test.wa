@@ -3,10 +3,7 @@
 func ExampleHello {
 	msg := "Hello, 世界"
 	encoded := StdEncoding.EncodeToString([]byte(msg))
-
-	// println(encoded)
-	// SGVsbG8sIOS4lueVjA==
-
+	println(encoded)
 	decoded, err := StdEncoding.DecodeString(encoded)
 	if err != nil {
 		println("decode error:", err.Error())
@@ -15,5 +12,6 @@ func ExampleHello {
 	println(string(decoded))
 
 	// Output:
+	// SGVsbG8sIOS4lueVjA==
 	// Hello, 世界
 }
