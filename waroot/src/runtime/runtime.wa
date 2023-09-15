@@ -6,15 +6,15 @@
 const sizeof_Header = 8
 
 #wa:linkname $knr_basep
-var knr_basep: u32
+global knr_basep: u32
 
 #wa:linkname $knr_freep
-var knr_freep: u32
+global knr_freep: u32
 
 // K&R malloc 实现, Block 头部
 type knr_Header struct {
-	ptr  :u32
-	size :u32
+	ptr:  u32
+	size: u32
 }
 
 // Heap 开始地址
@@ -50,8 +50,8 @@ func malloc(nbytes: u32) => u32 {
 	}
 
 	// round up to allocate in units of sizeof(Header)
-	var nunits = (nbytes+sizeof_Header-1)/sizeof_Header + 1
-	var prevp_addr = knr_freep
+	nunits = (nbytes+sizeof_Header-1)/sizeof_Header + 1
+	prevp_addr = knr_freep
 
 	// search free linked-list
 	prevp := knr_getBlockHeader(prevp_addr)
@@ -182,22 +182,22 @@ func next_rune(iter: stringIter) => (ok: bool, k: int, v: rune, pos: int) {
 	}
 
 	p0 := i32(get_u8(u32(iter.ptr) + u32(iter.pos)))
-	if p0 & 0b10000000 == 0 {
+	if p0&0b10000000 == 0 {
 		return true, iter.pos, rune(p0), iter.pos + 1
-	} else if p0 & 0b11100000 == 0b11000000 {
+	} else if p0&0b11100000 == 0b11000000 {
 		p0 = (p0 & 0b11111) << 6
-		p1 := i32(get_u8(u32(iter.ptr) + u32(iter.pos) + 1)) & 0b00111111
+		p1 := i32(get_u8(u32(iter.ptr)+u32(iter.pos)+1)) & 0b00111111
 		return true, iter.pos, rune(p0 | p1), iter.pos + 2
-	} else if p0 & 0b11110000 == 0b11100000 {
+	} else if p0&0b11110000 == 0b11100000 {
 		p0 = (p0 & 0b1111) << 12
-		p1 := (i32(get_u8(u32(iter.ptr) + u32(iter.pos) + 1)) & 0b00111111) << 6
-		p2 := (i32(get_u8(u32(iter.ptr) + u32(iter.pos) + 2)) & 0b00111111)
+		p1 := (i32(get_u8(u32(iter.ptr)+u32(iter.pos)+1)) & 0b00111111) << 6
+		p2 := (i32(get_u8(u32(iter.ptr)+u32(iter.pos)+2)) & 0b00111111)
 		return true, iter.pos, rune(p0 | p1 | p2), iter.pos + 3
-	} else if p0 & 0b11111000 == 0b11110000 {
+	} else if p0&0b11111000 == 0b11110000 {
 		p0 = (p0 & 0b111) << 18
-		p1 := (i32(get_u8(u32(iter.ptr) + u32(iter.pos) + 1)) & 0b00111111) << 12
-		p2 := (i32(get_u8(u32(iter.ptr) + u32(iter.pos) + 2)) & 0b00111111) << 6
-		p3 := (i32(get_u8(u32(iter.ptr) + u32(iter.pos) + 3)) & 0b00111111)
+		p1 := (i32(get_u8(u32(iter.ptr)+u32(iter.pos)+1)) & 0b00111111) << 12
+		p2 := (i32(get_u8(u32(iter.ptr)+u32(iter.pos)+2)) & 0b00111111) << 6
+		p3 := (i32(get_u8(u32(iter.ptr)+u32(iter.pos)+3)) & 0b00111111)
 		return true, iter.pos, rune(p0 | p1 | p2 | p3), iter.pos + 4
 	}
 
@@ -218,7 +218,7 @@ func string_Comp(x, y: string) => i32 {
 		i2.pos = p2
 
 		if (o1 && o2) != true {
-			break;
+			break
 		}
 
 		if v1 < v2 {
@@ -260,15 +260,15 @@ func string_GEQ(x, y: string) => bool {
 }
 
 const (
-	MaxRune   = '\U0010FFFF'
-	RuneError = '\uFFFD'
+	MaxRune      = '\U0010FFFF'
+	RuneError    = '\uFFFD'
 	surrogateMin = 0xD800
 	surrogateMax = 0xDFFF
-	tx = 0b10000000
-	t2 = 0b11000000
-	t3 = 0b11100000
-	t4 = 0b11110000
-	maskx = 0b00111111
+	tx           = 0b10000000
+	t2           = 0b11000000
+	t3           = 0b11100000
+	t4           = 0b11110000
+	maskx        = 0b00111111
 
 	rune1Max = 1<<7 - 1
 	rune2Max = 1<<11 - 1
