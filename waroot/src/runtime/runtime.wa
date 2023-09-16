@@ -50,8 +50,8 @@ func malloc(nbytes: u32) => u32 {
 	}
 
 	// round up to allocate in units of sizeof(Header)
-	nunits = (nbytes+sizeof_Header-1)/sizeof_Header + 1
-	prevp_addr = knr_freep
+	nunits := (nbytes+sizeof_Header-1)/sizeof_Header + 1
+	prevp_addr := knr_freep
 
 	// search free linked-list
 	prevp := knr_getBlockHeader(prevp_addr)
