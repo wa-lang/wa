@@ -361,16 +361,16 @@ func (m *Module) EmitStackAlloc(typ ValueType) (insts []wat.Inst, ret_type Value
 }
 
 func (m *Module) EmitGenExtract(x Value, id int) (insts []wat.Inst, ret_type ValueType) {
-	f := x.(*aTuple).Extract(id)
+	f := x.(*aTuple).ExtractByID(id)
 	insts = append(insts, f.EmitPush()...)
 	ret_type = f.Type()
 	return
 }
 
-func (m *Module) EmitGenField(x Value, field_name string) (insts []wat.Inst, ret_type ValueType) {
+func (m *Module) EmitGenField(x Value, field_id int) (insts []wat.Inst, ret_type ValueType) {
 	switch x := x.(type) {
 	case *aStruct:
-		field := x.Extract(field_name)
+		field := x.ExtractByID(field_id)
 		insts = append(insts, field.EmitPush()...)
 		ret_type = field.Type()
 
@@ -381,15 +381,15 @@ func (m *Module) EmitGenField(x Value, field_name string) (insts []wat.Inst, ret
 	return
 }
 
-func (m *Module) EmitGenFieldAddr(x Value, field_name string) (insts []wat.Inst, ret_type ValueType) {
+func (m *Module) EmitGenFieldAddr(x Value, field_id int) (insts []wat.Inst, ret_type ValueType) {
 	insts = append(insts, x.EmitPush()...)
 	var field *StructField
 	switch addr := x.(type) {
 	case *aRef:
-		field = addr.Type().(*Ref).Base.(*Struct).findFieldByName(field_name)
+		field = addr.Type().(*Ref).Base.(*Struct).fields[field_id]
 		ret_type = m.GenValueType_Ref(field.Type())
 	case *aPtr:
-		field = addr.Type().(*Ptr).Base.(*Struct).findFieldByName(field_name)
+		field = addr.Type().(*Ptr).Base.(*Struct).fields[field_id]
 		ret_type = m.GenValueType_Ptr(field.Type())
 
 	default:
@@ -437,8 +437,8 @@ func (m *Module) EmitGenIndexAddr(x, id Value) (insts []wat.Inst, ret_type Value
 
 	case *aSlice:
 		base_type := x.Type().(*Slice).Base
-		insts = append(insts, x.Extract("b").EmitPush()...)
-		insts = append(insts, x.Extract("d").EmitPush()...)
+		insts = append(insts, x.ExtractByName("b").EmitPush()...)
+		insts = append(insts, x.ExtractByName("d").EmitPush()...)
 		insts = append(insts, NewConst(strconv.Itoa(base_type.Size()), m.I32).EmitPush()...)
 		insts = append(insts, id.EmitPush()...)
 		insts = append(insts, wat.NewInstMul(wat.I32{}))
@@ -708,9 +708,9 @@ func (m *Module) EmitGenConvert(x Value, typ ValueType) (insts []wat.Inst) {
 		case xt.Equal(m.BYTES):
 			x := x.(*aSlice)
 			insts = append(insts, NewConst("", m.STRING).EmitPushNoRetain()...)
-			insts = append(insts, x.Extract("b").EmitPushNoRetain()...)
-			insts = append(insts, x.Extract("d").EmitPushNoRetain()...)
-			insts = append(insts, x.Extract("l").EmitPushNoRetain()...)
+			insts = append(insts, x.ExtractByName("b").EmitPushNoRetain()...)
+			insts = append(insts, x.ExtractByName("d").EmitPushNoRetain()...)
+			insts = append(insts, x.ExtractByName("l").EmitPushNoRetain()...)
 			insts = append(insts, wat.NewInstCall(m.STRING.(*String).fnName_append))
 			return
 
@@ -730,10 +730,10 @@ func (m *Module) EmitGenConvert(x Value, typ ValueType) (insts []wat.Inst) {
 		case xt.Equal(m.STRING):
 			x := x.(*aString)
 			insts = append(insts, NewConst("0", m.BYTES).EmitPushNoRetain()...)
-			insts = append(insts, x.Extract("b").EmitPushNoRetain()...)
-			insts = append(insts, x.Extract("d").EmitPushNoRetain()...)
-			insts = append(insts, x.Extract("l").EmitPushNoRetain()...)
-			insts = append(insts, x.Extract("l").EmitPushNoRetain()...)
+			insts = append(insts, x.ExtractByName("b").EmitPushNoRetain()...)
+			insts = append(insts, x.ExtractByName("d").EmitPushNoRetain()...)
+			insts = append(insts, x.ExtractByName("l").EmitPushNoRetain()...)
+			insts = append(insts, x.ExtractByName("l").EmitPushNoRetain()...)
 			insts = append(insts, wat.NewInstCall(m.BYTES.(*Slice).genAppendFunc(m)))
 			return
 		}
@@ -758,7 +758,7 @@ func (m *Module) EmitGenAppend(x, y Value) (insts []wat.Inst, ret_type ValueType
 
 	if !x.Type().Equal(y.Type()) {
 		if _, ok := y.Type().(*String); ok && xtype.Base.Equal(m.U8) {
-			insts = append(insts, y.(*aString).Extract("l").EmitPushNoRetain()...)
+			insts = append(insts, y.(*aString).ExtractByName("l").EmitPushNoRetain()...)
 		} else {
 			logger.Fatal("Type not match")
 			return
@@ -777,10 +777,10 @@ func (m *Module) EmitGenLen(x Value) (insts []wat.Inst) {
 		insts = NewConst(strconv.Itoa(x.Type().(*Array).Capacity), m.I32).EmitPush()
 
 	case *aSlice:
-		insts = x.Extract("l").EmitPush()
+		insts = x.ExtractByName("l").EmitPush()
 
 	case *aString:
-		insts = x.Extract("l").EmitPush()
+		insts = x.ExtractByName("l").EmitPush()
 
 	default:
 		logger.Fatalf("Todo: %T", x)
@@ -795,7 +795,7 @@ func (m *Module) EmitGenCap(x Value) (insts []wat.Inst) {
 		insts = NewConst(strconv.Itoa(x.Type().(*Array).Capacity), m.I32).EmitPush()
 
 	case *aSlice:
-		insts = x.Extract("c").EmitPush()
+		insts = x.ExtractByName("c").EmitPush()
 
 	default:
 		logger.Fatalf("Todo: %T", x)
@@ -811,7 +811,7 @@ func (m *Module) EmitGenCopy(x, y Value) (insts []wat.Inst) {
 
 	if !x.Type().Equal(y.Type()) {
 		if _, ok := y.Type().(*String); ok && xtype.Base.Equal(m.U8) {
-			insts = append(insts, y.(*aString).Extract("l").EmitPushNoRetain()...)
+			insts = append(insts, y.(*aString).ExtractByName("l").EmitPushNoRetain()...)
 		} else {
 			logger.Fatal("Type not match")
 			return
@@ -898,8 +898,8 @@ func (m *Module) EmitGenRange(x Value) (insts []wat.Inst, ret_type ValueType) {
 	switch x := x.(type) {
 	case *aString:
 		ret_type, _ = m.findValueType("runtime.stringIter")
-		insts = append(insts, x.Extract("d").EmitPush()...)
-		insts = append(insts, x.Extract("l").EmitPush()...)
+		insts = append(insts, x.ExtractByName("d").EmitPush()...)
+		insts = append(insts, x.ExtractByName("l").EmitPush()...)
 		insts = append(insts, wat.NewInstConst(wat.I32{}, "0"))
 
 	default:
@@ -915,19 +915,19 @@ func (m *Module) EmitGenNext_String(iter Value) (insts []wat.Inst, ret_type Valu
 
 	insts = append(insts, iter.EmitPushNoRetain()...)
 	insts = append(insts, wat.NewInstCall("runtime.next_rune"))
-	insts = append(insts, iter.(*aStruct).Extract("pos").EmitPop()...)
+	insts = append(insts, iter.(*aStruct).ExtractByName("pos").EmitPop()...)
 	return
 }
 
 func (m *Module) EmitInvoke(i Value, params []Value, mid int, typeName string) (insts []wat.Inst) {
 	iface := i.(*aInterface)
-	insts = append(insts, iface.Extract("d").EmitPushNoRetain()...)
+	insts = append(insts, iface.ExtractByName("d").EmitPushNoRetain()...)
 
 	for _, v := range params {
 		insts = append(insts, v.EmitPushNoRetain()...)
 	}
 
-	insts = append(insts, iface.Extract("itab").EmitPushNoRetain()...)
+	insts = append(insts, iface.ExtractByName("itab").EmitPushNoRetain()...)
 	insts = append(insts, wat.NewInstLoad(wat.I32{}, 8+mid*4, 4))
 
 	insts = append(insts, wat.NewInstCallIndirect(typeName))
@@ -937,8 +937,8 @@ func (m *Module) EmitInvoke(i Value, params []Value, mid int, typeName string) (
 func (m *Module) EmitPrintString(v Value) (insts []wat.Inst) {
 	s := v.(*aString)
 
-	insts = append(insts, s.Extract("d").EmitPushNoRetain()...)
-	insts = append(insts, s.Extract("l").EmitPushNoRetain()...)
+	insts = append(insts, s.ExtractByName("d").EmitPushNoRetain()...)
+	insts = append(insts, s.ExtractByName("l").EmitPushNoRetain()...)
 	insts = append(insts, wat.NewInstCall("$runtime.waPuts"))
 	return
 }
@@ -948,13 +948,13 @@ func (m *Module) EmitPrintInterface(v Value) (insts []wat.Inst) {
 	insts = append(insts, wat.NewInstConst(wat.I32{}, strconv.Itoa('(')))
 	insts = append(insts, wat.NewInstCall("$runtime.waPrintRune"))
 
-	insts = append(insts, i.Extract("d").(*aRef).Extract("d").EmitPushNoRetain()...)
+	insts = append(insts, i.ExtractByName("d").(*aRef).ExtractByName("d").EmitPushNoRetain()...)
 	insts = append(insts, wat.NewInstCall("$runtime.waPrintU32Ptr")) // data
 
 	insts = append(insts, wat.NewInstConst(wat.I32{}, strconv.Itoa(',')))
 	insts = append(insts, wat.NewInstCall("$runtime.waPrintRune"))
 
-	insts = append(insts, i.Extract("itab").EmitPushNoRetain()...)
+	insts = append(insts, i.ExtractByName("itab").EmitPushNoRetain()...)
 	insts = append(insts, wat.NewInstCall("$runtime.waPrintU32Ptr")) // itab
 
 	insts = append(insts, wat.NewInstConst(wat.I32{}, strconv.Itoa(')')))
@@ -964,8 +964,8 @@ func (m *Module) EmitPrintInterface(v Value) (insts []wat.Inst) {
 
 func (m *Module) EmitStringValue(v Value) (insts []wat.Inst) {
 	s := v.(*aString)
-	insts = append(insts, s.Extract("d").EmitPush()...)
-	insts = append(insts, s.Extract("l").EmitPush()...)
+	insts = append(insts, s.ExtractByName("d").EmitPush()...)
+	insts = append(insts, s.ExtractByName("l").EmitPush()...)
 	return
 }
 

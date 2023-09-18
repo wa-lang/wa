@@ -268,16 +268,34 @@ func GenSymbolName(src string) string {
 	return s
 }
 
-func ExtractField(x Value, field_name string) Value {
+func ExtractFieldByName(x Value, field_name string) Value {
 	switch x := x.(type) {
 	case *aStruct:
-		return x.Extract(field_name)
+		return x.ExtractByName(field_name)
 
 	case *aRef:
-		return x.Extract(field_name)
+		return x.ExtractByName(field_name)
 
 	case *aClosure:
-		return x.Extract(field_name)
+		return x.ExtractByName(field_name)
+
+	default:
+		logger.Fatalf("Todo:%T", x)
+	}
+
+	return nil
+}
+
+func ExtractFieldByID(x Value, id int) Value {
+	switch x := x.(type) {
+	case *aStruct:
+		return x.ExtractByID(id)
+
+	case *aRef:
+		return x.ExtractByID(id)
+
+	case *aClosure:
+		return x.ExtractByID(id)
 
 	default:
 		logger.Fatalf("Todo:%T", x)

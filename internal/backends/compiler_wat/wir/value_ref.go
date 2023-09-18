@@ -118,7 +118,7 @@ func (v *aRef) emitStoreToAddr(addr Value, offset int) []wat.Inst {
 }
 
 func (v *aRef) emitGetValue() []wat.Inst {
-	return v.typ.Base.EmitLoadFromAddr(v.aStruct.Extract("d"), 0)
+	return v.typ.Base.EmitLoadFromAddr(v.aStruct.ExtractByName("d"), 0)
 }
 
 func (v *aRef) emitSetValue(d Value) []wat.Inst {
@@ -126,7 +126,7 @@ func (v *aRef) emitSetValue(d Value) []wat.Inst {
 		logger.Fatal("Type not match")
 		return nil
 	}
-	return d.emitStoreToAddr(v.aStruct.Extract("d"), 0)
+	return d.emitStoreToAddr(v.aStruct.ExtractByName("d"), 0)
 }
 
 func (v *aRef) emitEq(r Value) (insts []wat.Inst, ok bool) {
@@ -134,5 +134,5 @@ func (v *aRef) emitEq(r Value) (insts []wat.Inst, ok bool) {
 		logger.Fatal("v.Type() != r.Type()")
 	}
 
-	return v.Extract("d").emitEq(r.(*aRef).Extract("d"))
+	return v.ExtractByName("d").emitEq(r.(*aRef).ExtractByName("d"))
 }

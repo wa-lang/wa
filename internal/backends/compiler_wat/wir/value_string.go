@@ -79,14 +79,14 @@ func (t *String) genFunc_append(m *Module) string {
 	f.Params = append(f.Params, y)
 	f.Results = append(f.Results, t)
 
-	x_len := NewLocal("x_len", x.Extract("l").Type())
+	x_len := NewLocal("x_len", x.ExtractByName("l").Type())
 	f.Locals = append(f.Locals, x_len)
-	f.Insts = append(f.Insts, x.Extract("l").EmitPush()...)
+	f.Insts = append(f.Insts, x.ExtractByName("l").EmitPush()...)
 	f.Insts = append(f.Insts, x_len.EmitPop()...)
 
-	y_len := NewLocal("y_len", y.Extract("l").Type())
+	y_len := NewLocal("y_len", y.ExtractByName("l").Type())
 	f.Locals = append(f.Locals, y_len)
-	f.Insts = append(f.Insts, y.Extract("l").EmitPush()...)
+	f.Insts = append(f.Insts, y.ExtractByName("l").EmitPush()...)
 	f.Insts = append(f.Insts, y_len.EmitPop()...)
 
 	//gen new_len:
@@ -118,7 +118,7 @@ func (t *String) genFunc_append(m *Module) string {
 
 		//x->new
 		{
-			f.Insts = append(f.Insts, x.Extract("d").EmitPush()...)
+			f.Insts = append(f.Insts, x.ExtractByName("d").EmitPush()...)
 			f.Insts = append(f.Insts, src.EmitPop()...)
 
 			block := wat.NewInstBlock("block2")
@@ -156,7 +156,7 @@ func (t *String) genFunc_append(m *Module) string {
 
 		//y->new
 		{
-			f.Insts = append(f.Insts, y.Extract("d").EmitPush()...)
+			f.Insts = append(f.Insts, y.ExtractByName("d").EmitPush()...)
 			f.Insts = append(f.Insts, src.EmitPop()...)
 
 			block := wat.NewInstBlock("block3")
@@ -217,8 +217,8 @@ func (t *String) genFunc_equal(m *Module) string {
 	f.Insts = append(f.Insts, wat.NewInstConst(wat.I32{}, "1"))
 	f.Insts = append(f.Insts, ret.EmitPop()...)
 
-	f.Insts = append(f.Insts, x.Extract("l").EmitPush()...)
-	f.Insts = append(f.Insts, y.Extract("l").EmitPush()...)
+	f.Insts = append(f.Insts, x.ExtractByName("l").EmitPush()...)
+	f.Insts = append(f.Insts, y.ExtractByName("l").EmitPush()...)
 	f.Insts = append(f.Insts, wat.NewInstNe(wat.I32{}))
 
 	inst_if := wat.NewInstIf(nil, nil, nil)
@@ -229,19 +229,19 @@ func (t *String) genFunc_equal(m *Module) string {
 	{
 		loop := wat.NewInstLoop("loop1")
 		{
-			loop.Insts = append(loop.Insts, x.Extract("l").EmitPush()...)
+			loop.Insts = append(loop.Insts, x.ExtractByName("l").EmitPush()...)
 			{
 				if1 := wat.NewInstIf(nil, nil, nil)
 
-				if1.True = append(if1.True, x.Extract("d").EmitPush()...)
-				if1.True = append(if1.True, x.Extract("l").EmitPush()...)
+				if1.True = append(if1.True, x.ExtractByName("d").EmitPush()...)
+				if1.True = append(if1.True, x.ExtractByName("l").EmitPush()...)
 				if1.True = append(if1.True, wat.NewInstAdd(wat.I32{}))
 				if1.True = append(if1.True, wat.NewInstConst(wat.I32{}, "1"))
 				if1.True = append(if1.True, wat.NewInstSub(wat.I32{}))
 				if1.True = append(if1.True, wat.NewInstLoad8u(0, 1))
 
-				if1.True = append(if1.True, y.Extract("d").EmitPush()...)
-				if1.True = append(if1.True, x.Extract("l").EmitPush()...)
+				if1.True = append(if1.True, y.ExtractByName("d").EmitPush()...)
+				if1.True = append(if1.True, x.ExtractByName("l").EmitPush()...)
 				if1.True = append(if1.True, wat.NewInstAdd(wat.I32{}))
 				if1.True = append(if1.True, wat.NewInstConst(wat.I32{}, "1"))
 				if1.True = append(if1.True, wat.NewInstSub(wat.I32{}))
@@ -251,10 +251,10 @@ func (t *String) genFunc_equal(m *Module) string {
 
 				if2 := wat.NewInstIf(nil, nil, nil)
 				{
-					if2.True = append(if2.True, x.Extract("l").EmitPush()...)
+					if2.True = append(if2.True, x.ExtractByName("l").EmitPush()...)
 					if2.True = append(if2.True, wat.NewInstConst(wat.I32{}, "1"))
 					if2.True = append(if2.True, wat.NewInstSub(wat.I32{}))
-					if2.True = append(if2.True, x.Extract("l").EmitPop()...)
+					if2.True = append(if2.True, x.ExtractByName("l").EmitPop()...)
 					if2.True = append(if2.True, wat.NewInstBr("loop1"))
 
 					if2.False = append(if2.False, wat.NewInstConst(wat.I32{}, "0"))
@@ -306,19 +306,19 @@ func (v *aString) emitStoreToAddr(addr Value, offset int) []wat.Inst {
 
 func (v *aString) emitSub(low, high Value) (insts []wat.Inst) {
 	//block
-	insts = append(insts, v.Extract("b").EmitPush()...)
+	insts = append(insts, v.ExtractByName("b").EmitPush()...)
 
 	//data:
 	if low == nil {
 		low = NewConst("0", v.typ._u32)
 	}
-	insts = append(insts, v.Extract("d").EmitPush()...)
+	insts = append(insts, v.ExtractByName("d").EmitPush()...)
 	insts = append(insts, low.EmitPush()...)
 	insts = append(insts, wat.NewInstAdd(wat.U32{}))
 
 	//len:
 	if high == nil {
-		high = v.Extract("l")
+		high = v.ExtractByName("l")
 	}
 	insts = append(insts, high.EmitPush()...)
 	insts = append(insts, low.EmitPush()...)
@@ -328,7 +328,7 @@ func (v *aString) emitSub(low, high Value) (insts []wat.Inst) {
 }
 
 func (v *aString) emitAt(index Value) (insts []wat.Inst) {
-	insts = append(insts, v.Extract("d").EmitPush()...)
+	insts = append(insts, v.ExtractByName("d").EmitPush()...)
 	insts = append(insts, index.EmitPush()...)
 	//Todo: 强制类型
 	if index.Type().Size() == 8 {
@@ -340,7 +340,7 @@ func (v *aString) emitAt(index Value) (insts []wat.Inst) {
 }
 
 func (v *aString) emitAt_CommaOk(index Value) (insts []wat.Inst) {
-	insts = append(insts, v.Extract("l").EmitPush()...)
+	insts = append(insts, v.ExtractByName("l").EmitPush()...)
 	insts = append(insts, index.EmitPush()...)
 	//Todo: 强制类型
 	if index.Type().Size() == 8 {
@@ -350,7 +350,7 @@ func (v *aString) emitAt_CommaOk(index Value) (insts []wat.Inst) {
 
 	{
 		var instsTrue, instsFalse []wat.Inst
-		instsTrue = append(instsTrue, v.Extract("d").EmitPush()...)
+		instsTrue = append(instsTrue, v.ExtractByName("d").EmitPush()...)
 		instsTrue = append(instsTrue, index.EmitPush()...)
 		//Todo: 强制类型
 		if index.Type().Size() == 8 {

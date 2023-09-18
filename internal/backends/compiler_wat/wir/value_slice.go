@@ -69,7 +69,7 @@ func (t *Slice) EmitLoadFromAddr(addr Value, offset int) []wat.Inst {
 /*这个函数极其不优雅*/
 func (t *Slice) emitGenFromRefOfSlice(x *aRef, low, high, max Value) (insts []wat.Inst) {
 	//block
-	insts = append(insts, x.Extract("d").EmitPush()...)
+	insts = append(insts, x.ExtractByName("d").EmitPush()...)
 	insts = append(insts, wat.NewInstLoad(wat.U32{}, 0, 1))
 	insts = append(insts, wat.NewInstCall("$Retain"))
 
@@ -77,7 +77,7 @@ func (t *Slice) emitGenFromRefOfSlice(x *aRef, low, high, max Value) (insts []wa
 	if low == nil {
 		low = NewConst("0", t._u32)
 	}
-	insts = append(insts, x.Extract("d").EmitPush()...)
+	insts = append(insts, x.ExtractByName("d").EmitPush()...)
 	insts = append(insts, wat.NewInstLoad(wat.U32{}, 4, 1))
 
 	//insts = append(insts, NewConst(strconv.Itoa(x.Type().(*Ref).Base.(*Slice).Base.Size()), t._u32).EmitPush()...)
@@ -88,7 +88,7 @@ func (t *Slice) emitGenFromRefOfSlice(x *aRef, low, high, max Value) (insts []wa
 
 	//len:
 	if high == nil {
-		insts = append(insts, x.Extract("d").EmitPush()...)
+		insts = append(insts, x.ExtractByName("d").EmitPush()...)
 		insts = append(insts, wat.NewInstLoad(wat.U32{}, 12, 1))
 	} else {
 		insts = append(insts, high.EmitPush()...)
@@ -98,7 +98,7 @@ func (t *Slice) emitGenFromRefOfSlice(x *aRef, low, high, max Value) (insts []wa
 
 	//cap:
 	if max == nil {
-		insts = append(insts, x.Extract("d").EmitPush()...)
+		insts = append(insts, x.ExtractByName("d").EmitPush()...)
 		insts = append(insts, wat.NewInstLoad(wat.U32{}, 12, 1))
 	} else {
 		insts = append(insts, max.EmitPush()...)
@@ -111,13 +111,13 @@ func (t *Slice) emitGenFromRefOfSlice(x *aRef, low, high, max Value) (insts []wa
 
 func (t *Slice) emitGenFromRefOfArray(x *aRef, low, high, max Value) (insts []wat.Inst) {
 	//block
-	insts = append(insts, x.Extract("b").EmitPush()...)
+	insts = append(insts, x.ExtractByName("b").EmitPush()...)
 
 	//data
 	if low == nil {
 		low = NewConst("0", t._u32)
 	}
-	insts = append(insts, x.Extract("d").EmitPush()...)
+	insts = append(insts, x.ExtractByName("d").EmitPush()...)
 	//insts = append(insts, NewConst(strconv.Itoa(x.Type().(*Ref).Base.(*Array).Base.Size()), t._u32).EmitPush()...)
 	insts = append(insts, NewConst(strconv.Itoa(t.Base.Size()), t._u32).EmitPush()...)
 	insts = append(insts, low.EmitPush()...)
@@ -186,14 +186,14 @@ func (t *Slice) genAppendFunc(m *Module) string {
 	f.Locals = append(f.Locals, item)
 	//f.Insts = append(f.Insts, item.EmitInit()...)
 
-	x_len := NewLocal("x_len", x.Extract("l").Type())
+	x_len := NewLocal("x_len", x.ExtractByName("l").Type())
 	f.Locals = append(f.Locals, x_len)
-	f.Insts = append(f.Insts, x.Extract("l").EmitPush()...)
+	f.Insts = append(f.Insts, x.ExtractByName("l").EmitPush()...)
 	f.Insts = append(f.Insts, x_len.EmitPop()...)
 
-	y_len := NewLocal("y_len", y.Extract("l").Type())
+	y_len := NewLocal("y_len", y.ExtractByName("l").Type())
 	f.Locals = append(f.Locals, y_len)
-	f.Insts = append(f.Insts, y.Extract("l").EmitPush()...)
+	f.Insts = append(f.Insts, y.ExtractByName("l").EmitPush()...)
 	f.Insts = append(f.Insts, y_len.EmitPop()...)
 
 	//gen new_len:
@@ -206,7 +206,7 @@ func (t *Slice) genAppendFunc(m *Module) string {
 
 	//if_new_len_le_cap
 	f.Insts = append(f.Insts, new_len.EmitPush()...)
-	f.Insts = append(f.Insts, x.Extract("c").EmitPush()...)
+	f.Insts = append(f.Insts, x.ExtractByName("c").EmitPush()...)
 	f.Insts = append(f.Insts, wat.NewInstLe(wat.U32{}))
 
 	src := NewLocal("src", t._base_ptr)
@@ -219,17 +219,17 @@ func (t *Slice) genAppendFunc(m *Module) string {
 	{ //if_true
 		var if_true []wat.Inst
 
-		if_true = append(if_true, x.Extract("b").EmitPush()...)
-		if_true = append(if_true, x.Extract("d").EmitPush()...)
+		if_true = append(if_true, x.ExtractByName("b").EmitPush()...)
+		if_true = append(if_true, x.ExtractByName("d").EmitPush()...)
 		if_true = append(if_true, new_len.EmitPush()...)
-		if_true = append(if_true, x.Extract("c").EmitPush()...)
+		if_true = append(if_true, x.ExtractByName("c").EmitPush()...)
 
 		//get src
-		if_true = append(if_true, y.Extract("d").EmitPush()...)
+		if_true = append(if_true, y.ExtractByName("d").EmitPush()...)
 		if_true = append(if_true, src.EmitPop()...)
 
 		//get dest
-		if_true = append(if_true, x.Extract("d").EmitPush()...)
+		if_true = append(if_true, x.ExtractByName("d").EmitPush()...)
 		if_true = append(if_true, item_size.EmitPush()...)
 		if_true = append(if_true, x_len.EmitPush()...)
 		if_true = append(if_true, wat.NewInstMul(wat.U32{}))
@@ -293,7 +293,7 @@ func (t *Slice) genAppendFunc(m *Module) string {
 
 		//x->new
 		{
-			if_false = append(if_false, x.Extract("d").EmitPush()...)
+			if_false = append(if_false, x.ExtractByName("d").EmitPush()...)
 			if_false = append(if_false, src.EmitPop()...)
 
 			block := wat.NewInstBlock("block2")
@@ -331,7 +331,7 @@ func (t *Slice) genAppendFunc(m *Module) string {
 
 		//y->new
 		{
-			if_false = append(if_false, y.Extract("d").EmitPush()...)
+			if_false = append(if_false, y.ExtractByName("d").EmitPush()...)
 			if_false = append(if_false, src.EmitPop()...)
 
 			block := wat.NewInstBlock("block3")
@@ -394,40 +394,40 @@ func (t *Slice) genCopyFunc(m *Module) string {
 	f.Locals = append(f.Locals, item)
 	//f.Insts = append(f.Insts, item.EmitInit()...)
 
-	count := NewLocal("count", d.Extract("l").Type())
+	count := NewLocal("count", d.ExtractByName("l").Type())
 	f.Locals = append(f.Locals, count)
 	{
-		f.Insts = append(f.Insts, d.Extract("l").EmitPush()...)
-		f.Insts = append(f.Insts, s.Extract("l").EmitPush()...)
+		f.Insts = append(f.Insts, d.ExtractByName("l").EmitPush()...)
+		f.Insts = append(f.Insts, s.ExtractByName("l").EmitPush()...)
 		f.Insts = append(f.Insts, wat.NewInstGt(toWatType(count.Type())))
 
 		ifs := wat.NewInstIf(nil, nil, nil)
 		f.Insts = append(f.Insts, ifs)
 
-		ifs.True = append(ifs.True, s.Extract("l").EmitPush()...)
+		ifs.True = append(ifs.True, s.ExtractByName("l").EmitPush()...)
 		ifs.True = append(ifs.True, count.EmitPop()...)
-		ifs.False = append(ifs.False, d.Extract("l").EmitPush()...)
+		ifs.False = append(ifs.False, d.ExtractByName("l").EmitPush()...)
 		ifs.False = append(ifs.False, count.EmitPop()...)
 	}
 	f.Insts = append(f.Insts, count.EmitPush()...) //ret size
 
-	dp := NewLocal("dp", d.Extract("d").Type())
+	dp := NewLocal("dp", d.ExtractByName("d").Type())
 	f.Locals = append(f.Locals, dp)
-	sp := NewLocal("sp", s.Extract("d").Type())
+	sp := NewLocal("sp", s.ExtractByName("d").Type())
 	f.Locals = append(f.Locals, sp)
-	item_size := NewLocal("item_size", d.Extract("l").Type())
+	item_size := NewLocal("item_size", d.ExtractByName("l").Type())
 	f.Locals = append(f.Locals, item_size)
 	{
-		f.Insts = append(f.Insts, d.Extract("d").EmitPush()...)
-		f.Insts = append(f.Insts, s.Extract("d").EmitPush()...)
-		f.Insts = append(f.Insts, wat.NewInstLt(toWatType(d.Extract("d").Type())))
+		f.Insts = append(f.Insts, d.ExtractByName("d").EmitPush()...)
+		f.Insts = append(f.Insts, s.ExtractByName("d").EmitPush()...)
+		f.Insts = append(f.Insts, wat.NewInstLt(toWatType(d.ExtractByName("d").Type())))
 
 		ifs := wat.NewInstIf(nil, nil, nil)
 		f.Insts = append(f.Insts, ifs)
 		// dp<sp
-		ifs.True = append(ifs.True, d.Extract("d").EmitPush()...)
+		ifs.True = append(ifs.True, d.ExtractByName("d").EmitPush()...)
 		ifs.True = append(ifs.True, dp.EmitPop()...)
-		ifs.True = append(ifs.True, s.Extract("d").EmitPush()...)
+		ifs.True = append(ifs.True, s.ExtractByName("d").EmitPush()...)
 		ifs.True = append(ifs.True, sp.EmitPop()...)
 		ifs.True = append(ifs.True, wat.NewInstConst(wat.I32{}, strconv.Itoa(t.Base.Size())))
 		ifs.True = append(ifs.True, item_size.EmitPop()...)
@@ -440,12 +440,12 @@ func (t *Slice) genCopyFunc(m *Module) string {
 		ifs.False = append(ifs.False, wat.NewInstMul(wat.I32{}))
 		ifs.False = append(ifs.False, item_size.EmitPop()...)
 
-		ifs.False = append(ifs.False, d.Extract("d").EmitPush()...)
+		ifs.False = append(ifs.False, d.ExtractByName("d").EmitPush()...)
 		ifs.False = append(ifs.False, item_size.EmitPush()...)
 		ifs.False = append(ifs.False, wat.NewInstAdd(wat.I32{}))
 		ifs.False = append(ifs.False, dp.EmitPop()...)
 
-		ifs.False = append(ifs.False, s.Extract("d").EmitPush()...)
+		ifs.False = append(ifs.False, s.ExtractByName("d").EmitPush()...)
 		ifs.False = append(ifs.False, item_size.EmitPush()...)
 		ifs.False = append(ifs.False, wat.NewInstAdd(wat.I32{}))
 		ifs.False = append(ifs.False, sp.EmitPop()...)
@@ -521,13 +521,13 @@ func (v *aSlice) emitStoreToAddr(addr Value, offset int) []wat.Inst {
 
 func (v *aSlice) emitSub(low, high, max Value) (insts []wat.Inst) {
 	//block
-	insts = append(insts, v.Extract("b").EmitPush()...)
+	insts = append(insts, v.ExtractByName("b").EmitPush()...)
 
 	//data:
 	if low == nil {
 		low = NewConst("0", v.typ._u32)
 	}
-	insts = append(insts, v.Extract("d").EmitPush()...)
+	insts = append(insts, v.ExtractByName("d").EmitPush()...)
 	insts = append(insts, NewConst(strconv.Itoa(v.typ.Base.Size()), v.typ._u32).EmitPush()...)
 	insts = append(insts, low.EmitPush()...)
 	insts = append(insts, wat.NewInstMul(wat.U32{}))
@@ -535,7 +535,7 @@ func (v *aSlice) emitSub(low, high, max Value) (insts []wat.Inst) {
 
 	//len:
 	if high == nil {
-		high = v.Extract("l")
+		high = v.ExtractByName("l")
 	}
 	insts = append(insts, high.EmitPush()...)
 	insts = append(insts, low.EmitPush()...)
@@ -543,7 +543,7 @@ func (v *aSlice) emitSub(low, high, max Value) (insts []wat.Inst) {
 
 	//cap:
 	if max == nil {
-		insts = append(insts, v.Extract("c").EmitPush()...)
+		insts = append(insts, v.ExtractByName("c").EmitPush()...)
 	} else {
 		insts = append(insts, max.EmitPush()...)
 	}
@@ -567,5 +567,5 @@ func (v *aSlice) emitEq(r Value) ([]wat.Inst, bool) {
 		logger.Fatal("r should be nil")
 	}
 
-	return v.Extract("d").emitEq(r_s.Extract("d"))
+	return v.ExtractByName("d").emitEq(r_s.ExtractByName("d"))
 }
