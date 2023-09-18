@@ -12,6 +12,7 @@ StructField:
 **************************************/
 type StructField struct {
 	name     string
+	id       int
 	typ      ValueType
 	_start   int
 	_typ_ptr *Ptr //type of *typ
@@ -82,7 +83,8 @@ func (t *Struct) AppendField(f *StructField) {
 
 func (t *Struct) Finish() {
 	t._size = 0
-	for _, field := range t.fields {
+	for i, field := range t.fields {
+		field.id = i
 		fa := field.Type().align()
 		field._start = makeAlign(t._size, fa)
 
@@ -182,15 +184,6 @@ func (t *Struct) EmitLoadFromAddr(addr Value, offset int) (insts []wat.Inst) {
 	return
 }
 
-func (t *Struct) findFieldByName(field_name string) *StructField {
-	for i := range t.fields {
-		if t.fields[i].Name() == field_name {
-			return t.fields[i]
-		}
-	}
-	return nil
-}
-
 /**************************************
 aStruct:
 **************************************/
@@ -211,7 +204,7 @@ func newValue_Struct(name string, kind ValueKind, typ *Struct) *aStruct {
 
 func (v *aStruct) genSubValue(m *StructField) Value {
 	if v.Kind() != ValueKindConst {
-		return newValue(v.Name()+"."+m.Name(), v.Kind(), m.Type())
+		return newValue(v.Name()+"."+strconv.Itoa(m.id), v.Kind(), m.Type())
 	} else {
 		fv, ok := v.field_const_vals[m.Name()]
 		if ok {
@@ -234,8 +227,7 @@ func (v *aStruct) setFieldConstValue(field string, sv Value) {
 
 func (v *aStruct) raw() []wat.Value {
 	var r []wat.Value
-	st := v.Type().(*Struct)
-	for _, m := range st.fields {
+	for _, m := range v.typ.fields {
 		t := v.genSubValue(m)
 		r = append(r, t.raw()...)
 	}
@@ -244,8 +236,7 @@ func (v *aStruct) raw() []wat.Value {
 
 func (v *aStruct) EmitInit() []wat.Inst {
 	var insts []wat.Inst
-	st := v.Type().(*Struct)
-	for _, m := range st.fields {
+	for _, m := range v.typ.fields {
 		t := v.genSubValue(m)
 		insts = append(insts, t.EmitInit()...)
 	}
@@ -253,8 +244,7 @@ func (v *aStruct) EmitInit() []wat.Inst {
 }
 
 func (v *aStruct) EmitPush() (insts []wat.Inst) {
-	st := v.Type().(*Struct)
-	for _, m := range st.fields {
+	for _, m := range v.typ.fields {
 		t := v.genSubValue(m)
 		insts = append(insts, t.EmitPush()...)
 	}
@@ -262,8 +252,7 @@ func (v *aStruct) EmitPush() (insts []wat.Inst) {
 }
 
 func (v *aStruct) EmitPushNoRetain() (insts []wat.Inst) {
-	st := v.Type().(*Struct)
-	for _, m := range st.fields {
+	for _, m := range v.typ.fields {
 		t := v.genSubValue(m)
 		insts = append(insts, t.EmitPushNoRetain()...)
 	}
@@ -272,9 +261,8 @@ func (v *aStruct) EmitPushNoRetain() (insts []wat.Inst) {
 
 func (v *aStruct) EmitPop() []wat.Inst {
 	var insts []wat.Inst
-	st := v.Type().(*Struct)
-	for i := range st.fields {
-		m := st.fields[len(st.fields)-i-1]
+	for i := range v.typ.fields {
+		m := v.typ.fields[len(v.typ.fields)-i-1]
 		t := v.genSubValue(m)
 		insts = append(insts, t.EmitPop()...)
 	}
@@ -283,28 +271,34 @@ func (v *aStruct) EmitPop() []wat.Inst {
 
 func (v *aStruct) EmitRelease() []wat.Inst {
 	var insts []wat.Inst
-	st := v.Type().(*Struct)
-	for i := range st.fields {
-		m := st.fields[len(st.fields)-i-1]
+	for i := range v.typ.fields {
+		m := v.typ.fields[len(v.typ.fields)-i-1]
 		t := v.genSubValue(m)
 		insts = append(insts, t.EmitRelease()...)
 	}
 	return insts
 }
 
-func (v *aStruct) Extract(member_name string) Value {
-	st := v.Type().(*Struct)
-	for _, m := range st.fields {
+func (v *aStruct) ExtractByName(member_name string) Value {
+	for _, m := range v.typ.fields {
 		if m.Name() == member_name {
 			return v.genSubValue(m)
 		}
 	}
+	logger.Fatal("field not found:", member_name)
 	return nil
 }
 
+func (v *aStruct) ExtractByID(id int) Value {
+	if id >= len(v.typ.fields) {
+		logger.Fatal("id > len(fields)")
+	}
+
+	return v.genSubValue(v.typ.fields[id])
+}
+
 func (v *aStruct) emitStoreToAddr(addr Value, offset int) (insts []wat.Inst) {
-	st := v.Type().(*Struct)
-	for _, m := range st.fields {
+	for _, m := range v.typ.fields {
 		t := v.genSubValue(m)
 		ptr := newValue_Ptr(addr.Name(), addr.Kind(), m._typ_ptr)
 		insts = append(insts, t.emitStoreToAddr(ptr, m._start+offset)...)
@@ -313,8 +307,7 @@ func (v *aStruct) emitStoreToAddr(addr Value, offset int) (insts []wat.Inst) {
 }
 
 func (v *aStruct) emitStore(offset int) (insts []wat.Inst) {
-	st := v.Type().(*Struct)
-	for _, m := range st.fields {
+	for _, m := range v.typ.fields {
 		t := v.genSubValue(m)
 		insts = append(insts, t.emitStore(m._start+offset)...)
 	}
@@ -336,7 +329,7 @@ func (v *aStruct) Bin() (b []byte) {
 }
 
 func (v *aStruct) emitEq(r Value) (insts []wat.Inst, ok bool) {
-	if !v.Type().Equal(r.Type()) {
+	if !v.typ.Equal(r.Type()) {
 		logger.Fatal("v.Type() != r.Type()")
 	}
 

@@ -80,12 +80,12 @@ func (t *Interface) emitGenFromValue(x Value, xRefType *Ref, compID int) (insts 
 }
 
 func (t *Interface) emitGenFromInterface(x *aInterface) (insts []wat.Inst) {
-	insts = append(insts, x.Extract("d").EmitPush()...) //data
+	insts = append(insts, x.ExtractByName("d").EmitPush()...) //data
 
-	insts = append(insts, x.Extract("itab").EmitPush()...)
+	insts = append(insts, x.ExtractByName("itab").EmitPush()...)
 	ifs := wat.NewInstIf(nil, nil, nil)
 	ifs.Ret = append(ifs.Ret, wat.U32{})
-	ifs.True = append(ifs.True, x.Extract("itab").EmitPush()...)
+	ifs.True = append(ifs.True, x.ExtractByName("itab").EmitPush()...)
 	ifs.True = append(ifs.True, wat.NewInstLoad(wat.I32{}, 0, 4))
 	ifs.True = append(ifs.True, wat.NewInstConst(wat.I32{}, strconv.Itoa(t.Hash())))
 	ifs.True = append(ifs.True, wat.NewInstConst(wat.I32{}, "0"))
@@ -93,7 +93,7 @@ func (t *Interface) emitGenFromInterface(x *aInterface) (insts []wat.Inst) {
 	ifs.False = append(ifs.False, wat.NewInstConst(wat.I32{}, "0"))
 	insts = append(insts, ifs)
 
-	insts = append(insts, x.Extract("eq").EmitPush()...) //eq
+	insts = append(insts, x.ExtractByName("eq").EmitPush()...) //eq
 
 	return
 }
@@ -120,7 +120,7 @@ func (v *aInterface) emitStoreToAddr(addr Value, offset int) []wat.Inst {
 }
 
 func (v *aInterface) emitGetData(destType ValueType, commaOk bool) (insts []wat.Inst) {
-	insts = append(insts, v.Extract("itab").EmitPush()...)
+	insts = append(insts, v.ExtractByName("itab").EmitPush()...)
 	insts = append(insts, wat.NewInstLoad(wat.I32{}, 0, 4))
 	insts = append(insts, wat.NewInstConst(wat.I32{}, strconv.Itoa(destType.Hash())))
 	insts = append(insts, wat.NewInstEq(wat.I32{}))
@@ -130,9 +130,9 @@ func (v *aInterface) emitGetData(destType ValueType, commaOk bool) (insts []wat.
 
 	// true:
 	if _, ok := destType.(*Ref); ok {
-		ifBlock.True = v.Extract("d").EmitPush()
+		ifBlock.True = v.ExtractByName("d").EmitPush()
 	} else {
-		ifBlock.True = destType.EmitLoadFromAddr(v.Extract("d").(*aRef).Extract("d"), 0)
+		ifBlock.True = destType.EmitLoadFromAddr(v.ExtractByName("d").(*aRef).ExtractByName("d"), 0)
 	}
 
 	// false:
@@ -151,9 +151,9 @@ func (v *aInterface) emitGetData(destType ValueType, commaOk bool) (insts []wat.
 }
 
 func (v *aInterface) emitQueryInterface(destType ValueType, commaOk bool) (insts []wat.Inst) {
-	insts = append(insts, v.Extract("d").EmitPushNoRetain()...)
-	insts = append(insts, v.Extract("itab").EmitPushNoRetain()...)
-	insts = append(insts, v.Extract("eq").EmitPushNoRetain()...)
+	insts = append(insts, v.ExtractByName("d").EmitPushNoRetain()...)
+	insts = append(insts, v.ExtractByName("itab").EmitPushNoRetain()...)
+	insts = append(insts, v.ExtractByName("eq").EmitPushNoRetain()...)
 	insts = append(insts, wat.NewInstConst(wat.I32{}, strconv.Itoa(destType.Hash())))
 	if commaOk {
 		insts = append(insts, wat.NewInstCall("$wa.runtime.queryIface_CommaOk"))
@@ -170,31 +170,31 @@ func (v *aInterface) emitEq(r Value) (insts []wat.Inst, ok bool) {
 	}
 
 	d := r.(*aInterface)
-	ins, _ := v.Extract("eq").emitEq(d.Extract("eq"))
+	ins, _ := v.ExtractByName("eq").emitEq(d.ExtractByName("eq"))
 	insts = append(insts, ins...)
 
 	compEq := wat.NewInstIf(nil, nil, nil)
 	compEq.Ret = append(compEq.Ret, wat.I32{})
 	{
-		compEq.True = append(compEq.True, v.Extract("eq").EmitPush()...)
+		compEq.True = append(compEq.True, v.ExtractByName("eq").EmitPush()...)
 		compEq.True = append(compEq.True, wat.NewInstConst(wat.I32{}, "-1"))
 		compEq.True = append(compEq.True, wat.NewInstNe(wat.I32{}))
 
 		compable := wat.NewInstIf(nil, nil, nil)
 		compable.Ret = append(compable.Ret, wat.I32{})
 		{
-			compable.True = append(compable.True, v.Extract("eq").EmitPush()...)
+			compable.True = append(compable.True, v.ExtractByName("eq").EmitPush()...)
 			compable.True = append(compable.True, wat.NewInstEqz(wat.I32{}))
 
 			isRef := wat.NewInstIf(nil, nil, nil)
 			isRef.Ret = append(isRef.Ret, wat.I32{})
 
-			ins, _ = v.Extract("d").emitEq(d.Extract("d"))
+			ins, _ = v.ExtractByName("d").emitEq(d.ExtractByName("d"))
 			isRef.True = ins
 
-			isRef.False = append(isRef.False, v.Extract("d").(*aRef).Extract("d").EmitPushNoRetain()...)
-			isRef.False = append(isRef.False, d.Extract("d").(*aRef).Extract("d").EmitPushNoRetain()...)
-			isRef.False = append(isRef.False, v.Extract("eq").EmitPush()...)
+			isRef.False = append(isRef.False, v.ExtractByName("d").(*aRef).ExtractByName("d").EmitPushNoRetain()...)
+			isRef.False = append(isRef.False, d.ExtractByName("d").(*aRef).ExtractByName("d").EmitPushNoRetain()...)
+			isRef.False = append(isRef.False, v.ExtractByName("eq").EmitPush()...)
 			isRef.False = append(isRef.False, wat.NewInstCallIndirect("$wa.runtime.comp"))
 
 			compable.True = append(compable.True, isRef)

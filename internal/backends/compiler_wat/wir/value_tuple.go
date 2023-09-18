@@ -94,12 +94,3 @@ func (v *aTuple) EmitRelease() []wat.Inst { return v.aStruct.EmitRelease() }
 func (v *aTuple) emitStoreToAddr(addr Value, offset int) []wat.Inst {
 	return v.aStruct.emitStoreToAddr(addr, offset)
 }
-
-func (v *aTuple) Extract(id int) Value {
-	st := v.typ.underlying
-	if id >= len(st.fields) {
-		panic("id >= len(st.Members)")
-	}
-
-	return v.aStruct.genSubValue(st.fields[id])
-}

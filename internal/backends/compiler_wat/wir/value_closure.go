@@ -142,9 +142,9 @@ func EmitCallClosure(c Value, params []Value) (insts []wat.Inst) {
 		insts = append(insts, p.EmitPushNoRetain()...)
 	}
 	closure := c.(*aClosure)
-	insts = append(insts, closure.Extract("fn_index").EmitPushNoRetain()...)
+	insts = append(insts, closure.ExtractByName("fn_index").EmitPushNoRetain()...)
 
-	insts = append(insts, closure.Extract("d").EmitPush()...)
+	insts = append(insts, closure.ExtractByName("d").EmitPush()...)
 	insts = append(insts, currentModule.FindGlobalByName("$wa.runtime.closure_data").EmitPop()...)
 
 	insts = append(insts, wat.NewInstCallIndirect(closure.typ._fnTypeName))
@@ -161,7 +161,7 @@ func (v *aClosure) emitEq(r Value) ([]wat.Inst, bool) {
 		logger.Fatal("r is not a Closure")
 	}
 
-	insts, ok := v.Extract("fn_index").emitEq(r_c.Extract("fn_index"))
+	insts, ok := v.ExtractByName("fn_index").emitEq(r_c.ExtractByName("fn_index"))
 	if !ok {
 		logger.Fatal("fn_index is not comparable")
 	}

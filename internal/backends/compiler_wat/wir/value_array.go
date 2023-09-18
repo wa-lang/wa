@@ -98,7 +98,7 @@ func (t *Array) genFunc_IndexOf(m *Module) string {
 		block := wat.NewInstBlock("block" + strconv.Itoa(i))
 		block.Insts = append(block.Insts, block_pre)
 
-		block.Insts = append(block.Insts, x.Extract("m"+strconv.Itoa(i)).EmitPush()...)
+		block.Insts = append(block.Insts, x.ExtractByName("m"+strconv.Itoa(i)).EmitPush()...)
 		block.Insts = append(block.Insts, ret.EmitPop()...)
 		block.Insts = append(block.Insts, wat.NewInstBr("block"+strconv.Itoa(t.Capacity-1)))
 

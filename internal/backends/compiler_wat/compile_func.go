@@ -857,37 +857,17 @@ func (g *functionGenerator) genExtract(inst *ssa.Extract) ([]wat.Inst, wir.Value
 
 func (g *functionGenerator) genFiled(inst *ssa.Field) ([]wat.Inst, wir.ValueType) {
 	x := g.getValue(inst.X)
-	field := inst.X.Type().Underlying().(*types.Struct).Field(inst.Field)
-	fieldname := wir.GenSymbolName(field.Name())
-	if field.Embedded() {
-		//if _, ok := field.Type().(*types.Named); ok {
-		//	pkgname, _ := wir.GetPkgMangleName(field.Pkg().Path())
-		//	fieldname = pkgname + "." + fieldname
-		//}
-		fieldname = "$" + fieldname
-	}
-
-	return g.module.EmitGenField(x.value, fieldname)
+	return g.module.EmitGenField(x.value, inst.Field)
 }
 
 func (g *functionGenerator) genFieldAddr(inst *ssa.FieldAddr) ([]wat.Inst, wir.ValueType) {
-	field := inst.X.Type().Underlying().(*types.Pointer).Elem().Underlying().(*types.Struct).Field(inst.Field)
-	fieldname := wir.GenSymbolName(field.Name())
-	if field.Embedded() {
-		//if _, ok := field.Type().(*types.Named); ok {
-		//	pkgname, _ := wir.GetPkgMangleName(field.Pkg().Path())
-		//	fieldname = pkgname + "." + fieldname
-		//}
-		fieldname = "$" + fieldname
-	}
-
 	x := g.getValue(inst.X)
 	if x.force_register {
-		nv := wir.ExtractField(x.value, fieldname)
+		nv := wir.ExtractFieldByID(x.value, inst.Field)
 		g.locals_map[inst] = valueWrap{value: nv, force_register: true}
 		return nil, nil
 	} else {
-		return g.module.EmitGenFieldAddr(x.value, fieldname)
+		return g.module.EmitGenFieldAddr(x.value, inst.Field)
 	}
 }
 
@@ -1022,7 +1002,7 @@ func (g *functionGenerator) genMakeClosre_Anonymous(inst *ssa.MakeClosure) (inst
 		warp_fn.Results = g.tLib.GenFnSig(f.Signature).Results
 
 		dx := g.module.FindGlobalByName("$wa.runtime.closure_data")
-		data_ptr := wir.ExtractField(dx, "d")
+		data_ptr := wir.ExtractFieldByName(dx, "d")
 
 		warp_fn.Insts = append(warp_fn.Insts, st_free_data.EmitLoadFromAddr(data_ptr, 0)...)
 		warp_fn.Insts = append(warp_fn.Insts, dx.EmitRelease()...)
@@ -1045,18 +1025,18 @@ func (g *functionGenerator) genMakeClosre_Anonymous(inst *ssa.MakeClosure) (inst
 		for i, freevar := range f.FreeVars {
 			sv := g.getValue(inst.Bindings[i])
 			insts = append(insts, sv.value.EmitPush()...)
-			dv := wir.ExtractField(free_data, freevar.Name())
+			dv := wir.ExtractFieldByName(free_data, freevar.Name())
 			insts = append(insts, dv.EmitPop()...)
 		}
 	}
 	insts = append(insts, wir.NewConst(strconv.Itoa(warp_fn_index), g.module.U32).EmitPush()...)
-	insts = append(insts, wir.ExtractField(closure, "fn_index").EmitPop()...)
+	insts = append(insts, wir.ExtractFieldByName(closure, "fn_index").EmitPop()...)
 	{
 		i, _ := g.module.EmitHeapAlloc(st_free_data)
 		insts = append(insts, i...)
-		insts = append(insts, wir.ExtractField(closure, "d").EmitPop()...)
+		insts = append(insts, wir.ExtractFieldByName(closure, "d").EmitPop()...)
 	}
-	insts = append(insts, g.module.EmitStore(wir.ExtractField(closure, "d"), free_data)...)
+	insts = append(insts, g.module.EmitStore(wir.ExtractFieldByName(closure, "d"), free_data)...)
 	insts = append(insts, free_data.EmitRelease()...)
 	insts = append(insts, free_data.EmitInit()...)
 
@@ -1086,7 +1066,7 @@ func (g *functionGenerator) genMakeClosre_Bound(inst *ssa.MakeClosure) (insts []
 		warp_fn.Results = g.tLib.GenFnSig(f.Signature).Results
 
 		dx := g.module.FindGlobalByName("$wa.runtime.closure_data")
-		data_ptr := wir.ExtractField(dx, "d")
+		data_ptr := wir.ExtractFieldByName(dx, "d")
 
 		warp_fn.Insts = append(warp_fn.Insts, recv_type.EmitLoadFromAddr(data_ptr, 0)...)
 		warp_fn.Insts = append(warp_fn.Insts, dx.EmitRelease()...)
@@ -1105,15 +1085,15 @@ func (g *functionGenerator) genMakeClosre_Bound(inst *ssa.MakeClosure) (insts []
 	closure := g.addRegister(g.module.GenValueType_Closure(g.tLib.GenFnSig(f.Signature)))
 
 	insts = append(insts, wir.NewConst(strconv.Itoa(warp_fn_index), g.module.U32).EmitPush()...)
-	insts = append(insts, wir.ExtractField(closure, "fn_index").EmitPop()...)
+	insts = append(insts, wir.ExtractFieldByName(closure, "fn_index").EmitPop()...)
 	{
 		i, _ := g.module.EmitHeapAlloc(recv_type)
 		insts = append(insts, i...)
-		insts = append(insts, wir.ExtractField(closure, "d").EmitPop()...)
+		insts = append(insts, wir.ExtractFieldByName(closure, "d").EmitPop()...)
 	}
 
 	recv := g.getValue(inst.Bindings[0])
-	insts = append(insts, g.module.EmitStore(wir.ExtractField(closure, "d"), recv.value)...)
+	insts = append(insts, g.module.EmitStore(wir.ExtractFieldByName(closure, "d"), recv.value)...)
 
 	insts = append(insts, closure.EmitPush()...)
 	return
