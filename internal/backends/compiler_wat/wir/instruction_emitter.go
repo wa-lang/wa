@@ -281,7 +281,7 @@ func (m *Module) binOpMatchType(x, y ValueType) ValueType {
 
 func (m *Module) EmitLoad(addr Value) (insts []wat.Inst, ret_type ValueType) {
 	switch addr.Kind() {
-	case ValueKindGlobal_Value:
+	case ValueKindGlobal:
 		insts = append(insts, addr.EmitPush()...)
 		ret_type = addr.Type()
 
@@ -303,39 +303,37 @@ func (m *Module) EmitLoad(addr Value) (insts []wat.Inst, ret_type ValueType) {
 	return
 }
 
-func (m *Module) EmitStore(addr, value Value) (insts []wat.Inst) {
+func (m *Module) EmitStore(addr, value Value, is_init bool) (insts []wat.Inst) {
 	switch addr.Kind() {
-	case ValueKindGlobal_Value:
+	case ValueKindGlobal:
 		if value == nil {
-			zero_value := NewConst("0", addr.Type())
-			insts = append(insts, zero_value.EmitPush()...)
-			insts = append(insts, addr.EmitPop()...)
-		} else {
-			if !addr.Type().Equal(value.Type()) {
-				logger.Fatal("Type not match")
-				return nil
-			}
-			insts = append(insts, value.EmitPush()...)
-			insts = append(insts, addr.EmitPop()...)
+			value = NewConst("0", addr.Type())
 		}
+		if !addr.Type().Equal(value.Type()) {
+			logger.Fatal("Type not match")
+			return nil
+		}
+
+		insts = append(insts, value.EmitPush()...)
+		insts = append(insts, addr.EmitPop()...)
 
 	default:
 		switch addr := addr.(type) {
 		case *aRef:
 			if value == nil {
-				zero_value := NewConst("0", addr.Type().(*Ref).Base)
-				insts = append(insts, addr.emitSetValue(zero_value)...)
-			} else {
+				value = NewConst("0", addr.Type().(*Ref).Base)
+			}
+			if addr.Kind() != ValueKindConst || value.Kind() != ValueKindConst || !is_init {
 				insts = append(insts, addr.emitSetValue(value)...)
+			} else {
+				m.DataSeg.Set(value.Bin(), addr.getConstPtr())
 			}
 
 		case *aPtr:
 			if value == nil {
-				zero_value := NewConst("0", addr.Type().(*Ptr).Base)
-				insts = append(insts, addr.emitSetValue(zero_value)...)
-			} else {
-				insts = append(insts, addr.emitSetValue(value)...)
+				value = NewConst("0", addr.Type().(*Ptr).Base)
 			}
+			insts = append(insts, addr.emitSetValue(value)...)
 
 		default:
 			logger.Fatalf("Todo %v", addr)
@@ -381,27 +379,34 @@ func (m *Module) EmitGenField(x Value, field_id int) (insts []wat.Inst, ret_type
 	return
 }
 
-func (m *Module) EmitGenFieldAddr(x Value, field_id int) (insts []wat.Inst, ret_type ValueType) {
-	insts = append(insts, x.EmitPush()...)
-	var field *StructField
-	switch addr := x.(type) {
+func (m *Module) EmitGenFieldAddr(x Value, field_id int) (insts []wat.Inst, ret_type ValueType, ret_val Value) {
+	switch x := x.(type) {
 	case *aRef:
-		field = addr.Type().(*Ref).Base.(*Struct).fields[field_id]
-		ret_type = m.GenValueType_Ref(field.Type())
+		field := x.Type().(*Ref).Base.(*Struct).fields[field_id]
+		r_type := m.GenValueType_Ref(field.Type())
+		ret_type = r_type
+		if x.Kind() != ValueKindConst || x.ExtractByName("b").Name() != "0" {
+			insts = append(insts, x.EmitPush()...)
+			insts = append(insts, NewConst(strconv.Itoa(field._start), m.I32).EmitPush()...)
+			insts = append(insts, wat.NewInstAdd(wat.I32{}))
+		} else {
+			ret_val = r_type.newConstRef(x.getConstPtr() + field._start)
+		}
 	case *aPtr:
-		field = addr.Type().(*Ptr).Base.(*Struct).fields[field_id]
+		field := x.Type().(*Ptr).Base.(*Struct).fields[field_id]
 		ret_type = m.GenValueType_Ptr(field.Type())
+		insts = append(insts, x.EmitPush()...)
+		insts = append(insts, NewConst(strconv.Itoa(field._start), m.I32).EmitPush()...)
+		insts = append(insts, wat.NewInstAdd(wat.I32{}))
 
 	default:
 		logger.Fatalf("Todo:%T", x.Type())
 	}
 
-	insts = append(insts, NewConst(strconv.Itoa(field._start), m.I32).EmitPush()...)
-	insts = append(insts, wat.NewInstAdd(wat.I32{}))
 	return
 }
 
-func (m *Module) EmitGenIndexAddr(x, id Value) (insts []wat.Inst, ret_type ValueType) {
+func (m *Module) EmitGenIndexAddr(x, id Value) (insts []wat.Inst, ret_type ValueType, ret_val Value) {
 	if !id.Type().Equal(m.I32) {
 		panic("index should be i32")
 	}
@@ -424,12 +429,20 @@ func (m *Module) EmitGenIndexAddr(x, id Value) (insts []wat.Inst, ret_type Value
 	case *aRef:
 		switch typ := x.Type().(*Ref).Base.(type) {
 		case *Array:
-			insts = append(insts, x.EmitPush()...)
-			insts = append(insts, NewConst(strconv.Itoa(typ.Base.Size()), m.I32).EmitPush()...)
-			insts = append(insts, id.EmitPush()...)
-			insts = append(insts, wat.NewInstMul(wat.I32{}))
-			insts = append(insts, wat.NewInstAdd(wat.I32{}))
-			ret_type = m.GenValueType_Ref(typ.Base)
+			r_type := m.GenValueType_Ref(typ.Base)
+			ret_type = r_type
+			if x.Kind() != ValueKindConst || id.Kind() != ValueKindConst || x.ExtractByName("b").Name() != "0" {
+				insts = append(insts, x.EmitPush()...)
+				insts = append(insts, NewConst(strconv.Itoa(typ.Base.Size()), m.I32).EmitPush()...)
+				insts = append(insts, id.EmitPush()...)
+				insts = append(insts, wat.NewInstMul(wat.I32{}))
+				insts = append(insts, wat.NewInstAdd(wat.I32{}))
+			} else {
+				ptr := x.getConstPtr()
+				i, _ := strconv.Atoi(id.Name())
+				ptr += r_type.Base.Size() * i
+				ret_val = r_type.newConstRef(ptr)
+			}
 
 		default:
 			logger.Fatalf("Todo: %T", typ)

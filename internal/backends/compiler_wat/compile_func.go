@@ -35,6 +35,8 @@ type functionGenerator struct {
 	var_block_selector wir.Value
 	var_current_block  wir.Value
 	var_rets           []wir.Value
+
+	is_init bool
 }
 
 func newFunctionGenerator(prog *loader.Program, module *wir.Module, tLib *typeLib) *functionGenerator {
@@ -181,6 +183,7 @@ func (g *functionGenerator) getValue(i ssa.Value) valueWrap {
 }
 
 func (g *functionGenerator) genFunction(f *ssa.Function) *wir.Function {
+	g.is_init = (f.Synthetic == "package initializer")
 	var wir_fn wir.Function
 	{
 		internal, external := wir.GetFnMangleName(f)
@@ -796,7 +799,7 @@ func (g *functionGenerator) genStore(inst *ssa.Store) []wat.Inst {
 	if addr.force_register {
 		return g.module.EmitAssginValue(addr.value, val.value)
 	} else {
-		return g.module.EmitStore(addr.value, val.value)
+		return g.module.EmitStore(addr.value, val.value, g.is_init)
 	}
 }
 
@@ -860,18 +863,24 @@ func (g *functionGenerator) genFiled(inst *ssa.Field) ([]wat.Inst, wir.ValueType
 	return g.module.EmitGenField(x.value, inst.Field)
 }
 
-func (g *functionGenerator) genFieldAddr(inst *ssa.FieldAddr) ([]wat.Inst, wir.ValueType) {
+func (g *functionGenerator) genFieldAddr(inst *ssa.FieldAddr) (insts []wat.Inst, ret_type wir.ValueType) {
 	x := g.getValue(inst.X)
 	if x.force_register {
 		nv := wir.ExtractFieldByID(x.value, inst.Field)
 		g.locals_map[inst] = valueWrap{value: nv, force_register: true}
 		return nil, nil
 	} else {
-		return g.module.EmitGenFieldAddr(x.value, inst.Field)
+		var ret_val wir.Value
+		insts, ret_type, ret_val = g.module.EmitGenFieldAddr(x.value, inst.Field)
+		if ret_val != nil {
+			g.locals_map[inst] = valueWrap{value: ret_val}
+			ret_type = nil
+		}
+		return
 	}
 }
 
-func (g *functionGenerator) genIndexAddr(inst *ssa.IndexAddr) ([]wat.Inst, wir.ValueType) {
+func (g *functionGenerator) genIndexAddr(inst *ssa.IndexAddr) (insts []wat.Inst, ret_type wir.ValueType) {
 	if inst.Parent().ForceRegister() {
 		logger.Fatal("ssa.IndexAddr is not available in ForceRegister-mode")
 		return nil, nil
@@ -880,7 +889,13 @@ func (g *functionGenerator) genIndexAddr(inst *ssa.IndexAddr) ([]wat.Inst, wir.V
 	x := g.getValue(inst.X)
 	id := g.getValue(inst.Index)
 
-	return g.module.EmitGenIndexAddr(x.value, id.value)
+	var ret_val wir.Value
+	insts, ret_type, ret_val = g.module.EmitGenIndexAddr(x.value, id.value)
+	if ret_val != nil {
+		g.locals_map[inst] = valueWrap{value: ret_val}
+		ret_type = nil
+	}
+	return
 }
 
 func (g *functionGenerator) genIndex(inst *ssa.Index) (insts []wat.Inst, ret_type wir.ValueType) {
@@ -1036,7 +1051,7 @@ func (g *functionGenerator) genMakeClosre_Anonymous(inst *ssa.MakeClosure) (inst
 		insts = append(insts, i...)
 		insts = append(insts, wir.ExtractFieldByName(closure, "d").EmitPop()...)
 	}
-	insts = append(insts, g.module.EmitStore(wir.ExtractFieldByName(closure, "d"), free_data)...)
+	insts = append(insts, g.module.EmitStore(wir.ExtractFieldByName(closure, "d"), free_data, false)...)
 	insts = append(insts, free_data.EmitRelease()...)
 	insts = append(insts, free_data.EmitInit()...)
 
@@ -1093,7 +1108,7 @@ func (g *functionGenerator) genMakeClosre_Bound(inst *ssa.MakeClosure) (insts []
 	}
 
 	recv := g.getValue(inst.Bindings[0])
-	insts = append(insts, g.module.EmitStore(wir.ExtractFieldByName(closure, "d"), recv.value)...)
+	insts = append(insts, g.module.EmitStore(wir.ExtractFieldByName(closure, "d"), recv.value, false)...)
 
 	insts = append(insts, closure.EmitPush()...)
 	return
@@ -1214,7 +1229,7 @@ func (g *functionGenerator) genSetter(f *ssa.Function) *wir.Function {
 	value := wir.NewLocal("data", value_type)
 	wir_fn.Params = append(wir_fn.Params, value)
 
-	insts := g.module.EmitStore(addr, value)
+	insts := g.module.EmitStore(addr, value, false)
 	wir_fn.Insts = append(wir_fn.Insts, insts...)
 
 	return &wir_fn

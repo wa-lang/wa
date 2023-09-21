@@ -17,6 +17,7 @@ type Ref struct {
 	Base        ValueType
 	underlying  *Struct
 	_base_block *Block
+	_base_ptr   *Ptr
 	_void       ValueType
 }
 
@@ -30,11 +31,11 @@ func (m *Module) GenValueType_Ref(base ValueType) *Ref {
 
 	ref_t._base_block = m.GenValueType_Block(base)
 	ref_t._void = m.VOID
-	base_ptr := m.GenValueType_Ptr(base)
+	ref_t._base_ptr = m.GenValueType_Ptr(base)
 
 	ref_t.underlying = m.genInternalStruct(ref_t.name + ".underlying")
 	ref_t.underlying.AppendField(m.NewStructField("b", ref_t._base_block))
-	ref_t.underlying.AppendField(m.NewStructField("d", base_ptr))
+	ref_t.underlying.AppendField(m.NewStructField("d", ref_t._base_ptr))
 	ref_t.underlying.Finish()
 
 	m.addValueType(&ref_t)
@@ -96,6 +97,13 @@ func (t *Ref) EmitLoadFromAddr(addr Value, offset int) []wat.Inst {
 	return t.underlying.EmitLoadFromAddr(addr, offset)
 }
 
+func (t *Ref) newConstRef(ptr int) *aRef {
+	v := newValue_Ref("", ValueKindConst, t)
+	v.setFieldConstValue("b", NewConst("0", t._base_block))
+	v.setFieldConstValue("d", NewConst(strconv.Itoa(ptr), t._base_ptr))
+	return v
+}
+
 /**************************************
 aRef:
 **************************************/
@@ -135,4 +143,13 @@ func (v *aRef) emitEq(r Value) (insts []wat.Inst, ok bool) {
 	}
 
 	return v.ExtractByName("d").emitEq(r.(*aRef).ExtractByName("d"))
+}
+
+func (v *aRef) getConstPtr() int {
+	if v.kind != ValueKindConst {
+		logger.Fatal("Must be a const")
+	}
+
+	i, _ := strconv.Atoi(v.ExtractByName("d").Name())
+	return i
 }

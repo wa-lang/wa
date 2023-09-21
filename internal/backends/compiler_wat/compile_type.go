@@ -288,12 +288,6 @@ func (tLib *typeLib) compile(from types.Type) wir.ValueType {
 			newType = tLib.module.GenValueType_Closure(tLib.GenFnSig(ut))
 
 		default:
-			//pkg_name := ""
-			//if t.Obj().Pkg() != nil {
-			//	pkg_name, _ = wir.GetPkgMangleName(t.Obj().Pkg().Path())
-			//}
-			//obj_name := wir.GenSymbolName(t.Obj().Name())
-			//newType = tLib.module.GenValueType_Dup(pkg_name+"."+obj_name, tLib.compile(ut))
 			logger.Fatalf("Todo:%T", ut)
 		}
 

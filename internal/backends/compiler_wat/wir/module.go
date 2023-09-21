@@ -36,13 +36,12 @@ type Module struct {
 	table_map map[string]int
 
 	globals []struct {
-		v        Value
-		init_val string
+		name     string
+		val      Value
+		init_val Value
 	}
 	globalsMapByValue map[ssa.Value]int
 	globalsMapByName  map[string]int
-
-	constGlobals []wat.Global
 
 	DataSeg *wat.DataSeg
 
@@ -149,26 +148,30 @@ func (m *Module) AddFunc(f *Function) {
 }
 
 func (m *Module) AddGlobal(name string, typ ValueType, is_pointer bool, ssa_value ssa.Value) Value {
-	v := struct {
-		v        Value
-		init_val string
-	}{v: NewGlobal(name, typ, is_pointer)}
+	var v struct {
+		name     string
+		val      Value
+		init_val Value
+	}
+
+	v.name = name
+	if is_pointer {
+		t_ref, ok := typ.(*Ref)
+		if !ok {
+			logger.Fatal("typ should be *Ref")
+		}
+		gptr := m.DataSeg.Alloc(t_ref.Base.Size(), t_ref.Base.align())
+		v.val = t_ref.newConstRef(gptr)
+	} else {
+		v.val = NewGlobal(name, typ)
+	}
 
 	if ssa_value != nil {
 		m.globalsMapByValue[ssa_value] = len(m.globals)
 	}
 	m.globalsMapByName[name] = len(m.globals)
 	m.globals = append(m.globals, v)
-	return v.v
-}
-
-func (m *Module) AddConstGlobal(name string, init_val string, typ ValueType) {
-	var v wat.Global
-	v.V = wat.NewVar(name, toWatType(typ))
-	v.IsMut = false
-	v.InitValue = init_val
-
-	m.constGlobals = append(m.constGlobals, v)
+	return v.val
 }
 
 func (m *Module) FindGlobalByName(name string) Value {
@@ -177,7 +180,7 @@ func (m *Module) FindGlobalByName(name string) Value {
 		return nil
 	}
 
-	return m.globals[id].v
+	return m.globals[id].val
 }
 
 func (m *Module) FindGlobalByValue(v ssa.Value) Value {
@@ -186,35 +189,16 @@ func (m *Module) FindGlobalByValue(v ssa.Value) Value {
 		return nil
 	}
 
-	return m.globals[id].v
+	return m.globals[id].val
 }
 
-func (m *Module) SetGlobalInitValue(name string, val string) {
+func (m *Module) SetGlobalInitValue(name string, val Value) {
 	id, ok := m.globalsMapByName[name]
 	if !ok {
 		logger.Fatalf("Global not found:%s", name)
 	}
 
 	m.globals[id].init_val = val
-}
-
-func (m *Module) genGlobalAlloc() *Function {
-	var f Function
-	f.InternalName = "$waGlobalAlloc"
-
-	for _, g := range m.globals {
-		if g.v.Kind() != ValueKindGlobal_Pointer {
-			continue
-		}
-
-		ref := g.v.(*aRef)
-		t := ref.Type().(*Ref).Base
-		f.Insts = append(f.Insts, wat.NewInstConst(wat.I32{}, strconv.Itoa(t.Size())))
-		f.Insts = append(f.Insts, wat.NewInstCall("$waHeapAlloc"))
-		f.Insts = append(f.Insts, ref.ExtractByName("d").EmitPop()...)
-	}
-
-	return &f
 }
 
 func (m *Module) ToWatModule() *wat.Module {
@@ -258,24 +242,43 @@ func (m *Module) ToWatModule() *wat.Module {
 		wat_module.Tables.Elems = m.table
 	}
 
-	wat_module.Funcs = append(wat_module.Funcs, m.genGlobalAlloc().ToWatFunc())
-
 	for _, f := range m.funcs {
 		wat_module.Funcs = append(wat_module.Funcs, f.ToWatFunc())
 	}
 
 	for _, g := range m.globals {
-		raw := g.v.raw()
-		for _, r := range raw {
-			var wat_global wat.Global
-			wat_global.V = r
-			wat_global.IsMut = true
-			wat_global.InitValue = g.init_val
-			wat_module.Globals = append(wat_module.Globals, wat_global)
+		if g.val.Kind() == ValueKindConst {
+			g_v := newValue(g.name, ValueKindGlobal, g.val.Type())
+			raw_v := g_v.raw()
+			raw_c := g.val.raw()
+			for i, r := range raw_v {
+				var wat_global wat.Global
+				wat_global.V = r
+				wat_global.IsMut = false
+				wat_global.InitValue = raw_c[i].Name()
+				wat_module.Globals = append(wat_module.Globals, wat_global)
+			}
+		} else if g.init_val != nil {
+			raw_v := g.val.raw()
+			raw_c := g.init_val.raw()
+			for i, r := range raw_v {
+				var wat_global wat.Global
+				wat_global.V = r
+				wat_global.IsMut = true
+				wat_global.InitValue = raw_c[i].Name()
+				wat_module.Globals = append(wat_module.Globals, wat_global)
+			}
+
+		} else {
+			raw_v := g.val.raw()
+			for _, r := range raw_v {
+				var wat_global wat.Global
+				wat_global.V = r
+				wat_global.IsMut = true
+				wat_module.Globals = append(wat_module.Globals, wat_global)
+			}
 		}
 	}
-
-	wat_module.Globals = append(wat_module.Globals, m.constGlobals...)
 
 	{
 		var heap_base wat.Global
@@ -369,9 +372,9 @@ func (m *Module) buildItab() {
 	}
 
 	itabs_ptr := m.DataSeg.Append(itabs, 8)
-	m.SetGlobalInitValue("$wa.runtime._itabsPtr", strconv.Itoa(itabs_ptr))
-	m.SetGlobalInitValue("$wa.runtime._interfaceCount", strconv.Itoa(len(m.usedInterfaces)))
-	m.SetGlobalInitValue("$wa.runtime._concretTypeCount", strconv.Itoa(len(m.usedConcreteTypes)))
+	m.SetGlobalInitValue("$wa.runtime._itabsPtr", NewConst(strconv.Itoa(itabs_ptr), m.FindGlobalByName("$wa.runtime._itabsPtr").Type()))
+	m.SetGlobalInitValue("$wa.runtime._interfaceCount", NewConst(strconv.Itoa(len(m.usedInterfaces)), m.FindGlobalByName("$wa.runtime._interfaceCount").Type()))
+	m.SetGlobalInitValue("$wa.runtime._concretTypeCount", NewConst(strconv.Itoa(len(m.usedConcreteTypes)), m.FindGlobalByName("$wa.runtime._concretTypeCount").Type()))
 }
 
 func (m *Module) buildTypesInfo() {

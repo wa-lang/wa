@@ -25,8 +25,7 @@ type ValueKind uint8
 
 const (
 	ValueKindLocal ValueKind = iota
-	ValueKindGlobal_Value
-	ValueKindGlobal_Pointer
+	ValueKindGlobal
 	ValueKindConst
 )
 

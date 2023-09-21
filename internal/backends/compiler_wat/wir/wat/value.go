@@ -3,12 +3,12 @@
 package wat
 
 func NewVar(name string, typ ValueType) Value { return &aVar{name: name, typ: typ} }
-func NewVarI32(name string) Value             { return &aVar{typ: I32{}, name: name} }
-func NewVarU32(name string) Value             { return &aVar{typ: U32{}, name: name} }
-func NewVarI64(name string) Value             { return &aVar{typ: I64{}, name: name} }
-func NewVarU64(name string) Value             { return &aVar{typ: U64{}, name: name} }
-func NewVarF32(name string) Value             { return &aVar{typ: F32{}, name: name} }
-func NewVarF64(name string) Value             { return &aVar{typ: F64{}, name: name} }
+func NewVarI32(name string) Value             { return &aVar{name: name, typ: I32{}} }
+func NewVarU32(name string) Value             { return &aVar{name: name, typ: U32{}} }
+func NewVarI64(name string) Value             { return &aVar{name: name, typ: I64{}} }
+func NewVarU64(name string) Value             { return &aVar{name: name, typ: U64{}} }
+func NewVarF32(name string) Value             { return &aVar{name: name, typ: F32{}} }
+func NewVarF64(name string) Value             { return &aVar{name: name, typ: F64{}} }
 
 type aValueType struct{}
 

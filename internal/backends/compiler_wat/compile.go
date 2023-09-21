@@ -51,10 +51,6 @@ func (p *Compiler) Compile(prog *loader.Program, mainFunc string) (output string
 
 	for _, n := range pkgnames {
 		p.ssaPkg = prog.Pkgs[n].SSAPkg
-		p.CompilePkgConst(p.ssaPkg)
-	}
-	for _, n := range pkgnames {
-		p.ssaPkg = prog.Pkgs[n].SSAPkg
 		p.CompilePkgType(p.ssaPkg)
 	}
 	for _, n := range pkgnames {
@@ -71,7 +67,6 @@ func (p *Compiler) Compile(prog *loader.Program, mainFunc string) (output string
 	{
 		var f wir.Function
 		f.InternalName, f.ExternalName = "_start", "_start"
-		f.Insts = append(f.Insts, wat.NewInstCall("$waGlobalAlloc"))
 		n, _ := wir.GetPkgMangleName(prog.SSAMainPkg.Pkg.Path())
 		n += ".init"
 		f.Insts = append(f.Insts, wat.NewInstCall(n))
@@ -126,14 +121,6 @@ func (p *Compiler) CompileWsFiles(prog *loader.Program) {
 	}
 
 	p.module.BaseWat = sb.String()
-}
-
-func (p *Compiler) CompilePkgConst(ssaPkg *ssa.Package) {
-	//for _, m := range p.ssaPkg.Members {
-	//	if con, ok := m.(*ssa.NamedConst); ok {
-	//		p.compileConst(con)
-	//	}
-	//}
 }
 
 func (p *Compiler) CompilePkgType(ssaPkg *ssa.Package) {

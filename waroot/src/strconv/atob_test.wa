@@ -8,7 +8,7 @@ type atobTest struct {
 	err error
 }
 
-var atobtests = []atobTest{
+var atobtests = [...]atobTest{
 	{"", false, ErrSyntax},
 	{"asdf", false, ErrSyntax},
 	{"0", false, nil},
@@ -26,7 +26,8 @@ var atobtests = []atobTest{
 }
 
 func TestParseBool {
-	for _, test := range atobtests {
+	for i := 0; i < len(atobtests); i++ {
+		test := &atobtests[i]
 		b, e := ParseBool(test.in)
 		if test.err != nil {
 			// expect an error
@@ -68,13 +69,14 @@ type appendBoolTest struct {
 	out []byte
 }
 
-var appendBoolTests = []appendBoolTest{
+var appendBoolTests = [...]appendBoolTest{
 	{true, []byte("foo "), []byte("foo true")},
 	{false, []byte("foo "), []byte("foo false")},
 }
 
 func TestAppendBool {
-	for _, test := range appendBoolTests {
+	for i := 0; i < len(appendBoolTests); i++ {
+		test := &appendBoolTests[i]
 		b := AppendBool(test.in, test.b)
 		if !bytes.Equal(b, test.out) {
 			println(string(test.in), test.b, string(test.out), string(b))

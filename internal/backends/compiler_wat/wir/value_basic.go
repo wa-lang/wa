@@ -3,6 +3,7 @@
 package wir
 
 import (
+	"math"
 	"strconv"
 
 	"wa-lang.org/wa/internal/backends/compiler_wat/wir/wat"
@@ -17,12 +18,8 @@ func NewLocal(name string, typ ValueType) Value {
 	return newValue(name, ValueKindLocal, typ)
 }
 
-func NewGlobal(name string, typ ValueType, as_pointer bool) Value {
-	if as_pointer {
-		return newValue(name, ValueKindGlobal_Pointer, typ)
-	} else {
-		return newValue(name, ValueKindGlobal_Value, typ)
-	}
+func NewGlobal(name string, typ ValueType) Value {
+	return newValue(name, ValueKindGlobal, typ)
 }
 
 func newValue(name string, kind ValueKind, typ ValueType) Value {
@@ -84,7 +81,7 @@ func (v *aValue) push(name string) wat.Inst {
 	case ValueKindLocal:
 		return wat.NewInstGetLocal(name)
 
-	case ValueKindGlobal_Value, ValueKindGlobal_Pointer:
+	case ValueKindGlobal:
 		return wat.NewInstGetGlobal(name)
 
 	case ValueKindConst:
@@ -100,7 +97,7 @@ func (v *aValue) pop(name string) wat.Inst {
 	case ValueKindLocal:
 		return wat.NewInstSetLocal(name)
 
-	case ValueKindGlobal_Value, ValueKindGlobal_Pointer:
+	case ValueKindGlobal:
 		return wat.NewInstSetGlobal(name)
 
 	case ValueKindConst:
@@ -179,24 +176,96 @@ func (v *aBasic) Bin() (b []byte) {
 	}
 
 	switch v.Type().(type) {
-	case *tU8, *tI8:
+	case *tU8, *tBool:
 		b = make([]byte, 1)
-		i, _ := strconv.Atoi(v.Name())
-		b[0] = byte(i & 0xFF)
+		i, _ := strconv.ParseUint(v.Name(), 0, 8)
+		b[0] = byte(i)
 
-	case *tU16, *tI16:
+	case *tI8:
+		b = make([]byte, 1)
+		i, _ := strconv.ParseInt(v.Name(), 0, 8)
+		si := uint8(int8(i))
+		b[0] = byte(si)
+
+	case *tU16:
 		b = make([]byte, 2)
-		i, _ := strconv.Atoi(v.Name())
-		b[0] = byte(i & 0xFF)
-		b[1] = byte((i >> 8) & 0xFF)
+		i, _ := strconv.ParseUint(v.Name(), 0, 16)
+		si := uint16(i)
+		b[0] = byte(si & 0xFF)
+		b[1] = byte((si >> 8) & 0xFF)
 
-	case *tU32, *tI32:
+	case *tI16:
+		b = make([]byte, 2)
+		i, _ := strconv.ParseInt(v.Name(), 0, 16)
+		si := uint16(int16(i))
+		b[0] = byte(si & 0xFF)
+		b[1] = byte((si >> 8) & 0xFF)
+
+	case *tU32:
 		b = make([]byte, 4)
-		i, _ := strconv.Atoi(v.Name())
-		b[0] = byte(i & 0xFF)
-		b[1] = byte((i >> 8) & 0xFF)
-		b[2] = byte((i >> 16) & 0xFF)
-		b[3] = byte((i >> 24) & 0xFF)
+		i, _ := strconv.ParseUint(v.Name(), 0, 32)
+		si := uint32(i)
+		b[0] = byte(si & 0xFF)
+		b[1] = byte((si >> 8) & 0xFF)
+		b[2] = byte((si >> 16) & 0xFF)
+		b[3] = byte((si >> 24) & 0xFF)
+
+	case *tI32:
+		b = make([]byte, 4)
+		i, _ := strconv.ParseInt(v.Name(), 0, 32)
+		si := uint32(int32(i))
+		b[0] = byte(si & 0xFF)
+		b[1] = byte((si >> 8) & 0xFF)
+		b[2] = byte((si >> 16) & 0xFF)
+		b[3] = byte((si >> 24) & 0xFF)
+
+	case *tU64:
+		b = make([]byte, 8)
+		i, _ := strconv.ParseUint(v.Name(), 0, 64)
+		si := uint64(i)
+		b[0] = byte(si & 0xFF)
+		b[1] = byte((si >> 8) & 0xFF)
+		b[2] = byte((si >> 16) & 0xFF)
+		b[3] = byte((si >> 24) & 0xFF)
+		b[4] = byte((si >> 32) & 0xFF)
+		b[5] = byte((si >> 40) & 0xFF)
+		b[6] = byte((si >> 48) & 0xFF)
+		b[7] = byte((si >> 56) & 0xFF)
+
+	case *tI64:
+		b = make([]byte, 8)
+		i, _ := strconv.ParseInt(v.Name(), 0, 6)
+		si := uint64(int64(i))
+		b[0] = byte(si & 0xFF)
+		b[1] = byte((si >> 8) & 0xFF)
+		b[2] = byte((si >> 16) & 0xFF)
+		b[3] = byte((si >> 24) & 0xFF)
+		b[4] = byte((si >> 32) & 0xFF)
+		b[5] = byte((si >> 40) & 0xFF)
+		b[6] = byte((si >> 48) & 0xFF)
+		b[7] = byte((si >> 56) & 0xFF)
+
+	case *tF32:
+		b = make([]byte, 4)
+		f, _ := strconv.ParseFloat(v.Name(), 32)
+		si := math.Float32bits(float32(f))
+		b[0] = byte(si & 0xFF)
+		b[1] = byte((si >> 8) & 0xFF)
+		b[2] = byte((si >> 16) & 0xFF)
+		b[3] = byte((si >> 24) & 0xFF)
+
+	case *tF64:
+		b = make([]byte, 4)
+		f, _ := strconv.ParseFloat(v.Name(), 64)
+		si := math.Float64bits(f)
+		b[0] = byte(si & 0xFF)
+		b[1] = byte((si >> 8) & 0xFF)
+		b[2] = byte((si >> 16) & 0xFF)
+		b[3] = byte((si >> 24) & 0xFF)
+		b[4] = byte((si >> 32) & 0xFF)
+		b[5] = byte((si >> 40) & 0xFF)
+		b[6] = byte((si >> 48) & 0xFF)
+		b[7] = byte((si >> 56) & 0xFF)
 
 	default:
 		panic("todo")

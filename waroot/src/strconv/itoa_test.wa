@@ -3,7 +3,8 @@
 // license that can be found in the LICENSE file.
 
 func TestItoa_varlenInts {
-	for _, t := range varlenInts {
+	for i := 0; i < len(varlenInts); i++ {
+		t := &varlenInts[i]
 		assert(Itoa(t.in) == t.out, "Itoa(" + t.out + ") failed")
 	}
 }
@@ -16,7 +17,7 @@ func TestItoa_uitob64tests {
 	// todo
 }
 
-var varlenInts = []struct {
+global varlenInts = [...]struct {
 	in  :int
 	out :string
 }{
@@ -33,7 +34,7 @@ var varlenInts = []struct {
 }
 
 
-var itob64tests = []struct {
+global itob64tests = [...]struct {
 	in   :i64
 	base :int
 	out  :string
@@ -81,7 +82,7 @@ var itob64tests = []struct {
 	{(((((17*36+24)*36+21)*36+34)*36+12)*36+24)*36 + 32, 36, "holycow"},
 }
 
-var uitob64tests = []struct {
+global uitob64tests = [...]struct {
 	in   :u64
 	base :int
 	out  :string
