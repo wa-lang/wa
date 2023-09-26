@@ -1,0 +1,15 @@
+// 版权 @2023 凹语言 作者。保留所有权利。
+
+// index returns the index of the first instance of c in s, or -1 if missing.
+func index(s: string, c: byte) => int {
+	return bytealg_IndexByteString(s, c)
+}
+
+func bytealg_IndexByteString(s: string, c: byte) => int {
+	for i := 0; i < len(s); i++ {
+		if s[i] == c {
+			return i
+		}
+	}
+	return -1
+}

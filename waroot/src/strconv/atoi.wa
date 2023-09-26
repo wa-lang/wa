@@ -24,7 +24,7 @@ type NumError struct {
 }
 
 func NumError.Error => string {
-	return "strconv." + this.Func + ": " + "parsing " + this.Num + ": " + this.Err.Error()
+	return "strconv." + this.Func + ": " + "parsing " + Quote(this.Num) + ": " + this.Err.Error()
 }
 
 func syntaxError(fn, str: string) => *NumError {

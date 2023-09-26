@@ -64,9 +64,11 @@ func newValue(name string, kind ValueKind, typ ValueType) Value {
 	return nil
 }
 
-/**************************************
+/*
+*************************************
 aValue:
-**************************************/
+*************************************
+*/
 type aValue struct {
 	name string
 	kind ValueKind
@@ -110,9 +112,11 @@ func (v *aValue) pop(name string) wat.Inst {
 	}
 }
 
-/**************************************
+/*
+*************************************
 aBasic:
-**************************************/
+*************************************
+*/
 type aBasic struct {
 	aValue
 }
@@ -255,7 +259,7 @@ func (v *aBasic) Bin() (b []byte) {
 		b[3] = byte((si >> 24) & 0xFF)
 
 	case *tF64:
-		b = make([]byte, 4)
+		b = make([]byte, 8)
 		f, _ := strconv.ParseFloat(v.Name(), 64)
 		si := math.Float64bits(f)
 		b[0] = byte(si & 0xFF)
