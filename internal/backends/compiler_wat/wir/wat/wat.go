@@ -2,6 +2,8 @@
 
 package wat
 
+import "strings"
+
 /**************************************
 Import:
 **************************************/
@@ -52,7 +54,7 @@ type FuncSig struct {
 Inst:
 **************************************/
 type Inst interface {
-	Format(indent string) string
+	Format(indent string, sb *strings.Builder)
 	isInstruction()
 }
 

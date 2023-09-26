@@ -2,6 +2,8 @@
 
 package wat
 
+import "strings"
+
 /**************************************
 instConst:
 **************************************/
@@ -14,6 +16,9 @@ type instConst struct {
 func NewInstConst(typ ValueType, literal string) *instConst {
 	return &instConst{typ: typ, literal: literal}
 }
-func (i *instConst) Format(indent string) string {
-	return indent + i.typ.Name() + ".const " + i.literal
+func (i *instConst) Format(indent string, sb *strings.Builder) {
+	sb.WriteString(indent)
+	sb.WriteString(i.typ.Name())
+	sb.WriteString(".const ")
+	sb.WriteString(i.literal)
 }

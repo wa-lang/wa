@@ -2,7 +2,11 @@
 
 package wat
 
-import "wa-lang.org/wa/internal/logger"
+import (
+	"strings"
+
+	"wa-lang.org/wa/internal/logger"
+)
 
 /**************************************
 instEqz:
@@ -12,8 +16,12 @@ type instEqz struct {
 	typ ValueType
 }
 
-func NewInstEqz(t ValueType) *instEqz          { return &instEqz{typ: t} }
-func (i *instEqz) Format(indent string) string { return indent + i.typ.Name() + ".eqz" }
+func NewInstEqz(t ValueType) *instEqz { return &instEqz{typ: t} }
+func (i *instEqz) Format(indent string, sb *strings.Builder) {
+	sb.WriteString(indent)
+	sb.WriteString(i.typ.Name())
+	sb.WriteString(".eqz")
+}
 
 /**************************************
 instEq:
@@ -23,8 +31,12 @@ type instEq struct {
 	typ ValueType
 }
 
-func NewInstEq(t ValueType) *instEq           { return &instEq{typ: t} }
-func (i *instEq) Format(indent string) string { return indent + i.typ.Name() + ".eq" }
+func NewInstEq(t ValueType) *instEq { return &instEq{typ: t} }
+func (i *instEq) Format(indent string, sb *strings.Builder) {
+	sb.WriteString(indent)
+	sb.WriteString(i.typ.Name())
+	sb.WriteString(".eq")
+}
 
 /**************************************
 instNe:
@@ -34,8 +46,12 @@ type instNe struct {
 	typ ValueType
 }
 
-func NewInstNe(t ValueType) *instNe           { return &instNe{typ: t} }
-func (i *instNe) Format(indent string) string { return indent + i.typ.Name() + ".ne" }
+func NewInstNe(t ValueType) *instNe { return &instNe{typ: t} }
+func (i *instNe) Format(indent string, sb *strings.Builder) {
+	sb.WriteString(indent)
+	sb.WriteString(i.typ.Name())
+	sb.WriteString(".ne")
+}
 
 /**************************************
 instLt:
@@ -46,28 +62,35 @@ type instLt struct {
 }
 
 func NewInstLt(t ValueType) *instLt { return &instLt{typ: t} }
-func (i *instLt) Format(indent string) string {
+func (i *instLt) Format(indent string, sb *strings.Builder) {
 	switch i.typ.(type) {
 	case I32:
-		return indent + "i32.lt_s"
+		sb.WriteString(indent)
+		sb.WriteString("i32.lt_s")
 
 	case U32:
-		return indent + "i32.lt_u"
+		sb.WriteString(indent)
+		sb.WriteString("i32.lt_u")
 
 	case I64:
-		return indent + "i64.lt_s"
+		sb.WriteString(indent)
+		sb.WriteString("i64.lt_s")
 
 	case U64:
-		return indent + "i64.lt_u"
+		sb.WriteString(indent)
+		sb.WriteString("i64.lt_u")
 
 	case F32:
-		return indent + "f32.lt"
+		sb.WriteString(indent)
+		sb.WriteString("f32.lt")
 
 	case F64:
-		return indent + "f64.lt"
+		sb.WriteString(indent)
+		sb.WriteString("f64.lt")
+
+	default:
+		logger.Fatal("Todo")
 	}
-	logger.Fatal("Todo")
-	return ""
 }
 
 /**************************************
@@ -79,28 +102,35 @@ type instGt struct {
 }
 
 func NewInstGt(t ValueType) *instGt { return &instGt{typ: t} }
-func (i *instGt) Format(indent string) string {
+func (i *instGt) Format(indent string, sb *strings.Builder) {
 	switch i.typ.(type) {
 	case I32:
-		return indent + "i32.gt_s"
+		sb.WriteString(indent)
+		sb.WriteString("i32.gt_s")
 
 	case U32:
-		return indent + "i32.gt_u"
+		sb.WriteString(indent)
+		sb.WriteString("i32.gt_u")
 
 	case I64:
-		return indent + "i64.gt_s"
+		sb.WriteString(indent)
+		sb.WriteString("i64.gt_s")
 
 	case U64:
-		return indent + "i64.gt_u"
+		sb.WriteString(indent)
+		sb.WriteString("i64.gt_u")
 
 	case F32:
-		return indent + "f32.gt"
+		sb.WriteString(indent)
+		sb.WriteString("f32.gt")
 
 	case F64:
-		return indent + "f64.gt"
+		sb.WriteString(indent)
+		sb.WriteString("f64.gt")
+
+	default:
+		logger.Fatal("Todo")
 	}
-	logger.Fatal("Todo")
-	return ""
 }
 
 /**************************************
@@ -112,28 +142,35 @@ type instLe struct {
 }
 
 func NewInstLe(t ValueType) *instLe { return &instLe{typ: t} }
-func (i *instLe) Format(indent string) string {
+func (i *instLe) Format(indent string, sb *strings.Builder) {
 	switch i.typ.(type) {
 	case I32:
-		return indent + "i32.le_s"
+		sb.WriteString(indent)
+		sb.WriteString("i32.le_s")
 
 	case U32:
-		return indent + "i32.le_u"
+		sb.WriteString(indent)
+		sb.WriteString("i32.le_u")
 
 	case I64:
-		return indent + "i64.le_s"
+		sb.WriteString(indent)
+		sb.WriteString("i64.le_s")
 
 	case U64:
-		return indent + "i64.le_u"
+		sb.WriteString(indent)
+		sb.WriteString("i64.le_u")
 
 	case F32:
-		return indent + "f32.le"
+		sb.WriteString(indent)
+		sb.WriteString("f32.le")
 
 	case F64:
-		return indent + "f64.le"
+		sb.WriteString(indent)
+		sb.WriteString("f64.le")
+
+	default:
+		logger.Fatal("Todo")
 	}
-	logger.Fatal("Todo")
-	return ""
 }
 
 /**************************************
@@ -145,17 +182,24 @@ type instGe struct {
 }
 
 func NewInstGe(t ValueType) *instGe { return &instGe{typ: t} }
-func (i *instGe) Format(indent string) string {
+func (i *instGe) Format(indent string, sb *strings.Builder) {
 	switch i.typ.(type) {
 	case I32, I64:
-		return indent + i.typ.Name() + ".ge_s"
+		sb.WriteString(indent)
+		sb.WriteString(i.typ.Name())
+		sb.WriteString(".ge_s")
 
 	case U32, U64:
-		return indent + i.typ.Name() + ".ge_u"
+		sb.WriteString(indent)
+		sb.WriteString(i.typ.Name())
+		sb.WriteString(".ge_u")
 
 	case F32, F64:
-		return indent + i.typ.Name() + ".ge"
+		sb.WriteString(indent)
+		sb.WriteString(i.typ.Name())
+		sb.WriteString(".ge")
+
+	default:
+		logger.Fatal("Todo")
 	}
-	logger.Fatal("Todo")
-	return ""
 }

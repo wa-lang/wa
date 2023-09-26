@@ -2,7 +2,10 @@
 
 package wat
 
-import "strconv"
+import (
+	"strconv"
+	"strings"
+)
 
 /**************************************
 instCall:
@@ -12,8 +15,12 @@ type instCall struct {
 	name string
 }
 
-func NewInstCall(name string) *instCall         { return &instCall{name: name} }
-func (i *instCall) Format(indent string) string { return indent + "call $" + i.name }
+func NewInstCall(name string) *instCall { return &instCall{name: name} }
+func (i *instCall) Format(indent string, sb *strings.Builder) {
+	sb.WriteString(indent)
+	sb.WriteString("call $")
+	sb.WriteString(i.name)
+}
 
 /**************************************
 instCallIndirect:
@@ -26,8 +33,11 @@ type instCallIndirect struct {
 func NewInstCallIndirect(func_type string) *instCallIndirect {
 	return &instCallIndirect{func_type: func_type}
 }
-func (i *instCallIndirect) Format(indent string) string {
-	return indent + "call_indirect (type $" + i.func_type + ")"
+func (i *instCallIndirect) Format(indent string, sb *strings.Builder) {
+	sb.WriteString(indent)
+	sb.WriteString("call_indirect (type $")
+	sb.WriteString(i.func_type)
+	sb.WriteString(")")
 }
 
 /**************************************
@@ -40,14 +50,22 @@ type instBlock struct {
 }
 
 func NewInstBlock(name string) *instBlock { return &instBlock{name: name} }
-func (i *instBlock) Format(indent string) string {
-	s := indent + "(block $"
-	s += i.name + "\n"
+func (i *instBlock) Format(indent string, sb *strings.Builder) {
+	sb.WriteString(indent)
+	sb.WriteString("(block $")
+
+	sb.WriteString(i.name)
+	sb.WriteString("\n")
+
+	indent_t := indent + "  "
 	for _, v := range i.Insts {
-		s += v.Format(indent+"  ") + "\n"
+		v.Format(indent_t, sb)
+		sb.WriteString("\n")
 	}
-	s += indent + ") ;;" + i.name
-	return s
+
+	sb.WriteString(indent)
+	sb.WriteString(") ;;")
+	sb.WriteString(i.name)
 }
 
 /**************************************
@@ -60,14 +78,22 @@ type instLoop struct {
 }
 
 func NewInstLoop(name string) *instLoop { return &instLoop{name: name} }
-func (i *instLoop) Format(indent string) string {
-	s := indent + "(loop $"
-	s += i.name + "\n"
+func (i *instLoop) Format(indent string, sb *strings.Builder) {
+	sb.WriteString(indent)
+	sb.WriteString("(loop $")
+
+	sb.WriteString(i.name)
+	sb.WriteString("\n")
+
+	indent_t := indent + "  "
 	for _, v := range i.Insts {
-		s += v.Format(indent+"  ") + "\n"
+		v.Format(indent_t, sb)
+		sb.WriteString("\n")
 	}
-	s += indent + ") ;;" + i.name
-	return s
+
+	sb.WriteString(indent)
+	sb.WriteString(") ;;")
+	sb.WriteString(i.name)
 }
 
 /**************************************
@@ -78,8 +104,12 @@ type instBr struct {
 	Name string
 }
 
-func NewInstBr(name string) *instBr           { return &instBr{Name: name} }
-func (i *instBr) Format(indent string) string { return indent + "br $" + i.Name }
+func NewInstBr(name string) *instBr { return &instBr{Name: name} }
+func (i *instBr) Format(indent string, sb *strings.Builder) {
+	sb.WriteString(indent)
+	sb.WriteString("br $")
+	sb.WriteString(i.Name)
+}
 
 /**************************************
 instBrTable:
@@ -90,12 +120,13 @@ type instBrTable struct {
 }
 
 func NewInstBrTable(t []int) *instBrTable { return &instBrTable{Table: t} }
-func (i *instBrTable) Format(indent string) string {
-	s := indent + "br_table"
+func (i *instBrTable) Format(indent string, sb *strings.Builder) {
+	sb.WriteString(indent)
+	sb.WriteString("br_table")
 	for _, v := range i.Table {
-		s += " " + strconv.Itoa(v)
+		sb.WriteString(" ")
+		sb.WriteString(strconv.Itoa(v))
 	}
-	return s
 }
 
 /**************************************
@@ -111,26 +142,34 @@ type instIf struct {
 func NewInstIf(instsTrue, instsFalse []Inst, ret []ValueType) *instIf {
 	return &instIf{True: instsTrue, False: instsFalse, Ret: ret}
 }
-func (i *instIf) Format(indent string) string {
-	s := indent + "if"
-	if len(i.Ret) > 0 {
-		s += " (result"
-		for _, r := range i.Ret {
-			s += " " + r.Name()
-		}
-		s += ")"
-	}
-	s += "\n"
+func (i *instIf) Format(indent string, sb *strings.Builder) {
+	sb.WriteString(indent)
+	sb.WriteString("if")
 
+	if len(i.Ret) > 0 {
+		sb.WriteString(" (result")
+		for _, r := range i.Ret {
+			sb.WriteString(" ")
+			sb.WriteString(r.Name())
+		}
+		sb.WriteString(")")
+	}
+	sb.WriteString("\n")
+
+	indent_t := indent + "  "
 	for _, v := range i.True {
-		s += v.Format(indent+"  ") + "\n"
+		v.Format(indent_t, sb)
+		sb.WriteString("\n")
 	}
-	s += indent + "else\n"
+	sb.WriteString(indent)
+	sb.WriteString("else\n")
 	for _, v := range i.False {
-		s += v.Format(indent+"  ") + "\n"
+		v.Format(indent_t, sb)
+		sb.WriteString("\n")
 	}
-	s += indent + "end"
-	return s
+
+	sb.WriteString(indent)
+	sb.WriteString("end")
 }
 
 /**************************************
@@ -140,5 +179,8 @@ type instReturn struct {
 	anInstruction
 }
 
-func NewInstReturn() *instReturn                  { return &instReturn{} }
-func (i *instReturn) Format(indent string) string { return indent + "return" }
+func NewInstReturn() *instReturn { return &instReturn{} }
+func (i *instReturn) Format(indent string, sb *strings.Builder) {
+	sb.WriteString(indent)
+	sb.WriteString("return")
+}

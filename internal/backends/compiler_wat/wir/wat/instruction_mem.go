@@ -2,7 +2,10 @@
 
 package wat
 
-import "strconv"
+import (
+	"strconv"
+	"strings"
+)
 
 /**************************************
 instLoad:
@@ -16,8 +19,13 @@ type instLoad struct {
 func NewInstLoad(typ ValueType, offset int, align int) *instLoad {
 	return &instLoad{typ: typ, offset: offset, align: align}
 }
-func (i *instLoad) Format(indent string) string {
-	return indent + i.typ.Name() + ".load offset=" + strconv.Itoa(i.offset) + " align=" + strconv.Itoa(i.align)
+func (i *instLoad) Format(indent string, sb *strings.Builder) {
+	sb.WriteString(indent)
+	sb.WriteString(i.typ.Name())
+	sb.WriteString(".load offset=")
+	sb.WriteString(strconv.Itoa(i.offset))
+	sb.WriteString(" align=")
+	sb.WriteString(strconv.Itoa(i.align))
 }
 
 /**************************************
@@ -31,8 +39,12 @@ type instLoad8s struct {
 func NewInstLoad8s(offset int, align int) *instLoad8s {
 	return &instLoad8s{offset: offset, align: align}
 }
-func (i *instLoad8s) Format(indent string) string {
-	return indent + "i32.load8_s offset=" + strconv.Itoa(i.offset) + " align=" + strconv.Itoa(i.align)
+func (i *instLoad8s) Format(indent string, sb *strings.Builder) {
+	sb.WriteString(indent)
+	sb.WriteString("i32.load8_s offset=")
+	sb.WriteString(strconv.Itoa(i.offset))
+	sb.WriteString(" align=")
+	sb.WriteString(strconv.Itoa(i.align))
 }
 
 /**************************************
@@ -46,8 +58,12 @@ type instLoad8u struct {
 func NewInstLoad8u(offset int, align int) *instLoad8u {
 	return &instLoad8u{offset: offset, align: align}
 }
-func (i *instLoad8u) Format(indent string) string {
-	return indent + "i32.load8_u offset=" + strconv.Itoa(i.offset) + " align=" + strconv.Itoa(i.align)
+func (i *instLoad8u) Format(indent string, sb *strings.Builder) {
+	sb.WriteString(indent)
+	sb.WriteString("i32.load8_u offset=")
+	sb.WriteString(strconv.Itoa(i.offset))
+	sb.WriteString(" align=")
+	sb.WriteString(strconv.Itoa(i.align))
 }
 
 /**************************************
@@ -61,8 +77,12 @@ type instLoad16s struct {
 func NewInstLoad16s(offset int, align int) *instLoad16s {
 	return &instLoad16s{offset: offset, align: align}
 }
-func (i *instLoad16s) Format(indent string) string {
-	return indent + "i32.load16_s offset=" + strconv.Itoa(i.offset) + " align=" + strconv.Itoa(i.align)
+func (i *instLoad16s) Format(indent string, sb *strings.Builder) {
+	sb.WriteString(indent)
+	sb.WriteString("i32.load16_s offset=")
+	sb.WriteString(strconv.Itoa(i.offset))
+	sb.WriteString(" align=")
+	sb.WriteString(strconv.Itoa(i.align))
 }
 
 /**************************************
@@ -76,8 +96,12 @@ type instLoad16u struct {
 func NewInstLoad16u(offset int, align int) *instLoad16u {
 	return &instLoad16u{offset: offset, align: align}
 }
-func (i *instLoad16u) Format(indent string) string {
-	return indent + "i32.load16_u offset=" + strconv.Itoa(i.offset) + " align=" + strconv.Itoa(i.align)
+func (i *instLoad16u) Format(indent string, sb *strings.Builder) {
+	sb.WriteString(indent)
+	sb.WriteString("i32.load16_u offset=")
+	sb.WriteString(strconv.Itoa(i.offset))
+	sb.WriteString(" align=")
+	sb.WriteString(strconv.Itoa(i.align))
 }
 
 /**************************************
@@ -92,8 +116,13 @@ type instStore struct {
 func NewInstStore(typ ValueType, offset int, align int) *instStore {
 	return &instStore{typ: typ, offset: offset, align: align}
 }
-func (i *instStore) Format(indent string) string {
-	return indent + i.typ.Name() + ".store offset=" + strconv.Itoa(i.offset) + " align=" + strconv.Itoa(i.align)
+func (i *instStore) Format(indent string, sb *strings.Builder) {
+	sb.WriteString(indent)
+	sb.WriteString(i.typ.Name())
+	sb.WriteString(".store offset=")
+	sb.WriteString(strconv.Itoa(i.offset))
+	sb.WriteString(" align=")
+	sb.WriteString(strconv.Itoa(i.align))
 }
 
 /**************************************
@@ -107,8 +136,12 @@ type instStore8 struct {
 func NewInstStore8(offset int, align int) *instStore8 {
 	return &instStore8{offset: offset, align: align}
 }
-func (i *instStore8) Format(indent string) string {
-	return indent + "i32.store8 offset=" + strconv.Itoa(i.offset) + " align=" + strconv.Itoa(i.align)
+func (i *instStore8) Format(indent string, sb *strings.Builder) {
+	sb.WriteString(indent)
+	sb.WriteString("i32.store8 offset=")
+	sb.WriteString(strconv.Itoa(i.offset))
+	sb.WriteString(" align=")
+	sb.WriteString(strconv.Itoa(i.align))
 }
 
 /**************************************
@@ -122,6 +155,10 @@ type instStore16 struct {
 func NewInstStore16(offset int, align int) *instStore16 {
 	return &instStore16{offset: offset, align: align}
 }
-func (i *instStore16) Format(indent string) string {
-	return indent + "i32.store16 offset=" + strconv.Itoa(i.offset) + " align=" + strconv.Itoa(i.align)
+func (i *instStore16) Format(indent string, sb *strings.Builder) {
+	sb.WriteString(indent)
+	sb.WriteString("i32.store16 offset=")
+	sb.WriteString(strconv.Itoa(i.offset))
+	sb.WriteString(" align=")
+	sb.WriteString(strconv.Itoa(i.align))
 }

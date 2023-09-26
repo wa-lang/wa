@@ -2,47 +2,68 @@
 
 package wat
 
-func (f *Function) Format(indent string) string {
-	s := indent + "(func $" + f.InternalName
+import "strings"
+
+func (f *Function) Format(sb *strings.Builder) {
+	sb.WriteString("(func $")
+	sb.WriteString(f.InternalName)
+
 	if len(f.ExternalName) > 0 {
-		s += " (export \"" + f.ExternalName + "\")"
+		sb.WriteString(" (export \"")
+		sb.WriteString(f.ExternalName)
+		sb.WriteString("\")")
 	}
 
 	for _, param := range f.Params {
-		s += " (param $" + param.Name() + " " + param.Type().Name() + ")"
+		sb.WriteString(" (param $")
+		sb.WriteString(param.Name())
+		sb.WriteByte(' ')
+		sb.WriteString(param.Type().Name())
+		sb.WriteByte(')')
 	}
 
 	if len(f.Results) > 0 {
-		s += " (result"
+		sb.WriteString(" (result")
 		for _, r := range f.Results {
-			s += " " + r.Name()
+			sb.WriteByte(' ')
+			sb.WriteString(r.Name())
 		}
-		s += ")"
+		sb.WriteByte(')')
 	}
-	s += "\n"
+	sb.WriteByte('\n')
 
 	for _, local := range f.Locals {
-		s += indent
-		s += "  (local $" + local.Name() + " " + local.Type().Name() + ")"
-		s += "\n"
+		sb.WriteString("  (local $")
+		sb.WriteString(local.Name())
+		sb.WriteByte(' ')
+		sb.WriteString(local.Type().Name())
+		sb.WriteByte(')')
+		sb.WriteByte('\n')
 	}
 
+	indent_t := "  "
 	for _, inst := range f.Insts {
-		s += inst.Format(indent+"  ") + "\n"
+		inst.Format(indent_t, sb)
+		sb.WriteByte('\n')
 	}
 
-	s += indent + ") ;;" + f.InternalName
-	return s
+	sb.WriteString(") ;;")
+	sb.WriteString(f.InternalName)
 }
 
 func (sig *FuncSig) String() string {
-	str := ""
+	var sb strings.Builder
+
 	for _, param := range sig.Params {
-		str += " (param " + param.Name() + ")"
+		sb.WriteString(" (param ")
+		sb.WriteString(param.Name())
+		sb.WriteByte(')')
 	}
 
 	for _, ret := range sig.Results {
-		str += " (result " + ret.Name() + ")"
+		sb.WriteString(" (result ")
+		sb.WriteString(ret.Name())
+		sb.WriteByte(')')
 	}
-	return str
+	return sb.String()
 }

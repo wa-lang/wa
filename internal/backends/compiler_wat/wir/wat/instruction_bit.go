@@ -2,7 +2,11 @@
 
 package wat
 
-import "wa-lang.org/wa/internal/logger"
+import (
+	"strings"
+
+	"wa-lang.org/wa/internal/logger"
+)
 
 /**************************************
 instAnd:
@@ -12,8 +16,12 @@ type instAnd struct {
 	typ ValueType
 }
 
-func NewInstAnd(t ValueType) *instAnd          { return &instAnd{typ: t} }
-func (i *instAnd) Format(indent string) string { return indent + i.typ.Name() + ".and" }
+func NewInstAnd(t ValueType) *instAnd { return &instAnd{typ: t} }
+func (i *instAnd) Format(indent string, sb *strings.Builder) {
+	sb.WriteString(indent)
+	sb.WriteString(i.typ.Name())
+	sb.WriteString(".and")
+}
 
 /**************************************
 instOr:
@@ -23,8 +31,12 @@ type instOr struct {
 	typ ValueType
 }
 
-func NewInstOr(t ValueType) *instOr           { return &instOr{typ: t} }
-func (i *instOr) Format(indent string) string { return indent + i.typ.Name() + ".or" }
+func NewInstOr(t ValueType) *instOr { return &instOr{typ: t} }
+func (i *instOr) Format(indent string, sb *strings.Builder) {
+	sb.WriteString(indent)
+	sb.WriteString(i.typ.Name())
+	sb.WriteString(".or")
+}
 
 /**************************************
 instXor:
@@ -34,8 +46,12 @@ type instXor struct {
 	typ ValueType
 }
 
-func NewInstXor(t ValueType) *instXor          { return &instXor{typ: t} }
-func (i *instXor) Format(indent string) string { return indent + i.typ.Name() + ".xor" }
+func NewInstXor(t ValueType) *instXor { return &instXor{typ: t} }
+func (i *instXor) Format(indent string, sb *strings.Builder) {
+	sb.WriteString(indent)
+	sb.WriteString(i.typ.Name())
+	sb.WriteString(".xor")
+}
 
 /**************************************
 instShl:
@@ -45,8 +61,12 @@ type instShl struct {
 	typ ValueType
 }
 
-func NewInstShl(t ValueType) *instShl          { return &instShl{typ: t} }
-func (i *instShl) Format(indent string) string { return indent + i.typ.Name() + ".shl" }
+func NewInstShl(t ValueType) *instShl { return &instShl{typ: t} }
+func (i *instShl) Format(indent string, sb *strings.Builder) {
+	sb.WriteString(indent)
+	sb.WriteString(i.typ.Name())
+	sb.WriteString(".shl")
+}
 
 /**************************************
 instShr:
@@ -57,14 +77,19 @@ type instShr struct {
 }
 
 func NewInstShr(t ValueType) *instShr { return &instShr{typ: t} }
-func (i *instShr) Format(indent string) string {
+func (i *instShr) Format(indent string, sb *strings.Builder) {
 	switch i.typ.(type) {
 	case I32, I64:
-		return indent + i.typ.Name() + ".shr_s"
+		sb.WriteString(indent)
+		sb.WriteString(i.typ.Name())
+		sb.WriteString(".shr_s")
 
 	case U32, U64:
-		return indent + i.typ.Name() + ".shr_u"
+		sb.WriteString(indent)
+		sb.WriteString(i.typ.Name())
+		sb.WriteString(".shr_u")
+
+	default:
+		logger.Fatal("Todo")
 	}
-	logger.Fatal("Todo")
-	return ""
 }

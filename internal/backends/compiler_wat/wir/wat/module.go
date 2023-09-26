@@ -4,6 +4,7 @@ package wat
 
 import (
 	"strconv"
+	"strings"
 )
 
 // 模块对象
@@ -21,55 +22,70 @@ type Module struct {
 }
 
 func (m *Module) String() string {
-	s := "(module $__walang__\n"
+	var sb strings.Builder
+
+	sb.WriteString("(module $__walang__\n")
 
 	for _, i := range m.Imports {
-		s += i.Format("  ") + "\n"
+		sb.WriteString(i.Format("  "))
+		sb.WriteByte('\n')
 	}
 
-	s += m.BaseWat
+	sb.WriteString(m.BaseWat)
 
 	if len(m.DataSeg.data) > 0 {
-		s += "(data (i32.const " + strconv.Itoa(m.DataSeg.start) + ") \""
+		sb.WriteString("(data (i32.const ")
+		sb.WriteString(strconv.Itoa(m.DataSeg.start))
+		sb.WriteString(") \"")
 		for _, d := range m.DataSeg.data {
-			s += "\\"
+			sb.WriteByte('\\')
 			i := strconv.FormatInt(int64(d), 16)
 			if len(i) < 2 {
 				i = "0" + i
 			}
-			s += i
+			sb.WriteString(i)
 		}
-		s += "\")\n"
+		sb.WriteString("\")\n")
 	}
 
-	s += m.Tables.String()
+	sb.WriteString(m.Tables.String())
 
 	for _, ft := range m.FuncTypes {
-		s += ft.String()
+		sb.WriteString(ft.String())
 	}
 
 	for _, g := range m.Globals {
-		s += "(global $"
-		s += g.V.Name()
+		sb.WriteString("(global $")
+		sb.WriteString(g.V.Name())
 		if g.IsMut {
-			s += " (mut " + g.V.Type().Name() + ")"
+			sb.WriteString(" (mut ")
+			sb.WriteString(g.V.Type().Name())
+			sb.WriteByte(')')
 		} else {
-			s += " " + g.V.Type().Name()
+			sb.WriteByte(' ')
+			sb.WriteString(g.V.Type().Name())
 		} //
 		if len(g.InitValue) > 0 {
-			s += " (" + g.V.Type().Name() + ".const " + g.InitValue + ")"
+			sb.WriteString(" (")
+			sb.WriteString(g.V.Type().Name())
+			sb.WriteString(".const ")
+			sb.WriteString(g.InitValue)
+			sb.WriteByte(')')
 		} else {
-			s += " (" + g.V.Type().Name() + ".const 0)"
+			sb.WriteString(" (")
+			sb.WriteString(g.V.Type().Name())
+			sb.WriteString(".const 0)")
 		}
-		s += ")\n"
+		sb.WriteString(")\n")
 	}
 
 	for _, f := range m.Funcs {
-		s += "\n\n" + f.Format("")
+		sb.WriteString("\n\n")
+		f.Format(&sb)
 	}
 
-	s += "\n) ;;module"
-	return s
+	sb.WriteString("\n) ;;module")
+	return sb.String()
 }
 
 func (t Table) String() string {

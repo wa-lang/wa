@@ -3,6 +3,8 @@
 package wat
 
 import (
+	"strings"
+
 	"wa-lang.org/wa/internal/logger"
 )
 
@@ -19,8 +21,12 @@ type instAdd struct {
 	typ ValueType
 }
 
-func NewInstAdd(t ValueType) *instAdd          { return &instAdd{typ: t} }
-func (i *instAdd) Format(indent string) string { return indent + i.typ.Name() + ".add" }
+func NewInstAdd(t ValueType) *instAdd { return &instAdd{typ: t} }
+func (i *instAdd) Format(indent string, sb *strings.Builder) {
+	sb.WriteString(indent)
+	sb.WriteString(i.typ.Name())
+	sb.WriteString(".add")
+}
 
 /**************************************
 instSub:
@@ -30,8 +36,12 @@ type instSub struct {
 	typ ValueType
 }
 
-func NewInstSub(t ValueType) *instSub          { return &instSub{typ: t} }
-func (i *instSub) Format(indent string) string { return indent + i.typ.Name() + ".sub" }
+func NewInstSub(t ValueType) *instSub { return &instSub{typ: t} }
+func (i *instSub) Format(indent string, sb *strings.Builder) {
+	sb.WriteString(indent)
+	sb.WriteString(i.typ.Name())
+	sb.WriteString(".sub")
+}
 
 /**************************************
 instMul:
@@ -41,8 +51,12 @@ type instMul struct {
 	typ ValueType
 }
 
-func NewInstMul(t ValueType) *instMul          { return &instMul{typ: t} }
-func (i *instMul) Format(indent string) string { return indent + i.typ.Name() + ".mul" }
+func NewInstMul(t ValueType) *instMul { return &instMul{typ: t} }
+func (i *instMul) Format(indent string, sb *strings.Builder) {
+	sb.WriteString(indent)
+	sb.WriteString(i.typ.Name())
+	sb.WriteString(".mul")
+}
 
 /**************************************
 instDiv:
@@ -53,29 +67,35 @@ type instDiv struct {
 }
 
 func NewInstDiv(t ValueType) *instDiv { return &instDiv{typ: t} }
-func (i *instDiv) Format(indent string) string {
+func (i *instDiv) Format(indent string, sb *strings.Builder) {
 	switch i.typ.(type) {
 	case I32:
-		return indent + "i32.div_s"
+		sb.WriteString(indent)
+		sb.WriteString("i32.div_s")
 
 	case U32:
-		return indent + "i32.div_u"
+		sb.WriteString(indent)
+		sb.WriteString("i32.div_u")
 
 	case I64:
-		return indent + "i64.div_s"
+		sb.WriteString(indent)
+		sb.WriteString("i64.div_s")
 
 	case U64:
-		return indent + "i64.div_u"
+		sb.WriteString(indent)
+		sb.WriteString("i64.div_u")
 
 	case F32:
-		return indent + "f32.div"
+		sb.WriteString(indent)
+		sb.WriteString("f32.div")
 
 	case F64:
-		return indent + "f64.div"
+		sb.WriteString(indent)
+		sb.WriteString("f64.div")
 
+	default:
+		logger.Fatal("Todo")
 	}
-	logger.Fatal("Todo")
-	return ""
 }
 
 /**************************************
@@ -87,20 +107,25 @@ type instRem struct {
 }
 
 func NewInstRem(t ValueType) *instRem { return &instRem{typ: t} }
-func (i *instRem) Format(indent string) string {
+func (i *instRem) Format(indent string, sb *strings.Builder) {
 	switch i.typ.(type) {
 	case I32:
-		return indent + "i32.rem_s"
+		sb.WriteString(indent)
+		sb.WriteString("i32.rem_s")
 
 	case U32:
-		return indent + "i32.rem_u"
+		sb.WriteString(indent)
+		sb.WriteString("i32.rem_u")
 
 	case I64:
-		return indent + "i64.rem_s"
+		sb.WriteString(indent)
+		sb.WriteString("i64.rem_s")
 
 	case U64:
-		return indent + "i64.rem_u"
+		sb.WriteString(indent)
+		sb.WriteString("i64.rem_u")
+
+	default:
+		logger.Fatal("Todo")
 	}
-	logger.Fatal("Todo")
-	return ""
 }

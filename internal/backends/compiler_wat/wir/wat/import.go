@@ -2,6 +2,8 @@
 
 package wat
 
+import "strings"
+
 /**************************************
 ImpObj:
 **************************************/
@@ -27,5 +29,15 @@ func NewImpFunc(moduleName string, objName string, funcName string, sig FuncSig)
 }
 func (o *ImpFunc) Type() ObjType { return ObjTypeFunc }
 func (o *ImpFunc) Format(indent string) string {
-	return indent + "(import \"" + o.moduleName + "\" \"" + o.objName + "\" (func $" + o.funcName + o.sig.String() + "))"
+	var sb strings.Builder
+	sb.WriteString(indent)
+	sb.WriteString("(import \"")
+	sb.WriteString(o.moduleName)
+	sb.WriteString("\" \"")
+	sb.WriteString(o.objName)
+	sb.WriteString("\" (func $")
+	sb.WriteString(o.funcName)
+	sb.WriteString(o.sig.String())
+	sb.WriteString("))")
+	return sb.String()
 }
