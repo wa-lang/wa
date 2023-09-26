@@ -64,11 +64,9 @@ func newValue(name string, kind ValueKind, typ ValueType) Value {
 	return nil
 }
 
-/*
-*************************************
+/**************************************
 aValue:
-*************************************
-*/
+**************************************/
 type aValue struct {
 	name string
 	kind ValueKind
@@ -112,11 +110,9 @@ func (v *aValue) pop(name string) wat.Inst {
 	}
 }
 
-/*
-*************************************
+/**************************************
 aBasic:
-*************************************
-*/
+**************************************/
 type aBasic struct {
 	aValue
 }
