@@ -1,0 +1,84 @@
+// 版权 @2023 凹语言 作者。保留所有权利。
+
+import "image/color"
+
+global (
+	_ :Image = (*Gray)(nil)
+	_ :Image = (*RGBA)(nil)
+
+	_ :Image16bit = (*Gray16)(nil)
+	_ :Image16bit = (*RGBA64)(nil)
+)
+
+func Gray.Bounds() => Rectangle {
+	return this.Rect
+}
+func Gray.PixOffset(x, y: int) => int {
+	return (y-this.Rect.Min.Y)*this.Stride + (x-this.Rect.Min.X)*1
+}
+func Gray.At(x, y: int) => color.RGBA {
+	i := this.PixOffset(x, y)
+	v := this.Pix[i]
+	return color.RGBA{v, v, v, 0xFF}
+}
+
+func Gray16.Bounds() => Rectangle {
+	return this.Rect
+}
+func Gray16.PixOffset(x, y: int) => int {
+	return (y-this.Rect.Min.Y)*this.Stride + (x-this.Rect.Min.X)*2
+}
+func Gray16.At(x, y: int) => color.RGBA64 {
+	i := this.PixOffset(x, y)
+	v := this.Pix[i]
+	return color.RGBA64{v, v, v, 0xFFFF}
+}
+
+func NewRGBA(r: Rectangle) => *RGBA {
+	return &RGBA{
+		// todo
+	}
+}
+
+func RGBA.Bounds() => Rectangle {
+	return this.Rect
+}
+func RGBA.PixOffset(x, y: int) => int {
+	return (y-this.Rect.Min.Y)*this.Stride + (x-this.Rect.Min.X)*4
+}
+func RGBA.At(x, y: int) => color.RGBA {
+	i := this.PixOffset(x, y)
+	s := this.Pix[i : i+4 : i+4]
+	return color.RGBA{s[0], s[1], s[2], s[3]}
+}
+
+func RGBA64.Bounds() => Rectangle {
+	return this.Rect
+}
+
+func RGBA64.PixOffset(x, y: int) => int {
+	return (y-this.Rect.Min.Y)*this.Stride + (x-this.Rect.Min.X)*8
+}
+func RGBA64.At(x, y: int) => color.RGBA64 {
+	i := this.PixOffset(x, y)
+	s := this.Pix[i : i+4 : i+4]
+	return color.RGBA64{s[0], s[1], s[2], s[3]}
+}
+
+func NewPaletted(r: Rectangle) => *Paletted {
+	return &Paletted{
+		// todo
+	}
+}
+
+func Paletted.Bounds() => Rectangle {
+	return this.Rect
+}
+func Paletted.PixOffset(x, y: int) => int {
+	return (y-this.Rect.Min.Y)*this.Stride + (x-this.Rect.Min.X)*1
+}
+func Paletted.At(x, y: int) => color.RGBA {
+	i := this.PixOffset(x, y)
+	v := this.Pix[i]
+	return this.Paletted[v]
+}

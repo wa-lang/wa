@@ -1,27 +1,24 @@
 // 版权 @2023 凹语言 作者。保留所有权利。
 
+import "image/color"
+
+// 图像大小
+type Config struct {
+	Width, Height: int
+}
+
 // 图像接口
 type Image interface {
 	Bounds() => Rectangle
 	PixOffset(x, y: int) => int
-	At(x, y: int) => []u8
+	At(x, y: int) => color.RGBA
 }
 
 // 图像接口(16bit)
-type ImageU16 interface {
+type Image16bit interface {
 	Bounds() => Rectangle
 	PixOffset(x, y: int) => int
-	At(x, y: int) => []u16
-}
-
-// 二维点
-type Point struct {
-	X, Y: int
-}
-
-// 二维矩形
-type Rectangle struct {
-	Min, Max: Point
+	At(x, y: int) => color.RGBA64
 }
 
 // 二维图像 Gray
@@ -32,7 +29,7 @@ type Gray struct {
 }
 
 // 二维图像 Gray16
-type Gray struct {
+type Gray16 struct {
 	Pix:    []u16
 	Stride: int
 	Rect:   Rectangle
@@ -46,8 +43,15 @@ type RGBA struct {
 }
 
 // 二维图像 RGBA64
-type RGBA struct {
+type RGBA64 struct {
 	Pix:    []u16
 	Stride: int
 	Rect:   Rectangle
+}
+
+type Paletted struct {
+	Pix:      []u8
+	Stride:   int
+	Rect:     Rectangle
+	Paletted: []color.RGBA
 }
