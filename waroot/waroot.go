@@ -104,40 +104,37 @@ func GetStdPkgList() []string {
 }
 
 var stdPkgs = []string{
-	"apple",               // 测试已覆盖
-	"archive/txtar",       // API 完整
-	"bufio",               // API 完整
-	"bytes",               // API 完整
-	"errors",              // API 完整, 测试已覆盖
-	"encoding",            // API 完整
-	"encoding/base64",     // API 完整
-	"encoding/binary",     // API 部分
-	"encoding/hex",        // API 完整
-	"encoding/qrcode",     // ?
-	"fmt",                 // ?
-	"hash",                // API 完整
-	"hash/crc32",          // API 完整
-	"image",               // ?
-	"image/bmp",           // ?
-	"image/color",         // ?
-	"image/color/palette", // ?
-	"io",                  // API 部分
-	"math",                // API 部分
-	"math/big",            // API 部分
-	"math/bits",           // API 完整
-	"math/gf256",          // ?
-	"os",                  // API 部分
-	"reflect",             // ?
-	"regexp",              // API 部分
-	"runtime",             //
-	"sort",                // API 完整
-	"strconv",             // API 完整
-	"strings",             // API 完整
-	"syscall",             // API 完整
-	"text/template",       // 无
-	"unicode",             // API 部分
-	"unicode/ctypes",      // API 完整, 测试已覆盖
-	"unicode/utf8",        // API 完整, 测试已覆盖
+	"apple",           // 测试已覆盖
+	"archive/txtar",   // API 完整
+	"bufio",           // API 完整
+	"bytes",           // API 完整
+	"errors",          // API 完整, 测试已覆盖
+	"encoding",        // API 完整
+	"encoding/base64", // API 完整
+	"encoding/binary", // API 部分
+	"encoding/hex",    // API 完整
+	"encoding/qrcode", // ?
+	"fmt",             // ?
+	"hash",            // API 完整
+	"hash/crc32",      // API 完整
+	"image",           // ?
+	"io",              // API 部分
+	"math",            // API 部分
+	"math/big",        // API 部分
+	"math/bits",       // API 完整
+	"math/gf256",      // ?
+	"os",              // API 部分
+	"reflect",         // ?
+	"regexp",          // API 部分
+	"runtime",         //
+	"sort",            // API 完整
+	"strconv",         // API 完整
+	"strings",         // API 完整
+	"syscall",         // API 完整
+	"text/template",   // 无
+	"unicode",         // API 部分
+	"unicode/ctypes",  // API 完整, 测试已覆盖
+	"unicode/utf8",    // API 完整, 测试已覆盖
 }
 
 var wzStdPkgs = []string{
