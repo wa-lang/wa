@@ -1,0 +1,51 @@
+// 版权 @2023 凹语言 作者。保留所有权利。
+
+import (
+	"encoding/binary"
+	"io"
+)
+
+type header struct {
+	sigBM:           [2]byte
+	fileSize:        u32
+	resverved:       [2]u16
+	pixOffset:       u32
+	dibHeaderSize:   u32
+	width:           u32
+	height:          u32
+	colorPlane:      u16
+	bpp:             u16
+	compression:     u32
+	imageSize:       u32
+	xPixelsPerMeter: u32
+	yPixelsPerMeter: u32
+	colorUse:        u32
+	colorImportant:  u32
+}
+
+func header.Write(w: io.Writer) => error {
+	b := make([]byte, 0, 64)
+
+	b = append(b, this.sigBM[:]...)
+	b = binary.LittleEndian.AppendUint32(b, this.fileSize)
+	b = binary.LittleEndian.AppendUint16(b, this.resverved[0])
+	b = binary.LittleEndian.AppendUint16(b, this.resverved[1])
+
+	b = binary.LittleEndian.AppendUint32(b, this.pixOffset)
+	b = binary.LittleEndian.AppendUint32(b, this.dibHeaderSize)
+	b = binary.LittleEndian.AppendUint32(b, this.width)
+	b = binary.LittleEndian.AppendUint32(b, this.height)
+
+	b = binary.LittleEndian.AppendUint16(b, this.colorPlane)
+	b = binary.LittleEndian.AppendUint16(b, this.bpp)
+
+	b = binary.LittleEndian.AppendUint32(b, this.compression)
+	b = binary.LittleEndian.AppendUint32(b, this.imageSize)
+	b = binary.LittleEndian.AppendUint32(b, this.xPixelsPerMeter)
+	b = binary.LittleEndian.AppendUint32(b, this.yPixelsPerMeter)
+	b = binary.LittleEndian.AppendUint32(b, this.colorUse)
+	b = binary.LittleEndian.AppendUint32(b, this.colorImportant)
+
+	_, err := w.Write(b)
+	return err
+}

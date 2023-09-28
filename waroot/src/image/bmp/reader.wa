@@ -6,26 +6,6 @@ import (
 	"image/color"
 )
 
-global ErrUnsupported = errors.New("bmp: unsupported BMP image")
-
-func DecodeConfig(d: []byte) => (config: image.Config, err: error) {
-	config, _, _, err = decodeConfig(d)
-	return
-}
-
-func Decode(data: []byte) => (image.Image, error) {
-	config, palette, offset, err := decodeConfig(data)
-	if err != nil {
-		return nil, err
-	}
-	if len(palette) > 0 {
-		return decodePaletted(data, config, palette, int(offset))
-	}
-
-	rgba, err := decodeRGBA(data, config, int(offset))
-	return rgba, err
-}
-
 func decodeConfig(data: []byte) => (
 	config: image.Config,
 	palette: []color.RGBA,

@@ -18,12 +18,6 @@
 // should look at more advanced solutions such as the encoding/gob
 // package or protocol buffers.
 
-import (
-//"errors"
-//"io"
-//"math"
-)
-
 // A ByteOrder specifies how to convert byte slices into
 // 16-, 32-, or 64-bit unsigned integers.
 type ByteOrder interface {

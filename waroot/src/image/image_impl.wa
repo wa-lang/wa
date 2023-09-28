@@ -6,10 +6,17 @@ global (
 	_ :Image = (*Gray)(nil)
 	_ :Image = (*RGBA)(nil)
 
-	_ :Image16bit = (*Gray16)(nil)
-	_ :Image16bit = (*RGBA64)(nil)
+	_ :RGBA64Image = (*Gray16)(nil)
+	_ :RGBA64Image = (*RGBA64)(nil)
 )
 
+func NewGray(r: Rectangle) => *Gray {
+	return &Gray{
+		Pix:    make([]u8, pixelBufferLength(1, r, "Gray")),
+		Stride: 1 * r.Dx(),
+		Rect:   r,
+	}
+}
 func Gray.Bounds() => Rectangle {
 	return this.Rect
 }
@@ -22,6 +29,13 @@ func Gray.At(x, y: int) => color.RGBA {
 	return color.RGBA{v, v, v, 0xFF}
 }
 
+func NewGray16(r: Rectangle) => *Gray16 {
+	return &Gray16{
+		Pix:    make([]uint8, pixelBufferLength(2, r, "Gray16")),
+		Stride: 2 * r.Dx(),
+		Rect:   r,
+	}
+}
 func Gray16.Bounds() => Rectangle {
 	return this.Rect
 }
@@ -36,7 +50,9 @@ func Gray16.At(x, y: int) => color.RGBA64 {
 
 func NewRGBA(r: Rectangle) => *RGBA {
 	return &RGBA{
-		// todo
+		Pix:    make([]u8, pixelBufferLength(4, r, "RGBA")),
+		Stride: 4 * r.Dx(),
+		Rect:   r,
 	}
 }
 
@@ -50,6 +66,14 @@ func RGBA.At(x, y: int) => color.RGBA {
 	i := this.PixOffset(x, y)
 	s := this.Pix[i : i+4 : i+4]
 	return color.RGBA{s[0], s[1], s[2], s[3]}
+}
+
+func NewRGBA64(r: Rectangle) => *RGBA64 {
+	return &RGBA64{
+		Pix:    make([]uint8, pixelBufferLength(8, r, "RGBA64")),
+		Stride: 8 * r.Dx(),
+		Rect:   r,
+	}
 }
 
 func RGBA64.Bounds() => Rectangle {
@@ -67,7 +91,10 @@ func RGBA64.At(x, y: int) => color.RGBA64 {
 
 func NewPaletted(r: Rectangle) => *Paletted {
 	return &Paletted{
-		// todo
+		Pix:     make([]u8, pixelBufferLength(1, r, "Paletted")),
+		Stride:  1 * r.Dx(),
+		Rect:    r,
+		Palette: p,
 	}
 }
 
@@ -80,5 +107,5 @@ func Paletted.PixOffset(x, y: int) => int {
 func Paletted.At(x, y: int) => color.RGBA {
 	i := this.PixOffset(x, y)
 	v := this.Pix[i]
-	return this.Paletted[v]
+	return this.Palette[v]
 }

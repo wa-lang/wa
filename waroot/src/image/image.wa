@@ -15,7 +15,7 @@ type Image interface {
 }
 
 // 图像接口(16bit)
-type Image16bit interface {
+type RGBA64Image interface {
 	Bounds() => Rectangle
 	PixOffset(x, y: int) => int
 	At(x, y: int) => color.RGBA64
@@ -49,9 +49,10 @@ type RGBA64 struct {
 	Rect:   Rectangle
 }
 
+// 调色板图像
 type Paletted struct {
-	Pix:      []u8
-	Stride:   int
-	Rect:     Rectangle
-	Paletted: []color.RGBA
+	Pix:     []u8
+	Stride:  int
+	Rect:    Rectangle
+	Palette: []color.RGBA
 }

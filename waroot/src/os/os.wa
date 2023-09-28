@@ -22,3 +22,27 @@ func Environ() => []string {
 func ReadFile(name: string) => ([]byte, error) {
 	return nil, nil
 }
+
+func WriteFile(name: string, data: []byte, mod: u32) => error {
+	panic("todo")
+}
+
+func Getwd => (dir: string, err: error) {
+	panic("todo")
+}
+
+func Mkdir(name: string, perm: u32) => error {
+	panic("todo")
+}
+
+func Remove(name: string) => error {
+	panic("todo")
+}
+
+func Rename(oldpath, newpath: string) => error {
+	panic("todo")
+}
+
+func Truncate(name: string, size: i64) => error {
+	panic("todo")
+}
