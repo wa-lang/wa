@@ -109,7 +109,7 @@ func decodePaletted(
 	palette: []color.RGBA,
 	dataOffset: int,
 ) => (image.Image, error) {
-	paletted := image.NewPaletted(image.Rect(0, 0, config.Width, config.Height))
+	paletted := image.NewPaletted(image.Rect(0, 0, config.Width, config.Height), palette)
 	// BMP images are stored bottom-up rather than top-down.
 	for y := config.Height - 1; y >= 0; y-- {
 		p := paletted.Pix[y*paletted.Stride : y*paletted.Stride+config.Width]

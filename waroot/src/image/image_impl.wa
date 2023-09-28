@@ -31,7 +31,7 @@ func Gray.At(x, y: int) => color.RGBA {
 
 func NewGray16(r: Rectangle) => *Gray16 {
 	return &Gray16{
-		Pix:    make([]uint8, pixelBufferLength(2, r, "Gray16")),
+		Pix:    make([]u16, pixelBufferLength(2, r, "Gray16")),
 		Stride: 2 * r.Dx(),
 		Rect:   r,
 	}
@@ -70,7 +70,7 @@ func RGBA.At(x, y: int) => color.RGBA {
 
 func NewRGBA64(r: Rectangle) => *RGBA64 {
 	return &RGBA64{
-		Pix:    make([]uint8, pixelBufferLength(8, r, "RGBA64")),
+		Pix:    make([]u16, pixelBufferLength(8, r, "RGBA64")),
 		Stride: 8 * r.Dx(),
 		Rect:   r,
 	}
@@ -89,7 +89,7 @@ func RGBA64.At(x, y: int) => color.RGBA64 {
 	return color.RGBA64{s[0], s[1], s[2], s[3]}
 }
 
-func NewPaletted(r: Rectangle) => *Paletted {
+func NewPaletted(r: Rectangle, p: []color.RGBA) => *Paletted {
 	return &Paletted{
 		Pix:     make([]u8, pixelBufferLength(1, r, "Paletted")),
 		Stride:  1 * r.Dx(),
