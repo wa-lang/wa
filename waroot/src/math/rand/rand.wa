@@ -161,19 +161,19 @@ func Rand.Intn(n: int) => int {
 	return int(r.Int63n(int64(n)))
 }
 
-// Float64 returns, as a float64, a pseudo-random number in the half-open interval [0.0,1.0).
-func Rand.Float64() => float64 {
+// Float64 returns, as a f64, a pseudo-random number in the half-open interval [0.0,1.0).
+func Rand.Float64() => f64 {
 	// A clearer, simpler implementation would be:
-	//	return float64(r.Int63n(1<<53)) / (1<<53)
+	//	return f64(r.Int63n(1<<53)) / (1<<53)
 	// However, Go 1 shipped with
-	//	return float64(r.Int63()) / (1 << 63)
+	//	return f64(r.Int63()) / (1 << 63)
 	// and we want to preserve that value stream.
 	//
 	// There is one bug in the value stream: r.Int63() may be so close
 	// to 1<<63 that the division rounds up to 1.0, and we've guaranteed
 	// that the result is always less than 1.0.
 	//
-	// We tried to fix this by mapping 1.0 back to 0.0, but since float64
+	// We tried to fix this by mapping 1.0 back to 0.0, but since f64
 	// values near 0 are much denser than near 1, mapping 1 to 0 caused
 	// a theoretically significant overshoot in the probability of returning 0.
 	// Instead of that, if we round up to 1, just try again.
@@ -181,7 +181,7 @@ func Rand.Float64() => float64 {
 	// will not observe it anyway.
 
 	for {
-		f := float64(this.Int63()) / (1 << 63)
+		f := f64(this.Int63()) / (1 << 63)
 		if f == 1 {
 			continue // resample; this branch is taken O(never)
 		}
@@ -335,9 +335,9 @@ func Int31n(n: int32) => int32 { return globalRand.Int31n(n) }
 // It panics if n <= 0.
 func Intn(n: int) => int { return globalRand.Intn(n) }
 
-// Float64 returns, as a float64, a pseudo-random number in the half-open interval [0.0,1.0)
+// Float64 returns, as a f64, a pseudo-random number in the half-open interval [0.0,1.0)
 // from the default Source.
-func Float64() => float64 { return globalRand.Float64() }
+func Float64() => f64 { return globalRand.Float64() }
 
 // Float32 returns, as a float32, a pseudo-random number in the half-open interval [0.0,1.0)
 // from the default Source.
@@ -358,3 +358,22 @@ func Shuffle(n: int, swap: func(i, j: int)) { globalRand.Shuffle(n, swap) }
 //
 // Deprecated: For almost all use cases, crypto/rand.Read is more appropriate.
 func Read(p: []byte) => (n: int, err: error) { return globalRand.Read(p) }
+
+// NormFloat64 returns a normally distributed f64 in the range
+// [-math.MaxFloat64, +math.MaxFloat64] with
+// standard normal distribution (mean = 0, stddev = 1)
+// from the default Source.
+// To produce a different normal distribution, callers can
+// adjust the output using:
+//
+//	sample = NormFloat64() * desiredStdDev + desiredMean
+func NormFloat64() => f64 { return globalRand.NormFloat64() }
+
+// ExpFloat64 returns an exponentially distributed f64 in the range
+// (0, +math.MaxFloat64] with an exponential distribution whose rate parameter
+// (lambda) is 1 and whose mean is 1/lambda (1) from the default Source.
+// To produce a distribution with a different rate parameter,
+// callers can adjust the output using:
+//
+//	sample = ExpFloat64() / desiredRateParameter
+func ExpFloat64() => f64 { return globalRand.ExpFloat64() }
