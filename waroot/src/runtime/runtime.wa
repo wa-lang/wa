@@ -146,6 +146,9 @@ func free(ap: u32) {
 #wa:linkname $wa.runtime.i32_ref_to_ptr
 func I32_ref_to_ptr(t: *i32) => i32
 
+#wa:linkname $wa.runtime.i64_ref_to_ptr
+func I64_ref_to_ptr(t: *i64) => i32
+
 #wa:linkname $wa.runtime.slice_to_ptr
 func U8_slice_to_ptr(t: []byte) => i32
 

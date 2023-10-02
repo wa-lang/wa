@@ -1,7 +1,66 @@
 // 版权 @2022 凹语言 作者。保留所有权利。
 
+#wa:linkname $wa.runtime.i64_ref_to_ptr
+func refToPtr_i64(t: *i64) => i32
+
 #wa:import wasi_snapshot_preview1 clock_res_get
-func ClockResGet(id: i32, result_resolution: i32) => (errno: i32)
+func clock_res_get(id: i32, result_resolution: i32) => (errno: i32)
 
 #wa:import wasi_snapshot_preview1 clock_time_get
-func ClockTimeGet(id: i32, precision: i64, result_timestamp: i32) => (errno: i32)
+func clock_time_get(id: i32, precision: i64, result_timestamp: i32) => (errno: i32)
+
+type timestamp = u64
+
+type clockid = i32
+
+const (
+	clockRealtime :clockid = iota
+	clockMonotonic
+	clockProcessCPUTimeID
+	clockThreadCPUTimeID
+)
+
+type Timespec struct {
+	Sec:  int64
+	Nsec: int64
+}
+
+func Timespec.timestamp => timestamp {
+	return timestamp(this.Sec*1e9) + timestamp(this.Nsec)
+}
+
+func Timespec.setTimestamp(t: timestamp) {
+	this.Sec = int64(t / 1e9)
+	this.Nsec = int64(t % 1e9)
+}
+
+type Timeval struct {
+	Sec:  int64
+	Usec: int64
+}
+
+func Timeval.timestamp => timestamp {
+	return timestamp(this.Sec*1e9) + timestamp(this.Usec*1e3)
+}
+
+func Timeval.setTimestamp(t: timestamp) {
+	this.Sec = int64(t / 1e9)
+	this.Usec = int64((t % 1e9) / 1e3)
+}
+
+func setTimespec(sec, nsec: int64) => Timespec {
+	return Timespec{Sec: sec, Nsec: nsec}
+}
+
+func setTimeval(sec, usec: int64) => Timeval {
+	return Timeval{Sec: sec, Usec: usec}
+}
+
+func Gettimeofday(tv: *Timeval) => error {
+	time: i64
+	if errno := clock_time_get(clockRealtime, 1e3, refToPtr_i64(&time)); errno != 0 {
+		return &Errno{errno}
+	}
+	tv.setTimestamp(timestamp(time))
+	return nil
+}
