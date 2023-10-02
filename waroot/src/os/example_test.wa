@@ -1,0 +1,11 @@
+// 版权 @2023 凹语言 作者。保留所有权利。
+
+func ExampleTest {
+	for i, s := range Args {
+		println("arg:", i, s)
+	}
+
+	for i, s := range Environ() {
+		println("env:", i, s)
+	}
+}

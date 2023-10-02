@@ -1,0 +1,87 @@
+// 版权 @2023 凹语言 作者。保留所有权利。
+
+#wa:linkname $wa.runtime.i32_ref_to_ptr
+func wa_i32_ref_to_ptr(p: *i32) => i32
+
+#wa:linkname $wa.runtime.i64_ref_to_ptr
+func wa_i64_ref_to_ptr(p: *i64) => i32
+
+#wa:linkname $wa.runtime.string_to_ptr
+func wa_string_to_ptr(s: string) => i32
+
+#wa:linkname $wa.runtime.slice_to_ptr
+func wa_bytes_to_ptr(s: []byte) => i32
+
+#wa:linkname $wa.runtime.slice_to_ptr
+func wa_i32_slice_to_ptr(s: []i32) => i32
+
+#wa:import wasi_snapshot_preview1 args_get
+func wasi_args_get(result_argv: i32, result_argv_buf: i32) => (errno: i32)
+
+#wa:import wasi_snapshot_preview1 args_sizes_get
+func wasi_args_sizes_get(result_argc: i32, result_argv_len: i32) => (errno: i32)
+
+#wa:import wasi_snapshot_preview1 environ_get
+func wasi_environ_get(result_environv: i32, result_environv_buf: i32) => (errno: i32)
+
+#wa:import wasi_snapshot_preview1 environ_sizes_get
+func wasi_environ_sizes_get(result_environc: i32, result_environv_len: i32) => (errno: i32)
+
+#wa:linkname $runtime.procExit
+func exit(code: i32)
+
+func waenvs {
+	argc: i32
+	argvBufLen: i32
+
+	wasi_args_sizes_get(wa_i32_ref_to_ptr(&argc), wa_i32_ref_to_ptr(&argvBufLen))
+	if argc == 0 {
+		panic("wasi_args_sizes_get failed")
+	}
+
+	argslice = make([]string, argc)
+	if argc > 0 {
+		argv := make([]i32, argc)
+		argvBuf := make([]byte, argvBufLen)
+
+		if wasi_args_get(wa_i32_slice_to_ptr(argv), wa_bytes_to_ptr(argvBuf)) != 0 {
+			panic("wasi_args_get failed")
+		}
+
+		argvBufPtr := wa_bytes_to_ptr(argvBuf)
+		for i := range argslice {
+			start := argv[i] - argvBufPtr
+			end := start
+			for argvBuf[end] != 0 {
+				end++
+			}
+			argslice[i] = string(argvBuf[start:end])
+		}
+	}
+
+	// environment
+	environCount: i32
+	environBufLen: i32
+	if wasi_environ_sizes_get(wa_i32_ref_to_ptr(&environCount), wa_i32_ref_to_ptr(&environBufLen)) != 0 {
+		panic("wasi_environ_sizes_get failed")
+	}
+
+	envs = make([]string, environCount)
+	if environCount > 0 {
+		environ := make([]i32, environCount)
+		environBuf := make([]byte, environBufLen)
+		if wasi_environ_get(wa_i32_slice_to_ptr(environ), wa_bytes_to_ptr(environBuf)) != 0 {
+			panic("wasi_environ_get failed")
+		}
+
+		environBufPtr := wa_bytes_to_ptr(environBuf)
+		for i := range envs {
+			start := environ[i] - environBufPtr
+			end := start
+			for environBuf[end] != 0 {
+				end++
+			}
+			envs[i] = string(environBuf[start:end])
+		}
+	}
+}
