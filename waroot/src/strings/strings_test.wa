@@ -1,0 +1,445 @@
+// 版权 @2023 凹语言 作者。保留所有权利。
+
+import (
+	"unicode/ctypes"
+)
+
+func eq(a, b: []string) => bool {
+	if len(a) != len(b) {
+		return false
+	}
+	for i := 0; i < len(a); i++ {
+		if a[i] != b[i] {
+			return false
+		}
+	}
+	return true
+}
+
+global abcd = "abcd"
+global faces = "☺☻☹"
+global commas = "1,2,3,4"
+global dots = "1....2....3....4"
+
+type IndexTest struct {
+	s:   string
+	sep: string
+	out: int
+}
+
+global indexTests = []IndexTest{
+	{"", "", 0},
+	{"", "a", -1},
+	{"", "foo", -1},
+	{"fo", "foo", -1},
+	{"foo", "foo", 0},
+	{"oofofoofooo", "f", 2},
+	{"oofofoofooo", "foo", 4},
+	{"barfoobarfoo", "foo", 3},
+	{"foo", "", 0},
+	{"foo", "o", 1},
+	{"abcABCabc", "A", 3},
+	{"jrzm6jjhorimglljrea4w3rlgosts0w2gia17hno2td4qd1jz", "jz", 47},
+	{"ekkuk5oft4eq0ocpacknhwouic1uua46unx12l37nioq9wbpnocqks6", "ks6", 52},
+	{"999f2xmimunbuyew5vrkla9cpwhmxan8o98ec", "98ec", 33},
+	{"9lpt9r98i04k8bz6c6dsrthb96bhi", "96bhi", 24},
+	{"55u558eqfaod2r2gu42xxsu631xf0zobs5840vl", "5840vl", 33},
+	// cases with one byte strings - test special case in Index()
+	{"", "a", -1},
+	{"x", "a", -1},
+	{"x", "x", 0},
+	{"abc", "a", 0},
+	{"abc", "b", 1},
+	{"abc", "c", 2},
+	{"abc", "x", -1},
+	// test special cases in Index() for short strings
+	{"", "ab", -1},
+	{"bc", "ab", -1},
+	{"ab", "ab", 0},
+	{"xab", "ab", 1},
+	{"xab"[:2], "ab", -1},
+	{"", "abc", -1},
+	{"xbc", "abc", -1},
+	{"abc", "abc", 0},
+	{"xabc", "abc", 1},
+	{"xabc"[:3], "abc", -1},
+	{"xabxc", "abc", -1},
+	{"", "abcd", -1},
+	{"xbcd", "abcd", -1},
+	{"abcd", "abcd", 0},
+	{"xabcd", "abcd", 1},
+	{"xyabcd"[:5], "abcd", -1},
+	{"xbcqq", "abcqq", -1},
+	{"abcqq", "abcqq", 0},
+	{"xabcqq", "abcqq", 1},
+	{"xyabcqq"[:6], "abcqq", -1},
+	{"xabxcqq", "abcqq", -1},
+	{"xabcqxq", "abcqq", -1},
+	{"", "01234567", -1},
+	{"32145678", "01234567", -1},
+	{"01234567", "01234567", 0},
+	{"x01234567", "01234567", 1},
+	{"x0123456x01234567", "01234567", 9},
+	{"xx01234567"[:9], "01234567", -1},
+	{"", "0123456789", -1},
+	{"3214567844", "0123456789", -1},
+	{"0123456789", "0123456789", 0},
+	{"x0123456789", "0123456789", 1},
+	{"x012345678x0123456789", "0123456789", 11},
+	{"xyz0123456789"[:12], "0123456789", -1},
+	{"x01234567x89", "0123456789", -1},
+	{"", "0123456789012345", -1},
+	{"3214567889012345", "0123456789012345", -1},
+	{"0123456789012345", "0123456789012345", 0},
+	{"x0123456789012345", "0123456789012345", 1},
+	{"x012345678901234x0123456789012345", "0123456789012345", 17},
+	{"", "01234567890123456789", -1},
+	{"32145678890123456789", "01234567890123456789", -1},
+	{"01234567890123456789", "01234567890123456789", 0},
+	{"x01234567890123456789", "01234567890123456789", 1},
+	{"x0123456789012345678x01234567890123456789", "01234567890123456789", 21},
+	{"xyz01234567890123456789"[:22], "01234567890123456789", -1},
+	{"", "0123456789012345678901234567890", -1},
+	{"321456788901234567890123456789012345678911", "0123456789012345678901234567890", -1},
+	{"0123456789012345678901234567890", "0123456789012345678901234567890", 0},
+	{"x0123456789012345678901234567890", "0123456789012345678901234567890", 1},
+	{"x012345678901234567890123456789x0123456789012345678901234567890", "0123456789012345678901234567890", 32},
+	{"xyz0123456789012345678901234567890"[:33], "0123456789012345678901234567890", -1},
+	{"", "01234567890123456789012345678901", -1},
+	{"32145678890123456789012345678901234567890211", "01234567890123456789012345678901", -1},
+	{"01234567890123456789012345678901", "01234567890123456789012345678901", 0},
+	{"x01234567890123456789012345678901", "01234567890123456789012345678901", 1},
+	{"x0123456789012345678901234567890x01234567890123456789012345678901", "01234567890123456789012345678901", 33},
+	{"xyz01234567890123456789012345678901"[:34], "01234567890123456789012345678901", -1},
+	{"xxxxxx012345678901234567890123456789012345678901234567890123456789012", "012345678901234567890123456789012345678901234567890123456789012", 6},
+	{"", "0123456789012345678901234567890123456789", -1},
+	{"xx012345678901234567890123456789012345678901234567890123456789012", "0123456789012345678901234567890123456789", 2},
+	{"xx012345678901234567890123456789012345678901234567890123456789012"[:41], "0123456789012345678901234567890123456789", -1},
+	{"xx012345678901234567890123456789012345678901234567890123456789012", "0123456789012345678901234567890123456xxx", -1},
+	{"xx0123456789012345678901234567890123456789012345678901234567890120123456789012345678901234567890123456xxx", "0123456789012345678901234567890123456xxx", 65},
+	// test fallback to Rabin-Karp.
+	{"oxoxoxoxoxoxoxoxoxoxoxoy", "oy", 22},
+	{"oxoxoxoxoxoxoxoxoxoxoxox", "oy", -1},
+}
+
+global lastIndexTests = []IndexTest{
+	{"", "", 0},
+	{"", "a", -1},
+	{"", "foo", -1},
+	{"fo", "foo", -1},
+	{"foo", "foo", 0},
+	{"foo", "f", 0},
+	{"oofofoofooo", "f", 7},
+	{"oofofoofooo", "foo", 7},
+	{"barfoobarfoo", "foo", 9},
+	{"foo", "", 3},
+	{"foo", "o", 2},
+	{"abcABCabc", "A", 3},
+	{"abcABCabc", "a", 6},
+}
+
+global indexAnyTests = []IndexTest{
+	{"", "", -1},
+	{"", "a", -1},
+	{"", "abc", -1},
+	{"a", "", -1},
+	{"a", "a", 0},
+	//{"\x80", "\xffb", 0}, // todo(chai2010)
+	{"aaa", "a", 0},
+	{"abc", "xyz", -1},
+	{"abc", "xcz", 2},
+	{"ab☺c", "x☺yz", 2},
+	{"a☺b☻c☹d", "cx", len("a☺b☻")},
+	{"a☺b☻c☹d", "uvw☻xyz", len("a☺b")},
+	{"aRegExp*", ".(|)*+?^$[]", 7},
+	{dots + dots + dots, " ", -1},
+	//{"012abcba210", "\xffb", 4},
+	//{"012\x80bcb\x80210", "\xffb", 3},
+	//{"0123456\xcf\x80abc", "\xcfb\x80", 10},
+}
+
+global lastIndexAnyTests = []IndexTest{
+	{"", "", -1},
+	{"", "a", -1},
+	{"", "abc", -1},
+	{"a", "", -1},
+	{"a", "a", 0},
+	//{"\x80", "\xffb", 0},
+	{"aaa", "a", 2},
+	{"abc", "xyz", -1},
+	{"abc", "ab", 1},
+	{"ab☺c", "x☺yz", 2},
+	{"a☺b☻c☹d", "cx", len("a☺b☻")},
+	{"a☺b☻c☹d", "uvw☻xyz", len("a☺b")},
+	{"a.RegExp*", ".(|)*+?^$[]", 8},
+	{dots + dots + dots, " ", -1},
+	//{"012abcba210", "\xffb", 6},
+	//{"012\x80bcb\x80210", "\xffb", 7},
+	//{"0123456\xcf\x80abc", "\xcfb\x80", 10},
+}
+
+// Execute f on each test case.  funcName should be the name of f; it's used
+// in failure reports.
+func runIndexTests(f: func(s, sep: string) => int, funcName: string, testCases: []IndexTest) {
+	for _, test := range testCases {
+		actual := f(test.s, test.sep)
+		if actual != test.out {
+			assert(false)
+			//t.Errorf("%s(%q,%q) = %v; want %v", funcName, test.s, test.sep, actual, test.out)
+		}
+	}
+}
+
+func TestIndex {
+	runIndexTests(Index, "Index", indexTests)
+}
+
+func TestLastIndex {
+	runIndexTests(LastIndex, "LastIndex", lastIndexTests)
+}
+
+func TestIndexAny {
+	runIndexTests(IndexAny, "IndexAny", indexAnyTests)
+}
+
+func TestLastIndexAny {
+	runIndexTests(LastIndexAny, "LastIndexAny", lastIndexAnyTests)
+}
+
+func TestIndexByte {
+	for _, tt := range indexTests {
+		if len(tt.sep) != 1 {
+			continue
+		}
+		pos := IndexByte(tt.s, tt.sep[0])
+		if pos != tt.out {
+			assert(false)
+			//t.Errorf(`IndexByte(%q, %q) = %v; want %v`, tt.s, tt.sep[0], pos, tt.out)
+		}
+	}
+}
+
+func TestLastIndexByte {
+	testCases := []IndexTest{
+		{"", "q", -1},
+		{"abcdef", "q", -1},
+		{"abcdefabcdef", "a", len("abcdef")},      // something in the middle
+		{"abcdefabcdef", "f", len("abcdefabcde")}, // last byte
+		{"zabcdefabcdef", "z", 0},                 // first byte
+		{"a☺b☻c☹d", "b", len("a☺")},               // non-ascii
+	}
+	for _, test := range testCases {
+		actual := LastIndexByte(test.s, test.sep[0])
+		if actual != test.out {
+			assert(false)
+			//t.Errorf("LastIndexByte(%q,%c) = %v; want %v", test.s, test.sep[0], actual, test.out)
+		}
+	}
+}
+
+func simpleIndex(s, sep: string) => int {
+	n := len(sep)
+	for i := n; i <= len(s); i++ {
+		if s[i-n:i] == sep {
+			return i - n
+		}
+	}
+	return -1
+}
+
+func _TestIndexRandom {
+	// todo
+}
+
+func TestIndexRune {
+	tests := []struct {
+		in:   string
+		rune: rune
+		want: int
+	}{
+		{"", 'a', -1},
+		{"", '☺', -1},
+		{"foo", '☹', -1},
+		{"foo", 'o', 1},
+		{"foo☺bar", '☺', 3},
+		{"foo☺☻☹bar", '☹', 9},
+		{"a A x", 'A', 2},
+		{"some_text=some_value", '=', 9},
+		{"☺a", 'a', 3},
+		{"a☻☺b", '☺', 4},
+
+		// RuneError should match any invalid UTF-8 byte sequence.
+		//{"�", '�', 0},
+		//{"\xff", '�', 0},
+		//{"☻x�", '�', len("☻x")},
+		//{"☻x\xe2\x98", '�', len("☻x")},
+		//{"☻x\xe2\x98�", '�', len("☻x")},
+		//{"☻x\xe2\x98x", '�', len("☻x")},
+
+		// Invalid rune values should never match.
+		//{"a☺b☻c☹d\xe2\x98�\xff�\xed\xa0\x80", -1, -1},
+		//{"a☺b☻c☹d\xe2\x98�\xff�\xed\xa0\x80", 0xD800, -1}, // Surrogate pair
+		//{"a☺b☻c☹d\xe2\x98�\xff�\xed\xa0\x80", utf8.MaxRune + 1, -1},
+	}
+	for _, tt := range tests {
+		if got := IndexRune(tt.in, tt.rune); got != tt.want {
+			assert(false)
+			//t.Errorf("IndexRune(%q, %d) = %v; want %v", tt.in, tt.rune, got, tt.want)
+		}
+	}
+}
+
+type SplitTest struct {
+	s:   string
+	sep: string
+	n:   int
+	a:   []string
+}
+
+global splittests = []SplitTest{
+	{"", "", -1, []string{}},
+	//{abcd, "", 2, []string{"a", "bcd"}},
+	//{abcd, "", 4, []string{"a", "b", "c", "d"}},
+	//{abcd, "", -1, []string{"a", "b", "c", "d"}},
+	//{faces, "", -1, []string{"☺", "☻", "☹"}},
+	//{faces, "", 3, []string{"☺", "☻", "☹"}},
+	//{faces, "", 17, []string{"☺", "☻", "☹"}},
+	//{"☺�☹", "", -1, []string{"☺", "�", "☹"}},
+	//{abcd, "a", 0, nil},
+	//{abcd, "a", -1, []string{"", "bcd"}},
+	//{abcd, "z", -1, []string{"abcd"}},
+	//{commas, ",", -1, []string{"1", "2", "3", "4"}},
+	//{dots, "...", -1, []string{"1", ".2", ".3", ".4"}},
+	//{faces, "☹", -1, []string{"☺☻", ""}},
+	//{faces, "~", -1, []string{faces}},
+	//{"1 2 3 4", " ", 3, []string{"1", "2", "3 4"}},
+	//{"1 2", " ", 3, []string{"1", "2"}},
+	//{"", "T", math.MaxInt / 4, []string{""}},
+	//{"\xff-\xff", "", -1, []string{"\xff", "-", "\xff"}},
+	//{"\xff-\xff", "-", -1, []string{"\xff", "\xff"}},
+}
+
+func _TestSplit {
+	for _, tt := range splittests {
+		a := SplitN(tt.s, tt.sep, tt.n)
+		if !eq(a, tt.a) {
+			assert(false)
+			//t.Errorf("Split(%q, %q, %d) = %v; want %v", tt.s, tt.sep, tt.n, a, tt.a)
+			continue
+		}
+		if tt.n == 0 {
+			continue
+		}
+		s := Join(a, tt.sep)
+		if s != tt.s {
+			assert(false)
+			//t.Errorf("Join(Split(%q, %q, %d), %q) = %q", tt.s, tt.sep, tt.n, tt.sep, s)
+		}
+		if tt.n < 0 {
+			//b := Split(tt.s, tt.sep)
+			//if !reflect.DeepEqual(a, b) {
+			//	assert(false)
+			//	//t.Errorf("Split disagrees with SplitN(%q, %q, %d) = %v; want %v", tt.s, tt.sep, tt.n, b, a)
+			//}
+		}
+	}
+}
+
+global splitaftertests = []SplitTest{
+	{abcd, "a", -1, []string{"a", "bcd"}},
+	{abcd, "z", -1, []string{"abcd"}},
+	{abcd, "", -1, []string{"a", "b", "c", "d"}},
+	{commas, ",", -1, []string{"1,", "2,", "3,", "4"}},
+	{dots, "...", -1, []string{"1...", ".2...", ".3...", ".4"}},
+	{faces, "☹", -1, []string{"☺☻☹", ""}},
+	{faces, "~", -1, []string{faces}},
+	{faces, "", -1, []string{"☺", "☻", "☹"}},
+	{"1 2 3 4", " ", 3, []string{"1 ", "2 ", "3 4"}},
+	{"1 2 3", " ", 3, []string{"1 ", "2 ", "3"}},
+	{"1 2", " ", 3, []string{"1 ", "2"}},
+	{"123", "", 2, []string{"1", "23"}},
+	{"123", "", 17, []string{"1", "2", "3"}},
+}
+
+func _TestSplitAfter {
+	for _, tt := range splitaftertests {
+		a := SplitAfterN(tt.s, tt.sep, tt.n)
+		if !eq(a, tt.a) {
+			assert(false)
+			//t.Errorf(`Split(%q, %q, %d) = %v; want %v`, tt.s, tt.sep, tt.n, a, tt.a)
+			continue
+		}
+		s := Join(a, "")
+		if s != tt.s {
+			assert(false)
+			//t.Errorf(`Join(Split(%q, %q, %d), %q) = %q`, tt.s, tt.sep, tt.n, tt.sep, s)
+		}
+		if tt.n < 0 {
+			//b := SplitAfter(tt.s, tt.sep)
+			//if !reflect.DeepEqual(a, b) {
+			//	assert(false)
+			//	//t.Errorf("SplitAfter disagrees with SplitAfterN(%q, %q, %d) = %v; want %v", tt.s, tt.sep, tt.n, b, a)
+			//}
+		}
+	}
+}
+
+type FieldsTest struct {
+	s: string
+	a: []string
+}
+
+global fieldstests = []FieldsTest{
+	{"", []string{}},
+	{" ", []string{}},
+	{" \t ", []string{}},
+	//{"\u2000", []string{}},
+	{"  abc  ", []string{"abc"}},
+	{"1 2 3 4", []string{"1", "2", "3", "4"}},
+	{"1  2  3  4", []string{"1", "2", "3", "4"}},
+	//{"1\t\t2\t\t3\t4", []string{"1", "2", "3", "4"}},
+	//{"1\u20002\u20013\u20024", []string{"1", "2", "3", "4"}},
+	//{"\u2000\u2001\u2002", []string{}},
+	//{"\n™\t™\n", []string{"™", "™"}},
+	//{"\n\u20001™2\u2000 \u2001 ™", []string{"1™2", "™"}},
+	//{"\n1\uFFFD \uFFFD2\u20003\uFFFD4", []string{"1\uFFFD", "\uFFFD2", "3\uFFFD4"}},
+	//{"1\xFF\u2000\xFF2\xFF \xFF", []string{"1\xFF", "\xFF2\xFF", "\xFF"}},
+	{faces, []string{faces}},
+}
+
+func TestFields {
+	for _, tt := range fieldstests {
+		a := Fields(tt.s)
+		if !eq(a, tt.a) {
+			assert(false)
+			//t.Errorf("Fields(%q) = %v; want %v", tt.s, a, tt.a)
+			continue
+		}
+	}
+}
+
+global FieldsFuncTests = []FieldsTest{
+	{"", []string{}},
+	{"XX", []string{}},
+	{"XXhiXXX", []string{"hi"}},
+	{"aXXbXXXcX", []string{"a", "b", "c"}},
+}
+
+func TestFieldsFunc {
+	for _, tt := range fieldstests {
+		a := FieldsFunc(tt.s, ctypes.IsSpace)
+		if !eq(a, tt.a) {
+			assert(false)
+			//t.Errorf("FieldsFunc(%q, unicode.IsSpace) = %v; want %v", tt.s, a, tt.a)
+			continue
+		}
+	}
+	pred := func(c: rune) => bool { return c == 'X' }
+	for _, tt := range FieldsFuncTests {
+		a := FieldsFunc(tt.s, pred)
+		if !eq(a, tt.a) {
+			assert(false)
+			//t.Errorf("FieldsFunc(%q) = %v, want %v", tt.s, a, tt.a)
+		}
+	}
+}
