@@ -3,5 +3,5 @@
 func ExampleTest {
 	now := Now()
 	hour, min, sec := now.Clock()
-	println(hour, min, sec)
+	println("UTC:", hour, min, sec)
 }
