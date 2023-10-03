@@ -136,6 +136,7 @@ var stdPkgs = []string{
 	"strings",         // API 完整
 	"syscall",         // API 完整
 	"text/template",   // 无
+	"time",            // ?
 	"unicode",         // API 部分
 	"unicode/ctypes",  // API 完整, 测试已覆盖
 	"unicode/utf8",    // API 完整, 测试已覆盖

@@ -1,0 +1,98 @@
+// 版权 @2023 凹语言 作者。保留所有权利。
+
+const (
+	secondsPerMinute = 60
+	secondsPerHour   = 60 * secondsPerMinute
+	secondsPerDay    = 24 * secondsPerHour
+	secondsPerWeek   = 7 * secondsPerDay
+	daysPer400Years  = 365*400 + 97
+	daysPer100Years  = 365*100 + 24
+	daysPer4Years    = 365*4 + 1
+)
+
+const (
+	// The unsigned zero year for internal calculations.
+	// Must be 1 mod 400, and times before it will not compute correctly,
+	// but otherwise can be changed at will.
+	absoluteZeroYear = -292277022399
+
+	// The year of the zero Time.
+	// Assumed by the unixToInternal computation below.
+	internalYear = 1
+
+	// Offsets to convert between internal and absolute or Unix times.
+	absoluteToInternal :i64 = (absoluteZeroYear - internalYear) * 365.2425 * secondsPerDay
+	internalToAbsolute      = -absoluteToInternal
+
+	unixToInternal :i64 = (1969*365 + 1969/4 - 1969/100 + 1969/400) * secondsPerDay
+	internalToUnix :i64 = -unixToInternal
+
+	wallToInternal :i64 = (1884*365 + 1884/4 - 1884/100 + 1884/400) * secondsPerDay
+)
+
+const (
+	hasMonotonic = 1 << 63
+	maxWall      = wallToInternal + (1<<33 - 1) // year 2157
+	minWall      = wallToInternal               // year 1885
+	nsecMask     = 1<<30 - 1
+	nsecShift    = 30
+)
+
+global startNano: i64 = nanotime() - 1
+
+type Time struct {
+	wall: u64
+	ext:  i64
+}
+
+// Now returns the current local time.
+func Now() => Time {
+	sec, nsec, mono := time_now()
+	mono -= startNano
+	sec += unixToInternal - minWall
+	if uint64(sec)>>33 != 0 {
+		// Seconds field overflowed the 33 bits available when
+		// storing a monotonic time. This will be true after
+		// March 16, 2157.
+		return Time{uint64(nsec), sec + minWall}
+	}
+	return Time{hasMonotonic | uint64(sec)<<nsecShift | uint64(nsec), mono}
+}
+
+// Clock returns the hour, minute, and second within the day specified by t.
+func Time.Clock => (hour, min, sec: int) {
+	return absClock(this.abs())
+}
+
+// abs returns the time t as an absolute time, adjusted by the zone offset.
+// It is called when computing a presentation property like Month or Hour.
+func Time.abs => uint64 {
+	sec := this.unixSec()
+	return uint64(sec + (unixToInternal + internalToAbsolute))
+}
+
+// nsec returns the time's nanoseconds.
+func Time.nsec => int32 {
+	return int32(this.wall & nsecMask)
+}
+
+// sec returns the time's seconds since Jan 1 year 1.
+func Time.sec => int64 {
+	if this.wall&hasMonotonic != 0 {
+		return wallToInternal + int64(this.wall<<1>>(nsecShift+1))
+	}
+	return this.ext
+}
+
+// unixSec returns the time's seconds since Jan 1 1970 (Unix time).
+func Time.unixSec => int64 { return this.sec() + internalToUnix }
+
+// absClock is like clock but operates on an absolute time.
+func absClock(abs: uint64) => (hour, min, sec: int) {
+	sec = int(abs % secondsPerDay)
+	hour = sec / secondsPerHour
+	sec -= hour * secondsPerHour
+	min = sec / secondsPerMinute
+	sec -= min * secondsPerMinute
+	return
+}
