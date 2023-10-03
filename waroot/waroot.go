@@ -103,6 +103,24 @@ func GetStdPkgList() []string {
 	return append([]string{}, stdPkgs...)
 }
 
+func GetStdPkgTestList() []string {
+	ss := make([]string, 0, len(stdPkgs))
+	for _, s := range stdPkgs {
+		switch {
+		case s == "builtin":
+			continue
+		case s == "runtime":
+			continue
+		case s == "syscall":
+			continue
+		case strings.HasPrefix(s, "syscall/"):
+			continue
+		}
+		ss = append(ss, s)
+	}
+	return ss
+}
+
 var stdPkgs = []string{
 	"apple",           // 测试已覆盖
 	"archive/txtar",   // API 完整
@@ -134,9 +152,12 @@ var stdPkgs = []string{
 	"sort",            // API 完整
 	"strconv",         // API 完整
 	"strings",         // API 完整
-	"syscall",         // API 完整
+	"syscall/arduino", // ?
+	"syscall/chrome",  // ?
+	"syscall/mvp",     // ?
+	"syscall/wasi",    // ?
 	"text/template",   // 无
-	"time",            // ?
+	"time",            // API 部分
 	"unicode",         // API 部分
 	"unicode/ctypes",  // API 完整, 测试已覆盖
 	"unicode/utf8",    // API 完整, 测试已覆盖
