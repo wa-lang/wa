@@ -77,7 +77,7 @@
 	call $runtime.free
 )
 
-(func $$wa.runtime.Block.Init (param $ptr i32) (param $item_count i32) (param $release_func i32) (param $item_size i32) (result i32) ;;result = ptr
+(func $runtime.Block.Init (param $ptr i32) (param $item_count i32) (param $release_func i32) (param $item_size i32) (result i32) ;;result = ptr
 	local.get $ptr
 
 	local.get $ptr
@@ -100,17 +100,31 @@
 	end
 )
 
-(func $$wa.runtime.DupI32 (param i32) (result i32 i32) ;;r0 = r1 = p0
+(func $runtime.Block.HeapAlloc (export "runtime.Block.HeapAlloc") (param $item_count i32) (param $release_func i32) (param $item_size i32) (result i32) ;;result = ptr_block
+  local.get $item_count
+  local.get $item_size
+  i32.mul
+  i32.const 16
+  i32.add
+  call $$waHeapAlloc
+
+  local.get $item_count
+  local.get $release_func
+  local.get $item_size
+  call $runtime.Block.Init
+)
+
+(func $runtime.DupI32 (param i32) (result i32 i32) ;;r0 = r1 = p0
 	local.get 0
 	local.get 0
 )
 
-(func $$wa.runtime.SwapI32 (param i32 i32) (result i32 i32) ;;r0 = p1, r1 = p0
+(func $runtime.SwapI32 (param i32 i32) (result i32 i32) ;;r0 = p1, r1 = p0
 	local.get 1
 	local.get 0
 )
 
-(func $$Retain (param $ptr i32) (result i32) ;;result = ptr
+(func $runtime.Block.Retain (export "runtime.Block.Retain") (param $ptr i32) (result i32) ;;result = ptr
 	local.get $ptr
 
 	local.get $ptr
@@ -124,7 +138,7 @@
 	end
 )
 
-(func $$Release (export "$runtime.Release") (param $ptr i32)
+(func $runtime.Block.Release (export "runtime.Block.Release") (param $ptr i32)
 	(local $ref_count i32)
 	(local $item_count i32)
 	(local $free_func i32)
@@ -219,4 +233,37 @@
 	local.get $d
 	local.get $l
 	i32.const 0
+)
+
+(func $runtime.i32_load (export "runtime.i32_load") (param $addr i32) (result i32)
+	local.get $addr
+	i32.load
+)
+
+(func $runtime.i32_store (export "runtime.i32_store") (param $addr i32) (param $v i32)
+	local.get $addr
+	local.get $v
+	i32.store
+)
+
+(func $runtime.f32_load (export "runtime.f32_load") (param $addr i32) (result f32)
+	local.get $addr
+	f32.load
+)
+
+(func $runtime.f32_store (export "runtime.f32_store") (param $addr i32) (param $v f32)
+	local.get $addr
+	local.get $v
+	f32.store
+)
+
+(func $runtime.f64_load (export "runtime.f64_load") (param $addr i32) (result f64)
+	local.get $addr
+	f64.load
+)
+
+(func $runtime.f64_store (export "runtime.f64_store") (param $addr i32) (param $v f64)
+	local.get $addr
+	local.get $v
+	f64.store
 )

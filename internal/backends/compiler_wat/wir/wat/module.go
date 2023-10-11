@@ -57,6 +57,11 @@ func (m *Module) String() string {
 	for _, g := range m.Globals {
 		sb.WriteString("(global $")
 		sb.WriteString(g.V.Name())
+		if len(g.NameExp) > 0 {
+			sb.WriteString(" (export \"")
+			sb.WriteString(g.NameExp)
+			sb.WriteString("\")")
+		}
 		if g.IsMut {
 			sb.WriteString(" (mut ")
 			sb.WriteString(g.V.Type().Name())

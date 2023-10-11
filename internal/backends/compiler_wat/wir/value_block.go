@@ -56,7 +56,7 @@ func (t *Block) onFree() int {
 
 	f.Insts = append(f.Insts, ptr.EmitPush()...)
 	f.Insts = append(f.Insts, wat.NewInstLoad(wat.U32{}, 0, 1))
-	f.Insts = append(f.Insts, wat.NewInstCall("$Release"))
+	f.Insts = append(f.Insts, wat.NewInstCall("runtime.Block.Release"))
 	f.Insts = append(f.Insts, ptr.EmitPush()...)
 	f.Insts = append(f.Insts, wat.NewInstConst(wat.U32{}, "0"))
 	f.Insts = append(f.Insts, wat.NewInstStore(wat.U32{}, 0, 1))
@@ -68,7 +68,7 @@ func (t *Block) onFree() int {
 func (t *Block) EmitLoadFromAddr(addr Value, offset int) (insts []wat.Inst) {
 	insts = append(insts, addr.EmitPush()...)
 	insts = append(insts, wat.NewInstLoad(wat.U32{}, offset, 1))
-	insts = append(insts, wat.NewInstCall("$Retain"))
+	insts = append(insts, wat.NewInstCall("runtime.Block.Retain"))
 	return
 }
 
@@ -101,7 +101,7 @@ func (t *Block) emitHeapAlloc(item_count Value) (insts []wat.Inst) {
 	insts = append(insts, item_count.EmitPush()...)                                       //item_count
 	insts = append(insts, NewConst(strconv.Itoa(t.Base.onFree()), t._uint).EmitPush()...) //free_method
 	insts = append(insts, NewConst(strconv.Itoa(t.Base.Size()), t._uint).EmitPush()...)   //item_size
-	insts = append(insts, wat.NewInstCall("$wa.runtime.Block.Init"))
+	insts = append(insts, wat.NewInstCall("runtime.Block.Init"))
 
 	return
 }
@@ -133,7 +133,7 @@ func (v *aBlock) EmitPush() (insts []wat.Inst) {
 		return
 	}
 
-	insts = append(insts, wat.NewInstCall("$Retain"))
+	insts = append(insts, wat.NewInstCall("runtime.Block.Retain"))
 	return
 }
 
@@ -153,7 +153,7 @@ func (v *aBlock) EmitRelease() (insts []wat.Inst) {
 		return
 	}
 	insts = append(insts, v.push(v.name))
-	insts = append(insts, wat.NewInstCall("$Release"))
+	insts = append(insts, wat.NewInstCall("runtime.Block.Release"))
 	return
 }
 
@@ -163,23 +163,23 @@ func (v *aBlock) emitStoreToAddr(addr Value, offset int) (insts []wat.Inst) {
 	//		return
 	//	}
 	//}
-	insts = append(insts, addr.EmitPush()...)                    // a
-	insts = append(insts, v.EmitPush()...)                       // a v
-	insts = append(insts, addr.EmitPush()...)                    // a v a
-	insts = append(insts, wat.NewInstLoad(wat.U32{}, offset, 1)) // a v o
-	insts = append(insts, wat.NewInstCall("$Release"))           // a v
+	insts = append(insts, addr.EmitPush()...)                       // a
+	insts = append(insts, v.EmitPush()...)                          // a v
+	insts = append(insts, addr.EmitPush()...)                       // a v a
+	insts = append(insts, wat.NewInstLoad(wat.U32{}, offset, 1))    // a v o
+	insts = append(insts, wat.NewInstCall("runtime.Block.Release")) // a v
 
 	insts = append(insts, wat.NewInstStore(toWatType(v.Type()), offset, 1))
 	return
 }
 
 func (v *aBlock) emitStore(offset int) (insts []wat.Inst) {
-	insts = append(insts, wat.NewInstCall("$wa.runtime.DupI32"))  // a
-	insts = append(insts, wat.NewInstCall("$wa.runtime.DupI32"))  // a a
-	insts = append(insts, v.EmitPush()...)                        // a a v
-	insts = append(insts, wat.NewInstCall("$wa.runtime.SwapI32")) // a v a
-	insts = append(insts, wat.NewInstLoad(wat.U32{}, offset, 1))  // a v o
-	insts = append(insts, wat.NewInstCall("$Release"))            // a v
+	insts = append(insts, wat.NewInstCall("runtime.DupI32"))        // a
+	insts = append(insts, wat.NewInstCall("runtime.DupI32"))        // a a
+	insts = append(insts, v.EmitPush()...)                          // a a v
+	insts = append(insts, wat.NewInstCall("$runtime.SwapI32"))      // a v a
+	insts = append(insts, wat.NewInstLoad(wat.U32{}, offset, 1))    // a v o
+	insts = append(insts, wat.NewInstCall("runtime.Block.Release")) // a v
 
 	insts = append(insts, wat.NewInstStore(toWatType(v.Type()), offset, 1))
 	return

@@ -119,4 +119,5 @@ type Global struct {
 	V         Value
 	IsMut     bool
 	InitValue string
+	NameExp   string
 }

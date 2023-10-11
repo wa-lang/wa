@@ -37,6 +37,7 @@ type Module struct {
 
 	globals []struct {
 		name     string
+		name_exp string
 		val      Value
 		init_val Value
 	}
@@ -147,14 +148,16 @@ func (m *Module) AddFunc(f *Function) {
 	}
 }
 
-func (m *Module) AddGlobal(name string, typ ValueType, is_pointer bool, ssa_value ssa.Value) Value {
+func (m *Module) AddGlobal(name_internal string, name_export string, typ ValueType, is_pointer bool, ssa_value ssa.Value) Value {
 	var v struct {
 		name     string
+		name_exp string
 		val      Value
 		init_val Value
 	}
 
-	v.name = name
+	v.name = name_internal
+	v.name_exp = name_export
 	if is_pointer {
 		t_ref, ok := typ.(*Ref)
 		if !ok {
@@ -163,13 +166,13 @@ func (m *Module) AddGlobal(name string, typ ValueType, is_pointer bool, ssa_valu
 		gptr := m.DataSeg.Alloc(t_ref.Base.Size(), t_ref.Base.align())
 		v.val = t_ref.newConstRef(gptr)
 	} else {
-		v.val = NewGlobal(name, typ)
+		v.val = NewGlobal(name_internal, typ)
 	}
 
 	if ssa_value != nil {
 		m.globalsMapByValue[ssa_value] = len(m.globals)
 	}
-	m.globalsMapByName[name] = len(m.globals)
+	m.globalsMapByName[name_internal] = len(m.globals)
 	m.globals = append(m.globals, v)
 	return v.val
 }
@@ -251,30 +254,53 @@ func (m *Module) ToWatModule() *wat.Module {
 			g_v := newValue(g.name, ValueKindGlobal, g.val.Type())
 			raw_v := g_v.raw()
 			raw_c := g.val.raw()
+			var raw_e []wat.Value
+			if len(g.name_exp) > 0 {
+				g_v_exp := newValue(g.name_exp, ValueKindGlobal, g.val.Type())
+				raw_e = g_v_exp.raw()
+			}
 			for i, r := range raw_v {
 				var wat_global wat.Global
 				wat_global.V = r
 				wat_global.IsMut = false
 				wat_global.InitValue = raw_c[i].Name()
+				if i < len(raw_e) {
+					wat_global.NameExp = raw_e[i].Name()
+				}
 				wat_module.Globals = append(wat_module.Globals, wat_global)
 			}
 		} else if g.init_val != nil {
 			raw_v := g.val.raw()
 			raw_c := g.init_val.raw()
+			var raw_e []wat.Value
+			if len(g.name_exp) > 0 {
+				g_v_exp := newValue(g.name_exp, ValueKindGlobal, g.val.Type())
+				raw_e = g_v_exp.raw()
+			}
 			for i, r := range raw_v {
 				var wat_global wat.Global
 				wat_global.V = r
 				wat_global.IsMut = true
 				wat_global.InitValue = raw_c[i].Name()
+				if i < len(raw_e) {
+					wat_global.NameExp = raw_e[i].Name()
+				}
 				wat_module.Globals = append(wat_module.Globals, wat_global)
 			}
-
 		} else {
 			raw_v := g.val.raw()
-			for _, r := range raw_v {
+			var raw_e []wat.Value
+			if len(g.name_exp) > 0 {
+				g_v_exp := newValue(g.name_exp, ValueKindGlobal, g.val.Type())
+				raw_e = g_v_exp.raw()
+			}
+			for i, r := range raw_v {
 				var wat_global wat.Global
 				wat_global.V = r
 				wat_global.IsMut = true
+				if i < len(raw_e) {
+					wat_global.NameExp = raw_e[i].Name()
+				}
 				wat_module.Globals = append(wat_module.Globals, wat_global)
 			}
 		}

@@ -174,10 +174,17 @@ func IsNumber(v Value) bool {
 }
 
 func GetFnMangleName(v interface{}) (internal string, external string) {
+	exported := true
 	switch f := v.(type) {
 	case *ssa.Function:
+		if f.Object() == nil || !f.Object().Exported() {
+			exported = false
+		}
 		if recv := f.Signature.Recv(); recv != nil {
 			internal, external = GetPkgMangleName(recv.Pkg().Path())
+			if external != "__main__" {
+				exported = false
+			}
 
 			internal += "."
 			external += "."
@@ -200,6 +207,9 @@ func GetFnMangleName(v interface{}) (internal string, external string) {
 		} else {
 			if f.Pkg != nil {
 				internal, external = GetPkgMangleName(f.Pkg.Pkg.Path())
+				if external != "__main__" {
+					exported = false
+				}
 			}
 		}
 		internal += "."
@@ -209,6 +219,9 @@ func GetFnMangleName(v interface{}) (internal string, external string) {
 
 	case *types.Func:
 		internal, external = GetPkgMangleName(f.Pkg().Path())
+		if !f.Exported() || external != "__main__" {
+			exported = false
+		}
 		sig := f.Type().(*types.Signature)
 		if recv := sig.Recv(); recv != nil {
 			internal += "."
@@ -236,6 +249,9 @@ func GetFnMangleName(v interface{}) (internal string, external string) {
 		external += GenSymbolName(f.Name())
 	}
 
+	if !exported {
+		external = ""
+	}
 	return internal, external
 }
 
