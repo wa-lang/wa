@@ -29,18 +29,13 @@ type Module struct {
 	fnSigs     []*FnSig
 	fnSigsName map[string]fnSigWrap
 
-	funcs     []*Function
+	Funcs     []*Function
 	funcs_map map[string]*Function
 
 	table     []string
 	table_map map[string]int
 
-	globals []struct {
-		name     string
-		name_exp string
-		val      Value
-		init_val Value
-	}
+	Globals           []Global
 	globalsMapByValue map[ssa.Value]int
 	globalsMapByName  map[string]int
 
@@ -143,21 +138,17 @@ func (m *Module) FindFunc(fn_name string) *Function {
 
 func (m *Module) AddFunc(f *Function) {
 	if m.FindFunc(f.InternalName) == nil {
-		m.funcs = append(m.funcs, f)
+		m.Funcs = append(m.Funcs, f)
 		m.funcs_map[f.InternalName] = f
 	}
 }
 
 func (m *Module) AddGlobal(name_internal string, name_export string, typ ValueType, is_pointer bool, ssa_value ssa.Value) Value {
-	var v struct {
-		name     string
-		name_exp string
-		val      Value
-		init_val Value
-	}
+	var v Global
 
-	v.name = name_internal
-	v.name_exp = name_export
+	v.Name = name_internal
+	v.Name_exp = name_export
+	v.Type = typ
 	if is_pointer {
 		t_ref, ok := typ.(*Ref)
 		if !ok {
@@ -170,10 +161,10 @@ func (m *Module) AddGlobal(name_internal string, name_export string, typ ValueTy
 	}
 
 	if ssa_value != nil {
-		m.globalsMapByValue[ssa_value] = len(m.globals)
+		m.globalsMapByValue[ssa_value] = len(m.Globals)
 	}
-	m.globalsMapByName[name_internal] = len(m.globals)
-	m.globals = append(m.globals, v)
+	m.globalsMapByName[name_internal] = len(m.Globals)
+	m.Globals = append(m.Globals, v)
 	return v.val
 }
 
@@ -183,7 +174,7 @@ func (m *Module) FindGlobalByName(name string) Value {
 		return nil
 	}
 
-	return m.globals[id].val
+	return m.Globals[id].val
 }
 
 func (m *Module) FindGlobalByValue(v ssa.Value) Value {
@@ -192,7 +183,7 @@ func (m *Module) FindGlobalByValue(v ssa.Value) Value {
 		return nil
 	}
 
-	return m.globals[id].val
+	return m.Globals[id].val
 }
 
 func (m *Module) SetGlobalInitValue(name string, val Value) {
@@ -201,7 +192,7 @@ func (m *Module) SetGlobalInitValue(name string, val Value) {
 		logger.Fatalf("Global not found:%s", name)
 	}
 
-	m.globals[id].init_val = val
+	m.Globals[id].init_val = val
 }
 
 func (m *Module) ToWatModule() *wat.Module {
@@ -245,18 +236,18 @@ func (m *Module) ToWatModule() *wat.Module {
 		wat_module.Tables.Elems = m.table
 	}
 
-	for _, f := range m.funcs {
+	for _, f := range m.Funcs {
 		wat_module.Funcs = append(wat_module.Funcs, f.ToWatFunc())
 	}
 
-	for _, g := range m.globals {
+	for _, g := range m.Globals {
 		if g.val.Kind() == ValueKindConst {
-			g_v := newValue(g.name, ValueKindGlobal, g.val.Type())
+			g_v := newValue(g.Name, ValueKindGlobal, g.val.Type())
 			raw_v := g_v.raw()
 			raw_c := g.val.raw()
 			var raw_e []wat.Value
-			if len(g.name_exp) > 0 {
-				g_v_exp := newValue(g.name_exp, ValueKindGlobal, g.val.Type())
+			if len(g.Name_exp) > 0 {
+				g_v_exp := newValue(g.Name_exp, ValueKindGlobal, g.val.Type())
 				raw_e = g_v_exp.raw()
 			}
 			for i, r := range raw_v {
@@ -273,8 +264,8 @@ func (m *Module) ToWatModule() *wat.Module {
 			raw_v := g.val.raw()
 			raw_c := g.init_val.raw()
 			var raw_e []wat.Value
-			if len(g.name_exp) > 0 {
-				g_v_exp := newValue(g.name_exp, ValueKindGlobal, g.val.Type())
+			if len(g.Name_exp) > 0 {
+				g_v_exp := newValue(g.Name_exp, ValueKindGlobal, g.val.Type())
 				raw_e = g_v_exp.raw()
 			}
 			for i, r := range raw_v {
@@ -290,8 +281,8 @@ func (m *Module) ToWatModule() *wat.Module {
 		} else {
 			raw_v := g.val.raw()
 			var raw_e []wat.Value
-			if len(g.name_exp) > 0 {
-				g_v_exp := newValue(g.name_exp, ValueKindGlobal, g.val.Type())
+			if len(g.Name_exp) > 0 {
+				g_v_exp := newValue(g.Name_exp, ValueKindGlobal, g.val.Type())
 				raw_e = g_v_exp.raw()
 			}
 			for i, r := range raw_v {
@@ -427,51 +418,51 @@ func (m *Module) buildTypeInfo(t ValueType) int {
 	_type.setFieldConstValue("name", NewConst(t.Named(), m.STRING))
 
 	switch typ := t.(type) {
-	case *tVoid:
+	case *Void:
 		typ.addr = m.DataSeg.Append(_type.Bin(), 8)
 		return typ.addr
 
-	case *tI8:
+	case *I8:
 		typ.addr = m.DataSeg.Append(_type.Bin(), 8)
 		return typ.addr
 
-	case *tU8:
+	case *U8:
 		typ.addr = m.DataSeg.Append(_type.Bin(), 8)
 		return typ.addr
 
-	case *tI16:
+	case *I16:
 		typ.addr = m.DataSeg.Append(_type.Bin(), 8)
 		return typ.addr
 
-	case *tU16:
+	case *U16:
 		typ.addr = m.DataSeg.Append(_type.Bin(), 8)
 		return typ.addr
 
-	case *tI32:
+	case *I32:
 		typ.addr = m.DataSeg.Append(_type.Bin(), 8)
 		return typ.addr
 
-	case *tU32:
+	case *U32:
 		typ.addr = m.DataSeg.Append(_type.Bin(), 8)
 		return typ.addr
 
-	case *tI64:
+	case *I64:
 		typ.addr = m.DataSeg.Append(_type.Bin(), 8)
 		return typ.addr
 
-	case *tU64:
+	case *U64:
 		typ.addr = m.DataSeg.Append(_type.Bin(), 8)
 		return typ.addr
 
-	case *tF32:
+	case *F32:
 		typ.addr = m.DataSeg.Append(_type.Bin(), 8)
 		return typ.addr
 
-	case *tF64:
+	case *F64:
 		typ.addr = m.DataSeg.Append(_type.Bin(), 8)
 		return typ.addr
 
-	case *tRune:
+	case *Rune:
 		typ.addr = m.DataSeg.Append(_type.Bin(), 8)
 		return typ.addr
 

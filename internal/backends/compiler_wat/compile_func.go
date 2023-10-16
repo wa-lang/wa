@@ -197,6 +197,8 @@ func (g *functionGenerator) genFunction(f *ssa.Function) *wir.Function {
 		} else {
 			wir_fn.ExternalName = external
 		}
+
+		wir_fn.ExplicitExported = (len(external) > 0)
 	}
 
 	rets := f.Signature.Results()

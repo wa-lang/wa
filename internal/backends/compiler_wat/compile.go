@@ -3,6 +3,7 @@
 package compiler_wat
 
 import (
+	"fmt"
 	"sort"
 	"strings"
 
@@ -10,6 +11,7 @@ import (
 	"wa-lang.org/wa/internal/backends/compiler_wat/wir/wat"
 	"wa-lang.org/wa/internal/config"
 	"wa-lang.org/wa/internal/loader"
+	"wa-lang.org/wa/internal/logger"
 	"wa-lang.org/wa/internal/ssa"
 	"wa-lang.org/wa/waroot"
 )
@@ -80,6 +82,8 @@ func (p *Compiler) Compile(prog *loader.Program, mainFunc string) (output string
 
 		p.module.AddFunc(&f)
 	}
+
+	//p.GenJsBind()
 
 	return p.module.ToWatModule().String(), nil
 }
@@ -190,4 +194,126 @@ func CompileFunc(f *ssa.Function, prog *loader.Program, tLib *typeLib, module *w
 		return
 	}
 	module.AddFunc(newFunctionGenerator(prog, module, tLib).genFunction(f))
+}
+
+func (p *Compiler) GenJsBind() {
+	for _, g := range p.module.Globals {
+		if len(g.Name_exp) == 0 {
+			continue
+		}
+
+		ref_type, ok := g.Type.(*wir.Ref)
+		if !ok {
+			logger.Fatalf("Exported global: %s should be *T.", g.Name)
+		}
+
+		switch typ := ref_type.Base.(type) {
+		case *wir.U8:
+			println("Name:", g.Name_exp, ", Type:", typ.Named())
+
+		case *wir.U16:
+			println("Name:", g.Name_exp, ", Type:", typ.Named())
+
+		case *wir.I32:
+			println("Name:", g.Name_exp, ", Type:", typ.Named())
+
+		case *wir.U32:
+			println("Name:", g.Name_exp, ", Type:", typ.Named())
+
+		case *wir.I64:
+			println("Name:", g.Name_exp, ", Type:", typ.Named())
+
+		case *wir.U64:
+			println("Name:", g.Name_exp, ", Type:", typ.Named())
+
+		case *wir.Bool:
+			println("Name:", g.Name_exp, ", Type:", typ.Named())
+
+		case *wir.Rune:
+			println("Name:", g.Name_exp, ", Type:", typ.Named())
+
+		case *wir.String:
+			println("Name:", g.Name_exp, ", Type:", typ.Named())
+
+		default:
+			//非基本类型，不导出
+		}
+	}
+
+	for _, f := range p.module.Funcs {
+		if !f.ExplicitExported {
+			continue
+		}
+
+		println("Function:", f.ExternalName)
+		for i, p := range f.Params {
+			switch typ := p.Type().(type) {
+			case *wir.U8:
+				fmt.Printf("\tParam[%d] - Name: %s, Type: %s\n", i, p.Name(), typ.Named())
+
+			case *wir.U16:
+				fmt.Printf("\tParam[%d] - Name: %s, Type: %s\n", i, p.Name(), typ.Named())
+
+			case *wir.I32:
+				fmt.Printf("\tParam[%d] - Name: %s, Type: %s\n", i, p.Name(), typ.Named())
+
+			case *wir.U32:
+				fmt.Printf("\tParam[%d] - Name: %s, Type: %s\n", i, p.Name(), typ.Named())
+
+			case *wir.I64:
+				fmt.Printf("\tParam[%d] - Name: %s, Type: %s\n", i, p.Name(), typ.Named())
+
+			case *wir.U64:
+				fmt.Printf("\tParam[%d] - Name: %s, Type: %s\n", i, p.Name(), typ.Named())
+
+			case *wir.Bool:
+				fmt.Printf("\tParam[%d] - Name: %s, Type: %s\n", i, p.Name(), typ.Named())
+
+			case *wir.Rune:
+				fmt.Printf("\tParam[%d] - Name: %s, Type: %s\n", i, p.Name(), typ.Named())
+
+			case *wir.String:
+				fmt.Printf("\tParam[%d] - Name: %s, Type: %s\n", i, p.Name(), typ.Named())
+
+			default:
+				//非基本类型，不导出
+			}
+		}
+
+		for i, r := range f.Results {
+			switch typ := r.(type) {
+			case *wir.U8:
+				fmt.Printf("\tRet[%d] - Type: %s\n", i, typ.Named())
+
+			case *wir.U16:
+				fmt.Printf("\tRet[%d] - Type: %s\n", i, typ.Named())
+
+			case *wir.I32:
+				fmt.Printf("\tRet[%d] - Type: %s\n", i, typ.Named())
+
+			case *wir.U32:
+				fmt.Printf("\tRet[%d] - Type: %s\n", i, typ.Named())
+
+			case *wir.I64:
+				fmt.Printf("\tRet[%d] - Type: %s\n", i, typ.Named())
+
+			case *wir.U64:
+				fmt.Printf("\tRet[%d] - Type: %s\n", i, typ.Named())
+
+			case *wir.Bool:
+				fmt.Printf("\tRet[%d] - Type: %s\n", i, typ.Named())
+
+			case *wir.Rune:
+				fmt.Printf("\tRet[%d] - Type: %s\n", i, typ.Named())
+
+			case *wir.String:
+				fmt.Printf("\tRet[%d] - Type: %s\n", i, typ.Named())
+
+			default:
+				//非基本类型，不导出
+			}
+
+		}
+
+	}
 }

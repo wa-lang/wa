@@ -166,7 +166,7 @@ func (m *Module) GenValueType(from types.Type) ValueType {
 
 func IsNumber(v Value) bool {
 	switch v.Type().(type) {
-	case *tI8, *tU8, *tI16, *tU16, *tI32, *tU32, *tI64, *tU64, *tF32, *tF64, *tBool:
+	case *I8, *U8, *I16, *U16, *I32, *U32, *I64, *U64, *F32, *F64, *Bool:
 		return true
 	}
 

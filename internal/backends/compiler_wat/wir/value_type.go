@@ -39,22 +39,22 @@ const (
 
 func toWatType(t ValueType) wat.ValueType {
 	switch t.(type) {
-	case *tI32, *tRune: //Todo: *tI8, *tI16*
+	case *I32, *Rune: //Todo: *tI8, *tI16*
 		return wat.I32{}
 
-	case *tU32, *tU8, *tU16, *tBool:
+	case *U32, *U8, *U16, *Bool:
 		return wat.U32{}
 
-	case *tI64:
+	case *I64:
 		return wat.I64{}
 
-	case *tU64:
+	case *U64:
 		return wat.U64{}
 
-	case *tF32:
+	case *F32:
 		return wat.F32{}
 
-	case *tF64:
+	case *F64:
 		return wat.F64{}
 
 	case *Ptr:
@@ -92,14 +92,14 @@ func (t *tCommon) OnComp() int         { return t.comp }
 func (t *tCommon) setOnComp(c int)     { t.comp = c }
 
 /**************************************
-tVoid:
+Void:
 **************************************/
-type tVoid struct {
+type Void struct {
 	tCommon
 }
 
-func (m *Module) GenValueType_void(name string) *tVoid {
-	nt := tVoid{}
+func (m *Module) GenValueType_void(name string) *Void {
+	nt := Void{}
 	if len(name) > 0 {
 		nt.name = name
 	} else {
@@ -107,32 +107,32 @@ func (m *Module) GenValueType_void(name string) *tVoid {
 	}
 	t, ok := m.findValueType(nt.name)
 	if ok {
-		return t.(*tVoid)
+		return t.(*Void)
 	}
 
 	m.addValueType(&nt)
 	return &nt
 }
-func (t *tVoid) Size() int              { return 0 }
-func (t *tVoid) align() int             { return 0 }
-func (t *tVoid) Kind() TypeKind         { return kVoid }
-func (t *tVoid) onFree() int            { return 0 }
-func (t *tVoid) Raw() []wat.ValueType   { return []wat.ValueType{} }
-func (t *tVoid) Equal(u ValueType) bool { _, ok := u.(*tVoid); return ok }
-func (t *tVoid) EmitLoadFromAddr(addr Value, offset int) []wat.Inst {
+func (t *Void) Size() int              { return 0 }
+func (t *Void) align() int             { return 0 }
+func (t *Void) Kind() TypeKind         { return kVoid }
+func (t *Void) onFree() int            { return 0 }
+func (t *Void) Raw() []wat.ValueType   { return []wat.ValueType{} }
+func (t *Void) Equal(u ValueType) bool { _, ok := u.(*Void); return ok }
+func (t *Void) EmitLoadFromAddr(addr Value, offset int) []wat.Inst {
 	logger.Fatal("Unreachable")
 	return nil
 }
 
 /**************************************
-tBool:
+Bool:
 **************************************/
-type tBool struct {
+type Bool struct {
 	tCommon
 }
 
-func (m *Module) GenValueType_bool(name string) *tBool {
-	nt := tBool{}
+func (m *Module) GenValueType_bool(name string) *Bool {
+	nt := Bool{}
 	if len(name) > 0 {
 		nt.name = name
 	} else {
@@ -140,19 +140,19 @@ func (m *Module) GenValueType_bool(name string) *tBool {
 	}
 	t, ok := m.findValueType(nt.name)
 	if ok {
-		return t.(*tBool)
+		return t.(*Bool)
 	}
 
 	m.addValueType(&nt)
 	return &nt
 }
-func (t *tBool) Size() int              { return 1 }
-func (t *tBool) align() int             { return 1 }
-func (t *tBool) Kind() TypeKind         { return kBool }
-func (t *tBool) onFree() int            { return 0 }
-func (t *tBool) Raw() []wat.ValueType   { return []wat.ValueType{wat.I32{}} }
-func (t *tBool) Equal(u ValueType) bool { _, ok := u.(*tBool); return ok }
-func (t *tBool) EmitLoadFromAddr(addr Value, offset int) []wat.Inst {
+func (t *Bool) Size() int              { return 1 }
+func (t *Bool) align() int             { return 1 }
+func (t *Bool) Kind() TypeKind         { return kBool }
+func (t *Bool) onFree() int            { return 0 }
+func (t *Bool) Raw() []wat.ValueType   { return []wat.ValueType{wat.I32{}} }
+func (t *Bool) Equal(u ValueType) bool { _, ok := u.(*Bool); return ok }
+func (t *Bool) EmitLoadFromAddr(addr Value, offset int) []wat.Inst {
 	//if !addr.Type().(*Ptr).Base.Equal(t) {
 	//	logger.Fatal("Type not match")
 	//	return nil
@@ -165,12 +165,12 @@ func (t *tBool) EmitLoadFromAddr(addr Value, offset int) []wat.Inst {
 /**************************************
 tRune:
 **************************************/
-type tRune struct {
+type Rune struct {
 	tCommon
 }
 
-func (m *Module) GenValueType_rune(name string) *tRune {
-	nt := tRune{}
+func (m *Module) GenValueType_rune(name string) *Rune {
+	nt := Rune{}
 	if len(name) > 0 {
 		nt.name = name
 	} else {
@@ -178,19 +178,19 @@ func (m *Module) GenValueType_rune(name string) *tRune {
 	}
 	t, ok := m.findValueType(nt.name)
 	if ok {
-		return t.(*tRune)
+		return t.(*Rune)
 	}
 
 	m.addValueType(&nt)
 	return &nt
 }
-func (t *tRune) Size() int              { return 4 }
-func (t *tRune) align() int             { return 4 }
-func (t *tRune) Kind() TypeKind         { return kRune }
-func (t *tRune) onFree() int            { return 0 }
-func (t *tRune) Raw() []wat.ValueType   { return []wat.ValueType{wat.I32{}} }
-func (t *tRune) Equal(u ValueType) bool { _, ok := u.(*tRune); return ok }
-func (t *tRune) EmitLoadFromAddr(addr Value, offset int) []wat.Inst {
+func (t *Rune) Size() int              { return 4 }
+func (t *Rune) align() int             { return 4 }
+func (t *Rune) Kind() TypeKind         { return kRune }
+func (t *Rune) onFree() int            { return 0 }
+func (t *Rune) Raw() []wat.ValueType   { return []wat.ValueType{wat.I32{}} }
+func (t *Rune) Equal(u ValueType) bool { _, ok := u.(*Rune); return ok }
+func (t *Rune) EmitLoadFromAddr(addr Value, offset int) []wat.Inst {
 	//if !addr.Type().(*Ptr).Base.Equal(t) {
 	//	logger.Fatal("Type not match")
 	//	return nil
@@ -201,14 +201,14 @@ func (t *tRune) EmitLoadFromAddr(addr Value, offset int) []wat.Inst {
 }
 
 /**************************************
-tI8:
+I8:
 **************************************/
-type tI8 struct {
+type I8 struct {
 	tCommon
 }
 
-func (m *Module) GenValueType_i8(name string) *tI8 {
-	nt := tI8{}
+func (m *Module) GenValueType_i8(name string) *I8 {
+	nt := I8{}
 	if len(name) > 0 {
 		nt.name = name
 	} else {
@@ -216,19 +216,19 @@ func (m *Module) GenValueType_i8(name string) *tI8 {
 	}
 	t, ok := m.findValueType(nt.name)
 	if ok {
-		return t.(*tI8)
+		return t.(*I8)
 	}
 
 	m.addValueType(&nt)
 	return &nt
 }
-func (t *tI8) Size() int              { return 1 }
-func (t *tI8) align() int             { return 1 }
-func (t *tI8) Kind() TypeKind         { return kI8 }
-func (t *tI8) onFree() int            { return 0 }
-func (t *tI8) Raw() []wat.ValueType   { return []wat.ValueType{wat.I32{}} }
-func (t *tI8) Equal(u ValueType) bool { _, ok := u.(*tI8); return ok }
-func (t *tI8) EmitLoadFromAddr(addr Value, offset int) []wat.Inst {
+func (t *I8) Size() int              { return 1 }
+func (t *I8) align() int             { return 1 }
+func (t *I8) Kind() TypeKind         { return kI8 }
+func (t *I8) onFree() int            { return 0 }
+func (t *I8) Raw() []wat.ValueType   { return []wat.ValueType{wat.I32{}} }
+func (t *I8) Equal(u ValueType) bool { _, ok := u.(*I8); return ok }
+func (t *I8) EmitLoadFromAddr(addr Value, offset int) []wat.Inst {
 	//if !addr.Type().(*Ptr).Base.Equal(t) {
 	//	logger.Fatal("Type not match")
 	//	return nil
@@ -243,14 +243,14 @@ func (t *tI8) EmitLoadFromAddr(addr Value, offset int) []wat.Inst {
 }
 
 /**************************************
-tU8:
+U8:
 **************************************/
-type tU8 struct {
+type U8 struct {
 	tCommon
 }
 
-func (m *Module) GenValueType_u8(name string) *tU8 {
-	nt := tU8{}
+func (m *Module) GenValueType_u8(name string) *U8 {
+	nt := U8{}
 	if len(name) > 0 {
 		nt.name = name
 	} else {
@@ -258,19 +258,19 @@ func (m *Module) GenValueType_u8(name string) *tU8 {
 	}
 	t, ok := m.findValueType(nt.name)
 	if ok {
-		return t.(*tU8)
+		return t.(*U8)
 	}
 
 	m.addValueType(&nt)
 	return &nt
 }
-func (t *tU8) Size() int              { return 1 }
-func (t *tU8) align() int             { return 1 }
-func (t *tU8) Kind() TypeKind         { return kU8 }
-func (t *tU8) onFree() int            { return 0 }
-func (t *tU8) Raw() []wat.ValueType   { return []wat.ValueType{wat.I32{}} }
-func (t *tU8) Equal(u ValueType) bool { _, ok := u.(*tU8); return ok }
-func (t *tU8) EmitLoadFromAddr(addr Value, offset int) []wat.Inst {
+func (t *U8) Size() int              { return 1 }
+func (t *U8) align() int             { return 1 }
+func (t *U8) Kind() TypeKind         { return kU8 }
+func (t *U8) onFree() int            { return 0 }
+func (t *U8) Raw() []wat.ValueType   { return []wat.ValueType{wat.I32{}} }
+func (t *U8) Equal(u ValueType) bool { _, ok := u.(*U8); return ok }
+func (t *U8) EmitLoadFromAddr(addr Value, offset int) []wat.Inst {
 	//if !addr.Type().(*Ptr).Base.Equal(t) {
 	//	logger.Fatal("Type not match")
 	//	return nil
@@ -284,14 +284,14 @@ func (t *tU8) EmitLoadFromAddr(addr Value, offset int) []wat.Inst {
 }
 
 /**************************************
-tI16:
+I16:
 **************************************/
-type tI16 struct {
+type I16 struct {
 	tCommon
 }
 
-func (m *Module) GenValueType_i16(name string) *tI16 {
-	nt := tI16{}
+func (m *Module) GenValueType_i16(name string) *I16 {
+	nt := I16{}
 	if len(name) > 0 {
 		nt.name = name
 	} else {
@@ -299,19 +299,19 @@ func (m *Module) GenValueType_i16(name string) *tI16 {
 	}
 	t, ok := m.findValueType(nt.name)
 	if ok {
-		return t.(*tI16)
+		return t.(*I16)
 	}
 
 	m.addValueType(&nt)
 	return &nt
 }
-func (t *tI16) Size() int              { return 2 }
-func (t *tI16) align() int             { return 2 }
-func (t *tI16) Kind() TypeKind         { return kI16 }
-func (t *tI16) onFree() int            { return 0 }
-func (t *tI16) Raw() []wat.ValueType   { return []wat.ValueType{wat.I32{}} }
-func (t *tI16) Equal(u ValueType) bool { _, ok := u.(*tI16); return ok }
-func (t *tI16) EmitLoadFromAddr(addr Value, offset int) []wat.Inst {
+func (t *I16) Size() int              { return 2 }
+func (t *I16) align() int             { return 2 }
+func (t *I16) Kind() TypeKind         { return kI16 }
+func (t *I16) onFree() int            { return 0 }
+func (t *I16) Raw() []wat.ValueType   { return []wat.ValueType{wat.I32{}} }
+func (t *I16) Equal(u ValueType) bool { _, ok := u.(*I16); return ok }
+func (t *I16) EmitLoadFromAddr(addr Value, offset int) []wat.Inst {
 	//if !addr.Type().(*Ptr).Base.Equal(t) {
 	//	logger.Fatal("Type not match")
 	//	return nil
@@ -327,12 +327,12 @@ func (t *tI16) EmitLoadFromAddr(addr Value, offset int) []wat.Inst {
 /**************************************
 tU16:
 **************************************/
-type tU16 struct {
+type U16 struct {
 	tCommon
 }
 
-func (m *Module) GenValueType_u16(name string) *tU16 {
-	nt := tU16{}
+func (m *Module) GenValueType_u16(name string) *U16 {
+	nt := U16{}
 	if len(name) > 0 {
 		nt.name = name
 	} else {
@@ -340,19 +340,19 @@ func (m *Module) GenValueType_u16(name string) *tU16 {
 	}
 	t, ok := m.findValueType(nt.name)
 	if ok {
-		return t.(*tU16)
+		return t.(*U16)
 	}
 
 	m.addValueType(&nt)
 	return &nt
 }
-func (t *tU16) Size() int              { return 2 }
-func (t *tU16) align() int             { return 2 }
-func (t *tU16) Kind() TypeKind         { return kU16 }
-func (t *tU16) onFree() int            { return 0 }
-func (t *tU16) Raw() []wat.ValueType   { return []wat.ValueType{wat.I32{}} }
-func (t *tU16) Equal(u ValueType) bool { _, ok := u.(*tU16); return ok }
-func (t *tU16) EmitLoadFromAddr(addr Value, offset int) []wat.Inst {
+func (t *U16) Size() int              { return 2 }
+func (t *U16) align() int             { return 2 }
+func (t *U16) Kind() TypeKind         { return kU16 }
+func (t *U16) onFree() int            { return 0 }
+func (t *U16) Raw() []wat.ValueType   { return []wat.ValueType{wat.I32{}} }
+func (t *U16) Equal(u ValueType) bool { _, ok := u.(*U16); return ok }
+func (t *U16) EmitLoadFromAddr(addr Value, offset int) []wat.Inst {
 	//if !addr.Type().(*Ptr).Base.Equal(t) {
 	//	logger.Fatal("Type not match")
 	//	return nil
@@ -366,9 +366,9 @@ func (t *tU16) EmitLoadFromAddr(addr Value, offset int) []wat.Inst {
 }
 
 /**************************************
-tI32:
+I32:
 **************************************/
-type tI32 struct {
+type I32 struct {
 	tCommon
 }
 
@@ -376,8 +376,8 @@ func (m *Module) GenValueType_int(name string) ValueType {
 	return m.GenValueType_i32(name)
 }
 
-func (m *Module) GenValueType_i32(name string) *tI32 {
-	nt := tI32{}
+func (m *Module) GenValueType_i32(name string) *I32 {
+	nt := I32{}
 	if len(name) > 0 {
 		nt.name = name
 	} else {
@@ -385,19 +385,19 @@ func (m *Module) GenValueType_i32(name string) *tI32 {
 	}
 	t, ok := m.findValueType(nt.name)
 	if ok {
-		return t.(*tI32)
+		return t.(*I32)
 	}
 
 	m.addValueType(&nt)
 	return &nt
 }
-func (t *tI32) Size() int              { return 4 }
-func (t *tI32) align() int             { return 4 }
-func (t *tI32) Kind() TypeKind         { return kI32 }
-func (t *tI32) onFree() int            { return 0 }
-func (t *tI32) Raw() []wat.ValueType   { return []wat.ValueType{wat.I32{}} }
-func (t *tI32) Equal(u ValueType) bool { _, ok := u.(*tI32); return ok }
-func (t *tI32) EmitLoadFromAddr(addr Value, offset int) []wat.Inst {
+func (t *I32) Size() int              { return 4 }
+func (t *I32) align() int             { return 4 }
+func (t *I32) Kind() TypeKind         { return kI32 }
+func (t *I32) onFree() int            { return 0 }
+func (t *I32) Raw() []wat.ValueType   { return []wat.ValueType{wat.I32{}} }
+func (t *I32) Equal(u ValueType) bool { _, ok := u.(*I32); return ok }
+func (t *I32) EmitLoadFromAddr(addr Value, offset int) []wat.Inst {
 	//if !addr.Type().(*Ptr).Base.Equal(t) {
 	//	logger.Fatal("Type not match")
 	//	return nil
@@ -411,9 +411,9 @@ func (t *tI32) EmitLoadFromAddr(addr Value, offset int) []wat.Inst {
 }
 
 /**************************************
-tU32:
+U32:
 **************************************/
-type tU32 struct {
+type U32 struct {
 	tCommon
 }
 
@@ -421,8 +421,8 @@ func (m *Module) GenValueType_uint(name string) ValueType {
 	return m.GenValueType_u32(name)
 }
 
-func (m *Module) GenValueType_u32(name string) *tU32 {
-	nt := tU32{}
+func (m *Module) GenValueType_u32(name string) *U32 {
+	nt := U32{}
 	if len(name) > 0 {
 		nt.name = name
 	} else {
@@ -430,19 +430,19 @@ func (m *Module) GenValueType_u32(name string) *tU32 {
 	}
 	t, ok := m.findValueType(nt.name)
 	if ok {
-		return t.(*tU32)
+		return t.(*U32)
 	}
 
 	m.addValueType(&nt)
 	return &nt
 }
-func (t *tU32) Size() int              { return 4 }
-func (t *tU32) align() int             { return 4 }
-func (t *tU32) Kind() TypeKind         { return kU32 }
-func (t *tU32) onFree() int            { return 0 }
-func (t *tU32) Raw() []wat.ValueType   { return []wat.ValueType{wat.U32{}} }
-func (t *tU32) Equal(u ValueType) bool { _, ok := u.(*tU32); return ok }
-func (t *tU32) EmitLoadFromAddr(addr Value, offset int) []wat.Inst {
+func (t *U32) Size() int              { return 4 }
+func (t *U32) align() int             { return 4 }
+func (t *U32) Kind() TypeKind         { return kU32 }
+func (t *U32) onFree() int            { return 0 }
+func (t *U32) Raw() []wat.ValueType   { return []wat.ValueType{wat.U32{}} }
+func (t *U32) Equal(u ValueType) bool { _, ok := u.(*U32); return ok }
+func (t *U32) EmitLoadFromAddr(addr Value, offset int) []wat.Inst {
 	//if !addr.Type().(*Ptr).Base.Equal(t) {
 	//	logger.Fatal("Type not match")
 	//	return nil
@@ -456,14 +456,14 @@ func (t *tU32) EmitLoadFromAddr(addr Value, offset int) []wat.Inst {
 }
 
 /**************************************
-tI64:
+I64:
 **************************************/
-type tI64 struct {
+type I64 struct {
 	tCommon
 }
 
-func (m *Module) GenValueType_i64(name string) *tI64 {
-	nt := tI64{}
+func (m *Module) GenValueType_i64(name string) *I64 {
+	nt := I64{}
 	if len(name) > 0 {
 		nt.name = name
 	} else {
@@ -471,19 +471,19 @@ func (m *Module) GenValueType_i64(name string) *tI64 {
 	}
 	t, ok := m.findValueType(nt.name)
 	if ok {
-		return t.(*tI64)
+		return t.(*I64)
 	}
 
 	m.addValueType(&nt)
 	return &nt
 }
-func (t *tI64) Size() int              { return 8 }
-func (t *tI64) align() int             { return 8 }
-func (t *tI64) Kind() TypeKind         { return kI64 }
-func (t *tI64) onFree() int            { return 0 }
-func (t *tI64) Raw() []wat.ValueType   { return []wat.ValueType{wat.I64{}} }
-func (t *tI64) Equal(u ValueType) bool { _, ok := u.(*tI64); return ok }
-func (t *tI64) EmitLoadFromAddr(addr Value, offset int) []wat.Inst {
+func (t *I64) Size() int              { return 8 }
+func (t *I64) align() int             { return 8 }
+func (t *I64) Kind() TypeKind         { return kI64 }
+func (t *I64) onFree() int            { return 0 }
+func (t *I64) Raw() []wat.ValueType   { return []wat.ValueType{wat.I64{}} }
+func (t *I64) Equal(u ValueType) bool { _, ok := u.(*I64); return ok }
+func (t *I64) EmitLoadFromAddr(addr Value, offset int) []wat.Inst {
 	//if !addr.Type().(*Ptr).Base.Equal(t) {
 	//	logger.Fatal("Type not match")
 	//	return nil
@@ -497,14 +497,14 @@ func (t *tI64) EmitLoadFromAddr(addr Value, offset int) []wat.Inst {
 }
 
 /**************************************
-tU64:
+U64:
 **************************************/
-type tU64 struct {
+type U64 struct {
 	tCommon
 }
 
-func (m *Module) GenValueType_u64(name string) *tU64 {
-	nt := tU64{}
+func (m *Module) GenValueType_u64(name string) *U64 {
+	nt := U64{}
 	if len(name) > 0 {
 		nt.name = name
 	} else {
@@ -512,19 +512,19 @@ func (m *Module) GenValueType_u64(name string) *tU64 {
 	}
 	t, ok := m.findValueType(nt.name)
 	if ok {
-		return t.(*tU64)
+		return t.(*U64)
 	}
 
 	m.addValueType(&nt)
 	return &nt
 }
-func (t *tU64) Size() int              { return 8 }
-func (t *tU64) align() int             { return 8 }
-func (t *tU64) Kind() TypeKind         { return kU64 }
-func (t *tU64) onFree() int            { return 0 }
-func (t *tU64) Raw() []wat.ValueType   { return []wat.ValueType{wat.U64{}} }
-func (t *tU64) Equal(u ValueType) bool { _, ok := u.(*tU64); return ok }
-func (t *tU64) EmitLoadFromAddr(addr Value, offset int) []wat.Inst {
+func (t *U64) Size() int              { return 8 }
+func (t *U64) align() int             { return 8 }
+func (t *U64) Kind() TypeKind         { return kU64 }
+func (t *U64) onFree() int            { return 0 }
+func (t *U64) Raw() []wat.ValueType   { return []wat.ValueType{wat.U64{}} }
+func (t *U64) Equal(u ValueType) bool { _, ok := u.(*U64); return ok }
+func (t *U64) EmitLoadFromAddr(addr Value, offset int) []wat.Inst {
 	//if !addr.Type().(*Ptr).Base.Equal(t) {
 	//	logger.Fatal("Type not match")
 	//	return nil
@@ -538,14 +538,14 @@ func (t *tU64) EmitLoadFromAddr(addr Value, offset int) []wat.Inst {
 }
 
 /**************************************
-tF32:
+F32:
 **************************************/
-type tF32 struct {
+type F32 struct {
 	tCommon
 }
 
-func (m *Module) GenValueType_f32(name string) *tF32 {
-	nt := tF32{}
+func (m *Module) GenValueType_f32(name string) *F32 {
+	nt := F32{}
 	if len(name) > 0 {
 		nt.name = name
 	} else {
@@ -553,19 +553,19 @@ func (m *Module) GenValueType_f32(name string) *tF32 {
 	}
 	t, ok := m.findValueType(nt.name)
 	if ok {
-		return t.(*tF32)
+		return t.(*F32)
 	}
 
 	m.addValueType(&nt)
 	return &nt
 }
-func (t *tF32) Size() int              { return 4 }
-func (t *tF32) align() int             { return 4 }
-func (t *tF32) Kind() TypeKind         { return kF32 }
-func (t *tF32) onFree() int            { return 0 }
-func (t *tF32) Raw() []wat.ValueType   { return []wat.ValueType{wat.F32{}} }
-func (t *tF32) Equal(u ValueType) bool { _, ok := u.(*tF32); return ok }
-func (t *tF32) EmitLoadFromAddr(addr Value, offset int) []wat.Inst {
+func (t *F32) Size() int              { return 4 }
+func (t *F32) align() int             { return 4 }
+func (t *F32) Kind() TypeKind         { return kF32 }
+func (t *F32) onFree() int            { return 0 }
+func (t *F32) Raw() []wat.ValueType   { return []wat.ValueType{wat.F32{}} }
+func (t *F32) Equal(u ValueType) bool { _, ok := u.(*F32); return ok }
+func (t *F32) EmitLoadFromAddr(addr Value, offset int) []wat.Inst {
 	//if !addr.Type().(*Ptr).Base.Equal(t) {
 	//	logger.Fatal("Type not match")
 	//	return nil
@@ -579,14 +579,14 @@ func (t *tF32) EmitLoadFromAddr(addr Value, offset int) []wat.Inst {
 }
 
 /**************************************
-tF64:
+F64:
 **************************************/
-type tF64 struct {
+type F64 struct {
 	tCommon
 }
 
-func (m *Module) GenValueType_f64(name string) *tF64 {
-	nt := tF64{}
+func (m *Module) GenValueType_f64(name string) *F64 {
+	nt := F64{}
 	if len(name) > 0 {
 		nt.name = name
 	} else {
@@ -594,19 +594,19 @@ func (m *Module) GenValueType_f64(name string) *tF64 {
 	}
 	t, ok := m.findValueType(nt.name)
 	if ok {
-		return t.(*tF64)
+		return t.(*F64)
 	}
 
 	m.addValueType(&nt)
 	return &nt
 }
-func (t *tF64) Size() int              { return 8 }
-func (t *tF64) align() int             { return 8 }
-func (t *tF64) Kind() TypeKind         { return kF64 }
-func (t *tF64) onFree() int            { return 0 }
-func (t *tF64) Raw() []wat.ValueType   { return []wat.ValueType{wat.F64{}} }
-func (t *tF64) Equal(u ValueType) bool { _, ok := u.(*tF64); return ok }
-func (t *tF64) EmitLoadFromAddr(addr Value, offset int) []wat.Inst {
+func (t *F64) Size() int              { return 8 }
+func (t *F64) align() int             { return 8 }
+func (t *F64) Kind() TypeKind         { return kF64 }
+func (t *F64) onFree() int            { return 0 }
+func (t *F64) Raw() []wat.ValueType   { return []wat.ValueType{wat.F64{}} }
+func (t *F64) Equal(u ValueType) bool { _, ok := u.(*F64); return ok }
+func (t *F64) EmitLoadFromAddr(addr Value, offset int) []wat.Inst {
 	//if !addr.Type().(*Ptr).Base.Equal(t) {
 	//	logger.Fatal("Type not match")
 	//	return nil
