@@ -81,7 +81,7 @@ func (t *Block) emitHeapAlloc(item_count Value) (insts []wat.Inst) {
 			return nil
 		}
 		insts = append(insts, NewConst(strconv.Itoa(t.Base.Size()*c+16), t._uint).EmitPush()...)
-		insts = append(insts, wat.NewInstCall("$waHeapAlloc"))
+		insts = append(insts, wat.NewInstCall("runtime.HeapAlloc"))
 
 	default:
 		if !item_count.Type().Equal(t._uint) && !item_count.Type().Equal(t._int) {
@@ -94,7 +94,7 @@ func (t *Block) emitHeapAlloc(item_count Value) (insts []wat.Inst) {
 		insts = append(insts, wat.NewInstMul(wat.U32{}))
 		insts = append(insts, NewConst("16", t._uint).EmitPush()...)
 		insts = append(insts, wat.NewInstAdd(wat.U32{}))
-		insts = append(insts, wat.NewInstCall("$waHeapAlloc"))
+		insts = append(insts, wat.NewInstCall("runtime.HeapAlloc"))
 
 	}
 
@@ -177,7 +177,7 @@ func (v *aBlock) emitStore(offset int) (insts []wat.Inst) {
 	insts = append(insts, wat.NewInstCall("runtime.DupI32"))        // a
 	insts = append(insts, wat.NewInstCall("runtime.DupI32"))        // a a
 	insts = append(insts, v.EmitPush()...)                          // a a v
-	insts = append(insts, wat.NewInstCall("$runtime.SwapI32"))      // a v a
+	insts = append(insts, wat.NewInstCall("runtime.SwapI32"))       // a v a
 	insts = append(insts, wat.NewInstLoad(wat.U32{}, offset, 1))    // a v o
 	insts = append(insts, wat.NewInstCall("runtime.Block.Release")) // a v
 

@@ -18,12 +18,12 @@ type knr_Header struct {
 }
 
 // Heap 开始地址
-#wa:linkname $waHeapBase
-func waHeapBase() => u32
+#wa:linkname runtime.heapBase
+func heapBase() => u32
 
 // Heap 最大地址(闭区间)
-#wa:linkname $waHeapMax
-func waHeapMax() => u32
+#wa:linkname runtime.heapMax
+func heapMax() => u32
 
 #wa:runtime_getter
 func knr_getBlockHeader(p: u32) => knr_Header
@@ -34,16 +34,16 @@ func knr_setBlockHeader(p: u32, hdr: knr_Header)
 // 分配 nbytes 字节, 返回地址
 #wa:force_register
 func malloc(nbytes: u32) => u32 {
-	if nbytes == 0 || nbytes >= (waHeapMax()-knr_basep) {
+	if nbytes == 0 || nbytes >= (heapMax()-knr_basep) {
 		return 0
 	}
 	if knr_basep == 0 {
-		knr_basep = waHeapBase()
+		knr_basep = heapBase()
 		knr_freep = knr_basep
 
 		base := knr_Header{
 			ptr:  knr_basep,
-			size: (waHeapMax()-knr_basep)/sizeof_Header - 1,
+			size: (heapMax()-knr_basep)/sizeof_Header - 1,
 		}
 
 		knr_setBlockHeader(knr_basep, base)

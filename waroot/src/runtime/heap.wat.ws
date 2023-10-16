@@ -1,35 +1,35 @@
 ;; Copyright 2023 The Wa Authors. All rights reserved.
 
-(func $$waGetStackPtr (result i32)
+(func $runtime.getStackPtr (result i32)
 	(global.get $__stack_ptr)
 )
 
-(func $$waSetStackPtr (param $sp i32)
+(func $runtime.setStackPtr (param $sp i32)
 	local.get $sp
 	global.set $__stack_ptr
 )
 
-(func $$waStackAlloc (param $size i32) (result i32)
+(func $runtime.stackAlloc (param $size i32) (result i32)
 	;; $__stack_ptr -= $size
 	(global.set $__stack_ptr (i32.sub (global.get $__stack_ptr) (local.get  $size)))
 	;; return $__stack_ptr
 	(return (global.get $__stack_ptr))
 )
 
-(func $$waStackFree (param $size i32)
+(func $runtime.stackFree (param $size i32)
 	;; $__stack_ptr += $size
 	(global.set $__stack_ptr (i32.add (global.get $__stack_ptr) (local.get $size)))
 )
 
-(func $$waHeapBase(result i32)
+(func $runtime.heapBase(result i32)
 	global.get $__heap_base
 )
 
-(func $$waHeapMax(result i32)
+(func $runtime.heapMax(result i32)
 	global.get $__heap_max
 )
 
-(func $$waHeapAlloc (export "$runtime.waHeapAlloc") (param $nbytes i32) (result i32) ;;result = ptr
+(func $runtime.HeapAlloc (export "runtime.HeapAlloc") (param $nbytes i32) (result i32) ;;result = ptr
 	(local $ptr i32)
 
 	local.get $nbytes
@@ -72,7 +72,7 @@
 	local.get $ptr
 )
 
-(func $$waHeapFree (export "$runtime.waHeapFree") (param $ptr i32)
+(func $runtime.HeapFree (export "runtime.HeapFree") (param $ptr i32)
 	local.get $ptr
 	call $runtime.free
 )
@@ -106,7 +106,7 @@
   i32.mul
   i32.const 16
   i32.add
-  call $$waHeapAlloc
+  call $runtime.HeapAlloc
 
   local.get $item_count
   local.get $release_func
@@ -213,7 +213,7 @@
 		end  ;;free_func != 0
 
 		local.get $ptr
-		call $$waHeapFree
+		call $runtime.HeapFree
 	end  ;;ref_count == 0
 )
 

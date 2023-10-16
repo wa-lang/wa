@@ -13,10 +13,10 @@
 	(local.set $sp (global.get $__stack_ptr))
 
 	;; 分配 iov 结构体
-	(local.set $p_iov (call $$waStackAlloc (i32.const 8)))
+	(local.set $p_iov (call $runtime.stackAlloc (i32.const 8)))
 
 	;; 返回地址
-	(local.set $p_nwritten (call $$waStackAlloc (i32.const 4)))
+	(local.set $p_nwritten (call $runtime.stackAlloc (i32.const 4)))
 
 	;; 设置字符串指针和长度
 	(i32.store offset=0 align=1 (local.get $p_iov) (local.get $str))

@@ -86,7 +86,7 @@ func (t *Ref) emitStackAlloc() (insts []wat.Inst) {
 
 	insts = append(insts, NewConst("0", t.underlying._u32).EmitPush()...)
 	insts = append(insts, NewConst(strconv.Itoa(t.Base.Size()), t.underlying._u32).EmitPush()...)
-	insts = append(insts, wat.NewInstCall("$waStackAlloc"))
+	insts = append(insts, wat.NewInstCall("runtime.stackAlloc"))
 
 	//insts = append(insts, wat.NewComment("Ref.emitStackAlloc end"))
 	//insts = append(insts, wat.NewBlank())
