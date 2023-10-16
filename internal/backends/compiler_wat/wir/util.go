@@ -173,7 +173,7 @@ func IsNumber(v Value) bool {
 	return false
 }
 
-func GetFnMangleName(v interface{}) (internal string, external string) {
+func GetFnMangleName(v interface{}, mainPkg string) (internal string, external string) {
 	exported := true
 	switch f := v.(type) {
 	case *ssa.Function:
@@ -182,7 +182,7 @@ func GetFnMangleName(v interface{}) (internal string, external string) {
 		}
 		if recv := f.Signature.Recv(); recv != nil {
 			internal, external = GetPkgMangleName(recv.Pkg().Path())
-			if external != "__main__" {
+			if external != mainPkg {
 				exported = false
 			}
 
@@ -207,7 +207,7 @@ func GetFnMangleName(v interface{}) (internal string, external string) {
 		} else {
 			if f.Pkg != nil {
 				internal, external = GetPkgMangleName(f.Pkg.Pkg.Path())
-				if external != "__main__" {
+				if external != mainPkg {
 					exported = false
 				}
 			}
@@ -219,7 +219,7 @@ func GetFnMangleName(v interface{}) (internal string, external string) {
 
 	case *types.Func:
 		internal, external = GetPkgMangleName(f.Pkg().Path())
-		if !f.Exported() || external != "__main__" {
+		if !f.Exported() || external != mainPkg {
 			exported = false
 		}
 		sig := f.Type().(*types.Signature)

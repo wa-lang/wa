@@ -185,7 +185,7 @@ func CompileFunc(f *ssa.Function, prog *loader.Program, tLib *typeLib, module *w
 			if len(f.LinkName()) > 0 {
 				fn_name = f.LinkName()
 			} else {
-				fn_name, _ = wir.GetFnMangleName(f)
+				fn_name, _ = wir.GetFnMangleName(f, prog.Manifest.MainPkg)
 			}
 
 			sig := tLib.GenFnSig(f.Signature)
