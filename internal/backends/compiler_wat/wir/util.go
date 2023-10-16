@@ -181,10 +181,10 @@ func GetFnMangleName(v interface{}, mainPkg string) (internal string, external s
 			exported = false
 		}
 		if recv := f.Signature.Recv(); recv != nil {
-			internal, external = GetPkgMangleName(recv.Pkg().Path())
-			if external != mainPkg {
+			if recv.Pkg().Path() != mainPkg {
 				exported = false
 			}
+			internal, external = GetPkgMangleName(recv.Pkg().Path())
 
 			internal += "."
 			external += "."
@@ -206,10 +206,10 @@ func GetFnMangleName(v interface{}, mainPkg string) (internal string, external s
 			}
 		} else {
 			if f.Pkg != nil {
-				internal, external = GetPkgMangleName(f.Pkg.Pkg.Path())
-				if external != mainPkg {
+				if f.Pkg.Pkg.Path() != mainPkg {
 					exported = false
 				}
+				internal, external = GetPkgMangleName(f.Pkg.Pkg.Path())
 			}
 		}
 		internal += "."
@@ -218,10 +218,10 @@ func GetFnMangleName(v interface{}, mainPkg string) (internal string, external s
 		external += GenSymbolName(f.Name())
 
 	case *types.Func:
-		internal, external = GetPkgMangleName(f.Pkg().Path())
-		if !f.Exported() || external != mainPkg {
+		if f.Pkg().Path() != mainPkg {
 			exported = false
 		}
+		internal, external = GetPkgMangleName(f.Pkg().Path())
 		sig := f.Type().(*types.Signature)
 		if recv := sig.Recv(); recv != nil {
 			internal += "."
