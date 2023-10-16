@@ -100,7 +100,22 @@ func IsStdPkg(pkgpath string) bool {
 }
 
 func GetStdPkgList() []string {
-	return append([]string{}, stdPkgs...)
+	var ss []string
+	for _, s := range stdPkgs {
+		ss = append(ss, s)
+	}
+	return ss
+}
+
+func GetStdTestPkgList() []string {
+	var ss []string
+	for _, s := range stdPkgs {
+		if strings.HasPrefix(s, "syscall") {
+			continue
+		}
+		ss = append(ss, s)
+	}
+	return ss
 }
 
 var stdPkgs = []string{
@@ -132,6 +147,9 @@ var stdPkgs = []string{
 	"strconv",             // API 完整
 	"strings",             // API 完整
 	"syscall",             // API 完整
+	"syscall/js",          // ?
+	"syscall/wasi",        // ?
+	"syscall/chrome",      // ?
 	"text/template",       // 无
 	"unicode",             // API 部分
 	"unicode/ctypes",      // API 完整, 测试已覆盖

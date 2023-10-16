@@ -35,8 +35,8 @@ const (
 
 	WaOS_arduino = "arduino" // Arduino 平台
 	WaOS_chrome  = "chrome"  // Chrome 浏览器
+	WaOS_js      = "js"      // 浏览器 JS
 	WaOS_wasi    = "wasi"    // WASI 接口
-	WaOS_js      = "js"      // JS
 )
 
 // 体系结构类型

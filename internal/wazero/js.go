@@ -6,15 +6,16 @@ import (
 	"context"
 	"fmt"
 
-	"wa-lang.org/wa/internal/config"
 	"wa-lang.org/wazero"
 	"wa-lang.org/wazero/api"
 	"wa-lang.org/wazero/imports/walang"
 	"wa-lang.org/wazero/sys"
 )
 
+const jsModuleName = "syscall_js"
+
 func JsInstantiate(ctx context.Context, rt wazero.Runtime) (api.Closer, error) {
-	return rt.NewHostModuleBuilder(config.WaOS_js).
+	return rt.NewHostModuleBuilder(jsModuleName).
 		// func print_bool(v: bool)
 		NewFunctionBuilder().
 		WithFunc(func(ctx context.Context, m api.Module, v uint32) {
