@@ -18,7 +18,7 @@ func (p *Compiler) compileGlobal(g *ssa.Global) {
 		} else {
 			name_exp := ""
 			if g.Pkg.Pkg.Path() == p.prog.Manifest.MainPkg && g.Object().Exported() {
-				name_exp = pkg_name + g.Name()
+				name_exp = pkg_name + "." + g.Name()
 			}
 			p.module.AddGlobal(pkg_name+"."+wir.GenSymbolName(g.Name()), name_exp, p.tLib.compile(g.Type()), true, g)
 		}
