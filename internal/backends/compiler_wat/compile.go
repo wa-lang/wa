@@ -3,9 +3,12 @@
 package compiler_wat
 
 import (
+	"bytes"
+	_ "embed"
 	"fmt"
 	"sort"
 	"strings"
+	"text/template"
 
 	"wa-lang.org/wa/internal/backends/compiler_wat/wir"
 	"wa-lang.org/wa/internal/backends/compiler_wat/wir/wat"
@@ -83,7 +86,8 @@ func (p *Compiler) Compile(prog *loader.Program, mainFunc string) (output string
 		p.module.AddFunc(&f)
 	}
 
-	//p.GenJsBind()
+	// p.GenJsBind()
+	// p.GenJSBinding()
 
 	return p.module.ToWatModule().String(), nil
 }
@@ -316,4 +320,151 @@ func (p *Compiler) GenJsBind() {
 		}
 
 	}
+}
+
+//go:embed js_binding_tmpl.js
+var js_binding_tmpl string
+
+type JSGlobal struct {
+	Name string
+	Type string
+}
+
+type JSFunc struct {
+	Name       string
+	Params     string
+	PreCall    string
+	GetResults string
+	Release    string
+	Return     string
+}
+
+type JSModule struct {
+	Pkg     string
+	Globals []JSGlobal
+	Funcs   []JSFunc
+}
+
+func stripNamePrefix(name string) string {
+	if i := strings.LastIndex(name, "."); i >= 0 {
+		return name[i+1:]
+	}
+	return name
+}
+
+func (p *Compiler) globalsForJsBinding() []JSGlobal {
+	var globals []JSGlobal
+	for _, g := range p.module.Globals {
+		if len(g.Name_exp) == 0 {
+			continue
+		}
+
+		ref_type, ok := g.Type.(*wir.Ref)
+		if !ok {
+			logger.Fatalf("Exported global: %s should be *T.", g.Name)
+		}
+		switch typ := ref_type.Base.(type) {
+		case *wir.U8, *wir.U16, *wir.I32, *wir.U32, *wir.I64, *wir.U64, *wir.Bool, *wir.Rune, *wir.String:
+			name := stripNamePrefix(g.Name_exp)
+			tp := typ.Named()
+			globals = append(globals, JSGlobal{Name: name, Type: tp})
+		default: //非基本类型，不导出
+		}
+
+	}
+	return globals
+}
+
+func (p *Compiler) funcsForJSBinding() []JSFunc {
+	var funcs []JSFunc
+
+	// 函数
+	for _, f := range p.module.Funcs {
+		if !f.ExplicitExported {
+			continue
+		}
+
+		fn := JSFunc{Name: stripNamePrefix(f.ExternalName)}
+
+		// 参数名称列表
+		var sb strings.Builder
+		for i, p := range f.Params {
+			if i > 0 {
+				sb.WriteString(", ")
+			}
+			sb.WriteString(p.Name())
+		}
+		fn.Params = sb.String()
+
+		// 参数
+		if len(f.Params) > 0 {
+			var sb strings.Builder
+			var sbr strings.Builder
+			for i, p := range f.Params {
+				name := p.Name()
+				switch p.Type().(type) {
+				case *wir.U8, *wir.U16, *wir.I32, *wir.U32, *wir.I64, *wir.U64, *wir.Bool, *wir.Rune:
+					sb.WriteString(fmt.Sprintf("params.push(%s);\n", name))
+				case *wir.String: // 字符串类型需要转换为[l,b,d]的形式
+					sb.WriteString(fmt.Sprintf("let p%d = this._mem_util.set_string(%s);\n", i, name))
+					sb.WriteString(fmt.Sprintf("params = params.concat(p%d);\n", i))
+					sbr.WriteString(fmt.Sprintf("this._mem_util.block_release(p%d[0]);\n", i))
+				default:
+				}
+			}
+			fn.PreCall = sb.String()
+			fn.Release = sbr.String()
+		}
+
+		// 返回值
+		if len(f.Results) > 0 {
+			var sb strings.Builder
+			var sbr strings.Builder
+			for i, r := range f.Results {
+				switch tp := r.(type) {
+				case *wir.U8, *wir.U16, *wir.I32, *wir.U32, *wir.I64, *wir.U64, *wir.Bool, *wir.Rune, *wir.String:
+					sb.WriteString(fmt.Sprintf("let r%d = this._mem_util.extract_%s(res);\n", i, tp.Named()))
+					if i > 0 {
+						sbr.WriteString(",")
+					}
+					sbr.WriteString(fmt.Sprintf("r%d", i))
+				default:
+				}
+			}
+			fn.GetResults = sb.String()
+			if len(f.Results) == 1 {
+				fn.Return = "return " + sbr.String() + ";"
+			} else {
+				fn.Return = "return [" + sbr.String() + "];"
+			}
+		}
+
+		funcs = append(funcs, fn)
+
+	}
+	return funcs
+}
+
+func (p *Compiler) GenJSBinding() string {
+	// 模板
+	t, err := template.New("js").Parse(js_binding_tmpl)
+	if err != nil {
+		logger.Fatal(err)
+	}
+	data := JSModule{
+		Pkg:     p.prog.Manifest.MainPkg,
+		Globals: p.globalsForJsBinding(),
+		Funcs:   p.funcsForJSBinding(),
+	}
+	var bf bytes.Buffer
+	err = t.Execute(&bf, data)
+	if err != nil {
+		logger.Fatal(err)
+	}
+
+	// 测试用：生成一个js文件
+	// TODO: 正式版需要删除
+	// os.WriteFile("js_binding_test.js", bf.Bytes(), 0644)
+
+	return bf.String()
 }
