@@ -340,9 +340,10 @@ type JSFunc struct {
 }
 
 type JSModule struct {
-	Pkg     string
-	Globals []JSGlobal
-	Funcs   []JSFunc
+	Filename string
+	Pkg      string
+	Globals  []JSGlobal
+	Funcs    []JSFunc
 }
 
 func stripNamePrefix(name string) string {
@@ -445,16 +446,17 @@ func (p *Compiler) funcsForJSBinding() []JSFunc {
 	return funcs
 }
 
-func (p *Compiler) GenJSBinding() string {
+func (p *Compiler) GenJSBinding(wasmFilename string) string {
 	// 模板
 	t, err := template.New("js").Parse(js_binding_tmpl)
 	if err != nil {
 		logger.Fatal(err)
 	}
 	data := JSModule{
-		Pkg:     p.prog.Manifest.MainPkg,
-		Globals: p.globalsForJsBinding(),
-		Funcs:   p.funcsForJSBinding(),
+		Filename: wasmFilename,
+		Pkg:      p.prog.Manifest.MainPkg,
+		Globals:  p.globalsForJsBinding(),
+		Funcs:    p.funcsForJSBinding(),
 	}
 	var bf bytes.Buffer
 	err = t.Execute(&bf, data)
