@@ -93,7 +93,7 @@ func BuildApp(opt *appbase.Option, input, outfile string) (wasmBytes []byte, err
 
 	// 只编译 wa/wz 文件, 输出路径相同, 后缀名调整
 	if appbase.HasExt(input, ".wa", ".wz") {
-		_, watOutput, err := buildWat(opt, input)
+		_, compiler, watOutput, err := buildWat(opt, input)
 		if err != nil {
 			fmt.Println(err)
 			os.Exit(1)
@@ -110,6 +110,17 @@ func BuildApp(opt *appbase.Option, input, outfile string) (wasmBytes []byte, err
 		if err != nil {
 			fmt.Printf("write %s failed: %v\n", outfile, err)
 			os.Exit(1)
+		}
+
+		// 生成 js 胶水代码
+		if opt.TargetOS == config.WaOS_js {
+			jsOutfile := appbase.ReplaceExt(outfile, ".wasm", ".js")
+			jsOutput := compiler.GenJSBinding(filepath.Base(outfile))
+			err = os.WriteFile(jsOutfile, []byte(jsOutput), 0666)
+			if err != nil {
+				fmt.Printf("write %s failed: %v\n", jsOutfile, err)
+				os.Exit(1)
+			}
 		}
 
 		// wat 编译为 wasm
@@ -158,7 +169,7 @@ func BuildApp(opt *appbase.Option, input, outfile string) (wasmBytes []byte, err
 		}
 
 		// 编译出 wat 文件
-		_, watOutput, err := buildWat(opt, input)
+		_, compiler, watOutput, err := buildWat(opt, input)
 		if err != nil {
 			fmt.Println(err)
 			os.Exit(1)
@@ -170,6 +181,17 @@ func BuildApp(opt *appbase.Option, input, outfile string) (wasmBytes []byte, err
 		if err != nil {
 			fmt.Printf("write %s failed: %v\n", outfile, err)
 			os.Exit(1)
+		}
+
+		// 生成 js 胶水代码
+		if opt.TargetOS == config.WaOS_js {
+			jsOutfile := appbase.ReplaceExt(outfile, ".wasm", ".js")
+			jsOutput := compiler.GenJSBinding(filepath.Base(outfile))
+			err = os.WriteFile(jsOutfile, []byte(jsOutput), 0666)
+			if err != nil {
+				fmt.Printf("write %s failed: %v\n", jsOutfile, err)
+				os.Exit(1)
+			}
 		}
 
 		// wat 编译为 wasm
@@ -191,18 +213,22 @@ func BuildApp(opt *appbase.Option, input, outfile string) (wasmBytes []byte, err
 	}
 }
 
-func buildWat(opt *appbase.Option, filename string) (*loader.Program, []byte, error) {
+func buildWat(opt *appbase.Option, filename string) (
+	prog *loader.Program, compiler *compiler_wat.Compiler,
+	watBytes []byte, err error,
+) {
 	cfg := opt.Config()
-	prog, err := loader.LoadProgram(cfg, filename)
+	prog, err = loader.LoadProgram(cfg, filename)
 	if err != nil {
-		return prog, nil, err
+		return prog, nil, nil, err
 	}
 
-	output, err := compiler_wat.New().Compile(prog, "main")
+	compiler = compiler_wat.New()
+	output, err := compiler.Compile(prog, "main")
 
 	if err != nil {
-		return prog, nil, err
+		return prog, nil, nil, err
 	}
 
-	return prog, []byte(output), nil
+	return prog, compiler, []byte(output), nil
 }
