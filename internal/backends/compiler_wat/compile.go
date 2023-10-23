@@ -17,8 +17,7 @@ import (
 )
 
 type Compiler struct {
-	prog   *loader.Program
-	ssaPkg *ssa.Package
+	prog *loader.Program
 
 	module *wir.Module
 	tLib   *typeLib
@@ -51,17 +50,13 @@ func (p *Compiler) Compile(prog *loader.Program, mainFunc string) (output string
 		}
 	}
 
+	p.CompilePkgType(prog.Pkgs["runtime"].SSAPkg)
+
 	for _, n := range pkgnames {
-		p.ssaPkg = prog.Pkgs[n].SSAPkg
-		p.CompilePkgType(p.ssaPkg)
+		p.CompilePkgGlobal(prog.Pkgs[n].SSAPkg)
 	}
 	for _, n := range pkgnames {
-		p.ssaPkg = prog.Pkgs[n].SSAPkg
-		p.CompilePkgGlobal(p.ssaPkg)
-	}
-	for _, n := range pkgnames {
-		p.ssaPkg = prog.Pkgs[n].SSAPkg
-		p.CompilePkgFunc(p.ssaPkg)
+		p.CompilePkgFunc(prog.Pkgs[n].SSAPkg)
 	}
 
 	p.tLib.finish()
@@ -129,13 +124,13 @@ func (p *Compiler) CompileWsFiles(prog *loader.Program) {
 
 func (p *Compiler) CompilePkgType(ssaPkg *ssa.Package) {
 	var memnames []string
-	for name := range p.ssaPkg.Members {
+	for name := range ssaPkg.Members {
 		memnames = append(memnames, name)
 	}
 	sort.Strings(memnames)
 
 	for _, name := range memnames {
-		m := p.ssaPkg.Members[name]
+		m := ssaPkg.Members[name]
 		if t, ok := m.(*ssa.Type); ok {
 			p.compileType(t)
 		}
@@ -144,13 +139,13 @@ func (p *Compiler) CompilePkgType(ssaPkg *ssa.Package) {
 
 func (p *Compiler) CompilePkgGlobal(ssaPkg *ssa.Package) {
 	var memnames []string
-	for name := range p.ssaPkg.Members {
+	for name := range ssaPkg.Members {
 		memnames = append(memnames, name)
 	}
 	sort.Strings(memnames)
 
 	for _, name := range memnames {
-		m := p.ssaPkg.Members[name]
+		m := ssaPkg.Members[name]
 		if global, ok := m.(*ssa.Global); ok {
 			p.compileGlobal(global)
 		}
@@ -159,13 +154,13 @@ func (p *Compiler) CompilePkgGlobal(ssaPkg *ssa.Package) {
 
 func (p *Compiler) CompilePkgFunc(ssaPkg *ssa.Package) {
 	var memnames []string
-	for name := range p.ssaPkg.Members {
+	for name := range ssaPkg.Members {
 		memnames = append(memnames, name)
 	}
 	sort.Strings(memnames)
 
 	for _, name := range memnames {
-		m := p.ssaPkg.Members[name]
+		m := ssaPkg.Members[name]
 		if fn, ok := m.(*ssa.Function); ok {
 			CompileFunc(fn, p.prog, p.tLib, p.module)
 		}
