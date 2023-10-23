@@ -193,6 +193,7 @@ func (g *functionGenerator) genFunction(f *ssa.Function) *wir.Function {
 			wir_fn.InternalName = internal
 		}
 		if len(f.ExportName()) > 0 {
+			external = f.ExportName()
 			wir_fn.ExternalName = f.ExportName()
 		} else {
 			wir_fn.ExternalName = external
