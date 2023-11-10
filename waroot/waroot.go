@@ -46,9 +46,6 @@ var _warootFS embed.FS
 //go:embed src/base.clang.ws
 var baseWsFile_clang string
 
-//go:embed src/base.llvm.ws
-var baseWsFile_llvm string
-
 //go:embed src/base.wat.ws
 var baseWsFile_wat string
 
@@ -57,8 +54,6 @@ func GetBaseWsCode(backend string) string {
 	switch backend {
 	case config.WaBackend_clang:
 		return baseWsFile_clang
-	case config.WaBackend_llvm:
-		return baseWsFile_llvm
 	case config.WaBackend_wat:
 		return baseWsFile_wat
 	}

@@ -51,18 +51,16 @@ graph LR
     wa_ast(Wa AST);
 
     c_cpp(C/C++);
-    llir(LLVM IR);
     wasm(WASM);
 
     wa_ext   --> wa_ast;
     wago_ext --> wa_ast;
 
     wa_ast --> c_cpp;
-    wa_ast --> llir;
     wa_ast --> wasm;
 ```
 
-凹编译器支持 C/C++、LLVM IR、WASM 等多种输出以满足不同的目标场景。当前阶段的主要任务：
+凹编译器支持 C/C++、WASM 等多种输出以满足不同的目标场景。当前阶段的主要任务：
 - 创建编译器框架
 - 确定前中后端模块间的接口
 - 设计能满足语法特性基线的运行时模型
@@ -72,7 +70,6 @@ graph LR
 各后端可能的应用场景：
 
 - C/C++：凹语言™与 C/C++ 混合开发
-- LLVM IR：直接编译为Native Code
 - WASM：直接编译为WebAssembly模块
 
 当任一后端模块覆盖“可用最小集”，我们将尝试开发一些简单的网页示例，待选的方向有交互式图形图像、在线编译等。

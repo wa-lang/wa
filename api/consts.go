@@ -29,7 +29,6 @@ const (
 	WaBackend_Default = config.WaBackend_Default // 默认
 
 	WaBackend_clang = config.WaBackend_clang // 输出 c
-	WaBackend_llvm  = config.WaBackend_llvm  // 输出 llir
 	WaBackend_wat   = config.WaBackend_wat   // 输出 wat
 )
 

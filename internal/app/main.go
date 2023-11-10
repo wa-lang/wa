@@ -20,7 +20,6 @@ import (
 	"wa-lang.org/wa/internal/app/appfmt"
 	"wa-lang.org/wa/internal/app/appinit"
 	"wa-lang.org/wa/internal/app/applex"
-	"wa-lang.org/wa/internal/app/appllvm"
 	"wa-lang.org/wa/internal/app/applogo"
 	"wa-lang.org/wa/internal/app/applsp"
 	"wa-lang.org/wa/internal/app/appplay"
@@ -97,7 +96,6 @@ func Main() {
 		appssa.CmdSsa,
 
 		// 待完善的子命令(隐藏)
-		appllvm.CmdNative,
 		appcir.CmdCir,
 		appdoc.CmdDoc,
 		applsp.CmdLsp,

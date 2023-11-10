@@ -1,4 +1,3 @@
-//
 package cconstant
 
 import (
@@ -14,9 +13,11 @@ type Constant interface {
 	isConstant()
 }
 
-/**************************************
+/*
+*************************************
 Zero: 0值常数
-**************************************/
+*************************************
+*/
 type Zero struct {
 }
 
@@ -34,9 +35,11 @@ func (z *Zero) Type() ctypes.Type {
 
 func (z *Zero) IsExpr() {}
 
-/**************************************
+/*
+*************************************
 Bool
-**************************************/
+*************************************
+*/
 type Bool struct {
 	x bool
 }
@@ -58,9 +61,11 @@ func (b *Bool) Type() ctypes.Type {
 
 func (b *Bool) IsExpr() {}
 
-/**************************************
+/*
+*************************************
 Int: 整型常数
-**************************************/
+*************************************
+*/
 type Int struct {
 	// 整数类型
 	typ *ctypes.IntType
@@ -75,12 +80,12 @@ func NewInt(t *ctypes.IntType, v int64) *Int {
 
 // NewIntFromString() 从字符串中创建指定类型的整型常数
 // 字符串可为以下形式之一：
-//    * boolean literal
-//         true | false
-//    * integer literal
-//         [-]?[0-9]+
-//    * hexadecimal integer literal
-//         [us]0x[0-9A-Fa-f]+
+//   - boolean literal
+//     true | false
+//   - integer literal
+//     [-]?[0-9]+
+//   - hexadecimal integer literal
+//     [us]0x[0-9A-Fa-f]+
 func NewIntFromString(t *ctypes.IntType, s string) (*Int, error) {
 	// 布尔型
 	switch s {
@@ -138,8 +143,6 @@ func NewIntFromString(t *ctypes.IntType, s string) (*Int, error) {
 	return &Int{typ: t, x: v}, nil
 }
 
-// String returns the LLVM syntax representation of the constant as a type-value
-// pair.
 func (c *Int) CIRString() string {
 	return c.Ident()
 }
@@ -158,15 +161,16 @@ func (c *Int) isConstant() {}
 
 func (c *Int) IsExpr() {}
 
-/**************************************
+/*
+*************************************
 Float:
-**************************************/
+*************************************
+*/
 type Float struct {
 	// 常数值
 	x float32
 }
 
-//
 func NewFloat(v float32) *Float {
 	return &Float{x: v}
 }
@@ -181,15 +185,16 @@ func (f *Float) Type() ctypes.Type {
 
 func (d *Float) IsExpr() {}
 
-/**************************************
+/*
+*************************************
 Double:
-**************************************/
+*************************************
+*/
 type Double struct {
 	// 常数值
 	x float64
 }
 
-//
 func NewDouble(v float64) *Double {
 	return &Double{x: v}
 }
@@ -204,15 +209,16 @@ func (d *Double) Type() ctypes.Type {
 
 func (d *Double) IsExpr() {}
 
-/**************************************
+/*
+*************************************
 StringLit:
-**************************************/
+*************************************
+*/
 type StringLit struct {
 	//字符串字面值
 	x string
 }
 
-//
 func NewStringLit(v string) *StringLit {
 	return &StringLit{x: v}
 }

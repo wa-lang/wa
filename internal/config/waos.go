@@ -25,7 +25,6 @@ const (
 	WaBackend_Default = WaBackend_wat // 默认
 
 	WaBackend_clang = "clang" // 输出 c
-	WaBackend_llvm  = "llvm"  // 输出 llir
 	WaBackend_wat   = "wat"   // 输出 wat
 )
 
@@ -53,7 +52,6 @@ const (
 // 后端列表
 var WaBackend_List = []string{
 	WaBackend_clang,
-	WaBackend_llvm,
 	WaBackend_wat,
 }
 
