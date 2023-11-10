@@ -71,7 +71,7 @@ func (t *Slice) emitGenFromRefOfSlice(x *aRef, low, high, max Value) (insts []wa
 	//block
 	insts = append(insts, x.ExtractByName("d").EmitPush()...)
 	insts = append(insts, wat.NewInstLoad(wat.U32{}, 0, 1))
-	insts = append(insts, wat.NewInstCall("$Retain"))
+	insts = append(insts, wat.NewInstCall("runtime.Block.Retain"))
 
 	//data
 	if low == nil {
@@ -151,7 +151,7 @@ func (t *Slice) emitGenMake(Len, Cap Value) (insts []wat.Inst) {
 	insts = append(insts, t._base_block.emitHeapAlloc(Cap)...)
 
 	//data
-	insts = append(insts, wat.NewInstCall("$wa.runtime.DupI32"))
+	insts = append(insts, wat.NewInstCall("runtime.DupI32"))
 	insts = append(insts, NewConst("16", t._u32).EmitPush()...)
 	insts = append(insts, wat.NewInstAdd(wat.U32{}))
 
@@ -283,10 +283,10 @@ func (t *Slice) genAppendFunc(m *Module) string {
 		if_false = append(if_false, new_cap.EmitPop()...)
 		if_false = append(if_false, t._base_block.emitHeapAlloc(new_cap)...) //block
 
-		if_false = append(if_false, wat.NewInstCall("$wa.runtime.DupI32"))
+		if_false = append(if_false, wat.NewInstCall("runtime.DupI32"))
 		if_false = append(if_false, NewConst("16", t._u32).EmitPush()...)
 		if_false = append(if_false, wat.NewInstAdd(wat.U32{})) //data
-		if_false = append(if_false, wat.NewInstCall("$wa.runtime.DupI32"))
+		if_false = append(if_false, wat.NewInstCall("runtime.DupI32"))
 		if_false = append(if_false, dest.EmitPop()...)     //dest
 		if_false = append(if_false, new_len.EmitPush()...) //len
 		if_false = append(if_false, new_cap.EmitPush()...) //cap

@@ -134,8 +134,8 @@ func BuildOptions(c *cli.Context, waBackend ...string) *Option {
 		opt.TargetOS = config.WaOS_arduino
 	case config.WaOS_chrome:
 		opt.TargetOS = config.WaOS_chrome
-	case config.WaOS_mvp:
-		opt.TargetOS = config.WaOS_mvp
+	case config.WaOS_js:
+		opt.TargetOS = config.WaOS_js
 	default:
 		fmt.Printf("unreachable: target: %s\n", c.String("target"))
 		os.Exit(1)

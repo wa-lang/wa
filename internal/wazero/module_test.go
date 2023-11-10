@@ -18,7 +18,7 @@ func main {
 	println("hello wazero")
 }
 
-func add(a:i32, b:i32) => i32 {
+func Add(a:i32, b:i32) => i32 {
 	return a+b
 }
 `
@@ -42,7 +42,7 @@ func add(a:i32, b:i32) => i32 {
 	}
 
 	// add 函数执行
-	result, _, _, err := m.RunFunc("__main__.add", 1, 2)
+	result, _, _, err := m.RunFunc("__main__.Add", 1, 2)
 	if err != nil {
 		t.Fatal(err)
 	}

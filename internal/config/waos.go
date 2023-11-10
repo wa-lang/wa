@@ -35,8 +35,8 @@ const (
 
 	WaOS_arduino = "arduino" // Arduino 平台
 	WaOS_chrome  = "chrome"  // Chrome 浏览器
+	WaOS_js      = "js"      // 浏览器 JS
 	WaOS_wasi    = "wasi"    // WASI 接口
-	WaOS_mvp     = "mvp"     // MVP 接口, 最小可用
 )
 
 // 体系结构类型
@@ -62,7 +62,7 @@ var WaOS_List = []string{
 	WaOS_arduino,
 	WaOS_chrome,
 	WaOS_wasi,
-	WaOS_mvp,
+	WaOS_js,
 }
 
 // CPU 列表

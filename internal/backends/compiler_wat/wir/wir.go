@@ -12,13 +12,25 @@ var currentModule *Module
 Function:
 **************************************/
 type Function struct {
-	InternalName string
-	ExternalName string
-	Results      []ValueType
-	Params       []Value
-	Locals       []Value
+	InternalName     string
+	ExternalName     string
+	ExplicitExported bool
+	Results          []ValueType
+	Params           []Value
+	Locals           []Value
 
 	Insts []wat.Inst
+}
+
+/**************************************
+Global:
+**************************************/
+type Global struct {
+	Name     string
+	Name_exp string
+	val      Value
+	Type     ValueType
+	init_val Value
 }
 
 type ValueKind uint8

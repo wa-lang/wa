@@ -306,7 +306,7 @@ func (tLib *typeLib) compile(from types.Type) wir.ValueType {
 			var method wir.Method
 			method.Sig = tLib.GenFnSig(mfn.Signature)
 			method.Name = mfn.Name()
-			method.FullFnName, _ = wir.GetFnMangleName(mfn)
+			method.FullFnName, _ = wir.GetFnMangleName(mfn, tLib.prog.Manifest.MainPkg)
 
 			newType.AddMethod(method)
 		}

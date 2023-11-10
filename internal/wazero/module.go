@@ -156,8 +156,8 @@ func (p *Module) buildModule() error {
 			p.wazeroInitErr = err
 			return err
 		}
-	case config.WaOS_mvp:
-		if _, err = MvpInstantiate(p.wazeroCtx, p.wazeroRuntime); err != nil {
+	case config.WaOS_js:
+		if _, err = JsInstantiate(p.wazeroCtx, p.wazeroRuntime); err != nil {
 			p.wazeroInitErr = err
 			return err
 		}

@@ -1,0 +1,23 @@
+// 版权 @2023 凹语言 作者。保留所有权利。
+
+import "strconv"
+
+global I: i32 = 123
+global S: string = "这是一个字符串"
+
+func main {
+	println(Fn2("你好，凹语言", 41))
+}
+
+func Fn1() {
+	println(I)
+}
+
+func Fn2(s: string, i: int) => (string, int, string) {
+	s += strconv.Itoa(i)
+	return s, i + 1, S
+}
+
+func Fn3() {
+	println(S)
+}

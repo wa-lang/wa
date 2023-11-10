@@ -100,20 +100,17 @@ func IsStdPkg(pkgpath string) bool {
 }
 
 func GetStdPkgList() []string {
-	return append([]string{}, stdPkgs...)
+	var ss []string
+	for _, s := range stdPkgs {
+		ss = append(ss, s)
+	}
+	return ss
 }
 
-func GetStdPkgTestList() []string {
-	ss := make([]string, 0, len(stdPkgs))
+func GetStdTestPkgList() []string {
+	var ss []string
 	for _, s := range stdPkgs {
-		switch {
-		case s == "builtin":
-			continue
-		case s == "runtime":
-			continue
-		case s == "syscall":
-			continue
-		case strings.HasPrefix(s, "syscall/"):
+		if strings.HasPrefix(s, "syscall") {
 			continue
 		}
 		ss = append(ss, s)
@@ -131,20 +128,16 @@ var stdPkgs = []string{
 	"encoding/base64", // API 完整
 	"encoding/binary", // API 部分
 	"encoding/hex",    // API 完整
-	"encoding/qrcode", // ?
 	"fmt",             // ?
 	"hash",            // API 完整
 	"hash/crc32",      // API 完整
 	"image",           // ?
 	"image/bmp",       // ?
 	"image/color",     // ?
-	"image/draw",      // ?
 	"io",              // API 部分
 	"math",            // API 部分
 	"math/big",        // API 部分
 	"math/bits",       // API 完整
-	"math/gf256",      // ?
-	"math/rand",       // ?
 	"os",              // API 部分
 	"reflect",         // ?
 	"regexp",          // API 部分
@@ -152,12 +145,11 @@ var stdPkgs = []string{
 	"sort",            // API 完整
 	"strconv",         // API 完整
 	"strings",         // API 完整
-	"syscall/arduino", // ?
-	"syscall/chrome",  // ?
-	"syscall/mvp",     // ?
+	"syscall",         // API 完整
+	"syscall/js",      // ?
 	"syscall/wasi",    // ?
+	"syscall/chrome",  // ?
 	"text/template",   // 无
-	"time",            // API 部分
 	"unicode",         // API 部分
 	"unicode/ctypes",  // API 完整, 测试已覆盖
 	"unicode/utf8",    // API 完整, 测试已覆盖

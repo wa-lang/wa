@@ -109,10 +109,10 @@ func (t *String) genFunc_append(m *Module) string {
 		//gen new string
 		f.Insts = append(f.Insts, t._u8_block.emitHeapAlloc(new_len)...) //block
 
-		f.Insts = append(f.Insts, wat.NewInstCall("$wa.runtime.DupI32"))
+		f.Insts = append(f.Insts, wat.NewInstCall("runtime.DupI32"))
 		f.Insts = append(f.Insts, NewConst("16", t._u32).EmitPush()...)
 		f.Insts = append(f.Insts, wat.NewInstAdd(wat.U32{})) //data
-		f.Insts = append(f.Insts, wat.NewInstCall("$wa.runtime.DupI32"))
+		f.Insts = append(f.Insts, wat.NewInstCall("runtime.DupI32"))
 		f.Insts = append(f.Insts, dest.EmitPop()...)     //dest
 		f.Insts = append(f.Insts, new_len.EmitPush()...) //len
 

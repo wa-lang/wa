@@ -3,26 +3,26 @@
 import "runtime"
 
 // wa test apple
-// wa test -target=mvp apple
+// wa test -target=js apple
 
 func TestApple {
 	apple := Apple()
-	if runtime.WAOS == "mvp" {
-		assert(apple == "apple-mvp", apple)
+	if runtime.WAOS == "js" {
+		assert(apple == "apple-js", apple)
 	} else {
 		assert(apple == "apple", apple)
 	}
 }
 
 func ExampleApple {
-	if runtime.WAOS == "mvp" {
+	if runtime.WAOS == "js" {
 		println(Apple())
 	} else {
-		println(Apple()+"-mvp")
+		println(Apple() + "-js")
 	}
 
 	// Output:
-	// apple-mvp
+	// apple-js
 }
 
 func ExamplePanic {

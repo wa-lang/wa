@@ -167,7 +167,7 @@ func (g *functionGenerator) getValue(i ssa.Value) valueWrap {
 		return nv
 
 	case *ssa.Function:
-		fn_name, _ := wir.GetFnMangleName(v)
+		fn_name, _ := wir.GetFnMangleName(v, g.prog.Manifest.MainPkg)
 
 		if v.Parent() != nil {
 			if g.module.FindFunc(fn_name) == nil {
@@ -186,17 +186,20 @@ func (g *functionGenerator) genFunction(f *ssa.Function) *wir.Function {
 	g.is_init = (f.Synthetic == "package initializer")
 	var wir_fn wir.Function
 	{
-		internal, external := wir.GetFnMangleName(f)
+		internal, external := wir.GetFnMangleName(f, g.prog.Manifest.MainPkg)
 		if len(f.LinkName()) > 0 {
 			wir_fn.InternalName = f.LinkName()
 		} else {
 			wir_fn.InternalName = internal
 		}
 		if len(f.ExportName()) > 0 {
+			external = f.ExportName()
 			wir_fn.ExternalName = f.ExportName()
 		} else {
 			wir_fn.ExternalName = external
 		}
+
+		wir_fn.ExplicitExported = (len(external) > 0)
 	}
 
 	rets := f.Signature.Results()
@@ -557,7 +560,7 @@ func (g *functionGenerator) genCall(inst *ssa.Call) (insts []wat.Inst, ret_type 
 		if len(callee.LinkName()) > 0 {
 			insts = append(insts, wat.NewInstCall(callee.LinkName()))
 		} else {
-			fn_internal_name, _ := wir.GetFnMangleName(callee)
+			fn_internal_name, _ := wir.GetFnMangleName(callee, g.prog.Manifest.MainPkg)
 			insts = append(insts, wat.NewInstCall(fn_internal_name))
 		}
 
@@ -988,7 +991,7 @@ func (g *functionGenerator) genMakeClosre_Anonymous(inst *ssa.MakeClosure) (inst
 
 	var st_free_data *wir.Struct
 	{
-		fn_internal_name, _ := wir.GetFnMangleName(f)
+		fn_internal_name, _ := wir.GetFnMangleName(f, g.prog.Manifest.MainPkg)
 		st_name := fn_internal_name + ".$warpdata"
 
 		var found bool
@@ -1008,7 +1011,7 @@ func (g *functionGenerator) genMakeClosre_Anonymous(inst *ssa.MakeClosure) (inst
 	var warp_fn_index int
 	{
 		var warp_fn wir.Function
-		fn_name, _ := wir.GetFnMangleName(f)
+		fn_name, _ := wir.GetFnMangleName(f, g.prog.Manifest.MainPkg)
 		warp_fn.InternalName = fn_name + ".$warpfn"
 		for _, i := range f.Params {
 			pa := valueWrap{value: wir.NewLocal(i.Name(), g.tLib.compile(i.Type()))}
@@ -1072,7 +1075,7 @@ func (g *functionGenerator) genMakeClosre_Bound(inst *ssa.MakeClosure) (insts []
 	var warp_fn_index int
 	{
 		var warp_fn wir.Function
-		fn_name, _ := wir.GetFnMangleName(f.Object())
+		fn_name, _ := wir.GetFnMangleName(f.Object(), g.prog.Manifest.MainPkg)
 		warp_fn.InternalName = fn_name + ".$bound"
 		for _, i := range f.Params {
 			pa := valueWrap{value: wir.NewLocal(i.Name(), g.tLib.compile(i.Type()))}
@@ -1169,7 +1172,7 @@ func (g *functionGenerator) genGetter(f *ssa.Function) *wir.Function {
 		wir_fn.InternalName = f.LinkName()
 		wir_fn.ExternalName = f.LinkName()
 	} else {
-		wir_fn.InternalName, wir_fn.ExternalName = wir.GetFnMangleName(f)
+		wir_fn.InternalName, wir_fn.ExternalName = wir.GetFnMangleName(f, g.prog.Manifest.MainPkg)
 	}
 
 	rets := f.Signature.Results()
@@ -1203,7 +1206,7 @@ func (g *functionGenerator) genSetter(f *ssa.Function) *wir.Function {
 		wir_fn.InternalName = f.LinkName()
 		wir_fn.ExternalName = f.LinkName()
 	} else {
-		wir_fn.InternalName, wir_fn.ExternalName = wir.GetFnMangleName(f)
+		wir_fn.InternalName, wir_fn.ExternalName = wir.GetFnMangleName(f, g.prog.Manifest.MainPkg)
 	}
 
 	rets := f.Signature.Results()
@@ -1241,7 +1244,7 @@ func (g *functionGenerator) genSizer(f *ssa.Function) *wir.Function {
 		wir_fn.InternalName = f.LinkName()
 		wir_fn.ExternalName = f.LinkName()
 	} else {
-		wir_fn.InternalName, wir_fn.ExternalName = wir.GetFnMangleName(f)
+		wir_fn.InternalName, wir_fn.ExternalName = wir.GetFnMangleName(f, g.prog.Manifest.MainPkg)
 	}
 
 	rets := f.Signature.Results()

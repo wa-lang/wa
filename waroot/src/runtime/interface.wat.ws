@@ -13,7 +13,7 @@
 	  local.get $t
 	  if (result i32 i32 i32 i32)
 	    local.get $d.b
-		call $$Retain
+		call $runtime.Block.Retain
 	    local.get $d.d
 	    local.get $t
 	    local.get $eq
@@ -47,7 +47,7 @@
 	  local.get $t
 	  if (result i32 i32 i32 i32 i32)
 	    local.get $d.b
-		call $$Retain
+		call $runtime.Block.Retain
 	    local.get $d.d
 	    local.get $t
 	    local.get $eq

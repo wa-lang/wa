@@ -1,8 +1,8 @@
 // 版权 @2022 凹语言 作者。保留所有权利。
 
-import "syscall/mvp"
+import "syscall/js"
 
-const WAOS = "mvp"
+const WAOS = "js"
 
 #wa:linkname $runtime.argsSizesGet
 func argsSizesGet(result_argc: i32, result_argv_len: i32) => (errno: i32) {
@@ -31,7 +31,7 @@ func fdWrite(fd: i32, io: i32, iovs_len: i32, nwritten: i32) => (written: i32) {
 
 #wa:linkname $runtime.procExit
 func procExit(code: i32) {
-	mvp.ProcExit(code)
+	js.ProcExit(code)
 }
 
 #wa:linkname $runtime.panic_
@@ -71,42 +71,42 @@ func assertWithMessage(ok: i32, msg_ptr: i32, msg_len: i32, pos_msg_ptr: i32, po
 
 #wa:linkname $runtime.waPrintBool
 func waPrintBool(i: bool) {
-	mvp.PrintBool(i)
+	js.PrintBool(i)
 }
 
 #wa:linkname $runtime.waPrintI32
 func waPrintI32(i: i32) {
-	mvp.PrintI32(i)
+	js.PrintI32(i)
 }
 
 #wa:linkname $runtime.waPrintU32Ptr
 func waPrintU32Ptr(i: u32) {
-	mvp.PrintU32Ptr(i)
+	js.PrintU32Ptr(i)
 }
 
 #wa:linkname $runtime.waPrintU32
 func waPrintU32(i: u32) {
-	mvp.PrintU32(i)
+	js.PrintU32(i)
 }
 
 #wa:linkname $runtime.waPrintI64
 func waPrintI64(i: i64) {
-	mvp.PrintI64(i)
+	js.PrintI64(i)
 }
 
 #wa:linkname $runtime.waPrintU64
 func waPrintU64(i: u64) {
-	mvp.PrintU64(i)
+	js.PrintU64(i)
 }
 
 #wa:linkname $runtime.waPrintF32
 func waPrintF32(i: f32) {
-	mvp.PrintF32(i)
+	js.PrintF32(i)
 }
 
 #wa:linkname $runtime.waPrintF64
 func waPrintF64(i: f64) {
-	mvp.PrintF64(i)
+	js.PrintF64(i)
 }
 
 #wa:linkname $runtime.waPrintString
@@ -116,10 +116,10 @@ func waPrintString(s: string) {
 
 #wa:linkname $runtime.waPrintRune
 func waPrintRune(ch: i32) {
-	mvp.PrintRune(ch)
+	js.PrintRune(ch)
 }
 
 #wa:linkname $runtime.waPuts
 func waPuts(ptr: i32, len: i32) {
-	mvp.Puts(ptr, len)
+	js.Puts(ptr, len)
 }

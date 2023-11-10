@@ -54,7 +54,7 @@ var CmdTest = &cli.Command{
 func RunTest(cfg *config.Config, pkgpath, runPattern string, appArgs ...string) {
 	var pkgList = []string{pkgpath}
 	if pkgpath == "std" {
-		pkgList = waroot.GetStdPkgTestList()
+		pkgList = waroot.GetStdTestPkgList()
 	}
 	for _, p := range pkgList {
 		runTest(cfg, p, runPattern, appArgs...)

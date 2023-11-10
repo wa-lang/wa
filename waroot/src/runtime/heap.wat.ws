@@ -1,35 +1,35 @@
 ;; Copyright 2023 The Wa Authors. All rights reserved.
 
-(func $$waGetStackPtr (result i32)
+(func $runtime.getStackPtr (result i32)
 	(global.get $__stack_ptr)
 )
 
-(func $$waSetStackPtr (param $sp i32)
+(func $runtime.setStackPtr (param $sp i32)
 	local.get $sp
 	global.set $__stack_ptr
 )
 
-(func $$waStackAlloc (param $size i32) (result i32)
+(func $runtime.stackAlloc (param $size i32) (result i32)
 	;; $__stack_ptr -= $size
 	(global.set $__stack_ptr (i32.sub (global.get $__stack_ptr) (local.get  $size)))
 	;; return $__stack_ptr
 	(return (global.get $__stack_ptr))
 )
 
-(func $$waStackFree (param $size i32)
+(func $runtime.stackFree (param $size i32)
 	;; $__stack_ptr += $size
 	(global.set $__stack_ptr (i32.add (global.get $__stack_ptr) (local.get $size)))
 )
 
-(func $$waHeapBase(result i32)
+(func $runtime.heapBase(result i32)
 	global.get $__heap_base
 )
 
-(func $$waHeapMax(result i32)
+(func $runtime.heapMax(result i32)
 	global.get $__heap_max
 )
 
-(func $$waHeapAlloc (export "$runtime.waHeapAlloc") (param $nbytes i32) (result i32) ;;result = ptr
+(func $runtime.HeapAlloc (export "runtime.HeapAlloc") (param $nbytes i32) (result i32) ;;result = ptr
 	(local $ptr i32)
 
 	local.get $nbytes
@@ -72,12 +72,12 @@
 	local.get $ptr
 )
 
-(func $$waHeapFree (export "$runtime.waHeapFree") (param $ptr i32)
+(func $runtime.HeapFree (export "runtime.HeapFree") (param $ptr i32)
 	local.get $ptr
 	call $runtime.free
 )
 
-(func $$wa.runtime.Block.Init (param $ptr i32) (param $item_count i32) (param $release_func i32) (param $item_size i32) (result i32) ;;result = ptr
+(func $runtime.Block.Init (param $ptr i32) (param $item_count i32) (param $release_func i32) (param $item_size i32) (result i32) ;;result = ptr
 	local.get $ptr
 
 	local.get $ptr
@@ -100,17 +100,31 @@
 	end
 )
 
-(func $$wa.runtime.DupI32 (param i32) (result i32 i32) ;;r0 = r1 = p0
+(func $runtime.Block.HeapAlloc (export "runtime.Block.HeapAlloc") (param $item_count i32) (param $release_func i32) (param $item_size i32) (result i32) ;;result = ptr_block
+  local.get $item_count
+  local.get $item_size
+  i32.mul
+  i32.const 16
+  i32.add
+  call $runtime.HeapAlloc
+
+  local.get $item_count
+  local.get $release_func
+  local.get $item_size
+  call $runtime.Block.Init
+)
+
+(func $runtime.DupI32 (param i32) (result i32 i32) ;;r0 = r1 = p0
 	local.get 0
 	local.get 0
 )
 
-(func $$wa.runtime.SwapI32 (param i32 i32) (result i32 i32) ;;r0 = p1, r1 = p0
+(func $runtime.SwapI32 (param i32 i32) (result i32 i32) ;;r0 = p1, r1 = p0
 	local.get 1
 	local.get 0
 )
 
-(func $$Retain (param $ptr i32) (result i32) ;;result = ptr
+(func $runtime.Block.Retain (export "runtime.Block.Retain") (param $ptr i32) (result i32) ;;result = ptr
 	local.get $ptr
 
 	local.get $ptr
@@ -124,7 +138,7 @@
 	end
 )
 
-(func $$Release (export "$runtime.Release") (param $ptr i32)
+(func $runtime.Block.Release (export "runtime.Block.Release") (param $ptr i32)
 	(local $ref_count i32)
 	(local $item_count i32)
 	(local $free_func i32)
@@ -199,7 +213,7 @@
 		end  ;;free_func != 0
 
 		local.get $ptr
-		call $$waHeapFree
+		call $runtime.HeapFree
 	end  ;;ref_count == 0
 )
 
@@ -223,4 +237,37 @@
 	local.get $d
 	local.get $l
 	i32.const 0
+)
+
+(func $runtime.i32_load (export "runtime.i32_load") (param $addr i32) (result i32)
+	local.get $addr
+	i32.load
+)
+
+(func $runtime.i32_store (export "runtime.i32_store") (param $addr i32) (param $v i32)
+	local.get $addr
+	local.get $v
+	i32.store
+)
+
+(func $runtime.f32_load (export "runtime.f32_load") (param $addr i32) (result f32)
+	local.get $addr
+	f32.load
+)
+
+(func $runtime.f32_store (export "runtime.f32_store") (param $addr i32) (param $v f32)
+	local.get $addr
+	local.get $v
+	f32.store
+)
+
+(func $runtime.f64_load (export "runtime.f64_load") (param $addr i32) (result f64)
+	local.get $addr
+	f64.load
+)
+
+(func $runtime.f64_store (export "runtime.f64_store") (param $addr i32) (param $v f64)
+	local.get $addr
+	local.get $v
+	f64.store
 )
