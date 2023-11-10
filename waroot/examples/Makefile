@@ -9,8 +9,6 @@ ci-test-all:
 	@echo "== examples test begin =="
 
 	# loop forever
-	# cd ./arduino && make
-	# cd ./arduino-wat && make
 
 	cd ./brainfuck && make
 	cd ./expr && make

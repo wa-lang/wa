@@ -1,7 +1,7 @@
 # 版本日志
 
 - (dev)
-  - 去掉 LLVM 后端支持
+  - 去掉 LLVM 后端支持, CPU 只支持 wasm 类型, 删除 Arduino 支持
 - v0.8.1 (2023-08-11) MVP
   - MVP 版本, 细节请参考《凹语言手册》：https://wa-lang.org/man
 - v0.7.0 (2023-05-27)

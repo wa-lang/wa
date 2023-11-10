@@ -141,11 +141,6 @@ func (p *Module) buildModule() error {
 	}
 
 	switch p.cfg.WaOS {
-	case config.WaOS_arduino:
-		if _, err = ArduinoInstantiate(p.wazeroCtx, p.wazeroRuntime); err != nil {
-			p.wazeroInitErr = err
-			return err
-		}
 	case config.WaOS_chrome:
 		if _, err = ChromeInstantiate(p.wazeroCtx, p.wazeroRuntime); err != nil {
 			p.wazeroInitErr = err

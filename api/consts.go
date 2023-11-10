@@ -36,10 +36,9 @@ const (
 const (
 	WaOS_Default = config.WaOS_Default // 默认
 
-	WaOS_arduino = config.WaOS_arduino // Arduino 平台
-	WaOS_chrome  = config.WaOS_chrome  // Chrome 浏览器
-	WaOS_js      = config.WaOS_js      // 浏览器 js
-	WaOS_wasi    = config.WaOS_wasi    // WASI 接口
+	WaOS_chrome = config.WaOS_chrome // Chrome 浏览器
+	WaOS_js     = config.WaOS_js     // 浏览器 js
+	WaOS_wasi   = config.WaOS_wasi   // WASI 接口
 )
 
 // 体系结构类型

@@ -32,10 +32,9 @@ const (
 const (
 	WaOS_Default = WaOS_wasi // 默认
 
-	WaOS_arduino = "arduino" // Arduino 平台
-	WaOS_chrome  = "chrome"  // Chrome 浏览器
-	WaOS_js      = "js"      // 浏览器 JS
-	WaOS_wasi    = "wasi"    // WASI 接口
+	WaOS_chrome = "chrome" // Chrome 浏览器
+	WaOS_js     = "js"     // 浏览器 JS
+	WaOS_wasi   = "wasi"   // WASI 接口
 )
 
 // 体系结构类型
@@ -52,7 +51,6 @@ var WaBackend_List = []string{
 
 // OS 列表
 var WaOS_List = []string{
-	WaOS_arduino,
 	WaOS_chrome,
 	WaOS_wasi,
 	WaOS_js,
