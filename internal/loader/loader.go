@@ -181,6 +181,13 @@ func (p *_Loader) Import(pkgpath string) (*types.Package, error) {
 		return nil, err
 	}
 
+	// 解析当前包的宿主代码
+	pkg.WhostFiles, err = p.ParseDir_wahostFiles(pkgpath)
+	if err != nil {
+		logger.Tracef(&config.EnableTrace_loader, "err: %v", err)
+		return nil, err
+	}
+
 	// 解析当前包的 AST, 隐含了是否测试模式
 	filenames, pkg.Files, err = p.ParseDir(pkgpath)
 	if err != nil {
@@ -419,6 +426,65 @@ func (p *_Loader) ParseDir_wsFiles(pkgpath string) (files []*WsFile, err error) 
 
 	for i := 0; i < len(filenames); i++ {
 		files = append(files, &WsFile{
+			Name: filenames[i],
+			Code: string(datas[i]),
+		})
+	}
+	return
+}
+
+func (p *_Loader) ParseDir_wahostFiles(pkgpath string) (files []*WhostFile, err error) {
+	logger.Tracef(&config.EnableTrace_loader, "pkgpath: %v", pkgpath)
+
+	if p.cfg.WaOS == "" {
+		panic("unreachable")
+	}
+
+	var (
+		extNames          = []string{fmt.Sprintf(".wa-host.%s", p.cfg.WaOS)}
+		unitTestMode bool = false
+
+		filenames []string
+		datas     [][]byte
+	)
+
+	switch {
+	case p.isStdPkg(pkgpath):
+		logger.Tracef(&config.EnableTrace_loader, "isStdPkg; pkgpath: %v", pkgpath)
+
+		filenames, datas, err = p.readDirFiles(p.vfs.Std, pkgpath, unitTestMode, extNames)
+		if err != nil {
+			logger.Tracef(&config.EnableTrace_loader, "err: %v", err)
+			return nil, err
+		}
+	case p.isSelfPkg(pkgpath):
+		relpkg := strings.TrimPrefix(pkgpath, p.prog.Manifest.Pkg.Pkgpath)
+		if relpkg == "" {
+			relpkg = "."
+		}
+
+		logger.Tracef(&config.EnableTrace_loader, "isSelfPkg; pkgpath=%v, relpkg=%v", pkgpath, relpkg)
+
+		filenames, datas, err = p.readDirFiles(p.vfs.App, relpkg, unitTestMode, extNames)
+		if err != nil {
+			logger.Tracef(&config.EnableTrace_loader, "err: %v", err)
+			return nil, err
+		}
+
+		logger.Trace(&config.EnableTrace_loader, "isSelfPkg; return ok")
+
+	default: // vendor
+		logger.Tracef(&config.EnableTrace_loader, "vendorPkg; pkgpath: %v", pkgpath)
+
+		filenames, datas, err = p.readDirFiles(p.vfs.Vendor, pkgpath, unitTestMode, extNames)
+		if err != nil {
+			logger.Tracef(&config.EnableTrace_loader, "err: %v", err)
+			return nil, err
+		}
+	}
+
+	for i := 0; i < len(filenames); i++ {
+		files = append(files, &WhostFile{
 			Name: filenames[i],
 			Code: string(datas[i]),
 		})

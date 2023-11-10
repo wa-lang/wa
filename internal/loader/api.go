@@ -25,10 +25,11 @@ type Program struct {
 
 // 单个包对象
 type Package struct {
-	Pkg     *types.Package // 类型检查后的包
-	Info    *types.Info    // 包的类型检查信息
-	Files   []*ast.File    // AST语法树
-	WsFiles []*WsFile      // 汇编代码
+	Pkg        *types.Package // 类型检查后的包
+	Info       *types.Info    // 包的类型检查信息
+	Files      []*ast.File    // AST语法树
+	WsFiles    []*WsFile      // 汇编代码
+	WhostFiles []*WhostFile   // 宿主代码文件
 
 	SSAPkg   *ssa.Package
 	TestInfo *TestInfo
@@ -54,6 +55,12 @@ type TestFuncInfo struct {
 type WsFile struct {
 	Name string // 文件名
 	Code string // 汇编代码
+}
+
+// 宿主代码文件
+type WhostFile struct {
+	Name string // 文件名
+	Code string // 宿主代码
 }
 
 // 加载程序
