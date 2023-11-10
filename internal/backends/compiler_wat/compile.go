@@ -126,6 +126,45 @@ func (p *Compiler) CompileWsFiles(prog *loader.Program) {
 	p.module.BaseWat = sb.String()
 }
 
+func (p *Compiler) CompileWhostFiles(prog *loader.Program) string {
+	var sb strings.Builder
+
+	sb.WriteString(waroot.GetBaseWhostCode(p.prog.Cfg.WaOS))
+	sb.WriteString("\n")
+
+	var pkgpathList = make([]string, 0, len(prog.Pkgs))
+	for pkgpath := range prog.Pkgs {
+		pkgpathList = append(pkgpathList, pkgpath)
+	}
+	sort.Strings(pkgpathList)
+
+	var lineCommentSep = "// -" + strings.Repeat("-", 60-4) + "\n"
+
+	for _, pkgpath := range pkgpathList {
+		pkg := prog.Pkgs[pkgpath]
+		if len(pkg.WhostFiles) == 0 {
+			continue
+		}
+
+		func() {
+			sb.WriteString(lineCommentSep)
+			sb.WriteString("// package: " + pkgpath + "\n")
+			sb.WriteString(lineCommentSep)
+			sb.WriteString("\n")
+
+			for _, sf := range pkg.WhostFiles {
+				sb.WriteString("// file: " + sf.Name + "\n")
+				sb.WriteString("\n")
+
+				sb.WriteString(strings.TrimSpace(sf.Code))
+				sb.WriteString("\n")
+			}
+		}()
+	}
+
+	return sb.String()
+}
+
 func (p *Compiler) CompilePkgType(ssaPkg *ssa.Package) {
 	var memnames []string
 	for name := range ssaPkg.Members {
@@ -442,6 +481,9 @@ func (p *Compiler) funcsForJSBinding() []JSFunc {
 }
 
 func (p *Compiler) GenJSBinding(wasmFilename string) string {
+	var bf bytes.Buffer
+	bf.WriteString(p.CompileWhostFiles(p.prog))
+
 	// 模板
 	t, err := template.New("js").Parse(js_binding_tmpl)
 	if err != nil {
@@ -453,7 +495,6 @@ func (p *Compiler) GenJSBinding(wasmFilename string) string {
 		Globals:  p.globalsForJsBinding(),
 		Funcs:    p.funcsForJSBinding(),
 	}
-	var bf bytes.Buffer
 	err = t.Execute(&bf, data)
 	if err != nil {
 		logger.Fatal(err)

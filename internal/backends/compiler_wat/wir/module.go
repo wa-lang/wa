@@ -14,9 +14,11 @@ type fnSigWrap struct {
 	typeAddr int
 }
 
-/**************************************
+/*
+*************************************
 Module:
-**************************************/
+*************************************
+*/
 type Module struct {
 	VOID, BOOL, RUNE, U8, U16, I32, U32, UPTR, I64, U64, INT, UINT, F32, F64, STRING, BYTES ValueType
 

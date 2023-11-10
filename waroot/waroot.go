@@ -49,6 +49,12 @@ var baseWsFile_clang string
 //go:embed src/base.wat.ws
 var baseWsFile_wat string
 
+//go:embed src/base.wa-host.js
+var baseWhostFile_js string
+
+//go:embed src/base.wa-host.wasi
+var baseWhostFile_wasi string
+
 // 获取汇编基础代码
 func GetBaseWsCode(backend string) string {
 	switch backend {
@@ -59,6 +65,24 @@ func GetBaseWsCode(backend string) string {
 	}
 	for _, s := range config.WaBackend_List {
 		if s == backend {
+			return ""
+		}
+	}
+	panic("unreachable")
+}
+
+// 获取宿主基础代码
+func GetBaseWhostCode(waos string) string {
+	switch waos {
+	case config.WaOS_chrome:
+		return baseWhostFile_js
+	case config.WaOS_js:
+		return baseWhostFile_js
+	case config.WaOS_wasi:
+		return baseWhostFile_wasi
+	}
+	for _, s := range config.WaBackend_List {
+		if s == waos {
 			return ""
 		}
 	}
