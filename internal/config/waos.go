@@ -41,12 +41,7 @@ const (
 // 体系结构类型
 const (
 	WaArch_Default = WaArch_wasm // 默认
-
-	WaArch_386     = "386"     // 386 平台
-	WaArch_amd64   = "amd64"   // amd64 平台
-	WaArch_arm64   = "arm64"   // arm64 平台
-	WaArch_riscv64 = "riscv64" // riscv64 平台
-	WaArch_wasm    = "wasm"    // wasm 平台
+	WaArch_wasm    = "wasm"      // wasm 平台
 )
 
 // 后端列表
@@ -65,10 +60,6 @@ var WaOS_List = []string{
 
 // CPU 列表
 var WaArch_List = []string{
-	WaArch_386,
-	WaArch_amd64,
-	WaArch_arm64,
-	WaArch_riscv64,
 	WaArch_wasm,
 }
 

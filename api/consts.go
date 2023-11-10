@@ -45,10 +45,5 @@ const (
 // 体系结构类型
 const (
 	WaArch_Default = config.WaArch_Default // 默认
-
-	WaArch_386     = config.WaArch_386     // 386 平台
-	WaArch_amd64   = config.WaArch_amd64   // amd64 平台
-	WaArch_arm64   = config.WaArch_arm64   // arm64 平台
-	WaArch_riscv64 = config.WaArch_riscv64 // riscv64 平台
 	WaArch_wasm    = config.WaArch_wasm    // wasm 平台
 )
