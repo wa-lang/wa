@@ -8,3 +8,5 @@ wa-lang.org/wabt-go v1.3.0 h1:7oSrr80hGlf9G6wwf2pQQ1NXbeqBxEk3D3GDWwbYmVA=
 wa-lang.org/wabt-go v1.3.0/go.mod h1:v4fKY/p4oMiKwQ2S2aC/wOXvJ2bk2MgtLmwK0TKTNx0=
 wa-lang.org/wazero v1.0.1 h1:6o6M2o6TP0c6b1+jJtfFaAJQGBIk8HrDegIGzrtwmGc=
 wa-lang.org/wazero v1.0.1/go.mod h1:r1lGhhlgAnh5eZyNHe/dslT0LF7aY3qZGJWCbxRqf3E=
+wa-lang.org/wazero v1.0.2 h1:YFWmcMroUUzfUhuh8+07K7gI0Qy7ZPe/mAMwNc+LkRE=
+wa-lang.org/wazero v1.0.2/go.mod h1:r1lGhhlgAnh5eZyNHe/dslT0LF7aY3qZGJWCbxRqf3E=
