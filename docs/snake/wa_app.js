@@ -102,20 +102,20 @@
 
             function onMouseDown(ev) {
               let pt = getPointOnCanvas(ev.clientX, ev.clientY);
-              app._inst.exports['snake$canvas.OnMouseDown'](canvas.id, pt.x, pt.y);
+              app._inst.exports['snake.Canvas_OnMouseDown'](canvas.id, pt.x, pt.y);
             }
 
             function onMouseUp(ev) {
               let pt = getPointOnCanvas(ev.clientX, ev.clientY);
-              app._inst.exports['snake$canvas.OnMouseUp'](canvas.id, pt.x, pt.y);
+              app._inst.exports['snake.Canvas_OnMouseUp'](canvas.id, pt.x, pt.y);
             }
 
             function onKeyDown(ev) {
-              app._inst.exports['snake$canvas.OnKeyDown'](canvas.id, ev.keyCode);
+              app._inst.exports['snake.Canvas_OnKeyDown'](canvas.id, ev.keyCode);
             }
 
             function onKeyUp(ev) {
-              app._inst.exports['snake$canvas.OnKeyUp'](canvas.id, ev.keyCode);
+              app._inst.exports['snake.Canvas_OnKeyUp'](canvas.id, ev.keyCode);
             }
 
             if (IS_MOBILE) {

@@ -4,6 +4,19 @@ import "snake/canvas"
 
 global ca: *canvas.Canvas
 
+func Canvas_OnMouseDown(id: u32, x, y: u32) {
+	canvas.OnMouseDown(id, x, y)
+}
+func Canvas_OnMouseUp(id: u32, x, y: u32) {
+	canvas.OnMouseUp(id, x, y)
+}
+func Canvas_OnKeyDown(id, key: u32) {
+	canvas.OnKeyDown(id, key)
+}
+func Canvas_OnKeyUp(id, key: u32) {
+	canvas.OnKeyUp(id, key)
+}
+
 type Position struct {
 	x, y: i32
 }
