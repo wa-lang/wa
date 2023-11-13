@@ -32,7 +32,7 @@ jobs:
       - run: wa -h
       - run: cd waroot && wa run examples/prime
       - run: cd waroot && wa run hello.wa
-      - run: cd waroot && wa run -target=chrome hello.wa 
+      - run: cd waroot && wa run -target=unknown hello.wa 
 
       - uses: shogo82148/actions-goveralls@v1
         with:
@@ -61,7 +61,7 @@ jobs:
       - run: wa -h
       - run: cd waroot && wa run examples/prime
       - run: cd waroot && wa run hello.wa
-      - run: cd waroot && wa run -target=chrome hello.wa 
+      - run: cd waroot && wa run -target=unknown hello.wa 
 
   build-and-test-macos:
     runs-on: macos-12
@@ -86,4 +86,4 @@ jobs:
       - run: wa -h
       - run: cd waroot && wa run examples/prime
       - run: cd waroot && wa run hello.wa
-      - run: cd waroot && wa run -target=chrome hello.wa 
+      - run: cd waroot && wa run -target=unknown hello.wa 

@@ -32,9 +32,9 @@ const (
 const (
 	WaOS_Default = WaOS_wasi // 默认
 
-	WaOS_chrome = "chrome" // Chrome 浏览器
-	WaOS_js     = "js"     // 浏览器 JS
-	WaOS_wasi   = "wasi"   // WASI 接口
+	WaOS_js      = "js"      // 浏览器 JS
+	WaOS_wasi    = "wasi"    // WASI 接口
+	WaOS_unknown = "unknown" // Unknown
 )
 
 // 体系结构类型
@@ -51,9 +51,9 @@ var WaBackend_List = []string{
 
 // OS 列表
 var WaOS_List = []string{
-	WaOS_chrome,
-	WaOS_wasi,
 	WaOS_js,
+	WaOS_wasi,
+	WaOS_unknown,
 }
 
 // CPU 列表

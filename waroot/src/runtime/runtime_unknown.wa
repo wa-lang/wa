@@ -1,8 +1,8 @@
 // 版权 @2022 凹语言 作者。保留所有权利。
 
-import "syscall/chrome"
+import "syscall/unknown"
 
-const WAOS = "chrome"
+const WAOS = "unknown"
 
 #wa:linkname $runtime.argsSizesGet
 func argsSizesGet(result_argc: i32, result_argv_len: i32) => (errno: i32) {
@@ -96,10 +96,10 @@ func waPrintString(s: string) {
 
 #wa:linkname $runtime.waPrintRune
 func waPrintRune(ch: i32) {
-	chrome.PrintRune(ch)
+	unknown.PrintRune(ch)
 }
 
 #wa:linkname $runtime.waPuts
 func waPuts(ptr: i32, len: i32) {
-	chrome.Puts(ptr, len)
+	unknown.Puts(ptr, len)
 }

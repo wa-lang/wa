@@ -74,7 +74,7 @@ func GetBaseWsCode(backend string) string {
 // 获取宿主基础代码
 func GetBaseWhostCode(waos string) string {
 	switch waos {
-	case config.WaOS_chrome:
+	case config.WaOS_unknown:
 		return baseWhostFile_js
 	case config.WaOS_js:
 		return baseWhostFile_js
@@ -167,7 +167,7 @@ var stdPkgs = []string{
 	"syscall",         // API 完整
 	"syscall/js",      // ?
 	"syscall/wasi",    // ?
-	"syscall/chrome",  // ?
+	"syscall/unknown", // ?
 	"text/template",   // 无
 	"unicode",         // API 部分
 	"unicode/ctypes",  // API 完整, 测试已覆盖

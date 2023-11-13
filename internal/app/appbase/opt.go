@@ -130,8 +130,8 @@ func BuildOptions(c *cli.Context, waBackend ...string) *Option {
 		opt.TargetOS = config.WaOS_Default
 	case config.WaOS_wasi:
 		opt.TargetOS = config.WaOS_wasi
-	case config.WaOS_chrome:
-		opt.TargetOS = config.WaOS_chrome
+	case config.WaOS_unknown:
+		opt.TargetOS = config.WaOS_unknown
 	case config.WaOS_js:
 		opt.TargetOS = config.WaOS_js
 	default:

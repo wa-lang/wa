@@ -10,10 +10,10 @@ import (
 	"wa-lang.org/wazero/api"
 )
 
-const chromeModuleName = "wa_js_env"
+const unknownModuleName = "unknown"
 
-func ChromeInstantiate(ctx context.Context, rt wazero.Runtime) (api.Closer, error) {
-	return rt.NewHostModuleBuilder(chromeModuleName).
+func UnknownInstantiate(ctx context.Context, rt wazero.Runtime) (api.Closer, error) {
+	return rt.NewHostModuleBuilder(unknownModuleName).
 		NewFunctionBuilder().
 		WithFunc(func(ctx context.Context, m api.Module, pos, len uint32) {
 			bytes, _ := m.Memory().Read(ctx, pos, len)

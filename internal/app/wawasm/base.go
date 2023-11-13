@@ -32,7 +32,7 @@ func waClearError() {
 func waGenerateWat(filename, code string) string {
 	cfg := api.DefaultConfig()
 	cfg.WaArch = api.WaArch_wasm
-	cfg.WaOS = api.WaOS_chrome
+	cfg.WaOS = api.WaOS_js
 
 	wat, err := waBuildFile(cfg, filename, code)
 	if err != nil {
