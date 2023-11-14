@@ -1,0 +1,52 @@
+// 版权 @2023 hello 作者。保留所有权利。
+
+#wa:import canvas rect
+func canvas_rect(x, y, w, h: i32)
+
+#wa:import canvas moveTo
+func canvas_moveTo(x, y: i32)
+
+#wa:import canvas lineTo
+func canvas_lineTo(x, y: i32)
+
+#wa:import canvas stroke
+func canvas_stroke
+
+func main {
+	println("Hello Canvas!")
+}
+
+// +---+    +---+
+// | o |    | o |
+// |   +----+   |
+// |            |
+// |    \/\/    |
+// |            |
+// +------------+
+
+func DrawLogo {
+	canvas_moveTo(50, 50)
+	canvas_lineTo(150, 50)
+	canvas_lineTo(150, 150)
+	canvas_lineTo(250, 150)
+	canvas_lineTo(250, 50)
+	canvas_lineTo(350, 50)
+	canvas_lineTo(350, 350)
+	canvas_lineTo(50, 350)
+	canvas_lineTo(50, 50)
+
+	// O O
+	canvas_rect(95, 95, 10, 10)
+	canvas_rect(295, 95, 10, 10)
+
+	// W
+	canvas_moveTo(200, 230)
+	canvas_lineTo(200-34, 230+34)
+	canvas_lineTo(200-34-34, 230+34-34)
+
+	canvas_moveTo(200, 230)
+	canvas_lineTo(200+34, 230+34)
+	canvas_lineTo(200+34+34, 230+34-34)
+
+	canvas_stroke()
+}
