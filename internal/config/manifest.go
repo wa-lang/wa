@@ -151,6 +151,9 @@ func isValidAppName(s string) bool {
 		return false
 	}
 	for _, c := range []rune(s) {
+		if c == '-' || c == '.' {
+			continue
+		}
 		if c == '_' || (c >= '0' && c <= '9') || unicode.IsLetter(c) {
 			continue
 		}
@@ -164,7 +167,7 @@ func isValidPkgpath(s string) bool {
 		return false
 	}
 	for _, c := range []rune(s) {
-		if c == '_' || c == '.' || c == '/' || (c >= '0' && c <= '9') {
+		if c == '-' || c == '_' || c == '.' || c == '/' || (c >= '0' && c <= '9') {
 			continue
 		}
 		if unicode.IsLetter(c) {

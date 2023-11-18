@@ -26,7 +26,7 @@ func CmdRunAction(c *cli.Context) error {
 	input := c.Args().First()
 	outfile := ""
 
-	if input == "" {
+	if input == "" || input == "." {
 		input, _ = os.Getwd()
 	}
 

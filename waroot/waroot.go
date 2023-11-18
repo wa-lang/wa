@@ -58,8 +58,6 @@ var baseWhostFile_wasi string
 // 获取汇编基础代码
 func GetBaseWsCode(backend string) string {
 	switch backend {
-	case config.WaBackend_clang:
-		return baseWsFile_clang
 	case config.WaBackend_wat:
 		return baseWsFile_wat
 	}

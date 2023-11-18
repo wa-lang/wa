@@ -24,13 +24,12 @@ package config
 const (
 	WaBackend_Default = WaBackend_wat // 默认
 
-	WaBackend_clang = "clang" // 输出 c
-	WaBackend_wat   = "wat"   // 输出 wat
+	WaBackend_wat = "wat" // 输出 wat
 )
 
 // 目标平台类型, 可管理后缀名
 const (
-	WaOS_Default = WaOS_wasi // 默认
+	WaOS_Default = WaOS_js // 默认
 
 	WaOS_js      = "js"      // 浏览器 JS
 	WaOS_wasi    = "wasi"    // WASI 接口
@@ -45,7 +44,6 @@ const (
 
 // 后端列表
 var WaBackend_List = []string{
-	WaBackend_clang,
 	WaBackend_wat,
 }
 

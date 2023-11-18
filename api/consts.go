@@ -28,8 +28,7 @@ import (
 const (
 	WaBackend_Default = config.WaBackend_Default // 默认
 
-	WaBackend_clang = config.WaBackend_clang // 输出 c
-	WaBackend_wat   = config.WaBackend_wat   // 输出 wat
+	WaBackend_wat = config.WaBackend_wat // 输出 wat
 )
 
 // 目标平台类型, 可管理后缀名
