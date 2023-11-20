@@ -407,7 +407,7 @@ func (m *Module) EmitGenFieldAddr(x Value, field_id int) (insts []wat.Inst, ret_
 }
 
 func (m *Module) EmitGenIndexAddr(x, id Value) (insts []wat.Inst, ret_type ValueType, ret_val Value) {
-	if !id.Type().Equal(m.I32) {
+	if !id.Type().Equal(m.I32) && !id.Type().Equal(m.U32) {
 		panic("index should be i32")
 	}
 
