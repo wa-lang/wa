@@ -132,7 +132,8 @@ class WaApp {
     }
 
     let imports = {
-      syscall_js: syscall
+      syscall_js: syscall,
+      {{$.ImportCode}}
     }
 
     WebAssembly.instantiateStreaming(fetch(url), imports).then(res => {

@@ -126,10 +126,10 @@ func (p *Compiler) CompileWsFiles(prog *loader.Program) {
 	p.module.BaseWat = sb.String()
 }
 
-func (p *Compiler) CompileWhostFiles(prog *loader.Program) string {
+func (p *Compiler) CompileWImportFiles(prog *loader.Program) string {
 	var sb strings.Builder
 
-	sb.WriteString(waroot.GetBaseWhostCode(p.prog.Cfg.WaOS))
+	sb.WriteString(waroot.GetBaseImportCode(p.prog.Cfg.WaOS))
 	sb.WriteString("\n")
 
 	var pkgpathList = make([]string, 0, len(prog.Pkgs))
@@ -142,7 +142,7 @@ func (p *Compiler) CompileWhostFiles(prog *loader.Program) string {
 
 	for _, pkgpath := range pkgpathList {
 		pkg := prog.Pkgs[pkgpath]
-		if len(pkg.WhostFiles) == 0 {
+		if len(pkg.WImportFiles) == 0 {
 			continue
 		}
 
@@ -152,7 +152,7 @@ func (p *Compiler) CompileWhostFiles(prog *loader.Program) string {
 			sb.WriteString(lineCommentSep)
 			sb.WriteString("\n")
 
-			for _, sf := range pkg.WhostFiles {
+			for _, sf := range pkg.WImportFiles {
 				sb.WriteString("// file: " + sf.Name + "\n")
 				sb.WriteString("\n")
 
@@ -374,10 +374,11 @@ type JSFunc struct {
 }
 
 type JSModule struct {
-	Filename string
-	Pkg      string
-	Globals  []JSGlobal
-	Funcs    []JSFunc
+	Filename   string
+	Pkg        string
+	Globals    []JSGlobal
+	Funcs      []JSFunc
+	ImportCode string
 }
 
 func stripNamePrefix(name string) string {
@@ -481,20 +482,20 @@ func (p *Compiler) funcsForJSBinding() []JSFunc {
 }
 
 func (p *Compiler) GenJSBinding(wasmFilename string) string {
-	var bf bytes.Buffer
-	bf.WriteString(p.CompileWhostFiles(p.prog))
-
 	// 模板
 	t, err := template.New("js").Parse(js_binding_tmpl)
 	if err != nil {
 		logger.Fatal(err)
 	}
 	data := JSModule{
-		Filename: wasmFilename,
-		Pkg:      p.prog.Manifest.MainPkg,
-		Globals:  p.globalsForJsBinding(),
-		Funcs:    p.funcsForJSBinding(),
+		Filename:   wasmFilename,
+		Pkg:        p.prog.Manifest.MainPkg,
+		Globals:    p.globalsForJsBinding(),
+		Funcs:      p.funcsForJSBinding(),
+		ImportCode: p.CompileWImportFiles(p.prog),
 	}
+
+	var bf bytes.Buffer
 	err = t.Execute(&bf, data)
 	if err != nil {
 		logger.Fatal(err)
