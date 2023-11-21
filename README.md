@@ -92,7 +92,7 @@ func main {
 Execute the program:
 
 ```
-$ cd waroot && wa run examples/prime
+$ cd waroot && wa run -target=wasi examples/prime
 2
 3
 5
