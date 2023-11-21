@@ -13,8 +13,6 @@ wat2wasm.exe
 *.a
 *.so
 *.dylib
-*.ll
-*.s
 *.out*
 *.wasm
 *.wasm.*
