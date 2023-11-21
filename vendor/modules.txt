@@ -1,0 +1,31 @@
+# wa-lang.org/wazero v1.0.2
+## explicit; go 1.17
+wa-lang.org/wazero
+wa-lang.org/wazero/api
+wa-lang.org/wazero/experimental
+wa-lang.org/wazero/imports/proxywasm
+wa-lang.org/wazero/imports/proxywasm/internal
+wa-lang.org/wazero/imports/proxywasm/types
+wa-lang.org/wazero/imports/walang
+wa-lang.org/wazero/imports/wasi_snapshot_preview1
+wa-lang.org/wazero/internal/asm
+wa-lang.org/wazero/internal/asm/amd64
+wa-lang.org/wazero/internal/asm/arm64
+wa-lang.org/wazero/internal/compilationcache
+wa-lang.org/wazero/internal/engine/compiler
+wa-lang.org/wazero/internal/engine/interpreter
+wa-lang.org/wazero/internal/ieee754
+wa-lang.org/wazero/internal/leb128
+wa-lang.org/wazero/internal/moremath
+wa-lang.org/wazero/internal/platform
+wa-lang.org/wazero/internal/sys
+wa-lang.org/wazero/internal/u32
+wa-lang.org/wazero/internal/u64
+wa-lang.org/wazero/internal/version
+wa-lang.org/wazero/internal/wasi_snapshot_preview1
+wa-lang.org/wazero/internal/wasm
+wa-lang.org/wazero/internal/wasm/binary
+wa-lang.org/wazero/internal/wasmdebug
+wa-lang.org/wazero/internal/wasmruntime
+wa-lang.org/wazero/internal/wazeroir
+wa-lang.org/wazero/sys
