@@ -181,6 +181,17 @@ func BuildApp(opt *appbase.Option, input, outfile string) (wasmBytes []byte, err
 				fmt.Printf("write %s failed: %v\n", jsOutfile, err)
 				os.Exit(1)
 			}
+
+			// 生成 index.html 文件
+			indexHtmlPath := filepath.Join(filepath.Dir(outfile), "index.html")
+			if !appbase.PathExists(indexHtmlPath) {
+				htmlOutput := compiler.GenIndexHtml(filepath.Base(jsOutfile))
+				err = os.WriteFile(indexHtmlPath, []byte(htmlOutput), 0666)
+				if err != nil {
+					fmt.Printf("write %s failed: %v\n", indexHtmlPath, err)
+					os.Exit(1)
+				}
+			}
 		}
 
 		// wat 编译为 wasm

@@ -356,6 +356,9 @@ func (p *Compiler) GenJsBind() {
 	}
 }
 
+//go:embed index.html.gotmpl
+var index_html_tmpl string
+
 //go:embed js_binding_tmpl.js
 var js_binding_tmpl string
 
@@ -479,6 +482,28 @@ func (p *Compiler) funcsForJSBinding() []JSFunc {
 
 	}
 	return funcs
+}
+
+func (p *Compiler) GenIndexHtml(jsFilename string) string {
+	t, err := template.New("index.html").Parse(index_html_tmpl)
+	if err != nil {
+		logger.Fatal(err)
+	}
+	data := JSModule{
+		Filename:   jsFilename,
+		Pkg:        p.prog.Manifest.MainPkg,
+		Globals:    p.globalsForJsBinding(),
+		Funcs:      p.funcsForJSBinding(),
+		ImportCode: p.CompileWImportFiles(p.prog),
+	}
+
+	var bf bytes.Buffer
+	err = t.Execute(&bf, data)
+	if err != nil {
+		logger.Fatal(err)
+	}
+
+	return bf.String()
 }
 
 func (p *Compiler) GenJSBinding(wasmFilename string) string {
