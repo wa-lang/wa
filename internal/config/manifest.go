@@ -13,7 +13,7 @@ import (
 	"strings"
 	"unicode"
 
-	"github.com/BurntSushi/toml"
+	"wa-lang.org/wa/internal/3rdparty/toml"
 )
 
 // 模块文件
