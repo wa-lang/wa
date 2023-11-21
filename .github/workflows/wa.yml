@@ -30,8 +30,8 @@ jobs:
       - run: go install
 
       - run: wa -h
-      - run: cd waroot && wa run examples/prime
-      - run: cd waroot && wa run hello.wa
+      - run: cd waroot && wa run -target=wasi examples/prime
+      - run: cd waroot && wa run -target=wasi hello.wa
       - run: cd waroot && wa run -target=unknown hello.wa 
 
       - uses: shogo82148/actions-goveralls@v1
@@ -59,8 +59,8 @@ jobs:
       - run: go install
 
       - run: wa -h
-      - run: cd waroot && wa run examples/prime
-      - run: cd waroot && wa run hello.wa
+      - run: cd waroot && wa run -target=wasi examples/prime
+      - run: cd waroot && wa run -target=wasi hello.wa
       - run: cd waroot && wa run -target=unknown hello.wa 
 
   build-and-test-macos:
@@ -84,6 +84,6 @@ jobs:
       - run: go install
 
       - run: wa -h
-      - run: cd waroot && wa run examples/prime
-      - run: cd waroot && wa run hello.wa
+      - run: cd waroot && wa run -target=wasi examples/prime
+      - run: cd waroot && wa run -target=wasi hello.wa
       - run: cd waroot && wa run -target=unknown hello.wa 
