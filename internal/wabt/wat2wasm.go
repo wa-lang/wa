@@ -10,9 +10,9 @@ import (
 	"path/filepath"
 	"sync"
 
+	"wa-lang.org/wa/internal/3rdparty/wabt-go"
 	"wa-lang.org/wa/internal/config"
 	"wa-lang.org/wa/internal/logger"
-	"wa-lang.org/wabt-go"
 )
 
 var muWabt sync.Mutex
