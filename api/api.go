@@ -79,7 +79,7 @@ func BuildFile(cfg *config.Config, filename string, src interface{}) (wat []byte
 		return nil, err
 	}
 
-	watOut, err := compiler_wat.New().Compile(prog, "main")
+	watOut, err := compiler_wat.New().Compile(prog)
 	return []byte(watOut), err
 }
 
@@ -91,7 +91,7 @@ func BuildVFS(cfg *config.Config, vfs *config.PkgVFS, appPkg string) (wat []byte
 		return nil, err
 	}
 
-	watOut, err := compiler_wat.New().Compile(prog, "main")
+	watOut, err := compiler_wat.New().Compile(prog)
 	return []byte(watOut), err
 }
 

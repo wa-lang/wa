@@ -80,7 +80,7 @@ func runTest(cfg *config.Config, pkgpath, runPattern string, appArgs ...string) 
 	}
 
 	// 生成 wat 文件(main 函数为空)
-	watOutput, err := compiler_wat.New().Compile(prog, "")
+	watOutput, err := compiler_wat.New().Compile(prog)
 	if err != nil {
 		fmt.Println(err)
 		os.Exit(1)

@@ -34,7 +34,7 @@ func New() *Compiler {
 	return p
 }
 
-func (p *Compiler) Compile(prog *loader.Program, mainFunc string) (output string, err error) {
+func (p *Compiler) Compile(prog *loader.Program) (output string, err error) {
 	p.prog = prog
 	p.CompileWsFiles(prog)
 

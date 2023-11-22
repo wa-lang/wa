@@ -232,7 +232,7 @@ func buildWat(opt *appbase.Option, filename string) (
 	}
 
 	compiler = compiler_wat.New()
-	output, err := compiler.Compile(prog, "main")
+	output, err := compiler.Compile(prog)
 
 	if err != nil {
 		return prog, nil, nil, err
