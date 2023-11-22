@@ -3,7 +3,9 @@
 package appbase
 
 import (
+	"io"
 	"os"
+	"path/filepath"
 	"strings"
 	"unicode"
 )
@@ -95,4 +97,48 @@ func IsValidPkgpath(s string) bool {
 	return IsValidAppName(pkgname)
 }
 
-// 是标准库路径
+// 复制目录
+func CopyDir(dst, src string) (err error) {
+	entryList, err := os.ReadDir(src)
+	if err != nil && !os.IsExist(err) {
+		return err
+	}
+	for _, entry := range entryList {
+		if entry.IsDir() {
+			if err = CopyDir(dst+"/"+entry.Name(), src+"/"+entry.Name()); err != nil {
+				return err
+			}
+		} else {
+			srcFname := filepath.Clean(src + "/" + entry.Name())
+			dstFname := filepath.Clean(dst + "/" + entry.Name())
+
+			if err := CopyFile(dstFname, srcFname); err != nil {
+				return err
+			}
+		}
+	}
+	return nil
+}
+
+// 复制文件
+func CopyFile(dst, src string) error {
+	err := os.MkdirAll(filepath.Dir(dst), 0777)
+	if err != nil && !os.IsExist(err) {
+		return err
+	}
+	fsrc, err := os.Open(src)
+	if err != nil {
+		return err
+	}
+	defer fsrc.Close()
+
+	fdst, err := os.Create(dst)
+	if err != nil {
+		return err
+	}
+	defer fdst.Close()
+	if _, err = io.Copy(fdst, fsrc); err != nil {
+		return err
+	}
+	return nil
+}

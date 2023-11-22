@@ -6,6 +6,10 @@ func main {
 	heart()
 }
 
+func GetSomething => string {
+	return "你好，凹语言！"
+}
+
 func sum(n: int) => int {
 	v: int
 	for i := 1; i <= n; i++ {

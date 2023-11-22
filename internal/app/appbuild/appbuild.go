@@ -182,14 +182,22 @@ func BuildApp(opt *appbase.Option, input, outfile string) (wasmBytes []byte, err
 				os.Exit(1)
 			}
 
-			// 生成 index.html 文件
-			indexHtmlPath := filepath.Join(filepath.Dir(outfile), "index.html")
-			if !appbase.PathExists(indexHtmlPath) {
-				htmlOutput := compiler.GenIndexHtml(filepath.Base(jsOutfile))
-				err = os.WriteFile(indexHtmlPath, []byte(htmlOutput), 0666)
-				if err != nil {
-					fmt.Printf("write %s failed: %v\n", indexHtmlPath, err)
-					os.Exit(1)
+			// 复制 www 目录
+			if appbase.IsNativeDir(filepath.Join(manifest.Root, "www")) {
+				appbase.CopyDir(
+					filepath.Join(manifest.Root, "output"),
+					filepath.Join(manifest.Root, "www"),
+				)
+			} else {
+				// 生成 index.html 文件
+				indexHtmlPath := filepath.Join(filepath.Dir(outfile), "index.html")
+				if !appbase.PathExists(indexHtmlPath) {
+					htmlOutput := compiler.GenIndexHtml(filepath.Base(jsOutfile))
+					err = os.WriteFile(indexHtmlPath, []byte(htmlOutput), 0666)
+					if err != nil {
+						fmt.Printf("write %s failed: %v\n", indexHtmlPath, err)
+						os.Exit(1)
+					}
 				}
 			}
 		}
