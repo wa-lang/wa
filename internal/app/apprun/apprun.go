@@ -61,8 +61,17 @@ func CmdRunAction(c *cli.Context) error {
 			openBrowser(addr)
 		}()
 
+		fileHandler := http.FileServer(http.Dir(filepath.Join(input, "output")))
 		http.Handle(
-			"/", http.FileServer(http.Dir(filepath.Join(input, "output"))),
+			"/", http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
+				w.Header().Add("Cache-Control", "no-cache")
+				if strings.HasSuffix(req.URL.Path, ".wasm") {
+					w.Header().Set("content-type", "application/wasm")
+				}
+				w.Header().Set("Access-Control-Allow-Origin", "*")
+
+				fileHandler.ServeHTTP(w, req)
+			}),
 		)
 		if err := http.ListenAndServe(addr, nil); err != nil {
 			fmt.Println(err)
