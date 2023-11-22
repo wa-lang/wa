@@ -63,6 +63,6 @@ func waBuildFile(cfg *config.Config, filename string, src interface{}) (wat []by
 		return nil, err
 	}
 
-	watOut, err := compiler_wat.New().Compile(prog, "main")
+	watOut, err := compiler_wat.New().Compile(prog)
 	return []byte(watOut), err
 }
