@@ -3,141 +3,117 @@
 
 class WaApp {
   constructor(url) {
-    let app = this;
+    if (!url === null) { throw new Error('WASM URL 未设置'); };
+
+    this._wasm_url = url;
+    this._mem_util = this.createMemUtil();
     this._wasm_inst = null;
     this._wa_print_buf = "";
+  }
 
-    this._mem_util = new function() {
-      this.mem = () => { return app._wasm_inst.exports.memory; }
-      this.mem_view = (addr, len) => { return new DataView(this.mem().buffer, addr, len); }
-      this.mem_array_u8 = (addr, len) => { return new Uint8Array(this.mem().buffer, addr, len); }
-
-      this.get_string = (d, l) => { return new TextDecoder("utf-8").decode(this.mem_view(d, l)); }
-      this.set_string = (s) => {
+  createMemUtil = () => {
+    return {
+      mem: () => { return this._wasm_inst.exports.memory; },
+      mem_view: (addr, len) => { return new DataView(this._mem_util.mem().buffer, addr, len); },
+      mem_array_u8: (addr, len) => { return new Uint8Array(this._mem_util.mem().buffer, addr, len); },
+      get_string: (d, l) => { return new TextDecoder("utf-8").decode(this._mem_util.mem_view(d, l)); },
+      set_string: (s) => {
         const bytes = new TextEncoder("utf-8").encode(s);
         const l = bytes.length;
-        const b = app._wasm_inst.exports["runtime.Block.HeapAlloc"](l, 0, 1);
+        const b = this._wasm_inst.exports["runtime.Block.HeapAlloc"](l, 0, 1);
         const d = b + 16;
-        this.mem_array_u8(d, l).set(bytes);
-        return [b, d, l]
-      }
-
-      this.block_release = (addr) => { app._wasm_inst.exports["runtime.Block.Release"](addr); }
-
+        this._mem_util.mem_array_u8(d, l).set(bytes);
+        return [b, d, l];
+      },
+      block_release: (addr) => { this._wasm_inst.exports["runtime.Block.Release"](addr); },
       //基本类型直接读写：
-      this.bool_load = (addr) => { /*Todo*/ }
-      this.bool_store = (addr, v) => { /*Todo*/ }
-      this.u8_load = (addr) => { /*Todo*/ }
-      this.u8_store = (addr, v) => { /*Todo*/ }
-      this.u16_load = (addr) => { /*Todo*/ }
-      this.u16_store = (addr, v) => { /*Todo*/ }
-      this.u32_load = (addr) => { /*Todo*/ }
-      this.u32_store = (addr, v) => { /*Todo*/ }
-      this.i32_load = (addr) => { return app._wasm_inst.exports["runtime.i32_load"](addr); }
-      this.i32_store = (addr, v) => { app._wasm_inst.exports["runtime.i32_store"](addr, v); }
-      this.rune_load = (addr) => { /*Todo*/ }
-      this.rune_store = (addr, v) => { /*Todo*/ }
-      this.u64_load = (addr) => { /*Todo*/ }
-      this.u64_store = (addr, v) => { /*Todo*/ }
-      this.i64_load = (addr) => { /*Todo*/ }
-      this.i64_store = (addr, v) => { /*Todo*/ }
-      this.f32_load = (addr) => { return app._wasm_inst.exports["runtime.f32_load"](addr); }
-      this.f32_store = (addr, v) => { app._wasm_inst.exports["runtime.f32_store"](addr, v); }
-      this.f64_load = (addr) => { return app._wasm_inst.exports["runtime.f64_load"](addr); }
-      this.f64_store = (addr, v) => { app._wasm_inst.exports["runtime.f64_store"](addr, v); }
-      this.string_load = (addr) => {
-        const d = this.i32_load(addr + 4)
-        const l = this.i32_load(addr + 8)
-        return this.get_string(d, l);
-      }
-      this.string_store = (addr, v) => {
-        const b = this.i32_load(addr)
-        this.block_release(b)
-        let ns = this.set_string(v)
-        this.i32_store(addr, ns[0])
-        this.i32_store(addr + 4, ns[1])
-        this.i32_store(addr + 8, ns[2])
-      }
-
-      //返回值提取：
-      this.extract_string = (arr) => {
-        const s = this.get_string(arr[1], arr[2]);
-        this.block_release(arr[0])
-        arr.splice(0, 3)
-        return s
-      }
-      this.extract_bool = (arr) => {
-        //Todo
-        arr.splice(0, 1)
-        return 0
-      }
-      this.extract_u8 = (arr) => {
-        //Todo
-        arr.splice(0, 1)
-        return 0
-      }
-      this.extract_u16 = (arr) => {
-        //Todo
-        arr.splice(0, 1)
-        return 0
-      }
-      this.extract_u32 = (arr) => {
-        //Todo
-        arr.splice(0, 1)
-        return 0
-      }
-      this.extract_i32 = (arr) => {
-        const v = arr[0]
-        arr.splice(0, 1)
-        return v
-      }
-      this.extract_rune = (arr) => {
-        //Todo
-        arr.splice(0, 1)
-        return 0
-      }
-      this.extract_f32 = (arr) => {
-        const v = arr[0]
-        arr.splice(0, 1)
-        return 0
-      }
-      this.extract_f64 = (arr) => {
-        const v = arr[0]
-        arr.splice(0, 1)
-        return 0
-      }
+      bool_load: (addr) => { /*Todo*/ },
+      bool_store: (addr, v) => { /*Todo*/ },
+      u8_load: (addr) => { /*Todo*/ },
+      u8_store: (addr, v) => { /*Todo*/ },
+      u16_load: (addr) => { /*Todo*/ },
+      u16_store: (addr, v) => { /*Todo*/ },
+      u32_load: (addr) => { /*Todo*/ },
+      u32_store: (addr, v) => { /*Todo*/ },
+      i32_load: (addr) => { return this._wasm_inst.exports["runtime.i32_load"](addr); },
+      i32_store: (addr, v) => { this._wasm_inst.exports["runtime.i32_store"](addr, v); },
+      rune_load: (addr) => { /*Todo*/ },
+      rune_store: (addr, v) => { /*Todo*/ },
+      u64_load: (addr) => { /*Todo*/ },
+      u64_store: (addr, v) => { /*Todo*/ },
+      i64_load: (addr) => { /*Todo*/ },
+      i64_store: (addr, v) => { /*Todo*/ },
+      f32_load: (addr) => { return this._wasm_inst.exports["runtime.f32_load"](addr); },
+      f32_store: (addr, v) => { this._wasm_inst.exports["runtime.f32_store"](addr, v); },
+      f64_load: (addr) => { return this._wasm_inst.exports["runtime.f64_load"](addr); },
+      f64_store: (addr, v) => { this._wasm_inst.exports["runtime.f64_store"](addr, v); },
+      string_load: (addr) => {
+        const d = this._mem_util.i32_load(addr + 4);
+        const l = this._mem_util.i32_load(addr + 8);
+        return this._mem_util.get_string(d, l);
+      },
+      string_store: (addr, v) => {
+        const b = this._mem_util.i32_load(addr);
+        this._mem_util.block_release(b);
+        let ns = set_string(v);
+        this._mem_util.i32_store(addr, ns[0]);
+        this._mem_util.i32_store(addr + 4, ns[1]);
+        this._mem_util.i32_store(addr + 8, ns[2]);
+      },
+      extract_string: (arr) => {
+        const s = this._mem_util.get_string(arr[1], arr[2]);
+        this._mem_util.block_release(arr[0]);
+        arr.splice(0, 3);
+        return s;
+      },
+      extract_bool: (arr) => { arr.splice(0, 1); return 0; },
+      extract_u8: (arr) => { arr.splice(0, 1); return 0; },
+      extract_u16: (arr) => { arr.splice(0, 1); return 0; },
+      extract_u32: (arr) => { arr.splice(0, 1); return 0; },
+      extract_i32: (arr) => { const v = arr[0]; arr.splice(0, 1); return v; },
+      extract_rune: (arr) => { arr.splice(0, 1); return 0; },
+      extract_f32: (arr) => { const v = arr[0]; arr.splice(0, 1); return v; },
+      extract_f64: (arr) => { const v = arr[0]; arr.splice(0, 1); return v; },
     }
+  };
 
-    let syscall = new function() {
-      this.print_bool = (b) => { app._wa_print_buf += Boolean(b) }
-      this.print_u32 = (i) => { app._wa_print_buf += i }
-      this.print_i32 = (i) => { app._wa_print_buf += i }
-      this.print_u64 = (i) => { app._wa_print_buf += i }
-      this.print_i64 = (i) => { app._wa_print_buf += i }
-      this.print_f32 = (f) => { app._wa_print_buf += f }
-      this.print_f64 = (f) => { app._wa_print_buf += f }
-      this.print_ptr = (p) => { app._wa_print_buf += p }
-      this.print_str = (addr, len) => { app._wa_print_buf += app._mem_util.get_string(addr, len) }
-      this.proc_exit = (code) => { alert(code) }
-      this.print_rune = (c) => {
+  createSyscall = () => {
+    return {
+      print_bool: (b) => { this._wa_print_buf += Boolean(b).toString(); },
+      print_u32: (i) => { this._wa_print_buf += u; },
+      print_i32: (i) => { this._wa_print_buf += i },
+      print_u64: (i) => { this._wa_print_buf += i },
+      print_u64: (i) => { this._wa_print_buf += i },
+      print_i64: (i) => { this._wa_print_buf += i },
+      print_f32: (f) => { this._wa_print_buf += f },
+      print_f64: (f) => { this._wa_print_buf += f },
+      print_ptr: (p) => { this._wa_print_buf += p },
+      print_str: (addr, len) => { this._wa_print_buf += this._mem_util.get_string(addr, len);},
+      proc_exit: (code) => { alert(code) },
+      print_rune: (c) => {
         let ch = String.fromCodePoint(c);
-        if (ch == '\n') {
-          console.log(app._wa_print_buf);
-          app._wa_print_buf = "";
+        if (ch == "\n") {
+          console.log(this._wa_print_buf);
+          this._wa_print_buf = "";
         }
         else {
-          app._wa_print_buf += ch
+          this._wa_print_buf += ch;
         }
       }
     }
+  };
 
-    let imports = {
-      syscall_js: syscall,
+  async init() {
+    const imports = {
+      syscall_js: this.createSyscall(),
       {{$.ImportCode}}
-    }
+      // ...
+    };
 
-    WebAssembly.instantiateStreaming(fetch(url), imports).then(res => {
-      this._wasm_inst = res.instance;
+    try {
+      const source = await fetch(this._wasm_url);
+      const result = await WebAssembly.instantiateStreaming(source, imports);
+      this._wasm_inst = result.instance;
 
       // 全局变量：
       {{ range $.Globals }}
@@ -160,10 +136,17 @@ class WaApp {
       }
       {{ end }}
 
-      this._wasm_inst.exports._start();
-    })
+      return this
+    } catch (error) {
+      console.error('WASM 初始化失败:', error);
+    }
+  }
 
-  }  // constructor
 }  // class WaApp
 
-window['waApp'] = new WaApp("./{{$root.Filename}}");
+new WaApp("./{{$root.Filename}}").init().then((result) => {
+  window['waApp'] = result
+})
+.catch((err) => {
+  console.log('WaApp 错误', error);
+});
