@@ -20,10 +20,10 @@ var CmdDev = &cli.Command{
 	Usage:  "only for dev/debug",
 	Flags: []cli.Flag{
 		&cli.BoolFlag{
-			Name:  "hello",
+			Name: "hello",
 		},
 		&cli.BoolFlag{
-			Name:  "count-code-lines",
+			Name: "count-code-lines",
 		},
 	},
 	Action: func(c *cli.Context) error {
@@ -33,7 +33,7 @@ var CmdDev = &cli.Command{
 		}
 
 		if c.Bool("hello") {
-			wat, err := api.BuildFile(
+			_, wat, err := api.BuildFile(
 				config.DefaultConfig(),
 				"hello.wa", "func main() { println(123) }",
 			)

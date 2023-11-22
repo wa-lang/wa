@@ -52,7 +52,7 @@ func Add(a:i32, b:i32) => i32 {
 }
 
 func tBuildWasm(t *testing.T, waCode string) []byte {
-	watBytes, err := api.BuildFile(api.DefaultConfig(), "main.wa", waCode)
+	_, watBytes, err := api.BuildFile(api.DefaultConfig(), "main.wa", waCode)
 	if err != nil {
 		t.Fatal(err)
 	}
