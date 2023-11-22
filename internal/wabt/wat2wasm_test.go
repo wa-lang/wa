@@ -37,7 +37,7 @@ func tMatchErrMsg(err error, errMsg string) bool {
 }
 
 func tBuildWat(waCode string) string {
-	watBytes, err := api.BuildFile(api.DefaultConfig(), "main.wa", waCode)
+	_, watBytes, err := api.BuildFile(api.DefaultConfig(), "main.wa", waCode)
 	if err != nil {
 		return err.Error()
 	}

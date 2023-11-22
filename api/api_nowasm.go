@@ -12,9 +12,9 @@ import (
 )
 
 // 执行凹代码
-func RunCode(cfg *config.Config, filename, code string, mainFunc string, args ...string) (stdoutStderr []byte, err error) {
+func RunCode(cfg *config.Config, filename, code string, args ...string) (stdoutStderr []byte, err error) {
 	// 编译为 wat 格式
-	watBytes, err := BuildFile(cfg, filename, code)
+	mainFunc, watBytes, err := BuildFile(cfg, filename, code)
 	if err != nil {
 		return
 	}
