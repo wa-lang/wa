@@ -71,12 +71,12 @@ func (p *Compiler) Compile(prog *loader.Program, mainFunc string) (output string
 		n += ".init"
 		f.Insts = append(f.Insts, wat.NewInstCall(n))
 
-		if mainFunc != "" {
-			n, _ = wir.GetPkgMangleName(prog.SSAMainPkg.Pkg.Path())
-			n += "."
-			n += mainFunc
-			f.Insts = append(f.Insts, wat.NewInstCall(n))
-		}
+		//if mainFunc != "" {
+		//	n, _ = wir.GetPkgMangleName(prog.SSAMainPkg.Pkg.Path())
+		//	n += "."
+		//	n += mainFunc
+		//	f.Insts = append(f.Insts, wat.NewInstCall(n))
+		//}
 
 		p.module.AddFunc(&f)
 	}

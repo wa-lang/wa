@@ -177,13 +177,15 @@ func GetFnMangleName(v interface{}, mainPkg string) (internal string, external s
 	exported := true
 	switch f := v.(type) {
 	case *ssa.Function:
-		if f.Object() == nil || !f.Object().Exported() {
-			exported = false
-		}
 		if recv := f.Signature.Recv(); recv != nil {
-			if recv.Pkg().Path() != mainPkg {
-				exported = false
-			}
+			//if recv.Pkg().Path() != mainPkg {
+			//	exported = false
+			//} else {
+			//	if f.Object() == nil || (!f.Object().Exported() && f.Object().Name() != "main") {
+			//		exported = false
+			//	}
+			//}
+			exported = false
 			internal, external = GetPkgMangleName(recv.Pkg().Path())
 
 			internal += "."
@@ -208,8 +210,14 @@ func GetFnMangleName(v interface{}, mainPkg string) (internal string, external s
 			if f.Pkg != nil {
 				if f.Pkg.Pkg.Path() != mainPkg {
 					exported = false
+				} else {
+					if f.Object() == nil || (!f.Object().Exported() && f.Object().Name() != "main") {
+						exported = false
+					}
 				}
 				internal, external = GetPkgMangleName(f.Pkg.Pkg.Path())
+			} else {
+				exported = false
 			}
 		}
 		internal += "."
