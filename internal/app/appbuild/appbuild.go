@@ -175,7 +175,7 @@ func BuildApp(opt *appbase.Option, input, outfile string) (mainFunc string, wasm
 
 		// 生成 js 胶水代码
 		if opt.TargetOS == config.WaOS_js {
-			jsOutfile := appbase.ReplaceExt(outfile, ".wasm", ".mjs")
+			jsOutfile := appbase.ReplaceExt(outfile, ".wasm", ".js")
 			jsOutput := compiler.GenJSBinding(filepath.Base(outfile))
 			err = os.WriteFile(jsOutfile, []byte(jsOutput), 0666)
 			if err != nil {

@@ -2,9 +2,11 @@
 
 <title>{{.Pkg}}</title>
 
-<script type="module">
-import InitWaApp from "./{{.Filename}}";
+<script type="text/javascript" src="./{{.Filename}}"></script>
 
-let app = await InitWaApp();
-app.main();
+<script>
+  let app = new WaApp();
+  app.init().then((result) => {
+    app.main();
+  })
 </script>
