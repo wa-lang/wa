@@ -104,6 +104,7 @@ class WaApp {
   };
 
   async init() {
+    const app = this;
     const imports = {
       syscall_js: this.createSyscall(),
       {{$.ImportCode}}
@@ -148,5 +149,5 @@ new WaApp("./{{$root.Filename}}").init().then((result) => {
   window['waApp'] = result
 })
 .catch((err) => {
-  console.log('WaApp 错误', error);
+  console.log('WaApp 错误', err);
 });
