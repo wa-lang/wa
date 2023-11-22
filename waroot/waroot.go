@@ -16,9 +16,6 @@ var _VERSION string
 //go:embed misc/_example_app
 var _exampleAppFS embed.FS
 
-//go:embed misc/_example_vendor
-var _exampleVendorFS embed.FS
-
 // 版本号(dev后缀表示开发版)
 func GetVersion() string {
 	return _VERSION
@@ -26,14 +23,6 @@ func GetVersion() string {
 
 func GetExampleAppFS() fs.FS {
 	fs, err := fs.Sub(_exampleAppFS, "misc/_example_app")
-	if err != nil {
-		panic(err)
-	}
-	return fs
-}
-
-func GetExampleVendorFS() fs.FS {
-	fs, err := fs.Sub(_exampleVendorFS, "misc/_example_vendor")
 	if err != nil {
 		panic(err)
 	}

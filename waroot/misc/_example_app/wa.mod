@@ -2,13 +2,3 @@
 
 name = "{{.Name}}"
 pkgpath = "{{.Pkgpath}}"
-version = "0.0.1"
-authors = ["author", "author2"]
-description = "module description"
-readme = "README.md"
-homepage = ""
-repository = ""
-license = ""
-license_file = "LICENSE"
-keywords = []
-categories = []

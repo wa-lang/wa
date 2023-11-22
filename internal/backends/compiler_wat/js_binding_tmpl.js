@@ -145,9 +145,9 @@ class WaApp {
 
 }  // class WaApp
 
-new WaApp("./{{$root.Filename}}").init().then((result) => {
-  window['waApp'] = result
-})
-.catch((err) => {
-  console.log('WaApp 错误', err);
-});
+
+async function InitWaApp() {
+  return new WaApp("./{{$root.Filename}}").init();
+}
+
+export{InitWaApp as default};

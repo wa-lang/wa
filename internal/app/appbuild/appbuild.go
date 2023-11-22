@@ -37,14 +37,14 @@ func CmdBuildAction(c *cli.Context) error {
 	}
 
 	var opt = appbase.BuildOptions(c)
-	_, err := BuildApp(opt, input, outfile)
+	_, _, err := BuildApp(opt, input, outfile)
 	if err != nil {
 		return err
 	}
 	return err
 }
 
-func BuildApp(opt *appbase.Option, input, outfile string) (wasmBytes []byte, err error) {
+func BuildApp(opt *appbase.Option, input, outfile string) (mainFunc string, wasmBytes []byte, err error) {
 	// 路径是否存在
 	if !appbase.PathExists(input) {
 		fmt.Printf("%q not found\n", input)
@@ -59,7 +59,8 @@ func BuildApp(opt *appbase.Option, input, outfile string) (wasmBytes []byte, err
 
 	// 已经是 wasm, 直接返回
 	if appbase.HasExt(input, ".wasm") {
-		return os.ReadFile(input)
+		wasmBytes, err = os.ReadFile(input)
+		return
 	}
 
 	// 只编译 wat 文件, 输出路径相同, 后缀名调整
@@ -88,7 +89,7 @@ func BuildApp(opt *appbase.Option, input, outfile string) (wasmBytes []byte, err
 		}
 
 		// OK
-		return wasmBytes, nil
+		return "", wasmBytes, nil
 	}
 
 	// 只编译 wa/wz 文件, 输出路径相同, 后缀名调整
@@ -127,7 +128,7 @@ func BuildApp(opt *appbase.Option, input, outfile string) (wasmBytes []byte, err
 		}
 
 		// OK
-		return wasmBytes, nil
+		return "__main__.main", wasmBytes, nil
 	}
 
 	// 构建目录
@@ -174,7 +175,7 @@ func BuildApp(opt *appbase.Option, input, outfile string) (wasmBytes []byte, err
 
 		// 生成 js 胶水代码
 		if opt.TargetOS == config.WaOS_js {
-			jsOutfile := appbase.ReplaceExt(outfile, ".wasm", ".js")
+			jsOutfile := appbase.ReplaceExt(outfile, ".wasm", ".mjs")
 			jsOutput := compiler.GenJSBinding(filepath.Base(outfile))
 			err = os.WriteFile(jsOutfile, []byte(jsOutput), 0666)
 			if err != nil {
@@ -182,22 +183,14 @@ func BuildApp(opt *appbase.Option, input, outfile string) (wasmBytes []byte, err
 				os.Exit(1)
 			}
 
-			// 复制 www 目录
-			if appbase.IsNativeDir(filepath.Join(manifest.Root, "www")) {
-				appbase.CopyDir(
-					filepath.Join(manifest.Root, "output"),
-					filepath.Join(manifest.Root, "www"),
-				)
-			} else {
-				// 生成 index.html 文件
-				indexHtmlPath := filepath.Join(filepath.Dir(outfile), "index.html")
-				if !appbase.PathExists(indexHtmlPath) {
-					htmlOutput := compiler.GenIndexHtml(filepath.Base(jsOutfile))
-					err = os.WriteFile(indexHtmlPath, []byte(htmlOutput), 0666)
-					if err != nil {
-						fmt.Printf("write %s failed: %v\n", indexHtmlPath, err)
-						os.Exit(1)
-					}
+			// 生成 index.html 文件
+			indexHtmlPath := filepath.Join(filepath.Dir(outfile), "index.html")
+			if !appbase.PathExists(indexHtmlPath) {
+				htmlOutput := compiler.GenIndexHtml(filepath.Base(jsOutfile))
+				err = os.WriteFile(indexHtmlPath, []byte(htmlOutput), 0666)
+				if err != nil {
+					fmt.Printf("write %s failed: %v\n", indexHtmlPath, err)
+					os.Exit(1)
 				}
 			}
 		}
@@ -216,8 +209,11 @@ func BuildApp(opt *appbase.Option, input, outfile string) (wasmBytes []byte, err
 			os.Exit(1)
 		}
 
+		// 主函数
+		mainFunc := manifest.MainPkg + ".main"
+
 		// OK
-		return wasmBytes, nil
+		return mainFunc, wasmBytes, nil
 	}
 }
 

@@ -54,10 +54,25 @@ func BuildModule(
 }
 
 // 执行初始化, 仅执行一次
-func (p *Module) RunMain() (stdout, stderr []byte, err error) {
+func (p *Module) RunMain(mainFunc string) (stdout, stderr []byte, err error) {
 	p.wazeroModule, p.wazeroInitErr = p.wazeroRuntime.InstantiateModule(
 		p.wazeroCtx, p.wazeroCompileModule, p.wazeroConf,
 	)
+
+	if mainFunc != "" {
+		fn := p.wazeroModule.ExportedFunction(mainFunc)
+		if fn == nil {
+			err = fmt.Errorf("wazero: func %q not found", mainFunc)
+			return
+		}
+
+		_, err = fn.Call(p.wazeroCtx)
+		if err != nil {
+			stdout = p.stdoutBuffer.Bytes()
+			stderr = p.stderrBuffer.Bytes()
+			return
+		}
+	}
 
 	stdout = p.stdoutBuffer.Bytes()
 	stderr = p.stderrBuffer.Bytes()

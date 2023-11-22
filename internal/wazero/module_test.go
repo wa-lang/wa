@@ -33,7 +33,7 @@ func Add(a:i32, b:i32) => i32 {
 	defer m.Close()
 
 	// main 执行
-	stdout, _, err := m.RunMain()
+	stdout, _, err := m.RunMain("__main__.main")
 	if err != nil {
 		t.Fatal(err)
 	}

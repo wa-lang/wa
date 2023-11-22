@@ -3,11 +3,6 @@
 func main {
 	println("你好，凹语言！")
 	println(sum(100))
-	heart()
-}
-
-func GetSomething => string {
-	return "你好，凹语言！"
 }
 
 func sum(n: int) => int {
@@ -16,19 +11,4 @@ func sum(n: int) => int {
 		v += i
 	}
 	return v
-}
-
-func heart {
-	a := 0.0
-	for y := 1.5; y > -1.5; y = y - 0.1 {
-		for x := -1.5; x < 1.5; x = x + 0.05 {
-			a = x*x + y*y - 1.0
-			if a*a*a < x*x*y*y*y {
-				print('@')
-			} else {
-				print(' ')
-			}
-		}
-		println()
-	}
 }

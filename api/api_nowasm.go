@@ -12,7 +12,7 @@ import (
 )
 
 // 执行凹代码
-func RunCode(cfg *config.Config, filename, code string, args ...string) (stdoutStderr []byte, err error) {
+func RunCode(cfg *config.Config, filename, code string, mainFunc string, args ...string) (stdoutStderr []byte, err error) {
 	// 编译为 wat 格式
 	watBytes, err := BuildFile(cfg, filename, code)
 	if err != nil {
@@ -26,7 +26,7 @@ func RunCode(cfg *config.Config, filename, code string, args ...string) (stdoutS
 	}
 
 	// main 执行
-	stdout, stderr, err := wazero.RunWasm(cfg, filename, wasmBytes, args...)
+	stdout, stderr, err := wazero.RunWasm(cfg, filename, wasmBytes, mainFunc, args...)
 	stdoutStderr = append(stdout, stderr...)
 	return
 }

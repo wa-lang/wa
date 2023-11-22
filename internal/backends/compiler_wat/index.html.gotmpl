@@ -1,10 +1,10 @@
 <!DOCTYPE html>
-{{- $root := . -}}
 
-<title>{{$root.Pkg}}</title>
+<title>{{.Pkg}}</title>
 
-<script type="text/javascript" src="./{{$root.Filename}}"></script>
+<script type="module">
+import InitWaApp from "./{{.Filename}}";
 
-<script>
-// waApp.Method();
+let app = await InitWaApp();
+app.main();
 </script>

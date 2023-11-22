@@ -22,7 +22,7 @@ func ExampleRunCode() {
 		}
 	`
 
-	output, err := api.RunCode(api.DefaultConfig(), "hello.wa", code)
+	output, err := api.RunCode(api.DefaultConfig(), "hello.wa", code, "__main__.main")
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -48,7 +48,7 @@ func ExampleRunCode_args() {
 	cfg.WaOS = api.WaOS_wasi
 
 	args := []string{"aa", "bb"}
-	output, err := api.RunCode(cfg, "hello.wa", code, args...)
+	output, err := api.RunCode(cfg, "hello.wa", code, "__main__.main", args...)
 	if err != nil {
 		if len(output) != 0 {
 			log.Println(string(output))
@@ -74,7 +74,7 @@ func ExampleRunCode_wz() {
 		。
 	`
 
-	output, err := api.RunCode(api.DefaultConfig(), "hello.wa", code)
+	output, err := api.RunCode(api.DefaultConfig(), "hello.wa", code, "__main__.main")
 	if err != nil {
 		if len(output) != 0 {
 			log.Println(string(output))

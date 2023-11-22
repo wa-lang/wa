@@ -30,10 +30,6 @@ var CmdRun = &cli.Command{
 			Usage: "set http address",
 			Value: ":8000",
 		},
-		&cli.BoolFlag{
-			Name:  "noweb",
-			Usage: "set noweb mode",
-		},
 	},
 	Action: CmdRunAction,
 }
@@ -47,13 +43,13 @@ func CmdRunAction(c *cli.Context) error {
 	}
 
 	var opt = appbase.BuildOptions(c)
-	wasmBytes, err := appbuild.BuildApp(opt, input, outfile)
+	mainFunc, wasmBytes, err := appbuild.BuildApp(opt, input, outfile)
 	if err != nil {
 		return err
 	}
 
 	// Web 模式启动服务器
-	if !c.Bool("noweb") && opt.TargetOS == config.WaOS_js && appbase.IsNativeDir(input) {
+	if opt.TargetOS == config.WaOS_js && appbase.IsNativeDir(input) {
 		var addr = c.String("http")
 		if strings.HasPrefix(addr, ":") {
 			addr = "localhost" + addr
@@ -81,7 +77,7 @@ func CmdRunAction(c *cli.Context) error {
 		appArgs = c.Args().Slice()[1:]
 	}
 
-	stdout, stderr, err := wazero.RunWasm(opt.Config(), input, wasmBytes, appArgs...)
+	stdout, stderr, err := wazero.RunWasm(opt.Config(), input, wasmBytes, mainFunc, appArgs...)
 	if err != nil {
 		if len(stdout) > 0 {
 			fmt.Fprint(os.Stdout, string(stdout))

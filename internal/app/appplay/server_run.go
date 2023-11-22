@@ -47,7 +47,7 @@ func (p *WebServer) compileAndRun(req *Request) (*Response, error) {
 		filename = "prog.wz"
 	}
 
-	result, err := api.RunCode(api.DefaultConfig(), filename, req.Body)
+	result, err := api.RunCode(api.DefaultConfig(), filename, "__main__.main", req.Body)
 	if err != nil {
 		resp := &Response{Errors: err.Error()}
 		return resp, nil
