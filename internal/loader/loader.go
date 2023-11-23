@@ -174,6 +174,21 @@ func (p *_Loader) Import(pkgpath string) (*types.Package, error) {
 	var pkg Package
 	var filenames []string
 
+	if pkgpath == "unsafe" {
+		pkg.Pkg = types.Unsafe
+		pkg.Info = &types.Info{
+			Types:      make(map[ast.Expr]types.TypeAndValue),
+			Defs:       make(map[*ast.Ident]types.Object),
+			Uses:       make(map[*ast.Ident]types.Object),
+			Implicits:  make(map[ast.Node]types.Object),
+			Selections: make(map[*ast.SelectorExpr]*types.Selection),
+			Scopes:     make(map[ast.Node]*types.Scope),
+		}
+
+		p.prog.Pkgs[pkgpath] = &pkg
+		return pkg.Pkg, nil
+	}
+
 	// 解析当前包的汇编代码
 	pkg.WsFiles, err = p.ParseDir_wsFiles(pkgpath)
 	if err != nil {
