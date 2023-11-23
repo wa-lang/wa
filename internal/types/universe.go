@@ -156,6 +156,7 @@ const (
 	_Recover
 
 	// wa
+	_Raw
 	_Printf
 
 	// wz
@@ -192,6 +193,7 @@ var predeclaredFuncs = [...]struct {
 	_Real:    {"real", 1, false, expression},
 	_Recover: {"recover", 0, false, statement},
 
+	_Raw:    {"raw", 1, false, expression},
 	_Printf: {"printf", 1, true, statement},
 
 	_长: {"长", 1, false, expression},

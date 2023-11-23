@@ -527,6 +527,22 @@ func (check *Checker) builtin(x *operand, call *ast.CallExpr, id builtinId) (_ b
 			check.recordBuiltinType(call.Fun, makeSig(x.typ))
 		}
 
+	case _Raw:
+		if _, ok := x.typ.Underlying().(*Slice); !ok {
+			check.invalidArg(x.pos(), "%s is not a slice", x.typ)
+			return
+		}
+
+		retType := NewSlice(Typ[Uint8])
+		if check.Types != nil {
+			check.recordBuiltinType(
+				call.Fun, makeSig(retType, x.typ),
+			)
+		}
+
+		x.mode = value
+		x.typ = retType
+
 	case _Printf:
 		S := x.typ
 		if s, _ := S.Underlying().(*Basic); s == nil || (s.kind != String && s.kind != UntypedString) {

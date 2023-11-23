@@ -607,6 +607,8 @@ func (g *functionGenerator) genBuiltin(call *ssa.CallCommon) cir.Expr {
 		fn_type := ctypes.NewFuncType(cir.ToCType(call.Value.(*ssa.Builtin).Type().(*types.Signature).Results()), args_type)
 		function := cir.NewVar("$wartc::Append", fn_type)
 		return cir.NewCallExpr(function, args)
+	case "raw":
+		logger.Fatal("Todo.raw:", call.Value)
 	}
 	logger.Fatal("Todo:", call.Value)
 	return nil
