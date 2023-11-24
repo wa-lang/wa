@@ -835,6 +835,11 @@ func (m *Module) EmitGenCopy(x, y Value) (insts []wat.Inst) {
 	return
 }
 
+func (m *Module) EmitGenRaw(x Value) (insts []wat.Inst) {
+	s := x.(*aSlice)
+	return s.emitConvertToBytes()
+}
+
 func (m *Module) EmitGenMakeInterface(x Value, itype ValueType) (insts []wat.Inst) {
 	x_type := x.Type()
 	m.markConcreteTypeUsed(x_type)

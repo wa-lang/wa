@@ -569,3 +569,21 @@ func (v *aSlice) emitEq(r Value) ([]wat.Inst, bool) {
 
 	return v.ExtractByName("d").emitEq(r_s.ExtractByName("d"))
 }
+
+func (v *aSlice) emitConvertToBytes() (insts []wat.Inst) {
+	// block:
+	insts = append(insts, v.ExtractByName("b").EmitPush()...)
+
+	// data:
+	insts = append(insts, v.ExtractByName("d").EmitPush()...)
+
+	// len:
+	insts = append(insts, v.ExtractByName("l").EmitPush()...)
+	insts = append(insts, wat.NewInstConst(wat.U32{}, strconv.Itoa(v.typ.Base.Size())))
+	insts = append(insts, wat.NewInstMul(wat.U32{}))
+
+	// cap:
+	insts = append(insts, wat.NewInstCall("runtime.DupI32"))
+
+	return
+}

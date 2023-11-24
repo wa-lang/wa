@@ -710,6 +710,13 @@ func (g *functionGenerator) genBuiltin(call *ssa.CallCommon) (insts []wat.Inst, 
 		insts = g.module.EmitGenCopy(g.getValue(call.Args[0]).value, g.getValue(call.Args[1]).value)
 		ret_type = g.module.I32
 
+	case "raw":
+		if len(call.Args) != 1 {
+			panic("len(cap.Args) != 1")
+		}
+		insts = g.module.EmitGenRaw(g.getValue(call.Args[0]).value)
+		ret_type = g.module.BYTES
+
 	case "ssa:wrapnilchk":
 		insts = g.getValue(call.Args[0]).value.EmitPushNoRetain()
 		ret_type = g.getValue(call.Args[0]).value.Type()
