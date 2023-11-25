@@ -5,7 +5,7 @@
 w、h为画布以像素为单位的宽高
 返回值为画布对象对应的网页DOM对象id
 */
-#wa:import wa_js_env newCanvas
+#wa:import snake_game newCanvas
 func newCanvas_JS(w, h: u32) => u32
 
 /*
@@ -13,7 +13,7 @@ func newCanvas_JS(w, h: u32) => u32
 id为画布对象对应的网页DOM对象id
 buf为帧缓存指针
 */
-#wa:import wa_js_env updateCanvas
+#wa:import snake_game updateCanvas
 func updateCanvas_JS(id: u32, buf: *u32)
 
 //画布事件回调函数原型

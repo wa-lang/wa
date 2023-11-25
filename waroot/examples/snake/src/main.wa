@@ -113,7 +113,7 @@ func GameState.SetGridType(p: Position, t: u8) {
 	}
 }
 
-#wa:import wa_js_env rand
+#wa:import snake_game rand
 func rand_JS(_: i32) => i32
 func GameState.GenFood() => Position {
 	p: Position
