@@ -2,33 +2,31 @@
   class WaApp {
     constructor() {
       this._inst = null;
-      this._wa_print_buf = "";
     }
 
     init(url) {
       let app = this;
       let importsObject = {
         syscall_js: new function () {
-          this.print_bool = (b) => { this._wa_print_buf += Boolean(b).toString(); },
-          this.print_u32 = (i) => { this._wa_print_buf += u; },
-          this.print_i32 = (i) => { this._wa_print_buf += i },
-          this.print_u64 = (i) => { this._wa_print_buf += i },
-          this.print_u64 = (i) => { this._wa_print_buf += i },
-          this.print_i64 = (i) => { this._wa_print_buf += i },
-          this.print_f32 = (f) => { this._wa_print_buf += f },
-          this.print_f64 = (f) => { this._wa_print_buf += f },
-          this.print_ptr = (p) => { this._wa_print_buf += p },
-          this.print_str = (addr, len) => { this._wa_print_buf += this._mem_util.get_string(addr, len);},
+          this.print_bool = (b) => { console.log(b) },
+          this.print_u32 = (i) => { console.log(i) },
+          this.print_i32 = (i) => { console.log(i) },
+          this.print_u64 = (i) => { console.log(i) },
+          this.print_u64 = (i) => { console.log(i) },
+          this.print_i64 = (i) => { console.log(i) },
+          this.print_f32 = (f) => { console.log(f) },
+          this.print_f64 = (f) => { console.log(f) },
+          this.print_ptr = (p) => {  console.log(p) },
+          this.print_str = (d, l) => {
+            const mem = app._inst.exports.memory;
+            const mem_view = new DataView(mem.buffer, d, l);
+            const s = new TextDecoder("utf-8").decode(mem_view);
+            console.log(s);
+          }
           this.proc_exit = (code) => { alert(code) },
           this.print_rune = (c) => {
             let ch = String.fromCodePoint(c);
-            if (ch == "\n") {
-              console.log(this._wa_print_buf);
-              this._wa_print_buf = "";
-            }
-            else {
-              this._wa_print_buf += ch;
-            }
+            console.log(ch)
           }
         },
         snake_game: new function () {
@@ -104,6 +102,7 @@
       WebAssembly.instantiateStreaming(fetch(url), importsObject).then(res => {
         this._inst = res.instance;
         this._inst.exports._start();
+        this._inst.exports['snake.main']();
         const timer = setInterval(gameLoop, 150);
       })
     }

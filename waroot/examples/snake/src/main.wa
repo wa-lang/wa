@@ -187,6 +187,7 @@ func Step() {
 }
 
 func main {
+	println("snake game run")
 	gameState.Init(32, 32, 10)
 	gameState.Start()
 }
