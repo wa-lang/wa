@@ -68,6 +68,18 @@ func RGBA.At(x, y: int) => color.RGBA {
 	return color.RGBA{s[0], s[1], s[2], s[3]}
 }
 
+func RGBA.SetRGBA(x, y: int, c: color.RGBA) {
+	if !this.Rect.Contain(x, y) {
+		return
+	}
+	i := this.PixOffset(x, y)
+	s := this.Pix[i : i+4 : i+4]
+	s[0] = c.R
+	s[1] = c.G
+	s[2] = c.B
+	s[3] = c.A
+}
+
 func NewRGBA64(r: Rectangle) => *RGBA64 {
 	return &RGBA64{
 		Pix:    make([]u16, pixelBufferLength(8, r, "RGBA64")),

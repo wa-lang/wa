@@ -38,6 +38,10 @@ func Rectangle.Size => Point {
 		this.Max.Y - this.Min.Y,
 	}
 }
+func Rectangle.Contain(x, y: int) => bool {
+	return this.Min.X <= x && x < this.Max.X &&
+		this.Min.Y <= y && y < this.Max.Y
+}
 
 func pixelBufferLength(bytesPerPixel: int, r: Rectangle, imageTypeName: string) => int {
 	totalLength := mul3NonNeg(bytesPerPixel, r.Dx(), r.Dy())
