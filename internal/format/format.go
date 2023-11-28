@@ -37,7 +37,6 @@ const parserMode = parser.ParseComments
 // If src != nil, readSource converts src to a []byte if possible;
 // otherwise it returns an error. If src == nil, readSource returns
 // the result of reading the file specified by filename.
-//
 func readSource(vfs fs.FS, filename string, src interface{}) ([]byte, error) {
 	if src != nil {
 		switch s := src.(type) {
@@ -87,7 +86,6 @@ func File(vfs fs.FS, filename string, src interface{}) (text []byte, changed boo
 //
 // The function may return early (before the entire result is written)
 // and return a formatting error, for instance due to an incorrect AST.
-//
 func Node(dst io.Writer, fset *token.FileSet, node interface{}) error {
 	// Determine if we have a complete source file (file != nil).
 	var file *ast.File
@@ -150,6 +148,20 @@ func SourceFile(src []byte) ([]byte, error) {
 		// Complete source file.
 		// TODO(gri) consider doing this always.
 		ast.SortImports(fset, file)
+	}
+
+	return format(fset, file, sourceAdj, indentAdj, src, config)
+}
+
+// 从语法树格式化(内部用)
+func DevFormat(
+	fset *token.FileSet,
+	file *ast.File,
+	src []byte,
+) ([]byte, error) {
+	indentAdj := 0
+	sourceAdj := func(src []byte, indent int) []byte {
+		return src
 	}
 
 	return format(fset, file, sourceAdj, indentAdj, src, config)
