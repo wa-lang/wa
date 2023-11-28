@@ -31,7 +31,7 @@ func CmdGo2waAction(c *cli.Context) error {
 		fmt.Println(err)
 		os.Exit(1)
 	}
-	fmt.Println(string(code))
+	fmt.Print(string(code))
 	return nil
 }
 
