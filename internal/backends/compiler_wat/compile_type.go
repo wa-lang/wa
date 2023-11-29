@@ -38,12 +38,13 @@ func (tLib *typeLib) find(v types.Type) wir.ValueType {
 }
 
 func (tLib *typeLib) compile(from types.Type) wir.ValueType {
-	if v, ok := tLib.typeTable[from.String()]; ok {
+	from_name := from.String()
+	if v, ok := tLib.typeTable[from_name]; ok {
 		return *v
 	}
 
 	var newType wir.ValueType
-	tLib.typeTable[from.String()] = &newType
+	tLib.typeTable[from_name] = &newType
 	uncommanFlag := false
 
 	switch t := from.(type) {
@@ -120,7 +121,9 @@ func (tLib *typeLib) compile(from types.Type) wir.ValueType {
 		}
 
 	case *types.Pointer:
+		delete(tLib.typeTable, from_name)
 		newType = tLib.module.GenValueType_Ref(tLib.compile(t.Elem()))
+		tLib.typeTable[from_name] = &newType
 		uncommanFlag = true
 
 	case *types.Array:
