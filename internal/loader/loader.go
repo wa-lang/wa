@@ -24,6 +24,8 @@ import (
 	"wa-lang.org/wa/waroot"
 )
 
+var _loadRuntime bool = true
+
 type _Loader struct {
 	cfg  config.Config
 	vfs  config.PkgVFS
@@ -109,10 +111,12 @@ func (p *_Loader) loadProgram(vfs *config.PkgVFS, manifest *config.Manifest) (*P
 	}
 
 	// import "runtime"
-	logger.Trace(&config.EnableTrace_loader, "import runtime")
-	if _, err := p.Import("runtime"); err != nil {
-		logger.Tracef(&config.EnableTrace_loader, "err: %v", err)
-		return nil, err
+	if _loadRuntime {
+		logger.Trace(&config.EnableTrace_loader, "import runtime")
+		if _, err := p.Import("runtime"); err != nil {
+			logger.Tracef(&config.EnableTrace_loader, "err: %v", err)
+			return nil, err
+		}
 	}
 
 	// import "main"
@@ -211,13 +215,15 @@ func (p *_Loader) Import(pkgpath string) (*types.Package, error) {
 	}
 
 	// main 包隐式导入 runtime
-	if pkgpath == p.prog.Manifest.MainPkg && pkgpath != "runtime" {
-		if len(pkg.Files) > 0 {
-			f, err := parser.ParseFile(nil, p.prog.Fset, "_$main$runtime.wa", `import "runtime" => _`, parser.AllErrors)
-			if err != nil {
-				panic(err)
+	if _loadRuntime {
+		if pkgpath == p.prog.Manifest.MainPkg && pkgpath != "runtime" {
+			if len(pkg.Files) > 0 {
+				f, err := parser.ParseFile(nil, p.prog.Fset, "_$main$runtime.wa", `import "runtime" => _`, parser.AllErrors)
+				if err != nil {
+					panic(err)
+				}
+				pkg.Files[0].Decls = append(f.Decls, pkg.Files[0].Decls...)
 			}
-			pkg.Files[0].Decls = append(f.Decls, pkg.Files[0].Decls...)
 		}
 	}
 

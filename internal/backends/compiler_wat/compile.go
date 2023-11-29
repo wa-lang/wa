@@ -53,7 +53,9 @@ func (p *Compiler) Compile(prog *loader.Program) (output string, err error) {
 		}
 	}
 
-	p.CompilePkgType(prog.Pkgs["runtime"].SSAPkg)
+	if rt, ok := prog.Pkgs["runtime"]; ok {
+		p.CompilePkgType(rt.SSAPkg)
+	}
 
 	for _, n := range pkgnames {
 		p.CompilePkgGlobal(prog.Pkgs[n].SSAPkg)
