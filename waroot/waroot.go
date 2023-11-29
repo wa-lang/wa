@@ -113,7 +113,7 @@ func GetStdPkgList() []string {
 func GetStdTestPkgList() []string {
 	var ss []string
 	for _, s := range stdPkgs {
-		if s == "unsafe" {
+		if s == "unsafe" || s == "debug" {
 			continue
 		}
 		if strings.HasPrefix(s, "syscall") {
@@ -134,6 +134,7 @@ var stdPkgs = []string{
 	"encoding/base64", // API 完整
 	"encoding/binary", // API 部分
 	"encoding/hex",    // API 完整
+	"debug",           // ?
 	"fmt",             // ?
 	"hash",            // API 完整
 	"hash/crc32",      // API 完整

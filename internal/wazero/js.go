@@ -5,6 +5,7 @@ package wazero
 import (
 	"context"
 	"fmt"
+	"os"
 
 	"wa-lang.org/wazero"
 	"wa-lang.org/wazero/api"
@@ -107,6 +108,44 @@ func JsInstantiate(ctx context.Context, rt wazero.Runtime) (api.Closer, error) {
 		}).
 		WithParameterNames("ptr", "len").
 		Export("print_str").
+
+		// 非标准, 仅用于辅助测试
+		// func read_file_len(name_ptr, name_len) => i32
+		NewFunctionBuilder().
+		WithFunc(func(ctx context.Context, m api.Module, name_ptr, name_len uint32) uint32 {
+			name_bytes, _ := m.Memory().Read(ctx, name_ptr, name_len)
+			if fi, err := os.Lstat(string(name_bytes)); err == nil {
+				return uint32(fi.Size())
+			}
+			return 0
+		}).
+		WithParameterNames("name_ptr", "name_len").
+		Export("read_file_len").
+
+		// 非标准, 仅用于辅助测试
+		// func read_file_data(name_ptr, name_len, data_ptr)
+		NewFunctionBuilder().
+		WithFunc(func(ctx context.Context, m api.Module, name_ptr, name_len, data_ptr, data_len uint32) {
+			name_bytes, _ := m.Memory().Read(ctx, name_ptr, name_len)
+			data, _ := os.ReadFile(string(name_bytes))
+			if len(data) > int(data_len) {
+				data = data[:data_len]
+			}
+			m.Memory().Write(ctx, data_ptr, data)
+		}).
+		WithParameterNames("name_ptr", "name_len", "data_ptr", "data_len").
+		Export("read_file_data").
+
+		// 非标准, 仅用于辅助测试
+		// func write_file(name_ptr, name_len, data_ptr, data_len: i32)
+		NewFunctionBuilder().
+		WithFunc(func(ctx context.Context, m api.Module, name_ptr, name_len, data_ptr, data_len uint32) {
+			name_bytes, _ := m.Memory().Read(ctx, name_ptr, name_len)
+			data_bytes, _ := m.Memory().Read(ctx, data_ptr, data_len)
+			os.WriteFile(string(name_bytes), data_bytes, 0666)
+		}).
+		WithParameterNames("name_ptr", "name_len", "data_ptr", "data_len").
+		Export("write_file").
 
 		// func proc_exit(code: i32)
 		NewFunctionBuilder().
