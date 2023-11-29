@@ -100,6 +100,15 @@
 	end
 )
 
+(func $runtime.Block.SetFinalizer (param $ptr i32) (param $release_func i32)
+	local.get $ptr
+	if
+		local.get $ptr
+		local.get $release_func
+		i32.store offset=8 align=1
+	end
+)
+
 (func $runtime.Block.HeapAlloc (export "runtime.Block.HeapAlloc") (param $item_count i32) (param $release_func i32) (param $item_size i32) (result i32) ;;result = ptr_block
   local.get $item_count
   local.get $item_size

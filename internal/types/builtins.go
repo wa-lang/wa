@@ -543,6 +543,27 @@ func (check *Checker) builtin(x *operand, call *ast.CallExpr, id builtinId) (_ b
 		x.mode = value
 		x.typ = retType
 
+	case _SetFinalizer:
+		var params []Type
+		if nargs > 0 {
+			params = make([]Type, nargs)
+			for i := 0; i < nargs; i++ {
+				if i > 0 {
+					arg(x, i) // first argument already evaluated
+				}
+				check.assignment(x, nil, "argument to "+predeclaredFuncs[id].name)
+				if x.mode == invalid {
+					// TODO(gri) "use" all arguments?
+					return
+				}
+				params[i] = x.typ
+			}
+		}
+		x.mode = novalue
+		if check.Types != nil {
+			check.recordBuiltinType(call.Fun, makeSig(nil, params...))
+		}
+
 	case _Printf:
 		S := x.typ
 		if s, _ := S.Underlying().(*Basic); s == nil || (s.kind != String && s.kind != UntypedString) {

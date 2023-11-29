@@ -153,3 +153,11 @@ func (v *aRef) getConstPtr() int {
 	i, _ := strconv.Atoi(v.ExtractByName("d").Name())
 	return i
 }
+
+func (v *aRef) emitGenSetFinalizer(fn_id int) (insts []wat.Inst) {
+	insts = append(insts, v.ExtractByName("b").EmitPushNoRetain()...)
+	insts = append(insts, wat.NewInstConst(wat.I32{}, strconv.Itoa(fn_id)))
+	insts = append(insts, wat.NewInstCall("runtime.Block.SetFinalizer"))
+
+	return
+}

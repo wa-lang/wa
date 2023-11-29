@@ -717,6 +717,24 @@ func (g *functionGenerator) genBuiltin(call *ssa.CallCommon) (insts []wat.Inst, 
 		insts = g.module.EmitGenRaw(g.getValue(call.Args[0]).value)
 		ret_type = g.module.BYTES
 
+	case "setFinalizer":
+		if len(call.Args) != 2 {
+			panic("len(call.Args) != 2")
+		}
+
+		var fn_id int
+		callee := call.Args[1].(*ssa.Function)
+		g.module.AddFunc(newFunctionGenerator(g.prog, g.module, g.tLib).genFunction(callee))
+		if len(callee.LinkName()) > 0 {
+			fn_id = g.module.AddTableElem(callee.LinkName())
+		} else {
+			fn_internal_name, _ := wir.GetFnMangleName(callee, g.prog.Manifest.MainPkg)
+			fn_id = g.module.AddTableElem(fn_internal_name)
+		}
+		insts = g.module.EmitGenSetFinalizer(g.getValue(call.Args[0]).value, fn_id)
+
+		ret_type = g.module.VOID
+
 	case "ssa:wrapnilchk":
 		insts = g.getValue(call.Args[0]).value.EmitPushNoRetain()
 		ret_type = g.getValue(call.Args[0]).value.Type()

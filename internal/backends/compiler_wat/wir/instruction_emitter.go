@@ -845,6 +845,10 @@ func (m *Module) EmitGenRaw(x Value) (insts []wat.Inst) {
 	return s.emitConvertToBytes()
 }
 
+func (m *Module) EmitGenSetFinalizer(x Value, fn_id int) (insts []wat.Inst) {
+	return x.(*aRef).emitGenSetFinalizer(fn_id)
+}
+
 func (m *Module) EmitGenMakeInterface(x Value, itype ValueType) (insts []wat.Inst) {
 	x_type := x.Type()
 	m.markConcreteTypeUsed(x_type)
