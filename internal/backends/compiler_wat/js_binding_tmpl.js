@@ -23,6 +23,15 @@ class WaApp {
         this._mem_util.mem_array_u8(d, l).set(bytes);
         return [b, d, l];
       },
+      get_bytes: (d, l) => { return this._mem_util.mem_array_u8(d, l).slice(0); },
+      set_bytes: (bytes) => {
+        const l = bytes.length;
+        const c = l;
+        const b = this._wasm_inst.exports["runtime.Block.HeapAlloc"](l, 0, 1);
+        const d = b + 16;
+        this._mem_util.mem_array_u8(d, l).set(bytes);
+        return [b, d, l, c];
+      },
       block_release: (addr) => { this._wasm_inst.exports["runtime.Block.Release"](addr); },
       //基本类型直接读写：
       bool_load: (addr) => { /*Todo*/ },
@@ -63,6 +72,12 @@ class WaApp {
         this._mem_util.block_release(arr[0]);
         arr.splice(0, 3);
         return s;
+      },
+      extract_bytes: (arr) => {
+        const b = this._mem_util.get_bytes(arr[1], arr[2]);
+        this._mem_util.block_release(arr[0]);
+        arr.splice(0, 4);
+        return b
       },
       extract_bool: (arr) => { arr.splice(0, 1); return 0; },
       extract_u8: (arr) => { arr.splice(0, 1); return 0; },
