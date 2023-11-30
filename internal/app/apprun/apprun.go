@@ -30,6 +30,11 @@ var CmdRun = &cli.Command{
 			Usage: "set http address",
 			Value: ":8000",
 		},
+		&cli.BoolFlag{
+			Name:  "console",
+			Usage: "set console mode",
+			Value: false,
+		},
 	},
 	Action: CmdRunAction,
 }
@@ -49,7 +54,7 @@ func CmdRunAction(c *cli.Context) error {
 	}
 
 	// Web 模式启动服务器
-	if opt.TargetOS == config.WaOS_js && appbase.IsNativeDir(input) {
+	if !c.Bool("console") && opt.TargetOS == config.WaOS_js && appbase.IsNativeDir(input) {
 		var addr = c.String("http")
 		if strings.HasPrefix(addr, ":") {
 			addr = "localhost" + addr
