@@ -79,14 +79,9 @@ class WaApp {
         arr.splice(0, 4);
         return b
       },
-      extract_bool: (arr) => { arr.splice(0, 1); return 0; },
-      extract_u8: (arr) => { arr.splice(0, 1); return 0; },
-      extract_u16: (arr) => { arr.splice(0, 1); return 0; },
-      extract_u32: (arr) => { arr.splice(0, 1); return 0; },
-      extract_i32: (arr) => { const v = arr[0]; arr.splice(0, 1); return v; },
-      extract_rune: (arr) => { arr.splice(0, 1); return 0; },
-      extract_f32: (arr) => { const v = arr[0]; arr.splice(0, 1); return v; },
-      extract_f64: (arr) => { const v = arr[0]; arr.splice(0, 1); return v; },
+      extract_bool: (arr) => { const v = arr[0]; arr.splice(0, 1); return v?true:false; },
+      extract_rune: (arr) => { const v = arr[0]; arr.splice(0, 1); return String.fromCodePoint(v); },
+      extract_number: (arr) => { const v = arr[0]; arr.splice(0, 1); return v; },
     }
   };
 

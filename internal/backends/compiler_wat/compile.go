@@ -444,17 +444,27 @@ func (p *Compiler) funcsForJSBinding() []JSFunc {
 			var sbr strings.Builder
 			for i, p := range f.Params {
 				name := p.Name()
-				switch p.Type() {
-				case m.U8, m.U16, m.I32, m.U32, m.I64, m.U64, m.BOOL, m.RUNE:
+				switch pt := p.Type().(type) {
+				case *wir.U8, *wir.U16, *wir.I32, *wir.U32, *wir.I64, *wir.U64, *wir.F32, *wir.F64:
 					sb.WriteString(fmt.Sprintf("params.push(%s);\n", name))
-				case m.STRING: // 字符串类型需要转换为[b,d,l]的形式
+
+				case *wir.Bool:
+					sb.WriteString(fmt.Sprintf("params.push(%s?1:0);\n", name))
+
+				case *wir.Rune:
+					sb.WriteString(fmt.Sprintf("params.push(%s.codePointAt(0));\n", name))
+
+				case *wir.String: // 字符串类型需要转换为[b,d,l]的形式
 					sb.WriteString(fmt.Sprintf("let p%d = this._mem_util.set_string(%s);\n", i, name))
 					sb.WriteString(fmt.Sprintf("params = params.concat(p%d);\n", i))
 					sbr.WriteString(fmt.Sprintf("this._mem_util.block_release(p%d[0]);\n", i))
-				case m.BYTES: // Bytes转换为[b,d,l,c]
-					sb.WriteString(fmt.Sprintf("let p%d = this._mem_util.set_bytes(%s);\n", i, name))
-					sb.WriteString(fmt.Sprintf("params = params.concat(p%d);\n", i))
-					sbr.WriteString(fmt.Sprintf("this._mem_util.block_release(p%d[0]);\n", i))
+
+				case *wir.Slice: // Bytes转换为[b,d,l,c]
+					if pt.Equal(m.BYTES) {
+						sb.WriteString(fmt.Sprintf("let p%d = this._mem_util.set_bytes(%s);\n", i, name))
+						sb.WriteString(fmt.Sprintf("params = params.concat(p%d);\n", i))
+						sbr.WriteString(fmt.Sprintf("this._mem_util.block_release(p%d[0]);\n", i))
+					}
 
 				default:
 				}
@@ -468,23 +478,32 @@ func (p *Compiler) funcsForJSBinding() []JSFunc {
 			var sb strings.Builder
 			var sbr strings.Builder
 			for i, r := range f.Results {
-				switch r {
-				case m.U8, m.U16, m.I32, m.U32, m.I64, m.U64, m.BOOL, m.RUNE, m.STRING:
-					sb.WriteString(fmt.Sprintf("let r%d = this._mem_util.extract_%s(res);\n", i, r.Named()))
-					if i > 0 {
-						sbr.WriteString(",")
-					}
-					sbr.WriteString(fmt.Sprintf("r%d", i))
+				switch rt := r.(type) {
+				case *wir.U8, *wir.U16, *wir.I32, *wir.U32, *wir.I64, *wir.U64, *wir.F32, *wir.F64:
+					sb.WriteString(fmt.Sprintf("let r%d = this._mem_util.extract_number(res);\n", i))
 
-				case m.BYTES:
-					sb.WriteString(fmt.Sprintf("let r%d = this._mem_util.extract_bytes(res);\n", i))
-					if i > 0 {
-						sbr.WriteString(",")
+				case *wir.Bool:
+					sb.WriteString(fmt.Sprintf("let r%d = this._mem_util.extract_bool(res);\n", i))
+
+				case *wir.Rune:
+					sb.WriteString(fmt.Sprintf("let r%d = this._mem_util.extract_rune(res);\n", i))
+
+				case *wir.String:
+					sb.WriteString(fmt.Sprintf("let r%d = this._mem_util.extract_string(res);\n", i))
+
+				case *wir.Slice:
+					if rt.Equal(m.BYTES) {
+						sb.WriteString(fmt.Sprintf("let r%d = this._mem_util.extract_bytes(res);\n", i))
 					}
-					sbr.WriteString(fmt.Sprintf("r%d", i))
 
 				default:
 				}
+
+				if i > 0 {
+					sbr.WriteString(",")
+				}
+				sbr.WriteString(fmt.Sprintf("r%d", i))
+
 			}
 			fn.GetResults = sb.String()
 			if len(f.Results) == 1 {
