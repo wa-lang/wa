@@ -5,14 +5,11 @@ import "image/color"
 global (
 	_ :Image = (*Gray)(nil)
 	_ :Image = (*RGBA)(nil)
-
-	_ :RGBA64Image = (*Gray16)(nil)
-	_ :RGBA64Image = (*RGBA64)(nil)
 )
 
 func NewGray(r: Rectangle) => *Gray {
 	return &Gray{
-		Pix:    make([]u8, pixelBufferLength(1, r, "Gray")),
+		Pix:    make([]u8, r.Dx()*r.Dy()),
 		Stride: 1 * r.Dx(),
 		Rect:   r,
 	}
@@ -29,28 +26,9 @@ func Gray.At(x, y: int) => color.RGBA {
 	return color.RGBA{v, v, v, 0xFF}
 }
 
-func NewGray16(r: Rectangle) => *Gray16 {
-	return &Gray16{
-		Pix:    make([]u16, pixelBufferLength(2, r, "Gray16")),
-		Stride: 2 * r.Dx(),
-		Rect:   r,
-	}
-}
-func Gray16.Bounds() => Rectangle {
-	return this.Rect
-}
-func Gray16.PixOffset(x, y: int) => int {
-	return (y-this.Rect.Min.Y)*this.Stride + (x-this.Rect.Min.X)*2
-}
-func Gray16.At(x, y: int) => color.RGBA64 {
-	i := this.PixOffset(x, y)
-	v := this.Pix[i]
-	return color.RGBA64{v, v, v, 0xFFFF}
-}
-
 func NewRGBA(r: Rectangle) => *RGBA {
 	return &RGBA{
-		Pix:    make([]u8, pixelBufferLength(4, r, "RGBA")),
+		Pix:    make([]u8, 4*r.Dx()*r.Dy()),
 		Stride: 4 * r.Dx(),
 		Rect:   r,
 	}
@@ -69,7 +47,7 @@ func RGBA.At(x, y: int) => color.RGBA {
 }
 
 func RGBA.SetRGBA(x, y: int, c: color.RGBA) {
-	if !this.Rect.Contain(x, y) {
+	if !this.Rect.Contains(x, y) {
 		return
 	}
 	i := this.PixOffset(x, y)
@@ -80,30 +58,9 @@ func RGBA.SetRGBA(x, y: int, c: color.RGBA) {
 	s[3] = c.A
 }
 
-func NewRGBA64(r: Rectangle) => *RGBA64 {
-	return &RGBA64{
-		Pix:    make([]u16, pixelBufferLength(8, r, "RGBA64")),
-		Stride: 8 * r.Dx(),
-		Rect:   r,
-	}
-}
-
-func RGBA64.Bounds() => Rectangle {
-	return this.Rect
-}
-
-func RGBA64.PixOffset(x, y: int) => int {
-	return (y-this.Rect.Min.Y)*this.Stride + (x-this.Rect.Min.X)*8
-}
-func RGBA64.At(x, y: int) => color.RGBA64 {
-	i := this.PixOffset(x, y)
-	s := this.Pix[i : i+4 : i+4]
-	return color.RGBA64{s[0], s[1], s[2], s[3]}
-}
-
 func NewPaletted(r: Rectangle, p: []color.RGBA) => *Paletted {
 	return &Paletted{
-		Pix:     make([]u8, pixelBufferLength(1, r, "Paletted")),
+		Pix:     make([]u8, r.Dx()*r.Dy()),
 		Stride:  1 * r.Dx(),
 		Rect:    r,
 		Palette: p,
