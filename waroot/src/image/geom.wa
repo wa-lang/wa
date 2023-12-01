@@ -21,7 +21,10 @@ type Rectangle struct {
 }
 
 func Rect(x, y, w, h: int) => Rectangle {
-	return Rectangle{}
+	return Rectangle{
+		Min: Point{x, y},
+		Max: Point{x + w, y + h},
+	}
 }
 
 func Rectangle.Dx => int {
