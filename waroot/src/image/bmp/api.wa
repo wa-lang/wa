@@ -9,21 +9,27 @@ import (
 global ErrUnsupported = errors.New("bmp: unsupported BMP image")
 
 func DecodeConfig(d: []byte) => (config: image.Config, err: error) {
-	config, _, _, err = decodeConfig(d)
+	config, _, _, _, err = decodeConfig(d)
 	return
 }
 
 func Decode(data: []byte) => (image.Image, error) {
-	config, palette, offset, err := decodeConfig(data)
+	config, palette, bpp, offset, err := decodeConfig(data)
 	if err != nil {
 		return nil, err
 	}
-	if len(palette) > 0 {
+
+	switch bpp {
+	case 8:
 		return decodePaletted(data, config, palette, int(offset))
+	case 24:
+		panic("TODO: RGB")
+	case 32:
+		rgba, err := decodeRGBA(data, config, int(offset))
+		return rgba, err
 	}
 
-	rgba, err := decodeRGBA(data, config, int(offset))
-	return rgba, err
+	return nil, ErrUnsupported
 }
 
 func Encode(w: io.Writer, m: image.Image) => error {
