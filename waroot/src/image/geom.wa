@@ -20,11 +20,15 @@ type Rectangle struct {
 	Min, Max: Point
 }
 
-func Rect(x, y, w, h: int) => Rectangle {
-	return Rectangle{
-		Min: Point{x, y},
-		Max: Point{x + w, y + h},
+func Rect(x0, y0, x1, y1: int) => Rectangle {
+	if x0 > x1 {
+		x0, x1 = x1, x0
 	}
+
+	if y0 > y1 {
+		y0, y1 = y1, y0
+	}
+	return Rectangle{ Min: Point{x0, y0}, Max: Point{x1, y1} }
 }
 
 func Rectangle.Dx => int {
