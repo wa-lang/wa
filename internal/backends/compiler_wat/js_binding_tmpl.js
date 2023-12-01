@@ -145,6 +145,7 @@ class WaApp {
       }
       {{ end }}
 
+      this._wasm_inst.exports._start();
       return this
     } catch (error) {
       console.error('WASM 初始化失败:', error);
