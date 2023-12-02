@@ -35,6 +35,11 @@ var CmdRun = &cli.Command{
 			Usage: "set console mode",
 			Value: false,
 		},
+		&cli.BoolFlag{
+			Name:  "autobuild",
+			Usage: "set auto build mode",
+			Value: false,
+		},
 	},
 	Action: CmdRunAction,
 }
@@ -64,6 +69,14 @@ func CmdRunAction(c *cli.Context) error {
 		go func() {
 			time.Sleep(time.Second * 2)
 			openBrowser(addr)
+
+			// 后台每隔几秒重新编译
+			if c.Bool("autobuild") {
+				for {
+					appbuild.BuildApp(opt, input, outfile)
+					time.Sleep(time.Second * 3)
+				}
+			}
 		}()
 
 		fileHandler := http.FileServer(http.Dir(filepath.Join(input, "output")))
