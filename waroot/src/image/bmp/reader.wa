@@ -9,6 +9,7 @@ import (
 func decodeConfig(data: []byte) => (
 	config: image.Config,
 	palette: []color.RGBA,
+	bitsPerPixel: i32,
 	offset: u32,
 	err: error,
 ) {
@@ -64,6 +65,7 @@ func decodeConfig(data: []byte) => (
 			// Every 4th byte is padding.
 			palette[i] = color.RGBA{b[4*i+2], b[4*i+1], b[4*i+0], 0xFF}
 		}
+		bitsPerPixel = 8
 		config = image.Config{Width: width, Height: height}
 		return
 	case 24:
@@ -71,9 +73,19 @@ func decodeConfig(data: []byte) => (
 			err = ErrUnsupported
 			return
 		}
+		bitsPerPixel = 24
+		config = image.Config{Width: width, Height: height}
+		return
+	case 32:
+		if offset != fileHeaderLen+infoHeaderLen {
+			err = ErrUnsupported
+			return
+		}
+		bitsPerPixel = 32
 		config = image.Config{Width: width, Height: height}
 		return
 	}
+
 	err = ErrUnsupported
 	return
 }
@@ -84,15 +96,13 @@ func decodeRGBA(
 	dataOffset: int,
 ) => (*image.RGBA, error) {
 	rgba := image.NewRGBA(image.Rect(0, 0, config.Width, config.Height))
-	// There are 3 bytes per pixel, and each row is 4-byte aligned.
-	step := (3*config.Width + 3) &^ 3
-	// BMP images are stored bottom-up rather than top-down.
+	step := config.Width * 4
 	for y := config.Height - 1; y >= 0; y-- {
 		b := data[:dataOffset][:step]
 		dataOffset += step
 
 		p := rgba.Pix[y*rgba.Stride : y*rgba.Stride+config.Width*4]
-		for i, j := 0, 0; i < len(p); i, j = i+4, j+3 {
+		for i, j := 0, 0; i < len(p); i, j = i+4, j+4 {
 			// BMP images are stored in BGR order rather than RGB order.
 			p[i+0] = b[j+2]
 			p[i+1] = b[j+1]

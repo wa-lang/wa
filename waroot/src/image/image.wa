@@ -14,13 +14,6 @@ type Image interface {
 	At(x, y: int) => color.RGBA
 }
 
-// 图像接口(16bit)
-type RGBA64Image interface {
-	Bounds() => Rectangle
-	PixOffset(x, y: int) => int
-	At(x, y: int) => color.RGBA64
-}
-
 // 二维图像 Gray
 type Gray struct {
 	Pix:    []u8
@@ -28,23 +21,9 @@ type Gray struct {
 	Rect:   Rectangle
 }
 
-// 二维图像 Gray16
-type Gray16 struct {
-	Pix:    []u16
-	Stride: int
-	Rect:   Rectangle
-}
-
 // 二维图像 RGBA
 type RGBA struct {
 	Pix:    []u8
-	Stride: int
-	Rect:   Rectangle
-}
-
-// 二维图像 RGBA64
-type RGBA64 struct {
-	Pix:    []u16
 	Stride: int
 	Rect:   Rectangle
 }
