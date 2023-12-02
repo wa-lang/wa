@@ -158,7 +158,7 @@ func (t *Bool) EmitLoadFromAddr(addr Value, offset int) []wat.Inst {
 	//	return nil
 	//}
 	insts := addr.EmitPush()
-	insts = append(insts, wat.NewInstLoad(toWatType(t), offset, 1))
+	insts = append(insts, wat.NewInstLoad8u(offset, 1))
 	return insts
 }
 
