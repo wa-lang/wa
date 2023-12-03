@@ -4,6 +4,4 @@ type Gray struct {
 	Y: u8
 }
 
-type RGBA struct {
-	R, G, B, A: u8
-}
+type RGBA u32

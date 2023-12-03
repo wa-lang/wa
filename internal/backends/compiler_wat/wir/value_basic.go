@@ -145,10 +145,10 @@ func (v *aBasic) emitStoreToAddr(addr Value, offset int) []wat.Inst {
 		insts = append(insts, wat.NewInstStore8(offset, 1))
 
 	case *U16, *I16:
-		insts = append(insts, wat.NewInstStore16(offset, 1))
+		insts = append(insts, wat.NewInstStore16(offset, 2))
 
 	default:
-		insts = append(insts, wat.NewInstStore(toWatType(v.Type()), offset, 1))
+		insts = append(insts, wat.NewInstStore(toWatType(v.Type()), offset, v.Type().align()))
 	}
 	return insts
 }
@@ -161,10 +161,10 @@ func (v *aBasic) emitStore(offset int) (insts []wat.Inst) {
 		insts = append(insts, wat.NewInstStore8(offset, 1))
 
 	case *U16, *I16:
-		insts = append(insts, wat.NewInstStore16(offset, 1))
+		insts = append(insts, wat.NewInstStore16(offset, 2))
 
 	default:
-		insts = append(insts, wat.NewInstStore(toWatType(v.Type()), offset, 1))
+		insts = append(insts, wat.NewInstStore(toWatType(v.Type()), offset, v.Type().align()))
 	}
 
 	return

@@ -8,30 +8,30 @@ type Config struct {
 }
 
 // 图像接口
-type Image interface {
-	Bounds() => Rectangle
-	PixOffset(x, y: int) => int
-	At(x, y: int) => color.RGBA
-}
+//type Image interface {
+//	Bounds() => Rectangle
+//	PixOffset(x, y: int) => int
+//	At(x, y: int) => color.RGBA
+//}
 
 // 二维图像 Gray
-type Gray struct {
-	Pix:    []u8
-	Stride: int
-	Rect:   Rectangle
-}
+//type Gray struct {
+//	Pix:    []u8
+//	Stride: int
+//	Rect:   Rectangle
+//}
 
 // 二维图像 RGBA
 type RGBA struct {
-	Pix:    []u8
-	Stride: int
+	Pix:    []color.RGBA
+	//Stride: int
 	Rect:   Rectangle
 }
 
 // 调色板图像
-type Paletted struct {
-	Pix:     []u8
-	Stride:  int
-	Rect:    Rectangle
-	Palette: []color.RGBA
-}
+//type Paletted struct {
+//	Pix:     []u8
+//	Stride:  int
+//	Rect:    Rectangle
+//	Palette: []color.RGBA
+//}

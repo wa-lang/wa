@@ -3,78 +3,80 @@
 import "image/color"
 
 global (
-	_ :Image = (*Gray)(nil)
-	_ :Image = (*RGBA)(nil)
+	//_ :Image = (*Gray)(nil)
+	//_ :Image = (*RGBA)(nil)
 )
 
-func NewGray(r: Rectangle) => *Gray {
-	return &Gray{
-		Pix:    make([]u8, r.Dx()*r.Dy()),
-		Stride: 1 * r.Dx(),
-		Rect:   r,
-	}
-}
-func Gray.Bounds() => Rectangle {
-	return this.Rect
-}
-func Gray.PixOffset(x, y: int) => int {
-	return (y-this.Rect.Min.Y)*this.Stride + (x-this.Rect.Min.X)*1
-}
-func Gray.At(x, y: int) => color.RGBA {
-	i := this.PixOffset(x, y)
-	v := this.Pix[i]
-	return color.RGBA{v, v, v, 0xFF}
-}
+//func NewGray(r: Rectangle) => *Gray {
+//	return &Gray{
+//		Pix:    make([]u8, r.Dx()*r.Dy()),
+//		Stride: 1 * r.Dx(),
+//		Rect:   r,
+//	}
+//}
+//func Gray.Bounds() => Rectangle {
+//	return this.Rect
+//}
+//func Gray.PixOffset(x, y: int) => int {
+//	return (y-this.Rect.Min.Y)*this.Stride + (x-this.Rect.Min.X)*1
+//}
+//func Gray.At(x, y: int) => color.RGBA {
+//	i := this.PixOffset(x, y)
+//	v := this.Pix[i]
+//	return color.RGBA{v, v, v, 0xFF}
+//}
 
 func NewRGBA(r: Rectangle) => *RGBA {
 	return &RGBA{
-		Pix:    make([]u8, 4*r.Dx()*r.Dy()),
-		Stride: 4 * r.Dx(),
+		Pix:    make([]color.RGBA, r.Dx()*r.Dy()),
+		//Stride: 4 * r.Dx(),
 		Rect:   r,
 	}
 }
 
-func RGBA.Bounds() => Rectangle {
-	return this.Rect
-}
-func RGBA.PixOffset(x, y: int) => int {
-	return (y-this.Rect.Min.Y)*this.Stride + (x-this.Rect.Min.X)*4
-}
-func RGBA.At(x, y: int) => color.RGBA {
-	i := this.PixOffset(x, y)
-	s := this.Pix[i : i+4 : i+4]
-	return color.RGBA{s[0], s[1], s[2], s[3]}
-}
+//func RGBA.Bounds() => Rectangle {
+//	return this.Rect
+//}
+//func RGBA.PixOffset(x, y: int) => int {
+//	return (y-this.Rect.Min.Y)*this.Stride + (x-this.Rect.Min.X)*4
+//}
+//func RGBA.At(x, y: int) => color.RGBA {
+//	i := this.PixOffset(x, y)
+//	s := this.Pix[i : i+4 : i+4]
+//	return color.RGBA{s[0], s[1], s[2], s[3]}
+//}
 
 func RGBA.SetRGBA(x, y: int, c: color.RGBA) {
-	if !this.Rect.Contains(x, y) {
-		return
-	}
-	i := this.PixOffset(x, y)
-	s := this.Pix[i : i+4 : i+4]
-	s[0] = c.R
-	s[1] = c.G
-	s[2] = c.B
-	s[3] = c.A
+	this.Pix[y * this.Rect.Dx() + x] = c
+	//if !this.Rect.Contains(x, y) {
+	//	return
+	//}
+	//i := this.PixOffset(x, y)
+	//s := this.Pix[i : i+4 : i+4]
+	//s[0] = c.R
+	//s[1] = c.G
+	//s[2] = c.B
+	//s[3] = c.A
 }
 
-func NewPaletted(r: Rectangle, p: []color.RGBA) => *Paletted {
-	return &Paletted{
-		Pix:     make([]u8, r.Dx()*r.Dy()),
-		Stride:  1 * r.Dx(),
-		Rect:    r,
-		Palette: p,
-	}
-}
-
-func Paletted.Bounds() => Rectangle {
-	return this.Rect
-}
-func Paletted.PixOffset(x, y: int) => int {
-	return (y-this.Rect.Min.Y)*this.Stride + (x-this.Rect.Min.X)*1
-}
-func Paletted.At(x, y: int) => color.RGBA {
-	i := this.PixOffset(x, y)
-	v := this.Pix[i]
-	return this.Palette[v]
-}
+//func NewPaletted(r: Rectangle, p: []color.RGBA) => *Paletted {
+//	return &Paletted{
+//		Pix:     make([]u8, r.Dx()*r.Dy()),
+//		Stride:  1 * r.Dx(),
+//		Rect:    r,
+//		Palette: p,
+//	}
+//}
+//
+//func Paletted.Bounds() => Rectangle {
+//	return this.Rect
+//}
+//func Paletted.PixOffset(x, y: int) => int {
+//	return (y-this.Rect.Min.Y)*this.Stride + (x-this.Rect.Min.X)*1
+//}
+//func Paletted.At(x, y: int) => color.RGBA {
+//	i := this.PixOffset(x, y)
+//	v := this.Pix[i]
+//	return this.Palette[v]
+//}
+//

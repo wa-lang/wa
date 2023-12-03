@@ -1,5 +1,6 @@
 // 版权 @2023 凹语言 作者。保留所有权利。
 
+/*
 import (
 	"errors"
 	"image"
@@ -181,3 +182,4 @@ func encode(w: io.Writer, m: image.Image) => error {
 	}
 	return encodeImage(w, m, step)
 }
+*/

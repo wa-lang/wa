@@ -1,5 +1,6 @@
 // 版权 @2023 凹语言 作者。保留所有权利。
 
+/*
 import (
 	"encoding/binary"
 	"io"
@@ -49,3 +50,4 @@ func header.Write(w: io.Writer) => error {
 	_, err := w.Write(b)
 	return err
 }
+*/

@@ -1,5 +1,6 @@
 // 版权 @2023 凹语言 作者。保留所有权利。
 
+/*
 import (
 	"errors"
 	"image"
@@ -141,3 +142,4 @@ func readUint16(b: []byte) => uint16 {
 func readUint32(b: []byte) => uint32 {
 	return uint32(b[0]) | uint32(b[1])<<8 | uint32(b[2])<<16 | uint32(b[3])<<24
 }
+*/

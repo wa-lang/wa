@@ -196,7 +196,7 @@ func (t *Rune) EmitLoadFromAddr(addr Value, offset int) []wat.Inst {
 	//	return nil
 	//}
 	insts := addr.EmitPush()
-	insts = append(insts, wat.NewInstLoad(toWatType(t), offset, 1))
+	insts = append(insts, wat.NewInstLoad(toWatType(t), offset, 4))
 	return insts
 }
 
@@ -320,7 +320,7 @@ func (t *I16) EmitLoadFromAddr(addr Value, offset int) []wat.Inst {
 		logger.Fatal("addr should be `*aPtr`")
 	}
 	insts := addr.EmitPush()
-	insts = append(insts, wat.NewInstLoad16s(offset, 1))
+	insts = append(insts, wat.NewInstLoad16s(offset, 2))
 	return insts
 }
 
@@ -361,7 +361,7 @@ func (t *U16) EmitLoadFromAddr(addr Value, offset int) []wat.Inst {
 		logger.Fatal("addr should be `*aPtr`")
 	}
 	insts := addr.EmitPush()
-	insts = append(insts, wat.NewInstLoad16u(offset, 1))
+	insts = append(insts, wat.NewInstLoad16u(offset, 2))
 	return insts
 }
 
@@ -406,7 +406,7 @@ func (t *I32) EmitLoadFromAddr(addr Value, offset int) []wat.Inst {
 		logger.Fatal("addr should be `*aPtr`")
 	}
 	insts := addr.EmitPush()
-	insts = append(insts, wat.NewInstLoad(toWatType(t), offset, 1))
+	insts = append(insts, wat.NewInstLoad(toWatType(t), offset, 4))
 	return insts
 }
 
@@ -451,7 +451,7 @@ func (t *U32) EmitLoadFromAddr(addr Value, offset int) []wat.Inst {
 		logger.Fatal("addr should be `*aPtr`")
 	}
 	insts := addr.EmitPush()
-	insts = append(insts, wat.NewInstLoad(toWatType(t), offset, 1))
+	insts = append(insts, wat.NewInstLoad(toWatType(t), offset, 4))
 	return insts
 }
 
@@ -492,7 +492,7 @@ func (t *I64) EmitLoadFromAddr(addr Value, offset int) []wat.Inst {
 		logger.Fatal("addr should be `*aPtr`")
 	}
 	insts := addr.EmitPush()
-	insts = append(insts, wat.NewInstLoad(toWatType(t), offset, 1))
+	insts = append(insts, wat.NewInstLoad(toWatType(t), offset, 8))
 	return insts
 }
 
@@ -533,7 +533,7 @@ func (t *U64) EmitLoadFromAddr(addr Value, offset int) []wat.Inst {
 		logger.Fatal("addr should be `*aPtr`")
 	}
 	insts := addr.EmitPush()
-	insts = append(insts, wat.NewInstLoad(toWatType(t), offset, 1))
+	insts = append(insts, wat.NewInstLoad(toWatType(t), offset, 8))
 	return insts
 }
 
@@ -574,7 +574,7 @@ func (t *F32) EmitLoadFromAddr(addr Value, offset int) []wat.Inst {
 		logger.Fatal("addr should be `*aPtr`")
 	}
 	insts := addr.EmitPush()
-	insts = append(insts, wat.NewInstLoad(toWatType(t), offset, 1))
+	insts = append(insts, wat.NewInstLoad(toWatType(t), offset, 4))
 	return insts
 }
 
@@ -615,6 +615,6 @@ func (t *F64) EmitLoadFromAddr(addr Value, offset int) []wat.Inst {
 		logger.Fatal("addr should be `*aPtr`")
 	}
 	insts := addr.EmitPush()
-	insts = append(insts, wat.NewInstLoad(toWatType(t), offset, 1))
+	insts = append(insts, wat.NewInstLoad(toWatType(t), offset, 8))
 	return insts
 }
