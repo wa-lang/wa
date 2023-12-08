@@ -13,7 +13,7 @@ func (p *Compiler) compileGlobal(g *ssa.Global) {
 		p.module.AddGlobal(g.LinkName(), "", p.tLib.compile(g.Type().(*types.Pointer).Elem()), false, g)
 	} else {
 		pkg_name, _ := wir.GetPkgMangleName(g.Pkg.Pkg.Path())
-		if g.Name() == "init$guard" {
+		if g.Name() == "init$guard" || g.ForceRegister() {
 			p.module.AddGlobal(pkg_name+"."+g.Name(), "", p.tLib.compile(g.Type().(*types.Pointer).Elem()), false, g)
 		} else {
 			name_exp := ""

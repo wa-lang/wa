@@ -1356,6 +1356,23 @@ func (v *Global) ExportName() string {
 	return info.ExportName
 }
 
+// 返回强制寄存器，默认为false
+func (v *Global) ForceRegister() bool {
+	if v.commentInfo != nil {
+		return v.commentInfo.ForceRegister
+	}
+	if v.Object() == nil {
+		v.commentInfo = new(astutil.CommentInfo)
+		return v.commentInfo.ForceRegister
+	}
+
+	doc := v.Object().NodeDoc()
+	info := astutil.ParseCommentInfo(doc)
+
+	v.commentInfo = &info
+	return info.ForceRegister
+}
+
 func (v *Function) Name() string         { return v.name }
 func (v *Function) Type() types.Type     { return v.Signature }
 func (v *Function) Pos() token.Pos       { return v.pos }
