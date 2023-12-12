@@ -4,6 +4,7 @@
   - 增加胶水代码定义特性
   - 增加 canvas 绘制 logo 例子
   - 去掉 LLVM 后端支持, CPU 只支持 wasm 类型, 删除 Clang 和 Arduino 支持
+  - 标准库增加 qrcode
   - 默认目标 OS 改为 js
 - v0.8.1 (2023-08-11) MVP
   - MVP 版本, 细节请参考《凹语言手册》：https://wa-lang.org/man

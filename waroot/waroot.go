@@ -134,6 +134,7 @@ var stdPkgs = []string{
 	"encoding/base64", // API 完整
 	"encoding/binary", // API 部分
 	"encoding/hex",    // API 完整
+	"encoding/qrcode", // ?
 	"debug",           // ?
 	"fmt",             // ?
 	"hash",            // API 完整
@@ -145,6 +146,7 @@ var stdPkgs = []string{
 	"math",            // API 部分
 	"math/big",        // API 部分
 	"math/bits",       // API 完整
+	"math/gf256",      // ?
 	"os",              // API 部分
 	"reflect",         // ?
 	"regexp",          // API 部分
