@@ -140,7 +140,6 @@ var stdPkgs = []string{
 	"hash",            // API 完整
 	"hash/crc32",      // API 完整
 	"image",           // ?
-	"image/bmp",       // ?
 	"image/color",     // ?
 	"io",              // API 部分
 	"math",            // API 部分

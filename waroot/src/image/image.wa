@@ -7,31 +7,16 @@ type Config struct {
 	Width, Height: int
 }
 
-// 图像接口
-//type Image interface {
-//	Bounds() => Rectangle
-//	PixOffset(x, y: int) => int
-//	At(x, y: int) => color.RGBA
-//}
-
 // 二维图像 Gray
-//type Gray struct {
-//	Pix:    []u8
-//	Stride: int
-//	Rect:   Rectangle
-//}
+type Gray struct {
+	Width:  int
+	Height: int
+	Pix:    []color.Gray
+}
 
 // 二维图像 RGBA
 type RGBA struct {
+	Width:  int
+	Height: int
 	Pix:    []color.RGBA
-	//Stride: int
-	Rect:   Rectangle
 }
-
-// 调色板图像
-//type Paletted struct {
-//	Pix:     []u8
-//	Stride:  int
-//	Rect:    Rectangle
-//	Palette: []color.RGBA
-//}
