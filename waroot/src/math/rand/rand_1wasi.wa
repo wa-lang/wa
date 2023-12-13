@@ -2,6 +2,8 @@
 
 #wa:build !wasi
 
+import "errors"
+
 func getRandomData(r: []byte) => error {
 	return errors.New("rand.GetRandomData: unsupport")
 }
