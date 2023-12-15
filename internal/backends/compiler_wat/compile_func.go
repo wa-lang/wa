@@ -147,7 +147,66 @@ func (g *functionGenerator) getValue(i ssa.Value) valueWrap {
 				return valueWrap{value: wir.NewConst("0", g.tLib.compile(t))}
 			}
 			if _, ok := t.Underlying().(*types.Basic); ok {
-				return valueWrap{value: wir.NewConst(v.Value.String(), g.tLib.compile(t))}
+				switch t.Underlying().(*types.Basic).Kind() {
+
+				case types.Bool, types.UntypedBool:
+					if constant.BoolVal(v.Value) {
+						return valueWrap{value: wir.NewConst("1", g.module.BOOL)}
+					} else {
+						return valueWrap{value: wir.NewConst("0", g.module.BOOL)}
+					}
+
+				case types.Uint8:
+					val, _ := constant.Uint64Val(v.Value)
+					return valueWrap{value: wir.NewConst(strconv.Itoa(int(val)), g.tLib.compile(t))}
+
+				//case types.Int8:
+				//	val, _ := constant.Int64Val(v.Value)
+				//	return valueWrap{value: wir.NewConst(strconv.Itoa(int(val)), g.tLib.compile(t))}
+
+				case types.Uint16:
+					val, _ := constant.Uint64Val(v.Value)
+					return valueWrap{value: wir.NewConst(strconv.Itoa(int(val)), g.tLib.compile(t))}
+
+				//case types.Int16:
+				//	val, _ := constant.Int64Val(v.Value)
+				//	return valueWrap{value: wir.NewConst(strconv.Itoa(int(val)), g.tLib.compile(t))}
+
+				case types.Uint32, types.Uintptr, types.Uint:
+					val, _ := constant.Uint64Val(v.Value)
+					return valueWrap{value: wir.NewConst(strconv.Itoa(int(val)), g.tLib.compile(t))}
+
+				case types.Int32, types.Int:
+					val, _ := constant.Int64Val(v.Value)
+					if t.Underlying().(*types.Basic).Name() == "rune" {
+						return valueWrap{value: wir.NewConst(strconv.Itoa(int(val)), g.tLib.compile(t))}
+					} else {
+						return valueWrap{value: wir.NewConst(strconv.Itoa(int(val)), g.tLib.compile(t))}
+					}
+
+				case types.Int64:
+					val, _ := constant.Int64Val(v.Value)
+					return valueWrap{value: wir.NewConst(strconv.Itoa(int(val)), g.tLib.compile(t))}
+
+				case types.Uint64:
+					val, _ := constant.Uint64Val(v.Value)
+					return valueWrap{value: wir.NewConst(strconv.Itoa(int(val)), g.tLib.compile(t))}
+
+				case types.Float32:
+					val, _ := constant.Float64Val(v.Value)
+					return valueWrap{value: wir.NewConst(strconv.FormatFloat(val, 'f', -1, 32), g.tLib.compile(t))}
+
+				case types.Float64:
+					val, _ := constant.Float64Val(v.Value)
+					return valueWrap{value: wir.NewConst(strconv.FormatFloat(val, 'f', -1, 64), g.tLib.compile(t))}
+
+				case types.String, types.UntypedString:
+					val := constant.StringVal(v.Value)
+					return valueWrap{value: wir.NewConst(val, g.tLib.compile(t))}
+
+				default:
+					logger.Fatalf("Todo:%T %v", t, t.Underlying().(*types.Basic).Kind())
+				}
 			}
 			logger.Fatalf("Todo:%T", t)
 
