@@ -142,7 +142,7 @@ func EmitCallClosure(c Value, params []Value) (insts []wat.Inst) {
 		insts = append(insts, p.EmitPushNoRetain()...)
 	}
 	closure := c.(*aClosure)
-	insts = append(insts, closure.ExtractByName("fn_index").EmitPushNoRetain()...)
+	insts = append(insts, closure.ExtractByName("fn_index").EmitPush()...)
 
 	insts = append(insts, closure.ExtractByName("d").EmitPush()...)
 	insts = append(insts, currentModule.FindGlobalByName("$wa.runtime.closure_data").EmitPop()...)

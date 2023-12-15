@@ -3,6 +3,10 @@
 // 凹语言, The Wa Programming Language.
 package main
 
-import "wa-lang.org/wa/internal/app"
+import (
+	"wa-lang.org/wa/internal/app"
+)
 
-func main() { app.Main() }
+func main() {
+	app.Main()
+}
