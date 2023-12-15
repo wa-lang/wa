@@ -1,0 +1,11 @@
+// 版权 @2023 life 作者。保留所有权利。
+
+import "js/canvas"
+
+func main {
+	println("你好，凹语言！")
+
+	c, _ := canvas.QueryCanvas("canvas")
+	ctx, _ := c.GetContext2D()
+	ctxCanvas = ctx
+}
