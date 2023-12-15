@@ -1,8 +1,10 @@
 # 版本日志
 
 - (dev)
+- v0.9.0 (2023-12-15) MVP
   - 增加胶水代码定义特性
-  - 增加 canvas 绘制 logo 例子
+  - 添加 js、js/cancas 标准库
+  - 增加 logo、mandelbrot、life、qrcode 等例子
   - 去掉 LLVM 后端支持, CPU 只支持 wasm 类型, 删除 Clang 和 Arduino 支持
   - 标准库增加 qrcode
   - 默认目标 OS 改为 js
