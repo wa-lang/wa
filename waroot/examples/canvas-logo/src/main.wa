@@ -1,0 +1,43 @@
+// 版权 @2023 logo 作者。保留所有权利。
+
+import "js/canvas"
+
+func main {
+	println("你好，凹语言！")
+
+	c, _ := canvas.QueryCanvas("canvas")
+	ctx, _ := c.GetContext2D()
+
+	ctx.SetFillStyle("green")
+	ctx.FillRect(50, 10, 300, 10)
+	ctx.FillText("https://wa-lang.org/", 150, 30)
+
+	drawWaLogo(ctx)
+}
+
+func drawWaLogo(ctx: canvas.Context2D) {
+	ctx.MoveTo(50, 50)
+	ctx.LineTo(150, 50)
+	ctx.LineTo(150, 150)
+	ctx.LineTo(250, 150)
+	ctx.LineTo(250, 50)
+	ctx.LineTo(350, 50)
+	ctx.LineTo(350, 350)
+	ctx.LineTo(50, 350)
+	ctx.LineTo(50, 50)
+
+	// O O
+	ctx.Rect(95, 95, 10, 10)
+	ctx.Rect(295, 95, 10, 10)
+
+	// W
+	ctx.MoveTo(200, 230)
+	ctx.LineTo(200-34, 230+34)
+	ctx.LineTo(200-34-34, 230+34-34)
+
+	ctx.MoveTo(200, 230)
+	ctx.LineTo(200+34, 230+34)
+	ctx.LineTo(200+34+34, 230+34-34)
+
+	ctx.Stroke()
+}
