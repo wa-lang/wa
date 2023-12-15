@@ -142,6 +142,7 @@ var stdPkgs = []string{
 	"image",           // ?
 	"image/color",     // ?
 	"io",              // API 部分
+	"js",              // ?
 	"math",            // API 部分
 	"math/big",        // API 部分
 	"math/bits",       // API 完整
