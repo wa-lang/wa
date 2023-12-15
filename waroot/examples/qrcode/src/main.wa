@@ -1,0 +1,41 @@
+// 版权 @2023 qrcode 作者。保留所有权利。
+
+import (
+	"encoding/qrcode"
+	"image"
+	"js/canvas"
+)
+
+func main {
+	println("你好，凹语言！")
+
+	c, _ := canvas.QueryCanvas("canvas")
+	ctx, _ := c.GetContext2D()
+
+	const size = 400
+	m := image.NewRGBA(size, size)
+	println(m.Width, m.Height)
+
+	qrImg, err := qrcode.Encode("https://wa-lang.org/", qrcode.L)
+	if err != nil {
+		println(err.Error())
+		return
+	}
+
+	for y := 0; y < size; y++ {
+		yy := y * qrImg.Size / size
+		for x := 0; x < size; x++ {
+			xx := x * qrImg.Size / size
+			if qrImg.Black(xx, yy) {
+				m.SetRGBA(x, y, 0xFFFFFFFF)
+			} else {
+				m.SetRGBA(x, y, 0xFF000000)
+			}
+		}
+	}
+
+	ctx.PutImageData(
+		raw(m.Pix), 0, 0, 0, 0,
+		f32(m.Width), f32(m.Height),
+	)
+}
