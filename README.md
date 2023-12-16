@@ -49,6 +49,7 @@ Instead of requiring complex toolchains to set up, you can simply go install it 
 ## WebGPU Demo
 
 - Play: [https://wa-lang.org/webgpu/](https://wa-lang.org/webgpu/)
+- Code: [https://github.com/wa-lang/webgpu](https://github.com/wa-lang/webgpu)
 
 ![](https://wa-lang.org/st0036-02.png)
 

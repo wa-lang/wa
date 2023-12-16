@@ -41,13 +41,14 @@
 ## NES小霸王游戏机模拟器
 
 - Play: [https://wa-lang.org/nes/](https://wa-lang.org/nes/)
-- Code: [https://github.com/wa-lang/nes](https://github.com/wa-lang/nes)
+- Code: [https://gitee.com/wa-lang/nes](https://gitee.com/wa-lang/nes)
 
 ![](https://wa-lang.org/st0036-01.png)
 
 ## WebGPU 模拟土星和小行星
 
 - Play: [https://wa-lang.org/webgpu/](https://wa-lang.org/webgpu/)
+- Code: [https://gitee.com/wa-lang/webgpu](https://gitee.com/wa-lang/webgpu)
 
 ![](https://wa-lang.org/st0036-02.png)
 
