@@ -39,6 +39,20 @@ Instead of requiring complex toolchains to set up, you can simply go install it 
 
 ![](https://wa-lang.org/st0018-03.jpg)
 
+## NES emulator
+
+- Play: [https://wa-lang.org/nes/](https://wa-lang.org/nes/)
+- Code: [https://github.com/wa-lang/nes](https://github.com/wa-lang/nes)
+
+![](https://wa-lang.org/st0036-01.png)
+
+## WebGPU Demo
+
+- Play: [https://wa-lang.org/webgpu/](https://wa-lang.org/webgpu/)
+
+![](https://wa-lang.org/st0036-02.png)
+
+
 ## Example: Print Wa
 
 Print rune and call function：
