@@ -41,7 +41,7 @@
 ## NES小霸王游戏机模拟器
 
 - Play: [https://wa-lang.org/nes/](https://wa-lang.org/nes/)
-- Code: [https://gitee.com/wa-lang/nes](https://gitee.com/wa-lang/nes)
+- Code: [https://gitee.com/wa-lang/nes-wa](https://gitee.com/wa-lang/nes-wa)
 
 ![](https://wa-lang.org/st0036-01.png)
 
