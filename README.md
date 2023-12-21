@@ -30,28 +30,28 @@ Instead of requiring complex toolchains to set up, you can simply go install it 
 
 [https://wa-lang.org/playground](https://wa-lang.org/playground)
 
-![](https://wa-lang.org/playground-01.png)
+![](docs/images/playground-01.png)
 
 ## Snake Game
 
 - Play: [https://wa-lang.org/wa/snake/](https://wa-lang.org/wa/snake/)
 - Code: [waroot/examples/snake/README-en.md](waroot/examples/snake/README-en.md)
 
-![](https://wa-lang.org/st0018-03.jpg)
+![](docs/images/snake-01.jpg)
 
 ## NES emulator
 
 - Play: [https://wa-lang.org/nes/](https://wa-lang.org/nes/)
 - Code: [https://github.com/wa-lang/nes](https://github.com/wa-lang/nes)
 
-![](https://wa-lang.org/st0036-01.png)
+![](docs/images/nes-01.png)
 
 ## WebGPU Demo
 
 - Play: [https://wa-lang.org/webgpu/](https://wa-lang.org/webgpu/)
 - Code: [https://github.com/wa-lang/webgpu](https://github.com/wa-lang/webgpu)
 
-![](https://wa-lang.org/st0036-02.png)
+![](docs/images/webgpu-01.png)
 
 
 ## Example: Print Wa

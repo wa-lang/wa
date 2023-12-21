@@ -28,14 +28,14 @@
 
 [https://wa-lang.org/playground](https://wa-lang.org/playground)
 
-![](https://wa-lang.org/playground-01.png)
+![](docs/images/playground-01.png)
 
 ## 贪吃蛇游戏
 
 - [https://wa-lang.org/wa/snake/](https://wa-lang.org/wa/snake/)
 - [https://wa-lang.org/smalltalk/st0018.html](https://wa-lang.org/smalltalk/st0018.html)
 
-![](https://wa-lang.org/st0018-03.jpg)
+![](docs/images/snake-01.jpg)
 
 
 ## NES小霸王游戏机模拟器
@@ -43,14 +43,14 @@
 - Play: [https://wa-lang.org/nes/](https://wa-lang.org/nes/)
 - Code: [https://gitee.com/wa-lang/nes-wa](https://gitee.com/wa-lang/nes-wa)
 
-![](https://wa-lang.org/st0036-01.png)
+![](docs/images/nes-01.png)
 
 ## WebGPU 模拟土星和小行星
 
 - Play: [https://wa-lang.org/webgpu/](https://wa-lang.org/webgpu/)
 - Code: [https://gitee.com/wa-lang/webgpu](https://gitee.com/wa-lang/webgpu)
 
-![](https://wa-lang.org/st0036-02.png)
+![](docs/images/webgpu-01.png)
 
 
 ## 例子: 凹语言
