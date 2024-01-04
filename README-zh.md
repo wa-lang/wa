@@ -151,11 +151,11 @@ $ cd waroot && wa run -target=wasi examples/prime
 
 |贡献者|贡献点|
 | --- | --- |
-|柴树杉| 35000|
-|丁尔男| 42500|
+|柴树杉| 50000|
+|丁尔男| 58500|
 |史斌  | 29000|
-|扈梦明| 14000|
-|赵普明| 17000|
+|扈梦明| 28000|
+|赵普明| 18000|
 |宋汝阳|  2000|
 |刘云峰|  1000|
 |王湘南|  1000|
@@ -163,5 +163,10 @@ $ cd waroot && wa run -target=wasi examples/prime
 |吴烜  |  3000|
 |刘斌  |  2500|
 |尹贻浩|  2000|
+|安博超 | 3000|
+|yuqiaoyu| 600|
+|qstesiro| 200|
+|small_broken_gong|100|
+|tk103331|100|
 
 贡献点变更记录见 [waroot/cplog](waroot/cplog) 目录。
