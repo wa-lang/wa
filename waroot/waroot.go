@@ -138,6 +138,7 @@ var stdPkgs = []string{
 	"encoding/base64", // API 完整
 	"encoding/binary", // API 部分
 	"encoding/hex",    // API 完整
+	"encoding/pem",    // ?
 	"encoding/qrcode", // ?
 	"debug",           // ?
 	"fmt",             // ?

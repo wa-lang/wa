@@ -1,0 +1,215 @@
+// 版权 @2024 凹语言 作者。保留所有权利。
+
+import (
+	"bytes"
+	"encoding/base64"
+	"io"
+)
+
+type Block struct {
+	Type:    string
+	Headers: []Header
+	Bytes:   []byte
+}
+
+type Header struct {
+	Key:   string
+	Value: string
+}
+
+func getLine(data: []byte) => (line, rest: []byte) {
+	i := bytes.Index(data, []byte{'\n'})
+	j: int
+	if i < 0 {
+		i = len(data)
+		j = i
+	} else {
+		j = i + 1
+		if i > 0 && data[i-1] == '\r' {
+			i--
+		}
+	}
+	return data[0:i], data[j:]
+}
+
+func removeWhitespace(data: []byte) => []byte {
+	result := make([]byte, len(data))
+	n := 0
+
+	for _, b := range data {
+		if b == ' ' || b == '\t' || b == '\r' || b == '\n' {
+			continue
+		}
+		result[n] = b
+		n++
+	}
+
+	return result[0:n]
+}
+
+global pemStart = []byte("\n-----BEGIN ")
+global pemEnd = []byte("\n-----END ")
+global pemEndOfLine = []byte("-----")
+
+func Decode(data: []byte) => (p: *Block, rest: []byte) {
+
+	rest = data
+	if bytes.HasPrefix(data, pemStart[1:]) {
+		rest = rest[len(pemStart)-1 : len(data)]
+	} else if i := bytes.Index(data, pemStart); i >= 0 {
+		rest = rest[i+len(pemStart) : len(data)]
+	} else {
+		return nil, data
+	}
+
+	typeLine, rest := getLine(rest)
+	if !bytes.HasSuffix(typeLine, pemEndOfLine) {
+		return decodeError(data, rest)
+	}
+	typeLine = typeLine[0 : len(typeLine)-len(pemEndOfLine)]
+
+	p = &Block{
+		Type: string(typeLine),
+	}
+
+	for {
+
+		if len(rest) == 0 {
+			return nil, data
+		}
+		line, next := getLine(rest)
+
+		i := bytes.Index(line, []byte{':'})
+		if i == -1 {
+			break
+		}
+
+		key, val := line[0:i], line[i+1:]
+		key = bytes.TrimSpace(key)
+		val = bytes.TrimSpace(val)
+		p.Headers = append(p.Headers, Header{string(key), string(val)})
+		rest = next
+	}
+
+	i := bytes.Index(rest, pemEnd)
+	if i < 0 {
+		return decodeError(data, rest)
+	}
+	base64Data := removeWhitespace(rest[0:i])
+
+	p.Bytes = make([]byte, base64.StdEncoding.DecodedLen(len(base64Data)))
+	n, err := base64.StdEncoding.Decode(p.Bytes, base64Data)
+	if err != nil {
+		return decodeError(data, rest)
+	}
+	p.Bytes = p.Bytes[0:n]
+
+	_, rest = getLine(rest[i+len(pemEnd):])
+
+	return
+}
+
+func decodeError(data, rest: []byte) => (*Block, []byte) {
+
+	p, rest := Decode(rest)
+	if p == nil {
+		rest = data
+	}
+	return p, rest
+}
+
+const pemLineLength = 64
+
+type lineBreaker struct {
+	line: [pemLineLength]byte
+	used: int
+	out:  io.Writer
+}
+
+func lineBreaker.Write(b: []byte) => (n: int, err: error) {
+	if this.used+len(b) < pemLineLength {
+		copy(this.line[this.used:], b)
+		this.used += len(b)
+		return len(b), nil
+	}
+
+	n, err = this.out.Write(this.line[0:this.used])
+	if err != nil {
+		return
+	}
+	excess := pemLineLength - this.used
+	this.used = 0
+
+	n, err = this.out.Write(b[0:excess])
+	if err != nil {
+		return
+	}
+
+	n, err = this.out.Write([]byte{'\n'})
+	if err != nil {
+		return
+	}
+
+	return this.Write(b[excess:])
+}
+
+func lineBreaker.Close() => (err: error) {
+	if this.used > 0 {
+		_, err = this.out.Write(this.line[0:this.used])
+		if err != nil {
+			return
+		}
+		_, err = this.out.Write([]byte{'\n'})
+	}
+
+	return
+}
+
+func Encode(out: io.Writer, b: *Block) => (err: error) {
+	_, err = out.Write(pemStart[1:])
+	if err != nil {
+		return
+	}
+	_, err = out.Write([]byte(b.Type + "-----\n"))
+	if err != nil {
+		return
+	}
+
+	if len(b.Headers) > 0 {
+		for _, kv := range b.Headers {
+			k, v := kv.Key, kv.Value
+			_, err = out.Write([]byte(k + ": " + v + "\n"))
+			if err != nil {
+				return
+			}
+		}
+		_, err = out.Write([]byte{'\n'})
+		if err != nil {
+			return
+		}
+	}
+
+	breaker: lineBreaker
+	breaker.out = out
+
+	b64 := base64.NewEncoder(base64.StdEncoding, &breaker)
+	_, err = b64.Write(b.Bytes)
+	if err != nil {
+		return
+	}
+	b64.Close()
+	breaker.Close()
+
+	_, err = out.Write(pemEnd[1:])
+	if err != nil {
+		return
+	}
+	_, err = out.Write([]byte(b.Type + "-----\n"))
+	return
+}
+
+func EncodeToMemory(b: *Block) => []byte {
+	buf: bytes.Buffer
+	Encode(&buf, b)
+	return buf.Bytes()
+}
