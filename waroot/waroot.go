@@ -135,6 +135,7 @@ var stdPkgs = []string{
 	"container/ring",  // ?
 	"errors",          // API 完整, 测试已覆盖
 	"encoding",        // API 完整
+	"encoding/base32", // ?
 	"encoding/base64", // API 完整
 	"encoding/binary", // API 部分
 	"encoding/hex",    // API 完整
