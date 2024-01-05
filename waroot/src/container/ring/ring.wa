@@ -1,0 +1,98 @@
+// 版权 @2024 凹语言 作者。保留所有权利。
+
+type Ring struct {
+	next, prev: *Ring
+	Value:      interface{}
+}
+
+func Ring.init => *Ring {
+	this.next = this
+	this.prev = this
+	return this
+}
+
+func Ring.Next => *Ring {
+	if this.next == nil {
+		return this.init()
+	}
+	return this.next
+}
+
+func Ring.Prev => *Ring {
+	if this.next == nil {
+		return this.init()
+	}
+	return this.prev
+}
+
+func Ring.Move(n: int) => *Ring {
+	if this.next == nil {
+		return this.init()
+	}
+	switch {
+	case n < 0:
+		for ; n < 0; n++ {
+			this = this.prev
+		}
+	case n > 0:
+		for ; n > 0; n-- {
+			this = this.next
+		}
+	}
+	return this
+}
+
+func New(n: int) => *Ring {
+	if n <= 0 {
+		return nil
+	}
+	r := new(Ring)
+	p := r
+	for i := 1; i < n; i++ {
+		p.next = &Ring{prev: p}
+		p = p.next
+	}
+	p.next = r
+	r.prev = p
+	return r
+}
+
+func Ring.Link(s: *Ring) => *Ring {
+	n := this.Next()
+	if s != nil {
+		p := s.Prev()
+
+		this.next = s
+		s.prev = this
+		n.prev = p
+		p.next = n
+	}
+	return n
+}
+
+func Ring.Unlink(n: int) => *Ring {
+	if n <= 0 {
+		return nil
+	}
+	return this.Link(this.Move(n + 1))
+}
+
+func Ring.Len => int {
+	n := 0
+	if this != nil {
+		n = 1
+		for p := this.Next(); p != this; p = p.next {
+			n++
+		}
+	}
+	return n
+}
+
+func Ring.Do(f: func(interface{})) {
+	if this != nil {
+		f(this.Value)
+		for p := this.Next(); p != this; p = p.next {
+			f(p.Value)
+		}
+	}
+}

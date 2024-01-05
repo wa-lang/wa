@@ -130,6 +130,9 @@ var stdPkgs = []string{
 	"bufio",           // API 完整
 	"bytes",           // API 完整
 	"compress/snappy", // ?
+	"container/heap",  // ?
+	"container/list",  // ?
+	"container/ring",  // ?
 	"errors",          // API 完整, 测试已覆盖
 	"encoding",        // API 完整
 	"encoding/base64", // API 完整
