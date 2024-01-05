@@ -142,7 +142,9 @@ var stdPkgs = []string{
 	"debug",           // ?
 	"fmt",             // ?
 	"hash",            // API 完整
+	"hash/adler32",    // ?
 	"hash/crc32",      // API 完整
+	"hash/fnv",        // ?
 	"image",           // ?
 	"image/color",     // ?
 	"io",              // API 部分
