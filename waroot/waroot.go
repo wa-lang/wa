@@ -133,6 +133,7 @@ var stdPkgs = []string{
 	"container/heap",  // ?
 	"container/list",  // ?
 	"container/ring",  // ?
+	"crypto/md5",      // ?, 测试失败, Skip
 	"errors",          // API 完整, 测试已覆盖
 	"encoding",        // API 完整
 	"encoding/base32", // ?
