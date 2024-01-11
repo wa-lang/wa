@@ -13,7 +13,6 @@
 // treated like an ordinary parameter list and thus may contain multiple
 // entries where the spec permits exactly one. Consequently, the corresponding
 // field in the AST (ast.FuncDecl.Recv) field is not restricted to one entry.
-//
 package parser
 
 import (
@@ -181,7 +180,6 @@ var unresolved = new(ast.Object)
 // the object it denotes. If no object is found and collectUnresolved is
 // set, x is marked as unresolved and collected in the list of unresolved
 // identifiers.
-//
 func (p *parser) tryResolve(x ast.Expr, collectUnresolved bool) {
 	// nothing to do if x is not an identifier or the blank identifier
 	ident, _ := x.(*ast.Ident)
@@ -288,7 +286,6 @@ func (p *parser) consumeComment() (comment *ast.Comment, endline int) {
 // comments list, and return it together with the line at which
 // the last comment in the group ends. A non-comment token or n
 // empty lines terminate a comment group.
-//
 func (p *parser) consumeCommentGroup(n int) (comments *ast.CommentGroup, endline int) {
 	var list []*ast.Comment
 	endline = p.file.Line(p.pos)
@@ -319,7 +316,6 @@ func (p *parser) consumeCommentGroup(n int) (comments *ast.CommentGroup, endline
 //
 // Lead and line comments may be considered documentation that is
 // stored in the AST.
-//
 func (p *parser) next() {
 	p.leadComment = nil
 	p.lineComment = nil
@@ -406,7 +402,6 @@ func (p *parser) expect(tok token.Token) token.Pos {
 
 // expectClosing is like expect but provides a better error message
 // for the common case of a missing comma before a newline.
-//
 func (p *parser) expectClosing(tok token.Token, context string) token.Pos {
 	if p.tok != tok && p.tok == token.SEMICOLON && p.lit == "\n" {
 		p.error(p.pos, "missing ',' before newline in "+context)
@@ -521,7 +516,6 @@ var exprEnd = map[token.Token]bool{
 // token positions are invalid due to parse errors, the resulting end position
 // may be past the file's EOF position, which would lead to panics if used
 // later on.
-//
 func (p *parser) safePos(pos token.Pos) (res token.Pos) {
 	defer func() {
 		if recover() != nil {
@@ -1071,8 +1065,18 @@ func (p *parser) parseMapType() *ast.MapType {
 	pos := p.expect(token.MAP)
 	p.expect(token.LBRACK)
 	key := p.parseType()
-	p.expect(token.RBRACK)
-	value := p.parseType()
+
+	var value ast.Expr
+	if p.tok == token.COMMA {
+		// map[KeyType, ValueType]
+		p.expect(token.COMMA)
+		value = p.parseType()
+		p.expect(token.RBRACK)
+	} else {
+		// map[KeyType]ValueType
+		p.expect(token.RBRACK)
+		value = p.parseType()
+	}
 
 	return &ast.MapType{Map: pos, Key: key, Value: value}
 }
@@ -1184,7 +1188,6 @@ func (p *parser) parseFuncTypeOrLit() ast.Expr {
 // parseOperand may return an expression or a raw type (incl. array
 // types of the form [...]T. Callers must verify the result.
 // If lhs is set and the result is an identifier, it is not resolved.
-//
 func (p *parser) parseOperand(lhs bool) ast.Expr {
 	if p.trace {
 		defer un(trace(p, "Operand"))
@@ -1500,7 +1503,6 @@ func unparen(x ast.Expr) ast.Expr {
 
 // checkExprOrType checks that x is an expression or a type
 // (and not a raw type such as [...]T).
-//
 func (p *parser) checkExprOrType(x ast.Expr) ast.Expr {
 	switch t := unparen(x).(type) {
 	case *ast.ParenExpr:
