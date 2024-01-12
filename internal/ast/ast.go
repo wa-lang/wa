@@ -790,7 +790,6 @@ type (
 		Name       *Ident        // type name
 		TypeParams *FieldList    // type parameters; or nil
 		ColonPos   token.Pos     // position of ":" operator (token.NoPos if there is no ":")
-		Assign     token.Pos     // position of '=', if any
 		Type       Expr          // *Ident, *ParenExpr, *SelectorExpr, *StarExpr, or any of the *XxxTypes
 		Comment    *CommentGroup // line comments; or nil
 	}

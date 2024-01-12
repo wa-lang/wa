@@ -2443,9 +2443,6 @@ func (p *parser) parseTypeSpec(doc *ast.CommentGroup, _ token.Token, _ int) ast.
 	if p.tok == token.COLON {
 		spec.ColonPos = p.pos
 		p.next()
-	} else if p.tok == token.ASSIGN {
-		spec.Assign = p.pos
-		p.next()
 	}
 	spec.Type = p.parseType()
 	p.expectSemi() // call before accessing p.linecomment

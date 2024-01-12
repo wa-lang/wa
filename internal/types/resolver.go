@@ -404,7 +404,7 @@ func (check *Checker) collectObjects() {
 					case *ast.TypeSpec:
 						obj := NewTypeName(s.Name.Pos(), pkg, s.Name.Name, nil)
 						obj.setNode(s)
-						check.declarePkgObj(s.Name, obj, &declInfo{file: fileScope, typ: s.Type, alias: s.Assign.IsValid()})
+						check.declarePkgObj(s.Name, obj, &declInfo{file: fileScope, typ: s.Type, alias: false})
 
 						if s.Doc == nil {
 							if d.Lparen == token.NoPos && d.Doc != nil {

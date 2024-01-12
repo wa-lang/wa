@@ -39,7 +39,8 @@ func (check *Checker) declare(scope *Scope, id *ast.Ident, obj Object, pos token
 
 // pathString returns a string of the form a->b-> ... ->g for a path [a, b, ... g].
 // TODO(gri) remove once we don't need the old cycle detection (explicitly passed
-//           []*TypeName path) anymore
+//
+//	[]*TypeName path) anymore
 func pathString(path []*TypeName) string {
 	var s string
 	for i, p := range path {
@@ -682,7 +683,7 @@ func (check *Checker) declStmt(decl ast.Decl) {
 				check.declare(check.scope, s.Name, obj, scopePos)
 				// mark and unmark type before calling typeDecl; its type is still nil (see Checker.objDecl)
 				obj.setColor(grey + color(check.push(obj)))
-				check.typeDecl(obj, s.Type, nil, s.Assign.IsValid())
+				check.typeDecl(obj, s.Type, nil, false)
 				check.pop().setColor(black)
 			default:
 				check.invalidAST(s.Pos(), "const, type, or var declaration expected")

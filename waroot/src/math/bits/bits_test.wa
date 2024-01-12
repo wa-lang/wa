@@ -5,7 +5,7 @@
 
 const DeBruijn64 = deBruijn64
 
-type entry = struct {
+type entry struct {
 	nlz, ntz, pop: int
 }
 
