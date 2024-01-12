@@ -1,6 +1,6 @@
 // 版权 @2021 凹语言 作者。保留所有权利。
 
-type T1 struct {
+type T1 :struct {
 	a: i32
 	b: string
 }
@@ -9,11 +9,11 @@ func T1.print {
 	println("a: ", this.a)
 }
 
-type I interface {
+type I :interface {
 	print()
 }
 
-type T2 struct {
+type T2 :struct {
 	a: []i32
 }
 

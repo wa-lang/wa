@@ -35,7 +35,7 @@ const (
 )
 
 // Table is a 256-word table representing the polynomial for efficient processing.
-type Table [256]uint32
+type Table :[256]uint32
 
 // This file makes use of functions implemented in architecture-specific files.
 // The interface that they implement is as follows:
@@ -148,7 +148,7 @@ func MakeTable(poly: uint32) => *Table {
 }
 
 // digest represents the partial evaluation of a checksum.
-type digest struct {
+type digest :struct {
 	crc: uint32
 	tab: *Table
 }

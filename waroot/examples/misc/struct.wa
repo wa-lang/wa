@@ -10,11 +10,11 @@ func main {
 	println(j.b)
 }
 
-type sp struct {
+type sp :struct {
 	a: *i32
 }
 
-type sc struct {
+type sc :struct {
 	b: i32
 	sp
 }

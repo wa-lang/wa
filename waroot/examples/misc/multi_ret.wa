@@ -14,6 +14,6 @@ func Swap(i, j: ST) => (ST, ST) {
 	return j, i
 }
 
-type ST struct {
+type ST :struct {
 	i, j: i32
 }

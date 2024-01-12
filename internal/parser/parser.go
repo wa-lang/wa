@@ -847,7 +847,7 @@ func (p *parser) parseParameterList(scope *ast.Scope, ellipsisOk bool) (params [
 			colonPos = p.pos
 			p.next()
 		} else {
-			if p.tok != token.RPAREN {
+			if p.tok != token.RPAREN && p.tok != token.RBRACK {
 				p.expect(token.COLON)
 			}
 		}
@@ -941,6 +941,33 @@ func (p *parser) parseResult(scope *ast.Scope) *ast.FieldList {
 	return nil
 }
 
+func (p *parser) parseTypeParams(scope *ast.Scope) (tparams *ast.FieldList) {
+	if p.trace {
+		defer un(trace(p, "TypeParams"))
+	}
+
+	// 数组和切片歧义, 必须加 ':' 分隔
+	// type byteReplacer :[256]byte
+	// type byteReplacer :[]byte
+
+	if p.tok != token.LBRACK {
+		return nil
+	}
+
+	lparen := p.expect(token.LBRACK)
+
+	if p.tok == token.RBRACK {
+		p.next()
+		return nil
+	}
+
+	params := p.parseParameterList(scope, false)
+	rparen := p.expect(token.RBRACK)
+
+	tparams = &ast.FieldList{Opening: lparen, List: params, Closing: rparen}
+	return
+}
+
 func (p *parser) parseSignature(scope *ast.Scope) (params, results *ast.FieldList, arrowPos token.Pos) {
 	if p.trace {
 		defer un(trace(p, "Signature"))
@@ -986,13 +1013,16 @@ func (p *parser) parseFuncType() (*ast.FuncType, *ast.Scope) {
 
 	pos := p.expect(token.FUNC)
 	scope := ast.NewScope(p.topScope) // function scope
+
+	tparams := p.parseTypeParams(scope)
 	params, results, arrowPos := p.parseSignature(scope)
 
 	return &ast.FuncType{
-		Func:     pos,
-		Params:   params,
-		ArrowPos: arrowPos,
-		Results:  results,
+		Func:       pos,
+		TypeParams: tparams,
+		Params:     params,
+		ArrowPos:   arrowPos,
+		Results:    results,
 	}, scope
 }
 
@@ -2439,12 +2469,20 @@ func (p *parser) parseTypeSpec(doc *ast.CommentGroup, _ token.Token, _ int) ast.
 	// containing block.
 	// (Global identifiers are resolved in a separate phase after parsing.)
 	spec := &ast.TypeSpec{Doc: doc, Name: ident}
+	spec.TypeParams = p.parseTypeParams(p.topScope)
 	p.declare(spec, nil, p.topScope, ast.Typ, ident)
 	if p.tok == token.COLON {
 		spec.ColonPos = p.pos
 		p.next()
 	}
 	spec.Type = p.parseType()
+
+	if _, ok := spec.Type.(*ast.StructType); !ok {
+		if spec.TypeParams != nil {
+			p.error(spec.TypeParams.Opening, "type params only support struct type")
+		}
+	}
+
 	p.expectSemi() // call before accessing p.linecomment
 	spec.Comment = p.lineComment
 
@@ -2523,6 +2561,7 @@ func (p *parser) parseFuncDecl() *ast.FuncDecl {
 		}
 	}
 
+	tparams := p.parseTypeParams(scope)
 	params, results, arrowPos := p.parseSignature(scope)
 
 	var body *ast.BlockStmt
@@ -2536,10 +2575,11 @@ func (p *parser) parseFuncDecl() *ast.FuncDecl {
 		Recv: recv,
 		Name: ident,
 		Type: &ast.FuncType{
-			Func:     pos,
-			Params:   params,
-			ArrowPos: arrowPos,
-			Results:  results,
+			Func:       pos,
+			TypeParams: tparams,
+			Params:     params,
+			ArrowPos:   arrowPos,
+			Results:    results,
 		},
 		Body: body,
 	}

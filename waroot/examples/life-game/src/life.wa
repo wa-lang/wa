@@ -40,7 +40,7 @@ func LifeInit(w, h, s: int) {
 	}
 }
 
-type DIR struct {
+type DIR :struct {
 	x: int
 	y: int
 }

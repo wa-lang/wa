@@ -6,7 +6,7 @@
 
 import "strconv" => __yystrconv__
 
-type exprSymType struct {
+type exprSymType :struct {
 	yys: int
 	num: int
 }
@@ -35,12 +35,12 @@ const exprInitialStackSize = 16
 // Lex 结束标志
 const eof = 0
 
-type exprToken struct {
+type exprToken :struct {
 	Kind:  int
 	Value: int
 }
 
-type exprLexer struct {
+type exprLexer :struct {
 	tokens: []exprToken
 	pos:    int
 }
@@ -143,7 +143,7 @@ global exprTok3 = [...]int{
 	0,
 }
 
-type exprErrorMessageInfo struct {
+type exprErrorMessageInfo :struct {
 	state: int
 	token: int
 	msg:   string
@@ -158,7 +158,7 @@ global (
 	exprErrorVerbose = false
 )
 
-type exprParser struct {
+type exprParser :struct {
 	lval:  exprSymType
 	stack: [exprInitialStackSize]exprSymType
 	char:  int

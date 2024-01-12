@@ -47,7 +47,7 @@ func simpleUpdate(crc: uint32, tab: *Table, p: []byte) => uint32 {
 const slicing8Cutoff = 16
 
 // slicing8Table is array of 8 Tables, used by the slicing-by-8 algorithm.
-type slicing8Table [8]Table
+type slicing8Table :[8]Table
 
 // slicingMakeTable constructs a slicing8Table for the specified polynomial. The
 // table is suitable for use with the slicing-by-8 algorithm (slicingUpdate).

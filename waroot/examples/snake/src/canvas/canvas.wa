@@ -17,11 +17,11 @@ buf为帧缓存指针
 func updateCanvas_JS(id: u32, buf: *u32)
 
 //画布事件回调函数原型
-type OnTouch func(x, y: u32)
-type OnKey func(key: u32)
+type OnTouch :func(x, y: u32)
+type OnKey :func(key: u32)
 
 //画布对象
-type Canvas struct {
+type Canvas :struct {
 	device_id: u32   //画布对象对应的网页DOM对象id
 	width:     u32   //画布宽度，以像素为单位
 	height:    u32   //画布高度，以像素为单位
@@ -29,7 +29,7 @@ type Canvas struct {
 }
 
 //画布事件
-type CanvasEvents struct {
+type CanvasEvents :struct {
 	Device_id:   u32     //画布设备ID
 	OnMouseDown: OnTouch //鼠标按下时的回调处理函数
 	OnMouseUp:   OnTouch //鼠标松开时的回调处理函数

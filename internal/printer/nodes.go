@@ -1571,6 +1571,7 @@ func (p *printer) spec(spec ast.Spec, n int, doIndent bool) {
 		} else {
 			p.print(vtab)
 		}
+		p.print(token.COLON)
 		p.expr(s.Type)
 		p.setComment(s.Comment)
 

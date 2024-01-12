@@ -4,7 +4,7 @@ import (
 	"pkg/mypkg"
 )
 
-type ST struct {
+type ST :struct {
 	A: string
 	B: i32
 }

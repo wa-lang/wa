@@ -380,7 +380,7 @@ func Fields(s: string) => []string {
 func FieldsFunc(s: string, f: func(rune) => bool) => []string {
 	// A span is used to record a slice of s of the form s[start:end].
 	// The start index is inclusive and the end index is exclusive.
-	type span struct {
+	type span :struct {
 		start: int
 		end:   int
 	}
@@ -859,7 +859,7 @@ func lastIndexFunc(s: string, f: func(rune) => bool, truth: bool) => int {
 // ensuring that any non-ASCII character will be reported as not in the set.
 // This allocates a total of 32 bytes even though the upper half
 // is unused to avoid bounds checks in asciiSet.contains.
-type asciiSet [8]uint32
+type asciiSet :[8]uint32
 
 // makeASCIISet creates a set of ASCII characters and reports whether all
 // characters in chars are ASCII.

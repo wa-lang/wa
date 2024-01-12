@@ -17,7 +17,7 @@ func Canvas_OnKeyUp(id, key: u32) {
 	canvas.OnKeyUp(id, key)
 }
 
-type Position struct {
+type Position :struct {
 	x, y: i32
 }
 
@@ -41,7 +41,7 @@ const (
 
 global Dirs: [5]Position
 
-type GameState struct {
+type GameState :struct {
 	w, h:  i32
 	scale: i32
 	grid:  []u8

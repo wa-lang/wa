@@ -4,13 +4,13 @@ import "io"
 
 // Replacer replaces a list of strings with replacements.
 // It is safe for concurrent use by multiple goroutines.
-type Replacer struct {
+type Replacer :struct {
 	r:      replacer
 	oldnew: []string
 }
 
 // replacer is the interface that a replacement algorithm needs to implement.
-type replacer interface {
+type replacer :interface {
 	Replace(s: string) => string
 	WriteString(w: io.Writer, s: string) => (n: int, err: error)
 }
@@ -117,7 +117,7 @@ func Replacer.WriteString(w: io.Writer, s: string) => (n: int, err: error) {
 // n2 and n3; n4's child is n5; n6's child is n7. Nodes n0, n1 and n4 (marked
 // with a trailing "-") are partial keys, and nodes n2, n3, n5, n6 and n7
 // (marked with a trailing "+") are complete keys.
-type trieNode struct {
+type trieNode :struct {
 	// value is the value of the trie node's key/value pair. It is empty if
 	// this node is not a complete key.
 	value: string
@@ -255,7 +255,7 @@ func genericReplacer.lookup(s: string, ignoreRoot: bool) => (val: string, keylen
 
 // genericReplacer is the fully generic algorithm.
 // It's used as a fallback when nothing faster can be used.
-type genericReplacer struct {
+type genericReplacer :struct {
 	root: trieNode
 	// tableSize is the size of a trie node's lookup table. It is the number
 	// of unique key bytes.
@@ -296,7 +296,7 @@ func makeGenericReplacer(oldnew: []string) => *genericReplacer {
 	return r
 }
 
-type appendSliceWriter []byte
+type appendSliceWriter :[]byte
 
 // Write writes to the buffer to satisfy io.Writer.
 func appendSliceWriter.Write(p: []byte) => (int, error) {
@@ -310,7 +310,7 @@ func appendSliceWriter.WriteString(s: string) => (int, error) {
 	return len(s), nil
 }
 
-type stringWriter struct {
+type stringWriter :struct {
 	w: io.Writer
 }
 
@@ -377,7 +377,7 @@ func genericReplacer.WriteString(w: io.Writer, s: string) => (n: int, err: error
 
 // singleStringReplacer is the implementation that's used when there is only
 // one string to replace (and that string has more than one byte).
-type singleStringReplacer struct {
+type singleStringReplacer :struct {
 	finder: *stringFinder
 	// value is the new string that replaces that pattern when it's found.
 	value: string
@@ -438,7 +438,7 @@ func singleStringReplacer.WriteString(w: io.Writer, s: string) => (n: int, err: 
 // byteReplacer is the implementation that's used when all the "old"
 // and "new" values are single ASCII bytes.
 // The array contains replacement bytes indexed by old byte.
-type byteReplacer [256]byte
+type byteReplacer :[256]byte
 
 func byteReplacer.Replace(s: string) => string {
 	r := this
@@ -493,7 +493,7 @@ func byteReplacer.WriteString(w: io.Writer, s: string) => (n: int, err: error) {
 
 // byteStringReplacer is the implementation that's used when all the
 // "old" values are single ASCII bytes but the "new" values vary in size.
-type byteStringReplacer struct {
+type byteStringReplacer :struct {
 	// replacements contains replacement byte slices indexed by old byte.
 	// A nil []byte means that the old byte should not be replaced.
 	replacements: [256][]byte

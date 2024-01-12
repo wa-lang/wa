@@ -7,7 +7,7 @@ func main {
 	vm.Run()
 }
 
-type BrainFuck struct {
+type BrainFuck :struct {
 	mem:  [30000]byte
 	code: string
 	pos:  int

@@ -146,7 +146,7 @@ func test_array(a: int, b: int) {
 	println("arr[", b, "][", a, "] = ", arr[b][a])
 }
 
-type t0 struct {
+type t0 :struct {
 	a: i64
 	b: i32
 	c: [4]f64
@@ -181,7 +181,7 @@ func test_struct1(a: int, b: int, c: int) {
 	}
 }
 
-type struct_t0 struct {
+type struct_t0 :struct {
 	arr0: [16]int
 	arr1: [16]f32
 }
@@ -234,7 +234,7 @@ func test_struct4 {
 	}
 }
 
-type fff32 f32
+type fff32 :f32
 
 global arr0: [32]fff32
 global arr1: [32]fff32
@@ -359,7 +359,7 @@ func test_global_consts() {
 	}
 }
 
-type ty0 struct {
+type ty0 :struct {
 	v0: int
 	v1: f64
 }
