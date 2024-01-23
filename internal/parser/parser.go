@@ -22,6 +22,7 @@ import (
 	"unicode"
 
 	"wa-lang.org/wa/internal/ast"
+	"wa-lang.org/wa/internal/ast/typeparams"
 	"wa-lang.org/wa/internal/scanner"
 	"wa-lang.org/wa/internal/token"
 )
@@ -1115,7 +1116,11 @@ func (p *parser) parseMapType() *ast.MapType {
 func (p *parser) tryIdentOrType() ast.Expr {
 	switch p.tok {
 	case token.IDENT:
-		return p.parseTypeName()
+		typ := p.parseTypeName()
+		if p.tok == token.LBRACK {
+			typ = p.parseTypeInstance(typ)
+		}
+		return typ
 	case token.LBRACK:
 		return p.parseArrayType()
 	case token.STRUCT:
@@ -1147,6 +1152,38 @@ func (p *parser) tryType() ast.Expr {
 		p.resolve(typ)
 	}
 	return typ
+}
+
+func (p *parser) parseTypeInstance(typ ast.Expr) ast.Expr {
+	if p.trace {
+		defer un(trace(p, "TypeInstance"))
+	}
+
+	opening := p.expect(token.LBRACK)
+	p.exprLev++
+	var list []ast.Expr
+	for p.tok != token.RBRACK && p.tok != token.EOF {
+		list = append(list, p.parseType())
+		if !p.atComma("type argument list", token.RBRACK) {
+			break
+		}
+		p.next()
+	}
+	p.exprLev--
+
+	closing := p.expectClosing(token.RBRACK, "type argument list")
+
+	if len(list) == 0 {
+		p.errorExpected(closing, "type argument list")
+		return &ast.IndexExpr{
+			X:      typ,
+			Lbrack: opening,
+			Index:  &ast.BadExpr{From: opening + 1, To: closing},
+			Rbrack: closing,
+		}
+	}
+
+	return typeparams.PackIndexExpr(typ, opening, list, closing)
 }
 
 // ----------------------------------------------------------------------------
@@ -1291,28 +1328,59 @@ func (p *parser) parseTypeAssertion(x ast.Expr) ast.Expr {
 	return &ast.TypeAssertExpr{X: x, Type: typ, Lparen: lparen, Rparen: rparen}
 }
 
-func (p *parser) parseIndexOrSlice(x ast.Expr) ast.Expr {
+func (p *parser) parseIndexOrSliceOrInstance(x ast.Expr) ast.Expr {
 	if p.trace {
-		defer un(trace(p, "IndexOrSlice"))
+		defer un(trace(p, "parseIndexOrSliceOrInstance"))
 	}
 
-	const N = 3 // change the 3 to 2 to disable 3-index slices
 	lbrack := p.expect(token.LBRACK)
+	if p.tok == token.RBRACK {
+		// empty index, slice or index expressions are not permitted;
+		// accept them for parsing tolerance, but complain
+		p.errorExpected(p.pos, "operand")
+		rbrack := p.pos
+		p.next()
+		return &ast.IndexExpr{
+			X:      x,
+			Lbrack: lbrack,
+			Index:  &ast.BadExpr{From: rbrack, To: rbrack},
+			Rbrack: rbrack,
+		}
+	}
 	p.exprLev++
+
+	const N = 3 // change the 3 to 2 to disable 3-index slices
+	var args []ast.Expr
 	var index [N]ast.Expr
 	var colons [N - 1]token.Pos
 	if p.tok != token.COLON {
-		index[0] = p.parseRhs()
+		// We can't know if we have an index expression or a type instantiation;
+		// so even if we see a (named) type we are not going to be in type context.
+		index[0] = p.parseRhsOrType()
 	}
 	ncolons := 0
-	for p.tok == token.COLON && ncolons < len(colons) {
-		colons[ncolons] = p.pos
-		ncolons++
-		p.next()
-		if p.tok != token.COLON && p.tok != token.RBRACK && p.tok != token.EOF {
-			index[ncolons] = p.parseRhs()
+	switch p.tok {
+	case token.COLON:
+		// slice expression
+		for p.tok == token.COLON && ncolons < len(colons) {
+			colons[ncolons] = p.pos
+			ncolons++
+			p.next()
+			if p.tok != token.COLON && p.tok != token.RBRACK && p.tok != token.EOF {
+				index[ncolons] = p.parseRhs()
+			}
+		}
+	case token.COMMA:
+		// instance expression
+		args = append(args, index[0])
+		for p.tok == token.COMMA {
+			p.next()
+			if p.tok != token.RBRACK && p.tok != token.EOF {
+				args = append(args, p.parseType())
+			}
 		}
 	}
+
 	p.exprLev--
 	rbrack := p.expect(token.RBRACK)
 
@@ -1335,7 +1403,13 @@ func (p *parser) parseIndexOrSlice(x ast.Expr) ast.Expr {
 		return &ast.SliceExpr{X: x, Lbrack: lbrack, Low: index[0], High: index[1], Max: index[2], Slice3: slice3, Rbrack: rbrack}
 	}
 
-	return &ast.IndexExpr{X: x, Lbrack: lbrack, Index: index[0], Rbrack: rbrack}
+	if len(args) == 0 {
+		// index expression
+		return &ast.IndexExpr{X: x, Lbrack: lbrack, Index: index[0], Rbrack: rbrack}
+	}
+
+	// instance expression
+	return typeparams.PackIndexExpr(x, lbrack, args, rbrack)
 }
 
 func (p *parser) parseCallOrConversion(fun ast.Expr) *ast.CallExpr {
@@ -1580,7 +1654,7 @@ L:
 			if lhs {
 				p.resolve(x)
 			}
-			x = p.parseIndexOrSlice(p.checkExpr(x))
+			x = p.parseIndexOrSliceOrInstance(p.checkExpr(x))
 		case token.LPAREN:
 			if lhs {
 				p.resolve(x)
