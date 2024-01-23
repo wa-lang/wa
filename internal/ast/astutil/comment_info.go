@@ -23,6 +23,8 @@ type CommentInfo struct {
 	RuntimeSetter bool      // #wa:runtime_setter
 	RuntimeSizer  bool      // #wa:runtime_sizer
 	WasmModule    string    // #wa:wasm-module xxx
+	Generic       string    // #wa:generic XXX[Type,...]
+	Operator      string    // #wa:operator +
 }
 
 // 获取节点关联文档
@@ -93,6 +95,11 @@ func ParseCommentInfo(docList ...*ast.CommentGroup) (info CommentInfo) {
 				if len(parts) >= 2 {
 					info.WasmModule = parts[1]
 				}
+
+			case "#wa:generic":
+				info.Generic = strings.Join(parts[1:], " ")
+			case "#wa:operator":
+				info.Operator = strings.Join(parts[1:], " ")
 			}
 		}
 	}
