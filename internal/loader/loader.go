@@ -181,6 +181,9 @@ func (p *_Loader) Import(pkgpath string) (*types.Package, error) {
 	if pkgpath == "unsafe" {
 		pkg.Pkg = types.Unsafe
 		pkg.Info = &types.Info{
+			GenericTypes: make(map[ast.Expr]types.TypeAndValue),
+			GenericDefs:  make(map[*ast.Ident]types.Object),
+
 			Types:      make(map[ast.Expr]types.TypeAndValue),
 			Defs:       make(map[*ast.Ident]types.Object),
 			Uses:       make(map[*ast.Ident]types.Object),
@@ -262,6 +265,9 @@ func (p *_Loader) Import(pkgpath string) (*types.Package, error) {
 	}
 
 	pkg.Info = &types.Info{
+		GenericTypes: make(map[ast.Expr]types.TypeAndValue),
+		GenericDefs:  make(map[*ast.Ident]types.Object),
+
 		Types:      make(map[ast.Expr]types.TypeAndValue),
 		Defs:       make(map[*ast.Ident]types.Object),
 		Uses:       make(map[*ast.Ident]types.Object),

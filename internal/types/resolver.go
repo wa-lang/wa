@@ -427,12 +427,21 @@ func (check *Checker) collectObjects() {
 						// don't declare init functions in the package scope - they are invisible
 						obj.parent = pkg.scope
 						check.recordDef(d.Name, obj)
+						// init 函数不支持泛型
+						if d.Type.TypeParams != nil {
+							check.softErrorf(obj.pos, "init must have no type parameters")
+						}
 						// init functions must have a body
 						if d.Body == nil {
 							check.softErrorf(obj.pos, "missing function body")
 						}
 					} else {
-						check.declare(pkg.scope, d.Name, obj, token.NoPos)
+						if d.Type.TypeParams != nil {
+							check.declareGenericFunc(pkg.scope, d.Name, obj, token.NoPos)
+							continue
+						} else {
+							check.declare(pkg.scope, d.Name, obj, token.NoPos)
+						}
 					}
 				} else {
 					// method

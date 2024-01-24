@@ -23,7 +23,6 @@
 // Use Info.Types[expr].Type for the results of type inference.
 //
 // For a tutorial, see https://golang.org/s/types-tutorial.
-//
 package types
 
 import (
@@ -137,6 +136,11 @@ type Config struct {
 // If the package has type errors, the collected information may
 // be incomplete.
 type Info struct {
+	// 泛型类型
+	GenericTypes map[ast.Expr]TypeAndValue
+	// 泛型函数
+	GenericDefs map[*ast.Ident]Object
+
 	// Types maps expressions to their types, and for constant
 	// expressions, also their values. Invalid expressions are
 	// omitted.
@@ -224,7 +228,6 @@ type Info struct {
 
 // TypeOf returns the type of expression e, or nil if not found.
 // Precondition: the Types, Uses and Defs maps are populated.
-//
 func (info *Info) TypeOf(e ast.Expr) Type {
 	if t, ok := info.Types[e]; ok {
 		return t.Type
@@ -244,7 +247,6 @@ func (info *Info) TypeOf(e ast.Expr) Type {
 // it defines, not the type (*TypeName) it uses.
 //
 // Precondition: the Uses and Defs maps are populated.
-//
 func (info *Info) ObjectOf(id *ast.Ident) Object {
 	if obj := info.Defs[id]; obj != nil {
 		return obj
