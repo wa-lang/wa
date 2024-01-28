@@ -138,8 +138,10 @@ type Config struct {
 type Info struct {
 	// 泛型类型
 	GenericTypes map[ast.Expr]TypeAndValue
-	// 泛型函数
+	// 泛型函数定义
 	GenericDefs map[*ast.Ident]Object
+	// 泛型函数使用
+	GenericUses map[*ast.Ident]Object
 
 	// Types maps expressions to their types, and for constant
 	// expressions, also their values. Invalid expressions are

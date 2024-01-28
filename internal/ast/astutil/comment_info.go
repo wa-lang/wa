@@ -15,7 +15,7 @@ type CommentInfo struct {
 
 	Inline        bool      // #wa:inline
 	Nobounds      bool      // #wa:nobounds
-	LinkName      string    // #wa:linkname xxx
+	LinkName      string    // #wa:linkname xxx yyy // 泛型函数可能是多个
 	ExportName    string    // #wa:export xxx
 	ImportName    [2]string // #wa:import xxx yyy
 	ForceRegister bool      // #wa:force_register
@@ -23,7 +23,6 @@ type CommentInfo struct {
 	RuntimeSetter bool      // #wa:runtime_setter
 	RuntimeSizer  bool      // #wa:runtime_sizer
 	WasmModule    string    // #wa:wasm-module xxx
-	Generic       string    // #wa:generic XXX[Type,...]
 	Operator      string    // #wa:operator +
 }
 
@@ -71,7 +70,7 @@ func ParseCommentInfo(docList ...*ast.CommentGroup) (info CommentInfo) {
 				info.Nobounds = true
 			case "#wa:linkname", "//wa:linkname":
 				if len(parts) >= 2 {
-					info.LinkName = parts[1]
+					info.LinkName = strings.Join(parts[1:], " ")
 				}
 			case "#wa:export", "//wa:export":
 				if len(parts) >= 2 {
@@ -96,8 +95,6 @@ func ParseCommentInfo(docList ...*ast.CommentGroup) (info CommentInfo) {
 					info.WasmModule = parts[1]
 				}
 
-			case "#wa:generic":
-				info.Generic = strings.Join(parts[1:], " ")
 			case "#wa:operator":
 				info.Operator = strings.Join(parts[1:], " ")
 			}
