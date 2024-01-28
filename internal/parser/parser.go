@@ -2635,7 +2635,12 @@ func (p *parser) parseFuncDecl() *ast.FuncDecl {
 		}
 	}
 
-	tparams := p.parseTypeParams(scope)
+	// 泛型函数只支持全局函数, 不支持方法
+	var tparams *ast.FieldList
+	if recv != nil {
+		tparams = p.parseTypeParams(scope)
+	}
+
 	params, results, arrowPos := p.parseSignature(scope)
 
 	var body *ast.BlockStmt
