@@ -1,4 +1,11 @@
 canvas: new function() {
+  this.set_width_height = (canvas_handle, width, height) => {
+    if (canvas_handle == 0) return;
+    const canvas = app._extobj.get_obj(canvas_handle);
+    canvas.width = width;
+    canvas.height = height;
+  }
+
   this.get_context2d = (h) => {
     if (h == 0) return 0;
 

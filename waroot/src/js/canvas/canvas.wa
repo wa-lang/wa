@@ -3,14 +3,14 @@ import "js"
 /*
 不能使用该类型直接声明值，需通过 QueryCanvas() 创建
 */
-type Canvas struct {
+type Canvas :struct {
 	js.ExtObj
 }
 
 /*
 不能使用该类型直接声明值，需通过 Canvas.GetContext2D 创建
 */
-type Context2D struct {
+type Context2D :struct {
 	js.ExtObj
 }
 
@@ -643,6 +643,11 @@ func Canvas.GetContext2D() => (ctx: Context2D, succ: bool) {
 	}
 
 	return
+}
+
+// 设置 Canvas 大小
+func Canvas.SetWidthHeight(width, height: i32) {
+	jsSetWidthHeight(this.GetHandle(), width, height)
 }
 
 /*

@@ -1,5 +1,8 @@
 import "js"
 
+#wa:import canvas set_width_height
+func jsSetWidthHeight(ctx: js.Handle, width, height: i32)
+
 /*****************************************
 *                                        *
 *          Color, Style, Shadow          *
