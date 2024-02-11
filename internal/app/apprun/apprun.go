@@ -3,6 +3,7 @@
 package apprun
 
 import (
+	_ "embed"
 	"fmt"
 	"net/http"
 	"os"
@@ -18,6 +19,9 @@ import (
 	"wa-lang.org/wa/internal/config"
 	"wa-lang.org/wa/internal/wazero"
 )
+
+//go:embed favicon.ico
+var favicon []byte
 
 var CmdRun = &cli.Command{
 	Name:  "run",
@@ -78,6 +82,15 @@ func CmdRunAction(c *cli.Context) error {
 				}
 			}
 		}()
+		http.Handle(
+			"/favicon.ico", http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
+				w.Header().Add("Cache-Control", "no-cache")
+				w.Header().Set("content-type", "image/x-icon")
+				w.Header().Set("Access-Control-Allow-Origin", "*")
+
+				w.Write(favicon)
+			}),
+		)
 
 		fileHandler := http.FileServer(http.Dir(filepath.Join(input, "output")))
 		http.Handle(
