@@ -96,6 +96,9 @@ func jsArcWithDirection(ctx: js.Handle, x, y, radius, start_angle, end_angle: f3
 #wa:import canvas arc_to
 func jsArcTo(ctx: js.Handle, x1, y1, x2, y2, radius: f32)
 
+#wa:import canvas ellipse
+func jsEllipse(ctx: js.Handle, x, y, radiusX, radiusY, rotation, startAngle, endAngle: f32, anticlockwise: bool)
+
 #wa:import canvas is_point_in_path
 func jsIsPointInPath(ctx: js.Handle, x, y: f32) => bool
 

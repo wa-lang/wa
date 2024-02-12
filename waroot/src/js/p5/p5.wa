@@ -1,0 +1,104 @@
+// 版权 @2024 凹语言 作者。保留所有权利。
+
+// https://p5js.org/reference/
+// https://developer.mozilla.org/en-US/docs/Web/API/Canvas_API/Tutorial/Drawing_shapes
+
+import (
+	"js/canvas"
+)
+
+global (
+	p5Canvas    :canvas.Canvas
+	p5CanvasCtx :canvas.Context2D
+
+	p5CanvasWidth  :int
+	p5CanvasHeight :int
+)
+
+func init {
+	c, _ := canvas.QueryCanvas("canvas")
+	p5Canvas = c
+
+	ctx, _ := c.GetContext2D()
+	p5CanvasCtx = ctx
+}
+
+// 创建/调整画布大小
+func CreateCanvas(width, height: int) {
+	p5CanvasWidth = width
+	p5CanvasHeight = height
+	p5Canvas.SetWidthHeight(i32(width), i32(height))
+}
+
+// 设置画布背景
+func Background(red, green, blue: int) {
+	p5CanvasCtx.SetFillStyle(buildFillStyle(red, green, blue))
+	p5CanvasCtx.FillRect(0, 0, f32(p5CanvasWidth), f32(p5CanvasHeight))
+}
+
+// 设置画笔颜色
+func Stroke(v1, v2, v3: int) {
+	//
+}
+
+// 设置填充颜色
+func Fill(v1, v2, v3: int) {
+	//
+}
+
+// 绘制一个点
+func Point(x, y: int) {
+	//
+}
+
+// 绘制线段
+func Line(x1, y1, x2, y2: int) {
+	//
+}
+
+// 绘制四边形
+func Quad(x1, y1, x2, y2, x3, y3, x4, y4: int) {
+	//
+}
+
+// 绘制矩形
+func Rect(x, y, w, h: int) {
+	//
+}
+
+// 绘制三角形
+func triangle(x1, y1, x2, y2, x3, y3: int) {
+	//
+}
+
+// 绘制扇形
+func Arc(x, y, w, h, start, stop: int) {
+	//
+}
+
+// 绘制椭圆
+func Ellipse(x, y, w, h: int) {
+	const Pi = 3.1415926
+	p5CanvasCtx.BeginPath()
+	p5CanvasCtx.Ellipse(
+		f32(x),
+		f32(y),
+		f32(w)/2, // radiusX
+		f32(h)/2, // radiusY
+		0,        // rotation
+		0,        // startAngle
+		2*Pi,     // endAngle
+		false,    // anticlockwise
+	)
+	p5CanvasCtx.Stroke()
+}
+
+// 绘制贝塞尔曲线
+func Bezier(x1, y1, x2, y2, x3, y3, x4, y4: int) {
+	//
+}
+
+// 鼠标是否被按下
+func MouseIsPressed => bool {
+	return false
+}

@@ -1,0 +1,19 @@
+// 版权 @2024 P5-hello 作者。保留所有权利。
+
+import (
+	"js/p5"
+)
+
+func init {
+	p5.CreateCanvas(400, 400)
+}
+
+func Draw {
+	p5.Background(220, 220, 220)
+	p5.Ellipse(50, 50, 80, 80)
+}
+
+func main {
+	println("你好, P5!")
+	Draw()
+}

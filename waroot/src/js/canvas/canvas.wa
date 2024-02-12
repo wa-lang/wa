@@ -290,6 +290,19 @@ func Context2D.ArcTo(x1, y1, x2, y2, radius: f32) {
 }
 
 /*
+ * 绘制椭圆
+ * radiusX: 椭圆长轴的半径。
+ * radiusY: 椭圆短轴的半径。
+ * rotation: 椭圆的旋转角度，以弧度表示 (非角度度数)。
+ * startAngle: 将要绘制的起始点角度，从 x 轴测量，以弧度表示 (非角度度数)。
+ * endAngle: 椭圆将要绘制的结束点角度，以弧度表示 (非角度度数)。
+ * anticlockwise: 可选. Boolean 选项，如果为 true，逆时针方向绘制椭圆（逆时针），反之顺时针方向绘制。
+ */
+func Context2D.Ellipse(x, y, radiusX, radiusY, rotation, startAngle, endAngle: f32, anticlockwise: bool) {
+	jsEllipse(this.GetHandle(), x, y, radiusX, radiusY, rotation, startAngle, endAngle, anticlockwise)
+}
+
+/*
 * 如果指定的点位于当前路径中，则返回 true，否则返回 false
 * params: x, y
 *   x: 要测试的 x 坐标

@@ -119,6 +119,9 @@ func GetStdTestPkgList() []string {
 		if strings.HasPrefix(s, "syscall") {
 			continue
 		}
+		if s == "js" || strings.HasPrefix(s, "js/") {
+			continue
+		}
 		ss = append(ss, s)
 	}
 	return ss
@@ -153,6 +156,7 @@ var stdPkgs = []string{
 	"io",              // API 部分
 	"js",              // ?
 	"js/canvas",       // ?
+	"js/p5",           // ?
 	"math",            // API 部分
 	"math/big",        // API 部分
 	"math/bits",       // API 完整

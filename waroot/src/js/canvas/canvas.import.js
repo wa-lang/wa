@@ -171,6 +171,12 @@ canvas: new function() {
     const ctx = app._extobj.get_obj(ctx_handle);
     ctx.arcTo(x1, y1, x2, y2, r);
   }
+  this.ellipse = (ctx_handle, x, y, radiusX, radiusY, rotation, startAngle, endAngle, anticlockwise) => {
+    if (ctx_handle == 0) return;
+
+    const ctx = app._extobj.get_obj(ctx_handle);
+    ctx.ellipse(x, y, radiusX, radiusY, rotation, startAngle, endAngle, anticlockwise);
+  }
   this.is_point_in_path = (ctx_handle, x, y) => {
     if (ctx_handle == 0) return;
 
