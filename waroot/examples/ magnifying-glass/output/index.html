@@ -4,7 +4,10 @@
 
 <div style="text-align: center;">
   <canvas id="canvas" width="400" height="400"></canvas>
-  <div></div>
+</div>
+
+<div style="text-align: center;">
+  <pre id="output"></pre>
 </div>
 
 <script type="text/javascript" src="./app.js"></script>
@@ -20,6 +23,7 @@
 
       const canvas = document.getElementById("canvas");
       canvas.addEventListener("mousemove", (event) => {
+        console.log(`x:${event.offsetX},y:${event.offsetY}`);
         app.OnMouseMove(event.offsetX, event.offsetY);
       });
 

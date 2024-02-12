@@ -8,8 +8,11 @@
 
 import (
 	"image"
+	"js"
 	"js/canvas"
 	"math"
+	"strconv"
+	"strings"
 )
 
 global (
@@ -20,6 +23,7 @@ global (
 
 	cellsRGBA :*image.RGBA = nil
 	ctxCanvas :canvas.Context2D
+	outoutObj :js.ExtObj
 )
 
 func _sq(x: f32) => f32 {
@@ -33,24 +37,32 @@ func genColorGray(i, j, center_x, center_y: int) => int {
 	DIM := int(width)
 
 	n := 3
-	r := _sqrt(_sq(f32(i)-f32(center_y)) + _sq(f32(j)-f32(center_x)))
+	r := _sqrt(_sq(f32(i)-f32(center_x)) + _sq(f32(j)-f32(center_y)))
 	s := r / f32((DIM/2)/2)
 
 	if s < 1 {
-		i -= center_y
-		j -= center_x
+		i -= center_x
+		j -= center_y
 
 		k := (_sqrt(1-_sq(s))*_sqrt(1-_sq(s/f32(n))) + _sq(s)/f32(n)) * f32(n)
 
-		i = int(f32(i)/k + f32(center_y))
-		j = int(f32(j)/k + f32(center_x))
+		i = int(f32(i)/k + f32(center_x))
+		j = int(f32(j)/k + f32(center_y))
 	}
 	return (i/((DIM/2)/8) + j/((DIM/2)/8)) % 2 * 255
 }
 
 func OnMouseMove(x, y: int) {
-    center_x = y
-    center_y = x
+	sb: strings.Builder
+	sb.WriteString("X:")
+	sb.WriteString(strconv.Itoa(x))
+	sb.WriteString("Y:")
+	sb.WriteString(strconv.Itoa(y))
+	outoutObj.SetMember_string("innerHTML", sb.String())
+
+	println("OnMouseMove:", x, y)
+	center_x = x
+	center_y = y
 }
 
 func StepGame {
@@ -73,8 +85,4 @@ func StepGame {
 		raw(cellsRGBA.Pix), 0, 0, 0, 0,
 		f32(width), f32(height),
 	)
-}
-
-func LifePausing {
-	println("pausing:")
 }

@@ -1,12 +1,18 @@
 // 版权 @2024 magnifying-glass 作者。保留所有权利。
 
-import "js/canvas"
+import (
+	"js"
+	"js/canvas"
+)
 
 func main {
 	println("你好，凹语言！")
 
 	c, _ := canvas.QueryCanvas("canvas")
 	c.SetWidthHeight(i32(width), i32(height))
+
+	h := js.QuerySelector("output")
+	outoutObj = js.WrapExtObj(h)
 
 	ctx, _ := c.GetContext2D()
 	ctxCanvas = ctx
