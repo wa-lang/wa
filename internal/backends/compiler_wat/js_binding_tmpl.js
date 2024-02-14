@@ -138,7 +138,11 @@ class WaApp {
         // 准备参数
         let params = [];
         {{.PreCall}}
+        {{if .ExportName}}
+        let res = this._wasm_inst.exports["{{.ExportName}}"](...params);
+        {{else}}
         let res = this._wasm_inst.exports["{{$.Pkg}}.{{.Name}}"](...params);
+        {{end}}
         {{.GetResults}}
         {{.Release}}
         {{.Return}}

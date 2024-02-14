@@ -371,6 +371,7 @@ type JSGlobal struct {
 
 type JSFunc struct {
 	Name       string
+	ExportName string
 	Params     string
 	PreCall    string
 	GetResults string
@@ -426,7 +427,10 @@ func (p *Compiler) funcsForJSBinding() []JSFunc {
 			continue
 		}
 
-		fn := JSFunc{Name: stripNamePrefix(f.ExternalName)}
+		fn := JSFunc{
+			Name:       stripNamePrefix(f.ExternalName),
+			ExportName: f.ExportName,
+		}
 
 		// 参数名称列表
 		var sb strings.Builder

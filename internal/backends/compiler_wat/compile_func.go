@@ -254,6 +254,7 @@ func (g *functionGenerator) genFunction(f *ssa.Function) *wir.Function {
 		if len(f.ExportName()) > 0 {
 			external = f.ExportName()
 			wir_fn.ExternalName = f.ExportName()
+			wir_fn.ExportName = f.ExportName()
 		} else {
 			wir_fn.ExternalName = external
 		}

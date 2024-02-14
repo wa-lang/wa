@@ -4,10 +4,12 @@
 // https://developer.mozilla.org/en-US/docs/Web/API/Canvas_API/Tutorial/Drawing_shapes
 
 import (
+	"js"
 	"js/canvas"
 )
 
 global (
+	p5App       :js.ExtObj
 	p5Canvas    :canvas.Canvas
 	p5CanvasCtx :canvas.Context2D
 
@@ -16,6 +18,8 @@ global (
 )
 
 func init {
+	jsInit()
+
 	c, _ := canvas.QueryCanvas("canvas")
 	p5Canvas = c
 
@@ -96,9 +100,4 @@ func Ellipse(x, y, w, h: int) {
 // 绘制贝塞尔曲线
 func Bezier(x1, y1, x2, y2, x3, y3, x4, y4: int) {
 	//
-}
-
-// 鼠标是否被按下
-func MouseIsPressed => bool {
-	return false
 }

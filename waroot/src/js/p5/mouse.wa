@@ -1,0 +1,20 @@
+// 版权 @2024 凹语言 作者。保留所有权利。
+
+global (
+	MouseIsPressed :bool // 鼠标是否被按下
+	MouseX         :int  // 鼠标位置信息
+	MouseY         :int  // 鼠标位置信息
+)
+
+// 鼠标按键
+#wa:export p5js_onMousePressed
+func onMousePressed(flag: bool) {
+	MouseIsPressed = flag
+}
+
+// 鼠标移动
+#wa:export p5js_onMouseMove
+func onMouseMove(x, y: i32) {
+	MouseX = int(x)
+	MouseY = int(y)
+}
