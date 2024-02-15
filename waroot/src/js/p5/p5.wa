@@ -41,38 +41,60 @@ func Background(red, green, blue: int) {
 }
 
 // 设置画笔颜色
-func Stroke(v1, v2, v3: int) {
-	//
+func Stroke(red, green, blue: int) {
+	p5CanvasCtx.SetStrokeStyle(buildFillStyle(red, green, blue))
 }
 
 // 设置填充颜色
-func Fill(v1, v2, v3: int) {
-	//
+func Fill(red, green, blue: int) {
+	p5CanvasCtx.SetFillStyle(buildFillStyle(red, green, blue))
+}
+
+// 不填充
+func NoFill {
+	p5CanvasCtx.SetFillStyle("none")
 }
 
 // 绘制一个点
 func Point(x, y: int) {
-	//
+	p5CanvasCtx.BeginPath()
+	p5CanvasCtx.MoveTo(f32(x), f32(y))
+	p5CanvasCtx.LineTo(f32(x+1), f32(y+1))
+	p5CanvasCtx.Stroke()
 }
 
 // 绘制线段
 func Line(x1, y1, x2, y2: int) {
-	//
+	p5CanvasCtx.BeginPath()
+	p5CanvasCtx.MoveTo(f32(x1), f32(y1))
+	p5CanvasCtx.LineTo(f32(x2), f32(y2))
+	p5CanvasCtx.Stroke()
 }
 
 // 绘制四边形
 func Quad(x1, y1, x2, y2, x3, y3, x4, y4: int) {
-	//
+	p5CanvasCtx.BeginPath()
+	p5CanvasCtx.MoveTo(f32(x1), f32(y1))
+	p5CanvasCtx.LineTo(f32(x2), f32(y2))
+	p5CanvasCtx.LineTo(f32(x3), f32(y3))
+	p5CanvasCtx.LineTo(f32(x4), f32(y4))
+	p5CanvasCtx.LineTo(f32(x1), f32(y1))
+	p5CanvasCtx.Stroke()
 }
 
 // 绘制矩形
 func Rect(x, y, w, h: int) {
-	//
+	p5CanvasCtx.Rect(f32(x), f32(y), f32(w), f32(h))
 }
 
 // 绘制三角形
-func triangle(x1, y1, x2, y2, x3, y3: int) {
-	//
+func Triangle(x1, y1, x2, y2, x3, y3: int) {
+	p5CanvasCtx.BeginPath()
+	p5CanvasCtx.MoveTo(f32(x1), f32(y1))
+	p5CanvasCtx.LineTo(f32(x2), f32(y2))
+	p5CanvasCtx.LineTo(f32(x3), f32(y3))
+	p5CanvasCtx.LineTo(f32(x1), f32(y1))
+	p5CanvasCtx.Stroke()
 }
 
 // 绘制扇形
