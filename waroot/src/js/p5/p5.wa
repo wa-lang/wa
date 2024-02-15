@@ -38,6 +38,8 @@ func CreateCanvas(width, height: int) {
 func Background(red, green, blue: int) {
 	p5CanvasCtx.SetFillStyle(buildFillStyle(red, green, blue))
 	p5CanvasCtx.FillRect(0, 0, f32(p5CanvasWidth), f32(p5CanvasHeight))
+
+	p5CanvasCtx.SetFillStyle(buildFillStyle(0, 0, 0))
 }
 
 // 设置画笔颜色
@@ -98,8 +100,19 @@ func Triangle(x1, y1, x2, y2, x3, y3: int) {
 }
 
 // 绘制扇形
-func Arc(x, y, w, h, start, stop: int) {
-	//
+func Arc(x, y, w, h: int, startAngle, endAngle: f32) {
+	p5CanvasCtx.BeginPath()
+	p5CanvasCtx.Ellipse(
+		f32(x),
+		f32(y),
+		f32(w)/2,   // radiusX
+		f32(h)/2,   // radiusY
+		0,          // rotation
+		startAngle, // startAngle
+		endAngle,   // endAngle
+		false,      // anticlockwise
+	)
+	p5CanvasCtx.Stroke()
 }
 
 // 绘制椭圆
@@ -122,4 +135,14 @@ func Ellipse(x, y, w, h: int) {
 // 绘制贝塞尔曲线
 func Bezier(x1, y1, x2, y2, x3, y3, x4, y4: int) {
 	//
+}
+
+// 设置字体
+func TextFont(font: string) {
+	p5CanvasCtx.SetFont(font)
+}
+
+// 绘制文本
+func Text(s: string, x, y: int) {
+	p5CanvasCtx.FillText(s, f32(x), f32(y))
 }

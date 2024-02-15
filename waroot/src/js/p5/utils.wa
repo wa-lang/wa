@@ -12,3 +12,10 @@ func buildFillStyle(red, green, blue: int) => string {
 	hex.EncodeU8(b[1+4:], u8(blue))
 	return string(b[:])
 }
+
+// 角度转弧度
+func Radians(angle: f32) => f32 {
+	const PI = 3.1415926
+	const DEG_TO_RAD = PI / 180
+	return angle * DEG_TO_RAD
+}
