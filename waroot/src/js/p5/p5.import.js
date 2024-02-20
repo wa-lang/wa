@@ -37,7 +37,7 @@ p5js: new function() {
             });
 
             canvas.addEventListener("mousemove", (event) => {
-                theApp.p5js_onMouseMove(event.offsetX, event.offsetY);
+                theApp.p5js_onMouseMoved(event.offsetX, event.offsetY);
             });
         }
 

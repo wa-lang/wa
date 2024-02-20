@@ -1,0 +1,45 @@
+// 版权 @2024 凹语言 作者。保留所有权利。
+
+global (
+	KeyIsPressed :bool = false
+	Key          :int
+	KeyCode      :int
+)
+
+// 特殊键盘按键
+const (
+	BACKSPACE   = 0 // 回退
+	DELETE      = 0 // 删除
+	ENTER       = 0 // 回车
+	RETURN      = 0 // Tab
+	TAB         = 0 // 空格
+	ESCAPE      = 0 // Esc
+	SHIFT       = 0 // Shift
+	CONTROL     = 0 // Ctrl
+	OPTION      = 0 // Option
+	ALT         = 0 // Alt
+	UP_ARROW    = 0 // 方向键: 上
+	DOWN_ARROW  = 0 // 方向键: 下
+	LEFT_ARROW  = 0 // 方向键: 左
+	RIGHT_ARROW = 0 // 方向键: 右
+)
+
+#wa:export p5js_onKeyPressed
+func onKeyPressed() {
+	//
+}
+
+#wa:export p5js_onKeyReleased
+func onKeyReleased() {
+	//
+}
+
+#wa:export p5js_onKeyTyped
+func onKeyTyped() {
+	//
+}
+
+#wa:export p5js_onKeyIsDown
+func onKeyIsDown(code: int) {
+	//
+}

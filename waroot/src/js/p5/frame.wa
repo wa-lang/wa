@@ -1,0 +1,14 @@
+// 版权 @2024 凹语言 作者。保留所有权利。
+
+global (
+	Width  :int = 100 // 画布宽度
+	Height :int = 100 // 画布高度
+
+	FrameCount :int  // 帧计数
+	Focused    :bool // 是否获得焦点
+)
+
+// 设置/返回帧率
+func FrameRate(fps: int) => int {
+	return 0 // TODO
+}

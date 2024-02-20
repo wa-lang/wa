@@ -1,9 +1,18 @@
 // 版权 @2024 凹语言 作者。保留所有权利。
 
+const (
+	LEFT   = 1 // 鼠标左键
+	RIGHT  = 2 // 鼠标右键
+	CENTER = 4 // 鼠标中键
+)
+
 global (
 	MouseIsPressed :bool // 鼠标是否被按下
-	MouseX         :int  // 鼠标位置信息
-	MouseY         :int  // 鼠标位置信息
+	MouseButton    :int  // 鼠标按键
+	PMouseX        :int  // 前一帧鼠标位置信息
+	PMouseY        :int  // 前一帧鼠标位置信息
+	MouseX         :int  // 当前帧鼠标位置信息
+	MouseY         :int  // 当前帧鼠标位置信息
 )
 
 // 鼠标按键
@@ -13,8 +22,32 @@ func onMousePressed(flag: bool) {
 }
 
 // 鼠标移动
-#wa:export p5js_onMouseMove
-func onMouseMove(x, y: i32) {
+#wa:export p5js_onMouseMoved
+func onMouseMoved(x, y: i32) {
 	MouseX = int(x)
 	MouseY = int(y)
+}
+
+// 鼠标拖动
+#wa:export p5js_onMouseDragged
+func onMouseDragged() {
+	// TODO
+}
+
+// 鼠标单击
+#wa:export p5js_onMouseClicked
+func onMouseClicked() {
+	// TODO
+}
+
+// 鼠标双击
+#wa:export p5js_onDoubleClicked
+func onDoubleClicked() {
+	// TODO
+}
+
+// 鼠标滚轮
+#wa:export p5js_onMouseWheel
+func onMouseWheel(delta: i32) {
+	// TODO
 }
