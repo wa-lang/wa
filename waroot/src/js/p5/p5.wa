@@ -131,18 +131,3 @@ func Ellipse(x, y, w, h: int) {
 	)
 	p5CanvasCtx.Stroke()
 }
-
-// 绘制贝塞尔曲线
-func Bezier(x1, y1, x2, y2, x3, y3, x4, y4: int) {
-	//
-}
-
-// 设置字体
-func TextFont(font: string) {
-	p5CanvasCtx.SetFont(font)
-}
-
-// 绘制文本
-func Text(s: string, x, y: int) {
-	p5CanvasCtx.FillText(s, f32(x), f32(y))
-}

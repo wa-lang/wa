@@ -5,7 +5,6 @@ p5js: new function() {
     theApp._p5js = p5js;
 
     this._inited = false;
-    this._preTimeStamp = 1;
 
     // 初始化
     this.init = () => {
@@ -20,20 +19,97 @@ p5js: new function() {
 
         // 键盘消息
         document.addEventListener('keydown', (event) => {
-            // console.log(`p5: document.addEventListener`);
+
+            // 保持定义一致
+            const keyCode_Enter = 13;
+            const keyCode_Tab = 9;
+            const keyCode_Space = 32;
+            const keyCode_ArrowUp = 1004;
+            const keyCode_ArrowDown = 1005;
+            const keyCode_ArrowLeft = 1006;
+            const keyCode_ArrowRight = 1007;
+            const keyCode_Escape = 1008;
+            const keyCode_Backspace = 1009;
+            const keyCode_Delete = 1010;
+            const keyCode_Shift = 1011;
+            const keyCode_Control = 1012;
+            const keyCode_Option = 1013;
+            const keyCode_Alt = 1014;
+
+            // 保持和凹语言环境定义一致
+            switch (event.key) {
+            case "Enter":
+                theApp.p5js_onKeyDown(keyCode_Enter);
+                return;
+            case "Tab":
+                theApp.p5js_onKeyDown(keyCode_Tab);
+                return;
+            case " ":
+                theApp.p5js_onKeyDown(keyCode_Space);
+                return;
+
+            case "ArrowUp":
+                theApp.p5js_onKeyDown(keyCode_ArrowUp);
+                return;
+            case "ArrowDown":
+                theApp.p5js_onKeyDown(keyCode_ArrowDown);
+                return;
+            case "ArrowLeft":
+                theApp.p5js_onKeyDown(keyCode_ArrowLeft);
+                return;
+            case "ArrowRight":
+                theApp.p5js_onKeyDown(keyCode_ArrowRight);
+                return;
+
+            case "Escape":
+                theApp.p5js_onKeyDown(keyCode_Escape);
+                return;
+            case "Backspace":
+                theApp.p5js_onKeyDown(keyCode_Backspace);
+                return;
+            case "Delete":
+                theApp.p5js_onKeyDown(keyCode_Delete);
+                return;
+
+            case "Shift":
+                theApp.p5js_onKeyDown(keyCode_Shift);
+                return;
+            case "Control":
+                theApp.p5js_onKeyDown(keyCode_Control);
+                return;
+            case "Meta":
+                theApp.p5js_onKeyDown(keyCode_Option);
+                return;
+            case "Alt":
+                theApp.p5js_onKeyDown(keyCode_Alt);
+                return;
+
+            default:
+                theApp.p5js_onKeyDown(event.keyCode);
+                return;
+            }
         });
         document.addEventListener('keyup', (event) => {
-            // console.log(`p5: document.addEventListener`);
+            theApp.p5js_onKeyUp();
         });
 
         // 鼠标按键消息
         const canvas = document.getElementById("canvas");
         if(canvas) {
+            canvas.addEventListener("mouseenter", (event) => {    
+                theApp.p5js_onMouseEnter();
+            });
+            canvas.addEventListener("mouseleave", (event) => {    
+                theApp.onMouseLeave();
+            });
+
             canvas.addEventListener("mousedown", (event) => {    
-                theApp.p5js_onMousePressed(true);
+                theApp.onMouseDown(
+                    event.button, event.offsetX, event.offsetY
+                );
             });
             canvas.addEventListener("mouseup", (event) => {    
-                theApp.p5js_onMousePressed(false);
+                theApp.p5js_onMouseUp();
             });
 
             canvas.addEventListener("mousemove", (event) => {
@@ -44,8 +120,10 @@ p5js: new function() {
         // 帧函数
         if(theApp.Draw) {
             let stepAnima = function (timeStamp) {
+                theApp.p5js_onDraw_before(timeStamp);
                 theApp.Draw();
-                p5js._preTimeStamp = timeStamp;
+                theApp.p5js_onDraw_after();
+
                 window.requestAnimationFrame(stepAnima);
             }
             window.requestAnimationFrame(stepAnima);
