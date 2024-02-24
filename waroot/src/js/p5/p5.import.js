@@ -96,15 +96,24 @@ p5js: new function() {
         // 鼠标按键消息
         const canvas = document.getElementById("canvas");
         if(canvas) {
+
+            // 焦点事件
+            canvas.addEventListener("focus", (event) => {    
+                theApp.p5js_onFocus();
+            }, true);
+            canvas.addEventListener("blur", (event) => {    
+                theApp.p5js_onBlur();
+            }, true);
+
             canvas.addEventListener("mouseenter", (event) => {    
                 theApp.p5js_onMouseEnter();
             });
             canvas.addEventListener("mouseleave", (event) => {    
-                theApp.onMouseLeave();
+                theApp.p5js_onMouseLeave();
             });
 
             canvas.addEventListener("mousedown", (event) => {    
-                theApp.onMouseDown(
+                theApp.p5js_onMouseDown(
                     event.button, event.offsetX, event.offsetY
                 );
             });
@@ -120,7 +129,7 @@ p5js: new function() {
         // 帧函数
         if(theApp.Draw) {
             let stepAnima = function (timeStamp) {
-                theApp.p5js_onDraw_before(timeStamp);
+                theApp.p5js_onDraw_before(timeStamp/1000.0);
                 theApp.Draw();
                 theApp.p5js_onDraw_after();
 

@@ -12,9 +12,6 @@ global (
 	p5App       :js.ExtObj
 	p5Canvas    :canvas.Canvas
 	p5CanvasCtx :canvas.Context2D
-
-	p5CanvasWidth  :int
-	p5CanvasHeight :int
 )
 
 func init {
@@ -29,15 +26,16 @@ func init {
 
 // 创建/调整画布大小
 func CreateCanvas(width, height: int) {
-	p5CanvasWidth = width
-	p5CanvasHeight = height
+	Width = width
+	Height = height
+
 	p5Canvas.SetWidthHeight(i32(width), i32(height))
 }
 
 // 设置画布背景
 func Background(red, green, blue: int) {
 	p5CanvasCtx.SetFillStyle(buildFillStyle(red, green, blue))
-	p5CanvasCtx.FillRect(0, 0, f32(p5CanvasWidth), f32(p5CanvasHeight))
+	p5CanvasCtx.FillRect(0, 0, f32(Width), f32(Height))
 
 	p5CanvasCtx.SetFillStyle(buildFillStyle(0, 0, 0))
 }

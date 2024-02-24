@@ -16,6 +16,18 @@ global (
 	curTimeStamp :f32 // 当前时间戳
 )
 
+// 获取焦点
+#wa:export p5js_onFocus
+func onFocus {
+	Focused = true
+}
+
+// 失去焦点
+#wa:export p5js_onBlur
+func onBlur {
+	Focused = false
+}
+
 // 每次Draw之前调用
 #wa:export p5js_onDraw_before
 func onDraw_before(timeStamp: f32) {
