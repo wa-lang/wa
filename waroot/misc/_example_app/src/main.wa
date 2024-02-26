@@ -1,5 +1,21 @@
 // 版权 @{{.Year}} {{.Name}} 作者。保留所有权利。
 
+{{if .IsP5App}}
+import "js/p5"
+
+func init {
+	p5.CreateCanvas(400, 400)
+	p5.Background(220, 220, 220)
+}
+
+func Draw {
+	if p5.MouseIsPressed {
+		p5.Ellipse(p5.MouseX, p5.MouseY, 80, 80)
+	} else {
+		p5.Ellipse(p5.MouseX, p5.MouseY, 40, 40)
+	}
+}
+{{else}}
 func main {
 	println("你好，凹语言！")
 	println(sum(100))
@@ -12,3 +28,4 @@ func sum(n: int) => int {
 	}
 	return v
 }
+{{end}}
