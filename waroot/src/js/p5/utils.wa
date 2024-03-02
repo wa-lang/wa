@@ -1,18 +1,5 @@
 // 版权 @2024 凹语言 作者。保留所有权利。
 
-import (
-	"encoding/hex"
-)
-
-// 生成 FillStyle 字符串
-func buildFillStyle(red, green, blue: int) => string {
-	b := [7]byte{0: '#'}
-	hex.EncodeU8(b[1+0:], u8(red))
-	hex.EncodeU8(b[1+2:], u8(green))
-	hex.EncodeU8(b[1+4:], u8(blue))
-	return string(b[:])
-}
-
 // 角度转弧度
 func Radians(angle: f32) => f32 {
 	const PI = 3.1415926

@@ -4,13 +4,14 @@ import "js/p5"
 
 func init {
 	p5.CreateCanvas(400, 400)
-	p5.Background(220, 220, 220)
+	p5.Background(220, 0, 0)
 }
 
 func Draw {
 	if p5.MouseIsPressed {
-		p5.Ellipse(p5.MouseX, p5.MouseY, 80, 80)
+		p5.Stroke(0, 0, 255)
 	} else {
-		p5.Ellipse(p5.MouseX, p5.MouseY, 40, 40)
+		p5.Stroke(0, 255, 0)
 	}
+	p5.Point(p5.MouseX, p5.MouseY)
 }

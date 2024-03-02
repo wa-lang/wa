@@ -48,4 +48,10 @@ func onDraw_after {
 
 	PMouseX = MouseX
 	PMouseY = MouseY
+
+	p5CanvasCtx.PutImageData(
+		raw(p5CanvasBuffer.Pix), 0, 0, 0, 0,
+		f32(p5CanvasBuffer.Width),
+		f32(p5CanvasBuffer.Height),
+	)
 }
