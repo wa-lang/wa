@@ -114,5 +114,5 @@ func Triangle(x1, y1, x2, y2, x3, y3: int) {
 
 // 绘制椭圆
 func Ellipse(x, y, w, h: int) {
-	p5DrawEllipse(p5CanvasBuffer, x, y, w, h, p5StrokeColor)
+	p5DrawEllipse(p5CanvasBuffer, x-(w/2), y-(h/2), w, h, p5StrokeColor)
 }
