@@ -9,14 +9,14 @@ import (
 // https://www.codeproject.com/articles/21039/ellipse-drawing-algorithm
 
 func p5DrawEllipse(p: *image.RGBA, x, y, w, h: int, c: color.RGBA) {
-	const nSeg = 10
+	const nSeg = 30
 	const pi = 3.1415926
 
 	x0, y0, xi, yi, xi_1, yi_1: f64
 
 	for i := 0; i < (nSeg); i++ {
-		xi = (f64(w) / 2) * math.Sin((f64(i)/nSeg)*(pi*2))
-		yi = (f64(h) / 2) * math.Cos((f64(i)/nSeg)*(pi*2))
+		xi = (f64(w) / 2) * math.Cos((f64(i)/nSeg)*(pi*2))
+		yi = (f64(h) / 2) * math.Sin((f64(i)/nSeg)*(pi*2))
 
 		if i == 0 {
 			xi_1, yi_1 = xi, yi

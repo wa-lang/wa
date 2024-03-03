@@ -112,12 +112,7 @@ func Triangle(x1, y1, x2, y2, x3, y3: int) {
 	// todo: fill
 }
 
-// 绘制扇形
-func Arc(x, y, w, h: int, startAngle, endAngle: f32) {
-	// todo
-}
-
 // 绘制椭圆
 func Ellipse(x, y, w, h: int) {
-	p5DrawEllipse(p5CanvasBuffer, w, y, w, h, p5StrokeColor)
+	p5DrawEllipse(p5CanvasBuffer, x, y, w, h, p5StrokeColor)
 }
