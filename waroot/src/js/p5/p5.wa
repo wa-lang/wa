@@ -85,10 +85,10 @@ func Line(x1, y1, x2, y2: int) {
 
 // 绘制矩形
 func Rect(x, y, w, h: int) {
-	p5DrawLine(p5CanvasBuffer, x, y, x+w, y, p5StrokeColor)
-	p5DrawLine(p5CanvasBuffer, x+w, y, x+w, y+h, p5StrokeColor)
-	p5DrawLine(p5CanvasBuffer, x+w, y+h, x, y+h, p5StrokeColor)
-	p5DrawLine(p5CanvasBuffer, x, y+h, x, y, p5StrokeColor)
+	p5DrawLine(p5CanvasBuffer, x, y, x+w-1, y, p5StrokeColor)
+	p5DrawLine(p5CanvasBuffer, x+w-1, y, x+w-1, y+h-1, p5StrokeColor)
+	p5DrawLine(p5CanvasBuffer, x+w-1, y+h-1, x, y+h-1, p5StrokeColor)
+	p5DrawLine(p5CanvasBuffer, x, y+h-1, x, y, p5StrokeColor)
 
 	// tod: fill
 }
@@ -119,5 +119,5 @@ func Arc(x, y, w, h: int, startAngle, endAngle: f32) {
 
 // 绘制椭圆
 func Ellipse(x, y, w, h: int) {
-	// todo
+	p5DrawEllipse(p5CanvasBuffer, w, y, w, h, p5StrokeColor)
 }
