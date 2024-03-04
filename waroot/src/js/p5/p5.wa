@@ -20,8 +20,8 @@ global (
 	p5StrokeColor     :color.RGBA = color.RGBAFrom(0, 0, 0, 0xff)       // 画笔色
 	p5FillColor       :color.RGBA = color.RGBAFrom(0, 0, 0, 0xff)       // 填充色
 
-	NoFill   :bool = false // 不填充
-	NoStroke :bool = false // 无边框
+	_NoFill   :bool = false // 不填充
+	_NoStroke :bool = false // 无边框
 )
 
 func init {
