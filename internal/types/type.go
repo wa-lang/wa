@@ -192,54 +192,6 @@ func (t *Tuple) Len() int {
 // At returns the i'th variable of tuple t.
 func (t *Tuple) At(i int) *Var { return t.vars[i] }
 
-// A Signature represents a (non-builtin) function or method type.
-// The receiver is ignored when comparing signatures for identity.
-type Signature struct {
-	// We need to keep the scope in Signature (rather than passing it around
-	// and store it in the Func Object) because when type-checking a function
-	// literal we call the general type checker which returns a general Type.
-	// We then unpack the *Signature and use the scope for the literal body.
-	scope    *Scope // function scope, present for package-local signatures
-	recv     *Var   // nil if not a method
-	params   *Tuple // (incoming) parameters from left to right; or nil
-	results  *Tuple // (outgoing) results from left to right; or nil
-	variadic bool   // true if the last parameter's type is of the form ...T (or string, for append built-in only)
-}
-
-// NewSignature returns a new function type for the given receiver, parameters,
-// and results, either of which may be nil. If variadic is set, the function
-// is variadic, it must have at least one parameter, and the last parameter
-// must be of unnamed slice type.
-func NewSignature(recv *Var, params, results *Tuple, variadic bool) *Signature {
-	if variadic {
-		n := params.Len()
-		if n == 0 {
-			panic("types.NewSignature: variadic function must have at least one parameter")
-		}
-		if _, ok := params.At(n - 1).typ.(*Slice); !ok {
-			panic("types.NewSignature: variadic parameter must be of unnamed slice type")
-		}
-	}
-	return &Signature{nil, recv, params, results, variadic}
-}
-
-// Recv returns the receiver of signature s (if a method), or nil if a
-// function. It is ignored when comparing signatures for identity.
-//
-// For an abstract method, Recv returns the enclosing interface either
-// as a *Named or an *Interface. Due to embedding, an interface may
-// contain methods whose receiver type is a different interface.
-func (s *Signature) Recv() *Var { return s.recv }
-
-// Params returns the parameters of signature s, or nil.
-func (s *Signature) Params() *Tuple { return s.params }
-
-// Results returns the results of signature s, or nil.
-func (s *Signature) Results() *Tuple { return s.results }
-
-// Variadic reports whether the signature s is variadic.
-func (s *Signature) Variadic() bool { return s.variadic }
-
 // An Interface represents an interface type.
 type Interface struct {
 	methods   []*Func // ordered list of explicitly declared methods
@@ -388,54 +340,6 @@ func (m *Map) Key() Type { return m.key }
 // Elem returns the element type of map m.
 func (m *Map) Elem() Type { return m.elem }
 
-// A Named represents a named type.
-type Named struct {
-	obj        *TypeName // corresponding declared object
-	underlying Type      // possibly a *Named during setup; never a *Named once set up completely
-	methods    []*Func   // methods declared for this type (not the method set of this type); signatures are type-checked lazily
-}
-
-// NewNamed returns a new named type for the given type name, underlying type, and associated methods.
-// If the given type name obj doesn't have a type yet, its type is set to the returned named type.
-// The underlying type must not be a *Named.
-func NewNamed(obj *TypeName, underlying Type, methods []*Func) *Named {
-	if _, ok := underlying.(*Named); ok {
-		panic("types.NewNamed: underlying type must not be *Named")
-	}
-	typ := &Named{obj: obj, underlying: underlying, methods: methods}
-	if obj.typ == nil {
-		obj.typ = typ
-	}
-	return typ
-}
-
-// Obj returns the type name for the named type t.
-func (t *Named) Obj() *TypeName { return t.obj }
-
-// NumMethods returns the number of explicit methods whose receiver is named type t.
-func (t *Named) NumMethods() int { return len(t.methods) }
-
-// Method returns the i'th method of named type t for 0 <= i < t.NumMethods().
-func (t *Named) Method(i int) *Func { return t.methods[i] }
-
-// SetUnderlying sets the underlying type and marks t as complete.
-func (t *Named) SetUnderlying(underlying Type) {
-	if underlying == nil {
-		panic("types.Named.SetUnderlying: underlying type must not be nil")
-	}
-	if _, ok := underlying.(*Named); ok {
-		panic("types.Named.SetUnderlying: underlying type must not be *Named")
-	}
-	t.underlying = underlying
-}
-
-// AddMethod adds method m unless it is already in the method list.
-func (t *Named) AddMethod(m *Func) {
-	if i, _ := lookupMethod(t.methods, m.pkg, m.name); i < 0 {
-		t.methods = append(t.methods, m)
-	}
-}
-
 // Implementations for Type methods.
 
 func (b *Basic) Underlying() Type     { return b }
@@ -444,10 +348,8 @@ func (s *Slice) Underlying() Type     { return s }
 func (s *Struct) Underlying() Type    { return s }
 func (p *Pointer) Underlying() Type   { return p }
 func (t *Tuple) Underlying() Type     { return t }
-func (s *Signature) Underlying() Type { return s }
 func (t *Interface) Underlying() Type { return t }
 func (m *Map) Underlying() Type       { return m }
-func (t *Named) Underlying() Type     { return t.underlying }
 
 func (b *Basic) String() string     { return TypeString(b, nil) }
 func (a *Array) String() string     { return TypeString(a, nil) }
@@ -455,7 +357,5 @@ func (s *Slice) String() string     { return TypeString(s, nil) }
 func (s *Struct) String() string    { return TypeString(s, nil) }
 func (p *Pointer) String() string   { return TypeString(p, nil) }
 func (t *Tuple) String() string     { return TypeString(t, nil) }
-func (s *Signature) String() string { return TypeString(s, nil) }
 func (t *Interface) String() string { return TypeString(t, nil) }
 func (m *Map) String() string       { return TypeString(m, nil) }
-func (t *Named) String() string     { return TypeString(t, nil) }

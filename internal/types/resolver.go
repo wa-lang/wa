@@ -145,10 +145,7 @@ func (check *Checker) importPackage(pos token.Pos, path, dir string) *Package {
 	}
 
 	// no package yet => import it
-	if path == "C" && check.conf.FakeImportC {
-		imp = NewPackage("C", "C")
-		imp.fake = true
-	} else {
+	{
 		// ordinary import
 		var err error
 		if importer := check.conf.Importer; importer == nil {

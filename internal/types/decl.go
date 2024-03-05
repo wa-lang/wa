@@ -42,9 +42,6 @@ func (check *Checker) declareGenericFunc(scope *Scope, id *ast.Ident, obj *Func,
 	}
 	if id != nil {
 		// check.recordDef(id, obj)
-		if m := check.GenericDefs; m != nil {
-			m[id] = obj
-		}
 	}
 }
 

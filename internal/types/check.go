@@ -25,10 +25,9 @@ const (
 // Strict mode are Go 1 compliant, but not all Go 1 programs
 // will pass in Strict mode. The additional rules are:
 //
-// - A type assertion x.(T) where T is an interface type
-//   is invalid if any (statically known) method that exists
-//   for both x and T have different signatures.
-//
+//   - A type assertion x.(T) where T is an interface type
+//     is invalid if any (statically known) method that exists
+//     for both x and T have different signatures.
 const strict = false
 
 // exprInfo stores information about an untyped expression.
@@ -339,6 +338,40 @@ func (check *Checker) recordCommaOkTypes(x ast.Expr, a [2]Type) {
 			x = p.X
 		}
 	}
+}
+
+// recordInstance records instantiation information into check.Info, if the
+// Instances map is non-nil. The given expr must be an ident, selector, or
+// index (list) expr with ident or selector operand.
+//
+// TODO(rfindley): the expr parameter is fragile. See if we can access the
+// instantiated identifier in some other way.
+func (check *Checker) recordInstance(expr ast.Expr, targs []Type, typ Type) {
+	ident := instantiatedIdent(expr)
+	assert(ident != nil)
+	assert(typ != nil)
+	if m := check.Instances; m != nil {
+		m[ident] = Instance{newTypeList(targs), typ}
+	}
+}
+
+func instantiatedIdent(expr ast.Expr) *ast.Ident {
+	var selOrIdent ast.Expr
+	switch e := expr.(type) {
+	case *ast.IndexExpr:
+		selOrIdent = e.X
+	case *ast.IndexListExpr:
+		selOrIdent = e.X
+	case *ast.SelectorExpr, *ast.Ident:
+		selOrIdent = e
+	}
+	switch x := selOrIdent.(type) {
+	case *ast.Ident:
+		return x
+	case *ast.SelectorExpr:
+		return x.Sel
+	}
+	panic("instantiated ident not found")
 }
 
 func (check *Checker) recordDef(id *ast.Ident, obj Object) {
