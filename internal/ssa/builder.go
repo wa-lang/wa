@@ -2048,9 +2048,7 @@ func (p *Package) build() {
 	for _, file := range p.files {
 		for _, decl := range file.Decls {
 			if decl, ok := decl.(*ast.FuncDecl); ok {
-				if decl.Type.TypeParams == nil {
-					b.buildFuncDecl(p, decl)
-				}
+				b.buildFuncDecl(p, decl)
 			}
 		}
 	}

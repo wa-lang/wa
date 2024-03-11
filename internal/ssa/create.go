@@ -143,7 +143,7 @@ func membersFromDecl(pkg *Package, decl ast.Decl) {
 
 	case *ast.FuncDecl:
 		id := decl.Name
-		if !isBlankIdent(id) && decl.Type.TypeParams == nil {
+		if !isBlankIdent(id) {
 			memberFromObject(pkg, pkg.info.Defs[id], decl)
 		}
 	}

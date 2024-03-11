@@ -385,11 +385,10 @@ type (
 
 	// A FuncType node represents a function type.
 	FuncType struct {
-		Func       token.Pos  // position of "func" keyword (token.NoPos if there is no "func")
-		TypeParams *FieldList // type parameters; or nil
-		Params     *FieldList // (incoming) parameters; non-nil
-		ArrowPos   token.Pos  // position of "=>" operator (token.NoPos if there is no "=>")
-		Results    *FieldList // (outgoing) results; or nil
+		Func     token.Pos  // position of "func" keyword (token.NoPos if there is no "func")
+		Params   *FieldList // (incoming) parameters; non-nil
+		ArrowPos token.Pos  // position of "=>" operator (token.NoPos if there is no "=>")
+		Results  *FieldList // (outgoing) results; or nil
 	}
 
 	// An InterfaceType node represents an interface type.
@@ -798,12 +797,11 @@ type (
 
 	// A TypeSpec node represents a type declaration (TypeSpec production).
 	TypeSpec struct {
-		Doc        *CommentGroup // associated documentation; or nil
-		Name       *Ident        // type name
-		TypeParams *FieldList    // type parameters; or nil
-		ColonPos   token.Pos     // position of ":" operator (token.NoPos if there is no ":")
-		Type       Expr          // *Ident, *ParenExpr, *SelectorExpr, *StarExpr, or any of the *XxxTypes
-		Comment    *CommentGroup // line comments; or nil
+		Doc      *CommentGroup // associated documentation; or nil
+		Name     *Ident        // type name
+		ColonPos token.Pos     // position of ":" operator (token.NoPos if there is no ":")
+		Type     Expr          // *Ident, *ParenExpr, *SelectorExpr, *StarExpr, or any of the *XxxTypes
+		Comment  *CommentGroup // line comments; or nil
 	}
 )
 

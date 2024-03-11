@@ -166,9 +166,6 @@ func Walk(v Visitor, node Node) {
 		Walk(v, n.Fields)
 
 	case *FuncType:
-		if n.TypeParams != nil {
-			Walk(v, n.TypeParams)
-		}
 		if n.Params != nil {
 			Walk(v, n.Params)
 		}
@@ -310,9 +307,6 @@ func Walk(v Visitor, node Node) {
 			Walk(v, n.Doc)
 		}
 		Walk(v, n.Name)
-		if n.TypeParams != nil {
-			Walk(v, n.TypeParams)
-		}
 		Walk(v, n.Type)
 		if n.Comment != nil {
 			Walk(v, n.Comment)
