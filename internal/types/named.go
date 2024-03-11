@@ -4,7 +4,6 @@ package types
 type Named struct {
 	obj        *TypeName      // corresponding declared object
 	underlying Type           // possibly a *Named during setup; never a *Named once set up completely
-	tparams    *TypeParamList // type parameters, or nil
 	targs      *TypeList      // type arguments (after instantiation), or nil
 
 	methods []*Func // methods declared for this type (not the method set of this type); signatures are type-checked lazily
@@ -54,13 +53,6 @@ func (t *Named) AddMethod(m *Func) {
 func (t *Named) Underlying() Type { return t.underlying }
 
 func (t *Named) String() string { return TypeString(t, nil) }
-
-// TypeParams returns the type parameters of the named type t, or nil.
-// The result is non-nil for an (originally) generic type even if it is instantiated.
-func (t *Named) TypeParams() *TypeParamList {
-	return t.tparams
-	//return t.resolve(nil).tparams
-}
 
 // SetTypeParams sets the type parameters of the named type t.
 // t must not have type arguments.

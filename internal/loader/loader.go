@@ -182,7 +182,6 @@ func (p *_Loader) Import(pkgpath string) (*types.Package, error) {
 		pkg.Pkg = types.Unsafe
 		pkg.Info = &types.Info{
 			Types:      make(map[ast.Expr]types.TypeAndValue),
-			Instances:  make(map[*ast.Ident]types.Instance),
 			Defs:       make(map[*ast.Ident]types.Object),
 			Uses:       make(map[*ast.Ident]types.Object),
 			Implicits:  make(map[ast.Node]types.Object),
@@ -264,7 +263,6 @@ func (p *_Loader) Import(pkgpath string) (*types.Package, error) {
 
 	pkg.Info = &types.Info{
 		Types:      make(map[ast.Expr]types.TypeAndValue),
-		Instances:  make(map[*ast.Ident]types.Instance),
 		Defs:       make(map[*ast.Ident]types.Object),
 		Uses:       make(map[*ast.Ident]types.Object),
 		Implicits:  make(map[ast.Node]types.Object),

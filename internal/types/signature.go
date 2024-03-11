@@ -7,13 +7,11 @@ type Signature struct {
 	// and store it in the Func Object) because when type-checking a function
 	// literal we call the general type checker which returns a general Type.
 	// We then unpack the *Signature and use the scope for the literal body.
-	rparams  *TypeParamList // receiver type parameters from left to right, or nil
-	tparams  *TypeParamList // type parameters from left to right, or nil
-	scope    *Scope         // function scope, present for package-local signatures
-	recv     *Var           // nil if not a method
-	params   *Tuple         // (incoming) parameters from left to right; or nil
-	results  *Tuple         // (outgoing) results from left to right; or nil
-	variadic bool           // true if the last parameter's type is of the form ...T (or string, for append built-in only)
+	scope    *Scope // function scope, present for package-local signatures
+	recv     *Var   // nil if not a method
+	params   *Tuple // (incoming) parameters from left to right; or nil
+	results  *Tuple // (outgoing) results from left to right; or nil
+	variadic bool   // true if the last parameter's type is of the form ...T (or string, for append built-in only)
 }
 
 // NewSignature returns a new function type for the given receiver, parameters,
@@ -30,38 +28,7 @@ func NewSignature(recv *Var, params, results *Tuple, variadic bool) *Signature {
 			panic("types.NewSignature: variadic parameter must be of unnamed slice type")
 		}
 	}
-	return &Signature{nil, nil, nil, recv, params, results, variadic}
-}
-
-// NewSignatureType creates a new function type for the given receiver,
-// receiver type parameters, type parameters, parameters, and results. If
-// variadic is set, params must hold at least one parameter and the last
-// parameter must be of unnamed slice type. If recv is non-nil, typeParams must
-// be empty. If recvTypeParams is non-empty, recv must be non-nil.
-func NewSignatureType(recv *Var, recvTypeParams, typeParams []*TypeParam, params, results *Tuple, variadic bool) *Signature {
-	if variadic {
-		n := params.Len()
-		if n == 0 {
-			panic("variadic function must have at least one parameter")
-		}
-		if _, ok := params.At(n - 1).typ.(*Slice); !ok {
-			panic("variadic parameter must be of unnamed slice type")
-		}
-	}
-	sig := &Signature{recv: recv, params: params, results: results, variadic: variadic}
-	if len(recvTypeParams) != 0 {
-		if recv == nil {
-			panic("function with receiver type parameters must have a receiver")
-		}
-		sig.rparams = bindTParams(recvTypeParams)
-	}
-	if len(typeParams) != 0 {
-		if recv != nil {
-			panic("function with type parameters cannot have a receiver")
-		}
-		sig.tparams = bindTParams(typeParams)
-	}
-	return sig
+	return &Signature{nil, recv, params, results, variadic}
 }
 
 // Recv returns the receiver of signature s (if a method), or nil if a
@@ -71,12 +38,6 @@ func NewSignatureType(recv *Var, recvTypeParams, typeParams []*TypeParam, params
 // as a *Named or an *Interface. Due to embedding, an interface may
 // contain methods whose receiver type is a different interface.
 func (s *Signature) Recv() *Var { return s.recv }
-
-// TypeParams returns the type parameters of signature s, or nil.
-func (s *Signature) TypeParams() *TypeParamList { return s.tparams }
-
-// RecvTypeParams returns the receiver type parameters of signature s, or nil.
-func (s *Signature) RecvTypeParams() *TypeParamList { return s.rparams }
 
 // Params returns the parameters of signature s, or nil.
 func (s *Signature) Params() *Tuple { return s.params }

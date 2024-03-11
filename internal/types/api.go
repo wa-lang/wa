@@ -51,15 +51,6 @@ func (err Error) Error() string {
 	return fmt.Sprintf("%s: %s", err.Fset.Position(err.Pos), err.Msg)
 }
 
-// An ArgumentError holds an error associated with an argument index.
-type ArgumentError struct {
-	Index int
-	Err   error
-}
-
-func (e *ArgumentError) Error() string { return e.Err.Error() }
-func (e *ArgumentError) Unwrap() error { return e.Err }
-
 // An Importer resolves import paths to Packages.
 //
 // CAUTION: This interface does not support the import of locally
@@ -101,10 +92,6 @@ type ImporterFrom interface {
 // A Config specifies the configuration for type checking.
 // The zero value for Config is a ready-to-use default configuration.
 type Config struct {
-	// Context is the context used for resolving global identifiers. If nil, the
-	// type checker will initialize this field with a newly created context.
-	Context *Context
-
 	// If IgnoreFuncBodies is set, function bodies are not
 	// type-checked.
 	IgnoreFuncBodies bool
@@ -158,20 +145,6 @@ type Info struct {
 	// only in the Defs map, and identifiers denoting packages in
 	// qualified identifiers are collected in the Uses map.
 	Types map[ast.Expr]TypeAndValue
-
-	// Instances maps identifiers denoting generic types or functions to their
-	// type arguments and instantiated type.
-	//
-	// For example, Instances will map the identifier for 'T' in the type
-	// instantiation T[int, string] to the type arguments [int, string] and
-	// resulting instantiated *Named type. Given a generic function
-	// func F[A any](A), Instances will map the identifier for 'F' in the call
-	// expression F(int(1)) to the inferred type arguments [int], and resulting
-	// instantiated *Signature.
-	//
-	// Invariant: Instantiating Uses[id].Type() with Instances[id].TypeArgs
-	// results in an equivalent of Instances[id].Type.
-	Instances map[*ast.Ident]Instance
 
 	// Defs maps identifiers to the objects they define (including
 	// package names, dots "." of dot-imports, and blank "_" identifiers).
@@ -328,15 +301,6 @@ func (tv TypeAndValue) Assignable() bool {
 // used on the rhs of a comma-ok assignment.
 func (tv TypeAndValue) HasOk() bool {
 	return tv.mode == commaok || tv.mode == mapindex
-}
-
-// Instance reports the type arguments and instantiated type for type and
-// function instantiations. For type instantiations, Type will be of dynamic
-// type *Named. For function instantiations, Type will be of dynamic type
-// *Signature.
-type Instance struct {
-	TypeArgs *TypeList
-	Type     Type
 }
 
 // An Initializer describes a package-level variable, or a list of variables in case

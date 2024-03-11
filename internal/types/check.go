@@ -340,40 +340,6 @@ func (check *Checker) recordCommaOkTypes(x ast.Expr, a [2]Type) {
 	}
 }
 
-// recordInstance records instantiation information into check.Info, if the
-// Instances map is non-nil. The given expr must be an ident, selector, or
-// index (list) expr with ident or selector operand.
-//
-// TODO(rfindley): the expr parameter is fragile. See if we can access the
-// instantiated identifier in some other way.
-func (check *Checker) recordInstance(expr ast.Expr, targs []Type, typ Type) {
-	ident := instantiatedIdent(expr)
-	assert(ident != nil)
-	assert(typ != nil)
-	if m := check.Instances; m != nil {
-		m[ident] = Instance{newTypeList(targs), typ}
-	}
-}
-
-func instantiatedIdent(expr ast.Expr) *ast.Ident {
-	var selOrIdent ast.Expr
-	switch e := expr.(type) {
-	case *ast.IndexExpr:
-		selOrIdent = e.X
-	case *ast.IndexListExpr:
-		selOrIdent = e.X
-	case *ast.SelectorExpr, *ast.Ident:
-		selOrIdent = e
-	}
-	switch x := selOrIdent.(type) {
-	case *ast.Ident:
-		return x
-	case *ast.SelectorExpr:
-		return x.Sel
-	}
-	panic("instantiated ident not found")
-}
-
 func (check *Checker) recordDef(id *ast.Ident, obj Object) {
 	assert(id != nil)
 	if m := check.Defs; m != nil {
