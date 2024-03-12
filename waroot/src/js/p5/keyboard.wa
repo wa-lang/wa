@@ -1,0 +1,57 @@
+// 版权 @2024 凹语言 作者。保留所有权利。
+
+global (
+	KeyIsPressed :bool = false
+	Key          :int
+	KeyCode      :int
+)
+
+// 特殊键盘按键
+const (
+	ENTER = keyCode_Enter // 回车
+	TAB   = keyCode_Tab   // Tab
+	SPACE = keyCode_Space // 空格
+
+	ARROW_UP    = keyCode_ArrowUp    // 方向键: 上
+	ARROW_DOWN  = keyCode_ArrowDown  // 方向键: 下
+	ARROW_LEFT  = keyCode_ArrowLeft  // 方向键: 左
+	ARROW_RIGHT = keyCode_ArrowRight // 方向键: 右
+
+	ESCAPE    = keyCode_Escape    // Esc
+	BACKSPACE = keyCode_Backspace // 回退
+	DELETE    = keyCode_Delete    // 删除
+	SHIFT     = keyCode_Shift     // Shift
+	CONTROL   = keyCode_Control   // Ctrl
+	OPTION    = keyCode_Option    // Option
+	ALT       = keyCode_Alt       // Alt
+)
+
+// 保持定义一致
+const keyCode_Enter = 13
+const keyCode_Tab = 9
+const keyCode_Space = 32
+const keyCode_ArrowUp = 1004
+const keyCode_ArrowDown = 1005
+const keyCode_ArrowLeft = 1006
+const keyCode_ArrowRight = 1007
+const keyCode_Escape = 1008
+const keyCode_Backspace = 1009
+const keyCode_Delete = 1010
+const keyCode_Shift = 1011
+const keyCode_Control = 1012
+const keyCode_Option = 1013
+const keyCode_Alt = 1014
+
+#wa:export p5js_onKeyDown
+func onKeyDown(keyCode: int) {
+	KeyIsPressed = true
+	KeyCode = keyCode
+	Key = keyCode
+}
+
+#wa:export p5js_onKeyUp
+func onKeyUp() {
+	KeyIsPressed = false
+	KeyCode = 0
+	Key = 0
+}

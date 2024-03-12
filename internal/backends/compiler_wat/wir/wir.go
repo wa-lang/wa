@@ -8,11 +8,9 @@ func SetCurrentModule(m *Module) { currentModule = m }
 
 var currentModule *Module
 
-/*
-*************************************
+/**************************************
 Function:
-*************************************
-*/
+**************************************/
 type Function struct {
 	InternalName     string
 	ExternalName     string
@@ -25,11 +23,9 @@ type Function struct {
 	Insts []wat.Inst
 }
 
-/*
-*************************************
+/**************************************
 Global:
-*************************************
-*/
+**************************************/
 type Global struct {
 	Name     string
 	Name_exp string
@@ -46,11 +42,9 @@ const (
 	ValueKindConst
 )
 
-/*
-*************************************
+/**************************************
 Value:
-*************************************
-*/
+**************************************/
 type Value interface {
 	Name() string
 	Kind() ValueKind
@@ -68,11 +62,9 @@ type Value interface {
 	emitEq(r Value) ([]wat.Inst, bool)
 }
 
-/*
-*************************************
+/**************************************
 ValueType:
-*************************************
-*/
+**************************************/
 type ValueType interface {
 	Named() string
 	Size() int
@@ -96,11 +88,9 @@ type ValueType interface {
 	setOnComp(c int)
 }
 
-/*
-*************************************
+/**************************************
 Method:
-*************************************
-*/
+**************************************/
 type Method struct {
 	Sig        FnSig
 	Name       string

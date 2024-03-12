@@ -96,15 +96,6 @@ type Config struct {
 	// type-checked.
 	IgnoreFuncBodies bool
 
-	// If FakeImportC is set, `import "C"` (for packages requiring Cgo)
-	// declares an empty "C" package and errors are omitted for qualified
-	// identifiers referring to package C (which won't find an object).
-	// This feature is intended for the standard library cmd/api tool.
-	//
-	// Caution: Effects may be unpredictable due to follow-on errors.
-	//          Do not use casually!
-	FakeImportC bool
-
 	// If Error != nil, it is called with each error found
 	// during type checking; err has dynamic type Error.
 	// Secondary errors (for instance, to enumerate all types
@@ -136,13 +127,6 @@ type Config struct {
 // If the package has type errors, the collected information may
 // be incomplete.
 type Info struct {
-	// 泛型类型
-	GenericTypes map[ast.Expr]TypeAndValue
-	// 泛型函数定义
-	GenericDefs map[*ast.Ident]Object
-	// 泛型函数使用
-	GenericUses map[*ast.Ident]Object
-
 	// Types maps expressions to their types, and for constant
 	// expressions, also their values. Invalid expressions are
 	// omitted.

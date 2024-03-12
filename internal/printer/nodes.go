@@ -439,9 +439,6 @@ func isTypeElem(x ast.Expr) bool {
 }
 
 func (p *printer) signature(sig *ast.FuncType) {
-	if sig.TypeParams != nil {
-		p.parameters(sig.TypeParams, funcTParam)
-	}
 	if sig.Params != nil {
 		if sig.Params.Opening != token.NoPos {
 			p.parameters(sig.Params, funcParam)
@@ -1569,9 +1566,6 @@ func (p *printer) spec(spec ast.Spec, n int, doIndent bool) {
 	case *ast.TypeSpec:
 		p.setComment(s.Doc)
 		p.expr(s.Name)
-		if s.TypeParams != nil {
-			p.parameters(s.TypeParams, typeTParam)
-		}
 		if n == 1 {
 			p.print(blank)
 		} else {

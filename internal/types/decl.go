@@ -19,35 +19,6 @@ func (check *Checker) reportAltDecl(obj Object) {
 	}
 }
 
-// 记录泛型类型
-func (check *Checker) declareGenericType(scope *Scope, id *ast.Ident, obj *TypeName, pos token.Pos) {
-	typ := obj.Node().(*ast.TypeSpec)
-	assert(typ.TypeParams != nil)
-
-	panic("TODO")
-}
-
-// 记录泛型函数
-func (check *Checker) declareGenericFunc(scope *Scope, id *ast.Ident, obj *Func, pos token.Pos) {
-	fn := obj.Node().(*ast.FuncDecl)
-	assert(fn.Type.TypeParams != nil)
-
-	if obj.Name() != "_" {
-		if alt := scope.Insert(obj); alt != nil {
-			check.errorf(obj.Pos(), "%s redeclared in this block", obj.Name())
-			check.reportAltDecl(alt)
-			return
-		}
-		obj.setScopePos(pos)
-	}
-	if id != nil {
-		// check.recordDef(id, obj)
-		if m := check.GenericDefs; m != nil {
-			m[id] = obj
-		}
-	}
-}
-
 func (check *Checker) declare(scope *Scope, id *ast.Ident, obj Object, pos token.Pos) {
 	// spec: "The blank identifier, represented by the underscore
 	// character _, may be used in a declaration like any other

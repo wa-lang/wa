@@ -170,7 +170,6 @@ type getter func(x *operand, i int)
 // If the returned getter is called at most once for a given operand index i
 // (including i == 0), that operand is guaranteed to cause only one call of
 // the incoming getter with that i.
-//
 func unpack(get getter, n int, allowCommaOk bool) (getter, int, bool) {
 	if n != 1 {
 		// zero or multiple values

@@ -3,6 +3,7 @@
 package appinit
 
 import (
+	"bytes"
 	"fmt"
 	"io/fs"
 	"os"
@@ -12,6 +13,7 @@ import (
 
 	"wa-lang.org/wa/internal/3rdparty/cli"
 	"wa-lang.org/wa/internal/app/appbase"
+	"wa-lang.org/wa/internal/format"
 	"wa-lang.org/wa/waroot"
 )
 
@@ -32,6 +34,10 @@ var CmdInit = &cli.Command{
 			Value:   "myapp",
 		},
 		&cli.BoolFlag{
+			Name:    "p5",
+			Usage:   "p5 example",
+		},
+		&cli.BoolFlag{
 			Name:    "update",
 			Aliases: []string{"u"},
 			Usage:   "update example",
@@ -39,7 +45,7 @@ var CmdInit = &cli.Command{
 	},
 
 	Action: func(c *cli.Context) error {
-		err := InitApp(c.String("name"), c.String("pkgpath"), c.Bool("update"))
+		err := InitApp(c.String("name"), c.String("pkgpath"), c.Bool("p5"), c.Bool("update"))
 		if err != nil {
 			fmt.Println(err)
 			os.Exit(1)
@@ -48,7 +54,7 @@ var CmdInit = &cli.Command{
 	},
 }
 
-func InitApp(name, pkgpath string, update bool) error {
+func InitApp(name, pkgpath string, isP5App, update bool) error {
 	if name == "" {
 		return fmt.Errorf("init failed: <%s> is empty", name)
 	}
@@ -70,10 +76,12 @@ func InitApp(name, pkgpath string, update bool) error {
 		Name    string
 		Pkgpath string
 		Year    int
+		IsP5App bool
 	}{
 		Name:    name,
 		Pkgpath: pkgpath,
 		Year:    time.Now().Year(),
+		IsP5App: isP5App,
 	}
 
 	appFS := waroot.GetExampleAppFS()
@@ -104,11 +112,20 @@ func InitApp(name, pkgpath string, update bool) error {
 		}
 		defer f.Close()
 
-		err = tmpl.Execute(f, &info)
+		var buf bytes.Buffer
+		err = tmpl.Execute(&buf, &info)
 		if err != nil {
 			return err
 		}
+		
+		code, _, err := format.File(nil, path, buf.Bytes())
+		if err != nil {
+			code = buf.Bytes()
+		}
 
+		if _, err := f.Write(code); err != nil {
+			return err
+		}
 		return nil
 	})
 	if err != nil {

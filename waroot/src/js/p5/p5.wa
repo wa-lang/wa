@@ -4,17 +4,24 @@
 // https://developer.mozilla.org/en-US/docs/Web/API/Canvas_API/Tutorial/Drawing_shapes
 
 import (
+	"image"
+	"image/color"
 	"js"
 	"js/canvas"
 )
 
 global (
-	p5App       :js.ExtObj
-	p5Canvas    :canvas.Canvas
-	p5CanvasCtx :canvas.Context2D
+	p5App          :js.ExtObj
+	p5Canvas       :canvas.Canvas
+	p5CanvasCtx    :canvas.Context2D
+	p5CanvasBuffer :*image.RGBA
 
-	p5CanvasWidth  :int
-	p5CanvasHeight :int
+	p5BackgroundColor :color.RGBA = color.RGBAFrom(220, 220, 220, 0xff) // 背景色
+	p5StrokeColor     :color.RGBA = color.RGBAFrom(0, 0, 0, 0xff)       // 画笔色
+	p5FillColor       :color.RGBA = color.RGBAFrom(0, 0, 0, 0xff)       // 填充色
+
+	_NoFill   :bool = false // 不填充
+	_NoStroke :bool = false // 无边框
 )
 
 func init {
@@ -29,75 +36,83 @@ func init {
 
 // 创建/调整画布大小
 func CreateCanvas(width, height: int) {
-	p5CanvasWidth = width
-	p5CanvasHeight = height
+	Width = width
+	Height = height
+
 	p5Canvas.SetWidthHeight(i32(width), i32(height))
+	p5CanvasBuffer = image.NewRGBA(width, height)
 }
 
 // 设置画布背景
 func Background(red, green, blue: int) {
-	p5CanvasCtx.SetFillStyle(buildFillStyle(red, green, blue))
-	p5CanvasCtx.FillRect(0, 0, f32(p5CanvasWidth), f32(p5CanvasHeight))
+	p5BackgroundColor = color.RGBAFrom(
+		u8(red), u8(green), u8(blue),
+		0xff,
+	)
+
+	for y := 0; y < Height; y++ {
+		for x := 0; x < Width; x++ {
+			p5CanvasBuffer.SetRGBA(x, y, p5BackgroundColor)
+		}
+	}
 }
 
 // 设置画笔颜色
-func Stroke(v1, v2, v3: int) {
-	//
+func Stroke(red, green, blue: int) {
+	p5StrokeColor = color.RGBAFrom(
+		u8(red), u8(green), u8(blue),
+		0xff,
+	)
 }
 
 // 设置填充颜色
-func Fill(v1, v2, v3: int) {
-	//
+func Fill(red, green, blue: int) {
+	p5FillColor = color.RGBAFrom(
+		u8(red), u8(green), u8(blue),
+		0xff,
+	)
 }
 
 // 绘制一个点
 func Point(x, y: int) {
-	//
+	p5CanvasBuffer.SetRGBA(x, y, p5StrokeColor)
 }
 
 // 绘制线段
 func Line(x1, y1, x2, y2: int) {
-	//
-}
-
-// 绘制四边形
-func Quad(x1, y1, x2, y2, x3, y3, x4, y4: int) {
-	//
+	p5DrawLine(p5CanvasBuffer, x1, y1, x2, y2, p5StrokeColor)
 }
 
 // 绘制矩形
 func Rect(x, y, w, h: int) {
-	//
+	p5DrawLine(p5CanvasBuffer, x, y, x+w-1, y, p5StrokeColor)
+	p5DrawLine(p5CanvasBuffer, x+w-1, y, x+w-1, y+h-1, p5StrokeColor)
+	p5DrawLine(p5CanvasBuffer, x+w-1, y+h-1, x, y+h-1, p5StrokeColor)
+	p5DrawLine(p5CanvasBuffer, x, y+h-1, x, y, p5StrokeColor)
+
+	// tod: fill
+}
+
+// 绘制四边形
+func Quad(x1, y1, x2, y2, x3, y3, x4, y4: int) {
+	p5DrawLine(p5CanvasBuffer, x1, y1, x2, y2, p5StrokeColor)
+	p5DrawLine(p5CanvasBuffer, x2, y2, x3, y3, p5StrokeColor)
+	p5DrawLine(p5CanvasBuffer, x3, y3, x4, y4, p5StrokeColor)
+	p5DrawLine(p5CanvasBuffer, x4, y4, x1, y1, p5StrokeColor)
+
+	// todo: fill
 }
 
 // 绘制三角形
-func triangle(x1, y1, x2, y2, x3, y3: int) {
-	//
-}
+func Triangle(x1, y1, x2, y2, x3, y3: int) {
+	p5DrawLine(p5CanvasBuffer, x1, y1, x2, y2, p5StrokeColor)
+	p5DrawLine(p5CanvasBuffer, x2, y2, x3, y3, p5StrokeColor)
+	p5DrawLine(p5CanvasBuffer, x3, y3, x1, y1, p5StrokeColor)
 
-// 绘制扇形
-func Arc(x, y, w, h, start, stop: int) {
-	//
+	// todo: fill
 }
 
 // 绘制椭圆
 func Ellipse(x, y, w, h: int) {
-	const Pi = 3.1415926
-	p5CanvasCtx.BeginPath()
-	p5CanvasCtx.Ellipse(
-		f32(x),
-		f32(y),
-		f32(w)/2, // radiusX
-		f32(h)/2, // radiusY
-		0,        // rotation
-		0,        // startAngle
-		2*Pi,     // endAngle
-		false,    // anticlockwise
-	)
-	p5CanvasCtx.Stroke()
-}
-
-// 绘制贝塞尔曲线
-func Bezier(x1, y1, x2, y2, x3, y3, x4, y4: int) {
-	//
+	p5DrawEllipse(p5CanvasBuffer, x-(w/2), y-(h/2), w, h, p5StrokeColor)
 }

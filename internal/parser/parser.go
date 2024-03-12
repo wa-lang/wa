@@ -1014,13 +1014,10 @@ func (p *parser) parseFuncType() (*ast.FuncType, *ast.Scope) {
 
 	pos := p.expect(token.FUNC)
 	scope := ast.NewScope(p.topScope) // function scope
-
-	tparams := p.parseTypeParams(scope)
 	params, results, arrowPos := p.parseSignature(scope)
 
 	return &ast.FuncType{
 		Func:       pos,
-		TypeParams: tparams,
 		Params:     params,
 		ArrowPos:   arrowPos,
 		Results:    results,
@@ -2543,19 +2540,12 @@ func (p *parser) parseTypeSpec(doc *ast.CommentGroup, _ token.Token, _ int) ast.
 	// containing block.
 	// (Global identifiers are resolved in a separate phase after parsing.)
 	spec := &ast.TypeSpec{Doc: doc, Name: ident}
-	spec.TypeParams = p.parseTypeParams(p.topScope)
 	p.declare(spec, nil, p.topScope, ast.Typ, ident)
 	if p.tok == token.COLON {
 		spec.ColonPos = p.pos
 		p.next()
 	}
 	spec.Type = p.parseType()
-
-	if _, ok := spec.Type.(*ast.StructType); !ok {
-		if spec.TypeParams != nil {
-			p.error(spec.TypeParams.Opening, "type params only support struct type")
-		}
-	}
 
 	p.expectSemi() // call before accessing p.linecomment
 	spec.Comment = p.lineComment
@@ -2635,12 +2625,6 @@ func (p *parser) parseFuncDecl() *ast.FuncDecl {
 		}
 	}
 
-	// 泛型函数只支持全局函数, 不支持方法
-	var tparams *ast.FieldList
-	if recv != nil {
-		tparams = p.parseTypeParams(scope)
-	}
-
 	params, results, arrowPos := p.parseSignature(scope)
 
 	var body *ast.BlockStmt
@@ -2654,11 +2638,10 @@ func (p *parser) parseFuncDecl() *ast.FuncDecl {
 		Recv: recv,
 		Name: ident,
 		Type: &ast.FuncType{
-			Func:       pos,
-			TypeParams: tparams,
-			Params:     params,
-			ArrowPos:   arrowPos,
-			Results:    results,
+			Func:     pos,
+			Params:   params,
+			ArrowPos: arrowPos,
+			Results:  results,
 		},
 		Body: body,
 	}

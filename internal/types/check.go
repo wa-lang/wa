@@ -25,10 +25,9 @@ const (
 // Strict mode are Go 1 compliant, but not all Go 1 programs
 // will pass in Strict mode. The additional rules are:
 //
-// - A type assertion x.(T) where T is an interface type
-//   is invalid if any (statically known) method that exists
-//   for both x and T have different signatures.
-//
+//   - A type assertion x.(T) where T is an interface type
+//     is invalid if any (statically known) method that exists
+//     for both x and T have different signatures.
 const strict = false
 
 // exprInfo stores information about an untyped expression.
