@@ -201,7 +201,7 @@ func (v *aBasic) Bin() (b []byte) {
 		b[0] = byte(si & 0xFF)
 		b[1] = byte((si >> 8) & 0xFF)
 
-	case *U32:
+	case *U32, *Rune:
 		b = make([]byte, 4)
 		i, _ := strconv.ParseUint(v.Name(), 0, 32)
 		si := uint32(i)
@@ -268,7 +268,7 @@ func (v *aBasic) Bin() (b []byte) {
 		b[7] = byte((si >> 56) & 0xFF)
 
 	default:
-		panic("todo")
+		logger.Fatalf("todo: %T", v.Type())
 	}
 
 	return

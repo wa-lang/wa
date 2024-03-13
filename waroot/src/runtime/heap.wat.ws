@@ -247,36 +247,3 @@
 	local.get $l
 	i32.const 0
 )
-
-(func $runtime.i32_load (export "runtime.i32_load") (param $addr i32) (result i32)
-	local.get $addr
-	i32.load
-)
-
-(func $runtime.i32_store (export "runtime.i32_store") (param $addr i32) (param $v i32)
-	local.get $addr
-	local.get $v
-	i32.store
-)
-
-(func $runtime.f32_load (export "runtime.f32_load") (param $addr i32) (result f32)
-	local.get $addr
-	f32.load
-)
-
-(func $runtime.f32_store (export "runtime.f32_store") (param $addr i32) (param $v f32)
-	local.get $addr
-	local.get $v
-	f32.store
-)
-
-(func $runtime.f64_load (export "runtime.f64_load") (param $addr i32) (result f64)
-	local.get $addr
-	f64.load
-)
-
-(func $runtime.f64_store (export "runtime.f64_store") (param $addr i32) (param $v f64)
-	local.get $addr
-	local.get $v
-	f64.store
-)

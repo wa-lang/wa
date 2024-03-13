@@ -406,7 +406,7 @@ func (p *Compiler) globalsForJsBinding() []JSGlobal {
 			logger.Fatalf("Exported global: %s should be *T.", g.Name)
 		}
 		switch typ := ref_type.Base.(type) {
-		case *wir.U8, *wir.U16, *wir.I32, *wir.U32, *wir.I64, *wir.U64, *wir.Bool, *wir.Rune, *wir.String:
+		case *wir.U8, *wir.U16, *wir.U32, *wir.I32, *wir.F32, *wir.F64, *wir.Bool, *wir.Rune, *wir.String:
 			name := stripNamePrefix(g.Name_exp)
 			tp := typ.Named()
 			globals = append(globals, JSGlobal{Name: name, Type: tp})
@@ -432,6 +432,8 @@ func (p *Compiler) funcsForJSBinding() []JSFunc {
 			ExportName: f.ExportName,
 		}
 
+		exportable := true
+
 		// 参数名称列表
 		var sb strings.Builder
 		for i, p := range f.Params {
@@ -449,7 +451,7 @@ func (p *Compiler) funcsForJSBinding() []JSFunc {
 			for i, p := range f.Params {
 				name := p.Name()
 				switch pt := p.Type().(type) {
-				case *wir.U8, *wir.U16, *wir.I32, *wir.U32, *wir.I64, *wir.U64, *wir.F32, *wir.F64:
+				case *wir.U8, *wir.U16, *wir.U32, *wir.I32, *wir.F32, *wir.F64:
 					sb.WriteString(fmt.Sprintf("params.push(%s);\n", name))
 
 				case *wir.Bool:
@@ -471,6 +473,7 @@ func (p *Compiler) funcsForJSBinding() []JSFunc {
 					}
 
 				default:
+					exportable = false
 				}
 			}
 			fn.PreCall = sb.String()
@@ -483,7 +486,7 @@ func (p *Compiler) funcsForJSBinding() []JSFunc {
 			var sbr strings.Builder
 			for i, r := range f.Results {
 				switch rt := r.(type) {
-				case *wir.U8, *wir.U16, *wir.I32, *wir.U32, *wir.I64, *wir.U64, *wir.F32, *wir.F64:
+				case *wir.U8, *wir.U16, *wir.U32, *wir.I32, *wir.F32, *wir.F64:
 					sb.WriteString(fmt.Sprintf("let r%d = this._mem_util.extract_number(res);\n", i))
 
 				case *wir.Bool:
@@ -501,6 +504,7 @@ func (p *Compiler) funcsForJSBinding() []JSFunc {
 					}
 
 				default:
+					exportable = false
 				}
 
 				if i > 0 {
@@ -517,8 +521,9 @@ func (p *Compiler) funcsForJSBinding() []JSFunc {
 			}
 		}
 
-		funcs = append(funcs, fn)
-
+		if exportable {
+			funcs = append(funcs, fn)
+		}
 	}
 	return funcs
 }
