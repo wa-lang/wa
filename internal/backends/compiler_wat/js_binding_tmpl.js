@@ -14,6 +14,11 @@ class WaApp {
       mem: () => { return this._wasm_inst.exports.memory; },
       mem_view: (addr, len) => { return new DataView(this._mem_util.mem().buffer, addr, len); },
       mem_array_u8: (addr, len) => { return new Uint8Array(this._mem_util.mem().buffer, addr, len); },
+      mem_array_u16: (addr, len) => { return new Uint16Array(this._mem_util.mem().buffer, addr, len); },
+      mem_array_u32: (addr, len) => { return new Uint32Array(this._mem_util.mem().buffer, addr, len); },
+      mem_array_i32: (addr, len) => { return new Int32Array(this._mem_util.mem().buffer, addr, len); },
+      mem_array_f32: (addr, len) => { return new Float32Array(this._mem_util.mem().buffer, addr, len); },
+      mem_array_f64: (addr, len) => { return new Float64Array(this._mem_util.mem().buffer, addr, len); },
       get_string: (d, l) => { return new TextDecoder("utf-8").decode(this._mem_util.mem_view(d, l)); },
       set_string: (s) => {
         const bytes = new TextEncoder("utf-8").encode(s);
@@ -34,26 +39,28 @@ class WaApp {
       },
       block_release: (addr) => { this._wasm_inst.exports["runtime.Block.Release"](addr); },
       //基本类型直接读写：
-      bool_load: (addr) => { /*Todo*/ },
-      bool_store: (addr, v) => { /*Todo*/ },
-      u8_load: (addr) => { /*Todo*/ },
-      u8_store: (addr, v) => { /*Todo*/ },
-      u16_load: (addr) => { /*Todo*/ },
-      u16_store: (addr, v) => { /*Todo*/ },
-      u32_load: (addr) => { /*Todo*/ },
-      u32_store: (addr, v) => { /*Todo*/ },
-      i32_load: (addr) => { return this._wasm_inst.exports["runtime.i32_load"](addr); },
-      i32_store: (addr, v) => { this._wasm_inst.exports["runtime.i32_store"](addr, v); },
-      rune_load: (addr) => { /*Todo*/ },
-      rune_store: (addr, v) => { /*Todo*/ },
-      u64_load: (addr) => { /*Todo*/ },
-      u64_store: (addr, v) => { /*Todo*/ },
-      i64_load: (addr) => { /*Todo*/ },
-      i64_store: (addr, v) => { /*Todo*/ },
-      f32_load: (addr) => { return this._wasm_inst.exports["runtime.f32_load"](addr); },
-      f32_store: (addr, v) => { this._wasm_inst.exports["runtime.f32_store"](addr, v); },
-      f64_load: (addr) => { return this._wasm_inst.exports["runtime.f64_load"](addr); },
-      f64_store: (addr, v) => { this._wasm_inst.exports["runtime.f64_store"](addr, v); },
+      bool_load: (addr) => { return this._mem_util.mem_array_u8(addr, 1)[0] != 0; },
+      bool_store: (addr, v) => {
+        if (v) {
+          this._mem_util.mem_array_u8(addr, 1)[0] = 1;
+        } else {
+          this._mem_util.mem_array_u8(addr, 1)[0] = 0;
+        }
+      },
+      u8_load: (addr) => { return this._mem_util.mem_array_u8(addr, 1)[0]; },
+      u8_store: (addr, v) => { this._mem_util.mem_array_u8(addr, 1)[0] = v; },
+      u16_load: (addr) => { return this._mem_util.mem_array_u16(addr, 1)[0]; },
+      u16_store: (addr, v) => { this._mem_util.mem_array_u16(addr, 1)[0] = v; },
+      u32_load: (addr) => { return this._mem_util.mem_array_u32(addr, 1)[0]; },
+      u32_store: (addr, v) => { this._mem_util.mem_array_u32(addr, 1)[0] = v; },
+      i32_load: (addr) => { return this._mem_util.mem_array_i32(addr, 1)[0]; },
+      i32_store: (addr, v) => { this._mem_util.mem_array_i32(addr, 1)[0] = v; },
+      rune_load: (addr) => { return String.fromCodePoint(this._mem_util.mem_array_u32(addr, 1)[0]); },
+      rune_store: (addr, v) => { this._mem_util.mem_array_u32(addr, 1)[0] = v.codePointAt(0); },
+      f32_load: (addr) => { return this._mem_util.mem_array_f32(addr, 1)[0]; },
+      f32_store: (addr, v) => { this._mem_util.mem_array_f32(addr, 1)[0] = v; },
+      f64_load: (addr) => { return this._mem_util.mem_array_f64(addr, 1)[0]; },
+      f64_store: (addr, v) => { this._mem_util.mem_array_f64(addr, 1)[0] = v; },
       string_load: (addr) => {
         const d = this._mem_util.i32_load(addr + 4);
         const l = this._mem_util.i32_load(addr + 8);
@@ -88,7 +95,12 @@ class WaApp {
   _createSyscall = () => {
     return {
       print_bool: (b) => { this._wa_print_buf += Boolean(b).toString(); },
-      print_u32: (i) => { this._wa_print_buf += i; },
+      print_u32: (i) => {
+        if (i < 0) {
+          i += 4294967296;
+        }
+        this._wa_print_buf += i;
+      },
       print_i32: (i) => { this._wa_print_buf += i },
       print_u64: (i) => { this._wa_print_buf += i },
       print_u64: (i) => { this._wa_print_buf += i },
