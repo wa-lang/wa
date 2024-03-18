@@ -22,7 +22,6 @@ import (
 	"unicode"
 
 	"wa-lang.org/wa/internal/ast"
-	"wa-lang.org/wa/internal/ast/typeparams"
 	"wa-lang.org/wa/internal/scanner"
 	"wa-lang.org/wa/internal/token"
 )
@@ -848,7 +847,7 @@ func (p *parser) parseParameterList(scope *ast.Scope, ellipsisOk bool) (params [
 			colonPos = p.pos
 			p.next()
 		} else {
-			if p.tok != token.RPAREN && p.tok != token.RBRACK {
+			if p.tok != token.RPAREN {
 				p.expect(token.COLON)
 			}
 		}
@@ -942,33 +941,6 @@ func (p *parser) parseResult(scope *ast.Scope) *ast.FieldList {
 	return nil
 }
 
-func (p *parser) parseTypeParams(scope *ast.Scope) (tparams *ast.FieldList) {
-	if p.trace {
-		defer un(trace(p, "TypeParams"))
-	}
-
-	// 数组和切片歧义, 必须加 ':' 分隔
-	// type byteReplacer :[256]byte
-	// type byteReplacer :[]byte
-
-	if p.tok != token.LBRACK {
-		return nil
-	}
-
-	lparen := p.expect(token.LBRACK)
-
-	if p.tok == token.RBRACK {
-		p.next()
-		return nil
-	}
-
-	params := p.parseParameterList(scope, false)
-	rparen := p.expect(token.RBRACK)
-
-	tparams = &ast.FieldList{Opening: lparen, List: params, Closing: rparen}
-	return
-}
-
 func (p *parser) parseSignature(scope *ast.Scope) (params, results *ast.FieldList, arrowPos token.Pos) {
 	if p.trace {
 		defer un(trace(p, "Signature"))
@@ -1017,10 +989,10 @@ func (p *parser) parseFuncType() (*ast.FuncType, *ast.Scope) {
 	params, results, arrowPos := p.parseSignature(scope)
 
 	return &ast.FuncType{
-		Func:       pos,
-		Params:     params,
-		ArrowPos:   arrowPos,
-		Results:    results,
+		Func:     pos,
+		Params:   params,
+		ArrowPos: arrowPos,
+		Results:  results,
 	}, scope
 }
 
@@ -1093,18 +1065,8 @@ func (p *parser) parseMapType() *ast.MapType {
 	pos := p.expect(token.MAP)
 	p.expect(token.LBRACK)
 	key := p.parseType()
-
-	var value ast.Expr
-	if p.tok == token.COMMA {
-		// map[KeyType, ValueType]
-		p.expect(token.COMMA)
-		value = p.parseType()
-		p.expect(token.RBRACK)
-	} else {
-		// map[KeyType]ValueType
-		p.expect(token.RBRACK)
-		value = p.parseType()
-	}
+	p.expect(token.RBRACK)
+	value := p.parseType()
 
 	return &ast.MapType{Map: pos, Key: key, Value: value}
 }
@@ -1113,11 +1075,7 @@ func (p *parser) parseMapType() *ast.MapType {
 func (p *parser) tryIdentOrType() ast.Expr {
 	switch p.tok {
 	case token.IDENT:
-		typ := p.parseTypeName()
-		if p.tok == token.LBRACK {
-			typ = p.parseTypeInstance(typ)
-		}
-		return typ
+		return p.parseTypeName()
 	case token.LBRACK:
 		return p.parseArrayType()
 	case token.STRUCT:
@@ -1149,38 +1107,6 @@ func (p *parser) tryType() ast.Expr {
 		p.resolve(typ)
 	}
 	return typ
-}
-
-func (p *parser) parseTypeInstance(typ ast.Expr) ast.Expr {
-	if p.trace {
-		defer un(trace(p, "TypeInstance"))
-	}
-
-	opening := p.expect(token.LBRACK)
-	p.exprLev++
-	var list []ast.Expr
-	for p.tok != token.RBRACK && p.tok != token.EOF {
-		list = append(list, p.parseType())
-		if !p.atComma("type argument list", token.RBRACK) {
-			break
-		}
-		p.next()
-	}
-	p.exprLev--
-
-	closing := p.expectClosing(token.RBRACK, "type argument list")
-
-	if len(list) == 0 {
-		p.errorExpected(closing, "type argument list")
-		return &ast.IndexExpr{
-			X:      typ,
-			Lbrack: opening,
-			Index:  &ast.BadExpr{From: opening + 1, To: closing},
-			Rbrack: closing,
-		}
-	}
-
-	return typeparams.PackIndexExpr(typ, opening, list, closing)
 }
 
 // ----------------------------------------------------------------------------
@@ -1325,59 +1251,28 @@ func (p *parser) parseTypeAssertion(x ast.Expr) ast.Expr {
 	return &ast.TypeAssertExpr{X: x, Type: typ, Lparen: lparen, Rparen: rparen}
 }
 
-func (p *parser) parseIndexOrSliceOrInstance(x ast.Expr) ast.Expr {
+func (p *parser) parseIndexOrSlice(x ast.Expr) ast.Expr {
 	if p.trace {
-		defer un(trace(p, "parseIndexOrSliceOrInstance"))
+		defer un(trace(p, "IndexOrSlice"))
 	}
-
-	lbrack := p.expect(token.LBRACK)
-	if p.tok == token.RBRACK {
-		// empty index, slice or index expressions are not permitted;
-		// accept them for parsing tolerance, but complain
-		p.errorExpected(p.pos, "operand")
-		rbrack := p.pos
-		p.next()
-		return &ast.IndexExpr{
-			X:      x,
-			Lbrack: lbrack,
-			Index:  &ast.BadExpr{From: rbrack, To: rbrack},
-			Rbrack: rbrack,
-		}
-	}
-	p.exprLev++
 
 	const N = 3 // change the 3 to 2 to disable 3-index slices
-	var args []ast.Expr
+	lbrack := p.expect(token.LBRACK)
+	p.exprLev++
 	var index [N]ast.Expr
 	var colons [N - 1]token.Pos
 	if p.tok != token.COLON {
-		// We can't know if we have an index expression or a type instantiation;
-		// so even if we see a (named) type we are not going to be in type context.
-		index[0] = p.parseRhsOrType()
+		index[0] = p.parseRhs()
 	}
 	ncolons := 0
-	switch p.tok {
-	case token.COLON:
-		// slice expression
-		for p.tok == token.COLON && ncolons < len(colons) {
-			colons[ncolons] = p.pos
-			ncolons++
-			p.next()
-			if p.tok != token.COLON && p.tok != token.RBRACK && p.tok != token.EOF {
-				index[ncolons] = p.parseRhs()
-			}
-		}
-	case token.COMMA:
-		// instance expression
-		args = append(args, index[0])
-		for p.tok == token.COMMA {
-			p.next()
-			if p.tok != token.RBRACK && p.tok != token.EOF {
-				args = append(args, p.parseType())
-			}
+	for p.tok == token.COLON && ncolons < len(colons) {
+		colons[ncolons] = p.pos
+		ncolons++
+		p.next()
+		if p.tok != token.COLON && p.tok != token.RBRACK && p.tok != token.EOF {
+			index[ncolons] = p.parseRhs()
 		}
 	}
-
 	p.exprLev--
 	rbrack := p.expect(token.RBRACK)
 
@@ -1400,13 +1295,7 @@ func (p *parser) parseIndexOrSliceOrInstance(x ast.Expr) ast.Expr {
 		return &ast.SliceExpr{X: x, Lbrack: lbrack, Low: index[0], High: index[1], Max: index[2], Slice3: slice3, Rbrack: rbrack}
 	}
 
-	if len(args) == 0 {
-		// index expression
-		return &ast.IndexExpr{X: x, Lbrack: lbrack, Index: index[0], Rbrack: rbrack}
-	}
-
-	// instance expression
-	return typeparams.PackIndexExpr(x, lbrack, args, rbrack)
+	return &ast.IndexExpr{X: x, Lbrack: lbrack, Index: index[0], Rbrack: rbrack}
 }
 
 func (p *parser) parseCallOrConversion(fun ast.Expr) *ast.CallExpr {
@@ -1651,7 +1540,7 @@ L:
 			if lhs {
 				p.resolve(x)
 			}
-			x = p.parseIndexOrSliceOrInstance(p.checkExpr(x))
+			x = p.parseIndexOrSlice(p.checkExpr(x))
 		case token.LPAREN:
 			if lhs {
 				p.resolve(x)
@@ -2546,7 +2435,6 @@ func (p *parser) parseTypeSpec(doc *ast.CommentGroup, _ token.Token, _ int) ast.
 		p.next()
 	}
 	spec.Type = p.parseType()
-
 	p.expectSemi() // call before accessing p.linecomment
 	spec.Comment = p.lineComment
 

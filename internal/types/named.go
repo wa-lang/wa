@@ -2,9 +2,9 @@ package types
 
 // A Named represents a named type.
 type Named struct {
-	obj        *TypeName      // corresponding declared object
-	underlying Type           // possibly a *Named during setup; never a *Named once set up completely
-	targs      *TypeList      // type arguments (after instantiation), or nil
+	obj        *TypeName // corresponding declared object
+	underlying Type      // possibly a *Named during setup; never a *Named once set up completely
+	targs      *TypeList // type arguments (after instantiation), or nil
 
 	methods []*Func // methods declared for this type (not the method set of this type); signatures are type-checked lazily
 }
@@ -53,14 +53,6 @@ func (t *Named) AddMethod(m *Func) {
 func (t *Named) Underlying() Type { return t.underlying }
 
 func (t *Named) String() string { return TypeString(t, nil) }
-
-// SetTypeParams sets the type parameters of the named type t.
-// t must not have type arguments.
-func (t *Named) SetTypeParams(tparams []*TypeParam) {
-	assert(t.targs.Len() == 0)
-	panic("todo")
-	//t.resolve(nil).tparams = bindTParams(tparams)
-}
 
 // TypeArgs returns the type arguments used to instantiate the named type t.
 func (t *Named) TypeArgs() *TypeList { return t.targs }
