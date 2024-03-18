@@ -4,9 +4,7 @@ package types
 type Named struct {
 	obj        *TypeName // corresponding declared object
 	underlying Type      // possibly a *Named during setup; never a *Named once set up completely
-	targs      *TypeList // type arguments (after instantiation), or nil
-
-	methods []*Func // methods declared for this type (not the method set of this type); signatures are type-checked lazily
+	methods    []*Func   // methods declared for this type (not the method set of this type); signatures are type-checked lazily
 }
 
 // NewNamed returns a new named type for the given type name, underlying type, and associated methods.
@@ -53,6 +51,3 @@ func (t *Named) AddMethod(m *Func) {
 func (t *Named) Underlying() Type { return t.underlying }
 
 func (t *Named) String() string { return TypeString(t, nil) }
-
-// TypeArgs returns the type arguments used to instantiate the named type t.
-func (t *Named) TypeArgs() *TypeList { return t.targs }
