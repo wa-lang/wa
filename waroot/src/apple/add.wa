@@ -8,3 +8,10 @@ func Inc(arg_Inc_a: int) => int {
 func IncF64(arg_IncF64_f: f64) => f64 {
 	return arg_IncF64_f + 1
 }
+
+type MyInt :int
+
+#wa:generic AddF64
+func MyInt.Add(a: int) {}
+
+func MyInt.AddF64(a: f64) {}

@@ -365,6 +365,32 @@ func (obj *Func) FullName() string {
 	return buf.String()
 }
 
+func (obj *Func) RecvTypeName() string {
+	fnNode, _ := obj.node.(*ast.FuncDecl)
+	if fnNode == nil {
+		return ""
+	}
+	if len(fnNode.Recv.List) != 1 {
+		return ""
+	}
+
+	thisType := fnNode.Recv.List[0].Type
+
+	if x, ok := thisType.(*ast.Ident); ok {
+		return x.Name
+	}
+
+	starExpr, _ := thisType.(*ast.StarExpr)
+	if starExpr == nil {
+		return ""
+	}
+	identExpr, _ := starExpr.X.(*ast.Ident)
+	if identExpr == nil {
+		return ""
+	}
+	return identExpr.Name
+}
+
 // Scope returns the scope of the function's body block.
 func (obj *Func) Scope() *Scope { return obj.typ.(*Signature).scope }
 

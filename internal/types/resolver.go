@@ -494,6 +494,23 @@ func (check *Checker) collectObjects() {
 	}
 }
 
+func (check *Checker) lookMethodFunc(recvTypeName, methodName string) *Func {
+	for obj := range check.objMap {
+		if fn, ok := obj.(*Func); ok {
+			if obj.Parent() != nil {
+				continue
+			}
+			if fn.RecvTypeName() != recvTypeName {
+				continue
+			}
+			if fn.name == methodName {
+				return fn
+			}
+		}
+	}
+	return nil
+}
+
 // 预处理函数重载
 func (check *Checker) processGenericFuncs() {
 	if check.conf.DisableGeneric {
@@ -504,6 +521,24 @@ func (check *Checker) processGenericFuncs() {
 		if fn, ok := obj.(*Func); ok {
 			assert(fn.generic == nil)
 			if info := astutil.ParseCommentInfo(fn.NodeDoc()); len(info.Generic) != 0 {
+				// method
+				if obj.Parent() == nil {
+					fnNode, _ := fn.node.(*ast.FuncDecl)
+					assert(fnNode != nil)
+					assert(fnNode.Recv != nil)
+					recvTypeName := fn.RecvTypeName()
+					for _, name := range info.Generic {
+						if xFn := check.lookMethodFunc(recvTypeName, name); xFn != nil {
+							fn.generic = append(fn.generic, xFn)
+						} else {
+							check.errorf(obj.Pos(), "%s generic %s method not found", obj.Name(), name)
+							continue
+						}
+					}
+					continue
+				}
+
+				// global function
 				for _, name := range info.Generic {
 					xObj := obj.Parent().Lookup(name)
 					if xObj == nil {
