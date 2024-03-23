@@ -120,6 +120,8 @@ type Config struct {
 	// If DisableUnusedImportCheck is set, packages are not checked
 	// for unused imports.
 	DisableUnusedImportCheck bool
+
+	DisableGeneric bool
 }
 
 // Info holds result type information for a type-checked package.

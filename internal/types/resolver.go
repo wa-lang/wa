@@ -12,6 +12,7 @@ import (
 	"unicode"
 
 	"wa-lang.org/wa/internal/ast"
+	"wa-lang.org/wa/internal/ast/astutil"
 	"wa-lang.org/wa/internal/constant"
 	"wa-lang.org/wa/internal/token"
 )
@@ -488,6 +489,34 @@ func (check *Checker) collectObjects() {
 			if base != nil {
 				f.hasPtrRecv = ptr
 				check.methods[base] = append(check.methods[base], f)
+			}
+		}
+	}
+}
+
+// 预处理函数重载
+func (check *Checker) processGenericFuncs() {
+	if check.conf.DisableGeneric {
+		return
+	}
+
+	for obj := range check.objMap {
+		if fn, ok := obj.(*Func); ok {
+			assert(fn.generic == nil)
+			if info := astutil.ParseCommentInfo(fn.NodeDoc()); len(info.Generic) != 0 {
+				for _, name := range info.Generic {
+					xObj := obj.Parent().Lookup(name)
+					if xObj == nil {
+						check.errorf(obj.Pos(), "%s generic %s not found", obj.Name(), name)
+						continue
+					}
+					if xFn, ok := xObj.(*Func); ok {
+						fn.generic = append(fn.generic, xFn)
+					} else {
+						check.errorf(obj.Pos(), "%s generic %s not function", obj.Name(), name)
+						continue
+					}
+				}
 			}
 		}
 	}

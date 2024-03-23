@@ -16,7 +16,6 @@ import (
 // An Object describes a named language entity such as a package,
 // constant, type, variable, function (incl. methods), or label.
 // All objects implement the Object interface.
-//
 type Object interface {
 	Node() ast.Node             // 获取对应的 ast.Node
 	NodeDoc() *ast.CommentGroup // 获取文档注释
@@ -317,7 +316,7 @@ func NewParam(pos token.Pos, pkg *Package, name string, typ Type) *Var {
 
 // NewField returns a new variable representing a struct field.
 // For embedded fields, the name is the unqualified type name
-/// under which the field is accessible.
+// under which the field is accessible.
 func NewField(pos token.Pos, pkg *Package, name string, typ Type, embedded bool) *Var {
 	return &Var{object: object{nil, nil, pos, pkg, name, typ, 0, colorFor(typ), token.NoPos, nil}, embedded: embedded, isField: true}
 }
@@ -340,6 +339,7 @@ func (*Var) isDependency() {} // a variable may be a dependency of an initializa
 type Func struct {
 	object
 	hasPtrRecv bool // only valid for methods that don't have a type yet
+	generic    []*Func
 }
 
 // NewFunc returns a new function with the given signature, representing
@@ -350,7 +350,11 @@ func NewFunc(pos token.Pos, pkg *Package, name string, sig *Signature) *Func {
 	if sig != nil {
 		typ = sig
 	}
-	return &Func{object{nil, nil, pos, pkg, name, typ, 0, colorFor(typ), token.NoPos, nil}, false}
+	return &Func{
+		object{nil, nil, pos, pkg, name, typ, 0, colorFor(typ), token.NoPos, nil},
+		false,
+		nil,
+	}
 }
 
 // FullName returns the package- or receiver-type-qualified name of
@@ -363,6 +367,8 @@ func (obj *Func) FullName() string {
 
 // Scope returns the scope of the function's body block.
 func (obj *Func) Scope() *Scope { return obj.typ.(*Signature).scope }
+
+func (obj *Func) Generic() []*Func { return obj.generic }
 
 func (*Func) isDependency() {} // a function may be a dependency of an initialization expression
 

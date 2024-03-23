@@ -21,3 +21,5 @@ y.wa.*
 /docs/snake/*
 
 _target
+
+__debug_bin*

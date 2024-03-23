@@ -250,6 +250,8 @@ func (check *Checker) checkFiles(files []*ast.File) (err error) {
 
 	check.collectObjects()
 
+	check.processGenericFuncs()
+
 	check.packageObjects()
 
 	check.processDelayed(0) // incl. all functions

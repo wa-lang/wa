@@ -1,0 +1,10 @@
+// 版权 @2019 凹语言 作者。保留所有权利。
+
+#wa:generic IncF64
+func Inc(arg_Inc_a: int) => int {
+	return arg_Inc_a + 1
+}
+
+func IncF64(arg_IncF64_f: f64) => f64 {
+	return arg_IncF64_f + 1
+}
