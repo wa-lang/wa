@@ -494,7 +494,7 @@ func (check *Checker) collectObjects() {
 	}
 }
 
-func (check *Checker) lookMethodFunc(recvTypeName, methodName string) *Func {
+func (check *Checker) lookupMethodFunc(recvTypeName, methodName string) *Func {
 	for obj := range check.objMap {
 		if fn, ok := obj.(*Func); ok {
 			if obj.Parent() != nil {
@@ -528,7 +528,7 @@ func (check *Checker) processGenericFuncs() {
 					assert(fnNode.Recv != nil)
 					recvTypeName := fn.RecvTypeName()
 					for _, name := range info.Generic {
-						if xFn := check.lookMethodFunc(recvTypeName, name); xFn != nil {
+						if xFn := check.lookupMethodFunc(recvTypeName, name); xFn != nil {
 							fn.generic = append(fn.generic, xFn)
 						} else {
 							check.errorf(obj.Pos(), "%s generic %s method not found", obj.Name(), name)
@@ -555,6 +555,46 @@ func (check *Checker) processGenericFuncs() {
 			}
 		}
 	}
+}
+
+func (check *Checker) resolveExprOrTypeOrGenericCall(x *operand, e *ast.CallExpr) {
+	switch eCall := e.Fun.(type) {
+	case *ast.Ident: // Fn(arg)
+		scope, obj := check.scope.LookupParent(eCall.Name, check.pos)
+		_, _ = scope, obj
+
+		// todo(chai)
+
+	case *ast.SelectorExpr: // x.FuncOrMethod(arg)
+		if xIdent, ok := eCall.X.(*ast.Ident); ok {
+			scope, obj := check.scope.LookupParent(xIdent.Name, check.pos)
+			_ = scope
+
+			switch obj := obj.(type) {
+			case *PkgName: // pkg.Func(arg)
+				pname := obj
+				assert(pname.pkg == check.pkg)
+				exp := pname.Imported().scope.Lookup(eCall.Sel.Name)
+				fnObj, _ := exp.(*Func)
+				_ = fnObj
+
+				// todo(chai)
+
+			case *Var: // this.Method(arg)
+				if t, _ := obj.Type().(*Named); t != nil {
+					if p, _ := t.underlying.(*Pointer); p != nil {
+						obj, _, _ := lookupFieldOrMethod(p, true, check.pkg, eCall.Sel.Name)
+						if fnObj, ok := obj.(*Func); ok {
+							_ = fnObj
+							// todo(chai)
+						}
+					}
+				}
+			}
+		}
+	}
+
+	check.exprOrType(x, e.Fun)
 }
 
 // resolveBaseTypeName returns the non-alias base type name for typ, and whether

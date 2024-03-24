@@ -12,7 +12,7 @@ import (
 )
 
 func (check *Checker) call(x *operand, e *ast.CallExpr) exprKind {
-	check.exprOrType(x, e.Fun)
+	check.resolveExprOrTypeOrGenericCall(x, e)
 
 	switch x.mode {
 	case invalid:
