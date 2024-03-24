@@ -78,7 +78,7 @@ func add(a: i32, b: i32) => i32 {
 
 ```
 $ wa run hello.wa 
-你好，凹语言！
+hello, Wa!
 42 2023
 2
 ```
