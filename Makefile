@@ -1,5 +1,14 @@
 # 版权 @2019 凹语言 作者。保留所有权利。
 
+.PHONY: wa hello prime build-wasm ci-test-all clean
+
+GOBIN = ./build/bin/wa
+
+wa:
+	go build -o $(GOBIN)
+	@echo "Done building."
+	@echo "Run \"$(GOBIN)\" to launch wa."
+
 hello:
 	go install
 	cd waroot && go run ../main.go run hello.wa
