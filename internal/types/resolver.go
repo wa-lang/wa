@@ -5,6 +5,7 @@
 package types
 
 import (
+	"errors"
 	"fmt"
 	"sort"
 	"strconv"
@@ -557,36 +558,69 @@ func (check *Checker) processGenericFuncs() {
 	}
 }
 
+func (check *Checker) tryGenericCall(x *operand, fn *Func, e *ast.CallExpr) (err error) {
+	assert(check != nil)
+
+	firstErrBak := check.firstErr
+	defer func() { check.firstErr = firstErrBak }()
+
+	defer check.handleBailout(&err)
+
+	// check args type, donot panic
+	arg, n, _ := unpack(func(x *operand, i int) { check.multiExpr(x, e.Args[i]) }, len(e.Args), false)
+	if arg == nil {
+		return errors.New("invalid mode")
+	}
+
+	sig, _ := fn.typ.Underlying().(*Signature)
+	check.arguments(x, e, sig, arg, n)
+	return
+}
+
 func (check *Checker) resolveExprOrTypeOrGenericCall(x *operand, e *ast.CallExpr) {
 	switch eCall := e.Fun.(type) {
 	case *ast.Ident: // Fn(arg)
-		scope, obj := check.scope.LookupParent(eCall.Name, check.pos)
-		_, _ = scope, obj
-
-		// todo(chai)
+		_, obj := check.scope.LookupParent(eCall.Name, check.pos)
+		if fnObj, ok := obj.(*Func); ok && len(fnObj.generic) != 0 {
+			for _, genericFnObj := range fnObj.generic {
+				if err := check.tryGenericCall(x, genericFnObj, e); err == nil {
+					eCall.Name = genericFnObj.name
+					check.exprOrType(x, e.Fun)
+					return
+				}
+			}
+		}
 
 	case *ast.SelectorExpr: // x.FuncOrMethod(arg)
 		if xIdent, ok := eCall.X.(*ast.Ident); ok {
-			scope, obj := check.scope.LookupParent(xIdent.Name, check.pos)
-			_ = scope
-
+			_, obj := check.scope.LookupParent(xIdent.Name, check.pos)
 			switch obj := obj.(type) {
 			case *PkgName: // pkg.Func(arg)
 				pname := obj
 				assert(pname.pkg == check.pkg)
 				exp := pname.Imported().scope.Lookup(eCall.Sel.Name)
-				fnObj, _ := exp.(*Func)
-				_ = fnObj
-
-				// todo(chai)
+				if fnObj, _ := exp.(*Func); ok && len(fnObj.generic) != 0 {
+					for _, genericFnObj := range fnObj.generic {
+						if err := check.tryGenericCall(x, genericFnObj, e); err == nil {
+							eCall.Sel.Name = genericFnObj.name
+							check.exprOrType(x, e.Fun)
+							return
+						}
+					}
+				}
 
 			case *Var: // this.Method(arg)
 				if t, _ := obj.Type().(*Named); t != nil {
 					if p, _ := t.underlying.(*Pointer); p != nil {
 						obj, _, _ := lookupFieldOrMethod(p, true, check.pkg, eCall.Sel.Name)
-						if fnObj, ok := obj.(*Func); ok {
-							_ = fnObj
-							// todo(chai)
+						if fnObj, ok := obj.(*Func); ok && len(fnObj.generic) != 0 {
+							for _, genericFnObj := range fnObj.generic {
+								if err := check.tryGenericCall(x, genericFnObj, e); err == nil {
+									eCall.Sel.Name = genericFnObj.name
+									check.exprOrType(x, e.Fun)
+									return
+								}
+							}
 						}
 					}
 				}
