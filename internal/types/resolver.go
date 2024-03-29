@@ -601,7 +601,7 @@ func (check *Checker) resolveExprOrTypeOrGenericCall(x *operand, e *ast.CallExpr
 				pname := obj
 				assert(pname.pkg == check.pkg)
 				exp := pname.Imported().scope.Lookup(eCall.Sel.Name)
-				if fnObj, _ := exp.(*Func); ok && len(fnObj.generic) != 0 {
+				if fnObj, ok := exp.(*Func); ok && len(fnObj.generic) != 0 {
 					for _, genericFnObj := range fnObj.generic {
 						if err := check.tryGenericCall(x, genericFnObj, e); err == nil {
 							eCall.Sel.Name = genericFnObj.name
@@ -613,15 +613,13 @@ func (check *Checker) resolveExprOrTypeOrGenericCall(x *operand, e *ast.CallExpr
 
 			case *Var: // this.Method(arg)
 				if t, _ := obj.Type().(*Named); t != nil {
-					if p, _ := t.underlying.(*Pointer); p != nil {
-						obj, _, _ := lookupFieldOrMethod(p, true, check.pkg, eCall.Sel.Name)
-						if fnObj, ok := obj.(*Func); ok && len(fnObj.generic) != 0 {
-							for _, genericFnObj := range fnObj.generic {
-								if err := check.tryGenericCall(x, genericFnObj, e); err == nil {
-									eCall.Sel.Name = genericFnObj.name
-									check.exprOrType(x, e.Fun)
-									return
-								}
+					obj, _, _ := lookupFieldOrMethod(t, true, check.pkg, eCall.Sel.Name)
+					if fnObj, ok := obj.(*Func); ok && len(fnObj.generic) != 0 {
+						for _, genericFnObj := range fnObj.generic {
+							if err := check.tryGenericCall(x, genericFnObj, e); err == nil {
+								eCall.Sel.Name = genericFnObj.name
+								check.exprOrType(x, e.Fun)
+								return
 							}
 						}
 					}
