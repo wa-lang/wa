@@ -562,6 +562,8 @@ func (check *Checker) tryGenericCall(x *operand, fn *Func, e *ast.CallExpr) (err
 	assert(check != nil)
 
 	firstErrBak := check.firstErr
+	check.firstErr = nil
+
 	defer func() { check.firstErr = firstErrBak }()
 
 	defer check.handleBailout(&err)

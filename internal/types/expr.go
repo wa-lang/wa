@@ -81,6 +81,11 @@ func (check *Checker) op(m opPredicates, x *operand, op token.Token) bool {
 
 // The unary expression e may be nil. It's passed in for better error messages only.
 func (check *Checker) unary(x *operand, e *ast.UnaryExpr, op token.Token) {
+	check.expr(x, e.X)
+	if x.mode == invalid {
+		return
+	}
+
 	switch op {
 	case token.AND:
 		// spec: "As an exception to the addressability
@@ -92,6 +97,11 @@ func (check *Checker) unary(x *operand, e *ast.UnaryExpr, op token.Token) {
 		}
 		x.mode = value
 		x.typ = &Pointer{base: x.typ}
+		return
+	}
+
+	if check.tryUnaryOperatorCall(x, e, op) {
+		x.mode = value
 		return
 	}
 
@@ -348,7 +358,6 @@ func (check *Checker) representable(x *operand, typ *Basic) {
 // Also, if x is a constant, it must be representable as a value of typ,
 // and if x is the (formerly untyped) lhs operand of a non-constant
 // shift, it must be an integer value.
-//
 func (check *Checker) updateExprType(x ast.Expr, typ Type, final bool) {
 	old, found := check.untyped[x]
 	if !found {
@@ -777,6 +786,11 @@ func (check *Checker) binary(x *operand, e *ast.BinaryExpr, lhs, rhs ast.Expr, o
 		return
 	}
 
+	if check.tryBinaryOperatorCall(x, e, lhs, rhs, op) {
+		x.mode = value
+		return
+	}
+
 	check.convertUntyped(x, y.typ)
 	if x.mode == invalid {
 		return
@@ -895,7 +909,6 @@ func (check *Checker) index(index ast.Expr, max int64) (i int64, valid bool) {
 // against the literal's element type (typ), and the element indices against
 // the literal length if known (length >= 0). It returns the length of the
 // literal (maximum index value + 1).
-//
 func (check *Checker) indexedElts(elts []ast.Expr, typ Type, length int64) int64 {
 	visited := make(map[int64]bool, len(elts))
 	var index, max int64
@@ -952,7 +965,6 @@ const (
 // rawExpr typechecks expression e and initializes x with the expression
 // value or type. If an error occurred, x.mode is set to invalid.
 // If hint != nil, it is the type of a composite literal element.
-//
 func (check *Checker) rawExpr(x *operand, e ast.Expr, hint Type) exprKind {
 	if trace {
 		check.trace(e.Pos(), "%s", e)
@@ -995,7 +1007,6 @@ func (check *Checker) rawExpr(x *operand, e ast.Expr, hint Type) exprKind {
 
 // exprInternal contains the core of type checking of expressions.
 // Must only be called by rawExpr.
-//
 func (check *Checker) exprInternal(x *operand, e ast.Expr, hint Type) exprKind {
 	// make sure x has a valid state in case of bailout
 	// (was issue 5770)
@@ -1470,10 +1481,6 @@ func (check *Checker) exprInternal(x *operand, e ast.Expr, hint Type) exprKind {
 		}
 
 	case *ast.UnaryExpr:
-		check.expr(x, e.X)
-		if x.mode == invalid {
-			goto Error
-		}
 		check.unary(x, e, e.Op)
 		if x.mode == invalid {
 			goto Error
@@ -1568,7 +1575,6 @@ func (check *Checker) singleValue(x *operand) {
 // expr typechecks expression e and initializes x with the expression value.
 // The result must be a single value.
 // If an error occurred, x.mode is set to invalid.
-//
 func (check *Checker) expr(x *operand, e ast.Expr) {
 	check.multiExpr(x, e)
 	check.singleValue(x)
@@ -1595,7 +1601,6 @@ func (check *Checker) multiExpr(x *operand, e ast.Expr) {
 // exprWithHint typechecks expression e and initializes x with the expression value;
 // hint is the type of a composite literal element.
 // If an error occurred, x.mode is set to invalid.
-//
 func (check *Checker) exprWithHint(x *operand, e ast.Expr, hint Type) {
 	assert(hint != nil)
 	check.rawExpr(x, e, hint)
@@ -1617,7 +1622,6 @@ func (check *Checker) exprWithHint(x *operand, e ast.Expr, hint Type) {
 
 // exprOrType typechecks expression or type e and initializes x with the expression value or type.
 // If an error occurred, x.mode is set to invalid.
-//
 func (check *Checker) exprOrType(x *operand, e ast.Expr) {
 	check.rawExpr(x, e, nil)
 	check.singleValue(x)

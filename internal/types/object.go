@@ -258,6 +258,7 @@ func (*Const) isDependency() {} // a constant may be a dependency of an initiali
 // A TypeName represents a name for a (defined or alias) type.
 type TypeName struct {
 	object
+	ops *typeOperator
 }
 
 // NewTypeName returns a new type name denoting the given typ.
@@ -268,7 +269,7 @@ type TypeName struct {
 // argument for NewNamed, which will set the TypeName's type as a side-
 // effect.
 func NewTypeName(pos token.Pos, pkg *Package, name string, typ Type) *TypeName {
-	return &TypeName{object{nil, nil, pos, pkg, name, typ, 0, colorFor(typ), token.NoPos, nil}}
+	return &TypeName{object{nil, nil, pos, pkg, name, typ, 0, colorFor(typ), token.NoPos, nil}, nil}
 }
 
 // IsAlias reports whether obj is an alias name for a type.

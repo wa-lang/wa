@@ -13,18 +13,18 @@ type CommentInfo struct {
 	BuildIgnore bool     // #wa:build ignore
 	BuildTags   []string // #wa:build s1 s2 ...
 
-	Inline        bool      // #wa:inline
-	Nobounds      bool      // #wa:nobounds
-	LinkName      string    // #wa:linkname xxx
-	ExportName    string    // #wa:export xxx
-	ImportName    [2]string // #wa:import xxx yyy
-	ForceRegister bool      // #wa:force_register
-	RuntimeGetter bool      // #wa:runtime_getter
-	RuntimeSetter bool      // #wa:runtime_setter
-	RuntimeSizer  bool      // #wa:runtime_sizer
-	WasmModule    string    // #wa:wasm-module xxx
-	Generic       []string  // #wa:generic xxx yyy
-	Operator      string    // #wa:operator +
+	Inline        bool       // #wa:inline
+	Nobounds      bool       // #wa:nobounds
+	LinkName      string     // #wa:linkname xxx
+	ExportName    string     // #wa:export xxx
+	ImportName    [2]string  // #wa:import xxx yyy
+	ForceRegister bool       // #wa:force_register
+	RuntimeGetter bool       // #wa:runtime_getter
+	RuntimeSetter bool       // #wa:runtime_setter
+	RuntimeSizer  bool       // #wa:runtime_sizer
+	WasmModule    string     // #wa:wasm-module xxx
+	Generic       []string   // #wa:generic xxx yyy
+	Operator      [][]string // #wa:operator + xxx yyy
 }
 
 // 获取节点关联文档
@@ -97,9 +97,9 @@ func ParseCommentInfo(docList ...*ast.CommentGroup) (info CommentInfo) {
 				}
 
 			case "#wa:generic":
-				info.Generic = parts[1:]
+				info.Generic = append(info.Generic, parts[1:]...)
 			case "#wa:operator":
-				info.Operator = strings.Join(parts[1:], " ")
+				info.Operator = append(info.Operator, parts[1:])
 			}
 		}
 	}

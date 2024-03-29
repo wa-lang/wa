@@ -251,6 +251,7 @@ func (check *Checker) checkFiles(files []*ast.File) (err error) {
 	check.collectObjects()
 
 	check.processGenericFuncs()
+	check.processTypeOperators()
 
 	check.packageObjects()
 
