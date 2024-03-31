@@ -135,14 +135,39 @@ func (check *Checker) processTypeOperators() {
 func (check *Checker) tryUnaryOperatorCall(
 	x *operand, e *ast.UnaryExpr,
 	op token.Token,
-) bool {
-	return false // todo(chai)
+) *Func {
+	assert(x.typ != nil)
+
+	var ops *typeOperator
+	switch typ := x.typ.(type) {
+	case *Named:
+		ops = typ.obj.ops
+	default:
+		// todo(chai)
+	}
+	if ops == nil {
+		return nil
+	}
+
+	switch op {
+	case token.ADD:
+		return ops.Unary_ADD
+	case token.SUB:
+		return ops.Unary_SUB
+	case token.XOR:
+		return ops.Unary_XOR
+	case token.NOT:
+		return ops.Unary_NOT
+	}
+
+	unreachable()
+	return nil
 }
 
 func (check *Checker) tryBinaryOperatorCall(
 	x *operand, e *ast.BinaryExpr,
 	lhs, rhs ast.Expr,
 	op token.Token,
-) bool {
-	return false // todo(chai)
+) *Func {
+	return nil // todo(chai)
 }

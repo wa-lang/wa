@@ -100,7 +100,7 @@ func (check *Checker) unary(x *operand, e *ast.UnaryExpr, op token.Token) {
 		return
 	}
 
-	if check.tryUnaryOperatorCall(x, e, op) {
+	if fn := check.tryUnaryOperatorCall(x, e, op); fn != nil {
 		x.mode = value
 		return
 	}
@@ -786,7 +786,7 @@ func (check *Checker) binary(x *operand, e *ast.BinaryExpr, lhs, rhs ast.Expr, o
 		return
 	}
 
-	if check.tryBinaryOperatorCall(x, e, lhs, rhs, op) {
+	if fn := check.tryBinaryOperatorCall(x, e, lhs, rhs, op); fn != nil {
 		x.mode = value
 		return
 	}
