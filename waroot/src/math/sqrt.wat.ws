@@ -4,3 +4,8 @@
 	local.get $x
 	f64.sqrt
 )
+
+(func $$math.waSqrtF32 (param $x f32) (result f32)
+	local.get $x
+	f32.sqrt
+)

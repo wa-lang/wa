@@ -6,8 +6,14 @@
 //	Sin(±0) = ±0
 //	Sin(±Inf) = NaN
 //	Sin(NaN) = NaN
+#wa:generic Sin32
 func Sin(x: f64) => f64 {
 	return sin(x)
+}
+
+// f32 version of Sin
+func Sin32(x: f32) => f32 {
+	return f32(sin(f64(x)))
 }
 
 // Cos returns the cosine of the radian argument x.
@@ -15,8 +21,14 @@ func Sin(x: f64) => f64 {
 // Special cases are:
 //	Cos(±Inf) = NaN
 //	Cos(NaN) = NaN
+#wa:generic Cos32
 func Cos(x: f64) => f64 {
 	return cos(x)
+}
+
+// f32 version of Cos
+func Cos32(x: f32) => f32 {
+	return f32(cos(f64(x)))
 }
 
 func sin(x: f64) => f64 {
