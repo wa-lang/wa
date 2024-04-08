@@ -1,0 +1,121 @@
+
+import "js"
+
+type VertexFormat uint
+
+const (
+    VertexFormat_uint8x2: VertexFormat = iota
+    VertexFormat_uint8x4
+    VertexFormat_sint8x2
+    VertexFormat_sint8x4
+    VertexFormat_unorm8x2
+    VertexFormat_unorm8x4
+    VertexFormat_snorm8x2
+    VertexFormat_snorm8x4
+    VertexFormat_uint16x2
+    VertexFormat_uint16x4
+    VertexFormat_sint16x2
+    VertexFormat_sint16x4
+    VertexFormat_unorm16x2
+    VertexFormat_unorm16x4
+    VertexFormat_snorm16x2
+    VertexFormat_snorm16x4
+    VertexFormat_float16x2
+    VertexFormat_float16x4
+    VertexFormat_float32
+    VertexFormat_float32x2
+    VertexFormat_float32x3
+    VertexFormat_float32x4
+    VertexFormat_uint32
+    VertexFormat_uint32x2
+    VertexFormat_uint32x3
+    VertexFormat_uint32x4
+    VertexFormat_sint32
+    VertexFormat_sint32x2
+    VertexFormat_sint32x3
+    VertexFormat_sint32x4
+    VertexFormat_unorm10_10_10_2
+)
+
+global vertexFormatSymbols = [...]string{
+    VertexFormat_uint8x2: "uint8x2",
+    VertexFormat_uint8x4: "uint8x4",
+    VertexFormat_sint8x2: "sint8x2",
+    VertexFormat_sint8x4: "sint8x4",
+    VertexFormat_unorm8x2: "unorm8x2",
+    VertexFormat_unorm8x4: "unorm8x4",
+    VertexFormat_snorm8x2: "snorm8x2",
+    VertexFormat_snorm8x4: "snorm8x4",
+    VertexFormat_uint16x2: "uint16x2",
+    VertexFormat_uint16x4: "uint16x4",
+    VertexFormat_sint16x2: "sint16x2",
+    VertexFormat_sint16x4: "sint16x4",
+    VertexFormat_unorm16x2: "unorm16x2",
+    VertexFormat_unorm16x4: "unorm16x4",
+    VertexFormat_snorm16x2: "snorm16x2",
+    VertexFormat_snorm16x4: "snorm16x4",
+    VertexFormat_float16x2: "float16x2",
+    VertexFormat_float16x4: "float16x4",
+    VertexFormat_float32: "float32",
+    VertexFormat_float32x2: "float32x2",
+    VertexFormat_float32x3: "float32x3",
+    VertexFormat_float32x4: "float32x4",
+    VertexFormat_uint32: "uint32",
+    VertexFormat_uint32x2: "uint32x2",
+    VertexFormat_uint32x3: "uint32x3",
+    VertexFormat_uint32x4: "uint32x4",
+    VertexFormat_sint32: "sint32",
+    VertexFormat_sint32x2: "sint32x2",
+    VertexFormat_sint32x3: "sint32x3",
+    VertexFormat_sint32x4: "sint32x4",
+    VertexFormat_unorm10_10_10_2: "unorm10-10-10-2",
+}
+
+/*
+VertexDataEntry - 既入口寄存器信息
+*/
+type VertexAttribute struct {
+    Location: i32
+    Offset: i32
+    Format: VertexFormat
+}
+
+type BufferStepMode uint
+
+const (
+    BufferStepMode_vertex: BufferStepMode = iota
+    BufferStepMode_instance
+)
+
+global stepModeSymbols = [...]string{
+    BufferStepMode_vertex: "vertex",
+    BufferStepMode_instance: "instance",
+}
+
+/*
+VertexLayout - 既 FVF 声明
+不能使用该类型直接声明值，需通过 NewVertexLayout() 创建
+*/
+type VertexLayout struct {
+    js.ExtObj
+}
+
+func NewVertexLayout(stride: i32, stepMode: BufferStepMode, attributes: []VertexAttribute) => VertexLayout {
+    vl : VertexLayout
+
+    vl.ExtObj = js.NewExtObj()
+    vl.SetMember_i32("arrayStride", stride)
+    vl.SetMember_string("stepMode", stepModeSymbols[stepMode])
+
+    va := js.NewExtArray()
+    for _, attr := range attributes {
+        vo := js.NewExtObj()
+        vo.SetMember_i32("shaderLocation", attr.Location)
+        vo.SetMember_i32("offset", attr.Offset)
+        vo.SetMember_string("format", vertexFormatSymbols[attr.Format])
+        va.Append_obj(vo)
+    }
+    vl.SetMember_obj("attributes", va.ExtObj)
+
+    return vl
+}

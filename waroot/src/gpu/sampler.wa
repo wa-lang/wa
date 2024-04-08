@@ -1,0 +1,37 @@
+
+import "js"
+
+/*
+不能使用该类型直接声明值，需通过 Device.CreateSampler() 创建
+*/
+type Sampler struct {
+    js.ExtObj
+}
+
+/*
+不能使用该类型直接声明值，NewSamplerDesc() 创建
+*/
+type SamplerDesc struct {
+    js.ExtObj
+}
+
+func NewSamplerDesc() => SamplerDesc {
+    d: SamplerDesc
+    d.ExtObj = js.NewExtObj()
+    return d
+}
+
+type Filter string
+
+const (
+    Filter_linear = Filter("linear")
+)
+
+func SamplerDesc.SetMagFilter(filter: Filter) {
+    println(filter)
+    this.SetMember_string("magFilter", string(filter))
+}
+
+func SamplerDesc.SetMinFilter(filter: Filter) {
+    this.SetMember_string("minFilter", string(filter))
+}

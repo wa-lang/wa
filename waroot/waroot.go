@@ -147,6 +147,7 @@ var stdPkgs = []string{
 	"encoding/qrcode", // ?
 	"debug",           // ?
 	"fmt",             // ?
+	"gpu",             // ?
 	"hash",            // API 完整
 	"hash/adler32",    // ?
 	"hash/crc32",      // API 完整

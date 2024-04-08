@@ -1,0 +1,109 @@
+
+import "js"
+
+/*
+不能使用该类型直接声明值，需通过 CreateDevice() 创建
+*/
+type Device struct {
+    js.ExtObj
+}
+
+func Test() {
+    println("Test")
+}
+
+#wa:import webgpu create_device
+func jsCreateDevice() => js.Handle
+func CreateDevice() => Device {
+    d: Device
+    d.ExtObj = js.WrapExtObj(jsCreateDevice())
+    return d
+}
+
+#wa:import webgpu device_ready
+func jsDeviceReady(device: js.Handle) => i32
+func Device.Ready() => bool {
+    return jsDeviceReady(this.GetHandle()) != 0
+}
+
+#wa:import webgpu create_shader_module
+func jsCreateShaderModule(device: js.Handle, code: string) => js.Handle
+func Device.CreateShaderModule(code: string) => ShaderModule {
+    s: ShaderModule
+    s._extref = js.WrapExtObj(jsCreateShaderModule(this.GetHandle(), code))
+    return s
+}
+
+#wa:import webgpu create_buffer
+func jsCreateBuffer(device: js.Handle, byteLen: int, usage: BufferUsage) => js.Handle
+func Device.CreateBuffer(byteLen: int, usage: BufferUsage) => Buffer {
+    b: Buffer
+    b._device = this.ExtObj
+    b.ExtObj = js.WrapExtObj(jsCreateBuffer(this.GetHandle(), byteLen, usage))
+    return b
+}
+
+#wa:import webgpu create_texture
+func jsCreateTexture(device: js.Handle, desc: js.Handle) => js.Handle
+func Device.CreateTexture(desc: *TextureDesc) => Texture {
+    t: Texture
+    d := desc.createExtObj()
+    t.ExtObj = js.WrapExtObj(jsCreateTexture(this.GetHandle(), d.GetHandle()))
+    return t
+}
+
+#wa:import webgpu create_sampler
+func jsCreateSampler(device, desc: js.Handle) => js.Handle
+func Device.CreateSampler(desc: SamplerDesc) => Sampler {
+    s: Sampler
+    s.ExtObj = js.WrapExtObj(jsCreateSampler(this.GetHandle(), desc.GetHandle()))
+    return s
+}
+
+#wa:import webgpu copy_external_image_to_texture
+func jsCopyExternalImageToTexture(device, src, dest: js.Handle)
+func Device.CopyExternalImageToTexture(src: js.ExtObj, dest: Texture) {
+    jsCopyExternalImageToTexture(this.GetHandle(), src.GetHandle(), dest.GetHandle())
+}
+
+#wa:import webgpu create_render_pipeline
+func jsCreateRenderPipeline(device, pl_desc: js.Handle) => js.Handle
+func Device.CreateRenderPipeline(desc: PipelineDesc) => RenderPipeline {
+    p: RenderPipeline
+    p.ExtObj = js.WrapExtObj(jsCreateRenderPipeline(this.GetHandle(), desc.GetHandle()))
+
+    return p
+}
+
+#wa:import webgpu create_bind_group
+func jsCreateBindGroup(device, bg_desc: js.Handle) => js.Handle
+func Device.CreateBindGroup(desc: BindGroupDesc) => BindGroup {
+    g: BindGroup
+    g.ExtObj = js.WrapExtObj(jsCreateBindGroup(this.GetHandle(), desc.GetHandle()))
+
+    return g
+}
+
+#wa:import webgpu create_command_encoder
+func jsCreateCommandEncoder(device: js.Handle) => js.Handle
+func Device.CreateCommandEncoder() => CommandEncoder {
+    c: CommandEncoder
+    c.ExtObj = js.WrapExtObj(jsCreateCommandEncoder(this.GetHandle()))
+
+    return c
+}
+
+#wa:import webgpu create_render_bundle_encoder
+func jsCreateRenderBundleEncoder(device, desc: js.Handle) => js.Handle
+func Device.CreateRenderBundleEncoder(desc: RenderBundleEncoderDesc) => PassEncoder {
+    c: PassEncoder
+    c.ExtObj = js.WrapExtObj(jsCreateRenderBundleEncoder(this.GetHandle(), desc.GetHandle()))
+
+    return c
+}
+
+#wa:import webgpu submit
+func jsSubmit(device, gpu_command_buffer: js.Handle)
+func Device.Submit(gb: GPUCommandBuffer) {
+    jsSubmit(this.GetHandle(), gb.GetHandle())
+}

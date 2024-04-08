@@ -1,0 +1,77 @@
+
+import "js"
+
+/*
+不能使用该类型直接声明值，需通过 Device.CreateBindGroup() 创建
+*/
+type BindGroup struct {
+    js.ExtObj
+}
+
+/*
+不能使用该类型直接声明值，NewBindGroupDesc() 创建
+*/
+type BindGroupDesc struct {
+    js.ExtObj
+}
+
+func NewBindGroupDesc() => BindGroupDesc {
+    d: BindGroupDesc
+    d.ExtObj = js.NewExtObj()
+    return d
+}
+
+func BindGroupDesc.SetLayout(layout: BindGroupLayout) {
+    this.SetMember_obj("layout", layout.ExtObj)
+}
+
+func BindGroupDesc.SetEntries(entries: []BindGroupEntry) {
+    va := js.NewExtArray()
+    for _, e := range entries {
+        va.Append_obj(e.ExtObj)
+    }
+    this.SetMember_obj("entries", va.ExtObj)
+}
+
+
+/*
+不能使用该类型直接声明值，需通过其它函数创建
+*/
+type BindGroupLayout struct {
+    js.ExtObj
+}
+
+/*
+不能使用该类型直接声明值，需通过 NewBindGroupEntry() 创建
+*/
+type BindGroupEntry struct {
+    js.ExtObj
+}
+
+func NewBindGroupEntry() => BindGroupEntry {
+    e: BindGroupEntry
+    e.ExtObj = js.NewExtObj()
+    return e
+}
+
+func BindGroupEntry.SetBinding(id: i32) {
+    this.SetMember_i32("binding", id)
+}
+
+func BindGroupEntry.SetResource(r: js.ExtObj) {
+    this.SetMember_obj("resource", r)
+}
+
+/*
+不能使用该类型直接声明值，需通过 NewBufferBinding() 创建
+*/
+type BufferBinding struct {
+    js.ExtObj
+}
+
+func NewBufferBinding(buffer: Buffer) => BufferBinding {
+    b: BufferBinding
+    b.ExtObj = js.NewExtObj()
+    b.SetMember_obj("buffer", buffer.ExtObj)
+    return b
+}

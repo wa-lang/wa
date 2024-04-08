@@ -1,0 +1,196 @@
+
+import "js"
+
+type Color struct {
+    R, G, B, A: f32
+}
+
+type LoadOp u32
+
+const (
+    LoadOp_clear = iota
+    LoadOp_load
+)
+
+global loadOpSymbols = [...]string {
+    LoadOp_clear: "clear",
+    LoadOp_load:  "load",
+}
+
+type StoreOp u32
+
+const (
+    StoreOp_store = iota
+    StoreOp_discard
+)
+
+global storeOpSymbols = [...]string {
+    StoreOp_store:   "store",
+    StoreOp_discard: "discard",
+}
+
+type RenderPassDesc_ColorAttchment struct {
+    ClearValue: Color
+    LoadOp: LoadOp
+    StoreOp: StoreOp
+    View: TextureView
+}
+
+type RenderPassDesc_DepthStencilAttachment struct {
+    ClearValue: f32
+    LoadOp: LoadOp
+    StoreOp: StoreOp
+    View: TextureView
+}
+
+/*
+不能使用该类型直接声明值，需通过 NewRenderPassDesc() 创建
+该对象需每帧重建
+*/
+type RenderPassDesc struct {
+    js.ExtObj
+}
+
+func NewRenderPassDesc() => RenderPassDesc {
+    rpd: RenderPassDesc
+    rpd.ExtObj = js.NewExtObj()
+
+    return rpd
+}
+
+func RenderPassDesc.SetColorAttachments(attachments: []RenderPassDesc_ColorAttchment) {
+    va := js.NewExtArray()
+    for _, a := range attachments {
+        vo := js.NewExtObj()
+
+        {
+            vc := js.NewExtObj()
+            vc.SetMember_f32("r", a.ClearValue.R)
+            vc.SetMember_f32("g", a.ClearValue.G)
+            vc.SetMember_f32("b", a.ClearValue.B)
+            vc.SetMember_f32("a", a.ClearValue.A)
+            vo.SetMember_obj("clearValue", vc)
+        }
+
+        vo.SetMember_string("loadOp", loadOpSymbols[a.LoadOp])
+        vo.SetMember_string("storeOp", storeOpSymbols[a.StoreOp])
+        vo.SetMember_obj("view", a.View.ExtObj)
+
+        va.Append_obj(vo)
+    }
+
+    this.SetMember_obj("colorAttachments", va.ExtObj)
+}
+
+func RenderPassDesc.SetDepthStencilAttachment(attachment: RenderPassDesc_DepthStencilAttachment) {
+    vo := js.NewExtObj()
+    vo.SetMember_obj("view", attachment.View.ExtObj)
+    vo.SetMember_f32("depthClearValue", attachment.ClearValue)
+    vo.SetMember_string("depthLoadOp", loadOpSymbols[attachment.LoadOp])
+    vo.SetMember_string("depthStoreOp", storeOpSymbols[attachment.StoreOp])
+
+    this.SetMember_obj("depthStencilAttachment", vo)
+}
+
+/*
+不能使用该类型直接声明值，需通过 CommandEncoder.BeginRenderPass() 创建
+该对象需每帧重建
+*/
+type PassEncoder struct {
+    js.ExtObj
+}
+
+#wa:import webgpu set_render_pass_pipeline
+func jsPassEncoderSetPipeline(render_pass, pipeline: js.Handle)
+func PassEncoder.SetPipeline(p: RenderPipeline) {
+    jsPassEncoderSetPipeline(this.GetHandle(), p.GetHandle())
+}
+
+#wa:import webgpu set_render_pass_bind_group
+func jsPassEncoderSetBindGroup(render_pass: js.Handle, id: i32, bg: js.Handle)
+func PassEncoder.SetBindGroup(id: i32, bg: BindGroup) {
+    jsPassEncoderSetBindGroup(this.GetHandle(), id, bg.GetHandle())
+}
+
+#wa:import webgpu set_render_pass_vertex_buffer
+func jsPassEncoderSetVertexBuffer(render_pass: js.Handle, slot: i32, buffer: js.Handle)
+func PassEncoder.SetVertexBuffer(slot: i32, vb: Buffer) {
+    jsPassEncoderSetVertexBuffer(this.GetHandle(), slot, vb.GetHandle())
+}
+
+#wa:import webgpu set_render_pass_index_buffer
+func jsSetRenderPassIndexBuffer(render_pass, buffer: js.Handle, typ: string)
+func PassEncoder.SetIndexBuffer(ib: Buffer, typ: string) {
+    jsSetRenderPassIndexBuffer(this.GetHandle(), ib.GetHandle(), typ)
+}
+
+#wa:import webgpu draw_render_pass
+func jsPassEncoderDraw(render_pass: js.Handle, vertex_count: i32)
+func PassEncoder.Draw(vertex_count: i32) {
+    jsPassEncoderDraw(this.GetHandle(), vertex_count)
+}
+
+#wa:import webgpu render_pass_draw_indexed
+func jsPassEncoderDrawIndexed(render_pass: js.Handle, index_count: i32)
+func PassEncoder.DrawIndexed(index_count: i32) {
+    jsPassEncoderDrawIndexed(this.GetHandle(), index_count)
+}
+
+#wa:import webgpu pass_encoder_execute_bundles
+func jsPassEncoderExecuteBundles(pass_encoder, render_bundle: js.Handle)
+func PassEncoder.ExecuteBundles(bundles: []RenderBundle) {
+    va := js.NewExtArray()
+    for _, rb := range(bundles) {
+        va.Append_obj(rb.ExtObj)
+    }
+    jsPassEncoderExecuteBundles(this.GetHandle(), va.GetHandle())
+}
+
+#wa:import webgpu end_render_pass
+func jsPassEncoderEnd(render_pass: js.Handle)
+func PassEncoder.End() {
+    jsPassEncoderEnd(this.GetHandle())
+}
+
+#wa:import webgpu render_bundle_encoder_finish
+func jsRenderBundleEncoderFinish(encoder: js.Handle) => js.Handle
+func PassEncoder.Finish() => RenderBundle {
+    bundle: RenderBundle
+    bundle.ExtObj = js.WrapExtObj(jsRenderBundleEncoderFinish(this.GetHandle()))
+
+    return bundle
+}
+
+/*
+不能使用该类型直接声明值，需通过 Device.CreateCommandEncoder() 创建
+该对象需每帧重建
+*/
+type CommandEncoder struct {
+    js.ExtObj
+}
+
+#wa:import webgpu begin_render_pass
+func jsBeginRenderPass(command_encoder, render_pass_desc: js.Handle) => js.Handle
+func CommandEncoder.BeginRenderPass(desc: RenderPassDesc) => PassEncoder {
+    rp: PassEncoder
+    rp.ExtObj = js.WrapExtObj(jsBeginRenderPass(this.GetHandle(), desc.GetHandle()))
+
+    return rp
+}
+
+#wa:import webgpu finish_command_encoder
+func jsFinishCommandEncoder(command_encoder: js.Handle) => js.Handle
+func CommandEncoder.Finish() => GPUCommandBuffer {
+    gb: GPUCommandBuffer
+    gb.ExtObj = js.WrapExtObj(jsFinishCommandEncoder(this.GetHandle()))
+
+    return gb
+}
+
+/*
+不能使用该类型直接声明值，需通过 CommandEncoder.Finish() 等创建
+该对象需每帧重建
+*/
+type GPUCommandBuffer struct {
+    js.ExtObj
+}

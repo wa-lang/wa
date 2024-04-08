@@ -1,0 +1,31 @@
+
+import "js"
+
+type BufferUsage uint
+
+const (
+    BufferUsage_MAP_READ:       BufferUsage = 1
+    BufferUsage_MAP_WRITE:      BufferUsage = 2
+    BufferUsage_COPY_SRC:       BufferUsage = 4
+    BufferUsage_COPY_DST:       BufferUsage = 8
+    BufferUsage_INDEX:          BufferUsage = 16
+    BufferUsage_VERTEX:         BufferUsage = 32
+    BufferUsage_UNIFORM:        BufferUsage = 64
+    BufferUsage_STORAGE:        BufferUsage = 128
+    BufferUsage_INDIRECT:       BufferUsage = 256
+    BufferUsage_QUERY_RESOLVE:  BufferUsage = 512
+)
+
+/*
+不能使用该类型直接声明值，需通过 Device.CreateBuffer() 创建
+*/
+type Buffer struct {
+    _device: js.ExtObj
+    js.ExtObj
+}
+
+#wa:import webgpu write_buffer
+func jsWriteBuffer(device, buffer: js.Handle, offset: i32, data: []byte)
+func Buffer.Write(offset: i32, data: []byte) {
+    jsWriteBuffer(this._device.GetHandle(), this.GetHandle(), offset, data)
+}
