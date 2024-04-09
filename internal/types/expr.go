@@ -100,8 +100,7 @@ func (check *Checker) unary(x *operand, e *ast.UnaryExpr, op token.Token) {
 		return
 	}
 
-	if fn := check.tryUnaryOperatorCall(x, e, op); fn != nil {
-		x.mode = value
+	if check.tryUnaryOperatorCall(x, e) {
 		return
 	}
 
@@ -781,13 +780,12 @@ func (check *Checker) binary(x *operand, e *ast.BinaryExpr, lhs, rhs ast.Expr, o
 		return
 	}
 
-	if isShift(op) {
-		check.shift(x, &y, e, op)
+	if check.tryBinaryOperatorCall(x, &y, e) {
 		return
 	}
 
-	if fn := check.tryBinaryOperatorCall(x, e, lhs, rhs, op); fn != nil {
-		x.mode = value
+	if isShift(op) {
+		check.shift(x, &y, e, op)
 		return
 	}
 
