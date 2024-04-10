@@ -171,7 +171,7 @@ func (check *Checker) tryUnaryOperatorCall(x *operand, e *ast.UnaryExpr) bool {
 	x.typ = fn.typ.(*Signature).results.vars[0].typ
 	x.expr = &ast.CallExpr{
 		Fun: &ast.SelectorExpr{
-			X:   &ast.Ident{Name: fn.pkg.path},
+			X:   &ast.Ident{Name: "#" + fn.pkg.path},
 			Sel: &ast.Ident{Name: fn.pkg.name},
 		},
 		Args: []ast.Expr{e.X},
@@ -228,7 +228,7 @@ func (check *Checker) tryBinaryOperatorCall(x, y *operand, e *ast.BinaryExpr) bo
 	x.typ = fnMached.typ.(*Signature).results.vars[0].typ
 	x.expr = &ast.CallExpr{
 		Fun: &ast.SelectorExpr{
-			X:   &ast.Ident{Name: fnMached.pkg.path},
+			X:   &ast.Ident{Name: "#" + fnMached.pkg.path},
 			Sel: &ast.Ident{Name: fnMached.pkg.name},
 		},
 		Args: []ast.Expr{e.X},
