@@ -162,6 +162,7 @@ var stdPkgs = []string{
 	"math/big",        // API 部分
 	"math/bits",       // API 完整
 	"math/gf256",      // ?
+	"net",             // ?
 	"os",              // API 部分
 	"reflect",         // ?
 	"regexp",          // API 部分
