@@ -132,42 +132,177 @@ func (check *Checker) processTypeOperators() {
 	}
 }
 
-func (check *Checker) tryUnaryOperatorCall(
-	x *operand, e *ast.UnaryExpr,
-	op token.Token,
-) *Func {
+func (check *Checker) tryUnaryOperatorCall(x *operand, e *ast.UnaryExpr) bool {
+	if true {
+		return false // todo(chai): debug
+	}
+
 	assert(x.typ != nil)
 
-	var ops *typeOperator
-	switch typ := x.typ.(type) {
-	case *Named:
-		ops = typ.obj.ops
-	default:
-		// todo(chai)
+	var xNamed *Named
+	if v, ok := x.typ.(*Named); ok {
+		xNamed = v
 	}
-	if ops == nil {
-		return nil
+	if xNamed == nil || xNamed.obj == nil || xNamed.obj.ops == nil {
+		return false
 	}
 
-	switch op {
+	var fn *Func
+	switch e.Op {
 	case token.ADD:
-		return ops.Unary_ADD
+		fn = xNamed.obj.ops.Unary_ADD
 	case token.SUB:
-		return ops.Unary_SUB
+		fn = xNamed.obj.ops.Unary_SUB
 	case token.XOR:
-		return ops.Unary_XOR
+		fn = xNamed.obj.ops.Unary_XOR
 	case token.NOT:
-		return ops.Unary_NOT
+		fn = xNamed.obj.ops.Unary_NOT
+	}
+	if fn == nil {
+		return false
 	}
 
-	unreachable()
-	return nil
+	err := check.tryUnaryOpFunc(fn, x, e)
+	if err == nil {
+		return false
+	}
+
+	x.mode = value
+	x.typ = fn.typ.(*Signature).results.vars[0].typ
+	x.expr = &ast.CallExpr{
+		Fun: &ast.SelectorExpr{
+			X:   &ast.Ident{Name: "#" + fn.pkg.path},
+			Sel: &ast.Ident{Name: fn.pkg.name},
+		},
+		Args: []ast.Expr{e.X},
+	}
+
+	check.hasCallOrRecv = true
+	return true
 }
 
-func (check *Checker) tryBinaryOperatorCall(
-	x *operand, e *ast.BinaryExpr,
-	lhs, rhs ast.Expr,
-	op token.Token,
-) *Func {
-	return nil // todo(chai)
+func (check *Checker) tryBinaryOperatorCall(x, y *operand, e *ast.BinaryExpr) bool {
+	if true {
+		return false // todo(chai): debug
+	}
+
+	var xNamed, yNamed *Named
+	if v, ok := x.typ.(*Named); ok {
+		xNamed = v
+	}
+	if v, ok := y.typ.(*Named); ok {
+		yNamed = v
+	}
+
+	// 至少有1个是自定义类型
+	if xNamed == nil && yNamed == nil {
+		return false
+	}
+
+	// 根据左右顺序匹配
+	xFuncs := check.getBinOpFuncs(xNamed, e.Op)
+	yFuncs := check.getBinOpFuncs(yNamed, e.Op)
+
+	var fnMached *Func
+	if fnMached == nil {
+		for _, fn := range xFuncs {
+			if err := check.tryBinOpFunc(fn, x, y, e); err == nil {
+				fnMached = fn
+				break
+			}
+		}
+	}
+	if fnMached == nil {
+		for _, fn := range yFuncs {
+			if err := check.tryBinOpFunc(fn, x, y, e); err == nil {
+				fnMached = fn
+				break
+			}
+		}
+	}
+	if fnMached == nil {
+		return false
+	}
+
+	x.mode = value
+	x.typ = fnMached.typ.(*Signature).results.vars[0].typ
+	x.expr = &ast.CallExpr{
+		Fun: &ast.SelectorExpr{
+			X:   &ast.Ident{Name: "#" + fnMached.pkg.path},
+			Sel: &ast.Ident{Name: fnMached.pkg.name},
+		},
+		Args: []ast.Expr{e.X},
+	}
+
+	check.hasCallOrRecv = true
+	return true
+}
+
+func (check *Checker) tryUnaryOpFunc(fn *Func, x *operand, e *ast.UnaryExpr) (err error) {
+	assert(fn != nil)
+
+	firstErrBak := check.firstErr
+	check.firstErr = nil
+
+	defer func() { check.firstErr = firstErrBak }()
+
+	defer check.handleBailout(&err)
+
+	check.rawExpr(x, e.X, nil)
+
+	assert(fn.typ != nil)
+	sig, _ := fn.typ.(*Signature)
+	assert(sig != nil)
+	assert(sig.recv == nil)
+	assert(sig.params.Len() == 1)
+	assert(sig.results.Len() == 1)
+
+	// 检查参数是否匹配
+	check.argument(sig, 0, x, token.NoPos, "")
+	return
+}
+
+func (check *Checker) tryBinOpFunc(fn *Func, x, y *operand, e *ast.BinaryExpr) (err error) {
+	firstErrBak := check.firstErr
+	check.firstErr = nil
+
+	defer func() { check.firstErr = firstErrBak }()
+
+	defer check.handleBailout(&err)
+
+	check.rawExpr(x, e.X, nil)
+	check.rawExpr(y, e.Y, nil)
+
+	assert(fn.typ != nil)
+	sig, _ := fn.typ.(*Signature)
+	assert(sig != nil)
+	assert(sig.recv == nil)
+	assert(sig.params.Len() == 2)
+	assert(sig.results.Len() == 1)
+
+	// 检查参数是否匹配
+	check.argument(sig, 0, x, token.NoPos, "")
+	check.argument(sig, 1, y, token.NoPos, "")
+	return
+}
+
+func (check *Checker) getBinOpFuncs(x *Named, op token.Token) []*Func {
+	if x == nil {
+		return nil
+	}
+	if typ := x.obj; typ != nil && typ.ops != nil {
+		switch op {
+		case token.ADD:
+			return typ.ops.ADD
+		case token.SUB:
+			return typ.ops.ADD
+		case token.MUL:
+			return typ.ops.ADD
+		case token.QUO:
+			return typ.ops.ADD
+		case token.REM:
+			return typ.ops.ADD
+		}
+	}
+	return nil
 }
