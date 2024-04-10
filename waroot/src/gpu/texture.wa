@@ -239,7 +239,6 @@ type TextureView struct {
 }
 
 /*
-不能使用该类型直接声明值，需通过 NewTextureDesc() 创建
 */
 type TextureDesc struct {
     Dimension:      TextureDimension    // default = TextureDimension_2d
@@ -252,8 +251,6 @@ type TextureDesc struct {
     Depth:          i32                 // default = 1
     ViewFormats:    []TextureFormat
     Label:          string
-
-    //js.ExtObj
 }
 
 func TextureDesc.Default() {
@@ -298,30 +295,3 @@ func TextureDesc.createExtObj() => js.ExtObj {
 
     return d
 }
-
-//func NewTextureDesc() => TextureDesc {
-//    d: TextureDesc
-//    d.ExtObj = js.NewExtObj()
-//
-//    return d
-//}
-//
-//func TextureDesc.SetDimension(v: TextureDimension) {
-//    this.SetMember_string("dimension", string(v))
-//}
-//
-//func TextureDesc.SetFormat(v: TextureFormat) {
-//    this.SetMember_string("format", textureFormatSymbols[v])
-//}
-//
-//func TextureDesc.SetUsage(v: TextureUsage) {
-//    this.SetMember_i32("usage", i32(v))
-//}
-//
-//func TextureDesc.SetSize(size: []i32) {
-//    va := js.NewExtArray()
-//    for _, v := range size {
-//        va.Append_i32(v)
-//    }
-//    this.SetMember_obj("size", va.ExtObj)
-//}

@@ -1,0 +1,55 @@
+// 版权 @2024 凹语言 作者。保留所有权利。
+
+type BlobFetcher interface {
+    OnDone(resource: string, ok: bool, status: u32, data: []byte)
+}
+
+/*
+*/
+#wa:import net fetch_blob
+func jsFetchBlob(tid: int, resource: string)
+func FetchBlob(resource: string, fetcher: BlobFetcher) {
+    if fetcher == nil {
+        panic("Fetcher can't be nil.")
+    }
+    tid := allocTask(resource, fetcher)
+    jsFetchBlob(tid, resource)
+}
+
+#wa:export net.onFetchBlobDone
+func onFetchBlobDone(tid: int, ok: bool, status: u32, data: []byte) {
+    tasks[tid].fetcher.(BlobFetcher).OnDone(tasks[tid].resource, ok, status, data)
+    freeTask(tid)
+}
+
+type fetchTask struct {
+    resource: string
+    fetcher: interface{}
+}
+
+global tasks: []fetchTask
+global freeTaskIDs: []int
+
+func allocTask(resource: string, fetcher: interface{}) => (taskid: int) {
+    if len(freeTaskIDs) > 0 {
+        i := len(freeTaskIDs) - 1
+        taskid = freeTaskIDs[i]
+        freeTaskIDs = freeTaskIDs[:i]
+    } else {
+        taskid = len(tasks)
+        tasks = append(tasks, fetchTask{})
+    }
+    tasks[taskid].resource = resource
+    tasks[taskid].fetcher = fetcher
+    return
+}
+
+func freeTask(taskid: int) {
+    if tasks[taskid].fetcher == nil {
+        panic("Task has been freed.")
+    }
+    tasks[taskid].resource = ""
+    tasks[taskid].fetcher = nil
+
+    freeTaskIDs = append(freeTaskIDs, taskid)
+}
