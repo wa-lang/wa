@@ -315,18 +315,7 @@ func (check *Checker) selector(x *operand, e *ast.SelectorExpr) {
 	// can only appear in qualified identifiers which are mapped to
 	// selector expressions.
 	if ident, ok := e.X.(*ast.Ident); ok {
-		var obj Object
-		if ident.Name[0] == '#' {
-			// 内部: 根据包路径查询
-			for _, pkg := range check.pkg.imports {
-				if pkg.path == ident.Name[1:] {
-					// todo(chai)
-				}
-			}
-		} else {
-			obj = check.lookup(ident.Name)
-		}
-
+		obj := check.lookup(ident.Name)
 		if pname, _ := obj.(*PkgName); pname != nil {
 			assert(pname.pkg == check.pkg)
 			check.recordUse(ident, pname)

@@ -780,7 +780,7 @@ func (check *Checker) binary(x *operand, e *ast.BinaryExpr, lhs, rhs ast.Expr, o
 		return
 	}
 
-	if check.tryBinaryOperatorCall(x, &y, e) {
+	if check.tryBinaryOperatorCall(x, &y, lhs, rhs, op) {
 		return
 	}
 

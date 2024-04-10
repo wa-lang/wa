@@ -133,10 +133,6 @@ func (check *Checker) processTypeOperators() {
 }
 
 func (check *Checker) tryUnaryOperatorCall(x *operand, e *ast.UnaryExpr) bool {
-	if true {
-		return false // todo(chai): debug
-	}
-
 	assert(x.typ != nil)
 
 	var xNamed *Named
@@ -181,11 +177,9 @@ func (check *Checker) tryUnaryOperatorCall(x *operand, e *ast.UnaryExpr) bool {
 	return true
 }
 
-func (check *Checker) tryBinaryOperatorCall(x, y *operand, e *ast.BinaryExpr) bool {
-	if true {
-		return false // todo(chai): debug
-	}
-
+func (check *Checker) tryBinaryOperatorCall(
+	x, y *operand, lhs, rhs ast.Expr, op token.Token,
+) bool {
 	var xNamed, yNamed *Named
 	if v, ok := x.typ.(*Named); ok {
 		xNamed = v
@@ -200,13 +194,13 @@ func (check *Checker) tryBinaryOperatorCall(x, y *operand, e *ast.BinaryExpr) bo
 	}
 
 	// 根据左右顺序匹配
-	xFuncs := check.getBinOpFuncs(xNamed, e.Op)
-	yFuncs := check.getBinOpFuncs(yNamed, e.Op)
+	xFuncs := check.getBinOpFuncs(xNamed, op)
+	yFuncs := check.getBinOpFuncs(yNamed, op)
 
 	var fnMached *Func
 	if fnMached == nil {
 		for _, fn := range xFuncs {
-			if err := check.tryBinOpFunc(fn, x, y, e); err == nil {
+			if err := check.tryBinOpFunc(fn, x, y, lhs, rhs); err == nil {
 				fnMached = fn
 				break
 			}
@@ -214,7 +208,7 @@ func (check *Checker) tryBinaryOperatorCall(x, y *operand, e *ast.BinaryExpr) bo
 	}
 	if fnMached == nil {
 		for _, fn := range yFuncs {
-			if err := check.tryBinOpFunc(fn, x, y, e); err == nil {
+			if err := check.tryBinOpFunc(fn, x, y, lhs, rhs); err == nil {
 				fnMached = fn
 				break
 			}
@@ -228,10 +222,11 @@ func (check *Checker) tryBinaryOperatorCall(x, y *operand, e *ast.BinaryExpr) bo
 	x.typ = fnMached.typ.(*Signature).results.vars[0].typ
 	x.expr = &ast.CallExpr{
 		Fun: &ast.SelectorExpr{
-			X:   &ast.Ident{Name: "#" + fnMached.pkg.path},
-			Sel: &ast.Ident{Name: fnMached.pkg.name},
+			// TODO(chai): 未导入包/当前包/外部名字屏蔽
+			X:   &ast.Ident{Name: fnMached.pkg.name},
+			Sel: &ast.Ident{Name: fnMached.name},
 		},
-		Args: []ast.Expr{e.X},
+		Args: []ast.Expr{lhs, rhs},
 	}
 
 	check.hasCallOrRecv = true
@@ -262,7 +257,7 @@ func (check *Checker) tryUnaryOpFunc(fn *Func, x *operand, e *ast.UnaryExpr) (er
 	return
 }
 
-func (check *Checker) tryBinOpFunc(fn *Func, x, y *operand, e *ast.BinaryExpr) (err error) {
+func (check *Checker) tryBinOpFunc(fn *Func, x, y *operand, lhs, rhs ast.Expr) (err error) {
 	firstErrBak := check.firstErr
 	check.firstErr = nil
 
@@ -270,8 +265,8 @@ func (check *Checker) tryBinOpFunc(fn *Func, x, y *operand, e *ast.BinaryExpr) (
 
 	defer check.handleBailout(&err)
 
-	check.rawExpr(x, e.X, nil)
-	check.rawExpr(y, e.Y, nil)
+	check.rawExpr(x, lhs, nil)
+	check.rawExpr(y, rhs, nil)
 
 	assert(fn.typ != nil)
 	sig, _ := fn.typ.(*Signature)
