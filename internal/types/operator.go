@@ -90,8 +90,10 @@ func (check *Checker) processTypeOperators() {
 								assert(fnDecl.Type != nil)
 								assert(fnDecl.Type.Params != nil)
 								if len(fnDecl.Type.Params.List) == 1 {
-									typName.ops.Unary_ADD = funcs[0]
-									continue
+									if len(fnDecl.Type.Params.List[0].Names) == 1 {
+										typName.ops.Unary_ADD = funcs[0]
+										continue
+									}
 								}
 							}
 						}
@@ -108,8 +110,10 @@ func (check *Checker) processTypeOperators() {
 						if node := funcs[0].node; node != nil {
 							if fnDecl, ok := node.(*ast.FuncDecl); ok {
 								if len(fnDecl.Type.Params.List) == 1 {
-									typName.ops.Unary_SUB = funcs[0]
-									continue
+									if len(fnDecl.Type.Params.List[0].Names) == 1 {
+										typName.ops.Unary_SUB = funcs[0]
+										continue
+									}
 								}
 							}
 						}
@@ -158,8 +162,7 @@ func (check *Checker) tryUnaryOperatorCall(x *operand, e *ast.UnaryExpr) bool {
 		return false
 	}
 
-	err := check.tryUnaryOpFunc(fn, x, e)
-	if err == nil {
+	if err := check.tryUnaryOpFunc(fn, x, e); err != nil {
 		return false
 	}
 
@@ -196,14 +199,15 @@ func (check *Checker) tryBinaryOperatorCall(
 	// 根据左右顺序匹配
 	xFuncs := check.getBinOpFuncs(xNamed, op)
 	yFuncs := check.getBinOpFuncs(yNamed, op)
+	if len(xFuncs) == 0 && len(yFuncs) == 0 {
+		return false
+	}
 
 	var fnMached *Func
-	if fnMached == nil {
-		for _, fn := range xFuncs {
-			if err := check.tryBinOpFunc(fn, x, y, lhs, rhs); err == nil {
-				fnMached = fn
-				break
-			}
+	for _, fn := range xFuncs {
+		if err := check.tryBinOpFunc(fn, x, y, lhs, rhs); err == nil {
+			fnMached = fn
+			break
 		}
 	}
 	if fnMached == nil {
@@ -220,13 +224,21 @@ func (check *Checker) tryBinaryOperatorCall(
 
 	x.mode = value
 	x.typ = fnMached.typ.(*Signature).results.vars[0].typ
-	x.expr = &ast.CallExpr{
-		Fun: &ast.SelectorExpr{
-			// TODO(chai): 未导入包/当前包/外部名字屏蔽
-			X:   &ast.Ident{Name: fnMached.pkg.name},
-			Sel: &ast.Ident{Name: fnMached.name},
-		},
-		Args: []ast.Expr{lhs, rhs},
+	if fnMached.pkg == check.pkg {
+		// TODO(chai): 当前包/外部名字屏蔽
+		x.expr = &ast.CallExpr{
+			Fun:  &ast.Ident{Name: fnMached.name},
+			Args: []ast.Expr{lhs, rhs},
+		}
+	} else {
+		x.expr = &ast.CallExpr{
+			// TODO(chai): 未导入包修复
+			Fun: &ast.SelectorExpr{
+				X:   &ast.Ident{Name: fnMached.pkg.name},
+				Sel: &ast.Ident{Name: fnMached.name},
+			},
+			Args: []ast.Expr{lhs, rhs},
+		}
 	}
 
 	check.hasCallOrRecv = true
@@ -290,13 +302,13 @@ func (check *Checker) getBinOpFuncs(x *Named, op token.Token) []*Func {
 		case token.ADD:
 			return typ.ops.ADD
 		case token.SUB:
-			return typ.ops.ADD
+			return typ.ops.SUB
 		case token.MUL:
-			return typ.ops.ADD
+			return typ.ops.MUL
 		case token.QUO:
-			return typ.ops.ADD
+			return typ.ops.QUO
 		case token.REM:
-			return typ.ops.ADD
+			return typ.ops.REM
 		}
 	}
 	return nil
