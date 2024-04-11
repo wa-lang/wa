@@ -726,7 +726,12 @@ func (check *Checker) builtin(x *operand, call *ast.CallExpr, id builtinId) (_ b
 		}
 		var t operand
 		x1 := x
-		for _, arg := range call.Args {
+		for i, arg := range call.Args {
+			if x := check.tryFixOperatorCall(arg); x != nil {
+				call.Args[i] = x
+				arg = x
+			}
+
 			check.rawExpr(x1, arg, nil) // permit trace for types, e.g.: new(trace(T))
 			check.dump("%v: %s", x1.pos(), x1)
 			x1 = &t // use incoming x only for first argument

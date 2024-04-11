@@ -136,8 +136,26 @@ func (check *Checker) processTypeOperators() {
 	}
 }
 
+func (check *Checker) tryFixOperatorCall(expr ast.Expr) ast.Expr {
+	switch expr := expr.(type) {
+	case *ast.BinaryExpr:
+		var x, y operand
+		if check.tryBinaryOperatorCall(&x, &y, expr.X, expr.Y, expr.Op) {
+			return x.expr
+		}
+	case *ast.UnaryExpr:
+		var x operand
+		if check.tryUnaryOperatorCall(&x, expr) {
+			return x.expr
+		}
+	}
+	return nil
+}
+
 func (check *Checker) tryUnaryOperatorCall(x *operand, e *ast.UnaryExpr) bool {
-	assert(x.typ != nil)
+	if x.typ == nil {
+		return false
+	}
 
 	var xNamed *Named
 	if v, ok := x.typ.(*Named); ok {
