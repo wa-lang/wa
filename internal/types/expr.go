@@ -100,10 +100,6 @@ func (check *Checker) unary(x *operand, e *ast.UnaryExpr, op token.Token) {
 		return
 	}
 
-	if check.tryUnaryOperatorCall(x, e) {
-		return
-	}
-
 	if !check.op(unaryOpPredicates, x, op) {
 		x.mode = invalid
 		return
@@ -777,10 +773,6 @@ func (check *Checker) binary(x *operand, e *ast.BinaryExpr, lhs, rhs ast.Expr, o
 	if y.mode == invalid {
 		x.mode = invalid
 		x.expr = y.expr
-		return
-	}
-
-	if check.tryBinaryOperatorCall(x, &y, lhs, rhs, op) {
 		return
 	}
 

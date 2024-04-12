@@ -14,6 +14,12 @@ import (
 func (check *Checker) call(x *operand, e *ast.CallExpr) exprKind {
 	check.resolveExprOrTypeOrGenericCall(x, e)
 
+	for i, arg := range e.Args {
+		if expr := check.tryFixOperatorCall(arg); expr != nil {
+			e.Args[i] = expr
+		}
+	}
+
 	switch x.mode {
 	case invalid:
 		check.use(e.Args...)

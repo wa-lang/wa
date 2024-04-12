@@ -140,11 +140,14 @@ func (check *Checker) tryFixOperatorCall(expr ast.Expr) ast.Expr {
 	switch expr := expr.(type) {
 	case *ast.BinaryExpr:
 		var x, y operand
+		check.rawExpr(&x, expr.X, nil)
+		check.rawExpr(&y, expr.Y, nil)
 		if check.tryBinaryOperatorCall(&x, &y, expr.X, expr.Y, expr.Op) {
 			return x.expr
 		}
 	case *ast.UnaryExpr:
 		var x operand
+		check.rawExpr(&x, expr.X, nil)
 		if check.tryUnaryOperatorCall(&x, expr) {
 			return x.expr
 		}
@@ -221,39 +224,39 @@ func (check *Checker) tryBinaryOperatorCall(
 		return false
 	}
 
-	var fnMached *Func
+	var fnMatched *Func
 	for _, fn := range xFuncs {
 		if err := check.tryBinOpFunc(fn, x, y, lhs, rhs); err == nil {
-			fnMached = fn
+			fnMatched = fn
 			break
 		}
 	}
-	if fnMached == nil {
+	if fnMatched == nil {
 		for _, fn := range yFuncs {
 			if err := check.tryBinOpFunc(fn, x, y, lhs, rhs); err == nil {
-				fnMached = fn
+				fnMatched = fn
 				break
 			}
 		}
 	}
-	if fnMached == nil {
+	if fnMatched == nil {
 		return false
 	}
 
 	x.mode = value
-	x.typ = fnMached.typ.(*Signature).results.vars[0].typ
-	if fnMached.pkg == check.pkg {
+	x.typ = fnMatched.typ.(*Signature).results.vars[0].typ
+	if fnMatched.pkg == check.pkg {
 		// TODO(chai): 当前包/外部名字屏蔽
 		x.expr = &ast.CallExpr{
-			Fun:  &ast.Ident{Name: fnMached.name},
+			Fun:  &ast.Ident{Name: fnMatched.name},
 			Args: []ast.Expr{lhs, rhs},
 		}
 	} else {
 		x.expr = &ast.CallExpr{
 			// TODO(chai): 未导入包修复
 			Fun: &ast.SelectorExpr{
-				X:   &ast.Ident{Name: fnMached.pkg.name},
-				Sel: &ast.Ident{Name: fnMached.name},
+				X:   &ast.Ident{Name: fnMatched.pkg.name},
+				Sel: &ast.Ident{Name: fnMatched.name},
 			},
 			Args: []ast.Expr{lhs, rhs},
 		}
