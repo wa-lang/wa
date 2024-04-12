@@ -4,10 +4,13 @@ type BlobFetcher interface {
     OnDone(resource: string, ok: bool, status: u32, data: []byte)
 }
 
+type BlobHandler func(resource: string, ok: bool, status: u32, data: []byte)
+
 /*
 */
 #wa:import net fetch_blob
 func jsFetchBlob(tid: int, resource: string)
+#wa:generic FetchBlobWithHandler
 func FetchBlob(resource: string, fetcher: BlobFetcher) {
     if fetcher == nil {
         panic("Fetcher can't be nil.")
@@ -16,9 +19,23 @@ func FetchBlob(resource: string, fetcher: BlobFetcher) {
     jsFetchBlob(tid, resource)
 }
 
+func FetchBlobWithHandler(resource: string, handler: BlobHandler) {
+    if handler == nil {
+        panic("Handler can't be nil.")
+    }
+    tid := allocTask(resource, handler)
+    jsFetchBlob(tid, resource)
+}
+
 #wa:export net.onFetchBlobDone
 func onFetchBlobDone(tid: int, ok: bool, status: u32, data: []byte) {
-    tasks[tid].fetcher.(BlobFetcher).OnDone(tasks[tid].resource, ok, status, data)
+    switch h := tasks[tid].fetcher.(type) {
+    case BlobFetcher:
+        h.OnDone(tasks[tid].resource, ok, status, data)
+
+    case BlobHandler:
+        h(tasks[tid].resource, ok, status, data)
+    }
     freeTask(tid)
 }
 
