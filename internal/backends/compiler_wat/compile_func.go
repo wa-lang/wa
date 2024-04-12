@@ -732,6 +732,10 @@ func (g *functionGenerator) genBuiltin(call *ssa.CallCommon) (insts []wat.Inst, 
 				insts = append(insts, g.module.EmitPrintString(av)...)
 			} else if _, ok := avt.(*wir.Interface); ok {
 				insts = append(insts, g.module.EmitPrintInterface(av)...)
+			} else if _, ok := avt.(*wir.Ref); ok {
+				insts = append(insts, g.module.EmitPrintRef(av)...)
+			} else if _, ok := avt.(*wir.Closure); ok {
+				insts = append(insts, g.module.EmitPrintClosure(av)...)
 			} else {
 				logger.Fatalf("Todo: print(%T)", avt)
 			}
@@ -1107,8 +1111,7 @@ func (g *functionGenerator) genMakeClosre_Anonymous(inst *ssa.MakeClosure) (inst
 		dx := g.module.FindGlobalByName("$wa.runtime.closure_data")
 		data_ptr := wir.ExtractFieldByName(dx, "d")
 
-		warp_fn.Insts = append(warp_fn.Insts, st_free_data.EmitLoadFromAddr(data_ptr, 0)...)
-		warp_fn.Insts = append(warp_fn.Insts, dx.EmitRelease()...)
+		warp_fn.Insts = append(warp_fn.Insts, st_free_data.EmitLoadFromAddrNoRetain(data_ptr, 0)...)
 		warp_fn.Insts = append(warp_fn.Insts, dx.EmitInit()...)
 
 		for _, i := range warp_fn.Params {
@@ -1171,8 +1174,7 @@ func (g *functionGenerator) genMakeClosre_Bound(inst *ssa.MakeClosure) (insts []
 		dx := g.module.FindGlobalByName("$wa.runtime.closure_data")
 		data_ptr := wir.ExtractFieldByName(dx, "d")
 
-		warp_fn.Insts = append(warp_fn.Insts, recv_type.EmitLoadFromAddr(data_ptr, 0)...)
-		warp_fn.Insts = append(warp_fn.Insts, dx.EmitRelease()...)
+		warp_fn.Insts = append(warp_fn.Insts, recv_type.EmitLoadFromAddrNoRetain(data_ptr, 0)...)
 		warp_fn.Insts = append(warp_fn.Insts, dx.EmitInit()...)
 
 		for _, i := range warp_fn.Params {

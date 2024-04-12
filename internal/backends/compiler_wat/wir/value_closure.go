@@ -99,15 +99,19 @@ func (t *Closure) Equal(u ValueType) bool {
 }
 
 func (t *Closure) EmitLoadFromAddr(addr Value, offset int) []wat.Inst {
-	//if !addr.Type().(*Ptr).Base.Equal(t) {
-	//	logger.Fatal("Type not match")
-	//	return nil
-	//}
 	if _, ok := addr.(*aPtr); !ok {
 		logger.Fatal("addr should be `*aPtr`")
 	}
 
 	return t.underlying.EmitLoadFromAddr(addr, offset)
+}
+
+func (t *Closure) EmitLoadFromAddrNoRetain(addr Value, offset int) []wat.Inst {
+	if _, ok := addr.(*aPtr); !ok {
+		logger.Fatal("addr should be `*aPtr`")
+	}
+
+	return t.underlying.EmitLoadFromAddrNoRetain(addr, offset)
 }
 
 /**************************************
@@ -144,8 +148,8 @@ func EmitCallClosure(c Value, params []Value) (insts []wat.Inst) {
 	closure := c.(*aClosure)
 	insts = append(insts, closure.ExtractByName("fn_index").EmitPush()...)
 
-	insts = append(insts, closure.ExtractByName("d").EmitPush()...)
-	insts = append(insts, currentModule.FindGlobalByName("$wa.runtime.closure_data").EmitPop()...)
+	insts = append(insts, closure.ExtractByName("d").EmitPushNoRetain()...)
+	insts = append(insts, currentModule.FindGlobalByName("$wa.runtime.closure_data").(*aRef).EmitPop()...)
 
 	insts = append(insts, wat.NewInstCallIndirect(closure.typ._fnTypeName))
 	return

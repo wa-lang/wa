@@ -66,6 +66,10 @@ func (t *Slice) EmitLoadFromAddr(addr Value, offset int) []wat.Inst {
 	return t.underlying.EmitLoadFromAddr(addr, offset)
 }
 
+func (t *Slice) EmitLoadFromAddrNoRetain(addr Value, offset int) []wat.Inst {
+	return t.underlying.EmitLoadFromAddrNoRetain(addr, offset)
+}
+
 /*这个函数极其不优雅*/
 func (t *Slice) emitGenFromRefOfSlice(x *aRef, low, high, max Value) (insts []wat.Inst) {
 	//block
@@ -514,10 +518,6 @@ func newValue_Slice(name string, kind ValueKind, typ *Slice) *aSlice {
 }
 
 func (v *aSlice) Type() ValueType { return v.typ }
-
-func (v *aSlice) emitStoreToAddr(addr Value, offset int) []wat.Inst {
-	return v.aStruct.emitStoreToAddr(addr, offset)
-}
 
 func (v *aSlice) emitSub(low, high, max Value) (insts []wat.Inst) {
 	//block

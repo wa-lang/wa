@@ -52,6 +52,10 @@ func (t *Interface) EmitLoadFromAddr(addr Value, offset int) []wat.Inst {
 	return t.underlying.EmitLoadFromAddr(addr, offset)
 }
 
+func (t *Interface) EmitLoadFromAddrNoRetain(addr Value, offset int) []wat.Inst {
+	return t.underlying.EmitLoadFromAddrNoRetain(addr, offset)
+}
+
 func (t *Interface) emitGenFromRef(x *aRef) (insts []wat.Inst) {
 	insts = append(insts, x.EmitPush()...) //data
 
@@ -114,10 +118,6 @@ func newValue_Interface(name string, kind ValueKind, typ *Interface) *aInterface
 }
 
 func (v *aInterface) Type() ValueType { return v.typ }
-
-func (v *aInterface) emitStoreToAddr(addr Value, offset int) []wat.Inst {
-	return v.aStruct.emitStoreToAddr(addr, offset)
-}
 
 func (v *aInterface) emitGetData(destType ValueType, commaOk bool) (insts []wat.Inst) {
 	insts = append(insts, v.ExtractByName("itab").EmitPush()...)

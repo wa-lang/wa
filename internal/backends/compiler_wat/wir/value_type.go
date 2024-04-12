@@ -123,6 +123,10 @@ func (t *Void) EmitLoadFromAddr(addr Value, offset int) []wat.Inst {
 	logger.Fatal("Unreachable")
 	return nil
 }
+func (t *Void) EmitLoadFromAddrNoRetain(addr Value, offset int) []wat.Inst {
+	logger.Fatal("Unreachable")
+	return nil
+}
 
 /**************************************
 Bool:
@@ -153,10 +157,11 @@ func (t *Bool) onFree() int            { return 0 }
 func (t *Bool) Raw() []wat.ValueType   { return []wat.ValueType{wat.I32{}} }
 func (t *Bool) Equal(u ValueType) bool { _, ok := u.(*Bool); return ok }
 func (t *Bool) EmitLoadFromAddr(addr Value, offset int) []wat.Inst {
-	//if !addr.Type().(*Ptr).Base.Equal(t) {
-	//	logger.Fatal("Type not match")
-	//	return nil
-	//}
+	insts := addr.EmitPush()
+	insts = append(insts, wat.NewInstLoad8u(offset, 1))
+	return insts
+}
+func (t *Bool) EmitLoadFromAddrNoRetain(addr Value, offset int) []wat.Inst {
 	insts := addr.EmitPush()
 	insts = append(insts, wat.NewInstLoad8u(offset, 1))
 	return insts
@@ -191,10 +196,11 @@ func (t *Rune) onFree() int            { return 0 }
 func (t *Rune) Raw() []wat.ValueType   { return []wat.ValueType{wat.I32{}} }
 func (t *Rune) Equal(u ValueType) bool { _, ok := u.(*Rune); return ok }
 func (t *Rune) EmitLoadFromAddr(addr Value, offset int) []wat.Inst {
-	//if !addr.Type().(*Ptr).Base.Equal(t) {
-	//	logger.Fatal("Type not match")
-	//	return nil
-	//}
+	insts := addr.EmitPush()
+	insts = append(insts, wat.NewInstLoad(toWatType(t), offset, 4))
+	return insts
+}
+func (t *Rune) EmitLoadFromAddrNoRetain(addr Value, offset int) []wat.Inst {
 	insts := addr.EmitPush()
 	insts = append(insts, wat.NewInstLoad(toWatType(t), offset, 4))
 	return insts
@@ -229,10 +235,15 @@ func (t *I8) onFree() int            { return 0 }
 func (t *I8) Raw() []wat.ValueType   { return []wat.ValueType{wat.I32{}} }
 func (t *I8) Equal(u ValueType) bool { _, ok := u.(*I8); return ok }
 func (t *I8) EmitLoadFromAddr(addr Value, offset int) []wat.Inst {
-	//if !addr.Type().(*Ptr).Base.Equal(t) {
-	//	logger.Fatal("Type not match")
-	//	return nil
-	//}
+	if _, ok := addr.(*aPtr); !ok {
+		logger.Fatal("addr should be `*aPtr`")
+	}
+
+	insts := addr.EmitPush()
+	insts = append(insts, wat.NewInstLoad8s(offset, 1))
+	return insts
+}
+func (t *I8) EmitLoadFromAddrNoRetain(addr Value, offset int) []wat.Inst {
 	if _, ok := addr.(*aPtr); !ok {
 		logger.Fatal("addr should be `*aPtr`")
 	}
@@ -271,10 +282,14 @@ func (t *U8) onFree() int            { return 0 }
 func (t *U8) Raw() []wat.ValueType   { return []wat.ValueType{wat.I32{}} }
 func (t *U8) Equal(u ValueType) bool { _, ok := u.(*U8); return ok }
 func (t *U8) EmitLoadFromAddr(addr Value, offset int) []wat.Inst {
-	//if !addr.Type().(*Ptr).Base.Equal(t) {
-	//	logger.Fatal("Type not match")
-	//	return nil
-	//}
+	if _, ok := addr.(*aPtr); !ok {
+		logger.Fatal("addr should be `*aPtr`")
+	}
+	insts := addr.EmitPush()
+	insts = append(insts, wat.NewInstLoad8u(offset, 1))
+	return insts
+}
+func (t *U8) EmitLoadFromAddrNoRetain(addr Value, offset int) []wat.Inst {
 	if _, ok := addr.(*aPtr); !ok {
 		logger.Fatal("addr should be `*aPtr`")
 	}
@@ -312,10 +327,14 @@ func (t *I16) onFree() int            { return 0 }
 func (t *I16) Raw() []wat.ValueType   { return []wat.ValueType{wat.I32{}} }
 func (t *I16) Equal(u ValueType) bool { _, ok := u.(*I16); return ok }
 func (t *I16) EmitLoadFromAddr(addr Value, offset int) []wat.Inst {
-	//if !addr.Type().(*Ptr).Base.Equal(t) {
-	//	logger.Fatal("Type not match")
-	//	return nil
-	//}
+	if _, ok := addr.(*aPtr); !ok {
+		logger.Fatal("addr should be `*aPtr`")
+	}
+	insts := addr.EmitPush()
+	insts = append(insts, wat.NewInstLoad16s(offset, 2))
+	return insts
+}
+func (t *I16) EmitLoadFromAddrNoRetain(addr Value, offset int) []wat.Inst {
 	if _, ok := addr.(*aPtr); !ok {
 		logger.Fatal("addr should be `*aPtr`")
 	}
@@ -353,10 +372,14 @@ func (t *U16) onFree() int            { return 0 }
 func (t *U16) Raw() []wat.ValueType   { return []wat.ValueType{wat.I32{}} }
 func (t *U16) Equal(u ValueType) bool { _, ok := u.(*U16); return ok }
 func (t *U16) EmitLoadFromAddr(addr Value, offset int) []wat.Inst {
-	//if !addr.Type().(*Ptr).Base.Equal(t) {
-	//	logger.Fatal("Type not match")
-	//	return nil
-	//}
+	if _, ok := addr.(*aPtr); !ok {
+		logger.Fatal("addr should be `*aPtr`")
+	}
+	insts := addr.EmitPush()
+	insts = append(insts, wat.NewInstLoad16u(offset, 2))
+	return insts
+}
+func (t *U16) EmitLoadFromAddrNoRetain(addr Value, offset int) []wat.Inst {
 	if _, ok := addr.(*aPtr); !ok {
 		logger.Fatal("addr should be `*aPtr`")
 	}
@@ -398,10 +421,14 @@ func (t *I32) onFree() int            { return 0 }
 func (t *I32) Raw() []wat.ValueType   { return []wat.ValueType{wat.I32{}} }
 func (t *I32) Equal(u ValueType) bool { _, ok := u.(*I32); return ok }
 func (t *I32) EmitLoadFromAddr(addr Value, offset int) []wat.Inst {
-	//if !addr.Type().(*Ptr).Base.Equal(t) {
-	//	logger.Fatal("Type not match")
-	//	return nil
-	//}
+	if _, ok := addr.(*aPtr); !ok {
+		logger.Fatal("addr should be `*aPtr`")
+	}
+	insts := addr.EmitPush()
+	insts = append(insts, wat.NewInstLoad(toWatType(t), offset, 4))
+	return insts
+}
+func (t *I32) EmitLoadFromAddrNoRetain(addr Value, offset int) []wat.Inst {
 	if _, ok := addr.(*aPtr); !ok {
 		logger.Fatal("addr should be `*aPtr`")
 	}
@@ -443,10 +470,14 @@ func (t *U32) onFree() int            { return 0 }
 func (t *U32) Raw() []wat.ValueType   { return []wat.ValueType{wat.U32{}} }
 func (t *U32) Equal(u ValueType) bool { _, ok := u.(*U32); return ok }
 func (t *U32) EmitLoadFromAddr(addr Value, offset int) []wat.Inst {
-	//if !addr.Type().(*Ptr).Base.Equal(t) {
-	//	logger.Fatal("Type not match")
-	//	return nil
-	//}
+	if _, ok := addr.(*aPtr); !ok {
+		logger.Fatal("addr should be `*aPtr`")
+	}
+	insts := addr.EmitPush()
+	insts = append(insts, wat.NewInstLoad(toWatType(t), offset, 4))
+	return insts
+}
+func (t *U32) EmitLoadFromAddrNoRetain(addr Value, offset int) []wat.Inst {
 	if _, ok := addr.(*aPtr); !ok {
 		logger.Fatal("addr should be `*aPtr`")
 	}
@@ -484,10 +515,14 @@ func (t *I64) onFree() int            { return 0 }
 func (t *I64) Raw() []wat.ValueType   { return []wat.ValueType{wat.I64{}} }
 func (t *I64) Equal(u ValueType) bool { _, ok := u.(*I64); return ok }
 func (t *I64) EmitLoadFromAddr(addr Value, offset int) []wat.Inst {
-	//if !addr.Type().(*Ptr).Base.Equal(t) {
-	//	logger.Fatal("Type not match")
-	//	return nil
-	//}
+	if _, ok := addr.(*aPtr); !ok {
+		logger.Fatal("addr should be `*aPtr`")
+	}
+	insts := addr.EmitPush()
+	insts = append(insts, wat.NewInstLoad(toWatType(t), offset, 8))
+	return insts
+}
+func (t *I64) EmitLoadFromAddrNoRetain(addr Value, offset int) []wat.Inst {
 	if _, ok := addr.(*aPtr); !ok {
 		logger.Fatal("addr should be `*aPtr`")
 	}
@@ -525,10 +560,14 @@ func (t *U64) onFree() int            { return 0 }
 func (t *U64) Raw() []wat.ValueType   { return []wat.ValueType{wat.U64{}} }
 func (t *U64) Equal(u ValueType) bool { _, ok := u.(*U64); return ok }
 func (t *U64) EmitLoadFromAddr(addr Value, offset int) []wat.Inst {
-	//if !addr.Type().(*Ptr).Base.Equal(t) {
-	//	logger.Fatal("Type not match")
-	//	return nil
-	//}
+	if _, ok := addr.(*aPtr); !ok {
+		logger.Fatal("addr should be `*aPtr`")
+	}
+	insts := addr.EmitPush()
+	insts = append(insts, wat.NewInstLoad(toWatType(t), offset, 8))
+	return insts
+}
+func (t *U64) EmitLoadFromAddrNoRetain(addr Value, offset int) []wat.Inst {
 	if _, ok := addr.(*aPtr); !ok {
 		logger.Fatal("addr should be `*aPtr`")
 	}
@@ -566,10 +605,14 @@ func (t *F32) onFree() int            { return 0 }
 func (t *F32) Raw() []wat.ValueType   { return []wat.ValueType{wat.F32{}} }
 func (t *F32) Equal(u ValueType) bool { _, ok := u.(*F32); return ok }
 func (t *F32) EmitLoadFromAddr(addr Value, offset int) []wat.Inst {
-	//if !addr.Type().(*Ptr).Base.Equal(t) {
-	//	logger.Fatal("Type not match")
-	//	return nil
-	//}
+	if _, ok := addr.(*aPtr); !ok {
+		logger.Fatal("addr should be `*aPtr`")
+	}
+	insts := addr.EmitPush()
+	insts = append(insts, wat.NewInstLoad(toWatType(t), offset, 4))
+	return insts
+}
+func (t *F32) EmitLoadFromAddrNoRetain(addr Value, offset int) []wat.Inst {
 	if _, ok := addr.(*aPtr); !ok {
 		logger.Fatal("addr should be `*aPtr`")
 	}
@@ -607,10 +650,14 @@ func (t *F64) onFree() int            { return 0 }
 func (t *F64) Raw() []wat.ValueType   { return []wat.ValueType{wat.F64{}} }
 func (t *F64) Equal(u ValueType) bool { _, ok := u.(*F64); return ok }
 func (t *F64) EmitLoadFromAddr(addr Value, offset int) []wat.Inst {
-	//if !addr.Type().(*Ptr).Base.Equal(t) {
-	//	logger.Fatal("Type not match")
-	//	return nil
-	//}
+	if _, ok := addr.(*aPtr); !ok {
+		logger.Fatal("addr should be `*aPtr`")
+	}
+	insts := addr.EmitPush()
+	insts = append(insts, wat.NewInstLoad(toWatType(t), offset, 8))
+	return insts
+}
+func (t *F64) EmitLoadFromAddrNoRetain(addr Value, offset int) []wat.Inst {
 	if _, ok := addr.(*aPtr); !ok {
 		logger.Fatal("addr should be `*aPtr`")
 	}

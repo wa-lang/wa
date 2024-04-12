@@ -61,6 +61,10 @@ func (t *Array) EmitLoadFromAddr(addr Value, offset int) (insts []wat.Inst) {
 	return t.underlying.EmitLoadFromAddr(addr, offset)
 }
 
+func (t *Array) EmitLoadFromAddrNoRetain(addr Value, offset int) (insts []wat.Inst) {
+	return t.underlying.EmitLoadFromAddrNoRetain(addr, offset)
+}
+
 func (t *Array) genFunc_IndexOf(m *Module) string {
 	if t.Capacity == 0 {
 		return ""

@@ -65,6 +65,10 @@ func (t *String) EmitLoadFromAddr(addr Value, offset int) []wat.Inst {
 	return t.underlying.EmitLoadFromAddr(addr, offset)
 }
 
+func (t *String) EmitLoadFromAddrNoRetain(addr Value, offset int) []wat.Inst {
+	return t.underlying.EmitLoadFromAddrNoRetain(addr, offset)
+}
+
 func (t *String) genFunc_append(m *Module) string {
 	fn_name := "$string.appendstr"
 	if m.FindFunc(fn_name) != nil {
@@ -299,10 +303,6 @@ func newValue_String(name string, kind ValueKind, typ *String) *aString {
 }
 
 func (v *aString) Type() ValueType { return v.typ }
-
-func (v *aString) emitStoreToAddr(addr Value, offset int) []wat.Inst {
-	return v.aStruct.emitStoreToAddr(addr, offset)
-}
 
 func (v *aString) emitSub(low, high Value) (insts []wat.Inst) {
 	//block

@@ -74,6 +74,7 @@ type ValueType interface {
 	Raw() []wat.ValueType
 	Equal(ValueType) bool
 	EmitLoadFromAddr(addr Value, offset int) []wat.Inst
+	EmitLoadFromAddrNoRetain(addr Value, offset int) []wat.Inst
 
 	Hash() int
 	SetHash(h int)

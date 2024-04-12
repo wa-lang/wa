@@ -97,6 +97,10 @@ func (t *Ref) EmitLoadFromAddr(addr Value, offset int) []wat.Inst {
 	return t.underlying.EmitLoadFromAddr(addr, offset)
 }
 
+func (t *Ref) EmitLoadFromAddrNoRetain(addr Value, offset int) []wat.Inst {
+	return t.underlying.EmitLoadFromAddrNoRetain(addr, offset)
+}
+
 func (t *Ref) newConstRef(ptr int) *aRef {
 	v := newValue_Ref("", ValueKindConst, t)
 	v.setFieldConstValue("b", NewConst("0", t._base_block))
@@ -120,10 +124,6 @@ func newValue_Ref(name string, kind ValueKind, typ *Ref) *aRef {
 }
 
 func (v *aRef) Type() ValueType { return v.typ }
-
-func (v *aRef) emitStoreToAddr(addr Value, offset int) []wat.Inst {
-	return v.aStruct.emitStoreToAddr(addr, offset)
-}
 
 func (v *aRef) emitGetValue() []wat.Inst {
 	return v.typ.Base.EmitLoadFromAddr(v.aStruct.ExtractByName("d"), 0)

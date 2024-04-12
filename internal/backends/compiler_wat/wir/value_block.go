@@ -67,8 +67,14 @@ func (t *Block) onFree() int {
 
 func (t *Block) EmitLoadFromAddr(addr Value, offset int) (insts []wat.Inst) {
 	insts = append(insts, addr.EmitPush()...)
-	insts = append(insts, wat.NewInstLoad(wat.U32{}, offset, 1))
+	insts = append(insts, wat.NewInstLoad(wat.U32{}, offset, 4))
 	insts = append(insts, wat.NewInstCall("runtime.Block.Retain"))
+	return
+}
+
+func (t *Block) EmitLoadFromAddrNoRetain(addr Value, offset int) (insts []wat.Inst) {
+	insts = append(insts, addr.EmitPush()...)
+	insts = append(insts, wat.NewInstLoad(wat.U32{}, offset, 4))
 	return
 }
 

@@ -184,6 +184,14 @@ func (t *Struct) EmitLoadFromAddr(addr Value, offset int) (insts []wat.Inst) {
 	return
 }
 
+func (t *Struct) EmitLoadFromAddrNoRetain(addr Value, offset int) (insts []wat.Inst) {
+	for _, m := range t.fields {
+		ptr := newValue_Ptr(addr.Name(), addr.Kind(), m._typ_ptr)
+		insts = append(insts, m.Type().EmitLoadFromAddrNoRetain(ptr, m._start+offset)...)
+	}
+	return
+}
+
 /**************************************
 aStruct:
 **************************************/
