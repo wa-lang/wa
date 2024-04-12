@@ -53,6 +53,12 @@ Instead of requiring complex toolchains to set up, you can simply go install it 
 
 ![](docs/images/webgpu-01.png)
 
+## P5 for creative coding
+
+- https://wa-lang.org/smalltalk/st0037.html
+
+![](docs/images/p5wa-01.png)
+
 
 ## Example: Print Wa
 

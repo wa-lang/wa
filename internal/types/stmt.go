@@ -319,6 +319,10 @@ func (check *Checker) stmt(ctxt stmtContext, s ast.Stmt) {
 		check.stmt(ctxt, s.Stmt)
 
 	case *ast.ExprStmt:
+		if x := check.tryFixOperatorCall(s.X); x != nil {
+			s.X = x
+		}
+
 		// spec: "With the exception of specific built-in functions,
 		// function and method calls and receive operations can appear
 		// in statement context. Such statements may be parenthesized."

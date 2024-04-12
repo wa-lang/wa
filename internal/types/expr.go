@@ -780,7 +780,7 @@ func (check *Checker) binary(x *operand, e *ast.BinaryExpr, lhs, rhs ast.Expr, o
 		return
 	}
 
-	if check.tryBinaryOperatorCall(x, &y, e) {
+	if check.tryBinaryOperatorCall(x, &y, lhs, rhs, op) {
 		return
 	}
 
@@ -1257,6 +1257,10 @@ func (check *Checker) exprInternal(x *operand, e ast.Expr, hint Type) exprKind {
 		x.typ = typ
 
 	case *ast.ParenExpr:
+		if x := check.tryFixOperatorCall(e.X); x != nil {
+			e.X = x
+		}
+
 		kind := check.rawExpr(x, e.X, nil)
 		x.expr = e
 		return kind

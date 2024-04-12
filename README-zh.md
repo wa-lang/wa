@@ -52,6 +52,11 @@
 
 ![](docs/images/webgpu-01.png)
 
+## P5 儿童编程
+
+- https://wa-lang.org/smalltalk/st0037.html
+
+![](docs/images/p5wa-01.png)
 
 ## 例子: 凹语言
 

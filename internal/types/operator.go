@@ -90,8 +90,10 @@ func (check *Checker) processTypeOperators() {
 								assert(fnDecl.Type != nil)
 								assert(fnDecl.Type.Params != nil)
 								if len(fnDecl.Type.Params.List) == 1 {
-									typName.ops.Unary_ADD = funcs[0]
-									continue
+									if len(fnDecl.Type.Params.List[0].Names) == 1 {
+										typName.ops.Unary_ADD = funcs[0]
+										continue
+									}
 								}
 							}
 						}
@@ -108,8 +110,10 @@ func (check *Checker) processTypeOperators() {
 						if node := funcs[0].node; node != nil {
 							if fnDecl, ok := node.(*ast.FuncDecl); ok {
 								if len(fnDecl.Type.Params.List) == 1 {
-									typName.ops.Unary_SUB = funcs[0]
-									continue
+									if len(fnDecl.Type.Params.List[0].Names) == 1 {
+										typName.ops.Unary_SUB = funcs[0]
+										continue
+									}
 								}
 							}
 						}
@@ -132,12 +136,26 @@ func (check *Checker) processTypeOperators() {
 	}
 }
 
-func (check *Checker) tryUnaryOperatorCall(x *operand, e *ast.UnaryExpr) bool {
-	if true {
-		return false // todo(chai): debug
+func (check *Checker) tryFixOperatorCall(expr ast.Expr) ast.Expr {
+	switch expr := expr.(type) {
+	case *ast.BinaryExpr:
+		var x, y operand
+		if check.tryBinaryOperatorCall(&x, &y, expr.X, expr.Y, expr.Op) {
+			return x.expr
+		}
+	case *ast.UnaryExpr:
+		var x operand
+		if check.tryUnaryOperatorCall(&x, expr) {
+			return x.expr
+		}
 	}
+	return nil
+}
 
-	assert(x.typ != nil)
+func (check *Checker) tryUnaryOperatorCall(x *operand, e *ast.UnaryExpr) bool {
+	if x.typ == nil {
+		return false
+	}
 
 	var xNamed *Named
 	if v, ok := x.typ.(*Named); ok {
@@ -162,8 +180,7 @@ func (check *Checker) tryUnaryOperatorCall(x *operand, e *ast.UnaryExpr) bool {
 		return false
 	}
 
-	err := check.tryUnaryOpFunc(fn, x, e)
-	if err == nil {
+	if err := check.tryUnaryOpFunc(fn, x, e); err != nil {
 		return false
 	}
 
@@ -181,11 +198,9 @@ func (check *Checker) tryUnaryOperatorCall(x *operand, e *ast.UnaryExpr) bool {
 	return true
 }
 
-func (check *Checker) tryBinaryOperatorCall(x, y *operand, e *ast.BinaryExpr) bool {
-	if true {
-		return false // todo(chai): debug
-	}
-
+func (check *Checker) tryBinaryOperatorCall(
+	x, y *operand, lhs, rhs ast.Expr, op token.Token,
+) bool {
 	var xNamed, yNamed *Named
 	if v, ok := x.typ.(*Named); ok {
 		xNamed = v
@@ -200,21 +215,22 @@ func (check *Checker) tryBinaryOperatorCall(x, y *operand, e *ast.BinaryExpr) bo
 	}
 
 	// 根据左右顺序匹配
-	xFuncs := check.getBinOpFuncs(xNamed, e.Op)
-	yFuncs := check.getBinOpFuncs(yNamed, e.Op)
+	xFuncs := check.getBinOpFuncs(xNamed, op)
+	yFuncs := check.getBinOpFuncs(yNamed, op)
+	if len(xFuncs) == 0 && len(yFuncs) == 0 {
+		return false
+	}
 
 	var fnMached *Func
-	if fnMached == nil {
-		for _, fn := range xFuncs {
-			if err := check.tryBinOpFunc(fn, x, y, e); err == nil {
-				fnMached = fn
-				break
-			}
+	for _, fn := range xFuncs {
+		if err := check.tryBinOpFunc(fn, x, y, lhs, rhs); err == nil {
+			fnMached = fn
+			break
 		}
 	}
 	if fnMached == nil {
 		for _, fn := range yFuncs {
-			if err := check.tryBinOpFunc(fn, x, y, e); err == nil {
+			if err := check.tryBinOpFunc(fn, x, y, lhs, rhs); err == nil {
 				fnMached = fn
 				break
 			}
@@ -226,12 +242,21 @@ func (check *Checker) tryBinaryOperatorCall(x, y *operand, e *ast.BinaryExpr) bo
 
 	x.mode = value
 	x.typ = fnMached.typ.(*Signature).results.vars[0].typ
-	x.expr = &ast.CallExpr{
-		Fun: &ast.SelectorExpr{
-			X:   &ast.Ident{Name: "#" + fnMached.pkg.path},
-			Sel: &ast.Ident{Name: fnMached.pkg.name},
-		},
-		Args: []ast.Expr{e.X},
+	if fnMached.pkg == check.pkg {
+		// TODO(chai): 当前包/外部名字屏蔽
+		x.expr = &ast.CallExpr{
+			Fun:  &ast.Ident{Name: fnMached.name},
+			Args: []ast.Expr{lhs, rhs},
+		}
+	} else {
+		x.expr = &ast.CallExpr{
+			// TODO(chai): 未导入包修复
+			Fun: &ast.SelectorExpr{
+				X:   &ast.Ident{Name: fnMached.pkg.name},
+				Sel: &ast.Ident{Name: fnMached.name},
+			},
+			Args: []ast.Expr{lhs, rhs},
+		}
 	}
 
 	check.hasCallOrRecv = true
@@ -262,7 +287,7 @@ func (check *Checker) tryUnaryOpFunc(fn *Func, x *operand, e *ast.UnaryExpr) (er
 	return
 }
 
-func (check *Checker) tryBinOpFunc(fn *Func, x, y *operand, e *ast.BinaryExpr) (err error) {
+func (check *Checker) tryBinOpFunc(fn *Func, x, y *operand, lhs, rhs ast.Expr) (err error) {
 	firstErrBak := check.firstErr
 	check.firstErr = nil
 
@@ -270,8 +295,8 @@ func (check *Checker) tryBinOpFunc(fn *Func, x, y *operand, e *ast.BinaryExpr) (
 
 	defer check.handleBailout(&err)
 
-	check.rawExpr(x, e.X, nil)
-	check.rawExpr(y, e.Y, nil)
+	check.rawExpr(x, lhs, nil)
+	check.rawExpr(y, rhs, nil)
 
 	assert(fn.typ != nil)
 	sig, _ := fn.typ.(*Signature)
@@ -295,13 +320,13 @@ func (check *Checker) getBinOpFuncs(x *Named, op token.Token) []*Func {
 		case token.ADD:
 			return typ.ops.ADD
 		case token.SUB:
-			return typ.ops.ADD
+			return typ.ops.SUB
 		case token.MUL:
-			return typ.ops.ADD
+			return typ.ops.MUL
 		case token.QUO:
-			return typ.ops.ADD
+			return typ.ops.QUO
 		case token.REM:
-			return typ.ops.ADD
+			return typ.ops.REM
 		}
 	}
 	return nil
