@@ -989,6 +989,54 @@ func (m *Module) EmitPrintInterface(v Value) (insts []wat.Inst) {
 	return
 }
 
+func (m *Module) EmitPrintRef(v Value) (insts []wat.Inst) {
+	i := v.(*aRef)
+	insts = append(insts, wat.NewInstConst(wat.I32{}, strconv.Itoa('(')))
+	insts = append(insts, wat.NewInstCall("$runtime.waPrintRune"))
+
+	insts = append(insts, i.ExtractByName("b").EmitPushNoRetain()...)
+	insts = append(insts, wat.NewInstCall("$runtime.waPrintU32Ptr")) // block
+	insts = append(insts, wat.NewInstConst(wat.I32{}, strconv.Itoa(',')))
+	insts = append(insts, wat.NewInstCall("$runtime.waPrintRune"))
+
+	insts = append(insts, i.ExtractByName("b").EmitPushNoRetain()...)
+	insts = append(insts, wat.NewInstLoad(wat.I32{}, 0, 1))
+	insts = append(insts, wat.NewInstCall("$runtime.waPrintI32")) // refcount
+	insts = append(insts, wat.NewInstConst(wat.I32{}, strconv.Itoa(',')))
+	insts = append(insts, wat.NewInstCall("$runtime.waPrintRune"))
+
+	insts = append(insts, i.ExtractByName("d").EmitPushNoRetain()...)
+	insts = append(insts, wat.NewInstCall("$runtime.waPrintU32Ptr")) // data
+
+	insts = append(insts, wat.NewInstConst(wat.I32{}, strconv.Itoa(')')))
+	insts = append(insts, wat.NewInstCall("$runtime.waPrintRune"))
+	return
+}
+
+func (m *Module) EmitPrintClosure(v Value) (insts []wat.Inst) {
+	i := v.(*aClosure)
+	insts = append(insts, wat.NewInstConst(wat.I32{}, strconv.Itoa('(')))
+	insts = append(insts, wat.NewInstCall("$runtime.waPrintRune"))
+
+	insts = append(insts, i.ExtractByName("fn_index").EmitPushNoRetain()...)
+	insts = append(insts, wat.NewInstCall("$runtime.waPrintI32")) // fn_index
+	insts = append(insts, wat.NewInstConst(wat.I32{}, strconv.Itoa(',')))
+	insts = append(insts, wat.NewInstCall("$runtime.waPrintRune"))
+
+	insts = append(insts, i.ExtractByName("d").(*aRef).ExtractByName("b").EmitPushNoRetain()...)
+	insts = append(insts, wat.NewInstCall("$runtime.waPrintU32Ptr")) // data.block
+	insts = append(insts, wat.NewInstConst(wat.I32{}, strconv.Itoa(',')))
+	insts = append(insts, wat.NewInstCall("$runtime.waPrintRune"))
+
+	insts = append(insts, i.ExtractByName("d").(*aRef).ExtractByName("b").EmitPushNoRetain()...)
+	insts = append(insts, wat.NewInstLoad(wat.I32{}, 0, 1))
+	insts = append(insts, wat.NewInstCall("$runtime.waPrintI32")) // data.block.RefCount
+
+	insts = append(insts, wat.NewInstConst(wat.I32{}, strconv.Itoa(')')))
+	insts = append(insts, wat.NewInstCall("$runtime.waPrintRune"))
+	return
+}
+
 func (m *Module) EmitStringValue(v Value) (insts []wat.Inst) {
 	s := v.(*aString)
 	insts = append(insts, s.ExtractByName("d").EmitPush()...)
