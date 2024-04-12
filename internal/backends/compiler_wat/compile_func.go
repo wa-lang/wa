@@ -1109,9 +1109,8 @@ func (g *functionGenerator) genMakeClosre_Anonymous(inst *ssa.MakeClosure) (inst
 		warp_fn.Results = g.tLib.GenFnSig(f.Signature).Results
 
 		dx := g.module.FindGlobalByName("$wa.runtime.closure_data")
-		data_ptr := wir.ExtractFieldByName(dx, "d")
 
-		warp_fn.Insts = append(warp_fn.Insts, st_free_data.EmitLoadFromAddrNoRetain(data_ptr, 0)...)
+		warp_fn.Insts = append(warp_fn.Insts, st_free_data.EmitLoadFromAddrNoRetain(dx, 0)...)
 		warp_fn.Insts = append(warp_fn.Insts, dx.EmitInit()...)
 
 		for _, i := range warp_fn.Params {
@@ -1172,9 +1171,8 @@ func (g *functionGenerator) genMakeClosre_Bound(inst *ssa.MakeClosure) (insts []
 		warp_fn.Results = g.tLib.GenFnSig(f.Signature).Results
 
 		dx := g.module.FindGlobalByName("$wa.runtime.closure_data")
-		data_ptr := wir.ExtractFieldByName(dx, "d")
 
-		warp_fn.Insts = append(warp_fn.Insts, recv_type.EmitLoadFromAddrNoRetain(data_ptr, 0)...)
+		warp_fn.Insts = append(warp_fn.Insts, recv_type.EmitLoadFromAddrNoRetain(dx, 0)...)
 		warp_fn.Insts = append(warp_fn.Insts, dx.EmitInit()...)
 
 		for _, i := range warp_fn.Params {

@@ -29,7 +29,7 @@ type Compiler struct {
 func New() *Compiler {
 	p := new(Compiler)
 	p.module = wir.NewModule()
-	p.module.AddGlobal("$wa.runtime.closure_data", "", p.module.GenValueType_Ref(p.module.VOID), false, nil)
+	p.module.AddGlobal("$wa.runtime.closure_data", "", p.module.GenValueType_Ptr(p.module.VOID), false, nil)
 	wir.SetCurrentModule(p.module)
 	return p
 }
