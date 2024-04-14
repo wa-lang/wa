@@ -3,8 +3,9 @@
 import "js/p5"
 
 func init {
-	p5.CreateCanvas(400, 400)
-	p5.Background(220, 220, 220)
+	p5.CreateCanvas(400)
+	p5.Background(220)
+	p5.Stroke(p5.RED)
 }
 
 func Draw {
