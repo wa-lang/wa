@@ -31,6 +31,7 @@ ci-test-all:
 	cd waroot && go run ../main.go run hello.wa
 
 	make -C ./waroot/examples ci-test-all
+	wa -v
 
 clean:
 	-rm a.out*

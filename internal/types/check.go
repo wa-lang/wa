@@ -98,6 +98,14 @@ type Checker struct {
 
 	// debugging
 	indent int // indentation for tracing
+
+	nextId uint64 // check.genNextId()
+}
+
+func (check *Checker) genNextId() int {
+	id := check.nextId + 1
+	check.nextId++
+	return int(id)
 }
 
 // addUnusedImport adds the position of a dot-imported package

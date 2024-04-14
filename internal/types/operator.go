@@ -4,6 +4,8 @@ package types
 
 import (
 	"errors"
+	"strconv"
+	"unicode"
 
 	"wa-lang.org/wa/internal/ast"
 	"wa-lang.org/wa/internal/ast/astutil"
@@ -333,4 +335,53 @@ func (check *Checker) getBinOpFuncs(x *Named, op token.Token) []*Func {
 		}
 	}
 	return nil
+}
+
+// 查找运算符重载函数调用对应包的名字
+func (check *Checker) findOperatorCallPkgImportName(pkg *Package) string {
+	assert(pkg != check.pkg)
+	for _, importPkg := range check.pkg.imports {
+		if importPkg == pkg {
+			return importPkg.name
+		}
+	}
+	return ""
+}
+
+// 确保运算符重载的函数对应的包被导入
+func (check *Checker) assureOperatorCallPkgImported(pkg *Package) {
+	assert(pkg != check.pkg)
+	for _, importPkg := range check.pkg.imports {
+		if importPkg == pkg {
+			return
+		}
+	}
+
+	name := check.genPkgAbsImportName(pkg)
+	obj := NewPkgName(token.NoPos, check.pkg, name, pkg)
+	obj.setNode(&ast.ImportSpec{
+		Name: &ast.Ident{Name: name},
+		Path: &ast.BasicLit{Kind: token.STRING, Value: pkg.path},
+		Comment: &ast.CommentGroup{
+			List: []*ast.Comment{
+				{Text: "internal: only for operator overloading call"},
+			},
+		},
+	})
+
+	check.declare(check.pkg.scope, nil, obj, token.NoPos)
+	check.pkg.imports = append(check.pkg.imports, pkg)
+}
+
+// 给需要中间倒入的pkg生成一个导入名字, 用于修改ast
+func (check *Checker) genPkgAbsImportName(pkg *Package) string {
+	var newPkgPath = "#"
+	for _, c := range pkg.path {
+		if unicode.IsLetter(c) || unicode.IsNumber(c) {
+			newPkgPath += string(c)
+		} else {
+			newPkgPath += "_"
+		}
+	}
+	return newPkgPath + "_" + strconv.Itoa(check.genNextId())
 }
