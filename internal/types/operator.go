@@ -4,8 +4,6 @@ package types
 
 import (
 	"errors"
-	"strconv"
-	"unicode"
 
 	"wa-lang.org/wa/internal/ast"
 	"wa-lang.org/wa/internal/ast/astutil"
@@ -191,12 +189,22 @@ func (check *Checker) tryUnaryOperatorCall(x *operand, e *ast.UnaryExpr) bool {
 
 	x.mode = value
 	x.typ = fn.typ.(*Signature).results.vars[0].typ
-	x.expr = &ast.CallExpr{
-		Fun: &ast.SelectorExpr{
-			X:   &ast.Ident{Name: "#" + fn.pkg.path},
-			Sel: &ast.Ident{Name: fn.pkg.name},
-		},
-		Args: []ast.Expr{e.X},
+
+	if fn.pkg == check.pkg {
+		// TODO(chai): 被外部局部同名对象屏蔽
+		x.expr = &ast.CallExpr{
+			Fun:  &ast.Ident{Name: fn.name},
+			Args: []ast.Expr{e.X},
+		}
+	} else {
+		check.ensureOperatorCallPkgImported(fn.pkg)
+		x.expr = &ast.CallExpr{
+			Fun: &ast.SelectorExpr{
+				X:   &ast.Ident{Name: "#" + fn.pkg.path},
+				Sel: &ast.Ident{Name: fn.name},
+			},
+			Args: []ast.Expr{e.X},
+		}
 	}
 
 	check.hasCallOrRecv = true
@@ -247,17 +255,18 @@ func (check *Checker) tryBinaryOperatorCall(
 
 	x.mode = value
 	x.typ = fnMatched.typ.(*Signature).results.vars[0].typ
+
 	if fnMatched.pkg == check.pkg {
-		// TODO(chai): 当前包/外部名字屏蔽
+		// TODO(chai): 被外部局部同名对象屏蔽
 		x.expr = &ast.CallExpr{
 			Fun:  &ast.Ident{Name: fnMatched.name},
 			Args: []ast.Expr{lhs, rhs},
 		}
 	} else {
+		check.ensureOperatorCallPkgImported(fnMatched.pkg)
 		x.expr = &ast.CallExpr{
-			// TODO(chai): 未导入包修复
 			Fun: &ast.SelectorExpr{
-				X:   &ast.Ident{Name: fnMatched.pkg.name},
+				X:   &ast.Ident{Name: "#" + fnMatched.pkg.path},
 				Sel: &ast.Ident{Name: fnMatched.name},
 			},
 			Args: []ast.Expr{lhs, rhs},
@@ -337,30 +346,20 @@ func (check *Checker) getBinOpFuncs(x *Named, op token.Token) []*Func {
 	return nil
 }
 
-// 查找运算符重载函数调用对应包的名字
-func (check *Checker) findOperatorCallPkgImportName(pkg *Package) string {
-	assert(pkg != check.pkg)
-	for _, importPkg := range check.pkg.imports {
-		if importPkg == pkg {
-			return importPkg.name
-		}
-	}
-	return ""
-}
-
 // 确保运算符重载的函数对应的包被导入
-func (check *Checker) assureOperatorCallPkgImported(pkg *Package) {
+func (check *Checker) ensureOperatorCallPkgImported(pkg *Package) {
 	assert(pkg != check.pkg)
-	for _, importPkg := range check.pkg.imports {
-		if importPkg == pkg {
+
+	pkgname := "#" + pkg.path
+	for _, x := range check.pkg.imports {
+		if x.path == pkg.path && x.name == pkgname {
 			return
 		}
 	}
 
-	name := check.genPkgAbsImportName(pkg)
-	obj := NewPkgName(token.NoPos, check.pkg, name, pkg)
+	obj := NewPkgName(token.NoPos, check.pkg, pkgname, pkg)
 	obj.setNode(&ast.ImportSpec{
-		Name: &ast.Ident{Name: name},
+		Name: &ast.Ident{Name: pkgname},
 		Path: &ast.BasicLit{Kind: token.STRING, Value: pkg.path},
 		Comment: &ast.CommentGroup{
 			List: []*ast.Comment{
@@ -371,17 +370,4 @@ func (check *Checker) assureOperatorCallPkgImported(pkg *Package) {
 
 	check.declare(check.pkg.scope, nil, obj, token.NoPos)
 	check.pkg.imports = append(check.pkg.imports, pkg)
-}
-
-// 给需要中间倒入的pkg生成一个导入名字, 用于修改ast
-func (check *Checker) genPkgAbsImportName(pkg *Package) string {
-	var newPkgPath = "#"
-	for _, c := range pkg.path {
-		if unicode.IsLetter(c) || unicode.IsNumber(c) {
-			newPkgPath += string(c)
-		} else {
-			newPkgPath += "_"
-		}
-	}
-	return newPkgPath + "_" + strconv.Itoa(check.genNextId())
 }
