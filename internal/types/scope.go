@@ -67,7 +67,16 @@ func (s *Scope) Child(i int) *Scope { return s.children[i] }
 // Lookup returns the object in scope s with the given name if such an
 // object exists; otherwise the result is nil.
 func (s *Scope) Lookup(name string) Object {
-	return s.elems[name]
+	if obj, ok := s.elems[name]; ok {
+		return obj
+	}
+	if s.parent == Universe {
+		if strings.HasPrefix(name, "#{func}:") {
+			return s.elems[name[len("#{func}:"):]]
+		}
+	}
+
+	return nil
 }
 
 // LookupParent follows the parent chain of scopes starting with s until
@@ -84,6 +93,13 @@ func (s *Scope) LookupParent(name string, pos token.Pos) (*Scope, Object) {
 	for ; s != nil; s = s.parent {
 		if obj := s.elems[name]; obj != nil && (!pos.IsValid() || obj.scopePos() <= pos) {
 			return s, obj
+		}
+		if s.parent == Universe {
+			if strings.HasPrefix(name, "#{func}:") {
+				if obj, ok := s.elems[name[len("#{func}:"):]]; ok {
+					return s, obj
+				}
+			}
 		}
 	}
 	return nil, nil

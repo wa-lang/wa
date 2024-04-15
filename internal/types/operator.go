@@ -193,14 +193,14 @@ func (check *Checker) tryUnaryOperatorCall(x *operand, e *ast.UnaryExpr) bool {
 	if fn.pkg == check.pkg {
 		// TODO(chai): 被外部局部同名对象屏蔽
 		x.expr = &ast.CallExpr{
-			Fun:  &ast.Ident{Name: fn.name},
+			Fun:  &ast.Ident{Name: "#{func}:" + fn.name},
 			Args: []ast.Expr{e.X},
 		}
 	} else {
 		check.ensureOperatorCallPkgImported(fn.pkg)
 		x.expr = &ast.CallExpr{
 			Fun: &ast.SelectorExpr{
-				X:   &ast.Ident{Name: "#" + fn.pkg.path},
+				X:   &ast.Ident{Name: "#{pkg}:" + fn.pkg.path},
 				Sel: &ast.Ident{Name: fn.name},
 			},
 			Args: []ast.Expr{e.X},
@@ -259,14 +259,14 @@ func (check *Checker) tryBinaryOperatorCall(
 	if fnMatched.pkg == check.pkg {
 		// TODO(chai): 被外部局部同名对象屏蔽
 		x.expr = &ast.CallExpr{
-			Fun:  &ast.Ident{Name: fnMatched.name},
+			Fun:  &ast.Ident{Name: "#{func}:" + fnMatched.name},
 			Args: []ast.Expr{lhs, rhs},
 		}
 	} else {
 		check.ensureOperatorCallPkgImported(fnMatched.pkg)
 		x.expr = &ast.CallExpr{
 			Fun: &ast.SelectorExpr{
-				X:   &ast.Ident{Name: "#" + fnMatched.pkg.path},
+				X:   &ast.Ident{Name: "#{pkg}:" + fnMatched.pkg.path},
 				Sel: &ast.Ident{Name: fnMatched.name},
 			},
 			Args: []ast.Expr{lhs, rhs},
@@ -350,7 +350,7 @@ func (check *Checker) getBinOpFuncs(x *Named, op token.Token) []*Func {
 func (check *Checker) ensureOperatorCallPkgImported(pkg *Package) {
 	assert(pkg != check.pkg)
 
-	pkgname := "#" + pkg.path
+	pkgname := "#{pkg}:" + pkg.path
 	for _, x := range check.pkg.imports {
 		if x.path == pkg.path && x.name == pkgname {
 			return
