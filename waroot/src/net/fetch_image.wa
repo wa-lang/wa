@@ -1,0 +1,69 @@
+// 版权 @2024 凹语言 作者。保留所有权利。
+
+import "js"
+
+type ImageFetcher interface {
+    OnDone(resource: string, ok: bool, status: u32, extobj: js.Handle)
+}
+
+type ImageHandler func(resource: string, ok: bool, status: u32, extobj: js.Handle)
+
+/*
+*/
+#wa:import net fetch_image
+func jsFetchImage(tid: int, resource: string) => js.Handle
+#wa:generic FetchImageWithHandler
+func FetchImage(resource: string, fetcher: ImageFetcher) {
+    if fetcher == nil {
+        panic("Fetcher can't be nil.")
+    }
+    tid := allocImageTask(resource, fetcher)
+    jsFetchImage(tid, resource)
+}
+
+func FetchImageWithHandler(resource: string, handler: ImageHandler) {
+    if handler == nil {
+        panic("Handler can't be nil.")
+    }
+    tid := allocImageTask(resource, handler)
+    jsFetchImage(tid, resource)
+}
+
+#wa:export net.onFetchImageDone
+func onFetchImageDone(tid: int, ok: bool, status: u32, extobj: js.Handle) {
+    switch h := imageTasks[tid].fetcher.(type) {
+    case ImageFetcher:
+        h.OnDone(imageTasks[tid].resource, ok, status, extobj)
+
+    case ImageHandler:
+        h(imageTasks[tid].resource, ok, status, extobj)
+    }
+    freeImageTask(tid)
+}
+
+global imageTasks: []fetchTask
+global freeImageTaskIDs: []int
+
+func allocImageTask(resource: string, fetcher: interface{}) => (taskid: int) {
+    if len(freeImageTaskIDs) > 0 {
+        i := len(freeImageTaskIDs) - 1
+        taskid = freeImageTaskIDs[i]
+        freeImageTaskIDs = freeImageTaskIDs[:i]
+    } else {
+        taskid = len(imageTasks)
+        imageTasks = append(imageTasks, fetchTask{})
+    }
+    imageTasks[taskid].resource = resource
+    imageTasks[taskid].fetcher = fetcher
+    return
+}
+
+func freeImageTask(taskid: int) {
+    if imageTasks[taskid].fetcher == nil {
+        panic("Task has been freed.")
+    }
+    imageTasks[taskid].resource = ""
+    imageTasks[taskid].fetcher = nil
+
+    freeImageTaskIDs = append(freeImageTaskIDs, taskid)
+}

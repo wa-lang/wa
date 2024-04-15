@@ -15,7 +15,7 @@ func FetchBlob(resource: string, fetcher: BlobFetcher) {
     if fetcher == nil {
         panic("Fetcher can't be nil.")
     }
-    tid := allocTask(resource, fetcher)
+    tid := allocBlobTask(resource, fetcher)
     jsFetchBlob(tid, resource)
 }
 
@@ -23,20 +23,20 @@ func FetchBlobWithHandler(resource: string, handler: BlobHandler) {
     if handler == nil {
         panic("Handler can't be nil.")
     }
-    tid := allocTask(resource, handler)
+    tid := allocBlobTask(resource, handler)
     jsFetchBlob(tid, resource)
 }
 
 #wa:export net.onFetchBlobDone
 func onFetchBlobDone(tid: int, ok: bool, status: u32, data: []byte) {
-    switch h := tasks[tid].fetcher.(type) {
+    switch h := blobTasks[tid].fetcher.(type) {
     case BlobFetcher:
-        h.OnDone(tasks[tid].resource, ok, status, data)
+        h.OnDone(blobTasks[tid].resource, ok, status, data)
 
     case BlobHandler:
-        h(tasks[tid].resource, ok, status, data)
+        h(blobTasks[tid].resource, ok, status, data)
     }
-    freeTask(tid)
+    freeBlobTask(tid)
 }
 
 type fetchTask struct {
@@ -44,29 +44,29 @@ type fetchTask struct {
     fetcher: interface{}
 }
 
-global tasks: []fetchTask
-global freeTaskIDs: []int
+global blobTasks: []fetchTask
+global freeBlobTaskIDs: []int
 
-func allocTask(resource: string, fetcher: interface{}) => (taskid: int) {
-    if len(freeTaskIDs) > 0 {
-        i := len(freeTaskIDs) - 1
-        taskid = freeTaskIDs[i]
-        freeTaskIDs = freeTaskIDs[:i]
+func allocBlobTask(resource: string, fetcher: interface{}) => (taskid: int) {
+    if len(freeBlobTaskIDs) > 0 {
+        i := len(freeBlobTaskIDs) - 1
+        taskid = freeBlobTaskIDs[i]
+        freeBlobTaskIDs = freeBlobTaskIDs[:i]
     } else {
-        taskid = len(tasks)
-        tasks = append(tasks, fetchTask{})
+        taskid = len(blobTasks)
+        blobTasks = append(blobTasks, fetchTask{})
     }
-    tasks[taskid].resource = resource
-    tasks[taskid].fetcher = fetcher
+    blobTasks[taskid].resource = resource
+    blobTasks[taskid].fetcher = fetcher
     return
 }
 
-func freeTask(taskid: int) {
-    if tasks[taskid].fetcher == nil {
+func freeBlobTask(taskid: int) {
+    if blobTasks[taskid].fetcher == nil {
         panic("Task has been freed.")
     }
-    tasks[taskid].resource = ""
-    tasks[taskid].fetcher = nil
+    blobTasks[taskid].resource = ""
+    blobTasks[taskid].fetcher = nil
 
-    freeTaskIDs = append(freeTaskIDs, taskid)
+    freeBlobTaskIDs = append(freeBlobTaskIDs, taskid)
 }
