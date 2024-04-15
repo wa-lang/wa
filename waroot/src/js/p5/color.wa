@@ -1,0 +1,11 @@
+// 版权 @2024 凹语言 作者。保留所有权利。
+
+import (
+	"image/color"
+)
+
+global (
+	RED   = color.RGBAFrom(u8(255), u8(0), u8(0), 0xff)
+	GREEN = color.RGBAFrom(u8(0), u8(255), u8(0), 0xff)
+	BLUE  = color.RGBAFrom(u8(0), u8(0), u8(255), 0xff)
+)

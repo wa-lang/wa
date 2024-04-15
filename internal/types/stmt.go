@@ -167,6 +167,12 @@ func assignOp(op token.Token) token.Token {
 }
 
 func (check *Checker) suspendedCall(keyword string, call *ast.CallExpr) {
+	for i, x := range call.Args {
+		if expr := check.tryFixOperatorCall(x); expr != nil {
+			call.Args[i] = expr
+		}
+	}
+
 	var x operand
 	var msg string
 	switch check.rawExpr(&x, call, nil) {
@@ -343,6 +349,10 @@ func (check *Checker) stmt(ctxt stmtContext, s ast.Stmt) {
 		check.errorf(x.pos(), "%s %s", &x, msg)
 
 	case *ast.IncDecStmt:
+		if expr := check.tryFixOperatorCall(s.X); expr != nil {
+			s.X = expr
+		}
+
 		var op token.Token
 		switch s.Tok {
 		case token.INC:
@@ -372,6 +382,12 @@ func (check *Checker) stmt(ctxt stmtContext, s ast.Stmt) {
 		check.assignVar(s.X, &x)
 
 	case *ast.AssignStmt:
+		for i, x := range s.Rhs {
+			if expr := check.tryFixOperatorCall(x); expr != nil {
+				s.Rhs[i] = expr
+			}
+		}
+
 		switch s.Tok {
 		case token.ASSIGN, token.DEFINE:
 			if len(s.Lhs) == 0 {
@@ -408,6 +424,11 @@ func (check *Checker) stmt(ctxt stmtContext, s ast.Stmt) {
 		check.suspendedCall("defer", s.Call)
 
 	case *ast.ReturnStmt:
+		for i, x := range s.Results {
+			if expr := check.tryFixOperatorCall(x); expr != nil {
+				s.Results[i] = expr
+			}
+		}
 		res := check.sig.results
 		if res.Len() > 0 {
 			// function returns results
@@ -461,6 +482,11 @@ func (check *Checker) stmt(ctxt stmtContext, s ast.Stmt) {
 		defer check.closeScope()
 
 		check.simpleStmt(s.Init)
+
+		if expr := check.tryFixOperatorCall(s.Cond); expr != nil {
+			s.Cond = expr
+		}
+
 		var x operand
 		check.expr(&x, s.Cond)
 		if x.mode != invalid && !isBoolean(x.typ) {
@@ -486,6 +512,10 @@ func (check *Checker) stmt(ctxt stmtContext, s ast.Stmt) {
 		check.simpleStmt(s.Init)
 		var x operand
 		if s.Tag != nil {
+			if expr := check.tryFixOperatorCall(s.Tag); expr != nil {
+				s.Tag = expr
+			}
+
 			check.expr(&x, s.Tag)
 			// By checking assignment of x to an invisible temporary
 			// (as a compiler would), we get all the relevant checks.
@@ -539,6 +569,9 @@ func (check *Checker) stmt(ctxt stmtContext, s ast.Stmt) {
 		var rhs ast.Expr
 		switch guard := s.Assign.(type) {
 		case *ast.ExprStmt:
+			if expr := check.tryFixOperatorCall(guard.X); expr != nil {
+				guard.X = expr
+			}
 			rhs = guard.X
 		case *ast.AssignStmt:
 			if len(guard.Lhs) != 1 || guard.Tok != token.DEFINE || len(guard.Rhs) != 1 {
@@ -550,6 +583,12 @@ func (check *Checker) stmt(ctxt stmtContext, s ast.Stmt) {
 			if lhs == nil {
 				check.invalidAST(s.Pos(), "incorrect form of type switch guard")
 				return
+			}
+
+			for i, x := range guard.Rhs {
+				if expr := check.tryFixOperatorCall(x); expr != nil {
+					guard.Rhs[i] = expr
+				}
 			}
 
 			if lhs.Name == "_" {
@@ -644,6 +683,10 @@ func (check *Checker) stmt(ctxt stmtContext, s ast.Stmt) {
 
 		check.simpleStmt(s.Init)
 		if s.Cond != nil {
+			if expr := check.tryFixOperatorCall(s.Cond); expr != nil {
+				s.Cond = expr
+			}
+
 			var x operand
 			check.expr(&x, s.Cond)
 			if x.mode != invalid && !isBoolean(x.typ) {

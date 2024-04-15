@@ -35,6 +35,7 @@ func init {
 }
 
 // 创建/调整画布大小
+#wa:generic CreateCanvasSquare
 func CreateCanvas(width, height: int) {
 	Width = width
 	Height = height
@@ -43,7 +44,19 @@ func CreateCanvas(width, height: int) {
 	p5CanvasBuffer = image.NewRGBA(width, height)
 }
 
+// 调整画布大小
+func CreateCanvasSquare(wh: int) {
+	width, height := wh, wh
+
+	Width = width
+	Height = height
+
+	p5Canvas.SetWidthHeight(i32(width), i32(height))
+	p5CanvasBuffer = image.NewRGBA(width, height)
+}
+
 // 设置画布背景
+#wa:generic BackgroundColor BackgroundRGBA
 func Background(red, green, blue: int) {
 	p5BackgroundColor = color.RGBAFrom(
 		u8(red), u8(green), u8(blue),
@@ -57,12 +70,46 @@ func Background(red, green, blue: int) {
 	}
 }
 
+// 设置画布背景, 小于256时用灰度
+func BackgroundColor(v: color.Gray) {
+	p5BackgroundColor = color.RGBAFrom(
+		u8(v), u8(v), u8(v),
+		0xff,
+	)
+
+	for y := 0; y < Height; y++ {
+		for x := 0; x < Width; x++ {
+			p5CanvasBuffer.SetRGBA(x, y, p5BackgroundColor)
+		}
+	}
+}
+
+// 设置画布背景, 小于256时用灰度
+func BackgroundRGBA(v: color.RGBA) {
+	p5BackgroundColor = v
+	for y := 0; y < Height; y++ {
+		for x := 0; x < Width; x++ {
+			p5CanvasBuffer.SetRGBA(x, y, p5BackgroundColor)
+		}
+	}
+}
+
 // 设置画笔颜色
+#wa:generic StrokeColor StrokeRGBA
 func Stroke(red, green, blue: int) {
 	p5StrokeColor = color.RGBAFrom(
 		u8(red), u8(green), u8(blue),
 		0xff,
 	)
+}
+func StrokeColor(v: color.Gray) {
+	p5StrokeColor = color.RGBAFrom(
+		u8(v), u8(v), u8(v),
+		0xff,
+	)
+}
+func StrokeRGBA(v: color.RGBA) {
+	p5StrokeColor = v
 }
 
 // 设置填充颜色

@@ -9,9 +9,20 @@ func IncF64(arg_IncF64_f: f64) => f64 {
 	return arg_IncF64_f + 1
 }
 
-type MyInt :int
+#wa:operator + MyInt_add
+type MyInt :struct {
+	V: int
+}
 
 #wa:generic AddF64
-func MyInt.Add(a: int) {}
+func MyInt.Add(a: int) {
+	this.V += a
+}
 
-func MyInt.AddF64(a: f64) {}
+func MyInt.AddF64(a: f64) {
+	this.V += int(a)
+}
+
+func MyInt_add(x, y: MyInt) => int {
+	return x.V + y.V
+}

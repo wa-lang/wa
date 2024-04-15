@@ -586,7 +586,7 @@ func (check *Checker) resolveExprOrTypeOrGenericCall(x *operand, e *ast.CallExpr
 		if fnObj, ok := obj.(*Func); ok && len(fnObj.generic) != 0 {
 			for _, genericFnObj := range fnObj.generic {
 				if err := check.tryGenericCall(x, genericFnObj, e); err == nil {
-					eCall.Name = genericFnObj.name
+					eCall.Name = "#{func}:" + genericFnObj.name
 					check.exprOrType(x, e.Fun)
 					return
 				}
