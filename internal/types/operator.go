@@ -191,7 +191,6 @@ func (check *Checker) tryUnaryOperatorCall(x *operand, e *ast.UnaryExpr) bool {
 	x.typ = fn.typ.(*Signature).results.vars[0].typ
 
 	if fn.pkg == check.pkg {
-		// TODO(chai): 被外部局部同名对象屏蔽
 		x.expr = &ast.CallExpr{
 			Fun:  &ast.Ident{Name: "#{func}:" + fn.name},
 			Args: []ast.Expr{e.X},
@@ -257,7 +256,6 @@ func (check *Checker) tryBinaryOperatorCall(
 	x.typ = fnMatched.typ.(*Signature).results.vars[0].typ
 
 	if fnMatched.pkg == check.pkg {
-		// TODO(chai): 被外部局部同名对象屏蔽
 		x.expr = &ast.CallExpr{
 			Fun:  &ast.Ident{Name: "#{func}:" + fnMatched.name},
 			Args: []ast.Expr{lhs, rhs},
