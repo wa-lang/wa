@@ -148,6 +148,13 @@ func (check *Checker) processTypeOperators() {
 }
 
 func (check *Checker) tryFixOperatorCall(expr ast.Expr) ast.Expr {
+	defer func(ctxt context, indent int) {
+		check.context = ctxt
+		check.indent = indent
+	}(check.context, check.indent)
+
+	check.context.ignoreFuncLitBody = true
+
 	switch expr := expr.(type) {
 	case *ast.BinaryExpr:
 		var x, y operand

@@ -568,6 +568,13 @@ func (check *Checker) tryGenericCall(x *operand, fn *Func, e *ast.CallExpr) (err
 
 	defer check.handleBailout(&err)
 
+	defer func(ctxt context, indent int) {
+		check.context = ctxt
+		check.indent = indent
+	}(check.context, check.indent)
+
+	check.context.ignoreFuncLitBody = true
+
 	// check args type, donot panic
 	arg, n, _ := unpack(func(x *operand, i int) { check.multiExpr(x, e.Args[i]) }, len(e.Args), false)
 	if arg == nil {
