@@ -12,6 +12,7 @@ import (
 	"strings"
 
 	"wa-lang.org/wa/internal/ast"
+	"wa-lang.org/wa/internal/ast/astutil"
 	"wa-lang.org/wa/internal/config"
 	wzparser "wa-lang.org/wa/internal/frontend/wz/parser"
 	"wa-lang.org/wa/internal/loader/buildtag"
@@ -517,6 +518,7 @@ func (p *_Loader) ParseDir(pkgpath string) (filenames []string, files []*ast.Fil
 	logger.Tracef(&config.EnableTrace_loader, "pkgpath: %v", pkgpath)
 
 	var (
+		pkgVFS       fs.FS
 		extNames          = []string{".wa", ".wz", ".wa.go"}
 		unitTestMode bool = false
 		datas        [][]byte
@@ -529,6 +531,7 @@ func (p *_Loader) ParseDir(pkgpath string) (filenames []string, files []*ast.Fil
 	case p.isStdPkg(pkgpath):
 		logger.Tracef(&config.EnableTrace_loader, "isStdPkg; pkgpath: %v", pkgpath)
 
+		pkgVFS = p.vfs.Std
 		filenames, datas, err = p.readDirFiles(p.vfs.Std, pkgpath, unitTestMode, extNames)
 		if err != nil {
 			logger.Tracef(&config.EnableTrace_loader, "err: %v", err)
@@ -542,6 +545,7 @@ func (p *_Loader) ParseDir(pkgpath string) (filenames []string, files []*ast.Fil
 
 		logger.Tracef(&config.EnableTrace_loader, "isSelfPkg; pkgpath=%v, relpkg=%v", pkgpath, relpkg)
 
+		pkgVFS = p.vfs.App
 		filenames, datas, err = p.readDirFiles(p.vfs.App, relpkg, unitTestMode, extNames)
 		if err != nil {
 			logger.Tracef(&config.EnableTrace_loader, "err: %v", err)
@@ -553,6 +557,7 @@ func (p *_Loader) ParseDir(pkgpath string) (filenames []string, files []*ast.Fil
 	default: // vendor
 		logger.Tracef(&config.EnableTrace_loader, "vendorPkg; pkgpath: %v", pkgpath)
 
+		pkgVFS = p.vfs.Vendor
 		filenames, datas, err = p.readDirFiles(p.vfs.Vendor, pkgpath, unitTestMode, extNames)
 		if err != nil {
 			logger.Tracef(&config.EnableTrace_loader, "err: %v", err)
@@ -577,6 +582,27 @@ func (p *_Loader) ParseDir(pkgpath string) (filenames []string, files []*ast.Fil
 			return nil, nil, err
 		}
 		files = append(files, f)
+	}
+
+	// read embed files
+	for _, f := range files {
+		for _, commentGroup := range f.Comments {
+			info := astutil.ParseCommentInfo(commentGroup)
+			if info.Embed == "" {
+				continue
+			}
+
+			if f.EmbedMap == nil {
+				f.EmbedMap = make(map[string]string)
+			}
+
+			data, err := fs.ReadFile(pkgVFS, info.Embed)
+			if err != nil {
+				continue
+			}
+
+			f.EmbedMap[info.Embed] = string(data)
+		}
 	}
 
 	return filenames, files, nil

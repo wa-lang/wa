@@ -25,6 +25,7 @@ type CommentInfo struct {
 	WasmModule    string     // #wa:wasm-module xxx
 	Generic       []string   // #wa:generic xxx yyy
 	Operator      [][]string // #wa:operator + xxx yyy
+	Embed         string     // #wa:embed filename
 }
 
 // 获取节点关联文档
@@ -100,6 +101,11 @@ func ParseCommentInfo(docList ...*ast.CommentGroup) (info CommentInfo) {
 				info.Generic = append(info.Generic, parts[1:]...)
 			case "#wa:operator":
 				info.Operator = append(info.Operator, parts[1:])
+
+			case "#wa:embed":
+				if len(parts) >= 2 {
+					info.Embed = parts[1]
+				}
 			}
 		}
 	}

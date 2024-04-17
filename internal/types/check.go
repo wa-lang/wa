@@ -253,6 +253,7 @@ func (check *Checker) checkFiles(files []*ast.File) (err error) {
 
 	check.collectObjects()
 
+	check.processGlobalEmbed()
 	check.processGenericFuncs()
 	check.processTypeOperators()
 

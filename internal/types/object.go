@@ -242,14 +242,12 @@ func (obj *PkgName) Imported() *Package { return obj.imported }
 type Const struct {
 	object
 	val constant.Value
-
-	embed *embedInfo
 }
 
 // NewConst returns a new constant with value val.
 // The remaining arguments set the attributes found with all Objects.
 func NewConst(pos token.Pos, pkg *Package, name string, typ Type, val constant.Value) *Const {
-	return &Const{object{nil, nil, pos, pkg, name, typ, 0, colorFor(typ), token.NoPos, nil}, val, nil}
+	return &Const{object{nil, nil, pos, pkg, name, typ, 0, colorFor(typ), token.NoPos, nil}, val}
 }
 
 // Val returns the constant's value.
