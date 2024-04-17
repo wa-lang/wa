@@ -596,7 +596,12 @@ func (p *_Loader) ParseDir(pkgpath string) (filenames []string, files []*ast.Fil
 				f.EmbedMap = make(map[string]string)
 			}
 
-			data, err := fs.ReadFile(pkgVFS, info.Embed)
+			vpath := info.Embed
+			if pkgpath != "__main__" {
+				vpath = filepath.Join(pkgpath, info.Embed)
+			}
+
+			data, err := fs.ReadFile(pkgVFS, vpath)
 			if err != nil {
 				continue
 			}

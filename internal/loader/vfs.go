@@ -90,7 +90,6 @@ func loadProgramFileMeta(cfg *config.Config, filename string, src interface{}) (
 				mapFS[name] = &fstest.MapFile{
 					Data: data,
 				}
-
 			}
 		}
 
