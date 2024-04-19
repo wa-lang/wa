@@ -7,14 +7,36 @@ import (
 	"errors"
 	"io"
 	"os"
+	"path"
 	"path/filepath"
 	"strings"
 	"testing/fstest"
 
+	"wa-lang.org/wa/internal/ast/astutil"
 	"wa-lang.org/wa/internal/config"
 	"wa-lang.org/wa/internal/logger"
+	"wa-lang.org/wa/internal/parser"
+	"wa-lang.org/wa/internal/token"
 	"wa-lang.org/wa/waroot"
 )
+
+// 读取 embed 列表, 提前加载内嵌资源数据
+func parseEmbedPathList(filename string, src interface{}) []string {
+	fset := token.NewFileSet()
+	f, err := parser.ParseFile(nil, fset, filename, src, parser.ParseComments)
+	if err != nil {
+		return nil
+	}
+
+	var ss []string
+	for _, doc := range f.Comments {
+		if info := astutil.ParseCommentInfo(doc); info.Embed != "" {
+			ss = append(ss, info.Embed)
+		}
+	}
+
+	return ss
+}
 
 // 根据路径加载需要的 vfs 和 manifest
 func loadProgramFileMeta(cfg *config.Config, filename string, src interface{}) (
@@ -54,11 +76,25 @@ func loadProgramFileMeta(cfg *config.Config, filename string, src interface{}) (
 	// 构造入口文件
 	vfs = new(config.PkgVFS)
 	if vfs.App == nil {
-		vfs.App = fstest.MapFS{
+
+		mapFS := fstest.MapFS{
 			filepath.Base(filename): &fstest.MapFile{
 				Data: srcData,
 			},
 		}
+
+		// read embed list, and read file data
+		embedList := parseEmbedPathList(filename, string(srcData))
+		for _, name := range embedList {
+			localpath := filepath.Join(filepath.Dir(filename), name)
+			if data, err := os.ReadFile(localpath); err == nil {
+				mapFS[path.Join(manifest.MainPkg, name)] = &fstest.MapFile{
+					Data: data,
+				}
+			}
+		}
+
+		vfs.App = mapFS
 	}
 
 	if vfs.Std == nil {

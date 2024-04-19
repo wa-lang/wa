@@ -18,10 +18,15 @@ type typeOperator struct {
 	QUO []*Func // /
 	REM []*Func // %
 
+	EQL []*Func // ==
+	NEQ []*Func // !=
+	LSS []*Func // <
+	LEQ []*Func // <=
+	GTR []*Func // >
+	GEQ []*Func // >=
+
 	Unary_ADD *Func // +x
 	Unary_SUB *Func // -x
-	Unary_XOR *Func // ^x
-	Unary_NOT *Func // !x
 }
 
 func (check *Checker) lookupOperatorFuncs(pkg *Package, names ...string) (funcs []*Func, err error) {
@@ -70,13 +75,6 @@ func (check *Checker) processTypeOperators() {
 				}
 
 				switch ops[0] {
-				case "^":
-					assert(len(funcs) == 1)
-					typName.ops.Unary_XOR = funcs[0]
-				case "!":
-					assert(len(funcs) == 1)
-					typName.ops.Unary_NOT = funcs[0]
-
 				case "+":
 					if len(funcs) == 1 {
 						if typ := funcs[0].typ; typ != nil {
@@ -127,6 +125,19 @@ func (check *Checker) processTypeOperators() {
 				case "%":
 					typName.ops.REM = funcs
 
+				case "==":
+					typName.ops.EQL = funcs
+				case "!=":
+					typName.ops.NEQ = funcs
+				case "<":
+					typName.ops.LSS = funcs
+				case "<=":
+					typName.ops.LEQ = funcs
+				case ">":
+					typName.ops.GTR = funcs
+				case ">=":
+					typName.ops.GEQ = funcs
+
 				default:
 					check.errorf(obj.Pos(), "%s operator %s invalid", obj.Name(), ops[0])
 					return
@@ -137,6 +148,13 @@ func (check *Checker) processTypeOperators() {
 }
 
 func (check *Checker) tryFixOperatorCall(expr ast.Expr) ast.Expr {
+	defer func(ctxt context, indent int) {
+		check.context = ctxt
+		check.indent = indent
+	}(check.context, check.indent)
+
+	check.context.ignoreFuncLitBody = true
+
 	switch expr := expr.(type) {
 	case *ast.BinaryExpr:
 		var x, y operand
@@ -174,10 +192,6 @@ func (check *Checker) tryUnaryOperatorCall(x *operand, e *ast.UnaryExpr) bool {
 		fn = xNamed.obj.ops.Unary_ADD
 	case token.SUB:
 		fn = xNamed.obj.ops.Unary_SUB
-	case token.XOR:
-		fn = xNamed.obj.ops.Unary_XOR
-	case token.NOT:
-		fn = xNamed.obj.ops.Unary_NOT
 	}
 	if fn == nil {
 		return false
@@ -339,6 +353,19 @@ func (check *Checker) getBinOpFuncs(x *Named, op token.Token) []*Func {
 			return typ.ops.QUO
 		case token.REM:
 			return typ.ops.REM
+
+		case token.EQL:
+			return typ.ops.EQL
+		case token.NEQ:
+			return typ.ops.NEQ
+		case token.LSS:
+			return typ.ops.LSS
+		case token.LEQ:
+			return typ.ops.LEQ
+		case token.GTR:
+			return typ.ops.GTR
+		case token.GEQ:
+			return typ.ops.GEQ
 		}
 	}
 	return nil

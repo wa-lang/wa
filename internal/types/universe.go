@@ -22,10 +22,11 @@ var Universe *Scope
 var Unsafe *Package
 
 var (
-	universeIota *Const
-	universeByte *Basic // uint8 alias, but has name "byte"
-	universeRune *Basic // int32 alias, but has name "rune"
-	universeAny  Object
+	universeIota   *Const
+	universeByte   *Basic // uint8 alias, but has name "byte"
+	universeRune   *Basic // int32 alias, but has name "rune"
+	universeString *Basic
+	universeAny    Object
 )
 
 // Typ contains the predeclared *Basic types indexed by their
@@ -242,6 +243,7 @@ func init() {
 	universeIota = Universe.Lookup("iota").(*Const)
 	universeByte = Universe.Lookup("byte").(*TypeName).typ.(*Basic)
 	universeRune = Universe.Lookup("rune").(*TypeName).typ.(*Basic)
+	universeString = Universe.Lookup("string").(*TypeName).typ.(*Basic)
 	universeAny = Universe.Lookup("any")
 }
 
