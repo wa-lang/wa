@@ -1,6 +1,10 @@
 # 版本日志
 
 - (dev)
+- v0.12.0 (2024-04-20)
+  - `const` 常量增加 `embed` 实验特性
+  - 完善函数重载和运算符重载功能, 完善胶水代码
+  - 简化 p5 API接口
 - v0.11.0 (2024-04-13)
   - 完善 `math/{Sin,Cos,Sqrt}` 等 API
   - 增加 `math/vector`/`math/matrix`/`net` 标准库
