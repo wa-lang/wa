@@ -7,6 +7,7 @@ import (
 	"errors"
 	"io"
 	"os"
+	"path"
 	"path/filepath"
 	"strings"
 	"testing/fstest"
@@ -85,9 +86,9 @@ func loadProgramFileMeta(cfg *config.Config, filename string, src interface{}) (
 		// read embed list, and read file data
 		embedList := parseEmbedPathList(filename, string(srcData))
 		for _, name := range embedList {
-			path := filepath.Join(filepath.Dir(filename), name)
-			if data, err := os.ReadFile(path); err == nil {
-				mapFS[name] = &fstest.MapFile{
+			localpath := filepath.Join(filepath.Dir(filename), name)
+			if data, err := os.ReadFile(localpath); err == nil {
+				mapFS[path.Join(manifest.MainPkg, name)] = &fstest.MapFile{
 					Data: data,
 				}
 			}
