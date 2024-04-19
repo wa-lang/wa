@@ -136,6 +136,8 @@ func isComparison(op token.Token) bool {
 	switch op {
 	case token.EQL, token.NEQ, token.LSS, token.LEQ, token.GTR, token.GEQ:
 		return true
+	case token.SPACESHIP:
+		return true
 	}
 	return false
 }
@@ -585,6 +587,8 @@ func (check *Checker) comparison(x, y *operand, op token.Token) {
 		case token.LSS, token.LEQ, token.GTR, token.GEQ:
 			// spec: The ordering operators <, <=, >, and >= apply to operands that are ordered."
 			defined = isOrdered(x.typ) && isOrdered(y.typ)
+		case token.SPACESHIP:
+			defined = isOrdered(x.typ) && isOrdered(y.typ)
 		default:
 			unreachable()
 		}
@@ -606,7 +610,11 @@ func (check *Checker) comparison(x, y *operand, op token.Token) {
 	}
 
 	if x.mode == constant_ && y.mode == constant_ {
-		x.val = constant.MakeBool(constant.Compare(x.val, op, y.val))
+		if op == token.SPACESHIP {
+			x.val = constant.MakeInt64(constant.CompareSpaceShip(x.val, y.val))
+		} else {
+			x.val = constant.MakeBool(constant.Compare(x.val, op, y.val))
+		}
 		// The operands are never materialized; no need to update
 		// their types.
 	} else {
@@ -617,6 +625,12 @@ func (check *Checker) comparison(x, y *operand, op token.Token) {
 		// is the respective default type.
 		check.updateExprType(x.expr, Default(x.typ), true)
 		check.updateExprType(y.expr, Default(y.typ), true)
+	}
+
+	// x <=> y, 返回 -1/0/1
+	if op == token.SPACESHIP {
+		x.typ = Typ[Int]
+		return
 	}
 
 	// spec: "Comparison operators compare two operands and yield

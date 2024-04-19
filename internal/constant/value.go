@@ -9,7 +9,6 @@
 // is unknown due to an error. Operations on unknown
 // values produce unknown values unless specified
 // otherwise.
-//
 package constant
 
 import (
@@ -567,14 +566,13 @@ func Float64Val(x Value) (float64, bool) {
 // interface, it is up to the caller to type assert the result to the expected
 // type. The possible dynamic return types are:
 //
-//    x Kind             type of result
-//    -----------------------------------------
-//    Bool               bool
-//    String             string
-//    Int                int64 or *big.Int
-//    Float              *big.Float or *big.Rat
-//    everything else    nil
-//
+//	x Kind             type of result
+//	-----------------------------------------
+//	Bool               bool
+//	String             string
+//	Int                int64 or *big.Int
+//	Float              *big.Float or *big.Rat
+//	everything else    nil
 func Val(x Value) interface{} {
 	switch x := x.(type) {
 	case boolVal:
@@ -596,16 +594,15 @@ func Val(x Value) interface{} {
 
 // Make returns the Value for x.
 //
-//    type of x        result Kind
-//    ----------------------------
-//    bool             Bool
-//    string           String
-//    int64            Int
-//    *big.Int         Int
-//    *big.Float       Float
-//    *big.Rat         Float
-//    anything else    Unknown
-//
+//	type of x        result Kind
+//	----------------------------
+//	bool             Bool
+//	string           String
+//	int64            Int
+//	*big.Int         Int
+//	*big.Float       Float
+//	*big.Rat         Float
+//	anything else    Unknown
 func Make(x interface{}) Value {
 	switch x := x.(type) {
 	case bool:
@@ -941,7 +938,6 @@ func is63bit(x int64) bool {
 // The operation must be defined for the operand.
 // If prec > 0 it specifies the ^ (xor) result size in bits.
 // If y is Unknown, the result is Unknown.
-//
 func UnaryOp(op token.Token, y Value, prec uint) Value {
 	switch op {
 	case token.ADD:
@@ -1031,7 +1027,6 @@ func ord(x Value) int {
 // smallest complexity for two values x and y. If one of them is
 // numeric, both of them must be numeric. If one of them is Unknown
 // or invalid (say, nil) both results are that value.
-//
 func match(x, y Value) (_, _ Value) {
 	if ord(x) > ord(y) {
 		y, x = match(y, x)
@@ -1102,7 +1097,6 @@ func match(x, y Value) (_, _ Value) {
 // To force integer division of Int operands, use op == token.QUO_ASSIGN
 // instead of token.QUO; the result is guaranteed to be Int in this case.
 // Division by zero leads to a run-time panic.
-//
 func BinaryOp(x_ Value, op token.Token, y_ Value) Value {
 	x, y := match(x_, y_)
 
@@ -1282,7 +1276,6 @@ func quo(x, y Value) Value { return BinaryOp(x, token.QUO, y) }
 // Shift returns the result of the shift expression x op s
 // with op == token.SHL or token.SHR (<< or >>). x must be
 // an Int or an Unknown. If x is Unknown, the result is x.
-//
 func Shift(x Value, op token.Token, s uint) Value {
 	switch x := x.(type) {
 	case unknownVal:
@@ -1338,7 +1331,6 @@ func cmpZero(x int, op token.Token) bool {
 // The comparison must be defined for the operands.
 // If one of the operands is Unknown, the result is
 // false.
-//
 func Compare(x_ Value, op token.Token, y_ Value) bool {
 	x, y := match(x_, y_)
 
@@ -1412,4 +1404,44 @@ func Compare(x_ Value, op token.Token, y_ Value) bool {
 	}
 
 	panic(fmt.Sprintf("invalid comparison %v %s %v", x_, op, y_))
+}
+
+func CompareSpaceShip(x_ Value, y_ Value) int64 {
+	x, y := match(x_, y_)
+
+	switch x := x.(type) {
+	case int64Val:
+		y := y.(int64Val)
+		switch {
+		case x == y:
+			return 0
+		case x < y:
+			return -1
+		case x > y:
+			return 1
+		}
+
+	case intVal:
+		return int64(x.val.Cmp(y.(intVal).val))
+
+	case ratVal:
+		return int64(x.val.Cmp(y.(ratVal).val))
+
+	case floatVal:
+		return int64(x.val.Cmp(y.(floatVal).val))
+
+	case *stringVal:
+		xs := x.string()
+		ys := y.(*stringVal).string()
+		switch {
+		case xs == ys:
+			return 0
+		case xs < ys:
+			return -1
+		case xs > ys:
+			return 1
+		}
+	}
+
+	panic(fmt.Sprintf("invalid comparison %v %s %v", x_, "<=>", y_))
 }
