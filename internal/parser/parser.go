@@ -2391,9 +2391,13 @@ func (p *parser) parseValueSpec(doc *ast.CommentGroup, keyword token.Token, iota
 			p.error(pos, "missing variable type or initialization")
 		}
 	case token.CONST:
-		if values == nil && (iota == 0 || typ != nil) {
-			p.error(pos, "missing constant value")
+		if typ == nil && values == nil && iota == 0 {
+			p.error(pos, "missing const type or initialization")
 		}
+
+		// if values == nil && (iota == 0 || typ != nil) {
+		//     p.error(pos, "missing constant value")
+		// }
 	}
 
 	// Go spec: The scope of a constant or variable identifier declared inside

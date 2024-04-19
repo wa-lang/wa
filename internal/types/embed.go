@@ -7,37 +7,38 @@ import (
 
 	"wa-lang.org/wa/internal/ast"
 	"wa-lang.org/wa/internal/ast/astutil"
+	"wa-lang.org/wa/internal/constant"
 	"wa-lang.org/wa/internal/token"
 )
 
 // 预处理全局变量文件嵌入
 func (check *Checker) processGlobalEmbed() {
 	for obj, d := range check.objMap {
-		if varObj, ok := obj.(*Var); ok {
-			varSpec := varObj.Node().(*ast.ValueSpec)
-			varCommentInfo := astutil.ParseCommentInfo(varObj.NodeDoc())
+		if constObj, ok := obj.(*Const); ok {
+			valueSpec := constObj.Node().(*ast.ValueSpec)
+			commentInfo := astutil.ParseCommentInfo(constObj.NodeDoc())
 
-			if varCommentInfo.Embed == "" {
+			if commentInfo.Embed == "" {
 				continue
 			}
-			if len(varSpec.Names) != 1 {
-				check.errorf(varObj.Pos(), "wa:embed only support one global")
+			if len(valueSpec.Names) != 1 {
+				check.errorf(constObj.Pos(), "wa:embed cannot apply to multiple const")
 				return
 			}
-			if len(varSpec.Values) != 0 || varSpec.Type == nil {
-				check.errorf(varObj.Pos(), "wa:embed donot support init values")
+			if len(valueSpec.Values) != 0 {
+				check.errorf(constObj.Pos(), "wa:embed cannot apply to const with initializer")
 				return
 			}
 
-			typeIdent, _ := varSpec.Type.(*ast.Ident)
+			typeIdent, _ := valueSpec.Type.(*ast.Ident)
 			if typeIdent == nil {
-				check.errorf(varObj.Pos(), "wa:embed must have type")
+				check.errorf(constObj.Pos(), "wa:embed cannot apply to untyped const")
 				return
 			}
 
-			scope, obj := check.pkg.scope.LookupParent(typeIdent.Name, varSpec.Pos())
+			scope, obj := check.pkg.scope.LookupParent(typeIdent.Name, valueSpec.Pos())
 			if scope != Universe || obj.Type() != universeString {
-				check.errorf(varObj.Pos(), "wa:embed invalid global type %v", obj)
+				check.errorf(constObj.Pos(), "wa:embed invalid global type %v", obj)
 				continue
 			}
 
@@ -47,7 +48,7 @@ func (check *Checker) processGlobalEmbed() {
 		Loop:
 			for _, f := range check.files {
 				for k, v := range f.EmbedMap {
-					if k == varCommentInfo.Embed {
+					if k == commentInfo.Embed {
 						embedFound = true
 						embedData = v
 						break Loop
@@ -55,19 +56,20 @@ func (check *Checker) processGlobalEmbed() {
 				}
 			}
 			if !embedFound {
-				check.errorf(varObj.Pos(), "wa:embed file not found")
+				check.errorf(constObj.Pos(), "wa:embed %s: not found no matching files found", commentInfo.Embed)
 				continue
 			}
 
-			varSpec.Values = []ast.Expr{
+			valueSpec.Values = []ast.Expr{
 				&ast.BasicLit{
-					ValuePos: varSpec.Pos(),
+					ValuePos: valueSpec.Pos(),
 					Kind:     token.STRING,
 					Value:    strconv.Quote(embedData),
 				},
 			}
 
-			d.init = varSpec.Values[0]
+			constObj.val = constant.MakeString(strconv.Quote(embedData))
+			d.init = valueSpec.Values[0]
 		}
 	}
 }

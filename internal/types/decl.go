@@ -602,7 +602,7 @@ func (check *Checker) declStmt(decl ast.Decl) {
 						check.constDecl(obj, last.Type, init)
 					}
 
-					check.arityMatch(s, last)
+					check.arityMatch(s, last, false)
 
 					// process function literals in init expressions before scope changes
 					check.processDelayed(top)
@@ -657,7 +657,7 @@ func (check *Checker) declStmt(decl ast.Decl) {
 						}
 					}
 
-					check.arityMatch(s, nil)
+					check.arityMatch(s, nil, false)
 
 					// process function literals in init expressions before scope changes
 					check.processDelayed(top)

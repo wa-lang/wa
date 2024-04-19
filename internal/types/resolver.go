@@ -54,7 +54,7 @@ func (d *declInfo) addDep(obj Object) {
 // have the appropriate number of names and init exprs. For const
 // decls, init is the value spec providing the init exprs; for
 // var decls, init is nil (the init exprs are in s in this case).
-func (check *Checker) arityMatch(s, init *ast.ValueSpec) {
+func (check *Checker) arityMatch(s, init *ast.ValueSpec, hasEmbed bool) {
 	l := len(s.Names)
 	r := len(s.Values)
 	if init != nil {
@@ -79,8 +79,10 @@ func (check *Checker) arityMatch(s, init *ast.ValueSpec) {
 			// TODO(gri) avoid declared but not used error here
 		}
 	case l > r && (init != nil || r != 1):
-		n := s.Names[r]
-		check.errorf(n.Pos(), "missing init expr for %s", n)
+		if !hasEmbed {
+			n := s.Names[r]
+			check.errorf(n.Pos(), "missing init expr for %s", n)
+		}
 	}
 }
 
@@ -325,6 +327,12 @@ func (check *Checker) collectObjects() {
 					case *ast.ValueSpec:
 						switch d.Tok {
 						case token.CONST:
+							hasEmbed := false
+							if len(s.Names) == 1 {
+								info := astutil.ParseCommentInfo(d.Doc)
+								hasEmbed = info.Embed != ""
+							}
+
 							// determine which initialization expressions to use
 							switch {
 							case s.Type != nil || len(s.Values) > 0:
@@ -353,7 +361,7 @@ func (check *Checker) collectObjects() {
 								check.declarePkgObj(name, obj, d)
 							}
 
-							check.arityMatch(s, last)
+							check.arityMatch(s, last, hasEmbed)
 
 						case token.VAR, token.GLOBAL:
 							lhs := make([]*Var, len(s.Names))
@@ -394,7 +402,7 @@ func (check *Checker) collectObjects() {
 								check.declarePkgObj(name, obj, d)
 							}
 
-							check.arityMatch(s, nil)
+							check.arityMatch(s, nil, false)
 
 						default:
 							check.invalidAST(s.Pos(), "invalid token %s", d.Tok)
