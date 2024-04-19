@@ -69,7 +69,7 @@ class WaApp {
       string_store: (addr, v) => {
         const b = this._mem_util.i32_load(addr);
         this._mem_util.block_release(b);
-        let ns = set_string(v);
+        let ns = this._mem_util.set_string(v);
         this._mem_util.i32_store(addr, ns[0]);
         this._mem_util.i32_store(addr + 4, ns[1]);
         this._mem_util.i32_store(addr + 8, ns[2]);
