@@ -133,7 +133,11 @@ func emitCompare(f *Function, op token.Token, x, y Value, pos token.Pos) Value {
 		Y:  y,
 	}
 	v.setPos(pos)
-	v.setType(tBool)
+	if op == token.SPACESHIP {
+		v.setType(tInt)
+	} else {
+		v.setType(tBool)
+	}
 	return f.emit(v)
 }
 

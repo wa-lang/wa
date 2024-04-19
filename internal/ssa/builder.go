@@ -609,6 +609,9 @@ func (b *builder) expr0(fn *Function, e ast.Expr, tv types.TypeAndValue) Value {
 			cmp := emitCompare(fn, e.Op, b.expr(fn, e.X), b.expr(fn, e.Y), e.OpPos)
 			// The type of x==y may be UntypedBool.
 			return emitConv(fn, cmp, types.Default(tv.Type))
+		case token.SPACESHIP:
+			cmp := emitCompare(fn, e.Op, b.expr(fn, e.X), b.expr(fn, e.Y), e.OpPos)
+			return emitConv(fn, cmp, types.Default(tv.Type))
 		default:
 			panic("illegal op in BinaryExpr: " + e.Op.String())
 		}
