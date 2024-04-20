@@ -18,15 +18,10 @@ type typeOperator struct {
 	QUO []*Func // /
 	REM []*Func // %
 
-	EQL []*Func // ==
-	NEQ []*Func // !=
-	LSS []*Func // <
-	LEQ []*Func // <=
-	GTR []*Func // >
-	GEQ []*Func // >=
-
 	Unary_ADD *Func // +x
 	Unary_SUB *Func // -x
+
+	SPACESHIP *Func // <=>
 }
 
 func (check *Checker) lookupOperatorFuncs(pkg *Package, names ...string) (funcs []*Func, err error) {
@@ -125,18 +120,8 @@ func (check *Checker) processTypeOperators() {
 				case "%":
 					typName.ops.REM = funcs
 
-				case "==":
-					typName.ops.EQL = funcs
-				case "!=":
-					typName.ops.NEQ = funcs
-				case "<":
-					typName.ops.LSS = funcs
-				case "<=":
-					typName.ops.LEQ = funcs
-				case ">":
-					typName.ops.GTR = funcs
-				case ">=":
-					typName.ops.GEQ = funcs
+				case "<=>":
+					typName.ops.SPACESHIP = funcs[0]
 
 				default:
 					check.errorf(obj.Pos(), "%s operator %s invalid", obj.Name(), ops[0])
@@ -285,6 +270,15 @@ func (check *Checker) tryBinaryOperatorCall(
 		}
 	}
 
+	switch op {
+	case token.EQL, token.NEQ, token.LSS, token.LEQ, token.GTR, token.GEQ:
+		x.expr = &ast.BinaryExpr{
+			X: x.expr, Op: op, Y: &ast.BasicLit{Kind: token.INT, Value: "0"},
+		}
+		assert(x.typ == Typ[Int])
+		x.typ = Typ[Bool]
+	}
+
 	check.hasCallOrRecv = true
 	return true
 }
@@ -354,18 +348,10 @@ func (check *Checker) getBinOpFuncs(x *Named, op token.Token) []*Func {
 		case token.REM:
 			return typ.ops.REM
 
-		case token.EQL:
-			return typ.ops.EQL
-		case token.NEQ:
-			return typ.ops.NEQ
-		case token.LSS:
-			return typ.ops.LSS
-		case token.LEQ:
-			return typ.ops.LEQ
-		case token.GTR:
-			return typ.ops.GTR
-		case token.GEQ:
-			return typ.ops.GEQ
+		case token.EQL, token.NEQ, token.LSS, token.LEQ, token.GTR, token.GEQ, token.SPACESHIP:
+			if typ.ops.SPACESHIP != nil {
+				return []*Func{typ.ops.SPACESHIP}
+			}
 		}
 	}
 	return nil
@@ -376,10 +362,8 @@ func (check *Checker) ensureOperatorCallPkgImported(pkg *Package) {
 	assert(pkg != check.pkg)
 
 	pkgname := "#{pkg}:" + pkg.path
-	for _, x := range check.pkg.imports {
-		if x.path == pkg.path && x.name == pkgname {
-			return
-		}
+	if check.pkg.scope.Lookup(pkgname) != nil {
+		return
 	}
 
 	obj := NewPkgName(token.NoPos, check.pkg, pkgname, pkg)

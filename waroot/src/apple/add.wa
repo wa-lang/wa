@@ -10,6 +10,7 @@ func IncF64(arg_IncF64_f: f64) => f64 {
 }
 
 #wa:operator + MyInt_add
+#wa:operator <=> MyInt_cmp
 type MyInt :struct {
 	V: int
 }
@@ -25,4 +26,14 @@ func MyInt.AddF64(a: f64) {
 
 func MyInt_add(x, y: MyInt) => int {
 	return x.V + y.V
+}
+
+func MyInt_cmp(x, y: MyInt) => int {
+	switch {
+	case x.V < y.V:
+		return -1
+	case x.V > y.V:
+		return 1
+	}
+	return 0
 }
