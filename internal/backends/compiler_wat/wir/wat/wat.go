@@ -91,6 +91,7 @@ const (
 	OpCodeGt
 	OpCodeLe
 	OpCodeGe
+	OpCodeComp
 	OpCodeAnd
 	OpCodeOr
 	OpCodeXor

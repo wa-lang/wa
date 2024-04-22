@@ -210,6 +210,7 @@ func next_rune(iter: stringIter) => (ok: bool, k: int, v: rune, pos: int) {
 #wa:linkname $wa.runtime.string_to_iter
 func stringToIter(s: string) => stringIter
 
+#wa:linkname $wa.runtime.string_Comp
 func string_Comp(x, y: string) => i32 {
 	i1 := stringToIter(x)
 	i2 := stringToIter(y)

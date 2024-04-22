@@ -187,6 +187,28 @@ func (m *Module) EmitBinOp(x, y Value, op wat.OpCode) (insts []wat.Inst, ret_typ
 		}
 		ret_type = m.BOOL
 
+	case wat.OpCodeComp:
+		if x.Type().Equal(m.STRING) {
+			insts = append(insts, x.EmitPushNoRetain()...)
+			insts = append(insts, y.EmitPushNoRetain()...)
+			insts = append(insts, wat.NewInstCall("$wa.runtime.string_Comp"))
+		} else {
+			insts = append(insts, x.EmitPushNoRetain()...)
+			insts = append(insts, y.EmitPushNoRetain()...)
+			insts = append(insts, wat.NewInstLt(toWatType(x.Type())))
+
+			inst_lt := wat.NewInstIf(nil, nil, nil)
+			inst_lt.Ret = append(inst_lt.Ret, wat.I32{})
+			inst_lt.True = append(inst_lt.True, wat.NewInstConst(wat.I32{}, "-1"))
+			inst_lt.False = append(inst_lt.False, x.EmitPushNoRetain()...)
+			inst_lt.False = append(inst_lt.False, y.EmitPushNoRetain()...)
+			inst_lt.False = append(inst_lt.False, wat.NewInstGt(toWatType(x.Type())))
+
+			insts = append(insts, inst_lt)
+		}
+
+		ret_type = m.I32
+
 	case wat.OpCodeAnd:
 		ret_type = x.Type()
 		insts = append(insts, x.EmitPushNoRetain()...)
