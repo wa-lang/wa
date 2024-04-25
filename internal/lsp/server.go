@@ -6,7 +6,6 @@ import (
 	"context"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"log"
 	"os"
 	"sync"
@@ -47,7 +46,7 @@ func (p *LSPServer) Run() {
 		io.Writer
 		io.ReadCloser
 	}{
-		ReadCloser: ioutil.NopCloser(os.Stdin),
+		ReadCloser: io.NopCloser(os.Stdin),
 		Writer:     os.Stdout,
 	}
 
