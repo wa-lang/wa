@@ -17,7 +17,7 @@ var CmdLsp = &cli.Command{
 		},
 	},
 	Action: func(c *cli.Context) error {
-		lsp.NewLSPServer(&lsp.Option{}).Run()
-		return nil
+		opt := &lsp.Option{LogFile: c.String("log-file")}
+		return lsp.NewLSPServer(opt).Run()
 	},
 }
