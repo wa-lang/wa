@@ -216,10 +216,76 @@ global textureFormatSymbols = [...]string{
 }
 
 /*
-不能使用该类型直接声明值，需通过其它函数创建
+不能使用该类型直接声明值，需通过Device.CreateTexture()创建
 */
 type Texture struct {
     js.ExtObj
+    desc: TextureDesc
+}
+
+/*
+返回纹理的维度
+*/
+func Texture.Dimension() => TextureDimension {
+    return this.desc.Dimension
+}
+
+/*
+返回纹理的数据格式
+*/
+func Texture.Format() => TextureFormat {
+    return this.desc.Format
+}
+
+/*
+返回纹理的多级子纹理数量
+*/
+func Texture.MipLevelCount() => i32 {
+    return this.desc.MipLevelCount
+}
+
+/*
+返回纹理的采样个数（1 或 4）
+*/
+func Texture.SampleCount() => i32{
+    return this.desc.SampleCount
+}
+
+/*
+返回纹理的用途
+*/
+func Texture.Usage() => TextureUsage {
+    return this.desc.Usage
+}
+
+/*
+返回纹理的宽度（以像素为单位）
+*/
+func Texture.Width() => i32 {
+    return this.desc.Width
+}
+
+/*
+返回纹理的高度（以像素为单位）
+*/
+func Texture.Height() => i32 {
+    return this.desc.Height
+}
+
+/*
+若纹理维度为三维（既TextureDimension_3d），返回纹理的深度
+若纹理维度为二维（既TextureDimension_2d），返回纹理的层数
+其余情况返回 1
+*/
+func Texture.DepthOrArrayLayers() => i32 {
+    return this.desc.Depth
+}
+
+/*
+返回纹理的标签
+*/
+func Texture.Label() => string {
+    return this.desc.Label
 }
 
 #wa:import webgpu create_texture_view
