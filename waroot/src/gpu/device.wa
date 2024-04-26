@@ -45,10 +45,11 @@ func Device.CreateBuffer(byteLen: int, usage: BufferUsage) => Buffer {
 
 #wa:import webgpu create_texture
 func jsCreateTexture(device: js.Handle, desc: js.Handle) => js.Handle
-func Device.CreateTexture(desc: *TextureDesc) => Texture {
+func Device.CreateTexture(desc: TextureDesc) => Texture {
     t: Texture
     d := desc.createExtObj()
     t.ExtObj = js.WrapExtObj(jsCreateTexture(this.GetHandle(), d.GetHandle()))
+    t.desc = desc
     return t
 }
 

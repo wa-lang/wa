@@ -28,7 +28,6 @@ const (
 )
 
 func SamplerDesc.SetMagFilter(filter: Filter) {
-    println(filter)
     this.SetMember_string("magFilter", string(filter))
 }
 
