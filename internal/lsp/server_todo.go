@@ -237,15 +237,7 @@ func (s *LSPServer) DiagnosticWorkspace(context.Context, *protocol.WorkspaceDiag
 	return nil, fmt.Errorf("TODO")
 }
 
-func (s *LSPServer) DidChangeConfiguration(context.Context, *protocol.DidChangeConfigurationParams) error {
-	return fmt.Errorf("TODO")
-}
-
 func (s *LSPServer) DidChangeWatchedFiles(context.Context, *protocol.DidChangeWatchedFilesParams) error {
-	return fmt.Errorf("TODO")
-}
-
-func (s *LSPServer) DidChangeWorkspaceFolders(context.Context, *protocol.DidChangeWorkspaceFoldersParams) error {
 	return fmt.Errorf("TODO")
 }
 

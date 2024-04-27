@@ -4,6 +4,7 @@ package lsp
 
 import (
 	"context"
+	"fmt"
 	"io"
 	"log"
 	"os"
@@ -22,6 +23,9 @@ type LSPServer struct {
 	logger *log.Logger
 	conn   jsonrpc2.Conn
 	client protocol.ClientCloser
+
+	clientName       string
+	workspaceFolders []string
 }
 
 func NewLSPServer(opt *Option) *LSPServer {
@@ -59,9 +63,50 @@ func (p *LSPServer) Run() error {
 func (s *LSPServer) Initialize(ctx context.Context, params *protocol.ParamInitialize) (*protocol.InitializeResult, error) {
 	s.logger.Println("Initialize:", jsonMarshal(params))
 
+	// 记录客户端名字
+	if params != nil && params.ClientInfo != nil {
+		s.clientName = params.ClientInfo.Name
+	}
+
+	// 记录工作区目录列表
+	for _, folder := range params.WorkspaceFolders {
+		if folder.URI == "" {
+			return nil, fmt.Errorf("empty WorkspaceFolder.URI")
+		}
+		if _, err := protocol.ParseDocumentURI(folder.URI); err != nil {
+			return nil, fmt.Errorf("invalid WorkspaceFolder.URI: %v", err)
+		}
+		s.workspaceFolders = append(s.workspaceFolders, folder.URI)
+	}
+
+	// 如果没有工作区, 且打开的是目录, 则用改目录
+	if len(s.workspaceFolders) == 0 && params.RootURI != "" {
+		s.workspaceFolders = append(s.workspaceFolders, params.RootURI.Path())
+	}
+
+	// TODO(chai): 工作区需要对应到 Wa 模块根目录
+
 	reply := &protocol.InitializeResult{
 		Capabilities: protocol.ServerCapabilities{
 			DocumentFormattingProvider: &protocol.Or_ServerCapabilities_documentFormattingProvider{Value: true},
+
+			// TODO(chai): 实现基本能力
+			HoverProvider:          &protocol.Or_ServerCapabilities_hoverProvider{Value: false},
+			DefinitionProvider:     &protocol.Or_ServerCapabilities_definitionProvider{Value: false},
+			TypeDefinitionProvider: &protocol.Or_ServerCapabilities_typeDefinitionProvider{Value: false},
+			FoldingRangeProvider:   &protocol.Or_ServerCapabilities_foldingRangeProvider{Value: false},
+			CodeActionProvider:     false,
+			RenameProvider:         false,
+			ExecuteCommandProvider: nil,
+			CodeLensProvider:       nil,
+
+			// TODO: 支持工作区列表变化
+			Workspace: &protocol.WorkspaceOptions{
+				WorkspaceFolders: &protocol.WorkspaceFolders5Gn{
+					Supported:           true,
+					ChangeNotifications: "workspace/didChangeWorkspaceFolders",
+				},
+			},
 		},
 		ServerInfo: &protocol.ServerInfo{
 			Version: version.Version,
@@ -77,6 +122,14 @@ func (s *LSPServer) Initialized(ctx context.Context, params *protocol.Initialize
 }
 
 func (s *LSPServer) Exit(ctx context.Context) error {
-	s.logger.Println("Exit:")
+	s.logger.Println("Exit")
 	return nil
+}
+
+func (s *LSPServer) DidChangeConfiguration(context.Context, *protocol.DidChangeConfigurationParams) error {
+	return fmt.Errorf("TODO")
+}
+
+func (s *LSPServer) DidChangeWorkspaceFolders(context.Context, *protocol.DidChangeWorkspaceFoldersParams) error {
+	return fmt.Errorf("TODO")
 }
