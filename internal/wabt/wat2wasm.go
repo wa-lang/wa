@@ -18,34 +18,38 @@ import (
 var muWabt sync.Mutex
 var wat2wasmPath string
 
-func init() {
-	const baseName = "wa.wat2wasm.exe"
+const Wat2WasmName = "wa.wat2wasm.exe"
 
+func init() {
 	// 1. exe 同级目录存在 wat2wasm ?
-	wat2wasmPath = filepath.Join(curExeDir(), baseName)
+	wat2wasmPath = filepath.Join(curExeDir(), Wat2WasmName)
 	if exeExists(wat2wasmPath) {
 		return
 	}
 
 	// 2. 当前目录存在 wat2wasm ?
 	cwd, _ := os.Getwd()
-	wat2wasmPath = filepath.Join(cwd, baseName)
+	wat2wasmPath = filepath.Join(cwd, Wat2WasmName)
 	if exeExists(wat2wasmPath) {
 		return
 	}
 
 	// 3. 本地系统存在 wat2wasm ?
-	if s, _ := exec.LookPath(baseName); s != "" {
+	if s, _ := exec.LookPath(Wat2WasmName); s != "" {
 		wat2wasmPath = s
 		return
 	}
 
 	// 4. wat2wasm 安装到 exe 所在目录 ?
-	wat2wasmPath = filepath.Join(curExeDir(), baseName)
+	wat2wasmPath = filepath.Join(curExeDir(), Wat2WasmName)
 	if err := os.WriteFile(wat2wasmPath, wabt.LoadWat2Wasm(), 0777); err != nil {
 		logger.Tracef(&config.EnableTrace_app, "install wat2wasm failed: %+v", err)
 		return
 	}
+}
+
+func LoadWat2Wasm() []byte {
+	return wabt.LoadWat2Wasm()
 }
 
 func Wat2Wasm(watBytes []byte) (wasmBytes []byte, err error) {

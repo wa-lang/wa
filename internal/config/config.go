@@ -3,8 +3,12 @@
 package config
 
 import (
+	"bytes"
 	"io/fs"
 	"os"
+	"path/filepath"
+
+	"wa-lang.org/wa/internal/version"
 )
 
 // 字长和指针大小
@@ -71,7 +75,32 @@ func DefaultConfig() *Config {
 		if s := os.Getenv("WAROOT"); s != "" {
 			p.WaRoot = s
 		}
+
+		// 尝试 $HOME/wa 目录
+		if s, ok := isWarootValid(); ok {
+			p.WaRoot = s
+		}
 	}
 
 	return p
+}
+
+// Waroot 是否有效
+// 需要保持和 waroot 处理一致
+func isWarootValid() (warootDir string, ok bool) {
+	if s, _ := os.UserHomeDir(); s != "" {
+		warootDir = filepath.Join(s, "wa")
+	}
+
+	d, err := os.ReadFile(filepath.Join(warootDir, "VERSION"))
+	if err != nil {
+		return "", false
+	}
+
+	ver := string(bytes.TrimSpace(d))
+	if ver != version.Version {
+		return "", false
+	}
+
+	return warootDir, true
 }

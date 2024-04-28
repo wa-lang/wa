@@ -3,11 +3,18 @@
 package waroot
 
 import (
+	"bytes"
 	"embed"
+	"fmt"
 	"io/fs"
+	"os"
+	"path/filepath"
 	"strings"
+	"time"
 
 	"wa-lang.org/wa/internal/config"
+	"wa-lang.org/wa/internal/version"
+	"wa-lang.org/wa/internal/wabt"
 )
 
 //go:embed VERSION
@@ -29,17 +36,120 @@ func GetExampleAppFS() fs.FS {
 	return fs
 }
 
-//go:embed src
-var _warootFS embed.FS
+// 本地根目录
+var _warootDir string
 
-//go:embed src/base.clang.ws
-var baseWsFile_clang string
+//go:embed bin/*
+//go:embed cplog/*
+//go:embed docs/*
+//go:embed examples/*
+//go:embed misc/*
+//go:embed src/*
+//go:embed tests/*
+//go:embed changelog.md
+//go:embed CONTRIBUTORS
+//go:embed hello.wa
+//go:embed LICENSE
+//go:embed logo.png
+//go:embed README.md
+//go:embed VERSION
+var _warootFS embed.FS
 
 //go:embed src/base.wat.ws
 var baseWsFile_wat string
 
 //go:embed src/base.import.js
 var baseImportFile_js string
+
+func init() {
+	if s, _ := os.UserHomeDir(); s != "" {
+		_warootDir = filepath.Join(s, "wa")
+	}
+}
+
+// 获取本地的凹语言根目录路径
+func GetWarootPath() string {
+	return _warootDir
+}
+
+// Waroot 是否有效
+func IsWarootValid() bool {
+	d, err := os.ReadFile(filepath.Join(_warootDir, "VERSION"))
+	if err != nil {
+		return false
+	}
+
+	ver := string(bytes.TrimSpace(d))
+	return ver == version.Version
+}
+
+// 初始化Waroot
+func InitWarootDir() error {
+	if IsWarootValid() {
+		return nil
+	}
+
+	// 删除旧的waroot
+	os.Rename(_warootDir, fmt.Sprintf("%s-%v-bak", _warootDir, time.Now().Format("20060102150405")))
+
+	err := fs.WalkDir(_warootFS, ".", func(path string, d fs.DirEntry, err error) error {
+		if d == nil || d.IsDir() {
+			return nil
+		}
+		if err != nil {
+			return err
+		}
+
+		data, err := fs.ReadFile(_warootFS, path)
+		if err != nil {
+			return err
+		}
+
+		dstpath := filepath.Join(_warootDir, path)
+		os.MkdirAll(filepath.Dir(dstpath), 0777)
+
+		if filepath.Base(path) == "_keep" {
+			return nil
+		}
+
+		f, err := os.Create(dstpath)
+		if err != nil {
+			return err
+		}
+		defer f.Close()
+
+		if _, err := f.Write(data); err != nil {
+			return err
+		}
+		return nil
+	})
+	if err != nil {
+		return err
+	}
+
+	// 获取当前 wa 命令所在目录
+	exePath, err := os.Executable()
+	if err != nil {
+		return err
+	}
+
+	// exe 已经在目录中
+	if isInDir(_warootDir, exePath) {
+		return nil
+	}
+
+	// 复制 bin 文件
+	if exeData, err := os.ReadFile(exePath); err == nil {
+		dstpath := filepath.Join(_warootDir, "bin", filepath.Base(exePath))
+		os.WriteFile(dstpath, exeData, 0777)
+	}
+
+	// 复制 wa.wat2wasm.exe文件
+	dstpath := filepath.Join(_warootDir, "bin", wabt.Wat2WasmName)
+	os.WriteFile(dstpath, wabt.LoadWat2Wasm(), 0777)
+
+	return nil
+}
 
 // 获取汇编基础代码
 func GetBaseWsCode(backend string) string {
@@ -103,11 +213,7 @@ func IsStdPkg(pkgpath string) bool {
 }
 
 func GetStdPkgList() []string {
-	var ss []string
-	for _, s := range stdPkgs {
-		ss = append(ss, s)
-	}
-	return ss
+	return append([]string{}, stdPkgs...)
 }
 
 func GetStdTestPkgList() []string {
@@ -125,6 +231,45 @@ func GetStdTestPkgList() []string {
 		ss = append(ss, s)
 	}
 	return ss
+}
+
+// InDir checks whether path is in the file tree rooted at dir.
+// It checks only the lexical form of the file names.
+// It does not consider symbolic links.
+//
+// Copied from go/src/cmd/go/internal/search/search.go.
+func isInDir(dir, path string) bool {
+	pv := strings.ToUpper(filepath.VolumeName(path))
+	dv := strings.ToUpper(filepath.VolumeName(dir))
+	path = path[len(pv):]
+	dir = dir[len(dv):]
+	switch {
+	default:
+		return false
+	case pv != dv:
+		return false
+	case len(path) == len(dir):
+		if path == dir {
+			return true
+		}
+		return false
+	case dir == "":
+		return path != ""
+	case len(path) > len(dir):
+		if dir[len(dir)-1] == filepath.Separator {
+			if path[:len(dir)] == dir {
+				return path[len(dir):] != ""
+			}
+			return false
+		}
+		if path[len(dir)] == filepath.Separator && path[:len(dir)] == dir {
+			if len(path) == len(dir)+1 {
+				return true
+			}
+			return path[len(dir)+1:] != ""
+		}
+		return false
+	}
 }
 
 var stdPkgs = []string{

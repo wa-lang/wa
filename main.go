@@ -8,5 +8,6 @@ import (
 )
 
 func main() {
+	app.InitWaroot()
 	app.Main()
 }
