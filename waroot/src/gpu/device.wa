@@ -53,13 +53,15 @@ func Device.CreateTexture(desc: TextureDesc) => Texture {
     return t
 }
 
-#wa:import webgpu create_sampler
-func jsCreateSampler(device, desc: js.Handle) => js.Handle
 func Device.CreateSampler(desc: SamplerDesc) => Sampler {
     s: Sampler
-    s.ExtObj = js.WrapExtObj(jsCreateSampler(this.GetHandle(), desc.GetHandle()))
+    d := desc.createExtObj()
+    s.ExtObj = js.WrapExtObj(jsCreateSampler(this.GetHandle(), d.GetHandle()))
+    s.desc = desc
     return s
 }
+#wa:import webgpu create_sampler
+func jsCreateSampler(device, desc: js.Handle) => js.Handle
 
 #wa:import webgpu copy_external_image_to_texture
 func jsCopyExternalImageToTexture(device, src, dest: js.Handle)
