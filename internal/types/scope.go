@@ -79,6 +79,17 @@ func (s *Scope) Lookup(name string) Object {
 	return nil
 }
 
+func (s *Scope) LookupByPos(pos token.Pos) Object {
+	for _, obj := range s.elems {
+		if obj.Pos() <= pos {
+			if obj.Node() != nil && pos <= obj.Node().End() {
+				return obj
+			}
+		}
+	}
+	return nil
+}
+
 // LookupParent follows the parent chain of scopes starting with s until
 // it finds a scope where Lookup(name) returns a non-nil object, and then
 // returns that scope and object. If a valid position pos is provided,

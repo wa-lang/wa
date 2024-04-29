@@ -203,7 +203,7 @@ func (p *_Loader) Import(pkgpath string) (*types.Package, error) {
 	}
 
 	// 解析当前包的宿主代码
-	pkg.WImportFiles, err = p.ParseDir_hostImpoertFiles(pkgpath)
+	pkg.WImportFiles, err = p.ParseDir_hostImportFiles(pkgpath)
 	if err != nil {
 		logger.Tracef(&config.EnableTrace_loader, "err: %v", err)
 		return nil, err
@@ -456,7 +456,7 @@ func (p *_Loader) ParseDir_wsFiles(pkgpath string) (files []*WsFile, err error) 
 	return
 }
 
-func (p *_Loader) ParseDir_hostImpoertFiles(pkgpath string) (files []*WhostFile, err error) {
+func (p *_Loader) ParseDir_hostImportFiles(pkgpath string) (files []*WhostFile, err error) {
 	logger.Tracef(&config.EnableTrace_loader, "pkgpath: %v", pkgpath)
 
 	if p.cfg.WaOS == "" {

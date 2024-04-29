@@ -33,10 +33,6 @@ func (s *LSPServer) ResolveCodeLens(context.Context, *protocol.CodeLens) (*proto
 	return nil, fmt.Errorf("TODO")
 }
 
-func (s *LSPServer) ResolveCompletionItem(context.Context, *protocol.CompletionItem) (*protocol.CompletionItem, error) {
-	return nil, fmt.Errorf("TODO")
-}
-
 func (s *LSPServer) ResolveDocumentLink(context.Context, *protocol.DocumentLink) (*protocol.DocumentLink, error) {
 	return nil, fmt.Errorf("TODO")
 }
@@ -61,31 +57,11 @@ func (s *LSPServer) DidSaveNotebookDocument(context.Context, *protocol.DidSaveNo
 	return fmt.Errorf("TODO")
 }
 
-func (s *LSPServer) Shutdown(context.Context) error {
-	return fmt.Errorf("TODO")
-}
-
-func (s *LSPServer) CodeAction(context.Context, *protocol.CodeActionParams) ([]protocol.CodeAction, error) {
-	return nil, fmt.Errorf("TODO")
-}
-
-func (s *LSPServer) CodeLens(context.Context, *protocol.CodeLensParams) ([]protocol.CodeLens, error) {
-	return nil, fmt.Errorf("TODO")
-}
-
 func (s *LSPServer) ColorPresentation(context.Context, *protocol.ColorPresentationParams) ([]protocol.ColorPresentation, error) {
 	return nil, fmt.Errorf("TODO")
 }
 
-func (s *LSPServer) Completion(context.Context, *protocol.CompletionParams) (*protocol.CompletionList, error) {
-	return nil, fmt.Errorf("TODO")
-}
-
 func (s *LSPServer) Declaration(context.Context, *protocol.DeclarationParams) (*protocol.Or_textDocument_declaration, error) {
-	return nil, fmt.Errorf("TODO")
-}
-
-func (s *LSPServer) Definition(context.Context, *protocol.DefinitionParams) ([]protocol.Location, error) {
 	return nil, fmt.Errorf("TODO")
 }
 
@@ -113,10 +89,6 @@ func (s *LSPServer) DocumentColor(context.Context, *protocol.DocumentColorParams
 	return nil, fmt.Errorf("TODO")
 }
 
-func (s *LSPServer) DocumentHighlight(context.Context, *protocol.DocumentHighlightParams) ([]protocol.DocumentHighlight, error) {
-	return nil, fmt.Errorf("TODO")
-}
-
 func (s *LSPServer) DocumentLink(context.Context, *protocol.DocumentLinkParams) ([]protocol.DocumentLink, error) {
 	return nil, fmt.Errorf("TODO")
 }
@@ -126,10 +98,6 @@ func (s *LSPServer) DocumentSymbol(context.Context, *protocol.DocumentSymbolPara
 }
 
 func (s *LSPServer) FoldingRange(context.Context, *protocol.FoldingRangeParams) ([]protocol.FoldingRange, error) {
-	return nil, fmt.Errorf("TODO")
-}
-
-func (s *LSPServer) Hover(context.Context, *protocol.HoverParams) (*protocol.Hover, error) {
 	return nil, fmt.Errorf("TODO")
 }
 
@@ -178,10 +146,6 @@ func (s *LSPServer) RangeFormatting(context.Context, *protocol.DocumentRangeForm
 }
 
 func (s *LSPServer) RangesFormatting(context.Context, *protocol.DocumentRangesFormattingParams) ([]protocol.TextEdit, error) {
-	return nil, fmt.Errorf("TODO")
-}
-
-func (s *LSPServer) References(context.Context, *protocol.ReferenceParams) ([]protocol.Location, error) {
 	return nil, fmt.Errorf("TODO")
 }
 
