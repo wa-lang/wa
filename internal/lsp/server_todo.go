@@ -25,10 +25,6 @@ func (s *LSPServer) OutgoingCalls(context.Context, *protocol.CallHierarchyOutgoi
 	return nil, fmt.Errorf("TODO")
 }
 
-func (s *LSPServer) ResolveCodeAction(context.Context, *protocol.CodeAction) (*protocol.CodeAction, error) {
-	return nil, fmt.Errorf("TODO")
-}
-
 func (s *LSPServer) ResolveCodeLens(context.Context, *protocol.CodeLens) (*protocol.CodeLens, error) {
 	return nil, fmt.Errorf("TODO")
 }
@@ -67,10 +63,6 @@ func (s *LSPServer) Declaration(context.Context, *protocol.DeclarationParams) (*
 
 func (s *LSPServer) Diagnostic(context.Context, *string) (*string, error) {
 	return nil, fmt.Errorf("TODO")
-}
-
-func (s *LSPServer) DidChange(context.Context, *protocol.DidChangeTextDocumentParams) error {
-	return fmt.Errorf("TODO")
 }
 
 func (s *LSPServer) DidClose(context.Context, *protocol.DidCloseTextDocumentParams) error {
@@ -238,5 +230,13 @@ func (s *LSPServer) WillRenameFiles(context.Context, *protocol.RenameFilesParams
 }
 
 func (s *LSPServer) ResolveWorkspaceSymbol(context.Context, *protocol.WorkspaceSymbol) (*protocol.WorkspaceSymbol, error) {
+	return nil, fmt.Errorf("TODO")
+}
+
+func (s *LSPServer) ResolveCodeAction(context.Context, *protocol.CodeAction) (*protocol.CodeAction, error) {
+	return nil, fmt.Errorf("TODO")
+}
+
+func (s *LSPServer) ResolveCompletionItem(context.Context, *protocol.CompletionItem) (*protocol.CompletionItem, error) {
 	return nil, fmt.Errorf("TODO")
 }

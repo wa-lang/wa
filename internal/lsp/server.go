@@ -27,11 +27,13 @@ type LSPServer struct {
 	clientName string
 
 	waModules map[protocol.DocumentURI]*WaModule
+	fileMap   map[string]string // 被编辑和修改的文件, 临时缓存
 }
 
 func NewLSPServer(opt *Option) *LSPServer {
 	p := &LSPServer{
 		waModules: make(map[protocol.DocumentURI]*WaModule),
+		fileMap:   make(map[string]string),
 	}
 
 	logPrefix := fmt.Sprintf("[PID:%d] ", os.Getpid())
@@ -80,10 +82,22 @@ func (s *LSPServer) Initialize(ctx context.Context, params *protocol.ParamInitia
 
 	reply := &protocol.InitializeResult{
 		Capabilities: protocol.ServerCapabilities{
+			TextDocumentSync: &protocol.TextDocumentSyncOptions{
+				Change:    protocol.Full,
+				OpenClose: true,
+				Save: &protocol.SaveOptions{
+					IncludeText: false,
+				},
+			},
+
 			DocumentFormattingProvider: &protocol.Or_ServerCapabilities_documentFormattingProvider{Value: true},
 			HoverProvider:              &protocol.Or_ServerCapabilities_hoverProvider{Value: true},
 			DefinitionProvider:         &protocol.Or_ServerCapabilities_definitionProvider{Value: true},
 			TypeDefinitionProvider:     &protocol.Or_ServerCapabilities_typeDefinitionProvider{Value: true},
+
+			CompletionProvider: &protocol.CompletionOptions{
+				TriggerCharacters: []string{"."},
+			},
 
 			// TODO(chai): 实现基本能力
 			FoldingRangeProvider:   &protocol.Or_ServerCapabilities_foldingRangeProvider{Value: false},
