@@ -13,6 +13,7 @@ import (
 	"wa-lang.org/wa/internal/ast/astutil"
 	"wa-lang.org/wa/internal/lsp/protocol"
 	"wa-lang.org/wa/internal/token"
+	"wa-lang.org/wa/internal/types"
 )
 
 func (p *LSPServer) DidChange(ctx context.Context, params *protocol.DidChangeTextDocumentParams) error {
@@ -113,11 +114,16 @@ func (p *LSPServer) Completion(ctx context.Context, params *protocol.CompletionP
 	}
 
 	var completionItems []protocol.CompletionItem
-	for _, name := range obj.Parent().Names() {
-		completionItems = append(completionItems, protocol.CompletionItem{
-			Label:      name,
-			InsertText: name,
-		})
+	switch obj := obj.(type) {
+	case *types.PkgName:
+		for _, name := range obj.Imported().Scope().Names() {
+			completionItems = append(completionItems, protocol.CompletionItem{
+				Label:      name,
+				InsertText: name,
+			})
+		}
+	default:
+		// todo
 	}
 
 	reply := &protocol.CompletionList{
