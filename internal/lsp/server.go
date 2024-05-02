@@ -19,7 +19,8 @@ import (
 var _ protocol.Server = (*LSPServer)(nil)
 
 type Option struct {
-	LogFile string
+	LogFile     string
+	SyncFileDir string // 文件快照目录
 }
 
 type LSPServer struct {
@@ -30,6 +31,8 @@ type LSPServer struct {
 
 	waModules map[protocol.DocumentURI]*WaModule
 	fileMap   map[string]string // 被编辑和修改的文件, 临时缓存
+
+	syncFile *SyncFile
 }
 
 func NewLSPServer(opt *Option) *LSPServer {
@@ -49,6 +52,15 @@ func NewLSPServer(opt *Option) *LSPServer {
 	}
 	if p.logger == nil {
 		p.logger = log.New(io.Discard, logPrefix, log.Ldate|log.Ltime|log.Lshortfile)
+	}
+
+	if opt != nil && opt.SyncFileDir != "" {
+		p.syncFile = &SyncFile{
+			RootDir: opt.SyncFileDir,
+		}
+	}
+	if p.syncFile == nil {
+		p.syncFile = &SyncFile{}
 	}
 
 	stream := jsonrpc2.NewHeaderStream(fakenet.NewConn("stdio", os.Stdin, os.Stdout))

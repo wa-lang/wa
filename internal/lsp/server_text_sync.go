@@ -6,6 +6,7 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	"strconv"
 	"strings"
 
 	"wa-lang.org/wa/internal/lsp/jsonrpc2"
@@ -15,6 +16,11 @@ import (
 func (p *LSPServer) DidOpen(ctx context.Context, params *protocol.DidOpenTextDocumentParams) error {
 	p.logger.Println("DidOpen:", jsonMarshal(params))
 	p.fileMap[params.TextDocument.URI.Path()] = params.TextDocument.Text
+
+	p.syncFile.SaveFile(
+		params.TextDocument.URI.Path()+"."+strconv.Itoa(int(params.TextDocument.Version)),
+		params.TextDocument.Text,
+	)
 	return nil
 }
 
@@ -41,6 +47,11 @@ func (p *LSPServer) DidChange(ctx context.Context, params *protocol.DidChangeTex
 	}
 
 	p.logger.Println("DidChange.text:", string(text))
+	p.syncFile.SaveFile(
+		params.TextDocument.URI.Path()+"."+strconv.Itoa(int(params.TextDocument.Version)),
+		string(text),
+	)
+
 	p.fileMap[params.TextDocument.URI.Path()] = string(text)
 	return nil
 }
