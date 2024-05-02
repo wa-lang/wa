@@ -15,7 +15,7 @@ import (
 )
 
 func (p *LSPServer) Definition(ctx context.Context, params *protocol.DefinitionParams) ([]protocol.Location, error) {
-	p.logger.Println("Hover:", jsonMarshal(params))
+	p.logger.Println("Definition:", jsonMarshal(params))
 
 	if !strings.HasSuffix(string(params.TextDocument.URI), ".wa") {
 		return nil, nil

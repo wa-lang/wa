@@ -9,6 +9,7 @@ import (
 	"wa-lang.org/wa/internal/lsp/protocol"
 )
 
-func (s *LSPServer) DocumentHighlight(context.Context, *protocol.DocumentHighlightParams) ([]protocol.DocumentHighlight, error) {
+func (p *LSPServer) DocumentHighlight(ctx context.Context, params *protocol.DocumentHighlightParams) ([]protocol.DocumentHighlight, error) {
+	p.logger.Println("DocumentHighlight:", jsonMarshal(params))
 	return nil, fmt.Errorf("TODO")
 }

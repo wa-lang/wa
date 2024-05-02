@@ -9,10 +9,12 @@ import (
 	"wa-lang.org/wa/internal/lsp/protocol"
 )
 
-func (s *LSPServer) CodeAction(context.Context, *protocol.CodeActionParams) ([]protocol.CodeAction, error) {
+func (p *LSPServer) CodeAction(ctx context.Context, params *protocol.CodeActionParams) ([]protocol.CodeAction, error) {
+	p.logger.Println("CodeAction:", jsonMarshal(params))
 	return nil, fmt.Errorf("TODO")
 }
 
-func (s *LSPServer) CodeLens(context.Context, *protocol.CodeLensParams) ([]protocol.CodeLens, error) {
+func (p *LSPServer) CodeLens(ctx context.Context, params *protocol.CodeLensParams) ([]protocol.CodeLens, error) {
+	p.logger.Println("CodeAction:", jsonMarshal(params))
 	return nil, fmt.Errorf("TODO")
 }

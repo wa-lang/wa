@@ -6,27 +6,26 @@ import (
 	"bytes"
 	"context"
 	"fmt"
-	"os"
 	"strings"
 
 	"wa-lang.org/wa/internal/lsp/jsonrpc2"
 	"wa-lang.org/wa/internal/lsp/protocol"
 )
 
-func (s *LSPServer) DidChangeWatchedFiles(context.Context, *protocol.DidChangeWatchedFilesParams) error {
-	return fmt.Errorf("TODO")
+func (p *LSPServer) DidOpen(ctx context.Context, params *protocol.DidOpenTextDocumentParams) error {
+	p.logger.Println("DidOpen:", jsonMarshal(params))
+	p.fileMap[params.TextDocument.URI.Path()] = params.TextDocument.Text
+	return nil
 }
 
-func (s *LSPServer) DidOpen(context.Context, *protocol.DidOpenTextDocumentParams) error {
-	return fmt.Errorf("TODO")
+func (s *LSPServer) DidSave(ctx context.Context, params *protocol.DidSaveTextDocumentParams) error {
+	s.logger.Println("DidSave:", jsonMarshal(params))
+	return nil
 }
 
-func (s *LSPServer) DidSave(context.Context, *protocol.DidSaveTextDocumentParams) error {
-	return fmt.Errorf("TODO")
-}
-
-func (s *LSPServer) DidClose(context.Context, *protocol.DidCloseTextDocumentParams) error {
-	return fmt.Errorf("TODO")
+func (s *LSPServer) DidClose(ctx context.Context, params *protocol.DidCloseTextDocumentParams) error {
+	s.logger.Println("DidClose:", jsonMarshal(params))
+	return nil
 }
 
 func (p *LSPServer) DidChange(ctx context.Context, params *protocol.DidChangeTextDocumentParams) error {
@@ -36,16 +35,13 @@ func (p *LSPServer) DidChange(ctx context.Context, params *protocol.DidChangeTex
 		return nil
 	}
 
-	path := params.TextDocument.URI.Path()
-
-	// todo: 目前只支持全局同步
-	for _, x := range params.ContentChanges {
-		if x.Range == nil {
-			p.fileMap[path] = x.Text
-			break
-		}
+	text, err := p.changedText(params.TextDocument.URI, params.ContentChanges)
+	if err != nil {
+		return err
 	}
 
+	p.logger.Println("DidChange.text:", string(text))
+	p.fileMap[params.TextDocument.URI.Path()] = string(text)
 	return nil
 }
 func (s *LSPServer) changedText(uri protocol.DocumentURI, changes []protocol.TextDocumentContentChangeEvent) ([]byte, error) {
@@ -64,10 +60,7 @@ func (s *LSPServer) changedText(uri protocol.DocumentURI, changes []protocol.Tex
 
 // 接受增量变更, 用于同步数据内容
 func (s *LSPServer) applyIncrementalChanges(uri protocol.DocumentURI, changes []protocol.TextDocumentContentChangeEvent) ([]byte, error) {
-	content, err := os.ReadFile(uri.Path())
-	if err != nil {
-		return nil, err
-	}
+	content := []byte(s.fileMap[uri.Path()])
 
 	for _, change := range changes {
 		m := protocol.NewMapper(uri, content)

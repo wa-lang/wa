@@ -21,6 +21,8 @@ func (p *LSPServer) Hover(ctx context.Context, params *protocol.HoverParams) (*p
 		return nil, nil
 	}
 
+	p.logger.Println("Hover.text:", p.fileMap[params.TextDocument.URI.Path()])
+
 	module, ok := p.loadModule(params.TextDocument.URI)
 	if !ok {
 		return nil, nil

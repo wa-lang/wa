@@ -9,6 +9,8 @@ import (
 	"wa-lang.org/wa/internal/lsp/protocol"
 )
 
-func (s *LSPServer) References(context.Context, *protocol.ReferenceParams) ([]protocol.Location, error) {
+func (p *LSPServer) References(ctx context.Context, params *protocol.ReferenceParams) ([]protocol.Location, error) {
+	p.logger.Println("References:", jsonMarshal(params))
+
 	return nil, fmt.Errorf("TODO")
 }

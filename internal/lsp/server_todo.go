@@ -80,3 +80,8 @@ func (s *LSPServer) SelectionRange(context.Context, *protocol.SelectionRangePara
 func (s *LSPServer) SemanticTokensRange(context.Context, *protocol.SemanticTokensRangeParams) (*protocol.SemanticTokens, error) {
 	return nil, fmt.Errorf("TODO")
 }
+
+func (s *LSPServer) DidChangeWatchedFiles(ctx context.Context, params *protocol.DidChangeWatchedFilesParams) error {
+	s.logger.Println("DidChangeWatchedFiles:", jsonMarshal(params))
+	return nil
+}

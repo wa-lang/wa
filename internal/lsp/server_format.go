@@ -11,7 +11,7 @@ import (
 )
 
 func (s *LSPServer) Formatting(ctx context.Context, params *protocol.DocumentFormattingParams) ([]protocol.TextEdit, error) {
-	s.logger.Println("Initialize:", jsonMarshal(params))
+	s.logger.Println("Formatting:", jsonMarshal(params))
 
 	path := params.TextDocument.URI.Path()
 	content, err := os.ReadFile(path)

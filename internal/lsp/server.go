@@ -85,7 +85,7 @@ func (s *LSPServer) Initialize(ctx context.Context, params *protocol.ParamInitia
 	reply := &protocol.InitializeResult{
 		Capabilities: protocol.ServerCapabilities{
 			TextDocumentSync: &protocol.TextDocumentSyncOptions{
-				Change:    protocol.Full,
+				Change:    protocol.Incremental,
 				OpenClose: true,
 				Save: &protocol.SaveOptions{
 					IncludeText: false,
