@@ -9,8 +9,8 @@
 >
 
 <path
-	stroke="none" fill="LightSeaGreen"
-	d="M60,50 h90 v100 h100 v-100 h90 l10,10 v280 l-10,10 h-280 l-10,-10 v-280"
+	stroke="none" fill="blue"
+	d="M50,50 h100 v100 h100 v-100 h100 v300 h-300"
 />
 
 <path
