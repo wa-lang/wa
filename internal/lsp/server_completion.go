@@ -16,26 +16,6 @@ import (
 	"wa-lang.org/wa/internal/types"
 )
 
-func (p *LSPServer) DidChange(ctx context.Context, params *protocol.DidChangeTextDocumentParams) error {
-	p.logger.Println("DidChange:", jsonMarshal(params))
-
-	if !strings.HasSuffix(string(params.TextDocument.URI), ".wa") {
-		return nil
-	}
-
-	path := params.TextDocument.URI.Path()
-
-	// todo: 目前只支持全局同步
-	for _, x := range params.ContentChanges {
-		if x.Range == nil {
-			p.fileMap[path] = x.Text
-			break
-		}
-	}
-
-	return nil
-}
-
 func (p *LSPServer) Completion(ctx context.Context, params *protocol.CompletionParams) (*protocol.CompletionList, error) {
 	p.logger.Println("Completion:", jsonMarshal(params))
 

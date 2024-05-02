@@ -4,13 +4,50 @@ package lsp
 
 import (
 	"bytes"
+	"context"
 	"fmt"
 	"os"
+	"strings"
 
 	"wa-lang.org/wa/internal/lsp/jsonrpc2"
 	"wa-lang.org/wa/internal/lsp/protocol"
 )
 
+func (s *LSPServer) DidChangeWatchedFiles(context.Context, *protocol.DidChangeWatchedFilesParams) error {
+	return fmt.Errorf("TODO")
+}
+
+func (s *LSPServer) DidOpen(context.Context, *protocol.DidOpenTextDocumentParams) error {
+	return fmt.Errorf("TODO")
+}
+
+func (s *LSPServer) DidSave(context.Context, *protocol.DidSaveTextDocumentParams) error {
+	return fmt.Errorf("TODO")
+}
+
+func (s *LSPServer) DidClose(context.Context, *protocol.DidCloseTextDocumentParams) error {
+	return fmt.Errorf("TODO")
+}
+
+func (p *LSPServer) DidChange(ctx context.Context, params *protocol.DidChangeTextDocumentParams) error {
+	p.logger.Println("DidChange:", jsonMarshal(params))
+
+	if !strings.HasSuffix(string(params.TextDocument.URI), ".wa") {
+		return nil
+	}
+
+	path := params.TextDocument.URI.Path()
+
+	// todo: 目前只支持全局同步
+	for _, x := range params.ContentChanges {
+		if x.Range == nil {
+			p.fileMap[path] = x.Text
+			break
+		}
+	}
+
+	return nil
+}
 func (s *LSPServer) changedText(uri protocol.DocumentURI, changes []protocol.TextDocumentContentChangeEvent) ([]byte, error) {
 	if len(changes) == 0 {
 		return nil, fmt.Errorf("%w: no content changes provided", jsonrpc2.ErrInternal)

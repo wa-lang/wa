@@ -16,6 +16,8 @@ import (
 	"wa-lang.org/wa/internal/version"
 )
 
+var _ protocol.Server = (*LSPServer)(nil)
+
 type Option struct {
 	LogFile string
 }
