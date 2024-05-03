@@ -12,6 +12,7 @@ import (
 
 	"wa-lang.org/wa/internal/lsp/fakenet"
 	"wa-lang.org/wa/internal/lsp/jsonrpc2"
+	_ "wa-lang.org/wa/internal/lsp/loaderx"
 	"wa-lang.org/wa/internal/lsp/protocol"
 	"wa-lang.org/wa/internal/version"
 )
@@ -21,6 +22,8 @@ var _ protocol.Server = (*LSPServer)(nil)
 type Option struct {
 	LogFile     string
 	SyncFileDir string // 文件快照目录
+	WaOS        string // build 的目标系统
+	WaRoot      string // 本地的 waroot 目录
 }
 
 type LSPServer struct {
