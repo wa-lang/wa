@@ -32,6 +32,10 @@ import (
 	"wa-lang.org/wa/waroot"
 )
 
+func InitWaroot() {
+	waroot.InitWarootDir()
+}
+
 func Main() {
 	cliApp := cli.NewApp()
 	cliApp.Name = "Wa"

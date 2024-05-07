@@ -5,8 +5,6 @@ package appbase
 import (
 	"fmt"
 	"os"
-	"os/exec"
-	"runtime"
 	"strings"
 
 	"wa-lang.org/wa/internal/3rdparty/cli"
@@ -20,8 +18,6 @@ type Option struct {
 	BuilgTags    []string
 	TargetArch   string
 	TargetOS     string
-	Clang        string
-	Llc          string
 	LD_StackSize int
 	LD_MaxMemory int
 }
@@ -58,17 +54,8 @@ func (opt *Option) Config() *config.Config {
 	case "wasm64":
 		cfg.WaSizes.MaxAlign = 8
 		cfg.WaSizes.WordSize = 8
-	case "amd64":
-		cfg.WaSizes.MaxAlign = 8
-		cfg.WaSizes.WordSize = 8
-	case "arm64":
-		cfg.WaSizes.MaxAlign = 8
-		cfg.WaSizes.WordSize = 8
-	case "native":
-		cfg.WaSizes.MaxAlign = 8
-		cfg.WaSizes.WordSize = 8
 	default:
-		panic("todo")
+		panic("unknown WaArch: " + cfg.WaArch)
 	}
 
 	return cfg
@@ -76,26 +63,6 @@ func (opt *Option) Config() *config.Config {
 
 // 构建命令行程序对象
 func (opt *Option) Adjust() {
-	if opt.Clang == "" {
-		if runtime.GOOS == "windows" {
-			opt.Clang, _ = exec.LookPath("clang.exe")
-		} else {
-			opt.Clang, _ = exec.LookPath("clang")
-		}
-		if opt.Clang == "" {
-			opt.Clang = "clang"
-		}
-	}
-	if opt.Llc == "" {
-		if runtime.GOOS == "windows" {
-			opt.Llc, _ = exec.LookPath("llc.exe")
-		} else {
-			opt.Llc, _ = exec.LookPath("llc")
-		}
-		if opt.Llc == "" {
-			opt.Llc = "llc"
-		}
-	}
 	if opt.TargetOS == "" {
 		opt.TargetOS = config.WaOS_Default
 	}
@@ -109,8 +76,6 @@ func BuildOptions(c *cli.Context, waBackend ...string) *Option {
 		Debug:        c.Bool("debug"),
 		WaBackend:    config.WaBackend_Default,
 		BuilgTags:    strings.Fields(c.String("tags")),
-		Clang:        c.String("clang"),
-		Llc:          c.String("llc"),
 		LD_StackSize: c.Int("ld-stack-size"),
 		LD_MaxMemory: c.Int("ld-max-memory"),
 	}
