@@ -156,8 +156,10 @@ webgpu: new function () {
     return app._extobj.insert_obj(shader);
   }
 
-  this.create_buffer = (device, byteLen, usage) => {
+  this.create_buffer = (device, label_b, label_d, label_l, mapped, byteLen, usage) => {
     let buffer = app._extobj.get_obj(device).createBuffer({
+      label: app._mem_util.get_string(label_d, label_l),
+      mappedAtCreation: mapped != 0,
       size: byteLen,
       usage: usage,
     });
@@ -281,4 +283,60 @@ webgpu: new function () {
   this.get_preferred_canvas_format = () => {
     return this._texture_format_map.get(navigator.gpu.getPreferredCanvasFormat());
   }
+
+  this.buffer_map_state = (b_h) => {
+    let buffer = app._extobj.get_obj(b_h);
+    let state = buffer.mapState;
+    switch (state) {
+      case 'unmapped':
+        return 0;
+
+      case 'pending':
+        return 1;
+
+      case 'mapped':
+        return 2;
+
+      default:
+        throw new Error(`Unknown mapState: ` + state);
+    }
+  }
+
+  this.buffer_map_async = (tid, h, mode) => {
+    let buffer = app._extobj.get_obj(h);
+    buffer.mapAsync(mode)
+      .then(() => {
+        buffer._waMappedRange = new Uint8Array(buffer.getMappedRange());
+        let slice = app._mem_util.set_bytes(buffer._waMappedRange);
+        app._wasm_inst.exports["gpu.onBufferMapDone"](tid, 1, ...slice);
+        app._mem_util.block_release(slice[0]);
+      })
+      .catch((err) => {
+        app._wasm_inst.exports["gpu.onBufferMapDone"](tid, 0, 0, 0, 0, 0);
+        console.log(err)
+      })
+  }
+
+  this.buffer_get_mapped_range = (h) => {
+    let buffer = app._extobj.get_obj(h);
+    
+    let ab = new ArrayBuffer(4);
+    let u8 = new Uint8Array(ab)
+    u8[0] = 13
+    u8[1] = 42
+    u8[2] = 87
+    u8[3] = 76
+    let slice = app._mem_util.set_bytes(u8)
+    return slice
+    //return [13, 42, 56, 78]
+  }
+
+  this.buffer_unmap = (h, b, d, l, c) => {
+    let buffer = app._extobj.get_obj(h);
+    let u8a = app._mem_util.get_bytes(d, l);
+    buffer._waMappedRange.set(u8a);
+    buffer._waMappedRange = null;
+    buffer.unmap();
+  }
+
 },

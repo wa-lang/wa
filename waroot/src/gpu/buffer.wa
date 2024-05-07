@@ -1,7 +1,7 @@
 
 import "js"
 
-type BufferUsage uint
+type BufferUsage u32
 
 const (
     BufferUsage_MAP_READ:       BufferUsage = 1
@@ -16,16 +16,151 @@ const (
     BufferUsage_QUERY_RESOLVE:  BufferUsage = 512
 )
 
+type MapState i32
+
+const (
+    MapState_unmapped: MapState = iota
+    MapState_pending
+    MapState_mapped
+)
+
+type MapMode i32
+const (
+    MapMode_READ: MapMode = 1
+    MapMode_WRITE: MapMode = 2
+)
+
+type BufferDesc struct {
+    Label:            string
+    MappedAtCreation: bool
+    Size:             int
+    Usage:            BufferUsage
+}
+
 /*
 不能使用该类型直接声明值，需通过 Device.CreateBuffer() 创建
 */
 type Buffer struct {
-    _device: js.ExtObj
     js.ExtObj
+    _device: js.ExtObj
+    desc: BufferDesc
+
+    mapped: bool
+    mappedRange: []byte
 }
 
-#wa:import webgpu write_buffer
-func jsWriteBuffer(device, buffer: js.Handle, offset: i32, data: []byte)
+/*
+向Buffer中写入数据块
+*/
 func Buffer.Write(offset: i32, data: []byte) {
     jsWriteBuffer(this._device.GetHandle(), this.GetHandle(), offset, data)
+}
+#wa:import webgpu write_buffer
+func jsWriteBuffer(device, buffer: js.Handle, offset: i32, data: []byte)
+
+/*
+返回 Buffer 的标签
+*/
+func Buffer.Label() => string {
+    return this.desc.Label
+}
+
+/*
+返回 Buffer 的大小（以字节为单位）
+*/
+func Buffer.Size() => int {
+    return this.desc.Size
+}
+
+/*
+返回 Buffer 的用途
+*/
+func Buffer.Usage() => BufferUsage {
+    return this.desc.Usage
+}
+
+/*
+返回 Buffer 的映射状态
+*/
+func Buffer.MapState() => MapState {
+    return jsBufferMapState(this.GetHandle())
+}
+#wa:import webgpu buffer_map_state
+func jsBufferMapState(buffer: js.Handle) => MapState
+
+type BufferMapper interface {
+    OnMapped(b: *Buffer, ok: bool)
+}
+
+type BufferMapHandler func(b: *Buffer, ok: bool)
+
+/*
+异步映射
+*/
+func Buffer.MapAsync(mode: MapMode, mapper: BufferMapper) {
+}
+#wa:import webgpu buffer_map_async
+func jsBufferMapAsync(tid: int, buffer: js.Handle, mode: MapMode)
+
+#wa:import webgpu buffer_get_mapped_range
+func jsBufferGetMappedRange(buffer: js.Handle) => []byte
+
+func Buffer.Unmap() {
+    if !this.mapped {
+        return
+    }
+
+    jsBufferUnmap(this.GetHandle(), this.mappedRange)
+    this.mapped = false
+    this.mappedRange = nil
+}
+#wa:import webgpu buffer_unmap
+func jsBufferUnmap(bh: js.Handle, mappedRange: []byte)
+
+#wa:export gpu.onBufferMapDone
+func onBufferMapDone(tid: int, ok: bool, data: []byte) {
+    task := &mapTasks[tid]
+    task.buffer.mapped = ok
+    task.buffer.mappedRange = data
+
+    switch h := task.mapper.(type) {
+    case BufferMapper:
+        h.OnMapped(task.buffer, ok)
+
+    case BufferMapHandler:
+        h(task.buffer, ok)
+    }
+    freeMapTask(tid)
+}
+
+type mapTask struct {
+    buffer: *Buffer
+    mapper: interface{}
+}
+
+global mapTasks: []mapTask
+global freeMapTaskIDs: []int
+
+func allocMapTask(buffer: *Buffer, mapper: interface{}) => (taskid: int) {
+    if len(freeMapTaskIDs) > 0 {
+        i := len(freeMapTaskIDs) - 1
+        taskid = freeMapTaskIDs[i]
+        freeMapTaskIDs = freeMapTaskIDs[:i]
+    } else {
+        taskid = len(mapTasks)
+        mapTasks = append(mapTasks, mapTask{})
+    }
+    mapTasks[taskid].buffer = buffer
+    mapTasks[taskid].mapper = mapper
+    return
+}
+
+func freeMapTask(taskid: int) {
+    if mapTasks[taskid].mapper == nil {
+        panic("Task has been freed.")
+    }
+    mapTasks[taskid].buffer = nil
+    mapTasks[taskid].mapper = nil
+
+    freeMapTaskIDs = append(freeMapTaskIDs, taskid)
 }

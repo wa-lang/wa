@@ -114,13 +114,13 @@ func PassEncoder.SetBindGroup(id: i32, bg: BindGroup) {
 
 #wa:import webgpu set_render_pass_vertex_buffer
 func jsPassEncoderSetVertexBuffer(render_pass: js.Handle, slot: i32, buffer: js.Handle)
-func PassEncoder.SetVertexBuffer(slot: i32, vb: Buffer) {
+func PassEncoder.SetVertexBuffer(slot: i32, vb: *Buffer) {
     jsPassEncoderSetVertexBuffer(this.GetHandle(), slot, vb.GetHandle())
 }
 
 #wa:import webgpu set_render_pass_index_buffer
 func jsSetRenderPassIndexBuffer(render_pass, buffer: js.Handle, typ: string)
-func PassEncoder.SetIndexBuffer(ib: Buffer, typ: string) {
+func PassEncoder.SetIndexBuffer(ib: *Buffer, typ: string) {
     jsSetRenderPassIndexBuffer(this.GetHandle(), ib.GetHandle(), typ)
 }
 

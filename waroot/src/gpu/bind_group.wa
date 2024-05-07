@@ -69,7 +69,7 @@ type BufferBinding struct {
     js.ExtObj
 }
 
-func NewBufferBinding(buffer: Buffer) => BufferBinding {
+func NewBufferBinding(buffer: *Buffer) => BufferBinding {
     b: BufferBinding
     b.ExtObj = js.NewExtObj()
     b.SetMember_obj("buffer", buffer.ExtObj)

@@ -34,14 +34,15 @@ func Device.CreateShaderModule(code: string) => ShaderModule {
     return s
 }
 
-#wa:import webgpu create_buffer
-func jsCreateBuffer(device: js.Handle, byteLen: int, usage: BufferUsage) => js.Handle
-func Device.CreateBuffer(byteLen: int, usage: BufferUsage) => Buffer {
+func Device.CreateBuffer(desc: BufferDesc) => *Buffer {
     b: Buffer
+    b.ExtObj = js.WrapExtObj(jsCreateBuffer(this.GetHandle(), desc.Label, desc.MappedAtCreation, desc.Size, desc.Usage))
     b._device = this.ExtObj
-    b.ExtObj = js.WrapExtObj(jsCreateBuffer(this.GetHandle(), byteLen, usage))
-    return b
+    b.desc = desc
+    return &b
 }
+#wa:import webgpu create_buffer
+func jsCreateBuffer(device: js.Handle, label: string, mappedAtCreation: bool, byteLen: int, usage: BufferUsage) => js.Handle
 
 #wa:import webgpu create_texture
 func jsCreateTexture(device: js.Handle, desc: js.Handle) => js.Handle
@@ -53,6 +54,7 @@ func Device.CreateTexture(desc: TextureDesc) => Texture {
     return t
 }
 
+#wa:generic CreateSampler_Default
 func Device.CreateSampler(desc: SamplerDesc) => Sampler {
     s: Sampler
     d := desc.createExtObj()
@@ -62,6 +64,10 @@ func Device.CreateSampler(desc: SamplerDesc) => Sampler {
 }
 #wa:import webgpu create_sampler
 func jsCreateSampler(device, desc: js.Handle) => js.Handle
+
+func Device.CreateSampler_Default() => Sampler {
+    return this.CreateSampler(DefaultSamplerDesc())
+}
 
 #wa:import webgpu copy_external_image_to_texture
 func jsCopyExternalImageToTexture(device, src, dest: js.Handle)

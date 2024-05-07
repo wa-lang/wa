@@ -23,7 +23,7 @@ global textureDimensionSymbols = [...]string{
     TextureDimension_3d: "3d",
 }
 
-type TextureFormat u32
+type TextureFormat i32
 
 const (
     TextureFormat_r8unorm: TextureFormat = iota
