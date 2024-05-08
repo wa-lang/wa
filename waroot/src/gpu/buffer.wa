@@ -88,6 +88,7 @@ func Buffer.MapState() => MapState {
 #wa:import webgpu buffer_map_state
 func jsBufferMapState(buffer: js.Handle) => MapState
 
+
 type BufferMapper interface {
     OnMapped(b: *Buffer, ok: bool)
 }
@@ -102,8 +103,41 @@ func Buffer.MapAsync(mode: MapMode, mapper: BufferMapper) {
 #wa:import webgpu buffer_map_async
 func jsBufferMapAsync(tid: int, buffer: js.Handle, mode: MapMode)
 
-#wa:import webgpu buffer_get_mapped_range
-func jsBufferGetMappedRange(buffer: js.Handle) => []byte
+
+/*
+获取已映射的 Buffer 的数据块
+*/
+#wa:generic GetMappedRangeOffset GetMappedRangeOffsetSize
+func Buffer.GetMappedRange() => []byte {
+    if !this.mapped {
+        panic("Not mapped.")
+    }
+    return this.mappedRange
+}
+
+func Buffer.GetMappedRangeOffset(offset: int) => []byte {
+    if !this.mapped {
+        panic("Not mapped.")
+    }
+
+    if offset >= this.desc.Size {
+        panic("range overflowed")
+    }
+
+    return this.mappedRange[offset:]
+}
+
+func Buffer.GetMappedRangeOffsetSize(offset, size: int) => []byte {
+    if !this.mapped {
+        panic("Not mapped.")
+    }
+
+    if offset + size > this.desc.Size {
+        panic("range overflowed")
+    }
+
+    return this.mappedRange[offset:offset + size]
+}
 
 func Buffer.Unmap() {
     if !this.mapped {
@@ -116,6 +150,9 @@ func Buffer.Unmap() {
 }
 #wa:import webgpu buffer_unmap
 func jsBufferUnmap(bh: js.Handle, mappedRange: []byte)
+
+#wa:import webgpu buffer_get_mapped_range
+func jsBufferGetMappedRange(buffer: js.Handle) => []byte
 
 #wa:export gpu.onBufferMapDone
 func onBufferMapDone(tid: int, ok: bool, data: []byte) {
