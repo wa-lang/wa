@@ -627,7 +627,11 @@ func (check *Checker) resolveExprOrTypeOrGenericCall(x *operand, e *ast.CallExpr
 				}
 
 			case *Var: // this.Method(arg)
-				if t, _ := obj.Type().(*Named); t != nil {
+				varTyp := obj.Type()
+				if t, _ := obj.Type().(*Pointer); t != nil {
+					varTyp = t.base
+				}
+				if t, _ := varTyp.(*Named); t != nil {
 					obj, _, _ := lookupFieldOrMethod(t, true, check.pkg, eCall.Sel.Name)
 					if fnObj, ok := obj.(*Func); ok && len(fnObj.generic) != 0 {
 						for _, genericFnObj := range fnObj.generic {
