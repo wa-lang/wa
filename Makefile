@@ -33,5 +33,8 @@ ci-test-all:
 	make -C ./waroot/examples ci-test-all
 	wa -v
 
+build-dist:
+	go run ./builder
+
 clean:
 	-rm a.out*
