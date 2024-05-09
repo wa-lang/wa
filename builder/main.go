@@ -252,8 +252,26 @@ func (p *Builder) zipDir(dir string) {
 		}
 		defer file.Close()
 
-		relpath, _ := filepath.Rel(dir, path)
-		f, err := w.Create(filepath.Join("wa", relpath))
+		fileInfo, err := file.Stat()
+		if err != nil {
+			return err
+		}
+
+		// 需要保留可执行等标志信息
+		header, err := zip.FileInfoHeader(fileInfo)
+		if err != nil {
+			return err
+		}
+
+		relpath, err := filepath.Rel(dir, path)
+		if err != nil {
+			return err
+		}
+
+		header.Name = filepath.Join("wa", relpath)
+		header.Method = zip.Deflate
+
+		f, err := w.CreateHeader(header)
 		if err != nil {
 			return err
 		}
