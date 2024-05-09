@@ -8,6 +8,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"runtime"
 	"sync"
 
 	"wa-lang.org/wa/internal/config"
@@ -37,6 +38,19 @@ func init() {
 	if s, _ := exec.LookPath(Wat2WasmName); s != "" {
 		wat2wasmPath = s
 		return
+	}
+
+	// 4. 查找根目录(为了简化一些测试环境)
+	if runtime.GOOS == "windows" {
+		wat2wasmPath = "c:/" + Wat2WasmName
+		if exeExists(wat2wasmPath) {
+			return
+		}
+	} else {
+		wat2wasmPath = "/" + Wat2WasmName
+		if exeExists(wat2wasmPath) {
+			return
+		}
 	}
 }
 

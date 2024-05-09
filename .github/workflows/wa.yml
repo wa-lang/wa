@@ -23,6 +23,9 @@ jobs:
       - run: go version
       - run: go env
 
+      # install wat2wasm
+      - run: cp internal/3rdparty/wabt-go/internal/wabt-1.0.29-ubuntu/bin/wat2wasm /wa.wat2wasm.exe
+
       - run: make ci-test-all
 
       - run: go test -v -coverprofile=profile.cov ./...
@@ -52,6 +55,9 @@ jobs:
       - run: go version
       - run: go env
 
+      # install wat2wasm
+      - run: cp internal/3rdparty/wabt-go/internal/wabt-1.0.29-windows/bin/wat2wasm.exe c:/wa.wat2wasm.exe
+
       - run: make ci-test-all
 
       - run: go test -v ./...
@@ -76,6 +82,9 @@ jobs:
 
       - run: go version
       - run: go env
+
+      # install wat2wasm
+      - run: cp internal/3rdparty/wabt-go/internal/wabt-1.0.29-macos/bin/wat2wasm /wa.wat2wasm.exe
 
       - run: make ci-test-all
 
