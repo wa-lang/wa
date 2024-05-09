@@ -24,7 +24,7 @@ jobs:
       - run: go env
 
       # install wat2wasm
-      - run: cp internal/3rdparty/wabt-go/internal/wabt-1.0.29-ubuntu/bin/wat2wasm /wa.wat2wasm.exe
+      - run: sudo cp internal/3rdparty/wabt-go/internal/wabt-1.0.29-ubuntu/bin/wat2wasm /usr/local/bin/wa.wat2wasm.exe
 
       - run: make ci-test-all
 
@@ -56,7 +56,7 @@ jobs:
       - run: go env
 
       # install wat2wasm
-      - run: cp internal/3rdparty/wabt-go/internal/wabt-1.0.29-windows/bin/wat2wasm.exe c:/wa.wat2wasm.exe
+      - run: copy internal/3rdparty/wabt-go/internal/wabt-1.0.29-windows/bin/wat2wasm.exe c:/wa.wat2wasm.exe
 
       - run: make ci-test-all
 
@@ -84,7 +84,7 @@ jobs:
       - run: go env
 
       # install wat2wasm
-      - run: cp internal/3rdparty/wabt-go/internal/wabt-1.0.29-macos/bin/wat2wasm /wa.wat2wasm.exe
+      - run: sudo cp internal/3rdparty/wabt-go/internal/wabt-1.0.29-macos/bin/wat2wasm /usr/local/bin/wa.wat2wasm.exe
 
       - run: make ci-test-all
 

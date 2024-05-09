@@ -23,7 +23,7 @@ jobs:
           go-version: 1.17
 
       # install wat2wasm
-      - run: cp internal/3rdparty/wabt-go/internal/wabt-1.0.29-ubuntu/bin/wat2wasm /wa.wat2wasm.exe
+      - run: sudo cp internal/3rdparty/wabt-go/internal/wabt-1.0.29-ubuntu/bin/wat2wasm /usr/local/bin/wa.wat2wasm.exe
 
       - run: make -C internal/app/wawasm
       - run: make -C waroot/examples/snake publish

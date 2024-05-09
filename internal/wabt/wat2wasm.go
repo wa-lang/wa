@@ -40,14 +40,14 @@ func init() {
 		return
 	}
 
-	// 4. 查找根目录(为了简化一些测试环境)
+	// 4. 查找C盘根目录(为了简化一些测试环境)
 	if runtime.GOOS == "windows" {
 		wat2wasmPath = "c:/" + Wat2WasmName
 		if exeExists(wat2wasmPath) {
 			return
 		}
 	} else {
-		wat2wasmPath = "/" + Wat2WasmName
+		wat2wasmPath = "/usr/local/bin/" + Wat2WasmName
 		if exeExists(wat2wasmPath) {
 			return
 		}
