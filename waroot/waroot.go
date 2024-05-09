@@ -192,6 +192,10 @@ func GetFS() fs.FS {
 	return fs
 }
 
+func GetRootFS() fs.FS {
+	return _warootFS
+}
+
 func IsStdPkg(pkgpath string) bool {
 	for _, s := range stdPkgs {
 		if s == pkgpath {
