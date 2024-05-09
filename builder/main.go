@@ -15,6 +15,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"strings"
 
 	"wa-lang.org/wa/internal/3rdparty/wabt-go"
 	"wa-lang.org/wa/internal/version"
@@ -207,7 +208,11 @@ func (p *Builder) genWarootFiles(waRootPath string) error {
 		dstpath := filepath.Join(waRootPath, path)
 		os.MkdirAll(filepath.Dir(dstpath), 0777)
 
+		// 跳过忽略的文件
 		if s := filepath.Base(path); s == "_keep" || s == ".keep" {
+			return nil
+		}
+		if strings.HasSuffix(path, ".go") {
 			return nil
 		}
 

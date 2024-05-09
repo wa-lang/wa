@@ -16,7 +16,7 @@ import (
 	"wa-lang.org/wa/internal/loader"
 	"wa-lang.org/wa/internal/logger"
 	"wa-lang.org/wa/internal/ssa"
-	"wa-lang.org/wa/waroot"
+	wasrc "wa-lang.org/wa/waroot/src"
 )
 
 type Compiler struct {
@@ -92,7 +92,7 @@ func (p *Compiler) Compile(prog *loader.Program) (output string, err error) {
 func (p *Compiler) CompileWsFiles(prog *loader.Program) {
 	var sb strings.Builder
 
-	sb.WriteString(waroot.GetBaseWsCode(config.WaBackend_wat))
+	sb.WriteString(wasrc.GetBaseWsCode(config.WaBackend_wat))
 	sb.WriteString("\n")
 
 	var pkgpathList = make([]string, 0, len(prog.Pkgs))
@@ -131,7 +131,7 @@ func (p *Compiler) CompileWsFiles(prog *loader.Program) {
 func (p *Compiler) CompileWImportFiles(prog *loader.Program) string {
 	var sb strings.Builder
 
-	sb.WriteString(waroot.GetBaseImportCode(p.prog.Cfg.WaOS))
+	sb.WriteString(wasrc.GetBaseImportCode(p.prog.Cfg.WaOS))
 	sb.WriteString("\n")
 
 	var pkgpathList = make([]string, 0, len(prog.Pkgs))

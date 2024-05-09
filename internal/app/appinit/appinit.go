@@ -14,7 +14,6 @@ import (
 	"wa-lang.org/wa/internal/3rdparty/cli"
 	"wa-lang.org/wa/internal/app/appbase"
 	"wa-lang.org/wa/internal/format"
-	"wa-lang.org/wa/waroot"
 )
 
 var CmdInit = &cli.Command{
@@ -34,8 +33,8 @@ var CmdInit = &cli.Command{
 			Value:   "myapp",
 		},
 		&cli.BoolFlag{
-			Name:    "p5",
-			Usage:   "p5 example",
+			Name:  "p5",
+			Usage: "p5 example",
 		},
 		&cli.BoolFlag{
 			Name:    "update",
@@ -84,7 +83,7 @@ func InitApp(name, pkgpath string, isP5App, update bool) error {
 		IsP5App: isP5App,
 	}
 
-	appFS := waroot.GetExampleAppFS()
+	appFS := waroot_GetExampleAppFS()
 	err := fs.WalkDir(appFS, ".", func(path string, d fs.DirEntry, err error) error {
 		if d == nil || d.IsDir() {
 			return nil
@@ -117,7 +116,7 @@ func InitApp(name, pkgpath string, isP5App, update bool) error {
 		if err != nil {
 			return err
 		}
-		
+
 		code, _, err := format.File(nil, path, buf.Bytes())
 		if err != nil {
 			code = buf.Bytes()

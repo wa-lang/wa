@@ -23,7 +23,8 @@ import (
 	"wa-lang.org/wa/internal/token"
 	"wa-lang.org/wa/internal/types"
 	"wa-lang.org/wa/internal/wamime"
-	"wa-lang.org/wa/waroot"
+	wasrc "wa-lang.org/wa/waroot/src"
+	wastd "wa-lang.org/wa/waroot/src"
 )
 
 var _loadRuntime bool = true
@@ -108,7 +109,7 @@ func (p *_Loader) loadProgram(vfs *config.PkgVFS, manifest *config.Manifest) (*P
 		if p.cfg.WaRoot != "" {
 			p.vfs.Std = os.DirFS(filepath.Join(p.cfg.WaRoot, "src"))
 		} else {
-			p.vfs.Std = waroot.GetFS()
+			p.vfs.Std = wasrc.GetStdFS()
 		}
 	}
 
@@ -677,7 +678,7 @@ func (p *_Loader) hasExt(name string, extensions ...string) bool {
 }
 
 func (p *_Loader) isStdPkg(pkgpath string) bool {
-	return waroot.IsStdPkg(pkgpath)
+	return wastd.IsStdPkg(pkgpath)
 }
 
 func (p *_Loader) isSelfPkg(pkgpath string) bool {

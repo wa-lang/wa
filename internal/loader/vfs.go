@@ -17,7 +17,7 @@ import (
 	"wa-lang.org/wa/internal/logger"
 	"wa-lang.org/wa/internal/parser"
 	"wa-lang.org/wa/internal/token"
-	"wa-lang.org/wa/waroot"
+	wasrc "wa-lang.org/wa/waroot/src"
 )
 
 // 读取 embed 列表, 提前加载内嵌资源数据
@@ -101,7 +101,7 @@ func loadProgramFileMeta(cfg *config.Config, filename string, src interface{}) (
 		if cfg.WaRoot != "" {
 			vfs.Std = os.DirFS(filepath.Join(cfg.WaRoot, "src"))
 		} else {
-			vfs.Std = waroot.GetFS()
+			vfs.Std = wasrc.GetStdFS()
 		}
 	}
 	if vfs.Vendor == nil {
@@ -125,7 +125,7 @@ func loadProgramMeta(cfg *config.Config, appPath string) (
 	logger.Tracef(&config.EnableTrace_loader, "cfg: %+v", cfg)
 	logger.Tracef(&config.EnableTrace_loader, "appPath: %s", appPath)
 
-	if waroot.IsStdPkg(appPath) {
+	if wasrc.IsStdPkg(appPath) {
 		manifest = &config.Manifest{
 			Root:    "",
 			MainPkg: appPath,
@@ -140,7 +140,7 @@ func loadProgramMeta(cfg *config.Config, appPath string) (
 		if cfg.WaRoot != "" {
 			vfs.Std = os.DirFS(filepath.Join(cfg.WaRoot, "src"))
 		} else {
-			vfs.Std = waroot.GetFS()
+			vfs.Std = wasrc.GetStdFS()
 		}
 		return
 	}
@@ -162,7 +162,7 @@ func loadProgramMeta(cfg *config.Config, appPath string) (
 		if cfg.WaRoot != "" {
 			vfs.Std = os.DirFS(filepath.Join(cfg.WaRoot, "src"))
 		} else {
-			vfs.Std = waroot.GetFS()
+			vfs.Std = wasrc.GetStdFS()
 		}
 	}
 	if vfs.Vendor == nil {

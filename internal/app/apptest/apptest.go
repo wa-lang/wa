@@ -17,7 +17,7 @@ import (
 	"wa-lang.org/wa/internal/loader"
 	"wa-lang.org/wa/internal/wabt"
 	"wa-lang.org/wa/internal/wazero"
-	"wa-lang.org/wa/waroot"
+	"wa-lang.org/wa/waroot/src"
 )
 
 var CmdTest = &cli.Command{
@@ -54,7 +54,7 @@ var CmdTest = &cli.Command{
 func RunTest(cfg *config.Config, pkgpath, runPattern string, appArgs ...string) {
 	var pkgList = []string{pkgpath}
 	if pkgpath == "std" {
-		pkgList = waroot.GetStdTestPkgList()
+		pkgList = src.GetStdTestPkgList()
 	}
 	for _, p := range pkgList {
 		runTest(cfg, p, runPattern, appArgs...)

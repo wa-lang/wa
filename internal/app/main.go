@@ -29,7 +29,7 @@ import (
 	"wa-lang.org/wa/internal/app/apptest"
 	"wa-lang.org/wa/internal/app/appyacc"
 	"wa-lang.org/wa/internal/config"
-	"wa-lang.org/wa/waroot"
+	"wa-lang.org/wa/internal/version"
 )
 
 func Main() {
@@ -37,7 +37,7 @@ func Main() {
 	cliApp.Name = "Wa"
 	cliApp.Usage = "Wa is a tool for managing Wa source code."
 	cliApp.Copyright = "Copyright 2018 The Wa Authors. All rights reserved."
-	cliApp.Version = waroot.GetVersion()
+	cliApp.Version = version.Version
 	cliApp.EnableBashCompletion = true
 	cliApp.HideHelpCommand = true
 
