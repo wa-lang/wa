@@ -4,6 +4,9 @@ package wabt
 
 import _ "embed"
 
+// Wabt 版本号
+const Version = "1.0.29"
+
 const Wat2WasmName = "wa.wat2wasm.exe"
 
 //go:embed internal/wabt-1.0.29-macos/bin/wat2wasm

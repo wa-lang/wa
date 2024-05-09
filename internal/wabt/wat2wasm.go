@@ -10,7 +10,6 @@ import (
 	"path/filepath"
 	"sync"
 
-	"wa-lang.org/wa/internal/3rdparty/wabt-go"
 	"wa-lang.org/wa/internal/config"
 	"wa-lang.org/wa/internal/logger"
 )
@@ -39,17 +38,6 @@ func init() {
 		wat2wasmPath = s
 		return
 	}
-
-	// 4. wat2wasm 安装到 exe 所在目录 ?
-	wat2wasmPath = filepath.Join(curExeDir(), Wat2WasmName)
-	if err := os.WriteFile(wat2wasmPath, wabt.LoadWat2Wasm(), 0777); err != nil {
-		logger.Tracef(&config.EnableTrace_app, "install wat2wasm failed: %+v", err)
-		return
-	}
-}
-
-func LoadWat2Wasm() []byte {
-	return wabt.LoadWat2Wasm()
 }
 
 func Wat2Wasm(watBytes []byte) (wasmBytes []byte, err error) {

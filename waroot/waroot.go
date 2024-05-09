@@ -5,16 +5,13 @@ package waroot
 import (
 	"bytes"
 	"embed"
-	"fmt"
 	"io/fs"
 	"os"
 	"path/filepath"
 	"strings"
-	"time"
 
 	"wa-lang.org/wa/internal/config"
 	"wa-lang.org/wa/internal/version"
-	"wa-lang.org/wa/internal/wabt"
 )
 
 //go:embed VERSION
@@ -81,74 +78,6 @@ func IsWarootValid() bool {
 
 	ver := string(bytes.TrimSpace(d))
 	return ver == version.Version
-}
-
-// 初始化Waroot
-func InitWarootDir() error {
-	if IsWarootValid() {
-		return nil
-	}
-
-	// 删除旧的waroot
-	os.Rename(_warootDir, fmt.Sprintf("%s-%v-bak", _warootDir, time.Now().Format("20060102150405")))
-
-	err := fs.WalkDir(_warootFS, ".", func(path string, d fs.DirEntry, err error) error {
-		if d == nil || d.IsDir() {
-			return nil
-		}
-		if err != nil {
-			return err
-		}
-
-		data, err := fs.ReadFile(_warootFS, path)
-		if err != nil {
-			return err
-		}
-
-		dstpath := filepath.Join(_warootDir, path)
-		os.MkdirAll(filepath.Dir(dstpath), 0777)
-
-		if filepath.Base(path) == "_keep" {
-			return nil
-		}
-
-		f, err := os.Create(dstpath)
-		if err != nil {
-			return err
-		}
-		defer f.Close()
-
-		if _, err := f.Write(data); err != nil {
-			return err
-		}
-		return nil
-	})
-	if err != nil {
-		return err
-	}
-
-	// 获取当前 wa 命令所在目录
-	exePath, err := os.Executable()
-	if err != nil {
-		return err
-	}
-
-	// exe 已经在目录中
-	if isInDir(_warootDir, exePath) {
-		return nil
-	}
-
-	// 复制 bin 文件
-	if exeData, err := os.ReadFile(exePath); err == nil {
-		dstpath := filepath.Join(_warootDir, "bin", filepath.Base(exePath))
-		os.WriteFile(dstpath, exeData, 0777)
-	}
-
-	// 复制 wa.wat2wasm.exe文件
-	dstpath := filepath.Join(_warootDir, "bin", wabt.Wat2WasmName)
-	os.WriteFile(dstpath, wabt.LoadWat2Wasm(), 0777)
-
-	return nil
 }
 
 // 获取汇编基础代码
