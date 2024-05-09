@@ -39,6 +39,10 @@ func Device.CreateBuffer(desc: BufferDesc) => *Buffer {
     b.ExtObj = js.WrapExtObj(jsCreateBuffer(this.GetHandle(), desc.Label, desc.MappedAtCreation, desc.Size, desc.Usage))
     b._device = this.ExtObj
     b.desc = desc
+    if desc.MappedAtCreation {
+        b.mapped = true
+        b.mappedRange = jsBufferGetMappedRange(b.GetHandle())
+    }
     return &b
 }
 #wa:import webgpu create_buffer

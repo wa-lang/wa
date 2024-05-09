@@ -319,16 +319,9 @@ webgpu: new function () {
 
   this.buffer_get_mapped_range = (h) => {
     let buffer = app._extobj.get_obj(h);
-    
-    let ab = new ArrayBuffer(4);
-    let u8 = new Uint8Array(ab)
-    u8[0] = 13
-    u8[1] = 42
-    u8[2] = 87
-    u8[3] = 76
-    let slice = app._mem_util.set_bytes(u8)
-    return slice
-    //return [13, 42, 56, 78]
+    buffer._waMappedRange = new Uint8Array(buffer.getMappedRange());
+    let slice = app._mem_util.set_bytes(buffer._waMappedRange);
+    return slice;
   }
 
   this.buffer_unmap = (h, b, d, l, c) => {
