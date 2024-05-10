@@ -98,14 +98,14 @@ func SamplerDesc.createExtObj() => js.ExtObj {
 
     d.SetMember_string("label", this.Label)
     
-    d.SetMember_i32("", this.LodMinClamp)
-    d.SetMember_i32("", this.LodMaxClamp)
+    d.SetMember_i32("lodMinClamp", this.LodMinClamp)
+    d.SetMember_i32("lodMaxClamp", this.LodMaxClamp)
 
-    d.SetMember_i32("", this.MaxAnisotropy)
+    d.SetMember_i32("maxAnisotropy", this.MaxAnisotropy)
 
-    d.SetMember_string("", filterSymbols[this.MagFilter])
-    d.SetMember_string("", filterSymbols[this.MinFilter])
-    d.SetMember_string("", filterSymbols[this.MipmapFilter])
+    d.SetMember_string("magFilter", filterSymbols[this.MagFilter])
+    d.SetMember_string("minFilter", filterSymbols[this.MinFilter])
+    d.SetMember_string("mipmapFilter", filterSymbols[this.MipmapFilter])
 
     return d    
 }

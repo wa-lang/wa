@@ -45,17 +45,17 @@ func Contex.Configure(conf: ContexConfig) {
     jsConfigureContex(this.GetHandle(), vo.GetHandle())
 }
 
-#wa:import webgpu get_contex_current_texture
-func jsGetContexCurrentTexture(contex: js.Handle) => js.Handle
-func Contex.GetCurrentTexture() => Texture {
+func Contex.GetCurrentTexture() => *Texture {
     t: Texture
     t.ExtObj = js.WrapExtObj(jsGetContexCurrentTexture(this.GetHandle()))
 
-    return t
+    return &t
 }
+#wa:import webgpu get_contex_current_texture
+func jsGetContexCurrentTexture(contex: js.Handle) => js.Handle
 
-#wa:import webgpu get_preferred_canvas_format
-func jsGetPreferredCanvasFormat() => TextureFormat
 func GetPreferredCanvasFormat() => TextureFormat {
     return jsGetPreferredCanvasFormat()
 }
+#wa:import webgpu get_preferred_canvas_format
+func jsGetPreferredCanvasFormat() => TextureFormat

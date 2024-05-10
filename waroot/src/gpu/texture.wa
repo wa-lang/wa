@@ -361,11 +361,11 @@ func Texture.Label() => string {
 /*
 创建纹理视图
 */
-func Texture.CreateView() => TextureView {
+func Texture.CreateView() => *TextureView {
     v: TextureView
     v.ExtObj = js.WrapExtObj(jsCreateTextureView(this.GetHandle()))
 
-    return v
+    return &v
 }
 #wa:import webgpu create_texture_view
 func jsCreateTextureView(texture: js.Handle) => js.Handle
