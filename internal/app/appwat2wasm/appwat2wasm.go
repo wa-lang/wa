@@ -36,16 +36,19 @@ var CmdWat2wasm = &cli.Command{
 
 		source, err := os.ReadFile(infile)
 		if err != nil {
-			return err
+			fmt.Println(err)
+			os.Exit(1)
 		}
 		wasmBytes, err := wazero.Wat2Wasm(source)
 		if err != nil {
-			return err
+			fmt.Println(err)
+			os.Exit(1)
 		}
 
 		err = os.WriteFile(outfile, wasmBytes, 0666)
 		if err != nil {
-			return err
+			fmt.Println(err)
+			os.Exit(1)
 		}
 
 		return nil

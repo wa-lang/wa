@@ -194,7 +194,7 @@ func (p *moduleParser) beginModuleField(tok tokenType, tokenBytes []byte, _, _ u
 			p.pos = positionFunc
 			return p.funcParser.begin, nil
 		case wasm.ExternTypeTableName:
-			return nil, fmt.Errorf("TODO: %s", tokenBytes)
+			panic("TODO(chai): table")
 		case wasm.ExternTypeMemoryName:
 			if p.module.SectionElementCount(wasm.SectionIDMemory) > 0 {
 				return nil, moreThanOneInvalidInSection(wasm.SectionIDMemory)
@@ -202,7 +202,7 @@ func (p *moduleParser) beginModuleField(tok tokenType, tokenBytes []byte, _, _ u
 			p.pos = positionMemory
 			return p.memoryParser.begin, nil
 		case wasm.ExternTypeGlobalName:
-			return nil, fmt.Errorf("TODO: %s", tokenBytes)
+			panic("TODO(chai): global")
 		case "export":
 			p.pos = positionExport
 			return p.parseExportName, nil
@@ -213,9 +213,9 @@ func (p *moduleParser) beginModuleField(tok tokenType, tokenBytes []byte, _, _ u
 			p.pos = positionStart
 			return p.parseStart, nil
 		case "elem":
-			return nil, errors.New("TODO: elem")
+			panic("TODO(chai): elem")
 		case "data":
-			return nil, errors.New("TODO: data")
+			panic("TODO(chai): data")
 		default:
 			return nil, unexpectedFieldName(tokenBytes)
 		}
