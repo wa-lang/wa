@@ -280,6 +280,10 @@ func (p *moduleParser) parseGlobal_init(tok tokenType, tokenBytes []byte, line, 
 					if tok != tokenRParen {
 						return nil, unexpectedToken(tok, tokenBytes)
 					}
+
+					p.currentModuleField = nil
+					p.module.GlobalSection = append(p.module.GlobalSection, g)
+
 					p.pos = positionInitial
 					return p.parseModule, nil
 				}, nil
