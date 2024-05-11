@@ -189,9 +189,21 @@ func (p *funcParser) beginInstruction(tokenBytes []byte) (next tokenParser, err 
 		return p.encodeMemArgOp(wasm.OpcodeI64Load, alignment64)
 	case wasm.OpcodeI64StoreName: // See https://www.w3.org/TR/2019/REC-wasm-core-1-20191205/#memory-instructions%E2%91%A8
 		return p.encodeMemArgOp(wasm.OpcodeI64Store, alignment64)
+
 	case wasm.OpcodeLocalGetName: // See https://www.w3.org/TR/2019/REC-wasm-core-1-20191205/#variable-instructions%E2%91%A0
 		opCode = wasm.OpcodeLocalGet
 		next = p.parseLocalIndex
+
+	case wasm.OpcodeGlobalGetName:
+		opCode = wasm.OpcodeGlobalGet
+		next = p.parseGlobalIndex
+	case wasm.OpcodeGlobalSetName:
+		opCode = wasm.OpcodeGlobalSet
+		next = p.parseGlobalIndex
+	case wasm.OpcodeLocalSetName:
+		opCode = wasm.OpcodeLocalSet
+		next = p.parseLocalIndex
+
 	case wasm.OpcodeMemoryGrowName: // See https://www.w3.org/TR/2019/REC-wasm-core-1-20191205/#memory-instructions%E2%91%A6
 		p.currentBody = append(p.currentBody, wasm.OpcodeMemoryGrow, 0x00) // reserved arg0
 		return p.beginFieldOrInstruction, nil
@@ -361,6 +373,29 @@ func (p *funcParser) parseFuncIndex(tok tokenType, tokenBytes []byte, line, col 
 		p.currentBody = append(p.currentBody, leb128.EncodeUint32(idx)...)
 	}
 	return p.beginFieldOrInstruction, nil
+}
+
+// TODO: port this to the indexNamespace
+func (p *funcParser) parseGlobalIndex(tok tokenType, tokenBytes []byte, _, _ uint32) (tokenParser, error) {
+	switch tok {
+	case tokenUN: // Ex. 1
+		i, overflow := decodeUint32(tokenBytes)
+		if overflow {
+			return nil, fmt.Errorf("index outside range of uint32: %s", tokenBytes)
+		}
+		p.currentBody = append(p.currentBody, leb128.EncodeUint32(i)...)
+
+		// TODO: it is possible this is out of range in the index. Local out-of-range is caught in Store.Initialize, but
+		// we can provide a better area since we can access the line and col info. However, since the local index starts
+		// with parameters and they are on the type, and that type may be defined after the function, it can get hairy.
+		// To handle this neatly means doing a quick check to see if the type is already present and immediately
+		// validate. If the type isn't yet present, we can save off the context for late validation, noting that we
+		// should probably save off the instruction count or at least the current opcode to help with the error message.
+		return p.beginFieldOrInstruction, nil
+	case tokenID: // Ex $y
+		return nil, errors.New("TODO: index variables are not yet supported")
+	}
+	return nil, unexpectedToken(tok, tokenBytes)
 }
 
 // TODO: port this to the indexNamespace
