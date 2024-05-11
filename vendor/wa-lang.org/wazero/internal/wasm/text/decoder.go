@@ -26,6 +26,11 @@ const (
 	positionExportFunc
 	positionExportMemory
 	positionStart
+
+	positionGlobal
+	positionTable
+	positionData
+	positionElem
 )
 
 type callbackPosition byte
@@ -193,16 +198,12 @@ func (p *moduleParser) beginModuleField(tok tokenType, tokenBytes []byte, _, _ u
 		case wasm.ExternTypeFuncName:
 			p.pos = positionFunc
 			return p.funcParser.begin, nil
-		case wasm.ExternTypeTableName:
-			panic("TODO(chai): table")
 		case wasm.ExternTypeMemoryName:
 			if p.module.SectionElementCount(wasm.SectionIDMemory) > 0 {
 				return nil, moreThanOneInvalidInSection(wasm.SectionIDMemory)
 			}
 			p.pos = positionMemory
 			return p.memoryParser.begin, nil
-		case wasm.ExternTypeGlobalName:
-			panic("TODO(chai): global")
 		case "export":
 			p.pos = positionExport
 			return p.parseExportName, nil
@@ -212,10 +213,18 @@ func (p *moduleParser) beginModuleField(tok tokenType, tokenBytes []byte, _, _ u
 			}
 			p.pos = positionStart
 			return p.parseStart, nil
-		case "elem":
-			panic("TODO(chai): elem")
+		case wasm.ExternTypeGlobalName:
+			p.pos = positionGlobal
+			return p.parseGlobal, nil
+		case wasm.ExternTypeTableName:
+			p.pos = positionTable
+			return p.parseTable, nil
 		case "data":
-			panic("TODO(chai): data")
+			p.pos = positionData
+			return p.parseData, nil
+		case "elem":
+			p.pos = positionElem
+			return p.parseElem, nil
 		default:
 			return nil, unexpectedFieldName(tokenBytes)
 		}
@@ -528,8 +537,10 @@ func (p *moduleParser) beginExportDesc(tok tokenType, tokenBytes []byte, _, _ ui
 	case wasm.ExternTypeMemoryName:
 		p.pos = positionExportMemory
 		return p.parseExportDesc, nil
-	case wasm.ExternTypeTableName, wasm.ExternTypeGlobalName:
-		return nil, fmt.Errorf("TODO: %s", tokenBytes)
+	case wasm.ExternTypeTableName:
+		return nil, fmt.Errorf("TODO: moduleParser.beginExportDesc: ExternTypeTableName: %s", tokenBytes)
+	case wasm.ExternTypeGlobalName:
+		return nil, fmt.Errorf("TODO: moduleParser.beginExportDesc: ExternTypeGlobalName: %s", tokenBytes)
 	default:
 		return nil, unexpectedFieldName(tokenBytes)
 	}
