@@ -3,6 +3,9 @@ package text
 import (
 	"errors"
 	"fmt"
+	"runtime"
+	"strings"
+	"unsafe"
 
 	"wa-lang.org/wazero/api"
 	"wa-lang.org/wazero/internal/wasm"
@@ -13,6 +16,18 @@ func newTypeParser(enabledFeatures api.CoreFeatures, typeNamespace *indexNamespa
 }
 
 type onType func(ft *wasm.FunctionType) tokenParser
+
+func (fn onType) shortName() string {
+	pp := (**uintptr)(unsafe.Pointer(&fn))
+	if *pp == nil {
+		return "<nil>"
+	}
+	fullName := runtime.FuncForPC(**pp).Name()
+	if idx := strings.LastIndex(fullName, "/"); idx >= 0 {
+		return fullName[idx+1:]
+	}
+	return fullName
+}
 
 // typeParser parses a wasm.Type from and dispatches to onType.
 //

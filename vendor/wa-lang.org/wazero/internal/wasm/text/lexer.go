@@ -3,7 +3,10 @@ package text
 import (
 	"errors"
 	"fmt"
+	"runtime"
+	"strings"
 	"unicode/utf8"
+	"unsafe"
 )
 
 // tokenParser parses the current token and returns a parser for the next.
@@ -18,6 +21,18 @@ import (
 // Note: Do not include the line and column number in a parsing error as that will be attached automatically. Line and
 // column are here for storing the source location, such as for use in runtime stack traces.
 type tokenParser func(tok tokenType, tokenBytes []byte, line, col uint32) (tokenParser, error)
+
+func (fn tokenParser) shortName() string {
+	pp := (**uintptr)(unsafe.Pointer(&fn))
+	if *pp == nil {
+		return "<nil>"
+	}
+	fullName := runtime.FuncForPC(**pp).Name()
+	if idx := strings.LastIndex(fullName, "/"); idx >= 0 {
+		return fullName[idx+1:]
+	}
+	return fullName
+}
 
 // TODO: since S-expressions are common and also multiple nesting levels in fields, ex. (import (func)), think about a
 // special result of popCount which pops one or two RParens. This could inline skipping parens, which have no error

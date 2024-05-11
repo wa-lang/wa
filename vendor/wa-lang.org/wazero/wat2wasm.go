@@ -7,7 +7,7 @@ import (
 )
 
 func Wat2Wasm(source []byte) ([]byte, error) {
-	if m, err := text.DecodeModule(source, api.CoreFeaturesV1); err != nil {
+	if m, err := text.DecodeModule(source, api.CoreFeaturesV2); err != nil {
 		return nil, err
 	} else {
 		return binary.EncodeModule(m), nil
