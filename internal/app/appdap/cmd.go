@@ -1,9 +1,8 @@
 package appdap
 
 import (
-	"fmt"
-
 	"wa-lang.org/wa/internal/3rdparty/cli"
+	"wa-lang.org/wa/internal/dap"
 )
 
 var CmdDap = &cli.Command{
@@ -28,7 +27,7 @@ var CmdDap = &cli.Command{
 		},
 	},
 	Action: func(c *cli.Context) error {
-		fmt.Println("TODO: DAP")
+		dap.Run()
 		return nil
 	},
 }
