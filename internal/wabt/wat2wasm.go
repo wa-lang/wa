@@ -11,6 +11,7 @@ import (
 	"runtime"
 	"sync"
 
+	"wa-lang.org/wa/internal/3rdparty/wabt-go"
 	"wa-lang.org/wa/internal/config"
 	"wa-lang.org/wa/internal/logger"
 )
@@ -50,6 +51,30 @@ func init() {
 		wat2wasmPath = "/usr/local/bin/" + Wat2WasmName
 		if exeExists(wat2wasmPath) {
 			return
+		}
+	}
+
+	// 5. wat2wasm 安装到 exe 所在目录 ?
+	{
+		switch runtime.GOOS {
+		case "darwin":
+			wat2wasmPath = filepath.Join(curExeDir(), Wat2WasmName)
+			if err := os.WriteFile(wat2wasmPath, []byte(wabt.Wat2wasm_macos), 0777); err != nil {
+				logger.Tracef(&config.EnableTrace_app, "install wat2wasm failed: %+v", err)
+				return
+			}
+		case "linux":
+			wat2wasmPath = filepath.Join(curExeDir(), Wat2WasmName)
+			if err := os.WriteFile(wat2wasmPath, []byte(wabt.Wat2wasm_ubuntu), 0777); err != nil {
+				logger.Tracef(&config.EnableTrace_app, "install wat2wasm failed: %+v", err)
+				return
+			}
+		case "windows":
+			wat2wasmPath = filepath.Join(curExeDir(), Wat2WasmName)
+			if err := os.WriteFile(wat2wasmPath, []byte(wabt.Wat2wasm_windows), 0777); err != nil {
+				logger.Tracef(&config.EnableTrace_app, "install wat2wasm failed: %+v", err)
+				return
+			}
 		}
 	}
 }

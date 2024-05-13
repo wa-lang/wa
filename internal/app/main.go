@@ -15,6 +15,7 @@ import (
 	"wa-lang.org/wa/internal/app/appast"
 	"wa-lang.org/wa/internal/app/appbuild"
 	"wa-lang.org/wa/internal/app/appcir"
+	"wa-lang.org/wa/internal/app/appdap"
 	"wa-lang.org/wa/internal/app/appdev"
 	"wa-lang.org/wa/internal/app/appdoc"
 	"wa-lang.org/wa/internal/app/appfmt"
@@ -27,6 +28,7 @@ import (
 	"wa-lang.org/wa/internal/app/apprun"
 	"wa-lang.org/wa/internal/app/appssa"
 	"wa-lang.org/wa/internal/app/apptest"
+	"wa-lang.org/wa/internal/app/appwat2wasm"
 	"wa-lang.org/wa/internal/app/appyacc"
 	"wa-lang.org/wa/internal/config"
 	"wa-lang.org/wa/internal/version"
@@ -95,12 +97,14 @@ func Main() {
 		applex.CmdLex,
 		appast.CmdAst,
 		appssa.CmdSsa,
+		appwat2wasm.CmdWat2wasm,
 
 		// 待完善的子命令(隐藏)
 		appgo2wa.CmdGo2wa,
 		appcir.CmdCir,
 		appdoc.CmdDoc,
 		applsp.CmdLsp,
+		appdap.CmdDap,
 	}
 
 	cliApp.Run(os.Args)

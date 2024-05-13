@@ -777,6 +777,7 @@ type GlobalType struct {
 }
 
 type Global struct {
+	Name string
 	Type *GlobalType
 	Init *ConstantExpression
 }
