@@ -308,11 +308,11 @@ webgpu: new function () {
       .then(() => {
         buffer._waMappedRange = new Uint8Array(buffer.getMappedRange());
         let slice = app._mem_util.set_bytes(buffer._waMappedRange);
-        app._wasm_inst.exports["gpu.onBufferMapDone"](tid, 1, ...slice);
+        app._wasm_inst.exports["gpu.onBufferMapped"](tid, 1, ...slice);
         app._mem_util.block_release(slice[0]);
       })
       .catch((err) => {
-        app._wasm_inst.exports["gpu.onBufferMapDone"](tid, 0, 0, 0, 0, 0);
+        app._wasm_inst.exports["gpu.onBufferMapped"](tid, 0, 0, 0, 0, 0);
         console.log(err)
       })
   }
