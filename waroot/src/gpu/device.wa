@@ -20,11 +20,11 @@ func CreateDevice() => Device {
     return d
 }
 
-#wa:import webgpu device_ready
-func jsDeviceReady(device: js.Handle) => i32
 func Device.Ready() => bool {
     return jsDeviceReady(this.GetHandle()) != 0
 }
+#wa:import webgpu device_ready
+func jsDeviceReady(device: js.Handle) => i32
 
 #wa:import webgpu create_shader_module
 func jsCreateShaderModule(device: js.Handle, code: string) => js.Handle

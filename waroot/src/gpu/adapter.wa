@@ -1,0 +1,108 @@
+
+import "js"
+
+/*
+不能使用该类型直接声明值，需通过 RequestAdapter 创建
+*/
+type Adapter struct {
+    js.ExtObj
+}
+
+type AdapterRequestor interface {
+    OnRequested(adapter: *Adapter)
+}
+
+type AdatperRequestHandler func(adapter: *Adapter)
+
+/*
+获取 Adapter，异步
+*/
+#wa:generic RequestAdapterWithHandler
+func RequestAdapter(requestor: AdapterRequestor) {
+    if requestor == nil  {
+        panic("AdapterRequestor can't be nil.")
+    }
+    tid := asyncTasks.Alloc(nil, requestor)
+    jsGpuRequestAdapter(tid, 0)
+}
+#wa:import webgpu gpu_request_adapter
+func jsGpuRequestAdapter(tid: int, option: js.Handle)
+
+func RequestAdapterWithHandler(handler: AdatperRequestHandler) {
+    if handler == nil {
+        panic("AdatperRequestHandler can't be nil.")
+    }
+    tid := asyncTasks.Alloc(nil, handler)
+    jsGpuRequestAdapter(tid, 0)
+}
+
+type DeviceRequestor interface {
+    OnRequested(device: *Device)
+}
+
+type DeviceRequestHandler func(device: *Device)
+
+/*
+获取 Device，异步
+*/
+func Adapter.RequestDevice(requestor: DeviceRequestor) {
+    if requestor == nil {
+        panic("DeviceRequestor can't be nil.")
+    }
+    tid := asyncTasks.Alloc(nil, requestor)
+    jsAdapterRequestDevice(tid, this.GetHandle(), 0)
+}
+#wa:import webgpu adapter_request_device
+func jsAdapterRequestDevice(tid: int, adapter: js.Handle, desc: js.Handle)
+
+func Adapter.RequestDeviceWithHandler(handler: DeviceRequestHandler) {
+    if handler == nil {
+        panic("DeviceRequestHandler can't be nil.")
+    }
+    tid := asyncTasks.Alloc(nil, handler)
+    jsAdapterRequestDevice(tid, this.GetHandle(), 0)
+}
+
+#wa:export gpu.onAdapterRequested
+func onAdapterRequested(tid: int, ah: js.Handle) {
+    _, handler := asyncTasks.Get(tid)
+    adapter: *Adapter
+    if ah != 0 {
+        v: Adapter
+        v.ExtObj = js.WrapExtObj(ah)
+        adapter = &v
+    }
+
+    switch h := handler.(type) {
+    case AdapterRequestor:
+        h.OnRequested(adapter)
+
+    case AdatperRequestHandler:
+        h(adapter)
+    }
+
+    asyncTasks.Free(tid)
+}
+
+#wa:export gpu.onDeviceRequested
+func onDeviceRequested(tid: int, dh: js.Handle) {
+    _, handler := asyncTasks.Get(tid)
+    device: *Device
+    if dh != 0 {
+        v: Device
+        v.ExtObj = js.WrapExtObj(dh)
+        device = &v
+    }
+
+    switch h := handler.(type) {
+    case DeviceRequestor:
+        h.OnRequested(device)
+
+    case DeviceRequestHandler:
+        h(device)
+    }
+
+    asyncTasks.Free(tid)
+}
+
+global asyncTasks: js.TaskQueue
