@@ -1,5 +1,7 @@
 // 版权 @2024 凹语言 作者。保留所有权利。
 
+import "js"
+
 type BlobFetcher interface {
     OnDone(resource: string, ok: bool, status: u32, data: []byte)
 }
@@ -15,7 +17,7 @@ func FetchBlob(resource: string, fetcher: BlobFetcher) {
     if fetcher == nil {
         panic("Fetcher can't be nil.")
     }
-    tid := allocBlobTask(resource, fetcher)
+    tid := fetchTasks.Alloc(resource, fetcher)
     jsFetchBlob(tid, resource)
 }
 
@@ -23,50 +25,21 @@ func FetchBlobWithHandler(resource: string, handler: BlobHandler) {
     if handler == nil {
         panic("Handler can't be nil.")
     }
-    tid := allocBlobTask(resource, handler)
+    tid := fetchTasks.Alloc(resource, handler)
     jsFetchBlob(tid, resource)
 }
 
 #wa:export net.onFetchBlobDone
 func onFetchBlobDone(tid: int, ok: bool, status: u32, data: []byte) {
-    switch h := blobTasks[tid].fetcher.(type) {
+    source, handler := fetchTasks.Get(tid)
+    switch h := handler.(type) {
     case BlobFetcher:
-        h.OnDone(blobTasks[tid].resource, ok, status, data)
+        h.OnDone(source.(string), ok, status, data)
 
     case BlobHandler:
-        h(blobTasks[tid].resource, ok, status, data)
+        h(source.(string), ok, status, data)
     }
-    freeBlobTask(tid)
+    fetchTasks.Free(tid)
 }
 
-type fetchTask struct {
-    resource: string
-    fetcher: interface{}
-}
-
-global blobTasks: []fetchTask
-global freeBlobTaskIDs: []int
-
-func allocBlobTask(resource: string, fetcher: interface{}) => (taskid: int) {
-    if len(freeBlobTaskIDs) > 0 {
-        i := len(freeBlobTaskIDs) - 1
-        taskid = freeBlobTaskIDs[i]
-        freeBlobTaskIDs = freeBlobTaskIDs[:i]
-    } else {
-        taskid = len(blobTasks)
-        blobTasks = append(blobTasks, fetchTask{})
-    }
-    blobTasks[taskid].resource = resource
-    blobTasks[taskid].fetcher = fetcher
-    return
-}
-
-func freeBlobTask(taskid: int) {
-    if blobTasks[taskid].fetcher == nil {
-        panic("Task has been freed.")
-    }
-    blobTasks[taskid].resource = ""
-    blobTasks[taskid].fetcher = nil
-
-    freeBlobTaskIDs = append(freeBlobTaskIDs, taskid)
-}
+global fetchTasks: js.TaskQueue

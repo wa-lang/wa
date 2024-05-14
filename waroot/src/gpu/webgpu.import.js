@@ -98,6 +98,43 @@ webgpu: new function () {
     ["astc-12x12-unorm-srgb", 94],
   ])
 
+  this.gpu_request_adapter = (tid, option_h) => {
+    if (!navigator.gpu) {
+      throw Error('WebGPU not supported.');
+    }
+
+    let option = {};
+    if (option_h) {
+      option = app._extobj.get_obj(option_h);
+    }
+
+    navigator.gpu.requestAdapter(option).then((adapter) => {
+      if (!adapter) {
+        alert('Couldn\'t request WebGPU adapter.');
+        throw Error('Couldn\'t request WebGPU adapter.');
+      }
+      let ah = app._extobj.insert_obj(adapter);
+      app._wasm_inst.exports["gpu.onAdapterRequested"](tid, ah);
+    })
+    .catch((err) => {
+      app._wasm_inst.exports["gpu.onAdapterRequested"](tid, 0);
+      console.log(err)
+    })
+  }
+
+  this.adapter_request_device = (tid, ah, desc_h) => {
+    const adapter = app._extobj.get_obj(ah);
+    let desc = {};
+    if (desc_h) {
+      desc = app._extobj.get_obj(desc_h);
+    }
+
+    adapter.requestDevice(desc).then((device) => {
+      const device_h = app._extobj.insert_obj(device);
+      app._wasm_inst.exports["gpu.onDeviceRequested"](tid, device_h);
+    })
+  }
+
   this.get_gpu_contex = (canvas_h) => {
     const canvas = app._extobj.get_obj(canvas_h);
     const ctx = canvas.getContext('webgpu');
@@ -308,11 +345,11 @@ webgpu: new function () {
       .then(() => {
         buffer._waMappedRange = new Uint8Array(buffer.getMappedRange());
         let slice = app._mem_util.set_bytes(buffer._waMappedRange);
-        app._wasm_inst.exports["gpu.onBufferMapDone"](tid, 1, ...slice);
+        app._wasm_inst.exports["gpu.onBufferMapped"](tid, 1, ...slice);
         app._mem_util.block_release(slice[0]);
       })
       .catch((err) => {
-        app._wasm_inst.exports["gpu.onBufferMapDone"](tid, 0, 0, 0, 0, 0);
+        app._wasm_inst.exports["gpu.onBufferMapped"](tid, 0, 0, 0, 0, 0);
         console.log(err)
       })
   }

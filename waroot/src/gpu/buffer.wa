@@ -98,7 +98,21 @@ type BufferMapHandler func(b: *Buffer, ok: bool)
 /*
 异步映射
 */
+#wa:generic MapAysncWithHandler
 func Buffer.MapAsync(mode: MapMode, mapper: BufferMapper) {
+    if mapper == nil {
+        panic("BufferMapper can't be nil.")
+    }
+    tid := asyncTasks.Alloc(this, mapper)
+    jsBufferMapAsync(tid, this.GetHandle(), mode)
+}
+
+func Buffer.MapAysncWithHandler(mode: MapMode, handler: BufferMapHandler) {
+    if handler == nil {
+        panic("BufferMapHandler can't be nil.")
+    }
+    tid := asyncTasks.Alloc(this, handler)
+    jsBufferMapAsync(tid, this.GetHandle(), mode)
 }
 #wa:import webgpu buffer_map_async
 func jsBufferMapAsync(tid: int, buffer: js.Handle, mode: MapMode)
@@ -154,50 +168,21 @@ func jsBufferUnmap(bh: js.Handle, mappedRange: []byte)
 #wa:import webgpu buffer_get_mapped_range
 func jsBufferGetMappedRange(buffer: js.Handle) => []byte
 
-#wa:export gpu.onBufferMapDone
-func onBufferMapDone(tid: int, ok: bool, data: []byte) {
-    task := &mapTasks[tid]
-    task.buffer.mapped = ok
-    task.buffer.mappedRange = data
+#wa:export gpu.onBufferMapped
+func onBufferMapped(tid: int, ok: bool, data: []byte) {
+    source, handler := asyncTasks.Get(tid)
 
-    switch h := task.mapper.(type) {
+    buffer := source.(*Buffer)
+    buffer.mapped = ok
+    buffer.mappedRange = data
+
+    switch h := handler.(type) {
     case BufferMapper:
-        h.OnMapped(task.buffer, ok)
+        h.OnMapped(buffer, ok)
 
     case BufferMapHandler:
-        h(task.buffer, ok)
+        h(buffer, ok)
     }
-    freeMapTask(tid)
-}
 
-type mapTask struct {
-    buffer: *Buffer
-    mapper: interface{}
-}
-
-global mapTasks: []mapTask
-global freeMapTaskIDs: []int
-
-func allocMapTask(buffer: *Buffer, mapper: interface{}) => (taskid: int) {
-    if len(freeMapTaskIDs) > 0 {
-        i := len(freeMapTaskIDs) - 1
-        taskid = freeMapTaskIDs[i]
-        freeMapTaskIDs = freeMapTaskIDs[:i]
-    } else {
-        taskid = len(mapTasks)
-        mapTasks = append(mapTasks, mapTask{})
-    }
-    mapTasks[taskid].buffer = buffer
-    mapTasks[taskid].mapper = mapper
-    return
-}
-
-func freeMapTask(taskid: int) {
-    if mapTasks[taskid].mapper == nil {
-        panic("Task has been freed.")
-    }
-    mapTasks[taskid].buffer = nil
-    mapTasks[taskid].mapper = nil
-
-    freeMapTaskIDs = append(freeMapTaskIDs, taskid)
+    asyncTasks.Free(tid)
 }
