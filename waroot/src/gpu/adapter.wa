@@ -45,6 +45,7 @@ type DeviceRequestHandler func(device: *Device)
 /*
 获取 Device，异步
 */
+#wa:generic RequestDeviceWithHandler
 func Adapter.RequestDevice(requestor: DeviceRequestor) {
     if requestor == nil {
         panic("DeviceRequestor can't be nil.")

@@ -14,7 +14,7 @@ global alphaModeSymbols = [...]string{
 }
 
 type ContexConfig struct {
-    Device: Device
+    Device: *Device
     Format: TextureFormat
     AlphaMode: AlphaMode
 }
