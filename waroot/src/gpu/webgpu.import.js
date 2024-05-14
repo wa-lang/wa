@@ -98,6 +98,10 @@ webgpu: new function () {
     ["astc-12x12-unorm-srgb", 94],
   ])
 
+  this.gpu_get_preferred_canvas_format = () => {
+    return this._texture_format_map.get(navigator.gpu.getPreferredCanvasFormat());
+  }
+
   this.gpu_request_adapter = (tid, option_h) => {
     if (!navigator.gpu) {
       throw Error('WebGPU not supported.');
@@ -315,10 +319,6 @@ webgpu: new function () {
   this.create_texture_view = (texture) => {
     let view = app._extobj.get_obj(texture).createView();
     return app._extobj.insert_obj(view);
-  }
-
-  this.get_preferred_canvas_format = () => {
-    return this._texture_format_map.get(navigator.gpu.getPreferredCanvasFormat());
   }
 
   this.buffer_map_state = (b_h) => {

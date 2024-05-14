@@ -53,9 +53,3 @@ func Contex.GetCurrentTexture() => *Texture {
 }
 #wa:import webgpu get_contex_current_texture
 func jsGetContexCurrentTexture(contex: js.Handle) => js.Handle
-
-func GetPreferredCanvasFormat() => TextureFormat {
-    return jsGetPreferredCanvasFormat()
-}
-#wa:import webgpu get_preferred_canvas_format
-func jsGetPreferredCanvasFormat() => TextureFormat
