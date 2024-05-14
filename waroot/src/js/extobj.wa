@@ -56,6 +56,10 @@ func ExtObj.GetHandle() => Handle {
     return *this._handle
 }
 
+func ExtObj.Valid() => bool {
+    return this._handle != nil
+}
+
 /*
 向一个 ExtObj 对象中添加 bool 型的成员，jsSetMember_bool的封装
 */
