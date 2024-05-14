@@ -33,14 +33,14 @@ type RenderPassDesc_ColorAttchment struct {
     ClearValue: Color
     LoadOp: LoadOp
     StoreOp: StoreOp
-    View: *TextureView
+    View: TextureView
 }
 
 type RenderPassDesc_DepthStencilAttachment struct {
     ClearValue: f32
     LoadOp: LoadOp
     StoreOp: StoreOp
-    View: *TextureView
+    View: TextureView
 }
 
 /*

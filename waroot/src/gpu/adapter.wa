@@ -18,7 +18,7 @@ func Adapter.RequestDevice(requestor: DeviceRequestor) {
     jsAdapterRequestDevice(tid, this.GetHandle(), 0)
 }
 type DeviceRequestor interface {
-    OnRequested(device: *Device)
+    OnRequested(device: Device)
 }
 
 func Adapter.RequestDevice_Handler(handler: DeviceRequestHandler) {
@@ -28,7 +28,7 @@ func Adapter.RequestDevice_Handler(handler: DeviceRequestHandler) {
     tid := asyncTasks.Alloc(nil, handler)
     jsAdapterRequestDevice(tid, this.GetHandle(), 0)
 }
-type DeviceRequestHandler func(device: *Device)
+type DeviceRequestHandler func(device: Device)
 
 #wa:import webgpu adapter_request_device
 func jsAdapterRequestDevice(tid: int, adapter: js.Handle, desc: js.Handle)
@@ -36,12 +36,8 @@ func jsAdapterRequestDevice(tid: int, adapter: js.Handle, desc: js.Handle)
 #wa:export gpu.onDeviceRequested
 func onDeviceRequested(tid: int, dh: js.Handle) {
     _, handler := asyncTasks.Get(tid)
-    device: *Device
-    if dh != 0 {
-        v: Device
-        v.ExtObj = js.WrapExtObj(dh)
-        device = &v
-    }
+    device: Device
+    device.ExtObj = js.WrapExtObj(dh)
 
     switch h := handler.(type) {
     case DeviceRequestor:

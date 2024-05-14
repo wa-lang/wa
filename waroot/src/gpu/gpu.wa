@@ -20,7 +20,7 @@ func RequestAdapter(requestor: AdapterRequestor) {
     jsGpuRequestAdapter(tid, 0)
 }
 type AdapterRequestor interface {
-    OnRequested(adapter: *Adapter)
+    OnRequested(adapter: Adapter)
 }
 
 func RequestAdapter_Handler(handler: AdatperRequestHandler) {
@@ -30,7 +30,7 @@ func RequestAdapter_Handler(handler: AdatperRequestHandler) {
     tid := asyncTasks.Alloc(nil, handler)
     jsGpuRequestAdapter(tid, 0)
 }
-type AdatperRequestHandler func(adapter: *Adapter)
+type AdatperRequestHandler func(adapter: Adapter)
 
 #wa:import webgpu gpu_request_adapter
 func jsGpuRequestAdapter(tid: int, option: js.Handle)
@@ -38,12 +38,8 @@ func jsGpuRequestAdapter(tid: int, option: js.Handle)
 #wa:export gpu.onAdapterRequested
 func onAdapterRequested(tid: int, ah: js.Handle) {
     _, handler := asyncTasks.Get(tid)
-    adapter: *Adapter
-    if ah != 0 {
-        v: Adapter
-        v.ExtObj = js.WrapExtObj(ah)
-        adapter = &v
-    }
+    adapter: Adapter
+    adapter.ExtObj = js.WrapExtObj(ah)
 
     switch h := handler.(type) {
     case AdapterRequestor:
