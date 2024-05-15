@@ -1,6 +1,7 @@
 
 import "js"
 
+//---------------------------------------------------------------
 // 不能使用该类型直接声明值，需通过 Device.CreateBindGroup() 创建
 type BindGroup struct {
     js.ExtObj
@@ -12,7 +13,7 @@ type BindGroup struct {
 type BindGroupDesc struct {
     Entries: []BindGroupEntry
     Label: string
-    Layout: *BindGroupLayout
+    Layout: BindGroupLayout
 }
 
 func BindGroupDesc.createExtObj() => js.ExtObj {
