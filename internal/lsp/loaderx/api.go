@@ -6,8 +6,8 @@ package loaderx
 
 import (
 	"context"
-	"fmt"
 	"io"
+	"io/fs"
 	"log"
 
 	"wa-lang.org/wa/internal/lsp/protocol"
@@ -36,14 +36,30 @@ func NewUniverse(cfg Config) *Universe {
 	return p
 }
 
+func (p *Universe) VFS() fs.FS {
+	return &openedFS{p}
+}
+
 // 配置发生变化
 func (p *Universe) DidChangeConfiguration(ctx context.Context, params *protocol.DidChangeConfigurationParams) error {
-	return fmt.Errorf("TODO")
+	p.logger.Println("Universe.DidChangeConfiguration:", params.Settings)
+	return nil
 }
 
 // 监视的文件列表发生变化
 func (p *Universe) DidChangeWatchedFiles(ctx context.Context, params *protocol.DidChangeWatchedFilesParams) error {
-	return fmt.Errorf("TODO")
+	for _, x := range params.Changes {
+		switch x.Type {
+		case protocol.Created:
+			p.logger.Println("Universe.DidChangeWatchedFiles:", x.URI, "Created")
+		case protocol.Changed:
+			p.logger.Println("Universe.DidChangeWatchedFiles:", x.URI, "Changed")
+		case protocol.Deleted:
+			p.logger.Println("Universe.DidChangeWatchedFiles:", x.URI, "Deleted")
+		}
+	}
+
+	return nil
 }
 
 // 工作区发生变化
@@ -60,45 +76,51 @@ func (p *Universe) DidChangeWorkspaceFolders(ctx context.Context, params *protoc
 // 创建文件
 func (p *Universe) DidCreateFiles(ctx context.Context, params *protocol.CreateFilesParams) error {
 	for _, f := range params.Files {
-		p.Files[protocol.DocumentURI(f.URI)] = &File{
-			Version: 0,
-			FileUri: protocol.DocumentURI(f.URI),
-			PkgPath: "",
-			Data:    []byte{},
-		}
+		p.logger.Println("Universe.DidCreateFiles:", f.URI)
 	}
-	return fmt.Errorf("TODO")
+	return nil
 }
 
 // 删除文件
 func (p *Universe) DidDeleteFiles(ctx context.Context, params *protocol.DeleteFilesParams) error {
 	for _, f := range params.Files {
+		p.logger.Println("Universe.DidDeleteFiles:", f.URI)
 		delete(p.Files, protocol.DocumentURI(f.URI))
 	}
-	return fmt.Errorf("TODO")
+	return nil
 }
 
 // 重新命名文件
 func (p *Universe) DidRenameFiles(ctx context.Context, params *protocol.RenameFilesParams) error {
-	return fmt.Errorf("TODO")
+	for _, f := range params.Files {
+		p.logger.Println("Universe.DidRenameFiles:", f.OldURI, "=>", f.NewURI)
+		delete(p.Files, protocol.DocumentURI(f.OldURI))
+		delete(p.Files, protocol.DocumentURI(f.NewURI))
+	}
+	return nil
 }
 
 func (p *Universe) DidOpen(ctx context.Context, params *protocol.DidOpenTextDocumentParams) error {
+	p.logger.Println("Universe.DidOpen:", params.TextDocument.URI)
 	p.Files[params.TextDocument.URI] = &File{
 		Version: 0,
 		FileUri: params.TextDocument.URI,
 		PkgPath: "",
 		Data:    []byte(params.TextDocument.Text),
 	}
-	return fmt.Errorf("TODO")
+	return nil
 }
 
-func (s *Universe) DidSave(ctx context.Context, params *protocol.DidSaveTextDocumentParams) error {
-	return fmt.Errorf("TODO")
+func (p *Universe) DidSave(ctx context.Context, params *protocol.DidSaveTextDocumentParams) error {
+	p.logger.Println("Universe.DidSave:", params.TextDocument.URI)
+	delete(p.Files, protocol.DocumentURI(params.TextDocument.URI))
+	return nil
 }
 
-func (s *Universe) DidClose(ctx context.Context, params *protocol.DidCloseTextDocumentParams) error {
-	return fmt.Errorf("TODO")
+func (p *Universe) DidClose(ctx context.Context, params *protocol.DidCloseTextDocumentParams) error {
+	p.logger.Println("Universe.DidClose:", params.TextDocument.URI)
+	delete(p.Files, protocol.DocumentURI(params.TextDocument.URI))
+	return nil
 }
 
 func (p *Universe) DidChange(ctx context.Context, params *protocol.DidChangeTextDocumentParams) error {
@@ -107,5 +129,5 @@ func (p *Universe) DidChange(ctx context.Context, params *protocol.DidChangeText
 		return err
 	}
 	p.Files[params.TextDocument.URI].Data = text
-	return fmt.Errorf("TODO")
+	return nil
 }
