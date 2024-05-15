@@ -1,77 +1,87 @@
 
 import "js"
 
-/*
-不能使用该类型直接声明值，需通过 Device.CreateBindGroup() 创建
-*/
+//---------------------------------------------------------------
+// 不能使用该类型直接声明值，需通过 Device.CreateBindGroup() 创建
 type BindGroup struct {
     js.ExtObj
 }
 
-/*
-不能使用该类型直接声明值，NewBindGroupDesc() 创建
-*/
+//---------------------------------------------------------------
+
+// BindGroup 描述符，用于创建 BindGroup
 type BindGroupDesc struct {
-    js.ExtObj
+    Entries: []BindGroupEntry
+    Label: string
+    Layout: BindGroupLayout
 }
 
-func NewBindGroupDesc() => BindGroupDesc {
-    d: BindGroupDesc
-    d.ExtObj = js.NewExtObj()
+func BindGroupDesc.createExtObj() => js.ExtObj {
+    d := js.NewExtObj()
+    va := js.NewExtArray()
+    for _, e := range this.Entries {
+        va.Append_obj(e.ExtObj)
+    }
+    d.SetMember_obj("entries", va.ExtObj)
+
+    d.SetMember_string("label", this.Label)
+
+    d.SetMember_obj("layout", this.Layout.ExtObj)
     return d
 }
 
-func BindGroupDesc.SetLayout(layout: BindGroupLayout) {
-    this.SetMember_obj("layout", layout.ExtObj)
-}
+//---------------------------------------------------------------
 
-func BindGroupDesc.SetEntries(entries: []BindGroupEntry) {
-    va := js.NewExtArray()
-    for _, e := range entries {
-        va.Append_obj(e.ExtObj)
-    }
-    this.SetMember_obj("entries", va.ExtObj)
-}
-
-
-/*
-不能使用该类型直接声明值，需通过其它函数创建
-*/
-type BindGroupLayout struct {
-    js.ExtObj
-}
-
-/*
-不能使用该类型直接声明值，需通过 NewBindGroupEntry() 创建
-*/
+// 不能使用该类型直接声明值，需通过 NewBindGroupEntry() 创建
 type BindGroupEntry struct {
     js.ExtObj
 }
 
-func NewBindGroupEntry() => BindGroupEntry {
+#wa:generic NewBindGroupEntry_TextureView NewBindGroupEntry_Sampler
+func NewBindGroupEntry(binding: i32, b: BufferBinding) => BindGroupEntry {
     e: BindGroupEntry
     e.ExtObj = js.NewExtObj()
+    e.SetMember_i32("binding", binding)
+    e.SetMember_obj("resource", b.ExtObj)
     return e
 }
 
-func BindGroupEntry.SetBinding(id: i32) {
-    this.SetMember_i32("binding", id)
+func NewBindGroupEntry_TextureView(binding: i32, t: TextureView) => BindGroupEntry {
+    e: BindGroupEntry
+    e.ExtObj = js.NewExtObj()
+    e.SetMember_i32("binding", binding)
+    e.SetMember_obj("resource", t.ExtObj)
+    return e
 }
 
-func BindGroupEntry.SetResource(r: js.ExtObj) {
-    this.SetMember_obj("resource", r)
+func NewBindGroupEntry_Sampler(binding: i32, s: Sampler) => BindGroupEntry {
+    e: BindGroupEntry
+    e.ExtObj = js.NewExtObj()
+    e.SetMember_i32("binding", binding)
+    e.SetMember_obj("resource", s.ExtObj)
+    return e
 }
 
-/*
-不能使用该类型直接声明值，需通过 NewBufferBinding() 创建
-*/
+//---------------------------------------------------------------
+
+// 不能使用该类型直接声明值，需通过 NewBufferBinding() 创建
 type BufferBinding struct {
     js.ExtObj
 }
 
+#wa:generic NewBufferBinding_OffsetSize
 func NewBufferBinding(buffer: *Buffer) => BufferBinding {
     b: BufferBinding
     b.ExtObj = js.NewExtObj()
     b.SetMember_obj("buffer", buffer.ExtObj)
+    return b
+}
+
+func NewBufferBinding_OffsetSize(buffer: *Buffer, offset, size: i32) => BufferBinding {
+    b: BufferBinding
+    b.ExtObj = js.NewExtObj()
+    b.SetMember_obj("buffer", buffer.ExtObj)
+    b.SetMember_i32("offset", offset)
+    b.SetMember_i32("size", size)
     return b
 }

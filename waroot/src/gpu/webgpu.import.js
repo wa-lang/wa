@@ -98,6 +98,10 @@ webgpu: new function () {
     ["astc-12x12-unorm-srgb", 94],
   ])
 
+  this.gpu_get_preferred_canvas_format = () => {
+    return this._texture_format_map.get(navigator.gpu.getPreferredCanvasFormat());
+  }
+
   this.gpu_request_adapter = (tid, option_h) => {
     if (!navigator.gpu) {
       throw Error('WebGPU not supported.');
@@ -152,39 +156,6 @@ webgpu: new function () {
     return app._extobj.insert_obj(texture)
   }
 
-  this.create_device = () => {
-    if (!navigator.gpu) {
-      alert('WebGPU not supported.');
-      throw Error('WebGPU not supported.');
-    }
-
-    let h = app._extobj.insert_obj({});
-    navigator.gpu.requestAdapter().then((adapter) => {
-      if (!adapter) {
-        alert('Couldn\'t request WebGPU adapter.');
-        throw Error('Couldn\'t request WebGPU adapter.');
-      }
-      return adapter.requestDevice()
-    }).then((device) => {
-      device._wa_ready = true;
-      app._extobj.set_obj(h, device);
-    })
-
-    return h
-  }
-
-  this.device_ready = (device) => {
-    if (device === 0) {
-      return 0
-    }
-    let obj = app._extobj.get_obj(device);
-    if (obj._wa_ready) {
-      return 1
-    } else {
-      return 0
-    }
-  }
-
   this.create_shader_module = (device, shader_code_b, shader_code_d, shader_code_l) => {
     const shader_code = app._mem_util.get_string(shader_code_d, shader_code_l)
     let shader = app._extobj.get_obj(device).createShaderModule({
@@ -230,12 +201,12 @@ webgpu: new function () {
     return app._extobj.insert_obj(pipeline);
   }
 
-  this.create_bind_group = (device, bg_desc) => {
+  this.device_create_bind_group = (device, bg_desc) => {
     let bind_group = app._extobj.get_obj(device).createBindGroup(app._extobj.get_obj(bg_desc));
     return app._extobj.insert_obj(bind_group);
   }
 
-  this.get_bind_group_layout = (pipeline, id) => {
+  this.renderpipeline_get_bind_group_layout = (pipeline, id) => {
     let layout = app._extobj.get_obj(pipeline).getBindGroupLayout(id);
     return app._extobj.insert_obj(layout);
   }
@@ -315,10 +286,6 @@ webgpu: new function () {
   this.create_texture_view = (texture) => {
     let view = app._extobj.get_obj(texture).createView();
     return app._extobj.insert_obj(view);
-  }
-
-  this.get_preferred_canvas_format = () => {
-    return this._texture_format_map.get(navigator.gpu.getPreferredCanvasFormat());
   }
 
   this.buffer_map_state = (b_h) => {

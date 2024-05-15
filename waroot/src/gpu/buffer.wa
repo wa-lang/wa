@@ -121,7 +121,7 @@ func jsBufferMapAsync(tid: int, buffer: js.Handle, mode: MapMode)
 /*
 获取已映射的 Buffer 的数据块
 */
-#wa:generic GetMappedRangeOffset GetMappedRangeOffsetSize
+#wa:generic GetMappedRange_Offset GetMappedRange_OffsetSize
 func Buffer.GetMappedRange() => []byte {
     if !this.mapped {
         panic("Not mapped.")
@@ -129,7 +129,7 @@ func Buffer.GetMappedRange() => []byte {
     return this.mappedRange
 }
 
-func Buffer.GetMappedRangeOffset(offset: int) => []byte {
+func Buffer.GetMappedRange_Offset(offset: int) => []byte {
     if !this.mapped {
         panic("Not mapped.")
     }
@@ -141,7 +141,7 @@ func Buffer.GetMappedRangeOffset(offset: int) => []byte {
     return this.mappedRange[offset:]
 }
 
-func Buffer.GetMappedRangeOffsetSize(offset, size: int) => []byte {
+func Buffer.GetMappedRange_OffsetSize(offset, size: int) => []byte {
     if !this.mapped {
         panic("Not mapped.")
     }
