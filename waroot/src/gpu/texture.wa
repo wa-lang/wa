@@ -246,7 +246,7 @@ func DefaultTextureDesc() => TextureDesc {
         MipLevelCount: 1,
         SampleCount: 1,
         Height: 1,
-        Depth: 1,      
+        Depth: 1,
     }
 }
 

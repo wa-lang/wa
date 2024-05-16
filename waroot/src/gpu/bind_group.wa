@@ -7,6 +7,13 @@ type BindGroup struct {
     js.ExtObj
 }
 
+// 返回 BindGroup 标签
+func BindGroup.Label() => string {
+    return jsBindGroupGetLabel(this.GetHandle())
+}
+#wa:import webgpu bindgroup_get_label
+func jsBindGroupGetLabel(bg: js.Handle) => string
+
 //---------------------------------------------------------------
 
 // BindGroup 描述符，用于创建 BindGroup

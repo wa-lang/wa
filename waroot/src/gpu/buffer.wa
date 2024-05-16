@@ -1,6 +1,8 @@
 
 import "js"
 
+//---------------------------------------------------------------
+
 type BufferUsage u32
 
 const (
@@ -16,6 +18,8 @@ const (
     BufferUsage_QUERY_RESOLVE:  BufferUsage = 512
 )
 
+//---------------------------------------------------------------
+
 type MapState i32
 
 const (
@@ -24,11 +28,15 @@ const (
     MapState_mapped
 )
 
+//---------------------------------------------------------------
+
 type MapMode i32
 const (
     MapMode_READ: MapMode = 1
     MapMode_WRITE: MapMode = 2
 )
+
+//---------------------------------------------------------------
 
 type BufferDesc struct {
     Label:            string
@@ -37,9 +45,9 @@ type BufferDesc struct {
     Usage:            BufferUsage
 }
 
-/*
-不能使用该类型直接声明值，需通过 Device.CreateBuffer() 创建
-*/
+//---------------------------------------------------------------
+
+// 不能使用该类型直接声明值，需通过 Device.CreateBuffer() 创建
 type Buffer struct {
     js.ExtObj
     _device: js.ExtObj
@@ -49,39 +57,29 @@ type Buffer struct {
     mappedRange: []byte
 }
 
-/*
-向Buffer中写入数据块
-*/
+// 向Buffer中写入数据块
 func Buffer.Write(offset: i32, data: []byte) {
     jsWriteBuffer(this._device.GetHandle(), this.GetHandle(), offset, data)
 }
 #wa:import webgpu write_buffer
 func jsWriteBuffer(device, buffer: js.Handle, offset: i32, data: []byte)
 
-/*
-返回 Buffer 的标签
-*/
+// 返回 Buffer 的标签
 func Buffer.Label() => string {
     return this.desc.Label
 }
 
-/*
-返回 Buffer 的大小（以字节为单位）
-*/
+// 返回 Buffer 的大小（以字节为单位）
 func Buffer.Size() => int {
     return this.desc.Size
 }
 
-/*
-返回 Buffer 的用途
-*/
+// 返回 Buffer 的用途
 func Buffer.Usage() => BufferUsage {
     return this.desc.Usage
 }
 
-/*
-返回 Buffer 的映射状态
-*/
+// 返回 Buffer 的映射状态
 func Buffer.MapState() => MapState {
     return jsBufferMapState(this.GetHandle())
 }
@@ -89,16 +87,8 @@ func Buffer.MapState() => MapState {
 func jsBufferMapState(buffer: js.Handle) => MapState
 
 
-type BufferMapper interface {
-    OnMapped(b: *Buffer, ok: bool)
-}
-
-type BufferMapHandler func(b: *Buffer, ok: bool)
-
-/*
-异步映射
-*/
-#wa:generic MapAysncWithHandler
+// 异步映射
+#wa:generic MapAysnc_Handler
 func Buffer.MapAsync(mode: MapMode, mapper: BufferMapper) {
     if mapper == nil {
         panic("BufferMapper can't be nil.")
@@ -106,21 +96,42 @@ func Buffer.MapAsync(mode: MapMode, mapper: BufferMapper) {
     tid := asyncTasks.Alloc(this, mapper)
     jsBufferMapAsync(tid, this.GetHandle(), mode)
 }
+type BufferMapper interface {
+    OnMapped(b: *Buffer, ok: bool)
+}
 
-func Buffer.MapAysncWithHandler(mode: MapMode, handler: BufferMapHandler) {
+func Buffer.MapAysnc_Handler(mode: MapMode, handler: BufferMapHandler) {
     if handler == nil {
         panic("BufferMapHandler can't be nil.")
     }
     tid := asyncTasks.Alloc(this, handler)
     jsBufferMapAsync(tid, this.GetHandle(), mode)
 }
+type BufferMapHandler func(b: *Buffer, ok: bool)
+
 #wa:import webgpu buffer_map_async
 func jsBufferMapAsync(tid: int, buffer: js.Handle, mode: MapMode)
 
+#wa:export gpu.onBufferMapped
+func onBufferMapped(tid: int, ok: bool, data: []byte) {
+    source, handler := asyncTasks.Get(tid)
 
-/*
-获取已映射的 Buffer 的数据块
-*/
+    buffer := source.(*Buffer)
+    buffer.mapped = ok
+    buffer.mappedRange = data
+
+    switch h := handler.(type) {
+    case BufferMapper:
+        h.OnMapped(buffer, ok)
+
+    case BufferMapHandler:
+        h(buffer, ok)
+    }
+
+    asyncTasks.Free(tid)
+}
+
+// 获取已映射的 Buffer 的数据块
 #wa:generic GetMappedRange_Offset GetMappedRange_OffsetSize
 func Buffer.GetMappedRange() => []byte {
     if !this.mapped {
@@ -153,6 +164,10 @@ func Buffer.GetMappedRange_OffsetSize(offset, size: int) => []byte {
     return this.mappedRange[offset:offset + size]
 }
 
+#wa:import webgpu buffer_get_mapped_range
+func jsBufferGetMappedRange(buffer: js.Handle) => []byte
+
+// 撤销映射
 func Buffer.Unmap() {
     if !this.mapped {
         return
@@ -164,25 +179,3 @@ func Buffer.Unmap() {
 }
 #wa:import webgpu buffer_unmap
 func jsBufferUnmap(bh: js.Handle, mappedRange: []byte)
-
-#wa:import webgpu buffer_get_mapped_range
-func jsBufferGetMappedRange(buffer: js.Handle) => []byte
-
-#wa:export gpu.onBufferMapped
-func onBufferMapped(tid: int, ok: bool, data: []byte) {
-    source, handler := asyncTasks.Get(tid)
-
-    buffer := source.(*Buffer)
-    buffer.mapped = ok
-    buffer.mappedRange = data
-
-    switch h := handler.(type) {
-    case BufferMapper:
-        h.OnMapped(buffer, ok)
-
-    case BufferMapHandler:
-        h(buffer, ok)
-    }
-
-    asyncTasks.Free(tid)
-}
