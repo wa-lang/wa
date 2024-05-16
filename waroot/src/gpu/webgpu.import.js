@@ -98,6 +98,8 @@ webgpu: new function () {
     ["astc-12x12-unorm-srgb", 94],
   ])
 
+  //---------------------------------------------------------------
+
   this.gpu_get_preferred_canvas_format = () => {
     return this._texture_format_map.get(navigator.gpu.getPreferredCanvasFormat());
   }
@@ -126,6 +128,8 @@ webgpu: new function () {
     })
   }
 
+  //---------------------------------------------------------------
+
   this.adapter_request_device = (tid, ah, desc_h) => {
     const adapter = app._extobj.get_obj(ah);
     let desc = {};
@@ -139,22 +143,94 @@ webgpu: new function () {
     })
   }
 
-  this.get_gpu_contex = (canvas_h) => {
-    const canvas = app._extobj.get_obj(canvas_h);
+  //---------------------------------------------------------------
+
+  this.bindgroup_get_label = (bh) => {
+    let bindgroup = app._extobj.get_obj(bh);
+    let str = app._mem_util.set_string(bindgroup.label);
+    return str;
+  }
+
+  //---------------------------------------------------------------
+
+  this.buffer_map_async = (tid, h, mode) => {
+    let buffer = app._extobj.get_obj(h);
+    buffer.mapAsync(mode)
+      .then(() => {
+        buffer._waMappedRange = new Uint8Array(buffer.getMappedRange());
+        let slice = app._mem_util.set_bytes(buffer._waMappedRange);
+        app._wasm_inst.exports["gpu.onBufferMapped"](tid, 1, ...slice);
+        app._mem_util.block_release(slice[0]);
+      })
+      .catch((err) => {
+        app._wasm_inst.exports["gpu.onBufferMapped"](tid, 0, 0, 0, 0, 0);
+        console.log(err)
+      })
+  }
+
+  this.buffer_map_state = (b_h) => {
+    let buffer = app._extobj.get_obj(b_h);
+    let state = buffer.mapState;
+    switch (state) {
+      case 'unmapped':
+        return 0;
+
+      case 'pending':
+        return 1;
+
+      case 'mapped':
+        return 2;
+
+      default:
+        throw new Error(`Unknown mapState: ` + state);
+    }
+  }
+
+  this.buffer_get_mapped_range = (h) => {
+    let buffer = app._extobj.get_obj(h);
+    buffer._waMappedRange = new Uint8Array(buffer.getMappedRange());
+    let slice = app._mem_util.set_bytes(buffer._waMappedRange);
+    return slice;
+  }
+  
+  this.buffer_unmap = (h, b, d, l, c) => {
+    let buffer = app._extobj.get_obj(h);
+    let u8a = app._mem_util.get_bytes(d, l);
+    buffer._waMappedRange.set(u8a);
+    buffer._waMappedRange = null;
+    buffer.unmap();
+  }
+
+  //---------------------------------------------------------------
+
+  this.canvas_get_contex = (h) => {
+    const canvas = app._extobj.get_obj(h);
     const ctx = canvas.getContext('webgpu');
     return app._extobj.insert_obj(ctx);
   }
 
-  this.configure_contex = (contex_h, config_h) => {
+  this.contex_get_canvas = (h) => {
+    const contex = app._extobj.get_obj(h);
+    return app._extobj.insert_obj(contex.canvas);
+  }
+
+  this.contex_configure = (contex_h, config_h) => {
     const contex = app._extobj.get_obj(contex_h);
     const config = app._extobj.get_obj(config_h);
     contex.configure(config);
   }
 
-  this.get_contex_current_texture = (contex) => {
+  this.contex_get_current_texture = (contex) => {
     let texture = app._extobj.get_obj(contex).getCurrentTexture();
     return app._extobj.insert_obj(texture)
   }
+
+  this.contex_unconfigure = (h) => {
+    app._extobj.get_obj(h).contex_unconfigure();
+  }
+  
+  //---------------------------------------------------------------
+  
 
   this.create_shader_module = (device, shader_code_b, shader_code_d, shader_code_l) => {
     const shader_code = app._mem_util.get_string(shader_code_d, shader_code_l)
@@ -288,52 +364,5 @@ webgpu: new function () {
     return app._extobj.insert_obj(view);
   }
 
-  this.buffer_map_state = (b_h) => {
-    let buffer = app._extobj.get_obj(b_h);
-    let state = buffer.mapState;
-    switch (state) {
-      case 'unmapped':
-        return 0;
-
-      case 'pending':
-        return 1;
-
-      case 'mapped':
-        return 2;
-
-      default:
-        throw new Error(`Unknown mapState: ` + state);
-    }
-  }
-
-  this.buffer_map_async = (tid, h, mode) => {
-    let buffer = app._extobj.get_obj(h);
-    buffer.mapAsync(mode)
-      .then(() => {
-        buffer._waMappedRange = new Uint8Array(buffer.getMappedRange());
-        let slice = app._mem_util.set_bytes(buffer._waMappedRange);
-        app._wasm_inst.exports["gpu.onBufferMapped"](tid, 1, ...slice);
-        app._mem_util.block_release(slice[0]);
-      })
-      .catch((err) => {
-        app._wasm_inst.exports["gpu.onBufferMapped"](tid, 0, 0, 0, 0, 0);
-        console.log(err)
-      })
-  }
-
-  this.buffer_get_mapped_range = (h) => {
-    let buffer = app._extobj.get_obj(h);
-    buffer._waMappedRange = new Uint8Array(buffer.getMappedRange());
-    let slice = app._mem_util.set_bytes(buffer._waMappedRange);
-    return slice;
-  }
-
-  this.buffer_unmap = (h, b, d, l, c) => {
-    let buffer = app._extobj.get_obj(h);
-    let u8a = app._mem_util.get_bytes(d, l);
-    buffer._waMappedRange.set(u8a);
-    buffer._waMappedRange = null;
-    buffer.unmap();
-  }
 
 },
