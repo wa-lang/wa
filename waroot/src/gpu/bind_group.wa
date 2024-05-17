@@ -9,10 +9,8 @@ type BindGroup struct {
 
 // 返回 BindGroup 标签
 func BindGroup.Label() => string {
-    return jsBindGroupGetLabel(this.GetHandle())
+    return jsObjGetLabel(this.GetHandle())
 }
-#wa:import webgpu bindgroup_get_label
-func jsBindGroupGetLabel(bg: js.Handle) => string
 
 //---------------------------------------------------------------
 

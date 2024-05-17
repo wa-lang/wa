@@ -100,6 +100,6 @@ func Device.CreateRenderBundleEncoder(desc: RenderBundleEncoderDesc) => PassEnco
 
 #wa:import webgpu submit
 func jsSubmit(device, gpu_command_buffer: js.Handle)
-func Device.Submit(gb: GPUCommandBuffer) {
+func Device.Submit(gb: CommandBuffer) {
     jsSubmit(this.GetHandle(), gb.GetHandle())
 }

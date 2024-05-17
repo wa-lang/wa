@@ -130,6 +130,14 @@ webgpu: new function () {
 
   //---------------------------------------------------------------
 
+  this.obj_get_label = (h) => {
+    let obj = app._extobj.get_obj(h);
+    let str = app._mem_util.set_string(obj.label);
+    return str;
+  }
+
+  //---------------------------------------------------------------
+
   this.adapter_request_device = (tid, ah, desc_h) => {
     const adapter = app._extobj.get_obj(ah);
     let desc = {};
@@ -141,14 +149,6 @@ webgpu: new function () {
       const device_h = app._extobj.insert_obj(device);
       app._wasm_inst.exports["gpu.onDeviceRequested"](tid, device_h);
     })
-  }
-
-  //---------------------------------------------------------------
-
-  this.bindgroup_get_label = (bh) => {
-    let bindgroup = app._extobj.get_obj(bh);
-    let str = app._mem_util.set_string(bindgroup.label);
-    return str;
   }
 
   //---------------------------------------------------------------
@@ -228,7 +228,7 @@ webgpu: new function () {
   this.contex_unconfigure = (h) => {
     app._extobj.get_obj(h).contex_unconfigure();
   }
-  
+
   //---------------------------------------------------------------
   
 

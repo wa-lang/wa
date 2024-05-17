@@ -180,17 +180,9 @@ func CommandEncoder.BeginRenderPass(desc: RenderPassDesc) => PassEncoder {
 
 #wa:import webgpu finish_command_encoder
 func jsFinishCommandEncoder(command_encoder: js.Handle) => js.Handle
-func CommandEncoder.Finish() => GPUCommandBuffer {
-    gb: GPUCommandBuffer
+func CommandEncoder.Finish() => CommandBuffer {
+    gb: CommandBuffer
     gb.ExtObj = js.WrapExtObj(jsFinishCommandEncoder(this.GetHandle()))
 
     return gb
-}
-
-/*
-不能使用该类型直接声明值，需通过 CommandEncoder.Finish() 等创建
-该对象需每帧重建
-*/
-type GPUCommandBuffer struct {
-    js.ExtObj
 }
