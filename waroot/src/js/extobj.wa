@@ -45,6 +45,13 @@ func NewExtObj() => ExtObj {
     return WrapExtObj(jsNewObj())        
 }
 
+func GetObjHandle(obj: ExtObj) => Handle {
+    if obj._handle == nil {
+        return Handle(0)
+    }
+    return *obj._handle
+}
+
 /*
 获取 ExtObj 的对象句柄
 */

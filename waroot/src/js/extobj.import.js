@@ -57,8 +57,10 @@ extobj: new function() {
     this._obj_buf[h][name] = value;
   }
   this.set_member_obj = (h, member_name_b, member_name_d, member_name_l, value) => {
-    let member_name = app._mem_util.get_string(member_name_d, member_name_l);
-    this._obj_buf[h][member_name] = this._obj_buf[value];
+    if (value > 0) {
+      let member_name = app._mem_util.get_string(member_name_d, member_name_l);
+      this._obj_buf[h][member_name] = this._obj_buf[value];
+    }    
   }
   this.new_array = () => {
     let arr = [];
@@ -76,7 +78,9 @@ extobj: new function() {
     this._obj_buf[h].push(value);
   }
   this.append_obj = (h, value) => {
-    this._obj_buf[h].push(this._obj_buf[value]);
+    if (value > 0) {
+      this._obj_buf[h].push(this._obj_buf[value]);
+    }
   }
   app._extobj = this;
 },
