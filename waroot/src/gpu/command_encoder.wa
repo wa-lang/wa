@@ -1,0 +1,117 @@
+
+import "js"
+
+//---------------------------------------------------------------
+
+// 不能使用该类型直接声明值，需通过 Device.CreateCommandEncoder() 创建, 该对象需每帧重建
+type CommandEncoder struct {
+    js.ExtObj
+}
+
+// 开始录入 RenderPass，返回 RenderPassEncoder
+func CommandEncoder.BeginRenderPass(desc: RenderPassDesc) => PassEncoder {
+    do := desc.createExtObj()
+    rp: PassEncoder
+    rp.ExtObj = js.WrapExtObj(jsCommandEncoderBeginRenderPass(this.GetHandle(), do.GetHandle()))
+
+    return rp
+}
+#wa:import webgpu commandencoder_begin_render_pass
+func jsCommandEncoderBeginRenderPass(command_encoder, render_pass_desc: js.Handle) => js.Handle
+
+// 结束录入，返回 CommandBuffer
+func CommandEncoder.Finish() => CommandBuffer {
+    gb: CommandBuffer
+    gb.ExtObj = js.WrapExtObj(jsCommandEncoderFinish(this.GetHandle()))
+
+    return gb
+}
+#wa:import webgpu commandencoder_finish
+func jsCommandEncoderFinish(command_encoder: js.Handle) => js.Handle
+
+//---------------------------------------------------------------
+
+type ColorAttchmentDesc struct {
+    ClearValue: Color
+    LoadOp: LoadOp
+    StoreOp: StoreOp
+    ResolveTarget: TextureView
+    View: TextureView
+}
+
+type DepthStencilAttachmentDesc struct {
+    DepthClearValue: f32
+    DepthLoadOp: LoadOp
+    DepthStoreOp: StoreOp
+    
+    StencilClearValue: f32
+    StencilLoadOp: LoadOp
+    StencilStoreOp: StoreOp
+
+    DepthReadOnly: bool
+    StencilReadOnly: bool
+    View: TextureView
+}
+
+//---------------------------------------------------------------
+
+// RenderPass 描述符，用于创建 RenderPass
+type RenderPassDesc struct {
+    ColorAttachments: []ColorAttchmentDesc
+    DepthStencilAttachment: DepthStencilAttachmentDesc
+    Label: string
+}
+
+func RenderPassDesc.createExtObj() => js.ExtObj {
+    d := js.NewExtObj()
+
+    ca := js.NewExtArray()
+    for _, a := range this.ColorAttachments {
+        vo := js.NewExtObj()
+        {
+            vc := js.NewExtObj()
+            vc.SetMember_f32("r", a.ClearValue.R)
+            vc.SetMember_f32("g", a.ClearValue.G)
+            vc.SetMember_f32("b", a.ClearValue.B)
+            vc.SetMember_f32("a", a.ClearValue.A)
+            vo.SetMember_obj("clearValue", vc)
+        }
+        vo.SetMember_string("loadOp", loadOpSymbols[a.LoadOp])
+        vo.SetMember_string("storeOp", storeOpSymbols[a.StoreOp])
+        vo.SetMember_obj("resolveTarget", a.ResolveTarget.ExtObj)
+        vo.SetMember_obj("view", a.View.ExtObj)
+
+        ca.Append_obj(vo)
+    }
+    d.SetMember_obj("colorAttachments", ca.ExtObj)
+
+    da := js.NewExtObj()
+    {
+        dss := &this.DepthStencilAttachment
+        da.SetMember_f32("depthClearValue", dss.DepthClearValue)
+        if dss.DepthLoadOp != LoadOp_none {
+            da.SetMember_string("depthLoadOp", loadOpSymbols[dss.DepthLoadOp])
+        }
+        if dss.DepthStoreOp != StoreOp_none {
+            da.SetMember_string("depthStoreOp", storeOpSymbols[dss.DepthStoreOp])
+        }
+
+        da.SetMember_f32("stencilClearValue", dss.StencilClearValue)
+        if dss.StencilLoadOp != LoadOp_none {
+            da.SetMember_string("stencilLoadOp", loadOpSymbols[dss.StencilLoadOp])
+        }
+        if dss.StencilStoreOp != StoreOp_none {
+            da.SetMember_string("stencilStoreOp", storeOpSymbols[dss.StencilStoreOp])
+        }        
+
+        da.SetMember_bool("depthReadOnly", dss.DepthReadOnly)
+        da.SetMember_bool("stencilReadOnly", dss.StencilReadOnly)
+
+        da.SetMember_obj("view", dss.View.ExtObj)
+    }
+    d.SetMember_obj("depthStencilAttachment", da)
+
+    d.SetMember_string("label", this.Label)
+
+    return d
+}

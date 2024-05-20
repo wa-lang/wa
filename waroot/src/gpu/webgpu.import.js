@@ -231,6 +231,19 @@ webgpu: new function () {
 
   //---------------------------------------------------------------
   
+  this.commandencoder_begin_render_pass = (command_encoder, render_pass_desc) => {
+    let render_pass = app._extobj.get_obj(command_encoder).beginRenderPass(app._extobj.get_obj(render_pass_desc));
+    return app._extobj.insert_obj(render_pass);
+  }
+
+  this.commandencoder_finish = (command_encoder_h) => {
+    const command_encoder = app._extobj.get_obj(command_encoder_h);
+    const command_buffer = command_encoder.finish();
+    return app._extobj.insert_obj(command_buffer);
+  }
+
+
+  //---------------------------------------------------------------
 
   this.create_shader_module = (device, shader_code_b, shader_code_d, shader_code_l) => {
     const shader_code = app._mem_util.get_string(shader_code_d, shader_code_l)
@@ -301,17 +314,6 @@ webgpu: new function () {
     const device = app._extobj.get_obj(device_h);
     const command_buffer = app._extobj.get_obj(command_buffer_h);
     device.queue.submit([command_buffer]);
-  }
-
-  this.finish_command_encoder = (command_encoder_h) => {
-    const command_encoder = app._extobj.get_obj(command_encoder_h);
-    const command_buffer = command_encoder.finish();
-    return app._extobj.insert_obj(command_buffer);
-  }
-
-  this.begin_render_pass = (command_encoder, render_pass_desc) => {
-    let render_pass = app._extobj.get_obj(command_encoder).beginRenderPass(app._extobj.get_obj(render_pass_desc));
-    return app._extobj.insert_obj(render_pass);
   }
 
   this.set_render_pass_pipeline = (render_pass, pipeline) => {

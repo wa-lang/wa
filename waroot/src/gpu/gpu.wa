@@ -1,6 +1,44 @@
 
 import "js"
 
+//---------------------------------------------------------------
+
+type Color struct {
+    R, G, B, A: f32
+}
+
+//---------------------------------------------------------------
+
+type LoadOp u32
+
+const (
+    LoadOp_none = iota
+    LoadOp_clear
+    LoadOp_load
+)
+
+global loadOpSymbols = [...]string {
+    LoadOp_clear: "clear",
+    LoadOp_load:  "load",
+}
+
+//---------------------------------------------------------------
+
+type StoreOp u32
+
+const (
+    StoreOp_none = iota
+    StoreOp_store
+    StoreOp_discard
+)
+
+global storeOpSymbols = [...]string {
+    StoreOp_store:   "store",
+    StoreOp_discard: "discard",
+}
+
+//---------------------------------------------------------------
+
 // 获取 Canvas 纹理格式
 func GetPreferredCanvasFormat() => TextureFormat {
     return jsGpuGetPreferredCanvasFormat()
