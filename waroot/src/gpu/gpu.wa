@@ -95,4 +95,6 @@ func onAdapterRequested(tid: int, ah: js.Handle) {
 #wa:import webgpu obj_get_label
 func jsObjGetLabel(bg: js.Handle) => string
 
+//---------------------------------------------------------------
+
 global asyncTasks: js.TaskQueue

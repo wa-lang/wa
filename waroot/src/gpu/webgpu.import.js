@@ -231,7 +231,7 @@ webgpu: new function () {
 
   //---------------------------------------------------------------
   
-  this.commandencoder_begin_render_pass = (command_encoder, render_pass_desc) => {
+  this.commandencoder_begin_render = (command_encoder, render_pass_desc) => {
     let render_pass = app._extobj.get_obj(command_encoder).beginRenderPass(app._extobj.get_obj(render_pass_desc));
     return app._extobj.insert_obj(render_pass);
   }

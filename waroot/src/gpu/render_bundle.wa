@@ -1,36 +1,13 @@
 
 import "js"
 
-/*
-不能使用该类型直接声明值，需通过 NewRenderBundleDesc() 创建
-该对象需每帧重建
-*/
-type RenderBundleEncoderDesc struct {
-    js.ExtObj
-}
+//---------------------------------------------------------------
 
-func NewRenderBundleEncoderDesc() => RenderBundleEncoderDesc {
-    rbd: RenderBundleEncoderDesc
-    rbd.ExtObj = js.NewExtObj()
-    return rbd
-}
-
-func RenderBundleEncoderDesc.SetColorFormats(colorFormats: []TextureFormat) {
-    va := js.NewExtArray()
-    for _, v := range colorFormats {
-        va.Append_string(textureFormatSymbols[v])
-    }
-
-    this.SetMember_obj("colorFormats", va.ExtObj)
-}
-
-func RenderBundleEncoderDesc.SetDepthStencilFormat(format: TextureFormat) {
-    this.SetMember_string("depthStencilFormat", textureFormatSymbols[format])
-}
-
-/*
-不能使用该类型直接声明值，需通过 RenderBundleEncoder.Finish() 创建
-*/
+// 不能使用该类型直接声明值，需通过 RenderEncoder.BundleFinish() 创建
 type RenderBundle struct {
     js.ExtObj
+}
+
+func RenderBundle.Label() => string {
+    return jsObjGetLabel(this.GetHandle())
 }
