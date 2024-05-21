@@ -231,7 +231,7 @@ webgpu: new function () {
 
   //---------------------------------------------------------------
   
-  this.commandencoder_begin_render = (command_encoder, render_pass_desc) => {
+  this.commandencoder_begin_render_pass = (command_encoder, render_pass_desc) => {
     let render_pass = app._extobj.get_obj(command_encoder).beginRenderPass(app._extobj.get_obj(render_pass_desc));
     return app._extobj.insert_obj(render_pass);
   }
@@ -316,43 +316,75 @@ webgpu: new function () {
     device.queue.submit([command_buffer]);
   }
 
-  this.set_render_pass_pipeline = (render_pass, pipeline) => {
-    app._extobj.get_obj(render_pass).setPipeline(app._extobj.get_obj(pipeline));
+  //---------------------------------------------------------------
+
+  this.render_encoder_draw = (rh, vertexCount, instanceCount, firstVertex, firstInstance) => {
+    app._extobj.get_obj(rh).draw(vertexCount, instanceCount, firstVertex, firstInstance);
   }
 
-  this.set_render_pass_bind_group = (render_pass, id, bg) => {
-    app._extobj.get_obj(render_pass).setBindGroup(id, app._extobj.get_obj(bg))
+  this.render_encoder_draw_indexed = (rh, indexCount, instanceCount, firstIndex, baseVertex, firstInstance) => {
+    app._extobj.get_obj(rh).drawIndexed(indexCount, instanceCount, firstIndex, baseVertex, firstInstance);
   }
 
-  this.set_render_pass_vertex_buffer = (render_pass, slot, buffer) => {
-    app._extobj.get_obj(render_pass).setVertexBuffer(slot, app._extobj.get_obj(buffer));
+  this.render_encoder_draw_indirect = (rh, bh, offset) => {
+    let encoder = app._extobj.get_obj(rh);
+    let buffer = app._extobj.get_obj(bh);
+    encoder.drawIndirect(buffer, offset);
+  }
+  
+  this.render_encoder_draw_indexed_indirect = (rh, bh, offset) => {
+    let encoder = app._extobj.get_obj(rh);
+    let buffer = app._extobj.get_obj(bh);
+    encoder.drawIndexedIndirect(buffer, offset);
   }
 
-  this.set_render_pass_index_buffer = (render_pass, buffer, typ_b, typ_d, typ_l) => {
-    const typ = app._mem_util.get_string(typ_d, typ_l);
-    app._extobj.get_obj(render_pass).setIndexBuffer(app._extobj.get_obj(buffer), typ);
+  this.render_encoder_end = (rh) => {
+    app._extobj.get_obj(rh).end()
   }
 
-  this.draw_render_pass = (render_pass, vertex_count) => {
-    app._extobj.get_obj(render_pass).draw(vertex_count);
+  this.render_encoder_execute_bundles = (rh, render_bundles) => {
+    app._extobj.get_obj(rh).executeBundles(app._extobj.get_obj(render_bundles));
   }
 
-  this.render_pass_draw_indexed = (render_pass, index_count) => {
-    app._extobj.get_obj(render_pass).drawIndexed(index_count);
-  }
-
-  this.pass_encoder_execute_bundles = (pass_encoder, render_bundles) => {
-    app._extobj.get_obj(pass_encoder).executeBundles(app._extobj.get_obj(render_bundles));
-  }
-
-  this.end_render_pass = (render_pass) => {
-    app._extobj.get_obj(render_pass).end()
-  }
-
-  this.render_bundle_encoder_finish = (encoder) => {
+  this.render_encoder_finish_bundle = (encoder) => {
     let bundle = app._extobj.get_obj(encoder).finish();
     return app._extobj.insert_obj(bundle);
   }
+
+  this.render_encoder_set_bind_group = (rh, id, bg, dynamicOffsets) => {
+    if (dynamicOffsets == 0) {
+      app._extobj.get_obj(rh).setBindGroup(id, app._extobj.get_obj(bg));
+    } else {
+      app._extobj.get_obj(rh).setBindGroup(id, app._extobj.get_obj(bg), app._extobj.get_obj(dynamicOffsets));
+    }
+  }
+
+  this.render_encoder_set_index_buffer = (rh, buffer, format, offset) => {
+    const indexFormat = format ? 'uint32' : 'uint16';
+    app._extobj.get_obj(rh).setIndexBuffer(app._extobj.get_obj(buffer), indexFormat, offset);
+  }
+  this.render_encoder_set_index_buffer_size = (rh, buffer, format, offset, size) => {
+    const indexFormat = format ? 'uint32' : 'uint16';
+    app._extobj.get_obj(rh).setIndexBuffer(app._extobj.get_obj(buffer), indexFormat, offset, size);
+  }
+
+  this.render_encoder_set_pipeline = (rh, ph) => {
+    app._extobj.get_obj(rh).setPipeline(app._extobj.get_obj(ph));
+  }
+
+  this.render_encoder_set_vertex_buffer = (rh, slot, buffer, offset) => {
+    app._extobj.get_obj(rh).setVertexBuffer(slot, app._extobj.get_obj(buffer), offset);
+  }
+  this.render_encoder_set_vertex_buffer_size = (rh, slot, buffer, offset, size) => {
+    app._extobj.get_obj(rh).setVertexBuffer(slot, app._extobj.get_obj(buffer), offset, size);
+  }
+
+  this.render_encoder_set_viewport = (rh, x, y, width, height, minDepth, maxDepth) => {
+    app._extobj.get_obj(rh).setViewport(x, y, width, height, minDepth, maxDepth);
+  }
+  
+
+
 
   this.write_buffer = (device_h, buffer_h, offset, data_b, data_d, data_l, data_c) => {
     const device = app._extobj.get_obj(device_h);

@@ -8,16 +8,16 @@ type CommandEncoder struct {
     js.ExtObj
 }
 
-// 开始录入渲染指令，返回 RenderEncoder
-func CommandEncoder.BeginRender(desc: RenderPassDesc) => RenderEncoder {
+// 开始录入渲染指令，返回 类型为 RenderPassEncoder 的 RenderEncoder
+func CommandEncoder.BeginRenderPass(desc: RenderPassDesc) => RenderEncoder {
     do := desc.createExtObj()
-    re: RenderEncoder
-    re.ExtObj = js.WrapExtObj(jsCommandEncoderBeginRender(this.GetHandle(), do.GetHandle()))
+    re := RenderEncoder{Type: RenderEncoderType_RenderPassEncoder}
+    re.ExtObj = js.WrapExtObj(jsCommandEncoderBeginRenderPass(this.GetHandle(), do.GetHandle()))
 
     return re
 }
-#wa:import webgpu commandencoder_begin_render
-func jsCommandEncoderBeginRender(command_encoder, render_pass_desc: js.Handle) => js.Handle
+#wa:import webgpu commandencoder_begin_render_pass
+func jsCommandEncoderBeginRenderPass(command_encoder, render_pass_desc: js.Handle) => js.Handle
 
 // 结束录入，返回 CommandBuffer
 func CommandEncoder.Finish() => CommandBuffer {

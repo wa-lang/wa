@@ -1,52 +1,102 @@
 
 import "js"
 
-/*
-不能使用该类型直接声明值，需通过 CommandEncoder.BeginRenderPass() 创建
-该对象需每帧重建
-*/
+//---------------------------------------------------------------
+
+type RenderEncoderType u32
+
+const (
+    RenderEncoderType_RenderPassEncoder: RenderEncoderType = iota
+    RenderEncoderType_RenderBundleEncoder
+)
+
+//---------------------------------------------------------------
+
+// 不能使用该类型直接声明值。该对象对应 GPURenderPassEncoder 与 GPURenderBundleEncoder
+// 通过 CommandEncoder.BeginRenderPass() 创建时，返回对象为 RenderPassEncoder
+// 通过 Device.CreateRenderBundleEncoder() 创建时，返回对象为 RenderBundleEncoder
 type RenderEncoder struct {
     js.ExtObj
+    Type: RenderEncoderType
 }
 
-#wa:import webgpu set_render_pass_pipeline
-func jsRenderEncoderSetPipeline(render_pass, pipeline: js.Handle)
-func RenderEncoder.SetPipeline(p: RenderPipeline) {
-    jsRenderEncoderSetPipeline(this.GetHandle(), p.GetHandle())
+// 获取标签
+func RenderEncoder.Label() => string {
+    return jsObjGetLabel(this.GetHandle())
 }
 
-#wa:import webgpu set_render_pass_bind_group
-func jsRenderEncoderSetBindGroup(render_pass: js.Handle, id: i32, bg: js.Handle)
-func RenderEncoder.SetBindGroup(id: i32, bg: BindGroup) {
-    jsRenderEncoderSetBindGroup(this.GetHandle(), id, bg.GetHandle())
+// Todo 仅当对象为 RenderPassEncoder 时可用
+//func RenderEncoder.beginOcclusionQuery()
+
+// Draw
+#wa:generic Draw2 Draw3 Draw4
+func RenderEncoder.Draw(vertexCount: i32) {
+    jsRenderEncoderDraw(this.GetHandle(), vertexCount, 1, 0, 0)
+}
+#wa:import webgpu render_encoder_draw
+func jsRenderEncoderDraw(renderEncoder: js.Handle, vertexCount, instanceCount, firstVertex, firstInstance: i32)
+
+func RenderEncoder.Draw2(vertexCount, instanceCount: i32) {
+    jsRenderEncoderDraw(this.GetHandle(), vertexCount, instanceCount, 0, 0)
 }
 
-#wa:import webgpu set_render_pass_vertex_buffer
-func jsRenderEncoderSetVertexBuffer(render_pass: js.Handle, slot: i32, buffer: js.Handle)
-func RenderEncoder.SetVertexBuffer(slot: i32, vb: *Buffer) {
-    jsRenderEncoderSetVertexBuffer(this.GetHandle(), slot, vb.GetHandle())
+func RenderEncoder.Draw3(vertexCount, instanceCount, firstVertex: i32) {
+    jsRenderEncoderDraw(this.GetHandle(), vertexCount, instanceCount, firstVertex, 0)
 }
 
-#wa:import webgpu set_render_pass_index_buffer
-func jsSetRenderPassIndexBuffer(render_pass, buffer: js.Handle, typ: string)
-func RenderEncoder.SetIndexBuffer(ib: *Buffer, typ: string) {
-    jsSetRenderPassIndexBuffer(this.GetHandle(), ib.GetHandle(), typ)
+func RenderEncoder.Draw4(vertexCount, instanceCount, firstVertex, firstInstance: i32) {
+    jsRenderEncoderDraw(this.GetHandle(), vertexCount, instanceCount, firstVertex, firstInstance)
 }
 
-#wa:import webgpu draw_render_pass
-func jsRenderEncoderDraw(render_pass: js.Handle, vertex_count: i32)
-func RenderEncoder.Draw(vertex_count: i32) {
-    jsRenderEncoderDraw(this.GetHandle(), vertex_count)
+// DrawIndexed
+#wa:generic DrawIndexed2 DrawIndexed3 DrawIndexed4 DrawIndexed5
+func RenderEncoder.DrawIndexed(indexCount: i32) {
+    jsRenderEncoderDrawIndexed(this.GetHandle(), indexCount, 1, 0, 0, 0)
+}
+#wa:import webgpu render_encoder_draw_indexed
+func jsRenderEncoderDrawIndexed(renderEncoder: js.Handle, indexCount, instanceCount, firstIndex, baseVertex, firstInstance: i32)
+
+func RenderEncoder.DrawIndexed2(indexCount, instanceCount: i32) {
+    jsRenderEncoderDrawIndexed(this.GetHandle(), indexCount, instanceCount, 0, 0, 0)    
 }
 
-#wa:import webgpu render_pass_draw_indexed
-func jsRenderEncoderDrawIndexed(render_pass: js.Handle, index_count: i32)
-func RenderEncoder.DrawIndexed(index_count: i32) {
-    jsRenderEncoderDrawIndexed(this.GetHandle(), index_count)
+func RenderEncoder.DrawIndexed3(indexCount, instanceCount, firstIndex: i32) {
+    jsRenderEncoderDrawIndexed(this.GetHandle(), indexCount, instanceCount, firstIndex, 0, 0)    
 }
 
-#wa:import webgpu pass_encoder_execute_bundles
-func jsRenderEncoderExecuteBundles(pass_encoder, render_bundle: js.Handle)
+func RenderEncoder.DrawIndexed4(indexCount, instanceCount, firstIndex, baseVertex: i32) {
+    jsRenderEncoderDrawIndexed(this.GetHandle(), indexCount, instanceCount, firstIndex, baseVertex, 0)    
+}
+
+func RenderEncoder.DrawIndexed5(indexCount, instanceCount, firstIndex, baseVertex, firstInstance: i32) {
+    jsRenderEncoderDrawIndexed(this.GetHandle(), indexCount, instanceCount, firstIndex, baseVertex, firstInstance)    
+}
+
+// DrawIndirect
+func RenderEncoder.DrawIndirect(indirectBuffer: *Buffer, indirectOffset: i32) {
+    jsRenderEncoderDrawIndirect(this.GetHandle(), indirectBuffer.GetHandle(), indirectOffset)
+}
+#wa:import webgpu render_encoder_draw_indirect
+func jsRenderEncoderDrawIndirect(renderEncoder, indirectBuffer: js.Handle, indirectOffset: i32)
+
+// DrawIndexedIndirect
+func RenderEncoder.DrawIndexedIndirect(indirectBuffer: *Buffer, indirectOffset: i32) {
+    jsRenderEncoderDrawIndexedIndirect(this.GetHandle(), indirectBuffer.GetHandle(), indirectOffset)
+}
+#wa:import webgpu render_encoder_draw_indexed_indirect
+func jsRenderEncoderDrawIndexedIndirect(renderEncoder, indirectBuffer: js.Handle, indirectOffset: i32)
+
+// 结束渲染指令录入，仅当对象为 RenderPassEncoder 时可用
+func RenderEncoder.End() {
+    jsRenderEncoderEnd(this.GetHandle())
+}
+#wa:import webgpu render_encoder_end
+func jsRenderEncoderEnd(render_pass: js.Handle)
+
+// Todo 仅当对象为 RenderPassEncoder 时可用
+//func RenderEncoder.EndOcclusionQuery()
+
+// 执行预先录入的 RenderBundle，仅当对象为 RenderPassEncoder 时可用
 func RenderEncoder.ExecuteBundles(bundles: []RenderBundle) {
     va := js.NewExtArray()
     for _, rb := range(bundles) {
@@ -54,45 +104,135 @@ func RenderEncoder.ExecuteBundles(bundles: []RenderBundle) {
     }
     jsRenderEncoderExecuteBundles(this.GetHandle(), va.GetHandle())
 }
+#wa:import webgpu render_encoder_execute_bundles
+func jsRenderEncoderExecuteBundles(renderEncoder, render_bundle: js.Handle)
 
-#wa:import webgpu end_render_pass
-func jsRenderEncoderEnd(render_pass: js.Handle)
-func RenderEncoder.End() {
-    jsRenderEncoderEnd(this.GetHandle())
-}
-
-#wa:import webgpu render_bundle_encoder_finish
-func jsRenderBundleEncoderFinish(encoder: js.Handle) => js.Handle
-func RenderEncoder.BundleFinish() => RenderBundle {
+// 结束渲染指令录入，返回 RenderBundle，仅当对象为 GPURenderBundleEncoder 时可用
+func RenderEncoder.Finish_Bundle() => RenderBundle {
     bundle: RenderBundle
-    bundle.ExtObj = js.WrapExtObj(jsRenderBundleEncoderFinish(this.GetHandle()))
+    bundle.ExtObj = js.WrapExtObj(jsRenderEncoderFinish_Bundle(this.GetHandle()))
 
     return bundle
 }
+#wa:import webgpu render_encoder_finish_bundle
+func jsRenderEncoderFinish_Bundle(encoder: js.Handle) => js.Handle
 
-/*
-不能使用该类型直接声明值，需通过 NewRenderBundleDesc() 创建
-该对象需每帧重建
-*/
-type RenderBundleEncoderDesc struct {
-    js.ExtObj
+// Todo
+//func RenderEncoder.InsertDebugMarker()
+
+// Todo
+//func RenderEncoder.PopDebugGroup()
+
+// Todo
+//func RenderEncoder.PushDebugGroup()
+
+// 设置绑定组
+#wa:generic SetBindGroup_DynamicOffsets
+func RenderEncoder.SetBindGroup(id: i32, bg: BindGroup) {
+    jsRenderEncoderSetBindGroup(this.GetHandle(), id, bg.GetHandle(), 0)
 }
+#wa:import webgpu render_encoder_set_bind_group
+func jsRenderEncoderSetBindGroup(renderEncoder: js.Handle, id: i32, bg: js.Handle, dynamicOffsets: js.Handle)
 
-func NewRenderBundleEncoderDesc() => RenderBundleEncoderDesc {
-    rbd: RenderBundleEncoderDesc
-    rbd.ExtObj = js.NewExtObj()
-    return rbd
-}
-
-func RenderBundleEncoderDesc.SetColorFormats(colorFormats: []TextureFormat) {
+func RenderEncoder.SetBindGroup_DynamicOffsets(id: i32, bg: BindGroup, dynamicOffsets: []i32) {
     va := js.NewExtArray()
-    for _, v := range colorFormats {
+    for _, v := range dynamicOffsets {
+        va.Append_i32(v)        
+    }
+    jsRenderEncoderSetBindGroup(this.GetHandle(), id, bg.GetHandle(), va.GetHandle())
+}
+
+// Todo 仅当对象为 RenderPassEncoder 时可用
+//func RenderEncoder.SetBlendConstant()
+
+// 设置索引缓冲
+#wa:generic SetIndexBuffer_Offset SetIndexBuffer_OffsetSize
+func RenderEncoder.SetIndexBuffer(ib: *Buffer, format: IndexFormat) {
+    jsRenderEncoderSetIndexBuffer(this.GetHandle(), ib.GetHandle(), format, 0)
+}
+#wa:import webgpu render_encoder_set_index_buffer
+func jsRenderEncoderSetIndexBuffer(renderEncoder, buffer: js.Handle, format: IndexFormat, offset: i32)
+
+func RenderEncoder.SetIndexBuffer_Offset(ib: *Buffer, format: IndexFormat, offset: i32) {
+    jsRenderEncoderSetIndexBuffer(this.GetHandle(), ib.GetHandle(), format, offset)
+}
+
+func RenderEncoder.SetIndexBuffer_OffsetSize(ib: *Buffer, format: IndexFormat, offset, size: i32) {
+    jsRenderEncoderSetIndexBuffer_Size(this.GetHandle(), ib.GetHandle(), format, offset, size)
+}
+#wa:import webgpu render_encoder_set_index_buffer_size
+func jsRenderEncoderSetIndexBuffer_Size(renderEncoder, buffer: js.Handle, format: IndexFormat, offset, size: i32)
+
+// 设置管线
+func RenderEncoder.SetPipeline(p: RenderPipeline) {
+    jsRenderEncoderSetPipeline(this.GetHandle(), p.GetHandle())
+}
+#wa:import webgpu render_encoder_set_pipeline
+func jsRenderEncoderSetPipeline(renderEncoder, pipeline: js.Handle)
+
+// Todo 仅当对象为 RenderPassEncoder 时可用
+//func RenderEncoder.SetScissorRect()
+
+// Todo 仅当对象为 RenderPassEncoder 时可用
+//func RenderEncoder.SetStencilReference()()
+
+// 设置顶点缓冲
+#wa:generic SetVertexBuffer_Offset SetVertexBuffer_OffsetSize
+func RenderEncoder.SetVertexBuffer(slot: i32, vb: *Buffer) {
+    jsRenderEncoderSetVertexBuffer(this.GetHandle(), slot, vb.GetHandle(), 0)
+}
+#wa:import webgpu render_encoder_set_vertex_buffer
+func jsRenderEncoderSetVertexBuffer(renderEncoder: js.Handle, slot: i32, buffer: js.Handle, offset: i32)
+
+func RenderEncoder.SetVertexBuffer_Offset(slot: i32, vb: *Buffer, offset: i32) {
+    jsRenderEncoderSetVertexBuffer(this.GetHandle(), slot, vb.GetHandle(), offset)
+}
+
+func RenderEncoder.SetVertexBuffer_OffsetSize(slot: i32, vb: *Buffer, offset, size: i32) {
+    jsRenderEncoderSetVertexBuffer_Size(this.GetHandle(), slot, vb.GetHandle(), offset, size)
+}
+#wa:import webgpu render_encoder_set_vertex_buffer_size
+func jsRenderEncoderSetVertexBuffer_Size(renderEncoder: js.Handle, slot: i32, buffer: js.Handle, offset, size: i32)
+
+// 设置视口，仅当对象为 RenderPassEncoder 时可用
+func RenderEncoder.SetViewport(x, y, width, height: i32, minDepth, maxDepth: f32) {
+    jsRenderEncoderSetViewport(this.GetHandle(), x, y, width, height, minDepth, maxDepth)
+}
+#wa:import webgpu render_encoder_set_viewport
+func jsRenderEncoderSetViewport(renderEncoder: js.Handle, x, y, width, height: i32, minDepth, maxDepth: f32)
+
+//---------------------------------------------------------------
+
+// RenderBundleEncoder 描述符
+type RenderBundleEncoderDesc struct {
+    ColorFormats: []TextureFormat
+    DepthStencilFormat: TextureFormat
+    Label: string
+    SampleCount: i32
+
+    DepthReadOnly: bool
+    StencilReadOnly: bool
+}
+
+func RenderBundleEncoderDesc.createExtObj() => js.ExtObj {
+    d := js.NewExtObj()
+
+    va := js.NewExtArray()
+    for _, v := range this.ColorFormats {
         va.Append_string(textureFormatSymbols[v])
     }
+    d.SetMember_obj("colorFormats", va.ExtObj)
 
-    this.SetMember_obj("colorFormats", va.ExtObj)
-}
+    d.SetMember_string("depthStencilFormat", textureFormatSymbols[this.DepthStencilFormat])
 
-func RenderBundleEncoderDesc.SetDepthStencilFormat(format: TextureFormat) {
-    this.SetMember_string("depthStencilFormat", textureFormatSymbols[format])
+    d.SetMember_string("lable", this.Label)
+
+    if this.SampleCount > 0 {
+        d.SetMember_i32("sampleCount", this.SampleCount)
+    }
+
+    d.SetMember_bool("depthReadOnly", this.DepthReadOnly)
+    d.SetMember_bool("stencilReadOnly", this.StencilReadOnly)
+
+    return d
 }

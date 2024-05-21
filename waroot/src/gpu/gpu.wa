@@ -12,7 +12,7 @@ type Color struct {
 type LoadOp u32
 
 const (
-    LoadOp_none = iota
+    LoadOp_none: LoadOp = iota
     LoadOp_clear
     LoadOp_load
 )
@@ -27,7 +27,7 @@ global loadOpSymbols = [...]string {
 type StoreOp u32
 
 const (
-    StoreOp_none = iota
+    StoreOp_none: StoreOp = iota
     StoreOp_store
     StoreOp_discard
 )
@@ -36,6 +36,14 @@ global storeOpSymbols = [...]string {
     StoreOp_store:   "store",
     StoreOp_discard: "discard",
 }
+
+//---------------------------------------------------------------
+
+type IndexFormat u32
+const (
+    IndexFormat_u16: IndexFormat = iota
+    IndexFormat_u32
+)
 
 //---------------------------------------------------------------
 

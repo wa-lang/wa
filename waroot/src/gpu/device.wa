@@ -91,9 +91,11 @@ func Device.CreateCommandEncoder() => CommandEncoder {
 
 #wa:import webgpu create_render_bundle_encoder
 func jsCreateRenderBundleEncoder(device, desc: js.Handle) => js.Handle
+// 创建类型为 RenderBundleEncoder 的 RenderEncoder
 func Device.CreateRenderBundleEncoder(desc: RenderBundleEncoderDesc) => RenderEncoder {
-    re: RenderEncoder
-    re.ExtObj = js.WrapExtObj(jsCreateRenderBundleEncoder(this.GetHandle(), desc.GetHandle()))
+    re := RenderEncoder{Type: RenderEncoderType_RenderBundleEncoder}
+    d := desc.createExtObj()
+    re.ExtObj = js.WrapExtObj(jsCreateRenderBundleEncoder(this.GetHandle(), d.GetHandle()))
 
     return re
 }
