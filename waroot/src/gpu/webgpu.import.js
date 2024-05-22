@@ -384,6 +384,54 @@ webgpu: new function () {
   }
   
 
+  //---------------------------------------------------------------
+
+  this.texture_get_depth = (th) => {
+    return app._extobj.get_obj(th).depthOrArrayLayers;
+  }
+
+  this.texture_get_dimension = (th) => {
+    switch (app._extobj.get_obj(th).dimension)
+    {
+      case "2d":
+        return 0;
+
+      case "1d":
+        return 1;
+
+      case "3d":
+        return 2;
+    }
+  }
+
+  this.texture_get_format = (th) => {
+    return this._texture_format_map.get(app._extobj.get_obj(th).format);
+  }
+
+  this.texture_get_width_height = (th) => {
+    const t = app._extobj.get_obj(th);
+    return [t.width, t.height];
+  }
+
+  this.texture_get_mip_level_count = (th) => {
+    return app._extobj.get_obj(th).mipLevelCount;
+  }
+
+  this.texture_get_sample_count = (th) => {
+    return app._extobj.get_obj(th).sampleCount;
+  }
+
+  this.texture_get_usage = (th) => {
+    return app._extobj.get_obj(th).usage;
+  }
+
+
+  this.create_texture_view = (th) => {
+    let view = app._extobj.get_obj(th).createView();
+    return app._extobj.insert_obj(view);
+  }
+
+
 
 
   this.write_buffer = (device_h, buffer_h, offset, data_b, data_d, data_l, data_c) => {
@@ -393,10 +441,6 @@ webgpu: new function () {
     device.queue.writeBuffer(buffer, offset, data)
   }
 
-  this.create_texture_view = (texture) => {
-    let view = app._extobj.get_obj(texture).createView();
-    return app._extobj.insert_obj(view);
-  }
 
 
 },

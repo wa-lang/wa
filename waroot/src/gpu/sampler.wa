@@ -69,7 +69,7 @@ func SamplerDesc.createExtObj() => js.ExtObj {
 
 //---------------------------------------------------------------
 
-type AddressMode  u32
+type AddressMode  i32
 
 const (
     AddressMode_clamp_to_edge: AddressMode = iota
@@ -85,7 +85,7 @@ global addressModeSymbols = [...]string{
 
 //---------------------------------------------------------------
 
-type CompareMode u32
+type CompareMode i32
 
 const (
     CompareMode_none: CompareMode = iota

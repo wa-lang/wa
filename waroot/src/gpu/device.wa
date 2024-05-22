@@ -34,7 +34,6 @@ func Device.CreateTexture(desc: TextureDesc) => Texture {
     t: Texture
     d := desc.createExtObj()
     t.ExtObj = js.WrapExtObj(jsCreateTexture(this.GetHandle(), d.GetHandle()))
-    t.desc = desc
     return t
 }
 #wa:import webgpu create_texture
