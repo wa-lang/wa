@@ -63,9 +63,10 @@ func jsCopyExternalImageToTexture(device, src, dest: js.Handle)
 
 #wa:import webgpu create_render_pipeline
 func jsCreateRenderPipeline(device, pl_desc: js.Handle) => js.Handle
-func Device.CreateRenderPipeline(desc: PipelineDesc) => RenderPipeline {
+func Device.CreateRenderPipeline(desc: RenderPipelineDesc) => RenderPipeline {
+    d := desc.createExtObj()
     p: RenderPipeline
-    p.ExtObj = js.WrapExtObj(jsCreateRenderPipeline(this.GetHandle(), desc.GetHandle()))
+    p.ExtObj = js.WrapExtObj(jsCreateRenderPipeline(this.GetHandle(), d.GetHandle()))
 
     return p
 }
