@@ -1,0 +1,14 @@
+// 版权 @2024 凹语言 作者。保留所有权利。
+
+#wa:need-constructor
+type Object :struct {
+	name: string
+}
+
+func NewObject(name: string) => Object {
+	return Object{name: name}
+}
+
+func Object.Name => string {
+	return this.name
+}
