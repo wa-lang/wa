@@ -24,7 +24,7 @@ func NewUniverse(cfg Config) *Universe {
 
 		Fset:  token.NewFileSet(),
 		Files: make(map[protocol.DocumentURI]*File),
-		Pkgs:  make(map[string]*Package),
+		Pkgs:  make(map[PkgpathURI]*Package),
 
 		logger: cfg.logger,
 	}

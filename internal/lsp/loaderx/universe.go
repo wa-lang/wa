@@ -16,6 +16,7 @@ import (
 type (
 	URI         = protocol.URI
 	DocumentURI = protocol.DocumentURI
+	PkgpathURI  string // import "pkgpath"
 )
 
 type Config struct {
@@ -34,9 +35,9 @@ type Universe struct {
 	WaRoot          string // 模块根目录
 	WorkspaceFolder []URI  // 工作区目录
 
-	Fset  *token.FileSet        //
-	Files map[DocumentURI]*File // 工作区文件信息(可能包含被修改的 Std 文件)
-	Pkgs  map[string]*Package   // 全部包信息(包含 Std)
+	Fset  *token.FileSet          //
+	Files map[DocumentURI]*File   // 工作区文件信息(可能包含被修改的 Std 文件)
+	Pkgs  map[PkgpathURI]*Package // 全部包信息(包含 Std)
 
 	logger *log.Logger
 }
