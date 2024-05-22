@@ -2,6 +2,8 @@
 
 FROM --platform=linux/amd64 ubuntu:20.04
 
+LABEL org.opencontainers.image.source="https://github.com/wa-lang/wa"
+
 WORKDIR /root
 
 # go run ./builder
