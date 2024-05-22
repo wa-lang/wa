@@ -60,6 +60,8 @@ func (p *Builder) GenAll() {
 	waRoot_linux_amd64 := p.getWarootPath(linux, amd64)
 	waRoot_windows_amd64 := p.getWarootPath(windows, amd64)
 
+	waRoot_docker := fmt.Sprintf("%s/wa-docker-linux-amd64", p.Output)
+
 	p.genWarootFiles(waRoot_darwin_amd64)
 	p.genWarootFiles(waRoot_darwin_arm64)
 	p.genWarootFiles(waRoot_linux_amd64)
@@ -68,6 +70,9 @@ func (p *Builder) GenAll() {
 	p.genWat2wasmExe()
 	p.genWaExe()
 
+	os.RemoveAll(waRoot_docker)
+	cpDir(waRoot_docker, waRoot_linux_amd64)
+
 	p.zipDir(waRoot_darwin_amd64)
 	p.zipDir(waRoot_darwin_arm64)
 	p.zipDir(waRoot_linux_amd64)
@@ -75,7 +80,7 @@ func (p *Builder) GenAll() {
 
 	os.RemoveAll(waRoot_darwin_amd64)
 	os.RemoveAll(waRoot_darwin_arm64)
-	os.RemoveAll(waRoot_linux_amd64)
+	os.RemoveAll(waRoot_linux_amd64) // keep for build docker image
 	os.RemoveAll(waRoot_windows_amd64)
 
 	p.genChecksums()
@@ -295,4 +300,49 @@ func (p *Builder) zipDir(dir string) {
 
 func (p *Builder) getWarootPath(waos, waarch string) string {
 	return fmt.Sprintf("%s/wa_%s_%s-%s", p.Output, version.Version, waos, waarch)
+}
+
+func cpDir(dst, src string) (total int) {
+	entryList, err := os.ReadDir(src)
+	if err != nil && !os.IsExist(err) {
+		log.Fatal("cpDir: ", err)
+	}
+	for _, entry := range entryList {
+		if entry.IsDir() {
+			cpDir(dst+"/"+entry.Name(), src+"/"+entry.Name())
+		} else {
+			srcFname := filepath.Clean(src + "/" + entry.Name())
+			dstFname := filepath.Clean(dst + "/" + entry.Name())
+
+			cpFile(dstFname, srcFname)
+			total++
+		}
+	}
+	return
+}
+
+func cpFile(dst, src string) {
+	err := os.MkdirAll(filepath.Dir(dst), 0777)
+	if err != nil && !os.IsExist(err) {
+		log.Fatal("cpFile: ", err)
+	}
+	fsrc, err := os.Open(src)
+	if err != nil {
+		log.Fatal("cpFile: ", err)
+	}
+	defer fsrc.Close()
+
+	fi, err := fsrc.Stat()
+	if err != nil {
+		log.Fatal("cpFile: ", err)
+	}
+
+	fdst, err := os.OpenFile(dst, os.O_RDWR|os.O_CREATE|os.O_TRUNC, fi.Mode())
+	if err != nil {
+		log.Fatal("cpFile: ", err)
+	}
+	defer fdst.Close()
+	if _, err = io.Copy(fdst, fsrc); err != nil {
+		log.Fatal("cpFile: ", err)
+	}
 }
