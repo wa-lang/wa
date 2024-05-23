@@ -85,7 +85,7 @@ func jsGpuRequestAdapter(tid: int, option: js.Handle)
 func onAdapterRequested(tid: int, ah: js.Handle) {
     _, handler := asyncTasks.Get(tid)
     adapter: Adapter
-    adapter.ExtObj = js.WrapExtObj(ah)
+    adapter._extref = js.WrapExtObj(ah)
 
     switch h := handler.(type) {
     case AdapterRequestor:

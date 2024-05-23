@@ -8,13 +8,14 @@ type Device struct {
     js.ExtObj
 }
 
-#wa:import webgpu create_shader_module
-func jsCreateShaderModule(device: js.Handle, code: string) => js.Handle
-func Device.CreateShaderModule(code: string) => ShaderModule {
+func Device.CreateShaderModule(desc: ShaderModuleDesc) => ShaderModule {
+    d := desc.createExtObj()
     s: ShaderModule
-    s._extref = js.WrapExtObj(jsCreateShaderModule(this.GetHandle(), code))
+    s._extref = js.WrapExtObj(jsCreateShaderModule(this.GetHandle(), d.GetHandle()))
     return s
 }
+#wa:import webgpu create_shader_module
+func jsCreateShaderModule(device, desc: js.Handle) => js.Handle
 
 func Device.CreateBuffer(desc: BufferDesc) => *Buffer {
     b: Buffer

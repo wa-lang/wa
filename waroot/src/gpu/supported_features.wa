@@ -1,0 +1,9 @@
+
+import "js"
+
+//---------------------------------------------------------------
+
+// 不能使用该类型直接声明值，需通过 Adapter.Features 创建 - Todo
+type SupportedFeatures struct {
+    _extref: js.ExtObj
+}

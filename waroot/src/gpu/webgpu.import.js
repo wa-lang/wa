@@ -138,6 +138,18 @@ webgpu: new function () {
 
   //---------------------------------------------------------------
 
+  this.adapter_get_features = (ah) => {
+    return app._extobj.insert_obj(app._extobj.get_obj(ah).features)
+  }
+
+  this.adapter_get_is_fallback_adapter = (ah) => {
+    return app._extobj.get_obj(ah).isFallbackAdapter ? 1 : 0;
+  }
+
+  this.adapter_get_limits = (ah) => {
+    return app._extobj.insert_obj(app._extobj.get_obj(ah).limits)
+  }
+
   this.adapter_request_device = (tid, ah, desc_h) => {
     const adapter = app._extobj.get_obj(ah);
     let desc = {};
@@ -245,11 +257,8 @@ webgpu: new function () {
 
   //---------------------------------------------------------------
 
-  this.create_shader_module = (device, shader_code_b, shader_code_d, shader_code_l) => {
-    const shader_code = app._mem_util.get_string(shader_code_d, shader_code_l)
-    let shader = app._extobj.get_obj(device).createShaderModule({
-      code: shader_code
-    });
+  this.create_shader_module = (device, desc_h) => {
+    let shader = app._extobj.get_obj(device).createShaderModule(app._extobj.get_obj(desc_h));
     return app._extobj.insert_obj(shader);
   }
 
