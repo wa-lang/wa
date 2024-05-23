@@ -46,3 +46,17 @@ jobs:
         with:
           token: ${{ secrets.WA_DEPLOY }}
           artifacts: "_output/*.zip,_output/*.checksums.txt"
+
+      - name: 'Login to GitHub Container Registry'
+        uses: docker/login-action@v1
+        with:
+          registry: ghcr.io
+          username: ${{github.actor}}
+          password: ${{secrets.WA_DEPLOY_DOCKER}}
+
+      - name: 'Build Wa Image'
+        run: |
+          go run ./builder
+          docker build . --tag ghcr.io/wa-lang/wa:${{ github.ref_name }}
+          docker push ghcr.io/wa-lang/wa:${{ github.ref_name }}
+
