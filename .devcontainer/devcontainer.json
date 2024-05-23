@@ -2,7 +2,7 @@
 // README at: https://github.com/devcontainers/templates/tree/main/src/cpp
 {
 	"name": "wa-lang",
-	"image": "ghcr.io/wa-lang/wa:latest",
+	"image": "mcr.microsoft.com/devcontainers/go:1.17",
 
 	// Features to add to the dev container. More info: https://containers.dev/features.
 	// "features": {},
