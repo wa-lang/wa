@@ -138,6 +138,18 @@ webgpu: new function () {
 
   //---------------------------------------------------------------
 
+  this.adapter_get_features = (ah) => {
+    return app._extobj.insert_obj(app._extobj.get_obj(ah).features)
+  }
+
+  this.adapter_get_is_fallback_adapter = (ah) => {
+    return app._extobj.get_obj(ah).isFallbackAdapter ? 1 : 0;
+  }
+
+  this.adapter_get_limits = (ah) => {
+    return app._extobj.insert_obj(app._extobj.get_obj(ah).limits)
+  }
+
   this.adapter_request_device = (tid, ah, desc_h) => {
     const adapter = app._extobj.get_obj(ah);
     let desc = {};
