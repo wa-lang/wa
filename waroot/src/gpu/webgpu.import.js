@@ -245,11 +245,8 @@ webgpu: new function () {
 
   //---------------------------------------------------------------
 
-  this.create_shader_module = (device, shader_code_b, shader_code_d, shader_code_l) => {
-    const shader_code = app._mem_util.get_string(shader_code_d, shader_code_l)
-    let shader = app._extobj.get_obj(device).createShaderModule({
-      code: shader_code
-    });
+  this.create_shader_module = (device, desc_h) => {
+    let shader = app._extobj.get_obj(device).createShaderModule(app._extobj.get_obj(desc_h));
     return app._extobj.insert_obj(shader);
   }
 
