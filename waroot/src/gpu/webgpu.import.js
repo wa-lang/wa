@@ -257,12 +257,17 @@ webgpu: new function () {
 
   //---------------------------------------------------------------
 
-  this.create_shader_module = (device, desc_h) => {
-    let shader = app._extobj.get_obj(device).createShaderModule(app._extobj.get_obj(desc_h));
-    return app._extobj.insert_obj(shader);
+  this.device_get_queue = (device) => {
+    let queue = app._extobj.get_obj(device).queue;
+    return app._extobj.insert_obj(queue);
   }
 
-  this.create_buffer = (device, label_b, label_d, label_l, mapped, byteLen, usage) => {
+  this.device_create_bind_group = (device, bg_desc) => {
+    let bind_group = app._extobj.get_obj(device).createBindGroup(app._extobj.get_obj(bg_desc));
+    return app._extobj.insert_obj(bind_group);
+  }
+
+  this.device_create_buffer = (device, label_b, label_d, label_l, mapped, byteLen, usage) => {
     let buffer = app._extobj.get_obj(device).createBuffer({
       label: app._mem_util.get_string(label_d, label_l),
       mappedAtCreation: mapped != 0,
@@ -272,57 +277,58 @@ webgpu: new function () {
     return app._extobj.insert_obj(buffer);
   }
 
-  this.create_texture = (device, desc) => {
-    let texture = app._extobj.get_obj(device).createTexture(app._extobj.get_obj(desc));
-    return app._extobj.insert_obj(texture);
+  this.device_create_command_encoder = (device) => {
+    let encoder = app._extobj.get_obj(device).createCommandEncoder();
+    return app._extobj.insert_obj(encoder);
   }
 
-  this.create_sampler = (device, dh) => {
+  this.device_create_render_bundle_encoder = (device, desc) => {
+    let rb_encoder = app._extobj.get_obj(device).createRenderBundleEncoder(app._extobj.get_obj(desc));
+    return app._extobj.insert_obj(rb_encoder);
+  }
+
+  this.device_create_render_pipeline = (device, pl_desc) => {
+    let pipeline = app._extobj.get_obj(device).createRenderPipeline(app._extobj.get_obj(pl_desc));
+    return app._extobj.insert_obj(pipeline);
+  }
+
+  this.device_create_sampler = (device, dh) => {
     const desc = app._extobj.get_obj(dh)
     let sampler = app._extobj.get_obj(device).createSampler(desc);
     return app._extobj.insert_obj(sampler);
   }
 
-  this.copy_external_image_to_texture = (dh, src, dest) => {
-    const device = app._extobj.get_obj(dh);
+  this.device_create_shader_module = (device, desc_h) => {
+    let shader = app._extobj.get_obj(device).createShaderModule(app._extobj.get_obj(desc_h));
+    return app._extobj.insert_obj(shader);
+  }
+
+  this.device_create_texture = (device, desc) => {
+    let texture = app._extobj.get_obj(device).createTexture(app._extobj.get_obj(desc));
+    return app._extobj.insert_obj(texture);
+  }
+
+  //---------------------------------------------------------------
+
+  this.queue_copy_external_image_to_texture = (qh, src, dest) => {
     const imageBitmap = app._extobj.get_obj(src);
     const tex = app._extobj.get_obj(dest);
-    device.queue.copyExternalImageToTexture(
+    app._extobj.get_obj(qh).copyExternalImageToTexture(
       { source: imageBitmap },
       { texture: tex },
       [imageBitmap.width, imageBitmap.height]
     );
   }
 
-  this.create_render_pipeline = (device, pl_desc) => {
-    let pipeline = app._extobj.get_obj(device).createRenderPipeline(app._extobj.get_obj(pl_desc));
-    return app._extobj.insert_obj(pipeline);
+  this.queue_submit = (qh, command_buffer_h) => {
+    app._extobj.get_obj(qh).submit([app._extobj.get_obj(command_buffer_h)]);
   }
 
-  this.device_create_bind_group = (device, bg_desc) => {
-    let bind_group = app._extobj.get_obj(device).createBindGroup(app._extobj.get_obj(bg_desc));
-    return app._extobj.insert_obj(bind_group);
-  }
-
-  this.renderpipeline_get_bind_group_layout = (pipeline, id) => {
-    let layout = app._extobj.get_obj(pipeline).getBindGroupLayout(id);
-    return app._extobj.insert_obj(layout);
-  }
-
-  this.create_command_encoder = (device) => {
-    let encoder = app._extobj.get_obj(device).createCommandEncoder();
-    return app._extobj.insert_obj(encoder);
-  }
-
-  this.create_render_bundle_encoder = (device, desc) => {
-    let rb_encoder = app._extobj.get_obj(device).createRenderBundleEncoder(app._extobj.get_obj(desc));
-    return app._extobj.insert_obj(rb_encoder);
-  }
-
-  this.submit = (device_h, command_buffer_h) => {
-    const device = app._extobj.get_obj(device_h);
-    const command_buffer = app._extobj.get_obj(command_buffer_h);
-    device.queue.submit([command_buffer]);
+  this.queue_write_buffer = (qh, bh, offset, data_b, data_d, data_l, data_c) => {
+    const queue = app._extobj.get_obj(qh);
+    const buffer = app._extobj.get_obj(bh);
+    const data = app._mem_util.mem_array_u8(data_d, data_l);
+    queue.writeBuffer(buffer, offset, data)
   }
 
   //---------------------------------------------------------------
@@ -392,6 +398,12 @@ webgpu: new function () {
     app._extobj.get_obj(rh).setViewport(x, y, width, height, minDepth, maxDepth);
   }
   
+  //---------------------------------------------------------------
+
+  this.renderpipeline_get_bind_group_layout = (pipeline, id) => {
+    let layout = app._extobj.get_obj(pipeline).getBindGroupLayout(id);
+    return app._extobj.insert_obj(layout);
+  }
 
   //---------------------------------------------------------------
 
@@ -434,22 +446,10 @@ webgpu: new function () {
     return app._extobj.get_obj(th).usage;
   }
 
-
-  this.create_texture_view = (th) => {
+  this.texture_create_texture_view = (th) => {
     let view = app._extobj.get_obj(th).createView();
     return app._extobj.insert_obj(view);
   }
-
-
-
-
-  this.write_buffer = (device_h, buffer_h, offset, data_b, data_d, data_l, data_c) => {
-    const device = app._extobj.get_obj(device_h);
-    const buffer = app._extobj.get_obj(buffer_h);
-    const data = app._mem_util.mem_array_u8(data_d, data_l);
-    device.queue.writeBuffer(buffer, offset, data)
-  }
-
 
 
 },

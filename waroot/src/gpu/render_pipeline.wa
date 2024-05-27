@@ -4,6 +4,7 @@ import "js"
 //---------------------------------------------------------------
 
 // 不能使用该类型直接声明值，需通过 Device.CreateRenderPipeline 创建
+#wa:need-constructor
 type RenderPipeline struct {
     js.ExtObj
 }
@@ -16,7 +17,7 @@ func RenderPipeline.Label() => string {
 // 获取绑定组布局
 func RenderPipeline.GetBindGroupLayout(id: int) => BindGroupLayout {
     bl: BindGroupLayout
-    bl.ExtObj = js.WrapExtObj(jsRenderPipelineGetBindGroupLayout(this.GetHandle(), id))
+    bl._extobj = js.WrapExtObj(jsRenderPipelineGetBindGroupLayout(this.GetHandle(), id))
     return bl
 }
 #wa:import webgpu renderpipeline_get_bind_group_layout
@@ -41,8 +42,8 @@ func RenderPipelineDesc.createExtObj() => js.ExtObj {
     d.SetMember_obj("fragment", this.Fragment.createExtObj())
     d.SetMember_string("label", this.Label)
 
-    if this.Layout.Valid() {
-        d.SetMember_obj("layout", this.Layout.ExtObj)
+    if this.Layout._extobj.Valid() {
+        d.SetMember_obj("layout", this.Layout._extobj)
     } else {
         d.SetMember_string("layout", "auto")
     }
@@ -106,7 +107,7 @@ type RenderPipelineDesc_fragment struct {
 
 func RenderPipelineDesc_fragment.createExtObj() => js.ExtObj {
     vo := js.NewExtObj()
-    vo.SetMember_obj("module", this.Module._extref)
+    vo.SetMember_obj("module", this.Module._extobj)
     vo.SetMember_string("entryPoint", this.EntryPoint)
 
     va := js.NewExtArray()
@@ -303,7 +304,7 @@ type RenderPipelineDesc_vertex struct {
 
 func RenderPipelineDesc_vertex.createExtObj() => js.ExtObj {
     vo := js.NewExtObj()
-    vo.SetMember_obj("module", this.Module._extref)
+    vo.SetMember_obj("module", this.Module._extobj)
     vo.SetMember_string("entryPoint", this.EntryPoint)
 
     va := js.NewExtArray()

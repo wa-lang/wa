@@ -69,62 +69,63 @@ func TextureDesc.createExtObj() => js.ExtObj {
 //---------------------------------------------------------------
 
 // 不能使用该类型直接声明值，需通过Device.CreateTexture()创建
+#wa:need-constructor
 type Texture struct {
-    js.ExtObj
+    _extobj: js.ExtObj
 }
 
 // 若纹理维度为三维（既TextureDimension_3d），返回纹理的深度
 // 若纹理维度为二维（既TextureDimension_2d），返回纹理的层数
 // 其余情况返回 1
 func Texture.DepthOrArrayLayers() => i32 {
-    return jsTextureGetDepth(this.GetHandle())
+    return jsTextureGetDepth(this._extobj.GetHandle())
 }
 #wa:import webgpu texture_get_depth
 func jsTextureGetDepth(texture: js.Handle) => i32
 
 // 返回纹理的维度
 func Texture.Dimension() => TextureDimension {
-    return jsTextureGetDimension(this.GetHandle())
+    return jsTextureGetDimension(this._extobj.GetHandle())
 }
 #wa:import webgpu texture_get_dimension
 func jsTextureGetDimension(texture: js.Handle) => TextureDimension
 
 // 返回纹理的数据格式
 func Texture.Format() => TextureFormat {
-    return jsTextureGetFormat(this.GetHandle())
+    return jsTextureGetFormat(this._extobj.GetHandle())
 }
 #wa:import webgpu texture_get_format
 func jsTextureGetFormat(texture: js.Handle) => TextureFormat
 
 // 返回纹理的宽度、高度（以像素为单位）
 func Texture.WidthHeight() => (i32, i32) {
-    return jsTextureGetWidthHeight(this.GetHandle())
+    return jsTextureGetWidthHeight(this._extobj.GetHandle())
 }
 #wa:import webgpu texture_get_width_height
 func jsTextureGetWidthHeight(texture: js.Handle) => (i32, i32)
 
 // 返回纹理的标签
 func Texture.Label() => string {
-    return jsObjGetLabel(this.GetHandle())
+    return jsObjGetLabel(this._extobj.GetHandle())
 }
 
 // 返回纹理的多级子纹理数量
 func Texture.MipLevelCount() => i32 {
-    return jsTextureGetMipLevelCount(this.GetHandle())
+    return jsTextureGetMipLevelCount(this._extobj.GetHandle())
 }
 #wa:import webgpu texture_get_mip_level_count
 func jsTextureGetMipLevelCount(texture: js.Handle) => i32
 
 // 返回纹理的采样个数（1 或 4）
 func Texture.SampleCount() => i32{
-    return jsTextureGetSampleCount(this.GetHandle())
+    return jsTextureGetSampleCount(this._extobj.GetHandle())
 }
 #wa:import webgpu texture_get_sample_count
 func jsTextureGetSampleCount(texture: js.Handle) => i32
 
 // 返回纹理的用途
 func Texture.Usage() => TextureUsage {
-    return jsTextureGetUsage(this.GetHandle())
+    return jsTextureGetUsage(this._extobj.GetHandle())
 }
 #wa:import webgpu texture_get_usage
 func jsTextureGetUsage(texture: js.Handle) => TextureUsage
@@ -132,12 +133,12 @@ func jsTextureGetUsage(texture: js.Handle) => TextureUsage
 // 创建纹理视图
 func Texture.CreateView() => TextureView {
     v: TextureView
-    v.ExtObj = js.WrapExtObj(jsCreateTextureView(this.GetHandle()))
+    v._extobj = js.WrapExtObj(jsTextureCreateTextureView(this._extobj.GetHandle()))
 
     return v
 }
-#wa:import webgpu create_texture_view
-func jsCreateTextureView(texture: js.Handle) => js.Handle
+#wa:import webgpu texture_create_texture_view
+func jsTextureCreateTextureView(texture: js.Handle) => js.Handle
 
 //---------------------------------------------------------------
 
@@ -367,6 +368,7 @@ global textureFormatSymbols = [...]string{
 //---------------------------------------------------------------
 
 // 不能使用该类型直接声明值，需通过 Texture.CreateView() 创建
+#wa:need-constructor
 type TextureView struct {
-    js.ExtObj
+    _extobj: js.ExtObj
 }

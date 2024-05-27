@@ -4,6 +4,7 @@ import "js"
 //---------------------------------------------------------------
 
 // 不能使用该类型直接声明值，需通过其它函数创建
+#wa:need-constructor
 type BindGroupLayout struct {
-    js.ExtObj
+    _extobj: js.ExtObj
 }

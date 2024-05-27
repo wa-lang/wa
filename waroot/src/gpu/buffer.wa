@@ -48,25 +48,18 @@ type BufferDesc struct {
 //---------------------------------------------------------------
 
 // 不能使用该类型直接声明值，需通过 Device.CreateBuffer() 创建
+#wa:need-constructor
 type Buffer struct {
-    js.ExtObj
-    _device: js.ExtObj
+    _extobj: js.ExtObj
     desc: BufferDesc
 
     mapped: bool
     mappedRange: []byte
 }
 
-// 向Buffer中写入数据块
-func Buffer.Write(offset: i32, data: []byte) {
-    jsWriteBuffer(this._device.GetHandle(), this.GetHandle(), offset, data)
-}
-#wa:import webgpu write_buffer
-func jsWriteBuffer(device, buffer: js.Handle, offset: i32, data: []byte)
-
 // 返回 Buffer 的标签
 func Buffer.Label() => string {
-    return this.desc.Label
+    return jsObjGetLabel(this._extobj.GetHandle())
 }
 
 // 返回 Buffer 的大小（以字节为单位）
@@ -81,7 +74,7 @@ func Buffer.Usage() => BufferUsage {
 
 // 返回 Buffer 的映射状态
 func Buffer.MapState() => MapState {
-    return jsBufferMapState(this.GetHandle())
+    return jsBufferMapState(this._extobj.GetHandle())
 }
 #wa:import webgpu buffer_map_state
 func jsBufferMapState(buffer: js.Handle) => MapState
@@ -94,7 +87,7 @@ func Buffer.MapAsync(mode: MapMode, mapper: BufferMapper) {
         panic("BufferMapper can't be nil.")
     }
     tid := asyncTasks.Alloc(this, mapper)
-    jsBufferMapAsync(tid, this.GetHandle(), mode)
+    jsBufferMapAsync(tid, this._extobj.GetHandle(), mode)
 }
 type BufferMapper interface {
     OnMapped(b: *Buffer, ok: bool)
@@ -105,7 +98,7 @@ func Buffer.MapAysnc_Handler(mode: MapMode, handler: BufferMapHandler) {
         panic("BufferMapHandler can't be nil.")
     }
     tid := asyncTasks.Alloc(this, handler)
-    jsBufferMapAsync(tid, this.GetHandle(), mode)
+    jsBufferMapAsync(tid, this._extobj.GetHandle(), mode)
 }
 type BufferMapHandler func(b: *Buffer, ok: bool)
 
@@ -173,7 +166,7 @@ func Buffer.Unmap() {
         return
     }
 
-    jsBufferUnmap(this.GetHandle(), this.mappedRange)
+    jsBufferUnmap(this._extobj.GetHandle(), this.mappedRange)
     this.mapped = false
     this.mappedRange = nil
 }

@@ -2,8 +2,9 @@
 import "js"
 
 // Adapter 对象，不能使用该类型直接声明值，需通过 RequestAdapter 创建
+#wa:need-constructor
 type Adapter struct {
-    _extref: js.ExtObj
+    _extobj: js.ExtObj
 }
 
 //---------------------------------------------------------------
@@ -11,7 +12,7 @@ type Adapter struct {
 // Features
 func Adapter.Features() => SupportedFeatures {
     s: SupportedFeatures
-    s._extref = js.WrapExtObj(jsAdapterGetFeatures(this._extref.GetHandle()))
+    s._extobj = js.WrapExtObj(jsAdapterGetFeatures(this._extobj.GetHandle()))
     return s
 }
 #wa:import webgpu adapter_get_features
@@ -19,7 +20,7 @@ func jsAdapterGetFeatures(adapter: js.Handle) => js.Handle
 
 // IsFallbackAdapter
 func Adapter.IsFallbackAdapter() => bool {
-    return jsAdapterGetIsFallbackAdapter(this._extref.GetHandle())
+    return jsAdapterGetIsFallbackAdapter(this._extobj.GetHandle())
 }
 #wa:import webgpu adapter_get_is_fallback_adapter
 func jsAdapterGetIsFallbackAdapter(adapter: js.Handle) => bool
@@ -27,7 +28,7 @@ func jsAdapterGetIsFallbackAdapter(adapter: js.Handle) => bool
 // Limits
 func Adapter.Limits() => SupportedLimits {
     s: SupportedLimits
-    s._extref = js.WrapExtObj(jsAdapterGetLimits(this._extref.GetHandle()))
+    s._extobj = js.WrapExtObj(jsAdapterGetLimits(this._extobj.GetHandle()))
     return s
 }
 #wa:import webgpu adapter_get_limits
@@ -43,7 +44,7 @@ func Adapter.RequestDevice(requestor: DeviceRequestor) {
         panic("DeviceRequestor can't be nil.")
     }
     tid := asyncTasks.Alloc(nil, requestor)
-    jsAdapterRequestDevice(tid, this._extref.GetHandle(), 0)
+    jsAdapterRequestDevice(tid, this._extobj.GetHandle(), 0)
 }
 type DeviceRequestor interface {
     OnRequested(device: Device)
@@ -54,7 +55,7 @@ func Adapter.RequestDevice_Handler(handler: DeviceRequestHandler) {
         panic("DeviceRequestHandler can't be nil.")
     }
     tid := asyncTasks.Alloc(nil, handler)
-    jsAdapterRequestDevice(tid, this._extref.GetHandle(), 0)
+    jsAdapterRequestDevice(tid, this._extobj.GetHandle(), 0)
 }
 type DeviceRequestHandler func(device: Device)
 
@@ -65,7 +66,7 @@ func jsAdapterRequestDevice(tid: int, adapter: js.Handle, desc: js.Handle)
 func onDeviceRequested(tid: int, dh: js.Handle) {
     _, handler := asyncTasks.Get(tid)
     device: Device
-    device.ExtObj = js.WrapExtObj(dh)
+    device._extobj = js.WrapExtObj(dh)
 
     switch h := handler.(type) {
     case DeviceRequestor:

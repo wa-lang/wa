@@ -4,10 +4,11 @@ import "js"
 //---------------------------------------------------------------
 
 // 不能使用该类型直接声明值，需通过 Device.CreatePipelineLayout() 创建
+#wa:need-constructor
 type PipelineLayout struct {
-    js.ExtObj
+    _extobj: js.ExtObj
 }
 
 func PipelineLayout.Label() => string {
-    return jsObjGetLabel(this.GetHandle())
+    return jsObjGetLabel(this._extobj.GetHandle())
 }

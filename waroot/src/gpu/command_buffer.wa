@@ -4,10 +4,11 @@ import "js"
 //---------------------------------------------------------------
 
 // 不能使用该类型直接声明值，需通过 CommandEncoder.Finish() 等创建，该对象需每帧重建
+#wa:need-constructor
 type CommandBuffer struct {
-    js.ExtObj
+    _extobj: js.ExtObj
 }
 
 func CommandBuffer.Label() => string {
-    return jsObjGetLabel(this.GetHandle())
+    return jsObjGetLabel(this._extobj.GetHandle())
 }

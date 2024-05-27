@@ -4,12 +4,13 @@ import "js"
 //---------------------------------------------------------------
 
 // 不能使用该类型直接声明值，需通过 Device.CreateSampler() 创建
+#wa:need-constructor
 type Sampler struct {
-    js.ExtObj
+    _extobj: js.ExtObj
 }
 
 func Sampler.Label() => string {
-    return jsObjGetLabel(this.GetHandle())
+    return jsObjGetLabel(this._extobj.GetHandle())
 }
 
 //---------------------------------------------------------------

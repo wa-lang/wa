@@ -4,6 +4,7 @@ import "js"
 //---------------------------------------------------------------
 
 // 不能使用该类型直接声明值，需通过 Adapter.RequestAdapterInfo 创建 - Todo
+#wa:need-constructor
 type AdapterInfo struct {
-    _extref: js.ExtObj
+    _extobj: js.ExtObj
 }

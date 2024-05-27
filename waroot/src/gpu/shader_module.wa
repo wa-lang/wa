@@ -23,13 +23,14 @@ func ShaderModuleDesc.createExtObj() => js.ExtObj {
 //---------------------------------------------------------------
 
 // 不能使用该类型直接声明值，需通过 Device.CreateShaderModule() 创建
+#wa:need-constructor
 type ShaderModule struct {
-    _extref: js.ExtObj
+    _extobj: js.ExtObj
 }
 
 // 获取标签
 func ShaderModule.Label() => string {
-    return jsObjGetLabel(this._extref.GetHandle())
+    return jsObjGetLabel(this._extobj.GetHandle())
 }
 
 // Todo 获取编译信息，异步
