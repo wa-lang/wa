@@ -74,14 +74,14 @@ type BufferBinding struct {
 }
 
 #wa:generic NewBufferBinding_OffsetSize
-func NewBufferBinding(buffer: *Buffer) => BufferBinding {
+func NewBufferBinding(buffer: Buffer) => BufferBinding {
     b: BufferBinding
     b._extobj = js.NewExtObj()
     b._extobj.SetMember_obj("buffer", buffer._extobj)
     return b
 }
 
-func NewBufferBinding_OffsetSize(buffer: *Buffer, offset, size: i32) => BufferBinding {
+func NewBufferBinding_OffsetSize(buffer: Buffer, offset, size: i32) => BufferBinding {
     b: BufferBinding
     b._extobj = js.NewExtObj()
     b._extobj.SetMember_obj("buffer", buffer._extobj)

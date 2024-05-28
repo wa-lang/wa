@@ -198,6 +198,14 @@ webgpu: new function () {
     }
   }
 
+  this.buffer_size = (b_h) => {
+    return app._extobj.get_obj(b_h).size;
+  }
+
+  this.buffer_usage = (b_h) => {
+    return app._extobj.get_obj(b_h).usage;
+  }
+
   this.buffer_get_mapped_range = (h) => {
     let buffer = app._extobj.get_obj(h);
     buffer._waMappedRange = new Uint8Array(buffer.getMappedRange());

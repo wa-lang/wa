@@ -41,15 +41,15 @@ func jsDeviceCreateBindGroup(device, bg_desc: js.Handle) => js.Handle
 
 //func Device.CreateBindGroupLayout() - Todo
 
-func Device.CreateBuffer(desc: BufferDesc) => *Buffer {
+func Device.CreateBuffer(desc: BufferDesc) => Buffer {
     b: Buffer
     b._extobj = js.WrapExtObj(jsDeviceCreateBuffer(this._extobj.GetHandle(), desc.Label, desc.MappedAtCreation, desc.Size, desc.Usage))
-    b.desc = desc
+    b.mapContex = new(bufferMapContex)
     if desc.MappedAtCreation {
-        b.mapped = true
-        b.mappedRange = jsBufferGetMappedRange(b._extobj.GetHandle())
+        b.mapContex.mapped = true
+        b.mapContex.mappedRange = jsBufferGetMappedRange(b._extobj.GetHandle())
     }
-    return &b
+    return b
 }
 #wa:import webgpu device_create_buffer
 func jsDeviceCreateBuffer(device: js.Handle, label: string, mappedAtCreation: bool, byteLen: int, usage: BufferUsage) => js.Handle

@@ -47,29 +47,21 @@ type BufferDesc struct {
 
 //---------------------------------------------------------------
 
+type bufferMapContex struct {
+    mapped: bool
+    mappedRange: []byte
+}
+
 // 不能使用该类型直接声明值，需通过 Device.CreateBuffer() 创建
 #wa:need-constructor
 type Buffer struct {
     _extobj: js.ExtObj
-    desc: BufferDesc
-
-    mapped: bool
-    mappedRange: []byte
+    mapContex: *bufferMapContex
 }
 
 // 返回 Buffer 的标签
 func Buffer.Label() => string {
     return jsObjGetLabel(this._extobj.GetHandle())
-}
-
-// 返回 Buffer 的大小（以字节为单位）
-func Buffer.Size() => int {
-    return this.desc.Size
-}
-
-// 返回 Buffer 的用途
-func Buffer.Usage() => BufferUsage {
-    return this.desc.Usage
 }
 
 // 返回 Buffer 的映射状态
@@ -79,6 +71,19 @@ func Buffer.MapState() => MapState {
 #wa:import webgpu buffer_map_state
 func jsBufferMapState(buffer: js.Handle) => MapState
 
+// 返回 Buffer 的大小（以字节为单位）
+func Buffer.Size() => i32 {
+    return jsBufferSize(this._extobj.GetHandle())
+}
+#wa:import webgpu buffer_size
+func jsBufferSize(buffer: js.Handle) => i32
+
+// 返回 Buffer 的用途
+func Buffer.Usage() => BufferUsage {
+    return jsBufferUsage(this._extobj.GetHandle())
+}
+#wa:import webgpu buffer_usage
+func jsBufferUsage(buffer: js.Handle) => BufferUsage
 
 // 异步映射
 #wa:generic MapAysnc_Handler
@@ -90,7 +95,7 @@ func Buffer.MapAsync(mode: MapMode, mapper: BufferMapper) {
     jsBufferMapAsync(tid, this._extobj.GetHandle(), mode)
 }
 type BufferMapper interface {
-    OnMapped(b: *Buffer, ok: bool)
+    OnMapped(b: Buffer, ok: bool)
 }
 
 func Buffer.MapAysnc_Handler(mode: MapMode, handler: BufferMapHandler) {
@@ -100,7 +105,7 @@ func Buffer.MapAysnc_Handler(mode: MapMode, handler: BufferMapHandler) {
     tid := asyncTasks.Alloc(this, handler)
     jsBufferMapAsync(tid, this._extobj.GetHandle(), mode)
 }
-type BufferMapHandler func(b: *Buffer, ok: bool)
+type BufferMapHandler func(b: Buffer, ok: bool)
 
 #wa:import webgpu buffer_map_async
 func jsBufferMapAsync(tid: int, buffer: js.Handle, mode: MapMode)
@@ -109,9 +114,9 @@ func jsBufferMapAsync(tid: int, buffer: js.Handle, mode: MapMode)
 func onBufferMapped(tid: int, ok: bool, data: []byte) {
     source, handler := asyncTasks.Get(tid)
 
-    buffer := source.(*Buffer)
-    buffer.mapped = ok
-    buffer.mappedRange = data
+    buffer := source.(Buffer)
+    buffer.mapContex.mapped = ok
+    buffer.mapContex.mappedRange = data
 
     switch h := handler.(type) {
     case BufferMapper:
@@ -127,34 +132,26 @@ func onBufferMapped(tid: int, ok: bool, data: []byte) {
 // 获取已映射的 Buffer 的数据块
 #wa:generic GetMappedRange_Offset GetMappedRange_OffsetSize
 func Buffer.GetMappedRange() => []byte {
-    if !this.mapped {
+    if !this.mapContex.mapped {
         panic("Not mapped.")
     }
-    return this.mappedRange
+    return this.mapContex.mappedRange
 }
 
 func Buffer.GetMappedRange_Offset(offset: int) => []byte {
-    if !this.mapped {
+    if !this.mapContex.mapped {
         panic("Not mapped.")
     }
 
-    if offset >= this.desc.Size {
-        panic("range overflowed")
-    }
-
-    return this.mappedRange[offset:]
+    return this.mapContex.mappedRange[offset:]
 }
 
 func Buffer.GetMappedRange_OffsetSize(offset, size: int) => []byte {
-    if !this.mapped {
+    if !this.mapContex.mapped {
         panic("Not mapped.")
     }
 
-    if offset + size > this.desc.Size {
-        panic("range overflowed")
-    }
-
-    return this.mappedRange[offset:offset + size]
+    return this.mapContex.mappedRange[offset:offset + size]
 }
 
 #wa:import webgpu buffer_get_mapped_range
@@ -162,13 +159,13 @@ func jsBufferGetMappedRange(buffer: js.Handle) => []byte
 
 // 撤销映射
 func Buffer.Unmap() {
-    if !this.mapped {
+    if !this.mapContex.mapped {
         return
     }
 
-    jsBufferUnmap(this._extobj.GetHandle(), this.mappedRange)
-    this.mapped = false
-    this.mappedRange = nil
+    jsBufferUnmap(this._extobj.GetHandle(), this.mapContex.mappedRange)
+    this.mapContex.mapped = false
+    this.mapContex.mappedRange = nil
 }
 #wa:import webgpu buffer_unmap
 func jsBufferUnmap(bh: js.Handle, mappedRange: []byte)

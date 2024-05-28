@@ -28,7 +28,7 @@ func Queue.Submit(cb: CommandBuffer) {
 func jsQueueSubmit(queue, gpu_command_buffer: js.Handle)
 
 // 向Buffer中写入数据块
-func Queue.WriteBuffer(buffer: *Buffer, offset: i32, data: []byte) {
+func Queue.WriteBuffer(buffer: Buffer, offset: i32, data: []byte) {
     jsQueueWriteBuffer(this._extobj.GetHandle(), buffer._extobj.GetHandle(), offset, data)
 }
 #wa:import webgpu queue_write_buffer
