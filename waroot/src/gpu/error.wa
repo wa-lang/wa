@@ -3,8 +3,10 @@ import "js"
 
 //---------------------------------------------------------------
 
-// 不能使用该类型直接声明值，需通过其它函数创建 - Todo
+// 不能使用该类型直接声明值
 #wa:need-constructor
-type BindGroupLayout struct {
+type Error struct {
     _extobj: js.ExtObj
 }
+
+//func Error.Message() - Todo

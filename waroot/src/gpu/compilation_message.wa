@@ -1,0 +1,17 @@
+
+import "js"
+
+//---------------------------------------------------------------
+
+// 不能使用该类型直接声明值，需通过 CompilationInfo.Messages 获取
+#wa:need-constructor
+type CompilationMessage struct {
+    _extobj: js.ExtObj
+}
+
+//func CompilationMessage.Length() - Todo
+//func CompilationMessage.LineNum() - Todo
+//func CompilationMessage.LinePos() - Todo
+//func CompilationMessage.Message() - Todo
+//func CompilationMessage.Offset() - Todo
+//func CompilationMessage.Type() - Todo

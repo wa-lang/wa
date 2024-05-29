@@ -1,0 +1,17 @@
+
+import "js"
+
+//---------------------------------------------------------------
+
+// 不能使用该类型直接声明值。通过 Device.CreateComputePipeline() 创建
+#wa:need-constructor
+type ComputePipeline struct {
+    _extobj: js.ExtObj
+}
+
+// 获取标签
+func ComputePipeline.Label() => string {
+    return jsObjGetLabel(this._extobj.GetHandle())
+}
+
+//func ComputePipeline.GetBindGroupLayout()() - Todo

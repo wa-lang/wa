@@ -9,6 +9,13 @@ type CommandEncoder struct {
     _extobj: js.ExtObj
 }
 
+// 返回标签
+func CommandEncoder.Label() => string {
+    return jsObjGetLabel(this._extobj.GetHandle())
+}
+
+//func CommandEncoder.BeginComputePass() - Todo
+
 // 开始录入渲染指令，返回 类型为 RenderPassEncoder 的 RenderEncoder
 func CommandEncoder.BeginRenderPass(desc: RenderPassDesc) => RenderEncoder {
     do := desc.createExtObj()
@@ -20,6 +27,16 @@ func CommandEncoder.BeginRenderPass(desc: RenderPassDesc) => RenderEncoder {
 #wa:import webgpu commandencoder_begin_render_pass
 func jsCommandEncoderBeginRenderPass(command_encoder, render_pass_desc: js.Handle) => js.Handle
 
+// func CommandEncoder.ClearBuffer() - Todo
+
+//func CommandEncoder.CopyBufferToBuffer() - Todo
+
+//func CommandEncoder.CopyBufferToTexture() - Todo
+
+//func CommandEncoder.CopyTextureToBuffer() - Todo
+
+//func CommandEncoder.CopyTextureToTexture() - Todo
+
 // 结束录入，返回 CommandBuffer
 func CommandEncoder.Finish() => CommandBuffer {
     cb: CommandBuffer
@@ -29,6 +46,12 @@ func CommandEncoder.Finish() => CommandBuffer {
 }
 #wa:import webgpu commandencoder_finish
 func jsCommandEncoderFinish(command_encoder: js.Handle) => js.Handle
+
+
+//func CommandEncoder.InsertDebugMarker() - Todo
+//func CommandEncoder.PopDebugGroup() - Todo
+//func CommandEncoder.PushDebugGroup() - Todo
+//func CommandEncoder.ResolveQuerySet() - Todo
 
 //---------------------------------------------------------------
 
@@ -61,6 +84,10 @@ type RenderPassDesc struct {
     ColorAttachments: []ColorAttchmentDesc
     DepthStencilAttachment: DepthStencilAttachmentDesc
     Label: string
+
+    //maxDrawCount - Todo
+    //OcclusionQuerySet - Todo
+    //TimestampWrites - Todo
 }
 
 func RenderPassDesc.createExtObj() => js.ExtObj {

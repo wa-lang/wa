@@ -26,8 +26,8 @@ func RenderEncoder.Label() => string {
     return jsObjGetLabel(this._extobj.GetHandle())
 }
 
-// Todo 仅当对象为 RenderPassEncoder 时可用
-//func RenderEncoder.beginOcclusionQuery()
+// 仅当对象为 RenderPassEncoder 时可用
+//func RenderEncoder.BeginOcclusionQuery() - Todo
 
 // Draw
 #wa:generic Draw2 Draw3 Draw4
@@ -94,8 +94,8 @@ func RenderEncoder.End() {
 #wa:import webgpu render_encoder_end
 func jsRenderEncoderEnd(render_pass: js.Handle)
 
-// Todo 仅当对象为 RenderPassEncoder 时可用
-//func RenderEncoder.EndOcclusionQuery()
+//仅当对象为 RenderPassEncoder 时可用
+//func RenderEncoder.EndOcclusionQuery() - Todo
 
 // 执行预先录入的 RenderBundle，仅当对象为 RenderPassEncoder 时可用
 func RenderEncoder.ExecuteBundles(bundles: []RenderBundle) {
@@ -118,14 +118,11 @@ func RenderEncoder.Finish_Bundle() => RenderBundle {
 #wa:import webgpu render_encoder_finish_bundle
 func jsRenderEncoderFinish_Bundle(encoder: js.Handle) => js.Handle
 
-// Todo
-//func RenderEncoder.InsertDebugMarker()
+//func RenderEncoder.InsertDebugMarker() - Todo
 
-// Todo
-//func RenderEncoder.PopDebugGroup()
+//func RenderEncoder.PopDebugGroup() - Todo
 
-// Todo
-//func RenderEncoder.PushDebugGroup()
+//func RenderEncoder.PushDebugGroup() - Todo
 
 // 设置绑定组
 #wa:generic SetBindGroup_DynamicOffsets
@@ -171,11 +168,11 @@ func RenderEncoder.SetPipeline(p: RenderPipeline) {
 #wa:import webgpu render_encoder_set_pipeline
 func jsRenderEncoderSetPipeline(renderEncoder, pipeline: js.Handle)
 
-// Todo 仅当对象为 RenderPassEncoder 时可用
-//func RenderEncoder.SetScissorRect()
+// 仅当对象为 RenderPassEncoder 时可用
+//func RenderEncoder.SetScissorRect() - Todo
 
-// Todo 仅当对象为 RenderPassEncoder 时可用
-//func RenderEncoder.SetStencilReference()()
+// 仅当对象为 RenderPassEncoder 时可用
+//func RenderEncoder.SetStencilReference() - Todo
 
 // 设置顶点缓冲
 #wa:generic SetVertexBuffer_Offset SetVertexBuffer_OffsetSize

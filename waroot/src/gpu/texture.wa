@@ -140,6 +140,8 @@ func Texture.CreateView() => TextureView {
 #wa:import webgpu texture_create_texture_view
 func jsTextureCreateTextureView(texture: js.Handle) => js.Handle
 
+//func Texture.CreateView(desc) - Todo
+
 //---------------------------------------------------------------
 
 type TextureUsage u32
