@@ -17,3 +17,9 @@ var Wat2wasm_ubuntu string
 
 //go:embed internal/wabt-1.0.29-windows/bin/wat2wasm.exe
 var Wat2wasm_windows string
+
+// wat2wasm.wasm 版本号
+const Wat2wasm_wasm_Version = "1.0.37"
+
+//go:embed internal/wabt-1.0.37-wasm/wat2wasm.wasm
+var Wat2wasm_wasm string

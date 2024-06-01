@@ -15,8 +15,10 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"runtime"
 	"strings"
 
+	"wa-lang.org/wa/internal/3rdparty/gover"
 	"wa-lang.org/wa/internal/3rdparty/wabt-go"
 	"wa-lang.org/wa/internal/version"
 	"wa-lang.org/wa/waroot"
@@ -26,9 +28,11 @@ const (
 	darwin  = "darwin"
 	linux   = "linux"
 	windows = "windows"
+	wasip1  = "wasip1"
 
 	amd64 = "amd64"
 	arm64 = "arm64"
+	wasm  = "wasm"
 )
 
 var (
@@ -41,7 +45,6 @@ func init() {
 
 func main() {
 	flag.Parse()
-
 	b := &Builder{Output: *flagOutputDir}
 	b.GenAll()
 }
@@ -59,6 +62,7 @@ func (p *Builder) GenAll() {
 	waRoot_darwin_arm64 := p.getWarootPath(darwin, amd64)
 	waRoot_linux_amd64 := p.getWarootPath(linux, amd64)
 	waRoot_windows_amd64 := p.getWarootPath(windows, amd64)
+	waRoot_wasip1_wasm := p.getWarootPath(wasip1, wasm)
 
 	waRoot_docker := fmt.Sprintf("%s/wa-docker-linux-amd64", p.Output)
 
@@ -66,6 +70,10 @@ func (p *Builder) GenAll() {
 	p.genWarootFiles(waRoot_darwin_arm64)
 	p.genWarootFiles(waRoot_linux_amd64)
 	p.genWarootFiles(waRoot_windows_amd64)
+
+	if isWasip1Enabled() {
+		p.genWarootFiles(waRoot_wasip1_wasm)
+	}
 
 	p.genWat2wasmExe()
 	p.genWaExe()
@@ -78,10 +86,18 @@ func (p *Builder) GenAll() {
 	p.zipDir(waRoot_linux_amd64)
 	p.zipDir(waRoot_windows_amd64)
 
+	if isWasip1Enabled() {
+		p.zipDir(waRoot_wasip1_wasm)
+	}
+
 	os.RemoveAll(waRoot_darwin_amd64)
 	os.RemoveAll(waRoot_darwin_arm64)
 	os.RemoveAll(waRoot_linux_amd64) // keep for build docker image
 	os.RemoveAll(waRoot_windows_amd64)
+
+	if isWasip1Enabled() {
+		os.RemoveAll(waRoot_wasip1_wasm)
+	}
 
 	p.genChecksums()
 }
@@ -92,6 +108,9 @@ func (p *Builder) genChecksums() {
 		p.getWarootPath(darwin, amd64),
 		p.getWarootPath(linux, amd64),
 		p.getWarootPath(windows, amd64),
+	}
+	if isWasip1Enabled() {
+		paths = append(paths, p.getWarootPath(wasip1, wasm))
 	}
 	var buf bytes.Buffer
 	for _, path := range paths {
@@ -110,6 +129,19 @@ func (p *Builder) genChecksums() {
 }
 
 func (p *Builder) genWaExe() {
+	// wasip1/wasm
+	if isWasip1Enabled() {
+		waRootPath := p.getWarootPath(wasip1, wasm)
+		dstpath := filepath.Join(waRootPath, "bin", "wa.wasm")
+
+		cmd := exec.Command("go", "build", "-o", dstpath, "wa-lang.org/wa/cmd/wa-wasm")
+		cmd.Env = append([]string{"GOOS=" + wasip1, "GOARCH=" + wasm}, os.Environ()...)
+		if output, err := cmd.CombinedOutput(); err != nil {
+			fmt.Print(string(output))
+			panic(err)
+		}
+	}
+
 	// darwin/arm64
 	{
 		waRootPath := p.getWarootPath(darwin, arm64)
@@ -164,6 +196,13 @@ func (p *Builder) genWaExe() {
 }
 
 func (p *Builder) genWat2wasmExe() {
+	// wasm
+	if isWasip1Enabled() {
+		waRootPath := p.getWarootPath(wasip1, wasm)
+		dstpath := filepath.Join(waRootPath, "bin", "wa2wasm.wasm")
+		os.WriteFile(dstpath, []byte(wabt.Wat2wasm_wasm), 0777)
+	}
+
 	// macos/arm64
 	{
 		waRootPath := p.getWarootPath(darwin, arm64)
@@ -300,6 +339,11 @@ func (p *Builder) zipDir(dir string) {
 
 func (p *Builder) getWarootPath(waos, waarch string) string {
 	return fmt.Sprintf("%s/wa_%s_%s-%s", p.Output, version.Version, waos, waarch)
+}
+
+func isWasip1Enabled() bool {
+	goversion := strings.TrimPrefix(runtime.Version(), "go")
+	return gover.Compare(goversion, "1.21") >= 0
 }
 
 func cpDir(dst, src string) (total int) {

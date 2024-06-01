@@ -37,7 +37,8 @@ jobs:
       - name: Set up Go
         uses: actions/setup-go@v2
         with:
-          go-version: 1.17
+          # go1.21 support wasip1/wasm
+          go-version: 1.21
 
       - run: make build-dist
 

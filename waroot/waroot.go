@@ -10,9 +10,7 @@ import (
 //go:embed bin/*
 //go:embed cplog/*
 //go:embed docs/*
-//go:embed examples/*
 //go:embed src/*
-//go:embed tests/*
 //go:embed changelog.md
 //go:embed CONTRIBUTORS
 //go:embed hello.wa

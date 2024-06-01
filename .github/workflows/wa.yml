@@ -37,8 +37,6 @@ jobs:
       - run: cd waroot && wa run -target=wasi hello.wa
       - run: cd waroot && wa run -target=unknown hello.wa
 
-      - run: make build-docker
-
       - uses: shogo82148/actions-goveralls@v1
         with:
           path-to-profile: profile.cov
