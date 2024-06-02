@@ -65,6 +65,7 @@ func (p *Builder) GenAll() {
 	waRoot_wasip1_wasm := p.getWarootPath(wasip1, wasm)
 
 	waRoot_docker := fmt.Sprintf("%s/wa-docker-linux-amd64", p.Output)
+	waRoot_wasip1 := fmt.Sprintf("%s/wa-wasip1", p.Output)
 
 	p.genWarootFiles(waRoot_darwin_amd64)
 	p.genWarootFiles(waRoot_darwin_arm64)
@@ -80,6 +81,11 @@ func (p *Builder) GenAll() {
 
 	os.RemoveAll(waRoot_docker)
 	cpDir(waRoot_docker, waRoot_linux_amd64)
+
+	if isWasip1Enabled() {
+		os.RemoveAll(waRoot_wasip1)
+		cpDir(waRoot_wasip1, waRoot_wasip1_wasm)
+	}
 
 	p.zipDir(waRoot_darwin_amd64)
 	p.zipDir(waRoot_darwin_arm64)
