@@ -205,7 +205,7 @@ func (p *Builder) genWat2wasmExe() {
 	// wasm
 	if isWasip1Enabled() {
 		waRootPath := p.getWarootPath(wasip1, wasm)
-		dstpath := filepath.Join(waRootPath, "bin", "wa2wasm.wasm")
+		dstpath := filepath.Join(waRootPath, "bin", "wat2wasm.wasm")
 		os.WriteFile(dstpath, []byte(wabt.Wat2wasm_wasm), 0777)
 	}
 
