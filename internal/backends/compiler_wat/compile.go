@@ -66,6 +66,7 @@ func (p *Compiler) Compile(prog *loader.Program) (output string, err error) {
 
 	p.tLib.finish()
 
+	// 生成 _start 函数：
 	{
 		var f wir.Function
 		f.InternalName, f.ExternalName = "_start", "_start"
@@ -80,6 +81,18 @@ func (p *Compiler) Compile(prog *loader.Program) (output string, err error) {
 		//	f.Insts = append(f.Insts, wat.NewInstCall(n))
 		//}
 
+		p.module.AddFunc(&f)
+	}
+
+	// 生成 _main 函数：
+	{
+		var f wir.Function
+		f.InternalName, f.ExternalName = "_main", "_main"
+		n, _ := wir.GetPkgMangleName(prog.SSAMainPkg.Pkg.Path())
+		n += ".main"
+		if p.module.FindFunc(n) != nil {
+			f.Insts = append(f.Insts, wat.NewInstCall(n))
+		}
 		p.module.AddFunc(&f)
 	}
 
