@@ -12,15 +12,14 @@ import (
 )
 
 var CmdRunWasm = &cli.Command{
-	Name:  "run-wasm",
-	Usage: "run wasm program",
+	Name:      "run-wasm",
+	Usage:     "run wasm program",
+	ArgsUsage: "file.wasm",
 	Flags: []cli.Flag{
-		appbase.MakeFlag_target(),
-		appbase.MakeFlag_tags(),
 		&cli.StringFlag{
 			Name:  "main-func",
 			Usage: "set main func",
-			Value: "__main__.main",
+			Value: "_main",
 		},
 	},
 	Action: CmdRunAction,
@@ -35,16 +34,18 @@ func CmdRunAction(c *cli.Context) error {
 	}
 
 	wasmBytes, err := os.ReadFile(input)
+	if err != nil {
+		return err
+	}
 
 	var appArgs []string
 	if c.NArg() > 2 {
 		appArgs = c.Args().Slice()[2:]
 	}
 
-	var opt = appbase.BuildOptions(c)
 	var mainFunc = c.String("main-func")
 
-	stdout, stderr, err := wazero.RunWasm(opt.Config(), input, wasmBytes, mainFunc, appArgs...)
+	stdout, stderr, err := wazero.RunWasm(input, wasmBytes, mainFunc, appArgs...)
 	if err != nil {
 		if len(stdout) > 0 {
 			fmt.Fprint(os.Stdout, string(stdout))
@@ -56,6 +57,7 @@ func CmdRunAction(c *cli.Context) error {
 			os.Exit(exitCode)
 		}
 		fmt.Println(err)
+		return nil
 	}
 	if len(stdout) > 0 {
 		fmt.Fprint(os.Stdout, string(stdout))

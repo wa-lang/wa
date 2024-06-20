@@ -1,7 +1,6 @@
 package wazero
 
 import (
-	"wa-lang.org/wa/internal/config"
 	"wa-lang.org/wazero"
 	"wa-lang.org/wazero/sys"
 )
@@ -11,8 +10,8 @@ func Wat2Wasm(source []byte) ([]byte, error) {
 }
 
 // 单次执行 wasm
-func RunWasm(cfg *config.Config, wasmName string, wasmBytes []byte, mainFunc string, wasmArgs ...string) (stdout, stderr []byte, err error) {
-	m, err := BuildModule(cfg, wasmName, wasmBytes, wasmArgs...)
+func RunWasm(wasmName string, wasmBytes []byte, mainFunc string, wasmArgs ...string) (stdout, stderr []byte, err error) {
+	m, err := BuildModule(wasmName, wasmBytes, wasmArgs...)
 	if err != nil {
 		return
 	}

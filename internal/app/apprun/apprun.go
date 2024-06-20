@@ -117,7 +117,7 @@ func CmdRunAction(c *cli.Context) error {
 		appArgs = c.Args().Slice()[1:]
 	}
 
-	stdout, stderr, err := wazero.RunWasm(opt.Config(), input, wasmBytes, mainFunc, appArgs...)
+	stdout, stderr, err := wazero.RunWasm(input, wasmBytes, mainFunc, appArgs...)
 	if err != nil {
 		if len(stdout) > 0 {
 			fmt.Fprint(os.Stdout, string(stdout))
