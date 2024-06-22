@@ -36,7 +36,8 @@ const (
 )
 
 var (
-	flagOutputDir = flag.String("output", "_output", "set output dir")
+	flagOutputDir  = flag.String("output", "_output", "set output dir")
+	flagCgoEnabled = flag.Bool("cgo-enabled", false, "enable cgo")
 )
 
 func init() {
@@ -135,13 +136,18 @@ func (p *Builder) genChecksums() {
 }
 
 func (p *Builder) genWaExe() {
+	CGO_ENABLED := "CGO_ENABLED=0"
+	if *flagCgoEnabled {
+		CGO_ENABLED = "CGO_ENABLED=1"
+	}
+
 	// wasip1/wasm
 	if isWasip1Enabled() {
 		waRootPath := p.getWarootPath(wasip1, wasm)
 		dstpath := filepath.Join(waRootPath, "bin", "wa.wasm")
 
 		cmd := exec.Command("go", "build", "-o", dstpath, "wa-lang.org/wa/cmd/wa-wasm")
-		cmd.Env = append([]string{"GOOS=" + wasip1, "GOARCH=" + wasm}, os.Environ()...)
+		cmd.Env = append([]string{"GOOS=" + wasip1, "GOARCH=" + wasm, "CGO_ENABLED=0"}, os.Environ()...)
 		if output, err := cmd.CombinedOutput(); err != nil {
 			fmt.Print(string(output))
 			panic(err)
@@ -154,7 +160,7 @@ func (p *Builder) genWaExe() {
 		dstpath := filepath.Join(waRootPath, "bin", "wa")
 
 		cmd := exec.Command("go", "build", "-o", dstpath, "wa-lang.org/wa")
-		cmd.Env = append([]string{"GOOS=" + darwin, "GOARCH=" + arm64}, os.Environ()...)
+		cmd.Env = append([]string{"GOOS=" + darwin, "GOARCH=" + arm64, CGO_ENABLED}, os.Environ()...)
 		if output, err := cmd.CombinedOutput(); err != nil {
 			fmt.Print(string(output))
 			panic(err)
@@ -167,7 +173,7 @@ func (p *Builder) genWaExe() {
 		dstpath := filepath.Join(waRootPath, "bin", "wa")
 
 		cmd := exec.Command("go", "build", "-o", dstpath, "wa-lang.org/wa")
-		cmd.Env = append([]string{"GOOS=" + darwin, "GOARCH=" + amd64}, os.Environ()...)
+		cmd.Env = append([]string{"GOOS=" + darwin, "GOARCH=" + amd64, CGO_ENABLED}, os.Environ()...)
 		if output, err := cmd.CombinedOutput(); err != nil {
 			fmt.Print(string(output))
 			panic(err)
@@ -180,7 +186,7 @@ func (p *Builder) genWaExe() {
 		dstpath := filepath.Join(waRootPath, "bin", "wa")
 
 		cmd := exec.Command("go", "build", "-o", dstpath, "wa-lang.org/wa")
-		cmd.Env = append([]string{"GOOS=" + linux, "GOARCH=" + amd64}, os.Environ()...)
+		cmd.Env = append([]string{"GOOS=" + linux, "GOARCH=" + amd64, CGO_ENABLED}, os.Environ()...)
 		if output, err := cmd.CombinedOutput(); err != nil {
 			fmt.Print(string(output))
 			panic(err)
@@ -193,7 +199,7 @@ func (p *Builder) genWaExe() {
 		dstpath := filepath.Join(waRootPath, "bin", "wa.exe")
 
 		cmd := exec.Command("go", "build", "-o", dstpath, "wa-lang.org/wa")
-		cmd.Env = append([]string{"GOOS=" + windows, "GOARCH=" + amd64}, os.Environ()...)
+		cmd.Env = append([]string{"GOOS=" + windows, "GOARCH=" + amd64, CGO_ENABLED}, os.Environ()...)
 		if output, err := cmd.CombinedOutput(); err != nil {
 			fmt.Print(string(output))
 			panic(err)
