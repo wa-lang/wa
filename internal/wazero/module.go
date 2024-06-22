@@ -113,6 +113,23 @@ func (p *Module) Close() error {
 	return err
 }
 
+// 是否包含用户自定义的宿主函数
+func (p *Module) HasUnknownImportFunc() bool {
+	for _, importedFunc := range p.wazeroCompileModule.ImportedFunctions() {
+		moduleName, _, isImport := importedFunc.Import()
+		if !isImport {
+			continue
+		}
+
+		switch moduleName {
+		case "syscall_js", "wasi_snapshot_preview1":
+		default:
+			return true
+		}
+	}
+	return false
+}
+
 func (p *Module) buildModule() error {
 	p.wazeroCtx = context.Background()
 

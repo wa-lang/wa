@@ -11,12 +11,10 @@ import (
 	"path/filepath"
 	"runtime"
 	"strings"
-	"time"
 
 	"wa-lang.org/wa/internal/3rdparty/cli"
 	"wa-lang.org/wa/internal/app/appbase"
 	"wa-lang.org/wa/internal/app/appbuild"
-	"wa-lang.org/wa/internal/config"
 	"wa-lang.org/wa/internal/wazero"
 )
 
@@ -29,20 +27,20 @@ var CmdRun = &cli.Command{
 	Flags: []cli.Flag{
 		appbase.MakeFlag_target(),
 		appbase.MakeFlag_tags(),
-		&cli.StringFlag{
-			Name:  "http",
-			Usage: "set http address",
-			Value: ":8000",
+		&cli.BoolFlag{
+			Name:  "web",
+			Usage: "set web mode",
+			Value: false,
 		},
 		&cli.BoolFlag{
 			Name:  "console",
 			Usage: "set console mode",
 			Value: false,
 		},
-		&cli.BoolFlag{
-			Name:  "autobuild",
-			Usage: "set auto build mode",
-			Value: false,
+		&cli.StringFlag{
+			Name:  "http",
+			Usage: "set http address",
+			Value: ":8000",
 		},
 	},
 	Action: CmdRunAction,
@@ -62,26 +60,25 @@ func CmdRunAction(c *cli.Context) error {
 		return err
 	}
 
+	var appArgs []string
+	if c.NArg() > 1 {
+		appArgs = c.Args().Slice()[1:]
+	}
+
+	m, err := wazero.BuildModule(input, wasmBytes, appArgs...)
+	if err != nil {
+		return err
+	}
+	defer m.Close()
+
 	// Web 模式启动服务器
-	if !c.Bool("console") && opt.TargetOS == config.WaOS_js && appbase.IsNativeDir(input) {
+	if (m.HasUnknownImportFunc() || c.Bool("web")) && !c.Bool("console") {
 		var addr = c.String("http")
 		if strings.HasPrefix(addr, ":") {
 			addr = "localhost" + addr
 		}
 		fmt.Printf("listen at http://%s\n", addr)
 
-		go func() {
-			time.Sleep(time.Second * 2)
-			openBrowser(addr)
-
-			// 后台每隔几秒重新编译
-			if c.Bool("autobuild") {
-				for {
-					appbuild.BuildApp(opt, input, outfile)
-					time.Sleep(time.Second * 3)
-				}
-			}
-		}()
 		http.Handle(
 			"/favicon.ico", http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
 				w.Header().Add("Cache-Control", "no-cache")
@@ -112,12 +109,7 @@ func CmdRunAction(c *cli.Context) error {
 		return nil
 	}
 
-	var appArgs []string
-	if c.NArg() > 1 {
-		appArgs = c.Args().Slice()[1:]
-	}
-
-	stdout, stderr, err := wazero.RunWasm(input, wasmBytes, mainFunc, appArgs...)
+	stdout, stderr, err := m.RunMain(mainFunc)
 	if err != nil {
 		if len(stdout) > 0 {
 			fmt.Fprint(os.Stdout, string(stdout))
