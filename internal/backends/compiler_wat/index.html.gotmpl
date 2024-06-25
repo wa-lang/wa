@@ -1,20 +1,26 @@
 <!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{{.Pkg}}</title>
+</head>
+<body>
+  <div style="text-align: center;">
+    <canvas id="canvas" width="0" height="0"></canvas>
+  </div>
 
-<title>{{.Pkg}}</title>
+  <div style="text-align: center;">
+    <pre id="output"></pre>
+  </div>
 
-<div style="text-align: center;">
-  <canvas id="canvas" width="0" height="0"></canvas>
-</div>
+  <script type="text/javascript" src="./{{.Filename}}"></script>
 
-<div style="text-align: center;">
-  <pre id="output"></pre>
-</div>
-
-<script type="text/javascript" src="./{{.Filename}}"></script>
-
-<script>
-  let app = new WaApp();
-  app.init().then((result) => {
-    app.main();
-  })
-</script>
+  <script>
+    let app = new WaApp();
+    app.init().then((result) => {
+      app.main();
+    })
+  </script>
+</body>
+</html>
