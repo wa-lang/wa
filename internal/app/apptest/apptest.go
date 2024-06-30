@@ -96,7 +96,7 @@ func runTest(cfg *config.Config, pkgpath, runPattern string, appArgs ...string) 
 		os.Exit(1)
 	}
 
-	m, err := wazero.BuildModule(cfg, wasmName, wasmBytes, wasmArgs...)
+	m, err := wazero.BuildModule(wasmName, wasmBytes, wasmArgs...)
 	if err != nil {
 		fmt.Println(err)
 		os.Exit(1)
@@ -147,7 +147,7 @@ func runTest(cfg *config.Config, pkgpath, runPattern string, appArgs ...string) 
 
 			// 重新加载
 			{
-				m, err = wazero.BuildModule(cfg, wasmName, wasmBytes, wasmArgs...)
+				m, err = wazero.BuildModule(wasmName, wasmBytes, wasmArgs...)
 				if err != nil {
 					fmt.Println(err)
 					os.Exit(1)
@@ -253,7 +253,7 @@ func runTest(cfg *config.Config, pkgpath, runPattern string, appArgs ...string) 
 
 			// 重新加载
 			{
-				m, err = wazero.BuildModule(cfg, wasmName, wasmBytes, wasmArgs...)
+				m, err = wazero.BuildModule(wasmName, wasmBytes, wasmArgs...)
 				if err != nil {
 					fmt.Println(err)
 					os.Exit(1)

@@ -24,9 +24,7 @@ func Add(a:i32, b:i32) => i32 {
 `
 	wasmBytes := tBuildWasm(t, waCode)
 
-	m, err := wazero.BuildModule(
-		api.DefaultConfig(), wasmName, wasmBytes,
-	)
+	m, err := wazero.BuildModule(wasmName, wasmBytes)
 	if err != nil {
 		t.Fatal(err)
 	}

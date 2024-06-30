@@ -26,7 +26,7 @@ func RunCode(cfg *config.Config, filename, code string, args ...string) (stdoutS
 	}
 
 	// main 执行
-	stdout, stderr, err := wazero.RunWasm(cfg, filename, wasmBytes, mainFunc, args...)
+	stdout, stderr, err := wazero.RunWasm(filename, wasmBytes, mainFunc, args...)
 	stdoutStderr = append(stdout, stderr...)
 	return
 }

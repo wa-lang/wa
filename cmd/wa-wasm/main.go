@@ -13,6 +13,7 @@ import (
 	"wa-lang.org/wa/internal/app/appfmt"
 	"wa-lang.org/wa/internal/app/appinit"
 	"wa-lang.org/wa/internal/app/applsp"
+	apprun "wa-lang.org/wa/internal/app/apprun-wasm"
 	"wa-lang.org/wa/internal/config"
 	"wa-lang.org/wa/internal/version"
 )
@@ -65,6 +66,7 @@ func main() {
 	cliApp.Commands = []*cli.Command{
 		appinit.CmdInit,
 		appbuild.CmdBuild,
+		apprun.CmdRunWasm,
 		appfmt.CmdFmt,
 		applsp.CmdLsp, // hidden
 	}

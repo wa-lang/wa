@@ -86,9 +86,9 @@ class WaApp {
         arr.splice(0, 4);
         return b
       },
-      extract_bool: (arr) => { const v = arr[0]; arr.splice(0, 1); return v?true:false; },
-      extract_rune: (arr) => { const v = arr[0]; arr.splice(0, 1); return String.fromCodePoint(v); },
-      extract_number: (arr) => { const v = arr[0]; arr.splice(0, 1); return v; },
+      extract_bool: (v) => { return v?true:false; },
+      extract_rune: (v) => { return String.fromCodePoint(v); },
+      extract_number: (v) => { return v; },
     }
   };
 

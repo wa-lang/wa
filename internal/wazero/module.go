@@ -19,8 +19,6 @@ import (
 
 // wasm 模块, 可多次执行
 type Module struct {
-	cfg *config.Config
-
 	wasmName  string
 	wasmBytes []byte
 	wasmArgs  []string
@@ -38,11 +36,8 @@ type Module struct {
 }
 
 // 构建模块(会执行编译)
-func BuildModule(
-	cfg *config.Config, wasmName string, wasmBytes []byte, wasmArgs ...string,
-) (*Module, error) {
+func BuildModule(wasmName string, wasmBytes []byte, wasmArgs ...string) (*Module, error) {
 	m := &Module{
-		cfg:       cfg,
 		wasmName:  wasmName,
 		wasmBytes: wasmBytes,
 		wasmArgs:  wasmArgs,
@@ -61,7 +56,7 @@ func (p *Module) RunMain(mainFunc string) (stdout, stderr []byte, err error) {
 
 	if mainFunc != "" {
 		fn := p.wazeroModule.ExportedFunction(mainFunc)
-		if fn == nil {
+		if fn == nil && mainFunc != "_main" {
 			err = fmt.Errorf("wazero: func %q not found", mainFunc)
 			return
 		}
@@ -118,6 +113,23 @@ func (p *Module) Close() error {
 	return err
 }
 
+// 是否包含用户自定义的宿主函数
+func (p *Module) HasUnknownImportFunc() bool {
+	for _, importedFunc := range p.wazeroCompileModule.ImportedFunctions() {
+		moduleName, _, isImport := importedFunc.Import()
+		if !isImport {
+			continue
+		}
+
+		switch moduleName {
+		case "syscall_js", "wasi_snapshot_preview1":
+		default:
+			return true
+		}
+	}
+	return false
+}
+
 func (p *Module) buildModule() error {
 	p.wazeroCtx = context.Background()
 
@@ -155,7 +167,26 @@ func (p *Module) buildModule() error {
 		return err
 	}
 
-	switch p.cfg.WaOS {
+	// 根据导入的函数识别宿主类型
+	var waOS = config.WaOS_unknown
+	for _, importedFunc := range p.wazeroCompileModule.ImportedFunctions() {
+		moduleName, funcName, isImport := importedFunc.Import()
+		if !isImport {
+			continue
+		}
+
+		if moduleName == "syscall_js" && funcName == "print_str" {
+			waOS = config.WaOS_js
+			break
+		}
+
+		if moduleName == "wasi_snapshot_preview1" {
+			waOS = config.WaOS_wasi
+			break
+		}
+	}
+
+	switch waOS {
 	case config.WaOS_unknown:
 		if _, err = UnknownInstantiate(p.wazeroCtx, p.wazeroRuntime); err != nil {
 			p.wazeroInitErr = err
@@ -173,7 +204,7 @@ func (p *Module) buildModule() error {
 		}
 
 	default:
-		return fmt.Errorf("unknown waos: %q", p.cfg.WaOS)
+		return fmt.Errorf("unknown waos: %q", waOS)
 	}
 
 	return nil
