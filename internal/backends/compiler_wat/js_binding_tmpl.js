@@ -155,6 +155,9 @@ class WaApp {
         {{else}}
         let res = this._wasm_inst.exports["{{$.Pkg}}.{{.Name}}"](...params);
         {{end}}
+        if (!Array.prototype.isPrototypeOf(res)) {
+          res = [res];
+        }
         {{.GetResults}}
         {{.Release}}
         {{.Return}}
