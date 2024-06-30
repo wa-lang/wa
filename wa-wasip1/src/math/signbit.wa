@@ -1,0 +1,6 @@
+// 版权 @2023 凹语言 作者。保留所有权利。
+
+// Signbit reports whether x is negative or negative zero.
+func Signbit(x: f64) => bool {
+	return Float64bits(x)&(1<<63) != 0
+}

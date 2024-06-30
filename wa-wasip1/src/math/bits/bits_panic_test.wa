@@ -1,0 +1,77 @@
+// 版权 @2023 凹语言 作者。保留所有权利。
+
+const (
+	divZeroError = "runtime error: integer divide by zero"
+)
+
+func TestDivPanicOverflow {
+	// Output(panic):
+	// integer overflow
+
+	assert(overflowError == "integer overflow")
+
+	q, r := Div(1, 0, 1)
+	_, _= q, r
+
+	assert(false, "should panic")
+}
+
+func TestDiv32PanicOverflow {
+	// Output(panic):
+	// integer overflow
+
+	assert(overflowError == "integer overflow")
+
+	q, r := Div32(1, 0, 1)
+	_, _= q, r
+
+	assert(false, "should panic")
+}
+
+func TestDiv64PanicOverflow {
+	// Output(panic):
+	// integer overflow
+
+	assert(overflowError == "integer overflow")
+
+	q, r := Div64(1, 0, 1)
+	_, _= q, r
+
+	assert(false, "should panic")
+}
+
+func TestDivPanicZero {
+	// Output(panic):
+	// integer divide by zero
+
+	assert(divideError == "integer divide by zero")
+
+	q, r := Div(1, 1, 0)
+	_, _= q, r
+
+	assert(false, "should panic")
+}
+
+func TestDiv32PanicZero {
+	// Output(panic):
+	// integer divide by zero
+
+	assert(divideError == "integer divide by zero")
+
+	q, r := Div32(1, 1, 0)
+	_, _= q, r
+
+	assert(false, "should panic")
+}
+
+func TestDiv64PanicZero {
+	// Output(panic):
+	// integer divide by zero
+
+	assert(divideError == "integer divide by zero")
+
+	q, r := Div64(1, 1, 0)
+	_, _= q, r
+
+	assert(false, "should panic")
+}

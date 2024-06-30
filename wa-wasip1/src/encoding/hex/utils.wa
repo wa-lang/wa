@@ -1,0 +1,25 @@
+// 版权 @2023 凹语言 作者。保留所有权利。
+
+func EncodeU8(dst: []byte, v: u8) => int {
+	dst[0] = hextable[v>>4]
+	dst[1] = hextable[v&0x0f]
+	return 2
+}
+
+func EncodeU16(dst: []byte, v: u16) => int {
+	EncodeU8(dst[0:], u8(v>>8))
+	EncodeU8(dst[2:], u8(v))
+	return 4
+}
+
+func EncodeU32(dst: []byte, v: u32) => int {
+	EncodeU16(dst[0:], u16(v>>16))
+	EncodeU16(dst[4:], u16(v))
+	return 8
+}
+
+func EncodeU64(dst: []byte, v: u64) => int {
+	EncodeU32(dst[0:], u32(v>>32))
+	EncodeU32(dst[8:], u32(v))
+	return 16
+}

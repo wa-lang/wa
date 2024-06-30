@@ -1,0 +1,141 @@
+// 版权 @2024 凹语言 作者。保留所有权利。
+
+import "hash"
+
+type (
+	sum32  uint32
+	sum32a uint32
+	sum64  uint64
+	sum64a uint64
+)
+
+const (
+	offset32 = 2166136261
+	offset64 = 14695981039346656037
+	prime32  = 16777619
+	prime64  = 1099511628211
+)
+
+func New32() => hash.Hash32 {
+	s: sum32 = offset32
+	return &s
+}
+
+func New32a() => hash.Hash32 {
+	s: sum32a = offset32
+	return &s
+}
+
+func New64() => hash.Hash64 {
+	s: sum64 = offset64
+	return &s
+}
+
+func New64a() => hash.Hash64 {
+	s: sum64a = offset64
+	return &s
+}
+
+func sum32.Reset()  { *this = offset32 }
+func sum32a.Reset() { *this = offset32 }
+func sum64.Reset()  { *this = offset64 }
+func sum64a.Reset() { *this = offset64 }
+
+func sum32.Sum32() => uint32  { return uint32(*this) }
+func sum32a.Sum32() => uint32 { return uint32(*this) }
+func sum64.Sum64() => uint64  { return uint64(*this) }
+func sum64a.Sum64() => uint64 { return uint64(*this) }
+
+func sum32.Write(data: []byte) => (int, error) {
+	hash := *this
+	for _, c := range data {
+		hash *= prime32
+		hash ^= sum32(c)
+	}
+	*this = hash
+	return len(data), nil
+}
+
+func sum32a.Write(data: []byte) => (int, error) {
+	hash := *this
+	for _, c := range data {
+		hash ^= sum32a(c)
+		hash *= prime32
+	}
+	*this = hash
+	return len(data), nil
+}
+
+func sum64.Write(data: []byte) => (int, error) {
+	hash := *this
+	for _, c := range data {
+		hash *= prime64
+		hash ^= sum64(c)
+	}
+	*this = hash
+	return len(data), nil
+}
+
+func sum64a.Write(data: []byte) => (int, error) {
+	hash := *this
+	for _, c := range data {
+		hash ^= sum64a(c)
+		hash *= prime64
+	}
+	*this = hash
+	return len(data), nil
+}
+
+func sum32.Size() => int  { return 4 }
+func sum32a.Size() => int { return 4 }
+func sum64.Size() => int  { return 8 }
+func sum64a.Size() => int { return 8 }
+
+func sum32.BlockSize() => int  { return 1 }
+func sum32a.BlockSize() => int { return 1 }
+func sum64.BlockSize() => int  { return 1 }
+func sum64a.BlockSize() => int { return 1 }
+
+func sum32.Sum(in: []byte) => []byte {
+	v := uint32(*this)
+	in = append(in, byte(v>>24))
+	in = append(in, byte(v>>16))
+	in = append(in, byte(v>>8))
+	in = append(in, byte(v))
+	return in
+}
+
+func sum32a.Sum(in: []byte) => []byte {
+	v := uint32(*this)
+	in = append(in, byte(v>>24))
+	in = append(in, byte(v>>16))
+	in = append(in, byte(v>>8))
+	in = append(in, byte(v))
+	return in
+}
+
+func sum64.Sum(in: []byte) => []byte {
+	v := uint64(*this)
+	in = append(in, byte(v>>56))
+	in = append(in, byte(v>>48))
+	in = append(in, byte(v>>40))
+	in = append(in, byte(v>>32))
+	in = append(in, byte(v>>24))
+	in = append(in, byte(v>>16))
+	in = append(in, byte(v>>8))
+	in = append(in, byte(v))
+	return in
+}
+
+func sum64a.Sum(in: []byte) => []byte {
+	v := uint64(*this)
+	in = append(in, byte(v>>56))
+	in = append(in, byte(v>>48))
+	in = append(in, byte(v>>40))
+	in = append(in, byte(v>>32))
+	in = append(in, byte(v>>24))
+	in = append(in, byte(v>>16))
+	in = append(in, byte(v>>8))
+	in = append(in, byte(v))
+	return in
+}

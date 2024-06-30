@@ -1,0 +1,138 @@
+
+/*
+Handle 是外部 JS 对象在凹中的句柄，既 JS 对象在对象池中的ID
+*/
+type Handle u32
+
+/*
+凹内部一般不直接保存 Handle，因为对象可能被多次引用
+Handle 和 ExtObj 使用场景的一般性规则：
+ 1. Handle 用于凹和 JS 环境的交互，标记操作的是对象池中的哪个对象
+ 2. ExtObj 用于凹内部保存、传递、复用外部对象的引用
+*/
+type ExtObj struct {
+    _handle: *Handle
+}
+
+/*
+某些外部对象的创建需要调用特定的 JS 方法，比如GpuDevice
+那么这些对象 JS 侧的构造过程是：
+ 1. 创建对象；
+ 2. 将其存入对象池，获取ID
+ 3. 将ID（既对象句柄）返回给凹代码
+由于凹内部一般不直接保存 Handle（见 ExtObj 定义），那么就需要调用下述函数将 Handle 存入 ExtObj 并返回
+*/
+func WrapExtObj(h: Handle) => ExtObj {
+    ph := &h
+    setFinalizer(ph, _handleFinalizer)
+
+    return ExtObj{_handle: ph}
+}
+
+#wa:runtime_getter
+func _getHandle(p: u32) => Handle
+
+func _handleFinalizer(p: u32) {
+    h := _getHandle(p)
+    //println("_handleFinalizer(), 释放 Block:", p, "handle: ", h)
+	jsFreeObj(h)
+}
+
+/*
+创建一个 JS 空对象，返回 ExtObj
+*/
+func NewExtObj() => ExtObj {
+    return WrapExtObj(jsNewObj())        
+}
+
+func GetObjHandle(obj: ExtObj) => Handle {
+    if obj._handle == nil {
+        return Handle(0)
+    }
+    return *obj._handle
+}
+
+/*
+获取 ExtObj 的对象句柄
+*/
+func ExtObj.GetHandle() => Handle {
+    if this._handle == nil {
+        return Handle(0)
+    }
+
+    return *this._handle
+}
+
+func ExtObj.Valid() => bool {
+    return this._handle != nil
+}
+
+/*
+向一个 ExtObj 对象中添加 bool 型的成员，jsSetMember_bool的封装
+*/
+func ExtObj.SetMember_bool(member_name: string, value: bool) {
+    jsSetMember_bool(this.GetHandle(), member_name, value)
+}
+
+/*
+向一个 ExtObj 对象中添加 i32 型的成员，jsSetMember_i32的封装
+*/
+func ExtObj.SetMember_i32(member_name: string, value: i32) {
+    jsSetMember_i32(this.GetHandle(), member_name, value)
+}
+
+/*
+向一个 ExtObj 对象中添加 f32 型的成员，jsSetMember_f32的封装
+*/
+func ExtObj.SetMember_f32(member_name: string, value: f32) {
+    jsSetMember_f32(this.GetHandle(), member_name, value)
+}
+
+/*
+向一个 ExtObj 对象中添加 string 型的成员，jsSetMember_string的封装
+*/
+func ExtObj.SetMember_string(member_name: string, value: string) {
+    jsSetMember_string(this.GetHandle(), member_name, value)
+}
+
+/*
+向一个 ExtObj 对象中添加另一个对象成员，jsSetMember_obj的封装
+*/
+func ExtObj.SetMember_obj(member_name: string, value: ExtObj) {
+    jsSetMember_obj(this.GetHandle(), member_name, value.GetHandle())
+}
+
+/*
+JS 数组对象
+*/
+type ExtArray struct {
+    ExtObj    
+}
+
+/*
+创建一个 JS 空数组，返回 ExtArray
+*/
+func NewExtArray() => ExtArray {
+    return ExtArray{ExtObj: WrapExtObj(jsNewArray())}
+}
+
+/*
+向一个 ExtArray 数组添加一个 i32 型元素，jsAppend_i32的封装
+*/
+func ExtArray.Append_i32(value: i32) {
+    jsAppend_i32(this.GetHandle(), value)
+}
+
+/*
+向一个 ExtArray 数组添加一个 i32 型元素，jsAppend_string的封装
+*/
+func ExtArray.Append_string(value: string) {
+    jsAppend_string(this.GetHandle(), value)
+}
+
+/*
+向一个 ExtArray 数组添加一个对象元素，jsAppend_obj的封装
+*/
+func ExtArray.Append_obj(value: ExtObj) {
+    jsAppend_obj(this.GetHandle(), value.GetHandle())
+}

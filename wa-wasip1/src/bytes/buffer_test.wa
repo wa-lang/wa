@@ -1,0 +1,536 @@
+// 版权 @2023 凹语言 作者。保留所有权利。
+
+// Copyright 2009 The Go Authors. All rights reserved.
+// Use of this source code is governed by a BSD-style
+// license that can be found in the LICENSE file.
+
+import (
+	"io"
+	"unicode/utf8"
+)
+
+const N = 10000       // make this bigger for a larger (and slower) test
+global testString: string // test data for write tests
+global testBytes: []byte  // test data; same as testString but as a slice.
+
+type negativeReader: struct{}
+
+func negativeReader.Read(_: []byte) => (int, error) { return -1, nil }
+
+func init {
+	testBytes = make([]byte, N)
+	for i := 0; i < N; i++ {
+		testBytes[i] = 'a' + byte(i%26)
+	}
+	testString = string(testBytes)
+}
+
+// Verify that contents of buf match the string s.
+func check(testname: string, buf: *Buffer, s: string) {
+	bytes := buf.Bytes()
+	str := buf.String()
+	if buf.Len() != len(bytes) {
+		assert(false)
+		//t.Errorf("%s: buf.Len() == %d, len(buf.Bytes()) == %d", testname, buf.Len(), len(bytes))
+	}
+
+	if buf.Len() != len(str) {
+		assert(false)
+		//t.Errorf("%s: buf.Len() == %d, len(buf.String()) == %d", testname, buf.Len(), len(str))
+	}
+
+	if buf.Len() != len(s) {
+		assert(false)
+		//t.Errorf("%s: buf.Len() == %d, len(s) == %d", testname, buf.Len(), len(s))
+	}
+
+	if string(bytes) != s {
+		assert(false)
+		//t.Errorf("%s: string(buf.Bytes()) == %q, s == %q", testname, string(bytes), s)
+	}
+}
+
+// Fill buf through n writes of string fus.
+// The initial contents of buf corresponds to the string s;
+// the result is the final contents of buf returned as a string.
+func fillString(testname: string, buf: *Buffer, s: string, n: int, fus: string) => string {
+	check(testname+" (fill 1)", buf, s)
+	for ; n > 0; n-- {
+		m, err := buf.WriteString(fus)
+		if m != len(fus) {
+			assert(false)
+			//t.Errorf(testname+" (fill 2): m == %d, expected %d", m, len(fus))
+		}
+		if err != nil {
+			assert(false)
+			//t.Errorf(testname+" (fill 3): err should always be nil, found err == %s", err)
+		}
+		s += fus
+		check(testname+" (fill 4)", buf, s)
+	}
+	return s
+}
+
+// Fill buf through n writes of byte slice fub.
+// The initial contents of buf corresponds to the string s;
+// the result is the final contents of buf returned as a string.
+func fillBytes(testname: string, buf: *Buffer, s: string, n: int, fub: []byte) => string {
+	check(testname+" (fill 1)", buf, s)
+	for ; n > 0; n-- {
+		m, err := buf.Write(fub)
+		if m != len(fub) {
+			assert(false)
+			//t.Errorf(testname+" (fill 2): m == %d, expected %d", m, len(fub))
+		}
+		if err != nil {
+			assert(false)
+			//t.Errorf(testname+" (fill 3): err should always be nil, found err == %s", err)
+		}
+		s += string(fub)
+		check(testname+" (fill 4)", buf, s)
+	}
+	return s
+}
+
+func TestNewBuffer {
+	buf := NewBuffer(testBytes)
+	check("NewBuffer", buf, testString)
+}
+
+func TestNewBufferString {
+	buf := NewBufferString(testString)
+	check("NewBufferString", buf, testString)
+}
+
+// Empty buf through repeated reads into fub.
+// The initial contents of buf corresponds to the string s.
+func empty(testname: string, buf: *Buffer, s: string, fub: []byte) {
+	check(testname+" (empty 1)", buf, s)
+
+	for {
+		n, err := buf.Read(fub)
+		if n == 0 {
+			break
+		}
+		if err != nil {
+			assert(false)
+			//t.Errorf(testname+" (empty 2): err should always be nil, found err == %s", err)
+		}
+		s = s[n:]
+		check(testname+" (empty 3)", buf, s)
+	}
+
+	check(testname+" (empty 4)", buf, "")
+}
+
+func TestBasicOperations {
+	buf: Buffer
+
+	for i := 0; i < 5; i++ {
+		check("TestBasicOperations (1)", &buf, "")
+
+		buf.Reset()
+		check("TestBasicOperations (2)", &buf, "")
+
+		buf.Truncate(0)
+		check("TestBasicOperations (3)", &buf, "")
+
+		n, err := buf.Write(testBytes[0:1])
+		if want := 1; err != nil || n != want {
+			assert(false)
+			//t.Errorf("Write: got (%d, %v), want (%d, %v)", n, err, want, nil)
+		}
+		check("TestBasicOperations (4)", &buf, "a")
+
+		buf.WriteByte(testString[1])
+		check("TestBasicOperations (5)", &buf, "ab")
+
+		n, err = buf.Write(testBytes[2:26])
+		if want := 24; err != nil || n != want {
+			assert(false)
+			//t.Errorf("Write: got (%d, %v), want (%d, %v)", n, err, want, nil)
+		}
+		check("TestBasicOperations (6)", &buf, testString[0:26])
+
+		buf.Truncate(26)
+		check("TestBasicOperations (7)", &buf, testString[0:26])
+
+		buf.Truncate(20)
+		check("TestBasicOperations (8)", &buf, testString[0:20])
+
+		empty("TestBasicOperations (9)", &buf, testString[0:20], make([]byte, 5))
+		empty("TestBasicOperations (10)", &buf, "", make([]byte, 100))
+
+		buf.WriteByte(testString[1])
+		c, err := buf.ReadByte()
+		if want := testString[1]; err != nil || c != want {
+			assert(false)
+			//t.Errorf("ReadByte: got (%q, %v), want (%q, %v)", c, err, want, nil)
+		}
+		c, err = buf.ReadByte()
+		if err != io.EOF {
+			assert(false)
+			//t.Errorf("ReadByte: got (%q, %v), want (%q, %v)", c, err, byte(0), io.EOF)
+		}
+	}
+}
+
+func TestLargeStringWrites {
+	buf: Buffer
+	limit := 30
+	// if testing.Short() {
+	{
+		limit = 9
+	}
+	for i := 3; i < limit; i += 3 {
+		s := fillString("TestLargeWrites (1)", &buf, "", 5, testString)
+		empty("TestLargeStringWrites (2)", &buf, s, make([]byte, len(testString)/i))
+	}
+	check("TestLargeStringWrites (3)", &buf, "")
+}
+
+func TestLargeByteWrites {
+	buf: Buffer
+	limit := 30
+	//if testing.Short() {
+	{
+		limit = 9
+	}
+	for i := 3; i < limit; i += 3 {
+		s := fillBytes("TestLargeWrites (1)", &buf, "", 5, testBytes)
+		empty("TestLargeByteWrites (2)", &buf, s, make([]byte, len(testString)/i))
+	}
+	check("TestLargeByteWrites (3)", &buf, "")
+}
+
+func TestLargeStringReads {
+	buf: Buffer
+	for i := 3; i < 30; i += 3 {
+		s := fillString("TestLargeReads (1)", &buf, "", 5, testString[0:len(testString)/i])
+		empty("TestLargeReads (2)", &buf, s, make([]byte, len(testString)))
+	}
+	check("TestLargeStringReads (3)", &buf, "")
+}
+
+func TestLargeByteReads{
+	buf: Buffer
+	for i := 3; i < 30; i += 3 {
+		s := fillBytes("TestLargeReads (1)", &buf, "", 5, testBytes[0:len(testBytes)/i])
+		empty("TestLargeReads (2)", &buf, s, make([]byte, len(testString)))
+	}
+	check("TestLargeByteReads (3)", &buf, "")
+}
+
+/*
+func TestMixedReadsAndWrites {
+	buf: Buffer
+	s := ""
+	for i := 0; i < 50; i++ {
+		wlen := rand.Intn(len(testString))
+		if i%2 == 0 {
+			s = fillString(t, "TestMixedReadsAndWrites (1)", &buf, s, 1, testString[0:wlen])
+		} else {
+			s = fillBytes(t, "TestMixedReadsAndWrites (1)", &buf, s, 1, testBytes[0:wlen])
+		}
+
+		rlen := rand.Intn(len(testString))
+		fub := make([]byte, rlen)
+		n, _ := buf.Read(fub)
+		s = s[n:]
+	}
+	empty(t, "TestMixedReadsAndWrites (2)", &buf, s, make([]byte, buf.Len()))
+}
+*/
+
+func TestCapWithPreallocatedSlice {
+	buf := NewBuffer(make([]byte, 10))
+	n := buf.Cap()
+	if n != 10 {
+		assert(false)
+		// t.Errorf("expected 10, got %d", n)
+	}
+}
+
+func TestCapWithSliceAndWrittenData {
+	buf := NewBuffer(make([]byte, 0, 10))
+	buf.Write([]byte("test"))
+	n := buf.Cap()
+	if n != 10 {
+		assert(false)
+		//t.Errorf("expected 10, got %d", n)
+	}
+}
+
+func TestNil {
+	b: *Buffer
+	if b.String() != "<nil>" {
+		assert(false)
+		//t.Errorf("expected <nil>; got %q", b.String())
+	}
+}
+
+func TestReadFrom {
+	buf: Buffer
+	for i := 3; i < 30; i += 3 {
+		s := fillBytes("TestReadFrom (1)", &buf, "", 5, testBytes[0:len(testBytes)/i])
+		b: Buffer
+		b.ReadFrom(&buf)
+		empty("TestReadFrom (2)", &b, s, make([]byte, len(testString)))
+	}
+}
+
+func TestWriteTo {
+	buf: Buffer
+	for i := 3; i < 30; i += 3 {
+		s := fillBytes("TestWriteTo (1)", &buf, "", 5, testBytes[0:len(testBytes)/i])
+		b: Buffer
+		buf.WriteTo(&b)
+		empty("TestWriteTo (2)", &b, s, make([]byte, len(testString)))
+	}
+}
+
+func TestRuneIO {
+	const NRune = 1000
+	// Built a test slice while we write the data
+	b := make([]byte, utf8.UTFMax*NRune)
+	buf: Buffer
+	n := 0
+	for r := rune(0); r < NRune; r++ {
+		size := utf8.EncodeRune(b[n:], r)
+		nbytes, err := buf.WriteRune(r)
+		if err != nil {
+			assert(false)
+			//t.Fatalf("WriteRune(%U) error: %s", r, err)
+		}
+		if nbytes != size {
+			assert(false)
+			//t.Fatalf("WriteRune(%U) expected %d, got %d", r, size, nbytes)
+		}
+		n += size
+	}
+	b = b[0:n]
+
+	// Check the resulting bytes
+	if !Equal(buf.Bytes(), b) {
+		assert(false)
+		//t.Fatalf("incorrect result from WriteRune: %q not %q", buf.Bytes(), b)
+	}
+
+	p := make([]byte, utf8.UTFMax)
+	// Read it back with ReadRune
+	for r := rune(0); r < NRune; r++ {
+		size := utf8.EncodeRune(p, r)
+		nr, nbytes, err := buf.ReadRune()
+		if nr != r || nbytes != size || err != nil {
+			assert(false)
+			//t.Fatalf("ReadRune(%U) got %U,%d not %U,%d (err=%s)", r, nr, nbytes, r, size, err)
+		}
+	}
+
+	// Check that UnreadRune works
+	buf.Reset()
+
+	// check at EOF
+	if err := buf.UnreadRune(); err == nil {
+		assert(false)
+		//t.Fatal("UnreadRune at EOF: got no error")
+	}
+	if _, _, err := buf.ReadRune(); err == nil {
+		assert(false)
+		//t.Fatal("ReadRune at EOF: got no error")
+	}
+	if err := buf.UnreadRune(); err == nil {
+		assert(false)
+		//t.Fatal("UnreadRune after ReadRune at EOF: got no error")
+	}
+
+	// check not at EOF
+	buf.Write(b)
+	for r := rune(0); r < NRune; r++ {
+		r1, size, _ := buf.ReadRune()
+		if err := buf.UnreadRune(); err != nil {
+			assert(false)
+			//t.Fatalf("UnreadRune(%U) got error %q", r, err)
+		}
+		r2, nbytes, err := buf.ReadRune()
+		if r1 != r2 || r1 != r || nbytes != size || err != nil {
+			assert(false)
+			//t.Fatalf("ReadRune(%U) after UnreadRune got %U,%d not %U,%d (err=%s)", r, r2, nbytes, r, size, err)
+		}
+	}
+}
+
+func TestWriteInvalidRune {
+	// Invalid runes, including negative ones, should be written as
+	// utf8.RuneError.
+	for _, r := range []rune{-1, utf8.MaxRune + 1} {
+		buf: Buffer
+		buf.WriteRune(r)
+		check("TestWriteInvalidRune", &buf, "\uFFFD")
+	}
+}
+
+func TestNext {
+	b := []byte{0, 1, 2, 3, 4}
+	tmp := make([]byte, 5)
+	for i := 0; i <= 5; i++ {
+		for j := i; j <= 5; j++ {
+			for k := 0; k <= 6; k++ {
+				// 0 <= i <= j <= 5; 0 <= k <= 6
+				// Check that if we start with a buffer
+				// of length j at offset i and ask for
+				// Next(k), we get the right bytes.
+				buf := NewBuffer(b[0:j])
+				n, _ := buf.Read(tmp[0:i])
+				if n != i {
+					assert(false)
+					//t.Fatalf("Read %d returned %d", i, n)
+				}
+				bb := buf.Next(k)
+				want := k
+				if want > j-i {
+					want = j - i
+				}
+				if len(bb) != want {
+					assert(false)
+					//t.Fatalf("in %d,%d: len(Next(%d)) == %d", i, j, k, len(bb))
+				}
+				for l, v := range bb {
+					if v != byte(l+i) {
+						assert(false)
+						//t.Fatalf("in %d,%d: Next(%d)[%d] = %d, want %d", i, j, k, l, v, l+i)
+					}
+				}
+			}
+		}
+	}
+}
+
+
+global readBytesTests = []struct {
+	buffer:   string
+	delim:    byte
+	expected: []string
+	err:      error
+}{
+	{"", 0, []string{""}, io.EOF},
+	{"a\x00", 0, []string{"a\x00"}, nil},
+	{"abbbaaaba", 'b', []string{"ab", "b", "b", "aaab"}, nil},
+	{"hello\x01world", 1, []string{"hello\x01"}, nil},
+	{"foo\nbar", 0, []string{"foo\nbar"}, io.EOF},
+	{"alpha\nbeta\ngamma\n", '\n', []string{"alpha\n", "beta\n", "gamma\n"}, nil},
+	{"alpha\nbeta\ngamma", '\n', []string{"alpha\n", "beta\n", "gamma"}, io.EOF},
+}
+
+func TestReadBytes {
+	for _, test := range readBytesTests {
+		buf := NewBufferString(test.buffer)
+		err: error
+		for _, expected := range test.expected {
+			bytes: []byte
+			bytes, err = buf.ReadBytes(test.delim)
+			if string(bytes) != expected {
+				assert(false)
+				//t.Errorf("expected %q, got %q", expected, bytes)
+			}
+			if err != nil {
+				break
+			}
+		}
+		if err != test.err {
+			assert(false)
+			//t.Errorf("expected error %v, got %v", test.err, err)
+		}
+	}
+}
+
+func TestReadString {
+	for _, test := range readBytesTests {
+		buf := NewBufferString(test.buffer)
+		err: error
+		for _, expected := range test.expected {
+			s: string
+			s, err = buf.ReadString(test.delim)
+			if s != expected {
+				assert(false)
+				//t.Errorf("expected %q, got %q", expected, s)
+			}
+			if err != nil {
+				break
+			}
+		}
+		if err != test.err {
+			assert(false)
+			//t.Errorf("expected error %v, got %v", test.err, err)
+		}
+	}
+}
+
+func TestGrow {
+	// TODO
+}
+
+// Was a bug: used to give EOF reading empty slice at EOF.
+func TestReadEmptyAtEOF {
+	b := new(Buffer)
+	slice := make([]byte, 0)
+	n, err := b.Read(slice)
+	if err != nil {
+		assert(false)
+		//t.Errorf("read error: %v", err)
+	}
+	if n != 0 {
+		assert(false)
+		//t.Errorf("wrong count; got %d want 0", n)
+	}
+}
+
+func TestUnreadByte {
+	b := new(Buffer)
+
+	// check at EOF
+	if err := b.UnreadByte(); err == nil {
+		assert(false)
+		//t.Fatal("UnreadByte at EOF: got no error")
+	}
+	if _, err := b.ReadByte(); err == nil {
+		assert(false)
+		//t.Fatal("ReadByte at EOF: got no error")
+	}
+	if err := b.UnreadByte(); err == nil {
+		assert(false)
+		//t.Fatal("UnreadByte after ReadByte at EOF: got no error")
+	}
+
+	// check not at EOF
+	b.WriteString("abcdefghijklmnopqrstuvwxyz")
+
+	// after unsuccessful read
+	if n, err := b.Read(nil); n != 0 || err != nil {
+		assert(false)
+		//t.Fatalf("Read(nil) = %d,%v; want 0,nil", n, err)
+	}
+	if err := b.UnreadByte(); err == nil {
+		assert(false)
+		//t.Fatal("UnreadByte after Read(nil): got no error")
+	}
+
+	// after successful read
+	if _, err := b.ReadBytes('m'); err != nil {
+		assert(false)
+		//t.Fatalf("ReadBytes: %v", err)
+	}
+	if err := b.UnreadByte(); err != nil {
+		assert(false)
+		//t.Fatalf("UnreadByte: %v", err)
+	}
+	c, err := b.ReadByte()
+	if err != nil {
+		assert(false)
+		//t.Fatalf("ReadByte: %v", err)
+	}
+	if c != 'm' {
+		assert(false)
+		//t.Errorf("ReadByte = %q; want %q", c, 'm')
+	}
+}

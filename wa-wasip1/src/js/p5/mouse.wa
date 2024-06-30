@@ -1,0 +1,51 @@
+// 版权 @2024 凹语言 作者。保留所有权利。
+
+const (
+	LEFT   = 0 // 鼠标左键
+	RIGHT  = 1 // 鼠标右键
+	CENTER = 2 // 鼠标中键
+)
+
+global (
+	MouseIsOut     :bool // 鼠标是否离开
+	MouseIsPressed :bool // 鼠标是否被按下
+	MouseButton    :int  // 鼠标按键
+	PMouseX        :int  // 前一帧鼠标位置信息
+	PMouseY        :int  // 前一帧鼠标位置信息
+	MouseX         :int  // 当前帧鼠标位置信息
+	MouseY         :int  // 当前帧鼠标位置信息
+)
+
+// 鼠标进入
+#wa:export p5js_onMouseEnter
+func onMouseEnter {
+	MouseIsOut = false
+}
+
+// 鼠标离开
+#wa:export p5js_onMouseLeave
+func onMouseLeave {
+	MouseIsOut = true
+}
+
+// 鼠标按下
+#wa:export p5js_onMouseDown
+func onMouseDown(button, x, y: i32) {
+	MouseIsPressed = true
+	MouseButton = int(button)
+	MouseX = int(x)
+	MouseY = int(y)
+}
+
+// 鼠标松开
+#wa:export p5js_onMouseUp
+func onMouseUp {
+	MouseIsPressed = false
+}
+
+// 鼠标移动
+#wa:export p5js_onMouseMoved
+func onMouseMoved(x, y: i32) {
+	MouseX = int(x)
+	MouseY = int(y)
+}

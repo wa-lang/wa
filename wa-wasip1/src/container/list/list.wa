@@ -1,0 +1,172 @@
+// 版权 @2024 凹语言 作者。保留所有权利。
+
+type Element struct {
+	next, prev: *Element
+	list:       *List
+
+	Value: interface{}
+}
+
+func Element.Next => *Element { return this.next }
+
+func Element.Prev => *Element { return this.prev }
+
+type List struct {
+	front, back: *Element
+	len:         int
+}
+
+func List.Init => *List {
+	this.front = nil
+	this.back = nil
+	this.len = 0
+	return this
+}
+
+func New => *List { return new(List) }
+
+func List.Front => *Element { return this.front }
+
+func List.Back => *Element { return this.back }
+
+func List.Remove(e: *Element) => interface{} {
+	this.remove(e)
+	e.list = nil
+	return e.Value
+}
+
+func List.remove(e: *Element) {
+	if e.list != this {
+		return
+	}
+	if e.prev == nil {
+		this.front = e.next
+	} else {
+		e.prev.next = e.next
+	}
+	if e.next == nil {
+		this.back = e.prev
+	} else {
+		e.next.prev = e.prev
+	}
+
+	e.prev = nil
+	e.next = nil
+	this.len--
+}
+
+func List.insertBefore(e: *Element, mark: *Element) {
+	if mark.prev == nil {
+
+		this.front = e
+	} else {
+		mark.prev.next = e
+	}
+	e.prev = mark.prev
+	mark.prev = e
+	e.next = mark
+	this.len++
+}
+
+func List.insertAfter(e: *Element, mark: *Element) {
+	if mark.next == nil {
+
+		this.back = e
+	} else {
+		mark.next.prev = e
+	}
+	e.next = mark.next
+	mark.next = e
+	e.prev = mark
+	this.len++
+}
+
+func List.insertFront(e: *Element) {
+	if this.front == nil {
+
+		this.front, this.back = e, e
+		e.prev, e.next = nil, nil
+		this.len = 1
+		return
+	}
+	this.insertBefore(e, this.front)
+}
+
+func List.insertBack(e: *Element) {
+	if this.back == nil {
+
+		this.front, this.back = e, e
+		e.prev, e.next = nil, nil
+		this.len = 1
+		return
+	}
+	this.insertAfter(e, this.back)
+}
+
+func List.PushFront(value: interface{}) => *Element {
+	e := &Element{nil, nil, this, value}
+	this.insertFront(e)
+	return e
+}
+
+func List.PushBack(value: interface{}) => *Element {
+	e := &Element{nil, nil, this, value}
+	this.insertBack(e)
+	return e
+}
+
+func List.InsertBefore(value: interface{}, mark: *Element) => *Element {
+	if mark.list != this {
+		return nil
+	}
+	e := &Element{nil, nil, this, value}
+	this.insertBefore(e, mark)
+	return e
+}
+
+func List.InsertAfter(value: interface{}, mark: *Element) => *Element {
+	if mark.list != this {
+		return nil
+	}
+	e := &Element{nil, nil, this, value}
+	this.insertAfter(e, mark)
+	return e
+}
+
+func List.MoveToFront(e: *Element) {
+	if e.list != this || this.front == e {
+		return
+	}
+	this.remove(e)
+	this.insertFront(e)
+}
+
+func List.MoveToBack(e: *Element) {
+	if e.list != this || this.back == e {
+		return
+	}
+	this.remove(e)
+	this.insertBack(e)
+}
+
+func List.Len => int { return this.len }
+
+func List.PushBackList(ol: *List) {
+	last := ol.Back()
+	for e := ol.Front(); e != nil; e = e.Next() {
+		this.PushBack(e.Value)
+		if e == last {
+			break
+		}
+	}
+}
+
+func List.PushFrontList(ol: *List) {
+	first := ol.Front()
+	for e := ol.Back(); e != nil; e = e.Prev() {
+		this.PushFront(e.Value)
+		if e == first {
+			break
+		}
+	}
+}

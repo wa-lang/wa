@@ -1,0 +1,171 @@
+
+import "js"
+
+//---------------------------------------------------------------
+
+type BufferUsage u32
+
+const (
+    BufferUsage_MAP_READ:       BufferUsage = 1
+    BufferUsage_MAP_WRITE:      BufferUsage = 2
+    BufferUsage_COPY_SRC:       BufferUsage = 4
+    BufferUsage_COPY_DST:       BufferUsage = 8
+    BufferUsage_INDEX:          BufferUsage = 16
+    BufferUsage_VERTEX:         BufferUsage = 32
+    BufferUsage_UNIFORM:        BufferUsage = 64
+    BufferUsage_STORAGE:        BufferUsage = 128
+    BufferUsage_INDIRECT:       BufferUsage = 256
+    BufferUsage_QUERY_RESOLVE:  BufferUsage = 512
+)
+
+//---------------------------------------------------------------
+
+type MapState i32
+
+const (
+    MapState_unmapped: MapState = iota
+    MapState_pending
+    MapState_mapped
+)
+
+//---------------------------------------------------------------
+
+type MapMode i32
+const (
+    MapMode_READ: MapMode = 1
+    MapMode_WRITE: MapMode = 2
+)
+
+//---------------------------------------------------------------
+
+type BufferDesc struct {
+    Label:            string
+    MappedAtCreation: bool
+    Size:             int
+    Usage:            BufferUsage
+}
+
+//---------------------------------------------------------------
+
+type bufferMapContex struct {
+    mapped: bool
+    mappedRange: []byte
+}
+
+// 不能使用该类型直接声明值，需通过 Device.CreateBuffer() 创建
+#wa:need-constructor
+type Buffer struct {
+    _extobj: js.ExtObj
+    mapContex: *bufferMapContex
+}
+
+// 返回 Buffer 的标签
+func Buffer.Label() => string {
+    return jsObjGetLabel(this._extobj.GetHandle())
+}
+
+// 返回 Buffer 的映射状态
+func Buffer.MapState() => MapState {
+    return jsBufferMapState(this._extobj.GetHandle())
+}
+#wa:import webgpu buffer_map_state
+func jsBufferMapState(buffer: js.Handle) => MapState
+
+// 返回 Buffer 的大小（以字节为单位）
+func Buffer.Size() => i32 {
+    return jsBufferSize(this._extobj.GetHandle())
+}
+#wa:import webgpu buffer_size
+func jsBufferSize(buffer: js.Handle) => i32
+
+// 返回 Buffer 的用途
+func Buffer.Usage() => BufferUsage {
+    return jsBufferUsage(this._extobj.GetHandle())
+}
+#wa:import webgpu buffer_usage
+func jsBufferUsage(buffer: js.Handle) => BufferUsage
+
+// 异步映射
+#wa:generic MapAysnc_Handler
+func Buffer.MapAsync(mode: MapMode, mapper: BufferMapper) {
+    if mapper == nil {
+        panic("BufferMapper can't be nil.")
+    }
+    tid := asyncTasks.Alloc(this, mapper)
+    jsBufferMapAsync(tid, this._extobj.GetHandle(), mode)
+}
+type BufferMapper interface {
+    OnMapped(b: Buffer, ok: bool)
+}
+
+func Buffer.MapAysnc_Handler(mode: MapMode, handler: BufferMapHandler) {
+    if handler == nil {
+        panic("BufferMapHandler can't be nil.")
+    }
+    tid := asyncTasks.Alloc(this, handler)
+    jsBufferMapAsync(tid, this._extobj.GetHandle(), mode)
+}
+type BufferMapHandler func(b: Buffer, ok: bool)
+
+#wa:import webgpu buffer_map_async
+func jsBufferMapAsync(tid: int, buffer: js.Handle, mode: MapMode)
+
+#wa:export gpu.onBufferMapped
+func onBufferMapped(tid: int, ok: bool, data: []byte) {
+    source, handler := asyncTasks.Get(tid)
+
+    buffer := source.(Buffer)
+    buffer.mapContex.mapped = ok
+    buffer.mapContex.mappedRange = data
+
+    switch h := handler.(type) {
+    case BufferMapper:
+        h.OnMapped(buffer, ok)
+
+    case BufferMapHandler:
+        h(buffer, ok)
+    }
+
+    asyncTasks.Free(tid)
+}
+
+// 获取已映射的 Buffer 的数据块
+#wa:generic GetMappedRange_Offset GetMappedRange_OffsetSize
+func Buffer.GetMappedRange() => []byte {
+    if !this.mapContex.mapped {
+        panic("Not mapped.")
+    }
+    return this.mapContex.mappedRange
+}
+
+func Buffer.GetMappedRange_Offset(offset: int) => []byte {
+    if !this.mapContex.mapped {
+        panic("Not mapped.")
+    }
+
+    return this.mapContex.mappedRange[offset:]
+}
+
+func Buffer.GetMappedRange_OffsetSize(offset, size: int) => []byte {
+    if !this.mapContex.mapped {
+        panic("Not mapped.")
+    }
+
+    return this.mapContex.mappedRange[offset:offset + size]
+}
+
+#wa:import webgpu buffer_get_mapped_range
+func jsBufferGetMappedRange(buffer: js.Handle) => []byte
+
+// 撤销映射
+func Buffer.Unmap() {
+    if !this.mapContex.mapped {
+        return
+    }
+
+    jsBufferUnmap(this._extobj.GetHandle(), this.mapContex.mappedRange)
+    this.mapContex.mapped = false
+    this.mapContex.mappedRange = nil
+}
+#wa:import webgpu buffer_unmap
+func jsBufferUnmap(bh: js.Handle, mappedRange: []byte)

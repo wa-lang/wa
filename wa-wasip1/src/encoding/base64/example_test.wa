@@ -1,0 +1,17 @@
+// 版权 @2023 凹语言 作者。保留所有权利。
+
+func ExampleHello {
+	msg := "Hello, 世界"
+	encoded := StdEncoding.EncodeToString([]byte(msg))
+	println(encoded)
+	decoded, err := StdEncoding.DecodeString(encoded)
+	if err != nil {
+		println("decode error:", err.Error())
+		return
+	}
+	println(string(decoded))
+
+	// Output:
+	// SGVsbG8sIOS4lueVjA==
+	// Hello, 世界
+}

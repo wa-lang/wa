@@ -1,0 +1,316 @@
+// 版权 @2023 凹语言 作者。保留所有权利。
+
+import (
+	"math/bits"
+)
+
+type nat struct {
+	Data: []uint
+}
+
+func natFromString(s: string) => nat {
+	temp := &nat{nil}
+	return temp.setString(s)
+}
+
+// 这个方法是临时使用的, 用于部分内容的测试
+func nat.setString(s: string) => nat {
+	// 长度应该是超过的
+	z := this.make((len(s) + _S - 1) / _S)
+	val: uint = 0
+	for i := 0; i < len(s); i++ {
+		if s[i] < '0' || s[i] > '9' {
+			panic("bad big integer string")
+		}
+		val = uint(s[i] - '0')
+		z = z.mulAddWW(z, 10, val)
+		val = 0
+	}
+
+	return z.norm()
+}
+
+func nat.clear() {
+	for i := range this.Data {
+		this.Data[i] = 0
+	}
+}
+
+global (
+	natOne = nat{Data: []uint{1}}
+)
+
+// 临时使用
+func nat.raw_print() {
+	print("raw_nat: {")
+	for i := range this.Data {
+		print(this.Data[i])
+		if i != len(this.Data)-1 {
+			print(",")
+		}
+	}
+	println("}")
+}
+
+func nat.norm() => nat {
+	i := len(this.Data)
+	for i > 0 && this.Data[i-1] == 0 {
+		i--
+	}
+	return nat{Data: this.Data[0:i]}
+}
+
+func nat.make(n: int) => nat {
+	if n <= cap(this.Data) {
+		return nat{Data: this.Data[:n]} // reuse this.Data
+	}
+	if n == 1 {
+		// Most nats start small and stay that way; don't over-allocate.
+		return nat{Data: make([]uint, 1)}
+	}
+	// Choosing a good value for e has significant performance impact
+	// because it increases the chance that a value can be reused.
+	const e = 4 // extra capacity
+	return nat{Data: make([]uint, n, n+e)}
+}
+
+func nat.setWord(x: uint) => nat {
+	if x == 0 {
+		return nat{Data: this.Data[:0]}
+	}
+	z := this.make(1)
+	z.Data[0] = x
+	return z
+}
+
+func nat.set(x: nat) => nat {
+	z := this.make(len(x.Data))
+	copy(z.Data, x.Data)
+
+	return z
+}
+
+func nat.add(x, y: nat) => nat {
+	m := len(x.Data)
+	n := len(y.Data)
+
+	switch {
+	case m < n:
+		return this.add(y, x)
+	case m == 0:
+		// n == 0 because m >= n; result is 0
+		return nat{Data: this.Data[:0]}
+	case n == 0:
+		// result is x
+		return this.set(x)
+	}
+	// m > 0
+	z := this.make(m + 1)
+	c := addVV(z.Data[0:n], x.Data, y.Data)
+	if m > n {
+		c = addVW(z.Data[n:m], x.Data[n:], c)
+	}
+	z.Data[m] = c
+
+	return z.norm()
+}
+
+func nat.sub(x, y: nat) => nat {
+	m := len(x.Data)
+	n := len(y.Data)
+	switch {
+	case m < n:
+		panic("underflow")
+	case m == 0:
+		// n == 0 because m >= n; result is 0
+		return nat{Data: this.Data[:0]}
+	case n == 0:
+		// result is x
+		return this.set(x)
+	}
+	// m > 0
+	z := this.make(m)
+	c := subVV(z.Data[0:n], x.Data, y.Data)
+	if m > n {
+		c = subVW(z.Data[n:], x.Data[n:], c)
+	}
+	if c != 0 {
+		panic("underflow")
+	}
+	return z.norm()
+}
+
+func nat.cmp(y: nat) => int {
+	r := 0
+	m := len(this.Data)
+	n := len(y.Data)
+	if m != n || m == 0 {
+		switch {
+		case m < n:
+			r = -1
+		case m > n:
+			r = 1
+		}
+		return r
+	}
+	i := m - 1
+	for i > 0 && this.Data[i] == y.Data[i] {
+		i--
+	}
+	switch {
+	case this.Data[i] < y.Data[i]:
+		r = -1
+	case this.Data[i] > y.Data[i]:
+		r = 1
+	}
+	return r
+}
+
+func nat.mulAddWW(x: nat, y, r: uint) => nat {
+	m := len(x.Data)
+	if m == 0 || y == 0 {
+		return this.setWord(r) // result is r
+	}
+	// m > 0
+
+	z := this.make(m + 1)
+	z.Data[m] = mulAddVWW(z.Data[:m], x.Data, y, r)
+	return z.norm()
+}
+
+// basicMul multiplies x and y and leaves the result in z.
+// The (non-normalized) result is placed in z[0 : len(x) + len(y)].
+func basicMul(z, x, y: nat) {
+	// z.Data[:len(x.Data)+len(y.Data)].clear()
+	// initialize z
+	t := nat{Data: z.Data[:len(x.Data)+len(y.Data)]}
+	t.clear()
+
+	for i, d := range y.Data {
+		if d != 0 {
+			z.Data[len(x.Data)+i] = addMulVVW(z.Data[i:i+len(x.Data)], x.Data, d)
+		}
+	}
+}
+
+// alias reports whether x and y share the same base array.
+// Note: alias assumes that the capacity of underlying arrays
+//       is never changed for nat values; i.e. that there are
+//       no 3-operand slice expressions in this code (or worse,
+//       reflect-based operations to the same effect).
+func alias(x, y: nat) => bool {
+	x_cap := cap(x.Data)
+	y_cap := cap(y.Data)
+	return x_cap > 0 && y_cap > 0 && &x.Data[:x_cap][x_cap-1] == &y.Data[:y_cap][y_cap-1]
+}
+
+// addAt implements z += x<<(_W*i); z must be long enough.
+// (we don't use nat.add because we need z to stay the same
+// slice, and we don't need to normalize z after each addition)
+func addAt(z, x: nat, i: int) {
+	if n := len(x.Data); n > 0 {
+		if c := addVV(z.Data[i:i+n], z.Data[i:], x.Data); c != 0 {
+			j := i + n
+			if j < len(z.Data) {
+				addVW(z.Data[j:], z.Data[j:], c)
+			}
+		}
+	}
+}
+
+func nat.mul(x, y: nat) => nat {
+	m := len(x.Data)
+	n := len(y.Data)
+	switch {
+	case m < n:
+		return this.mul(y, x)
+	case m == 0 || n == 0:
+		return nat{Data: this.Data[:0]}
+	case n == 1:
+		return this.mulAddWW(x, y.Data[0], 0)
+	}
+	// m >= n > 1
+
+	// determine if z can be reused
+	if alias(*this, x) || alias(*this, y) {
+		// 空指针操作
+		this = nil // z is an alias for x or y - cannot reuse
+	}
+
+	z := this.make(m + n)
+	basicMul(z, x, y)
+	return z.norm()
+}
+
+func getNat(n: int) => *nat {
+	r := (&nat{}).make(n)
+	return &r
+}
+
+func putNat(x: *nat) {
+	// panic("todo")
+}
+
+func nat.bitLen() => int {
+	if i := len(this.Data) - 1; i >= 0 {
+		return i*_W + bits.Len(uint(this.Data[i]))
+	}
+	return 0
+}
+
+// bytes writes the value of z into buf using big-endian encoding.
+// The value of z is encoded in the slice buf[i:]. If the value of z
+// cannot be represented in buf, bytes panics. The number i of unused
+// bytes at the beginning of buf is returned as result.
+func nat.bytes(buf: []byte) => int {
+	i := len(buf)
+	for _, d := range this.Data {
+		for j := 0; j < _S; j++ {
+			i--
+			if i >= 0 {
+				buf[i] = byte(d)
+			} else if byte(d) != 0 {
+				panic("math/big: buffer too small to fit value")
+			}
+			d >>= 8
+		}
+	}
+
+	if i < 0 {
+		i = 0
+	}
+	for i < len(buf) && buf[i] == 0 {
+		i++
+	}
+	return i
+}
+
+// bigEndianWord returns the contents of buf interpreted as a big-endian encoded Word value.
+func bigEndianWord(buf: []byte) => uint {
+	if _W == 64 {
+		return uint(Buf2Uint64(buf))
+	}
+	return uint(Buf2Uint32(buf))
+}
+
+// setBytes interprets buf as the bytes of a big-endian unsigned
+// integer, sets z to that value, and returns z.
+func nat.setBytes(buf: []byte) => nat {
+	z := this.make((len(buf) + _S - 1) / _S)
+	i := len(buf)
+	for k := 0; i >= _S; k++ {
+		z.Data[k] = bigEndianWord(buf[i-_S : i])
+		i -= _S
+	}
+
+	if i > 0 {
+		d: uint = 0
+		for s := uint(0); i > 0; s += 8 {
+			d |= uint(buf[i-1]) << s
+			i--
+		}
+		z.Data[len(z.Data)-1] = d
+	}
+
+	return z.norm()
+}

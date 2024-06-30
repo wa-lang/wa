@@ -1,0 +1,25 @@
+// 版权 @2023 凹语言 作者。保留所有权利。
+
+global (
+	DefaultPrintI32  :func(i: i32)
+	DefaultPrintRune :func(ch: i32)
+	DefaultPuts      :func(ptr: i32, len: i32)
+)
+
+func PrintI32(i: i32) {
+	if DefaultPrintI32 != nil {
+		DefaultPrintI32(i)
+	}
+}
+
+func PrintRune(ch: i32) {
+	if DefaultPrintRune != nil {
+		DefaultPrintRune(ch)
+	}
+}
+
+func Puts(ptr: i32, len: i32) {
+	if DefaultPuts != nil {
+		DefaultPuts(ptr, len)
+	}
+}

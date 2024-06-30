@@ -1,0 +1,94 @@
+// 版权 @2022 凹语言 作者。保留所有权利。
+
+#wa:import wasi_snapshot_preview1 fd_advise
+func FdAdvise(fd: i32, offset: i64, len: i64, result_advice: i32) => (errno: i32)
+
+#wa:import wasi_snapshot_preview1 fd_allocate
+func FdAllocate(fd: i32, offset: i64, len: i64) => (errno: i32)
+
+#wa:import wasi_snapshot_preview1 fd_close
+func FdClose(fd: i32) => (errno: i32)
+
+#wa:import wasi_snapshot_preview1 fd_datasync
+func FdDatasync(fd: i32) => (errno: i32)
+
+#wa:import wasi_snapshot_preview1 fd_fdstat_get
+func FdFdstatGet(fd: i32, result_stat: i32) => (errno: i32)
+
+#wa:import wasi_snapshot_preview1 fd_fdstat_set_flags
+func FdFdstatSetFlags(fd: i32, flags: i32) => (errno: i32)
+
+#wa:import wasi_snapshot_preview1 fd_fdstat_set_rights
+func FdFdstatSetRights(fd: i32, fs_rights_base: i64, fs_rights_inheriting: i64) => (errno: i32)
+
+#wa:import wasi_snapshot_preview1 fd_filestat_get
+func FdFilestatGet(fd: i32, result_buf: i32) => (errno: i32)
+
+#wa:import wasi_snapshot_preview1 fd_filestat_set_size
+func FdFilestatSetSize(fd: i32, size: i64) => (errno: i32)
+
+#wa:import wasi_snapshot_preview1 fd_filestat_set_times
+func FdFilestatSetTimes(fd: i32, atim: i64, mtim: i64, fst_flags: i32) => (errno: i32)
+
+#wa:import wasi_snapshot_preview1 fd_pread
+func FdPread(fd: i32, iovs: i32, iovs_len: i32, offset: i64, result_size: i32) => (errno: i32)
+
+#wa:import wasi_snapshot_preview1 fd_prestat_get
+func FdPrestatGet(fd: i32, result_prestat: i32) => (errno: i32)
+
+#wa:import wasi_snapshot_preview1 fd_prestat_dir_name
+func FdPrestatDirName(fd: i32, path: i32, path_len: i32) => (errno: i32)
+
+#wa:import wasi_snapshot_preview1 fd_pwrite
+func FdPwrite(fd: i32, iovs: i32, iovs_len: i32, offset: i64, result_nwritten: i32) => (errno: i32)
+
+#wa:import wasi_snapshot_preview1 fd_read
+func FdRead(fd: i32, iovs: i32, iovs_len: i32, result_size: i32) => (errno: i32)
+
+#wa:import wasi_snapshot_preview1 fd_readdir
+func FdReaddir(fd: i32, buf: i32, buf_len: i32, cookie: i64, result_bufused: i32) => (errno: i32)
+
+#wa:import wasi_snapshot_preview1 fd_renumber
+func FdRenumber(fd: i32, to: i32) => (errno: i32)
+
+#wa:import wasi_snapshot_preview1 fd_seek
+func FdSeek(fd: i32, offset: i64, whence: i32, result_newoffset: i32) => (errno: i32)
+
+#wa:import wasi_snapshot_preview1 fd_sync
+func FdSync(fd: i32) => (errno: i32)
+
+#wa:import wasi_snapshot_preview1 fd_tell
+func FdTell(fd: i32, result_offset: i32) => (errno: i32)
+
+#wa:import wasi_snapshot_preview1 fd_write
+func FdWrite(fd: i32, io: i32, iovs_len: i32, nwritten: i32) => (errno: i32)
+
+#wa:import wasi_snapshot_preview1 path_create_directory
+func PathCreateDirectory(fd: i32, path: i32, path_len: i32) => (errno: i32)
+
+#wa:import wasi_snapshot_preview1 path_filestat_get
+func PathFilestatGet(fd: i32, flags: i32, path: i32, path_len: i32, result_buf: i32) => (errno: i32)
+
+#wa:import wasi_snapshot_preview1 path_filestat_set_times
+func PathFilestatSetTimes(fd: i32, flags: i32, path: i32, path_len: i32, atim: i64, mtim: i64, fst_flags: i32) => (errno: i32)
+
+#wa:import wasi_snapshot_preview1 path_link
+func PathLink(old_fd, old_flags, old_path, old_path_len, new_fd, new_path, new_path_len: i32) => (errno: i32)
+
+#wa:import wasi_snapshot_preview1 path_open
+func PathOpen(fd, dirflags, path, path_len, oflags: i32, fs_rights_base: i64, fs_rights_inheriting: i64, fdflags, result_opened_fd: i32) => (errno: i32)
+
+#wa:import wasi_snapshot_preview1 path_readlink
+func PathReadlink(fd, path, path_len, buf, buf_len, result_bufused: i32) => (errno: i32)
+
+#wa:import wasi_snapshot_preview1 path_remove_directory
+func PathRemoveDirectory(fd, path, path_len: i32) => (errno: i32)
+
+#wa:import wasi_snapshot_preview1 path_rename
+func PathRename(fd, old_path, old_path_len, new_fd, new_path, new_path_len: i32) => (errno: i32)
+
+#wa:import wasi_snapshot_preview1 path_symlink
+func PathSymlink(old_path, old_path_len, fd, new_path, new_path_len: i32) => (errno: i32)
+
+#wa:import wasi_snapshot_preview1 path_unlink_file
+func PathUnlinkFile(fd, path, path_len: i32) => (errno: i32)

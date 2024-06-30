@@ -1,0 +1,84 @@
+// 版权 @2023 凹语言 作者。保留所有权利。
+
+import "bytes"
+
+type atobTest struct {
+	in:  string
+	out: bool
+	err: error
+}
+
+global atobtests = [...]atobTest{
+	{"", false, ErrSyntax},
+	{"asdf", false, ErrSyntax},
+	{"0", false, nil},
+	{"f", false, nil},
+	{"F", false, nil},
+	{"FALSE", false, nil},
+	{"false", false, nil},
+	{"False", false, nil},
+	{"1", true, nil},
+	{"t", true, nil},
+	{"T", true, nil},
+	{"TRUE", true, nil},
+	{"true", true, nil},
+	{"True", true, nil},
+}
+
+func TestParseBool {
+	for _, test := range atobtests {
+		b, e := ParseBool(test.in)
+		if test.err != nil {
+			// expect an error
+			if e == nil {
+				println(test.in + ": expected " + test.err.Error() + "but got nil")
+				assert(false)
+			} else {
+				// NumError assertion must succeed; it's the only thing we return.
+				if test.err != e.(*NumError).Err {
+					println(test.in + ": expected " + test.err.Error() + " but got " + e.Error())
+					assert(false)
+				}
+			}
+		} else {
+			if e != nil {
+				println(test.in + ": expected no error but got " + e.Error())
+				assert(false)
+			}
+			if b != test.out {
+				println("%s: expected "+test.in+" but got ", b)
+				assert(false)
+			}
+		}
+	}
+}
+
+func TestFormatBool {
+	if f := FormatBool(true); f != "true" {
+		assert(false, "FormatBool(true) failed")
+	}
+	if f := FormatBool(false); f != "false" {
+		assert(false, "FormatBool(false) failed")
+	}
+}
+
+type appendBoolTest struct {
+	b:   bool
+	in:  []byte
+	out: []byte
+}
+
+global appendBoolTests = [...]appendBoolTest{
+	{true, []byte("foo "), []byte("foo true")},
+	{false, []byte("foo "), []byte("foo false")},
+}
+
+func TestAppendBool {
+	for _, test := range appendBoolTests {
+		b := AppendBool(test.in, test.b)
+		if !bytes.Equal(b, test.out) {
+			println(string(test.in), test.b, string(test.out), string(b))
+			assert(false, "AppendBool failed")
+		}
+	}
+}

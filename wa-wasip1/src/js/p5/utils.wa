@@ -1,0 +1,8 @@
+// 版权 @2024 凹语言 作者。保留所有权利。
+
+// 角度转弧度
+func Radians(angle: f32) => f32 {
+	const PI = 3.1415926
+	const DEG_TO_RAD = PI / 180
+	return angle * DEG_TO_RAD
+}

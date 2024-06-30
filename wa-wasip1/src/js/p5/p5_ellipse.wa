@@ -1,0 +1,40 @@
+// 版权 @2024 凹语言 作者。保留所有权利。
+
+import (
+	"image"
+	"image/color"
+	"math"
+)
+
+// https://www.codeproject.com/articles/21039/ellipse-drawing-algorithm
+
+func p5DrawEllipse(p: *image.RGBA, x, y, w, h: int, c: color.RGBA) {
+	const nSeg = 30
+	const pi = 3.1415926
+
+	x0, y0, xi, yi, xi_1, yi_1: f64
+
+	for i := 0; i < (nSeg); i++ {
+		xi = (f64(w) / 2) * math.Cos((f64(i)/nSeg)*(pi*2))
+		yi = (f64(h) / 2) * math.Sin((f64(i)/nSeg)*(pi*2))
+
+		if i == 0 {
+			xi_1, yi_1 = xi, yi
+			x0, y0 = xi, yi
+			continue
+		}
+
+		p5DrawLine(p,
+			int(xi_1+f64(x+w/2)), int(yi_1+f64(y+h/2)),
+			int(xi+f64(x+w/2)), int(yi+f64(y+h/2)),
+			c,
+		)
+		xi_1, yi_1 = xi, yi
+	}
+
+	p5DrawLine(p,
+		int(x0+f64(x+w/2)), int(y0+f64(y+h/2)),
+		int(xi+f64(x+w/2)), int(yi+f64(y+h/2)),
+		c,
+	)
+}

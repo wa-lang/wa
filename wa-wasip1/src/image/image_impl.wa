@@ -1,0 +1,35 @@
+// 版权 @2023 凹语言 作者。保留所有权利。
+
+import "image/color"
+
+func NewGray(w, h: int) => *Gray {
+	return &Gray{
+		Width:  w,
+		Height: h,
+		Pix:    make([]color.Gray, w*h),
+	}
+}
+
+func Gray.GrayAt(x, y: int) => color.Gray {
+	return this.Pix[y*this.Width+x]
+}
+
+func Gray.SetGray(x, y: int, c: color.Gray) {
+	this.Pix[y*this.Width+x] = c
+}
+
+func NewRGBA(w, h: int) => *RGBA {
+	return &RGBA{
+		Width:  w,
+		Height: h,
+		Pix:    make([]color.RGBA, w*h),
+	}
+}
+
+func RGBA.RGBAAt(x, y: int) => color.RGBA {
+	return this.Pix[y*this.Width+x]
+}
+
+func RGBA.SetRGBA(x, y: int, c: color.RGBA) {
+	this.Pix[y*this.Width+x] = c
+}

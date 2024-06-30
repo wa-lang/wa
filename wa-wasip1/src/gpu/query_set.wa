@@ -1,0 +1,20 @@
+
+import "js"
+
+//---------------------------------------------------------------
+
+// 不能使用该类型直接声明值。
+#wa:need-constructor
+type QuerySet struct {
+    _extobj: js.ExtObj
+}
+
+//func QuerySet.Count() - Todo
+
+// 返回标签
+func QuerySet.Label() => string {
+    return jsObjGetLabel(this._extobj.GetHandle())
+}
+
+//func QuerySet.Type() - Todo
+//func QuerySet.Destroy() - Todo

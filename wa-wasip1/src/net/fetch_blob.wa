@@ -1,0 +1,45 @@
+// 版权 @2024 凹语言 作者。保留所有权利。
+
+import "js"
+
+type BlobFetcher interface {
+    OnDone(resource: string, ok: bool, status: u32, data: []byte)
+}
+
+type BlobHandler func(resource: string, ok: bool, status: u32, data: []byte)
+
+/*
+*/
+#wa:import net fetch_blob
+func jsFetchBlob(tid: int, resource: string)
+#wa:generic FetchBlobWithHandler
+func FetchBlob(resource: string, fetcher: BlobFetcher) {
+    if fetcher == nil {
+        panic("Fetcher can't be nil.")
+    }
+    tid := fetchTasks.Alloc(resource, fetcher)
+    jsFetchBlob(tid, resource)
+}
+
+func FetchBlobWithHandler(resource: string, handler: BlobHandler) {
+    if handler == nil {
+        panic("Handler can't be nil.")
+    }
+    tid := fetchTasks.Alloc(resource, handler)
+    jsFetchBlob(tid, resource)
+}
+
+#wa:export net.onFetchBlobDone
+func onFetchBlobDone(tid: int, ok: bool, status: u32, data: []byte) {
+    source, handler := fetchTasks.Get(tid)
+    switch h := handler.(type) {
+    case BlobFetcher:
+        h.OnDone(source.(string), ok, status, data)
+
+    case BlobHandler:
+        h(source.(string), ok, status, data)
+    }
+    fetchTasks.Free(tid)
+}
+
+global fetchTasks: js.TaskQueue

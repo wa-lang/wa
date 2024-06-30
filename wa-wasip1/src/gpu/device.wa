@@ -1,0 +1,135 @@
+
+import "js"
+
+//---------------------------------------------------------------
+
+// 不能使用该类型直接声明值，需通过 Adapter.RequestDevice() 创建
+#wa:need-constructor
+type Device struct {
+    _extobj: js.ExtObj
+}
+
+func Device.Valid() => bool {
+    return this._extobj.Valid()
+}
+
+//func Device.Features() - Todo
+
+func Device.Label() => string {
+    return jsObjGetLabel(this._extobj.GetHandle())
+}
+
+//func Device.limits() - Todo
+
+//func Device.Lost() - Todo
+
+func Device.Queue() => Queue {
+    return Queue{_extobj: js.WrapExtObj(jsDeviceGetQueue(this._extobj.GetHandle()))}
+}
+#wa:import webgpu device_get_queue
+func jsDeviceGetQueue(device: js.Handle) => js.Handle
+
+func Device.CreateBindGroup(desc: BindGroupDesc) => BindGroup {
+    bg: BindGroup
+    d := desc.createExtObj()
+    bg._extobj = js.WrapExtObj(jsDeviceCreateBindGroup(this._extobj.GetHandle(), d.GetHandle()))
+
+    return bg
+}
+#wa:import webgpu device_create_bind_group
+func jsDeviceCreateBindGroup(device, bg_desc: js.Handle) => js.Handle
+
+//func Device.CreateBindGroupLayout() - Todo
+
+func Device.CreateBuffer(desc: BufferDesc) => Buffer {
+    b: Buffer
+    b._extobj = js.WrapExtObj(jsDeviceCreateBuffer(this._extobj.GetHandle(), desc.Label, desc.MappedAtCreation, desc.Size, desc.Usage))
+    b.mapContex = new(bufferMapContex)
+    if desc.MappedAtCreation {
+        b.mapContex.mapped = true
+        b.mapContex.mappedRange = jsBufferGetMappedRange(b._extobj.GetHandle())
+    }
+    return b
+}
+#wa:import webgpu device_create_buffer
+func jsDeviceCreateBuffer(device: js.Handle, label: string, mappedAtCreation: bool, byteLen: int, usage: BufferUsage) => js.Handle
+
+func Device.CreateCommandEncoder() => CommandEncoder {
+    ce: CommandEncoder
+    ce._extobj = js.WrapExtObj(jsDeviceCreateCommandEncoder(this._extobj.GetHandle()))
+
+    return ce
+}
+#wa:import webgpu device_create_command_encoder
+func jsDeviceCreateCommandEncoder(device: js.Handle) => js.Handle
+
+//func Device.CreateComputePipeline() - Todo
+
+//func Device.CreatePipelineLayout() - Todo
+
+//func Device.CreateQuerySet() - Todo
+
+// 创建类型为 RenderBundleEncoder 的 RenderEncoder
+func Device.CreateRenderBundleEncoder(desc: RenderBundleEncoderDesc) => RenderEncoder {
+    re := RenderEncoder{Type: RenderEncoderType_RenderBundleEncoder}
+    d := desc.createExtObj()
+    re._extobj = js.WrapExtObj(jsDeviceCreateRenderBundleEncoder(this._extobj.GetHandle(), d.GetHandle()))
+
+    return re
+}
+#wa:import webgpu device_create_render_bundle_encoder
+func jsDeviceCreateRenderBundleEncoder(device, desc: js.Handle) => js.Handle
+
+// 创建渲染管线
+func Device.CreateRenderPipeline(desc: RenderPipelineDesc) => RenderPipeline {
+    d := desc.createExtObj()
+    p: RenderPipeline
+    p.ExtObj = js.WrapExtObj(jsDeviceCreateRenderPipeline(this._extobj.GetHandle(), d.GetHandle()))
+
+    return p
+}
+#wa:import webgpu device_create_render_pipeline
+func jsDeviceCreateRenderPipeline(device, pl_desc: js.Handle) => js.Handle
+
+// 创建采样器
+#wa:generic CreateSampler_Default
+func Device.CreateSampler(desc: SamplerDesc) => Sampler {
+    s: Sampler
+    d := desc.createExtObj()
+    s._extobj = js.WrapExtObj(jsDeviceCreateSampler(this._extobj.GetHandle(), d.GetHandle()))
+    return s
+}
+#wa:import webgpu device_create_sampler
+func jsDeviceCreateSampler(device, desc: js.Handle) => js.Handle
+
+func Device.CreateSampler_Default() => Sampler {
+    return this.CreateSampler(SamplerDesc{})
+}
+
+// 创建 Shader 模块
+func Device.CreateShaderModule(desc: ShaderModuleDesc) => ShaderModule {
+    d := desc.createExtObj()
+    s: ShaderModule
+    s._extobj = js.WrapExtObj(jsDeviceCreateShaderModule(this._extobj.GetHandle(), d.GetHandle()))
+    return s
+}
+#wa:import webgpu device_create_shader_module
+func jsDeviceCreateShaderModule(device, desc: js.Handle) => js.Handle
+
+// 创建纹理
+func Device.CreateTexture(desc: TextureDesc) => Texture {
+    t: Texture
+    d := desc.createExtObj()
+    t._extobj = js.WrapExtObj(jsDeviceCreateTexture(this._extobj.GetHandle(), d.GetHandle()))
+    return t
+}
+#wa:import webgpu device_create_texture
+func jsDeviceCreateTexture(device: js.Handle, desc: js.Handle) => js.Handle
+
+//func Device.Destroy() - Todo
+
+//func Device.ImportExternalTexture() - Todo
+
+//func Device.PopErrorScope() - Todo
+
+//func Device.PushErrorScope() - Todo

@@ -1,0 +1,51 @@
+// 版权 @2023 凹语言 作者。保留所有权利。
+
+#wa:linkname $wa.runtime.i32_ref_to_ptr
+func wa_i32_ref_to_ptr(p: *i32) => i32
+
+#wa:linkname $wa.runtime.i64_ref_to_ptr
+func wa_i64_ref_to_ptr(p: *i64) => i32
+
+#wa:linkname $wa.runtime.string_to_ptr
+func wa_string_to_ptr(s: string) => i32
+
+#wa:linkname $wa.runtime.slice_to_ptr
+func wa_bytes_to_ptr(s: []byte) => i32
+
+#wa:linkname $wa.runtime.slice_to_ptr
+func wa_i32_slice_to_ptr(s: []i32) => i32
+
+#wa:import wasi_snapshot_preview1 clock_time_get
+func wasi_clock_time_get(id: i32, precision: i64, result_timestamp: i32) => (errno: i32)
+
+// https://github.com/WebAssembly/WASI/blob/a2b96e81c0586125cc4dc79a5be0b78d9a059925/legacy/preview1/docs.md#-timestamp-u64
+type timestamp = i64
+
+// https://github.com/WebAssembly/WASI/blob/a2b96e81c0586125cc4dc79a5be0b78d9a059925/legacy/preview1/docs.md#-clockid-variant
+type clockid = i32
+
+const (
+	clockRealtime  :clockid = 0
+	clockMonotonic :clockid = 1
+)
+
+func walltime => (sec: i64, nsec: i32) {
+	time: timestamp
+	if wasi_clock_time_get(clockRealtime, 0, wa_i64_ref_to_ptr(&time)) != 0 {
+		panic("wasi_clock_time_get failed")
+	}
+	return i64(time / 1000000000), i32(time % 1000000000)
+}
+
+func nanotime => i64 {
+	time: timestamp
+	if wasi_clock_time_get(clockMonotonic, 0, wa_i64_ref_to_ptr(&time)) != 0 {
+		panic("wasi_clock_time_get failed")
+	}
+	return i64(time)
+}
+
+func time_now() => (sec: i64, nsec: i32, mono: i64) {
+	sec, nsec = walltime()
+	return sec, nsec, nanotime()
+}

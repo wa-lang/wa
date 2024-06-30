@@ -1,0 +1,7 @@
+// 版权 @2023 凹语言 作者。保留所有权利。
+
+#wa:build !wasi
+
+func waenvs {}
+
+func exit(code: i32) {}

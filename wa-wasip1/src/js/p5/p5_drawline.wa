@@ -1,0 +1,118 @@
+// 版权 @2024 凹语言 作者。保留所有权利。
+
+import (
+	"image"
+	"image/color"
+)
+
+func p5DrawLine(p: *image.RGBA, x1, y1, x2, y2: int, c: color.RGBA) {
+	if x1 == x2 && y1 == y2 {
+		p.SetRGBA(x1, y1, c)
+		return
+	}
+
+	if x1 > x2 {
+		x1, y1, x2, y2 = x2, y2, x1, y1
+	}
+
+	dx, dy := x2-x1, y2-y1
+
+	if dy < 0 {
+		dy = -dy
+	}
+
+	if y1 == y2 {
+		dx := x1 - x2
+		if dx < 0 {
+			dx = -dx
+		}
+		for ; dx != 0; dx-- {
+			p.SetRGBA(x1, y1, c)
+			x1++
+		}
+		p.SetRGBA(x1, y1, c)
+	}
+
+	if x1 == x2 {
+		if y1 > y2 {
+			y1, y2 = y2, y1
+		}
+		for ; dy != 0; dy-- {
+			p.SetRGBA(x1, y1, c)
+			y1++
+		}
+		p.SetRGBA(x1, y1, c)
+		return
+	}
+
+	if dx == dy {
+		if y1 < y2 {
+			for ; dx != 0; dx-- {
+				p.SetRGBA(x1, y1, c)
+				x1++
+				y1++
+			}
+		} else {
+			for ; dx != 0; dx-- {
+				p.SetRGBA(x1, y1, c)
+				x1++
+				y1--
+			}
+		}
+		p.SetRGBA(x1, y1, c)
+		return
+	}
+
+	if dx > dy {
+		if y1 < y2 {
+			dy, e, slope := 2*dy, dx, 2*dx
+			for ; dx != 0; dx-- {
+				p.SetRGBA(x1, y1, c)
+				x1++
+				e -= dy
+				if e < 0 {
+					y1++
+					e += slope
+				}
+			}
+		} else {
+			dy, e, slope := 2*dy, dx, 2*dx
+			for ; dx != 0; dx-- {
+				p.SetRGBA(x1, y1, c)
+				x1++
+				e -= dy
+				if e < 0 {
+					y1--
+					e += slope
+				}
+			}
+		}
+		p.SetRGBA(x2, y2, c)
+		return
+	}
+
+	if y1 < y2 {
+		dx, e, slope := 2*dx, dy, 2*dy
+		for ; dy != 0; dy-- {
+			p.SetRGBA(x1, y1, c)
+			y1++
+			e -= dx
+			if e < 0 {
+				x1++
+				e += slope
+			}
+		}
+	} else {
+		dx, e, slope := 2*dx, dy, 2*dy
+		for ; dy != 0; dy-- {
+			p.SetRGBA(x1, y1, c)
+			y1--
+			e -= dx
+			if e < 0 {
+				x1++
+				e += slope
+			}
+		}
+	}
+	p.SetRGBA(x2, y2, c)
+}

@@ -1,0 +1,161 @@
+// 版权 @2023 凹语言 作者。保留所有权利。
+
+// bool is the set of boolean values, true and false.
+type bool: bool
+
+// true and false are the two untyped boolean values.
+const (
+	true  = 0 == 0 // Untyped bool.
+	false = 0 != 0 // Untyped bool.
+)
+
+// u8 is the set of all unsigned 8-bit integers.
+// Range: 0 through 255.
+type u8: u8
+
+// u16 is the set of all unsigned 16-bit integers.
+// Range: 0 through 65535.
+type u16: u16
+
+// u32 is the set of all unsigned 32-bit integers.
+// Range: 0 through 4294967295.
+type u32: u32
+
+// u64 is the set of all unsigned 64-bit integers.
+// Range: 0 through 18446744073709551615.
+type u64: u64
+
+// int32 is the set of all signed 32-bit integers.
+// Range: -2147483648 through 2147483647.
+type i32: i32
+
+// int64 is the set of all signed 64-bit integers.
+// Range: -9223372036854775808 through 9223372036854775807.
+type i64: i64
+
+// float32 is the set of all IEEE-754 32-bit floating-point numbers.
+type f32: f32
+
+// float64 is the set of all IEEE-754 64-bit floating-point numbers.
+type f64: f64
+
+// string is the set of all strings of 8-bit bytes, conventionally but not
+// necessarily representing UTF-8-encoded text. A string may be empty, but
+// not nil. Values of string type are immutable.
+type string: string
+
+// int is a signed integer type that is at least 32 bits in size. It is a
+// distinct type, however, and not an alias for, say, int32.
+type int: int
+
+// uint is an unsigned integer type that is at least 32 bits in size. It is a
+// distinct type, however, and not an alias for, say, u32.
+type uint: uint
+
+// byte is an alias for u8 and is equivalent to u8 in all ways. It is
+// used, by convention, to distinguish byte values from 8-bit unsigned
+// integer values.
+type byte = u8
+
+// rune is an alias for int32 and is equivalent to int32 in all ways. It is
+// used, by convention, to distinguish character values from integer values.
+type rune = i32
+
+// Type is here for the purposes of documentation only. It is a stand-in
+// for any Wa type, but represents the same type for any given function
+// invocation.
+type Type: int
+
+// nil is a predeclared identifier representing the zero value for a
+// pointer, func, interface, map, or slice type.
+global nil: Type // Type must be a pointer, func, interface, map, or slice type
+
+// IntegerType is here for the purposes of documentation only. It is a stand-in
+// for any integer type: int, uint, int8 etc.
+type IntegerType: int
+
+// FloatType is here for the purposes of documentation only. It is a stand-in
+// for either float type: float32 or float64.
+type FloatType: f32
+
+// The append built-in function appends elements to the end of a slice. If
+// it has sufficient capacity, the destination is resliced to accommodate the
+// new elements. If it does not, a new underlying array will be allocated.
+// Append returns the updated slice. It is therefore necessary to store the
+// result of append, often in the variable holding the slice itself:
+//	slice = append(slice, elem1, elem2)
+//	slice = append(slice, anotherSlice...)
+// As a special case, it is legal to append a string to a byte slice, like this:
+//	slice = append([]byte("hello "), "world"...)
+func append(slice: []Type, elems: ...Type) => []Type
+
+// The copy built-in function copies elements from a source slice into a
+// destination slice. (As a special case, it also will copy bytes from a
+// string to a slice of bytes.) The source and destination may overlap. Copy
+// returns the number of elements copied, which will be the minimum of
+// len(src) and len(dst).
+func copy(dst, src: []Type) => int
+
+// The len built-in function returns the length of v, according to its type:
+//	Array: the number of elements in v.
+//	Pointer to array: the number of elements in *v (even if v is nil).
+//	Slice, or map: the number of elements in v; if v is nil, len(v) is zero.
+//	String: the number of bytes in v.
+// For some arguments, such as a string literal or a simple array expression, the
+// result can be a constant. See the Wa language specification's "Length and
+// capacity" section for details.
+func len(v: Type) => int
+
+// The cap built-in function returns the capacity of v, according to its type:
+//	Array: the number of elements in v (same as len(v)).
+//	Pointer to array: the number of elements in *v (same as len(v)).
+//	Slice: the maximum length the slice can reach when resliced;
+//	if v is nil, cap(v) is zero.
+// For some arguments, such as a simple array expression, the result can be a
+// constant. See the Wa language specification's "Length and capacity" section for
+// details.
+func cap(v: Type) => int
+
+// The make built-in function allocates and initializes an object of type
+// slice, or map. Like new, the first argument is a type, not a
+// value. Unlike new, make's return type is the same as the type of its
+// argument, not a pointer to it. The specification of the result depends on
+// the type:
+//	Slice: The size specifies the length. The capacity of the slice is
+//	equal to its length. A second integer argument may be provided to
+//	specify a different capacity; it must be no smaller than the
+//	length. For example, make([]int, 0, 10) allocates an underlying array
+//	of size 10 and returns a slice of length 0 and capacity 10 that is
+//	backed by this underlying array.
+//	Map: An empty map is allocated with enough space to hold the
+//	specified number of elements. The size may be omitted, in which case
+//	a small starting size is allocated.
+func make(t: Type, size: ...IntegerType) => Type
+
+// The new built-in function allocates memory. The first argument is a type,
+// not a value, and the value returned is a pointer to a newly
+// allocated zero value of that type.
+func new(Type) => *Type
+
+// The panic built-in function stops normal execution of the current
+// application.
+func panic(msg: string)
+
+// The print built-in function formats its arguments in an
+// implementation-specific way and writes the result to standard error.
+// Print is useful for bootstrapping and debugging; it is not guaranteed
+// to stay in the language.
+func print(args: ...Type)
+
+// The println built-in function formats its arguments in an
+// implementation-specific way and writes the result to standard error.
+// Spaces are always added between arguments and a newline is appended.
+// Println is useful for bootstrapping and debugging; it is not guaranteed
+// to stay in the language.
+func println(args: ...Type)
+
+// The error built-in interface type is the conventional interface for
+// representing an error condition, with the nil value representing no error.
+type error interface {
+	Error() => string
+}

@@ -1,0 +1,204 @@
+// 版权 @2023 凹语言 作者。保留所有权利。
+
+func ExampleDecodeLastRune {
+	b := []byte("Hello, 世界")
+
+	for len(b) > 0 {
+		r, size := DecodeLastRune(b)
+		println(r, size)
+
+		b = b[:len(b)-size]
+	}
+	// Output:
+	// 界 3
+	// 世 3
+	//   1
+	// , 1
+	// o 1
+	// l 1
+	// l 1
+	// e 1
+	// H 1
+}
+
+func ExampleDecodeLastRuneInString {
+	str := "Hello, 世界"
+
+	for len(str) > 0 {
+		r, size := DecodeLastRuneInString(str)
+		println(r, size)
+
+		str = str[:len(str)-size]
+	}
+	// Output:
+	// 界 3
+	// 世 3
+	//   1
+	// , 1
+	// o 1
+	// l 1
+	// l 1
+	// e 1
+	// H 1
+}
+
+func ExampleDecodeRune {
+	b := []byte("Hello, 世界")
+
+	for len(b) > 0 {
+		r, size := DecodeRune(b)
+		println(r, size)
+
+		b = b[size:]
+	}
+	// Output:
+	// H 1
+	// e 1
+	// l 1
+	// l 1
+	// o 1
+	// , 1
+	//   1
+	// 世 3
+	// 界 3
+}
+
+func ExampleDecodeRuneInString {
+	str := "Hello, 世界"
+
+	for len(str) > 0 {
+		r, size := DecodeRuneInString(str)
+		println(r, size)
+
+		str = str[size:]
+	}
+	// Output:
+	// H 1
+	// e 1
+	// l 1
+	// l 1
+	// o 1
+	// , 1
+	//   1
+	// 世 3
+	// 界 3
+}
+
+func ExampleEncodeRune {
+	r := '世'
+	buf := make([]byte, 3)
+
+	n := EncodeRune(buf, r)
+
+	print("[")
+	for i, v := range buf {
+		if i > 0 {
+			print(" ")
+		}
+		print(v)
+	}
+	println("]")
+	println(n)
+
+	// Output:
+	// [228 184 150]
+	// 3
+}
+
+func ExampleFullRune {
+	buf := []byte{228, 184, 150} // 世
+	println(FullRune(buf))
+	println(FullRune(buf[:2]))
+	// Output:
+	// true
+	// false
+}
+
+func ExampleFullRuneInString {
+	str := "世"
+	println(FullRuneInString(str))
+	println(FullRuneInString(str[:2]))
+	// Output:
+	// true
+	// false
+}
+
+func ExampleRuneCount {
+	buf := []byte("Hello, 世界")
+	println("bytes =", len(buf))
+	println("runes =", RuneCount(buf))
+	// Output:
+	// bytes = 13
+	// runes = 9
+}
+
+func ExampleRuneCountInString {
+	str := "Hello, 世界"
+	println("bytes =", len(str))
+	println("runes =", RuneCountInString(str))
+	// Output:
+	// bytes = 13
+	// runes = 9
+}
+
+func ExampleRuneLen {
+	println(RuneLen('a'))
+	println(RuneLen('界'))
+	// Output:
+	// 1
+	// 3
+}
+
+func ExampleRuneStart {
+	buf := []byte("a界")
+	println(RuneStart(buf[0]))
+	println(RuneStart(buf[1]))
+	println(RuneStart(buf[2]))
+	// Output:
+	// true
+	// true
+	// false
+}
+
+func ExampleValid {
+	valid := []byte("Hello, 世界")
+	invalid := []byte{0xff, 0xfe, 0xfd}
+
+	println(Valid(valid))
+	println(Valid(invalid))
+	// Output:
+	// true
+	// false
+}
+
+func ExampleValidRune {
+	valid := 'a'
+	invalid := rune(0xfffffff)
+
+	println(ValidRune(valid))
+	println(ValidRune(invalid))
+	// Output:
+	// true
+	// false
+}
+
+func ExampleValidString {
+	valid := "Hello, 世界"
+	invalid := string([]byte{0xff, 0xfe, 0xfd})
+
+	println(ValidString(valid))
+	println(ValidString(invalid))
+	// Output:
+	// true
+	// false
+}
+
+func ExampleAppendRune {
+	buf1 := AppendRune(nil, 0x10000)
+	buf2 := AppendRune([]byte("init"), 0x10000)
+	println(string(buf1))
+	println(string(buf2))
+	// Output:
+	// 𐀀
+	// init𐀀
+}

@@ -1,0 +1,50 @@
+// 版权 @2023 凹语言 作者。保留所有权利。
+
+global Args: []string
+
+global (
+	argslice :[]string
+	envs     :[]string
+)
+
+func init {
+	waenvs()
+
+	Args = append(Args, argslice...)
+}
+
+func Environ() => []string {
+	return append([]string{}, envs...)
+}
+
+func Exit(code: i32) {
+	exit(code)
+}
+
+func ReadFile(name: string) => ([]byte, error) {
+	return nil, nil
+}
+
+func WriteFile(name: string, data: []byte, mod: u32) => error {
+	panic("todo")
+}
+
+func Getwd => (dir: string, err: error) {
+	panic("todo")
+}
+
+func Mkdir(name: string, perm: u32) => error {
+	panic("todo")
+}
+
+func Remove(name: string) => error {
+	panic("todo")
+}
+
+func Rename(oldpath, newpath: string) => error {
+	panic("todo")
+}
+
+func Truncate(name: string, size: i64) => error {
+	panic("todo")
+}

@@ -1,0 +1,39 @@
+// 版权 @2024 凹语言 作者。保留所有权利。
+
+type task struct {
+    source: interface{}
+    handler: interface{}
+}
+
+type TaskQueue struct {
+    tasks: []task
+    freeIDs: []int
+}
+
+func TaskQueue.Alloc(source, handler: interface{}) => (taskid: int) {
+    if len(this.freeIDs) > 0 {
+        i := len(this.freeIDs) - 1
+        taskid = this.freeIDs[i]
+        this.freeIDs = this.freeIDs[:i]
+    } else {
+        taskid = len(this.tasks)
+        this.tasks = append(this.tasks, task{})
+    }
+    this.tasks[taskid].source = source
+    this.tasks[taskid].handler = handler
+    return
+}
+
+func TaskQueue.Get(taskid: int) => (source, handler: interface{}) {
+    return this.tasks[taskid].source, this.tasks[taskid].handler
+}
+
+func TaskQueue.Free(taskid: int) {
+    if this.tasks[taskid].handler == nil {
+        panic("Task has been freed.")
+    }
+    this.tasks[taskid].source = nil
+    this.tasks[taskid].handler = nil
+
+    this.freeIDs = append(this.freeIDs, taskid)
+}

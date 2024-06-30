@@ -1,0 +1,16 @@
+// 版权 @2023 凹语言 作者。保留所有权利。
+
+import (
+	"errors"
+	"runtime"
+)
+
+#wa:import wasi_snapshot_preview1 random_get
+func wasi_random_get(buf: i32, bufLen: i32) => (errno: i32)
+
+func getRandomData(r: []byte) => error {
+	if wasi_random_get(runtime.WaBytesToPtr(r), i32(len(r))) != 0 {
+		return errors.New("wasi_random_get failed")
+	}
+	return nil
+}

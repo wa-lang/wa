@@ -1,0 +1,114 @@
+// 版权 @2023 凹语言 作者。保留所有权利。
+
+// test好像并不执行该文件夹, 改为导出方法放在外层执行
+func Test_Norm {
+	t := nat{Data: []uint{1, 0, 0, 0}}
+	t = t.norm()
+	assert(len(t.Data) == 1, "bad norm length!")
+	assert(t.Data[0] == 1, "bad norm value!")
+}
+
+func Test_setWord {
+	t := nat{Data: []uint{1, 2, 3, 4}}
+	z := t.setWord(0)
+	assert(len(z.Data) == 0, "bad setWord length!")
+
+	z = t.setWord(10)
+	assert(t.Data[0] == 10, "bad setWord value!")
+}
+
+func Test_set {
+	t := nat{Data: []uint{1, 2, 3, 4}}
+	z := t.set(t)
+	assert(len(z.Data) == len(t.Data), "bad set length!")
+	for i := 0; i < len(z.Data); i++ {
+		assert(z.Data[i] == t.Data[i], "bad set value!")
+	}
+}
+
+// 参考go单元测试的内容
+type funNN func(z: nat, x: nat, y: nat) => nat
+type argNN struct {
+	z: nat
+	x: nat
+	y: nat
+}
+
+global sumNN = []argNN{
+	{},
+	{z: nat{[]uint{1}}, x: nat{nil}, y: nat{[]uint{1}}},
+	{z: nat{[]uint{1111111110}}, x: nat{[]uint{123456789}}, y: nat{[]uint{987654321}}},
+	{z: nat{[]uint{0, 0, 0, 1}}, x: nat{nil}, y: nat{[]uint{0, 0, 0, 1}}},
+	{z: nat{[]uint{0, 0, 0, 1111111110}}, x: nat{[]uint{0, 0, 0, 123456789}}, y: nat{Data: []uint{0, 0, 0, 987654321}}},
+	{z: nat{[]uint{0, 0, 0, 1}}, x: nat{[]uint{0, 0, _M}}, y: nat{[]uint{0, 0, 1}}},
+}
+
+global prodNN = []argNN{
+	{},
+	{z: nat{nil}, x: nat{nil}, y: nat{nil}},
+	{z: nat{nil}, x: nat{[]uint{991}}, y: nat{nil}},
+	{z: nat{[]uint{991}}, x: nat{[]uint{991}}, y: nat{[]uint{1}}},
+	{z: nat{[]uint{991 * 991}}, x: nat{[]uint{991}}, y: nat{[]uint{991}}},
+	{z: nat{[]uint{0, 0, 991 * 991}}, x: nat{[]uint{0, 991}}, y: nat{[]uint{0, 991}}},
+	{z: nat{[]uint{1 * 991, 2 * 991, 3 * 991, 4 * 991}}, x: nat{[]uint{1, 2, 3, 4}}, y: nat{[]uint{991}}},
+	{z: nat{[]uint{4, 11, 20, 30, 20, 11, 4}}, x: nat{[]uint{1, 2, 3, 4}}, y: nat{[]uint{4, 3, 2, 1}}},
+	// 3^100 * 3^28 = 3^128
+	{
+		z: natFromString("11790184577738583171520872861412518665678211592275841109096961"),
+		x: natFromString("515377520732011331036461129765621272702107522001"),
+		y: natFromString("22876792454961"),
+	},
+}
+
+func testFunNN(msg: string, f: funNN, a: argNN) {
+	temp := nat{}
+	z := f(temp, a.x, a.y)
+	t := z.cmp(a.z)
+	assert(t == 0, "error for "+msg)
+}
+
+func Test_funNN {
+	AddNN := func(z, x, y: nat) => nat { return z.add(x, y) }
+	SubNN := func(z, x, y: nat) => nat { return z.sub(x, y) }
+	ProdNN := func(z, x, y: nat) => nat { return z.mul(x, y) }
+	for _, a := range sumNN {
+		arg := a
+		testFunNN("add", AddNN, arg)
+
+		arg = argNN{a.z, a.y, a.x}
+		testFunNN("add symmetric", AddNN, arg)
+
+		arg = argNN{a.x, a.z, a.y}
+		testFunNN("sub", SubNN, arg)
+
+		arg = argNN{a.y, a.z, a.x}
+		testFunNN("sub symmetric", SubNN, arg)
+	}
+
+	for _, a := range prodNN {
+		arg := a
+		testFunNN("mul", ProdNN, arg)
+
+		arg = argNN{a.z, a.y, a.x}
+		testFunNN("mul symmetric", ProdNN, arg)
+	}
+}
+
+func Test_div {
+	u := natFromString("11790184577738583171520872861412518665678211592275841109096961")
+	v := natFromString("515377520732011331036461129765621272702107522001")
+	w := natFromString("22876792454961") // 商
+	r := natFromString("0")              // 余数
+
+	q := &nat{nil}
+	q2, r2 := q.div(nat{nil}, u, v)
+
+	assert(q2.cmp(w) == 0, "error for div result")
+	assert(r2.cmp(r) == 0, "error for div remainder result")
+}
+
+func Test_setString {
+	n := natFromString("22876792454961")
+	assert(n.Data[0] == 1796636465, "bad nat value from string")
+	assert(n.Data[1] == 5326, "bad nat value from string")
+}

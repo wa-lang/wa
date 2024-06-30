@@ -1,0 +1,15 @@
+
+import "js"
+
+//---------------------------------------------------------------
+
+// 不能使用该类型直接声明值。通过 Device.ImportExternalTexture() 创建
+#wa:need-constructor
+type ExternalTexture struct {
+    _extobj: js.ExtObj
+}
+
+// 返回标签
+func ExternalTexture.Label() => string {
+    return jsObjGetLabel(this._extobj.GetHandle())
+}

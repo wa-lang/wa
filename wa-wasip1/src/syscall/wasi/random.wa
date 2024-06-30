@@ -1,0 +1,4 @@
+// 版权 @2022 凹语言 作者。保留所有权利。
+
+#wa:import wasi_snapshot_preview1 random_get
+func RandomGet(buf: i32, buf_len: i32) => (errno: i32)

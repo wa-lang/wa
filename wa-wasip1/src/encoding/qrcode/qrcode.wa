@@ -1,0 +1,65 @@
+// Copyright 2011 The Go Authors.  All rights reserved.
+// Use of this source code is governed by a BSD-style
+// license that can be found in the LICENSE file.
+
+import (
+	"errors"
+)
+
+// Encode returns an encoding of text at the given error correction level.
+func Encode(text: string, level: Level) => (*Image, error) {
+	// Pick data encoding, smallest first.
+	// We could split the string and use different encodings
+	// but that seems like overkill for now.
+	enc: Encoding
+	if x := Num(text); x.Check() == nil {
+		enc = &x
+	} else if x := Alpha(text); x.Check() == nil {
+		enc = &x
+	} else {
+		x := String(text)
+		enc = &x
+	}
+
+	// Pick size.
+	l := Level(level)
+	v: Version
+	for v = MinVersion; ; v++ {
+		if v > MaxVersion {
+			return nil, errors.New("text too long to encode as QR")
+		}
+		if enc.Bits(v) <= v.DataBytes(l)*8 {
+			break
+		}
+	}
+
+	// Build and execute plan.
+	p, err := NewPlan(v, l, 0)
+	if err != nil {
+		return nil, err
+	}
+	cc, err := p.Encode(enc)
+	if err != nil {
+		return nil, err
+	}
+
+	// TODO: Pick appropriate mask.
+
+	return &Image{cc.Bitmap, cc.Size, cc.Stride, 8}, nil
+}
+
+// A Image is a square pixel grid.
+// It implements image.Image and direct PNG encoding.
+type Image struct {
+	Bitmap: []byte // 1 is black, 0 is white
+	Size:   int    // number of pixels on a side
+	Stride: int    // number of bytes per row
+	Scale:  int    // number of image pixels per QR pixel
+}
+
+// Black returns true if the pixel at (x,y) is black.
+func Image.Black(x, y: int) => bool {
+	c := this
+	return 0 <= x && x < c.Size && 0 <= y && y < c.Size &&
+		c.Bitmap[y*c.Stride+x/8]&(1<<uint(7-x&7)) != 0
+}

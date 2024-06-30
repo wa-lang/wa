@@ -1,0 +1,36 @@
+
+#wa:import extobj new_obj
+func jsNewObj() => Handle
+
+#wa:import extobj query_selector
+func QuerySelector(sel: string) => Handle
+
+#wa:import extobj free_obj
+func jsFreeObj(h: Handle)
+
+#wa:import extobj set_member_bool
+func jsSetMember_bool(h: Handle, member_name: string, value: bool)
+
+#wa:import extobj set_member_i32
+func jsSetMember_i32(h: Handle, member_name: string, value: i32)
+
+#wa:import extobj set_member_f32
+func jsSetMember_f32(h: Handle, member_name: string, value: f32)
+
+#wa:import extobj set_member_string
+func jsSetMember_string(h: Handle, member_name: string, value: string)
+
+#wa:import extobj set_member_obj
+func jsSetMember_obj(h: Handle, member_name: string, value: Handle)
+
+#wa:import extobj new_array
+func jsNewArray() => Handle
+
+#wa:import extobj append_i32
+func jsAppend_i32(h: Handle, value: i32)
+
+#wa:import extobj append_string
+func jsAppend_string(h: Handle, value: string)
+
+#wa:import extobj append_obj
+func jsAppend_obj(h: Handle, value: Handle)

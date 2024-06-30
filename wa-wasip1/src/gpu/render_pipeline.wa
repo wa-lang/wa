@@ -1,0 +1,317 @@
+
+import "js"
+
+//---------------------------------------------------------------
+
+// 不能使用该类型直接声明值，需通过 Device.CreateRenderPipeline 创建
+#wa:need-constructor
+type RenderPipeline struct {
+    js.ExtObj
+}
+
+// 获取标签
+func RenderPipeline.Label() => string {
+    return jsObjGetLabel(this.GetHandle())
+}
+
+// 获取绑定组布局
+func RenderPipeline.GetBindGroupLayout(id: int) => BindGroupLayout {
+    bl: BindGroupLayout
+    bl._extobj = js.WrapExtObj(jsRenderPipelineGetBindGroupLayout(this.GetHandle(), id))
+    return bl
+}
+#wa:import webgpu renderpipeline_get_bind_group_layout
+func jsRenderPipelineGetBindGroupLayout(pipeline: js.Handle, id: int) => js.Handle
+
+//---------------------------------------------------------------
+
+type RenderPipelineDesc struct {
+    DepthStencil: RenderPipelineDesc_depthStencil
+    Fragment: RenderPipelineDesc_fragment
+    Label: string
+    Layout: PipelineLayout
+    Multisample: PipelineDesc_multisample
+    Primitive: PipelineDesc_primitive
+    Vertex: RenderPipelineDesc_vertex
+}
+
+func RenderPipelineDesc.createExtObj() => js.ExtObj {
+    d := js.NewExtObj()
+
+    d.SetMember_obj("depthStencil", this.DepthStencil.createExtObj())
+    d.SetMember_obj("fragment", this.Fragment.createExtObj())
+    d.SetMember_string("label", this.Label)
+
+    if this.Layout._extobj.Valid() {
+        d.SetMember_obj("layout", this.Layout._extobj)
+    } else {
+        d.SetMember_string("layout", "auto")
+    }
+
+    d.SetMember_obj("multisample", this.Multisample.createExtObj())
+
+    d.SetMember_obj("primitive", this.Primitive.createExtObj())
+
+    d.SetMember_obj("vertex", this.Vertex.createExtObj())
+    return d
+}
+
+//---------------------------------------------------------------
+
+type RenderPipelineDesc_depthStencil struct {
+    DepthBias: f32
+    DepthBiasClamp: f32
+    DepthBiasSlopeScale: f32
+    DepthCompare: DepthCompare
+    DepthWriteEnabled: bool
+    Format: TextureFormat
+
+    //StencilBack - Todo
+    //StencilFront - Todo
+    //StencilReadMask - Todo
+    //StencilWriteMask - Todo
+}
+
+func RenderPipelineDesc_depthStencil.createExtObj() => js.ExtObj {
+    d := js.NewExtObj()
+    d.SetMember_f32("depthBias", this.DepthBias)
+    d.SetMember_f32("depthBiasClamp", this.DepthBiasClamp)
+    d.SetMember_f32("depthBiasSlopeScale", this.DepthBiasSlopeScale)
+    d.SetMember_string("depthCompare", string(this.DepthCompare))
+    d.SetMember_bool("depthWriteEnabled", this.DepthWriteEnabled)
+    d.SetMember_string("format", textureFormatSymbols[this.Format])
+
+    return d
+}
+
+type DepthCompare string
+const (
+    DepthCompare_never: DepthCompare          = "never"
+    DepthCompare_less: DepthCompare           = "less"
+    DepthCompare_equal: DepthCompare          = "equal"
+    DepthCompare_less_equal: DepthCompare     = "less-equal"
+    DepthCompare_greater: DepthCompare        = "greater"
+    DepthCompare_not_equal: DepthCompare      = "not-equal"
+    DepthCompare_greater_equal: DepthCompare  = "greater-equal"
+    DepthCompare_always: DepthCompare         = "always"
+)
+
+//---------------------------------------------------------------
+
+type RenderPipelineDesc_fragment struct {
+    //Constants - Todo
+    Module: ShaderModule
+    EntryPoint: string
+    Targets: []FragmentTarget
+}
+
+func RenderPipelineDesc_fragment.createExtObj() => js.ExtObj {
+    vo := js.NewExtObj()
+    vo.SetMember_obj("module", this.Module._extobj)
+    vo.SetMember_string("entryPoint", this.EntryPoint)
+
+    va := js.NewExtArray()
+    for _, t := range this.Targets {
+        va.Append_obj(t.createExtObj())
+    }
+    vo.SetMember_obj("targets", va.ExtObj)
+
+    return vo
+}
+
+//---------------------------------------------------------------
+
+type FragmentTarget struct {
+    AlphaDstFactor: BlendFactor
+    AlphaOp: BlendOp
+    AlphaSrcFactor: BlendFactor
+
+    ColorDstFactor: BlendFactor
+    ColorOp: BlendOp
+    ColorSrcFactor: BlendFactor
+
+    Format: TextureFormat
+
+    //WriteMask - Todo
+}
+
+func FragmentTarget.createExtObj() => js.ExtObj {
+    d := js.NewExtObj()
+
+    alpha := js.NewExtObj()
+    if this.AlphaDstFactor != BlendFactor_undefine {
+        alpha.SetMember_string("dstFactor", blendFactorSymbols[this.AlphaDstFactor])
+    }
+    alpha.SetMember_string("operation", blendOpSymbols[this.AlphaOp])
+    if this.AlphaSrcFactor != BlendFactor_undefine {
+        alpha.SetMember_string("srcFactor", blendFactorSymbols[this.AlphaSrcFactor])
+    }
+    d.SetMember_obj("alpha", alpha)
+
+    color := js.NewExtObj()
+    if this.ColorDstFactor != BlendFactor_undefine {
+        color.SetMember_string("dstFactor", blendFactorSymbols[this.ColorDstFactor])
+    }
+    color.SetMember_string("operation", blendOpSymbols[this.ColorOp])
+    if this.ColorSrcFactor != BlendFactor_undefine {
+        color.SetMember_string("srcFactor", blendFactorSymbols[this.ColorSrcFactor])
+    }
+    d.SetMember_obj("color", color)
+
+    d.SetMember_string("format", textureFormatSymbols[this.Format])
+
+    return d
+}
+
+//---------------------------------------------------------------
+
+type BlendOp u32
+const (
+    BlendOp_add: BlendOp = iota
+    BlendOp_max
+    BlendOp_min
+    BlendOp_reverse_subtract
+    BlendOp_subtract
+)
+
+global blendOpSymbols = [...]string {
+    BlendOp_add: "add",
+    BlendOp_max: "max",
+    BlendOp_min: "min",
+    BlendOp_reverse_subtract: "reverse-subtract",
+    BlendOp_subtract: "subtract",
+}
+
+type BlendFactor u32
+const (
+    BlendFactor_undefine: BlendFactor = iota
+    BlendFactor_constant
+    BlendFactor_dst
+    BlendFactor_dst_alpha
+    BlendFactor_one
+    BlendFactor_one_minus_dst
+    BlendFactor_one_minus_src
+    BlendFactor_one_minus_src_alpha
+    BlendFactor_one_minus_dst_alpha
+    BlendFactor_one_minus_constant
+    BlendFactor_src
+    BlendFactor_src_alpha
+    BlendFactor_src_alpha_saturated
+    BlendFactor_zero
+)
+
+global blendFactorSymbols = [...]string {
+    BlendFactor_constant:            "constant",
+    BlendFactor_dst:                 "dst",
+    BlendFactor_dst_alpha:           "dst-alpha",
+    BlendFactor_one:                 "one",
+    BlendFactor_one_minus_dst:       "one-minus-dst",
+    BlendFactor_one_minus_src:       "one-minus-src",
+    BlendFactor_one_minus_src_alpha: "one-minus-src-alpha",
+    BlendFactor_one_minus_dst_alpha: "one-minus-dst-alpha",
+    BlendFactor_one_minus_constant:  "one-minus-constant",
+    BlendFactor_src:                 "src",
+    BlendFactor_src_alpha:           "src-alpha",
+    BlendFactor_src_alpha_saturated: "src-alpha-saturated",
+    BlendFactor_zero:                "zero",
+}
+
+//---------------------------------------------------------------
+
+type PipelineDesc_multisample struct {
+    AlphaToCoverageEnabled: bool
+    Count: i32
+    //Mask: u32 - Todo
+}
+
+func PipelineDesc_multisample.createExtObj() => js.ExtObj {
+    d := js.NewExtObj()
+
+    if this.AlphaToCoverageEnabled {
+        d.SetMember_bool("alphaToCoverageEnabled", true)
+    }
+
+    if this.Count > 0 {
+        d.SetMember_i32("count", this.Count)
+    }
+
+    //if this.Mask > 0 {
+    //    d.SetMember_i32("mask", this.Mask)
+    //}
+
+    return d
+}
+
+//---------------------------------------------------------------
+
+type PipelineDesc_primitive struct {
+    CullMode: CullMode
+    FrontFace: FrontFace
+    //StripIndexFormat: IndexFormat - Todo
+    Topology: Topology
+    UnclippedDepth: bool
+}
+
+func PipelineDesc_primitive.createExtObj() => js.ExtObj {
+    d := js.NewExtObj()
+
+    if len(this.CullMode) > 0 {
+        d.SetMember_string("cullMode", string(this.CullMode))
+    }
+
+    if len(this.FrontFace) > 0 {
+        d.SetMember_string("frontFace", string(this.FrontFace))
+    }
+
+    if len(this.Topology) > 0 {
+        d.SetMember_string("topology", string(this.Topology))
+    }
+    
+    d.SetMember_bool("unclippedDepth", this.UnclippedDepth)
+
+    return d
+}
+
+type CullMode string
+const (
+    CullMode_none: CullMode = "none"
+    CullMode_back: CullMode = "back"
+    CullMode_front: CullMode = "front"
+)
+
+type FrontFace string
+const (
+    FrontFace_ccw: FrontFace = "ccw"
+    FrontFace_cw: FrontFace = "cw"
+)
+
+type Topology string
+const (
+    Topology_triangle_list: Topology = "triangle-list"
+    Topology_triangle_strip: Topology = "triangle-strip"
+    Topology_point_list: Topology = "point-list"
+    Topology_line_list: Topology = "line-list"
+    Topology_line_strip: Topology = "line-strip"
+)
+
+//---------------------------------------------------------------
+
+type RenderPipelineDesc_vertex struct {
+    Module: ShaderModule
+    EntryPoint: string
+    Layouts: []VertexLayout
+}
+
+func RenderPipelineDesc_vertex.createExtObj() => js.ExtObj {
+    vo := js.NewExtObj()
+    vo.SetMember_obj("module", this.Module._extobj)
+    vo.SetMember_string("entryPoint", this.EntryPoint)
+
+    va := js.NewExtArray()
+    for _, l := range this.Layouts {
+        va.Append_obj(l.ExtObj)
+    }
+    vo.SetMember_obj("buffers", va.ExtObj)
+
+    return vo
+}

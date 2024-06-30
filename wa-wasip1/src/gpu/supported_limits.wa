@@ -1,0 +1,10 @@
+
+import "js"
+
+//---------------------------------------------------------------
+
+// 不能使用该类型直接声明值，需通过 Adapter.Limits 创建 - Todo
+#wa:need-constructor
+type SupportedLimits struct {
+    _extobj: js.ExtObj
+}

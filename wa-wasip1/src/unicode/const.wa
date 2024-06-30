@@ -1,0 +1,8 @@
+// 版权 @2023 凹语言 作者。保留所有权利。
+
+const (
+	MaxRune         = '\U0010FFFF' // Maximum valid Unicode code point.
+	ReplacementChar = '\uFFFD'     // Represents invalid code points.
+	MaxASCII        = '\u007F'     // maximum ASCII value.
+	MaxLatin1       = '\u00FF'     // maximum Latin-1 value.
+)

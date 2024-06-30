@@ -1,0 +1,74 @@
+
+import "js"
+
+//---------------------------------------------------------------
+
+type AlphaMode u32
+
+const (
+    AlphaMode_opaque = iota
+    AlphaMode_premultiplied
+)
+
+global alphaModeSymbols = [...]string{
+    AlphaMode_opaque:        "opaque",
+    AlphaMode_premultiplied: "premultiplied",
+}
+
+type ContexConfig struct {
+    Device: Device
+    Format: TextureFormat
+    AlphaMode: AlphaMode
+}
+
+//---------------------------------------------------------------
+
+// 不能使用该类型直接声明值，需通过 QueryCanvasGpuContex 创建
+#wa:need-constructor
+type CanvasContex struct {
+    _extobj: js.ExtObj
+}
+
+// 查询 Canvas 并从中创建 CanvasContex
+func QueryCanvasGpuContex(canvas_selector: string) => CanvasContex {
+    ctx: CanvasContex
+    ctx._extobj = js.WrapExtObj(jsCanvasGetGpuContex(js.QuerySelector(canvas_selector)))
+    return ctx
+}
+#wa:import webgpu canvas_get_contex
+func jsCanvasGetGpuContex(canvas: js.Handle) => js.Handle
+
+// 返回创建 CanvasContex 时所用的 Canvas
+func CanvasContex.Canvas() => js.ExtObj {
+    return js.WrapExtObj(jsCanvasContexGetCanvas(this._extobj.GetHandle()))
+}
+#wa:import webgpu contex_get_canvas
+func jsCanvasContexGetCanvas(canvas: js.Handle) => js.Handle
+
+// 配置 CanvasContex
+func CanvasContex.Configure(conf: ContexConfig) {
+    vo := js.NewExtObj()
+    vo.SetMember_obj("device", conf.Device._extobj)
+    vo.SetMember_string("format", textureFormatSymbols[conf.Format])
+    vo.SetMember_string("alphaMode", alphaModeSymbols[conf.AlphaMode])
+
+    jsContexConfigure(this._extobj.GetHandle(), vo.GetHandle())
+}
+#wa:import webgpu contex_configure
+func jsContexConfigure(contex, config: js.Handle)
+
+// 获取 CanvasContex 的当前纹理
+func CanvasContex.CurrentTexture() => Texture {
+    t: Texture
+    t._extobj = js.WrapExtObj(jsContexGetCurrentTexture(this._extobj.GetHandle()))
+    return t
+}
+#wa:import webgpu contex_get_current_texture
+func jsContexGetCurrentTexture(contex: js.Handle) => js.Handle
+
+// 取消配置 ConvasContex
+func CanvasContex.Unconfigure() {
+    jsContexUnconfigure(this._extobj.GetHandle())
+}
+#wa:import webgpu contex_unconfigure
+func jsContexUnconfigure(contex: js.Handle)

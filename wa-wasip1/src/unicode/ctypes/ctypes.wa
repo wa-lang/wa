@@ -1,0 +1,134 @@
+// 版权 @2023 凹语言 作者。保留所有权利。
+
+const (
+	MaxRune         = '\U0010FFFF' // Maximum valid Unicode code point.
+	ReplacementChar = '\uFFFD'     // Represents invalid code points.
+	MaxASCII        = '\u007F'     // maximum ASCII value.
+	MaxLatin1       = '\u00FF'     // maximum Latin-1 value.
+)
+
+func IsAlnum(r: rune) => bool {
+	return IsAlpha(r) || IsDigit(r)
+}
+
+func IsAlpha(r: rune) => bool {
+	return (r|32)-'a' < 26
+}
+
+func IsAsscii(r: rune) => bool {
+	return r <= 0x7f
+}
+
+func IsBlank(r: rune) => bool {
+	return r == ' ' || r == '\t'
+}
+
+func IsCntrl(r: rune) => bool {
+	return r < 0x20 || r == 0x7f
+}
+
+func IsDigit(r: rune) => bool {
+	return r >= '0' && r <= '9'
+}
+
+func IsGraph(r: rune) => bool {
+	if IsAsscii(r) {
+		return r-0x21 < 0x5e
+	}
+	return false
+}
+
+func IsLower(r: rune) => bool {
+	return r >= 'a' && r <= 'z'
+}
+
+func IsPrint(r: rune) => bool {
+	if IsAsscii(r) {
+		return r-0x20 < 0x5f
+	}
+	return false
+}
+
+func IsPunct(r: rune) => bool {
+	if IsAsscii(r) {
+		return IsGraph(r) && !IsAlnum(r)
+	}
+	return false
+}
+
+func IsSpace(r: rune) => bool {
+	switch r {
+	case '\t', '\n', '\v', '\f', '\r', ' ', 0x85, 0xA0:
+		return true
+	}
+	return false
+}
+
+func IsUpper(r: rune) => bool {
+	return r >= 'A' && r <= 'Z'
+}
+
+func IsXdigit(r: rune) => bool {
+	return IsDigit(r) || (r >= 'A' && r <= 'F') || (r >= 'a' && r <= 'f')
+}
+
+func ToAscii(r: rune) => rune {
+	return r & 0x7f
+}
+
+func ToLower(r: rune) => rune {
+	if IsUpper(r) {
+		return r | 32
+	}
+	return r
+}
+
+func ToUpper(r: rune) => rune {
+	if IsLower(r) {
+		return r & 0x5f
+	}
+	return r
+}
+
+// ToTitle maps the rune to title case.
+func ToTitle(r: rune) => rune {
+	if r <= MaxASCII {
+		if 'a' <= r && r <= 'z' { // title case is upper case for ASCII
+			r -= 'a' - 'A'
+		}
+		return r
+	}
+	return r
+}
+
+// SimpleFold iterates over Unicode code points equivalent under
+// the Unicode-defined simple case folding. Among the code points
+// equivalent to rune (including rune itself), SimpleFold returns the
+// smallest rune > r if one exists, or else the smallest rune >= 0.
+// If r is not a valid Unicode code point, SimpleFold(r) returns r.
+//
+// For example:
+//
+//	SimpleFold('A') = 'a'
+//	SimpleFold('a') = 'A'
+//
+//	SimpleFold('K') = 'k'
+//	SimpleFold('k') = '\u212A' (Kelvin symbol, K)
+//	SimpleFold('\u212A') = 'K'
+//
+//	SimpleFold('1') = '1'
+//
+//	SimpleFold(-2) = -2
+func SimpleFold(r: rune) => rune {
+	if r < 0 || r > MaxRune {
+		return r
+	}
+
+	// No folding specified. This is a one- or two-element
+	// equivalence class containing rune and ToLower(rune)
+	// and ToUpper(rune) if they are different from rune.
+	if l := ToLower(r); l != r {
+		return l
+	}
+	return ToUpper(r)
+}

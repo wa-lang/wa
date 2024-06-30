@@ -1,0 +1,24 @@
+// 版权 @2023 凹语言 作者。保留所有权利。
+
+#wa:linkname $math.waSqrtF64
+func waSqrtF64(x: f64) => f64
+
+#wa:linkname $math.waSqrtF32
+func waSqrtF32(x: f32) => f32
+
+// Sqrt returns the square root of x.
+//
+// Special cases are:
+//	Sqrt(+Inf) = +Inf
+//	Sqrt(±0) = ±0
+//	Sqrt(x < 0) = NaN
+//	Sqrt(NaN) = NaN
+#wa:generic Sqrt32
+func Sqrt(x: f64) => f64 {
+	return waSqrtF64(x)
+}
+
+// f32 version of Sqrt
+func Sqrt32(x: f32) => f32 {
+	return waSqrtF32(x)
+}

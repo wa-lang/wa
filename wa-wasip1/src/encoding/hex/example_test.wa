@@ -1,0 +1,59 @@
+// 版权 @2023 凹语言 作者。保留所有权利。
+
+func ExampleEncode() {
+	src := []byte("Hello Wa-lang!")
+
+	dst := make([]byte, EncodedLen(len(src)))
+	Encode(dst, src)
+
+	println(string(dst))
+
+	// Output:
+	// 48656c6c6f2057612d6c616e6721
+}
+
+func ExampleDecode {
+	src := []byte("48656c6c6f2057612d6c616e6721")
+
+	dst := make([]byte, DecodedLen(len(src)))
+	n, err := Decode(dst, src)
+	if err != nil {
+		panic(err.Error())
+	}
+
+	println(string(dst[:n]))
+
+	// Output:
+	// Hello Wa-lang!
+}
+
+func ExampleDecodeString() {
+	const s = "48656c6c6f2057612d6c616e6721"
+	decoded, err := DecodeString(s)
+	if err != nil {
+		panic(err.Error())
+	}
+
+	println(string(decoded))
+
+	// Output:
+	// Hello Wa-lang!
+}
+
+func _ExampleDump {
+	content := []byte("Wa-lang: Design for WebAssembly")
+	println(Dump(content))
+
+	// Output:
+	// 00000000  57 61 2d 6c 61 6e 67 3a  20 44 65 73 69 67 6e 20  |Wa-lang: Design |
+	// 00000010  66 6f 72 20 57 65 62 41  73 73 65 6d 62 6c 79     |for WebAssembly|
+}
+
+func ExampleEncodeToString {
+	src := []byte("Hello")
+	encodedStr := EncodeToString(src)
+	println(encodedStr)
+
+	// Output:
+	// 48656c6c6f
+}

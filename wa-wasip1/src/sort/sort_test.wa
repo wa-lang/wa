@@ -1,0 +1,70 @@
+// 版权 @2023 凹语言 作者。保留所有权利。
+
+import "math"
+
+global ints = [...]int{74, 59, 238, -784, 9845, 959, 905, 0, 0, 42, 7586, -5467984, 7586}
+global float64s = [...]float64{74.3, 59.0, math.Inf(1), 238.2, -784.0, 2.3, math.NaN(), math.NaN(), math.Inf(-1), 9845.768, -959.7485, 905, 7.8, 7.8}
+global strings = [...]string{"", "Hello", "foo", "bar", "foo", "f00", "%*&^*&^&", "***"}
+
+func TestSortIntSlice {
+	data := ints
+	a := &IntSlice{data[0:]}
+	Sort(a)
+	if !IsSorted(a) {
+		assert(false)
+		//t.Errorf("sorted %v", ints)
+		//t.Errorf("   got %v", data)
+	}
+}
+
+func TestSortFloat64Slice {
+	data := float64s
+	a := &Float64Slice{data[0:]}
+	Sort(a)
+	if !IsSorted(a) {
+		assert(false)
+		//t.Errorf("sorted %v", float64s)
+		//t.Errorf("   got %v", data)
+	}
+}
+
+func TestSortStringSlice {
+	data := strings
+	a := &StringSlice{data[0:]}
+	Sort(a)
+	if !IsSorted(a) {
+		assert(false)
+		//t.Errorf("sorted %v", strings)
+		//t.Errorf("   got %v", data)
+	}
+}
+
+func TestInts {
+	data := ints
+	Ints(data[0:])
+	if !IntsAreSorted(data[0:]) {
+		assert(false)
+		//t.Errorf("sorted %v", ints)
+		//t.Errorf("   got %v", data)
+	}
+}
+
+func TestFloat64s {
+	data := float64s
+	Float64s(data[0:])
+	if !Float64sAreSorted(data[0:]) {
+		assert(false)
+		//t.Errorf("sorted %v", float64s)
+		//t.Errorf("   got %v", data)
+	}
+}
+
+func TestStrings {
+	data := strings
+	Strings(data[0:])
+	if !StringsAreSorted(data[0:]) {
+		assert(false)
+		//t.Errorf("sorted %v", strings)
+		//t.Errorf("   got %v", data)
+	}
+}

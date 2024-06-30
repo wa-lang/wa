@@ -1,0 +1,222 @@
+import "js"
+
+#wa:import canvas set_width_height
+func jsSetWidthHeight(ctx: js.Handle, width, height: i32)
+
+/*****************************************
+*                                        *
+*          Color, Style, Shadow          *
+*                                        *
+*****************************************/
+#wa:import canvas set_fill_style
+func jsSetFillStyle(ctx: js.Handle, style: string)
+
+#wa:import canvas set_stroke_style
+func jsSetStrokeStyle(ctx: js.Handle, style: string)
+
+#wa:import canvas set_shadow_color
+func jsSetShadowColor(ctx: js.Handle, color: string)
+
+#wa:import canvas set_shadow_blur
+func jsSetShadowBlur(ctx: js.Handle, blur: f32)
+
+#wa:import canvas set_shadow_offset_x
+func jsSetShadowOffsetX(ctx: js.Handle, offset: f32)
+
+#wa:import canvas set_shadow_offset_y
+func jsSetShadowOffsetY(ctx: js.Handle, offset: f32)
+
+#wa:import canvas create_linear_gradient
+func jsCreateLinearGradient(ctx: js.Handle, x0, y0, x1, y1: f32) => js.Handle
+
+#wa:import canvas create_pattern
+func jsCreatePattern(ctx: js.Handle, image: js.Handle, repetition: string) => js.Handle
+
+#wa:import canvas create_radial_gradient
+func jsCreateRadialGradient(ctx: js.Handle, x0, y0, r0, x1, y1, r1: f32) => js.Handle
+
+#wa:import canvas add_color_stop
+func jsAddColorStop(ctx: js.Handle, stop: f32, color: string)
+
+/*****************************************
+*                                        *
+*               Line style               *
+*                                        *
+*****************************************/
+#wa:import canvas set_line_cap
+func jsSetLineCap(ctx: js.Handle, cap: string)
+
+#wa:import canvas set_line_join
+func jsSetLineJoin(ctx: js.Handle, join: string)
+
+#wa:import canvas set_line_width
+func jsSetLineWidth(ctx: js.Handle, width: f32)
+
+#wa:import canvas set_miter_limit
+func jsSetMiterLimit(ctx: js.Handle, limit: f32)
+
+/*****************************************
+*                                        *
+*                  Path                  *
+*                                        *
+*****************************************/
+#wa:import canvas fill
+func jsFill(ctx: js.Handle)
+
+#wa:import canvas stroke
+func jsStroke(ctx: js.Handle)
+
+#wa:import canvas begin_path
+func jsBeginPath(ctx: js.Handle)
+
+#wa:import canvas move_to
+func jsMoveTo(ctx: js.Handle, x, y: f32)
+
+#wa:import canvas close_path
+func jsClosePath(ctx: js.Handle)
+
+#wa:import canvas line_to
+func jsLineTo(ctx: js.Handle, x, y: f32)
+
+#wa:import canvas clip
+func jsClip(ctx: js.Handle)
+
+#wa:import canvas quadratic_curve_to
+func jsQuadraticCurveTo(ctx: js.Handle, cpx, cpy, x, y: f32)
+
+#wa:import canvas bezier_curve_to
+func jsBezierCurveTo(ctx: js.Handle, cp1x, cp1y, cp2x, cp2y, x, y: f32)
+
+#wa:import canvas arc
+func jsArc(ctx: js.Handle, x, y, radius, start_angle, end_angle: f32)
+
+#wa:import canvas arc_with_direction
+func jsArcWithDirection(ctx: js.Handle, x, y, radius, start_angle, end_angle: f32, counterclockwise: bool)
+
+#wa:import canvas arc_to
+func jsArcTo(ctx: js.Handle, x1, y1, x2, y2, radius: f32)
+
+#wa:import canvas ellipse
+func jsEllipse(ctx: js.Handle, x, y, radiusX, radiusY, rotation, startAngle, endAngle: f32, anticlockwise: bool)
+
+#wa:import canvas is_point_in_path
+func jsIsPointInPath(ctx: js.Handle, x, y: f32) => bool
+
+/*****************************************
+*                                        *
+*                Rectangle               *
+*                                        *
+*****************************************/
+#wa:import canvas rect
+func jsRect(ctx: js.Handle, x, y, w, h: f32)
+
+#wa:import canvas fill_rect
+func jsFillRect(ctx: js.Handle, x, y, w, h: f32)
+
+#wa:import canvas stroke_rect
+func jsStrokeRect(ctx: js.Handle, x, y, w, h: f32)
+
+#wa:import canvas clear_rect
+func jsClearRect(ctx: js.Handle, x, y, w, h: f32)
+
+/*****************************************
+*                                        *
+*               Conversion               *
+*                                        *
+*****************************************/
+#wa:import canvas scale
+func jsScale(ctx: js.Handle, scale_width, scale_height: f32)
+
+#wa:import canvas rotate
+func jsRotate(ctx: js.Handle, angle: f32)
+
+#wa:import canvas translate
+func jsTranslate(ctx: js.Handle, x, y: f32)
+
+#wa:import canvas transform
+func jsTransform(ctx: js.Handle, a, b, c, d, e, f: f32)
+
+#wa:import canvas set_transform
+func jsSetTransform(ctx: js.Handle, a, b, c, d, e, f: f32)
+
+/*****************************************
+*                                        *
+*                  Text                  *
+*                                        *
+*****************************************/
+#wa:import canvas set_font
+func jsSetFont(ctx: js.Handle, font: string)
+
+#wa:import canvas set_text_align
+func jsSetTextAlign(ctx: js.Handle, align: string)
+
+#wa:import canvas set_text_baseline
+func jsSetTextBaseline(ctx: js.Handle, baseline: string)
+
+#wa:import canvas fill_text
+func jsFillText(ctx: js.Handle, text: string, x, y: f32)
+
+#wa:import canvas fill_text_with_max_width
+func jsFillTextWithMaxWidth(ctx: js.Handle, text: string, x, y, max_width: f32)
+
+#wa:import canvas stroke_text
+func jsStrokeText(ctx: js.Handle, text: string, x, y: f32)
+
+#wa:import canvas stroke_text_with_max_width
+func jsStrokeTextWithMaxWidth(ctx: js.Handle, text: string, x, y, max_width: f32)
+
+#wa:import canvas measure_text
+func jsMeasureText(ctx: js.Handle, text: string) => js.Handle
+
+#wa:import canvas measure_text_with_max_width
+func jsMeasureTextWithMaxWidth(ctx: js.Handle, text: string, max_width: f32) => js.Handle
+
+/*****************************************
+*                                        *
+*              Image drawing             *
+*                                        *
+*****************************************/
+#wa:import canvas draw_image
+func jsDrawImageScaled(ctx: js.Handle, image: js.ExtObj, dx, dy, dwidth, dheight: f32)
+
+#wa:import canvas draw_image_cropped
+func jsDrawImageCropped(ctx: js.Handle, image: js.ExtObj, sx, sy, swidth, sheight, dx, dy, dwidth, dheight: f32)
+
+/*****************************************
+*                                        *
+*           Pixel manipulation           *
+*                                        *
+*****************************************/
+#wa:import canvas create_image_data
+func jsCreateImageData(ctx: js.Handle, width, height: f32) => js.Handle
+
+#wa:import canvas get_image_data
+func jsGetImageData(ctx: js.Handle, x, y, width, height: f32) => js.Handle
+
+#wa:import canvas put_image_data
+func jsPutImageData(ctx: js.Handle, image_data: []u8, dx, dy: f32, dirty_x, dirty_y, dirty_width, dirty_height: f32)
+
+/*****************************************
+*                                        *
+*                Synthesis               *
+*                                        *
+*****************************************/
+#wa:import canvas set_global_alpha
+func jsSetGlobalAlpha(ctx: js.Handle, alpha: f32)
+
+#wa:import canvas set_global_composite_operation
+func jsSetGlobalCompositeOperation(ctx: js.Handle, operation: string)
+
+/*****************************************
+*                                        *
+*                  Other                 *
+*                                        *
+*****************************************/
+#wa:import canvas save
+func jsSave(ctx: js.Handle)
+
+#wa:import canvas restore
+func jsRestore(ctx: js.Handle)
+
+#wa:import canvas get_context2d
+func jsGetContext2D(canvas: js.Handle) => js.Handle

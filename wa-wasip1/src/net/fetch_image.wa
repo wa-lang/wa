@@ -1,0 +1,43 @@
+// 版权 @2024 凹语言 作者。保留所有权利。
+
+import "js"
+
+type ImageFetcher interface {
+    OnDone(resource: string, ok: bool, status: u32, extobj: js.Handle)
+}
+
+type ImageHandler func(resource: string, ok: bool, status: u32, extobj: js.Handle)
+
+/*
+*/
+#wa:import net fetch_image
+func jsFetchImage(tid: int, resource: string) => js.Handle
+#wa:generic FetchImageWithHandler
+func FetchImage(resource: string, fetcher: ImageFetcher) {
+    if fetcher == nil {
+        panic("Fetcher can't be nil.")
+    }
+    tid := fetchTasks.Alloc(resource, fetcher)
+    jsFetchImage(tid, resource)
+}
+
+func FetchImageWithHandler(resource: string, handler: ImageHandler) {
+    if handler == nil {
+        panic("Handler can't be nil.")
+    }
+    tid := fetchTasks.Alloc(resource, handler)
+    jsFetchImage(tid, resource)
+}
+
+#wa:export net.onFetchImageDone
+func onFetchImageDone(tid: int, ok: bool, status: u32, extobj: js.Handle) {
+    source, handler := fetchTasks.Get(tid)
+    switch h := handler.(type) {
+    case ImageFetcher:
+        h.OnDone(source.(string), ok, status, extobj)
+
+    case ImageHandler:
+        h(source.(string), ok, status, extobj)
+    }
+    fetchTasks.Free(tid)
+}

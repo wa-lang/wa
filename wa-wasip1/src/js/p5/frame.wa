@@ -1,0 +1,57 @@
+// 版权 @2024 凹语言 作者。保留所有权利。
+
+global (
+	Width  :int = 100 // 画布宽度
+	Height :int = 100 // 画布高度
+
+	DeltaTime  :f32 // 过去的时间
+	FrameCount :int // 帧计数
+	FrameRate  :int // 帧率
+
+	Focused :bool // 是否获得焦点
+)
+
+global (
+	preTimeStamp :f32 // 上次时间戳
+	curTimeStamp :f32 // 当前时间戳
+)
+
+// 获取焦点
+#wa:export p5js_onFocus
+func onFocus {
+	Focused = true
+}
+
+// 失去焦点
+#wa:export p5js_onBlur
+func onBlur {
+	Focused = false
+}
+
+// 每次Draw之前调用
+#wa:export p5js_onDraw_before
+func onDraw_before(timeStamp: f32) {
+	curTimeStamp = timeStamp
+
+	DeltaTime = curTimeStamp - preTimeStamp
+	FrameCount++
+
+	if DeltaTime > 0 {
+		FrameRate = int(1 / DeltaTime)
+	}
+}
+
+// 每次Draw之后调用
+#wa:export p5js_onDraw_after
+func onDraw_after {
+	preTimeStamp = curTimeStamp
+
+	PMouseX = MouseX
+	PMouseY = MouseY
+
+	p5CanvasCtx.PutImageData(
+		raw(p5CanvasBuffer.Pix), 0, 0, 0, 0,
+		f32(p5CanvasBuffer.Width),
+		f32(p5CanvasBuffer.Height),
+	)
+}

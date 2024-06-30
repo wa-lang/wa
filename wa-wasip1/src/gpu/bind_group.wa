@@ -1,0 +1,91 @@
+
+import "js"
+
+//---------------------------------------------------------------
+// 不能使用该类型直接声明值，需通过 Device.CreateBindGroup() 创建
+#wa:need-constructor
+type BindGroup struct {
+    _extobj js.ExtObj
+}
+
+// 返回 BindGroup 标签
+func BindGroup.Label() => string {
+    return jsObjGetLabel(this._extobj.GetHandle())
+}
+
+//---------------------------------------------------------------
+
+// BindGroup 描述符，用于创建 BindGroup
+type BindGroupDesc struct {
+    Entries: []BindGroupEntry
+    Label: string
+    Layout: BindGroupLayout
+}
+
+func BindGroupDesc.createExtObj() => js.ExtObj {
+    d := js.NewExtObj()
+    va := js.NewExtArray()
+    for _, e := range this.Entries {
+        va.Append_obj(e.createExtObj())
+    }
+    d.SetMember_obj("entries", va.ExtObj)
+
+    d.SetMember_string("label", this.Label)
+
+    d.SetMember_obj("layout", this.Layout._extobj)
+    return d
+}
+
+//---------------------------------------------------------------
+
+// 不能使用该类型直接声明值，需通过 NewBindGroupEntry() 创建
+#wa:need-constructor
+type BindGroupEntry struct {
+    binding: i32
+    resource: js.ExtObj
+}
+
+#wa:generic NewBindGroupEntry_TextureView NewBindGroupEntry_Sampler
+func NewBindGroupEntry(binding: i32, resource: BufferBinding) => BindGroupEntry {
+    return BindGroupEntry{binding:binding, resource: resource._extobj}
+}
+
+func NewBindGroupEntry_TextureView(binding: i32, resource: TextureView) => BindGroupEntry {
+    return BindGroupEntry{binding:binding, resource: resource._extobj}
+}
+
+func NewBindGroupEntry_Sampler(binding: i32, resource: Sampler) => BindGroupEntry {
+    return BindGroupEntry{binding:binding, resource: resource._extobj}
+}
+
+func BindGroupEntry.createExtObj() => js.ExtObj {
+    d := js.NewExtObj()
+    d.SetMember_i32("binding", this.binding)
+    d.SetMember_obj("resource", this.resource)
+    return d
+}
+
+//---------------------------------------------------------------
+
+// 不能使用该类型直接声明值，需通过 NewBufferBinding() 创建
+#wa:need-constructor
+type BufferBinding struct {
+    _extobj: js.ExtObj
+}
+
+#wa:generic NewBufferBinding_OffsetSize
+func NewBufferBinding(buffer: Buffer) => BufferBinding {
+    b: BufferBinding
+    b._extobj = js.NewExtObj()
+    b._extobj.SetMember_obj("buffer", buffer._extobj)
+    return b
+}
+
+func NewBufferBinding_OffsetSize(buffer: Buffer, offset, size: i32) => BufferBinding {
+    b: BufferBinding
+    b._extobj = js.NewExtObj()
+    b._extobj.SetMember_obj("buffer", buffer._extobj)
+    b._extobj.SetMember_i32("offset", offset)
+    b._extobj.SetMember_i32("size", size)
+    return b
+}

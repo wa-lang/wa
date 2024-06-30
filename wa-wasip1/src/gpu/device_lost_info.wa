@@ -1,0 +1,13 @@
+
+import "js"
+
+//---------------------------------------------------------------
+
+// 不能使用该类型直接声明值
+#wa:need-constructor
+type DeviceLostInfo struct {
+    _extobj: js.ExtObj
+}
+
+//func DeviceLostInfo.Message() - Todo
+//func DeviceLostInfo.Reason() - Todo

@@ -1,0 +1,67 @@
+// 版权 @2024 凹语言 作者。保留所有权利。
+
+import "hash"
+
+const (
+	mod = 65521
+)
+
+const Size = 4
+
+type digest struct {
+	a, b: uint32
+}
+
+func digest.Reset() { this.a, this.b = 1, 0 }
+
+func New() => hash.Hash32 {
+	d := new(digest)
+	d.Reset()
+	return d
+}
+
+func digest.Size() => int { return Size }
+
+func digest.BlockSize() => int { return 1 }
+
+func update(a, b: uint32, p: []byte) => (aa, bb: uint32) {
+	for _, pi := range p {
+		a += uint32(pi)
+		b += a
+
+		if b > (0xffffffff-255)/2 {
+			a %= mod
+			b %= mod
+
+		} else {
+
+		}
+	}
+	return a, b
+}
+
+func finish(a, b: uint32) => uint32 {
+	if b >= mod {
+		a %= mod
+		b %= mod
+	}
+	return b<<16 | a
+}
+
+func digest.Write(p: []byte) => (nn: int, err: error) {
+	this.a, this.b = update(this.a, this.b, p)
+	return len(p), nil
+}
+
+func digest.Sum32() => uint32 { return finish(this.a, this.b) }
+
+func digest.Sum(in: []byte) => []byte {
+	s := this.Sum32()
+	in = append(in, byte(s>>24))
+	in = append(in, byte(s>>16))
+	in = append(in, byte(s>>8))
+	in = append(in, byte(s))
+	return in
+}
+
+func Checksum(data: []byte) => uint32 { return finish(update(1, 0, data)) }

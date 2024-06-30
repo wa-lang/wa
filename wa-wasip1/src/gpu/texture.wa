@@ -1,0 +1,376 @@
+
+import "js"
+
+//---------------------------------------------------------------
+
+// 纹理描述符，用于创建纹理时定义纹理参数
+type TextureDesc struct {
+    Dimension:      TextureDimension    // 默认值 0(TextureDimension_2d)
+    Format:         TextureFormat
+    MipLevelCount:  i32                 // 默认值 1，为0时表示取默认值
+    SampleCount:    i32                 // 默认值 1，为0时表示取默认值
+    Usage:          TextureUsage
+    Width:          i32
+    Height:         i32                 // 默认值 1，为0时表示取默认值
+    Depth:          i32                 // 默认值 1，为0时表示取默认值
+    ViewFormats:    []TextureFormat
+    Label:          string
+}
+
+func TextureDesc.createExtObj() => js.ExtObj {
+    d := js.NewExtObj()
+    d.SetMember_string("dimension", textureDimensionSymbols[this.Dimension])
+    d.SetMember_string("format", textureFormatSymbols[this.Format])
+
+    if this.MipLevelCount > 1 {
+        d.SetMember_i32("mipLevelCount", this.MipLevelCount)
+    }
+
+    if this.SampleCount > 1 {
+        d.SetMember_i32("sampleCount", this.SampleCount)
+    }
+    d.SetMember_i32("usage", i32(this.Usage))
+
+    {
+        va := js.NewExtArray()
+
+        va.Append_i32(this.Width)
+
+        if this.Height == 0 {
+            va.Append_i32(1)
+        } else {
+            va.Append_i32(this.Height)
+        }
+
+        if this.Depth == 0 {
+            va.Append_i32(1)
+        } else {
+            va.Append_i32(this.Depth)
+        }        
+        
+        d.SetMember_obj("size", va.ExtObj)
+    }
+
+    if len(this.ViewFormats) > 0 {
+        va := js.NewExtArray()
+        for _, v := range this.ViewFormats {
+            va.Append_string(textureFormatSymbols[v])
+        }
+        d.SetMember_obj("viewFormats", va.ExtObj)
+    }
+
+    if len(this.Label) > 0 {
+        d.SetMember_string("label", this.Label)
+    }
+
+    return d
+}
+
+//---------------------------------------------------------------
+
+// 不能使用该类型直接声明值，需通过Device.CreateTexture()创建
+#wa:need-constructor
+type Texture struct {
+    _extobj: js.ExtObj
+}
+
+// 若纹理维度为三维（既TextureDimension_3d），返回纹理的深度
+// 若纹理维度为二维（既TextureDimension_2d），返回纹理的层数
+// 其余情况返回 1
+func Texture.DepthOrArrayLayers() => i32 {
+    return jsTextureGetDepth(this._extobj.GetHandle())
+}
+#wa:import webgpu texture_get_depth
+func jsTextureGetDepth(texture: js.Handle) => i32
+
+// 返回纹理的维度
+func Texture.Dimension() => TextureDimension {
+    return jsTextureGetDimension(this._extobj.GetHandle())
+}
+#wa:import webgpu texture_get_dimension
+func jsTextureGetDimension(texture: js.Handle) => TextureDimension
+
+// 返回纹理的数据格式
+func Texture.Format() => TextureFormat {
+    return jsTextureGetFormat(this._extobj.GetHandle())
+}
+#wa:import webgpu texture_get_format
+func jsTextureGetFormat(texture: js.Handle) => TextureFormat
+
+// 返回纹理的宽度、高度（以像素为单位）
+func Texture.WidthHeight() => (i32, i32) {
+    return jsTextureGetWidthHeight(this._extobj.GetHandle())
+}
+#wa:import webgpu texture_get_width_height
+func jsTextureGetWidthHeight(texture: js.Handle) => (i32, i32)
+
+// 返回纹理的标签
+func Texture.Label() => string {
+    return jsObjGetLabel(this._extobj.GetHandle())
+}
+
+// 返回纹理的多级子纹理数量
+func Texture.MipLevelCount() => i32 {
+    return jsTextureGetMipLevelCount(this._extobj.GetHandle())
+}
+#wa:import webgpu texture_get_mip_level_count
+func jsTextureGetMipLevelCount(texture: js.Handle) => i32
+
+// 返回纹理的采样个数（1 或 4）
+func Texture.SampleCount() => i32{
+    return jsTextureGetSampleCount(this._extobj.GetHandle())
+}
+#wa:import webgpu texture_get_sample_count
+func jsTextureGetSampleCount(texture: js.Handle) => i32
+
+// 返回纹理的用途
+func Texture.Usage() => TextureUsage {
+    return jsTextureGetUsage(this._extobj.GetHandle())
+}
+#wa:import webgpu texture_get_usage
+func jsTextureGetUsage(texture: js.Handle) => TextureUsage
+
+// 创建纹理视图
+func Texture.CreateView() => TextureView {
+    v: TextureView
+    v._extobj = js.WrapExtObj(jsTextureCreateTextureView(this._extobj.GetHandle()))
+
+    return v
+}
+#wa:import webgpu texture_create_texture_view
+func jsTextureCreateTextureView(texture: js.Handle) => js.Handle
+
+//func Texture.CreateView(desc) - Todo
+
+//---------------------------------------------------------------
+
+type TextureUsage u32
+const (
+    TextureUsage_COPY_SRC: TextureUsage = 1
+    TextureUsage_COPY_DST: TextureUsage = 2
+    TextureUsage_TEXTURE_BINDING: TextureUsage = 4
+    TextureUsage_STORAGE_BINDING: TextureUsage = 8
+    TextureUsage_RENDER_ATTACHMENT: TextureUsage = 16
+)
+
+//---------------------------------------------------------------
+
+type TextureDimension i32
+const (
+    TextureDimension_2d: TextureDimension = iota
+    TextureDimension_1d
+    TextureDimension_3d
+)
+
+global textureDimensionSymbols = [...]string{
+    TextureDimension_2d: "2d",
+    TextureDimension_1d: "1d",
+    TextureDimension_3d: "3d",
+}
+
+//---------------------------------------------------------------
+
+type TextureFormat i32
+const (
+    TextureFormat_r8unorm: TextureFormat = iota
+    TextureFormat_r8snorm
+    TextureFormat_r8uint
+    TextureFormat_r8sint
+    TextureFormat_r16uint
+    TextureFormat_r16sint
+    TextureFormat_r16float
+    TextureFormat_rg8unorm
+    TextureFormat_rg8snorm
+    TextureFormat_rg8uint
+    TextureFormat_rg8sint
+    TextureFormat_r32uint
+    TextureFormat_r32sint
+    TextureFormat_r32float
+    TextureFormat_rg16uint
+    TextureFormat_rg16sint
+    TextureFormat_rg16float
+    TextureFormat_rgba8unorm
+    TextureFormat_rgba8unorm_srgb
+    TextureFormat_rgba8snorm
+    TextureFormat_rgba8uint
+    TextureFormat_rgba8sint
+    TextureFormat_bgra8unorm
+    TextureFormat_bgra8unorm_srgb
+    TextureFormat_rgb9e5ufloat
+    TextureFormat_rgb10a2uint
+    TextureFormat_rgb10a2unorm
+    TextureFormat_rg11b10ufloat
+    TextureFormat_rg32uint
+    TextureFormat_rg32sint
+    TextureFormat_rg32float
+    TextureFormat_rgba16uint
+    TextureFormat_rgba16sint
+    TextureFormat_rgba16float
+    TextureFormat_rgba32uint
+    TextureFormat_rgba32sint
+    TextureFormat_rgba32float
+    TextureFormat_stencil8
+    TextureFormat_depth16unorm
+    TextureFormat_depth24plus
+    TextureFormat_depth24plus_stencil8
+    TextureFormat_depth32float
+    TextureFormat_depth32float_stencil8
+    TextureFormat_bc1_rgba_unorm
+    TextureFormat_bc1_rgba_unorm_srgb
+    TextureFormat_bc2_rgba_unorm
+    TextureFormat_bc2_rgba_unorm_srgb
+    TextureFormat_bc3_rgba_unorm
+    TextureFormat_bc3_rgba_unorm_srgb
+    TextureFormat_bc4_r_unorm
+    TextureFormat_bc4_r_snorm
+    TextureFormat_bc5_rg_unorm
+    TextureFormat_bc5_rg_snorm
+    TextureFormat_bc6h_rgb_ufloat
+    TextureFormat_bc6h_rgb_float
+    TextureFormat_bc7_rgba_unorm
+    TextureFormat_bc7_rgba_unorm_srgb
+    TextureFormat_etc2_rgb8unorm
+    TextureFormat_etc2_rgb8unorm_srgb
+    TextureFormat_etc2_rgb8a1unorm
+    TextureFormat_etc2_rgb8a1unorm_srgb
+    TextureFormat_etc2_rgba8unorm
+    TextureFormat_etc2_rgba8unorm_srgb
+    TextureFormat_eac_r11unorm
+    TextureFormat_eac_r11snorm
+    TextureFormat_eac_rg11unorm
+    TextureFormat_eac_rg11snorm
+    TextureFormat_astc_4x4_unorm
+    TextureFormat_astc_4x4_unorm_srgb
+    TextureFormat_astc_5x4_unorm
+    TextureFormat_astc_5x4_unorm_srgb
+    TextureFormat_astc_5x5_unorm
+    TextureFormat_astc_5x5_unorm_srgb
+    TextureFormat_astc_6x5_unorm
+    TextureFormat_astc_6x5_unorm_srgb
+    TextureFormat_astc_6x6_unorm
+    TextureFormat_astc_6x6_unorm_srgb
+    TextureFormat_astc_8x5_unorm
+    TextureFormat_astc_8x5_unorm_srgb
+    TextureFormat_astc_8x6_unorm
+    TextureFormat_astc_8x6_unorm_srgb
+    TextureFormat_astc_8x8_unorm
+    TextureFormat_astc_8x8_unorm_srgb
+    TextureFormat_astc_10x5_unorm
+    TextureFormat_astc_10x5_unorm_srgb
+    TextureFormat_astc_10x6_unorm
+    TextureFormat_astc_10x6_unorm_srgb
+    TextureFormat_astc_10x8_unorm
+    TextureFormat_astc_10x8_unorm_srgb
+    TextureFormat_astc_10x10_unorm
+    TextureFormat_astc_10x10_unorm_srgb
+    TextureFormat_astc_12x10_unorm
+    TextureFormat_astc_12x10_unorm_srgb
+    TextureFormat_astc_12x12_unorm
+    TextureFormat_astc_12x12_unorm_srgb
+)
+
+global textureFormatSymbols = [...]string{
+    TextureFormat_r8unorm: "r8unorm",
+    TextureFormat_r8snorm: "r8snorm",
+    TextureFormat_r8uint: "r8uint",
+    TextureFormat_r8sint: "r8sint",
+    TextureFormat_r16uint: "r16uint",
+    TextureFormat_r16sint: "r16sint",
+    TextureFormat_r16float: "r16float",
+    TextureFormat_rg8unorm: "rg8unorm",
+    TextureFormat_rg8snorm: "rg8snorm",
+    TextureFormat_rg8uint: "rg8uint",
+    TextureFormat_rg8sint: "rg8sint",
+    TextureFormat_r32uint: "r32uint",
+    TextureFormat_r32sint: "r32sint",
+    TextureFormat_r32float: "r32float",
+    TextureFormat_rg16uint: "rg16uint",
+    TextureFormat_rg16sint: "rg16sint",
+    TextureFormat_rg16float: "rg16float",
+    TextureFormat_rgba8unorm: "rgba8unorm",
+    TextureFormat_rgba8unorm_srgb: "rgba8unorm-srgb",
+    TextureFormat_rgba8snorm: "rgba8snorm",
+    TextureFormat_rgba8uint: "rgba8uint",
+    TextureFormat_rgba8sint: "rgba8sint",
+    TextureFormat_bgra8unorm: "bgra8unorm",
+    TextureFormat_bgra8unorm_srgb: "bgra8unorm-srgb",
+    TextureFormat_rgb9e5ufloat: "rgb9e5ufloat",
+    TextureFormat_rgb10a2uint: "rgb10a2uint",
+    TextureFormat_rgb10a2unorm: "rgb10a2unorm",
+    TextureFormat_rg11b10ufloat: "rg11b10ufloat",
+    TextureFormat_rg32uint: "rg32uint",
+    TextureFormat_rg32sint: "rg32sint",
+    TextureFormat_rg32float: "rg32float",
+    TextureFormat_rgba16uint: "rgba16uint",
+    TextureFormat_rgba16sint: "rgba16sint",
+    TextureFormat_rgba16float: "rgba16float",
+    TextureFormat_rgba32uint: "rgba32uint",
+    TextureFormat_rgba32sint: "rgba32sint",
+    TextureFormat_rgba32float: "rgba32float",
+    TextureFormat_stencil8: "stencil8",
+    TextureFormat_depth16unorm: "depth16unorm",
+    TextureFormat_depth24plus: "depth24plus",
+    TextureFormat_depth24plus_stencil8: "depth24plus-stencil8",
+    TextureFormat_depth32float: "depth32float",
+    TextureFormat_depth32float_stencil8: "depth32float-stencil8",
+    TextureFormat_bc1_rgba_unorm: "bc1-rgba-unorm",
+    TextureFormat_bc1_rgba_unorm_srgb: "bc1-rgba-unorm-srgb",
+    TextureFormat_bc2_rgba_unorm: "bc2-rgba-unorm",
+    TextureFormat_bc2_rgba_unorm_srgb: "bc2-rgba-unorm-srgb",
+    TextureFormat_bc3_rgba_unorm: "bc3-rgba-unorm",
+    TextureFormat_bc3_rgba_unorm_srgb: "bc3-rgba-unorm-srgb",
+    TextureFormat_bc4_r_unorm: "bc4-r-unorm",
+    TextureFormat_bc4_r_snorm: "bc4-r-snorm",
+    TextureFormat_bc5_rg_unorm: "bc5-rg-unorm",
+    TextureFormat_bc5_rg_snorm: "bc5-rg-snorm",
+    TextureFormat_bc6h_rgb_ufloat: "bc6h-rgb-ufloat",
+    TextureFormat_bc6h_rgb_float: "bc6h-rgb-float",
+    TextureFormat_bc7_rgba_unorm: "bc7-rgba-unorm",
+    TextureFormat_bc7_rgba_unorm_srgb: "bc7-rgba-unorm-srgb",
+    TextureFormat_etc2_rgb8unorm: "etc2-rgb8unorm",
+    TextureFormat_etc2_rgb8unorm_srgb: "etc2-rgb8unorm-srgb",
+    TextureFormat_etc2_rgb8a1unorm: "etc2-rgb8a1unorm",
+    TextureFormat_etc2_rgb8a1unorm_srgb: "etc2-rgb8a1unorm-srgb",
+    TextureFormat_etc2_rgba8unorm: "etc2-rgba8unorm",
+    TextureFormat_etc2_rgba8unorm_srgb: "etc2-rgba8unorm-srgb",
+    TextureFormat_eac_r11unorm: "eac-r11unorm",
+    TextureFormat_eac_r11snorm: "eac-r11snorm",
+    TextureFormat_eac_rg11unorm: "eac-rg11unorm",
+    TextureFormat_eac_rg11snorm: "eac-rg11snorm",
+    TextureFormat_astc_4x4_unorm: "astc-4x4-unorm",
+    TextureFormat_astc_4x4_unorm_srgb: "astc-4x4-unorm-srgb",
+    TextureFormat_astc_5x4_unorm: "astc-5x4-unorm",
+    TextureFormat_astc_5x4_unorm_srgb: "astc-5x4-unorm-srgb",
+    TextureFormat_astc_5x5_unorm: "astc-5x5-unorm",
+    TextureFormat_astc_5x5_unorm_srgb: "astc-5x5-unorm-srgb",
+    TextureFormat_astc_6x5_unorm: "astc-6x5-unorm",
+    TextureFormat_astc_6x5_unorm_srgb: "astc-6x5-unorm-srgb",
+    TextureFormat_astc_6x6_unorm: "astc-6x6-unorm",
+    TextureFormat_astc_6x6_unorm_srgb: "astc-6x6-unorm-srgb",
+    TextureFormat_astc_8x5_unorm: "astc-8x5-unorm",
+    TextureFormat_astc_8x5_unorm_srgb: "astc-8x5-unorm-srgb",
+    TextureFormat_astc_8x6_unorm: "astc-8x6-unorm",
+    TextureFormat_astc_8x6_unorm_srgb: "astc-8x6-unorm-srgb",
+    TextureFormat_astc_8x8_unorm: "astc-8x8-unorm",
+    TextureFormat_astc_8x8_unorm_srgb: "astc-8x8-unorm-srgb",
+    TextureFormat_astc_10x5_unorm: "astc-10x5-unorm",
+    TextureFormat_astc_10x5_unorm_srgb: "astc-10x5-unorm-srgb",
+    TextureFormat_astc_10x6_unorm: "astc-10x6-unorm",
+    TextureFormat_astc_10x6_unorm_srgb: "astc-10x6-unorm-srgb",
+    TextureFormat_astc_10x8_unorm: "astc-10x8-unorm",
+    TextureFormat_astc_10x8_unorm_srgb: "astc-10x8-unorm-srgb",
+    TextureFormat_astc_10x10_unorm: "astc-10x10-unorm",
+    TextureFormat_astc_10x10_unorm_srgb: "astc-10x10-unorm-srgb",
+    TextureFormat_astc_12x10_unorm: "astc-12x10-unorm",
+    TextureFormat_astc_12x10_unorm_srgb: "astc-12x10-unorm-srgb",
+    TextureFormat_astc_12x12_unorm: "astc-12x12-unorm",
+    TextureFormat_astc_12x12_unorm_srgb: "astc-12x12-unorm-srgb",
+}
+
+//---------------------------------------------------------------
+
+// 不能使用该类型直接声明值，需通过 Texture.CreateView() 创建
+#wa:need-constructor
+type TextureView struct {
+    _extobj: js.ExtObj
+}

@@ -1,0 +1,128 @@
+
+import "js"
+
+//---------------------------------------------------------------
+
+// 不能使用该类型直接声明值，需通过 Device.CreateSampler() 创建
+#wa:need-constructor
+type Sampler struct {
+    _extobj: js.ExtObj
+}
+
+func Sampler.Label() => string {
+    return jsObjGetLabel(this._extobj.GetHandle())
+}
+
+//---------------------------------------------------------------
+
+// 采样器描述符，用于创建采样器时定义采样器参数
+type SamplerDesc struct {
+    AddressModeU: AddressMode  //U方向寻址模式。默认值 0(AddressMode_clamp_to_edge)
+    AddressModeV: AddressMode  //V方向寻址模式。默认值 0(AddressMode_clamp_to_edge)
+    AddressModeW: AddressMode  //W方向寻址模式。默认值 0(AddressMode_clamp_to_edge)
+
+    Compare: CompareMode  //若为CompareMode_none之外的值，则为比较取样器，取样模式由该值确定。默认值 0(CompareMode_none)
+
+    Label: string  //标签
+
+    LodMinClamp: i32  //Lod最低等级。默认值 0
+    LodMaxClamp: i32  //Lod最高等级。默认值 32，为0时表示取默认值
+
+    MaxAnisotropy: i32  //各向异性采样数。默认值 1，为0时表示取默认值
+
+    MagFilter:    Filter  //默认值 0(Filter_nearest)
+    MinFilter:    Filter  //默认值 0(Filter_nearest)
+    MipmapFilter: Filter  //默认值 0(Filter_nearest)
+}
+
+func SamplerDesc.createExtObj() => js.ExtObj {
+    d := js.NewExtObj()
+    d.SetMember_string("addressModeU", addressModeSymbols[this.AddressModeU])
+    d.SetMember_string("addressModeV", addressModeSymbols[this.AddressModeV])
+    d.SetMember_string("addressModeW", addressModeSymbols[this.AddressModeW])
+
+    if this.Compare != CompareMode_none {
+        d.SetMember_string("compare", compareModeSymbols[this.Compare])
+    }
+
+    d.SetMember_string("label", this.Label)
+    
+    d.SetMember_i32("lodMinClamp", this.LodMinClamp)
+
+    if this.LodMaxClamp == 0 {
+        d.SetMember_i32("lodMaxClamp", 32)
+    } else {
+        d.SetMember_i32("lodMaxClamp", this.LodMaxClamp)
+    }
+
+    if this.MaxAnisotropy == 0 {
+        d.SetMember_i32("maxAnisotropy", 1)
+    } else {
+        d.SetMember_i32("maxAnisotropy", this.MaxAnisotropy)
+    }
+
+    d.SetMember_string("magFilter", filterSymbols[this.MagFilter])
+    d.SetMember_string("minFilter", filterSymbols[this.MinFilter])
+    d.SetMember_string("mipmapFilter", filterSymbols[this.MipmapFilter])
+
+    return d    
+}
+
+//---------------------------------------------------------------
+
+type AddressMode  i32
+
+const (
+    AddressMode_clamp_to_edge: AddressMode = iota
+    AddressMode_repeat
+    AddressMode_mirror_repeat
+)
+
+global addressModeSymbols = [...]string{
+    AddressMode_clamp_to_edge: "clamp-to-edge",  //截取至 [0, 1] 之间
+    AddressMode_repeat:        "repeat",  //重复铺贴
+    AddressMode_mirror_repeat: "mirror-repeat",  //重复铺贴，但每次过界时镜像
+}
+
+//---------------------------------------------------------------
+
+type CompareMode i32
+
+const (
+    CompareMode_none: CompareMode = iota
+    CompareMode_never
+    CompareMode_less
+    CompareMode_equal
+    CompareMode_less_equal
+    CompareMode_greater
+    CompareMode_not_equal
+    CopmareMode_greater_equal
+    CompareMode_always
+)
+
+global compareModeSymbols = [...]string{
+    CompareMode_none: "",
+    CompareMode_never: "never",
+    CompareMode_less: "less",
+    CompareMode_equal: "equal",
+    CompareMode_less_equal: "less-equal",
+    CompareMode_greater: "greater",
+    CompareMode_not_equal: "not-equal",
+    CopmareMode_greater_equal: "greater-equal",
+    CompareMode_always: "always",
+}
+
+//---------------------------------------------------------------
+
+type Filter i32
+
+const (
+    Filter_nearest: Filter = iota
+    Filter_linear
+)
+
+global filterSymbols = [...]string{
+    Filter_nearest: "nearest",
+    Filter_linear:  "linear",
+}
+

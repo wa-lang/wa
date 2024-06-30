@@ -1,0 +1,39 @@
+// 版权 @2019 凹语言 作者。保留所有权利。
+
+#wa:generic IncF64
+func Inc(arg_Inc_a: int) => int {
+	return arg_Inc_a + 1
+}
+
+func IncF64(arg_IncF64_f: f64) => f64 {
+	return arg_IncF64_f + 1
+}
+
+#wa:operator + MyInt_add
+#wa:operator <=> MyInt_cmp
+type MyInt :struct {
+	V: int
+}
+
+#wa:generic AddF64
+func MyInt.Add(a: int) {
+	this.V += a
+}
+
+func MyInt.AddF64(a: f64) {
+	this.V += int(a)
+}
+
+func MyInt_add(x, y: MyInt) => int {
+	return x.V + y.V
+}
+
+func MyInt_cmp(x, y: MyInt) => int {
+	switch {
+	case x.V < y.V:
+		return -1
+	case x.V > y.V:
+		return 1
+	}
+	return 0
+}

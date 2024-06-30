@@ -1,0 +1,14 @@
+// 版权 @2023 凹语言 作者。保留所有权利。
+
+type Gray u8
+
+type RGBA u32
+
+func RGBAFrom(r, g, b, a: u8) => RGBA {
+	return RGBA(u32(a)<<24 + u32(b)<<16 + u32(g)<<8 + u32(r))
+}
+
+func RGBA.R => u8 { return u8(*this) }
+func RGBA.G => u8 { return u8(*this >> 8) }
+func RGBA.B => u8 { return u8(*this >> 16) }
+func RGBA.A => u8 { return u8(*this >> 24) }

@@ -1,0 +1,60 @@
+
+import "math"
+
+type Vec3f struct {
+    X, Y, Z: f32
+}
+
+type Vec4f struct {
+    X, Y, Z, W: f32
+}
+
+#wa:generic Magnitude4f
+func Magnitude(v: Vec3f) => f32 {
+    return math.Sqrt(v.X * v.X + v.Y * v.Y + v.Z * v.Z)
+}
+
+func Magnitude4f(v: Vec4f) => f32 {
+    return math.Sqrt(v.X * v.X + v.Y * v.Y + v.Z * v.Z + v.W * v.W)
+}
+
+#wa:generic Scale4f
+func Scale(v: Vec3f, s: f32) => Vec3f {
+    return Vec3f{X: v.X * s, Y: v.Y * s, Z: v.Z * s}
+}
+
+func Scale4f(v: Vec4f, s: f32) => Vec4f {
+    return Vec4f{X: v.X * s, Y: v.Y * s, Z: v.Z * s, W: v.W * s}
+}
+
+#wa:generic Sub4f
+func Sub(a, b: Vec3f) => Vec3f {
+    return Vec3f{X: a.X - b.X, Y: a.Y - b.Y, Z: a.Z - b.Z}
+}
+
+func Sub4f(a, b: Vec4f) => Vec4f {
+    return Vec4f{X: a.X - b.X, Y: a.Y - b.Y, Z: a.Z - b.Z, W: a.W - b.W}
+}
+
+#wa:generic Normalize4f
+func Normalize(v: Vec3f) => Vec3f {
+    m := 1.0 / Magnitude(v)
+    return Scale(v, m)
+}
+
+func Normalize4f(v: Vec4f) => Vec4f {
+    m := 1.0 / Magnitude(v)
+    return Scale(v, m)
+}
+
+func CrossProduct(a, b: Vec3f) => Vec3f {
+    r: Vec3f
+    r.X = a.Y * b.Z - a.Z * b.Y
+    r.Y = a.Z * b.X - a.X * b.Z
+    r.Z = a.X * b.Y - a.Y * b.X
+    return r
+}
+
+func DotProduct(a, b: Vec3f) => f32 {
+    return a.X * b.X + a.Y * b.Y + a.Z * b.Z
+}

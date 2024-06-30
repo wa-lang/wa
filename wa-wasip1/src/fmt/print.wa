@@ -1,0 +1,20 @@
+// 版权 @2019 凹语言 作者。保留所有权利。
+
+#wa:build !fmt_tag
+
+func Println(a: ...interface{}) {
+	for i, v := range a {
+		if i > 0 {
+			print(" ")
+		}
+		switch v:= v.(type) {
+		case int:
+			print(v)
+		case string:
+			print(v)
+		case error:
+			print(v.Error())
+		}
+	}
+	println()
+}

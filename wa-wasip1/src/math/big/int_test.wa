@@ -1,0 +1,82 @@
+// 版权 @2023 凹语言 作者。保留所有权利。
+
+type funZZ func(z, x, y: *Int) => *Int
+type argZZ struct {
+	z, x, y: *Int
+}
+
+global sumZZ = []argZZ{
+	{NewInt("0"), NewInt("0"), NewInt("0")},
+	{NewInt("1"), NewInt("1"), NewInt("0")},
+	{NewInt("1111111110"), NewInt("123456789"), NewInt("987654321")},
+	{NewInt("-1"), NewInt("-1"), NewInt("0")},
+	{NewInt("864197532"), NewInt("-123456789"), NewInt("987654321")},
+	{NewInt("-1111111110"), NewInt("-123456789"), NewInt("-987654321")},
+}
+
+func Test_Int_Set() {
+	for _, a := range sumZZ {
+		z: Int
+		z.Set(a.z)
+		assert((&z).Cmp(a.z) == 0, "error for int set")
+	}
+}
+
+func testFunZZ(msg: string, f: funZZ, a: argZZ) {
+	z: Int
+	f(&z, a.x, a.y)
+	t := (&z).Cmp(a.z)
+	assert(t == 0, "error for "+msg)
+}
+
+func Test_Int_Sum() {
+	AddZZ := func(z, x, y: *Int) => *Int { return z.Add(x, y) }
+	SubZZ := func(z, x, y: *Int) => *Int { return z.Sub(x, y) }
+
+	for _, a := range sumZZ {
+		arg := a
+		testFunZZ("AddZZ", AddZZ, arg)
+
+		arg = argZZ{a.z, a.y, a.x}
+		testFunZZ("AddZZ symmetric", AddZZ, arg)
+
+		arg = argZZ{a.x, a.z, a.y}
+		testFunZZ("SubZZ", SubZZ, arg)
+
+		arg = argZZ{a.y, a.z, a.x}
+		testFunZZ("SubZZ symmetric", SubZZ, arg)
+	}
+}
+
+global quoTests = []struct {
+	x, y: string
+	q, r: string
+}{
+	{
+		"476217953993950760840509444250624797097991362735329973741718102894495832294430498335824897858659711275234906400899559094370964723884706254265559534144986498357",
+		"9353930466774385905609975137998169297361893554149986716853295022578535724979483772383667534691121982974895531435241089241440253066816724367338287092081996",
+		"50911",
+		"1",
+	},
+	{
+		"11510768301994997771168",
+		"1328165573307167369775",
+		"8",
+		"885443715537658812968",
+	},
+}
+
+func Test_Quo() {
+
+	for _, test := range quoTests {
+		x := NewInt(test.x)
+		y := NewInt(test.y)
+		expectedQ := NewInt(test.q)
+		expectedR := NewInt(test.r)
+
+		r := NewInt("0")
+		q, r := NewInt("0").QuoRem(x, y, r)
+		assert(q.Cmp(expectedQ) == 0, "error for Int quotient")
+		assert(r.Cmp(expectedR) == 0, "error for Int remainder")
+	}
+}

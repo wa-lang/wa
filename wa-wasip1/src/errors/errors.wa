@@ -1,0 +1,14 @@
+// 版权 @2023 凹语言 作者。保留所有权利。
+
+// 构造字符串类型的 error
+func New(text: string) => error {
+	return &errorString{text}
+}
+
+type errorString struct {
+	s :string
+}
+
+func errorString.Error => string {
+	return this.s
+}

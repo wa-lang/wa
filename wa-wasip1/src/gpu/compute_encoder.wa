@@ -1,0 +1,25 @@
+
+import "js"
+
+//---------------------------------------------------------------
+
+// 不能使用该类型直接声明值。通过 CommandEncoder.BeginComputePass() 创建
+// 该对象对应 GPUComputePassEncoder
+#wa:need-constructor
+type ComputeEncoder struct {
+    _extobj: js.ExtObj
+}
+
+// 获取标签
+func ComputeEncoder.Label() => string {
+    return jsObjGetLabel(this._extobj.GetHandle())
+}
+
+//func ComputeEncoder.DispatchWorkgroups() - Todo
+//func ComputeEncoder.DispatchWorkgroupsIndirect() - Todo
+//func ComputeEncoder.End() - Todo
+//func ComputeEncoder.InsertDebugMarker() - Todo
+//func ComputeEncoder.PopDebugGroup() - Todo
+//func ComputeEncoder.PushDebugGroup() - Todo
+//func ComputeEncoder.SetBindGroup() - Todo
+//func ComputeEncoder.SetPipeline() - Todo

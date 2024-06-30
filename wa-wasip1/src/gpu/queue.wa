@@ -1,0 +1,37 @@
+
+import "js"
+
+//---------------------------------------------------------------
+
+// 不能使用该类型直接声明值，需通过 Device.Queue() 创建 - Todo
+#wa:need-constructor
+type Queue struct {
+    _extobj: js.ExtObj
+}
+
+func Queue.Label() => string {
+    return jsObjGetLabel(this._extobj.GetHandle())
+}
+
+func Queue.CopyExternalImageToTexture(src: js.ExtObj, dest: Texture) {
+    jsQueueCopyExternalImageToTexture(this._extobj.GetHandle(), src.GetHandle(), dest._extobj.GetHandle())
+}
+#wa:import webgpu queue_copy_external_image_to_texture
+func jsQueueCopyExternalImageToTexture(queue, src, dest: js.Handle)
+
+//func Queue.OnSubmittedWorkDone() - Todo
+
+func Queue.Submit(cb: CommandBuffer) {
+    jsQueueSubmit(this._extobj.GetHandle(), cb._extobj.GetHandle())
+}
+#wa:import webgpu queue_submit
+func jsQueueSubmit(queue, gpu_command_buffer: js.Handle)
+
+// 向Buffer中写入数据块
+func Queue.WriteBuffer(buffer: Buffer, offset: i32, data: []byte) {
+    jsQueueWriteBuffer(this._extobj.GetHandle(), buffer._extobj.GetHandle(), offset, data)
+}
+#wa:import webgpu queue_write_buffer
+func jsQueueWriteBuffer(queue, buffer: js.Handle, offset: i32, data: []byte)
+
+//func Queue.WriteTexture() - Todo

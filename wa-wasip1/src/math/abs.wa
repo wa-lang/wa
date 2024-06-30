@@ -1,0 +1,13 @@
+// 版权 @2023 凹语言 作者。保留所有权利。
+
+// Abs returns the absolute value of x.
+//
+// Special cases are:
+//	Abs(±Inf) = +Inf
+//	Abs(NaN) = NaN
+func Abs(x: f64) => f64 {
+	if x > 0 {
+		return x
+	}
+	return -x
+}

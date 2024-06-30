@@ -1,0 +1,349 @@
+// 版权 @2024 凹语言 作者。保留所有权利。
+
+import (
+	"io"
+	"strconv"
+)
+
+type Encoding struct {
+	encode:    string
+	decodeMap: [256]byte
+}
+
+const encodeStd = "ABCDEFGHIJKLMNOPQRSTUVWXYZ234567"
+const encodeHex = "0123456789ABCDEFGHIJKLMNOPQRSTUV"
+
+func NewEncoding(encoder: string) => *Encoding {
+	e := new(Encoding)
+	e.encode = encoder
+	for i := 0; i < len(e.decodeMap); i++ {
+		e.decodeMap[i] = 0xFF
+	}
+	for i := 0; i < len(encoder); i++ {
+		e.decodeMap[encoder[i]] = byte(i)
+	}
+	return e
+}
+
+global StdEncoding = NewEncoding(encodeStd)
+
+global HexEncoding = NewEncoding(encodeHex)
+
+func Encoding.Encode(dst, src: []byte) {
+	enc := this
+	if len(src) == 0 {
+		return
+	}
+
+	for len(src) > 0 {
+		dst[0] = 0
+		dst[1] = 0
+		dst[2] = 0
+		dst[3] = 0
+		dst[4] = 0
+		dst[5] = 0
+		dst[6] = 0
+		dst[7] = 0
+
+		switch len(src) {
+		default:
+			dst[7] |= src[4] & 0x1F
+			dst[6] |= src[4] >> 5
+			dst[6] |= (src[3] << 3) & 0x1F
+			dst[5] |= (src[3] >> 2) & 0x1F
+			dst[4] |= src[3] >> 7
+			dst[4] |= (src[2] << 1) & 0x1F
+			dst[3] |= (src[2] >> 4) & 0x1F
+			dst[3] |= (src[1] << 4) & 0x1F
+			dst[2] |= (src[1] >> 1) & 0x1F
+			dst[1] |= (src[1] >> 6) & 0x1F
+			dst[1] |= (src[0] << 2) & 0x1F
+			dst[0] |= src[0] >> 3
+		case 4:
+			dst[6] |= (src[3] << 3) & 0x1F
+			dst[5] |= (src[3] >> 2) & 0x1F
+			dst[4] |= src[3] >> 7
+			dst[4] |= (src[2] << 1) & 0x1F
+			dst[3] |= (src[2] >> 4) & 0x1F
+			dst[3] |= (src[1] << 4) & 0x1F
+			dst[2] |= (src[1] >> 1) & 0x1F
+			dst[1] |= (src[1] >> 6) & 0x1F
+			dst[1] |= (src[0] << 2) & 0x1F
+			dst[0] |= src[0] >> 3
+		case 3:
+			dst[4] |= (src[2] << 1) & 0x1F
+			dst[3] |= (src[2] >> 4) & 0x1F
+			dst[3] |= (src[1] << 4) & 0x1F
+			dst[2] |= (src[1] >> 1) & 0x1F
+			dst[1] |= (src[1] >> 6) & 0x1F
+			dst[1] |= (src[0] << 2) & 0x1F
+			dst[0] |= src[0] >> 3
+		case 2:
+			dst[3] |= (src[1] << 4) & 0x1F
+			dst[2] |= (src[1] >> 1) & 0x1F
+			dst[1] |= (src[1] >> 6) & 0x1F
+			dst[1] |= (src[0] << 2) & 0x1F
+			dst[0] |= src[0] >> 3
+		case 1:
+			dst[1] |= (src[0] << 2) & 0x1F
+			dst[0] |= src[0] >> 3
+		}
+
+		for j := 0; j < 8; j++ {
+			dst[j] = enc.encode[dst[j]]
+		}
+
+		if len(src) < 5 {
+			dst[7] = '='
+			if len(src) < 4 {
+				dst[6] = '='
+				dst[5] = '='
+				if len(src) < 3 {
+					dst[4] = '='
+					if len(src) < 2 {
+						dst[3] = '='
+						dst[2] = '='
+					}
+				}
+			}
+			break
+		}
+		src = src[5:]
+		dst = dst[8:]
+	}
+}
+
+func Encoding.EncodeToString(src: []byte) => string {
+	buf := make([]byte, this.EncodedLen(len(src)))
+	this.Encode(buf, src)
+	return string(buf)
+}
+
+type encoder struct {
+	err:  error
+	enc:  *Encoding
+	w:    io.Writer
+	buf:  [5]byte
+	nbuf: int
+	out:  [1024]byte
+}
+
+func encoder.Write(p: []byte) => (n: int, err: error) {
+	if this.err != nil {
+		return 0, this.err
+	}
+
+	if this.nbuf > 0 {
+		i: int
+		for i = 0; i < len(p) && this.nbuf < 5; i++ {
+			this.buf[this.nbuf] = p[i]
+			this.nbuf++
+		}
+		n += i
+		p = p[i:]
+		if this.nbuf < 5 {
+			return
+		}
+		this.enc.Encode(this.out[0:], this.buf[0:])
+		if _, this.err = this.w.Write(this.out[0:8]); this.err != nil {
+			return n, this.err
+		}
+		this.nbuf = 0
+	}
+
+	for len(p) >= 5 {
+		nn := len(this.out) / 8 * 5
+		if nn > len(p) {
+			nn = len(p)
+		}
+		nn -= nn % 5
+		if nn > 0 {
+			this.enc.Encode(this.out[0:], p[0:nn])
+			if _, this.err = this.w.Write(this.out[0 : nn/5*8]); this.err != nil {
+				return n, this.err
+			}
+		}
+		n += nn
+		p = p[nn:]
+	}
+
+	for i := 0; i < len(p); i++ {
+		this.buf[i] = p[i]
+	}
+	this.nbuf = len(p)
+	n += len(p)
+	return
+}
+
+func encoder.Close() => error {
+
+	if this.err == nil && this.nbuf > 0 {
+		this.enc.Encode(this.out[0:], this.buf[0:this.nbuf])
+		this.nbuf = 0
+		_, this.err = this.w.Write(this.out[0:8])
+	}
+	return this.err
+}
+
+func NewEncoder(enc: *Encoding, w: io.Writer) => io.WriteCloser {
+	return &encoder{enc: enc, w: w}
+}
+
+func Encoding.EncodedLen(n: int) => int { return (n + 4) / 5 * 8 }
+
+type CorruptInputError struct {
+	V: int64
+}
+
+func CorruptInputError.Error() => string {
+	return "illegal base32 data at input byte " + strconv.FormatInt(int64(this.V), 10)
+}
+
+func Encoding.decode(dst, src: []byte) => (n: int, end: bool, err: error) {
+	osrc := src
+	for len(src) > 0 && !end {
+
+		dbuf: [8]byte
+		dlen := 8
+
+	dbufloop:
+		for j := 0; j < 8; {
+			if len(src) == 0 {
+				return n, false, &CorruptInputError{int64(len(osrc) - len(src) - j)}
+			}
+			in := src[0]
+			src = src[1:]
+			if in == '\r' || in == '\n' {
+
+				continue
+			}
+			if in == '=' && j >= 2 && len(src) < 8 {
+
+				for k := 0; k < 8-j-1; k++ {
+					if len(src) > k && src[k] != '=' {
+						return n, false, &CorruptInputError{int64(len(osrc) - len(src) + k - 1)}
+					}
+				}
+				dlen = j
+				end = true
+				break dbufloop
+			}
+			dbuf[j] = this.decodeMap[in]
+			if dbuf[j] == 0xFF {
+				return n, false, &CorruptInputError{int64(len(osrc) - len(src) - 1)}
+			}
+			j++
+		}
+
+		switch dlen {
+		case 7, 8:
+			dst[4] = dbuf[6]<<5 | dbuf[7]
+			dst[3] = dbuf[4]<<7 | dbuf[5]<<2 | dbuf[6]>>3
+			dst[2] = dbuf[3]<<4 | dbuf[4]>>1
+			dst[1] = dbuf[1]<<6 | dbuf[2]<<1 | dbuf[3]>>4
+			dst[0] = dbuf[0]<<3 | dbuf[1]>>2
+		case 6, 5:
+			dst[3] = dbuf[4]<<7 | dbuf[5]<<2 | dbuf[6]>>3
+			dst[2] = dbuf[3]<<4 | dbuf[4]>>1
+			dst[1] = dbuf[1]<<6 | dbuf[2]<<1 | dbuf[3]>>4
+			dst[0] = dbuf[0]<<3 | dbuf[1]>>2
+		case 4:
+			dst[2] = dbuf[3]<<4 | dbuf[4]>>1
+			dst[1] = dbuf[1]<<6 | dbuf[2]<<1 | dbuf[3]>>4
+			dst[0] = dbuf[0]<<3 | dbuf[1]>>2
+		case 3:
+			dst[1] = dbuf[1]<<6 | dbuf[2]<<1 | dbuf[3]>>4
+			dst[0] = dbuf[0]<<3 | dbuf[1]>>2
+		case 2:
+			dst[0] = dbuf[0]<<3 | dbuf[1]>>2
+		}
+		dst = dst[5:]
+		switch dlen {
+		case 2:
+			n += 1
+		case 3, 4:
+			n += 2
+		case 5:
+			n += 3
+		case 6, 7:
+			n += 4
+		case 8:
+			n += 5
+		}
+	}
+	return n, end, nil
+}
+
+func Encoding.Decode(dst, src: []byte) => (n: int, err: error) {
+	n, _, err = this.decode(dst, src)
+	return
+}
+
+func Encoding.DecodeString(s: string) => ([]byte, error) {
+	dbuf := make([]byte, this.DecodedLen(len(s)))
+	n, err := this.Decode(dbuf, []byte(s))
+	return dbuf[:n], err
+}
+
+type decoder struct {
+	err:    error
+	enc:    *Encoding
+	r:      io.Reader
+	end:    bool
+	buf:    [1024]byte
+	nbuf:   int
+	out:    []byte
+	outbuf: [1024 / 8 * 5]byte
+}
+
+func decoder.Read(p: []byte) => (n: int, err: error) {
+	d := this
+	if d.err != nil {
+		return 0, d.err
+	}
+
+	if len(d.out) > 0 {
+		n = copy(p, d.out)
+		d.out = d.out[n:]
+		return n, nil
+	}
+
+	nn := len(p) / 5 * 8
+	if nn < 8 {
+		nn = 8
+	}
+	if nn > len(d.buf) {
+		nn = len(d.buf)
+	}
+	nn, d.err = io.ReadAtLeast(d.r, d.buf[d.nbuf:nn], 8-d.nbuf)
+	d.nbuf += nn
+	if d.nbuf < 8 {
+		return 0, d.err
+	}
+
+	nr := d.nbuf / 8 * 8
+	nw := d.nbuf / 8 * 5
+	if nw > len(p) {
+		nw, d.end, d.err = d.enc.decode(d.outbuf[0:], d.buf[0:nr])
+		d.out = d.outbuf[0:nw]
+		n = copy(p, d.out)
+		d.out = d.out[n:]
+	} else {
+		n, d.end, d.err = d.enc.decode(p, d.buf[0:nr])
+	}
+	d.nbuf -= nr
+	for i := 0; i < d.nbuf; i++ {
+		d.buf[i] = d.buf[i+nr]
+	}
+
+	if d.err == nil {
+		d.err = err
+	}
+	return n, d.err
+}
+
+func NewDecoder(this: *Encoding, r: io.Reader) => io.Reader {
+	return &decoder{enc: this, r: r}
+}
+
+func Encoding.DecodedLen(n: int) => int { return n / 8 * 5 }

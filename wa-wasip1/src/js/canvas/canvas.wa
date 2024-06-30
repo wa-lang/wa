@@ -1,0 +1,672 @@
+import "js"
+
+/*
+不能使用该类型直接声明值，需通过 QueryCanvas() 创建
+*/
+type Canvas :struct {
+	js.ExtObj
+}
+
+/*
+不能使用该类型直接声明值，需通过 Canvas.GetContext2D 创建
+*/
+type Context2D :struct {
+	js.ExtObj
+}
+
+func QueryCanvas(selector: string) => (canvas: Canvas, succ: bool) {
+	h := js.QuerySelector(selector)
+	if h != 0 {
+		canvas.ExtObj = js.WrapExtObj(h)
+		succ = true
+	} else {
+		succ = false
+	}
+
+	return
+}
+
+/*****************************************
+*                                        *
+*          Color, Style, Shadow          *
+*                                        *
+*****************************************/
+/*
+* 设置或返回用于填充绘画的颜色、渐变或模式
+* params: style: color | gradient | pattern
+*   style: 用于填充绘画的颜色、渐变或模式
+ */
+func Context2D.SetFillStyle(style: string) {
+	jsSetFillStyle(this.GetHandle(), style)
+}
+
+/*
+* 设置或返回用于笔触的颜色、渐变或模式
+* params: style: color | gradient | pattern
+*   style: 用于笔触的颜色、渐变或模式
+ */
+func Context2D.SetStrokeStyle(style: string) {
+	jsSetStrokeStyle(this.GetHandle(), style)
+}
+
+/*
+* 设置或返回用于阴影的颜色
+* params: color
+*   color: 用于阴影的颜色
+ */
+func Context2D.SetShadowColor(color: string) {
+	jsSetShadowColor(this.GetHandle(), color)
+}
+
+/*
+* 设置或返回用于阴影的模糊级别
+* params: blur
+*   blur: 用于阴影的模糊级别
+ */
+func Context2D.SetShadowBlur(blur: f32) {
+	jsSetShadowBlur(this.GetHandle(), blur)
+}
+
+/*
+* 设置或返回阴影与形状的水平距离
+* params: x
+*   x: 阴影与形状的水平距离
+ */
+func Context2D.SetShadowOffsetX(x: f32) {
+	jsSetShadowOffsetX(this.GetHandle(), x)
+}
+
+/*
+* 设置或返回阴影与形状的垂直距离
+* params: y
+*   y: 阴影与形状的垂直距离
+ */
+func Context2D.SetShadowOffsetY(y: f32) {
+	jsSetShadowOffsetY(this.GetHandle(), y)
+}
+
+/*
+* 创建线性渐变（用在画布内容上）
+* params: x0, y0, x1, y1
+*   x0: 渐变开始点的 x 坐标
+*   y0: 渐变开始点的 y 坐标
+*   x1: 渐变结束点的 x 坐标
+*   y1: 渐变结束点的 y 坐标
+ */
+func Context2D.CreateLinearGradient(x0, y0, x1, y1: f32) => (gradient: js.ExtObj) {
+	// TODO: 需要获取 CanvasGradient 对象
+	return
+}
+
+/*
+* 在指定的方向上重复指定的元素
+* params: image, repetition: repeat | repeat-x | repeat-y | no-repeat
+ */
+func Context2D.CreatePattern(image: []u8, repetition: string) => (pattern: js.ExtObj) {
+	// TODO: 需要获取 CanvasPattern 对象
+	return
+}
+
+/*
+* 创建放射状/环形的渐变（用在画布内容上）
+* params: x0, y0, r0, x1, y1, r1
+*   x0: 渐变的开始圆的 x 坐标
+*   y0: 渐变的开始圆的 y 坐标
+*   r0: 开始圆的半径
+*   x1: 渐变的结束圆的 x 坐标
+*   y1: 渐变的结束圆的 y 坐标
+*   r1: 结束圆的半径
+ */
+func Context2D.CreateRadialGradient(x0, y0, r0, x1, y1, r1: f32) => (gradient: js.ExtObj) {
+	// TODO: 需要获取 CanvasGradient 对象
+	return
+}
+
+/*
+* 规定渐变对象中的颜色和停止位置
+* params: stop, color
+*   stop: 介于 0.0 与 1.0 之间的值，表示渐变中开始与结束之间的位置
+*   color: 在 stop 位置显示的 CSS 颜色值
+ */
+func Context2D.AddColorStop(stop: f32, color: string) {
+	jsAddColorStop(this.GetHandle(), stop, color)
+}
+
+/*****************************************
+*                                        *
+*               Line style               *
+*                                        *
+*****************************************/
+/*
+* 设置或返回线条的结束端点样式
+* params: cap: butt | round | square
+*   cap: 线条的结束端点样式
+ */
+func Context2D.SetLineCap(cap: string) {
+	jsSetLineCap(this.GetHandle(), cap)
+}
+
+/*
+* 设置或返回两条线相交时，所创建的拐角类型
+* params: join: bevel | round | miter
+*   join: 两条线相交时，所创建的拐角类型
+ */
+func Context2D.SetLineJoin(join: string) {
+	jsSetLineJoin(this.GetHandle(), join)
+}
+
+/*
+* 设置或返回当前的线条宽度
+* params: width
+*   width: 当前的线条宽度
+ */
+func Context2D.SetLineWidth(width: f32) {
+	jsSetLineWidth(this.GetHandle(), width)
+}
+
+/*
+* 设置或返回最大斜接长度
+* params: limit
+*   limit: 最大斜接长度
+ */
+func Context2D.SetMiterLimit(limit: f32) {
+	jsSetMiterLimit(this.GetHandle(), limit)
+}
+
+/*****************************************
+*                                        *
+*                  Path                  *
+*                                        *
+*****************************************/
+// 填充当前绘图（路径）
+func Context2D.Fill() {
+	jsFill(this.GetHandle())
+}
+
+// 绘制已定义的路径
+func Context2D.Stroke() {
+	jsStroke(this.GetHandle())
+}
+
+// 起始一条路径，或重置当前路径
+func Context2D.BeginPath() {
+	jsBeginPath(this.GetHandle())
+}
+
+/*
+* 把路径移动到画布中的指定点，不创建线条
+* params: x, y
+*   x: 路径的目标位置的 x 坐标
+*   y: 路径的目标位置的 y 坐标
+ */
+func Context2D.MoveTo(x, y: f32) {
+	jsMoveTo(this.GetHandle(), x, y)
+}
+
+// 创建从当前点回到起始点的路径
+func Context2D.ClosePath() {
+	jsClosePath(this.GetHandle())
+}
+
+/*
+* 添加一个新点，然后在画布中创建从该点到最后指定点的线条
+* params: x, y
+*   x: 路径的目标位置的 x 坐标
+*   y: 路径的目标位置的 y 坐标
+ */
+func Context2D.LineTo(x, y: f32) {
+	jsLineTo(this.GetHandle(), x, y)
+}
+
+// 从原始画布剪切任意形状和尺寸的区域
+func Context2D.Clip() {
+	jsClip(this.GetHandle())
+}
+
+/*
+* 创建二次贝塞尔曲线
+* params: cpx, cpy, x, y
+*   cpx: 贝塞尔控制点的 x 坐标
+*   cpy: 贝塞尔控制点的 y 坐标
+*   x: 结束点的 x 坐标
+*   y: 结束点的 y 坐标
+ */
+func Context2D.QuadraticCurveTo(cpx, cpy, x, y: f32) {
+	jsQuadraticCurveTo(this.GetHandle(), cpx, cpy, x, y)
+}
+
+/*
+* 创建三次贝塞尔曲线
+* params: cp1x, cp1y, cp2x, cp2y, x, y
+*   cp1x: 第一个贝塞尔控制点的 x 坐标
+*   cp1y: 第一个贝塞尔控制点的 y 坐标
+*   cp2x: 第二个贝塞尔控制点的 x 坐标
+*   cp2y: 第二个贝塞尔控制点的 y 坐标
+*   x: 结束点的 x 坐标
+*   y: 结束点的 y 坐标
+ */
+func Context2D.BezierCurveTo(cp1x, cp1y, cp2x, cp2y, x, y: f32) {
+	jsBezierCurveTo(this.GetHandle(), cp1x, cp1y, cp2x, cp2y, x, y)
+}
+
+/*
+* 创建弧/曲线（用于创建圆形或部分圆）
+* params: x, y, radius, startAngle, endAngle
+*   x: 圆的中心的 x 坐标
+*   y: 圆的中心的 y 坐标
+*   radius: 圆的半径
+*   startAngle: 起始角，以弧度计（弧的圆形的三点钟位置是 0 度）
+*   endAngle: 结束角，以弧度计
+ */
+func Context2D.Arc(x, y, radius, startAngle, endAngle: f32) {
+	jsArc(this.GetHandle(), x, y, radius, startAngle, endAngle)
+}
+
+/*
+* 创建带有方向的弧/曲线（用于创建圆形或部分圆）
+* params: x, y, radius, startAngle, endAngle
+*   x: 圆的中心的 x 坐标
+*   y: 圆的中心的 y 坐标
+*   radius: 圆的半径
+*   startAngle: 起始角，以弧度计（弧的圆形的三点钟位置是 0 度）
+*   endAngle: 结束角，以弧度计
+*   counterclockwise: 规定应该逆时针还是顺时针绘图。false = 顺时针，true = 逆时针
+ */
+func Context2D.ArcWithDirection(x, y, radius, startAngle, endAngle: f32, counterclockwise: bool) {
+	jsArcWithDirection(this.GetHandle(), x, y, radius, startAngle, endAngle, counterclockwise)
+}
+
+/*
+* 创建两切线之间的弧/曲线
+* params: x1, y1, x2, y2, radius
+*   x1: 两切线交点的横坐标
+*   y1: 两切线交点的纵坐标
+*   x2: 第二条切线上一点的横坐标
+*   y2: 第二条切线上一点的纵坐标
+*   radius: 圆弧的半径
+ */
+func Context2D.ArcTo(x1, y1, x2, y2, radius: f32) {
+	jsArcTo(this.GetHandle(), x1, y1, x2, y2, radius)
+}
+
+/*
+ * 绘制椭圆
+ * radiusX: 椭圆长轴的半径。
+ * radiusY: 椭圆短轴的半径。
+ * rotation: 椭圆的旋转角度，以弧度表示 (非角度度数)。
+ * startAngle: 将要绘制的起始点角度，从 x 轴测量，以弧度表示 (非角度度数)。
+ * endAngle: 椭圆将要绘制的结束点角度，以弧度表示 (非角度度数)。
+ * anticlockwise: 可选. Boolean 选项，如果为 true，逆时针方向绘制椭圆（逆时针），反之顺时针方向绘制。
+ */
+func Context2D.Ellipse(x, y, radiusX, radiusY, rotation, startAngle, endAngle: f32, anticlockwise: bool) {
+	jsEllipse(this.GetHandle(), x, y, radiusX, radiusY, rotation, startAngle, endAngle, anticlockwise)
+}
+
+/*
+* 如果指定的点位于当前路径中，则返回 true，否则返回 false
+* params: x, y
+*   x: 要测试的 x 坐标
+*   y: 要测试的 y 坐标
+ */
+func Context2D.IsPointInPath(x, y: f32) => (isInPath: bool) {
+	isInPath = jsIsPointInPath(this.GetHandle(), x, y)
+	return
+}
+
+/*****************************************
+*                                        *
+*                Rectangle               *
+*                                        *
+*****************************************/
+/*
+* 创建矩形
+* params: x, y, w, h
+*   x: 矩形左上角的 x 坐标
+*   y: 矩形左上角的 y 坐标
+*   w: 矩形的宽度，以像素计
+*   h: 矩形的高度，以像素计
+ */
+func Context2D.Rect(x, y, w, h: f32) {
+	jsRect(this.GetHandle(), x, y, w, h)
+}
+
+/*
+* 绘制"被填充"的矩形
+* params: x, y, w, h
+*   x: 矩形左上角的 x 坐标
+*   y: 矩形左上角的 y 坐标
+*   w: 矩形的宽度，以像素计
+*   h: 矩形的高度，以像素计
+ */
+func Context2D.FillRect(x, y, w, h: f32) {
+	jsFillRect(this.GetHandle(), x, y, w, h)
+}
+
+/*
+* 绘制矩形（无填充）
+* params: x, y, w, h
+*   x: 矩形左上角的 x 坐标
+*   y: 矩形左上角的 y 坐标
+*   w: 矩形的宽度，以像素计
+*   h: 矩形的高度，以像素计
+ */
+func Context2D.StrokeRect(x, y, w, h: f32) {
+	jsStrokeRect(this.GetHandle(), x, y, w, h)
+}
+
+/*
+* 清除指定矩形区域，让清除部分完全透明
+* params: x, y, w, h
+*   x: 要清除的矩形左上角的 x 坐标
+*   y: 要清除的矩形左上角的 y 坐标
+*   w: 要清除的矩形的宽度，以像素计
+*   h: 要清除的矩形的高度，以像素计
+ */
+func Context2D.ClearRect(x, y, w, h: f32) {
+	jsClearRect(this.GetHandle(), x, y, w, h)
+}
+
+/*****************************************
+*                                        *
+*               Conversion               *
+*                                        *
+*****************************************/
+/*
+* 缩放当前绘图至更大或更小
+* params: scalewidth, scaleheight
+*   scalewidth: 缩放当前绘图的宽度（1=100%，0.5=50%，2=200%，依次类推）
+*   scaleheight: 缩放当前绘图的高度（1=100%，0.5=50%，2=200%，依次类推）
+ */
+func Context2D.Scale(scalewidth, scaleheight: f32) {
+	jsScale(this.GetHandle(), scalewidth, scaleheight)
+}
+
+/*
+* 旋转当前绘图
+* params: angle
+*   angle: 旋转当前绘图的角度，以弧度计
+ */
+func Context2D.Rotate(angle: f32) {
+	jsRotate(this.GetHandle(), angle)
+}
+
+/*
+* 重新映射画布上的 (0,0) 位置
+* params: x, y
+*   x: 添加到水平坐标（x）上的值
+*   y: 添加到垂直坐标（y）上的值
+ */
+func Context2D.Translate(x, y: f32) {
+	jsTranslate(this.GetHandle(), x, y)
+}
+
+/*
+* 替换绘图的当前转换矩阵
+* params: a, b, c, d, e, f
+*   a: 水平缩放绘图
+*   b: 水平倾斜绘图
+*   c: 垂直倾斜绘图
+*   d: 垂直缩放绘图
+*   e: 水平移动绘图
+*   f: 垂直移动绘图
+ */
+func Context2D.Transform(a, b, c, d, e, f: f32) {
+	jsTransform(this.GetHandle(), a, b, c, d, e, f)
+}
+
+/*
+* 将当前转换重置为单位矩阵。然后运行 transform()
+* params: a, b, c, d, e, f
+*   a: 水平缩放绘图
+*   b: 水平倾斜绘图
+*   c: 垂直倾斜绘图
+*   d: 垂直缩放绘图
+*   e: 水平移动绘图
+*   f: 垂直移动绘图
+ */
+func Context2D.SetTransform(a, b, c, d, e, f: f32) {
+	jsSetTransform(this.GetHandle(), a, b, c, d, e, f)
+}
+
+/*****************************************
+*                                        *
+*                  Text                  *
+*                                        *
+*****************************************/
+/*
+* 设置或返回文本内容的当前字体属性
+* params: font
+*   font: 规定文本内容的字体属性
+ */
+func Context2D.SetFont(font: string) {
+	jsSetFont(this.GetHandle(), font)
+}
+
+/*
+* 设置或返回文本内容的当前对齐方式
+* params: align: center | end | left | right | start
+*   align: 规定文本的当前对齐方式
+ */
+func Context2D.SetTextAlign(align: string) {
+	jsSetTextAlign(this.GetHandle(), align)
+}
+
+/*
+* 设置或返回在绘制文本时使用的当前文本基线
+* params: baseline: alphabetic | top | hanging | middle | ideographic | bottom
+*   baseline: 规定在绘制文本时使用的当前文本基线
+ */
+func Context2D.SetTextBaseline(baseline: string) {
+	jsSetTextBaseline(this.GetHandle(), baseline)
+}
+
+/*
+* 在画布上绘制"被填充的"文本
+* params: text, x, y
+*   text: 规定在画布上输出的文本
+*   x: 开始绘制文本的 x 坐标位置（相对于画布）
+*   y: 开始绘制文本的 y 坐标位置（相对于画布）
+ */
+func Context2D.FillText(text: string, x, y: f32) {
+	jsFillText(this.GetHandle(), text, x, y)
+}
+
+/*
+* 在画布上以最大宽度绘制"被填充的"文本
+* params: text, x, y, maxWidth
+*   text: 规定在画布上输出的文本
+*   x: 开始绘制文本的 x 坐标位置（相对于画布）
+*   y: 开始绘制文本的 y 坐标位置（相对于画布）
+*   maxWidth: 允许的最大文本宽度，以像素计
+ */
+func Context2D.FillTextWithMaxWidth(text: string, x, y, maxWidth: f32) {
+	jsFillTextWithMaxWidth(this.GetHandle(), text, x, y, maxWidth)
+}
+
+/*
+* 在画布上绘制文本（无填充）
+* params: text, x, y
+*   text: 规定在画布上输出的文本
+*   x: 开始绘制文本的 x 坐标位置（相对于画布）
+*   y: 开始绘制文本的 y 坐标位置（相对于画布）
+ */
+func Context2D.StrokeText(text: string, x, y: f32) {
+	jsStrokeText(this.GetHandle(), text, x, y)
+}
+
+/*
+* 在画布上以最大宽度绘制文本（无填充）
+* params: text, x, y, maxWidth
+*   text: 规定在画布上输出的文本
+*   x: 开始绘制文本的 x 坐标位置（相对于画布）
+*   y: 开始绘制文本的 y 坐标位置（相对于画布）
+*   maxWidth: 允许的最大文本宽度，以像素计
+ */
+func Context2D.StrokeTextWithMaxWidth(text: string, x, y, maxWidth: f32) {
+	jsStrokeTextWithMaxWidth(this.GetHandle(), text, x, y, maxWidth)
+}
+
+/*
+* 返回包含指定文本宽度的对象
+* params: text
+*   text: 规定要测量的文本
+ */
+func Context2D.MeasureText(text: string) => (metrics: js.ExtObj) {
+	// TODO: 需要获取 TextMetrics 对象
+	return
+}
+
+/*
+* 返回包含使用最大宽度测量的指定文本的对象
+* params: text, maxWidth
+*   text: 规定要测量的文本
+*   maxWidth: 文本最大宽度
+ */
+func Context2D.MeasureTextWithMaxWidth(text: string, maxWidth: f32) => (metrics: js.ExtObj) {
+	// TODO: 需要获取 TextMetrics 对象
+	return
+}
+
+/*****************************************
+*                                        *
+*              Image drawing             *
+*                                        *
+*****************************************/
+/*
+* 向画布上绘制图像、画布或视频
+* params: image, dx, dy, dwidth, dheight
+*   image: 规定要使用的图像、画布或视频
+*   dx: 在画布上放置图像的 x 坐标位置
+*   dy: 在画布上放置图像的 y 坐标位置
+*   dwidth: 在画布上放置图像的宽度，伸展或缩小图像
+*   dheight: 在画布上放置图像的高度，伸展或缩小图像
+ */
+func Context2D.DrawImage(image: js.ExtObj, dx, dy, dwidth, dheight: f32) {
+	// TODO: 待验证
+	jsDrawImageScaled(this.GetHandle(), image, dx, dy, dwidth, dheight)
+}
+
+/*
+* 向画布上绘制图像、画布或视频（剪切和缩放）
+* params: image, sx, sy, swidth, sheight, dx, dy, dwidth, dheight
+*   image: 规定要使用的图像、画布或视频
+*   sx: 开始剪切的 x 坐标位置
+*   sy: 开始剪切的 y 坐标位置
+*   swidth: 被剪切图像的宽度
+*   sheight: 被剪切图像的高度
+*   dx: 在画布上放置图像的 x 坐标位置
+*   dy: 在画布上放置图像的 y 坐标位置
+*   dwidth: 在画布上放置图像的宽度，伸展或缩小图像
+*   dheight: 在画布上放置图像的高度，伸展或缩小图像
+ */
+func Context2D.DrawImageCropped(image: js.ExtObj, sx, sy, swidth, sheight, dx, dy, dwidth, dheight: f32) {
+	// TODO: 待验证
+	jsDrawImageCropped(this.GetHandle(), image, sx, sy, swidth, sheight, dx, dy, dwidth, dheight)
+}
+
+/*****************************************
+*                                        *
+*           Pixel manipulation           *
+*                                        *
+*****************************************/
+/*
+* 创建新的、空白的 ImageData 对象
+* params: width, height
+*   width: ImageData 对象的宽度，以像素计
+*   height: ImageData 对象的高度，以像素计
+ */
+func Context2D.CreateImageData(width, height: f32) => (imageData: js.ExtObj) {
+	// TODO: 需要获取 ImageData 对象
+	return
+}
+
+/*
+* 返回 ImageData 对象，该对象为画布上指定的矩形复制像素数据
+* params: x, y, width, height
+*   x: 开始复制的左上角位置的 x 坐标（以像素计）
+*   y: 开始复制的左上角位置的 y 坐标（以像素计）
+*   width: 要复制的矩形区域的宽度
+*   height: 要复制的矩形区域的高度
+ */
+func Context2D.GetImageData(x, y, width, height: f32) => (imageData: js.ExtObj) {
+	// TODO: 需要获取 ImageData 对象
+	return
+}
+
+/*
+* 把图像数据（从指定的 ImageData 对象）放回画布上
+* params: imagedata, dx, dy, dirtyX, dirtyY, dirtyWidth, dirtyHeight
+*   imagedata: 规定要放回画布的 ImageData 对象
+*   dx: ImageData 对象左上角的 x 坐标，以像素计
+*   dy: ImageData 对象左上角的 y 坐标，以像素计
+*   dirtyX: 水平值（x），以像素计，在画布上放置图像的位置
+*   dirtyY: 水平值（y），以像素计，在画布上放置图像的位置
+*   dirtyWidth: 在画布上绘制图像所使用的宽度
+*   dirtyHeight: 在画布上绘制图像所使用的高度
+ */
+func Context2D.PutImageData(imagedata: []u8, dx, dy: f32, dirtyX, dirtyY, dirtyWidth, dirtyHeight: f32) {
+	jsPutImageData(this.GetHandle(), imagedata, dx, dy, dirtyX, dirtyY, dirtyWidth, dirtyHeight)
+}
+
+/*****************************************
+*                                        *
+*                Synthesis               *
+*                                        *
+*****************************************/
+/*
+* 设置或返回绘图的当前 alpha 或透明值
+* params: alpha
+*   alpha: 介于 0.0（完全透明） 与 1.0（不透明） 之间的值
+ */
+func Context2D.SetGlobalAlpha(alpha: f32) {
+	jsSetGlobalAlpha(this.GetHandle(), alpha)
+}
+
+/*
+* 设置或返回新图像如何绘制到已有的图像上
+* params: globalCompositeOperation: source-over | source-atop | source-in | source-out | destination-over | destination-atop | destination-in | destination-out | lighter | copy | xor
+*   globalCompositeOperation: 设置或返回新图像如何绘制到已有的图像上
+ */
+func Context2D.SetGlobalCompositeOperation(globalCompositeOperation: string) {
+	jsSetGlobalCompositeOperation(this.GetHandle(), globalCompositeOperation)
+}
+
+/*****************************************
+*                                        *
+*                  Other                 *
+*                                        *
+*****************************************/
+// 保存当前环境的状态
+func Context2D.Save() {
+	jsSave(this.GetHandle())
+}
+
+// 返回之前保存过的路径状态和属性
+func Context2D.Restore() {
+	jsRestore(this.GetHandle())
+}
+
+func Canvas.GetContext2D() => (ctx: Context2D, succ: bool) {
+	h := jsGetContext2D(this.GetHandle())
+	if h != 0 {
+		ctx.ExtObj = js.WrapExtObj(h)
+		succ = true
+	} else {
+		succ = false
+	}
+
+	return
+}
+
+// 设置 Canvas 大小
+func Canvas.SetWidthHeight(width, height: i32) {
+	jsSetWidthHeight(this.GetHandle(), width, height)
+}
+
+/*
+   c, _ := canvas.QueryCanvas("#canvas")
+   ctx, _ := c.GetContext2D()
+
+   ctx.SetFillStyle("green")
+   ctx.FillRect(0, 0, 50, 50)
+*/

@@ -1,0 +1,25 @@
+// 版权 @2019 凹语言 作者。保留所有权利。
+
+#wa:linkname $wa.runtime.i32_ref_to_ptr
+func WaI32RefToPtr(p: *i32) => i32
+
+#wa:linkname $wa.runtime.i64_ref_to_ptr
+func WaI64RefToPtr(p: *i64) => i32
+
+#wa:linkname $wa.runtime.string_to_ptr
+func WaStringToPtr(s: string) => i32
+
+#wa:linkname $wa.runtime.slice_to_ptr
+func WaBytesToPtr(s: []byte) => i32
+
+#wa:linkname $wa.runtime.slice_to_ptr
+func WaI32SliceToPtr(s: []i32) => i32
+
+#wa:linkname $wa.runtime.slice_to_ptr
+func WaI64SliceToPtr(s: []i64) => i32
+
+#wa:linkname $wa.runtime.slice_to_ptr
+func WaF32SliceToPtr(s: []f32) => i32
+
+#wa:linkname $wa.runtime.slice_to_ptr
+func WaF64SliceToPtr(s: []f64) => i32

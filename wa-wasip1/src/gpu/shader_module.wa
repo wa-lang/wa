@@ -1,0 +1,37 @@
+
+import "js"
+
+//---------------------------------------------------------------
+
+type ShaderModuleDesc struct {
+    Code: string
+    // Hints - Todo
+    Label: string
+    // SourceMap - Todo
+}
+
+func ShaderModuleDesc.createExtObj() => js.ExtObj {
+    d := js.NewExtObj()
+
+    d.SetMember_string("code", this.Code)
+
+    d.SetMember_string("label", this.Label)
+
+    return d
+}
+
+//---------------------------------------------------------------
+
+// 不能使用该类型直接声明值，需通过 Device.CreateShaderModule() 创建
+#wa:need-constructor
+type ShaderModule struct {
+    _extobj: js.ExtObj
+}
+
+// 获取标签
+func ShaderModule.Label() => string {
+    return jsObjGetLabel(this._extobj.GetHandle())
+}
+
+// Todo 获取编译信息，异步
+//func ShaderModule.RequestCompilationInfo()

@@ -1,0 +1,252 @@
+// 版权 @2023 凹语言 作者。保留所有权利。
+
+type Int struct {
+	neg: bool // sign
+	abs: nat  // absolute value of the integer
+}
+
+global intOne = &Int{false, natOne}
+
+// 测试用
+func NewInt(x: string) => *Int {
+	t := new(Int)
+	neg := false
+	if x[0] == '-' {
+		neg = true
+		x = x[1:]
+	}
+	t.abs = natFromString(x)
+	t.neg = neg
+
+	return t
+}
+
+func NewIntWithuint(x: uint) => *Int {
+	t := new(Int)
+	t.abs = nat{[]uint{x}}
+	t.neg = false
+	return t
+}
+
+// Sign returns:
+//
+//	-1 if x <  0
+//	 0 if x == 0
+//	+1 if x >  0
+//
+func Int.Sign() => int {
+	if len(this.abs.Data) == 0 {
+		return 0
+	}
+	if this.neg {
+		return -1
+	}
+	return 1
+}
+
+// Set sets z to x and returns z.
+func Int.Set(x: *Int) => *Int {
+	if this != x {
+		this.abs = this.abs.set(x.abs)
+		this.neg = x.neg
+	}
+	return this
+}
+
+// Bits provides raw (unchecked but fast) access to x by returning its
+// absolute value as a little-endian Word slice. The result and x share
+// the same underlying array.
+// Bits is intended to support implementation of missing low-level Int
+// functionality outside this package; it should be avoided otherwise.
+func Int.Bits() => []uint {
+	return this.abs.Data
+}
+
+// SetBits provides raw (unchecked but fast) access to z by setting its
+// value to abs, interpreted as a little-endian Word slice, and returning
+// z. The result and abs share the same underlying array.
+// SetBits is intended to support implementation of missing low-level Int
+// functionality outside this package; it should be avoided otherwise.
+func Int.SetBits(abs: []uint) => *Int {
+	temp := &nat{abs}
+	this.abs = temp.norm()
+	this.neg = false
+	return this
+}
+
+// Abs sets z to |x| (the absolute value of x) and returns z.
+func Int.Abs(x: *Int) => *Int {
+	this.Set(x)
+	this.neg = false
+	return this
+}
+
+// Neg sets z to -x and returns z.
+func Int.Neg(x: *Int) => *Int {
+	this.Set(x)
+	this.neg = len(this.abs.Data) > 0 && !this.neg // 0 has no sign
+	return this
+}
+
+// Add sets z to the sum x+y and returns z.
+func Int.Add(x, y: *Int) => *Int {
+	neg := x.neg
+	if x.neg == y.neg {
+		// x + y == x + y
+		// (-x) + (-y) == -(x + y)
+		this.abs = this.abs.add(x.abs, y.abs)
+	} else {
+		// x + (-y) == x - y == -(y - x)
+		// (-x) + y == y - x == -(x - y)
+		if x.abs.cmp(y.abs) >= 0 {
+			this.abs = this.abs.sub(x.abs, y.abs)
+		} else {
+			neg = !neg
+			this.abs = this.abs.sub(y.abs, x.abs)
+		}
+	}
+	this.neg = len(this.abs.Data) > 0 && neg // 0 has no sign
+	return this
+}
+
+// Sub sets z to the difference x-y and returns z.
+func Int.Sub(x, y: *Int) => *Int {
+	neg := x.neg
+	if x.neg != y.neg {
+		// x - (-y) == x + y
+		// (-x) - y == -(x + y)
+		this.abs = this.abs.add(x.abs, y.abs)
+	} else {
+		// x - y == x - y == -(y - x)
+		// (-x) - (-y) == y - x == -(x - y)
+		if x.abs.cmp(y.abs) >= 0 {
+			this.abs = this.abs.sub(x.abs, y.abs)
+		} else {
+			neg = !neg
+			this.abs = this.abs.sub(y.abs, x.abs)
+		}
+	}
+	this.neg = len(this.abs.Data) > 0 && neg // 0 has no sign
+	return this
+}
+
+// Mul sets z to the product x*y and returns z.
+func Int.Mul(x, y: *Int) => *Int {
+	// x * y == x * y
+	// x * (-y) == -(x * y)
+	// (-x) * y == -(x * y)
+	// (-x) * (-y) == x * y
+	this.abs = this.abs.mul(x.abs, y.abs)
+	this.neg = len(this.abs.Data) > 0 && this.neg != this.neg // 0 has no sign
+	return this
+}
+
+// QuoRem sets z to the quotient x/y and r to the remainder x%y
+// and returns the pair (z, r) for y != 0.
+// If y == 0, a division-by-zero run-time panic occurs.
+//
+// QuoRem implements T-division and modulus (like Go):
+//
+//	q = x/y      with the result truncated to zero
+//	r = x - y*q
+//
+// (See Daan Leijen, ``Division and Modulus for Computer Scientists''.)
+// See DivMod for Euclidean division and modulus (unlike Go).
+//
+func Int.QuoRem(x, y, r: *Int) => (*Int, *Int) {
+	this.abs, r.abs = this.abs.div(r.abs, x.abs, y.abs)
+	this.neg, r.neg = len(this.abs.Data) > 0 && x.neg != y.neg, len(r.abs.Data) > 0 && x.neg // 0 has no sign
+	return this, r
+}
+
+// DivMod sets z to the quotient x div y and m to the modulus x mod y
+// and returns the pair (z, m) for y != 0.
+// If y == 0, a division-by-zero run-time panic occurs.
+//
+// DivMod implements Euclidean division and modulus (unlike Go):
+//
+//	q = x div y  such that
+//	m = x - y*q  with 0 <= m < |y|
+//
+// (See Raymond T. Boute, ``The Euclidean definition of the functions
+// div and mod''. ACM Transactions on Programming Languages and
+// Systems (TOPLAS), 14(2):127-144, New York, NY, USA, 4/1992.
+// ACM press.)
+// See QuoRem for T-division and modulus (like Go).
+//
+func Int.DivMod(x, y, m: *Int) => (*Int, *Int) {
+	y0 := y // save y
+	if this == y || alias(this.abs, y.abs) {
+		y0 = new(Int).Set(y)
+	}
+	this.QuoRem(x, y, m)
+	if m.neg {
+		if y0.neg {
+			this.Add(this, intOne)
+			m.Sub(m, y0)
+		} else {
+			this.Sub(this, intOne)
+			m.Add(m, y0)
+		}
+	}
+	return this, m
+}
+
+// Cmp compares x and y and returns:
+//
+//   -1 if x <  y
+//    0 if x == y
+//   +1 if x >  y
+//
+func Int.Cmp(y: *Int) => (r: int) {
+	// x cmp y == x cmp y
+	// x cmp (-y) == x
+	// (-x) cmp y == y
+	// (-x) cmp (-y) == -(x cmp y)
+	switch {
+	case this == y:
+		// nothing to do
+	case this.neg == y.neg:
+		r = this.abs.cmp(y.abs)
+		if this.neg {
+			r = -r
+		}
+	case this.neg:
+		r = -1
+	default:
+		r = 1
+	}
+	return
+}
+
+// CmpAbs compares the absolute values of x and y and returns:
+//
+//   -1 if |x| <  |y|
+//    0 if |x| == |y|
+//   +1 if |x| >  |y|
+//
+func Int.CmpAbs(y: *Int) => int {
+	return this.abs.cmp(y.abs)
+}
+
+// SetBytes interprets buf as the bytes of a big-endian unsigned
+// integer, sets z to that value, and returns z.
+func Int.SetBytes(buf: []byte) => *Int {
+	this.abs = this.abs.setBytes(buf)
+	this.neg = false
+	return this
+}
+
+// Bytes returns the absolute value of x as a big-endian byte slice.
+//
+// To use a fixed length slice, or a preallocated one, use FillBytes.
+func Int.Bytes() => []byte {
+	buf := make([]byte, len(this.abs.Data)*_S)
+	return buf[this.abs.bytes(buf):]
+}
+
+// BitLen returns the length of the absolute value of x in bits.
+// The bit length of 0 is 0.
+func Int.BitLen() => int {
+	return this.abs.bitLen()
+}

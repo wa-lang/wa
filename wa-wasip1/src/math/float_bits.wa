@@ -1,0 +1,35 @@
+// 版权 @2023 凹语言 作者。保留所有权利。
+
+#wa:linkname $math.waFloat64bits
+func waFloat64bits(x: f64) => u64
+
+#wa:linkname $math.waFloat64frombits
+func waFloat64frombits(x: u64) => f64
+
+#wa:linkname $math.waFloat32bits
+func waFloat32bits(x: f32) => u32
+
+#wa:linkname $math.waFloat32frombits
+func waFloat32frombits(x: u32) => f32
+
+// Float64bits returns the IEEE 754 binary representation of f,
+// with the sign bit of f and the result in the same bit position,
+// and Float64bits(Float64frombits(x)) == x.
+func Float64bits(f: float64) => u64 { return waFloat64bits(f) }
+
+// Float64frombits returns the floating-point number corresponding
+// to the IEEE 754 binary representation b, with the sign bit of b
+// and the result in the same bit position.
+// Float64frombits(Float64bits(x)) == x.
+func Float64frombits(b: u64) => f64 { return waFloat64frombits(b) }
+
+// Float32bits returns the IEEE 754 binary representation of f,
+// with the sign bit of f and the result in the same bit position.
+// Float32bits(Float32frombits(x)) == x.
+func Float32bits(f: f32) => u32 { return waFloat32bits(f) }
+
+// Float32frombits returns the floating-point number corresponding
+// to the IEEE 754 binary representation b, with the sign bit of b
+// and the result in the same bit position.
+// Float32frombits(Float32bits(x)) == x.
+func Float32frombits(b: u32) => f32 { return waFloat32frombits(b) }

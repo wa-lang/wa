@@ -1,0 +1,33 @@
+// 版权 @2023 凹语言 作者。保留所有权利。
+
+import "runtime"
+
+// wa test apple
+// wa test -target=js apple
+
+func TestApple {
+	apple := Apple()
+	if runtime.WAOS == "js" {
+		assert(apple == "apple-js", apple)
+	} else {
+		assert(apple == "apple", apple)
+	}
+}
+
+func ExampleApple {
+	if runtime.WAOS == "js" {
+		println(Apple())
+	} else {
+		println(Apple() + "-js")
+	}
+
+	// Output:
+	// apple-js
+}
+
+func ExamplePanic {
+	panic("fuck panic")
+
+	// Output(panic):
+	// fuck panic
+}

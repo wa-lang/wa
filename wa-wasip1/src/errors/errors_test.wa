@@ -1,0 +1,36 @@
+// 版权 @2023 凹语言 作者。保留所有权利。
+
+import "fmt"
+
+func TestNewEqual {
+	// 不同的错误对象不相等
+	if New("abc") == New("abc") {
+		assert(false, `New("abc") == New("abc")`)
+	}
+	if New("abc") == New("xyz") {
+		assert(false, `New("abc") == New("xyz")`)
+	}
+
+	// 可以和自身比较
+	err := New("jkl")
+	if err != err {
+		assert(false, `err != err`)
+	}
+}
+
+func TestErrorMethod {
+	err := New("abc")
+	if err.Error() != "abc" {
+		assert(false, `New("abc").Error() = "` + err.Error() + `", want "abc"`)
+	}
+}
+
+func ExampleNew {
+	err := New("emit macho dwarf: elf header corrupted")
+	if err != nil {
+		fmt.Println(err)
+	}
+	// Output:
+	// emit macho dwarf: elf header corrupted
+}
+

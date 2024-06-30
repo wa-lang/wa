@@ -1,0 +1,12 @@
+
+import "js"
+
+//---------------------------------------------------------------
+
+// 不能使用该类型直接声明值，需通过 ShaderModule.RequestCompilationInfo() 获取
+#wa:need-constructor
+type CompilationInfo struct {
+    _extobj: js.ExtObj
+}
+
+//func CompilationInfo.Messages - Todo

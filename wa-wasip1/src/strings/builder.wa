@@ -1,0 +1,70 @@
+// 版权 @2023 凹语言 作者。保留所有权利。
+
+import (
+	"unicode/utf8"
+)
+
+// A Builder is used to efficiently build a string using Write methods.
+// It minimizes memory copying. The zero value is ready to use.
+// Do not copy a non-zero Builder.
+type Builder struct {
+	buf: []byte
+}
+
+// String returns the accumulated string.
+func Builder.String => string {
+	return string(this.buf)
+}
+
+// Len returns the number of accumulated bytes; b.Len() == len(b.String()).
+func Builder.Len => int { return len(this.buf) }
+
+// Cap returns the capacity of the builder's underlying byte slice. It is the
+// total space allocated for the string being built and includes any bytes
+// already written.
+func Builder.Cap => int { return cap(this.buf) }
+
+// Reset resets the Builder to be empty.
+func Builder.Reset {
+	this.buf = nil
+}
+
+// Grow grows b's capacity, if necessary, to guarantee space for
+// another n bytes. After Grow(n), at least n bytes can be written to b
+// without another allocation. If n is negative, Grow panics.
+func Builder.Grow(n: int) {
+	if cap(this.buf)-len(this.buf) < n {
+		buf := make([]byte, cap(this.buf)+n)
+		copy(buf, this.buf)
+		this.buf = buf
+	}
+}
+
+// Write appends the contents of p to b's buffer.
+// Write always returns len(p), nil.
+func Builder.Write(p: []byte) => (int, error) {
+	this.buf = append(this.buf, p...)
+	return len(p), nil
+}
+
+// WriteByte appends the byte c to b's buffer.
+// The returned error is always nil.
+func Builder.WriteByte(c: byte) => error {
+	this.buf = append(this.buf, c)
+	return nil
+}
+
+// WriteRune appends the UTF-8 encoding of Unicode code point r to b's buffer.
+// It returns the length of r and a nil error.
+func Builder.WriteRune(r: rune) => (int, error) {
+	n := len(this.buf)
+	this.buf = utf8.AppendRune(this.buf, r)
+	return len(this.buf) - n, nil
+}
+
+// WriteString appends the contents of s to b's buffer.
+// It returns the length of s and a nil error.
+func Builder.WriteString(s: string) => (int, error) {
+	this.buf = append(this.buf, s...)
+	return len(s), nil
+}

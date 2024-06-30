@@ -1,0 +1,33 @@
+// 版权 @2023 凹语言 作者。保留所有权利。
+
+#wa:linkname $wa.runtime.slice_to_ptr
+func slice_to_ptr(t: []byte) => i32
+
+#wa:linkname $wa.runtime.string_to_ptr
+func string_to_ptr(s: string) => i32
+
+#wa:import syscall_js debug_read_file_len
+func debug_read_file_len(name_ptr, name_len: i32) => i32
+
+#wa:import syscall_js debug_read_file_data
+func debug_read_file_data(name_ptr, name_len, data_ptr, data_len: i32)
+
+#wa:import syscall_js debug_write_file
+func debug_write_file(name_ptr, name_len, data_ptr, data_len: i32)
+
+func ReadFile(name: string) => []byte {
+	size := debug_read_file_len(string_to_ptr(name), i32(len(name)))
+	data := make([]byte, size)
+	debug_read_file_data(
+		string_to_ptr(name), i32(len(name)),
+		slice_to_ptr(data), i32(len(data)),
+	)
+	return data
+}
+
+func WriteFile(name: string, data: []byte) {
+	debug_write_file(
+		string_to_ptr(name), i32(len(name)),
+		slice_to_ptr(data), i32(len(data)),
+	)
+}
