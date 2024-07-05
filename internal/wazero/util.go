@@ -1,8 +1,8 @@
 package wazero
 
 import (
-	"wa-lang.org/wazero"
-	"wa-lang.org/wazero/sys"
+	"wa-lang.org/wa/internal/3rdparty/wazero"
+	"wa-lang.org/wa/internal/3rdparty/wazero/sys"
 )
 
 func Wat2Wasm(source []byte) ([]byte, error) {

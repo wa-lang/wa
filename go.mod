@@ -3,7 +3,3 @@
 module wa-lang.org/wa
 
 go 1.17
-
-require (
-	wa-lang.org/wazero v1.0.2
-)
