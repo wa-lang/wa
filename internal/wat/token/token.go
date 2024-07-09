@@ -22,6 +22,12 @@ const (
 	EOF
 	COMMENT
 
+	// 特殊符号
+	operator_beg
+	LPAREN // (
+	RPAREN // )
+	operator_end
+
 	// 面值类型
 	literal_beg
 	IDENT  // 表示符, 比如 $name
@@ -30,12 +36,6 @@ const (
 	CHAR   // 'a'
 	STRING // "abc"
 	literal_end
-
-	// 特殊符号
-	operator_beg
-	LPAREN // (
-	RPAREN // )
-	operator_end
 
 	// 关键字
 	keyword_beg
@@ -155,6 +155,11 @@ func (tok Token) IsLiteral() bool {
 // 关键字
 func (tok Token) IsKeyword() bool {
 	return keyword_beg < tok && tok < keyword_end
+}
+
+// 特殊符号
+func (tok Token) IsOperator() bool {
+	return operator_beg < tok && tok < operator_end
 }
 
 // 标识符
