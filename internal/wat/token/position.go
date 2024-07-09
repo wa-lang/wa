@@ -48,38 +48,6 @@ func (pos Position) String() string {
 	return s
 }
 
-// Pos is a compact encoding of a source position within a file set.
-// It can be converted into a Position for a more convenient, but much
-// larger, representation.
-//
-// The Pos value for a given file is a number in the range [base, base+size],
-// where base and size are specified when adding the file to the file set via
-// AddFile.
-//
-// To create the Pos value for a specific source offset (measured in bytes),
-// first add the respective file to the current file set using FileSet.AddFile
-// and then call File.Pos(offset) for that file. Given a Pos value p
-// for a specific file set fset, the corresponding Position value is
-// obtained by calling fset.Position(p).
-//
-// Pos values can be compared directly with the usual comparison operators:
-// If two Pos values p and q are in the same file, comparing p and q is
-// equivalent to comparing the respective source file offsets. If p and q
-// are in different files, p < q is true if the file implied by p was added
-// to the respective file set before the file implied by q.
-type Pos int
-
-// The zero value for Pos is NoPos; there is no file and line information
-// associated with it, and NoPos.IsValid() is false. NoPos is always
-// smaller than any other Pos value. The corresponding Position value
-// for NoPos is the zero value for Position.
-const NoPos Pos = 0
-
-// IsValid reports whether the position is valid.
-func (p Pos) IsValid() bool {
-	return p != NoPos
-}
-
 // -----------------------------------------------------------------------------
 // File
 
@@ -87,21 +55,19 @@ func (p Pos) IsValid() bool {
 // A File has a name, size, and line offset table.
 type File struct {
 	name string // file name as provided to AddFile
-	base int    // Pos value range for this file is [base...base+size]
 	size int    // file size as provided to AddFile
 
 	lines []int // lines contains the offset of the first character for each line (the first entry is always 0)
 	infos []lineInfo
 }
 
+func NewFile(name string, size int) *File {
+	return &File{name: name, size: size}
+}
+
 // Name returns the file name of file f as registered with AddFile.
 func (f *File) Name() string {
 	return f.name
-}
-
-// Base returns the base offset of file f as registered with AddFile.
-func (f *File) Base() int {
-	return f.base
 }
 
 // Size returns the size of file f as registered with AddFile.
@@ -188,14 +154,14 @@ func (f *File) SetLinesForContent(content []byte) {
 // LineStart returns the Pos value of the start of the specified line.
 // It ignores any alternative positions set using AddLineColumnInfo.
 // LineStart panics if the 1-based line number is invalid.
-func (f *File) LineStart(line int) Pos {
+func (f *File) LineStart(line int) int {
 	if line < 1 {
 		panic("illegal line number (line numbering starts at 1)")
 	}
 	if line > len(f.lines) {
 		panic("illegal line number")
 	}
-	return Pos(f.base + f.lines[line-1])
+	return f.lines[line-1]
 }
 
 // A lineInfo object describes alternative file, line, and column
@@ -228,29 +194,9 @@ func (f *File) AddLineColumnInfo(offset int, filename string, line, column int) 
 	}
 }
 
-// Pos returns the Pos value for the given file offset;
-// the offset must be <= f.Size().
-// f.Pos(f.Offset(p)) == p.
-func (f *File) Pos(offset int) Pos {
-	if offset > f.size {
-		panic("illegal file offset")
-	}
-	return Pos(f.base + offset)
-}
-
-// Offset returns the offset for the given file position p;
-// p must be a valid Pos value in that file.
-// f.Offset(f.Pos(offset)) == offset.
-func (f *File) Offset(p Pos) int {
-	if int(p) < f.base || int(p) > f.base+f.size {
-		panic("illegal Pos value")
-	}
-	return int(p) - f.base
-}
-
 // Line returns the line number for the given file position p;
 // p must be a Pos value in that file or NoPos.
-func (f *File) Line(p Pos) int {
+func (f *File) Line(p int) int {
 	return f.Position(p).Line
 }
 
@@ -292,8 +238,8 @@ func (f *File) unpack(offset int, adjusted bool) (filename string, line, column 
 	return
 }
 
-func (f *File) position(p Pos, adjusted bool) (pos Position) {
-	offset := int(p) - f.base
+func (f *File) position(p int, adjusted bool) (pos Position) {
+	offset := int(p)
 	pos.Offset = offset
 	pos.Filename, pos.Line, pos.Column = f.unpack(offset, adjusted)
 	return
@@ -303,19 +249,17 @@ func (f *File) position(p Pos, adjusted bool) (pos Position) {
 // If adjusted is set, the position may be adjusted by position-altering
 // //line comments; otherwise those comments are ignored.
 // p must be a Pos value in f or NoPos.
-func (f *File) PositionFor(p Pos, adjusted bool) (pos Position) {
-	if p != NoPos {
-		if int(p) < f.base || int(p) > f.base+f.size {
-			panic("illegal Pos value")
-		}
-		pos = f.position(p, adjusted)
+func (f *File) PositionFor(p int, adjusted bool) (pos Position) {
+	if int(p) < 0 || int(p) > f.size {
+		panic("illegal Pos value")
 	}
+	pos = f.position(p, adjusted)
 	return
 }
 
 // Position returns the Position value for the given file position p.
 // Calling f.Position(p) is equivalent to calling f.PositionFor(p, true).
-func (f *File) Position(p Pos) (pos Position) {
+func (f *File) Position(p int) (pos Position) {
 	return f.PositionFor(p, true)
 }
 

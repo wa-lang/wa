@@ -134,7 +134,7 @@ func (s *Scanner) Init(file *token.File, src []byte, err ErrorHandler, mode Mode
 
 func (s *Scanner) error(offs int, msg string) {
 	if s.err != nil {
-		s.err(s.file.Position(s.file.Pos(offs)), msg)
+		s.err(s.file.Position(offs), msg)
 	}
 	s.ErrorCount++
 }
@@ -287,7 +287,7 @@ func (s *Scanner) updateLineInfo(next, offs int, text []byte) {
 	// an empty filename means to use the previous filename.
 	filename := string(text[:i-1]) // lop off ":line", and trim white space
 	if filename == "" && ok2 {
-		filename = s.file.Position(s.file.Pos(offs)).Filename
+		filename = s.file.Position(offs).Filename
 	} else if filename != "" {
 		// Put a relative filename in the current directory.
 		// This is for compatibility with earlier releases.
@@ -793,12 +793,12 @@ func (s *Scanner) switch4(tok0, tok1 token.Token, ch2 rune, tok2, tok3 token.Tok
 // Scan adds line information to the file added to the file
 // set with Init. Token positions are relative to that file
 // and thus relative to the file set.
-func (s *Scanner) Scan() (pos token.Pos, tok token.Token, lit string) {
+func (s *Scanner) Scan() (pos int, tok token.Token, lit string) {
 scanAgain:
 	s.skipWhitespace()
 
 	// current token start
-	pos = s.file.Pos(s.offset)
+	pos = s.offset
 
 	// determine token value
 	switch ch := s.ch; {
@@ -839,7 +839,7 @@ scanAgain:
 		default:
 			// next reports unexpected BOMs - don't repeat
 			if ch != bom {
-				s.errorf(s.file.Offset(pos), "illegal character %#U", ch)
+				s.errorf(pos, "illegal character %#U", ch)
 			}
 			tok = token.ILLEGAL
 			lit = string(ch)
