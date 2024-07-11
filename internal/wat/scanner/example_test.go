@@ -27,7 +27,6 @@ func ExampleScanner_Scan() {
 	// output:
 	// ( ""
 	// module "module"
-	// ILLEGAL "$"
-	// INSTRUCTION "__walang__"
+	// IDENT "$__walang__"
 	// ) ""
 }

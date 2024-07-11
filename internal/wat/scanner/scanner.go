@@ -149,27 +149,8 @@ func (s *Scanner) scanComment(firstRune rune) string {
 	next := -1           // position immediately following the comment; < 0 means invalid comment
 	numCR := 0
 
-	// #-style comment
-	if firstRune == '#' {
-		offs = s.offset - 1 // position of initial '#'
-
-		// (the final '\n' is not considered part of the comment)
-		for s.ch != '\n' && s.ch >= 0 {
-			if s.ch == '\r' {
-				numCR++
-			}
-			s.next()
-		}
-		// if we are at '\n', the position following the comment is afterwards
-		next = s.offset
-		if s.ch == '\n' {
-			next++
-		}
-		goto exit
-	}
-
-	//-style comment
-	if s.ch == '/' {
+	// ;;-style comment
+	if firstRune == ';' && s.ch == ';' {
 		// (the final '\n' is not considered part of the comment)
 		s.next()
 		for s.ch != '\n' && s.ch >= 0 {
@@ -186,7 +167,7 @@ func (s *Scanner) scanComment(firstRune rune) string {
 		goto exit
 	}
 
-	/*-style comment */
+	/* (;-style comment;) */
 	s.next()
 	for s.ch >= 0 {
 		ch := s.ch
@@ -194,7 +175,7 @@ func (s *Scanner) scanComment(firstRune rune) string {
 			numCR++
 		}
 		s.next()
-		if ch == '*' && s.ch == '/' {
+		if ch == ';' && s.ch == ')' {
 			s.next()
 			next = s.offset
 			goto exit
@@ -206,32 +187,24 @@ func (s *Scanner) scanComment(firstRune rune) string {
 exit:
 	lit := s.src[offs:s.offset]
 
-	// #-style comment
-	if firstRune == '#' {
-		if numCR > 0 && lit[len(lit)-1] == '\r' {
-			lit = lit[:len(lit)-1]
-		}
-		return string(lit)
-	}
-
-	// On Windows, a (//-comment) line may end in "\r\n".
+	// On Windows, a (;;-comment) line may end in "\r\n".
 	// Remove the final '\r' before analyzing the text for
 	// line directives (matching the compiler). Remove any
 	// other '\r' afterwards (matching the pre-existing be-
 	// havior of the scanner).
-	if numCR > 0 && len(lit) >= 2 && lit[1] == '/' && lit[len(lit)-1] == '\r' {
+	if numCR > 0 && len(lit) >= 2 && lit[0] == ';' && lit[len(lit)-1] == '\r' {
 		lit = lit[:len(lit)-1]
 		numCR--
 	}
 
 	// interpret line directives
-	// (//line directives must start at the beginning of the current line)
-	if next >= 0 /* implies valid comment */ && (lit[1] == '*' || offs == s.lineOffset) && bytes.HasPrefix(lit[2:], prefix) {
+	// (;;line directives must start at the beginning of the current line)
+	if next >= 0 /* implies valid comment */ && (lit[0] == ';' || offs == s.lineOffset) && bytes.HasPrefix(lit[2:], prefix) {
 		s.updateLineInfo(next, offs, lit)
 	}
 
 	if numCR > 0 {
-		lit = stripCR(lit, lit[1] == '*')
+		lit = stripCR(lit, lit[0] == '(')
 	}
 
 	return string(lit)
@@ -370,7 +343,7 @@ func isDigit(ch rune) bool {
 
 func (s *Scanner) scanIdentifier() string {
 	offs := s.offset
-	for isLetter(s.ch) || isDigit(s.ch) {
+	for s.ch == '$' || s.ch == '.' || isLetter(s.ch) || isDigit(s.ch) {
 		s.next()
 	}
 	return string(s.src[offs:s.offset])
@@ -802,6 +775,9 @@ scanAgain:
 
 	// determine token value
 	switch ch := s.ch; {
+	case ch == '$':
+		lit = s.scanIdentifier()
+		tok = token.IDENT
 	case isLetter(ch):
 		lit = s.scanIdentifier()
 		if len(lit) > 1 {
@@ -815,13 +791,27 @@ scanAgain:
 	default:
 		s.next() // always make progress
 		switch ch {
+		case '$':
+			lit = s.scanIdentifier()
+			tok = token.IDENT
 		case -1:
 			tok = token.EOF
 		case '\'':
 			tok = token.CHAR
 			lit = s.scanRune()
 		case '(':
-			tok = token.LPAREN
+			// (; comment ;)
+			if s.ch == ';' {
+				comment := s.scanComment('(')
+				if s.mode&ScanComments == 0 {
+					// skip comment
+					goto scanAgain
+				}
+				tok = token.COMMENT
+				lit = comment
+			} else {
+				tok = token.LPAREN
+			}
 		case ')':
 			tok = token.RPAREN
 

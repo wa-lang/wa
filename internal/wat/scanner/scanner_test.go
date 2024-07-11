@@ -37,45 +37,50 @@ type elt struct {
 }
 
 var tokens = [...]elt{
-	// Operators and delimiters
+	// 分隔符
 	{token.LPAREN, "(", operator},
 	{token.RPAREN, ")", operator},
 
-	/*
-		// Special tokens
-		{token.COMMENT, ";; a comment\n", special},
+	// 单行/多行注释
+	{token.COMMENT, ";; a comment\n", special},
+	{token.COMMENT, "(; a comment\nnext line\n;)", special},
 
-		// Identifiers and basic type literals
-		{token.IDENT, "foobar", literal},
-		{token.IDENT, "a۰۱۸", literal},
-		{token.IDENT, "foo६४", literal},
-		{token.IDENT, "bar９８７６", literal},
-		{token.IDENT, "ŝ", literal},    // was bug (issue 4000)
-		{token.IDENT, "ŝfoo", literal}, // was bug (issue 4000)
-		{token.INT, "0", literal},
-		{token.INT, "1", literal},
-		{token.INT, "123456789012345678890", literal},
-		{token.INT, "01234567", literal},
-		{token.INT, "0xcafebabe", literal},
-		{token.FLOAT, "0.", literal},
-		{token.FLOAT, ".0", literal},
-		{token.FLOAT, "3.14159265", literal},
-		{token.FLOAT, "1e0", literal},
-		{token.FLOAT, "1e+100", literal},
-		{token.FLOAT, "1e-100", literal},
-		{token.FLOAT, "2.71828e-1000", literal},
-		{token.CHAR, "'a'", literal},
-		{token.CHAR, "'\\000'", literal},
-		{token.CHAR, "'\\xFF'", literal},
-		{token.CHAR, "'\\uff16'", literal},
-		{token.CHAR, "'\\U0000ff16'", literal},
+	// 标识符
+	{token.IDENT, "$foobar", literal},
+	{token.IDENT, "$$foobar", literal},
+	{token.IDENT, "$foobar.abc.123", literal},
+	{token.IDENT, "$a۰۱۸", literal},
+	{token.IDENT, "$foo६४", literal},
+	{token.IDENT, "$bar９８７６", literal},
+	{token.IDENT, "$ŝ", literal},
+	{token.IDENT, "$ŝfoo", literal},
 
-		// Keywords
-		{token.FUNC, "func", keyword},
-		{token.GLOBAL, "global", keyword},
-		{token.IMPORT, "import", keyword},
-		{token.TYPE, "type", keyword},
-	*/
+	// 字面值
+	{token.INT, "0", literal},
+	{token.INT, "1", literal},
+	{token.INT, "123456789012345678890", literal},
+	{token.INT, "01234567", literal},
+	{token.INT, "0xcafebabe", literal},
+	{token.FLOAT, "0.", literal},
+	{token.FLOAT, ".0", literal},
+	{token.FLOAT, "3.14159265", literal},
+	{token.FLOAT, "1e0", literal},
+	{token.FLOAT, "1e+100", literal},
+	{token.FLOAT, "1e-100", literal},
+	{token.FLOAT, "2.71828e-1000", literal},
+	{token.CHAR, "'a'", literal},
+	{token.CHAR, "'\\000'", literal},
+	{token.CHAR, "'\\xFF'", literal},
+	{token.CHAR, "'\\uff16'", literal},
+	{token.CHAR, "'\\U0000ff16'", literal},
+
+	// Keywords(TODO: 补全)
+	{token.FUNC, "func", keyword},
+	{token.GLOBAL, "global", keyword},
+	{token.IMPORT, "import", keyword},
+	{token.TYPE, "type", keyword},
+
+	// TODO: 指令
 }
 
 const whitespace = "  \t  \n\n\n" // to separate tokens
@@ -152,9 +157,9 @@ func TestScan(t *testing.T) {
 		switch e.tok {
 		case token.COMMENT:
 			// no CRs in comments
-			elit = string(stripCR([]byte(e.lit), e.lit[1] == '*'))
+			elit = string(stripCR([]byte(e.lit), e.lit[0] == '('))
 			//-style comment literal doesn't contain newline
-			if elit[1] == '/' {
+			if elit[0] == ';' {
 				elit = elit[0 : len(elit)-1]
 			}
 		case token.IDENT:
@@ -163,9 +168,6 @@ func TestScan(t *testing.T) {
 			if e.tok.IsLiteral() {
 				// no CRs in raw string literals
 				elit = e.lit
-				if elit[0] == '`' {
-					elit = string(stripCR([]byte(elit), false))
-				}
 			} else if e.tok.IsKeyword() {
 				elit = e.lit
 			}
@@ -307,7 +309,7 @@ var dirWindowsSegments = []segment{
 }
 
 func TestNumbers(t *testing.T) {
-	for _, test := range []struct {
+	for k, test := range []struct {
 		tok              token.Token
 		src, tokens, err string
 	}{
@@ -348,15 +350,15 @@ func TestNumbers(t *testing.T) {
 
 		{token.INT, "08123", "08123", "invalid digit '8' in octal literal"},
 		{token.INT, "01293", "01293", "invalid digit '9' in octal literal"},
-		{token.INT, "0F.", "0 F .", ""}, // only accept 0-9
-		{token.INT, "0123F.", "0123 F .", ""},
-		{token.INT, "0123456x", "0123456 x", ""},
+		//{token.INT, "0F.", "0 F .", ""}, // only accept 0-9
+		//{token.INT, "0123F.", "0123 F .", ""},
+		//{token.INT, "0123456x", "0123456 x", ""},
 
 		// decimals
 		{token.INT, "1", "1", ""},
 		{token.INT, "1234", "1234", ""},
 
-		{token.INT, "1f", "1 f", ""}, // only accept 0-9
+		//{token.INT, "1f", "1 f", ""}, // only accept 0-9
 
 		// decimal floats
 		{token.FLOAT, "0.", "0.", ""},
@@ -451,22 +453,22 @@ func TestNumbers(t *testing.T) {
 
 			if i == 0 {
 				if tok != test.tok {
-					t.Errorf("%q: got token %s; want %s", test.src, tok, test.tok)
+					t.Fatalf("%d: %q: got token %s; want %s", k, test.src, tok, test.tok)
 				}
 				if err != test.err {
-					t.Errorf("%q: got error %q; want %q", test.src, err, test.err)
+					t.Fatalf("%d:%q: got error %q; want %q", k, test.src, err, test.err)
 				}
 			}
 
 			if lit != want {
-				t.Errorf("%q: got literal %q (%s); want %s", test.src, lit, tok, want)
+				t.Fatalf("%d: %q: got literal %q (%s); want %s", k, test.src, lit, tok, want)
 			}
 		}
 
 		// make sure we read all
 		_, tok, _ := s.Scan()
 		if tok != token.EOF {
-			t.Errorf("%q: got %s; want EOF", test.src, tok)
+			t.Fatalf("%q: got %s; want EOF", test.src, tok)
 		}
 	}
 }

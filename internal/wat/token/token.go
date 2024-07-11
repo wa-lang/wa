@@ -30,7 +30,7 @@ const (
 
 	// 面值类型
 	literal_beg
-	IDENT  // 表示符, 比如 $name
+	IDENT  // 标识符, 比如 $name
 	INT    // 12345
 	FLOAT  // 123.45
 	CHAR   // 'a'
