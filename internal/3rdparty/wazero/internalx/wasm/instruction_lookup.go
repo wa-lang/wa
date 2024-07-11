@@ -2,6 +2,8 @@
 
 package wasm
 
+import "strconv"
+
 var instructionOpcodes map[string]Opcode
 
 func init() {
@@ -27,4 +29,12 @@ func init() {
 func LookupOpcode(s string) (Opcode, bool) {
 	v, ok := instructionOpcodes[s]
 	return v, ok
+}
+
+func OpcodeName(op Opcode) string {
+	s := instructionNames[op]
+	if s == "" {
+		s = "wasm.Opcode(" + strconv.Itoa(int(op)) + ")"
+	}
+	return s
 }

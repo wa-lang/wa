@@ -7,7 +7,7 @@ import (
 	"wa-lang.org/wa/internal/wat/token"
 )
 
-func _ExampleScanner_Hello() {
+func ExampleScanner_Hello() {
 	var src = []byte(tHello)
 	var file = token.NewFile("", len(src))
 
@@ -15,18 +15,19 @@ func _ExampleScanner_Hello() {
 	s.Init(file, src, nil, scanner.ScanComments)
 
 	for {
-		_, tok, lit := s.Scan()
+		pos, tok, lit := s.Scan()
 		if tok == token.EOF {
 			break
 		}
-		fmt.Printf("%s %q\n", tok, lit)
+		if tok == token.ILLEGAL {
+			fmt.Printf("failed: %v: %s %q\n", file.Position(pos), tok, lit)
+			return
+		}
 	}
+	fmt.Println("ok")
 
 	// output:
-	// ( ""
-	// module "module"
-	// IDENT "$__walang__"
-	// ) ""
+	// ok
 }
 
 const tHello = `(module $hello_wasi

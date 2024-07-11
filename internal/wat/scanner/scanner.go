@@ -780,12 +780,13 @@ scanAgain:
 		tok = token.IDENT
 	case isLetter(ch):
 		lit = s.scanIdentifier()
-		if len(lit) > 1 {
-			// keywords are longer than one letter - avoid lookup otherwise
-			tok = token.Lookup(lit)
-		} else {
-			tok = token.IDENT
+		tok = token.Lookup(lit)
+		if tok == token.INSTRUCTION {
+			if _, ok := token.LookupOpcode(lit); !ok {
+				tok = token.ILLEGAL
+			}
 		}
+
 	case isDecimal(ch) || ch == '.' && isDecimal(rune(s.peek())):
 		tok, lit = s.scanNumber()
 	default:
@@ -796,6 +797,9 @@ scanAgain:
 			tok = token.IDENT
 		case -1:
 			tok = token.EOF
+		case '"':
+			tok = token.STRING
+			lit = s.scanString()
 		case '\'':
 			tok = token.CHAR
 			lit = s.scanRune()
@@ -814,6 +818,8 @@ scanAgain:
 			}
 		case ')':
 			tok = token.RPAREN
+		case '=':
+			tok = token.ASSIGN
 
 		case ';':
 			if s.ch == ';' {

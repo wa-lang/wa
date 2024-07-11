@@ -16,6 +16,7 @@ const /* class */ (
 	literal
 	operator
 	keyword
+	instruction
 )
 
 func tokenclass(tok token.Token) int {
@@ -26,6 +27,8 @@ func tokenclass(tok token.Token) int {
 		return operator
 	case tok.IsKeyword():
 		return keyword
+	case tok == token.INSTRUCTION:
+		return instruction
 	}
 	return special
 }
@@ -40,6 +43,7 @@ var tokens = [...]elt{
 	// 分隔符
 	{token.LPAREN, "(", operator},
 	{token.RPAREN, ")", operator},
+	{token.ASSIGN, "=", operator},
 
 	// 单行/多行注释
 	{token.COMMENT, ";; a comment\n", special},
@@ -73,8 +77,18 @@ var tokens = [...]elt{
 	{token.CHAR, "'\\xFF'", literal},
 	{token.CHAR, "'\\uff16'", literal},
 	{token.CHAR, "'\\U0000ff16'", literal},
+	{token.STRING, `"wasi_snapshot_preview1"`, literal},
 
 	// Keywords
+	{token.I32, "i32", keyword},
+	{token.I64, "i64", keyword},
+	{token.F32, "f32", keyword},
+	{token.F64, "f64", keyword},
+
+	{token.MUT, "mut", keyword},
+	{token.ANYFUNC, "anyfunc", keyword},
+	{token.OFFSET, "offset", keyword},
+
 	{token.MODULE, "module", keyword},
 	{token.IMPORT, "import", keyword},
 	{token.EXPORT, "export", keyword},
@@ -89,8 +103,53 @@ var tokens = [...]elt{
 	{token.RESULT, "result", keyword},
 	{token.LOCAL, "local", keyword},
 	{token.START, "start", keyword},
+	{token.LABEL, "label", keyword},
 
 	// TODO: 指令
+	{token.INSTRUCTION, "global.get", instruction},
+	{token.INSTRUCTION, "global.set", instruction},
+	{token.INSTRUCTION, "local.get", instruction},
+	{token.INSTRUCTION, "local.set", instruction},
+
+	{token.INSTRUCTION, "i32.const", instruction},
+	{token.INSTRUCTION, "i64.const", instruction},
+	{token.INSTRUCTION, "f32.const", instruction},
+	{token.INSTRUCTION, "f64.const", instruction},
+
+	{token.INSTRUCTION, "i32.add", instruction},
+	{token.INSTRUCTION, "i64.add", instruction},
+	{token.INSTRUCTION, "f32.add", instruction},
+	{token.INSTRUCTION, "f64.add", instruction},
+
+	{token.INSTRUCTION, "i32.sub", instruction},
+	{token.INSTRUCTION, "i64.sub", instruction},
+	{token.INSTRUCTION, "f32.sub", instruction},
+	{token.INSTRUCTION, "f64.sub", instruction},
+
+	{token.INSTRUCTION, "i32.le_s", instruction},
+	{token.INSTRUCTION, "i64.le_s", instruction},
+
+	{token.INSTRUCTION, "i32.eq", instruction},
+	{token.INSTRUCTION, "i64.eq", instruction},
+	{token.INSTRUCTION, "f32.eq", instruction},
+	{token.INSTRUCTION, "f64.eq", instruction},
+
+	{token.INSTRUCTION, "i32.store", instruction},
+
+	{token.INSTRUCTION, "call", instruction},
+	{token.INSTRUCTION, "call_indirect", instruction},
+
+	{token.INSTRUCTION, "nop", instruction},
+	{token.INSTRUCTION, "unreachable", instruction},
+	{token.INSTRUCTION, "block", instruction},
+	{token.INSTRUCTION, "end", instruction},
+	{token.INSTRUCTION, "if", instruction},
+	{token.INSTRUCTION, "else", instruction},
+	{token.INSTRUCTION, "loop", instruction},
+	{token.INSTRUCTION, "br", instruction},
+	{token.INSTRUCTION, "br_if", instruction},
+	{token.INSTRUCTION, "br_table", instruction},
+	{token.INSTRUCTION, "drop", instruction},
 }
 
 const whitespace = "  \t  \n\n\n" // to separate tokens
@@ -128,12 +187,7 @@ func TestScan(t *testing.T) {
 	s.Init(token.NewFile("", len(source)), source, eh, ScanComments|dontInsertSemis)
 
 	// set up expected position
-	epos := token.Position{
-		Filename: "",
-		Offset:   0,
-		Line:     1,
-		Column:   1,
-	}
+	epos := token.Position{Line: 1, Column: 1}
 
 	index := 0
 	for {
@@ -180,10 +234,12 @@ func TestScan(t *testing.T) {
 				elit = e.lit
 			} else if e.tok.IsKeyword() {
 				elit = e.lit
+			} else if e.tok.IsIsntruction() {
+				elit = e.lit
 			}
 		}
 		if lit != elit {
-			t.Errorf("bad literal for %q: got %q, expected %q", lit, lit, elit)
+			t.Fatalf("bad literal for %q: got %q, expected %q", lit, lit, elit)
 		}
 
 		if tok == token.EOF {

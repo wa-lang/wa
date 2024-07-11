@@ -26,6 +26,7 @@ const (
 	operator_beg
 	LPAREN // (
 	RPAREN // )
+	ASSIGN // =, i32.load offset=8 align=4
 	operator_end
 
 	// 面值类型
@@ -45,6 +46,11 @@ const (
 	F32 // f32
 	F64 // f64
 
+	MUT     // mut
+	ANYFUNC // anyfunc
+	OFFSET  // offset
+	ALIGN   // align
+
 	MODULE // module
 	IMPORT // import
 	EXPORT // export
@@ -62,8 +68,13 @@ const (
 	RESULT // result
 
 	START // start
+
+	LABEL // label
+
 	keyword_end
 
+	// TODO: 指令转关键字
+	// if/else/loop/end/...
 	INSTRUCTION // 指令码
 )
 
@@ -80,11 +91,17 @@ var tokens = [...]string{
 
 	LPAREN: "(",
 	RPAREN: ")",
+	ASSIGN: "=",
 
 	I32: "i32",
 	I64: "i64",
 	F32: "f32",
 	F64: "f64",
+
+	MUT:     "mut",
+	ANYFUNC: "anyfunc",
+	OFFSET:  "offset",
+	ALIGN:   "align",
 
 	MODULE: "module",
 	IMPORT: "import",
@@ -103,6 +120,8 @@ var tokens = [...]string{
 	RESULT: "result",
 
 	START: "start",
+
+	LABEL: "label",
 
 	INSTRUCTION: "INSTRUCTION",
 }
@@ -146,6 +165,9 @@ func Lookup(ident string) Token {
 func LookupOpcode(s string) (Opcode, bool) {
 	return wasm.LookupOpcode(s)
 }
+func OpcodeName(op Opcode) string {
+	return wasm.OpcodeName(op)
+}
 
 // 常量面值
 func (tok Token) IsLiteral() bool {
@@ -160,6 +182,10 @@ func (tok Token) IsKeyword() bool {
 // 特殊符号
 func (tok Token) IsOperator() bool {
 	return operator_beg < tok && tok < operator_end
+}
+
+func (tok Token) IsIsntruction() bool {
+	return tok == INSTRUCTION
 }
 
 // 标识符
