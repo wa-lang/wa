@@ -74,11 +74,21 @@ var tokens = [...]elt{
 	{token.CHAR, "'\\uff16'", literal},
 	{token.CHAR, "'\\U0000ff16'", literal},
 
-	// Keywords(TODO: 补全)
-	{token.FUNC, "func", keyword},
-	{token.GLOBAL, "global", keyword},
+	// Keywords
+	{token.MODULE, "module", keyword},
 	{token.IMPORT, "import", keyword},
+	{token.EXPORT, "export", keyword},
+	{token.MEMORY, "memory", keyword},
+	{token.DATA, "data", keyword},
+	{token.TABLE, "table", keyword},
+	{token.ELEM, "elem", keyword},
 	{token.TYPE, "type", keyword},
+	{token.GLOBAL, "global", keyword},
+	{token.FUNC, "func", keyword},
+	{token.PARAM, "param", keyword},
+	{token.RESULT, "result", keyword},
+	{token.LOCAL, "local", keyword},
+	{token.START, "start", keyword},
 
 	// TODO: 指令
 }
@@ -144,12 +154,12 @@ func TestScan(t *testing.T) {
 			index++
 		}
 		if tok != e.tok {
-			t.Errorf("bad token for %q: got %s, expected %s", lit, tok, e.tok)
+			t.Fatalf("%d: bad token for %q: got %s, expected %s", index, lit, tok, e.tok)
 		}
 
 		// check token class
 		if tokenclass(tok) != e.class {
-			t.Errorf("bad class for %q: got %d, expected %d", lit, tokenclass(tok), e.class)
+			t.Fatalf("%d: bad class for %q: got %d, expected %d", index, lit, tokenclass(tok), e.class)
 		}
 
 		// check literal
