@@ -2,27 +2,64 @@
 
 package ast
 
+import "wa-lang.org/wa/internal/wat/token"
+
 // Module 表示一个 WASM 模块。
 type Module struct {
-	Doc  string // 注释
-	Name string // 模块的名字(可空)
+	Doc  *CommentGroup // 关联注释
+	Name *Ident        // 模块的名字(可空)
 
-	InitFn string // 初始化函数
-	MainFn string // 开始函数名字(可空)
+	Imports []*ImportSpec // 导入对象
+	Memory  *Memory       // 内存对象, 包含 Data 信息(可空)
+	Table   *Table        // 表格对象, 包含 Elem 信息(可空)
+	Globals []Global      // 全局对象
+	Funcs   []Func        // 函数对象
 
-	Memory *Memory // 内存对象, 包含 Data 信息(可空)
-	Table  *Table  // 表格对象, 包含 Elem 信息(可空)
+	Comments []*CommentGroup // 全部注释列表
+}
 
-	Globals []Global // 全局对象
-	Funcs   []Func   // 函数对象
+// 节点信息
+type Node interface {
+	Pos() token.Pos // position of first character belonging to the node
+	End() token.Pos // position of first character immediately after the node
+}
+
+// 指令对应接口
+type Instruction interface {
+	Node
+
+	DocString() string
+	WATString() string // 支持缩进
+
+	isInstruction()
+}
+
+// 注释组
+type CommentGroup struct {
+	List []*Comment // len(List) > 0
+}
+
+// 注释
+type Comment struct {
+	From token.Pos // position of "(;" or ";;" starting the comment
+	Text string    // comment text (excluding '\n' for ;;-style comments)
+}
+
+// 导入对象(仅支持函数)
+type ImportSpec struct {
+	Doc        *CommentGroup // 关联的注释
+	ModulePath *StringLit    // 模块路径
+	FuncPath   *StringLit    // 函数路径
+	FuncName   *Ident        // 导入后的名字
+	FuncType   *FuncType     // 函数类型
+	EndPos     token.Pos     // 结束位置
 }
 
 // 内存信息
 type Memory struct {
-	Doc        string   // 注释
-	Name       string   // 内存对象的名字
-	ImportPath []string // 导入路径(仅针对导入对象)
-	ExportName string   // 导出名字
+	Doc        string // 注释
+	Name       string // 内存对象的名字
+	ExportName string // 导出名字
 
 	Pages int           // 页数, 每页 64 KB
 	Data  []DataSection // 初始化数据, 可能重叠
@@ -38,10 +75,9 @@ type DataSection struct {
 
 // Table 信息
 type Table struct {
-	Doc        string   // 注释
-	Name       string   // Table对象的名字
-	ImportPath []string // 导入路径(仅针对导入对象)
-	ExportName string   // 导出名字
+	Doc        string // 注释
+	Name       string // Table对象的名字
+	ExportName string // 导出名字
 
 	Size int           // 表格容量
 	Type string        // 元素类型, 默认为 anyfunc
@@ -57,23 +93,21 @@ type ElemSection struct {
 
 // 全局变量
 type Global struct {
-	Doc        string   // 注释
-	Name       string   // 全局变量名
-	ImportPath []string // 导入路径(仅针对导入对象)
-	ExportName string   // 导出名字
+	Doc        string // 注释
+	Name       string // 全局变量名
+	ExportName string // 导出名字
 
 	Type    string // 类型信息
 	Value   string // 初始值(导入变量忽略)
 	Mutable bool   // 是否可写
-
 }
 
 // 函数定义
 type Func struct {
-	Doc        string   // 注释
-	Name       string   // 函数名
-	ImportPath []string // 导入路径(仅针对导入对象)
-	ExportName string   // 导出名字
+	Doc        string // 注释
+	Name       string // 函数名
+	ExportName string // 导出名字
+	IsStart    bool   // start 函数
 
 	Type *FuncType // 函数类型
 	Body *FuncBody // 函数体
@@ -98,10 +132,14 @@ type Field struct {
 	Type string // 变量类型
 }
 
-// 指令对应接口
-type Instruction interface {
-	DocString() string
-	WATString() string // 支持缩进
+// 标识符
+type Ident struct {
+	NamePos token.Pos // 位置
+	Name    string    // $name
+}
 
-	isInstruction()
+// 字符串面值
+type StringLit struct {
+	ValuePos token.Pos
+	Value    string
 }

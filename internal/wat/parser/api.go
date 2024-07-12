@@ -8,5 +8,8 @@ import (
 )
 
 func ParseModule(file *token.File, src []byte) (f *ast.Module, err error) {
-	panic("todo")
+	var p parser
+	p.init(file, src)
+	f = p.parseFile()
+	return
 }

@@ -7,6 +7,9 @@ import (
 	"sort"
 )
 
+// 位置指针
+type Pos int
+
 // -----------------------------------------------------------------------------
 // Positions
 
@@ -196,7 +199,7 @@ func (f *File) AddLineColumnInfo(offset int, filename string, line, column int) 
 
 // Line returns the line number for the given file position p;
 // p must be a Pos value in that file or NoPos.
-func (f *File) Line(p int) int {
+func (f *File) Line(p Pos) int {
 	return f.Position(p).Line
 }
 
@@ -238,7 +241,7 @@ func (f *File) unpack(offset int, adjusted bool) (filename string, line, column 
 	return
 }
 
-func (f *File) position(p int, adjusted bool) (pos Position) {
+func (f *File) position(p Pos, adjusted bool) (pos Position) {
 	offset := int(p)
 	pos.Offset = offset
 	pos.Filename, pos.Line, pos.Column = f.unpack(offset, adjusted)
@@ -249,7 +252,7 @@ func (f *File) position(p int, adjusted bool) (pos Position) {
 // If adjusted is set, the position may be adjusted by position-altering
 // //line comments; otherwise those comments are ignored.
 // p must be a Pos value in f or NoPos.
-func (f *File) PositionFor(p int, adjusted bool) (pos Position) {
+func (f *File) PositionFor(p Pos, adjusted bool) (pos Position) {
 	if int(p) < 0 || int(p) > f.size {
 		panic("illegal Pos value")
 	}
@@ -259,7 +262,7 @@ func (f *File) PositionFor(p int, adjusted bool) (pos Position) {
 
 // Position returns the Position value for the given file position p.
 // Calling f.Position(p) is equivalent to calling f.PositionFor(p, true).
-func (f *File) Position(p int) (pos Position) {
+func (f *File) Position(p Pos) (pos Position) {
 	return f.PositionFor(p, true)
 }
 
