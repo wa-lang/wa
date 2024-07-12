@@ -26,8 +26,11 @@ func tokenclass(tok token.Token) int {
 	case tok.IsOperator():
 		return operator
 	case tok.IsKeyword():
+		if tok.IsIsntruction() {
+			return instruction
+		}
 		return keyword
-	case tok == token.INSTRUCTION:
+	case tok.IsIsntruction():
 		return instruction
 	}
 	return special
@@ -103,18 +106,17 @@ var tokens = [...]elt{
 	{token.RESULT, "result", keyword},
 	{token.LOCAL, "local", keyword},
 	{token.START, "start", keyword},
-	{token.LABEL, "label", keyword},
 
 	// TODO: 指令
-	{token.INSTRUCTION, "global.get", instruction},
-	{token.INSTRUCTION, "global.set", instruction},
-	{token.INSTRUCTION, "local.get", instruction},
-	{token.INSTRUCTION, "local.set", instruction},
+	{token.INS_GLOBAL_GET, "global.get", instruction},
+	{token.INS_GLOBAL_SET, "global.set", instruction},
+	{token.INS_LOCAL_GET, "local.get", instruction},
+	{token.INS_LOCAL_SET, "local.set", instruction},
 
-	{token.INSTRUCTION, "i32.const", instruction},
-	{token.INSTRUCTION, "i64.const", instruction},
-	{token.INSTRUCTION, "f32.const", instruction},
-	{token.INSTRUCTION, "f64.const", instruction},
+	{token.INS_I32_CONST, "i32.const", instruction},
+	{token.INS_I64_CONST, "i64.const", instruction},
+	{token.INS_F32_CONST, "f32.const", instruction},
+	{token.INS_F64_CONST, "f64.const", instruction},
 
 	{token.INSTRUCTION, "i32.add", instruction},
 	{token.INSTRUCTION, "i64.add", instruction},
@@ -126,30 +128,32 @@ var tokens = [...]elt{
 	{token.INSTRUCTION, "f32.sub", instruction},
 	{token.INSTRUCTION, "f64.sub", instruction},
 
-	{token.INSTRUCTION, "i32.le_s", instruction},
-	{token.INSTRUCTION, "i64.le_s", instruction},
+	{token.INS_I32_LE_S, "i32.le_s", instruction},
+	{token.INS_I64_LE_S, "i64.le_s", instruction},
 
-	{token.INSTRUCTION, "i32.eq", instruction},
-	{token.INSTRUCTION, "i64.eq", instruction},
-	{token.INSTRUCTION, "f32.eq", instruction},
-	{token.INSTRUCTION, "f64.eq", instruction},
+	{token.INS_I32_EQ, "i32.eq", instruction},
+	{token.INS_I64_EQ, "i64.eq", instruction},
+	{token.INS_F32_EQ, "f32.eq", instruction},
+	{token.INS_F64_EQ, "f64.eq", instruction},
 
-	{token.INSTRUCTION, "i32.store", instruction},
+	{token.INS_I32_STORE, "i32.store", instruction},
 
-	{token.INSTRUCTION, "call", instruction},
-	{token.INSTRUCTION, "call_indirect", instruction},
+	{token.INS_CALL, "call", instruction},
+	{token.INS_CALL_INDIRECT, "call_indirect", instruction},
 
-	{token.INSTRUCTION, "nop", instruction},
-	{token.INSTRUCTION, "unreachable", instruction},
-	{token.INSTRUCTION, "block", instruction},
-	{token.INSTRUCTION, "end", instruction},
-	{token.INSTRUCTION, "if", instruction},
-	{token.INSTRUCTION, "else", instruction},
-	{token.INSTRUCTION, "loop", instruction},
-	{token.INSTRUCTION, "br", instruction},
-	{token.INSTRUCTION, "br_if", instruction},
-	{token.INSTRUCTION, "br_table", instruction},
-	{token.INSTRUCTION, "drop", instruction},
+	{token.INS_NOP, "nop", instruction},
+	{token.INS_UNREACHABLE, "unreachable", instruction},
+	{token.INS_BLOCK, "block", instruction},
+	{token.INS_END, "end", instruction},
+	{token.INS_IF, "if", instruction},
+	{token.INS_ELSE, "else", instruction},
+	{token.INS_LOOP, "loop", instruction},
+	{token.INS_BR, "br", instruction},
+	{token.INS_BR_IF, "br_if", instruction},
+	{token.INS_BR_TABLE, "br_table", instruction},
+	{token.INS_DROP, "drop", instruction},
+
+	{token.LABEL, "label", instruction},
 }
 
 const whitespace = "  \t  \n\n\n" // to separate tokens
