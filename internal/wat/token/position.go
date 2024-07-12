@@ -62,7 +62,7 @@ type File struct {
 }
 
 func NewFile(name string, size int) *File {
-	return &File{name: name, size: size}
+	return &File{name: name, size: size, lines: []int{0}}
 }
 
 // Name returns the file name of file f as registered with AddFile.
