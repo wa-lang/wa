@@ -118,15 +118,15 @@ var tokens = [...]elt{
 	{token.INS_F32_CONST, "f32.const", instruction},
 	{token.INS_F64_CONST, "f64.const", instruction},
 
-	{token.INSTRUCTION, "i32.add", instruction},
-	{token.INSTRUCTION, "i64.add", instruction},
-	{token.INSTRUCTION, "f32.add", instruction},
-	{token.INSTRUCTION, "f64.add", instruction},
+	{token.INS_I32_ADD, "i32.add", instruction},
+	{token.INS_I64_ADD, "i64.add", instruction},
+	{token.INS_F32_ADD, "f32.add", instruction},
+	{token.INS_F64_ADD, "f64.add", instruction},
 
-	{token.INSTRUCTION, "i32.sub", instruction},
-	{token.INSTRUCTION, "i64.sub", instruction},
-	{token.INSTRUCTION, "f32.sub", instruction},
-	{token.INSTRUCTION, "f64.sub", instruction},
+	{token.INS_I32_SUB, "i32.sub", instruction},
+	{token.INS_I64_SUB, "i64.sub", instruction},
+	{token.INS_F32_SUB, "f32.sub", instruction},
+	{token.INS_F64_SUB, "f64.sub", instruction},
 
 	{token.INS_I32_LE_S, "i32.le_s", instruction},
 	{token.INS_I64_LE_S, "i64.le_s", instruction},
@@ -152,8 +152,6 @@ var tokens = [...]elt{
 	{token.INS_BR_IF, "br_if", instruction},
 	{token.INS_BR_TABLE, "br_table", instruction},
 	{token.INS_DROP, "drop", instruction},
-
-	{token.LABEL, "label", instruction},
 }
 
 const whitespace = "  \t  \n\n\n" // to separate tokens

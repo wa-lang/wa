@@ -781,11 +781,6 @@ scanAgain:
 	case isLetter(ch):
 		lit = s.scanIdentifier()
 		tok = token.Lookup(lit)
-		if tok == token.INSTRUCTION {
-			if _, ok := token.LookupOpcode(lit); !ok {
-				tok = token.ILLEGAL
-			}
-		}
 
 	case isDecimal(ch) || ch == '.' && isDecimal(rune(s.peek())):
 		tok, lit = s.scanNumber()
