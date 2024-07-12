@@ -1,6 +1,6 @@
-// 版权 @2023 凹语言 作者。保留所有权利。
+// 版权 @2024 凹语言 作者。保留所有权利。
 
-package wat
+package ast
 
 // Module 表示一个 WASM 模块。
 type Module struct {
