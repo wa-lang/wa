@@ -42,11 +42,7 @@ func TestHello(t *testing.T) {
 			break
 		}
 		if tok == token.ILLEGAL {
-			line := string(wat[pos-15:])
-			if len(line) > 20 {
-				line = line[:20] + "..."
-			}
-			t.Fatalf("failed: %v: %s %q @%s\n", file.Position(pos), tok, lit, line)
+			t.Fatalf("failed: %v: %s %q", file.Position(pos), tok, lit)
 		}
 	}
 }
