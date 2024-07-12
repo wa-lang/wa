@@ -2,10 +2,54 @@ package scanner_test
 
 import (
 	"fmt"
+	"testing"
 
+	"wa-lang.org/wa/internal/backends/compiler_wat"
+	"wa-lang.org/wa/internal/config"
+	"wa-lang.org/wa/internal/loader"
 	"wa-lang.org/wa/internal/wat/scanner"
 	"wa-lang.org/wa/internal/wat/token"
 )
+
+// 构建 wat 目标
+func tBuildWat(t *testing.T, filename string, src interface{}) string {
+	cfg := config.DefaultConfig()
+	prog, err := loader.LoadProgramFile(cfg, filename, src)
+	if err != nil || prog == nil {
+		t.Fatal(err)
+	}
+
+	watOut, err := compiler_wat.New().Compile(prog)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	return watOut
+}
+
+func TestHello(t *testing.T) {
+	wat := tBuildWat(t, "hello.wa", `func main { println(123) }`)
+
+	var src = []byte(wat)
+	var file = token.NewFile("hello.wa", len(src))
+
+	var s scanner.Scanner
+	s.Init(file, src, nil, scanner.ScanComments)
+
+	for {
+		pos, tok, lit := s.Scan()
+		if tok == token.EOF {
+			break
+		}
+		if tok == token.ILLEGAL {
+			line := string(wat[pos-15:])
+			if len(line) > 20 {
+				line = line[:20] + "..."
+			}
+			t.Fatalf("failed: %v: %s %q @%s\n", file.Position(pos), tok, lit, line)
+		}
+	}
+}
 
 func ExampleScanner_Hello() {
 	var src = []byte(tHello)

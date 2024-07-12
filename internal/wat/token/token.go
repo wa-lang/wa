@@ -42,7 +42,7 @@ const (
 	F64 // f64
 
 	MUT     // mut
-	ANYFUNC // anyfunc
+	FUNCREF // funcref
 	OFFSET  // offset
 	ALIGN   // align
 
@@ -96,19 +96,19 @@ const (
 	INS_TABLE_GET           // 0x25, table.get
 	INS_TABLE_SET           // 0x26, table.set
 	INS_I32_LOAD            // 0x28, i32.load
-	INS_I64_LOAD            // 0x29, i32.load
+	INS_I64_LOAD            // 0x29, i64.load
 	INS_F32_LOAD            // 0x2a, f32.load
 	INS_F64_LOAD            // 0x2b, f64.load
-	INS_I32_LOAD_8S         // 0x2c, i32.load_8s
-	INS_I32_LOAD_8U         // 0x2d, i32.load_8u
-	INS_I32_LOAD_16S        // 0x2e, i32.load_16s
-	INS_I32_LOAD_16U        // 0x2f, i32.load_16u
-	INS_I64_LOAD_8S         // 0x30, i64.load_8s
-	INS_I64_LOAD_8U         // 0x31, i64.load_8u
-	INS_I64_LOAD_16S        // 0x31, i64.load_16s
-	INS_I64_LOAD_16U        // 0x33, i64.load_16u
-	INS_I64_LOAD_32S        // 0x34, i64.load_32s
-	INS_I64_LOAD_32U        // 0x35, i64.load_32u
+	INS_I32_LOAD8_S         // 0x2c, i32.load8_s
+	INS_I32_LOAD8_U         // 0x2d, i32.load8_u
+	INS_I32_LOAD16_S        // 0x2e, i32.load16_s
+	INS_I32_LOAD16_U        // 0x2f, i32.load16_u
+	INS_I64_LOAD8_S         // 0x30, i64.load8_s
+	INS_I64_LOAD8_U         // 0x31, i64.load8_u
+	INS_I64_LOAD16_S        // 0x31, i64.load16_s
+	INS_I64_LOAD16_U        // 0x33, i64.load16_u
+	INS_I64_LOAD32_S        // 0x34, i64.load32_s
+	INS_I64_LOAD32_U        // 0x35, i64.load32_u
 	INS_I32_STORE           // 0x36, i32.store
 	INS_I64_STORE           // 0x37, i64.store
 	INS_F32_STORE           // 0x38, f32.store
@@ -272,7 +272,7 @@ var tokens = [...]string{
 	F64: "f64",
 
 	MUT:     "mut",
-	ANYFUNC: "anyfunc",
+	FUNCREF: "funcref",
 	OFFSET:  "offset",
 	ALIGN:   "align",
 
@@ -318,19 +318,19 @@ var tokens = [...]string{
 	INS_TABLE_GET:           "table.get",
 	INS_TABLE_SET:           "table.set",
 	INS_I32_LOAD:            "i32.load",
-	INS_I64_LOAD:            "i32.load",
+	INS_I64_LOAD:            "i64.load",
 	INS_F32_LOAD:            "f32.load",
 	INS_F64_LOAD:            "f64.load",
-	INS_I32_LOAD_8S:         "i32.load_8s",
-	INS_I32_LOAD_8U:         "i32.load_8u",
-	INS_I32_LOAD_16S:        "i32.load_16s",
-	INS_I32_LOAD_16U:        "i32.load_16u",
-	INS_I64_LOAD_8S:         "i64.load_8s",
-	INS_I64_LOAD_8U:         "i64.load_8u",
-	INS_I64_LOAD_16S:        "i64.load_16s",
-	INS_I64_LOAD_16U:        "i64.load_16u",
-	INS_I64_LOAD_32S:        "i64.load_32s",
-	INS_I64_LOAD_32U:        "i64.load_32u",
+	INS_I32_LOAD8_S:         "i32.load8_s",
+	INS_I32_LOAD8_U:         "i32.load8_u",
+	INS_I32_LOAD16_S:        "i32.load16_s",
+	INS_I32_LOAD16_U:        "i32.load16_u",
+	INS_I64_LOAD8_S:         "i64.load8_s",
+	INS_I64_LOAD8_U:         "i64.load8_u",
+	INS_I64_LOAD16_S:        "i64.load16_s",
+	INS_I64_LOAD16_U:        "i64.load16_u",
+	INS_I64_LOAD32_S:        "i64.load32_s",
+	INS_I64_LOAD32_U:        "i64.load32_u",
 	INS_I32_STORE:           "i32.store",
 	INS_I64_STORE:           "i64.store",
 	INS_F32_STORE:           "f32.store",

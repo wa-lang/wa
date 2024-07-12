@@ -89,7 +89,7 @@ var tokens = [...]elt{
 	{token.F64, "f64", keyword},
 
 	{token.MUT, "mut", keyword},
-	{token.ANYFUNC, "anyfunc", keyword},
+	{token.FUNCREF, "funcref", keyword},
 	{token.OFFSET, "offset", keyword},
 
 	{token.MODULE, "module", keyword},

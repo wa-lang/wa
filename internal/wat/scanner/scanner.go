@@ -782,6 +782,11 @@ scanAgain:
 		lit = s.scanIdentifier()
 		tok = token.Lookup(lit)
 
+	case ch == '-':
+		s.next()
+		tok, lit = s.scanNumber()
+		lit = "-" + lit
+
 	case isDecimal(ch) || ch == '.' && isDecimal(rune(s.peek())):
 		tok, lit = s.scanNumber()
 	default:
