@@ -8,9 +8,7 @@ import (
 
 // The parser structure holds the parser's internal state.
 type parser struct {
-	wagoMode bool // *.wa.go 模式
-
-	file    *token.File
+	m       *ast.Module
 	errors  scanner.ErrorList
 	scanner scanner.Scanner
 
@@ -32,11 +30,13 @@ type parser struct {
 	//imports    []*ast.ImportSpec // list of imports
 }
 
-func (p *parser) init(file *token.File, src []byte) {
-	p.file = file
+func (p *parser) init(path string, src []byte) {
+	p.m = &ast.Module{
+		File: token.NewFile(path, len(src)),
+	}
 
 	eh := func(pos token.Position, msg string) { p.errors.Add(pos, msg) }
-	p.scanner.Init(p.file, src, eh, scanner.ScanComments)
+	p.scanner.Init(p.m.File, src, eh, scanner.ScanComments)
 
 	p.next()
 }

@@ -11,12 +11,14 @@ import (
 	"wa-lang.org/wa/internal/ast"
 	"wa-lang.org/wa/internal/parser"
 	"wa-lang.org/wa/internal/token"
+	wat_ast "wa-lang.org/wa/internal/wat/ast"
+	wat_parser "wa-lang.org/wa/internal/wat/parser"
 )
 
 var CmdAst = &cli.Command{
 	Hidden: true,
 	Name:   "ast",
-	Usage:  "parse Wa source code and print ast",
+	Usage:  "parse Wa/wat source code and print ast",
 	Action: CmdAstAction,
 }
 
@@ -35,6 +37,9 @@ func CmdAstAction(c *cli.Context) error {
 }
 
 func PrintAST(filename string) error {
+	if appbase.IsNativeFile(filename, ".wat") {
+		return PrintWatAST(filename)
+	}
 	if !appbase.HasExt(filename, ".wa", ".wz") {
 		return fmt.Errorf("%q is not Wa file", filename)
 	}
@@ -53,4 +58,13 @@ func PrintAST(filename string) error {
 	}
 
 	return ast.Print(fset, f)
+}
+
+func PrintWatAST(filename string) error {
+	m, err := wat_parser.ParseModule(filename, nil)
+	if err != nil {
+		return err
+	}
+
+	return wat_ast.Print(m)
 }

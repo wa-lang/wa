@@ -67,8 +67,8 @@ func fprint(w io.Writer, file *token.File, x interface{}, f FieldFilter) (err er
 
 // Print prints x to standard output, skipping nil fields.
 // Print(fset, x) is the same as Fprint(os.Stdout, fset, x, NotNilFilter).
-func Print(file *token.File, x interface{}) error {
-	return Fprint(os.Stdout, file, x, NotNilFilter)
+func Print(m *Module) error {
+	return Fprint(os.Stdout, m.File, m, NotNilFilter)
 }
 
 type printer struct {
@@ -140,6 +140,10 @@ func (p *printer) printf(format string, args ...interface{}) {
 func (p *printer) print(x reflect.Value) {
 	if !NotNilFilter("", x) {
 		p.printf("nil")
+		return
+	}
+
+	if _, ok := x.Interface().(*token.File); ok {
 		return
 	}
 
