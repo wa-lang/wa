@@ -8,16 +8,14 @@ import "wa-lang.org/wa/internal/wat/token"
 type Module struct {
 	File *token.File // 文件位置信息
 
-	Doc  *CommentGroup // 关联注释
-	Name *Ident        // 模块的名字(可空)
+	Doc  string // 关联注释
+	Name string // 模块的名字(可空)
 
 	Imports []*ImportSpec // 导入对象
 	Memory  *Memory       // 内存对象, 包含 Data 信息(可空)
 	Table   *Table        // 表格对象, 包含 Elem 信息(可空)
 	Globals []Global      // 全局对象
 	Funcs   []Func        // 函数对象
-
-	Comments []*CommentGroup // 全部注释列表
 }
 
 // 节点信息
@@ -29,32 +27,17 @@ type Node interface {
 // 指令对应接口
 type Instruction interface {
 	Node
-
-	DocString() string
-	WATString() string // 支持缩进
-
 	isInstruction()
-}
-
-// 注释组
-type CommentGroup struct {
-	List []*Comment // len(List) > 0
-}
-
-// 注释
-type Comment struct {
-	From token.Pos // position of "(;" or ";;" starting the comment
-	Text string    // comment text (excluding '\n' for ;;-style comments)
 }
 
 // 导入对象(仅支持函数)
 type ImportSpec struct {
-	Doc        *CommentGroup // 关联的注释
-	ModulePath *StringLit    // 模块路径
-	FuncPath   *StringLit    // 函数路径
-	FuncName   *Ident        // 导入后的名字
-	FuncType   *FuncType     // 函数类型
-	EndPos     token.Pos     // 结束位置
+	Doc        string    // 关联的注释
+	ModulePath string    // 模块路径
+	FuncPath   string    // 函数路径
+	FuncName   string    // 导入后的名字
+	FuncType   *FuncType // 函数类型
+	EndPos     token.Pos // 结束位置
 }
 
 // 内存信息
@@ -132,16 +115,4 @@ type Field struct {
 	Doc  string // 注释
 	Name string // 变量名字
 	Type string // 变量类型
-}
-
-// 标识符
-type Ident struct {
-	NamePos token.Pos // 位置
-	Name    string    // $name
-}
-
-// 字符串面值
-type StringLit struct {
-	ValuePos token.Pos
-	Value    string
 }

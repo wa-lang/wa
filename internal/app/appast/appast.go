@@ -11,7 +11,6 @@ import (
 	"wa-lang.org/wa/internal/ast"
 	"wa-lang.org/wa/internal/parser"
 	"wa-lang.org/wa/internal/token"
-	wat_ast "wa-lang.org/wa/internal/wat/ast"
 	wat_parser "wa-lang.org/wa/internal/wat/parser"
 )
 
@@ -66,5 +65,6 @@ func PrintWatAST(filename string) error {
 		return err
 	}
 
-	return wat_ast.Print(m)
+	fmt.Println(m)
+	return nil
 }
