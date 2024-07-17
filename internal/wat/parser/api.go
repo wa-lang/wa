@@ -7,8 +7,7 @@ import (
 )
 
 func ParseModule(path string, src []byte) (f *ast.Module, err error) {
-	var p parser
-	p.init(path, src)
-	f = p.parseFile()
+	p := newParser(path, src)
+	f, err = p.ParseModule()
 	return
 }

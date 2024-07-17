@@ -34,12 +34,14 @@ func (p *printer) Print(m *Module) error {
 
 	fmt.Fprint(p.w, "(module")
 	if p.m.Name != "" {
-		fmt.Fprint(p.w, "", p.m.Name)
+		fmt.Fprint(p.w, " ", p.m.Name)
 	}
 
 	if p.isModuleEmpty() {
 		fmt.Fprint(p.w, ")")
 		return nil
+	} else {
+		defer fmt.Fprint(p.w, "\nn)")
 	}
 
 	p.w.Write([]byte("TODO"))
