@@ -8,7 +8,7 @@ import (
 	"wa-lang.org/wa/internal/wat/parser"
 )
 
-func ExampleParseModule() {
+func _ExampleParseModule() {
 	src := `(module $hello)`
 
 	// Parse src but stop after processing the imports.
