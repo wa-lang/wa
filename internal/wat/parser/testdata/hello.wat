@@ -19,6 +19,6 @@
 			(i32.const 1)  ;; len(iovs) - 只有1个字符串
 			(i32.const 20) ;; nwritten - 指针, 里面是要写到数据长度
 		)
-		drop ;; 忽略返回值
+		(drop) ;; 忽略返回值
 	)
 )

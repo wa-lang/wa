@@ -134,6 +134,10 @@ func (p *parser) parseModule() {
 
 	// 解析模块主体
 	for {
+		if p.tok == token.RPAREN {
+			return
+		}
+
 		// 解析注释
 		if p.tok == token.COMMENT {
 			p.parseComment()
@@ -228,27 +232,55 @@ func (p *parser) parseModuleSection_func() {
 	if p.tok == token.LPAREN {
 		p.acceptToken(token.LPAREN)
 
-		switch p.tok {
-		case token.EXPORT:
-			p.acceptToken(token.EXPORT)
-			p.parseStringLit()
-			p.acceptToken(token.RPAREN)
-		case token.PARAM:
-			p.next()
-			if p.tok == token.IDENT {
-				p.parseIdent()
-			}
+	Loop0:
+		for {
 			switch p.tok {
-			case token.I32, token.I64, token.F32, token.F64:
+			case token.COMMENT:
+				p.parseComment()
+
+			case token.EXPORT:
+				p.acceptToken(token.EXPORT)
+				p.parseStringLit()
+				p.acceptToken(token.RPAREN)
+
+			case token.PARAM:
 				p.next()
+				if p.tok == token.IDENT {
+					p.parseIdent()
+				}
+				switch p.tok {
+				case token.I32, token.I64, token.F32, token.F64:
+					p.next()
+					p.acceptToken(token.RPAREN)
+				default:
+					p.errorf(p.pos, "bad token: %v, lit: %q", p.tok, p.lit)
+				}
 			default:
+				break Loop0
 			}
-		case token.RPAREN:
-			// todo
-		default:
 		}
 	}
 
+	for {
+		if p.tok == token.LPAREN {
+			p.acceptToken(token.LPAREN)
+		} else if p.tok == token.COMMENT {
+			p.parseComment()
+			continue
+		} else {
+			break
+		}
+
+		switch {
+		case p.tok == token.COMMENT:
+			p.parseComment()
+		case p.tok.IsIsntruction():
+			p.parseInstruction()
+			p.acceptToken(token.RPAREN)
+		default:
+			p.errorf(p.pos, "bad token: %v, lit: %q", p.tok, p.lit)
+		}
+	}
 }
 
 func (p *parser) parseModuleSection_export() {
@@ -270,7 +302,7 @@ func (p *parser) parseModuleSection_export() {
 		p.parseIntLit() // todo
 
 	case token.FUNC:
-		p.acceptToken(token.MEMORY)
+		p.acceptToken(token.FUNC)
 		p.parseIdent() // todo
 
 	default:
