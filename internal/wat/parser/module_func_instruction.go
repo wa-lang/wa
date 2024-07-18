@@ -48,27 +48,16 @@ func (p *parser) parseInstruction_call() {
 			return
 		}
 
-		if p.tok == token.COMMENT {
-			p.parseComment()
-			continue
-		}
+		p.consumeComments()
 
 		for {
-			if p.tok == token.COMMENT {
-				p.parseComment()
-				continue
-			}
+			p.consumeComments()
 
 			if p.tok == token.LPAREN {
 				p.acceptToken(token.LPAREN)
 				if p.tok.IsIsntruction() {
 					p.parseInstruction()
 					p.acceptToken(token.RPAREN)
-					continue
-				}
-
-				if p.tok == token.COMMENT {
-					p.parseComment()
 					continue
 				}
 			}
