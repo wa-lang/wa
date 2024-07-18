@@ -11,6 +11,7 @@
 
 - 主页: [https://wa-lang.org](https://wa-lang.org)
 - 参考手册: [https://wa-lang.org/man/](https://wa-lang.org/man/)
+- 仓库(GitCode): [https://gitcode.com/wa-lang/wa](https://gitcode.com/wa-lang/wa)
 - 仓库(Gitee): [https://gitee.com/wa-lang/wa](https://gitee.com/wa-lang/wa)
 - 仓库(Github): [https://github.com/wa-lang/wa](https://github.com/wa-lang/wa)
 - Playground: [https://wa-lang.org/playground](https://wa-lang.org/playground)
