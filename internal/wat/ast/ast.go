@@ -10,12 +10,17 @@ import "wa-lang.org/wa/internal/wat/token"
 type Module struct {
 	File *token.File // 文件位置信息
 
-	Name    string        // 模块的名字(可空)
-	Imports []*ImportSpec // 导入对象
-	Memory  *Memory       // 内存对象, 包含 Data 信息(可空)
-	Table   *Table        // 表格对象, 包含 Elem 信息(可空)
-	Globals []Global      // 全局对象
-	Funcs   []Func        // 函数对象
+	Name    string         // 模块的名字(可空)
+	Types   []*TypeSection // 类型定义
+	Imports []*ImportSpec  // 导入对象
+	Exports []*ExportSpec  // 导出对象
+	Memory  *Memory        // 内存对象, 包含 Data 信息(可空)
+	Data    []*DataSection // 初始化数据, 可能重叠
+	Table   *Table         // 表格对象, 包含 Elem 信息(可空)
+	Elem    []*ElemSection // 初始化数据
+	Globals []*Global      // 全局对象
+	Funcs   []*Func        // 函数对象
+	Start   string         // start 函数
 }
 
 // 指令对应接口
@@ -23,22 +28,41 @@ type Instruction interface {
 	aInstruction()
 }
 
+// 类型信息
+type TypeSection struct {
+	Name string
+	Type *FuncType
+}
+
 // 导入对象(仅支持函数)
 type ImportSpec struct {
-	ModulePath string    // 模块路径
-	FuncPath   string    // 函数路径
-	FuncName   string    // 导入后的名字
-	FuncType   *FuncType // 函数类型
-	EndPos     token.Pos // 结束位置
+	ObjModule string      // 模块路径
+	ObjName   string      // 实体名字
+	ObjKind   token.Token // 导入类别: MEMORY, TABLE, FUNC, GLOBAL
+
+	MemoryIdx  int         // 导入内存编号
+	TableIdx   int         // 导入Table编号
+	GlobalName string      // 导入全局变量名字
+	GlobalType token.Token // 导入全局变量类型: I32, I64, F32, F64
+	FuncName   string      // 导入后函数名字
+	FuncType   *FuncType   // 导入函数类型
+}
+
+// 导出对象
+type ExportSpec struct {
+	Name      string      // 导出名字
+	Kind      token.Token // 导出类型
+	FuncIdx   string      // 导出函数ID
+	TableIdx  string      // 导出表格ID
+	MemoryIdx string      // 导出内存ID
+	GlobalIdx string      // 导出全局变量ID
 }
 
 // 内存信息
 type Memory struct {
-	Name       string // 内存对象的名字
-	ExportName string // 导出名字
-
-	Pages int           // 页数, 每页 64 KB
-	Data  []DataSection // 初始化数据, 可能重叠
+	Name     string // 内存对象的名字
+	Pages    int    // 页数, 每页 64 KB
+	MaxPages int    // 最大页数
 }
 
 // 初始化数据
@@ -50,44 +74,39 @@ type DataSection struct {
 
 // Table 信息
 type Table struct {
-	Name       string // Table对象的名字
-	ExportName string // 导出名字
-
-	Size int           // 表格容量
-	Type string        // 元素类型, 默认为 anyfunc
-	Elem []ElemSection // 初始化数据
+	Name    string      // Table对象的名字
+	Size    int         // 表格容量
+	MaxSize int         // 最大容量
+	Type    token.Token // 元素类型, 默认为 funcref, externref
 }
 
 // 表格元素数据
 type ElemSection struct {
+	Name   string // 名字
 	Offset uint32 // 偏移量(从 0 开始)
 	Value  string // 初始化值, 引用的是其他 func 的名字
 }
 
 // 全局变量
 type Global struct {
-	Name       string // 全局变量名
-	ExportName string // 导出名字
-
-	Type    string // 类型信息
-	Value   string // 初始值(导入变量忽略)
-	Mutable bool   // 是否可写
+	Name    string      // 全局变量名
+	Mutable bool        // 是否可写
+	Type    token.Token // 类型信息
+	Value   int         // 初始值(导入变量忽略)
 }
 
 // 函数定义
 type Func struct {
-	Name       string // 函数名
-	ExportName string // 导出名字
-	IsStart    bool   // start 函数
-
-	Type *FuncType // 函数类型
-	Body *FuncBody // 函数体
+	Name       string    // 函数名
+	ExportName string    // 导出名字
+	Type       *FuncType // 函数类型
+	Body       *FuncBody // 函数体
 }
 
 // 函数类型
 type FuncType struct {
-	Params      []Field  // 参数名字
-	ResultsType []string // 返回值类型
+	Params  []Field       // 参数名字
+	Results []token.Token // 返回值类型: I32, I64, F32, F64
 }
 
 // 函数定义
@@ -98,6 +117,6 @@ type FuncBody struct {
 
 // 参数和局部变量信息
 type Field struct {
-	Name string // 变量名字
-	Type string // 变量类型
+	Name string      // 变量名字
+	Type token.Token // 变量类型: I32, I64, F32, F64
 }

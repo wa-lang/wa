@@ -9,142 +9,121 @@ import (
 
 // import ::= (import mod:name nm:nname d:importdesc)
 //
-// importdesc ::= (func id typeuse)
+// importdesc ::= (memory id memtype)
 //             |  (table id tabletype)
-//             |  (memory id memtype)
 //             |  (global id globaltype)
+//             |  (func id typeuse)
 
 func (p *parser) parseModuleSection_import() *ast.ImportSpec {
 	p.acceptToken(token.IMPORT)
+	p.consumeComments()
 
 	spec := &ast.ImportSpec{}
 
 	// 宿主模块和名字
+	spec.ObjModule = p.parseStringLit()
 	p.consumeComments()
-	spec.ModulePath = p.parseStringLit()
 
+	spec.ObjName = p.parseStringLit()
 	p.consumeComments()
-	spec.FuncPath = p.parseStringLit()
 
-Loop:
-	for {
-		p.consumeComments()
-		p.acceptToken(token.LPAREN)
-
+	p.acceptToken(token.LPAREN)
+	{
 		p.consumeComments()
 		switch p.tok {
-		case token.FUNC:
-			p.parseModuleSection_import_func(spec)
-			p.consumeComments()
-			p.acceptToken(token.RPAREN)
-		case token.TABLE:
-			p.parseModuleSection_import_table(spec)
-			p.consumeComments()
-			p.acceptToken(token.RPAREN)
 		case token.MEMORY:
 			p.parseModuleSection_import_memory(spec)
-			p.consumeComments()
-			p.acceptToken(token.RPAREN)
+		case token.TABLE:
+			p.parseModuleSection_import_table(spec)
+		case token.FUNC:
+			p.parseModuleSection_import_func(spec)
 		case token.GLOBAL:
 			p.parseModuleSection_import_global(spec)
-			p.consumeComments()
-			p.acceptToken(token.RPAREN)
+		default:
+			p.errorf(p.pos, "bad token, %v %s", p.tok, p.lit)
 		}
-
-		break Loop
+		p.consumeComments()
 	}
+	p.acceptToken(token.RPAREN)
 
 	return spec
 }
 
-func (p *parser) parseModuleSection_import_table(spec *ast.ImportSpec) {
-	p.acceptToken(token.TABLE)
-
-	panic("TODO")
-}
-
 func (p *parser) parseModuleSection_import_memory(spec *ast.ImportSpec) {
 	p.acceptToken(token.MEMORY)
+	p.consumeComments()
 
-	panic("TODO")
+	spec.MemoryIdx = p.parseIntLit()
+}
+
+func (p *parser) parseModuleSection_import_table(spec *ast.ImportSpec) {
+	p.acceptToken(token.TABLE)
+	p.consumeComments()
+
+	spec.TableIdx = p.parseIntLit()
 }
 
 func (p *parser) parseModuleSection_import_global(spec *ast.ImportSpec) {
 	p.acceptToken(token.GLOBAL)
 
-	panic("TODO")
+	spec.GlobalName = p.parseIdent()
+	spec.GlobalType = p.parseNumberType()
 }
 
 func (p *parser) parseModuleSection_import_func(spec *ast.ImportSpec) {
 	p.acceptToken(token.FUNC)
+	p.consumeComments()
 
-	spec.FuncName = p.parseIdent()
 	spec.FuncType = &ast.FuncType{}
+	spec.FuncName = p.parseIdent()
 
-	if p.tok == token.LPAREN {
+	for {
+		p.consumeComments()
+		if p.tok != token.LPAREN {
+			break
+		}
+
 		p.acceptToken(token.LPAREN)
+		p.consumeComments()
 
 		switch p.tok {
 		case token.PARAM:
-			p.parseModuleSection_import_func_param(spec)
+			p.acceptToken(token.PARAM)
+			p.consumeComments()
+
+			if p.tok == token.IDENT {
+				// (param $name i32)
+				p.parseIdent()
+				p.consumeComments()
+				typ := p.parseNumberType()
+
+				spec.FuncType.Params = append(spec.FuncType.Params, ast.Field{
+					Type: typ,
+				})
+			} else {
+				// (param i32)
+				// (param i32 i64)
+				for _, typ := range p.parseNumberTypeList() {
+					spec.FuncType.Params = append(spec.FuncType.Params, ast.Field{
+						Type: typ,
+					})
+				}
+			}
+
 			p.acceptToken(token.RPAREN)
+
 		case token.RESULT:
-			p.parseModuleSection_import_func_result(spec)
+			// (result i32)
+			// (result i32 i64)
+			p.acceptToken(token.RESULT)
+			p.consumeComments()
+			for _, typ := range p.parseNumberTypeList() {
+				spec.FuncType.Results = append(spec.FuncType.Results, typ)
+			}
 			p.acceptToken(token.RPAREN)
-			return
+
 		default:
-			p.errorf(p.pos, "bad token: %v, lit: %q", p.tok, p.lit)
-		}
-	}
-
-	if p.tok == token.LPAREN {
-		p.acceptToken(token.LPAREN)
-
-		switch p.tok {
-		case token.RESULT:
-			p.parseModuleSection_import_func_result(spec)
-			p.acceptToken(token.RPAREN)
-		default:
-			p.errorf(p.pos, "bad token: %v, lit: %q", p.tok, p.lit)
-		}
-	}
-}
-
-func (p *parser) parseModuleSection_import_func_param(spec *ast.ImportSpec) {
-	p.acceptToken(token.PARAM)
-
-	for {
-		var field ast.Field
-		if p.tok == token.IDENT {
-			field.Name = p.lit
-			p.next()
-		}
-
-		switch p.tok {
-		case token.I32, token.I64, token.F32, token.F64:
-			field.Type = p.lit
-			spec.FuncType.Params = append(spec.FuncType.Params, field)
-			p.next()
-		case token.RPAREN:
-			return
-		default:
-			p.errorf(p.pos, "bad token: %v, lit: %q", p.tok, p.lit)
-		}
-	}
-}
-
-func (p *parser) parseModuleSection_import_func_result(spec *ast.ImportSpec) {
-	p.acceptToken(token.RESULT)
-
-	for {
-		switch p.tok {
-		case token.I32, token.I64, token.F32, token.F64:
-			spec.FuncType.ResultsType = append(spec.FuncType.ResultsType, p.lit)
-			p.next()
-		case token.RPAREN:
-			return
-		default:
-			p.errorf(p.pos, "bad token: %v, lit: %q", p.tok, p.lit)
+			p.errorf(p.pos, "bad token: %v %s", p.tok, p.lit)
 		}
 	}
 }

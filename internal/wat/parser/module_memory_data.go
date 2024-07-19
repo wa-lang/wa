@@ -2,7 +2,10 @@
 
 package parser
 
-import "wa-lang.org/wa/internal/wat/token"
+import (
+	"wa-lang.org/wa/internal/wat/ast"
+	"wa-lang.org/wa/internal/wat/token"
+)
 
 // data ::= (data id? b:datastring)
 //       |  (data id? x:memuse (offset e:expr) b:datastring)
@@ -12,8 +15,15 @@ import "wa-lang.org/wa/internal/wat/token"
 // memuse ::= (memory x:memidx)
 
 // (data (i32.const 8) "hello world\n")
-func (p *parser) parseModuleSection_data() {
+func (p *parser) parseModuleSection_data() *ast.DataSection {
 	p.acceptToken(token.DATA)
+
+	dataSection := &ast.DataSection{}
+
+	p.consumeComments()
+	if p.tok == token.IDENT {
+		dataSection.Name = p.parseIdent()
+	}
 
 	p.consumeComments()
 	p.acceptToken(token.LPAREN)
@@ -22,11 +32,13 @@ func (p *parser) parseModuleSection_data() {
 	p.acceptToken(token.INS_I32_CONST)
 
 	p.consumeComments()
-	p.parseIntLit()
+	dataSection.Offset = uint32(p.parseIntLit())
 
 	p.consumeComments()
 	p.acceptToken(token.RPAREN)
 
 	p.consumeComments()
-	p.parseStringLit()
+	dataSection.Value = []byte(p.parseStringLit())
+
+	return dataSection
 }

@@ -8,20 +8,31 @@ import (
 )
 
 // mem ::= (memory id? memtype)
+//
+// memtype ::= lim:limits
+//
+// limits ::= n:u32 | n:u32 m:u32
 
-func (p *parser) parseModuleSection_memory() {
+// (memory $memory 1024)
+// (memory $memory 1024 2028)
+func (p *parser) parseModuleSection_memory() *ast.Memory {
 	p.acceptToken(token.MEMORY)
 
-	if p.module.Memory == nil {
-		p.module.Memory = &ast.Memory{}
-	}
+	mem := &ast.Memory{}
 
 	p.consumeComments()
 	if p.tok == token.IDENT {
-		p.module.Memory.Name = p.lit
+		mem.Name = p.lit
 		p.acceptToken(token.IDENT)
 	}
 
 	p.consumeComments()
-	p.module.Memory.Pages = p.parseIntLit()
+	mem.Pages = p.parseIntLit()
+
+	p.consumeComments()
+	if p.tok == token.INT {
+		mem.MaxPages = p.parseIntLit()
+	}
+
+	return mem
 }

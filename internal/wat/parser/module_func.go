@@ -3,6 +3,7 @@
 package parser
 
 import (
+	"wa-lang.org/wa/internal/wat/ast"
 	"wa-lang.org/wa/internal/wat/token"
 )
 
@@ -10,14 +11,19 @@ import (
 //
 // local := (local id? t:valtype)
 
-func (p *parser) parseModuleSection_func() {
+func (p *parser) parseModuleSection_func() *ast.Func {
 	p.acceptToken(token.FUNC)
 
-	// (func $main (export "_start")
+	fn := &ast.Func{
+		Type: &ast.FuncType{},
+		Body: &ast.FuncBody{},
+	}
 
 	if p.tok == token.IDENT {
-		p.acceptToken(token.IDENT)
+		fn.Name = p.parseIdent()
 	}
+
+	// todo
 
 	if p.tok == token.LPAREN {
 		p.acceptToken(token.LPAREN)
@@ -28,18 +34,26 @@ func (p *parser) parseModuleSection_func() {
 			switch p.tok {
 			case token.EXPORT:
 				p.acceptToken(token.EXPORT)
-				p.parseStringLit()
+
+				p.consumeComments()
+				fn.ExportName = p.parseStringLit()
+
+				p.consumeComments()
 				p.acceptToken(token.RPAREN)
 
 			case token.PARAM:
+				var field ast.Field
 				p.next()
 				if p.tok == token.IDENT {
-					p.parseIdent()
+					field.Name = p.parseIdent()
 				}
 				switch p.tok {
 				case token.I32, token.I64, token.F32, token.F64:
+					field.Type = p.tok
 					p.next()
+					p.consumeComments()
 					p.acceptToken(token.RPAREN)
+					fn.Type.Params = append(fn.Type.Params, field)
 				default:
 					p.errorf(p.pos, "bad token: %v, lit: %q", p.tok, p.lit)
 				}
@@ -65,4 +79,6 @@ func (p *parser) parseModuleSection_func() {
 			p.errorf(p.pos, "bad token: %v, lit: %q", p.tok, p.lit)
 		}
 	}
+
+	return fn
 }

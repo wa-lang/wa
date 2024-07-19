@@ -61,30 +61,40 @@ func (p *parser) parseModuleSection() {
 		p.errorf(p.pos, "bad token: %v, lit: %q", p.tok, p.lit)
 
 	case token.TYPE:
-		p.parseModuleSection_type()
+		typ := p.parseModuleSection_type()
+		p.module.Types = append(p.module.Types, typ)
 
 	case token.IMPORT:
-		p.parseModuleSection_import()
+		spec := p.parseModuleSection_import()
+		p.module.Imports = append(p.module.Imports, spec)
 	case token.EXPORT:
-		p.parseModuleSection_export()
+		spec := p.parseModuleSection_export()
+		p.module.Exports = append(p.module.Exports, spec)
 
 	case token.MEMORY:
-		p.parseModuleSection_memory()
+		mem := p.parseModuleSection_memory()
+		p.module.Memory = mem
 	case token.DATA:
-		p.parseModuleSection_data()
+		dataSection := p.parseModuleSection_data()
+		p.module.Data = append(p.module.Data, dataSection)
 
 	case token.TABLE:
-		p.parseModuleSection_table()
+		tab := p.parseModuleSection_table()
+		p.module.Table = tab
+
 	case token.ELEM:
-		p.parseModuleSection_elem()
+		elemSection := p.parseModuleSection_elem()
+		p.module.Elem = append(p.module.Elem, elemSection)
 
 	case token.GLOBAL:
-		p.parseModuleSection_global()
+		g := p.parseModuleSection_global()
+		p.module.Globals = append(p.module.Globals, g)
 
 	case token.FUNC:
-		p.parseModuleSection_func()
+		fn := p.parseModuleSection_func()
+		p.module.Funcs = append(p.module.Funcs, fn)
 
 	case token.START:
-		p.parseModuleSection_start()
+		p.module.Start = p.parseModuleSection_start()
 	}
 }

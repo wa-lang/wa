@@ -2,17 +2,54 @@
 
 package parser
 
-import "wa-lang.org/wa/internal/wat/token"
+import (
+	"wa-lang.org/wa/internal/wat/ast"
+	"wa-lang.org/wa/internal/wat/token"
+)
 
 // global ::= (global id? globaltype expr)
+//
+// globaltype ::= valtype | (mut valtype)
 
 // (global $__stack_ptr (mut i32) (i32.const 1024))     ;; index=0
 // (global $__heap_max  i32       (i32.const 67108864)) ;; 64MB, 1024 page
-func (p *parser) parseModuleSection_global() {
+func (p *parser) parseModuleSection_global() *ast.Global {
 	p.acceptToken(token.GLOBAL)
 
-	p.consumeComments()
-	p.parseIdent()
+	g := &ast.Global{}
 
-	panic("TODO")
+	p.consumeComments()
+	if p.tok == token.IDENT {
+		g.Name = p.parseIdent()
+	}
+
+	p.consumeComments()
+	if p.tok != token.LPAREN {
+		g.Type = p.parseNumberType()
+
+		p.consumeComments()
+		p.acceptToken(token.LPAREN)
+
+		p.consumeComments()
+		p.acceptToken(token.INS_I32_CONST)
+		g.Value = p.parseIntLit()
+
+	} else {
+		p.acceptToken(token.LPAREN)
+		p.consumeComments()
+
+		if p.tok == token.MUT {
+			p.acceptToken(token.MUT)
+			g.Mutable = true
+
+			p.consumeComments()
+			p.acceptToken(token.LPAREN)
+			p.consumeComments()
+		}
+
+		p.acceptToken(token.INS_I32_CONST)
+		g.Value = p.parseIntLit()
+	}
+
+	return g
 }

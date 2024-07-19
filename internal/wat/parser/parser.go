@@ -179,3 +179,26 @@ func (p *parser) parseNumberType() token.Token {
 		panic("unreachable")
 	}
 }
+
+func (p *parser) parseNumberTypeList() []token.Token {
+	var tokens []token.Token
+
+Loop:
+	for {
+		p.consumeComments()
+		switch p.tok {
+		case token.I32, token.I64, token.F32, token.F64:
+			tokens = append(tokens, p.tok)
+			p.next()
+		default:
+			break Loop
+		}
+	}
+
+	if len(tokens) == 0 {
+		p.errorf(p.pos, "export %v, got %v", "i32|i64|f32|f64", p.tok)
+		panic("unreachable")
+	}
+
+	return tokens
+}

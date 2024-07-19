@@ -6,9 +6,9 @@ import "wa-lang.org/wa/internal/wat/token"
 
 // start ::= (start funcidx)
 
-func (p *parser) parseModuleSection_start() {
+func (p *parser) parseModuleSection_start() string {
 	p.acceptToken(token.START)
 
 	p.consumeComments()
-	p.parseIdent()
+	return p.parseIdent()
 }
