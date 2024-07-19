@@ -2,4 +2,13 @@
 
 package parser
 
-func (p *parser) parseModuleSection_start() {}
+import "wa-lang.org/wa/internal/wat/token"
+
+// start ::= (start funcidx)
+
+func (p *parser) parseModuleSection_start() {
+	p.acceptToken(token.START)
+
+	p.consumeComments()
+	p.parseIdent()
+}

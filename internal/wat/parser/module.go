@@ -4,6 +4,21 @@ package parser
 
 import "wa-lang.org/wa/internal/wat/token"
 
+// https://webassembly.github.io/spec/core/text/modules.html
+
+// module ::= (module id? (m:modulefield))
+//
+// modulefield ::= type
+//              |  import
+//              |  func
+//              |  table
+//              |  memory
+//              |  global
+//              |  export
+//              |  start
+//              |  elem
+//              |  data
+
 // 解析 module
 // (module $name ...)
 func (p *parser) parseModule() {

@@ -4,6 +4,8 @@ package parser
 
 import "wa-lang.org/wa/internal/wat/token"
 
+// table ::= (table id tabletype)
+
 // (table 3 funcref)
 func (p *parser) parseModuleSection_table() {
 	p.acceptToken(token.TABLE)

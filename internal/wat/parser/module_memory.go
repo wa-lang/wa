@@ -7,6 +7,8 @@ import (
 	"wa-lang.org/wa/internal/wat/token"
 )
 
+// mem ::= (memory id? memtype)
+
 func (p *parser) parseModuleSection_memory() {
 	p.acceptToken(token.MEMORY)
 
@@ -14,10 +16,12 @@ func (p *parser) parseModuleSection_memory() {
 		p.module.Memory = &ast.Memory{}
 	}
 
+	p.consumeComments()
 	if p.tok == token.IDENT {
 		p.module.Memory.Name = p.lit
 		p.acceptToken(token.IDENT)
 	}
 
+	p.consumeComments()
 	p.module.Memory.Pages = p.parseIntLit()
 }

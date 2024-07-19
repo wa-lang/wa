@@ -4,6 +4,13 @@ package parser
 
 import "wa-lang.org/wa/internal/wat/token"
 
+// export ::= (export nm:name d:exportdesc)
+//
+// exportdesc ::= (func funcidx)
+//             |  (table tableidx)
+//             |  (memory memidx)
+//             |  (global globalidx)
+
 func (p *parser) parseModuleSection_export() {
 	p.acceptToken(token.EXPORT)
 

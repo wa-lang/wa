@@ -4,6 +4,14 @@ package parser
 
 import "wa-lang.org/wa/internal/wat/token"
 
+// elem ::= (elem id? elemlist)
+//       |  (elem id? x:tableuse (offset e:expr) elemlist)
+//       |  (elem id? declare elemlist)
+//
+// elemlist ::= reftype vec(elemexpr)
+// elemexpr ::= (item e:expr)
+// tableuse ::= (table x:tableidx)
+
 // (elem (i32.const 1) $$u8.$$block.$$onFree)
 func (p *parser) parseModuleSection_elem() {
 	p.acceptToken(token.ELEM)
@@ -20,6 +28,10 @@ func (p *parser) parseModuleSection_elem() {
 	p.consumeComments()
 	p.acceptToken(token.RPAREN)
 
-	p.consumeComments()
-	p.parseIdent()
+	for {
+		p.consumeComments()
+		if p.tok != token.RPAREN {
+			p.parseIdent()
+		}
+	}
 }

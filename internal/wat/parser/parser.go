@@ -167,3 +167,15 @@ func (p *parser) parseStringLit() string {
 	p.acceptToken(token.STRING)
 	return s
 }
+
+func (p *parser) parseNumberType() token.Token {
+	switch p.tok {
+	case token.I32, token.I64, token.F32, token.F64:
+		tok := p.tok
+		p.next()
+		return tok
+	default:
+		p.errorf(p.pos, "export %v, got %v", "i32|i64|f32|f64", p.tok)
+		panic("unreachable")
+	}
+}
