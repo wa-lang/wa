@@ -23,11 +23,6 @@ type Module struct {
 	Start   string         // start 函数
 }
 
-// 指令对应接口
-type Instruction interface {
-	aInstruction()
-}
-
 // 类型信息
 type TypeSection struct {
 	Name string

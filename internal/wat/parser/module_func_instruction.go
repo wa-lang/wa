@@ -2,50 +2,65 @@
 
 package parser
 
-import "wa-lang.org/wa/internal/wat/token"
+import (
+	"wa-lang.org/wa/internal/wat/ast"
+	"wa-lang.org/wa/internal/wat/token"
+)
 
-func (p *parser) parseInstruction() {
+func (p *parser) parseInstruction() ast.Instruction {
 	switch p.tok {
 	default:
 		p.errorf(p.pos, "bad token: %v, lit: %q", p.tok, p.lit)
+		panic("unreachable")
 
 	case token.INS_I32_STORE:
-		p.parseInstruction_i32_store()
+		return p.parseInstruction_i32_store()
 	case token.INS_I32_CONST:
-		p.parseInstruction_i32_const()
+		return p.parseInstruction_i32_const()
 
 	case token.INS_CALL:
-		p.parseInstruction_call()
+		return p.parseInstruction_call()
 	case token.INS_DROP:
-		p.parseInstruction_drop()
+		return p.parseInstruction_drop()
 	}
 }
 
-func (p *parser) parseInstruction_i32_store() {
+func (p *parser) parseInstruction_i32_store() *ast.Ins_I32Store {
 	p.acceptToken(token.INS_I32_STORE)
 
+	ins := &ast.Ins_I32Store{}
+
 	p.acceptToken(token.LPAREN)
-	p.parseInstruction_i32_const()
+	addr := p.parseInstruction_i32_const()
 	p.acceptToken(token.RPAREN)
 
 	p.acceptToken(token.LPAREN)
-	p.parseInstruction_i32_const()
+	val := p.parseInstruction_i32_const()
 	p.acceptToken(token.RPAREN)
+
+	ins.Offset = uint32(addr.Value)
+	ins.Value = val.Value
+
+	return ins
 }
 
-func (p *parser) parseInstruction_i32_const() {
+func (p *parser) parseInstruction_i32_const() *ast.Ins_I32Const {
 	p.acceptToken(token.INS_I32_CONST)
-	p.parseIntLit()
+	ins := &ast.Ins_I32Const{}
+	ins.Value = int32(p.parseIntLit())
+	return ins
 }
 
-func (p *parser) parseInstruction_call() {
+func (p *parser) parseInstruction_call() *ast.Ins_Call {
 	p.acceptToken(token.INS_CALL)
 
-	p.parseIdent()
+	ins := &ast.Ins_Call{}
+
+	ins.Name = p.parseIdent()
 
 	for {
 		if p.tok == token.RPAREN {
-			return
+			return ins
 		}
 
 		p.consumeComments()
@@ -56,7 +71,7 @@ func (p *parser) parseInstruction_call() {
 			if p.tok == token.LPAREN {
 				p.acceptToken(token.LPAREN)
 				if p.tok.IsIsntruction() {
-					p.parseInstruction()
+					ins.Args = append(ins.Args, p.parseInstruction())
 					p.acceptToken(token.RPAREN)
 					continue
 				}
@@ -67,7 +82,8 @@ func (p *parser) parseInstruction_call() {
 	}
 }
 
-func (p *parser) parseInstruction_drop() {
+func (p *parser) parseInstruction_drop() *ast.Ins_Drop {
 	p.acceptToken(token.INS_DROP)
-
+	ins := &ast.Ins_Drop{}
+	return ins
 }
