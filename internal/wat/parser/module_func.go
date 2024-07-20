@@ -122,20 +122,23 @@ Loop:
 			p.acceptToken(token.RPAREN)
 
 		default:
-			if p.tok.IsIsntruction() {
-				if fn.Body == nil {
-					fn.Body = &ast.FuncBody{}
-				}
-
-				ins := p.parseInstruction()
-				fn.Body.Insts = append(fn.Body.Insts, ins)
-
-				p.consumeComments()
-				p.acceptToken(token.RPAREN)
-			} else {
-				break Loop
-			}
+			break Loop
 		}
+	}
+
+	// 解析指令
+	// 不支持指令折叠
+	for {
+		p.consumeComments()
+		if !p.tok.IsIsntruction() {
+			break
+		}
+		if fn.Body == nil {
+			fn.Body = &ast.FuncBody{}
+		}
+
+		ins := p.parseInstruction()
+		fn.Body.Insts = append(fn.Body.Insts, ins)
 	}
 
 	return fn

@@ -10,15 +10,24 @@
 
 	;; _start 类似 main 函数, 自动执行
 	(func $main (export "_start")
-		(i32.store (i32.const 0) (i32.const 8))  ;; iov.iov_base - 字符串地址为 8
-		(i32.store (i32.const 4) (i32.const 12)) ;; iov.iov_len  - 字符串长度
+		;; iov.iov_base - 字符串地址为 8
+		i32.const 0
+		i32.const 8
+		i32.store
 
-		(call $fd_write
-			(i32.const 1)  ;; 1 对应 stdout
-			(i32.const 0)  ;; *iovs - 前 8 个字节保留给 iov 数组
-			(i32.const 1)  ;; len(iovs) - 只有1个字符串
-			(i32.const 20) ;; nwritten - 指针, 里面是要写到数据长度
-		)
-		(drop) ;; 忽略返回值
+		;; iov.iov_len  - 字符串长度
+		i32.const 4
+		i32.const 12
+		i32.store
+
+		;; 输出到 stdout
+		i32.const 1  ;; 1 对应 stdout
+		i32.const 0  ;; *iovs - 前 8 个字节保留给 iov 数组
+		i32.const 1  ;; len(iovs) - 只有1个字符串
+		i32.const 20 ;; nwritten - 指针, 里面是要写到数据长度
+		call $fd_write
+
+		;; 忽略返回值
+		drop
 	)
 )
