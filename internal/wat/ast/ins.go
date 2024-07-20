@@ -15,7 +15,9 @@ type Ins_Loop struct{}
 type Ins_If struct{}
 type Ins_Else struct{}
 type Ins_End struct{}
-type Ins_Br struct{}
+type Ins_Br struct {
+	X string
+}
 type Ins_BrIf struct{}
 type Ins_BrTable struct{}
 type Ins_Return struct{}
@@ -29,11 +31,21 @@ type Ins_CallIndirect struct{}
 type Ins_Drop struct{}
 type Ins_Select struct{}
 type Ins_TypedSelect struct{}
-type Ins_LocalGet struct{}
-type Ins_LocalSet struct{}
-type Ins_LOcalTee struct{}
-type Ins_GlobalGet struct{}
-type Ins_GlobalSet struct{}
+type Ins_LocalGet struct {
+	X string
+}
+type Ins_LocalSet struct {
+	X string
+}
+type Ins_LocalTee struct {
+	X string
+}
+type Ins_GlobalGet struct {
+	X string
+}
+type Ins_GlobalSet struct {
+	X string
+}
 type Ins_TableGet struct{}
 type Ins_TableSet struct{}
 type Ins_I32Load struct{ Offset uint32 }
@@ -57,8 +69,6 @@ type Ins_I32Store struct {
 }
 
 type Ins_I64Store struct {
-	Offset uint32
-	Value  int64
 }
 type Ins_F32Store struct {
 	Offset uint32
@@ -93,10 +103,10 @@ type Ins_I64Store32 struct {
 type Ins_MemorySize struct{}
 type Ins_MemoryGrow struct{}
 
-type Ins_I32Const struct{ Value int32 }
-type Ins_I64Const struct{ Value int64 }
-type Ins_F32Const struct{ Value float32 }
-type Ins_F64Const struct{ Value float64 }
+type Ins_I32Const struct{ X int32 }
+type Ins_I64Const struct{ X int64 }
+type Ins_F32Const struct{ X float32 }
+type Ins_F64Const struct{ X float64 }
 
 type Ins_I32Eqz struct{}
 type Ins_I32Eq struct{}
@@ -233,5 +243,42 @@ type Ins_I64ReintepretI64 struct{}
 func (*Ins_I32Const) aInstruction() {}
 func (*Ins_I32Store) aInstruction() {}
 func (*Ins_I32Load) aInstruction()  {}
-func (*Ins_Call) aInstruction()     {}
-func (*Ins_Drop) aInstruction()     {}
+
+func (*Ins_I64Const) aInstruction() {}
+func (*Ins_I64Store) aInstruction() {}
+func (*Ins_I64Load) aInstruction()  {}
+
+func (*Ins_Br) aInstruction()           {}
+func (*Ins_Call) aInstruction()         {}
+func (*Ins_CallIndirect) aInstruction() {}
+func (*Ins_Drop) aInstruction()         {}
+func (*Ins_Return) aInstruction()       {}
+func (*Ins_Unreachable) aInstruction()  {}
+func (*Ins_If) aInstruction()           {}
+
+func (*Ins_GlobalGet) aInstruction() {}
+func (*Ins_GlobalSet) aInstruction() {}
+
+func (*Ins_LocalGet) aInstruction() {}
+func (*Ins_LocalSet) aInstruction() {}
+func (*Ins_LocalTee) aInstruction() {}
+
+func (*Ins_I32Add) aInstruction()  {}
+func (*Ins_I32Sub) aInstruction()  {}
+func (*Ins_I32Mul) aInstruction()  {}
+func (*Ins_I32DivS) aInstruction() {}
+func (*Ins_I32DivU) aInstruction() {}
+func (*Ins_I32RemS) aInstruction() {}
+func (*Ins_I32RemU) aInstruction() {}
+
+func (*Ins_I32Eqz) aInstruction() {}
+func (*Ins_I32Eq) aInstruction()  {}
+func (*Ins_I32Ne) aInstruction()  {}
+func (*Ins_I32LtS) aInstruction() {}
+func (*Ins_I32LtU) aInstruction() {}
+func (*Ins_I32GtS) aInstruction() {}
+func (*Ins_I32GtU) aInstruction() {}
+func (*Ins_I32LeS) aInstruction() {}
+func (*Ins_I32LeU) aInstruction() {}
+func (*Ins_I32GeS) aInstruction() {}
+func (*Ins_I32GeU) aInstruction() {}

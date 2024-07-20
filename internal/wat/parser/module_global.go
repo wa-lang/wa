@@ -34,21 +34,31 @@ func (p *parser) parseModuleSection_global() *ast.Global {
 		p.acceptToken(token.INS_I32_CONST)
 		g.Value = p.parseIntLit()
 
+		p.consumeComments()
+		p.acceptToken(token.RPAREN)
+
 	} else {
 		p.acceptToken(token.LPAREN)
 		p.consumeComments()
 
-		if p.tok == token.MUT {
-			p.acceptToken(token.MUT)
-			g.Mutable = true
+		p.acceptToken(token.MUT)
+		g.Mutable = true
 
-			p.consumeComments()
-			p.acceptToken(token.LPAREN)
-			p.consumeComments()
-		}
+		p.consumeComments()
+		g.Type = p.parseNumberType()
 
+		p.consumeComments()
+		p.acceptToken(token.RPAREN)
+
+		p.consumeComments()
+		p.acceptToken(token.LPAREN)
+
+		p.consumeComments()
 		p.acceptToken(token.INS_I32_CONST)
 		g.Value = p.parseIntLit()
+
+		p.consumeComments()
+		p.acceptToken(token.RPAREN)
 	}
 
 	return g
