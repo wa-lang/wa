@@ -91,11 +91,24 @@ func (p *parser) next() {
 }
 
 // 吃掉一个预期的 token
-func (p *parser) acceptToken(expectToken token.Token) {
-	if p.tok != expectToken {
+func (p *parser) acceptToken(expectToken token.Token, moreExpectTokens ...token.Token) {
+	if p.tok == expectToken {
+		p.next()
+		return
+	}
+	for _, tok := range moreExpectTokens {
+		if p.tok == tok {
+			p.next()
+			return
+		}
+	}
+
+	if len(moreExpectTokens) > 0 {
+		all := append([]token.Token{expectToken}, moreExpectTokens...)
+		p.errorf(p.pos, "expect %v, got %v", all, p.tok)
+	} else {
 		p.errorf(p.pos, "expect %v, got %v", expectToken, p.tok)
 	}
-	p.next()
 }
 
 // 解析 wat 文件
@@ -165,6 +178,13 @@ func (p *parser) parseCharLit() rune {
 func (p *parser) parseStringLit() string {
 	s := p.lit // todo: 解码
 	p.acceptToken(token.STRING)
+	return s
+}
+
+// 解析索引, 标识符或整数
+func (p *parser) parseIdentOrIndex() string {
+	s := p.lit
+	p.acceptToken(token.IDENT, token.INT)
 	return s
 }
 
