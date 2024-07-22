@@ -52,7 +52,7 @@ type instBlock struct {
 func NewInstBlock(name string) *instBlock { return &instBlock{name: name} }
 func (i *instBlock) Format(indent string, sb *strings.Builder) {
 	sb.WriteString(indent)
-	sb.WriteString("(block $")
+	sb.WriteString("block $")
 
 	sb.WriteString(i.name)
 	sb.WriteString("\n")
@@ -64,7 +64,7 @@ func (i *instBlock) Format(indent string, sb *strings.Builder) {
 	}
 
 	sb.WriteString(indent)
-	sb.WriteString(") ;;")
+	sb.WriteString("end ;;")
 	sb.WriteString(i.name)
 }
 
@@ -80,7 +80,7 @@ type instLoop struct {
 func NewInstLoop(name string) *instLoop { return &instLoop{name: name} }
 func (i *instLoop) Format(indent string, sb *strings.Builder) {
 	sb.WriteString(indent)
-	sb.WriteString("(loop $")
+	sb.WriteString("loop $")
 
 	sb.WriteString(i.name)
 	sb.WriteString("\n")
@@ -92,7 +92,7 @@ func (i *instLoop) Format(indent string, sb *strings.Builder) {
 	}
 
 	sb.WriteString(indent)
-	sb.WriteString(") ;;")
+	sb.WriteString("end ;;")
 	sb.WriteString(i.name)
 }
 
