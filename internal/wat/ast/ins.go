@@ -22,28 +22,54 @@ func (tok OpToken) String() string {
 
 type Ins_Unreachable struct{ OpToken }
 type Ins_Nop struct{ OpToken }
-type Ins_Block struct{ OpToken }
-type Ins_Loop struct{ OpToken }
-type Ins_If struct{ OpToken }
+type Ins_Block struct {
+	OpToken
+	X    string
+	List []Instruction
+}
+type Ins_Loop struct {
+	OpToken
+	X    string
+	List []Instruction
+}
+type Ins_If struct {
+	OpToken
+	Body []Instruction
+	Else []Instruction
+}
 type Ins_Else struct{ OpToken }
 type Ins_End struct{ OpToken }
 type Ins_Br struct {
 	OpToken
 	X string
 }
-type Ins_BrIf struct{ OpToken }
-type Ins_BrTable struct{ OpToken }
+type Ins_BrIf struct {
+	OpToken
+	X    string
+	Body []Instruction
+	Else []Instruction
+}
+type Ins_BrTable struct {
+	OpToken
+	XList []string
+}
 type Ins_Return struct{ OpToken }
 
 type Ins_Call struct {
 	OpToken
-	Name string
-	Args []Instruction
+	X string
 }
 
-type Ins_CallIndirect struct{ OpToken }
+type Ins_CallIndirect struct {
+	OpToken
+	X string
+}
 type Ins_Drop struct{ OpToken }
-type Ins_Select struct{ OpToken }
+type Ins_Select struct {
+	OpToken
+	X string
+	Y string
+}
 type Ins_TypedSelect struct{ OpToken }
 type Ins_LocalGet struct {
 	OpToken
@@ -65,8 +91,14 @@ type Ins_GlobalSet struct {
 	OpToken
 	X string
 }
-type Ins_TableGet struct{ OpToken }
-type Ins_TableSet struct{ OpToken }
+type Ins_TableGet struct {
+	OpToken
+	X string
+}
+type Ins_TableSet struct {
+	OpToken
+	X string
+}
 type Ins_I32Load struct {
 	OpToken
 	Offset uint32

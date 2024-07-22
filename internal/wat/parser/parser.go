@@ -188,6 +188,20 @@ func (p *parser) parseIdentOrIndex() string {
 	return s
 }
 
+func (p *parser) parseIdentOrIndexList() (ss []string) {
+	for {
+		if p.tok == token.IDENT || p.tok == token.INT {
+			ss = append(ss, p.lit)
+			p.acceptToken(token.IDENT, token.INT)
+		}
+		break
+	}
+	if len(ss) == 0 {
+		p.errorf(p.pos, "expect token.IDENT or token.INT, got %q", p.tok)
+	}
+	return
+}
+
 func (p *parser) parseNumberType() token.Token {
 	switch p.tok {
 	case token.I32, token.I64, token.F32, token.F64:
