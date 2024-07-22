@@ -22,16 +22,13 @@ import "wa-lang.org/wa/internal/wat/token"
 // 解析 module
 // (module $name ...)
 func (p *parser) parseModule() {
-	p.acceptToken(token.LPAREN)
-	defer p.acceptToken(token.RPAREN)
-	defer p.consumeComments()
-
-	// module 关键字
+	// 头部注释
 	p.consumeComments()
+
+	p.acceptToken(token.LPAREN)
 	p.acceptToken(token.MODULE)
 
 	// 模块名字
-	p.consumeComments()
 	if p.tok == token.IDENT {
 		p.module.Name = p.lit
 		p.next()
@@ -46,6 +43,9 @@ func (p *parser) parseModule() {
 			break
 		}
 	}
+
+	p.consumeComments()
+	p.acceptToken(token.RPAREN)
 }
 
 // 解析模块段
@@ -53,8 +53,6 @@ func (p *parser) parseModuleSection() {
 	p.acceptToken(token.LPAREN)
 	defer p.acceptToken(token.RPAREN)
 	defer p.consumeComments()
-
-	p.consumeComments()
 
 	switch p.tok {
 	default:

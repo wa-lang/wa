@@ -806,13 +806,9 @@ scanAgain:
 		case '(':
 			// (; comment ;)
 			if s.ch == ';' {
-				comment := s.scanComment('(')
-				if s.mode&ScanComments == 0 {
-					// skip comment
-					goto scanAgain
-				}
-				tok = token.COMMENT
-				lit = comment
+				// 不支持多行注释(这是Feature, 不是BUG)
+				tok = token.ILLEGAL
+				lit = string(ch)
 			} else {
 				tok = token.LPAREN
 			}

@@ -9,7 +9,7 @@ import (
 	"wa-lang.org/wa/internal/wat/parser"
 )
 
-func _TestParseModule(t *testing.T) {
+func TestParseModule(t *testing.T) {
 	const filename = "testdata/hello.wat"
 	src := tReadFile(t, filename)
 

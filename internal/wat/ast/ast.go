@@ -8,8 +8,6 @@ import "wa-lang.org/wa/internal/wat/token"
 
 // Module 表示一个 WASM 模块。
 type Module struct {
-	File *token.File // 文件位置信息
-
 	Name    string         // 模块的名字(可空)
 	Types   []*TypeSection // 类型定义
 	Imports []*ImportSpec  // 导入对象

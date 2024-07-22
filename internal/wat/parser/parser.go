@@ -15,6 +15,7 @@ type parser struct {
 	filename string
 	src      []byte
 
+	fset    *token.File
 	scanner scanner.Scanner
 	module  *ast.Module
 
@@ -23,6 +24,8 @@ type parser struct {
 	lit string
 
 	err error
+
+	trace bool
 }
 
 type parserError struct {
@@ -38,6 +41,7 @@ func newParser(path string, src []byte) *parser {
 	p := &parser{
 		filename: path,
 		src:      src,
+		fset:     token.NewFile(path, len(src)),
 	}
 
 	return p
@@ -45,11 +49,18 @@ func newParser(path string, src []byte) *parser {
 
 // 解析 wat 模块
 func (p *parser) ParseModule() (m *ast.Module, err error) {
-	p.module = &ast.Module{
-		File: token.NewFile(p.filename, len(p.src)),
+	p.module = &ast.Module{}
+
+	if p.trace {
+		fmt.Println("filename:", p.filename)
+		fmt.Printf("code: %s\n", string(p.src))
 	}
 
 	defer func() {
+		if p.trace {
+			// 调试模型不捕获异常
+			return
+		}
 		if r := recover(); r != nil {
 			if errx, ok := r.(*parserError); ok {
 				m = p.module
@@ -60,7 +71,7 @@ func (p *parser) ParseModule() (m *ast.Module, err error) {
 		}
 	}()
 
-	p.scanner.Init(p.module.File, p.src,
+	p.scanner.Init(p.fset, p.src,
 		func(pos token.Position, msg string) {
 			if p.err != nil {
 				p.err = &parserError{pos, msg}
@@ -79,7 +90,7 @@ func (p *parser) ParseModule() (m *ast.Module, err error) {
 // 报错, 只报第一个错误
 func (p *parser) errorf(pos token.Pos, format string, a ...interface{}) {
 	p.err = &parserError{
-		pos: p.module.File.Position(pos),
+		pos: p.fset.Position(pos),
 		msg: fmt.Sprintf(format, a...),
 	}
 	panic(p.err)
@@ -88,6 +99,9 @@ func (p *parser) errorf(pos token.Pos, format string, a ...interface{}) {
 // 下一个 token
 func (p *parser) next() {
 	p.pos, p.tok, p.lit = p.scanner.Scan()
+	if p.trace {
+		fmt.Println(p.fset.Position(p.pos), p.tok, p.lit)
+	}
 }
 
 // 吃掉一个预期的 token
@@ -116,13 +130,10 @@ func (p *parser) parseFile() {
 	// 读取第一个Token
 	p.next()
 
-	// 解析开头的注释
-	p.consumeComments()
-
-	// 解析 module 节点
+	// 解析 module
 	p.parseModule()
 
-	// 解析结尾的注释
+	// 忽略尾部注释
 	p.consumeComments()
 
 	// 结束解析
