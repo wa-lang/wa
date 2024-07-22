@@ -48,9 +48,8 @@ var tokens = [...]elt{
 	{token.RPAREN, ")", operator},
 	{token.ASSIGN, "=", operator},
 
-	// 单行/多行注释
+	// 单行注释(不支持多行注释)
 	{token.COMMENT, ";; a comment\n", special},
-	{token.COMMENT, "(; a comment\nnext line\n;)", special},
 
 	// 标识符
 	{token.IDENT, "$foobar", literal},
