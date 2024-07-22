@@ -101,105 +101,121 @@ type Ins_TableSet struct {
 }
 type Ins_I32Load struct {
 	OpToken
-	Offset uint32
+	Offset uint
+	Align  uint
 }
 type Ins_I64Load struct {
 	OpToken
-	Offset uint32
+	Offset uint
+	Align  uint
 }
 type Ins_F32Load struct {
 	OpToken
-	Offset uint32
+	Offset uint
+	Align  uint
 }
 type Ins_F64Load struct {
 	OpToken
-	Offset uint32
+	Offset uint
+	Align  uint
 }
 type Ins_I32Load8S struct {
 	OpToken
-	Offset uint32
+	Offset uint
+	Align  uint
 }
 type Ins_I32Load8U struct {
 	OpToken
-	Offset uint32
+	Offset uint
+	Align  uint
 }
 type Ins_I32Load16S struct {
 	OpToken
-	Offset uint32
+	Offset uint
+	Align  uint
 }
 type Ins_I32Load16U struct {
 	OpToken
-	Offset uint32
+	Offset uint
+	Align  uint
 }
 type Ins_I64Load8S struct {
 	OpToken
-	Offset uint32
+	Offset uint
+	Align  uint
 }
 type Ins_I64Load8U struct {
 	OpToken
-	Offset uint32
+	Offset uint
+	Align  uint
 }
 type Ins_I64Load16S struct {
 	OpToken
-	Offset uint32
+	Offset uint
+	Align  uint
 }
 type Ins_I64Load16U struct {
 	OpToken
-	Offset uint32
+	Offset uint
+	Align  uint
 }
 type Ins_I64Load32S struct {
 	OpToken
-	Offset uint32
+	Offset uint
+	Align  uint
 }
 type Ins_I64Load32U struct {
 	OpToken
-	Offset uint32
+	Offset uint
+	Align  uint
 }
 
 type Ins_I32Store struct {
 	OpToken
-	Offset uint32
-	Value  int32
+	Offset uint
+	Align  uint
 }
 
 type Ins_I64Store struct {
 	OpToken
+	Offset uint
+	Align  uint
 }
 type Ins_F32Store struct {
 	OpToken
-	Offset uint32
-	Value  float32
+	Offset uint
+	Align  uint
 }
 type Ins_F64Store struct {
 	OpToken
-	Offset uint32
-	Value  float64
+	Offset uint
+	Align  uint
 }
 
 type Ins_I32Store8 struct {
 	OpToken
-	Offset uint32
-	Value  int32
+	Offset uint
+	Align  uint
 }
 type Ins_I32Store16 struct {
 	OpToken
-	Offset uint32
-	Value  int32
+	Offset uint
+	Align  uint
 }
 type Ins_I64Store8 struct {
 	OpToken
-	Offset uint32
-	Value  int64
+	Offset uint
+	Align  uint
 }
 type Ins_I64Store16 struct {
 	OpToken
-	Offset uint32
-	Value  int64
+	Offset uint
+	Align  uint
 }
 type Ins_I64Store32 struct {
 	OpToken
-	Offset uint32
-	Value  int64
+	Offset uint
+	Align  uint
 }
 
 type Ins_MemorySize struct{ OpToken }

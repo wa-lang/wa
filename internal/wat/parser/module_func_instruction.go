@@ -757,166 +757,909 @@ func (p *parser) parseIns_TableSet() (i ast.Ins_TableSet) {
 }
 
 func (p *parser) parseIns_I32Load() (i ast.Ins_I32Load) {
-	panic("TODO")
+	// i32.load offset=0 align=1
+	i.OpToken = ast.OpToken(p.tok)
+	p.acceptToken(token.INS_I32_LOAD)
+	p.acceptToken(token.OFFSET)
+	p.acceptToken(token.ASSIGN)
+	i.Offset = uint(p.parseIntLit())
+	p.acceptToken(token.ALIGN)
+	p.acceptToken(token.ASSIGN)
+	i.Align = uint(p.parseIntLit())
+	return
 }
 func (p *parser) parseIns_I64Load() (i ast.Ins_I64Load) {
-	panic("TODO")
+	i.OpToken = ast.OpToken(p.tok)
+	p.acceptToken(token.INS_I64_LOAD)
+	p.acceptToken(token.OFFSET)
+	p.acceptToken(token.ASSIGN)
+	i.Offset = uint(p.parseIntLit())
+	p.acceptToken(token.ALIGN)
+	p.acceptToken(token.ASSIGN)
+	i.Align = uint(p.parseIntLit())
+	return
 }
 func (p *parser) parseIns_F32Load() (i ast.Ins_F32Load) {
-	panic("TODO")
+	i.OpToken = ast.OpToken(p.tok)
+	p.acceptToken(token.INS_F32_LOAD)
+	p.acceptToken(token.OFFSET)
+	p.acceptToken(token.ASSIGN)
+	i.Offset = uint(p.parseIntLit())
+	p.acceptToken(token.ALIGN)
+	p.acceptToken(token.ASSIGN)
+	i.Align = uint(p.parseIntLit())
+	return
 }
 func (p *parser) parseIns_F64Load() (i ast.Ins_F64Load) {
-	panic("TODO")
+	i.OpToken = ast.OpToken(p.tok)
+	p.acceptToken(token.INS_F64_LOAD)
+	p.acceptToken(token.OFFSET)
+	p.acceptToken(token.ASSIGN)
+	i.Offset = uint(p.parseIntLit())
+	p.acceptToken(token.ALIGN)
+	p.acceptToken(token.ASSIGN)
+	i.Align = uint(p.parseIntLit())
+	return
 }
 
-func (p *parser) parseIns_I32Load8S() ast.Ins_I32Load8S               { panic("TODO") }
-func (p *parser) parseIns_I32Load8U() ast.Ins_I32Load8U               { panic("TODO") }
-func (p *parser) parseIns_I32Load16S() ast.Ins_I32Load16S             { panic("TODO") }
-func (p *parser) parseIns_I32Load16U() ast.Ins_I32Load16U             { panic("TODO") }
-func (p *parser) parseIns_I64Load8S() ast.Ins_I64Load8S               { panic("TODO") }
-func (p *parser) parseIns_I64Load8U() ast.Ins_I64Load8U               { panic("TODO") }
-func (p *parser) parseIns_I64Load16S() ast.Ins_I64Load16S             { panic("TODO") }
-func (p *parser) parseIns_I64Load16U() ast.Ins_I64Load16U             { panic("TODO") }
-func (p *parser) parseIns_I64Load32S() ast.Ins_I64Load32S             { panic("TODO") }
-func (p *parser) parseIns_I64Load32U() ast.Ins_I64Load32U             { panic("TODO") }
-func (p *parser) parseIns_I32Store() ast.Ins_I32Store                 { panic("TODO") }
-func (p *parser) parseIns_I64Store() ast.Ins_I64Store                 { panic("TODO") }
-func (p *parser) parseIns_F32Store() ast.Ins_F32Store                 { panic("TODO") }
-func (p *parser) parseIns_F64Store() ast.Ins_F64Store                 { panic("TODO") }
-func (p *parser) parseIns_I32Store8() ast.Ins_I32Store8               { panic("TODO") }
-func (p *parser) parseIns_I32Store16() ast.Ins_I32Store16             { panic("TODO") }
-func (p *parser) parseIns_I64Store8() ast.Ins_I64Store8               { panic("TODO") }
-func (p *parser) parseIns_I64Store16() ast.Ins_I64Store16             { panic("TODO") }
-func (p *parser) parseIns_I64Store32() ast.Ins_I64Store32             { panic("TODO") }
-func (p *parser) parseIns_MemorySize() ast.Ins_MemorySize             { panic("TODO") }
-func (p *parser) parseIns_MemoryGrow() ast.Ins_MemoryGrow             { panic("TODO") }
-func (p *parser) parseIns_I32Const() ast.Ins_I32Const                 { panic("TODO") }
-func (p *parser) parseIns_I64Const() ast.Ins_I64Const                 { panic("TODO") }
-func (p *parser) parseIns_F32Const() ast.Ins_F32Const                 { panic("TODO") }
-func (p *parser) parseIns_F64Const() ast.Ins_F64Const                 { panic("TODO") }
-func (p *parser) parseIns_I32Eqz() ast.Ins_I32Eqz                     { panic("TODO") }
-func (p *parser) parseIns_I32Eq() ast.Ins_I32Eq                       { panic("TODO") }
-func (p *parser) parseIns_I32Ne() ast.Ins_I32Ne                       { panic("TODO") }
-func (p *parser) parseIns_I32LtS() ast.Ins_I32LtS                     { panic("TODO") }
-func (p *parser) parseIns_I32LtU() ast.Ins_I32LtU                     { panic("TODO") }
-func (p *parser) parseIns_I32GtS() ast.Ins_I32GtS                     { panic("TODO") }
-func (p *parser) parseIns_I32GtU() ast.Ins_I32GtU                     { panic("TODO") }
-func (p *parser) parseIns_I32LeS() ast.Ins_I32LeS                     { panic("TODO") }
-func (p *parser) parseIns_I32LeU() ast.Ins_I32LeU                     { panic("TODO") }
-func (p *parser) parseIns_I32GeS() ast.Ins_I32GeS                     { panic("TODO") }
-func (p *parser) parseIns_I32GeU() ast.Ins_I32GeU                     { panic("TODO") }
-func (p *parser) parseIns_I64Eqz() ast.Ins_I64Eqz                     { panic("TODO") }
-func (p *parser) parseIns_I64Eq() ast.Ins_I64Eq                       { panic("TODO") }
-func (p *parser) parseIns_I64Ne() ast.Ins_I64Ne                       { panic("TODO") }
-func (p *parser) parseIns_I64LtS() ast.Ins_I64LtS                     { panic("TODO") }
-func (p *parser) parseIns_I64LtU() ast.Ins_I64LtU                     { panic("TODO") }
-func (p *parser) parseIns_I64GtS() ast.Ins_I64GtS                     { panic("TODO") }
-func (p *parser) parseIns_I64GtU() ast.Ins_I64GtU                     { panic("TODO") }
-func (p *parser) parseIns_I64LeS() ast.Ins_I64LeS                     { panic("TODO") }
-func (p *parser) parseIns_I64LeU() ast.Ins_I64LeU                     { panic("TODO") }
-func (p *parser) parseIns_I64GeS() ast.Ins_I64GeS                     { panic("TODO") }
-func (p *parser) parseIns_I64GeU() ast.Ins_I64GeU                     { panic("TODO") }
-func (p *parser) parseIns_F32Eq() ast.Ins_F32Eq                       { panic("TODO") }
-func (p *parser) parseIns_F32Ne() ast.Ins_F32Ne                       { panic("TODO") }
-func (p *parser) parseIns_F32Lt() ast.Ins_F32Lt                       { panic("TODO") }
-func (p *parser) parseIns_F32Gt() ast.Ins_F32Gt                       { panic("TODO") }
-func (p *parser) parseIns_F32Le() ast.Ins_F32Le                       { panic("TODO") }
-func (p *parser) parseIns_F32Ge() ast.Ins_F32Ge                       { panic("TODO") }
-func (p *parser) parseIns_F64Eq() ast.Ins_F64Eq                       { panic("TODO") }
-func (p *parser) parseIns_F64Ne() ast.Ins_F64Ne                       { panic("TODO") }
-func (p *parser) parseIns_F64Lt() ast.Ins_F64Lt                       { panic("TODO") }
-func (p *parser) parseIns_F64Gt() ast.Ins_F64Gt                       { panic("TODO") }
-func (p *parser) parseIns_F64Le() ast.Ins_F64Le                       { panic("TODO") }
-func (p *parser) parseIns_F64Ge() ast.Ins_F64Ge                       { panic("TODO") }
-func (p *parser) parseIns_I32Clz() ast.Ins_I32Clz                     { panic("TODO") }
-func (p *parser) parseIns_I32Ctz() ast.Ins_I32Ctz                     { panic("TODO") }
-func (p *parser) parseIns_I32Popcnt() ast.Ins_I32Popcnt               { panic("TODO") }
-func (p *parser) parseIns_I32Add() ast.Ins_I32Add                     { panic("TODO") }
-func (p *parser) parseIns_I32Sub() ast.Ins_I32Sub                     { panic("TODO") }
-func (p *parser) parseIns_I32Mul() ast.Ins_I32Mul                     { panic("TODO") }
-func (p *parser) parseIns_I32DivS() ast.Ins_I32DivS                   { panic("TODO") }
-func (p *parser) parseIns_I32DivU() ast.Ins_I32DivU                   { panic("TODO") }
-func (p *parser) parseIns_I32RemS() ast.Ins_I32RemS                   { panic("TODO") }
-func (p *parser) parseIns_I32RemU() ast.Ins_I32RemU                   { panic("TODO") }
-func (p *parser) parseIns_I32And() ast.Ins_I32And                     { panic("TODO") }
-func (p *parser) parseIns_I32Or() ast.Ins_I32Or                       { panic("TODO") }
-func (p *parser) parseIns_I32Xor() ast.Ins_I32Xor                     { panic("TODO") }
-func (p *parser) parseIns_I32Shl() ast.Ins_I32Shl                     { panic("TODO") }
-func (p *parser) parseIns_I32ShrS() ast.Ins_I32ShrS                   { panic("TODO") }
-func (p *parser) parseIns_I32ShrU() ast.Ins_I32ShrU                   { panic("TODO") }
-func (p *parser) parseIns_I32Rotl() ast.Ins_I32Rotl                   { panic("TODO") }
-func (p *parser) parseIns_I32Rotr() ast.Ins_I32Rotr                   { panic("TODO") }
-func (p *parser) parseIns_I64Clz() ast.Ins_I64Clz                     { panic("TODO") }
-func (p *parser) parseIns_I64Ctz() ast.Ins_I64Ctz                     { panic("TODO") }
-func (p *parser) parseIns_I64Popcnt() ast.Ins_I64Popcnt               { panic("TODO") }
-func (p *parser) parseIns_I64Add() ast.Ins_I64Add                     { panic("TODO") }
-func (p *parser) parseIns_I64Sub() ast.Ins_I64Sub                     { panic("TODO") }
-func (p *parser) parseIns_I64Mul() ast.Ins_I64Mul                     { panic("TODO") }
-func (p *parser) parseIns_I64DivS() ast.Ins_I64DivS                   { panic("TODO") }
-func (p *parser) parseIns_I64DivU() ast.Ins_I64DivU                   { panic("TODO") }
-func (p *parser) parseIns_I64RemS() ast.Ins_I64RemS                   { panic("TODO") }
-func (p *parser) parseIns_I64RemU() ast.Ins_I64RemU                   { panic("TODO") }
-func (p *parser) parseIns_I64And() ast.Ins_I64And                     { panic("TODO") }
-func (p *parser) parseIns_I64Or() ast.Ins_I64Or                       { panic("TODO") }
-func (p *parser) parseIns_I64Xor() ast.Ins_I64Xor                     { panic("TODO") }
-func (p *parser) parseIns_I64Shl() ast.Ins_I64Shl                     { panic("TODO") }
-func (p *parser) parseIns_I64ShrS() ast.Ins_I64ShrS                   { panic("TODO") }
-func (p *parser) parseIns_I64ShrU() ast.Ins_I64ShrU                   { panic("TODO") }
-func (p *parser) parseIns_I64Rotl() ast.Ins_I64Rotl                   { panic("TODO") }
-func (p *parser) parseIns_I64Rotr() ast.Ins_I64Rotr                   { panic("TODO") }
-func (p *parser) parseIns_F32Abs() ast.Ins_F32Abs                     { panic("TODO") }
-func (p *parser) parseIns_F32Neg() ast.Ins_F32Neg                     { panic("TODO") }
-func (p *parser) parseIns_F32Ceil() ast.Ins_F32Ceil                   { panic("TODO") }
-func (p *parser) parseIns_F32Floor() ast.Ins_F32Floor                 { panic("TODO") }
-func (p *parser) parseIns_F32Trunc() ast.Ins_F32Trunc                 { panic("TODO") }
-func (p *parser) parseIns_F32Nearest() ast.Ins_F32Nearest             { panic("TODO") }
-func (p *parser) parseIns_F32Sqrt() ast.Ins_F32Sqrt                   { panic("TODO") }
-func (p *parser) parseIns_F32Add() ast.Ins_F32Add                     { panic("TODO") }
-func (p *parser) parseIns_F32Sub() ast.Ins_F32Sub                     { panic("TODO") }
-func (p *parser) parseIns_F32Mul() ast.Ins_F32Mul                     { panic("TODO") }
-func (p *parser) parseIns_F32Div() ast.Ins_F32Div                     { panic("TODO") }
-func (p *parser) parseIns_F32Min() ast.Ins_F32Min                     { panic("TODO") }
-func (p *parser) parseIns_F32Max() ast.Ins_F32Max                     { panic("TODO") }
-func (p *parser) parseIns_F32Copysign() ast.Ins_F32Copysign           { panic("TODO") }
-func (p *parser) parseIns_F64Abs() ast.Ins_F64Abs                     { panic("TODO") }
-func (p *parser) parseIns_F64Neg() ast.Ins_F64Neg                     { panic("TODO") }
-func (p *parser) parseIns_F64Ceil() ast.Ins_F64Ceil                   { panic("TODO") }
-func (p *parser) parseIns_F64Floor() ast.Ins_F64Floor                 { panic("TODO") }
-func (p *parser) parseIns_F64Trunc() ast.Ins_F64Trunc                 { panic("TODO") }
-func (p *parser) parseIns_F64Nearest() ast.Ins_F64Nearest             { panic("TODO") }
-func (p *parser) parseIns_F64Sqrt() ast.Ins_F64Sqrt                   { panic("TODO") }
-func (p *parser) parseIns_F64Add() ast.Ins_F64Add                     { panic("TODO") }
-func (p *parser) parseIns_F64Sub() ast.Ins_F64Sub                     { panic("TODO") }
-func (p *parser) parseIns_F64Mul() ast.Ins_F64Mul                     { panic("TODO") }
-func (p *parser) parseIns_F64Div() ast.Ins_F64Div                     { panic("TODO") }
-func (p *parser) parseIns_F64Min() ast.Ins_F64Min                     { panic("TODO") }
-func (p *parser) parseIns_F64Max() ast.Ins_F64Max                     { panic("TODO") }
-func (p *parser) parseIns_F64Copysign() ast.Ins_F64Copysign           { panic("TODO") }
-func (p *parser) parseIns_I32WrapI64() ast.Ins_I32WrapI64             { panic("TODO") }
-func (p *parser) parseIns_I32TruncF32S() ast.Ins_I32TruncF32S         { panic("TODO") }
-func (p *parser) parseIns_I32TruncF32U() ast.Ins_I32TruncF32U         { panic("TODO") }
-func (p *parser) parseIns_I32TruncF64S() ast.Ins_I32TruncF64S         { panic("TODO") }
-func (p *parser) parseIns_I32TruncF64U() ast.Ins_I32TruncF64U         { panic("TODO") }
-func (p *parser) parseIns_I64ExtendI32S() ast.Ins_I64ExtendI32S       { panic("TODO") }
-func (p *parser) parseIns_I64ExtendI32U() ast.Ins_I64ExtendI32U       { panic("TODO") }
-func (p *parser) parseIns_I64TruncF32S() ast.Ins_I64TruncF32S         { panic("TODO") }
-func (p *parser) parseIns_I64TruncF32U() ast.Ins_I64TruncF32U         { panic("TODO") }
-func (p *parser) parseIns_I64TruncF64S() ast.Ins_I64TruncF64S         { panic("TODO") }
-func (p *parser) parseIns_I64TruncF64U() ast.Ins_I64TruncF64U         { panic("TODO") }
-func (p *parser) parseIns_F32ConvertI32S() ast.Ins_F32ConvertI32S     { panic("TODO") }
-func (p *parser) parseIns_F32ConvertI32U() ast.Ins_F32ConvertI32U     { panic("TODO") }
-func (p *parser) parseIns_F32ConvertI64S() ast.Ins_F32ConvertI64S     { panic("TODO") }
-func (p *parser) parseIns_F32ConvertI64U() ast.Ins_F32ConvertI64U     { panic("TODO") }
-func (p *parser) parseIns_F32DemoteF64() ast.Ins_F32DemoteF64         { panic("TODO") }
-func (p *parser) parseIns_F64ConvertI32S() ast.Ins_F64ConvertI32S     { panic("TODO") }
-func (p *parser) parseIns_F64ConvertI32U() ast.Ins_F64ConvertI32U     { panic("TODO") }
-func (p *parser) parseIns_F64ConvertI64S() ast.Ins_F64ConvertI64S     { panic("TODO") }
-func (p *parser) parseIns_F64ConvertI64U() ast.Ins_F64ConvertI64U     { panic("TODO") }
-func (p *parser) parseIns_F64DemoteF32() ast.Ins_F64DemoteF32         { panic("TODO") }
-func (p *parser) parseIns_I32ReintepretF32() ast.Ins_I32ReintepretF32 { panic("TODO") }
-func (p *parser) parseIns_I64ReintepretF64() ast.Ins_I64ReintepretF64 { panic("TODO") }
-func (p *parser) parseIns_I32ReintepretI32() ast.Ins_I32ReintepretI32 { panic("TODO") }
-func (p *parser) parseIns_I64ReintepretI64() ast.Ins_I64ReintepretI64 { panic("TODO") }
+func (p *parser) parseIns_I32Load8S() (i ast.Ins_I32Load8S) {
+	i.OpToken = ast.OpToken(p.tok)
+	p.acceptToken(token.INS_I32_LOAD8_S)
+	p.acceptToken(token.OFFSET)
+	p.acceptToken(token.ASSIGN)
+	i.Offset = uint(p.parseIntLit())
+	p.acceptToken(token.ALIGN)
+	p.acceptToken(token.ASSIGN)
+	i.Align = uint(p.parseIntLit())
+	return
+}
+func (p *parser) parseIns_I32Load8U() (i ast.Ins_I32Load8U) {
+	i.OpToken = ast.OpToken(p.tok)
+	p.acceptToken(token.INS_I32_LOAD8_U)
+	p.acceptToken(token.OFFSET)
+	p.acceptToken(token.ASSIGN)
+	i.Offset = uint(p.parseIntLit())
+	p.acceptToken(token.ALIGN)
+	p.acceptToken(token.ASSIGN)
+	i.Align = uint(p.parseIntLit())
+	return
+}
+func (p *parser) parseIns_I32Load16S() (i ast.Ins_I32Load16S) {
+	i.OpToken = ast.OpToken(p.tok)
+	p.acceptToken(token.INS_I32_LOAD16_S)
+	p.acceptToken(token.OFFSET)
+	p.acceptToken(token.ASSIGN)
+	i.Offset = uint(p.parseIntLit())
+	p.acceptToken(token.ALIGN)
+	p.acceptToken(token.ASSIGN)
+	i.Align = uint(p.parseIntLit())
+	return
+}
+func (p *parser) parseIns_I32Load16U() (i ast.Ins_I32Load16U) {
+	i.OpToken = ast.OpToken(p.tok)
+	p.acceptToken(token.INS_I32_LOAD16_S)
+	p.acceptToken(token.OFFSET)
+	p.acceptToken(token.ASSIGN)
+	i.Offset = uint(p.parseIntLit())
+	p.acceptToken(token.ALIGN)
+	p.acceptToken(token.ASSIGN)
+	i.Align = uint(p.parseIntLit())
+	return
+}
+func (p *parser) parseIns_I64Load8S() (i ast.Ins_I64Load8S) {
+	i.OpToken = ast.OpToken(p.tok)
+	p.acceptToken(token.INS_I64_LOAD8_S)
+	p.acceptToken(token.OFFSET)
+	p.acceptToken(token.ASSIGN)
+	i.Offset = uint(p.parseIntLit())
+	p.acceptToken(token.ALIGN)
+	p.acceptToken(token.ASSIGN)
+	i.Align = uint(p.parseIntLit())
+	return
+}
+func (p *parser) parseIns_I64Load8U() (i ast.Ins_I64Load8U) {
+	i.OpToken = ast.OpToken(p.tok)
+	p.acceptToken(token.INS_I64_LOAD8_U)
+	p.acceptToken(token.OFFSET)
+	p.acceptToken(token.ASSIGN)
+	i.Offset = uint(p.parseIntLit())
+	p.acceptToken(token.ALIGN)
+	p.acceptToken(token.ASSIGN)
+	i.Align = uint(p.parseIntLit())
+	return
+}
+func (p *parser) parseIns_I64Load16S() (i ast.Ins_I64Load16S) {
+	i.OpToken = ast.OpToken(p.tok)
+	p.acceptToken(token.INS_I64_LOAD16_S)
+	p.acceptToken(token.OFFSET)
+	p.acceptToken(token.ASSIGN)
+	i.Offset = uint(p.parseIntLit())
+	p.acceptToken(token.ALIGN)
+	p.acceptToken(token.ASSIGN)
+	i.Align = uint(p.parseIntLit())
+	return
+}
+func (p *parser) parseIns_I64Load16U() (i ast.Ins_I64Load16U) {
+	i.OpToken = ast.OpToken(p.tok)
+	p.acceptToken(token.INS_I64_LOAD16_U)
+	p.acceptToken(token.OFFSET)
+	p.acceptToken(token.ASSIGN)
+	i.Offset = uint(p.parseIntLit())
+	p.acceptToken(token.ALIGN)
+	p.acceptToken(token.ASSIGN)
+	i.Align = uint(p.parseIntLit())
+	return
+}
+func (p *parser) parseIns_I64Load32S() (i ast.Ins_I64Load32S) {
+	i.OpToken = ast.OpToken(p.tok)
+	p.acceptToken(token.INS_I64_LOAD32_S)
+	p.acceptToken(token.OFFSET)
+	p.acceptToken(token.ASSIGN)
+	i.Offset = uint(p.parseIntLit())
+	p.acceptToken(token.ALIGN)
+	p.acceptToken(token.ASSIGN)
+	i.Align = uint(p.parseIntLit())
+	return
+}
+func (p *parser) parseIns_I64Load32U() (i ast.Ins_I64Load32U) {
+	i.OpToken = ast.OpToken(p.tok)
+	p.acceptToken(token.INS_I64_LOAD32_U)
+	p.acceptToken(token.OFFSET)
+	p.acceptToken(token.ASSIGN)
+	i.Offset = uint(p.parseIntLit())
+	p.acceptToken(token.ALIGN)
+	p.acceptToken(token.ASSIGN)
+	i.Align = uint(p.parseIntLit())
+	return
+}
+func (p *parser) parseIns_I32Store() (i ast.Ins_I32Store) {
+	i.OpToken = ast.OpToken(p.tok)
+	p.acceptToken(token.INS_I32_STORE)
+	p.acceptToken(token.OFFSET)
+	p.acceptToken(token.ASSIGN)
+	i.Offset = uint(p.parseIntLit())
+	p.acceptToken(token.ALIGN)
+	p.acceptToken(token.ASSIGN)
+	i.Align = uint(p.parseIntLit())
+	return
+}
+func (p *parser) parseIns_I64Store() (i ast.Ins_I64Store) {
+	i.OpToken = ast.OpToken(p.tok)
+	p.acceptToken(token.INS_I64_STORE)
+	p.acceptToken(token.OFFSET)
+	p.acceptToken(token.ASSIGN)
+	i.Offset = uint(p.parseIntLit())
+	p.acceptToken(token.ALIGN)
+	p.acceptToken(token.ASSIGN)
+	i.Align = uint(p.parseIntLit())
+	return
+}
+func (p *parser) parseIns_F32Store() (i ast.Ins_F32Store) {
+	i.OpToken = ast.OpToken(p.tok)
+	p.acceptToken(token.INS_F32_STORE)
+	p.acceptToken(token.OFFSET)
+	p.acceptToken(token.ASSIGN)
+	i.Offset = uint(p.parseIntLit())
+	p.acceptToken(token.ALIGN)
+	p.acceptToken(token.ASSIGN)
+	i.Align = uint(p.parseIntLit())
+	return
+}
+func (p *parser) parseIns_F64Store() (i ast.Ins_F64Store) {
+	i.OpToken = ast.OpToken(p.tok)
+	p.acceptToken(token.INS_F64_STORE)
+	p.acceptToken(token.OFFSET)
+	p.acceptToken(token.ASSIGN)
+	i.Offset = uint(p.parseIntLit())
+	p.acceptToken(token.ALIGN)
+	p.acceptToken(token.ASSIGN)
+	i.Align = uint(p.parseIntLit())
+	return
+}
+func (p *parser) parseIns_I32Store8() (i ast.Ins_I32Store8) {
+	i.OpToken = ast.OpToken(p.tok)
+	p.acceptToken(token.INS_I32_STORE8)
+	p.acceptToken(token.OFFSET)
+	p.acceptToken(token.ASSIGN)
+	i.Offset = uint(p.parseIntLit())
+	p.acceptToken(token.ALIGN)
+	p.acceptToken(token.ASSIGN)
+	i.Align = uint(p.parseIntLit())
+	return
+}
+func (p *parser) parseIns_I32Store16() (i ast.Ins_I32Store16) {
+	i.OpToken = ast.OpToken(p.tok)
+	p.acceptToken(token.INS_I32_STORE16)
+	p.acceptToken(token.OFFSET)
+	p.acceptToken(token.ASSIGN)
+	i.Offset = uint(p.parseIntLit())
+	p.acceptToken(token.ALIGN)
+	p.acceptToken(token.ASSIGN)
+	i.Align = uint(p.parseIntLit())
+	return
+}
+func (p *parser) parseIns_I64Store8() (i ast.Ins_I64Store8) {
+	i.OpToken = ast.OpToken(p.tok)
+	p.acceptToken(token.INS_I64_STORE8)
+	p.acceptToken(token.OFFSET)
+	p.acceptToken(token.ASSIGN)
+	i.Offset = uint(p.parseIntLit())
+	p.acceptToken(token.ALIGN)
+	p.acceptToken(token.ASSIGN)
+	i.Align = uint(p.parseIntLit())
+	return
+}
+func (p *parser) parseIns_I64Store16() (i ast.Ins_I64Store16) {
+	i.OpToken = ast.OpToken(p.tok)
+	p.acceptToken(token.INS_I64_STORE16)
+	p.acceptToken(token.OFFSET)
+	p.acceptToken(token.ASSIGN)
+	i.Offset = uint(p.parseIntLit())
+	p.acceptToken(token.ALIGN)
+	p.acceptToken(token.ASSIGN)
+	i.Align = uint(p.parseIntLit())
+	return
+}
+func (p *parser) parseIns_I64Store32() (i ast.Ins_I64Store32) {
+	i.OpToken = ast.OpToken(p.tok)
+	p.acceptToken(token.INS_I64_STORE32)
+	p.acceptToken(token.OFFSET)
+	p.acceptToken(token.ASSIGN)
+	i.Offset = uint(p.parseIntLit())
+	p.acceptToken(token.ALIGN)
+	p.acceptToken(token.ASSIGN)
+	i.Align = uint(p.parseIntLit())
+	return
+}
+func (p *parser) parseIns_MemorySize() (i ast.Ins_MemorySize) {
+	i.OpToken = ast.OpToken(p.tok)
+	p.acceptToken(token.INS_MEMORY_SIZE)
+	return
+}
+func (p *parser) parseIns_MemoryGrow() (i ast.Ins_MemoryGrow) {
+	i.OpToken = ast.OpToken(p.tok)
+	p.acceptToken(token.INS_MEMORY_GROW)
+	return
+}
+func (p *parser) parseIns_I32Const() (i ast.Ins_I32Const) {
+	i.OpToken = ast.OpToken(p.tok)
+	p.acceptToken(token.INS_I32_CONST)
+	i.X = int32(p.parseIntLit())
+	return
+}
+func (p *parser) parseIns_I64Const() (i ast.Ins_I64Const) {
+	i.OpToken = ast.OpToken(p.tok)
+	p.acceptToken(token.INS_I64_CONST)
+	i.X = int64(p.parseIntLit())
+	return
+}
+func (p *parser) parseIns_F32Const() (i ast.Ins_F32Const) {
+	i.OpToken = ast.OpToken(p.tok)
+	p.acceptToken(token.INS_F32_CONST)
+	i.X = float32(p.parseFloatLit())
+	return
+}
+func (p *parser) parseIns_F64Const() (i ast.Ins_F64Const) {
+	i.OpToken = ast.OpToken(p.tok)
+	p.acceptToken(token.INS_F64_CONST)
+	i.X = float64(p.parseFloatLit())
+	return
+}
+func (p *parser) parseIns_I32Eqz() (i ast.Ins_I32Eqz) {
+	i.OpToken = ast.OpToken(p.tok)
+	p.acceptToken(token.INS_I32_EQZ)
+	return
+}
+func (p *parser) parseIns_I32Eq() (i ast.Ins_I32Eq) {
+	i.OpToken = ast.OpToken(p.tok)
+	p.acceptToken(token.INS_I32_EQ)
+	return
+}
+func (p *parser) parseIns_I32Ne() (i ast.Ins_I32Ne) {
+	i.OpToken = ast.OpToken(p.tok)
+	p.acceptToken(token.INS_I32_NE)
+	return
+}
+func (p *parser) parseIns_I32LtS() (i ast.Ins_I32LtS) {
+	i.OpToken = ast.OpToken(p.tok)
+	p.acceptToken(token.INS_I32_LT_S)
+	return
+}
+func (p *parser) parseIns_I32LtU() (i ast.Ins_I32LtU) {
+	i.OpToken = ast.OpToken(p.tok)
+	p.acceptToken(token.INS_I32_LT_U)
+	return
+}
+func (p *parser) parseIns_I32GtS() (i ast.Ins_I32GtS) {
+	i.OpToken = ast.OpToken(p.tok)
+	p.acceptToken(token.INS_I32_GT_S)
+	return
+}
+func (p *parser) parseIns_I32GtU() (i ast.Ins_I32GtU) {
+	i.OpToken = ast.OpToken(p.tok)
+	p.acceptToken(token.INS_I32_GT_U)
+	return
+}
+func (p *parser) parseIns_I32LeS() (i ast.Ins_I32LeS) {
+	i.OpToken = ast.OpToken(p.tok)
+	p.acceptToken(token.INS_I32_LE_S)
+	return
+}
+func (p *parser) parseIns_I32LeU() (i ast.Ins_I32LeU) {
+	i.OpToken = ast.OpToken(p.tok)
+	p.acceptToken(token.INS_I32_LE_U)
+	return
+}
+func (p *parser) parseIns_I32GeS() (i ast.Ins_I32GeS) {
+	i.OpToken = ast.OpToken(p.tok)
+	p.acceptToken(token.INS_I32_GE_S)
+	return
+}
+func (p *parser) parseIns_I32GeU() (i ast.Ins_I32GeU) {
+	i.OpToken = ast.OpToken(p.tok)
+	p.acceptToken(token.INS_I32_GE_U)
+	return
+}
+func (p *parser) parseIns_I64Eqz() (i ast.Ins_I64Eqz) {
+	i.OpToken = ast.OpToken(p.tok)
+	p.acceptToken(token.INS_I64_EQZ)
+	return
+}
+func (p *parser) parseIns_I64Eq() (i ast.Ins_I64Eq) {
+	i.OpToken = ast.OpToken(p.tok)
+	p.acceptToken(token.INS_I64_EQ)
+	return
+}
+func (p *parser) parseIns_I64Ne() (i ast.Ins_I64Ne) {
+	i.OpToken = ast.OpToken(p.tok)
+	p.acceptToken(token.INS_I64_NE)
+	return
+}
+func (p *parser) parseIns_I64LtS() (i ast.Ins_I64LtS) {
+	i.OpToken = ast.OpToken(p.tok)
+	p.acceptToken(token.INS_I64_LT_S)
+	return
+}
+func (p *parser) parseIns_I64LtU() (i ast.Ins_I64LtU) {
+	i.OpToken = ast.OpToken(p.tok)
+	p.acceptToken(token.INS_I64_LT_U)
+	return
+}
+func (p *parser) parseIns_I64GtS() (i ast.Ins_I64GtS) {
+	i.OpToken = ast.OpToken(p.tok)
+	p.acceptToken(token.INS_I64_GT_S)
+	return
+}
+func (p *parser) parseIns_I64GtU() (i ast.Ins_I64GtU) {
+	i.OpToken = ast.OpToken(p.tok)
+	p.acceptToken(token.INS_I64_GT_U)
+	return
+}
+func (p *parser) parseIns_I64LeS() (i ast.Ins_I64LeS) {
+	i.OpToken = ast.OpToken(p.tok)
+	p.acceptToken(token.INS_I64_LE_S)
+	return
+}
+func (p *parser) parseIns_I64LeU() (i ast.Ins_I64LeU) {
+	i.OpToken = ast.OpToken(p.tok)
+	p.acceptToken(token.INS_I64_LE_U)
+	return
+}
+func (p *parser) parseIns_I64GeS() (i ast.Ins_I64GeS) {
+	i.OpToken = ast.OpToken(p.tok)
+	p.acceptToken(token.INS_I64_GE_S)
+	return
+}
+func (p *parser) parseIns_I64GeU() (i ast.Ins_I64GeU) {
+	i.OpToken = ast.OpToken(p.tok)
+	p.acceptToken(token.INS_I64_GE_U)
+	return
+}
+func (p *parser) parseIns_F32Eq() (i ast.Ins_F32Eq) {
+	i.OpToken = ast.OpToken(p.tok)
+	p.acceptToken(token.INS_F32_EQ)
+	return
+}
+func (p *parser) parseIns_F32Ne() (i ast.Ins_F32Ne) {
+	i.OpToken = ast.OpToken(p.tok)
+	p.acceptToken(token.INS_F32_NE)
+	return
+}
+func (p *parser) parseIns_F32Lt() (i ast.Ins_F32Lt) {
+	i.OpToken = ast.OpToken(p.tok)
+	p.acceptToken(token.INS_F32_LT)
+	return
+}
+func (p *parser) parseIns_F32Gt() (i ast.Ins_F32Gt) {
+	i.OpToken = ast.OpToken(p.tok)
+	p.acceptToken(token.INS_F32_GT)
+	return
+}
+func (p *parser) parseIns_F32Le() (i ast.Ins_F32Le) {
+	i.OpToken = ast.OpToken(p.tok)
+	p.acceptToken(token.INS_F32_LE)
+	return
+}
+func (p *parser) parseIns_F32Ge() (i ast.Ins_F32Ge) {
+	i.OpToken = ast.OpToken(p.tok)
+	p.acceptToken(token.INS_F32_GE)
+	return
+}
+func (p *parser) parseIns_F64Eq() (i ast.Ins_F64Eq) {
+	i.OpToken = ast.OpToken(p.tok)
+	p.acceptToken(token.INS_F64_EQ)
+	return
+}
+func (p *parser) parseIns_F64Ne() (i ast.Ins_F64Ne) {
+	i.OpToken = ast.OpToken(p.tok)
+	p.acceptToken(token.INS_F64_NE)
+	return
+}
+func (p *parser) parseIns_F64Lt() (i ast.Ins_F64Lt) {
+	i.OpToken = ast.OpToken(p.tok)
+	p.acceptToken(token.INS_F64_LT)
+	return
+}
+func (p *parser) parseIns_F64Gt() (i ast.Ins_F64Gt) {
+	i.OpToken = ast.OpToken(p.tok)
+	p.acceptToken(token.INS_F64_GT)
+	return
+}
+func (p *parser) parseIns_F64Le() (i ast.Ins_F64Le) {
+	i.OpToken = ast.OpToken(p.tok)
+	p.acceptToken(token.INS_F64_LE)
+	return
+}
+func (p *parser) parseIns_F64Ge() (i ast.Ins_F64Ge) {
+	i.OpToken = ast.OpToken(p.tok)
+	p.acceptToken(token.INS_F64_GE)
+	return
+}
+func (p *parser) parseIns_I32Clz() (i ast.Ins_I32Clz) {
+	i.OpToken = ast.OpToken(p.tok)
+	p.acceptToken(token.INS_I32_CLZ)
+	return
+}
+func (p *parser) parseIns_I32Ctz() (i ast.Ins_I32Ctz) {
+	i.OpToken = ast.OpToken(p.tok)
+	p.acceptToken(token.INS_I32_CTZ)
+	return
+}
+func (p *parser) parseIns_I32Popcnt() (i ast.Ins_I32Popcnt) {
+	i.OpToken = ast.OpToken(p.tok)
+	p.acceptToken(token.INS_I32_POPCNT)
+	return
+}
+func (p *parser) parseIns_I32Add() (i ast.Ins_I32Add) {
+	i.OpToken = ast.OpToken(p.tok)
+	p.acceptToken(token.INS_I32_ADD)
+	return
+}
+func (p *parser) parseIns_I32Sub() (i ast.Ins_I32Sub) {
+	i.OpToken = ast.OpToken(p.tok)
+	p.acceptToken(token.INS_I32_SUB)
+	return
+}
+func (p *parser) parseIns_I32Mul() (i ast.Ins_I32Mul) {
+	i.OpToken = ast.OpToken(p.tok)
+	p.acceptToken(token.INS_I32_MUL)
+	return
+}
+func (p *parser) parseIns_I32DivS() (i ast.Ins_I32DivS) {
+	i.OpToken = ast.OpToken(p.tok)
+	p.acceptToken(token.INS_I32_DIV_S)
+	return
+}
+func (p *parser) parseIns_I32DivU() (i ast.Ins_I32DivU) {
+	i.OpToken = ast.OpToken(p.tok)
+	p.acceptToken(token.INS_I32_DIV_U)
+	return
+}
+func (p *parser) parseIns_I32RemS() (i ast.Ins_I32RemS) {
+	i.OpToken = ast.OpToken(p.tok)
+	p.acceptToken(token.INS_I32_REM_S)
+	return
+}
+func (p *parser) parseIns_I32RemU() (i ast.Ins_I32RemU) {
+	i.OpToken = ast.OpToken(p.tok)
+	p.acceptToken(token.INS_I32_REM_U)
+	return
+}
+func (p *parser) parseIns_I32And() (i ast.Ins_I32And) {
+	i.OpToken = ast.OpToken(p.tok)
+	p.acceptToken(token.INS_I32_AND)
+	return
+}
+func (p *parser) parseIns_I32Or() (i ast.Ins_I32Or) {
+	i.OpToken = ast.OpToken(p.tok)
+	p.acceptToken(token.INS_I32_OR)
+	return
+}
+func (p *parser) parseIns_I32Xor() (i ast.Ins_I32Xor) {
+	i.OpToken = ast.OpToken(p.tok)
+	p.acceptToken(token.INS_I32_XOR)
+	return
+}
+func (p *parser) parseIns_I32Shl() (i ast.Ins_I32Shl) {
+	i.OpToken = ast.OpToken(p.tok)
+	p.acceptToken(token.INS_I32_SHL)
+	return
+}
+func (p *parser) parseIns_I32ShrS() (i ast.Ins_I32ShrS) {
+	i.OpToken = ast.OpToken(p.tok)
+	p.acceptToken(token.INS_I32_SHR_S)
+	return
+}
+func (p *parser) parseIns_I32ShrU() (i ast.Ins_I32ShrU) {
+	i.OpToken = ast.OpToken(p.tok)
+	p.acceptToken(token.INS_I32_SHR_U)
+	return
+}
+func (p *parser) parseIns_I32Rotl() (i ast.Ins_I32Rotl) {
+	i.OpToken = ast.OpToken(p.tok)
+	p.acceptToken(token.INS_I32_ROTL)
+	return
+}
+func (p *parser) parseIns_I32Rotr() (i ast.Ins_I32Rotr) {
+	i.OpToken = ast.OpToken(p.tok)
+	p.acceptToken(token.INS_I32_ROTR)
+	return
+}
+func (p *parser) parseIns_I64Clz() (i ast.Ins_I64Clz) {
+	i.OpToken = ast.OpToken(p.tok)
+	p.acceptToken(token.INS_I64_CLZ)
+	return
+}
+func (p *parser) parseIns_I64Ctz() (i ast.Ins_I64Ctz) {
+	i.OpToken = ast.OpToken(p.tok)
+	p.acceptToken(token.INS_I64_CTZ)
+	return
+}
+func (p *parser) parseIns_I64Popcnt() (i ast.Ins_I64Popcnt) {
+	i.OpToken = ast.OpToken(p.tok)
+	p.acceptToken(token.INS_I64_POPCNT)
+	return
+}
+func (p *parser) parseIns_I64Add() (i ast.Ins_I64Add) {
+	i.OpToken = ast.OpToken(p.tok)
+	p.acceptToken(token.INS_I64_ADD)
+	return
+}
+func (p *parser) parseIns_I64Sub() (i ast.Ins_I64Sub) {
+	i.OpToken = ast.OpToken(p.tok)
+	p.acceptToken(token.INS_I64_SUB)
+	return
+}
+func (p *parser) parseIns_I64Mul() (i ast.Ins_I64Mul) {
+	i.OpToken = ast.OpToken(p.tok)
+	p.acceptToken(token.INS_I64_MUL)
+	return
+}
+func (p *parser) parseIns_I64DivS() (i ast.Ins_I64DivS) {
+	i.OpToken = ast.OpToken(p.tok)
+	p.acceptToken(token.INS_I64_DIV_S)
+	return
+}
+func (p *parser) parseIns_I64DivU() (i ast.Ins_I64DivU) {
+	i.OpToken = ast.OpToken(p.tok)
+	p.acceptToken(token.INS_I64_DIV_U)
+	return
+}
+func (p *parser) parseIns_I64RemS() (i ast.Ins_I64RemS) {
+	i.OpToken = ast.OpToken(p.tok)
+	p.acceptToken(token.INS_I64_REM_S)
+	return
+}
+func (p *parser) parseIns_I64RemU() (i ast.Ins_I64RemU) {
+	i.OpToken = ast.OpToken(p.tok)
+	p.acceptToken(token.INS_I64_REM_U)
+	return
+}
+func (p *parser) parseIns_I64And() (i ast.Ins_I64And) {
+	i.OpToken = ast.OpToken(p.tok)
+	p.acceptToken(token.INS_I64_AND)
+	return
+}
+func (p *parser) parseIns_I64Or() (i ast.Ins_I64Or) {
+	i.OpToken = ast.OpToken(p.tok)
+	p.acceptToken(token.INS_I64_OR)
+	return
+}
+func (p *parser) parseIns_I64Xor() (i ast.Ins_I64Xor) {
+	i.OpToken = ast.OpToken(p.tok)
+	p.acceptToken(token.INS_I64_XOR)
+	return
+}
+func (p *parser) parseIns_I64Shl() (i ast.Ins_I64Shl) {
+	i.OpToken = ast.OpToken(p.tok)
+	p.acceptToken(token.INS_I64_SHL)
+	return
+}
+func (p *parser) parseIns_I64ShrS() (i ast.Ins_I64ShrS) {
+	i.OpToken = ast.OpToken(p.tok)
+	p.acceptToken(token.INS_I64_SHR_S)
+	return
+}
+func (p *parser) parseIns_I64ShrU() (i ast.Ins_I64ShrU) {
+	i.OpToken = ast.OpToken(p.tok)
+	p.acceptToken(token.INS_I64_SHR_U)
+	return
+}
+func (p *parser) parseIns_I64Rotl() (i ast.Ins_I64Rotl) {
+	i.OpToken = ast.OpToken(p.tok)
+	p.acceptToken(token.INS_I64_ROTL)
+	return
+}
+func (p *parser) parseIns_I64Rotr() (i ast.Ins_I64Rotr) {
+	i.OpToken = ast.OpToken(p.tok)
+	p.acceptToken(token.INS_I64_ROTR)
+	return
+}
+func (p *parser) parseIns_F32Abs() (i ast.Ins_F32Abs) {
+	i.OpToken = ast.OpToken(p.tok)
+	p.acceptToken(token.INS_F32_ABS)
+	return
+}
+func (p *parser) parseIns_F32Neg() (i ast.Ins_F32Neg) {
+	i.OpToken = ast.OpToken(p.tok)
+	p.acceptToken(token.INS_F32_NEG)
+	return
+}
+func (p *parser) parseIns_F32Ceil() (i ast.Ins_F32Ceil) {
+	i.OpToken = ast.OpToken(p.tok)
+	p.acceptToken(token.INS_F32_CEIL)
+	return
+}
+func (p *parser) parseIns_F32Floor() (i ast.Ins_F32Floor) {
+	i.OpToken = ast.OpToken(p.tok)
+	p.acceptToken(token.INS_F32_FLOOR)
+	return
+}
+func (p *parser) parseIns_F32Trunc() (i ast.Ins_F32Trunc) {
+	i.OpToken = ast.OpToken(p.tok)
+	p.acceptToken(token.INS_F32_TRUNC)
+	return
+}
+func (p *parser) parseIns_F32Nearest() (i ast.Ins_F32Nearest) {
+	i.OpToken = ast.OpToken(p.tok)
+	p.acceptToken(token.INS_F32_NEAREST)
+	return
+}
+func (p *parser) parseIns_F32Sqrt() (i ast.Ins_F32Sqrt) {
+	i.OpToken = ast.OpToken(p.tok)
+	p.acceptToken(token.INS_F32_SQRT)
+	return
+}
+func (p *parser) parseIns_F32Add() (i ast.Ins_F32Add) {
+	i.OpToken = ast.OpToken(p.tok)
+	p.acceptToken(token.INS_F32_ADD)
+	return
+}
+func (p *parser) parseIns_F32Sub() (i ast.Ins_F32Sub) {
+	i.OpToken = ast.OpToken(p.tok)
+	p.acceptToken(token.INS_F32_SUB)
+	return
+}
+func (p *parser) parseIns_F32Mul() (i ast.Ins_F32Mul) {
+	i.OpToken = ast.OpToken(p.tok)
+	p.acceptToken(token.INS_F32_MUL)
+	return
+}
+func (p *parser) parseIns_F32Div() (i ast.Ins_F32Div) {
+	i.OpToken = ast.OpToken(p.tok)
+	p.acceptToken(token.INS_F32_DIV)
+	return
+}
+func (p *parser) parseIns_F32Min() (i ast.Ins_F32Min) {
+	i.OpToken = ast.OpToken(p.tok)
+	p.acceptToken(token.INS_F32_MIN)
+	return
+}
+func (p *parser) parseIns_F32Max() (i ast.Ins_F32Max) {
+	i.OpToken = ast.OpToken(p.tok)
+	p.acceptToken(token.INS_F32_MAX)
+	return
+}
+func (p *parser) parseIns_F32Copysign() (i ast.Ins_F32Copysign) {
+	i.OpToken = ast.OpToken(p.tok)
+	p.acceptToken(token.INS_F32_COPYSIGN)
+	return
+}
+func (p *parser) parseIns_F64Abs() (i ast.Ins_F64Abs) {
+	i.OpToken = ast.OpToken(p.tok)
+	p.acceptToken(token.INS_F64_ABS)
+	return
+}
+func (p *parser) parseIns_F64Neg() (i ast.Ins_F64Neg) {
+	i.OpToken = ast.OpToken(p.tok)
+	p.acceptToken(token.INS_F64_NEG)
+	return
+}
+func (p *parser) parseIns_F64Ceil() (i ast.Ins_F64Ceil) {
+	i.OpToken = ast.OpToken(p.tok)
+	p.acceptToken(token.INS_F64_CEIL)
+	return
+}
+func (p *parser) parseIns_F64Floor() (i ast.Ins_F64Floor) {
+	i.OpToken = ast.OpToken(p.tok)
+	p.acceptToken(token.INS_F64_FLOOR)
+	return
+}
+func (p *parser) parseIns_F64Trunc() (i ast.Ins_F64Trunc) {
+	i.OpToken = ast.OpToken(p.tok)
+	p.acceptToken(token.INS_F64_TRUNC)
+	return
+}
+func (p *parser) parseIns_F64Nearest() (i ast.Ins_F64Nearest) {
+	i.OpToken = ast.OpToken(p.tok)
+	p.acceptToken(token.INS_F64_NEAREST)
+	return
+}
+func (p *parser) parseIns_F64Sqrt() (i ast.Ins_F64Sqrt) {
+	i.OpToken = ast.OpToken(p.tok)
+	p.acceptToken(token.INS_F64_SQRT)
+	return
+}
+func (p *parser) parseIns_F64Add() (i ast.Ins_F64Add) {
+	i.OpToken = ast.OpToken(p.tok)
+	p.acceptToken(token.INS_F64_ADD)
+	return
+}
+func (p *parser) parseIns_F64Sub() (i ast.Ins_F64Sub) {
+	i.OpToken = ast.OpToken(p.tok)
+	p.acceptToken(token.INS_F64_SUB)
+	return
+}
+func (p *parser) parseIns_F64Mul() (i ast.Ins_F64Mul) {
+	i.OpToken = ast.OpToken(p.tok)
+	p.acceptToken(token.INS_F64_MUL)
+	return
+}
+func (p *parser) parseIns_F64Div() (i ast.Ins_F64Div) {
+	i.OpToken = ast.OpToken(p.tok)
+	p.acceptToken(token.INS_F64_DIV)
+	return
+}
+func (p *parser) parseIns_F64Min() (i ast.Ins_F64Min) {
+	i.OpToken = ast.OpToken(p.tok)
+	p.acceptToken(token.INS_F64_MIN)
+	return
+}
+func (p *parser) parseIns_F64Max() (i ast.Ins_F64Max) {
+	i.OpToken = ast.OpToken(p.tok)
+	p.acceptToken(token.INS_F64_MAX)
+	return
+}
+func (p *parser) parseIns_F64Copysign() (i ast.Ins_F64Copysign) {
+	i.OpToken = ast.OpToken(p.tok)
+	p.acceptToken(token.INS_F64_COPYSIGN)
+	return
+}
+func (p *parser) parseIns_I32WrapI64() (i ast.Ins_I32WrapI64) {
+	i.OpToken = ast.OpToken(p.tok)
+	p.acceptToken(token.INS_I32_WRAP_I64)
+	return
+}
+func (p *parser) parseIns_I32TruncF32S() (i ast.Ins_I32TruncF32S) {
+	i.OpToken = ast.OpToken(p.tok)
+	p.acceptToken(token.INS_I32_TRUNC_F32_S)
+	return
+}
+func (p *parser) parseIns_I32TruncF32U() (i ast.Ins_I32TruncF32U) {
+	i.OpToken = ast.OpToken(p.tok)
+	p.acceptToken(token.INS_I32_TRUNC_F32_U)
+	return
+}
+func (p *parser) parseIns_I32TruncF64S() (i ast.Ins_I32TruncF64S) {
+	i.OpToken = ast.OpToken(p.tok)
+	p.acceptToken(token.INS_I32_TRUNC_F64_S)
+	return
+}
+func (p *parser) parseIns_I32TruncF64U() (i ast.Ins_I32TruncF64U) {
+	i.OpToken = ast.OpToken(p.tok)
+	p.acceptToken(token.INS_I32_TRUNC_F64_U)
+	return
+}
+func (p *parser) parseIns_I64ExtendI32S() (i ast.Ins_I64ExtendI32S) {
+	i.OpToken = ast.OpToken(p.tok)
+	p.acceptToken(token.INS_I64_EXTEND_I32_S)
+	return
+}
+func (p *parser) parseIns_I64ExtendI32U() (i ast.Ins_I64ExtendI32U) {
+	i.OpToken = ast.OpToken(p.tok)
+	p.acceptToken(token.INS_I64_EXTEND_I32_U)
+	return
+}
+func (p *parser) parseIns_I64TruncF32S() (i ast.Ins_I64TruncF32S) {
+	i.OpToken = ast.OpToken(p.tok)
+	p.acceptToken(token.INS_I64_TRUNC_F32_S)
+	return
+}
+func (p *parser) parseIns_I64TruncF32U() (i ast.Ins_I64TruncF32U) {
+	i.OpToken = ast.OpToken(p.tok)
+	p.acceptToken(token.INS_I64_TRUNC_F32_U)
+	return
+}
+func (p *parser) parseIns_I64TruncF64S() (i ast.Ins_I64TruncF64S) {
+	i.OpToken = ast.OpToken(p.tok)
+	p.acceptToken(token.INS_I64_TRUNC_F64_S)
+	return
+}
+func (p *parser) parseIns_I64TruncF64U() (i ast.Ins_I64TruncF64U) {
+	i.OpToken = ast.OpToken(p.tok)
+	p.acceptToken(token.INS_I64_TRUNC_F64_U)
+	return
+}
+func (p *parser) parseIns_F32ConvertI32S() (i ast.Ins_F32ConvertI32S) {
+	i.OpToken = ast.OpToken(p.tok)
+	p.acceptToken(token.INS_F32_CONVERT_I32_S)
+	return
+}
+func (p *parser) parseIns_F32ConvertI32U() (i ast.Ins_F32ConvertI32U) {
+	i.OpToken = ast.OpToken(p.tok)
+	p.acceptToken(token.INS_F32_CONVERT_I32_U)
+	return
+}
+func (p *parser) parseIns_F32ConvertI64S() (i ast.Ins_F32ConvertI64S) {
+	i.OpToken = ast.OpToken(p.tok)
+	p.acceptToken(token.INS_F32_CONVERT_I64_S)
+	return
+}
+func (p *parser) parseIns_F32ConvertI64U() (i ast.Ins_F32ConvertI64U) {
+	i.OpToken = ast.OpToken(p.tok)
+	p.acceptToken(token.INS_F32_CONVERT_I64_U)
+	return
+}
+func (p *parser) parseIns_F32DemoteF64() (i ast.Ins_F32DemoteF64) {
+	i.OpToken = ast.OpToken(p.tok)
+	p.acceptToken(token.INS_F32_DEMOTE_F64)
+	return
+}
+func (p *parser) parseIns_F64ConvertI32S() (i ast.Ins_F64ConvertI32S) {
+	i.OpToken = ast.OpToken(p.tok)
+	p.acceptToken(token.INS_F64_CONVERT_I32_S)
+	return
+}
+func (p *parser) parseIns_F64ConvertI32U() (i ast.Ins_F64ConvertI32U) {
+	i.OpToken = ast.OpToken(p.tok)
+	p.acceptToken(token.INS_F64_CONVERT_I32_U)
+	return
+}
+func (p *parser) parseIns_F64ConvertI64S() (i ast.Ins_F64ConvertI64S) {
+	i.OpToken = ast.OpToken(p.tok)
+	p.acceptToken(token.INS_F64_CONVERT_I64_S)
+	return
+}
+func (p *parser) parseIns_F64ConvertI64U() (i ast.Ins_F64ConvertI64U) {
+	i.OpToken = ast.OpToken(p.tok)
+	p.acceptToken(token.INS_F64_CONVERT_I64_U)
+	return
+}
+func (p *parser) parseIns_F64DemoteF32() (i ast.Ins_F64DemoteF32) {
+	i.OpToken = ast.OpToken(p.tok)
+	p.acceptToken(token.INS_F64_DEMOTE_F32)
+	return
+}
+func (p *parser) parseIns_I32ReintepretF32() (i ast.Ins_I32ReintepretF32) {
+	i.OpToken = ast.OpToken(p.tok)
+	p.acceptToken(token.INS_I32_REINTERPRET_F32)
+	return
+}
+func (p *parser) parseIns_I64ReintepretF64() (i ast.Ins_I64ReintepretF64) {
+	i.OpToken = ast.OpToken(p.tok)
+	p.acceptToken(token.INS_I64_REINTERPRET_F64)
+	return
+}
+func (p *parser) parseIns_I32ReintepretI32() (i ast.Ins_I32ReintepretI32) {
+	i.OpToken = ast.OpToken(p.tok)
+	p.acceptToken(token.INS_I32_REINTERPRET_I32)
+	return
+}
+func (p *parser) parseIns_I64ReintepretI64() (i ast.Ins_I64ReintepretI64) {
+	i.OpToken = ast.OpToken(p.tok)
+	p.acceptToken(token.INS_I64_REINTERPRET_I64)
+	return
+}
 
 func (p *parser) parseInstruction_i32_store() *ast.Ins_I32Store {
 	// i32.store offset=0 align=1
