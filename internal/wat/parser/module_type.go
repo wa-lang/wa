@@ -18,33 +18,35 @@ func (p *parser) parseModuleSection_type() *ast.TypeSection {
 		Type: &ast.FuncType{},
 	}
 
-	p.consumeComments()
 	if p.tok == token.IDENT {
 		typ.Name = p.parseIdent()
 	}
 
-	p.consumeComments()
+	p.acceptToken(token.LPAREN)
 	p.parseModuleSection_type_funcType(typ.Type)
+	p.acceptToken(token.RPAREN)
 
 	return typ
 }
 
 func (p *parser) parseModuleSection_type_funcType(typ *ast.FuncType) {
-	p.acceptToken(token.LPAREN)
-	defer p.acceptToken(token.RPAREN)
-	defer p.consumeComments()
+	p.acceptToken(token.FUNC)
 
 	for {
-		p.consumeComments()
 		if p.tok != token.LPAREN {
 			break
 		}
 
+		p.acceptToken(token.LPAREN)
 		switch p.tok {
 		case token.PARAM:
 			p.parseModuleSection_type_funcType_param(typ)
+			p.acceptToken(token.RPAREN)
 		case token.RESULT:
 			p.parseModuleSection_type_funcType_result(typ)
+			p.acceptToken(token.RPAREN)
+		default:
+			p.errorf(p.pos, "bad token %v, %q", p.tok, p.lit)
 		}
 	}
 }
@@ -52,17 +54,11 @@ func (p *parser) parseModuleSection_type_funcType(typ *ast.FuncType) {
 // (param i32)
 // (param $release_func i32)
 func (p *parser) parseModuleSection_type_funcType_param(typ *ast.FuncType) {
-	p.acceptToken(token.LPAREN)
-	defer p.acceptToken(token.RPAREN)
-
-	p.consumeComments()
 	p.acceptToken(token.PARAM)
 
-	p.consumeComments()
 	if p.tok == token.IDENT {
 		var field ast.Field
 		field.Name = p.parseIdent()
-		p.consumeComments()
 		field.Type = p.parseNumberType()
 		typ.Params = append(typ.Params, field)
 	} else {
@@ -75,13 +71,8 @@ func (p *parser) parseModuleSection_type_funcType_param(typ *ast.FuncType) {
 // (result i32)
 // (result i32 i32)
 func (p *parser) parseModuleSection_type_funcType_result(typ *ast.FuncType) {
-	p.acceptToken(token.LPAREN)
-	defer p.acceptToken(token.RPAREN)
-
-	p.consumeComments()
 	p.acceptToken(token.RESULT)
 
-	p.consumeComments()
 	for _, x := range p.parseNumberTypeList() {
 		typ.Results = append(typ.Results, x)
 	}

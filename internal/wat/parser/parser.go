@@ -158,7 +158,7 @@ func (p *parser) parseIntLit() int {
 // 解析浮点数常量面值
 func (p *parser) parseFloatLit() float64 {
 	pos, lit := p.pos, p.lit
-	p.acceptToken(token.FLOAT)
+	p.acceptToken(token.FLOAT, token.INT)
 
 	n, err := strconv.ParseFloat(lit, 64)
 	if err != nil {
@@ -193,6 +193,7 @@ func (p *parser) parseIdentOrIndexList() (ss []string) {
 		if p.tok == token.IDENT || p.tok == token.INT {
 			ss = append(ss, p.lit)
 			p.acceptToken(token.IDENT, token.INT)
+			continue
 		}
 		break
 	}
@@ -210,8 +211,8 @@ func (p *parser) parseNumberType() token.Token {
 		return tok
 	default:
 		p.errorf(p.pos, "export %v, got %v", "i32|i64|f32|f64", p.tok)
-		panic("unreachable")
 	}
+	panic("unreachable")
 }
 
 func (p *parser) parseNumberTypeList() []token.Token {
@@ -219,7 +220,6 @@ func (p *parser) parseNumberTypeList() []token.Token {
 
 Loop:
 	for {
-		p.consumeComments()
 		switch p.tok {
 		case token.I32, token.I64, token.F32, token.F64:
 			tokens = append(tokens, p.tok)
@@ -228,10 +228,8 @@ Loop:
 			break Loop
 		}
 	}
-
 	if len(tokens) == 0 {
 		p.errorf(p.pos, "export %v, got %v", "i32|i64|f32|f64", p.tok)
-		panic("unreachable")
 	}
 
 	return tokens

@@ -28,7 +28,7 @@ func ExampleParseModule() {
 	// $hello
 }
 
-func _ExampleParseModule_wa() {
+func ExampleParseModule_wa() {
 	const filename = "a.out.wa"
 	const src = `func main { println("hello wa") }`
 
