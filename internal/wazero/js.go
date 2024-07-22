@@ -7,10 +7,10 @@ import (
 	"fmt"
 	"os"
 
-	"wa-lang.org/wazero"
-	"wa-lang.org/wazero/api"
-	"wa-lang.org/wazero/imports/walang"
-	"wa-lang.org/wazero/sys"
+	"wa-lang.org/wa/internal/3rdparty/wazero"
+	"wa-lang.org/wa/internal/3rdparty/wazero/api"
+	"wa-lang.org/wa/internal/3rdparty/wazero/imports/walang"
+	"wa-lang.org/wa/internal/3rdparty/wazero/sys"
 )
 
 const jsModuleName = "syscall_js"

@@ -3,7 +3,7 @@
 package wazero
 
 import (
-	proxywasm "wa-lang.org/wazero/imports/proxywasm"
+	proxywasm "wa-lang.org/wa/internal/3rdparty/wazero/imports/proxywasm"
 )
 
 func _() {

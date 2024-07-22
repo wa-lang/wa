@@ -34,7 +34,7 @@
 
 	;; 重置栈指针
 	(global.set $__stack_ptr (local.get $sp))
-	drop
+	(drop)
 
 	;; {{$$runtime.waPuts/body/end}}
 )

@@ -6,8 +6,8 @@ import (
 	"context"
 	"fmt"
 
-	"wa-lang.org/wazero"
-	"wa-lang.org/wazero/api"
+	"wa-lang.org/wa/internal/3rdparty/wazero"
+	"wa-lang.org/wa/internal/3rdparty/wazero/api"
 )
 
 const unknownModuleName = "unknown"
