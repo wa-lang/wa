@@ -75,9 +75,9 @@ type Table struct {
 
 // 表格元素数据
 type ElemSection struct {
-	Name   string // 名字
-	Offset uint32 // 偏移量(从 0 开始)
-	Value  string // 初始化值, 引用的是其他 func 的名字
+	Name   string   // 名字
+	Offset uint32   // 偏移量(从 0 开始)
+	Values []string // 初始化值, 引用的是其他 func 的名字
 }
 
 // 全局变量

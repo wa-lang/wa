@@ -21,25 +21,16 @@ func (p *parser) parseModuleSection_elem() *ast.ElemSection {
 
 	elemSection := &ast.ElemSection{}
 
-	p.consumeComments()
 	if p.tok == token.IDENT {
 		elemSection.Name = p.parseIdent()
 	}
 
-	p.consumeComments()
 	p.acceptToken(token.LPAREN)
-
-	p.consumeComments()
 	p.acceptToken(token.INS_I32_CONST)
-
-	p.consumeComments()
 	elemSection.Offset = uint32(p.parseIntLit())
-
-	p.consumeComments()
 	p.acceptToken(token.RPAREN)
 
-	p.consumeComments()
-	elemSection.Value = p.parseIdent()
+	elemSection.Values = p.parseIdentOrIndexList()
 
 	return elemSection
 }

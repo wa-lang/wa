@@ -3,9 +3,11 @@
 package watutil
 
 import (
+	"encoding/hex"
+	"fmt"
+
 	"wa-lang.org/wa/internal/3rdparty/wazero/api"
 	"wa-lang.org/wa/internal/3rdparty/wazero/internalx/leb128"
-	"wa-lang.org/wa/internal/3rdparty/wazero/internalx/u64"
 	"wa-lang.org/wa/internal/3rdparty/wazero/internalx/wasm"
 	"wa-lang.org/wa/internal/3rdparty/wazero/internalx/wasm/binary"
 	"wa-lang.org/wa/internal/3rdparty/wazero/internalx/wasm/text"
@@ -229,70 +231,170 @@ func (p *wat2wasmWorker) buildFunctionSection() error {
 }
 
 func (p *wat2wasmWorker) buildDataSection() error {
-	return nil // todo
+	p.mWasm.DataSection = []*wasm.DataSegment{}
+
+	for _, x := range p.mWat.Data {
+		dst := make([]byte, hex.DecodedLen(len(x.Value)))
+		n, err := hex.Decode(dst, x.Value)
+		if err != nil {
+			panic(err)
+		}
+
+		p.mWasm.DataSection = append(p.mWasm.DataSection, &wasm.DataSegment{
+			OffsetExpression: &wasm.ConstantExpression{
+				Opcode: wasm.OpcodeI32Const,
+				Data:   leb128.EncodeInt32(int32(x.Offset)),
+			},
+			Init: dst[:n],
+		})
+	}
+
+	return nil
 }
+
 func (p *wat2wasmWorker) buildElementSection() error {
-	return nil // todo
+	p.mWasm.ElementSection = []*wasm.ElementSegment{}
+
+	for _, x := range p.mWat.Elem {
+		initList := []*wasm.Index{}
+		for _, ident := range x.Values {
+			idx := p.findFuncIdx(ident)
+			initList = append(initList, &idx)
+		}
+
+		p.mWasm.ElementSection = append(p.mWasm.ElementSection, &wasm.ElementSegment{
+			Type:       wasm.RefTypeFuncref,
+			TableIndex: 0,
+			OffsetExpr: &wasm.ConstantExpression{
+				Opcode: wasm.OpcodeI32Const,
+				Data:   leb128.EncodeInt32(int32(x.Offset)),
+			},
+			Init: initList,
+		})
+	}
+
+	return nil
 }
 func (p *wat2wasmWorker) buildCodeSection() error {
-	return nil // todo
+	p.mWasm.CodeSection = []*wasm.Code{}
+
+	for _, fn := range p.mWat.Funcs {
+		fnCode := &wasm.Code{}
+		for _, local := range fn.Body.Locals {
+			fnCode.LocalTypes = append(fnCode.LocalTypes, p.buildValueType(local.Type))
+		}
+		for _, ins := range fn.Body.Insts {
+			fnCode.Body = p.buildInstruction(fnCode.Body, ins)
+		}
+	}
+
+	return nil
 }
 func (p *wat2wasmWorker) buildNameSection() error {
-	return nil // todo
+	p.mWasm.NameSection.FunctionNames = nil
+	p.mWasm.NameSection.LocalNames = nil
+
+	var funcNames wasm.NameMap
+	var localNames wasm.IndirectNameMap
+	var importFuncCount int
+
+	for _, x := range p.mWat.Imports {
+		if x.ObjKind == token.FUNC {
+			funcNames = append(funcNames, &wasm.NameAssoc{
+				Index: wasm.Index(importFuncCount),
+				Name:  x.FuncName,
+			})
+			importFuncCount++
+		}
+	}
+	for i, fn := range p.mWat.Funcs {
+		var localNameMap wasm.NameMap
+		for j, local := range fn.Body.Locals {
+			localNameMap = append(localNameMap, &wasm.NameAssoc{
+				Index: wasm.Index(j),
+				Name:  local.Name,
+			})
+		}
+
+		funcNames = append(funcNames, &wasm.NameAssoc{
+			Index: wasm.Index(importFuncCount + i),
+			Name:  fn.Name,
+		})
+
+		localNames = append(localNames, &wasm.NameMapAssoc{
+			Index:   wasm.Index(importFuncCount + i),
+			NameMap: localNameMap,
+		})
+	}
+
+	return nil
 }
+
 func (p *wat2wasmWorker) buildExportSection() error {
-	return nil // todo
+	p.mWasm.ExportSection = []*wasm.Export{}
+
+	if len(p.mWat.Exports) == 0 {
+		p.mWasm.ExportSection = nil
+		return nil
+	}
+
+	for _, x := range p.mWat.Exports {
+		spec := &wasm.Export{Name: x.Name}
+		switch x.Kind {
+		case token.FUNC:
+			spec.Type = wasm.ExternTypeFunc
+			spec.Index = p.findFuncIdx(x.FuncIdx)
+		case token.MEMORY:
+			spec.Type = wasm.ExternTypeMemory
+			spec.Index = p.findMemoryIdx(x.FuncIdx)
+		case token.TABLE:
+			spec.Type = wasm.ExternTypeTable
+			spec.Index = p.findTableIdx(x.FuncIdx)
+		case token.GLOBAL:
+			spec.Type = wasm.ExternTypeGlobal
+			spec.Index = p.findGlobalIdx(x.FuncIdx)
+		default:
+			panic("unreachable")
+		}
+
+		p.mWasm.ExportSection = append(p.mWasm.ExportSection, spec)
+	}
+
+	return nil
 }
+
 func (p *wat2wasmWorker) buildStartSection() error {
-	return nil // todo
-}
+	p.mWasm.StartSection = nil
 
-// 构建函数类型
-func (p *wat2wasmWorker) buildFuncType(in *ast.FuncType) *wasm.FunctionType {
-	t := &wasm.FunctionType{}
-	for _, x := range in.Params {
-		t.Params = append(t.Params, p.buildValueType(x.Type))
+	if p.mWat.Start == "" {
+		return nil
 	}
-	for _, x := range in.Results {
-		t.Results = append(t.Results, p.buildValueType(x))
-	}
-	return t
-}
 
-// 构建值类型
-func (p *wat2wasmWorker) buildValueType(x token.Token) wasm.ValueType {
-	switch x {
-	case token.I32:
-		return wasm.ValueTypeI32
-	case token.I64:
-		return wasm.ValueTypeI64
-	case token.F32:
-		return wasm.ValueTypeF32
-	case token.F64:
-		return wasm.ValueTypeF64
-	default:
-		panic("unreachable")
-	}
-}
+	var startIdx wasm.Index
+	var startFound = false
 
-// 全局变量初始化指令
-func (p *wat2wasmWorker) buildConstantExpression(g *ast.Global) *wasm.ConstantExpression {
-	x := &wasm.ConstantExpression{}
-	switch g.Type {
-	case token.I32:
-		x.Opcode = wasm.OpcodeI32Const
-		x.Data = leb128.EncodeInt32(g.I32Value)
-	case token.I64:
-		x.Opcode = wasm.OpcodeI32Const
-		x.Data = leb128.EncodeInt64(g.I64Value)
-	case token.F32:
-		x.Opcode = wasm.OpcodeI32Const
-		x.Data = u64.LeBytes(api.EncodeF32(g.F32Value))
-	case token.F64:
-		x.Opcode = wasm.OpcodeI32Const
-		x.Data = u64.LeBytes(api.EncodeF64(g.F64Value))
-	default:
-		panic("unreachable")
+	for _, spec := range p.mWat.Imports {
+		if spec.ObjKind == token.FUNC {
+			if spec.FuncName == p.mWat.Start {
+				startFound = true
+				break
+			}
+			startIdx++
+		}
 	}
-	return x
+	if !startFound {
+		for _, fn := range p.mWat.Funcs {
+			if fn.Name == p.mWat.Start {
+				startFound = true
+				break
+			}
+		}
+	}
+
+	if !startFound {
+		return fmt.Errorf("start func not found")
+	}
+
+	p.mWasm.StartSection = &startIdx
+	return nil
 }
