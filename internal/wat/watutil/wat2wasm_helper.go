@@ -3,20 +3,16 @@
 package watutil
 
 import (
+	"encoding/binary"
+	"math"
 	"strconv"
 	"strings"
 
-	"wa-lang.org/wa/internal/3rdparty/wazero/api"
 	"wa-lang.org/wa/internal/3rdparty/wazero/internalx/leb128"
-	"wa-lang.org/wa/internal/3rdparty/wazero/internalx/u64"
 	"wa-lang.org/wa/internal/3rdparty/wazero/internalx/wasm"
 	"wa-lang.org/wa/internal/wat/ast"
 	"wa-lang.org/wa/internal/wat/token"
 )
-
-func (p *wat2wasmWorker) buildInstruction(dst []byte, i ast.Instruction) []byte {
-	panic("TODO") // todo
-}
 
 func (p *wat2wasmWorker) findFuncIdx(ident string) wasm.Index {
 	if idx, err := strconv.Atoi(ident); err == nil {
@@ -145,18 +141,34 @@ func (p *wat2wasmWorker) buildConstantExpression(g *ast.Global) *wasm.ConstantEx
 	switch g.Type {
 	case token.I32:
 		x.Opcode = wasm.OpcodeI32Const
-		x.Data = leb128.EncodeInt32(g.I32Value)
+		x.Data = p.encodeInt32(g.I32Value)
 	case token.I64:
 		x.Opcode = wasm.OpcodeI32Const
-		x.Data = leb128.EncodeInt64(g.I64Value)
+		x.Data = p.encodeInt64(g.I64Value)
 	case token.F32:
 		x.Opcode = wasm.OpcodeI32Const
-		x.Data = u64.LeBytes(api.EncodeF32(g.F32Value))
+		x.Data = p.encodeFloat32(g.F32Value)
 	case token.F64:
 		x.Opcode = wasm.OpcodeI32Const
-		x.Data = u64.LeBytes(api.EncodeF64(g.F64Value))
+		x.Data = p.encodeFloat64(g.F64Value)
 	default:
 		panic("unreachable")
 	}
 	return x
+}
+
+func (p *wat2wasmWorker) encodeInt32(i int32) []byte {
+	return leb128.EncodeInt32(i)
+}
+
+func (p *wat2wasmWorker) encodeInt64(i int64) []byte {
+	return leb128.EncodeInt64(i)
+}
+
+func (p *wat2wasmWorker) encodeFloat32(i float32) []byte {
+	return binary.LittleEndian.AppendUint32(nil, math.Float32bits(i))
+}
+
+func (p *wat2wasmWorker) encodeFloat64(i float64) []byte {
+	return binary.LittleEndian.AppendUint64(nil, math.Float64bits(i))
 }

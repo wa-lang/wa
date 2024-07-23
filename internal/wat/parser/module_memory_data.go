@@ -20,24 +20,15 @@ func (p *parser) parseModuleSection_data() *ast.DataSection {
 
 	dataSection := &ast.DataSection{}
 
-	p.consumeComments()
 	if p.tok == token.IDENT {
 		dataSection.Name = p.parseIdent()
 	}
 
-	p.consumeComments()
 	p.acceptToken(token.LPAREN)
-
-	p.consumeComments()
 	p.acceptToken(token.INS_I32_CONST)
-
-	p.consumeComments()
 	dataSection.Offset = uint32(p.parseIntLit())
-
-	p.consumeComments()
 	p.acceptToken(token.RPAREN)
 
-	p.consumeComments()
 	dataSection.Value = []byte(p.parseStringLit())
 
 	return dataSection

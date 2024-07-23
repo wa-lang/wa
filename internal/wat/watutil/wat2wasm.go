@@ -3,14 +3,8 @@
 package watutil
 
 import (
-	"encoding/hex"
-	"fmt"
-
-	"wa-lang.org/wa/internal/3rdparty/wazero/api"
-	"wa-lang.org/wa/internal/3rdparty/wazero/internalx/leb128"
 	"wa-lang.org/wa/internal/3rdparty/wazero/internalx/wasm"
 	"wa-lang.org/wa/internal/3rdparty/wazero/internalx/wasm/binary"
-	"wa-lang.org/wa/internal/3rdparty/wazero/internalx/wasm/text"
 	"wa-lang.org/wa/internal/wat/ast"
 	"wa-lang.org/wa/internal/wat/parser"
 	"wa-lang.org/wa/internal/wat/token"
@@ -41,14 +35,6 @@ type inlinedTypeIndex struct {
 
 func newWat2wasmWorker(mWat *ast.Module) *wat2wasmWorker {
 	return &wat2wasmWorker{mWat: mWat}
-}
-
-func (p *wat2wasmWorker) wat2wasm_bak(source []byte) ([]byte, error) {
-	if m, err := text.DecodeModule(source, api.CoreFeaturesV2); err != nil {
-		return nil, err
-	} else {
-		return binary.EncodeModule(m), nil
-	}
 }
 
 func (p *wat2wasmWorker) EncodeWasm() ([]byte, error) {
@@ -234,18 +220,12 @@ func (p *wat2wasmWorker) buildDataSection() error {
 	p.mWasm.DataSection = []*wasm.DataSegment{}
 
 	for _, x := range p.mWat.Data {
-		dst := make([]byte, hex.DecodedLen(len(x.Value)))
-		n, err := hex.Decode(dst, x.Value)
-		if err != nil {
-			panic(err)
-		}
-
 		p.mWasm.DataSection = append(p.mWasm.DataSection, &wasm.DataSegment{
 			OffsetExpression: &wasm.ConstantExpression{
 				Opcode: wasm.OpcodeI32Const,
-				Data:   leb128.EncodeInt32(int32(x.Offset)),
+				Data:   p.encodeInt32(int32(x.Offset)),
 			},
-			Init: dst[:n],
+			Init: x.Value,
 		})
 	}
 
@@ -267,7 +247,7 @@ func (p *wat2wasmWorker) buildElementSection() error {
 			TableIndex: 0,
 			OffsetExpr: &wasm.ConstantExpression{
 				Opcode: wasm.OpcodeI32Const,
-				Data:   leb128.EncodeInt32(int32(x.Offset)),
+				Data:   p.encodeInt32(int32(x.Offset)),
 			},
 			Init: initList,
 		})
@@ -389,10 +369,6 @@ func (p *wat2wasmWorker) buildStartSection() error {
 				break
 			}
 		}
-	}
-
-	if !startFound {
-		return fmt.Errorf("start func not found")
 	}
 
 	p.mWasm.StartSection = &startIdx
