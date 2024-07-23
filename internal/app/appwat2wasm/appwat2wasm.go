@@ -5,9 +5,10 @@ package appwat2wasm
 import (
 	"fmt"
 	"os"
+	"strings"
 
 	"wa-lang.org/wa/internal/3rdparty/cli"
-	"wa-lang.org/wa/internal/wazero"
+	"wa-lang.org/wa/internal/wat/watutil"
 )
 
 var CmdWat2wasm = &cli.Command{
@@ -31,7 +32,13 @@ var CmdWat2wasm = &cli.Command{
 		infile := c.Args().First()
 		outfile := c.String("output")
 		if outfile == "" {
-			outfile = infile + ".wasm"
+			outfile = infile
+			if n1, n2 := len(outfile), len(".wat"); n1 > n2 {
+				if s := outfile[n1-n2:]; strings.EqualFold(s, ".wat") {
+					outfile = outfile[:n1-n2]
+				}
+			}
+			outfile += ".wasm"
 		}
 
 		source, err := os.ReadFile(infile)
@@ -39,7 +46,7 @@ var CmdWat2wasm = &cli.Command{
 			fmt.Println(err)
 			os.Exit(1)
 		}
-		wasmBytes, err := wazero.Wat2Wasm(source)
+		wasmBytes, err := watutil.Wat2Wasm(infile, source)
 		if err != nil {
 			fmt.Println(err)
 			os.Exit(1)

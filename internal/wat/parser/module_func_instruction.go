@@ -1035,25 +1035,25 @@ func (p *parser) parseIns_MemoryGrow() (i ast.Ins_MemoryGrow) {
 func (p *parser) parseIns_I32Const() (i ast.Ins_I32Const) {
 	i.OpToken = ast.OpToken(p.tok)
 	p.acceptToken(token.INS_I32_CONST)
-	i.X = int32(p.parseIntLit())
+	i.X = p.parseInt32Lit()
 	return
 }
 func (p *parser) parseIns_I64Const() (i ast.Ins_I64Const) {
 	i.OpToken = ast.OpToken(p.tok)
 	p.acceptToken(token.INS_I64_CONST)
-	i.X = int64(p.parseIntLit())
+	i.X = p.parseInt64Lit()
 	return
 }
 func (p *parser) parseIns_F32Const() (i ast.Ins_F32Const) {
 	i.OpToken = ast.OpToken(p.tok)
 	p.acceptToken(token.INS_F32_CONST)
-	i.X = float32(p.parseFloatLit())
+	i.X = p.parseFloat32Lit()
 	return
 }
 func (p *parser) parseIns_F64Const() (i ast.Ins_F64Const) {
 	i.OpToken = ast.OpToken(p.tok)
 	p.acceptToken(token.INS_F64_CONST)
-	i.X = float64(p.parseFloatLit())
+	i.X = p.parseFloat64Lit()
 	return
 }
 func (p *parser) parseIns_I32Eqz() (i ast.Ins_I32Eqz) {

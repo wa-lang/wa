@@ -154,12 +154,32 @@ func (p *parser) parseIdent() string {
 	return s
 }
 
-// 解析整数常量面值
+// 解析整数常量面值解析整数常量面值
 func (p *parser) parseIntLit() int {
 	pos, lit := p.pos, p.lit
 	p.acceptToken(token.INT)
 
-	n, err := strconv.Atoi(lit)
+	n, err := strconv.ParseInt(lit, 10, 64)
+	if err != nil {
+		p.errorf(pos, "expect int, got %q", lit)
+	}
+	return int(n)
+}
+func (p *parser) parseInt32Lit() int32 {
+	pos, lit := p.pos, p.lit
+	p.acceptToken(token.INT)
+
+	n, err := strconv.ParseInt(lit, 10, 32)
+	if err != nil {
+		p.errorf(pos, "expect int, got %q", lit)
+	}
+	return int32(n)
+}
+func (p *parser) parseInt64Lit() int64 {
+	pos, lit := p.pos, p.lit
+	p.acceptToken(token.INT)
+
+	n, err := strconv.ParseInt(lit, 10, 64)
 	if err != nil {
 		p.errorf(pos, "expect int, got %q", lit)
 	}
@@ -167,7 +187,17 @@ func (p *parser) parseIntLit() int {
 }
 
 // 解析浮点数常量面值
-func (p *parser) parseFloatLit() float64 {
+func (p *parser) parseFloat32Lit() float32 {
+	pos, lit := p.pos, p.lit
+	p.acceptToken(token.FLOAT, token.INT)
+
+	n, err := strconv.ParseFloat(lit, 32)
+	if err != nil {
+		p.errorf(pos, "expect int, got %q", lit)
+	}
+	return float32(n)
+}
+func (p *parser) parseFloat64Lit() float64 {
 	pos, lit := p.pos, p.lit
 	p.acceptToken(token.FLOAT, token.INT)
 

@@ -18,46 +18,58 @@ func (p *parser) parseModuleSection_global() *ast.Global {
 
 	g := &ast.Global{}
 
-	p.consumeComments()
 	if p.tok == token.IDENT {
 		g.Name = p.parseIdent()
 	}
 
-	p.consumeComments()
 	if p.tok != token.LPAREN {
 		g.Type = p.parseNumberType()
 
-		p.consumeComments()
 		p.acceptToken(token.LPAREN)
+		switch g.Type {
+		case token.I32:
+			p.acceptToken(token.INS_I32_CONST)
+			g.I32Value = p.parseInt32Lit()
+		case token.I64:
+			p.acceptToken(token.INS_I64_CONST)
+			g.I64Value = p.parseInt64Lit()
+		case token.F32:
+			p.acceptToken(token.INS_F32_CONST)
+			g.F32Value = p.parseFloat32Lit()
+		case token.F64:
+			p.acceptToken(token.INS_I32_CONST)
+			g.F64Value = p.parseFloat64Lit()
+		default:
+			p.errorf(p.pos, "bad token %v %v", p.tok, p.lit)
+		}
 
-		p.consumeComments()
-		p.acceptToken(token.INS_I32_CONST)
-		g.Value = p.parseIntLit()
-
-		p.consumeComments()
 		p.acceptToken(token.RPAREN)
 
 	} else {
 		p.acceptToken(token.LPAREN)
-		p.consumeComments()
-
 		p.acceptToken(token.MUT)
 		g.Mutable = true
-
-		p.consumeComments()
 		g.Type = p.parseNumberType()
-
-		p.consumeComments()
 		p.acceptToken(token.RPAREN)
 
-		p.consumeComments()
 		p.acceptToken(token.LPAREN)
+		switch g.Type {
+		case token.I32:
+			p.acceptToken(token.INS_I32_CONST)
+			g.I32Value = p.parseInt32Lit()
+		case token.I64:
+			p.acceptToken(token.INS_I64_CONST)
+			g.I64Value = p.parseInt64Lit()
+		case token.F32:
+			p.acceptToken(token.INS_F32_CONST)
+			g.F32Value = p.parseFloat32Lit()
+		case token.F64:
+			p.acceptToken(token.INS_I32_CONST)
+			g.F64Value = p.parseFloat64Lit()
+		default:
+			p.errorf(p.pos, "bad token %v %v", p.tok, p.lit)
+		}
 
-		p.consumeComments()
-		p.acceptToken(token.INS_I32_CONST)
-		g.Value = p.parseIntLit()
-
-		p.consumeComments()
 		p.acceptToken(token.RPAREN)
 	}
 
