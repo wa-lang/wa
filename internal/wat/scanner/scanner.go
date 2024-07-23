@@ -538,20 +538,19 @@ func (s *Scanner) scanEscape(quote rune) bool {
 	var n int
 	var base, max uint32
 	switch s.ch {
-	case 'a', 'b', 'f', 'n', 'r', 't', 'v', '\\', quote:
+	// 扩展语法
+	case 'n', 'r', 't', '\\', quote:
 		s.next()
 		return true
-	case '0', '1', '2', '3', '4', '5', '6', '7':
-		n, base, max = 3, 8, 255
-	case 'x':
-		s.next()
+
+	// hex: \01\ab\CD
+	case '0', '1', '2', '3', '4', '5', '6', '7', '8', '9':
 		n, base, max = 2, 16, 255
-	case 'u':
-		s.next()
-		n, base, max = 4, 16, unicode.MaxRune
-	case 'U':
-		s.next()
-		n, base, max = 8, 16, unicode.MaxRune
+	case 'a', 'b', 'c', 'd', 'e', 'f':
+		n, base, max = 2, 16, 255
+	case 'A', 'B', 'C', 'D', 'E', 'F':
+		n, base, max = 2, 16, 255
+
 	default:
 		msg := "unknown escape sequence"
 		if s.ch < 0 {

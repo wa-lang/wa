@@ -75,11 +75,8 @@ var tokens = [...]elt{
 	{token.FLOAT, "1e-100", literal},
 	{token.FLOAT, "2.71828e-1000", literal},
 	{token.CHAR, "'a'", literal},
-	{token.CHAR, "'\\000'", literal},
-	{token.CHAR, "'\\xFF'", literal},
-	{token.CHAR, "'\\uff16'", literal},
-	{token.CHAR, "'\\U0000ff16'", literal},
 	{token.STRING, `"wasi_snapshot_preview1"`, literal},
+	{token.STRING, `"abc\12\ab\CD\n\t\r"`, literal},
 
 	// Keywords
 	{token.I32, "i32", keyword},
@@ -179,8 +176,8 @@ func TestScan(t *testing.T) {
 	whitespace_linecount := newlineCount(whitespace)
 
 	// error handler
-	eh := func(_ token.Position, msg string) {
-		t.Errorf("error handler called (msg = %s)", msg)
+	eh := func(pos token.Position, msg string) {
+		t.Errorf("%v: error handler called (msg = %s)", pos, msg)
 	}
 
 	// verify scan
