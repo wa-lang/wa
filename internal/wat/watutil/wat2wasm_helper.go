@@ -166,9 +166,13 @@ func (p *wat2wasmWorker) encodeInt64(i int64) []byte {
 }
 
 func (p *wat2wasmWorker) encodeFloat32(i float32) []byte {
-	return binary.LittleEndian.AppendUint32(nil, math.Float32bits(i))
+	b := make([]byte, 4)
+	binary.LittleEndian.PutUint32(b, math.Float32bits(i))
+	return b
 }
 
 func (p *wat2wasmWorker) encodeFloat64(i float64) []byte {
-	return binary.LittleEndian.AppendUint64(nil, math.Float64bits(i))
+	b := make([]byte, 8)
+	binary.LittleEndian.PutUint64(nil, math.Float64bits(i))
+	return b
 }
