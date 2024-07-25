@@ -6,6 +6,8 @@ import "wa-lang.org/wa/internal/wat/token"
 
 // 指令对应接口
 type Instruction interface {
+	Token() token.Token
+
 	aInstruction()
 }
 
@@ -13,6 +15,9 @@ type OpToken token.Token
 
 func (OpToken) aInstruction() {}
 
+func (tok OpToken) Token() token.Token {
+	return token.Token(tok)
+}
 func (tok OpToken) Valid() bool {
 	return token.Token(tok).IsIsntruction()
 }
@@ -24,18 +29,21 @@ type Ins_Unreachable struct{ OpToken }
 type Ins_Nop struct{ OpToken }
 type Ins_Block struct {
 	OpToken
-	X    string
-	List []Instruction
+	X       string
+	Results []token.Token // 返回值类型: I32, I64, F32, F64
+	List    []Instruction
 }
 type Ins_Loop struct {
 	OpToken
-	X    string
-	List []Instruction
+	X       string
+	Results []token.Token // 返回值类型: I32, I64, F32, F64
+	List    []Instruction
 }
 type Ins_If struct {
 	OpToken
-	Body []Instruction
-	Else []Instruction
+	Results []token.Token // 返回值类型: I32, I64, F32, F64
+	Body    []Instruction
+	Else    []Instruction
 }
 type Ins_Else struct{ OpToken }
 type Ins_End struct{ OpToken }

@@ -16,8 +16,10 @@
 		i32.store
 
 		;; iov.iov_len  - 字符串长度
-		i32.const 4
-		i32.const 12
+		block $label (result i32 i32)
+			i32.const 4
+			i32.const 12
+		end
 		i32.store
 
 		;; 输出到 stdout

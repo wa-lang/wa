@@ -380,7 +380,16 @@ func (p *parser) parseIns_Block() (i ast.Ins_Block) {
 	p.acceptToken(token.INS_BLOCK)
 
 	p.consumeComments()
-	i.X = p.parseIdentOrIndex()
+	if p.tok == token.IDENT {
+		i.X = p.parseIdent()
+	}
+
+	if p.tok == token.LPAREN {
+		p.acceptToken(token.LPAREN)
+		p.acceptToken(token.RESULT)
+		i.Results = p.parseNumberTypeList()
+		p.acceptToken(token.RPAREN)
+	}
 
 	for {
 		p.consumeComments()
@@ -399,7 +408,16 @@ func (p *parser) parseIns_Loop() (i ast.Ins_Loop) {
 	p.acceptToken(token.INS_LOOP)
 
 	p.consumeComments()
-	i.X = p.parseIdentOrIndex()
+	if p.tok == token.IDENT {
+		i.X = p.parseIdent()
+	}
+
+	if p.tok == token.LPAREN {
+		p.acceptToken(token.LPAREN)
+		p.acceptToken(token.RESULT)
+		i.Results = p.parseNumberTypeList()
+		p.acceptToken(token.RPAREN)
+	}
 
 	for {
 		p.consumeComments()
