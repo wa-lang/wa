@@ -3,6 +3,8 @@
 package watutil
 
 import (
+	"strings"
+
 	"wa-lang.org/wa/internal/3rdparty/wazero/internalx/wasm"
 	"wa-lang.org/wa/internal/3rdparty/wazero/internalx/wasm/binary"
 	"wa-lang.org/wa/internal/wat/ast"
@@ -39,7 +41,9 @@ func newWat2wasmWorker(mWat *ast.Module) *wat2wasmWorker {
 
 func (p *wat2wasmWorker) EncodeWasm() ([]byte, error) {
 	names := &wasm.NameSection{
-		ModuleName: p.mWat.Name,
+		ModuleName:    strings.TrimPrefix(p.mWat.Name, "$"),
+		FunctionNames: wasm.NameMap{},
+		LocalNames:    wasm.IndirectNameMap{},
 	}
 
 	p.mWasm = &wasm.Module{NameSection: names}
@@ -80,10 +84,6 @@ func (p *wat2wasmWorker) EncodeWasm() ([]byte, error) {
 	}
 	if err := p.buildStartSection(); err != nil {
 		return nil, err
-	}
-
-	if names.ModuleName == "" && names.FunctionNames == nil && names.LocalNames == nil {
-		p.mWasm.NameSection = nil
 	}
 
 	return binary.EncodeModule(p.mWasm), nil

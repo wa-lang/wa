@@ -8,8 +8,8 @@ WAT_WASM_FILES=$(patsubst %.wat,%.wat.wasm,$(WAT_FILES))
 default: $(WAT_WASM_FILES)
 	@echo "ok"
 
-cleam:
-	-rm *.wat.wasm
+clean:
+	-rm *.wat.wasm *.wasm
 
 %.wat.wasm: %.wat
-	wat2wasm $< -o $@
+	wat2wasm --debug-names $< -o $@

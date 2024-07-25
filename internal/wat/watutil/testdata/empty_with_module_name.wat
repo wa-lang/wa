@@ -1,1 +1,1 @@
-(module $name)
+(module $walang)

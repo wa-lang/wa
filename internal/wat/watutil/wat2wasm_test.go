@@ -11,7 +11,7 @@ import (
 	"wa-lang.org/wa/internal/wat/watutil"
 )
 
-func _TestWat2Wasm(t *testing.T) {
+func TestWat2Wasm(t *testing.T) {
 	for i, name := range tTestWat2Wasm_names {
 		wat, expect := tLoadWatWasm(t, name)
 		got, err := watutil.Wat2Wasm(name, wat)
@@ -32,6 +32,8 @@ func tCmpBytes(t *testing.T, name string, expect, got []byte) {
 	if i == len(expect) && i == len(got) {
 		return
 	}
+
+	os.WriteFile("testdata/a.out.wasm", got, 0666)
 
 	t.Fatalf("%s:\nexpect[%04X]: %s\n   got[%04X]: %s",
 		name,
@@ -54,7 +56,7 @@ func tLoadWatWasm(t *testing.T, name string) (watBytes, wasmBytes []byte) {
 	if err != nil {
 		t.Fatalf("os.ReadFile %s failed: %v", name, err)
 	}
-	wasmBytes, err = os.ReadFile(name)
+	wasmBytes, err = os.ReadFile(name + ".wasm")
 	if err != nil {
 		t.Fatalf("os.ReadFile %s failed: %v", name, err)
 	}

@@ -163,7 +163,7 @@ func encodeNameSectionData(n *wasm.NameSection) (data []byte) {
 	if fd := encodeFunctionNameData(n); len(fd) > 0 {
 		data = append(data, encodeNameSubsection(subsectionIDFunctionNames, fd)...)
 	}
-	if ld := encodeLocalNameData(n); len(ld) > 0 {
+	if ld := encodeLocalNameData(n); len(ld) >= 0 {
 		data = append(data, encodeNameSubsection(subsectionIDLocalNames, ld)...)
 	}
 	return
@@ -192,7 +192,7 @@ func encodeNameMap(m wasm.NameMap) []byte {
 // See https://www.w3.org/TR/2019/REC-wasm-core-1-20191205/#binary-localnamesec
 func encodeLocalNameData(n *wasm.NameSection) []byte {
 	if len(n.LocalNames) == 0 {
-		return nil
+		// 保持和 wabt-1.0.29/wat2wasm 行为一致
 	}
 
 	funcNameCount := uint32(len(n.LocalNames))
