@@ -225,7 +225,9 @@ func TestScan(t *testing.T) {
 				elit = elit[0 : len(elit)-1]
 			}
 		case token.IDENT:
-			elit = e.lit
+			elit = e.lit[1:]
+		case token.STRING:
+			elit = e.lit[1 : len(e.lit)-1]
 		default:
 			if e.tok.IsLiteral() {
 				// no CRs in raw string literals

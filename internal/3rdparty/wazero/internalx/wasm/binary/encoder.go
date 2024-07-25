@@ -11,15 +11,6 @@ var sizePrefixedName = []byte{4, 'n', 'a', 'm', 'e'}
 // See https://www.w3.org/TR/2019/REC-wasm-core-1-20191205/#binary-format%E2%91%A0
 func EncodeModule(m *wasm.Module) (bytes []byte) {
 	bytes = append(Magic, version...)
-	if m.SectionElementCount(wasm.SectionIDCustom) > 0 {
-		// >> The name section should appear only once in a module, and only after the data section.
-		// See https://www.w3.org/TR/2019/REC-wasm-core-1-20191205/#binary-namesec
-		if m.NameSection != nil {
-			nameSection := append(sizePrefixedName, encodeNameSectionData(m.NameSection)...)
-			bytes = append(bytes, encodeSection(wasm.SectionIDCustom, nameSection)...)
-		}
-
-	}
 	if m.SectionElementCount(wasm.SectionIDType) > 0 {
 		bytes = append(bytes, encodeTypeSection(m.TypeSection)...)
 	}
@@ -52,6 +43,14 @@ func EncodeModule(m *wasm.Module) (bytes []byte) {
 	}
 	if m.SectionElementCount(wasm.SectionIDData) > 0 {
 		bytes = append(bytes, encodeDataSection(m.DataSection)...)
+	}
+	if m.SectionElementCount(wasm.SectionIDCustom) > 0 {
+		// >> The name section should appear only once in a module, and only after the data section.
+		// See https://www.w3.org/TR/2019/REC-wasm-core-1-20191205/#binary-namesec
+		if m.NameSection != nil {
+			nameSection := append(sizePrefixedName, encodeNameSectionData(m.NameSection)...)
+			bytes = append(bytes, encodeSection(wasm.SectionIDCustom, nameSection)...)
+		}
 	}
 	return
 }

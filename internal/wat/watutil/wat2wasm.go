@@ -3,8 +3,6 @@
 package watutil
 
 import (
-	"strings"
-
 	"wa-lang.org/wa/internal/3rdparty/wazero/internalx/wasm"
 	"wa-lang.org/wa/internal/3rdparty/wazero/internalx/wasm/binary"
 	"wa-lang.org/wa/internal/wat/ast"
@@ -41,7 +39,7 @@ func newWat2wasmWorker(mWat *ast.Module) *wat2wasmWorker {
 
 func (p *wat2wasmWorker) EncodeWasm() ([]byte, error) {
 	names := &wasm.NameSection{
-		ModuleName:    strings.TrimPrefix(p.mWat.Name, "$"),
+		ModuleName:    p.mWat.Name,
 		FunctionNames: wasm.NameMap{},
 		LocalNames:    wasm.IndirectNameMap{},
 	}
@@ -271,23 +269,27 @@ func (p *wat2wasmWorker) buildCodeSection() error {
 	return nil
 }
 func (p *wat2wasmWorker) buildNameSection() error {
-	p.mWasm.NameSection.FunctionNames = nil
-	p.mWasm.NameSection.LocalNames = nil
-
 	var funcNames wasm.NameMap
 	var localNames wasm.IndirectNameMap
 	var importFuncCount int
 
 	for _, x := range p.mWat.Imports {
 		if x.ObjKind == token.FUNC {
+			// todo: 参数名字是否要解析?
 			funcNames = append(funcNames, &wasm.NameAssoc{
 				Index: wasm.Index(importFuncCount),
 				Name:  x.FuncName,
+			})
+			localNames = append(localNames, &wasm.NameMapAssoc{
+				Index:   wasm.Index(importFuncCount),
+				NameMap: nil,
 			})
 			importFuncCount++
 		}
 	}
 	for i, fn := range p.mWat.Funcs {
+		// todo: 参数名字是否要解析?
+
 		var localNameMap wasm.NameMap
 		for j, local := range fn.Body.Locals {
 			localNameMap = append(localNameMap, &wasm.NameAssoc{
@@ -306,6 +308,9 @@ func (p *wat2wasmWorker) buildNameSection() error {
 			NameMap: localNameMap,
 		})
 	}
+
+	p.mWasm.NameSection.FunctionNames = funcNames
+	p.mWasm.NameSection.LocalNames = localNames
 
 	return nil
 }
@@ -326,13 +331,13 @@ func (p *wat2wasmWorker) buildExportSection() error {
 			spec.Index = p.findFuncIdx(x.FuncIdx)
 		case token.MEMORY:
 			spec.Type = wasm.ExternTypeMemory
-			spec.Index = p.findMemoryIdx(x.FuncIdx)
+			spec.Index = p.findMemoryIdx(x.MemoryIdx)
 		case token.TABLE:
 			spec.Type = wasm.ExternTypeTable
-			spec.Index = p.findTableIdx(x.FuncIdx)
+			spec.Index = p.findTableIdx(x.TableIdx)
 		case token.GLOBAL:
 			spec.Type = wasm.ExternTypeGlobal
-			spec.Index = p.findGlobalIdx(x.FuncIdx)
+			spec.Index = p.findGlobalIdx(x.GlobalIdx)
 		default:
 			panic("unreachable")
 		}

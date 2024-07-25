@@ -22,14 +22,10 @@ func (p *parser) parseModuleSection_import() *ast.ImportSpec {
 
 	// 宿主模块和名字
 	spec.ObjModule = p.parseStringLit()
-	p.consumeComments()
-
 	spec.ObjName = p.parseStringLit()
-	p.consumeComments()
 
 	p.acceptToken(token.LPAREN)
 	{
-		p.consumeComments()
 		switch p.tok {
 		case token.MEMORY:
 			p.parseModuleSection_import_memory(spec)
@@ -42,7 +38,6 @@ func (p *parser) parseModuleSection_import() *ast.ImportSpec {
 		default:
 			p.errorf(p.pos, "bad token, %v %s", p.tok, p.lit)
 		}
-		p.consumeComments()
 	}
 	p.acceptToken(token.RPAREN)
 
@@ -53,6 +48,7 @@ func (p *parser) parseModuleSection_import_memory(spec *ast.ImportSpec) {
 	p.acceptToken(token.MEMORY)
 	p.consumeComments()
 
+	spec.ObjKind = token.MEMORY
 	spec.MemoryIdx = p.parseIntLit()
 }
 
@@ -60,41 +56,38 @@ func (p *parser) parseModuleSection_import_table(spec *ast.ImportSpec) {
 	p.acceptToken(token.TABLE)
 	p.consumeComments()
 
+	spec.ObjKind = token.TABLE
 	spec.TableIdx = p.parseIntLit()
 }
 
 func (p *parser) parseModuleSection_import_global(spec *ast.ImportSpec) {
 	p.acceptToken(token.GLOBAL)
 
+	spec.ObjKind = token.GLOBAL
 	spec.GlobalName = p.parseIdent()
 	spec.GlobalType = p.parseNumberType()
 }
 
 func (p *parser) parseModuleSection_import_func(spec *ast.ImportSpec) {
 	p.acceptToken(token.FUNC)
-	p.consumeComments()
 
+	spec.ObjKind = token.FUNC
 	spec.FuncType = &ast.FuncType{}
 	spec.FuncName = p.parseIdent()
 
 	for {
-		p.consumeComments()
 		if p.tok != token.LPAREN {
 			break
 		}
 
 		p.acceptToken(token.LPAREN)
-		p.consumeComments()
-
 		switch p.tok {
 		case token.PARAM:
 			p.acceptToken(token.PARAM)
-			p.consumeComments()
 
 			if p.tok == token.IDENT {
 				// (param $name i32)
 				p.parseIdent()
-				p.consumeComments()
 				typ := p.parseNumberType()
 
 				spec.FuncType.Params = append(spec.FuncType.Params, ast.Field{
@@ -116,7 +109,6 @@ func (p *parser) parseModuleSection_import_func(spec *ast.ImportSpec) {
 			// (result i32)
 			// (result i32 i64)
 			p.acceptToken(token.RESULT)
-			p.consumeComments()
 			for _, typ := range p.parseNumberTypeList() {
 				spec.FuncType.Results = append(spec.FuncType.Results, typ)
 			}

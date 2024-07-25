@@ -776,6 +776,9 @@ scanAgain:
 	switch ch := s.ch; {
 	case ch == '$':
 		lit = s.scanIdentifier()
+		if len(lit) > 0 && lit[0] == '$' {
+			lit = lit[1:]
+		}
 		tok = token.IDENT
 	case isLetter(ch):
 		lit = s.scanIdentifier()
@@ -793,12 +796,21 @@ scanAgain:
 		switch ch {
 		case '$':
 			lit = s.scanIdentifier()
+			if len(lit) > 0 && lit[0] == '$' {
+				lit = lit[1:]
+			}
 			tok = token.IDENT
 		case -1:
 			tok = token.EOF
 		case '"':
 			tok = token.STRING
 			lit = s.scanString()
+			if len(lit) > 0 && lit[0] == '"' {
+				lit = lit[1:]
+			}
+			if len(lit) > 0 && lit[len(lit)-1] == '"' {
+				lit = lit[:len(lit)-1]
+			}
 		case '\'':
 			tok = token.CHAR
 			lit = s.scanRune()

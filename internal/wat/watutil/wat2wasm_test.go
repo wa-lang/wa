@@ -11,6 +11,12 @@ import (
 	"wa-lang.org/wa/internal/wat/watutil"
 )
 
+var tTestWat2Wasm_names = []string{
+	"testdata/empty.wat",
+	"testdata/empty_with_module_name.wat",
+	"testdata/hello-01.wat",
+}
+
 func TestWat2Wasm(t *testing.T) {
 	for i, name := range tTestWat2Wasm_names {
 		wat, expect := tLoadWatWasm(t, name)
@@ -61,9 +67,4 @@ func tLoadWatWasm(t *testing.T, name string) (watBytes, wasmBytes []byte) {
 		t.Fatalf("os.ReadFile %s failed: %v", name, err)
 	}
 	return
-}
-
-var tTestWat2Wasm_names = []string{
-	"testdata/empty.wat",
-	"testdata/empty_with_module_name.wat",
 }

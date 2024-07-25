@@ -47,7 +47,7 @@ func TestHello(t *testing.T) {
 	}
 }
 
-func ExampleScanner_Hello() {
+func ExampleScanner_hello() {
 	var src = []byte(tHello)
 	var file = token.NewFile("", len(src))
 

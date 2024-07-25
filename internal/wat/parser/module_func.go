@@ -17,8 +17,8 @@ func (p *parser) parseModuleSection_func() *ast.Func {
 	p.acceptToken(token.FUNC)
 
 	fn := &ast.Func{
-		Type: nil, // 作为标志
-		Body: nil, // 作为标志
+		Type: &ast.FuncType{},
+		Body: &ast.FuncBody{},
 	}
 
 	p.consumeComments()
@@ -37,37 +37,16 @@ Loop:
 		p.acceptToken(token.LPAREN)
 		switch p.tok {
 		case token.EXPORT:
-			if fn.Type != nil || fn.Body != nil {
-				p.errorf(p.pos, "export must befor param/result/body")
-			}
-
 			p.acceptToken(token.EXPORT)
-
-			p.consumeComments()
 			fn.ExportName = p.parseStringLit()
-
-			p.consumeComments()
 			p.acceptToken(token.RPAREN)
 
 		case token.PARAM:
-			if fn.Body != nil {
-				p.errorf(p.pos, "export must befor result/body")
-			}
-			if fn.Type != nil && len(fn.Type.Results) > 0 {
-				p.errorf(p.pos, "export must befor result")
-			}
-
 			p.acceptToken(token.PARAM)
 
-			if fn.Type == nil {
-				fn.Type = &ast.FuncType{}
-			}
-
 			var field ast.Field
-			p.consumeComments()
 			if p.tok == token.IDENT {
 				field.Name = p.parseIdent()
-				p.consumeComments()
 				field.Type = p.parseNumberType()
 				fn.Type.Params = append(fn.Type.Params, field)
 			} else {
@@ -76,32 +55,16 @@ Loop:
 				}
 			}
 
-			p.consumeComments()
 			p.acceptToken(token.RPAREN)
 
 		case token.RESULT:
-			if fn.Body != nil {
-				p.errorf(p.pos, "result must befor func body")
-			}
-
 			p.acceptToken(token.RESULT)
-
-			if fn.Type == nil {
-				fn.Type = &ast.FuncType{}
-			}
-
-			p.consumeComments()
 			for _, x := range p.parseNumberTypeList() {
 				fn.Type.Results = append(fn.Type.Results, x)
 			}
-
-			p.consumeComments()
 			p.acceptToken(token.RPAREN)
 
 		case token.LOCAL:
-			if fn.Body == nil {
-				fn.Body = &ast.FuncBody{}
-			}
 			if len(fn.Body.Insts) > 0 {
 				p.errorf(p.pos, "local must befor instruction")
 			}
@@ -109,16 +72,13 @@ Loop:
 			p.acceptToken(token.LOCAL)
 
 			var field ast.Field
-			p.consumeComments()
 			if p.tok == token.IDENT {
 				field.Name = p.parseIdent()
 			}
 
-			p.consumeComments()
 			field.Type = p.parseNumberType()
 			fn.Body.Locals = append(fn.Body.Locals, field)
 
-			p.consumeComments()
 			p.acceptToken(token.RPAREN)
 
 		default:
