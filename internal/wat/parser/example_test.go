@@ -25,7 +25,7 @@ func ExampleParseModule() {
 
 	// output:
 	// (module $hello)
-	// $hello
+	// hello
 }
 
 func ExampleParseModule_wa() {
@@ -47,5 +47,5 @@ func ExampleParseModule_wa() {
 	fmt.Println(m.Name)
 
 	// output:
-	// $__walang__
+	// __walang__
 }
