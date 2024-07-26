@@ -20,9 +20,14 @@ var tTestWat2Wasm_names = []string{
 	"testdata/memory-04.wat",
 	"testdata/func-01.wat",
 	"testdata/func-02.wat",
+	"testdata/func-03.wat",
 	"testdata/hello-01.wat",
 	"testdata/hello-02.wat",
 	"testdata/hello-03.wat",
+
+	// todo:
+	// "testdata/func-04.wat",
+	// "testdata/type-01.wat",
 }
 
 func TestWat2Wasm(t *testing.T) {

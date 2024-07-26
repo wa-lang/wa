@@ -1,5 +1,8 @@
 // 版权 @2024 凹语言 作者。保留所有权利。
 
+// https://github.com/WebAssembly/wabt/blob/1.0.29/src/binary.h
+// https://github.com/WebAssembly/extended-name-section/blob/main/proposals/extended-name-section/Overview.md
+
 package watutil
 
 import (
@@ -15,7 +18,7 @@ func Wat2Wasm(filename string, source []byte) ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
-	return newWat2wasmWorker(m).EncodeWasm()
+	return newWat2wasmWorker(m).EncodeWasm(true)
 }
 
 type wat2wasmWorker struct {
@@ -37,7 +40,7 @@ func newWat2wasmWorker(mWat *ast.Module) *wat2wasmWorker {
 	return &wat2wasmWorker{mWat: mWat}
 }
 
-func (p *wat2wasmWorker) EncodeWasm() ([]byte, error) {
+func (p *wat2wasmWorker) EncodeWasm(debugNames bool) ([]byte, error) {
 	names := &wasm.NameSection{
 		ModuleName:    p.mWat.Name,
 		FunctionNames: wasm.NameMap{},
@@ -102,8 +105,10 @@ func (p *wat2wasmWorker) EncodeWasm() ([]byte, error) {
 	}
 
 	// ID: 0
-	if err := p.buildNameSection(); err != nil {
-		return nil, err
+	if debugNames {
+		if err := p.buildNameSection(); err != nil {
+			return nil, err
+		}
 	}
 
 	return binary.EncodeModule(p.mWasm), nil
@@ -329,6 +334,21 @@ func (p *wat2wasmWorker) buildNameSection() error {
 			})
 			importFuncCount++
 		}
+	}
+	for _, typ := range p.mWat.Types {
+		var localNameMap wasm.NameMap
+		for j, local := range typ.Type.Params {
+			if local.Name != "" {
+				localNameMap = append(localNameMap, &wasm.NameAssoc{
+					Index: wasm.Index(j),
+					Name:  local.Name,
+				})
+			}
+		}
+		localNames = append(localNames, &wasm.NameMapAssoc{
+			Index:   wasm.Index(importFuncCount),
+			NameMap: localNameMap,
+		})
 	}
 	for i, fn := range p.mWat.Funcs {
 		var localNameMap wasm.NameMap
