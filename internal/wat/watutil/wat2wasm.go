@@ -275,22 +275,37 @@ func (p *wat2wasmWorker) buildNameSection() error {
 
 	for _, x := range p.mWat.Imports {
 		if x.ObjKind == token.FUNC {
-			// todo: 参数名字是否要解析?
+			var localNameMap wasm.NameMap
+			for j, local := range x.FuncType.Params {
+				if local.Name != "" {
+					localNameMap = append(localNameMap, &wasm.NameAssoc{
+						Index: wasm.Index(j),
+						Name:  local.Name,
+					})
+				}
+			}
+
 			funcNames = append(funcNames, &wasm.NameAssoc{
 				Index: wasm.Index(importFuncCount),
 				Name:  x.FuncName,
 			})
 			localNames = append(localNames, &wasm.NameMapAssoc{
 				Index:   wasm.Index(importFuncCount),
-				NameMap: nil,
+				NameMap: localNameMap,
 			})
 			importFuncCount++
 		}
 	}
 	for i, fn := range p.mWat.Funcs {
-		// todo: 参数名字是否要解析?
-
 		var localNameMap wasm.NameMap
+		for j, local := range fn.Type.Params {
+			if local.Name != "" {
+				localNameMap = append(localNameMap, &wasm.NameAssoc{
+					Index: wasm.Index(j),
+					Name:  local.Name,
+				})
+			}
+		}
 		for j, local := range fn.Body.Locals {
 			localNameMap = append(localNameMap, &wasm.NameAssoc{
 				Index: wasm.Index(j),

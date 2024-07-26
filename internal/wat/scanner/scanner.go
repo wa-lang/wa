@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"path/filepath"
 	"strconv"
+	"strings"
 	"unicode"
 	"unicode/utf8"
 
@@ -532,16 +533,31 @@ func invalidSep(x string) int {
 // escaped quote. In case of a syntax error, it stops at the offending
 // character (without consuming it) and returns false. Otherwise
 // it returns true.
-func (s *Scanner) scanEscape(quote rune) bool {
+func (s *Scanner) scanEscape(quote rune) (v rune, ok bool) {
 	offs := s.offset
 
 	var n int
 	var base, max uint32
 	switch s.ch {
 	// 扩展语法
-	case 'n', 'r', 't', '\\', quote:
+	case quote:
 		s.next()
-		return true
+		return quote, true
+	case 'n':
+		s.next()
+		return '\n', true
+	case 'r':
+		s.next()
+		return '\r', true
+	case 't':
+		s.next()
+		return '\t', true
+	case 'v':
+		s.next()
+		return '\v', true
+	case '\\':
+		s.next()
+		return '\\', true
 
 	// hex: \01\ab\CD
 	case '0', '1', '2', '3', '4', '5', '6', '7', '8', '9':
@@ -557,7 +573,7 @@ func (s *Scanner) scanEscape(quote rune) bool {
 			msg = "escape sequence not terminated"
 		}
 		s.error(offs, msg)
-		return false
+		return 0, false
 	}
 
 	var x uint32
@@ -569,7 +585,7 @@ func (s *Scanner) scanEscape(quote rune) bool {
 				msg = "escape sequence not terminated"
 			}
 			s.error(s.offset, msg)
-			return false
+			return 0, false
 		}
 		x = x*base + d
 		s.next()
@@ -578,10 +594,10 @@ func (s *Scanner) scanEscape(quote rune) bool {
 
 	if x > max || 0xD800 <= x && x < 0xE000 {
 		s.error(offs, "escape sequence is invalid Unicode code point")
-		return false
+		return 0, false
 	}
 
-	return true
+	return rune(x), true
 }
 
 func (s *Scanner) scanRune() string {
@@ -606,7 +622,7 @@ func (s *Scanner) scanRune() string {
 		}
 		n++
 		if ch == '\\' {
-			if !s.scanEscape('\'') {
+			if _, ok := s.scanEscape('\''); !ok {
 				valid = false
 			}
 			// continue to read to closing quote
@@ -623,7 +639,7 @@ func (s *Scanner) scanRune() string {
 func (s *Scanner) scanString() string {
 	// '"' opening already consumed
 	offs := s.offset - 1
-
+	var sb strings.Builder
 	for {
 		ch := s.ch
 		if ch == '\n' || ch < 0 {
@@ -635,11 +651,14 @@ func (s *Scanner) scanString() string {
 			break
 		}
 		if ch == '\\' {
-			s.scanEscape('"')
+			v, _ := s.scanEscape('"')
+			sb.WriteRune(v)
+		} else {
+			sb.WriteRune(ch)
 		}
 	}
 
-	return string(s.src[offs:s.offset])
+	return sb.String()
 }
 
 func stripCR(b []byte, comment bool) []byte {
@@ -659,34 +678,6 @@ func stripCR(b []byte, comment bool) []byte {
 	return c[:i]
 }
 
-func (s *Scanner) scanRawString() string {
-	// '`' opening already consumed
-	offs := s.offset - 1
-
-	hasCR := false
-	for {
-		ch := s.ch
-		if ch < 0 {
-			s.error(offs, "raw string literal not terminated")
-			break
-		}
-		s.next()
-		if ch == '`' {
-			break
-		}
-		if ch == '\r' {
-			hasCR = true
-		}
-	}
-
-	lit := s.src[offs:s.offset]
-	if hasCR {
-		lit = stripCR(lit, false)
-	}
-
-	return string(lit)
-}
-
 func (s *Scanner) skipWhitespace() {
 	for s.ch == ' ' || s.ch == '\t' || s.ch == '\n' || s.ch == '\r' {
 		s.next()
@@ -698,42 +689,6 @@ func (s *Scanner) skipWhitespace() {
 // of ch_i. If a token ends in '=', the result is tok1 or tok3
 // respectively. Otherwise, the result is tok0 if there was no other
 // matching character, or tok2 if the matching character was ch2.
-
-func (s *Scanner) switch2(tok0, tok1 token.Token) token.Token {
-	if s.ch == '=' {
-		s.next()
-		return tok1
-	}
-	return tok0
-}
-
-func (s *Scanner) switch3(tok0, tok1 token.Token, ch2 rune, tok2 token.Token) token.Token {
-	if s.ch == '=' {
-		s.next()
-		return tok1
-	}
-	if s.ch == ch2 {
-		s.next()
-		return tok2
-	}
-	return tok0
-}
-
-func (s *Scanner) switch4(tok0, tok1 token.Token, ch2 rune, tok2, tok3 token.Token) token.Token {
-	if s.ch == '=' {
-		s.next()
-		return tok1
-	}
-	if s.ch == ch2 {
-		s.next()
-		if s.ch == '=' {
-			s.next()
-			return tok3
-		}
-		return tok2
-	}
-	return tok0
-}
 
 // Scan scans the next token and returns the token position, the token,
 // and its literal string if applicable. The source end is indicated by
@@ -765,7 +720,7 @@ func (s *Scanner) switch4(tok0, tok1 token.Token, ch2 rune, tok2, tok3 token.Tok
 // Scan adds line information to the file added to the file
 // set with Init. Token positions are relative to that file
 // and thus relative to the file set.
-func (s *Scanner) Scan() (pos token.Pos, tok token.Token, lit string) {
+func (s *Scanner) Scan() (pos token.Pos, tok token.Token, tokValue string) {
 scanAgain:
 	s.skipWhitespace()
 
@@ -775,51 +730,45 @@ scanAgain:
 	// determine token value
 	switch ch := s.ch; {
 	case ch == '$':
-		lit = s.scanIdentifier()
-		if len(lit) > 0 && lit[0] == '$' {
-			lit = lit[1:]
+		tokValue = s.scanIdentifier()
+		if len(tokValue) > 0 && tokValue[0] == '$' {
+			tokValue = tokValue[1:]
 		}
 		tok = token.IDENT
 	case isLetter(ch):
-		lit = s.scanIdentifier()
-		tok = token.Lookup(lit)
+		tokValue = s.scanIdentifier()
+		tok = token.Lookup(tokValue)
 
 	case ch == '-':
 		s.next()
-		tok, lit = s.scanNumber()
-		lit = "-" + lit
+		tok, tokValue = s.scanNumber()
+		tokValue = "-" + tokValue
 
 	case isDecimal(ch) || ch == '.' && isDecimal(rune(s.peek())):
-		tok, lit = s.scanNumber()
+		tok, tokValue = s.scanNumber()
 	default:
 		s.next() // always make progress
 		switch ch {
 		case '$':
-			lit = s.scanIdentifier()
-			if len(lit) > 0 && lit[0] == '$' {
-				lit = lit[1:]
+			tokValue = s.scanIdentifier()
+			if len(tokValue) > 0 && tokValue[0] == '$' {
+				tokValue = tokValue[1:]
 			}
 			tok = token.IDENT
 		case -1:
 			tok = token.EOF
 		case '"':
 			tok = token.STRING
-			lit = s.scanString()
-			if len(lit) > 0 && lit[0] == '"' {
-				lit = lit[1:]
-			}
-			if len(lit) > 0 && lit[len(lit)-1] == '"' {
-				lit = lit[:len(lit)-1]
-			}
+			tokValue = s.scanString()
 		case '\'':
 			tok = token.CHAR
-			lit = s.scanRune()
+			tokValue = s.scanRune()
 		case '(':
 			// (; comment ;)
 			if s.ch == ';' {
 				// 不支持多行注释(这是Feature, 不是BUG)
 				tok = token.ILLEGAL
-				lit = string(ch)
+				tokValue = string(ch)
 			} else {
 				tok = token.LPAREN
 			}
@@ -836,7 +785,7 @@ scanAgain:
 					goto scanAgain
 				}
 				tok = token.COMMENT
-				lit = comment
+				tokValue = comment
 			}
 
 		default:
@@ -845,7 +794,7 @@ scanAgain:
 				s.errorf(int(pos), "illegal character %#U", ch)
 			}
 			tok = token.ILLEGAL
-			lit = string(ch)
+			tokValue = string(ch)
 		}
 	}
 

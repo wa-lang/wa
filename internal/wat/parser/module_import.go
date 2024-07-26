@@ -87,10 +87,11 @@ func (p *parser) parseModuleSection_import_func(spec *ast.ImportSpec) {
 
 			if p.tok == token.IDENT {
 				// (param $name i32)
-				p.parseIdent()
+				name := p.parseIdent()
 				typ := p.parseNumberType()
 
 				spec.FuncType.Params = append(spec.FuncType.Params, ast.Field{
+					Name: name,
 					Type: typ,
 				})
 			} else {
