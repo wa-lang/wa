@@ -46,41 +46,63 @@ func (p *wat2wasmWorker) EncodeWasm() ([]byte, error) {
 
 	p.mWasm = &wasm.Module{NameSection: names}
 
+	// ID: 1
 	if err := p.buildTypeSection(); err != nil {
 		return nil, err
 	}
+
+	// ID: 2
 	if err := p.buildImportSection(); err != nil {
 		return nil, err
 	}
-	if err := p.buildMemorySection(); err != nil {
-		return nil, err
-	}
-	if err := p.buildTableSection(); err != nil {
-		return nil, err
-	}
-	if err := p.buildGlobalSection(); err != nil {
-		return nil, err
-	}
+
+	// ID: 3
 	if err := p.buildFunctionSection(); err != nil {
 		return nil, err
 	}
 
-	if err := p.buildDataSection(); err != nil {
+	// ID: 4
+	if err := p.buildTableSection(); err != nil {
 		return nil, err
 	}
-	if err := p.buildElementSection(); err != nil {
+
+	// ID: 5
+	if err := p.buildMemorySection(); err != nil {
 		return nil, err
 	}
-	if err := p.buildCodeSection(); err != nil {
+
+	// ID: 6
+	if err := p.buildGlobalSection(); err != nil {
 		return nil, err
 	}
-	if err := p.buildNameSection(); err != nil {
-		return nil, err
-	}
+
+	// ID: 7
 	if err := p.buildExportSection(); err != nil {
 		return nil, err
 	}
+
+	// ID: 8
 	if err := p.buildStartSection(); err != nil {
+		return nil, err
+	}
+
+	// ID: 9
+	if err := p.buildElementSection(); err != nil {
+		return nil, err
+	}
+
+	// ID: 10
+	if err := p.buildCodeSection(); err != nil {
+		return nil, err
+	}
+
+	// ID: 11
+	if err := p.buildDataSection(); err != nil {
+		return nil, err
+	}
+
+	// ID: 0
+	if err := p.buildNameSection(); err != nil {
 		return nil, err
 	}
 
@@ -262,7 +284,7 @@ func (p *wat2wasmWorker) buildCodeSection() error {
 			fnCode.LocalTypes = append(fnCode.LocalTypes, p.buildValueType(local.Type))
 		}
 		for _, ins := range fn.Body.Insts {
-			fnCode.Body = p.buildInstruction(fnCode.Body, ins)
+			fnCode.Body = p.appendInstruction(fnCode.Body, ins)
 		}
 
 		fnCode.Body = append(fnCode.Body, wasm.OpcodeEnd)

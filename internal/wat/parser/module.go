@@ -2,7 +2,10 @@
 
 package parser
 
-import "wa-lang.org/wa/internal/wat/token"
+import (
+	"wa-lang.org/wa/internal/wat/ast"
+	"wa-lang.org/wa/internal/wat/token"
+)
 
 // https://webassembly.github.io/spec/core/text/modules.html
 
@@ -41,6 +44,17 @@ func (p *parser) parseModule() {
 			p.parseModuleSection()
 		} else {
 			break
+		}
+	}
+
+	// 补充导出的函数
+	for _, fn := range p.module.Funcs {
+		if fn.ExportName != "" {
+			p.module.Exports = append(p.module.Exports, &ast.ExportSpec{
+				Name:    fn.ExportName,
+				Kind:    token.FUNC,
+				FuncIdx: fn.Name,
+			})
 		}
 	}
 

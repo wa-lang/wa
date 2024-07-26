@@ -21,7 +21,7 @@ var tTestWat2Wasm_names = []string{
 	"testdata/hello-01.wat",
 	"testdata/hello-02.wat",
 	"testdata/func-01.wat",
-	// "testdata/func-02.wat",
+	"testdata/func-02.wat",
 }
 
 func TestWat2Wasm(t *testing.T) {

@@ -27,7 +27,7 @@ func (p *wat2wasmWorker) lookupTokenOpcode(tok token.Token) wasm.Opcode {
 func (p *wat2wasmWorker) buildInstruction_enterBlock() {}
 func (p *wat2wasmWorker) buildInstruction_leaveBlock() {}
 
-func (p *wat2wasmWorker) buildInstruction(dst []byte, i ast.Instruction) []byte {
+func (p *wat2wasmWorker) appendInstruction(dst []byte, i ast.Instruction) []byte {
 	tok := i.Token()
 	opcode := p.lookupTokenOpcode(tok)
 

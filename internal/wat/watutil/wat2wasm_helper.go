@@ -18,9 +18,7 @@ func (p *wat2wasmWorker) findFuncIdx(ident string) wasm.Index {
 	if idx, err := strconv.Atoi(ident); err == nil {
 		return wasm.Index(idx)
 	}
-	if !strings.HasPrefix(ident, "$") {
-		panic("invalid ident:" + ident)
-	}
+
 	var importCount int
 	for _, x := range p.mWat.Imports {
 		if x.ObjKind == token.FUNC {
