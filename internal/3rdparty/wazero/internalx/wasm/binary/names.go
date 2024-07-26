@@ -17,6 +17,19 @@ const (
 	// subsectionIDLocalNames contain a map of function indices to a map of local indices to their names, in ascending
 	// order by function and local index
 	subsectionIDLocalNames = uint8(2)
+
+	// 扩展特性
+	// https://github.com/WebAssembly/wabt/blob/1.0.29/src/binary.h
+	// https://github.com/WebAssembly/extended-name-section/blob/main/proposals/extended-name-section/Overview.md
+
+	subsectionIDLabelNames       = uint8(3)
+	subsectionIDTypeNames        = uint8(4)
+	subsectionIDTableNames       = uint8(5)
+	subsectionIDMemoryNames      = uint8(6)
+	subsectionIDGlobalNames      = uint8(7)
+	subsectionIDElemSegmentNames = uint8(8)
+	subsectionIDDataSegmentNames = uint8(9)
+	subsectionIDTagNames         = uint8(10)
 )
 
 // decodeNameSection deserializes the data associated with the "name" key in SectionIDCustom according to the
@@ -66,9 +79,49 @@ func decodeNameSection(r *bytes.Reader, limit uint64) (result *wasm.NameSection,
 				return nil, err
 			}
 		default: // Skip other subsections.
-			// Note: Not Seek because it doesn't err when given an offset past EOF. Rather, it leads to undefined state.
-			if _, err = io.CopyN(io.Discard, r, int64(subsectionSize)); err != nil {
-				return nil, fmt.Errorf("failed to skip subsection[%d]: %w", subsectionID, err)
+
+			// 扩展特性
+			// https://github.com/WebAssembly/wabt/blob/1.0.29/src/binary.h
+			// https://github.com/WebAssembly/extended-name-section/blob/main/proposals/extended-name-section/Overview.md
+
+			switch subsectionID {
+			case subsectionIDLabelNames:
+				if _, err = io.CopyN(io.Discard, r, int64(subsectionSize)); err != nil {
+					return nil, fmt.Errorf("failed to skip subsection[%d]: %w", subsectionID, err)
+				}
+			case subsectionIDTypeNames:
+				if result.TypeNames, err = decodeExtendedNames(r, subsectionID); err != nil {
+					return nil, err
+				}
+			case subsectionIDTableNames:
+				if result.TableNames, err = decodeExtendedNames(r, subsectionID); err != nil {
+					return nil, err
+				}
+			case subsectionIDMemoryNames:
+				if result.MemoryNames, err = decodeExtendedNames(r, subsectionID); err != nil {
+					return nil, err
+				}
+			case subsectionIDGlobalNames:
+				if result.GlobalNames, err = decodeExtendedNames(r, subsectionID); err != nil {
+					return nil, err
+				}
+			case subsectionIDElemSegmentNames:
+				if result.ElemSegmentNames, err = decodeExtendedNames(r, subsectionID); err != nil {
+					return nil, err
+				}
+			case subsectionIDDataSegmentNames:
+				if result.DataSegmentNames, err = decodeExtendedNames(r, subsectionID); err != nil {
+					return nil, err
+				}
+			case subsectionIDTagNames:
+				if result.TagNames, err = decodeExtendedNames(r, subsectionID); err != nil {
+					return nil, err
+				}
+			default:
+				// Note: Not Seek because it doesn't err when given an offset past EOF. Rather, it leads to undefined state.
+				if _, err = io.CopyN(io.Discard, r, int64(subsectionSize)); err != nil {
+					return nil, fmt.Errorf("failed to skip subsection[%d]: %w", subsectionID, err)
+				}
 			}
 		}
 		limit -= uint64(subsectionSize)
@@ -134,6 +187,30 @@ func decodeLocalNames(r *bytes.Reader) (wasm.IndirectNameMap, error) {
 	return result, nil
 }
 
+func decodeExtendedNames(r *bytes.Reader, subsectionIDExtendedNames uint8) (wasm.NameMap, error) {
+	namesCount, err := decodeEntendNamesCount(r, subsectionIDExtendedNames)
+	if err != nil {
+		return nil, err
+	}
+
+	result := make(wasm.NameMap, namesCount)
+	for i := uint32(0); i < namesCount; i++ {
+		idx, err := decodeEntendNameIndex(r, subsectionIDExtendedNames)
+		if err != nil {
+			return nil, err
+		}
+
+		name, _, err := decodeUTF8(r, "subsectionExtendedNames[%d] [%d] name",
+			subsectionIDExtendedNames, idx,
+		)
+		if err != nil {
+			return nil, err
+		}
+		result[i] = &wasm.NameAssoc{Index: idx, Name: name}
+	}
+	return result, nil
+}
+
 func decodeFunctionIndex(r *bytes.Reader, subsectionID uint8) (uint32, error) {
 	functionIndex, _, err := leb128.DecodeUint32(r)
 	if err != nil {
@@ -148,6 +225,22 @@ func decodeFunctionCount(r *bytes.Reader, subsectionID uint8) (uint32, error) {
 		return 0, fmt.Errorf("failed to read the function count of subsection[%d]: %w", subsectionID, err)
 	}
 	return functionCount, nil
+}
+
+func decodeEntendNamesCount(r *bytes.Reader, subsectionID uint8) (uint32, error) {
+	n, _, err := leb128.DecodeUint32(r)
+	if err != nil {
+		return 0, fmt.Errorf("failed to read the extend names count of subsection[%d]: %w", subsectionID, err)
+	}
+	return n, nil
+}
+
+func decodeEntendNameIndex(r *bytes.Reader, subsectionID uint8) (uint32, error) {
+	idx, _, err := leb128.DecodeUint32(r)
+	if err != nil {
+		return 0, fmt.Errorf("failed to read a extend name index in subsection[%d]: %w", subsectionID, err)
+	}
+	return idx, nil
 }
 
 // encodeNameSectionData serializes the data for the "name" key in wasm.SectionIDCustom according to the
@@ -166,6 +259,36 @@ func encodeNameSectionData(n *wasm.NameSection) (data []byte) {
 	if ld := encodeLocalNameData(n); len(ld) >= 0 {
 		data = append(data, encodeNameSubsection(subsectionIDLocalNames, ld)...)
 	}
+
+	// 扩展特性
+	// https://github.com/WebAssembly/wabt/blob/1.0.29/src/binary.h
+	// https://github.com/WebAssembly/extended-name-section/blob/main/proposals/extended-name-section/Overview.md
+
+	if data := encodeEntendNameData(n.LabelNames); len(data) > 0 {
+		// todo: label
+	}
+	if data := encodeEntendNameData(n.TypeNames); len(data) > 0 {
+		data = append(data, encodeNameSubsection(subsectionIDTypeNames, data)...)
+	}
+	if data := encodeEntendNameData(n.TableNames); len(data) > 0 {
+		data = append(data, encodeNameSubsection(subsectionIDTableNames, data)...)
+	}
+	if data := encodeEntendNameData(n.MemoryNames); len(data) > 0 {
+		data = append(data, encodeNameSubsection(subsectionIDMemoryNames, data)...)
+	}
+	if data := encodeEntendNameData(n.GlobalNames); len(data) > 0 {
+		data = append(data, encodeNameSubsection(subsectionIDGlobalNames, data)...)
+	}
+	if data := encodeEntendNameData(n.ElemSegmentNames); len(data) > 0 {
+		data = append(data, encodeNameSubsection(subsectionIDElemSegmentNames, data)...)
+	}
+	if data := encodeEntendNameData(n.DataSegmentNames); len(data) > 0 {
+		data = append(data, encodeNameSubsection(subsectionIDDataSegmentNames, data)...)
+	}
+	if data := encodeEntendNameData(n.TagNames); len(data) > 0 {
+		data = append(data, encodeNameSubsection(subsectionIDTagNames, data)...)
+	}
+
 	return
 }
 
@@ -177,6 +300,14 @@ func encodeFunctionNameData(n *wasm.NameSection) []byte {
 	}
 
 	return encodeNameMap(n.FunctionNames)
+}
+
+func encodeEntendNameData(nameMap wasm.NameMap) []byte {
+	if len(nameMap) == 0 {
+		return nil
+	}
+
+	return encodeNameMap(nameMap)
 }
 
 func encodeNameMap(m wasm.NameMap) []byte {

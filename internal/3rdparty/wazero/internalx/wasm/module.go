@@ -876,6 +876,19 @@ type NameSection struct {
 	// Note: LocalNames are only used for debugging. At runtime, locals are called based on raw numeric index.
 	// Note: This can be nil for any reason including configuration.
 	LocalNames IndirectNameMap
+
+	// 扩展特性
+	// https://github.com/WebAssembly/wabt/blob/1.0.29/src/binary.h
+	// https://github.com/WebAssembly/extended-name-section/blob/main/proposals/extended-name-section/Overview.md
+
+	LabelNames       NameMap
+	TypeNames        NameMap
+	TableNames       NameMap
+	MemoryNames      NameMap
+	GlobalNames      NameMap
+	ElemSegmentNames NameMap
+	DataSegmentNames NameMap
+	TagNames         NameMap
 }
 
 // NameMap associates an index with any associated names.
