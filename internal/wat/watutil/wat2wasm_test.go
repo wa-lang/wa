@@ -14,10 +14,14 @@ import (
 var tTestWat2Wasm_names = []string{
 	"testdata/empty.wat",
 	"testdata/empty_with_module_name.wat",
-	"testdata/hello-01.wat",
-	"testdata/hello-02.wat",
 	"testdata/memory-01.wat",
 	"testdata/memory-02.wat",
+	"testdata/memory-03.wat",
+	"testdata/memory-04.wat",
+	"testdata/hello-01.wat",
+	"testdata/hello-02.wat",
+	"testdata/func-01.wat",
+	// "testdata/func-02.wat",
 }
 
 func TestWat2Wasm(t *testing.T) {

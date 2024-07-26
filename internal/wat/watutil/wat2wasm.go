@@ -264,6 +264,10 @@ func (p *wat2wasmWorker) buildCodeSection() error {
 		for _, ins := range fn.Body.Insts {
 			fnCode.Body = p.buildInstruction(fnCode.Body, ins)
 		}
+
+		fnCode.Body = append(fnCode.Body, wasm.OpcodeEnd)
+
+		p.mWasm.CodeSection = append(p.mWasm.CodeSection, fnCode)
 	}
 
 	return nil

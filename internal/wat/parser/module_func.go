@@ -88,13 +88,13 @@ Loop:
 
 	// 解析指令
 	// 不支持指令折叠
+	if fn.Body == nil {
+		fn.Body = &ast.FuncBody{}
+	}
 	for {
 		p.consumeComments()
 		if !p.tok.IsIsntruction() {
 			break
-		}
-		if fn.Body == nil {
-			fn.Body = &ast.FuncBody{}
 		}
 
 		ins := p.parseInstruction()
