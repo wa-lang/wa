@@ -4,8 +4,9 @@
 
 WAT_FILES=$(wildcard ./*.wat)
 WAT_WASM_FILES=$(patsubst %.wat,%.wat.wasm,$(WAT_FILES))
+WAT_WASM_NONAME_FILES=$(patsubst %.wat,%.wat.noname.wasm,$(WAT_FILES))
 
-default: $(WAT_WASM_FILES)
+default: $(WAT_WASM_FILES) $(WAT_WASM_NONAME_FILES)
 	@echo "ok"
 
 clean:
@@ -13,3 +14,6 @@ clean:
 
 %.wat.wasm: %.wat
 	wat2wasm --debug-names $< -o $@
+
+%.wat.noname.wasm: %.wat
+	wat2wasm $< -o $@

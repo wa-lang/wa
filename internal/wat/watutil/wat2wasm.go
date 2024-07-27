@@ -13,12 +13,24 @@ import (
 	"wa-lang.org/wa/internal/wat/token"
 )
 
+type Options struct {
+	DisableDebugNames bool
+}
+
 func Wat2Wasm(filename string, source []byte) ([]byte, error) {
 	m, err := parser.ParseModule(filename, source)
 	if err != nil {
 		return nil, err
 	}
 	return newWat2wasmWorker(m).EncodeWasm(true)
+}
+
+func Wat2WasmWithOptions(filename string, source []byte, opt Options) ([]byte, error) {
+	m, err := parser.ParseModule(filename, source)
+	if err != nil {
+		return nil, err
+	}
+	return newWat2wasmWorker(m).EncodeWasm(!opt.DisableDebugNames)
 }
 
 type wat2wasmWorker struct {
@@ -40,7 +52,7 @@ func newWat2wasmWorker(mWat *ast.Module) *wat2wasmWorker {
 	return &wat2wasmWorker{mWat: mWat}
 }
 
-func (p *wat2wasmWorker) EncodeWasm(debugNames bool) ([]byte, error) {
+func (p *wat2wasmWorker) EncodeWasm(enableDebugNames bool) ([]byte, error) {
 	names := &wasm.NameSection{
 		ModuleName:    p.mWat.Name,
 		FunctionNames: wasm.NameMap{},
@@ -105,10 +117,12 @@ func (p *wat2wasmWorker) EncodeWasm(debugNames bool) ([]byte, error) {
 	}
 
 	// ID: 0
-	if debugNames {
+	if enableDebugNames {
 		if err := p.buildNameSection(); err != nil {
 			return nil, err
 		}
+	} else {
+		p.mWasm.NameSection = nil
 	}
 
 	return binary.EncodeModule(p.mWasm), nil

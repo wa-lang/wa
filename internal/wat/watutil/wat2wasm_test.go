@@ -32,8 +32,19 @@ var tTestWat2Wasm_names = []string{
 
 func TestWat2Wasm(t *testing.T) {
 	for i, name := range tTestWat2Wasm_names {
-		wat, expect := tLoadWatWasm(t, name)
+		wat, expect, _ := tLoadWatWasm(t, name)
 		got, err := watutil.Wat2Wasm(name, wat)
+		if err != nil {
+			t.Fatalf("%d: %v", i, err)
+		}
+		tCmpBytes(t, name, expect, got)
+	}
+}
+
+func TestWat2WasmWithOptions_nomae(t *testing.T) {
+	for i, name := range tTestWat2Wasm_names {
+		wat, _, expect := tLoadWatWasm(t, name)
+		got, err := watutil.Wat2WasmWithOptions(name, wat, watutil.Options{DisableDebugNames: true})
 		if err != nil {
 			t.Fatalf("%d: %v", i, err)
 		}
@@ -69,13 +80,17 @@ func tHexString(b []byte, off, size int) string {
 	return sb.String()
 }
 
-func tLoadWatWasm(t *testing.T, name string) (watBytes, wasmBytes []byte) {
+func tLoadWatWasm(t *testing.T, name string) (watBytes, wasmBytes, wasmNonameBytes []byte) {
 	var err error
 	watBytes, err = os.ReadFile(name)
 	if err != nil {
 		t.Fatalf("os.ReadFile %s failed: %v", name, err)
 	}
 	wasmBytes, err = os.ReadFile(name + ".wasm")
+	if err != nil {
+		t.Fatalf("os.ReadFile %s failed: %v", name, err)
+	}
+	wasmNonameBytes, err = os.ReadFile(name + ".noname.wasm")
 	if err != nil {
 		t.Fatalf("os.ReadFile %s failed: %v", name, err)
 	}
