@@ -166,7 +166,7 @@ func (p *wat2wasmWorker) buildImportSection() error {
 	for i, x := range p.mWat.Imports {
 		spec := &wasm.Import{
 			Module: x.ObjModule,
-			Name:   x.FuncName,
+			Name:   x.ObjName,
 		}
 
 		switch x.ObjKind {
@@ -315,7 +315,7 @@ func (p *wat2wasmWorker) buildCodeSection() error {
 			fnCode.LocalTypes = append(fnCode.LocalTypes, p.buildValueType(local.Type))
 		}
 		for _, ins := range fn.Body.Insts {
-			fnCode.Body = p.appendInstruction(fnCode.Body, ins)
+			fnCode.Body = p.appendInstruction(fnCode.Body, fn, ins)
 		}
 
 		fnCode.Body = append(fnCode.Body, wasm.OpcodeEnd)

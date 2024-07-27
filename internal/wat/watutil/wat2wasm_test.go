@@ -40,16 +40,16 @@ var tTestWat2WasmWithOptions_noname_files = []string{
 	"testdata/func-01.wat",
 	"testdata/func-02.wat",
 	"testdata/func-03.wat",
+	"testdata/func-04.wat",
 	"testdata/hello-01.wat",
 	"testdata/hello-02.wat",
 	"testdata/hello-03.wat",
-
 	"testdata/type-01.wat",
-	//"testdata/type-02.wat",
-	//"testdata/type-03.wat",
+	"testdata/type-02.wat",
 
-	// todo:
-	// "testdata/func-04.wat",
+	// debug:
+
+	// "testdata/type-03.wat",
 }
 
 func TestWat2Wasm(t *testing.T) {

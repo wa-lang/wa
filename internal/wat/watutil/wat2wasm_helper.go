@@ -35,6 +35,20 @@ func (p *wat2wasmWorker) findFuncIdx(ident string) wasm.Index {
 	}
 	return 0
 }
+func (p *wat2wasmWorker) findFuncLocalIdx(fn *ast.Func, ident string) wasm.Index {
+	for i, x := range fn.Type.Params {
+		if x.Name == ident {
+			return wasm.Index(i)
+		}
+	}
+	for i, x := range fn.Body.Locals {
+		if x.Name == ident {
+			return wasm.Index(len(fn.Type.Params) + i)
+		}
+	}
+	return 0
+}
+
 func (p *wat2wasmWorker) findTableIdx(ident string) wasm.Index {
 	if idx, err := strconv.Atoi(ident); err == nil {
 		return wasm.Index(idx)
@@ -83,9 +97,6 @@ func (p *wat2wasmWorker) findMemoryIdx(ident string) wasm.Index {
 func (p *wat2wasmWorker) findGlobalIdx(ident string) wasm.Index {
 	if idx, err := strconv.Atoi(ident); err == nil {
 		return wasm.Index(idx)
-	}
-	if !strings.HasPrefix(ident, "$") {
-		panic("invalid ident:" + ident)
 	}
 
 	var importCount int
@@ -149,6 +160,14 @@ func (p *wat2wasmWorker) encodeInt32(i int32) []byte {
 
 func (p *wat2wasmWorker) encodeInt64(i int64) []byte {
 	return leb128.EncodeInt64(i)
+}
+
+func (p *wat2wasmWorker) encodeUint32(i uint32) []byte {
+	return leb128.EncodeUint32(i)
+}
+
+func (p *wat2wasmWorker) encodeUint64(i uint64) []byte {
+	return leb128.EncodeUint64(i)
 }
 
 func (p *wat2wasmWorker) encodeFloat32(i float32) []byte {

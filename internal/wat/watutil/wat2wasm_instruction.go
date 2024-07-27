@@ -27,7 +27,7 @@ func (p *wat2wasmWorker) lookupTokenOpcode(tok token.Token) wasm.Opcode {
 func (p *wat2wasmWorker) buildInstruction_enterBlock() {}
 func (p *wat2wasmWorker) buildInstruction_leaveBlock() {}
 
-func (p *wat2wasmWorker) appendInstruction(dst []byte, i ast.Instruction) []byte {
+func (p *wat2wasmWorker) appendInstruction(dst []byte, fn *ast.Func, i ast.Instruction) []byte {
 	tok := i.Token()
 	opcode := p.lookupTokenOpcode(tok)
 
@@ -67,19 +67,47 @@ func (p *wat2wasmWorker) appendInstruction(dst []byte, i ast.Instruction) []byte
 	case token.INS_TYPED_SELECT:
 		return append(dst, opcode)
 	case token.INS_LOCAL_GET:
-		return append(dst, opcode)
+		ins := i.(ast.Ins_LocalGet)
+		x := p.findFuncLocalIdx(fn, ins.X)
+		dst = append(dst, opcode)
+		dst = append(dst, p.encodeUint32(x)...)
+		return dst
 	case token.INS_LOCAL_SET:
-		return append(dst, opcode)
+		ins := i.(ast.Ins_LocalSet)
+		x := p.findFuncLocalIdx(fn, ins.X)
+		dst = append(dst, opcode)
+		dst = append(dst, p.encodeUint32(x)...)
+		return dst
 	case token.INS_LOCAL_TEE:
-		return append(dst, opcode)
+		ins := i.(ast.Ins_LocalTee)
+		x := p.findFuncLocalIdx(fn, ins.X)
+		dst = append(dst, opcode)
+		dst = append(dst, p.encodeUint32(x)...)
+		return dst
 	case token.INS_GLOBAL_GET:
-		return append(dst, opcode)
+		ins := i.(ast.Ins_GlobalGet)
+		x := p.findGlobalIdx(ins.X)
+		dst = append(dst, opcode)
+		dst = append(dst, p.encodeUint32(x)...)
+		return dst
 	case token.INS_GLOBAL_SET:
-		return append(dst, opcode)
+		ins := i.(ast.Ins_GlobalSet)
+		x := p.findGlobalIdx(ins.X)
+		dst = append(dst, opcode)
+		dst = append(dst, p.encodeUint32(x)...)
+		return dst
 	case token.INS_TABLE_GET:
-		return append(dst, opcode)
+		ins := i.(ast.Ins_TableGet)
+		x := p.findTableIdx(ins.X)
+		dst = append(dst, opcode)
+		dst = append(dst, p.encodeUint32(x)...)
+		return dst
 	case token.INS_TABLE_SET:
-		return append(dst, opcode)
+		ins := i.(ast.Ins_TableSet)
+		x := p.findTableIdx(ins.X)
+		dst = append(dst, opcode)
+		dst = append(dst, p.encodeUint32(x)...)
+		return dst
 	case token.INS_I32_LOAD:
 		return append(dst, opcode)
 	case token.INS_I64_LOAD:
@@ -131,13 +159,25 @@ func (p *wat2wasmWorker) appendInstruction(dst []byte, i ast.Instruction) []byte
 	case token.INS_MEMORY_GROW:
 		return append(dst, opcode)
 	case token.INS_I32_CONST:
-		return append(dst, opcode)
+		ins := i.(ast.Ins_I32Const)
+		dst = append(dst, opcode)
+		dst = append(dst, p.encodeInt32(ins.X)...)
+		return dst
 	case token.INS_I64_CONST:
-		return append(dst, opcode)
+		ins := i.(ast.Ins_I64Const)
+		dst = append(dst, opcode)
+		dst = append(dst, p.encodeInt64(ins.X)...)
+		return dst
 	case token.INS_F32_CONST:
-		return append(dst, opcode)
+		ins := i.(ast.Ins_F32Const)
+		dst = append(dst, opcode)
+		dst = append(dst, p.encodeFloat32(ins.X)...)
+		return dst
 	case token.INS_F64_CONST:
-		return append(dst, opcode)
+		ins := i.(ast.Ins_F64Const)
+		dst = append(dst, opcode)
+		dst = append(dst, p.encodeFloat64(ins.X)...)
+		return dst
 	case token.INS_I32_EQZ:
 		return append(dst, opcode)
 	case token.INS_I32_EQ:
