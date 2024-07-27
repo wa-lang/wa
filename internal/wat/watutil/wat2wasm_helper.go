@@ -105,18 +105,6 @@ func (p *wat2wasmWorker) findGlobalIdx(ident string) wasm.Index {
 	return 0
 }
 
-// 构建函数类型
-func (p *wat2wasmWorker) buildFuncType(in *ast.FuncType) *wasm.FunctionType {
-	t := &wasm.FunctionType{}
-	for _, x := range in.Params {
-		t.Params = append(t.Params, p.buildValueType(x.Type))
-	}
-	for _, x := range in.Results {
-		t.Results = append(t.Results, p.buildValueType(x))
-	}
-	return t
-}
-
 // 构建值类型
 func (p *wat2wasmWorker) buildValueType(x token.Token) wasm.ValueType {
 	switch x {

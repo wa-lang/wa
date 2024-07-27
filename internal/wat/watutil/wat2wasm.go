@@ -136,20 +136,24 @@ func (p *wat2wasmWorker) buildTypeSection() error {
 	for _, spec := range p.mWat.Imports {
 		if spec.ObjKind == token.FUNC {
 			typ := p.buildFuncType(spec.FuncType)
-			p.mWasm.TypeSection = append(p.mWasm.TypeSection, typ)
+			p.registerFuncType(typ)
 		}
 	}
 
 	// Type段类型
 	for _, x := range p.mWat.Types {
 		typ := p.buildFuncType(x.Type)
-		p.mWasm.TypeSection = append(p.mWasm.TypeSection, typ)
+		p.registerFuncType(typ)
 	}
 
 	// 函数类型
-	for _, x := range p.mWat.Funcs {
-		typ := p.buildFuncType(x.Type)
-		p.mWasm.TypeSection = append(p.mWasm.TypeSection, typ)
+	for _, fn := range p.mWat.Funcs {
+		typ := p.buildFuncType(fn.Type)
+		p.registerFuncType(typ)
+
+		for _, typInBody := range p.appendFuncBodyTypes(nil, fn.Body.Insts) {
+			p.registerFuncType(typInBody)
+		}
 	}
 
 	return nil

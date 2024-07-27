@@ -73,7 +73,10 @@ func (p *parser) parseModuleSection_import_func(spec *ast.ImportSpec) {
 
 	spec.ObjKind = token.FUNC
 	spec.FuncType = &ast.FuncType{}
-	spec.FuncName = p.parseIdent()
+
+	if p.tok == token.IDENT {
+		spec.FuncName = p.parseIdent()
+	}
 
 	for {
 		if p.tok != token.LPAREN {
