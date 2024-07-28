@@ -14,6 +14,28 @@ import (
 	"wa-lang.org/wa/internal/wat/token"
 )
 
+func (p *wat2wasmWorker) lookupTokenOpcode(tok token.Token) wasm.Opcode {
+	return tokOpcodeMap[tok]
+}
+
+func (p *wat2wasmWorker) finfLabelIndex(label string) wasm.Index {
+	if idx, err := strconv.Atoi(label); err == nil {
+		return wasm.Index(idx)
+	}
+	for i := 0; i < len(p.labelScope); i++ {
+		if s := p.labelScope[len(p.labelScope)-i-1]; s == label {
+			return wasm.Index(i)
+		}
+	}
+	return 0
+}
+func (p *wat2wasmWorker) enterLabelScope(label string) {
+	p.labelScope = append(p.labelScope, label)
+}
+func (p *wat2wasmWorker) leaveLabelScope() {
+	p.labelScope = p.labelScope[:len(p.labelScope)-1]
+}
+
 func (p *wat2wasmWorker) findFuncIdx(ident string) wasm.Index {
 	if idx, err := strconv.Atoi(ident); err == nil {
 		return wasm.Index(idx)

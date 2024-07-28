@@ -379,11 +379,9 @@ func (p *parser) parseIns_Block() (i ast.Ins_Block) {
 	i.OpToken = ast.OpToken(p.tok)
 	p.acceptToken(token.INS_BLOCK)
 
-	p.consumeComments()
 	if p.tok == token.IDENT {
-		i.X = p.parseIdent()
+		i.Label = p.parseIdent()
 	}
-
 	if p.tok == token.LPAREN {
 		p.acceptToken(token.LPAREN)
 		p.acceptToken(token.RESULT)
@@ -407,11 +405,9 @@ func (p *parser) parseIns_Loop() (i ast.Ins_Loop) {
 	i.OpToken = ast.OpToken(p.tok)
 	p.acceptToken(token.INS_LOOP)
 
-	p.consumeComments()
 	if p.tok == token.IDENT {
-		i.X = p.parseIdent()
+		i.Label = p.parseIdent()
 	}
-
 	if p.tok == token.LPAREN {
 		p.acceptToken(token.LPAREN)
 		p.acceptToken(token.RESULT)
@@ -436,8 +432,10 @@ func (p *parser) parseIns_If() (i ast.Ins_If) {
 	i.OpToken = ast.OpToken(p.tok)
 	p.acceptToken(token.INS_IF)
 
-	// if (result i32 i32 i32 i32)
-	p.consumeComments()
+	// if $label (result i32 i32 i32 i32)
+	if p.tok == token.IDENT {
+		i.Label = p.parseIdent()
+	}
 	if p.tok == token.LPAREN {
 		p.acceptToken(token.LPAREN)
 		p.acceptToken(token.RESULT)

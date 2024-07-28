@@ -29,18 +29,19 @@ type Ins_Unreachable struct{ OpToken }
 type Ins_Nop struct{ OpToken }
 type Ins_Block struct {
 	OpToken
-	X       string
+	Label   string
 	Results []token.Token // 返回值类型: I32, I64, F32, F64
 	List    []Instruction
 }
 type Ins_Loop struct {
 	OpToken
-	X       string
+	Label   string
 	Results []token.Token // 返回值类型: I32, I64, F32, F64
 	List    []Instruction
 }
 type Ins_If struct {
 	OpToken
+	Label   string
 	Results []token.Token // 返回值类型: I32, I64, F32, F64
 	Body    []Instruction
 	Else    []Instruction

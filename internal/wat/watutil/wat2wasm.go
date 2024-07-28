@@ -40,6 +40,8 @@ type wat2wasmWorker struct {
 
 	inlinedTypeIndices []*inlinedTypeIndex
 	inlinedTypes       []*wasm.FunctionType
+
+	labelScope []string // 嵌套的lebel查询, if/block/loop
 }
 
 type inlinedTypeIndex struct {

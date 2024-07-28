@@ -47,6 +47,8 @@ var tTestWat2WasmWithOptions_noname_files = []string{
 	"testdata/type-01.wat",
 	"testdata/type-02.wat",
 
+	// "testdata/label-01.wat",
+
 	// debug:
 
 	// "testdata/type-03.wat",

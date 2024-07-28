@@ -40,14 +40,14 @@ func (p *wat2wasmWorker) appendFuncBodyTypes(dst []*wasm.FunctionType, insList [
 			dst = append(dst, p.buildFuncType(&ast.FuncType{Results: ins.Results}))
 			dst = append(dst, p.appendFuncBodyTypes(dst, ins.List)...)
 		case token.INS_LOOP:
-			ins := ins.(ast.Ins_Block)
+			ins := ins.(ast.Ins_Loop)
 			dst = append(dst, p.buildFuncType(&ast.FuncType{Results: ins.Results}))
 			dst = append(dst, p.appendFuncBodyTypes(dst, ins.List)...)
 		case token.INS_IF:
-			ins := ins.(ast.Ins_Block)
+			ins := ins.(ast.Ins_If)
 			dst = append(dst, p.buildFuncType(&ast.FuncType{Results: ins.Results}))
-			dst = append(dst, p.appendFuncBodyTypes(dst, ins.List)...)
-
+			dst = append(dst, p.appendFuncBodyTypes(dst, ins.Body)...)
+			dst = append(dst, p.appendFuncBodyTypes(dst, ins.Else)...)
 		}
 	}
 	return dst

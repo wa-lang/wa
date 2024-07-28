@@ -20,13 +20,6 @@ func init() {
 	}
 }
 
-func (p *wat2wasmWorker) lookupTokenOpcode(tok token.Token) wasm.Opcode {
-	return tokOpcodeMap[tok]
-}
-
-func (p *wat2wasmWorker) buildInstruction_enterBlock() {}
-func (p *wat2wasmWorker) buildInstruction_leaveBlock() {}
-
 func (p *wat2wasmWorker) appendInstruction(dst []byte, fn *ast.Func, i ast.Instruction) []byte {
 	tok := i.Token()
 	opcode := p.lookupTokenOpcode(tok)
@@ -37,13 +30,41 @@ func (p *wat2wasmWorker) appendInstruction(dst []byte, fn *ast.Func, i ast.Instr
 	case token.INS_NOP:
 		return append(dst, opcode)
 	case token.INS_BLOCK:
-		blk := i.(ast.Ins_Block)
-		_ = blk
-		return append(dst, opcode)
+		ins := i.(ast.Ins_Block)
+		p.enterLabelScope(ins.Label)
+		defer p.leaveLabelScope()
+		dst = append(dst, opcode)
+		for _, x := range ins.List {
+			dst = append(dst, p.appendInstruction(dst, fn, x)...)
+		}
+		dst = append(dst, wasm.OpcodeEnd)
+		return dst
 	case token.INS_LOOP:
-		return append(dst, opcode)
+		ins := i.(ast.Ins_Loop)
+		p.enterLabelScope(ins.Label)
+		defer p.leaveLabelScope()
+		dst = append(dst, opcode)
+		for _, x := range ins.List {
+			dst = append(dst, p.appendInstruction(dst, fn, x)...)
+		}
+		dst = append(dst, wasm.OpcodeEnd)
+		return dst
 	case token.INS_IF:
-		return append(dst, opcode)
+		ins := i.(ast.Ins_If)
+		p.enterLabelScope(ins.Label)
+		defer p.leaveLabelScope()
+		dst = append(dst, opcode)
+		for _, x := range ins.Body {
+			dst = append(dst, p.appendInstruction(dst, fn, x)...)
+		}
+		if len(ins.Else) > 0 {
+			dst = append(dst, wasm.OpcodeElse)
+			for _, x := range ins.Else {
+				dst = append(dst, p.appendInstruction(dst, fn, x)...)
+			}
+		}
+		dst = append(dst, wasm.OpcodeEnd)
+		return dst
 	case token.INS_ELSE:
 		return append(dst, opcode)
 	case token.INS_END:
