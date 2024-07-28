@@ -8,6 +8,22 @@ import (
 	"wa-lang.org/wa/internal/wat/token"
 )
 
+func (p *wat2wasmWorker) mustFindFuncTypeIndex(fn *ast.Func) wasm.Index {
+	typ := &wasm.FunctionType{}
+	for _, x := range fn.Type.Params {
+		typ.Params = append(typ.Params, p.buildValueType(x.Type))
+	}
+	for _, x := range fn.Type.Results {
+		typ.Results = append(typ.Results, p.buildValueType(x))
+	}
+	for i, x := range p.mWasm.TypeSection {
+		if typ.EqualsSignature(x.Params, x.Results) {
+			return wasm.Index(i)
+		}
+	}
+	panic("unreachable")
+}
+
 func (p *wat2wasmWorker) findBlockTypeIndex(results []token.Token) int32 {
 	typ := &wasm.FunctionType{}
 	for _, x := range results {

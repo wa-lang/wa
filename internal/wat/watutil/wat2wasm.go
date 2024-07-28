@@ -256,15 +256,9 @@ func (p *wat2wasmWorker) buildGlobalSection() error {
 func (p *wat2wasmWorker) buildFunctionSection() error {
 	p.mWasm.FunctionSection = []wasm.Index{}
 
-	var importFuncCount int
-	for _, x := range p.mWat.Imports {
-		if x.ObjKind == token.FUNC {
-			importFuncCount++
-		}
-	}
-	for i := range p.mWat.Funcs {
+	for _, fn := range p.mWat.Funcs {
 		p.mWasm.FunctionSection = append(
-			p.mWasm.FunctionSection, wasm.Index(importFuncCount+i),
+			p.mWasm.FunctionSection, p.mustFindFuncTypeIndex(fn),
 		)
 	}
 
