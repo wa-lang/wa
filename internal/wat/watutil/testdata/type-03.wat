@@ -1,5 +1,5 @@
 ;; 确保类型的顺序
-(module $type.01
+(module $type.03
 	(import "env" "foo" (func))
 	(func $bar
 		block (result i32 i64)

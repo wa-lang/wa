@@ -200,3 +200,18 @@ func (p *wat2wasmWorker) encodeFloat64(i float64) []byte {
 	binary.LittleEndian.PutUint64(nil, math.Float64bits(i))
 	return b
 }
+func (p *wat2wasmWorker) encodeAlign(align uint) byte {
+	switch align {
+	case 1:
+		return 0
+	case 2:
+		return 1
+	case 4:
+		return 2
+	case 8:
+		return 3
+	case 16:
+		return 4
+	}
+	panic("unreachable")
+}
