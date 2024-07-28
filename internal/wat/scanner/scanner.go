@@ -1,3 +1,5 @@
+// 版权 @2024 凹语言 作者。保留所有权利。
+
 package scanner
 
 import (
@@ -684,14 +686,8 @@ func (s *Scanner) skipWhitespace() {
 	}
 }
 
-// Helper functions for scanning multi-byte tokens such as >> += >>= .
-// Different routines recognize different length tok_i based on matches
-// of ch_i. If a token ends in '=', the result is tok1 or tok3
-// respectively. Otherwise, the result is tok0 if there was no other
-// matching character, or tok2 if the matching character was ch2.
-
 // Scan scans the next token and returns the token position, the token,
-// and its literal string if applicable. The source end is indicated by
+// and its string encoded value if applicable. The source end is indicated by
 // token.EOF.
 //
 // If the returned token is a literal (token.IDENT, token.INT, token.FLOAT,
@@ -699,11 +695,6 @@ func (s *Scanner) skipWhitespace() {
 // has the corresponding value.
 //
 // If the returned token is a keyword, the literal string is the keyword.
-//
-// If the returned token is token.SEMICOLON, the corresponding
-// literal string is ";" if the semicolon was present in the source,
-// and "\n" if the semicolon was inserted because of a newline or
-// at EOF.
 //
 // If the returned token is token.ILLEGAL, the literal string is the
 // offending character.
@@ -717,9 +708,8 @@ func (s *Scanner) skipWhitespace() {
 // must check the scanner's ErrorCount or the number of calls
 // of the error handler, if there was one installed.
 //
-// Scan adds line information to the file added to the file
-// set with Init. Token positions are relative to that file
-// and thus relative to the file set.
+// Scan adds line information to the file with Init. Token positions
+// are relative to that file.
 func (s *Scanner) Scan() (pos token.Pos, tok token.Token, tokValue string) {
 scanAgain:
 	s.skipWhitespace()
