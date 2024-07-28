@@ -18,7 +18,7 @@ func (p *wat2wasmWorker) lookupTokenOpcode(tok token.Token) wasm.Opcode {
 	return tokOpcodeMap[tok]
 }
 
-func (p *wat2wasmWorker) finfLabelIndex(label string) wasm.Index {
+func (p *wat2wasmWorker) findLabelIndex(label string) wasm.Index {
 	if idx, err := strconv.Atoi(label); err == nil {
 		return wasm.Index(idx)
 	}
@@ -98,9 +98,6 @@ func (p *wat2wasmWorker) findMemoryIndex(ident string) wasm.Index {
 		return wasm.Index(idx)
 	}
 
-	if !strings.HasPrefix(ident, "$") {
-		panic("invalid ident:" + ident)
-	}
 	var importCount int
 	for _, x := range p.mWat.Imports {
 		if x.ObjKind == token.MEMORY {

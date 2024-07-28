@@ -439,7 +439,7 @@ func (p *parser) parseIns_If() (i ast.Ins_If) {
 	if p.tok == token.LPAREN {
 		p.acceptToken(token.LPAREN)
 		p.acceptToken(token.RESULT)
-		p.parseNumberTypeList()
+		i.Results = p.parseNumberTypeList()
 		p.acceptToken(token.RPAREN)
 	}
 

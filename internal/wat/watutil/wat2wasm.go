@@ -137,24 +137,26 @@ func (p *wat2wasmWorker) buildTypeSection() error {
 	// 导入函数类型
 	for _, spec := range p.mWat.Imports {
 		if spec.ObjKind == token.FUNC {
-			typ := p.buildFuncType(spec.FuncType)
-			p.registerFuncType(typ)
+			if err := p.buildFuncType(spec.FuncType); err != nil {
+				return err
+			}
 		}
 	}
 
 	// Type段类型
 	for _, x := range p.mWat.Types {
-		typ := p.buildFuncType(x.Type)
-		p.registerFuncType(typ)
+		if err := p.buildFuncType(x.Type); err != nil {
+			return err
+		}
 	}
 
 	// 函数类型
 	for _, fn := range p.mWat.Funcs {
-		typ := p.buildFuncType(fn.Type)
-		p.registerFuncType(typ)
-
-		for _, typInBody := range p.appendFuncBodyTypes(nil, fn.Body.Insts) {
-			p.registerFuncType(typInBody)
+		if err := p.buildFuncType(fn.Type); err != nil {
+			return err
+		}
+		if err := p.buildFuncBodyTypes(fn.Body.Insts); err != nil {
+			return err
 		}
 	}
 
@@ -317,7 +319,7 @@ func (p *wat2wasmWorker) buildCodeSection() error {
 			fnCode.LocalTypes = append(fnCode.LocalTypes, p.buildValueType(local.Type))
 		}
 		for _, ins := range fn.Body.Insts {
-			fnCode.Body = p.appendInstruction(fnCode.Body, fn, ins)
+			p.buildInstruction(fnCode, fn, ins)
 		}
 
 		fnCode.Body = append(fnCode.Body, wasm.OpcodeEnd)
