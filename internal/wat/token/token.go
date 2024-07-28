@@ -242,11 +242,11 @@ const (
 	INS_F64_CONVERT_I32_U   // 0xb8, f64.convert_i32_u
 	INS_F64_CONVERT_I64_S   // 0xb9, f64.convert_i64_s
 	INS_F64_CONVERT_I64_U   // 0xba, f64.convert_i64_u
-	INS_F64_DEMOTE_F32      // 0xbb, f64.demote_f32
+	INS_F64_PROMOTE_F32     // 0xbb, f64.promote_f32
 	INS_I32_REINTERPRET_F32 // 0xbc, i32.reinterpret_f32
 	INS_I64_REINTERPRET_F64 // 0xbd, i64.reinterpret_f64
-	INS_I32_REINTERPRET_I32 // 0xbe, i32.reinterpret_i32
-	INS_I64_REINTERPRET_I64 // 0xbf, i64.reinterpret_i64
+	INS_F32_REINTERPRET_I32 // 0xbe, f32.reinterpret_i32
+	INS_F64_REINTERPRET_I64 // 0xbf, f64.reinterpret_i64
 
 	instruction_end
 )
@@ -464,11 +464,11 @@ var tokens = [...]string{
 	INS_F64_CONVERT_I32_U:   "f64.convert_i32_u",
 	INS_F64_CONVERT_I64_S:   "f64.convert_i64_s",
 	INS_F64_CONVERT_I64_U:   "f64.convert_i64_u",
-	INS_F64_DEMOTE_F32:      "f64.demote_f32",
+	INS_F64_PROMOTE_F32:     "f64.promote_f32",
 	INS_I32_REINTERPRET_F32: "i32.reinterpret_f32",
 	INS_I64_REINTERPRET_F64: "i64.reinterpret_f64",
-	INS_I32_REINTERPRET_I32: "i32.reinterpret_i32",
-	INS_I64_REINTERPRET_I64: "i64.reinterpret_i64",
+	INS_F32_REINTERPRET_I32: "f32.reinterpret_i32",
+	INS_F64_REINTERPRET_I64: "f64.reinterpret_i64",
 }
 
 func (tok Token) String() string {

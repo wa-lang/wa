@@ -50,13 +50,11 @@ type Ins_Else struct{ OpToken }
 type Ins_End struct{ OpToken }
 type Ins_Br struct {
 	OpToken
-	X string
+	X string // todo: IdxOrLabel
 }
 type Ins_BrIf struct {
 	OpToken
-	X    string
-	Body []Instruction
-	Else []Instruction
+	X string
 }
 type Ins_BrTable struct {
 	OpToken
@@ -76,10 +74,11 @@ type Ins_CallIndirect struct {
 type Ins_Drop struct{ OpToken }
 type Ins_Select struct {
 	OpToken
-	X string
-	Y string
 }
-type Ins_TypedSelect struct{ OpToken }
+type Ins_TypedSelect struct {
+	OpToken
+	Typ string
+}
 type Ins_LocalGet struct {
 	OpToken
 	X string
@@ -110,121 +109,121 @@ type Ins_TableSet struct {
 }
 type Ins_I32Load struct {
 	OpToken
-	Offset uint
 	Align  uint
+	Offset uint
 }
 type Ins_I64Load struct {
 	OpToken
-	Offset uint
 	Align  uint
+	Offset uint
 }
 type Ins_F32Load struct {
 	OpToken
-	Offset uint
 	Align  uint
+	Offset uint
 }
 type Ins_F64Load struct {
 	OpToken
-	Offset uint
 	Align  uint
+	Offset uint
 }
 type Ins_I32Load8S struct {
 	OpToken
-	Offset uint
 	Align  uint
+	Offset uint
 }
 type Ins_I32Load8U struct {
 	OpToken
-	Offset uint
 	Align  uint
+	Offset uint
 }
 type Ins_I32Load16S struct {
 	OpToken
-	Offset uint
 	Align  uint
+	Offset uint
 }
 type Ins_I32Load16U struct {
 	OpToken
-	Offset uint
 	Align  uint
+	Offset uint
 }
 type Ins_I64Load8S struct {
 	OpToken
-	Offset uint
 	Align  uint
+	Offset uint
 }
 type Ins_I64Load8U struct {
 	OpToken
-	Offset uint
 	Align  uint
+	Offset uint
 }
 type Ins_I64Load16S struct {
 	OpToken
-	Offset uint
 	Align  uint
+	Offset uint
 }
 type Ins_I64Load16U struct {
 	OpToken
-	Offset uint
 	Align  uint
+	Offset uint
 }
 type Ins_I64Load32S struct {
 	OpToken
-	Offset uint
 	Align  uint
+	Offset uint
 }
 type Ins_I64Load32U struct {
 	OpToken
-	Offset uint
 	Align  uint
+	Offset uint
 }
 
 type Ins_I32Store struct {
 	OpToken
-	Offset uint
 	Align  uint
+	Offset uint
 }
 
 type Ins_I64Store struct {
 	OpToken
-	Offset uint
 	Align  uint
+	Offset uint
 }
 type Ins_F32Store struct {
 	OpToken
-	Offset uint
 	Align  uint
+	Offset uint
 }
 type Ins_F64Store struct {
 	OpToken
-	Offset uint
 	Align  uint
+	Offset uint
 }
 
 type Ins_I32Store8 struct {
 	OpToken
-	Offset uint
 	Align  uint
+	Offset uint
 }
 type Ins_I32Store16 struct {
 	OpToken
-	Offset uint
 	Align  uint
+	Offset uint
 }
 type Ins_I64Store8 struct {
 	OpToken
-	Offset uint
 	Align  uint
+	Offset uint
 }
 type Ins_I64Store16 struct {
 	OpToken
-	Offset uint
 	Align  uint
+	Offset uint
 }
 type Ins_I64Store32 struct {
 	OpToken
-	Offset uint
 	Align  uint
+	Offset uint
 }
 
 type Ins_MemorySize struct{ OpToken }
@@ -373,8 +372,8 @@ type Ins_F64ConvertI32S struct{ OpToken }
 type Ins_F64ConvertI32U struct{ OpToken }
 type Ins_F64ConvertI64S struct{ OpToken }
 type Ins_F64ConvertI64U struct{ OpToken }
-type Ins_F64DemoteF32 struct{ OpToken }
+type Ins_F64PromoteF32 struct{ OpToken }
 type Ins_I32ReintepretF32 struct{ OpToken }
 type Ins_I64ReintepretF64 struct{ OpToken }
-type Ins_I32ReintepretI32 struct{ OpToken }
-type Ins_I64ReintepretI64 struct{ OpToken }
+type Ins_F32ReintepretI32 struct{ OpToken }
+type Ins_F64ReintepretI64 struct{ OpToken }

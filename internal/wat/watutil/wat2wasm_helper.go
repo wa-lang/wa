@@ -36,7 +36,7 @@ func (p *wat2wasmWorker) leaveLabelScope() {
 	p.labelScope = p.labelScope[:len(p.labelScope)-1]
 }
 
-func (p *wat2wasmWorker) findFuncIdx(ident string) wasm.Index {
+func (p *wat2wasmWorker) findFuncIndex(ident string) wasm.Index {
 	if idx, err := strconv.Atoi(ident); err == nil {
 		return wasm.Index(idx)
 	}
@@ -57,7 +57,7 @@ func (p *wat2wasmWorker) findFuncIdx(ident string) wasm.Index {
 	}
 	return 0
 }
-func (p *wat2wasmWorker) findFuncLocalIdx(fn *ast.Func, ident string) wasm.Index {
+func (p *wat2wasmWorker) findFuncLocalIndex(fn *ast.Func, ident string) wasm.Index {
 	for i, x := range fn.Type.Params {
 		if x.Name == ident {
 			return wasm.Index(i)
@@ -71,7 +71,7 @@ func (p *wat2wasmWorker) findFuncLocalIdx(fn *ast.Func, ident string) wasm.Index
 	return 0
 }
 
-func (p *wat2wasmWorker) findTableIdx(ident string) wasm.Index {
+func (p *wat2wasmWorker) findTableIndex(ident string) wasm.Index {
 	if idx, err := strconv.Atoi(ident); err == nil {
 		return wasm.Index(idx)
 	}
@@ -93,7 +93,7 @@ func (p *wat2wasmWorker) findTableIdx(ident string) wasm.Index {
 
 	return 0
 }
-func (p *wat2wasmWorker) findMemoryIdx(ident string) wasm.Index {
+func (p *wat2wasmWorker) findMemoryIndex(ident string) wasm.Index {
 	if idx, err := strconv.Atoi(ident); err == nil {
 		return wasm.Index(idx)
 	}
@@ -116,7 +116,7 @@ func (p *wat2wasmWorker) findMemoryIdx(ident string) wasm.Index {
 	return 0
 }
 
-func (p *wat2wasmWorker) findGlobalIdx(ident string) wasm.Index {
+func (p *wat2wasmWorker) findGlobalIndex(ident string) wasm.Index {
 	if idx, err := strconv.Atoi(ident); err == nil {
 		return wasm.Index(idx)
 	}

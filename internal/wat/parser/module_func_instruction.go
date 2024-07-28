@@ -349,16 +349,16 @@ func (p *parser) parseInstruction() ast.Instruction {
 		return p.parseIns_F64ConvertI64S()
 	case token.INS_F64_CONVERT_I64_U:
 		return p.parseIns_F64ConvertI64U()
-	case token.INS_F64_DEMOTE_F32:
-		return p.parseIns_F64DemoteF32()
+	case token.INS_F64_PROMOTE_F32:
+		return p.parseIns_F64PromoteF32()
 	case token.INS_I32_REINTERPRET_F32:
 		return p.parseIns_I32ReintepretF32()
 	case token.INS_I64_REINTERPRET_F64:
 		return p.parseIns_I64ReintepretF64()
-	case token.INS_I32_REINTERPRET_I32:
-		return p.parseIns_I32ReintepretI32()
-	case token.INS_I64_REINTERPRET_I64:
-		return p.parseIns_I64ReintepretI64()
+	case token.INS_F32_REINTERPRET_I32:
+		return p.parseIns_F32ReintepretI32()
+	case token.INS_F64_REINTERPRET_I64:
+		return p.parseIns_F64ReintepretI64()
 	}
 
 	p.errorf(p.pos, "bad token: %v, lit: %q", p.tok, p.lit)
@@ -483,30 +483,7 @@ func (p *parser) parseIns_Br() (i ast.Ins_Br) {
 func (p *parser) parseIns_BrIf() (i ast.Ins_BrIf) {
 	i.OpToken = ast.OpToken(p.tok)
 	p.acceptToken(token.INS_BR_IF)
-
 	i.X = p.parseIdentOrIndex()
-
-	for {
-		p.consumeComments()
-		if p.tok == token.INS_END || p.tok == token.INS_ELSE {
-			break
-		}
-		i.Body = append(i.Body, p.parseInstruction())
-	}
-	if p.tok == token.INS_ELSE {
-		p.acceptToken(token.INS_ELSE)
-
-		for {
-			p.consumeComments()
-			if p.tok == token.INS_END {
-				break
-			}
-			i.Else = append(i.Else, p.parseInstruction())
-		}
-	}
-
-	p.consumeComments()
-	p.acceptToken(token.INS_END)
 	return
 }
 
@@ -546,12 +523,13 @@ func (p *parser) parseIns_Drop() (i ast.Ins_Drop) {
 func (p *parser) parseIns_Select() (i ast.Ins_Select) {
 	i.OpToken = ast.OpToken(p.tok)
 	p.acceptToken(token.INS_SELECT)
-	i.X = p.parseIdentOrIndex()
-	i.Y = p.parseIdentOrIndex()
 	return
 }
-func (p *parser) parseIns_TypedSelect() ast.Ins_TypedSelect {
-	panic("TODO")
+func (p *parser) parseIns_TypedSelect() (i ast.Ins_TypedSelect) {
+	i.OpToken = ast.OpToken(p.tok)
+	p.acceptToken(token.INS_TYPED_SELECT)
+	i.Typ = p.parseIdentOrIndex()
+	return
 }
 
 func (p *parser) parseIns_LocalGet() (i ast.Ins_LocalGet) {
@@ -1662,9 +1640,9 @@ func (p *parser) parseIns_F64ConvertI64U() (i ast.Ins_F64ConvertI64U) {
 	p.acceptToken(token.INS_F64_CONVERT_I64_U)
 	return
 }
-func (p *parser) parseIns_F64DemoteF32() (i ast.Ins_F64DemoteF32) {
+func (p *parser) parseIns_F64PromoteF32() (i ast.Ins_F64PromoteF32) {
 	i.OpToken = ast.OpToken(p.tok)
-	p.acceptToken(token.INS_F64_DEMOTE_F32)
+	p.acceptToken(token.INS_F64_PROMOTE_F32)
 	return
 }
 func (p *parser) parseIns_I32ReintepretF32() (i ast.Ins_I32ReintepretF32) {
@@ -1677,13 +1655,13 @@ func (p *parser) parseIns_I64ReintepretF64() (i ast.Ins_I64ReintepretF64) {
 	p.acceptToken(token.INS_I64_REINTERPRET_F64)
 	return
 }
-func (p *parser) parseIns_I32ReintepretI32() (i ast.Ins_I32ReintepretI32) {
+func (p *parser) parseIns_F32ReintepretI32() (i ast.Ins_F32ReintepretI32) {
 	i.OpToken = ast.OpToken(p.tok)
-	p.acceptToken(token.INS_I32_REINTERPRET_I32)
+	p.acceptToken(token.INS_F32_REINTERPRET_I32)
 	return
 }
-func (p *parser) parseIns_I64ReintepretI64() (i ast.Ins_I64ReintepretI64) {
+func (p *parser) parseIns_F64ReintepretI64() (i ast.Ins_F64ReintepretI64) {
 	i.OpToken = ast.OpToken(p.tok)
-	p.acceptToken(token.INS_I64_REINTERPRET_I64)
+	p.acceptToken(token.INS_F64_REINTERPRET_I64)
 	return
 }

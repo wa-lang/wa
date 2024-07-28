@@ -291,7 +291,7 @@ func (p *wat2wasmWorker) buildElementSection() error {
 	for _, x := range p.mWat.Elem {
 		initList := []*wasm.Index{}
 		for _, ident := range x.Values {
-			idx := p.findFuncIdx(ident)
+			idx := p.findFuncIndex(ident)
 			initList = append(initList, &idx)
 		}
 
@@ -417,16 +417,16 @@ func (p *wat2wasmWorker) buildExportSection() error {
 		switch x.Kind {
 		case token.FUNC:
 			spec.Type = wasm.ExternTypeFunc
-			spec.Index = p.findFuncIdx(x.FuncIdx)
+			spec.Index = p.findFuncIndex(x.FuncIdx)
 		case token.MEMORY:
 			spec.Type = wasm.ExternTypeMemory
-			spec.Index = p.findMemoryIdx(x.MemoryIdx)
+			spec.Index = p.findMemoryIndex(x.MemoryIdx)
 		case token.TABLE:
 			spec.Type = wasm.ExternTypeTable
-			spec.Index = p.findTableIdx(x.TableIdx)
+			spec.Index = p.findTableIndex(x.TableIdx)
 		case token.GLOBAL:
 			spec.Type = wasm.ExternTypeGlobal
-			spec.Index = p.findGlobalIdx(x.GlobalIdx)
+			spec.Index = p.findGlobalIndex(x.GlobalIdx)
 		default:
 			panic("unreachable")
 		}
