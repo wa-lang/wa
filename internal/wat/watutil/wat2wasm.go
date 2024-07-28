@@ -134,19 +134,19 @@ func (p *wat2wasmWorker) EncodeWasm(enableDebugNames bool) ([]byte, error) {
 func (p *wat2wasmWorker) buildTypeSection() error {
 	p.mWasm.TypeSection = []*wasm.FunctionType{}
 
+	// Type段类型
+	for _, x := range p.mWat.Types {
+		if err := p.buildFuncType(x.Type); err != nil {
+			return err
+		}
+	}
+
 	// 导入函数类型
 	for _, spec := range p.mWat.Imports {
 		if spec.ObjKind == token.FUNC {
 			if err := p.buildFuncType(spec.FuncType); err != nil {
 				return err
 			}
-		}
-	}
-
-	// Type段类型
-	for _, x := range p.mWat.Types {
-		if err := p.buildFuncType(x.Type); err != nil {
-			return err
 		}
 	}
 
@@ -167,7 +167,7 @@ func (p *wat2wasmWorker) buildTypeSection() error {
 func (p *wat2wasmWorker) buildImportSection() error {
 	p.mWasm.ImportSection = []*wasm.Import{}
 
-	for i, x := range p.mWat.Imports {
+	for _, x := range p.mWat.Imports {
 		spec := &wasm.Import{
 			Module: x.ObjModule,
 			Name:   x.ObjName,
@@ -176,7 +176,7 @@ func (p *wat2wasmWorker) buildImportSection() error {
 		switch x.ObjKind {
 		case token.FUNC:
 			spec.Type = wasm.ExternTypeFunc
-			spec.DescFunc = wasm.Index(i)
+			spec.DescFunc = p.mustFindFuncTypeIndex(x.FuncType)
 		case token.TABLE:
 			spec.Type = wasm.ExternTypeTable
 			spec.DescTable = &wasm.Table{}
@@ -258,7 +258,7 @@ func (p *wat2wasmWorker) buildFunctionSection() error {
 
 	for _, fn := range p.mWat.Funcs {
 		p.mWasm.FunctionSection = append(
-			p.mWasm.FunctionSection, p.mustFindFuncTypeIndex(fn),
+			p.mWasm.FunctionSection, p.mustFindFuncTypeIndex(fn.Type),
 		)
 	}
 

@@ -8,12 +8,12 @@ import (
 	"wa-lang.org/wa/internal/wat/token"
 )
 
-func (p *wat2wasmWorker) mustFindFuncTypeIndex(fn *ast.Func) wasm.Index {
+func (p *wat2wasmWorker) mustFindFuncTypeIndex(fnType *ast.FuncType) wasm.Index {
 	typ := &wasm.FunctionType{}
-	for _, x := range fn.Type.Params {
+	for _, x := range fnType.Params {
 		typ.Params = append(typ.Params, p.buildValueType(x.Type))
 	}
-	for _, x := range fn.Type.Results {
+	for _, x := range fnType.Results {
 		typ.Results = append(typ.Results, p.buildValueType(x))
 	}
 	for i, x := range p.mWasm.TypeSection {
