@@ -42,6 +42,7 @@ var tTestWat2WasmWithOptions_noname_files = []string{
 	"testdata/func-03.wat",
 	"testdata/func-04.wat",
 	"testdata/func-05.wat",
+	"testdata/func-06.wat",
 	"testdata/hello-01.wat",
 	"testdata/hello-02.wat",
 	"testdata/hello-03.wat",

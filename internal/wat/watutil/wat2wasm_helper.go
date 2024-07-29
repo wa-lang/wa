@@ -6,7 +6,6 @@ import (
 	"encoding/binary"
 	"math"
 	"strconv"
-	"strings"
 
 	"wa-lang.org/wa/internal/3rdparty/wazero/internalx/leb128"
 	"wa-lang.org/wa/internal/3rdparty/wazero/internalx/wasm"
@@ -58,6 +57,10 @@ func (p *wat2wasmWorker) findFuncIndex(ident string) wasm.Index {
 	return 0
 }
 func (p *wat2wasmWorker) findFuncLocalIndex(fn *ast.Func, ident string) wasm.Index {
+	if idx, err := strconv.Atoi(ident); err == nil {
+		return wasm.Index(idx)
+	}
+
 	for i, x := range fn.Type.Params {
 		if x.Name == ident {
 			return wasm.Index(i)
@@ -74,9 +77,6 @@ func (p *wat2wasmWorker) findFuncLocalIndex(fn *ast.Func, ident string) wasm.Ind
 func (p *wat2wasmWorker) findTableIndex(ident string) wasm.Index {
 	if idx, err := strconv.Atoi(ident); err == nil {
 		return wasm.Index(idx)
-	}
-	if !strings.HasPrefix(ident, "$") {
-		panic("invalid ident:" + ident)
 	}
 	var importCount int
 	for _, x := range p.mWat.Imports {

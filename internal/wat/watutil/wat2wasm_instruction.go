@@ -129,9 +129,11 @@ func (p *wat2wasmWorker) buildInstruction(dst *wasm.Code, fn *ast.Func, i ast.In
 
 	case token.INS_CALL_INDIRECT:
 		ins := i.(ast.Ins_CallIndirect)
-		x := p.findTableIndex(ins.X)
+		tableIdx := p.findTableIndex(ins.TableIdx)
+		typeIdx := p.findFuncIndex(ins.TypeIdx)
 		dst.Body = append(dst.Body, wasm.OpcodeCallIndirect)
-		dst.Body = append(dst.Body, p.encodeUint32(x)...)
+		dst.Body = append(dst.Body, p.encodeUint32(tableIdx)...)
+		dst.Body = append(dst.Body, p.encodeUint32(typeIdx)...)
 
 	case token.INS_DROP:
 		dst.Body = append(dst.Body, wasm.OpcodeDrop)

@@ -506,12 +506,17 @@ func (p *parser) parseIns_Call() (i ast.Ins_Call) {
 }
 
 func (p *parser) parseIns_CallIndirect() (i ast.Ins_CallIndirect) {
-	// call_indirect (type $$onFree)
+	// call_indirect $idx? (type $$onFree)
 	i.OpToken = ast.OpToken(p.tok)
 	p.acceptToken(token.INS_CALL_INDIRECT)
+	if p.tok != token.LPAREN {
+		i.TableIdx = p.parseIdentOrIndex()
+	} else {
+		i.TableIdx = "0"
+	}
 	p.acceptToken(token.LPAREN)
 	p.acceptToken(token.TYPE)
-	i.X = p.parseIdentOrIndex()
+	i.TypeIdx = p.parseIdentOrIndex()
 	p.acceptToken(token.RPAREN)
 	return
 }

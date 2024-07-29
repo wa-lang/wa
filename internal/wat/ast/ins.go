@@ -69,7 +69,8 @@ type Ins_Call struct {
 
 type Ins_CallIndirect struct {
 	OpToken
-	X string
+	TableIdx string
+	TypeIdx  string
 }
 type Ins_Drop struct{ OpToken }
 type Ins_Select struct {
