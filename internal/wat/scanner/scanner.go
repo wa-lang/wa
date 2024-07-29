@@ -346,7 +346,7 @@ func isDigit(ch rune) bool {
 
 func (s *Scanner) scanIdentifier() string {
 	offs := s.offset
-	for s.ch == '$' || s.ch == '.' || isLetter(s.ch) || isDigit(s.ch) {
+	for s.ch == '$' || s.ch == '.' || s.ch == '#' || isLetter(s.ch) || isDigit(s.ch) {
 		s.next()
 	}
 	return string(s.src[offs:s.offset])
