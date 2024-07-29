@@ -45,12 +45,16 @@ var tTestWat2WasmWithOptions_noname_files = []string{
 	"testdata/hello-01.wat",
 	"testdata/hello-02.wat",
 	"testdata/hello-03.wat",
+	"testdata/hello-04.wat",
 	"testdata/type-01.wat",
 	"testdata/type-02.wat",
 	"testdata/type-03.wat",
 	"testdata/label-01.wat",
-
-	// debug:
+	"testdata/wa-runtime-01.wat",
+	"testdata/wa-runtime-02.wat",
+	"testdata/wa-runtime-03.wat",
+	"testdata/wa-runtime-04.wat",
+	"testdata/wa-runtime-05.wat",
 }
 
 func TestWat2Wasm(t *testing.T) {
@@ -88,7 +92,7 @@ func tCmpBytes(t *testing.T, name string, expect, got []byte) {
 
 	os.WriteFile("testdata/a.out.wasm", got, 0666)
 
-	t.Fatalf("%s:\nexpect[%04X]: %s\n   got[%04X]: %s",
+	t.Fatalf("%s:\nexpect[%08X]: %s\n   got[%08X]: %s",
 		name,
 		i, tHexString(expect, i, 16),
 		i, tHexString(got, i, 16),

@@ -113,11 +113,11 @@ func (p *wat2wasmWorker) buildInstruction(dst *wasm.Code, fn *ast.Func, i ast.In
 	case token.INS_BR_TABLE:
 		ins := i.(ast.Ins_BrTable)
 		dst.Body = append(dst.Body, wasm.OpcodeBrTable)
+		dst.Body = append(dst.Body, p.encodeUint32(uint32(len(ins.XList)-1))...)
 		for _, x := range ins.XList {
 			x := p.findLabelIndex(x)
 			dst.Body = append(dst.Body, p.encodeUint32(x)...)
 		}
-		// todo: 是否有结尾标志
 
 	case token.INS_RETURN:
 		dst.Body = append(dst.Body, wasm.OpcodeReturn)
