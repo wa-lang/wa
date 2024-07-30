@@ -10,31 +10,43 @@
 	(local $stdout i32)
 
 	;; 保存栈指针状态
-	(local.set $sp (global.get $__stack_ptr))
+	global.get $__stack_ptr
+	local.set $sp
 
 	;; 分配 iov 结构体
-	(local.set $p_iov (call $runtime.stackAlloc (i32.const 8)))
+	i32.const 8
+	call $runtime.stackAlloc
+	local.set $p_iov
 
 	;; 返回地址
-	(local.set $p_nwritten (call $runtime.stackAlloc (i32.const 4)))
+	i32.const 4
+	call $runtime.stackAlloc
+	local.set $p_nwritten
 
 	;; 设置字符串指针和长度
-	(i32.store offset=0 align=1 (local.get $p_iov) (local.get $str))
-	(i32.store offset=4 align=1 (local.get $p_iov) (local.get $len))
+	local.get $p_iov
+	local.get $str
+	i32.store offset=0 align=1
+
+	local.get $p_iov
+	local.get $len
+	i32.store offset=4 align=1
 
 	;; 标准输出
-	(local.set $stdout (i32.const 1))
+	i32.const 1
+	local.set $stdout
 
 	;; 输出字符串
-	(call $$runtime.fdWrite
-		(local.get $stdout)
-		(local.get $p_iov) (i32.const 1)
-		(local.get $p_nwritten)
-	)
+	local.get $stdout
+	local.get $p_iov
+	i32.const 1
+	local.get $p_nwritten
+	call $$runtime.fdWrite
 
 	;; 重置栈指针
-	(global.set $__stack_ptr (local.get $sp))
-	(drop)
+	local.get $sp
+	global.set $__stack_ptr
+	drop
 
 	;; {{$$runtime.waPuts/body/end}}
 )
