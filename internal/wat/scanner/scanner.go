@@ -344,10 +344,18 @@ func isDigit(ch rune) bool {
 	return isDecimal(ch) || ch >= utf8.RuneSelf && unicode.IsDigit(ch)
 }
 
+func isIdChar(ch rune) bool {
+	return strings.ContainsRune(`!#$%*+-./:<=>?@\^_~'|`+"`", ch)
+}
+
 func (s *Scanner) scanIdentifier() string {
+	first := s.ch
 	offs := s.offset
-	for s.ch == '$' || s.ch == '.' || s.ch == '#' || isLetter(s.ch) || isDigit(s.ch) {
+	for s.ch == '$' || s.ch == '.' || s.ch == '#' || isLetter(s.ch) || isDigit(s.ch) || (first == '$' && isIdChar(s.ch)) {
 		s.next()
+	}
+	if first == '$' {
+		offs++ // skip first $
 	}
 	return string(s.src[offs:s.offset])
 }
@@ -396,6 +404,22 @@ func (s *Scanner) digits(base int, invalid *int) (digsep int) {
 		}
 	}
 	return
+}
+
+// \ab
+func (s *Scanner) scanHexByte() byte {
+	b0 := digitVal(s.ch)
+	if b0 >= 16 {
+		s.errorf(s.offset, "invalid digit %q", s.ch)
+
+	}
+	s.next()
+	b1 := digitVal(s.ch)
+	if b1 >= 16 {
+		s.errorf(s.offset, "invalid digit %q", s.ch)
+	}
+	s.next()
+	return byte(b0*16 + b1)
 }
 
 func (s *Scanner) scanNumber() (token.Token, string) {
@@ -535,71 +559,43 @@ func invalidSep(x string) int {
 // escaped quote. In case of a syntax error, it stops at the offending
 // character (without consuming it) and returns false. Otherwise
 // it returns true.
-func (s *Scanner) scanEscape(quote rune) (v rune, ok bool) {
+func (s *Scanner) scanEscape(quote byte) (v []byte, ok bool) {
 	offs := s.offset
 
-	var n int
-	var base, max uint32
 	switch s.ch {
 	// 扩展语法
-	case quote:
+	case rune(quote):
 		s.next()
-		return quote, true
+		return []byte{quote}, true
 	case 'n':
 		s.next()
-		return '\n', true
+		return []byte{'\n'}, true
 	case 'r':
 		s.next()
-		return '\r', true
+		return []byte{'\r'}, true
 	case 't':
 		s.next()
-		return '\t', true
+		return []byte{'\t'}, true
 	case 'v':
 		s.next()
-		return '\v', true
+		return []byte{'\v'}, true
 	case '\\':
 		s.next()
-		return '\\', true
-
-	// hex: \01\ab\CD
-	case '0', '1', '2', '3', '4', '5', '6', '7', '8', '9':
-		n, base, max = 2, 16, 255
-	case 'a', 'b', 'c', 'd', 'e', 'f':
-		n, base, max = 2, 16, 255
-	case 'A', 'B', 'C', 'D', 'E', 'F':
-		n, base, max = 2, 16, 255
+		return []byte{'\\'}, true
 
 	default:
+		// hex: \01\ab\CD
+		if isHex(s.ch) {
+			v = []byte{s.scanHexByte()}
+			return v, true
+		}
 		msg := "unknown escape sequence"
 		if s.ch < 0 {
 			msg = "escape sequence not terminated"
 		}
 		s.error(offs, msg)
-		return 0, false
+		return nil, false
 	}
-
-	var x uint32
-	for n > 0 {
-		d := uint32(digitVal(s.ch))
-		if d >= base {
-			msg := fmt.Sprintf("illegal character %#U in escape sequence", s.ch)
-			if s.ch < 0 {
-				msg = "escape sequence not terminated"
-			}
-			s.error(s.offset, msg)
-			return 0, false
-		}
-		x = x*base + d
-		s.next()
-		n--
-	}
-
-	if x > max || 0xD800 <= x && x < 0xE000 {
-		s.error(offs, "escape sequence is invalid Unicode code point")
-		return 0, false
-	}
-
-	return rune(x), true
 }
 
 func (s *Scanner) scanRune() string {
@@ -653,8 +649,8 @@ func (s *Scanner) scanString() string {
 			break
 		}
 		if ch == '\\' {
-			v, _ := s.scanEscape('"')
-			sb.WriteRune(v)
+			bytes, _ := s.scanEscape('"')
+			sb.WriteString(string(bytes))
 		} else {
 			sb.WriteRune(ch)
 		}
@@ -721,9 +717,6 @@ scanAgain:
 	switch ch := s.ch; {
 	case ch == '$':
 		tokValue = s.scanIdentifier()
-		if len(tokValue) > 0 && tokValue[0] == '$' {
-			tokValue = tokValue[1:]
-		}
 		tok = token.IDENT
 	case isLetter(ch):
 		tokValue = s.scanIdentifier()
@@ -741,9 +734,6 @@ scanAgain:
 		switch ch {
 		case '$':
 			tokValue = s.scanIdentifier()
-			if len(tokValue) > 0 && tokValue[0] == '$' {
-				tokValue = tokValue[1:]
-			}
 			tok = token.IDENT
 		case -1:
 			tok = token.EOF

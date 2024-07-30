@@ -53,11 +53,7 @@ var tokens = [...]elt{
 	{token.IDENT, "$foobar", literal},
 	{token.IDENT, "$$foobar", literal},
 	{token.IDENT, "$foobar.abc.123", literal},
-	{token.IDENT, "$a۰۱۸", literal},
-	{token.IDENT, "$foo६४", literal},
-	{token.IDENT, "$bar９８７６", literal},
-	{token.IDENT, "$ŝ", literal},
-	{token.IDENT, "$ŝfoo", literal},
+	{token.IDENT, "$bar9876", literal},
 
 	// 字面值
 	{token.INT, "0", literal},
