@@ -6,6 +6,9 @@
 package watutil
 
 import (
+	"context"
+
+	"wa-lang.org/wa/internal/3rdparty/wazero"
 	"wa-lang.org/wa/internal/3rdparty/wazero/internalx/wasm"
 	"wa-lang.org/wa/internal/3rdparty/wazero/internalx/wasm/binary"
 	"wa-lang.org/wa/internal/wat/ast"
@@ -17,7 +20,19 @@ type Options struct {
 	DisableDebugNames bool
 }
 
-func Wat2Wasm(filename string, source []byte) ([]byte, error) {
+func Wat2Wasm(filename string, source []byte) (wasmBytes []byte, err error) {
+	defer func() {
+		if err == nil {
+			rt := wazero.NewRuntime(context.Background())
+			m, errx := rt.CompileModule(context.Background(), wasmBytes)
+			if errx == nil {
+				m.Close(context.Background())
+			} else {
+				err = errx
+			}
+		}
+	}()
+
 	m, err := parser.ParseModule(filename, source)
 	if err != nil {
 		return nil, err

@@ -57,7 +57,9 @@ func CmdRunAction(c *cli.Context) error {
 	var opt = appbase.BuildOptions(c)
 	mainFunc, wasmBytes, err := appbuild.BuildApp(opt, input, outfile)
 	if err != nil {
-		return err
+		fmt.Println("appbuild.BuildApp:", err)
+		os.Exit(1)
+		return nil
 	}
 
 	var appArgs []string
@@ -67,7 +69,9 @@ func CmdRunAction(c *cli.Context) error {
 
 	m, err := wazero.BuildModule(input, wasmBytes, appArgs...)
 	if err != nil {
-		return err
+		fmt.Println("wazero.BuildModule:", err)
+		os.Exit(1)
+		return nil
 	}
 	defer m.Close()
 
