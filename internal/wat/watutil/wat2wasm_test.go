@@ -56,9 +56,10 @@ var tTestWat2WasmWithOptions_noname_files = []string{
 	"testdata/wa-runtime-03.wat",
 	"testdata/wa-runtime-04.wat",
 	"testdata/wa-runtime-05.wat",
-
+	"testdata/wa-runtime-06.wat",
 	"testdata/data-01.wat",
 	"testdata/table-01.wat",
+	"testdata/export-01.wat",
 }
 
 func TestWat2Wasm(t *testing.T) {

@@ -48,6 +48,7 @@ var CmdWat2wasm = &cli.Command{
 		}
 		wasmBytes, err := watutil.Wat2Wasm(infile, source)
 		if err != nil {
+			os.WriteFile(outfile, wasmBytes, 0666)
 			fmt.Println(err)
 			os.Exit(1)
 		}

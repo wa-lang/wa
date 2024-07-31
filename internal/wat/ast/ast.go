@@ -82,13 +82,14 @@ type ElemSection struct {
 
 // 全局变量
 type Global struct {
-	Name     string      // 全局变量名
-	Mutable  bool        // 是否可写
-	Type     token.Token // 类型信息
-	I32Value int32       // 初始值(导入变量忽略)
-	I64Value int64       // 初始值(导入变量忽略)
-	F32Value float32     // 初始值(导入变量忽略)
-	F64Value float64     // 初始值(导入变量忽略)
+	Name       string      // 全局变量名
+	ExportName string      // 导出名字
+	Mutable    bool        // 是否可写
+	Type       token.Token // 类型信息
+	I32Value   int32       // 初始值(导入变量忽略)
+	I64Value   int64       // 初始值(导入变量忽略)
+	F32Value   float32     // 初始值(导入变量忽略)
+	F64Value   float64     // 初始值(导入变量忽略)
 }
 
 // 函数定义

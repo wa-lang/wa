@@ -47,7 +47,16 @@ func (p *parser) parseModule() {
 		}
 	}
 
-	// 补充导出的函数
+	// 补充导出全局变量/函数
+	for _, g := range p.module.Globals {
+		if g.ExportName != "" {
+			p.module.Exports = append(p.module.Exports, &ast.ExportSpec{
+				Name:      g.ExportName,
+				Kind:      token.GLOBAL,
+				GlobalIdx: g.Name,
+			})
+		}
+	}
 	for _, fn := range p.module.Funcs {
 		if fn.ExportName != "" {
 			p.module.Exports = append(p.module.Exports, &ast.ExportSpec{

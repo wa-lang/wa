@@ -151,7 +151,7 @@ func (p *wat2wasmWorker) buildTypeSection() error {
 
 	// Type段类型
 	for _, x := range p.mWat.Types {
-		if err := p.buildFuncType(x.Type); err != nil {
+		if err := p.buildFuncType(x.Name, x.Type); err != nil {
 			return err
 		}
 	}
@@ -159,7 +159,7 @@ func (p *wat2wasmWorker) buildTypeSection() error {
 	// 导入函数类型
 	for _, spec := range p.mWat.Imports {
 		if spec.ObjKind == token.FUNC {
-			if err := p.buildFuncType(spec.FuncType); err != nil {
+			if err := p.buildFuncType(spec.FuncName, spec.FuncType); err != nil {
 				return err
 			}
 		}
@@ -167,10 +167,10 @@ func (p *wat2wasmWorker) buildTypeSection() error {
 
 	// 函数类型
 	for _, fn := range p.mWat.Funcs {
-		if err := p.buildFuncType(fn.Type); err != nil {
+		if err := p.buildFuncType(fn.Name, fn.Type); err != nil {
 			return err
 		}
-		if err := p.buildFuncBodyTypes(fn.Body.Insts); err != nil {
+		if err := p.buildFuncBodyTypes(fn.Name, fn.Body.Insts); err != nil {
 			return err
 		}
 	}
@@ -422,7 +422,6 @@ func (p *wat2wasmWorker) buildExportSection() error {
 		p.mWasm.ExportSection = nil
 		return nil
 	}
-
 	for _, x := range p.mWat.Exports {
 		spec := &wasm.Export{Name: x.Name}
 		switch x.Kind {

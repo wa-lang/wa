@@ -553,7 +553,7 @@ func (p *wat2wasmWorker) buildInstruction(dst *wasm.Code, fn *ast.Func, i ast.In
 	case token.INS_I32_TRUNC_F64_U:
 		dst.Body = append(dst.Body, wasm.OpcodeI32TruncF64U)
 	case token.INS_I64_EXTEND_I32_S:
-		dst.Body = append(dst.Body, wasm.OpcodeI64Extend32S)
+		dst.Body = append(dst.Body, wasm.OpcodeI64ExtendI32S)
 	case token.INS_I64_EXTEND_I32_U:
 		dst.Body = append(dst.Body, wasm.OpcodeI64ExtendI32U)
 	case token.INS_I64_TRUNC_F32_S:
