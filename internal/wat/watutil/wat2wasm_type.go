@@ -3,10 +3,24 @@
 package watutil
 
 import (
+	"strconv"
+
 	"wa-lang.org/wa/internal/3rdparty/wazero/internalx/wasm"
 	"wa-lang.org/wa/internal/wat/ast"
 	"wa-lang.org/wa/internal/wat/token"
 )
+
+func (p *wat2wasmWorker) findTypeIndexByIdent(ident string) wasm.Index {
+	if idx, err := strconv.Atoi(ident); err == nil {
+		return wasm.Index(idx)
+	}
+	for i, x := range p.mWat.Types {
+		if x.Name == ident {
+			return wasm.Index(i)
+		}
+	}
+	return 0
+}
 
 func (p *wat2wasmWorker) mustFindFuncTypeIndex(fnType *ast.FuncType) wasm.Index {
 	typ := &wasm.FunctionType{}

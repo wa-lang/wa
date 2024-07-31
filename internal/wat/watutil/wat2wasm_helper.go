@@ -81,7 +81,7 @@ func (p *wat2wasmWorker) findTableIndex(ident string) wasm.Index {
 	var importCount int
 	for _, x := range p.mWat.Imports {
 		if x.ObjKind == token.TABLE {
-			if x.FuncName == ident {
+			if x.TableName == ident {
 				return wasm.Index(importCount)
 			}
 			importCount++
@@ -101,7 +101,7 @@ func (p *wat2wasmWorker) findMemoryIndex(ident string) wasm.Index {
 	var importCount int
 	for _, x := range p.mWat.Imports {
 		if x.ObjKind == token.MEMORY {
-			if x.FuncName == ident {
+			if x.MemoryName == ident {
 				return wasm.Index(importCount)
 			}
 			importCount++
@@ -121,7 +121,7 @@ func (p *wat2wasmWorker) findGlobalIndex(ident string) wasm.Index {
 	var importCount int
 	for _, x := range p.mWat.Imports {
 		if x.ObjKind == token.GLOBAL {
-			if x.FuncName == ident {
+			if x.GlobalName == ident {
 				return wasm.Index(importCount)
 			}
 			importCount++

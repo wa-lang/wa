@@ -33,8 +33,8 @@ type ImportSpec struct {
 	ObjName   string      // 实体名字
 	ObjKind   token.Token // 导入类别: MEMORY, TABLE, FUNC, GLOBAL
 
-	MemoryIdx  int         // 导入内存编号
-	TableIdx   int         // 导入Table编号
+	MemoryName string      // 导入内存编号
+	TableName  string      // 导入Table编号
 	GlobalName string      // 导入全局变量名字
 	GlobalType token.Token // 导入全局变量类型: I32, I64, F32, F64
 	FuncName   string      // 导入后函数名字

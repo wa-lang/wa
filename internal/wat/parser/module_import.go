@@ -49,7 +49,7 @@ func (p *parser) parseModuleSection_import_memory(spec *ast.ImportSpec) {
 	p.consumeComments()
 
 	spec.ObjKind = token.MEMORY
-	spec.MemoryIdx = p.parseIntLit()
+	spec.MemoryName = p.parseIdentOrIndex()
 }
 
 func (p *parser) parseModuleSection_import_table(spec *ast.ImportSpec) {
@@ -57,7 +57,7 @@ func (p *parser) parseModuleSection_import_table(spec *ast.ImportSpec) {
 	p.consumeComments()
 
 	spec.ObjKind = token.TABLE
-	spec.TableIdx = p.parseIntLit()
+	spec.TableName = p.parseIdentOrIndex()
 }
 
 func (p *parser) parseModuleSection_import_global(spec *ast.ImportSpec) {
