@@ -25,6 +25,7 @@ var CmdRun = &cli.Command{
 	Name:  "run",
 	Usage: "compile and run Wa program",
 	Flags: []cli.Flag{
+		appbase.MakeFlag_wabt(),
 		appbase.MakeFlag_target(),
 		appbase.MakeFlag_tags(),
 		&cli.BoolFlag{

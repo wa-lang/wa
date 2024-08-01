@@ -100,7 +100,7 @@ var stdPkgs = []string{
 	"apple",           // 测试已覆盖, wat2wasm ok
 	"archive/txtar",   // API 完整, wat2wasm ok
 	"bufio",           // API 完整, wat2wasm ok
-	"bytes",           // API 完整, wat2wasm failed
+	"bytes",           // API 完整, wat2wasm ok
 	"compress/snappy", // ?
 	"container/heap",  // ?
 	"container/list",  // ?
@@ -108,11 +108,11 @@ var stdPkgs = []string{
 	"crypto/md5",      // ?, 测试失败, Skip, wat2wasm ok
 	"errors",          // API 完整, 测试已覆盖, wat2wasm ok
 	"encoding",        // API 完整, wat2wasm ok
-	"encoding/base32", // ?, wat2wasm failed
-	"encoding/base64", // API 完整, wat2wasm failed
-	"encoding/binary", // API 部分, wat2wasm failed
+	"encoding/base32", // ?, wat2wasm ok
+	"encoding/base64", // API 完整, wat2wasm ok
+	"encoding/binary", // API 部分, wat2wasm ok
 	"encoding/hex",    // API 完整, wat2wasm ok
-	"encoding/pem",    // ?, wat2wasm failed
+	"encoding/pem",    // ?, wat2wasm ok
 	"encoding/qrcode", // ?
 	"debug",           // ?
 	"fmt",             // ?, wat2wasm ok
@@ -128,18 +128,18 @@ var stdPkgs = []string{
 	"js/canvas",       // ?
 	"js/p5",           // ?
 	"math",            // API 部分
-	"math/big",        // API 部分, wat2wasm failed
-	"math/bits",       // API 完整, wat2wasm failed
-	"math/gf256",      // ?, wat2wasm failed
+	"math/big",        // API 部分, wat2wasm ok
+	"math/bits",       // API 完整, wat2wasm ok
+	"math/gf256",      // ?, wat2wasm ok
 	"net",             // ?
 	"os",              // API 部分, wat2wasm ok
-	"reflect",         // ?, wat2wasm failed
+	"reflect",         // ?
 	"regexp",          // API 部分
 	"runtime",         //
-	"sort",            // API 完整, wat2wasm failed
-	"strconv",         // API 完整, wat2wasm failed
+	"sort",            // API 完整, wat2wasm ok
+	"strconv",         // API 完整, wat2wasm ok
 	"strings",         // API 完整, wat2wasm ok
-	"syscall",         // API 完整, wat2wasm failed
+	"syscall",         // API 完整
 	"syscall/js",      //
 	"syscall/wasi",    //
 	"syscall/unknown", //

@@ -719,7 +719,7 @@ func (p *parser) parseIns_I32Load16S() (i ast.Ins_I32Load16S) {
 }
 func (p *parser) parseIns_I32Load16U() (i ast.Ins_I32Load16U) {
 	i.OpToken = ast.OpToken(p.tok)
-	p.acceptToken(token.INS_I32_LOAD16_S)
+	p.acceptToken(token.INS_I32_LOAD16_U)
 	if p.tok == token.OFFSET {
 		p.acceptToken(token.OFFSET)
 		p.acceptToken(token.ASSIGN)

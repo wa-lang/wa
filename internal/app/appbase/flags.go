@@ -8,6 +8,14 @@ import (
 	"wa-lang.org/wa/internal/config"
 )
 
+// wabt工具
+func MakeFlag_wabt() *cli.BoolFlag {
+	return &cli.BoolFlag{
+		Name:  "wabt",
+		Usage: "use wabt/wat2wasm tool",
+	}
+}
+
 // 输出路径
 func MakeFlag_output() *cli.StringFlag {
 	return &cli.StringFlag{
