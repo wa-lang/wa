@@ -1,6 +1,11 @@
 # 版本日志
 
 - (dev)
+  - `wa` 命令瘦身 (TODO)
+  - 删除 wabt 工具和 `-wabt` 参数 (TODO)
+  - 去掉 `wa run-wasm` 子命令, 合并到 `wa run` 子命令 (TODO)
+  - 完善 `wa lsp` 子命令 (TODO)
+  - 回复 `brew` 打包支持
 - v0.14.0 (2024-08-01)
   - 后端重新实现 wat 到 wasm 的转换工具并默认启用; run/build 临时增加 `-wabt=false` 参数
   - 简化 `wa run`, 优先命令行执行, 并增加 `-web` 参数

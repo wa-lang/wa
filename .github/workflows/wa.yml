@@ -23,9 +23,6 @@ jobs:
       - run: go version
       - run: go env
 
-      # install wat2wasm
-      - run: sudo cp internal/3rdparty/wabt-go/internal/wabt-1.0.29-ubuntu/bin/wat2wasm /usr/local/bin/wa.wat2wasm.exe
-
       - run: make ci-test-all
 
       - run: go test -v -coverprofile=profile.cov ./...
@@ -35,7 +32,7 @@ jobs:
       - run: wa -h
       - run: cd waroot && wa run -target=wasi examples/prime
       - run: cd waroot && wa run -target=wasi hello.wa
-      - run: cd waroot && wa run -target=unknown hello.wa
+      - run: cd waroot && wa run -target=unknown hello.wa 
 
       - uses: shogo82148/actions-goveralls@v1
         with:
@@ -54,9 +51,6 @@ jobs:
 
       - run: go version
       - run: go env
-
-      # install wat2wasm
-      - run: copy internal/3rdparty/wabt-go/internal/wabt-1.0.29-windows/bin/wat2wasm.exe c:/wa.wat2wasm.exe
 
       - run: make ci-test-all
 
@@ -82,9 +76,6 @@ jobs:
 
       - run: go version
       - run: go env
-
-      # install wat2wasm
-      - run: sudo cp internal/3rdparty/wabt-go/internal/wabt-1.0.29-macos/bin/wat2wasm /usr/local/bin/wa.wat2wasm.exe
 
       - run: make ci-test-all
 

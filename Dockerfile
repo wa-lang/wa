@@ -11,8 +11,8 @@ RUN apt update
 RUN apt install -y git
 
 # go run ./builder
-COPY ./_output/wa-docker-linux-amd64 /usr/local/wa
-ENV PATH=${PATH}:/usr/local/wa/bin
+COPY ./wa /usr/local/wa
+ENV PATH=${PATH}:/usr/local/bin/wa
 
 # docker run --platform linux/amd64 --rm -it wa-lang/wa
 CMD ["/bin/bash"]

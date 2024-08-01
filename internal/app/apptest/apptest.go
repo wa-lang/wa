@@ -15,7 +15,7 @@ import (
 	"wa-lang.org/wa/internal/backends/compiler_wat"
 	"wa-lang.org/wa/internal/config"
 	"wa-lang.org/wa/internal/loader"
-	"wa-lang.org/wa/internal/wabt"
+	"wa-lang.org/wa/internal/wat/watutil"
 	"wa-lang.org/wa/internal/wazero"
 	"wa-lang.org/wa/waroot/src"
 )
@@ -90,7 +90,7 @@ func runTest(cfg *config.Config, pkgpath, runPattern string, appArgs ...string) 
 	os.WriteFile("a.out.wat", []byte(watOutput), 0666)
 
 	// 编译为 wasm
-	wasmBytes, err := wabt.Wat2Wasm([]byte(watOutput))
+	wasmBytes, err := watutil.Wat2Wasm("a.out.wat", []byte(watOutput))
 	if err != nil {
 		fmt.Println(err)
 		os.Exit(1)

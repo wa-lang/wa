@@ -30,8 +30,7 @@ jobs:
       - run: make -C waroot/examples/snake publish
 
       - run: |
-          go run ./builder
-          cp -r ./_output/wa-wasip1 ./docs
+          GOOS=wasip1 GOARCH=wasm go build -o=./docs/wa-wasip1/bin/wa
 
       - name: Deploy
         uses: peaceiris/actions-gh-pages@v3
@@ -64,7 +63,7 @@ jobs:
 
       - name: 'Build Wa Image'
         run: |
-          go run ./builder
+          go build
           docker build . --tag ghcr.io/wa-lang/wa:latest
           docker push ghcr.io/wa-lang/wa:latest
 

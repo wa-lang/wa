@@ -13,7 +13,6 @@ import (
 
 // 命令行选项
 type Option struct {
-	UseWabt      bool
 	Debug        bool
 	WaBackend    string
 	BuilgTags    []string
@@ -79,10 +78,6 @@ func BuildOptions(c *cli.Context, waBackend ...string) *Option {
 		BuilgTags:    strings.Fields(c.String("tags")),
 		LD_StackSize: c.Int("ld-stack-size"),
 		LD_MaxMemory: c.Int("ld-max-memory"),
-	}
-
-	if c.Bool("wabt") {
-		opt.UseWabt = true
 	}
 
 	opt.TargetArch = "wasm"

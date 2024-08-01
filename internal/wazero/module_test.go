@@ -7,7 +7,7 @@ import (
 	"testing"
 
 	"wa-lang.org/wa/api"
-	"wa-lang.org/wa/internal/wabt"
+	"wa-lang.org/wa/internal/wat/watutil"
 	"wa-lang.org/wa/internal/wazero"
 )
 
@@ -54,7 +54,7 @@ func tBuildWasm(t *testing.T, waCode string) []byte {
 	if err != nil {
 		t.Fatal(err)
 	}
-	wasmBytes, err := wabt.Wat2Wasm(watBytes)
+	wasmBytes, err := watutil.Wat2Wasm("a.out.wat", watBytes)
 	if err != nil {
 		t.Fatal(err)
 	}

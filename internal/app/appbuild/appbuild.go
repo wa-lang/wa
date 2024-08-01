@@ -12,7 +12,6 @@ import (
 	"wa-lang.org/wa/internal/backends/compiler_wat"
 	"wa-lang.org/wa/internal/config"
 	"wa-lang.org/wa/internal/loader"
-	"wa-lang.org/wa/internal/wabt"
 	"wa-lang.org/wa/internal/wat/watutil"
 )
 
@@ -20,7 +19,6 @@ var CmdBuild = &cli.Command{
 	Name:  "build",
 	Usage: "compile Wa source code",
 	Flags: []cli.Flag{
-		appbase.MakeFlag_wabt(),
 		appbase.MakeFlag_output(),
 		appbase.MakeFlag_target(),
 		appbase.MakeFlag_tags(),
@@ -77,7 +75,7 @@ func BuildApp(opt *appbase.Option, input, outfile string) (mainFunc string, wasm
 			fmt.Printf("read %s failed: %v\n", input, err)
 			os.Exit(1)
 		}
-		wasmBytes, err := wat2wasm(opt.UseWabt, input, watData)
+		wasmBytes, err := watutil.Wat2Wasm(input, watData)
 		if err != nil {
 			fmt.Printf("wat2wasm %s failed: %v\n", input, err)
 			os.Exit(1)
@@ -116,7 +114,7 @@ func BuildApp(opt *appbase.Option, input, outfile string) (mainFunc string, wasm
 		}
 
 		// wat 编译为 wasm
-		wasmBytes, err := wat2wasm(opt.UseWabt, watOutfile, watOutput)
+		wasmBytes, err := watutil.Wat2Wasm(watOutfile, watOutput)
 		if err != nil {
 			fmt.Printf("wat2wasm %s failed: %v\n", input, err)
 			os.Exit(1)
@@ -198,7 +196,7 @@ func BuildApp(opt *appbase.Option, input, outfile string) (mainFunc string, wasm
 		}
 
 		// wat 编译为 wasm
-		wasmBytes, err := wat2wasm(opt.UseWabt, input, watOutput)
+		wasmBytes, err := watutil.Wat2Wasm(input, watOutput)
 		if err != nil {
 			fmt.Printf("wat2wasm %s failed: %v\n", input, err)
 			os.Exit(1)
@@ -216,14 +214,6 @@ func BuildApp(opt *appbase.Option, input, outfile string) (mainFunc string, wasm
 
 		// OK
 		return mainFunc, wasmBytes, nil
-	}
-}
-
-func wat2wasm(useWabt bool, filename string, watBytes []byte) (wasmBytes []byte, err error) {
-	if useWabt {
-		return wabt.Wat2Wasm(watBytes)
-	} else {
-		return watutil.Wat2Wasm(filename, watBytes)
 	}
 }
 

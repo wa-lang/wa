@@ -1,13 +1,10 @@
 // 版权 @2022 凹语言 作者。保留所有权利。
 
-//go:build !wasm
-// +build !wasm
-
 package api
 
 import (
 	"wa-lang.org/wa/internal/config"
-	"wa-lang.org/wa/internal/wabt"
+	"wa-lang.org/wa/internal/wat/watutil"
 	"wa-lang.org/wa/internal/wazero"
 )
 
@@ -20,7 +17,7 @@ func RunCode(cfg *config.Config, filename, code string, args ...string) (stdoutS
 	}
 
 	// wat 编译为 wasm
-	wasmBytes, err := wabt.Wat2Wasm(watBytes)
+	wasmBytes, err := watutil.Wat2Wasm(filename, watBytes)
 	if err != nil {
 		return
 	}

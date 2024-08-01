@@ -1,8 +1,5 @@
 // 版权 @2019 凹语言 作者。保留所有权利。
 
-//go:build !wasm
-// +build !wasm
-
 // 凹语言，The Wa Programming Language.
 package app
 
