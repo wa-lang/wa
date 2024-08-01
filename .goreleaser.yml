@@ -1,0 +1,86 @@
+# This is an example .goreleaser.yml file with some sane defaults.
+# Make sure to check the documentation at http://goreleaser.com
+before:
+  hooks:
+    - go version
+builds:
+  - id: default
+    env:
+      - CGO_ENABLED=0
+    goos:
+      - linux
+      - windows
+      - darwin
+    goarch:
+      - amd64
+      - arm64
+    # 使用 ldflags="-s -w" 去掉符号表和调试信息，以减少发布包的大小
+    ldflags:
+      - -s
+      - -w
+    ignore:
+      - goos: linux
+        goarch: arm64
+      - goos: windows
+        goarch: arm64
+    main: .
+archives:
+  - id: default
+    builds:
+      - default
+    name_template: "{{ .ProjectName }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}"
+    format_overrides:
+      - goos: windows
+        format: zip
+checksum:
+  name_template: 'checksums.txt'
+changelog:
+  use: github
+  sort: asc
+  filters:
+    exclude:
+      - '^docs:'
+      - '^test:'
+
+release:
+  github:
+    owner: wa-lang
+    name: wa
+  draft: false
+  footer: |
+    Homepage https://wa-lang.org
+
+brews:
+  - tap:
+      owner: wa-lang
+      name: homebrew-tap
+    url_template: "https://github.com/wa-lang/wa/releases/download/{{ .Tag }}/{{ .ArtifactName }}"
+    download_strategy: CurlDownloadStrategy
+    # Git author used to commit to the repository.
+    # Defaults are shown.
+    commit_author:
+      name: GoReleaser Bot
+      email: goreleaser@carlosbecker.com
+    folder: HomebrewFormula
+    homepage: "https://github.com/wa-lang/wa"
+    description: "The Wa Programming Language"
+    license: "AGPL-3.0 license"
+    skip_upload: false
+    test: |
+      system "#{bin}/wa"
+
+scoop:
+  url_template: "https://github.com/wa-lang/wa/releases/download/{{ .Tag }}/{{ .ArtifactName }}"
+  bucket:
+    owner: wa-lang
+    name: scoop-bucket
+    branch: master
+    token: "{{ .Env.GITHUB_TOKEN }}"
+  folder: Scoops
+  commit_author:
+    name: goreleaserbot
+    email: bot@goreleaser.com
+  commit_msg_template: "Scoop update for {{ .ProjectName }} version {{ .Tag }}"
+  homepage: "http://github.com/wa-lang/wa"
+  description: "The Wa Programming Language"
+  license: AGPL-3.0 license
