@@ -14,9 +14,9 @@ func (p *wat2wasmWorker) findTypeIndexByIdent(ident string) wasm.Index {
 	if idx, err := strconv.Atoi(ident); err == nil {
 		return wasm.Index(idx)
 	}
-	for i, x := range p.mWat.Types {
+	for _, x := range p.mWat.Types {
 		if x.Name == ident {
-			return wasm.Index(i)
+			return p.mustFindFuncTypeIndex(x.Type)
 		}
 	}
 	return 0

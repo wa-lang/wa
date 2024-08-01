@@ -97,56 +97,56 @@ func GetStdTestPkgList() []string {
 }
 
 var stdPkgs = []string{
-	"apple",           // 测试已覆盖
-	"archive/txtar",   // API 完整
-	"bufio",           // API 完整
-	"bytes",           // API 完整
+	"apple",           // 测试已覆盖, wat2wasm ok
+	"archive/txtar",   // API 完整, wat2wasm ok
+	"bufio",           // API 完整, wat2wasm ok
+	"bytes",           // API 完整, wat2wasm failed
 	"compress/snappy", // ?
 	"container/heap",  // ?
 	"container/list",  // ?
 	"container/ring",  // ?
-	"crypto/md5",      // ?, 测试失败, Skip
-	"errors",          // API 完整, 测试已覆盖
-	"encoding",        // API 完整
-	"encoding/base32", // ?
-	"encoding/base64", // API 完整
-	"encoding/binary", // API 部分
-	"encoding/hex",    // API 完整
-	"encoding/pem",    // ?
+	"crypto/md5",      // ?, 测试失败, Skip, wat2wasm ok
+	"errors",          // API 完整, 测试已覆盖, wat2wasm ok
+	"encoding",        // API 完整, wat2wasm ok
+	"encoding/base32", // ?, wat2wasm failed
+	"encoding/base64", // API 完整, wat2wasm failed
+	"encoding/binary", // API 部分, wat2wasm failed
+	"encoding/hex",    // API 完整, wat2wasm ok
+	"encoding/pem",    // ?, wat2wasm failed
 	"encoding/qrcode", // ?
 	"debug",           // ?
-	"fmt",             // ?
+	"fmt",             // ?, wat2wasm ok
 	"gpu",             // ?
-	"hash",            // API 完整
-	"hash/adler32",    // ?
-	"hash/crc32",      // API 完整
-	"hash/fnv",        // ?
-	"image",           // ?
+	"hash",            // API 完整, wat2wasm ok
+	"hash/adler32",    // ?, wat2wasm ok
+	"hash/crc32",      // API 完整, wat2wasm ok
+	"hash/fnv",        // ?, wat2wasm failed
+	"image",           // ?, wat2wasm ok
 	"image/color",     // ?
-	"io",              // API 部分
+	"io",              // API 部分, wat2wasm ok
 	"js",              // ?
 	"js/canvas",       // ?
 	"js/p5",           // ?
 	"math",            // API 部分
-	"math/big",        // API 部分
-	"math/bits",       // API 完整
-	"math/gf256",      // ?
+	"math/big",        // API 部分, wat2wasm failed
+	"math/bits",       // API 完整, wat2wasm failed
+	"math/gf256",      // ?, wat2wasm failed
 	"net",             // ?
-	"os",              // API 部分
-	"reflect",         // ?
+	"os",              // API 部分, wat2wasm ok
+	"reflect",         // ?, wat2wasm failed
 	"regexp",          // API 部分
 	"runtime",         //
-	"sort",            // API 完整
-	"strconv",         // API 完整
-	"strings",         // API 完整
-	"syscall",         // API 完整
-	"syscall/js",      // ?
-	"syscall/wasi",    // ?
-	"syscall/unknown", // ?
+	"sort",            // API 完整, wat2wasm failed
+	"strconv",         // API 完整, wat2wasm failed
+	"strings",         // API 完整, wat2wasm ok
+	"syscall",         // API 完整, wat2wasm failed
+	"syscall/js",      //
+	"syscall/wasi",    //
+	"syscall/unknown", //
 	"text/template",   // 无
 	"unicode",         // API 部分
-	"unicode/ctypes",  // API 完整, 测试已覆盖
-	"unicode/utf8",    // API 完整, 测试已覆盖
+	"unicode/ctypes",  // API 完整, 测试已覆盖, wat2wasm ok
+	"unicode/utf8",    // API 完整, 测试已覆盖, wat2wasm ok
 }
 
 var wzStdPkgs = []string{
