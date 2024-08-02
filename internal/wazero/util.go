@@ -1,13 +1,8 @@
 package wazero
 
 import (
-	"wa-lang.org/wa/internal/3rdparty/wazero"
 	"wa-lang.org/wa/internal/3rdparty/wazero/sys"
 )
-
-func Wat2Wasm(source []byte) ([]byte, error) {
-	return wazero.Wat2Wasm(source)
-}
 
 // 单次执行 wasm
 func RunWasm(wasmName string, wasmBytes []byte, mainFunc string, wasmArgs ...string) (stdout, stderr []byte, err error) {

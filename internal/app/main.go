@@ -23,7 +23,6 @@ import (
 	"wa-lang.org/wa/internal/app/applsp"
 	"wa-lang.org/wa/internal/app/appplay"
 	"wa-lang.org/wa/internal/app/apprun"
-	apprun_wasm "wa-lang.org/wa/internal/app/apprun-wasm"
 	"wa-lang.org/wa/internal/app/appssa"
 	"wa-lang.org/wa/internal/app/apptest"
 	"wa-lang.org/wa/internal/app/appwat2wasm"
@@ -86,7 +85,6 @@ func Main() {
 		appinit.CmdInit,
 		appbuild.CmdBuild,
 		apprun.CmdRun,
-		apprun_wasm.CmdRunWasm,
 		appfmt.CmdFmt,
 		apptest.CmdTest,
 		appyacc.CmdYacc,

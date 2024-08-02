@@ -15,6 +15,7 @@ import (
 	"wa-lang.org/wa/internal/3rdparty/cli"
 	"wa-lang.org/wa/internal/app/appbase"
 	"wa-lang.org/wa/internal/app/appbuild"
+	"wa-lang.org/wa/internal/wat/watutil"
 	"wa-lang.org/wa/internal/wazero"
 )
 
@@ -52,6 +53,30 @@ func CmdRunAction(c *cli.Context) error {
 
 	if input == "" || input == "." {
 		input, _ = os.Getwd()
+	}
+
+	if appbase.HasExt(input, ".wat") {
+		watBytes, err := os.ReadFile(input)
+		if err != nil {
+			return err
+		}
+		wasmBytes, err := watutil.Wat2Wasm(input, watBytes)
+		if err != nil {
+			return err
+		}
+		var appArgs []string
+		if args := c.Args().Slice(); len(args) > 2 {
+			appArgs = args[2:]
+		}
+		return runWasm(input, wasmBytes, appArgs...)
+	}
+
+	if appbase.HasExt(input, ".wasm") {
+		var appArgs []string
+		if args := c.Args().Slice(); len(args) > 2 {
+			appArgs = args[2:]
+		}
+		return runWasm(input, nil, appArgs...)
 	}
 
 	var opt = appbase.BuildOptions(c)
@@ -149,4 +174,35 @@ func openBrowser(url string) error {
 	default:
 		return fmt.Errorf("unsupported platform")
 	}
+}
+
+func runWasm(input string, wasmBytes []byte, args ...string) error {
+	var err error
+	if wasmBytes == nil {
+		if wasmBytes, err = os.ReadFile(input); err != nil {
+			return err
+		}
+	}
+
+	stdout, stderr, err := wazero.RunWasm(input, wasmBytes, "_main", args...)
+	if err != nil {
+		if len(stdout) > 0 {
+			fmt.Fprint(os.Stdout, string(stdout))
+		}
+		if len(stderr) > 0 {
+			fmt.Fprint(os.Stderr, string(stderr))
+		}
+		if exitCode, ok := wazero.AsExitError(err); ok {
+			os.Exit(exitCode)
+		}
+		fmt.Println(err)
+		return nil
+	}
+	if len(stdout) > 0 {
+		fmt.Fprint(os.Stdout, string(stdout))
+	}
+	if len(stderr) > 0 {
+		fmt.Fprint(os.Stderr, string(stderr))
+	}
+	return nil
 }
