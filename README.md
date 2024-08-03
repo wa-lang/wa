@@ -158,10 +158,10 @@ More examples [waroot/examples](waroot/examples)
 
 |Contributor|Contribution points|
 | --- | --- |
-|柴树杉| 50000|
-|丁尔男| 58500|
+|柴树杉| 69000|
+|丁尔男| 73500|
 |史斌  | 29000|
-|扈梦明| 28000|
+|扈梦明| 39000|
 |赵普明| 18000|
 |宋汝阳|  2000|
 |刘云峰|  1000|
@@ -175,3 +175,6 @@ More examples [waroot/examples](waroot/examples)
 |qstesiro| 200|
 |small_broken_gong|100|
 |tk103331|100|
+|蔡兴|3000|
+|王仁义|1000|
+|imalasong|1000|
