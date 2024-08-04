@@ -87,6 +87,7 @@ func Main() {
 		apprun.CmdRun,
 		appfmt.CmdFmt,
 		apptest.CmdTest,
+		applsp.CmdLsp,
 		appyacc.CmdYacc,
 		applogo.CmdLogo,
 
@@ -100,7 +101,6 @@ func Main() {
 		appgo2wa.CmdGo2wa,
 		appcir.CmdCir,
 		appdoc.CmdDoc,
-		applsp.CmdLsp,
 		appdap.CmdDap,
 	}
 
