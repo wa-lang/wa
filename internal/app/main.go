@@ -10,6 +10,7 @@ import (
 
 	"wa-lang.org/wa/internal/3rdparty/cli"
 	"wa-lang.org/wa/internal/app/appast"
+	"wa-lang.org/wa/internal/app/appbase"
 	"wa-lang.org/wa/internal/app/appbuild"
 	"wa-lang.org/wa/internal/app/appcir"
 	"wa-lang.org/wa/internal/app/appdap"
@@ -69,6 +70,9 @@ func Main() {
 	// 没有参数时显示 help 信息
 	cliApp.Action = func(c *cli.Context) error {
 		if c.NArg() > 0 {
+			if c.NArg() == 1 && appbase.HasExt(c.Args().First(), ".wa", ".wat", ".wasm") {
+				return apprun.CmdRunAction(c)
+			}
 			fmt.Println("unknown command:", strings.Join(c.Args().Slice(), " "))
 			os.Exit(1)
 		}

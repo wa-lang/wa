@@ -85,7 +85,7 @@ func BuildOptions(c *cli.Context, waBackend ...string) *Option {
 		opt.WaBackend = waBackend[0]
 	}
 
-	if target := c.String("target"); !config.CheckWaOS(target) {
+	if target := c.String("target"); target != "" && !config.CheckWaOS(target) {
 		fmt.Printf("unknown target: %s\n", c.String("target"))
 		os.Exit(1)
 	}
