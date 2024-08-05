@@ -16,7 +16,6 @@ import (
 // Position describes an arbitrary source position
 // including the file, line, and column location.
 // A Position is valid if the line number is > 0.
-//
 type Position struct {
 	Filename string // filename, if any
 	Offset   int    // offset, starting at 0
@@ -35,7 +34,6 @@ func (pos *Position) IsValid() bool { return pos.Line > 0 }
 //	line                valid position without file name and no column (column == 0)
 //	file                invalid position with file name
 //	-                   invalid position without file name
-//
 func (pos Position) String() string {
 	s := pos.Filename
 	if pos.IsValid() {
@@ -72,14 +70,12 @@ func (pos Position) String() string {
 // equivalent to comparing the respective source file offsets. If p and q
 // are in different files, p < q is true if the file implied by p was added
 // to the respective file set before the file implied by q.
-//
 type Pos int
 
 // The zero value for Pos is NoPos; there is no file and line information
 // associated with it, and NoPos.IsValid() is false. NoPos is always
 // smaller than any other Pos value. The corresponding Position value
 // for NoPos is the zero value for Position.
-//
 const NoPos Pos = 0
 
 // IsValid reports whether the position is valid.
@@ -92,12 +88,12 @@ func (p Pos) IsValid() bool {
 
 // A File is a handle for a file belonging to a FileSet.
 // A File has a name, size, and line offset table.
-//
 type File struct {
-	set  *FileSet
-	name string // file name as provided to AddFile
-	base int    // Pos value range for this file is [base...base+size]
-	size int    // file size as provided to AddFile
+	set      *FileSet
+	name     string // file name as provided to AddFile
+	base     int    // Pos value range for this file is [base...base+size]
+	size     int    // file size as provided to AddFile
+	capacity int    // 最大容量, 用于 file 更新预留
 
 	// lines and infos are protected by mutex
 	mutex sync.Mutex
@@ -105,9 +101,22 @@ type File struct {
 	infos []lineInfo
 }
 
+// 清除数据
+func (f *File) Clear() {
+	f.mutex.Lock()
+	defer f.mutex.Unlock()
+	f.lines = []int{0}
+	f.infos = []lineInfo{}
+}
+
 // Name returns the file name of file f as registered with AddFile.
 func (f *File) Name() string {
 	return f.name
+}
+
+// 更新名字
+func (f *File) SetName(s string) {
+	f.name = s
 }
 
 // Base returns the base offset of file f as registered with AddFile.
@@ -118,6 +127,10 @@ func (f *File) Base() int {
 // Size returns the size of file f as registered with AddFile.
 func (f *File) Size() int {
 	return f.size
+}
+
+func (f *File) Cap() int {
+	return f.capacity
 }
 
 // LineCount returns the number of lines in file f.
@@ -131,7 +144,6 @@ func (f *File) LineCount() int {
 // AddLine adds the line offset for a new line.
 // The line offset must be larger than the offset for the previous line
 // and smaller than the file size; otherwise the line offset is ignored.
-//
 func (f *File) AddLine(offset int) {
 	f.mutex.Lock()
 	if i := len(f.lines); (i == 0 || f.lines[i-1] < offset) && offset < f.size {
@@ -144,7 +156,6 @@ func (f *File) AddLine(offset int) {
 // the newline character at the end of the line with a space (to not change the
 // remaining offsets). To obtain the line number, consult e.g. Position.Line.
 // MergeLine will panic if given an invalid line number.
-//
 func (f *File) MergeLine(line int) {
 	if line < 1 {
 		panic("illegal line number (line numbering starts at 1)")
@@ -171,7 +182,6 @@ func (f *File) MergeLine(line int) {
 // and smaller than the file size; otherwise SetLines fails and returns
 // false.
 // Callers must not mutate the provided slice after SetLines returns.
-//
 func (f *File) SetLines(lines []int) bool {
 	// verify validity of lines table
 	size := f.size
@@ -191,6 +201,9 @@ func (f *File) SetLines(lines []int) bool {
 // SetLinesForContent sets the line offsets for the given file content.
 // It ignores position-altering //line comments.
 func (f *File) SetLinesForContent(content []byte) {
+	if f.capacity < len(content) {
+		panic("file content large than capacity")
+	}
 	var lines []int
 	line := 0
 	for offset, b := range content {
@@ -205,6 +218,7 @@ func (f *File) SetLinesForContent(content []byte) {
 
 	// set lines table
 	f.mutex.Lock()
+	f.size = len(content)
 	f.lines = lines
 	f.mutex.Unlock()
 }
@@ -236,7 +250,6 @@ type lineInfo struct {
 
 // AddLineInfo is like AddLineColumnInfo with a column = 1 argument.
 // It is here for backward-compatibility for code prior to Go 1.11.
-//
 func (f *File) AddLineInfo(offset int, filename string, line int) {
 	f.AddLineColumnInfo(offset, filename, line, 1)
 }
@@ -249,7 +262,6 @@ func (f *File) AddLineInfo(offset int, filename string, line int) {
 //
 // AddLineColumnInfo is typically used to register alternative position
 // information for line directives such as //line filename:line:column.
-//
 func (f *File) AddLineColumnInfo(offset int, filename string, line, column int) {
 	f.mutex.Lock()
 	if i := len(f.infos); i == 0 || f.infos[i-1].Offset < offset && offset < f.size {
@@ -261,7 +273,6 @@ func (f *File) AddLineColumnInfo(offset int, filename string, line, column int) 
 // Pos returns the Pos value for the given file offset;
 // the offset must be <= f.Size().
 // f.Pos(f.Offset(p)) == p.
-//
 func (f *File) Pos(offset int) Pos {
 	if offset > f.size {
 		panic("illegal file offset")
@@ -272,7 +283,6 @@ func (f *File) Pos(offset int) Pos {
 // Offset returns the offset for the given file position p;
 // p must be a valid Pos value in that file.
 // f.Offset(f.Pos(offset)) == offset.
-//
 func (f *File) Offset(p Pos) int {
 	if int(p) < f.base || int(p) > f.base+f.size {
 		panic("illegal Pos value")
@@ -282,7 +292,6 @@ func (f *File) Offset(p Pos) int {
 
 // Line returns the line number for the given file position p;
 // p must be a Pos value in that file or NoPos.
-//
 func (f *File) Line(p Pos) int {
 	return f.Position(p).Line
 }
@@ -294,7 +303,6 @@ func searchLineInfos(a []lineInfo, x int) int {
 // unpack returns the filename and line and column number for a file offset.
 // If adjusted is set, unpack will return the filename and line information
 // possibly adjusted by //line comments; otherwise those comments are ignored.
-//
 func (f *File) unpack(offset int, adjusted bool) (filename string, line, column int) {
 	f.mutex.Lock()
 	defer f.mutex.Unlock()
@@ -339,7 +347,6 @@ func (f *File) position(p Pos, adjusted bool) (pos Position) {
 // If adjusted is set, the position may be adjusted by position-altering
 // //line comments; otherwise those comments are ignored.
 // p must be a Pos value in f or NoPos.
-//
 func (f *File) PositionFor(p Pos, adjusted bool) (pos Position) {
 	if p != NoPos {
 		if int(p) < f.base || int(p) > f.base+f.size {
@@ -352,7 +359,6 @@ func (f *File) PositionFor(p Pos, adjusted bool) (pos Position) {
 
 // Position returns the Position value for the given file position p.
 // Calling f.Position(p) is equivalent to calling f.PositionFor(p, true).
-//
 func (f *File) Position(p Pos) (pos Position) {
 	return f.PositionFor(p, true)
 }
@@ -363,7 +369,6 @@ func (f *File) Position(p Pos) (pos Position) {
 // A FileSet represents a set of source files.
 // Methods of file sets are synchronized; multiple goroutines
 // may invoke them concurrently.
-//
 type FileSet struct {
 	mutex sync.RWMutex // protects the file set
 	base  int          // base offset for the next file
@@ -380,13 +385,11 @@ func NewFileSet() *FileSet {
 
 // Base returns the minimum base offset that must be provided to
 // AddFile when adding the next file.
-//
 func (s *FileSet) Base() int {
 	s.mutex.RLock()
 	b := s.base
 	s.mutex.RUnlock()
 	return b
-
 }
 
 // AddFile adds a new file with a given filename, base offset, and file size
@@ -404,8 +407,16 @@ func (s *FileSet) Base() int {
 // with offs in the range [0, size] and thus p in the range [base, base+size].
 // For convenience, File.Pos may be used to create file-specific position
 // values from a file offset.
-//
 func (s *FileSet) AddFile(filename string, base, size int) *File {
+	return s.addFile(filename, base, size, 0)
+}
+
+// 多分配一些容量, 用于后续更新
+func (s *FileSet) AddFileWithCap(filename string, base, size, cap int) *File {
+	return s.addFile(filename, base, size, cap)
+}
+
+func (s *FileSet) addFile(filename string, base, size, cap int) *File {
 	s.mutex.Lock()
 	defer s.mutex.Unlock()
 	if base < 0 {
@@ -414,9 +425,13 @@ func (s *FileSet) AddFile(filename string, base, size int) *File {
 	if base < s.base || size < 0 {
 		panic("illegal base or size")
 	}
+	if cap < size {
+		cap = size
+	}
+
 	// base >= s.base && size >= 0
-	f := &File{set: s, name: filename, base: base, size: size, lines: []int{0}}
-	base += size + 1 // +1 because EOF also has a position
+	f := &File{set: s, name: filename, base: base, size: size, capacity: cap, lines: []int{0}}
+	base += cap + 1 // +1 because EOF also has a position
 	if base < 0 {
 		panic("token.Pos offset overflow (> 2G of source code in file set)")
 	}
@@ -429,7 +444,6 @@ func (s *FileSet) AddFile(filename string, base, size int) *File {
 
 // Iterate calls f for the files in the file set in the order they were added
 // until f returns false.
-//
 func (s *FileSet) Iterate(f func(*File) bool) {
 	for i := 0; ; i++ {
 		var file *File
@@ -474,7 +488,6 @@ func (s *FileSet) file(p Pos) *File {
 // File returns the file that contains the position p.
 // If no such file is found (for instance for p == NoPos),
 // the result is nil.
-//
 func (s *FileSet) File(p Pos) (f *File) {
 	if p != NoPos {
 		f = s.file(p)
@@ -486,7 +499,6 @@ func (s *FileSet) File(p Pos) (f *File) {
 // If adjusted is set, the position may be adjusted by position-altering
 // //line comments; otherwise those comments are ignored.
 // p must be a Pos value in s or NoPos.
-//
 func (s *FileSet) PositionFor(p Pos, adjusted bool) (pos Position) {
 	if p != NoPos {
 		if f := s.file(p); f != nil {
@@ -498,7 +510,6 @@ func (s *FileSet) PositionFor(p Pos, adjusted bool) (pos Position) {
 
 // Position converts a Pos p in the fileset into a Position value.
 // Calling s.Position(p) is equivalent to calling s.PositionFor(p, true).
-//
 func (s *FileSet) Position(p Pos) (pos Position) {
 	return s.PositionFor(p, true)
 }
