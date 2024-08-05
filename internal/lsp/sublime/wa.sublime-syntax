@@ -1,0 +1,630 @@
+%YAML 1.2
+---
+# http://www.sublimetext.com/docs/3/syntax.html
+name: 'WaSublime: Wa'
+comment: based on the Go syntax shipped in ST3 with some improvements (ligature, etc.)
+file_extensions:
+  - wa
+first_line_match: "-[*]-( Mode:)? Wa -[*]-"
+scope: source.wa
+variables:
+  identifier: '\b[[:alpha:]_][[:alnum:]_]*\b'
+  type_chars: '[[:alnum:]\s,._*&<>\[\]-]'
+
+contexts:
+  main:
+    - include: global
+
+  global:
+    - include: imports
+    - include: functions
+    - include: statements
+
+  statements:
+    - include: expressions-early
+    - include: initializers
+    - include: block
+    - match: ^\s*((?!default){{identifier}})(:)(?!=)
+      captures:
+        1: entity.name.label.wa
+        2: punctuation.separator.wa
+    - match: \b(type)\s+({{identifier}})\s+(struct)\b
+      captures:
+        1: storage.type.wa
+        2: entity.name.struct.wa
+        3: storage.type.wa
+      push:
+        - meta_scope: meta.struct.wa
+        - include: comments
+        - match: \}
+          scope: meta.block.wa punctuation.definition.block.end.wa
+          pop: true
+        - match: \{
+          scope: punctuation.definition.block.begin.wa
+          push:
+            - meta_scope: meta.block.wa
+            - match: '(?=\})'
+              pop: true
+            - match: (?:(,)|^)\s*(\*)?(?:{{identifier}}\.)*({{identifier}})\s*(?=$|"|`)
+              captures:
+                1: punctuation.separator.wa
+                2: keyword.operator.wa
+                3: variable.other.member.wa
+            - match: (?:(,)|^)\s*({{identifier}})
+              captures:
+                1: punctuation.separator.wa
+                2: variable.other.member.wa
+            - include: types
+            - include: comments
+            - include: strings
+            - include: anonymous-functions
+    - match: \b(type)\s+({{identifier}})
+      captures:
+        1: storage.type.wa
+        2: entity.name.type.wa
+      push:
+        - meta_scope: meta.type.wa
+        - match: $
+          pop: true
+        - include: comments
+        - include: types
+        - include: anonymous-functions
+        - include: keywords
+        - include: late-keywords
+    - include: expressions-late
+
+  case-default:
+    - match: '\b(default|case)\b'
+      scope: keyword.control.wa
+    - match: (,|:)
+      scope: punctuation.separator.wa
+
+  expressions:
+    - include: expressions-early
+    - include: expressions-late
+
+  expressions-early:
+    - include: case-default
+    - include: keywords
+
+  expressions-late:
+    - include: comments
+    - include: access
+    - include: strings
+    - include: char
+    - include: types
+    - include: anonymous-functions
+    - include: late-keywords
+    - include: operators
+    - include: function-calls
+    - include: builtins
+    - match: \[
+      scope: punctuation.definition.brackets.begin.wa
+      push:
+        - meta_scope: meta.brackets.wa
+        - match: \]
+          scope: punctuation.definition.brackets.end.wa
+          pop: true
+        - include: expressions
+    - match: \(
+      scope: punctuation.definition.group.begin.wa
+      push:
+        - meta_scope: meta.group.wa
+        - match: \)
+          scope: punctuation.definition.group.end.wa
+          pop: true
+        - include: expressions
+
+  builtins:
+    - match: \b(append|cap|close|complex|copy|delete|imag|len|make|new|panic|print|println|real|recover)\b
+      scope: support.function.builtin.wa
+
+  imports:
+    - match: '^\s*(import)\s+(?=")'
+      scope: meta.import.wa
+      captures:
+        1: keyword.control.import.wa
+      push:
+        - meta_scope: meta.import.wa
+        - include: strings
+        - match: '$'
+          pop: true
+    - match: '^\s*(import)\s*(\()'
+      captures:
+        1: keyword.control.import.wa
+        2: meta.group.wa punctuation.definition.group.begin.wa
+      push:
+        - meta_scope: meta.import.wa
+        - meta_content_scope: meta.group.wa
+        - match: '\)'
+          scope: meta.group.wa punctuation.definition.group.end.wa
+          pop: true
+        - include: comments
+        - include: strings
+
+  access:
+    - match: '(\.)({{identifier}})(?!\s*\()'
+      captures:
+        1: punctuation.accessor.wa
+        2: variable.other.member.wa
+
+  block:
+    - match: '\{'
+      scope: punctuation.definition.block.begin.wa
+      push:
+        - meta_scope: meta.block.wa
+        - match: '\}'
+          scope: punctuation.definition.block.end.wa
+          pop: true
+        - include: statements
+
+  comments:
+    - match: ^/\* =(\s*.*?)\s*= \*/$\n?
+      scope: comment.block.wa
+      captures:
+        1: meta.toc-list.banner.block.wa
+    - match: /\*
+      scope: punctuation.definition.comment.wa
+      push:
+        - meta_scope: comment.block.wa
+        - match: \*/
+          scope: punctuation.definition.comment.wa
+          pop: true
+    - match: \*/
+      scope: invalid.illegal.stray-comment-end.wa
+    - match: ^// =(\s*.*?)\s*=\s*$\n?
+      scope: comment.line.double-slash.banner.wa
+      captures:
+        1: meta.toc-list.banner.line.wa
+    - match: //
+      scope: punctuation.definition.comment.wa
+      push:
+        - meta_scope: comment.line.double-slash.wa
+        - match: \n
+          pop: true
+
+  function-calls:
+    - match: (\.)({{identifier}})\s*(\()
+      captures:
+        1: punctuation.accessor.wa
+        2: variable.function.wa
+        3: meta.group.wa punctuation.definition.group.begin.wa
+      push:
+        - meta_scope: meta.function-call.method.wa
+        - meta_content_scope: meta.group.wa
+        - match: \)
+          scope: meta.group.wa punctuation.definition.group.end.wa
+          pop: true
+        - include: expressions
+    - match: (?={{identifier}}\s*\()
+      push:
+        - meta_content_scope: meta.function-call.wa
+        - include: builtins
+        - match: '{{identifier}}'
+          scope: variable.function.wa
+        - match: '\('
+          scope: meta.group.wa punctuation.definition.group.begin.wa
+          set:
+            - meta_scope: meta.function-call.wa
+            - meta_content_scope: meta.group.wa
+            - match: \)
+              scope: meta.group.wa punctuation.definition.group.end.wa
+              pop: true
+            - include: expressions
+
+  initializers:
+    # Match multiple variable declarations inside of parens
+    - match: \b(var)\s+(\()
+      captures:
+        1: storage.type.wa
+        2: meta.group.wa punctuation.definition.group.begin.wa
+      push:
+        - meta_scope: meta.initialization.multiple.wa
+        - meta_content_scope: meta.group.wa
+        - match: \)
+          scope: meta.group.wa punctuation.definition.group.end.wa
+          pop: true
+        - match: '^\s*({{identifier}})'
+          captures:
+            1: variable.other.wa
+          push:
+            - match: '\s*(,)\s*({{identifier}})'
+              captures:
+                1: punctuation.separator.wa
+                2: variable.other.wa
+            - match: ''
+              pop: true
+        - include: expressions
+    # Match multiple constant declarations inside of parens
+    - match: \b(const)\s+(\()
+      captures:
+        1: storage.type.wa
+        2: meta.group.wa punctuation.definition.group.begin.wa
+      push:
+        - meta_content_scope: meta.group.wa
+        - match: \)
+          scope: meta.group.wa punctuation.definition.group.end.wa
+          pop: true
+        - match: '^\s*({{identifier}})'
+          captures:
+            1: entity.name.constant.wa
+          push:
+            - match: '\s*(,)\s*({{identifier}})'
+              captures:
+                1: punctuation.separator.wa
+                2: entity.name.constant.wa
+            - match: ''
+              pop: true
+        - include: expressions
+    # Match a single constant
+    - match: \b(const)b(?:\s+({{identifier}}))?
+      captures:
+        1: storage.type.wa
+        2: entity.name.constant.wa
+    # Matches the 'var x int = 0' style of variable declaration
+    - match: '^\s*(var)\s+({{identifier}})'
+      captures:
+        1: storage.type.wa
+        2: variable.other.wa
+      push:
+        - meta_scope: meta.initialization.explicit.wa
+        - include: comments
+        - match: '\s*(,)\s*({{identifier}})'
+          captures:
+            1: punctuation.separator.wa
+            2: variable.other.wa
+        - match: ''
+          set:
+            - meta_content_scope: meta.initialization.explicit.wa
+            - match: '$'
+              pop: true
+            - include: expressions
+    # Matches the 'x := 0' style of variable declaration
+    - match: '({{identifier}})(?=(\s*,\s*{{identifier}})*\s*:=)'
+      scope: variable.other.wa
+      push:
+        - meta_scope: meta.initialization.short.wa
+        - include: comments
+        - match: '\s*(,)\s*({{identifier}})'
+          captures:
+            1: punctuation.separator.wa
+            2: variable.other.wa
+        - match: ':='
+          scope: keyword.operator.initialize.wa
+          pop: true
+
+  keywords:
+    - match: \b(s(elect|witch)|c(ontinue|ase)|i(f|mport)|def(er|ault)|package|else|f(or|allthrough)|r(eturn|ange)|go(to)?|break)\b
+      scope: keyword.control.wa
+    - match: \b(nil|true|false|iota)\b
+      scope: constant.language.wa
+    - match: '\b(0[xX])\h*\b'
+      scope: constant.numeric.integer.hexadecimal.wa
+      captures:
+        1: punctuation.definition.numeric.hexadecimal.wa
+    - match: '\b([0-9]+\.[0-9]*|\.[0-9]+)([eE][+-]?\d+)?\b'
+      scope: constant.numeric.float.decimal.wa
+    - match: '\b\d+\b'
+      scope: constant.numeric.integer.decimal.wa
+
+  late-keywords:
+    - match: \b(chan|func|var|type|map)\b
+      scope: storage.type.wa
+    - match: \bconst\b
+      scope: storage.modifier.wa
+
+  operators:
+    - match: '[-]{2}'
+      scope: keyword.operator.decrement.wa
+    - match: '[+]{2}'
+      scope: keyword.operator.increment.wa
+    - match: '[.]{3}'
+      scope: keyword.operator.wa
+    - match: <-
+      scope: keyword.operator.channel.wa
+    - match: '<<=|>>=|&^=|[-+|^*/%&]='
+      scope: keyword.operator.assignment.wa
+    - match: '&^|<<|>>'
+      scope: keyword.operator.arithmetic.wa
+    - match: '[=!<>]=|[<>]'
+      scope: keyword.operator.comparison.wa
+    - match: "[|&]{2}|!"
+      scope: keyword.operator.logical.wa
+    - match: ':='
+      scope: keyword.operator.initialize.wa
+    - match: '[=!<>]='
+      scope: keyword.operator.wa
+    - match: <<|>>
+      scope: keyword.operator.wa
+    - match: '='
+      scope: keyword.operator.assignment.wa
+    - match: '[-/*&<>+|^%!]'
+      scope: keyword.operator.wa
+
+  types:
+    - match: '\b(struct|interface)\b(?:(\{)(\}))?'
+      captures:
+        1: storage.type.wa
+        2: meta.block.wa punctuation.definition.block.begin.wa
+        3: meta.block.wa punctuation.definition.block.end.wa
+    - match: (\[)(\d*)(\])(?=[[:alpha:]_])
+      scope: meta.brackets.wa
+      captures:
+        1: punctuation.definition.brackets.begin.wa
+        2: constant.numeric.wa
+        3: punctuation.definition.brackets.end.wa
+    - match: '\b(map)\b(\[)'
+      captures:
+        1: storage.type.wa
+        2: meta.brackets.wa punctuation.definition.brackets.begin.wa
+      push:
+        - meta_content_scope: meta.brackets.wa
+        - match: '(?=\s|$)'
+          pop: true
+        - match: \]
+          scope: meta.brackets.wa punctuation.definition.brackets.end.wa
+          pop: true
+        - include: types
+    - match: '(<-)?\b(chan)\b(<-)?(?=\s+[[:alpha:]_])'
+      captures:
+        1: keyword.operator.channel.wa
+        2: storage.type.wa
+        3: keyword.operator.channel.wa
+    - include: basic-types
+
+  basic-types:
+    - match: '\b(int(16|8|32|64)?|uint(16|8|32|ptr|64)?|float(32|64)?|b(yte|ool)|error|string|rune|complex(64|128))\b'
+      scope: storage.type.wa
+    - match: '\b(ComplexType|FloatType|IntegerType|Type|Type1)\b'
+      scope: storage.type.wa
+
+  functions:
+    - include: reciever-function-begin
+    - include: plain-function-begin
+    - include: anonymous-functions
+    - match: '\b(func)\s+({{identifier}})'
+      captures:
+        1: storage.type.wa
+        2: entity.name.function.wa
+
+  anonymous-functions:
+    - include: no-param-anonymous-function-begin
+    - include: multi-param-anonymous-function-begin
+    - include: single-param-anonymous-function-begin
+
+  reciever-function-begin:
+    - match: |-
+        (?x)
+        (func)
+        \s*
+        # receiver declaration: (Type), (*Type), (t Type), (t *Type)
+        (
+          (\()
+            (?:\s*({{identifier}})\s+)?
+            (\*?)
+            \s*
+            {{identifier}}
+            \s*
+          (\))
+        )
+        \s*
+        # name of function
+        ( {{identifier}} )
+        (?=\s*\()
+      scope: meta.function.declaration.wa
+      captures:
+        1: storage.type.wa
+        2: meta.group.wa
+        3: punctuation.definition.group.begin.wa
+        4: variable.parameter.receiver.wa
+        5: keyword.operator.wa
+        6: punctuation.definition.group.end.wa
+        7: entity.name.function.wa
+      push: function-params
+
+  plain-function-begin:
+    - match: |-
+        (?x)
+        (func)
+        \s*
+        # name of function
+        ( {{identifier}} )
+        (?=\s*\()
+      scope: meta.function.declaration.wa
+      captures:
+        1: storage.type.wa
+        2: entity.name.function.wa
+      push: function-params
+
+  no-param-anonymous-function-begin:
+    - match: |-
+        (?x)
+        (func)
+        (\s*)
+        ((\()\s*(\)))
+        (\s*)
+      captures:
+        1: meta.function.declaration.anonymous.wa storage.type.wa
+        2: meta.function.wa
+        3: meta.function.parameters.wa meta.group.wa
+        4: punctuation.definition.group.begin.wa
+        5: punctuation.definition.group.end.wa
+        6: meta.function.wa
+      push: function-return-type
+
+  multi-param-anonymous-function-begin:
+    - match: |-
+        (?x)
+        (func)
+        (\s*)
+        # param list with at least one comma: (t Type, ...)
+        (?=\(.*,)
+      scope: meta.function.declaration.anonymous.wa
+      captures:
+        1: meta.function.declaration.anonymous.wa storage.type.wa
+        2: meta.function.wa
+      push: function-params
+
+  single-param-anonymous-function-begin:
+    - match: |-
+        (?x)
+        (func)
+        (\s*)
+        (?=
+          # single param: (t Type)
+          \([^,)]+\)
+          \s*
+          # return type: Type, (Type), (Type, Type2)
+          (
+            \({{type_chars}}+\)
+            |
+            {{type_chars}}
+          )?
+          \s*
+          (\{|$)
+        )
+      captures:
+        1: meta.function.declaration.anonymous.wa storage.type.wa
+        2: meta.function.wa
+      push: function-params
+
+  function-params:
+    - match: (\s*)(\()(\s*)
+      captures:
+        1: meta.function.wa
+        2: meta.function.parameters.wa meta.group.wa punctuation.definition.group.begin.wa
+        3: meta.function.parameters.wa meta.group.wa
+      # Create a temporary context to handle the initial parameter if it does
+      # not include a type
+      set: function-params-param-name
+
+  function-params-param-name:
+    # If the first thing is an identifier followed by a comma or a comment
+    # and then a comma, it is a parameter that shares a type with a later
+    # parameter
+    - meta_content_scope: meta.function.parameters.wa meta.group.wa
+    - match: \s+(?=/\*)
+    - include: comments
+    - match: '\s*({{identifier}})(?=\s*,|\s*/\*.*?\*/\s*,)'
+      captures:
+        1: variable.parameter.wa
+      set: function-params-other
+    - match: ''
+      set: function-params-other
+
+  function-params-other:
+    - meta_content_scope: meta.function.parameters.wa meta.group.wa
+    - match: (?=\)\s*)
+      set:
+        - match: '(\))(\s*)'
+          captures:
+            1: meta.function.parameters.wa meta.group.wa punctuation.definition.group.end.wa
+            2: meta.function.wa
+          set: function-return-type
+    - include: comments
+    - match: '{{identifier}}(?=\s+[^\s,)])'
+      scope: variable.parameter.wa
+      set:
+        - meta_content_scope: meta.function.parameters.wa meta.group.wa
+        - match: '(?=\))'
+          set: function-params-other
+        - match: '(,)\s*'
+          captures:
+            1: punctuation.separator.wa
+          set: function-params-param-name
+        - include: types-group
+    - include: types-group
+    - match: ','
+      scope: punctuation.separator.wa
+
+  function-return-type:
+    - meta_content_scope: meta.function.return-type.wa
+    - match: '(?=\{)'
+      set: function-body
+    - include: types-group
+    # Match an identifier so that is doesn't trigger an exit from the context
+    - match: '{{identifier}}'
+    - match: \(
+      scope: meta.group.wa punctuation.definition.group.begin.wa
+      set:
+        - meta_content_scope: meta.function.return-type.wa meta.group.wa
+        - match: '\)'
+          scope: punctuation.definition.group.end.wa
+          set: function-body
+        - match: ','
+          scope: punctuation.separator.wa
+        - include: types-group
+    # If a function declaration ends in a newline not in parens and not in a
+    # block, it is a forward declaration
+    - match: $
+      pop: true
+    # Exit for any other char, such as )
+    - match: (?=\S)
+      pop: true
+
+  types-group:
+    - include: comments
+    - match: \*
+      scope: keyword.operator.wa
+    - include: types
+
+  function-body:
+    - match: $
+      pop: true
+    - match: (\s*)(\{)
+      captures:
+        1: meta.function.wa
+        2: meta.function.wa meta.block.wa punctuation.definition.block.begin.wa
+      set:
+        - meta_content_scope: meta.function.wa meta.block.wa
+        - match: \}
+          scope: meta.function.wa meta.block.wa punctuation.definition.block.end.wa
+          pop: true
+        - include: statements
+
+  string-escaped-char:
+    - match: '\\(\\|[abfnrutv''"]|x\h{2}|u\h{4}|U\h{8}|[0-7]{3})'
+      scope: constant.character.escape.wa
+    - match: \\.
+      scope: invalid.illegal.unknown-escape.wa
+
+  string-placeholder:
+    - match: |-
+        (?x)%
+            [#0\- +']*                                  # flags
+            (\[\d+\])?                                  # field (argument #)
+            [,;:_]?                                     # separator character (AltiVec)
+            ((-?\d+)|(\[\d+\])?\*)?                     # minimum field width
+            (\.((-?\d+)|(\[\d+\])?\*)?)?                # precision
+            [diouxwXDOUeEfFgGaAcCsSpqnvtTbyYhHmMzZ%]    # conversion type
+      scope: constant.other.placeholder.wa
+    - match: "%"
+      scope: invalid.illegal.placeholder.wa
+
+  strings:
+    - match: '"'
+      scope: punctuation.definition.string.begin.wa
+      push:
+        - meta_scope: string.quoted.double.wa
+        - match: '"'
+          scope: punctuation.definition.string.end.wa
+          pop: true
+        - include: string-placeholder
+        - include: string-escaped-char
+    - match: "`"
+      scope: punctuation.definition.string.begin.wa
+      push:
+        - meta_scope: string.quoted.raw.wa
+        - match: "`"
+          scope: punctuation.definition.string.end.wa
+          pop: true
+        - include: string-placeholder
+  char:
+    - match: "'"
+      scope: punctuation.definition.string.begin.wa
+      push:
+        - meta_scope: string.quoted.single.wa
+        - match: "'"
+          scope: punctuation.definition.string.end.wa
+          pop: true
+        - include: string-escaped-char
