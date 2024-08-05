@@ -1,8 +1,8 @@
 %YAML 1.2
 ---
 # http://www.sublimetext.com/docs/3/syntax.html
-name: 'WaSublime: Wa'
-comment: based on the Go syntax shipped in ST3 with some improvements (ligature, etc.)
+name: 'Wa'
+comment: the wa language, https://wa-lang.org
 file_extensions:
   - wa
 first_line_match: "-[*]-( Mode:)? Wa -[*]-"
@@ -214,7 +214,7 @@ contexts:
 
   initializers:
     # Match multiple variable declarations inside of parens
-    - match: \b(var)\s+(\()
+    - match: \b(global)\s+(\()
       captures:
         1: storage.type.wa
         2: meta.group.wa punctuation.definition.group.begin.wa
@@ -261,8 +261,8 @@ contexts:
       captures:
         1: storage.type.wa
         2: entity.name.constant.wa
-    # Matches the 'var x int = 0' style of variable declaration
-    - match: '^\s*(var)\s+({{identifier}})'
+    # Matches the 'global x int = 0' style of variable declaration
+    - match: '^\s*(global)\s+({{identifier}})'
       captures:
         1: storage.type.wa
         2: variable.other.wa
@@ -294,7 +294,7 @@ contexts:
           pop: true
 
   keywords:
-    - match: \b(s(elect|witch)|c(ontinue|ase)|i(f|mport)|def(er|ault)|package|else|f(or|allthrough)|r(eturn|ange)|go(to)?|break)\b
+    - match: \b(switch|c(ontinue|ase)|i(f|mport)|def(er|ault)|else|for|r(eturn|ange)|break)\b
       scope: keyword.control.wa
     - match: \b(nil|true|false|iota)\b
       scope: constant.language.wa
@@ -308,7 +308,7 @@ contexts:
       scope: constant.numeric.integer.decimal.wa
 
   late-keywords:
-    - match: \b(chan|func|var|type|map)\b
+    - match: \b(func|global|type|map)\b
       scope: storage.type.wa
     - match: \bconst\b
       scope: storage.modifier.wa
@@ -320,8 +320,6 @@ contexts:
       scope: keyword.operator.increment.wa
     - match: '[.]{3}'
       scope: keyword.operator.wa
-    - match: <-
-      scope: keyword.operator.channel.wa
     - match: '<<=|>>=|&^=|[-+|^*/%&]='
       scope: keyword.operator.assignment.wa
     - match: '&^|<<|>>'
@@ -365,15 +363,10 @@ contexts:
           scope: meta.brackets.wa punctuation.definition.brackets.end.wa
           pop: true
         - include: types
-    - match: '(<-)?\b(chan)\b(<-)?(?=\s+[[:alpha:]_])'
-      captures:
-        1: keyword.operator.channel.wa
-        2: storage.type.wa
-        3: keyword.operator.channel.wa
     - include: basic-types
 
   basic-types:
-    - match: '\b(int(16|8|32|64)?|uint(16|8|32|ptr|64)?|float(32|64)?|b(yte|ool)|error|string|rune|complex(64|128))\b'
+    - match: '\b(int(16|8|32|64)?|(i8|i16|i32|i64)|uint(16|8|32|ptr|64)?|(u8|u16|u32|u64)|float(32|64)?|(f32|f64)|b(yte|ool)|error|string|rune|complex(64|128))\b'
       scope: storage.type.wa
     - match: '\b(ComplexType|FloatType|IntegerType|Type|Type1)\b'
       scope: storage.type.wa
@@ -397,19 +390,8 @@ contexts:
         (?x)
         (func)
         \s*
-        # receiver declaration: (Type), (*Type), (t Type), (t *Type)
-        (
-          (\()
-            (?:\s*({{identifier}})\s+)?
-            (\*?)
-            \s*
-            {{identifier}}
-            \s*
-          (\))
-        )
-        \s*
         # name of function
-        ( {{identifier}} )
+        ( {{identifier}}\.{{identifier}} )
         (?=\s*\()
       scope: meta.function.declaration.wa
       captures:
