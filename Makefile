@@ -41,8 +41,10 @@ ci-test-all:
 	make -C ./waroot/examples ci-test-all
 	wa -v
 
-build-dist:
-	go run ./builder
+wasm-js:
+	GOOS=js GOARCH=wasm go build -o wa.wasm
+	mv wa.wasm ./docs
+	cd ./docs && zip wa.wasm.zip wa.wasm
 
 clean:
 	-rm a.out*

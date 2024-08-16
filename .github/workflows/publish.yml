@@ -23,11 +23,13 @@ jobs:
           # go1.21 support wasip1/wasm
           go-version: 1.21
 
-      - run: make -C internal/app/wawasm
+      - run: |
+          GOOS=js GOARCH=wasm go build -o=./docs/wa-js/wa.wasm
+          GOOS=wasip1 GOARCH=wasm go build -o=./docs/wa-wasip1/wa.wasm
+
+      - run: make wasm-js
       - run: make -C waroot/examples/snake publish
 
-      - run: |
-          GOOS=wasip1 GOARCH=wasm go build -o=./docs/wa-wasip1/bin/wa
 
       - name: Deploy
         uses: peaceiris/actions-gh-pages@v3

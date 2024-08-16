@@ -98,15 +98,24 @@ func loadProgramFileMeta(cfg *config.Config, filename string, src interface{}) (
 	}
 
 	if vfs.Std == nil {
-		if cfg.WaRoot != "" {
-			vfs.Std = os.DirFS(filepath.Join(cfg.WaRoot, "src"))
+		// pkg/std
+		stdPath := filepath.Join(manifest.Root, "pkg", "std")
+		if dirPathExists(stdPath) {
+			vfs.Std = os.DirFS(stdPath)
 		} else {
 			vfs.Std = wasrc.GetStdFS()
 		}
 	}
 	if vfs.Vendor == nil {
 		if src == nil {
-			vfs.Vendor = os.DirFS(filepath.Join(manifest.Root, "vendor"))
+			vendorPath := filepath.Join(manifest.Root, "vendor")
+			pkgVendorPath := filepath.Join(manifest.Root, "pkg", "vendor")
+
+			if dirPathExists(vendorPath) {
+				vfs.Vendor = os.DirFS(vendorPath)
+			} else if dirPathExists(pkgVendorPath) {
+				vfs.Vendor = os.DirFS(pkgVendorPath)
+			}
 		}
 		if vfs.Vendor == nil {
 			vfs.Vendor = make(fstest.MapFS) // empty fs
@@ -137,11 +146,15 @@ func loadProgramMeta(cfg *config.Config, appPath string) (
 		}
 
 		vfs = new(config.PkgVFS)
-		if cfg.WaRoot != "" {
-			vfs.Std = os.DirFS(filepath.Join(cfg.WaRoot, "src"))
+
+		// pkg/std
+		stdPath := filepath.Join(manifest.Root, "pkg", "std")
+		if dirPathExists(stdPath) {
+			vfs.Std = os.DirFS(stdPath)
 		} else {
 			vfs.Std = wasrc.GetStdFS()
 		}
+
 		return
 	}
 
@@ -159,14 +172,24 @@ func loadProgramMeta(cfg *config.Config, appPath string) (
 	}
 
 	if vfs.Std == nil {
-		if cfg.WaRoot != "" {
-			vfs.Std = os.DirFS(filepath.Join(cfg.WaRoot, "src"))
+		// pkg/std
+		stdPath := filepath.Join(manifest.Root, "pkg", "std")
+		if dirPathExists(stdPath) {
+			vfs.Std = os.DirFS(stdPath)
 		} else {
 			vfs.Std = wasrc.GetStdFS()
 		}
 	}
 	if vfs.Vendor == nil {
-		vfs.Vendor = os.DirFS(filepath.Join(manifest.Root, "vendor"))
+		vendorPath := filepath.Join(manifest.Root, "vendor")
+		pkgVendorPath := filepath.Join(manifest.Root, "pkg", "vendor")
+
+		if dirPathExists(vendorPath) {
+			vfs.Vendor = os.DirFS(vendorPath)
+		} else if dirPathExists(pkgVendorPath) {
+			vfs.Vendor = os.DirFS(pkgVendorPath)
+		}
+
 		if vfs.Vendor == nil {
 			vfs.Vendor = make(fstest.MapFS) // empty fs
 		}

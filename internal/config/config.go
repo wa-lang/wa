@@ -28,7 +28,6 @@ type PkgVFS struct {
 type Config struct {
 	WatOutput string   // 输出的 wat 文件路径
 	WaBackend string   // 编译器后端
-	WaRoot    string   // 凹 程序根目录, src 目录下是包代码, 为空时用内置标准库实现
 	WaArch    string   // 目标 CPU
 	WaOS      string   // 目标 OS
 	WaSizes   StdSizes // 指针大小
@@ -69,16 +68,6 @@ func DefaultConfig() *Config {
 			p.WaOS = s
 		} else {
 			p.WaOS = WaOS_Default
-		}
-	}
-	if p.WaRoot == "" {
-		if s := os.Getenv("WAROOT"); s != "" {
-			p.WaRoot = s
-		}
-
-		// 尝试 $HOME/wa 目录
-		if s, ok := isWarootValid(); ok {
-			p.WaRoot = s
 		}
 	}
 

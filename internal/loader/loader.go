@@ -106,10 +106,12 @@ func (p *_Loader) loadProgram(vfs *config.PkgVFS, manifest *config.Manifest) (*P
 	p.prog.Fset = token.NewFileSet()
 
 	if p.vfs.Std == nil {
-		if p.cfg.WaRoot != "" {
-			p.vfs.Std = os.DirFS(filepath.Join(p.cfg.WaRoot, "src"))
+		// pkg/std
+		stdPath := filepath.Join(manifest.Root, "pkg", "std")
+		if dirPathExists(stdPath) {
+			vfs.Std = os.DirFS(stdPath)
 		} else {
-			p.vfs.Std = wasrc.GetStdFS()
+			vfs.Std = wasrc.GetStdFS()
 		}
 	}
 
