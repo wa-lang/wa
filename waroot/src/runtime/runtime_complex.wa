@@ -1,0 +1,45 @@
+// 版权 @2024 凹语言 作者。保留所有权利。
+
+#wa:linkname $wa.runtime.complex64_Add
+func complex64_Add(a, ai, b, bi: f32) => (f32, f32) {
+	return a + b, ai + bi
+}
+
+#wa:linkname $wa.runtime.complex64_Sub
+func complex64_Sub(a, ai, b, bi: f32) => (f32, f32) {
+	return a - b, ai - bi
+}
+
+#wa:linkname $wa.runtime.complex64_Mul
+func complex64_Mul(a, ai, b, bi: f32) => (f32, f32) {
+	return a*b - ai*bi, ai*b + a*bi
+}
+
+#wa:linkname $wa.runtime.complex64_Div
+func complex64_Div(a, ai, b, bi: f32) => (f32, f32) {
+	c := (a*b + ai*bi) / (b*b + bi*bi)
+	ci := (ai*b - a*bi) / (b*b + bi*bi)
+	return c, ci
+}
+
+#wa:linkname $wa.runtime.complex128_Add
+func complex128_Add(a, ai, b, bi: f64) => (f64, f64) {
+	return a + b, ai + bi
+}
+
+#wa:linkname $wa.runtime.complex128_Sub
+func complex128_Sub(a, ai, b, bi: f64) => (f64, f64) {
+	return a - b, ai - bi
+}
+
+#wa:linkname $wa.runtime.complex128_Mul
+func complex128_Mul(a, ai, b, bi: f64) => (f64, f64) {
+	return a*b - ai*bi, ai*b + a*bi
+}
+
+#wa:linkname $wa.runtime.complex128_Div
+func complex128_Div(a, ai, b, bi: f64) => (f64, f64) {
+	c := (a*b + ai*bi) / (b*b + bi*bi)
+	ci := (ai*b - a*bi) / (b*b + bi*bi)
+	return c, ci
+}
