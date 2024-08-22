@@ -42,9 +42,18 @@ ci-test-all:
 	wa -v
 
 wasm-js:
+	-@rm ./wa.wasm
+	@mkdir -p ./docs/wa-js
 	GOOS=js GOARCH=wasm go build -o wa.wasm
-	mv wa.wasm ./docs
-	cd ./docs && zip wa.wasm.zip wa.wasm
+	mv wa.wasm ./docs/wa-js
+	cd ./docs/wa-js && zip wa.wasm.zip wa.wasm
+
+wasm-wasip1:
+	-@rm ./wa.wasm
+	@mkdir -p ./docs/wa-wasip1
+	GOOS=wasip1 GOARCH=wasm go build -o wa.wasm
+	mv wa.wasm ./docs/wa-wasip1
+	cd ./docs/wa-wasip1 && zip wa.wasm.zip wa.wasm
 
 clean:
 	-rm a.out*
