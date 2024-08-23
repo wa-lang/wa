@@ -147,6 +147,7 @@ var stdPkgs = []string{
 	"unicode",         // API 部分
 	"unicode/ctypes",  // API 完整, 测试已覆盖, wat2wasm ok
 	"unicode/utf8",    // API 完整, 测试已覆盖, wat2wasm ok
+	"wasm4",
 }
 
 var wzStdPkgs = []string{

@@ -1,0 +1,113 @@
+// 版权 @2024 凹语言 作者。保留所有权利。
+
+// WASM4: https://wasm4.org/docs
+
+// 屏幕大小
+const SCREEN_SIZE: i32 = 160
+
+// 内存地址
+const (
+	PALETTE       :u32 = 0x04 // [4]u32
+	DRAW_COLORS   :u32 = 0x14 // u16
+	GAMEPAD1      :u32 = 0x16 // u8
+	GAMEPAD2      :u32 = 0x17 // u8
+	GAMEPAD3      :u32 = 0x18 // u8
+	GAMEPAD4      :u32 = 0x19 // u8
+	MOUSE_X       :u32 = 0x1a // u16
+	MOUSE_Y       :u32 = 0x1c // u16
+	MOUSE_BUTTONS :u32 = 0x1e // u8
+	SYSTEM_FLAGS  :u32 = 0x1f // u8
+	NETPLAY       :u32 = 0x20 // u8
+	FRAMEBUFFER   :u32 = 0xa0 // [6400]u8, 帧缓存
+)
+
+// 鼠标键盘
+
+const (
+	BUTTON_1     :byte = 1
+	BUTTON_2     :byte = 2
+	BUTTON_LEFT  :byte = 16
+	BUTTON_RIGHT :byte = 32
+	BUTTON_UP    :byte = 64
+	BUTTON_DOWN  :byte = 128
+
+	MOUSE_LEFT   :byte = 1
+	MOUSE_RIGHT  :byte = 2
+	MOUSE_MIDDLE :byte = 4
+
+	SYSTEM_PRESERVE_FRAMEBUFFER :byte = 1
+	SYSTEM_HIDE_GAMEPAD_OVERLAY :byte = 2
+)
+
+// 复制数据到帧缓存
+#wa:import env blit
+func Blit(sprite: *byte, x, y: i32, width, height, flags: u32)
+
+// 复制数据到帧缓存(增强版)
+#wa:import env blitSub
+func BlitSub(sprite: *byte, x, y: i32, width, height: u32, srcX, srcY: u32, stride: i32, flags: u32)
+
+// Flags位信息
+const (
+	BLIT_1BPP   = 0
+	BLIT_2BPP   = 1
+	BLIT_FLIP_X = 2
+	BLIT_FLIP_Y = 4
+	BLIT_ROTATE = 8
+)
+
+// 绘制线段
+#wa:import env line
+func Line(x1, y1, x2, y2: i32)
+
+// 绘制水平的线段
+#wa:import env hline
+func HLine(x, y, len: i32)
+
+// 绘制竖直的线段
+#wa:import env vline
+func VLine(x, y, len: i32)
+
+// 绘制椭圆或圆
+#wa:import env oval
+func Oval(x, y, width, height: i32)
+
+// 绘制矩形
+#wa:import env rect
+func Rect(x, y, width, height: i32)
+
+// 绘制文本
+#wa:import env textUtf8
+func Text(text: string, x, y: i32)
+
+// 播发声音
+#wa:import env tone
+func Tone(frequency, duration, volume, flags: u32)
+
+const (
+	TONE_PULSE1    = 0
+	TONE_PULSE2    = 1
+	TONE_TRIANGLE  = 2
+	TONE_NOISE     = 3
+	TONE_MODE1     = 0
+	TONE_MODE2     = 4
+	TONE_MODE3     = 8
+	TONE_MODE4     = 12
+	TONE_PAN_LEFT  = 16
+	TONE_PAN_RIGHT = 32
+	TONE_NOTE_MODE = 64
+)
+
+// 存储函数
+
+// 读磁盘数据
+#wa:import env diskr
+func DiskR(ptr, count: u32) => u32
+
+// 写磁盘数据
+#wa:import env diskw
+func DiskW(src, count: u32) => u32
+
+// 打印调试信息
+#wa:import env traceUtf8
+func Trace(str: string)
