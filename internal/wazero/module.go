@@ -123,7 +123,7 @@ func (p *Module) HasUnknownImportFunc() bool {
 
 		switch moduleName {
 		case "syscall_js", "wasi_snapshot_preview1":
-		default:
+		default: // wasm4, unknown, ...
 			return true
 		}
 	}
@@ -184,6 +184,11 @@ func (p *Module) buildModule() error {
 			waOS = config.WaOS_wasi
 			break
 		}
+
+		if moduleName == "env" && funcName == "blitSub" {
+			waOS = config.WaOS_wasm4
+			break
+		}
 	}
 
 	switch waOS {
@@ -197,6 +202,8 @@ func (p *Module) buildModule() error {
 			p.wazeroInitErr = err
 			return err
 		}
+	case config.WaOS_wasm4:
+		panic("wasm4: TODO") // 浏览器执行
 	case config.WaOS_js:
 		if _, err = JsInstantiate(p.wazeroCtx, p.wazeroRuntime); err != nil {
 			p.wazeroInitErr = err

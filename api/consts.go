@@ -37,6 +37,7 @@ const (
 
 	WaOS_js      = config.WaOS_js      // 浏览器 js
 	WaOS_wasi    = config.WaOS_wasi    // WASI 接口
+	WaOS_wasm4   = config.WaOS_wasm4   // WASM4 接口
 	WaOS_unknown = config.WaOS_unknown // Unknown
 )
 

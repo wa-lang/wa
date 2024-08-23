@@ -42,6 +42,8 @@ func GetBaseImportCode(waos string) string {
 		return ""
 	case WaOS_wasi:
 		return ""
+	case WaOS_wasm4:
+		return ""
 	}
 	for _, s := range WaBackend_List {
 		if s == waos {
