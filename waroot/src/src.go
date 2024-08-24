@@ -144,12 +144,12 @@ var stdPkgs = []string{
 	"syscall",         // API 完整
 	"syscall/js",      //
 	"syscall/wasi",    //
+	"syscall/wasm4",   // WASM4 游戏
 	"syscall/unknown", //
 	"text/template",   // 无
 	"unicode",         // API 部分
 	"unicode/ctypes",  // API 完整, 测试已覆盖, wat2wasm ok
 	"unicode/utf8",    // API 完整, 测试已覆盖, wat2wasm ok
-	"wasm4",
 }
 
 var wzStdPkgs = []string{

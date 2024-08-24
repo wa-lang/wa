@@ -1,0 +1,28 @@
+// 版权 @2024 W4-hello 作者。保留所有权利。
+
+import "wasm4"
+
+global smiley = []byte{
+	0b11000011,
+	0b10000001,
+	0b00100100,
+	0b00100100,
+	0b00000000,
+	0b00100100,
+	0b10011001,
+	0b11000011,
+}
+
+func init {
+	wasm4.Update = update
+}
+
+func Update() {
+	wasm4.DrawColors.SetPrimary(wasm4.Primary)
+	wasm4.DrawText("Hello from Wa!", wasm4.Point{X: 10, Y: 10})
+	if wasm4.Gamepad.X() {
+		wasm4.DrawColors.SetPrimary(wasm4.Dark)
+	}
+	wasm4.Blit(smiley, wasm4.Point{X: 76, Y: 76}, wasm4.Size{Width: 8, Height: 8}, 0)
+	wasm4.DrawText("Press X to blink", wasm4.Point{X: 16, Y: 90})
+}
