@@ -159,6 +159,14 @@ func (p *parser) parseIntLit() int {
 	pos, lit := p.pos, p.lit
 	p.acceptToken(token.INT)
 
+	if len(lit) > 2 && lit[0] == '0' && (lit[1] == 'x' || lit[1] == 'X') {
+		n, err := strconv.ParseInt(lit[2:], 16, 64)
+		if err != nil {
+			p.errorf(pos, "expect int, got %q", lit)
+		}
+		return int(n)
+	}
+
 	n, err := strconv.ParseInt(lit, 10, 64)
 	if err != nil {
 		p.errorf(pos, "expect int, got %q", lit)
@@ -169,13 +177,21 @@ func (p *parser) parseInt32Lit() int32 {
 	pos, lit := p.pos, p.lit
 	p.acceptToken(token.INT)
 
+	if len(lit) > 2 && lit[0] == '0' && (lit[1] == 'x' || lit[1] == 'X') {
+		n, err := strconv.ParseInt(lit[2:], 16, 32)
+		if err != nil {
+			p.errorf(pos, "expect int32, got %q", lit)
+		}
+		return int32(n)
+	}
+
 	// 需要支持 u32 和 -1 两种格式
 	n, err := strconv.ParseInt(lit, 10, 32)
 	if err != nil {
 		if n, errx := strconv.ParseUint(lit, 10, 32); errx == nil {
 			return int32(uint32(n))
 		} else {
-			p.errorf(pos, "expect int, got %q, err = %v", lit, err)
+			p.errorf(pos, "expect int32, got %q, err = %v", lit, err)
 		}
 
 	}
@@ -185,9 +201,17 @@ func (p *parser) parseUint32Lit() uint32 {
 	pos, lit := p.pos, p.lit
 	p.acceptToken(token.INT)
 
+	if len(lit) > 2 && lit[0] == '0' && (lit[1] == 'x' || lit[1] == 'X') {
+		n, err := strconv.ParseInt(lit[2:], 16, 32)
+		if err != nil {
+			p.errorf(pos, "expect uint32, got %q", lit)
+		}
+		return uint32(n)
+	}
+
 	n, err := strconv.ParseUint(lit, 10, 32)
 	if err != nil {
-		p.errorf(pos, "expect int, got %q", lit)
+		p.errorf(pos, "expect uint32, got %q", lit)
 	}
 	return uint32(n)
 }
@@ -195,9 +219,17 @@ func (p *parser) parseInt64Lit() int64 {
 	pos, lit := p.pos, p.lit
 	p.acceptToken(token.INT)
 
+	if len(lit) > 2 && lit[0] == '0' && (lit[1] == 'x' || lit[1] == 'X') {
+		n, err := strconv.ParseInt(lit[2:], 16, 64)
+		if err != nil {
+			p.errorf(pos, "expect int64, got %q", lit)
+		}
+		return int64(n)
+	}
+
 	n, err := strconv.ParseInt(lit, 10, 64)
 	if err != nil {
-		p.errorf(pos, "expect int, got %q", lit)
+		p.errorf(pos, "expect int64, got %q", lit)
 	}
 	return int64(uint64(n))
 }
@@ -205,9 +237,17 @@ func (p *parser) parseUint64Lit() uint64 {
 	pos, lit := p.pos, p.lit
 	p.acceptToken(token.INT)
 
+	if len(lit) > 2 && lit[0] == '0' && (lit[1] == 'x' || lit[1] == 'X') {
+		n, err := strconv.ParseInt(lit[2:], 16, 64)
+		if err != nil {
+			p.errorf(pos, "expect uint64, got %q", lit)
+		}
+		return uint64(n)
+	}
+
 	n, err := strconv.ParseUint(lit, 10, 64)
 	if err != nil {
-		p.errorf(pos, "expect int, got %q", lit)
+		p.errorf(pos, "expect uint64, got %q", lit)
 	}
 	return n
 }
@@ -219,7 +259,7 @@ func (p *parser) parseFloat32Lit() float32 {
 
 	n, err := strconv.ParseFloat(lit, 32)
 	if err != nil {
-		p.errorf(pos, "expect int, got %q", lit)
+		p.errorf(pos, "expect float32, got %q", lit)
 	}
 	return float32(n)
 }
@@ -229,7 +269,7 @@ func (p *parser) parseFloat64Lit() float64 {
 
 	n, err := strconv.ParseFloat(lit, 64)
 	if err != nil {
-		p.errorf(pos, "expect int, got %q", lit)
+		p.errorf(pos, "expect float64, got %q", lit)
 	}
 	return n
 }

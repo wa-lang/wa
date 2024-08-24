@@ -44,12 +44,11 @@ func (p *parser) parseModuleSection_import() *ast.ImportSpec {
 	return spec
 }
 
+// (import "env" "memory" (memory 1))
 func (p *parser) parseModuleSection_import_memory(spec *ast.ImportSpec) {
 	p.acceptToken(token.MEMORY)
-	p.consumeComments()
-
-	spec.ObjKind = token.MEMORY
 	spec.MemoryName = p.parseIdentOrIndex()
+	spec.ObjKind = token.MEMORY
 }
 
 func (p *parser) parseModuleSection_import_table(spec *ast.ImportSpec) {

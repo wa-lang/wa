@@ -2,6 +2,9 @@
 
 // WASM4: https://wasm4.org/docs
 
+#wa:linkname $wa.runtime.string_to_ptr
+func u8_string_to_ptr(s: string) => i32
+
 // 屏幕大小
 const SCREEN_SIZE: i32 = 160
 
@@ -77,8 +80,12 @@ func Oval(x, y, width, height: i32)
 func Rect(x, y, width, height: i32)
 
 // 绘制文本
+func Text(s: string, x, y: i32) {
+	_Text(u8_string_to_ptr(s), i32(len(s)), x, y)
+}
+
 #wa:import env textUtf8
-func Text(textPtr, textLen: i32, x, y: i32)
+func _Text(textPtr, textLen: i32, x, y: i32)
 
 // 播发声音
 #wa:import env tone

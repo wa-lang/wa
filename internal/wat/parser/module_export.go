@@ -83,7 +83,7 @@ func (p *parser) parseModuleSection_export() *ast.ExportSpec {
 		}
 
 	default:
-		p.errorf(p.pos, "expect int, got %q", p.lit)
+		p.errorf(p.pos, "unexpect %q", p.lit)
 	}
 
 	return spec
