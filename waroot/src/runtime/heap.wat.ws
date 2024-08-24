@@ -1,5 +1,9 @@
 ;; Copyright 2023 The Wa Authors. All rights reserved.
 
+(func $runtime.throw
+	unreachable
+)
+
 (func $runtime.getStackPtr (result i32)
 	global.get $__stack_ptr
 )

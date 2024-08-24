@@ -105,7 +105,7 @@ func (p *Compiler) Compile(prog *loader.Program) (output string, err error) {
 func (p *Compiler) CompileWsFiles(prog *loader.Program) {
 	var sb strings.Builder
 
-	sb.WriteString(wasrc.GetBaseWsCode(config.WaBackend_wat))
+	sb.WriteString(wasrc.GetBaseWsCode(config.WaBackend_wat, p.prog.Cfg.WaOS))
 	sb.WriteString("\n")
 
 	var pkgpathList = make([]string, 0, len(prog.Pkgs))

@@ -78,7 +78,7 @@ func Rect(x, y, width, height: i32)
 
 // 绘制文本
 #wa:import env textUtf8
-func Text(text: string, x, y: i32)
+func Text(textPtr, textLen: i32, x, y: i32)
 
 // 播发声音
 #wa:import env tone
@@ -108,4 +108,4 @@ func DiskW(src, count: i32) => i32
 
 // 打印调试信息
 #wa:import env traceUtf8
-func Trace(str: i32)
+func Trace(msgPtr, msgLen: i32)

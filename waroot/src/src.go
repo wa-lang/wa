@@ -13,6 +13,9 @@ import (
 //go:embed base.wat.ws
 var baseWsFile_wat string
 
+//go:embed base_wasm4.wat.ws
+var baseWsFile_wat_wasm4 string
+
 //go:embed base.import.js
 var baseImportFile_js string
 
@@ -20,9 +23,12 @@ var baseImportFile_js string
 var _stdFS embed.FS
 
 // 获取汇编基础代码
-func GetBaseWsCode(backend string) string {
+func GetBaseWsCode(backend, targetOS string) string {
 	switch backend {
 	case WaBackend_wat:
+		if targetOS == WaOS_wasm4 {
+			return baseWsFile_wat_wasm4
+		}
 		return baseWsFile_wat
 	}
 	for _, s := range WaBackend_List {

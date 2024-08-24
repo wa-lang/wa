@@ -12,10 +12,14 @@ global knr_basep: u32
 global knr_freep: u32
 
 // K&R malloc 实现, Block 头部
-type knr_Header struct {
+type knr_Header :struct {
 	ptr:  u32
 	size: u32
 }
+
+// 抛出异常
+#wa:linkname runtime.throw
+func throw()
 
 // Heap 开始地址
 #wa:linkname runtime.heapBase
@@ -167,7 +171,7 @@ func refToPtr_string(s: string) => i32 {
 	return U8_string_to_ptr(s)
 }
 
-type stringIter struct {
+type stringIter :struct {
 	ptr: uint
 	len: int
 	pos: int
