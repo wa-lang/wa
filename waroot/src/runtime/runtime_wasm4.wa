@@ -119,7 +119,6 @@ func waPrintRune(ch: i32) {
 	printString(stringFromRune(ch))
 }
 
-#wa:linkname $runtime.waPuts
 func waPuts(ptr: i32, len: i32) {
 	wasm4.Trace(ptr, len)
 }
