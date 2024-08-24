@@ -47,8 +47,16 @@ func (p *parser) parseModuleSection_import() *ast.ImportSpec {
 // (import "env" "memory" (memory 1))
 func (p *parser) parseModuleSection_import_memory(spec *ast.ImportSpec) {
 	p.acceptToken(token.MEMORY)
-	spec.MemoryName = p.parseIdentOrIndex()
 	spec.ObjKind = token.MEMORY
+
+	spec.Memory = &ast.Memory{}
+	if p.tok == token.IDENT {
+		spec.Memory.Name = p.parseIdent()
+	}
+	spec.Memory.Pages = p.parseIntLit()
+	if p.tok == token.INT {
+		spec.Memory.MaxPages = p.parseIntLit()
+	}
 }
 
 func (p *parser) parseModuleSection_import_table(spec *ast.ImportSpec) {

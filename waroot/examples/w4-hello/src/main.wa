@@ -1,8 +1,8 @@
 // 版权 @2024 W4-hello 作者。保留所有权利。
 
-import "wasm4"
+import "syscall/wasm4"
 
-global smiley = []byte{
+global smiley = [8]byte{
 	0b11000011,
 	0b10000001,
 	0b00100100,
@@ -13,16 +13,16 @@ global smiley = []byte{
 	0b11000011,
 }
 
-func init {
-	wasm4.Update = update
-}
+#wa:export update
+func Update {
+	wasm4.SetDrawColors(2)
+	wasm4.Text("Hello from Wa-lang!", 10, 10)
 
-func Update() {
-	wasm4.DrawColors.SetPrimary(wasm4.Primary)
-	wasm4.DrawText("Hello from Wa!", wasm4.Point{X: 10, Y: 10})
-	if wasm4.Gamepad.X() {
-		wasm4.DrawColors.SetPrimary(wasm4.Dark)
+	gamepad := wasm4.GetGamePad1()
+	if gamepad&wasm4.BUTTON_1 != 0 {
+		wasm4.SetDrawColors(4)
 	}
-	wasm4.Blit(smiley, wasm4.Point{X: 76, Y: 76}, wasm4.Size{Width: 8, Height: 8}, 0)
-	wasm4.DrawText("Press X to blink", wasm4.Point{X: 16, Y: 90})
+
+	wasm4.Blit(smiley[:], 76, 76, 8, 8, wasm4.BLIT_1BPP)
+	wasm4.Text("Press X to blink", 16, 90)
 }

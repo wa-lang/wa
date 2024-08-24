@@ -22,6 +22,8 @@ Module:
 type Module struct {
 	VOID, BOOL, RUNE, U8, U16, I32, U32, UPTR, I64, U64, INT, UINT, F32, F64, STRING, BYTES ValueType
 
+	stkSize int // 栈大小
+
 	types_map         map[string]ValueType
 	usedConcreteTypes []ValueType
 	usedInterfaces    []ValueType
@@ -46,7 +48,7 @@ type Module struct {
 	BaseWat string
 }
 
-func NewModule() *Module {
+func NewModule(stkSize int) *Module {
 	var m Module
 	m.types_map = make(map[string]ValueType)
 	m.fnSigsName = make(map[string]fnSigWrap)
@@ -73,11 +75,13 @@ func NewModule() *Module {
 	m.STRING = m.GenValueType_string("")
 	m.BYTES = m.GenValueType_Slice(m.U8, "")
 
+	m.stkSize = stkSize
+
 	//table中先行插入一条记录，防止产生0值（无效值）id
 	m.table = append(m.table, "")
 
 	//data_seg中先插入标志，防止产生0值
-	m.DataSeg = wat.NewDataSeg(2048)
+	m.DataSeg = wat.NewDataSeg(stkSize + 32)
 	m.DataSeg.Append([]byte("$$wads$$"), 8)
 
 	return &m
@@ -300,6 +304,7 @@ func (m *Module) ToWatModule() *wat.Module {
 	}
 
 	{
+		// todo:
 		var heap_base wat.Global
 		heap_base.V = wat.NewVar("__heap_base", wat.I32{})
 		heap_base.IsMut = false

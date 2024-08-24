@@ -1,6 +1,7 @@
 # 版本日志
 
 - (dev)
+  - 增加 wasm4 游戏平台支持
   - Playground 依赖的 `wa.wasm` 编译环境升级到 Go1.21 (兼顾 wasip1 编译)
   - 调整凹语言程序目录结构, `vendor` 改为 `pkg/vendor`, 增加 `pkg/std` 目录为可选标准库
   - `wa` 命令瘦身: 删除 wabt 工具和 `-wabt` 参数, 去掉 `wa run-wasm` 子命令

@@ -22,6 +22,26 @@ var baseImportFile_js string
 //go:embed *
 var _stdFS embed.FS
 
+// 获取栈大小(需要和 base.wat.ws 一致)
+func GetStackSize(backend, targetOS string) int {
+	const stkSize = 1024 * 8
+	switch backend {
+	case WaBackend_wat:
+		if targetOS == WaOS_wasm4 {
+			const startAddr = 0x19a0 // 6560
+			return startAddr + stkSize
+		}
+		return stkSize
+	}
+	for _, s := range WaBackend_List {
+		if s == backend {
+			return stkSize
+		}
+	}
+	panic("unreachable")
+	return 0
+}
+
 // 获取汇编基础代码
 func GetBaseWsCode(backend, targetOS string) string {
 	switch backend {

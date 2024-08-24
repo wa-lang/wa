@@ -198,7 +198,10 @@ func (p *wat2wasmWorker) buildImportSection() error {
 			panic("import unsupport table")
 		case token.MEMORY:
 			spec.Type = wasm.ExternTypeMemory
-			spec.DescMem = &wasm.Memory{Min: 1}
+			spec.DescMem = &wasm.Memory{
+				Min: uint32(x.Memory.Pages),
+				Max: uint32(x.Memory.MaxPages),
+			}
 		case token.GLOBAL:
 			spec.Type = wasm.ExternTypeGlobal
 			spec.DescGlobal = &wasm.GlobalType{}

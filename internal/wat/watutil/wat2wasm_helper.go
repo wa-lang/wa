@@ -101,7 +101,7 @@ func (p *wat2wasmWorker) findMemoryIndex(ident string) wasm.Index {
 	var importCount int
 	for _, x := range p.mWat.Imports {
 		if x.ObjKind == token.MEMORY {
-			if x.MemoryName == ident {
+			if x.Memory.Name == ident {
 				return wasm.Index(importCount)
 			}
 			importCount++

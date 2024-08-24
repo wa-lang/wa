@@ -27,15 +27,18 @@ type Compiler struct {
 }
 
 func New() *Compiler {
-	p := new(Compiler)
-	p.module = wir.NewModule()
-	p.module.AddGlobal("$wa.runtime.closure_data", "", p.module.GenValueType_Ptr(p.module.VOID), false, nil)
-	wir.SetCurrentModule(p.module)
-	return p
+	return new(Compiler)
 }
 
 func (p *Compiler) Compile(prog *loader.Program) (output string, err error) {
 	p.prog = prog
+
+	// 不同平台 stack 大小不同
+	stkSize := wasrc.GetStackSize(config.WaBackend_wat, p.prog.Cfg.WaOS)
+	p.module = wir.NewModule(stkSize)
+	p.module.AddGlobal("$wa.runtime.closure_data", "", p.module.GenValueType_Ptr(p.module.VOID), false, nil)
+	wir.SetCurrentModule(p.module)
+
 	p.CompileWsFiles(prog)
 
 	p.tLib = newTypeLib(p.module, prog)

@@ -5,23 +5,89 @@
 #wa:linkname $wa.runtime.string_to_ptr
 func u8_string_to_ptr(s: string) => i32
 
+#wa:linkname $wa.runtime.slice_to_ptr
+func u8_slice_to_ptr(t: []byte) => i32
+
 // 屏幕大小
 const SCREEN_SIZE: i32 = 160
 
+// 读调色板
+func GetPalette => (u32, u32, u32, u32) {
+	a, b, c, d := getPalette()
+	return u32(a), u32(b), u32(c), u32(d)
+}
+
+#wa:linkname $syscall/wasm4.GetPalette
+func getPalette => (i32, i32, i32, i32)
+
+// 写调试板
+func SetPalette(a0, a1, a2, a3: u32) {
+	setPalette(i32(a0), i32(a1), i32(a2), i32(a3))
+}
+
+#wa:linkname $syscall/wasm4.SetPalette
+func setPalette(a0, a1, a2, a3: i32)
+
+// 读绘图颜色
+func GetDrawColors => u16 {
+	x := getDrawColors()
+	return u16(x)
+}
+
+#wa:linkname $syscall/wasm4.GetDrawColors
+func getDrawColors => i32
+
+// 写绘图颜色
+func SetDrawColors(a: u16) {
+	setDrawColors(i32(a))
+}
+
+#wa:linkname $syscall/wasm4.SetDrawColors
+func setDrawColors(a: i32)
+
+// 读取控制键
+
+func GetGamePad1 => u8 {
+	return u8(getGamePad1())
+}
+func GetGamePad2 => u8 {
+	return u8(getGamePad2())
+}
+func GetGamePad3 => u8 {
+	return u8(getGamePad3())
+}
+func GetGamePad4 => u8 {
+	return u8(getGamePad4())
+}
+
+#wa:linkname $syscall/wasm4.GetGamePad1
+func getGamePad1 => i32
+
+#wa:linkname $syscall/wasm4.GetGamePad2
+func getGamePad2 => i32
+
+#wa:linkname $syscall/wasm4.GetGamePad3
+func getGamePad3 => i32
+
+#wa:linkname $syscall/wasm4.GetGamePad4
+func getGamePad4 => i32
+
+// 鼠标信息
+
+#wa:linkname $syscall/wasm4.GetMouseX
+func GetMouseX => i32
+
+#wa:linkname $syscall/wasm4.GetMouseY
+func GetMouseY => i32
+
+#wa:linkname $syscall/wasm4.GetMouseButtons
+func GetMouseButtons => i32
+
 // 内存地址
 const (
-	PALETTE       :i32 = 0x04 // [4]i32
-	DRAW_COLORS   :i32 = 0x14 // u16
-	GAMEPAD1      :i32 = 0x16 // u8
-	GAMEPAD2      :i32 = 0x17 // u8
-	GAMEPAD3      :i32 = 0x18 // u8
-	GAMEPAD4      :i32 = 0x19 // u8
-	MOUSE_X       :i32 = 0x1a // u16
-	MOUSE_Y       :i32 = 0x1c // u16
-	MOUSE_BUTTONS :i32 = 0x1e // u8
-	SYSTEM_FLAGS  :i32 = 0x1f // u8
-	NETPLAY       :i32 = 0x20 // u8
-	FRAMEBUFFER   :i32 = 0xa0 // [6400]u8, 帧缓存
+	_SYSTEM_FLAGS :i32 = 0x1f // u8
+	_NETPLAY      :i32 = 0x20 // u8
+	_FRAMEBUFFER  :i32 = 0xa0 // [6400]u8, 帧缓存
 )
 
 // 鼠标键盘
@@ -43,8 +109,12 @@ const (
 )
 
 // 复制数据到帧缓存
+func Blit(sprite: []byte, x, y: i32, width, height, flags: i32) {
+	blit(u8_slice_to_ptr(sprite), x, y, width, height, flags)
+}
+
 #wa:import env blit
-func Blit(sprite: i32, x, y: i32, width, height, flags: i32)
+func blit(sprite: i32, x, y: i32, width, height, flags: i32)
 
 // 复制数据到帧缓存(增强版)
 #wa:import env blitSub
