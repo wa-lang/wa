@@ -1,13 +1,14 @@
 # 版本日志
 
 - (dev)
+  - 完善 `wa lsp` 子命令 (TODO)
+  - 恢复 `brew` 打包支持
+- v0.15.0 (2024-08-25)
   - 增加 wasm4 游戏平台支持
   - Playground 依赖的 `wa.wasm` 编译环境升级到 Go1.21 (兼顾 wasip1 编译)
   - 调整凹语言程序目录结构, `vendor` 改为 `pkg/vendor`, 增加 `pkg/std` 目录为可选标准库
   - `wa` 命令瘦身: 删除 wabt 工具和 `-wabt` 参数, 去掉 `wa run-wasm` 子命令
   - 删除 `WAROOT` 环境变量, 凹语言始终以单个 `wa` 命令程序简化安装
-  - 完善 `wa lsp` 子命令 (TODO)
-  - 恢复 `brew` 打包支持
 - v0.14.0 (2024-08-01)
   - 后端重新实现 wat 到 wasm 的转换工具并默认启用; run/build 临时增加 `-wabt=false` 参数
   - 简化 `wa run`, 优先命令行执行, 并增加 `-web` 参数

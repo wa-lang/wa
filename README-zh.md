@@ -39,6 +39,10 @@
 ![](docs/images/snake-01.jpg)
 
 
+Wasm4 Snake Game:
+
+- Code: [waroot/examples/w4-snake](waroot/examples/w4-snake)
+
 ## NES小霸王游戏机模拟器
 
 - Play: [https://wa-lang.org/nes/](https://wa-lang.org/nes/)

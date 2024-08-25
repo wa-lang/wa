@@ -37,7 +37,11 @@ Instead of requiring complex toolchains to set up, you can simply go install it 
 - Play: [https://wa-lang.org/wa/snake/](https://wa-lang.org/wa/snake/)
 - Code: [waroot/examples/snake/README-en.md](waroot/examples/snake/README-en.md)
 
-![](docs/images/snake-01.jpg)
+![](docs/images/snake-w4-01.png)
+
+Wasm4 Snake Game:
+
+- Code: [waroot/examples/w4-snake](waroot/examples/w4-snake)
 
 ## NES emulator
 
