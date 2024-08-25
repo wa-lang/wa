@@ -29,17 +29,22 @@ func SetPalette(a0, a1, a2, a3: u32) {
 func setPalette(a0, a1, a2, a3: i32)
 
 // 读绘图颜色
-func GetDrawColors => u16 {
+func GetDrawColors => (a, b, c, d: u8) {
 	x := getDrawColors()
-	return u16(x)
+	a = u8(u32(x) & 0xF)
+	b = u8((u32(x) >> 4) & 0xF)
+	c = u8((u32(x) >> 8) & 0xF)
+	d = u8((u32(x) >> 12) & 0xF)
+	return
 }
 
 #wa:linkname $syscall/wasm4.GetDrawColors
 func getDrawColors => i32
 
 // 写绘图颜色
-func SetDrawColors(a: u16) {
-	setDrawColors(i32(a))
+func SetDrawColors(a, b, c, d: u8) {
+	x := u32(a) + (u32(b) << 4) + (u32(c) << 8) + (u32(d) << 12)
+	setDrawColors(i32(x))
 }
 
 #wa:linkname $syscall/wasm4.SetDrawColors
@@ -180,12 +185,20 @@ const (
 )
 
 // 读磁盘数据
+func DiskR(data: []byte) => i32 {
+	return diskR(u8_slice_to_ptr(data), i32(len(data)))
+}
+
 #wa:import env diskr
-func DiskR(ptr, count: i32) => i32
+func diskR(ptr, count: i32) => i32
 
 // 写磁盘数据
+func DiskW(data: []byte) => i32 {
+	return diskW(u8_slice_to_ptr(data), i32(len(data)))
+}
+
 #wa:import env diskw
-func DiskW(src, count: i32) => i32
+func diskW(src, count: i32) => i32
 
 // 打印调试信息
 func Trace(msg: string) {

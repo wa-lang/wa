@@ -39,7 +39,10 @@ func input() {
 	gamePad := wasm4.GetGamePad1()
 
 	if gamePad&wasm4.BUTTON_1 != 0 {
-		snake.Stoped = !snake.Stoped
+		snake.Stoped = true
+	}
+	if gamePad&wasm4.BUTTON_2 != 0 {
+		snake.Stoped = false
 	}
 
 	if gamePad&wasm4.BUTTON_UP != 0 {
@@ -90,7 +93,7 @@ func update {
 	snake.Draw()
 
 	// Draw the fruit.
-	wasm4.SetDrawColors((Light << 0) + (Primary << 4) + (Secondary << 8) + (Dark << 12))
+	wasm4.SetDrawColors(Light, Primary, Secondary, Dark)
 	wasm4.Blit(fruitSprite, i32(fruit.X), i32(fruit.Y), size, size, wasm4.BLIT_2BPP)
 }
 
@@ -123,14 +126,14 @@ func Snake.Reset {
 // Draw the snake's body
 func Snake.Draw {
 	// Draw green rectangles with blue outline for body segments.
-	wasm4.SetDrawColors((Secondary << 0) + (Dark << 4) + (Secondary << 8) + (Dark << 12))
+	wasm4.SetDrawColors(Secondary, Dark, Secondary, Dark)
 
 	for _, part := range this.Body {
 		wasm4.Rect(i32(part.X), i32(part.Y), size, size)
 	}
 
 	// Draw blue rectangle for the head.
-	wasm4.SetDrawColors((Dark << 0) + (Transparent << 4) + (Secondary << 8) + (Dark << 12))
+	wasm4.SetDrawColors(Dark, Transparent, Secondary, Dark)
 	head := this.Body[0]
 	wasm4.Rect(i32(head.X), i32(head.Y), size, size)
 }
