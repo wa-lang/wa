@@ -2,7 +2,6 @@
 
 - (dev)
   - 完善 `wa lsp` 子命令 (TODO)
-  - 恢复 `brew` 打包支持
 - v0.15.0 (2024-08-25)
   - 增加 wasm4 游戏平台支持
   - Playground 依赖的 `wa.wasm` 编译环境升级到 Go1.21 (兼顾 wasip1 编译)
