@@ -38,8 +38,10 @@
 
 ![](docs/images/snake-01.jpg)
 
+[Wasm4](https://wasm4.org/) Snake Game:
 
-Wasm4 Snake Game:
+![](docs/images/snake-w4-01.png)
+
 
 - Code: [waroot/examples/w4-snake](waroot/examples/w4-snake)
 
