@@ -15,6 +15,7 @@ import (
 	"wa-lang.org/wa/internal/3rdparty/cli"
 	"wa-lang.org/wa/internal/app/appbase"
 	"wa-lang.org/wa/internal/app/appbuild"
+	"wa-lang.org/wa/internal/config"
 	"wa-lang.org/wa/internal/wat/watutil"
 	"wa-lang.org/wa/internal/wazero"
 )
@@ -84,6 +85,12 @@ func CmdRunAction(c *cli.Context) error {
 	if err != nil {
 		fmt.Println("appbuild.BuildApp:", err)
 		os.Exit(1)
+		return nil
+	}
+
+	if opt.Config().WaOS == config.WaOS_wasm4 {
+		fmt.Println("please use `w4` to run wasm4 game!")
+		os.Exit(0)
 		return nil
 	}
 

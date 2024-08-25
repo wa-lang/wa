@@ -1,8 +1,11 @@
 // 版权 @2022 凹语言 作者。保留所有权利。
 
-import "syscall/wasm4"
+import "syscall/wasm4" => _
 
 const WAOS = "wasm4"
+
+#wa:import env traceUtf8
+func waPuts(ptr: i32, len: i32)
 
 #wa:linkname $runtime.argsSizesGet
 func argsSizesGet(result_argc: i32, result_argv_len: i32) => (errno: i32) {
@@ -117,8 +120,4 @@ func waPrintString(s: string) {
 #wa:linkname $runtime.waPrintRune
 func waPrintRune(ch: i32) {
 	printString(stringFromRune(ch))
-}
-
-func waPuts(ptr: i32, len: i32) {
-	wasm4.Trace(ptr, len)
 }

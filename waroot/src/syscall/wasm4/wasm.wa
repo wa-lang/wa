@@ -117,8 +117,12 @@ func Blit(sprite: []byte, x, y: i32, width, height, flags: i32) {
 func blit(sprite: i32, x, y: i32, width, height, flags: i32)
 
 // 复制数据到帧缓存(增强版)
+func BlitSub(sprite: []byte, x, y: i32, width, height: i32, srcX, srcY: i32, stride: i32, flags: i32) {
+	blitSub(u8_slice_to_ptr(sprite), x, y, width, height, srcX, srcY, stride, flags)
+}
+
 #wa:import env blitSub
-func BlitSub(sprite: i32, x, y: i32, width, height: i32, srcX, srcY: i32, stride: i32, flags: i32)
+func blitSub(sprite: i32, x, y: i32, width, height: i32, srcX, srcY: i32, stride: i32, flags: i32)
 
 // Flags位信息
 const (
@@ -151,11 +155,11 @@ func Rect(x, y, width, height: i32)
 
 // 绘制文本
 func Text(s: string, x, y: i32) {
-	_Text(u8_string_to_ptr(s), i32(len(s)), x, y)
+	textUtf8(u8_string_to_ptr(s), i32(len(s)), x, y)
 }
 
 #wa:import env textUtf8
-func _Text(textPtr, textLen: i32, x, y: i32)
+func textUtf8(textPtr, textLen: i32, x, y: i32)
 
 // 播发声音
 #wa:import env tone
@@ -184,5 +188,9 @@ func DiskR(ptr, count: i32) => i32
 func DiskW(src, count: i32) => i32
 
 // 打印调试信息
+func Trace(msg: string) {
+	traceUtf8(u8_string_to_ptr(msg), i32(len(msg)))
+}
+
 #wa:import env traceUtf8
-func Trace(msgPtr, msgLen: i32)
+func traceUtf8(msgPtr, msgLen: i32)

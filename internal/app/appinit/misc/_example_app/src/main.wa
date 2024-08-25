@@ -15,6 +15,38 @@ func Draw {
 		p5.Point(p5.MouseX, p5.MouseY)
 	}
 }
+{{else if .IsWasm4App}}
+// $ wa build -target=wasm4
+// $ w4 run output/{{.Name}}.wasm
+
+// https://wasm4.org/docs/getting-started/setup
+
+import "syscall/wasm4"
+
+global smiley = [8]byte{
+	0b11000011,
+	0b10000001,
+	0b00100100,
+	0b00100100,
+	0b00000000,
+	0b00100100,
+	0b10011001,
+	0b11000011,
+}
+
+#wa:export update
+func Update {
+	wasm4.SetDrawColors(2)
+	wasm4.Text("Hello from Wa-lang!", 10, 10)
+
+	gamepad := wasm4.GetGamePad1()
+	if gamepad&wasm4.BUTTON_1 != 0 {
+		wasm4.SetDrawColors(4)
+	}
+
+	wasm4.Blit(smiley[:], 76, 76, 8, 8, wasm4.BLIT_1BPP)
+	wasm4.Text("Press X to blink", 16, 90)
+}
 {{else}}
 func main {
 	println("你好，凹语言！")

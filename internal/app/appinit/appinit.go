@@ -37,6 +37,10 @@ var CmdInit = &cli.Command{
 			Usage: "p5 example",
 		},
 		&cli.BoolFlag{
+			Name:  "wasm4",
+			Usage: "wasm4 game",
+		},
+		&cli.BoolFlag{
 			Name:    "update",
 			Aliases: []string{"u"},
 			Usage:   "update example",
@@ -44,7 +48,7 @@ var CmdInit = &cli.Command{
 	},
 
 	Action: func(c *cli.Context) error {
-		err := InitApp(c.String("name"), c.String("pkgpath"), c.Bool("p5"), c.Bool("update"))
+		err := InitApp(c.String("name"), c.String("pkgpath"), c.Bool("p5"), c.Bool("wasm4"), c.Bool("update"))
 		if err != nil {
 			fmt.Println(err)
 			os.Exit(1)
@@ -53,7 +57,7 @@ var CmdInit = &cli.Command{
 	},
 }
 
-func InitApp(name, pkgpath string, isP5App, update bool) error {
+func InitApp(name, pkgpath string, isP5App, isWasm4App, update bool) error {
 	if name == "" {
 		return fmt.Errorf("init failed: <%s> is empty", name)
 	}
@@ -72,15 +76,17 @@ func InitApp(name, pkgpath string, isP5App, update bool) error {
 	}
 
 	var info = struct {
-		Name    string
-		Pkgpath string
-		Year    int
-		IsP5App bool
+		Name       string
+		Pkgpath    string
+		Year       int
+		IsP5App    bool
+		IsWasm4App bool
 	}{
-		Name:    name,
-		Pkgpath: pkgpath,
-		Year:    time.Now().Year(),
-		IsP5App: isP5App,
+		Name:       name,
+		Pkgpath:    pkgpath,
+		Year:       time.Now().Year(),
+		IsP5App:    isP5App,
+		IsWasm4App: isWasm4App,
 	}
 
 	appFS := waroot_GetExampleAppFS()
