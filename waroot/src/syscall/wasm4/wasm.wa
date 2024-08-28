@@ -37,6 +37,9 @@ func GetDrawColors => (a, b, c, d: u8) {
 	d = u8((u32(x) >> 12) & 0xF)
 	return
 }
+func GetDrawColorsU16 => u16 {
+	return u16(getDrawColors())
+}
 
 #wa:linkname $syscall/wasm4.GetDrawColors
 func getDrawColors => i32
@@ -44,6 +47,9 @@ func getDrawColors => i32
 // 写绘图颜色
 func SetDrawColors(a, b, c, d: u8) {
 	x := u32(a) + (u32(b) << 4) + (u32(c) << 8) + (u32(d) << 12)
+	setDrawColors(i32(x))
+}
+func SetDrawColorsU16(x: u16) {
 	setDrawColors(i32(x))
 }
 

@@ -1,0 +1,131 @@
+// 版权 @2024 W4-2048 作者。保留所有权利。
+
+type Board :interface {
+	Get(row, col: int) => int
+	Add()
+	IsOver() => bool
+	Total() => int
+	Input(Key)
+	Restart()
+}
+
+func board.Get(col, row: int) => int {
+	return this.matrix[row][col]
+}
+
+type board :struct {
+	rand:   func() => u32
+	matrix: [][]int
+	over:   bool
+	newRow: int
+	newCol: int
+}
+
+func New(seed: u32) => Board {
+	this := &board{
+		matrix: newMatrix(),
+		rand:   lcg(1103515245, 12345, 1<<31, seed),
+	}
+
+	this.Add()
+	this.Add()
+
+	return this
+}
+
+func board.Restart {
+	this.matrix = newMatrix()
+
+	this.Add()
+	this.Add()
+}
+
+func board.Total() => int {
+	total: int
+
+	for i := 0; i < 4; i++ {
+		for j := 0; j < 4; j++ {
+			total += this.matrix[i][j]
+		}
+	}
+
+	return total
+}
+
+func board.IsOver() => bool {
+	empty := 0
+	for i := 0; i < 4; i++ {
+		for j := 0; j < 4; j++ {
+			if this.matrix[i][j] == 0 {
+				empty++
+			}
+		}
+	}
+	return empty == 0 || this.over
+}
+
+// Add : it first finds the empty slots in the board. They are the one with 0 value
+// The it places a new cell randomly in one of those empty places
+// The new value to put is also calculated randomly
+func board.Add {
+	val := 2
+
+	if this.intn(10) > 8 {
+		val = 4
+	}
+
+	empty := 0
+	for i := 0; i < 4; i++ {
+		for j := 0; j < 4; j++ {
+			if this.matrix[i][j] == 0 {
+				empty++
+			}
+		}
+	}
+
+	elementCount := this.intn(empty) + 1
+
+	index := 0
+
+	for i := 0; i < 4; i++ {
+		for j := 0; j < 4; j++ {
+			if this.matrix[i][j] == 0 {
+				index++
+				if index == elementCount {
+					this.newRow = i
+					this.newCol = j
+					this.matrix[i][j] = val
+					return
+				}
+			}
+		}
+	}
+
+	return
+}
+
+func board.intn(n: int) => int {
+	if n <= 0 {
+		return -1
+	}
+
+	return int(this.rand()) % n
+}
+
+func lcg(a, c, m, seed: u32) => func() => u32 {
+	r := seed
+	return func() => u32 {
+		r = (a*r + c) % m
+		return r
+	}
+}
+
+func newMatrix() => [][]int {
+	matrix := make([][]int, 0)
+
+	for i := 0; i < 4; i++ {
+		matrix = append(matrix, make([]int, 4))
+	}
+
+	return matrix
+}

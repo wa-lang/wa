@@ -1,0 +1,33 @@
+// 版权 @2024 W4-2048 作者。保留所有权利。
+
+type Key :int
+
+const (
+	KeyUp :Key = iota
+	KeyDown
+	KeyRight
+	KeyLeft
+	KeyBTN1
+	KeyBTN2
+)
+
+func board.Input(key: Key) {
+	switch key {
+	case KeyUp:
+		this.up()
+		this.Add()
+	case KeyDown:
+		this.down()
+		this.Add()
+	case KeyRight:
+		this.right()
+		this.Add()
+	case KeyLeft:
+		this.left()
+		this.Add()
+	case KeyBTN1:
+		// Do something
+	case KeyBTN2:
+		this.Restart()
+	}
+}

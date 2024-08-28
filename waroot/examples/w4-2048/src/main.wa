@@ -1,0 +1,415 @@
+// 版权 @2024 W4-2048 作者。保留所有权利。
+
+import (
+	"strconv"
+	"syscall/wasm4"
+
+	"w42048/game"
+	"w42048/palettes"
+)
+
+const (
+	tracingEnabled = false
+	soundEnabled   = true
+	musicEnabled   = true
+)
+
+global ui: *UI = nil
+
+//wa:export start
+func Start {
+	seed := u32(478194671)
+
+	ui = NewUI(game.New(seed), palettes.IceCreamGB)
+}
+
+//wa:export update
+func Update {
+	ui.frame++
+	ui.show()
+	ui.sound()
+	ui.music()
+	ui.input()
+}
+
+type UI :struct {
+	game.Board
+
+	frame:  uint
+	oldPad: u8
+	pal:    [4]u32
+}
+
+func NewUI(board: game.Board, pal: [4]u32) => *UI {
+	return &UI{
+		Board: board,
+		pal:   pal,
+	}
+}
+
+// ┌───────────────────────────────────────────────────────────────────────────┐
+// │                                                                           │
+// │ Rendering                                                                 │
+// │                                                                           │
+// └───────────────────────────────────────────────────────────────────────────┘
+
+func UI.show {
+	wasm4.SetPalette(this.pal[0], this.pal[1], this.pal[2], this.pal[3])
+
+	dotbg(0, 0, 160, 27, 3, 0x3, 0x4)
+
+	// Pts border
+	wasm4.SetDrawColorsU16(0x32)
+	wasm4.Rect(0, 6, 84, 12)
+
+	// Bottom background
+	wasm4.SetDrawColorsU16(0x4)
+	wasm4.Rect(0, 157, 160, 3)
+
+	wasm4.SetDrawColorsU16(0x24)
+	wasm4.Text("Total"+leftpad(strconv.Itoa(this.Total()), " ", 5), 2, 8)
+
+	wasm4.SetDrawColorsU16(0x41)
+	wasm4.Text(" -+-+-+- ", 88, 0)
+	wasm4.SetDrawColorsU16(0x42)
+	wasm4.Text(" 2|0|4|8 ", 88, 8)
+	wasm4.SetDrawColorsU16(0x43)
+	wasm4.Text(" -+-+-+- ", 88, 16)
+
+	for r := i32(0); r < 4; r++ {
+		for c := i32(0); c < 4; c++ {
+			if v := this.Get(int(r), int(c)); v > 0 {
+				showTile(r, c, i32(v))
+			}
+		}
+	}
+
+	wasm4.SetDrawColorsU16(0x3)
+
+	// Horizontal lines on the board
+	wasm4.Line(0, 28, 160, 28)
+	wasm4.Line(0, 60, 160, 60)
+	wasm4.Line(0, 92, 160, 92)
+	wasm4.Line(0, 124, 160, 124)
+	wasm4.Line(0, 156, 160, 156)
+
+	wasm4.SetDrawColorsU16(0x2)
+	wasm4.Line(0, 27, 160, 27)
+	wasm4.Line(0, 59, 160, 59)
+	wasm4.Line(0, 91, 160, 91)
+	wasm4.Line(0, 123, 160, 123)
+	wasm4.Line(0, 155, 160, 155)
+
+	// Vertical lines on the board
+	wasm4.Line(39, 28, 39, 155)
+	wasm4.Line(80, 28, 80, 155)
+	wasm4.Line(120, 28, 120, 155)
+
+	if this.frame < 124 {
+		s: string
+		fg: u16
+		bg: u16
+		a: i32
+		h: i32
+
+		switch {
+		case this.frame < 6 || this.frame > 118:
+			s = "L   E   T   S      G   O."
+			fg, bg, a, h = 0x2, 0x21, 120, 10
+		case this.frame < 12 || this.frame > 112:
+			s = "L  E  T  S    G  O!"
+			fg, bg, a, h = 0x3, 0x21, 115, 15
+		case this.frame < 18 || this.frame > 106:
+			s = "L E T S  G O!"
+			fg, bg, a, h = 0x3, 0x32, 110, 20
+		case this.frame < 24 || this.frame > 100:
+			s = "LETS GO!"
+			fg, bg, a, h = 0x4, 0x23, 105, 25
+		default:
+			s = "LETS GO!"
+			fg, bg, a, h = 0x1, 0x34, 100, 30
+		}
+
+		wasm4.SetDrawColorsU16(bg)
+		wasm4.Rect(8, a, 144, h)
+		wasm4.SetDrawColorsU16(fg)
+		wasm4.Text(s, 80-(i32(len(s))*8/2), a+(h/2)-5)
+	}
+}
+
+func showTile(col, row, val: i32) {
+	x, y := 2+(col*41), 32+row*32
+	w, h := i32(35), i32(27)
+	s := i32(8)
+
+	tileShadow(val)
+	wasm4.Rect(x-1, y-1, w, h)
+
+	set(x, y, 0x43)
+
+	wasm4.SetDrawColorsU16(0x1)
+	wasm4.Line(x-1, y, x, y-1)
+	wasm4.Line(x+(w-3), y-1, x+(w-2), y)
+
+	set(x-1, y-1, 0x1)         // Top-Left
+	set(x+(w-2), y-1, 0x1)     // Top-Right
+	set(x-1, y+(h)-2, 0x1)     // Bottom-Left
+	set(x+(w-2), y+(h)-2, 0x1) // Bottom-Right
+
+	tileColor(val)
+	wasm4.Text("    ", x, y)
+	wasm4.Text(leftpad(strconv.Itoa(int(val)), " ", 4), x, y+s)
+	wasm4.Text("    ", x, y+s*2)
+}
+
+func tileColor(val: i32) {
+	switch val {
+	case 2:
+		wasm4.SetDrawColorsU16(0x21)
+	case 4:
+		wasm4.SetDrawColorsU16(0x32)
+	case 8:
+		wasm4.SetDrawColorsU16(0x24)
+	case 16:
+		wasm4.SetDrawColorsU16(0x32)
+	case 32:
+		wasm4.SetDrawColorsU16(0x34)
+	case 64:
+		wasm4.SetDrawColorsU16(0x32)
+	case 128:
+		wasm4.SetDrawColorsU16(0x40)
+	case 256:
+		wasm4.SetDrawColorsU16(0x42)
+	case 512:
+		wasm4.SetDrawColorsU16(0x43)
+	case 1024:
+		wasm4.SetDrawColorsU16(0x34)
+	case 2048:
+		wasm4.SetDrawColorsU16(0x24)
+	}
+}
+
+func tileShadow(val: i32) {
+	switch val {
+	case 2:
+		wasm4.SetDrawColorsU16(0x43)
+	case 4:
+		wasm4.SetDrawColorsU16(0x43)
+	case 8:
+		wasm4.SetDrawColorsU16(0x42)
+	case 16:
+		wasm4.SetDrawColorsU16(0x32)
+	case 32:
+		wasm4.SetDrawColorsU16(0x34)
+	case 64:
+		wasm4.SetDrawColorsU16(0x32)
+	case 128:
+		wasm4.SetDrawColorsU16(0x43)
+	case 256:
+		wasm4.SetDrawColorsU16(0x42)
+	case 512:
+		wasm4.SetDrawColorsU16(0x24)
+	case 1024:
+		wasm4.SetDrawColorsU16(0x44)
+	case 2048:
+		wasm4.SetDrawColorsU16(0x44)
+	}
+}
+
+// ┌───────────────────────────────────────────────────────────────────────────┐
+// │                                                                           │
+// │ Palette                                                                   │
+// │                                                                           │
+// └───────────────────────────────────────────────────────────────────────────┘
+
+func UI.randomPalette {
+	this.pal = palettes.All[int(this.frame)%len(palettes.All)]
+}
+
+// ┌───────────────────────────────────────────────────────────────────────────┐
+// │                                                                           │
+// │ Music and Sound                                                           │
+// │                                                                           │
+// └───────────────────────────────────────────────────────────────────────────┘
+
+func UI.music {
+	if !musicEnabled {
+		return
+	}
+
+	switch {
+	case this.beat(24):
+		play(Sound{40, 0, 0, 8, 0, 0, 0, 2, 0})
+	case this.beat(32):
+		play(Sound{80, 0, 0, 8, 0, 0, 0, 2, 0})
+	case this.beat(96):
+		play(Sound{160, 0, 0, 8, 0, 0, 0, 2, 0})
+	}
+}
+
+func UI.beat(n: uint) => bool {
+	return this.frame%n == 0
+}
+
+func UI.sound {
+	if !soundEnabled {
+		return
+	}
+
+	switch {
+	case this.btn1():
+	case this.btn2():
+	case this.up():
+		play(sfxUp)
+	case this.down():
+		play(sfxDown)
+	case this.right():
+		play(sfxRight)
+	case this.left():
+		play(sfxLeft)
+	}
+}
+
+// ┌───────────────────────────────────────────────────────────────────────────┐
+// │                                                                           │
+// │ Input                                                                     │
+// │                                                                           │
+// └───────────────────────────────────────────────────────────────────────────┘
+
+func UI.input() {
+	switch {
+	case this.btn1():
+		log("BTN1")
+		this.Input(game.KeyBTN1)
+		this.randomPalette()
+	case this.btn2():
+		log("BTN2")
+		this.Input(game.KeyBTN2)
+	case this.up():
+		log("🡱")
+		this.Input(game.KeyUp)
+	case this.down():
+		log("🡳")
+		this.Input(game.KeyDown)
+	case this.right():
+		log("🡲")
+		this.Input(game.KeyRight)
+	case this.left():
+		log("🡰")
+		this.Input(game.KeyLeft)
+	}
+
+	this.oldPad = wasm4.GetGamePad1()
+}
+
+func UI.GetPad => u8 {
+	return wasm4.GetGamePad1()
+}
+
+func UI.up => bool {
+	return this.GetPad()&wasm4.BUTTON_UP != 0 && this.oldPad&wasm4.BUTTON_UP == 0
+}
+
+func UI.down() => bool {
+	return this.GetPad()&wasm4.BUTTON_DOWN != 0 && this.oldPad&wasm4.BUTTON_DOWN == 0
+}
+
+func UI.right() => bool {
+	return this.GetPad()&wasm4.BUTTON_RIGHT != 0 && this.oldPad&wasm4.BUTTON_RIGHT == 0
+}
+
+func UI.left() => bool {
+	return this.GetPad()&wasm4.BUTTON_LEFT != 0 && this.oldPad&wasm4.BUTTON_LEFT == 0
+}
+
+func UI.btn1() => bool {
+	return this.GetPad()&wasm4.BUTTON_1 != 0 && this.oldPad&wasm4.BUTTON_1 == 0
+}
+
+func UI.btn2() => bool {
+	return this.GetPad()&wasm4.BUTTON_2 != 0 && this.oldPad&wasm4.BUTTON_2 == 0
+}
+
+func dotbg(x1, y1, w, h, s: i32, dc, bg: u16) {
+	for x := x1; x < w; x++ {
+		for y := y1; y < h; y++ {
+			if x%s == 0 && y%s == 0 {
+				set(x, y, dc)
+			} else {
+				set(x, y, bg)
+			}
+		}
+	}
+}
+
+func UI.log(s: string) {
+	log(leftpad(strconv.Itoa(int(this.frame)), " ", 5) + " - " + s)
+}
+
+func log(s: string) {
+	if !tracingEnabled {
+		return
+	}
+
+	wasm4.Trace(s)
+}
+
+func set(x, y: i32, c: u16) {
+	wasm4.SetDrawColorsU16(c)
+	wasm4.Line(x, y, x, y)
+}
+
+// ┌───────────────────────────────────────────────────────────────────────────┐
+// │                                                                           │
+// │ Sound Effects                                                             │
+// │                                                                           │
+// └───────────────────────────────────────────────────────────────────────────┘
+
+type Sound :struct {
+	freq1:   uint
+	freq2:   uint
+	attack:  uint
+	decay:   uint
+	sustain: uint
+	release: uint
+	volume:  uint
+	channel: uint
+	mode:    uint
+}
+
+func play(s: Sound) {
+	freq := s.freq1 | s.freq2<<16
+	duration := s.attack<<24 | s.decay<<16 | s.sustain | s.release<<8
+	flags := s.channel | s.mode<<2
+
+	wasm4.Tone(i32(freq), i32(duration), i32(s.volume), i32(flags))
+}
+
+global (
+	sfxUp    = Sound{140, 20, 4, 10, 0, 0, 0, 0, 2}
+	sfxDown  = Sound{140, 20, 4, 10, 0, 0, 0, 0, 2}
+	sfxRight = Sound{140, 20, 4, 10, 0, 0, 0, 0, 2}
+	sfxLeft  = Sound{140, 20, 4, 10, 0, 0, 0, 0, 2}
+)
+
+// ┌───────────────────────────────────────────────────────────────────────────┐
+// │                                                                           │
+// │ String functions                                                          │
+// │                                                                           │
+// └───────────────────────────────────────────────────────────────────────────┘
+
+func leftpad(s, c: string, w: int) => string {
+	n := w - len(s)
+
+	if n <= 0 {
+		return s
+	}
+
+	p: string
+
+	for i := 0; i < n; i++ {
+		p += c
+	}
+
+	return p + s
+}
