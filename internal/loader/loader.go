@@ -463,7 +463,8 @@ func (p *_Loader) ParseDir_hostImportFiles(pkgpath string) (files []*WhostFile, 
 	logger.Tracef(&config.EnableTrace_loader, "pkgpath: %v", pkgpath)
 
 	if p.cfg.Target == "" && p.prog.Manifest.Pkg.Target == "" {
-		panic("unreachable")
+		p.cfg.Target = config.WaOS_Default
+		p.prog.Manifest.Pkg.Target = config.WaOS_Default
 	}
 
 	var (
