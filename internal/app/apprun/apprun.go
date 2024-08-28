@@ -11,6 +11,7 @@ import (
 	"path/filepath"
 	"runtime"
 	"strings"
+	"time"
 
 	"wa-lang.org/wa/internal/3rdparty/cli"
 	"wa-lang.org/wa/internal/app/appbase"
@@ -122,6 +123,12 @@ func CmdRunAction(c *cli.Context) error {
 				fileHandler.ServeHTTP(w, req)
 			}),
 		)
+
+		go func() {
+			time.Sleep(time.Second * 2)
+			openBrowser(addr)
+		}()
+
 		if err := http.ListenAndServe(addr, nil); err != nil {
 			fmt.Println(err)
 			os.Exit(1)

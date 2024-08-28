@@ -26,10 +26,9 @@ type PkgVFS struct {
 
 // 通用配置信息
 type Config struct {
+	Target    string   // 目标平台
 	WatOutput string   // 输出的 wat 文件路径
 	WaBackend string   // 编译器后端
-	WaArch    string   // 目标 CPU
-	WaOS      string   // 目标 OS
 	WaSizes   StdSizes // 指针大小
 	BuilgTags []string // 条件编译的标志
 	UnitTest  bool     // 单元测试模式
@@ -54,21 +53,6 @@ func DefaultConfig() *Config {
 
 	if p.WaBackend == "" {
 		p.WaBackend = WaBackend_Default
-	}
-
-	if p.WaArch == "" {
-		if s := os.Getenv("WAARCH"); s != "" {
-			p.WaArch = s
-		} else {
-			p.WaArch = WaArch_Default
-		}
-	}
-	if p.WaOS == "" {
-		if s := os.Getenv("WAOS"); s != "" {
-			p.WaOS = s
-		} else {
-			p.WaOS = WaOS_Default
-		}
 	}
 
 	return p

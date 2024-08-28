@@ -71,6 +71,17 @@ func loadProgramFileMeta(cfg *config.Config, filename string, src interface{}) (
 		}
 	}
 
+	if cfg.Target != "" {
+		manifest.Pkg.Target = cfg.Target
+	}
+	if manifest.Pkg.Target == "" {
+		manifest.Pkg.Target = config.WaOS_Default
+	}
+
+	if cfg.Target != manifest.Pkg.Target {
+		cfg.Target = manifest.Pkg.Target
+	}
+
 	logger.Tracef(&config.EnableTrace_loader, "manifest: %s", manifest.JSONString())
 
 	// 构造入口文件
@@ -162,6 +173,17 @@ func loadProgramMeta(cfg *config.Config, appPath string) (
 	if err != nil {
 		logger.Tracef(&config.EnableTrace_loader, "err: %v", err)
 		return nil, nil, err
+	}
+
+	if cfg.Target != "" {
+		manifest.Pkg.Target = cfg.Target
+	}
+	if manifest.Pkg.Target == "" {
+		manifest.Pkg.Target = config.WaOS_Default
+	}
+
+	if cfg.Target != manifest.Pkg.Target {
+		cfg.Target = manifest.Pkg.Target
 	}
 
 	logger.Tracef(&config.EnableTrace_loader, "manifest: %s", manifest.JSONString())

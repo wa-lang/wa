@@ -2,3 +2,4 @@
 
 name = "w42048"
 pkgpath = "w42048"
+target = "wasm4"

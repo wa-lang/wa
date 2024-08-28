@@ -2,3 +2,4 @@
 
 name = "w4app"
 pkgpath = "w4app"
+target = "wasm4"

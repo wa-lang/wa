@@ -2,3 +2,4 @@
 
 name = "{{.Name}}"
 pkgpath = "{{.Pkgpath}}"
+target = {{if .IsWasiApp}}"wasi"{{else if .IsWasm4App}}"wasm4"{{else}}"js"{{end}}

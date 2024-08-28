@@ -158,6 +158,9 @@ func BuildApp(opt *appbase.Option, input, outfile string) (mainFunc string, wasm
 			fmt.Printf("%q is invalid wa moudle\n", input)
 			os.Exit(1)
 		}
+		if opt.Target != "" {
+			manifest.Pkg.Target = opt.Target
+		}
 		if err := manifest.Valid(); err != nil {
 			fmt.Printf("%q is invalid wa module; %v\n", input, err)
 			os.Exit(1)
@@ -188,7 +191,7 @@ func BuildApp(opt *appbase.Option, input, outfile string) (mainFunc string, wasm
 		}
 
 		// 生成 js 胶水代码
-		if opt.TargetOS == config.WaOS_js {
+		if manifest.Pkg.Target == config.WaOS_js {
 			jsOutfile := appbase.ReplaceExt(outfile, ".wasm", ".js")
 			jsOutput := compiler.GenJSBinding(filepath.Base(outfile))
 			err = os.WriteFile(jsOutfile, []byte(jsOutput), 0666)
@@ -223,7 +226,7 @@ func BuildApp(opt *appbase.Option, input, outfile string) (mainFunc string, wasm
 			os.Exit(1)
 		}
 
-		if opt.TargetOS == config.WaOS_wasm4 {
+		if manifest.Pkg.Target == config.WaOS_wasm4 {
 			icoOutfile := filepath.Join(filepath.Dir(outfile), "favicon.ico")
 			w4JsOutfile := filepath.Join(filepath.Dir(outfile), "wasm4.js")
 			w4CssOutfile := filepath.Join(filepath.Dir(outfile), "wasm4.css")

@@ -22,8 +22,8 @@ func MakeFlag_output() *cli.StringFlag {
 func MakeFlag_target() *cli.StringFlag {
 	return &cli.StringFlag{
 		Name:  "target",
-		Usage: fmt.Sprintf("set target os (%s)", strings.Join(config.WaOS_List, "|")),
-		Value: config.WaOS_Default,
+		Usage: fmt.Sprintf("set target type (%s)", strings.Join(config.WaOS_List, "|")),
+		Value: "",
 	}
 }
 

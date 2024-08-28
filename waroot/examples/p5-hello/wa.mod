@@ -2,3 +2,4 @@
 
 name = "p5app"
 pkgpath = "p5app"
+target = "js"

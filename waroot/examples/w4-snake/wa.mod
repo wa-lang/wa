@@ -2,3 +2,4 @@
 
 name = "w4snake"
 pkgpath = "w4snake"
+target = "wasm4"

@@ -32,6 +32,7 @@ type Manifest struct {
 type Manifest_package struct {
 	Name          string   `json:"name"`                    // 名字
 	Pkgpath       string   `json:"pkgpath"`                 // 模块的导入路径
+	Target        string   `json:"target"`                  // 目标平台
 	Version       string   `json:"version"`                 // 版本
 	Authors       []string `json:"authors,omitempty"`       // 作者
 	Description   string   `json:"description,omitempty"`   // 一句话简介

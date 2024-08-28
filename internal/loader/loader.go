@@ -462,12 +462,12 @@ func (p *_Loader) ParseDir_wsFiles(pkgpath string) (files []*WsFile, err error) 
 func (p *_Loader) ParseDir_hostImportFiles(pkgpath string) (files []*WhostFile, err error) {
 	logger.Tracef(&config.EnableTrace_loader, "pkgpath: %v", pkgpath)
 
-	if p.cfg.WaOS == "" {
+	if p.cfg.Target == "" && p.prog.Manifest.Pkg.Target == "" {
 		panic("unreachable")
 	}
 
 	var (
-		extNames          = []string{fmt.Sprintf(".import.%s", p.cfg.WaOS)}
+		extNames          = []string{fmt.Sprintf(".import.%s", p.GetTargetOS())}
 		unitTestMode bool = false
 
 		filenames []string
@@ -696,7 +696,7 @@ func (p *_Loader) isSelfPkg(pkgpath string) bool {
 func (p *_Loader) getSizes() types.Sizes {
 	var zero config.StdSizes
 	if p == nil || p.cfg.WaSizes == zero {
-		return types.SizesFor(p.cfg.WaArch)
+		return types.SizesFor(p.GetTargetArch())
 	} else {
 		return &types.StdSizes{
 			WordSize: p.cfg.WaSizes.WordSize,
@@ -745,7 +745,7 @@ func (p *_Loader) isSkipedAstFile(f *ast.File) (bool, error) {
 		return false, err
 	}
 	ok := expr.Eval(func(tag string) bool {
-		if tag == p.cfg.WaOS || tag == p.cfg.WaArch {
+		if tag == p.GetTargetOS() || tag == p.GetTargetArch() {
 			return true
 		}
 		for _, x := range p.cfg.BuilgTags {
@@ -776,7 +776,7 @@ func (p *_Loader) isSkipedSouceFile(filename string, unitTestMode bool, extNames
 		}
 	}
 
-	if p.cfg.WaOS != "" {
+	if p.GetTargetOS() != "" {
 		var isTargetFile bool
 		for _, ext := range extNames {
 			for _, os := range config.WaOS_List {
@@ -789,7 +789,7 @@ func (p *_Loader) isSkipedSouceFile(filename string, unitTestMode bool, extNames
 		if isTargetFile {
 			var shouldSkip = true
 			for _, ext := range extNames {
-				if strings.HasSuffix(filename, "_"+p.cfg.WaOS+ext) {
+				if strings.HasSuffix(filename, "_"+p.GetTargetOS()+ext) {
 					shouldSkip = false
 					break
 				}
@@ -820,4 +820,18 @@ func (p *_Loader) isTestFile(filename string) bool {
 		return true
 	}
 	return false
+}
+
+func (p *_Loader) GetTargetOS() string {
+	if s := p.cfg.Target; s != "" {
+		return s
+	}
+	if s := p.prog.Manifest.Pkg.Target; s != "" {
+		return s
+	}
+	return config.WaOS_Default
+}
+
+func (p *_Loader) GetTargetArch() string {
+	return config.WaArch_Default
 }
