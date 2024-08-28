@@ -26,6 +26,8 @@ jobs:
       - run: make wasm-js
       - run: make wasm-wasip1
       - run: make -C waroot/examples/snake publish
+      - run: make -C waroot/examples/w4-snake publish
+      - run: make -C waroot/examples/w4-2048 publish
 
       - name: Deploy
         uses: peaceiris/actions-gh-pages@v3

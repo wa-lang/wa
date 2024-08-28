@@ -114,8 +114,17 @@ func (p *Module) Close() error {
 }
 
 // 是否包含用户自定义的宿主函数
-func (p *Module) HasUnknownImportFunc() bool {
-	for _, importedFunc := range p.wazeroCompileModule.ImportedFunctions() {
+func HasUnknownImportFunc(wasmBytes []byte) bool {
+	wazeroCtx := context.Background()
+	rt := wazero.NewRuntime(wazeroCtx)
+
+	var err error
+	wazeroCompileModule, err := rt.CompileModule(wazeroCtx, wasmBytes)
+	if err != nil {
+		return false
+	}
+
+	for _, importedFunc := range wazeroCompileModule.ImportedFunctions() {
 		moduleName, _, isImport := importedFunc.Import()
 		if !isImport {
 			continue

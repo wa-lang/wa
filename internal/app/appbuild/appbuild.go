@@ -3,9 +3,11 @@
 package appbuild
 
 import (
+	_ "embed"
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"wa-lang.org/wa/internal/3rdparty/cli"
 	"wa-lang.org/wa/internal/app/appbase"
@@ -14,6 +16,18 @@ import (
 	"wa-lang.org/wa/internal/loader"
 	"wa-lang.org/wa/internal/wat/watutil"
 )
+
+//go:embed assets/favicon.ico
+var favicon_ico string
+
+//go:embed assets/index.html
+var w4index_html string
+
+//go:embed assets/wasm4.js
+var w4js string
+
+//go:embed assets/wasm4.css
+var w4css string
 
 var CmdBuild = &cli.Command{
 	Name:  "build",
@@ -207,6 +221,21 @@ func BuildApp(opt *appbase.Option, input, outfile string) (mainFunc string, wasm
 		if err != nil {
 			fmt.Printf("write %s failed: %v\n", outfile, err)
 			os.Exit(1)
+		}
+
+		if opt.TargetOS == config.WaOS_wasm4 {
+			icoOutfile := filepath.Join(filepath.Dir(outfile), "favicon.ico")
+			w4JsOutfile := filepath.Join(filepath.Dir(outfile), "wasm4.js")
+			w4CssOutfile := filepath.Join(filepath.Dir(outfile), "wasm4.css")
+			w4IndexOutfile := filepath.Join(filepath.Dir(outfile), "index.html")
+
+			wasm4Cart := filepath.Base(outfile)
+			wasm4JsCode := strings.Replace(w4js, `"cart.wasm"`, `"`+wasm4Cart+`"`, -1)
+
+			os.WriteFile(icoOutfile, []byte(favicon_ico), 0666)
+			os.WriteFile(w4JsOutfile, []byte(wasm4JsCode), 0666)
+			os.WriteFile(w4CssOutfile, []byte(w4css), 0666)
+			os.WriteFile(w4IndexOutfile, []byte(w4index_html), 0666)
 		}
 
 		// 主函数
