@@ -40,12 +40,15 @@ Instead of requiring complex toolchains to set up, you can simply go install it 
 
 ![](docs/images/snake-01.jpg)
 
-[Wasm4](https://wasm4.org/) Snake Game:
+## WASM4 Game
 
-![](docs/images/snake-w4-01.png)
+- Wasm4/Snake: https://wa-lang.org/wa/w4-snake/
+- Wasm4/2048: https://wa-lang.org/wa/w4-2048/
 
+![](docs/images/wasm4-game-snake-2048.png)
 
-- Code: [waroot/examples/w4-snake](waroot/examples/w4-snake)
+- [Wasm4/Snake Code](waroot/examples/w4-snake)
+- [Wasm4/2048 Code](waroot/examples/w4-2048)
 
 ## NES emulator
 
