@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<map version="1.2" tiledversion="1.2.4" orientation="orthogonal" renderorder="right-down" width="14" height="14" tilewidth="8" tileheight="8" infinite="0" nextlayerid="8" nextobjectid="1">
+ <tileset firstgid="1" name="tileset" tilewidth="8" tileheight="8" tilecount="132" columns="12">
+  <image source="tileset.png" width="96" height="88"/>
+ </tileset>
+ <layer id="7" name="Layer 1" width="14" height="14">
+  <data encoding="csv">
+0,0,0,5,6,0,0,0,0,5,6,0,0,0,
+0,0,0,17,18,0,0,0,0,17,18,0,0,0,
+0,0,0,41,42,0,0,0,0,41,42,0,0,0,
+49,50,52,53,54,57,51,51,56,53,54,55,58,59,
+61,62,64,65,66,69,63,63,68,65,66,67,70,71,
+0,0,0,101,102,0,0,0,0,101,102,0,0,0,
+0,0,0,29,30,0,0,0,0,29,30,0,0,0,
+0,0,0,29,30,0,0,0,0,29,30,0,0,0,
+0,0,0,89,90,0,0,0,0,89,90,0,0,0,
+49,50,52,53,54,57,51,51,56,53,54,55,58,59,
+61,62,64,65,66,69,63,63,68,65,66,67,70,71,
+0,0,0,77,78,0,0,0,0,77,78,0,0,0,
+0,0,0,113,114,0,0,0,0,113,114,0,0,0,
+0,0,0,125,126,0,0,0,0,125,126,0,0,0
+</data>
+ </layer>
+</map>
