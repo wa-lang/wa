@@ -5,7 +5,11 @@ import "syscall/wasm4" => _
 const WAOS = "wasm4"
 
 #wa:import env traceUtf8
-func waPuts(ptr: i32, len: i32)
+func traceUtf8(msgPtr, msgLen: i32)
+
+func waPuts(ptr: i32, len: i32) {
+	traceUtf8(ptr, len)
+}
 
 #wa:linkname $runtime.argsSizesGet
 func argsSizesGet(result_argc: i32, result_argv_len: i32) => (errno: i32) {
