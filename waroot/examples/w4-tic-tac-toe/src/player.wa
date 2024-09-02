@@ -1,11 +1,10 @@
 import (
-	"image"
 	"syscall/wasm4"
 )
 
 type Tile :struct {
 	ID:  int
-	Pos: image.Point
+	Pos: Point
 }
 
 type Player :struct {
@@ -15,7 +14,7 @@ type Player :struct {
 
 type Next :[]Tile
 
-func Player.Draw(pos: image.Point, win: bool) {
+func Player.Draw(pos: Point, win: bool) {
 	p := this
 	ts := p.TilesNormal
 	if win {
@@ -26,9 +25,10 @@ func Player.Draw(pos: image.Point, win: bool) {
 		y := tile.Pos.Y*8 + (pos.Y*6+2)*8
 		sx := uint(tile.ID%12) * 8
 		sy := uint(tile.ID/12) * 8
-		wasm4.BlitSub(tileset.Data, x, y, 8, 8, sx, sy, tileset.Width, tileset.Flags)
+		wasm4.BlitSub(tileset.Data, i32(x), i32(y), 8, 8,
+			i32(sx), i32(sy), i32(tileset.Width), i32(tileset.Flags),
+		)
 	}
-
 }
 
 func Next.Draw() {
@@ -37,96 +37,98 @@ func Next.Draw() {
 		y := tile.Pos.Y * 8
 		sx := uint(tile.ID%12) * 8
 		sy := uint(tile.ID/12) * 8
-		wasm4.BlitSub(tileset.Data, x, y, 8, 8, sx, sy, tileset.Width, tileset.Flags)
+		wasm4.BlitSub(tileset.Data, i32(x), i32(y), 8, 8,
+			i32(sx), i32(sy), i32(tileset.Width), i32(tileset.Flags),
+		)
 	}
 }
 
 global playerSprite = []Player{
 	{
 		TilesNormal: []Tile{
-			{ID: 6*12 + 0, Pos: image.Point{X: 0, Y: 0}},
-			{ID: 6*12 + 1, Pos: image.Point{X: 3, Y: 0}},
-			{ID: 2*12 + 2, Pos: image.Point{X: 1, Y: 1}},
-			{ID: 3*12 + 2, Pos: image.Point{X: 2, Y: 1}},
-			{ID: 2*12 + 2, Pos: image.Point{X: 2, Y: 2}},
-			{ID: 3*12 + 2, Pos: image.Point{X: 1, Y: 2}},
-			{ID: 6*12 + 2, Pos: image.Point{X: 0, Y: 3}},
-			{ID: 6*12 + 3, Pos: image.Point{X: 3, Y: 3}},
+			{ID: 6*12 + 0, Pos: Point{X: 0, Y: 0}},
+			{ID: 6*12 + 1, Pos: Point{X: 3, Y: 0}},
+			{ID: 2*12 + 2, Pos: Point{X: 1, Y: 1}},
+			{ID: 3*12 + 2, Pos: Point{X: 2, Y: 1}},
+			{ID: 2*12 + 2, Pos: Point{X: 2, Y: 2}},
+			{ID: 3*12 + 2, Pos: Point{X: 1, Y: 2}},
+			{ID: 6*12 + 2, Pos: Point{X: 0, Y: 3}},
+			{ID: 6*12 + 3, Pos: Point{X: 3, Y: 3}},
 
-			{ID: 8*12 + 1, Pos: image.Point{X: 0, Y: 2}},
-			{ID: 9*12 + 1, Pos: image.Point{X: 0, Y: 1}},
-			{ID: 8*12 + 2, Pos: image.Point{X: 1, Y: 0}},
-			{ID: 9*12 + 2, Pos: image.Point{X: 1, Y: 3}},
+			{ID: 8*12 + 1, Pos: Point{X: 0, Y: 2}},
+			{ID: 9*12 + 1, Pos: Point{X: 0, Y: 1}},
+			{ID: 8*12 + 2, Pos: Point{X: 1, Y: 0}},
+			{ID: 9*12 + 2, Pos: Point{X: 1, Y: 3}},
 
-			{ID: 8*12 + 1, Pos: image.Point{X: 2, Y: 0}},
-			{ID: 9*12 + 1, Pos: image.Point{X: 2, Y: 3}},
-			{ID: 8*12 + 2, Pos: image.Point{X: 3, Y: 2}},
-			{ID: 9*12 + 2, Pos: image.Point{X: 3, Y: 1}},
+			{ID: 8*12 + 1, Pos: Point{X: 2, Y: 0}},
+			{ID: 9*12 + 1, Pos: Point{X: 2, Y: 3}},
+			{ID: 8*12 + 2, Pos: Point{X: 3, Y: 2}},
+			{ID: 9*12 + 2, Pos: Point{X: 3, Y: 1}},
 		},
 		TilesWin: []Tile{
-			{ID: 6*12 + 6, Pos: image.Point{X: 0, Y: 0}},
-			{ID: 6*12 + 7, Pos: image.Point{X: 3, Y: 0}},
-			{ID: 3*12 + 3, Pos: image.Point{X: 1, Y: 1}},
-			{ID: 2*12 + 3, Pos: image.Point{X: 2, Y: 1}},
-			{ID: 3*12 + 3, Pos: image.Point{X: 2, Y: 2}},
-			{ID: 2*12 + 3, Pos: image.Point{X: 1, Y: 2}},
-			{ID: 6*12 + 8, Pos: image.Point{X: 0, Y: 3}},
-			{ID: 6*12 + 9, Pos: image.Point{X: 3, Y: 3}},
+			{ID: 6*12 + 6, Pos: Point{X: 0, Y: 0}},
+			{ID: 6*12 + 7, Pos: Point{X: 3, Y: 0}},
+			{ID: 3*12 + 3, Pos: Point{X: 1, Y: 1}},
+			{ID: 2*12 + 3, Pos: Point{X: 2, Y: 1}},
+			{ID: 3*12 + 3, Pos: Point{X: 2, Y: 2}},
+			{ID: 2*12 + 3, Pos: Point{X: 1, Y: 2}},
+			{ID: 6*12 + 8, Pos: Point{X: 0, Y: 3}},
+			{ID: 6*12 + 9, Pos: Point{X: 3, Y: 3}},
 
-			{ID: 8*12 + 7, Pos: image.Point{X: 0, Y: 2}},
-			{ID: 9*12 + 7, Pos: image.Point{X: 0, Y: 1}},
-			{ID: 8*12 + 8, Pos: image.Point{X: 1, Y: 0}},
-			{ID: 9*12 + 8, Pos: image.Point{X: 1, Y: 3}},
+			{ID: 8*12 + 7, Pos: Point{X: 0, Y: 2}},
+			{ID: 9*12 + 7, Pos: Point{X: 0, Y: 1}},
+			{ID: 8*12 + 8, Pos: Point{X: 1, Y: 0}},
+			{ID: 9*12 + 8, Pos: Point{X: 1, Y: 3}},
 
-			{ID: 8*12 + 7, Pos: image.Point{X: 2, Y: 0}},
-			{ID: 9*12 + 7, Pos: image.Point{X: 2, Y: 3}},
-			{ID: 8*12 + 8, Pos: image.Point{X: 3, Y: 2}},
-			{ID: 9*12 + 8, Pos: image.Point{X: 3, Y: 1}},
+			{ID: 8*12 + 7, Pos: Point{X: 2, Y: 0}},
+			{ID: 9*12 + 7, Pos: Point{X: 2, Y: 3}},
+			{ID: 8*12 + 8, Pos: Point{X: 3, Y: 2}},
+			{ID: 9*12 + 8, Pos: Point{X: 3, Y: 1}},
 		},
 	},
 	{
 		TilesNormal: []Tile{
-			{ID: 7*12 + 0, Pos: image.Point{X: 0, Y: 0}},
-			{ID: 7*12 + 1, Pos: image.Point{X: 1, Y: 0}},
-			{ID: 7*12 + 2, Pos: image.Point{X: 2, Y: 0}},
-			{ID: 7*12 + 3, Pos: image.Point{X: 3, Y: 0}},
-			{ID: 8*12 + 0, Pos: image.Point{X: 0, Y: 1}},
-			{ID: 8*12 + 3, Pos: image.Point{X: 3, Y: 1}},
-			{ID: 9*12 + 0, Pos: image.Point{X: 0, Y: 2}},
-			{ID: 9*12 + 3, Pos: image.Point{X: 3, Y: 2}},
-			{ID: 10*12 + 0, Pos: image.Point{X: 0, Y: 3}},
-			{ID: 10*12 + 1, Pos: image.Point{X: 1, Y: 3}},
-			{ID: 10*12 + 2, Pos: image.Point{X: 2, Y: 3}},
-			{ID: 10*12 + 3, Pos: image.Point{X: 3, Y: 3}},
+			{ID: 7*12 + 0, Pos: Point{X: 0, Y: 0}},
+			{ID: 7*12 + 1, Pos: Point{X: 1, Y: 0}},
+			{ID: 7*12 + 2, Pos: Point{X: 2, Y: 0}},
+			{ID: 7*12 + 3, Pos: Point{X: 3, Y: 0}},
+			{ID: 8*12 + 0, Pos: Point{X: 0, Y: 1}},
+			{ID: 8*12 + 3, Pos: Point{X: 3, Y: 1}},
+			{ID: 9*12 + 0, Pos: Point{X: 0, Y: 2}},
+			{ID: 9*12 + 3, Pos: Point{X: 3, Y: 2}},
+			{ID: 10*12 + 0, Pos: Point{X: 0, Y: 3}},
+			{ID: 10*12 + 1, Pos: Point{X: 1, Y: 3}},
+			{ID: 10*12 + 2, Pos: Point{X: 2, Y: 3}},
+			{ID: 10*12 + 3, Pos: Point{X: 3, Y: 3}},
 		},
 		TilesWin: []Tile{
-			{ID: 7*12 + 6, Pos: image.Point{X: 0, Y: 0}},
-			{ID: 7*12 + 7, Pos: image.Point{X: 1, Y: 0}},
-			{ID: 7*12 + 8, Pos: image.Point{X: 2, Y: 0}},
-			{ID: 7*12 + 9, Pos: image.Point{X: 3, Y: 0}},
-			{ID: 8*12 + 6, Pos: image.Point{X: 0, Y: 1}},
-			{ID: 8*12 + 9, Pos: image.Point{X: 3, Y: 1}},
-			{ID: 9*12 + 6, Pos: image.Point{X: 0, Y: 2}},
-			{ID: 9*12 + 9, Pos: image.Point{X: 3, Y: 2}},
-			{ID: 10*12 + 6, Pos: image.Point{X: 0, Y: 3}},
-			{ID: 10*12 + 7, Pos: image.Point{X: 1, Y: 3}},
-			{ID: 10*12 + 8, Pos: image.Point{X: 2, Y: 3}},
-			{ID: 10*12 + 9, Pos: image.Point{X: 3, Y: 3}},
+			{ID: 7*12 + 6, Pos: Point{X: 0, Y: 0}},
+			{ID: 7*12 + 7, Pos: Point{X: 1, Y: 0}},
+			{ID: 7*12 + 8, Pos: Point{X: 2, Y: 0}},
+			{ID: 7*12 + 9, Pos: Point{X: 3, Y: 0}},
+			{ID: 8*12 + 6, Pos: Point{X: 0, Y: 1}},
+			{ID: 8*12 + 9, Pos: Point{X: 3, Y: 1}},
+			{ID: 9*12 + 6, Pos: Point{X: 0, Y: 2}},
+			{ID: 9*12 + 9, Pos: Point{X: 3, Y: 2}},
+			{ID: 10*12 + 6, Pos: Point{X: 0, Y: 3}},
+			{ID: 10*12 + 7, Pos: Point{X: 1, Y: 3}},
+			{ID: 10*12 + 8, Pos: Point{X: 2, Y: 3}},
+			{ID: 10*12 + 9, Pos: Point{X: 3, Y: 3}},
 		},
 	},
 }
 
 global nextSprite = []Next{
 	[]Tile{
-		{ID: 0*12 + 0, Pos: image.Point{X: 0, Y: 0}},
-		{ID: 0*12 + 1, Pos: image.Point{X: 1, Y: 0}},
-		{ID: 1*12 + 0, Pos: image.Point{X: 0, Y: 1}},
-		{ID: 1*12 + 1, Pos: image.Point{X: 1, Y: 1}},
+		{ID: 0*12 + 0, Pos: Point{X: 0, Y: 0}},
+		{ID: 0*12 + 1, Pos: Point{X: 1, Y: 0}},
+		{ID: 1*12 + 0, Pos: Point{X: 0, Y: 1}},
+		{ID: 1*12 + 1, Pos: Point{X: 1, Y: 1}},
 	},
 	[]Tile{
-		{ID: 2*12 + 0, Pos: image.Point{X: 0, Y: 0}},
-		{ID: 2*12 + 1, Pos: image.Point{X: 1, Y: 0}},
-		{ID: 3*12 + 0, Pos: image.Point{X: 0, Y: 1}},
-		{ID: 3*12 + 1, Pos: image.Point{X: 1, Y: 1}},
+		{ID: 2*12 + 0, Pos: Point{X: 0, Y: 0}},
+		{ID: 2*12 + 1, Pos: Point{X: 1, Y: 0}},
+		{ID: 3*12 + 0, Pos: Point{X: 0, Y: 1}},
+		{ID: 3*12 + 1, Pos: Point{X: 1, Y: 1}},
 	},
 }

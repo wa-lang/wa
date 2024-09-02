@@ -1,6 +1,4 @@
 import (
-	"image"
-
 	"syscall/wasm4"
 )
 
@@ -8,10 +6,14 @@ type Star :struct {
 	X, Y, VelX: int
 }
 
+type Point :struct {
+	X, Y: int
+}
+
 type Game :struct {
 	board:           [3][3]int
 	currentPlayer:   int
-	cursor:          image.Point
+	cursor:          Point
 	frameCount:      int
 	animFrame:       int
 	winner:          int
@@ -20,7 +22,7 @@ type Game :struct {
 	rnd:             func(uint) => uint
 	stars:           []Star
 	playerSprite:    interface {
-		Draw(image.Point, bool)
+		Draw(Point, bool)
 	}
 }
 
@@ -28,7 +30,7 @@ func Game.Move(X, Y: int) {
 	g := this
 	g.board[X][Y] = g.currentPlayer
 	g.currentPlayer = g.currentPlayer%2 + 1
-	pos: [3]image.Point
+	pos: [3]Point
 	g.winner, pos = g.CheckStatus()
 	if g.winner == 1 || g.winner == 2 {
 		g.board[pos[0].X][pos[0].Y] += 2
@@ -95,7 +97,7 @@ func Game.Update() {
 				}
 			case wasm4.BUTTON_2:
 				X, Y := g.CPU()
-				g.cursor = image.Pt(X, Y)
+				g.cursor = Point{X, Y}
 				g.Move(X, Y)
 			}
 		}
@@ -117,7 +119,7 @@ func Game.Draw() {
 	g := this
 	for _, star := range g.stars {
 		wasm4.SetDrawColorsU16(4 - uint16(star.VelX))
-		wasm4.Line(star.X, star.Y, star.X, star.Y)
+		wasm4.Line(i32(star.X), i32(star.Y), i32(star.X), i32(star.Y))
 	}
 
 	wasm4.SetDrawColorsU16(0x4320)
@@ -137,65 +139,65 @@ func Game.Draw() {
 				win = true
 			}
 			if playerID != 0 {
-				playerSprite[playerID-1].Draw(image.Point{X: x, Y: y}, win)
+				playerSprite[playerID-1].Draw(Point{X: x, Y: y}, win)
 			}
 		}
 	}
 
-	letters["W"].Draw(4, 18)
-	letters["A"].Draw(6, 18)
-	letters["S"].Draw(8, 18)
-	letters["M"].Draw(10, 18)
-	letters["-"].Draw(12, 19)
-	letters["4"].Draw(14, 18)
+	letters_W.Draw(4, 18)
+	letters_A.Draw(6, 18)
+	letters_S.Draw(8, 18)
+	letters_M.Draw(10, 18)
+	letters_minus.Draw(12, 19)
+	letters_4.Draw(14, 18)
 
 	if g.winner == 1 || g.winner == 2 {
 		nextSprite[g.winner-1].Draw()
-		letters["W"].Draw(8, 0)
-		letters["I"].Draw(10, 0)
-		letters["N"].Draw(11, 0)
-		letters["S"].Draw(13, 0)
+		letters_W.Draw(8, 0)
+		letters_I.Draw(10, 0)
+		letters_N.Draw(11, 0)
+		letters_S.Draw(13, 0)
 	} else if g.winner == 0 {
 		playerSprite[g.currentPlayer-1].Draw(g.cursor, g.animFrame == 0)
 	} else {
-		letters["D"].Draw(6, 0)
-		letters["R"].Draw(8, 0)
-		letters["A"].Draw(10, 0)
-		letters["W"].Draw(12, 0)
+		letters_D.Draw(6, 0)
+		letters_R.Draw(8, 0)
+		letters_A.Draw(10, 0)
+		letters_W.Draw(12, 0)
 	}
 }
 
-func Game.CheckStatus() => (playerID: int, pos: [3]image.Point) {
+func Game.CheckStatus() => (playerID: int, pos: [3]Point) {
 	g := this
 	for y := 0; y < 3; y++ {
 		if id := g.board[0][y]; id != 0 && id == g.board[1][y] && id == g.board[2][y] {
-			pos[0] = image.Pt(0, y)
-			pos[1] = image.Pt(1, y)
-			pos[2] = image.Pt(2, y)
+			pos[0] = Point{0, y}
+			pos[1] = Point{1, y}
+			pos[2] = Point{2, y}
 			return id, pos
 		}
 	}
 
 	for x := 0; x < 3; x++ {
 		if id := g.board[x][0]; id != 0 && id == g.board[x][1] && id == g.board[x][2] {
-			pos[0] = image.Pt(x, 0)
-			pos[1] = image.Pt(x, 1)
-			pos[2] = image.Pt(x, 2)
+			pos[0] = Point{x, 0}
+			pos[1] = Point{x, 1}
+			pos[2] = Point{x, 2}
 			return id, pos
 		}
 	}
 
 	if id := g.board[0][0]; id != 0 && id == g.board[1][1] && id == g.board[2][2] {
-		pos[0] = image.Pt(0, 0)
-		pos[1] = image.Pt(1, 1)
-		pos[2] = image.Pt(2, 2)
+		pos[0] = Point{0, 0}
+		pos[1] = Point{1, 1}
+		pos[2] = Point{2, 2}
 		return id, pos
 	}
 
 	if id := g.board[2][0]; id != 0 && id == g.board[1][1] && id == g.board[0][2] {
-		pos[0] = image.Pt(2, 0)
-		pos[1] = image.Pt(1, 1)
-		pos[2] = image.Pt(0, 2)
+		pos[0] = Point{2, 0}
+		pos[1] = Point{1, 1}
+		pos[2] = Point{0, 2}
 		return id, pos
 	}
 
@@ -243,11 +245,11 @@ func Game.CPU() => (int, int) {
 	}
 
 	// Pick a random field
-	fields := make([]image.Point, 0)
+	fields := make([]Point, 0)
 	for X := 0; X < 3; X++ {
 		for Y := 0; Y < 3; Y++ {
 			if g.board[X][Y] == 0 {
-				fields = append(fields, image.Point{X: X, Y: Y})
+				fields = append(fields, Point{X: X, Y: Y})
 			}
 		}
 	}
