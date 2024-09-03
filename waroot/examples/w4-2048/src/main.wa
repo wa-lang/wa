@@ -69,6 +69,9 @@ func UI.show {
 	wasm4.SetDrawColorsU16(0x24)
 	wasm4.Text("Total"+leftpad(strconv.Itoa(this.Total()), " ", 5), 2, 8)
 
+	wasm4.SetDrawColorsU16(0x43)
+	wasm4.Text("wa-lang.org", 0, 19)
+
 	wasm4.SetDrawColorsU16(0x41)
 	wasm4.Text(" -+-+-+- ", 88, 0)
 	wasm4.SetDrawColorsU16(0x42)

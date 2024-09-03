@@ -546,7 +546,7 @@ func Update {
 
 	wasm4.SetDrawColorsU16(1)
 
-	wasm4.Text("WASM-4", 112, 152)
+	wasm4.Text("Wa-lang", 100, 150)
 
 	wasm4.Text(strconv.Itoa(int(level+1)), 104, 24+2)
 	wasm4.Text(strconv.Itoa(int(score)), 104, 48+2)
