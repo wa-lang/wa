@@ -1,0 +1,8 @@
+// 版权 @2024 W4-teris 作者。保留所有权利。
+
+global seed: u64
+
+func rand => int {
+	seed = 6364136223846793005*seed + 1
+	return int(seed >> 33)
+}

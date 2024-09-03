@@ -2,6 +2,8 @@
 
 // WASM4: https://wasm4.org/docs
 
+// TODO: 基于函数重载, 优化 API
+
 #wa:linkname $wa.runtime.string_to_ptr
 func u8_string_to_ptr(s: string) => i32
 
@@ -20,6 +22,18 @@ func GetPalette => (u32, u32, u32, u32) {
 #wa:linkname $syscall/wasm4.GetPalette
 func getPalette => (i32, i32, i32, i32)
 
+#wa:linkname $syscall/wasm4.getPalette0
+func GetPalette0 => i32
+
+#wa:linkname $syscall/wasm4.getPalette1
+func GetPalette1 => i32
+
+#wa:linkname $syscall/wasm4.getPalette2
+func GetPalette2 => i32
+
+#wa:linkname $syscall/wasm4.getPalette3
+func GetPalette3 => i32
+
 // 写调试板
 func SetPalette(a0, a1, a2, a3: u32) {
 	setPalette(i32(a0), i32(a1), i32(a2), i32(a3))
@@ -27,6 +41,18 @@ func SetPalette(a0, a1, a2, a3: u32) {
 
 #wa:linkname $syscall/wasm4.SetPalette
 func setPalette(a0, a1, a2, a3: i32)
+
+#wa:linkname $syscall/wasm4.setPalette0
+func SetPalette0(a: i32)
+
+#wa:linkname $syscall/wasm4.setPalette1
+func SetPalette1(a: i32)
+
+#wa:linkname $syscall/wasm4.setPalette2
+func SetPalette2(a: i32)
+
+#wa:linkname $syscall/wasm4.setPalette3
+func SetPalette3(a: i32)
 
 // 读绘图颜色
 func GetDrawColors => (a, b, c, d: u8) {

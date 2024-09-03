@@ -48,6 +48,25 @@
 (global $TONE_PAN_RIGHT i32 (i32.const 32))
 (global $TONE_NOTE_MODE i32 (i32.const 64))
 
+(func $$syscall/wasm4.getPalette0 (result i32)
+	global.get $PALETTE0
+	i32.load
+)
+(func $$syscall/wasm4.getPalette1 (result i32)
+	global.get $PALETTE1
+	i32.load
+)
+
+(func $$syscall/wasm4.getPalette2 (result i32)
+	global.get $PALETTE2
+	i32.load
+)
+
+(func $$syscall/wasm4.getPalette3 (result i32)
+	global.get $PALETTE3
+	i32.load
+)
+
 (func $$syscall/wasm4.GetPalette (result i32 i32 i32 i32)
 	global.get $PALETTE0
 	i32.load
@@ -58,6 +77,27 @@
 	global.get $PALETTE3
 	i32.load
 	return
+)
+
+(func $$syscall/wasm4.setPalette0 (param $a i32)
+	global.get $PALETTE0
+	local.get $a
+	i32.store
+)
+(func $$syscall/wasm4.setPalette1 (param $a i32)
+	global.get $PALETTE1
+	local.get $a
+	i32.store
+)
+(func $$syscall/wasm4.setPalette2 (param $a i32)
+	global.get $PALETTE2
+	local.get $a
+	i32.store
+)
+(func $$syscall/wasm4.setPalette3 (param $a i32)
+	global.get $PALETTE3
+	local.get $a
+	i32.store
 )
 
 (func $$syscall/wasm4.SetPalette (param $a0 i32) (param $a1 i32) (param $a2 i32) (param $a3 i32)

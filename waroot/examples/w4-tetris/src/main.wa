@@ -1,28 +1,559 @@
-// 版权 @2024 W4-hello 作者。保留所有权利。
+// 版权 @2024 W4-teris 作者。保留所有权利。
 
 import "syscall/wasm4"
+import "strconv"
 
-global smiley = [8]byte{
-	0b11000011,
-	0b10000001,
-	0b00100100,
-	0b00100100,
-	0b00000000,
-	0b00100100,
-	0b10011001,
-	0b11000011,
+global PIECE_SPRITES = [][8]u8{
+	// L
+	{
+		0b11111111,
+		0b10000001,
+		0b10111101,
+		0b10100001,
+		0b10100001,
+		0b10100001,
+		0b10000001,
+		0b11111111,
+	},
+
+	// J
+	{
+		0b11111111,
+		0b10000001,
+		0b10000101,
+		0b10000101,
+		0b10000101,
+		0b10111101,
+		0b10000001,
+		0b11111111,
+	},
+
+	// Z
+	{
+		0b11111111,
+		0b10100101,
+		0b11001001,
+		0b10010011,
+		0b10100101,
+		0b11001001,
+		0b10010011,
+		0b11111111,
+	},
+
+	// S
+	{
+		0b11111111,
+		0b10100101,
+		0b10010011,
+		0b11001001,
+		0b10100101,
+		0b10010011,
+		0b11001001,
+		0b11111111,
+	},
+
+	// O
+	{
+		0b11111111,
+		0b10000001,
+		0b10000001,
+		0b10000001,
+		0b10000001,
+		0b10000001,
+		0b10000001,
+		0b11111111,
+	},
+
+	// T
+	{
+		0b11111111,
+		0b10000001,
+		0b10111101,
+		0b10100101,
+		0b10100101,
+		0b10111101,
+		0b10000001,
+		0b11111111,
+	},
+
+	// I
+	{
+		0b11111111,
+		0b10000001,
+		0b10100101,
+		0b10000001,
+		0b10100101,
+		0b10111101,
+		0b10000001,
+		0b11111111,
+	},
+}
+
+global PIECE_COLORS = []u32{
+	0x0484d1, // L: blue
+	0xfb922b, // J: orange
+	0xe53b44, // Z: red
+	0x63c64d, // S: green
+	0xffe762, // O: yellow
+	0xbf66bf, // T: purple
+	0x2ce8f4, // I: cyan
+}
+
+const SPIN_CW = 1
+const SPIN_CCW = -1
+
+const BOARD_WIDTH = 10
+const BOARD_HEIGHT = 20
+const BOARD_OFFSET_X = 16
+
+global board: [BOARD_WIDTH * BOARD_HEIGHT]u8
+
+type PieceType :int
+
+const (
+	L :PieceType = iota
+	J
+	Z
+	S
+	O
+	T
+	I
+)
+
+global PIECE_COORDS = []i32{
+	// L
+	1, -1,
+	-1, 0,
+	0, 0,
+	1, 0,
+
+	// J
+	-1, -1,
+	-1, 0,
+	0, 0,
+	1, 0,
+
+	// Z
+	0, -1,
+	-1, -1,
+	0, 0,
+	1, 0,
+
+	// S
+	0, -1,
+	1, -1,
+	0, 0,
+	-1, 0,
+
+	// O
+	-1, -1,
+	-1, 0,
+	0, 0,
+	0, -1,
+
+	// T
+	0, -1,
+	-1, 0,
+	0, 0,
+	1, 0,
+
+	// I
+	-2, 0,
+	-1, 0,
+	0, 0,
+	1, 0,
+}
+
+global LEVEL_SPEED = []int{
+	53,
+	49,
+	45,
+	41,
+	37,
+	33,
+	28,
+	22,
+	17,
+	11,
+	10,
+	9,
+	8,
+	7,
+	6,
+	6,
+	5,
+	5,
+	4,
+	4,
+	3,
+}
+
+global CLEAR_SCORES = []u16{40, 100, 300, 1200}
+
+type Piece :struct {
+	x, y:   u8
+	typ:    PieceType
+	coords: [8]i32
+}
+
+global piece: Piece
+global nextPieceType: PieceType
+
+global level: int
+global score: int
+global best: int
+global lines: int
+
+global gravityDelay: int
+
+global repeatDelay: int
+global holdingDirection: int
+global lastGamepadState: u8
+
+// How many frames remaining in the row clear animation
+global clearAnimationDelay: int
+
+global gameover: int
+global gameoverElapsed: int
+
+// Bitmask for rows that are painted a color during the row clear animation
+global clearAnimationRowMask: u32
+
+func drawBlock(typ: PieceType, x, y: i32) {
+	wasm4.Blit(PIECE_SPRITES[typ][:], BOARD_OFFSET_X+x, y, 8, 8, wasm4.BLIT_1BPP)
+}
+
+func drawPiece(x, y: i32, typ: PieceType, coords: []i32) {
+	for i := 0; i < 4; i++ {
+		cx := coords[i*2+0]
+		cy := coords[i*2+1]
+		drawBlock(typ, 8*(x+cx), 8*(y+cy))
+	}
+}
+
+func nextPiece() {
+	piece.x = 5
+	piece.y = 1
+	piece.typ = nextPieceType
+	nextPieceType = PieceType(rand() % 7)
+
+	//tracef("Piece type %d", piece.type);
+
+	c := PIECE_COORDS[piece.typ*8:]
+	for n := 0; n < 8; n++ {
+		piece.coords[n] = c[n]
+	}
+
+	wasm4.SetPalette1(i32(PIECE_COLORS[piece.typ]))
+}
+
+func checkFilledRows => int {
+	clearAnimationRowMask = 0
+
+	for y := BOARD_HEIGHT - 1; y >= 0; y-- {
+		filled := true
+		for x := 0; x < BOARD_WIDTH; x++ {
+			if board[y*BOARD_WIDTH+x] == 0 {
+				filled = false
+				break
+			}
+		}
+		if filled {
+			clearAnimationRowMask |= 1 << y
+			clearAnimationDelay += 16
+		}
+	}
+
+	if clearAnimationRowMask != 0 {
+		return 1
+	}
+	return 0
+}
+
+func clearFilledRows {
+	cleared := 0
+
+	for y := BOARD_HEIGHT - 1; y >= 0; y-- {
+		filled := true
+		for x := 0; x < BOARD_WIDTH; x++ {
+			if board[y*BOARD_WIDTH+x] == 0 {
+				filled = false
+				break
+			}
+		}
+		if filled {
+			cleared++
+
+			for n := (y+1)*BOARD_WIDTH - 1; n >= BOARD_WIDTH; n-- {
+				board[n] = board[n-BOARD_WIDTH]
+			}
+			y++
+		}
+	}
+
+	if cleared != 0 {
+		score += (level + 1) * int(CLEAR_SCORES[cleared-1])
+		if score >= best {
+			best = score
+
+			b: [4]byte
+			b[0] = byte(u32(best) >> 24)
+			b[1] = byte(u32(best) >> 16)
+			b[2] = byte(u32(best) >> 8)
+			b[3] = byte(u32(best))
+
+			wasm4.DiskW(b[:])
+		}
+		lines += cleared
+		newLevel := lines / 8
+		if newLevel != level {
+			level = newLevel
+			wasm4.Tone(130|(940<<16), 20, 100, wasm4.TONE_PULSE2|wasm4.TONE_MODE2)
+		}
+	}
+}
+
+func copyPieceToBoard {
+	c := piece.coords[:]
+	for n := 0; n < 4; n++ {
+		cx := i32(c[2*n+0])
+		cy := i32(c[2*n+1])
+		x := i32(piece.x) + cx
+		y := i32(piece.y) + cy
+		board[y*BOARD_WIDTH+x] = u8(piece.typ) + 1
+	}
+}
+
+func movePiece(dx, dy: i32) => int {
+	c := piece.coords[:]
+	for n := 0; n < 4; n++ {
+		cx := i32(c[2*n+0])
+		cy := i32(c[2*n+1])
+
+		x := i32(piece.x) + cx + dx
+		y := i32(piece.y) + cy + dy
+
+		if x < 0 || x >= BOARD_WIDTH || y < 0 || y >= BOARD_HEIGHT || board[y*BOARD_WIDTH+x] != 0 {
+			return 1
+		}
+	}
+
+	piece.x += u8(dx)
+	piece.y += u8(dy)
+	return 0
+}
+
+func spinPiece(direction: i32) => int {
+	if piece.typ == O {
+		return 1
+	}
+
+	coordsCopy: [8]i32
+	for n := 0; n < 8; n++ {
+		coordsCopy[n] = piece.coords[n]
+	}
+
+	for n := 0; n < 4; n++ {
+		cx := piece.coords[2*n+0]
+		cy := piece.coords[2*n+1]
+		piece.coords[2*n+0] = -direction * cy
+		piece.coords[2*n+1] = direction * cx
+	}
+
+	if movePiece(0, 0) != 0 {
+		for n := 0; n < 8; n++ {
+			piece.coords[n] = coordsCopy[n]
+		}
+		return 1
+	}
+
+	return 0
+}
+
+func stepGravity() => int {
+	if movePiece(0, 1) != 0 {
+		copyPieceToBoard()
+		if checkFilledRows() == 0 {
+			nextPiece()
+			if movePiece(0, 0) != 0 {
+				gameover = 1
+				gameoverElapsed = 0
+				wasm4.Tone(1024|(10<<16), 0|(160<<8), 100, wasm4.TONE_PULSE1|wasm4.TONE_MODE2)
+
+			} else {
+				// Play a thunk
+				wasm4.Tone(240, 0|(12<<8), 100, wasm4.TONE_NOISE)
+			}
+		}
+		return 1
+	}
+	return 0
+}
+
+#wa:export start
+func Start {
+	wasm4.SetPalette0(0xd8dee9)
+	wasm4.SetPalette2(0x4c566a)
+	wasm4.SetPalette3(0x2e3440)
+
+	b: [4]byte
+	wasm4.DiskR(b[:])
+	best = int(u32(b[3]) | u32(b[2])<<8 | u32(b[1])<<16 | u32(b[0])<<24)
+
+	nextPiece()
 }
 
 #wa:export update
 func Update {
-	wasm4.SetDrawColors(2, 0, 0, 0)
-	wasm4.Text("Hello from Wa-lang!", 10, 10)
-
 	gamepad := wasm4.GetGamePad1()
-	if gamepad&wasm4.BUTTON_1 != 0 {
-		wasm4.SetDrawColors(4, 0, 0, 0)
+	pressedThisFrame := gamepad & (gamepad ^ lastGamepadState)
+	lastGamepadState = gamepad
+
+	if clearAnimationDelay != 0 {
+		if clearAnimationDelay%16 == 0 {
+			wasm4.Tone(140|(540<<16), 8|(16<<8), 100, wasm4.TONE_NOISE)
+		}
+
+		clearAnimationDelay--
+		if clearAnimationDelay == 0 {
+			clearFilledRows()
+			clearAnimationRowMask = 0
+			nextPiece()
+		}
+
+	} else if gameover != 0 {
+		if gameoverElapsed < 80 {
+			gameoverElapsed++
+		}
+
+	} else {
+		if (pressedThisFrame & (wasm4.BUTTON_1 | wasm4.BUTTON_2 | wasm4.BUTTON_UP)) != 0 {
+			// Button 2 (B) is usually left of Button 1 (A).
+			// Therefore, Button 1 should spins clockwise (to the right) and
+			// Button 2 should spin counter-clockwise (to the left).
+			// The default spin direction is clockwise.
+
+			if pressedThisFrame&wasm4.BUTTON_2 != 0 {
+
+				if spinPiece(SPIN_CCW) == 0 {
+					wasm4.Tone(210|(250<<16), 8, 100, wasm4.TONE_PULSE1|wasm4.TONE_MODE3)
+				}
+			} else {
+
+				if spinPiece(SPIN_CW) == 0 {
+					wasm4.Tone(210|(250<<16), 8, 100, wasm4.TONE_PULSE1|wasm4.TONE_MODE3)
+				}
+			}
+		}
+
+		if (pressedThisFrame & wasm4.BUTTON_DOWN) != 0 {
+			// Hard drop
+			for stepGravity() == 0 {
+			}
+		}
+
+		if (gamepad & (wasm4.BUTTON_RIGHT | wasm4.BUTTON_LEFT)) != 0 {
+			if repeatDelay != 0 {
+				repeatDelay--
+			} else {
+				repeatDelay = 18
+				if holdingDirection != 0 {
+					repeatDelay = 6
+				}
+				if (gamepad & wasm4.BUTTON_LEFT) != 0 {
+					movePiece(-1, 0)
+				} else {
+					movePiece(1, 0)
+				}
+			}
+			holdingDirection = 1
+
+		} else {
+			holdingDirection = 0
+			repeatDelay = 0
+		}
+
+		if gravityDelay != 0 {
+			gravityDelay--
+		} else {
+			idx := level
+			if lastIdx := len(LEVEL_SPEED) - 1; idx >= lastIdx {
+				idx = lastIdx
+			}
+
+			gravityDelay = LEVEL_SPEED[idx]
+			stepGravity()
+		}
 	}
 
-	wasm4.Blit(smiley[:], 76, 76, 8, 8, wasm4.BLIT_1BPP)
-	wasm4.Text("Press X to blink", 16, 90)
+	wasm4.SetDrawColorsU16(3)
+	wasm4.Rect(0, 0, BOARD_OFFSET_X, 160)
+	wasm4.Rect(BOARD_OFFSET_X+BOARD_WIDTH*8, 0, 160-(BOARD_OFFSET_X+BOARD_WIDTH*8), 160)
+
+	wasm4.SetDrawColorsU16(4)
+	wasm4.Rect(BOARD_OFFSET_X, 0, 1, 160)
+	wasm4.Rect(BOARD_OFFSET_X+BOARD_WIDTH*8-1, 0, 1, 160)
+
+	boardY := 0
+	if gameover != 0 {
+		boardY = 2 * gameoverElapsed
+
+		wasm4.SetDrawColorsU16(4)
+
+		wasm4.Text("GAME OVER", BOARD_OFFSET_X+4, 64)
+		wasm4.Text(" PRESS X", BOARD_OFFSET_X+4, 64+8+2)
+
+		// Restart
+		if boardY >= 160 && (pressedThisFrame&wasm4.BUTTON_1) != 0 {
+			gameover = 0
+			level = 0
+			score = 0
+			lines = 0
+			nextPiece()
+			for ii := 0; ii < BOARD_WIDTH*BOARD_HEIGHT; ii++ {
+				board[ii] = 0
+			}
+		}
+	}
+
+	for y := 0; y < BOARD_HEIGHT; y++ {
+		flag := (((clearAnimationRowMask >> y) & 1) != 0) && (((u32(clearAnimationDelay) >> 3) & 1) != 0)
+		if flag {
+			wasm4.SetDrawColorsU16(0x42)
+		} else {
+			wasm4.SetDrawColorsU16(0x43)
+		}
+
+		for x := 0; x < BOARD_WIDTH; x++ {
+			b := board[y*BOARD_WIDTH+x]
+			if b > 0 {
+				drawBlock(PieceType(b-1), i32(8*x), i32(8*y+boardY))
+			}
+		}
+	}
+
+	if gameover == 0 {
+		wasm4.SetDrawColorsU16(0x41)
+
+		drawPiece(13, 14, nextPieceType, PIECE_COORDS[8*nextPieceType:])
+	}
+
+	wasm4.SetDrawColorsU16(4)
+
+	wasm4.Text("LEVEL", 104, 16)
+	wasm4.Text("SCORE", 104, 40)
+	wasm4.Text("BEST", 104, 64)
+
+	wasm4.SetDrawColorsU16(1)
+
+	wasm4.Text("WASM-4", 112, 152)
+
+	wasm4.Text(strconv.Itoa(level+1), 104, 24+2)
+	wasm4.Text(strconv.Itoa(score), 104, 48+2)
+	wasm4.Text(strconv.Itoa(best), 104, 72+2)
+
+	if clearAnimationDelay == 0 && gameover != 0 {
+		wasm4.SetDrawColorsU16(0x42)
+		drawPiece(i32(piece.x), i32(piece.y), piece.typ, piece.coords[:])
+	}
 }
