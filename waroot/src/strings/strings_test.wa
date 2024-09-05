@@ -190,6 +190,15 @@ func runIndexTests(f: func(s, sep: string) => int, funcName: string, testCases: 
 	}
 }
 
+func TestReplaceAll {
+	s0 := "abc{?}d"
+	s1 := ReplaceAll(s0, `{?}`, "123")
+	expect := "abc123d"
+
+	assert(s1 == expect, expect)
+	assert(len(s1) == 7)
+}
+
 func TestIndex {
 	runIndexTests(Index, "Index", indexTests)
 }

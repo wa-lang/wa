@@ -34,7 +34,7 @@ func Builder.Reset {
 // without another allocation. If n is negative, Grow panics.
 func Builder.Grow(n: int) {
 	if cap(this.buf)-len(this.buf) < n {
-		buf := make([]byte, cap(this.buf)+n)
+		buf := make([]byte, len(this.buf), cap(this.buf)+n)
 		copy(buf, this.buf)
 		this.buf = buf
 	}
