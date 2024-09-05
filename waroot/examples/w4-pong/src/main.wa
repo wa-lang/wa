@@ -19,12 +19,6 @@ const (
 
 global game = NewPongGame(true) // 双人游戏
 
-#wa:export start
-func Start {
-	wasm4.SetDrawColors(0, 4)
-	wasm4.SetDrawColors(1, 2)
-}
-
 #wa:export update
 func Update {
 	game.Input()
