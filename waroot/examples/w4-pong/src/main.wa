@@ -15,7 +15,7 @@ const (
 )
 
 // 玩家1(右边): 上下方向键
-// 玩家2(左边): ED键对应上下键
+// 玩家2(左边): ED键对应上下键, 左右方向键盘控制
 
 global game = NewPongGame(true) // 双人游戏
 
@@ -71,6 +71,13 @@ func PongGame.Input {
 
 	// 第2个玩家或机器人
 	if this.isMultiplayer {
+		// 左右方向键盘控制
+		if pad := wasm4.GetGamePad1(); pad&wasm4.BUTTON_LEFT != 0 && this.y2 > 0 {
+			this.y2 -= 2
+		} else if pad&wasm4.BUTTON_RIGHT != 0 && this.y2+height < screenSize {
+			this.y2 += 2
+		}
+
 		if pad := wasm4.GetGamePad2(); pad&wasm4.BUTTON_UP != 0 && this.y2 > 0 {
 			this.y2 -= 2
 		} else if pad&wasm4.BUTTON_DOWN != 0 && this.y2+height < screenSize {
