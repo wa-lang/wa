@@ -30,6 +30,7 @@ jobs:
       - run: make -C waroot/examples/w4-2048 publish
       - run: make -C waroot/examples/w4-tic-tac-toe publish
       - run: make -C waroot/examples/w4-tetris publish
+      - run: make -C waroot/examples/w4-pong publish
 
       - name: Deploy
         uses: peaceiris/actions-gh-pages@v3

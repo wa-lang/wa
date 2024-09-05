@@ -50,7 +50,6 @@ var CmdRun = &cli.Command{
 
 func CmdRunAction(c *cli.Context) error {
 	input := c.Args().First()
-	outfile := ""
 
 	if input == "" || input == "." {
 		input, _ = os.Getwd()
@@ -81,7 +80,7 @@ func CmdRunAction(c *cli.Context) error {
 	}
 
 	var opt = appbase.BuildOptions(c)
-	mainFunc, wasmBytes, err := appbuild.BuildApp(opt, input, outfile)
+	mainFunc, wasmBytes, err := appbuild.BuildApp(opt, input, "")
 	if err != nil {
 		fmt.Println("appbuild.BuildApp:", err)
 		os.Exit(1)
@@ -135,6 +134,14 @@ func CmdRunAction(c *cli.Context) error {
 		}
 
 		return nil
+	}
+
+	// 单文件执行时删除中间临时文件
+	if !c.Bool("debug") {
+		if appbase.HasExt(input, ".wa") {
+			os.Remove(input + "t")  // *.wat
+			os.Remove(input + "sm") // *.wasm
+		}
 	}
 
 	m, err := wazero.BuildModule(input, wasmBytes, appArgs...)

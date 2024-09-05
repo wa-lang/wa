@@ -71,9 +71,23 @@ func GetDrawColorsU16 => u16 {
 func getDrawColors => i32
 
 // 写绘图颜色
+#wa:generic SetDrawColorsByIndex SetDrawColorsU16
 func SetDrawColors(a, b, c, d: u8) {
 	x := u32(a) + (u32(b) << 4) + (u32(c) << 8) + (u32(d) << 12)
 	setDrawColors(i32(x))
+}
+func SetDrawColorsByIndex(idx: int, v: u8) {
+	a, b, c, d := GetDrawColors()
+	switch idx {
+	case 0:
+		SetDrawColors(v, b, c, d)
+	case 1:
+		SetDrawColors(a, v, c, d)
+	case 2:
+		SetDrawColors(a, b, v, d)
+	case 3:
+		SetDrawColors(a, b, c, v)
+	}
 }
 func SetDrawColorsU16(x: u16) {
 	setDrawColors(i32(x))
@@ -171,24 +185,49 @@ const (
 )
 
 // 绘制线段
+#wa:generic LineI32
+func Line(x1, y1, x2, y2: int) {
+	LineI32(i32(x1), i32(y1), i32(x2), i32(y2))
+}
+
 #wa:import env line
-func Line(x1, y1, x2, y2: i32)
+func LineI32(x1, y1, x2, y2: i32)
 
 // 绘制水平的线段
+#wa:generic HLineI32
+func HLine(x, y, len: int) {
+	HLineI32(i32(x), i32(y), i32(len))
+}
+
 #wa:import env hline
-func HLine(x, y, len: i32)
+func HLineI32(x, y, len: i32)
 
 // 绘制竖直的线段
+#wa:generic VLineI32
+func VLine(x, y, len: int) {
+	VLineI32(i32(x), i32(y), i32(len))
+}
+
 #wa:import env vline
-func VLine(x, y, len: i32)
+func VLineI32(x, y, len: i32)
 
 // 绘制椭圆或圆
+#wa:generic OvalI32
+func Oval(x, y, width, height: int) {
+	OvalI32(i32(x), i32(y), i32(width), i32(height))
+}
+
 #wa:import env oval
-func Oval(x, y, width, height: i32)
+func OvalI32(x, y, width, height: i32)
 
 // 绘制矩形
+#wa:generic RectI32
+func Rect(x, y, width, height: int) {
+	RectI32(i32(x), i32(y), i32(width), i32(height))
+}
+
 #wa:import env rect
-func Rect(x, y, width, height: i32)
+func RectI32(x, y, width, height: i32)
 
 // 绘制文本
 func Text(s: string, x, y: i32) {

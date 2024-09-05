@@ -1,0 +1,153 @@
+// 版权 @2024 W4-hello 作者。保留所有权利。
+
+import (
+	"math/rand"
+	"strconv"
+	"syscall/wasm4"
+)
+
+const (
+	width  = 5
+	height = 15
+
+	ballSize   = 5
+	screenSize = int(wasm4.SCREEN_SIZE)
+)
+
+// 玩家1(右边): 上下方向键
+// 玩家2(左边): ED键对应上下键
+
+global game = NewPongGame(true) // 双人游戏
+
+#wa:export start
+func Start {
+	wasm4.SetDrawColors(0, 4)
+	wasm4.SetDrawColors(1, 2)
+}
+
+#wa:export update
+func Update {
+	game.Input()
+	game.Update()
+	game.Draw()
+}
+
+// 游戏的状态
+type PongGame :struct {
+	isMultiplayer: bool // 多人游戏
+	ballX:         int  // 球的水平位置
+	ballY:         int  // 球的竖直位置
+	dirX:          int  // 球的方向
+	dirY:          int  // 球的方向
+	y1:            int  // 左边挡板位置
+	y2:            int  // 右边挡板位置
+	score1:        int  // 玩家分数
+	score2:        int  // 玩家分数
+}
+
+// 构建一个新游戏对象
+func NewPongGame(enableMultiplayer: bool) => *PongGame {
+	return &PongGame{
+		isMultiplayer: enableMultiplayer,
+		ballX:         screenSize / 2,
+		ballY:         screenSize / 2,
+		dirX:          1,
+		dirY:          1,
+		y1:            screenSize / 2,
+		y2:            screenSize / 2,
+		score1:        0,
+		score2:        0,
+	}
+}
+
+// 处理输入
+func PongGame.Input {
+	// 第1个玩家
+	if pad := wasm4.GetGamePad1(); pad&wasm4.BUTTON_UP != 0 && this.y1 > 0 {
+		this.y1 -= 2
+	} else if pad&wasm4.BUTTON_DOWN != 0 && this.y1+height < screenSize {
+		this.y1 += 2
+	}
+
+	// 第2个玩家或机器人
+	if this.isMultiplayer {
+		if pad := wasm4.GetGamePad2(); pad&wasm4.BUTTON_UP != 0 && this.y2 > 0 {
+			this.y2 -= 2
+		} else if pad&wasm4.BUTTON_DOWN != 0 && this.y2+height < screenSize {
+			this.y2 += 2
+		}
+	} else {
+		this.y2 = this.ballY // 自动对齐到接球位置(TODO: 失误机制)
+	}
+}
+
+// 更新游戏状态
+func PongGame.Update {
+	// 更新球的方向
+	if dirNow := this.paddleCollision(); dirNow != 0 {
+		wasm4.Tone(2000, 5, 100, wasm4.TONE_PULSE2|wasm4.TONE_MODE2)
+		if rand.Int()%2 != 0 {
+			this.dirX = dirNow
+			this.dirY = -1
+		} else {
+			this.dirX = dirNow
+			this.dirY = 1
+		}
+	}
+
+	// 更新球的位置
+	this.ballX += this.dirX
+	this.ballY += this.dirY
+
+	// 检查球是否反弹
+	if this.ballY > screenSize || this.ballY < 0 {
+		wasm4.Tone(2000, 5, 100, wasm4.TONE_PULSE2|wasm4.TONE_MODE2)
+		this.dirY = -this.dirY
+	}
+
+	// 判断得分
+	if this.ballX <= 0 || this.ballX > screenSize {
+		wasm4.Tone(1000, 5, 100, wasm4.TONE_PULSE2|wasm4.TONE_MODE2)
+
+		if this.ballX <= 0 { // 左边玩家失球
+			this.score2 += 1
+		} else if this.ballX > screenSize {
+			this.score1 += 1 // 右边玩家失球
+		}
+
+		// 重置球位置
+		this.ballX = screenSize / 2
+		this.ballY = screenSize / 2
+		this.dirX = -this.dirX
+	}
+}
+
+// 渲染球的状态到游戏屏幕
+func PongGame.Draw {
+	wasm4.SetDrawColors(0, 4)
+	wasm4.SetDrawColors(1, 0)
+	wasm4.Text(strconv.Itoa(this.score1), 85, 0)
+	wasm4.Text(strconv.Itoa(this.score2), 70, 0)
+	wasm4.Rect(screenSize/2, 0, 2, screenSize)
+
+	wasm4.SetDrawColors(0, 2)
+	wasm4.SetDrawColors(1, 3)
+	wasm4.Oval(this.ballX, this.ballY, ballSize, ballSize)
+	wasm4.Rect(0, this.y2, width, height)
+	wasm4.Rect(screenSize-width, this.y1, width, height)
+}
+
+// 碰撞检测
+func PongGame.paddleCollision => int {
+	if this.ballX < width &&
+		this.ballY < this.y2+height &&
+		this.ballY+ballSize > this.y2 {
+		return 1
+	}
+	if this.ballX+ballSize > screenSize-width &&
+		this.ballY < this.y1+height &&
+		this.ballY+ballSize > this.y1 {
+		return -1
+	}
+	return 0
+}
