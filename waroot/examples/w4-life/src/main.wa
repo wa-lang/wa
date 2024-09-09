@@ -1,0 +1,12 @@
+// 版权 @2024 W4-life 作者。保留所有权利。
+
+#wa:export start
+func Start {
+	println("life start")
+	LifeInit()
+}
+
+#wa:export update
+func Update {
+	LifeStep()
+}

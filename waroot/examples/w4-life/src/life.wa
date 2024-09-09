@@ -1,0 +1,96 @@
+// 版权 @2023 life 作者。保留所有权利。
+
+import (
+	"math/rand"
+	"syscall/wasm4"
+)
+
+const (
+	width  = wasm4.SCREEN_SIZE
+	height = wasm4.SCREEN_SIZE
+)
+
+global (
+	cells0    = NewBitImage(width, height)
+	cells1    = NewBitImage(width, height)
+	cellFrame = FramebufferInstance()
+
+	pausing = false
+)
+
+func LifePausing {
+	println("pausing:", pausing)
+	pausing = !pausing
+}
+
+func LifeInit {
+	for x := 0; x < cells0.Width; x++ {
+		for y := 0; y < cells0.Height; y++ {
+			if (rand.Int() % 2) != 0 {
+				cells0.Set(x, y, true)
+			} else {
+				cells0.Set(x, y, false)
+			}
+		}
+	}
+}
+
+type DIR :struct {
+	x: int
+	y: int
+}
+
+global dirs = [...]DIR{
+	{-1, -1}, {0, -1}, {1, -1}, {-1, 0}, {1, 0}, {-1, 1}, {0, 1}, {1, 1},
+}
+
+// 生命进化
+func lifeEvolve {
+	for y := 0; y < height; y++ {
+		for x := 0; x < width; x++ {
+			live_count := 0
+			for i := 0; i < 8; i++ {
+				nx := (x + dirs[i].x + width) % width
+				ny := (y + dirs[i].y + height) % height
+				if cells0.At(nx, ny) {
+					live_count++
+				}
+			}
+
+			if cells0.At(x, y) {
+				switch live_count {
+				case 2, 3:
+					cells1.Set(x, y, true)
+				default:
+					cells1.Set(x, y, false)
+				}
+			} else {
+				switch live_count {
+				case 3:
+					cells1.Set(x, y, true)
+				default:
+					cells1.Set(x, y, false)
+				}
+			}
+		}
+	}
+
+	// 交换 cells0 和 cells1
+	cells0, cells1 = cells1, cells0
+}
+
+func LifeStep {
+	if !pausing {
+		lifeEvolve()
+	}
+
+	for x := 0; x < width; x++ {
+		for y := 0; y < height; y++ {
+			if cells0.At(x, y) {
+				cellFrame.Set(x, y, 4)
+			} else {
+				cellFrame.Set(x, y, 2)
+			}
+		}
+	}
+}
