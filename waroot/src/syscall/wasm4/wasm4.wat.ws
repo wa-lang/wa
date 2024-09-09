@@ -14,6 +14,8 @@
 (global $MOUSE_BUTTONS i32 (i32.const 0x1e))
 (global $SYSTEM_FLAGS i32 (i32.const 0x1f))
 (global $NETPLAY i32 (i32.const 0x20))
+
+(global $FRAMEBUFFER_BLOCK i32 (i32.const 0x98))
 (global $FRAMEBUFFER i32 (i32.const 0xa0))
 
 (global $BUTTON_1 i32 (i32.const 1))
@@ -47,6 +49,22 @@
 (global $TONE_PAN_LEFT i32 (i32.const 16))
 (global $TONE_PAN_RIGHT i32 (i32.const 32))
 (global $TONE_NOTE_MODE i32 (i32.const 64))
+
+(func $$syscall/wasm4.getMemory (param $blk i32) (param $ptr i32) (param $len i32) (param $cap i32) (result i32 i32 i32 i32)
+	local.get $blk
+	local.get $ptr
+	local.get $len
+	local.get $cap
+	return
+)
+
+(func $$syscall/wasm4.getFramebuffer (result i32 i32 i32 i32)
+	global.get $FRAMEBUFFER_BLOCK
+	global.get $FRAMEBUFFER
+	i32.const 6400
+	i32.const 6400
+	return
+)
 
 (func $$syscall/wasm4.getPalette0 (result i32)
 	global.get $PALETTE0

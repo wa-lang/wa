@@ -4,6 +4,10 @@
 
 // TODO: 基于函数重载, 优化 API
 
+// 获取内存切片
+#wa:linkname $syscall/wasm4.getMemory
+func getMemory(blk, ptr, len, cap: i32) => []byte
+
 #wa:linkname $wa.runtime.string_to_ptr
 func u8_string_to_ptr(s: string) => i32
 
@@ -11,7 +15,7 @@ func u8_string_to_ptr(s: string) => i32
 func u8_slice_to_ptr(t: []byte) => i32
 
 // 屏幕大小
-const SCREEN_SIZE: i32 = 160
+const SCREEN_SIZE = 160
 
 // 读调色板
 func GetPalette => (u32, u32, u32, u32) {
@@ -278,3 +282,9 @@ func Trace(msg: string) {
 
 #wa:import env traceUtf8
 func traceUtf8(msgPtr, msgLen: i32)
+
+// 获取帧缓存
+func GetFramebuffer => []byte {
+	const blk, ptr, cap = 0x98, 0xa0, 6400
+	return getMemory(blk, ptr, cap, cap)
+}
