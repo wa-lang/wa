@@ -45,6 +45,14 @@ func LifeInit {
 	}
 }
 
+func LifeSetRect(x0, y0, x1, y1: int) {
+	for x := x0; x < x1; x++ {
+		for y := y0; y < y1; y++ {
+			cells0.Set(x, y, true)
+		}
+	}
+}
+
 type DIR :struct {
 	x: int
 	y: int

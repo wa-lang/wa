@@ -21,6 +21,9 @@ func BitImage.At(x, y: int) => bool {
 }
 
 func BitImage.Set(x, y: int, c: bool) {
+	if x < 0 || x >= this.Width || y < 0 || y >= this.Height {
+		return
+	}
 	idx := (y*this.Width + x) / 8
 	if c {
 		this.Pix[idx] = byte(setBit(uint(this.Pix[idx]), uint(x%8)))
