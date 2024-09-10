@@ -121,10 +121,12 @@ func BuildApp(opt *appbase.Option, input, outfile string) (mainFunc string, wasm
 
 		// wat 写到文件
 		watOutfile := appbase.ReplaceExt(outfile, ".wasm", ".wat")
-		err = os.WriteFile(watOutfile, watOutput, 0666)
-		if err != nil {
-			fmt.Printf("write %s failed: %v\n", outfile, err)
-			os.Exit(1)
+		if !opt.RunFileMode {
+			err = os.WriteFile(watOutfile, watOutput, 0666)
+			if err != nil {
+				fmt.Printf("write %s failed: %v\n", outfile, err)
+				os.Exit(1)
+			}
 		}
 
 		// wat 编译为 wasm
@@ -135,10 +137,12 @@ func BuildApp(opt *appbase.Option, input, outfile string) (mainFunc string, wasm
 		}
 
 		// wasm 写到文件
-		err = os.WriteFile(outfile, wasmBytes, 0666)
-		if err != nil {
-			fmt.Printf("write %s failed: %v\n", outfile, err)
-			os.Exit(1)
+		if !opt.RunFileMode {
+			err = os.WriteFile(outfile, wasmBytes, 0666)
+			if err != nil {
+				fmt.Printf("write %s failed: %v\n", outfile, err)
+				os.Exit(1)
+			}
 		}
 
 		// OK

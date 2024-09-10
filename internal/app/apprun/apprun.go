@@ -80,6 +80,11 @@ func CmdRunAction(c *cli.Context) error {
 	}
 
 	var opt = appbase.BuildOptions(c)
+	if appbase.HasExt(input, ".wa") {
+		// 执行单个 wa 脚本, 避免写磁盘
+		opt.RunFileMode = true
+	}
+
 	mainFunc, wasmBytes, err := appbuild.BuildApp(opt, input, "")
 	if err != nil {
 		fmt.Println("appbuild.BuildApp:", err)

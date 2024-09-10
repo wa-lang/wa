@@ -14,6 +14,7 @@ import (
 // 命令行选项
 type Option struct {
 	Debug        bool
+	RunFileMode  bool // 单文件运行模式
 	WaBackend    string
 	BuilgTags    []string
 	Target       string
