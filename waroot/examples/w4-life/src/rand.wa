@@ -1,0 +1,6 @@
+global seed: u64 = 123
+
+func rand => int {
+	seed = 6364136223846793005*seed + 1
+	return int(seed >> 33)
+}

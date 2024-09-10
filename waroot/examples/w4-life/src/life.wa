@@ -1,9 +1,6 @@
 // 版权 @2023 life 作者。保留所有权利。
 
-import (
-	"math/rand"
-	"syscall/wasm4"
-)
+import "syscall/wasm4"
 
 const (
 	width  = wasm4.SCREEN_SIZE
@@ -18,15 +15,28 @@ global (
 	pausing = false
 )
 
-func LifePausing {
+func LifeStop {
 	println("pausing:", pausing)
-	pausing = !pausing
+	pausing = true
+}
+
+func LifeStart {
+	println("pausing:", pausing)
+	pausing = false
 }
 
 func LifeInit {
+	for i := range cells0.Pix {
+		cells0.Pix[i] = 0
+	}
+	for i := range cells1.Pix {
+		cells1.Pix[i] = 0
+	}
+
+	seed += u64(wasm4.GetMouseX() + 1)
 	for x := 0; x < cells0.Width; x++ {
 		for y := 0; y < cells0.Height; y++ {
-			if (rand.Int() % 2) != 0 {
+			if (rand() % 3) != 0 {
 				cells0.Set(x, y, true)
 			} else {
 				cells0.Set(x, y, false)
@@ -84,9 +94,13 @@ func LifeStep {
 		lifeEvolve()
 	}
 
+	drawFrambuffer(cells0)
+}
+
+func drawFrambuffer(m: *BitImage) {
 	for x := 0; x < width; x++ {
 		for y := 0; y < height; y++ {
-			if cells0.At(x, y) {
+			if m.At(x, y) {
 				cellFrame.Set(x, y, 4)
 			} else {
 				cellFrame.Set(x, y, 2)

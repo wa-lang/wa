@@ -1,5 +1,7 @@
 // 版权 @2024 W4-life 作者。保留所有权利。
 
+import "syscall/wasm4"
+
 #wa:export start
 func Start {
 	println("life start")
@@ -8,5 +10,13 @@ func Start {
 
 #wa:export update
 func Update {
+	gamepad := wasm4.GetGamePad1()
+	if gamepad&wasm4.BUTTON_1 != 0 {
+		LifeStop()
+	}
+	if gamepad&wasm4.BUTTON_2 != 0 {
+		LifeStart()
+	}
+
 	LifeStep()
 }

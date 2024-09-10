@@ -1,4 +1,4 @@
-// 版权 @2024 凹语言 作者。保留所有权利。
+// 版权 @2024 W4-life 作者。保留所有权利。
 
 import "syscall/wasm4"
 
@@ -16,7 +16,7 @@ func FramebufferInstance => *Framebuffer {
 }
 
 func Framebuffer.Set(x, y: int, v: byte) {
-	idx := (y*wasm4.SCREEN_SIZE + x)/4
+	idx := (y*wasm4.SCREEN_SIZE + x) / 4
 	shift := byte((x % 4) * 2)
 	mask := byte(0b11 << shift)
 	this.Pix[idx] = (v << shift) | (this.Pix[idx] & ^mask)
