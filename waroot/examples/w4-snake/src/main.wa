@@ -88,6 +88,7 @@ func update {
 			snake.Body = append(snake.Body, snake.Body[len(snake.Body)-1])
 			fruit.X = u8(randInt(20) * size)
 			fruit.Y = u8(randInt(20) * size)
+			sfxEat.play()
 		}
 	}
 	snake.Draw()
@@ -206,3 +207,28 @@ func Snake.IsDead => bool {
 	}
 	return false
 }
+
+type Sound :struct {
+	freq1:   uint
+	freq2:   uint
+	attack:  uint
+	decay:   uint
+	sustain: uint
+	release: uint
+	volume:  uint
+	channel: uint
+	mode:    uint
+}
+
+func Sound.play {
+	s := this
+	freq := s.freq1 | s.freq2<<16
+	duration := s.attack<<24 | s.decay<<16 | s.sustain | s.release<<8
+	flags := s.channel | s.mode<<2
+
+	wasm4.Tone(i32(freq), i32(duration), i32(s.volume), i32(flags))
+}
+
+global (
+	sfxEat = Sound{140, 20, 4, 10, 0, 0, 0, 0, 2}
+)
