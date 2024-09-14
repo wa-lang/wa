@@ -1,0 +1,3 @@
+# syscall/unknown 包
+
+该包针对 unknown 目标平台, 该目标平台默认没有自动引入任何函数.

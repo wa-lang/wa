@@ -23,3 +23,7 @@ func Puts(ptr: i32, len: i32) {
 		DefaultPuts(ptr, len)
 	}
 }
+
+func PrintString(s: string) {
+	__import__print_str(__linkname__string_to_ptr(s), i32(len(s)))
+}
