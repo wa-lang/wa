@@ -20,6 +20,7 @@ js
 - api.wa: 对外提供凹语言风格的 API 包装
 - api_example_test.wa: 用法示例
 - z_abi.wa: 导入的宿主函数或汇编实现的函数
+- z_abi.wat.ws: 汇编语言代码
 
 
 ## 导入目标平台函数
