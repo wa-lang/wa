@@ -1,4 +1,5 @@
 // 版权 @2022 凹语言 作者。保留所有权利。
 
-#wa:import wasi_snapshot_preview1 proc_exit
-func ProcExit(code: i32)
+func ProcExit(code: int) {
+	__import__proc_exit(i32(code))
+}

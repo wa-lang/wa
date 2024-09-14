@@ -1,0 +1,45 @@
+// 版权 @2024 凹语言 作者。保留所有权利。
+
+// https://github.com/WebAssembly/WASI/blob/snapshot-01/phases/snapshot/docs.md#functions
+
+#wa:import wasi_snapshot_preview1 args_get
+func __import__args_get(result_argv: i32, result_argv_buf: i32) => (errno: i32)
+
+#wa:import wasi_snapshot_preview1 args_sizes_get
+func __import__args_sizes_get(result_argc: i32, result_argv_len: i32) => (errno: i32)
+
+#wa:import wasi_snapshot_preview1 clock_res_get
+func __import__clock_res_get(id: i32, result_resolution: i32) => (errno: i32)
+
+#wa:import wasi_snapshot_preview1 clock_time_get
+func __import__clock_time_get(id: i32, precision: i64, result_timestamp: i32) => (errno: i32)
+
+#wa:import wasi_snapshot_preview1 environ_get
+func __import__environ_get(result_environv: i32, result_environv_buf: i32) => (errno: i32)
+
+#wa:import wasi_snapshot_preview1 environ_sizes_get
+func __import__environ_sizes_get(result_environc: i32, result_environv_len: i32) => (errno: i32)
+
+#wa:import wasi_snapshot_preview1 proc_exit
+func __import__proc_exit(code: i32)
+
+#wa:import wasi_snapshot_preview1 random_get
+func __import__random_get(buf: i32, buf_len: i32) => (errno: i32)
+
+#wa:linkname $syscall/wasi.__linkname__slice_data_ptr
+func __linkname__slice_data_ptr(s: []byte) => i32
+
+#wa:linkname $syscall/wasi.__linkname__string_data_ptr
+func __linkname__string_data_ptr(s: string) => i32
+
+#wa:linkname $syscall/wasi.__linkname__make_slice
+func __linkname__makeByteSlice(blk, ptr, len, cap: i32) => []byte
+
+#wa:linkname $syscall/wasi.__linkname__make_slice
+func __linkname__makeU8Slice(blk, ptr, len, cap: i32) => []u8
+
+#wa:linkname $syscall/wasi.__linkname__make_slice
+func __linkname__makeU16Slice(blk, ptr, len, cap: i32) => []u16
+
+#wa:linkname $syscall/wasi.__linkname__make_slice
+func __linkname__makeU32Slice(blk, ptr, len, cap: i32) => []u32

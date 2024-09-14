@@ -1,14 +1,5 @@
 // 版权 @2024 凹语言 作者。保留所有权利。
 
-// Flags位信息
-const (
-	BLIT_1BPP   = 0
-	BLIT_2BPP   = 1
-	BLIT_FLIP_X = 2
-	BLIT_FLIP_Y = 4
-	BLIT_ROTATE = 8
-)
-
 // https://wasm4.org/docs/reference/memory/
 
 const (

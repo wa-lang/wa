@@ -30,7 +30,7 @@ func fdWrite(fd: i32, io: i32, iovs_len: i32, nwritten: i32) => (errno: i32) {
 }
 
 #wa:linkname $runtime.procExit
-func procExit(code: i32) {
+func procExit(code: int) {
 	wasi.ProcExit(code)
 }
 
