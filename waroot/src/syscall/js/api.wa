@@ -1,0 +1,49 @@
+// 版权 @2023 凹语言 作者。保留所有权利。
+
+func PrintBool(v: bool) {
+	__import__print_bool(v)
+}
+
+func PrintI32(v: i32) {
+	__import__print_i32(v)
+}
+
+func PrintU32(v: u32) {
+	__import__print_u32(v)
+}
+
+func PrintU32Ptr(v: u32) {
+	__import__print_ptr(v)
+}
+
+func PrintI64(v: i64) {
+	__import__print_i64(v)
+}
+
+func PrintU64(v: u64) {
+	__import__print_u64(v)
+}
+
+func PrintF32(v: f32) {
+	__import__print_f32(v)
+}
+
+func PrintF64(v: f64) {
+	__import__print_f64(v)
+}
+
+func PrintRune(v: i32) {
+	__import__print_rune(v)
+}
+
+func PrintString(s: string) {
+	__import__print_str(__linkname__string_to_ptr(s), i32(len(s)))
+}
+
+func Puts(ptr: i32, len: i32) {
+	__import__print_str(ptr, len)
+}
+
+func ProcExit(v: i32) {
+	__import__proc_exit(v)
+}
