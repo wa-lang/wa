@@ -1,0 +1,33 @@
+// 版权 @2024 W4-life 作者。保留所有权利。
+
+// 2色图像, 长宽是8的倍数
+type BitImage :struct {
+	Width:  int
+	Height: int
+	Pix:    []byte
+}
+
+func NewBitImage(w, h: int) => *BitImage {
+	return &BitImage{
+		Width:  w,
+		Height: h,
+		Pix:    make([]byte, w*h/8),
+	}
+}
+
+func BitImage.At(x, y: int) => bool {
+	idx := (y*this.Width + x) / 8
+	return hasBit(uint(this.Pix[idx]), uint(x%8))
+}
+
+func BitImage.Set(x, y: int, c: bool) {
+	if x < 0 || x >= this.Width || y < 0 || y >= this.Height {
+		return
+	}
+	idx := (y*this.Width + x) / 8
+	if c {
+		this.Pix[idx] = byte(setBit(uint(this.Pix[idx]), uint(x%8)))
+	} else {
+		this.Pix[idx] = byte(clearBit(uint(this.Pix[idx]), uint(x%8)))
+	}
+}
