@@ -1,0 +1,74 @@
+// 版权 @2024 凹语言 作者。保留所有权利。
+
+// 读调色板
+func GetPalette => (u32, u32, u32, u32) {
+	p := __linkname__makeU32Slice(0, _PALETTE0, 4, 4)
+	return p[0], p[1], p[2], p[3]
+}
+
+// 写调试板
+func SetPalette(a0, a1, a2, a3: u32) {
+	p := __linkname__makeU32Slice(0, _PALETTE0, 4, 4)
+	p[0], p[1], p[2], p[3] = a0, a1, a2, a3
+}
+
+func SetPalette0(a: int) {
+	p := __linkname__makeU32Slice(0, _PALETTE0, 1, 1)
+	p[0] = u32(a)
+}
+
+func SetPalette1(a: int) {
+	p := __linkname__makeU32Slice(0, _PALETTE1, 1, 1)
+	p[0] = u32(a)
+}
+
+func SetPalette2(a: int) {
+	p := __linkname__makeU32Slice(0, _PALETTE2, 1, 1)
+	p[0] = u32(a)
+}
+
+func SetPalette3(a: int) {
+	p := __linkname__makeU32Slice(0, _PALETTE3, 1, 1)
+	p[0] = u32(a)
+}
+
+// 读绘图颜色
+func GetDrawColors => (a, b, c, d: u8) {
+	p := __linkname__makeU16Slice(0, _DRAW_COLORS, 1, 1)
+	x := p[0]
+
+	a = u8(u32(x) & 0xF)
+	b = u8((u32(x) >> 4) & 0xF)
+	c = u8((u32(x) >> 8) & 0xF)
+	d = u8((u32(x) >> 12) & 0xF)
+	return
+}
+func GetDrawColorsU16 => u16 {
+	p := __linkname__makeU16Slice(0, _DRAW_COLORS, 1, 1)
+	return p[0]
+}
+
+// 写绘图颜色
+#wa:generic SetDrawColorsByIndex SetDrawColorsU16
+func SetDrawColors(a, b, c, d: u8) {
+	p := __linkname__makeU16Slice(0, _DRAW_COLORS, 1, 1)
+	x := u32(a) + (u32(b) << 4) + (u32(c) << 8) + (u32(d) << 12)
+	p[0] = u16(x)
+}
+func SetDrawColorsByIndex(idx: int, v: u8) {
+	a, b, c, d := GetDrawColors()
+	switch idx {
+	case 0:
+		SetDrawColors(v, b, c, d)
+	case 1:
+		SetDrawColors(a, v, c, d)
+	case 2:
+		SetDrawColors(a, b, v, d)
+	case 3:
+		SetDrawColors(a, b, c, v)
+	}
+}
+func SetDrawColorsU16(x: u16) {
+	p := __linkname__makeU16Slice(0, _DRAW_COLORS, 1, 1)
+	p[0] = u16(x)
+}

@@ -4,8 +4,8 @@ type w4State :struct {
 	palette:      u32
 	drawColors:   u16
 	gamepad1:     u8
-	mouseX:       i32
-	mouseY:       i32
+	mouseX:       int
+	mouseY:       int
 	mouseButtons: u32
 }
 

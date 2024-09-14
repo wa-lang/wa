@@ -1,0 +1,23 @@
+// 版权 @2024 凹语言 作者。保留所有权利。
+
+// 读取控制键
+
+func GetGamePad1 => u8 {
+	u8Slice := __linkname__makeU8Slice(0, _GAMEPAD1, 1, 1)
+	return u8(u8Slice[0])
+}
+
+func GetGamePad2 => u8 {
+	u8Slice := __linkname__makeU8Slice(0, _GAMEPAD2, 1, 1)
+	return u8(u8Slice[0])
+}
+
+func GetGamePad3 => u8 {
+	u8Slice := __linkname__makeU8Slice(0, _GAMEPAD3, 1, 1)
+	return u8(u8Slice[0])
+}
+
+func GetGamePad4 => u8 {
+	u8Slice := __linkname__makeU8Slice(0, _GAMEPAD4, 1, 1)
+	return u8(u8Slice[0])
+}

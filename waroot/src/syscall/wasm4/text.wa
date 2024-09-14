@@ -1,0 +1,16 @@
+// 版权 @2024 凹语言 作者。保留所有权利。
+
+// 绘制文本
+func Text(s: string, x, y: i32) {
+	__import__textUtf8(__linkname__string_data_ptr(s), i32(len(s)), x, y)
+}
+
+// 打印调试信息
+func Trace(msg: string) {
+	__import__traceUtf8(__linkname__string_data_ptr(msg), i32(len(msg)))
+}
+
+// 根据指针打印(底层用)
+func X_waPuts(ptr, len: i32) {
+	__import__traceUtf8(i32(ptr), i32(len))
+}

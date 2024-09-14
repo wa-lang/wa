@@ -1,0 +1,25 @@
+// 版权 @2024 凹语言 作者。保留所有权利。
+
+const (
+	TONE_PULSE1    = 0
+	TONE_PULSE2    = 1
+	TONE_TRIANGLE  = 2
+	TONE_NOISE     = 3
+	TONE_MODE1     = 0
+	TONE_MODE2     = 4
+	TONE_MODE3     = 8
+	TONE_MODE4     = 12
+	TONE_PAN_LEFT  = 16
+	TONE_PAN_RIGHT = 32
+	TONE_NOTE_MODE = 64
+)
+
+// 播发声音
+func Tone(frequency, duration, volume, flags: int) {
+	__import__tone(
+		i32(frequency),
+		i32(duration),
+		i32(volume),
+		i32(flags),
+	)
+}

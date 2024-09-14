@@ -1,0 +1,11 @@
+// 版权 @2024 凹语言 作者。保留所有权利。
+
+// 获取帧缓存
+func GetFramebuffer => []byte {
+	return __linkname__makeByteSlice(
+		0, // 不释放 block
+		_FRAMEBUFFER,
+		_FRAMEBUFFER_SIZE,
+		_FRAMEBUFFER_SIZE,
+	)
+}
