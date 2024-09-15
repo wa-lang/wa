@@ -1,9 +1,12 @@
 # 版本日志
 
 - (dev)
-  - 完善 wasm4 游戏支持, 增加贪吃蛇和2048游戏在线试玩页面
   - 完善 `wa lsp` 子命令 (TODO)
-  - “国产语言论坛”关闭: ~~https://zh-lang.osanswer.net/c/walang~~
+- v0.16.0 (2024-09-16)
+  - “国产语言论坛”被动关闭: ~~https://zh-lang.osanswer.net~~
+  - 增加 `__package__`/`__FILE__`/`__LINE__`/`__func__` 预定义常量, 表示当前位置信息
+  - 完善 wasm4 游戏支持, 增加俄罗斯方块/pong/life等多个游戏, 并提供在线试玩页面
+  - 重构 `syscall` 部分子包和文档
 - v0.15.0 (2024-08-25)
   - 增加 wasm4 游戏平台支持
   - Playground 依赖的 `wa.wasm` 编译环境升级到 Go1.21 (兼顾 wasip1 编译)
