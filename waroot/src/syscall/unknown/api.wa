@@ -25,5 +25,7 @@ func Puts(ptr: i32, len: i32) {
 }
 
 func PrintString(s: string) {
-	__import__print_str(__linkname__string_to_ptr(s), i32(len(s)))
+	if DefaultPuts != nil {
+		DefaultPuts(__linkname__string_to_ptr(s), i32(len(s)))
+	}
 }
