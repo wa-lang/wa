@@ -25,6 +25,8 @@ type Option struct {
 func (opt *Option) Config() *config.Config {
 	cfg := config.DefaultConfig()
 
+	cfg.Target = opt.Target
+
 	if opt.Debug {
 		cfg.Debug = true
 	}
