@@ -77,7 +77,7 @@ func (check *Checker) ident(x *operand, e *ast.Ident, def *Named, wantType bool)
 			}
 			x.val = check.iota
 
-		case universe__package__:
+		case universe__PACKAGE__:
 			x.val = constant.MakeString(check.pkg.path)
 		case universe__FILE__:
 			pos := check.fset.Position(e.Pos())
@@ -85,13 +85,16 @@ func (check *Checker) ident(x *operand, e *ast.Ident, def *Named, wantType bool)
 		case universe__LINE__:
 			pos := check.fset.Position(e.Pos())
 			x.val = constant.MakeInt64(int64(pos.Line))
-		case universe__func__:
+		case universe__COLUMN__:
+			pos := check.fset.Position(e.Pos())
+			x.val = constant.MakeInt64(int64(pos.Column))
+		case universe__FUNC__:
 			if check.sig == nil {
-				check.errorf(e.Pos(), "cannot use __func__ outside func or method declaration")
+				check.errorf(e.Pos(), "cannot use __FUNC__ outside func or method declaration")
 				return
 			}
 			if check.decl.fdecl == nil {
-				check.errorf(e.Pos(), "cannot use __func__ outside global func declaration")
+				check.errorf(e.Pos(), "cannot use __FUNC__ outside global func declaration")
 				return
 			}
 
