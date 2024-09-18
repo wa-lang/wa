@@ -133,6 +133,7 @@ func BuildApp(opt *appbase.Option, input, outfile string) (mainFunc string, wasm
 		wasmBytes, err := watutil.Wat2Wasm(watOutfile, watOutput)
 		if err != nil {
 			fmt.Printf("wat2wasm %s failed: %v\n", input, err)
+			os.WriteFile(watOutfile, watOutput, 0666)
 			os.Exit(1)
 		}
 

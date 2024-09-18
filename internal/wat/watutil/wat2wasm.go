@@ -18,6 +18,7 @@ import (
 
 type Options struct {
 	DisableDebugNames bool
+	RemoveUnused      bool
 }
 
 func Wat2Wasm(filename string, source []byte) (wasmBytes []byte, err error) {
@@ -37,6 +38,7 @@ func Wat2Wasm(filename string, source []byte) (wasmBytes []byte, err error) {
 	if err != nil {
 		return nil, err
 	}
+
 	return newWat2wasmWorker(m).EncodeWasm(true)
 }
 
@@ -45,6 +47,12 @@ func Wat2WasmWithOptions(filename string, source []byte, opt Options) ([]byte, e
 	if err != nil {
 		return nil, err
 	}
+
+	// 删除未使用对象
+	if opt.RemoveUnused {
+		m = new_RemoveUnusedPass(m).DoPass()
+	}
+
 	return newWat2wasmWorker(m).EncodeWasm(!opt.DisableDebugNames)
 }
 
