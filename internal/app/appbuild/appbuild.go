@@ -38,6 +38,7 @@ var CmdBuild = &cli.Command{
 		appbase.MakeFlag_tags(),
 		appbase.MakeFlag_ld_stack_size(),
 		appbase.MakeFlag_ld_max_memory(),
+		appbase.MakeFlag_optimize(),
 	},
 	Action: CmdBuildAction,
 }
@@ -89,7 +90,9 @@ func BuildApp(opt *appbase.Option, input, outfile string) (mainFunc string, wasm
 			fmt.Printf("read %s failed: %v\n", input, err)
 			os.Exit(1)
 		}
-		wasmBytes, err := watutil.Wat2Wasm(input, watData)
+		wasmBytes, err := watutil.Wat2WasmWithOptions(input, watData, watutil.Options{
+			RemoveUnused: opt.Optimize,
+		})
 		if err != nil {
 			fmt.Printf("wat2wasm %s failed: %v\n", input, err)
 			os.Exit(1)
@@ -130,7 +133,9 @@ func BuildApp(opt *appbase.Option, input, outfile string) (mainFunc string, wasm
 		}
 
 		// wat 编译为 wasm
-		wasmBytes, err := watutil.Wat2Wasm(watOutfile, watOutput)
+		wasmBytes, err := watutil.Wat2WasmWithOptions(watOutfile, watOutput, watutil.Options{
+			RemoveUnused: opt.Optimize,
+		})
 		if err != nil {
 			fmt.Printf("wat2wasm %s failed: %v\n", input, err)
 			os.WriteFile(watOutfile, watOutput, 0666)
@@ -218,7 +223,9 @@ func BuildApp(opt *appbase.Option, input, outfile string) (mainFunc string, wasm
 		}
 
 		// wat 编译为 wasm
-		wasmBytes, err := watutil.Wat2Wasm(input, watOutput)
+		wasmBytes, err := watutil.Wat2WasmWithOptions(input, watOutput, watutil.Options{
+			RemoveUnused: opt.Optimize,
+		})
 		if err != nil {
 			fmt.Printf("wat2wasm %s failed: %v\n", input, err)
 			os.Exit(1)

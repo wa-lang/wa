@@ -11,71 +11,88 @@ import (
 type _RemoveUnusedPass struct {
 	m *ast.Module
 
-	usedTypesMap  map[string]*ast.TypeSection
-	usedImportMap map[string]*ast.ImportSpec
-	usedGlobalMap map[string]*ast.Global
-	usedFuncMap   map[string]*ast.Func
+	funcs map[string]*funcObj
+}
+
+type color int
+
+const (
+	white color = 0
+	black color = -1
+)
+
+type funcObj struct {
+	*ast.Func
+	color
 }
 
 func new_RemoveUnusedPass(m *ast.Module) *_RemoveUnusedPass {
-	return &_RemoveUnusedPass{
-		m: m,
-
-		usedTypesMap:  make(map[string]*ast.TypeSection),
-		usedImportMap: make(map[string]*ast.ImportSpec),
-		usedGlobalMap: make(map[string]*ast.Global),
-		usedFuncMap:   make(map[string]*ast.Func),
+	p := &_RemoveUnusedPass{m: m}
+	p.funcs = make(map[string]*funcObj, len(m.Funcs))
+	for _, fn := range m.Funcs {
+		p.funcs[fn.Name] = &funcObj{Func: fn}
 	}
+	return p
 }
 
 func (p *_RemoveUnusedPass) DoPass() *ast.Module {
-	p.walkStartFunc()
-	p.walkExportFunc()
+	for i := range p.funcs {
+		p.funcs[i].color = white
+	}
 
-	m := p.m
-	if len(m.Types) != len(p.usedTypesMap) {
-		m.Types = make([]*ast.TypeSection, 0, len(p.usedTypesMap))
-		for _, x := range p.m.Types {
-			if _, ok := p.usedTypesMap[x.Name]; ok {
-				m.Types = append(m.Types, x)
+Loop:
+	for _, fn := range p.m.Funcs {
+		// start
+		if fn.Name != "" && fn.Name == p.m.Start {
+			p.markFuncReachable(p.funcs[fn.Name])
+			continue
+		}
+
+		// table elem
+		for _, elem := range p.m.Elem {
+			if fn.Name != "" && fn.Name == elem.Name {
+				p.markFuncReachable(p.funcs[fn.Name])
+				continue Loop
+			}
+		}
+
+		// export
+		for _, exp := range p.m.Exports {
+			if exp.Kind == token.FUNC {
+				if exp.Name != "" && fn.Name == exp.FuncIdx {
+					p.markFuncReachable(p.funcs[fn.Name])
+					continue Loop
+				}
 			}
 		}
 	}
-	if len(m.Imports) != len(p.usedImportMap) {
-		m.Imports = make([]*ast.ImportSpec, 0, len(p.usedImportMap))
-		for _, x := range p.m.Imports {
-			if x.ObjKind != token.FUNC {
-				m.Imports = append(m.Imports, x)
-				continue
-			}
-			if _, ok := p.usedImportMap[x.FuncName]; ok {
-				m.Imports = append(m.Imports, x)
-			}
+
+	m := *p.m
+	m.Funcs = p.m.Funcs[:0]
+	for _, fn := range p.funcs {
+		switch fn.color {
+		case white:
+			// skip
+		case black:
+			m.Funcs = append(m.Funcs, fn.Func)
 		}
 	}
-	if len(m.Globals) != len(p.usedGlobalMap) {
-		m.Globals = make([]*ast.Global, 0, len(p.usedGlobalMap))
-		for _, x := range p.m.Globals {
-			if _, ok := p.usedGlobalMap[x.Name]; ok {
-				m.Globals = append(m.Globals, x)
-			}
-		}
-	}
-	if len(m.Funcs) != len(p.usedFuncMap) {
-		m.Funcs = make([]*ast.Func, 0, len(p.usedFuncMap))
-		for _, x := range p.m.Funcs {
-			if _, ok := p.usedTypesMap[x.Name]; ok {
-				m.Funcs = append(m.Funcs, x)
-			}
-		}
-	}
-	return m
+
+	return &m
 }
 
-func (p *_RemoveUnusedPass) walkStartFunc() {
-	// todo
-}
-
-func (p *_RemoveUnusedPass) walkExportFunc() {
-	// todo
+func (p *_RemoveUnusedPass) markFuncReachable(fn *funcObj) {
+	fn.color = black
+	for _, ins := range fn.Body.Insts {
+		switch ins := ins.(type) {
+		case ast.Ins_Call:
+			if xFn := p.funcs[ins.X]; xFn.color == white {
+				p.markFuncReachable(xFn)
+			}
+		case ast.Ins_TableSet:
+			if xFn := p.funcs[ins.X]; xFn.color == white {
+				p.markFuncReachable(xFn)
+			}
+		}
+	}
 }

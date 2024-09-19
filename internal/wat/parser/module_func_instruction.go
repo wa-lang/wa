@@ -501,7 +501,7 @@ func (p *parser) parseIns_Return() (i ast.Ins_Return) {
 func (p *parser) parseIns_Call() (i ast.Ins_Call) {
 	i.OpToken = ast.OpToken(p.tok)
 	p.acceptToken(token.INS_CALL)
-	i.X = p.parseIdentOrIndex()
+	i.X = p.parseIdent() // 必须根据名字调用
 	return
 }
 

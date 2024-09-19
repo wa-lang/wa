@@ -20,6 +20,7 @@ type Option struct {
 	Target       string
 	LD_StackSize int
 	LD_MaxMemory int
+	Optimize     bool // 优化
 }
 
 func (opt *Option) Config() *config.Config {
@@ -56,6 +57,7 @@ func BuildOptions(c *cli.Context, waBackend ...string) *Option {
 		BuilgTags:    strings.Fields(c.String("tags")),
 		LD_StackSize: c.Int("ld-stack-size"),
 		LD_MaxMemory: c.Int("ld-max-memory"),
+		Optimize:     c.Bool("optimize"),
 	}
 
 	if target := c.String("target"); target != "" && !config.CheckWaOS(target) {

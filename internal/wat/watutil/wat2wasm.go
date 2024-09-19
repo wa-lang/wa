@@ -42,7 +42,19 @@ func Wat2Wasm(filename string, source []byte) (wasmBytes []byte, err error) {
 	return newWat2wasmWorker(m).EncodeWasm(true)
 }
 
-func Wat2WasmWithOptions(filename string, source []byte, opt Options) ([]byte, error) {
+func Wat2WasmWithOptions(filename string, source []byte, opt Options) (wasmBytes []byte, err error) {
+	defer func() {
+		if err == nil {
+			rt := wazero.NewRuntime(context.Background())
+			m, errx := rt.CompileModule(context.Background(), wasmBytes)
+			if errx == nil {
+				m.Close(context.Background())
+			} else {
+				err = errx
+			}
+		}
+	}()
+
 	m, err := parser.ParseModule(filename, source)
 	if err != nil {
 		return nil, err
