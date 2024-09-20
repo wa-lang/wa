@@ -29,6 +29,7 @@ var CmdRun = &cli.Command{
 	Flags: []cli.Flag{
 		appbase.MakeFlag_target(),
 		appbase.MakeFlag_tags(),
+		appbase.MakeFlag_optimize(),
 		&cli.BoolFlag{
 			Name:  "web",
 			Usage: "set web mode",

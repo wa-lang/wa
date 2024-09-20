@@ -28,10 +28,24 @@ type funcObj struct {
 
 func new_RemoveUnusedPass(m *ast.Module) *_RemoveUnusedPass {
 	p := &_RemoveUnusedPass{m: m}
-	p.funcs = make(map[string]*funcObj, len(m.Funcs))
+
+	p.funcs = make(map[string]*funcObj, len(m.Funcs)+len(m.Imports))
+
+	for _, importSpec := range m.Imports {
+		if importSpec.ObjKind == token.FUNC {
+			p.funcs[importSpec.FuncName] = &funcObj{
+				Func: &ast.Func{
+					Name: importSpec.FuncName,
+					Type: importSpec.FuncType,
+					Body: &ast.FuncBody{},
+				},
+			}
+		}
+	}
 	for _, fn := range m.Funcs {
 		p.funcs[fn.Name] = &funcObj{Func: fn}
 	}
+
 	return p
 }
 
@@ -84,15 +98,34 @@ Loop:
 func (p *_RemoveUnusedPass) markFuncReachable(fn *funcObj) {
 	fn.color = black
 	for _, ins := range fn.Body.Insts {
-		switch ins := ins.(type) {
-		case ast.Ins_Call:
-			if xFn := p.funcs[ins.X]; xFn.color == white {
-				p.markFuncReachable(xFn)
-			}
-		case ast.Ins_TableSet:
-			if xFn := p.funcs[ins.X]; xFn.color == white {
-				p.markFuncReachable(xFn)
-			}
+		p.markFuncReachable_ins(ins)
+	}
+}
+
+func (p *_RemoveUnusedPass) markFuncReachable_ins(ins ast.Instruction) {
+	switch ins := ins.(type) {
+	case ast.Ins_Call:
+		if xFn := p.funcs[ins.X]; xFn.color == white {
+			p.markFuncReachable(xFn)
+		}
+	case ast.Ins_TableSet:
+		if xFn := p.funcs[ins.X]; xFn.color == white {
+			p.markFuncReachable(xFn)
+		}
+	case ast.Ins_Block:
+		for _, x := range ins.List {
+			p.markFuncReachable_ins(x)
+		}
+	case ast.Ins_Loop:
+		for _, x := range ins.List {
+			p.markFuncReachable_ins(x)
+		}
+	case ast.Ins_If:
+		for _, x := range ins.Body {
+			p.markFuncReachable_ins(x)
+		}
+		for _, x := range ins.Else {
+			p.markFuncReachable_ins(x)
 		}
 	}
 }

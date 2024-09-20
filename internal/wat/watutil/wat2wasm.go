@@ -62,7 +62,8 @@ func Wat2WasmWithOptions(filename string, source []byte, opt Options) (wasmBytes
 
 	// 删除未使用对象
 	if opt.RemoveUnused {
-		m = new_RemoveUnusedPass(m).DoPass()
+		pass := new_RemoveUnusedPass(m)
+		m = pass.DoPass()
 	}
 
 	return newWat2wasmWorker(m).EncodeWasm(!opt.DisableDebugNames)

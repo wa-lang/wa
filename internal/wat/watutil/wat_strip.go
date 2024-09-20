@@ -16,7 +16,8 @@ func WatStrip(path string, src []byte) (watBytes []byte, err error) {
 	}
 
 	// 删除未使用对象
-	m = new_RemoveUnusedPass(m).DoPass()
+	pass := new_RemoveUnusedPass(m)
+	m = pass.DoPass()
 
 	var buf bytes.Buffer
 	if err := printer.Fprint(&buf, m); err != nil {
