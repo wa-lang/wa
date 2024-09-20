@@ -90,9 +90,7 @@ func BuildApp(opt *appbase.Option, input, outfile string) (mainFunc string, wasm
 			fmt.Printf("read %s failed: %v\n", input, err)
 			os.Exit(1)
 		}
-		wasmBytes, err := watutil.Wat2WasmWithOptions(input, watData, watutil.Options{
-			RemoveUnused: opt.Optimize,
-		})
+		wasmBytes, err := watutil.Wat2Wasm(input, watData)
 		if err != nil {
 			fmt.Printf("wat2wasm %s failed: %v\n", input, err)
 			os.Exit(1)
@@ -117,6 +115,14 @@ func BuildApp(opt *appbase.Option, input, outfile string) (mainFunc string, wasm
 			os.Exit(1)
 		}
 
+		if opt.Optimize {
+			watOutput, err = watutil.WatStrip(input, watOutput)
+			if err != nil {
+				fmt.Println(err)
+				os.Exit(1)
+			}
+		}
+
 		// 设置默认输出目标
 		if outfile == "" {
 			outfile = appbase.ReplaceExt(input, ".wa", ".wasm")
@@ -133,9 +139,7 @@ func BuildApp(opt *appbase.Option, input, outfile string) (mainFunc string, wasm
 		}
 
 		// wat 编译为 wasm
-		wasmBytes, err := watutil.Wat2WasmWithOptions(watOutfile, watOutput, watutil.Options{
-			RemoveUnused: opt.Optimize,
-		})
+		wasmBytes, err := watutil.Wat2Wasm(watOutfile, watOutput)
 		if err != nil {
 			fmt.Printf("wat2wasm %s failed: %v\n", input, err)
 			os.WriteFile(watOutfile, watOutput, 0666)
@@ -192,6 +196,14 @@ func BuildApp(opt *appbase.Option, input, outfile string) (mainFunc string, wasm
 			os.Exit(1)
 		}
 
+		if opt.Optimize {
+			watOutput, err = watutil.WatStrip(input, watOutput)
+			if err != nil {
+				fmt.Println(err)
+				os.Exit(1)
+			}
+		}
+
 		// wat 写到文件
 		watOutfile := appbase.ReplaceExt(outfile, ".wasm", ".wat")
 		err = os.WriteFile(watOutfile, watOutput, 0666)
@@ -223,9 +235,7 @@ func BuildApp(opt *appbase.Option, input, outfile string) (mainFunc string, wasm
 		}
 
 		// wat 编译为 wasm
-		wasmBytes, err := watutil.Wat2WasmWithOptions(input, watOutput, watutil.Options{
-			RemoveUnused: opt.Optimize,
-		})
+		wasmBytes, err := watutil.Wat2Wasm(input, watOutput)
 		if err != nil {
 			fmt.Printf("wat2wasm %s failed: %v\n", input, err)
 			os.Exit(1)
