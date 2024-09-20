@@ -5,7 +5,6 @@ package appwatstrip
 import (
 	"fmt"
 	"os"
-	"strings"
 
 	"wa-lang.org/wa/internal/3rdparty/cli"
 	"wa-lang.org/wa/internal/wat/watutil"
@@ -16,13 +15,6 @@ var CmdWatStrip = &cli.Command{
 	Name:      "wat-strip",
 	Usage:     "remove unused func and global in WebAssembly text file",
 	ArgsUsage: "<file.wat>",
-	Flags: []cli.Flag{
-		&cli.StringFlag{
-			Name:    "output",
-			Aliases: []string{"o"},
-			Usage:   "set output file",
-		},
-	},
 	Action: func(c *cli.Context) error {
 		if c.NArg() == 0 {
 			fmt.Fprintf(os.Stderr, "no input file")
@@ -30,35 +22,19 @@ var CmdWatStrip = &cli.Command{
 		}
 
 		infile := c.Args().First()
-		outfile := c.String("output")
-		if outfile == "" {
-			outfile = infile
-			if n1, n2 := len(outfile), len(".wat"); n1 > n2 {
-				if s := outfile[n1-n2:]; strings.EqualFold(s, ".wat") {
-					outfile = outfile[:n1-n2]
-				}
-			}
-			outfile += ".out.wat"
-		}
 
 		source, err := os.ReadFile(infile)
 		if err != nil {
 			fmt.Println(err)
 			os.Exit(1)
 		}
-		watBytes, err := watutil.Wat2Wasm(infile, source)
-		if err != nil {
-			os.WriteFile(outfile, watBytes, 0666)
-			fmt.Println(err)
-			os.Exit(1)
-		}
-
-		err = os.WriteFile(outfile, watBytes, 0666)
+		watBytes, err := watutil.WatStrip(infile, source)
 		if err != nil {
 			fmt.Println(err)
 			os.Exit(1)
 		}
 
+		os.Stdout.Write(watBytes)
 		return nil
 	},
 }

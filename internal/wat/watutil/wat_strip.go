@@ -2,14 +2,14 @@
 
 package watutil
 
-import "wa-lang.org/wa/internal/wat/parser"
+import (
+	"bytes"
+
+	"wa-lang.org/wa/internal/wat/parser"
+	"wa-lang.org/wa/internal/wat/printer"
+)
 
 func WatStrip(path string, src []byte) (watBytes []byte, err error) {
-	data, err := readSource(path, src)
-	if err != nil {
-		return nil, err
-	}
-
 	m, err := parser.ParseModule(path, src)
 	if err != nil {
 		return nil, err
@@ -17,9 +17,11 @@ func WatStrip(path string, src []byte) (watBytes []byte, err error) {
 
 	// 删除未使用对象
 	m = new_RemoveUnusedPass(m).DoPass()
-	_ = m
 
-	// TODO: m => string
+	var buf bytes.Buffer
+	if err := printer.Fprint(&buf, m); err != nil {
+		return nil, err
+	}
 
-	return data, nil
+	return buf.Bytes(), nil
 }
