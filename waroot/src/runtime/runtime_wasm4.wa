@@ -7,6 +7,7 @@ const WAOS = "wasm4"
 #wa:import env traceUtf8
 func traceUtf8(msgPtr, msgLen: i32)
 
+#wa:linkname $runtime.waPuts
 func waPuts(ptr: i32, len: i32) {
 	traceUtf8(ptr, len)
 }

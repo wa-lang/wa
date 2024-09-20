@@ -22,6 +22,7 @@ const (
 )
 
 type funcObj struct {
+	isImport bool
 	*ast.Func
 	color
 }
@@ -34,6 +35,7 @@ func new_RemoveUnusedPass(m *ast.Module) *_RemoveUnusedPass {
 	for _, importSpec := range m.Imports {
 		if importSpec.ObjKind == token.FUNC {
 			p.funcs[importSpec.FuncName] = &funcObj{
+				isImport: true,
 				Func: &ast.Func{
 					Name: importSpec.FuncName,
 					Type: importSpec.FuncType,
@@ -63,10 +65,13 @@ Loop:
 		}
 
 		// table elem
+
 		for _, elem := range p.m.Elem {
-			if fn.Name != "" && fn.Name == elem.Name {
-				p.markFuncReachable(p.funcs[fn.Name])
-				continue Loop
+			for _, elemValue := range elem.Values {
+				if fn.Name != "" && fn.Name == elemValue {
+					p.markFuncReachable(p.funcs[fn.Name])
+					continue Loop
+				}
 			}
 		}
 
@@ -84,6 +89,10 @@ Loop:
 	m := *p.m
 	m.Funcs = p.m.Funcs[:0]
 	for _, fn := range p.funcs {
+		if fn.isImport {
+			continue
+		}
+
 		switch fn.color {
 		case white:
 			// skip

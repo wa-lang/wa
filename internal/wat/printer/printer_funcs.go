@@ -218,7 +218,7 @@ func (p *watPrinter) printFuncs_body_ins(fn *ast.Func, ins ast.Instruction, blkL
 		if x := insLoad.Offset; x != 0 {
 			fmt.Fprintf(p.w, " offset=%d", x)
 		}
-		if x := insLoad.Align; x != 0 {
+		if x := insLoad.Align; x != 4 {
 			fmt.Fprintf(p.w, " align=%d", x)
 		}
 		fmt.Fprintln(p.w)
@@ -228,7 +228,7 @@ func (p *watPrinter) printFuncs_body_ins(fn *ast.Func, ins ast.Instruction, blkL
 		if x := insLoad.Offset; x != 0 {
 			fmt.Fprintf(p.w, " offset=%d", x)
 		}
-		if x := insLoad.Align; x != 0 {
+		if x := insLoad.Align; x != 8 {
 			fmt.Fprintf(p.w, " align=%d", x)
 		}
 		fmt.Fprintln(p.w)
@@ -238,7 +238,7 @@ func (p *watPrinter) printFuncs_body_ins(fn *ast.Func, ins ast.Instruction, blkL
 		if x := insLoad.Offset; x != 0 {
 			fmt.Fprintf(p.w, " offset=%d", x)
 		}
-		if x := insLoad.Align; x != 0 {
+		if x := insLoad.Align; x != 4 {
 			fmt.Fprintf(p.w, " align=%d", x)
 		}
 		fmt.Fprintln(p.w)
@@ -248,7 +248,7 @@ func (p *watPrinter) printFuncs_body_ins(fn *ast.Func, ins ast.Instruction, blkL
 		if x := insLoad.Offset; x != 0 {
 			fmt.Fprintf(p.w, " offset=%d", x)
 		}
-		if x := insLoad.Align; x != 0 {
+		if x := insLoad.Align; x != 8 {
 			fmt.Fprintf(p.w, " align=%d", x)
 		}
 		fmt.Fprintln(p.w)
@@ -258,7 +258,7 @@ func (p *watPrinter) printFuncs_body_ins(fn *ast.Func, ins ast.Instruction, blkL
 		if x := insLoad.Offset; x != 0 {
 			fmt.Fprintf(p.w, " offset=%d", x)
 		}
-		if x := insLoad.Align; x != 0 {
+		if x := insLoad.Align; x != 4 {
 			fmt.Fprintf(p.w, " align=%d", x)
 		}
 		fmt.Fprintln(p.w)
@@ -268,7 +268,7 @@ func (p *watPrinter) printFuncs_body_ins(fn *ast.Func, ins ast.Instruction, blkL
 		if x := insLoad.Offset; x != 0 {
 			fmt.Fprintf(p.w, " offset=%d", x)
 		}
-		if x := insLoad.Align; x != 0 {
+		if x := insLoad.Align; x != 4 {
 			fmt.Fprintf(p.w, " align=%d", x)
 		}
 		fmt.Fprintln(p.w)
@@ -278,7 +278,7 @@ func (p *watPrinter) printFuncs_body_ins(fn *ast.Func, ins ast.Instruction, blkL
 		if x := insLoad.Offset; x != 0 {
 			fmt.Fprintf(p.w, " offset=%d", x)
 		}
-		if x := insLoad.Align; x != 0 {
+		if x := insLoad.Align; x != 2 {
 			fmt.Fprintf(p.w, " align=%d", x)
 		}
 		fmt.Fprintln(p.w)
@@ -288,7 +288,7 @@ func (p *watPrinter) printFuncs_body_ins(fn *ast.Func, ins ast.Instruction, blkL
 		if x := insLoad.Offset; x != 0 {
 			fmt.Fprintf(p.w, " offset=%d", x)
 		}
-		if x := insLoad.Align; x != 0 {
+		if x := insLoad.Align; x != 2 {
 			fmt.Fprintf(p.w, " align=%d", x)
 		}
 		fmt.Fprintln(p.w)
@@ -298,7 +298,7 @@ func (p *watPrinter) printFuncs_body_ins(fn *ast.Func, ins ast.Instruction, blkL
 		if x := insLoad.Offset; x != 0 {
 			fmt.Fprintf(p.w, " offset=%d", x)
 		}
-		if x := insLoad.Align; x != 0 {
+		if x := insLoad.Align; x != 8 {
 			fmt.Fprintf(p.w, " align=%d", x)
 		}
 		fmt.Fprintln(p.w)
@@ -308,7 +308,7 @@ func (p *watPrinter) printFuncs_body_ins(fn *ast.Func, ins ast.Instruction, blkL
 		if x := insLoad.Offset; x != 0 {
 			fmt.Fprintf(p.w, " offset=%d", x)
 		}
-		if x := insLoad.Align; x != 0 {
+		if x := insLoad.Align; x != 8 {
 			fmt.Fprintf(p.w, " align=%d", x)
 		}
 		fmt.Fprintln(p.w)
@@ -318,7 +318,7 @@ func (p *watPrinter) printFuncs_body_ins(fn *ast.Func, ins ast.Instruction, blkL
 		if x := insLoad.Offset; x != 0 {
 			fmt.Fprintf(p.w, " offset=%d", x)
 		}
-		if x := insLoad.Align; x != 0 {
+		if x := insLoad.Align; x != 8 {
 			fmt.Fprintf(p.w, " align=%d", x)
 		}
 		fmt.Fprintln(p.w)
@@ -328,7 +328,7 @@ func (p *watPrinter) printFuncs_body_ins(fn *ast.Func, ins ast.Instruction, blkL
 		if x := insLoad.Offset; x != 0 {
 			fmt.Fprintf(p.w, " offset=%d", x)
 		}
-		if x := insLoad.Align; x != 0 {
+		if x := insLoad.Align; x != 2 {
 			fmt.Fprintf(p.w, " align=%d", x)
 		}
 		fmt.Fprintln(p.w)
@@ -338,7 +338,7 @@ func (p *watPrinter) printFuncs_body_ins(fn *ast.Func, ins ast.Instruction, blkL
 		if x := insLoad.Offset; x != 0 {
 			fmt.Fprintf(p.w, " offset=%d", x)
 		}
-		if x := insLoad.Align; x != 0 {
+		if x := insLoad.Align; x != 4 {
 			fmt.Fprintf(p.w, " align=%d", x)
 		}
 		fmt.Fprintln(p.w)
@@ -348,7 +348,7 @@ func (p *watPrinter) printFuncs_body_ins(fn *ast.Func, ins ast.Instruction, blkL
 		if x := insLoad.Offset; x != 0 {
 			fmt.Fprintf(p.w, " offset=%d", x)
 		}
-		if x := insLoad.Align; x != 0 {
+		if x := insLoad.Align; x != 8 {
 			fmt.Fprintf(p.w, " align=%d", x)
 		}
 		fmt.Fprintln(p.w)
@@ -358,7 +358,7 @@ func (p *watPrinter) printFuncs_body_ins(fn *ast.Func, ins ast.Instruction, blkL
 		if x := insLoad.Offset; x != 0 {
 			fmt.Fprintf(p.w, " offset=%d", x)
 		}
-		if x := insLoad.Align; x != 0 {
+		if x := insLoad.Align; x != 4 {
 			fmt.Fprintf(p.w, " align=%d", x)
 		}
 		fmt.Fprintln(p.w)
@@ -368,7 +368,7 @@ func (p *watPrinter) printFuncs_body_ins(fn *ast.Func, ins ast.Instruction, blkL
 		if x := insLoad.Offset; x != 0 {
 			fmt.Fprintf(p.w, " offset=%d", x)
 		}
-		if x := insLoad.Align; x != 0 {
+		if x := insLoad.Align; x != 2 {
 			fmt.Fprintf(p.w, " align=%d", x)
 		}
 		fmt.Fprintln(p.w)
@@ -378,7 +378,7 @@ func (p *watPrinter) printFuncs_body_ins(fn *ast.Func, ins ast.Instruction, blkL
 		if x := insLoad.Offset; x != 0 {
 			fmt.Fprintf(p.w, " offset=%d", x)
 		}
-		if x := insLoad.Align; x != 0 {
+		if x := insLoad.Align; x != 4 {
 			fmt.Fprintf(p.w, " align=%d", x)
 		}
 		fmt.Fprintln(p.w)
@@ -388,7 +388,7 @@ func (p *watPrinter) printFuncs_body_ins(fn *ast.Func, ins ast.Instruction, blkL
 		if x := insLoad.Offset; x != 0 {
 			fmt.Fprintf(p.w, " offset=%d", x)
 		}
-		if x := insLoad.Align; x != 0 {
+		if x := insLoad.Align; x != 8 {
 			fmt.Fprintf(p.w, " align=%d", x)
 		}
 		fmt.Fprintln(p.w)
@@ -398,7 +398,7 @@ func (p *watPrinter) printFuncs_body_ins(fn *ast.Func, ins ast.Instruction, blkL
 		if x := insLoad.Offset; x != 0 {
 			fmt.Fprintf(p.w, " offset=%d", x)
 		}
-		if x := insLoad.Align; x != 0 {
+		if x := insLoad.Align; x != 4 {
 			fmt.Fprintf(p.w, " align=%d", x)
 		}
 		fmt.Fprintln(p.w)
@@ -408,7 +408,7 @@ func (p *watPrinter) printFuncs_body_ins(fn *ast.Func, ins ast.Instruction, blkL
 		if x := insLoad.Offset; x != 0 {
 			fmt.Fprintf(p.w, " offset=%d", x)
 		}
-		if x := insLoad.Align; x != 0 {
+		if x := insLoad.Align; x != 2 {
 			fmt.Fprintf(p.w, " align=%d", x)
 		}
 		fmt.Fprintln(p.w)
@@ -418,7 +418,7 @@ func (p *watPrinter) printFuncs_body_ins(fn *ast.Func, ins ast.Instruction, blkL
 		if x := insLoad.Offset; x != 0 {
 			fmt.Fprintf(p.w, " offset=%d", x)
 		}
-		if x := insLoad.Align; x != 0 {
+		if x := insLoad.Align; x != 8 {
 			fmt.Fprintf(p.w, " align=%d", x)
 		}
 		fmt.Fprintln(p.w)
@@ -428,7 +428,7 @@ func (p *watPrinter) printFuncs_body_ins(fn *ast.Func, ins ast.Instruction, blkL
 		if x := insLoad.Offset; x != 0 {
 			fmt.Fprintf(p.w, " offset=%d", x)
 		}
-		if x := insLoad.Align; x != 0 {
+		if x := insLoad.Align; x != 2 {
 			fmt.Fprintf(p.w, " align=%d", x)
 		}
 		fmt.Fprintln(p.w)
@@ -438,7 +438,7 @@ func (p *watPrinter) printFuncs_body_ins(fn *ast.Func, ins ast.Instruction, blkL
 		if x := insLoad.Offset; x != 0 {
 			fmt.Fprintf(p.w, " offset=%d", x)
 		}
-		if x := insLoad.Align; x != 0 {
+		if x := insLoad.Align; x != 8 {
 			fmt.Fprintf(p.w, " align=%d", x)
 		}
 		fmt.Fprintln(p.w)

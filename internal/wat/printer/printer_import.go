@@ -17,6 +17,7 @@ func (p *watPrinter) printImport() error {
 		switch importSpec.ObjKind {
 		case token.GLOBAL:
 			panic("TODO")
+
 		case token.FUNC:
 			fmt.Fprint(p.w, p.indent)
 			fmt.Fprintf(p.w, "(import %q %q", importSpec.ObjModule, importSpec.ObjName)
@@ -24,7 +25,21 @@ func (p *watPrinter) printImport() error {
 			fmt.Fprint(p.w, ")\n")
 
 		case token.MEMORY:
+			fmt.Fprint(p.w, p.indent)
+			fmt.Fprintf(p.w, "(import %q %q", importSpec.ObjModule, importSpec.ObjName)
+			fmt.Fprintf(p.w, " (memory")
+			if s := importSpec.Memory.Name; s != "" {
+				fmt.Fprintf(p.w, " $"+s)
+			}
+			fmt.Fprintf(p.w, " %d", importSpec.Memory.Pages)
+			if importSpec.Memory.MaxPages != 0 {
+				fmt.Fprintf(p.w, " %d", importSpec.Memory.MaxPages)
+			}
+			fmt.Fprint(p.w, "))\n")
+
 		case token.TABLE:
+			panic("TODO")
+
 		default:
 			panic("unreachable")
 		}
