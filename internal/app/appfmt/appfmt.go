@@ -3,6 +3,7 @@
 package appfmt
 
 import (
+	"bytes"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -13,6 +14,8 @@ import (
 	"wa-lang.org/wa/internal/app/appbase"
 	"wa-lang.org/wa/internal/config"
 	"wa-lang.org/wa/internal/format"
+	"wa-lang.org/wa/internal/wat/parser"
+	"wa-lang.org/wa/internal/wat/printer"
 )
 
 var CmdFmt = &cli.Command{
@@ -31,6 +34,9 @@ var CmdFmt = &cli.Command{
 }
 
 func Fmt(path string) error {
+	if appbase.IsNativeFile(path, ".wat") {
+		return fmtWatFile(path)
+	}
 	if appbase.IsNativeFile(path, ".wa", ".wz") {
 		_, err := fmtFile(path)
 		return err
@@ -94,6 +100,21 @@ func fmtFile(path string) (changed bool, err error) {
 		}
 	}
 	return changed, nil
+}
+
+func fmtWatFile(path string) (err error) {
+	m, err := parser.ParseModule(path, nil)
+	if err != nil {
+		return err
+	}
+
+	var buf bytes.Buffer
+	if err := printer.Fprint(&buf, m); err != nil {
+		return err
+	}
+
+	os.Stdout.Write(buf.Bytes())
+	return nil
 }
 
 func getDirWaFileList(dir string, walkSubDir bool, extList ...string) []string {
