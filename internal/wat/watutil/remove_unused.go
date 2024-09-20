@@ -87,6 +87,16 @@ Loop:
 	}
 
 	m := *p.m
+	m.Imports = p.m.Imports[:0]
+	for _, importSpec := range p.m.Imports {
+		if importSpec.ObjKind == token.FUNC {
+			if fnObj := p.funcs[importSpec.FuncName]; fnObj.color == white {
+				continue // skip
+			}
+		}
+		m.Imports = append(m.Imports, importSpec)
+	}
+
 	m.Funcs = p.m.Funcs[:0]
 	for _, fn := range p.funcs {
 		if fn.isImport {
