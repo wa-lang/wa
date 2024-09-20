@@ -26,7 +26,7 @@ func (p *watPrinter) Fprint(w io.Writer, m *ast.Module) error {
 	p.m = m
 	p.w = w
 
-	p.indent = "  "
+	p.indent = "\t"
 
 	fmt.Fprint(p.w, "(module")
 	if p.m.Name != "" {

@@ -25,6 +25,11 @@ func (p *watPrinter) isModuleEmpty() bool {
 	if !p.isFuncEmpty() {
 		return false
 	}
+
+	if !p.isTypeEmpty() {
+		return false
+	}
+
 	return true
 }
 
@@ -54,4 +59,8 @@ func (p *watPrinter) isGlobalEmpty() bool {
 
 func (p *watPrinter) isFuncEmpty() bool {
 	return len(p.m.Funcs) == 0
+}
+
+func (p *watPrinter) isTypeEmpty() bool {
+	return len(p.m.Types) == 0
 }

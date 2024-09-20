@@ -9,8 +9,6 @@ import (
 	"wa-lang.org/wa/internal/wat/token"
 )
 
-// (import "syscall_js" "print_bool" (func $syscall$js.__import__print_bool (param i32)))
-
 func (p *watPrinter) printImport() error {
 	if len(p.m.Imports) > 0 {
 		fmt.Fprintln(p.w)
@@ -46,7 +44,7 @@ func (p *watPrinter) printImport_func(importSpec *ast.ImportSpec) {
 	if len(fnType.Results) > 0 {
 		fmt.Fprintf(p.w, " (result")
 		for _, x := range fnType.Results {
-			fmt.Fprintf(p.w, " %v)", x)
+			fmt.Fprintf(p.w, " %v", x)
 		}
 		fmt.Fprint(p.w, ")")
 	}
@@ -54,19 +52,3 @@ func (p *watPrinter) printImport_func(importSpec *ast.ImportSpec) {
 	fmt.Fprint(p.w, ")")
 	return
 }
-
-/*
-
-type ImportSpec struct {
-	ObjModule string      // 模块路径
-	ObjName   string      // 实体名字
-	ObjKind   token.Token // 导入类别: MEMORY, TABLE, FUNC, GLOBAL
-
-	Memory     *Memory     // 导入内存
-	TableName  string      // 导入Table编号
-	GlobalName string      // 导入全局变量名字
-	GlobalType token.Token // 导入全局变量类型: I32, I64, F32, F64
-	FuncName   string      // 导入后函数名字
-	FuncType   *FuncType   // 导入函数类型
-}
-*/
