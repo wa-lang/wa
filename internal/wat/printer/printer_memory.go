@@ -14,7 +14,7 @@ func (p *watPrinter) printMemory() error {
 	fmt.Fprint(p.w, p.indent)
 	fmt.Fprint(p.w, "(memory")
 	if s := p.m.Memory.Name; s != "" {
-		fmt.Fprintf(p.w, " $%s", s)
+		fmt.Fprintf(p.w, " %s", p.identOrIndex(s))
 	}
 	fmt.Fprint(p.w, " ", p.m.Memory.Pages)
 	if p.m.Memory.MaxPages > 0 {

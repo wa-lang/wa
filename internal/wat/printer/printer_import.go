@@ -33,7 +33,7 @@ func (p *watPrinter) printImport() error {
 }
 
 func (p *watPrinter) printImport_func(importSpec *ast.ImportSpec) {
-	fmt.Fprintf(p.w, " (func $%s", importSpec.FuncName)
+	fmt.Fprintf(p.w, " (func %s", p.identOrIndex(importSpec.FuncName))
 
 	fnType := importSpec.FuncType
 	if len(fnType.Params) > 0 {

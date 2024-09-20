@@ -12,7 +12,7 @@ func (p *watPrinter) printTable() error {
 	fmt.Fprint(p.w, p.indent)
 	fmt.Fprint(p.w, "(table")
 	if s := p.m.Table.Name; s != "" {
-		fmt.Fprintf(p.w, " $%s", s)
+		fmt.Fprintf(p.w, " %s", p.identOrIndex(s))
 	}
 	fmt.Fprint(p.w, " ", p.m.Table.Size)
 	if p.m.Table.MaxSize > 0 {

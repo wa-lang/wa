@@ -24,10 +24,11 @@ func (p *watPrinter) printType_func(typ *ast.TypeSection) {
 	fmt.Fprint(p.w, p.indent)
 	fmt.Fprint(p.w, "(type")
 	if s := typ.Name; s != "" {
-		fmt.Fprintf(p.w, " $%s", s)
+		fmt.Fprintf(p.w, " %s", p.identOrIndex(s))
 	}
 
 	fnType := typ.Type
+	fmt.Fprint(p.w, " (func")
 	if len(fnType.Params) > 0 {
 		for _, x := range fnType.Params {
 			fmt.Fprintf(p.w, " (param %v)", x.Type)
@@ -36,11 +37,11 @@ func (p *watPrinter) printType_func(typ *ast.TypeSection) {
 	if len(fnType.Results) > 0 {
 		fmt.Fprintf(p.w, " (result")
 		for _, x := range fnType.Results {
-			fmt.Fprintf(p.w, " %v)", x)
+			fmt.Fprintf(p.w, " %v", x)
 		}
 		fmt.Fprint(p.w, ")")
 	}
 
-	fmt.Fprintln(p.w, ")")
+	fmt.Fprintln(p.w, "))")
 	return
 }

@@ -15,11 +15,19 @@ func (p *watPrinter) printFuncs() error {
 		return nil
 	}
 	for _, fn := range p.m.Funcs {
-		fmt.Fprintf(p.w, "%s(func $%s", p.indent, fn.Name)
+		fmt.Fprintf(p.w, "%s(func %s", p.indent, p.identOrIndex(fn.Name))
+
+		if fn.ExportName != "" {
+			fmt.Fprintf(p.w, " (export %q)", fn.ExportName)
+		}
 
 		if len(fn.Type.Params) > 0 {
 			for _, x := range fn.Type.Params {
-				fmt.Fprintf(p.w, " (param $%s %v)", x.Name, x.Type)
+				if x.Name != "" {
+					fmt.Fprintf(p.w, " (param %s %v)", p.identOrIndex(x.Name), x.Type)
+				} else {
+					fmt.Fprintf(p.w, " (param %v)", x.Type)
+				}
 			}
 		}
 		if len(fn.Type.Results) > 0 {
@@ -47,7 +55,7 @@ func (p *watPrinter) printFuncs_body(fn *ast.Func) {
 		fmt.Fprint(p.w, p.indent+p.indent)
 		fmt.Fprint(p.w, "(local")
 		if local.Name != "" {
-			fmt.Fprintf(p.w, " $%s", local.Name)
+			fmt.Fprintf(p.w, " %s", p.identOrIndex(local.Name))
 		}
 		fmt.Fprintf(p.w, " %v)\n", local.Type)
 	}
@@ -82,7 +90,7 @@ func (p *watPrinter) printFuncs_body_ins(fn *ast.Func, ins ast.Instruction, blkL
 
 		fmt.Fprint(p.w, tok)
 		if s := insBlock.Label; s != "" {
-			fmt.Fprintf(p.w, " $%s", s)
+			fmt.Fprintf(p.w, " %s", p.identOrIndex(s))
 		}
 		if len(insBlock.Results) > 0 {
 			fmt.Fprint(p.w, "(result")
@@ -105,7 +113,7 @@ func (p *watPrinter) printFuncs_body_ins(fn *ast.Func, ins ast.Instruction, blkL
 
 		fmt.Fprint(p.w, tok)
 		if s := insLoop.Label; s != "" {
-			fmt.Fprintf(p.w, " $%s", s)
+			fmt.Fprintf(p.w, " %s", p.identOrIndex(s))
 		}
 		if len(insLoop.Results) > 0 {
 			fmt.Fprint(p.w, "(result")
@@ -128,7 +136,7 @@ func (p *watPrinter) printFuncs_body_ins(fn *ast.Func, ins ast.Instruction, blkL
 
 		fmt.Fprint(p.w, tok)
 		if s := insIf.Label; s != "" {
-			fmt.Fprintf(p.w, " $%s", s)
+			fmt.Fprintf(p.w, " %s", p.identOrIndex(s))
 		}
 		if len(insIf.Results) > 0 {
 			fmt.Fprint(p.w, "(result")
@@ -161,23 +169,27 @@ func (p *watPrinter) printFuncs_body_ins(fn *ast.Func, ins ast.Instruction, blkL
 		panic("unreachable")
 
 	case token.INS_BR:
-		fmt.Fprintln(p.w, tok, "$"+ins.(ast.Ins_Br).X)
+		fmt.Fprintln(p.w, tok, p.identOrIndex(ins.(ast.Ins_Br).X))
 	case token.INS_BR_IF:
-		fmt.Fprintln(p.w, tok, "$"+ins.(ast.Ins_BrIf).X)
+		fmt.Fprintln(p.w, tok, p.identOrIndex(ins.(ast.Ins_BrIf).X))
 	case token.INS_BR_TABLE:
-		// todo: check x is int or string
-		fmt.Fprintln(p.w, tok, strings.Join(ins.(ast.Ins_BrTable).XList, " "))
+		var sb strings.Builder
+		for _, s := range ins.(ast.Ins_BrTable).XList {
+			sb.WriteRune(' ')
+			sb.WriteString(p.identOrIndex(s))
+		}
+		fmt.Fprintln(p.w, tok, sb.String())
 	case token.INS_RETURN:
 		fmt.Fprintln(p.w, tok)
 	case token.INS_CALL:
-		fmt.Fprintln(p.w, tok, "$"+ins.(ast.Ins_Call).X)
+		fmt.Fprintln(p.w, tok, p.identOrIndex(ins.(ast.Ins_Call).X))
 	case token.INS_CALL_INDIRECT:
 		insCallIndirect := ins.(ast.Ins_CallIndirect)
 		fmt.Fprint(p.w, tok)
 		if s := insCallIndirect.TableIdx; s != "" {
-			fmt.Fprintf(p.w, " $%s", s)
+			fmt.Fprintf(p.w, " %s", p.identOrIndex(s))
 		}
-		fmt.Fprintf(p.w, " (type $%s)", insCallIndirect.TypeIdx)
+		fmt.Fprintf(p.w, " (type %s)", p.identOrIndex(insCallIndirect.TypeIdx))
 		fmt.Fprintln(p.w)
 
 	case token.INS_DROP:
@@ -185,79 +197,263 @@ func (p *watPrinter) printFuncs_body_ins(fn *ast.Func, ins ast.Instruction, blkL
 	case token.INS_SELECT:
 		fmt.Fprintln(p.w, tok)
 	case token.INS_TYPED_SELECT:
-		fmt.Fprintln(p.w, tok, "$"+ins.(ast.Ins_TypedSelect).Typ)
+		fmt.Fprintln(p.w, tok, p.identOrIndex(ins.(ast.Ins_TypedSelect).Typ))
 	case token.INS_LOCAL_GET:
-		fmt.Fprintln(p.w, tok, "$"+ins.(ast.Ins_LocalGet).X)
+		fmt.Fprintln(p.w, tok, p.identOrIndex(ins.(ast.Ins_LocalGet).X))
 	case token.INS_LOCAL_SET:
-		fmt.Fprintln(p.w, tok, "$"+ins.(ast.Ins_LocalSet).X)
+		fmt.Fprintln(p.w, tok, p.identOrIndex(ins.(ast.Ins_LocalSet).X))
 	case token.INS_LOCAL_TEE:
-		fmt.Fprintln(p.w, tok, "$"+ins.(ast.Ins_LocalTee).X)
+		fmt.Fprintln(p.w, tok, p.identOrIndex(ins.(ast.Ins_LocalTee).X))
 	case token.INS_GLOBAL_GET:
-		fmt.Fprintln(p.w, tok, "$"+ins.(ast.Ins_GlobalGet).X)
+		fmt.Fprintln(p.w, tok, p.identOrIndex(ins.(ast.Ins_GlobalGet).X))
 	case token.INS_GLOBAL_SET:
-		fmt.Fprintln(p.w, tok, "$"+ins.(ast.Ins_GlobalSet).X)
+		fmt.Fprintln(p.w, tok, p.identOrIndex(ins.(ast.Ins_GlobalSet).X))
 	case token.INS_TABLE_GET:
-		fmt.Fprintln(p.w, tok, "$"+ins.(ast.Ins_TableGet).X)
+		fmt.Fprintln(p.w, tok, p.identOrIndex(ins.(ast.Ins_TableGet).X))
 	case token.INS_TABLE_SET:
-		fmt.Fprintln(p.w, tok, "$"+ins.(ast.Ins_TableSet).X)
+		fmt.Fprintln(p.w, tok, p.identOrIndex(ins.(ast.Ins_TableSet).X))
 	case token.INS_I32_LOAD:
-		fmt.Fprintln(p.w, tok)
+		fmt.Fprint(p.w, tok)
+		insLoad := ins.(ast.Ins_I32Load)
+		if x := insLoad.Offset; x != 0 {
+			fmt.Fprintf(p.w, " offset=%d", x)
+		}
+		if x := insLoad.Align; x != 0 {
+			fmt.Fprintf(p.w, " align=%d", x)
+		}
+		fmt.Fprintln(p.w)
 	case token.INS_I64_LOAD:
-		fmt.Fprintln(p.w, tok)
+		fmt.Fprint(p.w, tok)
+		insLoad := ins.(ast.Ins_I64Load)
+		if x := insLoad.Offset; x != 0 {
+			fmt.Fprintf(p.w, " offset=%d", x)
+		}
+		if x := insLoad.Align; x != 0 {
+			fmt.Fprintf(p.w, " align=%d", x)
+		}
+		fmt.Fprintln(p.w)
 	case token.INS_F32_LOAD:
-		fmt.Fprintln(p.w, tok)
+		fmt.Fprint(p.w, tok)
+		insLoad := ins.(ast.Ins_F32Load)
+		if x := insLoad.Offset; x != 0 {
+			fmt.Fprintf(p.w, " offset=%d", x)
+		}
+		if x := insLoad.Align; x != 0 {
+			fmt.Fprintf(p.w, " align=%d", x)
+		}
+		fmt.Fprintln(p.w)
 	case token.INS_F64_LOAD:
-		fmt.Fprintln(p.w, tok)
+		fmt.Fprint(p.w, tok)
+		insLoad := ins.(ast.Ins_F64Load)
+		if x := insLoad.Offset; x != 0 {
+			fmt.Fprintf(p.w, " offset=%d", x)
+		}
+		if x := insLoad.Align; x != 0 {
+			fmt.Fprintf(p.w, " align=%d", x)
+		}
+		fmt.Fprintln(p.w)
 	case token.INS_I32_LOAD8_S:
-		fmt.Fprintln(p.w, tok)
+		fmt.Fprint(p.w, tok)
+		insLoad := ins.(ast.Ins_I32Load8S)
+		if x := insLoad.Offset; x != 0 {
+			fmt.Fprintf(p.w, " offset=%d", x)
+		}
+		if x := insLoad.Align; x != 0 {
+			fmt.Fprintf(p.w, " align=%d", x)
+		}
+		fmt.Fprintln(p.w)
 	case token.INS_I32_LOAD8_U:
-		fmt.Fprintln(p.w, tok)
+		fmt.Fprint(p.w, tok)
+		insLoad := ins.(ast.Ins_I32Load8U)
+		if x := insLoad.Offset; x != 0 {
+			fmt.Fprintf(p.w, " offset=%d", x)
+		}
+		if x := insLoad.Align; x != 0 {
+			fmt.Fprintf(p.w, " align=%d", x)
+		}
+		fmt.Fprintln(p.w)
 	case token.INS_I32_LOAD16_S:
-		fmt.Fprintln(p.w, tok)
+		fmt.Fprint(p.w, tok)
+		insLoad := ins.(ast.Ins_I32Load16S)
+		if x := insLoad.Offset; x != 0 {
+			fmt.Fprintf(p.w, " offset=%d", x)
+		}
+		if x := insLoad.Align; x != 0 {
+			fmt.Fprintf(p.w, " align=%d", x)
+		}
+		fmt.Fprintln(p.w)
 	case token.INS_I32_LOAD16_U:
-		fmt.Fprintln(p.w, tok)
+		fmt.Fprint(p.w, tok)
+		insLoad := ins.(ast.Ins_I32Load16U)
+		if x := insLoad.Offset; x != 0 {
+			fmt.Fprintf(p.w, " offset=%d", x)
+		}
+		if x := insLoad.Align; x != 0 {
+			fmt.Fprintf(p.w, " align=%d", x)
+		}
+		fmt.Fprintln(p.w)
 	case token.INS_I64_LOAD8_S:
-		fmt.Fprintln(p.w, tok)
+		fmt.Fprint(p.w, tok)
+		insLoad := ins.(ast.Ins_I64Load8S)
+		if x := insLoad.Offset; x != 0 {
+			fmt.Fprintf(p.w, " offset=%d", x)
+		}
+		if x := insLoad.Align; x != 0 {
+			fmt.Fprintf(p.w, " align=%d", x)
+		}
+		fmt.Fprintln(p.w)
 	case token.INS_I64_LOAD8_U:
-		fmt.Fprintln(p.w, tok)
+		fmt.Fprint(p.w, tok)
+		insLoad := ins.(ast.Ins_I64Load8U)
+		if x := insLoad.Offset; x != 0 {
+			fmt.Fprintf(p.w, " offset=%d", x)
+		}
+		if x := insLoad.Align; x != 0 {
+			fmt.Fprintf(p.w, " align=%d", x)
+		}
+		fmt.Fprintln(p.w)
 	case token.INS_I64_LOAD16_S:
-		fmt.Fprintln(p.w, tok)
+		fmt.Fprint(p.w, tok)
+		insLoad := ins.(ast.Ins_I64Load16S)
+		if x := insLoad.Offset; x != 0 {
+			fmt.Fprintf(p.w, " offset=%d", x)
+		}
+		if x := insLoad.Align; x != 0 {
+			fmt.Fprintf(p.w, " align=%d", x)
+		}
+		fmt.Fprintln(p.w)
 	case token.INS_I64_LOAD16_U:
-		fmt.Fprintln(p.w, tok)
+		fmt.Fprint(p.w, tok)
+		insLoad := ins.(ast.Ins_I64Load16U)
+		if x := insLoad.Offset; x != 0 {
+			fmt.Fprintf(p.w, " offset=%d", x)
+		}
+		if x := insLoad.Align; x != 0 {
+			fmt.Fprintf(p.w, " align=%d", x)
+		}
+		fmt.Fprintln(p.w)
 	case token.INS_I64_LOAD32_S:
-		fmt.Fprintln(p.w, tok)
+		fmt.Fprint(p.w, tok)
+		insLoad := ins.(ast.Ins_I64Load32S)
+		if x := insLoad.Offset; x != 0 {
+			fmt.Fprintf(p.w, " offset=%d", x)
+		}
+		if x := insLoad.Align; x != 0 {
+			fmt.Fprintf(p.w, " align=%d", x)
+		}
+		fmt.Fprintln(p.w)
 	case token.INS_I64_LOAD32_U:
-		fmt.Fprintln(p.w, tok)
+		fmt.Fprint(p.w, tok)
+		insLoad := ins.(ast.Ins_I64Load32U)
+		if x := insLoad.Offset; x != 0 {
+			fmt.Fprintf(p.w, " offset=%d", x)
+		}
+		if x := insLoad.Align; x != 0 {
+			fmt.Fprintf(p.w, " align=%d", x)
+		}
+		fmt.Fprintln(p.w)
 	case token.INS_I32_STORE:
-		fmt.Fprintln(p.w, tok)
+		fmt.Fprint(p.w, tok)
+		insLoad := ins.(ast.Ins_I32Store)
+		if x := insLoad.Offset; x != 0 {
+			fmt.Fprintf(p.w, " offset=%d", x)
+		}
+		if x := insLoad.Align; x != 0 {
+			fmt.Fprintf(p.w, " align=%d", x)
+		}
+		fmt.Fprintln(p.w)
 	case token.INS_I64_STORE:
-		fmt.Fprintln(p.w, tok)
+		fmt.Fprint(p.w, tok)
+		insLoad := ins.(ast.Ins_I64Store)
+		if x := insLoad.Offset; x != 0 {
+			fmt.Fprintf(p.w, " offset=%d", x)
+		}
+		if x := insLoad.Align; x != 0 {
+			fmt.Fprintf(p.w, " align=%d", x)
+		}
+		fmt.Fprintln(p.w)
 	case token.INS_F32_STORE:
-		fmt.Fprintln(p.w, tok)
+		fmt.Fprint(p.w, tok)
+		insLoad := ins.(ast.Ins_F32Store)
+		if x := insLoad.Offset; x != 0 {
+			fmt.Fprintf(p.w, " offset=%d", x)
+		}
+		if x := insLoad.Align; x != 0 {
+			fmt.Fprintf(p.w, " align=%d", x)
+		}
+		fmt.Fprintln(p.w)
 	case token.INS_F64_STORE:
-		fmt.Fprintln(p.w, tok)
+		fmt.Fprint(p.w, tok)
+		insLoad := ins.(ast.Ins_F64Store)
+		if x := insLoad.Offset; x != 0 {
+			fmt.Fprintf(p.w, " offset=%d", x)
+		}
+		if x := insLoad.Align; x != 0 {
+			fmt.Fprintf(p.w, " align=%d", x)
+		}
+		fmt.Fprintln(p.w)
 	case token.INS_I32_STORE8:
-		fmt.Fprintln(p.w, tok)
+		fmt.Fprint(p.w, tok)
+		insLoad := ins.(ast.Ins_I32Store8)
+		if x := insLoad.Offset; x != 0 {
+			fmt.Fprintf(p.w, " offset=%d", x)
+		}
+		if x := insLoad.Align; x != 0 {
+			fmt.Fprintf(p.w, " align=%d", x)
+		}
+		fmt.Fprintln(p.w)
 	case token.INS_I32_STORE16:
-		fmt.Fprintln(p.w, tok)
+		fmt.Fprint(p.w, tok)
+		insLoad := ins.(ast.Ins_I32Store16)
+		if x := insLoad.Offset; x != 0 {
+			fmt.Fprintf(p.w, " offset=%d", x)
+		}
+		if x := insLoad.Align; x != 0 {
+			fmt.Fprintf(p.w, " align=%d", x)
+		}
+		fmt.Fprintln(p.w)
 	case token.INS_I64_STORE8:
-		fmt.Fprintln(p.w, tok)
+		fmt.Fprint(p.w, tok)
+		insLoad := ins.(ast.Ins_I64Store8)
+		if x := insLoad.Offset; x != 0 {
+			fmt.Fprintf(p.w, " offset=%d", x)
+		}
+		if x := insLoad.Align; x != 0 {
+			fmt.Fprintf(p.w, " align=%d", x)
+		}
+		fmt.Fprintln(p.w)
 	case token.INS_I64_STORE16:
-		fmt.Fprintln(p.w, tok)
+		fmt.Fprint(p.w, tok)
+		insLoad := ins.(ast.Ins_I64Store16)
+		if x := insLoad.Offset; x != 0 {
+			fmt.Fprintf(p.w, " offset=%d", x)
+		}
+		if x := insLoad.Align; x != 0 {
+			fmt.Fprintf(p.w, " align=%d", x)
+		}
+		fmt.Fprintln(p.w)
 	case token.INS_I64_STORE32:
-		fmt.Fprintln(p.w, tok)
+		fmt.Fprint(p.w, tok)
+		insLoad := ins.(ast.Ins_I64Store32)
+		if x := insLoad.Offset; x != 0 {
+			fmt.Fprintf(p.w, " offset=%d", x)
+		}
+		if x := insLoad.Align; x != 0 {
+			fmt.Fprintf(p.w, " align=%d", x)
+		}
+		fmt.Fprintln(p.w)
 	case token.INS_MEMORY_SIZE:
 		fmt.Fprintln(p.w, tok)
 	case token.INS_MEMORY_GROW:
 		fmt.Fprintln(p.w, tok)
 	case token.INS_I32_CONST:
-		fmt.Fprintln(p.w, tok)
+		fmt.Fprintln(p.w, tok, ins.(ast.Ins_I32Const).X)
 	case token.INS_I64_CONST:
-		fmt.Fprintln(p.w, tok)
+		fmt.Fprintln(p.w, tok, ins.(ast.Ins_I64Const).X)
 	case token.INS_F32_CONST:
-		fmt.Fprintln(p.w, tok)
+		fmt.Fprintln(p.w, tok, ins.(ast.Ins_F32Const).X)
 	case token.INS_F64_CONST:
-		fmt.Fprintln(p.w, tok)
+		fmt.Fprintln(p.w, tok, ins.(ast.Ins_F64Const).X)
 	case token.INS_I32_EQZ:
 		fmt.Fprintln(p.w, tok)
 	case token.INS_I32_EQ:
@@ -504,5 +700,13 @@ func (p *watPrinter) printFuncs_body_ins(fn *ast.Func, ins ast.Instruction, blkL
 		fmt.Fprintln(p.w, tok)
 	case token.INS_F64_REINTERPRET_I64:
 		fmt.Fprintln(p.w, tok)
+	}
+}
+
+func (p *watPrinter) identOrIndex(idOrIdx string) string {
+	if ch := idOrIdx[0]; ch >= '0' && ch <= '9' {
+		return idOrIdx
+	} else {
+		return "$" + idOrIdx
 	}
 }

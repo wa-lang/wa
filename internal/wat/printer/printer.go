@@ -43,6 +43,10 @@ func (p *watPrinter) Fprint(w io.Writer, m *ast.Module) error {
 	if err := p.printImport(); err != nil {
 		return err
 	}
+	if err := p.printExport(); err != nil {
+		return err
+	}
+
 	if err := p.printMemory(); err != nil {
 		return err
 	}
