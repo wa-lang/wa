@@ -98,16 +98,9 @@ Loop:
 	}
 
 	m.Funcs = p.m.Funcs[:0]
-	for _, fn := range p.funcs {
-		if fn.isImport {
-			continue
-		}
-
-		switch fn.color {
-		case white:
-			// skip
-		case black:
-			m.Funcs = append(m.Funcs, fn.Func)
+	for _, fn := range p.m.Funcs {
+		if fnObj := p.funcs[fn.Name]; fnObj.color == black {
+			m.Funcs = append(m.Funcs, fn)
 		}
 	}
 
