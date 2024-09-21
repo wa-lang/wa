@@ -196,7 +196,7 @@ func BuildApp(opt *appbase.Option, input, outfile string) (mainFunc string, wasm
 			os.Exit(1)
 		}
 
-		if opt.Optimize {
+		if s := manifest.Pkg.Target; opt.Optimize || s == config.WaOS_wasm4 {
 			watOutput, err = watutil.WatStrip(input, watOutput)
 			if err != nil {
 				fmt.Println(err)
