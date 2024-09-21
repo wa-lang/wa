@@ -218,6 +218,11 @@ func (p *Module) buildModule() error {
 			p.wazeroInitErr = err
 			return err
 		}
+	case config.WaOS_arduino:
+		if _, err = ArduinoInstantiate(p.wazeroCtx, p.wazeroRuntime); err != nil {
+			p.wazeroInitErr = err
+			return err
+		}
 
 	default:
 		return fmt.Errorf("unknown waos: %q", waOS)

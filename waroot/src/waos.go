@@ -34,6 +34,7 @@ const (
 	WaOS_js      = "js"      // 浏览器 JS
 	WaOS_wasi    = "wasi"    // WASI 接口
 	WaOS_wasm4   = "wasm4"   // WASM4 游戏
+	WaOS_arduino = "arduino" // Arduino 平台
 	WaOS_unknown = "unknown" // Unknown
 )
 
@@ -53,6 +54,7 @@ var WaOS_List = []string{
 	WaOS_js,
 	WaOS_wasi,
 	WaOS_wasm4,
+	WaOS_arduino,
 	WaOS_unknown,
 }
 
