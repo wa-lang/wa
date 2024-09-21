@@ -1,4 +1,4 @@
-// 版权 @2022 凹语言 作者。保留所有权利。
+// 版权 @2024 arduino 作者。保留所有权利。
 
 import "syscall/arduino"
 
@@ -6,11 +6,9 @@ global LED = arduino.GetPinLED()
 
 func init {
 	arduino.PinMode(LED, 1)
-	arduino.Print("凹语言(Wa)/Arduino is running ...\n")
+	arduino.Print("Wa/Arduino is running ...\n")
 	arduino.Print("https://wa-lang.org\n")
-}
 
-func main {
 	for {
 		arduino.DigitalWrite(LED, arduino.HIGH)
 		arduino.Delay(100)

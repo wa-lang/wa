@@ -16,6 +16,9 @@ var baseWsFile_wat string
 //go:embed base_wasm4.wat.ws
 var baseWsFile_wat_wasm4 string
 
+//go:embed base_arduino.wat.ws
+var baseWsFile_wat_arduino string
+
 //go:embed base.import.js
 var baseImportFile_js string
 
@@ -48,6 +51,9 @@ func GetBaseWsCode(backend, targetOS string) string {
 	case WaBackend_wat:
 		if targetOS == WaOS_wasm4 {
 			return baseWsFile_wat_wasm4
+		}
+		if targetOS == WaOS_arduino {
+			return baseWsFile_wat_arduino
 		}
 		return baseWsFile_wat
 	}

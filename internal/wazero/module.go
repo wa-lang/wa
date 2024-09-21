@@ -131,7 +131,7 @@ func HasUnknownImportFunc(wasmBytes []byte) bool {
 		}
 
 		switch moduleName {
-		case "syscall_js", "wasi_snapshot_preview1":
+		case "syscall_js", "wasi_snapshot_preview1", "arduino":
 		default: // wasm4, unknown, ...
 			return true
 		}
@@ -191,6 +191,11 @@ func (p *Module) buildModule() error {
 
 		if moduleName == "wasi_snapshot_preview1" {
 			waOS = config.WaOS_wasi
+			break
+		}
+
+		if moduleName == "arduino" {
+			waOS = config.WaOS_arduino
 			break
 		}
 

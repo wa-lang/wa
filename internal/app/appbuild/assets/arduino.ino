@@ -1,8 +1,3 @@
-// 版权 @2022 凹语言 作者。保留所有权利。
-
-// Wa/Arduino 源代码位置
-// https://gitee.com/wa-lang/wa/tree/master/waroot/examples/arduino
-
 // 导入 Wasm3 头文件
 //
 // Wasm3 是 Volodymyr Shymanskyy, Steven Massey 开发的 WebAssembly 解释器,
@@ -46,10 +41,10 @@ m3ApiRawFunction(m3_arduino_pinMode) {
 	m3ApiGetArg(uint32_t, mode)
 
 	switch(mode) {
-	case 0: pinMode(pin, INPUT);
-	case 1: pinMode(pin, OUTPUT);
-	case 2: pinMode(pin, INPUT_PULLUP);
-	default: pinMode(pin, INPUT);
+	case 0: pinMode(pin, INPUT); break;
+	case 1: pinMode(pin, OUTPUT); break;
+	case 2: pinMode(pin, INPUT_PULLUP); break;
+	default: pinMode(pin, INPUT); break;
 	}
 
 	m3ApiSuccess();

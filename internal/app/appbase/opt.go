@@ -74,6 +74,8 @@ func BuildOptions(c *cli.Context, waBackend ...string) *Option {
 		opt.Target = config.WaOS_wasi
 	case config.WaOS_wasm4:
 		opt.Target = config.WaOS_wasm4
+	case config.WaOS_arduino:
+		opt.Target = config.WaOS_arduino
 	case config.WaOS_unknown:
 		opt.Target = config.WaOS_unknown
 	default:
