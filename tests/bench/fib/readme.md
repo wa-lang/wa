@@ -71,10 +71,10 @@ du -sh fib_*.wasm
 
 time wasmer fib_wa.wasm
 1836311903
-    0.26 real         0.04 user         0.05 sys
+        0.04 real         0.03 user         0.01 sys
 time wasmer fib_go.wasm
 1836311903
-    0.12 real         0.02 user         0.03 sys
+        0.08 real         0.02 user         0.02 sys
 ```
 
 简单总结:
