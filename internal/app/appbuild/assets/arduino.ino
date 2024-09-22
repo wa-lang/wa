@@ -10,7 +10,7 @@
 #define NATIVE_STACK_SIZE (32*1024)
 
 // WASM 最大内存限制, 一般不得超过 64KB 大小
-#define WASM_MEMORY_LIMIT 8096
+#define WASM_MEMORY_LIMIT (32*1024)
 
 // 导入 凹语言 生成的 WASM 文件对应的二进制头文件
 #include "app.wasm.h"

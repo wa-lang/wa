@@ -6,7 +6,7 @@ global LED = arduino.GetPinLED()
 
 func init {
 	arduino.PinMode(LED, 1)
-	arduino.Print("Wa/Arduino is running ...\n")
+	arduino.Print("凹语言(Wa)/Arduino is running ...\n")
 	arduino.Print("https://wa-lang.org\n")
 
 	for {
