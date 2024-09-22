@@ -47,6 +47,23 @@ func Update {
 	wasm4.Blit(smiley[:], 76, 76, 8, 8, wasm4.BLIT_1BPP)
 	wasm4.Text("Press X to blink", 16, 90)
 }
+{{else if .IsArduinoApp}}
+import "syscall/arduino"
+
+global LED = arduino.GetPinLED()
+
+func init {
+	arduino.PinMode(LED, 1)
+	arduino.Print("凹语言(Wa)/Arduino is running ...\n")
+	arduino.Print("https://wa-lang.org\n")
+
+	for {
+		arduino.DigitalWrite(LED, arduino.HIGH)
+		arduino.Delay(100)
+		arduino.DigitalWrite(LED, arduino.LOW)
+		arduino.Delay(900)
+	}
+}
 {{else}}
 func main {
 	println("你好，凹语言！")
