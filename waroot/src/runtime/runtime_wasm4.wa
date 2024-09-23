@@ -126,3 +126,8 @@ func waPrintString(s: string) {
 func waPrintRune(ch: i32) {
 	printString(stringFromRune(ch))
 }
+
+#wa:linkname $runtime.waPrintChar
+func waPrintChar(ch: i32) {
+	waPrintRune(ch)
+}

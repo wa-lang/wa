@@ -119,5 +119,11 @@ func waPrintRune(r: i32) {
 	printString(stringFromRune(r))
 }
 
+#wa:linkname $runtime.waPrintChar
+func waPrintChar(ch: i32) {
+	d := []byte{byte(ch)}
+	waPuts(U8_slice_to_ptr(d), 1)
+}
+
 #wa:linkname $runtime.waPuts
 func waPuts(ptr: i32, len: i32)

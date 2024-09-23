@@ -95,7 +95,14 @@ func waPrintString(s: string) {
 }
 
 #wa:linkname $runtime.waPrintRune
-func waPrintRune(ch: i32) {}
+func waPrintRune(ch: i32) {
+	printString(stringFromRune(r))
+}
+
+#wa:linkname $runtime.waPrintChar
+func waPrintChar(ch: i32) {
+	waPrintRune(ch)
+}
 
 #wa:linkname $runtime.waPuts
 func waPuts(ptr: i32, len: i32) {
