@@ -69,6 +69,12 @@
 
 ![](docs/images/p5wa-01.png)
 
+## Arduino Nano 33 开发板
+
+- https://wa-lang.org/smalltalk/st0052.html
+
+![](docs/images/arduino-nano33-01.png)
+
 ## 例子: 凹语言
 
 打印字符和调用函数：
