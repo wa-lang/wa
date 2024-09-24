@@ -6,5 +6,10 @@ func main {
 	// print hi
 	const code = "++++++++++[>++++++++++<-]>++++.+."
 	vm := bfpkg.NewBrainFuck(code)
-	vm.Run()
+	println(string(vm.Run()))
+}
+
+func Run(code: string) => string {
+	vm := bfpkg.NewBrainFuck(code)
+	return string(vm.Run())
 }

@@ -12,7 +12,8 @@ func NewBrainFuck(code: string) => *BrainFuck {
 	return &BrainFuck{code: code}
 }
 
-func BrainFuck.Run {
+func BrainFuck.Run => []byte {
+	output := make([]byte, 0, 64)
 	for ; this.pc != len(this.code); this.pc++ {
 		switch x := this.code[this.pc]; x {
 		case '>':
@@ -32,12 +33,12 @@ func BrainFuck.Run {
 				this.loop(-1)
 			}
 		case '.':
-			print(rune(this.mem[this.pos]))
+			output = append(output, this.mem[this.pos])
 		case ',':
 			// TODO: support read byte
 		}
 	}
-	return
+	return output
 }
 
 func BrainFuck.loop(inc: int) {
