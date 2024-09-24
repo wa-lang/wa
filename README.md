@@ -70,6 +70,11 @@ Instead of requiring complex toolchains to set up, you can simply go install it 
 
 ![](docs/images/p5wa-01.png)
 
+## Arduino Nano 33
+
+- https://wa-lang.org/smalltalk/st0052.html
+
+![](docs/images/arduino-nano33-01.png)
 
 ## Example: Print Wa
 
