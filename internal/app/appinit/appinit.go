@@ -93,7 +93,11 @@ func InitApp(name, pkgpath string, isP5App, isWasm4App, isWasiApp, isArduinoApp,
 	}
 
 	os.MkdirAll(name, 0777)
-	os.WriteFile(filepath.Join(name, ".gitignore"), []byte("/output\n"), 0666)
+	os.WriteFile(filepath.Join(name, ".gitignore"), []byte(`!/output/index.html
+/output/*.wat
+/output/*.wasm
+/output/*.js
+`), 0666)
 
 	var info = struct {
 		Name         string
@@ -159,6 +163,11 @@ func InitApp(name, pkgpath string, isP5App, isWasm4App, isWasiApp, isArduinoApp,
 	})
 	if err != nil {
 		return err
+	}
+
+	// 只有默认的 js 生成定制的 index.html
+	if isP5App || isWasm4App || isWasiApp || isArduinoApp {
+		os.Remove(filepath.Join(name, "output", "index.html"))
 	}
 
 	return nil
