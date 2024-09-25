@@ -195,3 +195,8 @@ $ cd waroot && wa run -target=wasi examples/prime
 |imalasong|1000|
 
 贡献点变更记录见 [waroot/cplog](waroot/cplog) 目录。
+
+
+## 收藏点击 ⭐
+
+如果你喜欢凹语言项目的话，可以点击 ⭐ 收藏。

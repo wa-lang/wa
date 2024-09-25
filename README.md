@@ -194,3 +194,8 @@ More examples [waroot/examples](waroot/examples)
 |蔡兴|3000|
 |王仁义|1000|
 |imalasong|1000|
+
+## Give a Star! ⭐
+
+If you like or are using Wa to learn or start your projects,
+please give it a star. Thanks!
