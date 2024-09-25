@@ -16,6 +16,7 @@ import (
 	"wa-lang.org/wa/internal/3rdparty/cli"
 	"wa-lang.org/wa/internal/app/appbase"
 	"wa-lang.org/wa/internal/app/appbuild"
+	"wa-lang.org/wa/internal/config"
 	"wa-lang.org/wa/internal/wat/watutil"
 	"wa-lang.org/wa/internal/wazero"
 )
@@ -98,8 +99,11 @@ func CmdRunAction(c *cli.Context) error {
 		appArgs = c.Args().Slice()[1:]
 	}
 
+	// 根据导入的宿主类型判断是否为 Web 模式
+	wasmImportModuleName, _ := wazero.ReadImportModuleName(wasmBytes)
+
 	// Web 模式启动服务器
-	if (wazero.HasUnknownImportFunc(wasmBytes) || c.Bool("web")) && !c.Bool("console") {
+	if !c.Bool("console") && (c.Bool("web") || wasmImportModuleName != config.WaOS_wasi) {
 		var addr = c.String("http")
 		if strings.HasPrefix(addr, ":") {
 			addr = "localhost" + addr

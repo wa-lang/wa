@@ -113,6 +113,39 @@ func (p *Module) Close() error {
 	return err
 }
 
+// 判断目标类型
+func ReadImportModuleName(wasmBytes []byte) (string, error) {
+	wazeroCtx := context.Background()
+	rt := wazero.NewRuntime(wazeroCtx)
+
+	var err error
+	wazeroCompileModule, err := rt.CompileModule(wazeroCtx, wasmBytes)
+	if err != nil {
+		return "", err
+	}
+
+	for _, importedFunc := range wazeroCompileModule.ImportedFunctions() {
+		moduleName, funcName, isImport := importedFunc.Import()
+		if !isImport {
+			continue
+		}
+
+		switch moduleName {
+		case "syscall_js":
+			return config.WaOS_js, nil
+		case "wasi_snapshot_preview1":
+			return config.WaOS_wasi, nil
+		case "arduino":
+			return config.WaOS_arduino, nil
+		case "env":
+			if funcName == "blitSub" {
+				return config.WaOS_wasm4, nil
+			}
+		}
+	}
+	return "", nil
+}
+
 // 是否包含用户自定义的宿主函数
 func HasUnknownImportFunc(wasmBytes []byte) bool {
 	wazeroCtx := context.Background()
