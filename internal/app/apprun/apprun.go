@@ -103,7 +103,7 @@ func CmdRunAction(c *cli.Context) error {
 	wasmImportModuleName, _ := wazero.ReadImportModuleName(wasmBytes)
 
 	// Web 模式启动服务器
-	if !c.Bool("console") && (c.Bool("web") || wasmImportModuleName != config.WaOS_wasi) {
+	if !c.Bool("console") && !opt.RunFileMode && (c.Bool("web") || wasmImportModuleName != config.WaOS_wasi) {
 		var addr = c.String("http")
 		if strings.HasPrefix(addr, ":") {
 			addr = "localhost" + addr
