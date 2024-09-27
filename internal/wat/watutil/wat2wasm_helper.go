@@ -4,6 +4,7 @@ package watutil
 
 import (
 	"encoding/binary"
+	"fmt"
 	"math"
 	"strconv"
 
@@ -26,7 +27,7 @@ func (p *wat2wasmWorker) findLabelIndex(label string) wasm.Index {
 			return wasm.Index(i)
 		}
 	}
-	return 0
+	panic(fmt.Sprintf("wat2wasm: unknown label %q", label))
 }
 func (p *wat2wasmWorker) enterLabelScope(label string) {
 	p.labelScope = append(p.labelScope, label)
@@ -54,7 +55,7 @@ func (p *wat2wasmWorker) findFuncIndex(ident string) wasm.Index {
 			return wasm.Index(importCount + i)
 		}
 	}
-	return 0
+	panic(fmt.Sprintf("wat2wasm: unknown func %q", ident))
 }
 func (p *wat2wasmWorker) findFuncLocalIndex(fn *ast.Func, ident string) wasm.Index {
 	if idx, err := strconv.Atoi(ident); err == nil {
@@ -71,7 +72,7 @@ func (p *wat2wasmWorker) findFuncLocalIndex(fn *ast.Func, ident string) wasm.Ind
 			return wasm.Index(len(fn.Type.Params) + i)
 		}
 	}
-	return 0
+	panic(fmt.Sprintf("wat2wasm: unknown func local %q", ident))
 }
 
 func (p *wat2wasmWorker) findTableIndex(ident string) wasm.Index {
@@ -91,7 +92,7 @@ func (p *wat2wasmWorker) findTableIndex(ident string) wasm.Index {
 		return wasm.Index(importCount)
 	}
 
-	return 0
+	panic(fmt.Sprintf("wat2wasm: unknown table %q", ident))
 }
 func (p *wat2wasmWorker) findMemoryIndex(ident string) wasm.Index {
 	if idx, err := strconv.Atoi(ident); err == nil {
@@ -110,7 +111,7 @@ func (p *wat2wasmWorker) findMemoryIndex(ident string) wasm.Index {
 	if p.mWat.Memory.Name == ident {
 		return wasm.Index(importCount)
 	}
-	return 0
+	panic(fmt.Sprintf("wat2wasm: unknown memory %q", ident))
 }
 
 func (p *wat2wasmWorker) findGlobalIndex(ident string) wasm.Index {
@@ -132,7 +133,8 @@ func (p *wat2wasmWorker) findGlobalIndex(ident string) wasm.Index {
 			return wasm.Index(importCount + i)
 		}
 	}
-	return 0
+
+	panic(fmt.Sprintf("wat2wasm: unknown global %q", ident))
 }
 
 // 构建值类型
