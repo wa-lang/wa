@@ -20,7 +20,7 @@ aiproxy: new function () {
     })
     .catch((err) => {
       app._wasm_inst.exports["ai.onSessionRequested"](tid, 0);
-      console.log(err)
+      console.log(`ai.assistant.create(): err = ${err}`);
     })
   }
 
@@ -40,6 +40,9 @@ aiproxy: new function () {
         
         app._mem_util.block_release(s[0]);
       })
+	  .catch((err) => {
+		console.log(`ai.prompt: err = ${err}`)
+	  });
   }
 
   //---------------------------------------------------------------
