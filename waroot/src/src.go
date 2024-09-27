@@ -125,6 +125,7 @@ func GetStdTestPkgList() []string {
 }
 
 var stdPkgs = []string{
+	"ai",              // ?
 	"apple",           // 测试已覆盖, wat2wasm ok
 	"archive/txtar",   // API 完整, wat2wasm ok
 	"bufio",           // API 完整, wat2wasm ok
