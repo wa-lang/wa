@@ -4,7 +4,7 @@ import "ai"
 
 func main {
 	ai.RequestSession(func(session: ai.Session){
-		session.PromptAsync("What is 2+2?", func(res: string) {
+		session.PromptAsync("Who are you?", func(res: string) {
 			println(res)
 		})
 	} , "")
