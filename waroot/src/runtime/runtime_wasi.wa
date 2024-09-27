@@ -30,7 +30,7 @@ func fdWrite(fd: i32, io: i32, iovs_len: i32, nwritten: i32) => (errno: i32) {
 }
 
 #wa:linkname $runtime.procExit
-func procExit(code: i32) {
+func procExit(code: int) {
 	wasi.ProcExit(code)
 }
 
@@ -117,6 +117,12 @@ func waPrintString(s: string) {
 #wa:linkname $runtime.waPrintRune
 func waPrintRune(r: i32) {
 	printString(stringFromRune(r))
+}
+
+#wa:linkname $runtime.waPrintChar
+func waPrintChar(ch: i32) {
+	d := []byte{byte(ch)}
+	waPuts(U8_slice_to_ptr(d), 1)
 }
 
 #wa:linkname $runtime.waPuts

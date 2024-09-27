@@ -1,0 +1,55 @@
+// 版权 @2024 凹语言 作者。保留所有权利。
+
+#wa:import env blit
+func __import__blit(sprite: i32, x, y: i32, width, height, flags: i32)
+
+#wa:import env blitSub
+func __import__blitSub(sprite: i32, x, y: i32, width, height: i32, srcX, srcY: i32, stride: i32, flags: i32)
+
+#wa:import env line
+func __import__line(x1, y1, x2, y2: i32)
+
+#wa:import env hline
+func __import__hline(x, y, len: i32)
+
+#wa:import env vline
+func __import__vline(x, y, len: i32)
+
+#wa:import env oval
+func __import__oval(x, y, width, height: i32)
+
+#wa:import env rect
+func __import__rect(x, y, width, height: i32)
+
+#wa:import env textUtf8
+func __import__textUtf8(textPtr, textLen: i32, x, y: i32)
+
+#wa:import env tone
+func __import__tone(frequency, duration, volume, flags: i32)
+
+#wa:import env diskr
+func __import__diskr(ptr, count: i32) => i32
+
+#wa:import env diskw
+func __import__diskw(src, count: i32) => i32
+
+#wa:import env traceUtf8
+func __import__traceUtf8(msgPtr, msgLen: i32)
+
+#wa:linkname $syscall/wasm4.__linkname__slice_data_ptr
+func __linkname__slice_data_ptr(s: []byte) => i32
+
+#wa:linkname $syscall/wasm4.__linkname__string_data_ptr
+func __linkname__string_data_ptr(s: string) => i32
+
+#wa:linkname $syscall/wasm4.__linkname__make_slice
+func __linkname__makeByteSlice(blk, ptr, len, cap: i32) => []byte
+
+#wa:linkname $syscall/wasm4.__linkname__make_slice
+func __linkname__makeU8Slice(blk, ptr, len, cap: i32) => []u8
+
+#wa:linkname $syscall/wasm4.__linkname__make_slice
+func __linkname__makeU16Slice(blk, ptr, len, cap: i32) => []u16
+
+#wa:linkname $syscall/wasm4.__linkname__make_slice
+func __linkname__makeU32Slice(blk, ptr, len, cap: i32) => []u32

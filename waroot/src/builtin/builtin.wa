@@ -1,7 +1,7 @@
 // 版权 @2023 凹语言 作者。保留所有权利。
 
 // bool is the set of boolean values, true and false.
-type bool: bool
+type bool :bool
 
 // true and false are the two untyped boolean values.
 const (
@@ -9,62 +9,70 @@ const (
 	false = 0 != 0 // Untyped bool.
 )
 
+const (
+	__PACKAGE__ = "" // package path
+	__FILE__    = "" // filename, if any
+	__LINE__    = 0  // line number, starting at 1
+	__COLUMN__  = 0  // column number, starting at 1
+	__FUNC__    = "" // func or method name
+)
+
 // u8 is the set of all unsigned 8-bit integers.
 // Range: 0 through 255.
-type u8: u8
+type u8 :u8
 
 // u16 is the set of all unsigned 16-bit integers.
 // Range: 0 through 65535.
-type u16: u16
+type u16 :u16
 
 // u32 is the set of all unsigned 32-bit integers.
 // Range: 0 through 4294967295.
-type u32: u32
+type u32 :u32
 
 // u64 is the set of all unsigned 64-bit integers.
 // Range: 0 through 18446744073709551615.
-type u64: u64
+type u64 :u64
 
 // int32 is the set of all signed 32-bit integers.
 // Range: -2147483648 through 2147483647.
-type i32: i32
+type i32 :i32
 
 // int64 is the set of all signed 64-bit integers.
 // Range: -9223372036854775808 through 9223372036854775807.
-type i64: i64
+type i64 :i64
 
 // float32 is the set of all IEEE-754 32-bit floating-point numbers.
-type f32: f32
+type f32 :f32
 
 // float64 is the set of all IEEE-754 64-bit floating-point numbers.
-type f64: f64
+type f64 :f64
 
 // string is the set of all strings of 8-bit bytes, conventionally but not
 // necessarily representing UTF-8-encoded text. A string may be empty, but
 // not nil. Values of string type are immutable.
-type string: string
+type string :string
 
 // int is a signed integer type that is at least 32 bits in size. It is a
 // distinct type, however, and not an alias for, say, int32.
-type int: int
+type int :int
 
 // uint is an unsigned integer type that is at least 32 bits in size. It is a
 // distinct type, however, and not an alias for, say, u32.
-type uint: uint
+type uint :uint
 
 // byte is an alias for u8 and is equivalent to u8 in all ways. It is
 // used, by convention, to distinguish byte values from 8-bit unsigned
 // integer values.
-type byte = u8
+type byte :u8 // byte == u8
 
 // rune is an alias for int32 and is equivalent to int32 in all ways. It is
 // used, by convention, to distinguish character values from integer values.
-type rune = i32
+type rune :i32 // rune == i32
 
 // Type is here for the purposes of documentation only. It is a stand-in
 // for any Wa type, but represents the same type for any given function
 // invocation.
-type Type: int
+type Type :int
 
 // nil is a predeclared identifier representing the zero value for a
 // pointer, func, interface, map, or slice type.
@@ -72,11 +80,11 @@ global nil: Type // Type must be a pointer, func, interface, map, or slice type
 
 // IntegerType is here for the purposes of documentation only. It is a stand-in
 // for any integer type: int, uint, int8 etc.
-type IntegerType: int
+type IntegerType :int
 
 // FloatType is here for the purposes of documentation only. It is a stand-in
 // for either float type: float32 or float64.
-type FloatType: f32
+type FloatType :f32
 
 // The append built-in function appends elements to the end of a slice. If
 // it has sufficient capacity, the destination is resliced to accommodate the
@@ -156,6 +164,6 @@ func println(args: ...Type)
 
 // The error built-in interface type is the conventional interface for
 // representing an error condition, with the nil value representing no error.
-type error interface {
+type error :interface {
 	Error() => string
 }

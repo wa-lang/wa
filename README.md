@@ -70,6 +70,11 @@ Instead of requiring complex toolchains to set up, you can simply go install it 
 
 ![](docs/images/p5wa-01.png)
 
+## Arduino Nano 33
+
+- https://wa-lang.org/smalltalk/st0052.html
+
+![](docs/images/arduino-nano33-01.png)
 
 ## Example: Print Wa
 
@@ -189,3 +194,8 @@ More examples [waroot/examples](waroot/examples)
 |蔡兴|3000|
 |王仁义|1000|
 |imalasong|1000|
+
+## Give a Star! ⭐
+
+If you like or are using Wa to learn or start your projects,
+please give it a star. Thanks!

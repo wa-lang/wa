@@ -89,7 +89,7 @@ global PIECE_SPRITES = [][8]u8{
 	},
 }
 
-global PIECE_COLORS = []i32{
+global PIECE_COLORS = []int{
 	0x0484d1, // L: blue
 	0xfb922b, // J: orange
 	0xe53b44, // Z: red

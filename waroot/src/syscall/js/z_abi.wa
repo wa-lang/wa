@@ -1,0 +1,37 @@
+// 版权 @2024 凹语言 作者。保留所有权利。
+
+#wa:import syscall_js print_bool
+func __import__print_bool(i: bool)
+
+#wa:import syscall_js print_i32
+func __import__print_i32(i: i32)
+
+#wa:import syscall_js print_u32
+func __import__print_u32(i: u32)
+
+#wa:import syscall_js print_ptr
+func __import__print_ptr(i: u32)
+
+#wa:import syscall_js print_i64
+func __import__print_i64(i: i64)
+
+#wa:import syscall_js print_u64
+func __import__print_u64(i: u64)
+
+#wa:import syscall_js print_f32
+func __import__print_f32(i: f32)
+
+#wa:import syscall_js print_f64
+func __import__print_f64(i: f64)
+
+#wa:import syscall_js print_rune
+func __import__print_rune(ch: i32)
+
+#wa:import syscall_js print_str
+func __import__print_str(ptr: i32, len: i32)
+
+#wa:import syscall_js proc_exit
+func __import__proc_exit(code: i32)
+
+#wa:linkname $syscall/js.__linkname__string_to_ptr
+func __linkname__string_to_ptr(s: string) => i32

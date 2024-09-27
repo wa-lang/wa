@@ -746,7 +746,7 @@ func (g *functionGenerator) genBuiltin(call *ssa.CallCommon) (insts []wat.Inst, 
 
 		if call.Value.Name() == "println" {
 			insts = append(insts, wir.NewConst(strconv.Itoa('\n'), g.module.I32).EmitPushNoRetain()...)
-			insts = append(insts, wat.NewInstCall("$runtime.waPrintRune"))
+			insts = append(insts, wat.NewInstCall("$runtime.waPrintChar"))
 		}
 		ret_type = g.module.VOID
 

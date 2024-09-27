@@ -1,0 +1,11 @@
+// 版权 @2024 凹语言 作者。保留所有权利。
+
+// 读磁盘数据
+func DiskR(data: []byte) => int {
+	return int(__import__diskr(__linkname__slice_data_ptr(data), i32(len(data))))
+}
+
+// 写磁盘数据
+func DiskW(data: []byte) => int {
+	return int(__import__diskw(__linkname__slice_data_ptr(data), i32(len(data))))
+}

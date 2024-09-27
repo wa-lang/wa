@@ -1,0 +1,23 @@
+// 版权 @2024 W4-life 作者。保留所有权利。
+
+import "syscall/wasm4"
+
+// https://wasm4.org/docs/guides/basic-drawing#direct-framebuffer-access
+
+// 帧缓存, 1个字节2个像素
+type Framebuffer :struct {
+	Pix: []byte
+}
+
+func FramebufferInstance => *Framebuffer {
+	return &Framebuffer{
+		Pix: wasm4.GetFramebuffer(),
+	}
+}
+
+func Framebuffer.Set(x, y: int, v: byte) {
+	idx := (y*wasm4.SCREEN_SIZE + x) / 4
+	shift := byte((x % 4) * 2)
+	mask := byte(0b11 << shift)
+	this.Pix[idx] = (v << shift) | (this.Pix[idx] & ^mask)
+}

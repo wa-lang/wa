@@ -3,11 +3,11 @@
 package appbuild
 
 import (
+	"bytes"
 	_ "embed"
 	"fmt"
 	"os"
 	"path/filepath"
-	"strings"
 
 	"wa-lang.org/wa/internal/3rdparty/cli"
 	"wa-lang.org/wa/internal/app/appbase"
@@ -16,6 +16,9 @@ import (
 	"wa-lang.org/wa/internal/loader"
 	"wa-lang.org/wa/internal/wat/watutil"
 )
+
+//go:embed assets/arduino.ino
+var arduino_ino string
 
 //go:embed assets/favicon.ico
 var favicon_ico string
@@ -38,6 +41,7 @@ var CmdBuild = &cli.Command{
 		appbase.MakeFlag_tags(),
 		appbase.MakeFlag_ld_stack_size(),
 		appbase.MakeFlag_ld_max_memory(),
+		appbase.MakeFlag_optimize(),
 	},
 	Action: CmdBuildAction,
 }
@@ -114,6 +118,14 @@ func BuildApp(opt *appbase.Option, input, outfile string) (mainFunc string, wasm
 			os.Exit(1)
 		}
 
+		if opt.Optimize {
+			watOutput, err = watutil.WatStrip(input, watOutput)
+			if err != nil {
+				fmt.Println(err)
+				os.Exit(1)
+			}
+		}
+
 		// 设置默认输出目标
 		if outfile == "" {
 			outfile = appbase.ReplaceExt(input, ".wa", ".wasm")
@@ -121,24 +133,29 @@ func BuildApp(opt *appbase.Option, input, outfile string) (mainFunc string, wasm
 
 		// wat 写到文件
 		watOutfile := appbase.ReplaceExt(outfile, ".wasm", ".wat")
-		err = os.WriteFile(watOutfile, watOutput, 0666)
-		if err != nil {
-			fmt.Printf("write %s failed: %v\n", outfile, err)
-			os.Exit(1)
+		if !opt.RunFileMode {
+			err = os.WriteFile(watOutfile, watOutput, 0666)
+			if err != nil {
+				fmt.Printf("write %s failed: %v\n", outfile, err)
+				os.Exit(1)
+			}
 		}
 
 		// wat 编译为 wasm
 		wasmBytes, err := watutil.Wat2Wasm(watOutfile, watOutput)
 		if err != nil {
 			fmt.Printf("wat2wasm %s failed: %v\n", input, err)
+			os.WriteFile(watOutfile, watOutput, 0666)
 			os.Exit(1)
 		}
 
 		// wasm 写到文件
-		err = os.WriteFile(outfile, wasmBytes, 0666)
-		if err != nil {
-			fmt.Printf("write %s failed: %v\n", outfile, err)
-			os.Exit(1)
+		if !opt.RunFileMode {
+			err = os.WriteFile(outfile, wasmBytes, 0666)
+			if err != nil {
+				fmt.Printf("write %s failed: %v\n", outfile, err)
+				os.Exit(1)
+			}
 		}
 
 		// OK
@@ -182,6 +199,14 @@ func BuildApp(opt *appbase.Option, input, outfile string) (mainFunc string, wasm
 			os.Exit(1)
 		}
 
+		if s := manifest.Pkg.Target; opt.Optimize || s == config.WaOS_wasm4 || s == config.WaOS_arduino {
+			watOutput, err = watutil.WatStrip(input, watOutput)
+			if err != nil {
+				fmt.Println(err)
+				os.Exit(1)
+			}
+		}
+
 		// wat 写到文件
 		watOutfile := appbase.ReplaceExt(outfile, ".wasm", ".wat")
 		err = os.WriteFile(watOutfile, watOutput, 0666)
@@ -190,8 +215,16 @@ func BuildApp(opt *appbase.Option, input, outfile string) (mainFunc string, wasm
 			os.Exit(1)
 		}
 
+		// wat 编译为 wasm
+		wasmBytes, err := watutil.Wat2Wasm(input, watOutput)
+		if err != nil {
+			fmt.Printf("wat2wasm %s failed: %v\n", input, err)
+			os.Exit(1)
+		}
+
 		// 生成 js 胶水代码
-		if manifest.Pkg.Target == config.WaOS_js {
+		switch manifest.Pkg.Target {
+		case config.WaOS_js:
 			jsOutfile := appbase.ReplaceExt(outfile, ".wasm", ".js")
 			jsOutput := compiler.GenJSBinding(filepath.Base(outfile))
 			err = os.WriteFile(jsOutfile, []byte(jsOutput), 0666)
@@ -210,35 +243,69 @@ func BuildApp(opt *appbase.Option, input, outfile string) (mainFunc string, wasm
 					os.Exit(1)
 				}
 			}
-		}
 
-		// wat 编译为 wasm
-		wasmBytes, err := watutil.Wat2Wasm(input, watOutput)
-		if err != nil {
-			fmt.Printf("wat2wasm %s failed: %v\n", input, err)
-			os.Exit(1)
-		}
+			// wasm 写到文件
+			err = os.WriteFile(outfile, wasmBytes, 0666)
+			if err != nil {
+				fmt.Printf("write %s failed: %v\n", outfile, err)
+				os.Exit(1)
+			}
 
-		// wasm 写到文件
-		err = os.WriteFile(outfile, wasmBytes, 0666)
-		if err != nil {
-			fmt.Printf("write %s failed: %v\n", outfile, err)
-			os.Exit(1)
-		}
-
-		if manifest.Pkg.Target == config.WaOS_wasm4 {
+		case config.WaOS_wasm4:
 			icoOutfile := filepath.Join(filepath.Dir(outfile), "favicon.ico")
 			w4JsOutfile := filepath.Join(filepath.Dir(outfile), "wasm4.js")
 			w4CssOutfile := filepath.Join(filepath.Dir(outfile), "wasm4.css")
 			w4IndexOutfile := filepath.Join(filepath.Dir(outfile), "index.html")
-
-			wasm4Cart := filepath.Base(outfile)
-			wasm4JsCode := strings.Replace(w4js, `"cart.wasm"`, `"`+wasm4Cart+`"`, -1)
+			w4WasmOutfile := filepath.Join(filepath.Dir(outfile), "cart.wasm")
 
 			os.WriteFile(icoOutfile, []byte(favicon_ico), 0666)
-			os.WriteFile(w4JsOutfile, []byte(wasm4JsCode), 0666)
+			os.WriteFile(w4JsOutfile, []byte(w4js), 0666)
 			os.WriteFile(w4CssOutfile, []byte(w4css), 0666)
 			os.WriteFile(w4IndexOutfile, []byte(w4index_html), 0666)
+			os.WriteFile(w4WasmOutfile, wasmBytes, 0666)
+
+		case config.WaOS_arduino:
+			arduinoDir := filepath.Join(filepath.Dir(outfile), "arduino")
+			inoOutfile := filepath.Join(filepath.Dir(outfile), "arduino", "arduino.ino")
+			appHeaderOutfile := filepath.Join(filepath.Dir(outfile), "arduino", "app.wasm.h")
+
+			var buf bytes.Buffer
+			// unsigned int app_wasm_len = ?;
+			// unsigned char app_wasm[] = { 0x00, 0x01, ... };
+			fmt.Fprintf(&buf, "// Auto Generate by Wa language. See https://wa-lang.org\n\n")
+			fmt.Fprintf(&buf, "unsigned int app_wasm_len = %d;\n\n", len(wasmBytes))
+			fmt.Fprintf(&buf, "unsigned char app_wasm[] = {")
+			for i, ch := range wasmBytes {
+				if i%10 == 0 {
+					fmt.Fprintf(&buf, "\n\t0x%02x,", ch)
+				} else {
+					fmt.Fprintf(&buf, " 0x%02x,", ch)
+					if i == len(wasmBytes)-1 {
+						fmt.Fprintln(&buf)
+					}
+				}
+			}
+			fmt.Fprintf(&buf, "};\n")
+
+			os.MkdirAll(arduinoDir, 0777)
+			os.WriteFile(inoOutfile, []byte(arduino_ino), 0666)
+			os.WriteFile(appHeaderOutfile, buf.Bytes(), 0666)
+
+			// wasm 写到文件
+			err = os.WriteFile(outfile, wasmBytes, 0666)
+			if err != nil {
+				fmt.Printf("write %s failed: %v\n", outfile, err)
+				os.Exit(1)
+			}
+
+		default:
+
+			// wasm 写到文件
+			err = os.WriteFile(outfile, wasmBytes, 0666)
+			if err != nil {
+				fmt.Printf("write %s failed: %v\n", outfile, err)
+				os.Exit(1)
+			}
 		}
 
 		// 主函数

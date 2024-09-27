@@ -16,6 +16,7 @@ import (
 	"wa-lang.org/wa/internal/3rdparty/cli"
 	"wa-lang.org/wa/internal/app/appbase"
 	"wa-lang.org/wa/internal/app/appbuild"
+	"wa-lang.org/wa/internal/config"
 	"wa-lang.org/wa/internal/wat/watutil"
 	"wa-lang.org/wa/internal/wazero"
 )
@@ -29,6 +30,7 @@ var CmdRun = &cli.Command{
 	Flags: []cli.Flag{
 		appbase.MakeFlag_target(),
 		appbase.MakeFlag_tags(),
+		appbase.MakeFlag_optimize(),
 		&cli.BoolFlag{
 			Name:  "web",
 			Usage: "set web mode",
@@ -80,6 +82,11 @@ func CmdRunAction(c *cli.Context) error {
 	}
 
 	var opt = appbase.BuildOptions(c)
+	if appbase.HasExt(input, ".wa") {
+		// 执行单个 wa 脚本, 避免写磁盘
+		opt.RunFileMode = true
+	}
+
 	mainFunc, wasmBytes, err := appbuild.BuildApp(opt, input, "")
 	if err != nil {
 		fmt.Println("appbuild.BuildApp:", err)
@@ -92,8 +99,11 @@ func CmdRunAction(c *cli.Context) error {
 		appArgs = c.Args().Slice()[1:]
 	}
 
+	// 根据导入的宿主类型判断是否为 Web 模式
+	wasmImportModuleName, _ := wazero.ReadImportModuleName(wasmBytes)
+
 	// Web 模式启动服务器
-	if (wazero.HasUnknownImportFunc(wasmBytes) || c.Bool("web")) && !c.Bool("console") {
+	if !c.Bool("console") && !opt.RunFileMode && (c.Bool("web") || wasmImportModuleName != config.WaOS_wasi) {
 		var addr = c.String("http")
 		if strings.HasPrefix(addr, ":") {
 			addr = "localhost" + addr

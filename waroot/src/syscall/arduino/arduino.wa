@@ -1,0 +1,36 @@
+// 版权 @2022 凹语言 作者。保留所有权利。
+
+const (
+	LOW  :i32 = 0
+	HIGH :i32 = 1
+
+	INPUT        :i32 = 0
+	OUTPUT       :i32 = 1
+	INPUT_PULLUP :i32 = 2
+)
+
+#wa:import arduino millis
+func Millis() => i32
+
+#wa:import arduino delay
+func Delay(ms: i32)
+
+#wa:import arduino pinMode
+func PinMode(pin, mode: i32)
+
+#wa:import arduino digitalWrite
+func DigitalWrite(pin, value: i32)
+
+#wa:import arduino getPinLED
+func GetPinLED() => i32
+
+#wa:import arduino print
+func PrintRawString(ptr: i32, len: i32)
+
+func Print(s: string) {
+	print(s)
+}
+
+func Println(s: string) {
+	println(s)
+}

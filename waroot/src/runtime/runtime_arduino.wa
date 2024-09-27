@@ -1,0 +1,110 @@
+// 版权 @2022 凹语言 作者。保留所有权利。
+
+import "syscall/arduino"
+
+const WAOS = "arduino"
+
+#wa:linkname $runtime.argsSizesGet
+func argsSizesGet(result_argc: i32, result_argv_len: i32) => (errno: i32) {
+	return
+}
+
+#wa:linkname $runtime.argsGet
+func argsGet(result_argv: i32, result_argv_buf: i32) => (errno: i32) {
+	return
+}
+
+#wa:linkname $runtime.environSizesGet
+func environSizesGet(result_environc: i32, result_environv_len: i32) => (errno: i32) {
+	return
+}
+
+#wa:linkname $runtime.environGet
+func environGet(result_environv: i32, result_environv_buf: i32) => (errno: i32) {
+	return
+}
+
+#wa:linkname $runtime.fdWrite
+func fdWrite(fd: i32, io: i32, iovs_len: i32, nwritten: i32) => (written: i32) {
+	return
+}
+
+#wa:linkname $runtime.procExit
+func procExit(code: i32) {}
+
+#wa:linkname $runtime.panic_
+func panic_(msg_ptr: i32, msg_len: i32, pos_msg_ptr: i32, pos_msg_len: i32) {
+	waPrintString("panic: ")
+	waPuts(msg_ptr, msg_len)
+	waPrintString(" (")
+	waPuts(pos_msg_ptr, pos_msg_len)
+	waPrintRune(')')
+	waPrintRune('\n')
+	procExit(1)
+}
+
+#wa:linkname $runtime.assert
+func assert(ok: i32, pos_msg_ptr: i32, pos_msg_len: i32) {}
+
+#wa:linkname $runtime.assertWithMessage
+func assertWithMessage(ok: i32, msg_ptr: i32, msg_len: i32, pos_msg_ptr: i32, pos_msg_len: i32) {}
+
+#wa:linkname $runtime.waPrintBool
+func waPrintBool(i: bool) {
+	printBool(i)
+}
+
+#wa:linkname $runtime.waPrintI32
+func waPrintI32(i: i32) {
+	printI64(i64(i))
+}
+
+#wa:linkname $runtime.waPrintU32Ptr
+func waPrintU32Ptr(i: u32) {
+	printHex(u64(i))
+}
+
+#wa:linkname $runtime.waPrintU32
+func waPrintU32(i: u32) {
+	printU64(u64(i))
+}
+
+#wa:linkname $runtime.waPrintI64
+func waPrintI64(i: i32) {
+	printI64(i64(i))
+}
+
+#wa:linkname $runtime.waPrintU64
+func waPrintU64(i: u64) {
+	printU64(i)
+}
+
+#wa:linkname $runtime.waPrintF32
+func waPrintF32(i: f32) {
+	printF64(f64(i))
+}
+
+#wa:linkname $runtime.waPrintF64
+func waPrintF64(i: f64) {
+	printF64(f64(i))
+}
+
+#wa:linkname $runtime.waPrintString
+func waPrintString(s: string) {
+	printString(s)
+}
+
+#wa:linkname $runtime.waPrintRune
+func waPrintRune(ch: i32) {
+	printString(stringFromRune(r))
+}
+
+#wa:linkname $runtime.waPrintChar
+func waPrintChar(ch: i32) {
+	waPrintRune(ch)
+}
+
+#wa:linkname $runtime.waPuts
+func waPuts(ptr: i32, len: i32) {
+	arduino.PrintRawString(ptr, len)
+}

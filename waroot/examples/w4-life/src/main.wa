@@ -18,5 +18,22 @@ func Update {
 		LifeStart()
 	}
 
+	mouseX := int(wasm4.GetMouseX())
+	mouseY := int(wasm4.GetMouseY())
+
+	if byte(wasm4.GetMouseButtons()) == wasm4.MOUSE_LEFT {
+		LifeSetRect(mouseX-2, mouseY-2, mouseX+2, mouseY+2)
+	}
+
 	LifeStep()
+
+	drawMouse(mouseX, mouseY)
+}
+
+func drawMouse(mouseX, mouseY: int) {
+	if mouseX < 0 || mouseY < 0 || mouseX >= wasm4.SCREEN_SIZE || mouseY >= wasm4.SCREEN_SIZE {
+		return
+	}
+	wasm4.SetDrawColors(2)
+	wasm4.Rect(mouseX-1, mouseY-1, 3, 3)
 }

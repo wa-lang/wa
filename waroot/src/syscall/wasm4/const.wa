@@ -1,0 +1,118 @@
+// 版权 @2024 凹语言 作者。保留所有权利。
+
+// https://wasm4.org/docs/reference/memory/
+
+const (
+	_Unused = 0x00 // u32
+
+	//   Bits  Description
+	//  0 -  7 Blue channel
+	//  8 - 15 Green channel
+	// 16 - 23 Red channel
+	// 24 - 31 Unused
+
+	_PALETTE0 = 0x04 // u32
+	_PALETTE1 = 0x08 // u32
+	_PALETTE2 = 0x0c // u32
+	_PALETTE3 = 0x10 // u32
+
+	//   Bits  Description
+	//  0 -  3 Draw color 1
+	//  4 -  7 Draw color 2
+	//  8 - 11 Draw color 3
+	// 12 - 15 Draw color 4
+
+	_DRAW_COLORS = 0x14 // u16
+
+	// Bit Name         Description
+	// 0   BUTTON_1     X button
+	// 1   BUTTON_2     Z button
+	// 2   Unused
+	// 3   Unused
+	// 4   BUTTON_LEFT  D-pad left
+	// 5   BUTTON_RIGHT D-pad right
+	// 6   BUTTON_UP    D-pad up
+	// 7   BUTTON_DOWN  D-pad down
+
+	_GAMEPAD1 = 0x16 // u8
+	_GAMEPAD2 = 0x17 // u8
+	_GAMEPAD3 = 0x18 // u8
+	_GAMEPAD4 = 0x19 // u8
+
+	_MOUSE_X = 0x1a // u16
+	_MOUSE_Y = 0x1c // u16
+
+	// Bit Name         Description
+	// 0   MOUSE_LEFT   Left mouse button
+	// 1   MOUSE_RIGHT  Right mouse button
+	// 2   MOUSE_MIDDLE Middle mouse button
+
+	_MOUSE_BUTTONS = 0x1e // u8
+
+	// Bit Name                        Description
+	// 0   SYSTEM_PRESERVE_FRAMEBUFFER Prevent clearing the framebuffer between frames.
+	// 1   SYSTEM_HIDE_GAMEPAD_OVERLAY Hide the gamepad UI overlay on mobile.
+
+	_SYSTEM_FLAGS = 0x1f // u8
+
+	// Bits  Description
+	// 0 - 1 Local player index (0 to 3).
+	// 2     Set if netplay is currently active.
+
+	_NETPLAY = 0x20 // u8
+
+	// Array of 160x160 pixels, with each pixel packed into 2 bits (colors 0 to 3).
+
+	_FRAMEBUFFER      = 0xa0          // [6400]byte
+	_FRAMEBUFFER_SIZE = 160 * 160 / 4 // 160x160/4
+
+	_0x19a0 = 0x19a0 // Available program memory
+
+	_BUTTON_1     = 1
+	_BUTTON_2     = 2
+	_BUTTON_LEFT  = 16
+	_BUTTON_RIGHT = 32
+	_BUTTON_UP    = 64
+	_BUTTON_DOWN  = 128
+
+	_MOUSE_LEFT   = 1
+	_MOUSE_RIGHT  = 2
+	_MOUSE_MIDDLE = 4
+
+	_SYSTEM_PRESERVE_FRAMEBUFFER = 1
+	_SYSTEM_HIDE_GAMEPAD_OVERLAY = 2
+
+	// Flag bits Name        Description
+	// 0         BLIT_2BPP   Sprite pixel format: 2BPP if set, otherwise 1BPP
+	// 1         BLIT_FLIP_X Flip sprite horizontally
+	// 2         BLIT_FLIP_Y Flip sprite vertically
+	// 3         BLIT_ROTATE Rotate sprite anti-clockwise 90 degrees
+
+	_BLIT_2BPP   = 1
+	_BLIT_1BPP   = 0
+	_BLIT_FLIP_X = 2
+	_BLIT_FLIP_Y = 4
+	_BLIT_ROTATE = 8
+
+	_TONE_PULSE1    = 0
+	_TONE_PULSE2    = 1
+	_TONE_TRIANGLE  = 2
+	_TONE_NOISE     = 3
+	_TONE_MODE1     = 0
+	_TONE_MODE2     = 4
+	_TONE_MODE3     = 8
+	_TONE_MODE4     = 12
+	_TONE_PAN_LEFT  = 16
+	_TONE_PAN_RIGHT = 32
+	_TONE_NOTE_MODE = 64
+)
+
+// Hotkeys
+// Key Description
+// 2   Save state
+// 4   Load state
+// R   Reboot cartridge
+// F8  Open devtools
+// F9  Take screenshot
+// F10 Record 4 second video
+// F11 Fullscreen

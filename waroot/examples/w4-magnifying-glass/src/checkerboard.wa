@@ -1,0 +1,82 @@
+// 版权 @2024 magnifying-glass 作者。保留所有权利。
+
+// Tweetable Mathematical Art
+// http://codegolf.stackexchange.com/questions/35569/tweetable-mathematical-art
+//
+// Ray Tracing
+// http://www.cnblogs.com/daishuo/p/3954422.html
+
+import (
+	"math"
+	"syscall/wasm4"
+)
+
+global (
+	width    :int = wasm4.SCREEN_SIZE
+	height   :int = wasm4.SCREEN_SIZE
+	center_x :int = wasm4.SCREEN_SIZE / 2
+	center_y :int = wasm4.SCREEN_SIZE / 2
+
+	cells      = NewBitImage(width, height)
+	cellsFrame = FramebufferInstance()
+)
+
+func _sq(x: f32) => f32 {
+	return x * x
+}
+func _sqrt(x: f32) => f32 {
+	return f32(math.Sqrt(f64(x)))
+}
+
+func genColorGray(i, j, center_x, center_y: int) => int {
+	DIM := int(width)
+
+	n := 3
+	r := _sqrt(_sq(f32(i)-f32(center_x)) + _sq(f32(j)-f32(center_y)))
+	s := r / f32((DIM/2)/2)
+
+	if s < 1 {
+		i -= center_x
+		j -= center_y
+
+		k := (_sqrt(1-_sq(s))*_sqrt(1-_sq(s/f32(n))) + _sq(s)/f32(n)) * f32(n)
+
+		i = int(f32(i)/k + f32(center_x))
+		j = int(f32(j)/k + f32(center_y))
+	}
+	return (i/((DIM/2)/8) + j/((DIM/2)/8)) % 2 * 255
+}
+
+func StepGame {
+	if x := wasm4.GetMouseX(); x > 0 && x < width-1 {
+		center_x = x
+	}
+	if y := wasm4.GetMouseY(); y > 0 && y < height-1 {
+		center_y = y
+	}
+
+	for x := 0; x < width; x++ {
+		for y := 0; y < height; y++ {
+			if genColorGray(x, y, center_x, center_y) != 0 {
+				cells.Set(x, y, true)
+			} else {
+				cells.Set(x, y, false)
+			}
+		}
+	}
+
+	// 绘制到屏幕缓存
+	drawFrambuffer(cells)
+}
+
+func drawFrambuffer(m: *BitImage) {
+	for x := 0; x < width; x++ {
+		for y := 0; y < height; y++ {
+			if m.At(x, y) {
+				cellsFrame.Set(x, y, 4)
+			} else {
+				cellsFrame.Set(x, y, 2)
+			}
+		}
+	}
+}

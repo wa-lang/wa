@@ -14,15 +14,19 @@ import (
 // 命令行选项
 type Option struct {
 	Debug        bool
+	RunFileMode  bool // 单文件运行模式
 	WaBackend    string
 	BuilgTags    []string
 	Target       string
 	LD_StackSize int
 	LD_MaxMemory int
+	Optimize     bool // 优化
 }
 
 func (opt *Option) Config() *config.Config {
 	cfg := config.DefaultConfig()
+
+	cfg.Target = opt.Target
 
 	if opt.Debug {
 		cfg.Debug = true
@@ -53,6 +57,7 @@ func BuildOptions(c *cli.Context, waBackend ...string) *Option {
 		BuilgTags:    strings.Fields(c.String("tags")),
 		LD_StackSize: c.Int("ld-stack-size"),
 		LD_MaxMemory: c.Int("ld-max-memory"),
+		Optimize:     c.Bool("optimize"),
 	}
 
 	if target := c.String("target"); target != "" && !config.CheckWaOS(target) {
@@ -69,6 +74,8 @@ func BuildOptions(c *cli.Context, waBackend ...string) *Option {
 		opt.Target = config.WaOS_wasi
 	case config.WaOS_wasm4:
 		opt.Target = config.WaOS_wasm4
+	case config.WaOS_arduino:
+		opt.Target = config.WaOS_arduino
 	case config.WaOS_unknown:
 		opt.Target = config.WaOS_unknown
 	default:

@@ -385,7 +385,7 @@ func play(s: Sound) {
 	duration := s.attack<<24 | s.decay<<16 | s.sustain | s.release<<8
 	flags := s.channel | s.mode<<2
 
-	wasm4.Tone(i32(freq), i32(duration), i32(s.volume), i32(flags))
+	wasm4.Tone(int(freq), int(duration), int(s.volume), int(flags))
 }
 
 global (

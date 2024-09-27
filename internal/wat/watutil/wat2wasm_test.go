@@ -73,17 +73,6 @@ func TestWat2Wasm(t *testing.T) {
 	}
 }
 
-func TestWat2WasmWithOptions_noname(t *testing.T) {
-	for i, name := range tTestWat2WasmWithOptions_noname_files {
-		wat, _, expect := tLoadWatWasm(t, name)
-		got, err := watutil.Wat2WasmWithOptions(name, wat, watutil.Options{DisableDebugNames: true})
-		if err != nil {
-			t.Fatalf("%d: %v", i, err)
-		}
-		tCmpBytes(t, name, expect, got)
-	}
-}
-
 func tCmpBytes(t *testing.T, name string, expect, got []byte) {
 	var i int
 	for ; i < len(expect) && i < len(got); i++ {

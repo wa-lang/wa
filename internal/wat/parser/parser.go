@@ -283,7 +283,7 @@ func (p *parser) parseCharLit() rune {
 
 // 解析字符串常量面值(含二进制数据)
 func (p *parser) parseStringLit() string {
-	s := p.lit // todo: 解码
+	s := p.lit
 	p.acceptToken(token.STRING)
 	return s
 }

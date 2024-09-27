@@ -27,6 +27,12 @@ var (
 	universeRune   *Basic // int32 alias, but has name "rune"
 	universeString *Basic
 	universeAny    Object
+
+	universe__PACKAGE__ *Const
+	universe__FILE__    *Const
+	universe__LINE__    *Const
+	universe__COLUMN__  *Const
+	universe__FUNC__    *Const
 )
 
 // Typ contains the predeclared *Basic types indexed by their
@@ -124,6 +130,12 @@ var predeclaredConsts = [...]struct {
 	{"true", UntypedBool, constant.MakeBool(true)},
 	{"false", UntypedBool, constant.MakeBool(false)},
 	{"iota", UntypedInt, constant.MakeInt64(0)},
+
+	{"__PACKAGE__", UntypedString, constant.MakeString("<wa-lang:__PACKAGE__>")},
+	{"__FILE__", UntypedString, constant.MakeString("<wa-lang:__FILE__>")},
+	{"__LINE__", UntypedInt, constant.MakeInt64(0)},
+	{"__COLUMN__", UntypedInt, constant.MakeInt64(0)},
+	{"__FUNC__", UntypedString, constant.MakeString("")},
 }
 
 func defPredeclaredConsts() {
@@ -245,6 +257,12 @@ func init() {
 	universeRune = Universe.Lookup("rune").(*TypeName).typ.(*Basic)
 	universeString = Universe.Lookup("string").(*TypeName).typ.(*Basic)
 	universeAny = Universe.Lookup("any")
+
+	universe__PACKAGE__ = Universe.Lookup("__PACKAGE__").(*Const)
+	universe__FILE__ = Universe.Lookup("__FILE__").(*Const)
+	universe__LINE__ = Universe.Lookup("__LINE__").(*Const)
+	universe__COLUMN__ = Universe.Lookup("__COLUMN__").(*Const)
+	universe__FUNC__ = Universe.Lookup("__FUNC__").(*Const)
 }
 
 // Objects with names containing blanks are internal and not entered into

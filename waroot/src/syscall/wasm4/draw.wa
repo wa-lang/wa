@@ -1,0 +1,49 @@
+// 版权 @2024 凹语言 作者。保留所有权利。
+
+// 屏幕大小
+const SCREEN_SIZE = 160
+
+// 绘制线段
+#wa:generic LineI32
+func Line(x1, y1, x2, y2: int) {
+	__import__line(i32(x1), i32(y1), i32(x2), i32(y2))
+}
+func LineI32(x1, y1, x2, y2: i32) {
+	__import__line(i32(x1), i32(y1), i32(x2), i32(y2))
+}
+
+// 绘制水平的线段
+#wa:generic HLineI32
+func HLine(x, y, len: int) {
+	__import__hline(i32(x), i32(y), i32(len))
+}
+func HLineI32(x, y, len: i32) {
+	__import__hline(i32(x), i32(y), i32(len))
+}
+
+// 绘制竖直的线段
+#wa:generic VLineI32
+func VLine(x, y, len: int) {
+	__import__vline(i32(x), i32(y), i32(len))
+}
+func VLineI32(x, y, len: i32) {
+	__import__vline(i32(x), i32(y), i32(len))
+}
+
+// 绘制椭圆或圆
+#wa:generic OvalI32
+func Oval(x, y, width, height: int) {
+	__import__oval(i32(x), i32(y), i32(width), i32(height))
+}
+func OvalI32(x, y, width, height: i32) {
+	__import__oval(i32(x), i32(y), i32(width), i32(height))
+}
+
+// 绘制矩形
+#wa:generic RectI32
+func Rect(x, y, width, height: int) {
+	__import__rect(i32(x), i32(y), i32(width), i32(height))
+}
+func RectI32(x, y, width, height: i32) {
+	__import__rect(i32(x), i32(y), i32(width), i32(height))
+}

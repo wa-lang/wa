@@ -16,10 +16,6 @@ import (
 	"wa-lang.org/wa/internal/wat/token"
 )
 
-type Options struct {
-	DisableDebugNames bool
-}
-
 func Wat2Wasm(filename string, source []byte) (wasmBytes []byte, err error) {
 	defer func() {
 		if err == nil {
@@ -37,15 +33,8 @@ func Wat2Wasm(filename string, source []byte) (wasmBytes []byte, err error) {
 	if err != nil {
 		return nil, err
 	}
-	return newWat2wasmWorker(m).EncodeWasm(true)
-}
 
-func Wat2WasmWithOptions(filename string, source []byte, opt Options) ([]byte, error) {
-	m, err := parser.ParseModule(filename, source)
-	if err != nil {
-		return nil, err
-	}
-	return newWat2wasmWorker(m).EncodeWasm(!opt.DisableDebugNames)
+	return newWat2wasmWorker(m).EncodeWasm(true)
 }
 
 type wat2wasmWorker struct {

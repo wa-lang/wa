@@ -48,3 +48,10 @@ func MakeFlag_ld_max_memory() *cli.IntFlag {
 		Usage: "set max memory size",
 	}
 }
+
+func MakeFlag_optimize() *cli.BoolFlag {
+	return &cli.BoolFlag{
+		Name:  "optimize",
+		Usage: "enable optimize flag",
+	}
+}

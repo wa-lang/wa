@@ -19,7 +19,6 @@ import (
 // If an error occurred, x.mode is set to invalid.
 // For the meaning of def, see Checker.definedType, below.
 // If wantType is set, the identifier e is expected to denote a type.
-//
 func (check *Checker) ident(x *operand, e *ast.Ident, def *Named, wantType bool) {
 	x.mode = invalid
 	x.expr = e
@@ -70,13 +69,46 @@ func (check *Checker) ident(x *operand, e *ast.Ident, def *Named, wantType bool)
 		if typ == Typ[Invalid] {
 			return
 		}
-		if obj == universeIota {
+		switch obj {
+		case universeIota:
 			if check.iota == nil {
 				check.errorf(e.Pos(), "cannot use iota outside constant declaration")
 				return
 			}
 			x.val = check.iota
-		} else {
+
+		case universe__PACKAGE__:
+			x.val = constant.MakeString(check.pkg.path)
+		case universe__FILE__:
+			pos := check.fset.Position(e.Pos())
+			x.val = constant.MakeString(pos.Filename)
+		case universe__LINE__:
+			pos := check.fset.Position(e.Pos())
+			x.val = constant.MakeInt64(int64(pos.Line))
+		case universe__COLUMN__:
+			pos := check.fset.Position(e.Pos())
+			x.val = constant.MakeInt64(int64(pos.Column))
+		case universe__FUNC__:
+			if check.sig == nil {
+				check.errorf(e.Pos(), "cannot use __FUNC__ outside func or method declaration")
+				return
+			}
+			if check.decl.fdecl == nil {
+				check.errorf(e.Pos(), "cannot use __FUNC__ outside global func declaration")
+				return
+			}
+
+			if check.decl.fdecl.Recv != nil {
+				recvTyp := check.decl.fdecl.Recv.List[0].Type
+				recvTypIdent := recvTyp.(*ast.StarExpr).X.(*ast.Ident)
+				funcName := check.decl.fdecl.Name.Name
+				x.val = constant.MakeString(recvTypIdent.Name + "." + funcName)
+			} else {
+				funcName := check.decl.fdecl.Name.Name
+				x.val = constant.MakeString(funcName)
+			}
+
+		default:
 			x.val = obj.val
 		}
 		assert(x.val != nil)
@@ -125,7 +157,6 @@ func (check *Checker) typ(e ast.Expr) Type {
 // If def != nil, e is the type specification for the defined type def, declared
 // in a type declaration, and def.underlying will be set to the type of e before
 // any components of e are type-checked.
-//
 func (check *Checker) definedType(e ast.Expr, def *Named) (T Type) {
 	if trace {
 		check.trace(e.Pos(), "%s", e)
@@ -220,7 +251,6 @@ func (check *Checker) funcType(sig *Signature, recvPar *ast.FieldList, ftyp *ast
 
 // typInternal drives type checking of types.
 // Must only be called by definedType.
-//
 func (check *Checker) typInternal(e ast.Expr, def *Named) Type {
 	switch e := e.(type) {
 	case *ast.BadExpr:
@@ -335,7 +365,6 @@ func (check *Checker) typInternal(e ast.Expr, def *Named) Type {
 // typeOrNil type-checks the type expression (or nil value) e
 // and returns the typ of e, or nil.
 // If e is neither a type nor nil, typOrNil returns Typ[Invalid].
-//
 func (check *Checker) typOrNil(e ast.Expr) Type {
 	var x operand
 	check.rawExpr(&x, e, nil)

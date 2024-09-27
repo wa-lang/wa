@@ -1,0 +1,17 @@
+// 版权 @2024 W4-life 作者。保留所有权利。
+
+func setBit(n: uint, pos: uint) => uint {
+	n |= 1 << pos
+	return n
+}
+
+func clearBit(n: uint, pos: uint) => uint {
+	mask := ^(1 << pos)
+	n &= uint(mask)
+	return n
+}
+
+func hasBit(n: uint, pos: uint) => bool {
+	val := n & (1 << pos)
+	return (val != 0)
+}

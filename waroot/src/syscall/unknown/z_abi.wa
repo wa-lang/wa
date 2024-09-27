@@ -1,0 +1,4 @@
+// 版权 @2024 凹语言 作者。保留所有权利。
+
+#wa:linkname $syscall/unknown.__linkname__string_to_ptr
+func __linkname__string_to_ptr(s: string) => i32

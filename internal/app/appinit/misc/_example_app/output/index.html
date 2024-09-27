@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{{.Name}}</title>
+</head>
+<body>
+  <div style="text-align: center;">
+    <canvas id="canvas" width="0" height="0"></canvas>
+  </div>
+
+  <div style="text-align: center;">
+    <pre id="output"></pre>
+  </div>
+
+  <script type="text/javascript" src="./{{.Name}}.js"></script>
+
+  <script>
+    let app = new WaApp();
+    app.init().then((result) => {
+      app.main();
+      document.getElementById('output').innerText = `1+2+3+...+100 = ${app.Sum(100)}`;
+    })
+  </script>
+</body>
+</html>

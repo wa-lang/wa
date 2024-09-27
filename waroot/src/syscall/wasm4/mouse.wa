@@ -1,0 +1,32 @@
+// 版权 @2024 凹语言 作者。保留所有权利。
+
+const (
+	BUTTON_1     :byte = 1
+	BUTTON_2     :byte = 2
+	BUTTON_LEFT  :byte = 16
+	BUTTON_RIGHT :byte = 32
+	BUTTON_UP    :byte = 64
+	BUTTON_DOWN  :byte = 128
+
+	MOUSE_LEFT   :byte = 1
+	MOUSE_RIGHT  :byte = 2
+	MOUSE_MIDDLE :byte = 4
+
+	SYSTEM_PRESERVE_FRAMEBUFFER :byte = 1
+	SYSTEM_HIDE_GAMEPAD_OVERLAY :byte = 2
+)
+
+func GetMouseX => int {
+	u16Slice := __linkname__makeU16Slice(0, _MOUSE_X, 1, 1)
+	return int(u16Slice[0])
+}
+
+func GetMouseY => int {
+	u16Slice := __linkname__makeU16Slice(0, _MOUSE_Y, 1, 1)
+	return int(u16Slice[0])
+}
+
+func GetMouseButtons => byte {
+	u8Slice := __linkname__makeU8Slice(0, _MOUSE_BUTTONS, 1, 1)
+	return byte(u8Slice[0])
+}

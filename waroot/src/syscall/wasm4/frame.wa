@@ -1,0 +1,56 @@
+// 版权 @2024 凹语言 作者。保留所有权利。
+
+// Flags位信息
+const (
+	BLIT_1BPP   = 0
+	BLIT_2BPP   = 1
+	BLIT_FLIP_X = 2
+	BLIT_FLIP_Y = 4
+	BLIT_ROTATE = 8
+)
+
+// 复制数据到帧缓存
+#wa:generic BlitI32
+func Blit(sprite: []byte, x, y, width, height, flags: int) {
+	__import__blit(
+		__linkname__slice_data_ptr(sprite),
+		i32(x), i32(y), i32(width), i32(height),
+		i32(flags),
+	)
+}
+func BlitI32(sprite: []byte, x, y, width, height, flags: i32) {
+	__import__blit(
+		__linkname__slice_data_ptr(sprite),
+		x, y, width, height,
+		flags,
+	)
+}
+
+// 复制数据到帧缓存(增强版)
+#wa:generic BlitSubI32
+func BlitSub(sprite: []byte, x, y, width, height, srcX, srcY, stride, flags: int) {
+	__import__blitSub(
+		__linkname__slice_data_ptr(sprite),
+		i32(x), i32(y), i32(width), i32(height),
+		i32(srcX), i32(srcY), i32(stride),
+		i32(flags),
+	)
+}
+func BlitSubI32(sprite: []byte, x, y, width, height, srcX, srcY, stride, flags: i32) {
+	__import__blitSub(
+		__linkname__slice_data_ptr(sprite),
+		x, y, width, height,
+		srcX, srcY, stride,
+		flags,
+	)
+}
+
+// 获取帧缓存
+func GetFramebuffer => []byte {
+	return __linkname__makeByteSlice(
+		0, // 不释放 block
+		_FRAMEBUFFER,
+		_FRAMEBUFFER_SIZE,
+		_FRAMEBUFFER_SIZE,
+	)
+}

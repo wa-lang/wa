@@ -1,0 +1,18 @@
+// 版权 @2024 arduino 作者。保留所有权利。
+
+import "syscall/arduino"
+
+global LED = arduino.GetPinLED()
+
+func init {
+	arduino.PinMode(LED, 1)
+	arduino.Print("凹语言(Wa)/Arduino is running ...\n")
+	arduino.Print("https://wa-lang.org\n")
+
+	for {
+		arduino.DigitalWrite(LED, arduino.HIGH)
+		arduino.Delay(100)
+		arduino.DigitalWrite(LED, arduino.LOW)
+		arduino.Delay(900)
+	}
+}

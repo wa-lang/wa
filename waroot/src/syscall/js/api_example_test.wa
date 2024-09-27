@@ -1,0 +1,18 @@
+// 版权 @2024 凹语言 作者。保留所有权利。
+
+func TestPrintBool {
+	PrintBool(true)
+	PrintBool(false)
+	PrintBool(1 != 2)
+}
+
+func TestPrintRune {
+	PrintRune('a')
+	PrintRune('凹')
+	PrintRune('\b')
+}
+
+
+func TestPrintString {
+	PrintString("凹语言\n")
+}
