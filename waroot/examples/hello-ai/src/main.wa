@@ -7,5 +7,5 @@ func main {
 		session.PromptAsync("Who are you?", func(res: string) {
 			println(res)
 		})
-	} , "")
+	})
 }

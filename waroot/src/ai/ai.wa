@@ -1,4 +1,3 @@
-
 import "js"
 
 global asyncTasks: js.TaskQueue
@@ -7,50 +6,67 @@ global asyncTasks: js.TaskQueue
 
 // Session 对象，不能使用该类型直接声明值，需通过 RequestSession 创建
 #wa:need-constructor
-type Session struct {
-    _extobj: js.ExtObj
+type Session :struct {
+	_extobj: js.ExtObj
 }
 
 // 获取 Session，异步
-#wa:generic RequestSession_Handler
+#wa:generic RequestSession_Handler RequestSessionSimple RequestSession_Handler_Simple
 func RequestSession(requestor: SessionRequestor, option: string) {
-    if requestor == nil  {
-        panic("SessionRequestor can't be nil.")
-    }
-    tid := asyncTasks.Alloc(nil, requestor)
-    jsAiRequestSession(tid, option)
+	if requestor == nil {
+		panic("SessionRequestor can't be nil.")
+	}
+	tid := asyncTasks.Alloc(nil, requestor)
+	jsAiRequestSession(tid, option)
 }
-type SessionRequestor interface {
-    OnRequested(session: Session)
+func RequestSessionSimple(requestor: SessionRequestor) {
+	if requestor == nil {
+		panic("SessionRequestor can't be nil.")
+	}
+	tid := asyncTasks.Alloc(nil, requestor)
+	jsAiRequestSession(tid, "")
+}
+
+type SessionRequestor :interface {
+	OnRequested(session: Session)
 }
 
 func RequestSession_Handler(handler: SessionRequestHandler, option: string) {
-    if handler == nil {
-        panic("SessionRequestHandler can't be nil.")
-    }
-    tid := asyncTasks.Alloc(nil, handler)
-    jsAiRequestSession(tid, option)
+	if handler == nil {
+		panic("SessionRequestHandler can't be nil.")
+	}
+	tid := asyncTasks.Alloc(nil, handler)
+	jsAiRequestSession(tid, option)
 }
-type SessionRequestHandler func(session: Session)
+
+func RequestSession_Handler_Simple(handler: SessionRequestHandler) {
+	if handler == nil {
+		panic("SessionRequestHandler can't be nil.")
+	}
+	tid := asyncTasks.Alloc(nil, handler)
+	jsAiRequestSession(tid, "")
+}
+
+type SessionRequestHandler :func(session: Session)
 
 #wa:import aiproxy request_session
 func jsAiRequestSession(tid: int, option: string)
 
 #wa:export ai.onSessionRequested
 func onSessionRequested(tid: int, sh: js.Handle) {
-    _, handler := asyncTasks.Get(tid)
-    session: Session
-    session._extobj = js.WrapExtObj(sh)
+	_, handler := asyncTasks.Get(tid)
+	session: Session
+	session._extobj = js.WrapExtObj(sh)
 
-    switch h := handler.(type) {
-    case SessionRequestor:
-        h.OnRequested(session)
+	switch h := handler.(type) {
+	case SessionRequestor:
+		h.OnRequested(session)
 
-    case SessionRequestHandler:
-        h(session)
-    }
+	case SessionRequestHandler:
+		h(session)
+	}
 
-    asyncTasks.Free(tid)
+	asyncTasks.Free(tid)
 }
 
 //---------------------------------------------------------------
@@ -58,42 +74,43 @@ func onSessionRequested(tid: int, sh: js.Handle) {
 // 异步 prompt
 #wa:generic PromptAsync_Handler
 func Session.PromptAsync(key: string, prompter: Prompter) {
-    if prompter == nil {
-        panic("Prompter can't be nil.")
-    }
-    tid := asyncTasks.Alloc(this, prompter)
-    jsPromptAsync(tid, this._extobj.GetHandle(), key)
+	if prompter == nil {
+		panic("Prompter can't be nil.")
+	}
+	tid := asyncTasks.Alloc(this, prompter)
+	jsPromptAsync(tid, this._extobj.GetHandle(), key)
 }
-type Prompter interface {
-    OnPrompted(result: string)
+
+type Prompter :interface {
+	OnPrompted(result: string)
 }
 
 func Session.PromptAsync_Handler(key: string, handler: PromptHandler) {
-    if handler == nil {
-        panic("BufferMapHandler can't be nil.")
-    }
-    tid := asyncTasks.Alloc(this, handler)
-    jsPromptAsync(tid, this._extobj.GetHandle(), key)
+	if handler == nil {
+		panic("BufferMapHandler can't be nil.")
+	}
+	tid := asyncTasks.Alloc(this, handler)
+	jsPromptAsync(tid, this._extobj.GetHandle(), key)
 }
-type PromptHandler func(result: string)
+
+type PromptHandler :func(result: string)
 
 #wa:import aiproxy prompt
 func jsPromptAsync(tid: int, session: js.Handle, key: string)
 
 #wa:export ai.onPrompted
 func onPrompted(tid: int, result: string) {
-    _, handler := asyncTasks.Get(tid)
+	_, handler := asyncTasks.Get(tid)
 
-    switch h := handler.(type) {
-    case Prompter:
-        h.OnPrompted(result)
+	switch h := handler.(type) {
+	case Prompter:
+		h.OnPrompted(result)
 
-    case PromptHandler:
-        h(result)
-    }
+	case PromptHandler:
+		h(result)
+	}
 
-    asyncTasks.Free(tid)
+	asyncTasks.Free(tid)
 }
 
 //---------------------------------------------------------------
-

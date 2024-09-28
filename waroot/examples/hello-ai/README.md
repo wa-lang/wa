@@ -12,9 +12,9 @@ func main {
 		session.PromptAsync("Who are you?", func(res: string) {
 			println(res)
 		})
-	} , "")
+	})
 }
-``
+```
 
 然后本地命令行环境执行`wa run`, 然后在打开的页面的开发者控制台可以看到以下输出:
 
