@@ -29,7 +29,7 @@ import (
 	"wa-lang.org/wa/internal/app/apprun"
 	"wa-lang.org/wa/internal/app/appssa"
 	"wa-lang.org/wa/internal/app/apptest"
-	"wa-lang.org/wa/internal/app/appwasm2wat"
+	"wa-lang.org/wa/internal/app/appwat2c"
 	"wa-lang.org/wa/internal/app/appwat2wasm"
 	"wa-lang.org/wa/internal/app/appwatstrip"
 	"wa-lang.org/wa/internal/app/appyacc"
@@ -105,8 +105,8 @@ func main() {
 		appast.CmdAst,
 		appssa.CmdSsa,
 		appwat2wasm.CmdWat2wasm,
-		appwasm2wat.CmdWasm2wat,
 		appwatstrip.CmdWatStrip,
+		appwat2c.CmdWat2c,
 
 		// 待完善的子命令(隐藏)
 		appgo2wa.CmdGo2wa,

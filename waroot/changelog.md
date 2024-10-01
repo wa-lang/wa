@@ -2,6 +2,7 @@
 
 - (dev)
   - 完善 `wa lsp` 子命令 (TODO)
+  - 支持 `wat2c` 命令(TODO)
 - v0.17.0 (2024-10-??)
   - 恢复 Arduino Nano 33 支持
   - 预定义常量统一用大写字母, 并增加 `__COLUMN__` 常量
