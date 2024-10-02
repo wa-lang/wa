@@ -47,10 +47,10 @@ func (p *wat2cWorker) BuildCode() (code, header []byte, err error) {
 	p.h.Reset()
 	p.c.Reset()
 
-	if err := p.buildHeader(); err != nil {
+	if err := p.buildCode(); err != nil {
 		return nil, nil, err
 	}
-	if err := p.buildCode(); err != nil {
+	if err := p.buildHeader(); err != nil {
 		return nil, nil, err
 	}
 

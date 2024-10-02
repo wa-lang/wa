@@ -24,10 +24,8 @@ func (p *wat2cWorker) buildHeader() error {
 		return nil
 	}
 
-	fmt.Fprintf(&p.h, "// module %s header file\n", p.m.Name)
-
 	for _, e := range funcs {
-		fmt.Fprintf(&p.h, "// extern void %s();\n", e.Name)
+		fmt.Fprintf(&p.h, "// extern void %s();\n", toCName(e.Name))
 	}
 
 	return nil
