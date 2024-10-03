@@ -4,12 +4,13 @@ package wat2c
 
 import (
 	"fmt"
+	"io"
 
 	"wa-lang.org/wa/internal/wat/ast"
 	"wa-lang.org/wa/internal/wat/token"
 )
 
-func (p *wat2cWorker) buildHeader() error {
+func (p *wat2cWorker) buildHeader(w io.Writer) error {
 	if len(p.m.Exports) == 0 {
 		return nil
 	}
@@ -25,7 +26,7 @@ func (p *wat2cWorker) buildHeader() error {
 	}
 
 	for _, e := range funcs {
-		fmt.Fprintf(&p.h, "// extern void %s();\n", toCName(e.Name))
+		fmt.Fprintf(w, "// extern void %s();\n", toCName(e.Name))
 	}
 
 	return nil

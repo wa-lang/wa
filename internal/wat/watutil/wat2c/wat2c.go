@@ -28,9 +28,6 @@ type wat2cWorker struct {
 	inlinedTypes       []*wasm.FunctionType
 
 	labelScope []string // 嵌套的lebel查询, if/block/loop
-
-	h bytes.Buffer
-	c bytes.Buffer
 }
 
 type inlinedTypeIndex struct {
@@ -44,15 +41,15 @@ func newWat2cWorker(mWat *ast.Module) *wat2cWorker {
 }
 
 func (p *wat2cWorker) BuildCode() (code, header []byte, err error) {
-	p.h.Reset()
-	p.c.Reset()
+	var h bytes.Buffer
+	var c bytes.Buffer
 
-	if err := p.buildCode(); err != nil {
+	if err := p.buildCode(&c); err != nil {
 		return nil, nil, err
 	}
-	if err := p.buildHeader(); err != nil {
+	if err := p.buildHeader(&h); err != nil {
 		return nil, nil, err
 	}
 
-	return p.c.Bytes(), p.h.Bytes(), nil
+	return c.Bytes(), h.Bytes(), nil
 }
