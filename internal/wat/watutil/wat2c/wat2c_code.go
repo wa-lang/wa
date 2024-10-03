@@ -42,15 +42,15 @@ func (p *wat2cWorker) buildMemory() error {
 		fmt.Fprintf(&p.c, "// memory $%s\n", p.m.Memory.Name)
 	}
 	if max := p.m.Memory.MaxPages; max > 0 {
-		fmt.Fprintf(&p.c, "static uint8_t   wasm_rt_memoy[%d*64*1024];\n", max)
-		fmt.Fprintf(&p.c, "static int       wasm_rt_memoy_size = %d;\n", p.m.Memory.Pages)
-		fmt.Fprintf(&p.c, "static const int wasm_rt_memoy_max_pages = %d;\n", max)
-		fmt.Fprintf(&p.c, "static const int wasm_rt_memoy_pages = %d;\n", p.m.Memory.Pages)
+		fmt.Fprintf(&p.c, "static uint8_t   wasm_memoy[%d*64*1024];\n", max)
+		fmt.Fprintf(&p.c, "static int       wasm_memoy_size = %d;\n", p.m.Memory.Pages)
+		fmt.Fprintf(&p.c, "static const int wasm_memoy_max_pages = %d;\n", max)
+		fmt.Fprintf(&p.c, "static const int wasm_memoy_pages = %d;\n", p.m.Memory.Pages)
 	} else {
-		fmt.Fprintf(&p.c, "static uint8_t   wasm_rt_memoy[%d*64*1024];\n", p.m.Memory.Pages)
-		fmt.Fprintf(&p.c, "static int       wasm_rt_memoy_size = %d;\n", p.m.Memory.Pages)
-		fmt.Fprintf(&p.c, "static const int wasm_rt_memoy_max_pages = %d;\n", p.m.Memory.Pages)
-		fmt.Fprintf(&p.c, "static const int wasm_rt_memoy_pages = %d;\n", p.m.Memory.Pages)
+		fmt.Fprintf(&p.c, "static uint8_t   wasm_memoy[%d*64*1024];\n", p.m.Memory.Pages)
+		fmt.Fprintf(&p.c, "static int       wasm_memoy_size = %d;\n", p.m.Memory.Pages)
+		fmt.Fprintf(&p.c, "static const int wasm_memoy_max_pages = %d;\n", p.m.Memory.Pages)
+		fmt.Fprintf(&p.c, "static const int wasm_memoy_pages = %d;\n", p.m.Memory.Pages)
 	}
 	fmt.Fprintln(&p.c)
 	return nil
@@ -89,27 +89,27 @@ func (p *wat2cWorker) buildGlobal() error {
 		switch g.Type {
 		case token.I32:
 			if g.Mutable {
-				fmt.Fprintf(&p.c, "static int32_t wasm_global_%s = %d;\n", toCName(g.Name), g.I32Value)
+				fmt.Fprintf(&p.c, "static int32_t var_%s = %d;\n", toCName(g.Name), g.I32Value)
 			} else {
-				fmt.Fprintf(&p.c, "static const int32_t wasm_global_%s = %d;\n", toCName(g.Name), g.I32Value)
+				fmt.Fprintf(&p.c, "static const int32_t var_%s = %d;\n", toCName(g.Name), g.I32Value)
 			}
 		case token.I64:
 			if g.Mutable {
-				fmt.Fprintf(&p.c, "static int64_t wasm_global_%s = %d;\n", toCName(g.Name), g.I64Value)
+				fmt.Fprintf(&p.c, "static int64_t var_%s = %d;\n", toCName(g.Name), g.I64Value)
 			} else {
-				fmt.Fprintf(&p.c, "static const int64_t wasm_global_%s = %d;\n", toCName(g.Name), g.I64Value)
+				fmt.Fprintf(&p.c, "static const int64_t var_%s = %d;\n", toCName(g.Name), g.I64Value)
 			}
 		case token.F32:
 			if g.Mutable {
-				fmt.Fprintf(&p.c, "static float wasm_global_%s = %f;\n", toCName(g.Name), g.F32Value)
+				fmt.Fprintf(&p.c, "static float var_%s = %f;\n", toCName(g.Name), g.F32Value)
 			} else {
-				fmt.Fprintf(&p.c, "static const float wasm_global_%s = %f;\n", toCName(g.Name), g.F32Value)
+				fmt.Fprintf(&p.c, "static const float var_%s = %f;\n", toCName(g.Name), g.F32Value)
 			}
 		case token.F64:
 			if g.Mutable {
-				fmt.Fprintf(&p.c, "static double wasm_global_%s = %f;\n", toCName(g.Name), g.F64Value)
+				fmt.Fprintf(&p.c, "static double var_%s = %f;\n", toCName(g.Name), g.F64Value)
 			} else {
-				fmt.Fprintf(&p.c, "static const double wasm_global_%s = %f;\n", toCName(g.Name), g.F64Value)
+				fmt.Fprintf(&p.c, "static const double var_%s = %f;\n", toCName(g.Name), g.F64Value)
 			}
 		default:
 			return fmt.Errorf("unsupported global type: %s", g.Type)
@@ -146,7 +146,7 @@ func (p *wat2cWorker) buildFuncs() error {
 		fmt.Fprintln(&p.c)
 
 		// 返回值通过栈传递, 返回入栈的个数
-		fmt.Fprintf(&p.c, "static int %s(uint64_t $result[]", toCName(f.Name))
+		fmt.Fprintf(&p.c, "static int fn_%s(int64_t $result[]", toCName(f.Name))
 		if len(f.Type.Params) > 0 {
 			for i, x := range f.Type.Params {
 				if x.Name != "" {
@@ -182,7 +182,7 @@ func (p *wat2cWorker) buildFuncs() error {
 		fmt.Fprintln(&p.c)
 
 		// 返回值通过栈传递, 返回入栈的个数
-		fmt.Fprintf(&p.c, "static int %s(uint64_t $result[]", toCName(f.Name))
+		fmt.Fprintf(&p.c, "static int fn_%s(int64_t $result[]", toCName(f.Name))
 		if len(f.Type.Params) > 0 {
 			for i, x := range f.Type.Params {
 				if x.Name != "" {
@@ -193,7 +193,9 @@ func (p *wat2cWorker) buildFuncs() error {
 			}
 		}
 		fmt.Fprintf(&p.c, ") {\n")
-		fmt.Fprintf(&p.c, "\t// TODO\n")
+		if err := p.buildFunc_body(f); err != nil {
+			return err
+		}
 		fmt.Fprintf(&p.c, "}\n\n")
 	}
 
