@@ -135,14 +135,14 @@
   call $runtime.Block.Init
 )
 
-(func $runtime.DupI32 (param i32) (result i32 i32) ;;r0 = r1 = p0
-	local.get 0
-	local.get 0
+(func $runtime.DupI32 (param $a i32) (result i32 i32) ;;r0 = r1 = p0
+	local.get $a
+	local.get $a
 )
 
-(func $runtime.SwapI32 (param i32 i32) (result i32 i32) ;;r0 = p1, r1 = p0
-	local.get 1
-	local.get 0
+(func $runtime.SwapI32 (param $a i32) (param $b i32) (result i32 i32) ;;r0 = p1, r1 = p0
+	local.get $b
+	local.get $a
 )
 
 (func $runtime.Block.Retain (export "runtime.Block.Retain") (param $ptr i32) (result i32) ;;result = ptr
