@@ -143,7 +143,7 @@ func addFuncs(
 	}
 	moduleName := m.NameSection.ModuleName
 	nameToFunc := make(map[string]*HostFunc, len(nameToGoFunc))
-	sortedExportNames := make([]string, len(nameToFunc))
+	sortedExportNames := make([]string, 0, len(nameToFunc))
 	for k := range nameToGoFunc {
 		sortedExportNames = append(sortedExportNames, k)
 	}
@@ -151,7 +151,7 @@ func addFuncs(
 	// Sort names for consistent iteration
 	sort.Strings(sortedExportNames)
 
-	funcNames := make([]string, len(nameToFunc))
+	funcNames := make([]string, 0, len(nameToFunc))
 	for _, k := range sortedExportNames {
 		v := nameToGoFunc[k]
 		if hf, ok := v.(*HostFunc); ok {
