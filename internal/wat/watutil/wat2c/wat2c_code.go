@@ -16,7 +16,9 @@ func (p *wat2cWorker) buildCode(w io.Writer) error {
 		fmt.Fprintf(w, "// module %s\n\n", p.m.Name)
 	}
 
-	fmt.Fprintf(w, "#include <stdint.h>\n\n")
+	fmt.Fprintf(w, "#include <stdint.h>\n")
+	fmt.Fprintf(w, "#include <string.h>\n")
+	fmt.Fprintln(w)
 
 	fmt.Fprintf(w, "typedef union wasm_val_t {\n")
 	fmt.Fprintf(w, "  int64_t i64;\n")

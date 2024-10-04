@@ -282,20 +282,40 @@ func (p *wat2cWorker) buildFunc_ins(w io.Writer, fnType *ast.FuncType, stk *valu
 		assert(stk.Len() == stkLen)
 	case token.INS_I32_STORE:
 		stkLen := stk.Len()
-		fmt.Fprintf(w, "%s// todo: %T\n", indent, i)
-		assert(stk.Len() == stkLen)
+		assert(stkLen >= 2)
+		i := i.(ast.Ins_I32Store)
+		fmt.Fprintf(w, "%smemcpy(&wasm_memoy[$reg[%d].i32+%d], &$reg[%d].i32, 4);\n",
+			indent, stk.TopIdx()-1, i.Offset, stk.TopIdx(),
+		)
+		stk.PopN(2)
+		assert(stk.Len() == stkLen-2)
 	case token.INS_I64_STORE:
 		stkLen := stk.Len()
-		fmt.Fprintf(w, "%s// todo: %T\n", indent, i)
-		assert(stk.Len() == stkLen)
+		assert(stkLen >= 2)
+		i := i.(ast.Ins_I64Store)
+		fmt.Fprintf(w, "%smemcpy(&wasm_memoy[$reg[%d].i32+%d], &$reg[%d].i64, 8);\n",
+			indent, stk.TopIdx()-1, i.Offset, stk.TopIdx(),
+		)
+		stk.PopN(2)
+		assert(stk.Len() == stkLen-2)
 	case token.INS_F32_STORE:
 		stkLen := stk.Len()
-		fmt.Fprintf(w, "%s// todo: %T\n", indent, i)
-		assert(stk.Len() == stkLen)
+		assert(stkLen >= 2)
+		i := i.(ast.Ins_F32Store)
+		fmt.Fprintf(w, "%smemcpy(&wasm_memoy[$reg[%d].i32+%d], &$reg[%d].f32, 4);\n",
+			indent, stk.TopIdx()-1, i.Offset, stk.TopIdx(),
+		)
+		stk.PopN(2)
+		assert(stk.Len() == stkLen-2)
 	case token.INS_F64_STORE:
 		stkLen := stk.Len()
-		fmt.Fprintf(w, "%s// todo: %T\n", indent, i)
-		assert(stk.Len() == stkLen)
+		assert(stkLen >= 2)
+		i := i.(ast.Ins_F64Store)
+		fmt.Fprintf(w, "%smemcpy(&wasm_memoy[$reg[%d].i32+%d], &$reg[%d].f64, 8);\n",
+			indent, stk.TopIdx()-1, i.Offset, stk.TopIdx(),
+		)
+		stk.PopN(2)
+		assert(stk.Len() == stkLen-2)
 	case token.INS_I32_STORE8:
 		stkLen := stk.Len()
 		fmt.Fprintf(w, "%s// todo: %T\n", indent, i)
