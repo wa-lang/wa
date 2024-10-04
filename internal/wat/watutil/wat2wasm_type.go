@@ -3,6 +3,7 @@
 package watutil
 
 import (
+	"fmt"
 	"strconv"
 
 	"wa-lang.org/wa/internal/3rdparty/wazero/internalx/wasm"
@@ -19,7 +20,7 @@ func (p *wat2wasmWorker) findTypeIndexByIdent(ident string) wasm.Index {
 			return p.mustFindFuncTypeIndex(x.Type)
 		}
 	}
-	return 0
+	panic(fmt.Sprintf("wat2wasm: unknown type %q", ident))
 }
 
 func (p *wat2wasmWorker) mustFindFuncTypeIndex(fnType *ast.FuncType) wasm.Index {

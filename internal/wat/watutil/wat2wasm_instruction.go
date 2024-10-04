@@ -138,12 +138,24 @@ func (p *wat2wasmWorker) buildInstruction(dst *wasm.Code, fn *ast.Func, i ast.In
 	case token.INS_DROP:
 		dst.Body = append(dst.Body, wasm.OpcodeDrop)
 	case token.INS_SELECT:
-		dst.Body = append(dst.Body, wasm.OpcodeSelect)
-	case token.INS_TYPED_SELECT:
-		ins := i.(ast.Ins_TypedSelect)
-		x := p.findTableIndex(ins.Typ)
-		dst.Body = append(dst.Body, wasm.OpcodeTypedSelect)
-		dst.Body = append(dst.Body, p.encodeUint32(x)...)
+		ins := i.(ast.Ins_Select)
+		if ins.ResultTyp != "" {
+			dst.Body = append(dst.Body, wasm.OpcodeTypedSelect)
+			switch ins.ResultTyp {
+			case "i32":
+				dst.Body = append(dst.Body, wasm.ValueTypeI32)
+			case "i64":
+				dst.Body = append(dst.Body, wasm.ValueTypeI64)
+			case "f32":
+				dst.Body = append(dst.Body, wasm.ValueTypeF32)
+			case "f64":
+				dst.Body = append(dst.Body, wasm.ValueTypeF64)
+			default:
+				panic("unreachable")
+			}
+		} else {
+			dst.Body = append(dst.Body, wasm.OpcodeSelect)
+		}
 
 	case token.INS_LOCAL_GET:
 		ins := i.(ast.Ins_LocalGet)

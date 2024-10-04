@@ -195,9 +195,12 @@ func (p *watPrinter) printFuncs_body_ins(fn *ast.Func, ins ast.Instruction, blkL
 	case token.INS_DROP:
 		fmt.Fprintln(p.w, tok)
 	case token.INS_SELECT:
-		fmt.Fprintln(p.w, tok)
-	case token.INS_TYPED_SELECT:
-		fmt.Fprintln(p.w, tok, p.identOrIndex(ins.(ast.Ins_TypedSelect).Typ))
+		insSelect := ins.(ast.Ins_Select)
+		if insSelect.ResultTyp != "" {
+			fmt.Fprintln(p.w, tok, "(result "+insSelect.ResultTyp+")")
+		} else {
+			fmt.Fprintln(p.w, tok)
+		}
 	case token.INS_LOCAL_GET:
 		fmt.Fprintln(p.w, tok, p.identOrIndex(ins.(ast.Ins_LocalGet).X))
 	case token.INS_LOCAL_SET:
