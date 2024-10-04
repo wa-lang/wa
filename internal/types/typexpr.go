@@ -700,7 +700,7 @@ func (check *Checker) structType(styp *Struct, e *ast.StructType) {
 	var tag string
 	add := func(ident *ast.Ident, embedded bool, pos token.Pos) {
 		if tag != "" && tags == nil {
-			tags = make([]string, len(fields))
+			tags = make([]string, 0, len(fields))
 		}
 		if tags != nil {
 			tags = append(tags, tag)
