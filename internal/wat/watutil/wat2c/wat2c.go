@@ -27,6 +27,7 @@ type wat2cWorker struct {
 	inlinedTypeIndices []*inlinedTypeIndex
 	inlinedTypes       []*wasm.FunctionType
 
+	localNames []string // 参数和局部变量名
 	labelScope []string // 嵌套的lebel查询, if/block/loop
 }
 

@@ -231,6 +231,9 @@ func (p *wat2cWorker) buildFuncs(w io.Writer) error {
 
 	// 函数的实现
 	for _, f := range p.m.Funcs {
+		p.localNames = nil
+		p.labelScope = nil
+
 		fmt.Fprintf(w, "// func %s", f.Name)
 		if len(f.Type.Params) > 0 {
 			for i, x := range f.Type.Params {
@@ -254,11 +257,15 @@ func (p *wat2cWorker) buildFuncs(w io.Writer) error {
 		fmt.Fprintf(w, "static int fn_%s(wasm_val_t $result[]", toCName(f.Name))
 		if len(f.Type.Params) > 0 {
 			for i, x := range f.Type.Params {
+				var argName string
 				if x.Name != "" {
-					fmt.Fprintf(w, ", wasm_val_t %v", toCName(x.Name))
+					argName = toCName(x.Name)
 				} else {
-					fmt.Fprintf(w, ", %v $arg%d", toCType(x.Type), i)
+					argName = fmt.Sprintf("$arg%d", i)
 				}
+
+				p.localNames = append(p.localNames, argName)
+				fmt.Fprintf(w, ", wasm_val_t %v", argName)
 			}
 		}
 		fmt.Fprintf(w, ") {\n")

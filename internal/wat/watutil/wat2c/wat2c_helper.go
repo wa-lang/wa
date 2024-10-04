@@ -8,6 +8,26 @@ import (
 	"wa-lang.org/wa/internal/wat/token"
 )
 
+func (p *wat2cWorker) findLocalName(fn *ast.Func, ident string) string {
+	if idx, err := strconv.Atoi(ident); err == nil {
+		if idx < 0 || idx >= len(fn.Type.Params)+len(fn.Body.Locals) {
+			panic(fmt.Sprintf("wat2c: unknown local %q", ident))
+		}
+		return p.localNames[idx]
+	}
+	for idx, arg := range fn.Type.Params {
+		if arg.Name == ident {
+			return p.localNames[idx]
+		}
+	}
+	for idx, arg := range fn.Body.Locals {
+		if arg.Name == ident {
+			return p.localNames[len(fn.Type.Params)+idx]
+		}
+	}
+	panic("unreachable")
+}
+
 func (p *wat2cWorker) findType(ident string) *ast.FuncType {
 	if idx, err := strconv.Atoi(ident); err == nil {
 		if idx < 0 || idx >= len(p.m.Types) {

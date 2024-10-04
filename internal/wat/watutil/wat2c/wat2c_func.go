@@ -16,9 +16,13 @@ func (p *wat2cWorker) buildFunc_body(w io.Writer, fn *ast.Func) error {
 	var stk valueTypeStack
 	var bufIns bytes.Buffer
 
+	p.labelScope = nil
+
 	if len(fn.Body.Locals) > 0 {
 		for _, x := range fn.Body.Locals {
-			fmt.Fprintf(&bufIns, "  wasm_val_t %s = {0}; // %s\n", toCName(x.Name), x.Name)
+			localName := toCName(x.Name)
+			p.localNames = append(p.localNames, localName)
+			fmt.Fprintf(&bufIns, "  wasm_val_t %s = {0}; // %s\n", localName, x.Name)
 		}
 		fmt.Fprintln(&bufIns)
 	}
