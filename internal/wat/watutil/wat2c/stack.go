@@ -12,23 +12,30 @@ type valueTypeStack struct {
 	maxStackPointer int
 }
 
-func (s *valueTypeStack) maxDepth() int {
+func (s *valueTypeStack) Len() int {
+	return len(s.stack)
+}
+
+func (s *valueTypeStack) MaxDepth() int {
 	return s.maxStackPointer
 }
-func (s *valueTypeStack) push(v token.Token) {
+func (s *valueTypeStack) Push(v token.Token) {
 	s.stack = append(s.stack, v)
 	if sp := len(s.stack); sp > s.maxStackPointer {
 		s.maxStackPointer = sp
 	}
 }
 
-func (s *valueTypeStack) pop() (vt token.Token) {
+func (s *valueTypeStack) Pop() (vt token.Token) {
+	if len(s.stack) == 0 {
+		return // todo: panic
+	}
 	vt = s.stack[len(s.stack)-1]
 	s.stack = s.stack[:len(s.stack)-1]
 	return
 }
 
-func (s *valueTypeStack) pushN(n int) {
+func (s *valueTypeStack) PushN(n int) {
 	for i := 0; i < n; i++ {
 		s.stack = append(s.stack, 0)
 	}
@@ -36,11 +43,11 @@ func (s *valueTypeStack) pushN(n int) {
 		s.maxStackPointer = sp
 	}
 }
-func (s *valueTypeStack) popN(dx int) {
+func (s *valueTypeStack) PopN(dx int) {
 	s.stack = s.stack[:len(s.stack)-dx]
 	return
 }
 
-func (s *valueTypeStack) nop() {
+func (s *valueTypeStack) Nop() {
 	// 栈不变化
 }

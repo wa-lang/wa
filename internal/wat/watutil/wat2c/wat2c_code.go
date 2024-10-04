@@ -18,6 +18,13 @@ func (p *wat2cWorker) buildCode(w io.Writer) error {
 
 	fmt.Fprintf(w, "#include <stdint.h>\n\n")
 
+	fmt.Fprintf(w, "typedef union wasm_reg_t {\n")
+	fmt.Fprintf(w, "  int64_t i64;\n")
+	fmt.Fprintf(w, "  double  f64;\n")
+	fmt.Fprintf(w, "  int32_t i32;\n")
+	fmt.Fprintf(w, "  float   f32;\n")
+	fmt.Fprintf(w, "} wasm_reg_t;\n\n")
+
 	if err := p.buildMemory(w); err != nil {
 		return err
 	}
@@ -147,7 +154,7 @@ func (p *wat2cWorker) buildFuncs(w io.Writer) error {
 		fmt.Fprintln(w)
 
 		// 返回值通过栈传递, 返回入栈的个数
-		fmt.Fprintf(w, "static int fn_%s(int64_t $result[]", toCName(f.Name))
+		fmt.Fprintf(w, "static int fn_%s(wasm_reg_t $result[]", toCName(f.Name))
 		if len(f.Type.Params) > 0 {
 			for i, x := range f.Type.Params {
 				if x.Name != "" {
@@ -183,7 +190,7 @@ func (p *wat2cWorker) buildFuncs(w io.Writer) error {
 		fmt.Fprintln(w)
 
 		// 返回值通过栈传递, 返回入栈的个数
-		fmt.Fprintf(w, "static int fn_%s(int64_t $result[]", toCName(f.Name))
+		fmt.Fprintf(w, "static int fn_%s(wasm_reg_t $result[]", toCName(f.Name))
 		if len(f.Type.Params) > 0 {
 			for i, x := range f.Type.Params {
 				if x.Name != "" {

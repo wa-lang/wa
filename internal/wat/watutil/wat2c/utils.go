@@ -1,11 +1,22 @@
 package wat2c
 
 import (
+	"fmt"
 	"strconv"
 	"strings"
 
 	"wa-lang.org/wa/internal/wat/token"
 )
+
+func assert(condition bool, args ...interface{}) {
+	if !condition {
+		if msg := fmt.Sprint(args...); msg != "" {
+			println(fmt.Sprintf("assert failed, %s", msg)) // todo: panic
+		} else {
+			println(fmt.Sprint("assert failed")) // todo: panic
+		}
+	}
+}
 
 func toCType(typ token.Token) string {
 	switch typ {
