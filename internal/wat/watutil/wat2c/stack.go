@@ -12,6 +12,10 @@ type valueTypeStack struct {
 	maxStackPointer int
 }
 
+func (s *valueTypeStack) TopIdx() int {
+	return len(s.stack) - 1
+}
+
 func (s *valueTypeStack) Len() int {
 	return len(s.stack)
 }

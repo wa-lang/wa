@@ -18,8 +18,7 @@ func (p *wat2cWorker) buildFunc_body(w io.Writer, fn *ast.Func) error {
 
 	if len(fn.Body.Locals) > 0 {
 		for _, x := range fn.Body.Locals {
-			fmt.Fprintf(&bufIns, "  // local %s: %s\n", x.Name, x.Type)
-			fmt.Fprintf(&bufIns, "  %s var_%s = 0;\n", toCType(x.Type), toCName(x.Name))
+			fmt.Fprintf(&bufIns, "  wasm_val_t %s = {0}; // %s\n", toCName(x.Name), x.Name)
 		}
 		fmt.Fprintln(&bufIns)
 	}
@@ -32,7 +31,10 @@ func (p *wat2cWorker) buildFunc_body(w io.Writer, fn *ast.Func) error {
 
 	// 未使用的可以省略
 	if stkMaxDepth := stk.MaxDepth(); stkMaxDepth > 0 {
-		fmt.Fprintf(w, "  wasm_reg_t $reg[%d];\n", stkMaxDepth)
+		fmt.Fprintf(w, "  wasm_val_t $reg[%d];\n", stkMaxDepth)
+		fmt.Fprintln(w)
+	} else {
+		fmt.Fprintf(w, "  wasm_val_t $reg[%d];\n", 1)
 		fmt.Fprintln(w)
 	}
 
@@ -52,7 +54,11 @@ func (p *wat2cWorker) buildFunc_ins(w io.Writer, fnType *ast.FuncType, stk *valu
 		fmt.Fprintf(w, "%s(0); // %s\n", indent, tok)
 	case token.INS_BLOCK:
 		i := i.(ast.Ins_Block)
-		fmt.Fprintf(w, "%s{ // block\n", indent)
+		if i.Label != "" {
+			fmt.Fprintf(w, "%s{ // block $%s\n", indent, i.Label)
+		} else {
+			fmt.Fprintf(w, "%s{ // block\n", indent)
+		}
 		for _, ins := range i.List {
 			if err := p.buildFunc_ins(w, fnType, stk, ins, level+1); err != nil {
 				return err
@@ -65,7 +71,11 @@ func (p *wat2cWorker) buildFunc_ins(w io.Writer, fnType *ast.FuncType, stk *valu
 		stkLen := stk.Len()
 		i := i.(ast.Ins_Loop)
 		fmt.Fprintf(w, "L_%s_next:\n", toCName(i.Label))
-		fmt.Fprintf(w, "%s{ // loop\n", indent)
+		if i.Label != "" {
+			fmt.Fprintf(w, "%s{ // loop $%s\n", indent, i.Label)
+		} else {
+			fmt.Fprintf(w, "%s{ // loop\n", indent)
+		}
 		for _, ins := range i.List {
 			if err := p.buildFunc_ins(w, fnType, stk, ins, level+1); err != nil {
 				return err
@@ -124,22 +134,30 @@ func (p *wat2cWorker) buildFunc_ins(w io.Writer, fnType *ast.FuncType, stk *valu
 		assert(stk.Len() == stkLen)
 	case token.INS_RETURN:
 		stkLen := stk.Len()
-
-		for _, result := range fnType.Results {
-			_ = result
-			// todo: 等其他指令完整后再处理
-			//if vt := stk.pop(); vt != result {
-			//	panic(fmt.Sprintf("unreachable: %v != %v", vt, result))
-			//}
+		assert(stkLen == len(fnType.Results))
+		for i := 0; i < len(fnType.Results); i++ {
+			fmt.Fprintf(w, "%s$result[%d] = $reg[%d];\n", indent, i, i)
 		}
-		fmt.Fprintf(w, "%s// todo: %T\n", indent, i)
-		assert(stk.Len() == stkLen)
+		fmt.Fprintf(w, "%sreturn %d;\n", indent, len(fnType.Results))
+		stk.PopN(len(fnType.Results))
+		assert(stk.Len() == 0)
 	case token.INS_CALL:
 		stkLen := stk.Len()
+		i := i.(ast.Ins_Call)
 
-		// todo: 要准备的函数参数个数
-		fmt.Fprintf(w, "%s// todo: %T\n", indent, i)
-		assert(stk.Len() == stkLen)
+		fnType := p.findFuncType(i.X)
+		assert(stkLen >= len(fnType.Params))
+
+		stk.PopN(len(fnType.Params))
+		resultOff := stk.Len()
+		stk.PushN(len(fnType.Results))
+
+		fmt.Fprintf(w, "%s((wasm_func_t)(fn_%s))(&$reg[%d]", indent, toCName(i.X), resultOff)
+		for i := 0; i < len(fnType.Params); i++ {
+			fmt.Fprintf(w, ", $reg[%d]", resultOff+i)
+		}
+		fmt.Fprintf(w, ");\n")
+
 	case token.INS_CALL_INDIRECT:
 		stkLen := stk.Len()
 
@@ -166,33 +184,34 @@ func (p *wat2cWorker) buildFunc_ins(w io.Writer, fnType *ast.FuncType, stk *valu
 		assert(stk.Len() == stkLen)
 	case token.INS_LOCAL_GET:
 		stkLen := stk.Len()
-
+		i := i.(ast.Ins_LocalGet)
 		stk.PushN(1)
-		fmt.Fprintf(w, "%s// todo: %T\n", indent, i)
-		assert(stk.Len() == stkLen)
+		// todo: 统一 arg/local/num 几种类型 name
+		fmt.Fprintf(w, "%s$reg[%d] = %s;\n", indent, stk.TopIdx(), toCName(i.X))
+		assert(stk.Len() == stkLen+1)
 	case token.INS_LOCAL_SET:
 		stkLen := stk.Len()
-
-		//stk.pop()
-		fmt.Fprintf(w, "%s// todo: %T\n", indent, i)
-		assert(stk.Len() == stkLen)
+		i := i.(ast.Ins_LocalSet)
+		fmt.Fprintf(w, "%s%s = $reg[%d];\n", indent, toCName(i.X), stk.TopIdx())
+		stk.Pop()
+		assert(stk.Len() == stkLen-1)
 	case token.INS_LOCAL_TEE:
 		stkLen := stk.Len()
-
-		//stk.push(stk.pop())
-		fmt.Fprintf(w, "%s// todo: %T\n", indent, i)
+		i := i.(ast.Ins_LocalTee)
+		fmt.Fprintf(w, "%s%s = $reg[%d];\n", indent, toCName(i.X), stk.TopIdx())
 		assert(stk.Len() == stkLen)
 	case token.INS_GLOBAL_GET:
 		stkLen := stk.Len()
-
+		i := i.(ast.Ins_GlobalGet)
 		stk.PushN(1)
-		fmt.Fprintf(w, "%s// todo: %T\n", indent, i)
-		assert(stk.Len() == stkLen)
+		fmt.Fprintf(w, "%s$reg[%d] = var_%s;\n", indent, stk.TopIdx(), toCName(i.X))
+		assert(stk.Len() == stkLen+1)
 	case token.INS_GLOBAL_SET:
 		stkLen := stk.Len()
-		//stk.pop()
-		fmt.Fprintf(w, "%s// todo: %T\n", indent, i)
-		assert(stk.Len() == stkLen)
+		i := i.(ast.Ins_GlobalSet)
+		fmt.Fprintf(w, "%svar_%s = $reg[%d];\n", indent, toCName(i.X), stk.TopIdx())
+		stk.Pop()
+		assert(stk.Len() == stkLen-1)
 	case token.INS_TABLE_GET:
 		stkLen := stk.Len()
 		fmt.Fprintf(w, "%s// todo: %T\n", indent, i)
@@ -307,24 +326,36 @@ func (p *wat2cWorker) buildFunc_ins(w io.Writer, fnType *ast.FuncType, stk *valu
 		assert(stk.Len() == stkLen)
 	case token.INS_I32_CONST:
 		stkLen := stk.Len()
-		fmt.Fprintf(w, "%s// todo: %T\n", indent, i)
-		assert(stk.Len() == stkLen)
+		i := i.(ast.Ins_I32Const)
+		stk.PushN(1)
+		fmt.Fprintf(w, "%s$reg[%d].i32 = %d;\n", indent, stk.TopIdx(), i.X)
+		assert(stk.Len() == stkLen+1)
 	case token.INS_I64_CONST:
 		stkLen := stk.Len()
-		fmt.Fprintf(w, "%s// todo: %T\n", indent, i)
-		assert(stk.Len() == stkLen)
+		i := i.(ast.Ins_I64Const)
+		stk.PushN(1)
+		fmt.Fprintf(w, "%s$reg[%d].i64 = %d;\n", indent, stk.TopIdx(), i.X)
+		assert(stk.Len() == stkLen+1)
 	case token.INS_F32_CONST:
 		stkLen := stk.Len()
-		fmt.Fprintf(w, "%s// todo: %T\n", indent, i)
-		assert(stk.Len() == stkLen)
+		i := i.(ast.Ins_F32Const)
+		stk.PushN(1)
+		fmt.Fprintf(w, "%s$reg[%d].f32 = %f;\n", indent, stk.TopIdx(), i.X)
+		assert(stk.Len() == stkLen+1)
 	case token.INS_F64_CONST:
 		stkLen := stk.Len()
-		fmt.Fprintf(w, "%s// todo: %T\n", indent, i)
-		assert(stk.Len() == stkLen)
+		i := i.(ast.Ins_F64Const)
+		stk.PushN(1)
+		fmt.Fprintf(w, "%s$reg[%d].f64 = %f;\n", indent, stk.TopIdx(), i.X)
+		assert(stk.Len() == stkLen+1)
 	case token.INS_I32_EQZ:
 		stkLen := stk.Len()
-		fmt.Fprintf(w, "%s// todo: %T\n", indent, i)
+		assert(stkLen >= 1)
+		fmt.Fprintf(w, "%s$reg[%d].i32 = $reg[%d].i32==0? 1: 0;\n",
+			indent, stk.TopIdx(), stk.TopIdx(),
+		)
 		assert(stk.Len() == stkLen)
+
 	case token.INS_I32_EQ:
 		stkLen := stk.Len()
 		fmt.Fprintf(w, "%s// todo: %T\n", indent, i)
@@ -471,12 +502,20 @@ func (p *wat2cWorker) buildFunc_ins(w io.Writer, fnType *ast.FuncType, stk *valu
 		assert(stk.Len() == stkLen)
 	case token.INS_I32_ADD:
 		stkLen := stk.Len()
-		fmt.Fprintf(w, "%s// todo: %T\n", indent, i)
-		assert(stk.Len() == stkLen)
+		assert(stkLen >= 2)
+		fmt.Fprintf(w, "%s$reg[%d].i32 += $reg[%d].i32;\n",
+			indent, stk.TopIdx()-1, stk.TopIdx(),
+		)
+		stk.Pop()
+		assert(stk.Len() == stkLen-1)
 	case token.INS_I32_SUB:
 		stkLen := stk.Len()
-		fmt.Fprintf(w, "%s// todo: %T\n", indent, i)
-		assert(stk.Len() == stkLen)
+		assert(stkLen >= 2)
+		fmt.Fprintf(w, "%s$reg[%d].i32 -= $reg[%d].i32;\n",
+			indent, stk.TopIdx()-1, stk.TopIdx(),
+		)
+		stk.Pop()
+		assert(stk.Len() == stkLen-1)
 	case token.INS_I32_MUL:
 		stkLen := stk.Len()
 		fmt.Fprintf(w, "%s// todo: %T\n", indent, i)

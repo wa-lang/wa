@@ -34,7 +34,30 @@ func toCType(typ token.Token) string {
 }
 
 // 生成C语言的标识符
+func toCGlobalName(name string) string {
+	return "g_" + toCName(name)
+}
+func toCFuncName(name string) string {
+	return "f_" + toCName(name)
+}
+func toCFuncArgName(name string) string {
+	return "a_" + toCName(name)
+}
+func toCFuncLocalName(name string) string {
+	return "v_" + toCName(name)
+}
+func toCFuncLabelName(name string) string {
+	return "L_" + toCName(name)
+}
+
 func toCName(name string) string {
+	if name == "" {
+		return name
+	}
+	if c := name[0]; c >= '0' && c <= '9' {
+		return name
+	}
+
 	var sb strings.Builder
 	for _, c := range ([]rune)(name) {
 		switch {
