@@ -770,15 +770,21 @@ func (p *wat2cWorker) buildFunc_ins(w io.Writer, fn *ast.Func, stk *valueTypeSta
 		assert(stk.Len() == stkLen-1)
 	case token.INS_I32_CLZ:
 		stkLen := stk.Len()
-		fmt.Fprintf(w, "%s// todo: %T\n", indent, i)
+		fmt.Fprintf(w, "%s$reg[%d].i32 = I32_CLZ($reg[%d].i32);\n",
+			indent, stk.TopIdx(), stk.TopIdx(),
+		)
 		assert(stk.Len() == stkLen)
 	case token.INS_I32_CTZ:
 		stkLen := stk.Len()
-		fmt.Fprintf(w, "%s// todo: %T\n", indent, i)
+		fmt.Fprintf(w, "%s$reg[%d].i32 = I32_CTZ($reg[%d].i32);\n",
+			indent, stk.TopIdx(), stk.TopIdx(),
+		)
 		assert(stk.Len() == stkLen)
 	case token.INS_I32_POPCNT:
 		stkLen := stk.Len()
-		fmt.Fprintf(w, "%s// todo: %T\n", indent, i)
+		fmt.Fprintf(w, "%s$reg[%d].i32 = I32_POPCNT($reg[%d].u32);\n",
+			indent, stk.TopIdx(), stk.TopIdx(),
+		)
 		assert(stk.Len() == stkLen)
 	case token.INS_I32_ADD:
 		stkLen := stk.Len()
@@ -886,23 +892,35 @@ func (p *wat2cWorker) buildFunc_ins(w io.Writer, fn *ast.Func, stk *valueTypeSta
 		assert(stk.Len() == stkLen-1)
 	case token.INS_I32_ROTL:
 		stkLen := stk.Len()
-		fmt.Fprintf(w, "%s// todo: %T\n", indent, i)
-		assert(stk.Len() == stkLen)
+		fmt.Fprintf(w, "%s$reg[%d].i32 = I32_ROTL($reg[%d].i32, $reg[%d].i32);\n",
+			indent, stk.TopIdx(), stk.TopIdx(), stk.TopIdx()-1,
+		)
+		stk.Pop()
+		assert(stk.Len() == stkLen-1)
 	case token.INS_I32_ROTR:
 		stkLen := stk.Len()
-		fmt.Fprintf(w, "%s// todo: %T\n", indent, i)
-		assert(stk.Len() == stkLen)
+		fmt.Fprintf(w, "%s$reg[%d].i32 = I32_ROTR($reg[%d].i32, $reg[%d].i32);\n",
+			indent, stk.TopIdx(), stk.TopIdx(), stk.TopIdx()-1,
+		)
+		stk.Pop()
+		assert(stk.Len() == stkLen-1)
 	case token.INS_I64_CLZ:
 		stkLen := stk.Len()
-		fmt.Fprintf(w, "%s// todo: %T\n", indent, i)
+		fmt.Fprintf(w, "%s$reg[%d].i32 = I64_CLZ($reg[%d].i64);\n",
+			indent, stk.TopIdx(), stk.TopIdx(),
+		)
 		assert(stk.Len() == stkLen)
 	case token.INS_I64_CTZ:
 		stkLen := stk.Len()
-		fmt.Fprintf(w, "%s// todo: %T\n", indent, i)
+		fmt.Fprintf(w, "%s$reg[%d].i32 = I64_CTZ($reg[%d].i64);\n",
+			indent, stk.TopIdx(), stk.TopIdx(),
+		)
 		assert(stk.Len() == stkLen)
 	case token.INS_I64_POPCNT:
 		stkLen := stk.Len()
-		fmt.Fprintf(w, "%s// todo: %T\n", indent, i)
+		fmt.Fprintf(w, "%s$reg[%d].i32 = I64_POPCNT($reg[%d].i64);\n",
+			indent, stk.TopIdx(), stk.TopIdx(),
+		)
 		assert(stk.Len() == stkLen)
 	case token.INS_I64_ADD:
 		stkLen := stk.Len()
@@ -1010,16 +1028,22 @@ func (p *wat2cWorker) buildFunc_ins(w io.Writer, fn *ast.Func, stk *valueTypeSta
 		assert(stk.Len() == stkLen-1)
 	case token.INS_I64_ROTL:
 		stkLen := stk.Len()
-		fmt.Fprintf(w, "%s// todo: %T\n", indent, i)
-		assert(stk.Len() == stkLen)
+		fmt.Fprintf(w, "%s$reg[%d].i64 = I64_ROTL($reg[%d].i64, $reg[%d].i32);\n",
+			indent, stk.TopIdx(), stk.TopIdx(), stk.TopIdx()-1,
+		)
+		stk.Pop()
+		assert(stk.Len() == stkLen-1)
 	case token.INS_I64_ROTR:
 		stkLen := stk.Len()
-		fmt.Fprintf(w, "%s// todo: %T\n", indent, i)
-		assert(stk.Len() == stkLen)
+		fmt.Fprintf(w, "%s$reg[%d].i64 = I64_ROTR($reg[%d].i64, $reg[%d].i32);\n",
+			indent, stk.TopIdx(), stk.TopIdx(), stk.TopIdx()-1,
+		)
+		stk.Pop()
+		assert(stk.Len() == stkLen-1)
 	case token.INS_F32_ABS:
 		stkLen := stk.Len()
-		fmt.Fprintf(w, "%s$reg[%d].f32 = ($reg[%d].f32>0)? $reg[%d].f32: -$reg[%d].f32;\n",
-			indent, stk.TopIdx(), stk.TopIdx(), stk.TopIdx(), stk.TopIdx(),
+		fmt.Fprintf(w, "%s$reg[%d].f32 = fabsf($reg[%d].f32);\n",
+			indent, stk.TopIdx(), stk.TopIdx(),
 		)
 		assert(stk.Len() == stkLen)
 	case token.INS_F32_NEG:
@@ -1030,23 +1054,33 @@ func (p *wat2cWorker) buildFunc_ins(w io.Writer, fn *ast.Func, stk *valueTypeSta
 		assert(stk.Len() == stkLen)
 	case token.INS_F32_CEIL:
 		stkLen := stk.Len()
-		fmt.Fprintf(w, "%s// todo: %T\n", indent, i)
+		fmt.Fprintf(w, "%s$reg[%d].f32 = ceilf($reg[%d].f32);\n",
+			indent, stk.TopIdx(), stk.TopIdx(),
+		)
 		assert(stk.Len() == stkLen)
 	case token.INS_F32_FLOOR:
 		stkLen := stk.Len()
-		fmt.Fprintf(w, "%s// todo: %T\n", indent, i)
+		fmt.Fprintf(w, "%s$reg[%d].f32 = floorf($reg[%d].f32);\n",
+			indent, stk.TopIdx(), stk.TopIdx(),
+		)
 		assert(stk.Len() == stkLen)
 	case token.INS_F32_TRUNC:
 		stkLen := stk.Len()
-		fmt.Fprintf(w, "%s// todo: %T\n", indent, i)
+		fmt.Fprintf(w, "%s$reg[%d].f32 = truncf($reg[%d].f32);\n",
+			indent, stk.TopIdx(), stk.TopIdx(),
+		)
 		assert(stk.Len() == stkLen)
 	case token.INS_F32_NEAREST:
 		stkLen := stk.Len()
-		fmt.Fprintf(w, "%s// todo: %T\n", indent, i)
+		fmt.Fprintf(w, "%s$reg[%d].f32 = roundf($reg[%d].f32);\n",
+			indent, stk.TopIdx(), stk.TopIdx(),
+		)
 		assert(stk.Len() == stkLen)
 	case token.INS_F32_SQRT:
 		stkLen := stk.Len()
-		fmt.Fprintf(w, "%s// todo: %T\n", indent, i)
+		fmt.Fprintf(w, "%s$reg[%d].f32 = sqrtf($reg[%d].f32);\n",
+			indent, stk.TopIdx(), stk.TopIdx(),
+		)
 		assert(stk.Len() == stkLen)
 	case token.INS_F32_ADD:
 		stkLen := stk.Len()
@@ -1083,27 +1117,29 @@ func (p *wat2cWorker) buildFunc_ins(w io.Writer, fn *ast.Func, stk *valueTypeSta
 	case token.INS_F32_MIN:
 		stkLen := stk.Len()
 		assert(stkLen >= 2)
-		fmt.Fprintf(w, "%s$reg[%d].f32 = ($reg[%d].f32<$reg[%d].f32)? $reg[%d].f32: $reg[%d].f32;\n",
-			indent, stk.TopIdx()-1, stk.TopIdx(), stk.TopIdx()-1, stk.TopIdx(), stk.TopIdx()-1,
+		fmt.Fprintf(w, "%s$reg[%d].f32 = fminf($reg[%d].f32, $reg[%d].f32);\n",
+			indent, stk.TopIdx()-1, stk.TopIdx(), stk.TopIdx()-1,
 		)
 		stk.Pop()
 		assert(stk.Len() == stkLen-1)
 	case token.INS_F32_MAX:
 		stkLen := stk.Len()
 		assert(stkLen >= 2)
-		fmt.Fprintf(w, "%s$reg[%d].f32 = ($reg[%d].f32>$reg[%d].f32)? $reg[%d].f32: $reg[%d].f32;\n",
-			indent, stk.TopIdx()-1, stk.TopIdx(), stk.TopIdx()-1, stk.TopIdx(), stk.TopIdx()-1,
+		fmt.Fprintf(w, "%s$reg[%d].f32 = fmaxf($reg[%d].f32, $reg[%d].f32);\n",
+			indent, stk.TopIdx()-1, stk.TopIdx(), stk.TopIdx()-1,
 		)
 		stk.Pop()
 		assert(stk.Len() == stkLen-1)
 	case token.INS_F32_COPYSIGN:
 		stkLen := stk.Len()
-		fmt.Fprintf(w, "%s// todo: %T\n", indent, i)
+		fmt.Fprintf(w, "%s$reg[%d].f32 = copysignf($reg[%d].f32, $reg[%d].f32);\n",
+			indent, stk.TopIdx()-1, stk.TopIdx(), stk.TopIdx()-1,
+		)
 		assert(stk.Len() == stkLen)
 	case token.INS_F64_ABS:
 		stkLen := stk.Len()
-		fmt.Fprintf(w, "%s$reg[%d].f64 = ($reg[%d].f64>0)? $reg[%d].f64: -$reg[%d].f64;\n",
-			indent, stk.TopIdx(), stk.TopIdx(), stk.TopIdx(), stk.TopIdx(),
+		fmt.Fprintf(w, "%s$reg[%d].f64 = fabs($reg[%d].f64);\n",
+			indent, stk.TopIdx(), stk.TopIdx(),
 		)
 		assert(stk.Len() == stkLen)
 	case token.INS_F64_NEG:
@@ -1114,23 +1150,33 @@ func (p *wat2cWorker) buildFunc_ins(w io.Writer, fn *ast.Func, stk *valueTypeSta
 		assert(stk.Len() == stkLen)
 	case token.INS_F64_CEIL:
 		stkLen := stk.Len()
-		fmt.Fprintf(w, "%s// todo: %T\n", indent, i)
+		fmt.Fprintf(w, "%s$reg[%d].f64 = ceil($reg[%d].f64);\n",
+			indent, stk.TopIdx(), stk.TopIdx(),
+		)
 		assert(stk.Len() == stkLen)
 	case token.INS_F64_FLOOR:
 		stkLen := stk.Len()
-		fmt.Fprintf(w, "%s// todo: %T\n", indent, i)
+		fmt.Fprintf(w, "%s$reg[%d].f64 = floor($reg[%d].f64);\n",
+			indent, stk.TopIdx(), stk.TopIdx(),
+		)
 		assert(stk.Len() == stkLen)
 	case token.INS_F64_TRUNC:
 		stkLen := stk.Len()
-		fmt.Fprintf(w, "%s// todo: %T\n", indent, i)
+		fmt.Fprintf(w, "%s$reg[%d].f64 = trunc($reg[%d].f64);\n",
+			indent, stk.TopIdx(), stk.TopIdx(),
+		)
 		assert(stk.Len() == stkLen)
 	case token.INS_F64_NEAREST:
 		stkLen := stk.Len()
-		fmt.Fprintf(w, "%s// todo: %T\n", indent, i)
+		fmt.Fprintf(w, "%s$reg[%d].f64 = round($reg[%d].f64);\n",
+			indent, stk.TopIdx(), stk.TopIdx(),
+		)
 		assert(stk.Len() == stkLen)
 	case token.INS_F64_SQRT:
 		stkLen := stk.Len()
-		fmt.Fprintf(w, "%s// todo: %T\n", indent, i)
+		fmt.Fprintf(w, "%s$reg[%d].f64 = sqrt($reg[%d].f64);\n",
+			indent, stk.TopIdx(), stk.TopIdx(),
+		)
 		assert(stk.Len() == stkLen)
 	case token.INS_F64_ADD:
 		stkLen := stk.Len()
@@ -1167,22 +1213,24 @@ func (p *wat2cWorker) buildFunc_ins(w io.Writer, fn *ast.Func, stk *valueTypeSta
 	case token.INS_F64_MIN:
 		stkLen := stk.Len()
 		assert(stkLen >= 2)
-		fmt.Fprintf(w, "%s$reg[%d].f64 = ($reg[%d].f64<$reg[%d].f64)? $reg[%d].f64: $reg[%d].f64;\n",
-			indent, stk.TopIdx()-1, stk.TopIdx(), stk.TopIdx()-1, stk.TopIdx(), stk.TopIdx()-1,
+		fmt.Fprintf(w, "%s$reg[%d].f64 = fmin($reg[%d].f64, $reg[%d].f64);\n",
+			indent, stk.TopIdx()-1, stk.TopIdx(), stk.TopIdx()-1,
 		)
 		stk.Pop()
 		assert(stk.Len() == stkLen-1)
 	case token.INS_F64_MAX:
 		stkLen := stk.Len()
 		assert(stkLen >= 2)
-		fmt.Fprintf(w, "%s$reg[%d].f64 = ($reg[%d].f64>$reg[%d].f64)? $reg[%d].f64: $reg[%d].f64;\n",
-			indent, stk.TopIdx()-1, stk.TopIdx(), stk.TopIdx()-1, stk.TopIdx(), stk.TopIdx()-1,
+		fmt.Fprintf(w, "%s$reg[%d].f64 = fmax($reg[%d].f64, $reg[%d].f64);\n",
+			indent, stk.TopIdx()-1, stk.TopIdx(), stk.TopIdx()-1,
 		)
 		stk.Pop()
 		assert(stk.Len() == stkLen-1)
 	case token.INS_F64_COPYSIGN:
 		stkLen := stk.Len()
-		fmt.Fprintf(w, "%s// todo: %T\n", indent, i)
+		fmt.Fprintf(w, "%s$reg[%d].f64 = copysign($reg[%d].f64, $reg[%d].f64);\n",
+			indent, stk.TopIdx()-1, stk.TopIdx(), stk.TopIdx()-1,
+		)
 		assert(stk.Len() == stkLen)
 	case token.INS_I32_WRAP_I64:
 		stkLen := stk.Len()
@@ -1192,19 +1240,27 @@ func (p *wat2cWorker) buildFunc_ins(w io.Writer, fn *ast.Func, stk *valueTypeSta
 		assert(stk.Len() == stkLen)
 	case token.INS_I32_TRUNC_F32_S:
 		stkLen := stk.Len()
-		fmt.Fprintf(w, "%s// todo: %T\n", indent, i)
+		fmt.Fprintf(w, "%s$reg[%d].i32 = (i32_t)(truncf($reg[%d].f32));\n",
+			indent, stk.TopIdx(), stk.TopIdx(),
+		)
 		assert(stk.Len() == stkLen)
 	case token.INS_I32_TRUNC_F32_U:
 		stkLen := stk.Len()
-		fmt.Fprintf(w, "%s// todo: %T\n", indent, i)
+		fmt.Fprintf(w, "%s$reg[%d].i32 = (u32_t)(truncf($reg[%d].f32));\n",
+			indent, stk.TopIdx(), stk.TopIdx(),
+		)
 		assert(stk.Len() == stkLen)
 	case token.INS_I32_TRUNC_F64_S:
 		stkLen := stk.Len()
-		fmt.Fprintf(w, "%s// todo: %T\n", indent, i)
+		fmt.Fprintf(w, "%s$reg[%d].i32 = (i32_t)(trunc($reg[%d].f64));\n",
+			indent, stk.TopIdx(), stk.TopIdx(),
+		)
 		assert(stk.Len() == stkLen)
 	case token.INS_I32_TRUNC_F64_U:
 		stkLen := stk.Len()
-		fmt.Fprintf(w, "%s// todo: %T\n", indent, i)
+		fmt.Fprintf(w, "%s$reg[%d].i32 = (u32_t)(trunc($reg[%d].f64));\n",
+			indent, stk.TopIdx(), stk.TopIdx(),
+		)
 		assert(stk.Len() == stkLen)
 	case token.INS_I64_EXTEND_I32_S:
 		stkLen := stk.Len()
