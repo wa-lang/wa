@@ -37,14 +37,14 @@ func (p *wat2cWorker) buildCode(w io.Writer) error {
 	fmt.Fprintf(w, "typedef double   f64_t;\n")
 	fmt.Fprintln(w)
 
-	fmt.Fprintf(w, "typedef union wasm_val_t {\n")
+	fmt.Fprintf(w, "typedef union val_t {\n")
 	fmt.Fprintf(w, "  i64_t i64;\n")
 	fmt.Fprintf(w, "  f64_t f64;\n")
 	fmt.Fprintf(w, "  i32_t i32;\n")
 	fmt.Fprintf(w, "  f32_t f32;\n")
-	fmt.Fprintf(w, "} wasm_val_t;\n\n")
+	fmt.Fprintf(w, "} val_t;\n\n")
 
-	fmt.Fprintf(w, "typedef int (*wasm_func_t)(wasm_val_t* $result, ...);\n\n")
+	fmt.Fprintf(w, "typedef int (*fn_t)(val_t* $result, ...);\n\n")
 
 	if err := p.buildImport(w); err != nil {
 		return err
@@ -103,13 +103,13 @@ func (p *wat2cWorker) buildImport(w io.Writer) error {
 		fmt.Fprintln(w)
 
 		// 返回值通过栈传递
-		fmt.Fprintf(w, "extern int fn_%s(wasm_val_t $result[]", toCName(fnName))
+		fmt.Fprintf(w, "extern int fn_%s(val_t $result[]", toCName(fnName))
 		if len(fnType.Params) > 0 {
 			for i, x := range fnType.Params {
 				if x.Name != "" {
-					fmt.Fprintf(w, ", wasm_val_t %v", toCName(x.Name))
+					fmt.Fprintf(w, ", val_t %v", toCName(x.Name))
 				} else {
-					fmt.Fprintf(w, ", wasm_val_t $arg%d", i)
+					fmt.Fprintf(w, ", val_t $arg%d", i)
 				}
 			}
 		}
@@ -175,27 +175,27 @@ func (p *wat2cWorker) buildGlobal(w io.Writer) error {
 		switch g.Type {
 		case token.I32:
 			if g.Mutable {
-				fmt.Fprintf(w, "static wasm_val_t var_%s = {.i32=%d};\n", toCName(g.Name), g.I32Value)
+				fmt.Fprintf(w, "static val_t var_%s = {.i32=%d};\n", toCName(g.Name), g.I32Value)
 			} else {
-				fmt.Fprintf(w, "static const wasm_val_t var_%s = {.i32=%d};\n", toCName(g.Name), g.I32Value)
+				fmt.Fprintf(w, "static const val_t var_%s = {.i32=%d};\n", toCName(g.Name), g.I32Value)
 			}
 		case token.I64:
 			if g.Mutable {
-				fmt.Fprintf(w, "static wasm_val_t var_%s = {.i64=%d};\n", toCName(g.Name), g.I64Value)
+				fmt.Fprintf(w, "static val_t var_%s = {.i64=%d};\n", toCName(g.Name), g.I64Value)
 			} else {
-				fmt.Fprintf(w, "static const wasm_val_t var_%s = {.i64=%d};\n", toCName(g.Name), g.I64Value)
+				fmt.Fprintf(w, "static const val_t var_%s = {.i64=%d};\n", toCName(g.Name), g.I64Value)
 			}
 		case token.F32:
 			if g.Mutable {
-				fmt.Fprintf(w, "static wasm_val_t var_%s = {.f32=%f|;\n", toCName(g.Name), g.F32Value)
+				fmt.Fprintf(w, "static val_t var_%s = {.f32=%f|;\n", toCName(g.Name), g.F32Value)
 			} else {
-				fmt.Fprintf(w, "static const wasm_val_t var_%s = {.f32=%f};\n", toCName(g.Name), g.F32Value)
+				fmt.Fprintf(w, "static const val_t var_%s = {.f32=%f};\n", toCName(g.Name), g.F32Value)
 			}
 		case token.F64:
 			if g.Mutable {
-				fmt.Fprintf(w, "static wasm_val_t var_%s = {.f64=%f};\n", toCName(g.Name), g.F64Value)
+				fmt.Fprintf(w, "static val_t var_%s = {.f64=%f};\n", toCName(g.Name), g.F64Value)
 			} else {
-				fmt.Fprintf(w, "static const wasm_val_t var_%s = {.f64=%f};\n", toCName(g.Name), g.F64Value)
+				fmt.Fprintf(w, "static const val_t var_%s = {.f64=%f};\n", toCName(g.Name), g.F64Value)
 			}
 		default:
 			return fmt.Errorf("unsupported global type: %s", g.Type)
@@ -232,13 +232,13 @@ func (p *wat2cWorker) buildFuncs(w io.Writer) error {
 		fmt.Fprintln(w)
 
 		// 返回值通过栈传递, 返回入栈的个数
-		fmt.Fprintf(w, "static int fn_%s(wasm_val_t $result[]", toCName(f.Name))
+		fmt.Fprintf(w, "static int fn_%s(val_t $result[]", toCName(f.Name))
 		if len(f.Type.Params) > 0 {
 			for i, x := range f.Type.Params {
 				if x.Name != "" {
-					fmt.Fprintf(w, ", wasm_val_t %v", toCName(x.Name))
+					fmt.Fprintf(w, ", val_t %v", toCName(x.Name))
 				} else {
-					fmt.Fprintf(w, ", wasm_val_t $arg%d", i)
+					fmt.Fprintf(w, ", val_t $arg%d", i)
 				}
 			}
 		}
@@ -274,7 +274,7 @@ func (p *wat2cWorker) buildFuncs(w io.Writer) error {
 		fmt.Fprintln(w)
 
 		// 返回值通过栈传递, 返回入栈的个数
-		fmt.Fprintf(w, "static int fn_%s(wasm_val_t $result[]", toCName(f.Name))
+		fmt.Fprintf(w, "static int fn_%s(val_t $result[]", toCName(f.Name))
 		if len(f.Type.Params) > 0 {
 			for i, x := range f.Type.Params {
 				var argName string
@@ -285,7 +285,7 @@ func (p *wat2cWorker) buildFuncs(w io.Writer) error {
 				}
 
 				p.localNames = append(p.localNames, argName)
-				fmt.Fprintf(w, ", wasm_val_t %v", argName)
+				fmt.Fprintf(w, ", val_t %v", argName)
 			}
 		}
 		fmt.Fprintf(w, ") {\n")
