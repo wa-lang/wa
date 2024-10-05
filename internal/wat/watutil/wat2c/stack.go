@@ -48,6 +48,9 @@ func (s *valueTypeStack) PushN(n int) {
 	}
 }
 func (s *valueTypeStack) PopN(dx int) {
+	if len(s.stack) < dx {
+		return // todo: panic
+	}
 	s.stack = s.stack[:len(s.stack)-dx]
 	return
 }

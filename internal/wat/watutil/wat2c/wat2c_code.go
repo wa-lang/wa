@@ -111,15 +111,15 @@ func (p *wat2cWorker) buildMemory(w io.Writer) error {
 		fmt.Fprintf(w, "// memory $%s\n", p.m.Memory.Name)
 	}
 	if max := p.m.Memory.MaxPages; max > 0 {
-		fmt.Fprintf(w, "static uint8_t   wasm_memoy[%d*64*1024];\n", max)
-		fmt.Fprintf(w, "static int       wasm_memoy_size = %d;\n", p.m.Memory.Pages)
-		fmt.Fprintf(w, "static const int wasm_memoy_max_pages = %d;\n", max)
-		fmt.Fprintf(w, "static const int wasm_memoy_pages = %d;\n", p.m.Memory.Pages)
+		fmt.Fprintf(w, "static uint8_t       wasm_memoy[%d*64*1024];\n", max)
+		fmt.Fprintf(w, "static int32_t       wasm_memoy_size = %d;\n", p.m.Memory.Pages)
+		fmt.Fprintf(w, "static const int32_t wasm_memoy_max_pages = %d;\n", max)
+		fmt.Fprintf(w, "static const int32_t wasm_memoy_pages = %d;\n", p.m.Memory.Pages)
 	} else {
-		fmt.Fprintf(w, "static uint8_t   wasm_memoy[%d*64*1024];\n", p.m.Memory.Pages)
-		fmt.Fprintf(w, "static int       wasm_memoy_size = %d;\n", p.m.Memory.Pages)
-		fmt.Fprintf(w, "static const int wasm_memoy_max_pages = %d;\n", p.m.Memory.Pages)
-		fmt.Fprintf(w, "static const int wasm_memoy_pages = %d;\n", p.m.Memory.Pages)
+		fmt.Fprintf(w, "static uint8_t       wasm_memoy[%d*64*1024];\n", p.m.Memory.Pages)
+		fmt.Fprintf(w, "static int32_t       wasm_memoy_size = %d;\n", p.m.Memory.Pages)
+		fmt.Fprintf(w, "static const int32_t wasm_memoy_max_pages = %d;\n", p.m.Memory.Pages)
+		fmt.Fprintf(w, "static const int32_t wasm_memoy_pages = %d;\n", p.m.Memory.Pages)
 	}
 	fmt.Fprintln(w)
 	return nil

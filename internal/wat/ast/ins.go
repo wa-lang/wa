@@ -100,11 +100,11 @@ type Ins_GlobalSet struct {
 }
 type Ins_TableGet struct {
 	OpToken
-	X string
+	TableIdx string
 }
 type Ins_TableSet struct {
 	OpToken
-	X string
+	TableIdx string
 }
 type Ins_I32Load struct {
 	OpToken

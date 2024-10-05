@@ -189,13 +189,13 @@ func (p *wat2wasmWorker) buildInstruction(dst *wasm.Code, fn *ast.Func, i ast.In
 
 	case token.INS_TABLE_GET:
 		ins := i.(ast.Ins_TableGet)
-		x := p.findTableIndex(ins.X)
+		x := p.findTableIndex(ins.TableIdx)
 		dst.Body = append(dst.Body, wasm.OpcodeTableGet)
 		dst.Body = append(dst.Body, p.encodeUint32(x)...)
 
 	case token.INS_TABLE_SET:
 		ins := i.(ast.Ins_TableSet)
-		x := p.findTableIndex(ins.X)
+		x := p.findTableIndex(ins.TableIdx)
 		dst.Body = append(dst.Body, wasm.OpcodeTableSet)
 		dst.Body = append(dst.Body, p.encodeUint32(x)...)
 

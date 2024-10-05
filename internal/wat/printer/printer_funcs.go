@@ -212,9 +212,9 @@ func (p *watPrinter) printFuncs_body_ins(fn *ast.Func, ins ast.Instruction, blkL
 	case token.INS_GLOBAL_SET:
 		fmt.Fprintln(p.w, tok, p.identOrIndex(ins.(ast.Ins_GlobalSet).X))
 	case token.INS_TABLE_GET:
-		fmt.Fprintln(p.w, tok, p.identOrIndex(ins.(ast.Ins_TableGet).X))
+		fmt.Fprintln(p.w, tok, p.identOrIndex(ins.(ast.Ins_TableGet).TableIdx))
 	case token.INS_TABLE_SET:
-		fmt.Fprintln(p.w, tok, p.identOrIndex(ins.(ast.Ins_TableSet).X))
+		fmt.Fprintln(p.w, tok, p.identOrIndex(ins.(ast.Ins_TableSet).TableIdx))
 	case token.INS_I32_LOAD:
 		fmt.Fprint(p.w, tok)
 		insLoad := ins.(ast.Ins_I32Load)

@@ -572,13 +572,13 @@ func (p *parser) parseIns_GlobalSet() (i ast.Ins_GlobalSet) {
 func (p *parser) parseIns_TableGet() (i ast.Ins_TableGet) {
 	i.OpToken = ast.OpToken(p.tok)
 	p.acceptToken(token.INS_TABLE_GET)
-	i.X = p.parseIdentOrIndex()
+	i.TableIdx = p.parseIdentOrIndex()
 	return
 }
 func (p *parser) parseIns_TableSet() (i ast.Ins_TableSet) {
 	i.OpToken = ast.OpToken(p.tok)
 	p.acceptToken(token.INS_TABLE_SET)
-	i.X = p.parseIdentOrIndex()
+	i.TableIdx = p.parseIdentOrIndex()
 	return
 }
 
