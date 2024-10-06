@@ -1,20 +1,20 @@
 (module
-  (func $fib (export "fib") (param $n i32) (result i32)
+  (func $fib (export "fib") (param $n i64) (result i64)
     local.get $n
-    i32.const 2
-    i32.le_u
+    i64.const 2
+    i64.le_u
     if
-      i32.const 1
+      i64.const 1
       return
     end
     local.get $n
-    i32.const 1
-    i32.sub
+    i64.const 1
+    i64.sub
     call $fib
     local.get $n
-    i32.const 2
-    i32.sub
+    i64.const 2
+    i64.sub
     call $fib
-    i32.add
+    i64.add
   )
 )

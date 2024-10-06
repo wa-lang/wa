@@ -31,9 +31,16 @@ func (p *wat2cWorker) buildFunc_body(w io.Writer, fn *ast.Func) error {
 		fmt.Fprintln(&bufIns)
 	}
 
-	for _, ins := range fn.Body.Insts {
+	for i, ins := range fn.Body.Insts {
 		if err := p.buildFunc_ins(&bufIns, fn, &stk, ins, 1); err != nil {
 			return err
+		}
+		// 手动补充最后一个 return
+		if i == len(fn.Body.Insts)-1 && ins.Token() != token.INS_RETURN {
+			insReturn := ast.Ins_Return{OpToken: ast.OpToken(token.INS_RETURN)}
+			if err := p.buildFunc_ins(&bufIns, fn, &stk, insReturn, 1); err != nil {
+				return err
+			}
 		}
 	}
 
