@@ -230,7 +230,18 @@ func (p *wat2cWorker) buildFuncs(w io.Writer) error {
 		fmt.Fprintln(w)
 
 		// 返回值类型
-		fmt.Fprintf(w, "typedef struct { val_t $R[%d]; } fn_%s_ret_t;\n", len(f.Type.Results), toCName(f.Name))
+		fmt.Fprintf(w, "typedef struct {")
+		for i := 0; i < len(f.Type.Results); i++ {
+			if i == 0 {
+				fmt.Fprintf(w, " val_t $R%d", i)
+			} else {
+				fmt.Fprintf(w, ", $R%d", i)
+			}
+			if i == len(f.Type.Results)-1 {
+				fmt.Fprintf(w, "; ")
+			}
+		}
+		fmt.Fprintf(w, "} fn_%s_ret_t;\n", toCName(f.Name))
 
 		// 返回值通过栈传递, 返回入栈的个数
 		fmt.Fprintf(w, "static fn_%s_ret_t fn_%s(", toCName(f.Name), toCName(f.Name))
