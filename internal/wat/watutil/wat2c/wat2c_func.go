@@ -205,7 +205,8 @@ func (p *wat2cWorker) buildFunc_ins(w io.Writer, fn *ast.Func, stk *valueTypeSta
 
 		// 需要定义临时变量保存返回值
 		if len(fnType.Results) > 0 {
-			fmt.Fprintf(w, "%s{ fn_%s_ret_t $ret = fn_%s(", indent, toCName(i.X), toCName(i.X))
+			fmt.Fprintf(w, "%s{\n", indent)
+			fmt.Fprintf(w, "%s  fn_%s_ret_t $ret = fn_%s(", indent, toCName(i.X), toCName(i.X))
 		} else {
 			fmt.Fprintf(w, "%sfn_%s(", indent, toCName(i.X))
 		}
@@ -215,11 +216,14 @@ func (p *wat2cWorker) buildFunc_ins(w io.Writer, fn *ast.Func, stk *valueTypeSta
 			}
 			fmt.Fprintf(w, "$R[%d]", resultOff+i)
 		}
-		fmt.Fprintf(w, ");")
+		fmt.Fprintf(w, ");\n")
 
 		// 复制到当前stk
 		if len(fnType.Results) > 0 {
-			fmt.Fprintf(w, " memcpy(&$R[%d], &$ret, sizeof($ret)); }\n", resultOff)
+			for i := 0; i < len(fnType.Results); i++ {
+				fmt.Fprintf(w, "%s  $R[%d] = $ret.$R[%d];\n", indent, resultOff+i, i)
+			}
+			fmt.Fprintf(w, "%s}\n", indent)
 		} else {
 			fmt.Fprintf(w, "\n")
 		}
@@ -239,10 +243,10 @@ func (p *wat2cWorker) buildFunc_ins(w io.Writer, fn *ast.Func, stk *valueTypeSta
 		// 生成要定义函数的类型
 		fmt.Fprintf(w, "%s{\n", indent)
 		{
-			fmt.Fprintf(w, "%stypedef struct { val_t $R[%d]; } fn_ret_t;\n",
+			fmt.Fprintf(w, "%s  typedef struct { val_t $R[%d]; } fn_ret_t;\n",
 				indent, len(fnType.Results),
 			)
-			fmt.Fprintf(w, "%stypedef fn_ret_t (*fn_t)(", indent)
+			fmt.Fprintf(w, "%s  typedef fn_ret_t (*fn_t)(", indent)
 			if len(fnType.Params) > 0 {
 				for i, x := range fnType.Params {
 					if i > 0 {
@@ -259,11 +263,11 @@ func (p *wat2cWorker) buildFunc_ins(w io.Writer, fn *ast.Func, stk *valueTypeSta
 
 			// 调用函数
 			if len(fnType.Results) > 0 {
-				fmt.Fprintf(w, "%sfn_ret_t $ret = ((fn_t)(wasm_table[$R[%d].i32]))(&$R[%d]",
+				fmt.Fprintf(w, "%s  fn_ret_t $ret = ((fn_t)(wasm_table[$R[%d].i32]))(&$R[%d]",
 					indent, tableAddr, resultOff,
 				)
 			} else {
-				fmt.Fprintf(w, "%s((fn_t)(wasm_table[$R[%d].i32]))(&$R[%d]",
+				fmt.Fprintf(w, "%s  ((fn_t)(wasm_table[$R[%d].i32]))(&$R[%d]",
 					indent, tableAddr, resultOff,
 				)
 			}
@@ -274,7 +278,11 @@ func (p *wat2cWorker) buildFunc_ins(w io.Writer, fn *ast.Func, stk *valueTypeSta
 
 			// 保存返回值
 			if len(fnType.Results) > 0 {
-				fmt.Fprintf(w, "%smemcpy(&$R[%d], &$ret, sizeof($ret));\n", indent, resultOff)
+				for i := 0; i < len(fnType.Results); i++ {
+					fmt.Fprintf(w, "%s  $R[%d] = $ret.$R[%d];\n", indent, resultOff+i, i)
+				}
+			} else {
+				fmt.Fprintf(w, "\n")
 			}
 		}
 
