@@ -44,8 +44,6 @@ func (p *wat2cWorker) buildCode(w io.Writer) error {
 	fmt.Fprintf(w, "  f32_t f32;\n")
 	fmt.Fprintf(w, "} val_t;\n\n")
 
-	fmt.Fprintf(w, "typedef int (*fn_t)(val_t* $result, ...);\n\n")
-
 	if err := p.buildImport(w); err != nil {
 		return err
 	}
@@ -231,14 +229,20 @@ func (p *wat2cWorker) buildFuncs(w io.Writer) error {
 		}
 		fmt.Fprintln(w)
 
+		// 返回值类型
+		fmt.Fprintf(w, "typedef struct { val_t $R[%d]; } fn_%s_ret_t;\n", len(f.Type.Results), toCName(f.Name))
+
 		// 返回值通过栈传递, 返回入栈的个数
-		fmt.Fprintf(w, "static int fn_%s(val_t $result[]", toCName(f.Name))
+		fmt.Fprintf(w, "static fn_%s_ret_t fn_%s(", toCName(f.Name), toCName(f.Name))
 		if len(f.Type.Params) > 0 {
 			for i, x := range f.Type.Params {
+				if i > 0 {
+					fmt.Fprintf(w, ", ")
+				}
 				if x.Name != "" {
-					fmt.Fprintf(w, ", val_t %v", toCName(x.Name))
+					fmt.Fprintf(w, "val_t %v", toCName(x.Name))
 				} else {
-					fmt.Fprintf(w, ", val_t $arg%d", i)
+					fmt.Fprintf(w, "val_t $arg%d", i)
 				}
 			}
 		}
@@ -274,7 +278,7 @@ func (p *wat2cWorker) buildFuncs(w io.Writer) error {
 		fmt.Fprintln(w)
 
 		// 返回值通过栈传递, 返回入栈的个数
-		fmt.Fprintf(w, "static int fn_%s(val_t $result[]", toCName(f.Name))
+		fmt.Fprintf(w, "static fn_%s_ret_t fn_%s(", toCName(f.Name), toCName(f.Name))
 		if len(f.Type.Params) > 0 {
 			for i, x := range f.Type.Params {
 				var argName string
@@ -285,7 +289,10 @@ func (p *wat2cWorker) buildFuncs(w io.Writer) error {
 				}
 
 				p.localNames = append(p.localNames, argName)
-				fmt.Fprintf(w, ", val_t %v", argName)
+				if i > 0 {
+					fmt.Fprint(w, ", ")
+				}
+				fmt.Fprintf(w, "val_t %v", argName)
 			}
 		}
 		fmt.Fprintf(w, ") {\n")

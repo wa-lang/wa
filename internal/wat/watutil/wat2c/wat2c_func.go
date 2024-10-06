@@ -46,12 +46,14 @@ func (p *wat2cWorker) buildFunc_body(w io.Writer, fn *ast.Func) error {
 
 	// 未使用的可以省略
 	if stkMaxDepth := stk.MaxDepth(); stkMaxDepth > 0 {
+		fmt.Fprintf(w, "  fn_%s_ret_t $result;\n", toCName(fn.Name))
 		fmt.Fprintf(w, "  val_t $R[%d];\n", stkMaxDepth)
 		fmt.Fprintf(w, "  u32_t $R_u32;\n")
 		fmt.Fprintf(w, "  u16_t $R_u16;\n")
 		fmt.Fprintf(w, "  u8_t  $R_u8;\n")
 		fmt.Fprintln(w)
 	} else {
+		fmt.Fprintf(w, "  fn_%s_ret_t $result;\n", toCName(fn.Name))
 		fmt.Fprintf(w, "  val_t $R[%d];\n", 1)
 		fmt.Fprintf(w, "  u32_t $R_u32;\n")
 		fmt.Fprintf(w, "  u16_t $R_u16;\n")
@@ -185,9 +187,9 @@ func (p *wat2cWorker) buildFunc_ins(w io.Writer, fn *ast.Func, stk *valueTypeSta
 		stkLen := stk.Len()
 		assert(stkLen == len(fn.Type.Results))
 		for i := 0; i < len(fn.Type.Results); i++ {
-			fmt.Fprintf(w, "%s$result[%d] = $R[%d];\n", indent, i, i)
+			fmt.Fprintf(w, "%s$result.$R[%d] = $R[%d];\n", indent, i, i)
 		}
-		fmt.Fprintf(w, "%sreturn %d;\n", indent, len(fn.Type.Results))
+		fmt.Fprintf(w, "%sreturn $result;\n", indent)
 		stk.PopN(len(fn.Type.Results))
 		assert(stk.Len() == 0)
 	case token.INS_CALL:
@@ -201,11 +203,26 @@ func (p *wat2cWorker) buildFunc_ins(w io.Writer, fn *ast.Func, stk *valueTypeSta
 		resultOff := stk.Len()
 		stk.PushN(len(fnType.Results))
 
-		fmt.Fprintf(w, "%s((fn_t)(fn_%s))(&$R[%d]", indent, toCName(i.X), resultOff)
-		for i := 0; i < len(fnType.Params); i++ {
-			fmt.Fprintf(w, ", $R[%d]", resultOff+i)
+		// 需要定义临时变量保存返回值
+		if len(fnType.Results) > 0 {
+			fmt.Fprintf(w, "%s{ fn_%s_ret_t $ret = fn_%s(", indent, toCName(i.X), toCName(i.X))
+		} else {
+			fmt.Fprintf(w, "%sfn_%s(", indent, toCName(i.X))
 		}
-		fmt.Fprintf(w, ");\n")
+		for i := 0; i < len(fnType.Params); i++ {
+			if i > 0 {
+				fmt.Fprintf(w, ", ")
+			}
+			fmt.Fprintf(w, "$R[%d]", resultOff+i)
+		}
+		fmt.Fprintf(w, ");")
+
+		// 复制到当前stk
+		if len(fnType.Results) > 0 {
+			fmt.Fprintf(w, " memcpy(&$R[%d], &$ret, sizeof($ret)); }\n", resultOff)
+		} else {
+			fmt.Fprintf(w, "\n")
+		}
 
 	case token.INS_CALL_INDIRECT:
 		stkLen := stk.Len()
@@ -219,13 +236,49 @@ func (p *wat2cWorker) buildFunc_ins(w io.Writer, fn *ast.Func, stk *valueTypeSta
 		resultOff := stk.Len()
 		stk.PushN(len(fnType.Results))
 
-		fmt.Fprintf(w, "%s((fn_t)(wasm_table[$R[%d].i32]))(&$R[%d]",
-			indent, tableAddr, resultOff,
-		)
-		for i := 0; i < len(fnType.Params); i++ {
-			fmt.Fprintf(w, ", $R[%d]", resultOff+i)
+		// 生成要定义函数的类型
+		fmt.Fprintf(w, "%s{\n", indent)
+		{
+			fmt.Fprintf(w, "%stypedef struct { val_t $R[%d]; } fn_ret_t;\n",
+				indent, len(fnType.Results),
+			)
+			fmt.Fprintf(w, "%stypedef fn_ret_t (*fn_t)(", indent)
+			if len(fnType.Params) > 0 {
+				for i, x := range fnType.Params {
+					if i > 0 {
+						fmt.Fprintf(w, ", ")
+					}
+					if x.Name != "" {
+						fmt.Fprintf(w, "val_t %v", toCName(x.Name))
+					} else {
+						fmt.Fprintf(w, "val_t $arg%d", i)
+					}
+				}
+			}
+			fmt.Fprintf(w, ");\n")
+
+			// 调用函数
+			if len(fnType.Results) > 0 {
+				fmt.Fprintf(w, "%sfn_ret_t $ret = ((fn_t)(wasm_table[$R[%d].i32]))(&$R[%d]",
+					indent, tableAddr, resultOff,
+				)
+			} else {
+				fmt.Fprintf(w, "%s((fn_t)(wasm_table[$R[%d].i32]))(&$R[%d]",
+					indent, tableAddr, resultOff,
+				)
+			}
+			for i := 0; i < len(fnType.Params); i++ {
+				fmt.Fprintf(w, ", $R[%d]", resultOff+i)
+			}
+			fmt.Fprintf(w, ");\n")
+
+			// 保存返回值
+			if len(fnType.Results) > 0 {
+				fmt.Fprintf(w, "%smemcpy(&$R[%d], &$ret, sizeof($ret));\n", indent, resultOff)
+			}
 		}
-		fmt.Fprintf(w, ");\n")
+
+		fmt.Fprintf(w, "%s}\n", indent)
 
 	case token.INS_DROP:
 		stkLen := stk.Len()
