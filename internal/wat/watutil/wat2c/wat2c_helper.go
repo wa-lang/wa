@@ -9,6 +9,10 @@ import (
 )
 
 func (p *wat2cWorker) findGlobalType(ident string) token.Token {
+	if ident == "" {
+		panic("wat2c: empty ident")
+	}
+
 	// 不支持导入的全局变量
 	if idx, err := strconv.Atoi(ident); err == nil {
 		if idx < 0 || idx >= len(p.m.Globals) {
@@ -25,6 +29,10 @@ func (p *wat2cWorker) findGlobalType(ident string) token.Token {
 }
 
 func (p *wat2cWorker) findLocalType(fn *ast.Func, ident string) token.Token {
+	if ident == "" {
+		panic("wat2c: empty ident")
+	}
+
 	if idx, err := strconv.Atoi(ident); err == nil {
 		if idx < 0 || idx >= len(fn.Type.Params)+len(fn.Body.Locals) {
 			panic(fmt.Sprintf("wat2c: unknown local %q", ident))
@@ -45,6 +53,10 @@ func (p *wat2cWorker) findLocalType(fn *ast.Func, ident string) token.Token {
 }
 
 func (p *wat2cWorker) findLocalName(fn *ast.Func, ident string) string {
+	if ident == "" {
+		panic("wat2c: empty ident")
+	}
+
 	if idx, err := strconv.Atoi(ident); err == nil {
 		if idx < 0 || idx >= len(fn.Type.Params)+len(fn.Body.Locals) {
 			panic(fmt.Sprintf("wat2c: unknown local %q", ident))
@@ -65,6 +77,10 @@ func (p *wat2cWorker) findLocalName(fn *ast.Func, ident string) string {
 }
 
 func (p *wat2cWorker) findType(ident string) *ast.FuncType {
+	if ident == "" {
+		panic("wat2c: empty ident")
+	}
+
 	if idx, err := strconv.Atoi(ident); err == nil {
 		if idx < 0 || idx >= len(p.m.Types) {
 			panic(fmt.Sprintf("wat2c: unknown type %q", ident))
@@ -80,6 +96,10 @@ func (p *wat2cWorker) findType(ident string) *ast.FuncType {
 }
 
 func (p *wat2cWorker) findFuncType(ident string) *ast.FuncType {
+	if ident == "" {
+		panic("wat2c: empty ident")
+	}
+
 	idx := p.findFuncIndex(ident)
 	if idx < len(p.m.Imports) {
 		return p.m.Imports[idx].FuncType
@@ -89,6 +109,10 @@ func (p *wat2cWorker) findFuncType(ident string) *ast.FuncType {
 }
 
 func (p *wat2cWorker) findFuncIndex(ident string) int {
+	if ident == "" {
+		panic("wat2c: empty ident")
+	}
+
 	if idx, err := strconv.Atoi(ident); err == nil {
 		return idx
 	}
@@ -111,6 +135,10 @@ func (p *wat2cWorker) findFuncIndex(ident string) int {
 }
 
 func (p *wat2cWorker) findLabelName(label string) string {
+	if label == "" {
+		panic("wat2c: empty label")
+	}
+
 	idx := p.findLabelIndex(label)
 	if idx < len(p.labelScope) {
 		return p.labelScope[len(p.labelScope)-idx-1]
@@ -119,6 +147,10 @@ func (p *wat2cWorker) findLabelName(label string) string {
 }
 
 func (p *wat2cWorker) findLabelIndex(label string) int {
+	if label == "" {
+		panic("wat2c: empty label")
+	}
+
 	if idx, err := strconv.Atoi(label); err == nil {
 		return idx
 	}

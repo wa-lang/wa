@@ -18,6 +18,10 @@ func assert(condition bool, args ...interface{}) {
 	}
 }
 
+func unreachable() {
+	panic("unreachable")
+}
+
 func toCType(typ token.Token) string {
 	switch typ {
 	case token.I32:
