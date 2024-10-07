@@ -1315,10 +1315,10 @@ func (p *wat2cWorker) buildFunc_ins(w io.Writer, fn *ast.Func, stk *valueTypeSta
 		stkLen := stk.Len()
 		assert(stkLen >= 2)
 		sp0 := stk.Pop(token.I32)
-		stk.Pop(token.I32)
+		sp1 := stk.Pop(token.I32)
 		ret0 := stk.Push(token.I32)
 		fmt.Fprintf(w, "%s$R%d.i64 = (i64_t)((u64_t)($R%d.i64)>>(u64_t)($R%d.i64));\n",
-			indent, ret0, sp0,
+			indent, ret0, sp1, sp0,
 		)
 		stk.Pop(token.I64)
 		assert(stk.Len() == stkLen-1)
@@ -1440,10 +1440,10 @@ func (p *wat2cWorker) buildFunc_ins(w io.Writer, fn *ast.Func, stk *valueTypeSta
 		stkLen := stk.Len()
 		assert(stkLen >= 2)
 		sp0 := stk.Pop(token.I32)
-		stk.Pop(token.I32)
+		sp1 := stk.Pop(token.I32)
 		ret0 := stk.Push(token.I32)
 		fmt.Fprintf(w, "%s$R%d.f32 = fminf($R%d.f32, $R%d.f32);\n",
-			indent, ret0, sp0,
+			indent, ret0, sp1, sp0,
 		)
 		stk.Pop(token.F32)
 		assert(stk.Len() == stkLen-1)
@@ -1567,10 +1567,10 @@ func (p *wat2cWorker) buildFunc_ins(w io.Writer, fn *ast.Func, stk *valueTypeSta
 		stkLen := stk.Len()
 		assert(stkLen >= 2)
 		sp0 := stk.Pop(token.I32)
-		stk.Pop(token.I32)
+		sp1 := stk.Pop(token.I32)
 		ret0 := stk.Push(token.I32)
 		fmt.Fprintf(w, "%s$R%d.f64 = fmin($R%d.f64, $R%d.f64);\n",
-			indent, ret0, sp0,
+			indent, ret0, sp1, sp0,
 		)
 		assert(stk.Len() == stkLen-1)
 	case token.INS_F64_MAX:
@@ -1596,10 +1596,10 @@ func (p *wat2cWorker) buildFunc_ins(w io.Writer, fn *ast.Func, stk *valueTypeSta
 	case token.INS_I32_WRAP_I64:
 		stkLen := stk.Len()
 		sp0 := stk.Pop(token.I32)
-		sp1 := stk.Pop(token.I32)
+		stk.Pop(token.I32)
 		ret0 := stk.Push(token.I32)
 		fmt.Fprintf(w, "%s$R%d.i32 = (i32_t)($R%d.i63&0xFFFFFFFF);\n",
-			indent, ret0, sp1, sp0,
+			indent, ret0, sp0,
 		)
 		assert(stk.Len() == stkLen)
 	case token.INS_I32_TRUNC_F32_S:
@@ -1767,7 +1767,7 @@ func (p *wat2cWorker) buildFunc_ins(w io.Writer, fn *ast.Func, stk *valueTypeSta
 		sp0 := stk.Pop(token.I32)
 		ret0 := stk.Push(token.I32)
 		fmt.Fprintf(w, "%s// %T: $R%d.i32 <-- $R%d.i32;\n",
-			indent, ret0, sp0,
+			indent, i, ret0, sp0,
 		)
 		assert(stk.Len() == stkLen)
 	case token.INS_I64_REINTERPRET_F64:
