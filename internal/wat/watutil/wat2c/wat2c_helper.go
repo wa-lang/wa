@@ -8,6 +8,42 @@ import (
 	"wa-lang.org/wa/internal/wat/token"
 )
 
+func (p *wat2cWorker) findGlobalType(ident string) token.Token {
+	// 不支持导入的全局变量
+	if idx, err := strconv.Atoi(ident); err == nil {
+		if idx < 0 || idx >= len(p.m.Globals) {
+			panic(fmt.Sprintf("wat2c: unknown global %q", ident))
+		}
+		return p.m.Globals[idx].Type
+	}
+	for _, g := range p.m.Globals {
+		if g.Name == ident {
+			return g.Type
+		}
+	}
+	panic("unreachable")
+}
+
+func (p *wat2cWorker) findLocalType(fn *ast.Func, ident string) token.Token {
+	if idx, err := strconv.Atoi(ident); err == nil {
+		if idx < 0 || idx >= len(fn.Type.Params)+len(fn.Body.Locals) {
+			panic(fmt.Sprintf("wat2c: unknown local %q", ident))
+		}
+		return p.localTypes[idx]
+	}
+	for idx, arg := range fn.Type.Params {
+		if arg.Name == ident {
+			return p.localTypes[idx]
+		}
+	}
+	for idx, arg := range fn.Body.Locals {
+		if arg.Name == ident {
+			return p.localTypes[len(fn.Type.Params)+idx]
+		}
+	}
+	panic("unreachable")
+}
+
 func (p *wat2cWorker) findLocalName(fn *ast.Func, ident string) string {
 	if idx, err := strconv.Atoi(ident); err == nil {
 		if idx < 0 || idx >= len(fn.Type.Params)+len(fn.Body.Locals) {

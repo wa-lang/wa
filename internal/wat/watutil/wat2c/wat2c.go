@@ -8,6 +8,7 @@ import (
 	"wa-lang.org/wa/internal/3rdparty/wazero/internalx/wasm"
 	"wa-lang.org/wa/internal/wat/ast"
 	"wa-lang.org/wa/internal/wat/parser"
+	"wa-lang.org/wa/internal/wat/token"
 )
 
 func Wat2C(filename string, source []byte) (code, header []byte, err error) {
@@ -27,8 +28,9 @@ type wat2cWorker struct {
 	inlinedTypeIndices []*inlinedTypeIndex
 	inlinedTypes       []*wasm.FunctionType
 
-	localNames []string // 参数和局部变量名
-	labelScope []string // 嵌套的lebel查询, if/block/loop
+	localNames []string      // 参数和局部变量名
+	localTypes []token.Token // 参数和局部变量类型
+	labelScope []string      // 嵌套的lebel查询, if/block/loop
 }
 
 type inlinedTypeIndex struct {

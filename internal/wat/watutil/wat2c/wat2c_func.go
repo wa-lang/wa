@@ -16,12 +16,13 @@ func (p *wat2cWorker) buildFunc_body(w io.Writer, fn *ast.Func) error {
 	var stk valueTypeStack
 	var bufIns bytes.Buffer
 
-	p.labelScope = nil
+	assert(len(p.labelScope) == 0)
 
 	if len(fn.Body.Locals) > 0 {
 		for _, x := range fn.Body.Locals {
 			localName := toCName(x.Name)
 			p.localNames = append(p.localNames, localName)
+			p.localTypes = append(p.localTypes, x.Type)
 			if localName != x.Name {
 				fmt.Fprintf(&bufIns, "  val_t %s = {0}; // %s\n", localName, x.Name)
 			} else {
@@ -165,7 +166,7 @@ func (p *wat2cWorker) buildFunc_ins(w io.Writer, fn *ast.Func, stk *valueTypeSta
 		stkLen := stk.Len()
 		i := i.(ast.Ins_BrIf)
 		assert(i.X != "")
-		stk.Pop()
+		stk.Pop(token.I32)
 		fmt.Fprintf(w, "%sif($R%d.i32) { goto L_%s_next; }\n",
 			indent, stk.Len(), toCName(p.findLabelName(i.X)),
 		)
@@ -175,7 +176,7 @@ func (p *wat2cWorker) buildFunc_ins(w io.Writer, fn *ast.Func, stk *valueTypeSta
 		i := i.(ast.Ins_BrTable)
 		assert(len(i.XList) > 1)
 		fmt.Fprintf(w, "%sswitch($R%d.i32) {\n", indent, stk.TopIdx())
-		stk.Pop()
+		stk.Pop(token.I32)
 		for k := 0; k < len(i.XList)-1; k++ {
 			assert(i.XList[k] != "")
 			fmt.Fprintf(w, "%scase %d: goto L_%s_next;\n",
@@ -311,7 +312,7 @@ func (p *wat2cWorker) buildFunc_ins(w io.Writer, fn *ast.Func, stk *valueTypeSta
 		stkLen := stk.Len()
 		assert(stk.Len() >= 1)
 		sp := stk.TopIdx()
-		stk.Pop()
+		stk.Drop()
 		fmt.Fprintf(w, "%s$R%d; // drop\n", indent, sp)
 		assert(stk.Len() == stkLen-1)
 	case token.INS_SELECT:
@@ -333,8 +334,9 @@ func (p *wat2cWorker) buildFunc_ins(w io.Writer, fn *ast.Func, stk *valueTypeSta
 	case token.INS_LOCAL_SET:
 		stkLen := stk.Len()
 		i := i.(ast.Ins_LocalSet)
+		xType := p.findLocalType(fn, i.X)
 		fmt.Fprintf(w, "%s%s = $R%d;\n", indent, p.findLocalName(fn, i.X), stk.TopIdx())
-		stk.Pop()
+		stk.Pop(xType)
 		assert(stk.Len() == stkLen-1)
 	case token.INS_LOCAL_TEE:
 		stkLen := stk.Len()
@@ -350,8 +352,9 @@ func (p *wat2cWorker) buildFunc_ins(w io.Writer, fn *ast.Func, stk *valueTypeSta
 	case token.INS_GLOBAL_SET:
 		stkLen := stk.Len()
 		i := i.(ast.Ins_GlobalSet)
+		xType := p.findGlobalType(i.X)
 		fmt.Fprintf(w, "%svar_%s = $R%d;\n", indent, toCName(i.X), stk.TopIdx())
-		stk.Pop()
+		stk.Pop(xType)
 		assert(stk.Len() == stkLen-1)
 	case token.INS_TABLE_GET:
 		stkLen := stk.Len()
@@ -890,7 +893,7 @@ func (p *wat2cWorker) buildFunc_ins(w io.Writer, fn *ast.Func, stk *valueTypeSta
 		fmt.Fprintf(w, "%s$R%d.i32 += $R%d.i32;\n",
 			indent, stk.TopIdx()-1, stk.TopIdx(),
 		)
-		stk.Pop()
+		stk.Pop(token.I32)
 		assert(stk.Len() == stkLen-1)
 	case token.INS_I32_SUB:
 		stkLen := stk.Len()
@@ -898,7 +901,7 @@ func (p *wat2cWorker) buildFunc_ins(w io.Writer, fn *ast.Func, stk *valueTypeSta
 		fmt.Fprintf(w, "%s$R%d.i32 -= $R%d.i32;\n",
 			indent, stk.TopIdx()-1, stk.TopIdx(),
 		)
-		stk.Pop()
+		stk.Pop(token.I32)
 		assert(stk.Len() == stkLen-1)
 	case token.INS_I32_MUL:
 		stkLen := stk.Len()
@@ -906,7 +909,7 @@ func (p *wat2cWorker) buildFunc_ins(w io.Writer, fn *ast.Func, stk *valueTypeSta
 		fmt.Fprintf(w, "%s$R%d.i32 *= $R%d.i32;\n",
 			indent, stk.TopIdx()-1, stk.TopIdx(),
 		)
-		stk.Pop()
+		stk.Pop(token.I32)
 		assert(stk.Len() == stkLen-1)
 	case token.INS_I32_DIV_S:
 		stkLen := stk.Len()
@@ -914,7 +917,7 @@ func (p *wat2cWorker) buildFunc_ins(w io.Writer, fn *ast.Func, stk *valueTypeSta
 		fmt.Fprintf(w, "%s$R%d.i32 /= $R%d.i32;\n",
 			indent, stk.TopIdx()-1, stk.TopIdx(),
 		)
-		stk.Pop()
+		stk.Pop(token.I32)
 		assert(stk.Len() == stkLen-1)
 	case token.INS_I32_DIV_U:
 		stkLen := stk.Len()
@@ -922,7 +925,7 @@ func (p *wat2cWorker) buildFunc_ins(w io.Writer, fn *ast.Func, stk *valueTypeSta
 		fmt.Fprintf(w, "%s$R%d.i32 = (i32_t)((u32_t)($R%d.i32)/(u32_t)($R%d.i32));\n",
 			indent, stk.TopIdx()-1, stk.TopIdx()-1, stk.TopIdx(),
 		)
-		stk.Pop()
+		stk.Pop(token.I32)
 		assert(stk.Len() == stkLen-1)
 	case token.INS_I32_REM_S:
 		stkLen := stk.Len()
@@ -930,7 +933,7 @@ func (p *wat2cWorker) buildFunc_ins(w io.Writer, fn *ast.Func, stk *valueTypeSta
 		fmt.Fprintf(w, "%s$R%d.i32 %%= $R%d.i32;\n",
 			indent, stk.TopIdx()-1, stk.TopIdx(),
 		)
-		stk.Pop()
+		stk.Pop(token.I32)
 		assert(stk.Len() == stkLen-1)
 	case token.INS_I32_REM_U:
 		stkLen := stk.Len()
@@ -938,7 +941,7 @@ func (p *wat2cWorker) buildFunc_ins(w io.Writer, fn *ast.Func, stk *valueTypeSta
 		fmt.Fprintf(w, "%s$R%d.i32 = (i32_t)((u32_t)($R%d.i32)%%(u32_t)($R%d.i32));\n",
 			indent, stk.TopIdx()-1, stk.TopIdx()-1, stk.TopIdx(),
 		)
-		stk.Pop()
+		stk.Pop(token.I32)
 		assert(stk.Len() == stkLen-1)
 	case token.INS_I32_AND:
 		stkLen := stk.Len()
@@ -946,7 +949,7 @@ func (p *wat2cWorker) buildFunc_ins(w io.Writer, fn *ast.Func, stk *valueTypeSta
 		fmt.Fprintf(w, "%s$R%d.i32 &= $R%d.i32;\n",
 			indent, stk.TopIdx()-1, stk.TopIdx(),
 		)
-		stk.Pop()
+		stk.Pop(token.I32)
 		assert(stk.Len() == stkLen-1)
 	case token.INS_I32_OR:
 		stkLen := stk.Len()
@@ -954,7 +957,7 @@ func (p *wat2cWorker) buildFunc_ins(w io.Writer, fn *ast.Func, stk *valueTypeSta
 		fmt.Fprintf(w, "%s$R%d.i32 |= $R%d.i32;\n",
 			indent, stk.TopIdx()-1, stk.TopIdx(),
 		)
-		stk.Pop()
+		stk.Pop(token.I32)
 		assert(stk.Len() == stkLen-1)
 	case token.INS_I32_XOR:
 		stkLen := stk.Len()
@@ -962,7 +965,7 @@ func (p *wat2cWorker) buildFunc_ins(w io.Writer, fn *ast.Func, stk *valueTypeSta
 		fmt.Fprintf(w, "%s$R%d.i32 ^= $R%d.i32;\n",
 			indent, stk.TopIdx()-1, stk.TopIdx(),
 		)
-		stk.Pop()
+		stk.Pop(token.I32)
 		assert(stk.Len() == stkLen-1)
 	case token.INS_I32_SHL:
 		stkLen := stk.Len()
@@ -970,7 +973,7 @@ func (p *wat2cWorker) buildFunc_ins(w io.Writer, fn *ast.Func, stk *valueTypeSta
 		fmt.Fprintf(w, "%s$R%d.i32 <<= $R%d.i32;\n",
 			indent, stk.TopIdx()-1, stk.TopIdx(),
 		)
-		stk.Pop()
+		stk.Pop(token.I32)
 		assert(stk.Len() == stkLen-1)
 	case token.INS_I32_SHR_S:
 		stkLen := stk.Len()
@@ -978,7 +981,7 @@ func (p *wat2cWorker) buildFunc_ins(w io.Writer, fn *ast.Func, stk *valueTypeSta
 		fmt.Fprintf(w, "%s$R%d.i32 >>= $R%d.i32;\n",
 			indent, stk.TopIdx()-1, stk.TopIdx(),
 		)
-		stk.Pop()
+		stk.Pop(token.I32)
 		assert(stk.Len() == stkLen-1)
 	case token.INS_I32_SHR_U:
 		stkLen := stk.Len()
@@ -986,21 +989,21 @@ func (p *wat2cWorker) buildFunc_ins(w io.Writer, fn *ast.Func, stk *valueTypeSta
 		fmt.Fprintf(w, "%s$R%d.i32 = (i32_t)((u32_t)($R%d.i32)>>(u32_t)($R%d.i32));\n",
 			indent, stk.TopIdx()-1, stk.TopIdx()-1, stk.TopIdx(),
 		)
-		stk.Pop()
+		stk.Pop(token.I32)
 		assert(stk.Len() == stkLen-1)
 	case token.INS_I32_ROTL:
 		stkLen := stk.Len()
 		fmt.Fprintf(w, "%s$R%d.i32 = I32_ROTL($R%d.i32, $R%d.i32);\n",
 			indent, stk.TopIdx(), stk.TopIdx(), stk.TopIdx()-1,
 		)
-		stk.Pop()
+		stk.Pop(token.I32)
 		assert(stk.Len() == stkLen-1)
 	case token.INS_I32_ROTR:
 		stkLen := stk.Len()
 		fmt.Fprintf(w, "%s$R%d.i32 = I32_ROTR($R%d.i32, $R%d.i32);\n",
 			indent, stk.TopIdx(), stk.TopIdx(), stk.TopIdx()-1,
 		)
-		stk.Pop()
+		stk.Pop(token.I32)
 		assert(stk.Len() == stkLen-1)
 	case token.INS_I64_CLZ:
 		stkLen := stk.Len()
@@ -1026,7 +1029,7 @@ func (p *wat2cWorker) buildFunc_ins(w io.Writer, fn *ast.Func, stk *valueTypeSta
 		fmt.Fprintf(w, "%s$R%d.i64 += $R%d.i64;\n",
 			indent, stk.TopIdx()-1, stk.TopIdx(),
 		)
-		stk.Pop()
+		stk.Pop(token.I64)
 		assert(stk.Len() == stkLen-1)
 	case token.INS_I64_SUB:
 		stkLen := stk.Len()
@@ -1034,7 +1037,7 @@ func (p *wat2cWorker) buildFunc_ins(w io.Writer, fn *ast.Func, stk *valueTypeSta
 		fmt.Fprintf(w, "%s$R%d.i64 -= $R%d.i64;\n",
 			indent, stk.TopIdx()-1, stk.TopIdx(),
 		)
-		stk.Pop()
+		stk.Pop(token.I64)
 		assert(stk.Len() == stkLen-1)
 	case token.INS_I64_MUL:
 		stkLen := stk.Len()
@@ -1042,7 +1045,7 @@ func (p *wat2cWorker) buildFunc_ins(w io.Writer, fn *ast.Func, stk *valueTypeSta
 		fmt.Fprintf(w, "%s$R%d.i64 *= $R%d.i64;\n",
 			indent, stk.TopIdx()-1, stk.TopIdx(),
 		)
-		stk.Pop()
+		stk.Pop(token.I64)
 		assert(stk.Len() == stkLen-1)
 	case token.INS_I64_DIV_S:
 		stkLen := stk.Len()
@@ -1050,7 +1053,7 @@ func (p *wat2cWorker) buildFunc_ins(w io.Writer, fn *ast.Func, stk *valueTypeSta
 		fmt.Fprintf(w, "%s$R%d.i64 /= $R%d.i64;\n",
 			indent, stk.TopIdx()-1, stk.TopIdx(),
 		)
-		stk.Pop()
+		stk.Pop(token.I64)
 		assert(stk.Len() == stkLen-1)
 	case token.INS_I64_DIV_U:
 		stkLen := stk.Len()
@@ -1058,7 +1061,7 @@ func (p *wat2cWorker) buildFunc_ins(w io.Writer, fn *ast.Func, stk *valueTypeSta
 		fmt.Fprintf(w, "%s$R%d.i64 = (i64_t)((u64_t)($R%d.i64)/(u64_t)($R%d.i64));\n",
 			indent, stk.TopIdx()-1, stk.TopIdx()-1, stk.TopIdx(),
 		)
-		stk.Pop()
+		stk.Pop(token.I64)
 		assert(stk.Len() == stkLen-1)
 	case token.INS_I64_REM_S:
 		stkLen := stk.Len()
@@ -1066,7 +1069,7 @@ func (p *wat2cWorker) buildFunc_ins(w io.Writer, fn *ast.Func, stk *valueTypeSta
 		fmt.Fprintf(w, "%s$R%d.i64 = (i64_t)((i64_t)($R%d.i64)%%(i64_t)($R%d.i64));\n",
 			indent, stk.TopIdx()-1, stk.TopIdx()-1, stk.TopIdx(),
 		)
-		stk.Pop()
+		stk.Pop(token.I64)
 		assert(stk.Len() == stkLen-1)
 	case token.INS_I64_REM_U:
 		stkLen := stk.Len()
@@ -1074,7 +1077,7 @@ func (p *wat2cWorker) buildFunc_ins(w io.Writer, fn *ast.Func, stk *valueTypeSta
 		fmt.Fprintf(w, "%s$R%d.i64 = (i64_t)((u64_t)($R%d.i64)/(u64_t)($R%d.i64));\n",
 			indent, stk.TopIdx()-1, stk.TopIdx()-1, stk.TopIdx(),
 		)
-		stk.Pop()
+		stk.Pop(token.I64)
 		assert(stk.Len() == stkLen-1)
 	case token.INS_I64_AND:
 		stkLen := stk.Len()
@@ -1082,7 +1085,7 @@ func (p *wat2cWorker) buildFunc_ins(w io.Writer, fn *ast.Func, stk *valueTypeSta
 		fmt.Fprintf(w, "%s$R%d.i64 &= $R%d.i64;\n",
 			indent, stk.TopIdx()-1, stk.TopIdx(),
 		)
-		stk.Pop()
+		stk.Pop(token.I64)
 		assert(stk.Len() == stkLen-1)
 	case token.INS_I64_OR:
 		stkLen := stk.Len()
@@ -1090,7 +1093,7 @@ func (p *wat2cWorker) buildFunc_ins(w io.Writer, fn *ast.Func, stk *valueTypeSta
 		fmt.Fprintf(w, "%s$R%d.i64 |= $R%d.i64;\n",
 			indent, stk.TopIdx()-1, stk.TopIdx(),
 		)
-		stk.Pop()
+		stk.Pop(token.I64)
 		assert(stk.Len() == stkLen-1)
 	case token.INS_I64_XOR:
 		stkLen := stk.Len()
@@ -1098,7 +1101,7 @@ func (p *wat2cWorker) buildFunc_ins(w io.Writer, fn *ast.Func, stk *valueTypeSta
 		fmt.Fprintf(w, "%s$R%d.i64 ^= $R%d.i64;\n",
 			indent, stk.TopIdx()-1, stk.TopIdx(),
 		)
-		stk.Pop()
+		stk.Pop(token.I64)
 		assert(stk.Len() == stkLen-1)
 	case token.INS_I64_SHL:
 		stkLen := stk.Len()
@@ -1106,7 +1109,7 @@ func (p *wat2cWorker) buildFunc_ins(w io.Writer, fn *ast.Func, stk *valueTypeSta
 		fmt.Fprintf(w, "%s$R%d.i64 <<= $R%d.i64;\n",
 			indent, stk.TopIdx()-1, stk.TopIdx(),
 		)
-		stk.Pop()
+		stk.Pop(token.I64)
 		assert(stk.Len() == stkLen-1)
 	case token.INS_I64_SHR_S:
 		stkLen := stk.Len()
@@ -1114,7 +1117,7 @@ func (p *wat2cWorker) buildFunc_ins(w io.Writer, fn *ast.Func, stk *valueTypeSta
 		fmt.Fprintf(w, "%s$R%d.i64 >>= $R%d.i64;\n",
 			indent, stk.TopIdx()-1, stk.TopIdx(),
 		)
-		stk.Pop()
+		stk.Pop(token.I64)
 		assert(stk.Len() == stkLen-1)
 	case token.INS_I64_SHR_U:
 		stkLen := stk.Len()
@@ -1122,21 +1125,21 @@ func (p *wat2cWorker) buildFunc_ins(w io.Writer, fn *ast.Func, stk *valueTypeSta
 		fmt.Fprintf(w, "%s$R%d.i64 = (i64_t)((u64_t)($R%d.i64)>>(u64_t)($R%d.i64));\n",
 			indent, stk.TopIdx()-1, stk.TopIdx()-1, stk.TopIdx(),
 		)
-		stk.Pop()
+		stk.Pop(token.I64)
 		assert(stk.Len() == stkLen-1)
 	case token.INS_I64_ROTL:
 		stkLen := stk.Len()
 		fmt.Fprintf(w, "%s$R%d.i64 = I64_ROTL($R%d.i64, $R%d.i32);\n",
 			indent, stk.TopIdx(), stk.TopIdx(), stk.TopIdx()-1,
 		)
-		stk.Pop()
+		stk.Pop(token.I64)
 		assert(stk.Len() == stkLen-1)
 	case token.INS_I64_ROTR:
 		stkLen := stk.Len()
 		fmt.Fprintf(w, "%s$R%d.i64 = I64_ROTR($R%d.i64, $R%d.i32);\n",
 			indent, stk.TopIdx(), stk.TopIdx(), stk.TopIdx()-1,
 		)
-		stk.Pop()
+		stk.Pop(token.I64)
 		assert(stk.Len() == stkLen-1)
 	case token.INS_F32_ABS:
 		stkLen := stk.Len()
@@ -1186,7 +1189,7 @@ func (p *wat2cWorker) buildFunc_ins(w io.Writer, fn *ast.Func, stk *valueTypeSta
 		fmt.Fprintf(w, "%s$R%d.f32 += $R%d.f32;\n",
 			indent, stk.TopIdx()-1, stk.TopIdx(),
 		)
-		stk.Pop()
+		stk.Pop(token.F32)
 		assert(stk.Len() == stkLen-1)
 	case token.INS_F32_SUB:
 		stkLen := stk.Len()
@@ -1194,7 +1197,7 @@ func (p *wat2cWorker) buildFunc_ins(w io.Writer, fn *ast.Func, stk *valueTypeSta
 		fmt.Fprintf(w, "%s$R%d.f32 -= $R%d.f32;\n",
 			indent, stk.TopIdx()-1, stk.TopIdx(),
 		)
-		stk.Pop()
+		stk.Pop(token.F32)
 		assert(stk.Len() == stkLen-1)
 	case token.INS_F32_MUL:
 		stkLen := stk.Len()
@@ -1202,7 +1205,7 @@ func (p *wat2cWorker) buildFunc_ins(w io.Writer, fn *ast.Func, stk *valueTypeSta
 		fmt.Fprintf(w, "%s$R%d.f32 *= $R%d.f32;\n",
 			indent, stk.TopIdx()-1, stk.TopIdx(),
 		)
-		stk.Pop()
+		stk.Pop(token.F32)
 		assert(stk.Len() == stkLen-1)
 	case token.INS_F32_DIV:
 		stkLen := stk.Len()
@@ -1210,7 +1213,7 @@ func (p *wat2cWorker) buildFunc_ins(w io.Writer, fn *ast.Func, stk *valueTypeSta
 		fmt.Fprintf(w, "%s$R%d.f32 /= $R%d.f32;\n",
 			indent, stk.TopIdx()-1, stk.TopIdx(),
 		)
-		stk.Pop()
+		stk.Pop(token.F32)
 		assert(stk.Len() == stkLen-1)
 	case token.INS_F32_MIN:
 		stkLen := stk.Len()
@@ -1218,7 +1221,7 @@ func (p *wat2cWorker) buildFunc_ins(w io.Writer, fn *ast.Func, stk *valueTypeSta
 		fmt.Fprintf(w, "%s$R%d.f32 = fminf($R%d.f32, $R%d.f32);\n",
 			indent, stk.TopIdx()-1, stk.TopIdx(), stk.TopIdx()-1,
 		)
-		stk.Pop()
+		stk.Pop(token.F32)
 		assert(stk.Len() == stkLen-1)
 	case token.INS_F32_MAX:
 		stkLen := stk.Len()
@@ -1226,7 +1229,7 @@ func (p *wat2cWorker) buildFunc_ins(w io.Writer, fn *ast.Func, stk *valueTypeSta
 		fmt.Fprintf(w, "%s$R%d.f32 = fmaxf($R%d.f32, $R%d.f32);\n",
 			indent, stk.TopIdx()-1, stk.TopIdx(), stk.TopIdx()-1,
 		)
-		stk.Pop()
+		stk.Pop(token.F32)
 		assert(stk.Len() == stkLen-1)
 	case token.INS_F32_COPYSIGN:
 		stkLen := stk.Len()
@@ -1234,7 +1237,7 @@ func (p *wat2cWorker) buildFunc_ins(w io.Writer, fn *ast.Func, stk *valueTypeSta
 		fmt.Fprintf(w, "%s$R%d.f32 = copysignf($R%d.f32, $R%d.f32);\n",
 			indent, stk.TopIdx()-1, stk.TopIdx(), stk.TopIdx()-1,
 		)
-		stk.Pop()
+		stk.Pop(token.F32)
 		assert(stk.Len() == stkLen-1)
 	case token.INS_F64_ABS:
 		stkLen := stk.Len()
@@ -1284,7 +1287,7 @@ func (p *wat2cWorker) buildFunc_ins(w io.Writer, fn *ast.Func, stk *valueTypeSta
 		fmt.Fprintf(w, "%s$R%d.f64 += $R%d.f64;\n",
 			indent, stk.TopIdx()-1, stk.TopIdx(),
 		)
-		stk.Pop()
+		stk.Pop(token.F64)
 		assert(stk.Len() == stkLen-1)
 	case token.INS_F64_SUB:
 		stkLen := stk.Len()
@@ -1292,7 +1295,7 @@ func (p *wat2cWorker) buildFunc_ins(w io.Writer, fn *ast.Func, stk *valueTypeSta
 		fmt.Fprintf(w, "%s$R%d.f64 -= $R%d.f64;\n",
 			indent, stk.TopIdx()-1, stk.TopIdx(),
 		)
-		stk.Pop()
+		stk.Pop(token.F64)
 		assert(stk.Len() == stkLen-1)
 	case token.INS_F64_MUL:
 		stkLen := stk.Len()
@@ -1300,7 +1303,7 @@ func (p *wat2cWorker) buildFunc_ins(w io.Writer, fn *ast.Func, stk *valueTypeSta
 		fmt.Fprintf(w, "%s$R%d.f64 *= $R%d.f64;\n",
 			indent, stk.TopIdx()-1, stk.TopIdx(),
 		)
-		stk.Pop()
+		stk.Pop(token.F64)
 		assert(stk.Len() == stkLen-1)
 	case token.INS_F64_DIV:
 		stkLen := stk.Len()
@@ -1308,7 +1311,7 @@ func (p *wat2cWorker) buildFunc_ins(w io.Writer, fn *ast.Func, stk *valueTypeSta
 		fmt.Fprintf(w, "%s$R%d.f64 /= $R%d.f64;\n",
 			indent, stk.TopIdx()-1, stk.TopIdx(),
 		)
-		stk.Pop()
+		stk.Pop(token.F64)
 		assert(stk.Len() == stkLen-1)
 	case token.INS_F64_MIN:
 		stkLen := stk.Len()
@@ -1316,7 +1319,7 @@ func (p *wat2cWorker) buildFunc_ins(w io.Writer, fn *ast.Func, stk *valueTypeSta
 		fmt.Fprintf(w, "%s$R%d.f64 = fmin($R%d.f64, $R%d.f64);\n",
 			indent, stk.TopIdx()-1, stk.TopIdx(), stk.TopIdx()-1,
 		)
-		stk.Pop()
+		stk.Pop(token.F64)
 		assert(stk.Len() == stkLen-1)
 	case token.INS_F64_MAX:
 		stkLen := stk.Len()
@@ -1324,7 +1327,7 @@ func (p *wat2cWorker) buildFunc_ins(w io.Writer, fn *ast.Func, stk *valueTypeSta
 		fmt.Fprintf(w, "%s$R%d.f64 = fmax($R%d.f64, $R%d.f64);\n",
 			indent, stk.TopIdx()-1, stk.TopIdx(), stk.TopIdx()-1,
 		)
-		stk.Pop()
+		stk.Pop(token.F64)
 		assert(stk.Len() == stkLen-1)
 	case token.INS_F64_COPYSIGN:
 		stkLen := stk.Len()
@@ -1332,7 +1335,7 @@ func (p *wat2cWorker) buildFunc_ins(w io.Writer, fn *ast.Func, stk *valueTypeSta
 		fmt.Fprintf(w, "%s$R%d.f64 = copysign($R%d.f64, $R%d.f64);\n",
 			indent, stk.TopIdx()-1, stk.TopIdx(), stk.TopIdx()-1,
 		)
-		stk.Pop()
+		stk.Pop(token.F64)
 		assert(stk.Len() == stkLen-1)
 	case token.INS_I32_WRAP_I64:
 		stkLen := stk.Len()

@@ -267,6 +267,7 @@ func (p *wat2cWorker) buildFuncs(w io.Writer) error {
 	// 函数的实现
 	for _, f := range p.m.Funcs {
 		p.localNames = nil
+		p.localTypes = nil
 		p.labelScope = nil
 
 		fmt.Fprintf(w, "// func %s", f.Name)
@@ -300,6 +301,8 @@ func (p *wat2cWorker) buildFuncs(w io.Writer) error {
 				}
 
 				p.localNames = append(p.localNames, argName)
+				p.localTypes = append(p.localTypes, x.Type)
+
 				if i > 0 {
 					fmt.Fprint(w, ", ")
 				}
