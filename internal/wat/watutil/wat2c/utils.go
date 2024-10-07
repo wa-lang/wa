@@ -11,9 +11,9 @@ import (
 func assert(condition bool, args ...interface{}) {
 	if !condition {
 		if msg := fmt.Sprint(args...); msg != "" {
-			println(fmt.Sprintf("assert failed, %s", msg)) // todo: panic
+			panic(fmt.Sprintf("assert failed, %s", msg))
 		} else {
-			println(fmt.Sprint("assert failed")) // todo: panic
+			panic(fmt.Sprint("assert failed"))
 		}
 	}
 }

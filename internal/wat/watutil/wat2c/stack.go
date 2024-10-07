@@ -13,6 +13,9 @@ type valueTypeStack struct {
 }
 
 func (s *valueTypeStack) TopIdx() int {
+	if len(s.stack) == 0 {
+		panic("unexpected stack empty")
+	}
 	return len(s.stack) - 1
 }
 
@@ -32,7 +35,7 @@ func (s *valueTypeStack) Push(v token.Token) {
 
 func (s *valueTypeStack) Pop() (vt token.Token) {
 	if len(s.stack) == 0 {
-		return // todo: panic
+		panic("unexpected stack empty")
 	}
 	vt = s.stack[len(s.stack)-1]
 	s.stack = s.stack[:len(s.stack)-1]
@@ -49,7 +52,7 @@ func (s *valueTypeStack) PushN(n int) {
 }
 func (s *valueTypeStack) PopN(dx int) {
 	if len(s.stack) < dx {
-		return // todo: panic
+		panic("unexpected stack empty")
 	}
 	s.stack = s.stack[:len(s.stack)-dx]
 	return
