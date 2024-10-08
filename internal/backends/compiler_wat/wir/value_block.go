@@ -210,3 +210,23 @@ func (v *aBlock) emitEq(r Value) ([]wat.Inst, bool) {
 	//logger.Fatal("aBlock shouldn't be compared.")
 	return nil, false
 }
+
+func (v *aBlock) emitCompare(r Value) (insts []wat.Inst) {
+	if !v.Type().Equal(r.Type()) {
+		logger.Fatal("v.Type() != r.Type()")
+	}
+
+	insts = append(insts, v.EmitPushNoRetain()...)
+	insts = append(insts, r.EmitPushNoRetain()...)
+	insts = append(insts, wat.NewInstLt(toWatType(v.Type())))
+
+	instLe := wat.NewInstIf(nil, nil, []wat.ValueType{wat.I32{}})
+	instLe.True = append(instLe.True, wat.NewInstConst(wat.I32{}, "-1"))
+
+	instLe.False = append(instLe.False, v.EmitPushNoRetain()...)
+	instLe.False = append(instLe.False, r.EmitPushNoRetain()...)
+	instLe.False = append(instLe.False, wat.NewInstGt(toWatType(v.Type())))
+
+	insts = append(insts, instLe)
+	return
+}

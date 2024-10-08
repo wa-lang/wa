@@ -60,6 +60,7 @@ type Value interface {
 	Bin() []byte
 
 	emitEq(r Value) ([]wat.Inst, bool)
+	emitCompare(r Value) []wat.Inst
 }
 
 /**************************************

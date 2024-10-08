@@ -381,3 +381,15 @@ func (v *aString) emitEq(r Value) (insts []wat.Inst, ok bool) {
 
 	return
 }
+
+func (v *aString) emitCompare(r Value) (insts []wat.Inst) {
+	if !v.Type().Equal(r.Type()) {
+		logger.Fatal("v.Type() != r.Type()")
+	}
+
+	insts = append(insts, v.EmitPushNoRetain()...)
+	insts = append(insts, r.EmitPushNoRetain()...)
+	insts = append(insts, wat.NewInstCall("$wa.runtime.string_Comp"))
+
+	return
+}

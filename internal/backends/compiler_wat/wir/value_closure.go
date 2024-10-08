@@ -171,3 +171,12 @@ func (v *aClosure) emitEq(r Value) ([]wat.Inst, bool) {
 	}
 	return insts, ok
 }
+
+func (v *aClosure) emitCompare(r Value) (insts []wat.Inst) {
+	if !v.Type().Equal(r.Type()) {
+		logger.Fatal("v.Type() != r.Type()")
+	}
+	d := r.(*aClosure)
+
+	return v.aStruct.emitCompare(&d.aStruct)
+}

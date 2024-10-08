@@ -3,8 +3,11 @@
 package wat
 
 import (
+	"fmt"
 	"strconv"
 	"strings"
+
+	"wa-lang.org/wa/internal/logger"
 )
 
 /**************************************
@@ -47,14 +50,28 @@ type instBlock struct {
 	anInstruction
 	name  string
 	Insts []Inst
+	Ret   []ValueType
 }
 
 func NewInstBlock(name string) *instBlock { return &instBlock{name: name} }
 func (i *instBlock) Format(indent string, sb *strings.Builder) {
 	sb.WriteString(indent)
-	sb.WriteString("block $")
+	sb.WriteString("block")
 
-	sb.WriteString(i.name)
+	if len(i.Ret) > 0 {
+		sb.WriteString(" (result")
+		for _, r := range i.Ret {
+			sb.WriteString(" ")
+			sb.WriteString(r.Name())
+		}
+		sb.WriteString(")")
+	}
+
+	if len(i.name) > 0 {
+		sb.WriteString(" $")
+		sb.WriteString(i.name)
+	}
+
 	sb.WriteString("\n")
 
 	indent_t := indent + "  "
@@ -101,14 +118,49 @@ instBr:
 **************************************/
 type instBr struct {
 	anInstruction
-	Name string
+	label interface{}
 }
 
-func NewInstBr(name string) *instBr { return &instBr{Name: name} }
+func NewInstBr(label interface{}) *instBr { return &instBr{label: label} }
 func (i *instBr) Format(indent string, sb *strings.Builder) {
 	sb.WriteString(indent)
-	sb.WriteString("br $")
-	sb.WriteString(i.Name)
+	switch l := i.label.(type) {
+	case string:
+		sb.WriteString("br $")
+		sb.WriteString(l)
+
+	case int:
+		sb.WriteString("br ")
+		sb.WriteString(fmt.Sprint(l))
+
+	default:
+		logger.Fatalf("Invalid br type:%T", l)
+	}
+}
+
+/**************************************
+instBrIf:
+**************************************/
+type instBrIf struct {
+	anInstruction
+	label interface{}
+}
+
+func NewInstBrIf(label interface{}) *instBrIf { return &instBrIf{label: label} }
+func (i *instBrIf) Format(indent string, sb *strings.Builder) {
+	sb.WriteString(indent)
+	switch l := i.label.(type) {
+	case string:
+		sb.WriteString("br_if $")
+		sb.WriteString(l)
+
+	case int:
+		sb.WriteString("br_if ")
+		sb.WriteString(fmt.Sprint(l))
+
+	default:
+		logger.Fatalf("Invalid br_if type:%T", l)
+	}
 }
 
 /**************************************

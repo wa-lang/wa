@@ -145,6 +145,14 @@ func (v *aRef) emitEq(r Value) (insts []wat.Inst, ok bool) {
 	return v.ExtractByName("d").emitEq(r.(*aRef).ExtractByName("d"))
 }
 
+func (v *aRef) emitCompare(r Value) (insts []wat.Inst) {
+	if !v.Type().Equal(r.Type()) {
+		logger.Fatal("v.Type() != r.Type()")
+	}
+
+	return v.ExtractByName("d").emitCompare(r.(*aRef).ExtractByName("d"))
+}
+
 func (v *aRef) getConstPtr() int {
 	if v.kind != ValueKindConst {
 		logger.Fatal("Must be a const")

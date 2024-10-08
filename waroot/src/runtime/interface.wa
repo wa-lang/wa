@@ -1,0 +1,15 @@
+// 版权 @2019 凹语言 作者。保留所有权利。
+
+#wa:linkname runtime.Compare
+func Compare(l, r: interface{}) => i32
+
+#wa:linkname runtime.getItab
+func getItab(dhash: i32, ihash: i32, commanok: i32) => u32 {
+	itab := _itabsPtr + ((dhash-1)*_interfaceCount-ihash-1)*4
+	return getU32(u32(itab))
+}
+
+func ActivateEmptyInterface() {
+	i := interface{}("")
+	println(i.(string))
+}
