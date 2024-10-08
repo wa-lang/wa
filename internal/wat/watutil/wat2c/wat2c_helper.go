@@ -140,8 +140,8 @@ func (p *wat2cWorker) findLabelName(label string) string {
 	}
 
 	idx := p.findLabelIndex(label)
-	if idx < len(p.labelScope) {
-		return p.labelScope[len(p.labelScope)-idx-1]
+	if idx < len(p.scopeLabels) {
+		return p.scopeLabels[len(p.scopeLabels)-idx-1]
 	}
 	panic(fmt.Sprintf("wat2c: unknown label %q", label))
 }
@@ -154,17 +154,18 @@ func (p *wat2cWorker) findLabelIndex(label string) int {
 	if idx, err := strconv.Atoi(label); err == nil {
 		return idx
 	}
-	for i := 0; i < len(p.labelScope); i++ {
-		if s := p.labelScope[len(p.labelScope)-i-1]; s == label {
+	for i := 0; i < len(p.scopeLabels); i++ {
+		if s := p.scopeLabels[len(p.scopeLabels)-i-1]; s == label {
 			return i
 		}
 	}
 	panic(fmt.Sprintf("wat2c: unknown label %q", label))
 }
 
-func (p *wat2cWorker) enterLabelScope(label string) {
-	p.labelScope = append(p.labelScope, label)
+func (p *wat2cWorker) enterLabelScope(stkBase int, label string) {
+	p.scopeLabels = append(p.scopeLabels, label)
+	p.scopeStackBases = append(p.scopeStackBases, stkBase)
 }
 func (p *wat2cWorker) leaveLabelScope() {
-	p.labelScope = p.labelScope[:len(p.labelScope)-1]
+	p.scopeLabels = p.scopeLabels[:len(p.scopeLabels)-1]
 }

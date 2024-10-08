@@ -10,7 +10,7 @@ import (
 
 // 函数内栈类型和深度计算
 type valueTypeStack struct {
-	stack           []token.Token // i32/i64/f32/f64
+	stack           []token.Token // i32/i64/f32/f64/funcref
 	maxStackPointer int
 }
 
@@ -35,7 +35,7 @@ func (s *valueTypeStack) Top(expect token.Token) int {
 
 func (s *valueTypeStack) Push(v token.Token) int {
 	switch v {
-	case token.I32, token.I64, token.F32, token.F64:
+	case token.I32, token.I64, token.F32, token.F64, token.FUNCREF:
 	default:
 		panic("unexpected value type")
 	}
@@ -48,7 +48,7 @@ func (s *valueTypeStack) Push(v token.Token) int {
 
 func (s *valueTypeStack) Pop(expect token.Token) int {
 	switch expect {
-	case token.I32, token.I64, token.F32, token.F64:
+	case token.I32, token.I64, token.F32, token.F64, token.FUNCREF:
 	default:
 		panic("unexpected value type")
 	}

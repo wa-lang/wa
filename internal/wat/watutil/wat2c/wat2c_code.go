@@ -25,16 +25,17 @@ func (p *wat2cWorker) buildCode(w io.Writer) error {
 	fmt.Fprintf(w, "#include <math.h>\n")
 	fmt.Fprintln(w)
 
-	fmt.Fprintf(w, "typedef uint8_t  u8_t;\n")
-	fmt.Fprintf(w, "typedef int8_t   i8_t;\n")
-	fmt.Fprintf(w, "typedef uint16_t u16_t;\n")
-	fmt.Fprintf(w, "typedef int16_t  i16_t;\n")
-	fmt.Fprintf(w, "typedef uint32_t u32_t;\n")
-	fmt.Fprintf(w, "typedef int32_t  i32_t;\n")
-	fmt.Fprintf(w, "typedef uint64_t u64_t;\n")
-	fmt.Fprintf(w, "typedef int64_t  i64_t;\n")
-	fmt.Fprintf(w, "typedef float    f32_t;\n")
-	fmt.Fprintf(w, "typedef double   f64_t;\n")
+	fmt.Fprintf(w, "typedef uint8_t   u8_t;\n")
+	fmt.Fprintf(w, "typedef int8_t    i8_t;\n")
+	fmt.Fprintf(w, "typedef uint16_t  u16_t;\n")
+	fmt.Fprintf(w, "typedef int16_t   i16_t;\n")
+	fmt.Fprintf(w, "typedef uint32_t  u32_t;\n")
+	fmt.Fprintf(w, "typedef int32_t   i32_t;\n")
+	fmt.Fprintf(w, "typedef uint64_t  u64_t;\n")
+	fmt.Fprintf(w, "typedef int64_t   i64_t;\n")
+	fmt.Fprintf(w, "typedef float     f32_t;\n")
+	fmt.Fprintf(w, "typedef double    f64_t;\n")
+	fmt.Fprintf(w, "typedef uintptr_t ref_t;\n")
 	fmt.Fprintln(w)
 
 	fmt.Fprintf(w, "typedef union val_t {\n")
@@ -42,6 +43,7 @@ func (p *wat2cWorker) buildCode(w io.Writer) error {
 	fmt.Fprintf(w, "  f64_t f64;\n")
 	fmt.Fprintf(w, "  i32_t i32;\n")
 	fmt.Fprintf(w, "  f32_t f32;\n")
+	fmt.Fprintf(w, "  ref_t ref;\n")
 	fmt.Fprintf(w, "} val_t;\n\n")
 
 	if err := p.buildImport(w); err != nil {
@@ -152,11 +154,11 @@ func (p *wat2cWorker) buildTable(w io.Writer) error {
 		fmt.Fprintf(w, "// table $%s\n", p.m.Table.Name)
 	}
 	if max := p.m.Table.MaxSize; max > 0 {
-		fmt.Fprintf(w, "static uintptr_t wasm_table[%d];\n", max)
+		fmt.Fprintf(w, "static ref_t     wasm_table[%d];\n", max)
 		fmt.Fprintf(w, "static int32_t   wasm_table_size = %d;\n", p.m.Table.Size)
 		fmt.Fprintf(w, "static const int wasm_table_max_size = %d;\n", max)
 	} else {
-		fmt.Fprintf(w, "static uintptr_t wasm_table[%d];\n", p.m.Table.Size)
+		fmt.Fprintf(w, "static ref_t     wasm_table[%d];\n", p.m.Table.Size)
 		fmt.Fprintf(w, "static int32_t   wasm_table_size = %d;\n", p.m.Table.Size)
 		fmt.Fprintf(w, "static const int wasm_table_max_size = %d;\n", p.m.Table.Size)
 	}
@@ -268,7 +270,7 @@ func (p *wat2cWorker) buildFuncs(w io.Writer) error {
 	for _, f := range p.m.Funcs {
 		p.localNames = nil
 		p.localTypes = nil
-		p.labelScope = nil
+		p.scopeLabels = nil
 
 		fmt.Fprintf(w, "// func %s", f.Name)
 		if len(f.Type.Params) > 0 {

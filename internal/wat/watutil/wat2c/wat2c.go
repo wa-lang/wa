@@ -28,9 +28,10 @@ type wat2cWorker struct {
 	inlinedTypeIndices []*inlinedTypeIndex
 	inlinedTypes       []*wasm.FunctionType
 
-	localNames []string      // 参数和局部变量名
-	localTypes []token.Token // 参数和局部变量类型
-	labelScope []string      // 嵌套的lebel查询, if/block/loop
+	localNames      []string      // 参数和局部变量名
+	localTypes      []token.Token // 参数和局部变量类型
+	scopeLabels     []string      // 嵌套的label查询, if/block/loop
+	scopeStackBases []int         // if/block/loop, 开始的栈位置
 }
 
 type inlinedTypeIndex struct {
