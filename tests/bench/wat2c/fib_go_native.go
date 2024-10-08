@@ -2,8 +2,10 @@
 
 package main
 
+import "fmt"
+
 func main() {
-	println(fib(46))
+	fmt.Printf("fib(%d) = %d\n", 46, fib(46))
 }
 func fib(n int) int {
 	if n <= 2 {
