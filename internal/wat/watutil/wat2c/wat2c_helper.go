@@ -8,6 +8,12 @@ import (
 	"wa-lang.org/wa/internal/wat/token"
 )
 
+func (p *wat2cWorker) Tracef(foramt string, a ...interface{}) {
+	if p.trace {
+		fmt.Printf(foramt, a...)
+	}
+}
+
 func (p *wat2cWorker) ifUseMathX(ins token.Token) bool {
 	switch ins {
 	case token.INS_I32_CLZ:

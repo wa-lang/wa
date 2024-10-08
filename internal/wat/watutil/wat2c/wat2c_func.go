@@ -13,6 +13,8 @@ import (
 )
 
 func (p *wat2cWorker) buildFunc_body(w io.Writer, fn *ast.Func) error {
+	p.Tracef("buildFunc_body: %s\n", fn.Name)
+
 	var stk valueTypeStack
 	var bufIns bytes.Buffer
 
@@ -70,6 +72,9 @@ func (p *wat2cWorker) buildFunc_body(w io.Writer, fn *ast.Func) error {
 }
 
 func (p *wat2cWorker) buildFunc_ins(w io.Writer, fn *ast.Func, stk *valueTypeStack, i ast.Instruction, level int) error {
+	p.Tracef("buildFunc_ins: %s begin: %v\n", i.Token(), stk.String())
+	defer func() { p.Tracef("buildFunc_ins: %s end: %v\n", i.Token(), stk.String()) }()
+
 	indent := strings.Repeat("  ", level)
 
 	if p.ifUseMathX(i.Token()) {
@@ -224,16 +229,17 @@ func (p *wat2cWorker) buildFunc_ins(w io.Writer, fn *ast.Func, stk *valueTypeSta
 	case token.INS_CALL:
 		i := i.(ast.Ins_Call)
 
-		fnType := p.findFuncType(i.X)
+		fnCallType := p.findFuncType(i.X)
 
 		// 需要定义临时变量保存返回值
-		if len(fnType.Results) > 0 {
+		if len(fnCallType.Results) > 0 {
 			fmt.Fprintf(w, "%s{\n", indent)
 			fmt.Fprintf(w, "%s  fn_%s_ret_t $ret = fn_%s(", indent, toCName(i.X), toCName(i.X))
 		} else {
 			fmt.Fprintf(w, "%sfn_%s(", indent, toCName(i.X))
 		}
-		for k, x := range fn.Type.Params {
+
+		for k, x := range fnCallType.Params {
 			if k > 0 {
 				fmt.Fprintf(w, ", ")
 			}
@@ -243,8 +249,8 @@ func (p *wat2cWorker) buildFunc_ins(w io.Writer, fn *ast.Func, stk *valueTypeSta
 		fmt.Fprintf(w, ");\n")
 
 		// 复制到当前stk
-		if len(fnType.Results) > 0 {
-			for k, retType := range fnType.Results {
+		if len(fnCallType.Results) > 0 {
+			for k, retType := range fnCallType.Results {
 				reti := stk.Push(retType)
 				fmt.Fprintf(w, "%s  $R%d = $ret.$R%d;\n", indent, reti, k)
 			}
@@ -257,27 +263,27 @@ func (p *wat2cWorker) buildFunc_ins(w io.Writer, fn *ast.Func, stk *valueTypeSta
 		i := i.(ast.Ins_CallIndirect)
 
 		sp0 := stk.Pop(token.I32)
-		fnType := p.findType(i.TypeIdx)
+		fnCallType := p.findType(i.TypeIdx)
 
 		// 生成要定义函数的类型
 		fmt.Fprintf(w, "%s{\n", indent)
 		{
 			fmt.Fprintf(w, "%s  typedef struct {", indent)
-			for i := 0; i < len(fnType.Results); i++ {
+			for i := 0; i < len(fnCallType.Results); i++ {
 				if i == 0 {
 					fmt.Fprintf(w, " val_t $R%d", i)
 				} else {
 					fmt.Fprintf(w, ", $R%d", i)
 				}
-				if i == len(fnType.Results)-1 {
+				if i == len(fnCallType.Results)-1 {
 					fmt.Fprintf(w, "; ")
 				}
 			}
 			fmt.Fprintf(w, "} fn_ret_t;\n")
 
 			fmt.Fprintf(w, "%s  typedef fn_ret_t (*fn_t)(", indent)
-			if len(fnType.Params) > 0 {
-				for i, x := range fnType.Params {
+			if len(fnCallType.Params) > 0 {
+				for i, x := range fnCallType.Params {
 					if i > 0 {
 						fmt.Fprintf(w, ", ")
 					}
@@ -291,7 +297,7 @@ func (p *wat2cWorker) buildFunc_ins(w io.Writer, fn *ast.Func, stk *valueTypeSta
 			fmt.Fprintf(w, ");\n")
 
 			// 调用函数
-			if len(fnType.Results) > 0 {
+			if len(fnCallType.Results) > 0 {
 				fmt.Fprintf(w, "%s  fn_ret_t $ret = ((fn_t)(wasm_table[$R%d.i32]))(",
 					indent, sp0,
 				)
@@ -300,15 +306,18 @@ func (p *wat2cWorker) buildFunc_ins(w io.Writer, fn *ast.Func, stk *valueTypeSta
 					indent, sp0,
 				)
 			}
-			for _, x := range fnType.Params {
+			for i, x := range fnCallType.Params {
+				if i > 0 {
+					fmt.Fprintf(w, ", ")
+				}
 				argi := stk.Pop(x.Type)
-				fmt.Fprintf(w, ", $R%d", argi)
+				fmt.Fprintf(w, "$R%d", argi)
 			}
 			fmt.Fprintf(w, ");\n")
 
 			// 保存返回值
-			if len(fnType.Results) > 0 {
-				for k, retType := range fnType.Results {
+			if len(fnCallType.Results) > 0 {
+				for k, retType := range fnCallType.Results {
 					reti := stk.Push(retType)
 					fmt.Fprintf(w, "%s  $R%d = $ret.$R%d;\n", indent, reti, k)
 				}

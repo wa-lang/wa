@@ -11,6 +11,8 @@ import (
 	"wa-lang.org/wa/internal/wat/token"
 )
 
+const DebugMode = false
+
 func Wat2C(filename string, source []byte) (code, header []byte, err error) {
 	m, err := parser.ParseModule(filename, source)
 	if err != nil {
@@ -34,6 +36,7 @@ type wat2cWorker struct {
 	scopeStackBases []int         // if/block/loop, 开始的栈位置
 
 	useMathX bool // 是否使用了 math_x 部分函数
+	trace    bool // 调试开关
 }
 
 type inlinedTypeIndex struct {
@@ -43,7 +46,7 @@ type inlinedTypeIndex struct {
 }
 
 func newWat2cWorker(mWat *ast.Module) *wat2cWorker {
-	return &wat2cWorker{m: mWat}
+	return &wat2cWorker{m: mWat, trace: DebugMode}
 }
 
 func (p *wat2cWorker) BuildCode() (code, header []byte, err error) {
