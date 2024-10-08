@@ -16,7 +16,7 @@ type Map struct {
 	Elem       ValueType
 	underlying *Ref
 
-	updateFnName, lookatFnName, lookatCommaokFnName string
+	updateFnName, lookatFnName, lookatCommaokFnName, delFnName string
 }
 
 func (module *Module) GenValueType_Map(key_type, elem_type ValueType, name string, ei_type ValueType) *Map {
@@ -253,6 +253,36 @@ func (module *Module) GenValueType_Map(key_type, elem_type ValueType, name strin
 		module.AddFunc(&f)
 	}
 
+	// delete
+	{
+		var f Function
+		m := NewLocal("m", map_t.underlying)
+		k := NewLocal("k", key_type)
+		f.Params = append(f.Params, m)
+		f.Params = append(f.Params, k)
+
+		ki := NewLocal("ki", ei_type)
+		f.Locals = append(f.Locals, ki)
+
+		if k_is_iface {
+			f.Insts = append(f.Insts, module.EmitGenChangeInterface(k, ei_type)...)
+		} else {
+			f.Insts = append(f.Insts, module.EmitGenMakeInterface(k, ei_type)...)
+		}
+		f.Insts = append(f.Insts, ki.EmitPop()...)
+
+		f.Insts = append(f.Insts, m.EmitPushNoRetain()...)
+		f.Insts = append(f.Insts, ki.EmitPushNoRetain()...)
+		f.Insts = append(f.Insts, wat.NewInstCall("runtime.mapDelete"))
+
+		f.Insts = append(f.Insts, ki.EmitRelease()...)
+
+		f.InternalName = map_t.name + ".delete"
+		map_t.delFnName = f.InternalName
+
+		module.AddFunc(&f)
+	}
+
 	module.addValueType(&map_t)
 	return &map_t
 }
@@ -351,6 +381,14 @@ func (v *aMap) emitLookup(key Value, CommaOk bool) (insts []wat.Inst) {
 func (v *aMap) emitLen() (insts []wat.Inst) {
 	insts = append(insts, v.aRef.EmitPushNoRetain()...)
 	insts = append(insts, wat.NewInstCall("runtime.mapLen"))
+
+	return
+}
+
+func (v *aMap) emitDelete(key Value) (insts []wat.Inst) {
+	insts = append(insts, v.aRef.EmitPushNoRetain()...)
+	insts = append(insts, key.EmitPushNoRetain()...)
+	insts = append(insts, wat.NewInstCall(v.typ.delFnName))
 
 	return
 }

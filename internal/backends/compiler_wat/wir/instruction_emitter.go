@@ -1023,6 +1023,11 @@ func (m *Module) EmitGenMapUpdate(ma, k, v Value) (insts []wat.Inst) {
 	return mi.emitUpdate(k, v)
 }
 
+func (m *Module) EmitGenDelete(ma, k Value) (insts []wat.Inst) {
+	mi := ma.(*aMap)
+	return mi.emitDelete(k)
+}
+
 func (m *Module) EmitPrintString(v Value) (insts []wat.Inst) {
 	s := v.(*aString)
 

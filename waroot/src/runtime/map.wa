@@ -72,3 +72,25 @@ func mapNext(iter: mapIter) => (ok: bool, k, v: interface{}, pos: int) {
 	node := iter.m.nodes[iter.pos]
 	return true, node.k, node.v, iter.pos + 1
 }
+
+#wa:linkname runtime.mapDelete
+func mapDelete(m: *mapImp, k: interface{}) {
+	if m == nil {
+		return
+	}
+
+	for i, n := range m.nodes {
+		if Compare(n.k, k) == 0 {
+			l := len(m.nodes) - 1
+			if i != l {
+				m.nodes[i] = m.nodes[l]
+			}
+			m.nodes[l].k = nil
+			m.nodes[l].v = nil
+
+			m.nodes = m.nodes[:l]
+			return
+		}
+	}
+}
+

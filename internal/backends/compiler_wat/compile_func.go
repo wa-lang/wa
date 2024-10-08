@@ -812,6 +812,10 @@ func (g *functionGenerator) genBuiltin(call *ssa.CallCommon) (insts []wat.Inst, 
 		insts = g.getValue(call.Args[0]).value.EmitPushNoRetain()
 		ret_type = g.getValue(call.Args[0]).value.Type()
 
+	case "delete":
+		insts = g.module.EmitGenDelete(g.getValue(call.Args[0]).value, g.getValue(call.Args[1]).value)
+		ret_type = g.module.VOID
+
 	default:
 		logger.Fatal("Todo:", call.Value)
 	}
