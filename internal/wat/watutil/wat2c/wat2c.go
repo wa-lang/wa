@@ -32,6 +32,8 @@ type wat2cWorker struct {
 	localTypes      []token.Token // 参数和局部变量类型
 	scopeLabels     []string      // 嵌套的label查询, if/block/loop
 	scopeStackBases []int         // if/block/loop, 开始的栈位置
+
+	useMathX bool // 是否使用了 math_x 部分函数
 }
 
 type inlinedTypeIndex struct {

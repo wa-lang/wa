@@ -3,6 +3,7 @@
 package wat2c
 
 import (
+	"bytes"
 	_ "embed"
 	"fmt"
 	"io"
@@ -263,10 +264,11 @@ func (p *wat2cWorker) buildFuncs(w io.Writer) error {
 	}
 	fmt.Fprintln(w)
 
-	// 扩展数学函数
-	fmt.Fprintln(w, math_x_code)
-
 	// 函数的实现
+	var funcImplBuf bytes.Buffer
+	var wBackup = w
+
+	w = &funcImplBuf
 	for _, f := range p.m.Funcs {
 		p.localNames = nil
 		p.localTypes = nil
@@ -316,6 +318,22 @@ func (p *wat2cWorker) buildFuncs(w io.Writer) error {
 			return err
 		}
 		fmt.Fprintf(w, "}\n\n")
+	}
+
+	// 恢复输出流
+	w = wBackup
+
+	// 扩展数学函数
+	if p.useMathX {
+		fmt.Fprintln(w, math_x_code)
+	}
+
+	// 复制函数实现
+	{
+		code := bytes.TrimSpace(funcImplBuf.Bytes())
+		if _, err := w.Write(code); err != nil {
+			return err
+		}
 	}
 
 	fmt.Fprintln(w)
