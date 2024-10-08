@@ -91,7 +91,7 @@
 	  else ;;if comp == 0, compare as ref:
 	    local.get $l.d.d
 		local.get $r.d.d
-		i32.le_u
+		i32.lt_u
 		if (result i32)
 		  i32.const -1
 		else
