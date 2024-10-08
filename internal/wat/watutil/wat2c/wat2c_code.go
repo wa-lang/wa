@@ -65,6 +65,19 @@ func (p *wat2cWorker) buildCode(w io.Writer) error {
 		return err
 	}
 
+	// 生成main函数
+	for _, f := range p.m.Funcs {
+		if f.Name == "_main" {
+			fmt.Fprintln(w)
+			fmt.Fprintf(w, "int main() {\n")
+			fmt.Fprintf(w, "  fn_%s();\n", toCName("_start"))
+			fmt.Fprintf(w, "  fn_%s();\n", toCName(f.Name))
+			fmt.Fprintf(w, "  return 0;\n")
+			fmt.Fprintf(w, "}\n")
+			break
+		}
+	}
+
 	return nil
 }
 
@@ -103,14 +116,31 @@ func (p *wat2cWorker) buildImport(w io.Writer) error {
 		}
 		fmt.Fprintln(w)
 
+		// 返回值类型
+		fmt.Fprintf(w, "typedef struct {")
+		for i := 0; i < len(fnType.Results); i++ {
+			if i == 0 {
+				fmt.Fprintf(w, " val_t $R%d", i)
+			} else {
+				fmt.Fprintf(w, ", $R%d", i)
+			}
+			if i == len(fnType.Results)-1 {
+				fmt.Fprintf(w, "; ")
+			}
+		}
+		fmt.Fprintf(w, "} fn_%s_ret_t;\n", toCName(fnName))
+
 		// 返回值通过栈传递
-		fmt.Fprintf(w, "extern int fn_%s(val_t $result[]", toCName(fnName))
+		fmt.Fprintf(w, "extern fn_%s_ret_t fn_%s(", toCName(fnName), toCName(fnName))
 		if len(fnType.Params) > 0 {
 			for i, x := range fnType.Params {
+				if i > 0 {
+					fmt.Fprint(w, ", ")
+				}
 				if x.Name != "" {
-					fmt.Fprintf(w, ", val_t %v", toCName(x.Name))
+					fmt.Fprintf(w, "val_t %v", toCName(x.Name))
 				} else {
-					fmt.Fprintf(w, ", val_t $arg%d", i)
+					fmt.Fprintf(w, "val_t $arg%d", i)
 				}
 			}
 		}
@@ -273,6 +303,7 @@ func (p *wat2cWorker) buildFuncs(w io.Writer) error {
 		p.localNames = nil
 		p.localTypes = nil
 		p.scopeLabels = nil
+		p.scopeStackBases = nil
 
 		fmt.Fprintf(w, "// func %s", f.Name)
 		if len(f.Type.Params) > 0 {
