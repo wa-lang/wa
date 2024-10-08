@@ -20,8 +20,6 @@ type typeOperator struct {
 
 	Unary_ADD *Func // +x
 	Unary_SUB *Func // -x
-
-	SPACESHIP *Func // <=>
 }
 
 func (check *Checker) lookupOperatorFuncs(pkg *Package, names ...string) (funcs []*Func, err error) {
@@ -119,9 +117,6 @@ func (check *Checker) processTypeOperators() {
 					typName.ops.QUO = funcs
 				case "%":
 					typName.ops.REM = funcs
-
-				case "<=>":
-					typName.ops.SPACESHIP = funcs[0]
 
 				default:
 					check.errorf(obj.Pos(), "%s operator %s invalid", obj.Name(), ops[0])
@@ -347,11 +342,6 @@ func (check *Checker) getBinOpFuncs(x *Named, op token.Token) []*Func {
 			return typ.ops.QUO
 		case token.REM:
 			return typ.ops.REM
-
-		case token.EQL, token.NEQ, token.LSS, token.LEQ, token.GTR, token.GEQ, token.SPACESHIP:
-			if typ.ops.SPACESHIP != nil {
-				return []*Func{typ.ops.SPACESHIP}
-			}
 		}
 	}
 	return nil

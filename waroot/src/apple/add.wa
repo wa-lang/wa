@@ -10,7 +10,6 @@ func IncF64(arg_IncF64_f: f64) => f64 {
 }
 
 #wa:operator + MyInt_add
-#wa:operator <=> MyInt_cmp
 type MyInt :struct {
 	V: int
 }
