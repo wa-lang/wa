@@ -561,63 +561,63 @@ func (p *wat2cWorker) buildFunc_ins(w io.Writer, fn *ast.Func, stk *valueTypeSta
 		sp1 := stk.Pop(token.I32)
 		ret0 := stk.Push(token.I32)
 		fmt.Fprintf(w, "%s$R%d.i32 = ($R%d.i32!=$R%d.i32)? 1: 0;\n",
-			indent, ret0, sp0, sp1,
+			indent, ret0, sp1, sp0,
 		)
 	case token.INS_I32_LT_S:
 		sp0 := stk.Pop(token.I32)
 		sp1 := stk.Pop(token.I32)
 		ret0 := stk.Push(token.I32)
 		fmt.Fprintf(w, "%s$R%d.i32 = ($R%d.i32<$R%d.i32)? 1: 0;\n",
-			indent, ret0, sp0, sp1,
+			indent, ret0, sp1, sp0,
 		)
 	case token.INS_I32_LT_U:
 		sp0 := stk.Pop(token.I32)
 		sp1 := stk.Pop(token.I32)
 		ret0 := stk.Push(token.I32)
 		fmt.Fprintf(w, "%s$R%d.i32 = ((u32_t)($R%d.i32)<(u32_t)($R%d.i32))? 1: 0;\n",
-			indent, ret0, sp0, sp1,
+			indent, ret0, sp1, sp0,
 		)
 	case token.INS_I32_GT_S:
 		sp0 := stk.Pop(token.I32)
 		sp1 := stk.Pop(token.I32)
 		ret0 := stk.Push(token.I32)
 		fmt.Fprintf(w, "%s$R%d.i32 = ($R%d.i32>$R%d.i32)? 1: 0;\n",
-			indent, ret0, sp0, sp1,
+			indent, ret0, sp1, sp0,
 		)
 	case token.INS_I32_GT_U:
 		sp0 := stk.Pop(token.I32)
 		sp1 := stk.Pop(token.I32)
 		ret0 := stk.Push(token.I32)
 		fmt.Fprintf(w, "%s$R%d.i32 = ((u32_t)($R%d.i32)>(u32_t)($R%d.i32))? 1: 0;\n",
-			indent, ret0, sp0, sp1,
+			indent, ret0, sp1, sp0,
 		)
 	case token.INS_I32_LE_S:
 		sp0 := stk.Pop(token.I32)
 		sp1 := stk.Pop(token.I32)
 		ret0 := stk.Push(token.I32)
 		fmt.Fprintf(w, "%s$R%d.i32 = ($R%d.i32<=$R%d.i32)? 1: 0;\n",
-			indent, ret0, sp0, sp1,
+			indent, ret0, sp1, sp0,
 		)
 	case token.INS_I32_LE_U:
 		sp0 := stk.Pop(token.I32)
 		sp1 := stk.Pop(token.I32)
 		ret0 := stk.Push(token.I32)
 		fmt.Fprintf(w, "%s$R%d.i32 = ((u32_t)($R%d.i32)<=(u32_t)($R%d.i32))? 1: 0;\n",
-			indent, ret0, sp0, sp1,
+			indent, ret0, sp1, sp0,
 		)
 	case token.INS_I32_GE_S:
 		sp0 := stk.Pop(token.I32)
 		sp1 := stk.Pop(token.I32)
 		ret0 := stk.Push(token.I32)
 		fmt.Fprintf(w, "%s$R%d.i32 = ($R%d.i32>=$R%d.i32)? 1: 0;\n",
-			indent, ret0, sp0, sp1,
+			indent, ret0, sp1, sp0,
 		)
 	case token.INS_I32_GE_U:
 		sp0 := stk.Pop(token.I32)
 		sp1 := stk.Pop(token.I32)
 		ret0 := stk.Push(token.I32)
 		fmt.Fprintf(w, "%s$R%d.i32 = ((u32_t)($R%d.i32)>=(u32_t)($R%d.i32))? 1: 0;\n",
-			indent, ret0, sp0, sp1,
+			indent, ret0, sp1, sp0,
 		)
 	case token.INS_I64_EQZ:
 		sp0 := stk.Pop(token.I64)
@@ -630,154 +630,154 @@ func (p *wat2cWorker) buildFunc_ins(w io.Writer, fn *ast.Func, stk *valueTypeSta
 		sp1 := stk.Pop(token.I64)
 		ret0 := stk.Push(token.I32)
 		fmt.Fprintf(w, "%s$R%d.i32 = ($R%d.i64==$R%d.i64)? 1: 0;\n",
-			indent, ret0, sp0, sp1,
+			indent, ret0, sp1, sp0,
 		)
 	case token.INS_I64_NE:
 		sp0 := stk.Pop(token.I64)
 		sp1 := stk.Pop(token.I64)
 		ret0 := stk.Push(token.I32)
 		fmt.Fprintf(w, "%s$R%d.i32 = ($R%d.i64!=$R%d.i64)? 1: 0;\n",
-			indent, ret0, sp0, sp1,
+			indent, ret0, sp1, sp0,
 		)
 	case token.INS_I64_LT_S:
 		sp0 := stk.Pop(token.I64)
 		sp1 := stk.Pop(token.I64)
 		ret0 := stk.Push(token.I32)
 		fmt.Fprintf(w, "%s$R%d.i32 = ($R%d.i64<$R%d.i64)? 1: 0;\n",
-			indent, ret0, sp0, sp1,
+			indent, ret0, sp1, sp0,
 		)
 	case token.INS_I64_LT_U:
 		sp0 := stk.Pop(token.I64)
 		sp1 := stk.Pop(token.I64)
 		ret0 := stk.Push(token.I32)
 		fmt.Fprintf(w, "%s$R%d.i32 = ((u64_t)($R%d.i64)<(u64_t)($R%d.i64))? 1: 0;\n",
-			indent, ret0, sp0, sp1,
+			indent, ret0, sp1, sp0,
 		)
 	case token.INS_I64_GT_S:
 		sp0 := stk.Pop(token.I64)
 		sp1 := stk.Pop(token.I64)
 		ret0 := stk.Push(token.I32)
 		fmt.Fprintf(w, "%s$R%d.i32 = ($R%d.i64>$R%d.i64)? 1: 0;\n",
-			indent, ret0, sp0, sp1,
+			indent, ret0, sp1, sp0,
 		)
 	case token.INS_I64_GT_U:
 		sp0 := stk.Pop(token.I64)
 		sp1 := stk.Pop(token.I64)
 		ret0 := stk.Push(token.I32)
 		fmt.Fprintf(w, "%s$R%d.i32 = ((u64_t)($R%d.i64)>(u64_t)($R%d.i64))? 1: 0;\n",
-			indent, ret0, sp0, sp1,
+			indent, ret0, sp1, sp0,
 		)
 	case token.INS_I64_LE_S:
 		sp0 := stk.Pop(token.I64)
 		sp1 := stk.Pop(token.I64)
 		ret0 := stk.Push(token.I32)
 		fmt.Fprintf(w, "%s$R%d.i32 = ($R%d.i64<=$R%d.i64)? 1: 0;\n",
-			indent, ret0, sp0, sp1,
+			indent, ret0, sp1, sp0,
 		)
 	case token.INS_I64_LE_U:
 		sp0 := stk.Pop(token.I64)
 		sp1 := stk.Pop(token.I64)
 		ret0 := stk.Push(token.I32)
 		fmt.Fprintf(w, "%s$R%d.i32 = ((u64_t)($R%d.i64)<=(u64_t)($R%d.i64))? 1: 0;\n",
-			indent, ret0, sp0, sp1,
+			indent, ret0, sp1, sp0,
 		)
 	case token.INS_I64_GE_S:
 		sp0 := stk.Pop(token.I64)
 		sp1 := stk.Pop(token.I64)
 		ret0 := stk.Push(token.I32)
 		fmt.Fprintf(w, "%s$R%d.i32 = ($R%d.i64>=$R%d.i64)? 1: 0;\n",
-			indent, ret0, sp0, sp1,
+			indent, ret0, sp1, sp0,
 		)
 	case token.INS_I64_GE_U:
 		sp0 := stk.Pop(token.I64)
 		sp1 := stk.Pop(token.I64)
 		ret0 := stk.Push(token.I32)
 		fmt.Fprintf(w, "%s$R%d.i32 = ((u64_t)($R%d.i64)>=(u64_t)($R%d.i64))? 1: 0;\n",
-			indent, ret0, sp0, sp1,
+			indent, ret0, sp1, sp0,
 		)
 	case token.INS_F32_EQ:
 		sp0 := stk.Pop(token.F32)
 		sp1 := stk.Pop(token.F32)
 		ret0 := stk.Push(token.I32)
 		fmt.Fprintf(w, "%s$R%d.i32 = ($R%d.f32==$R%d.f32)? 1: 0;\n",
-			indent, ret0, sp0, sp1,
+			indent, ret0, sp1, sp0,
 		)
 	case token.INS_F32_NE:
 		sp0 := stk.Pop(token.F32)
 		sp1 := stk.Pop(token.F32)
 		ret0 := stk.Push(token.I32)
 		fmt.Fprintf(w, "%s$R%d.i32 = ($R%d.f32!=$R%d.f32)? 1: 0;\n",
-			indent, ret0, sp0, sp1,
+			indent, ret0, sp1, sp0,
 		)
 	case token.INS_F32_LT:
 		sp0 := stk.Pop(token.F32)
 		sp1 := stk.Pop(token.F32)
 		ret0 := stk.Push(token.I32)
 		fmt.Fprintf(w, "%s$R%d.i32 = ($R%d.f32<$R%d.f32)? 1: 0;\n",
-			indent, ret0, sp0, sp1,
+			indent, ret0, sp1, sp0,
 		)
 	case token.INS_F32_GT:
 		sp0 := stk.Pop(token.F32)
 		sp1 := stk.Pop(token.F32)
 		ret0 := stk.Push(token.I32)
 		fmt.Fprintf(w, "%s$R%d.i32 = ($R%d.f32>$R%d.f32)? 1: 0;\n",
-			indent, ret0, sp0, sp1,
+			indent, ret0, sp1, sp0,
 		)
 	case token.INS_F32_LE:
 		sp0 := stk.Pop(token.F32)
 		sp1 := stk.Pop(token.F32)
 		ret0 := stk.Push(token.I32)
 		fmt.Fprintf(w, "%s$R%d.i32 = ($R%d.f32<=$R%d.f32)? 1: 0;\n",
-			indent, ret0, sp0, sp1,
+			indent, ret0, sp1, sp0,
 		)
 	case token.INS_F32_GE:
 		sp0 := stk.Pop(token.F32)
 		sp1 := stk.Pop(token.F32)
 		ret0 := stk.Push(token.I32)
 		fmt.Fprintf(w, "%s$R%d.i32 = ($R%d.f32>=$R%d.f32)? 1: 0;\n",
-			indent, ret0, sp0, sp1,
+			indent, ret0, sp1, sp0,
 		)
 	case token.INS_F64_EQ:
 		sp0 := stk.Pop(token.F64)
 		sp1 := stk.Pop(token.F64)
 		ret0 := stk.Push(token.I32)
 		fmt.Fprintf(w, "%s$R%d.i32 = ($R%d.f64==$R%d.f64)? 1: 0;\n",
-			indent, ret0, sp0, sp1,
+			indent, ret0, sp1, sp0,
 		)
 	case token.INS_F64_NE:
 		sp0 := stk.Pop(token.F64)
 		sp1 := stk.Pop(token.F64)
 		ret0 := stk.Push(token.I32)
 		fmt.Fprintf(w, "%s$R%d.i32 = ($R%d.f64!=$R%d.f64)? 1: 0;\n",
-			indent, ret0, sp0, sp1,
+			indent, ret0, sp1, sp0,
 		)
 	case token.INS_F64_LT:
 		sp0 := stk.Pop(token.F64)
 		sp1 := stk.Pop(token.F64)
 		ret0 := stk.Push(token.I32)
 		fmt.Fprintf(w, "%s$R%d.i32 = ($R%d.f64<$R%d.f64)? 1: 0;\n",
-			indent, ret0, sp0, sp1,
+			indent, ret0, sp1, sp0,
 		)
 	case token.INS_F64_GT:
 		sp0 := stk.Pop(token.F64)
 		sp1 := stk.Pop(token.F64)
 		ret0 := stk.Push(token.I32)
 		fmt.Fprintf(w, "%s$R%d.i32 = ($R%d.f64>$R%d.f64)? 1: 0;\n",
-			indent, ret0, sp0, sp1,
+			indent, ret0, sp1, sp0,
 		)
 	case token.INS_F64_LE:
 		sp0 := stk.Pop(token.F64)
 		sp1 := stk.Pop(token.F64)
 		ret0 := stk.Push(token.I32)
 		fmt.Fprintf(w, "%s$R%d.i32 = ($R%d.f64<=$R%d.f64)? 1: 0;\n",
-			indent, ret0, sp0, sp1,
+			indent, ret0, sp1, sp0,
 		)
 	case token.INS_F64_GE:
 		sp0 := stk.Pop(token.F64)
 		sp1 := stk.Pop(token.F64)
 		ret0 := stk.Push(token.I32)
 		fmt.Fprintf(w, "%s$R%d.i32 = ($R%d.f64>=$R%d.f64)? 1: 0;\n",
-			indent, ret0, sp0, sp1,
+			indent, ret0, sp1, sp0,
 		)
 	case token.INS_I32_CLZ:
 		p.useMathX = true
