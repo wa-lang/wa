@@ -19,8 +19,8 @@ aiproxy: new function () {
       app._wasm_inst.exports["ai.onSessionRequested"](tid, sh);
     })
     .catch((err) => {
+      console.log(`ai.assistant.create(): err = ${err}`);
       app._wasm_inst.exports["ai.onSessionRequested"](tid, 0);
-      console.log(err)
     })
   }
 
@@ -33,13 +33,16 @@ aiproxy: new function () {
       .then((res) =>{
         let params = [];
         params.push(tid);
-        let s = this._mem_util.set_string(res);
+        let s = app._mem_util.set_string(res);
         params = params.concat(s);
         
         app._wasm_inst.exports["ai.onPrompted"](...params);        
         
         app._mem_util.block_release(s[0]);
       })
+      .catch((err) => {
+        console.log(`ai.prompt: err = ${err}`)
+      });
   }
 
   //---------------------------------------------------------------

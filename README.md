@@ -168,6 +168,22 @@ Print prime numbers up to 30:
 
 Output is the same as the previous example.
 
+## Example: Chrome Native AI
+
+Chrome builtin Gemini Nano Demo:
+
+```wa
+import "ai"
+
+func main {
+	ai.RequestSession(func(session: ai.Session){
+		session.PromptAsync("Who are you?", func(res: string) {
+			println(res)
+		})
+	})
+}
+```
+
 More examples [waroot/examples](waroot/examples)
 
 ## Contributors

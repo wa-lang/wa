@@ -1,0 +1,11 @@
+// 版权 @2024 hello-ai 作者。保留所有权利。
+
+import "ai"
+
+func main {
+	ai.RequestSession(func(session: ai.Session) {
+		session.PromptAsync("Who are you?", func(res: string) {
+			println(res)
+		})
+	})
+}

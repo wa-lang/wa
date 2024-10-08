@@ -75,11 +75,9 @@ type Ins_CallIndirect struct {
 type Ins_Drop struct{ OpToken }
 type Ins_Select struct {
 	OpToken
+	ResultTyp string
 }
-type Ins_TypedSelect struct {
-	OpToken
-	Typ string
-}
+
 type Ins_LocalGet struct {
 	OpToken
 	X string
@@ -102,11 +100,11 @@ type Ins_GlobalSet struct {
 }
 type Ins_TableGet struct {
 	OpToken
-	X string
+	TableIdx string
 }
 type Ins_TableSet struct {
 	OpToken
-	X string
+	TableIdx string
 }
 type Ins_I32Load struct {
 	OpToken

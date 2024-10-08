@@ -39,8 +39,6 @@ func (p *parser) parseInstruction() ast.Instruction {
 		return p.parseIns_Drop()
 	case token.INS_SELECT:
 		return p.parseIns_Select()
-	case token.INS_TYPED_SELECT:
-		return p.parseIns_TypedSelect()
 	case token.INS_LOCAL_GET:
 		return p.parseIns_LocalGet()
 	case token.INS_LOCAL_SET:
@@ -528,12 +526,14 @@ func (p *parser) parseIns_Drop() (i ast.Ins_Drop) {
 func (p *parser) parseIns_Select() (i ast.Ins_Select) {
 	i.OpToken = ast.OpToken(p.tok)
 	p.acceptToken(token.INS_SELECT)
-	return
-}
-func (p *parser) parseIns_TypedSelect() (i ast.Ins_TypedSelect) {
-	i.OpToken = ast.OpToken(p.tok)
-	p.acceptToken(token.INS_TYPED_SELECT)
-	i.Typ = p.parseIdentOrIndex()
+	if p.tok == token.LPAREN {
+		p.acceptToken(token.LPAREN)
+		p.acceptToken(token.RESULT)
+		tokTyp := p.tok
+		p.acceptToken(token.I32, token.I64, token.F32, token.F64)
+		i.ResultTyp = tokTyp.String()
+		p.acceptToken(token.RPAREN)
+	}
 	return
 }
 
@@ -572,13 +572,13 @@ func (p *parser) parseIns_GlobalSet() (i ast.Ins_GlobalSet) {
 func (p *parser) parseIns_TableGet() (i ast.Ins_TableGet) {
 	i.OpToken = ast.OpToken(p.tok)
 	p.acceptToken(token.INS_TABLE_GET)
-	i.X = p.parseIdentOrIndex()
+	i.TableIdx = p.parseIdentOrIndex()
 	return
 }
 func (p *parser) parseIns_TableSet() (i ast.Ins_TableSet) {
 	i.OpToken = ast.OpToken(p.tok)
 	p.acceptToken(token.INS_TABLE_SET)
-	i.X = p.parseIdentOrIndex()
+	i.TableIdx = p.parseIdentOrIndex()
 	return
 }
 

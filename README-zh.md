@@ -167,6 +167,23 @@ $ cd waroot && wa run -target=wasi examples/prime
 
 运行的结果和英文语法的示例相同。
 
+## 例子：Chrome本地AI
+
+Chrome builtin Gemini Nano Demo:
+
+```wa
+import "ai"
+
+func main {
+	ai.RequestSession(func(session: ai.Session){
+		session.PromptAsync("Who are you?", func(res: string) {
+			println(res)
+		})
+	})
+}
+```
+
+
 更多例子 [waroot/examples](waroot/examples)
 
 ## 贡献者名单

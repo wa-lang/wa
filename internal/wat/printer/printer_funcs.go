@@ -195,9 +195,12 @@ func (p *watPrinter) printFuncs_body_ins(fn *ast.Func, ins ast.Instruction, blkL
 	case token.INS_DROP:
 		fmt.Fprintln(p.w, tok)
 	case token.INS_SELECT:
-		fmt.Fprintln(p.w, tok)
-	case token.INS_TYPED_SELECT:
-		fmt.Fprintln(p.w, tok, p.identOrIndex(ins.(ast.Ins_TypedSelect).Typ))
+		insSelect := ins.(ast.Ins_Select)
+		if insSelect.ResultTyp != "" {
+			fmt.Fprintln(p.w, tok, "(result "+insSelect.ResultTyp+")")
+		} else {
+			fmt.Fprintln(p.w, tok)
+		}
 	case token.INS_LOCAL_GET:
 		fmt.Fprintln(p.w, tok, p.identOrIndex(ins.(ast.Ins_LocalGet).X))
 	case token.INS_LOCAL_SET:
@@ -209,9 +212,9 @@ func (p *watPrinter) printFuncs_body_ins(fn *ast.Func, ins ast.Instruction, blkL
 	case token.INS_GLOBAL_SET:
 		fmt.Fprintln(p.w, tok, p.identOrIndex(ins.(ast.Ins_GlobalSet).X))
 	case token.INS_TABLE_GET:
-		fmt.Fprintln(p.w, tok, p.identOrIndex(ins.(ast.Ins_TableGet).X))
+		fmt.Fprintln(p.w, tok, p.identOrIndex(ins.(ast.Ins_TableGet).TableIdx))
 	case token.INS_TABLE_SET:
-		fmt.Fprintln(p.w, tok, p.identOrIndex(ins.(ast.Ins_TableSet).X))
+		fmt.Fprintln(p.w, tok, p.identOrIndex(ins.(ast.Ins_TableSet).TableIdx))
 	case token.INS_I32_LOAD:
 		fmt.Fprint(p.w, tok)
 		insLoad := ins.(ast.Ins_I32Load)

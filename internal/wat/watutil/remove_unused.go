@@ -121,7 +121,7 @@ func (p *_RemoveUnusedPass) markFuncReachable_ins(ins ast.Instruction) {
 			p.markFuncReachable(xFn)
 		}
 	case ast.Ins_TableSet:
-		if xFn := p.funcs[ins.X]; xFn.color == white {
+		if xFn := p.funcs[ins.TableIdx]; xFn.color == white {
 			p.markFuncReachable(xFn)
 		}
 	case ast.Ins_Block:

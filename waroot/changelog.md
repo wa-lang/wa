@@ -2,11 +2,13 @@
 
 - (dev)
   - 完善 `wa lsp` 子命令 (TODO)
+  - 支持 `wat2c` 命令(TODO)
 - v0.17.0 (2024-10-??)
   - 恢复 Arduino Nano 33 支持
   - 预定义常量统一用大写字母, 并增加 `__COLUMN__` 常量
   - `wa build` 和 `wa run` 增加 `-optimize` 优化参数, 优化后输出体积大约为原来的 1/3 到 1/4
   - 优化 `wa run` 默认行为, 只有 wasi 默认命令行执行
+  - 实验性增加 Chrome 内置 AI 支持
 - v0.16.0 (2024-09-16)
   - “国产语言论坛”被动关闭: ~~https://zh-lang.osanswer.net~~
   - 增加 `__package__`/`__FILE__`/`__LINE__`/`__func__` 预定义常量, 表示当前位置信息

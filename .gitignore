@@ -7,8 +7,6 @@ _output
 
 wa
 wa.exe
-wat2wasm
-wat2wasm.exe
 
 *.exe
 *.dll

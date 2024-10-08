@@ -87,7 +87,6 @@ const (
 	INS_CALL_INDIRECT       // 0x11, call_indirect
 	INS_DROP                // 0x1a, drop
 	INS_SELECT              // 0x1b, select
-	INS_TYPED_SELECT        // 0x1c, typed_select
 	INS_LOCAL_GET           // 0x20, local.get
 	INS_LOCAL_SET           // 0x21, local.set
 	INS_LOCAL_TEE           // 0x22, local.tee
@@ -309,7 +308,6 @@ var tokens = [...]string{
 	INS_CALL_INDIRECT:       "call_indirect",
 	INS_DROP:                "drop",
 	INS_SELECT:              "select",
-	INS_TYPED_SELECT:        "typed_select",
 	INS_LOCAL_GET:           "local.get",
 	INS_LOCAL_SET:           "local.set",
 	INS_LOCAL_TEE:           "local.tee",
