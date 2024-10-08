@@ -361,3 +361,29 @@ func (v *aStruct) emitEq(r Value) (insts []wat.Inst, ok bool) {
 
 	return
 }
+
+func (v *aStruct) emitCompare(r Value) (insts []wat.Inst) {
+	if !v.typ.Equal(r.Type()) {
+		logger.Fatal("v.Type() != r.Type()")
+	}
+
+	block := wat.NewInstBlock("")
+	block.Ret = append(block.Ret, wat.I32{})
+
+	d := r.(*aStruct)
+	for i := range v.typ.fields {
+		t1 := v.genSubValue(v.typ.fields[i])
+		t2 := d.genSubValue(d.typ.fields[i])
+
+		if i > 0 {
+			block.Insts = append(block.Insts, wat.NewInstCall("runtime.DupI32"))
+			block.Insts = append(block.Insts, wat.NewInstBrIf(0))
+			block.Insts = append(block.Insts, wat.NewInstDrop())
+		}
+
+		block.Insts = append(block.Insts, t1.emitCompare(t2)...)
+	}
+
+	insts = append(insts, block)
+	return
+}

@@ -409,6 +409,9 @@ func (g *functionGenerator) genInstruction(inst ssa.Instruction) (insts []wat.In
 	case *ssa.Panic:
 		insts = append(insts, g.genPanic(inst)...)
 
+	case *ssa.MapUpdate:
+		insts = append(insts, g.module.EmitGenMapUpdate(g.getValue(inst.Map).value, g.getValue(inst.Key).value, g.getValue(inst.Value).value)...)
+
 	default:
 		logger.Fatalf("Todo: %[1]v: %[1]T", inst)
 	}
@@ -468,6 +471,9 @@ func (g *functionGenerator) genValue(v ssa.Value) ([]wat.Inst, wir.ValueType) {
 
 	case *ssa.MakeSlice:
 		return g.genMakeSlice(v)
+
+	case *ssa.MakeMap:
+		return g.genMakeMap(v)
 
 	case *ssa.Lookup:
 		return g.genLookup(v)
@@ -1036,6 +1042,18 @@ func (g *functionGenerator) genMakeSlice(inst *ssa.MakeSlice) (insts []wat.Inst,
 	return
 }
 
+func (g *functionGenerator) genMakeMap(inst *ssa.MakeMap) (insts []wat.Inst, ret_type wir.ValueType) {
+	if inst.Parent().ForceRegister() {
+		logger.Fatal("ssa.MakeMap is not available in ForceRegister-mode")
+		return nil, nil
+	}
+
+	src_type := inst.Type()
+	ret_type = g.tLib.compile(src_type)
+	insts = g.module.EmitGenMakeMap(ret_type)
+	return
+}
+
 func (g *functionGenerator) genLookup(inst *ssa.Lookup) ([]wat.Inst, wir.ValueType) {
 	x := g.getValue(inst.X)
 	index := g.getValue(inst.Index)
@@ -1237,13 +1255,13 @@ func (g *functionGenerator) genRange(inst *ssa.Range) (insts []wat.Inst, ret_typ
 }
 
 func (g *functionGenerator) genNext(inst *ssa.Next) (insts []wat.Inst, ret_type wir.ValueType) {
+	iter := g.getValue(inst.Iter).value
 	if inst.IsString {
-		iter := g.getValue(inst.Iter).value
 		return g.module.EmitGenNext_String(iter)
 	} else {
-		logger.Fatalf("Todo:%T", inst.Type())
+		t := inst.Type().(*types.Tuple)
+		return g.module.EmitGenNext_Map(iter, g.tLib.compile(t.At(1).Type()), g.tLib.compile(t.At(2).Type()))
 	}
-	return
 }
 
 func (g *functionGenerator) addRegister(typ wir.ValueType) wir.Value {

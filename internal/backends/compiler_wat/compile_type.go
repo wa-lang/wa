@@ -21,6 +21,8 @@ type typeLib struct {
 
 	anonStructCount    int
 	anonInterfaceCount int
+
+	MaxTypeSize int
 }
 
 func newTypeLib(m *wir.Module, prog *loader.Program) *typeLib {
@@ -131,6 +133,13 @@ func (tLib *typeLib) compile(from types.Type) wir.ValueType {
 
 	case *types.Slice:
 		newType = tLib.module.GenValueType_Slice(tLib.compile(t.Elem()), "")
+
+	case *types.Map:
+		ei, ok := tLib.typeTable["interface{}"]
+		if !ok {
+			logger.Fatal("Can't find interface{} for map_imp.")
+		}
+		newType = tLib.module.GenValueType_Map(tLib.compile(t.Key()), tLib.compile(t.Elem()), "", *ei)
 
 	case *types.Signature:
 		newType = tLib.module.GenValueType_Closure(tLib.GenFnSig(t))
@@ -247,6 +256,13 @@ func (tLib *typeLib) compile(from types.Type) wir.ValueType {
 		case *types.Slice:
 			newType = tLib.module.GenValueType_Slice(tLib.compile(ut.Elem()), type_name)
 
+		case *types.Map:
+			ei, ok := tLib.typeTable["interface{}"]
+			if !ok {
+				logger.Fatal("Can't find interface{} for map_imp.")
+			}
+			newType = tLib.module.GenValueType_Map(tLib.compile(ut.Key()), tLib.compile(ut.Elem()), type_name, *ei)
+
 		case *types.Struct:
 			tStruct, found := tLib.module.GenValueType_Struct(type_name)
 			newType = tStruct
@@ -313,6 +329,11 @@ func (tLib *typeLib) compile(from types.Type) wir.ValueType {
 
 			newType.AddMethod(method)
 		}
+	}
+
+	tsize := newType.Size()
+	if tsize > tLib.MaxTypeSize {
+		tLib.MaxTypeSize = tsize
 	}
 
 	return newType

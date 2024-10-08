@@ -99,6 +99,13 @@ func (p *Compiler) Compile(prog *loader.Program) (output string, err error) {
 		p.module.AddFunc(&f)
 	}
 
+	// 生成 zptr:
+	{
+		zptr := p.module.DataSeg.Append(make([]byte, p.tLib.MaxTypeSize), 8)
+		p.module.AddGlobal("runtime.zptr", "", p.module.UINT, false, nil)
+		p.module.SetGlobalInitValue("runtime.zptr", wir.NewConst(fmt.Sprint(zptr), p.module.UINT))
+	}
+
 	// p.GenJsBind()
 	// p.GenJSBinding()
 

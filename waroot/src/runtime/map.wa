@@ -1,0 +1,74 @@
+// 版权 @2019 凹语言 作者。保留所有权利。
+
+type mapNode: struct {
+	k, v: interface{}
+}
+
+type mapImp: struct {
+	nodes: []mapNode
+}
+
+#wa:linkname runtime.mapMake
+func mapMake() => *mapImp {
+	m := mapImp{}
+	return &m
+}
+
+#wa:linkname runtime.mapUpdate
+func mapUpdate(m: *mapImp, k, v: interface{}) {
+	if m == nil {
+		panic("nil map.")
+	}
+
+	for i, n := range m.nodes {
+		if Compare(n.k, k) == 0 {
+			m.nodes[i].v = v
+			return
+		}
+	}
+
+	m.nodes = append(m.nodes, mapNode{k:k, v:v})
+}
+
+#wa:linkname runtime.mapLookup
+func mapLookup(m: *mapImp, k: interface{}) => (interface{}, bool) {
+	if m == nil {
+		return nil, false
+	}
+
+	for _, n := range m.nodes {
+		if Compare(n.k, k) == 0 {
+			return n.v, true
+		}
+	}
+
+	return nil, false
+}
+
+#wa:linkname runtime.mapLen
+func mapLen(m: *mapImp) => int {
+	if m == nil {
+		return 0
+	}
+
+	return len(m.nodes)
+}
+
+type mapIter: struct {
+	m: *mapImp
+	pos: int
+}
+
+#wa:linkname runtime.mapNext
+func mapNext(iter: mapIter) => (ok: bool, k, v: interface{}, pos: int) {
+	if iter.m == nil {
+		return false, nil, nil, iter.pos
+	}
+
+	if iter.pos >= len(iter.m.nodes) {
+		return false, nil, nil, iter.pos
+	}
+
+	node := iter.m.nodes[iter.pos]
+	return true, node.k, node.v, iter.pos + 1
+}

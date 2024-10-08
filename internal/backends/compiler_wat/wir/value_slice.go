@@ -570,6 +570,36 @@ func (v *aSlice) emitEq(r Value) ([]wat.Inst, bool) {
 	return v.ExtractByName("d").emitEq(r_s.ExtractByName("d"))
 }
 
+func (v *aSlice) emitCompare(r Value) (insts []wat.Inst) {
+	if !r.Type().Equal(r.Type()) {
+		logger.Fatal("v.Type() != r.Type()")
+	}
+
+	t := r.(*aSlice)
+
+	insts = append(insts, v.ExtractByName("d").EmitPushNoRetain()...)
+	insts = append(insts, t.ExtractByName("d").EmitPushNoRetain()...)
+	insts = append(insts, wat.NewInstLt(toWatType(v.ExtractByName("d").Type())))
+
+	instDLe := wat.NewInstIf(nil, nil, []wat.ValueType{wat.I32{}})
+
+	instDLe.True = append(instDLe.True, wat.NewInstConst(wat.I32{}, "-1"))
+
+	instDLe.False = append(instDLe.False, v.ExtractByName("d").EmitPushNoRetain()...)
+	instDLe.False = append(instDLe.False, t.ExtractByName("d").EmitPushNoRetain()...)
+	instDLe.False = append(instDLe.False, wat.NewInstGt(toWatType(v.ExtractByName("d").Type())))
+
+	instLLe := wat.NewInstIf(nil, nil, []wat.ValueType{wat.I32{}})
+	instLLe.True = append(instLLe.True, wat.NewInstConst(wat.I32{}, "1"))
+	instLLe.False = v.ExtractByName("l").emitCompare(t.ExtractByName("l"))
+
+	instDLe.False = append(instDLe.False, instLLe)
+
+	insts = append(insts, instDLe)
+
+	return
+}
+
 func (v *aSlice) emitConvertToBytes() (insts []wat.Inst) {
 	// block:
 	insts = append(insts, v.ExtractByName("b").EmitPush()...)

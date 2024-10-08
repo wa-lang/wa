@@ -76,12 +76,6 @@ func getTypePtr(hash: i32) => uintptr {
 	return 0
 }
 
-#wa:linkname $wa.runtime.getItab
-func getItab(dhash: i32, ihash: i32, commanok: i32) => u32 {
-	itab := _itabsPtr + ((dhash-1)*_interfaceCount-ihash-1)*4
-	return getU32(u32(itab))
-}
-
 #wa:runtime_getter
 func getU32(p: u32) => u32
 

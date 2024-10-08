@@ -108,7 +108,7 @@ func printF64(v: f64) {
 }
 
 func printU64(v: u64) {
-	buf: [100]byte
+	buf: [64]byte
 	i := len(buf)
 	for i--; i > 0; i-- {
 		buf[i] = byte(v%10 + '0')
@@ -130,7 +130,7 @@ func printI64(v: i64) {
 
 func printHex(v: u64) {
 	const dig = "0123456789abcdef"
-	buf: [100]byte
+	buf: [64]byte
 	i := len(buf)
 	for i--; i > 0; i-- {
 		buf[i] = dig[v%16]

@@ -541,6 +541,10 @@ func (m *Module) EmitGenMakeSlice(slice_type ValueType, Len, Cap Value) (insts [
 	return
 }
 
+func (m *Module) EmitGenMakeMap(map_type ValueType) (insts []wat.Inst) {
+	return map_type.(*Map).emitGenMake()
+}
+
 func (m *Module) EmitGenLookup(x, index Value, CommaOk bool) (insts []wat.Inst, ret_type ValueType) {
 	switch x := x.(type) {
 	case *aString:
@@ -552,6 +556,16 @@ func (m *Module) EmitGenLookup(x, index Value, CommaOk bool) (insts []wat.Inst, 
 			insts = x.emitAt(index)
 			ret_type = m.U8
 		}
+
+	case *aMap:
+		if CommaOk {
+			fileds := []ValueType{x.typ.Elem, m.BOOL}
+			ret_type = m.GenValueType_Tuple(fileds)
+		} else {
+			ret_type = x.typ.Elem
+		}
+
+		insts = x.emitLookup(index, CommaOk)
 
 	default:
 		logger.Fatalf("Todo: %T", x)
@@ -822,6 +836,9 @@ func (m *Module) EmitGenLen(x Value) (insts []wat.Inst) {
 	case *aString:
 		insts = x.ExtractByName("l").EmitPush()
 
+	case *aMap:
+		insts = x.emitLen()
+
 	default:
 		logger.Fatalf("Todo: %T", x)
 	}
@@ -896,26 +913,29 @@ func (m *Module) EmitGenMakeInterface(x Value, itype ValueType) (insts []wat.Ins
 			f.Locals = append(f.Locals, v0)
 			f.Locals = append(f.Locals, v1)
 
-			//f.Insts = append(f.Insts, v0.EmitInit()...)
-			//f.Insts = append(f.Insts, v1.EmitInit()...)
-
-			f.Insts = append(f.Insts, x_type.EmitLoadFromAddr(p0, 0)...)
-			f.Insts = append(f.Insts, v0.EmitPop()...)
-			f.Insts = append(f.Insts, x_type.EmitLoadFromAddr(p1, 0)...)
-			f.Insts = append(f.Insts, v1.EmitPop()...)
-
-			if ins, ok := v0.emitEq(v1); ok {
-				f.Insts = append(f.Insts, ins...)
-
-				f.Insts = append(f.Insts, v0.EmitRelease()...)
-				f.Insts = append(f.Insts, v1.EmitRelease()...)
-
-				m.AddFunc(&f)
-				compID = m.AddTableElem(f.InternalName)
-
-			} else {
-				compID = -1
+			f.Insts = append(f.Insts, p0.EmitPushNoRetain()...)
+			{
+				p0_valid := wat.NewInstIf(nil, nil, nil)
+				p0_valid.True = append(p0_valid.True, x_type.EmitLoadFromAddr(p0, 0)...)
+				p0_valid.True = append(p0_valid.True, v0.EmitPop()...)
+				f.Insts = append(f.Insts, p0_valid)
 			}
+
+			f.Insts = append(f.Insts, p1.EmitPushNoRetain()...)
+			{
+				p1_valid := wat.NewInstIf(nil, nil, nil)
+				p1_valid.True = append(p1_valid.True, x_type.EmitLoadFromAddr(p1, 0)...)
+				p1_valid.True = append(p1_valid.True, v1.EmitPop()...)
+				f.Insts = append(f.Insts, p1_valid)
+			}
+
+			f.Insts = append(f.Insts, v0.emitCompare(v1)...)
+
+			f.Insts = append(f.Insts, v0.EmitRelease()...)
+			f.Insts = append(f.Insts, v1.EmitRelease()...)
+
+			m.AddFunc(&f)
+			compID = m.AddTableElem(f.InternalName)
 
 			x_type.setOnComp(compID)
 		}
@@ -951,6 +971,11 @@ func (m *Module) EmitGenRange(x Value) (insts []wat.Inst, ret_type ValueType) {
 		insts = append(insts, x.ExtractByName("l").EmitPush()...)
 		insts = append(insts, wat.NewInstConst(wat.I32{}, "0"))
 
+	case *aMap:
+		ret_type, _ = m.findValueType("runtime.mapIter")
+		insts = append(insts, x.aRef.EmitPush()...)
+		insts = append(insts, wat.NewInstConst(wat.I32{}, "0"))
+
 	default:
 		logger.Fatalf("Todo:%T", x)
 	}
@@ -968,6 +993,16 @@ func (m *Module) EmitGenNext_String(iter Value) (insts []wat.Inst, ret_type Valu
 	return
 }
 
+func (m *Module) EmitGenNext_Map(iter Value, ktype ValueType, vtype ValueType) (insts []wat.Inst, ret_type ValueType) {
+	fields := []ValueType{m.BOOL, ktype, vtype}
+	ret_type = m.GenValueType_Tuple(fields)
+
+	insts = append(insts, iter.EmitPushNoRetain()...)
+	insts = append(insts, wat.NewInstCall("runtime.map."+ktype.Named()+"."+vtype.Named()+".next"))
+	insts = append(insts, iter.(*aStruct).ExtractByName("pos").EmitPop()...)
+	return
+}
+
 func (m *Module) EmitInvoke(i Value, params []Value, mid int, typeName string) (insts []wat.Inst) {
 	iface := i.(*aInterface)
 	insts = append(insts, iface.ExtractByName("d").EmitPushNoRetain()...)
@@ -981,6 +1016,11 @@ func (m *Module) EmitInvoke(i Value, params []Value, mid int, typeName string) (
 
 	insts = append(insts, wat.NewInstCallIndirect(typeName))
 	return
+}
+
+func (m *Module) EmitGenMapUpdate(ma, k, v Value) (insts []wat.Inst) {
+	mi := ma.(*aMap)
+	return mi.emitUpdate(k, v)
 }
 
 func (m *Module) EmitPrintString(v Value) (insts []wat.Inst) {

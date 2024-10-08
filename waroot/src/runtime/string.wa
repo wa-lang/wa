@@ -1,0 +1,169 @@
+// 版权 @2019 凹语言 作者。保留所有权利。
+
+type stringIter :struct {
+	ptr: uint
+	len: int
+	pos: int
+}
+
+#wa:runtime_getter
+func get_u8(p: u32) => u8
+
+#wa:runtime_setter
+func set_u8(p: u32, v: u8)
+
+func next_rune(iter: stringIter) => (ok: bool, k: int, v: rune, pos: int) {
+	if iter.pos >= iter.len {
+		return false, iter.pos, 0, iter.pos
+	}
+
+	p0 := i32(get_u8(u32(iter.ptr) + u32(iter.pos)))
+	if p0&0b10000000 == 0 {
+		return true, iter.pos, rune(p0), iter.pos + 1
+	} else if p0&0b11100000 == 0b11000000 {
+		p0 = (p0 & 0b11111) << 6
+		p1 := i32(get_u8(u32(iter.ptr)+u32(iter.pos)+1)) & 0b00111111
+		return true, iter.pos, rune(p0 | p1), iter.pos + 2
+	} else if p0&0b11110000 == 0b11100000 {
+		p0 = (p0 & 0b1111) << 12
+		p1 := (i32(get_u8(u32(iter.ptr)+u32(iter.pos)+1)) & 0b00111111) << 6
+		p2 := (i32(get_u8(u32(iter.ptr)+u32(iter.pos)+2)) & 0b00111111)
+		return true, iter.pos, rune(p0 | p1 | p2), iter.pos + 3
+	} else if p0&0b11111000 == 0b11110000 {
+		p0 = (p0 & 0b111) << 18
+		p1 := (i32(get_u8(u32(iter.ptr)+u32(iter.pos)+1)) & 0b00111111) << 12
+		p2 := (i32(get_u8(u32(iter.ptr)+u32(iter.pos)+2)) & 0b00111111) << 6
+		p3 := (i32(get_u8(u32(iter.ptr)+u32(iter.pos)+3)) & 0b00111111)
+		return true, iter.pos, rune(p0 | p1 | p2 | p3), iter.pos + 4
+	}
+
+	return
+}
+
+#wa:linkname $wa.runtime.string_to_iter
+func stringToIter(s: string) => stringIter
+
+#wa:linkname $wa.runtime.string_Comp
+func string_Comp(x, y: string) => i32 {
+	i1 := stringToIter(x)
+	i2 := stringToIter(y)
+
+	for {
+		o1, _, v1, p1 := next_rune(i1)
+		i1.pos = p1
+		o2, _, v2, p2 := next_rune(i2)
+		i2.pos = p2
+
+		if (o1 && o2) != true {
+			break
+		}
+
+		if v1 < v2 {
+			return -1
+		} else if v1 > v2 {
+			return 1
+		}
+	}
+
+	l1 := len(x)
+	l2 := len(y)
+	if l1 < l2 {
+		return -1
+	} else if l1 > l2 {
+		return 1
+	} else {
+		return 0
+	}
+}
+
+#wa:linkname $wa.runtime.string_LSS
+func string_LSS(x, y: string) => bool {
+	return string_Comp(x, y) == -1
+}
+
+#wa:linkname $wa.runtime.string_GTR
+func string_GTR(x, y: string) => bool {
+	return string_Comp(x, y) == 1
+}
+
+#wa:linkname $wa.runtime.string_LEQ
+func string_LEQ(x, y: string) => bool {
+	return string_Comp(x, y) != 1
+}
+
+#wa:linkname $wa.runtime.string_GEQ
+func string_GEQ(x, y: string) => bool {
+	return string_Comp(x, y) != -1
+}
+
+const (
+	MaxRune      = '\U0010FFFF'
+	RuneError    = '\uFFFD'
+	surrogateMin = 0xD800
+	surrogateMax = 0xDFFF
+	tx           = 0b10000000
+	t2           = 0b11000000
+	t3           = 0b11100000
+	t4           = 0b11110000
+	maskx        = 0b00111111
+
+	rune1Max = 1<<7 - 1
+	rune2Max = 1<<11 - 1
+	rune3Max = 1<<16 - 1
+)
+
+func stringFromRune(r: rune) => string {
+	p := make([]byte, 0, 4)
+	n: i32
+
+	switch i := uint32(r); {
+	case i <= rune1Max:
+		p[0] = byte(r)
+		n = 1
+	case i <= rune2Max:
+		_ = p[1] // eliminate bounds checks
+		p[0] = t2 | byte(r>>6)
+		p[1] = tx | byte(r)&maskx
+		n = 2
+	case i > MaxRune, surrogateMin <= i && i <= surrogateMax:
+		r = RuneError
+		// fallthrough
+		{
+			_ = p[2] // eliminate bounds checks
+			p[0] = t3 | byte(r>>12)
+			p[1] = tx | byte(r>>6)&maskx
+			p[2] = tx | byte(r)&maskx
+			n = 3
+		}
+	case i <= rune3Max:
+		_ = p[2] // eliminate bounds checks
+		p[0] = t3 | byte(r>>12)
+		p[1] = tx | byte(r>>6)&maskx
+		p[2] = tx | byte(r)&maskx
+		n = 3
+	default:
+		_ = p[3] // eliminate bounds checks
+		p[0] = t4 | byte(r>>18)
+		p[1] = tx | byte(r>>12)&maskx
+		p[2] = tx | byte(r>>6)&maskx
+		p[3] = tx | byte(r)&maskx
+		n = 4
+	}
+	return string(p[:n])
+}
+
+func stringFromRuneSlice(rs: []rune) => string {
+	s: string
+	for _, r := range rs {
+		s += stringFromRune(r)
+	}
+	return s
+}
+
+func runeSliceFromString(s: string) => []rune {
+	rs: []rune
+	for _, r := range s {
+		rs = append(rs, r)
+	}
+	return rs
+}
