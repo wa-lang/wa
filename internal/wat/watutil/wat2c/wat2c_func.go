@@ -71,6 +71,11 @@ func (p *wat2cWorker) buildFunc_body(w io.Writer, fn *ast.Func) error {
 
 func (p *wat2cWorker) buildFunc_ins(w io.Writer, fn *ast.Func, stk *valueTypeStack, i ast.Instruction, level int) error {
 	indent := strings.Repeat("  ", level)
+
+	if p.ifUseMathX(i.Token()) {
+		p.useMathX = true
+	}
+
 	switch tok := i.Token(); tok {
 	case token.INS_UNREACHABLE:
 		fmt.Fprintf(w, "%sabort(); // %s\n", indent, tok)
@@ -780,21 +785,18 @@ func (p *wat2cWorker) buildFunc_ins(w io.Writer, fn *ast.Func, stk *valueTypeSta
 			indent, ret0, sp1, sp0,
 		)
 	case token.INS_I32_CLZ:
-		p.useMathX = true
 		sp0 := stk.Pop(token.I32)
 		ret0 := stk.Push(token.I32)
 		fmt.Fprintf(w, "%s$R%d.i32 = I32_CLZ($R%d.i32);\n",
 			indent, ret0, sp0,
 		)
 	case token.INS_I32_CTZ:
-		p.useMathX = true
 		sp0 := stk.Pop(token.I32)
 		ret0 := stk.Push(token.I32)
 		fmt.Fprintf(w, "%s$R%d.i32 = I32_CTZ($R%d.i32);\n",
 			indent, ret0, sp0,
 		)
 	case token.INS_I32_POPCNT:
-		p.useMathX = true
 		sp0 := stk.Pop(token.I32)
 		ret0 := stk.Push(token.I32)
 		fmt.Fprintf(w, "%s$R%d.i32 = I32_POPCNT($R%d.u32);\n",
@@ -892,7 +894,6 @@ func (p *wat2cWorker) buildFunc_ins(w io.Writer, fn *ast.Func, stk *valueTypeSta
 			indent, ret0, sp1, sp0,
 		)
 	case token.INS_I32_ROTL:
-		p.useMathX = true
 		sp0 := stk.Pop(token.I32)
 		sp1 := stk.Pop(token.I32)
 		ret0 := stk.Push(token.I32)
@@ -900,7 +901,6 @@ func (p *wat2cWorker) buildFunc_ins(w io.Writer, fn *ast.Func, stk *valueTypeSta
 			indent, ret0, sp1, sp0,
 		)
 	case token.INS_I32_ROTR:
-		p.useMathX = true
 		sp0 := stk.Pop(token.I32)
 		sp1 := stk.Pop(token.I32)
 		ret0 := stk.Push(token.I32)
@@ -908,21 +908,18 @@ func (p *wat2cWorker) buildFunc_ins(w io.Writer, fn *ast.Func, stk *valueTypeSta
 			indent, ret0, sp1, sp0,
 		)
 	case token.INS_I64_CLZ:
-		p.useMathX = true
 		sp0 := stk.Pop(token.I64)
 		ret0 := stk.Push(token.I32)
 		fmt.Fprintf(w, "%s$R%d.i32 = I64_CLZ($R%d.i64);\n",
 			indent, ret0, sp0,
 		)
 	case token.INS_I64_CTZ:
-		p.useMathX = true
 		sp0 := stk.Pop(token.I64)
 		ret0 := stk.Push(token.I32)
 		fmt.Fprintf(w, "%s$R%d.i32 = I64_CTZ($R%d.i64);\n",
 			indent, ret0, sp0,
 		)
 	case token.INS_I64_POPCNT:
-		p.useMathX = true
 		sp0 := stk.Pop(token.I64)
 		ret0 := stk.Push(token.I32)
 		fmt.Fprintf(w, "%s$R%d.i32 = I64_POPCNT($R%d.i64);\n",
@@ -1020,7 +1017,6 @@ func (p *wat2cWorker) buildFunc_ins(w io.Writer, fn *ast.Func, stk *valueTypeSta
 			indent, ret0, sp1, sp0,
 		)
 	case token.INS_I64_ROTL:
-		p.useMathX = true
 		sp0 := stk.Pop(token.I64)
 		sp1 := stk.Pop(token.I64)
 		ret0 := stk.Push(token.I64)
@@ -1028,7 +1024,6 @@ func (p *wat2cWorker) buildFunc_ins(w io.Writer, fn *ast.Func, stk *valueTypeSta
 			indent, ret0, sp1, sp0,
 		)
 	case token.INS_I64_ROTR:
-		p.useMathX = true
 		sp0 := stk.Pop(token.I64)
 		sp1 := stk.Pop(token.I64)
 		ret0 := stk.Push(token.I64)

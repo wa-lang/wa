@@ -8,6 +8,33 @@ import (
 	"wa-lang.org/wa/internal/wat/token"
 )
 
+func (p *wat2cWorker) ifUseMathX(ins token.Token) bool {
+	switch ins {
+	case token.INS_I32_CLZ:
+		return true
+	case token.INS_I32_CTZ:
+		return true
+	case token.INS_I32_POPCNT:
+		return true
+	case token.INS_I32_ROTL:
+		return true
+	case token.INS_I32_ROTR:
+		return true
+
+	case token.INS_I64_CLZ:
+		return true
+	case token.INS_I64_CTZ:
+		return true
+	case token.INS_I64_POPCNT:
+		return true
+	case token.INS_I64_ROTL:
+		return true
+	case token.INS_I64_ROTR:
+		return true
+	}
+	return false
+}
+
 func (p *wat2cWorker) findGlobalType(ident string) token.Token {
 	if ident == "" {
 		panic("wat2c: empty ident")
