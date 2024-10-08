@@ -1015,20 +1015,10 @@ func (p *printer) expr1(expr ast.Expr, prec1, depth int) {
 		p.fieldList(x.Methods, false, x.Incomplete)
 
 	case *ast.MapType:
-		if p.Mode&WaGo != 0 {
-			// map[KeyType]ValueType
-			p.print(token.MAP, token.LBRACK)
-			p.expr(x.Key)
-			p.print(token.RBRACK)
-			p.expr(x.Value)
-		} else {
-			// map[KeyType, ValueType]
-			p.print(token.MAP, token.LBRACK)
-			p.expr(x.Key)
-			p.print(token.COMMA, blank)
-			p.expr(x.Value)
-			p.print(token.RBRACK)
-		}
+		p.print(token.MAP, token.LBRACK)
+		p.expr(x.Key)
+		p.print(token.RBRACK)
+		p.expr(x.Value)
 
 	default:
 		panic("unreachable")
