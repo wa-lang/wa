@@ -12,7 +12,7 @@ import (
 	"wa-lang.org/wa/internal/wat/token"
 )
 
-func (p *wat2cWorker) buildFunc_body(w io.Writer, fn *ast.Func) error {
+func (p *wat2cWorker) buildFunc_body(w io.Writer, fn *ast.Func, cRetType string) error {
 	p.Tracef("buildFunc_body: %s\n", fn.Name)
 
 	var stk valueTypeStack
@@ -61,7 +61,9 @@ func (p *wat2cWorker) buildFunc_body(w io.Writer, fn *ast.Func) error {
 	assert(stk.Len() == 0)
 
 	// 返回值
-	fmt.Fprintf(w, "  fn_%s_ret_t $result;\n", toCName(fn.Name))
+	if len(fn.Type.Results) > 1 {
+		fmt.Fprintf(w, "  %s $result;\n", cRetType)
+	}
 
 	// 固定类型的寄存器
 	fmt.Fprintf(w, "  u32_t $R_u32;\n")
@@ -229,51 +231,93 @@ func (p *wat2cWorker) buildFunc_ins(w io.Writer, fn *ast.Func, stk *valueTypeSta
 		fmt.Fprintf(w, "%s}\n", indent)
 
 	case token.INS_RETURN:
-		for i, xType := range fn.Type.Results {
-			spi := stk.Pop(xType)
-			switch xType {
+		switch len(fn.Type.Results) {
+		case 0:
+			fmt.Fprintf(w, "%sreturn;\n", indent)
+		case 1:
+			sp0 := stk.Pop(fn.Type.Results[0])
+			switch fn.Type.Results[0] {
 			case token.I32:
-				fmt.Fprintf(w, "%s$result.$R%d = $R%d.i32;\n", indent, i, spi)
+				fmt.Fprintf(w, "%sreturn $R%d.i32;\n", indent, sp0)
 			case token.I64:
-				fmt.Fprintf(w, "%s$result.$R%d = $R%d.i64;\n", indent, i, spi)
+				fmt.Fprintf(w, "%sreturn $R%d.i64;\n", indent, sp0)
 			case token.F32:
-				fmt.Fprintf(w, "%s$result.$R%d = $R%d.f32;\n", indent, i, spi)
+				fmt.Fprintf(w, "%sreturn $R%d.f32;\n", indent, sp0)
 			case token.F64:
-				fmt.Fprintf(w, "%s$result.$R%d = $R%d.f64;\n", indent, i, spi)
+				fmt.Fprintf(w, "%sreturn $R%d.f64;\n", indent, sp0)
 			default:
 				unreachable()
 			}
+		default:
+			for i, xType := range fn.Type.Results {
+				spi := stk.Pop(xType)
+				switch xType {
+				case token.I32:
+					fmt.Fprintf(w, "%s$result.$R%d = $R%d.i32;\n", indent, i, spi)
+				case token.I64:
+					fmt.Fprintf(w, "%s$result.$R%d = $R%d.i64;\n", indent, i, spi)
+				case token.F32:
+					fmt.Fprintf(w, "%s$result.$R%d = $R%d.f32;\n", indent, i, spi)
+				case token.F64:
+					fmt.Fprintf(w, "%s$result.$R%d = $R%d.f64;\n", indent, i, spi)
+				default:
+					unreachable()
+				}
+			}
+			fmt.Fprintf(w, "%sreturn $result;\n", indent)
 		}
-		fmt.Fprintf(w, "%sreturn $result;\n", indent)
 		assert(stk.Len() == 0)
 
 	case token.INS_CALL:
 		i := i.(ast.Ins_Call)
 
 		fnCallType := p.findFuncType(i.X)
+		fnCallCRetType := p.getFuncCRetType(fnCallType, i.X)
+
+		// 返回值
+		argList := make([]int, len(fnCallType.Params))
+		for k, x := range fnCallType.Params {
+			argList[k] = stk.Pop(x.Type)
+		}
 
 		// 需要定义临时变量保存返回值
-		if len(fnCallType.Results) > 0 {
-			fmt.Fprintf(w, "%s{\n", indent)
-			fmt.Fprintf(w, "%s  fn_%s_ret_t $ret = fn_%s(", indent, toCName(i.X), toCName(i.X))
-		} else {
+		switch len(fnCallType.Results) {
+		case 0:
 			fmt.Fprintf(w, "%sfn_%s(", indent, toCName(i.X))
+		case 1:
+			ret0 := stk.Push(fnCallType.Results[0])
+			switch fnCallType.Results[0] {
+			case token.I32:
+				fmt.Fprintf(w, "%s$R%d.i32 = fn_%s(", indent, ret0, toCName(i.X))
+			case token.I64:
+				fmt.Fprintf(w, "%s$R%d.i64 = fn_%s(", indent, ret0, toCName(i.X))
+			case token.F32:
+				fmt.Fprintf(w, "%s$R%d.f32 = fn_%s(", indent, ret0, toCName(i.X))
+			case token.F64:
+				fmt.Fprintf(w, "%s$R%d.f64 = fn_%s(", indent, ret0, toCName(i.X))
+			default:
+				unreachable()
+			}
+		}
+
+		if len(fnCallType.Results) > 1 {
+			fmt.Fprintf(w, "%s{\n", indent)
+			fmt.Fprintf(w, "%s  %s $ret = fn_%s(", indent, fnCallCRetType, toCName(i.X))
 		}
 
 		for k, x := range fnCallType.Params {
 			if k > 0 {
 				fmt.Fprintf(w, ", ")
 			}
-			argi := stk.Pop(x.Type)
 			switch x.Type {
 			case token.I32:
-				fmt.Fprintf(w, "$R%d.i32", argi)
+				fmt.Fprintf(w, "$R%d.i32", argList[k])
 			case token.I64:
-				fmt.Fprintf(w, "$R%d.i64", argi)
+				fmt.Fprintf(w, "$R%d.i64", argList[k])
 			case token.F32:
-				fmt.Fprintf(w, "$R%d.f32", argi)
+				fmt.Fprintf(w, "$R%d.f32", argList[k])
 			case token.F64:
-				fmt.Fprintf(w, "$R%d.f64", argi)
+				fmt.Fprintf(w, "$R%d.f64", argList[k])
 			default:
 				unreachable()
 			}
@@ -281,7 +325,7 @@ func (p *wat2cWorker) buildFunc_ins(w io.Writer, fn *ast.Func, stk *valueTypeSta
 		fmt.Fprintf(w, ");\n")
 
 		// 复制到当前stk
-		if len(fnCallType.Results) > 0 {
+		if len(fnCallType.Results) > 1 {
 			for k, retType := range fnCallType.Results {
 				reti := stk.Push(retType)
 				switch retType {
@@ -298,8 +342,6 @@ func (p *wat2cWorker) buildFunc_ins(w io.Writer, fn *ast.Func, stk *valueTypeSta
 				}
 			}
 			fmt.Fprintf(w, "%s}\n", indent)
-		} else {
-			fmt.Fprintf(w, "\n")
 		}
 
 	case token.INS_CALL_INDIRECT:
@@ -307,31 +349,40 @@ func (p *wat2cWorker) buildFunc_ins(w io.Writer, fn *ast.Func, stk *valueTypeSta
 
 		sp0 := stk.Pop(token.I32)
 		fnCallType := p.findType(i.TypeIdx)
+		fnCallCRetType := p.getFuncCRetType(fnCallType, "")
+
+		// 返回值
+		argList := make([]int, len(fnCallType.Params))
+		for k, x := range fnCallType.Params {
+			argList[k] = stk.Pop(x.Type)
+		}
 
 		// 生成要定义函数的类型
 		fmt.Fprintf(w, "%s{\n", indent)
 		{
-			fmt.Fprintf(w, "%s  typedef struct {", indent)
-			for i := 0; i < len(fnCallType.Results); i++ {
-				if i > 0 {
-					fmt.Fprintf(w, " ")
+			if len(fnCallType.Results) > 1 {
+				fmt.Fprintf(w, "%s  typedef struct {", indent)
+				for i := 0; i < len(fnCallType.Results); i++ {
+					if i > 0 {
+						fmt.Fprintf(w, " ")
+					}
+					switch fnCallType.Results[i] {
+					case token.I32:
+						fmt.Fprintf(w, "i32_t $R%d;", i)
+					case token.I64:
+						fmt.Fprintf(w, "i64_t $R%d;", i)
+					case token.F32:
+						fmt.Fprintf(w, "f32_t $R%d;", i)
+					case token.F64:
+						fmt.Fprintf(w, "f64_t $R%d;", i)
+					default:
+						unreachable()
+					}
 				}
-				switch fnCallType.Results[i] {
-				case token.I32:
-					fmt.Fprintf(w, "i32_t $R%d;", i)
-				case token.I64:
-					fmt.Fprintf(w, "i64_t $R%d;", i)
-				case token.F32:
-					fmt.Fprintf(w, "f32_t $R%d;", i)
-				case token.F64:
-					fmt.Fprintf(w, "f64_t $R%d;", i)
-				default:
-					unreachable()
-				}
+				fmt.Fprintf(w, "} %s;\n", fnCallCRetType)
 			}
-			fmt.Fprintf(w, "} fn_ret_t;\n")
 
-			fmt.Fprintf(w, "%s  typedef fn_ret_t (*fn_t)(", indent)
+			fmt.Fprintf(w, "%s  typedef %s (*fn_t)(", indent, fnCallCRetType)
 			if len(fnCallType.Params) > 0 {
 				for i, x := range fnCallType.Params {
 					var argName string
@@ -360,13 +411,37 @@ func (p *wat2cWorker) buildFunc_ins(w io.Writer, fn *ast.Func, stk *valueTypeSta
 			fmt.Fprintf(w, ");\n")
 
 			// 调用函数
-			if len(fnCallType.Results) > 0 {
-				fmt.Fprintf(w, "%s  fn_ret_t $ret = ((fn_t)(wasm_table[$R%d.i32]))(",
-					indent, sp0,
-				)
-			} else {
+			switch len(fnCallType.Results) {
+			case 0:
 				fmt.Fprintf(w, "%s  ((fn_t)(wasm_table[$R%d.i32]))(",
 					indent, sp0,
+				)
+			case 1:
+				ret0 := stk.Push(fnCallType.Results[0])
+				switch fnCallType.Results[0] {
+				case token.I32:
+					fmt.Fprintf(w, "%s  $R%d.i32 = ((fn_t)(wasm_table[$R%d.i32]))(",
+						indent, ret0, sp0,
+					)
+				case token.I64:
+					fmt.Fprintf(w, "%s  $R%d.i64 = ((fn_t)(wasm_table[$R%d.i32]))(",
+						indent, ret0, sp0,
+					)
+				case token.F32:
+					fmt.Fprintf(w, "%s  $R%d.f32 = ((fn_t)(wasm_table[$R%d.i32]))(",
+						indent, ret0, sp0,
+					)
+				case token.F64:
+					fmt.Fprintf(w, "%s  $R%d.f64 = ((fn_t)(wasm_table[$R%d.i32]))(",
+						indent, ret0, sp0,
+					)
+				default:
+					unreachable()
+				}
+
+			default:
+				fmt.Fprintf(w, "%s  %s $ret = ((fn_t)(wasm_table[$R%d.i32]))(",
+					indent, fnCallCRetType, sp0,
 				)
 			}
 			for i, x := range fnCallType.Params {
@@ -390,7 +465,7 @@ func (p *wat2cWorker) buildFunc_ins(w io.Writer, fn *ast.Func, stk *valueTypeSta
 			fmt.Fprintf(w, ");\n")
 
 			// 保存返回值
-			if len(fnCallType.Results) > 0 {
+			if len(fnCallType.Results) > 1 {
 				for k, retType := range fnCallType.Results {
 					reti := stk.Push(retType)
 					switch retType {
@@ -406,8 +481,6 @@ func (p *wat2cWorker) buildFunc_ins(w io.Writer, fn *ast.Func, stk *valueTypeSta
 						unreachable()
 					}
 				}
-			} else {
-				fmt.Fprintf(w, "\n")
 			}
 		}
 		fmt.Fprintf(w, "%s}\n", indent)

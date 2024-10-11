@@ -117,28 +117,31 @@ func (p *wat2cWorker) buildImport(w io.Writer) error {
 		fmt.Fprintln(w)
 
 		// 返回值类型
-		fmt.Fprintf(w, "typedef struct {")
-		for i := 0; i < len(fnType.Results); i++ {
-			if i > 0 {
-				fmt.Fprintf(w, " ")
+		cRetType := p.getFuncCRetType(fnType, fnName)
+		if len(fnType.Results) > 1 {
+			fmt.Fprintf(w, "typedef struct {")
+			for i := 0; i < len(fnType.Results); i++ {
+				if i > 0 {
+					fmt.Fprintf(w, " ")
+				}
+				switch fnType.Results[i] {
+				case token.I32:
+					fmt.Fprintf(w, "i32_t $R%d;", i)
+				case token.I64:
+					fmt.Fprintf(w, "i64_t $R%d;", i)
+				case token.F32:
+					fmt.Fprintf(w, "f32_t $R%d;", i)
+				case token.F64:
+					fmt.Fprintf(w, "f64_t $R%d;", i)
+				default:
+					unreachable()
+				}
 			}
-			switch fnType.Results[i] {
-			case token.I32:
-				fmt.Fprintf(w, "i32_t $R%d;", i)
-			case token.I64:
-				fmt.Fprintf(w, "i64_t $R%d;", i)
-			case token.F32:
-				fmt.Fprintf(w, "f32_t $R%d;", i)
-			case token.F64:
-				fmt.Fprintf(w, "f64_t $R%d;", i)
-			default:
-				unreachable()
-			}
+			fmt.Fprintf(w, "} fn_%s_ret_t;\n", toCName(fnName))
 		}
-		fmt.Fprintf(w, "} fn_%s_ret_t;\n", toCName(fnName))
 
 		// 返回值通过栈传递
-		fmt.Fprintf(w, "extern fn_%s_ret_t fn_%s(", toCName(fnName), toCName(fnName))
+		fmt.Fprintf(w, "extern %s fn_%s(", cRetType, toCName(fnName))
 		if len(fnType.Params) > 0 {
 			for i, x := range fnType.Params {
 				var argName string
@@ -284,25 +287,28 @@ func (p *wat2cWorker) buildFuncs(w io.Writer) error {
 		fmt.Fprintln(w)
 
 		// 返回值类型
-		fmt.Fprintf(w, "typedef struct {")
-		for i := 0; i < len(f.Type.Results); i++ {
-			if i > 0 {
-				fmt.Fprintf(w, " ")
+		cRetType := p.getFuncCRetType(f.Type, f.Name)
+		if len(f.Type.Results) > 1 {
+			fmt.Fprintf(w, "typedef struct {")
+			for i := 0; i < len(f.Type.Results); i++ {
+				if i > 0 {
+					fmt.Fprintf(w, " ")
+				}
+				switch f.Type.Results[i] {
+				case token.I32:
+					fmt.Fprintf(w, "i32_t $R%d;", i)
+				case token.I64:
+					fmt.Fprintf(w, "i64_t $R%d;", i)
+				case token.F32:
+					fmt.Fprintf(w, "f32_t $R%d;", i)
+				case token.F64:
+					fmt.Fprintf(w, "f64_t $R%d;", i)
+				}
 			}
-			switch f.Type.Results[i] {
-			case token.I32:
-				fmt.Fprintf(w, "i32_t $R%d;", i)
-			case token.I64:
-				fmt.Fprintf(w, "i64_t $R%d;", i)
-			case token.F32:
-				fmt.Fprintf(w, "f32_t $R%d;", i)
-			case token.F64:
-				fmt.Fprintf(w, "f64_t $R%d;", i)
-			}
+			fmt.Fprintf(w, "} fn_%s_ret_t;\n", toCName(f.Name))
 		}
-		fmt.Fprintf(w, "} fn_%s_ret_t;\n", toCName(f.Name))
 
-		fmt.Fprintf(w, "static fn_%s_ret_t fn_%s(", toCName(f.Name), toCName(f.Name))
+		fmt.Fprintf(w, "static %s fn_%s(", cRetType, toCName(f.Name))
 		if len(f.Type.Params) > 0 {
 			for i, x := range f.Type.Params {
 				if i > 0 {
@@ -353,6 +359,8 @@ func (p *wat2cWorker) buildFuncs(w io.Writer) error {
 		p.scopeLabels = nil
 		p.scopeStackBases = nil
 
+		cRetType := p.getFuncCRetType(f.Type, f.Name)
+
 		fmt.Fprintf(w, "// func %s", f.Name)
 		if len(f.Type.Params) > 0 {
 			for i, x := range f.Type.Params {
@@ -373,7 +381,7 @@ func (p *wat2cWorker) buildFuncs(w io.Writer) error {
 		fmt.Fprintln(w)
 
 		// 返回值通过栈传递, 返回入栈的个数
-		fmt.Fprintf(w, "static fn_%s_ret_t fn_%s(", toCName(f.Name), toCName(f.Name))
+		fmt.Fprintf(w, "static %s fn_%s(", cRetType, toCName(f.Name))
 		if len(f.Type.Params) > 0 {
 			for i, x := range f.Type.Params {
 				var argName string
@@ -404,7 +412,7 @@ func (p *wat2cWorker) buildFuncs(w io.Writer) error {
 			}
 		}
 		fmt.Fprintf(w, ") {\n")
-		if err := p.buildFunc_body(w, f); err != nil {
+		if err := p.buildFunc_body(w, f, cRetType); err != nil {
 			return err
 		}
 		fmt.Fprintf(w, "}\n\n")

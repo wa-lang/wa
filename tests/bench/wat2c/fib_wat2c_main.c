@@ -4,7 +4,7 @@
 
 int main() {
   i64_t i = 46;
-  fn_fib_ret_t $result = fn_fib(i);
-  printf("fib(%d) = %lld\n", 46, $result.$R0);
+  i64_t $result = fn_fib(i);
+  printf("fib(%d) = %lld\n", 46, $result);
   return 0;
 }
