@@ -26,10 +26,20 @@ func (p *wat2cWorker) buildFunc_body(w io.Writer, fn *ast.Func) error {
 			localName := toCName(x.Name)
 			p.localNames = append(p.localNames, localName)
 			p.localTypes = append(p.localTypes, x.Type)
+			switch x.Type {
+			case token.I32:
+				fmt.Fprintf(&bufIns, "  i32_t %s = 0;", localName)
+			case token.I64:
+				fmt.Fprintf(&bufIns, "  i64_t %s = 0;", localName)
+			case token.F32:
+				fmt.Fprintf(&bufIns, "  f32_t %s = 0;", localName)
+			case token.F64:
+				fmt.Fprintf(&bufIns, "  f64_t %s = 0;", localName)
+			}
 			if localName != x.Name {
-				fmt.Fprintf(&bufIns, "  val_t %s = {0}; // %s\n", localName, x.Name)
+				fmt.Fprintf(&bufIns, " // %s\n", x.Name)
 			} else {
-				fmt.Fprintf(&bufIns, "  val_t %s = {0};\n", localName)
+				fmt.Fprintf(&bufIns, "\n")
 			}
 		}
 		fmt.Fprintln(&bufIns)
@@ -58,7 +68,7 @@ func (p *wat2cWorker) buildFunc_body(w io.Writer, fn *ast.Func) error {
 	fmt.Fprintf(w, "  u16_t $R_u16;\n")
 	fmt.Fprintf(w, "  u8_t  $R_u8;\n")
 
-	// 栈寄存器
+	// 栈寄存器(union类型)
 	fmt.Fprintf(w, "  val_t $R0")
 	for i := 1; i < stk.MaxDepth(); i++ {
 		fmt.Fprintf(w, ", $R%d", i)
@@ -221,7 +231,18 @@ func (p *wat2cWorker) buildFunc_ins(w io.Writer, fn *ast.Func, stk *valueTypeSta
 	case token.INS_RETURN:
 		for i, xType := range fn.Type.Results {
 			spi := stk.Pop(xType)
-			fmt.Fprintf(w, "%s$result.$R%d = $R%d;\n", indent, i, spi)
+			switch xType {
+			case token.I32:
+				fmt.Fprintf(w, "%s$result.$R%d = $R%d.i32;\n", indent, i, spi)
+			case token.I64:
+				fmt.Fprintf(w, "%s$result.$R%d = $R%d.i64;\n", indent, i, spi)
+			case token.F32:
+				fmt.Fprintf(w, "%s$result.$R%d = $R%d.f32;\n", indent, i, spi)
+			case token.F64:
+				fmt.Fprintf(w, "%s$result.$R%d = $R%d.f64;\n", indent, i, spi)
+			default:
+				unreachable()
+			}
 		}
 		fmt.Fprintf(w, "%sreturn $result;\n", indent)
 		assert(stk.Len() == 0)
@@ -244,7 +265,18 @@ func (p *wat2cWorker) buildFunc_ins(w io.Writer, fn *ast.Func, stk *valueTypeSta
 				fmt.Fprintf(w, ", ")
 			}
 			argi := stk.Pop(x.Type)
-			fmt.Fprintf(w, "$R%d", argi)
+			switch x.Type {
+			case token.I32:
+				fmt.Fprintf(w, "$R%d.i32", argi)
+			case token.I64:
+				fmt.Fprintf(w, "$R%d.i64", argi)
+			case token.F32:
+				fmt.Fprintf(w, "$R%d.f32", argi)
+			case token.F64:
+				fmt.Fprintf(w, "$R%d.f64", argi)
+			default:
+				unreachable()
+			}
 		}
 		fmt.Fprintf(w, ");\n")
 
@@ -252,7 +284,18 @@ func (p *wat2cWorker) buildFunc_ins(w io.Writer, fn *ast.Func, stk *valueTypeSta
 		if len(fnCallType.Results) > 0 {
 			for k, retType := range fnCallType.Results {
 				reti := stk.Push(retType)
-				fmt.Fprintf(w, "%s  $R%d = $ret.$R%d;\n", indent, reti, k)
+				switch retType {
+				case token.I32:
+					fmt.Fprintf(w, "%s  $R%d.i32 = $ret.$R%d;\n", indent, reti, k)
+				case token.I64:
+					fmt.Fprintf(w, "%s  $R%d.i64 = $ret.$R%d;\n", indent, reti, k)
+				case token.F32:
+					fmt.Fprintf(w, "%s  $R%d.f32 = $ret.$R%d;\n", indent, reti, k)
+				case token.F64:
+					fmt.Fprintf(w, "%s  $R%d.f64 = $ret.$R%d;\n", indent, reti, k)
+				default:
+					unreachable()
+				}
 			}
 			fmt.Fprintf(w, "%s}\n", indent)
 		} else {
@@ -270,13 +313,20 @@ func (p *wat2cWorker) buildFunc_ins(w io.Writer, fn *ast.Func, stk *valueTypeSta
 		{
 			fmt.Fprintf(w, "%s  typedef struct {", indent)
 			for i := 0; i < len(fnCallType.Results); i++ {
-				if i == 0 {
-					fmt.Fprintf(w, " val_t $R%d", i)
-				} else {
-					fmt.Fprintf(w, ", $R%d", i)
+				if i > 0 {
+					fmt.Fprintf(w, " ")
 				}
-				if i == len(fnCallType.Results)-1 {
-					fmt.Fprintf(w, "; ")
+				switch fnCallType.Results[i] {
+				case token.I32:
+					fmt.Fprintf(w, "i32_t $R%d;", i)
+				case token.I64:
+					fmt.Fprintf(w, "i64_t $R%d;", i)
+				case token.F32:
+					fmt.Fprintf(w, "f32_t $R%d;", i)
+				case token.F64:
+					fmt.Fprintf(w, "f64_t $R%d;", i)
+				default:
+					unreachable()
 				}
 			}
 			fmt.Fprintf(w, "} fn_ret_t;\n")
@@ -284,13 +334,26 @@ func (p *wat2cWorker) buildFunc_ins(w io.Writer, fn *ast.Func, stk *valueTypeSta
 			fmt.Fprintf(w, "%s  typedef fn_ret_t (*fn_t)(", indent)
 			if len(fnCallType.Params) > 0 {
 				for i, x := range fnCallType.Params {
+					var argName string
+					if x.Name != "" {
+						argName = toCName(x.Name)
+					} else {
+						argName = fmt.Sprintf("$arg%d", i)
+					}
 					if i > 0 {
 						fmt.Fprintf(w, ", ")
 					}
-					if x.Name != "" {
-						fmt.Fprintf(w, "val_t %v", toCName(x.Name))
-					} else {
-						fmt.Fprintf(w, "val_t $arg%d", i)
+					switch x.Type {
+					case token.I32:
+						fmt.Fprintf(w, "i32_t %s", argName)
+					case token.I64:
+						fmt.Fprintf(w, "i64_t %s", argName)
+					case token.F32:
+						fmt.Fprintf(w, "f32_t %s", argName)
+					case token.F64:
+						fmt.Fprintf(w, "f64_t %s", argName)
+					default:
+						unreachable()
 					}
 				}
 			}
@@ -311,7 +374,18 @@ func (p *wat2cWorker) buildFunc_ins(w io.Writer, fn *ast.Func, stk *valueTypeSta
 					fmt.Fprintf(w, ", ")
 				}
 				argi := stk.Pop(x.Type)
-				fmt.Fprintf(w, "$R%d", argi)
+				switch x.Type {
+				case token.I32:
+					fmt.Fprintf(w, "$R%d.i32", argi)
+				case token.I64:
+					fmt.Fprintf(w, "$R%d.i64", argi)
+				case token.F32:
+					fmt.Fprintf(w, "$R%d.f32", argi)
+				case token.F64:
+					fmt.Fprintf(w, "$R%d.f64", argi)
+				default:
+					unreachable()
+				}
 			}
 			fmt.Fprintf(w, ");\n")
 
@@ -319,7 +393,18 @@ func (p *wat2cWorker) buildFunc_ins(w io.Writer, fn *ast.Func, stk *valueTypeSta
 			if len(fnCallType.Results) > 0 {
 				for k, retType := range fnCallType.Results {
 					reti := stk.Push(retType)
-					fmt.Fprintf(w, "%s  $R%d = $ret.$R%d;\n", indent, reti, k)
+					switch retType {
+					case token.I32:
+						fmt.Fprintf(w, "%s  $R%d.i32 = $ret.$R%d;\n", indent, reti, k)
+					case token.I64:
+						fmt.Fprintf(w, "%s  $R%d.i64 = $ret.$R%d;\n", indent, reti, k)
+					case token.F32:
+						fmt.Fprintf(w, "%s  $R%d.f32 = $ret.$R%d;\n", indent, reti, k)
+					case token.F64:
+						fmt.Fprintf(w, "%s  $R%d.f64 = $ret.$R%d;\n", indent, reti, k)
+					default:
+						unreachable()
+					}
 				}
 			} else {
 				fmt.Fprintf(w, "\n")
@@ -342,12 +427,34 @@ func (p *wat2cWorker) buildFunc_ins(w io.Writer, fn *ast.Func, stk *valueTypeSta
 		i := i.(ast.Ins_LocalGet)
 		xType := p.findLocalType(fn, i.X)
 		ret0 := stk.Push(xType)
-		fmt.Fprintf(w, "%s$R%d = %s;\n", indent, ret0, p.findLocalName(fn, i.X))
+		switch xType {
+		case token.I32:
+			fmt.Fprintf(w, "%s$R%d.i32 = %s;\n", indent, ret0, p.findLocalName(fn, i.X))
+		case token.I64:
+			fmt.Fprintf(w, "%s$R%d.i64 = %s;\n", indent, ret0, p.findLocalName(fn, i.X))
+		case token.F32:
+			fmt.Fprintf(w, "%s$R%d.f32 = %s;\n", indent, ret0, p.findLocalName(fn, i.X))
+		case token.F64:
+			fmt.Fprintf(w, "%s$R%d.f64 = %s;\n", indent, ret0, p.findLocalName(fn, i.X))
+		default:
+			unreachable()
+		}
 	case token.INS_LOCAL_SET:
 		i := i.(ast.Ins_LocalSet)
 		xType := p.findLocalType(fn, i.X)
 		sp0 := stk.Pop(xType)
-		fmt.Fprintf(w, "%s%s = $R%d;\n", indent, p.findLocalName(fn, i.X), sp0)
+		switch xType {
+		case token.I32:
+			fmt.Fprintf(w, "%s%s = $R%d.i32;\n", indent, p.findLocalName(fn, i.X), sp0)
+		case token.I64:
+			fmt.Fprintf(w, "%s%s = $R%d.i64;\n", indent, p.findLocalName(fn, i.X), sp0)
+		case token.F32:
+			fmt.Fprintf(w, "%s%s = $R%d.f32;\n", indent, p.findLocalName(fn, i.X), sp0)
+		case token.F64:
+			fmt.Fprintf(w, "%s%s = $R%d.f64;\n", indent, p.findLocalName(fn, i.X), sp0)
+		default:
+			unreachable()
+		}
 	case token.INS_LOCAL_TEE:
 		i := i.(ast.Ins_LocalTee)
 		xType := p.findLocalType(fn, i.X)
@@ -357,12 +464,34 @@ func (p *wat2cWorker) buildFunc_ins(w io.Writer, fn *ast.Func, stk *valueTypeSta
 		i := i.(ast.Ins_GlobalGet)
 		xType := p.findGlobalType(i.X)
 		ret0 := stk.Push(xType)
-		fmt.Fprintf(w, "%s$R%d = var_%s;\n", indent, ret0, toCName(i.X))
+		switch xType {
+		case token.I32:
+			fmt.Fprintf(w, "%s$R%d.i32 = var_%s;\n", indent, ret0, toCName(i.X))
+		case token.I64:
+			fmt.Fprintf(w, "%s$R%d.i64 = var_%s;\n", indent, ret0, toCName(i.X))
+		case token.F32:
+			fmt.Fprintf(w, "%s$R%d.f32 = var_%s;\n", indent, ret0, toCName(i.X))
+		case token.F64:
+			fmt.Fprintf(w, "%s$R%d.f64 = var_%s;\n", indent, ret0, toCName(i.X))
+		default:
+			unreachable()
+		}
 	case token.INS_GLOBAL_SET:
 		i := i.(ast.Ins_GlobalSet)
 		xType := p.findGlobalType(i.X)
 		sp0 := stk.Pop(xType)
-		fmt.Fprintf(w, "%svar_%s = $R%d;\n", indent, toCName(i.X), sp0)
+		switch xType {
+		case token.I32:
+			fmt.Fprintf(w, "%svar_%s = $R%d.i32;\n", indent, toCName(i.X), sp0)
+		case token.I64:
+			fmt.Fprintf(w, "%svar_%s = $R%d.i64;\n", indent, toCName(i.X), sp0)
+		case token.F32:
+			fmt.Fprintf(w, "%svar_%s = $R%d.f32;\n", indent, toCName(i.X), sp0)
+		case token.F64:
+			fmt.Fprintf(w, "%svar_%s = $R%d.f64;\n", indent, toCName(i.X), sp0)
+		default:
+			unreachable()
+		}
 	case token.INS_TABLE_GET:
 		sp0 := stk.Pop(token.I32)
 		ret0 := stk.Push(token.FUNCREF) // funcref

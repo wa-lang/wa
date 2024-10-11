@@ -119,13 +119,20 @@ func (p *wat2cWorker) buildImport(w io.Writer) error {
 		// 返回值类型
 		fmt.Fprintf(w, "typedef struct {")
 		for i := 0; i < len(fnType.Results); i++ {
-			if i == 0 {
-				fmt.Fprintf(w, " val_t $R%d", i)
-			} else {
-				fmt.Fprintf(w, ", $R%d", i)
+			if i > 0 {
+				fmt.Fprintf(w, " ")
 			}
-			if i == len(fnType.Results)-1 {
-				fmt.Fprintf(w, "; ")
+			switch fnType.Results[i] {
+			case token.I32:
+				fmt.Fprintf(w, "i32_t $R%d;", i)
+			case token.I64:
+				fmt.Fprintf(w, "i64_t $R%d;", i)
+			case token.F32:
+				fmt.Fprintf(w, "f32_t $R%d;", i)
+			case token.F64:
+				fmt.Fprintf(w, "f64_t $R%d;", i)
+			default:
+				unreachable()
 			}
 		}
 		fmt.Fprintf(w, "} fn_%s_ret_t;\n", toCName(fnName))
@@ -134,13 +141,27 @@ func (p *wat2cWorker) buildImport(w io.Writer) error {
 		fmt.Fprintf(w, "extern fn_%s_ret_t fn_%s(", toCName(fnName), toCName(fnName))
 		if len(fnType.Params) > 0 {
 			for i, x := range fnType.Params {
+				var argName string
+				if x.Name != "" {
+					argName = toCName(x.Name)
+				} else {
+					argName = fmt.Sprintf("$arg%d", i)
+				}
 				if i > 0 {
 					fmt.Fprint(w, ", ")
 				}
-				if x.Name != "" {
-					fmt.Fprintf(w, "val_t %v", toCName(x.Name))
-				} else {
-					fmt.Fprintf(w, "val_t $arg%d", i)
+
+				switch x.Type {
+				case token.I32:
+					fmt.Fprintf(w, "i32_t %v", argName)
+				case token.I64:
+					fmt.Fprintf(w, "i64_t %v", argName)
+				case token.F32:
+					fmt.Fprintf(w, "f32_t %v", argName)
+				case token.F64:
+					fmt.Fprintf(w, "f64_t %v", argName)
+				default:
+					unreachable()
 				}
 			}
 		}
@@ -206,27 +227,27 @@ func (p *wat2cWorker) buildGlobal(w io.Writer) error {
 		switch g.Type {
 		case token.I32:
 			if g.Mutable {
-				fmt.Fprintf(w, "static val_t var_%s = {.i32=%d};\n", toCName(g.Name), g.I32Value)
+				fmt.Fprintf(w, "static i32_t var_%s = %d;\n", toCName(g.Name), g.I32Value)
 			} else {
-				fmt.Fprintf(w, "static const val_t var_%s = {.i32=%d};\n", toCName(g.Name), g.I32Value)
+				fmt.Fprintf(w, "static const i32_t var_%s = %d;\n", toCName(g.Name), g.I32Value)
 			}
 		case token.I64:
 			if g.Mutable {
-				fmt.Fprintf(w, "static val_t var_%s = {.i64=%d};\n", toCName(g.Name), g.I64Value)
+				fmt.Fprintf(w, "static i64_t var_%s = %d;\n", toCName(g.Name), g.I64Value)
 			} else {
-				fmt.Fprintf(w, "static const val_t var_%s = {.i64=%d};\n", toCName(g.Name), g.I64Value)
+				fmt.Fprintf(w, "static const i64_t var_%s = %d;\n", toCName(g.Name), g.I64Value)
 			}
 		case token.F32:
 			if g.Mutable {
-				fmt.Fprintf(w, "static val_t var_%s = {.f32=%f|;\n", toCName(g.Name), g.F32Value)
+				fmt.Fprintf(w, "static f32_t var_%s = %f;\n", toCName(g.Name), g.F32Value)
 			} else {
-				fmt.Fprintf(w, "static const val_t var_%s = {.f32=%f};\n", toCName(g.Name), g.F32Value)
+				fmt.Fprintf(w, "static const f32_t var_%s = %f;\n", toCName(g.Name), g.F32Value)
 			}
 		case token.F64:
 			if g.Mutable {
-				fmt.Fprintf(w, "static val_t var_%s = {.f64=%f};\n", toCName(g.Name), g.F64Value)
+				fmt.Fprintf(w, "static f64_t var_%s = %f;\n", toCName(g.Name), g.F64Value)
 			} else {
-				fmt.Fprintf(w, "static const val_t var_%s = {.f64=%f};\n", toCName(g.Name), g.F64Value)
+				fmt.Fprintf(w, "static const f64_t var_%s = %f;\n", toCName(g.Name), g.F64Value)
 			}
 		default:
 			return fmt.Errorf("unsupported global type: %s", g.Type)
@@ -265,28 +286,55 @@ func (p *wat2cWorker) buildFuncs(w io.Writer) error {
 		// 返回值类型
 		fmt.Fprintf(w, "typedef struct {")
 		for i := 0; i < len(f.Type.Results); i++ {
-			if i == 0 {
-				fmt.Fprintf(w, " val_t $R%d", i)
-			} else {
-				fmt.Fprintf(w, ", $R%d", i)
+			if i > 0 {
+				fmt.Fprintf(w, " ")
 			}
-			if i == len(f.Type.Results)-1 {
-				fmt.Fprintf(w, "; ")
+			switch f.Type.Results[i] {
+			case token.I32:
+				fmt.Fprintf(w, "i32_t $R%d;", i)
+			case token.I64:
+				fmt.Fprintf(w, "i64_t $R%d;", i)
+			case token.F32:
+				fmt.Fprintf(w, "f32_t $R%d;", i)
+			case token.F64:
+				fmt.Fprintf(w, "f64_t $R%d;", i)
 			}
 		}
 		fmt.Fprintf(w, "} fn_%s_ret_t;\n", toCName(f.Name))
 
-		// 返回值通过栈传递, 返回入栈的个数
 		fmt.Fprintf(w, "static fn_%s_ret_t fn_%s(", toCName(f.Name), toCName(f.Name))
 		if len(f.Type.Params) > 0 {
 			for i, x := range f.Type.Params {
 				if i > 0 {
 					fmt.Fprintf(w, ", ")
 				}
-				if x.Name != "" {
-					fmt.Fprintf(w, "val_t %v", toCName(x.Name))
-				} else {
-					fmt.Fprintf(w, "val_t $arg%d", i)
+				switch x.Type {
+				case token.I32:
+					if x.Name != "" {
+						fmt.Fprintf(w, "i32_t %v", toCName(x.Name))
+					} else {
+						fmt.Fprintf(w, "i32_t $arg%d", i)
+					}
+				case token.I64:
+					if x.Name != "" {
+						fmt.Fprintf(w, "i64_t %v", toCName(x.Name))
+					} else {
+						fmt.Fprintf(w, "i64_t $arg%d", i)
+					}
+				case token.F32:
+					if x.Name != "" {
+						fmt.Fprintf(w, "f32_t %v", toCName(x.Name))
+					} else {
+						fmt.Fprintf(w, "f32_t $arg%d", i)
+					}
+				case token.F64:
+					if x.Name != "" {
+						fmt.Fprintf(w, "f64_t %v", toCName(x.Name))
+					} else {
+						fmt.Fprintf(w, "f64_t $arg%d", i)
+					}
+				default:
+					unreachable()
 				}
 			}
 		}
@@ -341,7 +389,18 @@ func (p *wat2cWorker) buildFuncs(w io.Writer) error {
 				if i > 0 {
 					fmt.Fprint(w, ", ")
 				}
-				fmt.Fprintf(w, "val_t %v", argName)
+				switch x.Type {
+				case token.I32:
+					fmt.Fprintf(w, "i32_t %v", argName)
+				case token.I64:
+					fmt.Fprintf(w, "i64_t %v", argName)
+				case token.F32:
+					fmt.Fprintf(w, "f32_t %v", argName)
+				case token.F64:
+					fmt.Fprintf(w, "f64_t %v", argName)
+				default:
+					unreachable()
+				}
 			}
 		}
 		fmt.Fprintf(w, ") {\n")
