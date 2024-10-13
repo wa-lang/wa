@@ -32,6 +32,7 @@ jobs:
       - run: make -C waroot/examples/w4-tetris publish
       - run: make -C waroot/examples/w4-pong publish
       - run: make -C waroot/examples/w4-life publish
+      - run: make -C waroot/examples/w4-rocket publish
       - run: make -C waroot/examples/w4-magnifying-glass publish
       - run: make -C waroot/examples/brainfuck publish
 
