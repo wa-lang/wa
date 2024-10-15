@@ -1,12 +1,9 @@
-// Copyright 2015, Hu Keping . All rights reserved.
-// Use of this source code is governed by a BSD-style
-// license that can be found in the LICENSE file.
+// 版权 @2024 凹语言 作者。保留所有权利。
 
-// Package rbtree implements operations on Red-Black tree.
-package rbtree
+package mapx
 
 //
-// Red-Black tree properties:  http://en.wikipedia.org/wiki/Rbtree
+// Red-Black tree properties:  http://en.wikipedia.org/wiki/mapImp
 //
 //  1) A node is either red or black
 //  2) The root is black
@@ -16,54 +13,46 @@ package rbtree
 //     of black nodes.
 //
 
-// Node of the rbtree has a pointer of the node of parent, left, right, also has own color and Item which client uses
-type Node struct {
-	Left   *Node
-	Right  *Node
-	Parent *Node
-	Color  uint
-
-	// for use by client.
-	Item
-}
-
 const (
-	// RED represents the color of the node is red
-	RED = 0
-	// BLACK represents the color of the node is black
-	BLACK = 1
+	mapRED   = 0
+	mapBLACK = 1
 )
 
-// Item has a method to compare items which is less
-type Item interface {
-	Less(than Item) bool
-}
-
-// Rbtree represents a Red-Black tree.
-type Rbtree struct {
-	NIL   *Node
-	root  *Node
+// mapImp represents a Red-Black tree.
+type mapImp struct {
+	NIL   *mapNode
+	root  *mapNode
 	count uint
 }
 
-func less(x, y Item) bool {
-	return x.Less(y)
+type mapNode struct {
+	Left   *mapNode
+	Right  *mapNode
+	Parent *mapNode
+	Color  uint
+
+	// for use by client.
+	mapItem
 }
 
-// New returns an initialized Red-Black tree
-func New() *Rbtree { return new(Rbtree).Init() }
+type mapItem struct {
+	k, v interface{}
+}
 
-// Init returns the initial of rbtree
-func (t *Rbtree) Init() *Rbtree {
-	node := &Node{nil, nil, nil, BLACK, nil}
-	return &Rbtree{
+func mapLess(x, y mapItem) bool {
+	return Compare(x.k, y.k) < 0
+}
+
+func MakeMap() *mapImp {
+	node := &mapNode{nil, nil, nil, mapBLACK, mapItem{nil, nil}}
+	return &mapImp{
 		NIL:   node,
 		root:  node,
 		count: 0,
 	}
 }
 
-func (t *Rbtree) leftRotate(x *Node) {
+func (t *mapImp) leftRotate(x *mapNode) {
 	// Since we are doing the left rotation, the right child should *NOT* nil.
 	if x.Right == t.NIL {
 		return
@@ -101,7 +90,7 @@ func (t *Rbtree) leftRotate(x *Node) {
 	x.Parent = y
 }
 
-func (t *Rbtree) rightRotate(x *Node) {
+func (t *mapImp) rightRotate(x *mapNode) {
 	// Since we are doing the right rotation, the left child should *NOT* nil.
 	if x.Left == t.NIL {
 		return
@@ -139,15 +128,15 @@ func (t *Rbtree) rightRotate(x *Node) {
 	x.Parent = y
 }
 
-func (t *Rbtree) insert(z *Node) *Node {
+func (t *mapImp) insert(z *mapNode) *mapNode {
 	x := t.root
 	y := t.NIL
 
 	for x != t.NIL {
 		y = x
-		if less(z.Item, x.Item) {
+		if mapLess(z.mapItem, x.mapItem) {
 			x = x.Left
-		} else if less(x.Item, z.Item) {
+		} else if mapLess(x.mapItem, z.mapItem) {
 			x = x.Right
 		} else {
 			return x
@@ -157,7 +146,7 @@ func (t *Rbtree) insert(z *Node) *Node {
 	z.Parent = y
 	if y == t.NIL {
 		t.root = z
-	} else if less(z.Item, y.Item) {
+	} else if mapLess(z.mapItem, y.mapItem) {
 		y.Left = z
 	} else {
 		y.Right = z
@@ -168,45 +157,45 @@ func (t *Rbtree) insert(z *Node) *Node {
 	return z
 }
 
-func (t *Rbtree) insertFixup(z *Node) {
-	for z.Parent.Color == RED {
+func (t *mapImp) insertFixup(z *mapNode) {
+	for z.Parent.Color == mapRED {
 		//
 		// Howerver, we do not need the assertion of non-nil grandparent
 		// because
 		//
 		//  2) The root is black
 		//
-		// Since the color of the parent is RED, so the parent is not root
+		// Since the color of the parent is mapRED, so the parent is not root
 		// and the grandparent must be exist.
 		//
 		if z.Parent == z.Parent.Parent.Left {
 			// Take y as the uncle, although it can be NIL, in that case
-			// its color is BLACK
+			// its color is mapBLACK
 			y := z.Parent.Parent.Right
-			if y.Color == RED {
+			if y.Color == mapRED {
 				//
 				// Case 1:
-				// Parent and uncle are both RED, the grandparent must be BLACK
+				// Parent and uncle are both mapRED, the grandparent must be mapBLACK
 				// due to
 				//
 				//  4) Both children of every red node are black
 				//
-				// Since the current node and its parent are all RED, we still
+				// Since the current node and its parent are all mapRED, we still
 				// in violation of 4), So repaint both the parent and the uncle
-				// to BLACK and grandparent to RED(to maintain 5)
+				// to mapBLACK and grandparent to mapRED(to maintain 5)
 				//
 				//  5) Every simple path from root to leaves contains the same
 				//     number of black nodes.
 				//
-				z.Parent.Color = BLACK
-				y.Color = BLACK
-				z.Parent.Parent.Color = RED
+				z.Parent.Color = mapBLACK
+				y.Color = mapBLACK
+				z.Parent.Parent.Color = mapRED
 				z = z.Parent.Parent
 			} else {
 				if z == z.Parent.Right {
 					//
 					// Case 2:
-					// Parent is RED and uncle is BLACK and the current node
+					// Parent is mapRED and uncle is mapBLACK and the current node
 					// is right child
 					//
 					// A left rotation on the parent of the current node will
@@ -219,45 +208,45 @@ func (t *Rbtree) insertFixup(z *Node) {
 				}
 				//
 				// Case 3:
-				// Parent is RED and uncle is BLACK and the current node is
+				// Parent is mapRED and uncle is mapBLACK and the current node is
 				// left child
 				//
 				// At the very beginning of Case 3, current node and parent are
-				// both RED, thus we violate 4).
-				// Repaint parent to BLACK will fix it, but 5) does not allow
+				// both mapRED, thus we violate 4).
+				// Repaint parent to mapBLACK will fix it, but 5) does not allow
 				// this because all paths that go through the parent will get
-				// 1 more black node. Then repaint grandparent to RED (as we
-				// discussed before, the grandparent is BLACK) and do a right
+				// 1 more black node. Then repaint grandparent to mapRED (as we
+				// discussed before, the grandparent is mapBLACK) and do a right
 				// rotation will fix that.
 				//
-				z.Parent.Color = BLACK
-				z.Parent.Parent.Color = RED
+				z.Parent.Color = mapBLACK
+				z.Parent.Parent.Color = mapRED
 				t.rightRotate(z.Parent.Parent)
 			}
 		} else { // same as then clause with "right" and "left" exchanged
 			y := z.Parent.Parent.Left
-			if y.Color == RED {
-				z.Parent.Color = BLACK
-				y.Color = BLACK
-				z.Parent.Parent.Color = RED
+			if y.Color == mapRED {
+				z.Parent.Color = mapBLACK
+				y.Color = mapBLACK
+				z.Parent.Parent.Color = mapRED
 				z = z.Parent.Parent
 			} else {
 				if z == z.Parent.Left {
 					z = z.Parent
 					t.rightRotate(z)
 				}
-				z.Parent.Color = BLACK
-				z.Parent.Parent.Color = RED
+				z.Parent.Color = mapBLACK
+				z.Parent.Parent.Color = mapRED
 				t.leftRotate(z.Parent.Parent)
 			}
 		}
 	}
-	t.root.Color = BLACK
+	t.root.Color = mapBLACK
 }
 
 // Just traverse the node from root to left recursively until left is NIL.
 // The node whose left is NIL is the node with minimum value.
-func (t *Rbtree) min(x *Node) *Node {
+func (t *mapImp) min(x *mapNode) *mapNode {
 	if x == t.NIL {
 		return t.NIL
 	}
@@ -271,7 +260,7 @@ func (t *Rbtree) min(x *Node) *Node {
 
 // Just traverse the node from root to right recursively until right is NIL.
 // The node whose right is NIL is the node with maximum value.
-func (t *Rbtree) max(x *Node) *Node {
+func (t *mapImp) max(x *mapNode) *mapNode {
 	if x == t.NIL {
 		return t.NIL
 	}
@@ -283,13 +272,13 @@ func (t *Rbtree) max(x *Node) *Node {
 	return x
 }
 
-func (t *Rbtree) search(x *Node) *Node {
+func (t *mapImp) search(x *mapNode) *mapNode {
 	p := t.root
 
 	for p != t.NIL {
-		if less(p.Item, x.Item) {
+		if mapLess(p.mapItem, x.mapItem) {
 			p = p.Right
-		} else if less(x.Item, p.Item) {
+		} else if mapLess(x.mapItem, p.mapItem) {
 			p = p.Left
 		} else {
 			break
@@ -300,7 +289,7 @@ func (t *Rbtree) search(x *Node) *Node {
 }
 
 // TODO: Need Document
-func (t *Rbtree) successor(x *Node) *Node {
+func (t *mapImp) successor(x *mapNode) *mapNode {
 	if x == t.NIL {
 		return t.NIL
 	}
@@ -319,16 +308,16 @@ func (t *Rbtree) successor(x *Node) *Node {
 }
 
 // TODO: Need Document
-func (t *Rbtree) delete(key *Node) *Node {
+func (t *mapImp) delete(key *mapNode) *mapNode {
 	z := t.search(key)
 
 	if z == t.NIL {
 		return t.NIL
 	}
-	ret := &Node{t.NIL, t.NIL, t.NIL, z.Color, z.Item}
+	ret := &mapNode{t.NIL, t.NIL, t.NIL, z.Color, z.mapItem}
 
-	var y *Node
-	var x *Node
+	var y *mapNode
+	var x *mapNode
 
 	if z.Left == t.NIL || z.Right == t.NIL {
 		y = z
@@ -343,9 +332,9 @@ func (t *Rbtree) delete(key *Node) *Node {
 	}
 
 	// Even if x is NIL, we do the assign. In that case all the NIL nodes will
-	// change from {nil, nil, nil, BLACK, nil} to {nil, nil, ADDR, BLACK, nil},
+	// change from {nil, nil, nil, mapBLACK, nil} to {nil, nil, ADDR, mapBLACK, nil},
 	// but do not worry about that because it will not affect the compare
-	// between Node-X with Node-NIL
+	// between mapNode-X with mapNode-NIL
 	x.Parent = y.Parent
 
 	if y.Parent == t.NIL {
@@ -357,10 +346,10 @@ func (t *Rbtree) delete(key *Node) *Node {
 	}
 
 	if y != z {
-		z.Item = y.Item
+		z.mapItem = y.mapItem
 	}
 
-	if y.Color == BLACK {
+	if y.Color == mapBLACK {
 		t.deleteFixup(x)
 	}
 
@@ -369,58 +358,58 @@ func (t *Rbtree) delete(key *Node) *Node {
 	return ret
 }
 
-func (t *Rbtree) deleteFixup(x *Node) {
-	for x != t.root && x.Color == BLACK {
+func (t *mapImp) deleteFixup(x *mapNode) {
+	for x != t.root && x.Color == mapBLACK {
 		if x == x.Parent.Left {
 			w := x.Parent.Right
-			if w.Color == RED {
-				w.Color = BLACK
-				x.Parent.Color = RED
+			if w.Color == mapRED {
+				w.Color = mapBLACK
+				x.Parent.Color = mapRED
 				t.leftRotate(x.Parent)
 				w = x.Parent.Right
 			}
-			if w.Left.Color == BLACK && w.Right.Color == BLACK {
-				w.Color = RED
+			if w.Left.Color == mapBLACK && w.Right.Color == mapBLACK {
+				w.Color = mapRED
 				x = x.Parent
 			} else {
-				if w.Right.Color == BLACK {
-					w.Left.Color = BLACK
-					w.Color = RED
+				if w.Right.Color == mapBLACK {
+					w.Left.Color = mapBLACK
+					w.Color = mapRED
 					t.rightRotate(w)
 					w = x.Parent.Right
 				}
 				w.Color = x.Parent.Color
-				x.Parent.Color = BLACK
-				w.Right.Color = BLACK
+				x.Parent.Color = mapBLACK
+				w.Right.Color = mapBLACK
 				t.leftRotate(x.Parent)
 				// this is to exit while loop
 				x = t.root
 			}
 		} else { // the code below is has left and right switched from above
 			w := x.Parent.Left
-			if w.Color == RED {
-				w.Color = BLACK
-				x.Parent.Color = RED
+			if w.Color == mapRED {
+				w.Color = mapBLACK
+				x.Parent.Color = mapRED
 				t.rightRotate(x.Parent)
 				w = x.Parent.Left
 			}
-			if w.Left.Color == BLACK && w.Right.Color == BLACK {
-				w.Color = RED
+			if w.Left.Color == mapBLACK && w.Right.Color == mapBLACK {
+				w.Color = mapRED
 				x = x.Parent
 			} else {
-				if w.Left.Color == BLACK {
-					w.Right.Color = BLACK
-					w.Color = RED
+				if w.Left.Color == mapBLACK {
+					w.Right.Color = mapBLACK
+					w.Color = mapRED
 					t.leftRotate(w)
 					w = x.Parent.Left
 				}
 				w.Color = x.Parent.Color
-				x.Parent.Color = BLACK
-				w.Left.Color = BLACK
+				x.Parent.Color = mapBLACK
+				w.Left.Color = mapBLACK
 				t.rightRotate(x.Parent)
 				x = t.root
 			}
 		}
 	}
-	x.Color = BLACK
+	x.Color = mapBLACK
 }
