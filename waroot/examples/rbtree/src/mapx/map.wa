@@ -1,7 +1,5 @@
 // 版权 @2024 凹语言 作者。保留所有权利。
 
-package mapx
-
 //
 // Red-Black tree properties:  http://en.wikipedia.org/wiki/rbtree
 //
@@ -18,29 +16,29 @@ const (
 	mapBLACK = 1
 )
 
-type mapImp struct {
-	NIL    *mapNode
-	root   *mapNode
-	keys   []interface{}
-	values []interface{}
-	count  uint
+type mapImp :struct {
+	NIL:    *mapNode
+	root:   *mapNode
+	keys:   []interface{}
+	values: []interface{}
+	count:  uint
 }
 
-type mapNode struct {
-	Left   *mapNode
-	Right  *mapNode
-	Parent *mapNode
-	Color  uint
+type mapNode :struct {
+	Left:   *mapNode
+	Right:  *mapNode
+	Parent: *mapNode
+	Color:  uint
 
-	Key    interface{}
-	ValIdx int
+	Key:    interface{}
+	ValIdx: int
 }
 
-func mapLess(x, y *mapNode) bool {
+func mapLess(x, y: *mapNode) => bool {
 	return Compare(x.Key, y.Key) < 0
 }
 
-func MakeMap() *mapImp {
+func MakeMap() => *mapImp {
 	node := &mapNode{nil, nil, nil, mapBLACK, nil, 0}
 	return &mapImp{
 		NIL:   node,
@@ -49,13 +47,13 @@ func MakeMap() *mapImp {
 	}
 }
 
-func (this *mapImp) Len() uint { return this.count }
+func mapImp.Len() => uint { return this.count }
 
-func (this *mapImp) Dump() {
+func mapImp.Dump() {
 	this.dump(this.root)
 }
 
-func (this *mapImp) dump(x *mapNode) {
+func mapImp.dump(x: *mapNode) {
 	if x == this.NIL {
 		println(x, "nil")
 
@@ -67,7 +65,7 @@ func (this *mapImp) dump(x *mapNode) {
 	this.dump(x.Right)
 }
 
-func (this *mapImp) Update(k, v interface{}) {
+func mapImp.Update(k, v: interface{}) {
 	ret := this.search(&mapNode{this.NIL, this.NIL, this.NIL, mapRED, k, 0})
 	if ret != nil && ret != this.NIL {
 		this.values[ret.ValIdx] = v
@@ -80,7 +78,7 @@ func (this *mapImp) Update(k, v interface{}) {
 
 }
 
-func (this *mapImp) Lookup(k interface{}) (interface{}, bool) {
+func mapImp.Lookup(k: interface{}) => (interface{}, bool) {
 	ret := this.search(&mapNode{this.NIL, this.NIL, this.NIL, mapRED, k, 0})
 	if ret == nil || ret == this.NIL {
 		return nil, false
@@ -89,7 +87,7 @@ func (this *mapImp) Lookup(k interface{}) (interface{}, bool) {
 	return this.values[ret.ValIdx], true
 }
 
-func (this *mapImp) Delete(k interface{}) {
+func mapImp.Delete(k: interface{}) {
 	idx := this.delete(&mapNode{this.NIL, this.NIL, this.NIL, mapRED, k, 0})
 	if idx >= 0 {
 		this.keys[idx] = this.keys[len(this.keys)-1]
@@ -100,7 +98,7 @@ func (this *mapImp) Delete(k interface{}) {
 	}
 }
 
-func (this *mapImp) leftRotate(x *mapNode) {
+func mapImp.leftRotate(x: *mapNode) {
 	// Since we are doing the left rotation, the right child should *NOT* nil.
 	if x.Right == this.NIL {
 		return
@@ -138,7 +136,7 @@ func (this *mapImp) leftRotate(x *mapNode) {
 	x.Parent = y
 }
 
-func (this *mapImp) rightRotate(x *mapNode) {
+func mapImp.rightRotate(x: *mapNode) {
 	// Since we are doing the right rotation, the left child should *NOT* nil.
 	if x.Left == this.NIL {
 		return
@@ -176,15 +174,18 @@ func (this *mapImp) rightRotate(x *mapNode) {
 	x.Parent = y
 }
 
-func (this *mapImp) insert(z *mapNode) *mapNode {
+func mapImp.insert(z: *mapNode) => *mapNode {
 	println("insert", z, z.Key.(string))
 
 	x := this.root
 	y := this.NIL
 
+	println("insert: y.v0=", y)
+
 	for x != this.NIL {
 		y = x
-		println("insert for:", z, x, y)
+		println("insert: y.v1=", y)
+
 		if mapLess(z, x) {
 			x = x.Left
 		} else if mapLess(x, z) {
@@ -194,11 +195,10 @@ func (this *mapImp) insert(z *mapNode) *mapNode {
 		}
 	}
 
-	println("insert for end:", z, x, y, this.NIL)
+	println("insert: y.v2=", y) // BUG: y的值没有变化
 
 	z.Parent = y
 	if y == this.NIL {
-		println("insert for end nil:", y, this.NIL)
 		this.root = z
 	} else if mapLess(z, y) {
 		y.Left = z
@@ -211,7 +211,7 @@ func (this *mapImp) insert(z *mapNode) *mapNode {
 	return z
 }
 
-func (this *mapImp) insertFixup(z *mapNode) {
+func mapImp.insertFixup(z: *mapNode) {
 	for z.Parent.Color == mapRED {
 		//
 		// Howerver, we do not need the assertion of non-nil grandparent
@@ -300,7 +300,7 @@ func (this *mapImp) insertFixup(z *mapNode) {
 
 // Just traverse the node from root to left recursively until left is NIL.
 // The node whose left is NIL is the node with minimum value.
-func (this *mapImp) min(x *mapNode) *mapNode {
+func mapImp.min(x: *mapNode) => *mapNode {
 	if x == this.NIL {
 		return this.NIL
 	}
@@ -312,7 +312,7 @@ func (this *mapImp) min(x *mapNode) *mapNode {
 	return x
 }
 
-func (this *mapImp) search(x *mapNode) *mapNode {
+func mapImp.search(x: *mapNode) => *mapNode {
 	p := this.root
 
 	for p != this.NIL {
@@ -328,7 +328,7 @@ func (this *mapImp) search(x *mapNode) *mapNode {
 	return p
 }
 
-func (this *mapImp) successor(x *mapNode) *mapNode {
+func mapImp.successor(x: *mapNode) => *mapNode {
 	if x == this.NIL {
 		return this.NIL
 	}
@@ -346,7 +346,7 @@ func (this *mapImp) successor(x *mapNode) *mapNode {
 	return y
 }
 
-func (this *mapImp) delete(key *mapNode) (valIdx int) {
+func mapImp.delete(key: *mapNode) => (valIdx: int) {
 	z := this.search(key)
 
 	if z == nil || z == this.NIL {
@@ -355,8 +355,8 @@ func (this *mapImp) delete(key *mapNode) (valIdx int) {
 	}
 	valIdx = z.ValIdx
 
-	var y *mapNode
-	var x *mapNode
+	y: *mapNode = nil
+	x: *mapNode = nil
 
 	if z.Left == this.NIL || z.Right == this.NIL {
 		y = z
@@ -396,7 +396,7 @@ func (this *mapImp) delete(key *mapNode) (valIdx int) {
 	return
 }
 
-func (this *mapImp) deleteFixup(x *mapNode) {
+func mapImp.deleteFixup(x: *mapNode) {
 	for x != this.root && x.Color == mapBLACK {
 		if x == x.Parent.Left {
 			w := x.Parent.Right

@@ -3,8 +3,8 @@
 default:
 	go run ../../../main.go run .
 
-test:
-	go run ../../../main.go test .
+fmt:
+	go run ../../../main.go fmt ./...
 
 clean:
 	-rm a.out*

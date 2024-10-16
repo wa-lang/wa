@@ -1,8 +1,6 @@
 // 版权 @2024 凹语言 作者。保留所有权利。
 
-package mapx
-
-func Compare(l, r interface{}) int {
+func Compare(l, r: interface{}) => int {
 	switch l.(type) {
 	case int:
 		l, r := l.(int), r.(int)
