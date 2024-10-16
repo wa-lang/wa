@@ -3,79 +3,37 @@
 package mapx
 
 type mapIter struct {
-	m   *mapImp    // map
-	v   int64      // map version
-	stk []*mapNode // stack
+	m   *mapImp
+	pos int
 }
 
 func MakeMapIter(m *mapImp) *mapIter {
-	return &mapIter{
-		m:   m,
-		v:   m.version,
-		stk: []*mapNode{m.root},
-	}
+	return &mapIter{m: m}
 }
 
 func (this *mapIter) HasNext() (ok bool) {
-	if this.v != this.m.version {
-		return
-	}
-	if len(this.stk) == 0 {
-		return
-	}
-
-	h := this.stk[len(this.stk)-1]
-	if h == nil || h == this.m.NIL {
-		return
-	}
-
-	return true
+	return this.pos < len(this.m.values)
 }
 
 func (this *mapIter) KeyValue() (k, v interface{}) {
-	if this.v != this.m.version {
-		return
-	}
-	if len(this.stk) == 0 {
-		return
+	if this.pos >= len(this.m.values) {
+		return nil, nil
 	}
 
-	h := this.stk[len(this.stk)-1]
-	if h == nil || h == this.m.NIL {
-		return
-	}
-
-	k = h.mapItem.k
-	v = h.mapItem.v
+	k = this.m.keys[this.pos]
+	v = this.m.values[this.pos]
 	return
 }
 
 func (this *mapIter) Next() (ok bool, k, v interface{}) {
-	if this.v != this.m.version {
-		return
-	}
-	if len(this.stk) == 0 {
-		return
-	}
-
-	h := this.stk[len(this.stk)-1]
-	this.stk = this.stk[:len(this.stk)-1]
-
-	if h == nil || h == this.m.NIL {
+	if this.pos >= len(this.m.values) {
 		return
 	}
 
 	ok = true
-	k = h.mapItem.k
-	v = h.mapItem.v
+	k = this.m.keys[this.pos]
+	v = this.m.values[this.pos]
 
-	if h.Right != nil && h.Right != this.m.NIL {
-		this.stk = append(this.stk, h.Right)
-	}
-
-	if h.Left != nil && h.Left != this.m.NIL {
-		this.stk = append(this.stk, h.Left)
-	}
-
+	this.pos++
 	return
 }

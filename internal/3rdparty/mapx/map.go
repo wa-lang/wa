@@ -19,10 +19,11 @@ const (
 )
 
 type mapImp struct {
-	NIL     *mapNode
-	root    *mapNode
-	count   uint
-	version int64
+	NIL    *mapNode
+	root   *mapNode
+	keys   []interface{}
+	values []interface{}
+	count  uint
 }
 
 type mapNode struct {
@@ -31,20 +32,16 @@ type mapNode struct {
 	Parent *mapNode
 	Color  uint
 
-	// for use by client.
-	mapItem
+	Key    interface{}
+	ValIdx int
 }
 
-type mapItem struct {
-	k, v interface{}
-}
-
-func mapLess(x, y mapItem) bool {
-	return Compare(x.k, y.k) < 0
+func mapLess(x, y *mapNode) bool {
+	return Compare(x.Key, y.Key) < 0
 }
 
 func MakeMap() *mapImp {
-	node := &mapNode{nil, nil, nil, mapBLACK, mapItem{nil, nil}}
+	node := &mapNode{nil, nil, nil, mapBLACK, nil, 0}
 	return &mapImp{
 		NIL:   node,
 		root:  node,
@@ -55,22 +52,36 @@ func MakeMap() *mapImp {
 func (this *mapImp) Len() uint { return this.count }
 
 func (this *mapImp) Update(k, v interface{}) {
-	this.version++
-	this.insert(&mapNode{this.NIL, this.NIL, this.NIL, mapRED, mapItem{k, v}})
+	ret := this.search(&mapNode{this.NIL, this.NIL, this.NIL, mapRED, k, 0})
+	if ret != nil && ret != this.NIL {
+		this.values[ret.ValIdx] = v
+		return
+	}
+
+	this.keys = append(this.keys, k)
+	this.values = append(this.values, v)
+	this.insert(&mapNode{this.NIL, this.NIL, this.NIL, mapRED, k, len(this.values) - 1})
+
 }
 
 func (this *mapImp) Lookup(k interface{}) (interface{}, bool) {
-	ret := this.search(&mapNode{this.NIL, this.NIL, this.NIL, mapRED, mapItem{k: k}})
-	if ret == nil {
+	ret := this.search(&mapNode{this.NIL, this.NIL, this.NIL, mapRED, k, 0})
+	if ret == nil || ret == this.NIL {
 		return nil, false
 	}
 
-	return ret.mapItem.v, true
+	return this.values[ret.ValIdx], true
 }
 
 func (this *mapImp) Delete(k interface{}) {
-	this.version++
-	this.delete(&mapNode{this.NIL, this.NIL, this.NIL, mapRED, mapItem{k: k}})
+	idx := this.delete(&mapNode{this.NIL, this.NIL, this.NIL, mapRED, k, 0})
+	if idx >= 0 {
+		this.keys[idx] = this.keys[len(this.keys)-1]
+		this.keys = this.keys[:len(this.keys)-1]
+
+		this.values[idx] = this.values[len(this.values)-1]
+		this.values = this.values[:len(this.values)-1]
+	}
 }
 
 func (this *mapImp) leftRotate(x *mapNode) {
@@ -155,9 +166,9 @@ func (this *mapImp) insert(z *mapNode) *mapNode {
 
 	for x != this.NIL {
 		y = x
-		if mapLess(z.mapItem, x.mapItem) {
+		if mapLess(z, x) {
 			x = x.Left
-		} else if mapLess(x.mapItem, z.mapItem) {
+		} else if mapLess(x, z) {
 			x = x.Right
 		} else {
 			return x
@@ -167,7 +178,7 @@ func (this *mapImp) insert(z *mapNode) *mapNode {
 	z.Parent = y
 	if y == this.NIL {
 		this.root = z
-	} else if mapLess(z.mapItem, y.mapItem) {
+	} else if mapLess(z, y) {
 		y.Left = z
 	} else {
 		y.Right = z
@@ -283,9 +294,9 @@ func (this *mapImp) search(x *mapNode) *mapNode {
 	p := this.root
 
 	for p != this.NIL {
-		if mapLess(p.mapItem, x.mapItem) {
+		if mapLess(p, x) {
 			p = p.Right
-		} else if mapLess(x.mapItem, p.mapItem) {
+		} else if mapLess(x, p) {
 			p = p.Left
 		} else {
 			break
@@ -313,13 +324,14 @@ func (this *mapImp) successor(x *mapNode) *mapNode {
 	return y
 }
 
-func (this *mapImp) delete(key *mapNode) *mapNode {
+func (this *mapImp) delete(key *mapNode) (valIdx int) {
 	z := this.search(key)
 
-	if z == this.NIL {
-		return this.NIL
+	if z == nil || z == this.NIL {
+		valIdx = -1
+		return
 	}
-	ret := &mapNode{this.NIL, this.NIL, this.NIL, z.Color, z.mapItem}
+	valIdx = z.ValIdx
 
 	var y *mapNode
 	var x *mapNode
@@ -351,7 +363,7 @@ func (this *mapImp) delete(key *mapNode) *mapNode {
 	}
 
 	if y != z {
-		z.mapItem = y.mapItem
+		z = y
 	}
 
 	if y.Color == mapBLACK {
@@ -359,8 +371,7 @@ func (this *mapImp) delete(key *mapNode) *mapNode {
 	}
 
 	this.count--
-
-	return ret
+	return
 }
 
 func (this *mapImp) deleteFixup(x *mapNode) {

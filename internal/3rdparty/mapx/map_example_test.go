@@ -27,23 +27,25 @@ func Example() {
 
 	fmt.Println("===")
 
+	m.Delete(100)
+	m.Delete(7)
+
 	for it := mapx.MakeMapIter(m); it.HasNext(); it.Next() {
 		k, v := it.KeyValue()
 		fmt.Println(k, v)
 	}
 
 	// Output:
-	// 3 4
 	// 1 2
-	// 7 8
-	// 5 6
+	// 3 4
 	// 11 12
+	// 5 6
+	// 7 8
 	// 9 10
 	// ===
-	// 3 4
 	// 1 2
-	// 7 8
-	// 5 6
+	// 3 4
 	// 11 12
+	// 5 6
 	// 9 10
 }
