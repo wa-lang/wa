@@ -15,7 +15,7 @@ func Compare(l, r interface{}) int {
 			return 0
 		}
 	case string:
-		l, r := l.(int), r.(int)
+		l, r := l.(string), r.(string)
 		switch {
 		case l < r:
 			return -1
