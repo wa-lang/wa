@@ -279,20 +279,6 @@ func (this *mapImp) min(x *mapNode) *mapNode {
 	return x
 }
 
-// Just traverse the node from root to right recursively until right is NIL.
-// The node whose right is NIL is the node with maximum value.
-func (this *mapImp) max(x *mapNode) *mapNode {
-	if x == this.NIL {
-		return this.NIL
-	}
-
-	for x.Right != this.NIL {
-		x = x.Right
-	}
-
-	return x
-}
-
 func (this *mapImp) search(x *mapNode) *mapNode {
 	p := this.root
 
@@ -309,7 +295,6 @@ func (this *mapImp) search(x *mapNode) *mapNode {
 	return p
 }
 
-// TODO: Need Document
 func (this *mapImp) successor(x *mapNode) *mapNode {
 	if x == this.NIL {
 		return this.NIL
@@ -328,7 +313,6 @@ func (this *mapImp) successor(x *mapNode) *mapNode {
 	return y
 }
 
-// TODO: Need Document
 func (this *mapImp) delete(key *mapNode) *mapNode {
 	z := this.search(key)
 

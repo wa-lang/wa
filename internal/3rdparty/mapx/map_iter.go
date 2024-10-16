@@ -16,6 +16,40 @@ func MakeMapIter(m *mapImp) *mapIter {
 	}
 }
 
+func (this *mapIter) HasNext() (ok bool) {
+	if this.v != this.m.version {
+		return
+	}
+	if len(this.stk) == 0 {
+		return
+	}
+
+	h := this.stk[len(this.stk)-1]
+	if h == nil || h == this.m.NIL {
+		return
+	}
+
+	return true
+}
+
+func (this *mapIter) KeyValue() (k, v interface{}) {
+	if this.v != this.m.version {
+		return
+	}
+	if len(this.stk) == 0 {
+		return
+	}
+
+	h := this.stk[len(this.stk)-1]
+	if h == nil || h == this.m.NIL {
+		return
+	}
+
+	k = h.mapItem.k
+	v = h.mapItem.v
+	return
+}
+
 func (this *mapIter) Next() (ok bool, k, v interface{}) {
 	if this.v != this.m.version {
 		return
