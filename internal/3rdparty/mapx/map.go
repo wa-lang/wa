@@ -3,7 +3,7 @@
 package mapx
 
 //
-// Red-Black tree properties:  http://en.wikipedia.org/wiki/mapImp
+// Red-Black tree properties:  http://en.wikipedia.org/wiki/rbtree
 //
 //  1) A node is either red or black
 //  2) The root is black
@@ -18,11 +18,11 @@ const (
 	mapBLACK = 1
 )
 
-// mapImp represents a Red-Black tree.
 type mapImp struct {
-	NIL   *mapNode
-	root  *mapNode
-	count uint
+	NIL     *mapNode
+	root    *mapNode
+	count   uint
+	version int64
 }
 
 type mapNode struct {
@@ -52,9 +52,30 @@ func MakeMap() *mapImp {
 	}
 }
 
-func (t *mapImp) leftRotate(x *mapNode) {
+func (this *mapImp) Len() uint { return this.count }
+
+func (this *mapImp) Update(k, v interface{}) {
+	this.version++
+	this.insert(&mapNode{this.NIL, this.NIL, this.NIL, mapRED, mapItem{k, v}})
+}
+
+func (this *mapImp) Lookup(k interface{}) (interface{}, bool) {
+	ret := this.search(&mapNode{this.NIL, this.NIL, this.NIL, mapRED, mapItem{k: k}})
+	if ret == nil {
+		return nil, false
+	}
+
+	return ret.mapItem.v, true
+}
+
+func (this *mapImp) Delete(k interface{}) {
+	this.version++
+	this.delete(&mapNode{this.NIL, this.NIL, this.NIL, mapRED, mapItem{k: k}})
+}
+
+func (this *mapImp) leftRotate(x *mapNode) {
 	// Since we are doing the left rotation, the right child should *NOT* nil.
-	if x.Right == t.NIL {
+	if x.Right == this.NIL {
 		return
 	}
 
@@ -73,13 +94,13 @@ func (t *mapImp) leftRotate(x *mapNode) {
 	//
 	y := x.Right
 	x.Right = y.Left
-	if y.Left != t.NIL {
+	if y.Left != this.NIL {
 		y.Left.Parent = x
 	}
 	y.Parent = x.Parent
 
-	if x.Parent == t.NIL {
-		t.root = y
+	if x.Parent == this.NIL {
+		this.root = y
 	} else if x == x.Parent.Left {
 		x.Parent.Left = y
 	} else {
@@ -90,9 +111,9 @@ func (t *mapImp) leftRotate(x *mapNode) {
 	x.Parent = y
 }
 
-func (t *mapImp) rightRotate(x *mapNode) {
+func (this *mapImp) rightRotate(x *mapNode) {
 	// Since we are doing the right rotation, the left child should *NOT* nil.
-	if x.Left == t.NIL {
+	if x.Left == this.NIL {
 		return
 	}
 
@@ -111,13 +132,13 @@ func (t *mapImp) rightRotate(x *mapNode) {
 	//
 	y := x.Left
 	x.Left = y.Right
-	if y.Right != t.NIL {
+	if y.Right != this.NIL {
 		y.Right.Parent = x
 	}
 	y.Parent = x.Parent
 
-	if x.Parent == t.NIL {
-		t.root = y
+	if x.Parent == this.NIL {
+		this.root = y
 	} else if x == x.Parent.Left {
 		x.Parent.Left = y
 	} else {
@@ -128,11 +149,11 @@ func (t *mapImp) rightRotate(x *mapNode) {
 	x.Parent = y
 }
 
-func (t *mapImp) insert(z *mapNode) *mapNode {
-	x := t.root
-	y := t.NIL
+func (this *mapImp) insert(z *mapNode) *mapNode {
+	x := this.root
+	y := this.NIL
 
-	for x != t.NIL {
+	for x != this.NIL {
 		y = x
 		if mapLess(z.mapItem, x.mapItem) {
 			x = x.Left
@@ -144,20 +165,20 @@ func (t *mapImp) insert(z *mapNode) *mapNode {
 	}
 
 	z.Parent = y
-	if y == t.NIL {
-		t.root = z
+	if y == this.NIL {
+		this.root = z
 	} else if mapLess(z.mapItem, y.mapItem) {
 		y.Left = z
 	} else {
 		y.Right = z
 	}
 
-	t.count++
-	t.insertFixup(z)
+	this.count++
+	this.insertFixup(z)
 	return z
 }
 
-func (t *mapImp) insertFixup(z *mapNode) {
+func (this *mapImp) insertFixup(z *mapNode) {
 	for z.Parent.Color == mapRED {
 		//
 		// Howerver, we do not need the assertion of non-nil grandparent
@@ -204,7 +225,7 @@ func (t *mapImp) insertFixup(z *mapNode) {
 					// The continuation into Case 3 will fix that.
 					//
 					z = z.Parent
-					t.leftRotate(z)
+					this.leftRotate(z)
 				}
 				//
 				// Case 3:
@@ -221,7 +242,7 @@ func (t *mapImp) insertFixup(z *mapNode) {
 				//
 				z.Parent.Color = mapBLACK
 				z.Parent.Parent.Color = mapRED
-				t.rightRotate(z.Parent.Parent)
+				this.rightRotate(z.Parent.Parent)
 			}
 		} else { // same as then clause with "right" and "left" exchanged
 			y := z.Parent.Parent.Left
@@ -233,25 +254,25 @@ func (t *mapImp) insertFixup(z *mapNode) {
 			} else {
 				if z == z.Parent.Left {
 					z = z.Parent
-					t.rightRotate(z)
+					this.rightRotate(z)
 				}
 				z.Parent.Color = mapBLACK
 				z.Parent.Parent.Color = mapRED
-				t.leftRotate(z.Parent.Parent)
+				this.leftRotate(z.Parent.Parent)
 			}
 		}
 	}
-	t.root.Color = mapBLACK
+	this.root.Color = mapBLACK
 }
 
 // Just traverse the node from root to left recursively until left is NIL.
 // The node whose left is NIL is the node with minimum value.
-func (t *mapImp) min(x *mapNode) *mapNode {
-	if x == t.NIL {
-		return t.NIL
+func (this *mapImp) min(x *mapNode) *mapNode {
+	if x == this.NIL {
+		return this.NIL
 	}
 
-	for x.Left != t.NIL {
+	for x.Left != this.NIL {
 		x = x.Left
 	}
 
@@ -260,22 +281,22 @@ func (t *mapImp) min(x *mapNode) *mapNode {
 
 // Just traverse the node from root to right recursively until right is NIL.
 // The node whose right is NIL is the node with maximum value.
-func (t *mapImp) max(x *mapNode) *mapNode {
-	if x == t.NIL {
-		return t.NIL
+func (this *mapImp) max(x *mapNode) *mapNode {
+	if x == this.NIL {
+		return this.NIL
 	}
 
-	for x.Right != t.NIL {
+	for x.Right != this.NIL {
 		x = x.Right
 	}
 
 	return x
 }
 
-func (t *mapImp) search(x *mapNode) *mapNode {
-	p := t.root
+func (this *mapImp) search(x *mapNode) *mapNode {
+	p := this.root
 
-	for p != t.NIL {
+	for p != this.NIL {
 		if mapLess(p.mapItem, x.mapItem) {
 			p = p.Right
 		} else if mapLess(x.mapItem, p.mapItem) {
@@ -289,18 +310,18 @@ func (t *mapImp) search(x *mapNode) *mapNode {
 }
 
 // TODO: Need Document
-func (t *mapImp) successor(x *mapNode) *mapNode {
-	if x == t.NIL {
-		return t.NIL
+func (this *mapImp) successor(x *mapNode) *mapNode {
+	if x == this.NIL {
+		return this.NIL
 	}
 
 	// Get the minimum from the right sub-tree if it existed.
-	if x.Right != t.NIL {
-		return t.min(x.Right)
+	if x.Right != this.NIL {
+		return this.min(x.Right)
 	}
 
 	y := x.Parent
-	for y != t.NIL && x == y.Right {
+	for y != this.NIL && x == y.Right {
 		x = y
 		y = y.Parent
 	}
@@ -308,24 +329,24 @@ func (t *mapImp) successor(x *mapNode) *mapNode {
 }
 
 // TODO: Need Document
-func (t *mapImp) delete(key *mapNode) *mapNode {
-	z := t.search(key)
+func (this *mapImp) delete(key *mapNode) *mapNode {
+	z := this.search(key)
 
-	if z == t.NIL {
-		return t.NIL
+	if z == this.NIL {
+		return this.NIL
 	}
-	ret := &mapNode{t.NIL, t.NIL, t.NIL, z.Color, z.mapItem}
+	ret := &mapNode{this.NIL, this.NIL, this.NIL, z.Color, z.mapItem}
 
 	var y *mapNode
 	var x *mapNode
 
-	if z.Left == t.NIL || z.Right == t.NIL {
+	if z.Left == this.NIL || z.Right == this.NIL {
 		y = z
 	} else {
-		y = t.successor(z)
+		y = this.successor(z)
 	}
 
-	if y.Left != t.NIL {
+	if y.Left != this.NIL {
 		x = y.Left
 	} else {
 		x = y.Right
@@ -337,8 +358,8 @@ func (t *mapImp) delete(key *mapNode) *mapNode {
 	// between mapNode-X with mapNode-NIL
 	x.Parent = y.Parent
 
-	if y.Parent == t.NIL {
-		t.root = x
+	if y.Parent == this.NIL {
+		this.root = x
 	} else if y == y.Parent.Left {
 		y.Parent.Left = x
 	} else {
@@ -350,22 +371,22 @@ func (t *mapImp) delete(key *mapNode) *mapNode {
 	}
 
 	if y.Color == mapBLACK {
-		t.deleteFixup(x)
+		this.deleteFixup(x)
 	}
 
-	t.count--
+	this.count--
 
 	return ret
 }
 
-func (t *mapImp) deleteFixup(x *mapNode) {
-	for x != t.root && x.Color == mapBLACK {
+func (this *mapImp) deleteFixup(x *mapNode) {
+	for x != this.root && x.Color == mapBLACK {
 		if x == x.Parent.Left {
 			w := x.Parent.Right
 			if w.Color == mapRED {
 				w.Color = mapBLACK
 				x.Parent.Color = mapRED
-				t.leftRotate(x.Parent)
+				this.leftRotate(x.Parent)
 				w = x.Parent.Right
 			}
 			if w.Left.Color == mapBLACK && w.Right.Color == mapBLACK {
@@ -375,22 +396,22 @@ func (t *mapImp) deleteFixup(x *mapNode) {
 				if w.Right.Color == mapBLACK {
 					w.Left.Color = mapBLACK
 					w.Color = mapRED
-					t.rightRotate(w)
+					this.rightRotate(w)
 					w = x.Parent.Right
 				}
 				w.Color = x.Parent.Color
 				x.Parent.Color = mapBLACK
 				w.Right.Color = mapBLACK
-				t.leftRotate(x.Parent)
+				this.leftRotate(x.Parent)
 				// this is to exit while loop
-				x = t.root
+				x = this.root
 			}
 		} else { // the code below is has left and right switched from above
 			w := x.Parent.Left
 			if w.Color == mapRED {
 				w.Color = mapBLACK
 				x.Parent.Color = mapRED
-				t.rightRotate(x.Parent)
+				this.rightRotate(x.Parent)
 				w = x.Parent.Left
 			}
 			if w.Left.Color == mapBLACK && w.Right.Color == mapBLACK {
@@ -400,14 +421,14 @@ func (t *mapImp) deleteFixup(x *mapNode) {
 				if w.Left.Color == mapBLACK {
 					w.Right.Color = mapBLACK
 					w.Color = mapRED
-					t.leftRotate(w)
+					this.leftRotate(w)
 					w = x.Parent.Left
 				}
 				w.Color = x.Parent.Color
 				x.Parent.Color = mapBLACK
 				w.Left.Color = mapBLACK
-				t.rightRotate(x.Parent)
-				x = t.root
+				this.rightRotate(x.Parent)
+				x = this.root
 			}
 		}
 	}

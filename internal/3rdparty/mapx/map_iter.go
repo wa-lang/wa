@@ -2,31 +2,46 @@
 
 package mapx
 
-import "unsafe"
-
 type mapIter struct {
-	m   *mapImp
-	pos int // node ptr
+	m   *mapImp    // map
+	v   int64      // map version
+	stk []*mapNode // stack
 }
 
-func mapNext(iter mapIter) (ok bool, k, v interface{}, pos int) {
-	ptr := (*mapNode)(unsafe.Pointer(uintptr(iter.pos)))
-	if ptr == nil {
-		// todo: 第一次调用，初始化
+func MakeMapIter(m *mapImp) *mapIter {
+	return &mapIter{
+		m:   m,
+		v:   m.version,
+		stk: []*mapNode{m.root},
 	}
-	if ptr == iter.m.NIL {
-		// todo: 已经遍历完了
-		return false, nil, nil, 0
-	}
-
-	panic("TODO")
 }
 
-func (t *mapImp) walk(n *mapNode, f func(k, v interface{})) {
-	if n == t.NIL {
+func (this *mapIter) Next() (ok bool, k, v interface{}) {
+	if this.v != this.m.version {
 		return
 	}
-	t.walk(n.Left, f)
-	f(n.k, n.v)
-	t.walk(n.Right, f)
+	if len(this.stk) == 0 {
+		return
+	}
+
+	h := this.stk[len(this.stk)-1]
+	this.stk = this.stk[:len(this.stk)-1]
+
+	if h == nil || h == this.m.NIL {
+		return
+	}
+
+	ok = true
+	k = h.mapItem.k
+	v = h.mapItem.v
+
+	if h.Right != nil && h.Right != this.m.NIL {
+		this.stk = append(this.stk, h.Right)
+	}
+
+	if h.Left != nil && h.Left != this.m.NIL {
+		this.stk = append(this.stk, h.Left)
+	}
+
+	return
 }
