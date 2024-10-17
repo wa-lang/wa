@@ -36,6 +36,9 @@ type functionGenerator struct {
 	var_current_block  wir.Value
 	var_rets           []wir.Value
 
+	internal_name string
+	defers_count  int
+
 	is_init bool
 }
 
@@ -260,6 +263,7 @@ func (g *functionGenerator) genFunction(f *ssa.Function) *wir.Function {
 		}
 
 		wir_fn.ExplicitExported = (len(external) > 0)
+		g.internal_name = internal
 	}
 
 	rets := f.Signature.Results()
@@ -447,7 +451,7 @@ func (g *functionGenerator) genValue(v ssa.Value) ([]wat.Inst, wir.ValueType) {
 		return g.genBinOp(v)
 
 	case *ssa.Call:
-		return g.genCall(v)
+		return g.genCall(v.Common())
 
 	case *ssa.Phi:
 		return g.genPhi(v)
@@ -594,18 +598,18 @@ func (g *functionGenerator) genBinOp(inst *ssa.BinOp) ([]wat.Inst, wir.ValueType
 	}
 }
 
-func (g *functionGenerator) genCall(inst *ssa.Call) (insts []wat.Inst, ret_type wir.ValueType) {
-	if inst.Call.IsInvoke() {
-		ret_type = g.tLib.compile(inst.Call.Signature().Results())
+func (g *functionGenerator) genCall(call *ssa.CallCommon) (insts []wat.Inst, ret_type wir.ValueType) {
+	if call.IsInvoke() {
+		ret_type = g.tLib.compile(call.Signature().Results())
 
-		t := g.tLib.find(inst.Call.Value.Type())
+		t := g.tLib.find(call.Value.Type())
 		for id := 0; id < t.NumMethods(); id++ {
 			m := t.Method(id)
-			if m.Name == inst.Call.Method.Name() {
-				iface := g.getValue(inst.Call.Value)
+			if m.Name == call.Method.Name() {
+				iface := g.getValue(call.Value)
 
 				var params []wir.Value
-				for _, v := range inst.Call.Args {
+				for _, v := range call.Args {
 					params = append(params, g.getValue(v).value)
 				}
 
@@ -616,16 +620,15 @@ func (g *functionGenerator) genCall(inst *ssa.Call) (insts []wat.Inst, ret_type 
 		}
 
 		return
-		//logger.Fatal("Todo: genCall(), Invoke")
 	}
 
-	switch inst.Call.Value.(type) {
+	switch call.Value.(type) {
 	case *ssa.Function:
-		ret_type = g.tLib.compile(inst.Call.Signature().Results())
-		for _, v := range inst.Call.Args {
+		ret_type = g.tLib.compile(call.Signature().Results())
+		for _, v := range call.Args {
 			insts = append(insts, g.getValue(v).value.EmitPushNoRetain()...)
 		}
-		callee := inst.Call.StaticCallee()
+		callee := call.StaticCallee()
 		if callee.Parent() != nil {
 			g.module.AddFunc(newFunctionGenerator(g.prog, g.module, g.tLib).genFunction(callee))
 		}
@@ -638,26 +641,16 @@ func (g *functionGenerator) genCall(inst *ssa.Call) (insts []wat.Inst, ret_type 
 		}
 
 	case *ssa.Builtin:
-		return g.genBuiltin(inst.Common())
+		return g.genBuiltin(call)
 
-	case *ssa.MakeClosure:
-		ret_type = g.tLib.compile(inst.Type())
+	default: // *ssa.MakeClosure
+		ret_type = g.tLib.compile(call.Signature().Results())
 		var params []wir.Value
-		for _, v := range inst.Call.Args {
+		for _, v := range call.Args {
 			params = append(params, g.getValue(v).value)
 		}
-		closure := g.getValue(inst.Call.Value)
+		closure := g.getValue(call.Value)
 		insts = wir.EmitCallClosure(closure.value, params)
-
-	default:
-		ret_type = g.tLib.compile(inst.Type())
-		var params []wir.Value
-		for _, v := range inst.Call.Args {
-			params = append(params, g.getValue(v).value)
-		}
-		closure := g.getValue(inst.Call.Value)
-		insts = wir.EmitCallClosure(closure.value, params)
-
 	}
 
 	return
@@ -1261,6 +1254,9 @@ func (g *functionGenerator) genMakeClosre_Anonymous(inst *ssa.MakeClosure) (inst
 }
 
 func (g *functionGenerator) genMakeDefer(inst *ssa.Defer) (insts []wat.Inst, ret_type wir.ValueType) {
+	//var st
+
+	g.defers_count++
 	panic("Todo")
 }
 
