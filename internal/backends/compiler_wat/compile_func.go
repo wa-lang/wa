@@ -355,26 +355,47 @@ func (g *functionGenerator) genFunction(f *ssa.Function) *wir.Function {
 	return &wir_fn
 }
 
-func (g *functionGenerator) genBlock(block *ssa.BasicBlock) []wat.Inst {
+func (g *functionGenerator) genBlock(block *ssa.BasicBlock) (insts []wat.Inst) {
 	if len(block.Instrs) == 0 {
 		logger.Fatalf("Block:%s is empty", block)
 	}
 
-	cur_block_assigned := false
-	var b []wat.Inst
-	for _, inst := range block.Instrs {
-		if _, ok := inst.(*ssa.Phi); !ok {
-			if !cur_block_assigned {
-				b = append(b, g.module.EmitAssginValue(g.var_current_block, wir.NewConst(strconv.Itoa(block.Index), g.module.I32))...)
-				b = append(b, wat.NewBlank())
-				cur_block_assigned = true
-			}
+	var i int
+	var phivs []wir.Value
+	for i = 0; i < len(block.Instrs); i++ {
+		phi, ok := block.Instrs[i].(*ssa.Phi)
+		if !ok {
+			break
 		}
 
-		b = append(b, g.genInstruction(inst)...)
+		s, t := g.genPhi(phi)
+		insts = append(insts, s...)
+		if t != nil && !t.Equal(g.module.VOID) {
+			if v, ok := g.locals_map[phi]; ok {
+				if !v.value.Type().Equal(t) {
+					panic("Type not match")
+				}
+				phivs = append(phivs, v.value)
+			} else {
+				nv := g.addRegister(t)
+				g.locals_map[phi] = valueWrap{value: nv}
+				phivs = append(phivs, nv)
+			}
+		}
 	}
-	return b
 
+	for j := len(phivs) - 1; j >= 0; j-- {
+		insts = append(insts, phivs[j].EmitPop()...)
+	}
+
+	insts = append(insts, g.module.EmitAssginValue(g.var_current_block, wir.NewConst(strconv.Itoa(block.Index), g.module.I32))...)
+	insts = append(insts, wat.NewBlank())
+
+	for ; i < len(block.Instrs); i++ {
+		insts = append(insts, g.genInstruction(block.Instrs[i])...)
+	}
+
+	return
 }
 
 func (g *functionGenerator) genInstruction(inst ssa.Instruction) (insts []wat.Inst) {
@@ -454,7 +475,7 @@ func (g *functionGenerator) genValue(v ssa.Value) ([]wat.Inst, wir.ValueType) {
 		return g.genCall(v.Common())
 
 	case *ssa.Phi:
-		return g.genPhi(v)
+		logger.Fatal("Phi shouldn't shown here")
 
 	case *ssa.Alloc:
 		return g.genAlloc(v)
