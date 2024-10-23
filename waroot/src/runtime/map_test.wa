@@ -1,0 +1,64 @@
+// 版权 @2014 凹语言 作者。保留所有权利。
+
+func ExampleMap_demo1 {
+	m := make(map[string]int)
+	m["a"] = 13
+	m["b"] = 42
+
+	println(m["a"])
+	println(m["b"])
+	println(m["c"])
+
+	// Output:
+	// 13
+	// 42
+	// 0
+}
+
+func ExampleMap_demo2 {
+	m := make(map[string]int)
+	m["a"] = 13
+	m["b"] = 42
+
+	println(m["a"])
+
+	v, ok := m["b"]
+	println(v, ok)
+
+	v, ok = m["c"]
+	println(v, ok)
+
+	println(len(m))
+
+	// Output:
+	// 13
+	// 42 true
+	// 0 false
+	// 2
+}
+
+func ExampleMap_demo3 {
+	m := make(map[string]int)
+	m["a"] = 13
+	m["b"] = 42
+
+	for k, v := range m {
+		println(k, v)
+	}
+
+	println("===")
+
+	m["d"] = 100
+	delete(m, "a")
+
+	for k, v := range m {
+		println(k, v)
+	}
+
+	// Output:
+	// a 13
+	// b 42
+	// ===
+	// d 100
+	// b 42
+}
