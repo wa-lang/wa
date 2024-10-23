@@ -18,13 +18,10 @@ func Compare(l, r interface{}) int {
 		l, r := l.(string), r.(string)
 		switch {
 		case l < r:
-			println("l < r:", l, r)
 			return -1
 		case l > r:
-			println("l > r:", l, r)
 			return 1
 		default:
-			println("l == r:", l, r)
 			return 0
 		}
 	}
