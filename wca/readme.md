@@ -9,15 +9,16 @@
 ### 主仓库
 
 - [humengmingxx](wca-humengmingxx.pdf)
+- [visus](wca-visus.pdf)
 - [wanglong001](wca-wanglong001.pdf)
 - [codefromthecrypt](wca-codefromthecrypt.pdf)
 - [imcusg-gmail](wca-imcusg-gmail.pdf)
 - [cricis-163](wca-cricis-163.pdf)
 - [shiinaorez](wca-shiinaorez.pdf)
 - [huawuque404](wca-huawuque404.pdf)
+- [toc130](wca-toc130.pdf)
 - imalasong
 - zhishi
-- visus
 - TrueAbc
 
 ### 其他仓库
