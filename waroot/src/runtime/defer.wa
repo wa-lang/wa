@@ -1,0 +1,33 @@
+// 版权 @2019 凹语言 作者。保留所有权利。
+
+type deferFn func()
+
+type defers struct {
+	fns: []deferFn
+}
+
+global defersStack: []defers
+
+#wa:linkname runtime.pushDeferStack
+func pushDeferStack {
+	defersStack = append(defersStack, defers{})
+}
+
+#wa:linkname runtime.popRunDeferStack
+func popRunDeferStack {
+	ls := len(defersStack) - 1
+	fns := defersStack[ls].fns[:]
+	ld := len(fns) - 1
+	for i := range fns {
+		fns[ld - i]()
+		fns[ld - i] = nil
+	}
+	defersStack[ls].fns = nil
+	defersStack = defersStack[:ls]
+}
+
+#wa:linkname runtime.pushDeferFunc
+func pushDeferFunc(f: deferFn) {
+	ls := len(defersStack) - 1
+	defersStack[ls].fns = append(defersStack[ls].fns, f)
+}

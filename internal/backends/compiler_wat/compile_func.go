@@ -336,9 +336,9 @@ func (g *functionGenerator) genFunction(f *ssa.Function) *wir.Function {
 		block_temp = inst
 	}
 
-	//for _, i := range g.registers {
-	//	wir_fn.Insts = append(wir_fn.Insts, i.EmitInit()...)
-	//}
+	if g.defers_count > 0 {
+		wir_fn.Insts = append(wir_fn.Insts, wat.NewInstCall("runtime.pushDeferStack"))
+	}
 
 	wir_fn.Insts = append(wir_fn.Insts, block_temp)
 
@@ -438,8 +438,11 @@ func (g *functionGenerator) genInstruction(inst ssa.Instruction) (insts []wat.In
 		insts = append(insts, g.module.EmitGenMapUpdate(g.getValue(inst.Map).value, g.getValue(inst.Key).value, g.getValue(inst.Value).value)...)
 
 	case *ssa.Defer:
-		s, _ := g.genMakeDefer(inst)
+		s := g.genMakeDefer(inst)
 		insts = append(insts, s...)
+
+	case *ssa.RunDefers:
+		insts = append(insts, wat.NewInstCall("runtime.popRunDeferStack"))
 
 	default:
 		logger.Fatalf("Todo: %[1]v: %[1]T", inst)
@@ -662,7 +665,25 @@ func (g *functionGenerator) genCall(call *ssa.CallCommon) (insts []wat.Inst, ret
 		}
 
 	case *ssa.Builtin:
-		return g.genBuiltin(call)
+		var args []wir.Value
+		if call.Value.Name() == "setFinalizer" {
+			var fn_id int
+			callee := call.Args[1].(*ssa.Function)
+			g.module.AddFunc(newFunctionGenerator(g.prog, g.module, g.tLib).genFunction(callee))
+			if len(callee.LinkName()) > 0 {
+				fn_id = g.module.AddTableElem(callee.LinkName())
+			} else {
+				fn_internal_name, _ := wir.GetFnMangleName(callee, g.prog.Manifest.MainPkg)
+				fn_id = g.module.AddTableElem(fn_internal_name)
+			}
+			args = append(args, g.getValue(call.Args[0]).value)
+			args = append(args, wir.NewConst(strconv.Itoa(fn_id), g.module.I32))
+		} else {
+			for _, arg := range call.Args {
+				args = append(args, g.getValue(arg).value)
+			}
+		}
+		return g.genBuiltin(call.Value.Name(), call.Pos(), args)
 
 	default: // *ssa.MakeClosure
 		ret_type = g.tLib.compile(call.Signature().Results())
@@ -677,11 +698,10 @@ func (g *functionGenerator) genCall(call *ssa.CallCommon) (insts []wat.Inst, ret
 	return
 }
 
-func (g *functionGenerator) genBuiltin(call *ssa.CallCommon) (insts []wat.Inst, ret_type wir.ValueType) {
-	switch call.Value.Name() {
+func (g *functionGenerator) genBuiltin(name string, pos token.Pos, args []wir.Value) (insts []wat.Inst, ret_type wir.ValueType) {
+	switch name {
 	case "assert":
-		for i, arg := range call.Args {
-			av := g.getValue(arg).value
+		for i, av := range args {
 			avt := av.Type()
 
 			// assert(ok: bool, ...)
@@ -707,12 +727,12 @@ func (g *functionGenerator) genBuiltin(call *ssa.CallCommon) (insts []wat.Inst, 
 
 		// 位置信息
 		{
-			callPos := g.prog.Fset.Position(call.Pos())
+			callPos := g.prog.Fset.Position(pos)
 			s := wir.NewConst(callPos.String(), g.module.STRING)
 			insts = append(insts, g.module.EmitStringValue(s)...)
 		}
 
-		switch len(call.Args) {
+		switch len(args) {
 		case 1:
 			insts = append(insts, wat.NewInstCall("$runtime.assert"))
 		case 2:
@@ -722,8 +742,7 @@ func (g *functionGenerator) genBuiltin(call *ssa.CallCommon) (insts []wat.Inst, 
 		}
 
 	case "print", "println":
-		for i, arg := range call.Args {
-			av := g.getValue(arg).value
+		for i, av := range args {
 			avt := av.Type()
 
 			if i > 0 {
@@ -768,74 +787,69 @@ func (g *functionGenerator) genBuiltin(call *ssa.CallCommon) (insts []wat.Inst, 
 			}
 		}
 
-		if call.Value.Name() == "println" {
+		if name == "println" {
 			insts = append(insts, wir.NewConst(strconv.Itoa('\n'), g.module.I32).EmitPushNoRetain()...)
 			insts = append(insts, wat.NewInstCall("$runtime.waPrintChar"))
 		}
 		ret_type = g.module.VOID
 
 	case "append":
-		if len(call.Args) != 2 {
+		if len(args) != 2 {
 			panic("len(call.Args) != 2")
 		}
-		insts, ret_type = g.module.EmitGenAppend(g.getValue(call.Args[0]).value, g.getValue(call.Args[1]).value)
+		insts, ret_type = g.module.EmitGenAppend(args[0], args[1])
 
 	case "len", "长":
-		if len(call.Args) != 1 {
+		if len(args) != 1 {
 			panic("len(call.Args) != 1")
 		}
-		insts = g.module.EmitGenLen(g.getValue(call.Args[0]).value)
+		insts = g.module.EmitGenLen(args[0])
 		ret_type = g.module.I32
 
 	case "cap":
-		if len(call.Args) != 1 {
+		if len(args) != 1 {
 			panic("len(cap.Args) != 1")
 		}
-		insts = g.module.EmitGenCap(g.getValue(call.Args[0]).value)
+		insts = g.module.EmitGenCap(args[0])
 		ret_type = g.module.I32
 
 	case "copy":
-		if len(call.Args) != 2 {
+		if len(args) != 2 {
 			logger.Fatal("len(copy.Args) != 2")
 		}
-		insts = g.module.EmitGenCopy(g.getValue(call.Args[0]).value, g.getValue(call.Args[1]).value)
+		insts = g.module.EmitGenCopy(args[0], args[1])
 		ret_type = g.module.I32
 
 	case "raw":
-		if len(call.Args) != 1 {
+		if len(args) != 1 {
 			panic("len(cap.Args) != 1")
 		}
-		insts = g.module.EmitGenRaw(g.getValue(call.Args[0]).value)
+		insts = g.module.EmitGenRaw(args[0])
 		ret_type = g.module.BYTES
 
 	case "setFinalizer":
-		if len(call.Args) != 2 {
+		if len(args) != 2 {
 			panic("len(call.Args) != 2")
 		}
 
-		var fn_id int
-		callee := call.Args[1].(*ssa.Function)
-		g.module.AddFunc(newFunctionGenerator(g.prog, g.module, g.tLib).genFunction(callee))
-		if len(callee.LinkName()) > 0 {
-			fn_id = g.module.AddTableElem(callee.LinkName())
-		} else {
-			fn_internal_name, _ := wir.GetFnMangleName(callee, g.prog.Manifest.MainPkg)
-			fn_id = g.module.AddTableElem(fn_internal_name)
+		fn_id, err := strconv.Atoi(args[1].Name())
+		if err != nil {
+			logger.Fatal("fn_id is invalid.")
 		}
-		insts = g.module.EmitGenSetFinalizer(g.getValue(call.Args[0]).value, fn_id)
+		insts = g.module.EmitGenSetFinalizer(args[0], fn_id)
 
 		ret_type = g.module.VOID
 
 	case "ssa:wrapnilchk":
-		insts = g.getValue(call.Args[0]).value.EmitPushNoRetain()
-		ret_type = g.getValue(call.Args[0]).value.Type()
+		insts = args[0].EmitPushNoRetain()
+		ret_type = args[0].Type()
 
 	case "delete":
-		insts = g.module.EmitGenDelete(g.getValue(call.Args[0]).value, g.getValue(call.Args[1]).value)
+		insts = g.module.EmitGenDelete(args[0], args[1])
 		ret_type = g.module.VOID
 
 	default:
-		logger.Fatal("Todo:", call.Value)
+		logger.Fatal("Todo:", name)
 	}
 	return
 }
@@ -1274,11 +1288,277 @@ func (g *functionGenerator) genMakeClosre_Anonymous(inst *ssa.MakeClosure) (inst
 	return
 }
 
-func (g *functionGenerator) genMakeDefer(inst *ssa.Defer) (insts []wat.Inst, ret_type wir.ValueType) {
-	//var st
+func (g *functionGenerator) genMakeDefer(inst *ssa.Defer) (insts []wat.Inst) {
+	defer func() { g.defers_count++ }()
 
-	g.defers_count++
-	panic("Todo")
+	st_closure := g.module.GenValueType_Closure(wir.FnSig{})
+	st_free_data, _ := g.module.GenValueType_Struct(g.internal_name + ".$deferwarp." + strconv.Itoa(g.defers_count) + ".params")
+	var warp_fn_index int
+	var warp_fn wir.Function
+	warp_fn.InternalName = g.internal_name + ".$deferwarp." + strconv.Itoa(g.defers_count)
+
+	if inst.Call.IsInvoke() {
+		iface := g.getValue(inst.Call.Value).value
+		iface_type := iface.Type()
+
+		st_free_data.AppendField(g.module.NewStructField("i", iface_type))
+		for i, v := range inst.Call.Args {
+			st_free_data.AppendField(g.module.NewStructField("p"+strconv.Itoa(i), g.getValue(v).value.Type()))
+		}
+		st_free_data.Finish()
+
+		var method_id int
+		var method wir.Method
+		for method_id = 0; method_id < iface_type.NumMethods(); method_id++ {
+			method = iface_type.Method(method_id)
+			if method.Name == inst.Call.Method.Name() {
+				break
+			}
+		}
+
+		// warp_fn:
+		{
+			free_data := wir.NewLocal("$fd", st_free_data)
+			warp_fn.Locals = append(warp_fn.Locals, free_data)
+			dx := g.module.FindGlobalByName("$wa.runtime.closure_data")
+			warp_fn.Insts = append(warp_fn.Insts, st_free_data.EmitLoadFromAddrNoRetain(dx, 0)...)
+			warp_fn.Insts = append(warp_fn.Insts, dx.EmitInit()...)
+			warp_fn.Insts = append(warp_fn.Insts, free_data.EmitPop()...)
+
+			iface := wir.ExtractFieldByID(free_data, 0)
+			var params []wir.Value
+			for i := range inst.Call.Args {
+				param := wir.ExtractFieldByID(free_data, i+1)
+				params = append(params, param)
+			}
+			warp_fn.Insts = append(warp_fn.Insts, g.module.EmitInvoke(iface, params, method_id, method.FullFnName)...)
+
+			rets := g.tLib.GenFnSig(inst.Call.Signature()).Results
+			for i := range rets {
+				j := len(rets) - i - 1
+				ret := wir.NewLocal("r"+strconv.Itoa(j), rets[j])
+				warp_fn.Locals = append(warp_fn.Locals, ret)
+				warp_fn.Insts = append(warp_fn.Insts, ret.EmitPop()...)
+				warp_fn.Insts = append(warp_fn.Insts, ret.EmitRelease()...)
+			}
+
+			g.module.AddFunc(&warp_fn)
+			warp_fn_index = g.module.AddTableElem(warp_fn.InternalName)
+		}
+
+		free_data := g.addRegister(st_free_data)
+		insts = append(insts, iface.EmitPush()...)
+		insts = append(insts, wir.ExtractFieldByID(free_data, 0).EmitPop()...)
+		for i, v := range inst.Call.Args {
+			insts = append(insts, g.getValue(v).value.EmitPush()...)
+			insts = append(insts, wir.ExtractFieldByID(free_data, i+1).EmitPop()...)
+		}
+
+		closure := g.addRegister(st_closure)
+		insts = append(insts, wir.NewConst(strconv.Itoa(warp_fn_index), g.module.U32).EmitPush()...)
+		insts = append(insts, wir.ExtractFieldByName(closure, "fn_index").EmitPop()...)
+		{
+			i, _ := g.module.EmitHeapAlloc(st_free_data)
+			insts = append(insts, i...)
+			insts = append(insts, wir.ExtractFieldByName(closure, "d").EmitPop()...)
+		}
+		insts = append(insts, g.module.EmitStore(wir.ExtractFieldByName(closure, "d"), free_data, false)...)
+		insts = append(insts, free_data.EmitRelease()...)
+		insts = append(insts, free_data.EmitInit()...)
+
+		insts = append(insts, closure.EmitPushNoRetain()...)
+		insts = append(insts, wat.NewInstCall("runtime.pushDeferFunc"))
+
+		return
+	}
+
+	switch inst.Call.Value.(type) {
+	case *ssa.Function:
+		callee := inst.Call.StaticCallee()
+		if callee.Parent() != nil {
+			g.module.AddFunc(newFunctionGenerator(g.prog, g.module, g.tLib).genFunction(callee))
+		}
+
+		for i, v := range inst.Call.Args {
+			st_free_data.AppendField(g.module.NewStructField("p"+strconv.Itoa(i), g.getValue(v).value.Type()))
+		}
+		st_free_data.Finish()
+
+		// warp_fn:
+		{
+			dx := g.module.FindGlobalByName("$wa.runtime.closure_data")
+			warp_fn.Insts = append(warp_fn.Insts, st_free_data.EmitLoadFromAddrNoRetain(dx, 0)...)
+			warp_fn.Insts = append(warp_fn.Insts, dx.EmitInit()...)
+
+			if len(callee.LinkName()) > 0 {
+				warp_fn.Insts = append(warp_fn.Insts, wat.NewInstCall(callee.LinkName()))
+			} else {
+				fn_internal_name, _ := wir.GetFnMangleName(callee, g.prog.Manifest.MainPkg)
+				warp_fn.Insts = append(warp_fn.Insts, wat.NewInstCall(fn_internal_name))
+			}
+
+			rets := g.tLib.GenFnSig(inst.Call.Signature()).Results
+			for i := range rets {
+				j := len(rets) - i - 1
+				ret := wir.NewLocal("r"+strconv.Itoa(j), rets[j])
+				warp_fn.Locals = append(warp_fn.Locals, ret)
+				warp_fn.Insts = append(warp_fn.Insts, ret.EmitPop()...)
+				warp_fn.Insts = append(warp_fn.Insts, ret.EmitRelease()...)
+			}
+
+			g.module.AddFunc(&warp_fn)
+			warp_fn_index = g.module.AddTableElem(warp_fn.InternalName)
+		}
+
+		free_data := g.addRegister(st_free_data)
+		for i, v := range inst.Call.Args {
+			insts = append(insts, g.getValue(v).value.EmitPush()...)
+			insts = append(insts, wir.ExtractFieldByID(free_data, i).EmitPop()...)
+		}
+
+		closure := g.addRegister(st_closure)
+		insts = append(insts, wir.NewConst(strconv.Itoa(warp_fn_index), g.module.U32).EmitPush()...)
+		insts = append(insts, wir.ExtractFieldByName(closure, "fn_index").EmitPop()...)
+		{
+			i, _ := g.module.EmitHeapAlloc(st_free_data)
+			insts = append(insts, i...)
+			insts = append(insts, wir.ExtractFieldByName(closure, "d").EmitPop()...)
+		}
+		insts = append(insts, g.module.EmitStore(wir.ExtractFieldByName(closure, "d"), free_data, false)...)
+		insts = append(insts, free_data.EmitRelease()...)
+		insts = append(insts, free_data.EmitInit()...)
+
+		insts = append(insts, closure.EmitPushNoRetain()...)
+		insts = append(insts, wat.NewInstCall("runtime.pushDeferFunc"))
+
+		return
+
+	case *ssa.Builtin:
+		if inst.Call.Value.Name() == "setFinalizer" {
+			logger.Fatal("Can't use setFinalizer() as defers.")
+		}
+
+		for i, v := range inst.Call.Args {
+			st_free_data.AppendField(g.module.NewStructField("p"+strconv.Itoa(i), g.getValue(v).value.Type()))
+		}
+		st_free_data.Finish()
+
+		// warp_fn:
+		{
+			free_data := wir.NewLocal("$fd", st_free_data)
+			warp_fn.Locals = append(warp_fn.Locals, free_data)
+			dx := g.module.FindGlobalByName("$wa.runtime.closure_data")
+			warp_fn.Insts = append(warp_fn.Insts, st_free_data.EmitLoadFromAddrNoRetain(dx, 0)...)
+			warp_fn.Insts = append(warp_fn.Insts, dx.EmitInit()...)
+			warp_fn.Insts = append(warp_fn.Insts, free_data.EmitPop()...)
+
+			var args []wir.Value
+			for i := range inst.Call.Args {
+				arg := wir.ExtractFieldByID(free_data, i)
+				args = append(args, arg)
+			}
+			callinsts, _ := g.genBuiltin(inst.Call.Value.Name(), inst.Call.Pos(), args)
+			warp_fn.Insts = append(warp_fn.Insts, callinsts...)
+
+			rets := g.tLib.GenFnSig(inst.Call.Signature()).Results
+			for i := range rets {
+				j := len(rets) - i - 1
+				ret := wir.NewLocal("r"+strconv.Itoa(j), rets[j])
+				warp_fn.Locals = append(warp_fn.Locals, ret)
+				warp_fn.Insts = append(warp_fn.Insts, ret.EmitPop()...)
+				warp_fn.Insts = append(warp_fn.Insts, ret.EmitRelease()...)
+			}
+
+			g.module.AddFunc(&warp_fn)
+			warp_fn_index = g.module.AddTableElem(warp_fn.InternalName)
+		}
+
+		free_data := g.addRegister(st_free_data)
+		for i, v := range inst.Call.Args {
+			insts = append(insts, g.getValue(v).value.EmitPush()...)
+			insts = append(insts, wir.ExtractFieldByID(free_data, i).EmitPop()...)
+		}
+
+		closure := g.addRegister(st_closure)
+		insts = append(insts, wir.NewConst(strconv.Itoa(warp_fn_index), g.module.U32).EmitPush()...)
+		insts = append(insts, wir.ExtractFieldByName(closure, "fn_index").EmitPop()...)
+		{
+			i, _ := g.module.EmitHeapAlloc(st_free_data)
+			insts = append(insts, i...)
+			insts = append(insts, wir.ExtractFieldByName(closure, "d").EmitPop()...)
+		}
+		insts = append(insts, g.module.EmitStore(wir.ExtractFieldByName(closure, "d"), free_data, false)...)
+		insts = append(insts, free_data.EmitRelease()...)
+		insts = append(insts, free_data.EmitInit()...)
+
+		insts = append(insts, closure.EmitPushNoRetain()...)
+		insts = append(insts, wat.NewInstCall("runtime.pushDeferFunc"))
+
+		return
+
+	default: // *ssa.MakeClosure
+		fn_value := g.getValue(inst.Call.Value).value
+		st_free_data.AppendField(g.module.NewStructField("c", fn_value.Type()))
+		for i, v := range inst.Call.Args {
+			st_free_data.AppendField(g.module.NewStructField("p"+strconv.Itoa(i), g.getValue(v).value.Type()))
+		}
+		st_free_data.Finish()
+
+		// warp_fn:
+		{
+			free_data := wir.NewLocal("$fd", st_free_data)
+			warp_fn.Locals = append(warp_fn.Locals, free_data)
+			dx := g.module.FindGlobalByName("$wa.runtime.closure_data")
+			warp_fn.Insts = append(warp_fn.Insts, st_free_data.EmitLoadFromAddrNoRetain(dx, 0)...)
+			warp_fn.Insts = append(warp_fn.Insts, dx.EmitInit()...)
+			warp_fn.Insts = append(warp_fn.Insts, free_data.EmitPop()...)
+
+			closure := wir.ExtractFieldByID(free_data, 0)
+			var params []wir.Value
+			for i := range inst.Call.Args {
+				param := wir.ExtractFieldByID(free_data, i+1)
+				params = append(params, param)
+			}
+			warp_fn.Insts = append(warp_fn.Insts, wir.EmitCallClosure(closure, params)...)
+
+			rets := g.tLib.GenFnSig(inst.Call.Signature()).Results
+			for i := range rets {
+				j := len(rets) - i - 1
+				ret := wir.NewLocal("r"+strconv.Itoa(j), rets[j])
+				warp_fn.Locals = append(warp_fn.Locals, ret)
+				warp_fn.Insts = append(warp_fn.Insts, ret.EmitPop()...)
+				warp_fn.Insts = append(warp_fn.Insts, ret.EmitRelease()...)
+			}
+
+			g.module.AddFunc(&warp_fn)
+			warp_fn_index = g.module.AddTableElem(warp_fn.InternalName)
+		}
+
+		free_data := g.addRegister(st_free_data)
+		insts = append(insts, fn_value.EmitPush()...)
+		insts = append(insts, wir.ExtractFieldByID(free_data, 0).EmitPop()...)
+		for i, v := range inst.Call.Args {
+			insts = append(insts, g.getValue(v).value.EmitPush()...)
+			insts = append(insts, wir.ExtractFieldByID(free_data, i+1).EmitPop()...)
+		}
+
+		closure := g.addRegister(st_closure)
+		insts = append(insts, wir.NewConst(strconv.Itoa(warp_fn_index), g.module.U32).EmitPush()...)
+		insts = append(insts, wir.ExtractFieldByName(closure, "fn_index").EmitPop()...)
+		{
+			i, _ := g.module.EmitHeapAlloc(st_free_data)
+			insts = append(insts, i...)
+			insts = append(insts, wir.ExtractFieldByName(closure, "d").EmitPop()...)
+		}
+		insts = append(insts, g.module.EmitStore(wir.ExtractFieldByName(closure, "d"), free_data, false)...)
+		insts = append(insts, free_data.EmitRelease()...)
+		insts = append(insts, free_data.EmitInit()...)
+
+		insts = append(insts, closure.EmitPushNoRetain()...)
+		insts = append(insts, wat.NewInstCall("runtime.pushDeferFunc"))
+
+		return
+	}
 }
 
 func (g *functionGenerator) genMakeInterface(inst *ssa.MakeInterface) (insts []wat.Inst, ret_type wir.ValueType) {
