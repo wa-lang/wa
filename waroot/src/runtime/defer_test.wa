@@ -1,0 +1,56 @@
+// 版权 @2024 凹语言 作者。保留所有权利。
+
+func ExampleDefer_demo1 {
+	func {
+		defer println("a1")
+		defer println("a2")
+		defer println("a3")
+		println("a4")
+	}()
+
+	// Output:
+	// a4
+	// a3
+	// a2
+	// a1
+}
+
+func ExampleDefer_for1 {
+	func {
+		for i := 0; i < 3; i++ {
+			defer println("i:", i)
+		}
+	}()
+
+	// Output:
+	// i: 2
+	// i: 1
+	// i: 0
+}
+
+func ExampleDefer_for2 {
+	func {
+		for i := 0; i < 3; i++ {
+			defer func { println("i:", i) } ()
+		}
+	}()
+
+	// Output:
+	// i: 3
+	// i: 3
+	// i: 3
+}
+
+func ExampleDefer_for3 {
+	func {
+		for i := 0; i < 3; i++ {
+			i := i
+			defer func { println("i:", i) } ()
+		}
+	}()
+
+	// Output:
+	// i: 2
+	// i: 1
+	// i: 0
+}
