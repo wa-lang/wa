@@ -9,7 +9,7 @@ on:
       - master
       - "releases/*"
 jobs:
-  build-and-test-ubuntu:
+  check-cla-list:
     runs-on: ubuntu-latest
     steps:
       - name: Git checkout
