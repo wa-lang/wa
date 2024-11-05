@@ -1,0 +1,29 @@
+# 版权 @2022 凹语言 作者。保留所有权利。
+
+name: Check CLA
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+      - master
+      - "releases/*"
+jobs:
+  build-and-test-ubuntu:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Git checkout
+        uses: actions/checkout@v4
+        with:
+          # 获取全部的 Git 历史
+          fetch-depth: 0
+
+      - name: Set up Go
+        uses: actions/setup-go@v2
+        with:
+          go-version: 1.17
+
+      - run: go version
+      - run: go env
+
+      - run: go run ./wca/check-cla.go

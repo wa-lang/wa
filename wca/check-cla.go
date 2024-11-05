@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
-	"sort"
 	"strings"
 )
 
@@ -27,7 +26,13 @@ var wcaMap = map[string]bool{
 }
 
 func main() {
-	for _, s := range gitLogEmailList() {
+	gitLostEmails := getGitLogEmails()
+
+	var sortedNames []string
+	for s := range gitLostEmails {
+		sortedNames = append(sortedNames, s)
+	}
+	for _, s := range sortedNames {
 		if wcaMap[s] {
 			fmt.Println("check cla:", s, "ok")
 		} else {
@@ -35,10 +40,18 @@ func main() {
 			os.Exit(1)
 		}
 	}
+	if len(gitLostEmails) != len(wcaMap) {
+		for k := range wcaMap {
+			if !gitLostEmails[k] {
+				fmt.Println("check cla:", k, "missing")
+			}
+		}
+		os.Exit(1)
+	}
 }
 
 // git log --pretty=format:"%ae"
-func gitLogEmailList() []string {
+func getGitLogEmails() map[string]bool {
 	cmd := exec.Command("git", "log", `--pretty=format:"%ae"`)
 	stdoutStderr, err := cmd.CombinedOutput()
 	if err != nil {
@@ -56,11 +69,5 @@ func gitLogEmailList() []string {
 		m[email] = true
 	}
 
-	var ss []string
-	for k := range m {
-		ss = append(ss, k)
-	}
-
-	sort.Strings(ss)
-	return ss
+	return m
 }

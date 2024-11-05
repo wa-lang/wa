@@ -23,8 +23,6 @@ jobs:
       - run: go version
       - run: go env
 
-      - run: go run ./wca/check-cla.go
-
       - run: make ci-test-all
 
       - run: go test -v -coverprofile=profile.cov ./...
