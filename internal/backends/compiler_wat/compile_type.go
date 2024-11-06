@@ -89,6 +89,12 @@ func (tLib *typeLib) compile(from types.Type) wir.ValueType {
 		case types.Float64, types.UntypedFloat:
 			newType = tLib.module.F64
 
+		case types.Complex64:
+			newType = tLib.module.COMPLEX64
+
+		case types.Complex128:
+			newType = tLib.module.COMPLEX128
+
 		case types.Uint:
 			newType = tLib.module.UINT
 
@@ -235,6 +241,12 @@ func (tLib *typeLib) compile(from types.Type) wir.ValueType {
 
 			case types.Float64, types.UntypedFloat:
 				newType = tLib.module.GenValueType_f64(type_name)
+
+			case types.Complex64:
+				newType = tLib.module.GenValueType_complex64(type_name)
+
+			case types.Complex128:
+				newType = tLib.module.GenValueType_complex128(type_name)
 
 			case types.Uint:
 				newType = tLib.module.GenValueType_uint(type_name)

@@ -20,7 +20,7 @@ Module:
 *************************************
 */
 type Module struct {
-	VOID, BOOL, RUNE, U8, U16, I32, U32, UPTR, I64, U64, INT, UINT, F32, F64, STRING, BYTES ValueType
+	VOID, BOOL, RUNE, U8, U16, I32, U32, UPTR, I64, U64, INT, UINT, F32, F64, COMPLEX64, COMPLEX128, STRING, BYTES ValueType
 
 	stkSize int // 栈大小
 
@@ -68,6 +68,8 @@ func NewModule(stkSize int) *Module {
 	m.U64 = m.GenValueType_u64("")
 	m.F32 = m.GenValueType_f32("")
 	m.F64 = m.GenValueType_f64("")
+	m.COMPLEX64 = m.GenValueType_complex64("")
+	m.COMPLEX128 = m.GenValueType_complex128("")
 	m.INT = m.I32
 	m.UINT = m.U32
 	m.UPTR = m.U32

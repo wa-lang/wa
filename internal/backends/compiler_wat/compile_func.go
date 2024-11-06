@@ -771,6 +771,12 @@ func (g *functionGenerator) genBuiltin(name string, pos token.Pos, args []wir.Va
 			} else if avt.Equal(g.module.F64) {
 				insts = append(insts, av.EmitPushNoRetain()...)
 				insts = append(insts, wat.NewInstCall("$runtime.waPrintF64"))
+			} else if avt.Equal(g.module.COMPLEX64) {
+				insts = append(insts, av.EmitPushNoRetain()...)
+				insts = append(insts, wat.NewInstCall("$wa.runtime.complex64_Print"))
+			} else if avt.Equal(g.module.COMPLEX128) {
+				insts = append(insts, av.EmitPushNoRetain()...)
+				insts = append(insts, wat.NewInstCall("$wa.runtime.complex128_Print"))
 			} else if avt.Equal(g.module.RUNE) {
 				insts = append(insts, av.EmitPushNoRetain()...)
 				insts = append(insts, wat.NewInstCall("$runtime.waPrintRune"))

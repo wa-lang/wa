@@ -76,8 +76,13 @@ func (m *Module) EmitBinOp(x, y Value, op wat.OpCode) (insts []wat.Inst, ret_typ
 		ret_type = x.Type()
 		insts = append(insts, x.EmitPushNoRetain()...)
 		insts = append(insts, y.EmitPushNoRetain()...)
+
 		if ret_type.Equal(m.STRING) {
 			insts = append(insts, wat.NewInstCall(m.STRING.(*String).fnName_append))
+		} else if ret_type.Equal(m.COMPLEX64) {
+			insts = append(insts, m.COMPLEX64.(*Complex64).emitAdd()...)
+		} else if ret_type.Equal(m.COMPLEX128) {
+			insts = append(insts, m.COMPLEX128.(*Complex128).emitAdd()...)
 		} else {
 			insts = append(insts, wat.NewInstAdd(toWatType(ret_type)))
 		}
@@ -94,7 +99,14 @@ func (m *Module) EmitBinOp(x, y Value, op wat.OpCode) (insts []wat.Inst, ret_typ
 		ret_type = x.Type()
 		insts = append(insts, x.EmitPushNoRetain()...)
 		insts = append(insts, y.EmitPushNoRetain()...)
-		insts = append(insts, wat.NewInstSub(toWatType(ret_type)))
+
+		if ret_type.Equal(m.COMPLEX64) {
+			insts = append(insts, m.COMPLEX64.(*Complex64).emitSub()...)
+		} else if ret_type.Equal(m.COMPLEX128) {
+			insts = append(insts, m.COMPLEX128.(*Complex128).emitSub()...)
+		} else {
+			insts = append(insts, wat.NewInstSub(toWatType(ret_type)))
+		}
 
 		if ret_type.Equal(m.U8) {
 			insts = append(insts, wat.NewInstConst(wat.I32{}, "255"))
@@ -108,7 +120,14 @@ func (m *Module) EmitBinOp(x, y Value, op wat.OpCode) (insts []wat.Inst, ret_typ
 		ret_type = x.Type()
 		insts = append(insts, x.EmitPushNoRetain()...)
 		insts = append(insts, y.EmitPushNoRetain()...)
-		insts = append(insts, wat.NewInstMul(toWatType(ret_type)))
+
+		if ret_type.Equal(m.COMPLEX64) {
+			insts = append(insts, m.COMPLEX64.(*Complex64).emitMul()...)
+		} else if ret_type.Equal(m.COMPLEX128) {
+			insts = append(insts, m.COMPLEX128.(*Complex128).emitMul()...)
+		} else {
+			insts = append(insts, wat.NewInstMul(toWatType(ret_type)))
+		}
 
 		if ret_type.Equal(m.U8) {
 			insts = append(insts, wat.NewInstConst(wat.I32{}, "255"))
@@ -122,7 +141,14 @@ func (m *Module) EmitBinOp(x, y Value, op wat.OpCode) (insts []wat.Inst, ret_typ
 		ret_type = x.Type()
 		insts = append(insts, x.EmitPushNoRetain()...)
 		insts = append(insts, y.EmitPushNoRetain()...)
-		insts = append(insts, wat.NewInstDiv(toWatType(ret_type)))
+
+		if ret_type.Equal(m.COMPLEX64) {
+			insts = append(insts, m.COMPLEX64.(*Complex64).emitDiv()...)
+		} else if ret_type.Equal(m.COMPLEX128) {
+			insts = append(insts, m.COMPLEX128.(*Complex128).emitDiv()...)
+		} else {
+			insts = append(insts, wat.NewInstDiv(toWatType(ret_type)))
+		}
 
 	case wat.OpCodeRem:
 		ret_type = x.Type()

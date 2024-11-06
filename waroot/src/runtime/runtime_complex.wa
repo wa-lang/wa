@@ -15,6 +15,11 @@ func complex64_Mul(a, ai, b, bi: f32) => (f32, f32) {
 	return a*b - ai*bi, ai*b + a*bi
 }
 
+#wa:linkname $wa.runtime.complex64_Print
+func complex64_Print(a, ai: f32) {
+	print("{", a, ",", ai, "}")
+}
+
 #wa:linkname $wa.runtime.complex64_Div
 func complex64_Div(a, ai, b, bi: f32) => (f32, f32) {
 	c := (a*b + ai*bi) / (b*b + bi*bi)
@@ -42,4 +47,9 @@ func complex128_Div(a, ai, b, bi: f64) => (f64, f64) {
 	c := (a*b + ai*bi) / (b*b + bi*bi)
 	ci := (ai*b - a*bi) / (b*b + bi*bi)
 	return c, ci
+}
+
+#wa:linkname $wa.runtime.complex128_Print
+func complex128_Print(a, ai: f64) {
+	print("{", a, ",", ai, "}")
 }

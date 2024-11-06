@@ -23,6 +23,8 @@ const (
 	kI64
 	kF32
 	kF64
+	kComplex64
+	kComplex128
 	kRune
 	kPtr
 	kBlock

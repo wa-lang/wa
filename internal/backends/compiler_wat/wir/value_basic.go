@@ -27,6 +27,12 @@ func newValue(name string, kind ValueKind, typ ValueType) Value {
 	case *I8, *U8, *I16, *U16, *I32, *U32, *I64, *U64, *F32, *F64, *Rune, *Bool:
 		return newValue_Basic(name, kind, typ)
 
+	case *Complex64:
+		return newValue_Complex64(name, kind, typ)
+
+	case *Complex128:
+		return newValue_Complex128(name, kind, typ)
+
 	case *Ptr:
 		return newValue_Ptr(name, kind, typ)
 
