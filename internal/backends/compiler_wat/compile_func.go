@@ -121,6 +121,20 @@ func (g *functionGenerator) getValue(i ssa.Value) valueWrap {
 				val := constant.StringVal(v.Value)
 				return valueWrap{value: wir.NewConst(val, g.module.STRING)}
 
+			case types.Complex64:
+				re, _ := constant.Float64Val(constant.Real(v.Value))
+				im, _ := constant.Float64Val(constant.Imag(v.Value))
+				res := strconv.FormatFloat(re, 'f', -1, 64)
+				ims := strconv.FormatFloat(im, 'f', -1, 64)
+				return valueWrap{value: wir.NewConst(res+" "+ims, g.module.COMPLEX64)}
+
+			case types.Complex128:
+				re, _ := constant.Float64Val(constant.Real(v.Value))
+				im, _ := constant.Float64Val(constant.Imag(v.Value))
+				res := strconv.FormatFloat(re, 'f', -1, 64)
+				ims := strconv.FormatFloat(im, 'f', -1, 64)
+				return valueWrap{value: wir.NewConst(res+" "+ims, g.module.COMPLEX128)}
+
 			default:
 				logger.Fatalf("Todo:%T %v", t, t.Kind())
 			}
@@ -845,6 +859,16 @@ func (g *functionGenerator) genBuiltin(name string, pos token.Pos, args []wir.Va
 		insts = g.module.EmitGenSetFinalizer(args[0], fn_id)
 
 		ret_type = g.module.VOID
+
+	case "real":
+		v := wir.ComplexExtractReal(args[0])
+		insts = append(insts, v.EmitPush()...)
+		ret_type = v.Type()
+
+	case "imag":
+		v := wir.ComplexExtractImag(args[0])
+		insts = append(insts, v.EmitPush()...)
+		ret_type = v.Type()
 
 	case "ssa:wrapnilchk":
 		insts = args[0].EmitPushNoRetain()

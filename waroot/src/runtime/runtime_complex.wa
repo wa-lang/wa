@@ -17,7 +17,7 @@ func complex64_Mul(a, ai, b, bi: f32) => (f32, f32) {
 
 #wa:linkname $wa.runtime.complex64_Print
 func complex64_Print(a, ai: f32) {
-	print("{", a, ",", ai, "}")
+	print("(", a, ai, "i)")
 }
 
 #wa:linkname $wa.runtime.complex64_Div
@@ -51,5 +51,5 @@ func complex128_Div(a, ai, b, bi: f64) => (f64, f64) {
 
 #wa:linkname $wa.runtime.complex128_Print
 func complex128_Print(a, ai: f64) {
-	print("{", a, ",", ai, "}")
+	print("(", a, ai, "i)")
 }

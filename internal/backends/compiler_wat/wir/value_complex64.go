@@ -3,6 +3,8 @@
 package wir
 
 import (
+	"strings"
+
 	"wa-lang.org/wa/internal/backends/compiler_wat/wir/wat"
 	"wa-lang.org/wa/internal/logger"
 )
@@ -13,6 +15,8 @@ Complex64:
 type Complex64 struct {
 	tCommon
 	underlying *Struct
+
+	_f32 ValueType
 }
 
 func (m *Module) GenValueType_complex64(name string) *Complex64 {
@@ -27,9 +31,10 @@ func (m *Module) GenValueType_complex64(name string) *Complex64 {
 		return ot.(*Complex64)
 	}
 
+	t._f32 = m.F32
 	t.underlying = m.genInternalStruct(t.name + ".underlying")
-	t.underlying.AppendField(m.NewStructField("re", m.F32))
-	t.underlying.AppendField(m.NewStructField("im", m.F32))
+	t.underlying.AppendField(m.NewStructField("real", m.F32))
+	t.underlying.AppendField(m.NewStructField("imag", m.F32))
 	t.underlying.Finish()
 
 	m.addValueType(&t)
@@ -79,6 +84,14 @@ func newValue_Complex64(name string, kind ValueKind, typ *Complex64) *aComplex64
 	var v aComplex64
 	v.typ = typ
 	v.aStruct = *newValue_Struct(name, kind, typ.underlying)
+	if kind == ValueKindConst {
+		s := strings.Split(name, " ")
+		if len(s) != 2 {
+			logger.Fatal("Invalid const complex64.")
+		}
+		v.aStruct.setFieldConstValue("real", NewConst(s[0], typ._f32))
+		v.aStruct.setFieldConstValue("imag", NewConst(s[1], typ._f32))
+	}
 
 	return &v
 }
@@ -98,4 +111,32 @@ func (v *aComplex64) emitCompare(r Value) (insts []wat.Inst) {
 	}
 
 	return v.aStruct.emitCompare(&r.(*aComplex64).aStruct)
+}
+
+func ComplexExtractReal(v Value) Value {
+	switch v := v.(type) {
+	case *aComplex64:
+		return v.aStruct.ExtractByName("real")
+
+	case *aComplex128:
+		return v.aStruct.ExtractByName("real")
+
+	default:
+		logger.Fatal("Value is not a complex.")
+		return nil
+	}
+}
+
+func ComplexExtractImag(v Value) Value {
+	switch v := v.(type) {
+	case *aComplex64:
+		return v.aStruct.ExtractByName("imag")
+
+	case *aComplex128:
+		return v.aStruct.ExtractByName("imag")
+
+	default:
+		logger.Fatal("Value is not a complex.")
+		return nil
+	}
 }

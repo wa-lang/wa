@@ -3,6 +3,8 @@
 package wir
 
 import (
+	"strings"
+
 	"wa-lang.org/wa/internal/backends/compiler_wat/wir/wat"
 	"wa-lang.org/wa/internal/logger"
 )
@@ -13,6 +15,7 @@ Complex128:
 type Complex128 struct {
 	tCommon
 	underlying *Struct
+	_f64       ValueType
 }
 
 func (m *Module) GenValueType_complex128(name string) *Complex128 {
@@ -27,9 +30,10 @@ func (m *Module) GenValueType_complex128(name string) *Complex128 {
 		return ot.(*Complex128)
 	}
 
+	t._f64 = m.F64
 	t.underlying = m.genInternalStruct(t.name + ".underlying")
-	t.underlying.AppendField(m.NewStructField("re", m.F64))
-	t.underlying.AppendField(m.NewStructField("im", m.F64))
+	t.underlying.AppendField(m.NewStructField("real", m.F64))
+	t.underlying.AppendField(m.NewStructField("imag", m.F64))
 	t.underlying.Finish()
 
 	m.addValueType(&t)
@@ -79,6 +83,14 @@ func newValue_Complex128(name string, kind ValueKind, typ *Complex128) *aComplex
 	var v aComplex128
 	v.typ = typ
 	v.aStruct = *newValue_Struct(name, kind, typ.underlying)
+	if kind == ValueKindConst {
+		s := strings.Split(name, " ")
+		if len(s) != 2 {
+			logger.Fatal("Invalid const complex128.")
+		}
+		v.aStruct.setFieldConstValue("real", NewConst(s[0], typ._f64))
+		v.aStruct.setFieldConstValue("imag", NewConst(s[1], typ._f64))
+	}
 
 	return &v
 }
