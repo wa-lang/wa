@@ -25,8 +25,6 @@ Instead of requiring complex toolchains to set up, you can simply go install it 
 - Github: [https://github.com/wa-lang/wa](https://github.com/wa-lang/wa)
 - Playground: [https://wa-lang.org/playground](https://wa-lang.org/playground)
 
-> Note: Our canonical Git repository is located at https://gitee.com/wa-lang/wa. There is a mirror of the repository at https://github.com/wa-lang/wa. Unless otherwise noted, the Wa source files are distributed under the AGPL-v3 license found in the LICENSE file.
-
 ## Playground
 
 [https://wa-lang.org/playground](https://wa-lang.org/playground)
