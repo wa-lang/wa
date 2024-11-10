@@ -163,6 +163,7 @@ var stdPkgs = []string{
 	"js/canvas",       // ?
 	"js/p5",           // ?
 	"math",            // API 部分
+	"math/cmplx",      // API 部分
 	"math/big",        // API 部分, wat2wasm ok
 	"math/bits",       // API 完整, wat2wasm ok
 	"math/gf256",      // ?, wat2wasm ok

@@ -3,6 +3,7 @@
 import "js/canvas"
 import "image"
 import "image/color"
+import "math/cmplx"
 
 func main {
 	println("你好，凹语言！")
@@ -18,7 +19,7 @@ func main {
 		yy := 4 * (f64(y)/size - 0.5) // [-2, 2]
 		for x := 0; x < size; x++ {
 			xx := 4 * (f64(x)/size - 0.5) // [-2, 2]
-			m.SetRGBA(x, y, mandelbrot(x, y, xx, yy))
+			m.SetRGBA(x, y, mandelbrot(complex(xx, yy)))
 		}
 	}
 
@@ -28,28 +29,18 @@ func main {
 	)
 }
 
-// z := z^2 + c
-// 特点，如果 c in M，则 |c| <= 2; 反过来不一定成立
-// 如果  c in M，则 |z| <= 2. 这个特性可以用来发现 c 是否属于 M
-func mandelbrot(x, y: int, cr, ci: f64) => color.RGBA {
-	const N = 254
-	zr, zi := f64(0), f64(0)
-	for i := u8(0); i < N; i++ {
-		if zr*zr+zi*zi > 2*2 {
-			return getColor(i)
+func mandelbrot(z: complex128) => color.RGBA {
+	const iterations = 200
+	const contrast = 15
+
+	v: complex128
+	for n := uint8(0); n < iterations; n++ {
+		v = v*v + z
+		if cmplx.Abs(v) > 2 {
+			return getColor(n)
 		}
-		zr, zi = complxMul(zr, zi, zr, zi)
-		zr, zi = complxAdd(zr, zi, cr, ci)
 	}
-
 	return 0xFFFFFFFF
-}
-
-func complxAdd(a, b, c, d: f64) => (f64, f64) {
-	return a + c, b + d
-}
-func complxMul(a, b, c, d: f64) => (f64, f64) {
-	return a*c - b*d, b*c + a*d
 }
 
 // 根据迭代次数计算一个合适的像素值
