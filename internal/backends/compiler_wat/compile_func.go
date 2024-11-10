@@ -870,6 +870,15 @@ func (g *functionGenerator) genBuiltin(name string, pos token.Pos, args []wir.Va
 		insts = append(insts, v.EmitPush()...)
 		ret_type = v.Type()
 
+	case "complex":
+		insts = append(insts, args[0].EmitPush()...)
+		insts = append(insts, args[1].EmitPush()...)
+		if args[0].Type().Equal(g.module.F32) {
+			ret_type = g.module.COMPLEX64
+		} else {
+			ret_type = g.module.COMPLEX128
+		}
+
 	case "ssa:wrapnilchk":
 		insts = args[0].EmitPushNoRetain()
 		ret_type = args[0].Type()
