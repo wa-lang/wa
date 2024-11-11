@@ -51,5 +51,19 @@ func complex128_Div(a, ai, b, bi: f64) => (f64, f64) {
 
 #wa:linkname $wa.runtime.complex128_Print
 func complex128_Print(a, ai: f64) {
-	print("(", a, ai, "i)")
+	printString("(")
+	if x := i64(a); f64(x) == a {
+		printI64(x)
+	} else {
+		printF64(a)
+	}
+	if ai >= 0 {
+		printString("+")
+	}
+	if xi := i64(ai); f64(xi) == ai {
+		printI64(xi)
+	} else {
+		printF64(ai)
+	}
+	printString("i)")
 }
