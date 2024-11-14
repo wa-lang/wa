@@ -7,6 +7,7 @@ import (
 	_ "embed"
 	"fmt"
 	"io"
+	"strings"
 
 	"wa-lang.org/wa/internal/wat/token"
 )
@@ -190,7 +191,11 @@ func (p *wat2cWorker) buildMemory_data(w io.Writer) error {
 	defer fmt.Fprintf(w, "}\n\n")
 
 	for _, d := range p.m.Data {
-		fmt.Fprintf(w, "  memcpy((void*)&wasm_memoy[%d], (void *)(%q), %d);\n", d.Offset, d.Value, len(d.Value))
+		var sb strings.Builder
+		for _, x := range d.Value {
+			sb.WriteString(fmt.Sprintf("\\x%02x", x))
+		}
+		fmt.Fprintf(w, "  memcpy((void*)&wasm_memoy[%d], (void *)(\"%s\"), %d);\n", d.Offset, sb.String(), len(d.Value))
 	}
 	return nil
 }
