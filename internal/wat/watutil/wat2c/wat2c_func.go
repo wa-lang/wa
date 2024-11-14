@@ -84,10 +84,10 @@ func (p *wat2cWorker) buildFunc_body(w io.Writer, fn *ast.Func, cRetType string)
 }
 
 func (p *wat2cWorker) buildFunc_ins(w io.Writer, fn *ast.Func, stk *valueTypeStack, i ast.Instruction, level int) error {
-	p.Tracef("buildFunc_ins: %s begin: %v\n", i.Token(), stk.String())
-	defer func() { p.Tracef("buildFunc_ins: %s end: %v\n", i.Token(), stk.String()) }()
-
 	indent := strings.Repeat("  ", level)
+
+	p.Tracef("buildFunc_ins: %s%s begin: %v\n", indent, i.Token(), stk.String())
+	defer func() { p.Tracef("buildFunc_ins: %s%s end: %v\n", indent, i.Token(), stk.String()) }()
 
 	if p.ifUseMathX(i.Token()) {
 		p.useMathX = true
@@ -166,6 +166,9 @@ func (p *wat2cWorker) buildFunc_ins(w io.Writer, fn *ast.Func, stk *valueTypeSta
 		}
 
 		if len(i.Else) > 0 {
+			p.Tracef("buildFunc_ins: %s%s begin: %v\n", indent, token.INS_ELSE, stk.String())
+			defer func() { p.Tracef("buildFunc_ins: %s%s end: %v\n", indent, token.INS_ELSE, stk.String()) }()
+
 			// 这是静态分析, 需要消除 if 分支对栈分配的影响
 			for _, retType := range i.Results {
 				stk.Pop(retType)
@@ -274,7 +277,7 @@ func (p *wat2cWorker) buildFunc_ins(w io.Writer, fn *ast.Func, stk *valueTypeSta
 		fnCallType := p.findFuncType(i.X)
 		fnCallCRetType := p.getFuncCRetType(fnCallType, i.X)
 
-		// 返回值
+		// 参数列表
 		argList := make([]int, len(fnCallType.Params))
 		for k, x := range fnCallType.Params {
 			argList[k] = stk.Pop(x.Type)
@@ -351,7 +354,7 @@ func (p *wat2cWorker) buildFunc_ins(w io.Writer, fn *ast.Func, stk *valueTypeSta
 		fnCallType := p.findType(i.TypeIdx)
 		fnCallCRetType := p.getFuncCRetType(fnCallType, "")
 
-		// 返回值
+		// 参数列表
 		argList := make([]int, len(fnCallType.Params))
 		for k, x := range fnCallType.Params {
 			argList[k] = stk.Pop(x.Type)
@@ -448,7 +451,7 @@ func (p *wat2cWorker) buildFunc_ins(w io.Writer, fn *ast.Func, stk *valueTypeSta
 				if i > 0 {
 					fmt.Fprintf(w, ", ")
 				}
-				argi := stk.Pop(x.Type)
+				argi := argList[i]
 				switch x.Type {
 				case token.I32:
 					fmt.Fprintf(w, "$R%d.i32", argi)
@@ -532,7 +535,18 @@ func (p *wat2cWorker) buildFunc_ins(w io.Writer, fn *ast.Func, stk *valueTypeSta
 		i := i.(ast.Ins_LocalTee)
 		xType := p.findLocalType(fn, i.X)
 		sp0 := stk.Top(xType)
-		fmt.Fprintf(w, "%s%s = $R%d;\n", indent, p.findLocalName(fn, i.X), sp0)
+		switch xType {
+		case token.I32:
+			fmt.Fprintf(w, "%s%s = $R%d.i32;\n", indent, p.findLocalName(fn, i.X), sp0)
+		case token.I64:
+			fmt.Fprintf(w, "%s%s = $R%d.i64;\n", indent, p.findLocalName(fn, i.X), sp0)
+		case token.F32:
+			fmt.Fprintf(w, "%s%s = $R%d.f32;\n", indent, p.findLocalName(fn, i.X), sp0)
+		case token.F64:
+			fmt.Fprintf(w, "%s%s = $R%d.f64;\n", indent, p.findLocalName(fn, i.X), sp0)
+		default:
+			unreachable()
+		}
 	case token.INS_GLOBAL_GET:
 		i := i.(ast.Ins_GlobalGet)
 		xType := p.findGlobalType(i.X)

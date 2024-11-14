@@ -22,6 +22,7 @@ func (p *wat2cWorker) buildCode(w io.Writer) error {
 	}
 
 	fmt.Fprintf(w, "#include <stdint.h>\n")
+	fmt.Fprintf(w, "#include <stdlib.h>\n")
 	fmt.Fprintf(w, "#include <string.h>\n")
 	fmt.Fprintf(w, "#include <math.h>\n")
 	fmt.Fprintln(w)
@@ -65,11 +66,20 @@ func (p *wat2cWorker) buildCode(w io.Writer) error {
 		return err
 	}
 
+	if err := p.buildTable_elem(w); err != nil {
+		return err
+	}
+	if err := p.buildMemory_data(w); err != nil {
+		return err
+	}
+
 	// 生成main函数
 	for _, f := range p.m.Funcs {
 		if f.Name == "_main" {
 			fmt.Fprintln(w)
 			fmt.Fprintf(w, "int main() {\n")
+			fmt.Fprintf(w, "  fn_memoy_init();\n")
+			fmt.Fprintf(w, "  fn_table_init();\n")
 			fmt.Fprintf(w, "  fn_%s();\n", toCName("_start"))
 			fmt.Fprintf(w, "  fn_%s();\n", toCName(f.Name))
 			fmt.Fprintf(w, "  return 0;\n")
@@ -172,6 +182,29 @@ func (p *wat2cWorker) buildImport(w io.Writer) error {
 	}
 
 	fmt.Fprintln(w)
+	return nil
+}
+
+func (p *wat2cWorker) buildMemory_data(w io.Writer) error {
+	fmt.Fprintf(w, "void fn_memoy_init() {\n")
+	defer fmt.Fprintf(w, "}\n\n")
+
+	for _, d := range p.m.Data {
+		fmt.Fprintf(w, "  memcpy((void*)&wasm_memoy[%d], (void *)(%q), %d);\n", d.Offset, d.Value, len(d.Value))
+	}
+	return nil
+}
+
+func (p *wat2cWorker) buildTable_elem(w io.Writer) error {
+	fmt.Fprintf(w, "void fn_table_init() {\n")
+	defer fmt.Fprintf(w, "}\n\n")
+
+	for _, e := range p.m.Elem {
+		for i, x := range e.Values {
+			fmt.Fprintf(w, "  wasm_table[%d] = %s;\n", int(e.Offset)+i, "(ref_t)(fn_"+toCName(x)+")")
+		}
+	}
+
 	return nil
 }
 
