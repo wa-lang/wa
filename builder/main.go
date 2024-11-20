@@ -143,7 +143,7 @@ func (p *Builder) genWaExe() {
 		dstpath := filepath.Join(waRootPath, "bin", "wa.wasm")
 
 		cmd := exec.Command("go", "build", "-o", dstpath, "wa-lang.org/wa")
-		cmd.Env = append([]string{"GOOS=" + wasip1, "GOARCH=" + wasm, "CGO_ENABLED=0"}, os.Environ()...)
+		cmd.Env = append([]string{"GOOS=" + wasip1, "GOARCH=" + wasm, CGO_ENABLED}, os.Environ()...)
 		if output, err := cmd.CombinedOutput(); err != nil {
 			fmt.Print(string(output))
 			panic(err)
