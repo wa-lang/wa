@@ -15,8 +15,7 @@
 
 </div>
 
-Wa is a general-purpose programming language designed for developing robustness and maintainability WebAssembly software.
-Instead of requiring complex toolchains to set up, you can simply go install it - or run it in a browser.
+Wa-lang is a general-purpose programming language designed for for WebAssembly. The goal is to provide a reliable, easy-to-use, statically typed language for high-performance web applications. The front-end parser of Wa-lang is derived from Golang, and the syntax maintains its simplicity, easy-to-learn, and unambiguous characteristics; the back-end code generator and runtime are fully independently developed (not dependent on external projects such as LLVM). Currently, Wa-lang is in the engineering trial stage.
 
 ![](docs/images/logo/logo-animate1.svg)
 
@@ -24,6 +23,13 @@ Instead of requiring complex toolchains to set up, you can simply go install it 
 - Manual: [https://wa-lang.github.io/man/en/](https://wa-lang.github.io/man/en/)
 - Github: [https://github.com/wa-lang/wa](https://github.com/wa-lang/wa)
 - Playground: [https://wa-lang.org/playground](https://wa-lang.org/playground)
+
+> Note: Unless otherwise noted, the Wa source files are distributed under the AGPL-v3 license found in the LICENSE file.
+
+## How to contribute
+The project is still in the prototype stage. If you have co-construction or PR needs, please refer to [How to contribute](./wca/readme.md). We no longer accept PRs for modifications to third-party libraries.
+
+> Note: Submitting a PR to this repository is deemed to be your recognition and acceptance of the [Wa-lang Contributor Agreement](./wca/wca.md)(Aka WCA), but your PRs will not be reviewed or accepted until WCA is actually signed.
 
 ## Playground
 

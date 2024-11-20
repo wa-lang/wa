@@ -1,9 +1,10 @@
-# 如何参与贡献
+# How to contribute
 
-感谢您有兴趣为 武汉市江夏区凹语言开发工作室 托管或管理的项目贡献软件代码！  
-在首次发起 PR 前，您需要签署“凹语言贡献者协议”（既WCA），签署方法为：通过您提交时所使用的电子邮箱，向 <wca@wa-lang.org> 发送一封签署凹语言贡献者协议的电子邮件。
+Thank you for your interest in contributing projects hosted or managed by wa-lang Development Studio!
 
-您需要在发送的签署邮件中完整包含协议全文，并将第一行的下划线（___）部分，替换为您的邮件地址。协议模板全文如下：
+Before launching a PR for the first time, you need to sign the "Wa-lang Contributor Agreement"(Aka WCA) by sending a email that signing WCA to <wca@wa-lang.org> through the email address you used when commiting.
+
+You need to include the full text of WCA in the signed email you send, and replace the underline text("___") in the first line with your email address. The full text of WCA template is as follows:
 
 ---
 
@@ -47,8 +48,8 @@
 
 ---
 
-一封完整的协议签署邮件应如下图所示，注意签署地址应改为您的邮箱地址（图中红框），邮件应发送至 <wca@wa-lang.org>（图中蓝框）：
+A complete WCA signing email should be as shown in the picture below. Note that the signing address should be changed to your email address (red box in the picture), and the email should be sent to <wca@wa-lang.org> (blue box in the picture):
 
 ![](wca_mail_sample.png)
 
-上述操作仅在首次提交前执行一次即可，后续通过该邮箱提交的贡献将自动合并，无需再签署。
+The above operation only needs to be performed once before the first PR. Subsequent contributions committed by this email address will be merged automatically.
