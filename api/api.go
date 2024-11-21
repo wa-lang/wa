@@ -75,7 +75,7 @@ func LoadProgramVFS(vfs *config.PkgVFS, cfg *config.Config, pkgPath string) (*Pr
 func BuildFile(cfg *config.Config, filename string, src interface{}) (mainFunc string, wat []byte, err error) {
 	prog, err := LoadProgramFile(cfg, filename, src)
 	if err != nil || prog == nil {
-		logger.Tracef(&config.EnableTrace_api, "LoadProgramVFS failed, err = %v", err)
+		logger.Tracef(&config.EnableTrace_api, "LoadProgramFile failed, err = %v", err)
 		return "", nil, err
 	}
 
