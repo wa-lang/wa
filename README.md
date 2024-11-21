@@ -15,7 +15,7 @@
 
 </div>
 
-Wa-lang is a general-purpose programming language designed for for WebAssembly. The goal is to provide a simple, reliable, easy-to-use, statically typed language for high-performance web applications. The back-end code generator and runtime are fully independently developed (not dependent on external projects such as LLVM). Currently, Wa-lang is in the engineering trial stage.
+Wa-lang is a general-purpose programming language designed for for WebAssembly. The goal is to provide a simple, reliable, easy-to-use, statically typed language for high-performance web applications. The code generator and runtime are fully independently developed (not dependent on external projects such as LLVM). Currently, Wa-lang is in the engineering trial stage.
 
 ![](docs/images/logo/logo-animate1.svg)
 
