@@ -174,13 +174,15 @@ func CmdRunAction(c *cli.Context) error {
 			os.Exit(exitCode)
 		}
 		fmt.Println(err)
+	} else {
+		if len(stdout) > 0 {
+			fmt.Fprint(os.Stdout, string(stdout))
+		}
+		if len(stderr) > 0 {
+			fmt.Fprint(os.Stderr, string(stderr))
+		}
 	}
-	if len(stdout) > 0 {
-		fmt.Fprint(os.Stdout, string(stdout))
-	}
-	if len(stderr) > 0 {
-		fmt.Fprint(os.Stderr, string(stderr))
-	}
+
 	return nil
 }
 
