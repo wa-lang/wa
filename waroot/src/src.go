@@ -42,7 +42,6 @@ func GetStackSize(backend, targetOS string) int {
 		}
 	}
 	panic("unreachable")
-	return 0
 }
 
 // 获取汇编基础代码
