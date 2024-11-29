@@ -56,9 +56,6 @@ func CmdBuildAction(c *cli.Context) error {
 
 	var opt = appbase.BuildOptions(c)
 	_, _, err := BuildApp(opt, input, outfile)
-	if err != nil {
-		return err
-	}
 	return err
 }
 

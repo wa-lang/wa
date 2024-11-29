@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"io/fs"
 	"os"
-	"path"
 	pathpkg "path"
 	"path/filepath"
 	"sort"
@@ -24,7 +23,6 @@ import (
 	"wa-lang.org/wa/internal/types"
 	"wa-lang.org/wa/internal/wamime"
 	wasrc "wa-lang.org/wa/waroot/src"
-	wastd "wa-lang.org/wa/waroot/src"
 )
 
 var _loadRuntime bool = true
@@ -601,7 +599,7 @@ func (p *_Loader) ParseDir(pkgpath string) (filenames []string, files []*ast.Fil
 				f.EmbedMap = make(map[string]string)
 			}
 
-			vpath := path.Join(pkgpath, info.Embed)
+			vpath := pathpkg.Join(pkgpath, info.Embed)
 			data, err := fs.ReadFile(pkgVFS, vpath)
 			if err != nil {
 				continue
@@ -681,7 +679,7 @@ func (p *_Loader) hasExt(name string, extensions ...string) bool {
 }
 
 func (p *_Loader) isStdPkg(pkgpath string) bool {
-	return wastd.IsStdPkg(pkgpath)
+	return wasrc.IsStdPkg(pkgpath)
 }
 
 func (p *_Loader) isSelfPkg(pkgpath string) bool {
