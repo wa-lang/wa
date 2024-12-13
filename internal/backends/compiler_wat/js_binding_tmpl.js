@@ -103,7 +103,6 @@ class WaApp {
       },
       print_i32: (i) => { this._wa_print_buf += i },
       print_u64: (i) => { this._wa_print_buf += i },
-      print_u64: (i) => { this._wa_print_buf += i },
       print_i64: (i) => { this._wa_print_buf += i },
       print_f32: (f) => { this._wa_print_buf += f },
       print_f64: (f) => { this._wa_print_buf += f },

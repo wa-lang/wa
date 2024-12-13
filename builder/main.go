@@ -59,8 +59,8 @@ func NewBuilder(outputDir string) *Builder {
 }
 
 func (p *Builder) GenAll() {
-	waRoot_darwin_amd64 := p.getWarootPath(darwin, arm64)
-	waRoot_darwin_arm64 := p.getWarootPath(darwin, amd64)
+	waRoot_darwin_amd64 := p.getWarootPath(darwin, amd64)
+	waRoot_darwin_arm64 := p.getWarootPath(darwin, arm64)
 	waRoot_linux_amd64 := p.getWarootPath(linux, amd64)
 	waRoot_windows_amd64 := p.getWarootPath(windows, amd64)
 	waRoot_wasip1_wasm := p.getWarootPath(wasip1, wasm)
