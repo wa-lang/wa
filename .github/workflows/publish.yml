@@ -13,6 +13,7 @@ on:
 jobs:
   deploy:
     runs-on: ubuntu-latest
+    if: ${{github.repository == 'wa-lang/wa'}}
     steps:
       - name: Checkout
         uses: actions/checkout@v3
@@ -48,6 +49,7 @@ jobs:
 
   build-push-docker:
     runs-on: ubuntu-latest
+    if: ${{github.repository == 'wa-lang/wa'}}
     steps:
       - name: Checkout
         uses: actions/checkout@v3
