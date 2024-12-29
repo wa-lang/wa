@@ -522,6 +522,7 @@ func (b *builder) expr0(fn *Function, e ast.Expr, tv types.TypeAndValue) Value {
 			Pkg:       fn.Pkg,
 			Prog:      fn.Prog,
 			syntax:    e,
+			anonymous: true,
 		}
 		fn.AnonFuncs = append(fn.AnonFuncs, fn2)
 		b.buildFunction(fn2)
