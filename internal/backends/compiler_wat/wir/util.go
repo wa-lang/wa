@@ -177,7 +177,11 @@ func GetFnMangleName(v interface{}, mainPkg string) (internal string, external s
 	exported := true
 	switch f := v.(type) {
 	case *ssa.Function:
-		if recv := f.Signature.Recv(); recv != nil {
+		recv := f.Signature.Recv()
+		if recv == nil && f.Anonymous() && f.Parent().Signature != nil {
+			recv = f.Parent().Signature.Recv()
+		}
+		if recv != nil {
 			//if recv.Pkg().Path() != mainPkg {
 			//	exported = false
 			//} else {
