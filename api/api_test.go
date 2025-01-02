@@ -18,3 +18,18 @@ func ExampleFormatCode() {
 	// Output:
 	// func add(a: i32, b: i32) => i32 { return a + b }
 }
+
+func ExampleFormatCode_structEmbeddingField() {
+	s, err := api.FormatCode("hello.wa", `
+type A :struct{  }
+type B :struct{  A  }
+`)
+	if err != nil {
+		panic(err)
+	}
+	fmt.Println(s)
+
+	// Output:
+	// type A :struct{}
+	// type B :struct{ A }
+}

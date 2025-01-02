@@ -523,8 +523,9 @@ func (p *printer) fieldList(fields *ast.FieldList, isStruct, isIncomplete bool) 
 					}
 					p.expr(x)
 				}
-				p.print(token.COLON)
+				// 匿名嵌入的成员不打印冒号
 				if len(f.Names) > 0 {
+					p.print(token.COLON)
 					p.print(blank)
 				}
 				p.expr(f.Type)
