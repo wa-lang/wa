@@ -644,6 +644,36 @@ func (check *Checker) resolveExprOrTypeOrGenericCall(x *operand, e *ast.CallExpr
 					}
 				}
 			}
+		} else {
+			// eCall.X 是普通的 Expr 类型
+			// 作为普通的 Expr, 解析其类型(已经check过没有错误)
+			var thisType Type = nil
+			{
+				var xOperand operand
+				check.rawExpr(&xOperand, eCall.X, nil)
+				if xOperand.mode == value {
+					// 返回值必须可取地址, 才可能链式调用方法
+					if t, ok := xOperand.typ.(*Pointer); ok {
+						thisType = t.Elem()
+					}
+				}
+			}
+
+			// 返回值必须是指针类型, 才能链式调用
+			if thisType != nil {
+				if t, _ := thisType.(*Named); t != nil {
+					obj, _, _ := lookupFieldOrMethod(t, true, check.pkg, eCall.Sel.Name)
+					if fnObj, ok := obj.(*Func); ok && len(fnObj.generic) != 0 {
+						for _, genericFnObj := range fnObj.generic {
+							if err := check.tryGenericCall(x, genericFnObj, e); err == nil {
+								eCall.Sel.Name = genericFnObj.name
+								check.exprOrType(x, e.Fun)
+								return
+							}
+						}
+					}
+				}
+			}
 		}
 	}
 
