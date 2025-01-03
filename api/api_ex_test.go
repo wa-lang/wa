@@ -63,6 +63,39 @@ func ExampleRunCode_args() {
 	// 1 : bb
 }
 
+func ExampleRunCode_genericChainCalls() {
+	const code = `
+		type A: struct { }
+
+		#wa:generic AddStr
+		func A.Add(i: int) => *A {
+			println(i)
+			return this
+		}
+
+		func A.AddStr(s: string) => *A {
+			println(s)
+			return this
+		}
+
+		func main() {
+			a: A
+			a.Add("abc").Add("def")
+		}
+	`
+
+	output, err := api.RunCode(api.DefaultConfig(), "hello.wa", code, "__main__.main")
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	fmt.Print(string(output))
+
+	// Output:
+	// abc
+	// def
+}
+
 func ExampleRunCode_wz() {
 	const code = `
 		#wa:syntax=wz
