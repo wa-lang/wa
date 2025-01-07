@@ -900,3 +900,10 @@ func trace2() {
 	// trace(f2(), 1, 2, 3)
 	// trace(f3(), 1, 2, 3, 4)
 }
+
+func setFinalizer1() {
+	i := 1
+	setFinalizer(i, func(ptr: i32) {}) // ERROR is not a pointer
+	setFinalizer(&i, func(ptr: i32) {}) // ERROR expect u32 as parameter
+	setFinalizer(&i, func(ptr: u32, y: i64) {}) // ERROR expect 1 parameter and 0 result
+}

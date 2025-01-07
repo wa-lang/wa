@@ -562,6 +562,27 @@ func (check *Checker) builtin(x *operand, call *ast.CallExpr, id builtinId) (_ b
 					// TODO(gri) "use" all arguments?
 					return
 				}
+				switch i {
+				case 0:
+					if !isPointer(x.typ) {
+						check.invalidArg(x.pos(), "%s is not a pointer", x)
+						return
+					}
+				case 1:
+					sig, ok := x.typ.(*Signature)
+					if !ok {
+						check.invalidArg(x.pos(), "%s is not a function", x)
+						return
+					}
+					if sig.Params().Len() != 1 || sig.Results().Len() != 0 {
+						check.invalidArg(x.pos(), "expect 1 parameter and 0 result for function, but found %d and %d", sig.Params().Len(), sig.Results().Len())
+						return
+					}
+					if sig.Params().At(0).Type().String() != "u32" {
+						check.invalidArg(x.pos(), "expect u32 as parameter for function, but found %s", sig.Params().At(0).Type().String())
+						return
+					}
+				}
 				params[i] = x.typ
 			}
 		}
