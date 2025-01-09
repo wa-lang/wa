@@ -30,6 +30,8 @@ Wa-lang is a general-purpose programming language designed for for WebAssembly. 
 ## How to contribute
 The project is still in the prototype stage. If you have co-construction or PR needs, please refer to [How to contribute](./wca/readme_en.md). We no longer accept PRs for modifications to third-party libraries.
 
+> Note: Our canonical Git repository is located at https://gitcode.com/wa-lang/wa. There is a mirror of the repository at https://github.com/wa-lang/wa. Unless otherwise noted, the Wa source files are distributed under the AGPL-v3 license found in the LICENSE file.
+
 > Note: Submitting a PR to this repository is deemed to be your recognition and acceptance of the [Wa-lang Contributor Agreement](./wca/wca.md)(Aka WCA), but your PRs will not be reviewed or accepted until WCA is actually signed.
 
 ## Playground
