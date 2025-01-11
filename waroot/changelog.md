@@ -3,6 +3,14 @@
 - (dev)
   - Native 后端 (TODO)
   - 完善 `wa lsp` 子命令 (TODO)
+- v0.20.0 (2025-01-12)
+  - 补充带文字 logo
+  - 种子案例: 实验性支持Dora SSR游戏开发: https://github.com/IppClub/dora-wa
+  - 支持 github action 自动化构建: https://github.com/wa-lang/setup-wa
+  - 修复方法重载处理问题, 支持链式调用
+  - 修复 wa fmt 对匿名结构体成员格式化的问题
+  - 完善 println 打印复数
+  - 完善wat2c子命令
 - v0.19.0 (2024-11-11)
   - 实现 `defer` 延迟执行函数的特性
   - 实现复数类型
