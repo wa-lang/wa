@@ -338,9 +338,9 @@ func (p *wat2wasmWorker) buildInstruction(dst *wasm.Code, fn *ast.Func, i ast.In
 		dst.Body = append(dst.Body, p.encodeUint32(uint32(ins.Offset))...)
 
 	case token.INS_MEMORY_SIZE:
-		dst.Body = append(dst.Body, wasm.OpcodeMemorySize)
+		dst.Body = append(dst.Body, wasm.OpcodeMemorySize, 0x00)
 	case token.INS_MEMORY_GROW:
-		dst.Body = append(dst.Body, wasm.OpcodeMemoryGrow)
+		dst.Body = append(dst.Body, wasm.OpcodeMemoryGrow, 0x00)
 	case token.INS_I32_CONST:
 		ins := i.(ast.Ins_I32Const)
 		dst.Body = append(dst.Body, wasm.OpcodeI32Const)
