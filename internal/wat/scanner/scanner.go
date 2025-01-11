@@ -147,7 +147,7 @@ func (s *Scanner) errorf(offs int, format string, args ...interface{}) {
 }
 
 func (s *Scanner) scanComment(firstRune rune) string {
-	// initial '/' already consumed; s.ch == '/' || s.ch == '*'
+	// initial ';'||'(' already consumed; s.ch == ';'
 	offs := s.offset - 1 // position of initial '/'
 	next := -1           // position immediately following the comment; < 0 means invalid comment
 	numCR := 0
@@ -746,9 +746,13 @@ scanAgain:
 		case '(':
 			// (; comment ;)
 			if s.ch == ';' {
-				// 不支持多行注释(这是Feature, 不是BUG)
-				tok = token.ILLEGAL
-				tokValue = string(ch)
+				comment := s.scanComment('(')
+				if s.mode&ScanComments == 0 {
+					// skip comment
+					goto scanAgain
+				}
+				tok = token.COMMENT
+				tokValue = comment
 			} else {
 				tok = token.LPAREN
 			}
