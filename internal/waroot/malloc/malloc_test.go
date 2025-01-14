@@ -5,5 +5,11 @@ package malloc
 import "testing"
 
 func TestHeap(t *testing.T) {
-	// TODO
+	h := NewHeap(nil)
+	got := h.Malloc(1)
+	defer h.Free(got)
+	expect := DefaultHeapBase + kFreeListHeadSize + kBlockHeadSize
+	if got != expect {
+		t.Fatalf("invalid ptr: expect = %d, got = %d", expect, got)
+	}
 }

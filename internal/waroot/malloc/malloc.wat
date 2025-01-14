@@ -1,9 +1,8 @@
 ;; Copyright 2025 The Wa Authors. All rights reserved.
 
-(module $malloc
-	(memory $memory 1024)
-
 	(export "memory" (memory $memory))
+
+	(memory $memory {{.MemoryPages}} {{.MemoryPagesMax}})
 
 	;; 栈/静态数据/堆的内存布局
 	;;
@@ -46,12 +45,12 @@
 	;; | size:i32 | next:i32 | data[0] |
 	;; +----------+----------+---------+
 	;;
-	(global $__stack_ptr (mut i32) (i32.const 1024))      ;; index=0, 用户可配置
-	(global $__heap_base i32       (i32.const 10000))     ;; index=1, 编译器生成, 8字节对齐, 只读
+	(global $__stack_ptr (mut i32) (i32.const {{.StackPtr}})) ;; index=0, 用户可配置
+	(global $__heap_base i32       (i32.const {{.HeapBase}})) ;; index=1, 编译器生成, 8字节对齐, 只读
 	(global $__heap_ptr  (mut i32) (i32.const 0))         ;; heap 当前位置指针
 	(global $__heap_top  (mut i32) (i32.const 0))         ;; heap 最大位置指针(超过时要 grow 内存)
 	(global $__heap_l128_freep (mut i32) (i32.const 0))   ;; l128 是循环链表, 记录当前的迭代位置
-	(global $__heap_lfixed_cap (mut i32) (i32.const 100)) ;; 固定尺寸空闲链表最大长度, 满时回收
+	(global $__heap_lfixed_cap (mut i32) (i32.const {{.HeapLFixedCap}})) ;; 固定尺寸空闲链表最大长度, 满时回收
 
 	;; 判断是否为固定大小内存
 	(func $heap_is_fixed_size (param $size i32) (result i32)
@@ -298,7 +297,7 @@
 
 	;; func wa_malloc(size: i32) => i32
 	;; 在堆上分配内存并返回地址, 内存不超过 2GB, 失败返回 0
-	(func $wa_malloc (param $size i32) (result i32)
+	(func $wa_malloc (export "wa_malloc") (param $size i32) (result i32)
 		(local $free_list i32) ;; *heap_block_t, 空闲链表头
 		(local $b i32) ;; *heap_block_t
 
@@ -595,7 +594,7 @@
 	)
 
 	;; func wa_free(ptr: i32) => i32
-	(func $wa_free (param $ptr i32)
+	(func $wa_free (export "wa_free") (param $ptr i32)
 		(local $size i32) ;; *heap_block_t
 		(local $block i32) ;; *heap_block_t
 		(local $freep i32) ;; 空闲链表指针
@@ -851,4 +850,3 @@
 	(func $_start (export "_start")
 		call $wa_malloc_init
 	)
-)
