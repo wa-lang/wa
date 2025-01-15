@@ -20,6 +20,8 @@ var malloc_wat string
 
 // 默认值
 const (
+	KPageBytes = 64 << 10 // 一个内存页大小
+
 	DefaultMemoryPages    int32 = 1  // 内存页数
 	DefaultMemoryPagesMax int32 = 10 // 内存最大页数
 
@@ -30,8 +32,8 @@ const (
 
 // 内部常量
 const (
-	kFreeListHeadSize = 5 * 8 // 全部空闲链表头大小
-	kBlockHeadSize    = 2 * 8 // 块头大小
+	kBlockHeadSize    = 8                  // 块头大小
+	kFreeListHeadSize = 5 * kBlockHeadSize // 全部空闲链表头大小
 )
 
 // Heap配置
@@ -126,8 +128,68 @@ func (p *Heap) init() {
 	}
 }
 
+// 获取全局变量
+func (p *Heap) Global__stack_ptr() int32 {
+	return p.xGlobal("__stack_ptr")
+}
+func (p *Heap) Global__heap_base() int32 {
+	return p.xGlobal("__heap_base")
+}
+func (p *Heap) Global__heap_ptr() int32 {
+	return p.xGlobal("__heap_ptr")
+}
+func (p *Heap) Global__heap_top() int32 {
+	return p.xGlobal("__heap_top")
+}
+func (p *Heap) Global__heap_l128_freep() int32 {
+	return p.xGlobal("__heap_l128_freep")
+}
+func (p *Heap) Global__heap_lfixed_cap() int32 {
+	return p.xGlobal("__heap_lfixed_cap")
+}
+
+func (p *Heap) xGlobal(name string) int32 {
+	v := p.wazeroModule.ExportedGlobal(name).Get(context.Background())
+	return int32(uint32(v))
+}
+
+// 去读内存
+func (p *Heap) ReadMemoryI32(offset int32) int32 {
+	v, _ := p.wazeroModule.Memory().ReadUint32Le(context.Background(), uint32(offset))
+	return int32(v)
+}
+
+// 读取空闲链表头
+func (p *Heap) ReadL24Header() HeapBlock {
+	offset := p.Global__heap_base() + 8*0
+	return p.ReadBlock(offset)
+}
+func (p *Heap) ReadL32Header() HeapBlock {
+	offset := p.Global__heap_base() + 8*1
+	return p.ReadBlock(offset)
+}
+func (p *Heap) ReadL46Header() HeapBlock {
+	offset := p.Global__heap_base() + 8*2
+	return p.ReadBlock(offset)
+}
+func (p *Heap) ReadL80Header() HeapBlock {
+	offset := p.Global__heap_base() + 8*3
+	return p.ReadBlock(offset)
+}
+func (p *Heap) ReadL128Header() HeapBlock {
+	offset := p.Global__heap_base() + 8*4
+	return p.ReadBlock(offset)
+}
+
+// 读取 HeapBlock 数据
+func (p *Heap) ReadBlock(offset int32) HeapBlock {
+	size := p.ReadMemoryI32(offset + 0)
+	next := p.ReadMemoryI32(offset + 4)
+	return HeapBlock{Size: size, Next: next}
+}
+
 // 初始化获取空闲链表
-func (p *Heap) FreeList(size int32) HeapBlock {
+func (p *Heap) ReadFreeListHeader(z int32) HeapBlock {
 	return HeapBlock{}
 }
 

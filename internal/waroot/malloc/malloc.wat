@@ -2,6 +2,13 @@
 
 	(export "memory" (memory $memory))
 
+	(export "__stack_ptr" (global $__stack_ptr))
+	(export "__heap_base" (global $__heap_base))
+	(export "__heap_ptr" (global $__heap_ptr))
+	(export "__heap_top" (global $__heap_top))
+	(export "__heap_l128_freep" (global $__heap_l128_freep))
+	(export "__heap_lfixed_cap" (global $__heap_lfixed_cap))
+
 	(memory $memory {{.MemoryPages}} {{.MemoryPagesMax}})
 
 	;; 栈/静态数据/堆的内存布局
@@ -230,15 +237,9 @@
 		global.get $__heap_base
 		call $heap_assert_align8
 
-		;; $__heap_l128_freep = $__heap_base + 5*sizeof(heap_block_t)
+		;; $__heap_ptr = $__heap_base + 5*sizeof(heap_block_t)
 		global.get $__heap_base
 		i32.const 40 ;; 5*sizeof(heap_block_t)
-		i32.add
-		global.set $__heap_l128_freep
-
-		;; $__heap_ptr = $__heap_l128_freep + 8
-		global.get $__heap_l128_freep
-		i32.const 8
 		i32.add
 		global.set $__heap_ptr
 
@@ -293,6 +294,13 @@
 		i32.add
 		i64.const 0 ;; size+next
 		i64.store offset=0
+
+		;; $__heap_l128_freep = $__heap_base + 4*sizeof(heap_block_t)
+		;; 该字段改用 global 表示, 不占用内存空间
+		global.get $__heap_base
+		i32.const 32 ;; 4*sizeof(heap_block_t)
+		i32.add
+		global.set $__heap_l128_freep
 	)
 
 	;; func wa_malloc(size: i32) => i32
