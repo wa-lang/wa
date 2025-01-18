@@ -1,5 +1,8 @@
 ;; Copyright 2025 The Wa Authors. All rights reserved.
 
+	(import "env" "print_i32" (func $print_i32 (param i32)))
+	(import "env" "print_i32_i32" (func $print_i32_i32 (param i32) (param i32)))
+
 	(export "memory" (memory $memory))
 
 	(export "__stack_ptr" (global $__stack_ptr))
@@ -28,9 +31,9 @@
 	;; +-+----------------------------+----------+----------+--------------------+
 	;; |                              |          ^          ^                    ^
 	;; v                              v          |          |                    |
-	;; +-----+-----+-----+-----+------+          |          |                 __heap_ptr
-	;; | l24 | l32 | l46 | l80 | l128 | ---------|----------|---> 空闲链表头, 头节点没有数据
-	;; +--+--+--+--+--+--+--+--+--+---+          |          |
+	;; +-----+-----+-----+-----+------+-----+    |          |                 __heap_ptr
+	;; | l24 | l32 | l48 | l80 | l128 | nil | ---|----------|---> 空闲链表头, 头节点没有数据
+	;; +--+--+--+--+--+--+--+--+--+---+-----+    |          |
 	;; ^  |     |     |     |     |       +---------+     +---------+
 	;; |  +-----|-----|-----|-----|-----> | 15 Byte | --> | 24 Byte | --> nil
 	;; |        |     |     |     |       +---------+     +---------+
@@ -38,14 +41,25 @@
 	;; |        +-----|-----|-----|-----> | 32 Byte | --> nil
 	;; |              |     |     |       +---------+
 	;; |              |     |     |       +---------+     +---------+
-	;; |              +-----|-----|-----> | 40 Byte | --> | 46 Byte | --> nil
+	;; |              +-----|-----|-----> | 40 Byte | --> | 48 Byte | --> nil
 	;; |                    |     |       +---------+     +---------+
 	;; |                    +-----|-----> nil
 	;; |                          |       +---------+     +-----------+
-	;; __heap_base          +-----+-----> | 81 Byte | --> | 1024 Byte | --> nil
+	;; __heap_base          +-----+-----> | 81 Byte | --> | 1024 Byte | --> Head
 	;;                      |     |       +---------+     +-----------+
 	;;                      |     +-----> l128 负责大于80字节大小的变长内存分配
-	;; __heap_l128_freep ---+     +-----> l128 是循环链表需要记录上次检索的位置
+	;; __heap_l128_freep ---+     +-----> l128 是 **循环链表** 需要记录上次检索的位置
+	;;                            +-----> l128 后面的 nil 避免头和分配的块数据相邻
+	;;
+	;; heap_fixed_header_t
+	;; +----------+----------+
+	;; | len:i32  | next:i32 |
+	;; +----------+----------+
+	;;
+	;; heap_L128_header_t
+	;; +------------+----------+
+	;; | size=0:i32 | next:i32 |
+	;; +------------+----------+
 	;;
 	;; heap_block_t
 	;; +----------+----------+---------+
@@ -57,10 +71,49 @@
 	(global $__heap_ptr  (mut i32) (i32.const 0))         ;; heap 当前位置指针
 	(global $__heap_top  (mut i32) (i32.const 0))         ;; heap 最大位置指针(超过时要 grow 内存)
 	(global $__heap_l128_freep (mut i32) (i32.const 0))   ;; l128 是循环链表, 记录当前的迭代位置
-	(global $__heap_lfixed_cap (mut i32) (i32.const {{.HeapLFixedCap}})) ;; 固定尺寸空闲链表最大长度, 满时回收
+	(global $__heap_lfixed_cap i32 (i32.const {{.HeapLFixedCap}})) ;; 固定尺寸空闲链表最大长度, 满时回收; 也可用于关闭 fixed 策略
+
+	;; 合法的指针
+	(func $heap_assert_valid_ptr (param $ptr i32)
+		;; ptr > 0
+		local.get $ptr
+		i32.const 0
+		i32.gt_s
+		if else unreachable end
+
+		;; 4 的倍数
+		local.get $ptr
+		i32.const 4
+		i32.rem_s
+		i32.eqz
+		if else unreachable end
+	)
+
+	;; 是否允许固定大小的分配策略
+	(func $heap_is_fixed_list_enabled (result i32)
+		global.get $__heap_lfixed_cap
+		i32.eqz
+		if (result i32)
+			i32.const 0
+		else
+			i32.const 1
+		end
+	)
+	(func $heap_assert_fixed_list_enabled
+		global.get $__heap_lfixed_cap
+		i32.eqz
+		if unreachable end
+	)
 
 	;; 判断是否为固定大小内存
 	(func $heap_is_fixed_size (param $size i32) (result i32)
+		;; 禁止了 fixed 策略?
+		call $heap_is_fixed_list_enabled
+		if else
+			i32.const 0
+			return
+		end
+
 		;; return ($size <= 80)? 1: 0
 		local.get $size
 		i32.const 80
@@ -143,7 +196,19 @@
 	;; 根据要申请内存的大小返回合适的空闲链表, 和对齐后的大小
 	;; func $heap_free_list.ptr_and_fixed_size(size: i32) => (ptr, fixed_size: i32)
 	(func $heap_free_list.ptr_and_fixed_size (param $size i32) (result i32 i32)
-		;; l24 | l32 | l46 | l80 | l128
+		;; l24 | l32 | l48 | l80 | l128
+
+		;; 禁止了 fixed 策略?
+		call $heap_is_fixed_list_enabled
+		if else
+			;; return l128
+			global.get $__heap_base
+			i32.const 32
+			i32.add
+			local.get $size
+			call $heap_alignment8
+			return
+		end
 
 		;; if $size > 80: return (l128, max(128, $fixed_size))
 		local.get $size
@@ -170,9 +235,9 @@
 			return
 		end
 
-		;; if $size > 46: return (l80, 80)
+		;; if $size > 48: return (l80, 80)
 		local.get $size
-		i32.const 46
+		i32.const 48
 		i32.gt_s
 		if
 			global.get $__heap_base
@@ -182,7 +247,7 @@
 			return
 		end
 
-		;; if $size > 32: return (l46, 46)
+		;; if $size > 32: return (l48, 48)
 		local.get $size
 		i32.const 32
 		i32.gt_s
@@ -190,7 +255,7 @@
 			global.get $__heap_base
 			i32.const 16 ;; 2*sizeof(heap_block_t)
 			i32.add
-			i32.const 46
+			i32.const 48
 			return
 		end
 
@@ -225,10 +290,10 @@
 			unreachable
 		end
 
-		;; $__stack_ptr < $__heap_base
+		;; assert $__stack_ptr < $__heap_base
 		global.get $__stack_ptr
 		global.get $__heap_base
-		i32.le_s
+		i32.lt_s
 		if else
 			unreachable
 		end
@@ -237,9 +302,9 @@
 		global.get $__heap_base
 		call $heap_assert_align8
 
-		;; $__heap_ptr = $__heap_base + 5*sizeof(heap_block_t)
+		;; $__heap_ptr = $__heap_base + 6*sizeof(heap_block_t)
 		global.get $__heap_base
-		i32.const 40 ;; 5*sizeof(heap_block_t)
+		i32.const 48 ;; 6*sizeof(heap_block_t)
 		i32.add
 		global.set $__heap_ptr
 
@@ -257,43 +322,15 @@
 			unreachable
 		end
 
-		;; 分别初始化空闲链表头(5*8=40个字节)
+		;; 分别初始化空闲链表头(6*8=48个字节), l128 再单独初始化
 		;; 固定大小的空闲链表头的 size 对应链表的节点数
-		;; l24 | l32 | l46 | l80 | l128
+		;; l24 | l32 | l48 | l80 | nil
+		;; memset(__heap_base, 0, 48)
 
-		;; l24
 		global.get $__heap_base
-		i64.const 0 ;; size+next
-		i64.store offset=0
-
-		;; l32
-		global.get $__heap_base
-		i32.const 8 ;; 1*sizeof(heap_block_t)
-		i32.add
-		i64.const 0 ;; size+next
-		i64.store offset=0
-
-		;; l46
-		global.get $__heap_base
-		i32.const 16 ;; 2*sizeof(heap_block_t)
-		i32.add
-		i64.const 0 ;; size+next
-		i64.store offset=0
-
-		;; l80
-		global.get $__heap_base
-		i32.const 24 ;; 3*sizeof(heap_block_t)
-		i32.add
-		i64.const 0 ;; size+next
-		i64.store offset=0
-
-		;; l128, 最后一个变长
-		;; 因为需要循环遍历检索, 因此 size 设置为 0
-		global.get $__heap_base
-		i32.const 32 ;; 4*sizeof(heap_block_t)
-		i32.add
-		i64.const 0 ;; size+next
-		i64.store offset=0
+		i32.const 0
+		i32.const 48 ;; 6*sizeof(heap_block_t)
+		memory.fill
 
 		;; $__heap_l128_freep = $__heap_base + 4*sizeof(heap_block_t)
 		;; 该字段改用 global 表示, 不占用内存空间
@@ -301,6 +338,12 @@
 		i32.const 32 ;; 4*sizeof(heap_block_t)
 		i32.add
 		global.set $__heap_l128_freep
+
+		;; L128 是一个环
+		global.get $__heap_l128_freep
+		i32.const 0 ;; size
+		global.get $__heap_l128_freep ;; next = l128
+		call $heap_block.init
 	)
 
 	;; func wa_malloc(size: i32) => i32
@@ -319,22 +362,26 @@
 		;; $free_list, $size = $heap_free_list_header.ptr_and_fixed_size(size)
 		local.get $size
 		call $heap_free_list.ptr_and_fixed_size
-		local.set $free_list
 		local.set $size
+		local.set $free_list
 
-		;; 定长和变长有不同的分配策略
-		local.get $size
-		call $heap_is_fixed_size
+		;; 是否禁止了 fixed 策略
+		call $heap_is_fixed_list_enabled
 		if
-			local.get $free_list
-			call $wa_malloc_reuse_fixed
-			local.tee $b
-			i32.eqz
-			if else
-				;; if ($b != nil) return b->data;
-				local.get $b
-				call $heap_block.data
-				return
+			;; 定长和变长有不同的分配策略
+			local.get $size
+			call $heap_is_fixed_size
+			if
+				local.get $free_list
+				call $wa_malloc_reuse_fixed
+				local.tee $b
+				i32.eqz
+				if else
+					;; if ($b != nil) return b->data;
+					local.get $b
+					call $heap_block.data
+					return
+				end
 			end
 		end
 
@@ -374,6 +421,9 @@
 	(func $wa_malloc_reuse_fixed (param $free_list i32) (result i32)
 		(local $p i32) ;; *heap_block_t
 
+		;; 禁止了 fixed 策略
+		call $heap_assert_fixed_list_enabled
+
 		;; $free_list.size 对应节点的数量
 		;; if $free_list.size == 0 { return nil }
 		local.get $free_list
@@ -384,7 +434,7 @@
 			return
 		end
 
-		;; $free_list.size++
+		;; $free_list.size--
 		local.get $free_list
 		block (result i32)
 			local.get $free_list
@@ -432,11 +482,11 @@
 		call $heap_block.next
 		local.set $p
 		loop $continue
-			;; if $p.size >= $nbytes + 128 + 8 { 分裂为2块 }
+			;; if $p.size >= $nbytes + 8 { 分裂为2块 }
 			local.get $p
 			call $heap_block.size
 			local.get $nbytes
-			i32.const 136 ;; sizeof(heap_block_t) + 128
+			i32.const 8 ;; sizeof(heap_block_t)
 			i32.add
 			i32.ge_s
 			if
@@ -473,13 +523,20 @@
 				;; $__heap_l128_freep = $prevp
 				local.get $prevp
 				global.set $__heap_l128_freep
-		
+
+				;; $p.size = $nbytes
+				;; $p.data = nil
+				local.get $p
+				local.get $nbytes
+				i32.const 0
+				call $heap_block.init
+
 				;; return $p
 				local.get $p
 				return
 			end
 
-			;; if $p.size >= $nbytes { ... }
+			;; if $p.size >= $nbytes { 分配完整一块 }
 			local.get $p
 			call $heap_block.size
 			local.get $nbytes
@@ -487,16 +544,23 @@
 			if
 				;; $prevp.next = $p.next
 				local.get $prevp
-				call $heap_block.next
-				local.get $p
-				call $heap_block.next
+				block (result i32)
+					local.get $p
+					call $heap_block.next
+				end
 				call $heap_block.set_next
 
 				;; $__heap_l128_freep = $prevp
 				local.get $prevp
 				global.set $__heap_l128_freep
-		
-				;; return $p.data
+
+				;; $p.size 不变
+				;; $p.data = nil
+				local.get $p
+				i32.const 0
+				call $heap_block.set_next
+
+				;; return $p
 				local.get $p
 				return
 			end
@@ -510,10 +574,11 @@
 				return
 			end
 
-			;; $prevp = $p ???
-			;; $p = $p.next
+			;; $prevp = $p
 			local.get $p
-			global.set $__heap_l128_freep
+			local.set $prevp
+
+			;; $p = $p.next
 			local.get $p
 			call $heap_block.next
 			local.set $p
@@ -571,9 +636,11 @@
 			;; 更新已经分配内存的大小
 			;; heap_top += (pages * WASM_PAGE_SIZE);
 			global.get $__heap_top
-			local.get $pages
-			i32.const 65536
-			i32.mul
+			block (result i32)
+				local.get $pages
+				i32.const 65536
+				i32.mul
+			end
 			i32.add
 			global.set $__heap_top
 
@@ -601,11 +668,15 @@
 		return
 	)
 
-	;; func wa_free(ptr: i32) => i32
+	;; func wa_free(ptr: i32)
 	(func $wa_free (export "wa_free") (param $ptr i32)
 		(local $size i32) ;; *heap_block_t
 		(local $block i32) ;; *heap_block_t
 		(local $freep i32) ;; 空闲链表指针
+
+		;; 必须是合法的指针
+		local.get $ptr
+		call $heap_assert_valid_ptr
 
 		;; 指针必须8字节对齐
 		local.get $ptr
@@ -622,54 +693,21 @@
 		call $heap_block.size
 		local.set $size
 
-		;; 根据 size 查询对应的空闲链表
-		local.get $size
-		call $heap_free_list.ptr_and_fixed_size
-		local.set $freep
-		drop
-
-		;; 如果是固定大小内存
-		local.get $size
-		call $heap_is_fixed_size
+		;; 允许fixed策略?
+		call $heap_is_fixed_list_enabled
 		if
-			;; 改进: 如果是空闲链表太长, 则回收到变长空闲链表
-			global.get $__heap_lfixed_cap
-			i32.eqz
-			if else
-				local.get $freep
-				call $heap_block.size
-				global.get $__heap_lfixed_cap
-				i32.gt_s
-				if
-					local.get $freep
-					call $wa_lfixed_free_all
-				end
+			;; 如果是固定大小内存
+			local.get $size
+			call $heap_is_fixed_size
+			if
+				;; 根据 size 查询对应的空闲链表
+				local.get $size
+				call $heap_free_list.ptr_and_fixed_size
+				drop
+				local.get $block
+				call $wa_lfixed_free_block
+				return
 			end
-
-			;; $block.next = $freep.next
-			local.get $block
-			block (result i32)
-				local.get $freep
-				call $heap_block.next
-			end
-			call $heap_block.set_next
-
-			;; $freep.next = $block
-			local.get $freep
-			local.get $block
-			call $heap_block.set_next
-
-			;; $freep.size--
-			local.get $freep
-			block (result i32)
-				local.get $freep
-				call $heap_block.size
-				i32.const 1
-				i32.sub
-			end
-			call $heap_block.set_size
-
-			return
 		end
 
 		;; 变长大小内存
@@ -678,17 +716,58 @@
 		return
 	)
 
+	;; 固定尺寸空闲链表释放
+	(func $wa_lfixed_free_block (param $freep i32) (param $block i32)
+		call $heap_assert_fixed_list_enabled
+
+		;; 如果是空闲链表太长, 则回收到变长空闲链表
+		;; if cap > 0 && $freep->size == cap { wa_lfixed_free_all() }
+		local.get $freep
+		call $heap_block.size
+		global.get $__heap_lfixed_cap
+		i32.eq
+		if
+			local.get $freep
+			call $wa_lfixed_free_all
+		end
+
+		;; $block.next = $freep.next
+		local.get $block
+		block (result i32)
+			local.get $freep
+			call $heap_block.next
+		end
+		call $heap_block.set_next
+
+		;; $freep.next = $block
+		local.get $freep
+		local.get $block
+		call $heap_block.set_next
+
+		;; $freep.size++
+		local.get $freep
+		block (result i32)
+			local.get $freep
+			call $heap_block.size
+			i32.const 1
+			i32.add
+		end
+		call $heap_block.set_size
+	)
+
 	;; 固定尺寸空闲链表释放到 l128
 	(func $wa_lfixed_free_all (param $freep i32)
 		(local $p i32)
 		(local $temp i32)
+
+		call $heap_assert_fixed_list_enabled
 
 		;; p = $freep.next
 		local.get $freep
 		call $heap_block.next
 		local.set $p
 
-		;; while $p.next != nil
+		;; while $p != nil
 		block $break
 			loop $continue
 				;; if $p == nil { break }
@@ -714,6 +793,12 @@
 				br $continue
 			end
 		end
+
+		;; 清空容量计数
+		local.get $freep
+		i32.const 0
+		i32.const 0
+		call $heap_block.init
 	)
 
 	;; kr_free 算法释放
@@ -729,7 +814,8 @@
 		global.get $__heap_l128_freep
 		local.set $p
 
-		;; while !(bp > p && bp < p->next)
+		;; 查找到 bp 属于 [p, p->next] 区间结束循环
+		;; while !(bp > p && bp < p->next) { ... }
 		block $break
 			loop $continue
 				;; if bp > p && bp < p->next: break
@@ -776,20 +862,23 @@
 				local.get $p
 				call $heap_block.next
 				local.set $p
+
 				br $continue
 			end
 		end
 
-		;; if (bp + bp->s.size == p->s.ptr) { ... }
+		;; if (bp + bp->s.size + 8 == p->s.ptr) { ... }
 		local.get $bp
 		local.get $bp
-		call $heap_block.size
+		call $heap_block.size		
 		i32.add ;; 需要确保对齐, size 是字节数, bp 是 *heap_block_t
+		i32.const 8 ;; sizeof(heap_block_t)
+		i32.add
 		local.get $p
 		call $heap_block.next
 		i32.eq
 		if ;; join to upper nbr
-			;; bp->s.size += p->s.ptr->s.size;
+			;; bp->s.size += p->s.ptr->s.size + 8;
 			local.get $bp
 			block (result i32)
 				local.get $bp
@@ -799,6 +888,9 @@
 				call $heap_block.next
 				call $heap_block.size
 
+				i32.const 8
+
+				i32.add
 				i32.add
 			end
 			call $heap_block.set_size
@@ -814,17 +906,23 @@
 
 		else
 			;; bp->s.ptr = p->s.ptr;
+			local.get $bp
+			local.get $p
+			call $heap_block.next
+			call $heap_block.set_next
 		end
 
-		;; if (p + p->s.size == bp) { ... }
+		;; if (p + p->s.size + 8 == bp) { ... }
 		local.get $p
 		local.get $p
 		call $heap_block.size
 		i32.add
+		i32.const 8
+		i32.add
 		local.get $bp
 		i32.eq
 		if ;; join to lower nbr
-			;; p->s.size += bp->s.size;
+			;; p->s.size += bp->s.size + 8;
 			local.get $p
 			block (result i32)
 				local.get $p
@@ -833,6 +931,9 @@
 				local.get $bp
 				call $heap_block.size
 
+				i32.const 8
+
+				i32.add
 				i32.add
 			end
 			call $heap_block.set_size

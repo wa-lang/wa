@@ -14,6 +14,9 @@ hello:
 	go install
 	cd waroot && go run ../main.go run hello.wa
 
+dev:
+	go run main.go dev -malloc
+
 prime:
 	cd waroot && go run ../main.go run examples/prime
 
