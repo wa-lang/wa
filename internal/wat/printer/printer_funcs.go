@@ -449,6 +449,12 @@ func (p *watPrinter) printFuncs_body_ins(fn *ast.Func, ins ast.Instruction, blkL
 		fmt.Fprintln(p.w, tok)
 	case token.INS_MEMORY_GROW:
 		fmt.Fprintln(p.w, tok)
+	case token.INS_MEMORY_INIT:
+		fmt.Fprintln(p.w, tok, ins.(ast.Ins_MemoryInit).DataIdx)
+	case token.INS_MEMORY_COPY:
+		fmt.Fprintln(p.w, tok)
+	case token.INS_MEMORY_FILL:
+		fmt.Fprintln(p.w, tok)
 	case token.INS_I32_CONST:
 		fmt.Fprintln(p.w, tok, ins.(ast.Ins_I32Const).X)
 	case token.INS_I64_CONST:

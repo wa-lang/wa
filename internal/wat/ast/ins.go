@@ -228,6 +228,13 @@ type Ins_I64Store32 struct {
 type Ins_MemorySize struct{ OpToken }
 type Ins_MemoryGrow struct{ OpToken }
 
+type Ins_MemoryInit struct {
+	OpToken
+	DataIdx int32
+}
+type Ins_MemoryCopy struct{ OpToken }
+type Ins_MemoryFill struct{ OpToken }
+
 type Ins_I32Const struct {
 	OpToken
 	X int32

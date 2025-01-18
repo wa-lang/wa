@@ -119,6 +119,9 @@ const (
 	INS_I64_STORE32         // 0x3e, i64.store32
 	INS_MEMORY_SIZE         // 0x3f, memory.size
 	INS_MEMORY_GROW         // 0x40, memory.grow
+	INS_MEMORY_INIT         // 0xfc 0x08, memory.init
+	INS_MEMORY_COPY         // 0xfc 0x0a, memory.copy
+	INS_MEMORY_FILL         // 0xfc 0x0b, memory.fill
 	INS_I32_CONST           // 0x41, i32.const
 	INS_I64_CONST           // 0x42, i64.const
 	INS_F32_CONST           // 0x43, f32.const
@@ -340,6 +343,9 @@ var tokens = [...]string{
 	INS_I64_STORE32:         "i64.store32",
 	INS_MEMORY_SIZE:         "memory.size",
 	INS_MEMORY_GROW:         "memory.grow",
+	INS_MEMORY_INIT:         "memory.init",
+	INS_MEMORY_COPY:         "memory.copy",
+	INS_MEMORY_FILL:         "memory.fill",
 	INS_I32_CONST:           "i32.const",
 	INS_I64_CONST:           "i64.const",
 	INS_F32_CONST:           "f32.const",

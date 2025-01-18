@@ -757,6 +757,27 @@ func (p *wat2cWorker) buildFunc_ins(w io.Writer, fn *ast.Func, stk *valueTypeSta
 		fmt.Fprintf(w, "%swasm_memoy_size += $R%d.i32; $R%d.i32 = wasm_memoy_size;\n",
 			indent, sp0, ret0,
 		)
+	case token.INS_MEMORY_INIT:
+		dst := stk.Pop(token.I32)
+		off := stk.Pop(token.I32)
+		len := stk.Pop(token.I32)
+		fmt.Fprintf(w, "%sTODO; // memcpy((void*)$R%d.i32; (void*)$R%d.i32, $R%d.i32);\n",
+			indent, dst, off, len,
+		)
+	case token.INS_MEMORY_COPY:
+		dst := stk.Pop(token.I32)
+		src := stk.Pop(token.I32)
+		len := stk.Pop(token.I32)
+		fmt.Fprintf(w, "%smemcpy((void*)$R%d.i32; (void*)$R%d.i32, $R%d.i32);\n",
+			indent, dst, src, len,
+		)
+	case token.INS_MEMORY_FILL:
+		dst := stk.Pop(token.I32)
+		val := stk.Pop(token.I32)
+		len := stk.Pop(token.I32)
+		fmt.Fprintf(w, "%smemset((void*)$R%d.i32; $R%d.i32, $R%d.i32);\n",
+			indent, dst, val, len,
+		)
 	case token.INS_I32_CONST:
 		i := i.(ast.Ins_I32Const)
 		sp0 := stk.Push(token.I32)

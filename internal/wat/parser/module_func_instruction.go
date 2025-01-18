@@ -103,6 +103,12 @@ func (p *parser) parseInstruction() ast.Instruction {
 		return p.parseIns_MemorySize()
 	case token.INS_MEMORY_GROW:
 		return p.parseIns_MemoryGrow()
+	case token.INS_MEMORY_INIT:
+		return p.parseIns_MemoryInit()
+	case token.INS_MEMORY_COPY:
+		return p.parseIns_MemoryCopy()
+	case token.INS_MEMORY_FILL:
+		return p.parseIns_MemoryFill()
 	case token.INS_I32_CONST:
 		return p.parseIns_I32Const()
 	case token.INS_I64_CONST:
@@ -1029,6 +1035,22 @@ func (p *parser) parseIns_MemorySize() (i ast.Ins_MemorySize) {
 func (p *parser) parseIns_MemoryGrow() (i ast.Ins_MemoryGrow) {
 	i.OpToken = ast.OpToken(p.tok)
 	p.acceptToken(token.INS_MEMORY_GROW)
+	return
+}
+func (p *parser) parseIns_MemoryInit() (i ast.Ins_MemoryInit) {
+	i.OpToken = ast.OpToken(p.tok)
+	p.acceptToken(token.INS_MEMORY_INIT)
+	i.DataIdx = p.parseInt32Lit() // TODO: 支持标识符
+	return
+}
+func (p *parser) parseIns_MemoryCopy() (i ast.Ins_MemoryCopy) {
+	i.OpToken = ast.OpToken(p.tok)
+	p.acceptToken(token.INS_MEMORY_COPY)
+	return
+}
+func (p *parser) parseIns_MemoryFill() (i ast.Ins_MemoryFill) {
+	i.OpToken = ast.OpToken(p.tok)
+	p.acceptToken(token.INS_MEMORY_FILL)
 	return
 }
 func (p *parser) parseIns_I32Const() (i ast.Ins_I32Const) {
