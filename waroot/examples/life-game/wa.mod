@@ -2,3 +2,4 @@
 
 name = "life"
 pkgpath = "myapp"
+target = "js"

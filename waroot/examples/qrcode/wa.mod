@@ -2,3 +2,4 @@
 
 name = "qrcode"
 pkgpath = "myapp"
+target = "js"

@@ -2,3 +2,4 @@
 
 name = "logo"
 pkgpath = "myapp"
+target = "js"

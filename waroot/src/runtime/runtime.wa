@@ -25,10 +25,6 @@ func throw()
 #wa:linkname runtime.heapBase
 func heapBase() => u32
 
-// Heap 最大地址(闭区间)
-#wa:linkname runtime.heapMax
-func heapMax() => u32
-
 #wa:runtime_getter
 func knr_getBlockHeader(p: u32) => knr_Header
 
@@ -36,116 +32,12 @@ func knr_getBlockHeader(p: u32) => knr_Header
 func knr_setBlockHeader(p: u32, hdr: knr_Header)
 
 // 分配 nbytes 字节, 返回地址
-#wa:force_register
-func malloc(nbytes: u32) => u32 {
-	if nbytes == 0 || nbytes >= (heapMax()-knr_basep) {
-		return 0
-	}
-	if knr_basep == 0 {
-		knr_basep = heapBase()
-		knr_freep = knr_basep
-
-		base := knr_Header{
-			ptr:  knr_basep,
-			size: (heapMax()-knr_basep)/sizeof_Header - 1,
-		}
-
-		knr_setBlockHeader(knr_basep, base)
-	}
-
-	// round up to allocate in units of sizeof(Header)
-	nunits := (nbytes+sizeof_Header-1)/sizeof_Header + 1
-	prevp_addr := knr_freep
-
-	// search free linked-list
-	prevp := knr_getBlockHeader(prevp_addr)
-	p_addr := prevp.ptr
-	p := knr_getBlockHeader(p_addr)
-	for {
-		if p.size >= nunits { // big enough
-			if p.size == nunits { // exactly
-				prevp.ptr = p.ptr
-				knr_setBlockHeader(prevp_addr, prevp)
-			} else {
-				p.size -= nunits
-				knr_setBlockHeader(p_addr, p)
-
-				// allocate at tail-end
-				p_addr += p.size * sizeof_Header
-				p = knr_getBlockHeader(p_addr)
-				p.size = nunits
-				knr_setBlockHeader(p_addr, p)
-			}
-
-			knr_freep = prevp_addr
-			return p_addr + sizeof_Header
-		}
-		if p_addr == knr_freep {
-			return 0 // none left
-		}
-
-		prevp_addr = p_addr
-		prevp = knr_getBlockHeader(prevp_addr)
-
-		p_addr = p.ptr
-		p = knr_getBlockHeader(p_addr)
-	}
-}
+#wa:linkname runtime.malloc
+func malloc(nbytes: i32) => i32
 
 // 回收内存, 释放到空闲列表
-#wa:force_register
-func free(ap: u32) {
-	if ap == 0 || ap%sizeof_Header != 0 {
-		return
-	}
-
-	// point to block header
-	bp_addr := ap - sizeof_Header
-	bp := knr_getBlockHeader(bp_addr)
-
-	// must be at least 2 units:
-	// 1 for header, 1 for mem block
-	if bp.size <= 1 {
-		// panic
-		return
-	}
-
-	p_addr := knr_freep
-	p := knr_getBlockHeader(p_addr)
-
-	for !(bp_addr > p_addr && bp_addr < p.ptr) {
-		// free block at start or end of arena
-		if (p_addr >= p.ptr) && (bp_addr > p_addr || bp_addr < p.ptr) {
-			break
-		}
-
-		p_addr = p.ptr
-		p = knr_getBlockHeader(p_addr)
-	}
-
-	// join to upper nbr
-	if bp_addr+bp.size*sizeof_Header == p.ptr {
-		p_ptr := knr_getBlockHeader(p.ptr)
-		bp.size += p_ptr.size
-		bp.ptr = p_ptr.ptr
-		knr_setBlockHeader(bp_addr, bp)
-	} else {
-		bp.ptr = p.ptr
-		knr_setBlockHeader(bp_addr, bp)
-	}
-
-	// join to lower nbr
-	if p_addr+p.size*sizeof_Header == bp_addr {
-		p.size += bp.size
-		p.ptr = bp.ptr
-		knr_setBlockHeader(p_addr, p)
-	} else {
-		p.ptr = bp_addr
-		knr_setBlockHeader(p_addr, p)
-	}
-
-	knr_freep = p_addr
-}
+#wa:linkname runtime.free
+func free(ap: i32)
 
 #wa:linkname $wa.runtime.i32_ref_to_ptr
 func I32_ref_to_ptr(t: *i32) => i32

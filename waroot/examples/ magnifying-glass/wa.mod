@@ -2,3 +2,4 @@
 
 name = "app"
 pkgpath = "myapp"
+target = "js"

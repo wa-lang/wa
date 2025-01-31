@@ -1,19 +1,5 @@
 ;; Copyright 2025 The Wa Authors. All rights reserved.
 
-	(import "env" "print_i32" (func $print_i32 (param i32)))
-	(import "env" "print_i32_i32" (func $print_i32_i32 (param i32) (param i32)))
-
-	(export "memory" (memory $memory))
-
-	(export "__stack_ptr" (global $__stack_ptr))
-	(export "__heap_base" (global $__heap_base))
-	(export "__heap_ptr" (global $__heap_ptr))
-	(export "__heap_top" (global $__heap_top))
-	(export "__heap_l128_freep" (global $__heap_l128_freep))
-	(export "__heap_lfixed_cap" (global $__heap_lfixed_cap))
-
-	(memory $memory {{.MemoryPages}} {{.MemoryPagesMax}})
-
 	;; 栈/静态数据/堆的内存布局
 	;;
 	;; 0               __stack_ptr           __heap_base    __heap_ptr  __heap_top
@@ -66,12 +52,9 @@
 	;; | size:i32 | next:i32 | data[0] |
 	;; +----------+----------+---------+
 	;;
-	(global $__stack_ptr (mut i32) (i32.const {{.StackPtr}})) ;; index=0, 用户可配置
-	(global $__heap_base i32       (i32.const {{.HeapBase}})) ;; index=1, 编译器生成, 8字节对齐, 只读
 	(global $__heap_ptr  (mut i32) (i32.const 0))         ;; heap 当前位置指针
 	(global $__heap_top  (mut i32) (i32.const 0))         ;; heap 最大位置指针(超过时要 grow 内存)
 	(global $__heap_l128_freep (mut i32) (i32.const 0))   ;; l128 是循环链表, 记录当前的迭代位置
-	(global $__heap_lfixed_cap i32 (i32.const {{.HeapLFixedCap}})) ;; 固定尺寸空闲链表最大长度, 满时回收; 也可用于关闭 fixed 策略
 	(global $__heap_init_flag (mut i32) (i32.const 0)) ;; 是否已经初始化
 
 	;; 合法的指针
@@ -355,11 +338,14 @@
 		call $heap_block.init
 	)
 
-	;; func wa_malloc(size: i32) => i32
+	;; func malloc(size: i32) => i32
 	;; 在堆上分配内存并返回地址, 内存不超过 2GB, 失败返回 0
-	(func $wa_malloc (export "wa_malloc") (param $size i32) (result i32)
+	(func $runtime.malloc (param $size i32) (result i32)
 		(local $free_list i32) ;; *heap_block_t, 空闲链表头
 		(local $b i32) ;; *heap_block_t
+
+		;; 仅初始化1次堆
+		call $wa_malloc_init_once
 
 		;; 输入参数对齐到8字节
 		local.get $size
@@ -677,11 +663,14 @@
 		return
 	)
 
-	;; func wa_free(ptr: i32)
-	(func $wa_free (export "wa_free") (param $ptr i32)
+	;; func free(ptr: i32)
+	(func $runtime.free (param $ptr i32)
 		(local $size i32) ;; *heap_block_t
 		(local $block i32) ;; *heap_block_t
 		(local $freep i32) ;; 空闲链表指针
+
+		;; 仅初始化1次堆
+		call $wa_malloc_init_once
 
 		;; 必须是合法的指针
 		local.get $ptr
@@ -962,9 +951,4 @@
 		;; freep = p;
 		local.get $p
 		global.set $__heap_l128_freep
-	)
-
-	;; 启动时初始化内存空间
-	(func $_start (export "_start")
-		call $wa_malloc_init_once
 	)

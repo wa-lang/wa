@@ -2,3 +2,4 @@
 
 name = "mandelbrot"
 pkgpath = "myapp"
+target = "js"

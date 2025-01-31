@@ -37,10 +37,6 @@
 	global.get $__heap_base
 )
 
-(func $runtime.heapMax(result i32)
-	global.get $__heap_max
-)
-
 (func $runtime.HeapAlloc (export "runtime.HeapAlloc") (param $nbytes i32) (result i32) ;;result = ptr
 	(local $ptr i32)
 
