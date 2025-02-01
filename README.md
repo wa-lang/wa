@@ -219,6 +219,7 @@ More examples [waroot/examples](waroot/examples)
 |imalasong|1000|
 |杨刚|4000|
 |崔爽|2000|
+|李瑾|10000|
 
 ## Give a Star! ⭐
 

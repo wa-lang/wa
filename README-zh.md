@@ -211,6 +211,7 @@ func main {
 |imalasong|1000|
 |杨刚|4000|
 |崔爽|2000|
+|李瑾|10000|
 
 贡献点变更记录见 [waroot/cplog](waroot/cplog) 目录。
 
