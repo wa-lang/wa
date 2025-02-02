@@ -1,7 +1,6 @@
 // 版权 @2024 W4-pong 作者。保留所有权利。
 
 import (
-	"math/rand"
 	"strconv"
 	"syscall/wasm4"
 )
@@ -37,6 +36,8 @@ type PongGame :struct {
 	y2:            int  // 右边挡板位置
 	score1:        int  // 玩家分数
 	score2:        int  // 玩家分数
+	seed:          u64  // 随机数种子
+
 }
 
 // 构建一个新游戏对象
@@ -51,6 +52,7 @@ func NewPongGame(enableMultiplayer: bool) => *PongGame {
 		y2:            screenSize / 2,
 		score1:        0,
 		score2:        0,
+		seed:          1,
 	}
 }
 
@@ -87,7 +89,7 @@ func PongGame.Update {
 	// 更新球的方向
 	if dirNow := this.paddleCollision(); dirNow != 0 {
 		wasm4.Tone(2000, 5, 100, wasm4.TONE_PULSE2|wasm4.TONE_MODE2)
-		if rand.Int()%2 != 0 {
+		if this.randInt()%2 != 0 {
 			this.dirX = dirNow
 			this.dirY = -1
 		} else {
@@ -151,4 +153,9 @@ func PongGame.paddleCollision => int {
 		return -1
 	}
 	return 0
+}
+
+func PongGame.randInt => int {
+	this.seed = 6364136223846793005*this.seed + 1
+	return int(this.seed >> 33)
 }
