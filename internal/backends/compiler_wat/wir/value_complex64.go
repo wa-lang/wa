@@ -44,7 +44,7 @@ func (m *Module) GenValueType_complex64(name string) *Complex64 {
 func (t *Complex64) Size() int              { return t.underlying.Size() }
 func (t *Complex64) align() int             { return t.underlying.align() }
 func (t *Complex64) Kind() TypeKind         { return kComplex64 }
-func (t *Complex64) onFree() int            { return t.underlying.onFree() }
+func (t *Complex64) OnFree() int            { return t.underlying.OnFree() }
 func (t *Complex64) Raw() []wat.ValueType   { return t.underlying.Raw() }
 func (t *Complex64) Equal(u ValueType) bool { _, ok := u.(*Complex64); return ok }
 

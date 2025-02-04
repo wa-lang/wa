@@ -15,7 +15,7 @@ import (
 // elemexpr ::= (item e:expr)
 // tableuse ::= (table x:tableidx)
 
-// (elem (i32.const 1) $$u8.$$block.$$onFree)
+// (elem (i32.const 1) $$u8.$$block.$$OnFree)
 func (p *parser) parseModuleSection_elem() *ast.ElemSection {
 	p.acceptToken(token.ELEM)
 

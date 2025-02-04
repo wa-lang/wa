@@ -45,7 +45,7 @@ func (m *Module) GenValueType_Ref(base ValueType) *Ref {
 func (t *Ref) Size() int            { return t.underlying.Size() }
 func (t *Ref) align() int           { return t.underlying.align() }
 func (t *Ref) Kind() TypeKind       { return kRef }
-func (t *Ref) onFree() int          { return t.underlying.onFree() }
+func (t *Ref) OnFree() int          { return t.underlying.OnFree() }
 func (t *Ref) Raw() []wat.ValueType { return t.underlying.Raw() }
 func (t *Ref) Equal(u ValueType) bool {
 	if ut, ok := u.(*Ref); ok {

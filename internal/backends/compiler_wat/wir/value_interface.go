@@ -39,7 +39,7 @@ func (m *Module) GenValueType_Interface(name string) (typ *Interface, found bool
 func (t *Interface) Size() int            { return t.underlying.Size() }
 func (t *Interface) align() int           { return t.underlying.align() }
 func (t *Interface) Kind() TypeKind       { return kInterface }
-func (t *Interface) onFree() int          { return t.underlying.onFree() }
+func (t *Interface) OnFree() int          { return t.underlying.OnFree() }
 func (t *Interface) Raw() []wat.ValueType { return t.underlying.Raw() }
 func (t *Interface) Equal(u ValueType) bool {
 	if ut, ok := u.(*Interface); ok {

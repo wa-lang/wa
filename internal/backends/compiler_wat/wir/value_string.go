@@ -57,7 +57,7 @@ func (m *Module) GenValueType_string(name string) *String {
 func (t *String) Size() int              { return t.underlying.Size() }
 func (t *String) align() int             { return t.underlying.align() }
 func (t *String) Kind() TypeKind         { return kString }
-func (t *String) onFree() int            { return t.underlying.onFree() }
+func (t *String) OnFree() int            { return t.underlying.OnFree() }
 func (t *String) Raw() []wat.ValueType   { return t.underlying.Raw() }
 func (t *String) Equal(u ValueType) bool { _, ok := u.(*String); return ok }
 

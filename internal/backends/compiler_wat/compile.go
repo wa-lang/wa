@@ -493,6 +493,14 @@ func (p *Compiler) funcsForJSBinding() []JSFunc {
 						sb.WriteString(fmt.Sprintf("let p%d = this._mem_util.set_bytes(%s);\n", i, name))
 						sb.WriteString(fmt.Sprintf("params = params.concat(p%d);\n", i))
 						sbr.WriteString(fmt.Sprintf("this._mem_util.block_release(p%d[0]);\n", i))
+					} else if pt.Base.OnFree() == 0 {
+						sb.WriteString(fmt.Sprintf("let p%d = this._mem_util.set_bytes(new Uint8Array(%s.buffer));\n", i, name))
+						sb.WriteString(fmt.Sprintf("p%d[2] = p%d[2] / %d;\n", i, i, pt.Base.Size()))
+						sb.WriteString(fmt.Sprintf("p%d[3] = p%d[3] / %d;\n", i, i, pt.Base.Size()))
+						sb.WriteString(fmt.Sprintf("params = params.concat(p%d);\n", i))
+						sbr.WriteString(fmt.Sprintf("this._mem_util.block_release(p%d[0]);\n", i))
+					} else {
+						exportable = false
 					}
 
 				default:
@@ -524,6 +532,12 @@ func (p *Compiler) funcsForJSBinding() []JSFunc {
 				case *wir.Slice:
 					if rt.Equal(m.BYTES) {
 						sb.WriteString(fmt.Sprintf("let r%d = this._mem_util.extract_bytes(res);\n", i))
+					} else if rt.Base.OnFree() == 0 {
+						sb.WriteString(fmt.Sprintf("res[2] = res[2] * %d;\n", rt.Base.Size()))
+						sb.WriteString(fmt.Sprintf("res[3] = res[3] * %d;\n", rt.Base.Size()))
+						sb.WriteString(fmt.Sprintf("let r%d = this._mem_util.extract_bytes(res);\n", i))
+					} else {
+						exportable = false
 					}
 
 				default:

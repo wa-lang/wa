@@ -510,7 +510,7 @@ func (p *parser) parseIns_Call() (i ast.Ins_Call) {
 }
 
 func (p *parser) parseIns_CallIndirect() (i ast.Ins_CallIndirect) {
-	// call_indirect $idx? (type $$onFree)
+	// call_indirect $idx? (type $$OnFree)
 	i.OpToken = ast.OpToken(p.tok)
 	p.acceptToken(token.INS_CALL_INDIRECT)
 	if p.tok != token.LPAREN {

@@ -43,7 +43,7 @@ func (m *Module) GenValueType_Tuple(fields []ValueType) *Tuple {
 func (t *Tuple) Size() int            { return t.underlying.Size() }
 func (t *Tuple) align() int           { return t.underlying.align() }
 func (t *Tuple) Kind() TypeKind       { return kTuple }
-func (t *Tuple) onFree() int          { return t.underlying.onFree() }
+func (t *Tuple) OnFree() int          { return t.underlying.OnFree() }
 func (t *Tuple) Raw() []wat.ValueType { return t.underlying.Raw() }
 func (t *Tuple) Equal(u ValueType) bool {
 	ut, ok := u.(*Tuple)

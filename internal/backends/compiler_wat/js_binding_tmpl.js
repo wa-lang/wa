@@ -172,3 +172,4 @@ class WaApp {
 
 }  // class WaApp
 
+export {WaApp}

@@ -213,7 +213,7 @@ func (m *Module) ToWatModule() *wat.Module {
 
 	{
 		var onfree_type wat.FuncType
-		onfree_type.Name = "$onFree"
+		onfree_type.Name = "$OnFree"
 		onfree_type.Params = m.I32.Raw()
 		wat_module.FuncTypes = append(wat_module.FuncTypes, onfree_type)
 	}

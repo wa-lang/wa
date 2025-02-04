@@ -110,7 +110,7 @@ func (t *Struct) genRawFree() (ret []fn_offset_pair) {
 				ret = append(ret, fn_offset_pair{fn: rf.fn, offset: rf.offset + member._start})
 			}
 		} else {
-			mff := member_type.onFree()
+			mff := member_type.OnFree()
 			if mff != 0 {
 				ret = append(ret, fn_offset_pair{fn: mff, offset: member._start})
 			}
@@ -120,9 +120,9 @@ func (t *Struct) genRawFree() (ret []fn_offset_pair) {
 	return
 }
 
-func (t *Struct) onFree() int {
+func (t *Struct) OnFree() int {
 	var f Function
-	f.InternalName = "$" + GenSymbolName(t.Named()) + ".$$onFree"
+	f.InternalName = "$" + GenSymbolName(t.Named()) + ".$$OnFree"
 
 	if i := currentModule.findTableElem(f.InternalName); i != 0 {
 		return i
@@ -143,7 +143,7 @@ func (t *Struct) onFree() int {
 		}
 
 		f.Insts = append(f.Insts, wat.NewInstConst(wat.U32{}, strconv.Itoa(rf.fn)))
-		f.Insts = append(f.Insts, wat.NewInstCallIndirect("$onFree"))
+		f.Insts = append(f.Insts, wat.NewInstCallIndirect("$OnFree"))
 	}
 	currentModule.AddFunc(&f)
 	return currentModule.AddTableElem(f.InternalName)

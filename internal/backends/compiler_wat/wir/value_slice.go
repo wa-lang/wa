@@ -53,7 +53,7 @@ func (m *Module) GenValueType_Slice(base ValueType, name string) *Slice {
 func (t *Slice) Size() int            { return t.underlying.Size() }
 func (t *Slice) align() int           { return t.underlying.align() }
 func (t *Slice) Kind() TypeKind       { return kSlice }
-func (t *Slice) onFree() int          { return t.underlying.onFree() }
+func (t *Slice) OnFree() int          { return t.underlying.OnFree() }
 func (t *Slice) Raw() []wat.ValueType { return t.underlying.Raw() }
 func (t *Slice) Equal(u ValueType) bool {
 	if ut, ok := u.(*Slice); ok {

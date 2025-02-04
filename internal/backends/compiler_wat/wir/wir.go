@@ -71,7 +71,7 @@ type ValueType interface {
 	Size() int
 	align() int
 	Kind() TypeKind
-	onFree() int
+	OnFree() int
 	Raw() []wat.ValueType
 	Equal(ValueType) bool
 	EmitLoadFromAddr(addr Value, offset int) []wat.Inst

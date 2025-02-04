@@ -290,7 +290,7 @@ func (module *Module) GenValueType_Map(key_type, elem_type ValueType, name strin
 func (t *Map) Size() int            { return t.underlying.Size() }
 func (t *Map) align() int           { return t.underlying.align() }
 func (t *Map) Kind() TypeKind       { return kMap }
-func (t *Map) onFree() int          { return t.underlying.onFree() }
+func (t *Map) OnFree() int          { return t.underlying.OnFree() }
 func (t *Map) Raw() []wat.ValueType { return t.underlying.Raw() }
 func (t *Map) Equal(u ValueType) bool {
 	if ut, ok := u.(*Map); ok {

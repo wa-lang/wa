@@ -88,7 +88,7 @@ func (m *Module) GenValueType_Closure(sig FnSig) *Closure {
 func (t *Closure) Size() int            { return t.underlying.Size() }
 func (t *Closure) align() int           { return t.underlying.align() }
 func (t *Closure) Kind() TypeKind       { return kStruct }
-func (t *Closure) onFree() int          { return t.underlying.onFree() }
+func (t *Closure) OnFree() int          { return t.underlying.OnFree() }
 func (t *Closure) Raw() []wat.ValueType { return t.underlying.Raw() }
 
 func (t *Closure) Equal(u ValueType) bool {

@@ -118,7 +118,7 @@ func (m *Module) GenValueType_void(name string) *Void {
 func (t *Void) Size() int              { return 0 }
 func (t *Void) align() int             { return 0 }
 func (t *Void) Kind() TypeKind         { return kVoid }
-func (t *Void) onFree() int            { return 0 }
+func (t *Void) OnFree() int            { return 0 }
 func (t *Void) Raw() []wat.ValueType   { return []wat.ValueType{} }
 func (t *Void) Equal(u ValueType) bool { _, ok := u.(*Void); return ok }
 func (t *Void) EmitLoadFromAddr(addr Value, offset int) []wat.Inst {
@@ -155,7 +155,7 @@ func (m *Module) GenValueType_bool(name string) *Bool {
 func (t *Bool) Size() int              { return 1 }
 func (t *Bool) align() int             { return 1 }
 func (t *Bool) Kind() TypeKind         { return kBool }
-func (t *Bool) onFree() int            { return 0 }
+func (t *Bool) OnFree() int            { return 0 }
 func (t *Bool) Raw() []wat.ValueType   { return []wat.ValueType{wat.I32{}} }
 func (t *Bool) Equal(u ValueType) bool { _, ok := u.(*Bool); return ok }
 func (t *Bool) EmitLoadFromAddr(addr Value, offset int) []wat.Inst {
@@ -194,7 +194,7 @@ func (m *Module) GenValueType_rune(name string) *Rune {
 func (t *Rune) Size() int              { return 4 }
 func (t *Rune) align() int             { return 4 }
 func (t *Rune) Kind() TypeKind         { return kRune }
-func (t *Rune) onFree() int            { return 0 }
+func (t *Rune) OnFree() int            { return 0 }
 func (t *Rune) Raw() []wat.ValueType   { return []wat.ValueType{wat.I32{}} }
 func (t *Rune) Equal(u ValueType) bool { _, ok := u.(*Rune); return ok }
 func (t *Rune) EmitLoadFromAddr(addr Value, offset int) []wat.Inst {
@@ -233,7 +233,7 @@ func (m *Module) GenValueType_i8(name string) *I8 {
 func (t *I8) Size() int              { return 1 }
 func (t *I8) align() int             { return 1 }
 func (t *I8) Kind() TypeKind         { return kI8 }
-func (t *I8) onFree() int            { return 0 }
+func (t *I8) OnFree() int            { return 0 }
 func (t *I8) Raw() []wat.ValueType   { return []wat.ValueType{wat.I32{}} }
 func (t *I8) Equal(u ValueType) bool { _, ok := u.(*I8); return ok }
 func (t *I8) EmitLoadFromAddr(addr Value, offset int) []wat.Inst {
@@ -280,7 +280,7 @@ func (m *Module) GenValueType_u8(name string) *U8 {
 func (t *U8) Size() int              { return 1 }
 func (t *U8) align() int             { return 1 }
 func (t *U8) Kind() TypeKind         { return kU8 }
-func (t *U8) onFree() int            { return 0 }
+func (t *U8) OnFree() int            { return 0 }
 func (t *U8) Raw() []wat.ValueType   { return []wat.ValueType{wat.I32{}} }
 func (t *U8) Equal(u ValueType) bool { _, ok := u.(*U8); return ok }
 func (t *U8) EmitLoadFromAddr(addr Value, offset int) []wat.Inst {
@@ -325,7 +325,7 @@ func (m *Module) GenValueType_i16(name string) *I16 {
 func (t *I16) Size() int              { return 2 }
 func (t *I16) align() int             { return 2 }
 func (t *I16) Kind() TypeKind         { return kI16 }
-func (t *I16) onFree() int            { return 0 }
+func (t *I16) OnFree() int            { return 0 }
 func (t *I16) Raw() []wat.ValueType   { return []wat.ValueType{wat.I32{}} }
 func (t *I16) Equal(u ValueType) bool { _, ok := u.(*I16); return ok }
 func (t *I16) EmitLoadFromAddr(addr Value, offset int) []wat.Inst {
@@ -370,7 +370,7 @@ func (m *Module) GenValueType_u16(name string) *U16 {
 func (t *U16) Size() int              { return 2 }
 func (t *U16) align() int             { return 2 }
 func (t *U16) Kind() TypeKind         { return kU16 }
-func (t *U16) onFree() int            { return 0 }
+func (t *U16) OnFree() int            { return 0 }
 func (t *U16) Raw() []wat.ValueType   { return []wat.ValueType{wat.I32{}} }
 func (t *U16) Equal(u ValueType) bool { _, ok := u.(*U16); return ok }
 func (t *U16) EmitLoadFromAddr(addr Value, offset int) []wat.Inst {
@@ -419,7 +419,7 @@ func (m *Module) GenValueType_i32(name string) *I32 {
 func (t *I32) Size() int              { return 4 }
 func (t *I32) align() int             { return 4 }
 func (t *I32) Kind() TypeKind         { return kI32 }
-func (t *I32) onFree() int            { return 0 }
+func (t *I32) OnFree() int            { return 0 }
 func (t *I32) Raw() []wat.ValueType   { return []wat.ValueType{wat.I32{}} }
 func (t *I32) Equal(u ValueType) bool { _, ok := u.(*I32); return ok }
 func (t *I32) EmitLoadFromAddr(addr Value, offset int) []wat.Inst {
@@ -468,7 +468,7 @@ func (m *Module) GenValueType_u32(name string) *U32 {
 func (t *U32) Size() int              { return 4 }
 func (t *U32) align() int             { return 4 }
 func (t *U32) Kind() TypeKind         { return kU32 }
-func (t *U32) onFree() int            { return 0 }
+func (t *U32) OnFree() int            { return 0 }
 func (t *U32) Raw() []wat.ValueType   { return []wat.ValueType{wat.U32{}} }
 func (t *U32) Equal(u ValueType) bool { _, ok := u.(*U32); return ok }
 func (t *U32) EmitLoadFromAddr(addr Value, offset int) []wat.Inst {
@@ -513,7 +513,7 @@ func (m *Module) GenValueType_i64(name string) *I64 {
 func (t *I64) Size() int              { return 8 }
 func (t *I64) align() int             { return 8 }
 func (t *I64) Kind() TypeKind         { return kI64 }
-func (t *I64) onFree() int            { return 0 }
+func (t *I64) OnFree() int            { return 0 }
 func (t *I64) Raw() []wat.ValueType   { return []wat.ValueType{wat.I64{}} }
 func (t *I64) Equal(u ValueType) bool { _, ok := u.(*I64); return ok }
 func (t *I64) EmitLoadFromAddr(addr Value, offset int) []wat.Inst {
@@ -558,7 +558,7 @@ func (m *Module) GenValueType_u64(name string) *U64 {
 func (t *U64) Size() int              { return 8 }
 func (t *U64) align() int             { return 8 }
 func (t *U64) Kind() TypeKind         { return kU64 }
-func (t *U64) onFree() int            { return 0 }
+func (t *U64) OnFree() int            { return 0 }
 func (t *U64) Raw() []wat.ValueType   { return []wat.ValueType{wat.U64{}} }
 func (t *U64) Equal(u ValueType) bool { _, ok := u.(*U64); return ok }
 func (t *U64) EmitLoadFromAddr(addr Value, offset int) []wat.Inst {
@@ -603,7 +603,7 @@ func (m *Module) GenValueType_f32(name string) *F32 {
 func (t *F32) Size() int              { return 4 }
 func (t *F32) align() int             { return 4 }
 func (t *F32) Kind() TypeKind         { return kF32 }
-func (t *F32) onFree() int            { return 0 }
+func (t *F32) OnFree() int            { return 0 }
 func (t *F32) Raw() []wat.ValueType   { return []wat.ValueType{wat.F32{}} }
 func (t *F32) Equal(u ValueType) bool { _, ok := u.(*F32); return ok }
 func (t *F32) EmitLoadFromAddr(addr Value, offset int) []wat.Inst {
@@ -648,7 +648,7 @@ func (m *Module) GenValueType_f64(name string) *F64 {
 func (t *F64) Size() int              { return 8 }
 func (t *F64) align() int             { return 8 }
 func (t *F64) Kind() TypeKind         { return kF64 }
-func (t *F64) onFree() int            { return 0 }
+func (t *F64) OnFree() int            { return 0 }
 func (t *F64) Raw() []wat.ValueType   { return []wat.ValueType{wat.F64{}} }
 func (t *F64) Equal(u ValueType) bool { _, ok := u.(*F64); return ok }
 func (t *F64) EmitLoadFromAddr(addr Value, offset int) []wat.Inst {

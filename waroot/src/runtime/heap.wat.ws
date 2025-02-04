@@ -204,10 +204,10 @@
 				local.set $data_ptr
 
 				loop $free_next
-					;; onFree(data_ptr)
+					;; OnFree(data_ptr)
 					local.get $data_ptr
 					local.get $free_func
-					call_indirect (type $$onFree)
+					call_indirect (type $$OnFree)
 
 					;; item_count--
 					local.get $item_count

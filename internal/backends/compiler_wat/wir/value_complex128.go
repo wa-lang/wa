@@ -43,7 +43,7 @@ func (m *Module) GenValueType_complex128(name string) *Complex128 {
 func (t *Complex128) Size() int              { return t.underlying.Size() }
 func (t *Complex128) align() int             { return t.underlying.align() }
 func (t *Complex128) Kind() TypeKind         { return kComplex128 }
-func (t *Complex128) onFree() int            { return t.underlying.onFree() }
+func (t *Complex128) OnFree() int            { return t.underlying.OnFree() }
 func (t *Complex128) Raw() []wat.ValueType   { return t.underlying.Raw() }
 func (t *Complex128) Equal(u ValueType) bool { _, ok := u.(*Complex128); return ok }
 

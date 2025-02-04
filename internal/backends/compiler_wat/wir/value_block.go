@@ -44,9 +44,9 @@ func (t *Block) Equal(u ValueType) bool {
 	return false
 }
 
-func (t *Block) onFree() int {
+func (t *Block) OnFree() int {
 	var f Function
-	f.InternalName = "$" + GenSymbolName(t.Named()) + ".$$onFree"
+	f.InternalName = "$" + GenSymbolName(t.Named()) + ".$$OnFree"
 	if i := currentModule.findTableElem(f.InternalName); i != 0 {
 		return i
 	}
@@ -105,7 +105,7 @@ func (t *Block) emitHeapAlloc(item_count Value) (insts []wat.Inst) {
 	}
 
 	insts = append(insts, item_count.EmitPush()...)                                       //item_count
-	insts = append(insts, NewConst(strconv.Itoa(t.Base.onFree()), t._uint).EmitPush()...) //free_method
+	insts = append(insts, NewConst(strconv.Itoa(t.Base.OnFree()), t._uint).EmitPush()...) //free_method
 	insts = append(insts, NewConst(strconv.Itoa(t.Base.Size()), t._uint).EmitPush()...)   //item_size
 	insts = append(insts, wat.NewInstCall("runtime.Block.Init"))
 

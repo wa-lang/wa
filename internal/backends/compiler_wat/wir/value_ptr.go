@@ -24,7 +24,7 @@ func (m *Module) GenValueType_Ptr(base ValueType) *Ptr {
 func (t *Ptr) Size() int            { return 4 }
 func (t *Ptr) align() int           { return 4 }
 func (t *Ptr) Kind() TypeKind       { return kPtr }
-func (t *Ptr) onFree() int          { return 0 }
+func (t *Ptr) OnFree() int          { return 0 }
 func (t *Ptr) Raw() []wat.ValueType { return []wat.ValueType{toWatType(t)} }
 
 func (t *Ptr) typeInfoAddr() int {
