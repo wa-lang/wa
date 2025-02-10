@@ -104,10 +104,7 @@ func TestHeap_radomMalloc_disableFixed(t *testing.T) {
 	for i := 0; i < 10; i++ {
 		gotList := make([]int32, 100)
 		for j := 0; j < len(gotList); j++ {
-			// BUG: j=30 和 j=31 返回相同的 30720
 			size := int32(rand.Intn(2000) + 1)
-			t.Log(fmt.Sprintf("run: %d %d %d", i, j, size))
-
 			gotList[j] = h.Malloc(size)
 			if gotList[j] == 0 {
 				t.Fatalf("%d:%d: h.Malloc failed", i, j)
