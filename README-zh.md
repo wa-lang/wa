@@ -7,7 +7,7 @@
 
 凹语言（凹读音“Wā”）是针对 WebAssembly 设计的编程语言，目标是为高性能网页应用提供一门简洁、可靠、易用、强类型的编译型通用语言。凹语言的代码生成器及运行时为全自主研发（不依赖于LLVM等外部项目），实现了全链路自主可控。目前凹语言处于工程试用阶段。
 
-![](docs/images/logo/logo-animate1.svg)
+![](docs/images/wa-chan/wa-chan-front-small-logo-animate1.svg)
 
 - 主页: [https://wa-lang.org](https://wa-lang.org)
 - 参考手册: [https://wa-lang.org/man/](https://wa-lang.org/man/)
