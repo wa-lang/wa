@@ -3,6 +3,11 @@
 - (dev)
   - Native 后端 (TODO)
   - 完善 `wa lsp` 子命令 (TODO)
+- v0.21.0 (2025-02-11)
+  - WA酱吉祥物诞生: https://wa-lang.org/smalltalk/st0069.html
+  - 导出函数使用Bytes外的纯值切片作为参数或返回值时，以值拷贝模式生成js胶水代码
+  - wasm 支持 `memory.fill` 和 `memory.copy` 指令
+  - 优化底层内存管理`malloc`函数的实现
 - v0.20.0 (2025-01-12)
   - 补充带文字 logo
   - 种子案例: 实验性支持Dora SSR游戏开发: https://github.com/IppClub/dora-wa
