@@ -2,7 +2,7 @@
 
 Thank you for your interest in contributing projects hosted or managed by wa-lang Development Studio!
 
-Before launching a PR for the first time, you need to sign the "Wa-lang Contributor Agreement"(Aka WCA) by sending a email that signing WCA to <wca@wa-lang.org> through the email address you used when commiting.
+Before launching a PR for the first time, you need to sign the "Wa Contributor Agreement"(Aka WCA) by sending a email that signing WCA to <wca@wa-lang.org> through the email address you used when commiting.
 
 You need to include the full text of WCA in the signed email you send, and replace the underline text("___") in the first line with your email address. The full text of WCA template is as follows:
 

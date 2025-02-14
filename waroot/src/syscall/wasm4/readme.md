@@ -32,7 +32,7 @@ global smiley = [8]byte{...}
 #wa:export update
 func Update {
 	wasm4.SetDrawColors(2, 0, 0, 0)
-	wasm4.Text("Hello from Wa-lang!", 10, 10)
+	wasm4.Text("Hello from Wa!", 10, 10)
 
 	gamepad := wasm4.GetGamePad1()
 	if gamepad&wasm4.BUTTON_1 != 0 {
