@@ -37,7 +37,12 @@ func main() {
 	if !window.IsNull() && !window.IsUndefined() {
 		window.Set("__WA_WAT__", outWat)
 		window.Set("__WA_FMT_CODE__", outFmt)
-		window.Set("__WA_WASM__", outWasm)
+
+		// 复制数组到 js
+		jsArray := js.Global().Get("Uint8Array").New(len(outWasm))
+		js.CopyBytesToJS(jsArray, outWasm)
+		window.Set("__WA_WASM__", jsArray)
+
 		window.Set("__WA_ERROR__", waGetErrorText())
 	} else {
 		fmt.Println(outWat)
