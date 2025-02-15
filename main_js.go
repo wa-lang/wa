@@ -32,14 +32,30 @@ func main() {
 
 	outWat := waGenerateWat(waName, waCode)
 	outFmt := waFormatCode(waName, waCode)
+	outWasm := waGenerateWasm(waName, outWat)
 
 	if !window.IsNull() && !window.IsUndefined() {
 		window.Set("__WA_WAT__", outWat)
 		window.Set("__WA_FMT_CODE__", outFmt)
+		window.Set("__WA_WASM__", outWasm)
 		window.Set("__WA_ERROR__", waGetErrorText())
 	} else {
 		fmt.Println(outWat)
 	}
+}
+
+func waGenerateWasm(filename, code string) []byte {
+	if waGetError() != nil {
+		return nil
+	}
+	wasmBytes, err := watutil.Wat2Wasm(filename, []byte(code))
+	if err != nil {
+		if waGetError() == nil {
+			waSetError(err)
+		}
+		return nil
+	}
+	return wasmBytes
 }
 
 func waGenerateWat(filename, code string) string {
