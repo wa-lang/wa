@@ -15,6 +15,7 @@ import (
 	"wa-lang.org/wa/internal/config"
 	"wa-lang.org/wa/internal/loader"
 	"wa-lang.org/wa/internal/logger"
+	"wa-lang.org/wa/internal/wat/watutil"
 )
 
 var waError error
