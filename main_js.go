@@ -15,7 +15,6 @@ import (
 	"wa-lang.org/wa/internal/config"
 	"wa-lang.org/wa/internal/loader"
 	"wa-lang.org/wa/internal/logger"
-	"wa-lang.org/wa/internal/wat/watutil"
 )
 
 var waError error
@@ -74,17 +73,6 @@ func waGenerateWat(filename, code string) string {
 		}
 		return ""
 	}
-
-	// wat去掉未用的部分
-	// 去掉注释, libwabt 不支持中文
-	wat, err = watutil.WatStrip(filename+".wat", wat)
-	if err != nil {
-		if waGetError() == nil {
-			waSetError(err)
-		}
-		return ""
-	}
-
 	return string(wat)
 }
 

@@ -319,51 +319,10 @@
 		;; l24 | l32 | l48 | l80 | nil
 		;; memset(__heap_base, 0, 48)
 
-		;; ------------------------------------------------
-
-		;; global.get $__heap_base
-		;; i32.const 0
-		;; i32.const 48 ;; 6*sizeof(heap_block_t)
-		;; memory.fill
-
-		;; wa playground 使用的 libwabt.js 不支持 memory.fill
-		;; 因此逐个初始化
-
 		global.get $__heap_base
-		i64.const 0 ;; size+next
-		i64.store offset=0
-
-		global.get $__heap_base
-		i32.const 8 ;; 1*sizeof(heap_block_t)
-		i32.add
-		i64.const 0 ;; size+next
-		i64.store offset=0
-
-		global.get $__heap_base
-		i32.const 16 ;; 2*sizeof(heap_block_t)
-		i32.add
-		i64.const 0 ;; size+next
-		i64.store offset=0
-
-		global.get $__heap_base
-		i32.const 24 ;; 3*sizeof(heap_block_t)
-		i32.add
-		i64.const 0 ;; size+next
-		i64.store offset=0
-
-		global.get $__heap_base
-		i32.const 32 ;; 4*sizeof(heap_block_t)
-		i32.add
-		i64.const 0 ;; size+next
-		i64.store offset=0
-
-		global.get $__heap_base
-		i32.const 40 ;; 5*sizeof(heap_block_t)
-		i32.add
-		i64.const 0 ;; size+next
-		i64.store offset=0
-
-		;; ------------------------------------------------
+		i32.const 0
+		i32.const 48 ;; 6*sizeof(heap_block_t)
+		memory.fill
 
 		;; $__heap_l128_freep = $__heap_base + 4*sizeof(heap_block_t)
 		;; 该字段改用 global 表示, 不占用内存空间
