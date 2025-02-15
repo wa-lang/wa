@@ -31,8 +31,6 @@ docker-run:
 	docker run --platform linux/amd64 --rm -it ${DOCKER_VOLUME} wa-lang/wa
 
 ci-test-all:
-	make wasm-js
-
 	go install
 	go test ./...
 
