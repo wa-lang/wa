@@ -65,7 +65,7 @@ const (
 	_INT      = 0b11
 )
 
-func addStruct(v reflect.Value, numInts, numFloats, numStack *int, addInt, addFloat, addStack func(uintptr), keepAlive []any) []any {
+func addStruct(v reflect.Value, numInts, numFloats, numStack *int, addInt, addFloat, addStack func(uintptr), keepAlive []interface{}) []interface{} {
 	if v.Type().Size() == 0 {
 		return keepAlive
 	}
@@ -187,12 +187,12 @@ func placeRegisters(v reflect.Value, addFloat func(uintptr), addInt func(uintptr
 	}
 }
 
-func placeStack(v reflect.Value, keepAlive []any, addInt func(uintptr)) []any {
+func placeStack(v reflect.Value, keepAlive []interface{}, addInt func(uintptr)) []interface{} {
 	// Struct is too big to be placed in registers.
 	// Copy to heap and place the pointer in register
 	ptrStruct := reflect.New(v.Type())
 	ptrStruct.Elem().Set(v)
-	ptr := ptrStruct.Elem().Addr().UnsafePointer()
+	ptr := unsafe.Pointer(ptrStruct.Elem().Addr().Pointer())
 	keepAlive = append(keepAlive, ptr)
 	addInt(uintptr(ptr))
 	return keepAlive
