@@ -14,8 +14,7 @@ import (
 	"wa-lang.org/wa/internal/app/appbase"
 	"wa-lang.org/wa/internal/config"
 	"wa-lang.org/wa/internal/format"
-	"wa-lang.org/wa/internal/wat/parser"
-	"wa-lang.org/wa/internal/wat/printer"
+	"wa-lang.org/wa/internal/wat/watutil/watfmt"
 )
 
 var CmdFmt = &cli.Command{
@@ -103,17 +102,18 @@ func fmtFile(path string) (changed bool, err error) {
 }
 
 func fmtWatFile(path string) (err error) {
-	m, err := parser.ParseModule(path, nil)
+	src, err := os.ReadFile(path)
 	if err != nil {
 		return err
 	}
-
-	var buf bytes.Buffer
-	if err := printer.Fprint(&buf, m); err != nil {
+	data, err := watfmt.Format(path, src)
+	if err != nil {
 		return err
 	}
-
-	os.Stdout.Write(buf.Bytes())
+	os.Stdout.Write(data)
+	if !bytes.HasSuffix(data, []byte("\n")) {
+		os.Stdout.Write([]byte("\n"))
+	}
 	return nil
 }
 
