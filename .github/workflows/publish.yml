@@ -22,7 +22,8 @@ jobs:
         uses: actions/setup-go@v2
         with:
           # go1.21 support wasip1/wasm
-          go-version: 1.21
+          # go1.24 support wasmexport
+          go-version: 1.24
 
       - run: make wasm-js
       - run: make wasm-wasip1
@@ -58,7 +59,8 @@ jobs:
         uses: actions/setup-go@v2
         with:
           # go1.21 support wasip1/wasm
-          go-version: 1.21
+          # go1.24 support wasmexport
+          go-version: 1.24
 
       - name: 'Login to GitHub Container Registry'
         uses: docker/login-action@v1

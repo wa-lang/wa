@@ -35,7 +35,8 @@ jobs:
         uses: actions/setup-go@v2
         with:
           # go1.21 support wasip1/wasm
-          go-version: 1.21
+          # go1.24 support wasmexport
+          go-version: 1.24
 
       - run: go run ./builder
 

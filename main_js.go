@@ -21,6 +21,11 @@ import (
 var waError error
 
 func main() {
+	runMain()
+}
+
+//go:wasmexport runMain
+func runMain() {
 	window := js.Global().Get("window")
 
 	// __WA_FILE_NAME__ 表示文件名, 用于区分中英文语法
