@@ -723,6 +723,10 @@ func (check *Checker) stmt(ctxt stmtContext, s ast.Stmt) {
 					key = Typ[Int]
 					val = universeRune // use 'rune' name
 				}
+				// 基于数值类型的迭代
+				if isInteger(typ) {
+					key = typ
+				}
 			case *Array:
 				key = Typ[Int]
 				val = typ.elem
@@ -734,15 +738,26 @@ func (check *Checker) stmt(ctxt stmtContext, s ast.Stmt) {
 					key = Typ[Int]
 					val = typ.elem
 				}
+				if typ, _ := typ.base.Underlying().(*Struct); typ != nil {
+					// TODO(chai): 自定义迭代器
+				}
+
 			case *Map:
 				key = typ.key
 				val = typ.elem
+
+			case *Signature:
+				// TODO(chai): 自定义迭代器
 			}
 		}
 
 		if key == nil {
 			check.errorf(x.pos(), "cannot range over %s", &x)
 			// ok to continue
+		}
+
+		if val == nil && s.Value != nil {
+			check.errorf(s.Value.Pos(), "range over %s permits only one iteration variable", &x)
 		}
 
 		// check assignment to/declaration of iteration variables

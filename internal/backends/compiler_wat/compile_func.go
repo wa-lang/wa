@@ -93,7 +93,7 @@ func (g *functionGenerator) getValue(i ssa.Value) valueWrap {
 				val, _ := constant.Uint64Val(v.Value)
 				return valueWrap{value: wir.NewConst(strconv.Itoa(int(val)), g.module.U32)}
 
-			case types.Int32, types.Int:
+			case types.Int32, types.Int, types.UntypedInt:
 				val, _ := constant.Int64Val(v.Value)
 				if t.Name() == "rune" {
 					return valueWrap{value: wir.NewConst(strconv.Itoa(int(val)), g.module.RUNE)}
@@ -113,7 +113,7 @@ func (g *functionGenerator) getValue(i ssa.Value) valueWrap {
 				val, _ := constant.Float64Val(v.Value)
 				return valueWrap{value: wir.NewConst(strconv.FormatFloat(val, 'f', -1, 32), g.module.F32)}
 
-			case types.Float64:
+			case types.Float64, types.UntypedFloat:
 				val, _ := constant.Float64Val(v.Value)
 				return valueWrap{value: wir.NewConst(strconv.FormatFloat(val, 'f', -1, 64), g.module.F64)}
 
