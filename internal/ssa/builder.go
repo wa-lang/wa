@@ -1560,11 +1560,23 @@ func (b *builder) rangeIndexed(fn *Function, x Value, tv types.Type, pos token.P
 	return
 }
 
-// rangeIter emits to fn the header for a loop using
+// 基于整数的迭代器
+func (b *builder) rangeIterInteger(fn *Function, x Value, tk, tv types.Type, pos token.Pos) (k Value, loop, done *BasicBlock) {
+	// TODO: chai
+	panic("Cannot range over: " + x.Type().Underlying().String())
+}
+
+// 基于闭包函数的迭代器
+func (b *builder) rangeIterClosure(fn *Function, x Value, tk, tv types.Type, pos token.Pos) (k, v Value, loop, done *BasicBlock) {
+	// TODO: chai
+	panic("Cannot range over: " + x.Type().Underlying().String())
+}
+
+// rangeIterMapOrString emits to fn the header for a loop using
 // Range/Next/Extract to iterate over map or string value x.
 // tk and tv are the types of the key/value results k and v, or nil
 // if the respective component is not wanted.
-func (b *builder) rangeIter(fn *Function, x Value, tk, tv types.Type, pos token.Pos) (k, v Value, loop, done *BasicBlock) {
+func (b *builder) rangeIterMapOrString(fn *Function, x Value, tk, tv types.Type, pos token.Pos) (k, v Value, loop, done *BasicBlock) {
 	//
 	//	it = range x
 	// loop:                                   (target of continue)
@@ -1656,8 +1668,16 @@ func (b *builder) rangeStmt(fn *Function, s *ast.RangeStmt, label *lblock) {
 	case *types.Slice, *types.Array, *types.Pointer: // *array
 		k, v, loop, done = b.rangeIndexed(fn, x, tv, s.For)
 
-	case *types.Map, *types.Basic: // string
-		k, v, loop, done = b.rangeIter(fn, x, tk, tv, s.For)
+	case *types.Map:
+		k, v, loop, done = b.rangeIterMapOrString(fn, x, tk, tv, s.For)
+	case *types.Basic: // string,integer
+		if rt.Info()&types.IsString != 0 {
+			k, v, loop, done = b.rangeIterMapOrString(fn, x, tk, tv, s.For)
+		} else if rt.Info()&types.IsInteger != 0 {
+			k, loop, done = b.rangeIterInteger(fn, x, tk, tv, s.For)
+		}
+	case *types.Signature:
+		k, v, loop, done = b.rangeIterClosure(fn, x, tk, tv, s.For)
 
 	default:
 		panic("Cannot range over: " + rt.String())

@@ -724,8 +724,10 @@ func (check *Checker) stmt(ctxt stmtContext, s ast.Stmt) {
 					val = universeRune // use 'rune' name
 				}
 				// 基于数值类型的迭代
-				if isInteger(typ) {
-					key = typ
+				if _UseFeature_forRangeIter {
+					if isInteger(typ) {
+						key = typ
+					}
 				}
 			case *Array:
 				key = Typ[Int]
@@ -738,16 +740,27 @@ func (check *Checker) stmt(ctxt stmtContext, s ast.Stmt) {
 					key = Typ[Int]
 					val = typ.elem
 				}
-				if typ, _ := typ.base.Underlying().(*Struct); typ != nil {
-					// TODO(chai): 自定义迭代器
-				}
 
 			case *Map:
 				key = typ.key
 				val = typ.elem
 
 			case *Signature:
-				// TODO(chai): 自定义迭代器
+				if _UseFeature_forRangeIter {
+					switch typ.results.Len() {
+					case 2:
+						// func => (key:T, ok:bool)
+						if isBoolean(typ.results.vars[1].typ) {
+							key = typ.results.vars[0].typ
+						}
+					case 3:
+						// func => (key:T0, val:T1, ok:bool)
+						if isBoolean(typ.results.vars[2].typ) {
+							key = typ.results.vars[0].typ
+							val = typ.results.vars[1].typ
+						}
+					}
+				}
 			}
 		}
 
