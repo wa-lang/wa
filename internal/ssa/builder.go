@@ -1561,15 +1561,102 @@ func (b *builder) rangeIndexed(fn *Function, x Value, tv types.Type, pos token.P
 }
 
 // 基于整数的迭代器
-func (b *builder) rangeIterInteger(fn *Function, x Value, tk, tv types.Type, pos token.Pos) (k Value, loop, done *BasicBlock) {
-	// TODO: chai
-	panic("Cannot range over: " + x.Type().Underlying().String())
+func (b *builder) rangeIterInteger(fn *Function, x Value, tk types.Type, pos token.Pos) (k Value, loop, done *BasicBlock) {
+	//
+	//     iter = 0
+	//     if 0 < x goto body else done
+	// loop:                                   (target of continue)
+	//     iter++
+	//     if iter < x goto body else done
+	// body:
+	//     k = x
+	//     ...body...
+	//     jump loop
+	// done:                                   (target of break)
+
+	if isUntyped(x.Type()) {
+		x = emitConv(fn, x, tInt)
+	}
+
+	T := x.Type()
+	iter := emitLocal(fn, T, token.NoPos, "rangeint.iter")
+	// x may be unsigned. Avoid initializing x to -1.
+
+	body := fn.newBasicBlock("rangeint.body")
+	done = fn.newBasicBlock("rangeint.done")
+	emitIf(fn, emitCompare(fn, token.LSS, zeroConst(T), x, token.NoPos), body, done)
+
+	loop = fn.newBasicBlock("rangeint.loop")
+	fn.currentBlock = loop
+
+	incr := &BinOp{
+		Op: token.ADD,
+		X:  emitLoad(fn, iter),
+		Y:  emitConv(fn, vOne, T),
+	}
+	incr.setType(T)
+	emitStore(fn, iter, fn.emit(incr), pos)
+	emitIf(fn, emitCompare(fn, token.LSS, incr, x, token.NoPos), body, done)
+	fn.currentBlock = body
+
+	if tk != nil {
+		// Integer types (int, uint8, etc.) are named and
+		// we know that k is assignable to x when tk != nil.
+		// This implies tk and T are identical so no conversion is needed.
+		k = emitLoad(fn, iter)
+	}
+
+	return
 }
 
 // 基于闭包函数的迭代器
 func (b *builder) rangeIterClosure(fn *Function, x Value, tk, tv types.Type, pos token.Pos) (k, v Value, loop, done *BasicBlock) {
-	// TODO: chai
-	panic("Cannot range over: " + x.Type().Underlying().String())
+	//
+	// loop:                                   (target of continue)
+	//     kvok = call x                       (key, val, ok)
+	//     ok = extract kvok #0                bool
+	//     if ok goto body else done
+	// body:
+	//     k = extract okv #1
+	//     v = extract okv #2
+	//     ...body...
+	//     jump loop
+	// done:                                   (target of break)
+
+	if tk == nil {
+		tk = tInvalid
+	}
+	if tv == nil {
+		tv = tInvalid
+	}
+
+	loop = fn.newBasicBlock("rangeiter.loop")
+	emitJump(fn, loop)
+	fn.currentBlock = loop
+
+	call := Call{
+		Call: CallCommon{
+			Value: x,
+			pos:   token.NoPos,
+		},
+	}
+
+	xsig := x.Type().Underlying().(*types.Signature)
+	call.setType(xsig.Results())
+	okv := fn.emit(&call)
+
+	body := fn.newBasicBlock("rangeiter.body")
+	done = fn.newBasicBlock("rangeiter.done")
+	emitIf(fn, emitExtract(fn, okv, 0), body, done)
+	fn.currentBlock = body
+
+	if tk != tInvalid {
+		k = emitExtract(fn, okv, 1)
+	}
+	if tv != tInvalid {
+		v = emitExtract(fn, okv, 2)
+	}
+	return
 }
 
 // rangeIterMapOrString emits to fn the header for a loop using
@@ -1674,7 +1761,7 @@ func (b *builder) rangeStmt(fn *Function, s *ast.RangeStmt, label *lblock) {
 		if rt.Info()&types.IsString != 0 {
 			k, v, loop, done = b.rangeIterMapOrString(fn, x, tk, tv, s.For)
 		} else if rt.Info()&types.IsInteger != 0 {
-			k, loop, done = b.rangeIterInteger(fn, x, tk, tv, s.For)
+			k, loop, done = b.rangeIterInteger(fn, x, tk, s.For)
 		}
 	case *types.Signature:
 		k, v, loop, done = b.rangeIterClosure(fn, x, tk, tv, s.For)

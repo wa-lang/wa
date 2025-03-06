@@ -23,7 +23,6 @@ func unparen(e ast.Expr) ast.Expr { return astutil.Unparen(e) }
 
 // isBlankIdent returns true iff e is an Ident with name "_".
 // They have no associated types.Object, and thus no type.
-//
 func isBlankIdent(e ast.Expr) bool {
 	id, ok := e.(*ast.Ident)
 	return ok && id.Name == "_"
@@ -52,11 +51,17 @@ func recvType(obj *types.Func) types.Type {
 	return obj.Type().(*types.Signature).Recv().Type()
 }
 
+// isUntyped reports whether typ is the type of an untyped constant.
+func isUntyped(typ types.Type) bool {
+	// No Underlying/Unalias: untyped constant types cannot be Named or Alias.
+	b, ok := typ.(*types.Basic)
+	return ok && b.Info()&types.IsUntyped != 0
+}
+
 // logStack prints the formatted "start" message to stderr and
 // returns a closure that prints the corresponding "end" message.
 // Call using 'defer logStack(...)()' to show builder stack on panic.
 // Don't forget trailing parens!
-//
 func logStack(format string, args ...interface{}) func() {
 	msg := fmt.Sprintf(format, args...)
 	io.WriteString(os.Stderr, msg)

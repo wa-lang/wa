@@ -747,17 +747,19 @@ func (check *Checker) stmt(ctxt stmtContext, s ast.Stmt) {
 
 			case *Signature:
 				if _UseFeature_forRangeIter {
-					switch typ.results.Len() {
-					case 2:
-						// func => (key:T, ok:bool)
-						if isBoolean(typ.results.vars[1].typ) {
-							key = typ.results.vars[0].typ
-						}
-					case 3:
-						// func => (key:T0, val:T1, ok:bool)
-						if isBoolean(typ.results.vars[2].typ) {
-							key = typ.results.vars[0].typ
-							val = typ.results.vars[1].typ
+					if typ.recv == nil && typ.params.Len() == 0 {
+						switch typ.results.Len() {
+						case 2:
+							// func => (ok:bool, key:T)
+							if isBoolean(typ.results.vars[0].typ) {
+								key = typ.results.vars[1].typ
+							}
+						case 3:
+							// func => (ok:bool, key:TK, val:TV)
+							if isBoolean(typ.results.vars[0].typ) {
+								key = typ.results.vars[1].typ
+								val = typ.results.vars[2].typ
+							}
 						}
 					}
 				}
