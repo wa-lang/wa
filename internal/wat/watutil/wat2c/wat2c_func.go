@@ -18,6 +18,8 @@ func (p *wat2cWorker) buildFunc_body(w io.Writer, fn *ast.Func, cRetType string)
 	var stk valueTypeStack
 	var bufIns bytes.Buffer
 
+	stk.funcName = fn.Name
+
 	assert(len(p.scopeLabels) == 0)
 	assert(len(p.scopeStackBases) == 0)
 
@@ -46,16 +48,16 @@ func (p *wat2cWorker) buildFunc_body(w io.Writer, fn *ast.Func, cRetType string)
 	}
 
 	assert(stk.Len() == 0)
-	for i, ins := range fn.Body.Insts {
+	for _, ins := range fn.Body.Insts {
 		if err := p.buildFunc_ins(&bufIns, fn, &stk, ins, 1); err != nil {
 			return err
 		}
-		// 手动补充最后一个 return
-		if i == len(fn.Body.Insts)-1 && ins.Token() != token.INS_RETURN {
-			insReturn := ast.Ins_Return{OpToken: ast.OpToken(token.INS_RETURN)}
-			if err := p.buildFunc_ins(&bufIns, fn, &stk, insReturn, 1); err != nil {
-				return err
-			}
+	}
+
+	// 有些函数最后的位置不是 return, 需要手动清理栈
+	if stk.Len() > 0 {
+		for _, xType := range fn.Type.Results {
+			stk.Pop(xType)
 		}
 	}
 	assert(stk.Len() == 0)
@@ -84,6 +86,8 @@ func (p *wat2cWorker) buildFunc_body(w io.Writer, fn *ast.Func, cRetType string)
 }
 
 func (p *wat2cWorker) buildFunc_ins(w io.Writer, fn *ast.Func, stk *valueTypeStack, i ast.Instruction, level int) error {
+	stk.NextInstruction(i)
+
 	indent := strings.Repeat("  ", level)
 
 	p.Tracef("buildFunc_ins: %s%s begin: %v\n", indent, i.Token(), stk.String())
