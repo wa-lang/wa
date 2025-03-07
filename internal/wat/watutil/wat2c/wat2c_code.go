@@ -96,39 +96,27 @@ func (p *wat2cWorker) buildImport(w io.Writer) error {
 	if len(p.m.Imports) == 0 {
 		return nil
 	}
+
+	// 同一个函数可能被导入多次
+	var hostFuncMap = make(map[string]bool)
+
+	// 声明原始的宿主函数
 	for _, importSpec := range p.m.Imports {
 		if importSpec.ObjKind != token.FUNC {
 			continue
 		}
 
-		fnName := importSpec.FuncName
+		fnName := importSpec.ObjModule + "." + importSpec.ObjName
 		fnType := importSpec.FuncType
 
-		fmt.Fprintf(w, "// import %s.%s => func $%s",
-			importSpec.ObjModule, importSpec.ObjName,
-			fnName,
-		)
-
-		if len(fnType.Params) > 0 {
-			for i, x := range fnType.Params {
-				if x.Name != "" {
-					fmt.Fprintf(w, " (param $%s %v)", x.Name, x.Type)
-				} else {
-					fmt.Fprintf(w, " (param $%d %v)", i, x.Type)
-				}
-			}
+		// 已经处理过
+		if hostFuncMap[fnName] {
+			continue
 		}
-		if len(fnType.Results) > 0 {
-			fmt.Fprintf(w, " (result")
-			for _, x := range fnType.Results {
-				fmt.Fprintf(w, " %v", x)
-			}
-			fmt.Fprint(w, ")")
-		}
-		fmt.Fprintln(w)
+		hostFuncMap[fnName] = true
 
 		// 返回值类型
-		cRetType := p.getFuncCRetType(fnType, fnName)
+		cRetType := p.getHostFuncCRetType(fnType, fnName)
 		if len(fnType.Results) > 1 {
 			fmt.Fprintf(w, "typedef struct {")
 			for i := 0; i < len(fnType.Results); i++ {
@@ -148,11 +136,11 @@ func (p *wat2cWorker) buildImport(w io.Writer) error {
 					unreachable()
 				}
 			}
-			fmt.Fprintf(w, "} fn_%s_ret_t;\n", toCName(fnName))
+			fmt.Fprintf(w, "} host_fn_%s_ret_t;\n", toCName(fnName))
 		}
 
 		// 返回值通过栈传递
-		fmt.Fprintf(w, "extern %s fn_%s(", cRetType, toCName(fnName))
+		fmt.Fprintf(w, "extern %s host_fn_%s(", cRetType, toCName(fnName))
 		if len(fnType.Params) > 0 {
 			for i, x := range fnType.Params {
 				var argName string
@@ -181,8 +169,162 @@ func (p *wat2cWorker) buildImport(w io.Writer) error {
 		}
 		fmt.Fprintf(w, ");\n")
 	}
-
 	fmt.Fprintln(w)
+
+	// 声明导入后的函数
+	for _, importSpec := range p.m.Imports {
+		if importSpec.ObjKind != token.FUNC {
+			continue
+		}
+
+		fnName := importSpec.FuncName
+		fnType := importSpec.FuncType
+
+		fmt.Fprintf(w, "// import %s.%s\n",
+			importSpec.ObjModule, importSpec.ObjName,
+		)
+
+		// 返回值类型
+		cRetType := p.getFuncCRetType(fnType, fnName)
+		if len(fnType.Results) > 1 {
+			fmt.Fprintf(w, "typedef struct {")
+			for i := 0; i < len(fnType.Results); i++ {
+				if i > 0 {
+					fmt.Fprintf(w, " ")
+				}
+				switch fnType.Results[i] {
+				case token.I32:
+					fmt.Fprintf(w, "i32_t $R%d;", i)
+				case token.I64:
+					fmt.Fprintf(w, "i64_t $R%d;", i)
+				case token.F32:
+					fmt.Fprintf(w, "f32_t $R%d;", i)
+				case token.F64:
+					fmt.Fprintf(w, "f64_t $R%d;", i)
+				default:
+					unreachable()
+				}
+			}
+			fmt.Fprintf(w, "} fn_%s_ret_t;\n", toCName(fnName))
+		}
+
+		// 返回值通过栈传递
+		fmt.Fprintf(w, "static %s fn_%s(", cRetType, toCName(fnName))
+		if len(fnType.Params) > 0 {
+			for i, x := range fnType.Params {
+				var argName string
+				if x.Name != "" {
+					argName = toCName(x.Name)
+				} else {
+					argName = fmt.Sprintf("$arg%d", i)
+				}
+				if i > 0 {
+					fmt.Fprint(w, ", ")
+				}
+
+				switch x.Type {
+				case token.I32:
+					fmt.Fprintf(w, "i32_t %v", argName)
+				case token.I64:
+					fmt.Fprintf(w, "i64_t %v", argName)
+				case token.F32:
+					fmt.Fprintf(w, "f32_t %v", argName)
+				case token.F64:
+					fmt.Fprintf(w, "f64_t %v", argName)
+				default:
+					unreachable()
+				}
+			}
+		}
+		fmt.Fprintf(w, ");\n")
+	}
+	fmt.Fprintln(w)
+
+	// 定义导入后的函数
+	for _, importSpec := range p.m.Imports {
+		if importSpec.ObjKind != token.FUNC {
+			continue
+		}
+
+		fnName := importSpec.FuncName
+		fnType := importSpec.FuncType
+
+		fmt.Fprintf(w, "// import %s.%s\n",
+			importSpec.ObjModule, importSpec.ObjName,
+		)
+
+		// 返回值类型
+		cHostRetType := p.getFuncCRetType(fnType, importSpec.ObjModule+"."+importSpec.ObjName)
+		cRetType := p.getFuncCRetType(fnType, fnName)
+
+		// 返回值通过栈传递
+		fmt.Fprintf(w, "static %s fn_%s(", cRetType, toCName(fnName))
+		if len(fnType.Params) > 0 {
+			for i, x := range fnType.Params {
+				var argName string
+				if x.Name != "" {
+					argName = toCName(x.Name)
+				} else {
+					argName = fmt.Sprintf("$arg%d", i)
+				}
+				if i > 0 {
+					fmt.Fprint(w, ", ")
+				}
+
+				switch x.Type {
+				case token.I32:
+					fmt.Fprintf(w, "i32_t %v", argName)
+				case token.I64:
+					fmt.Fprintf(w, "i64_t %v", argName)
+				case token.F32:
+					fmt.Fprintf(w, "f32_t %v", argName)
+				case token.F64:
+					fmt.Fprintf(w, "f64_t %v", argName)
+				default:
+					unreachable()
+				}
+			}
+		}
+		fmt.Fprintf(w, ") {\n")
+
+		// 定义返回值
+		if len(fnType.Results) > 0 {
+			fmt.Fprintf(w, "  union { %s v; %s host; } ret;\n", cRetType, cHostRetType)
+		}
+
+		// 处理宿主函数调用的返回值
+		if len(fnType.Results) > 0 {
+			fmt.Fprintf(w, "  ret.v = host_fn_%s(", toCName(fnName))
+		} else {
+			fmt.Fprintf(w, "  host_fn_%s(", toCName(fnName))
+		}
+
+		// 调用参数
+		for i, x := range fnType.Params {
+			var argName string
+			if x.Name != "" {
+				argName = toCName(x.Name)
+			} else {
+				argName = fmt.Sprintf("$arg%d", i)
+			}
+
+			if i > 0 {
+				fmt.Fprint(w, ", ")
+			}
+			fmt.Fprint(w, argName)
+		}
+		fmt.Fprintf(w, ");\n")
+
+		// 返回结果
+		if len(fnType.Results) > 0 {
+			fmt.Fprintf(w, "  return ret.host;\n")
+		}
+
+		fmt.Fprintf(w, "}\n")
+		fmt.Fprintln(w)
+	}
+	fmt.Fprintln(w)
+
 	return nil
 }
 
@@ -221,15 +363,15 @@ func (p *wat2cWorker) buildMemory(w io.Writer) error {
 		fmt.Fprintf(w, "// memory $%s\n", p.m.Memory.Name)
 	}
 	if max := p.m.Memory.MaxPages; max > 0 {
-		fmt.Fprintf(w, "static uint8_t       wasm_memoy[%d*64*1024];\n", max)
-		fmt.Fprintf(w, "static int32_t       wasm_memoy_size = %d;\n", p.m.Memory.Pages)
-		fmt.Fprintf(w, "static const int32_t wasm_memoy_max_pages = %d;\n", max)
-		fmt.Fprintf(w, "static const int32_t wasm_memoy_pages = %d;\n", p.m.Memory.Pages)
+		fmt.Fprintf(w, "uint8_t       wasm_memoy[%d*64*1024];\n", max)
+		fmt.Fprintf(w, "int32_t       wasm_memoy_size = %d;\n", p.m.Memory.Pages)
+		fmt.Fprintf(w, "const int32_t wasm_memoy_max_pages = %d;\n", max)
+		fmt.Fprintf(w, "const int32_t wasm_memoy_pages = %d;\n", p.m.Memory.Pages)
 	} else {
-		fmt.Fprintf(w, "static uint8_t       wasm_memoy[%d*64*1024];\n", p.m.Memory.Pages)
-		fmt.Fprintf(w, "static int32_t       wasm_memoy_size = %d;\n", p.m.Memory.Pages)
-		fmt.Fprintf(w, "static const int32_t wasm_memoy_max_pages = %d;\n", p.m.Memory.Pages)
-		fmt.Fprintf(w, "static const int32_t wasm_memoy_pages = %d;\n", p.m.Memory.Pages)
+		fmt.Fprintf(w, "uint8_t       wasm_memoy[%d*64*1024];\n", p.m.Memory.Pages)
+		fmt.Fprintf(w, "int32_t       wasm_memoy_size = %d;\n", p.m.Memory.Pages)
+		fmt.Fprintf(w, "const int32_t wasm_memoy_max_pages = %d;\n", p.m.Memory.Pages)
+		fmt.Fprintf(w, "const int32_t wasm_memoy_pages = %d;\n", p.m.Memory.Pages)
 	}
 	fmt.Fprintln(w)
 	return nil
@@ -247,13 +389,13 @@ func (p *wat2cWorker) buildTable(w io.Writer) error {
 		fmt.Fprintf(w, "// table $%s\n", p.m.Table.Name)
 	}
 	if max := p.m.Table.MaxSize; max > 0 {
-		fmt.Fprintf(w, "static ref_t     wasm_table[%d];\n", max)
-		fmt.Fprintf(w, "static int32_t   wasm_table_size = %d;\n", p.m.Table.Size)
-		fmt.Fprintf(w, "static const int wasm_table_max_size = %d;\n", max)
+		fmt.Fprintf(w, "ref_t     wasm_table[%d];\n", max)
+		fmt.Fprintf(w, "int32_t   wasm_table_size = %d;\n", p.m.Table.Size)
+		fmt.Fprintf(w, "const int wasm_table_max_size = %d;\n", max)
 	} else {
-		fmt.Fprintf(w, "static ref_t     wasm_table[%d];\n", p.m.Table.Size)
-		fmt.Fprintf(w, "static int32_t   wasm_table_size = %d;\n", p.m.Table.Size)
-		fmt.Fprintf(w, "static const int wasm_table_max_size = %d;\n", p.m.Table.Size)
+		fmt.Fprintf(w, "ref_t     wasm_table[%d];\n", p.m.Table.Size)
+		fmt.Fprintf(w, "int32_t   wasm_table_size = %d;\n", p.m.Table.Size)
+		fmt.Fprintf(w, "const int wasm_table_max_size = %d;\n", p.m.Table.Size)
 	}
 	fmt.Fprintln(w)
 	return nil
@@ -346,7 +488,7 @@ func (p *wat2cWorker) buildFuncs(w io.Writer) error {
 			fmt.Fprintf(w, "} fn_%s_ret_t;\n", toCName(f.Name))
 		}
 
-		fmt.Fprintf(w, "static %s fn_%s(", cRetType, toCName(f.Name))
+		fmt.Fprintf(w, "extern %s fn_%s(", cRetType, toCName(f.Name))
 		if len(f.Type.Params) > 0 {
 			for i, x := range f.Type.Params {
 				if i > 0 {
@@ -419,7 +561,7 @@ func (p *wat2cWorker) buildFuncs(w io.Writer) error {
 		fmt.Fprintln(w)
 
 		// 返回值通过栈传递, 返回入栈的个数
-		fmt.Fprintf(w, "static %s fn_%s(", cRetType, toCName(f.Name))
+		fmt.Fprintf(w, "%s fn_%s(", cRetType, toCName(f.Name))
 		if len(f.Type.Params) > 0 {
 			for i, x := range f.Type.Params {
 				var argName string

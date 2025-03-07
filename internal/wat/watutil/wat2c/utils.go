@@ -2,8 +2,8 @@ package wat2c
 
 import (
 	"fmt"
-	"strconv"
 	"strings"
+	"unicode"
 
 	"wa-lang.org/wa/internal/wat/token"
 )
@@ -65,22 +65,15 @@ func toCName(name string) string {
 	var sb strings.Builder
 	for _, c := range ([]rune)(name) {
 		switch {
-		case c == '_':
+		case '0' <= c && c <= '9':
 			sb.WriteRune(c)
 		case 'a' <= c && c <= 'z':
 			sb.WriteRune(c)
 		case 'A' <= c && c <= 'Z':
 			sb.WriteRune(c)
-		case c == '$':
-			// $ 是保留字符，转义为 _$$_
-			sb.WriteRune('_')
-			sb.WriteRune('$')
-			sb.WriteRune('$')
-			sb.WriteRune('_')
+		case unicode.IsLetter(c):
+			sb.WriteRune(c)
 		default:
-			sb.WriteRune('_')
-			sb.WriteRune('$')
-			sb.WriteString(strconv.FormatInt(int64(c), 16))
 			sb.WriteRune('_')
 		}
 	}

@@ -14,6 +14,28 @@ func (p *wat2cWorker) Tracef(foramt string, a ...interface{}) {
 	}
 }
 
+func (p *wat2cWorker) getHostFuncCRetType(fnType *ast.FuncType, fnName string) string {
+	switch len(fnType.Results) {
+	case 0:
+		return "void"
+	case 1:
+		switch fnType.Results[0] {
+		case token.I32:
+			return "i32_t"
+		case token.I64:
+			return "i64_t"
+		case token.F32:
+			return "f32_t"
+		case token.F64:
+			return "f64_t"
+		default:
+			panic("unreachable")
+		}
+	default:
+		return fmt.Sprintf("host_fn_%s_ret_t", toCName(fnName))
+	}
+}
+
 func (p *wat2cWorker) getFuncCRetType(fnType *ast.FuncType, fnName string) string {
 	switch len(fnType.Results) {
 	case 0:
