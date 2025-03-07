@@ -54,14 +54,6 @@ func (p *wat2cWorker) buildFunc_body(w io.Writer, fn *ast.Func, cRetType string)
 		}
 	}
 
-	// 有些函数最后的位置不是 return, 需要手动清理栈
-	if stk.Len() > 0 {
-		for _, xType := range fn.Type.Results {
-			stk.Pop(xType)
-		}
-	}
-	assert(stk.Len() == 0)
-
 	// 返回值
 	if len(fn.Type.Results) > 1 {
 		fmt.Fprintf(w, "  %s $result;\n", cRetType)
@@ -82,6 +74,59 @@ func (p *wat2cWorker) buildFunc_body(w io.Writer, fn *ast.Func, cRetType string)
 
 	// 指令复制到 w
 	io.Copy(w, &bufIns)
+
+	// 有些函数最后的位置不是 return, 需要手动清理栈
+	switch stk.LastInstruction().Token() {
+	case token.INS_RETURN:
+		// 已经处理过了
+	case token.INS_UNREACHABLE:
+		// 清空残余的栈, 不做类型校验
+		for stk.Len() > 0 {
+			stk.DropAny()
+		}
+	default:
+		// 补充 return
+		assert(stk.Len() == len(fn.Type.Results))
+
+		const indent = "  "
+		switch len(fn.Type.Results) {
+		case 0:
+			fmt.Fprintf(w, "%sreturn;\n", indent)
+		case 1:
+			sp0 := stk.Pop(fn.Type.Results[0])
+			switch fn.Type.Results[0] {
+			case token.I32:
+				fmt.Fprintf(w, "%sreturn $R%d.i32;\n", indent, sp0)
+			case token.I64:
+				fmt.Fprintf(w, "%sreturn $R%d.i64;\n", indent, sp0)
+			case token.F32:
+				fmt.Fprintf(w, "%sreturn $R%d.f32;\n", indent, sp0)
+			case token.F64:
+				fmt.Fprintf(w, "%sreturn $R%d.f64;\n", indent, sp0)
+			default:
+				unreachable()
+			}
+		default:
+			for i, xType := range fn.Type.Results {
+				spi := stk.Pop(xType)
+				switch xType {
+				case token.I32:
+					fmt.Fprintf(w, "%s$result.$R%d = $R%d.i32;\n", indent, i, spi)
+				case token.I64:
+					fmt.Fprintf(w, "%s$result.$R%d = $R%d.i64;\n", indent, i, spi)
+				case token.F32:
+					fmt.Fprintf(w, "%s$result.$R%d = $R%d.f32;\n", indent, i, spi)
+				case token.F64:
+					fmt.Fprintf(w, "%s$result.$R%d = $R%d.f64;\n", indent, i, spi)
+				default:
+					unreachable()
+				}
+			}
+			fmt.Fprintf(w, "%sreturn $result;\n", indent)
+		}
+	}
+	assert(stk.Len() == 0)
+
 	return nil
 }
 
@@ -765,21 +810,21 @@ func (p *wat2cWorker) buildFunc_ins(w io.Writer, fn *ast.Func, stk *valueTypeSta
 		dst := stk.Pop(token.I32)
 		off := stk.Pop(token.I32)
 		len := stk.Pop(token.I32)
-		fmt.Fprintf(w, "%sTODO; // memcpy((void*)$R%d.i32; (void*)$R%d.i32, $R%d.i32);\n",
+		fmt.Fprintf(w, "%sTODO; // memcpy((void*)$R%d.i32, (void*)$R%d.i32, $R%d.i32);\n",
 			indent, dst, off, len,
 		)
 	case token.INS_MEMORY_COPY:
 		dst := stk.Pop(token.I32)
 		src := stk.Pop(token.I32)
 		len := stk.Pop(token.I32)
-		fmt.Fprintf(w, "%smemcpy((void*)$R%d.i32; (void*)$R%d.i32, $R%d.i32);\n",
+		fmt.Fprintf(w, "%smemcpy((void*)$R%d.i32, (void*)$R%d.i32, $R%d.i32);\n",
 			indent, dst, src, len,
 		)
 	case token.INS_MEMORY_FILL:
 		dst := stk.Pop(token.I32)
 		val := stk.Pop(token.I32)
 		len := stk.Pop(token.I32)
-		fmt.Fprintf(w, "%smemset((void*)$R%d.i32; $R%d.i32, $R%d.i32);\n",
+		fmt.Fprintf(w, "%smemset((void*)$R%d.i32, $R%d.i32, $R%d.i32);\n",
 			indent, dst, val, len,
 		)
 	case token.INS_I32_CONST:

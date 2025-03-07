@@ -38,6 +38,10 @@ func (s *valueTypeStack) NextInstruction(ins ast.Instruction) {
 	}
 }
 
+func (s *valueTypeStack) LastInstruction() ast.Instruction {
+	return s.funcInstruction
+}
+
 func (s *valueTypeStack) Top(expect token.Token) int {
 	if len(s.stack) == 0 {
 		panic("unexpected stack empty; # " + s.String())
