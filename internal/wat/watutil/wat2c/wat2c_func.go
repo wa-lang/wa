@@ -169,7 +169,7 @@ func (p *wat2cWorker) buildFunc_ins(w io.Writer, fn *ast.Func, stk *valueTypeSta
 		}
 		fmt.Fprintf(w, "%s}\n", indent)
 		if i.Label != "" {
-			fmt.Fprintf(w, "L_%s_next:\n", toCName(i.Label))
+			fmt.Fprintf(w, "L_%s_next:;\n", toCName(i.Label))
 		}
 
 	case token.INS_LOOP:
@@ -182,7 +182,7 @@ func (p *wat2cWorker) buildFunc_ins(w io.Writer, fn *ast.Func, stk *valueTypeSta
 		defer p.leaveLabelScope()
 
 		if i.Label != "" {
-			fmt.Fprintf(w, "L_%s_next:\n", toCName(i.Label))
+			fmt.Fprintf(w, "L_%s_next:;\n", toCName(i.Label))
 		}
 		if i.Label != "" {
 			fmt.Fprintf(w, "%s{ // loop $%s\n", indent, i.Label)
@@ -235,7 +235,7 @@ func (p *wat2cWorker) buildFunc_ins(w io.Writer, fn *ast.Func, stk *valueTypeSta
 		}
 		fmt.Fprintf(w, "%s}\n", indent)
 		if i.Label != "" {
-			fmt.Fprintf(w, "L_%s_next:\n", toCName(i.Label))
+			fmt.Fprintf(w, "L_%s_next:;\n", toCName(i.Label))
 		}
 
 	case token.INS_ELSE:
@@ -640,170 +640,170 @@ func (p *wat2cWorker) buildFunc_ins(w io.Writer, fn *ast.Func, stk *valueTypeSta
 		i := i.(ast.Ins_I32Load)
 		sp0 := stk.Pop(token.I32)
 		ret0 := stk.Push(token.I32)
-		fmt.Fprintf(w, "%smemcpy(&$R%d.i32, &wasm_memoy[$R%d.i32+%d], 4);\n",
+		fmt.Fprintf(w, "%smemcpy(&$R%d.i32, WASM_MEMORY_ADDR($R%d.i32+%d), 4);\n",
 			indent, sp0, ret0, i.Offset,
 		)
 	case token.INS_I64_LOAD:
 		i := i.(ast.Ins_I64Load)
 		sp0 := stk.Pop(token.I32)
 		ret0 := stk.Push(token.I64)
-		fmt.Fprintf(w, "%smemcpy(&$R%d.i64, &wasm_memoy[$R%d.i32+%d], 8);\n",
+		fmt.Fprintf(w, "%smemcpy(&$R%d.i64, WASM_MEMORY_ADDR($R%d.i32+%d), 8);\n",
 			indent, sp0, ret0, i.Offset,
 		)
 	case token.INS_F32_LOAD:
 		i := i.(ast.Ins_F32Load)
 		sp0 := stk.Pop(token.I32)
 		ret0 := stk.Push(token.F32)
-		fmt.Fprintf(w, "%smemcpy(&$R%d.f32, &wasm_memoy[$R%d.i32+%d], 4);\n",
+		fmt.Fprintf(w, "%smemcpy(&$R%d.f32, WASM_MEMORY_ADDR($R%d.i32+%d), 4);\n",
 			indent, sp0, ret0, i.Offset,
 		)
 	case token.INS_F64_LOAD:
 		i := i.(ast.Ins_I32Load)
 		sp0 := stk.Pop(token.I32)
 		ret0 := stk.Push(token.I64)
-		fmt.Fprintf(w, "%smemcpy(&$R%d.f64, &wasm_memoy[$R%d.i32+%d], 8);\n",
+		fmt.Fprintf(w, "%smemcpy(&$R%d.f64, WASM_MEMORY_ADDR($R%d.i32+%d), 8);\n",
 			indent, sp0, ret0, i.Offset,
 		)
 	case token.INS_I32_LOAD8_S:
 		i := i.(ast.Ins_I32Load8S)
 		sp0 := stk.Pop(token.I32)
 		ret0 := stk.Push(token.I32)
-		fmt.Fprintf(w, "%smemcpy(&$R_u8, &wasm_memoy[$R%d.i32+%d], 1); $R%d.i32 = (i32_t)((i8_t)$R_u8);\n",
+		fmt.Fprintf(w, "%smemcpy(&$R_u8, WASM_MEMORY_ADDR($R%d.i32+%d), 1); $R%d.i32 = (i32_t)((i8_t)$R_u8);\n",
 			indent, ret0, i.Offset, sp0,
 		)
 	case token.INS_I32_LOAD8_U:
 		i := i.(ast.Ins_I32Load8U)
 		sp0 := stk.Pop(token.I32)
 		ret0 := stk.Push(token.I32)
-		fmt.Fprintf(w, "%smemcpy(&$R_u8, &wasm_memoy[$R%d.i32+%d], 1); $R%d.i32 = (i32_t)((u8_t)$R_u8);\n",
+		fmt.Fprintf(w, "%smemcpy(&$R_u8, WASM_MEMORY_ADDR($R%d.i32+%d), 1); $R%d.i32 = (i32_t)((u8_t)$R_u8);\n",
 			indent, ret0, i.Offset, sp0,
 		)
 	case token.INS_I32_LOAD16_S:
 		i := i.(ast.Ins_I32Load16S)
 		sp0 := stk.Pop(token.I32)
 		ret0 := stk.Push(token.I32)
-		fmt.Fprintf(w, "%smemcpy(&$R_u16, &wasm_memoy[$R%d.i32+%d], 2); $R%d.i32 = (i32_t)((i16_t)$R_u16);\n",
+		fmt.Fprintf(w, "%smemcpy(&$R_u16, WASM_MEMORY_ADDR($R%d.i32+%d), 2); $R%d.i32 = (i32_t)((i16_t)$R_u16);\n",
 			indent, ret0, i.Offset, sp0,
 		)
 	case token.INS_I32_LOAD16_U:
 		i := i.(ast.Ins_I32Load16U)
 		sp0 := stk.Pop(token.I32)
 		ret0 := stk.Push(token.I32)
-		fmt.Fprintf(w, "%smemcpy(&$R_u16, &wasm_memoy[$R%d.i32+%d], 2); $R%d.i32 = (i32_t)((u16_t)$R_u16);\n",
+		fmt.Fprintf(w, "%smemcpy(&$R_u16, WASM_MEMORY_ADDR($R%d.i32+%d), 2); $R%d.i32 = (i32_t)((u16_t)$R_u16);\n",
 			indent, ret0, i.Offset, sp0,
 		)
 	case token.INS_I64_LOAD8_S:
 		i := i.(ast.Ins_I64Load8S)
 		sp0 := stk.Pop(token.I32)
 		ret0 := stk.Push(token.I64)
-		fmt.Fprintf(w, "%smemcpy(&$R_u8, &wasm_memoy[$R%d.i32+%d], 1); $R%d.i64 = (i64_t)((i8_t)$R_u8);\n",
+		fmt.Fprintf(w, "%smemcpy(&$R_u8, WASM_MEMORY_ADDR($R%d.i32+%d), 1); $R%d.i64 = (i64_t)((i8_t)$R_u8);\n",
 			indent, ret0, i.Offset, sp0,
 		)
 	case token.INS_I64_LOAD8_U:
 		i := i.(ast.Ins_I64Load8U)
 		sp0 := stk.Pop(token.I32)
 		ret0 := stk.Push(token.I64)
-		fmt.Fprintf(w, "%smemcpy(&$R_u8, &wasm_memoy[$R%d.i32+%d], 1); $R%d.i64 = (i64_t)((u8_t)$R_u8);\n",
+		fmt.Fprintf(w, "%smemcpy(&$R_u8, WASM_MEMORY_ADDR($R%d.i32+%d), 1); $R%d.i64 = (i64_t)((u8_t)$R_u8);\n",
 			indent, ret0, i.Offset, sp0,
 		)
 	case token.INS_I64_LOAD16_S:
 		i := i.(ast.Ins_I64Load16S)
 		sp0 := stk.Pop(token.I32)
 		ret0 := stk.Push(token.I64)
-		fmt.Fprintf(w, "%smemcpy(&$R_u16, &wasm_memoy[$R%d.i32+%d], 2); $R%d.i64 = (i64_t)((i16_t)$R_u16);\n",
+		fmt.Fprintf(w, "%smemcpy(&$R_u16, WASM_MEMORY_ADDR($R%d.i32+%d), 2); $R%d.i64 = (i64_t)((i16_t)$R_u16);\n",
 			indent, ret0, i.Offset, sp0,
 		)
 	case token.INS_I64_LOAD16_U:
 		i := i.(ast.Ins_I64Load16U)
 		sp0 := stk.Pop(token.I32)
 		ret0 := stk.Push(token.I64)
-		fmt.Fprintf(w, "%smemcpy(&$R_u16, &wasm_memoy[$R%d.i32+%d], 2); $R%d.i64 = (i64_t)((u16_t)$R_u16);\n",
+		fmt.Fprintf(w, "%smemcpy(&$R_u16, WASM_MEMORY_ADDR($R%d.i32+%d), 2); $R%d.i64 = (i64_t)((u16_t)$R_u16);\n",
 			indent, ret0, i.Offset, sp0,
 		)
 	case token.INS_I64_LOAD32_S:
 		i := i.(ast.Ins_I64Load32S)
 		sp0 := stk.Pop(token.I32)
 		ret0 := stk.Push(token.I64)
-		fmt.Fprintf(w, "%smemcpy(&$R_u32, &wasm_memoy[$R%d.i32+%d], 4); $R%d.i64 = (i64_t)((i32_t)$R_u32);\n",
+		fmt.Fprintf(w, "%smemcpy(&$R_u32, WASM_MEMORY_ADDR($R%d.i32+%d), 4); $R%d.i64 = (i64_t)((i32_t)$R_u32);\n",
 			indent, ret0, i.Offset, sp0,
 		)
 	case token.INS_I64_LOAD32_U:
 		i := i.(ast.Ins_I64Load32U)
 		sp0 := stk.Pop(token.I32)
 		ret0 := stk.Push(token.I64)
-		fmt.Fprintf(w, "%smemcpy(&$R_u32, &wasm_memoy[$R%d.i32+%d], 4); $R%d.i64 = (i64_t)((u32_t)$R_u32);\n",
+		fmt.Fprintf(w, "%smemcpy(&$R_u32, WASM_MEMORY_ADDR($R%d.i32+%d), 4); $R%d.i64 = (i64_t)((u32_t)$R_u32);\n",
 			indent, ret0, i.Offset, sp0,
 		)
 	case token.INS_I32_STORE:
 		i := i.(ast.Ins_I32Store)
 		sp0 := stk.Pop(token.I32)
 		sp1 := stk.Pop(token.I32)
-		fmt.Fprintf(w, "%smemcpy(&wasm_memoy[$R%d.i32+%d], &$R%d.i32, 4);\n",
+		fmt.Fprintf(w, "%smemcpy(WASM_MEMORY_ADDR($R%d.i32+%d), &$R%d.i32, 4);\n",
 			indent, sp1, i.Offset, sp0,
 		)
 	case token.INS_I64_STORE:
 		i := i.(ast.Ins_I64Store)
 		sp0 := stk.Pop(token.I64)
 		sp1 := stk.Pop(token.I32)
-		fmt.Fprintf(w, "%smemcpy(&wasm_memoy[$R%d.i32+%d], &$R%d.i64, 8);\n",
+		fmt.Fprintf(w, "%smemcpy(WASM_MEMORY_ADDR($R%d.i32+%d), &$R%d.i64, 8);\n",
 			indent, sp1, i.Offset, sp0,
 		)
 	case token.INS_F32_STORE:
 		i := i.(ast.Ins_F32Store)
 		sp0 := stk.Pop(token.F32)
 		sp1 := stk.Pop(token.I32)
-		fmt.Fprintf(w, "%smemcpy(&wasm_memoy[$R%d.i32+%d], &$R%d.f32, 4);\n",
+		fmt.Fprintf(w, "%smemcpy(WASM_MEMORY_ADDR($R%d.i32+%d), &$R%d.f32, 4);\n",
 			indent, sp1, i.Offset, sp0,
 		)
 	case token.INS_F64_STORE:
 		i := i.(ast.Ins_F64Store)
 		sp0 := stk.Pop(token.F64)
 		sp1 := stk.Pop(token.I32)
-		fmt.Fprintf(w, "%smemcpy(&wasm_memoy[$R%d.i32+%d], &$R%d.f64, 8);\n",
+		fmt.Fprintf(w, "%smemcpy(WASM_MEMORY_ADDR($R%d.i32+%d), &$R%d.f64, 8);\n",
 			indent, sp1, i.Offset, sp0,
 		)
 	case token.INS_I32_STORE8:
 		i := i.(ast.Ins_I32Store8)
 		sp0 := stk.Pop(token.I32)
 		sp1 := stk.Pop(token.I32)
-		fmt.Fprintf(w, "%s$R_u8 = (u8_t)((i8_t)($R%d.i32)); memcpy(&wasm_memoy[$R%d.i32+%d], &$R_u8, 1);\n",
+		fmt.Fprintf(w, "%s$R_u8 = (u8_t)((i8_t)($R%d.i32)); memcpy(WASM_MEMORY_ADDR($R%d.i32+%d), &$R_u8, 1);\n",
 			indent, sp0, sp1, i.Offset,
 		)
 	case token.INS_I32_STORE16:
 		i := i.(ast.Ins_I32Store16)
 		sp0 := stk.Pop(token.I32)
 		sp1 := stk.Pop(token.I32)
-		fmt.Fprintf(w, "%s$R_u16 = (u16_t)((i16_t)($R%d.i32)); memcpy(&wasm_memoy[$R%d.i32+%d], &$R_u16, 2);\n",
+		fmt.Fprintf(w, "%s$R_u16 = (u16_t)((i16_t)($R%d.i32)); memcpy(WASM_MEMORY_ADDR($R%d.i32+%d), &$R_u16, 2);\n",
 			indent, sp0, sp1, i.Offset,
 		)
 	case token.INS_I64_STORE8:
 		i := i.(ast.Ins_I64Store8)
 		sp0 := stk.Pop(token.I64)
 		sp1 := stk.Pop(token.I32)
-		fmt.Fprintf(w, "%s$R_u8 = (u8_t)((i8_t)($R%d.i64)); memcpy(&wasm_memoy[$R%d.i32+%d], &$R_u8, 1);\n",
+		fmt.Fprintf(w, "%s$R_u8 = (u8_t)((i8_t)($R%d.i64)); memcpy(WASM_MEMORY_ADDR($R%d.i32+%d), &$R_u8, 1);\n",
 			indent, sp0, sp1, i.Offset,
 		)
 	case token.INS_I64_STORE16:
 		i := i.(ast.Ins_I64Store16)
 		sp0 := stk.Pop(token.I64)
 		sp1 := stk.Pop(token.I32)
-		fmt.Fprintf(w, "%s$R_u16 = (u16_t)((i16_t)($R%d.i64)); memcpy(&wasm_memoy[$R%d.i32+%d], &$R_u16, 2);\n",
+		fmt.Fprintf(w, "%s$R_u16 = (u16_t)((i16_t)($R%d.i64)); memcpy(WASM_MEMORY_ADDR($R%d.i32+%d), &$R_u16, 2);\n",
 			indent, sp0, sp1, i.Offset,
 		)
 	case token.INS_I64_STORE32:
 		i := i.(ast.Ins_I64Store32)
 		sp0 := stk.Pop(token.I64)
 		sp1 := stk.Pop(token.I32)
-		fmt.Fprintf(w, "%s$R_u32 = (u32_t)((i32_t)($R%d.i64)); memcpy(&wasm_memoy[$R%d.i32+%d], &$R_u32, 4);\n",
+		fmt.Fprintf(w, "%s$R_u32 = (u32_t)((i32_t)($R%d.i64)); memcpy(WASM_MEMORY_ADDR($R%d.i32+%d), &$R_u32, 4);\n",
 			indent, sp0, sp1, i.Offset,
 		)
 	case token.INS_MEMORY_SIZE:
 		sp0 := stk.Push(token.I32)
-		fmt.Fprintf(w, "%s$R%d.i32 = wasm_memoy_size;\n", indent, sp0)
+		fmt.Fprintf(w, "%s$R%d.i32 = wasm_memory_size;\n", indent, sp0)
 	case token.INS_MEMORY_GROW:
 		sp0 := stk.Pop(token.I32)
 		ret0 := stk.Push(token.I32)
-		fmt.Fprintf(w, "%swasm_memoy_size += $R%d.i32; $R%d.i32 = wasm_memoy_size;\n",
+		fmt.Fprintf(w, "%swasm_memory_size += $R%d.i32; $R%d.i32 = wasm_memory_size;\n",
 			indent, sp0, ret0,
 		)
 	case token.INS_MEMORY_INIT:

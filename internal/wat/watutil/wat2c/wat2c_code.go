@@ -24,6 +24,7 @@ func (p *wat2cWorker) buildCode(w io.Writer) error {
 
 	fmt.Fprintf(w, "#include <stdint.h>\n")
 	fmt.Fprintf(w, "#include <stdlib.h>\n")
+	fmt.Fprintf(w, "#include <stdio.h>\n")
 	fmt.Fprintf(w, "#include <string.h>\n")
 	fmt.Fprintf(w, "#include <math.h>\n")
 	fmt.Fprintln(w)
@@ -79,7 +80,7 @@ func (p *wat2cWorker) buildCode(w io.Writer) error {
 		if f.Name == "_main" {
 			fmt.Fprintln(w)
 			fmt.Fprintf(w, "int main() {\n")
-			fmt.Fprintf(w, "  fn_memoy_init();\n")
+			fmt.Fprintf(w, "  fn_memory_init();\n")
 			fmt.Fprintf(w, "  fn_table_init();\n")
 			fmt.Fprintf(w, "  fn_%s();\n", toCName("_start"))
 			fmt.Fprintf(w, "  fn_%s();\n", toCName(f.Name))
@@ -294,9 +295,9 @@ func (p *wat2cWorker) buildImport(w io.Writer) error {
 
 		// 处理宿主函数调用的返回值
 		if len(fnType.Results) > 0 {
-			fmt.Fprintf(w, "  ret.v = host_fn_%s(", toCName(fnName))
+			fmt.Fprintf(w, "  ret.v = host_fn_%s(", toCName(importSpec.ObjModule+"."+importSpec.ObjName))
 		} else {
-			fmt.Fprintf(w, "  host_fn_%s(", toCName(fnName))
+			fmt.Fprintf(w, "  host_fn_%s(", toCName(importSpec.ObjModule+"."+importSpec.ObjName))
 		}
 
 		// 调用参数
@@ -329,7 +330,7 @@ func (p *wat2cWorker) buildImport(w io.Writer) error {
 }
 
 func (p *wat2cWorker) buildMemory_data(w io.Writer) error {
-	fmt.Fprintf(w, "void fn_memoy_init() {\n")
+	fmt.Fprintf(w, "void fn_memory_init() {\n")
 	defer fmt.Fprintf(w, "}\n\n")
 
 	for _, d := range p.m.Data {
@@ -337,7 +338,7 @@ func (p *wat2cWorker) buildMemory_data(w io.Writer) error {
 		for _, x := range d.Value {
 			sb.WriteString(fmt.Sprintf("\\x%02x", x))
 		}
-		fmt.Fprintf(w, "  memcpy((void*)&wasm_memoy[%d], (void *)(\"%s\"), %d);\n", d.Offset, sb.String(), len(d.Value))
+		fmt.Fprintf(w, "  memcpy((void*)WASM_MEMORY_ADDR(%d), (void *)(\"%s\"), %d);\n", d.Offset, sb.String(), len(d.Value))
 	}
 	return nil
 }
@@ -363,16 +364,28 @@ func (p *wat2cWorker) buildMemory(w io.Writer) error {
 		fmt.Fprintf(w, "// memory $%s\n", p.m.Memory.Name)
 	}
 	if max := p.m.Memory.MaxPages; max > 0 {
-		fmt.Fprintf(w, "uint8_t       wasm_memoy[%d*64*1024];\n", max)
-		fmt.Fprintf(w, "int32_t       wasm_memoy_size = %d;\n", p.m.Memory.Pages)
-		fmt.Fprintf(w, "const int32_t wasm_memoy_max_pages = %d;\n", max)
-		fmt.Fprintf(w, "const int32_t wasm_memoy_pages = %d;\n", p.m.Memory.Pages)
+		fmt.Fprintf(w, "uint8_t       wasm_memory[%d*64*1024];\n", max)
+		fmt.Fprintf(w, "int32_t       wasm_memory_size = %d;\n", p.m.Memory.Pages)
+		fmt.Fprintf(w, "const int32_t wasm_memory_max_pages = %d;\n", max)
+		fmt.Fprintf(w, "const int32_t wasm_memory_pages = %d;\n", p.m.Memory.Pages)
 	} else {
-		fmt.Fprintf(w, "uint8_t       wasm_memoy[%d*64*1024];\n", p.m.Memory.Pages)
-		fmt.Fprintf(w, "int32_t       wasm_memoy_size = %d;\n", p.m.Memory.Pages)
-		fmt.Fprintf(w, "const int32_t wasm_memoy_max_pages = %d;\n", p.m.Memory.Pages)
-		fmt.Fprintf(w, "const int32_t wasm_memoy_pages = %d;\n", p.m.Memory.Pages)
+		fmt.Fprintf(w, "uint8_t       wasm_memory[%d*64*1024];\n", p.m.Memory.MaxPages)
+		fmt.Fprintf(w, "int32_t       wasm_memory_size = %d;\n", p.m.Memory.Pages)
+		fmt.Fprintf(w, "const int32_t wasm_memory_max_pages = %d;\n", p.m.Memory.Pages)
+		fmt.Fprintf(w, "const int32_t wasm_memory_pages = %d;\n", p.m.Memory.Pages)
 	}
+	fmt.Fprintln(w)
+
+	fmt.Fprintf(w, "#define WASM_MEMORY_ADDR(idx) wasm_memory_addr_at((idx),__FILE__,__LINE__)\n")
+	fmt.Fprintln(w)
+
+	fmt.Fprintf(w, "uint8_t* wasm_memory_addr_at(i32_t idx, const char* file, i32_t line) {\n")
+	fmt.Fprintf(w, "  if(idx < 0 || idx >= wasm_memory_size*65536) {\n")
+	fmt.Fprintf(w, "    printf(\"%%s:%%d\", file, line);\n")
+	fmt.Fprintf(w, "    abort();\n")
+	fmt.Fprintf(w, "  }\n")
+	fmt.Fprintf(w, "  return &wasm_memory[idx];\n")
+	fmt.Fprintf(w, "}\n")
 	fmt.Fprintln(w)
 	return nil
 }
