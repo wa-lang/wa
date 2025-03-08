@@ -2,6 +2,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+extern uint8_t wasm_memory[];
+
 void host_fn_syscall_js_print_bool(int32_t v) {
   printf(v? "true": "false");
 }
@@ -19,7 +21,7 @@ void host_fn_syscall_js_print_i64(int64_t v) {
   printf("%lld", v);
 }
 void host_fn_syscall_js_print_ptr(int32_t v) {
-
+	printf("%p", &wasm_memory[v]);
 }
 void host_fn_syscall_js_print_rune(int32_t n) {
   printf("%c", n);
@@ -27,7 +29,7 @@ void host_fn_syscall_js_print_rune(int32_t n) {
 void host_fn_syscall_js_print_str(int32_t ptr, int32_t len) {
 	int i;
 	for (i = 0; i < len; i++) {
-		printf("%c", (int)(char *)(ptr + i));
+		printf("%c", (int)(*(char*)&wasm_memory[ptr+i]));
 	}
 }
 

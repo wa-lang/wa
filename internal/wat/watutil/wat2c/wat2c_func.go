@@ -807,24 +807,33 @@ func (p *wat2cWorker) buildFunc_ins(w io.Writer, fn *ast.Func, stk *valueTypeSta
 			indent, sp0, ret0,
 		)
 	case token.INS_MEMORY_INIT:
+		i := i.(ast.Ins_MemoryInit)
+
 		dst := stk.Pop(token.I32)
 		off := stk.Pop(token.I32)
 		len := stk.Pop(token.I32)
-		fmt.Fprintf(w, "%sTODO; // memcpy((void*)$R%d.i32, (void*)$R%d.i32, $R%d.i32);\n",
-			indent, dst, off, len,
+
+		var sb strings.Builder
+		datai := p.m.Data[i.DataIdx].Value[off:][:len]
+		for _, x := range datai {
+			sb.WriteString(fmt.Sprintf("\\x%02x", x))
+		}
+
+		fmt.Fprintf(w, "%smemcpy((void*)WASM_MEMORY_ADDR($R%d.i32), (void*)(\"%s\"), %d);\n",
+			indent, dst, sb.String(), len,
 		)
 	case token.INS_MEMORY_COPY:
 		dst := stk.Pop(token.I32)
 		src := stk.Pop(token.I32)
 		len := stk.Pop(token.I32)
-		fmt.Fprintf(w, "%smemcpy((void*)$R%d.i32, (void*)$R%d.i32, $R%d.i32);\n",
+		fmt.Fprintf(w, "%smemcpy((void*)WASM_MEMORY_ADDR($R%d.i32), (void*)WASM_MEMORY_ADDR($R%d.i32), $R%d.i32);\n",
 			indent, dst, src, len,
 		)
 	case token.INS_MEMORY_FILL:
 		dst := stk.Pop(token.I32)
 		val := stk.Pop(token.I32)
 		len := stk.Pop(token.I32)
-		fmt.Fprintf(w, "%smemset((void*)$R%d.i32, $R%d.i32, $R%d.i32);\n",
+		fmt.Fprintf(w, "%smemset((void*)WASM_MEMORY_ADDR($R%d.i32), $R%d.i32, $R%d.i32);\n",
 			indent, dst, val, len,
 		)
 	case token.INS_I32_CONST:

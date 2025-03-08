@@ -369,7 +369,7 @@ func (p *wat2cWorker) buildMemory(w io.Writer) error {
 		fmt.Fprintf(w, "const int32_t wasm_memory_max_pages = %d;\n", max)
 		fmt.Fprintf(w, "const int32_t wasm_memory_pages = %d;\n", p.m.Memory.Pages)
 	} else {
-		fmt.Fprintf(w, "uint8_t       wasm_memory[%d*64*1024];\n", p.m.Memory.MaxPages)
+		fmt.Fprintf(w, "uint8_t       wasm_memory[%d*64*1024];\n", p.m.Memory.Pages)
 		fmt.Fprintf(w, "int32_t       wasm_memory_size = %d;\n", p.m.Memory.Pages)
 		fmt.Fprintf(w, "const int32_t wasm_memory_max_pages = %d;\n", p.m.Memory.Pages)
 		fmt.Fprintf(w, "const int32_t wasm_memory_pages = %d;\n", p.m.Memory.Pages)
@@ -381,7 +381,7 @@ func (p *wat2cWorker) buildMemory(w io.Writer) error {
 
 	fmt.Fprintf(w, "uint8_t* wasm_memory_addr_at(i32_t idx, const char* file, i32_t line) {\n")
 	fmt.Fprintf(w, "  if(idx < 0 || idx >= wasm_memory_size*65536) {\n")
-	fmt.Fprintf(w, "    printf(\"%%s:%%d\", file, line);\n")
+	fmt.Fprintf(w, "    printf(\"%%s:%%d\\n\", file, line);\n")
 	fmt.Fprintf(w, "    abort();\n")
 	fmt.Fprintf(w, "  }\n")
 	fmt.Fprintf(w, "  return &wasm_memory[idx];\n")
