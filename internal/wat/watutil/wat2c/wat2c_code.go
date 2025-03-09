@@ -50,6 +50,9 @@ func (p *wat2cWorker) buildCode(w io.Writer) error {
 	fmt.Fprintf(w, "  ref_t ref;\n")
 	fmt.Fprintf(w, "} val_t;\n\n")
 
+	fmt.Fprintf(w, `#define WASM_TRACE() printf("%%s %%s:%%d\n",__FUNCTION__,__FILE__,__LINE__)`+"\n")
+	fmt.Fprintln(w)
+
 	if err := p.buildImport(w); err != nil {
 		return err
 	}

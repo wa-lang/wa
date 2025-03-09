@@ -47,6 +47,10 @@ func (p *wat2cWorker) buildFunc_body(w io.Writer, fn *ast.Func, cRetType string)
 		fmt.Fprintln(&bufIns)
 	}
 
+	// 生成函数调用顺序
+	fmt.Fprintf(&bufIns, "  WASM_TRACE();\n")
+	fmt.Fprintln(&bufIns)
+
 	assert(stk.Len() == 0)
 	for _, ins := range fn.Body.Insts {
 		if err := p.buildFunc_ins(&bufIns, fn, &stk, ins, 1); err != nil {
@@ -126,6 +130,18 @@ func (p *wat2cWorker) buildFunc_body(w io.Writer, fn *ast.Func, cRetType string)
 		}
 	}
 	assert(stk.Len() == 0)
+
+	// 补充生成 return
+	if stk.LastInstruction().Token() != token.INS_RETURN {
+		switch len(fn.Type.Results) {
+		case 0:
+			fmt.Fprintf(w, "  return;\n")
+		case 1:
+			fmt.Fprintf(w, "  return 0;\n")
+		default:
+			fmt.Fprintf(w, "  return $result;\n")
+		}
+	}
 
 	return nil
 }
