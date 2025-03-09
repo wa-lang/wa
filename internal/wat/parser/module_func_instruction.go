@@ -532,12 +532,13 @@ func (p *parser) parseIns_Drop() (i ast.Ins_Drop) {
 func (p *parser) parseIns_Select() (i ast.Ins_Select) {
 	i.OpToken = ast.OpToken(p.tok)
 	p.acceptToken(token.INS_SELECT)
+	// wasm 2.0 支持带类型的T
 	if p.tok == token.LPAREN {
 		p.acceptToken(token.LPAREN)
 		p.acceptToken(token.RESULT)
 		tokTyp := p.tok
 		p.acceptToken(token.I32, token.I64, token.F32, token.F64)
-		i.ResultTyp = tokTyp.String()
+		i.ResultTyp = tokTyp
 		p.acceptToken(token.RPAREN)
 	}
 	return

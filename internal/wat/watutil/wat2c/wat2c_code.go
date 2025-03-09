@@ -50,7 +50,11 @@ func (p *wat2cWorker) buildCode(w io.Writer) error {
 	fmt.Fprintf(w, "  ref_t ref;\n")
 	fmt.Fprintf(w, "} val_t;\n\n")
 
-	fmt.Fprintf(w, `#define WASM_TRACE() printf("%%s %%s:%%d\n",__FUNCTION__,__FILE__,__LINE__)`+"\n")
+	fmt.Fprintf(w, `#ifdef NDEBUG`+"\n")
+	fmt.Fprintf(w, `  #define WASM_TRACE() ((void)0)`+"\n")
+	fmt.Fprintf(w, `#else`+"\n")
+	fmt.Fprintf(w, `  #define WASM_TRACE() printf("%%s %%s:%%d\n",__FUNCTION__,__FILE__,__LINE__)`+"\n")
+	fmt.Fprintf(w, `#endif`+"\n")
 	fmt.Fprintln(w)
 
 	if err := p.buildImport(w); err != nil {
@@ -336,6 +340,9 @@ func (p *wat2cWorker) buildMemory_data(w io.Writer) error {
 	fmt.Fprintf(w, "void fn_memory_init() {\n")
 	defer fmt.Fprintf(w, "}\n\n")
 
+	fmt.Fprintf(w, "  memset(&wasm_memory[0], 0, wasm_memory_size*65536);\n")
+	fmt.Fprintln(w)
+
 	for _, d := range p.m.Data {
 		var sb strings.Builder
 		for _, x := range d.Value {
@@ -349,6 +356,9 @@ func (p *wat2cWorker) buildMemory_data(w io.Writer) error {
 func (p *wat2cWorker) buildTable_elem(w io.Writer) error {
 	fmt.Fprintf(w, "void fn_table_init() {\n")
 	defer fmt.Fprintf(w, "}\n\n")
+
+	fmt.Fprintf(w, "  memset(&wasm_table[0], 0, wasm_table_size*sizeof(wasm_table[0]));\n")
+	fmt.Fprintln(w)
 
 	for _, e := range p.m.Elem {
 		for i, x := range e.Values {
@@ -368,26 +378,26 @@ func (p *wat2cWorker) buildMemory(w io.Writer) error {
 	}
 	if max := p.m.Memory.MaxPages; max > 0 {
 		fmt.Fprintf(w, "uint8_t       wasm_memory[%d*64*1024];\n", max)
+		fmt.Fprintf(w, "const int32_t wasm_memory_init_max_pages = %d;\n", max)
+		fmt.Fprintf(w, "const int32_t wasm_memory_init_pages = %d;\n", p.m.Memory.Pages)
 		fmt.Fprintf(w, "int32_t       wasm_memory_size = %d;\n", p.m.Memory.Pages)
-		fmt.Fprintf(w, "const int32_t wasm_memory_max_pages = %d;\n", max)
-		fmt.Fprintf(w, "const int32_t wasm_memory_pages = %d;\n", p.m.Memory.Pages)
 	} else {
 		fmt.Fprintf(w, "uint8_t       wasm_memory[%d*64*1024];\n", p.m.Memory.Pages)
+		fmt.Fprintf(w, "const int32_t wasm_memory_init_max_pages = %d;\n", p.m.Memory.Pages)
+		fmt.Fprintf(w, "const int32_t wasm_memory_init_pages = %d;\n", p.m.Memory.Pages)
 		fmt.Fprintf(w, "int32_t       wasm_memory_size = %d;\n", p.m.Memory.Pages)
-		fmt.Fprintf(w, "const int32_t wasm_memory_max_pages = %d;\n", p.m.Memory.Pages)
-		fmt.Fprintf(w, "const int32_t wasm_memory_pages = %d;\n", p.m.Memory.Pages)
 	}
 	fmt.Fprintln(w)
 
-	fmt.Fprintf(w, "#define WASM_MEMORY_ADDR(idx) wasm_memory_addr_at((idx),__FILE__,__LINE__)\n")
+	fmt.Fprintf(w, "#define WASM_MEMORY_ADDR(addr) wasm_memory_addr_at((addr),__FILE__,__LINE__)\n")
 	fmt.Fprintln(w)
 
-	fmt.Fprintf(w, "uint8_t* wasm_memory_addr_at(i32_t idx, const char* file, i32_t line) {\n")
-	fmt.Fprintf(w, "  if(idx < 0 || idx >= wasm_memory_size*65536) {\n")
-	fmt.Fprintf(w, "    printf(\"%%s:%%d\\n\", file, line);\n")
+	fmt.Fprintf(w, "uint8_t* wasm_memory_addr_at(i32_t addr, const char* file, i32_t line) {\n")
+	fmt.Fprintf(w, "  if(addr < 0 || addr >= wasm_memory_size*65536) {\n")
+	fmt.Fprintf(w, "    printf(\"%%s:%%d addr=%%d\\n\", file, line, addr);\n")
 	fmt.Fprintf(w, "    abort();\n")
 	fmt.Fprintf(w, "  }\n")
-	fmt.Fprintf(w, "  return &wasm_memory[idx];\n")
+	fmt.Fprintf(w, "  return &wasm_memory[addr];\n")
 	fmt.Fprintf(w, "}\n")
 	fmt.Fprintln(w)
 	return nil
@@ -406,13 +416,33 @@ func (p *wat2cWorker) buildTable(w io.Writer) error {
 	}
 	if max := p.m.Table.MaxSize; max > 0 {
 		fmt.Fprintf(w, "ref_t     wasm_table[%d];\n", max)
+		fmt.Fprintf(w, "const int wasm_table_init_max_size = %d;\n", max)
 		fmt.Fprintf(w, "int32_t   wasm_table_size = %d;\n", p.m.Table.Size)
-		fmt.Fprintf(w, "const int wasm_table_max_size = %d;\n", max)
 	} else {
 		fmt.Fprintf(w, "ref_t     wasm_table[%d];\n", p.m.Table.Size)
+		fmt.Fprintf(w, "const int wasm_table_init_max_size = %d;\n", p.m.Table.Size)
 		fmt.Fprintf(w, "int32_t   wasm_table_size = %d;\n", p.m.Table.Size)
-		fmt.Fprintf(w, "const int wasm_table_max_size = %d;\n", p.m.Table.Size)
 	}
+	fmt.Fprintln(w)
+
+	fmt.Fprintf(w, "#define WASM_TABLE_GET(addr) wasm_table_get((addr),__FILE__,__LINE__)\n")
+	fmt.Fprintf(w, "#define WASM_TABLE_SET(addr,val) wasm_table_set((addr),(val),__FILE__,__LINE__)\n")
+	fmt.Fprintln(w)
+
+	fmt.Fprintf(w, "ref_t wasm_table_get(i32_t addr, const char* file, i32_t line) {\n")
+	fmt.Fprintf(w, "  if(addr < 0 || addr >= wasm_table_size) {\n")
+	fmt.Fprintf(w, "    printf(\"%%s:%%d addr=%%d\\n\", file, line, addr);\n")
+	fmt.Fprintf(w, "    abort();\n")
+	fmt.Fprintf(w, "  }\n")
+	fmt.Fprintf(w, "  return wasm_table[addr];\n")
+	fmt.Fprintf(w, "}\n")
+	fmt.Fprintf(w, "void wasm_table_set(i32_t addr, ref_t val, const char* file, i32_t line) {\n")
+	fmt.Fprintf(w, "  if(addr < 0 || addr >= wasm_table_size) {\n")
+	fmt.Fprintf(w, "    printf(\"%%s:%%d addr=%%d\\n\", file, line, addr);\n")
+	fmt.Fprintf(w, "    abort();\n")
+	fmt.Fprintf(w, "  }\n")
+	fmt.Fprintf(w, "  wasm_table[addr] = val;\n")
+	fmt.Fprintf(w, "}\n")
 	fmt.Fprintln(w)
 	return nil
 }

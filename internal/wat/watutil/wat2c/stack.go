@@ -56,6 +56,13 @@ func (s *valueTypeStack) Top(expect token.Token) int {
 	}
 	return idx
 }
+func (s *valueTypeStack) TopToken() token.Token {
+	if len(s.stack) == 0 {
+		panic("unexpected stack empty; # " + s.String())
+	}
+	idx := len(s.stack) - 1
+	return s.stack[idx]
+}
 
 func (s *valueTypeStack) Push(v token.Token) int {
 	if s.trace {

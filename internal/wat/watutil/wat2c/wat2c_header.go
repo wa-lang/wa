@@ -50,14 +50,14 @@ func (p *wat2cWorker) buildHeader(w io.Writer) error {
 		}
 		if max := p.m.Memory.MaxPages; max > 0 {
 			fmt.Fprintf(w, "extern uint8_t       wasm_memory[%d*64*1024];\n", max)
+			fmt.Fprintf(w, "extern const int32_t wasm_memory_init_max_pages = %d;\n", max)
+			fmt.Fprintf(w, "extern const int32_t wasm_memory_init_pages = %d;\n", p.m.Memory.Pages)
 			fmt.Fprintf(w, "extern int32_t       wasm_memory_size = %d;\n", p.m.Memory.Pages)
-			fmt.Fprintf(w, "extern const int32_t wasm_memory_max_pages = %d;\n", max)
-			fmt.Fprintf(w, "extern const int32_t wasm_memory_pages = %d;\n", p.m.Memory.Pages)
 		} else {
 			fmt.Fprintf(w, "extern uint8_t       wasm_memory[%d*64*1024];\n", p.m.Memory.Pages)
+			fmt.Fprintf(w, "extern const int32_t wasm_memory_init_max_pages = %d;\n", p.m.Memory.Pages)
+			fmt.Fprintf(w, "extern const int32_t wasm_memory_init_pages = %d;\n", p.m.Memory.Pages)
 			fmt.Fprintf(w, "extern int32_t       wasm_memory_size = %d;\n", p.m.Memory.Pages)
-			fmt.Fprintf(w, "extern const int32_t wasm_memory_max_pages = %d;\n", p.m.Memory.Pages)
-			fmt.Fprintf(w, "extern const int32_t wasm_memory_pages = %d;\n", p.m.Memory.Pages)
 		}
 		fmt.Fprintln(w)
 	}
@@ -67,12 +67,12 @@ func (p *wat2cWorker) buildHeader(w io.Writer) error {
 		}
 		if max := p.m.Table.MaxSize; max > 0 {
 			fmt.Fprintf(w, "extern ref_t     wasm_table[%d];\n", max)
+			fmt.Fprintf(w, "extern const int wasm_table_init_max_size = %d;\n", max)
 			fmt.Fprintf(w, "extern int32_t   wasm_table_size = %d;\n", p.m.Table.Size)
-			fmt.Fprintf(w, "extern const int wasm_table_max_size = %d;\n", max)
 		} else {
 			fmt.Fprintf(w, "extern ref_t     wasm_table[%d];\n", p.m.Table.Size)
+			fmt.Fprintf(w, "extern const int wasm_table_init_max_size = %d;\n", p.m.Table.Size)
 			fmt.Fprintf(w, "extern int32_t   wasm_table_size = %d;\n", p.m.Table.Size)
-			fmt.Fprintf(w, "extern const int wasm_table_max_size = %d;\n", p.m.Table.Size)
 		}
 		fmt.Fprintln(w)
 	}
