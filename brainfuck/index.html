@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>凹语言/Wa-lang Brainfuck Webassembly</title>
+</head>
+<body>
+	<h1>凹语言/Wa-lang Brainfuck Webassembly</h1>
+	<p>Blog post / tutorial is at: <a href="https://wa-lang.org/smalltalk/st0013.html">https://wa-lang.org/smalltalk/st0013.html</a>.</p>
+	<label for="source">Brainfuck Source</label>
+	<br>
+	<textarea name="source" id="source" cols="30" rows="10">++++++++[>++++[>++>+++>+++>+<<<<-]>+>+>->>+[<]<-]>>.>---.+++++++..+++.>>.<-.<.+++.------.--------.>>+.>++.</textarea>
+	<br>
+	<button id="btn">Run</button>
+	<br>
+	<p>Output</p>
+	<pre id="output"></pre>
+
+	<script type="text/javascript" src="./brainfuck.js"></script>
+
+	<script>
+		let app = new WaApp();
+		app.init().then((result) => {
+			document.getElementById('btn').addEventListener('click', function () {
+				let code = document.getElementById('source').value;
+				let output = app.Run(code);
+				document.getElementById('output').innerText = output;
+			})
+		})
+	</script>
+</body>
+</html>
