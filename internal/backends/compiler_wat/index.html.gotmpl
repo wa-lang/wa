@@ -14,9 +14,9 @@
     <pre id="output"></pre>
   </div>
 
-  <script type="text/javascript" src="./{{.Filename}}"></script>
-
-  <script>
+  <script type="module">
+    import { WaApp } from "./{{.Filename}}";
+    
     let app = new WaApp();
     app.init().then((result) => {
       app.main();
