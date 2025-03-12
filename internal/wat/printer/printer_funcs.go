@@ -196,8 +196,8 @@ func (p *watPrinter) printFuncs_body_ins(fn *ast.Func, ins ast.Instruction, blkL
 		fmt.Fprintln(p.w, tok)
 	case token.INS_SELECT:
 		insSelect := ins.(ast.Ins_Select)
-		if insSelect.ResultTyp != "" {
-			fmt.Fprintln(p.w, tok, "(result "+insSelect.ResultTyp+")")
+		if insSelect.ResultTyp != 0 {
+			fmt.Fprintln(p.w, tok, "(result "+insSelect.ResultTyp.String()+")")
 		} else {
 			fmt.Fprintln(p.w, tok)
 		}

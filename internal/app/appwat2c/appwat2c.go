@@ -23,12 +23,6 @@ var CmdWat2c = &cli.Command{
 			Usage:   "set code output file",
 			Value:   "a.out.c",
 		},
-		&cli.StringFlag{
-			Name:    "header",
-			Aliases: []string{"hdr"},
-			Usage:   "set header output file",
-			Value:   "a.out.h",
-		},
 	},
 	Action: func(c *cli.Context) error {
 		if c.NArg() == 0 {
@@ -38,7 +32,6 @@ var CmdWat2c = &cli.Command{
 
 		infile := c.Args().First()
 		outfile := c.String("output")
-		hdrfile := c.String("header")
 
 		if outfile == "" {
 			outfile = infile
@@ -53,6 +46,8 @@ var CmdWat2c = &cli.Command{
 			outfile += ".c"
 		}
 
+		hdrfile := outfile[:len(outfile)-2] + ".h"
+
 		source, err := os.ReadFile(infile)
 		if err != nil {
 			fmt.Println(err)
@@ -66,12 +61,10 @@ var CmdWat2c = &cli.Command{
 			os.Exit(1)
 		}
 
-		if hdrfile != "" {
-			err = os.WriteFile(hdrfile, header, 0666)
-			if err != nil {
-				fmt.Println(err)
-				os.Exit(1)
-			}
+		err = os.WriteFile(hdrfile, header, 0666)
+		if err != nil {
+			fmt.Println(err)
+			os.Exit(1)
 		}
 
 		err = os.WriteFile(outfile, code, 0666)

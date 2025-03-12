@@ -139,16 +139,16 @@ func (p *wat2wasmWorker) buildInstruction(dst *wasm.Code, fn *ast.Func, i ast.In
 		dst.Body = append(dst.Body, wasm.OpcodeDrop)
 	case token.INS_SELECT:
 		ins := i.(ast.Ins_Select)
-		if ins.ResultTyp != "" {
+		if ins.ResultTyp != 0 {
 			dst.Body = append(dst.Body, wasm.OpcodeTypedSelect)
 			switch ins.ResultTyp {
-			case "i32":
+			case token.I32:
 				dst.Body = append(dst.Body, wasm.ValueTypeI32)
-			case "i64":
+			case token.I64:
 				dst.Body = append(dst.Body, wasm.ValueTypeI64)
-			case "f32":
+			case token.F32:
 				dst.Body = append(dst.Body, wasm.ValueTypeF32)
-			case "f64":
+			case token.F64:
 				dst.Body = append(dst.Body, wasm.ValueTypeF64)
 			default:
 				panic("unreachable")

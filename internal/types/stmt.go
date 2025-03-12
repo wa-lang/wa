@@ -723,6 +723,12 @@ func (check *Checker) stmt(ctxt stmtContext, s ast.Stmt) {
 					key = Typ[Int]
 					val = universeRune // use 'rune' name
 				}
+				// 基于数值类型的迭代
+				if _UseFeature_forRangeIter {
+					if isInteger(typ) {
+						key = typ
+					}
+				}
 			case *Array:
 				key = Typ[Int]
 				val = typ.elem
@@ -734,15 +740,39 @@ func (check *Checker) stmt(ctxt stmtContext, s ast.Stmt) {
 					key = Typ[Int]
 					val = typ.elem
 				}
+
 			case *Map:
 				key = typ.key
 				val = typ.elem
+
+			case *Signature:
+				if _UseFeature_forRangeIter {
+					if typ.recv == nil && typ.params.Len() == 0 {
+						switch typ.results.Len() {
+						case 2:
+							// func => (ok:bool, key:T)
+							if isBoolean(typ.results.vars[0].typ) {
+								key = typ.results.vars[1].typ
+							}
+						case 3:
+							// func => (ok:bool, key:TK, val:TV)
+							if isBoolean(typ.results.vars[0].typ) {
+								key = typ.results.vars[1].typ
+								val = typ.results.vars[2].typ
+							}
+						}
+					}
+				}
 			}
 		}
 
 		if key == nil {
 			check.errorf(x.pos(), "cannot range over %s", &x)
 			// ok to continue
+		}
+
+		if val == nil && s.Value != nil {
+			check.errorf(s.Value.Pos(), "range over %s permits only one iteration variable", &x)
 		}
 
 		// check assignment to/declaration of iteration variables

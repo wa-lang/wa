@@ -18,6 +18,8 @@ func (p *wat2cWorker) buildFunc_body(w io.Writer, fn *ast.Func, cRetType string)
 	var stk valueTypeStack
 	var bufIns bytes.Buffer
 
+	stk.funcName = fn.Name
+
 	assert(len(p.scopeLabels) == 0)
 	assert(len(p.scopeStackBases) == 0)
 
@@ -45,20 +47,16 @@ func (p *wat2cWorker) buildFunc_body(w io.Writer, fn *ast.Func, cRetType string)
 		fmt.Fprintln(&bufIns)
 	}
 
+	// 生成函数调用顺序
+	fmt.Fprintf(&bufIns, "  WASM_TRACE();\n")
+	fmt.Fprintln(&bufIns)
+
 	assert(stk.Len() == 0)
-	for i, ins := range fn.Body.Insts {
+	for _, ins := range fn.Body.Insts {
 		if err := p.buildFunc_ins(&bufIns, fn, &stk, ins, 1); err != nil {
 			return err
 		}
-		// 手动补充最后一个 return
-		if i == len(fn.Body.Insts)-1 && ins.Token() != token.INS_RETURN {
-			insReturn := ast.Ins_Return{OpToken: ast.OpToken(token.INS_RETURN)}
-			if err := p.buildFunc_ins(&bufIns, fn, &stk, insReturn, 1); err != nil {
-				return err
-			}
-		}
 	}
-	assert(stk.Len() == 0)
 
 	// 返回值
 	if len(fn.Type.Results) > 1 {
@@ -80,10 +78,77 @@ func (p *wat2cWorker) buildFunc_body(w io.Writer, fn *ast.Func, cRetType string)
 
 	// 指令复制到 w
 	io.Copy(w, &bufIns)
+
+	// 有些函数最后的位置不是 return, 需要手动清理栈
+	switch stk.LastInstruction().Token() {
+	case token.INS_RETURN:
+		// 已经处理过了
+	case token.INS_UNREACHABLE:
+		// 清空残余的栈, 不做类型校验
+		for stk.Len() > 0 {
+			stk.DropAny()
+		}
+	default:
+		// 补充 return
+		assert(stk.Len() == len(fn.Type.Results))
+
+		const indent = "  "
+		switch len(fn.Type.Results) {
+		case 0:
+			fmt.Fprintf(w, "%sreturn;\n", indent)
+		case 1:
+			sp0 := stk.Pop(fn.Type.Results[0])
+			switch fn.Type.Results[0] {
+			case token.I32:
+				fmt.Fprintf(w, "%sreturn $R%d.i32;\n", indent, sp0)
+			case token.I64:
+				fmt.Fprintf(w, "%sreturn $R%d.i64;\n", indent, sp0)
+			case token.F32:
+				fmt.Fprintf(w, "%sreturn $R%d.f32;\n", indent, sp0)
+			case token.F64:
+				fmt.Fprintf(w, "%sreturn $R%d.f64;\n", indent, sp0)
+			default:
+				unreachable()
+			}
+		default:
+			for i, xType := range fn.Type.Results {
+				spi := stk.Pop(xType)
+				switch xType {
+				case token.I32:
+					fmt.Fprintf(w, "%s$result.$R%d = $R%d.i32;\n", indent, i, spi)
+				case token.I64:
+					fmt.Fprintf(w, "%s$result.$R%d = $R%d.i64;\n", indent, i, spi)
+				case token.F32:
+					fmt.Fprintf(w, "%s$result.$R%d = $R%d.f32;\n", indent, i, spi)
+				case token.F64:
+					fmt.Fprintf(w, "%s$result.$R%d = $R%d.f64;\n", indent, i, spi)
+				default:
+					unreachable()
+				}
+			}
+			fmt.Fprintf(w, "%sreturn $result;\n", indent)
+		}
+	}
+	assert(stk.Len() == 0)
+
+	// 补充生成 return
+	if stk.LastInstruction().Token() != token.INS_RETURN {
+		switch len(fn.Type.Results) {
+		case 0:
+			fmt.Fprintf(w, "  return;\n")
+		case 1:
+			fmt.Fprintf(w, "  return 0;\n")
+		default:
+			fmt.Fprintf(w, "  return $result;\n")
+		}
+	}
+
 	return nil
 }
 
 func (p *wat2cWorker) buildFunc_ins(w io.Writer, fn *ast.Func, stk *valueTypeStack, i ast.Instruction, level int) error {
+	stk.NextInstruction(i)
+
 	indent := strings.Repeat("  ", level)
 
 	p.Tracef("buildFunc_ins: %s%s begin: %v\n", indent, i.Token(), stk.String())
@@ -97,7 +162,7 @@ func (p *wat2cWorker) buildFunc_ins(w io.Writer, fn *ast.Func, stk *valueTypeSta
 	case token.INS_UNREACHABLE:
 		fmt.Fprintf(w, "%sabort(); // %s\n", indent, tok)
 	case token.INS_NOP:
-		fmt.Fprintf(w, "%s(0); // %s\n", indent, tok)
+		fmt.Fprintf(w, "%s((void)0); // %s\n", indent, tok)
 
 	case token.INS_BLOCK:
 		i := i.(ast.Ins_Block)
@@ -120,7 +185,7 @@ func (p *wat2cWorker) buildFunc_ins(w io.Writer, fn *ast.Func, stk *valueTypeSta
 		}
 		fmt.Fprintf(w, "%s}\n", indent)
 		if i.Label != "" {
-			fmt.Fprintf(w, "L_%s_next:\n", toCName(i.Label))
+			fmt.Fprintf(w, "L_%s_next:;\n", toCName(i.Label))
 		}
 
 	case token.INS_LOOP:
@@ -133,7 +198,7 @@ func (p *wat2cWorker) buildFunc_ins(w io.Writer, fn *ast.Func, stk *valueTypeSta
 		defer p.leaveLabelScope()
 
 		if i.Label != "" {
-			fmt.Fprintf(w, "L_%s_next:\n", toCName(i.Label))
+			fmt.Fprintf(w, "L_%s_next:;\n", toCName(i.Label))
 		}
 		if i.Label != "" {
 			fmt.Fprintf(w, "%s{ // loop $%s\n", indent, i.Label)
@@ -186,7 +251,7 @@ func (p *wat2cWorker) buildFunc_ins(w io.Writer, fn *ast.Func, stk *valueTypeSta
 		}
 		fmt.Fprintf(w, "%s}\n", indent)
 		if i.Label != "" {
-			fmt.Fprintf(w, "L_%s_next:\n", toCName(i.Label))
+			fmt.Fprintf(w, "L_%s_next:;\n", toCName(i.Label))
 		}
 
 	case token.INS_ELSE:
@@ -360,7 +425,7 @@ func (p *wat2cWorker) buildFunc_ins(w io.Writer, fn *ast.Func, stk *valueTypeSta
 			argList[k] = stk.Pop(x.Type)
 		}
 
-		// 生成要定义函数的类型
+		// 生成要调用函数的类型
 		fmt.Fprintf(w, "%s{\n", indent)
 		{
 			if len(fnCallType.Results) > 1 {
@@ -416,26 +481,26 @@ func (p *wat2cWorker) buildFunc_ins(w io.Writer, fn *ast.Func, stk *valueTypeSta
 			// 调用函数
 			switch len(fnCallType.Results) {
 			case 0:
-				fmt.Fprintf(w, "%s  ((fn_t)(wasm_table[$R%d.i32]))(",
+				fmt.Fprintf(w, "%s  ((fn_t)(WASM_TABLE_GET($R%d.i32)))(",
 					indent, sp0,
 				)
 			case 1:
 				ret0 := stk.Push(fnCallType.Results[0])
 				switch fnCallType.Results[0] {
 				case token.I32:
-					fmt.Fprintf(w, "%s  $R%d.i32 = ((fn_t)(wasm_table[$R%d.i32]))(",
+					fmt.Fprintf(w, "%s  $R%d.i32 = ((fn_t)(WASM_TABLE_GET($R%d.i32)))(",
 						indent, ret0, sp0,
 					)
 				case token.I64:
-					fmt.Fprintf(w, "%s  $R%d.i64 = ((fn_t)(wasm_table[$R%d.i32]))(",
+					fmt.Fprintf(w, "%s  $R%d.i64 = ((fn_t)(WASM_TABLE_GET($R%d.i32)))(",
 						indent, ret0, sp0,
 					)
 				case token.F32:
-					fmt.Fprintf(w, "%s  $R%d.f32 = ((fn_t)(wasm_table[$R%d.i32]))(",
+					fmt.Fprintf(w, "%s  $R%d.f32 = ((fn_t)(WASM_TABLE_GET($R%d.i32)))(",
 						indent, ret0, sp0,
 					)
 				case token.F64:
-					fmt.Fprintf(w, "%s  $R%d.f64 = ((fn_t)(wasm_table[$R%d.i32]))(",
+					fmt.Fprintf(w, "%s  $R%d.f64 = ((fn_t)(WASM_TABLE_GET($R%d.i32)))(",
 						indent, ret0, sp0,
 					)
 				default:
@@ -443,7 +508,7 @@ func (p *wat2cWorker) buildFunc_ins(w io.Writer, fn *ast.Func, stk *valueTypeSta
 				}
 
 			default:
-				fmt.Fprintf(w, "%s  %s $ret = ((fn_t)(wasm_table[$R%d.i32]))(",
+				fmt.Fprintf(w, "%s  %s $ret = ((fn_t)(WASM_TABLE_GET($R%d.i32)))(",
 					indent, fnCallCRetType, sp0,
 				)
 			}
@@ -492,12 +557,25 @@ func (p *wat2cWorker) buildFunc_ins(w io.Writer, fn *ast.Func, stk *valueTypeSta
 		sp0 := stk.DropAny()
 		fmt.Fprintf(w, "%s// drop $R%d\n", indent, sp0)
 	case token.INS_SELECT:
-		sp0 := stk.Pop(token.I32)
-		sp1 := stk.Pop(token.I32)
-		sp2 := stk.Pop(token.I32)
+		i := i.(ast.Ins_Select)
+
+		sp0 := stk.Pop(token.I32) // 判断条件
+
+		// wasm 2.0 支持带类型
+		valType := i.ResultTyp
+		if valType == 0 {
+			// 不带类型, 2个数值类型必须一样
+			valType = stk.TopToken()
+		}
+		sp1 := stk.Pop(valType)
+		sp2 := stk.Pop(valType)
+
 		ret0 := stk.Push(token.I32)
+
+		// 注意返回值的顺序
+		// if sp0 != 0 { sp2 } else { sp1 }
 		fmt.Fprintf(w, "%s$R%d.i32 = $R%d.i32? $R%d.i32: $R%d.i32;\n",
-			indent, ret0, sp0, sp1, sp2,
+			indent, ret0, sp0, sp2, sp1,
 		)
 	case token.INS_LOCAL_GET:
 		i := i.(ast.Ins_LocalGet)
@@ -582,200 +660,232 @@ func (p *wat2cWorker) buildFunc_ins(w io.Writer, fn *ast.Func, stk *valueTypeSta
 	case token.INS_TABLE_GET:
 		sp0 := stk.Pop(token.I32)
 		ret0 := stk.Push(token.FUNCREF) // funcref
-		fmt.Fprintf(w, "%s$R%d.ref = wasm_table[$R%d.i32];\n", indent, sp0, ret0)
+		fmt.Fprintf(w, "%s$R%d.ref = WASM_TABLE_GET($R%d.i32);\n", indent, sp0, ret0)
 	case token.INS_TABLE_SET:
 		sp0 := stk.Pop(token.FUNCREF) // funcref
 		sp1 := stk.Pop(token.I32)
-		fmt.Fprintf(w, "%swasm_table[$R%d.i32] = $R%d.ref;\n", indent, sp1, sp0)
+		fmt.Fprintf(w, "%sWASM_TABLE_GET($R%d.i32,$R%d.ref);\n", indent, sp1, sp0)
 	case token.INS_I32_LOAD:
 		i := i.(ast.Ins_I32Load)
 		sp0 := stk.Pop(token.I32)
 		ret0 := stk.Push(token.I32)
-		fmt.Fprintf(w, "%smemcpy(&$R%d.i32, &wasm_memoy[$R%d.i32+%d], 4);\n",
+		fmt.Fprintf(w, "%smemcpy(&$R%d.i32, WASM_MEMORY_ADDR($R%d.i32+%d), 4);\n",
 			indent, sp0, ret0, i.Offset,
 		)
 	case token.INS_I64_LOAD:
 		i := i.(ast.Ins_I64Load)
 		sp0 := stk.Pop(token.I32)
 		ret0 := stk.Push(token.I64)
-		fmt.Fprintf(w, "%smemcpy(&$R%d.i64, &wasm_memoy[$R%d.i32+%d], 8);\n",
+		fmt.Fprintf(w, "%smemcpy(&$R%d.i64, WASM_MEMORY_ADDR($R%d.i32+%d), 8);\n",
 			indent, sp0, ret0, i.Offset,
 		)
 	case token.INS_F32_LOAD:
 		i := i.(ast.Ins_F32Load)
 		sp0 := stk.Pop(token.I32)
 		ret0 := stk.Push(token.F32)
-		fmt.Fprintf(w, "%smemcpy(&$R%d.f32, &wasm_memoy[$R%d.i32+%d], 4);\n",
+		fmt.Fprintf(w, "%smemcpy(&$R%d.f32, WASM_MEMORY_ADDR($R%d.i32+%d), 4);\n",
 			indent, sp0, ret0, i.Offset,
 		)
 	case token.INS_F64_LOAD:
 		i := i.(ast.Ins_I32Load)
 		sp0 := stk.Pop(token.I32)
 		ret0 := stk.Push(token.I64)
-		fmt.Fprintf(w, "%smemcpy(&$R%d.f64, &wasm_memoy[$R%d.i32+%d], 8);\n",
+		fmt.Fprintf(w, "%smemcpy(&$R%d.f64, WASM_MEMORY_ADDR($R%d.i32+%d), 8);\n",
 			indent, sp0, ret0, i.Offset,
 		)
 	case token.INS_I32_LOAD8_S:
 		i := i.(ast.Ins_I32Load8S)
 		sp0 := stk.Pop(token.I32)
 		ret0 := stk.Push(token.I32)
-		fmt.Fprintf(w, "%smemcpy(&$R_u8, &wasm_memoy[$R%d.i32+%d], 1); $R%d.i32 = (i32_t)((i8_t)$R_u8);\n",
+		fmt.Fprintf(w, "%smemcpy(&$R_u8, WASM_MEMORY_ADDR($R%d.i32+%d), 1); $R%d.i32 = (i32_t)((i8_t)$R_u8);\n",
 			indent, ret0, i.Offset, sp0,
 		)
 	case token.INS_I32_LOAD8_U:
 		i := i.(ast.Ins_I32Load8U)
 		sp0 := stk.Pop(token.I32)
 		ret0 := stk.Push(token.I32)
-		fmt.Fprintf(w, "%smemcpy(&$R_u8, &wasm_memoy[$R%d.i32+%d], 1); $R%d.i32 = (i32_t)((u8_t)$R_u8);\n",
+		fmt.Fprintf(w, "%smemcpy(&$R_u8, WASM_MEMORY_ADDR($R%d.i32+%d), 1); $R%d.i32 = (i32_t)((u8_t)$R_u8);\n",
 			indent, ret0, i.Offset, sp0,
 		)
 	case token.INS_I32_LOAD16_S:
 		i := i.(ast.Ins_I32Load16S)
 		sp0 := stk.Pop(token.I32)
 		ret0 := stk.Push(token.I32)
-		fmt.Fprintf(w, "%smemcpy(&$R_u16, &wasm_memoy[$R%d.i32+%d], 2); $R%d.i32 = (i32_t)((i16_t)$R_u16);\n",
+		fmt.Fprintf(w, "%smemcpy(&$R_u16, WASM_MEMORY_ADDR($R%d.i32+%d), 2); $R%d.i32 = (i32_t)((i16_t)$R_u16);\n",
 			indent, ret0, i.Offset, sp0,
 		)
 	case token.INS_I32_LOAD16_U:
 		i := i.(ast.Ins_I32Load16U)
 		sp0 := stk.Pop(token.I32)
 		ret0 := stk.Push(token.I32)
-		fmt.Fprintf(w, "%smemcpy(&$R_u16, &wasm_memoy[$R%d.i32+%d], 2); $R%d.i32 = (i32_t)((u16_t)$R_u16);\n",
+		fmt.Fprintf(w, "%smemcpy(&$R_u16, WASM_MEMORY_ADDR($R%d.i32+%d), 2); $R%d.i32 = (i32_t)((u16_t)$R_u16);\n",
 			indent, ret0, i.Offset, sp0,
 		)
 	case token.INS_I64_LOAD8_S:
 		i := i.(ast.Ins_I64Load8S)
 		sp0 := stk.Pop(token.I32)
 		ret0 := stk.Push(token.I64)
-		fmt.Fprintf(w, "%smemcpy(&$R_u8, &wasm_memoy[$R%d.i32+%d], 1); $R%d.i64 = (i64_t)((i8_t)$R_u8);\n",
+		fmt.Fprintf(w, "%smemcpy(&$R_u8, WASM_MEMORY_ADDR($R%d.i32+%d), 1); $R%d.i64 = (i64_t)((i8_t)$R_u8);\n",
 			indent, ret0, i.Offset, sp0,
 		)
 	case token.INS_I64_LOAD8_U:
 		i := i.(ast.Ins_I64Load8U)
 		sp0 := stk.Pop(token.I32)
 		ret0 := stk.Push(token.I64)
-		fmt.Fprintf(w, "%smemcpy(&$R_u8, &wasm_memoy[$R%d.i32+%d], 1); $R%d.i64 = (i64_t)((u8_t)$R_u8);\n",
+		fmt.Fprintf(w, "%smemcpy(&$R_u8, WASM_MEMORY_ADDR($R%d.i32+%d), 1); $R%d.i64 = (i64_t)((u8_t)$R_u8);\n",
 			indent, ret0, i.Offset, sp0,
 		)
 	case token.INS_I64_LOAD16_S:
 		i := i.(ast.Ins_I64Load16S)
 		sp0 := stk.Pop(token.I32)
 		ret0 := stk.Push(token.I64)
-		fmt.Fprintf(w, "%smemcpy(&$R_u16, &wasm_memoy[$R%d.i32+%d], 2); $R%d.i64 = (i64_t)((i16_t)$R_u16);\n",
+		fmt.Fprintf(w, "%smemcpy(&$R_u16, WASM_MEMORY_ADDR($R%d.i32+%d), 2); $R%d.i64 = (i64_t)((i16_t)$R_u16);\n",
 			indent, ret0, i.Offset, sp0,
 		)
 	case token.INS_I64_LOAD16_U:
 		i := i.(ast.Ins_I64Load16U)
 		sp0 := stk.Pop(token.I32)
 		ret0 := stk.Push(token.I64)
-		fmt.Fprintf(w, "%smemcpy(&$R_u16, &wasm_memoy[$R%d.i32+%d], 2); $R%d.i64 = (i64_t)((u16_t)$R_u16);\n",
+		fmt.Fprintf(w, "%smemcpy(&$R_u16, WASM_MEMORY_ADDR($R%d.i32+%d), 2); $R%d.i64 = (i64_t)((u16_t)$R_u16);\n",
 			indent, ret0, i.Offset, sp0,
 		)
 	case token.INS_I64_LOAD32_S:
 		i := i.(ast.Ins_I64Load32S)
 		sp0 := stk.Pop(token.I32)
 		ret0 := stk.Push(token.I64)
-		fmt.Fprintf(w, "%smemcpy(&$R_u32, &wasm_memoy[$R%d.i32+%d], 4); $R%d.i64 = (i64_t)((i32_t)$R_u32);\n",
+		fmt.Fprintf(w, "%smemcpy(&$R_u32, WASM_MEMORY_ADDR($R%d.i32+%d), 4); $R%d.i64 = (i64_t)((i32_t)$R_u32);\n",
 			indent, ret0, i.Offset, sp0,
 		)
 	case token.INS_I64_LOAD32_U:
 		i := i.(ast.Ins_I64Load32U)
 		sp0 := stk.Pop(token.I32)
 		ret0 := stk.Push(token.I64)
-		fmt.Fprintf(w, "%smemcpy(&$R_u32, &wasm_memoy[$R%d.i32+%d], 4); $R%d.i64 = (i64_t)((u32_t)$R_u32);\n",
+		fmt.Fprintf(w, "%smemcpy(&$R_u32, WASM_MEMORY_ADDR($R%d.i32+%d), 4); $R%d.i64 = (i64_t)((u32_t)$R_u32);\n",
 			indent, ret0, i.Offset, sp0,
 		)
 	case token.INS_I32_STORE:
 		i := i.(ast.Ins_I32Store)
 		sp0 := stk.Pop(token.I32)
 		sp1 := stk.Pop(token.I32)
-		fmt.Fprintf(w, "%smemcpy(&wasm_memoy[$R%d.i32+%d], &$R%d.i32, 4);\n",
+		fmt.Fprintf(w, "%smemcpy(WASM_MEMORY_ADDR($R%d.i32+%d), &$R%d.i32, 4);\n",
 			indent, sp1, i.Offset, sp0,
 		)
 	case token.INS_I64_STORE:
 		i := i.(ast.Ins_I64Store)
 		sp0 := stk.Pop(token.I64)
 		sp1 := stk.Pop(token.I32)
-		fmt.Fprintf(w, "%smemcpy(&wasm_memoy[$R%d.i32+%d], &$R%d.i64, 8);\n",
+		fmt.Fprintf(w, "%smemcpy(WASM_MEMORY_ADDR($R%d.i32+%d), &$R%d.i64, 8);\n",
 			indent, sp1, i.Offset, sp0,
 		)
 	case token.INS_F32_STORE:
 		i := i.(ast.Ins_F32Store)
 		sp0 := stk.Pop(token.F32)
 		sp1 := stk.Pop(token.I32)
-		fmt.Fprintf(w, "%smemcpy(&wasm_memoy[$R%d.i32+%d], &$R%d.f32, 4);\n",
+		fmt.Fprintf(w, "%smemcpy(WASM_MEMORY_ADDR($R%d.i32+%d), &$R%d.f32, 4);\n",
 			indent, sp1, i.Offset, sp0,
 		)
 	case token.INS_F64_STORE:
 		i := i.(ast.Ins_F64Store)
 		sp0 := stk.Pop(token.F64)
 		sp1 := stk.Pop(token.I32)
-		fmt.Fprintf(w, "%smemcpy(&wasm_memoy[$R%d.i32+%d], &$R%d.f64, 8);\n",
+		fmt.Fprintf(w, "%smemcpy(WASM_MEMORY_ADDR($R%d.i32+%d), &$R%d.f64, 8);\n",
 			indent, sp1, i.Offset, sp0,
 		)
 	case token.INS_I32_STORE8:
 		i := i.(ast.Ins_I32Store8)
 		sp0 := stk.Pop(token.I32)
 		sp1 := stk.Pop(token.I32)
-		fmt.Fprintf(w, "%s$R_u8 = (u8_t)((i8_t)($R%d.i32)); memcpy(&wasm_memoy[$R%d.i32+%d], &$R_u8, 1);\n",
+		fmt.Fprintf(w, "%s$R_u8 = (u8_t)((i8_t)($R%d.i32)); memcpy(WASM_MEMORY_ADDR($R%d.i32+%d), &$R_u8, 1);\n",
 			indent, sp0, sp1, i.Offset,
 		)
 	case token.INS_I32_STORE16:
 		i := i.(ast.Ins_I32Store16)
 		sp0 := stk.Pop(token.I32)
 		sp1 := stk.Pop(token.I32)
-		fmt.Fprintf(w, "%s$R_u16 = (u16_t)((i16_t)($R%d.i32)); memcpy(&wasm_memoy[$R%d.i32+%d], &$R_u16, 2);\n",
+		fmt.Fprintf(w, "%s$R_u16 = (u16_t)((i16_t)($R%d.i32)); memcpy(WASM_MEMORY_ADDR($R%d.i32+%d), &$R_u16, 2);\n",
 			indent, sp0, sp1, i.Offset,
 		)
 	case token.INS_I64_STORE8:
 		i := i.(ast.Ins_I64Store8)
 		sp0 := stk.Pop(token.I64)
 		sp1 := stk.Pop(token.I32)
-		fmt.Fprintf(w, "%s$R_u8 = (u8_t)((i8_t)($R%d.i64)); memcpy(&wasm_memoy[$R%d.i32+%d], &$R_u8, 1);\n",
+		fmt.Fprintf(w, "%s$R_u8 = (u8_t)((i8_t)($R%d.i64)); memcpy(WASM_MEMORY_ADDR($R%d.i32+%d), &$R_u8, 1);\n",
 			indent, sp0, sp1, i.Offset,
 		)
 	case token.INS_I64_STORE16:
 		i := i.(ast.Ins_I64Store16)
 		sp0 := stk.Pop(token.I64)
 		sp1 := stk.Pop(token.I32)
-		fmt.Fprintf(w, "%s$R_u16 = (u16_t)((i16_t)($R%d.i64)); memcpy(&wasm_memoy[$R%d.i32+%d], &$R_u16, 2);\n",
+		fmt.Fprintf(w, "%s$R_u16 = (u16_t)((i16_t)($R%d.i64)); memcpy(WASM_MEMORY_ADDR($R%d.i32+%d), &$R_u16, 2);\n",
 			indent, sp0, sp1, i.Offset,
 		)
 	case token.INS_I64_STORE32:
 		i := i.(ast.Ins_I64Store32)
 		sp0 := stk.Pop(token.I64)
 		sp1 := stk.Pop(token.I32)
-		fmt.Fprintf(w, "%s$R_u32 = (u32_t)((i32_t)($R%d.i64)); memcpy(&wasm_memoy[$R%d.i32+%d], &$R_u32, 4);\n",
+		fmt.Fprintf(w, "%s$R_u32 = (u32_t)((i32_t)($R%d.i64)); memcpy(WASM_MEMORY_ADDR($R%d.i32+%d), &$R_u32, 4);\n",
 			indent, sp0, sp1, i.Offset,
 		)
 	case token.INS_MEMORY_SIZE:
 		sp0 := stk.Push(token.I32)
-		fmt.Fprintf(w, "%s$R%d.i32 = wasm_memoy_size;\n", indent, sp0)
+		fmt.Fprintf(w, "%s$R%d.i32 = wasm_memory_size;\n", indent, sp0)
 	case token.INS_MEMORY_GROW:
 		sp0 := stk.Pop(token.I32)
 		ret0 := stk.Push(token.I32)
-		fmt.Fprintf(w, "%swasm_memoy_size += $R%d.i32; $R%d.i32 = wasm_memoy_size;\n",
-			indent, sp0, ret0,
+		fmt.Fprintf(w, "%sif(wasm_memory_size+$R%d.i32 <= wasm_memory_init_max_pages) {\n",
+			indent, sp0,
 		)
+		{
+			fmt.Fprintf(w, "%si32_t $temp = wasm_memory_size;\n",
+				indent+indent,
+			)
+			fmt.Fprintf(w, "%swasm_memory_size += $R%d.i32;\n",
+				indent+indent, sp0,
+			)
+			fmt.Fprintf(w, "%s$R%d.i32 = $temp;\n",
+				indent+indent, ret0,
+			)
+		}
+		fmt.Fprintf(w, "%s} else {\n",
+			indent,
+		)
+		{
+			fmt.Fprintf(w, "%s$R%d.i32 = -1;\n",
+				indent+indent, ret0,
+			)
+		}
+		fmt.Fprintf(w, "%s}\n",
+			indent,
+		)
+
 	case token.INS_MEMORY_INIT:
-		dst := stk.Pop(token.I32)
-		off := stk.Pop(token.I32)
+		i := i.(ast.Ins_MemoryInit)
+
 		len := stk.Pop(token.I32)
-		fmt.Fprintf(w, "%sTODO; // memcpy((void*)$R%d.i32; (void*)$R%d.i32, $R%d.i32);\n",
-			indent, dst, off, len,
+		off := stk.Pop(token.I32)
+		dst := stk.Pop(token.I32)
+
+		var sb strings.Builder
+		datai := p.m.Data[i.DataIdx].Value[off:][:len]
+		for _, x := range datai {
+			sb.WriteString(fmt.Sprintf("\\x%02x", x))
+		}
+
+		fmt.Fprintf(w, "%smemcpy((void*)WASM_MEMORY_ADDR($R%d.i32), (void*)(\"%s\"), %d);\n",
+			indent, dst, sb.String(), len,
 		)
 	case token.INS_MEMORY_COPY:
-		dst := stk.Pop(token.I32)
-		src := stk.Pop(token.I32)
 		len := stk.Pop(token.I32)
-		fmt.Fprintf(w, "%smemcpy((void*)$R%d.i32; (void*)$R%d.i32, $R%d.i32);\n",
+		src := stk.Pop(token.I32)
+		dst := stk.Pop(token.I32)
+		fmt.Fprintf(w, "%smemcpy((void*)WASM_MEMORY_ADDR($R%d.i32), (void*)WASM_MEMORY_ADDR($R%d.i32), $R%d.i32);\n",
 			indent, dst, src, len,
 		)
 	case token.INS_MEMORY_FILL:
-		dst := stk.Pop(token.I32)
-		val := stk.Pop(token.I32)
 		len := stk.Pop(token.I32)
-		fmt.Fprintf(w, "%smemset((void*)$R%d.i32; $R%d.i32, $R%d.i32);\n",
+		val := stk.Pop(token.I32)
+		dst := stk.Pop(token.I32)
+		fmt.Fprintf(w, "%smemset((void*)WASM_MEMORY_ADDR($R%d.i32), $R%d.i32, $R%d.i32);\n",
 			indent, dst, val, len,
 		)
 	case token.INS_I32_CONST:
@@ -1045,7 +1155,7 @@ func (p *wat2cWorker) buildFunc_ins(w io.Writer, fn *ast.Func, stk *valueTypeSta
 	case token.INS_I32_POPCNT:
 		sp0 := stk.Pop(token.I32)
 		ret0 := stk.Push(token.I32)
-		fmt.Fprintf(w, "%s$R%d.i32 = I32_POPCNT($R%d.u32);\n",
+		fmt.Fprintf(w, "%s$R%d.i32 = I32_POPCNT($R%d.i32);\n",
 			indent, ret0, sp0,
 		)
 	case token.INS_I32_ADD:
@@ -1122,21 +1232,21 @@ func (p *wat2cWorker) buildFunc_ins(w io.Writer, fn *ast.Func, stk *valueTypeSta
 		sp0 := stk.Pop(token.I32)
 		sp1 := stk.Pop(token.I32)
 		ret0 := stk.Push(token.I32)
-		fmt.Fprintf(w, "%s$R%d.i32 = $R%d.i32 << $R%d.i32;\n",
+		fmt.Fprintf(w, "%s$R%d.i32 = $R%d.i32 << ($R%d.i32&63);\n",
 			indent, ret0, sp1, sp0,
 		)
 	case token.INS_I32_SHR_S:
 		sp0 := stk.Pop(token.I32)
 		sp1 := stk.Pop(token.I32)
 		ret0 := stk.Push(token.I32)
-		fmt.Fprintf(w, "%s$R%d.i32 = $R%d.i32 >> $R%d.i32;\n",
+		fmt.Fprintf(w, "%s$R%d.i32 = $R%d.i32 >> ($R%d.i32&63);\n",
 			indent, ret0, sp1, sp0,
 		)
 	case token.INS_I32_SHR_U:
 		sp0 := stk.Pop(token.I32)
 		sp1 := stk.Pop(token.I32)
 		ret0 := stk.Push(token.I32)
-		fmt.Fprintf(w, "%s$R%d.i32 = (i32_t)((u32_t)($R%d.i32)>>(u32_t)($R%d.i32));\n",
+		fmt.Fprintf(w, "%s$R%d.i32 = (i32_t)((u32_t)($R%d.i32)>>(u32_t)($R%d.i32&63));\n",
 			indent, ret0, sp1, sp0,
 		)
 	case token.INS_I32_ROTL:
@@ -1217,7 +1327,7 @@ func (p *wat2cWorker) buildFunc_ins(w io.Writer, fn *ast.Func, stk *valueTypeSta
 		sp0 := stk.Pop(token.I64)
 		sp1 := stk.Pop(token.I64)
 		ret0 := stk.Push(token.I64)
-		fmt.Fprintf(w, "%s$R%d.i64 = (i64_t)((u64_t)($R%d.i64)/(u64_t)($R%d.i64));\n",
+		fmt.Fprintf(w, "%s$R%d.i64 = (i64_t)((u64_t)($R%d.i64)%%(u64_t)($R%d.i64));\n",
 			indent, ret0, sp1, sp0,
 		)
 	case token.INS_I64_AND:
@@ -1245,21 +1355,21 @@ func (p *wat2cWorker) buildFunc_ins(w io.Writer, fn *ast.Func, stk *valueTypeSta
 		sp0 := stk.Pop(token.I64)
 		sp1 := stk.Pop(token.I64)
 		ret0 := stk.Push(token.I64)
-		fmt.Fprintf(w, "%s$R%d.i64 = $R%d.i64 << $R%d.i64;\n",
+		fmt.Fprintf(w, "%s$R%d.i64 = $R%d.i64 << (((u64_t)$R%d.i64)&63);\n",
 			indent, ret0, sp1, sp0,
 		)
 	case token.INS_I64_SHR_S:
 		sp0 := stk.Pop(token.I64)
 		sp1 := stk.Pop(token.I64)
 		ret0 := stk.Push(token.I64)
-		fmt.Fprintf(w, "%s$R%d.i64 = $R%d.i64 >> $R%d.i64;\n",
+		fmt.Fprintf(w, "%s$R%d.i64 = $R%d.i64 >> (((u64_t)$R%d.i64)&63);\n",
 			indent, ret0, sp1, sp0,
 		)
 	case token.INS_I64_SHR_U:
 		sp0 := stk.Pop(token.I64)
 		sp1 := stk.Pop(token.I64)
 		ret0 := stk.Push(token.I64)
-		fmt.Fprintf(w, "%s$R%d.i64 = (i64_t)((u64_t)($R%d.i64)>>(u64_t)($R%d.i64));\n",
+		fmt.Fprintf(w, "%s$R%d.i64 = (i64_t)((u64_t)($R%d.i64)>>((u64_t)($R%d.i64)&63));\n",
 			indent, ret0, sp1, sp0,
 		)
 	case token.INS_I64_ROTL:
@@ -1461,7 +1571,7 @@ func (p *wat2cWorker) buildFunc_ins(w io.Writer, fn *ast.Func, stk *valueTypeSta
 	case token.INS_I32_WRAP_I64:
 		sp0 := stk.Pop(token.I64)
 		ret0 := stk.Push(token.I32)
-		fmt.Fprintf(w, "%s$R%d.i32 = (i32_t)($R%d.i64&0xFFFFFFFF);\n",
+		fmt.Fprintf(w, "%s$R%d.i32 = (i32_t)($R%d.i64);\n",
 			indent, ret0, sp0,
 		)
 	case token.INS_I32_TRUNC_F32_S:
@@ -1473,7 +1583,7 @@ func (p *wat2cWorker) buildFunc_ins(w io.Writer, fn *ast.Func, stk *valueTypeSta
 	case token.INS_I32_TRUNC_F32_U:
 		sp0 := stk.Pop(token.F32)
 		ret0 := stk.Push(token.I32)
-		fmt.Fprintf(w, "%s$R%d.i32 = (u32_t)(truncf($R%d.f32));\n",
+		fmt.Fprintf(w, "%s$R%d.i32 = (i32_t)(u32_t)(truncf($R%d.f32));\n",
 			indent, ret0, sp0,
 		)
 	case token.INS_I32_TRUNC_F64_S:
@@ -1485,7 +1595,7 @@ func (p *wat2cWorker) buildFunc_ins(w io.Writer, fn *ast.Func, stk *valueTypeSta
 	case token.INS_I32_TRUNC_F64_U:
 		sp0 := stk.Pop(token.F64)
 		ret0 := stk.Push(token.I32)
-		fmt.Fprintf(w, "%s$R%d.i32 = (i32_t)(trunc($R%d.f64));\n",
+		fmt.Fprintf(w, "%s$R%d.i32 = (i32_t)(u32_t)(trunc($R%d.f64));\n",
 			indent, ret0, sp0,
 		)
 	case token.INS_I64_EXTEND_I32_S:
@@ -1503,13 +1613,13 @@ func (p *wat2cWorker) buildFunc_ins(w io.Writer, fn *ast.Func, stk *valueTypeSta
 	case token.INS_I64_TRUNC_F32_S:
 		sp0 := stk.Pop(token.F32)
 		ret0 := stk.Push(token.I64)
-		fmt.Fprintf(w, "%s$R%d.i64 = (i64_t)(truncf($R%d.f32));\n",
+		fmt.Fprintf(w, "%s$R%d.i64 = (i64_t)(i32_t)(truncf($R%d.f32));\n",
 			indent, ret0, sp0,
 		)
 	case token.INS_I64_TRUNC_F32_U:
 		sp0 := stk.Pop(token.F32)
 		ret0 := stk.Push(token.I64)
-		fmt.Fprintf(w, "%s$R%d.i64 = (i64_t)(truncf($R%d.f32));\n",
+		fmt.Fprintf(w, "%s$R%d.i64 = (i64_t)(u32_t)(truncf($R%d.f32));\n",
 			indent, ret0, sp0,
 		)
 	case token.INS_I64_TRUNC_F64_S:
@@ -1521,7 +1631,7 @@ func (p *wat2cWorker) buildFunc_ins(w io.Writer, fn *ast.Func, stk *valueTypeSta
 	case token.INS_I64_TRUNC_F64_U:
 		sp0 := stk.Pop(token.F64)
 		ret0 := stk.Push(token.I64)
-		fmt.Fprintf(w, "%s$R%d.i64 = (i64_t)(trunc($R%d.f64));\n",
+		fmt.Fprintf(w, "%s$R%d.i64 = (i64_t)(u64_t)(trunc($R%d.f64));\n",
 			indent, ret0, sp0,
 		)
 	case token.INS_F32_CONVERT_I32_S:
@@ -1587,26 +1697,26 @@ func (p *wat2cWorker) buildFunc_ins(w io.Writer, fn *ast.Func, stk *valueTypeSta
 	case token.INS_I32_REINTERPRET_F32:
 		sp0 := stk.Pop(token.F32)
 		ret0 := stk.Push(token.F64)
-		fmt.Fprintf(w, "%s// %T: $R%d.i32 <-- $R%d.i32;\n",
-			indent, i, ret0, sp0,
+		fmt.Fprintf(w, "%s$R%d = $R%d;\n",
+			indent, ret0, sp0,
 		)
 	case token.INS_I64_REINTERPRET_F64:
 		sp0 := stk.Pop(token.I64)
 		ret0 := stk.Push(token.F64)
-		fmt.Fprintf(w, "%s// %T: $R%d.i64 <-- $R%d.f64;\n",
-			indent, i, ret0, sp0,
+		fmt.Fprintf(w, "%s$R%d = $R%d;\n",
+			indent, ret0, sp0,
 		)
 	case token.INS_F32_REINTERPRET_I32:
 		sp0 := stk.Pop(token.I32)
 		ret0 := stk.Push(token.F32)
-		fmt.Fprintf(w, "%s// %T: $R%d.f32 <-- $R%d.i32;\n",
-			indent, i, ret0, sp0,
+		fmt.Fprintf(w, "%s$R%d = $R%d;\n",
+			indent, ret0, sp0,
 		)
 	case token.INS_F64_REINTERPRET_I64:
 		sp0 := stk.Pop(token.I64)
 		ret0 := stk.Push(token.F64)
-		fmt.Fprintf(w, "%s// %T: $R%d.f64 <-- $R%d.i64;\n",
-			indent, i, ret0, sp0,
+		fmt.Fprintf(w, "%s$R%d = $R%d;\n",
+			indent, ret0, sp0,
 		)
 	default:
 		panic(fmt.Sprintf("unreachable: %T", i))

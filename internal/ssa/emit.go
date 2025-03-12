@@ -14,6 +14,25 @@ import (
 	"wa-lang.org/wa/internal/types"
 )
 
+// emitAlloc emits to f a new Alloc instruction allocating a variable
+// of type typ.
+//
+// The caller must set Alloc.Heap=true (for a heap-allocated variable)
+// or add the Alloc to f.Locals (for a frame-allocated variable).
+//
+// During building, a variable in f.Locals may have its Heap flag
+// set when it is discovered that its address is taken.
+// These Allocs are removed from f.Locals at the end.
+//
+// The builder should generally call one of the emit{New,Local,LocalVar} wrappers instead.
+func emitAlloc(f *Function, typ types.Type, pos token.Pos, comment string) *Alloc {
+	v := &Alloc{Comment: comment}
+	v.setType(types.NewPointer(typ))
+	v.setPos(pos)
+	f.emit(v)
+	return v
+}
+
 // emitNew emits to f a new (heap Alloc) instruction allocating an
 // object of type typ.  pos is the optional source location.
 func emitNew(f *Function, typ types.Type, pos token.Pos) *Alloc {
@@ -22,6 +41,17 @@ func emitNew(f *Function, typ types.Type, pos token.Pos) *Alloc {
 	v.setPos(pos)
 	f.emit(v)
 	return v
+}
+
+// emitLocal creates a local var for (t, pos, comment) and
+// emits an Alloc instruction for it.
+//
+// (Use this function or emitNew for synthetic variables;
+// for source-level variables in the same function, use emitLocalVar.)
+func emitLocal(f *Function, t types.Type, pos token.Pos, comment string) *Alloc {
+	local := emitAlloc(f, t, pos, comment)
+	f.Locals = append(f.Locals, local)
+	return local
 }
 
 // emitLoad emits to f an instruction to load the address addr into a

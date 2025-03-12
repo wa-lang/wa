@@ -75,7 +75,7 @@ type Ins_CallIndirect struct {
 type Ins_Drop struct{ OpToken }
 type Ins_Select struct {
 	OpToken
-	ResultTyp string
+	ResultTyp token.Token // I32, I64, F32, F64
 }
 
 type Ins_LocalGet struct {
