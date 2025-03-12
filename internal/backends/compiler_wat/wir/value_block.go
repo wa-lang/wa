@@ -81,13 +81,11 @@ func (t *Block) EmitLoadFromAddrNoRetain(addr Value, offset int) (insts []wat.In
 func (t *Block) emitHeapAlloc(item_count Value) (insts []wat.Inst) {
 	switch item_count.Kind() {
 	case ValueKindConst:
-		c, err := strconv.Atoi(item_count.Name())
+		_, err := strconv.Atoi(item_count.Name())
 		if err != nil {
 			logger.Fatalf("%v\n", err)
 			return nil
 		}
-		insts = append(insts, NewConst(strconv.Itoa(t.Base.Size()*c+16), t._uint).EmitPush()...)
-		insts = append(insts, wat.NewInstCall("runtime.HeapAlloc"))
 
 	default:
 		if !item_count.Type().Equal(t._uint) && !item_count.Type().Equal(t._int) {
@@ -95,19 +93,12 @@ func (t *Block) emitHeapAlloc(item_count Value) (insts []wat.Inst) {
 			return nil
 		}
 
-		insts = append(insts, item_count.EmitPush()...)
-		insts = append(insts, NewConst(strconv.Itoa(t.Base.Size()), t._uint).EmitPush()...)
-		insts = append(insts, wat.NewInstMul(wat.U32{}))
-		insts = append(insts, NewConst("16", t._uint).EmitPush()...)
-		insts = append(insts, wat.NewInstAdd(wat.U32{}))
-		insts = append(insts, wat.NewInstCall("runtime.HeapAlloc"))
-
 	}
 
 	insts = append(insts, item_count.EmitPush()...)                                       //item_count
 	insts = append(insts, NewConst(strconv.Itoa(t.Base.OnFree()), t._uint).EmitPush()...) //free_method
 	insts = append(insts, NewConst(strconv.Itoa(t.Base.Size()), t._uint).EmitPush()...)   //item_size
-	insts = append(insts, wat.NewInstCall("runtime.Block.Init"))
+	insts = append(insts, wat.NewInstCall("runtime.Block.HeapAlloc"))
 
 	return
 }

@@ -117,7 +117,8 @@
 	end
 )
 
-(func $runtime.Block.HeapAlloc (export "runtime.Block.HeapAlloc") (param $item_count i32) (param $release_func i32) (param $item_size i32) (result i32) ;;result = ptr_block
+(func $runtime.Block.HeapAlloc (export "runtime.Block.HeapAlloc") (param $item_count i32) (param $release_func i32) (param $item_size i32) (result i32 i32) ;;result = ptr_block, ptr_data
+  (local $b i32)
   local.get $item_count
   local.get $item_size
   i32.mul
@@ -129,6 +130,11 @@
   local.get $release_func
   local.get $item_size
   call $runtime.Block.Init
+  
+  local.tee $b
+  local.get $b
+  i32.const 16
+  i32.add
 )
 
 (func $runtime.DupI32 (param $a i32) (result i32 i32) ;;r0 = r1 = p0

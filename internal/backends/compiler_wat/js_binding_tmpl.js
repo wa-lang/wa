@@ -23,19 +23,17 @@ class WaApp {
       set_string: (s) => {
         const bytes = new TextEncoder("utf-8").encode(s);
         const l = bytes.length;
-        const b = this._wasm_inst.exports["runtime.Block.HeapAlloc"](l, 0, 1);
-        const d = b + 16;
-        this._mem_util.mem_array_u8(d, l).set(bytes);
-        return [b, d, l];
+        const bd = this._wasm_inst.exports["runtime.Block.HeapAlloc"](l, 0, 1);
+        this._mem_util.mem_array_u8(bd[1], l).set(bytes);
+        return [bd[0], bd[1], l];
       },
       get_bytes: (d, l) => { return this._mem_util.mem_array_u8(d, l).slice(0); },
       set_bytes: (bytes) => {
         const l = bytes.length;
         const c = l;
-        const b = this._wasm_inst.exports["runtime.Block.HeapAlloc"](l, 0, 1);
-        const d = b + 16;
-        this._mem_util.mem_array_u8(d, l).set(bytes);
-        return [b, d, l, c];
+        const bd = this._wasm_inst.exports["runtime.Block.HeapAlloc"](l, 0, 1);
+        this._mem_util.mem_array_u8(bd[1], l).set(bytes);
+        return [bd[0], bd[1], l, c];
       },
       block_release: (addr) => { this._wasm_inst.exports["runtime.Block.Release"](addr); },
       //基本类型直接读写：
