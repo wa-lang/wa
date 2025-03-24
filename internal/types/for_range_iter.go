@@ -3,4 +3,4 @@
 package types
 
 // 扩展迭代器语法
-const _UseFeature_forRangeIter = false
+const _UseFeature_forRangeIter = true

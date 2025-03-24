@@ -3,6 +3,12 @@
 - (dev)
   - Native 后端 (TODO)
   - 完善 `wa lsp` 子命令 (TODO)
+- v0.22.0 (2025-03-24)
+  - `for range`增加整数迭代和自定义迭代器
+  - Playground界面完善, 并去掉对libwabt的依赖
+  - 增加交互式学习指南: https://wa-lang.org/tutorial/
+  - 修复`wa fmt`子命令格式化wat文件时的错误
+  - 完善`wa wat2c`子命令实现
 - v0.21.0 (2025-02-11)
   - WA酱吉祥物诞生: https://wa-lang.org/smalltalk/st0069.html
   - 导出函数使用Bytes外的纯值切片作为参数或返回值时，以值拷贝模式生成js胶水代码
