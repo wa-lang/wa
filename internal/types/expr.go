@@ -1094,9 +1094,6 @@ func (check *Checker) exprInternal(x *operand, e ast.Expr, hint Type) exprKind {
 
 		switch utyp := base.Underlying().(type) {
 		case *Struct:
-			if true {
-				// todo(chai): check import type.NeesConstructor
-			}
 			if len(e.Elts) == 0 {
 				break
 			}

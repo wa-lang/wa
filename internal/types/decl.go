@@ -624,10 +624,6 @@ func (check *Checker) declStmt(decl ast.Decl) {
 						lhs0[i] = NewVar(name.Pos(), pkg, name.Name, nil)
 					}
 
-					if len(s.Values) == 0 {
-						// todo(chai): check import type.NeesConstructor
-					}
-
 					// initialize all variables
 					for i, obj := range lhs0 {
 						var lhs []*Var
