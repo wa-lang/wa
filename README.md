@@ -215,7 +215,7 @@ More examples [waroot/examples](waroot/examples)
 |small_broken_gong|100|
 |tk103331|100|
 |蔡兴|3000|
-|王仁义|1000|
+|王任义|1000|
 |imalasong|1000|
 |杨刚|4000|
 |崔爽|2000|
