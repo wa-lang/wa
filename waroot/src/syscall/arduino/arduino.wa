@@ -15,6 +15,9 @@ func Millis() => i32
 #wa:import arduino delay
 func Delay(ms: i32)
 
+#wa:import arduino delayMicroseconds
+func DelayMicroseconds(us: i32)
+
 #wa:import arduino pinMode
 func PinMode(pin, mode: i32)
 

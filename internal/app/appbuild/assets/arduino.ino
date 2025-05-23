@@ -35,6 +35,13 @@ m3ApiRawFunction(m3_arduino_delay) {
 	m3ApiSuccess();
 }
 
+// fn arduino.delayMicroseconds(us: u32)
+m3ApiRawFunction(m3_arduino_delayMicroseconds) {
+	m3ApiGetArg(uint32_t, us)
+	delayMicroseconds(us);
+	m3ApiSuccess();
+}
+
 // fn arduino.pinMode(pin: u32, mode: u32)
 m3ApiRawFunction(m3_arduino_pinMode) {
 	m3ApiGetArg(uint32_t, pin)
@@ -76,12 +83,13 @@ m3ApiRawFunction(m3_arduino_print) {
 
 // 初始化 Arduino 宿主 API
 M3Result LinkArduino(IM3Runtime rt) {
-	m3_LinkRawFunction (rt->modules, "arduino", "millis",       "i()",   &m3_arduino_millis);
-	m3_LinkRawFunction (rt->modules, "arduino", "delay",        "v(i)",  &m3_arduino_delay);
-	m3_LinkRawFunction (rt->modules, "arduino", "pinMode",      "v(ii)", &m3_arduino_pinMode);
-	m3_LinkRawFunction (rt->modules, "arduino", "digitalWrite", "v(ii)", &m3_arduino_digitalWrite);
-	m3_LinkRawFunction (rt->modules, "arduino", "getPinLED",    "i()",   &m3_arduino_getPinLED);
-	m3_LinkRawFunction (rt->modules, "arduino", "print",        "v(*i)", &m3_arduino_print);
+	m3_LinkRawFunction (rt->modules, "arduino", "millis",            "i()",   &m3_arduino_millis);
+	m3_LinkRawFunction (rt->modules, "arduino", "delay",             "v(i)",  &m3_arduino_delay);
+	m3_LinkRawFunction (rt->modules, "arduino", "delayMicroseconds", "v(i)",  &m3_arduino_delayMicroseconds);
+	m3_LinkRawFunction (rt->modules, "arduino", "pinMode",            "v(ii)", &m3_arduino_pinMode);
+	m3_LinkRawFunction (rt->modules, "arduino", "digitalWrite",       "v(ii)", &m3_arduino_digitalWrite);
+	m3_LinkRawFunction (rt->modules, "arduino", "getPinLED",          "i()",   &m3_arduino_getPinLED);
+	m3_LinkRawFunction (rt->modules, "arduino", "print",              "v(*i)", &m3_arduino_print);
 	return m3Err_none;
 }
 

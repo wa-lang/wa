@@ -1,0 +1,125 @@
+// 版权 @2025 arduino-lcd1602 作者。保留所有权利。
+
+import "syscall/arduino"
+
+// +---------------------------------------------------------------------+
+// | LCD1602 Module                                                      |
+// |-----+-----------------------+---------------------+-----------------+
+// | Pin | Label | Connected To  | Description         | In Code         |
+// |-----+-------+---------------+---------------------+-----------------+
+// |  1  | GND   | GND           | Ground              | -               |
+// |  2  | VCC   | 5V            | Power Supply        | -               |
+// |  3  | VO    | Potentiometer | Contrast Control    | -               |
+// |  4  | RS    | D7            | Register Select     | digitalWrite(RS)|
+// |  5  | RW    | GND           | Write Only (GND)    | always LOW      |
+// |  6  | E     | D6            | Enable Signal       | pulseEnable()   |
+// | 11  | D4    | D5            | Data Bit 4          | write4bits()    |
+// | 12  | D5    | D4            | Data Bit 5          | write4bits()    |
+// | 13  | D6    | D3            | Data Bit 6          | write4bits()    |
+// | 14  | D7    | D2            | Data Bit 7          | write4bits()    |
+// +-----+-------+---------------+---------------------+-----------------+
+
+// LCD1602引脚定义
+global (
+	RS :i32 = 7
+	E  :i32 = 6
+	D4 :i32 = 5
+	D5 :i32 = 4
+	D6 :i32 = 3
+	D7 :i32 = 2
+)
+
+// Generate Enable HIGH → LOW pulse to latch command/data
+func pulseEnable {
+	arduino.DigitalWrite(E, arduino.LOW)
+	arduino.DelayMicroseconds(1)
+	arduino.DigitalWrite(E, arduino.HIGH)
+	arduino.DelayMicroseconds(1)
+	arduino.DigitalWrite(E, arduino.LOW)
+	arduino.DelayMicroseconds(100) // 等待命令执行
+}
+
+// Output 4 bits to D4-D7 and toggle Enable
+func write4bits(value: byte) {
+	arduino.DigitalWrite(D4, i32((value>>0)&0x01))
+	arduino.DigitalWrite(D5, i32((value>>1)&0x01))
+	arduino.DigitalWrite(D6, i32((value>>2)&0x01))
+	arduino.DigitalWrite(D7, i32((value>>3)&0x01))
+	pulseEnable()
+}
+
+// Send a full byte in two 4-bit chunks (mode: 0 = command, 1 = data)
+func send(value, mode: byte) {
+	arduino.DigitalWrite(i32(RS), i32(mode))
+	write4bits(value >> 4)   // 高四位
+	write4bits(value & 0x0F) // 低四位
+}
+
+// Send instruction command to LCD (RS=0)
+func command(value: byte) {
+	send(value, byte(arduino.LOW))
+}
+
+// Write a character to current cursor position (RS=1)
+func writeChar(value: byte) {
+	send(value, byte(arduino.HIGH))
+}
+
+// Sets the LCD cursor to the specified row and column.
+func LCDSetCursor(row, col: i32) {
+	if row == 0 {
+		command(byte(0x80 + col))
+	} else {
+		command(byte(0xC0 + col))
+	}
+}
+
+// Displays a single character at the given LCD position.
+func LCDPrintChar(row, col: i32, ch: byte) {
+	LCDSetCursor(row, col)
+	writeChar(ch)
+}
+
+// Displays a string starting at the given LCD position.
+func LCDPrintString(row, col: i32, s: string) {
+	LCDSetCursor(row, col)
+	for _, ch := range s {
+		writeChar(byte(ch))
+	}
+}
+
+// Displays a string.
+#wa:generic LCDPrintString LCDPrintChar
+func LCDPrint(s: string) {
+	LCDSetCursor(0, 0)
+	for _, ch := range s {
+		writeChar(byte(ch))
+	}
+}
+
+// Initialize LCD in 4-bit mode, configure display & cursor settings
+func LCDInit {
+	arduino.PinMode(RS, arduino.OUTPUT)
+	arduino.PinMode(E, arduino.OUTPUT)
+	arduino.PinMode(D4, arduino.OUTPUT)
+	arduino.PinMode(D5, arduino.OUTPUT)
+	arduino.PinMode(D6, arduino.OUTPUT)
+	arduino.PinMode(D7, arduino.OUTPUT)
+	arduino.Delay(50) // 等待LCD启动
+
+	// 初始化到4-bit模式
+	write4bits(0x03)
+	arduino.Delay(5)
+	write4bits(0x03)
+	arduino.DelayMicroseconds(150)
+	write4bits(0x03)
+	write4bits(0x02) // 设置4-bit模式
+
+	// 几个基本设置
+	command(0x28) // 4-bit, 2行, 5x8 点阵
+	command(0x08) // 显示关闭
+	command(0x01) // 清屏
+	arduino.Delay(2)
+	command(0x06) // 输入模式：写入后光标右移
+	command(0x0C) // 显示开启，光标关闭
+}

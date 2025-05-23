@@ -1,0 +1,6 @@
+// 版权 @2025 arduino-lcd1602 作者。保留所有权利。
+
+func init {
+	LCDInit()
+	LCDPrint("Hello Wa-lang")
+}
