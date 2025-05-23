@@ -17,9 +17,9 @@
 	<p>Output</p>
 	<pre id="output"></pre>
 
-	<script type="text/javascript" src="./brainfuck.js"></script>
+	<script type="module">
+		import { WaApp } from "./brainfuck.js";
 
-	<script>
 		let app = new WaApp();
 		app.init().then((result) => {
 			document.getElementById('btn').addEventListener('click', function () {
