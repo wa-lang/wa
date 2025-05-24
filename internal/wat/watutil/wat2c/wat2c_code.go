@@ -82,14 +82,23 @@ func (p *wat2cWorker) buildCode(w io.Writer) error {
 		return err
 	}
 
+	// 生成 init 函数
+	{
+		fmt.Fprintln(w)
+		fmt.Fprintf(w, "void wasm_init() {\n")
+		fmt.Fprintf(w, "  fn_memory_init();\n")
+		fmt.Fprintf(w, "  fn_table_init();\n")
+		fmt.Fprintf(w, "  fn_%s();\n", toCName("_start"))
+		fmt.Fprintf(w, "  return;\n")
+		fmt.Fprintf(w, "}\n")
+	}
+
 	// 生成main函数
 	for _, f := range p.m.Funcs {
 		if f.Name == "_main" {
 			fmt.Fprintln(w)
-			fmt.Fprintf(w, "int main() {\n")
-			fmt.Fprintf(w, "  fn_memory_init();\n")
-			fmt.Fprintf(w, "  fn_table_init();\n")
-			fmt.Fprintf(w, "  fn_%s();\n", toCName("_start"))
+			fmt.Fprintf(w, "int wasm_main() {\n")
+			fmt.Fprintf(w, "  wasm_init();\n")
 			fmt.Fprintf(w, "  fn_%s();\n", toCName(f.Name))
 			fmt.Fprintf(w, "  return 0;\n")
 			fmt.Fprintf(w, "}\n")

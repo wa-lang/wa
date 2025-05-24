@@ -21,6 +21,12 @@ import (
 //go:embed assets/arduino.ino
 var arduino_ino string
 
+//go:embed assets/arduino-dev.ino
+var arduino_dev_ino string
+
+//go:embed assets/arduino-host.cpp
+var arduino_host_cpp string
+
 //go:embed assets/favicon.ico
 var favicon_ico string
 
@@ -295,6 +301,29 @@ func BuildApp(opt *appbase.Option, input, outfile string) (mainFunc string, wasm
 			if err != nil {
 				fmt.Printf("write %s failed: %v\n", outfile, err)
 				os.Exit(1)
+			}
+
+			// 测试输出的C代码
+			{
+				arduinoDir := filepath.Join(filepath.Dir(outfile), "arduino-dev")
+				inoOutfile := filepath.Join(filepath.Dir(outfile), "arduino-dev", "arduino-dev.ino")
+				hostCppOutfile := filepath.Join(filepath.Dir(outfile), "arduino-dev", "arduino-host.cpp")
+				waAppCfile := filepath.Join(filepath.Dir(outfile), "arduino-dev", "wa-app.c")
+				waAppHfile := filepath.Join(filepath.Dir(outfile), "arduino-dev", "wa-app.h")
+
+				os.MkdirAll(arduinoDir, 0777)
+				os.WriteFile(inoOutfile, []byte(arduino_dev_ino), 0666)
+				os.WriteFile(hostCppOutfile, []byte(arduino_host_cpp), 0666)
+
+				code, header, err := watutil.Wat2C("wa-app.wat", watOutput)
+				if err != nil {
+					os.WriteFile(outfile, code, 0666)
+					fmt.Println(err)
+					os.Exit(1)
+				}
+
+				os.WriteFile(waAppCfile, []byte(code), 0666)
+				os.WriteFile(waAppHfile, []byte(header), 0666)
 			}
 
 		default:
