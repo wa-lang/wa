@@ -97,6 +97,12 @@ func LCDPrint(s: string) {
 	}
 }
 
+// Claer screen.
+func LCDClear {
+	command(0x01)
+	arduino.Delay(2)
+}
+
 // Initialize LCD in 4-bit mode, configure display & cursor settings
 func LCDInit {
 	arduino.PinMode(RS, arduino.OUTPUT)

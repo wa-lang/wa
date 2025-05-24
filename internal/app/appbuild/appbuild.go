@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"time"
 
 	"wa-lang.org/wa/internal/3rdparty/cli"
 	"wa-lang.org/wa/internal/app/appbase"
@@ -270,6 +271,7 @@ func BuildApp(opt *appbase.Option, input, outfile string) (mainFunc string, wasm
 			// unsigned int app_wasm_len = ?;
 			// unsigned char app_wasm[] = { 0x00, 0x01, ... };
 			fmt.Fprintf(&buf, "// Auto Generate by Wa language. See https://wa-lang.org\n\n")
+			fmt.Fprintf(&buf, "#define APP_WASM_BUILD_TIME \"%v\"\n\n", time.Now().Format("2006-01-02T15:04:05"))
 			fmt.Fprintf(&buf, "unsigned int app_wasm_len = %d;\n\n", len(wasmBytes))
 			fmt.Fprintf(&buf, "unsigned char app_wasm[] = {")
 			for i, ch := range wasmBytes {

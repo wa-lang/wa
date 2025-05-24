@@ -21,8 +21,17 @@ func DelayMicroseconds(us: i32)
 #wa:import arduino pinMode
 func PinMode(pin, mode: i32)
 
+#wa:import arduino digitalRead
+func DigitalRead(pin: i32) => i32
+
 #wa:import arduino digitalWrite
 func DigitalWrite(pin, value: i32)
+
+#wa:import arduino analogRead
+func AnalogRead(pin: i32) => i32
+
+#wa:import arduino analogWrite
+func AnalogWrite(pin, value: i32)
 
 #wa:import arduino getPinLED
 func GetPinLED() => i32
