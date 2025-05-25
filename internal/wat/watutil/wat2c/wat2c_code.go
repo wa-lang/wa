@@ -86,6 +86,9 @@ func (p *wat2cWorker) buildCode(w io.Writer) error {
 	{
 		fmt.Fprintln(w)
 		fmt.Fprintf(w, "void wasm_init() {\n")
+		fmt.Fprintf(w, "  static int init_flag = 0;\n")
+		fmt.Fprintf(w, "  if(init_flag) return;\n")
+		fmt.Fprintf(w, "  init_flag = 1;\n")
 		fmt.Fprintf(w, "  fn_memory_init();\n")
 		fmt.Fprintf(w, "  fn_table_init();\n")
 		fmt.Fprintf(w, "  fn_%s();\n", toCName("_start"))

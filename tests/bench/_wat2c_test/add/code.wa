@@ -1,0 +1,9 @@
+global gBase: i32 = 1000
+
+func main() {
+	println(add(40, 2) + gBase)
+}
+
+func add(a: i32, b: i32) => i32 {
+	return a + b
+}

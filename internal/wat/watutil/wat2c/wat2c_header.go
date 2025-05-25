@@ -83,6 +83,7 @@ func (p *wat2cWorker) buildHeader(w io.Writer) error {
 	}
 
 	fmt.Fprintf(w, "extern void wasm_init();\n")
+	fmt.Fprintf(w, "extern int wasm_main();\n")
 	fmt.Fprintln(w)
 
 	fmt.Fprintf(w, "extern uint8_t* wasm_memory_addr_at(i32_t idx, const char* file, i32_t line);\n")
