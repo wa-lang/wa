@@ -83,14 +83,18 @@ func (p *wat2cWorker) buildCode(w io.Writer) error {
 	}
 
 	// 生成 init 函数
-	{
+	if false {
 		fmt.Fprintln(w)
 		fmt.Fprintf(w, "void wasm_init() {\n")
 		fmt.Fprintf(w, "  static int init_flag = 0;\n")
 		fmt.Fprintf(w, "  if(init_flag) return;\n")
 		fmt.Fprintf(w, "  init_flag = 1;\n")
-		fmt.Fprintf(w, "  fn_memory_init();\n")
-		fmt.Fprintf(w, "  fn_table_init();\n")
+		if p.m.Memory != nil {
+			fmt.Fprintf(w, "  fn_memory_init();\n")
+		}
+		if p.m.Table != nil {
+			fmt.Fprintf(w, "  fn_table_init();\n")
+		}
 		fmt.Fprintf(w, "  fn_%s();\n", toCName("_start"))
 		fmt.Fprintf(w, "  return;\n")
 		fmt.Fprintf(w, "}\n")
@@ -349,6 +353,9 @@ func (p *wat2cWorker) buildImport(w io.Writer) error {
 }
 
 func (p *wat2cWorker) buildMemory_data(w io.Writer) error {
+	if p.m.Memory == nil {
+		return nil
+	}
 	fmt.Fprintf(w, "void fn_memory_init() {\n")
 	defer fmt.Fprintf(w, "}\n\n")
 
@@ -366,6 +373,9 @@ func (p *wat2cWorker) buildMemory_data(w io.Writer) error {
 }
 
 func (p *wat2cWorker) buildTable_elem(w io.Writer) error {
+	if p.m.Table == nil {
+		return nil
+	}
 	fmt.Fprintf(w, "void fn_table_init() {\n")
 	defer fmt.Fprintf(w, "}\n\n")
 
