@@ -1,9 +1,10 @@
+// 版权 @2025 arduino-wat 作者。保留所有权利。
+
 #include "wa-app.h"
 
-    extern "C" void fn_main();
-
 void setup() {
-    fn_main();
+    app_init();
+    app_main();
 }
 
 void loop() {

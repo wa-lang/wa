@@ -13,19 +13,23 @@ import (
 
 const DebugMode = false
 
-func Wat2C(filename string, source []byte) (code, header []byte, err error) {
+func Wat2C(filename string, source []byte, prefix string) (code, header []byte, err error) {
+	prefix = toCName(prefix)
+
 	m, err := parser.ParseModule(filename, source)
 	if err != nil {
 		return nil, nil, err
 	}
 
 	worker := newWat2cWorker(m)
-	code, header, err = worker.BuildCode()
+	code, header, err = worker.BuildCode(prefix)
 	return
 }
 
 type wat2cWorker struct {
 	m *ast.Module
+
+	prefix string // 生成C代码时, 名字的前缀
 
 	inlinedTypeIndices []*inlinedTypeIndex
 	inlinedTypes       []*wasm.FunctionType
@@ -49,9 +53,11 @@ func newWat2cWorker(mWat *ast.Module) *wat2cWorker {
 	return &wat2cWorker{m: mWat, trace: DebugMode}
 }
 
-func (p *wat2cWorker) BuildCode() (code, header []byte, err error) {
+func (p *wat2cWorker) BuildCode(prefix string) (code, header []byte, err error) {
 	var h bytes.Buffer
 	var c bytes.Buffer
+
+	p.prefix = prefix
 
 	if err := p.buildCode(&c); err != nil {
 		return nil, nil, err

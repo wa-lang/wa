@@ -1,4 +1,4 @@
-;; 版权 @2022 凹语言 作者。保留所有权利。
+;; 版权 @2025 arduino-wat 作者。保留所有权利。
 
 (module $wa-arduino-hello
 	(import "arduino" "getPinLED" (func $getPinLED (result i32)))
@@ -8,9 +8,8 @@
 
 	(memory (;0;) 1)
 	(export "memory" (memory 0))
-	(export "_start" (func $main))
 
-	(func $main (local $tmp i32)
+	(func $main (export "_main") (local $tmp i32)
 		;; var LED i32 = getPinLED()
 		;; &LED == 1024
 		i32.const 1024

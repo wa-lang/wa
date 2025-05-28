@@ -21,19 +21,16 @@ func (p *wat2cWorker) getHostFuncCRetType(fnType *ast.FuncType, fnName string) s
 	case 1:
 		switch fnType.Results[0] {
 		case token.I32:
-			return "i32_t"
+			return "int32_t"
 		case token.I64:
-			return "i64_t"
+			return "int64_t"
 		case token.F32:
-			return "f32_t"
+			return "float"
 		case token.F64:
-			return "f64_t"
-		default:
-			panic("unreachable")
+			return "double"
 		}
-	default:
-		return fmt.Sprintf("host_fn_%s_ret_t", toCName(fnName))
 	}
+	panic("unreachable")
 }
 
 func (p *wat2cWorker) getFuncCRetType(fnType *ast.FuncType, fnName string) string {
@@ -43,18 +40,18 @@ func (p *wat2cWorker) getFuncCRetType(fnType *ast.FuncType, fnName string) strin
 	case 1:
 		switch fnType.Results[0] {
 		case token.I32:
-			return "i32_t"
+			return "int32_t"
 		case token.I64:
-			return "i64_t"
+			return "int64_t"
 		case token.F32:
-			return "f32_t"
+			return "float"
 		case token.F64:
-			return "f64_t"
+			return "double"
 		default:
 			panic("unreachable")
 		}
 	default:
-		return fmt.Sprintf("fn_%s_ret_t", toCName(fnName))
+		return fmt.Sprintf("%s_%s_ret_t", p.prefix, toCName(fnName))
 	}
 }
 
@@ -87,7 +84,7 @@ func (p *wat2cWorker) ifUseMathX(ins token.Token) bool {
 
 func (p *wat2cWorker) findGlobalType(ident string) token.Token {
 	if ident == "" {
-		panic("wat2c: empty ident")
+		panic("wat2c: empty global name")
 	}
 
 	// 不支持导入的全局变量
@@ -107,7 +104,7 @@ func (p *wat2cWorker) findGlobalType(ident string) token.Token {
 
 func (p *wat2cWorker) findLocalType(fn *ast.Func, ident string) token.Token {
 	if ident == "" {
-		panic("wat2c: empty ident")
+		panic("wat2c: empty local name")
 	}
 
 	if idx, err := strconv.Atoi(ident); err == nil {
@@ -131,7 +128,7 @@ func (p *wat2cWorker) findLocalType(fn *ast.Func, ident string) token.Token {
 
 func (p *wat2cWorker) findLocalName(fn *ast.Func, ident string) string {
 	if ident == "" {
-		panic("wat2c: empty ident")
+		panic("wat2c: empty local name")
 	}
 
 	if idx, err := strconv.Atoi(ident); err == nil {

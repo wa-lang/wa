@@ -8,126 +8,77 @@
 #include <string.h>
 #include <math.h>
 
-typedef uint8_t   u8_t;
-typedef int8_t    i8_t;
-typedef uint16_t  u16_t;
-typedef int16_t   i16_t;
-typedef uint32_t  u32_t;
-typedef int32_t   i32_t;
-typedef uint64_t  u64_t;
-typedef int64_t   i64_t;
-typedef float     f32_t;
-typedef double    f64_t;
-typedef uintptr_t ref_t;
-
 typedef union val_t {
-  i64_t i64;
-  f64_t f64;
-  i32_t i32;
-  f32_t f32;
-  ref_t ref;
+  int64_t   i64;
+  double    f64;
+  int32_t   i32;
+  float     f32;
+  uintptr_t ref;
 } val_t;
 
-#ifdef NDEBUG
-  #define WASM_TRACE() ((void)0)
-#else
-  #define WASM_TRACE() printf("%s %s:%d\n",__FUNCTION__,__FILE__,__LINE__)
-#endif
+extern int32_t app_arduino_getPinLED();
+extern void app_arduino_pinMode(int32_t pin, int32_t mode);
+extern void app_arduino_digitalWrite(int32_t pin, int32_t value);
+extern void app_arduino_delay(int32_t ms);
 
-extern i32_t host_fn_arduino_getPinLED();
-extern void host_fn_arduino_pinMode(i32_t pin, i32_t mode);
-extern void host_fn_arduino_digitalWrite(i32_t pin, i32_t value);
-extern void host_fn_arduino_delay(i32_t ms);
+#define app_getPinLED app_arduino_getPinLED // import arduino.getPinLED
+#define app_pinMode app_arduino_pinMode // import arduino.pinMode
+#define app_digitalWrite app_arduino_digitalWrite // import arduino.digitalWrite
+#define app_delay app_arduino_delay // import arduino.delay
 
-// import arduino.getPinLED
-static i32_t fn_getPinLED();
-// import arduino.pinMode
-static void fn_pinMode(i32_t pin, i32_t mode);
-// import arduino.digitalWrite
-static void fn_digitalWrite(i32_t pin, i32_t value);
-// import arduino.delay
-static void fn_delay(i32_t ms);
-
-// import arduino.getPinLED
-static i32_t fn_getPinLED() {
-  union { i32_t v; i32_t host; } ret;
-  ret.v = host_fn_arduino_getPinLED();
-  return ret.host;
-}
-
-// import arduino.pinMode
-static void fn_pinMode(i32_t pin, i32_t mode) {
-  host_fn_arduino_pinMode(pin, mode);
-}
-
-// import arduino.digitalWrite
-static void fn_digitalWrite(i32_t pin, i32_t value) {
-  host_fn_arduino_digitalWrite(pin, value);
-}
-
-// import arduino.delay
-static void fn_delay(i32_t ms) {
-  host_fn_arduino_delay(ms);
-}
-
-
-uint8_t       wasm_memory[1*64*1024];
-const int32_t wasm_memory_init_max_pages = 1;
-const int32_t wasm_memory_init_pages = 1;
-int32_t       wasm_memory_size = 1;
-
-#define WASM_MEMORY_ADDR(addr) wasm_memory_addr_at((addr),__FILE__,__LINE__)
-
-uint8_t* wasm_memory_addr_at(i32_t addr, const char* file, i32_t line) {
-  if(addr < 0 || addr >= wasm_memory_size*65536) {
-    printf("%s:%d addr=%d\n", file, line, addr);
-    abort();
-  }
-  return &wasm_memory[addr];
-}
+uint8_t       app_memory[1*64*1024];
+const int32_t app_memory_init_max_pages = 1;
+const int32_t app_memory_init_pages = 1;
+int32_t       app_memory_size = 1;
 
 // func $main
-extern void fn_main();
+extern void app_main();
 
 // func main
-void fn_main() {
-  u32_t $R_u32;
-  u16_t $R_u16;
-  u8_t  $R_u8;
+void app_main() {
+  uint32_t $R_u32;
+  uint16_t $R_u16;
+  uint8_t  $R_u8;
   val_t $R0, $R1;
 
-  i32_t tmp = 0;
-
-  WASM_TRACE();
+  int32_t tmp = 0;
 
   $R0.i32 = 1024;
-  $R1.i32 = fn_getPinLED();
+  $R1.i32 = app_getPinLED();
   tmp = $R1.i32;
-  memcpy(WASM_MEMORY_ADDR($R0.i32+0), &$R1.i32, 4);
+  memcpy(&app_memory[$R0.i32+0], &$R1.i32, 4);
   $R0.i32 = tmp;
   $R1.i32 = 1;
-  fn_pinMode($R0.i32, $R1.i32);
+  app_pinMode($R0.i32, $R1.i32);
 L_label0_next:;
   { // loop $label0
     $R0.i32 = 1024;
-    memcpy(&$R0.i32, WASM_MEMORY_ADDR($R0.i32+0), 4);
+    memcpy(&$R0.i32, &app_memory[$R0.i32+0], 4);
     $R1.i32 = 1;
-    fn_digitalWrite($R0.i32, $R1.i32);
+    app_digitalWrite($R0.i32, $R1.i32);
     $R0.i32 = 100;
-    fn_delay($R0.i32);
+    app_delay($R0.i32);
     $R0.i32 = 1024;
-    memcpy(&$R0.i32, WASM_MEMORY_ADDR($R0.i32+0), 4);
+    memcpy(&$R0.i32, &app_memory[$R0.i32+0], 4);
     $R1.i32 = 0;
-    fn_digitalWrite($R0.i32, $R1.i32);
+    app_digitalWrite($R0.i32, $R1.i32);
     $R0.i32 = 900;
-    fn_delay($R0.i32);
+    app_delay($R0.i32);
     goto L_label0_next;
   }
   abort(); // unreachable
   return;
 }
-void fn_memory_init() {
-  memset(&wasm_memory[0], 0, wasm_memory_size*65536);
+void app_memory_init() {
+  memset(&app_memory[0], 0, app_memory_size*65536);
 
 }
 
+
+void app_init() {
+  static int init_flag = 0;
+  if(init_flag) return;
+  init_flag = 1;
+  app_memory_init();
+  return;
+}

@@ -324,7 +324,7 @@ func BuildApp(opt *appbase.Option, input, outfile string) (mainFunc string, wasm
 				os.WriteFile(inoOutfile, []byte(arduino_dev_ino), 0666)
 				os.WriteFile(hostCppOutfile, []byte(arduino_host_cpp), 0666)
 
-				code, header, err := watutil.Wat2C("wa-app.wat", watOutput)
+				code, header, err := watutil.Wat2C("wa-app.wat", watOutput, "arduino")
 				if err != nil {
 					os.WriteFile(outfile, code, 0666)
 					fmt.Println(err)
@@ -349,7 +349,7 @@ func BuildApp(opt *appbase.Option, input, outfile string) (mainFunc string, wasm
 				os.WriteFile(hostCppOutfile, []byte(arduino_host_debug_cpp), 0666)
 				os.WriteFile(cmakefile, []byte(arduino_CMakeLists_txt), 0666)
 
-				code, header, err := watutil.Wat2C("wa-app.wat", watOutput)
+				code, header, err := watutil.Wat2C("wa-app.wat", watOutput, "arduino")
 				if err != nil {
 					os.WriteFile(outfile, code, 0666)
 					fmt.Println(err)

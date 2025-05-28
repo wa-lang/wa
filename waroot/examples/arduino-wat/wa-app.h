@@ -4,44 +4,27 @@
 
 #pragma once
 
+#ifndef _app_H_
+#define _app_H_
+
 #include <stdint.h>
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-typedef uint8_t   u8_t;
-typedef int8_t    i8_t;
-typedef uint16_t  u16_t;
-typedef int16_t   i16_t;
-typedef uint32_t  u32_t;
-typedef int32_t   i32_t;
-typedef uint64_t  u64_t;
-typedef int64_t   i64_t;
-typedef float     f32_t;
-typedef double    f64_t;
-typedef uintptr_t ref_t;
+extern uint8_t       app_memory[/*1*64*1024*/];
+extern const int32_t app_memory_init_max_pages; // = 1;
+extern const int32_t app_memory_init_pages; // = 1;
+extern int32_t       app_memory_size; // = 1;
 
-typedef union val_t {
-  i64_t i64;
-  f64_t f64;
-  i32_t i32;
-  f32_t f32;
-  ref_t ref;
-} val_t;
+extern void app_init();
 
-extern uint8_t       wasm_memory[/*1*64*1024*/];
-extern const int32_t wasm_memory_init_max_pages; // = 1;
-extern const int32_t wasm_memory_init_pages; // = 1;
-extern int32_t       wasm_memory_size; // = 1;
-
-extern void wasm_init();
-extern int wasm_main();
-
-extern uint8_t* wasm_memory_addr_at(i32_t idx, const char* file, i32_t line);
-
+// func $main
+extern void app_main();
 
 #ifdef __cplusplus
 } // extern C 
 #endif
 
+#endif // _app_H_

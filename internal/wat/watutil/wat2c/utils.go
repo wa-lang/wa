@@ -6,8 +6,6 @@ import (
 	"fmt"
 	"strings"
 	"unicode"
-
-	"wa-lang.org/wa/internal/wat/token"
 )
 
 func assert(condition bool, args ...interface{}) {
@@ -22,38 +20,6 @@ func assert(condition bool, args ...interface{}) {
 
 func unreachable() {
 	panic("unreachable")
-}
-
-func toCType(typ token.Token) string {
-	switch typ {
-	case token.I32:
-		return "int32_t"
-	case token.I64:
-		return "int64_t"
-	case token.F32:
-		return "float"
-	case token.F64:
-		return "double"
-	default:
-		return "void"
-	}
-}
-
-// 生成C语言的标识符
-func toCGlobalName(name string) string {
-	return "g_" + toCName(name)
-}
-func toCFuncName(name string) string {
-	return "f_" + toCName(name)
-}
-func toCFuncArgName(name string) string {
-	return "a_" + toCName(name)
-}
-func toCFuncLocalName(name string) string {
-	return "v_" + toCName(name)
-}
-func toCFuncLabelName(name string) string {
-	return "L_" + toCName(name)
 }
 
 func toCName(name string) string {

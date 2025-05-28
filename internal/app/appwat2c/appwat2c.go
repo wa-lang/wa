@@ -23,6 +23,12 @@ var CmdWat2c = &cli.Command{
 			Usage:   "set code output file",
 			Value:   "a.out.c",
 		},
+		&cli.StringFlag{
+			Name:    "prefix",
+			Aliases: []string{"p"},
+			Usage:   "name prefix to use in generated code",
+			Value:   "app",
+		},
 	},
 	Action: func(c *cli.Context) error {
 		if c.NArg() == 0 {
@@ -32,6 +38,7 @@ var CmdWat2c = &cli.Command{
 
 		infile := c.Args().First()
 		outfile := c.String("output")
+		prefix := c.String("prefix")
 
 		if outfile == "" {
 			outfile = infile
@@ -54,7 +61,7 @@ var CmdWat2c = &cli.Command{
 			os.Exit(1)
 		}
 
-		code, header, err := watutil.Wat2C(infile, source)
+		code, header, err := watutil.Wat2C(infile, source, prefix)
 		if err != nil {
 			os.WriteFile(outfile, code, 0666)
 			fmt.Println(err)

@@ -6,6 +6,6 @@ import (
 	"wa-lang.org/wa/internal/wat/watutil/wat2c"
 )
 
-func Wat2C(filename string, source []byte) (code, header []byte, err error) {
-	return wat2c.Wat2C(filename, source)
+func Wat2C(filename string, source []byte, prefix string) (code, header []byte, err error) {
+	return wat2c.Wat2C(filename, source, prefix)
 }
