@@ -346,8 +346,10 @@ func (p *wat2cWorker) buildFunc_ins(w io.Writer, fn *ast.Func, stk *valueTypeSta
 		fnCallCRetType := p.getFuncCRetType(fnCallType, i.X)
 
 		// 参数列表
+		// 出栈的顺序相反
 		argList := make([]int, len(fnCallType.Params))
-		for k, x := range fnCallType.Params {
+		for k := len(argList) - 1; k >= 0; k-- {
+			x := fnCallType.Params[k]
 			argList[k] = stk.Pop(x.Type)
 		}
 
@@ -423,8 +425,10 @@ func (p *wat2cWorker) buildFunc_ins(w io.Writer, fn *ast.Func, stk *valueTypeSta
 		fnCallCRetType := p.getFuncCRetType(fnCallType, "")
 
 		// 参数列表
+		// 出栈的顺序相反
 		argList := make([]int, len(fnCallType.Params))
-		for k, x := range fnCallType.Params {
+		for k := len(argList) - 1; k >= 0; k-- {
+			x := fnCallType.Params[k]
 			argList[k] = stk.Pop(x.Type)
 		}
 

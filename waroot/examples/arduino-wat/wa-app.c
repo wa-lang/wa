@@ -106,19 +106,19 @@ void fn_main() {
   memcpy(WASM_MEMORY_ADDR($R0.i32+0), &$R1.i32, 4);
   $R0.i32 = tmp;
   $R1.i32 = 1;
-  fn_pinMode($R1.i32, $R0.i32);
+  fn_pinMode($R0.i32, $R1.i32);
 L_label0_next:;
   { // loop $label0
     $R0.i32 = 1024;
     memcpy(&$R0.i32, WASM_MEMORY_ADDR($R0.i32+0), 4);
     $R1.i32 = 1;
-    fn_digitalWrite($R1.i32, $R0.i32);
+    fn_digitalWrite($R0.i32, $R1.i32);
     $R0.i32 = 100;
     fn_delay($R0.i32);
     $R0.i32 = 1024;
     memcpy(&$R0.i32, WASM_MEMORY_ADDR($R0.i32+0), 4);
     $R1.i32 = 0;
-    fn_digitalWrite($R1.i32, $R0.i32);
+    fn_digitalWrite($R0.i32, $R1.i32);
     $R0.i32 = 900;
     fn_delay($R0.i32);
     goto L_label0_next;
