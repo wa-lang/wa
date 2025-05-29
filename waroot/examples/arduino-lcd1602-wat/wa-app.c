@@ -76,6 +76,8 @@ static void app_LCDWriteChar(int32_t value);
 static void app_LCDClear();
 // func $LCDInit
 static void app_LCDInit();
+// func $say_hello (param $row i32) (param $col i32)
+static void app_say_hello(int32_t row, int32_t col);
 // func $_start
 static void app__start();
 // func $loop
@@ -310,16 +312,15 @@ static void app_LCDInit() {
   return;
 }
 
-// func _start
-static void app__start() {
+// func say_hello (param $row i32) (param $col i32)
+static void app_say_hello(int32_t row, int32_t col) {
   uint32_t R_u32;
   uint16_t R_u16;
   uint8_t  R_u8;
   val_t R0, R1;
 
-  app_LCDInit();
-  R0.i32 = 0;
-  R1.i32 = 1;
+  R0.i32 = row;
+  R1.i32 = col;
   app_LCDSetCursor(R0.i32, R1.i32);
   R0.i32 = 104;
   app_LCDWriteChar(R0.i32);
@@ -353,14 +354,60 @@ static void app__start() {
   return;
 }
 
-// func loop
-void app_loop() {
+// func _start
+static void app__start() {
   uint32_t R_u32;
   uint16_t R_u16;
   uint8_t  R_u8;
   val_t R0;
 
-  R0.i32 = 100;
+  app_LCDInit();
+  return;
+  return;
+}
+
+// func loop
+void app_loop() {
+  uint32_t R_u32;
+  uint16_t R_u16;
+  uint8_t  R_u8;
+  val_t R0, R1;
+
+  app_LCDClear();
+  R0.i32 = 0;
+  R1.i32 = 1;
+  app_say_hello(R0.i32, R1.i32);
+  R0.i32 = 1;
+  R1.i32 = 0;
+  app_say_hello(R0.i32, R1.i32);
+  R0.i32 = 500;
+  app_delay(R0.i32);
+  app_LCDClear();
+  R0.i32 = 0;
+  R1.i32 = 1;
+  app_say_hello(R0.i32, R1.i32);
+  R0.i32 = 1;
+  R1.i32 = 1;
+  app_say_hello(R0.i32, R1.i32);
+  R0.i32 = 500;
+  app_delay(R0.i32);
+  app_LCDClear();
+  R0.i32 = 0;
+  R1.i32 = 1;
+  app_say_hello(R0.i32, R1.i32);
+  R0.i32 = 1;
+  R1.i32 = 2;
+  app_say_hello(R0.i32, R1.i32);
+  R0.i32 = 500;
+  app_delay(R0.i32);
+  app_LCDClear();
+  R0.i32 = 0;
+  R1.i32 = 1;
+  app_say_hello(R0.i32, R1.i32);
+  R0.i32 = 1;
+  R1.i32 = 1;
+  app_say_hello(R0.i32, R1.i32);
+  R0.i32 = 500;
   app_delay(R0.i32);
   return;
   return;

@@ -276,16 +276,12 @@
 		call $lcdCommand
 	)
 
-	(func $_start (start)
-		;; LCD
-		call $LCDInit
-
-		;; LCDSetCursor(0, 1)
-		i32.const 0
-		i32.const 1
+	(func $say_hello (param $row i32) (param $col i32)
+		local.get $row
+		local.get $col
 		call $LCDSetCursor
 
-		;; LCDWriteChar('A')
+		;; hello wa-lang!
 		i32.const 'h'
 		call $LCDWriteChar
 		i32.const 'e'
@@ -316,9 +312,64 @@
 		call $LCDWriteChar
 	)
 
+	(func $_start (start)
+		;; LCD
+		call $LCDInit
+	)
+
 	(func $loop (export "loop")
-		;; delay(100)
-		i32.const 100
+		call $LCDClear
+		i32.const 0
+		i32.const 1
+		call $say_hello
+		i32.const 1
+		i32.const 0
+		call $say_hello
+
+		;; delay(500)
+		i32.const 500
+		call $delay
+
+		;; ------------------
+		
+		call $LCDClear
+		i32.const 0
+		i32.const 1
+		call $say_hello
+		i32.const 1
+		i32.const 1
+		call $say_hello
+
+		;; delay(500)
+		i32.const 500
+		call $delay
+		
+		;; ------------------
+		
+		call $LCDClear
+		i32.const 0
+		i32.const 1
+		call $say_hello
+		i32.const 1
+		i32.const 2
+		call $say_hello
+
+		;; delay(500)
+		i32.const 500
+		call $delay
+		
+		;; ------------------
+		
+		call $LCDClear
+		i32.const 0
+		i32.const 1
+		call $say_hello
+		i32.const 1
+		i32.const 1
+		call $say_hello
+
+		;; delay(500)
+		i32.const 500
 		call $delay
 	)
 )
