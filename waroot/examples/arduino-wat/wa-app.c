@@ -26,7 +26,7 @@ extern void app_arduino_delay(int32_t ms);
 #define app_digitalWrite app_arduino_digitalWrite // import arduino.digitalWrite
 #define app_delay app_arduino_delay // import arduino.delay
 
-uint8_t       app_memory[1*64*1024];
+uint8_t       app_memory[1*1024];
 const int32_t app_memory_init_max_pages = 1;
 const int32_t app_memory_init_pages = 1;
 int32_t       app_memory_size = 1;

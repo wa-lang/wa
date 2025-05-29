@@ -17,7 +17,6 @@
 	(global $OUTPUT i32 (i32.const 1))
 
 	(global $LED_BUILTIN i32 (i32.const 13))
-	(global $LED_12 i32 (i32.const 12))
 
 	;; +---------------------------------------------------------------------+
 	;; | LCD1602 Module                                                      |
@@ -113,7 +112,7 @@
 		;; digitalWrite(D6, (value >> 2) & 0x01);
 		global.get $D6
 		local.get $byteValue
-		i32.const 3
+		i32.const 2
 		call $getBitAt
 		call $digitalWrite
 
@@ -172,7 +171,7 @@
 		call $lcdCommand
 	)
 
-	(func $lcdWriteChar (param $value i32)
+	(func $LCDWriteChar (param $value i32)
 		;; lcdSend(value, HIGH);
 		local.get $value
 		global.get $HIGH
@@ -265,7 +264,7 @@
 		call $lcdCommand
 
 		;; delay(2);
-		i32.const 3
+		i32.const 2
 		call $delay
 
 		;; lcdCommand(0x06); // 输入模式：写入后光标右移
@@ -278,56 +277,48 @@
 	)
 
 	(func $_start (start)
-		;; pinMode(LED_BUILTIN, 1)
-		global.get $LED_BUILTIN
-		i32.const 1
-		call $pinMode
-		
-		;; pinMode(LED_12, 1)
-		global.get $LED_12
-		i32.const 1
-		call $pinMode
-		
-		;; digitalWrite(LED_BUILTIN, 1)
-		global.get $LED_BUILTIN
-		i32.const 1
-		call $digitalWrite
-		
-		;; digitalWrite(LED_12, 1)
-		global.get $LED_12
-		i32.const 1
-		call $digitalWrite
-
 		;; LCD
 		call $LCDInit
 
-		;; LCDSetCursor(0, 0)
+		;; LCDSetCursor(0, 1)
 		i32.const 0
-		i32.const 0
+		i32.const 1
 		call $LCDSetCursor
 
-		;; lcdWriteChar('A')
-		i32.const 65 ;; 'A'
-		call $lcdWriteChar
+		;; LCDWriteChar('A')
+		i32.const 'h'
+		call $LCDWriteChar
+		i32.const 'e'
+		call $LCDWriteChar
+		i32.const 'l'
+		call $LCDWriteChar
+		i32.const 'l'
+		call $LCDWriteChar
+		i32.const 'o'
+		call $LCDWriteChar
+		i32.const ' '
+		call $LCDWriteChar
+		i32.const 'w'
+		call $LCDWriteChar
+		i32.const 'a'
+		call $LCDWriteChar
+		i32.const '-'
+		call $LCDWriteChar
+		i32.const 'l'
+		call $LCDWriteChar
+		i32.const 'a'
+		call $LCDWriteChar
+		i32.const 'n'
+		call $LCDWriteChar
+		i32.const 'g'
+		call $LCDWriteChar
+		i32.const '!'
+		call $LCDWriteChar
 	)
 
 	(func $loop (export "loop")
-		;; digitalWrite(LED_BUILTIN, 1)
-		global.get $LED_BUILTIN
-		i32.const 1
-		call $digitalWrite
-
 		;; delay(100)
 		i32.const 100
 		call $delay
-
-		;; digitalWrite(LED_BUILTIN, 0)
-		global.get $LED_BUILTIN
-		i32.const 0
-		call $digitalWrite
-
-		;; delay(900)
-		i32.const 900
-		call $delay	
 	)
 )

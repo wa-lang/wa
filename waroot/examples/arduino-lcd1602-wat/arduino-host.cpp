@@ -4,15 +4,19 @@
 
 #include <Arduino.h>
 
+// 内存
+static uint8_t* app_host_memory = NULL;
+static int32_t app_host_memory_page_size = 0;
+
 // 初始化内存
-extern "C" void app_memory_init(uint8_t** pp, int32_t* page_size) {
-    **pp = NULL;
-    *page_size = 0;
+extern "C" void app_memory_init(uint8_t** pp_memory, int32_t* page_size) {
+    *pp_memory = app_host_memory;
+    *page_size = app_host_memory_page_size;
 }
 
 // 内存增长
-extern "C" int32_t app_memory_grow(uint8_t** pp, int32_t* page_size, int32_t new_size) {
-    return 0; // todo
+extern "C" int32_t app_memory_grow(uint8_t** pp_memory, int32_t* page_size, int32_t new_size) {
+    return -1; // 不支持扩容
 }
 
 extern "C" int32_t app_arduino_millis() {
@@ -52,5 +56,7 @@ extern "C" int32_t app_arduino_getPinLED() {
 }
 
 extern "C" void app_arduino_print(int32_t ptr, int32_t len) {
-    Serial.write(&app_memory[ptr], len);
+    if(app_host_memory != NULL) {
+        Serial.write(&app_host_memory[ptr], len);
+    }
 }

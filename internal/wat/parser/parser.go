@@ -175,6 +175,12 @@ func (p *parser) parseIntLit() int {
 }
 func (p *parser) parseInt32Lit() int32 {
 	pos, lit := p.pos, p.lit
+
+	if p.tok == token.CHAR {
+		p.acceptToken(token.CHAR)
+		return int32(lit[1]) // '?'
+	}
+
 	p.acceptToken(token.INT)
 
 	if len(lit) > 2 && lit[0] == '0' && (lit[1] == 'x' || lit[1] == 'X') {

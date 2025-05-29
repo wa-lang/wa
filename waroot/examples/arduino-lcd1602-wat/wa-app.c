@@ -43,8 +43,6 @@ static const int32_t app_INPUT = 0;
 static const int32_t app_OUTPUT = 1;
 // global $LED_BUILTIN: i32
 static const int32_t app_LED_BUILTIN = 13;
-// global $LED_12: i32
-static const int32_t app_LED_12 = 12;
 // global $RS: i32
 static const int32_t app_RS = 7;
 // global $E: i32
@@ -72,8 +70,8 @@ static void app_lcdSend(int32_t value, int32_t mode);
 static void app_lcdCommand(int32_t value);
 // func $LCDSetCursor (param $row i32) (param $col i32)
 static void app_LCDSetCursor(int32_t row, int32_t col);
-// func $lcdWriteChar (param $value i32)
-static void app_lcdWriteChar(int32_t value);
+// func $LCDWriteChar (param $value i32)
+static void app_LCDWriteChar(int32_t value);
 // func $LCDClear
 static void app_LCDClear();
 // func $LCDInit
@@ -158,7 +156,7 @@ static void app_lcdWrite4bits(int32_t byteValue) {
   app_digitalWrite(R0.i32, R1.i32);
   R0.i32 = app_D6;
   R1.i32 = byteValue;
-  R2.i32 = 3;
+  R2.i32 = 2;
   R1.i32 = app_getBitAt(R1.i32, R2.i32);
   app_digitalWrite(R0.i32, R1.i32);
   R0.i32 = app_D7;
@@ -228,8 +226,8 @@ static void app_LCDSetCursor(int32_t row, int32_t col) {
   return;
 }
 
-// func lcdWriteChar (param $value i32)
-static void app_lcdWriteChar(int32_t value) {
+// func LCDWriteChar (param $value i32)
+static void app_LCDWriteChar(int32_t value) {
   uint32_t R_u32;
   uint16_t R_u16;
   uint8_t  R_u8;
@@ -302,7 +300,7 @@ static void app_LCDInit() {
   app_lcdCommand(R0.i32);
   R0.i32 = 1;
   app_lcdCommand(R0.i32);
-  R0.i32 = 3;
+  R0.i32 = 2;
   app_delay(R0.i32);
   R0.i32 = 6;
   app_lcdCommand(R0.i32);
@@ -319,24 +317,38 @@ static void app__start() {
   uint8_t  R_u8;
   val_t R0, R1;
 
-  R0.i32 = app_LED_BUILTIN;
-  R1.i32 = 1;
-  app_pinMode(R0.i32, R1.i32);
-  R0.i32 = app_LED_12;
-  R1.i32 = 1;
-  app_pinMode(R0.i32, R1.i32);
-  R0.i32 = app_LED_BUILTIN;
-  R1.i32 = 1;
-  app_digitalWrite(R0.i32, R1.i32);
-  R0.i32 = app_LED_12;
-  R1.i32 = 1;
-  app_digitalWrite(R0.i32, R1.i32);
   app_LCDInit();
   R0.i32 = 0;
-  R1.i32 = 0;
+  R1.i32 = 1;
   app_LCDSetCursor(R0.i32, R1.i32);
-  R0.i32 = 65;
-  app_lcdWriteChar(R0.i32);
+  R0.i32 = 104;
+  app_LCDWriteChar(R0.i32);
+  R0.i32 = 101;
+  app_LCDWriteChar(R0.i32);
+  R0.i32 = 108;
+  app_LCDWriteChar(R0.i32);
+  R0.i32 = 108;
+  app_LCDWriteChar(R0.i32);
+  R0.i32 = 111;
+  app_LCDWriteChar(R0.i32);
+  R0.i32 = 32;
+  app_LCDWriteChar(R0.i32);
+  R0.i32 = 119;
+  app_LCDWriteChar(R0.i32);
+  R0.i32 = 97;
+  app_LCDWriteChar(R0.i32);
+  R0.i32 = 45;
+  app_LCDWriteChar(R0.i32);
+  R0.i32 = 108;
+  app_LCDWriteChar(R0.i32);
+  R0.i32 = 97;
+  app_LCDWriteChar(R0.i32);
+  R0.i32 = 110;
+  app_LCDWriteChar(R0.i32);
+  R0.i32 = 103;
+  app_LCDWriteChar(R0.i32);
+  R0.i32 = 33;
+  app_LCDWriteChar(R0.i32);
   return;
   return;
 }
@@ -346,17 +358,9 @@ void app_loop() {
   uint32_t R_u32;
   uint16_t R_u16;
   uint8_t  R_u8;
-  val_t R0, R1;
+  val_t R0;
 
-  R0.i32 = app_LED_BUILTIN;
-  R1.i32 = 1;
-  app_digitalWrite(R0.i32, R1.i32);
   R0.i32 = 100;
-  app_delay(R0.i32);
-  R0.i32 = app_LED_BUILTIN;
-  R1.i32 = 0;
-  app_digitalWrite(R0.i32, R1.i32);
-  R0.i32 = 900;
   app_delay(R0.i32);
   return;
   return;
