@@ -19,6 +19,7 @@ var wcaMap = map[string]bool{
 	"64215+codefromthecrypt@users.noreply.github.com": true,
 	"704566072@qq.com":            true,
 	"ben.shi@streamcomputing.com": true,
+	"bennshi@tencent.com":         true,
 	"chaishushan@gmail.com":       true,
 	"humengmingxx@gmail.com":      true,
 	"imcusg@gmail.com":            true,
