@@ -70,7 +70,11 @@ func (p *wat2cWorker) buildCode(w io.Writer) error {
 		fmt.Fprintf(w, "  if(init_flag) return;\n")
 		fmt.Fprintf(w, "  init_flag = 1;\n")
 		if p.m.Memory != nil {
-			fmt.Fprintf(w, "  %s_memory_init();\n", p.prefix)
+			fmt.Fprintf(w, "  %s_memory_init(&%s_memory, &%s_memory_size);\n",
+				p.prefix,
+				p.prefix,
+				p.prefix,
+			)
 		}
 		if p.m.Table != nil {
 			fmt.Fprintf(w, "  %s_table_init();\n", p.prefix)
@@ -122,7 +126,7 @@ func (p *wat2cWorker) buildImport(w io.Writer) error {
 				if x.Name != "" {
 					argName = toCName(x.Name)
 				} else {
-					argName = fmt.Sprintf("$arg%d", i)
+					argName = fmt.Sprintf("arg%d", i)
 				}
 				if i > 0 {
 					fmt.Fprint(w, ", ")
@@ -167,11 +171,6 @@ func (p *wat2cWorker) buildMemory_data(w io.Writer) error {
 	if p.m.Memory == nil {
 		return nil
 	}
-	fmt.Fprintf(w, "void %s_memory_init() {\n", p.prefix)
-	defer fmt.Fprintf(w, "}\n\n")
-
-	fmt.Fprintf(w, "  memset(&%s_memory[0], 0, %s_memory_size*65536);\n", p.prefix, p.prefix)
-	fmt.Fprintln(w)
 
 	for _, d := range p.m.Data {
 		var sb strings.Builder
@@ -215,15 +214,15 @@ func (p *wat2cWorker) buildMemory(w io.Writer) error {
 		fmt.Fprintf(w, "// memory $%s\n", p.m.Memory.Name)
 	}
 	if max := p.m.Memory.MaxPages; max > 0 {
-		fmt.Fprintf(w, "uint8_t       %s_memory[%d*64*1024];\n", p.prefix, max)
+		fmt.Fprintf(w, "uint8_t*      %s_memory = NULL;\n", p.prefix)
 		fmt.Fprintf(w, "const int32_t %s_memory_init_max_pages = %d;\n", p.prefix, max)
 		fmt.Fprintf(w, "const int32_t %s_memory_init_pages = %d;\n", p.prefix, p.m.Memory.Pages)
-		fmt.Fprintf(w, "int32_t       %s_memory_size = %d;\n", p.prefix, p.m.Memory.Pages)
+		fmt.Fprintf(w, "int32_t       %s_memory_size = %d;\n", p.prefix, 0)
 	} else {
-		fmt.Fprintf(w, "uint8_t       %s_memory[%d*64*1024];\n", p.prefix, p.m.Memory.Pages)
+		fmt.Fprintf(w, "uint8_t*      %s_memory = NULL;\n", p.prefix)
 		fmt.Fprintf(w, "const int32_t %s_memory_init_max_pages = %d;\n", p.prefix, p.m.Memory.Pages)
 		fmt.Fprintf(w, "const int32_t %s_memory_init_pages = %d;\n", p.prefix, p.m.Memory.Pages)
-		fmt.Fprintf(w, "int32_t       %s_memory_size = %d;\n", p.prefix, p.m.Memory.Pages)
+		fmt.Fprintf(w, "int32_t       %s_memory_size = %d;\n", p.prefix, 0)
 	}
 	fmt.Fprintln(w)
 
@@ -330,13 +329,13 @@ func (p *wat2cWorker) buildFuncs(w io.Writer) error {
 				}
 				switch f.Type.Results[i] {
 				case token.I32:
-					fmt.Fprintf(w, "int32_t $R%d;", i)
+					fmt.Fprintf(w, "int32_t R%d;", i)
 				case token.I64:
-					fmt.Fprintf(w, "int64_t $R%d;", i)
+					fmt.Fprintf(w, "int64_t R%d;", i)
 				case token.F32:
-					fmt.Fprintf(w, "float $R%d;", i)
+					fmt.Fprintf(w, "float R%d;", i)
 				case token.F64:
-					fmt.Fprintf(w, "double $R%d;", i)
+					fmt.Fprintf(w, "double R%d;", i)
 				}
 			}
 			fmt.Fprintf(w, "} %s_%s_ret_t;\n", p.prefix, toCName(f.Name))
@@ -357,25 +356,25 @@ func (p *wat2cWorker) buildFuncs(w io.Writer) error {
 					if x.Name != "" {
 						fmt.Fprintf(w, "int32_t %v", toCName(x.Name))
 					} else {
-						fmt.Fprintf(w, "int32_t $arg%d", i)
+						fmt.Fprintf(w, "int32_t arg%d", i)
 					}
 				case token.I64:
 					if x.Name != "" {
 						fmt.Fprintf(w, "int64_t %v", toCName(x.Name))
 					} else {
-						fmt.Fprintf(w, "int64_t $arg%d", i)
+						fmt.Fprintf(w, "int64_t arg%d", i)
 					}
 				case token.F32:
 					if x.Name != "" {
 						fmt.Fprintf(w, "float %v", toCName(x.Name))
 					} else {
-						fmt.Fprintf(w, "float $arg%d", i)
+						fmt.Fprintf(w, "float arg%d", i)
 					}
 				case token.F64:
 					if x.Name != "" {
 						fmt.Fprintf(w, "double %v", toCName(x.Name))
 					} else {
-						fmt.Fprintf(w, "double $arg%d", i)
+						fmt.Fprintf(w, "double arg%d", i)
 					}
 				default:
 					unreachable()
@@ -430,7 +429,7 @@ func (p *wat2cWorker) buildFuncs(w io.Writer) error {
 				if x.Name != "" {
 					argName = toCName(x.Name)
 				} else {
-					argName = fmt.Sprintf("$arg%d", i)
+					argName = fmt.Sprintf("arg%d", i)
 				}
 
 				p.localNames = append(p.localNames, argName)

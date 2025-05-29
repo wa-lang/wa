@@ -7,7 +7,7 @@
 	(import "arduino" "delay" (func $delay (param $ms i32)))
 	(import "arduino" "delayMicroseconds" (func $delayMicroseconds (param $us i32)))
 
-	(memory (;0;) 1)
+	(memory (;0;) 0)
 	(export "memory" (memory 0))
 
 	(global $HIGH i32 (i32.const 1))

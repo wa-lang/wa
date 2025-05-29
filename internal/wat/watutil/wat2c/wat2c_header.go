@@ -37,12 +37,12 @@ func (p *wat2cWorker) buildHeader(w io.Writer) error {
 			fmt.Fprintf(w, "// memory $%s\n", p.m.Memory.Name)
 		}
 		if max := p.m.Memory.MaxPages; max > 0 {
-			fmt.Fprintf(w, "extern uint8_t       %s_memory[/*%d*64*1024*/];\n", p.prefix, max)
+			fmt.Fprintf(w, "extern uint8_t*      %s_memory;\n", p.prefix)
 			fmt.Fprintf(w, "extern const int32_t %s_memory_init_max_pages; // = %d;\n", p.prefix, max)
 			fmt.Fprintf(w, "extern const int32_t %s_memory_init_pages; // = %d;\n", p.prefix, p.m.Memory.Pages)
 			fmt.Fprintf(w, "extern int32_t       %s_memory_size; // = %d;\n", p.prefix, p.m.Memory.Pages)
 		} else {
-			fmt.Fprintf(w, "extern uint8_t       %s_memory[/*%d*64*1024*/];\n", p.prefix, p.m.Memory.Pages)
+			fmt.Fprintf(w, "extern uint8_t*      %s_memory;\n", p.prefix)
 			fmt.Fprintf(w, "extern const int32_t %s_memory_init_max_pages; // = %d;\n", p.prefix, p.m.Memory.Pages)
 			fmt.Fprintf(w, "extern const int32_t %s_memory_init_pages; // = %d;\n", p.prefix, p.m.Memory.Pages)
 			fmt.Fprintf(w, "extern int32_t       %s_memory_size; // = %d;\n", p.prefix, p.m.Memory.Pages)
@@ -106,13 +106,13 @@ func (p *wat2cWorker) buildHeader(w io.Writer) error {
 				}
 				switch f.Type.Results[i] {
 				case token.I32:
-					fmt.Fprintf(w, "int32_t $R%d;", i)
+					fmt.Fprintf(w, "int32_t R%d;", i)
 				case token.I64:
-					fmt.Fprintf(w, "int64_t $R%d;", i)
+					fmt.Fprintf(w, "int64_t R%d;", i)
 				case token.F32:
-					fmt.Fprintf(w, "float $R%d;", i)
+					fmt.Fprintf(w, "float R%d;", i)
 				case token.F64:
-					fmt.Fprintf(w, "double $R%d;", i)
+					fmt.Fprintf(w, "double R%d;", i)
 				}
 			}
 			fmt.Fprintf(w, "} %s_%s_ret_t;\n", p.prefix, toCName(f.Name))
@@ -129,25 +129,25 @@ func (p *wat2cWorker) buildHeader(w io.Writer) error {
 					if x.Name != "" {
 						fmt.Fprintf(w, "int32_t %v", toCName(x.Name))
 					} else {
-						fmt.Fprintf(w, "int32_t $arg%d", i)
+						fmt.Fprintf(w, "int32_t arg%d", i)
 					}
 				case token.I64:
 					if x.Name != "" {
 						fmt.Fprintf(w, "int64_t %v", toCName(x.Name))
 					} else {
-						fmt.Fprintf(w, "int64_t $arg%d", i)
+						fmt.Fprintf(w, "int64_t arg%d", i)
 					}
 				case token.F32:
 					if x.Name != "" {
 						fmt.Fprintf(w, "float %v", toCName(x.Name))
 					} else {
-						fmt.Fprintf(w, "float $arg%d", i)
+						fmt.Fprintf(w, "float arg%d", i)
 					}
 				case token.F64:
 					if x.Name != "" {
 						fmt.Fprintf(w, "double %v", toCName(x.Name))
 					} else {
-						fmt.Fprintf(w, "double $arg%d", i)
+						fmt.Fprintf(w, "double arg%d", i)
 					}
 				default:
 					unreachable()

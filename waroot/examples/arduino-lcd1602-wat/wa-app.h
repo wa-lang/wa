@@ -13,10 +13,10 @@
 extern "C" {
 #endif
 
-extern uint8_t       app_memory[/*1*64*1024*/];
-extern const int32_t app_memory_init_max_pages; // = 1;
-extern const int32_t app_memory_init_pages; // = 1;
-extern int32_t       app_memory_size; // = 1;
+extern uint8_t*      app_memory;
+extern const int32_t app_memory_init_max_pages; // = 0;
+extern const int32_t app_memory_init_pages; // = 0;
+extern int32_t       app_memory_size; // = 0;
 
 extern void app_init();
 

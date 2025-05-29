@@ -28,10 +28,10 @@ extern void app_arduino_delayMicroseconds(int32_t us);
 #define app_delay app_arduino_delay // import arduino.delay
 #define app_delayMicroseconds app_arduino_delayMicroseconds // import arduino.delayMicroseconds
 
-uint8_t       app_memory[1*64*1024];
-const int32_t app_memory_init_max_pages = 1;
-const int32_t app_memory_init_pages = 1;
-int32_t       app_memory_size = 1;
+uint8_t*      app_memory = NULL;
+const int32_t app_memory_init_max_pages = 0;
+const int32_t app_memory_init_pages = 0;
+int32_t       app_memory_size = 0;
 
 // global $HIGH: i32
 static const int32_t app_HIGH = 1;
@@ -85,87 +85,87 @@ extern void app_loop();
 
 // func lcdPulseEnable
 static void app_lcdPulseEnable() {
-  uint32_t $R_u32;
-  uint16_t $R_u16;
-  uint8_t  $R_u8;
-  val_t $R0, $R1;
+  uint32_t R_u32;
+  uint16_t R_u16;
+  uint8_t  R_u8;
+  val_t R0, R1;
 
-  $R0.i32 = app_E;
-  $R1.i32 = app_LOW;
-  app_digitalWrite($R0.i32, $R1.i32);
-  $R0.i32 = 1;
-  app_delayMicroseconds($R0.i32);
-  $R0.i32 = app_E;
-  $R1.i32 = app_HIGH;
-  app_digitalWrite($R0.i32, $R1.i32);
-  $R0.i32 = 1;
-  app_delayMicroseconds($R0.i32);
-  $R0.i32 = app_E;
-  $R1.i32 = app_LOW;
-  app_digitalWrite($R0.i32, $R1.i32);
-  $R0.i32 = 100;
-  app_delayMicroseconds($R0.i32);
+  R0.i32 = app_E;
+  R1.i32 = app_LOW;
+  app_digitalWrite(R0.i32, R1.i32);
+  R0.i32 = 1;
+  app_delayMicroseconds(R0.i32);
+  R0.i32 = app_E;
+  R1.i32 = app_HIGH;
+  app_digitalWrite(R0.i32, R1.i32);
+  R0.i32 = 1;
+  app_delayMicroseconds(R0.i32);
+  R0.i32 = app_E;
+  R1.i32 = app_LOW;
+  app_digitalWrite(R0.i32, R1.i32);
+  R0.i32 = 100;
+  app_delayMicroseconds(R0.i32);
   return;
   return;
 }
 
 // func getBitAt (param $v i32) (param $i i32) (result i32)
 static int32_t app_getBitAt(int32_t v, int32_t i) {
-  uint32_t $R_u32;
-  uint16_t $R_u16;
-  uint8_t  $R_u8;
-  val_t $R0, $R1;
+  uint32_t R_u32;
+  uint16_t R_u16;
+  uint8_t  R_u8;
+  val_t R0, R1;
 
-  $R0.i32 = v;
-  $R1.i32 = i;
-  $R0.i32 = (int32_t)((uint32_t)($R0.i32)>>(uint32_t)($R1.i32&63));
-  $R1.i32 = 1;
-  $R0.i32 = $R0.i32 & $R1.i32;
-  return $R0.i32;
+  R0.i32 = v;
+  R1.i32 = i;
+  R0.i32 = (int32_t)((uint32_t)(R0.i32)>>(uint32_t)(R1.i32&63));
+  R1.i32 = 1;
+  R0.i32 = R0.i32 & R1.i32;
+  return R0.i32;
 }
 
 // func get4BitAt (param $v i32) (param $i i32) (result i32)
 static int32_t app_get4BitAt(int32_t v, int32_t i) {
-  uint32_t $R_u32;
-  uint16_t $R_u16;
-  uint8_t  $R_u8;
-  val_t $R0, $R1;
+  uint32_t R_u32;
+  uint16_t R_u16;
+  uint8_t  R_u8;
+  val_t R0, R1;
 
-  $R0.i32 = v;
-  $R1.i32 = i;
-  $R0.i32 = (int32_t)((uint32_t)($R0.i32)>>(uint32_t)($R1.i32&63));
-  $R1.i32 = 15;
-  $R0.i32 = $R0.i32 & $R1.i32;
-  return $R0.i32;
+  R0.i32 = v;
+  R1.i32 = i;
+  R0.i32 = (int32_t)((uint32_t)(R0.i32)>>(uint32_t)(R1.i32&63));
+  R1.i32 = 15;
+  R0.i32 = R0.i32 & R1.i32;
+  return R0.i32;
 }
 
 // func lcdWrite4bits (param $byteValue i32)
 static void app_lcdWrite4bits(int32_t byteValue) {
-  uint32_t $R_u32;
-  uint16_t $R_u16;
-  uint8_t  $R_u8;
-  val_t $R0, $R1, $R2;
+  uint32_t R_u32;
+  uint16_t R_u16;
+  uint8_t  R_u8;
+  val_t R0, R1, R2;
 
-  $R0.i32 = app_D4;
-  $R1.i32 = byteValue;
-  $R2.i32 = 0;
-  $R1.i32 = app_getBitAt($R1.i32, $R2.i32);
-  app_digitalWrite($R0.i32, $R1.i32);
-  $R0.i32 = app_D5;
-  $R1.i32 = byteValue;
-  $R2.i32 = 1;
-  $R1.i32 = app_getBitAt($R1.i32, $R2.i32);
-  app_digitalWrite($R0.i32, $R1.i32);
-  $R0.i32 = app_D6;
-  $R1.i32 = byteValue;
-  $R2.i32 = 3;
-  $R1.i32 = app_getBitAt($R1.i32, $R2.i32);
-  app_digitalWrite($R0.i32, $R1.i32);
-  $R0.i32 = app_D7;
-  $R1.i32 = byteValue;
-  $R2.i32 = 3;
-  $R1.i32 = app_getBitAt($R1.i32, $R2.i32);
-  app_digitalWrite($R0.i32, $R1.i32);
+  R0.i32 = app_D4;
+  R1.i32 = byteValue;
+  R2.i32 = 0;
+  R1.i32 = app_getBitAt(R1.i32, R2.i32);
+  app_digitalWrite(R0.i32, R1.i32);
+  R0.i32 = app_D5;
+  R1.i32 = byteValue;
+  R2.i32 = 1;
+  R1.i32 = app_getBitAt(R1.i32, R2.i32);
+  app_digitalWrite(R0.i32, R1.i32);
+  R0.i32 = app_D6;
+  R1.i32 = byteValue;
+  R2.i32 = 3;
+  R1.i32 = app_getBitAt(R1.i32, R2.i32);
+  app_digitalWrite(R0.i32, R1.i32);
+  R0.i32 = app_D7;
+  R1.i32 = byteValue;
+  R2.i32 = 3;
+  R1.i32 = app_getBitAt(R1.i32, R2.i32);
+  app_digitalWrite(R0.i32, R1.i32);
   app_lcdPulseEnable();
   return;
   return;
@@ -173,205 +173,200 @@ static void app_lcdWrite4bits(int32_t byteValue) {
 
 // func lcdSend (param $value i32) (param $mode i32)
 static void app_lcdSend(int32_t value, int32_t mode) {
-  uint32_t $R_u32;
-  uint16_t $R_u16;
-  uint8_t  $R_u8;
-  val_t $R0, $R1;
+  uint32_t R_u32;
+  uint16_t R_u16;
+  uint8_t  R_u8;
+  val_t R0, R1;
 
-  $R0.i32 = app_RS;
-  $R1.i32 = mode;
-  app_digitalWrite($R0.i32, $R1.i32);
-  $R0.i32 = value;
-  $R1.i32 = 4;
-  $R0.i32 = app_get4BitAt($R0.i32, $R1.i32);
-  app_lcdWrite4bits($R0.i32);
-  $R0.i32 = value;
-  $R1.i32 = 0;
-  $R0.i32 = app_get4BitAt($R0.i32, $R1.i32);
-  app_lcdWrite4bits($R0.i32);
+  R0.i32 = app_RS;
+  R1.i32 = mode;
+  app_digitalWrite(R0.i32, R1.i32);
+  R0.i32 = value;
+  R1.i32 = 4;
+  R0.i32 = app_get4BitAt(R0.i32, R1.i32);
+  app_lcdWrite4bits(R0.i32);
+  R0.i32 = value;
+  R1.i32 = 0;
+  R0.i32 = app_get4BitAt(R0.i32, R1.i32);
+  app_lcdWrite4bits(R0.i32);
   return;
   return;
 }
 
 // func lcdCommand (param $value i32)
 static void app_lcdCommand(int32_t value) {
-  uint32_t $R_u32;
-  uint16_t $R_u16;
-  uint8_t  $R_u8;
-  val_t $R0, $R1;
+  uint32_t R_u32;
+  uint16_t R_u16;
+  uint8_t  R_u8;
+  val_t R0, R1;
 
-  $R0.i32 = value;
-  $R1.i32 = app_LOW;
-  app_lcdSend($R0.i32, $R1.i32);
+  R0.i32 = value;
+  R1.i32 = app_LOW;
+  app_lcdSend(R0.i32, R1.i32);
   return;
   return;
 }
 
 // func LCDSetCursor (param $row i32) (param $col i32)
 static void app_LCDSetCursor(int32_t row, int32_t col) {
-  uint32_t $R_u32;
-  uint16_t $R_u16;
-  uint8_t  $R_u8;
-  val_t $R0, $R1;
+  uint32_t R_u32;
+  uint16_t R_u16;
+  uint8_t  R_u8;
+  val_t R0, R1;
 
-  $R0.i32 = row;
-  $R0.i32 = ($R0.i32==0)? 1: 0;
-  if($R0.i32) {
-    $R0.i32 = 128;
+  R0.i32 = row;
+  R0.i32 = (R0.i32==0)? 1: 0;
+  if(R0.i32) {
+    R0.i32 = 128;
   } else {
-    $R0.i32 = 192;
+    R0.i32 = 192;
   }
-  $R1.i32 = col;
-  $R0.i32 = $R0.i32 + $R1.i32;
-  app_lcdCommand($R0.i32);
+  R1.i32 = col;
+  R0.i32 = R0.i32 + R1.i32;
+  app_lcdCommand(R0.i32);
   return;
   return;
 }
 
 // func lcdWriteChar (param $value i32)
 static void app_lcdWriteChar(int32_t value) {
-  uint32_t $R_u32;
-  uint16_t $R_u16;
-  uint8_t  $R_u8;
-  val_t $R0, $R1;
+  uint32_t R_u32;
+  uint16_t R_u16;
+  uint8_t  R_u8;
+  val_t R0, R1;
 
-  $R0.i32 = value;
-  $R1.i32 = app_HIGH;
-  app_lcdSend($R0.i32, $R1.i32);
+  R0.i32 = value;
+  R1.i32 = app_HIGH;
+  app_lcdSend(R0.i32, R1.i32);
   return;
   return;
 }
 
 // func LCDClear
 static void app_LCDClear() {
-  uint32_t $R_u32;
-  uint16_t $R_u16;
-  uint8_t  $R_u8;
-  val_t $R0;
+  uint32_t R_u32;
+  uint16_t R_u16;
+  uint8_t  R_u8;
+  val_t R0;
 
-  $R0.i32 = 1;
-  app_lcdCommand($R0.i32);
-  $R0.i32 = 2;
-  app_delay($R0.i32);
+  R0.i32 = 1;
+  app_lcdCommand(R0.i32);
+  R0.i32 = 2;
+  app_delay(R0.i32);
   return;
   return;
 }
 
 // func LCDInit
 static void app_LCDInit() {
-  uint32_t $R_u32;
-  uint16_t $R_u16;
-  uint8_t  $R_u8;
-  val_t $R0, $R1;
+  uint32_t R_u32;
+  uint16_t R_u16;
+  uint8_t  R_u8;
+  val_t R0, R1;
 
-  $R0.i32 = app_RS;
-  $R1.i32 = app_OUTPUT;
-  app_pinMode($R0.i32, $R1.i32);
-  $R0.i32 = app_E;
-  $R1.i32 = app_OUTPUT;
-  app_pinMode($R0.i32, $R1.i32);
-  $R0.i32 = app_D4;
-  $R1.i32 = app_OUTPUT;
-  app_pinMode($R0.i32, $R1.i32);
-  $R0.i32 = app_D5;
-  $R1.i32 = app_OUTPUT;
-  app_pinMode($R0.i32, $R1.i32);
-  $R0.i32 = app_D6;
-  $R1.i32 = app_OUTPUT;
-  app_pinMode($R0.i32, $R1.i32);
-  $R0.i32 = app_D7;
-  $R1.i32 = app_OUTPUT;
-  app_pinMode($R0.i32, $R1.i32);
-  $R0.i32 = 50;
-  app_delay($R0.i32);
-  $R0.i32 = 3;
-  app_lcdWrite4bits($R0.i32);
-  $R0.i32 = 5;
-  app_delay($R0.i32);
-  $R0.i32 = 3;
-  app_lcdWrite4bits($R0.i32);
-  $R0.i32 = 150;
-  app_delayMicroseconds($R0.i32);
-  $R0.i32 = 3;
-  app_lcdWrite4bits($R0.i32);
-  $R0.i32 = 2;
-  app_lcdWrite4bits($R0.i32);
-  $R0.i32 = 40;
-  app_lcdCommand($R0.i32);
-  $R0.i32 = 8;
-  app_lcdCommand($R0.i32);
-  $R0.i32 = 1;
-  app_lcdCommand($R0.i32);
-  $R0.i32 = 3;
-  app_delay($R0.i32);
-  $R0.i32 = 6;
-  app_lcdCommand($R0.i32);
-  $R0.i32 = 12;
-  app_lcdCommand($R0.i32);
+  R0.i32 = app_RS;
+  R1.i32 = app_OUTPUT;
+  app_pinMode(R0.i32, R1.i32);
+  R0.i32 = app_E;
+  R1.i32 = app_OUTPUT;
+  app_pinMode(R0.i32, R1.i32);
+  R0.i32 = app_D4;
+  R1.i32 = app_OUTPUT;
+  app_pinMode(R0.i32, R1.i32);
+  R0.i32 = app_D5;
+  R1.i32 = app_OUTPUT;
+  app_pinMode(R0.i32, R1.i32);
+  R0.i32 = app_D6;
+  R1.i32 = app_OUTPUT;
+  app_pinMode(R0.i32, R1.i32);
+  R0.i32 = app_D7;
+  R1.i32 = app_OUTPUT;
+  app_pinMode(R0.i32, R1.i32);
+  R0.i32 = 50;
+  app_delay(R0.i32);
+  R0.i32 = 3;
+  app_lcdWrite4bits(R0.i32);
+  R0.i32 = 5;
+  app_delay(R0.i32);
+  R0.i32 = 3;
+  app_lcdWrite4bits(R0.i32);
+  R0.i32 = 150;
+  app_delayMicroseconds(R0.i32);
+  R0.i32 = 3;
+  app_lcdWrite4bits(R0.i32);
+  R0.i32 = 2;
+  app_lcdWrite4bits(R0.i32);
+  R0.i32 = 40;
+  app_lcdCommand(R0.i32);
+  R0.i32 = 8;
+  app_lcdCommand(R0.i32);
+  R0.i32 = 1;
+  app_lcdCommand(R0.i32);
+  R0.i32 = 3;
+  app_delay(R0.i32);
+  R0.i32 = 6;
+  app_lcdCommand(R0.i32);
+  R0.i32 = 12;
+  app_lcdCommand(R0.i32);
   return;
   return;
 }
 
 // func _start
 static void app__start() {
-  uint32_t $R_u32;
-  uint16_t $R_u16;
-  uint8_t  $R_u8;
-  val_t $R0, $R1;
+  uint32_t R_u32;
+  uint16_t R_u16;
+  uint8_t  R_u8;
+  val_t R0, R1;
 
-  $R0.i32 = app_LED_BUILTIN;
-  $R1.i32 = 1;
-  app_pinMode($R0.i32, $R1.i32);
-  $R0.i32 = app_LED_12;
-  $R1.i32 = 1;
-  app_pinMode($R0.i32, $R1.i32);
-  $R0.i32 = app_LED_BUILTIN;
-  $R1.i32 = 1;
-  app_digitalWrite($R0.i32, $R1.i32);
-  $R0.i32 = app_LED_12;
-  $R1.i32 = 1;
-  app_digitalWrite($R0.i32, $R1.i32);
+  R0.i32 = app_LED_BUILTIN;
+  R1.i32 = 1;
+  app_pinMode(R0.i32, R1.i32);
+  R0.i32 = app_LED_12;
+  R1.i32 = 1;
+  app_pinMode(R0.i32, R1.i32);
+  R0.i32 = app_LED_BUILTIN;
+  R1.i32 = 1;
+  app_digitalWrite(R0.i32, R1.i32);
+  R0.i32 = app_LED_12;
+  R1.i32 = 1;
+  app_digitalWrite(R0.i32, R1.i32);
   app_LCDInit();
-  $R0.i32 = 0;
-  $R1.i32 = 0;
-  app_LCDSetCursor($R0.i32, $R1.i32);
-  $R0.i32 = 65;
-  app_lcdWriteChar($R0.i32);
+  R0.i32 = 0;
+  R1.i32 = 0;
+  app_LCDSetCursor(R0.i32, R1.i32);
+  R0.i32 = 65;
+  app_lcdWriteChar(R0.i32);
   return;
   return;
 }
 
 // func loop
 void app_loop() {
-  uint32_t $R_u32;
-  uint16_t $R_u16;
-  uint8_t  $R_u8;
-  val_t $R0, $R1;
+  uint32_t R_u32;
+  uint16_t R_u16;
+  uint8_t  R_u8;
+  val_t R0, R1;
 
-  $R0.i32 = app_LED_BUILTIN;
-  $R1.i32 = 1;
-  app_digitalWrite($R0.i32, $R1.i32);
-  $R0.i32 = 100;
-  app_delay($R0.i32);
-  $R0.i32 = app_LED_BUILTIN;
-  $R1.i32 = 0;
-  app_digitalWrite($R0.i32, $R1.i32);
-  $R0.i32 = 900;
-  app_delay($R0.i32);
+  R0.i32 = app_LED_BUILTIN;
+  R1.i32 = 1;
+  app_digitalWrite(R0.i32, R1.i32);
+  R0.i32 = 100;
+  app_delay(R0.i32);
+  R0.i32 = app_LED_BUILTIN;
+  R1.i32 = 0;
+  app_digitalWrite(R0.i32, R1.i32);
+  R0.i32 = 900;
+  app_delay(R0.i32);
   return;
   return;
 }
-void app_memory_init() {
-  memset(&app_memory[0], 0, app_memory_size*65536);
-
-}
-
 
 void app_init() {
   static int init_flag = 0;
   if(init_flag) return;
   init_flag = 1;
-  app_memory_init();
+  app_memory_init(&app_memory, &app_memory_size);
   app__start();
   return;
 }

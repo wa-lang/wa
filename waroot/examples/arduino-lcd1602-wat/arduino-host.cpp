@@ -4,6 +4,17 @@
 
 #include <Arduino.h>
 
+// 初始化内存
+extern "C" void app_memory_init(uint8_t** pp, int32_t* page_size) {
+    **pp = NULL;
+    *page_size = 0;
+}
+
+// 内存增长
+extern "C" int32_t app_memory_grow(uint8_t** pp, int32_t* page_size, int32_t new_size) {
+    return 0; // todo
+}
+
 extern "C" int32_t app_arduino_millis() {
     return millis();
 }
