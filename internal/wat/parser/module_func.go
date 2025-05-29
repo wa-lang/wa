@@ -27,7 +27,7 @@ func (p *parser) parseModuleSection_func() *ast.Func {
 	}
 
 Loop:
-	// 解析 export/param/result/local
+	// 解析 start/export/param/result/local
 	for {
 		p.consumeComments()
 		if p.tok != token.LPAREN {
@@ -36,6 +36,14 @@ Loop:
 
 		p.acceptToken(token.LPAREN)
 		switch p.tok {
+		case token.START:
+			p.acceptToken(token.START)
+			if p.module.Start != "" {
+				p.errorf(p.pos, "start func exists")
+			}
+			p.module.Start = fn.Name
+			p.acceptToken(token.RPAREN)
+
 		case token.EXPORT:
 			p.acceptToken(token.EXPORT)
 			fn.ExportName = p.parseStringLit()

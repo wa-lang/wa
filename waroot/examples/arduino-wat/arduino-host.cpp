@@ -1,5 +1,7 @@
 // 版权 @2025 arduino-wat 作者。保留所有权利。
 
+#include "wa-app.h"
+
 #include <Arduino.h>
 
 extern "C" int32_t app_arduino_millis() {
@@ -39,6 +41,5 @@ extern "C" int32_t app_arduino_getPinLED() {
 }
 
 extern "C" void app_arduino_print(int32_t ptr, int32_t len) {
-    extern uint8_t wasm_memory[];
-    Serial.write(&wasm_memory[ptr], len);
+    Serial.write(&app_memory[ptr], len);
 }

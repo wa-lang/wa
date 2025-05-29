@@ -20,8 +20,8 @@ extern int32_t       app_memory_size; // = 1;
 
 extern void app_init();
 
-// func $main
-extern void app_main();
+// func $loop
+extern void app_loop();
 
 #ifdef __cplusplus
 } // extern C 

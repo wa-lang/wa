@@ -4,9 +4,8 @@
 
 void setup() {
     app_init();
-    app_main();
 }
 
 void loop() {
-    //
+    app_loop();
 }

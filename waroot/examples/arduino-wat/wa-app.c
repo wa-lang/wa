@@ -31,11 +31,13 @@ const int32_t app_memory_init_max_pages = 1;
 const int32_t app_memory_init_pages = 1;
 int32_t       app_memory_size = 1;
 
-// func $main
-extern void app_main();
+// func $_start
+static void app__start();
+// func $loop
+extern void app_loop();
 
-// func main
-void app_main() {
+// func _start
+static void app__start() {
   uint32_t $R_u32;
   uint16_t $R_u16;
   uint8_t  $R_u8;
@@ -50,23 +52,30 @@ void app_main() {
   $R0.i32 = tmp;
   $R1.i32 = 1;
   app_pinMode($R0.i32, $R1.i32);
-L_label0_next:;
-  { // loop $label0
-    $R0.i32 = 1024;
-    memcpy(&$R0.i32, &app_memory[$R0.i32+0], 4);
-    $R1.i32 = 1;
-    app_digitalWrite($R0.i32, $R1.i32);
-    $R0.i32 = 100;
-    app_delay($R0.i32);
-    $R0.i32 = 1024;
-    memcpy(&$R0.i32, &app_memory[$R0.i32+0], 4);
-    $R1.i32 = 0;
-    app_digitalWrite($R0.i32, $R1.i32);
-    $R0.i32 = 900;
-    app_delay($R0.i32);
-    goto L_label0_next;
-  }
-  abort(); // unreachable
+  return;
+  return;
+}
+
+// func loop
+void app_loop() {
+  uint32_t $R_u32;
+  uint16_t $R_u16;
+  uint8_t  $R_u8;
+  val_t $R0, $R1;
+
+  $R0.i32 = 1024;
+  memcpy(&$R0.i32, &app_memory[$R0.i32+0], 4);
+  $R1.i32 = 1;
+  app_digitalWrite($R0.i32, $R1.i32);
+  $R0.i32 = 100;
+  app_delay($R0.i32);
+  $R0.i32 = 1024;
+  memcpy(&$R0.i32, &app_memory[$R0.i32+0], 4);
+  $R1.i32 = 0;
+  app_digitalWrite($R0.i32, $R1.i32);
+  $R0.i32 = 900;
+  app_delay($R0.i32);
+  return;
   return;
 }
 void app_memory_init() {
@@ -80,5 +89,6 @@ void app_init() {
   if(init_flag) return;
   init_flag = 1;
   app_memory_init();
+  app__start();
   return;
 }

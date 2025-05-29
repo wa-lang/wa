@@ -75,6 +75,9 @@ func (p *wat2cWorker) buildCode(w io.Writer) error {
 		if p.m.Table != nil {
 			fmt.Fprintf(w, "  %s_table_init();\n", p.prefix)
 		}
+		if p.m.Start != "" {
+			fmt.Fprintf(w, "  %s_%s();\n", p.prefix, toCName(p.m.Start))
+		}
 		fmt.Fprintf(w, "  return;\n")
 		fmt.Fprintf(w, "}\n")
 	}
@@ -339,7 +342,11 @@ func (p *wat2cWorker) buildFuncs(w io.Writer) error {
 			fmt.Fprintf(w, "} %s_%s_ret_t;\n", p.prefix, toCName(f.Name))
 		}
 
-		fmt.Fprintf(w, "extern %s %s_%s(", cRetType, p.prefix, toCName(f.Name))
+		if f.ExportName == "" {
+			fmt.Fprintf(w, "static %s %s_%s(", cRetType, p.prefix, toCName(f.Name))
+		} else {
+			fmt.Fprintf(w, "extern %s %s_%s(", cRetType, p.prefix, toCName(f.Name))
+		}
 		if len(f.Type.Params) > 0 {
 			for i, x := range f.Type.Params {
 				if i > 0 {
@@ -412,7 +419,11 @@ func (p *wat2cWorker) buildFuncs(w io.Writer) error {
 		fmt.Fprintln(w)
 
 		// 返回值通过栈传递, 返回入栈的个数
-		fmt.Fprintf(w, "%s %s_%s(", cRetType, p.prefix, toCName(f.Name))
+		if f.ExportName == "" {
+			fmt.Fprintf(w, "static %s %s_%s(", cRetType, p.prefix, toCName(f.Name))
+		} else {
+			fmt.Fprintf(w, "%s %s_%s(", cRetType, p.prefix, toCName(f.Name))
+		}
 		if len(f.Type.Params) > 0 {
 			for i, x := range f.Type.Params {
 				var argName string

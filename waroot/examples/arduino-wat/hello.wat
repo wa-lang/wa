@@ -9,7 +9,9 @@
 	(memory (;0;) 1)
 	(export "memory" (memory 0))
 
-	(func $main (export "_main") (local $tmp i32)
+	(func $_start (start)
+		(local $tmp i32)
+
 		;; var LED i32 = getPinLED()
 		;; &LED == 1024
 		i32.const 1024
@@ -21,34 +23,27 @@
 		local.get $tmp
 		i32.const 1
 		call $pinMode
+	)
 
-		;; for {}
-		loop $label0 ;; label = @1
-			;; digitalWrite(LED, 1)
-			i32.const 1024
-			i32.load
-			i32.const 1
-			call $digitalWrite
+	(func $loop (export "loop")
+		;; digitalWrite(LED, 1)
+		i32.const 1024
+		i32.load
+		i32.const 1
+		call $digitalWrite
 
-			;; delay(100)
-			i32.const 100
-			call $delay
+		;; delay(100)
+		i32.const 100
+		call $delay
 
-			;; digitalWrite(LED, 0)
-			i32.const 1024
-			i32.load
-			i32.const 0
-			call $digitalWrite
+		;; digitalWrite(LED, 0)
+		i32.const 1024
+		i32.load
+		i32.const 0
+		call $digitalWrite
 
-			;; delay(900)
-			i32.const 900
-			call $delay
-
-			;; continue
-			br $label0 (;@1;)
-		end
-
-		;; panic("unreachable")
-		unreachable
+		;; delay(900)
+		i32.const 900
+		call $delay	
 	)
 )

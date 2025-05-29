@@ -89,6 +89,13 @@ func (p *wat2cWorker) buildHeader(w io.Writer) error {
 
 		fmt.Fprintf(w, "// func $%s\n", f.Name)
 
+		if f.ExportName != f.Name {
+			fmt.Fprintf(w, "#define %s_%s %s_%s\n",
+				p.prefix, toCName(f.ExportName),
+				p.prefix, toCName(f.Name),
+			)
+		}
+
 		// 返回值类型
 		cRetType := p.getFuncCRetType(f.Type, f.Name)
 		if len(f.Type.Results) > 1 {
