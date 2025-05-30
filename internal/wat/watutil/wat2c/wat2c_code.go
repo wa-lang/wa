@@ -75,9 +75,14 @@ func (p *wat2cWorker) buildCode(w io.Writer) error {
 				p.prefix,
 				p.prefix,
 			)
+			fmt.Fprintf(w, "  %s_memory_init_data(&%s_memory, &%s_memory_size);\n",
+				p.prefix,
+				p.prefix,
+				p.prefix,
+			)
 		}
 		if p.m.Table != nil {
-			fmt.Fprintf(w, "  %s_table_init();\n", p.prefix)
+			fmt.Fprintf(w, "  %s_table_init_elem();\n", p.prefix)
 		}
 		if p.m.Start != "" {
 			fmt.Fprintf(w, "  %s_%s();\n", p.prefix, toCName(p.m.Start))
@@ -172,6 +177,9 @@ func (p *wat2cWorker) buildMemory_data(w io.Writer) error {
 		return nil
 	}
 
+	fmt.Fprintf(w, "void %s_memory_init_data() {\n", p.prefix)
+	defer fmt.Fprintf(w, "}\n\n")
+
 	for _, d := range p.m.Data {
 		var sb strings.Builder
 		for _, x := range d.Value {
@@ -188,7 +196,7 @@ func (p *wat2cWorker) buildTable_elem(w io.Writer) error {
 	if p.m.Table == nil {
 		return nil
 	}
-	fmt.Fprintf(w, "void %s_table_init() {\n", p.prefix)
+	fmt.Fprintf(w, "void %s_table_init_elem() {\n", p.prefix)
 	defer fmt.Fprintf(w, "}\n\n")
 
 	fmt.Fprintf(w, "  memset(&%[1]s_table[0], 0, %[1]s_table_size*sizeof(%[1]s_table[0]));\n",
@@ -241,11 +249,11 @@ func (p *wat2cWorker) buildTable(w io.Writer) error {
 		fmt.Fprintf(w, "// table $%s\n", p.m.Table.Name)
 	}
 	if max := p.m.Table.MaxSize; max > 0 {
-		fmt.Fprintf(w, "ref_t     %s_table[%d];\n", p.prefix, max)
+		fmt.Fprintf(w, "uintptr_t %s_table[%d];\n", p.prefix, max)
 		fmt.Fprintf(w, "const int %s_table_init_max_size = %d;\n", p.prefix, max)
 		fmt.Fprintf(w, "int32_t   %s_table_size = %d;\n", p.prefix, p.m.Table.Size)
 	} else {
-		fmt.Fprintf(w, "ref_t     %s_table[%d];\n", p.prefix, p.m.Table.Size)
+		fmt.Fprintf(w, "uintptr_t %s_table[%d];\n", p.prefix, p.m.Table.Size)
 		fmt.Fprintf(w, "const int %s_table_init_max_size = %d;\n", p.prefix, p.m.Table.Size)
 		fmt.Fprintf(w, "int32_t   %s_table_size = %d;\n", p.prefix, p.m.Table.Size)
 	}

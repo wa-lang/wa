@@ -27,6 +27,15 @@ func MakeFlag_target() *cli.StringFlag {
 	}
 }
 
+// 构建的目标
+func MakeFlag_wat2c_prefix() *cli.StringFlag {
+	return &cli.StringFlag{
+		Name:  "wat2c.prefix",
+		Usage: "name prefix to use in wat2c generated code",
+		Value: "app",
+	}
+}
+
 // 构建的 Tags
 func MakeFlag_tags() *cli.StringFlag {
 	return &cli.StringFlag{

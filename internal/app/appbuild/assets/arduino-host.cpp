@@ -2,8 +2,8 @@
 
 #include <Arduino.h>
 
-// 内存
-static uint8_t* app_host_memory = NULL;
+// TODO: 配置初始内存
+static uint8_t app_host_memory[1];
 static int32_t app_host_memory_page_size = 0;
 
 // 初始化内存
@@ -14,7 +14,8 @@ extern "C" void app_memory_init(uint8_t** pp_memory, int32_t* page_size) {
 
 // 内存增长
 extern "C" int32_t app_memory_grow(uint8_t** pp_memory, int32_t* page_size, int32_t new_size) {
-    return -1; // 不支持扩容
+    // TODO: 实现内存扩容支持
+    return -1;
 }
 
 extern "C" int32_t host_fn_arduino_millis() {

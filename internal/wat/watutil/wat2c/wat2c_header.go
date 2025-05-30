@@ -54,11 +54,11 @@ func (p *wat2cWorker) buildHeader(w io.Writer) error {
 			fmt.Fprintf(w, "// table $%s\n", p.m.Table.Name)
 		}
 		if max := p.m.Table.MaxSize; max > 0 {
-			fmt.Fprintf(w, "extern ref_t     %s_table[/*%d*/];\n", p.prefix, max)
+			fmt.Fprintf(w, "extern uintptr_t %s_table[/*%d*/];\n", p.prefix, max)
 			fmt.Fprintf(w, "extern const int %s_table_init_max_size; // = %d;\n", p.prefix, max)
 			fmt.Fprintf(w, "extern int32_t   %s_table_size; // = %d;\n", p.prefix, p.m.Table.Size)
 		} else {
-			fmt.Fprintf(w, "extern ref_t     %s_table[/*%d*/];\n", p.prefix, p.m.Table.Size)
+			fmt.Fprintf(w, "extern uintptr_t %s_table[/*%d*/];\n", p.prefix, p.m.Table.Size)
 			fmt.Fprintf(w, "extern const int %s_table_init_max_size; // = %d;\n", p.prefix, p.m.Table.Size)
 			fmt.Fprintf(w, "extern int32_t   %s_table_size; // = %d;\n", p.prefix, p.m.Table.Size)
 		}

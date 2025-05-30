@@ -18,6 +18,7 @@ type Option struct {
 	WaBackend    string
 	BuilgTags    []string
 	Target       string
+	Wat2CPrefix  string
 	LD_StackSize int
 	LD_MaxMemory int
 	Optimize     bool // 优化
@@ -55,6 +56,7 @@ func BuildOptions(c *cli.Context, waBackend ...string) *Option {
 		Debug:        c.Bool("debug"),
 		WaBackend:    config.WaBackend_Default,
 		BuilgTags:    strings.Fields(c.String("tags")),
+		Wat2CPrefix:  c.String("wat2c.prefix"),
 		LD_StackSize: c.Int("ld-stack-size"),
 		LD_MaxMemory: c.Int("ld-max-memory"),
 		Optimize:     c.Bool("optimize"),

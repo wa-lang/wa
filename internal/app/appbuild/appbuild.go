@@ -40,6 +40,7 @@ var CmdBuild = &cli.Command{
 	Flags: []cli.Flag{
 		appbase.MakeFlag_output(),
 		appbase.MakeFlag_target(),
+		appbase.MakeFlag_wat2c_prefix(),
 		appbase.MakeFlag_tags(),
 		appbase.MakeFlag_ld_stack_size(),
 		appbase.MakeFlag_ld_max_memory(),
@@ -291,7 +292,7 @@ func BuildApp(opt *appbase.Option, input, outfile string) (mainFunc string, wasm
 
 			// 生成wat转译的C代码
 			{
-				code, header, err := watutil.Wat2C("wa-app.wat", watOutput, "arduino")
+				code, header, err := watutil.Wat2C("wa-app.wat", watOutput, opt.Wat2CPrefix)
 				if err != nil {
 					os.WriteFile(outfile, code, 0666)
 					fmt.Println(err)
