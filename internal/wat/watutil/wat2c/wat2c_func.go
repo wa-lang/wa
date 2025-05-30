@@ -86,7 +86,7 @@ func (p *wat2cWorker) buildFunc_body(w io.Writer, fn *ast.Func, cRetType string)
 	switch tok := stk.LastInstruction().Token(); tok {
 	case token.INS_RETURN:
 		// 已经处理过了
-	default:
+	case token.INS_UNREACHABLE:
 		// 清空残余的栈, 不做类型校验
 		if tok == token.INS_UNREACHABLE {
 			for stk.Len() > 0 {
@@ -94,6 +94,19 @@ func (p *wat2cWorker) buildFunc_body(w io.Writer, fn *ast.Func, cRetType string)
 			}
 		}
 
+		// 补充 return
+		// stk 已经被清空
+		const indent = "  "
+		switch len(fn.Type.Results) {
+		case 0:
+			fmt.Fprintf(w, "%sreturn;\n", indent)
+		case 1:
+			fmt.Fprintf(w, "%sreturn 0;\n", indent)
+		default:
+			fmt.Fprintf(w, "%sreturn result;\n", indent)
+		}
+
+	default:
 		// 补充 return
 		assert(stk.Len() == len(fn.Type.Results))
 
