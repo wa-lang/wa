@@ -3,12 +3,10 @@
 package appbuild
 
 import (
-	"bytes"
 	_ "embed"
 	"fmt"
 	"os"
 	"path/filepath"
-	"time"
 
 	"wa-lang.org/wa/internal/3rdparty/cli"
 	"wa-lang.org/wa/internal/app/appbase"
@@ -21,20 +19,8 @@ import (
 //go:embed assets/arduino.ino
 var arduino_ino string
 
-//go:embed assets/arduino-dev.ino
-var arduino_dev_ino string
-
 //go:embed assets/arduino-host.cpp
 var arduino_host_cpp string
-
-//go:embed assets/arduino-host-debug.cpp
-var arduino_host_debug_cpp string
-
-//go:embed assets/arduino-CMakeLists.txt
-var arduino_CMakeLists_txt string
-
-//go:embed assets/arduino-main-debug.cpp
-var arduino_main_debug_cpp string
 
 //go:embed assets/favicon.ico
 var favicon_ico string
@@ -280,30 +266,16 @@ func BuildApp(opt *appbase.Option, input, outfile string) (mainFunc string, wasm
 		case config.WaOS_arduino:
 			arduinoDir := filepath.Join(filepath.Dir(outfile), "arduino")
 			inoOutfile := filepath.Join(filepath.Dir(outfile), "arduino", "arduino.ino")
-			appHeaderOutfile := filepath.Join(filepath.Dir(outfile), "arduino", "app.wasm.h")
-
-			var buf bytes.Buffer
-			// unsigned int app_wasm_len = ?;
-			// unsigned char app_wasm[] = { 0x00, 0x01, ... };
-			fmt.Fprintf(&buf, "// Auto Generate by Wa language. See https://wa-lang.org\n\n")
-			fmt.Fprintf(&buf, "#define APP_WASM_BUILD_TIME \"%v\"\n\n", time.Now().Format("2006-01-02T15:04:05"))
-			fmt.Fprintf(&buf, "unsigned int app_wasm_len = %d;\n\n", len(wasmBytes))
-			fmt.Fprintf(&buf, "unsigned char app_wasm[] = {")
-			for i, ch := range wasmBytes {
-				if i%10 == 0 {
-					fmt.Fprintf(&buf, "\n\t0x%02x,", ch)
-				} else {
-					fmt.Fprintf(&buf, " 0x%02x,", ch)
-					if i == len(wasmBytes)-1 {
-						fmt.Fprintln(&buf)
-					}
-				}
-			}
-			fmt.Fprintf(&buf, "};\n")
+			hostCppOutfile := filepath.Join(filepath.Dir(outfile), "arduino", "arduino-host.cpp")
+			waAppCfile := filepath.Join(filepath.Dir(outfile), "arduino", "wa-app.c")
+			waAppHfile := filepath.Join(filepath.Dir(outfile), "arduino", "wa-app.h")
 
 			os.MkdirAll(arduinoDir, 0777)
-			os.WriteFile(inoOutfile, []byte(arduino_ino), 0666)
-			os.WriteFile(appHeaderOutfile, buf.Bytes(), 0666)
+
+			// 主文件
+			if !appbase.PathExists(inoOutfile) {
+				os.WriteFile(inoOutfile, []byte(arduino_ino), 0666)
+			}
 
 			// wasm 写到文件
 			err = os.WriteFile(outfile, wasmBytes, 0666)
@@ -312,43 +284,13 @@ func BuildApp(opt *appbase.Option, input, outfile string) (mainFunc string, wasm
 				os.Exit(1)
 			}
 
-			// 测试输出的C代码
-			{
-				arduinoDir := filepath.Join(filepath.Dir(outfile), "arduino-dev")
-				inoOutfile := filepath.Join(filepath.Dir(outfile), "arduino-dev", "arduino-dev.ino")
-				hostCppOutfile := filepath.Join(filepath.Dir(outfile), "arduino-dev", "arduino-host.cpp")
-				waAppCfile := filepath.Join(filepath.Dir(outfile), "arduino-dev", "wa-app.c")
-				waAppHfile := filepath.Join(filepath.Dir(outfile), "arduino-dev", "wa-app.h")
-
-				os.MkdirAll(arduinoDir, 0777)
-				os.WriteFile(inoOutfile, []byte(arduino_dev_ino), 0666)
+			// 宿主的C代码
+			if !appbase.PathExists(hostCppOutfile) {
 				os.WriteFile(hostCppOutfile, []byte(arduino_host_cpp), 0666)
-
-				code, header, err := watutil.Wat2C("wa-app.wat", watOutput, "arduino")
-				if err != nil {
-					os.WriteFile(outfile, code, 0666)
-					fmt.Println(err)
-					os.Exit(1)
-				}
-
-				os.WriteFile(waAppCfile, []byte(code), 0666)
-				os.WriteFile(waAppHfile, []byte(header), 0666)
 			}
 
-			// 调试输出的C代码
+			// 生成wat转译的C代码
 			{
-				arduinoDir := filepath.Join(filepath.Dir(outfile), "arduino-debug")
-				mainfile := filepath.Join(filepath.Dir(outfile), "arduino-debug", "main.cpp")
-				hostCppOutfile := filepath.Join(filepath.Dir(outfile), "arduino-debug", "arduino-host-debug.cpp")
-				cmakefile := filepath.Join(filepath.Dir(outfile), "arduino-debug", "CMakeLists.txt")
-				waAppCfile := filepath.Join(filepath.Dir(outfile), "arduino-debug", "wa-app.c")
-				waAppHfile := filepath.Join(filepath.Dir(outfile), "arduino-debug", "wa-app.h")
-
-				os.MkdirAll(arduinoDir, 0777)
-				os.WriteFile(mainfile, []byte(arduino_main_debug_cpp), 0666)
-				os.WriteFile(hostCppOutfile, []byte(arduino_host_debug_cpp), 0666)
-				os.WriteFile(cmakefile, []byte(arduino_CMakeLists_txt), 0666)
-
 				code, header, err := watutil.Wat2C("wa-app.wat", watOutput, "arduino")
 				if err != nil {
 					os.WriteFile(outfile, code, 0666)
