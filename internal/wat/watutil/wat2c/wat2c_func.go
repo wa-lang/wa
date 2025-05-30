@@ -47,6 +47,13 @@ func (p *wat2cWorker) buildFunc_body(w io.Writer, fn *ast.Func, cRetType string)
 		fmt.Fprintln(&bufIns)
 	}
 
+	// 至少要有一个指令
+	if len(fn.Body.Insts) == 0 {
+		fn.Body.Insts = []ast.Instruction{
+			ast.Ins_Return{OpToken: ast.OpToken(token.INS_RETURN)},
+		}
+	}
+
 	assert(stk.Len() == 0)
 	for _, ins := range fn.Body.Insts {
 		if err := p.buildFunc_ins(&bufIns, fn, &stk, ins, 1); err != nil {
@@ -76,71 +83,58 @@ func (p *wat2cWorker) buildFunc_body(w io.Writer, fn *ast.Func, cRetType string)
 	io.Copy(w, &bufIns)
 
 	// 有些函数最后的位置不是 return, 需要手动清理栈
-	lastInstruction := stk.LastInstruction()
-	if lastInstruction != nil {
-		switch lastInstruction.Token() {
-		case token.INS_RETURN:
-			// 已经处理过了
-		case token.INS_UNREACHABLE:
-			// 清空残余的栈, 不做类型校验
+	switch tok := stk.LastInstruction().Token(); tok {
+	case token.INS_RETURN:
+		// 已经处理过了
+	default:
+		// 清空残余的栈, 不做类型校验
+		if tok == token.INS_UNREACHABLE {
 			for stk.Len() > 0 {
 				stk.DropAny()
 			}
-		default:
-			// 补充 return
-			assert(stk.Len() == len(fn.Type.Results))
+		}
 
-			const indent = "  "
-			switch len(fn.Type.Results) {
-			case 0:
-				fmt.Fprintf(w, "%sreturn;\n", indent)
-			case 1:
-				sp0 := stk.Pop(fn.Type.Results[0])
-				switch fn.Type.Results[0] {
+		// 补充 return
+		assert(stk.Len() == len(fn.Type.Results))
+
+		const indent = "  "
+		switch len(fn.Type.Results) {
+		case 0:
+			fmt.Fprintf(w, "%sreturn;\n", indent)
+		case 1:
+			sp0 := stk.Pop(fn.Type.Results[0])
+			switch fn.Type.Results[0] {
+			case token.I32:
+				fmt.Fprintf(w, "%sreturn R%d.i32;\n", indent, sp0)
+			case token.I64:
+				fmt.Fprintf(w, "%sreturn R%d.i64;\n", indent, sp0)
+			case token.F32:
+				fmt.Fprintf(w, "%sreturn R%d.f32;\n", indent, sp0)
+			case token.F64:
+				fmt.Fprintf(w, "%sreturn R%d.f64;\n", indent, sp0)
+			default:
+				unreachable()
+			}
+		default:
+			for i, xType := range fn.Type.Results {
+				spi := stk.Pop(xType)
+				switch xType {
 				case token.I32:
-					fmt.Fprintf(w, "%sreturn R%d.i32;\n", indent, sp0)
+					fmt.Fprintf(w, "%sresult.R%d = R%d.i32;\n", indent, i, spi)
 				case token.I64:
-					fmt.Fprintf(w, "%sreturn R%d.i64;\n", indent, sp0)
+					fmt.Fprintf(w, "%sresult.R%d = R%d.i64;\n", indent, i, spi)
 				case token.F32:
-					fmt.Fprintf(w, "%sreturn R%d.f32;\n", indent, sp0)
+					fmt.Fprintf(w, "%sresult.R%d = R%d.f32;\n", indent, i, spi)
 				case token.F64:
-					fmt.Fprintf(w, "%sreturn R%d.f64;\n", indent, sp0)
+					fmt.Fprintf(w, "%sresult.R%d = R%d.f64;\n", indent, i, spi)
 				default:
 					unreachable()
 				}
-			default:
-				for i, xType := range fn.Type.Results {
-					spi := stk.Pop(xType)
-					switch xType {
-					case token.I32:
-						fmt.Fprintf(w, "%sresult.R%d = R%d.i32;\n", indent, i, spi)
-					case token.I64:
-						fmt.Fprintf(w, "%sresult.R%d = R%d.i64;\n", indent, i, spi)
-					case token.F32:
-						fmt.Fprintf(w, "%sresult.R%d = R%d.f32;\n", indent, i, spi)
-					case token.F64:
-						fmt.Fprintf(w, "%sresult.R%d = R%d.f64;\n", indent, i, spi)
-					default:
-						unreachable()
-					}
-				}
-				fmt.Fprintf(w, "%sreturn result;\n", indent)
 			}
+			fmt.Fprintf(w, "%sreturn result;\n", indent)
 		}
 	}
 	assert(stk.Len() == 0)
-
-	// 补充生成 return
-	if lastInstruction == nil || stk.LastInstruction().Token() != token.INS_RETURN {
-		switch len(fn.Type.Results) {
-		case 0:
-			fmt.Fprintf(w, "  return;\n")
-		case 1:
-			fmt.Fprintf(w, "  return 0;\n")
-		default:
-			fmt.Fprintf(w, "  return result;\n")
-		}
-	}
 
 	return nil
 }

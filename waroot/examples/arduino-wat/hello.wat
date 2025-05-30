@@ -6,7 +6,7 @@
 	(import "arduino" "digitalWrite" (func $digitalWrite (param $pin i32) (param $value i32)))
 	(import "arduino" "delay" (func $delay (param $ms i32)))
 
-	(memory (;0;) 1)
+	(memory (;0;) 0)
 	(export "memory" (memory 0))
 
 	(func $_start (start)

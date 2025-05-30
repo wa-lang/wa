@@ -22,9 +22,9 @@ func (p *wat2cWorker) buildCode(w io.Writer) error {
 		fmt.Fprintf(w, "// module %s\n\n", p.m.Name)
 	}
 
+	fmt.Fprintf(w, "#include <stddef.h>\n")
 	fmt.Fprintf(w, "#include <stdint.h>\n")
 	fmt.Fprintf(w, "#include <stdlib.h>\n")
-	fmt.Fprintf(w, "#include <stdio.h>\n")
 	fmt.Fprintf(w, "#include <string.h>\n")
 	fmt.Fprintf(w, "#include <math.h>\n")
 	fmt.Fprintln(w)

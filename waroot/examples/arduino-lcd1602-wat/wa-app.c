@@ -2,9 +2,9 @@
 
 // module wa-arduino-hello
 
+#include <stddef.h>
 #include <stdint.h>
 #include <stdlib.h>
-#include <stdio.h>
 #include <string.h>
 #include <math.h>
 
@@ -106,7 +106,6 @@ static void app_lcdPulseEnable() {
   R0.i32 = 100;
   app_delayMicroseconds(R0.i32);
   return;
-  return;
 }
 
 // func getBitAt (param $v i32) (param $i i32) (result i32)
@@ -168,7 +167,6 @@ static void app_lcdWrite4bits(int32_t byteValue) {
   app_digitalWrite(R0.i32, R1.i32);
   app_lcdPulseEnable();
   return;
-  return;
 }
 
 // func lcdSend (param $value i32) (param $mode i32)
@@ -190,7 +188,6 @@ static void app_lcdSend(int32_t value, int32_t mode) {
   R0.i32 = app_get4BitAt(R0.i32, R1.i32);
   app_lcdWrite4bits(R0.i32);
   return;
-  return;
 }
 
 // func lcdCommand (param $value i32)
@@ -203,7 +200,6 @@ static void app_lcdCommand(int32_t value) {
   R0.i32 = value;
   R1.i32 = app_LOW;
   app_lcdSend(R0.i32, R1.i32);
-  return;
   return;
 }
 
@@ -225,7 +221,6 @@ static void app_LCDSetCursor(int32_t row, int32_t col) {
   R0.i32 = R0.i32 + R1.i32;
   app_lcdCommand(R0.i32);
   return;
-  return;
 }
 
 // func LCDWriteChar (param $value i32)
@@ -238,7 +233,6 @@ static void app_LCDWriteChar(int32_t value) {
   R0.i32 = value;
   R1.i32 = app_HIGH;
   app_lcdSend(R0.i32, R1.i32);
-  return;
   return;
 }
 
@@ -253,7 +247,6 @@ static void app_LCDClear() {
   app_lcdCommand(R0.i32);
   R0.i32 = 2;
   app_delay(R0.i32);
-  return;
   return;
 }
 
@@ -309,7 +302,6 @@ static void app_LCDInit() {
   R0.i32 = 12;
   app_lcdCommand(R0.i32);
   return;
-  return;
 }
 
 // func say_hello (param $row i32) (param $col i32)
@@ -351,7 +343,6 @@ static void app_say_hello(int32_t row, int32_t col) {
   R0.i32 = 33;
   app_LCDWriteChar(R0.i32);
   return;
-  return;
 }
 
 // func _start
@@ -362,7 +353,6 @@ static void app__start() {
   val_t R0;
 
   app_LCDInit();
-  return;
   return;
 }
 
@@ -409,7 +399,6 @@ void app_loop() {
   app_say_hello(R0.i32, R1.i32);
   R0.i32 = 500;
   app_delay(R0.i32);
-  return;
   return;
 }
 

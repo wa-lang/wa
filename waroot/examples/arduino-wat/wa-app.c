@@ -2,9 +2,9 @@
 
 // module wa-arduino-hello
 
+#include <stddef.h>
 #include <stdint.h>
 #include <stdlib.h>
-#include <stdio.h>
 #include <string.h>
 #include <math.h>
 
@@ -26,10 +26,10 @@ extern void app_arduino_delay(int32_t ms);
 #define app_digitalWrite app_arduino_digitalWrite // import arduino.digitalWrite
 #define app_delay app_arduino_delay // import arduino.delay
 
-uint8_t       app_memory[1*1024];
-const int32_t app_memory_init_max_pages = 1;
-const int32_t app_memory_init_pages = 1;
-int32_t       app_memory_size = 1;
+uint8_t*      app_memory = NULL;
+const int32_t app_memory_init_max_pages = 0;
+const int32_t app_memory_init_pages = 0;
+int32_t       app_memory_size = 0;
 
 // func $_start
 static void app__start();
@@ -38,57 +38,50 @@ extern void app_loop();
 
 // func _start
 static void app__start() {
-  uint32_t $R_u32;
-  uint16_t $R_u16;
-  uint8_t  $R_u8;
-  val_t $R0, $R1;
+  uint32_t R_u32;
+  uint16_t R_u16;
+  uint8_t  R_u8;
+  val_t R0, R1;
 
   int32_t tmp = 0;
 
-  $R0.i32 = 1024;
-  $R1.i32 = app_getPinLED();
-  tmp = $R1.i32;
-  memcpy(&app_memory[$R0.i32+0], &$R1.i32, 4);
-  $R0.i32 = tmp;
-  $R1.i32 = 1;
-  app_pinMode($R0.i32, $R1.i32);
-  return;
+  R0.i32 = 1024;
+  R1.i32 = app_getPinLED();
+  tmp = R1.i32;
+  memcpy(&app_memory[R0.i32+0], &R1.i32, 4);
+  R0.i32 = tmp;
+  R1.i32 = 1;
+  app_pinMode(R0.i32, R1.i32);
   return;
 }
 
 // func loop
 void app_loop() {
-  uint32_t $R_u32;
-  uint16_t $R_u16;
-  uint8_t  $R_u8;
-  val_t $R0, $R1;
+  uint32_t R_u32;
+  uint16_t R_u16;
+  uint8_t  R_u8;
+  val_t R0, R1;
 
-  $R0.i32 = 1024;
-  memcpy(&$R0.i32, &app_memory[$R0.i32+0], 4);
-  $R1.i32 = 1;
-  app_digitalWrite($R0.i32, $R1.i32);
-  $R0.i32 = 100;
-  app_delay($R0.i32);
-  $R0.i32 = 1024;
-  memcpy(&$R0.i32, &app_memory[$R0.i32+0], 4);
-  $R1.i32 = 0;
-  app_digitalWrite($R0.i32, $R1.i32);
-  $R0.i32 = 900;
-  app_delay($R0.i32);
-  return;
+  R0.i32 = 1024;
+  memcpy(&R0.i32, &app_memory[R0.i32+0], 4);
+  R1.i32 = 1;
+  app_digitalWrite(R0.i32, R1.i32);
+  R0.i32 = 100;
+  app_delay(R0.i32);
+  R0.i32 = 1024;
+  memcpy(&R0.i32, &app_memory[R0.i32+0], 4);
+  R1.i32 = 0;
+  app_digitalWrite(R0.i32, R1.i32);
+  R0.i32 = 900;
+  app_delay(R0.i32);
   return;
 }
-void app_memory_init() {
-  memset(&app_memory[0], 0, app_memory_size*65536);
-
-}
-
 
 void app_init() {
   static int init_flag = 0;
   if(init_flag) return;
   init_flag = 1;
-  app_memory_init();
+  app_memory_init(&app_memory, &app_memory_size);
   app__start();
   return;
 }
