@@ -5,5 +5,5 @@ void setup() {
 }
 
 void loop() {
-    // app_loop();
+    app_loop();
 }

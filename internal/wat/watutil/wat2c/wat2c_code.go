@@ -65,27 +65,27 @@ func (p *wat2cWorker) buildCode(w io.Writer) error {
 	// 生成 init 函数
 	{
 		fmt.Fprintln(w)
-		fmt.Fprintf(w, "void %s_init() {\n", p.prefix)
+		fmt.Fprintf(w, "void %s_init() {\n", p.opt.Prefix)
 		fmt.Fprintf(w, "  static int init_flag = 0;\n")
 		fmt.Fprintf(w, "  if(init_flag) return;\n")
 		fmt.Fprintf(w, "  init_flag = 1;\n")
 		if p.m.Memory != nil {
 			fmt.Fprintf(w, "  %s_memory_init(&%s_memory, &%s_memory_size);\n",
-				p.prefix,
-				p.prefix,
-				p.prefix,
+				p.opt.Prefix,
+				p.opt.Prefix,
+				p.opt.Prefix,
 			)
 			fmt.Fprintf(w, "  %s_memory_init_data(&%s_memory, &%s_memory_size);\n",
-				p.prefix,
-				p.prefix,
-				p.prefix,
+				p.opt.Prefix,
+				p.opt.Prefix,
+				p.opt.Prefix,
 			)
 		}
 		if p.m.Table != nil {
-			fmt.Fprintf(w, "  %s_table_init_elem();\n", p.prefix)
+			fmt.Fprintf(w, "  %s_table_init_elem();\n", p.opt.Prefix)
 		}
 		if p.m.Start != "" {
-			fmt.Fprintf(w, "  %s_%s();\n", p.prefix, toCName(p.m.Start))
+			fmt.Fprintf(w, "  %s_%s();\n", p.opt.Prefix, toCName(p.m.Start))
 		}
 		fmt.Fprintf(w, "  return;\n")
 		fmt.Fprintf(w, "}\n")
@@ -124,7 +124,7 @@ func (p *wat2cWorker) buildImport(w io.Writer) error {
 		}
 
 		// 返回值通过栈传递
-		fmt.Fprintf(w, "extern %s %s_%s(", cRetType, p.prefix, toCName(fnName))
+		fmt.Fprintf(w, "extern %s %s_%s(", cRetType, p.opt.Prefix, toCName(fnName))
 		if len(fnType.Params) > 0 {
 			for i, x := range fnType.Params {
 				var argName string
@@ -162,8 +162,8 @@ func (p *wat2cWorker) buildImport(w io.Writer) error {
 		}
 
 		fmt.Fprintf(w, "#define %s_%s %s_%s // import %s.%s\n",
-			p.prefix, toCName(importSpec.FuncName),
-			p.prefix, toCName(importSpec.ObjModule+"."+importSpec.ObjName),
+			p.opt.Prefix, toCName(importSpec.FuncName),
+			p.opt.Prefix, toCName(importSpec.ObjModule+"."+importSpec.ObjName),
 			importSpec.ObjModule, importSpec.ObjName,
 		)
 	}
@@ -177,7 +177,7 @@ func (p *wat2cWorker) buildMemory_data(w io.Writer) error {
 		return nil
 	}
 
-	fmt.Fprintf(w, "void %s_memory_init_data() {\n", p.prefix)
+	fmt.Fprintf(w, "void %s_memory_init_data() {\n", p.opt.Prefix)
 	defer fmt.Fprintf(w, "}\n\n")
 
 	for _, d := range p.m.Data {
@@ -186,7 +186,7 @@ func (p *wat2cWorker) buildMemory_data(w io.Writer) error {
 			sb.WriteString(fmt.Sprintf("\\x%02x", x))
 		}
 		fmt.Fprintf(w, "  memcpy((void*)(&%s_memory[%d]), (void *)(\"%s\"), %d);\n",
-			p.prefix, d.Offset, sb.String(), len(d.Value),
+			p.opt.Prefix, d.Offset, sb.String(), len(d.Value),
 		)
 	}
 	return nil
@@ -196,18 +196,18 @@ func (p *wat2cWorker) buildTable_elem(w io.Writer) error {
 	if p.m.Table == nil {
 		return nil
 	}
-	fmt.Fprintf(w, "void %s_table_init_elem() {\n", p.prefix)
+	fmt.Fprintf(w, "void %s_table_init_elem() {\n", p.opt.Prefix)
 	defer fmt.Fprintf(w, "}\n\n")
 
 	fmt.Fprintf(w, "  memset(&%[1]s_table[0], 0, %[1]s_table_size*sizeof(%[1]s_table[0]));\n",
-		p.prefix,
+		p.opt.Prefix,
 	)
 	fmt.Fprintln(w)
 
 	for _, e := range p.m.Elem {
 		for i, x := range e.Values {
-			val := fmt.Sprintf("(uintptr_t)(%s_%s)", p.prefix, toCName(x))
-			fmt.Fprintf(w, "  %s_table[%d] = %s;\n", p.prefix, int(e.Offset)+i, val)
+			val := fmt.Sprintf("(uintptr_t)(%s_%s)", p.opt.Prefix, toCName(x))
+			fmt.Fprintf(w, "  %s_table[%d] = %s;\n", p.opt.Prefix, int(e.Offset)+i, val)
 		}
 	}
 
@@ -222,15 +222,15 @@ func (p *wat2cWorker) buildMemory(w io.Writer) error {
 		fmt.Fprintf(w, "// memory $%s\n", p.m.Memory.Name)
 	}
 	if max := p.m.Memory.MaxPages; max > 0 {
-		fmt.Fprintf(w, "uint8_t*      %s_memory = NULL;\n", p.prefix)
-		fmt.Fprintf(w, "const int32_t %s_memory_init_max_pages = %d;\n", p.prefix, max)
-		fmt.Fprintf(w, "const int32_t %s_memory_init_pages = %d;\n", p.prefix, p.m.Memory.Pages)
-		fmt.Fprintf(w, "int32_t       %s_memory_size = %d;\n", p.prefix, 0)
+		fmt.Fprintf(w, "uint8_t*      %s_memory = NULL;\n", p.opt.Prefix)
+		fmt.Fprintf(w, "const int32_t %s_memory_init_max_pages = %d;\n", p.opt.Prefix, max)
+		fmt.Fprintf(w, "const int32_t %s_memory_init_pages = %d;\n", p.opt.Prefix, p.m.Memory.Pages)
+		fmt.Fprintf(w, "int32_t       %s_memory_size = %d;\n", p.opt.Prefix, 0)
 	} else {
-		fmt.Fprintf(w, "uint8_t*      %s_memory = NULL;\n", p.prefix)
-		fmt.Fprintf(w, "const int32_t %s_memory_init_max_pages = %d;\n", p.prefix, p.m.Memory.Pages)
-		fmt.Fprintf(w, "const int32_t %s_memory_init_pages = %d;\n", p.prefix, p.m.Memory.Pages)
-		fmt.Fprintf(w, "int32_t       %s_memory_size = %d;\n", p.prefix, 0)
+		fmt.Fprintf(w, "uint8_t*      %s_memory = NULL;\n", p.opt.Prefix)
+		fmt.Fprintf(w, "const int32_t %s_memory_init_max_pages = %d;\n", p.opt.Prefix, p.m.Memory.Pages)
+		fmt.Fprintf(w, "const int32_t %s_memory_init_pages = %d;\n", p.opt.Prefix, p.m.Memory.Pages)
+		fmt.Fprintf(w, "int32_t       %s_memory_size = %d;\n", p.opt.Prefix, 0)
 	}
 	fmt.Fprintln(w)
 
@@ -249,13 +249,13 @@ func (p *wat2cWorker) buildTable(w io.Writer) error {
 		fmt.Fprintf(w, "// table $%s\n", p.m.Table.Name)
 	}
 	if max := p.m.Table.MaxSize; max > 0 {
-		fmt.Fprintf(w, "uintptr_t %s_table[%d];\n", p.prefix, max)
-		fmt.Fprintf(w, "const int %s_table_init_max_size = %d;\n", p.prefix, max)
-		fmt.Fprintf(w, "int32_t   %s_table_size = %d;\n", p.prefix, p.m.Table.Size)
+		fmt.Fprintf(w, "uintptr_t %s_table[%d];\n", p.opt.Prefix, max)
+		fmt.Fprintf(w, "const int %s_table_init_max_size = %d;\n", p.opt.Prefix, max)
+		fmt.Fprintf(w, "int32_t   %s_table_size = %d;\n", p.opt.Prefix, p.m.Table.Size)
 	} else {
-		fmt.Fprintf(w, "uintptr_t %s_table[%d];\n", p.prefix, p.m.Table.Size)
-		fmt.Fprintf(w, "const int %s_table_init_max_size = %d;\n", p.prefix, p.m.Table.Size)
-		fmt.Fprintf(w, "int32_t   %s_table_size = %d;\n", p.prefix, p.m.Table.Size)
+		fmt.Fprintf(w, "uintptr_t %s_table[%d];\n", p.opt.Prefix, p.m.Table.Size)
+		fmt.Fprintf(w, "const int %s_table_init_max_size = %d;\n", p.opt.Prefix, p.m.Table.Size)
+		fmt.Fprintf(w, "int32_t   %s_table_size = %d;\n", p.opt.Prefix, p.m.Table.Size)
 	}
 	fmt.Fprintln(w)
 
@@ -271,27 +271,27 @@ func (p *wat2cWorker) buildGlobal(w io.Writer) error {
 		switch g.Type {
 		case token.I32:
 			if g.Mutable {
-				fmt.Fprintf(w, "static int32_t %s_%s = %d;\n", p.prefix, toCName(g.Name), g.I32Value)
+				fmt.Fprintf(w, "static int32_t %s_%s = %d;\n", p.opt.Prefix, toCName(g.Name), g.I32Value)
 			} else {
-				fmt.Fprintf(w, "static const int32_t %s_%s = %d;\n", p.prefix, toCName(g.Name), g.I32Value)
+				fmt.Fprintf(w, "static const int32_t %s_%s = %d;\n", p.opt.Prefix, toCName(g.Name), g.I32Value)
 			}
 		case token.I64:
 			if g.Mutable {
-				fmt.Fprintf(w, "static int64_t %s_%s = %d;\n", p.prefix, toCName(g.Name), g.I64Value)
+				fmt.Fprintf(w, "static int64_t %s_%s = %d;\n", p.opt.Prefix, toCName(g.Name), g.I64Value)
 			} else {
-				fmt.Fprintf(w, "static const int64_t %s_%s = %d;\n", p.prefix, toCName(g.Name), g.I64Value)
+				fmt.Fprintf(w, "static const int64_t %s_%s = %d;\n", p.opt.Prefix, toCName(g.Name), g.I64Value)
 			}
 		case token.F32:
 			if g.Mutable {
-				fmt.Fprintf(w, "static float %s_%s = %f;\n", p.prefix, toCName(g.Name), g.F32Value)
+				fmt.Fprintf(w, "static float %s_%s = %f;\n", p.opt.Prefix, toCName(g.Name), g.F32Value)
 			} else {
-				fmt.Fprintf(w, "static const float %s_%s = %f;\n", p.prefix, toCName(g.Name), g.F32Value)
+				fmt.Fprintf(w, "static const float %s_%s = %f;\n", p.opt.Prefix, toCName(g.Name), g.F32Value)
 			}
 		case token.F64:
 			if g.Mutable {
-				fmt.Fprintf(w, "static double %s_%s = %f;\n", p.prefix, toCName(g.Name), g.F64Value)
+				fmt.Fprintf(w, "static double %s_%s = %f;\n", p.opt.Prefix, toCName(g.Name), g.F64Value)
 			} else {
-				fmt.Fprintf(w, "static const double %s_%s = %f;\n", p.prefix, toCName(g.Name), g.F64Value)
+				fmt.Fprintf(w, "static const double %s_%s = %f;\n", p.opt.Prefix, toCName(g.Name), g.F64Value)
 			}
 		default:
 			return fmt.Errorf("unsupported global type: %s", g.Type)
@@ -346,13 +346,13 @@ func (p *wat2cWorker) buildFuncs(w io.Writer) error {
 					fmt.Fprintf(w, "double R%d;", i)
 				}
 			}
-			fmt.Fprintf(w, "} %s_%s_ret_t;\n", p.prefix, toCName(f.Name))
+			fmt.Fprintf(w, "} %s_%s_ret_t;\n", p.opt.Prefix, toCName(f.Name))
 		}
 
 		if f.ExportName == "" {
-			fmt.Fprintf(w, "static %s %s_%s(", cRetType, p.prefix, toCName(f.Name))
+			fmt.Fprintf(w, "static %s %s_%s(", cRetType, p.opt.Prefix, toCName(f.Name))
 		} else {
-			fmt.Fprintf(w, "extern %s %s_%s(", cRetType, p.prefix, toCName(f.Name))
+			fmt.Fprintf(w, "extern %s %s_%s(", cRetType, p.opt.Prefix, toCName(f.Name))
 		}
 		if len(f.Type.Params) > 0 {
 			for i, x := range f.Type.Params {
@@ -427,9 +427,9 @@ func (p *wat2cWorker) buildFuncs(w io.Writer) error {
 
 		// 返回值通过栈传递, 返回入栈的个数
 		if f.ExportName == "" {
-			fmt.Fprintf(w, "static %s %s_%s(", cRetType, p.prefix, toCName(f.Name))
+			fmt.Fprintf(w, "static %s %s_%s(", cRetType, p.opt.Prefix, toCName(f.Name))
 		} else {
-			fmt.Fprintf(w, "%s %s_%s(", cRetType, p.prefix, toCName(f.Name))
+			fmt.Fprintf(w, "%s %s_%s(", cRetType, p.opt.Prefix, toCName(f.Name))
 		}
 		if len(f.Type.Params) > 0 {
 			for i, x := range f.Type.Params {

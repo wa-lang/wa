@@ -4,3 +4,7 @@ func init {
 	LCDInit()
 	LCDPrint("Hello Wa-lang")
 }
+
+func Loop {
+	//
+}

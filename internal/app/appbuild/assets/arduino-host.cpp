@@ -18,43 +18,43 @@ extern "C" int32_t app_memory_grow(uint8_t** pp_memory, int32_t* page_size, int3
     return -1;
 }
 
-extern "C" int32_t host_fn_arduino_millis() {
+extern "C" int32_t app_arduino_millis() {
     return millis();
 }
 
-extern "C" void host_fn_arduino_delay(int32_t ms) {
+extern "C" void app_arduino_delay(int32_t ms) {
     delay(ms);
 }
 
-extern "C" void host_fn_arduino_delayMicroseconds(int32_t us) {
+extern "C" void app_arduino_delayMicroseconds(int32_t us) {
     delayMicroseconds(us);
 }
 
-extern "C" void host_fn_arduino_pinMode(int32_t pin, int32_t mode) {
+extern "C" void app_arduino_pinMode(int32_t pin, int32_t mode) {
     pinMode(pin, mode);
 }
 
-extern "C" int32_t host_fn_arduino_digitalRead(int32_t pin) {
+extern "C" int32_t app_arduino_digitalRead(int32_t pin) {
     return digitalRead(pin);
 }
 
-extern "C" void host_fn_arduino_digitalWrite(int32_t pin, int32_t value) {
+extern "C" void app_arduino_digitalWrite(int32_t pin, int32_t value) {
     digitalWrite(pin, value);
 }
 
-extern "C" int32_t host_fn_arduino_analogRead(int32_t pin) {
+extern "C" int32_t app_arduino_analogRead(int32_t pin) {
     return analogRead(pin);
 }
 
-extern "C" void host_fn_arduino_analogWrite(int32_t pin, int32_t value) {
+extern "C" void app_arduino_analogWrite(int32_t pin, int32_t value) {
     analogWrite(pin, value);
 }
 
-extern "C" int32_t host_fn_arduino_getPinLED() {
+extern "C" int32_t app_arduino_getPinLED() {
     return LED_BUILTIN;
 }
 
-extern "C" void host_fn_arduino_print(int32_t ptr, int32_t len) {
+extern "C" void app_arduino_print(int32_t ptr, int32_t len) {
     if(app_host_memory != NULL) {
         Serial.write(&app_host_memory[ptr], len);
     }

@@ -46,8 +46,6 @@ var CmdWat2c = &cli.Command{
 		prefix := c.String("prefix")
 		exports := c.StringSliceAsMap("exports")
 
-		fmt.Println("exports:", exports)
-
 		if outfile == "" {
 			outfile = infile
 			if n1, n2 := len(outfile), len(".wat"); n1 > n2 {

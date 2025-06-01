@@ -51,7 +51,7 @@ func (p *wat2cWorker) getFuncCRetType(fnType *ast.FuncType, fnName string) strin
 			panic("unreachable")
 		}
 	default:
-		return fmt.Sprintf("%s_%s_ret_t", p.prefix, toCName(fnName))
+		return fmt.Sprintf("%s_%s_ret_t", p.opt.Prefix, toCName(fnName))
 	}
 }
 

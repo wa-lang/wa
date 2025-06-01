@@ -36,14 +36,6 @@ func MakeFlag_wat2c_prefix() *cli.StringFlag {
 	}
 }
 
-// wat2c 导出的函数列表
-func MakeFlag_wat2c_exports() *cli.StringSliceFlag {
-	return &cli.StringSliceFlag{
-		Name:  "wat2c.exports",
-		Usage: "set wat2c export func list (K1=V1,K2=V2,...)",
-	}
-}
-
 // 构建的 Tags
 func MakeFlag_tags() *cli.StringFlag {
 	return &cli.StringFlag{

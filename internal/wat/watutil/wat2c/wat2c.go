@@ -19,26 +19,20 @@ type Options struct {
 }
 
 func Wat2C(filename string, source []byte, opt Options) (code, header []byte, err error) {
-	if opt.Exports == nil {
-		opt.Exports = map[string]string{}
-	}
-
-	opt.Prefix = toCName(opt.Prefix)
-
 	m, err := parser.ParseModule(filename, source)
 	if err != nil {
 		return nil, nil, err
 	}
 
-	worker := newWat2cWorker(m)
-	code, header, err = worker.BuildCode(opt)
+	worker := newWat2cWorker(m, opt)
+	code, header, err = worker.BuildCode()
 	return
 }
 
 type wat2cWorker struct {
-	m *ast.Module
+	opt Options
 
-	prefix string // 生成C代码时, 名字的前缀
+	m *ast.Module
 
 	inlinedTypeIndices []*inlinedTypeIndex
 	inlinedTypes       []*wasm.FunctionType
@@ -58,15 +52,35 @@ type inlinedTypeIndex struct {
 	inlinedIdx wasm.Index
 }
 
-func newWat2cWorker(mWat *ast.Module) *wat2cWorker {
-	return &wat2cWorker{m: mWat, trace: DebugMode}
+func newWat2cWorker(mWat *ast.Module, opt Options) *wat2cWorker {
+	p := &wat2cWorker{m: mWat, trace: DebugMode}
+
+	p.opt.Prefix = toCName(opt.Prefix)
+
+	if p.opt.Exports == nil {
+		p.opt.Exports = map[string]string{}
+	}
+	for k, v := range opt.Exports {
+		p.opt.Exports[k] = v
+	}
+
+	// 更新 export 信息
+	for _, fn := range p.m.Funcs {
+		if exportName, ok := p.opt.Exports[fn.Name]; ok {
+			if exportName != "" {
+				fn.ExportName = exportName
+			} else {
+				fn.ExportName = fn.Name
+			}
+		}
+	}
+
+	return p
 }
 
-func (p *wat2cWorker) BuildCode(opt Options) (code, header []byte, err error) {
+func (p *wat2cWorker) BuildCode() (code, header []byte, err error) {
 	var h bytes.Buffer
 	var c bytes.Buffer
-
-	p.prefix = opt.Prefix
 
 	if err := p.buildCode(&c); err != nil {
 		return nil, nil, err

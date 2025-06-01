@@ -20,8 +20,8 @@ func (p *wat2cWorker) buildHeader(w io.Writer) error {
 	fmt.Fprintf(w, "#pragma once\n")
 	fmt.Fprintln(w)
 
-	fmt.Fprintf(w, "#ifndef _%s_H_\n", p.prefix)
-	fmt.Fprintf(w, "#define _%s_H_\n", p.prefix)
+	fmt.Fprintf(w, "#ifndef _%s_H_\n", p.opt.Prefix)
+	fmt.Fprintf(w, "#define _%s_H_\n", p.opt.Prefix)
 	fmt.Fprintln(w)
 
 	fmt.Fprintf(w, "#include <stdint.h>\n")
@@ -37,15 +37,15 @@ func (p *wat2cWorker) buildHeader(w io.Writer) error {
 			fmt.Fprintf(w, "// memory $%s\n", p.m.Memory.Name)
 		}
 		if max := p.m.Memory.MaxPages; max > 0 {
-			fmt.Fprintf(w, "extern uint8_t*      %s_memory;\n", p.prefix)
-			fmt.Fprintf(w, "extern const int32_t %s_memory_init_max_pages; // = %d;\n", p.prefix, max)
-			fmt.Fprintf(w, "extern const int32_t %s_memory_init_pages; // = %d;\n", p.prefix, p.m.Memory.Pages)
-			fmt.Fprintf(w, "extern int32_t       %s_memory_size; // = %d;\n", p.prefix, p.m.Memory.Pages)
+			fmt.Fprintf(w, "extern uint8_t*      %s_memory;\n", p.opt.Prefix)
+			fmt.Fprintf(w, "extern const int32_t %s_memory_init_max_pages; // = %d;\n", p.opt.Prefix, max)
+			fmt.Fprintf(w, "extern const int32_t %s_memory_init_pages; // = %d;\n", p.opt.Prefix, p.m.Memory.Pages)
+			fmt.Fprintf(w, "extern int32_t       %s_memory_size; // = %d;\n", p.opt.Prefix, p.m.Memory.Pages)
 		} else {
-			fmt.Fprintf(w, "extern uint8_t*      %s_memory;\n", p.prefix)
-			fmt.Fprintf(w, "extern const int32_t %s_memory_init_max_pages; // = %d;\n", p.prefix, p.m.Memory.Pages)
-			fmt.Fprintf(w, "extern const int32_t %s_memory_init_pages; // = %d;\n", p.prefix, p.m.Memory.Pages)
-			fmt.Fprintf(w, "extern int32_t       %s_memory_size; // = %d;\n", p.prefix, p.m.Memory.Pages)
+			fmt.Fprintf(w, "extern uint8_t*      %s_memory;\n", p.opt.Prefix)
+			fmt.Fprintf(w, "extern const int32_t %s_memory_init_max_pages; // = %d;\n", p.opt.Prefix, p.m.Memory.Pages)
+			fmt.Fprintf(w, "extern const int32_t %s_memory_init_pages; // = %d;\n", p.opt.Prefix, p.m.Memory.Pages)
+			fmt.Fprintf(w, "extern int32_t       %s_memory_size; // = %d;\n", p.opt.Prefix, p.m.Memory.Pages)
 		}
 		fmt.Fprintln(w)
 	}
@@ -54,18 +54,18 @@ func (p *wat2cWorker) buildHeader(w io.Writer) error {
 			fmt.Fprintf(w, "// table $%s\n", p.m.Table.Name)
 		}
 		if max := p.m.Table.MaxSize; max > 0 {
-			fmt.Fprintf(w, "extern uintptr_t %s_table[/*%d*/];\n", p.prefix, max)
-			fmt.Fprintf(w, "extern const int %s_table_init_max_size; // = %d;\n", p.prefix, max)
-			fmt.Fprintf(w, "extern int32_t   %s_table_size; // = %d;\n", p.prefix, p.m.Table.Size)
+			fmt.Fprintf(w, "extern uintptr_t %s_table[/*%d*/];\n", p.opt.Prefix, max)
+			fmt.Fprintf(w, "extern const int %s_table_init_max_size; // = %d;\n", p.opt.Prefix, max)
+			fmt.Fprintf(w, "extern int32_t   %s_table_size; // = %d;\n", p.opt.Prefix, p.m.Table.Size)
 		} else {
-			fmt.Fprintf(w, "extern uintptr_t %s_table[/*%d*/];\n", p.prefix, p.m.Table.Size)
-			fmt.Fprintf(w, "extern const int %s_table_init_max_size; // = %d;\n", p.prefix, p.m.Table.Size)
-			fmt.Fprintf(w, "extern int32_t   %s_table_size; // = %d;\n", p.prefix, p.m.Table.Size)
+			fmt.Fprintf(w, "extern uintptr_t %s_table[/*%d*/];\n", p.opt.Prefix, p.m.Table.Size)
+			fmt.Fprintf(w, "extern const int %s_table_init_max_size; // = %d;\n", p.opt.Prefix, p.m.Table.Size)
+			fmt.Fprintf(w, "extern int32_t   %s_table_size; // = %d;\n", p.opt.Prefix, p.m.Table.Size)
 		}
 		fmt.Fprintln(w)
 	}
 
-	fmt.Fprintf(w, "extern void %s_init();\n", p.prefix)
+	fmt.Fprintf(w, "extern void %s_init();\n", p.opt.Prefix)
 	fmt.Fprintln(w)
 
 	if len(p.m.Exports) == 0 {
@@ -91,8 +91,8 @@ func (p *wat2cWorker) buildHeader(w io.Writer) error {
 
 		if f.ExportName != f.Name {
 			fmt.Fprintf(w, "#define %s_%s %s_%s\n",
-				p.prefix, toCName(f.ExportName),
-				p.prefix, toCName(f.Name),
+				p.opt.Prefix, toCName(f.ExportName),
+				p.opt.Prefix, toCName(f.Name),
 			)
 		}
 
@@ -115,10 +115,10 @@ func (p *wat2cWorker) buildHeader(w io.Writer) error {
 					fmt.Fprintf(w, "double R%d;", i)
 				}
 			}
-			fmt.Fprintf(w, "} %s_%s_ret_t;\n", p.prefix, toCName(f.Name))
+			fmt.Fprintf(w, "} %s_%s_ret_t;\n", p.opt.Prefix, toCName(f.Name))
 		}
 
-		fmt.Fprintf(w, "extern %s %s_%s(", cRetType, p.prefix, toCName(f.Name))
+		fmt.Fprintf(w, "extern %s %s_%s(", cRetType, p.opt.Prefix, toCName(f.Name))
 		if len(f.Type.Params) > 0 {
 			for i, x := range f.Type.Params {
 				if i > 0 {
@@ -154,7 +154,7 @@ func (p *wat2cWorker) buildHeader(w io.Writer) error {
 				}
 			}
 		}
-		fmt.Fprintf(w, ");\n")
+		fmt.Fprintf(w, ");\n\n")
 	}
 	fmt.Fprintln(w)
 
@@ -163,7 +163,7 @@ func (p *wat2cWorker) buildHeader(w io.Writer) error {
 	fmt.Fprintf(w, "#endif\n")
 	fmt.Fprintln(w)
 
-	fmt.Fprintf(w, "#endif // _%s_H_\n", p.prefix)
+	fmt.Fprintf(w, "#endif // _%s_H_\n", p.opt.Prefix)
 
 	return nil
 }

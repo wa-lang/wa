@@ -293,8 +293,12 @@ func BuildApp(opt *appbase.Option, input, outfile string) (mainFunc string, wasm
 
 			// 生成wat转译的C代码
 			{
+				pkgName := manifest.Pkg.Name
 				code, header, err := watutil.Wat2C("wa-app.wat", watOutput, wat2c.Options{
 					Prefix: opt.Wat2CPrefix,
+					Exports: map[string]string{
+						pkgName + ".Loop": "loop",
+					},
 				})
 				if err != nil {
 					os.WriteFile(outfile, code, 0666)

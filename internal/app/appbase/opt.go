@@ -58,7 +58,6 @@ func BuildOptions(c *cli.Context, waBackend ...string) *Option {
 		WaBackend:    config.WaBackend_Default,
 		BuilgTags:    strings.Fields(c.String("tags")),
 		Wat2CPrefix:  c.String("wat2c.prefix"),
-		Wat2CExports: c.StringSliceAsMap("wat2c.exports"),
 		LD_StackSize: c.Int("ld-stack-size"),
 		LD_MaxMemory: c.Int("ld-max-memory"),
 		Optimize:     c.Bool("optimize"),

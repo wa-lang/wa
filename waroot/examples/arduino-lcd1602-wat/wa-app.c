@@ -401,12 +401,16 @@ void app_loop() {
   app_delay(R0.i32);
   return;
 }
+void app_memory_init_data() {
+}
+
 
 void app_init() {
   static int init_flag = 0;
   if(init_flag) return;
   init_flag = 1;
   app_memory_init(&app_memory, &app_memory_size);
+  app_memory_init_data(&app_memory, &app_memory_size);
   app__start();
   return;
 }
