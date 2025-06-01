@@ -23,7 +23,6 @@ extern void app_init();
 // func $loop
 extern void app_loop();
 
-
 #ifdef __cplusplus
 } // extern C 
 #endif

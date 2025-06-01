@@ -75,6 +75,15 @@ func newWat2cWorker(mWat *ast.Module, opt Options) *wat2cWorker {
 		}
 	}
 
+	// 如果 start 字段为空, 则尝试用 _start 导出函数替代
+	if p.m.Start == "" {
+		for _, fn := range p.m.Funcs {
+			if fn.ExportName == "_start" {
+				p.m.Start = fn.Name
+			}
+		}
+	}
+
 	return p
 }
 
@@ -89,5 +98,14 @@ func (p *wat2cWorker) BuildCode() (code, header []byte, err error) {
 		return nil, nil, err
 	}
 
-	return c.Bytes(), h.Bytes(), nil
+	// 删除头文件中多个连续的空白行
+	headerCode := h.Bytes()
+	for {
+		if !bytes.Contains(headerCode, []byte("\n\n\n")) {
+			break
+		}
+		headerCode = bytes.ReplaceAll(headerCode, []byte("\n\n\n"), []byte("\n\n"))
+	}
+
+	return c.Bytes(), headerCode, nil
 }
