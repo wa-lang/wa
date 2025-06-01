@@ -31,6 +31,9 @@ const int32_t app_memory_init_max_pages = 0;
 const int32_t app_memory_init_pages = 0;
 int32_t       app_memory_size = 0;
 
+// global $LED: i32
+static int32_t app_LED = 0;
+
 // func $_start
 static void app__start();
 // func $loop
@@ -42,11 +45,9 @@ static void app__start() {
 
   int32_t tmp = 0;
 
-  R0.i32 = 1024;
-  R1.i32 = app_getPinLED();
-  tmp = R1.i32;
-  memcpy(&app_memory[R0.i32+0], &R1.i32, 4);
-  R0.i32 = tmp;
+  R0.i32 = app_getPinLED();
+  app_LED = R0.i32;
+  R0.i32 = app_LED;
   R1.i32 = 1;
   app_pinMode(R0.i32, R1.i32);
   return;
@@ -56,14 +57,12 @@ static void app__start() {
 void app_loop() {
   val_t R0, R1;
 
-  R0.i32 = 1024;
-  memcpy(&R0.i32, &app_memory[R0.i32+0], 4);
+  R0.i32 = app_LED;
   R1.i32 = 1;
   app_digitalWrite(R0.i32, R1.i32);
   R0.i32 = 100;
   app_delay(R0.i32);
-  R0.i32 = 1024;
-  memcpy(&R0.i32, &app_memory[R0.i32+0], 4);
+  R0.i32 = app_LED;
   R1.i32 = 0;
   app_digitalWrite(R0.i32, R1.i32);
   R0.i32 = 900;

@@ -9,26 +9,25 @@
 	(memory (;0;) 0)
 	(export "memory" (memory 0))
 
+	(global $LED (mut i32) (i32.const 0))
+
+
 	(func $_start (start)
 		(local $tmp i32)
 
-		;; var LED i32 = getPinLED()
-		;; &LED == 1024
-		i32.const 1024
+		;; global LED i32 = getPinLED()
 		call $getPinLED
-		local.tee $tmp
-		i32.store
+		global.set $LED
 
 		;; pinMode(LED, 1)
-		local.get $tmp
+		global.get $LED
 		i32.const 1
 		call $pinMode
 	)
 
 	(func $loop (export "loop")
 		;; digitalWrite(LED, 1)
-		i32.const 1024
-		i32.load
+		global.get $LED
 		i32.const 1
 		call $digitalWrite
 
@@ -37,8 +36,7 @@
 		call $delay
 
 		;; digitalWrite(LED, 0)
-		i32.const 1024
-		i32.load
+		global.get $LED
 		i32.const 0
 		call $digitalWrite
 
