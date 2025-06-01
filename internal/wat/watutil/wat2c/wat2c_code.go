@@ -177,7 +177,7 @@ func (p *wat2cWorker) buildMemory_data(w io.Writer) error {
 		return nil
 	}
 
-	fmt.Fprintf(w, "void %s_memory_init_data() {\n", p.opt.Prefix)
+	fmt.Fprintf(w, "\nstatic void %s_memory_init_data() {\n", p.opt.Prefix)
 	defer fmt.Fprintf(w, "}\n\n")
 
 	for _, d := range p.m.Data {

@@ -54,6 +54,10 @@ func (p *wat2cWorker) buildFunc_body(w io.Writer, fn *ast.Func, cRetType string)
 		}
 	}
 
+	p.use_R_u32 = false
+	p.use_R_u16 = false
+	p.use_R_u8 = false
+
 	assert(stk.Len() == 0)
 	for _, ins := range fn.Body.Insts {
 		if err := p.buildFunc_ins(&bufIns, fn, &stk, ins, 1); err != nil {
@@ -67,17 +71,25 @@ func (p *wat2cWorker) buildFunc_body(w io.Writer, fn *ast.Func, cRetType string)
 	}
 
 	// 固定类型的寄存器
-	fmt.Fprintf(w, "  uint32_t R_u32;\n")
-	fmt.Fprintf(w, "  uint16_t R_u16;\n")
-	fmt.Fprintf(w, "  uint8_t  R_u8;\n")
+	if p.use_R_u32 {
+		fmt.Fprintf(w, "  uint32_t R_u32;\n")
+	}
+	if p.use_R_u16 {
+		fmt.Fprintf(w, "  uint16_t R_u16;\n")
+	}
+	if p.use_R_u8 {
+		fmt.Fprintf(w, "  uint8_t  R_u8;\n")
+	}
 
 	// 栈寄存器(union类型)
-	fmt.Fprintf(w, "  val_t R0")
-	for i := 1; i < stk.MaxDepth(); i++ {
-		fmt.Fprintf(w, ", R%d", i)
+	if stk.MaxDepth() > 0 {
+		fmt.Fprintf(w, "  val_t R0")
+		for i := 1; i < stk.MaxDepth(); i++ {
+			fmt.Fprintf(w, ", R%d", i)
+		}
+		fmt.Fprintf(w, ";\n")
+		fmt.Fprintln(w)
 	}
-	fmt.Fprintf(w, ";\n")
-	fmt.Fprintln(w)
 
 	// 指令复制到 w
 	io.Copy(w, &bufIns)
@@ -707,6 +719,7 @@ func (p *wat2cWorker) buildFunc_ins(w io.Writer, fn *ast.Func, stk *valueTypeSta
 		i := i.(ast.Ins_I32Load8S)
 		sp0 := stk.Pop(token.I32)
 		ret0 := stk.Push(token.I32)
+		p.use_R_u8 = true
 		fmt.Fprintf(w, "%smemcpy(&R_u8, &%s_memory[R%d.i32+%d], 1); R%d.i32 = (int32_t)((int8_t)R_u8);\n",
 			indent, p.opt.Prefix, ret0, i.Offset, sp0,
 		)
@@ -714,6 +727,7 @@ func (p *wat2cWorker) buildFunc_ins(w io.Writer, fn *ast.Func, stk *valueTypeSta
 		i := i.(ast.Ins_I32Load8U)
 		sp0 := stk.Pop(token.I32)
 		ret0 := stk.Push(token.I32)
+		p.use_R_u8 = true
 		fmt.Fprintf(w, "%smemcpy(&R_u8, &%s_memory[R%d.i32+%d], 1); R%d.i32 = (int32_t)((uint8_t)R_u8);\n",
 			indent, p.opt.Prefix, ret0, i.Offset, sp0,
 		)
@@ -721,6 +735,7 @@ func (p *wat2cWorker) buildFunc_ins(w io.Writer, fn *ast.Func, stk *valueTypeSta
 		i := i.(ast.Ins_I32Load16S)
 		sp0 := stk.Pop(token.I32)
 		ret0 := stk.Push(token.I32)
+		p.use_R_u16 = true
 		fmt.Fprintf(w, "%smemcpy(&R_u16, &%s_memory[R%d.i32+%d], 2); R%d.i32 = (int32_t)((int16_t)R_u16);\n",
 			indent, p.opt.Prefix, ret0, i.Offset, sp0,
 		)
@@ -728,6 +743,7 @@ func (p *wat2cWorker) buildFunc_ins(w io.Writer, fn *ast.Func, stk *valueTypeSta
 		i := i.(ast.Ins_I32Load16U)
 		sp0 := stk.Pop(token.I32)
 		ret0 := stk.Push(token.I32)
+		p.use_R_u16 = true
 		fmt.Fprintf(w, "%smemcpy(&R_u16, &%s_memory[R%d.i32+%d], 2); R%d.i32 = (int32_t)((uint16_t)R_u16);\n",
 			indent, p.opt.Prefix, ret0, i.Offset, sp0,
 		)
@@ -735,6 +751,7 @@ func (p *wat2cWorker) buildFunc_ins(w io.Writer, fn *ast.Func, stk *valueTypeSta
 		i := i.(ast.Ins_I64Load8S)
 		sp0 := stk.Pop(token.I32)
 		ret0 := stk.Push(token.I64)
+		p.use_R_u8 = true
 		fmt.Fprintf(w, "%smemcpy(&R_u8, &%s_memory[R%d.i32+%d], 1); R%d.i64 = (int64_t)((int8_t)R_u8);\n",
 			indent, p.opt.Prefix, ret0, i.Offset, sp0,
 		)
@@ -742,6 +759,7 @@ func (p *wat2cWorker) buildFunc_ins(w io.Writer, fn *ast.Func, stk *valueTypeSta
 		i := i.(ast.Ins_I64Load8U)
 		sp0 := stk.Pop(token.I32)
 		ret0 := stk.Push(token.I64)
+		p.use_R_u8 = true
 		fmt.Fprintf(w, "%smemcpy(&R_u8, &%s_memory[R%d.i32+%d], 1); R%d.i64 = (int64_t)((uint8_t)R_u8);\n",
 			indent, p.opt.Prefix, ret0, i.Offset, sp0,
 		)
@@ -749,6 +767,7 @@ func (p *wat2cWorker) buildFunc_ins(w io.Writer, fn *ast.Func, stk *valueTypeSta
 		i := i.(ast.Ins_I64Load16S)
 		sp0 := stk.Pop(token.I32)
 		ret0 := stk.Push(token.I64)
+		p.use_R_u16 = true
 		fmt.Fprintf(w, "%smemcpy(&R_u16, &%s_memory[R%d.i32+%d], 2); R%d.i64 = (int64_t)((int16_t)R_u16);\n",
 			indent, p.opt.Prefix, ret0, i.Offset, sp0,
 		)
@@ -756,6 +775,7 @@ func (p *wat2cWorker) buildFunc_ins(w io.Writer, fn *ast.Func, stk *valueTypeSta
 		i := i.(ast.Ins_I64Load16U)
 		sp0 := stk.Pop(token.I32)
 		ret0 := stk.Push(token.I64)
+		p.use_R_u16 = true
 		fmt.Fprintf(w, "%smemcpy(&R_u16, &%s_memory[R%d.i32+%d], 2); R%d.i64 = (int64_t)((uint16_t)R_u16);\n",
 			indent, p.opt.Prefix, ret0, i.Offset, sp0,
 		)
@@ -763,6 +783,7 @@ func (p *wat2cWorker) buildFunc_ins(w io.Writer, fn *ast.Func, stk *valueTypeSta
 		i := i.(ast.Ins_I64Load32S)
 		sp0 := stk.Pop(token.I32)
 		ret0 := stk.Push(token.I64)
+		p.use_R_u32 = true
 		fmt.Fprintf(w, "%smemcpy(&R_u32, &%s_memory[R%d.i32+%d], 4); R%d.i64 = (int64_t)((int32_t)R_u32);\n",
 			indent, p.opt.Prefix, ret0, i.Offset, sp0,
 		)
@@ -770,6 +791,7 @@ func (p *wat2cWorker) buildFunc_ins(w io.Writer, fn *ast.Func, stk *valueTypeSta
 		i := i.(ast.Ins_I64Load32U)
 		sp0 := stk.Pop(token.I32)
 		ret0 := stk.Push(token.I64)
+		p.use_R_u32 = true
 		fmt.Fprintf(w, "%smemcpy(&R_u32, &%s_memory[R%d.i32+%d], 4); R%d.i64 = (int64_t)((uint32_t)R_u32);\n",
 			indent, p.opt.Prefix, ret0, i.Offset, sp0,
 		)
@@ -805,6 +827,7 @@ func (p *wat2cWorker) buildFunc_ins(w io.Writer, fn *ast.Func, stk *valueTypeSta
 		i := i.(ast.Ins_I32Store8)
 		sp0 := stk.Pop(token.I32)
 		sp1 := stk.Pop(token.I32)
+		p.use_R_u8 = true
 		fmt.Fprintf(w, "%sR_u8 = (uint8_t)((int8_t)(R%d.i32)); memcpy(&%s_memory[R%d.i32+%d], &R_u8, 1);\n",
 			indent, sp0, p.opt.Prefix, sp1, i.Offset,
 		)
@@ -812,6 +835,7 @@ func (p *wat2cWorker) buildFunc_ins(w io.Writer, fn *ast.Func, stk *valueTypeSta
 		i := i.(ast.Ins_I32Store16)
 		sp0 := stk.Pop(token.I32)
 		sp1 := stk.Pop(token.I32)
+		p.use_R_u16 = true
 		fmt.Fprintf(w, "%sR_u16 = (uint16_t)((int16_t)(R%d.i32)); memcpy(&%s_memory[R%d.i32+%d], &R_u16, 2);\n",
 			indent, sp0, p.opt.Prefix, sp1, i.Offset,
 		)
@@ -819,6 +843,7 @@ func (p *wat2cWorker) buildFunc_ins(w io.Writer, fn *ast.Func, stk *valueTypeSta
 		i := i.(ast.Ins_I64Store8)
 		sp0 := stk.Pop(token.I64)
 		sp1 := stk.Pop(token.I32)
+		p.use_R_u8 = true
 		fmt.Fprintf(w, "%sR_u8 = (uint8_t)((int8_t)(R%d.i64)); memcpy(&%s_memory[R%d.i32+%d], &R_u8, 1);\n",
 			indent, sp0, p.opt.Prefix, sp1, i.Offset,
 		)
@@ -826,6 +851,7 @@ func (p *wat2cWorker) buildFunc_ins(w io.Writer, fn *ast.Func, stk *valueTypeSta
 		i := i.(ast.Ins_I64Store16)
 		sp0 := stk.Pop(token.I64)
 		sp1 := stk.Pop(token.I32)
+		p.use_R_u16 = true
 		fmt.Fprintf(w, "%sR_u16 = (uint16_t)((int16_t)(R%d.i64)); memcpy(&%s_memory[R%d.i32+%d], &R_u16, 2);\n",
 			indent, sp0, p.opt.Prefix, sp1, i.Offset,
 		)
@@ -833,6 +859,7 @@ func (p *wat2cWorker) buildFunc_ins(w io.Writer, fn *ast.Func, stk *valueTypeSta
 		i := i.(ast.Ins_I64Store32)
 		sp0 := stk.Pop(token.I64)
 		sp1 := stk.Pop(token.I32)
+		p.use_R_u32 = true
 		fmt.Fprintf(w, "%sR_u32 = (uint32_t)((int32_t)(R%d.i64)); memcpy(&%s_memory[R%d.i32+%d], &R_u32, 4);\n",
 			indent, sp0, p.opt.Prefix, sp1, i.Offset,
 		)

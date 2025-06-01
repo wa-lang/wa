@@ -42,8 +42,12 @@ type wat2cWorker struct {
 	scopeLabels     []string      // 嵌套的label查询, if/block/loop
 	scopeStackBases []int         // if/block/loop, 开始的栈位置
 
-	useMathX bool // 是否使用了 math_x 部分函数
-	trace    bool // 调试开关
+	useMathX  bool // 是否使用了 math_x 部分函数
+	use_R_u32 bool // R_u32
+	use_R_u16 bool // R_u16
+	use_R_u8  bool // R_u8
+
+	trace bool // 调试开关
 }
 
 type inlinedTypeIndex struct {
@@ -107,5 +111,8 @@ func (p *wat2cWorker) BuildCode() (code, header []byte, err error) {
 		headerCode = bytes.ReplaceAll(headerCode, []byte("\n\n\n"), []byte("\n\n"))
 	}
 
-	return c.Bytes(), headerCode, nil
+	// 删除空白行
+	bodyCode := bytes.ReplaceAll(c.Bytes(), []byte("\n\n\n"), []byte("\n\n"))
+
+	return bodyCode, headerCode, nil
 }

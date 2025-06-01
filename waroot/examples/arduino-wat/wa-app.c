@@ -38,9 +38,6 @@ extern void app_loop();
 
 // func _start
 static void app__start() {
-  uint32_t R_u32;
-  uint16_t R_u16;
-  uint8_t  R_u8;
   val_t R0, R1;
 
   int32_t tmp = 0;
@@ -57,9 +54,6 @@ static void app__start() {
 
 // func loop
 void app_loop() {
-  uint32_t R_u32;
-  uint16_t R_u16;
-  uint8_t  R_u8;
   val_t R0, R1;
 
   R0.i32 = 1024;
@@ -76,9 +70,9 @@ void app_loop() {
   app_delay(R0.i32);
   return;
 }
-void app_memory_init_data() {
-}
 
+static void app_memory_init_data() {
+}
 
 void app_init() {
   static int init_flag = 0;

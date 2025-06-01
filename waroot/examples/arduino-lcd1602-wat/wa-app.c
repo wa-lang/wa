@@ -85,9 +85,6 @@ extern void app_loop();
 
 // func lcdPulseEnable
 static void app_lcdPulseEnable() {
-  uint32_t R_u32;
-  uint16_t R_u16;
-  uint8_t  R_u8;
   val_t R0, R1;
 
   R0.i32 = app_E;
@@ -110,9 +107,6 @@ static void app_lcdPulseEnable() {
 
 // func getBitAt (param $v i32) (param $i i32) (result i32)
 static int32_t app_getBitAt(int32_t v, int32_t i) {
-  uint32_t R_u32;
-  uint16_t R_u16;
-  uint8_t  R_u8;
   val_t R0, R1;
 
   R0.i32 = v;
@@ -125,9 +119,6 @@ static int32_t app_getBitAt(int32_t v, int32_t i) {
 
 // func get4BitAt (param $v i32) (param $i i32) (result i32)
 static int32_t app_get4BitAt(int32_t v, int32_t i) {
-  uint32_t R_u32;
-  uint16_t R_u16;
-  uint8_t  R_u8;
   val_t R0, R1;
 
   R0.i32 = v;
@@ -140,9 +131,6 @@ static int32_t app_get4BitAt(int32_t v, int32_t i) {
 
 // func lcdWrite4bits (param $byteValue i32)
 static void app_lcdWrite4bits(int32_t byteValue) {
-  uint32_t R_u32;
-  uint16_t R_u16;
-  uint8_t  R_u8;
   val_t R0, R1, R2;
 
   R0.i32 = app_D4;
@@ -171,9 +159,6 @@ static void app_lcdWrite4bits(int32_t byteValue) {
 
 // func lcdSend (param $value i32) (param $mode i32)
 static void app_lcdSend(int32_t value, int32_t mode) {
-  uint32_t R_u32;
-  uint16_t R_u16;
-  uint8_t  R_u8;
   val_t R0, R1;
 
   R0.i32 = app_RS;
@@ -192,9 +177,6 @@ static void app_lcdSend(int32_t value, int32_t mode) {
 
 // func lcdCommand (param $value i32)
 static void app_lcdCommand(int32_t value) {
-  uint32_t R_u32;
-  uint16_t R_u16;
-  uint8_t  R_u8;
   val_t R0, R1;
 
   R0.i32 = value;
@@ -205,9 +187,6 @@ static void app_lcdCommand(int32_t value) {
 
 // func LCDSetCursor (param $row i32) (param $col i32)
 static void app_LCDSetCursor(int32_t row, int32_t col) {
-  uint32_t R_u32;
-  uint16_t R_u16;
-  uint8_t  R_u8;
   val_t R0, R1;
 
   R0.i32 = row;
@@ -225,9 +204,6 @@ static void app_LCDSetCursor(int32_t row, int32_t col) {
 
 // func LCDWriteChar (param $value i32)
 static void app_LCDWriteChar(int32_t value) {
-  uint32_t R_u32;
-  uint16_t R_u16;
-  uint8_t  R_u8;
   val_t R0, R1;
 
   R0.i32 = value;
@@ -238,9 +214,6 @@ static void app_LCDWriteChar(int32_t value) {
 
 // func LCDClear
 static void app_LCDClear() {
-  uint32_t R_u32;
-  uint16_t R_u16;
-  uint8_t  R_u8;
   val_t R0;
 
   R0.i32 = 1;
@@ -252,9 +225,6 @@ static void app_LCDClear() {
 
 // func LCDInit
 static void app_LCDInit() {
-  uint32_t R_u32;
-  uint16_t R_u16;
-  uint8_t  R_u8;
   val_t R0, R1;
 
   R0.i32 = app_RS;
@@ -306,9 +276,6 @@ static void app_LCDInit() {
 
 // func say_hello (param $row i32) (param $col i32)
 static void app_say_hello(int32_t row, int32_t col) {
-  uint32_t R_u32;
-  uint16_t R_u16;
-  uint8_t  R_u8;
   val_t R0, R1;
 
   R0.i32 = row;
@@ -347,20 +314,12 @@ static void app_say_hello(int32_t row, int32_t col) {
 
 // func _start
 static void app__start() {
-  uint32_t R_u32;
-  uint16_t R_u16;
-  uint8_t  R_u8;
-  val_t R0;
-
   app_LCDInit();
   return;
 }
 
 // func loop
 void app_loop() {
-  uint32_t R_u32;
-  uint16_t R_u16;
-  uint8_t  R_u8;
   val_t R0, R1;
 
   app_LCDClear();
@@ -401,9 +360,9 @@ void app_loop() {
   app_delay(R0.i32);
   return;
 }
-void app_memory_init_data() {
-}
 
+static void app_memory_init_data() {
+}
 
 void app_init() {
   static int init_flag = 0;
