@@ -14,6 +14,7 @@ import (
 	"wa-lang.org/wa/internal/config"
 	"wa-lang.org/wa/internal/loader"
 	"wa-lang.org/wa/internal/wat/watutil"
+	"wa-lang.org/wa/internal/wat/watutil/wat2c"
 )
 
 //go:embed assets/arduino.ino
@@ -292,7 +293,9 @@ func BuildApp(opt *appbase.Option, input, outfile string) (mainFunc string, wasm
 
 			// 生成wat转译的C代码
 			{
-				code, header, err := watutil.Wat2C("wa-app.wat", watOutput, opt.Wat2CPrefix)
+				code, header, err := watutil.Wat2C("wa-app.wat", watOutput, wat2c.Options{
+					Prefix: opt.Wat2CPrefix,
+				})
 				if err != nil {
 					os.WriteFile(outfile, code, 0666)
 					fmt.Println(err)

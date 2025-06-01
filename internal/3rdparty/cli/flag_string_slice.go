@@ -35,15 +35,9 @@ func (s *StringSlice) Set(value string) error {
 		s.hasBeenSet = true
 	}
 
-	if strings.HasPrefix(value, slPfx) {
-		// Deserializing assumes overwrite
-		_ = json.Unmarshal([]byte(strings.Replace(value, slPfx, "", 1)), &s.slice)
-		s.hasBeenSet = true
-		return nil
+	for _, v := range strings.Split(value, ",") {
+		s.slice = append(s.slice, strings.TrimSpace(v))
 	}
-
-	s.slice = append(s.slice, value)
-
 	return nil
 }
 
@@ -180,6 +174,20 @@ func (c *Context) StringSlice(name string) []string {
 		return lookupStringSlice(name, fs)
 	}
 	return nil
+}
+
+// 列表解码为 map, -flag="K1=V1,K2=V2"
+func (c *Context) StringSliceAsMap(name string) map[string]string {
+	var m = make(map[string]string)
+	for _, kv := range c.StringSlice(name) {
+		if idx := strings.Index(kv, "="); idx >= 0 {
+			k, v := kv[:idx], kv[idx+1:]
+			m[k] = v
+		} else {
+			m[kv] = ""
+		}
+	}
+	return m
 }
 
 func lookupStringSlice(name string, set *flag.FlagSet) []string {

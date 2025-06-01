@@ -9,6 +9,7 @@ import (
 
 	"wa-lang.org/wa/internal/3rdparty/cli"
 	"wa-lang.org/wa/internal/wat/watutil"
+	"wa-lang.org/wa/internal/wat/watutil/wat2c"
 )
 
 var CmdWat2c = &cli.Command{
@@ -29,6 +30,10 @@ var CmdWat2c = &cli.Command{
 			Usage:   "name prefix to use in generated code",
 			Value:   "app",
 		},
+		&cli.StringSliceFlag{
+			Name:  "exports",
+			Usage: "set export func list (K1=V1,K2=V2,...)",
+		},
 	},
 	Action: func(c *cli.Context) error {
 		if c.NArg() == 0 {
@@ -39,6 +44,9 @@ var CmdWat2c = &cli.Command{
 		infile := c.Args().First()
 		outfile := c.String("output")
 		prefix := c.String("prefix")
+		exports := c.StringSliceAsMap("exports")
+
+		fmt.Println("exports:", exports)
 
 		if outfile == "" {
 			outfile = infile
@@ -61,7 +69,10 @@ var CmdWat2c = &cli.Command{
 			os.Exit(1)
 		}
 
-		code, header, err := watutil.Wat2C(infile, source, prefix)
+		code, header, err := watutil.Wat2C(infile, source, wat2c.Options{
+			Prefix:  prefix,
+			Exports: exports,
+		})
 		if err != nil {
 			os.WriteFile(outfile, code, 0666)
 			fmt.Println(err)
