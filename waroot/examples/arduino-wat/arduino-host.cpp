@@ -4,6 +4,15 @@
 
 #include <Arduino.h>
 
+// 常量定义
+extern "C" int32_t app_arduino_HIGH = HIGH;
+extern "C" int32_t app_arduino_LOW = LOW;
+
+extern "C" int32_t app_arduino_INPUT = INPUT;
+extern "C" int32_t app_arduino_OUTPUT = OUTPUT;
+
+extern "C" int32_t app_arduino_LED_BUILTIN = LED_BUILTIN;
+
 // 内存
 static uint8_t* app_host_memory = NULL;
 static int32_t app_host_memory_page_size = 0;
@@ -49,10 +58,6 @@ extern "C" int32_t app_arduino_analogRead(int32_t pin) {
 
 extern "C" void app_arduino_analogWrite(int32_t pin, int32_t value) {
     analogWrite(pin, value);
-}
-
-extern "C" int32_t app_arduino_getPinLED() {
-    return LED_BUILTIN;
 }
 
 extern "C" void app_arduino_print(int32_t ptr, int32_t len) {

@@ -16,23 +16,25 @@ typedef union val_t {
   uintptr_t ref;
 } val_t;
 
-extern int32_t app_arduino_getPinLED();
+extern int32_t app_arduino_HIGH;
+extern int32_t app_arduino_LOW;
+extern int32_t app_arduino_INPUT;
+extern int32_t app_arduino_OUTPUT;
+extern int32_t app_arduino_LED_BUILTIN;
+
 extern void app_arduino_pinMode(int32_t pin, int32_t mode);
 extern void app_arduino_digitalWrite(int32_t pin, int32_t value);
 extern void app_arduino_delay(int32_t ms);
 
-#define app_getPinLED app_arduino_getPinLED // import arduino.getPinLED
+#define app_HIGH app_arduino_HIGH // import arduino.HIGH
+#define app_LOW app_arduino_LOW // import arduino.LOW
+#define app_INPUT app_arduino_INPUT // import arduino.INPUT
+#define app_OUTPUT app_arduino_OUTPUT // import arduino.OUTPUT
+#define app_LED_BUILTIN app_arduino_LED_BUILTIN // import arduino.LED_BUILTIN
+
 #define app_pinMode app_arduino_pinMode // import arduino.pinMode
 #define app_digitalWrite app_arduino_digitalWrite // import arduino.digitalWrite
 #define app_delay app_arduino_delay // import arduino.delay
-
-uint8_t*      app_memory = NULL;
-const int32_t app_memory_init_max_pages = 0;
-const int32_t app_memory_init_pages = 0;
-int32_t       app_memory_size = 0;
-
-// global $LED: i32
-static int32_t app_LED = 0;
 
 // func $_start
 static void app__start();
@@ -43,12 +45,8 @@ extern void app_loop();
 static void app__start() {
   val_t R0, R1;
 
-  int32_t tmp = 0;
-
-  R0.i32 = app_getPinLED();
-  app_LED = R0.i32;
-  R0.i32 = app_LED;
-  R1.i32 = 1;
+  R0.i32 = app_LED_BUILTIN;
+  R1.i32 = app_OUTPUT;
   app_pinMode(R0.i32, R1.i32);
   return;
 }
@@ -57,28 +55,23 @@ static void app__start() {
 void app_loop() {
   val_t R0, R1;
 
-  R0.i32 = app_LED;
-  R1.i32 = 1;
+  R0.i32 = app_LED_BUILTIN;
+  R1.i32 = app_HIGH;
   app_digitalWrite(R0.i32, R1.i32);
   R0.i32 = 100;
   app_delay(R0.i32);
-  R0.i32 = app_LED;
-  R1.i32 = 0;
+  R0.i32 = app_LED_BUILTIN;
+  R1.i32 = app_LOW;
   app_digitalWrite(R0.i32, R1.i32);
   R0.i32 = 900;
   app_delay(R0.i32);
   return;
 }
 
-static void app_memory_init_data() {
-}
-
 void app_init() {
   static int init_flag = 0;
   if(init_flag) return;
   init_flag = 1;
-  app_memory_init(&app_memory, &app_memory_size);
-  app_memory_init_data(&app_memory, &app_memory_size);
   app__start();
   return;
 }
