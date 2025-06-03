@@ -183,8 +183,13 @@ func (p *wat2wasmWorker) buildImportSection() error {
 			spec.DescFunc = p.mustFindFuncTypeIndex(x.FuncType)
 		case token.TABLE:
 			spec.Type = wasm.ExternTypeTable
-			spec.DescTable = &wasm.Table{}
-			panic("import unsupport table")
+			spec.DescTable = &wasm.Table{
+				Min: uint32(x.Table.Size),
+			}
+			if x.Table.MaxSize != 0 {
+				spec.DescTable.Max = new(uint32)
+				*spec.DescTable.Max = uint32(x.Table.MaxSize)
+			}
 		case token.MEMORY:
 			spec.Type = wasm.ExternTypeMemory
 			spec.DescMem = &wasm.Memory{
@@ -193,8 +198,9 @@ func (p *wat2wasmWorker) buildImportSection() error {
 			}
 		case token.GLOBAL:
 			spec.Type = wasm.ExternTypeGlobal
-			spec.DescGlobal = &wasm.GlobalType{}
-			panic("import unsupport global")
+			spec.DescGlobal = &wasm.GlobalType{
+				ValType: p.buildValueType(x.GlobalType),
+			}
 		default:
 			panic("unreachable")
 		}

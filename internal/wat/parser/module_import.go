@@ -61,10 +61,16 @@ func (p *parser) parseModuleSection_import_memory(spec *ast.ImportSpec) {
 
 func (p *parser) parseModuleSection_import_table(spec *ast.ImportSpec) {
 	p.acceptToken(token.TABLE)
-	p.consumeComments()
-
 	spec.ObjKind = token.TABLE
-	spec.TableName = p.parseIdentOrIndex()
+
+	spec.Table = &ast.Table{}
+	if p.tok == token.IDENT {
+		spec.Table.Name = p.parseIdent()
+	}
+	spec.Table.Size = p.parseIntLit()
+	if p.tok == token.INT {
+		spec.Table.MaxSize = p.parseIntLit()
+	}
 }
 
 func (p *parser) parseModuleSection_import_global(spec *ast.ImportSpec) {

@@ -82,7 +82,7 @@ func (p *wat2wasmWorker) findTableIndex(ident string) wasm.Index {
 	var importCount int
 	for _, x := range p.mWat.Imports {
 		if x.ObjKind == token.TABLE {
-			if x.TableName == ident {
+			if x.Table.Name == ident {
 				return wasm.Index(importCount)
 			}
 			importCount++
