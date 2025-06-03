@@ -16,7 +16,10 @@ func (p *watPrinter) printImport() error {
 	for _, importSpec := range p.m.Imports {
 		switch importSpec.ObjKind {
 		case token.GLOBAL:
-			panic("TODO")
+			fmt.Fprint(p.w, p.indent)
+			fmt.Fprintf(p.w, "(import %q %q", importSpec.ObjModule, importSpec.ObjName)
+			p.printImport_global(importSpec)
+			fmt.Fprint(p.w, ")\n")
 
 		case token.FUNC:
 			fmt.Fprint(p.w, p.indent)
@@ -45,6 +48,14 @@ func (p *watPrinter) printImport() error {
 		}
 	}
 	return nil
+}
+
+func (p *watPrinter) printImport_global(importSpec *ast.ImportSpec) {
+	fmt.Fprintf(p.w, " (global %s %s)",
+		p.identOrIndex(importSpec.GlobalName),
+		importSpec.GlobalType,
+	)
+	return
 }
 
 func (p *watPrinter) printImport_func(importSpec *ast.ImportSpec) {

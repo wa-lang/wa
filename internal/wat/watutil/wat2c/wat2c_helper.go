@@ -14,7 +14,21 @@ func (p *wat2cWorker) Tracef(foramt string, a ...interface{}) {
 	}
 }
 
-func (p *wat2cWorker) getHostFuncCRetType(fnType *ast.FuncType, fnName string) string {
+func (p *wat2cWorker) getCType(typ token.Token) string {
+	switch typ {
+	case token.I32:
+		return "int32_t"
+	case token.I64:
+		return "int64_t"
+	case token.F32:
+		return "float"
+	case token.F64:
+		return "double"
+	}
+	panic("unreachable")
+}
+
+func (p *wat2cWorker) getHostFuncCRetType(fnType *ast.FuncType) string {
 	switch len(fnType.Results) {
 	case 0:
 		return "void"
@@ -87,13 +101,44 @@ func (p *wat2cWorker) findGlobalType(ident string) token.Token {
 		panic("wat2c: empty global name")
 	}
 
-	// 不支持导入的全局变量
+	// 全局变量是索引类型
 	if idx, err := strconv.Atoi(ident); err == nil {
-		if idx < 0 || idx >= len(p.m.Globals) {
+		if idx < 0 {
 			panic(fmt.Sprintf("wat2c: unknown global %q", ident))
 		}
-		return p.m.Globals[idx].Type
+
+		// 是导入的全局变量
+		if idx < p.importGlobalCount {
+			var nextIndex int
+			for _, importSpec := range p.m.Imports {
+				if importSpec.ObjKind != token.GLOBAL {
+					continue
+				}
+				// 找到导入对象
+				if nextIndex == idx {
+					return importSpec.GlobalType
+				}
+				// 更新索引
+				nextIndex++
+			}
+		}
+
+		// 模块内部定义的全局变量
+		return p.m.Globals[idx-p.importGlobalCount].Type
 	}
+
+	// 从导入对象开始查找
+	for _, importSpec := range p.m.Imports {
+		if importSpec.ObjKind != token.GLOBAL {
+			continue
+		}
+		// 找到导入对象
+		if importSpec.GlobalName == ident {
+			return importSpec.GlobalType
+		}
+	}
+
+	// 查找本地定义的全局对象
 	for _, g := range p.m.Globals {
 		if g.Name == ident {
 			return g.Type
@@ -174,12 +219,24 @@ func (p *wat2cWorker) findFuncType(ident string) *ast.FuncType {
 		panic("wat2c: empty ident")
 	}
 
-	idx := p.findFuncIndex(ident)
-	if idx < len(p.m.Imports) {
-		return p.m.Imports[idx].FuncType
+	// 查找导入的函数类型
+	for _, importSpec := range p.m.Imports {
+		if importSpec.ObjKind != token.FUNC {
+			continue
+		}
+		if importSpec.FuncName == ident {
+			return importSpec.FuncType
+		}
 	}
 
-	return p.m.Funcs[idx-len(p.m.Imports)].Type
+	// 查找本地定义的函数
+	for _, fn := range p.m.Funcs {
+		if fn.Name == ident {
+			return fn.Type
+		}
+	}
+
+	panic(fmt.Sprintf("wat2c: unknown func %q", ident))
 }
 
 func (p *wat2cWorker) findFuncIndex(ident string) int {
@@ -191,20 +248,27 @@ func (p *wat2cWorker) findFuncIndex(ident string) int {
 		return idx
 	}
 
-	var importCount int
-	for _, x := range p.m.Imports {
-		if x.ObjKind == token.FUNC {
-			if x.FuncName == ident {
-				return importCount
+	// 导入函数
+	{
+		var nextIndex int
+		for _, importSpec := range p.m.Imports {
+			if importSpec.ObjKind != token.FUNC {
+				continue
 			}
-			importCount++
+			if ident == importSpec.FuncName {
+				return nextIndex
+			}
+			nextIndex++
 		}
 	}
+
+	// 查找本地定义的函数
 	for i, fn := range p.m.Funcs {
 		if fn.Name == ident {
-			return importCount + i
+			return p.importFuncCount + i
 		}
 	}
+
 	panic(fmt.Sprintf("wat2c: unknown func %q", ident))
 }
 

@@ -99,8 +99,30 @@ func (p *wat2cWorker) buildImport(w io.Writer) error {
 		return nil
 	}
 
-	// 同一个函数可能被导入多次
+	// 同一个对象可能被导入多次
+	var hostGlobalMap = make(map[string]bool)
 	var hostFuncMap = make(map[string]bool)
+
+	// 导入全局的只读变量
+	for _, importSpec := range p.m.Imports {
+		if importSpec.ObjKind != token.GLOBAL {
+			continue
+		}
+
+		globalName := importSpec.ObjModule + "." + importSpec.ObjName
+		globalType := importSpec.GlobalType
+
+		// 已经处理过
+		if hostGlobalMap[globalName] {
+			continue
+		}
+		hostGlobalMap[globalName] = true
+
+		fmt.Fprintf(w, "extern %s %s_%s;\n", p.getCType(globalType), p.opt.Prefix, toCName(globalName))
+	}
+	if len(hostGlobalMap) > 0 {
+		fmt.Fprintln(w)
+	}
 
 	// 声明原始的宿主函数
 	for _, importSpec := range p.m.Imports {
@@ -118,7 +140,7 @@ func (p *wat2cWorker) buildImport(w io.Writer) error {
 		hostFuncMap[fnName] = true
 
 		// 返回值类型
-		cRetType := p.getHostFuncCRetType(fnType, fnName)
+		cRetType := p.getHostFuncCRetType(fnType)
 		if len(fnType.Results) > 1 {
 			panic("wat2c: host func donot support multi return value")
 		}
@@ -153,7 +175,25 @@ func (p *wat2cWorker) buildImport(w io.Writer) error {
 		}
 		fmt.Fprintf(w, ");\n")
 	}
-	fmt.Fprintln(w)
+	if len(hostFuncMap) > 0 {
+		fmt.Fprintln(w)
+	}
+
+	// 定义导入后的全局变量
+	for _, importSpec := range p.m.Imports {
+		if importSpec.ObjKind != token.GLOBAL {
+			continue
+		}
+
+		fmt.Fprintf(w, "#define %s_%s %s_%s // import %s.%s\n",
+			p.opt.Prefix, toCName(importSpec.GlobalName),
+			p.opt.Prefix, toCName(importSpec.ObjModule+"."+importSpec.ObjName),
+			importSpec.ObjModule, importSpec.ObjName,
+		)
+	}
+	if len(hostGlobalMap) > 0 {
+		fmt.Fprintln(w)
+	}
 
 	// 定义导入后的函数
 	for _, importSpec := range p.m.Imports {
@@ -167,7 +207,9 @@ func (p *wat2cWorker) buildImport(w io.Writer) error {
 			importSpec.ObjModule, importSpec.ObjName,
 		)
 	}
-	fmt.Fprintln(w)
+	if len(hostFuncMap) > 0 {
+		fmt.Fprintln(w)
+	}
 
 	return nil
 }

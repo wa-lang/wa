@@ -34,6 +34,9 @@ type wat2cWorker struct {
 
 	m *ast.Module
 
+	importGlobalCount int // 导入全局只读变量的数目
+	importFuncCount   int // 导入函数的数目
+
 	inlinedTypeIndices []*inlinedTypeIndex
 	inlinedTypes       []*wasm.FunctionType
 
@@ -66,6 +69,18 @@ func newWat2cWorker(mWat *ast.Module, opt Options) *wat2cWorker {
 	}
 	for k, v := range opt.Exports {
 		p.opt.Exports[k] = v
+	}
+
+	// 统计导入的global和func索引
+	p.importGlobalCount = 0
+	p.importFuncCount = 0
+	for _, importSpec := range p.m.Imports {
+		switch importSpec.ObjKind {
+		case token.GLOBAL:
+			p.importGlobalCount++
+		case token.FUNC:
+			p.importFuncCount++
+		}
 	}
 
 	// 更新 export 信息
