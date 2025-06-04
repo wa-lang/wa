@@ -203,139 +203,139 @@ func (p *wat2wasmWorker) buildInstruction(dst *wasm.Code, fn *ast.Func, i ast.In
 		ins := i.(ast.Ins_I32Load)
 		dst.Body = append(dst.Body, wasm.OpcodeI32Load)
 		dst.Body = append(dst.Body, p.encodeAlign(ins.Align))
-		dst.Body = append(dst.Body, p.encodeUint32(uint32(ins.Offset))...)
+		dst.Body = append(dst.Body, p.encodeUint64(ins.Offset)...)
 
 	case token.INS_I64_LOAD:
 		ins := i.(ast.Ins_I64Load)
 		dst.Body = append(dst.Body, wasm.OpcodeI64Load)
 		dst.Body = append(dst.Body, p.encodeAlign(ins.Align))
-		dst.Body = append(dst.Body, p.encodeUint32(uint32(ins.Offset))...)
+		dst.Body = append(dst.Body, p.encodeUint64(ins.Offset)...)
 
 	case token.INS_F32_LOAD:
 		ins := i.(ast.Ins_F32Load)
 		dst.Body = append(dst.Body, wasm.OpcodeF32Load)
 		dst.Body = append(dst.Body, p.encodeAlign(ins.Align))
-		dst.Body = append(dst.Body, p.encodeUint32(uint32(ins.Offset))...)
+		dst.Body = append(dst.Body, p.encodeUint64(ins.Offset)...)
 
 	case token.INS_F64_LOAD:
 		ins := i.(ast.Ins_F64Load)
 		dst.Body = append(dst.Body, wasm.OpcodeF64Load)
 		dst.Body = append(dst.Body, p.encodeAlign(ins.Align))
-		dst.Body = append(dst.Body, p.encodeUint32(uint32(ins.Offset))...)
+		dst.Body = append(dst.Body, p.encodeUint64(ins.Offset)...)
 
 	case token.INS_I32_LOAD8_S:
 		ins := i.(ast.Ins_I32Load8S)
 		dst.Body = append(dst.Body, wasm.OpcodeI32Load8S)
 		dst.Body = append(dst.Body, p.encodeAlign(ins.Align))
-		dst.Body = append(dst.Body, p.encodeUint32(uint32(ins.Offset))...)
+		dst.Body = append(dst.Body, p.encodeUint64(ins.Offset)...)
 
 	case token.INS_I32_LOAD8_U:
 		ins := i.(ast.Ins_I32Load8U)
 		dst.Body = append(dst.Body, wasm.OpcodeI32Load8U)
 		dst.Body = append(dst.Body, p.encodeAlign(ins.Align))
-		dst.Body = append(dst.Body, p.encodeUint32(uint32(ins.Offset))...)
+		dst.Body = append(dst.Body, p.encodeUint64(ins.Offset)...)
 
 	case token.INS_I32_LOAD16_S:
 		ins := i.(ast.Ins_I32Load16S)
 		dst.Body = append(dst.Body, wasm.OpcodeI32Load16S)
 		dst.Body = append(dst.Body, p.encodeAlign(ins.Align))
-		dst.Body = append(dst.Body, p.encodeUint32(uint32(ins.Offset))...)
+		dst.Body = append(dst.Body, p.encodeUint64(ins.Offset)...)
 
 	case token.INS_I32_LOAD16_U:
 		ins := i.(ast.Ins_I32Load16U)
 		dst.Body = append(dst.Body, wasm.OpcodeI32Load16U)
 		dst.Body = append(dst.Body, p.encodeAlign(ins.Align))
-		dst.Body = append(dst.Body, p.encodeUint32(uint32(ins.Offset))...)
+		dst.Body = append(dst.Body, p.encodeUint64(ins.Offset)...)
 
 	case token.INS_I64_LOAD8_S:
 		ins := i.(ast.Ins_I64Load8S)
 		dst.Body = append(dst.Body, wasm.OpcodeI64Load8S)
 		dst.Body = append(dst.Body, p.encodeAlign(ins.Align))
-		dst.Body = append(dst.Body, p.encodeUint32(uint32(ins.Offset))...)
+		dst.Body = append(dst.Body, p.encodeUint64(ins.Offset)...)
 
 	case token.INS_I64_LOAD8_U:
 		ins := i.(ast.Ins_I64Load8U)
 		dst.Body = append(dst.Body, wasm.OpcodeI64Load8U)
 		dst.Body = append(dst.Body, p.encodeAlign(ins.Align))
-		dst.Body = append(dst.Body, p.encodeUint32(uint32(ins.Offset))...)
+		dst.Body = append(dst.Body, p.encodeUint64(ins.Offset)...)
 
 	case token.INS_I64_LOAD16_S:
 		ins := i.(ast.Ins_I64Load16S)
 		dst.Body = append(dst.Body, wasm.OpcodeI64Load16S)
 		dst.Body = append(dst.Body, p.encodeAlign(ins.Align))
-		dst.Body = append(dst.Body, p.encodeUint32(uint32(ins.Offset))...)
+		dst.Body = append(dst.Body, p.encodeUint64(ins.Offset)...)
 
 	case token.INS_I64_LOAD16_U:
 		ins := i.(ast.Ins_I64Load16U)
 		dst.Body = append(dst.Body, wasm.OpcodeI64Load16U)
 		dst.Body = append(dst.Body, p.encodeAlign(ins.Align))
-		dst.Body = append(dst.Body, p.encodeUint32(uint32(ins.Offset))...)
+		dst.Body = append(dst.Body, p.encodeUint64(ins.Offset)...)
 
 	case token.INS_I64_LOAD32_S:
 		ins := i.(ast.Ins_I64Load32S)
 		dst.Body = append(dst.Body, wasm.OpcodeI64Load32S)
 		dst.Body = append(dst.Body, p.encodeAlign(ins.Align))
-		dst.Body = append(dst.Body, p.encodeUint32(uint32(ins.Offset))...)
+		dst.Body = append(dst.Body, p.encodeUint64(ins.Offset)...)
 
 	case token.INS_I64_LOAD32_U:
 		ins := i.(ast.Ins_I64Load32U)
 		dst.Body = append(dst.Body, wasm.OpcodeI64Load32U)
 		dst.Body = append(dst.Body, p.encodeAlign(ins.Align))
-		dst.Body = append(dst.Body, p.encodeUint32(uint32(ins.Offset))...)
+		dst.Body = append(dst.Body, p.encodeUint64(ins.Offset)...)
 
 	case token.INS_I32_STORE:
 		ins := i.(ast.Ins_I32Store)
 		dst.Body = append(dst.Body, wasm.OpcodeI32Store)
 		dst.Body = append(dst.Body, p.encodeAlign(ins.Align))
-		dst.Body = append(dst.Body, p.encodeUint32(uint32(ins.Offset))...)
+		dst.Body = append(dst.Body, p.encodeUint64(ins.Offset)...)
 
 	case token.INS_I64_STORE:
 		ins := i.(ast.Ins_I64Store)
 		dst.Body = append(dst.Body, wasm.OpcodeI64Store)
 		dst.Body = append(dst.Body, p.encodeAlign(ins.Align))
-		dst.Body = append(dst.Body, p.encodeUint32(uint32(ins.Offset))...)
+		dst.Body = append(dst.Body, p.encodeUint64(ins.Offset)...)
 
 	case token.INS_F32_STORE:
 		ins := i.(ast.Ins_F32Store)
 		dst.Body = append(dst.Body, wasm.OpcodeF32Store)
 		dst.Body = append(dst.Body, p.encodeAlign(ins.Align))
-		dst.Body = append(dst.Body, p.encodeUint32(uint32(ins.Offset))...)
+		dst.Body = append(dst.Body, p.encodeUint64(ins.Offset)...)
 
 	case token.INS_F64_STORE:
 		ins := i.(ast.Ins_F64Store)
 		dst.Body = append(dst.Body, wasm.OpcodeF64Store)
 		dst.Body = append(dst.Body, p.encodeAlign(ins.Align))
-		dst.Body = append(dst.Body, p.encodeUint32(uint32(ins.Offset))...)
+		dst.Body = append(dst.Body, p.encodeUint64(ins.Offset)...)
 
 	case token.INS_I32_STORE8:
 		ins := i.(ast.Ins_I32Store8)
 		dst.Body = append(dst.Body, wasm.OpcodeI32Store8)
 		dst.Body = append(dst.Body, p.encodeAlign(ins.Align))
-		dst.Body = append(dst.Body, p.encodeUint32(uint32(ins.Offset))...)
+		dst.Body = append(dst.Body, p.encodeUint64(ins.Offset)...)
 
 	case token.INS_I32_STORE16:
 		ins := i.(ast.Ins_I32Store16)
 		dst.Body = append(dst.Body, wasm.OpcodeI32Store16)
 		dst.Body = append(dst.Body, p.encodeAlign(ins.Align))
-		dst.Body = append(dst.Body, p.encodeUint32(uint32(ins.Offset))...)
+		dst.Body = append(dst.Body, p.encodeUint64(ins.Offset)...)
 
 	case token.INS_I64_STORE8:
 		ins := i.(ast.Ins_I64Store8)
 		dst.Body = append(dst.Body, wasm.OpcodeI64Store8)
 		dst.Body = append(dst.Body, p.encodeAlign(ins.Align))
-		dst.Body = append(dst.Body, p.encodeUint32(uint32(ins.Offset))...)
+		dst.Body = append(dst.Body, p.encodeUint64(ins.Offset)...)
 
 	case token.INS_I64_STORE16:
 		ins := i.(ast.Ins_I64Store16)
 		dst.Body = append(dst.Body, wasm.OpcodeI64Store16)
 		dst.Body = append(dst.Body, p.encodeAlign(ins.Align))
-		dst.Body = append(dst.Body, p.encodeUint32(uint32(ins.Offset))...)
+		dst.Body = append(dst.Body, p.encodeUint64(ins.Offset)...)
 
 	case token.INS_I64_STORE32:
 		ins := i.(ast.Ins_I64Store32)
 		dst.Body = append(dst.Body, wasm.OpcodeI64Store32)
 		dst.Body = append(dst.Body, p.encodeAlign(ins.Align))
-		dst.Body = append(dst.Body, p.encodeUint32(uint32(ins.Offset))...)
+		dst.Body = append(dst.Body, p.encodeUint64(ins.Offset)...)
 
 	case token.INS_MEMORY_SIZE:
 		dst.Body = append(dst.Body, wasm.OpcodeMemorySize, 0x00)

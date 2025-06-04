@@ -596,14 +596,14 @@ func (p *parser) parseIns_I32Load() (i ast.Ins_I32Load) {
 	if p.tok == token.OFFSET {
 		p.acceptToken(token.OFFSET)
 		p.acceptToken(token.ASSIGN)
-		i.Offset = uint(p.parseIntLit())
+		i.Offset = uint64(p.parseIntLit())
 	} else {
 		i.Offset = 0
 	}
 	if p.tok == token.ALIGN {
 		p.acceptToken(token.ALIGN)
 		p.acceptToken(token.ASSIGN)
-		i.Align = uint(p.parseIntLit())
+		i.Align = uint32(p.parseIntLit())
 	} else {
 		i.Align = 4
 	}
@@ -615,14 +615,14 @@ func (p *parser) parseIns_I64Load() (i ast.Ins_I64Load) {
 	if p.tok == token.OFFSET {
 		p.acceptToken(token.OFFSET)
 		p.acceptToken(token.ASSIGN)
-		i.Offset = uint(p.parseIntLit())
+		i.Offset = uint64(p.parseIntLit())
 	} else {
 		i.Offset = 0
 	}
 	if p.tok == token.ALIGN {
 		p.acceptToken(token.ALIGN)
 		p.acceptToken(token.ASSIGN)
-		i.Align = uint(p.parseIntLit())
+		i.Align = uint32(p.parseIntLit())
 	} else {
 		i.Align = 8
 	}
@@ -634,14 +634,14 @@ func (p *parser) parseIns_F32Load() (i ast.Ins_F32Load) {
 	if p.tok == token.OFFSET {
 		p.acceptToken(token.OFFSET)
 		p.acceptToken(token.ASSIGN)
-		i.Offset = uint(p.parseIntLit())
+		i.Offset = uint64(p.parseIntLit())
 	} else {
 		i.Offset = 0
 	}
 	if p.tok == token.ALIGN {
 		p.acceptToken(token.ALIGN)
 		p.acceptToken(token.ASSIGN)
-		i.Align = uint(p.parseIntLit())
+		i.Align = uint32(p.parseIntLit())
 	} else {
 		i.Align = 4
 	}
@@ -653,14 +653,14 @@ func (p *parser) parseIns_F64Load() (i ast.Ins_F64Load) {
 	if p.tok == token.OFFSET {
 		p.acceptToken(token.OFFSET)
 		p.acceptToken(token.ASSIGN)
-		i.Offset = uint(p.parseIntLit())
+		i.Offset = uint64(p.parseIntLit())
 	} else {
 		i.Offset = 0
 	}
 	if p.tok == token.ALIGN {
 		p.acceptToken(token.ALIGN)
 		p.acceptToken(token.ASSIGN)
-		i.Align = uint(p.parseIntLit())
+		i.Align = uint32(p.parseIntLit())
 	} else {
 		i.Align = 8
 	}
@@ -673,14 +673,14 @@ func (p *parser) parseIns_I32Load8S() (i ast.Ins_I32Load8S) {
 	if p.tok == token.OFFSET {
 		p.acceptToken(token.OFFSET)
 		p.acceptToken(token.ASSIGN)
-		i.Offset = uint(p.parseIntLit())
+		i.Offset = uint64(p.parseIntLit())
 	} else {
 		i.Offset = 0
 	}
 	if p.tok == token.ALIGN {
 		p.acceptToken(token.ALIGN)
 		p.acceptToken(token.ASSIGN)
-		i.Align = uint(p.parseIntLit())
+		i.Align = uint32(p.parseIntLit())
 	} else {
 		i.Align = 1
 	}
@@ -692,14 +692,14 @@ func (p *parser) parseIns_I32Load8U() (i ast.Ins_I32Load8U) {
 	if p.tok == token.OFFSET {
 		p.acceptToken(token.OFFSET)
 		p.acceptToken(token.ASSIGN)
-		i.Offset = uint(p.parseIntLit())
+		i.Offset = uint64(p.parseIntLit())
 	} else {
 		i.Offset = 0
 	}
 	if p.tok == token.ALIGN {
 		p.acceptToken(token.ALIGN)
 		p.acceptToken(token.ASSIGN)
-		i.Align = uint(p.parseIntLit())
+		i.Align = uint32(p.parseIntLit())
 	} else {
 		i.Align = 1
 	}
@@ -711,14 +711,14 @@ func (p *parser) parseIns_I32Load16S() (i ast.Ins_I32Load16S) {
 	if p.tok == token.OFFSET {
 		p.acceptToken(token.OFFSET)
 		p.acceptToken(token.ASSIGN)
-		i.Offset = uint(p.parseIntLit())
+		i.Offset = uint64(p.parseIntLit())
 	} else {
 		i.Offset = 0
 	}
 	if p.tok == token.ALIGN {
 		p.acceptToken(token.ALIGN)
 		p.acceptToken(token.ASSIGN)
-		i.Align = uint(p.parseIntLit())
+		i.Align = uint32(p.parseIntLit())
 	} else {
 		i.Align = 2
 	}
@@ -730,14 +730,14 @@ func (p *parser) parseIns_I32Load16U() (i ast.Ins_I32Load16U) {
 	if p.tok == token.OFFSET {
 		p.acceptToken(token.OFFSET)
 		p.acceptToken(token.ASSIGN)
-		i.Offset = uint(p.parseIntLit())
+		i.Offset = uint64(p.parseIntLit())
 	} else {
 		i.Offset = 0
 	}
 	if p.tok == token.ALIGN {
 		p.acceptToken(token.ALIGN)
 		p.acceptToken(token.ASSIGN)
-		i.Align = uint(p.parseIntLit())
+		i.Align = uint32(p.parseIntLit())
 	} else {
 		i.Align = 2
 	}
@@ -749,14 +749,14 @@ func (p *parser) parseIns_I64Load8S() (i ast.Ins_I64Load8S) {
 	if p.tok == token.OFFSET {
 		p.acceptToken(token.OFFSET)
 		p.acceptToken(token.ASSIGN)
-		i.Offset = uint(p.parseIntLit())
+		i.Offset = uint64(p.parseIntLit())
 	} else {
 		i.Offset = 0
 	}
 	if p.tok == token.ALIGN {
 		p.acceptToken(token.ALIGN)
 		p.acceptToken(token.ASSIGN)
-		i.Align = uint(p.parseIntLit())
+		i.Align = uint32(p.parseIntLit())
 	} else {
 		i.Align = 1
 	}
@@ -768,14 +768,14 @@ func (p *parser) parseIns_I64Load8U() (i ast.Ins_I64Load8U) {
 	if p.tok == token.OFFSET {
 		p.acceptToken(token.OFFSET)
 		p.acceptToken(token.ASSIGN)
-		i.Offset = uint(p.parseIntLit())
+		i.Offset = uint64(p.parseIntLit())
 	} else {
 		i.Offset = 0
 	}
 	if p.tok == token.ALIGN {
 		p.acceptToken(token.ALIGN)
 		p.acceptToken(token.ASSIGN)
-		i.Align = uint(p.parseIntLit())
+		i.Align = uint32(p.parseIntLit())
 	} else {
 		i.Align = 1
 	}
@@ -787,14 +787,14 @@ func (p *parser) parseIns_I64Load16S() (i ast.Ins_I64Load16S) {
 	if p.tok == token.OFFSET {
 		p.acceptToken(token.OFFSET)
 		p.acceptToken(token.ASSIGN)
-		i.Offset = uint(p.parseIntLit())
+		i.Offset = uint64(p.parseIntLit())
 	} else {
 		i.Offset = 0
 	}
 	if p.tok == token.ALIGN {
 		p.acceptToken(token.ALIGN)
 		p.acceptToken(token.ASSIGN)
-		i.Align = uint(p.parseIntLit())
+		i.Align = uint32(p.parseIntLit())
 	} else {
 		i.Align = 2
 	}
@@ -806,14 +806,14 @@ func (p *parser) parseIns_I64Load16U() (i ast.Ins_I64Load16U) {
 	if p.tok == token.OFFSET {
 		p.acceptToken(token.OFFSET)
 		p.acceptToken(token.ASSIGN)
-		i.Offset = uint(p.parseIntLit())
+		i.Offset = uint64(p.parseIntLit())
 	} else {
 		i.Offset = 0
 	}
 	if p.tok == token.ALIGN {
 		p.acceptToken(token.ALIGN)
 		p.acceptToken(token.ASSIGN)
-		i.Align = uint(p.parseIntLit())
+		i.Align = uint32(p.parseIntLit())
 	} else {
 		i.Align = 2
 	}
@@ -825,14 +825,14 @@ func (p *parser) parseIns_I64Load32S() (i ast.Ins_I64Load32S) {
 	if p.tok == token.OFFSET {
 		p.acceptToken(token.OFFSET)
 		p.acceptToken(token.ASSIGN)
-		i.Offset = uint(p.parseIntLit())
+		i.Offset = uint64(p.parseIntLit())
 	} else {
 		i.Offset = 0
 	}
 	if p.tok == token.ALIGN {
 		p.acceptToken(token.ALIGN)
 		p.acceptToken(token.ASSIGN)
-		i.Align = uint(p.parseIntLit())
+		i.Align = uint32(p.parseIntLit())
 	} else {
 		i.Align = 4
 	}
@@ -844,14 +844,14 @@ func (p *parser) parseIns_I64Load32U() (i ast.Ins_I64Load32U) {
 	if p.tok == token.OFFSET {
 		p.acceptToken(token.OFFSET)
 		p.acceptToken(token.ASSIGN)
-		i.Offset = uint(p.parseIntLit())
+		i.Offset = uint64(p.parseIntLit())
 	} else {
 		i.Offset = 0
 	}
 	if p.tok == token.ALIGN {
 		p.acceptToken(token.ALIGN)
 		p.acceptToken(token.ASSIGN)
-		i.Align = uint(p.parseIntLit())
+		i.Align = uint32(p.parseIntLit())
 	} else {
 		i.Align = 4
 	}
@@ -863,14 +863,14 @@ func (p *parser) parseIns_I32Store() (i ast.Ins_I32Store) {
 	if p.tok == token.OFFSET {
 		p.acceptToken(token.OFFSET)
 		p.acceptToken(token.ASSIGN)
-		i.Offset = uint(p.parseIntLit())
+		i.Offset = uint64(p.parseIntLit())
 	} else {
 		i.Offset = 0
 	}
 	if p.tok == token.ALIGN {
 		p.acceptToken(token.ALIGN)
 		p.acceptToken(token.ASSIGN)
-		i.Align = uint(p.parseIntLit())
+		i.Align = uint32(p.parseIntLit())
 	} else {
 		i.Align = 4
 	}
@@ -882,14 +882,14 @@ func (p *parser) parseIns_I64Store() (i ast.Ins_I64Store) {
 	if p.tok == token.OFFSET {
 		p.acceptToken(token.OFFSET)
 		p.acceptToken(token.ASSIGN)
-		i.Offset = uint(p.parseIntLit())
+		i.Offset = uint64(p.parseIntLit())
 	} else {
 		i.Offset = 0
 	}
 	if p.tok == token.ALIGN {
 		p.acceptToken(token.ALIGN)
 		p.acceptToken(token.ASSIGN)
-		i.Align = uint(p.parseIntLit())
+		i.Align = uint32(p.parseIntLit())
 	} else {
 		i.Align = 8
 	}
@@ -901,14 +901,14 @@ func (p *parser) parseIns_F32Store() (i ast.Ins_F32Store) {
 	if p.tok == token.OFFSET {
 		p.acceptToken(token.OFFSET)
 		p.acceptToken(token.ASSIGN)
-		i.Offset = uint(p.parseIntLit())
+		i.Offset = uint64(p.parseIntLit())
 	} else {
 		i.Offset = 0
 	}
 	if p.tok == token.ALIGN {
 		p.acceptToken(token.ALIGN)
 		p.acceptToken(token.ASSIGN)
-		i.Align = uint(p.parseIntLit())
+		i.Align = uint32(p.parseIntLit())
 	} else {
 		i.Align = 4
 	}
@@ -920,14 +920,14 @@ func (p *parser) parseIns_F64Store() (i ast.Ins_F64Store) {
 	if p.tok == token.OFFSET {
 		p.acceptToken(token.OFFSET)
 		p.acceptToken(token.ASSIGN)
-		i.Offset = uint(p.parseIntLit())
+		i.Offset = uint64(p.parseIntLit())
 	} else {
 		i.Offset = 0
 	}
 	if p.tok == token.ALIGN {
 		p.acceptToken(token.ALIGN)
 		p.acceptToken(token.ASSIGN)
-		i.Align = uint(p.parseIntLit())
+		i.Align = uint32(p.parseIntLit())
 	} else {
 		i.Align = 8
 	}
@@ -939,14 +939,14 @@ func (p *parser) parseIns_I32Store8() (i ast.Ins_I32Store8) {
 	if p.tok == token.OFFSET {
 		p.acceptToken(token.OFFSET)
 		p.acceptToken(token.ASSIGN)
-		i.Offset = uint(p.parseIntLit())
+		i.Offset = uint64(p.parseIntLit())
 	} else {
 		i.Offset = 0
 	}
 	if p.tok == token.ALIGN {
 		p.acceptToken(token.ALIGN)
 		p.acceptToken(token.ASSIGN)
-		i.Align = uint(p.parseIntLit())
+		i.Align = uint32(p.parseIntLit())
 	} else {
 		i.Align = 1
 	}
@@ -958,14 +958,14 @@ func (p *parser) parseIns_I32Store16() (i ast.Ins_I32Store16) {
 	if p.tok == token.OFFSET {
 		p.acceptToken(token.OFFSET)
 		p.acceptToken(token.ASSIGN)
-		i.Offset = uint(p.parseIntLit())
+		i.Offset = uint64(p.parseIntLit())
 	} else {
 		i.Offset = 0
 	}
 	if p.tok == token.ALIGN {
 		p.acceptToken(token.ALIGN)
 		p.acceptToken(token.ASSIGN)
-		i.Align = uint(p.parseIntLit())
+		i.Align = uint32(p.parseIntLit())
 	} else {
 		i.Align = 2
 	}
@@ -977,14 +977,14 @@ func (p *parser) parseIns_I64Store8() (i ast.Ins_I64Store8) {
 	if p.tok == token.OFFSET {
 		p.acceptToken(token.OFFSET)
 		p.acceptToken(token.ASSIGN)
-		i.Offset = uint(p.parseIntLit())
+		i.Offset = uint64(p.parseIntLit())
 	} else {
 		i.Offset = 0
 	}
 	if p.tok == token.ALIGN {
 		p.acceptToken(token.ALIGN)
 		p.acceptToken(token.ASSIGN)
-		i.Align = uint(p.parseIntLit())
+		i.Align = uint32(p.parseIntLit())
 	} else {
 		i.Align = 1
 	}
@@ -996,14 +996,14 @@ func (p *parser) parseIns_I64Store16() (i ast.Ins_I64Store16) {
 	if p.tok == token.OFFSET {
 		p.acceptToken(token.OFFSET)
 		p.acceptToken(token.ASSIGN)
-		i.Offset = uint(p.parseIntLit())
+		i.Offset = uint64(p.parseIntLit())
 	} else {
 		i.Offset = 0
 	}
 	if p.tok == token.ALIGN {
 		p.acceptToken(token.ALIGN)
 		p.acceptToken(token.ASSIGN)
-		i.Align = uint(p.parseIntLit())
+		i.Align = uint32(p.parseIntLit())
 	} else {
 		i.Align = 2
 	}
@@ -1015,14 +1015,14 @@ func (p *parser) parseIns_I64Store32() (i ast.Ins_I64Store32) {
 	if p.tok == token.OFFSET {
 		p.acceptToken(token.OFFSET)
 		p.acceptToken(token.ASSIGN)
-		i.Offset = uint(p.parseIntLit())
+		i.Offset = uint64(p.parseIntLit())
 	} else {
 		i.Offset = 0
 	}
 	if p.tok == token.ALIGN {
 		p.acceptToken(token.ALIGN)
 		p.acceptToken(token.ASSIGN)
-		i.Align = uint(p.parseIntLit())
+		i.Align = uint32(p.parseIntLit())
 	} else {
 		i.Align = 4
 	}

@@ -23,6 +23,15 @@ func (p *parser) parseModuleSection_table() *ast.Table {
 		tab.Name = p.parseIdent()
 	}
 
+	// 忽略地址类型
+	// Table 的地址不会太大
+	switch p.tok {
+	case token.I32:
+		p.acceptToken(token.I32)
+	case token.I64:
+		p.acceptToken(token.I64)
+	}
+
 	p.consumeComments()
 	tab.Size = p.parseIntLit()
 
