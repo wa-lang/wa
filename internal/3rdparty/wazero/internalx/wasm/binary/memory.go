@@ -3,6 +3,7 @@ package binary
 import (
 	"bytes"
 
+	"wa-lang.org/wa/internal/3rdparty/wazero/api"
 	"wa-lang.org/wa/internal/3rdparty/wazero/internalx/wasm"
 )
 
@@ -14,13 +15,13 @@ func decodeMemory(
 	memorySizer func(minPages uint32, maxPages *uint32) (min, capacity, max uint32),
 	memoryLimitPages uint32,
 ) (*wasm.Memory, error) {
-	min, maxP, err := decodeLimitsType(r)
+	addrType, min, maxP, err := decodeLimitsType(r)
 	if err != nil {
 		return nil, err
 	}
 
 	min, capacity, max := memorySizer(min, maxP)
-	mem := &wasm.Memory{Min: min, Cap: capacity, Max: max, IsMaxEncoded: maxP != nil}
+	mem := &wasm.Memory{AddrType: addrType, Min: min, Cap: capacity, Max: max, IsMaxEncoded: maxP != nil}
 
 	return mem, mem.Validate(memoryLimitPages)
 }
@@ -32,6 +33,9 @@ func encodeMemory(i *wasm.Memory) []byte {
 	maxPtr := &i.Max
 	if !i.IsMaxEncoded {
 		maxPtr = nil
+	}
+	if i.AddrType == api.ValueTypeI64 {
+		return encodeLimitsType_i64(i.Min, maxPtr)
 	}
 	return encodeLimitsType(i.Min, maxPtr)
 }

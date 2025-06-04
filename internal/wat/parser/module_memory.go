@@ -26,6 +26,17 @@ func (p *parser) parseModuleSection_memory() *ast.Memory {
 		p.acceptToken(token.IDENT)
 	}
 
+	switch p.tok {
+	case token.I32:
+		mem.AddrType = token.I32
+		p.acceptToken(token.I32)
+	case token.I64:
+		mem.AddrType = token.I64
+		p.acceptToken(token.I64)
+	default:
+		mem.AddrType = token.I32
+	}
+
 	p.consumeComments()
 	mem.Pages = p.parseIntLit()
 

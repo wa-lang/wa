@@ -23,9 +23,12 @@ func decodeTable(r *bytes.Reader, enabledFeatures api.CoreFeatures) (*wasm.Table
 		}
 	}
 
-	min, max, err := decodeLimitsType(r)
+	addrType, min, max, err := decodeLimitsType(r)
 	if err != nil {
 		return nil, fmt.Errorf("read limits: %v", err)
+	}
+	if addrType != api.ValueTypeI32 {
+		return nil, fmt.Errorf("table address type must be i32, got %v", addrType)
 	}
 	if min > wasm.MaximumFunctionIndex {
 		return nil, fmt.Errorf("table min must be at most %d", wasm.MaximumFunctionIndex)

@@ -214,6 +214,7 @@ func (p *wat2wasmWorker) buildImportSection() error {
 func (p *wat2wasmWorker) buildMemorySection() error {
 	if p.mWat.Memory != nil {
 		p.mWasm.MemorySection = &wasm.Memory{
+			AddrType:     p.buildValueType(p.mWat.Memory.AddrType),
 			Min:          uint32(p.mWat.Memory.Pages),
 			Max:          uint32(p.mWat.Memory.MaxPages),
 			IsMaxEncoded: p.mWat.Memory.MaxPages > 0,

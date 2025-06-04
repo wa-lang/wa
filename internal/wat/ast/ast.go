@@ -53,9 +53,10 @@ type ExportSpec struct {
 
 // 内存信息
 type Memory struct {
-	Name     string // 内存对象的名字
-	Pages    int    // 页数, 每页 64 KB
-	MaxPages int    // 最大页数
+	Name     string      // 名字
+	AddrType token.Token // 地址类型: i32, i64; 用于 memory64 支持
+	Pages    int         // 页数, 每页 64 KB
+	MaxPages int         // 最大页数
 }
 
 // 初始化数据

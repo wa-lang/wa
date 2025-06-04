@@ -18,6 +18,15 @@ func TestParseModule(t *testing.T) {
 		t.Fatal(err)
 	}
 }
+func TestParseModule_memory64(t *testing.T) {
+	const filename = "testdata/memory64.wat"
+	src := tReadFile(t, filename)
+
+	_, err := parser.ParseModule(filename, src)
+	if err != nil {
+		t.Fatal(err)
+	}
+}
 
 func tReadFile(t *testing.T, path string) []byte {
 	data, err := os.ReadFile(path)

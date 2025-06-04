@@ -743,6 +743,7 @@ type Import struct {
 
 // Memory describes the limits of pages (64KB) in a memory.
 type Memory struct {
+	AddrType      ValueType // 内存类型: i32, i64
 	Min, Cap, Max uint32
 	// IsMaxEncoded true if the Max is encoded in the original source (binary or text).
 	IsMaxEncoded bool
@@ -751,6 +752,10 @@ type Memory struct {
 // Validate ensures values assigned to Min, Cap and Max are within valid thresholds.
 func (m *Memory) Validate(memoryLimitPages uint32) error {
 	min, capacity, max := m.Min, m.Cap, m.Max
+
+	if m.AddrType != api.ValueTypeI32 && m.AddrType != api.ValueTypeI64 {
+		return fmt.Errorf("invalid memory address type: %v", m.AddrType)
+	}
 
 	if max > memoryLimitPages {
 		return fmt.Errorf("max %d pages (%s) over limit of %d pages (%s)",
