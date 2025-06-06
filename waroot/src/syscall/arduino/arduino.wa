@@ -4,6 +4,13 @@ const (
 	LOW  :i32 = 0
 	HIGH :i32 = 1
 
+	// 警告: Arduino Nano ESP32 等变态板子私自修改了 INPUT/OUTPUT 等值
+	// 但是如果通过只读 global 方式导入, 那么则无法兼容 const
+	// 目前是临死方案, 假设不涉及 ESP32 等芯片
+
+	// 未来可能的解决方案:
+	// 全局变量增加 readonly 的编译器注解
+
 	INPUT        :i32 = 0
 	OUTPUT       :i32 = 1
 	INPUT_PULLUP :i32 = 2
