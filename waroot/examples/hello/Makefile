@@ -1,7 +1,10 @@
 # 版权 @2023 凹语言 作者。保留所有权利。
 
-default:
+run:
 	go run ../../../main.go run .
+
+build:
+	go run ../../../main.go build -wat2c.native .
 
 test:
 	go run ../../../main.go test .

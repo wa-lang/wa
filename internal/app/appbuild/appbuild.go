@@ -24,6 +24,15 @@ var arduino_ino string
 //go:embed assets/arduino-host.cpp
 var arduino_host_cpp string
 
+//go:embed assets/native-js-host.cpp
+var native_js_host_cpp string
+
+//go:embed assets/native.cpp
+var native_main_cpp string
+
+//go:embed assets/CMakeLists.txt
+var cmakelists_txt string
+
 //go:embed assets/favicon.ico
 var favicon_ico string
 
@@ -47,6 +56,7 @@ var CmdBuild = &cli.Command{
 		appbase.MakeFlag_ld_stack_size(),
 		appbase.MakeFlag_ld_max_memory(),
 		appbase.MakeFlag_optimize(),
+		appbase.MakeFlag_wat2c_native(),
 	},
 	Action: CmdBuildAction,
 }
@@ -251,6 +261,59 @@ func BuildApp(opt *appbase.Option, input, outfile string) (mainFunc string, wasm
 			if err != nil {
 				fmt.Printf("write %s failed: %v\n", outfile, err)
 				os.Exit(1)
+			}
+
+			// 通过 wat2c 生成 native c 代码
+			if opt.Wat2CNative {
+				nativeDir := filepath.Join(filepath.Dir(outfile), "native")
+
+				mainCppOutfile := filepath.Join(filepath.Dir(outfile), "native", "main.cpp")
+				cmakeOutfile := filepath.Join(filepath.Dir(outfile), "native", "CMakeLists.txt")
+				hostCppOutfile := filepath.Join(filepath.Dir(outfile), "native", "native-host.cpp")
+				waAppCfile := filepath.Join(filepath.Dir(outfile), "native", "wa-app.c")
+				waAppHfile := filepath.Join(filepath.Dir(outfile), "native", "wa-app.h")
+
+				os.MkdirAll(nativeDir, 0777)
+
+				// 主文件
+				if !appbase.PathExists(mainCppOutfile) {
+					os.WriteFile(mainCppOutfile, []byte(native_main_cpp), 0666)
+				}
+				if !appbase.PathExists(cmakeOutfile) {
+					os.WriteFile(cmakeOutfile, []byte(cmakelists_txt), 0666)
+				}
+
+				pkgName := manifest.Pkg.Name
+				m, code, header, err := watutil.Wat2C("wa-app.wat", watOutput, wat2c.Options{
+					Prefix: opt.Wat2CPrefix,
+					Exports: map[string]string{
+						pkgName + ".Loop": "loop",
+					},
+				})
+				if err != nil {
+					os.WriteFile(outfile, code, 0666)
+					fmt.Println(err)
+					os.Exit(1)
+				}
+
+				os.WriteFile(waAppCfile, []byte(code), 0666)
+				os.WriteFile(waAppHfile, []byte(header), 0666)
+
+				// 宿主的C代码
+				if !appbase.PathExists(hostCppOutfile) {
+					sMemoryBytes := "8" // 8 byte
+					if m.Memory != nil && m.Memory.Pages > 0 {
+						pages := m.Memory.Pages
+						if m.Memory.MaxPages > pages {
+							pages = m.Memory.MaxPages
+						}
+						sMemoryBytes = fmt.Sprintf("%d*(1<<16)", pages)
+					}
+
+					// 初始化 host 静态内存大小
+					host_cpp_code := strings.ReplaceAll(native_js_host_cpp, "{{.MemoryBytes}}", sMemoryBytes)
+					os.WriteFile(hostCppOutfile, []byte(host_cpp_code), 0666)
+				}
 			}
 
 		case config.WaOS_wasm4:

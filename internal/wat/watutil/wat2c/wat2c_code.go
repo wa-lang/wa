@@ -91,6 +91,17 @@ func (p *wat2cWorker) buildCode(w io.Writer) error {
 		fmt.Fprintf(w, "}\n")
 	}
 
+	// 生成 main 函数
+	for _, fn := range p.m.Funcs {
+		if fn.ExportName == "_main" {
+			fmt.Fprintln(w)
+			fmt.Fprintf(w, "void %s_main() {\n", p.opt.Prefix)
+			fmt.Fprintf(w, "  %s__main();\n", p.opt.Prefix)
+			fmt.Fprintf(w, "  return;\n")
+			fmt.Fprintf(w, "}\n")
+		}
+	}
+
 	return nil
 }
 

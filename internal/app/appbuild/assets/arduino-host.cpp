@@ -4,7 +4,7 @@
 
 // 配置初始内存
 static uint8_t app_host_memory[{{.MemoryBytes}}];
-static int32_t app_host_memory_page_size = 0;
+static int32_t app_host_memory_page_size = ({{.MemoryBytes}})/(1<<16);
 
 // 初始化内存
 extern "C" void app_memory_init(uint8_t** pp_memory, int32_t* page_size) {

@@ -26,13 +26,19 @@ func toCName(name string) string {
 	if name == "" {
 		return name
 	}
-	if c := name[0]; c >= '0' && c <= '9' {
-		return name
-	}
+
+	// pkg 路径可能以数字开头
+	// if c := name[0]; c >= '0' && c <= '9' {
+	// 	return name
+	// }
 
 	var sb strings.Builder
 	for _, c := range ([]rune)(name) {
 		switch {
+		case c == '$':
+			sb.WriteRune('_')
+		case c == '.':
+			sb.WriteRune('_')
 		case '0' <= c && c <= '9':
 			sb.WriteRune(c)
 		case 'a' <= c && c <= 'z':

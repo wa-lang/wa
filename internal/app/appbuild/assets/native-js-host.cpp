@@ -1,8 +1,10 @@
 #include "wa-app.h"
 
+#include <stdio.h>
+
 // 配置初始内存
 static uint8_t app_host_memory[{{.MemoryBytes}}];
-static int32_t app_host_memory_page_size = 0;
+static int32_t app_host_memory_page_size = ({{.MemoryBytes}})/(1<<16);
 
 // 初始化内存
 extern "C" void app_memory_init(uint8_t** pp_memory, int32_t* page_size) {
@@ -23,11 +25,11 @@ extern "C" void app_syscall_js_print_i32(int32_t i) {
     printf("%d", i);
 }
 
-extern "C" void app_syscall_js_print_i32(uint32_t i) {
+extern "C" void app_syscall_js_print_u32(uint32_t i) {
     printf("%d", i);
 }
 
-extern "C" void app_syscall_js_print_ptr(in32_t i) {
+extern "C" void app_syscall_js_print_ptr(int32_t i) {
     printf("%x", i);
 }
 
@@ -44,13 +46,13 @@ extern "C" void app_syscall_js_print_f32(float i) {
 }
 
 extern "C" void app_syscall_js_print_f64(double i) {
-    printf("%llf", i);
+    printf("%f", i);
 }
 
-extern "C" void app_syscall_js_print_rune(in32_t i) {
+extern "C" void app_syscall_js_print_rune(int32_t i) {
     printf("%c", i);
 }
 
-extern "C" void app_syscall_js_print_str(in32_t ptr, int32_t len) {
-    fwrite(stdout, &app_host_memory[ptr], len);
+extern "C" void app_syscall_js_print_str(int32_t ptr, int32_t len) {
+    fwrite(&app_host_memory[ptr], 1, len, stdout);
 }

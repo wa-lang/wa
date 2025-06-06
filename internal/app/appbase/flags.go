@@ -27,6 +27,14 @@ func MakeFlag_target() *cli.StringFlag {
 	}
 }
 
+// 通过 wat2c 同时生成native的C代码
+func MakeFlag_wat2c_native() *cli.BoolFlag {
+	return &cli.BoolFlag{
+		Name:  "wat2c.native",
+		Usage: "use wat2c generated native c code",
+	}
+}
+
 // wat2c 生成名字的前缀
 func MakeFlag_wat2c_prefix() *cli.StringFlag {
 	return &cli.StringFlag{

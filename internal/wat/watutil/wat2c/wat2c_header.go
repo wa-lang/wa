@@ -66,6 +66,13 @@ func (p *wat2cWorker) buildHeader(w io.Writer) error {
 	}
 
 	fmt.Fprintf(w, "extern void %s_init();\n", p.opt.Prefix)
+
+	// 生成 main 函数
+	for _, fn := range p.m.Funcs {
+		if fn.ExportName == "_main" {
+			fmt.Fprintf(w, "extern void %s_main();\n", p.opt.Prefix)
+		}
+	}
 	fmt.Fprintln(w)
 
 	if len(p.m.Exports) == 0 {
