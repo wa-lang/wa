@@ -8,19 +8,19 @@ ci-test-all:
 
 	@echo "== examples test begin =="
 
-	# loop forever
+	@echo "# loop forever"
 
-	#cd ./brainfuck && make
-	#cd ./expr && make
-	#cd ./hello && make
-	#cd ./misc && make
-	#cd ./pkg && make
-	#cd ./prime && make
-	#cd ./reftoptr && make
-	#cd ./surface && make
+	@echo "#cd ./brainfuck && make"
+	@echo "#cd ./expr && make"
+	@echo "#cd ./hello && make"
+	@echo "#cd ./misc && make"
+	@echo "#cd ./pkg && make"
+	@echo "#cd ./prime && make"
+	@echo "#cd ./reftoptr && make"
+	@echo "#cd ./surface && make"
 
-	# snake
-	cd ./snake && make publish
+	@echo "# snake"
+	@echo "# cd ./snake && make publish"
 
 	go run ../../main.go run copy.wa
 	go run ../../main.go run eq.wa
