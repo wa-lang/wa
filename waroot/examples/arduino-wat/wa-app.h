@@ -13,6 +13,12 @@
 extern "C" {
 #endif
 
+// memory $memory
+extern uint8_t*      app_memory;
+extern const int32_t app_memory_init_max_pages; // = 1;
+extern const int32_t app_memory_init_pages; // = 1;
+extern int32_t       app_memory_size; // = 1;
+
 extern void app_init();
 
 // func $loop

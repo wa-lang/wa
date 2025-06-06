@@ -225,7 +225,30 @@ func (p *wat2cWorker) buildMemory_data(w io.Writer) error {
 	for _, d := range p.m.Data {
 		var sb strings.Builder
 		for _, x := range d.Value {
-			sb.WriteString(fmt.Sprintf("\\x%02x", x))
+			switch {
+			case x == 0:
+				sb.WriteString("\\0")
+			case '0' <= x && x <= '9':
+				sb.WriteString(fmt.Sprintf("%c", x))
+			case 'a' <= x && x <= 'z':
+				sb.WriteString(fmt.Sprintf("%c", x))
+			case 'A' <= x && x <= 'Z':
+				sb.WriteString(fmt.Sprintf("%c", x))
+			case strings.ContainsRune(" `~!@#$%^&*()_-+={}[]|:;'<>,.?/", rune(x)):
+				sb.WriteString(fmt.Sprintf("%c", x))
+			case x == '"':
+				sb.WriteString("\\\"")
+			case x == '\t':
+				sb.WriteString("\\t")
+			case x == '\n':
+				sb.WriteString("\\n")
+			case x == '\\':
+				sb.WriteString("\\")
+			case x == ' ':
+				sb.WriteString(" ")
+			default:
+				sb.WriteString(fmt.Sprintf("\\x%02x", x))
+			}
 		}
 		fmt.Fprintf(w, "  memcpy((void*)(&%s_memory[%d]), (void *)(\"%s\"), %d);\n",
 			p.opt.Prefix, d.Offset, sb.String(), len(d.Value),

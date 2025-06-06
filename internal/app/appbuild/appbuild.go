@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"wa-lang.org/wa/internal/3rdparty/cli"
 	"wa-lang.org/wa/internal/app/appbase"
@@ -286,15 +287,10 @@ func BuildApp(opt *appbase.Option, input, outfile string) (mainFunc string, wasm
 				os.Exit(1)
 			}
 
-			// 宿主的C代码
-			if !appbase.PathExists(hostCppOutfile) {
-				os.WriteFile(hostCppOutfile, []byte(arduino_host_cpp), 0666)
-			}
-
 			// 生成wat转译的C代码
 			{
 				pkgName := manifest.Pkg.Name
-				code, header, err := watutil.Wat2C("wa-app.wat", watOutput, wat2c.Options{
+				m, code, header, err := watutil.Wat2C("wa-app.wat", watOutput, wat2c.Options{
 					Prefix: opt.Wat2CPrefix,
 					Exports: map[string]string{
 						pkgName + ".Loop": "loop",
@@ -308,6 +304,22 @@ func BuildApp(opt *appbase.Option, input, outfile string) (mainFunc string, wasm
 
 				os.WriteFile(waAppCfile, []byte(code), 0666)
 				os.WriteFile(waAppHfile, []byte(header), 0666)
+
+				// 宿主的C代码
+				if !appbase.PathExists(hostCppOutfile) {
+					sMemoryBytes := "8" // 8 byte
+					if m.Memory != nil && m.Memory.Pages > 0 {
+						pages := m.Memory.Pages
+						if m.Memory.MaxPages > pages {
+							pages = m.Memory.MaxPages
+						}
+						sMemoryBytes = fmt.Sprintf("%d*(1<<16)", pages)
+					}
+
+					// 初始化 host 静态内存大小
+					host_cpp_code := strings.ReplaceAll(arduino_host_cpp, "{{.MemoryBytes}}", sMemoryBytes)
+					os.WriteFile(hostCppOutfile, []byte(host_cpp_code), 0666)
+				}
 			}
 
 		default:

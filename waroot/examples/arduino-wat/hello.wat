@@ -9,15 +9,27 @@
 
 	(import "arduino" "LED_BUILTIN" (global $LED_BUILTIN i32))
 
+	(import "arduino" "delay" (func $delay (param $ms i32)))
 	(import "arduino" "pinMode" (func $pinMode (param $pin i32) (param $mode i32)))
 	(import "arduino" "digitalWrite" (func $digitalWrite (param $pin i32) (param $value i32)))
-	(import "arduino" "delay" (func $delay (param $ms i32)))
+	(import "arduino" "println" (func $println (param $ptr i32) (param $len i32)))
+
+	(memory $memory 1)
+
+	(global $hello_ptr i32 (i32.const 8))
+	(global $hello_len i32 (i32.const 14))
+	(data (i32.const 8) "hello arduino!\00")
 
 	(func $_start (start)
 		;; pinMode(LED_BUILTIN, OUTPUT)
 		global.get $LED_BUILTIN
 		global.get $OUTPUT
 		call $pinMode
+
+		;; println("hello arduino!")
+		global.get $hello_ptr
+		global.get $hello_len
+		call $println
 	)
 
 	(func $loop (export "loop")

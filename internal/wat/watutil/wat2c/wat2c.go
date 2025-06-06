@@ -18,10 +18,10 @@ type Options struct {
 	Exports map[string]string // 导出函数, 可能改名
 }
 
-func Wat2C(filename string, source []byte, opt Options) (code, header []byte, err error) {
-	m, err := parser.ParseModule(filename, source)
+func Wat2C(filename string, source []byte, opt Options) (m *ast.Module, code, header []byte, err error) {
+	m, err = parser.ParseModule(filename, source)
 	if err != nil {
-		return nil, nil, err
+		return m, nil, nil, err
 	}
 
 	worker := newWat2cWorker(m, opt)

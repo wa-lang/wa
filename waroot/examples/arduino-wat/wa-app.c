@@ -22,9 +22,10 @@ extern int32_t app_arduino_INPUT;
 extern int32_t app_arduino_OUTPUT;
 extern int32_t app_arduino_LED_BUILTIN;
 
+extern void app_arduino_delay(int32_t ms);
 extern void app_arduino_pinMode(int32_t pin, int32_t mode);
 extern void app_arduino_digitalWrite(int32_t pin, int32_t value);
-extern void app_arduino_delay(int32_t ms);
+extern void app_arduino_println(int32_t ptr, int32_t len);
 
 #define app_HIGH app_arduino_HIGH // import arduino.HIGH
 #define app_LOW app_arduino_LOW // import arduino.LOW
@@ -32,9 +33,21 @@ extern void app_arduino_delay(int32_t ms);
 #define app_OUTPUT app_arduino_OUTPUT // import arduino.OUTPUT
 #define app_LED_BUILTIN app_arduino_LED_BUILTIN // import arduino.LED_BUILTIN
 
+#define app_delay app_arduino_delay // import arduino.delay
 #define app_pinMode app_arduino_pinMode // import arduino.pinMode
 #define app_digitalWrite app_arduino_digitalWrite // import arduino.digitalWrite
-#define app_delay app_arduino_delay // import arduino.delay
+#define app_println app_arduino_println // import arduino.println
+
+// memory $memory
+uint8_t*      app_memory = NULL;
+const int32_t app_memory_init_max_pages = 1;
+const int32_t app_memory_init_pages = 1;
+int32_t       app_memory_size = 0;
+
+// global $hello_ptr: i32
+static const int32_t app_hello_ptr = 8;
+// global $hello_len: i32
+static const int32_t app_hello_len = 14;
 
 // func $_start
 static void app__start();
@@ -48,6 +61,9 @@ static void app__start() {
   R0.i32 = app_LED_BUILTIN;
   R1.i32 = app_OUTPUT;
   app_pinMode(R0.i32, R1.i32);
+  R0.i32 = app_hello_ptr;
+  R1.i32 = app_hello_len;
+  app_println(R0.i32, R1.i32);
   return;
 }
 
@@ -68,10 +84,16 @@ void app_loop() {
   return;
 }
 
+static void app_memory_init_data() {
+  memcpy((void*)(&app_memory[8]), (void *)("hello arduino!\0"), 15);
+}
+
 void app_init() {
   static int init_flag = 0;
   if(init_flag) return;
   init_flag = 1;
+  app_memory_init(&app_memory, &app_memory_size);
+  app_memory_init_data(&app_memory, &app_memory_size);
   app__start();
   return;
 }

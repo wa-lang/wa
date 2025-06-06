@@ -67,7 +67,7 @@ var CmdWat2c = &cli.Command{
 			os.Exit(1)
 		}
 
-		code, header, err := watutil.Wat2C(infile, source, wat2c.Options{
+		_, code, header, err := watutil.Wat2C(infile, source, wat2c.Options{
 			Prefix:  prefix,
 			Exports: exports,
 		})

@@ -3,9 +3,10 @@
 package watutil
 
 import (
+	"wa-lang.org/wa/internal/wat/ast"
 	"wa-lang.org/wa/internal/wat/watutil/wat2c"
 )
 
-func Wat2C(filename string, source []byte, opt wat2c.Options) (code, header []byte, err error) {
+func Wat2C(filename string, source []byte, opt wat2c.Options) (m *ast.Module, code, header []byte, err error) {
 	return wat2c.Wat2C(filename, source, opt)
 }

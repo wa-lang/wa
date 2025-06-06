@@ -14,8 +14,8 @@ extern "C" int32_t app_arduino_OUTPUT = OUTPUT;
 extern "C" int32_t app_arduino_LED_BUILTIN = LED_BUILTIN;
 
 // 内存
-static uint8_t* app_host_memory = NULL;
-static int32_t app_host_memory_page_size = 0;
+static uint8_t app_host_memory[64]; // 不足64K, 只能用很少部分
+static int32_t app_host_memory_page_size = 1;
 
 // 初始化内存
 extern "C" void app_memory_init(uint8_t** pp_memory, int32_t* page_size) {
@@ -63,5 +63,12 @@ extern "C" void app_arduino_analogWrite(int32_t pin, int32_t value) {
 extern "C" void app_arduino_print(int32_t ptr, int32_t len) {
     if(app_host_memory != NULL) {
         Serial.write(&app_host_memory[ptr], len);
+    }
+}
+
+extern "C" void app_arduino_println(int32_t ptr, int32_t len) {
+    if(app_host_memory != NULL) {
+        Serial.write(&app_host_memory[ptr], len);
+        Serial.println();
     }
 }

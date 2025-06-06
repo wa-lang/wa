@@ -2,8 +2,8 @@
 
 #include <Arduino.h>
 
-// TODO: 配置初始内存
-static uint8_t app_host_memory[1];
+// 配置初始内存
+static uint8_t app_host_memory[{{.MemoryBytes}}];
 static int32_t app_host_memory_page_size = 0;
 
 // 初始化内存
@@ -14,7 +14,6 @@ extern "C" void app_memory_init(uint8_t** pp_memory, int32_t* page_size) {
 
 // 内存增长
 extern "C" int32_t app_memory_grow(uint8_t** pp_memory, int32_t* page_size, int32_t new_size) {
-    // TODO: 实现内存扩容支持
     return -1;
 }
 
@@ -57,5 +56,12 @@ extern "C" int32_t app_arduino_getPinLED() {
 extern "C" void app_arduino_print(int32_t ptr, int32_t len) {
     if(app_host_memory != NULL) {
         Serial.write(&app_host_memory[ptr], len);
+    }
+}
+
+extern "C" void app_arduino_println(int32_t ptr, int32_t len) {
+    if(app_host_memory != NULL) {
+        Serial.write(&app_host_memory[ptr], len);
+        Serial.println();
     }
 }
