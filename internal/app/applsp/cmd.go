@@ -6,7 +6,7 @@ import (
 )
 
 var CmdLsp = &cli.Command{
-	Hidden: false,
+	Hidden: true,
 	Name:   "lsp",
 	Usage:  "run Wa langugage server (dev)",
 	Flags: []cli.Flag{
