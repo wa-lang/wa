@@ -24,7 +24,7 @@ func (p *watPrinter) printType_func(typ *ast.TypeSection) {
 	fmt.Fprint(p.w, p.indent)
 	fmt.Fprint(p.w, "(type")
 	if s := typ.Name; s != "" {
-		fmt.Fprintf(p.w, " %s", p.identOrIndex(s))
+		fmt.Fprintf(p.w, " %s", watPrinter_identOrIndex(s))
 	}
 
 	fnType := typ.Type

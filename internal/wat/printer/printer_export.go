@@ -16,17 +16,17 @@ func (p *watPrinter) printExport() error {
 		switch e.Kind {
 		case token.GLOBAL:
 			fmt.Fprintf(p.w, `%s(export "%s" (global %s))`+"\n",
-				p.indent, e.Name, p.identOrIndex(e.GlobalIdx),
+				p.indent, e.Name, watPrinter_identOrIndex(e.GlobalIdx),
 			)
 		case token.FUNC:
 			// skip
 		case token.MEMORY:
 			fmt.Fprintf(p.w, `%s(export "%s" (memory %s))`+"\n",
-				p.indent, e.Name, p.identOrIndex(e.MemoryIdx),
+				p.indent, e.Name, watPrinter_identOrIndex(e.MemoryIdx),
 			)
 		case token.TABLE:
 			fmt.Fprintf(p.w, `%s(export "%s" (table %s))`+"\n",
-				p.indent, e.Name, p.identOrIndex(e.TableIdx),
+				p.indent, e.Name, watPrinter_identOrIndex(e.TableIdx),
 			)
 		default:
 			panic("unreachable")

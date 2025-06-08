@@ -3,9 +3,13 @@
 package wat2c
 
 import (
+	"bytes"
 	"fmt"
 	"strings"
 	"unicode"
+
+	"wa-lang.org/wa/internal/wat/ast"
+	"wa-lang.org/wa/internal/wat/printer"
 )
 
 func assert(condition bool, args ...interface{}) {
@@ -53,4 +57,11 @@ func toCName(name string) string {
 	}
 
 	return sb.String()
+}
+
+// 格式化指令
+func insString(i ast.Instruction) string {
+	var buf bytes.Buffer
+	printer.PrintInstruction(&buf, "", i, 0)
+	return strings.TrimSpace(buf.String())
 }

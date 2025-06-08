@@ -17,7 +17,7 @@ func (p *watPrinter) printGlobals() error {
 		fmt.Fprint(p.w, p.indent)
 		fmt.Fprintf(p.w, "(global")
 		if g.Name != "" {
-			fmt.Fprintf(p.w, " %s", p.identOrIndex(g.Name))
+			fmt.Fprintf(p.w, " %s", watPrinter_identOrIndex(g.Name))
 		}
 		if g.Mutable {
 			fmt.Fprintf(p.w, " (mut %v)", g.Type)

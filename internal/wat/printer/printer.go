@@ -11,6 +11,12 @@ import (
 	"wa-lang.org/wa/internal/wat/ast"
 )
 
+// 打印指令
+func PrintInstruction(w io.Writer, indent string, ins ast.Instruction, blkLevel int) {
+	watPrinter_printFuncs_body_ins(w, indent, ins, blkLevel)
+}
+
+// 打印模块
 func Fprint(output io.Writer, m *ast.Module) error {
 	return new(watPrinter).Fprint(output, m)
 }

@@ -415,7 +415,7 @@ func (p *wat2cWorker) buildFunc_ins(w io.Writer, fn *ast.Func, stk *valueTypeSta
 				unreachable()
 			}
 		}
-		fmt.Fprintf(w, ");\n")
+		fmt.Fprintf(w, "); // %s\n", insString(i))
 
 		// 复制到当前stk
 		if len(fnCallType.Results) > 1 {
@@ -557,7 +557,7 @@ func (p *wat2cWorker) buildFunc_ins(w io.Writer, fn *ast.Func, stk *valueTypeSta
 					unreachable()
 				}
 			}
-			fmt.Fprintf(w, ");\n")
+			fmt.Fprintf(w, "); // %s\n", insString(i))
 
 			// 保存返回值
 			if len(fnCallType.Results) > 1 {
@@ -601,8 +601,9 @@ func (p *wat2cWorker) buildFunc_ins(w io.Writer, fn *ast.Func, stk *valueTypeSta
 
 		// 注意返回值的顺序
 		// if sp0 != 0 { sp2 } else { sp1 }
-		fmt.Fprintf(w, "%sR%d.i32 = R%d.i32? R%d.i32: R%d.i32;\n",
+		fmt.Fprintf(w, "%sR%d.i32 = R%d.i32? R%d.i32: R%d.i32; // %s\n",
 			indent, ret0, sp0, sp2, sp1,
+			insString(i),
 		)
 	case token.INS_LOCAL_GET:
 		i := i.(ast.Ins_LocalGet)
@@ -610,13 +611,13 @@ func (p *wat2cWorker) buildFunc_ins(w io.Writer, fn *ast.Func, stk *valueTypeSta
 		ret0 := stk.Push(xType)
 		switch xType {
 		case token.I32:
-			fmt.Fprintf(w, "%sR%d.i32 = %s;\n", indent, ret0, p.findLocalName(fn, i.X))
+			fmt.Fprintf(w, "%sR%d.i32 = %s; // %s\n", indent, ret0, p.findLocalName(fn, i.X), insString(i))
 		case token.I64:
-			fmt.Fprintf(w, "%sR%d.i64 = %s;\n", indent, ret0, p.findLocalName(fn, i.X))
+			fmt.Fprintf(w, "%sR%d.i64 = %s; // %s\n", indent, ret0, p.findLocalName(fn, i.X), insString(i))
 		case token.F32:
-			fmt.Fprintf(w, "%sR%d.f32 = %s;\n", indent, ret0, p.findLocalName(fn, i.X))
+			fmt.Fprintf(w, "%sR%d.f32 = %s; // %s\n", indent, ret0, p.findLocalName(fn, i.X), insString(i))
 		case token.F64:
-			fmt.Fprintf(w, "%sR%d.f64 = %s;\n", indent, ret0, p.findLocalName(fn, i.X))
+			fmt.Fprintf(w, "%sR%d.f64 = %s; // %s\n", indent, ret0, p.findLocalName(fn, i.X), insString(i))
 		default:
 			unreachable()
 		}
@@ -626,13 +627,13 @@ func (p *wat2cWorker) buildFunc_ins(w io.Writer, fn *ast.Func, stk *valueTypeSta
 		sp0 := stk.Pop(xType)
 		switch xType {
 		case token.I32:
-			fmt.Fprintf(w, "%s%s = R%d.i32;\n", indent, p.findLocalName(fn, i.X), sp0)
+			fmt.Fprintf(w, "%s%s = R%d.i32; // %s\n", indent, p.findLocalName(fn, i.X), sp0, insString(i))
 		case token.I64:
-			fmt.Fprintf(w, "%s%s = R%d.i64;\n", indent, p.findLocalName(fn, i.X), sp0)
+			fmt.Fprintf(w, "%s%s = R%d.i64; // %s\n", indent, p.findLocalName(fn, i.X), sp0, insString(i))
 		case token.F32:
-			fmt.Fprintf(w, "%s%s = R%d.f32;\n", indent, p.findLocalName(fn, i.X), sp0)
+			fmt.Fprintf(w, "%s%s = R%d.f32; // %s\n", indent, p.findLocalName(fn, i.X), sp0, insString(i))
 		case token.F64:
-			fmt.Fprintf(w, "%s%s = R%d.f64;\n", indent, p.findLocalName(fn, i.X), sp0)
+			fmt.Fprintf(w, "%s%s = R%d.f64; // %s\n", indent, p.findLocalName(fn, i.X), sp0, insString(i))
 		default:
 			unreachable()
 		}
@@ -642,13 +643,13 @@ func (p *wat2cWorker) buildFunc_ins(w io.Writer, fn *ast.Func, stk *valueTypeSta
 		sp0 := stk.Top(xType)
 		switch xType {
 		case token.I32:
-			fmt.Fprintf(w, "%s%s = R%d.i32;\n", indent, p.findLocalName(fn, i.X), sp0)
+			fmt.Fprintf(w, "%s%s = R%d.i32; // %s\n", indent, p.findLocalName(fn, i.X), sp0, insString(i))
 		case token.I64:
-			fmt.Fprintf(w, "%s%s = R%d.i64;\n", indent, p.findLocalName(fn, i.X), sp0)
+			fmt.Fprintf(w, "%s%s = R%d.i64; // %s\n", indent, p.findLocalName(fn, i.X), sp0, insString(i))
 		case token.F32:
-			fmt.Fprintf(w, "%s%s = R%d.f32;\n", indent, p.findLocalName(fn, i.X), sp0)
+			fmt.Fprintf(w, "%s%s = R%d.f32; // %s\n", indent, p.findLocalName(fn, i.X), sp0, insString(i))
 		case token.F64:
-			fmt.Fprintf(w, "%s%s = R%d.f64;\n", indent, p.findLocalName(fn, i.X), sp0)
+			fmt.Fprintf(w, "%s%s = R%d.f64; // %s\n", indent, p.findLocalName(fn, i.X), sp0, insString(i))
 		default:
 			unreachable()
 		}
@@ -658,13 +659,13 @@ func (p *wat2cWorker) buildFunc_ins(w io.Writer, fn *ast.Func, stk *valueTypeSta
 		ret0 := stk.Push(xType)
 		switch xType {
 		case token.I32:
-			fmt.Fprintf(w, "%sR%d.i32 = %s_%s;\n", indent, ret0, p.opt.Prefix, toCName(i.X))
+			fmt.Fprintf(w, "%sR%d.i32 = %s_%s; // %s\n", indent, ret0, p.opt.Prefix, toCName(i.X), insString(i))
 		case token.I64:
-			fmt.Fprintf(w, "%sR%d.i64 = %s_%s;\n", indent, ret0, p.opt.Prefix, toCName(i.X))
+			fmt.Fprintf(w, "%sR%d.i64 = %s_%s; // %s\n", indent, ret0, p.opt.Prefix, toCName(i.X), insString(i))
 		case token.F32:
-			fmt.Fprintf(w, "%sR%d.f32 = %s_%s;\n", indent, ret0, p.opt.Prefix, toCName(i.X))
+			fmt.Fprintf(w, "%sR%d.f32 = %s_%s; // %s\n", indent, ret0, p.opt.Prefix, toCName(i.X), insString(i))
 		case token.F64:
-			fmt.Fprintf(w, "%sR%d.f64 = %s_%s;\n", indent, ret0, p.opt.Prefix, toCName(i.X))
+			fmt.Fprintf(w, "%sR%d.f64 = %s_%s; // %s\n", indent, ret0, p.opt.Prefix, toCName(i.X), insString(i))
 		default:
 			unreachable()
 		}
@@ -674,37 +675,39 @@ func (p *wat2cWorker) buildFunc_ins(w io.Writer, fn *ast.Func, stk *valueTypeSta
 		sp0 := stk.Pop(xType)
 		switch xType {
 		case token.I32:
-			fmt.Fprintf(w, "%s%s_%s = R%d.i32;\n", indent, p.opt.Prefix, toCName(i.X), sp0)
+			fmt.Fprintf(w, "%s%s_%s = R%d.i32; // %s\n", indent, p.opt.Prefix, toCName(i.X), sp0, insString(i))
 		case token.I64:
-			fmt.Fprintf(w, "%s%s_%s = R%d.i64;\n", indent, p.opt.Prefix, toCName(i.X), sp0)
+			fmt.Fprintf(w, "%s%s_%s = R%d.i64; // %s\n", indent, p.opt.Prefix, toCName(i.X), sp0, insString(i))
 		case token.F32:
-			fmt.Fprintf(w, "%s%s_%s = R%d.f32;\n", indent, p.opt.Prefix, toCName(i.X), sp0)
+			fmt.Fprintf(w, "%s%s_%s = R%d.f32; // %s\n", indent, p.opt.Prefix, toCName(i.X), sp0, insString(i))
 		case token.F64:
-			fmt.Fprintf(w, "%s%s_%s = R%d.f64;\n", indent, p.opt.Prefix, toCName(i.X), sp0)
+			fmt.Fprintf(w, "%s%s_%s = R%d.f64; // %s\n", indent, p.opt.Prefix, toCName(i.X), sp0, insString(i))
 		default:
 			unreachable()
 		}
 	case token.INS_TABLE_GET:
 		sp0 := stk.Pop(token.I32)
 		ret0 := stk.Push(token.FUNCREF) // funcref
-		fmt.Fprintf(w, "%sR%d.ref = %s_table[R%d.i32];\n", indent, sp0, p.opt.Prefix, ret0)
+		fmt.Fprintf(w, "%sR%d.ref = %s_table[R%d.i32]; // %s\n", indent, sp0, p.opt.Prefix, ret0, insString(i))
 	case token.INS_TABLE_SET:
 		sp0 := stk.Pop(token.FUNCREF) // funcref
 		sp1 := stk.Pop(token.I32)
-		fmt.Fprintf(w, "%s%s_table[R%d.i32] = R%d.ref;\n", indent, p.opt.Prefix, sp1, sp0)
+		fmt.Fprintf(w, "%s%s_table[R%d.i32] = R%d.ref; // %s\n", indent, p.opt.Prefix, sp1, sp0, insString(i))
 	case token.INS_I32_LOAD:
 		i := i.(ast.Ins_I32Load)
 		if p.m.Memory.AddrType == token.I32 {
 			sp0 := stk.Pop(token.I32)
 			ret0 := stk.Push(token.I32)
-			fmt.Fprintf(w, "%smemcpy(&R%d.i32, &%s_memory[R%d.i32+%d], 4);\n",
+			fmt.Fprintf(w, "%smemcpy(&R%d.i32, &%s_memory[R%d.i32+%d], 4); // %s\n",
 				indent, ret0, p.opt.Prefix, sp0, i.Offset,
+				insString(i),
 			)
 		} else {
 			sp0 := stk.Pop(token.I64)
 			ret0 := stk.Push(token.I32)
-			fmt.Fprintf(w, "%smemcpy(&R%d.i32, &%s_memory[R%d.i64+%d], 4);\n",
+			fmt.Fprintf(w, "%smemcpy(&R%d.i32, &%s_memory[R%d.i64+%d], 4); // %s\n",
 				indent, ret0, p.opt.Prefix, sp0, i.Offset,
+				insString(i),
 			)
 		}
 	case token.INS_I64_LOAD:
@@ -712,14 +715,16 @@ func (p *wat2cWorker) buildFunc_ins(w io.Writer, fn *ast.Func, stk *valueTypeSta
 		if p.m.Memory.AddrType == token.I32 {
 			sp0 := stk.Pop(token.I32)
 			ret0 := stk.Push(token.I64)
-			fmt.Fprintf(w, "%smemcpy(&R%d.i64, &%s_memory[R%d.i32+%d], 8);\n",
+			fmt.Fprintf(w, "%smemcpy(&R%d.i64, &%s_memory[R%d.i32+%d], 8); // %s\n",
 				indent, ret0, p.opt.Prefix, sp0, i.Offset,
+				insString(i),
 			)
 		} else {
 			sp0 := stk.Pop(token.I64)
 			ret0 := stk.Push(token.I64)
-			fmt.Fprintf(w, "%smemcpy(&R%d.i64, &%s_memory[R%d.i64+%d], 8);\n",
+			fmt.Fprintf(w, "%smemcpy(&R%d.i64, &%s_memory[R%d.i64+%d], 8); // %s\n",
 				indent, ret0, p.opt.Prefix, sp0, i.Offset,
+				insString(i),
 			)
 		}
 	case token.INS_F32_LOAD:
@@ -727,14 +732,16 @@ func (p *wat2cWorker) buildFunc_ins(w io.Writer, fn *ast.Func, stk *valueTypeSta
 		if p.m.Memory.AddrType == token.I32 {
 			sp0 := stk.Pop(token.I32)
 			ret0 := stk.Push(token.F32)
-			fmt.Fprintf(w, "%smemcpy(&R%d.f32, &%s_memory[R%d.i32+%d], 4);\n",
+			fmt.Fprintf(w, "%smemcpy(&R%d.f32, &%s_memory[R%d.i32+%d], 4); // %s\n",
 				indent, ret0, p.opt.Prefix, sp0, i.Offset,
+				insString(i),
 			)
 		} else {
 			sp0 := stk.Pop(token.I64)
 			ret0 := stk.Push(token.F32)
-			fmt.Fprintf(w, "%smemcpy(&R%d.f32, &%s_memory[R%d.i64+%d], 4);\n",
+			fmt.Fprintf(w, "%smemcpy(&R%d.f32, &%s_memory[R%d.i64+%d], 4); // %s\n",
 				indent, ret0, p.opt.Prefix, sp0, i.Offset,
+				insString(i),
 			)
 		}
 	case token.INS_F64_LOAD:
@@ -742,14 +749,16 @@ func (p *wat2cWorker) buildFunc_ins(w io.Writer, fn *ast.Func, stk *valueTypeSta
 		if p.m.Memory.AddrType == token.I32 {
 			sp0 := stk.Pop(token.I32)
 			ret0 := stk.Push(token.F64)
-			fmt.Fprintf(w, "%smemcpy(&R%d.f64, &%s_memory[R%d.i32+%d], 8);\n",
+			fmt.Fprintf(w, "%smemcpy(&R%d.f64, &%s_memory[R%d.i32+%d], 8);// %s\n",
 				indent, ret0, p.opt.Prefix, sp0, i.Offset,
+				insString(i),
 			)
 		} else {
 			sp0 := stk.Pop(token.I64)
 			ret0 := stk.Push(token.F64)
-			fmt.Fprintf(w, "%smemcpy(&R%d.f64, &%s_memory[R%d.i64+%d], 8);\n",
+			fmt.Fprintf(w, "%smemcpy(&R%d.f64, &%s_memory[R%d.i64+%d], 8); // %s\n",
 				indent, ret0, p.opt.Prefix, sp0, i.Offset,
+				insString(i),
 			)
 		}
 	case token.INS_I32_LOAD8_S:
@@ -758,15 +767,17 @@ func (p *wat2cWorker) buildFunc_ins(w io.Writer, fn *ast.Func, stk *valueTypeSta
 			sp0 := stk.Pop(token.I32)
 			ret0 := stk.Push(token.I32)
 			p.use_R_u8 = true
-			fmt.Fprintf(w, "%smemcpy(&R_u8, &%s_memory[R%d.i32+%d], 1); R%d.i32 = (int32_t)((int8_t)R_u8);\n",
+			fmt.Fprintf(w, "%smemcpy(&R_u8, &%s_memory[R%d.i32+%d], 1); R%d.i32 = (int32_t)((int8_t)R_u8); // %s\n",
 				indent, p.opt.Prefix, sp0, i.Offset, ret0,
+				insString(i),
 			)
 		} else {
 			sp0 := stk.Pop(token.I64)
 			ret0 := stk.Push(token.I32)
 			p.use_R_u8 = true
-			fmt.Fprintf(w, "%smemcpy(&R_u8, &%s_memory[R%d.i64+%d], 1); R%d.i32 = (int32_t)((int8_t)R_u8);\n",
+			fmt.Fprintf(w, "%smemcpy(&R_u8, &%s_memory[R%d.i64+%d], 1); R%d.i32 = (int32_t)((int8_t)R_u8); // %s\n",
 				indent, p.opt.Prefix, sp0, i.Offset, ret0,
+				insString(i),
 			)
 		}
 	case token.INS_I32_LOAD8_U:
@@ -775,15 +786,17 @@ func (p *wat2cWorker) buildFunc_ins(w io.Writer, fn *ast.Func, stk *valueTypeSta
 			sp0 := stk.Pop(token.I32)
 			ret0 := stk.Push(token.I32)
 			p.use_R_u8 = true
-			fmt.Fprintf(w, "%smemcpy(&R_u8, &%s_memory[R%d.i32+%d], 1); R%d.i32 = (int32_t)((uint8_t)R_u8);\n",
+			fmt.Fprintf(w, "%smemcpy(&R_u8, &%s_memory[R%d.i32+%d], 1); R%d.i32 = (int32_t)((uint8_t)R_u8); // %s\n",
 				indent, p.opt.Prefix, sp0, i.Offset, ret0,
+				insString(i),
 			)
 		} else {
 			sp0 := stk.Pop(token.I64)
 			ret0 := stk.Push(token.I32)
 			p.use_R_u8 = true
-			fmt.Fprintf(w, "%smemcpy(&R_u8, &%s_memory[R%d.i64+%d], 1); R%d.i32 = (int32_t)((uint8_t)R_u8);\n",
+			fmt.Fprintf(w, "%smemcpy(&R_u8, &%s_memory[R%d.i64+%d], 1); R%d.i32 = (int32_t)((uint8_t)R_u8); // %s\n",
 				indent, p.opt.Prefix, sp0, i.Offset, ret0,
+				insString(i),
 			)
 		}
 	case token.INS_I32_LOAD16_S:
@@ -792,15 +805,17 @@ func (p *wat2cWorker) buildFunc_ins(w io.Writer, fn *ast.Func, stk *valueTypeSta
 			sp0 := stk.Pop(token.I32)
 			ret0 := stk.Push(token.I32)
 			p.use_R_u16 = true
-			fmt.Fprintf(w, "%smemcpy(&R_u16, &%s_memory[R%d.i32+%d], 2); R%d.i32 = (int32_t)((int16_t)R_u16);\n",
+			fmt.Fprintf(w, "%smemcpy(&R_u16, &%s_memory[R%d.i32+%d], 2); R%d.i32 = (int32_t)((int16_t)R_u16); // %s\n",
 				indent, p.opt.Prefix, sp0, i.Offset, ret0,
+				insString(i),
 			)
 		} else {
 			sp0 := stk.Pop(token.I64)
 			ret0 := stk.Push(token.I32)
 			p.use_R_u16 = true
-			fmt.Fprintf(w, "%smemcpy(&R_u16, &%s_memory[R%d.i64+%d], 2); R%d.i32 = (int32_t)((int16_t)R_u16);\n",
+			fmt.Fprintf(w, "%smemcpy(&R_u16, &%s_memory[R%d.i64+%d], 2); R%d.i32 = (int32_t)((int16_t)R_u16); // %s\n",
 				indent, p.opt.Prefix, sp0, i.Offset, ret0,
+				insString(i),
 			)
 		}
 	case token.INS_I32_LOAD16_U:
@@ -809,15 +824,17 @@ func (p *wat2cWorker) buildFunc_ins(w io.Writer, fn *ast.Func, stk *valueTypeSta
 			sp0 := stk.Pop(token.I32)
 			ret0 := stk.Push(token.I32)
 			p.use_R_u16 = true
-			fmt.Fprintf(w, "%smemcpy(&R_u16, &%s_memory[R%d.i32+%d], 2); R%d.i32 = (int32_t)((uint16_t)R_u16);\n",
+			fmt.Fprintf(w, "%smemcpy(&R_u16, &%s_memory[R%d.i32+%d], 2); R%d.i32 = (int32_t)((uint16_t)R_u16); // %s\n",
 				indent, p.opt.Prefix, sp0, i.Offset, ret0,
+				insString(i),
 			)
 		} else {
 			sp0 := stk.Pop(token.I64)
 			ret0 := stk.Push(token.I32)
 			p.use_R_u16 = true
-			fmt.Fprintf(w, "%smemcpy(&R_u16, &%s_memory[R%d.i64+%d], 2); R%d.i32 = (int32_t)((uint16_t)R_u16);\n",
+			fmt.Fprintf(w, "%smemcpy(&R_u16, &%s_memory[R%d.i64+%d], 2); R%d.i32 = (int32_t)((uint16_t)R_u16); // %s\n",
 				indent, p.opt.Prefix, sp0, i.Offset, ret0,
+				insString(i),
 			)
 		}
 	case token.INS_I64_LOAD8_S:
@@ -826,15 +843,17 @@ func (p *wat2cWorker) buildFunc_ins(w io.Writer, fn *ast.Func, stk *valueTypeSta
 			sp0 := stk.Pop(token.I32)
 			ret0 := stk.Push(token.I64)
 			p.use_R_u8 = true
-			fmt.Fprintf(w, "%smemcpy(&R_u8, &%s_memory[R%d.i32+%d], 1); R%d.i64 = (int64_t)((int8_t)R_u8);\n",
+			fmt.Fprintf(w, "%smemcpy(&R_u8, &%s_memory[R%d.i32+%d], 1); R%d.i64 = (int64_t)((int8_t)R_u8); // %s\n",
 				indent, p.opt.Prefix, sp0, i.Offset, ret0,
+				insString(i),
 			)
 		} else {
 			sp0 := stk.Pop(token.I64)
 			ret0 := stk.Push(token.I64)
 			p.use_R_u8 = true
-			fmt.Fprintf(w, "%smemcpy(&R_u8, &%s_memory[R%d.i64+%d], 1); R%d.i64 = (int64_t)((int8_t)R_u8);\n",
+			fmt.Fprintf(w, "%smemcpy(&R_u8, &%s_memory[R%d.i64+%d], 1); R%d.i64 = (int64_t)((int8_t)R_u8); // %s\n",
 				indent, p.opt.Prefix, sp0, i.Offset, ret0,
+				insString(i),
 			)
 		}
 	case token.INS_I64_LOAD8_U:
@@ -843,15 +862,17 @@ func (p *wat2cWorker) buildFunc_ins(w io.Writer, fn *ast.Func, stk *valueTypeSta
 			sp0 := stk.Pop(token.I32)
 			ret0 := stk.Push(token.I64)
 			p.use_R_u8 = true
-			fmt.Fprintf(w, "%smemcpy(&R_u8, &%s_memory[R%d.i32+%d], 1); R%d.i64 = (int64_t)((uint8_t)R_u8);\n",
+			fmt.Fprintf(w, "%smemcpy(&R_u8, &%s_memory[R%d.i32+%d], 1); R%d.i64 = (int64_t)((uint8_t)R_u8); // %s\n",
 				indent, p.opt.Prefix, sp0, i.Offset, ret0,
+				insString(i),
 			)
 		} else {
 			sp0 := stk.Pop(token.I64)
 			ret0 := stk.Push(token.I64)
 			p.use_R_u8 = true
-			fmt.Fprintf(w, "%smemcpy(&R_u8, &%s_memory[R%d.i64+%d], 1); R%d.i64 = (int64_t)((uint8_t)R_u8);\n",
+			fmt.Fprintf(w, "%smemcpy(&R_u8, &%s_memory[R%d.i64+%d], 1); R%d.i64 = (int64_t)((uint8_t)R_u8); // %s\n",
 				indent, p.opt.Prefix, sp0, i.Offset, ret0,
+				insString(i),
 			)
 		}
 	case token.INS_I64_LOAD16_S:
@@ -860,15 +881,17 @@ func (p *wat2cWorker) buildFunc_ins(w io.Writer, fn *ast.Func, stk *valueTypeSta
 			sp0 := stk.Pop(token.I32)
 			ret0 := stk.Push(token.I64)
 			p.use_R_u16 = true
-			fmt.Fprintf(w, "%smemcpy(&R_u16, &%s_memory[R%d.i32+%d], 2); R%d.i64 = (int64_t)((int16_t)R_u16);\n",
+			fmt.Fprintf(w, "%smemcpy(&R_u16, &%s_memory[R%d.i32+%d], 2); R%d.i64 = (int64_t)((int16_t)R_u16); // %s\n",
 				indent, p.opt.Prefix, sp0, i.Offset, ret0,
+				insString(i),
 			)
 		} else {
 			sp0 := stk.Pop(token.I64)
 			ret0 := stk.Push(token.I64)
 			p.use_R_u16 = true
-			fmt.Fprintf(w, "%smemcpy(&R_u16, &%s_memory[R%d.i64+%d], 2); R%d.i64 = (int64_t)((int16_t)R_u16);\n",
+			fmt.Fprintf(w, "%smemcpy(&R_u16, &%s_memory[R%d.i64+%d], 2); R%d.i64 = (int64_t)((int16_t)R_u16); // %s\n",
 				indent, p.opt.Prefix, sp0, i.Offset, ret0,
+				insString(i),
 			)
 		}
 	case token.INS_I64_LOAD16_U:
@@ -877,15 +900,17 @@ func (p *wat2cWorker) buildFunc_ins(w io.Writer, fn *ast.Func, stk *valueTypeSta
 			sp0 := stk.Pop(token.I32)
 			ret0 := stk.Push(token.I64)
 			p.use_R_u16 = true
-			fmt.Fprintf(w, "%smemcpy(&R_u16, &%s_memory[R%d.i32+%d], 2); R%d.i64 = (int64_t)((uint16_t)R_u16);\n",
+			fmt.Fprintf(w, "%smemcpy(&R_u16, &%s_memory[R%d.i32+%d], 2); R%d.i64 = (int64_t)((uint16_t)R_u16); // %s\n",
 				indent, p.opt.Prefix, sp0, i.Offset, ret0,
+				insString(i),
 			)
 		} else {
 			sp0 := stk.Pop(token.I64)
 			ret0 := stk.Push(token.I64)
 			p.use_R_u16 = true
-			fmt.Fprintf(w, "%smemcpy(&R_u16, &%s_memory[R%d.i64+%d], 2); R%d.i64 = (int64_t)((uint16_t)R_u16);\n",
+			fmt.Fprintf(w, "%smemcpy(&R_u16, &%s_memory[R%d.i64+%d], 2); R%d.i64 = (int64_t)((uint16_t)R_u16); // %s\n",
 				indent, p.opt.Prefix, sp0, i.Offset, ret0,
+				insString(i),
 			)
 		}
 	case token.INS_I64_LOAD32_S:
@@ -894,15 +919,17 @@ func (p *wat2cWorker) buildFunc_ins(w io.Writer, fn *ast.Func, stk *valueTypeSta
 			sp0 := stk.Pop(token.I32)
 			ret0 := stk.Push(token.I64)
 			p.use_R_u32 = true
-			fmt.Fprintf(w, "%smemcpy(&R_u32, &%s_memory[R%d.i32+%d], 4); R%d.i64 = (int64_t)((int32_t)R_u32);\n",
+			fmt.Fprintf(w, "%smemcpy(&R_u32, &%s_memory[R%d.i32+%d], 4); R%d.i64 = (int64_t)((int32_t)R_u32); // %s\n",
 				indent, p.opt.Prefix, sp0, i.Offset, ret0,
+				insString(i),
 			)
 		} else {
 			sp0 := stk.Pop(token.I64)
 			ret0 := stk.Push(token.I64)
 			p.use_R_u32 = true
-			fmt.Fprintf(w, "%smemcpy(&R_u32, &%s_memory[R%d.i64+%d], 4); R%d.i64 = (int64_t)((int32_t)R_u32);\n",
+			fmt.Fprintf(w, "%smemcpy(&R_u32, &%s_memory[R%d.i64+%d], 4); R%d.i64 = (int64_t)((int32_t)R_u32); // %s\n",
 				indent, p.opt.Prefix, sp0, i.Offset, ret0,
+				insString(i),
 			)
 		}
 	case token.INS_I64_LOAD32_U:
@@ -911,15 +938,17 @@ func (p *wat2cWorker) buildFunc_ins(w io.Writer, fn *ast.Func, stk *valueTypeSta
 			sp0 := stk.Pop(token.I32)
 			ret0 := stk.Push(token.I64)
 			p.use_R_u32 = true
-			fmt.Fprintf(w, "%smemcpy(&R_u32, &%s_memory[R%d.i32+%d], 4); R%d.i64 = (int64_t)((uint32_t)R_u32);\n",
+			fmt.Fprintf(w, "%smemcpy(&R_u32, &%s_memory[R%d.i32+%d], 4); R%d.i64 = (int64_t)((uint32_t)R_u32); // %s\n",
 				indent, p.opt.Prefix, sp0, i.Offset, ret0,
+				insString(i),
 			)
 		} else {
 			sp0 := stk.Pop(token.I64)
 			ret0 := stk.Push(token.I64)
 			p.use_R_u32 = true
-			fmt.Fprintf(w, "%smemcpy(&R_u32, &%s_memory[R%d.i64+%d], 4); R%d.i64 = (int64_t)((uint32_t)R_u32);\n",
+			fmt.Fprintf(w, "%smemcpy(&R_u32, &%s_memory[R%d.i64+%d], 4); R%d.i64 = (int64_t)((uint32_t)R_u32); // %s\n",
 				indent, p.opt.Prefix, sp0, i.Offset, ret0,
+				insString(i),
 			)
 		}
 	case token.INS_I32_STORE:
@@ -927,14 +956,16 @@ func (p *wat2cWorker) buildFunc_ins(w io.Writer, fn *ast.Func, stk *valueTypeSta
 		if p.m.Memory.AddrType == token.I32 {
 			sp0 := stk.Pop(token.I32)
 			sp1 := stk.Pop(token.I32)
-			fmt.Fprintf(w, "%smemcpy(&%s_memory[R%d.i32+%d], &R%d.i32, 4);\n",
+			fmt.Fprintf(w, "%smemcpy(&%s_memory[R%d.i32+%d], &R%d.i32, 4); // %s\n",
 				indent, p.opt.Prefix, sp1, i.Offset, sp0,
+				insString(i),
 			)
 		} else {
 			sp0 := stk.Pop(token.I32)
 			sp1 := stk.Pop(token.I64)
-			fmt.Fprintf(w, "%smemcpy(&%s_memory[R%d.i64+%d], &R%d.i32, 4);\n",
+			fmt.Fprintf(w, "%smemcpy(&%s_memory[R%d.i64+%d], &R%d.i32, 4); // %s\n",
 				indent, p.opt.Prefix, sp1, i.Offset, sp0,
+				insString(i),
 			)
 		}
 	case token.INS_I64_STORE:
@@ -942,14 +973,16 @@ func (p *wat2cWorker) buildFunc_ins(w io.Writer, fn *ast.Func, stk *valueTypeSta
 		if p.m.Memory.AddrType == token.I32 {
 			sp0 := stk.Pop(token.I64)
 			sp1 := stk.Pop(token.I32)
-			fmt.Fprintf(w, "%smemcpy(&%s_memory[R%d.i32+%d], &R%d.i64, 8);\n",
+			fmt.Fprintf(w, "%smemcpy(&%s_memory[R%d.i32+%d], &R%d.i64, 8); // %s\n",
 				indent, p.opt.Prefix, sp1, i.Offset, sp0,
+				insString(i),
 			)
 		} else {
 			sp0 := stk.Pop(token.I64)
 			sp1 := stk.Pop(token.I64)
-			fmt.Fprintf(w, "%smemcpy(&%s_memory[R%d.i64+%d], &R%d.i64, 8);\n",
+			fmt.Fprintf(w, "%smemcpy(&%s_memory[R%d.i64+%d], &R%d.i64, 8); // %s\n",
 				indent, p.opt.Prefix, sp1, i.Offset, sp0,
+				insString(i),
 			)
 		}
 	case token.INS_F32_STORE:
@@ -957,14 +990,16 @@ func (p *wat2cWorker) buildFunc_ins(w io.Writer, fn *ast.Func, stk *valueTypeSta
 		if p.m.Memory.AddrType == token.I32 {
 			sp0 := stk.Pop(token.F32)
 			sp1 := stk.Pop(token.I32)
-			fmt.Fprintf(w, "%smemcpy(&%s_memory[R%d.i32+%d], &R%d.f32, 4);\n",
+			fmt.Fprintf(w, "%smemcpy(&%s_memory[R%d.i32+%d], &R%d.f32, 4); // %s\n",
 				indent, p.opt.Prefix, sp1, i.Offset, sp0,
+				insString(i),
 			)
 		} else {
 			sp0 := stk.Pop(token.F32)
 			sp1 := stk.Pop(token.I64)
-			fmt.Fprintf(w, "%smemcpy(&%s_memory[R%d.i64+%d], &R%d.f32, 4);\n",
+			fmt.Fprintf(w, "%smemcpy(&%s_memory[R%d.i64+%d], &R%d.f32, 4); // %s\n",
 				indent, p.opt.Prefix, sp1, i.Offset, sp0,
+				insString(i),
 			)
 		}
 	case token.INS_F64_STORE:
@@ -972,14 +1007,16 @@ func (p *wat2cWorker) buildFunc_ins(w io.Writer, fn *ast.Func, stk *valueTypeSta
 		if p.m.Memory.AddrType == token.I32 {
 			sp0 := stk.Pop(token.F64)
 			sp1 := stk.Pop(token.I32)
-			fmt.Fprintf(w, "%smemcpy(&%s_memory[R%d.i32+%d], &R%d.f64, 8);\n",
+			fmt.Fprintf(w, "%smemcpy(&%s_memory[R%d.i32+%d], &R%d.f64, 8); // %s\n",
 				indent, p.opt.Prefix, sp1, i.Offset, sp0,
+				insString(i),
 			)
 		} else {
 			sp0 := stk.Pop(token.F64)
 			sp1 := stk.Pop(token.I64)
-			fmt.Fprintf(w, "%smemcpy(&%s_memory[R%d.i64+%d], &R%d.f64, 8);\n",
+			fmt.Fprintf(w, "%smemcpy(&%s_memory[R%d.i64+%d], &R%d.f64, 8); // %s\n",
 				indent, p.opt.Prefix, sp1, i.Offset, sp0,
+				insString(i),
 			)
 		}
 	case token.INS_I32_STORE8:
@@ -988,15 +1025,17 @@ func (p *wat2cWorker) buildFunc_ins(w io.Writer, fn *ast.Func, stk *valueTypeSta
 			sp0 := stk.Pop(token.I32)
 			sp1 := stk.Pop(token.I32)
 			p.use_R_u8 = true
-			fmt.Fprintf(w, "%sR_u8 = (uint8_t)((int8_t)(R%d.i32)); memcpy(&%s_memory[R%d.i32+%d], &R_u8, 1);\n",
+			fmt.Fprintf(w, "%sR_u8 = (uint8_t)((int8_t)(R%d.i32)); memcpy(&%s_memory[R%d.i32+%d], &R_u8, 1); // %s\n",
 				indent, sp0, p.opt.Prefix, sp1, i.Offset,
+				insString(i),
 			)
 		} else {
 			sp0 := stk.Pop(token.I32)
 			sp1 := stk.Pop(token.I64)
 			p.use_R_u8 = true
-			fmt.Fprintf(w, "%sR_u8 = (uint8_t)((int8_t)(R%d.i32)); memcpy(&%s_memory[R%d.i64+%d], &R_u8, 1);\n",
+			fmt.Fprintf(w, "%sR_u8 = (uint8_t)((int8_t)(R%d.i32)); memcpy(&%s_memory[R%d.i64+%d], &R_u8, 1); // %s\n",
 				indent, sp0, p.opt.Prefix, sp1, i.Offset,
+				insString(i),
 			)
 		}
 	case token.INS_I32_STORE16:
@@ -1005,15 +1044,17 @@ func (p *wat2cWorker) buildFunc_ins(w io.Writer, fn *ast.Func, stk *valueTypeSta
 			sp0 := stk.Pop(token.I32)
 			sp1 := stk.Pop(token.I32)
 			p.use_R_u16 = true
-			fmt.Fprintf(w, "%sR_u16 = (uint16_t)((int16_t)(R%d.i32)); memcpy(&%s_memory[R%d.i32+%d], &R_u16, 2);\n",
+			fmt.Fprintf(w, "%sR_u16 = (uint16_t)((int16_t)(R%d.i32)); memcpy(&%s_memory[R%d.i32+%d], &R_u16, 2); // %s\n",
 				indent, sp0, p.opt.Prefix, sp1, i.Offset,
+				insString(i),
 			)
 		} else {
 			sp0 := stk.Pop(token.I32)
 			sp1 := stk.Pop(token.I64)
 			p.use_R_u16 = true
-			fmt.Fprintf(w, "%sR_u16 = (uint16_t)((int16_t)(R%d.i32)); memcpy(&%s_memory[R%d.i64+%d], &R_u16, 2);\n",
+			fmt.Fprintf(w, "%sR_u16 = (uint16_t)((int16_t)(R%d.i32)); memcpy(&%s_memory[R%d.i64+%d], &R_u16, 2); // %s\n",
 				indent, sp0, p.opt.Prefix, sp1, i.Offset,
+				insString(i),
 			)
 		}
 	case token.INS_I64_STORE8:
@@ -1022,15 +1063,17 @@ func (p *wat2cWorker) buildFunc_ins(w io.Writer, fn *ast.Func, stk *valueTypeSta
 			sp0 := stk.Pop(token.I64)
 			sp1 := stk.Pop(token.I32)
 			p.use_R_u8 = true
-			fmt.Fprintf(w, "%sR_u8 = (uint8_t)((int8_t)(R%d.i64)); memcpy(&%s_memory[R%d.i32+%d], &R_u8, 1);\n",
+			fmt.Fprintf(w, "%sR_u8 = (uint8_t)((int8_t)(R%d.i64)); memcpy(&%s_memory[R%d.i32+%d], &R_u8, 1); // %s\n",
 				indent, sp0, p.opt.Prefix, sp1, i.Offset,
+				insString(i),
 			)
 		} else {
 			sp0 := stk.Pop(token.I64)
 			sp1 := stk.Pop(token.I64)
 			p.use_R_u8 = true
-			fmt.Fprintf(w, "%sR_u8 = (uint8_t)((int8_t)(R%d.i64)); memcpy(&%s_memory[R%d.i64+%d], &R_u8, 1);\n",
+			fmt.Fprintf(w, "%sR_u8 = (uint8_t)((int8_t)(R%d.i64)); memcpy(&%s_memory[R%d.i64+%d], &R_u8, 1); // %s\n",
 				indent, sp0, p.opt.Prefix, sp1, i.Offset,
+				insString(i),
 			)
 		}
 	case token.INS_I64_STORE16:
@@ -1039,15 +1082,17 @@ func (p *wat2cWorker) buildFunc_ins(w io.Writer, fn *ast.Func, stk *valueTypeSta
 			sp0 := stk.Pop(token.I64)
 			sp1 := stk.Pop(token.I32)
 			p.use_R_u16 = true
-			fmt.Fprintf(w, "%sR_u16 = (uint16_t)((int16_t)(R%d.i64)); memcpy(&%s_memory[R%d.i32+%d], &R_u16, 2);\n",
+			fmt.Fprintf(w, "%sR_u16 = (uint16_t)((int16_t)(R%d.i64)); memcpy(&%s_memory[R%d.i32+%d], &R_u16, 2); // %s\n",
 				indent, sp0, p.opt.Prefix, sp1, i.Offset,
+				insString(i),
 			)
 		} else {
 			sp0 := stk.Pop(token.I64)
 			sp1 := stk.Pop(token.I64)
 			p.use_R_u16 = true
-			fmt.Fprintf(w, "%sR_u16 = (uint16_t)((int16_t)(R%d.i64)); memcpy(&%s_memory[R%d.i64+%d], &R_u16, 2);\n",
+			fmt.Fprintf(w, "%sR_u16 = (uint16_t)((int16_t)(R%d.i64)); memcpy(&%s_memory[R%d.i64+%d], &R_u16, 2); // %s\n",
 				indent, sp0, p.opt.Prefix, sp1, i.Offset,
+				insString(i),
 			)
 		}
 	case token.INS_I64_STORE32:
@@ -1056,20 +1101,22 @@ func (p *wat2cWorker) buildFunc_ins(w io.Writer, fn *ast.Func, stk *valueTypeSta
 			sp0 := stk.Pop(token.I64)
 			sp1 := stk.Pop(token.I32)
 			p.use_R_u32 = true
-			fmt.Fprintf(w, "%sR_u32 = (uint32_t)((int32_t)(R%d.i64)); memcpy(&%s_memory[R%d.i32+%d], &R_u32, 4);\n",
+			fmt.Fprintf(w, "%sR_u32 = (uint32_t)((int32_t)(R%d.i64)); memcpy(&%s_memory[R%d.i32+%d], &R_u32, 4); // %s\n",
 				indent, sp0, p.opt.Prefix, sp1, i.Offset,
+				insString(i),
 			)
 		} else {
 			sp0 := stk.Pop(token.I64)
 			sp1 := stk.Pop(token.I64)
 			p.use_R_u32 = true
-			fmt.Fprintf(w, "%sR_u32 = (uint32_t)((int32_t)(R%d.i64)); memcpy(&%s_memory[R%d.i64+%d], &R_u32, 4);\n",
+			fmt.Fprintf(w, "%sR_u32 = (uint32_t)((int32_t)(R%d.i64)); memcpy(&%s_memory[R%d.i64+%d], &R_u32, 4); // %s\n",
 				indent, sp0, p.opt.Prefix, sp1, i.Offset,
+				insString(i),
 			)
 		}
 	case token.INS_MEMORY_SIZE:
 		sp0 := stk.Push(token.I32)
-		fmt.Fprintf(w, "%sR%d.i32 = %s_memory_size;\n", indent, sp0, p.opt.Prefix)
+		fmt.Fprintf(w, "%sR%d.i32 = %s_memory_size; // %s\n", indent, sp0, p.opt.Prefix, insString(i))
 	case token.INS_MEMORY_GROW:
 		sp0 := stk.Pop(token.I32)
 		ret0 := stk.Push(token.I32)
@@ -1112,852 +1159,978 @@ func (p *wat2cWorker) buildFunc_ins(w io.Writer, fn *ast.Func, stk *valueTypeSta
 			sb.WriteString(fmt.Sprintf("\\x%02x", x))
 		}
 
-		fmt.Fprintf(w, "%smemcpy(&%s_memory[R%d.i32], (void*)(\"%s\"), %d);\n",
+		fmt.Fprintf(w, "%smemcpy(&%s_memory[R%d.i32], (void*)(\"%s\"), %d); // %s\n",
 			indent, p.opt.Prefix, dst, sb.String(), len,
+			insString(i),
 		)
 	case token.INS_MEMORY_COPY:
 		len := stk.Pop(token.I32)
 		src := stk.Pop(token.I32)
 		dst := stk.Pop(token.I32)
-		fmt.Fprintf(w, "%smemcpy(&%s_memory[R%d.i32], &%s_memory[R%d.i32], R%d.i32);\n",
+		fmt.Fprintf(w, "%smemcpy(&%s_memory[R%d.i32], &%s_memory[R%d.i32], R%d.i32); // %s\n",
 			indent, p.opt.Prefix, dst, p.opt.Prefix, src, len,
+			insString(i),
 		)
 	case token.INS_MEMORY_FILL:
 		len := stk.Pop(token.I32)
 		val := stk.Pop(token.I32)
 		dst := stk.Pop(token.I32)
-		fmt.Fprintf(w, "%smemset(&%s_memory[R%d.i32], R%d.i32, R%d.i32);\n",
+		fmt.Fprintf(w, "%smemset(&%s_memory[R%d.i32], R%d.i32, R%d.i32); // %s\n",
 			indent, p.opt.Prefix, dst, val, len,
+			insString(i),
 		)
 	case token.INS_I32_CONST:
 		i := i.(ast.Ins_I32Const)
 		sp0 := stk.Push(token.I32)
-		fmt.Fprintf(w, "%sR%d.i32 = %d;\n", indent, sp0, i.X)
+		fmt.Fprintf(w, "%sR%d.i32 = %d; // %s\n", indent, sp0, i.X, insString(i))
 	case token.INS_I64_CONST:
 		i := i.(ast.Ins_I64Const)
 		sp0 := stk.Push(token.I64)
-		fmt.Fprintf(w, "%sR%d.i64 = %d;\n", indent, sp0, i.X)
+		fmt.Fprintf(w, "%sR%d.i64 = %d; // %s\n", indent, sp0, i.X, insString(i))
 	case token.INS_F32_CONST:
 		i := i.(ast.Ins_F32Const)
 		sp0 := stk.Push(token.F32)
-		fmt.Fprintf(w, "%sR%d.f32 = %f;\n", indent, sp0, i.X)
+		fmt.Fprintf(w, "%sR%d.f32 = %f; // %s\n", indent, sp0, i.X, insString(i))
 	case token.INS_F64_CONST:
 		i := i.(ast.Ins_F64Const)
 		sp0 := stk.Push(token.F64)
-		fmt.Fprintf(w, "%sR%d.f64 = %f;\n", indent, sp0, i.X)
+		fmt.Fprintf(w, "%sR%d.f64 = %f; // %s\n", indent, sp0, i.X, insString(i))
 	case token.INS_I32_EQZ:
 		sp0 := stk.Pop(token.I32)
 		ret0 := stk.Push(token.I32)
-		fmt.Fprintf(w, "%sR%d.i32 = (R%d.i32==0)? 1: 0;\n",
+		fmt.Fprintf(w, "%sR%d.i32 = (R%d.i32==0)? 1: 0; // %s\n",
 			indent, ret0, sp0,
+			insString(i),
 		)
 	case token.INS_I32_EQ:
 		sp0 := stk.Pop(token.I32)
 		sp1 := stk.Pop(token.I32)
 		ret0 := stk.Push(token.I32)
-		fmt.Fprintf(w, "%sR%d.i32 = (R%d.i32==R%d.i32)? 1: 0;\n",
+		fmt.Fprintf(w, "%sR%d.i32 = (R%d.i32==R%d.i32)? 1: 0; // %s\n",
 			indent, ret0, sp1, sp0,
+			insString(i),
 		)
 	case token.INS_I32_NE:
 		sp0 := stk.Pop(token.I32)
 		sp1 := stk.Pop(token.I32)
 		ret0 := stk.Push(token.I32)
-		fmt.Fprintf(w, "%sR%d.i32 = (R%d.i32!=R%d.i32)? 1: 0;\n",
+		fmt.Fprintf(w, "%sR%d.i32 = (R%d.i32!=R%d.i32)? 1: 0; // %s\n",
 			indent, ret0, sp1, sp0,
+			insString(i),
 		)
 	case token.INS_I32_LT_S:
 		sp0 := stk.Pop(token.I32)
 		sp1 := stk.Pop(token.I32)
 		ret0 := stk.Push(token.I32)
-		fmt.Fprintf(w, "%sR%d.i32 = (R%d.i32<R%d.i32)? 1: 0;\n",
+		fmt.Fprintf(w, "%sR%d.i32 = (R%d.i32<R%d.i32)? 1: 0; // %s\n",
 			indent, ret0, sp1, sp0,
+			insString(i),
 		)
 	case token.INS_I32_LT_U:
 		sp0 := stk.Pop(token.I32)
 		sp1 := stk.Pop(token.I32)
 		ret0 := stk.Push(token.I32)
-		fmt.Fprintf(w, "%sR%d.i32 = ((uint32_t)(R%d.i32)<(uint32_t)(R%d.i32))? 1: 0;\n",
+		fmt.Fprintf(w, "%sR%d.i32 = ((uint32_t)(R%d.i32)<(uint32_t)(R%d.i32))? 1: 0; // %s\n",
 			indent, ret0, sp1, sp0,
+			insString(i),
 		)
 	case token.INS_I32_GT_S:
 		sp0 := stk.Pop(token.I32)
 		sp1 := stk.Pop(token.I32)
 		ret0 := stk.Push(token.I32)
-		fmt.Fprintf(w, "%sR%d.i32 = (R%d.i32>R%d.i32)? 1: 0;\n",
+		fmt.Fprintf(w, "%sR%d.i32 = (R%d.i32>R%d.i32)? 1: 0; // %s\n",
 			indent, ret0, sp1, sp0,
+			insString(i),
 		)
 	case token.INS_I32_GT_U:
 		sp0 := stk.Pop(token.I32)
 		sp1 := stk.Pop(token.I32)
 		ret0 := stk.Push(token.I32)
-		fmt.Fprintf(w, "%sR%d.i32 = ((uint32_t)(R%d.i32)>(uint32_t)(R%d.i32))? 1: 0;\n",
+		fmt.Fprintf(w, "%sR%d.i32 = ((uint32_t)(R%d.i32)>(uint32_t)(R%d.i32))? 1: 0; // %s\n",
 			indent, ret0, sp1, sp0,
+			insString(i),
 		)
 	case token.INS_I32_LE_S:
 		sp0 := stk.Pop(token.I32)
 		sp1 := stk.Pop(token.I32)
 		ret0 := stk.Push(token.I32)
-		fmt.Fprintf(w, "%sR%d.i32 = (R%d.i32<=R%d.i32)? 1: 0;\n",
+		fmt.Fprintf(w, "%sR%d.i32 = (R%d.i32<=R%d.i32)? 1: 0; // %s\n",
 			indent, ret0, sp1, sp0,
+			insString(i),
 		)
 	case token.INS_I32_LE_U:
 		sp0 := stk.Pop(token.I32)
 		sp1 := stk.Pop(token.I32)
 		ret0 := stk.Push(token.I32)
-		fmt.Fprintf(w, "%sR%d.i32 = ((uint32_t)(R%d.i32)<=(uint32_t)(R%d.i32))? 1: 0;\n",
+		fmt.Fprintf(w, "%sR%d.i32 = ((uint32_t)(R%d.i32)<=(uint32_t)(R%d.i32))? 1: 0; // %s\n",
 			indent, ret0, sp1, sp0,
+			insString(i),
 		)
 	case token.INS_I32_GE_S:
 		sp0 := stk.Pop(token.I32)
 		sp1 := stk.Pop(token.I32)
 		ret0 := stk.Push(token.I32)
-		fmt.Fprintf(w, "%sR%d.i32 = (R%d.i32>=R%d.i32)? 1: 0;\n",
+		fmt.Fprintf(w, "%sR%d.i32 = (R%d.i32>=R%d.i32)? 1: 0; // %s\n",
 			indent, ret0, sp1, sp0,
+			insString(i),
 		)
 	case token.INS_I32_GE_U:
 		sp0 := stk.Pop(token.I32)
 		sp1 := stk.Pop(token.I32)
 		ret0 := stk.Push(token.I32)
-		fmt.Fprintf(w, "%sR%d.i32 = ((uint32_t)(R%d.i32)>=(uint32_t)(R%d.i32))? 1: 0;\n",
+		fmt.Fprintf(w, "%sR%d.i32 = ((uint32_t)(R%d.i32)>=(uint32_t)(R%d.i32))? 1: 0; // %s\n",
 			indent, ret0, sp1, sp0,
+			insString(i),
 		)
 	case token.INS_I64_EQZ:
 		sp0 := stk.Pop(token.I64)
 		ret0 := stk.Push(token.I32)
-		fmt.Fprintf(w, "%sR%d.i32 = (R%d.i64==0)? 1: 0;\n",
+		fmt.Fprintf(w, "%sR%d.i32 = (R%d.i64==0)? 1: 0; // %s\n",
 			indent, ret0, sp0,
+			insString(i),
 		)
 	case token.INS_I64_EQ:
 		sp0 := stk.Pop(token.I64)
 		sp1 := stk.Pop(token.I64)
 		ret0 := stk.Push(token.I32)
-		fmt.Fprintf(w, "%sR%d.i32 = (R%d.i64==R%d.i64)? 1: 0;\n",
+		fmt.Fprintf(w, "%sR%d.i32 = (R%d.i64==R%d.i64)? 1: 0; // %s\n",
 			indent, ret0, sp1, sp0,
+			insString(i),
 		)
 	case token.INS_I64_NE:
 		sp0 := stk.Pop(token.I64)
 		sp1 := stk.Pop(token.I64)
 		ret0 := stk.Push(token.I32)
-		fmt.Fprintf(w, "%sR%d.i32 = (R%d.i64!=R%d.i64)? 1: 0;\n",
+		fmt.Fprintf(w, "%sR%d.i32 = (R%d.i64!=R%d.i64)? 1: 0; // %s\n",
 			indent, ret0, sp1, sp0,
+			insString(i),
 		)
 	case token.INS_I64_LT_S:
 		sp0 := stk.Pop(token.I64)
 		sp1 := stk.Pop(token.I64)
 		ret0 := stk.Push(token.I32)
-		fmt.Fprintf(w, "%sR%d.i32 = (R%d.i64<R%d.i64)? 1: 0;\n",
+		fmt.Fprintf(w, "%sR%d.i32 = (R%d.i64<R%d.i64)? 1: 0; // %s\n",
 			indent, ret0, sp1, sp0,
+			insString(i),
 		)
 	case token.INS_I64_LT_U:
 		sp0 := stk.Pop(token.I64)
 		sp1 := stk.Pop(token.I64)
 		ret0 := stk.Push(token.I32)
-		fmt.Fprintf(w, "%sR%d.i32 = ((uint64_t)(R%d.i64)<(uint64_t)(R%d.i64))? 1: 0;\n",
+		fmt.Fprintf(w, "%sR%d.i32 = ((uint64_t)(R%d.i64)<(uint64_t)(R%d.i64))? 1: 0; // %s\n",
 			indent, ret0, sp1, sp0,
+			insString(i),
 		)
 	case token.INS_I64_GT_S:
 		sp0 := stk.Pop(token.I64)
 		sp1 := stk.Pop(token.I64)
 		ret0 := stk.Push(token.I32)
-		fmt.Fprintf(w, "%sR%d.i32 = (R%d.i64>R%d.i64)? 1: 0;\n",
+		fmt.Fprintf(w, "%sR%d.i32 = (R%d.i64>R%d.i64)? 1: 0; // %s\n",
 			indent, ret0, sp1, sp0,
+			insString(i),
 		)
 	case token.INS_I64_GT_U:
 		sp0 := stk.Pop(token.I64)
 		sp1 := stk.Pop(token.I64)
 		ret0 := stk.Push(token.I32)
-		fmt.Fprintf(w, "%sR%d.i32 = ((uint64_t)(R%d.i64)>(uint64_t)(R%d.i64))? 1: 0;\n",
+		fmt.Fprintf(w, "%sR%d.i32 = ((uint64_t)(R%d.i64)>(uint64_t)(R%d.i64))? 1: 0; // %s\n",
 			indent, ret0, sp1, sp0,
+			insString(i),
 		)
 	case token.INS_I64_LE_S:
 		sp0 := stk.Pop(token.I64)
 		sp1 := stk.Pop(token.I64)
 		ret0 := stk.Push(token.I32)
-		fmt.Fprintf(w, "%sR%d.i32 = (R%d.i64<=R%d.i64)? 1: 0;\n",
+		fmt.Fprintf(w, "%sR%d.i32 = (R%d.i64<=R%d.i64)? 1: 0; // %s\n",
 			indent, ret0, sp1, sp0,
+			insString(i),
 		)
 	case token.INS_I64_LE_U:
 		sp0 := stk.Pop(token.I64)
 		sp1 := stk.Pop(token.I64)
 		ret0 := stk.Push(token.I32)
-		fmt.Fprintf(w, "%sR%d.i32 = ((uint64_t)(R%d.i64)<=(uint64_t)(R%d.i64))? 1: 0;\n",
+		fmt.Fprintf(w, "%sR%d.i32 = ((uint64_t)(R%d.i64)<=(uint64_t)(R%d.i64))? 1: 0; // %s\n",
 			indent, ret0, sp1, sp0,
+			insString(i),
 		)
 	case token.INS_I64_GE_S:
 		sp0 := stk.Pop(token.I64)
 		sp1 := stk.Pop(token.I64)
 		ret0 := stk.Push(token.I32)
-		fmt.Fprintf(w, "%sR%d.i32 = (R%d.i64>=R%d.i64)? 1: 0;\n",
+		fmt.Fprintf(w, "%sR%d.i32 = (R%d.i64>=R%d.i64)? 1: 0; // %s\n",
 			indent, ret0, sp1, sp0,
+			insString(i),
 		)
 	case token.INS_I64_GE_U:
 		sp0 := stk.Pop(token.I64)
 		sp1 := stk.Pop(token.I64)
 		ret0 := stk.Push(token.I32)
-		fmt.Fprintf(w, "%sR%d.i32 = ((uint64_t)(R%d.i64)>=(uint64_t)(R%d.i64))? 1: 0;\n",
+		fmt.Fprintf(w, "%sR%d.i32 = ((uint64_t)(R%d.i64)>=(uint64_t)(R%d.i64))? 1: 0; // %s\n",
 			indent, ret0, sp1, sp0,
+			insString(i),
 		)
 	case token.INS_F32_EQ:
 		sp0 := stk.Pop(token.F32)
 		sp1 := stk.Pop(token.F32)
 		ret0 := stk.Push(token.I32)
-		fmt.Fprintf(w, "%sR%d.i32 = (R%d.f32==R%d.f32)? 1: 0;\n",
+		fmt.Fprintf(w, "%sR%d.i32 = (R%d.f32==R%d.f32)? 1: 0; // %s\n",
 			indent, ret0, sp1, sp0,
+			insString(i),
 		)
 	case token.INS_F32_NE:
 		sp0 := stk.Pop(token.F32)
 		sp1 := stk.Pop(token.F32)
 		ret0 := stk.Push(token.I32)
-		fmt.Fprintf(w, "%sR%d.i32 = (R%d.f32!=R%d.f32)? 1: 0;\n",
+		fmt.Fprintf(w, "%sR%d.i32 = (R%d.f32!=R%d.f32)? 1: 0; // %s\n",
 			indent, ret0, sp1, sp0,
+			insString(i),
 		)
 	case token.INS_F32_LT:
 		sp0 := stk.Pop(token.F32)
 		sp1 := stk.Pop(token.F32)
 		ret0 := stk.Push(token.I32)
-		fmt.Fprintf(w, "%sR%d.i32 = (R%d.f32<R%d.f32)? 1: 0;\n",
+		fmt.Fprintf(w, "%sR%d.i32 = (R%d.f32<R%d.f32)? 1: 0; // %s\n",
 			indent, ret0, sp1, sp0,
+			insString(i),
 		)
 	case token.INS_F32_GT:
 		sp0 := stk.Pop(token.F32)
 		sp1 := stk.Pop(token.F32)
 		ret0 := stk.Push(token.I32)
-		fmt.Fprintf(w, "%sR%d.i32 = (R%d.f32>R%d.f32)? 1: 0;\n",
+		fmt.Fprintf(w, "%sR%d.i32 = (R%d.f32>R%d.f32)? 1: 0; // %s\n",
 			indent, ret0, sp1, sp0,
+			insString(i),
 		)
 	case token.INS_F32_LE:
 		sp0 := stk.Pop(token.F32)
 		sp1 := stk.Pop(token.F32)
 		ret0 := stk.Push(token.I32)
-		fmt.Fprintf(w, "%sR%d.i32 = (R%d.f32<=R%d.f32)? 1: 0;\n",
+		fmt.Fprintf(w, "%sR%d.i32 = (R%d.f32<=R%d.f32)? 1: 0; // %s\n",
 			indent, ret0, sp1, sp0,
+			insString(i),
 		)
 	case token.INS_F32_GE:
 		sp0 := stk.Pop(token.F32)
 		sp1 := stk.Pop(token.F32)
 		ret0 := stk.Push(token.I32)
-		fmt.Fprintf(w, "%sR%d.i32 = (R%d.f32>=R%d.f32)? 1: 0;\n",
+		fmt.Fprintf(w, "%sR%d.i32 = (R%d.f32>=R%d.f32)? 1: 0; // %s\n",
 			indent, ret0, sp1, sp0,
+			insString(i),
 		)
 	case token.INS_F64_EQ:
 		sp0 := stk.Pop(token.F64)
 		sp1 := stk.Pop(token.F64)
 		ret0 := stk.Push(token.I32)
-		fmt.Fprintf(w, "%sR%d.i32 = (R%d.f64==R%d.f64)? 1: 0;\n",
+		fmt.Fprintf(w, "%sR%d.i32 = (R%d.f64==R%d.f64)? 1: 0; // %s\n",
 			indent, ret0, sp1, sp0,
+			insString(i),
 		)
 	case token.INS_F64_NE:
 		sp0 := stk.Pop(token.F64)
 		sp1 := stk.Pop(token.F64)
 		ret0 := stk.Push(token.I32)
-		fmt.Fprintf(w, "%sR%d.i32 = (R%d.f64!=R%d.f64)? 1: 0;\n",
+		fmt.Fprintf(w, "%sR%d.i32 = (R%d.f64!=R%d.f64)? 1: 0; // %s\n",
 			indent, ret0, sp1, sp0,
+			insString(i),
 		)
 	case token.INS_F64_LT:
 		sp0 := stk.Pop(token.F64)
 		sp1 := stk.Pop(token.F64)
 		ret0 := stk.Push(token.I32)
-		fmt.Fprintf(w, "%sR%d.i32 = (R%d.f64<R%d.f64)? 1: 0;\n",
+		fmt.Fprintf(w, "%sR%d.i32 = (R%d.f64<R%d.f64)? 1: 0; // %s\n",
 			indent, ret0, sp1, sp0,
+			insString(i),
 		)
 	case token.INS_F64_GT:
 		sp0 := stk.Pop(token.F64)
 		sp1 := stk.Pop(token.F64)
 		ret0 := stk.Push(token.I32)
-		fmt.Fprintf(w, "%sR%d.i32 = (R%d.f64>R%d.f64)? 1: 0;\n",
+		fmt.Fprintf(w, "%sR%d.i32 = (R%d.f64>R%d.f64)? 1: 0; // %s\n",
 			indent, ret0, sp1, sp0,
+			insString(i),
 		)
 	case token.INS_F64_LE:
 		sp0 := stk.Pop(token.F64)
 		sp1 := stk.Pop(token.F64)
 		ret0 := stk.Push(token.I32)
-		fmt.Fprintf(w, "%sR%d.i32 = (R%d.f64<=R%d.f64)? 1: 0;\n",
+		fmt.Fprintf(w, "%sR%d.i32 = (R%d.f64<=R%d.f64)? 1: 0; // %s\n",
 			indent, ret0, sp1, sp0,
+			insString(i),
 		)
 	case token.INS_F64_GE:
 		sp0 := stk.Pop(token.F64)
 		sp1 := stk.Pop(token.F64)
 		ret0 := stk.Push(token.I32)
-		fmt.Fprintf(w, "%sR%d.i32 = (R%d.f64>=R%d.f64)? 1: 0;\n",
+		fmt.Fprintf(w, "%sR%d.i32 = (R%d.f64>=R%d.f64)? 1: 0; // %s\n",
 			indent, ret0, sp1, sp0,
+			insString(i),
 		)
 	case token.INS_I32_CLZ:
 		sp0 := stk.Pop(token.I32)
 		ret0 := stk.Push(token.I32)
-		fmt.Fprintf(w, "%sR%d.i32 = I32_CLZ(R%d.i32);\n",
+		fmt.Fprintf(w, "%sR%d.i32 = I32_CLZ(R%d.i32); // %s\n",
 			indent, ret0, sp0,
+			insString(i),
 		)
 	case token.INS_I32_CTZ:
 		sp0 := stk.Pop(token.I32)
 		ret0 := stk.Push(token.I32)
-		fmt.Fprintf(w, "%sR%d.i32 = I32_CTZ(R%d.i32);\n",
+		fmt.Fprintf(w, "%sR%d.i32 = I32_CTZ(R%d.i32); // %s\n",
 			indent, ret0, sp0,
+			insString(i),
 		)
 	case token.INS_I32_POPCNT:
 		sp0 := stk.Pop(token.I32)
 		ret0 := stk.Push(token.I32)
-		fmt.Fprintf(w, "%sR%d.i32 = I32_POPCNT(R%d.i32);\n",
+		fmt.Fprintf(w, "%sR%d.i32 = I32_POPCNT(R%d.i32); // %s\n",
 			indent, ret0, sp0,
+			insString(i),
 		)
 	case token.INS_I32_ADD:
 		sp0 := stk.Pop(token.I32)
 		sp1 := stk.Pop(token.I32)
 		ret0 := stk.Push(token.I32)
-		fmt.Fprintf(w, "%sR%d.i32 = R%d.i32 + R%d.i32;\n",
+		fmt.Fprintf(w, "%sR%d.i32 = R%d.i32 + R%d.i32; // %s\n",
 			indent, ret0, sp1, sp0,
+			insString(i),
 		)
 	case token.INS_I32_SUB:
 		sp0 := stk.Pop(token.I32)
 		sp1 := stk.Pop(token.I32)
 		ret0 := stk.Push(token.I32)
-		fmt.Fprintf(w, "%sR%d.i32 = R%d.i32 - R%d.i32;\n",
+		fmt.Fprintf(w, "%sR%d.i32 = R%d.i32 - R%d.i32; // %s\n",
 			indent, ret0, sp1, sp0,
+			insString(i),
 		)
 	case token.INS_I32_MUL:
 		sp0 := stk.Pop(token.I32)
 		sp1 := stk.Pop(token.I32)
 		ret0 := stk.Push(token.I32)
-		fmt.Fprintf(w, "%sR%d.i32 = R%d.i32 * R%d.i32;\n",
+		fmt.Fprintf(w, "%sR%d.i32 = R%d.i32 * R%d.i32; // %s\n",
 			indent, ret0, sp1, sp0,
+			insString(i),
 		)
 	case token.INS_I32_DIV_S:
 		sp0 := stk.Pop(token.I32)
 		sp1 := stk.Pop(token.I32)
 		ret0 := stk.Push(token.I32)
-		fmt.Fprintf(w, "%sR%d.i32 = R%d.i32 / R%d.i32;\n",
+		fmt.Fprintf(w, "%sR%d.i32 = R%d.i32 / R%d.i32; // %s\n",
 			indent, ret0, sp1, sp0,
+			insString(i),
 		)
 	case token.INS_I32_DIV_U:
 		sp0 := stk.Pop(token.I32)
 		sp1 := stk.Pop(token.I32)
 		ret0 := stk.Push(token.I32)
-		fmt.Fprintf(w, "%sR%d.i32 = (int32_t)((uint32_t)(R%d.i32)/(uint32_t)(R%d.i32));\n",
+		fmt.Fprintf(w, "%sR%d.i32 = (int32_t)((uint32_t)(R%d.i32)/(uint32_t)(R%d.i32)); // %s\n",
 			indent, ret0, sp1, sp0,
+			insString(i),
 		)
 	case token.INS_I32_REM_S:
 		sp0 := stk.Pop(token.I32)
 		sp1 := stk.Pop(token.I32)
 		ret0 := stk.Push(token.I32)
-		fmt.Fprintf(w, "%sR%d.i32 = R%d.i32 %% R%d.i32;\n",
+		fmt.Fprintf(w, "%sR%d.i32 = R%d.i32 %% R%d.i32; // %s\n",
 			indent, ret0, sp1, sp0,
+			insString(i),
 		)
 	case token.INS_I32_REM_U:
 		sp0 := stk.Pop(token.I32)
 		sp1 := stk.Pop(token.I32)
 		ret0 := stk.Push(token.I32)
-		fmt.Fprintf(w, "%sR%d.i32 = (int32_t)((uint32_t)(R%d.i32)%%(uint32_t)(R%d.i32));\n",
+		fmt.Fprintf(w, "%sR%d.i32 = (int32_t)((uint32_t)(R%d.i32)%%(uint32_t)(R%d.i32)); // %s\n",
 			indent, ret0, sp1, sp0,
+			insString(i),
 		)
 	case token.INS_I32_AND:
 		sp0 := stk.Pop(token.I32)
 		sp1 := stk.Pop(token.I32)
 		ret0 := stk.Push(token.I32)
-		fmt.Fprintf(w, "%sR%d.i32 = R%d.i32 & R%d.i32;\n",
+		fmt.Fprintf(w, "%sR%d.i32 = R%d.i32 & R%d.i32; // %s\n",
 			indent, ret0, sp1, sp0,
+			insString(i),
 		)
 	case token.INS_I32_OR:
 		sp0 := stk.Pop(token.I32)
 		sp1 := stk.Pop(token.I32)
 		ret0 := stk.Push(token.I32)
-		fmt.Fprintf(w, "%sR%d.i32 = R%d.i32 | R%d.i32;\n",
+		fmt.Fprintf(w, "%sR%d.i32 = R%d.i32 | R%d.i32; // %s\n",
 			indent, ret0, sp1, sp0,
+			insString(i),
 		)
 	case token.INS_I32_XOR:
 		sp0 := stk.Pop(token.I32)
 		sp1 := stk.Pop(token.I32)
 		ret0 := stk.Push(token.I32)
-		fmt.Fprintf(w, "%sR%d.i32 = R%d.i32 ^ R%d.i32;\n",
+		fmt.Fprintf(w, "%sR%d.i32 = R%d.i32 ^ R%d.i32; // %s\n",
 			indent, ret0, sp1, sp0,
+			insString(i),
 		)
 	case token.INS_I32_SHL:
 		sp0 := stk.Pop(token.I32)
 		sp1 := stk.Pop(token.I32)
 		ret0 := stk.Push(token.I32)
-		fmt.Fprintf(w, "%sR%d.i32 = R%d.i32 << (R%d.i32&63);\n",
+		fmt.Fprintf(w, "%sR%d.i32 = R%d.i32 << (R%d.i32&63); // %s\n",
 			indent, ret0, sp1, sp0,
+			insString(i),
 		)
 	case token.INS_I32_SHR_S:
 		sp0 := stk.Pop(token.I32)
 		sp1 := stk.Pop(token.I32)
 		ret0 := stk.Push(token.I32)
-		fmt.Fprintf(w, "%sR%d.i32 = R%d.i32 >> (R%d.i32&63);\n",
+		fmt.Fprintf(w, "%sR%d.i32 = R%d.i32 >> (R%d.i32&63); // %s\n",
 			indent, ret0, sp1, sp0,
+			insString(i),
 		)
 	case token.INS_I32_SHR_U:
 		sp0 := stk.Pop(token.I32)
 		sp1 := stk.Pop(token.I32)
 		ret0 := stk.Push(token.I32)
-		fmt.Fprintf(w, "%sR%d.i32 = (int32_t)((uint32_t)(R%d.i32)>>(uint32_t)(R%d.i32&63));\n",
+		fmt.Fprintf(w, "%sR%d.i32 = (int32_t)((uint32_t)(R%d.i32)>>(uint32_t)(R%d.i32&63)); // %s\n",
 			indent, ret0, sp1, sp0,
+			insString(i),
 		)
 	case token.INS_I32_ROTL:
 		sp0 := stk.Pop(token.I32)
 		sp1 := stk.Pop(token.I32)
 		ret0 := stk.Push(token.I32)
-		fmt.Fprintf(w, "%sR%d.i32 = I32_ROTL(R%d.i32, R%d.i32);\n",
+		fmt.Fprintf(w, "%sR%d.i32 = I32_ROTL(R%d.i32, R%d.i32); // %s\n",
 			indent, ret0, sp1, sp0,
+			insString(i),
 		)
 	case token.INS_I32_ROTR:
 		sp0 := stk.Pop(token.I32)
 		sp1 := stk.Pop(token.I32)
 		ret0 := stk.Push(token.I32)
-		fmt.Fprintf(w, "%sR%d.i32 = I32_ROTR(R%d.i32, R%d.i32);\n",
+		fmt.Fprintf(w, "%sR%d.i32 = I32_ROTR(R%d.i32, R%d.i32); // %s\n",
 			indent, ret0, sp1, sp0,
+			insString(i),
 		)
 	case token.INS_I64_CLZ:
 		sp0 := stk.Pop(token.I64)
 		ret0 := stk.Push(token.I32)
-		fmt.Fprintf(w, "%sR%d.i32 = I64_CLZ(R%d.i64);\n",
+		fmt.Fprintf(w, "%sR%d.i32 = I64_CLZ(R%d.i64); // %s\n",
 			indent, ret0, sp0,
+			insString(i),
 		)
 	case token.INS_I64_CTZ:
 		sp0 := stk.Pop(token.I64)
 		ret0 := stk.Push(token.I32)
-		fmt.Fprintf(w, "%sR%d.i32 = I64_CTZ(R%d.i64);\n",
+		fmt.Fprintf(w, "%sR%d.i32 = I64_CTZ(R%d.i64); // %s\n",
 			indent, ret0, sp0,
+			insString(i),
 		)
 	case token.INS_I64_POPCNT:
 		sp0 := stk.Pop(token.I64)
 		ret0 := stk.Push(token.I32)
-		fmt.Fprintf(w, "%sR%d.i32 = I64_POPCNT(R%d.i64);\n",
+		fmt.Fprintf(w, "%sR%d.i32 = I64_POPCNT(R%d.i64); // %s\n",
 			indent, ret0, sp0,
+			insString(i),
 		)
 	case token.INS_I64_ADD:
 		sp0 := stk.Pop(token.I64)
 		sp1 := stk.Pop(token.I64)
 		ret0 := stk.Push(token.I64)
-		fmt.Fprintf(w, "%sR%d.i64 = R%d.i64 + R%d.i64;\n",
+		fmt.Fprintf(w, "%sR%d.i64 = R%d.i64 + R%d.i64; // %s\n",
 			indent, ret0, sp1, sp0,
+			insString(i),
 		)
 	case token.INS_I64_SUB:
 		sp0 := stk.Pop(token.I64)
 		sp1 := stk.Pop(token.I64)
 		ret0 := stk.Push(token.I64)
-		fmt.Fprintf(w, "%sR%d.i64 = R%d.i64 - R%d.i64;\n",
+		fmt.Fprintf(w, "%sR%d.i64 = R%d.i64 - R%d.i64; // %s\n",
 			indent, ret0, sp1, sp0,
+			insString(i),
 		)
 	case token.INS_I64_MUL:
 		sp0 := stk.Pop(token.I64)
 		sp1 := stk.Pop(token.I64)
 		ret0 := stk.Push(token.I64)
-		fmt.Fprintf(w, "%sR%d.i64 = R%d.i64 * R%d.i64;\n",
+		fmt.Fprintf(w, "%sR%d.i64 = R%d.i64 * R%d.i64; // %s\n",
 			indent, ret0, sp1, sp0,
+			insString(i),
 		)
 	case token.INS_I64_DIV_S:
 		sp0 := stk.Pop(token.I64)
 		sp1 := stk.Pop(token.I64)
 		ret0 := stk.Push(token.I64)
-		fmt.Fprintf(w, "%sR%d.i64 = R%d.i64 / R%d.i64;\n",
+		fmt.Fprintf(w, "%sR%d.i64 = R%d.i64 / R%d.i64; // %s\n",
 			indent, ret0, sp1, sp0,
+			insString(i),
 		)
 	case token.INS_I64_DIV_U:
 		sp0 := stk.Pop(token.I64)
 		sp1 := stk.Pop(token.I64)
 		ret0 := stk.Push(token.I64)
-		fmt.Fprintf(w, "%sR%d.i64 = (int64_t)((uint64_t)(R%d.i64)/(uint64_t)(R%d.i64));\n",
+		fmt.Fprintf(w, "%sR%d.i64 = (int64_t)((uint64_t)(R%d.i64)/(uint64_t)(R%d.i64)); // %s\n",
 			indent, ret0, sp1, sp0,
+			insString(i),
 		)
 	case token.INS_I64_REM_S:
 		sp0 := stk.Pop(token.I64)
 		sp1 := stk.Pop(token.I64)
 		ret0 := stk.Push(token.I64)
-		fmt.Fprintf(w, "%sR%d.i64 = (int64_t)((int64_t)(R%d.i64)%%(int64_t)(R%d.i64));\n",
+		fmt.Fprintf(w, "%sR%d.i64 = (int64_t)((int64_t)(R%d.i64)%%(int64_t)(R%d.i64)); // %s\n",
 			indent, ret0, sp1, sp0,
+			insString(i),
 		)
 	case token.INS_I64_REM_U:
 		sp0 := stk.Pop(token.I64)
 		sp1 := stk.Pop(token.I64)
 		ret0 := stk.Push(token.I64)
-		fmt.Fprintf(w, "%sR%d.i64 = (int64_t)((uint64_t)(R%d.i64)%%(uint64_t)(R%d.i64));\n",
+		fmt.Fprintf(w, "%sR%d.i64 = (int64_t)((uint64_t)(R%d.i64)%%(uint64_t)(R%d.i64)); // %s\n",
 			indent, ret0, sp1, sp0,
+			insString(i),
 		)
 	case token.INS_I64_AND:
 		sp0 := stk.Pop(token.I64)
 		sp1 := stk.Pop(token.I64)
 		ret0 := stk.Push(token.I64)
-		fmt.Fprintf(w, "%sR%d.i64 = R%d.i64 & R%d.i64;\n",
+		fmt.Fprintf(w, "%sR%d.i64 = R%d.i64 & R%d.i64; // %s\n",
 			indent, ret0, sp1, sp0,
+			insString(i),
 		)
 	case token.INS_I64_OR:
 		sp0 := stk.Pop(token.I64)
 		sp1 := stk.Pop(token.I64)
 		ret0 := stk.Push(token.I64)
-		fmt.Fprintf(w, "%sR%d.i64 = R%d.i64 | R%d.i64;\n",
+		fmt.Fprintf(w, "%sR%d.i64 = R%d.i64 | R%d.i64; // %s\n",
 			indent, ret0, sp1, sp0,
+			insString(i),
 		)
 	case token.INS_I64_XOR:
 		sp0 := stk.Pop(token.I64)
 		sp1 := stk.Pop(token.I64)
 		ret0 := stk.Push(token.I64)
-		fmt.Fprintf(w, "%sR%d.i64 = R%d.i64 ^ R%d.i64;\n",
+		fmt.Fprintf(w, "%sR%d.i64 = R%d.i64 ^ R%d.i64; // %s\n",
 			indent, ret0, sp1, sp0,
+			insString(i),
 		)
 	case token.INS_I64_SHL:
 		sp0 := stk.Pop(token.I64)
 		sp1 := stk.Pop(token.I64)
 		ret0 := stk.Push(token.I64)
-		fmt.Fprintf(w, "%sR%d.i64 = R%d.i64 << (((uint64_t)R%d.i64)&63);\n",
+		fmt.Fprintf(w, "%sR%d.i64 = R%d.i64 << (((uint64_t)R%d.i64)&63); // %s\n",
 			indent, ret0, sp1, sp0,
+			insString(i),
 		)
 	case token.INS_I64_SHR_S:
 		sp0 := stk.Pop(token.I64)
 		sp1 := stk.Pop(token.I64)
 		ret0 := stk.Push(token.I64)
-		fmt.Fprintf(w, "%sR%d.i64 = R%d.i64 >> (((uint64_t)R%d.i64)&63);\n",
+		fmt.Fprintf(w, "%sR%d.i64 = R%d.i64 >> (((uint64_t)R%d.i64)&63); // %s\n",
 			indent, ret0, sp1, sp0,
+			insString(i),
 		)
 	case token.INS_I64_SHR_U:
 		sp0 := stk.Pop(token.I64)
 		sp1 := stk.Pop(token.I64)
 		ret0 := stk.Push(token.I64)
-		fmt.Fprintf(w, "%sR%d.i64 = (int64_t)((uint64_t)(R%d.i64)>>((uint64_t)(R%d.i64)&63));\n",
+		fmt.Fprintf(w, "%sR%d.i64 = (int64_t)((uint64_t)(R%d.i64)>>((uint64_t)(R%d.i64)&63)); // %s\n",
 			indent, ret0, sp1, sp0,
+			insString(i),
 		)
 	case token.INS_I64_ROTL:
 		sp0 := stk.Pop(token.I64)
 		sp1 := stk.Pop(token.I64)
 		ret0 := stk.Push(token.I64)
-		fmt.Fprintf(w, "%sR%d.i64 = I64_ROTL(R%d.i64, R%d.i64);\n",
+		fmt.Fprintf(w, "%sR%d.i64 = I64_ROTL(R%d.i64, R%d.i64); // %s\n",
 			indent, ret0, sp1, sp0,
+			insString(i),
 		)
 	case token.INS_I64_ROTR:
 		sp0 := stk.Pop(token.I64)
 		sp1 := stk.Pop(token.I64)
 		ret0 := stk.Push(token.I64)
-		fmt.Fprintf(w, "%sR%d.i64 = I64_ROTR(R%d.i64, R%d.i64);\n",
+		fmt.Fprintf(w, "%sR%d.i64 = I64_ROTR(R%d.i64, R%d.i64); // %s\n",
 			indent, ret0, sp1, sp0,
+			insString(i),
 		)
 	case token.INS_F32_ABS:
 		sp0 := stk.Pop(token.F32)
 		ret0 := stk.Push(token.F32)
-		fmt.Fprintf(w, "%sR%d.f32 = fabsf(R%d.f32);\n",
+		fmt.Fprintf(w, "%sR%d.f32 = fabsf(R%d.f32); // %s\n",
 			indent, ret0, sp0,
+			insString(i),
 		)
 	case token.INS_F32_NEG:
 		sp0 := stk.Pop(token.F32)
 		ret0 := stk.Push(token.F32)
-		fmt.Fprintf(w, "%sR%d.f32 = 0-R%d.f32;\n",
+		fmt.Fprintf(w, "%sR%d.f32 = 0-R%d.f32; // %s\n",
 			indent, ret0, sp0,
+			insString(i),
 		)
 	case token.INS_F32_CEIL:
 		sp0 := stk.Pop(token.F32)
 		ret0 := stk.Push(token.F32)
-		fmt.Fprintf(w, "%sR%d.f32 = ceilf(R%d.f32);\n",
+		fmt.Fprintf(w, "%sR%d.f32 = ceilf(R%d.f32); // %s\n",
 			indent, ret0, sp0,
+			insString(i),
 		)
 	case token.INS_F32_FLOOR:
 		sp0 := stk.Pop(token.F32)
 		ret0 := stk.Push(token.F32)
-		fmt.Fprintf(w, "%sR%d.f32 = floorf(R%d.f32);\n",
+		fmt.Fprintf(w, "%sR%d.f32 = floorf(R%d.f32); // %s\n",
 			indent, ret0, sp0,
+			insString(i),
 		)
 	case token.INS_F32_TRUNC:
 		sp0 := stk.Pop(token.F32)
 		ret0 := stk.Push(token.F32)
-		fmt.Fprintf(w, "%sR%d.f32 = truncf(R%d.f32);\n",
+		fmt.Fprintf(w, "%sR%d.f32 = truncf(R%d.f32); // %s\n",
 			indent, ret0, sp0,
+			insString(i),
 		)
 	case token.INS_F32_NEAREST:
 		sp0 := stk.Pop(token.F32)
 		ret0 := stk.Push(token.F32)
-		fmt.Fprintf(w, "%sR%d.f32 = roundf(R%d.f32);\n",
+		fmt.Fprintf(w, "%sR%d.f32 = roundf(R%d.f32); // %s\n",
 			indent, ret0, sp0,
+			insString(i),
 		)
 	case token.INS_F32_SQRT:
 		sp0 := stk.Pop(token.F32)
 		ret0 := stk.Push(token.F32)
-		fmt.Fprintf(w, "%sR%d.f32 = sqrtf(R%d.f32);\n",
+		fmt.Fprintf(w, "%sR%d.f32 = sqrtf(R%d.f32); // %s\n",
 			indent, ret0, sp0,
+			insString(i),
 		)
 	case token.INS_F32_ADD:
 		sp0 := stk.Pop(token.F32)
 		sp1 := stk.Pop(token.F32)
 		ret0 := stk.Push(token.F32)
-		fmt.Fprintf(w, "%sR%d.f32 = R%d.f32 + R%d.f32;\n",
+		fmt.Fprintf(w, "%sR%d.f32 = R%d.f32 + R%d.f32; // %s\n",
 			indent, ret0, sp1, sp0,
+			insString(i),
 		)
 	case token.INS_F32_SUB:
 		sp0 := stk.Pop(token.F32)
 		sp1 := stk.Pop(token.F32)
 		ret0 := stk.Push(token.F32)
-		fmt.Fprintf(w, "%sR%d.f32 = R%d.f32 - R%d.f32;\n",
+		fmt.Fprintf(w, "%sR%d.f32 = R%d.f32 - R%d.f32; // %s\n",
 			indent, ret0, sp1, sp0,
+			insString(i),
 		)
 	case token.INS_F32_MUL:
 		sp0 := stk.Pop(token.F32)
 		sp1 := stk.Pop(token.F32)
 		ret0 := stk.Push(token.F32)
-		fmt.Fprintf(w, "%sR%d.f32 = R%d.f32 * R%d.f32;\n",
+		fmt.Fprintf(w, "%sR%d.f32 = R%d.f32 * R%d.f32; // %s\n",
 			indent, ret0, sp1, sp0,
+			insString(i),
 		)
 	case token.INS_F32_DIV:
 		sp0 := stk.Pop(token.F32)
 		sp1 := stk.Pop(token.F32)
 		ret0 := stk.Push(token.F32)
-		fmt.Fprintf(w, "%sR%d.f32 = R%d.f32 / R%d.f32;\n",
+		fmt.Fprintf(w, "%sR%d.f32 = R%d.f32 / R%d.f32; // %s\n",
 			indent, ret0, sp1, sp0,
+			insString(i),
 		)
 	case token.INS_F32_MIN:
 		sp0 := stk.Pop(token.F32)
 		sp1 := stk.Pop(token.F32)
 		ret0 := stk.Push(token.F32)
-		fmt.Fprintf(w, "%sR%d.f32 = fminf(R%d.f32, R%d.f32);\n",
+		fmt.Fprintf(w, "%sR%d.f32 = fminf(R%d.f32, R%d.f32); // %s\n",
 			indent, ret0, sp1, sp0,
+			insString(i),
 		)
 	case token.INS_F32_MAX:
 		sp0 := stk.Pop(token.F32)
 		sp1 := stk.Pop(token.F32)
 		ret0 := stk.Push(token.F32)
-		fmt.Fprintf(w, "%sR%d.f32 = fmaxf(R%d.f32, R%d.f32);\n",
+		fmt.Fprintf(w, "%sR%d.f32 = fmaxf(R%d.f32, R%d.f32); // %s\n",
 			indent, ret0, sp1, sp0,
+			insString(i),
 		)
 	case token.INS_F32_COPYSIGN:
 		sp0 := stk.Pop(token.F32)
 		sp1 := stk.Pop(token.F32)
 		ret0 := stk.Push(token.F32)
-		fmt.Fprintf(w, "%sR%d.f32 = copysignf(R%d.f32, R%d.f32);\n",
+		fmt.Fprintf(w, "%sR%d.f32 = copysignf(R%d.f32, R%d.f32); // %s\n",
 			indent, ret0, sp1, sp0,
+			insString(i),
 		)
 	case token.INS_F64_ABS:
 		sp0 := stk.Pop(token.F64)
 		ret0 := stk.Push(token.F64)
-		fmt.Fprintf(w, "%sR%d.f64 = fabs(R%d.f64);\n",
+		fmt.Fprintf(w, "%sR%d.f64 = fabs(R%d.f64); // %s\n",
 			indent, ret0, sp0,
+			insString(i),
 		)
 	case token.INS_F64_NEG:
 		sp0 := stk.Pop(token.F64)
 		ret0 := stk.Push(token.F64)
-		fmt.Fprintf(w, "%sR%d.f64 = 0-R%d.f64;\n",
+		fmt.Fprintf(w, "%sR%d.f64 = 0-R%d.f64; // %s\n",
 			indent, ret0, sp0,
+			insString(i),
 		)
 	case token.INS_F64_CEIL:
 		sp0 := stk.Pop(token.F64)
 		ret0 := stk.Push(token.F64)
-		fmt.Fprintf(w, "%sR%d.f64 = ceil(R%d.f64);\n",
+		fmt.Fprintf(w, "%sR%d.f64 = ceil(R%d.f64); // %s\n",
 			indent, ret0, sp0,
+			insString(i),
 		)
 	case token.INS_F64_FLOOR:
 		sp0 := stk.Pop(token.F64)
 		ret0 := stk.Push(token.F64)
-		fmt.Fprintf(w, "%sR%d.f64 = floor(R%d.f64);\n",
+		fmt.Fprintf(w, "%sR%d.f64 = floor(R%d.f64); // %s\n",
 			indent, ret0, sp0,
+			insString(i),
 		)
 	case token.INS_F64_TRUNC:
 		sp0 := stk.Pop(token.F64)
 		ret0 := stk.Push(token.F64)
-		fmt.Fprintf(w, "%sR%d.f64 = trunc(R%d.f64);\n",
+		fmt.Fprintf(w, "%sR%d.f64 = trunc(R%d.f64); // %s\n",
 			indent, ret0, sp0,
+			insString(i),
 		)
 	case token.INS_F64_NEAREST:
 		sp0 := stk.Pop(token.F64)
 		ret0 := stk.Push(token.F64)
-		fmt.Fprintf(w, "%sR%d.f64 = round(R%d.f64);\n",
+		fmt.Fprintf(w, "%sR%d.f64 = round(R%d.f64); // %s\n",
 			indent, ret0, sp0,
+			insString(i),
 		)
 	case token.INS_F64_SQRT:
 		sp0 := stk.Pop(token.F64)
 		ret0 := stk.Push(token.F64)
-		fmt.Fprintf(w, "%sR%d.f64 = sqrt(R%d.f64);\n",
+		fmt.Fprintf(w, "%sR%d.f64 = sqrt(R%d.f64); // %s\n",
 			indent, ret0, sp0,
+			insString(i),
 		)
 	case token.INS_F64_ADD:
 		sp0 := stk.Pop(token.F64)
 		sp1 := stk.Pop(token.F64)
 		ret0 := stk.Push(token.F64)
-		fmt.Fprintf(w, "%sR%d.f64 = R%d.f64 + R%d.f64;\n",
+		fmt.Fprintf(w, "%sR%d.f64 = R%d.f64 + R%d.f64; // %s\n",
 			indent, ret0, sp1, sp0,
+			insString(i),
 		)
 	case token.INS_F64_SUB:
 		sp0 := stk.Pop(token.F64)
 		sp1 := stk.Pop(token.F64)
 		ret0 := stk.Push(token.F64)
-		fmt.Fprintf(w, "%sR%d.f64 = R%d.f64 - R%d.f64;\n",
+		fmt.Fprintf(w, "%sR%d.f64 = R%d.f64 - R%d.f64; // %s\n",
 			indent, ret0, sp1, sp0,
+			insString(i),
 		)
 	case token.INS_F64_MUL:
 		sp0 := stk.Pop(token.F64)
 		sp1 := stk.Pop(token.F64)
 		ret0 := stk.Push(token.F64)
-		fmt.Fprintf(w, "%sR%d.f64 = R%d.f64 * R%d.f64;\n",
+		fmt.Fprintf(w, "%sR%d.f64 = R%d.f64 * R%d.f64; // %s\n",
 			indent, ret0, sp1, sp0,
+			insString(i),
 		)
 	case token.INS_F64_DIV:
 		sp0 := stk.Pop(token.F64)
 		sp1 := stk.Pop(token.F64)
 		ret0 := stk.Push(token.F64)
-		fmt.Fprintf(w, "%sR%d.f64 = R%d.f64 / R%d.f64;\n",
+		fmt.Fprintf(w, "%sR%d.f64 = R%d.f64 / R%d.f64; // %s\n",
 			indent, ret0, sp1, sp0,
+			insString(i),
 		)
 	case token.INS_F64_MIN:
 		sp0 := stk.Pop(token.F64)
 		sp1 := stk.Pop(token.F64)
 		ret0 := stk.Push(token.F64)
-		fmt.Fprintf(w, "%sR%d.f64 = fmin(R%d.f64, R%d.f64);\n",
+		fmt.Fprintf(w, "%sR%d.f64 = fmin(R%d.f64, R%d.f64); // %s\n",
 			indent, ret0, sp1, sp0,
+			insString(i),
 		)
 	case token.INS_F64_MAX:
 		sp0 := stk.Pop(token.F64)
 		sp1 := stk.Pop(token.F64)
 		ret0 := stk.Push(token.F64)
-		fmt.Fprintf(w, "%sR%d.f64 = fmax(R%d.f64, R%d.f64);\n",
+		fmt.Fprintf(w, "%sR%d.f64 = fmax(R%d.f64, R%d.f64); // %s\n",
 			indent, ret0, sp1, sp0,
+			insString(i),
 		)
 	case token.INS_F64_COPYSIGN:
 		sp0 := stk.Pop(token.F64)
 		sp1 := stk.Pop(token.F64)
 		ret0 := stk.Push(token.F64)
-		fmt.Fprintf(w, "%sR%d.f64 = copysign(R%d.f64, R%d.f64);\n",
+		fmt.Fprintf(w, "%sR%d.f64 = copysign(R%d.f64, R%d.f64); // %s\n",
 			indent, ret0, sp1, sp0,
+			insString(i),
 		)
 	case token.INS_I32_WRAP_I64:
 		sp0 := stk.Pop(token.I64)
 		ret0 := stk.Push(token.I32)
-		fmt.Fprintf(w, "%sR%d.i32 = (int32_t)(R%d.i64);\n",
+		fmt.Fprintf(w, "%sR%d.i32 = (int32_t)(R%d.i64); // %s\n",
 			indent, ret0, sp0,
+			insString(i),
 		)
 	case token.INS_I32_TRUNC_F32_S:
 		sp0 := stk.Pop(token.F32)
 		ret0 := stk.Push(token.I32)
-		fmt.Fprintf(w, "%sR%d.i32 = (int32_t)(truncf(R%d.f32));\n",
+		fmt.Fprintf(w, "%sR%d.i32 = (int32_t)(truncf(R%d.f32)); // %s\n",
 			indent, ret0, sp0,
+			insString(i),
 		)
 	case token.INS_I32_TRUNC_F32_U:
 		sp0 := stk.Pop(token.F32)
 		ret0 := stk.Push(token.I32)
-		fmt.Fprintf(w, "%sR%d.i32 = (int32_t)(uint32_t)(truncf(R%d.f32));\n",
+		fmt.Fprintf(w, "%sR%d.i32 = (int32_t)(uint32_t)(truncf(R%d.f32)); // %s\n",
 			indent, ret0, sp0,
+			insString(i),
 		)
 	case token.INS_I32_TRUNC_F64_S:
 		sp0 := stk.Pop(token.F64)
 		ret0 := stk.Push(token.I32)
-		fmt.Fprintf(w, "%sR%d.i32 = (int32_t)(trunc(R%d.f64));\n",
+		fmt.Fprintf(w, "%sR%d.i32 = (int32_t)(trunc(R%d.f64)); // %s\n",
 			indent, ret0, sp0,
+			insString(i),
 		)
 	case token.INS_I32_TRUNC_F64_U:
 		sp0 := stk.Pop(token.F64)
 		ret0 := stk.Push(token.I32)
-		fmt.Fprintf(w, "%sR%d.i32 = (int32_t)(uint32_t)(trunc(R%d.f64));\n",
+		fmt.Fprintf(w, "%sR%d.i32 = (int32_t)(uint32_t)(trunc(R%d.f64)); // %s\n",
 			indent, ret0, sp0,
+			insString(i),
 		)
 	case token.INS_I64_EXTEND_I32_S:
 		sp0 := stk.Pop(token.I32)
 		ret0 := stk.Push(token.I64)
-		fmt.Fprintf(w, "%sR%d.i64 = (int64_t)(R%d.i32);\n",
+		fmt.Fprintf(w, "%sR%d.i64 = (int64_t)(R%d.i32); // %s\n",
 			indent, ret0, sp0,
+			insString(i),
 		)
 	case token.INS_I64_EXTEND_I32_U:
 		sp0 := stk.Pop(token.I32)
 		ret0 := stk.Push(token.I64)
-		fmt.Fprintf(w, "%sR%d.i64 = (int64_t)((uint32_t)(R%d.i32));\n",
+		fmt.Fprintf(w, "%sR%d.i64 = (int64_t)((uint32_t)(R%d.i32)); // %s\n",
 			indent, ret0, sp0,
+			insString(i),
 		)
 	case token.INS_I64_TRUNC_F32_S:
 		sp0 := stk.Pop(token.F32)
 		ret0 := stk.Push(token.I64)
-		fmt.Fprintf(w, "%sR%d.i64 = (int64_t)(int32_t)(truncf(R%d.f32));\n",
+		fmt.Fprintf(w, "%sR%d.i64 = (int64_t)(int32_t)(truncf(R%d.f32)); // %s\n",
 			indent, ret0, sp0,
+			insString(i),
 		)
 	case token.INS_I64_TRUNC_F32_U:
 		sp0 := stk.Pop(token.F32)
 		ret0 := stk.Push(token.I64)
-		fmt.Fprintf(w, "%sR%d.i64 = (int64_t)(uint32_t)(truncf(R%d.f32));\n",
+		fmt.Fprintf(w, "%sR%d.i64 = (int64_t)(uint32_t)(truncf(R%d.f32)); // %s\n",
 			indent, ret0, sp0,
+			insString(i),
 		)
 	case token.INS_I64_TRUNC_F64_S:
 		sp0 := stk.Pop(token.F64)
 		ret0 := stk.Push(token.I64)
-		fmt.Fprintf(w, "%sR%d.i64 = (int64_t)(trunc(R%d.f64));\n",
+		fmt.Fprintf(w, "%sR%d.i64 = (int64_t)(trunc(R%d.f64)); // %s\n",
 			indent, ret0, sp0,
+			insString(i),
 		)
 	case token.INS_I64_TRUNC_F64_U:
 		sp0 := stk.Pop(token.F64)
 		ret0 := stk.Push(token.I64)
-		fmt.Fprintf(w, "%sR%d.i64 = (int64_t)(uint64_t)(trunc(R%d.f64));\n",
+		fmt.Fprintf(w, "%sR%d.i64 = (int64_t)(uint64_t)(trunc(R%d.f64)); // %s\n",
 			indent, ret0, sp0,
+			insString(i),
 		)
 	case token.INS_F32_CONVERT_I32_S:
 		sp0 := stk.Pop(token.I32)
 		ret0 := stk.Push(token.F32)
-		fmt.Fprintf(w, "%sR%d.f32 = (float)(R%d.i32);\n",
+		fmt.Fprintf(w, "%sR%d.f32 = (float)(R%d.i32); // %s\n",
 			indent, ret0, sp0,
+			insString(i),
 		)
 	case token.INS_F32_CONVERT_I32_U:
 		sp0 := stk.Pop(token.I32)
 		ret0 := stk.Push(token.F32)
-		fmt.Fprintf(w, "%sR%d.f32 = (float)(R%d.u32);\n",
+		fmt.Fprintf(w, "%sR%d.f32 = (float)(R%d.u32); // %s\n",
 			indent, ret0, sp0,
+			insString(i),
 		)
 	case token.INS_F32_CONVERT_I64_S:
 		sp0 := stk.Pop(token.I64)
 		ret0 := stk.Push(token.F32)
-		fmt.Fprintf(w, "%sR%d.f32 = (float)(R%d.i64);\n",
+		fmt.Fprintf(w, "%sR%d.f32 = (float)(R%d.i64); // %s\n",
 			indent, ret0, sp0,
+			insString(i),
 		)
 	case token.INS_F32_CONVERT_I64_U:
 		sp0 := stk.Pop(token.I64)
 		ret0 := stk.Push(token.F32)
-		fmt.Fprintf(w, "%sR%d.f32 = (float)(R%d.u64);\n",
+		fmt.Fprintf(w, "%sR%d.f32 = (float)(R%d.u64); // %s\n",
 			indent, ret0, sp0,
+			insString(i),
 		)
 	case token.INS_F32_DEMOTE_F64:
 		sp0 := stk.Pop(token.I64)
 		ret0 := stk.Push(token.F32)
-		fmt.Fprintf(w, "%sR%d.f32 = (float)(R%d.f64);\n",
+		fmt.Fprintf(w, "%sR%d.f32 = (float)(R%d.f64); // %s\n",
 			indent, ret0, sp0,
+			insString(i),
 		)
 	case token.INS_F64_CONVERT_I32_S:
 		sp0 := stk.Pop(token.I32)
 		ret0 := stk.Push(token.F64)
-		fmt.Fprintf(w, "%sR%d.f64 = (double)(R%d.i32);\n",
+		fmt.Fprintf(w, "%sR%d.f64 = (double)(R%d.i32); // %s\n",
 			indent, ret0, sp0,
+			insString(i),
 		)
 	case token.INS_F64_CONVERT_I32_U:
 		sp0 := stk.Pop(token.I32)
 		ret0 := stk.Push(token.F64)
-		fmt.Fprintf(w, "%sR%d.f64 = (double)(R%d.u32);\n",
+		fmt.Fprintf(w, "%sR%d.f64 = (double)(R%d.u32); // %s\n",
 			indent, ret0, sp0,
+			insString(i),
 		)
 	case token.INS_F64_CONVERT_I64_S:
 		sp0 := stk.Pop(token.I64)
 		ret0 := stk.Push(token.F64)
-		fmt.Fprintf(w, "%sR%d.f64 = (double)(R%d.i64);\n",
+		fmt.Fprintf(w, "%sR%d.f64 = (double)(R%d.i64); // %s\n",
 			indent, ret0, sp0,
+			insString(i),
 		)
 	case token.INS_F64_CONVERT_I64_U:
 		sp0 := stk.Pop(token.I64)
 		ret0 := stk.Push(token.F64)
-		fmt.Fprintf(w, "%sR%d.f64 = (double)(R%d.u64);\n",
+		fmt.Fprintf(w, "%sR%d.f64 = (double)(R%d.u64); // %s\n",
 			indent, ret0, sp0,
+			insString(i),
 		)
 	case token.INS_F64_PROMOTE_F32:
 		sp0 := stk.Pop(token.F32)
 		ret0 := stk.Push(token.F64)
-		fmt.Fprintf(w, "%sR%d.f64 = (double)(R%d.f32);\n",
+		fmt.Fprintf(w, "%sR%d.f64 = (double)(R%d.f32); // %s\n",
 			indent, ret0, sp0,
+			insString(i),
 		)
 	case token.INS_I32_REINTERPRET_F32:
 		sp0 := stk.Pop(token.F32)
 		ret0 := stk.Push(token.F64)
-		fmt.Fprintf(w, "%sR%d = R%d;\n",
+		fmt.Fprintf(w, "%sR%d = R%d; // %s\n",
 			indent, ret0, sp0,
+			insString(i),
 		)
 	case token.INS_I64_REINTERPRET_F64:
 		sp0 := stk.Pop(token.I64)
 		ret0 := stk.Push(token.F64)
-		fmt.Fprintf(w, "%sR%d = R%d;\n",
+		fmt.Fprintf(w, "%sR%d = R%d; // %s\n",
 			indent, ret0, sp0,
+			insString(i),
 		)
 	case token.INS_F32_REINTERPRET_I32:
 		sp0 := stk.Pop(token.I32)
 		ret0 := stk.Push(token.F32)
-		fmt.Fprintf(w, "%sR%d = R%d;\n",
+		fmt.Fprintf(w, "%sR%d = R%d; // %s\n",
 			indent, ret0, sp0,
+			insString(i),
 		)
 	case token.INS_F64_REINTERPRET_I64:
 		sp0 := stk.Pop(token.I64)
 		ret0 := stk.Push(token.F64)
-		fmt.Fprintf(w, "%sR%d = R%d;\n",
+		fmt.Fprintf(w, "%sR%d = R%d; // %s\n",
 			indent, ret0, sp0,
+			insString(i),
 		)
 	default:
 		panic(fmt.Sprintf("unreachable: %T", i))

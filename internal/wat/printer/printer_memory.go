@@ -18,7 +18,7 @@ func (p *watPrinter) printMemory() error {
 	fmt.Fprint(p.w, p.indent)
 	fmt.Fprint(p.w, "(memory")
 	if s := p.m.Memory.Name; s != "" {
-		fmt.Fprintf(p.w, " %s", p.identOrIndex(s))
+		fmt.Fprintf(p.w, " %s", watPrinter_identOrIndex(s))
 	}
 	if p.m.Memory.AddrType == token.I64 {
 		fmt.Fprintf(p.w, " i64") // 只显式输出 memory64 类型

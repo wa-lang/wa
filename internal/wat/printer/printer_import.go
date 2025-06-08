@@ -52,14 +52,14 @@ func (p *watPrinter) printImport() error {
 
 func (p *watPrinter) printImport_global(importSpec *ast.ImportSpec) {
 	fmt.Fprintf(p.w, " (global %s %s)",
-		p.identOrIndex(importSpec.GlobalName),
+		watPrinter_identOrIndex(importSpec.GlobalName),
 		importSpec.GlobalType,
 	)
 	return
 }
 
 func (p *watPrinter) printImport_func(importSpec *ast.ImportSpec) {
-	fmt.Fprintf(p.w, " (func %s", p.identOrIndex(importSpec.FuncName))
+	fmt.Fprintf(p.w, " (func %s", watPrinter_identOrIndex(importSpec.FuncName))
 
 	fnType := importSpec.FuncType
 	if len(fnType.Params) > 0 {

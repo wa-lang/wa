@@ -12,7 +12,7 @@ func (p *watPrinter) printElem() error {
 		fmt.Fprint(p.w, p.indent)
 		fmt.Fprintf(p.w, "(elem (i32.const %d)", e.Offset)
 		for _, s := range e.Values {
-			fmt.Fprint(p.w, " ", p.identOrIndex(s))
+			fmt.Fprint(p.w, " ", watPrinter_identOrIndex(s))
 		}
 		fmt.Fprintln(p.w, ")")
 	}

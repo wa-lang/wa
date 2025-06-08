@@ -15,7 +15,7 @@ func (p *watPrinter) printData() error {
 	for _, d := range p.m.Data {
 		fmt.Fprint(p.w, p.indent, "(data")
 		if d.Name != "" {
-			fmt.Fprint(p.w, p.identOrIndex(d.Name))
+			fmt.Fprint(p.w, watPrinter_identOrIndex(d.Name))
 		}
 		fmt.Fprintf(p.w, " (i32.const %d)", d.Offset)
 
