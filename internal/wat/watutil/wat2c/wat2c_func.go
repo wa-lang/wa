@@ -340,7 +340,8 @@ func (p *wat2cWorker) buildFunc_ins(w io.Writer, fn *ast.Func, stk *valueTypeSta
 				unreachable()
 			}
 		default:
-			for i, xType := range fn.Type.Results {
+			for i := len(fn.Type.Results) - 1; i >= 0; i-- {
+				xType := fn.Type.Results[i]
 				spi := stk.Pop(xType)
 				switch xType {
 				case token.I32:
@@ -586,7 +587,7 @@ func (p *wat2cWorker) buildFunc_ins(w io.Writer, fn *ast.Func, stk *valueTypeSta
 	case token.INS_SELECT:
 		i := i.(ast.Ins_Select)
 
-		sp0 := stk.Pop(token.I32) // 判断条件
+		spCondition := stk.Pop(token.I32) // 判断条件
 
 		// wasm 2.0 支持带类型
 		valType := i.ResultTyp
@@ -594,17 +595,37 @@ func (p *wat2cWorker) buildFunc_ins(w io.Writer, fn *ast.Func, stk *valueTypeSta
 			// 不带类型, 2个数值类型必须一样
 			valType = stk.TopToken()
 		}
-		sp1 := stk.Pop(valType)
-		sp2 := stk.Pop(valType)
+		spValueFalse := stk.Pop(valType)
+		spValueTrue := stk.Pop(valType)
 
-		ret0 := stk.Push(token.I32)
+		ret0 := stk.Push(valType)
 
 		// 注意返回值的顺序
 		// if sp0 != 0 { sp2 } else { sp1 }
-		fmt.Fprintf(w, "%sR%d.i32 = R%d.i32? R%d.i32: R%d.i32; // %s\n",
-			indent, ret0, sp0, sp2, sp1,
-			insString(i),
-		)
+		switch valType {
+		case token.I32:
+			fmt.Fprintf(w, "%sR%d.i32 = R%d.i32? R%d.i32: R%d.i32; // %s\n",
+				indent, ret0, spCondition, spValueTrue, spValueFalse,
+				insString(i),
+			)
+		case token.I64:
+			fmt.Fprintf(w, "%sR%d.i64 = R%d.i32? R%d.i64: R%d.i64; // %s\n",
+				indent, ret0, spCondition, spValueTrue, spValueFalse,
+				insString(i),
+			)
+		case token.F32:
+			fmt.Fprintf(w, "%sR%d.f32 = R%d.i32? R%d.f32: R%d.f32; // %s\n",
+				indent, ret0, spCondition, spValueTrue, spValueFalse,
+				insString(i),
+			)
+		case token.F64:
+			fmt.Fprintf(w, "%sR%d.f64 = R%d.i32? R%d.f64: R%d.f64; // %s\n",
+				indent, ret0, spCondition, spValueTrue, spValueFalse,
+				insString(i),
+			)
+		default:
+			unreachable()
+		}
 	case token.INS_LOCAL_GET:
 		i := i.(ast.Ins_LocalGet)
 		xType := p.findLocalType(fn, i.X)
@@ -688,7 +709,7 @@ func (p *wat2cWorker) buildFunc_ins(w io.Writer, fn *ast.Func, stk *valueTypeSta
 	case token.INS_TABLE_GET:
 		sp0 := stk.Pop(token.I32)
 		ret0 := stk.Push(token.FUNCREF) // funcref
-		fmt.Fprintf(w, "%sR%d.ref = %s_table[R%d.i32]; // %s\n", indent, sp0, p.opt.Prefix, ret0, insString(i))
+		fmt.Fprintf(w, "%sR%d.ref = %s_table[R%d.i32]; // %s\n", indent, ret0, p.opt.Prefix, sp0, insString(i))
 	case token.INS_TABLE_SET:
 		sp0 := stk.Pop(token.FUNCREF) // funcref
 		sp1 := stk.Pop(token.I32)
