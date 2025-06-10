@@ -300,10 +300,13 @@ func (p *wat2cWorker) findLabelIndex(label string) int {
 	panic(fmt.Sprintf("wat2c: unknown label %q", label))
 }
 
-func (p *wat2cWorker) enterLabelScope(stkBase int, label string) {
+func (p *wat2cWorker) enterLabelScope(stkBase int, label string, results []token.Token) {
 	p.scopeLabels = append(p.scopeLabels, label)
 	p.scopeStackBases = append(p.scopeStackBases, stkBase)
+	p.scopeResults = append(p.scopeResults, results)
 }
 func (p *wat2cWorker) leaveLabelScope() {
 	p.scopeLabels = p.scopeLabels[:len(p.scopeLabels)-1]
+	p.scopeStackBases = p.scopeStackBases[:len(p.scopeStackBases)-1]
+	p.scopeResults = p.scopeResults[:len(p.scopeResults)-1]
 }

@@ -479,6 +479,7 @@ func (p *wat2cWorker) buildFuncs(w io.Writer) error {
 		p.localTypes = nil
 		p.scopeLabels = nil
 		p.scopeStackBases = nil
+		p.scopeResults = nil
 
 		cRetType := p.getFuncCRetType(f.Type, f.Name)
 

@@ -40,10 +40,11 @@ type wat2cWorker struct {
 	inlinedTypeIndices []*inlinedTypeIndex
 	inlinedTypes       []*wasm.FunctionType
 
-	localNames      []string      // 参数和局部变量名
-	localTypes      []token.Token // 参数和局部变量类型
-	scopeLabels     []string      // 嵌套的label查询, if/block/loop
-	scopeStackBases []int         // if/block/loop, 开始的栈位置
+	localNames      []string        // 参数和局部变量名
+	localTypes      []token.Token   // 参数和局部变量类型
+	scopeLabels     []string        // 嵌套的label查询, if/block/loop
+	scopeStackBases []int           // if/block/loop, 开始的栈位置
+	scopeResults    [][]token.Token // 对应块的返回值数量和类型
 
 	useMathX  bool // 是否使用了 math_x 部分函数
 	use_R_u32 bool // R_u32

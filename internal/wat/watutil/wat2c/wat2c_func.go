@@ -27,6 +27,7 @@ func (p *wat2cWorker) buildFunc_body(w io.Writer, fn *ast.Func, cRetType string)
 
 	assert(len(p.scopeLabels) == 0)
 	assert(len(p.scopeStackBases) == 0)
+	assert(len(p.scopeResults) == 0)
 
 	if len(fn.Body.Locals) > 0 {
 		for _, x := range fn.Body.Locals {
@@ -193,7 +194,7 @@ func (p *wat2cWorker) buildFunc_ins(w io.Writer, fn *ast.Func, stk *valueTypeSta
 		stkBase := stk.Len()
 		defer func() { assert(stk.Len() == stkBase+len(i.Results)) }()
 
-		p.enterLabelScope(stkBase, i.Label)
+		p.enterLabelScope(stkBase, i.Label, i.Results)
 		defer p.leaveLabelScope()
 
 		if i.Label != "" {
@@ -217,7 +218,7 @@ func (p *wat2cWorker) buildFunc_ins(w io.Writer, fn *ast.Func, stk *valueTypeSta
 		stkBase := stk.Len()
 		defer func() { assert(stk.Len() == stkBase+len(i.Results)) }()
 
-		p.enterLabelScope(stkBase, i.Label)
+		p.enterLabelScope(stkBase, i.Label, i.Results)
 		defer p.leaveLabelScope()
 
 		if i.Label != "" {
@@ -244,7 +245,7 @@ func (p *wat2cWorker) buildFunc_ins(w io.Writer, fn *ast.Func, stk *valueTypeSta
 		stkBase := stk.Len()
 		defer func() { assert(stk.Len() == stkBase+len(i.Results)) }()
 
-		p.enterLabelScope(stkBase, i.Label)
+		p.enterLabelScope(stkBase, i.Label, i.Results)
 		defer p.leaveLabelScope()
 
 		for _, ins := range i.Body {
@@ -288,8 +289,15 @@ func (p *wat2cWorker) buildFunc_ins(w io.Writer, fn *ast.Func, stk *valueTypeSta
 		labelIdx := p.findLabelIndex(i.X)
 		labelName := p.findLabelName(i.X)
 
-		stkBase := p.scopeStackBases[len(p.scopeLabels)-labelIdx-1]
-		assert(stk.Len() == stkBase)
+		scopeStackBase := p.scopeStackBases[len(p.scopeLabels)-labelIdx-1]
+		scopeResults := p.scopeResults[len(p.scopeLabels)-labelIdx-1]
+
+		// 需要处理栈
+		if scopeStackBase+len(scopeResults) > stk.Len() {
+			panic("TODO: fix stack")
+		}
+
+		assert(stk.Len() == scopeStackBase)
 
 		fmt.Fprintf(w, "%sgoto L_%s_next;\n", indent, toCName(labelName))
 
@@ -298,10 +306,16 @@ func (p *wat2cWorker) buildFunc_ins(w io.Writer, fn *ast.Func, stk *valueTypeSta
 		labelIdx := p.findLabelIndex(i.X)
 		labelName := p.findLabelName(i.X)
 
-		stkBase := p.scopeStackBases[len(p.scopeLabels)-labelIdx-1]
+		scopeStackBase := p.scopeStackBases[len(p.scopeLabels)-labelIdx-1]
+		scopeResults := p.scopeResults[len(p.scopeLabels)-labelIdx-1]
+
+		// 需要处理栈
+		if scopeStackBase+len(scopeResults) > stk.Len() {
+			panic("TODO: fix stack")
+		}
 
 		sp0 := stk.Pop(token.I32)
-		assert(stk.Len() == stkBase)
+		assert(stk.Len() == scopeStackBase)
 
 		fmt.Fprintf(w, "%sif(R%d.i32) { goto L_%s_next; }\n",
 			indent, sp0, toCName(labelName),
@@ -309,6 +323,9 @@ func (p *wat2cWorker) buildFunc_ins(w io.Writer, fn *ast.Func, stk *valueTypeSta
 	case token.INS_BR_TABLE:
 		i := i.(ast.Ins_BrTable)
 		assert(len(i.XList) > 1)
+
+		// TODO: 需要处理栈?
+
 		sp0 := stk.Pop(token.I32)
 		fmt.Fprintf(w, "%sswitch(R%d.i32) {\n", indent, sp0)
 		for k := 0; k < len(i.XList)-1; k++ {
