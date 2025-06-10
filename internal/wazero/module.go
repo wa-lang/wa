@@ -56,9 +56,15 @@ func (p *Module) RunMain(mainFunc string) (stdout, stderr []byte, err error) {
 
 	if mainFunc != "" {
 		fn := p.wazeroModule.ExportedFunction(mainFunc)
-		if fn == nil && mainFunc != "_main" {
-			err = fmt.Errorf("wazero: func %q not found", mainFunc)
-			return
+		if fn == nil {
+			// 如果是 main 函数缺少, 则忽略错误
+			if mainFunc != "_main" {
+				err = fmt.Errorf("wazero: func %q not found", mainFunc)
+				return
+			} else {
+				// 警告: start 段可能未执行
+				return
+			}
 		}
 
 		_, err = fn.Call(p.wazeroCtx)
@@ -217,7 +223,7 @@ func (p *Module) buildModule() error {
 			continue
 		}
 
-		if moduleName == "syscall_js" && funcName == "print_str" {
+		if moduleName == "syscall_js" {
 			waOS = config.WaOS_js
 			break
 		}
