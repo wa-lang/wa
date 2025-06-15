@@ -161,13 +161,13 @@ func (p *wat2wasmWorker) buildConstantExpression(g *ast.Global) *wasm.ConstantEx
 		x.Opcode = wasm.OpcodeI32Const
 		x.Data = p.encodeInt32(g.I32Value)
 	case token.I64:
-		x.Opcode = wasm.OpcodeI32Const
+		x.Opcode = wasm.OpcodeI64Const
 		x.Data = p.encodeInt64(g.I64Value)
 	case token.F32:
-		x.Opcode = wasm.OpcodeI32Const
+		x.Opcode = wasm.OpcodeF32Const
 		x.Data = p.encodeFloat32(g.F32Value)
 	case token.F64:
-		x.Opcode = wasm.OpcodeI32Const
+		x.Opcode = wasm.OpcodeF64Const
 		x.Data = p.encodeFloat64(g.F64Value)
 	default:
 		panic("unreachable")
