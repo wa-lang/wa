@@ -32,9 +32,10 @@ const (
 	windows = "windows"
 	wasip1  = "wasip1"
 
-	amd64 = "amd64"
-	arm64 = "arm64"
-	wasm  = "wasm"
+	amd64   = "amd64"
+	arm64   = "arm64"
+	wasm    = "wasm"
+	riscv64 = "riscv64"
 )
 
 var (
@@ -63,6 +64,8 @@ func (p *Builder) GenAll() {
 	waRoot_darwin_amd64 := p.getWarootPath(darwin, amd64)
 	waRoot_darwin_arm64 := p.getWarootPath(darwin, arm64)
 	waRoot_linux_amd64 := p.getWarootPath(linux, amd64)
+	waRoot_linux_arm64 := p.getWarootPath(linux, arm64)
+	waRoot_linux_riscv64 := p.getWarootPath(linux, riscv64)
 	waRoot_windows_amd64 := p.getWarootPath(windows, amd64)
 	waRoot_wasip1_wasm := p.getWarootPath(wasip1, wasm)
 
@@ -72,6 +75,8 @@ func (p *Builder) GenAll() {
 	p.genWarootFiles(waRoot_darwin_amd64)
 	p.genWarootFiles(waRoot_darwin_arm64)
 	p.genWarootFiles(waRoot_linux_amd64)
+	p.genWarootFiles(waRoot_linux_arm64)
+	p.genWarootFiles(waRoot_linux_riscv64)
 	p.genWarootFiles(waRoot_windows_amd64)
 
 	if isWasip1Enabled() {
@@ -91,6 +96,8 @@ func (p *Builder) GenAll() {
 	p.zipDir(waRoot_darwin_amd64)
 	p.zipDir(waRoot_darwin_arm64)
 	p.zipDir(waRoot_linux_amd64)
+	p.zipDir(waRoot_linux_arm64)
+	p.zipDir(waRoot_linux_riscv64)
 	p.zipDir(waRoot_windows_amd64)
 
 	if isWasip1Enabled() {
@@ -100,6 +107,8 @@ func (p *Builder) GenAll() {
 	os.RemoveAll(waRoot_darwin_amd64)
 	os.RemoveAll(waRoot_darwin_arm64)
 	os.RemoveAll(waRoot_linux_amd64) // keep for build docker image
+	os.RemoveAll(waRoot_linux_arm64)
+	os.RemoveAll(waRoot_linux_riscv64)
 	os.RemoveAll(waRoot_windows_amd64)
 
 	if isWasip1Enabled() {
@@ -114,6 +123,8 @@ func (p *Builder) genChecksums() {
 		p.getWarootPath(darwin, arm64),
 		p.getWarootPath(darwin, amd64),
 		p.getWarootPath(linux, amd64),
+		p.getWarootPath(linux, arm64),
+		p.getWarootPath(linux, riscv64),
 		p.getWarootPath(windows, amd64),
 	}
 	if isWasip1Enabled() {
@@ -177,13 +188,39 @@ func (p *Builder) genWaExe() {
 		}
 	}
 
-	// ubuntu
+	// ubuntu/amd64
 	{
 		waRootPath := p.getWarootPath(linux, amd64)
 		dstpath := filepath.Join(waRootPath, "bin", "wa")
 
 		cmd := exec.Command("go", "build", "-o", dstpath, "wa-lang.org/wa")
 		cmd.Env = append([]string{"GOOS=" + linux, "GOARCH=" + amd64, CGO_ENABLED}, os.Environ()...)
+		if output, err := cmd.CombinedOutput(); err != nil {
+			fmt.Print(string(output))
+			panic(err)
+		}
+	}
+
+	// ubuntu/arm64
+	{
+		waRootPath := p.getWarootPath(linux, arm64)
+		dstpath := filepath.Join(waRootPath, "bin", "wa")
+
+		cmd := exec.Command("go", "build", "-o", dstpath, "wa-lang.org/wa")
+		cmd.Env = append([]string{"GOOS=" + linux, "GOARCH=" + arm64, CGO_ENABLED}, os.Environ()...)
+		if output, err := cmd.CombinedOutput(); err != nil {
+			fmt.Print(string(output))
+			panic(err)
+		}
+	}
+
+	// ubuntu/riscv64
+	{
+		waRootPath := p.getWarootPath(linux, riscv64)
+		dstpath := filepath.Join(waRootPath, "bin", "wa")
+
+		cmd := exec.Command("go", "build", "-o", dstpath, "wa-lang.org/wa")
+		cmd.Env = append([]string{"GOOS=" + linux, "GOARCH=" + riscv64, CGO_ENABLED}, os.Environ()...)
 		if output, err := cmd.CombinedOutput(); err != nil {
 			fmt.Print(string(output))
 			panic(err)
