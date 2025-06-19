@@ -233,31 +233,61 @@ func (p *wat2cWorker) buildMemory_data(w io.Writer) error {
 	fmt.Fprintf(w, "\nstatic void %s_memory_init_data() {\n", p.opt.Prefix)
 	defer fmt.Fprintf(w, "}\n\n")
 
+	// C 语言中 \x 转义序列是“贪婪”的, 会一直读取尽可能多的十六进制字符作为转义值的一部分，不会自动终止。
+	// 因此 \x000a 会被解析为 \x0a, 而不是 \x00 和 "0a" 字符串
+	// 解决的办法是通过字符串强制切割: \x00""0a
+
+	prevIsHexEscape := false
+
 	for _, d := range p.m.Data {
 		var sb strings.Builder
 		for _, x := range d.Value {
 			switch {
 			case x == 0:
-				sb.WriteString("\\0")
+				// \0 也会遇到 \00 类似的歧义问题, 统一用 \x00 表示
+				prevIsHexEscape = true
+				sb.WriteString("\\x00")
 			case '0' <= x && x <= '9':
+				if prevIsHexEscape {
+					// 数字都可能被前面的 \x... 吸收
+					sb.WriteString(`""`)
+				}
+				prevIsHexEscape = false
 				sb.WriteString(fmt.Sprintf("%c", x))
 			case 'a' <= x && x <= 'z':
+				if prevIsHexEscape && x <= 'f' {
+					// 部分字母可能被前面的 \x... 吸收
+					sb.WriteString(`""`)
+				}
+				prevIsHexEscape = false
 				sb.WriteString(fmt.Sprintf("%c", x))
 			case 'A' <= x && x <= 'Z':
+				if prevIsHexEscape && x <= 'F' {
+					// 部分字母可能被前面的 \x... 吸收
+					sb.WriteString(`""`)
+				}
+				prevIsHexEscape = false
 				sb.WriteString(fmt.Sprintf("%c", x))
 			case strings.ContainsRune(" `~!@#$%^&*()_-+={}[]|:;'<>,.?/", rune(x)):
+				prevIsHexEscape = false
 				sb.WriteString(fmt.Sprintf("%c", x))
 			case x == '"':
+				prevIsHexEscape = false
 				sb.WriteString("\\\"")
 			case x == '\t':
+				prevIsHexEscape = false
 				sb.WriteString("\\t")
 			case x == '\n':
+				prevIsHexEscape = false
 				sb.WriteString("\\n")
 			case x == '\\':
+				prevIsHexEscape = false
 				sb.WriteString("\\")
 			case x == ' ':
+				prevIsHexEscape = false
 				sb.WriteString(" ")
 			default:
+				prevIsHexEscape = true
 				sb.WriteString(fmt.Sprintf("\\x%02x", x))
 			}
 		}
