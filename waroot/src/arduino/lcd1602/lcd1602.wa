@@ -97,6 +97,10 @@ func LCDPrint(s: string) {
 	}
 }
 
+func LCDWriteChar(ch: rune) {
+	writeChar(byte(ch))
+}
+
 // Claer screen.
 func LCDClear {
 	command(0x01)

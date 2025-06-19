@@ -121,6 +121,9 @@ func GetStdTestPkgList() []string {
 		if strings.HasPrefix(s, "syscall") {
 			continue
 		}
+		if strings.HasPrefix(s, "arduino/") {
+			continue
+		}
 		if s == "js" || strings.HasPrefix(s, "js/") {
 			continue
 		}
@@ -132,6 +135,7 @@ func GetStdTestPkgList() []string {
 var stdPkgs = []string{
 	"ai",              // ?
 	"apple",           // 测试已覆盖, wat2wasm ok
+	"arduino/lcd1602", // Arduino 平台, LCD显示屏
 	"archive/txtar",   // API 完整, wat2wasm ok
 	"bufio",           // API 完整, wat2wasm ok
 	"bytes",           // API 完整, wat2wasm ok
