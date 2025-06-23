@@ -286,18 +286,58 @@ func (p *wat2cWorker) buildFunc_ins(w io.Writer, fn *ast.Func, stk *valueTypeSta
 	case token.INS_BR:
 		i := i.(ast.Ins_Br)
 
+		// br会根据目标block的返回值个数, 从当前block产生的栈中去返回值,
+		// 至于中间被跳过的block栈数据全部被丢弃.
+
 		labelIdx := p.findLabelIndex(i.X)
 		labelName := p.findLabelName(i.X)
 
-		scopeStackBase := p.scopeStackBases[len(p.scopeLabels)-labelIdx-1]
-		scopeResults := p.scopeResults[len(p.scopeLabels)-labelIdx-1]
+		destScopeStackBase := p.scopeStackBases[len(p.scopeLabels)-labelIdx-1]
+		destScopeResults := p.scopeResults[len(p.scopeLabels)-labelIdx-1]
 
-		// 需要处理栈
-		if scopeStackBase+len(scopeResults) > stk.Len() {
-			panic("TODO: fix stack")
+		currentScopeStackBase := p.scopeStackBases[len(p.scopeLabels)-1]
+
+		// br对应的block带返回值
+		if len(destScopeResults) > 0 {
+			// 必须确保当前block的stk上有足够的返回值
+			assert(currentScopeStackBase+len(destScopeResults) >= stk.Len())
+
+			// 第一个返回值返回值的偏移地址
+			firstResultOffset := stk.Len() - len(destScopeResults)
+
+			// 如果返回值位置和目标block的base不一致则需要逐个复制
+			if firstResultOffset > destScopeStackBase {
+				// 返回值是逆序出栈
+				fmt.Fprintf(w, "%s// copy br %s result\n", indent, labelName)
+				for i := len(destScopeResults) - 1; i >= 0; i-- {
+					xType := destScopeResults[i]
+					reti := stk.Pop(xType)
+					switch xType {
+					case token.I32:
+						fmt.Fprintf(w, "%sR%d.i32 = R%d.i32;\n", indent, destScopeStackBase+i, reti)
+					case token.I64:
+						fmt.Fprintf(w, "%sR%d.i64 = R%d.i64;\n", indent, destScopeStackBase+i, reti)
+					case token.F32:
+						fmt.Fprintf(w, "%sR%d.f32 = R%d.f32;\n", indent, destScopeStackBase+i, reti)
+					case token.F64:
+						fmt.Fprintf(w, "%sR%d.f64 = R%d.f64;\n", indent, destScopeStackBase+i, reti)
+					default:
+						unreachable()
+					}
+				}
+			}
 		}
 
-		assert(stk.Len() == scopeStackBase)
+		// 清除当前block的栈中除了目标返回值剩余的值
+		// 这个操作只是为了退出当前block, 因为br已经是最后一个指令
+		// 外层的block需要一个清理之后的栈
+		for stk.Len() > currentScopeStackBase {
+			stk.DropAny()
+		}
+
+		// 退出当前block时, stack已经被清理
+		// 中间栈帧的数据会在外层block指令时处理
+		assert(stk.Len() == currentScopeStackBase)
 
 		fmt.Fprintf(w, "%sgoto L_%s_next;\n", indent, toCName(labelName))
 
@@ -309,9 +349,14 @@ func (p *wat2cWorker) buildFunc_ins(w io.Writer, fn *ast.Func, stk *valueTypeSta
 		scopeStackBase := p.scopeStackBases[len(p.scopeLabels)-labelIdx-1]
 		scopeResults := p.scopeResults[len(p.scopeLabels)-labelIdx-1]
 
-		// 需要处理栈
-		if scopeStackBase+len(scopeResults) > stk.Len() {
-			panic("TODO: fix stack")
+		// 而br-if因为涉及else分支(需要维持栈平衡), 当前block后续的指令假设br-if只消耗了一个i32用于条件,
+		// 因此这种条件br的目标block不能带返回值.
+		assert(len(scopeResults) == 0)
+
+		// 如果是跨越多个Block, 只需要丢弃中间block的栈数据即可
+		if scopeStackBase > stk.Len() {
+			// 这里是生成运行时代码, 因此不需要涉及栈丢弃的逻辑
+			// 跨越多个block对应的stk的变量位置会在依次处理外层block时对应上
 		}
 
 		sp0 := stk.Pop(token.I32)
@@ -324,18 +369,94 @@ func (p *wat2cWorker) buildFunc_ins(w io.Writer, fn *ast.Func, stk *valueTypeSta
 		i := i.(ast.Ins_BrTable)
 		assert(len(i.XList) > 1)
 
-		// TODO: 需要处理栈?
+		// br-table的行为和br比较相似, 因此不涉及else部分不用担心栈平衡的问题.
+		// 但是每个目标block的返回值必须完全一致
+
+		// 默认分支
+		defaultLabelIdx := p.findLabelIndex(i.XList[len(i.XList)-1])
+		defaultLabelName := p.findLabelName(i.XList[len(i.XList)-1])
+		defaultScopeResults := p.scopeResults[len(p.scopeLabels)-defaultLabelIdx-1]
+
+		currentScopeStackBase := p.scopeStackBases[len(p.scopeLabels)-1]
 
 		sp0 := stk.Pop(token.I32)
 		fmt.Fprintf(w, "%sswitch(R%d.i32) {\n", indent, sp0)
-		for k := 0; k < len(i.XList)-1; k++ {
-			fmt.Fprintf(w, "%scase %d: goto L_%s_next;\n",
-				indent, k, toCName(p.findLabelName(i.XList[k])),
-			)
+		{
+			// 当前block的返回值位置是相同的, 只能统一取一次
+			var retIdxList = make([]int, len(defaultScopeResults))
+			for k := len(defaultScopeResults) - 1; k >= 0; k-- {
+				xTyp := defaultScopeResults[k]
+				retIdxList[k] = stk.Pop(xTyp)
+			}
+
+			for k := 0; k < len(i.XList); k++ {
+				labelIdx := p.findLabelIndex(i.XList[k])
+				labelName := p.findLabelName(i.XList[k])
+
+				destScopeStackBase := p.scopeStackBases[len(p.scopeLabels)-labelIdx-1]
+				destScopeResults := p.scopeResults[len(p.scopeLabels)-labelIdx-1]
+
+				// 验证每个目标返回值必须和default一致
+				assert(len(defaultScopeResults) == len(destScopeResults))
+				for i := 0; i < len(defaultScopeResults); i++ {
+					assert(defaultScopeResults[i] == destScopeResults[i])
+				}
+
+				// 带返回值的情况
+				if len(destScopeResults) > 0 {
+					// 必须确保当前block的stk上有足够的返回值
+					assert(currentScopeStackBase+len(destScopeResults) >= stk.Len())
+
+					// 第一个返回值返回值的偏移地址
+					firstResultOffset := stk.Len() - len(destScopeResults)
+
+					// 如果返回值位置和目标block的base不一致则需要逐个复制
+					if firstResultOffset > destScopeStackBase {
+						// 返回值是逆序出栈
+						fmt.Fprintf(w, "%s// copy br %s result\n", indent, labelName)
+						for i := 0; i < len(destScopeResults); i++ {
+							xType := destScopeResults[i]
+							reti := retIdxList[i]
+							switch xType {
+							case token.I32:
+								fmt.Fprintf(w, "%sR%d.i32 = R%d.i32;\n", indent, destScopeStackBase+i, reti)
+							case token.I64:
+								fmt.Fprintf(w, "%sR%d.i64 = R%d.i64;\n", indent, destScopeStackBase+i, reti)
+							case token.F32:
+								fmt.Fprintf(w, "%sR%d.f32 = R%d.f32;\n", indent, destScopeStackBase+i, reti)
+							case token.F64:
+								fmt.Fprintf(w, "%sR%d.f64 = R%d.f64;\n", indent, destScopeStackBase+i, reti)
+							default:
+								unreachable()
+							}
+						}
+					}
+				}
+
+				if k == len(i.XList)-1 {
+					assert(labelName == defaultLabelName)
+					fmt.Fprintf(w, "%sdefault: goto L_%s_next;\n",
+						indent, toCName(defaultLabelName),
+					)
+				} else {
+					fmt.Fprintf(w, "%scase %d: goto L_%s_next;\n",
+						indent, k, toCName(labelName),
+					)
+				}
+			}
 		}
-		fmt.Fprintf(w, "%sdefault: goto L_%s_next;\n",
-			indent, toCName(p.findLabelName(i.XList[len(i.XList)-1])),
-		)
+
+		// 清除当前block的栈中除了目标返回值剩余的值
+		// 这个操作只是为了退出当前block, 因为br已经是最后一个指令
+		// 外层的block需要一个清理之后的栈
+		for stk.Len() > currentScopeStackBase {
+			stk.DropAny()
+		}
+
+		// 退出当前block时, stack已经被清理
+		// 中间栈帧的数据会在外层block指令时处理
+		assert(stk.Len() == currentScopeStackBase)
+
 		fmt.Fprintf(w, "%s}\n", indent)
 
 	case token.INS_RETURN:

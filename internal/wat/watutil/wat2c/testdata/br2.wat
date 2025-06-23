@@ -11,8 +11,6 @@
             i32.const 555
             i32.const 666
             br $A ;; 会清空之前的栈, 保留需要返回的值
-
-            ;; TODO: 后续的栈如何检查?
         )
         drop ;; 丢弃 block $C 的返回
         drop ;; 丢弃 333
