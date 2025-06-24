@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"strconv"
 
-	"wa-lang.org/wa/internal/3rdparty/wazero/internalx/wasm"
+	"wa-lang.org/wa/internal/wasm"
 	"wa-lang.org/wa/internal/wat/ast"
 	"wa-lang.org/wa/internal/wat/token"
 )

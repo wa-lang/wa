@@ -6,35 +6,35 @@
 package watutil
 
 import (
-	"context"
-
-	"wa-lang.org/wa/internal/3rdparty/wazero"
-	"wa-lang.org/wa/internal/3rdparty/wazero/internalx/wasm"
-	"wa-lang.org/wa/internal/3rdparty/wazero/internalx/wasm/binary"
+	"wa-lang.org/wa/internal/wasm"
+	"wa-lang.org/wa/internal/wasm/api"
+	"wa-lang.org/wa/internal/wasm/binary"
 	"wa-lang.org/wa/internal/wat/ast"
 	"wa-lang.org/wa/internal/wat/parser"
 	"wa-lang.org/wa/internal/wat/token"
 )
 
 func Wat2Wasm(filename string, source []byte) (wasmBytes []byte, err error) {
-	defer func() {
-		if err == nil {
-			rt := wazero.NewRuntime(context.Background())
-			m, errx := rt.CompileModule(context.Background(), wasmBytes)
-			if errx == nil {
-				m.Close(context.Background())
-			} else {
-				err = errx
-			}
-		}
-	}()
-
 	m, err := parser.ParseModule(filename, source)
 	if err != nil {
 		return nil, err
 	}
 
-	return newWat2wasmWorker(m).EncodeWasm(true)
+	// 编码为二进制格式
+	wasmBytes, err = newWat2wasmWorker(m).EncodeWasm(true)
+
+	// 从新加载到内存模式进行校验
+	// TODO: 在编码为二进制前先进行校验
+	binModule, err := binary.DecodeModule(wasmBytes, api.CoreFeaturesV2, wasm.MemoryLimitPages, false)
+	if err != nil {
+		return nil, err
+	}
+	if err = binModule.Validate(api.CoreFeaturesV2); err != nil {
+		return nil, err
+	}
+
+	// OK
+	return
 }
 
 type wat2wasmWorker struct {
