@@ -16,6 +16,7 @@ import (
 	"wa-lang.org/wa/internal/loader"
 	"wa-lang.org/wa/internal/wat/watutil"
 	"wa-lang.org/wa/internal/wat/watutil/wat2c"
+	"wa-lang.org/wa/internal/wat/watutil/watstrip"
 )
 
 //go:embed assets/arduino.ino
@@ -131,7 +132,7 @@ func BuildApp(opt *appbase.Option, input, outfile string) (mainFunc string, wasm
 		}
 
 		if opt.Optimize {
-			watOutput, err = watutil.WatStrip(input, watOutput)
+			watOutput, err = watstrip.WatStrip(input, watOutput)
 			if err != nil {
 				fmt.Println(err)
 				os.Exit(1)
@@ -212,7 +213,7 @@ func BuildApp(opt *appbase.Option, input, outfile string) (mainFunc string, wasm
 		}
 
 		if s := manifest.Pkg.Target; opt.Optimize || s == config.WaOS_wasm4 || s == config.WaOS_arduino {
-			watOutput, err = watutil.WatStrip(input, watOutput)
+			watOutput, err = watstrip.WatStrip(input, watOutput)
 			if err != nil {
 				fmt.Println(err)
 				os.Exit(1)

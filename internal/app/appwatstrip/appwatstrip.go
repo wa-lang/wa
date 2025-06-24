@@ -7,7 +7,7 @@ import (
 	"os"
 
 	"wa-lang.org/wa/internal/3rdparty/cli"
-	"wa-lang.org/wa/internal/wat/watutil"
+	"wa-lang.org/wa/internal/wat/watutil/watstrip"
 )
 
 var CmdWatStrip = &cli.Command{
@@ -28,7 +28,7 @@ var CmdWatStrip = &cli.Command{
 			fmt.Println(err)
 			os.Exit(1)
 		}
-		watBytes, err := watutil.WatStrip(infile, source)
+		watBytes, err := watstrip.WatStrip(infile, source)
 		if err != nil {
 			fmt.Println(err)
 			os.Exit(1)
