@@ -7,7 +7,6 @@ package watutil
 
 import (
 	"wa-lang.org/wa/internal/wasm"
-	"wa-lang.org/wa/internal/wasm/api"
 	"wa-lang.org/wa/internal/wasm/binary"
 	"wa-lang.org/wa/internal/wat/ast"
 	"wa-lang.org/wa/internal/wat/parser"
@@ -25,11 +24,11 @@ func Wat2Wasm(filename string, source []byte) (wasmBytes []byte, err error) {
 
 	// 从新加载到内存模式进行校验
 	// TODO: 在编码为二进制前先进行校验
-	binModule, err := binary.DecodeModule(wasmBytes, api.CoreFeaturesV2, wasm.MemoryLimitPages, false)
+	binModule, err := binary.DecodeModule(wasmBytes, wasm.CoreFeaturesV2, wasm.MemoryLimitPages, false)
 	if err != nil {
 		return nil, err
 	}
-	if err = binModule.Validate(api.CoreFeaturesV2); err != nil {
+	if err = binModule.Validate(wasm.CoreFeaturesV2); err != nil {
 		return nil, err
 	}
 

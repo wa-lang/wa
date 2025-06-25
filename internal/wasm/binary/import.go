@@ -5,7 +5,6 @@ import (
 	"fmt"
 
 	"wa-lang.org/wa/internal/wasm"
-	"wa-lang.org/wa/internal/wasm/api"
 	"wa-lang.org/wa/internal/wasm/leb128"
 )
 
@@ -14,7 +13,7 @@ func decodeImport(
 	idx uint32,
 	memorySizer func(minPages uint32, maxPages *uint32) (min, capacity, max uint32),
 	memoryLimitPages uint32,
-	enabledFeatures api.CoreFeatures,
+	enabledFeatures wasm.CoreFeatures,
 ) (i *wasm.Import, err error) {
 	i = &wasm.Import{}
 	if i.Module, _, err = decodeUTF8(r, "import module"); err != nil {

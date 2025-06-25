@@ -7,7 +7,6 @@ import (
 	"io"
 
 	"wa-lang.org/wa/internal/wasm"
-	"wa-lang.org/wa/internal/wasm/api"
 	"wa-lang.org/wa/internal/wasm/leb128"
 )
 
@@ -15,7 +14,7 @@ import (
 // See https://www.w3.org/TR/2019/REC-wasm-core-1-20191205/#binary-format%E2%91%A0
 func DecodeModule(
 	binary []byte,
-	enabledFeatures api.CoreFeatures,
+	enabledFeatures wasm.CoreFeatures,
 	memoryLimitPages uint32,
 	memoryCapacityFromMax bool,
 ) (*wasm.Module, error) {
@@ -107,7 +106,7 @@ func DecodeModule(
 		case wasm.SectionIDData:
 			m.DataSection, err = decodeDataSection(r, enabledFeatures)
 		case wasm.SectionIDDataCount:
-			if err := enabledFeatures.RequireEnabled(api.CoreFeatureBulkMemoryOperations); err != nil {
+			if err := enabledFeatures.RequireEnabled(wasm.CoreFeatureBulkMemoryOperations); err != nil {
 				return nil, fmt.Errorf("data count section not supported as %v", err)
 			}
 			m.DataCountSection, err = decodeDataCountSection(r)

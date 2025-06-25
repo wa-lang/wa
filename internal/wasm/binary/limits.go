@@ -4,14 +4,13 @@ import (
 	"bytes"
 	"fmt"
 
-	"wa-lang.org/wa/internal/wasm/api"
 	"wa-lang.org/wa/internal/wasm/leb128"
 )
 
 // decodeLimitsType returns the `limitsType` (min, max) decoded with the WebAssembly 1.0 (20191205) Binary Format.
 //
 // See https://www.w3.org/TR/2019/REC-wasm-core-1-20191205/#limits%E2%91%A6
-func decodeLimitsType(r *bytes.Reader) (addrType api.ValueType, min uint32, max *uint32, err error) {
+func decodeLimitsType(r *bytes.Reader) (addrType ValueType, min uint32, max *uint32, err error) {
 	var flag byte
 	if flag, err = r.ReadByte(); err != nil {
 		err = fmt.Errorf("read leading byte: %v", err)
@@ -19,9 +18,9 @@ func decodeLimitsType(r *bytes.Reader) (addrType api.ValueType, min uint32, max 
 	}
 
 	if flag < 0x04 {
-		addrType = api.ValueTypeI32
+		addrType = ValueTypeI32
 	} else {
-		addrType = api.ValueTypeI64
+		addrType = ValueTypeI64
 	}
 
 	switch flag {

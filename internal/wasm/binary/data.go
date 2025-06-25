@@ -6,7 +6,6 @@ import (
 	"io"
 
 	"wa-lang.org/wa/internal/wasm"
-	"wa-lang.org/wa/internal/wasm/api"
 	"wa-lang.org/wa/internal/wasm/leb128"
 )
 
@@ -24,14 +23,14 @@ const (
 	dataSegmentPrefixActiveWithMemoryIndex dataSegmentPrefix = 0x2
 )
 
-func decodeDataSegment(r *bytes.Reader, enabledFeatures api.CoreFeatures) (*wasm.DataSegment, error) {
+func decodeDataSegment(r *bytes.Reader, enabledFeatures wasm.CoreFeatures) (*wasm.DataSegment, error) {
 	dataSegmentPrefx, _, err := leb128.DecodeUint32(r)
 	if err != nil {
 		return nil, fmt.Errorf("read data segment prefix: %w", err)
 	}
 
 	if dataSegmentPrefx != dataSegmentPrefixActive {
-		if err := enabledFeatures.RequireEnabled(api.CoreFeatureBulkMemoryOperations); err != nil {
+		if err := enabledFeatures.RequireEnabled(wasm.CoreFeatureBulkMemoryOperations); err != nil {
 			return nil, fmt.Errorf("non-zero prefix for data segment is invalid as %w", err)
 		}
 	}

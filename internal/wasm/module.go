@@ -9,7 +9,6 @@ import (
 	"sort"
 	"strings"
 
-	"wa-lang.org/wa/internal/wasm/api"
 	"wa-lang.org/wa/internal/wasm/leb128"
 )
 
@@ -22,7 +21,7 @@ import (
 // See binary.DecodeModule and text.DecodeModule
 type DecodeModule func(
 	wasm []byte,
-	enabledFeatures api.CoreFeatures,
+	enabledFeatures CoreFeatures,
 	memorySizer func(minPages uint32, maxPages *uint32) (min, capacity, max uint32),
 ) (result *Module, err error)
 
@@ -227,7 +226,7 @@ func (m *Module) TypeOfFunction(funcIdx Index) *FunctionType {
 	return m.TypeSection[typeIdx]
 }
 
-func (m *Module) Validate(enabledFeatures api.CoreFeatures) error {
+func (m *Module) Validate(enabledFeatures CoreFeatures) error {
 	for _, tp := range m.TypeSection {
 		tp.CacheNumInUint64()
 	}
@@ -305,7 +304,7 @@ func (m *Module) validateGlobals(globals []*GlobalType, numFuncts, maxGlobals ui
 	return nil
 }
 
-func (m *Module) validateFunctions(enabledFeatures api.CoreFeatures, functions []Index, globals []*GlobalType, memory *Memory, tables []*Table, maximumFunctionIndex uint32) error {
+func (m *Module) validateFunctions(enabledFeatures CoreFeatures, functions []Index, globals []*GlobalType, memory *Memory, tables []*Table, maximumFunctionIndex uint32) error {
 	if uint32(len(functions)) > maximumFunctionIndex {
 		return fmt.Errorf("too many functions in a store")
 	}
@@ -329,9 +328,6 @@ func (m *Module) validateFunctions(enabledFeatures api.CoreFeatures, functions [
 	for idx, typeIndex := range m.FunctionSection {
 		if typeIndex >= typeCount {
 			return fmt.Errorf("invalid %s: type section index %d out of range", m.funcDesc(SectionIDFunction, Index(idx)), typeIndex)
-		}
-		if m.CodeSection[idx].GoFunc != nil {
-			continue
 		}
 		if err = m.validateFunction(enabledFeatures, Index(idx), functions, globals, memory, tables, declaredFuncIndexes); err != nil {
 			return fmt.Errorf("invalid %s: %w", m.funcDesc(SectionIDFunction, Index(idx)), err)
@@ -407,7 +403,7 @@ func (m *Module) funcDesc(sectionID SectionID, sectionIndex Index) string {
 	return fmt.Sprintf("%s[%d] export[%s]", sectionIDName, sectionIndex, strings.Join(exportNames, ","))
 }
 
-func (m *Module) validateMemory(memory *Memory, globals []*GlobalType, _ api.CoreFeatures) error {
+func (m *Module) validateMemory(memory *Memory, globals []*GlobalType, _ CoreFeatures) error {
 	var activeElementCount int
 	for _, sec := range m.DataSection {
 		if !sec.IsPassive() {
@@ -431,14 +427,14 @@ func (m *Module) validateMemory(memory *Memory, globals []*GlobalType, _ api.Cor
 	return nil
 }
 
-func (m *Module) validateImports(enabledFeatures api.CoreFeatures) error {
+func (m *Module) validateImports(enabledFeatures CoreFeatures) error {
 	for _, i := range m.ImportSection {
 		switch i.Type {
 		case ExternTypeGlobal:
 			if !i.DescGlobal.Mutable {
 				continue
 			}
-			if err := enabledFeatures.RequireEnabled(api.CoreFeatureMutableGlobal); err != nil {
+			if err := enabledFeatures.RequireEnabled(CoreFeatureMutableGlobal); err != nil {
 				return fmt.Errorf("invalid import[%q.%q] global: %w", i.Module, i.Name, err)
 			}
 		}
@@ -446,7 +442,7 @@ func (m *Module) validateImports(enabledFeatures api.CoreFeatures) error {
 	return nil
 }
 
-func (m *Module) validateExports(enabledFeatures api.CoreFeatures, functions []Index, globals []*GlobalType, memory *Memory, tables []*Table) error {
+func (m *Module) validateExports(enabledFeatures CoreFeatures, functions []Index, globals []*GlobalType, memory *Memory, tables []*Table) error {
 	for _, exp := range m.ExportSection {
 		index := exp.Index
 		switch exp.Type {
@@ -461,7 +457,7 @@ func (m *Module) validateExports(enabledFeatures api.CoreFeatures, functions []I
 			if !globals[index].Mutable {
 				continue
 			}
-			if err := enabledFeatures.RequireEnabled(api.CoreFeatureMutableGlobal); err != nil {
+			if err := enabledFeatures.RequireEnabled(CoreFeatureMutableGlobal); err != nil {
 				return fmt.Errorf("invalid export[%q] global[%d]: %w", exp.Name, index, err)
 			}
 		case ExternTypeMemory:
@@ -690,7 +686,7 @@ type Memory struct {
 func (m *Memory) Validate(memoryLimitPages uint32) error {
 	min, capacity, max := m.Min, m.Cap, m.Max
 
-	if m.AddrType != api.ValueTypeI32 && m.AddrType != api.ValueTypeI64 {
+	if m.AddrType != ValueTypeI32 && m.AddrType != ValueTypeI64 {
 		return fmt.Errorf("invalid memory address type: %v", m.AddrType)
 	}
 
@@ -761,14 +757,6 @@ type Code struct {
 	// Body is a sequence of expressions ending in OpcodeEnd
 	// See https://www.w3.org/TR/2019/REC-wasm-core-1-20191205/#binary-expr
 	Body []byte
-
-	// GoFunc is non-nil when IsHostFunction and defined in go, either
-	// api.GoFunction or api.GoModuleFunction. When present, LocalTypes and Body must
-	// be nil.
-	//
-	// Note: This has no serialization format, so is not encodable.
-	// See https://www.w3.org/TR/2019/REC-wasm-core-1-20191205/#host-functions%E2%91%A2
-	GoFunc interface{}
 }
 
 type DataSegment struct {
@@ -956,19 +944,28 @@ func SectionIDName(sectionID SectionID) string {
 	return "unknown"
 }
 
-// ValueType is an alias of api.ValueType defined to simplify imports.
-type ValueType = api.ValueType
+// ValueType describes a parameter or result type mapped to a WebAssembly
+// function signature.
+//
+// See https://www.w3.org/TR/2019/REC-wasm-core-1-20191205/#binary-valtype
+type ValueType = byte
 
 const (
-	ValueTypeI32 = api.ValueTypeI32
-	ValueTypeI64 = api.ValueTypeI64
-	ValueTypeF32 = api.ValueTypeF32
-	ValueTypeF64 = api.ValueTypeF64
+	// ValueTypeI32 is a 32-bit integer.
+	ValueTypeI32 ValueType = 0x7f
+	// ValueTypeI64 is a 64-bit integer.
+	ValueTypeI64 ValueType = 0x7e
+	// ValueTypeF32 is a 32-bit floating point number.
+	ValueTypeF32 ValueType = 0x7d
+	// ValueTypeF64 is a 64-bit floating point number.
+	ValueTypeF64 ValueType = 0x7c
+
+	ValueTypeExternref ValueType = 0x6f
+
 	// TODO: ValueTypeV128 is not exposed in the api pkg yet.
 	ValueTypeV128 ValueType = 0x7b
 	// TODO: ValueTypeFuncref is not exposed in the api pkg yet.
-	ValueTypeFuncref   ValueType = 0x70
-	ValueTypeExternref           = api.ValueTypeExternref
+	ValueTypeFuncref ValueType = 0x70
 )
 
 // ValueTypeName is an alias of api.ValueTypeName defined to simplify imports.
@@ -978,28 +975,48 @@ func ValueTypeName(t ValueType) string {
 	} else if t == ValueTypeV128 {
 		return "v128"
 	}
-	return api.ValueTypeName(t)
+	return api_ValueTypeName(t)
 }
 
 func isReferenceValueType(vt ValueType) bool {
 	return vt == ValueTypeExternref || vt == ValueTypeFuncref
 }
 
-// ExternType is an alias of api.ExternType defined to simplify imports.
-type ExternType = api.ExternType
+// ExternType classifies imports and exports with their respective types.
+//
+// See https://www.w3.org/TR/2019/REC-wasm-core-1-20191205/#external-types%E2%91%A0
+type ExternType = byte
 
 const (
-	ExternTypeFunc       = api.ExternTypeFunc
-	ExternTypeFuncName   = api.ExternTypeFuncName
-	ExternTypeTable      = api.ExternTypeTable
-	ExternTypeTableName  = api.ExternTypeTableName
-	ExternTypeMemory     = api.ExternTypeMemory
-	ExternTypeMemoryName = api.ExternTypeMemoryName
-	ExternTypeGlobal     = api.ExternTypeGlobal
-	ExternTypeGlobalName = api.ExternTypeGlobalName
+	ExternTypeFunc   ExternType = 0x00
+	ExternTypeTable  ExternType = 0x01
+	ExternTypeMemory ExternType = 0x02
+	ExternTypeGlobal ExternType = 0x03
+)
+
+// The below are exported to consolidate parsing behavior for external types.
+const (
+	// ExternTypeFuncName is the name of the WebAssembly 1.0 (20191205) Text Format field for ExternTypeFunc.
+	ExternTypeFuncName = "func"
+	// ExternTypeTableName is the name of the WebAssembly 1.0 (20191205) Text Format field for ExternTypeTable.
+	ExternTypeTableName = "table"
+	// ExternTypeMemoryName is the name of the WebAssembly 1.0 (20191205) Text Format field for ExternTypeMemory.
+	ExternTypeMemoryName = "memory"
+	// ExternTypeGlobalName is the name of the WebAssembly 1.0 (20191205) Text Format field for ExternTypeGlobal.
+	ExternTypeGlobalName = "global"
 )
 
 // ExternTypeName is an alias of api.ExternTypeName defined to simplify imports.
-func ExternTypeName(t ValueType) string {
-	return api.ExternTypeName(t)
+func ExternTypeName(et ValueType) string {
+	switch et {
+	case ExternTypeFunc:
+		return ExternTypeFuncName
+	case ExternTypeTable:
+		return ExternTypeTableName
+	case ExternTypeMemory:
+		return ExternTypeMemoryName
+	case ExternTypeGlobal:
+		return ExternTypeGlobalName
+	}
+	return fmt.Sprintf("%#x", et)
 }

@@ -1,9 +1,6 @@
-package api
+package wasm
 
-import (
-	"fmt"
-	"strings"
-)
+import "fmt"
 
 // CoreFeatures is a bit flag of WebAssembly Core specification features. See
 // https://github.com/WebAssembly/proposals for proposals and their status.
@@ -165,48 +162,4 @@ func (f CoreFeatures) RequireEnabled(feature CoreFeatures) error {
 		return fmt.Errorf("feature %q is disabled", feature)
 	}
 	return nil
-}
-
-// String implements fmt.Stringer by returning each enabled feature.
-func (f CoreFeatures) String() string {
-	var builder strings.Builder
-	for i := 0; i <= 63; i++ { // cycle through all bits to reduce code and maintenance
-		target := CoreFeatures(1 << i)
-		if f.IsEnabled(target) {
-			if name := featureName(target); name != "" {
-				if builder.Len() > 0 {
-					builder.WriteByte('|')
-				}
-				builder.WriteString(name)
-			}
-		}
-	}
-	return builder.String()
-}
-
-func featureName(f CoreFeatures) string {
-	switch f {
-	case CoreFeatureMutableGlobal:
-		// match https://github.com/WebAssembly/mutable-global
-		return "mutable-global"
-	case CoreFeatureSignExtensionOps:
-		// match https://github.com/WebAssembly/spec/blob/wg-2.0.draft1/proposals/sign-extension-ops/Overview.md
-		return "sign-extension-ops"
-	case CoreFeatureMultiValue:
-		// match https://github.com/WebAssembly/spec/blob/wg-2.0.draft1/proposals/multi-value/Overview.md
-		return "multi-value"
-	case CoreFeatureNonTrappingFloatToIntConversion:
-		// match https://github.com/WebAssembly/spec/blob/wg-2.0.draft1/proposals/nontrapping-float-to-int-conversion/Overview.md
-		return "nontrapping-float-to-int-conversion"
-	case CoreFeatureBulkMemoryOperations:
-		// match https://github.com/WebAssembly/spec/blob/wg-2.0.draft1/proposals/bulk-memory-operations/Overview.md
-		return "bulk-memory-operations"
-	case CoreFeatureReferenceTypes:
-		// match https://github.com/WebAssembly/spec/blob/wg-2.0.draft1/proposals/reference-types/Overview.md
-		return "reference-types"
-	case CoreFeatureSIMD:
-		// match https://github.com/WebAssembly/spec/blob/wg-2.0.draft1/proposals/simd/SIMD.md
-		return "simd"
-	}
-	return ""
 }

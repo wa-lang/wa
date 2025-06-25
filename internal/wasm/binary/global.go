@@ -5,13 +5,12 @@ import (
 	"fmt"
 
 	"wa-lang.org/wa/internal/wasm"
-	"wa-lang.org/wa/internal/wasm/api"
 )
 
 // decodeGlobal returns the api.Global decoded with the WebAssembly 1.0 (20191205) Binary Format.
 //
 // See https://www.w3.org/TR/2019/REC-wasm-core-1-20191205/#binary-global
-func decodeGlobal(r *bytes.Reader, enabledFeatures api.CoreFeatures) (*wasm.Global, error) {
+func decodeGlobal(r *bytes.Reader, enabledFeatures wasm.CoreFeatures) (*wasm.Global, error) {
 	gt, err := decodeGlobalType(r)
 	if err != nil {
 		return nil, err

@@ -5,7 +5,6 @@ import (
 	"fmt"
 
 	"wa-lang.org/wa/internal/wasm"
-	"wa-lang.org/wa/internal/wasm/api"
 	"wa-lang.org/wa/internal/wasm/leb128"
 )
 
@@ -56,7 +55,7 @@ func encodeFunctionType(t *wasm.FunctionType) []byte {
 	return append(data, encodeValTypes(t.Results)...)
 }
 
-func decodeFunctionType(enabledFeatures api.CoreFeatures, r *bytes.Reader) (*wasm.FunctionType, error) {
+func decodeFunctionType(enabledFeatures wasm.CoreFeatures, r *bytes.Reader) (*wasm.FunctionType, error) {
 	b, err := r.ReadByte()
 	if err != nil {
 		return nil, fmt.Errorf("read leading byte: %w", err)
@@ -83,7 +82,7 @@ func decodeFunctionType(enabledFeatures api.CoreFeatures, r *bytes.Reader) (*was
 
 	// Guard >1.0 feature multi-value
 	if resultCount > 1 {
-		if err = enabledFeatures.RequireEnabled(api.CoreFeatureMultiValue); err != nil {
+		if err = enabledFeatures.RequireEnabled(wasm.CoreFeatureMultiValue); err != nil {
 			return nil, fmt.Errorf("multiple result types invalid as %v", err)
 		}
 	}

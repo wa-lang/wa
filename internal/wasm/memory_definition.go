@@ -1,28 +1,5 @@
 package wasm
 
-import "wa-lang.org/wa/internal/wasm/api"
-
-// ImportedMemories implements the same method as documented on wazero.CompiledModule.
-func (m *Module) ImportedMemories() (ret []api.MemoryDefinition) {
-	for _, d := range m.MemoryDefinitionSection {
-		if d.importDesc != nil {
-			ret = append(ret, d)
-		}
-	}
-	return
-}
-
-// ExportedMemories implements the same method as documented on wazero.CompiledModule.
-func (m *Module) ExportedMemories() map[string]api.MemoryDefinition {
-	ret := map[string]api.MemoryDefinition{}
-	for _, d := range m.MemoryDefinitionSection {
-		for _, e := range d.exportNames {
-			ret[e] = d
-		}
-	}
-	return ret
-}
-
 // BuildMemoryDefinitions generates memory metadata that can be parsed from
 // the module. This must be called after all validation.
 //

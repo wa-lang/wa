@@ -6,7 +6,6 @@ import (
 	"fmt"
 
 	"wa-lang.org/wa/internal/wasm"
-	"wa-lang.org/wa/internal/wasm/api"
 	"wa-lang.org/wa/internal/wasm/leb128"
 )
 
@@ -38,7 +37,7 @@ func decodeElementInitValueVector(r *bytes.Reader) ([]*wasm.Index, error) {
 	return vec, nil
 }
 
-func decodeElementConstExprVector(r *bytes.Reader, elemType wasm.RefType, enabledFeatures api.CoreFeatures) ([]*wasm.Index, error) {
+func decodeElementConstExprVector(r *bytes.Reader, elemType wasm.RefType, enabledFeatures wasm.CoreFeatures) ([]*wasm.Index, error) {
 	vs, _, err := leb128.DecodeUint32(r)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get the size of constexpr vector: %w", err)
@@ -102,14 +101,14 @@ const (
 	elementSegmentPrefixDeclarativeConstExprVector
 )
 
-func decodeElementSegment(r *bytes.Reader, enabledFeatures api.CoreFeatures) (*wasm.ElementSegment, error) {
+func decodeElementSegment(r *bytes.Reader, enabledFeatures wasm.CoreFeatures) (*wasm.ElementSegment, error) {
 	prefix, _, err := leb128.DecodeUint32(r)
 	if err != nil {
 		return nil, fmt.Errorf("read element prefix: %w", err)
 	}
 
 	if prefix != elementSegmentPrefixLegacy {
-		if err := enabledFeatures.RequireEnabled(api.CoreFeatureBulkMemoryOperations); err != nil {
+		if err := enabledFeatures.RequireEnabled(wasm.CoreFeatureBulkMemoryOperations); err != nil {
 			return nil, fmt.Errorf("non-zero prefix for element segment is invalid as %w", err)
 		}
 	}
@@ -158,7 +157,7 @@ func decodeElementSegment(r *bytes.Reader, enabledFeatures api.CoreFeatures) (*w
 		}
 
 		if tableIndex != 0 {
-			if err := enabledFeatures.RequireEnabled(api.CoreFeatureReferenceTypes); err != nil {
+			if err := enabledFeatures.RequireEnabled(wasm.CoreFeatureReferenceTypes); err != nil {
 				return nil, fmt.Errorf("table index must be zero but was %d: %w", tableIndex, err)
 			}
 		}
@@ -237,7 +236,7 @@ func decodeElementSegment(r *bytes.Reader, enabledFeatures api.CoreFeatures) (*w
 		}
 
 		if tableIndex != 0 {
-			if err := enabledFeatures.RequireEnabled(api.CoreFeatureReferenceTypes); err != nil {
+			if err := enabledFeatures.RequireEnabled(wasm.CoreFeatureReferenceTypes); err != nil {
 				return nil, fmt.Errorf("table index must be zero but was %d: %w", tableIndex, err)
 			}
 		}

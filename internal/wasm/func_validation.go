@@ -7,7 +7,6 @@ import (
 	"strconv"
 	"strings"
 
-	"wa-lang.org/wa/internal/wasm/api"
 	"wa-lang.org/wa/internal/wasm/leb128"
 )
 
@@ -26,7 +25,7 @@ const maximumValuesOnStack = 1 << 27
 //
 // Returns an error if the instruction sequence is not valid,
 // or potentially it can exceed the maximum number of values on the stack.
-func (m *Module) validateFunction(enabledFeatures api.CoreFeatures, idx Index, functions []Index,
+func (m *Module) validateFunction(enabledFeatures CoreFeatures, idx Index, functions []Index,
 	globals []*GlobalType, memory *Memory, tables []*Table, declaredFunctionIndexes map[Index]struct{},
 ) error {
 	return m.validateFunctionWithMaxStackValues(enabledFeatures, idx, functions, globals, memory, tables, maximumValuesOnStack, declaredFunctionIndexes)
@@ -54,7 +53,7 @@ func readMemArg(pc uint64, body []byte) (align, offset uint32, read uint64, err 
 //
 // * maxStackValues is the maximum height of values stack which the target is allowed to reach.
 func (m *Module) validateFunctionWithMaxStackValues(
-	enabledFeatures api.CoreFeatures,
+	enabledFeatures CoreFeatures,
 	idx Index,
 	functions []Index,
 	globals []*GlobalType,
@@ -478,7 +477,7 @@ func (m *Module) validateFunctionWithMaxStackValues(
 				copy(defaultLabelType, lnLabel.blockType.Params)
 			}
 
-			if enabledFeatures.IsEnabled(api.CoreFeatureReferenceTypes) {
+			if enabledFeatures.IsEnabled(CoreFeatureReferenceTypes) {
 				// As of reference-types proposal, br_table on unreachable state
 				// can choose unknown types for expected parameter types for each label.
 				// https://github.com/WebAssembly/reference-types/pull/116
@@ -562,7 +561,7 @@ func (m *Module) validateFunctionWithMaxStackValues(
 			}
 			pc += num - 1
 			if tableIndex != 0 {
-				if err := enabledFeatures.RequireEnabled(api.CoreFeatureReferenceTypes); err != nil {
+				if err := enabledFeatures.RequireEnabled(CoreFeatureReferenceTypes); err != nil {
 					return fmt.Errorf("table index must be zero but was %d: %w", tableIndex, err)
 				}
 			}
@@ -785,7 +784,7 @@ func (m *Module) validateFunctionWithMaxStackValues(
 				}
 				valueTypeStack.push(ValueTypeF64)
 			case OpcodeI32Extend8S, OpcodeI32Extend16S:
-				if err := enabledFeatures.RequireEnabled(api.CoreFeatureSignExtensionOps); err != nil {
+				if err := enabledFeatures.RequireEnabled(CoreFeatureSignExtensionOps); err != nil {
 					return fmt.Errorf("%s invalid as %v", instructionNames[op], err)
 				}
 				if err := valueTypeStack.popAndVerifyType(ValueTypeI32); err != nil {
@@ -793,7 +792,7 @@ func (m *Module) validateFunctionWithMaxStackValues(
 				}
 				valueTypeStack.push(ValueTypeI32)
 			case OpcodeI64Extend8S, OpcodeI64Extend16S, OpcodeI64Extend32S:
-				if err := enabledFeatures.RequireEnabled(api.CoreFeatureSignExtensionOps); err != nil {
+				if err := enabledFeatures.RequireEnabled(CoreFeatureSignExtensionOps); err != nil {
 					return fmt.Errorf("%s invalid as %v", instructionNames[op], err)
 				}
 				if err := valueTypeStack.popAndVerifyType(ValueTypeI64); err != nil {
@@ -804,7 +803,7 @@ func (m *Module) validateFunctionWithMaxStackValues(
 				return fmt.Errorf("invalid numeric instruction 0x%x", op)
 			}
 		} else if op >= OpcodeRefNull && op <= OpcodeRefFunc {
-			if err := enabledFeatures.RequireEnabled(api.CoreFeatureReferenceTypes); err != nil {
+			if err := enabledFeatures.RequireEnabled(CoreFeatureReferenceTypes); err != nil {
 				return fmt.Errorf("%s invalid as %v", instructionNames[op], err)
 			}
 			switch op {
@@ -839,7 +838,7 @@ func (m *Module) validateFunctionWithMaxStackValues(
 				valueTypeStack.push(ValueTypeFuncref)
 			}
 		} else if op == OpcodeTableGet || op == OpcodeTableSet {
-			if err := enabledFeatures.RequireEnabled(api.CoreFeatureReferenceTypes); err != nil {
+			if err := enabledFeatures.RequireEnabled(CoreFeatureReferenceTypes); err != nil {
 				return fmt.Errorf("%s is invalid as %v", InstructionName(op), err)
 			}
 			pc++
@@ -853,7 +852,7 @@ func (m *Module) validateFunctionWithMaxStackValues(
 
 			refType := tables[tableIndex].Type
 			if op == OpcodeTableGet {
-				if err := valueTypeStack.popAndVerifyType(api.ValueTypeI32); err != nil {
+				if err := valueTypeStack.popAndVerifyType(ValueTypeI32); err != nil {
 					return fmt.Errorf("cannot pop the operand for table.get: %v", err)
 				}
 				valueTypeStack.push(refType)
@@ -861,7 +860,7 @@ func (m *Module) validateFunctionWithMaxStackValues(
 				if err := valueTypeStack.popAndVerifyType(refType); err != nil {
 					return fmt.Errorf("cannot pop the operand for table.set: %v", err)
 				}
-				if err := valueTypeStack.popAndVerifyType(api.ValueTypeI32); err != nil {
+				if err := valueTypeStack.popAndVerifyType(ValueTypeI32); err != nil {
 					return fmt.Errorf("cannot pop the operand for table.set: %v", err)
 				}
 			}
@@ -882,7 +881,7 @@ func (m *Module) validateFunctionWithMaxStackValues(
 				return fmt.Errorf("invalid misc opcode: %#x", miscOp32)
 			}
 			if miscOpcode >= OpcodeMiscI32TruncSatF32S && miscOpcode <= OpcodeMiscI64TruncSatF64U {
-				if err := enabledFeatures.RequireEnabled(api.CoreFeatureNonTrappingFloatToIntConversion); err != nil {
+				if err := enabledFeatures.RequireEnabled(CoreFeatureNonTrappingFloatToIntConversion); err != nil {
 					return fmt.Errorf("%s invalid as %v", miscInstructionNames[miscOpcode], err)
 				}
 				var inType, outType ValueType
@@ -901,7 +900,7 @@ func (m *Module) validateFunctionWithMaxStackValues(
 				}
 				valueTypeStack.push(outType)
 			} else if miscOpcode >= OpcodeMiscMemoryInit && miscOpcode <= OpcodeMiscTableCopy {
-				if err := enabledFeatures.RequireEnabled(api.CoreFeatureBulkMemoryOperations); err != nil {
+				if err := enabledFeatures.RequireEnabled(CoreFeatureBulkMemoryOperations); err != nil {
 					return fmt.Errorf("%s invalid as %v", miscInstructionNames[miscOpcode], err)
 				}
 				var params []ValueType
@@ -982,7 +981,7 @@ func (m *Module) validateFunctionWithMaxStackValues(
 						return fmt.Errorf("failed to read source table index for %s: %v", MiscInstructionName(miscOpcode), err)
 					}
 					if tableIndex != 0 {
-						if err := enabledFeatures.RequireEnabled(api.CoreFeatureReferenceTypes); err != nil {
+						if err := enabledFeatures.RequireEnabled(CoreFeatureReferenceTypes); err != nil {
 							return fmt.Errorf("source table index must be zero for %s as %v", MiscInstructionName(miscOpcode), err)
 						}
 					}
@@ -1015,7 +1014,7 @@ func (m *Module) validateFunctionWithMaxStackValues(
 						return fmt.Errorf("failed to read destination table index for %s: %v", MiscInstructionName(miscOpcode), err)
 					}
 					if dstTableIndex != 0 {
-						if err := enabledFeatures.RequireEnabled(api.CoreFeatureReferenceTypes); err != nil {
+						if err := enabledFeatures.RequireEnabled(CoreFeatureReferenceTypes); err != nil {
 							return fmt.Errorf("destination table index must be zero for %s as %v", MiscInstructionName(miscOpcode), err)
 						}
 					}
@@ -1029,7 +1028,7 @@ func (m *Module) validateFunctionWithMaxStackValues(
 						return fmt.Errorf("failed to read source table index for %s: %v", MiscInstructionName(miscOpcode), err)
 					}
 					if srcTableIndex != 0 {
-						if err := enabledFeatures.RequireEnabled(api.CoreFeatureReferenceTypes); err != nil {
+						if err := enabledFeatures.RequireEnabled(CoreFeatureReferenceTypes); err != nil {
 							return fmt.Errorf("source table index must be zero for %s as %v", MiscInstructionName(miscOpcode), err)
 						}
 					}
@@ -1050,7 +1049,7 @@ func (m *Module) validateFunctionWithMaxStackValues(
 					}
 				}
 			} else if miscOpcode >= OpcodeMiscTableGrow && miscOpcode <= OpcodeMiscTableFill {
-				if err := enabledFeatures.RequireEnabled(api.CoreFeatureReferenceTypes); err != nil {
+				if err := enabledFeatures.RequireEnabled(CoreFeatureReferenceTypes); err != nil {
 					return fmt.Errorf("%s invalid as %v", miscInstructionNames[miscOpcode], err)
 				}
 
@@ -1089,7 +1088,7 @@ func (m *Module) validateFunctionWithMaxStackValues(
 			// Vector instructions come with two bytes where the first byte is always OpcodeVecPrefix,
 			// and the second byte determines the actual instruction.
 			vecOpcode := body[pc]
-			if err := enabledFeatures.RequireEnabled(api.CoreFeatureSIMD); err != nil {
+			if err := enabledFeatures.RequireEnabled(CoreFeatureSIMD); err != nil {
 				return fmt.Errorf("%s invalid as %v", vectorInstructionName[vecOpcode], err)
 			}
 
@@ -1529,7 +1528,7 @@ func (m *Module) validateFunctionWithMaxStackValues(
 			}
 
 			if op == OpcodeTypedSelect {
-				if err := enabledFeatures.RequireEnabled(api.CoreFeatureReferenceTypes); err != nil {
+				if err := enabledFeatures.RequireEnabled(CoreFeatureReferenceTypes); err != nil {
 					return fmt.Errorf("%s is invalid as %w", InstructionName(op), err)
 				}
 				pc++
@@ -1539,7 +1538,7 @@ func (m *Module) validateFunctionWithMaxStackValues(
 				pc++
 				tp := body[pc]
 				if tp != ValueTypeI32 && tp != ValueTypeI64 && tp != ValueTypeF32 && tp != ValueTypeF64 &&
-					tp != api.ValueTypeExternref && tp != ValueTypeFuncref && tp != ValueTypeV128 {
+					tp != ValueTypeExternref && tp != ValueTypeFuncref && tp != ValueTypeV128 {
 					return fmt.Errorf("invalid type %s for %s", ValueTypeName(tp), OpcodeTypedSelectName)
 				}
 			} else if isReferenceValueType(v1) || isReferenceValueType(v2) {
@@ -1858,7 +1857,7 @@ type controlBlock struct {
 //
 // See https://www.w3.org/TR/2019/REC-wasm-core-1-20191205/#binary-blocktype
 // See https://github.com/WebAssembly/spec/blob/wg-2.0.draft1/proposals/multi-value/Overview.md
-func DecodeBlockType(types []*FunctionType, r *bytes.Reader, enabledFeatures api.CoreFeatures) (*FunctionType, uint64, error) {
+func DecodeBlockType(types []*FunctionType, r *bytes.Reader, enabledFeatures CoreFeatures) (*FunctionType, uint64, error) {
 	raw, num, err := leb128.DecodeInt33AsInt64(r)
 	if err != nil {
 		return nil, 0, fmt.Errorf("decode int33: %w", err)
@@ -1883,7 +1882,7 @@ func DecodeBlockType(types []*FunctionType, r *bytes.Reader, enabledFeatures api
 	case -17: // 0x6f in original byte = externref
 		ret = &FunctionType{Results: []ValueType{ValueTypeExternref}, ResultNumInUint64: 1}
 	default:
-		if err = enabledFeatures.RequireEnabled(api.CoreFeatureMultiValue); err != nil {
+		if err = enabledFeatures.RequireEnabled(CoreFeatureMultiValue); err != nil {
 			return nil, num, fmt.Errorf("block with function type return invalid as %v", err)
 		}
 		if raw < 0 || (raw >= int64(len(types))) {

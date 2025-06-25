@@ -6,11 +6,10 @@ import (
 	"io"
 
 	"wa-lang.org/wa/internal/wasm"
-	"wa-lang.org/wa/internal/wasm/api"
 	"wa-lang.org/wa/internal/wasm/leb128"
 )
 
-func decodeTypeSection(enabledFeatures api.CoreFeatures, r *bytes.Reader) ([]*wasm.FunctionType, error) {
+func decodeTypeSection(enabledFeatures wasm.CoreFeatures, r *bytes.Reader) ([]*wasm.FunctionType, error) {
 	vs, _, err := leb128.DecodeUint32(r)
 	if err != nil {
 		return nil, fmt.Errorf("get size of vector: %w", err)
@@ -29,7 +28,7 @@ func decodeImportSection(
 	r *bytes.Reader,
 	memorySizer func(minPages uint32, maxPages *uint32) (min, capacity, max uint32),
 	memoryLimitPages uint32,
-	enabledFeatures api.CoreFeatures,
+	enabledFeatures wasm.CoreFeatures,
 ) ([]*wasm.Import, error) {
 	vs, _, err := leb128.DecodeUint32(r)
 	if err != nil {
@@ -60,13 +59,13 @@ func decodeFunctionSection(r *bytes.Reader) ([]uint32, error) {
 	return result, err
 }
 
-func decodeTableSection(r *bytes.Reader, enabledFeatures api.CoreFeatures) ([]*wasm.Table, error) {
+func decodeTableSection(r *bytes.Reader, enabledFeatures wasm.CoreFeatures) ([]*wasm.Table, error) {
 	vs, _, err := leb128.DecodeUint32(r)
 	if err != nil {
 		return nil, fmt.Errorf("error reading size")
 	}
 	if vs > 1 {
-		if err := enabledFeatures.RequireEnabled(api.CoreFeatureReferenceTypes); err != nil {
+		if err := enabledFeatures.RequireEnabled(wasm.CoreFeatureReferenceTypes); err != nil {
 			return nil, fmt.Errorf("at most one table allowed in module as %w", err)
 		}
 	}
@@ -101,7 +100,7 @@ func decodeMemorySection(
 	return decodeMemory(r, memorySizer, memoryLimitPages)
 }
 
-func decodeGlobalSection(r *bytes.Reader, enabledFeatures api.CoreFeatures) ([]*wasm.Global, error) {
+func decodeGlobalSection(r *bytes.Reader, enabledFeatures wasm.CoreFeatures) ([]*wasm.Global, error) {
 	vs, _, err := leb128.DecodeUint32(r)
 	if err != nil {
 		return nil, fmt.Errorf("get size of vector: %w", err)
@@ -147,7 +146,7 @@ func decodeStartSection(r *bytes.Reader) (*wasm.Index, error) {
 	return &vs, nil
 }
 
-func decodeElementSection(r *bytes.Reader, enabledFeatures api.CoreFeatures) ([]*wasm.ElementSegment, error) {
+func decodeElementSection(r *bytes.Reader, enabledFeatures wasm.CoreFeatures) ([]*wasm.ElementSegment, error) {
 	vs, _, err := leb128.DecodeUint32(r)
 	if err != nil {
 		return nil, fmt.Errorf("get size of vector: %w", err)
@@ -177,7 +176,7 @@ func decodeCodeSection(r *bytes.Reader) ([]*wasm.Code, error) {
 	return result, nil
 }
 
-func decodeDataSection(r *bytes.Reader, enabledFeatures api.CoreFeatures) ([]*wasm.DataSegment, error) {
+func decodeDataSection(r *bytes.Reader, enabledFeatures wasm.CoreFeatures) ([]*wasm.DataSegment, error) {
 	vs, _, err := leb128.DecodeUint32(r)
 	if err != nil {
 		return nil, fmt.Errorf("get size of vector: %w", err)

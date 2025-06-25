@@ -1,32 +1,5 @@
 package wasm
 
-import (
-	"wa-lang.org/wa/internal/wasm/api"
-)
-
-// ImportedFunctions returns the definitions of each imported function.
-//
-// Note: Unlike ExportedFunctions, there is no unique constraint on imports.
-func (m *Module) ImportedFunctions() (ret []api.FunctionDefinition) {
-	for _, d := range m.FunctionDefinitionSection {
-		if d.importDesc != nil {
-			ret = append(ret, d)
-		}
-	}
-	return
-}
-
-// ExportedFunctions returns the definitions of each exported function.
-func (m *Module) ExportedFunctions() map[string]api.FunctionDefinition {
-	ret := map[string]api.FunctionDefinition{}
-	for _, d := range m.FunctionDefinitionSection {
-		for _, e := range d.exportNames {
-			ret[e] = d
-		}
-	}
-	return ret
-}
-
 // BuildFunctionDefinitions generates function metadata that can be parsed from
 // the module. This must be called after all validation.
 //
@@ -64,11 +37,9 @@ func (m *Module) BuildFunctionDefinitions() {
 	}
 
 	for codeIndex, typeIndex := range m.FunctionSection {
-		code := m.CodeSection[codeIndex]
 		m.FunctionDefinitionSection = append(m.FunctionDefinitionSection, &FunctionDefinition{
 			index:    Index(codeIndex) + importCount,
 			funcType: m.TypeSection[typeIndex],
-			goFunc:   code.GoFunc,
 		})
 	}
 
@@ -107,7 +78,6 @@ type FunctionDefinition struct {
 	index       Index
 	name        string
 	debugName   string
-	goFunc      interface{}
 	funcType    *FunctionType
 	importDesc  *[2]string
 	exportNames []string
@@ -145,11 +115,6 @@ func (f *FunctionDefinition) Import() (moduleName, name string, isImport bool) {
 // ExportNames implements the same method as documented on api.FunctionDefinition.
 func (f *FunctionDefinition) ExportNames() []string {
 	return f.exportNames
-}
-
-// GoFunc implements the same method as documented on api.FunctionDefinition.
-func (f *FunctionDefinition) GoFunction() interface{} {
-	return f.goFunc
 }
 
 // ParamNames implements the same method as documented on api.FunctionDefinition.

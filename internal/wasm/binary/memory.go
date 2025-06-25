@@ -4,7 +4,6 @@ import (
 	"bytes"
 
 	"wa-lang.org/wa/internal/wasm"
-	"wa-lang.org/wa/internal/wasm/api"
 )
 
 // decodeMemory returns the api.Memory decoded with the WebAssembly 1.0 (20191205) Binary Format.
@@ -34,7 +33,7 @@ func encodeMemory(i *wasm.Memory) []byte {
 	if !i.IsMaxEncoded {
 		maxPtr = nil
 	}
-	if i.AddrType == api.ValueTypeI64 {
+	if i.AddrType == ValueTypeI64 {
 		return encodeLimitsType_i64(i.Min, maxPtr)
 	}
 	return encodeLimitsType(i.Min, maxPtr)

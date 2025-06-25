@@ -54,3 +54,23 @@ func ieee754_DecodeFloat64(buf []byte) (float64, error) {
 	raw := binary.LittleEndian.Uint64(buf)
 	return math.Float64frombits(raw), nil
 }
+
+// ValueTypeName returns the type name of the given ValueType as a string.
+// These type names match the names used in the WebAssembly text format.
+//
+// Note: This returns "unknown", if an undefined ValueType value is passed.
+func api_ValueTypeName(t ValueType) string {
+	switch t {
+	case ValueTypeI32:
+		return "i32"
+	case ValueTypeI64:
+		return "i64"
+	case ValueTypeF32:
+		return "f32"
+	case ValueTypeF64:
+		return "f64"
+	case ValueTypeExternref:
+		return "externref"
+	}
+	return "unknown"
+}

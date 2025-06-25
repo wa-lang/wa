@@ -6,11 +6,10 @@ import (
 	"io"
 
 	"wa-lang.org/wa/internal/wasm"
-	"wa-lang.org/wa/internal/wasm/api"
 	"wa-lang.org/wa/internal/wasm/leb128"
 )
 
-func decodeConstantExpression(r *bytes.Reader, enabledFeatures api.CoreFeatures) (*wasm.ConstantExpression, error) {
+func decodeConstantExpression(r *bytes.Reader, enabledFeatures wasm.CoreFeatures) (*wasm.ConstantExpression, error) {
 	b, err := r.ReadByte()
 	if err != nil {
 		return nil, fmt.Errorf("read opcode: %v", err)
@@ -42,7 +41,7 @@ func decodeConstantExpression(r *bytes.Reader, enabledFeatures api.CoreFeatures)
 	case wasm.OpcodeGlobalGet:
 		_, _, err = leb128.DecodeUint32(r)
 	case wasm.OpcodeRefNull:
-		if err := enabledFeatures.RequireEnabled(api.CoreFeatureBulkMemoryOperations); err != nil {
+		if err := enabledFeatures.RequireEnabled(wasm.CoreFeatureBulkMemoryOperations); err != nil {
 			return nil, fmt.Errorf("ref.null is not supported as %w", err)
 		}
 		reftype, err := r.ReadByte()
@@ -52,13 +51,13 @@ func decodeConstantExpression(r *bytes.Reader, enabledFeatures api.CoreFeatures)
 			return nil, fmt.Errorf("invalid type for ref.null: 0x%x", reftype)
 		}
 	case wasm.OpcodeRefFunc:
-		if err := enabledFeatures.RequireEnabled(api.CoreFeatureBulkMemoryOperations); err != nil {
+		if err := enabledFeatures.RequireEnabled(wasm.CoreFeatureBulkMemoryOperations); err != nil {
 			return nil, fmt.Errorf("ref.func is not supported as %w", err)
 		}
 		// Parsing index.
 		_, _, err = leb128.DecodeUint32(r)
 	case wasm.OpcodeVecPrefix:
-		if err := enabledFeatures.RequireEnabled(api.CoreFeatureSIMD); err != nil {
+		if err := enabledFeatures.RequireEnabled(wasm.CoreFeatureSIMD); err != nil {
 			return nil, fmt.Errorf("vector instructions are not supported as %w", err)
 		}
 		opcode, err = r.ReadByte()
