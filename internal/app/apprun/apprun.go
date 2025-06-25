@@ -151,6 +151,9 @@ func CmdRunAction(c *cli.Context) error {
 		if appbase.HasExt(input, ".wa") {
 			os.Remove(input + "t")  // *.wat
 			os.Remove(input + "sm") // *.wasm
+
+			// 删除 *.fset 文件
+			os.Remove(appbase.ReplaceExt(input, ".wa", ".fset"))
 		}
 	}
 

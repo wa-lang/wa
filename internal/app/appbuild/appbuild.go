@@ -125,7 +125,7 @@ func BuildApp(opt *appbase.Option, input, outfile string) (mainFunc string, wasm
 
 	// 只编译 wa/wz 文件, 输出路径相同, 后缀名调整
 	if appbase.HasExt(input, ".wa", ".wz") {
-		_, _, watOutput, err := buildWat(opt, input)
+		prog, _, watOutput, err := buildWat(opt, input)
 		if err != nil {
 			fmt.Println(err)
 			os.Exit(1)
@@ -169,6 +169,10 @@ func BuildApp(opt *appbase.Option, input, outfile string) (mainFunc string, wasm
 				fmt.Printf("write %s failed: %v\n", outfile, err)
 				os.Exit(1)
 			}
+
+			// fileset 写到文件中
+			fsetfile := appbase.ReplaceExt(outfile, ".wasm", ".fset")
+			os.WriteFile(fsetfile, prog.Fset.ToJson(), 0666)
 		}
 
 		// OK
@@ -206,7 +210,7 @@ func BuildApp(opt *appbase.Option, input, outfile string) (mainFunc string, wasm
 		}
 
 		// 编译出 wat 文件
-		_, compiler, watOutput, err := buildWat(opt, input)
+		prog, compiler, watOutput, err := buildWat(opt, input)
 		if err != nil {
 			fmt.Println(err)
 			os.Exit(1)
@@ -227,6 +231,10 @@ func BuildApp(opt *appbase.Option, input, outfile string) (mainFunc string, wasm
 			fmt.Printf("write %s failed: %v\n", outfile, err)
 			os.Exit(1)
 		}
+
+		// fileset 写到文件中
+		fsetfile := appbase.ReplaceExt(outfile, ".wasm", ".fset")
+		os.WriteFile(fsetfile, prog.Fset.ToJson(), 0666)
 
 		// wat 编译为 wasm
 		wasmBytes, err := watutil.Wat2Wasm(input, watOutput)
@@ -394,6 +402,10 @@ func BuildApp(opt *appbase.Option, input, outfile string) (mainFunc string, wasm
 				fmt.Printf("write %s failed: %v\n", outfile, err)
 				os.Exit(1)
 			}
+
+			// fileset 写到文件中
+			fsetfile := appbase.ReplaceExt(outfile, ".wasm", ".fset")
+			os.WriteFile(fsetfile, prog.Fset.ToJson(), 0666)
 		}
 
 		// 主函数
