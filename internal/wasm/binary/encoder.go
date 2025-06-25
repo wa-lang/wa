@@ -10,7 +10,7 @@ var sizePrefixedName = []byte{4, 'n', 'a', 'm', 'e'}
 // Note: If saving to a file, the conventional extension is wasm
 // See https://www.w3.org/TR/2019/REC-wasm-core-1-20191205/#binary-format%E2%91%A0
 func EncodeModule(m *wasm.Module) (bytes []byte) {
-	bytes = append(Magic, version...)
+	bytes = append([]byte(Magic), version...)
 	if m.SectionElementCount(wasm.SectionIDType) > 0 {
 		bytes = append(bytes, encodeTypeSection(m.TypeSection)...)
 	}

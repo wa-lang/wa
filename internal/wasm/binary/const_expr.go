@@ -2,8 +2,10 @@ package binary
 
 import (
 	"bytes"
+	"encoding/binary"
 	"fmt"
 	"io"
+	"math"
 
 	"wa-lang.org/wa/internal/wasm"
 	"wa-lang.org/wa/internal/wasm/leb128"
@@ -31,13 +33,19 @@ func decodeConstantExpression(r *bytes.Reader, enabledFeatures wasm.CoreFeatures
 		if _, err := io.ReadFull(r, buf); err != nil {
 			return nil, fmt.Errorf("read f32 constant: %v", err)
 		}
-		_, err = ieee754_DecodeFloat32(buf)
+
+		raw := binary.LittleEndian.Uint32(buf[:4])
+		_ = math.Float32frombits(raw)
+
 	case wasm.OpcodeF64Const:
 		buf := make([]byte, 8)
 		if _, err := io.ReadFull(r, buf); err != nil {
 			return nil, fmt.Errorf("read f64 constant: %v", err)
 		}
-		_, err = ieee754_DecodeFloat64(buf)
+
+		raw := binary.LittleEndian.Uint64(buf)
+		_ = math.Float64frombits(raw)
+
 	case wasm.OpcodeGlobalGet:
 		_, _, err = leb128.DecodeUint32(r)
 	case wasm.OpcodeRefNull:

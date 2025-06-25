@@ -22,12 +22,12 @@ func DecodeModule(
 
 	// Magic number.
 	buf := make([]byte, 4)
-	if _, err := io.ReadFull(r, buf); err != nil || !bytes.Equal(buf, Magic) {
+	if _, err := io.ReadFull(r, buf); err != nil || !bytes.Equal(buf, []byte(Magic)) {
 		return nil, ErrInvalidMagicNumber
 	}
 
 	// Version.
-	if _, err := io.ReadFull(r, buf); err != nil || !bytes.Equal(buf, version) {
+	if _, err := io.ReadFull(r, buf); err != nil || !bytes.Equal(buf, []byte(version)) {
 		return nil, ErrInvalidVersion
 	}
 
