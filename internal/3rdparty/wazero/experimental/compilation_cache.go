@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"os"
 
-	"wa-lang.org/wa/internal/3rdparty/wazero/internalx/compilationcache"
+	"wa-lang.org/wa/internal/3rdparty/wazero/internal/compilationcache"
 )
 
 // WithCompilationCacheDirName configures the destination directory of the compilation cache.

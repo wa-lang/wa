@@ -1,7 +1,7 @@
 package wasi_snapshot_preview1
 
 import (
-	internalwasi "wa-lang.org/wa/internal/3rdparty/wazero/internalx/wasi_snapshot_preview1"
+	internalwasi "wa-lang.org/wa/internal/3rdparty/wazero/internal/wasi_snapshot_preview1"
 )
 
 // Errno are the error codes returned by WASI functions.

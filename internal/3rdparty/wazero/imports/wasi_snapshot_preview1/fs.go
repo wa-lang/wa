@@ -11,8 +11,8 @@ import (
 	"syscall"
 
 	"wa-lang.org/wa/internal/3rdparty/wazero/api"
-	internalsys "wa-lang.org/wa/internal/3rdparty/wazero/internalx/sys"
-	"wa-lang.org/wa/internal/3rdparty/wazero/internalx/wasm"
+	internalsys "wa-lang.org/wa/internal/3rdparty/wazero/internal/sys"
+	"wa-lang.org/wa/internal/3rdparty/wazero/internal/wasm"
 )
 
 const (

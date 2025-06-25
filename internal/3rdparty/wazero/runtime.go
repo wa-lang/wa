@@ -7,9 +7,9 @@ import (
 
 	"wa-lang.org/wa/internal/3rdparty/wazero/api"
 	experimentalapi "wa-lang.org/wa/internal/3rdparty/wazero/experimental"
-	"wa-lang.org/wa/internal/3rdparty/wazero/internalx/version"
-	"wa-lang.org/wa/internal/3rdparty/wazero/internalx/wasm"
-	binaryformat "wa-lang.org/wa/internal/3rdparty/wazero/internalx/wasm/binary"
+	"wa-lang.org/wa/internal/3rdparty/wazero/internal/version"
+	"wa-lang.org/wa/internal/3rdparty/wazero/internal/wasm"
+	binaryformat "wa-lang.org/wa/internal/3rdparty/wazero/internal/wasm/binary"
 )
 
 // Runtime allows embedding of WebAssembly modules.

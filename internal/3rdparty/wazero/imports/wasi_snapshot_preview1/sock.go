@@ -1,6 +1,6 @@
 package wasi_snapshot_preview1
 
-import "wa-lang.org/wa/internal/3rdparty/wazero/internalx/wasm"
+import "wa-lang.org/wa/internal/3rdparty/wazero/internal/wasm"
 
 const (
 	functionSockAccept   = "sock_accept"

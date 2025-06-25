@@ -6,8 +6,8 @@ package walang
 
 import (
 	"wa-lang.org/wa/internal/3rdparty/wazero/api"
-	"wa-lang.org/wa/internal/3rdparty/wazero/internalx/sys"
-	"wa-lang.org/wa/internal/3rdparty/wazero/internalx/wasm"
+	"wa-lang.org/wa/internal/3rdparty/wazero/internal/sys"
+	"wa-lang.org/wa/internal/3rdparty/wazero/internal/wasm"
 )
 
 func ModCallContextSys(m api.Module) *sys.Context {

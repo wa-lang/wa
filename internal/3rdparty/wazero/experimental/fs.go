@@ -5,7 +5,7 @@ import (
 	"io/fs"
 
 	"wa-lang.org/wa/internal/3rdparty/wazero/api"
-	internalfs "wa-lang.org/wa/internal/3rdparty/wazero/internalx/sys"
+	internalfs "wa-lang.org/wa/internal/3rdparty/wazero/internal/sys"
 )
 
 // WithFS overrides fs.FS in the context-based manner. Caller needs to take

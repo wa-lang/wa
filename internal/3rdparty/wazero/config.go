@@ -10,11 +10,11 @@ import (
 	"time"
 
 	"wa-lang.org/wa/internal/3rdparty/wazero/api"
-	"wa-lang.org/wa/internal/3rdparty/wazero/internalx/engine/compiler"
-	"wa-lang.org/wa/internal/3rdparty/wazero/internalx/engine/interpreter"
-	"wa-lang.org/wa/internal/3rdparty/wazero/internalx/platform"
-	internalsys "wa-lang.org/wa/internal/3rdparty/wazero/internalx/sys"
-	"wa-lang.org/wa/internal/3rdparty/wazero/internalx/wasm"
+	"wa-lang.org/wa/internal/3rdparty/wazero/internal/engine/compiler"
+	"wa-lang.org/wa/internal/3rdparty/wazero/internal/engine/interpreter"
+	"wa-lang.org/wa/internal/3rdparty/wazero/internal/platform"
+	internalsys "wa-lang.org/wa/internal/3rdparty/wazero/internal/sys"
+	"wa-lang.org/wa/internal/3rdparty/wazero/internal/wasm"
 	"wa-lang.org/wa/internal/3rdparty/wazero/sys"
 )
 
