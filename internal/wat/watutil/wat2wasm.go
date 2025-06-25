@@ -21,18 +21,6 @@ func Wat2Wasm(filename string, source []byte) (wasmBytes []byte, err error) {
 
 	// 编码为二进制格式
 	wasmBytes, err = newWat2wasmWorker(m).EncodeWasm(true)
-
-	// 从新加载到内存模式进行校验
-	// TODO: 在编码为二进制前先进行校验
-	binModule, err := binary.DecodeModule(wasmBytes, wasm.CoreFeaturesV2, wasm.MemoryLimitPages, false)
-	if err != nil {
-		return nil, err
-	}
-	if err = binModule.Validate(wasm.CoreFeaturesV2); err != nil {
-		return nil, err
-	}
-
-	// OK
 	return
 }
 
@@ -128,6 +116,11 @@ func (p *wat2wasmWorker) EncodeWasm(enableDebugNames bool) ([]byte, error) {
 		}
 	} else {
 		p.mWasm.NameSection = nil
+	}
+
+	// 模块校验
+	if err := p.mWasm.Validate(wasm.CoreFeaturesV2); err != nil {
+		return nil, err
 	}
 
 	return binary.EncodeModule(p.mWasm), nil
