@@ -1,5 +1,9 @@
 // 版权 @2023 凹语言 作者。保留所有权利。
 
+func PrintPosition(pos: i32) {
+	__import__print_position(pos)
+}
+
 func PrintBool(v: bool) {
 	__import__print_bool(v)
 }

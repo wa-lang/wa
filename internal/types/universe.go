@@ -33,6 +33,7 @@ var (
 	universe__LINE__    *Const
 	universe__COLUMN__  *Const
 	universe__FUNC__    *Const
+	universe__POS__     *Const
 )
 
 // Typ contains the predeclared *Basic types indexed by their
@@ -136,6 +137,7 @@ var predeclaredConsts = [...]struct {
 	{"__LINE__", UntypedInt, constant.MakeInt64(0)},
 	{"__COLUMN__", UntypedInt, constant.MakeInt64(0)},
 	{"__FUNC__", UntypedString, constant.MakeString("")},
+	{"__POS__", UntypedInt, constant.MakeInt64(0)},
 }
 
 func defPredeclaredConsts() {
@@ -263,6 +265,7 @@ func init() {
 	universe__LINE__ = Universe.Lookup("__LINE__").(*Const)
 	universe__COLUMN__ = Universe.Lookup("__COLUMN__").(*Const)
 	universe__FUNC__ = Universe.Lookup("__FUNC__").(*Const)
+	universe__POS__ = Universe.Lookup("__POS__").(*Const)
 }
 
 // Objects with names containing blanks are internal and not entered into

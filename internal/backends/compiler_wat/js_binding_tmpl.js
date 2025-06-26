@@ -92,6 +92,7 @@ class WaApp {
 
   _createSyscall = () => {
     return {
+      print_position: (pos) => { this._wa_print_buf += pos },
       print_bool: (b) => { this._wa_print_buf += Boolean(b).toString(); },
       print_u32: (i) => {
         if (i < 0) {

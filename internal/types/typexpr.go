@@ -107,6 +107,8 @@ func (check *Checker) ident(x *operand, e *ast.Ident, def *Named, wantType bool)
 				funcName := check.decl.fdecl.Name.Name
 				x.val = constant.MakeString(funcName)
 			}
+		case universe__POS__:
+			x.val = constant.MakeInt64(int64(e.Pos()))
 
 		default:
 			x.val = obj.val

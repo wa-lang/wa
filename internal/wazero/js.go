@@ -18,18 +18,15 @@ const jsModuleName = "syscall_js"
 
 func (p *Module) JsInstantiate(ctx context.Context, rt wazero.Runtime) (api.Closer, error) {
 	return rt.NewHostModuleBuilder(jsModuleName).
-		// func pos_string(pos, buf, buf_len: i32) => (len: i32)
+		// func print_position(pos: i32)
 		NewFunctionBuilder().
-		WithFunc(func(ctx context.Context, m api.Module, pos, buf, buf_len uint32) uint32 {
+		WithFunc(func(ctx context.Context, m api.Module, pos uint32) {
 			posString := p.Position(token.Pos(int(pos))).String()
-			if len(posString) >= int(buf_len) {
-				posString = posString[:buf_len]
-			}
-			m.Memory().Write(ctx, buf, []byte(posString))
-			return uint32(len(posString))
+			w := walang.ModCallContextSys(m).Stdout()
+			fmt.Fprint(w, posString)
 		}).
-		WithParameterNames("pos", "buf", "buf_len").
-		Export("pos_string").
+		WithParameterNames("pos").
+		Export("print_position").
 
 		// func print_bool(v: bool)
 		NewFunctionBuilder().
