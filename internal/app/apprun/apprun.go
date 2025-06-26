@@ -70,7 +70,7 @@ func CmdRunAction(c *cli.Context) error {
 		if args := c.Args().Slice(); len(args) > 2 {
 			appArgs = args[2:]
 		}
-		return runWasm(input, wasmBytes, appArgs...)
+		return runWasm(input, wasmBytes, []byte{}, appArgs...)
 	}
 
 	if appbase.HasExt(input, ".wasm") {
@@ -78,7 +78,7 @@ func CmdRunAction(c *cli.Context) error {
 		if args := c.Args().Slice(); len(args) > 2 {
 			appArgs = args[2:]
 		}
-		return runWasm(input, nil, appArgs...)
+		return runWasm(input, nil, []byte{}, appArgs...)
 	}
 
 	var opt = appbase.BuildOptions(c)
@@ -87,7 +87,7 @@ func CmdRunAction(c *cli.Context) error {
 		opt.RunFileMode = true
 	}
 
-	mainFunc, wasmBytes, err := appbuild.BuildApp(opt, input, "")
+	mainFunc, wasmBytes, fsetBytes, err := appbuild.BuildApp(opt, input, "")
 	if err != nil {
 		fmt.Println("appbuild.BuildApp:", err)
 		os.Exit(1)
@@ -157,7 +157,7 @@ func CmdRunAction(c *cli.Context) error {
 		}
 	}
 
-	m, err := wazero.BuildModule(input, wasmBytes, appArgs...)
+	m, err := wazero.BuildModule(input, wasmBytes, fsetBytes, appArgs...)
 	if err != nil {
 		fmt.Println("wazero.BuildModule:", err)
 		os.Exit(1)
@@ -205,15 +205,21 @@ func openBrowser(url string) error {
 	}
 }
 
-func runWasm(input string, wasmBytes []byte, args ...string) error {
+func runWasm(input string, wasmBytes, fsetBytes []byte, args ...string) error {
 	var err error
-	if wasmBytes == nil {
+	if len(wasmBytes) == 0 {
 		if wasmBytes, err = os.ReadFile(input); err != nil {
 			return err
 		}
 	}
+	if fsetBytes == nil {
+		fsetFilename := filepath.Base(input) + ".fset"
+		if fsetBytes, err = os.ReadFile(fsetFilename); err != nil {
+			// 忽略错误
+		}
+	}
 
-	stdout, stderr, err := wazero.RunWasm(input, wasmBytes, "_main", args...)
+	stdout, stderr, err := wazero.RunWasm(input, wasmBytes, fsetBytes, "_main", args...)
 	if err != nil {
 		if len(stdout) > 0 {
 			fmt.Fprint(os.Stdout, string(stdout))

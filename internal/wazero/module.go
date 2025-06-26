@@ -15,14 +15,17 @@ import (
 	"wa-lang.org/wa/internal/3rdparty/wazero"
 	"wa-lang.org/wa/internal/3rdparty/wazero/api"
 	"wa-lang.org/wa/internal/config"
+	"wa-lang.org/wa/internal/token"
 )
 
 // wasm 模块, 可多次执行
 type Module struct {
 	wasmName  string
 	wasmBytes []byte
+	fsetBytes []byte
 	wasmArgs  []string
 
+	fset         *token.FileSet
 	stdoutBuffer bytes.Buffer
 	stderrBuffer bytes.Buffer
 
@@ -36,10 +39,11 @@ type Module struct {
 }
 
 // 构建模块(会执行编译)
-func BuildModule(wasmName string, wasmBytes []byte, wasmArgs ...string) (*Module, error) {
+func BuildModule(wasmName string, wasmBytes, fsetBytes []byte, wasmArgs ...string) (*Module, error) {
 	m := &Module{
 		wasmName:  wasmName,
 		wasmBytes: wasmBytes,
+		fsetBytes: fsetBytes,
 		wasmArgs:  wasmArgs,
 	}
 	if err := m.buildModule(); err != nil {
@@ -107,6 +111,11 @@ func (p *Module) RunFunc(name string, args ...uint64) (result []uint64, stdout, 
 	stdout = p.stdoutBuffer.Bytes()
 	stderr = p.stderrBuffer.Bytes()
 	return
+}
+
+// 查询文件位置信息
+func (p *Module) Position(pos token.Pos) token.Position {
+	return p.fset.Position(pos)
 }
 
 // 关闭模块
@@ -180,6 +189,13 @@ func HasUnknownImportFunc(wasmBytes []byte) bool {
 
 func (p *Module) buildModule() error {
 	p.wazeroCtx = context.Background()
+
+	p.fset = token.NewFileSet()
+	if len(p.fsetBytes) > 0 {
+		if err := p.fset.FromJson(p.fsetBytes); err != nil {
+			return err
+		}
+	}
 
 	p.wazeroConf = wazero.NewModuleConfig().
 		WithStdout(&p.stdoutBuffer).
@@ -258,7 +274,7 @@ func (p *Module) buildModule() error {
 	case config.WaOS_wasm4:
 		panic("wasm4: TODO") // 浏览器执行
 	case config.WaOS_js:
-		if _, err = JsInstantiate(p.wazeroCtx, p.wazeroRuntime); err != nil {
+		if _, err = p.JsInstantiate(p.wazeroCtx, p.wazeroRuntime); err != nil {
 			p.wazeroInitErr = err
 			return err
 		}

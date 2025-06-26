@@ -89,6 +89,8 @@ func runTest(cfg *config.Config, pkgpath, runPattern string, appArgs ...string) 
 	// wat 落盘(仅用于调试)
 	os.WriteFile("a.out.wat", []byte(watOutput), 0666)
 
+	fsetBytes := prog.Fset.ToJson()
+
 	// 编译为 wasm
 	wasmBytes, err := watutil.Wat2Wasm("a.out.wat", []byte(watOutput))
 	if err != nil {
@@ -96,7 +98,7 @@ func runTest(cfg *config.Config, pkgpath, runPattern string, appArgs ...string) 
 		os.Exit(1)
 	}
 
-	m, err := wazero.BuildModule(wasmName, wasmBytes, wasmArgs...)
+	m, err := wazero.BuildModule(wasmName, wasmBytes, fsetBytes, wasmArgs...)
 	if err != nil {
 		fmt.Println(err)
 		os.Exit(1)
@@ -147,7 +149,7 @@ func runTest(cfg *config.Config, pkgpath, runPattern string, appArgs ...string) 
 
 			// 重新加载
 			{
-				m, err = wazero.BuildModule(wasmName, wasmBytes, wasmArgs...)
+				m, err = wazero.BuildModule(wasmName, wasmBytes, fsetBytes, wasmArgs...)
 				if err != nil {
 					fmt.Println(err)
 					os.Exit(1)
@@ -253,7 +255,7 @@ func runTest(cfg *config.Config, pkgpath, runPattern string, appArgs ...string) 
 
 			// 重新加载
 			{
-				m, err = wazero.BuildModule(wasmName, wasmBytes, wasmArgs...)
+				m, err = wazero.BuildModule(wasmName, wasmBytes, fsetBytes, wasmArgs...)
 				if err != nil {
 					fmt.Println(err)
 					os.Exit(1)

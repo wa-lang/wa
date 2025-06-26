@@ -71,11 +71,11 @@ func CmdBuildAction(c *cli.Context) error {
 	}
 
 	var opt = appbase.BuildOptions(c)
-	_, _, err := BuildApp(opt, input, outfile)
+	_, _, _, err := BuildApp(opt, input, outfile)
 	return err
 }
 
-func BuildApp(opt *appbase.Option, input, outfile string) (mainFunc string, wasmBytes []byte, err error) {
+func BuildApp(opt *appbase.Option, input, outfile string) (mainFunc string, wasmBytes, fsetBytes []byte, err error) {
 	// 路径是否存在
 	if !appbase.PathExists(input) {
 		fmt.Printf("%q not found\n", input)
@@ -120,7 +120,7 @@ func BuildApp(opt *appbase.Option, input, outfile string) (mainFunc string, wasm
 		}
 
 		// OK
-		return "", wasmBytes, nil
+		return "", wasmBytes, nil, nil
 	}
 
 	// 只编译 wa/wz 文件, 输出路径相同, 后缀名调整
@@ -176,7 +176,7 @@ func BuildApp(opt *appbase.Option, input, outfile string) (mainFunc string, wasm
 		}
 
 		// OK
-		return "__main__.main", wasmBytes, nil
+		return "__main__.main", wasmBytes, prog.Fset.ToJson(), nil
 	}
 
 	// 构建目录
@@ -234,7 +234,8 @@ func BuildApp(opt *appbase.Option, input, outfile string) (mainFunc string, wasm
 
 		// fileset 写到文件中
 		fsetfile := appbase.ReplaceExt(outfile, ".wasm", ".fset")
-		os.WriteFile(fsetfile, prog.Fset.ToJson(), 0666)
+		fsetBytes := prog.Fset.ToJson()
+		os.WriteFile(fsetfile, fsetBytes, 0666)
 
 		// wat 编译为 wasm
 		wasmBytes, err := watutil.Wat2Wasm(input, watOutput)
@@ -412,7 +413,7 @@ func BuildApp(opt *appbase.Option, input, outfile string) (mainFunc string, wasm
 		mainFunc := manifest.MainPkg + ".main"
 
 		// OK
-		return mainFunc, wasmBytes, nil
+		return mainFunc, wasmBytes, fsetBytes, nil
 	}
 }
 

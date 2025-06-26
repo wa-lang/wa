@@ -22,9 +22,9 @@ func Add(a:i32, b:i32) => i32 {
 	return a+b
 }
 `
-	wasmBytes := tBuildWasm(t, waCode)
+	wasmBytes, fsetBytes := tBuildWasm(t, waCode)
 
-	m, err := wazero.BuildModule(wasmName, wasmBytes)
+	m, err := wazero.BuildModule(wasmName, wasmBytes, fsetBytes)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -49,14 +49,14 @@ func Add(a:i32, b:i32) => i32 {
 	}
 }
 
-func tBuildWasm(t *testing.T, waCode string) []byte {
-	_, watBytes, err := api.BuildFile(api.DefaultConfig(), "main.wa", waCode)
+func tBuildWasm(t *testing.T, waCode string) (wasmBytes, fsetBytes []byte) {
+	_, watBytes, fsetBytes, err := api.BuildFile(api.DefaultConfig(), "main.wa", waCode)
 	if err != nil {
 		t.Fatal(err)
 	}
-	wasmBytes, err := watutil.Wat2Wasm("a.out.wat", watBytes)
+	wasmBytes, err = watutil.Wat2Wasm("a.out.wat", watBytes)
 	if err != nil {
 		t.Fatal(err)
 	}
-	return wasmBytes
+	return wasmBytes, fsetBytes
 }

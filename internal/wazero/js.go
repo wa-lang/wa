@@ -11,12 +11,26 @@ import (
 	"wa-lang.org/wa/internal/3rdparty/wazero/api"
 	"wa-lang.org/wa/internal/3rdparty/wazero/imports/walang"
 	"wa-lang.org/wa/internal/3rdparty/wazero/sys"
+	"wa-lang.org/wa/internal/token"
 )
 
 const jsModuleName = "syscall_js"
 
-func JsInstantiate(ctx context.Context, rt wazero.Runtime) (api.Closer, error) {
+func (p *Module) JsInstantiate(ctx context.Context, rt wazero.Runtime) (api.Closer, error) {
 	return rt.NewHostModuleBuilder(jsModuleName).
+		// func pos_string(pos, buf, buf_len: i32) => (len: i32)
+		NewFunctionBuilder().
+		WithFunc(func(ctx context.Context, m api.Module, pos, buf, buf_len uint32) uint32 {
+			posString := p.Position(token.Pos(int(pos))).String()
+			if len(posString) >= int(buf_len) {
+				posString = posString[:buf_len]
+			}
+			m.Memory().Write(ctx, buf, []byte(posString))
+			return uint32(len(posString))
+		}).
+		WithParameterNames("pos", "buf", "buf_len").
+		Export("pos_string").
+
 		// func print_bool(v: bool)
 		NewFunctionBuilder().
 		WithFunc(func(ctx context.Context, m api.Module, v uint32) {

@@ -5,8 +5,8 @@ import (
 )
 
 // 单次执行 wasm
-func RunWasm(wasmName string, wasmBytes []byte, mainFunc string, wasmArgs ...string) (stdout, stderr []byte, err error) {
-	m, err := BuildModule(wasmName, wasmBytes, wasmArgs...)
+func RunWasm(wasmName string, wasmBytes, fsetBytes []byte, mainFunc string, wasmArgs ...string) (stdout, stderr []byte, err error) {
+	m, err := BuildModule(wasmName, wasmBytes, fsetBytes, wasmArgs...)
 	if err != nil {
 		return
 	}

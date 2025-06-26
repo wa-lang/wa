@@ -32,7 +32,7 @@ func ExampleParseModule_wa() {
 	const filename = "a.out.wa"
 	const src = `func main { println("hello wa") }`
 
-	_, watBytes, err := api.BuildFile(api.DefaultConfig(), filename, src)
+	_, watBytes, _, err := api.BuildFile(api.DefaultConfig(), filename, src)
 	if err != nil {
 		log.Fatal(err)
 	}

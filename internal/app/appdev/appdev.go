@@ -37,7 +37,7 @@ var CmdDev = &cli.Command{
 		}
 
 		if c.Bool("hello") {
-			_, wat, err := api.BuildFile(
+			_, wat, _, err := api.BuildFile(
 				config.DefaultConfig(),
 				"hello.wa", "func main() { println(123) }",
 			)
