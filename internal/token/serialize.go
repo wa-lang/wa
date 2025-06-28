@@ -5,7 +5,9 @@
 package token
 
 import (
+	"bytes"
 	"encoding/json"
+	"fmt"
 )
 
 type serializedFile struct {
@@ -42,6 +44,45 @@ func (s *FileSet) FromJson(jsonBytes []byte) error {
 	return s.Read(func(x interface{}) error {
 		return json.Unmarshal(jsonBytes, x)
 	})
+}
+
+// 编码为JSON
+func (s *FileSet) ToJavaScript() []byte {
+	var buf bytes.Buffer
+
+	fmt.Fprintln(&buf, "const fileSet = {")
+	defer fmt.Fprintln(&buf, "};")
+
+	fmt.Fprintf(&buf, "\tbase: %d\n", s.base)
+	fmt.Fprintln(&buf, "\t\tfiles: [")
+
+	for i, f := range s.files {
+		fmt.Fprintln(&buf, "\t\t\t{")
+
+		fmt.Fprintf(&buf, "\t\t\tname: %q,\n", f.name)
+		fmt.Fprintf(&buf, "\t\t\tbase: %d,\n", f.base)
+		fmt.Fprintf(&buf, "\t\t\tsize: %d,\n", f.size)
+
+		fmt.Fprintf(&buf, "\t\t\tlines: [")
+		for k, v := range f.lines {
+			if k > 0 {
+				fmt.Fprintf(&buf, ", ")
+			}
+			fmt.Fprint(&buf, v)
+
+		}
+		fmt.Fprintf(&buf, "]\n")
+
+		if i < len(s.files)-1 {
+			fmt.Fprintln(&buf, "\t\t\t},")
+		} else {
+			fmt.Fprintln(&buf, "\t\t\t}")
+		}
+	}
+
+	fmt.Fprintln(&buf, "\t]")
+
+	return buf.Bytes()
 }
 
 // Read calls decode to deserialize a file set into s; s must not be nil.
