@@ -18,7 +18,6 @@ package elf
 import (
 	"bytes"
 	"compress/zlib"
-	"debug/dwarf"
 	"encoding/binary"
 	"errors"
 	"fmt"
@@ -26,6 +25,8 @@ import (
 	"os"
 	"strings"
 	"unsafe"
+
+	"wa-lang.org/wa/internal/exp/dwarf"
 )
 
 // TODO: error reporting detail
