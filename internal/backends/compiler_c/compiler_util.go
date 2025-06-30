@@ -1,3 +1,4 @@
-// 版权 @2021 凹语言 作者。保留所有权利。
+// Copyright (C) 2024 武汉凹语言科技有限公司
+// SPDX-License-Identifier: AGPL-3.0-or-later
 
 package compiler_c

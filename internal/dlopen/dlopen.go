@@ -1,4 +1,5 @@
-// 版权 @2024 凹语言 作者。保留所有权利。
+// Copyright (C) 2024 武汉凹语言科技有限公司
+// SPDX-License-Identifier: AGPL-3.0-or-later
 
 // 以不依赖CGO的方式加载不同平台的共享库.
 // - linux/macOS: 基于Go的 plugin 标准库

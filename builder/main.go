@@ -1,4 +1,5 @@
-// 版权 @2024 凹语言 作者。保留所有权利。
+// Copyright (C) 2024 武汉凹语言科技有限公司
+// SPDX-License-Identifier: AGPL-3.0-or-later
 
 // go1.21 support wasip1/wasm
 // go1.24 support wasmexport
