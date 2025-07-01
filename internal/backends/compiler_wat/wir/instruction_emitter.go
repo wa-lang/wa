@@ -36,15 +36,20 @@ func (m *Module) EmitUnOp(x Value, op wat.OpCode) (insts []wat.Inst, ret_type Va
 
 	switch op {
 	case wat.OpCodeSub:
-		insts = append(insts, NewConst("0", ret_type).EmitPush()...)
-		insts = append(insts, x.EmitPush()...)
-		insts = append(insts, wat.NewInstSub(toWatType(ret_type)))
-		if ret_type.Equal(m.U8) {
-			insts = append(insts, wat.NewInstConst(wat.I32{}, "255"))
-			insts = append(insts, wat.NewInstAnd(wat.I32{}))
-		} else if ret_type.Equal(m.U16) {
-			insts = append(insts, wat.NewInstConst(wat.I32{}, "65535"))
-			insts = append(insts, wat.NewInstAnd(wat.I32{}))
+		if ret_type.Equal(m.F32) || ret_type.Equal(m.F64) {
+			insts = append(insts, x.EmitPush()...)
+			insts = append(insts, wat.NewInstNeg(toWatType(ret_type)))
+		} else {
+			insts = append(insts, NewConst("0", ret_type).EmitPush()...)
+			insts = append(insts, x.EmitPush()...)
+			insts = append(insts, wat.NewInstSub(toWatType(ret_type)))
+			if ret_type.Equal(m.U8) {
+				insts = append(insts, wat.NewInstConst(wat.I32{}, "255"))
+				insts = append(insts, wat.NewInstAnd(wat.I32{}))
+			} else if ret_type.Equal(m.U16) {
+				insts = append(insts, wat.NewInstConst(wat.I32{}, "65535"))
+				insts = append(insts, wat.NewInstAnd(wat.I32{}))
+			}
 		}
 
 	case wat.OpCodeXor:

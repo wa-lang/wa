@@ -129,3 +129,27 @@ func (i *instRem) Format(indent string, sb *strings.Builder) {
 		logger.Fatal("Todo")
 	}
 }
+
+/**************************************
+instNeg:
+**************************************/
+type instNeg struct {
+	anInstruction
+	typ ValueType
+}
+
+func NewInstNeg(t ValueType) *instNeg { return &instNeg{typ: t} }
+func (i *instNeg) Format(indent string, sb *strings.Builder) {
+	switch i.typ.(type) {
+	case F32:
+		sb.WriteString(indent)
+		sb.WriteString("f32.neg")
+
+	case F64:
+		sb.WriteString(indent)
+		sb.WriteString("f64.neg")
+
+	default:
+		logger.Fatal("Todo")
+	}
+}
