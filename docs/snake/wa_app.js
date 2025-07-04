@@ -17,17 +17,18 @@
           this.print_f32 = (f) => { console.log(f) },
           this.print_f64 = (f) => { console.log(f) },
           this.print_ptr = (p) => {  console.log(p) },
+          this.print_rune = (c) => {
+            let ch = String.fromCodePoint(c);
+            console.log(ch)
+          },
           this.print_str = (d, l) => {
             const mem = app._inst.exports.memory;
             const mem_view = new DataView(mem.buffer, d, l);
             const s = new TextDecoder("utf-8").decode(mem_view);
             console.log(s);
-          }
-          this.proc_exit = (code) => { alert(code) },
-          this.print_rune = (c) => {
-            let ch = String.fromCodePoint(c);
-            console.log(ch)
-          }
+          },
+          this.print_position = (i) => { console.log(i) },
+          this.proc_exit = (code) => { alert(code) }
         },
         snake_game: new function () {
           this.rand = (m) => {
