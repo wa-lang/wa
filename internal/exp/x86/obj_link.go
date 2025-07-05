@@ -9,21 +9,25 @@ type As int16
 
 // These are the portable opcodes.
 const (
-	AXXX As = iota
+	AXXX = 0 + iota
 	ACALL
+	ACHECKNIL
+	ADATA
 	ADUFFCOPY
 	ADUFFZERO
 	AEND
 	AFUNCDATA
+	AGLOBL
 	AJMP
 	ANOP
-	APCALIGN
-	APCALIGNMAX // currently x86, amd64 and arm64
 	APCDATA
 	ARET
-	AGETCALLERPC
 	ATEXT
+	ATYPE
 	AUNDEF
+	AUSEFIELD
+	AVARDEF
+	AVARKILL
 	A_ARCHSPECIFIC
 )
 
