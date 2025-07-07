@@ -29,8 +29,8 @@
 ## 联系我们
 电子邮箱：dev@wa-lang.org
 
-微信群助手：  
-![](docs/images/wechatgroup.jpg)
+微信群助手：
+![](https://wa-lang.org/wechatgroup.jpg)
 
 ## Playground 在线预览
 
