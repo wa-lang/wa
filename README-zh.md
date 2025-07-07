@@ -223,5 +223,5 @@ func main {
 ## 联系我们
 电子邮箱：dev@wa-lang.org
 
-微信群助手：
+微信号：walang_dev
 ![](https://wa-lang.org/wechatgroup.jpg)
