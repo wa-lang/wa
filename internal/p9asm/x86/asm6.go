@@ -30,6 +30,8 @@
 
 package x86
 
+import "wa-lang.org/wa/internal/p9asm/obj"
+
 // Instruction layout.
 
 const (
@@ -54,7 +56,7 @@ const (
 )
 
 type Optab struct {
-	as     As
+	as     int16
 	ytab   []ytab
 	prefix uint8
 	op     [23]uint8
@@ -842,7 +844,7 @@ var optab = []Optab{
 	{ABTSW, ybtl, Pq, [23]uint8{0xba, 05, 0xab}},
 	{ABTW, ybtl, Pq, [23]uint8{0xba, 04, 0xa3}},
 	{ABYTE, ybyte, Px, [23]uint8{1}},
-	{ACALL, ycall, Px, [23]uint8{0xff, 02, 0xff, 0x15, 0xe8}},
+	{obj.ACALL, ycall, Px, [23]uint8{0xff, 02, 0xff, 0x15, 0xe8}},
 	{ACDQ, ynone, Px, [23]uint8{0x99}},
 	{ACLC, ynone, Px, [23]uint8{0xf8}},
 	{ACLD, ynone, Px, [23]uint8{0xfc}},
@@ -939,7 +941,7 @@ var optab = []Optab{
 	{ACQO, ynone, Pw, [23]uint8{0x99}},
 	{ADAA, ynone, P32, [23]uint8{0x27}},
 	{ADAS, ynone, P32, [23]uint8{0x2f}},
-	{ADATA, nil, 0, [23]uint8{}},
+	{obj.ADATA, nil, 0, [23]uint8{}},
 	{ADECB, yincb, Pb, [23]uint8{0xfe, 01}},
 	{ADECL, yincl, Px1, [23]uint8{0x48, 0xff, 01}},
 	{ADECQ, yincq, Pw, [23]uint8{0xff, 01}},
@@ -958,7 +960,7 @@ var optab = []Optab{
 	{AFXSAVE, ysvrs, Pm, [23]uint8{0xae, 00, 0xae, 00}},
 	{AFXRSTOR64, ysvrs, Pw, [23]uint8{0x0f, 0xae, 01, 0x0f, 0xae, 01}},
 	{AFXSAVE64, ysvrs, Pw, [23]uint8{0x0f, 0xae, 00, 0x0f, 0xae, 00}},
-	{AGLOBL, nil, 0, [23]uint8{}},
+	{obj.AGLOBL, nil, 0, [23]uint8{}},
 	{AHLT, ynone, Px, [23]uint8{0xf4}},
 	{AIDIVB, ydivb, Pb, [23]uint8{0xf6, 07}},
 	{AIDIVL, ydivl, Px, [23]uint8{0xf7, 07}},
@@ -997,7 +999,7 @@ var optab = []Optab{
 	{AJLS, yjcond, Px, [23]uint8{0x76, 0x86}},
 	{AJLT, yjcond, Px, [23]uint8{0x7c, 0x8c}},
 	{AJMI, yjcond, Px, [23]uint8{0x78, 0x88}},
-	{AJMP, yjmp, Px, [23]uint8{0xff, 04, 0xeb, 0xe9}},
+	{obj.AJMP, yjmp, Px, [23]uint8{0xff, 04, 0xeb, 0xe9}},
 	{AJNE, yjcond, Px, [23]uint8{0x75, 0x85}},
 	{AJOC, yjcond, Px, [23]uint8{0x71, 0x81, 00}},
 	{AJOS, yjcond, Px, [23]uint8{0x70, 0x80, 00}},
@@ -1088,7 +1090,7 @@ var optab = []Optab{
 	{ANEGL, yscond, Px, [23]uint8{0xf7, 03}},
 	{ANEGQ, yscond, Pw, [23]uint8{0xf7, 03}},
 	{ANEGW, yscond, Pe, [23]uint8{0xf7, 03}},
-	{ANOP, ynop, Px, [23]uint8{0, 0}},
+	{obj.ANOP, ynop, Px, [23]uint8{0, 0}},
 	{ANOTB, yscond, Pb, [23]uint8{0xf6, 02}},
 	{ANOTL, yscond, Px, [23]uint8{0xf7, 02}}, // TODO(rsc): yscond is wrong here.
 	{ANOTQ, yscond, Pw, [23]uint8{0xf7, 02}},
@@ -1226,7 +1228,7 @@ var optab = []Optab{
 	{ARCRW, yshl, Pe, [23]uint8{0xd1, 03, 0xc1, 03, 0xd3, 03, 0xd3, 03}},
 	{AREP, ynone, Px, [23]uint8{0xf3}},
 	{AREPN, ynone, Px, [23]uint8{0xf2}},
-	{ARET, ynone, Px, [23]uint8{0xc3}},
+	{obj.ARET, ynone, Px, [23]uint8{0xc3}},
 	{ARETFW, yret, Pe, [23]uint8{0xcb, 0xca}},
 	{ARETFL, yret, Px, [23]uint8{0xcb, 0xca}},
 	{ARETFQ, yret, Pw, [23]uint8{0xcb, 0xca}},
@@ -1309,7 +1311,7 @@ var optab = []Optab{
 	{ATESTL, ytestl, Px, [23]uint8{0xa9, 0xf7, 00, 0x85, 0x85}},
 	{ATESTQ, ytestl, Pw, [23]uint8{0xa9, 0xf7, 00, 0x85, 0x85}},
 	{ATESTW, ytestl, Pe, [23]uint8{0xa9, 0xf7, 00, 0x85, 0x85}},
-	{ATEXT, ytext, Px, [23]uint8{}},
+	{obj.ATEXT, ytext, Px, [23]uint8{}},
 	{AUCOMISD, yxcmp, Pe, [23]uint8{0x2e}},
 	{AUCOMISS, yxcmp, Pm, [23]uint8{0x2e}},
 	{AUNPCKHPD, yxm, Pe, [23]uint8{0x15}},
@@ -1470,7 +1472,7 @@ var optab = []Optab{
 	{APREFETCHT2, yprefetch, Pm, [23]uint8{0x18, 03}},
 	{APREFETCHNTA, yprefetch, Pm, [23]uint8{0x18, 00}},
 	{AMOVQL, yrl_ml, Px, [23]uint8{0x89}},
-	{AUNDEF, ynone, Px, [23]uint8{0x0f, 0x0b}},
+	{obj.AUNDEF, ynone, Px, [23]uint8{0x0f, 0x0b}},
 	{AAESENC, yaes, Pq, [23]uint8{0x38, 0xdc, 0}},
 	{AAESENCLAST, yaes, Pq, [23]uint8{0x38, 0xdd, 0}},
 	{AAESDEC, yaes, Pq, [23]uint8{0x38, 0xde, 0}},
@@ -1479,20 +1481,20 @@ var optab = []Optab{
 	{AAESKEYGENASSIST, yaes2, Pq, [23]uint8{0x3a, 0xdf, 0}},
 	{APSHUFD, yxshuf, Pq, [23]uint8{0x70, 0}},
 	{APCLMULQDQ, yxshuf, Pq, [23]uint8{0x3a, 0x44, 0}},
-	{AUSEFIELD, ynop, Px, [23]uint8{0, 0}},
-	{ATYPE, nil, 0, [23]uint8{}},
-	{AFUNCDATA, yfuncdata, Px, [23]uint8{0, 0}},
-	{APCDATA, ypcdata, Px, [23]uint8{0, 0}},
-	{ACHECKNIL, nil, 0, [23]uint8{}},
-	{AVARDEF, nil, 0, [23]uint8{}},
-	{AVARKILL, nil, 0, [23]uint8{}},
-	{ADUFFCOPY, yduff, Px, [23]uint8{0xe8}},
-	{ADUFFZERO, yduff, Px, [23]uint8{0xe8}},
-	{AEND, nil, 0, [23]uint8{}},
+	{obj.AUSEFIELD, ynop, Px, [23]uint8{0, 0}},
+	{obj.ATYPE, nil, 0, [23]uint8{}},
+	{obj.AFUNCDATA, yfuncdata, Px, [23]uint8{0, 0}},
+	{obj.APCDATA, ypcdata, Px, [23]uint8{0, 0}},
+	{obj.ACHECKNIL, nil, 0, [23]uint8{}},
+	{obj.AVARDEF, nil, 0, [23]uint8{}},
+	{obj.AVARKILL, nil, 0, [23]uint8{}},
+	{obj.ADUFFCOPY, yduff, Px, [23]uint8{0xe8}},
+	{obj.ADUFFZERO, yduff, Px, [23]uint8{0xe8}},
+	{obj.AEND, nil, 0, [23]uint8{}},
 	{0, nil, 0, [23]uint8{}},
 }
 
-var opindex [(ALAST + 1) & AMask]*Optab
+var opindex [(ALAST + 1) & obj.AMask]*Optab
 
 // single-instruction no-ops of various lengths.
 // constructed by hand and disassembled with gdb to verify.

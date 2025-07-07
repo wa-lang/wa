@@ -3,8 +3,10 @@
 
 package arm64
 
+import "wa-lang.org/wa/internal/p9asm/obj"
+
 var Anames = []string{
-	A_ARCHSPECIFIC: "ADC",
+	obj.A_ARCHSPECIFIC: "ADC",
 	"ADCS",
 	"ADCSW",
 	"ADCW",

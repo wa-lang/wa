@@ -9,7 +9,7 @@
 package arch
 
 import (
-	"wa-lang.org/wa/internal/exp/arm64"
+	"wa-lang.org/wa/internal/p9asm/arm64"
 	"wa-lang.org/wa/internal/p9asm/obj"
 )
 

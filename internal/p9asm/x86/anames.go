@@ -3,8 +3,10 @@
 
 package x86
 
+import "wa-lang.org/wa/internal/p9asm/obj"
+
 var Anames = []string{
-	A_ARCHSPECIFIC: "AAA",
+	obj.A_ARCHSPECIFIC: "AAA",
 	"AAD",
 	"AAM",
 	"AAS",

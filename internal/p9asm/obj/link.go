@@ -227,18 +227,29 @@ type Prog struct {
 // Link holds the context for writing object code from a compiler
 // to be linker input or for reading that input into the linker.
 type Link struct {
+	Bso *Biobuf
+
 	LineHist LineHist
+
+	Plist *Plist
+	Plast *Plist
+
+	Diag func(string, ...interface{})
 }
 
 // LinkArch is the definition of a single architecture.
 type LinkArch struct {
-	ByteOrder binary.ByteOrder
-	Name      string
-	Thechar   int
-	UnaryDst  map[int]bool // Instruction takes one operand, a destination.
-	Minlc     int
-	Ptrsize   int
-	Regsize   int
+	ByteOrder  binary.ByteOrder
+	Name       string
+	Thechar    int
+	Preprocess func(*Link, *LSym)
+	Assemble   func(*Link, *LSym)
+	Follow     func(*Link, *LSym)
+	Progedit   func(*Link, *Prog)
+	UnaryDst   map[int]bool // Instruction takes one operand, a destination.
+	Minlc      int
+	Ptrsize    int
+	Regsize    int
 }
 
 /* executable header types */
@@ -433,4 +444,25 @@ const (
 
 type Pcdata struct {
 	P []byte
+}
+
+type Plist struct {
+	Name    *LSym
+	Firstpc *Prog
+	Recur   int
+	Link    *Plist
+}
+
+/*
+ * start a new Prog list.
+ */
+func Linknewplist(ctxt *Link) *Plist {
+	pl := new(Plist)
+	if ctxt.Plist == nil {
+		ctxt.Plist = pl
+	} else {
+		ctxt.Plast.Link = pl
+	}
+	ctxt.Plast = pl
+	return pl
 }

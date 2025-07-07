@@ -32,6 +32,8 @@ package x86
 
 import (
 	"fmt"
+
+	"wa-lang.org/wa/internal/p9asm/obj"
 )
 
 var Register = []string{
@@ -154,5 +156,5 @@ func Rconv(r int) string {
 	if REG_AL <= r && r-REG_AL < len(Register) {
 		return Register[r-REG_AL]
 	}
-	return fmt.Sprintf("Rgok(%d)", r-RBaseAMD64)
+	return fmt.Sprintf("Rgok(%d)", r-obj.RBaseAMD64)
 }

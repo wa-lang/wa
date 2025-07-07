@@ -30,13 +30,17 @@
 
 package x86
 
+import (
+	"wa-lang.org/wa/internal/p9asm/obj"
+)
+
 //go:generate go run ../stringer.go -i $GOFILE -o anames.go -p x86
 
 /*
  *	amd64
  */
 const (
-	AAAA = ABaseAMD64 + A_ARCHSPECIFIC + iota
+	AAAA = obj.ABaseAMD64 + obj.A_ARCHSPECIFIC + iota
 	AAAD
 	AAAM
 	AAAS
@@ -758,7 +762,7 @@ const (
 )
 
 const (
-	REG_AL = RBaseAMD64 + iota
+	REG_AL = obj.RBaseAMD64 + iota
 	REG_CL
 	REG_DL
 	REG_BL
