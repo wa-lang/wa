@@ -26,12 +26,6 @@
 
 > 特别注意：与 Issue 相比，发起 PR 更容易获得贡献点（贡献点可用于参加回馈活动，如：[首次凹语言贡献者回馈活动](https://wa-lang.org/smalltalk/st0078.html)）。当您在项目中找到问题发起 Issue后，不妨与我们联系，我们会帮助您将 Issue 转为 PR。
 
-## 联系我们
-电子邮箱：dev@wa-lang.org
-
-微信群助手：
-![](https://wa-lang.org/wechatgroup.jpg)
-
 ## Playground 在线预览
 
 [https://wa-lang.org/playground](https://wa-lang.org/playground)
@@ -226,6 +220,8 @@ func main {
 贡献点变更记录见 [waroot/cplog](waroot/cplog) 目录。
 
 
-## 收藏点击 ⭐
+## 联系我们
+电子邮箱：dev@wa-lang.org
 
-如果你喜欢凹语言项目的话，可以点击 ⭐ 收藏。
+微信群助手：
+![](https://wa-lang.org/wechatgroup.jpg)
