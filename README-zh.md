@@ -16,13 +16,21 @@
 - 仓库(Github): [https://github.com/wa-lang/wa](https://github.com/wa-lang/wa)
 - Playground: [https://wa-lang.org/playground](https://wa-lang.org/playground)
 
-> 说明: 除非特别声明，凹语言代码均以 AGPL-v3 开源协议授权, 具体可以参考 LICENSE 文件。
+> 说明: 凹语言编译器代码以 AGPL-v3 开源协议授权, 标准库以 MIT 协议授权，这意味着您使用凹语言开发的程序可以安全商用无需开源。若您希望在自己的项目中整合凹语言编译器的代码，而又不希望受 AGPL-v3 的传染性限制，您可以联系我们单独为您定制授权协议。
 
 ## 如何参与开发
 
 项目尚处于原型开源阶段，如果有共建和PR需求请参考 [如何贡献代码](./wca/readme.md)。我们不再接受针对第三方依赖库修改的 PR。
 
-> 特别注意：向本仓库提交PR视同您认可并接受[凹语言贡献者协议](./wca/wca.md)，但在实际签署之前，您的PR不会被评审或接受。
+向本仓库提交PR视同您认可并接受[凹语言贡献者协议](./wca/wca.md)，但在实际签署之前，您的PR不会被评审或接受。
+
+> 特别注意：与 Issue 相比，发起 PR 更容易获得贡献点（贡献点可用于参加回馈活动，如：[首次凹语言贡献者回馈活动](https://wa-lang.org/smalltalk/st0078.html)）。当您在项目中找到问题发起 Issue后，不妨与我们联系，我们会帮助您将 Issue 转为 PR。
+
+## 联系我们
+电子邮箱：dev@wa-lang.org
+
+微信群助手：  
+![](docs/images/wechatgroup.jpg)
 
 ## Playground 在线预览
 
