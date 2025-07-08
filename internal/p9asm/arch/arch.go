@@ -49,16 +49,12 @@ var Pseudos = map[string]int{
 	"TEXT":     obj.ATEXT,
 }
 
-// Set configures the architecture specified by GOARCH and returns its representation.
-// It returns nil if GOARCH is not recognized.
-func Set(GOARCH string) *Arch {
-	switch GOARCH {
-	case "amd64":
-		return archX86(&x86.Linkamd64)
-	case "arm64":
-		return archArm64()
-	}
-	return nil
+func ArchAmd64() *Arch {
+	return archX86(&x86.Linkamd64)
+}
+
+func ArchArm64() *Arch {
+	return archArm64(&arm64.Linkarm64)
 }
 
 func jumpX86(word string) bool {
@@ -153,7 +149,7 @@ func archX86(linkArch *obj.LinkArch) *Arch {
 	}
 }
 
-func archArm64() *Arch {
+func archArm64(linkArch *obj.LinkArch) *Arch {
 	register := make(map[string]int16)
 	// Create maps for easy lookup of instruction names etc.
 	// Note that there is no list of names as there is for 386 and amd64.
@@ -226,7 +222,7 @@ func archArm64() *Arch {
 	instructions["BL"] = arm64.ABL
 
 	return &Arch{
-		LinkArch:       &arm64.Linkarm64,
+		LinkArch:       linkArch,
 		Instructions:   instructions,
 		Register:       register,
 		RegisterPrefix: registerPrefix,

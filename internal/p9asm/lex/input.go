@@ -409,7 +409,7 @@ func (in *Input) include() {
 			in.Error("#include:", err)
 		}
 	}
-	in.Push(NewTokenizer(name, fd, fd))
+	in.Push(NewTokenizer(name, fd))
 }
 
 // #line processing.
@@ -435,7 +435,6 @@ func (in *Input) line() {
 	if tok != '\n' {
 		in.Error("unexpected token at end of #line: ", tok)
 	}
-	linkCtxt.LineHist.Update(histLine, file, line)
 	in.Stack.SetPos(line, file)
 }
 

@@ -66,13 +66,33 @@ func Headstr(v int) string {
 }
 
 func Linknew(arch *LinkArch) *Link {
-	panic("TODO")
+	ctxt := new(Link)
+	ctxt.Hash = make(map[SymVer]*LSym)
+	ctxt.Arch = arch
+	return ctxt
+}
+
+func _lookup(ctxt *Link, symb string, v int, create bool) *LSym {
+	s := ctxt.Hash[SymVer{symb, v}]
+	if s != nil || !create {
+		return s
+	}
+
+	s = &LSym{
+		Name:    symb,
+		Type:    0,
+		Version: int16(v),
+		Value:   0,
+		Size:    0,
+	}
+	ctxt.Hash[SymVer{symb, v}] = s
+
+	return s
 }
 
 func Linklookup(ctxt *Link, name string, v int) *LSym {
-	panic("TODO")
+	return _lookup(ctxt, name, v, true)
 }
-
 func Linksymfmt(s *LSym) string {
 	if s == nil {
 		return "<nil>"

@@ -21,7 +21,6 @@ func (s *Stack) Next() ScanToken {
 	tos := s.tr[len(s.tr)-1]
 	tok := tos.Next()
 	for tok == scanner.EOF && len(s.tr) > 1 {
-		tos.Close()
 		// Pop the topmost item from the stack and resume with the next one down.
 		s.tr = s.tr[:len(s.tr)-1]
 		tok = s.Next()

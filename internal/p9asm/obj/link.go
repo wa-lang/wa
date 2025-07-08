@@ -227,14 +227,20 @@ type Prog struct {
 // Link holds the context for writing object code from a compiler
 // to be linker input or for reading that input into the linker.
 type Link struct {
-	Bso *Biobuf
+	Arch *LinkArch
 
-	LineHist LineHist
+	Bso  *Biobuf
+	Hash map[SymVer]*LSym
 
 	Plist *Plist
 	Plast *Plist
 
 	Diag func(string, ...interface{})
+}
+
+type SymVer struct {
+	Name    string
+	Version int // TODO: make int16 to match LSym.Version?
 }
 
 // LinkArch is the definition of a single architecture.

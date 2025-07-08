@@ -6,11 +6,9 @@ package asm
 
 import (
 	"bytes"
-	"fmt"
 	"text/scanner"
 
 	"wa-lang.org/wa/internal/p9asm/arch"
-	"wa-lang.org/wa/internal/p9asm/flags"
 	"wa-lang.org/wa/internal/p9asm/lex"
 	"wa-lang.org/wa/internal/p9asm/obj"
 )
@@ -50,12 +48,6 @@ func (p *Parser) append(prog *obj.Prog, cond string, doLabel bool) {
 		p.pendingLabels = p.pendingLabels[0:0]
 	}
 	prog.Pc = int64(p.pc)
-	if *flags.Debug {
-		fmt.Println(p.histLineNum, prog)
-	}
-	if testOut != nil {
-		fmt.Fprintln(testOut, p.histLineNum, prog)
-	}
 }
 
 // validateSymbol checks that addr represents a valid name for a pseudo-op.
@@ -142,10 +134,9 @@ func (p *Parser) asmText(word string, operands [][]lex.Token) {
 		argSize = p.positiveAtoi(op[1].String())
 	}
 	prog := &obj.Prog{
-		Ctxt:   p.ctxt,
-		As:     obj.ATEXT,
-		Lineno: p.histLineNum,
-		From:   nameAddr,
+		Ctxt: p.ctxt,
+		As:   obj.ATEXT,
+		From: nameAddr,
 		From3: &obj.Addr{
 			Type:   obj.TYPE_CONST,
 			Offset: flag,
@@ -196,10 +187,9 @@ func (p *Parser) asmData(word string, operands [][]lex.Token) {
 	p.dataAddr[name] = nameAddr.Offset + int64(scale)
 
 	prog := &obj.Prog{
-		Ctxt:   p.ctxt,
-		As:     obj.ADATA,
-		Lineno: p.histLineNum,
-		From:   nameAddr,
+		Ctxt: p.ctxt,
+		As:   obj.ADATA,
+		From: nameAddr,
 		From3: &obj.Addr{
 			Offset: int64(scale),
 		},
@@ -235,10 +225,9 @@ func (p *Parser) asmGlobl(word string, operands [][]lex.Token) {
 
 	// log.Printf("GLOBL %s %d, $%d", name, flag, size)
 	prog := &obj.Prog{
-		Ctxt:   p.ctxt,
-		As:     obj.AGLOBL,
-		Lineno: p.histLineNum,
-		From:   nameAddr,
+		Ctxt: p.ctxt,
+		As:   obj.AGLOBL,
+		From: nameAddr,
 		From3: &obj.Addr{
 			Offset: flag,
 		},
@@ -264,11 +253,10 @@ func (p *Parser) asmPCData(word string, operands [][]lex.Token) {
 
 	// log.Printf("PCDATA $%d, $%d", key.Offset, value.Offset)
 	prog := &obj.Prog{
-		Ctxt:   p.ctxt,
-		As:     obj.APCDATA,
-		Lineno: p.histLineNum,
-		From:   key,
-		To:     value,
+		Ctxt: p.ctxt,
+		As:   obj.APCDATA,
+		From: key,
+		To:   value,
 	}
 	p.append(prog, "", true)
 }
@@ -289,11 +277,10 @@ func (p *Parser) asmFuncData(word string, operands [][]lex.Token) {
 	p.validateSymbol("FUNCDATA", &nameAddr, true)
 
 	prog := &obj.Prog{
-		Ctxt:   p.ctxt,
-		As:     obj.AFUNCDATA,
-		Lineno: p.histLineNum,
-		From:   valueAddr,
-		To:     nameAddr,
+		Ctxt: p.ctxt,
+		As:   obj.AFUNCDATA,
+		From: valueAddr,
+		To:   nameAddr,
 	}
 	p.append(prog, "", true)
 }
@@ -305,9 +292,8 @@ func (p *Parser) asmFuncData(word string, operands [][]lex.Token) {
 func (p *Parser) asmJump(op int, cond string, a []obj.Addr) {
 	var target *obj.Addr
 	prog := &obj.Prog{
-		Ctxt:   p.ctxt,
-		Lineno: p.histLineNum,
-		As:     int16(op),
+		Ctxt: p.ctxt,
+		As:   int16(op),
 	}
 	switch len(a) {
 	case 1:
@@ -409,9 +395,8 @@ func (p *Parser) branch(jmp, target *obj.Prog) {
 func (p *Parser) asmInstruction(op int, cond string, a []obj.Addr) {
 	// fmt.Printf("%s %+v\n", obj.Aconv(op), a)
 	prog := &obj.Prog{
-		Ctxt:   p.ctxt,
-		Lineno: p.histLineNum,
-		As:     int16(op),
+		Ctxt: p.ctxt,
+		As:   int16(op),
 	}
 	switch len(a) {
 	case 0:

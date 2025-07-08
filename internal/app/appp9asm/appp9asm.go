@@ -4,15 +4,13 @@
 package appp9asm
 
 import (
-	"flag"
+	"fmt"
 	"log"
 	"os"
-	"runtime"
 
 	"wa-lang.org/wa/internal/3rdparty/cli"
 	"wa-lang.org/wa/internal/p9asm/arch"
 	"wa-lang.org/wa/internal/p9asm/asm"
-	"wa-lang.org/wa/internal/p9asm/flags"
 	"wa-lang.org/wa/internal/p9asm/lex"
 	"wa-lang.org/wa/internal/p9asm/obj"
 )
@@ -21,27 +19,16 @@ var CmdP9Asm = &cli.Command{
 	Hidden: true,
 	Name:   "p9asm",
 	Usage:  "plan9 assembly language tool",
-	Flags: []cli.Flag{
-		&cli.StringFlag{
-			Name:  "arch",
-			Value: runtime.GOARCH,
-		},
-	},
+	Flags:  []cli.Flag{},
 	Action: func(c *cli.Context) error {
-		log.SetFlags(0)
-		log.SetPrefix("asm: ")
+		name := c.Args().First()
+		data, _ := os.ReadFile(name)
 
-		architecture := arch.Set(c.String("arch"))
-		if architecture == nil {
-			log.Fatalf("asm: unrecognized architecture %s", c.String("arch"))
-		}
+		arch := arch.ArchAmd64()
+		ctxt := obj.Linknew(arch.LinkArch)
 
-		ctxt := obj.Linknew(architecture.LinkArch)
-
-		ctxt.LineHist.TrimPathPrefix = *flags.TrimPath
-
-		lexer := lex.NewLexer(flag.Arg(0), ctxt)
-		parser := asm.NewParser(ctxt, architecture, lexer)
+		lexer := lex.NewLexer(name, data)
+		parser := asm.NewParser(ctxt, arch, lexer)
 
 		prog, ok := parser.Parse()
 		if !ok {
@@ -49,7 +36,7 @@ var CmdP9Asm = &cli.Command{
 			os.Exit(1)
 		}
 
-		_ = prog // TODO
+		fmt.Printf("%+v\n", prog)
 		return nil
 	},
 }

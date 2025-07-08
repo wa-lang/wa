@@ -22,7 +22,6 @@ import (
 type Parser struct {
 	lex           lex.TokenReader
 	lineNum       int   // Line number in source file.
-	histLineNum   int32 // Cumulative line number across source files.
 	errorLine     int32 // (Cumulative) line number of last error.
 	errorCount    int   // Number of errors.
 	pc            int64 // virtual PC; count of Progs; doesn't advance for GLOBL or DATA.
@@ -62,11 +61,7 @@ func (p *Parser) errorf(format string, args ...interface{}) {
 	if panicOnError {
 		panic(fmt.Errorf(format, args...))
 	}
-	if p.histLineNum == p.errorLine {
-		// Only one error per line.
-		return
-	}
-	p.errorLine = p.histLineNum
+
 	// Put file and line information on head of message.
 	format = "%s:%d: " + format + "\n"
 	args = append([]interface{}{p.lex.File(), p.lineNum}, args...)
@@ -97,7 +92,7 @@ func (p *Parser) line() bool {
 		// are labeled with this line. Otherwise we complain after we've absorbed
 		// the terminating newline and the line numbers are off by one in errors.
 		p.lineNum = p.lex.Line()
-		p.histLineNum = lex.HistLine()
+
 		switch tok {
 		case '\n', ';':
 			continue
