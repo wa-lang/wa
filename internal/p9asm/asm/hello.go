@@ -6,6 +6,7 @@
 package main
 
 import (
+	"bytes"
 	"fmt"
 
 	"wa-lang.org/wa/internal/p9asm/arch"
@@ -25,6 +26,11 @@ func main() {
 	if !ok {
 		panic("asm: assembly failed")
 	}
+
+	var buf bytes.Buffer
+	output := obj.Binitw(&buf)
+	obj.Writeobjdirect(ctxt, output)
+	output.Flush()
 
 	fmt.Printf("%+v\n", prog)
 }

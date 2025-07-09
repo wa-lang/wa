@@ -224,18 +224,36 @@ type Prog struct {
 	Mode   int8
 }
 
+// From3Type returns From3.Type, or TYPE_NONE when From3 is nil.
+func (p *Prog) From3Type() int16 {
+	if p.From3 == nil {
+		return TYPE_NONE
+	}
+	return p.From3.Type
+}
+
+// From3Offset returns From3.Offset, or 0 when From3 is nil.
+func (p *Prog) From3Offset() int64 {
+	if p.From3 == nil {
+		return 0
+	}
+	return p.From3.Offset
+}
+
 // Link holds the context for writing object code from a compiler
 // to be linker input or for reading that input into the linker.
 type Link struct {
 	Arch *LinkArch
 
-	Bso  *Biobuf
-	Hash map[SymVer]*LSym
-
-	Plist *Plist
-	Plast *Plist
+	Bso     *Biobuf
+	Hash    map[SymVer]*LSym
+	Imports []string
+	Plist   *Plist
+	Plast   *Plist
 
 	Diag func(string, ...interface{})
+
+	Cursym *LSym
 }
 
 type SymVer struct {

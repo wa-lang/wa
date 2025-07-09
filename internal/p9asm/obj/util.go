@@ -181,6 +181,12 @@ func Bterm(b *Biobuf) error {
 	return err
 }
 
+func (ctxt *Link) NewProg() *Prog {
+	p := new(Prog) // should be the only call to this; all others should use ctxt.NewProg
+	p.Ctxt = ctxt
+	return p
+}
+
 const (
 	ABase386 = (1 + iota) << 12
 	ABaseARM
