@@ -188,12 +188,16 @@ func (ctxt *Link) NewProg() *Prog {
 }
 
 const (
-	ABase386 = (1 + iota) << 12
+	ABase386 = (1 + iota) << 11
 	ABaseARM
 	ABaseAMD64
-	ABasePPC64
 	ABaseARM64
-	AMask = 1<<12 - 1 // AND with this to use the opcode as an array index.
+	ABaseLoong64
+	ABaseRISCV
+	ABaseWasm
+
+	AllowedOpCodes = 1 << 11            // The number of opcodes available for any given architecture.
+	AMask          = AllowedOpCodes - 1 // AND with this to use the opcode as an array index.
 )
 
 type opSet struct {
@@ -211,7 +215,7 @@ func RegisterOpcode(lo int, Anames []string) {
 }
 
 func Aconv(a int) string {
-	if a < A_ARCHSPECIFIC {
+	if a < int(A_ARCHSPECIFIC) {
 		return Anames[a]
 	}
 	for i := range aSpace {

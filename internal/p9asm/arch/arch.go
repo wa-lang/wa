@@ -20,6 +20,7 @@ const (
 	AMD64
 	ARM
 	ARM64
+	I386
 	Loong64
 	RISCV64
 	Wasm
