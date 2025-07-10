@@ -115,3 +115,17 @@ var Linkamd64 = obj.LinkArch{
 	Ptrsize:    8,
 	Regsize:    8,
 }
+
+var Link386 = obj.LinkArch{
+	ByteOrder:  binary.LittleEndian,
+	Name:       "386",
+	Thechar:    '8',
+	Preprocess: preprocess,
+	Assemble:   span6,
+	Follow:     follow,
+	Progedit:   progedit,
+	UnaryDst:   unaryDst,
+	Minlc:      1,
+	Ptrsize:    4,
+	Regsize:    4,
+}
