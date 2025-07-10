@@ -12,7 +12,20 @@ import (
 	"wa-lang.org/wa/internal/p9asm/x86"
 )
 
-// Pseudo-registers whose names are the constant name without the leading R.
+// 处理器类型
+type CPUType byte
+
+const (
+	NoArch CPUType = iota
+	AMD64
+	ARM
+	ARM64
+	Loong64
+	RISCV64
+	Wasm
+)
+
+// Plan9 汇编语言的伪寄存器
 const (
 	RFP = -(iota + 1)
 	RSB
@@ -20,25 +33,33 @@ const (
 	RPC
 )
 
-// Arch wraps the link architecture object with more architecture-specific information.
+// Arch 封装了链接器的架构对象，并附加了更多与架构相关的具体信息。
+//
+// 注意: 尽量避免在该结构体类型中直接依赖 p9asm/obj 包的类型
 type Arch struct {
-	*obj.LinkArch
-	// Map of instruction names to enumeration.
-	Instructions map[string]int
-	// Map of register names to enumeration.
-	Register map[string]int16
-	// Table of register prefix names. These are things like R for R(0) and SPR for SPR(268).
-	RegisterPrefix map[string]bool
-	// RegisterNumber converts R(10) into arm.REG_R10.
-	RegisterNumber func(string, int16) (int16, bool)
-	// Instruction is a jump.
-	IsJump func(word string) bool
-}
+	CPU CPUType
 
-// nilRegisterNumber is the register number function for architectures
-// that do not accept the R(N) notation. It always returns failure.
-func nilRegisterNumber(name string, n int16) (int16, bool) {
-	return 0, false
+	// 指令集表
+	// 比如 X86 平台的 JCC 指令对应 x86.AJCC
+	Instructions map[string]int
+
+	// 通用寄存器表
+	// 比如 X86 平台的 AX 寄存器对应 x86.REG_AX
+	Register map[string]int16
+
+	// 通用寄存器名字前缀表格, 比如 R(0) 的前缀为 R, SPR(268) 的前缀为 SPR
+	// 该表格需要和 this.RegisterNumber() 辅助函数配合使用
+	RegisterPrefix map[string]bool
+
+	// 根据通用寄存器的名字前缀和编号, 转化为底层唯一的机器码对应的编号.
+	// 比如 R(10) 对应 arm64.REG_R10.
+	RegisterNumber func(string, int16) (int16, bool)
+
+	// 哪些指令是只有一个目的操作数的, 比如某些一元运算
+	UnaryDst map[int]bool
+
+	// 判断是否为 jump 跳转指令
+	IsJump func(word string) bool
 }
 
 var Pseudos = map[string]int{
@@ -49,19 +70,19 @@ var Pseudos = map[string]int{
 	"TEXT":     obj.ATEXT,
 }
 
-func ArchAmd64() *Arch {
-	return archX86(&x86.Linkamd64)
+// 设置并返回对应的CPU对象
+func Set(cpu CPUType) *Arch {
+	switch cpu {
+	case AMD64:
+		return archX86(AMD64)
+	case ARM64:
+		return archArm64(ARM64)
+	}
+
+	return nil
 }
 
-func ArchArm64() *Arch {
-	return archArm64(&arm64.Linkarm64)
-}
-
-func jumpX86(word string) bool {
-	return word[0] == 'J' || word == "CALL" || strings.HasPrefix(word, "LOOP")
-}
-
-func archX86(linkArch *obj.LinkArch) *Arch {
+func archX86(CPU CPUType) *Arch {
 	register := make(map[string]int16)
 	// Create maps for easy lookup of instruction names etc.
 	for i, s := range x86.Register {
@@ -140,16 +161,25 @@ func archX86(linkArch *obj.LinkArch) *Arch {
 	instructions["PSRLDQ"] = x86.APSRLO
 
 	return &Arch{
-		LinkArch:       linkArch,
-		Instructions:   instructions,
-		Register:       register,
+		CPU:          CPU,
+		Instructions: instructions,
+		Register:     register,
+
+		// nil的map依然可以正常返回 x[key] 为零值
 		RegisterPrefix: nil,
-		RegisterNumber: nilRegisterNumber,
-		IsJump:         jumpX86,
+		// nil的func被调用会导致panic, 因此需要一个空函数
+		RegisterNumber: func(name string, n int16) (int16, bool) { return 0, false },
+
+		UnaryDst: x86.Linkamd64.UnaryDst,
+
+		// 判断是否为 X86 平台的 Jump 指令
+		IsJump: func(word string) bool {
+			return word[0] == 'J' || word == "CALL" || strings.HasPrefix(word, "LOOP")
+		},
 	}
 }
 
-func archArm64(linkArch *obj.LinkArch) *Arch {
+func archArm64(CPU CPUType) *Arch {
 	register := make(map[string]int16)
 	// Create maps for easy lookup of instruction names etc.
 	// Note that there is no list of names as there is for 386 and amd64.
@@ -222,11 +252,12 @@ func archArm64(linkArch *obj.LinkArch) *Arch {
 	instructions["BL"] = arm64.ABL
 
 	return &Arch{
-		LinkArch:       linkArch,
+		CPU:            CPU,
 		Instructions:   instructions,
 		Register:       register,
 		RegisterPrefix: registerPrefix,
 		RegisterNumber: arm64RegisterNumber,
+		UnaryDst:       arm64.Linkarm64.UnaryDst,
 		IsJump:         jumpArm64,
 	}
 

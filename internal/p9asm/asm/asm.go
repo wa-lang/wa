@@ -21,8 +21,8 @@ var testOut *bytes.Buffer // Gathers output when testing.
 // If doLabel is set, it also defines the labels collect for this Prog.
 func (p *Parser) append(prog *obj.Prog, cond string, doLabel bool) {
 	if cond != "" {
-		switch p.arch.Thechar {
-		case '7':
+		switch p.arch.CPU {
+		case arch.ARM64:
 			if !arch.ARM64Suffix(prog, cond) {
 				p.errorf("unrecognized suffix .%q", cond)
 			}
@@ -302,24 +302,6 @@ func (p *Parser) asmJump(op int, cond string, a []obj.Addr) {
 		// Special 2-operand jumps.
 		target = &a[1]
 		prog.From = a[0]
-	case 3:
-		if p.arch.Thechar == '9' {
-			// Special 3-operand jumps.
-			// First two must be constants; a[1] is a register number.
-			target = &a[2]
-			prog.From = obj.Addr{
-				Type:   obj.TYPE_CONST,
-				Offset: p.getConstant(prog, op, &a[0]),
-			}
-			reg := int16(p.getConstant(prog, op, &a[1]))
-			reg, ok := p.arch.RegisterNumber("R", int16(reg))
-			if !ok {
-				p.errorf("bad register number %d", reg)
-			}
-			prog.Reg = reg
-			break
-		}
-		fallthrough
 	default:
 		p.errorf("wrong number of arguments to %s instruction", obj.Aconv(op))
 		return
@@ -356,10 +338,6 @@ func (p *Parser) asmJump(op int, cond string, a []obj.Addr) {
 	case target.Type == obj.TYPE_MEM && target.Name == obj.NAME_NONE:
 		// JMP 4(R0)
 		prog.To = *target
-		// On the ppc64, 9a encodes BR (CTR) as BR CTR. We do the same.
-		if p.arch.Thechar == '9' && target.Offset == 0 {
-			prog.To.Type = obj.TYPE_REG
-		}
 	case target.Type == obj.TYPE_CONST:
 		// JMP $4
 		prog.To = a[0]
@@ -410,7 +388,7 @@ func (p *Parser) asmInstruction(op int, cond string, a []obj.Addr) {
 			// prog.To is no address.
 		}
 	case 2:
-		if p.arch.Thechar == '7' && arch.IsARM64CMP(op) {
+		if p.arch.CPU == arch.ARM64 && arch.IsARM64CMP(op) {
 			prog.From = a[0]
 			prog.Reg = p.getRegister(prog, op, &a[1])
 			break
@@ -418,8 +396,8 @@ func (p *Parser) asmInstruction(op int, cond string, a []obj.Addr) {
 		prog.From = a[0]
 		prog.To = a[1]
 	case 3:
-		switch p.arch.Thechar {
-		case '7':
+		switch p.arch.CPU {
+		case arch.ARM64:
 			// ARM64 instructions with one input and two outputs.
 			if arch.IsARM64STLXR(op) {
 				prog.From = a[0]
@@ -433,33 +411,15 @@ func (p *Parser) asmInstruction(op int, cond string, a []obj.Addr) {
 			prog.From = a[0]
 			prog.Reg = p.getRegister(prog, op, &a[1])
 			prog.To = a[2]
-		case '6', '8':
+		case arch.AMD64:
 			prog.From = a[0]
 			prog.From3 = newAddr(a[1])
 			prog.To = a[2]
-		case '9':
-			// Arithmetic. Choices are:
-			// reg reg reg
-			// imm reg reg
-			// reg imm reg
-			// If the immediate is the middle argument, use From3.
-			switch a[1].Type {
-			case obj.TYPE_REG:
-				prog.From = a[0]
-				prog.Reg = p.getRegister(prog, op, &a[1])
-				prog.To = a[2]
-			case obj.TYPE_CONST:
-				prog.From = a[0]
-				prog.From3 = newAddr(a[1])
-				prog.To = a[2]
-			default:
-				p.errorf("invalid addressing modes for %s instruction", obj.Aconv(op))
-			}
 		default:
 			p.errorf("TODO: implement three-operand instructions for this architecture")
 		}
 	case 4:
-		if p.arch.Thechar == '7' {
+		if p.arch.CPU == arch.ARM64 {
 			prog.From = a[0]
 			prog.Reg = p.getRegister(prog, op, &a[1])
 			prog.From3 = newAddr(a[2])

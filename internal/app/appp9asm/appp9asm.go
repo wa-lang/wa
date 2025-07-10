@@ -13,6 +13,7 @@ import (
 	"wa-lang.org/wa/internal/p9asm/asm"
 	"wa-lang.org/wa/internal/p9asm/lex"
 	"wa-lang.org/wa/internal/p9asm/obj"
+	"wa-lang.org/wa/internal/p9asm/x86"
 )
 
 var CmdP9Asm = &cli.Command{
@@ -24,8 +25,8 @@ var CmdP9Asm = &cli.Command{
 		name := c.Args().First()
 		data, _ := os.ReadFile(name)
 
-		arch := arch.ArchAmd64()
-		ctxt := obj.Linknew(arch.LinkArch)
+		arch := arch.Set(arch.AMD64)
+		ctxt := obj.Linknew(&x86.Linkamd64)
 
 		lexer := lex.NewLexer(name, data)
 		parser := asm.NewParser(ctxt, arch, lexer)
