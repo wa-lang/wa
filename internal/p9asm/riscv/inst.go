@@ -10,7 +10,7 @@ type inst struct {
 	funct7 uint32
 }
 
-func encode(a As) *inst {
+func encode(a int) *inst {
 	switch a {
 	case AADD:
 		return &inst{0x33, 0x0, 0x0, 0x0, 0, 0x0}

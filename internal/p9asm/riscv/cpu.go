@@ -31,13 +31,15 @@ package riscv
 import (
 	"errors"
 	"fmt"
+
+	"wa-lang.org/wa/internal/p9asm/obj"
 )
 
 //go:generate go run ../stringer.go -i $GOFILE -o anames.go -p riscv
 
 const (
 	// Base register numberings.
-	REG_X0 = RBaseRISCV + iota
+	REG_X0 = obj.RBaseRISCV + iota
 	REG_X1
 	REG_X2
 	REG_X3
@@ -331,7 +333,7 @@ const (
 	//
 
 	// 2.4: Integer Computational Instructions
-	AADDI = ABaseRISCV + A_ARCHSPECIFIC + iota
+	AADDI = obj.ABaseRISCV + obj.A_ARCHSPECIFIC + iota
 	ASLTI
 	ASLTIU
 	AANDI
@@ -1222,7 +1224,7 @@ const (
 //
 // Any instructions not listed here are assumed to either be non-unary or to read
 // from its argument.
-var unaryDst = map[As]bool{
+var unaryDst = map[int]bool{
 	ARDCYCLE:   true,
 	ARDTIME:    true,
 	ARDINSTRET: true,
