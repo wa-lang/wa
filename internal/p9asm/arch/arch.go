@@ -10,6 +10,7 @@ import (
 
 	"wa-lang.org/wa/internal/p9asm/arm"
 	"wa-lang.org/wa/internal/p9asm/arm64"
+	"wa-lang.org/wa/internal/p9asm/loong64"
 	"wa-lang.org/wa/internal/p9asm/obj"
 	"wa-lang.org/wa/internal/p9asm/riscv"
 	"wa-lang.org/wa/internal/p9asm/wasm"
@@ -25,6 +26,7 @@ const (
 	ARM
 	ARM64
 	I386
+	LOONG64
 	RISCV64
 	Wasm
 )
@@ -86,10 +88,12 @@ func Set(cpu CPUType) *Arch {
 		return archArm(ARM)
 	case ARM64:
 		return archArm64(ARM64)
+	case LOONG64:
+		return archLoong64(LOONG64)
 	case RISCV64:
-		return archRISCV64(false)
+		return archRISCV64(RISCV64, false)
 	case Wasm:
-		return archWasm()
+		return archWasm(Wasm)
 	}
 
 	return nil
@@ -354,8 +358,73 @@ func archArm(CPU CPUType) *Arch {
 	}
 }
 
-func archRISCV64(shared bool) *Arch {
-	register := make(map[string]int16)
+func archLoong64(CPU CPUType) *Arch {
+	p := &Arch{CPU: CPU}
+
+	// Create maps for easy lookup of instruction names etc.
+	// Note that there is no list of names as there is for x86.
+	for i := loong64.REG_R0; i <= loong64.REG_R31; i++ {
+		p.Register[obj.Rconv(i)] = int16(i)
+	}
+
+	for i := loong64.REG_F0; i <= loong64.REG_F31; i++ {
+		p.Register[obj.Rconv(i)] = int16(i)
+	}
+
+	for i := loong64.REG_FCSR0; i <= loong64.REG_FCSR31; i++ {
+		p.Register[obj.Rconv(i)] = int16(i)
+	}
+
+	for i := loong64.REG_FCC0; i <= loong64.REG_FCC31; i++ {
+		p.Register[obj.Rconv(i)] = int16(i)
+	}
+
+	for i := loong64.REG_V0; i <= loong64.REG_V31; i++ {
+		p.Register[obj.Rconv(i)] = int16(i)
+	}
+
+	for i := loong64.REG_X0; i <= loong64.REG_X31; i++ {
+		p.Register[obj.Rconv(i)] = int16(i)
+	}
+
+	// Pseudo-registers.
+	p.Register["SB"] = RSB
+	p.Register["FP"] = RFP
+	p.Register["PC"] = RPC
+
+	// Avoid unintentionally clobbering g using R22.
+	delete(p.Register, "R22")
+	p.Register["g"] = loong64.REG_R22
+
+	p.RegisterPrefix = map[string]bool{
+		"F":    true,
+		"FCSR": true,
+		"FCC":  true,
+		"R":    true,
+		"V":    true,
+		"X":    true,
+	}
+	p.RegisterNumber = loong64RegisterNumber
+
+	for i, s := range obj.Anames {
+		p.Instructions[s] = i
+	}
+	for i, s := range loong64.Anames {
+		if i >= obj.A_ARCHSPECIFIC {
+			p.Instructions[s] = i + obj.ABaseLoong64
+		}
+	}
+
+	// Annoying alias.
+	p.Instructions["JAL"] = loong64.AJAL
+
+	p.IsJump = jumpLoong64
+
+	return p
+}
+
+func archRISCV64(CPU CPUType, shared bool) *Arch {
+	p := &Arch{CPU: CPU}
 
 	// Standard register names.
 	for i := riscv.REG_X0; i <= riscv.REG_X31; i++ {
@@ -369,109 +438,112 @@ func archRISCV64(shared bool) *Arch {
 			continue
 		}
 		name := fmt.Sprintf("X%d", i-riscv.REG_X0)
-		register[name] = int16(i)
+		p.Register[name] = int16(i)
 	}
 	for i := riscv.REG_F0; i <= riscv.REG_F31; i++ {
 		name := fmt.Sprintf("F%d", i-riscv.REG_F0)
-		register[name] = int16(i)
+		p.Register[name] = int16(i)
 	}
 	for i := riscv.REG_V0; i <= riscv.REG_V31; i++ {
 		name := fmt.Sprintf("V%d", i-riscv.REG_V0)
-		register[name] = int16(i)
+		p.Register[name] = int16(i)
 	}
 
 	// General registers with ABI names.
-	register["ZERO"] = riscv.REG_ZERO
-	register["RA"] = riscv.REG_RA
-	register["SP"] = riscv.REG_SP
-	register["GP"] = riscv.REG_GP
-	register["TP"] = riscv.REG_TP
-	register["T0"] = riscv.REG_T0
-	register["T1"] = riscv.REG_T1
-	register["T2"] = riscv.REG_T2
-	register["S0"] = riscv.REG_S0
-	register["S1"] = riscv.REG_S1
-	register["A0"] = riscv.REG_A0
-	register["A1"] = riscv.REG_A1
-	register["A2"] = riscv.REG_A2
-	register["A3"] = riscv.REG_A3
-	register["A4"] = riscv.REG_A4
-	register["A5"] = riscv.REG_A5
-	register["A6"] = riscv.REG_A6
-	register["A7"] = riscv.REG_A7
-	register["S2"] = riscv.REG_S2
-	register["S3"] = riscv.REG_S3
-	register["S4"] = riscv.REG_S4
-	register["S5"] = riscv.REG_S5
-	register["S6"] = riscv.REG_S6
-	register["S7"] = riscv.REG_S7
-	register["S8"] = riscv.REG_S8
-	register["S9"] = riscv.REG_S9
-	register["S10"] = riscv.REG_S10
+	p.Register["ZERO"] = riscv.REG_ZERO
+	p.Register["RA"] = riscv.REG_RA
+	p.Register["SP"] = riscv.REG_SP
+	p.Register["GP"] = riscv.REG_GP
+	p.Register["TP"] = riscv.REG_TP
+	p.Register["T0"] = riscv.REG_T0
+	p.Register["T1"] = riscv.REG_T1
+	p.Register["T2"] = riscv.REG_T2
+	p.Register["S0"] = riscv.REG_S0
+	p.Register["S1"] = riscv.REG_S1
+	p.Register["A0"] = riscv.REG_A0
+	p.Register["A1"] = riscv.REG_A1
+	p.Register["A2"] = riscv.REG_A2
+	p.Register["A3"] = riscv.REG_A3
+	p.Register["A4"] = riscv.REG_A4
+	p.Register["A5"] = riscv.REG_A5
+	p.Register["A6"] = riscv.REG_A6
+	p.Register["A7"] = riscv.REG_A7
+	p.Register["S2"] = riscv.REG_S2
+	p.Register["S3"] = riscv.REG_S3
+	p.Register["S4"] = riscv.REG_S4
+	p.Register["S5"] = riscv.REG_S5
+	p.Register["S6"] = riscv.REG_S6
+	p.Register["S7"] = riscv.REG_S7
+	p.Register["S8"] = riscv.REG_S8
+	p.Register["S9"] = riscv.REG_S9
+	p.Register["S10"] = riscv.REG_S10
 	// Skip S11 as it is the g register.
-	register["T3"] = riscv.REG_T3
-	register["T4"] = riscv.REG_T4
-	register["T5"] = riscv.REG_T5
-	register["T6"] = riscv.REG_T6
+	p.Register["T3"] = riscv.REG_T3
+	p.Register["T4"] = riscv.REG_T4
+	p.Register["T5"] = riscv.REG_T5
+	p.Register["T6"] = riscv.REG_T6
 
 	// Go runtime register names.
-	register["g"] = riscv.REG_G
-	register["CTXT"] = riscv.REG_CTXT
-	register["TMP"] = riscv.REG_TMP
+	p.Register["g"] = riscv.REG_G
+	p.Register["CTXT"] = riscv.REG_CTXT
+	p.Register["TMP"] = riscv.REG_TMP
 
 	// ABI names for floating point register.
-	register["FT0"] = riscv.REG_FT0
-	register["FT1"] = riscv.REG_FT1
-	register["FT2"] = riscv.REG_FT2
-	register["FT3"] = riscv.REG_FT3
-	register["FT4"] = riscv.REG_FT4
-	register["FT5"] = riscv.REG_FT5
-	register["FT6"] = riscv.REG_FT6
-	register["FT7"] = riscv.REG_FT7
-	register["FS0"] = riscv.REG_FS0
-	register["FS1"] = riscv.REG_FS1
-	register["FA0"] = riscv.REG_FA0
-	register["FA1"] = riscv.REG_FA1
-	register["FA2"] = riscv.REG_FA2
-	register["FA3"] = riscv.REG_FA3
-	register["FA4"] = riscv.REG_FA4
-	register["FA5"] = riscv.REG_FA5
-	register["FA6"] = riscv.REG_FA6
-	register["FA7"] = riscv.REG_FA7
-	register["FS2"] = riscv.REG_FS2
-	register["FS3"] = riscv.REG_FS3
-	register["FS4"] = riscv.REG_FS4
-	register["FS5"] = riscv.REG_FS5
-	register["FS6"] = riscv.REG_FS6
-	register["FS7"] = riscv.REG_FS7
-	register["FS8"] = riscv.REG_FS8
-	register["FS9"] = riscv.REG_FS9
-	register["FS10"] = riscv.REG_FS10
-	register["FS11"] = riscv.REG_FS11
-	register["FT8"] = riscv.REG_FT8
-	register["FT9"] = riscv.REG_FT9
-	register["FT10"] = riscv.REG_FT10
-	register["FT11"] = riscv.REG_FT11
+	p.Register["FT0"] = riscv.REG_FT0
+	p.Register["FT1"] = riscv.REG_FT1
+	p.Register["FT2"] = riscv.REG_FT2
+	p.Register["FT3"] = riscv.REG_FT3
+	p.Register["FT4"] = riscv.REG_FT4
+	p.Register["FT5"] = riscv.REG_FT5
+	p.Register["FT6"] = riscv.REG_FT6
+	p.Register["FT7"] = riscv.REG_FT7
+	p.Register["FS0"] = riscv.REG_FS0
+	p.Register["FS1"] = riscv.REG_FS1
+	p.Register["FA0"] = riscv.REG_FA0
+	p.Register["FA1"] = riscv.REG_FA1
+	p.Register["FA2"] = riscv.REG_FA2
+	p.Register["FA3"] = riscv.REG_FA3
+	p.Register["FA4"] = riscv.REG_FA4
+	p.Register["FA5"] = riscv.REG_FA5
+	p.Register["FA6"] = riscv.REG_FA6
+	p.Register["FA7"] = riscv.REG_FA7
+	p.Register["FS2"] = riscv.REG_FS2
+	p.Register["FS3"] = riscv.REG_FS3
+	p.Register["FS4"] = riscv.REG_FS4
+	p.Register["FS5"] = riscv.REG_FS5
+	p.Register["FS6"] = riscv.REG_FS6
+	p.Register["FS7"] = riscv.REG_FS7
+	p.Register["FS8"] = riscv.REG_FS8
+	p.Register["FS9"] = riscv.REG_FS9
+	p.Register["FS10"] = riscv.REG_FS10
+	p.Register["FS11"] = riscv.REG_FS11
+	p.Register["FT8"] = riscv.REG_FT8
+	p.Register["FT9"] = riscv.REG_FT9
+	p.Register["FT10"] = riscv.REG_FT10
+	p.Register["FT11"] = riscv.REG_FT11
 
 	// Pseudo-registers.
-	register["SB"] = RSB
-	register["FP"] = RFP
-	register["PC"] = RPC
+	p.Register["SB"] = RSB
+	p.Register["FP"] = RFP
+	p.Register["PC"] = RPC
 
-	instructions := make(map[string]int)
 	for i, s := range obj.Anames {
-		instructions[s] = i
+		p.Instructions[s] = i
 	}
 	for i, s := range riscv.Anames {
 		if i >= obj.A_ARCHSPECIFIC {
-			instructions[s] = i + obj.ABaseRISCV
+			p.Instructions[s] = i + obj.ABaseRISCV
 		}
 	}
 
-	nilRegisterNumber := func(name string, n int16) (int16, bool) {
+	p.UnaryDst = riscv.LinkRISCV64.UnaryDst
+
+	p.RegisterPrefix = map[string]bool{}
+	p.RegisterNumber = func(name string, n int16) (int16, bool) {
 		return 0, false
 	}
-	jumpRISCV := func(word string) bool {
+
+	p.IsJump = func(word string) bool {
 		switch word {
 		case "BEQ", "BEQZ", "BGE", "BGEU", "BGEZ", "BGT", "BGTU", "BGTZ", "BLE", "BLEU", "BLEZ",
 			"BLT", "BLTU", "BLTZ", "BNE", "BNEZ", "CALL", "JAL", "JALR", "JMP":
@@ -480,42 +552,31 @@ func archRISCV64(shared bool) *Arch {
 		return false
 	}
 
-	return &Arch{
-		//LinkArch:       &riscv.LinkRISCV64,
-		Instructions:   instructions,
-		Register:       register,
-		RegisterPrefix: nil,
-		RegisterNumber: nilRegisterNumber,
-		UnaryDst:       riscv.LinkRISCV64.UnaryDst,
-		IsJump:         jumpRISCV,
-	}
+	return p
 }
 
-func archWasm() *Arch {
-	instructions := make(map[string]int)
+func archWasm(CPU CPUType) *Arch {
+	p := &Arch{CPU: CPU}
+
+	p.Register = wasm.Register
+
 	for i, s := range obj.Anames {
-		instructions[s] = i
+		p.Instructions[s] = i
 	}
 	for i, s := range wasm.Anames {
 		if i >= obj.A_ARCHSPECIFIC {
-			instructions[s] = i + obj.ABaseWasm
+			p.Instructions[s] = i + obj.ABaseWasm
 		}
 	}
 
-	nilRegisterNumber := func(name string, n int16) (int16, bool) {
-		return 0, false
-	}
-	jumpWasm := func(word string) bool {
+	p.UnaryDst = wasm.Linkwasm.UnaryDst
+
+	p.RegisterPrefix = map[string]bool{}
+	p.RegisterNumber = func(name string, n int16) (int16, bool) { return 0, false }
+
+	p.IsJump = func(word string) bool {
 		return word == "JMP" || word == "CALL" || word == "Call" || word == "Br" || word == "BrIf"
 	}
 
-	return &Arch{
-		//LinkArch:       &wasm.Linkwasm,
-		Instructions:   instructions,
-		Register:       wasm.Register,
-		RegisterPrefix: nil,
-		RegisterNumber: nilRegisterNumber,
-		UnaryDst:       wasm.Linkwasm.UnaryDst,
-		IsJump:         jumpWasm,
-	}
+	return p
 }
