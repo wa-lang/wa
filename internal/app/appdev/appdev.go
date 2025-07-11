@@ -6,7 +6,6 @@ package appdev
 import (
 	"bytes"
 	"fmt"
-	"io/ioutil"
 	"log"
 	"os"
 	"path/filepath"
@@ -15,7 +14,6 @@ import (
 	"wa-lang.org/wa/api"
 	"wa-lang.org/wa/internal/3rdparty/cli"
 	"wa-lang.org/wa/internal/config"
-	"wa-lang.org/wa/internal/waroot/malloc"
 )
 
 var CmdDev = &cli.Command{
@@ -34,8 +32,10 @@ var CmdDev = &cli.Command{
 		},
 	},
 	Action: func(c *cli.Context) error {
+		log.SetFlags(log.Llongfile)
+
 		if c.Bool("count-code-lines") {
-			RunCountCodeLines()
+			RunCountCodeLines(c)
 			os.Exit(0)
 		}
 
@@ -55,43 +55,15 @@ var CmdDev = &cli.Command{
 			os.Exit(0)
 		}
 
-		if c.Bool("malloc") {
-			h := malloc.NewHeap(&malloc.Config{
-				MemoryPages:    1,
-				MemoryPagesMax: 2,
-				StackPtr:       100,
-				HeapBase:       1000,
-				HeapLFixedCap:  3,
-			})
-
-			os.WriteFile("a.out-0.wasm", []byte(h.WasmBytes()), 0666)
-
-			os.WriteFile("a.out-0.dot", []byte(h.DotString()), 0666)
-
-			// 需要页扩展时失败
-			p1 := h.Malloc(65536 - 10) // (malloc.KPageBytes)
-			os.WriteFile("a.out-1.dot", []byte(h.DotString()), 0666)
-			fmt.Println("p1:", p1)
-			h.Free(p1)
-
-			os.WriteFile("a.out-2.dot", []byte(h.DotString()), 0666)
-
-			p2 := h.Malloc(malloc.KPageBytes)
-			os.WriteFile("a.out-2.dot", []byte(h.DotString()), 0666)
-			fmt.Println("p2:", p2)
-
-			os.Exit(0)
-		}
-
 		fmt.Println("...dev...")
 		return nil
 	},
 }
 
-func RunCountCodeLines() {
+func RunCountCodeLines(c *cli.Context) {
 	var dir = "."
-	if len(os.Args) > 1 {
-		dir = os.Args[1]
+	if c.NArg() > 0 {
+		dir = c.Args().First()
 	}
 
 	total := 0
@@ -103,7 +75,7 @@ func RunCountCodeLines() {
 		if info.IsDir() {
 			return nil
 		}
-		data, err := ioutil.ReadFile(path)
+		data, err := os.ReadFile(path)
 		if err != nil {
 			log.Fatal("ioutil.ReadFile: ", err)
 		}
