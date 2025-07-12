@@ -380,7 +380,7 @@ func (p *Parser) asmInstruction(op int, cond string, a []obj.Addr) {
 	case 0:
 		// Nothing to do.
 	case 1:
-		if p.arch.UnaryDst[op] {
+		if p.arch.LinkArch.UnaryDst[op] {
 			// prog.From is no address.
 			prog.To = a[0]
 		} else {

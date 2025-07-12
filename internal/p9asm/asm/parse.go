@@ -19,6 +19,15 @@ import (
 	"wa-lang.org/wa/internal/p9asm/obj"
 )
 
+// Plan9 汇编语言的伪指令
+var _Pseudos = map[string]int{
+	"DATA":     obj.ADATA,
+	"FUNCDATA": obj.AFUNCDATA,
+	"GLOBL":    obj.AGLOBL,
+	"PCDATA":   obj.APCDATA,
+	"TEXT":     obj.ATEXT,
+}
+
 type Parser struct {
 	lex           lex.TokenReader
 	lineNum       int   // Line number in source file.
@@ -170,7 +179,7 @@ func (p *Parser) line() bool {
 			p.errorf("missing operand")
 		}
 	}
-	i, present := arch.Pseudos[word]
+	i, present := _Pseudos[word]
 	if present {
 		p.pseudo(i, word, operands)
 		return true

@@ -40,10 +40,11 @@ const (
 )
 
 // Arch 封装了链接器的架构对象，并附加了更多与架构相关的具体信息。
-//
-// 注意: 尽量避免在该结构体类型中直接依赖 p9asm/obj 包的类型
 type Arch struct {
 	CPU CPUType
+
+	// 连接器相关配置
+	LinkArch *obj.LinkArch
 
 	// 指令集表
 	// 比如 X86 平台的 JCC 指令对应 x86.AJCC
@@ -61,48 +62,44 @@ type Arch struct {
 	// 比如 R(10) 对应 arm64.REG_R10.
 	RegisterNumber func(string, int16) (int16, bool)
 
-	// 哪些指令是只有一个目的操作数的, 比如某些一元运算
-	UnaryDst map[int]bool
-
 	// 判断是否为 jump 跳转指令
 	IsJump func(word string) bool
-}
-
-// Plan9 汇编语言的伪指令
-var Pseudos = map[string]int{
-	"DATA":     obj.ADATA,
-	"FUNCDATA": obj.AFUNCDATA,
-	"GLOBL":    obj.AGLOBL,
-	"PCDATA":   obj.APCDATA,
-	"TEXT":     obj.ATEXT,
 }
 
 // 设置并返回对应的CPU对象
 func Set(cpu CPUType) *Arch {
 	switch cpu {
 	case I386:
-		return archX86(I386)
+		return archX86(I386, &x86.Link386)
 	case AMD64:
-		return archX86(AMD64)
+		return archX86(AMD64, &x86.Linkamd64)
 	case ARM:
-		return archArm(ARM)
+		return archArm(ARM, &arm.Linkarm)
 	case ARM64:
-		return archArm64(ARM64)
+		return archArm64(ARM64, &arm64.Linkarm64)
 	case LOONG64:
-		return archLoong64(LOONG64)
+		return archLoong64(LOONG64, &loong64.Linkloong64)
 	case RISCV64:
-		return archRISCV64(RISCV64, false)
+		return archRISCV64(RISCV64, &riscv.LinkRISCV64, false)
 	case Wasm:
-		return archWasm(Wasm)
+		return archWasm(Wasm, &wasm.Linkwasm)
+	default:
+		panic("unreachable")
 	}
-
-	return nil
 }
 
-func archX86(CPU CPUType) *Arch {
-	p := &Arch{CPU: CPU}
+func archX86(CPU CPUType, linkArch *obj.LinkArch) *Arch {
+	p := &Arch{
+		CPU:      CPU,
+		LinkArch: linkArch,
+
+		Instructions:   map[string]int{},
+		Register:       map[string]int16{},
+		RegisterPrefix: map[string]bool{},
+	}
 
 	// 构造寄存器名查询表
+	p.Register = make(map[string]int16)
 	for i, s := range x86.Register {
 		p.Register[s] = int16(i + x86.REG_AL)
 	}
@@ -127,14 +124,6 @@ func archX86(CPU CPUType) *Arch {
 		if i >= obj.A_ARCHSPECIFIC {
 			p.Instructions[s] = i + obj.ABaseAMD64
 		}
-	}
-
-	// 哪些指令是只有一个目的操作数的, 比如某些一元运算
-	switch CPU {
-	case I386:
-		p.UnaryDst = x86.Link386.UnaryDst
-	case AMD64:
-		p.UnaryDst = x86.Linkamd64.UnaryDst
 	}
 
 	// 判断是否为 X86 平台的 Jump 指令
@@ -202,8 +191,15 @@ func archX86(CPU CPUType) *Arch {
 	return p
 }
 
-func archArm64(CPU CPUType) *Arch {
-	p := &Arch{CPU: CPU}
+func archArm64(CPU CPUType, linkArch *obj.LinkArch) *Arch {
+	p := &Arch{
+		CPU:      CPU,
+		LinkArch: linkArch,
+
+		Instructions:   map[string]int{},
+		Register:       map[string]int16{},
+		RegisterPrefix: map[string]bool{},
+	}
 
 	// ARM64 的寄存器表
 	// 注册方式和 AMD64 稍微有点区别
@@ -287,79 +283,83 @@ func archArm64(CPU CPUType) *Arch {
 	p.Instructions["B"] = arm64.AB
 	p.Instructions["BL"] = arm64.ABL
 
-	// 哪些指令是只有一个目的操作数的, 比如某些一元运算
-	p.UnaryDst = arm64.Linkarm64.UnaryDst
-
 	// 判断是否为 ARM64 平台的 Jump 指令
 	p.IsJump = jumpArm64
 
 	return p
 }
 
-func archArm(CPU CPUType) *Arch {
-	register := make(map[string]int16)
+func archArm(CPU CPUType, linkArch *obj.LinkArch) *Arch {
+	p := &Arch{
+		CPU:      CPU,
+		LinkArch: linkArch,
+
+		Instructions:   map[string]int{},
+		Register:       map[string]int16{},
+		RegisterPrefix: map[string]bool{},
+	}
+
 	// Create maps for easy lookup of instruction names etc.
 	// Note that there is no list of names as there is for x86.
 	for i := arm.REG_R0; i < arm.REG_SPSR; i++ {
-		register[obj.Rconv(i)] = int16(i)
+		p.Register[obj.Rconv(i)] = int16(i)
 	}
 	// Avoid unintentionally clobbering g using R10.
-	delete(register, "R10")
-	register["g"] = arm.REG_R10
+	delete(p.Register, "R10")
+	p.Register["g"] = arm.REG_R10
 	for i := 0; i < 16; i++ {
-		register[fmt.Sprintf("C%d", i)] = int16(i)
+		p.Register[fmt.Sprintf("C%d", i)] = int16(i)
 	}
 
 	// Pseudo-registers.
-	register["SB"] = RSB
-	register["FP"] = RFP
-	register["PC"] = RPC
-	register["SP"] = RSP
-	registerPrefix := map[string]bool{
-		"F": true,
-		"R": true,
-	}
+	p.Register["SB"] = RSB
+	p.Register["FP"] = RFP
+	p.Register["PC"] = RPC
+	p.Register["SP"] = RSP
+
+	p.RegisterPrefix = map[string]bool{"F": true, "R": true}
+	p.RegisterNumber = armRegisterNumber
 
 	// special operands for DMB/DSB instructions
-	register["MB_SY"] = arm.REG_MB_SY
-	register["MB_ST"] = arm.REG_MB_ST
-	register["MB_ISH"] = arm.REG_MB_ISH
-	register["MB_ISHST"] = arm.REG_MB_ISHST
-	register["MB_NSH"] = arm.REG_MB_NSH
-	register["MB_NSHST"] = arm.REG_MB_NSHST
-	register["MB_OSH"] = arm.REG_MB_OSH
-	register["MB_OSHST"] = arm.REG_MB_OSHST
+	p.Register["MB_SY"] = arm.REG_MB_SY
+	p.Register["MB_ST"] = arm.REG_MB_ST
+	p.Register["MB_ISH"] = arm.REG_MB_ISH
+	p.Register["MB_ISHST"] = arm.REG_MB_ISHST
+	p.Register["MB_NSH"] = arm.REG_MB_NSH
+	p.Register["MB_NSHST"] = arm.REG_MB_NSHST
+	p.Register["MB_OSH"] = arm.REG_MB_OSH
+	p.Register["MB_OSHST"] = arm.REG_MB_OSHST
 
-	instructions := make(map[string]int)
 	for i, s := range obj.Anames {
-		instructions[s] = i
+		p.Instructions[s] = i
 	}
 	for i, s := range arm.Anames {
 		if i >= obj.A_ARCHSPECIFIC {
-			instructions[s] = i + obj.ABaseARM
+			p.Instructions[s] = i + obj.ABaseARM
 		}
 	}
 	// Annoying aliases.
-	instructions["B"] = obj.AJMP
-	instructions["BL"] = obj.ACALL
+	p.Instructions["B"] = obj.AJMP
+	p.Instructions["BL"] = obj.ACALL
 	// MCR differs from MRC by the way fields of the word are encoded.
 	// (Details in arm.go). Here we add the instruction so parse will find
 	// it, but give it an opcode number known only to us.
-	instructions["MCR"] = aMCR
+	p.Instructions["MCR"] = aMCR
 
-	return &Arch{
-		CPU:            CPU,
-		Instructions:   instructions,
-		Register:       register,
-		RegisterPrefix: registerPrefix,
-		RegisterNumber: armRegisterNumber,
-		UnaryDst:       arm.Linkarm.UnaryDst,
-		IsJump:         jumpArm,
-	}
+	p.IsJump = jumpArm
+
+	return p
 }
 
-func archLoong64(CPU CPUType) *Arch {
-	p := &Arch{CPU: CPU}
+func archLoong64(CPU CPUType, linkArch *obj.LinkArch) *Arch {
+	p := &Arch{
+		CPU:      CPU,
+		LinkArch: linkArch,
+
+		Instructions:   map[string]int{},
+		Register:       map[string]int16{},
+		RegisterPrefix: map[string]bool{},
+	}
 
 	// Create maps for easy lookup of instruction names etc.
 	// Note that there is no list of names as there is for x86.
@@ -423,8 +423,15 @@ func archLoong64(CPU CPUType) *Arch {
 	return p
 }
 
-func archRISCV64(CPU CPUType, shared bool) *Arch {
-	p := &Arch{CPU: CPU}
+func archRISCV64(CPU CPUType, linkArch *obj.LinkArch, shared bool) *Arch {
+	p := &Arch{
+		CPU:      CPU,
+		LinkArch: linkArch,
+
+		Instructions:   map[string]int{},
+		Register:       map[string]int16{},
+		RegisterPrefix: map[string]bool{},
+	}
 
 	// Standard register names.
 	for i := riscv.REG_X0; i <= riscv.REG_X31; i++ {
@@ -536,9 +543,6 @@ func archRISCV64(CPU CPUType, shared bool) *Arch {
 		}
 	}
 
-	p.UnaryDst = riscv.LinkRISCV64.UnaryDst
-
-	p.RegisterPrefix = map[string]bool{}
 	p.RegisterNumber = func(name string, n int16) (int16, bool) {
 		return 0, false
 	}
@@ -555,10 +559,15 @@ func archRISCV64(CPU CPUType, shared bool) *Arch {
 	return p
 }
 
-func archWasm(CPU CPUType) *Arch {
-	p := &Arch{CPU: CPU}
+func archWasm(CPU CPUType, linkArch *obj.LinkArch) *Arch {
+	p := &Arch{
+		CPU:      CPU,
+		LinkArch: linkArch,
 
-	p.Register = wasm.Register
+		Instructions:   map[string]int{},
+		Register:       wasm.Register,
+		RegisterPrefix: map[string]bool{},
+	}
 
 	for i, s := range obj.Anames {
 		p.Instructions[s] = i
@@ -569,10 +578,9 @@ func archWasm(CPU CPUType) *Arch {
 		}
 	}
 
-	p.UnaryDst = wasm.Linkwasm.UnaryDst
-
-	p.RegisterPrefix = map[string]bool{}
-	p.RegisterNumber = func(name string, n int16) (int16, bool) { return 0, false }
+	p.RegisterNumber = func(name string, n int16) (int16, bool) {
+		return 0, false
+	}
 
 	p.IsJump = func(word string) bool {
 		return word == "JMP" || word == "CALL" || word == "Call" || word == "Br" || word == "BrIf"
