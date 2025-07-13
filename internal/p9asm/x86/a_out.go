@@ -762,6 +762,7 @@ const (
 )
 
 const (
+	// int8
 	REG_AL = obj.RBaseAMD64 + iota
 	REG_CL
 	REG_DL
@@ -779,6 +780,7 @@ const (
 	REG_R14B
 	REG_R15B
 
+	// int16
 	REG_AX
 	REG_CX
 	REG_DX
@@ -796,11 +798,13 @@ const (
 	REG_R14
 	REG_R15
 
+	// int16 高字节
 	REG_AH
 	REG_CH
 	REG_DH
 	REG_BH
 
+	// X87 80bit float
 	REG_F0
 	REG_F1
 	REG_F2
@@ -810,6 +814,7 @@ const (
 	REG_F6
 	REG_F7
 
+	// MMX int64
 	REG_M0
 	REG_M1
 	REG_M2
@@ -819,6 +824,7 @@ const (
 	REG_M6
 	REG_M7
 
+	// SSE/SSE2 XMM0–XMM15 int128
 	REG_X0
 	REG_X1
 	REG_X2
@@ -836,6 +842,7 @@ const (
 	REG_X14
 	REG_X15
 
+	// 段寄存器
 	REG_CS
 	REG_SS
 	REG_DS
@@ -843,12 +850,16 @@ const (
 	REG_FS
 	REG_GS
 
-	REG_GDTR /* global descriptor table register */
-	REG_IDTR /* interrupt descriptor table register */
-	REG_LDTR /* local descriptor table register */
-	REG_MSW  /* machine status word */
-	REG_TASK /* task register */
+	// 硬件系统寄存器
+	// 普通程序不会使用
+	REG_GDTR // 全局描述符表寄存器 global descriptor table register
+	REG_IDTR // 中断描述符表寄存器 interrupt descriptor table register
+	REG_LDTR // 局部描述符表寄存器 local descriptor table register
+	REG_MSW  // 任务寄存器 machine status word
+	REG_TASK // Machine Status Word, 其实是 CR0 的低 16 位. task register
 
+	// 控制寄存器
+	// 普通程序不会使用
 	REG_CR0
 	REG_CR1
 	REG_CR2
@@ -866,6 +877,7 @@ const (
 	REG_CR14
 	REG_CR15
 
+	// 硬件调试寄存器
 	REG_DR0
 	REG_DR1
 	REG_DR2
@@ -875,6 +887,8 @@ const (
 	REG_DR6
 	REG_DR7
 
+	// 测试寄存器
+	// 历史遗留, 普通程序不使用
 	REG_TR0
 	REG_TR1
 	REG_TR2
@@ -884,23 +898,33 @@ const (
 	REG_TR6
 	REG_TR7
 
+	// Thread Local Storage base
+	// Linux 通常用 FS 或 GS 的段基址寄存器。
+	// Windows 通常用 FS (32位) 或 GS (64位)
 	REG_TLS
 
+	// 寄存器变化的总数目
 	MAXREG
 
+	// 几个硬件寄存器的别名
 	REG_CR = REG_CR0
 	REG_DR = REG_DR0
 	REG_TR = REG_TR0
 
-	REGARG   = -1
-	REGRET   = REG_AX
-	FREGRET  = REG_X0
-	REGSP    = REG_SP
-	REGTMP   = REG_DI
-	REGCTXT  = REG_DX
-	REGEXT   = REG_R15     /* compiler allocates external registers R15 down */
-	FREGMIN  = REG_X0 + 5  /* first register variable */
-	FREGEXT  = REG_X0 + 15 /* first external register */
+	// 和 ABI 有关的约定
+	REGARG  = -1          // 函数调用参数
+	REGRET  = REG_AX      // 函数整数返回值
+	FREGRET = REG_X0      // 函数浮点数返回值
+	REGSP   = REG_SP      // 编译器内部符号: 栈指针寄存器, 对应 RSP
+	REGTMP  = REG_DI      // 编译器内部用作临时寄存器
+	REGCTXT = REG_DX      // 用来传递协程的上下文指针
+	REGEXT  = REG_R15     // compiler allocates external registers R15 down
+	FREGMIN = REG_X0 + 5  // first register variable
+	FREGEXT = REG_X0 + 15 // first external register
+
+	// 编译器内部的常量标志位
+	// 表示不同种类的操作数/常量类型等
+	// 用于汇编/编译器的数据结构, 如 Addr 或 Operand
 	T_TYPE   = 1 << 0
 	T_INDEX  = 1 << 1
 	T_OFFSET = 1 << 2
