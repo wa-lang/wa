@@ -9,6 +9,7 @@
 //	Portions Copyright © 2005-2007 C H Forsyth (forsyth@terzarima.net)
 //	Revisions Copyright © 2000-2007 Lucent Technologies Inc. and others
 //	Portions Copyright © 2009 The Go Authors.  All rights reserved.
+//	Portions Copyright © 2025 武汉凹语言科技有限公司.  All rights reserved.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -28,17 +29,194 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-package x86
-
-import (
-	"wa-lang.org/wa/internal/p9asm/obj"
-)
-
 //go:generate go run ../stringer.go -i $GOFILE -o anames.go -p x86
 
-/*
- *	amd64
- */
+package x86
+
+import "wa-lang.org/wa/internal/p9asm/obj"
+
+// 寄存器
+
+const (
+	REG_NONE = 0 // 无效
+)
+
+const (
+	// int8
+	REG_AL = obj.RBaseAMD64 + iota
+	REG_CL
+	REG_DL
+	REG_BL
+	REG_SPB
+	REG_BPB
+	REG_SIB
+	REG_DIB
+	REG_R8B
+	REG_R9B
+	REG_R10B
+	REG_R11B
+	REG_R12B
+	REG_R13B
+	REG_R14B
+	REG_R15B
+
+	// int16
+	REG_AX
+	REG_CX
+	REG_DX
+	REG_BX
+	REG_SP
+	REG_BP
+	REG_SI
+	REG_DI
+	REG_R8
+	REG_R9
+	REG_R10
+	REG_R11
+	REG_R12
+	REG_R13
+	REG_R14
+	REG_R15
+
+	// int16 高字节
+	REG_AH
+	REG_CH
+	REG_DH
+	REG_BH
+
+	// X87 80bit float
+	REG_F0
+	REG_F1
+	REG_F2
+	REG_F3
+	REG_F4
+	REG_F5
+	REG_F6
+	REG_F7
+
+	// MMX int64
+	REG_M0
+	REG_M1
+	REG_M2
+	REG_M3
+	REG_M4
+	REG_M5
+	REG_M6
+	REG_M7
+
+	// SSE/SSE2 XMM0–XMM15 int128
+	REG_X0
+	REG_X1
+	REG_X2
+	REG_X3
+	REG_X4
+	REG_X5
+	REG_X6
+	REG_X7
+	REG_X8
+	REG_X9
+	REG_X10
+	REG_X11
+	REG_X12
+	REG_X13
+	REG_X14
+	REG_X15
+
+	// 段寄存器
+	REG_CS
+	REG_SS
+	REG_DS
+	REG_ES
+	REG_FS
+	REG_GS
+
+	// 硬件系统寄存器
+	// 普通程序不会使用
+	REG_GDTR // 全局描述符表寄存器 global descriptor table register
+	REG_IDTR // 中断描述符表寄存器 interrupt descriptor table register
+	REG_LDTR // 局部描述符表寄存器 local descriptor table register
+	REG_MSW  // 任务寄存器 machine status word
+	REG_TASK // Machine Status Word, 其实是 CR0 的低 16 位. task register
+
+	// 控制寄存器
+	// 普通程序不会使用
+	REG_CR0
+	REG_CR1
+	REG_CR2
+	REG_CR3
+	REG_CR4
+	REG_CR5
+	REG_CR6
+	REG_CR7
+	REG_CR8
+	REG_CR9
+	REG_CR10
+	REG_CR11
+	REG_CR12
+	REG_CR13
+	REG_CR14
+	REG_CR15
+
+	// 硬件调试寄存器
+	REG_DR0
+	REG_DR1
+	REG_DR2
+	REG_DR3
+	REG_DR4
+	REG_DR5
+	REG_DR6
+	REG_DR7
+
+	// 测试寄存器
+	// 历史遗留, 普通程序不使用
+	REG_TR0
+	REG_TR1
+	REG_TR2
+	REG_TR3
+	REG_TR4
+	REG_TR5
+	REG_TR6
+	REG_TR7
+
+	// Thread Local Storage base
+	// Linux 通常用 FS 或 GS 的段基址寄存器。
+	// Windows 通常用 FS (32位) 或 GS (64位)
+	REG_TLS
+
+	// 寄存器变化的总数目
+	MAXREG
+
+	// 几个硬件寄存器的别名
+	REG_CR = REG_CR0
+	REG_DR = REG_DR0
+	REG_TR = REG_TR0
+
+	// 和 ABI 有关的约定
+	REGARG  = -1          // 函数调用参数
+	REGRET  = REG_AX      // 函数整数返回值
+	FREGRET = REG_X0      // 函数浮点数返回值
+	REGSP   = REG_SP      // 编译器内部符号: 栈指针寄存器, 对应 RSP
+	REGTMP  = REG_DI      // 编译器内部用作临时寄存器
+	REGCTXT = REG_DX      // 用来传递协程的上下文指针
+	REGEXT  = REG_R15     // compiler allocates external registers R15 down
+	FREGMIN = REG_X0 + 5  // first register variable
+	FREGEXT = REG_X0 + 15 // first external register
+
+	// 编译器内部的常量标志位
+	// 表示不同种类的操作数/常量类型等
+	// 用于汇编/编译器的数据结构, 如 Addr 或 Operand
+	T_TYPE   = 1 << 0
+	T_INDEX  = 1 << 1
+	T_OFFSET = 1 << 2
+	T_FCONST = 1 << 3
+	T_SYM    = 1 << 4
+	T_SCONST = 1 << 5
+	T_64     = 1 << 6
+	T_GOTYPE = 1 << 7
+)
+
+// X86 指令集
+
 const (
 	AAAA = obj.ABaseAMD64 + obj.A_ARCHSPECIFIC + iota
 	AAAD
@@ -755,182 +933,4 @@ const (
 	AFUCOMIP
 
 	ALAST
-)
-
-const (
-	REG_NONE = 0
-)
-
-const (
-	// int8
-	REG_AL = obj.RBaseAMD64 + iota
-	REG_CL
-	REG_DL
-	REG_BL
-	REG_SPB
-	REG_BPB
-	REG_SIB
-	REG_DIB
-	REG_R8B
-	REG_R9B
-	REG_R10B
-	REG_R11B
-	REG_R12B
-	REG_R13B
-	REG_R14B
-	REG_R15B
-
-	// int16
-	REG_AX
-	REG_CX
-	REG_DX
-	REG_BX
-	REG_SP
-	REG_BP
-	REG_SI
-	REG_DI
-	REG_R8
-	REG_R9
-	REG_R10
-	REG_R11
-	REG_R12
-	REG_R13
-	REG_R14
-	REG_R15
-
-	// int16 高字节
-	REG_AH
-	REG_CH
-	REG_DH
-	REG_BH
-
-	// X87 80bit float
-	REG_F0
-	REG_F1
-	REG_F2
-	REG_F3
-	REG_F4
-	REG_F5
-	REG_F6
-	REG_F7
-
-	// MMX int64
-	REG_M0
-	REG_M1
-	REG_M2
-	REG_M3
-	REG_M4
-	REG_M5
-	REG_M6
-	REG_M7
-
-	// SSE/SSE2 XMM0–XMM15 int128
-	REG_X0
-	REG_X1
-	REG_X2
-	REG_X3
-	REG_X4
-	REG_X5
-	REG_X6
-	REG_X7
-	REG_X8
-	REG_X9
-	REG_X10
-	REG_X11
-	REG_X12
-	REG_X13
-	REG_X14
-	REG_X15
-
-	// 段寄存器
-	REG_CS
-	REG_SS
-	REG_DS
-	REG_ES
-	REG_FS
-	REG_GS
-
-	// 硬件系统寄存器
-	// 普通程序不会使用
-	REG_GDTR // 全局描述符表寄存器 global descriptor table register
-	REG_IDTR // 中断描述符表寄存器 interrupt descriptor table register
-	REG_LDTR // 局部描述符表寄存器 local descriptor table register
-	REG_MSW  // 任务寄存器 machine status word
-	REG_TASK // Machine Status Word, 其实是 CR0 的低 16 位. task register
-
-	// 控制寄存器
-	// 普通程序不会使用
-	REG_CR0
-	REG_CR1
-	REG_CR2
-	REG_CR3
-	REG_CR4
-	REG_CR5
-	REG_CR6
-	REG_CR7
-	REG_CR8
-	REG_CR9
-	REG_CR10
-	REG_CR11
-	REG_CR12
-	REG_CR13
-	REG_CR14
-	REG_CR15
-
-	// 硬件调试寄存器
-	REG_DR0
-	REG_DR1
-	REG_DR2
-	REG_DR3
-	REG_DR4
-	REG_DR5
-	REG_DR6
-	REG_DR7
-
-	// 测试寄存器
-	// 历史遗留, 普通程序不使用
-	REG_TR0
-	REG_TR1
-	REG_TR2
-	REG_TR3
-	REG_TR4
-	REG_TR5
-	REG_TR6
-	REG_TR7
-
-	// Thread Local Storage base
-	// Linux 通常用 FS 或 GS 的段基址寄存器。
-	// Windows 通常用 FS (32位) 或 GS (64位)
-	REG_TLS
-
-	// 寄存器变化的总数目
-	MAXREG
-
-	// 几个硬件寄存器的别名
-	REG_CR = REG_CR0
-	REG_DR = REG_DR0
-	REG_TR = REG_TR0
-
-	// 和 ABI 有关的约定
-	REGARG  = -1          // 函数调用参数
-	REGRET  = REG_AX      // 函数整数返回值
-	FREGRET = REG_X0      // 函数浮点数返回值
-	REGSP   = REG_SP      // 编译器内部符号: 栈指针寄存器, 对应 RSP
-	REGTMP  = REG_DI      // 编译器内部用作临时寄存器
-	REGCTXT = REG_DX      // 用来传递协程的上下文指针
-	REGEXT  = REG_R15     // compiler allocates external registers R15 down
-	FREGMIN = REG_X0 + 5  // first register variable
-	FREGEXT = REG_X0 + 15 // first external register
-
-	// 编译器内部的常量标志位
-	// 表示不同种类的操作数/常量类型等
-	// 用于汇编/编译器的数据结构, 如 Addr 或 Operand
-	T_TYPE   = 1 << 0
-	T_INDEX  = 1 << 1
-	T_OFFSET = 1 << 2
-	T_FCONST = 1 << 3
-	T_SYM    = 1 << 4
-	T_SCONST = 1 << 5
-	T_64     = 1 << 6
-	T_GOTYPE = 1 << 7
 )

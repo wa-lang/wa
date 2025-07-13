@@ -9,6 +9,7 @@
 //	Portions Copyright © 2005-2007 C H Forsyth (forsyth@terzarima.net)
 //	Revisions Copyright © 2000-2007 Lucent Technologies Inc. and others
 //	Portions Copyright © 2009 The Go Authors.  All rights reserved.
+//	Portions Copyright © 2025 武汉凹语言科技有限公司.  All rights reserved.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -32,7 +33,7 @@ package x86
 
 import "wa-lang.org/wa/internal/p9asm/obj"
 
-// Instruction layout.
+// 指令布局
 
 const (
 	// 数据最大对齐边界
@@ -66,6 +67,7 @@ const (
 	FuncAlign = 16
 )
 
+// 指令机器码规范信息
 type Optab struct {
 	as     int16     // 指令种类(opcode 编号), 比如 AADD、AMOV 等
 	ytab   []ytab    // 类型映射表: 描述操作数类型组合对应的编码
@@ -73,6 +75,7 @@ type Optab struct {
 	op     [23]uint8 // 输出的机器码模板
 }
 
+// 指令的操作数类别和对应的模板位置
 type ytab struct {
 	from    uint8 // 第一个操作数的类型
 	from3   uint8 // 可选的第三个操作数类型(部分指令有三个操作数, 比如 LEA)
@@ -262,86 +265,156 @@ const (
 	Maxand = 10 // in -a output width of the byte codes
 )
 
+// 覆盖表, 大小是所有可能的操作数类型组合数
+// Ymax 是枚举操作数类型(比如 Yi8、Yax、Yrl 等)的最大值
+//
+// 比如要判断以下指令:
+// 第一个操作数是 Yi8, 第二个是 Yax, 这种组合合法吗
+//
+// ycover 用于快速查找: 给定 (from, to) 操作数类型，返回一个标记值
+//
+// 例如: MOV $5, AX 会查 ycover[Yi8*Ymax + Yax]
 var ycover [Ymax * Ymax]uint8
 
+// 寄存器属性
+// 给每个寄存器编号对应一个内部属性或编号
+// MAXREG 是寄存器枚举表里寄存器的总数
+// 通常在编译阶段/汇编阶段, 根据寄存器常量快速查到其内部编号或类型
 var reg [MAXREG]int
 
+// 保存每个寄存器需要加的 REX 前缀位(R, X, B)
+// 在 x86-64 中, R8~R15 寄存器需要 REX 前缀
 var regrex [MAXREG + 1]int
 
+// 无操作数指令的模式
+// 如 NOP、RET, 都是没有操作数的指令
 var ynone = []ytab{
+	// 操作数 from/to 都是 Ynone
+	// 指令编码模式是 Zlit(输出固定字节)
+	// zoffset=1, 表示机器码模板的偏移是 1
 	{Ynone, Ynone, Ynone, Zlit, 1},
 }
 
+// SAHF指令(Store AH into Flags) 对应的2种模式
 var ysahf = []ytab{
 	{Ynone, Ynone, Ynone, Zlit, 2},
 	{Ynone, Ynone, Ynone, Zlit, 1},
 }
 
+// TEXT 伪指令
+//
+// 比如以下2个指令:
+// TEXT ·foo(SB), $0-8
+// TEXT ·foo(SB), $16-8
 var ytext = []ytab{
+	// 第一个操作数是 Ymb(内存基址/符号, 比如 ·foo(SB))
+	// 第二个操作数可以是: Ynone (省略 offset); Yi32 (提供 offset, 立即数 32)
+	// 第三个是 Ytextsize (特殊内部类型: text 的大小参数)
+	// zcase=Zpseudo: 表示这是伪指令
+	// zoffset=0/1: 区分是否带立即数
 	{Ymb, Ynone, Ytextsize, Zpseudo, 0},
 	{Ymb, Yi32, Ytextsize, Zpseudo, 1},
 }
 
+// NOP 伪指令
+//
+// 为什么要这样写写?
+// - 汇编里 NOP 有很多灵活用法(比如用于 patch/对齐/替代)
+// - 汇编器允许 NOP 带上不同来源/目标: 比如 NOP 8(SP) 和 NOP X0
+// - 这些表项就告诉汇编器: 这些组合是合法的 NOP 操作, 虽然最终不输出实际机器码
 var ynop = []ytab{
-	{Ynone, Ynone, Ynone, Zpseudo, 0},
-	{Ynone, Ynone, Yiauto, Zpseudo, 0},
-	{Ynone, Ynone, Yml, Zpseudo, 0},
-	{Ynone, Ynone, Yrf, Zpseudo, 0},
-	{Ynone, Ynone, Yxr, Zpseudo, 0},
-	{Yiauto, Ynone, Ynone, Zpseudo, 0},
-	{Yml, Ynone, Ynone, Zpseudo, 0},
-	{Yrf, Ynone, Ynone, Zpseudo, 0},
-	{Yxr, Ynone, Ynone, Zpseudo, 1},
+	// zoffset 多数是 0 (表示匹配到的编码模板偏移为 0)
+	{Ynone, Ynone, Ynone, Zpseudo, 0},  // NOP 无参数形式
+	{Ynone, Ynone, Yiauto, Zpseudo, 0}, // 目标是自动变量偏移地址
+	{Ynone, Ynone, Yml, Zpseudo, 0},    // 目标是内存地址
+	{Ynone, Ynone, Yrf, Zpseudo, 0},    // 目标是浮点寄存器 ST(x)
+	{Ynone, Ynone, Yxr, Zpseudo, 0},    // 目标是 XMM 寄存器
+	{Yiauto, Ynone, Ynone, Zpseudo, 0}, // 来源是自动变量偏移地址
+	{Yml, Ynone, Ynone, Zpseudo, 0},    // 来源是内存地址
+	{Yrf, Ynone, Ynone, Zpseudo, 0},    // 来源是浮点寄存器
+
+	// 表示对于 NOP XMM 寄存器 这种情况, 用到模板列表的第 2 个模板
+	{Yxr, Ynone, Ynone, Zpseudo, 1}, // 来源是 XMM 寄存器
 }
 
+// FUNCDATA 伪指令
+//
+// 例子: FUNCDATA $index, sym+offset(SB)
 var yfuncdata = []ytab{
+	// from 是 Yi32: 第一个参数必须是立即数(比如 $1)
+	// from3 是 Ynone: 中间没有第 3 个操作数
+	// to 是 Ym: 第二个参数必须是内存符号
 	{Yi32, Ynone, Ym, Zpseudo, 0},
 }
 
+// PCDATA 伪指令
+// 例子: PCDATA $index, $value
 var ypcdata = []ytab{
+	// from 是 Yi32: 第一个参数是立即数
+	// to 是 Yi32: 第二个参数也是立即数
 	{Yi32, Ynone, Yi32, Zpseudo, 0},
 }
 
+// 8位版本的 XOR, 汇编指令 XORB
 var yxorb = []ytab{
-	{Yi32, Ynone, Yal, Zib_, 1},
-	{Yi32, Ynone, Ymb, Zibo_m, 2},
-	{Yrb, Ynone, Ymb, Zr_m, 1},
-	{Ymb, Ynone, Yrb, Zm_r, 1},
+	{Yi32, Ynone, Yal, Zib_, 1},   // XOR $imm8, AL
+	{Yi32, Ynone, Ymb, Zibo_m, 2}, // XOR $imm8, mem8
+	{Yrb, Ynone, Ymb, Zr_m, 1},    // XOR reg8, mem8
+	{Ymb, Ynone, Yrb, Zm_r, 1},    // XOR mem8, reg8
 }
 
+// 32位版本的 XOR, 汇编指令 XORL。
 var yxorl = []ytab{
-	{Yi8, Ynone, Yml, Zibo_m, 2},
-	{Yi32, Ynone, Yax, Zil_, 1},
-	{Yi32, Ynone, Yml, Zilo_m, 2},
-	{Yrl, Ynone, Yml, Zr_m, 1},
-	{Yml, Ynone, Yrl, Zm_r, 1},
+	{Yi8, Ynone, Yml, Zibo_m, 2},  // XOR $imm8, mem32
+	{Yi32, Ynone, Yax, Zil_, 1},   // XOR $imm32, EAX
+	{Yi32, Ynone, Yml, Zilo_m, 2}, // XOR $imm32, mem32
+	{Yrl, Ynone, Yml, Zr_m, 1},    // XOR reg32, mem32
+	{Yml, Ynone, Yrl, Zm_r, 1},    // XOR mem32, reg32
 }
 
+// 32位版本的 ADD, 汇编指令 ADDL
 var yaddl = []ytab{
-	{Yi8, Ynone, Yml, Zibo_m, 2},
-	{Yi32, Ynone, Yax, Zil_, 1},
-	{Yi32, Ynone, Yml, Zilo_m, 2},
-	{Yrl, Ynone, Yml, Zr_m, 1},
-	{Yml, Ynone, Yrl, Zm_r, 1},
+	{Yi8, Ynone, Yml, Zibo_m, 2},  // ADD $imm8, mem32
+	{Yi32, Ynone, Yax, Zil_, 1},   // ADD $imm32, EAX
+	{Yi32, Ynone, Yml, Zilo_m, 2}, // ADD $imm32, mem32
+	{Yrl, Ynone, Yml, Zr_m, 1},    // ADD reg32, mem32
+	{Yml, Ynone, Yrl, Zm_r, 1},    // ADD mem32, reg32
 }
 
+// 8 位 inc
 var yincb = []ytab{
+	// 无 from
+	// 目标是 Ymb: 内存地址（byte）
+	// zcase=Zo_m: 表示输出 opcode + modrm，只对内存做 inc。
 	{Ynone, Ynone, Ymb, Zo_m, 2},
 }
 
+// 16 位 inc
 var yincw = []ytab{
+	// Yml: 目标是内存地址(word, long, qword)
 	{Ynone, Ynone, Yml, Zo_m, 2},
 }
 
+// 32 位 inc
 var yincl = []ytab{
+	// 对目标是寄存器（Yrl, 32 位寄存器）的情况
+	// zcase=Z_rp: 这是 x86 的特殊情况
+	// - 对寄存器有短编码(opcode + reg number)
+	// - 比如 INCL AX -> opcode 是 0x40+reg
 	{Ynone, Ynone, Yrl, Z_rp, 1},
+
+	// 对目标是内存(Yml)
+	// zcase=Zo_m: 普通模式(opcode + modrm)
 	{Ynone, Ynone, Yml, Zo_m, 2},
 }
 
+// 64 位 inc
 var yincq = []ytab{
+	// 只支持对内存(Yml)
 	{Ynone, Ynone, Yml, Zo_m, 2},
 }
 
+// 8 位比较
 var ycmpb = []ytab{
 	{Yal, Ynone, Yi32, Z_ib, 1},
 	{Ymb, Ynone, Yi32, Zm_ibo, 2},
@@ -349,82 +422,95 @@ var ycmpb = []ytab{
 	{Yrb, Ynone, Ymb, Zr_m, 1},
 }
 
+// 32 位比较指令 CMP
 var ycmpl = []ytab{
-	{Yml, Ynone, Yi8, Zm_ibo, 2},
-	{Yax, Ynone, Yi32, Z_il, 1},
-	{Yml, Ynone, Yi32, Zm_ilo, 2},
-	{Yml, Ynone, Yrl, Zm_r, 1},
-	{Yrl, Ynone, Yml, Zr_m, 1},
+	{Yml, Ynone, Yi8, Zm_ibo, 2},  // CMP mem32, imm8
+	{Yax, Ynone, Yi32, Z_il, 1},   // CMP EAX, imm32
+	{Yml, Ynone, Yi32, Zm_ilo, 2}, // CMP mem32, imm32
+	{Yml, Ynone, Yrl, Zm_r, 1},    // CMP mem32, reg32
+	{Yrl, Ynone, Yml, Zr_m, 1},    // CMP reg32, mem32
 }
 
+// SHRB/SHLB/SALB 等 8 位移位指令
 var yshb = []ytab{
-	{Yi1, Ynone, Ymb, Zo_m, 2},
-	{Yi32, Ynone, Ymb, Zibo_m, 2},
-	{Ycx, Ynone, Ymb, Zo_m, 2},
+	{Yi1, Ynone, Ymb, Zo_m, 2},    // shift by 1: 特殊短 opcode
+	{Yi32, Ynone, Ymb, Zibo_m, 2}, // shift by imm8（可选立即数）
+	{Ycx, Ynone, Ymb, Zo_m, 2},    // shift by CL
 }
 
+// SHRL/SHLL/SARL 等 32 位移位指令
 var yshl = []ytab{
-	{Yi1, Ynone, Yml, Zo_m, 2},
-	{Yi32, Ynone, Yml, Zibo_m, 2},
-	{Ycl, Ynone, Yml, Zo_m, 2},
-	{Ycx, Ynone, Yml, Zo_m, 2},
+	{Yi1, Ynone, Yml, Zo_m, 2},    // shift by 1: 专用短指令
+	{Yi32, Ynone, Yml, Zibo_m, 2}, // shift by imm8
+	{Ycl, Ynone, Yml, Zo_m, 2},    // shift by CL
+	{Ycx, Ynone, Yml, Zo_m, 2},    // shift by CX
 }
 
+// 8 位 TEST
 var ytestb = []ytab{
-	{Yi32, Ynone, Yal, Zib_, 1},
-	{Yi32, Ynone, Ymb, Zibo_m, 2},
-	{Yrb, Ynone, Ymb, Zr_m, 1},
-	{Ymb, Ynone, Yrb, Zm_r, 1},
+	{Yi32, Ynone, Yal, Zib_, 1},   // TEST imm8, AL
+	{Yi32, Ynone, Ymb, Zibo_m, 2}, // TEST imm8, mem8
+	{Yrb, Ynone, Ymb, Zr_m, 1},    // TEST reg8, mem8
+	{Ymb, Ynone, Yrb, Zm_r, 1},    // TEST mem8, reg8
 }
 
+// 32 位 TEST
 var ytestl = []ytab{
-	{Yi32, Ynone, Yax, Zil_, 1},
-	{Yi32, Ynone, Yml, Zilo_m, 2},
-	{Yrl, Ynone, Yml, Zr_m, 1},
-	{Yml, Ynone, Yrl, Zm_r, 1},
+	{Yi32, Ynone, Yax, Zil_, 1},   // TEST imm32, EAX
+	{Yi32, Ynone, Yml, Zilo_m, 2}, // TEST imm32, mem32
+	{Yrl, Ynone, Yml, Zr_m, 1},    // TEST reg32, mem32
+	{Yml, Ynone, Yrl, Zm_r, 1},    // TEST mem32, reg32
 }
 
+// 8 位 MOV
 var ymovb = []ytab{
-	{Yrb, Ynone, Ymb, Zr_m, 1},
-	{Ymb, Ynone, Yrb, Zm_r, 1},
-	{Yi32, Ynone, Yrb, Zib_rp, 1},
-	{Yi32, Ynone, Ymb, Zibo_m, 2},
+	{Yrb, Ynone, Ymb, Zr_m, 1},    // MOV reg8, mem8
+	{Ymb, Ynone, Yrb, Zm_r, 1},    // MOV mem8, reg8
+	{Yi32, Ynone, Yrb, Zib_rp, 1}, // MOV imm8, reg8
+	{Yi32, Ynone, Ymb, Zibo_m, 2}, // MOV imm8, mem8
+
 }
 
+// 特殊用法
+// 通常对应: 比如 BSF, BSR 需要只对目标是内存的形式, 或 MOVS, SCAS 等字符串操作指令只带一个内存地址
 var ymbs = []ytab{
-	{Ymb, Ynone, Ynone, Zm_o, 2},
+	{Ymb, Ynone, Ynone, Zm_o, 2}, // 对内存地址做“单目操作”
 }
 
+// BTL (Bit Test Long, 测试位指令)
 var ybtl = []ytab{
-	{Yi8, Ynone, Yml, Zibo_m, 2},
-	{Yrl, Ynone, Yml, Zr_m, 1},
+	{Yi8, Ynone, Yml, Zibo_m, 2}, // BT imm8, mem32: 用 imm8 做 bit index
+	{Yrl, Ynone, Yml, Zr_m, 1},   // BT reg32, mem32: 用寄存器做 bit index
 }
 
+// 16 位 MOV
 var ymovw = []ytab{
-	{Yrl, Ynone, Yml, Zr_m, 1},
-	{Yml, Ynone, Yrl, Zm_r, 1},
-	{Yi0, Ynone, Yrl, Zclr, 1},
-	{Yi32, Ynone, Yrl, Zil_rp, 1},
-	{Yi32, Ynone, Yml, Zilo_m, 2},
-	{Yiauto, Ynone, Yrl, Zaut_r, 2},
+	{Yrl, Ynone, Yml, Zr_m, 1},      // 32位寄存器 -> 内存 (word)
+	{Yml, Ynone, Yrl, Zm_r, 1},      // 内存 -> 32位寄存器 (word)
+	{Yi0, Ynone, Yrl, Zclr, 1},      // 特殊情况: MOVW $0, reg (清零)
+	{Yi32, Ynone, Yrl, Zil_rp, 1},   // MOVW $imm, reg (立即数 -> 寄存器)
+	{Yi32, Ynone, Yml, Zilo_m, 2},   // MOVW $imm, mem (立即数 -> 内存)
+	{Yiauto, Ynone, Yrl, Zaut_r, 2}, // 从自动变量偏移取值 -> 寄存器(编译器生成的自动变量访问)
 }
 
+// 32 位 MOV
 var ymovl = []ytab{
-	{Yrl, Ynone, Yml, Zr_m, 1},
-	{Yml, Ynone, Yrl, Zm_r, 1},
-	{Yi0, Ynone, Yrl, Zclr, 1},
-	{Yi32, Ynone, Yrl, Zil_rp, 1},
-	{Yi32, Ynone, Yml, Zilo_m, 2},
-	{Yml, Ynone, Ymr, Zm_r_xm, 1}, // MMX MOVD
-	{Ymr, Ynone, Yml, Zr_m_xm, 1}, // MMX MOVD
-	{Yml, Ynone, Yxr, Zm_r_xm, 2}, // XMM MOVD (32 bit)
-	{Yxr, Ynone, Yml, Zr_m_xm, 2}, // XMM MOVD (32 bit)
-	{Yiauto, Ynone, Yrl, Zaut_r, 2},
+	{Yrl, Ynone, Yml, Zr_m, 1},      // 寄存器 -> 内存
+	{Yml, Ynone, Yrl, Zm_r, 1},      // 内存 -> 寄存器
+	{Yi0, Ynone, Yrl, Zclr, 1},      // MOVL $0, reg (清零)
+	{Yi32, Ynone, Yrl, Zil_rp, 1},   // MOVL $imm, reg
+	{Yi32, Ynone, Yml, Zilo_m, 2},   // MOVL $imm, mem
+	{Yml, Ynone, Ymr, Zm_r_xm, 1},   // MMX MOVD
+	{Ymr, Ynone, Yml, Zr_m_xm, 1},   // MMX MOVD
+	{Yml, Ynone, Yxr, Zm_r_xm, 2},   // XMM MOVD (32 bit)
+	{Yxr, Ynone, Yml, Zr_m_xm, 2},   // XMM MOVD (32 bit)
+	{Yiauto, Ynone, Yrl, Zaut_r, 2}, // 从自动变量偏移取值 -> 寄存器
 }
 
+// RET 指令
 var yret = []ytab{
-	{Ynone, Ynone, Ynone, Zo_iw, 1},
-	{Yi32, Ynone, Ynone, Zo_iw, 1},
+	{Ynone, Ynone, Ynone, Zo_iw, 1}, // 普通的 RET (无参数)
+	{Yi32, Ynone, Ynone, Zo_iw, 1},  // RET imm16: 带立即数参数的返回
 }
 
 var ymovq = []ytab{
