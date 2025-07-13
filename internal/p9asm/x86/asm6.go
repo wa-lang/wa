@@ -35,6 +35,7 @@ import "wa-lang.org/wa/internal/p9asm/obj"
 // Instruction layout.
 
 const (
+	// 数据最大对齐边界
 	MaxAlign = 32 // max data alignment
 
 	// Loop alignment constants:
@@ -50,184 +51,215 @@ const (
 	// setting MaxLoopPad = 0. The code is here for reference and
 	// for future experiments.
 	//
-	LoopAlign  = 16
+
+	// 编译器可以让循环入口对齐到一个固定的边界, 以提升 CPU 指令缓存命中率和解码效率
+	LoopAlign = 16
+
+	// 对齐时允许最多插入多少字节的 NOP 指令
+	// 这里设为 0 表示 禁用 loop alignment
+	// GCC 默认会插入最多 10 字节 NOP 来对齐循环入口(甚至对齐所有跳转目标, 不仅是循环入口)
+	// Go 编译器在 2012 年测试过, 没有显著效果, 所以默认禁用
 	MaxLoopPad = 0
-	FuncAlign  = 16
+
+	// 函数入口对齐到 16 字节。
+	// 现代 x86 CPU 对 16 字节对齐的函数入口支持得更好, 性能更好
+	FuncAlign = 16
 )
 
 type Optab struct {
-	as     int16
-	ytab   []ytab
-	prefix uint8
-	op     [23]uint8
+	as     int16     // 指令种类(opcode 编号), 比如 AADD、AMOV 等
+	ytab   []ytab    // 类型映射表: 描述操作数类型组合对应的编码
+	prefix uint8     // 前缀字节, X86 有 0xF2, 0xF3, 0x66 等
+	op     [23]uint8 // 输出的机器码模板
 }
 
 type ytab struct {
-	from    uint8
-	from3   uint8
-	to      uint8
-	zcase   uint8
-	zoffset uint8
+	from    uint8 // 第一个操作数的类型
+	from3   uint8 // 可选的第三个操作数类型(部分指令有三个操作数, 比如 LEA)
+	to      uint8 // 第二个操作数的类型
+	zcase   uint8 // 对应机器码模板的序号
+	zoffset uint8 // 偏移, 用于在模板里取哪一段
 }
 
+//  描述 MOV 指令编码方式 的表项, 用来把不同操作数类型映射到不同机器码模板
 type Movtab struct {
-	as   int16
-	ft   uint8
-	f3t  uint8
-	tt   uint8
-	code uint8
-	op   [4]uint8
+	as   int16    // 指令代号, 比如 AMOVB, AMOVW, AMOVL, 代表不同大小的 MOV 指令
+	ft   uint8    // 第一个操作数(from)的类型(内部枚举, 比如寄存器/内存/立即数等)
+	f3t  uint8    // 可选第三个操作数的类型. 多数情况下是 0, 只对少数指令有用, 比如三操作数指令
+	tt   uint8    // 第二个操作数(to)的类型
+	code uint8    // 编码方式编号，告诉后端怎么生成机器码
+	op   [4]uint8 // 机器码模板, 最多 4 字节(因为 MOV 类指令通常很短)
 }
 
+// 操作数类型枚举表
+// 用来告诉汇编器在指令匹配
+// 比如 Optab、Movtab 时, 操作数属于哪一类
+//
+// 每个操作数(寄存器/立即数/内存/段寄存器等)在生成机器码时都要归类:
+// - 是寄存器还是内存？
+// - 是 8 位还是 32 位？
+// - 是普通寄存器还是浮点寄存器？
+// - 是立即数还是绝对地址？
+//
 const (
-	Yxxx = iota
-	Ynone
-	Yi0 // $0
-	Yi1 // $1
-	Yi8 // $x, x fits in int8
-	Yu8 // $x, x fits in uint8
-	Yu7 // $x, x in 0..127 (fits in both int8 and uint8)
-	Ys32
-	Yi32
-	Yi64
-	Yiauto
-	Yal
-	Ycl
-	Yax
-	Ycx
-	Yrb
-	Yrl
+	Yxxx  = iota // 空类型
+	Ynone        // 无操作数
+
+	// 立即数
+	Yi0    // $0
+	Yi1    // $1
+	Yi8    // $x, x fits in int8
+	Yu8    // $x, x fits in uint8
+	Yu7    // $x, x in 0..127 (fits in both int8 and uint8)
+	Ys32   // 符号(符号常量)
+	Yi32   // int32
+	Yi64   // int64
+	Yiauto // ?
+
+	// 寄存器分类
+	Yal   // AL
+	Ycl   // CL
+	Yax   // AX
+	Ycx   // CX
+	Yrb   // 通用 8 位寄存器(比如 AL, BL, CL, DL, SIL, DIL, BPL, SPL, R8B-R15B)
+	Yrl   // 通用 32/64 位寄存器(比如 AX, BX, CX, DX, SI, DI, BP, SP, R8~R15)
 	Yrl32 // Yrl on 32-bit system
-	Yrf
-	Yf0
-	Yrx
-	Ymb
-	Yml
-	Ym
-	Ybr
-	Ycs
-	Yss
-	Yds
-	Yes
-	Yfs
-	Ygs
-	Ygdtr
-	Yidtr
-	Yldtr
-	Ymsw
-	Ytask
-	Ycr0
-	Ycr1
-	Ycr2
-	Ycr3
-	Ycr4
-	Ycr5
-	Ycr6
-	Ycr7
-	Ycr8
-	Ydr0
-	Ydr1
-	Ydr2
-	Ydr3
-	Ydr4
-	Ydr5
-	Ydr6
-	Ydr7
-	Ytr0
-	Ytr1
-	Ytr2
-	Ytr3
-	Ytr4
-	Ytr5
-	Ytr6
-	Ytr7
-	Ymr
-	Ymm
-	Yxr
-	Yxm
-	Ytls
-	Ytextsize
-	Yindir
-	Ymax
+	Yrf   // 浮点寄存器 ST(0) - ST(7)
+	Yf0   // ST(0)(浮点堆栈栈顶)
+	Yrx   // XMM 寄存器(XMM0~XMM15)
+
+	// 内存寻址/寄存器
+	Ymb       // 内存地址, 目标是 8 位数据
+	Yml       // 内存地址, 目标是 32/64 位数据
+	Ym        // 泛指内存地址
+	Ybr       // 段寄存器(CS, SS, DS, ES, FS, GS)
+	Ycs       // 段寄存器 CS
+	Yss       // 段寄存器 SS
+	Yds       // 段寄存器 DS
+	Yes       // 段寄存器 ES
+	Yfs       // 段寄存器 FS
+	Ygs       // 段寄存器 GS
+	Ygdtr     // GDTR
+	Yidtr     // IDTR
+	Yldtr     // LDTR
+	Ymsw      // 机器状态字
+	Ytask     // Task Register
+	Ycr0      // CR0 控制寄存器
+	Ycr1      //
+	Ycr2      //
+	Ycr3      //
+	Ycr4      //
+	Ycr5      //
+	Ycr6      //
+	Ycr7      //
+	Ycr8      //
+	Ydr0      // DR0 调试寄存器
+	Ydr1      //
+	Ydr2      //
+	Ydr3      //
+	Ydr4      //
+	Ydr5      //
+	Ydr6      //
+	Ydr7      //
+	Ytr0      // 测试寄存器(历史遗留)
+	Ytr1      //
+	Ytr2      //
+	Ytr3      //
+	Ytr4      //
+	Ytr5      //
+	Ytr6      //
+	Ytr7      //
+	Ymr       // MMX 寄存器
+	Ymm       // YMM 寄存器(AVX)
+	Yxr       // XMM 寄存器
+	Yxm       // XMM 内存操作数（movaps/movdqa 等指令里)
+	Ytls      // TLS 基址寄存器(FS/GS)
+	Ytextsize // .text 指令的大小参数(比如 TEXT sym(SB), 4, $40-8)
+	Yindir    // 间接寻址
+	Ymax      // 最大值, 通常用于边界检查或数组大小
 )
 
+// 指令模板/编码模式(zcase)
 const (
-	Zxxx = iota
-	Zlit
-	Zlitm_r
-	Z_rp
-	Zbr
-	Zcall
-	Zcallcon
-	Zcallduff
-	Zcallind
-	Zcallindreg
-	Zib_
-	Zib_rp
-	Zibo_m
-	Zibo_m_xm
-	Zil_
-	Zil_rp
-	Ziq_rp
-	Zilo_m
-	Ziqo_m
-	Zjmp
-	Zjmpcon
-	Zloop
-	Zo_iw
-	Zm_o
-	Zm_r
-	Zm2_r
-	Zm_r_xm
-	Zm_r_i_xm
-	Zm_r_3d
-	Zm_r_xm_nr
-	Zr_m_xm_nr
-	Zibm_r /* mmx1,mmx2/mem64,imm8 */
-	Zmb_r
-	Zaut_r
-	Zo_m
-	Zo_m64
-	Zpseudo
-	Zr_m
-	Zr_m_xm
-	Zrp_
-	Z_ib
-	Z_il
-	Zm_ibo
-	Zm_ilo
-	Zib_rr
-	Zil_rr
-	Zclr
-	Zbyte
-	Zmax
+	Zxxx        = iota // 无效
+	Zlit               // 输出固定的字节序列(字面值)
+	Zlitm_r            // 字面值 + 寄存器
+	Z_rp               // 寄存器到寄存器/内存（Reg / memory）
+	Zbr                // 分支指令：短跳、长跳
+	Zcall              // 绝对地址 call
+	Zcallcon           // call 符号常量
+	Zcallduff          // duff’s device 调用
+	Zcallind           // 间接调用（通过内存地址）
+	Zcallindreg        // 通过寄存器调用
+	Zib_               // 立即数（8位）
+	Zib_rp             // opcode + 立即数8 + reg/mem
+	Zibo_m             // opcode + imm8 + 内存操作数
+	Zibo_m_xm          // opcode + imm8 + 内存 + xmm 寄存器
+	Zil_               // 立即数（32位）
+	Zil_rp             // opcode + 立即数32 + reg/mem
+	Ziq_rp             // 立即数（64位）到寄存器/内存
+	Zilo_m             // opcode + 32位立即数到内存
+	Ziqo_m             // opcode + 64位立即数到内存
+	Zjmp               // 无条件跳转
+	Zjmpcon            // 条件跳转
+	Zloop              // loop 指令
+	Zo_iw              // opcode 后跟 16 位立即数
+	Zm_o               // 内存偏移到 opcode（比如 MOV 内存偏移量到 AL）
+	Zm_r               // 内存到寄存器
+	Zm2_r              // 两字节内存到寄存器（16位 load）
+	Zm_r_xm            // 内存到 XMM 寄存器
+	Zm_r_i_xm          // 内存+立即数到 XMM
+	Zm_r_3d            // 内存到 3DNow! 寄存器
+	Zm_r_xm_nr         // 内存到寄存器，不需要 REX 前缀
+	Zr_m_xm_nr         // 寄存器到内存，不需要 REX 前缀
+	Zibm_r             // mmx1,mmx2/mem64,imm8
+	Zmb_r              // 内存(字节)到寄存器
+	Zaut_r             // 自动变量到寄存器（栈变量寻址）
+	Zo_m               // opcode 后跟内存地址
+	Zo_m64             // opcode 后跟 64 位内存地址
+	Zpseudo            // 伪指令, 不需要生成机器码
+	Zr_m               // 寄存器到内存
+	Zr_m_xm            // opcode + reg (xmm) + 内存
+	Zrp_               // opcode + reg/mem
+	Z_ib               // opcode 后跟 8 位立即数
+	Z_il               // opcode 后跟 32 位立即数
+	Zm_ibo             // 内存地址 + 8位立即数
+	Zm_ilo             // 内存地址 + 32位立即数
+	Zib_rr             // opcode + imm8 + reg,reg
+	Zil_rr             // opcode + imm32 + reg,reg
+	Zclr               // 清零指令（特殊编码）
+	Zbyte              // 输出原始字节（db 0x90 等）
+	Zmax               // 枚举最大值(通常用来做数组大小)
 )
 
+// 指令前缀/REX前缀/内部flag
+// 例如: 指令需要 f2+0f 前缀, 对应 Pf2|Pm
 const (
-	Px  = 0
-	Px1 = 1    // symbolic; exact value doesn't matter
-	P32 = 0x32 /* 32-bit only */
-	Pe  = 0x66 /* operand escape */
-	Pm  = 0x0f /* 2byte opcode escape */
-	Pq  = 0xff /* both escapes: 66 0f */
-	Pb  = 0xfe /* byte operands */
-	Pf2 = 0xf2 /* xmm escape 1: f2 0f */
-	Pf3 = 0xf3 /* xmm escape 2: f3 0f */
-	Pq3 = 0x67 /* xmm escape 3: 66 48 0f */
-	Pw  = 0x48 /* Rex.w */
+	Px  = 0    // 默认无前缀
+	Px1 = 1    // symbolic; exact value doesn't matter, 符号型占位（只在内部标记时用，具体值不重要）
+	P32 = 0x32 // 32-bit only
+	Pe  = 0x66 // operand escape
+	Pm  = 0x0f // 2byte opcode escape
+	Pq  = 0xff // both escapes: 66 0f
+	Pb  = 0xfe // byte operands
+	Pf2 = 0xf2 // xmm escape 1: f2 0f
+	Pf3 = 0xf3 // xmm escape 2: f3 0f
+	Pq3 = 0x67 // xmm escape 3: 66 48 0f
+	Pw  = 0x48 // Rex.w
 	Pw8 = 0x90 // symbolic; exact value doesn't matter
-	Py  = 0x80 /* defaults to 64-bit mode */
+	Py  = 0x80 // defaults to 64-bit mode
 	Py1 = 0x81 // symbolic; exact value doesn't matter
 	Py3 = 0x83 // symbolic; exact value doesn't matter
 
-	Rxf = 1 << 9 /* internal flag for Rxr on from */
-	Rxt = 1 << 8 /* internal flag for Rxr on to */
-	Rxw = 1 << 3 /* =1, 64-bit operand size */
-	Rxr = 1 << 2 /* extend modrm reg */
-	Rxx = 1 << 1 /* extend sib index */
-	Rxb = 1 << 0 /* extend modrm r/m, sib base, or opcode reg */
+	// REX 前缀标志位
+	Rxf = 1 << 9 // internal flag for Rxr on from
+	Rxt = 1 << 8 // internal flag for Rxr on to
+	Rxw = 1 << 3 // =1, 64-bit operand size
+	Rxr = 1 << 2 // extend modrm reg
+	Rxx = 1 << 1 // extend sib index
+	Rxb = 1 << 0 // extend modrm r/m, sib base, or opcode reg
 
-	Maxand = 10 /* in -a output width of the byte codes */
+	Maxand = 10 // in -a output width of the byte codes
 )
 
 var ycover [Ymax * Ymax]uint8
