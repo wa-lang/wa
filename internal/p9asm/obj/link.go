@@ -154,6 +154,7 @@ type Addr struct {
 	Offset int64
 	Width  int64
 	Sym    *LSym
+	Gotype *LSym
 
 	// argument value:
 	//	for TYPE_SCONST, a string
@@ -222,6 +223,8 @@ type Prog struct {
 	Tt     uint8
 	Isize  uint8
 	Mode   int8
+
+	Info ProgInfo
 }
 
 // From3Type returns From3.Type, or TYPE_NONE when From3 is nil.
@@ -240,61 +243,15 @@ func (p *Prog) From3Offset() int64 {
 	return p.From3.Offset
 }
 
-// Link holds the context for writing object code from a compiler
-// to be linker input or for reading that input into the linker.
-type Link struct {
-	Headtype       int
-	Arch           *LinkArch
-	Debugzerostack int32
-
-	Flag_dynlink bool
-	Bso          *Biobuf
-	Hash         map[SymVer]*LSym
-	Imports      []string
-	Plist        *Plist
-	Plast        *Plist
-	Rexflag      int
-	Asmode       int
-	Andptr       []byte
-	And          [100]uint8
-	Flag_shared  int32
-	Curp         *Prog
-	Tlsg         *LSym
-
-	Diag func(string, ...interface{})
-	Mode int
-
-	Cursym *LSym
+// ProgInfo holds information about the instruction for use
+// by clients such as the compiler. The exact meaning of this
+// data is up to the client and is not interpreted by the cmd/internal/obj/... packages.
+type ProgInfo struct {
+	Flags    uint32 // flag bits
+	Reguse   uint64 // registers implicitly used by this instruction
+	Regset   uint64 // registers implicitly set by this instruction
+	Regindex uint64 // registers used by addressing mode
 }
-
-type SymVer struct {
-	Name    string
-	Version int // TODO: make int16 to match LSym.Version?
-}
-
-// LinkArch is the definition of a single architecture.
-type LinkArch struct {
-	ByteOrder  binary.ByteOrder
-	Name       string
-	Thechar    int
-	Preprocess func(*Link, *LSym)
-	Assemble   func(*Link, *LSym)
-	Follow     func(*Link, *LSym)
-	Progedit   func(*Link, *Prog)
-	UnaryDst   map[int]bool // Instruction takes one operand, a destination.
-	Minlc      int
-	Ptrsize    int
-	Regsize    int
-}
-
-/* executable header types */
-const (
-	Hunknown = 0 + iota
-	Hdarwin
-	Helf
-	Hlinux
-	Hwindows
-)
 
 // Prog.as opcodes.
 // These are the portable opcodes, common to all architectures.
@@ -312,8 +269,6 @@ const (
 	ADUFFCOPY
 	ADUFFZERO
 	AEND
-	APCALIGN
-	APCALIGNMAX // currently x86, amd64 and arm64
 	AFUNCDATA
 	AGLOBL
 	AJMP
@@ -482,6 +437,115 @@ const (
 type Pcdata struct {
 	P []byte
 }
+
+// Pcdata iterator.
+//      for(pciterinit(ctxt, &it, &pcd); !it.done; pciternext(&it)) { it.value holds in [it.pc, it.nextpc) }
+type Pciter struct {
+	d       Pcdata
+	p       []byte
+	pc      uint32
+	nextpc  uint32
+	pcscale uint32
+	value   int32
+	start   int
+	done    int
+}
+
+// symbol version, incremented each time a file is loaded.
+// version==1 is reserved for savehist.
+const (
+	HistVersion = 1
+)
+
+// Link holds the context for writing object code from a compiler
+// to be linker input or for reading that input into the linker.
+type Link struct {
+	Goarm              int32
+	Headtype           int
+	Arch               *LinkArch
+	Debugasm           int32
+	Debugvlog          int32
+	Debugzerostack     int32
+	Debugdivmod        int32
+	Debugpcln          int32
+	Flag_shared        int32
+	Flag_dynlink       bool
+	Bso                *Biobuf
+	Pathname           string
+	Windows            int32
+	Goroot             string
+	Goroot_final       string
+	Enforce_data_order int32
+	Hash               map[SymVer]*LSym
+	LineHist           LineHist
+	Imports            []string
+	Plist              *Plist
+	Plast              *Plist
+	Sym_div            *LSym
+	Sym_divu           *LSym
+	Sym_mod            *LSym
+	Sym_modu           *LSym
+	Tlsg               *LSym
+	Plan9privates      *LSym
+	Curp               *Prog
+	Printp             *Prog
+	Blitrl             *Prog
+	Elitrl             *Prog
+	Rexflag            int
+	Rep                int
+	Repn               int
+	Lock               int
+	Asmode             int
+	Andptr             []byte
+	And                [100]uint8
+	Instoffset         int64
+	Autosize           int32
+	Armsize            int32
+	Pc                 int64
+	Tlsoffset          int
+	Diag               func(string, ...interface{})
+	Mode               int
+	Cursym             *LSym
+	Version            int
+	Textp              *LSym
+	Etextp             *LSym
+}
+
+type SymVer struct {
+	Name    string
+	Version int // TODO: make int16 to match LSym.Version?
+}
+
+// LinkArch is the definition of a single architecture.
+type LinkArch struct {
+	ByteOrder  binary.ByteOrder
+	Name       string
+	Thechar    int
+	Preprocess func(*Link, *LSym)
+	Assemble   func(*Link, *LSym)
+	Follow     func(*Link, *LSym)
+	Progedit   func(*Link, *Prog)
+	UnaryDst   map[int]bool // Instruction takes one operand, a destination.
+	Minlc      int
+	Ptrsize    int
+	Regsize    int
+}
+
+/* executable header types */
+const (
+	Hunknown = 0 + iota
+	Hdarwin
+	Hdragonfly
+	Helf
+	Hfreebsd
+	Hlinux
+	Hnacl
+	Hnetbsd
+	Hopenbsd
+	Hplan9
+	Hsolaris
+	Hwindows
+)
 
 type Plist struct {
 	Name    *LSym

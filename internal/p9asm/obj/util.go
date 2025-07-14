@@ -6,14 +6,26 @@ package obj
 
 import (
 	"bufio"
+	"bytes"
 	"fmt"
 	"io"
 	"log"
 	"os"
+	"strconv"
 	"strings"
+	"time"
 )
 
 const REG_NONE = 0
+
+var start time.Time
+
+func Cputime() float64 {
+	if start.IsZero() {
+		start = time.Now()
+	}
+	return time.Since(start).Seconds()
+}
 
 type Biobuf struct {
 	f       *os.File
@@ -181,72 +193,139 @@ func Bterm(b *Biobuf) error {
 	return err
 }
 
+func envOr(key, value string) string {
+	if x := os.Getenv(key); x != "" {
+		return x
+	}
+	return value
+}
+
+func Getgoroot() string {
+	return envOr("GOROOT", "")
+}
+
+func Getgoarch() string {
+	return envOr("GOARCH", "")
+}
+
+func Getgoos() string {
+	return envOr("GOOS", "")
+}
+
+func Atoi(s string) int {
+	i, _ := strconv.Atoi(s)
+	return i
+}
+
+func (p *Prog) Line() string {
+	return p.Ctxt.LineHist.LineString(int(p.Lineno))
+}
+
+var armCondCode = []string{
+	".EQ",
+	".NE",
+	".CS",
+	".CC",
+	".MI",
+	".PL",
+	".VS",
+	".VC",
+	".HI",
+	".LS",
+	".GE",
+	".LT",
+	".GT",
+	".LE",
+	"",
+	".NV",
+}
+
+/* ARM scond byte */
+const (
+	C_SCOND     = (1 << 4) - 1
+	C_SBIT      = 1 << 4
+	C_PBIT      = 1 << 5
+	C_WBIT      = 1 << 6
+	C_FBIT      = 1 << 7
+	C_UBIT      = 1 << 7
+	C_SCOND_XOR = 14
+)
+
+// CConv formats ARM condition codes.
+func CConv(s uint8) string {
+	if s == 0 {
+		return ""
+	}
+	sc := armCondCode[(s&C_SCOND)^C_SCOND_XOR]
+	if s&C_SBIT != 0 {
+		sc += ".S"
+	}
+	if s&C_PBIT != 0 {
+		sc += ".P"
+	}
+	if s&C_WBIT != 0 {
+		sc += ".W"
+	}
+	if s&C_UBIT != 0 { /* ambiguous with FBIT */
+		sc += ".U"
+	}
+	return sc
+}
+
+func (p *Prog) String() string {
+	if p.Ctxt == nil {
+		return "<Prog without ctxt>"
+	}
+
+	sc := CConv(p.Scond)
+
+	var buf bytes.Buffer
+
+	fmt.Fprintf(&buf, "%.5d (%v)\t%v%s", p.Pc, p.Line(), Aconv(int(p.As)), sc)
+	sep := "\t"
+	if p.From.Type != TYPE_NONE {
+		fmt.Fprintf(&buf, "%s%v", sep, Dconv(p, &p.From))
+		sep = ", "
+	}
+	if p.Reg != REG_NONE {
+		// Should not happen but might as well show it if it does.
+		fmt.Fprintf(&buf, "%s%v", sep, Rconv(int(p.Reg)))
+		sep = ", "
+	}
+	if p.From3Type() != TYPE_NONE {
+		if p.From3.Type == TYPE_CONST && (p.As == ADATA || p.As == ATEXT || p.As == AGLOBL) {
+			// Special case - omit $.
+			fmt.Fprintf(&buf, "%s%d", sep, p.From3.Offset)
+		} else {
+			fmt.Fprintf(&buf, "%s%v", sep, Dconv(p, p.From3))
+		}
+		sep = ", "
+	}
+	if p.To.Type != TYPE_NONE {
+		fmt.Fprintf(&buf, "%s%v", sep, Dconv(p, &p.To))
+	}
+	if p.RegTo2 != REG_NONE {
+		fmt.Fprintf(&buf, "%s%v", sep, Rconv(int(p.RegTo2)))
+	}
+	return buf.String()
+}
+
 func (ctxt *Link) NewProg() *Prog {
 	p := new(Prog) // should be the only call to this; all others should use ctxt.NewProg
 	p.Ctxt = ctxt
 	return p
 }
 
-const (
-	ABase386 = (1 + iota) << 11
-	ABaseARM
-	ABaseAMD64
-	ABaseARM64
-	ABaseLoong64
-	ABaseRISCV
-	ABaseWasm
-
-	AllowedOpCodes = 1 << 11            // The number of opcodes available for any given architecture.
-	AMask          = AllowedOpCodes - 1 // AND with this to use the opcode as an array index.
-)
-
-type opSet struct {
-	lo    int
-	names []string
+func (ctxt *Link) Line(n int) string {
+	return ctxt.LineHist.LineString(n)
 }
 
-// Not even worth sorting
-var aSpace []opSet
-
-// RegisterOpcode binds a list of instruction names
-// to a given instruction number range.
-func RegisterOpcode(lo int, Anames []string) {
-	aSpace = append(aSpace, opSet{lo, Anames})
+func Getcallerpc(interface{}) uintptr {
+	return 1
 }
 
-func Aconv(a int) string {
-	if a < int(A_ARCHSPECIFIC) {
-		return Anames[a]
-	}
-	for i := range aSpace {
-		as := &aSpace[i]
-		if as.lo <= a && a < as.lo+len(as.names) {
-			return as.names[a-as.lo]
-		}
-	}
-	return fmt.Sprintf("A???%d", a)
-}
-
-var Anames = []string{
-	"XXX",
-	"CALL",
-	"CHECKNIL",
-	"DATA",
-	"DUFFCOPY",
-	"DUFFZERO",
-	"END",
-	"FUNCDATA",
-	"GLOBL",
-	"JMP",
-	"NOP",
-	"PCDATA",
-	"RET",
-	"TEXT",
-	"TYPE",
-	"UNDEF",
-	"USEFIELD",
-	"VARDEF",
-	"VARKILL",
+func (ctxt *Link) Dconv(a *Addr) string {
+	return Dconv(nil, a)
 }
 
 func Dconv(p *Prog, a *Addr) string {
@@ -410,6 +489,31 @@ type regSet struct {
 // Not even worth sorting.
 var regSpace []regSet
 
+/*
+	Each architecture defines a register space as a unique
+	integer range.
+	Here is the list of architectures and the base of their register spaces.
+*/
+
+const (
+	// Because of masking operations in the encodings, each register
+	// space should start at 0 modulo some power of 2.
+	RBase386     = 1 * 1024
+	RBaseAMD64   = 2 * 1024
+	RBaseARM     = 3 * 1024
+	RBaseARM64   = 8 * 1024  // range [8k, 13k)
+	RBaseRISCV   = 15 * 1024 // range [15k, 16k)
+	RBaseWasm    = 16 * 1024
+	RBaseLOONG64 = 19 * 1024 // range [19K, 22k)
+)
+
+// RegisterRegister binds a pretty-printer (Rconv) for register
+// numbers to a given register number range.  Lo is inclusive,
+// hi exclusive (valid registers are lo through hi-1).
+func RegisterRegister(lo, hi int, Rconv func(int) string) {
+	regSpace = append(regSpace, regSet{lo, hi, Rconv})
+}
+
 func Rconv(reg int) string {
 	if reg == REG_NONE {
 		return "NONE"
@@ -447,28 +551,73 @@ func regListConv(list int) string {
 }
 
 /*
-	Each architecture defines a register space as a unique
+	Each architecture defines an instruction (A*) space as a unique
 	integer range.
-	Here is the list of architectures and the base of their register spaces.
+	Global opcodes like CALL start at 0; the architecture-specific ones
+	start at a distinct, big-maskable offsets.
+	Here is the list of architectures and the base of their opcode spaces.
 */
 
 const (
-	// Because of masking operations in the encodings, each register
-	// space should start at 0 modulo some power of 2.
-	RBase386     = 1 * 1024
-	RBaseAMD64   = 2 * 1024
-	RBaseARM     = 3 * 1024
-	RBaseARM64   = 8 * 1024  // range [8k, 13k)
-	RBaseRISCV   = 15 * 1024 // range [15k, 16k)
-	RBaseWasm    = 16 * 1024
-	RBaseLOONG64 = 19 * 1024 // range [19K, 22k)
+	ABase386 = (1 + iota) << 11
+	ABaseARM
+	ABaseAMD64
+	ABaseARM64
+	ABaseLoong64
+	ABaseRISCV
+	ABaseWasm
+
+	AllowedOpCodes = 1 << 11            // The number of opcodes available for any given architecture.
+	AMask          = AllowedOpCodes - 1 // AND with this to use the opcode as an array index.
 )
 
-// RegisterRegister binds a pretty-printer (Rconv) for register
-// numbers to a given register number range.  Lo is inclusive,
-// hi exclusive (valid registers are lo through hi-1).
-func RegisterRegister(lo, hi int, Rconv func(int) string) {
-	regSpace = append(regSpace, regSet{lo, hi, Rconv})
+type opSet struct {
+	lo    int
+	names []string
+}
+
+// Not even worth sorting
+var aSpace []opSet
+
+// RegisterOpcode binds a list of instruction names
+// to a given instruction number range.
+func RegisterOpcode(lo int, Anames []string) {
+	aSpace = append(aSpace, opSet{lo, Anames})
+}
+
+func Aconv(a int) string {
+	if a < A_ARCHSPECIFIC {
+		return Anames[a]
+	}
+	for i := range aSpace {
+		as := &aSpace[i]
+		if as.lo <= a && a < as.lo+len(as.names) {
+			return as.names[a-as.lo]
+		}
+	}
+	return fmt.Sprintf("A???%d", a)
+}
+
+var Anames = []string{
+	"XXX",
+	"CALL",
+	"CHECKNIL",
+	"DATA",
+	"DUFFCOPY",
+	"DUFFZERO",
+	"END",
+	"FUNCDATA",
+	"GLOBL",
+	"JMP",
+	"NOP",
+	"PCDATA",
+	"RET",
+	"TEXT",
+	"TYPE",
+	"UNDEF",
+	"USEFIELD",
+	"VARDEF",
+	"VARKILL",
 }
 
 func Bool2int(b bool) int {

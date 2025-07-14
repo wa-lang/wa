@@ -130,6 +130,9 @@ func Writeobjdirect(ctxt *Link, b *Biobuf) {
 	var edata *LSym
 	for pl := ctxt.Plist; pl != nil; pl = pl.Link {
 		for p = pl.Firstpc; p != nil; p = plink {
+			if ctxt.Debugasm != 0 && ctxt.Debugvlog != 0 {
+				fmt.Printf("obj: %v\n", p)
+			}
 			plink = p.Link
 			p.Link = nil
 
@@ -156,6 +159,7 @@ func Writeobjdirect(ctxt *Link, b *Biobuf) {
 				a.Asym = p.From.Sym
 				a.Aoffset = int32(p.From.Offset)
 				a.Name = int16(p.From.Name)
+				a.Gotype = p.From.Gotype
 				a.Link = curtext.Autom
 				curtext.Autom = a
 				continue
@@ -323,6 +327,75 @@ func Writeobjdirect(ctxt *Link, b *Biobuf) {
 }
 
 func writesym(ctxt *Link, b *Biobuf, s *LSym) {
+	if ctxt.Debugasm != 0 {
+		fmt.Fprintf(ctxt.Bso, "%s ", s.Name)
+		if s.Version != 0 {
+			fmt.Fprintf(ctxt.Bso, "v=%d ", s.Version)
+		}
+		if s.Type != 0 {
+			fmt.Fprintf(ctxt.Bso, "t=%d ", s.Type)
+		}
+		if s.Dupok != 0 {
+			fmt.Fprintf(ctxt.Bso, "dupok ")
+		}
+		if s.Cfunc != 0 {
+			fmt.Fprintf(ctxt.Bso, "cfunc ")
+		}
+		if s.Nosplit != 0 {
+			fmt.Fprintf(ctxt.Bso, "nosplit ")
+		}
+		fmt.Fprintf(ctxt.Bso, "size=%d value=%d", int64(s.Size), int64(s.Value))
+		if s.Type == STEXT {
+			fmt.Fprintf(ctxt.Bso, " args=%#x locals=%#x", uint64(s.Args), uint64(s.Locals))
+			if s.Leaf != 0 {
+				fmt.Fprintf(ctxt.Bso, " leaf")
+			}
+		}
+
+		fmt.Fprintf(ctxt.Bso, "\n")
+		for p := s.Text; p != nil; p = p.Link {
+			fmt.Fprintf(ctxt.Bso, "\t%#04x %v\n", uint(int(p.Pc)), p)
+		}
+		var c int
+		var j int
+		for i := 0; i < len(s.P); {
+			fmt.Fprintf(ctxt.Bso, "\t%#04x", uint(i))
+			for j = i; j < i+16 && j < len(s.P); j++ {
+				fmt.Fprintf(ctxt.Bso, " %02x", s.P[j])
+			}
+			for ; j < i+16; j++ {
+				fmt.Fprintf(ctxt.Bso, "   ")
+			}
+			fmt.Fprintf(ctxt.Bso, "  ")
+			for j = i; j < i+16 && j < len(s.P); j++ {
+				c = int(s.P[j])
+				if ' ' <= c && c <= 0x7e {
+					fmt.Fprintf(ctxt.Bso, "%c", c)
+				} else {
+					fmt.Fprintf(ctxt.Bso, ".")
+				}
+			}
+
+			fmt.Fprintf(ctxt.Bso, "\n")
+			i += 16
+		}
+
+		var r *Reloc
+		var name string
+		for i := 0; i < len(s.R); i++ {
+			r = &s.R[i]
+			name = ""
+			if r.Sym != nil {
+				name = r.Sym.Name
+			}
+			if ctxt.Arch.Thechar == '5' || ctxt.Arch.Thechar == '9' {
+				fmt.Fprintf(ctxt.Bso, "\trel %d+%d t=%d %s+%x\n", int(r.Off), r.Siz, r.Type, name, uint64(int64(r.Add)))
+			} else {
+				fmt.Fprintf(ctxt.Bso, "\trel %d+%d t=%d %s+%d\n", int(r.Off), r.Siz, r.Type, name, int64(r.Add))
+			}
+		}
+	}
+
 	Bputc(b, 0xfe)
 	wrint(b, int64(s.Type))
 	wrstring(b, s.Name)

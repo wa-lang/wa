@@ -60,6 +60,9 @@ func savedata(ctxt *Link, s *LSym, p *Prog, pn string) {
 	if off < 0 || siz < 0 || off >= 1<<30 || siz >= 100 {
 		mangle(pn)
 	}
+	if ctxt.Enforce_data_order != 0 && off < int32(len(s.P)) {
+		ctxt.Diag("data out of order (already have %d)\n%v", len(s.P), p)
+	}
 	Symgrow(ctxt, s, int64(off+siz))
 
 	switch int(p.To.Type) {

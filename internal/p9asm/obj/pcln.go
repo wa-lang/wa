@@ -5,6 +5,7 @@
 package obj
 
 import (
+	"fmt"
 	"log"
 )
 
@@ -27,18 +28,32 @@ func addvarint(ctxt *Link, d *Pcdata, val uint32) {
 // where func is the function, val is the current value, p is the instruction being
 // considered, and arg can be used to further parameterize valfunc.
 func funcpctab(ctxt *Link, dst *Pcdata, func_ *LSym, desc string, valfunc func(*Link, *LSym, int32, *Prog, int32, interface{}) int32, arg interface{}) {
+	// To debug a specific function, uncomment second line and change name.
+	dbg := 0
+
 	//dbg = strcmp(func->name, "main.main") == 0;
 	//dbg = strcmp(desc, "pctofile") == 0;
 
+	ctxt.Debugpcln += int32(dbg)
+
 	dst.P = dst.P[:0]
+
+	if ctxt.Debugpcln != 0 {
+		fmt.Fprintf(ctxt.Bso, "funcpctab %s [valfunc=%s]\n", func_.Name, desc)
+	}
 
 	val := int32(-1)
 	oldval := val
 	if func_.Text == nil {
+		ctxt.Debugpcln -= int32(dbg)
 		return
 	}
 
 	pc := func_.Text.Pc
+
+	if ctxt.Debugpcln != 0 {
+		fmt.Fprintf(ctxt.Bso, "%6x %6d %v\n", uint64(pc), val, func_.Text)
+	}
 
 	started := int32(0)
 	var delta uint32
@@ -48,6 +63,9 @@ func funcpctab(ctxt *Link, dst *Pcdata, func_ *LSym, desc string, valfunc func(*
 
 		if val == oldval && started != 0 {
 			val = valfunc(ctxt, func_, val, p, 1, arg)
+			if ctxt.Debugpcln != 0 {
+				fmt.Fprintf(ctxt.Bso, "%6x %6s %v\n", uint64(int64(p.Pc)), "", p)
+			}
 			continue
 		}
 
@@ -57,6 +75,9 @@ func funcpctab(ctxt *Link, dst *Pcdata, func_ *LSym, desc string, valfunc func(*
 		// for a true instruction boundary in the program.
 		if p.Link != nil && p.Link.Pc == p.Pc {
 			val = valfunc(ctxt, func_, val, p, 1, arg)
+			if ctxt.Debugpcln != 0 {
+				fmt.Fprintf(ctxt.Bso, "%6x %6s %v\n", uint64(int64(p.Pc)), "", p)
+			}
 			continue
 		}
 
@@ -73,6 +94,10 @@ func funcpctab(ctxt *Link, dst *Pcdata, func_ *LSym, desc string, valfunc func(*
 		// and the pc deltas are unsigned. Both kinds of deltas are sent
 		// as variable-length little-endian base-128 integers,
 		// where the 0x80 bit indicates that the integer continues.
+
+		if ctxt.Debugpcln != 0 {
+			fmt.Fprintf(ctxt.Bso, "%6x %6d %v\n", uint64(int64(p.Pc)), val, p)
+		}
 
 		if started != 0 {
 			addvarint(ctxt, dst, uint32((p.Pc-pc)/int64(ctxt.Arch.Minlc)))
@@ -92,9 +117,22 @@ func funcpctab(ctxt *Link, dst *Pcdata, func_ *LSym, desc string, valfunc func(*
 	}
 
 	if started != 0 {
+		if ctxt.Debugpcln != 0 {
+			fmt.Fprintf(ctxt.Bso, "%6x done\n", uint64(int64(func_.Text.Pc)+func_.Size))
+		}
 		addvarint(ctxt, dst, uint32((func_.Value+func_.Size-pc)/int64(ctxt.Arch.Minlc)))
 		addvarint(ctxt, dst, 0) // terminator
 	}
+
+	if ctxt.Debugpcln != 0 {
+		fmt.Fprintf(ctxt.Bso, "wrote %d bytes to %p\n", len(dst.P), dst)
+		for i := 0; i < len(dst.P); i++ {
+			fmt.Fprintf(ctxt.Bso, " %02x", dst.P[i])
+		}
+		fmt.Fprintf(ctxt.Bso, "\n")
+	}
+
+	ctxt.Debugpcln -= int32(dbg)
 }
 
 // pctofileline computes either the file number (arg == 0)
@@ -107,6 +145,7 @@ func pctofileline(ctxt *Link, sym *LSym, oldval int32, p *Prog, phase int32, arg
 	}
 	var l int32
 	var f *LSym
+	linkgetline(ctxt, p.Lineno, &f, &l)
 	if f == nil {
 		//	print("getline failed for %s %v\n", ctxt->cursym->name, p);
 		return oldval
@@ -256,4 +295,44 @@ func getvarint(pp *[]byte) uint32 {
 
 	*pp = p
 	return v
+}
+
+func pciternext(it *Pciter) {
+	it.pc = it.nextpc
+	if it.done != 0 {
+		return
+	}
+	if -cap(it.p) >= -cap(it.d.P[len(it.d.P):]) {
+		it.done = 1
+		return
+	}
+
+	// value delta
+	v := getvarint(&it.p)
+
+	if v == 0 && it.start == 0 {
+		it.done = 1
+		return
+	}
+
+	it.start = 0
+	dv := int32(v>>1) ^ (int32(v<<31) >> 31)
+	it.value += dv
+
+	// pc delta
+	v = getvarint(&it.p)
+
+	it.nextpc = it.pc + v*it.pcscale
+}
+
+func pciterinit(ctxt *Link, it *Pciter, d *Pcdata) {
+	it.d = *d
+	it.p = it.d.P
+	it.pc = 0
+	it.nextpc = 0
+	it.value = -1
+	it.start = 1
+	it.done = 0
+	it.pcscale = uint32(ctxt.Arch.Minlc)
+	pciternext(it)
 }
