@@ -9,6 +9,7 @@
 //	Portions Copyright © 2005-2007 C H Forsyth (forsyth@terzarima.net)
 //	Revisions Copyright © 2000-2007 Lucent Technologies Inc. and others
 //	Portions Copyright © 2009 The Go Authors.  All rights reserved.
+//	Portions Copyright © 2025 武汉凹语言科技有限公司.  All rights reserved.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -150,6 +151,11 @@ var Register = []string{
 	"TR7",
 	"TLS",    /* [D_TLS] */
 	"MAXREG", /* [MAXREG] */
+}
+
+func init() {
+	obj.RegisterRegister(REG_AL, REG_AL+len(Register), Rconv)
+	obj.RegisterOpcode(obj.ABaseAMD64, Anames)
 }
 
 func Rconv(r int) string {

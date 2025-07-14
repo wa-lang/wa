@@ -243,15 +243,26 @@ func (p *Prog) From3Offset() int64 {
 // Link holds the context for writing object code from a compiler
 // to be linker input or for reading that input into the linker.
 type Link struct {
-	Arch *LinkArch
+	Headtype       int
+	Arch           *LinkArch
+	Debugzerostack int32
 
-	Bso     *Biobuf
-	Hash    map[SymVer]*LSym
-	Imports []string
-	Plist   *Plist
-	Plast   *Plist
+	Flag_dynlink bool
+	Bso          *Biobuf
+	Hash         map[SymVer]*LSym
+	Imports      []string
+	Plist        *Plist
+	Plast        *Plist
+	Rexflag      int
+	Asmode       int
+	Andptr       []byte
+	And          [100]uint8
+	Flag_shared  int32
+	Curp         *Prog
+	Tlsg         *LSym
 
 	Diag func(string, ...interface{})
+	Mode int
 
 	Cursym *LSym
 }
