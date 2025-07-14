@@ -12,7 +12,7 @@ import (
 	"strings"
 	"text/scanner"
 
-	"wa-lang.org/wa/internal/p9asm/flags"
+	"wa-lang.org/wa/internal/p9asm/asm/flags"
 )
 
 // Input is the main input: a stack of readers and some macro definitions.

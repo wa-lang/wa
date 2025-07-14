@@ -10,7 +10,7 @@ import (
 	"fmt"
 	"os"
 
-	"wa-lang.org/wa/internal/p9asm/goobj"
+	"wa-lang.org/wa/internal/p9asm/obj/goobj"
 )
 
 type goobjFile struct {

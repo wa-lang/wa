@@ -9,9 +9,9 @@ import (
 	"os"
 
 	"wa-lang.org/wa/internal/3rdparty/cli"
-	"wa-lang.org/wa/internal/p9asm/arch"
 	"wa-lang.org/wa/internal/p9asm/asm"
-	"wa-lang.org/wa/internal/p9asm/lex"
+	"wa-lang.org/wa/internal/p9asm/asm/arch"
+	"wa-lang.org/wa/internal/p9asm/asm/lex"
 	"wa-lang.org/wa/internal/p9asm/obj"
 	"wa-lang.org/wa/internal/p9asm/obj/x86"
 )

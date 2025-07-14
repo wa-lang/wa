@@ -9,7 +9,7 @@ import (
 	"testing"
 	"text/scanner"
 
-	"wa-lang.org/wa/internal/p9asm/lex"
+	"wa-lang.org/wa/internal/p9asm/asm/lex"
 )
 
 type exprTest struct {

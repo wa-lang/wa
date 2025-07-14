@@ -38,7 +38,7 @@ import (
 	"strconv"
 	"strings"
 
-	"wa-lang.org/wa/internal/p9asm/gcprog"
+	"wa-lang.org/wa/internal/p9asm/link/gcprog"
 	"wa-lang.org/wa/internal/p9asm/obj"
 )
 
