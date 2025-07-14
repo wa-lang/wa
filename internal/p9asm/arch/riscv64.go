@@ -9,7 +9,7 @@
 package arch
 
 import (
-	"wa-lang.org/wa/internal/p9asm/riscv"
+	"wa-lang.org/wa/internal/p9asm/obj/riscv"
 )
 
 // IsRISCV64AMO reports whether the op (as defined by a riscv.A*

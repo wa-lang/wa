@@ -9,8 +9,8 @@
 package arch
 
 import (
-	"wa-lang.org/wa/internal/p9asm/arm64"
 	"wa-lang.org/wa/internal/p9asm/obj"
+	"wa-lang.org/wa/internal/p9asm/obj/arm64"
 )
 
 var arm64LS = map[string]uint8{

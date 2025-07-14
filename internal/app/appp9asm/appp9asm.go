@@ -13,7 +13,7 @@ import (
 	"wa-lang.org/wa/internal/p9asm/asm"
 	"wa-lang.org/wa/internal/p9asm/lex"
 	"wa-lang.org/wa/internal/p9asm/obj"
-	"wa-lang.org/wa/internal/p9asm/x86"
+	"wa-lang.org/wa/internal/p9asm/obj/x86"
 )
 
 var CmdP9Asm = &cli.Command{

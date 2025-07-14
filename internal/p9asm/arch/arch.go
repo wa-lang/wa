@@ -8,13 +8,13 @@ import (
 	"fmt"
 	"strings"
 
-	"wa-lang.org/wa/internal/p9asm/arm"
-	"wa-lang.org/wa/internal/p9asm/arm64"
-	"wa-lang.org/wa/internal/p9asm/loong64"
 	"wa-lang.org/wa/internal/p9asm/obj"
-	"wa-lang.org/wa/internal/p9asm/riscv"
-	"wa-lang.org/wa/internal/p9asm/wasm"
-	"wa-lang.org/wa/internal/p9asm/x86"
+	"wa-lang.org/wa/internal/p9asm/obj/arm"
+	"wa-lang.org/wa/internal/p9asm/obj/arm64"
+	"wa-lang.org/wa/internal/p9asm/obj/loong64"
+	"wa-lang.org/wa/internal/p9asm/obj/riscv"
+	"wa-lang.org/wa/internal/p9asm/obj/wasm"
+	"wa-lang.org/wa/internal/p9asm/obj/x86"
 )
 
 // 处理器类型

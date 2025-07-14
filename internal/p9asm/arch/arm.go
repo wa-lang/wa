@@ -11,8 +11,8 @@ package arch
 import (
 	"strings"
 
-	"wa-lang.org/wa/internal/p9asm/arm"
 	"wa-lang.org/wa/internal/p9asm/obj"
+	"wa-lang.org/wa/internal/p9asm/obj/arm"
 )
 
 var armLS = map[string]uint8{

@@ -9,7 +9,7 @@
 package arch
 
 import (
-	"wa-lang.org/wa/internal/p9asm/loong64"
+	"wa-lang.org/wa/internal/p9asm/obj/loong64"
 )
 
 func jumpLoong64(word string) bool {
