@@ -9,9 +9,9 @@ import (
 	"bytes"
 	"fmt"
 
-	"wa-lang.org/wa/internal/p9asm/arch"
 	"wa-lang.org/wa/internal/p9asm/asm"
-	"wa-lang.org/wa/internal/p9asm/lex"
+	"wa-lang.org/wa/internal/p9asm/asm/arch"
+	"wa-lang.org/wa/internal/p9asm/asm/lex"
 	"wa-lang.org/wa/internal/p9asm/obj"
 )
 
@@ -19,7 +19,7 @@ func main() {
 	arch := arch.Set(arch.AMD64)
 	ctxt := obj.Linknew(arch.LinkArch)
 
-	lexer := lex.NewLexer("hello.p9asm", []byte(code))
+	lexer := lex.NewLexer("hello.p9asm", ctxt)
 	parser := asm.NewParser(ctxt, arch, lexer)
 
 	prog, ok := parser.Parse()

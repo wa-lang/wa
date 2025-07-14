@@ -31,6 +31,7 @@ var _Pseudos = map[string]int{
 type Parser struct {
 	lex           lex.TokenReader
 	lineNum       int   // Line number in source file.
+	histLineNum   int32 // Cumulative line number across source files.
 	errorLine     int32 // (Cumulative) line number of last error.
 	errorCount    int   // Number of errors.
 	pc            int64 // virtual PC; count of Progs; doesn't advance for GLOBL or DATA.
@@ -70,7 +71,11 @@ func (p *Parser) errorf(format string, args ...interface{}) {
 	if panicOnError {
 		panic(fmt.Errorf(format, args...))
 	}
-
+	if p.histLineNum == p.errorLine {
+		// Only one error per line.
+		return
+	}
+	p.errorLine = p.histLineNum
 	// Put file and line information on head of message.
 	format = "%s:%d: " + format + "\n"
 	args = append([]interface{}{p.lex.File(), p.lineNum}, args...)
@@ -101,7 +106,7 @@ func (p *Parser) line() bool {
 		// are labeled with this line. Otherwise we complain after we've absorbed
 		// the terminating newline and the line numbers are off by one in errors.
 		p.lineNum = p.lex.Line()
-
+		p.histLineNum = lex.HistLine()
 		switch tok {
 		case '\n', ';':
 			continue
@@ -127,7 +132,7 @@ func (p *Parser) line() bool {
 		for {
 			tok = p.lex.Next()
 			if len(operands) == 0 && len(items) == 0 {
-				if (p.arch.CPU == arch.ARM || p.arch.CPU == arch.ARM64) && tok == '.' {
+				if (p.arch.LinkArch.Thechar == '5' || p.arch.LinkArch.Thechar == '7') && tok == '.' {
 					// ARM conditionals.
 					tok = p.lex.Next()
 					str := p.lex.Text()
@@ -411,7 +416,7 @@ func (p *Parser) atStartOfRegister(name string) bool {
 // We have consumed the register or R prefix.
 func (p *Parser) atRegisterShift() bool {
 	// ARM only.
-	if p.arch.CPU != arch.ARM {
+	if p.arch.LinkArch.Thechar != '5' {
 		return false
 	}
 	// R1<<...
@@ -467,16 +472,18 @@ func (p *Parser) register(name string, prefix rune) (r1, r2 int16, scale int8, o
 	if c == ':' || c == ',' || c == '+' {
 		// 2nd register; syntax (R1+R2) etc. No two architectures agree.
 		// Check the architectures match the syntax.
+		char := p.arch.LinkArch.Thechar
 		switch p.next().ScanToken {
 		case ',':
-			if p.arch.CPU != arch.ARM && p.arch.CPU != arch.ARM64 {
+			if char != '5' && char != '7' {
 				p.errorf("(register,register) not supported on this architecture")
 				return
 			}
 		case '+':
-			p.errorf("(register+register) not supported on this architecture")
-			return
-
+			if char != '9' {
+				p.errorf("(register+register) not supported on this architecture")
+				return
+			}
 		}
 		name := p.next().String()
 		r2, ok = p.registerReference(name)
@@ -636,7 +643,7 @@ func (p *Parser) registerIndirect(a *obj.Addr, prefix rune) {
 	a.Reg = r1
 	if r2 != 0 {
 		// TODO: Consistency in the encoding would be nice here.
-		if p.arch.CPU == arch.ARM || p.arch.CPU == arch.ARM64 {
+		if p.arch.LinkArch.Thechar == '5' || p.arch.LinkArch.Thechar == '7' {
 			// Special form
 			// ARM: destination register pair (R1, R2).
 			// ARM64: register pair (R1, R2) for LDP/STP.
@@ -719,7 +726,7 @@ func (p *Parser) registerList(a *obj.Addr) {
 
 // register number is ARM-specific. It returns the number of the specified register.
 func (p *Parser) registerNumber(name string) uint16 {
-	if p.arch.CPU == arch.ARM && name == "g" {
+	if p.arch.LinkArch.Thechar == '5' && name == "g" {
 		return 10
 	}
 	if name[0] != 'R' {

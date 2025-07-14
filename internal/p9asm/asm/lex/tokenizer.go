@@ -6,6 +6,7 @@ package lex
 
 import (
 	"io"
+	"os"
 	"strings"
 	"text/scanner"
 	"unicode"
@@ -19,9 +20,10 @@ type Tokenizer struct {
 	s        *scanner.Scanner
 	line     int
 	fileName string
+	file     *os.File // If non-nil, file descriptor to close.
 }
 
-func NewTokenizer(name string, r io.Reader) *Tokenizer {
+func NewTokenizer(name string, r io.Reader, file *os.File) *Tokenizer {
 	var s scanner.Scanner
 	s.Init(r)
 	// Newline is like a semicolon; other space characters are fine.
@@ -35,11 +37,14 @@ func NewTokenizer(name string, r io.Reader) *Tokenizer {
 		scanner.ScanComments
 	s.Position.Filename = name
 	s.IsIdentRune = isIdentRune
-
+	if file != nil {
+		linkCtxt.LineHist.Push(histLine, name)
+	}
 	return &Tokenizer{
 		s:        &s,
 		line:     1,
 		fileName: name,
+		file:     file,
 	}
 }
 
@@ -100,11 +105,15 @@ func (t *Tokenizer) Next() ScanToken {
 		}
 		length := strings.Count(s.TokenText(), "\n")
 		t.line += length
+		histLine += length
 		// TODO: If we ever have //go: comments in assembly, will need to keep them here.
 		// For now, just discard all comments.
 	}
 	switch t.tok {
 	case '\n':
+		if t.file != nil {
+			histLine++
+		}
 		t.line++
 	case '-':
 		if s.Peek() == '>' {
@@ -132,4 +141,12 @@ func (t *Tokenizer) Next() ScanToken {
 		}
 	}
 	return t.tok
+}
+
+func (t *Tokenizer) Close() {
+	if t.file != nil {
+		t.file.Close()
+		// It's an open file, so pop the line history.
+		linkCtxt.LineHist.Pop(histLine)
+	}
 }

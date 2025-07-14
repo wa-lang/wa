@@ -23,12 +23,11 @@ var CmdP9Asm = &cli.Command{
 	Flags:  []cli.Flag{},
 	Action: func(c *cli.Context) error {
 		name := c.Args().First()
-		data, _ := os.ReadFile(name)
 
 		arch := arch.Set(arch.AMD64)
 		ctxt := obj.Linknew(&x86.Linkamd64)
 
-		lexer := lex.NewLexer(name, data)
+		lexer := lex.NewLexer(name, ctxt)
 		parser := asm.NewParser(ctxt, arch, lexer)
 
 		prog, ok := parser.Parse()

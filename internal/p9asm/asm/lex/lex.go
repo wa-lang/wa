@@ -6,10 +6,13 @@
 package lex
 
 import (
-	"bytes"
 	"fmt"
+	"log"
+	"os"
 	"strings"
 	"text/scanner"
+
+	"wa-lang.org/wa/internal/p9asm/obj"
 )
 
 // A ScanToken represents an input item. It is a simple wrapping of rune, as
@@ -54,11 +57,35 @@ func (t ScanToken) String() string {
 	}
 }
 
+var (
+	// It might be nice if these weren't global.
+	linkCtxt *obj.Link     // The link context for all instructions.
+	histLine int       = 1 // The cumulative count of lines processed.
+)
+
+// HistLine reports the cumulative source line number of the token,
+// for use in the Prog structure for the linker. (It's always handling the
+// instruction from the current lex line.)
+// It returns int32 because that's what type ../asm prefers.
+func HistLine() int32 {
+	return int32(histLine)
+}
+
 // NewLexer returns a lexer for the named file and the given link context.
-func NewLexer(name string, data []byte) TokenReader {
+func NewLexer(name string, ctxt *obj.Link) TokenReader {
+	linkCtxt = ctxt
 	input := NewInput(name)
-	input.Push(NewTokenizer(name, bytes.NewReader(data)))
+	fd, err := os.Open(name)
+	if err != nil {
+		log.Fatalf("asm: %s\n", err)
+	}
+	input.Push(NewTokenizer(name, fd, fd))
 	return input
+}
+
+// InitHist sets the line count to 1, for reproducible testing.
+func InitHist() {
+	histLine = 1
 }
 
 // The other files in this directory each contain an implementation of TokenReader.
@@ -81,6 +108,8 @@ type TokenReader interface {
 	Col() int
 	// SetPos sets the file and line number.
 	SetPos(line int, file string)
+	// Close does any teardown required.
+	Close()
 }
 
 // A Token is a scan token plus its string value.
@@ -115,7 +144,7 @@ type Macro struct {
 
 // Tokenize turns a string into a list of Tokens; used to parse the -D flag and in tests.
 func Tokenize(str string) []Token {
-	t := NewTokenizer("command line", strings.NewReader(str))
+	t := NewTokenizer("command line", strings.NewReader(str), nil)
 	var tokens []Token
 	for {
 		tok := t.Next()

@@ -409,7 +409,7 @@ func (in *Input) include() {
 			in.Error("#include:", err)
 		}
 	}
-	in.Push(NewTokenizer(name, fd))
+	in.Push(NewTokenizer(name, fd, fd))
 }
 
 // #line processing.

@@ -6,9 +6,11 @@ package asm
 
 import (
 	"bytes"
+	"fmt"
 	"text/scanner"
 
 	"wa-lang.org/wa/internal/p9asm/asm/arch"
+	"wa-lang.org/wa/internal/p9asm/asm/flags"
 	"wa-lang.org/wa/internal/p9asm/asm/lex"
 	"wa-lang.org/wa/internal/p9asm/obj"
 )
@@ -21,8 +23,13 @@ var testOut *bytes.Buffer // Gathers output when testing.
 // If doLabel is set, it also defines the labels collect for this Prog.
 func (p *Parser) append(prog *obj.Prog, cond string, doLabel bool) {
 	if cond != "" {
-		switch p.arch.CPU {
-		case arch.ARM64:
+		switch p.arch.LinkArch.Thechar {
+		case '5':
+			if !arch.ARMConditionCodes(prog, cond) {
+				p.errorf("unrecognized condition code .%q", cond)
+			}
+
+		case '7':
 			if !arch.ARM64Suffix(prog, cond) {
 				p.errorf("unrecognized suffix .%q", cond)
 			}
@@ -48,6 +55,12 @@ func (p *Parser) append(prog *obj.Prog, cond string, doLabel bool) {
 		p.pendingLabels = p.pendingLabels[0:0]
 	}
 	prog.Pc = int64(p.pc)
+	if *flags.Debug {
+		fmt.Println(p.histLineNum, prog)
+	}
+	if testOut != nil {
+		fmt.Fprintln(testOut, p.histLineNum, prog)
+	}
 }
 
 // validateSymbol checks that addr represents a valid name for a pseudo-op.
@@ -134,9 +147,10 @@ func (p *Parser) asmText(word string, operands [][]lex.Token) {
 		argSize = p.positiveAtoi(op[1].String())
 	}
 	prog := &obj.Prog{
-		Ctxt: p.ctxt,
-		As:   obj.ATEXT,
-		From: nameAddr,
+		Ctxt:   p.ctxt,
+		As:     obj.ATEXT,
+		Lineno: p.histLineNum,
+		From:   nameAddr,
 		From3: &obj.Addr{
 			Type:   obj.TYPE_CONST,
 			Offset: flag,
@@ -187,9 +201,10 @@ func (p *Parser) asmData(word string, operands [][]lex.Token) {
 	p.dataAddr[name] = nameAddr.Offset + int64(scale)
 
 	prog := &obj.Prog{
-		Ctxt: p.ctxt,
-		As:   obj.ADATA,
-		From: nameAddr,
+		Ctxt:   p.ctxt,
+		As:     obj.ADATA,
+		Lineno: p.histLineNum,
+		From:   nameAddr,
 		From3: &obj.Addr{
 			Offset: int64(scale),
 		},
@@ -225,9 +240,10 @@ func (p *Parser) asmGlobl(word string, operands [][]lex.Token) {
 
 	// log.Printf("GLOBL %s %d, $%d", name, flag, size)
 	prog := &obj.Prog{
-		Ctxt: p.ctxt,
-		As:   obj.AGLOBL,
-		From: nameAddr,
+		Ctxt:   p.ctxt,
+		As:     obj.AGLOBL,
+		Lineno: p.histLineNum,
+		From:   nameAddr,
 		From3: &obj.Addr{
 			Offset: flag,
 		},
@@ -253,10 +269,11 @@ func (p *Parser) asmPCData(word string, operands [][]lex.Token) {
 
 	// log.Printf("PCDATA $%d, $%d", key.Offset, value.Offset)
 	prog := &obj.Prog{
-		Ctxt: p.ctxt,
-		As:   obj.APCDATA,
-		From: key,
-		To:   value,
+		Ctxt:   p.ctxt,
+		As:     obj.APCDATA,
+		Lineno: p.histLineNum,
+		From:   key,
+		To:     value,
 	}
 	p.append(prog, "", true)
 }
@@ -277,10 +294,11 @@ func (p *Parser) asmFuncData(word string, operands [][]lex.Token) {
 	p.validateSymbol("FUNCDATA", &nameAddr, true)
 
 	prog := &obj.Prog{
-		Ctxt: p.ctxt,
-		As:   obj.AFUNCDATA,
-		From: valueAddr,
-		To:   nameAddr,
+		Ctxt:   p.ctxt,
+		As:     obj.AFUNCDATA,
+		Lineno: p.histLineNum,
+		From:   valueAddr,
+		To:     nameAddr,
 	}
 	p.append(prog, "", true)
 }
@@ -292,8 +310,9 @@ func (p *Parser) asmFuncData(word string, operands [][]lex.Token) {
 func (p *Parser) asmJump(op int, cond string, a []obj.Addr) {
 	var target *obj.Addr
 	prog := &obj.Prog{
-		Ctxt: p.ctxt,
-		As:   int16(op),
+		Ctxt:   p.ctxt,
+		Lineno: p.histLineNum,
+		As:     int16(op),
 	}
 	switch len(a) {
 	case 1:
@@ -302,6 +321,24 @@ func (p *Parser) asmJump(op int, cond string, a []obj.Addr) {
 		// Special 2-operand jumps.
 		target = &a[1]
 		prog.From = a[0]
+	case 3:
+		if p.arch.LinkArch.Thechar == '9' {
+			// Special 3-operand jumps.
+			// First two must be constants; a[1] is a register number.
+			target = &a[2]
+			prog.From = obj.Addr{
+				Type:   obj.TYPE_CONST,
+				Offset: p.getConstant(prog, op, &a[0]),
+			}
+			reg := int16(p.getConstant(prog, op, &a[1]))
+			reg, ok := p.arch.RegisterNumber("R", int16(reg))
+			if !ok {
+				p.errorf("bad register number %d", reg)
+			}
+			prog.Reg = reg
+			break
+		}
+		fallthrough
 	default:
 		p.errorf("wrong number of arguments to %s instruction", obj.Aconv(op))
 		return
@@ -338,6 +375,10 @@ func (p *Parser) asmJump(op int, cond string, a []obj.Addr) {
 	case target.Type == obj.TYPE_MEM && target.Name == obj.NAME_NONE:
 		// JMP 4(R0)
 		prog.To = *target
+		// On the ppc64, 9a encodes BR (CTR) as BR CTR. We do the same.
+		if p.arch.LinkArch.Thechar == '9' && target.Offset == 0 {
+			prog.To.Type = obj.TYPE_REG
+		}
 	case target.Type == obj.TYPE_CONST:
 		// JMP $4
 		prog.To = a[0]
@@ -373,8 +414,9 @@ func (p *Parser) branch(jmp, target *obj.Prog) {
 func (p *Parser) asmInstruction(op int, cond string, a []obj.Addr) {
 	// fmt.Printf("%s %+v\n", obj.Aconv(op), a)
 	prog := &obj.Prog{
-		Ctxt: p.ctxt,
-		As:   int16(op),
+		Ctxt:   p.ctxt,
+		Lineno: p.histLineNum,
+		As:     int16(op),
 	}
 	switch len(a) {
 	case 0:
@@ -388,7 +430,34 @@ func (p *Parser) asmInstruction(op int, cond string, a []obj.Addr) {
 			// prog.To is no address.
 		}
 	case 2:
-		if p.arch.CPU == arch.ARM64 && arch.IsARM64CMP(op) {
+		if p.arch.LinkArch.Thechar == '5' {
+			if arch.IsARMCMP(op) {
+				prog.From = a[0]
+				prog.Reg = p.getRegister(prog, op, &a[1])
+				break
+			}
+			// Strange special cases.
+			if arch.IsARMSTREX(op) {
+				/*
+					STREX x, (y)
+						from=(y) reg=x to=x
+					STREX (x), y
+						from=(x) reg=y to=y
+				*/
+				if a[0].Type == obj.TYPE_REG && a[1].Type != obj.TYPE_REG {
+					prog.From = a[1]
+					prog.Reg = a[0].Reg
+					prog.To = a[0]
+					break
+				} else if a[0].Type != obj.TYPE_REG && a[1].Type == obj.TYPE_REG {
+					prog.From = a[0]
+					prog.Reg = a[1].Reg
+					prog.To = a[1]
+					break
+				}
+				p.errorf("unrecognized addressing for %s", obj.Aconv(op))
+			}
+		} else if p.arch.LinkArch.Thechar == '7' && arch.IsARM64CMP(op) {
 			prog.From = a[0]
 			prog.Reg = p.getRegister(prog, op, &a[1])
 			break
@@ -396,8 +465,24 @@ func (p *Parser) asmInstruction(op int, cond string, a []obj.Addr) {
 		prog.From = a[0]
 		prog.To = a[1]
 	case 3:
-		switch p.arch.CPU {
-		case arch.ARM64:
+		switch p.arch.LinkArch.Thechar {
+		case '5':
+			// Special cases.
+			if arch.IsARMSTREX(op) {
+				/*
+					STREX x, (y), z
+						from=(y) reg=x to=z
+				*/
+				prog.From = a[1]
+				prog.Reg = p.getRegister(prog, op, &a[0])
+				prog.To = a[2]
+				break
+			}
+			// Otherwise the 2nd operand (a[1]) must be a register.
+			prog.From = a[0]
+			prog.Reg = p.getRegister(prog, op, &a[1])
+			prog.To = a[2]
+		case '7':
 			// ARM64 instructions with one input and two outputs.
 			if arch.IsARM64STLXR(op) {
 				prog.From = a[0]
@@ -411,15 +496,46 @@ func (p *Parser) asmInstruction(op int, cond string, a []obj.Addr) {
 			prog.From = a[0]
 			prog.Reg = p.getRegister(prog, op, &a[1])
 			prog.To = a[2]
-		case arch.AMD64:
+		case '6', '8':
 			prog.From = a[0]
 			prog.From3 = newAddr(a[1])
 			prog.To = a[2]
+		case '9':
+			// Arithmetic. Choices are:
+			// reg reg reg
+			// imm reg reg
+			// reg imm reg
+			// If the immediate is the middle argument, use From3.
+			switch a[1].Type {
+			case obj.TYPE_REG:
+				prog.From = a[0]
+				prog.Reg = p.getRegister(prog, op, &a[1])
+				prog.To = a[2]
+			case obj.TYPE_CONST:
+				prog.From = a[0]
+				prog.From3 = newAddr(a[1])
+				prog.To = a[2]
+			default:
+				p.errorf("invalid addressing modes for %s instruction", obj.Aconv(op))
+			}
 		default:
 			p.errorf("TODO: implement three-operand instructions for this architecture")
 		}
 	case 4:
-		if p.arch.CPU == arch.ARM64 {
+		if p.arch.LinkArch.Thechar == '5' && arch.IsARMMULA(op) {
+			// All must be registers.
+			p.getRegister(prog, op, &a[0])
+			r1 := p.getRegister(prog, op, &a[1])
+			p.getRegister(prog, op, &a[2])
+			r3 := p.getRegister(prog, op, &a[3])
+			prog.From = a[0]
+			prog.To = a[2]
+			prog.To.Type = obj.TYPE_REGREG2
+			prog.To.Offset = int64(r3)
+			prog.Reg = r1
+			break
+		}
+		if p.arch.LinkArch.Thechar == '7' {
 			prog.From = a[0]
 			prog.Reg = p.getRegister(prog, op, &a[1])
 			prog.From3 = newAddr(a[2])
@@ -430,6 +546,25 @@ func (p *Parser) asmInstruction(op int, cond string, a []obj.Addr) {
 	case 5:
 		p.errorf("can't handle %s instruction with 5 operands", obj.Aconv(op))
 	case 6:
+		if p.arch.LinkArch.Thechar == '5' && arch.IsARMMRC(op) {
+			// Strange special case: MCR, MRC.
+			prog.To.Type = obj.TYPE_CONST
+			x0 := p.getConstant(prog, op, &a[0])
+			x1 := p.getConstant(prog, op, &a[1])
+			x2 := int64(p.getRegister(prog, op, &a[2]))
+			x3 := int64(p.getRegister(prog, op, &a[3]))
+			x4 := int64(p.getRegister(prog, op, &a[4]))
+			x5 := p.getConstant(prog, op, &a[5])
+			// Cond is handled specially for this instruction.
+			offset, MRC, ok := arch.ARMMRCOffset(op, cond, x0, x1, x2, x3, x4, x5)
+			if !ok {
+				p.errorf("unrecognized condition code .%q", cond)
+			}
+			prog.To.Offset = offset
+			cond = ""
+			prog.As = int16(MRC) // Both instructions are coded as MRC.
+			break
+		}
 		fallthrough
 	default:
 		p.errorf("can't handle %s instruction with %d operands", obj.Aconv(op), len(a))
