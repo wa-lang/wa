@@ -31,7 +31,9 @@
 
 package x86
 
-import "wa-lang.org/wa/internal/p9asm/obj"
+import (
+	"wa-lang.org/wa/internal/p9asm/obj"
+)
 
 // 指令布局
 
@@ -84,7 +86,7 @@ type ytab struct {
 	zoffset uint8 // 偏移, 用于在模板里取哪一段
 }
 
-//  描述 MOV 指令编码方式 的表项, 用来把不同操作数类型映射到不同机器码模板
+// 描述 MOV 指令编码方式 的表项, 用来把不同操作数类型映射到不同机器码模板
 type Movtab struct {
 	as   int16    // 指令代号, 比如 AMOVB, AMOVW, AMOVL, 代表不同大小的 MOV 指令
 	ft   uint8    // 第一个操作数(from)的类型(内部枚举, 比如寄存器/内存/立即数等)
@@ -103,7 +105,6 @@ type Movtab struct {
 // - 是 8 位还是 32 位？
 // - 是普通寄存器还是浮点寄存器？
 // - 是立即数还是绝对地址？
-//
 const (
 	Yxxx  = iota // 空类型
 	Ynone        // 无操作数
@@ -513,6 +514,7 @@ var yret = []ytab{
 	{Yi32, Ynone, Ynone, Zo_iw, 1},  // RET imm16: 带立即数参数的返回
 }
 
+// 64 位移动指令 MOVQ
 var ymovq = []ytab{
 	// valid in 32-bit mode
 	{Ym, Ynone, Ymr, Zm_r_xm_nr, 1},  // 0x6f MMX MOVQ (shorter encoding)
@@ -535,202 +537,280 @@ var ymovq = []ytab{
 	{Yiauto, Ynone, Yrl, Zaut_r, 1}, // 0 built-in LEAQ
 }
 
+// 内存(64 位或其他宽度) -> 通用寄存器(reg long)
+// 比如: MOVQ m, AX
 var ym_rl = []ytab{
 	{Ym, Ynone, Yrl, Zm_r, 1},
 }
 
+// 寄存器 -> 内存
+// 比如: MOVQ AX, m
 var yrl_m = []ytab{
 	{Yrl, Ynone, Ym, Zr_m, 1},
 }
 
+// 内存字节(Ymb) -> reg long (Yrl)
+// 比如: MOVZBL m8, EAX
 var ymb_rl = []ytab{
 	{Ymb, Ynone, Yrl, Zmb_r, 1},
 }
 
+// 内存 long (Yml，通常指 32/64 位内存值) -> 寄存器
+// 比如: MOVL m32, EAX
 var yml_rl = []ytab{
 	{Yml, Ynone, Yrl, Zm_r, 1},
 }
 
+// 寄存器 -> 内存 long
+// 比如: MOVL EAX, m32
 var yrl_ml = []ytab{
 	{Yrl, Ynone, Yml, Zr_m, 1},
 }
 
+// 内存 byte 和 byte 寄存器之间的互相拷贝(load/store)
+// 名字 yml_mb 可能有误导, 可能不是指 memory long -> memory byte
+// 比如 MOVB m8, AL
 var yml_mb = []ytab{
+	// byte 寄存器 -> 内存 byte
 	{Yrb, Ynone, Ymb, Zr_m, 1},
+	// 内存 byte -> byte 寄存器
 	{Ymb, Ynone, Yrb, Zm_r, 1},
 }
 
+// byte 寄存器 -> 内存 byte
+// 比如 MOVB AL, m8
 var yrb_mb = []ytab{
 	{Yrb, Ynone, Ymb, Zr_m, 1},
 }
 
+// XCHG 交换两个操作数的值
+// 可以是寄存器与寄存器, 寄存器与内存, 也可以和特定寄存器 AX 优化
 var yxchg = []ytab{
-	{Yax, Ynone, Yrl, Z_rp, 1},
-	{Yrl, Ynone, Yax, Zrp_, 1},
-	{Yrl, Ynone, Yml, Zr_m, 1},
-	{Yml, Ynone, Yrl, Zm_r, 1},
+	{Yax, Ynone, Yrl, Z_rp, 1}, // 	AX <-> 通用寄存器，特例：有更短的编码
+	{Yrl, Ynone, Yax, Zrp_, 1}, // 通用寄存器 <-> AX
+	{Yrl, Ynone, Yml, Zr_m, 1}, // reg <-> memory long
+	{Yml, Ynone, Yrl, Zm_r, 1}, // memory long <-> reg
 }
 
+// DIVL 32 位无符号除法
 var ydivl = []ytab{
-	{Yml, Ynone, Ynone, Zm_o, 2},
+	{Yml, Ynone, Ynone, Zm_o, 2}, // 除数是内存 long (Yml), 结果在 AX/DX 中, DIV m32
 }
 
+// DIVB 8 位无符号除法
 var ydivb = []ytab{
-	{Ymb, Ynone, Ynone, Zm_o, 2},
+	{Ymb, Ynone, Ynone, Zm_o, 2}, // 除数是内存 byte
 }
 
+// IMUL 有多个变种: 单操作数/双操作数/三操作数
 var yimul = []ytab{
-	{Yml, Ynone, Ynone, Zm_o, 2},
-	{Yi8, Ynone, Yrl, Zib_rr, 1},
-	{Yi32, Ynone, Yrl, Zil_rr, 1},
-	{Yml, Ynone, Yrl, Zm_r, 2},
+	{Yml, Ynone, Ynone, Zm_o, 2},  // 单操作数: IMUL m32, 结果进 AX/DX
+	{Yi8, Ynone, Yrl, Zib_rr, 1},  // 双操作数: IMUL r32, r32, imm8 (目标 <- 目标 *imm8)
+	{Yi32, Ynone, Yrl, Zil_rr, 1}, // 双操作数: IMUL r32, r32, imm32
+	{Yml, Ynone, Yrl, Zm_r, 2},    // 双操作数: IMUL r32, m32 (目标 <- 目标 * m32)
 }
 
+// IMUL 三操作数形式
+// 将 memory long（m32） * imm8，结果放入目标寄存器
+// IMUL r32, m32, imm8
 var yimul3 = []ytab{
 	{Yi8, Yml, Yrl, Zibm_r, 2},
 }
 
+// 生成一个字节
+// 比如 .byte 0xXX
 var ybyte = []ytab{
+	// Yi64: 字面值(立即数) 64 位
+	// Zbyte: 这个模板会直接把立即数编码成一个单字节写进指令流(比如 .byte 指令)
 	{Yi64, Ynone, Ynone, Zbyte, 1},
 }
 
+// IN 指令(从 IO 端口读到 AL/EAX)
 var yin = []ytab{
-	{Yi32, Ynone, Ynone, Zib_, 1},
-	{Ynone, Ynone, Ynone, Zlit, 1},
+	{Yi32, Ynone, Ynone, Zib_, 1},  // IN AL/EAX, imm8 (端口号是立即数)
+	{Ynone, Ynone, Ynone, Zlit, 1}, // IN AL/EAX, DX (端口号在 DX 寄存器里)
 }
 
+// INT 指令(软件中断)
 var yint = []ytab{
-	{Yi32, Ynone, Ynone, Zib_, 1},
+	{Yi32, Ynone, Ynone, Zib_, 1}, // INT imm8 (中断号是立即数)
 }
 
+// 32位PUSHL
 var ypushl = []ytab{
-	{Yrl, Ynone, Ynone, Zrp_, 1},
-	{Ym, Ynone, Ynone, Zm_o, 2},
-	{Yi8, Ynone, Ynone, Zib_, 1},
-	{Yi32, Ynone, Ynone, Zil_, 1},
+	{Yrl, Ynone, Ynone, Zrp_, 1},  // PUSH reg (寄存器入栈)
+	{Ym, Ynone, Ynone, Zm_o, 2},   // PUSH mem (内存内容入栈)
+	{Yi8, Ynone, Ynone, Zib_, 1},  // PUSH imm8 (短立即数)
+	{Yi32, Ynone, Ynone, Zil_, 1}, // PUSH imm32 (长立即数)
 }
 
+// POPL 指令
 var ypopl = []ytab{
-	{Ynone, Ynone, Yrl, Z_rp, 1},
-	{Ynone, Ynone, Ym, Zo_m, 2},
+	{Ynone, Ynone, Yrl, Z_rp, 1}, // POP 到寄存器
+	{Ynone, Ynone, Ym, Zo_m, 2},  // POP 到内存
 }
 
+// BSWAP 指令(字节顺序翻转寄存器)
 var ybswap = []ytab{
-	{Ynone, Ynone, Yrl, Z_rp, 2},
+	{Ynone, Ynone, Yrl, Z_rp, 2}, // BSWAP reg (目标是寄存器)
 }
 
+// 条件指令类(setcc)
+// 例如 SETNE BYTE PTR [rax]
 var yscond = []ytab{
+	// Zo_m: 使用模板 Zo_m, 需要 modrm
+	// zoffset=2 表示指令长度是两字节指令前缀 + modrm
 	{Ynone, Ynone, Ymb, Zo_m, 2},
 }
 
+// 条件跳转指令(jcc)
+//
+// Ybr: 目标是分支目标（label）
+// Zbr: 表示按条件跳转的模板, 通常是 0F 8X disp32 (或短跳用 7X disp8)
+// 三种组合:
+// - 无条件数: 常规条件跳转
+// - Yi0: 带立即数0, 当作跳转条件
+// - Yi1: 带立即数1, zoffset=1 表示使用不同 opcode (例如短跳)
 var yjcond = []ytab{
 	{Ynone, Ynone, Ybr, Zbr, 0},
 	{Yi0, Ynone, Ybr, Zbr, 0},
 	{Yi1, Ynone, Ybr, Zbr, 1},
 }
 
+// loop 指令
+// 例如 loop label
 var yloop = []ytab{
 	{Ynone, Ynone, Ybr, Zloop, 1},
 }
 
+// 调用指令
 var ycall = []ytab{
-	{Ynone, Ynone, Yml, Zcallindreg, 0},
-	{Yrx, Ynone, Yrx, Zcallindreg, 2},
-	{Ynone, Ynone, Yindir, Zcallind, 2},
-	{Ynone, Ynone, Ybr, Zcall, 0},
-	{Ynone, Ynone, Yi32, Zcallcon, 1},
+	{Ynone, Ynone, Yml, Zcallindreg, 0}, // 无额外操作数, 目标是内存/间接调用
+	{Yrx, Ynone, Yrx, Zcallindreg, 2},   // 寄存器调用
+	{Ynone, Ynone, Yindir, Zcallind, 2}, // 无额外操作数, 目标是间接地址调用
+	{Ynone, Ynone, Ybr, Zcall, 0},       // 直接调用(标签)
+	{Ynone, Ynone, Yi32, Zcallcon, 1},   // 调用符号常量(符号地址)
 }
 
+// Duff's device 调用
 var yduff = []ytab{
 	{Ynone, Ynone, Yi32, Zcallduff, 1},
 }
 
+// JMP 指令
 var yjmp = []ytab{
-	{Ynone, Ynone, Yml, Zo_m64, 2},
-	{Ynone, Ynone, Ybr, Zjmp, 0},
-	{Ynone, Ynone, Yi32, Zjmpcon, 1},
+	{Ynone, Ynone, Yml, Zo_m64, 2},   // 跳转到内存/间接地址
+	{Ynone, Ynone, Ybr, Zjmp, 0},     // 跳转到标签(直接跳转)
+	{Ynone, Ynone, Yi32, Zjmpcon, 1}, // 跳转到符号常量
 }
 
+// 浮点数移动指令
+// d 后缀表示 double, 通常表示双向, 即既支持 load 又支持 store
 var yfmvd = []ytab{
-	{Ym, Ynone, Yf0, Zm_o, 2},
-	{Yf0, Ynone, Ym, Zo_m, 2},
-	{Yrf, Ynone, Yf0, Zm_o, 2},
-	{Yf0, Ynone, Yrf, Zo_m, 2},
+	{Ym, Ynone, Yf0, Zm_o, 2},  // 内存 -> ST(0)
+	{Yf0, Ynone, Ym, Zo_m, 2},  // ST(0) -> 内存
+	{Yrf, Ynone, Yf0, Zm_o, 2}, // ST(i) -> ST(0)
+	{Yf0, Ynone, Yrf, Zo_m, 2}, // ST(0) -> ST(i)
 }
 
+// 浮点数移动指令
+// p 后缀可能是 pop, 浮点指令里经常有 FSTP (存储并弹栈), 或 FLD 指令后面跟弹栈等。
 var yfmvdp = []ytab{
-	{Yf0, Ynone, Ym, Zo_m, 2},
-	{Yf0, Ynone, Yrf, Zo_m, 2},
+	{Yf0, Ynone, Ym, Zo_m, 2},  // ST(0) -> 内存
+	{Yf0, Ynone, Yrf, Zo_m, 2}, // ST(0) -> ST(i)
 }
 
+// 浮点数移动指令
+// 后缀 f 可能表示 fast / forward / from memory
+// 一般是支持基本的浮点 load/store，不涉及弹栈，也不涉及寄存器之间交换。
 var yfmvf = []ytab{
-	{Ym, Ynone, Yf0, Zm_o, 2},
-	{Yf0, Ynone, Ym, Zo_m, 2},
+	{Ym, Ynone, Yf0, Zm_o, 2}, // 内存 -> ST(0)
+	{Yf0, Ynone, Ym, Zo_m, 2}, // ST(0) -> 内存
 }
 
+// 浮点数移动指令
+// 后缀 x 表示 exchange
+// 比如浮点指令 FXCH 交换栈顶和 ST(i)
 var yfmvx = []ytab{
-	{Ym, Ynone, Yf0, Zm_o, 2},
+	{Ym, Ynone, Yf0, Zm_o, 2}, // 内存 -> ST(0)
 }
 
+// 浮点数移动指令
+// 后缀 p 表示 pop, 对应 ST(0) -> memory 并弹栈
 var yfmvp = []ytab{
-	{Yf0, Ynone, Ym, Zo_m, 2},
+	{Yf0, Ynone, Ym, Zo_m, 2}, // ST(0) -> 内存
 }
 
+// 浮点数移动指令
+// 对应 x86 的 FCMOVcc 指令, 根据条件码决定是否从 ST(i) 移动到 ST(0)
 var yfcmv = []ytab{
-	{Yrf, Ynone, Yf0, Zm_o, 2},
+	{Yrf, Ynone, Yf0, Zm_o, 2}, // ST(i) -> ST(0)
 }
 
+// 浮点加法(FADD/FADDxx)
 var yfadd = []ytab{
-	{Ym, Ynone, Yf0, Zm_o, 2},
-	{Yrf, Ynone, Yf0, Zm_o, 2},
-	{Yf0, Ynone, Yrf, Zo_m, 2},
+	{Ym, Ynone, Yf0, Zm_o, 2},  // 内存值加到 ST(0): FADD mem
+	{Yrf, Ynone, Yf0, Zm_o, 2}, // ST(i) 加到 ST(0): FADD ST(i), ST(0)
+	{Yf0, Ynone, Yrf, Zo_m, 2}, // ST(0) 加到 ST(i): FADD ST(0), ST(i)
 }
 
+// 浮点加并弹栈(FADDP)
 var yfaddp = []ytab{
-	{Yf0, Ynone, Yrf, Zo_m, 2},
+	{Yf0, Ynone, Yrf, Zo_m, 2}, // ST(0) 加到 ST(i), 并弹栈
 }
 
+// 浮点交换(FXCH)
 var yfxch = []ytab{
-	{Yf0, Ynone, Yrf, Zo_m, 2},
-	{Yrf, Ynone, Yf0, Zm_o, 2},
+	{Yf0, Ynone, Yrf, Zo_m, 2}, // 交换 ST(0) 和 ST(i)：FXCH ST(i)
+	{Yrf, Ynone, Yf0, Zm_o, 2}, // ST(i) -> ST(0): 实际也是 FXCH, 只是写法不同
 }
 
+// 浮点比较并弹栈(FCOMPP)
 var ycompp = []ytab{
-	{Yf0, Ynone, Yrf, Zo_m, 2}, /* botch is really f0,f1 */
+	{Yf0, Ynone, Yrf, Zo_m, 2}, // 比较 ST(0) 和 ST(i), 并弹两次栈顶. botch is really f0,f1
 }
 
+// 存储浮点状态字(FSTSW)
 var ystsw = []ytab{
-	{Ynone, Ynone, Ym, Zo_m, 2},
-	{Ynone, Ynone, Yax, Zlit, 1},
+	{Ynone, Ynone, Ym, Zo_m, 2},  // 将状态字写到内存: FSTSW mem
+	{Ynone, Ynone, Yax, Zlit, 1}, // 将状态字写到 AX: FSTSW AX
 }
 
+// 控制字指令 STCW / LDCW (Store Control Word / Load Control Word)
 var ystcw = []ytab{
-	{Ynone, Ynone, Ym, Zo_m, 2},
-	{Ym, Ynone, Ynone, Zm_o, 2},
+	{Ynone, Ynone, Ym, Zo_m, 2}, // 将控制字存储到内存: FSTCW mem
+	{Ym, Ynone, Ynone, Zm_o, 2}, // 从内存加载控制字: FLDCW mem
 }
 
+// 类似系统指令
+// 比如保存/恢复 x87 环境
 var ysvrs = []ytab{
-	{Ynone, Ynone, Ym, Zo_m, 2},
-	{Ym, Ynone, Ynone, Zm_o, 2},
+	{Ynone, Ynone, Ym, Zo_m, 2}, // 保存状态: FNSAVE/FSTENV mem
+	{Ym, Ynone, Ynone, Zm_o, 2}, // 恢复状态: FRSTOR/FLDENV mem
 }
 
+// 向量指令里 ymm 和 xmm
 var ymm = []ytab{
-	{Ymm, Ynone, Ymr, Zm_r_xm, 1},
-	{Yxm, Ynone, Yxr, Zm_r_xm, 2},
+	{Ymm, Ynone, Ymr, Zm_r_xm, 1}, // memory -> ymm 寄存器(可能是 256 位 AVX)
+	{Yxm, Ynone, Yxr, Zm_r_xm, 2}, // memory -> xmm 寄存器(128 位 SSE)
 }
 
+// 只涉及 xmm
 var yxm = []ytab{
-	{Yxm, Ynone, Yxr, Zm_r_xm, 1},
+	{Yxm, Ynone, Yxr, Zm_r_xm, 1}, // memory -> xmm 寄存器
 }
 
+// 数据转换, 数据搬运指令
+// xcv 可能是 convert 缩写
 var yxcvm1 = []ytab{
-	{Yxm, Ynone, Yxr, Zm_r_xm, 2},
-	{Yxm, Ynone, Ymr, Zm_r_xm, 2},
+	{Yxm, Ynone, Yxr, Zm_r_xm, 2}, // memory -> xmm
+	{Yxm, Ynone, Ymr, Zm_r_xm, 2}, // memory -> memory/寄存器
 }
 
+// 向量/浮点数据的转换指令, 第二种操作数模式
 var yxcvm2 = []ytab{
-	{Yxm, Ynone, Yxr, Zm_r_xm, 2},
-	{Ymm, Ynone, Yxr, Zm_r_xm, 2},
+	{Yxm, Ynone, Yxr, Zm_r_xm, 2}, // 从 XMM memory -> XMM register, 长度/特征=2
+	{Ymm, Ynone, Yxr, Zm_r_xm, 2}, // 从 YMM memory -> XMM register
 }
 
 /*
@@ -739,51 +819,80 @@ var yxmq = []ytab{
 }
 */
 
+// yxr: “XMM register -> XMM register”
+// 用来描述涉及 XMM 寄存器作为源和目标的指令(比如 ADDPS xmm1, xmm2)
+// 典型 SSE/AVX 指令: 寄存器间运算, 如 ADDPS xmm1, xmm2
 var yxr = []ytab{
 	{Yxr, Ynone, Yxr, Zm_r_xm, 1},
 }
 
+// 对应把向量寄存器里的值写到内存
+// 比如 MOVDQA xmm1, m128
+// ml 表示 memory low 或 memory load/store
 var yxr_ml = []ytab{
 	{Yxr, Ynone, Yml, Zr_m_xm, 1},
 }
 
+// 对应传统通用寄存器指令(非向量), 如 MOV r/m32, r32
 var ymr = []ytab{
 	{Ymr, Ynone, Ymr, Zm_r, 1},
 }
 
+// 寄存器/内存 -> memory
+// ml: memory low
 var ymr_ml = []ytab{
 	{Ymr, Ynone, Yml, Zr_m_xm, 1},
 }
 
+// 对应比较指令时从内存读到寄存器
+// 如 CMPPS xmm1, m128
 var yxcmp = []ytab{
 	{Yxm, Ynone, Yxr, Zm_r_xm, 1},
 }
 
+// 对应 PCMPxSTRI/CMPPS 带 immediate mask
+// 比如 CMPPS xmm1, m128, imm8
 var yxcmpi = []ytab{
 	{Yxm, Yxr, Yi8, Zm_r_i_xm, 2},
 }
 
+// 对应向量数据移动
 var yxmov = []ytab{
 	{Yxm, Ynone, Yxr, Zm_r_xm, 1},
 	{Yxr, Ynone, Yxm, Zr_m_xm, 1},
 }
 
+// 浮点数 → 整数转换
+// convert float -> long (int)
+// 比如 CVTTSS2SI
 var yxcvfl = []ytab{
 	{Yxm, Ynone, Yrl, Zm_r_xm, 1},
 }
 
+// 整数 → 浮点数
+// convert long -> float
+// 比如 CVTSI2SS
 var yxcvlf = []ytab{
 	{Yml, Ynone, Yxr, Zm_r_xm, 1},
 }
 
+// 浮点数 → 64位整数
+// convert float -> quad (int64)
+// 比如 CVTTSD2SI
 var yxcvfq = []ytab{
 	{Yxm, Ynone, Yrl, Zm_r_xm, 2},
 }
 
+// 64位整数 → 浮点数
+// convert quad (int64) -> float
+// 比如 CVTSI2SD
 var yxcvqf = []ytab{
 	{Yml, Ynone, Yxr, Zm_r_xm, 2},
 }
 
+// 大多数向量指令
+// packed single / shift
+// 比如 VPADDQ ymm, ymm, m256
 var yps = []ytab{
 	{Ymm, Ynone, Ymr, Zm_r_xm, 1},
 	{Yi8, Ynone, Ymr, Zibo_m_xm, 2},
@@ -791,64 +900,109 @@ var yps = []ytab{
 	{Yi8, Ynone, Yxr, Zibo_m_xm, 3},
 }
 
+// 从向量寄存器提取到标量寄存器。
+// XMM register → register long
+// MOVD r32, xmm
+// MOVQ r64, xmm
 var yxrrl = []ytab{
 	{Yxr, Ynone, Yrl, Zm_r, 1},
 }
 
+// memory float packed
+// MOVAPS ymm, m256
+// MOVUPS ymm, m256
 var ymfp = []ytab{
 	{Ymm, Ynone, Ymr, Zm_r_3d, 1},
 }
 
+// MOVD xmm, r32
+// MOVSS xmm, m32
+// MOVDQA xmm, m128
 var ymrxr = []ytab{
 	{Ymr, Ynone, Yxr, Zm_r, 1},
 	{Yxm, Ynone, Yxr, Zm_r_xm, 1},
 }
 
+// shuffle：重新排列向量里的元素
+// PSHUFD xmm, xmm/m128, imm8
+// PSHUFW mm, mm/m64, imm8
 var ymshuf = []ytab{
 	{Yi8, Ymm, Ymr, Zibm_r, 2},
 }
 
+// 根据另一个向量按字节重新排列
+// PSHUFB xmm, xmm/m128
 var ymshufb = []ytab{
 	{Yxm, Ynone, Yxr, Zm2_r, 2},
 }
 
+// 控制两个向量合并后的排列方式
+// SHUFPS xmm, xmm/m128, imm8
+// SHUFPD xmm, xmm/m128, imm8
 var yxshuf = []ytab{
 	{Yu8, Yxm, Yxr, Zibm_r, 2},
 }
 
+// 从 XMM 寄存器里提取一个 16 位 word 到通用寄存器, 立即数指定哪个 word
+// PEXTRW r32, xmm, imm8
 var yextrw = []ytab{
 	{Yu8, Yxr, Yrl, Zibm_r, 2},
 }
 
+// 把 16 位的值(来自内存或寄存器)插入到 XMM 寄存器指定的位置
+// PINSRW xmm, r/m16, imm8
 var yinsrw = []ytab{
 	{Yu8, Yml, Yxr, Zibm_r, 2},
 }
 
+// 把 32 位的值插入到 XMM
+// PINSRD xmm, r/m32, imm8
+// VPINSRD xmm, xmm, r/m32, imm8
 var yinsr = []ytab{
 	{Yu8, Ymm, Yxr, Zibm_r, 3},
 }
 
+// 对 128 位向量按字节逻辑左移或右移
+// PSLLDQ xmm, imm8
+// PSRLDQ xmm, imm8
 var ypsdq = []ytab{
 	{Yi8, Ynone, Yxr, Zibo_m, 2},
 }
 
+// 提取向量里每个字节最高位, 打包成整数
+// PMOVMSKB r32, xmm
+// PMOVMSKB r32, mm
 var ymskb = []ytab{
 	{Yxr, Ynone, Yrl, Zm_r_xm, 2},
 	{Ymr, Ynone, Yrl, Zm_r_xm, 1},
 }
 
+// 对内存(或寄存器)做 CRC32 校验, 更新结果到寄存器
+// CRC32 r32, r/m8
+// CRC32 r32, r/m32
 var ycrc32l = []ytab{
 	{Yml, Ynone, Yrl, Zlitm_r, 0},
 }
 
+// 给缓存做预取提示
+// PREFETCHT0 m8
+// PREFETCHT1 m8
+// PREFETCHNTA m8
 var yprefetch = []ytab{
 	{Ym, Ynone, Ynone, Zm_o, 2},
 }
 
+// AES 指令
+// AESENC xmm1, xmm2/m128
+// AESENCLAST xmm1, xmm2/m128
+// AESDEC xmm1, xmm2/m128
+// AESDECLAST xmm1, xmm2/m128
 var yaes = []ytab{
 	{Yxm, Ynone, Yxr, Zlitm_r, 2},
 }
 
+// AES 指令
+// AESKEYGENASSIST xmm1, xmm2/m128, imm8
 var yaes2 = []ytab{
 	{Yu8, Yxm, Yxr, Zibm_r, 2},
 }
@@ -910,6 +1064,70 @@ var yaes2 = []ytab{
  * example, is an opcode byte (z[0]) then an asmando (which is some kind of
  * encoded addressing mode for the Yml arg), and then a single immediate byte.
  * Zilo_m is the same but a long (32-bit) immediate.
+ */
+
+/*
+ * 你现在在 doasm 函数中，手里拿着一个 Prog*，其中 p->as 设置为某个指令，比如 ACRC32，
+ * 而 p->from 和 p->to 则是操作数（Addr* 类型）。
+ *
+ * 链接器会先扫描 optab 表，根据 p->as 查找对应的表项。
+ * 每个 optab 表项有一个 ytable（第二个字段），它描述了该指令支持的不同操作数字段组合。
+ *
+ * 接着，doasm 会遍历这个 ytable：
+ * - ytable 的每一行前两个字段是操作数的 Ytype 类型（由 span.c 中的 oclass 函数计算）
+ * - 如果 p->from 和 p->to 的类型与 ytable 中某一行匹配，就选中该行
+ *
+ * oclass 会根据操作数具体值判断其类型，例如区分常量 0 和 1 与一般的 8 位常量 Yi8。
+ * 而 instinit 初始化时，会设置 ycover 表，指定更宽泛的匹配关系，例如：
+ *
+ *    ycover[Yi0*Ymax + Ys32] = 1;
+ *    ycover[Yi1*Ymax + Ys32] = 1;
+ *    ycover[Yi8*Ymax + Ys32] = 1;
+ *
+ * 意思是：Yi0、Yi1 和 Yi8 都可以算作 Ys32（有符号 32 位数）。
+ *
+ * 与遍历 ytable 同时，还有一个指针 z，最开始指向 optab 中的“魔法字节”数组。
+ * 每次跳过一行不匹配时，就根据该行的第四个字段跳过相应字节。
+ * 当找到匹配行时，z 指针正好指向需要用来生成机器码的模板字节。
+ * 实际生成的机器码取决于该行的第三个字段（Ztype）和 z 指针指向的模板字节。
+ *
+ * 举个例子：看 AADDL 指令。
+ * optab 表中的一行：
+ *    { AADDL, yaddl, Px, 0x83,(00),0x05,0x81,(00),0x01,0x03 },
+ *
+ * 对应的 yaddl 表：
+ *    uchar yaddl[] = {
+ *        Yi8,  Yml, Zibo_m, 2,
+ *        Yi32, Yax, Zil_,   1,
+ *        Yi32, Yml, Zilo_m, 2,
+ *        Yrl,  Yml, Zr_m,   1,
+ *        Yml,  Yrl, Zm_r,   1,
+ *        0
+ *    };
+ *
+ * 表示 ADDL 有 5 种操作数字段组合，每种有对应的模板：
+ *
+ *    Yi8,  Yml  -> Zibo_m, z          (z 指向 0x83, 00)
+ *    Yi32, Yax  -> Zil_,   z+2        (z 指向 0x05)
+ *    Yi32, Yml  -> Zilo_m, z+3        (z 指向 0x81, 00)
+ *    Yrl,  Yml  -> Zr_m,   z+5        (z 指向 0x01)
+ *    Yml,  Yrl  -> Zm_r,   z+6        (z 指向 0x03)
+ *
+ * optab 中的 Pconstant（这里是 Px）控制是否要生成前缀字节。
+ *
+ * 在 doasm 函数中根据第三个字段 Ztype 进行 switch：
+ * 例如 Zibo_m 表示：
+ *   - 先输出一个 opcode 字节（z[0]）
+ *   - 然后输出 asmando（根据目标操作数编码的 modrm）
+ *   - 最后输出一个立即数字节
+ *
+ * Zilo_m 类似，只是立即数是 32 位。
+ *
+ * 整个机制总结：
+ * - optab 通过 as 匹配指令
+ * - ytable 描述合法的操作数字段组合
+ * - ycover 定义更宽松的类型匹配
+ * - 匹配成功后，用 Ztype + 模板字节（z）拼出机器码
  */
 var optab = []Optab{
 	// as, ytab, andproto, opcode
@@ -1612,6 +1830,8 @@ var optab = []Optab{
 	{0, nil, 0, [23]uint8{}},
 }
 
+// 快速索引表
+// 因为原始的指令比较稀疏(涉及多个指令集), 取低bit可以更紧凑
 var opindex [(ALAST + 1) & obj.AMask]*Optab
 
 // single-instruction no-ops of various lengths.
