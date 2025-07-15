@@ -46,7 +46,7 @@ func Main() {
 }
 
 func linkarchinit() {
-	ld.Thestring = obj.Getgoarch()
+	ld.Thestring = obj.Getwaarch()
 	ld.Thelinkarch = &ld.Linkarm64
 
 	ld.Thearch.Thechar = thechar

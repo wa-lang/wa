@@ -81,8 +81,8 @@ func Linknew(arch *LinkArch) *Link {
 	ctxt.Hash = make(map[SymVer]*LSym)
 	ctxt.Arch = arch
 	ctxt.Version = HistVersion
-	ctxt.Goroot = Getgoroot()
-	ctxt.Goroot_final = os.Getenv("GOROOT_FINAL")
+	ctxt.Waroot = Getwaroot()
+	ctxt.Waroot_final = os.Getenv("WAROOT_FINAL")
 	if runtime.GOOS == "windows" {
 		// TODO(rsc): Remove ctxt.Windows and let callers use runtime.GOOS.
 		ctxt.Windows = 1
@@ -96,8 +96,8 @@ func Linknew(arch *LinkArch) *Link {
 	buf = filepath.ToSlash(buf)
 	ctxt.Pathname = buf
 
-	ctxt.LineHist.GOROOT = ctxt.Goroot
-	ctxt.LineHist.GOROOT_FINAL = ctxt.Goroot_final
+	ctxt.LineHist.WAROOT = ctxt.Waroot
+	ctxt.LineHist.WAROOT_FINAL = ctxt.Waroot_final
 	ctxt.LineHist.Dir = ctxt.Pathname
 
 	ctxt.Headtype = headtype(Getgoos())

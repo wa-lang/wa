@@ -4,7 +4,9 @@
 package appp9asm
 
 import (
+	"flag"
 	"fmt"
+	"log"
 	"os"
 
 	"wa-lang.org/wa/internal/3rdparty/cli"
@@ -18,7 +20,7 @@ import (
 var CmdP9Asm = &cli.Command{
 	Hidden: true,
 	Name:   "p9asm",
-	Usage:  "plan9 assembly language tool",
+	Usage:  "p9asm language assembly tool",
 	Flags: []cli.Flag{
 		&cli.BoolFlag{
 			Name:  "debug",
@@ -70,6 +72,28 @@ var CmdP9Asm = &cli.Command{
 		arch := arch.Set(arch.AMD64)
 		ctxt := obj.Linknew(&x86.Linkamd64)
 
+		if flags.PrintOut {
+			ctxt.Debugasm = 1
+		}
+		ctxt.LineHist.TrimPathPrefix = flags.TrimPath
+		ctxt.Flag_dynlink = flags.Dynlink
+		if flags.Shared || flags.Dynlink {
+			ctxt.Flag_shared = 1
+		}
+
+		fd, err := os.Create(flags.OutputFile)
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		ctxt.Bso = obj.Binitw(os.Stdout)
+		defer ctxt.Bso.Flush()
+
+		ctxt.Diag = log.Fatalf
+		output := obj.Binitw(fd)
+		fmt.Fprintf(output, "wa object %s %s\n", obj.Getgoos(), obj.Getwaarch())
+		fmt.Fprintf(output, "!\n")
+
 		lexer, err := lex.NewLexer(name, ctxt, flags)
 		if err != nil {
 			fmt.Fprint(os.Stderr, err)
@@ -77,13 +101,16 @@ var CmdP9Asm = &cli.Command{
 		}
 		parser := asm.NewParser(ctxt, arch, lexer, flags)
 
-		prog, ok := parser.Parse()
+		pList := obj.Linknewplist(ctxt)
+		var ok bool
+		pList.Firstpc, ok = parser.Parse()
 		if !ok {
-			fmt.Fprintf(os.Stderr, "asm: assembly of %s failed", c.Args().First())
+			log.Printf("asm: assembly of %s failed", flag.Arg(0))
+			os.Remove(flags.OutputFile)
 			os.Exit(1)
 		}
-
-		fmt.Printf("%+v\n", prog)
+		obj.Writeobjdirect(ctxt, output)
+		output.Flush()
 		return nil
 	},
 }

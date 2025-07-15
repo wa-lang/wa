@@ -473,8 +473,8 @@ type Link struct {
 	Bso                *Biobuf
 	Pathname           string
 	Windows            int32
-	Goroot             string
-	Goroot_final       string
+	Waroot             string
+	Waroot_final       string
 	Enforce_data_order int32
 	Hash               map[SymVer]*LSym
 	LineHist           LineHist

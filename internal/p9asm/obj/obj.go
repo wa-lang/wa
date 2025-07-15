@@ -29,8 +29,8 @@ type LineHist struct {
 	Ranges         []LineRange // ranges for lookup
 	Dir            string      // directory to qualify relative paths
 	TrimPathPrefix string      // remove leading TrimPath from recorded file names
-	GOROOT         string      // current GOROOT
-	GOROOT_FINAL   string      // target GOROOT
+	WAROOT         string      // current WAROOT
+	WAROOT_FINAL   string      // target WAROOT
 }
 
 // A LineStack is an entry in the recorded line history.
@@ -81,8 +81,8 @@ func (h *LineHist) setFile(stk *LineStack, file string) {
 		} else {
 			abs = abs[len(h.TrimPathPrefix)+1:]
 		}
-	} else if h.GOROOT_FINAL != "" && h.GOROOT_FINAL != h.GOROOT && hasPathPrefix(abs, h.GOROOT) {
-		abs = h.GOROOT_FINAL + abs[len(h.GOROOT):]
+	} else if h.WAROOT_FINAL != "" && h.WAROOT_FINAL != h.WAROOT && hasPathPrefix(abs, h.WAROOT) {
+		abs = h.WAROOT_FINAL + abs[len(h.WAROOT):]
 	}
 	if abs == "" {
 		abs = "??"

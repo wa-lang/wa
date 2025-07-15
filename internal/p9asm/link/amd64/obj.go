@@ -48,7 +48,7 @@ func Main() {
 func linkarchinit() {
 	ld.Thestring = "amd64"
 	ld.Thelinkarch = &ld.Linkamd64
-	if obj.Getgoarch() == "amd64p32" {
+	if obj.Getwaarch() == "amd64p32" {
 		ld.Thelinkarch = &ld.Linkamd64p32
 	}
 

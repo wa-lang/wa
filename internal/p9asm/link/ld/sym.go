@@ -68,9 +68,9 @@ func linknew(arch *LinkArch) *Link {
 	ctxt.Hash = make(map[symVer]*LSym)
 	ctxt.Arch = arch
 	ctxt.Version = obj.HistVersion
-	ctxt.Goroot = obj.Getgoroot()
+	ctxt.Goroot = obj.Getwaroot()
 
-	p := obj.Getgoarch()
+	p := obj.Getwaarch()
 	if p != arch.Name {
 		log.Fatalf("invalid goarch %s (want %s)", p, arch.Name)
 	}

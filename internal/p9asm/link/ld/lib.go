@@ -290,7 +290,7 @@ const (
 
 func (mode *BuildMode) Set(s string) error {
 	goos := obj.Getgoos()
-	goarch := obj.Getgoarch()
+	goarch := obj.Getwaarch()
 	badmode := func() error {
 		return fmt.Errorf("buildmode %s not supported on %s/%s", s, goos, goarch)
 	}
@@ -1167,7 +1167,7 @@ func ldobj(f *obj.Biobuf, pkg string, length int64, pn string, file string, when
 	}
 
 	// First, check that the basic goos, goarch, and version match.
-	t := fmt.Sprintf("%s %s %s ", goos, obj.Getgoarch(), obj_Getgoversion)
+	t := fmt.Sprintf("%s %s %s ", goos, obj.Getwaarch(), obj_Getgoversion)
 
 	line = strings.TrimRight(line, "\n")
 	if !strings.HasPrefix(line[10:]+" ", t) && Debug['f'] == 0 {
@@ -1387,9 +1387,9 @@ func ldshlibsyms(shlib string) {
 }
 
 func mywhatsys() {
-	goroot = obj.Getgoroot()
+	goroot = obj.Getwaroot()
 	goos = obj.Getgoos()
-	goarch = obj.Getgoarch()
+	goarch = obj.Getwaarch()
 
 	if !strings.HasPrefix(goarch, Thestring) {
 		log.Fatalf("cannot use %cc with GOARCH=%s", Thearch.Thechar, goarch)

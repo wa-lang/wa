@@ -27,6 +27,7 @@ import (
 	"wa-lang.org/wa/internal/app/applogo"
 	"wa-lang.org/wa/internal/app/applsp"
 	"wa-lang.org/wa/internal/app/appp9asm"
+	"wa-lang.org/wa/internal/app/appp9link"
 	"wa-lang.org/wa/internal/app/appplay"
 	"wa-lang.org/wa/internal/app/apprun"
 	"wa-lang.org/wa/internal/app/appssa"
@@ -112,6 +113,7 @@ func main() {
 
 		// 待完善的子命令(隐藏)
 		appp9asm.CmdP9Asm,
+		appp9link.CmdP9Link,
 		appgo2wa.CmdGo2wa,
 		appcir.CmdCir,
 		appdoc.CmdDoc,

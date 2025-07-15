@@ -11,6 +11,7 @@ import (
 	"io"
 	"log"
 	"os"
+	"runtime"
 	"strconv"
 	"strings"
 	"time"
@@ -200,16 +201,16 @@ func envOr(key, value string) string {
 	return value
 }
 
-func Getgoroot() string {
-	return envOr("GOROOT", "")
+func Getwaroot() string {
+	return envOr("WAROOT", "")
 }
 
-func Getgoarch() string {
-	return envOr("GOARCH", "")
+func Getwaarch() string {
+	return envOr("WAARCH", runtime.GOARCH)
 }
 
 func Getgoos() string {
-	return envOr("GOOS", "")
+	return envOr("WAOS", runtime.GOOS)
 }
 
 func Atoi(s string) int {
