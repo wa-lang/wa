@@ -29,6 +29,8 @@ var _Pseudos = map[string]int{
 }
 
 type Parser struct {
+	Flags *arch.Flags
+
 	lex           lex.TokenReader
 	lineNum       int   // Line number in source file.
 	histLineNum   int32 // Cumulative line number across source files.
@@ -53,8 +55,12 @@ type Patch struct {
 	label string
 }
 
-func NewParser(ctxt *obj.Link, ar *arch.Arch, lexer lex.TokenReader) *Parser {
+func NewParser(ctxt *obj.Link, ar *arch.Arch, lexer lex.TokenReader, flags *arch.Flags) *Parser {
+	if flags == nil {
+		flags = new(arch.Flags)
+	}
 	return &Parser{
+		Flags:    flags,
 		ctxt:     ctxt,
 		arch:     ar,
 		lex:      lexer,

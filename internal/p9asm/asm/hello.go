@@ -16,11 +16,16 @@ import (
 )
 
 func main() {
+	flags := &arch.Flags{}
 	arch := arch.Set(arch.AMD64)
 	ctxt := obj.Linknew(arch.LinkArch)
 
-	lexer := lex.NewLexer("hello.p9asm", ctxt)
-	parser := asm.NewParser(ctxt, arch, lexer)
+	lexer, err := lex.NewLexer("hello.p9asm", ctxt, flags)
+	if err != nil {
+		panic(err)
+	}
+
+	parser := asm.NewParser(ctxt, arch, lexer, flags)
 
 	prog, ok := parser.Parse()
 	if !ok {

@@ -7,11 +7,11 @@ package lex
 
 import (
 	"fmt"
-	"log"
 	"os"
 	"strings"
 	"text/scanner"
 
+	"wa-lang.org/wa/internal/p9asm/asm/arch"
 	"wa-lang.org/wa/internal/p9asm/obj"
 )
 
@@ -72,15 +72,18 @@ func HistLine() int32 {
 }
 
 // NewLexer returns a lexer for the named file and the given link context.
-func NewLexer(name string, ctxt *obj.Link) TokenReader {
+func NewLexer(name string, ctxt *obj.Link, flags *arch.Flags) (TokenReader, error) {
 	linkCtxt = ctxt
-	input := NewInput(name)
+	input, err := NewInput(name, flags)
+	if err != nil {
+		return nil, err
+	}
 	fd, err := os.Open(name)
 	if err != nil {
-		log.Fatalf("asm: %s\n", err)
+		return nil, fmt.Errorf("asm: %s\n", err)
 	}
 	input.Push(NewTokenizer(name, fd, fd))
-	return input
+	return input, nil
 }
 
 // InitHist sets the line count to 1, for reproducible testing.

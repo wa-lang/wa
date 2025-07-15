@@ -10,7 +10,6 @@ import (
 	"text/scanner"
 
 	"wa-lang.org/wa/internal/p9asm/asm/arch"
-	"wa-lang.org/wa/internal/p9asm/asm/flags"
 	"wa-lang.org/wa/internal/p9asm/asm/lex"
 	"wa-lang.org/wa/internal/p9asm/obj"
 )
@@ -55,7 +54,7 @@ func (p *Parser) append(prog *obj.Prog, cond string, doLabel bool) {
 		p.pendingLabels = p.pendingLabels[0:0]
 	}
 	prog.Pc = int64(p.pc)
-	if *flags.Debug {
+	if p.Flags.Debug {
 		fmt.Println(p.histLineNum, prog)
 	}
 	if testOut != nil {

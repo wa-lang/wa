@@ -9,6 +9,8 @@ import (
 	"strings"
 	"testing"
 	"text/scanner"
+
+	"wa-lang.org/wa/internal/p9asm/asm/arch"
 )
 
 type lexTest struct {
@@ -124,7 +126,10 @@ var lexTests = []lexTest{
 
 func TestLex(t *testing.T) {
 	for _, test := range lexTests {
-		input := NewInput(test.name)
+		input, err := NewInput(test.name, &arch.Flags{})
+		if err != nil {
+			t.Fatal(err)
+		}
 		input.Push(NewTokenizer(test.name, strings.NewReader(test.input), nil))
 		result := drain(input)
 		if result != test.output {

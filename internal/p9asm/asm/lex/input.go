@@ -12,7 +12,7 @@ import (
 	"strings"
 	"text/scanner"
 
-	"wa-lang.org/wa/internal/p9asm/asm/flags"
+	"wa-lang.org/wa/internal/p9asm/asm/arch"
 )
 
 // Input is the main input: a stack of readers and some macro definitions.
@@ -31,17 +31,25 @@ type Input struct {
 }
 
 // NewInput returns a
-func NewInput(name string) *Input {
-	return &Input{
-		// include directories: look in source dir, then -I directories.
-		includes:        append([]string{filepath.Dir(name)}, flags.I...),
-		beginningOfLine: true,
-		macros:          predefine(flags.D),
+func NewInput(name string, flags *arch.Flags) (*Input, error) {
+	if flags == nil {
+		flags = new(arch.Flags)
 	}
+	macros, err := predefine(flags.Defines)
+	if err != nil {
+		return nil, err
+	}
+	p := &Input{
+		// include directories: look in source dir, then -I directories.
+		includes:        append([]string{filepath.Dir(name)}, flags.IncludeDirs...),
+		beginningOfLine: true,
+		macros:          macros,
+	}
+	return p, nil
 }
 
 // predefine installs the macros set by the -D flag on the command line.
-func predefine(defines flags.MultiFlag) map[string]*Macro {
+func predefine(defines []string) (map[string]*Macro, error) {
 	macros := make(map[string]*Macro)
 	for _, name := range defines {
 		value := "1"
@@ -51,8 +59,7 @@ func predefine(defines flags.MultiFlag) map[string]*Macro {
 		}
 		tokens := Tokenize(name)
 		if len(tokens) != 1 || tokens[0].ScanToken != scanner.Ident {
-			fmt.Fprintf(os.Stderr, "asm: parsing -D: %q is not a valid identifier name\n", tokens[0])
-			flags.Usage()
+			return nil, fmt.Errorf("asm: parsing -D: %q is not a valid identifier name\n", tokens[0])
 		}
 		macros[name] = &Macro{
 			name:   name,
@@ -60,7 +67,7 @@ func predefine(defines flags.MultiFlag) map[string]*Macro {
 			tokens: Tokenize(value),
 		}
 	}
-	return macros
+	return macros, nil
 }
 
 func (in *Input) Error(args ...interface{}) {
