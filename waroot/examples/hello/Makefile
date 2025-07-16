@@ -4,7 +4,7 @@ run:
 	go run ../../../main.go run -console .
 
 build:
-	go run ../../../main.go build -wat2c.native .
+	go run ../../../main.go build -wat2c-native .
 
 test:
 	go run ../../../main.go test .

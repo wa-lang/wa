@@ -25,7 +25,7 @@ Wa (Chinese name "凹", which pronounced "Wa") is a general-purpose programming 
 - Github: [https://github.com/wa-lang/wa](https://github.com/wa-lang/wa)
 - Playground: [https://wa-lang.org/playground](https://wa-lang.org/playground)
 
-> Note: Unless otherwise noted, the Wa source files are distributed under the AGPL-v3 license found in the LICENSE file.
+> Note: The Wa compiler source files are distributed under the AGPL-v3 license. The Wa standard library is licensed under the MIT license. The programs you develop using the Wa language can be safely used commercially without open source. If you want to integrate the Wa compiler code into your own project, but do not want to be restricted by the infectiousness of AGPL-v3, you can contact us to customize the license agreement for you.
 
 ## How to contribute
 The project is still in the prototype stage. If you have co-construction or PR needs, please refer to [How to contribute](./wca/readme_en.md). We no longer accept PRs for modifications to third-party libraries.
@@ -223,7 +223,6 @@ More examples [waroot/examples](waroot/examples)
 |王委委|100|
 |雪碧|100|
 
-## Give a Star! ⭐
+## Contact us
 
-If you like or are using Wa to learn or start your projects,
-please give it a star. Thanks!
+Email: `dev{AT}wa-lang.org`
