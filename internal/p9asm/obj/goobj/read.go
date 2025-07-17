@@ -574,7 +574,7 @@ func (r *objReader) parseObject(prefix []byte) error {
 	}
 
 	r.readFull(r.tmp[:8])
-	if !bytes.Equal(r.tmp[:8], []byte("\x00\x00go13ld")) {
+	if !bytes.Equal(r.tmp[:8], []byte("\x00\x00wa01ld")) {
 		return r.error(errCorruptObject)
 	}
 
@@ -661,7 +661,7 @@ func (r *objReader) parseObject(prefix []byte) error {
 	}
 
 	r.readFull(r.tmp[:7])
-	if !bytes.Equal(r.tmp[:7], []byte("\xffgo13ld")) {
+	if !bytes.Equal(r.tmp[:7], []byte("\xffwa01ld")) {
 		return r.error(errCorruptObject)
 	}
 

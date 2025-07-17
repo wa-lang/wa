@@ -15,13 +15,13 @@
 //
 // The file format is:
 //
-//	- magic header: "\x00\x00go13ld"
+//	- magic header: "\x00\x00wa01ld"
 //	- byte 1 - version number
 //	- sequence of strings giving dependencies (imported packages)
 //	- empty string (marks end of sequence)
 //	- sequence of defined symbols
 //	- byte 0xff (marks end of sequence)
-//	- magic footer: "\xff\xffgo13ld"
+//	- magic footer: "\xff\xffwa01ld"
 //
 // All integers are stored in a zigzag varint format.
 // See golang.org/s/go12symtab for a definition.
@@ -302,7 +302,7 @@ func Writeobjdirect(ctxt *Link, b *Biobuf) {
 	Bputc(b, 0)
 
 	Bputc(b, 0)
-	fmt.Fprintf(b, "go13ld")
+	fmt.Fprintf(b, "wa01ld")
 	Bputc(b, 1) // version
 
 	// Emit autolib.
@@ -323,7 +323,7 @@ func Writeobjdirect(ctxt *Link, b *Biobuf) {
 	Bputc(b, 0xff)
 
 	Bputc(b, 0xff)
-	fmt.Fprintf(b, "go13ld")
+	fmt.Fprintf(b, "wa01ld")
 }
 
 func writesym(ctxt *Link, b *Biobuf, s *LSym) {

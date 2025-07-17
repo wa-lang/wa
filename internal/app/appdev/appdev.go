@@ -25,9 +25,6 @@ var CmdDev = &cli.Command{
 			Name: "hello",
 		},
 		&cli.BoolFlag{
-			Name: "malloc",
-		},
-		&cli.BoolFlag{
 			Name: "count-code-lines",
 		},
 	},

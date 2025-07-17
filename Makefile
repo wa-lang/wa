@@ -15,7 +15,7 @@ hello:
 	cd waroot && go run ../main.go run hello.wa
 
 dev:
-	go run main.go dev -malloc
+	go run main.go p9asm -S -o a.out.6 ./tests/p9asm/hello.s
 
 prime:
 	cd waroot && go run ../main.go run examples/prime

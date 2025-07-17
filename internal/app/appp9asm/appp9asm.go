@@ -29,6 +29,7 @@ var CmdP9Asm = &cli.Command{
 		&cli.StringFlag{
 			Name:  "o",
 			Usage: "output file; default foo.6 for /a/b/c/foo.s on amd64",
+			Value: "a.out.6",
 		},
 		&cli.BoolFlag{
 			Name:  "S",
@@ -83,7 +84,8 @@ var CmdP9Asm = &cli.Command{
 
 		fd, err := os.Create(flags.OutputFile)
 		if err != nil {
-			log.Fatal(err)
+			fmt.Fprint(os.Stderr, err)
+			os.Exit(1)
 		}
 
 		ctxt.Bso = obj.Binitw(os.Stdout)

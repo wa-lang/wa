@@ -17,13 +17,13 @@ package ld
 //
 // The file format is:
 //
-//	- magic header: "\x00\x00go13ld"
+//	- magic header: "\x00\x00wa01ld"
 //	- byte 1 - version number
 //	- sequence of strings giving dependencies (imported packages)
 //	- empty string (marks end of sequence)
 //	- sequence of defined symbols
 //	- byte 0xff (marks end of sequence)
-//	- magic footer: "\xff\xffgo13ld"
+//	- magic footer: "\xff\xffwa01ld"
 //
 // All integers are stored in a zigzag varint format.
 // See golang.org/s/go12symtab for a definition.
@@ -111,8 +111,8 @@ import (
 )
 
 const (
-	startmagic = "\x00\x00go13ld"
-	endmagic   = "\xff\xffgo13ld"
+	startmagic = "\x00\x00wa01ld"
+	endmagic   = "\xff\xffwa01ld"
 )
 
 func ldobjfile(ctxt *Link, f *obj.Biobuf, pkg string, length int64, pn string) {
