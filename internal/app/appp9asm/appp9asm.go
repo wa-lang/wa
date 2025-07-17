@@ -91,7 +91,7 @@ var CmdP9Asm = &cli.Command{
 
 		ctxt.Diag = log.Fatalf
 		output := obj.Binitw(fd)
-		fmt.Fprintf(output, "wa object %s %s\n", obj.Getgoos(), obj.Getwaarch())
+		fmt.Fprintf(output, "wa object %s %s\n", obj.Getwaos(), obj.Getwaarch())
 		fmt.Fprintf(output, "!\n")
 
 		lexer, err := lex.NewLexer(name, ctxt, flags)

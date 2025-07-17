@@ -89,7 +89,7 @@ func (f *elfFile) text() (textStart uint64, text []byte, err error) {
 	return
 }
 
-func (f *elfFile) goarch() string {
+func (f *elfFile) waarch() string {
 	switch f.elf.Machine {
 	case elf.EM_386:
 		return "386"
@@ -97,8 +97,6 @@ func (f *elfFile) goarch() string {
 		return "amd64"
 	case elf.EM_ARM:
 		return "arm"
-	case elf.EM_PPC64:
-		return "ppc64"
 	}
 	return ""
 }

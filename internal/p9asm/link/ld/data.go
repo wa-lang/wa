@@ -364,7 +364,7 @@ func relocsym(s *LSym) {
 		}
 
 		// Android emulates runtime.tlsg as a regular variable.
-		if r.Type == obj.R_TLS && goos == "android" {
+		if r.Type == obj.R_TLS && waos == "android" {
 			r.Type = obj.R_ADDR
 		}
 

@@ -16,7 +16,7 @@ type rawFile interface {
 	symbols() (syms []Sym, err error)
 	pcln() (textStart uint64, symtab, pclntab []byte, err error)
 	text() (textStart uint64, text []byte, err error)
-	goarch() string
+	waarch() string
 }
 
 // A File is an opened executable file.
@@ -89,6 +89,6 @@ func (f *File) Text() (uint64, []byte, error) {
 	return f.raw.text()
 }
 
-func (f *File) GOARCH() string {
-	return f.raw.goarch()
+func (f *File) WAARCH() string {
+	return f.raw.waarch()
 }

@@ -26,9 +26,9 @@ type Disasm struct {
 	text      []byte           // bytes of text segment (actual instructions)
 	textStart uint64           // start PC of text
 	textEnd   uint64           // end PC of text
-	goarch    string           // GOARCH string
-	disasm    disasmFunc       // disassembler function for goarch
-	byteOrder binary.ByteOrder // byte order for goarch
+	waarch    string           // WAARCH string
+	disasm    disasmFunc       // disassembler function for waarch
+	byteOrder binary.ByteOrder // byte order for waarch
 }
 
 // Disasm returns a disassembler for the file f.
@@ -48,9 +48,9 @@ func (f *File) Disasm() (*Disasm, error) {
 		return nil, err
 	}
 
-	goarch := f.GOARCH()
-	disasm := disasms[goarch]
-	byteOrder := byteOrders[goarch]
+	waarch := f.WAARCH()
+	disasm := disasms[waarch]
+	byteOrder := byteOrders[waarch]
 	if disasm == nil || byteOrder == nil {
 		return nil, fmt.Errorf("unsupported architecture")
 	}
@@ -72,7 +72,7 @@ func (f *File) Disasm() (*Disasm, error) {
 		text:      textBytes,
 		textStart: textStart,
 		textEnd:   textStart + uint64(len(textBytes)),
-		goarch:    goarch,
+		waarch:    waarch,
 		disasm:    disasm,
 		byteOrder: byteOrder,
 	}
@@ -138,7 +138,7 @@ func (d *Disasm) Print(w io.Writer, filter *regexp.Regexp, start, end uint64) {
 		d.Decode(symStart, symEnd, func(pc, size uint64, file string, line int, text string) {
 			i := pc - d.textStart
 			fmt.Fprintf(tw, "\t%s:%d\t%#x\t", base(file), line, pc)
-			if size%4 != 0 || d.goarch == "386" || d.goarch == "amd64" {
+			if size%4 != 0 || d.waarch == "386" || d.waarch == "amd64" {
 				// Print instruction as bytes.
 				fmt.Fprintf(tw, "%x", code[i:i+size])
 			} else {

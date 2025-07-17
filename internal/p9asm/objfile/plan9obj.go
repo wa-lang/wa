@@ -133,7 +133,7 @@ func loadPlan9Table(f *plan9obj.File, sname, ename string) ([]byte, error) {
 	return data[ssym.Value-textStart : esym.Value-textStart], nil
 }
 
-func (f *plan9File) goarch() string {
+func (f *plan9File) waarch() string {
 	switch f.plan9.Magic {
 	case plan9obj.Magic386:
 		return "386"

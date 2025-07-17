@@ -209,7 +209,7 @@ func Getwaarch() string {
 	return envOr("WAARCH", runtime.GOARCH)
 }
 
-func Getgoos() string {
+func Getwaos() string {
 	return envOr("WAOS", runtime.GOOS)
 }
 

@@ -71,7 +71,7 @@ func Ldmain() {
 		}
 	}
 
-	if Thearch.Thechar == '6' && obj.Getgoos() == "plan9" {
+	if Thearch.Thechar == '6' && obj.Getwaos() == "plan9" {
 		obj.Flagcount("8", "use 64-bit addresses in symbol table", &Debug['8'])
 	}
 	obj.Flagfn1("B", "add an ELF NT_GNU_BUILD_ID `note` when using ELF", addbuildinfo)
@@ -175,7 +175,7 @@ func Ldmain() {
 	libinit() // creates outfile
 
 	if HEADTYPE == -1 {
-		HEADTYPE = int32(headtype(goos))
+		HEADTYPE = int32(headtype(waos))
 	}
 	Ctxt.Headtype = int(HEADTYPE)
 	if headstring == "" {

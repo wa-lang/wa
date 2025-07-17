@@ -104,7 +104,7 @@ func (f *machoFile) text() (textStart uint64, text []byte, err error) {
 	return
 }
 
-func (f *machoFile) goarch() string {
+func (f *machoFile) waarch() string {
 	switch f.macho.Cpu {
 	case macho.Cpu386:
 		return "386"
@@ -112,8 +112,6 @@ func (f *machoFile) goarch() string {
 		return "amd64"
 	case macho.CpuArm:
 		return "arm"
-	case macho.CpuPpc64:
-		return "ppc64"
 	}
 	return ""
 }

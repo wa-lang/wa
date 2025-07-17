@@ -72,7 +72,7 @@ func linknew(arch *LinkArch) *Link {
 
 	p := obj.Getwaarch()
 	if p != arch.Name {
-		log.Fatalf("invalid goarch %s (want %s)", p, arch.Name)
+		log.Fatalf("invalid waarch %s (want %s)", p, arch.Name)
 	}
 
 	var buf string
@@ -82,9 +82,9 @@ func linknew(arch *LinkArch) *Link {
 	}
 	buf = filepath.ToSlash(buf)
 
-	ctxt.Headtype = headtype(obj.Getgoos())
+	ctxt.Headtype = headtype(obj.Getwaos())
 	if ctxt.Headtype < 0 {
-		log.Fatalf("unknown goos %s", obj.Getgoos())
+		log.Fatalf("unknown waos %s", obj.Getwaos())
 	}
 
 	// Record thread-local storage offset.

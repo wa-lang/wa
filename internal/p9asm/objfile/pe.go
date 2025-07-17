@@ -188,7 +188,7 @@ func loadPETable(f *pe.File, sname, ename string) ([]byte, error) {
 	return data[ssym.Value:esym.Value], nil
 }
 
-func (f *peFile) goarch() string {
+func (f *peFile) waarch() string {
 	// Not sure how to get the info we want from PE header.
 	// Look in symbol table for telltale rt0 symbol.
 	if _, err := findPESymbol(f.pe, "_rt0_386_windows"); err == nil {

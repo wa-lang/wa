@@ -259,9 +259,9 @@ var (
 	// Set if we see an object compiled by the host compiler that is not
 	// from a package that is known to support internal linking mode.
 	externalobj = false
-	goroot      string
-	goarch      string
-	goos        string
+	waroot      string
+	waarch      string
+	waos        string
 	theline     string
 )
 
@@ -289,10 +289,10 @@ const (
 )
 
 func (mode *BuildMode) Set(s string) error {
-	goos := obj.Getgoos()
-	goarch := obj.Getwaarch()
+	waos := obj.Getwaos()
+	waarch := obj.Getwaarch()
 	badmode := func() error {
-		return fmt.Errorf("buildmode %s not supported on %s/%s", s, goos, goarch)
+		return fmt.Errorf("buildmode %s not supported on %s/%s", s, waos, waarch)
 	}
 	switch s {
 	default:
@@ -300,19 +300,19 @@ func (mode *BuildMode) Set(s string) error {
 	case "exe":
 		*mode = BuildmodeExe
 	case "c-archive":
-		switch goos {
+		switch waos {
 		case "darwin", "linux":
 		default:
 			return badmode()
 		}
 		*mode = BuildmodeCArchive
 	case "c-shared":
-		if goarch != "amd64" && goarch != "arm" {
+		if waarch != "amd64" && waarch != "arm" {
 			return badmode()
 		}
 		*mode = BuildmodeCShared
 	case "shared":
-		if goos != "linux" || goarch != "amd64" {
+		if waos != "linux" || waarch != "amd64" {
 			return badmode()
 		}
 		*mode = BuildmodeShared
@@ -351,7 +351,7 @@ func mayberemoveoutfile() {
 
 func libinit() {
 	Funcalign = Thearch.Funcalign
-	mywhatsys() // get goroot, goarch, goos
+	mywhatsys() // get waroot, waarch, waos
 
 	// add goroot to the end of the libdir list.
 	suffix := ""
@@ -365,7 +365,7 @@ func libinit() {
 		suffix = "race"
 	}
 
-	Lflag(fmt.Sprintf("%s/pkg/%s_%s%s%s", goroot, goos, goarch, suffixsep, suffix))
+	Lflag(fmt.Sprintf("%s/pkg/%s_%s%s%s", waroot, waos, waarch, suffixsep, suffix))
 
 	mayberemoveoutfile()
 	f, err := os.OpenFile(outfile, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0775)
@@ -379,9 +379,9 @@ func libinit() {
 	if INITENTRY == "" {
 		switch Buildmode {
 		case BuildmodeCShared, BuildmodeCArchive:
-			INITENTRY = fmt.Sprintf("_rt0_%s_%s_lib", goarch, goos)
+			INITENTRY = fmt.Sprintf("_rt0_%s_%s_lib", waarch, waos)
 		case BuildmodeExe:
-			INITENTRY = fmt.Sprintf("_rt0_%s_%s", goarch, goos)
+			INITENTRY = fmt.Sprintf("_rt0_%s_%s", waarch, waos)
 		case BuildmodeShared:
 			// No INITENTRY for -buildmode=shared
 		default:
@@ -495,7 +495,7 @@ func loadlib() {
 		}
 
 		// Force external linking for android.
-		if goos == "android" {
+		if waos == "android" {
 			Linkmode = LinkExternal
 		}
 
@@ -511,7 +511,7 @@ func loadlib() {
 
 	// cmd/7l doesn't support cgo internal linking
 	// This is https://golang.org/issue/10373.
-	if iscgo && goarch == "arm64" {
+	if iscgo && waarch == "arm64" {
 		Linkmode = LinkExternal
 	}
 
@@ -561,7 +561,7 @@ func loadlib() {
 	// TODO(crawshaw): android should require leaving the tlsg->type
 	// alone (as the runtime-provided SNOPTRBSS) just like darwin/arm.
 	// But some other part of the linker is expecting STLSBSS.
-	if tlsg.Type != obj.SDYNIMPORT && (goos != "darwin" || Thearch.Thechar != '5') {
+	if tlsg.Type != obj.SDYNIMPORT && (waos != "darwin" || Thearch.Thechar != '5') {
 		tlsg.Type = obj.STLSBSS
 	}
 	tlsg.Size = int64(Thearch.Ptrsize)
@@ -997,7 +997,7 @@ func hostlink() {
 	// only want to do this when producing a Windows output file
 	// on a Windows host.
 	outopt := outfile
-	if goos == "windows" && runtime.GOOS == "windows" && filepath.Ext(outopt) == "" {
+	if waos == "windows" && runtime.GOOS == "windows" && filepath.Ext(outopt) == "" {
 		outopt += "."
 	}
 	argv = append(argv, "-o")
@@ -1151,13 +1151,13 @@ func ldobj(f *obj.Biobuf, pkg string, length int64, pn string, file string, when
 		return
 	}
 
-	if !strings.HasPrefix(line, "go object ") {
-		if strings.HasSuffix(pn, ".go") {
-			Exitf("%cl: input %s is not .%c file (use %cg to compile .go files)", Thearch.Thechar, pn, Thearch.Thechar, Thearch.Thechar)
+	if !strings.HasPrefix(line, "wa object ") {
+		if strings.HasSuffix(pn, ".wa") {
+			Exitf("%cl: input %s is not .%c file (use %cg to compile .wa files)", Thearch.Thechar, pn, Thearch.Thechar, Thearch.Thechar)
 		}
 
 		if line == Thestring {
-			// old header format: just $GOOS
+			// old header format: just $WAOS
 			Diag("%s: stale object file", pn)
 			return
 		}
@@ -1166,8 +1166,8 @@ func ldobj(f *obj.Biobuf, pkg string, length int64, pn string, file string, when
 		return
 	}
 
-	// First, check that the basic goos, goarch, and version match.
-	t := fmt.Sprintf("%s %s %s ", goos, obj.Getwaarch(), obj_Getgoversion)
+	// First, check that the basic waos, waarch, and version match.
+	t := fmt.Sprintf("%s %s %s ", waos, obj.Getwaarch(), obj_Getgoversion)
 
 	line = strings.TrimRight(line, "\n")
 	if !strings.HasPrefix(line[10:]+" ", t) && Debug['f'] == 0 {
@@ -1387,12 +1387,12 @@ func ldshlibsyms(shlib string) {
 }
 
 func mywhatsys() {
-	goroot = obj.Getwaroot()
-	goos = obj.Getgoos()
-	goarch = obj.Getwaarch()
+	waroot = obj.Getwaroot()
+	waos = obj.Getwaos()
+	waarch = obj.Getwaarch()
 
-	if !strings.HasPrefix(goarch, Thestring) {
-		log.Fatalf("cannot use %cc with GOARCH=%s", Thearch.Thechar, goarch)
+	if !strings.HasPrefix(waarch, Thestring) {
+		log.Fatalf("cannot use %cc with WAARCH=%s", Thearch.Thechar, waarch)
 	}
 }
 
@@ -1819,7 +1819,7 @@ func genasmsym(put func(*LSym, string, int, int64, int64, int, *LSym)) {
 		case obj.STLSBSS:
 			if Linkmode == LinkExternal && HEADTYPE != obj.Hopenbsd {
 				var type_ int
-				if goos == "android" {
+				if waos == "android" {
 					type_ = 'B'
 				} else {
 					type_ = 't'

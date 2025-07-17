@@ -87,8 +87,8 @@ func (f *goobjFile) text() (textStart uint64, text []byte, err error) {
 	return 0, nil, fmt.Errorf("text not available in go object file")
 }
 
-// goarch makes sense but is not exposed in debug/goobj's API,
+// waarch makes sense but is not exposed in debug/goobj's API,
 // and we don't need it yet for any users of internal/objfile.
-func (f *goobjFile) goarch() string {
-	return "GOARCH unimplemented for debug/goobj files"
+func (f *goobjFile) waarch() string {
+	return "WAARCH unimplemented for debug/goobj files"
 }

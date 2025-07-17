@@ -100,9 +100,9 @@ func Linknew(arch *LinkArch) *Link {
 	ctxt.LineHist.WAROOT_FINAL = ctxt.Waroot_final
 	ctxt.LineHist.Dir = ctxt.Pathname
 
-	ctxt.Headtype = headtype(Getgoos())
+	ctxt.Headtype = headtype(Getwaos())
 	if ctxt.Headtype < 0 {
-		log.Fatalf("unknown goos %s", Getgoos())
+		log.Fatalf("unknown waos %s", Getwaos())
 	}
 
 	// Record thread-local storage offset.
