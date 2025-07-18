@@ -781,7 +781,7 @@ func Elfinit() {
 	// 32-bit architectures
 	case '5':
 		// we use EABI on both linux/arm and freebsd/arm.
-		if HEADTYPE == obj.Hlinux || HEADTYPE == obj.Hfreebsd {
+		if HEADTYPE == obj.Hlinux {
 			ehdr.flags = 0x5000002 // has entry point, Version5 EABI
 		}
 		fallthrough
@@ -1670,17 +1670,10 @@ func doelf() {
 	// for dynamic internal linker or external linking, so that various
 	// binutils could correctly calculate PT_TLS size.
 	// see https://golang.org/issue/5200.
-	if HEADTYPE != obj.Hopenbsd {
-		if Debug['d'] == 0 || Linkmode == LinkExternal {
-			Addstring(shstrtab, ".tbss")
-		}
+	if Debug['d'] == 0 || Linkmode == LinkExternal {
+		Addstring(shstrtab, ".tbss")
 	}
-	if HEADTYPE == obj.Hnetbsd {
-		Addstring(shstrtab, ".note.netbsd.ident")
-	}
-	if HEADTYPE == obj.Hopenbsd {
-		Addstring(shstrtab, ".note.openbsd.ident")
-	}
+
 	if len(buildinfo) > 0 {
 		Addstring(shstrtab, ".note.gnu.build-id")
 	}
@@ -2043,7 +2036,7 @@ func Asmbelf(symo int64) {
 	 * segment boundaries downwards to include it.
 	 * Except on NaCl where it must not be loaded.
 	 */
-	if HEADTYPE != obj.Hnacl {
+	{
 		o := int64(Segtext.Vaddr - pph.vaddr)
 		Segtext.Vaddr -= uint64(o)
 		Segtext.Length += uint64(o)
@@ -2063,21 +2056,6 @@ func Asmbelf(symo int64) {
 			switch HEADTYPE {
 			case obj.Hlinux:
 				interpreter = Thearch.Linuxdynld
-
-			case obj.Hfreebsd:
-				interpreter = Thearch.Freebsddynld
-
-			case obj.Hnetbsd:
-				interpreter = Thearch.Netbsddynld
-
-			case obj.Hopenbsd:
-				interpreter = Thearch.Openbsddynld
-
-			case obj.Hdragonfly:
-				interpreter = Thearch.Dragonflydynld
-
-			case obj.Hsolaris:
-				interpreter = Thearch.Solarisdynld
 			}
 		}
 
@@ -2090,23 +2068,6 @@ func Asmbelf(symo int64) {
 	}
 
 	pnote = nil
-	if HEADTYPE == obj.Hnetbsd || HEADTYPE == obj.Hopenbsd {
-		var sh *ElfShdr
-		switch HEADTYPE {
-		case obj.Hnetbsd:
-			sh = elfshname(".note.netbsd.ident")
-			resoff -= int64(elfnetbsdsig(sh, uint64(startva), uint64(resoff)))
-
-		case obj.Hopenbsd:
-			sh = elfshname(".note.openbsd.ident")
-			resoff -= int64(elfopenbsdsig(sh, uint64(startva), uint64(resoff)))
-		}
-
-		pnote = newElfPhdr()
-		pnote.type_ = PT_NOTE
-		pnote.flags = PF_R
-		phsh(pnote, sh)
-	}
 
 	if len(buildinfo) > 0 {
 		sh := elfshname(".note.gnu.build-id")
@@ -2288,7 +2249,7 @@ func Asmbelf(symo int64) {
 		// Do not emit PT_TLS for OpenBSD since ld.so(1) does
 		// not currently support it. This is handled
 		// appropriately in runtime/cgo.
-		if Ctxt.Tlsoffset != 0 && HEADTYPE != obj.Hopenbsd {
+		if Ctxt.Tlsoffset != 0 {
 			ph := newElfPhdr()
 			ph.type_ = PT_TLS
 			ph.flags = PF_R
@@ -2353,7 +2314,7 @@ elfobj:
 
 	// generate .tbss section for dynamic internal linking (except for OpenBSD)
 	// external linking generates .tbss in data.c
-	if Linkmode == LinkInternal && Debug['d'] == 0 && HEADTYPE != obj.Hopenbsd {
+	if Linkmode == LinkInternal && Debug['d'] == 0 {
 		sh := elfshname(".tbss")
 		sh.type_ = SHT_NOBITS
 		sh.addralign = uint64(Thearch.Regsize)
@@ -2386,15 +2347,7 @@ elfobj:
 	eh.ident[EI_MAG1] = 'E'
 	eh.ident[EI_MAG2] = 'L'
 	eh.ident[EI_MAG3] = 'F'
-	if HEADTYPE == obj.Hfreebsd {
-		eh.ident[EI_OSABI] = ELFOSABI_FREEBSD
-	} else if HEADTYPE == obj.Hnetbsd {
-		eh.ident[EI_OSABI] = ELFOSABI_NETBSD
-	} else if HEADTYPE == obj.Hopenbsd {
-		eh.ident[EI_OSABI] = ELFOSABI_OPENBSD
-	} else if HEADTYPE == obj.Hdragonfly {
-		eh.ident[EI_OSABI] = ELFOSABI_NONE
-	}
+
 	if elf64 {
 		eh.ident[EI_CLASS] = ELFCLASS64
 	} else {
@@ -2433,12 +2386,6 @@ elfobj:
 		a += int64(elfwriteinterp())
 	}
 	if Linkmode != LinkExternal {
-		if HEADTYPE == obj.Hnetbsd {
-			a += int64(elfwritenetbsdsig())
-		}
-		if HEADTYPE == obj.Hopenbsd {
-			a += int64(elfwriteopenbsdsig())
-		}
 		if len(buildinfo) > 0 {
 			a += int64(elfwritebuildinfo())
 		}

@@ -220,10 +220,6 @@ func putplan9sym(x *LSym, s string, t int, addr int64, size int64, ver int, go_ 
 		'Z',
 		'm':
 		l := 4
-		if HEADTYPE == obj.Hplan9 && Thearch.Thechar == '6' && Debug['8'] == 0 {
-			Lputb(uint32(addr >> 32))
-			l = 8
-		}
 
 		Lputb(uint32(addr))
 		Cput(uint8(t + 0x80)) /* 0x80 is variable length */

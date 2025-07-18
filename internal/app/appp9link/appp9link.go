@@ -12,7 +12,6 @@ import (
 	"wa-lang.org/wa/internal/p9asm/link/arm"
 	"wa-lang.org/wa/internal/p9asm/link/arm64"
 	"wa-lang.org/wa/internal/p9asm/link/x86"
-	"wa-lang.org/wa/internal/p9asm/obj"
 )
 
 var CmdP9Link = &cli.Command{
@@ -20,47 +19,22 @@ var CmdP9Link = &cli.Command{
 	Name:   "p9link",
 	Usage:  "p9asm object link tool",
 	Flags: []cli.Flag{
-		&cli.BoolFlag{
-			Name:  "debug",
-			Usage: "dump instructions as they are parsed",
-		},
 		&cli.StringFlag{
-			Name:  "o",
-			Usage: "output file; default foo.6 for /a/b/c/foo.s on amd64",
-		},
-		&cli.BoolFlag{
-			Name:  "S",
-			Usage: "print assembly and machine code",
-		},
-		&cli.StringFlag{
-			Name:  "trimpath",
-			Usage: "remove prefix from recorded source file paths",
-		},
-		&cli.BoolFlag{
-			Name:  "shared",
-			Usage: "generate code that can be linked into a shared library",
-		},
-		&cli.BoolFlag{
-			Name:  "dynlink",
-			Usage: "support references to Go symbols defined in other shared libraries",
-		},
-		&cli.StringSliceFlag{
-			Name:  "D",
-			Usage: "predefined symbol with optional simple value -D=identifer=value; can be set multiple times",
-		},
-		&cli.StringSliceFlag{
-			Name:  "I",
-			Usage: "include directory; can be set multiple times",
+			Name:  "arch",
+			Usage: "set target architecture (386|amd64|arm|arm64)",
 		},
 	},
 	Action: func(c *cli.Context) error {
-		switch obj.Getwaarch() {
+		// obj 文件隐含了 arch 信息
+		waarch := c.String("arch")
+		//_ = obj.Getwaarch()
+		switch waarch {
 		default:
-			fmt.Fprintf(os.Stderr, "link: unknown architecture %q\n", obj.Getwaarch())
+			fmt.Fprintf(os.Stderr, "link: unknown architecture %q\n", waarch)
 			os.Exit(2)
 		case "386":
 			x86.Main()
-		case "amd64", "amd64p32":
+		case "amd64":
 			amd64.Main()
 		case "arm":
 			arm.Main()

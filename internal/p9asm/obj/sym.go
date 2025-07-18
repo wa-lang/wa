@@ -35,7 +35,6 @@ import (
 	"log"
 	"os"
 	"path/filepath"
-	"runtime"
 	"strconv"
 )
 
@@ -44,16 +43,9 @@ var headers = []struct {
 	val  int
 }{
 	{"darwin", Hdarwin},
-	{"dragonfly", Hdragonfly},
 	{"elf", Helf},
-	{"freebsd", Hfreebsd},
 	{"linux", Hlinux},
 	{"android", Hlinux}, // must be after "linux" entry or else headstr(Hlinux) == "android"
-	{"nacl", Hnacl},
-	{"netbsd", Hnetbsd},
-	{"openbsd", Hopenbsd},
-	{"plan9", Hplan9},
-	{"solaris", Hsolaris},
 	{"windows", Hwindows},
 	{"windowsgui", Hwindows},
 }
@@ -76,14 +68,15 @@ func Headstr(v int) string {
 	return strconv.Itoa(v)
 }
 
-func Linknew(arch *LinkArch) *Link {
+func Linknew(arch *LinkArch, waos string) *Link {
 	ctxt := new(Link)
 	ctxt.Hash = make(map[SymVer]*LSym)
 	ctxt.Arch = arch
 	ctxt.Version = HistVersion
-	ctxt.Waroot = Getwaroot()
-	ctxt.Waroot_final = os.Getenv("WAROOT_FINAL")
-	if runtime.GOOS == "windows" {
+	ctxt.Waos = waos
+	ctxt.Waroot = ""       // Getwaroot()
+	ctxt.Waroot_final = "" // os.Getenv("WAROOT_FINAL")
+	if ctxt.Waos == "windows" {
 		// TODO(rsc): Remove ctxt.Windows and let callers use runtime.GOOS.
 		ctxt.Windows = 1
 	}
@@ -100,9 +93,9 @@ func Linknew(arch *LinkArch) *Link {
 	ctxt.LineHist.WAROOT_FINAL = ctxt.Waroot_final
 	ctxt.LineHist.Dir = ctxt.Pathname
 
-	ctxt.Headtype = headtype(Getwaos())
+	ctxt.Headtype = headtype(ctxt.Waos)
 	if ctxt.Headtype < 0 {
-		log.Fatalf("unknown waos %s", Getwaos())
+		log.Fatalf("unknown waos %s", ctxt.Waos)
 	}
 
 	// Record thread-local storage offset.
@@ -111,7 +104,7 @@ func Linknew(arch *LinkArch) *Link {
 	default:
 		log.Fatalf("unknown thread-local storage offset for %s", Headstr(ctxt.Headtype))
 
-	case Hplan9, Hwindows:
+	case Hwindows:
 		break
 
 		/*
@@ -119,28 +112,8 @@ func Linknew(arch *LinkArch) *Link {
 		 * Translate 0(FS) and 8(FS) into -16(FS) and -8(FS).
 		 * Known to low-level assembly in package runtime and runtime/cgo.
 		 */
-	case Hlinux,
-		Hfreebsd,
-		Hnetbsd,
-		Hopenbsd,
-		Hdragonfly,
-		Hsolaris:
+	case Hlinux:
 		ctxt.Tlsoffset = -1 * ctxt.Arch.Ptrsize
-
-	case Hnacl:
-		switch ctxt.Arch.Thechar {
-		default:
-			log.Fatalf("unknown thread-local storage offset for nacl/%s", ctxt.Arch.Name)
-
-		case '5':
-			ctxt.Tlsoffset = 0
-
-		case '6':
-			ctxt.Tlsoffset = 0
-
-		case '8':
-			ctxt.Tlsoffset = -8
-		}
 
 		/*
 		 * OS X system constants - offset from 0(GS) to our TLS.

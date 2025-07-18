@@ -8,13 +8,15 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"path/filepath"
+	"runtime"
+	"strings"
 
 	"wa-lang.org/wa/internal/3rdparty/cli"
 	"wa-lang.org/wa/internal/p9asm/asm"
 	"wa-lang.org/wa/internal/p9asm/asm/arch"
 	"wa-lang.org/wa/internal/p9asm/asm/lex"
 	"wa-lang.org/wa/internal/p9asm/obj"
-	"wa-lang.org/wa/internal/p9asm/obj/x86"
 )
 
 var CmdP9Asm = &cli.Command{
@@ -27,9 +29,18 @@ var CmdP9Asm = &cli.Command{
 			Usage: "dump instructions as they are parsed",
 		},
 		&cli.StringFlag{
+			Name:  "arch",
+			Usage: "set arch",
+			Value: runtime.GOARCH,
+		},
+		&cli.StringFlag{
+			Name:  "os",
+			Usage: "set os",
+			Value: runtime.GOOS,
+		},
+		&cli.StringFlag{
 			Name:  "o",
 			Usage: "output file; default foo.6 for /a/b/c/foo.s on amd64",
-			Value: "a.out.6",
 		},
 		&cli.BoolFlag{
 			Name:  "S",
@@ -57,6 +68,11 @@ var CmdP9Asm = &cli.Command{
 		},
 	},
 	Action: func(c *cli.Context) error {
+		if c.NArg() == 0 {
+			fmt.Fprintf(os.Stderr, "no input file")
+			os.Exit(1)
+		}
+
 		name := c.Args().First()
 
 		flags := &arch.Flags{
@@ -70,8 +86,12 @@ var CmdP9Asm = &cli.Command{
 			IncludeDirs: c.StringSlice("I"),
 		}
 
+		if flags.OutputFile == "" {
+			flags.OutputFile = strings.TrimSuffix(name, filepath.Ext(name)) + ".o"
+		}
+
 		arch := arch.Set(arch.AMD64)
-		ctxt := obj.Linknew(&x86.Linkamd64)
+		ctxt := obj.Linknew(arch.LinkArch, c.String("os"))
 
 		if flags.PrintOut {
 			ctxt.Debugasm = 1
@@ -93,7 +113,7 @@ var CmdP9Asm = &cli.Command{
 
 		ctxt.Diag = log.Fatalf
 		output := obj.Binitw(fd)
-		fmt.Fprintf(output, "wa object %s %s\n", obj.Getwaos(), obj.Getwaarch())
+		fmt.Fprintf(output, "wa object %s %s\n", c.String("os"), c.String("arch"))
 		fmt.Fprintf(output, "!\n")
 
 		lexer, err := lex.NewLexer(name, ctxt, flags)

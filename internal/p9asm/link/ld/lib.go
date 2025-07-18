@@ -601,7 +601,7 @@ func loadlib() {
 	// binaries, so leave it enabled on OS X (Mach-O) binaries.
 	// Also leave it enabled on Solaris which doesn't support
 	// statically linked binaries.
-	if Buildmode == BuildmodeExe && havedynamic == 0 && HEADTYPE != obj.Hdarwin && HEADTYPE != obj.Hsolaris {
+	if Buildmode == BuildmodeExe && havedynamic == 0 && HEADTYPE != obj.Hdarwin {
 		Debug['d'] = 1
 	}
 
@@ -768,18 +768,6 @@ func ldhostobj(ld func(*obj.Biobuf, string, int64, string), f *obj.Biobuf, pkg s
 		}
 	}
 
-	// DragonFly declares errno with __thread, which results in a symbol
-	// type of R_386_TLS_GD or R_X86_64_TLSGD. The Go linker does not
-	// currently know how to handle TLS relocations, hence we have to
-	// force external linking for any libraries that link in code that
-	// uses errno. This can be removed if the Go linker ever supports
-	// these relocation types.
-	if HEADTYPE == obj.Hdragonfly {
-		if pkg == "net" || pkg == "os/user" {
-			isinternal = false
-		}
-	}
-
 	if !isinternal {
 		externalobj = true
 	}
@@ -939,9 +927,6 @@ func hostlink() {
 
 	if HEADTYPE == obj.Hdarwin {
 		argv = append(argv, "-Wl,-no_pie,-headerpad,1144")
-	}
-	if HEADTYPE == obj.Hopenbsd {
-		argv = append(argv, "-Wl,-nopie")
 	}
 	if HEADTYPE == obj.Hwindows {
 		if headstring == "windowsgui" {
@@ -1817,7 +1802,7 @@ func genasmsym(put func(*LSym, string, int, int64, int64, int, *LSym)) {
 			put(s, s.Extname, 'U', 0, 0, int(s.Version), nil)
 
 		case obj.STLSBSS:
-			if Linkmode == LinkExternal && HEADTYPE != obj.Hopenbsd {
+			if Linkmode == LinkExternal {
 				var type_ int
 				if waos == "android" {
 					type_ = 'B'

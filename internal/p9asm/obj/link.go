@@ -473,6 +473,7 @@ type Link struct {
 	Bso                *Biobuf
 	Pathname           string
 	Windows            int32
+	Waos               string
 	Waroot             string
 	Waroot_final       string
 	Enforce_data_order int32
@@ -535,15 +536,8 @@ type LinkArch struct {
 const (
 	Hunknown = 0 + iota
 	Hdarwin
-	Hdragonfly
 	Helf
-	Hfreebsd
 	Hlinux
-	Hnacl
-	Hnetbsd
-	Hopenbsd
-	Hplan9
-	Hsolaris
 	Hwindows
 )
 

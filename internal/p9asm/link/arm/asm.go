@@ -562,9 +562,6 @@ func asmb() {
 				symo = uint32(ld.Rnd(int64(symo), int64(ld.INITRND)))
 			}
 
-		case obj.Hplan9:
-			symo = uint32(ld.Segdata.Fileoff + ld.Segdata.Filelen)
-
 		case obj.Hdarwin:
 			symo = uint32(ld.Segdwarf.Fileoff + uint64(ld.Rnd(int64(ld.Segdwarf.Filelen), int64(ld.INITRND))) + uint64(machlink))
 		}
@@ -590,20 +587,6 @@ func asmb() {
 				}
 			}
 
-		case obj.Hplan9:
-			ld.Asmplan9sym()
-			ld.Cflush()
-
-			sym := ld.Linklookup(ld.Ctxt, "pclntab", 0)
-			if sym != nil {
-				ld.Lcsize = int32(len(sym.P))
-				for i := 0; int32(i) < ld.Lcsize; i++ {
-					ld.Cput(uint8(sym.P[i]))
-				}
-
-				ld.Cflush()
-			}
-
 		case obj.Hdarwin:
 			if ld.Linkmode == ld.LinkExternal {
 				ld.Machoemitreloc()
@@ -619,21 +602,7 @@ func asmb() {
 	ld.Cseek(0)
 	switch ld.HEADTYPE {
 	default:
-	case obj.Hplan9: /* plan 9 */
-		ld.Thearch.Lput(0x647)                      /* magic */
-		ld.Thearch.Lput(uint32(ld.Segtext.Filelen)) /* sizes */
-		ld.Thearch.Lput(uint32(ld.Segdata.Filelen))
-		ld.Thearch.Lput(uint32(ld.Segdata.Length - ld.Segdata.Filelen))
-		ld.Thearch.Lput(uint32(ld.Symsize))      /* nsyms */
-		ld.Thearch.Lput(uint32(ld.Entryvalue())) /* va of entry */
-		ld.Thearch.Lput(0)
-		ld.Thearch.Lput(uint32(ld.Lcsize))
-
-	case obj.Hlinux,
-		obj.Hfreebsd,
-		obj.Hnetbsd,
-		obj.Hopenbsd,
-		obj.Hnacl:
+	case obj.Hlinux:
 		ld.Asmbelf(int64(symo))
 
 	case obj.Hdarwin:

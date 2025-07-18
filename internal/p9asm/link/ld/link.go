@@ -131,7 +131,8 @@ type Link struct {
 	Debugvlog int32
 	Bso       *obj.Biobuf
 	Windows   int32
-	Goroot    string
+	Waos      string
+	Waroot    string
 	Hash      map[symVer]*LSym
 	Allsym    *LSym
 	Nsymbol   int32

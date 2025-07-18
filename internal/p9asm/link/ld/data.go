@@ -356,7 +356,7 @@ func relocsym(s *LSym) {
 
 		// We need to be able to reference dynimport symbols when linking against
 		// shared libraries, and Solaris needs it always
-		if HEADTYPE != obj.Hsolaris && r.Sym != nil && r.Sym.Type == obj.SDYNIMPORT && !DynlinkingGo() {
+		if r.Sym != nil && r.Sym.Type == obj.SDYNIMPORT && !DynlinkingGo() {
 			Diag("unhandled relocation for %s (type %d rtype %d)", r.Sym.Name, r.Sym.Type, r.Type)
 		}
 		if r.Sym != nil && r.Sym.Type != obj.STLSBSS && !r.Sym.Reachable {
@@ -376,7 +376,7 @@ func relocsym(s *LSym) {
 			}
 
 		case obj.R_TLS:
-			if Linkmode == LinkExternal && Iself && HEADTYPE != obj.Hopenbsd {
+			if Linkmode == LinkExternal && Iself {
 				r.Done = 0
 				r.Sym = Ctxt.Tlsg
 				r.Xsym = Ctxt.Tlsg
@@ -404,7 +404,7 @@ func relocsym(s *LSym) {
 			}
 
 		case obj.R_TLS_LE:
-			if Linkmode == LinkExternal && Iself && HEADTYPE != obj.Hopenbsd {
+			if Linkmode == LinkExternal && Iself {
 				r.Done = 0
 				r.Sym = Ctxt.Tlsg
 				r.Xsym = Ctxt.Tlsg
@@ -416,7 +416,7 @@ func relocsym(s *LSym) {
 				break
 			}
 
-			if Iself || Ctxt.Headtype == obj.Hplan9 || Ctxt.Headtype == obj.Hdarwin {
+			if Iself || Ctxt.Headtype == obj.Hdarwin {
 				o = int64(Ctxt.Tlsoffset) + r.Add
 			} else if Ctxt.Headtype == obj.Hwindows {
 				o = r.Add
@@ -425,7 +425,7 @@ func relocsym(s *LSym) {
 			}
 
 		case obj.R_TLS_IE:
-			if Linkmode == LinkExternal && Iself && HEADTYPE != obj.Hopenbsd {
+			if Linkmode == LinkExternal && Iself {
 				r.Done = 0
 				r.Sym = Ctxt.Tlsg
 				r.Xsym = Ctxt.Tlsg
@@ -1391,7 +1391,7 @@ func dodata() {
 		Diag("data or bss segment too large")
 	}
 
-	if Iself && Linkmode == LinkExternal && s != nil && s.Type == obj.STLSBSS && HEADTYPE != obj.Hopenbsd {
+	if Iself && Linkmode == LinkExternal && s != nil && s.Type == obj.STLSBSS {
 		sect := addsection(&Segdata, ".tbss", 06)
 		sect.Align = int32(Thearch.Ptrsize)
 		sect.Vaddr = 0
@@ -1640,9 +1640,6 @@ func address() {
 
 	Segtext.Length = va - uint64(INITTEXT)
 	Segtext.Filelen = Segtext.Length
-	if HEADTYPE == obj.Hnacl {
-		va += 32 // room for the "halt sled"
-	}
 
 	if Segrodata.Sect != nil {
 		// align to page boundary so as not to mix
@@ -1671,9 +1668,7 @@ func address() {
 	if HEADTYPE == obj.Hwindows {
 		Segdata.Fileoff = Segtext.Fileoff + uint64(Rnd(int64(Segtext.Length), PEFILEALIGN))
 	}
-	if HEADTYPE == obj.Hplan9 {
-		Segdata.Fileoff = Segtext.Fileoff + Segtext.Filelen
-	}
+
 	var data *Section
 	var noptr *Section
 	var bss *Section

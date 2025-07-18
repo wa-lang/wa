@@ -49,16 +49,9 @@ var headers = []struct {
 	val  int
 }{
 	{"darwin", obj.Hdarwin},
-	{"dragonfly", obj.Hdragonfly},
 	{"elf", obj.Helf},
-	{"freebsd", obj.Hfreebsd},
 	{"linux", obj.Hlinux},
 	{"android", obj.Hlinux}, // must be after "linux" entry or else headstr(Hlinux) == "android"
-	{"nacl", obj.Hnacl},
-	{"netbsd", obj.Hnetbsd},
-	{"openbsd", obj.Hopenbsd},
-	{"plan9", obj.Hplan9},
-	{"solaris", obj.Hsolaris},
 	{"windows", obj.Hwindows},
 	{"windowsgui", obj.Hwindows},
 }
@@ -68,7 +61,7 @@ func linknew(arch *LinkArch) *Link {
 	ctxt.Hash = make(map[symVer]*LSym)
 	ctxt.Arch = arch
 	ctxt.Version = obj.HistVersion
-	ctxt.Goroot = obj.Getwaroot()
+	ctxt.Waroot = obj.Getwaroot()
 
 	p := obj.Getwaarch()
 	if p != arch.Name {
@@ -93,7 +86,7 @@ func linknew(arch *LinkArch) *Link {
 	default:
 		log.Fatalf("unknown thread-local storage offset for %s", Headstr(ctxt.Headtype))
 
-	case obj.Hplan9, obj.Hwindows:
+	case obj.Hwindows:
 		break
 
 		/*
@@ -101,28 +94,8 @@ func linknew(arch *LinkArch) *Link {
 		 * Translate 0(FS) and 8(FS) into -16(FS) and -8(FS).
 		 * Known to low-level assembly in package runtime and runtime/cgo.
 		 */
-	case obj.Hlinux,
-		obj.Hfreebsd,
-		obj.Hnetbsd,
-		obj.Hopenbsd,
-		obj.Hdragonfly,
-		obj.Hsolaris:
+	case obj.Hlinux:
 		ctxt.Tlsoffset = -1 * ctxt.Arch.Ptrsize
-
-	case obj.Hnacl:
-		switch ctxt.Arch.Thechar {
-		default:
-			log.Fatalf("unknown thread-local storage offset for nacl/%s", ctxt.Arch.Name)
-
-		case '5':
-			ctxt.Tlsoffset = 0
-
-		case '6':
-			ctxt.Tlsoffset = 0
-
-		case '8':
-			ctxt.Tlsoffset = -8
-		}
 
 		/*
 		 * OS X system constants - offset from 0(GS) to our TLS.

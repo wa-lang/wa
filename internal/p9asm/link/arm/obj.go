@@ -97,8 +97,6 @@ func archinit() {
 		}
 
 	case obj.Hlinux,
-		obj.Hfreebsd,
-		obj.Hnacl,
 		obj.Hdarwin:
 		break
 	}
@@ -107,23 +105,7 @@ func archinit() {
 	default:
 		ld.Exitf("unknown -H option: %v", ld.HEADTYPE)
 
-	case obj.Hplan9: /* plan 9 */
-		ld.HEADR = 32
-
-		if ld.INITTEXT == -1 {
-			ld.INITTEXT = 4128
-		}
-		if ld.INITDAT == -1 {
-			ld.INITDAT = 0
-		}
-		if ld.INITRND == -1 {
-			ld.INITRND = 4096
-		}
-
-	case obj.Hlinux, /* arm elf */
-		obj.Hfreebsd,
-		obj.Hnetbsd,
-		obj.Hopenbsd:
+	case obj.Hlinux: /* arm elf */
 		ld.Debug['d'] = 0
 		// with dynamic linking
 		ld.Elfinit()
@@ -136,20 +118,6 @@ func archinit() {
 		}
 		if ld.INITRND == -1 {
 			ld.INITRND = 4096
-		}
-
-	case obj.Hnacl:
-		ld.Elfinit()
-		ld.HEADR = 0x10000
-		ld.Funcalign = 16
-		if ld.INITTEXT == -1 {
-			ld.INITTEXT = 0x20000
-		}
-		if ld.INITDAT == -1 {
-			ld.INITDAT = 0
-		}
-		if ld.INITRND == -1 {
-			ld.INITRND = 0x10000
 		}
 
 	case obj.Hdarwin: /* apple MACH */

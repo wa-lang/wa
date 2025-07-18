@@ -255,12 +255,6 @@ func adddynrel(s *ld.LSym, r *ld.Reloc) {
 
 	case obj.R_ADDR:
 		if s.Type == obj.STEXT && ld.Iself {
-			if ld.HEADTYPE == obj.Hsolaris {
-				addpltsym(targ)
-				r.Sym = ld.Linklookup(ld.Ctxt, ".plt", 0)
-				r.Add += int64(targ.Plt)
-				return
-			}
 			// The code is asking for the address of an external
 			// function.  We provide it with the address of the
 			// correspondent GOT symbol.
@@ -674,23 +668,16 @@ func asmb() {
 		ld.Diag("unknown header type %d", ld.HEADTYPE)
 		fallthrough
 
-	case obj.Hplan9,
-		obj.Helf:
+	case obj.Helf:
 		break
 
 	case obj.Hdarwin:
 		ld.Debug['8'] = 1 /* 64-bit addresses */
 
-	case obj.Hlinux,
-		obj.Hfreebsd,
-		obj.Hnetbsd,
-		obj.Hopenbsd,
-		obj.Hdragonfly,
-		obj.Hsolaris:
+	case obj.Hlinux:
 		ld.Debug['8'] = 1 /* 64-bit addresses */
 
-	case obj.Hnacl,
-		obj.Hwindows:
+	case obj.Hwindows:
 		break
 	}
 
@@ -705,21 +692,14 @@ func asmb() {
 		ld.Bso.Flush()
 		switch ld.HEADTYPE {
 		default:
-		case obj.Hplan9,
-			obj.Helf:
+		case obj.Helf:
 			ld.Debug['s'] = 1
 			symo = int64(ld.Segdata.Fileoff + ld.Segdata.Filelen)
 
 		case obj.Hdarwin:
 			symo = int64(ld.Segdwarf.Fileoff + uint64(ld.Rnd(int64(ld.Segdwarf.Filelen), int64(ld.INITRND))) + uint64(machlink))
 
-		case obj.Hlinux,
-			obj.Hfreebsd,
-			obj.Hnetbsd,
-			obj.Hopenbsd,
-			obj.Hdragonfly,
-			obj.Hsolaris,
-			obj.Hnacl:
+		case obj.Hlinux:
 			symo = int64(ld.Segdata.Fileoff + ld.Segdata.Filelen)
 			symo = ld.Rnd(symo, int64(ld.INITRND))
 
@@ -748,20 +728,6 @@ func asmb() {
 				}
 			}
 
-		case obj.Hplan9:
-			ld.Asmplan9sym()
-			ld.Cflush()
-
-			sym := ld.Linklookup(ld.Ctxt, "pclntab", 0)
-			if sym != nil {
-				ld.Lcsize = int32(len(sym.P))
-				for i := 0; int32(i) < ld.Lcsize; i++ {
-					ld.Cput(uint8(sym.P[i]))
-				}
-
-				ld.Cflush()
-			}
-
 		case obj.Hwindows:
 			if ld.Debug['v'] != 0 {
 				fmt.Fprintf(&ld.Bso, "%5.2f dwarf\n", obj.Cputime())
@@ -783,31 +749,10 @@ func asmb() {
 	ld.Cseek(0)
 	switch ld.HEADTYPE {
 	default:
-	case obj.Hplan9: /* plan9 */
-		magic := int32(4*26*26 + 7)
-
-		magic |= 0x00008000                  /* fat header */
-		ld.Lputb(uint32(magic))              /* magic */
-		ld.Lputb(uint32(ld.Segtext.Filelen)) /* sizes */
-		ld.Lputb(uint32(ld.Segdata.Filelen))
-		ld.Lputb(uint32(ld.Segdata.Length - ld.Segdata.Filelen))
-		ld.Lputb(uint32(ld.Symsize)) /* nsyms */
-		vl := ld.Entryvalue()
-		ld.Lputb(PADDR(uint32(vl))) /* va of entry */
-		ld.Lputb(uint32(ld.Spsize)) /* sp offsets */
-		ld.Lputb(uint32(ld.Lcsize)) /* line offsets */
-		ld.Vputb(uint64(vl))        /* va of entry */
-
 	case obj.Hdarwin:
 		ld.Asmbmacho()
 
-	case obj.Hlinux,
-		obj.Hfreebsd,
-		obj.Hnetbsd,
-		obj.Hopenbsd,
-		obj.Hdragonfly,
-		obj.Hsolaris,
-		obj.Hnacl:
+	case obj.Hlinux:
 		ld.Asmbelf(symo)
 
 	case obj.Hwindows:

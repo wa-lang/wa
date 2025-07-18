@@ -48,10 +48,6 @@ func Main() {
 func linkarchinit() {
 	ld.Thestring = "amd64"
 	ld.Thelinkarch = &ld.Linkamd64
-	if obj.Getwaarch() == "amd64p32" {
-		ld.Thelinkarch = &ld.Linkamd64p32
-	}
-
 	ld.Thearch.Thechar = thechar
 	ld.Thearch.Ptrsize = ld.Thelinkarch.Ptrsize
 	ld.Thearch.Intsize = ld.Thelinkarch.Ptrsize
@@ -105,13 +101,7 @@ func archinit() {
 		}
 
 	case obj.Hdarwin,
-		obj.Hdragonfly,
-		obj.Hfreebsd,
 		obj.Hlinux,
-		obj.Hnacl,
-		obj.Hnetbsd,
-		obj.Hopenbsd,
-		obj.Hsolaris,
 		obj.Hwindows:
 		break
 	}
@@ -119,19 +109,6 @@ func archinit() {
 	switch ld.HEADTYPE {
 	default:
 		ld.Exitf("unknown -H option: %v", ld.HEADTYPE)
-
-	case obj.Hplan9: /* plan 9 */
-		ld.HEADR = 32 + 8
-
-		if ld.INITTEXT == -1 {
-			ld.INITTEXT = 0x200000 + int64(ld.HEADR)
-		}
-		if ld.INITDAT == -1 {
-			ld.INITDAT = 0
-		}
-		if ld.INITRND == -1 {
-			ld.INITRND = 0x200000
-		}
 
 	case obj.Helf: /* elf32 executable */
 		ld.HEADR = int32(ld.Rnd(52+3*32, 16))
@@ -160,12 +137,7 @@ func archinit() {
 			ld.INITDAT = 0
 		}
 
-	case obj.Hlinux, /* elf64 executable */
-		obj.Hfreebsd,   /* freebsd */
-		obj.Hnetbsd,    /* netbsd */
-		obj.Hopenbsd,   /* openbsd */
-		obj.Hdragonfly, /* dragonfly */
-		obj.Hsolaris:   /* solaris */
+	case obj.Hlinux: /* elf64 executable */
 		ld.Elfinit()
 
 		ld.HEADR = ld.ELFRESERVE
@@ -177,21 +149,6 @@ func archinit() {
 		}
 		if ld.INITRND == -1 {
 			ld.INITRND = 4096
-		}
-
-	case obj.Hnacl:
-		ld.Elfinit()
-		ld.Debug['w']++ // disable dwarf, which gets confused and is useless anyway
-		ld.HEADR = 0x10000
-		ld.Funcalign = 32
-		if ld.INITTEXT == -1 {
-			ld.INITTEXT = 0x20000
-		}
-		if ld.INITDAT == -1 {
-			ld.INITDAT = 0
-		}
-		if ld.INITRND == -1 {
-			ld.INITRND = 0x10000
 		}
 
 	case obj.Hwindows: /* PE executable */

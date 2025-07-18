@@ -33,15 +33,6 @@ var Linkamd64 = LinkArch{
 	Regsize:   8,
 }
 
-var Linkamd64p32 = LinkArch{
-	ByteOrder: binary.LittleEndian,
-	Name:      "amd64p32",
-	Thechar:   '6',
-	Minlc:     1,
-	Ptrsize:   4,
-	Regsize:   8,
-}
-
 var Link386 = LinkArch{
 	ByteOrder: binary.LittleEndian,
 	Name:      "386",
@@ -49,22 +40,4 @@ var Link386 = LinkArch{
 	Minlc:     1,
 	Ptrsize:   4,
 	Regsize:   4,
-}
-
-var Linkppc64 = LinkArch{
-	ByteOrder: binary.BigEndian,
-	Name:      "ppc64",
-	Thechar:   '9',
-	Minlc:     4,
-	Ptrsize:   8,
-	Regsize:   8,
-}
-
-var Linkppc64le = LinkArch{
-	ByteOrder: binary.LittleEndian,
-	Name:      "ppc64le",
-	Thechar:   '9',
-	Minlc:     4,
-	Ptrsize:   8,
-	Regsize:   8,
 }
