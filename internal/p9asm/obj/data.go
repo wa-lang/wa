@@ -146,14 +146,6 @@ func adduintxx(ctxt *Link, s *LSym, v uint64, wid int) int64 {
 	return off
 }
 
-func adduint8(ctxt *Link, s *LSym, v uint8) int64 {
-	return adduintxx(ctxt, s, uint64(v), 1)
-}
-
-func adduint16(ctxt *Link, s *LSym, v uint16) int64 {
-	return adduintxx(ctxt, s, uint64(v), 2)
-}
-
 func Adduint32(ctxt *Link, s *LSym, v uint32) int64 {
 	return adduintxx(ctxt, s, uint64(v), 4)
 }

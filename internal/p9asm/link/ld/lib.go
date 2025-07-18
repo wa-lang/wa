@@ -425,6 +425,8 @@ func errorexit() {
 }
 
 func loadinternal(name string) {
+	const obj_AEXIST = 0
+
 	found := 0
 	for i := 0; i < len(Ctxt.Libdir); i++ {
 		if Linkshared {
@@ -432,7 +434,7 @@ func loadinternal(name string) {
 			if Debug['v'] != 0 {
 				fmt.Fprintf(&Bso, "searching for %s.a in %s\n", name, shlibname)
 			}
-			if obj.Access(shlibname, obj.AEXIST) >= 0 {
+			if obj.Access(shlibname, obj_AEXIST) >= 0 {
 				addlibpath(Ctxt, "internal", "internal", "", name, shlibname)
 				found = 1
 				break
@@ -442,7 +444,7 @@ func loadinternal(name string) {
 		if Debug['v'] != 0 {
 			fmt.Fprintf(&Bso, "searching for %s.a in %s\n", name, pname)
 		}
-		if obj.Access(pname, obj.AEXIST) >= 0 {
+		if obj.Access(pname, obj_AEXIST) >= 0 {
 			addlibpath(Ctxt, "internal", "internal", pname, name, "")
 			found = 1
 			break
@@ -1713,12 +1715,6 @@ func Cwrite(p []byte) {
 
 func Cput(c uint8) {
 	coutbuf.WriteByte(c)
-}
-
-func usage() {
-	fmt.Fprintf(os.Stderr, "usage: link [options] main.o\n")
-	obj.Flagprint(2)
-	Exit(2)
 }
 
 func setheadtype(s string) {

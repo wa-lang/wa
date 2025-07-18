@@ -168,11 +168,6 @@ func Linklookup(ctxt *Link, name string, v int) *LSym {
 	return _lookup(ctxt, name, v, true)
 }
 
-// read-only lookup
-func linkrlookup(ctxt *Link, name string, v int) *LSym {
-	return _lookup(ctxt, name, v, false)
-}
-
 func Linksymfmt(s *LSym) string {
 	if s == nil {
 		return "<nil>"

@@ -39,6 +39,9 @@ import (
 	"wa-lang.org/wa/internal/p9asm/obj"
 )
 
+// 使用帧指针
+const Framepointer_enabled = true
+
 // 指令布局
 
 const (
@@ -3733,12 +3736,12 @@ func doasm(ctxt *obj.Link, p *obj.Prog) {
 					ctxt.Diag("directly calling duff when dynamically linking Go")
 				}
 
-				if obj.Framepointer_enabled != 0 && yt.zcase == Zcallduff && p.Mode == 64 {
+				if Framepointer_enabled && yt.zcase == Zcallduff && p.Mode == 64 {
 					// Maintain BP around call, since duffcopy/duffzero can't do it
 					// (the call jumps into the middle of the function).
 					// This makes it possible to see call sites for duffcopy/duffzero in
 					// BP-based profiling tools like Linux perf (which is the
-					// whole point of obj.Framepointer_enabled).
+					// whole point of Framepointer_enabled).
 					// MOVQ BP, -16(SP)
 					// LEAQ -16(SP), BP
 					copy(ctxt.Andptr, bpduff1)
@@ -3754,7 +3757,7 @@ func doasm(ctxt *obj.Link, p *obj.Prog) {
 				r.Siz = 4
 				put4(ctxt, 0)
 
-				if obj.Framepointer_enabled != 0 && yt.zcase == Zcallduff && p.Mode == 64 {
+				if Framepointer_enabled && yt.zcase == Zcallduff && p.Mode == 64 {
 					// Pop BP pushed above.
 					// MOVQ 0(BP), BP
 					copy(ctxt.Andptr, bpduff2)

@@ -71,52 +71,58 @@ func Ldmain() {
 		}
 	}
 
-	if Thearch.Thechar == '6' && obj.Getwaos() == "plan9" {
-		obj.Flagcount("8", "use 64-bit addresses in symbol table", &Debug['8'])
-	}
-	obj.Flagfn1("B", "add an ELF NT_GNU_BUILD_ID `note` when using ELF", addbuildinfo)
-	obj.Flagcount("C", "check Go calls to C code", &Debug['C'])
-	obj.Flagint64("D", "set data segment `address`", &INITDAT)
-	obj.Flagstr("E", "set `entry` symbol name", &INITENTRY)
-	obj.Flagfn1("I", "use `linker` as ELF dynamic linker", setinterp)
-	obj.Flagfn1("L", "add specified `directory` to library path", Lflag)
-	obj.Flagfn1("H", "set header `type`", setheadtype)
-	obj.Flagint32("R", "set address rounding `quantum`", &INITRND)
-	obj.Flagint64("T", "set text segment `address`", &INITTEXT)
-	obj.Flagfn0("V", "print version and exit", doversion)
-	obj.Flagcount("W", "disassemble input", &Debug['W'])
-	obj.Flagfn1("X", "add string value `definition` of the form importpath.name=value", addstrdata1)
-	obj.Flagcount("a", "disassemble output", &Debug['a'])
-	obj.Flagstr("buildid", "record `id` as Go toolchain build id", &buildid)
-	flag.Var(&Buildmode, "buildmode", "set build `mode`")
-	obj.Flagcount("c", "dump call graph", &Debug['c'])
-	obj.Flagcount("d", "disable dynamic executable", &Debug['d'])
-	obj.Flagstr("extld", "use `linker` when linking in external mode", &extld)
-	obj.Flagstr("extldflags", "pass `flags` to external linker", &extldflags)
-	obj.Flagcount("f", "ignore version mismatch", &Debug['f'])
-	obj.Flagcount("g", "disable go package data checks", &Debug['g'])
-	obj.Flagcount("h", "halt on error", &Debug['h'])
-	obj.Flagstr("installsuffix", "set package directory `suffix`", &flag_installsuffix)
-	obj.Flagstr("k", "set field tracking `symbol`", &tracksym)
-	obj.Flagfn1("linkmode", "set link `mode` (internal, external, auto)", setlinkmode)
-	flag.BoolVar(&Linkshared, "linkshared", false, "link against installed Go shared libraries")
-	obj.Flagcount("n", "dump symbol table", &Debug['n'])
-	obj.Flagstr("o", "write output to `file`", &outfile)
-	flag.Var(&rpath, "r", "set the ELF dynamic linker search `path` to dir1:dir2:...")
-	obj.Flagcount("race", "enable race detector", &flag_race)
-	obj.Flagcount("s", "disable symbol table", &Debug['s'])
 	var flagShared int
-	if Thearch.Thechar == '5' || Thearch.Thechar == '6' {
-		obj.Flagcount("shared", "generate shared object (implies -linkmode external)", &flagShared)
-	}
-	obj.Flagstr("tmpdir", "use `directory` for temporary files", &tmpdir)
-	obj.Flagcount("u", "reject unsafe packages", &Debug['u'])
-	obj.Flagcount("v", "print link trace", &Debug['v'])
-	obj.Flagcount("w", "disable DWARF generation", &Debug['w'])
 
-	obj.Flagstr("cpuprofile", "write cpu profile to `file`", &cpuprofile)
-	obj.Flagstr("memprofile", "write memory profile to `file`", &memprofile)
-	obj.Flagint64("memprofilerate", "set runtime.MemProfileRate to `rate`", &memprofilerate)
+	/*
+		TODO: chaishushan
+
+		if Thearch.Thechar == '6' && obj.Getwaos() == "plan9" {
+			obj.Flagcount("8", "use 64-bit addresses in symbol table", &Debug['8'])
+		}
+		obj.Flagfn1("B", "add an ELF NT_GNU_BUILD_ID `note` when using ELF", addbuildinfo)
+		obj.Flagcount("C", "check Go calls to C code", &Debug['C'])
+		obj.Flagint64("D", "set data segment `address`", &INITDAT)
+		obj.Flagstr("E", "set `entry` symbol name", &INITENTRY)
+		obj.Flagfn1("I", "use `linker` as ELF dynamic linker", setinterp)
+		obj.Flagfn1("L", "add specified `directory` to library path", Lflag)
+		obj.Flagfn1("H", "set header `type`", setheadtype)
+		obj.Flagint32("R", "set address rounding `quantum`", &INITRND)
+		obj.Flagint64("T", "set text segment `address`", &INITTEXT)
+		obj.Flagfn0("V", "print version and exit", doversion)
+		obj.Flagcount("W", "disassemble input", &Debug['W'])
+		obj.Flagfn1("X", "add string value `definition` of the form importpath.name=value", addstrdata1)
+		obj.Flagcount("a", "disassemble output", &Debug['a'])
+		obj.Flagstr("buildid", "record `id` as Go toolchain build id", &buildid)
+		flag.Var(&Buildmode, "buildmode", "set build `mode`")
+		obj.Flagcount("c", "dump call graph", &Debug['c'])
+		obj.Flagcount("d", "disable dynamic executable", &Debug['d'])
+		obj.Flagstr("extld", "use `linker` when linking in external mode", &extld)
+		obj.Flagstr("extldflags", "pass `flags` to external linker", &extldflags)
+		obj.Flagcount("f", "ignore version mismatch", &Debug['f'])
+		obj.Flagcount("g", "disable go package data checks", &Debug['g'])
+		obj.Flagcount("h", "halt on error", &Debug['h'])
+		obj.Flagstr("installsuffix", "set package directory `suffix`", &flag_installsuffix)
+		obj.Flagstr("k", "set field tracking `symbol`", &tracksym)
+		obj.Flagfn1("linkmode", "set link `mode` (internal, external, auto)", setlinkmode)
+		flag.BoolVar(&Linkshared, "linkshared", false, "link against installed Go shared libraries")
+		obj.Flagcount("n", "dump symbol table", &Debug['n'])
+		obj.Flagstr("o", "write output to `file`", &outfile)
+		flag.Var(&rpath, "r", "set the ELF dynamic linker search `path` to dir1:dir2:...")
+		obj.Flagcount("race", "enable race detector", &flag_race)
+		obj.Flagcount("s", "disable symbol table", &Debug['s'])
+		if Thearch.Thechar == '5' || Thearch.Thechar == '6' {
+			obj.Flagcount("shared", "generate shared object (implies -linkmode external)", &flagShared)
+		}
+		obj.Flagstr("tmpdir", "use `directory` for temporary files", &tmpdir)
+		obj.Flagcount("u", "reject unsafe packages", &Debug['u'])
+		obj.Flagcount("v", "print link trace", &Debug['v'])
+		obj.Flagcount("w", "disable DWARF generation", &Debug['w'])
+
+		obj.Flagstr("cpuprofile", "write cpu profile to `file`", &cpuprofile)
+		obj.Flagstr("memprofile", "write memory profile to `file`", &memprofile)
+		obj.Flagint64("memprofilerate", "set runtime.MemProfileRate to `rate`", &memprofilerate)
+
+	*/
 
 	// Clumsy hack to preserve old two-argument -X name val syntax for old scripts.
 	// Rewrite that syntax into new syntax -X name=val.
@@ -145,7 +151,8 @@ func Ldmain() {
 	}
 	os.Args = args
 
-	obj.Flagparse(usage)
+	// TODO: chaishushan
+	// obj.Flagparse(usage)
 
 	startProfile()
 	Ctxt.Bso = &Bso
@@ -162,7 +169,7 @@ func Ldmain() {
 	}
 
 	if Buildmode != BuildmodeShared && flag.NArg() != 1 {
-		usage()
+		panic("usage: TODO") // TODO: chaishushan
 	}
 
 	if outfile == "" {

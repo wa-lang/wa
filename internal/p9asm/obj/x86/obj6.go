@@ -40,6 +40,15 @@ import (
 	"wa-lang.org/wa/internal/p9asm/obj"
 )
 
+func obj_Nopout(p *obj.Prog) {
+	p.As = obj.ANOP
+	p.Scond = 0
+	p.From = obj.Addr{}
+	p.From3 = nil
+	p.Reg = 0
+	p.To = obj.Addr{}
+}
+
 func canuse1insntls(ctxt *obj.Link) bool {
 	if ctxt.Arch.Regsize == 4 {
 		switch ctxt.Headtype {
@@ -76,7 +85,7 @@ func progedit(ctxt *obj.Link, p *obj.Prog) {
 				ctxt.Mode = int(p.From.Offset)
 			}
 		}
-		obj.Nopout(p)
+		obj_Nopout(p)
 	}
 
 	// Thread-local storage references use the TLS pseudo-register.
@@ -132,7 +141,7 @@ func progedit(ctxt *obj.Link, p *obj.Prog) {
 		// guarantee we are producing byte-identical binaries as before this code.
 		// But it should be unnecessary.
 		if (p.As == AMOVQ || p.As == AMOVL) && p.From.Type == obj.TYPE_REG && p.From.Reg == REG_TLS && p.To.Type == obj.TYPE_REG && REG_AX <= p.To.Reg && p.To.Reg <= REG_R15 {
-			obj.Nopout(p)
+			obj_Nopout(p)
 		}
 		if p.From.Type == obj.TYPE_MEM && p.From.Index == REG_TLS && REG_AX <= p.From.Reg && p.From.Reg <= REG_R15 {
 			p.From.Reg = REG_TLS
@@ -443,7 +452,7 @@ func preprocess(ctxt *obj.Link, cursym *obj.LSym) {
 	}
 
 	var bpsize int
-	if p.Mode == 64 && obj.Framepointer_enabled != 0 && autoffset > 0 {
+	if p.Mode == 64 && Framepointer_enabled && autoffset > 0 {
 		// Make room for to save a base pointer.  If autoffset == 0,
 		// this might do something special like a tail jump to
 		// another function, so in that case we omit this.
