@@ -17,7 +17,7 @@ import (
 var CmdP9Link = &cli.Command{
 	Hidden: true,
 	Name:   "p9link",
-	Usage:  "p9asm object link tool",
+	Usage:  "link object to executable",
 	Flags: []cli.Flag{
 		&cli.StringFlag{
 			Name:  "arch",

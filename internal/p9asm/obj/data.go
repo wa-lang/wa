@@ -32,13 +32,10 @@
 package obj
 
 import (
+	"fmt"
 	"log"
 	"math"
 )
-
-func mangle(file string) {
-	log.Fatalf("%s: mangled input file", file)
-}
 
 func Symgrow(ctxt *Link, s *LSym, lsiz int64) {
 	siz := int(lsiz)
@@ -58,7 +55,7 @@ func savedata(ctxt *Link, s *LSym, p *Prog, pn string) {
 	off := int32(p.From.Offset)
 	siz := int32(p.From3.Offset)
 	if off < 0 || siz < 0 || off >= 1<<30 || siz >= 100 {
-		mangle(pn)
+		panic(fmt.Errorf("%s: mangled input file", pn))
 	}
 	if ctxt.Enforce_data_order != 0 && off < int32(len(s.P)) {
 		ctxt.Diag("data out of order (already have %d)\n%v", len(s.P), p)
@@ -115,41 +112,4 @@ func savedata(ctxt *Link, s *LSym, p *Prog, pn string) {
 func Addrel(s *LSym) *Reloc {
 	s.R = append(s.R, Reloc{})
 	return &s.R[len(s.R)-1]
-}
-
-func Setuintxx(ctxt *Link, s *LSym, off int64, v uint64, wid int64) int64 {
-	if s.Type == 0 {
-		s.Type = SDATA
-	}
-	if s.Size < off+wid {
-		s.Size = off + wid
-		Symgrow(ctxt, s, s.Size)
-	}
-
-	switch wid {
-	case 1:
-		s.P[off] = uint8(v)
-	case 2:
-		ctxt.Arch.ByteOrder.PutUint16(s.P[off:], uint16(v))
-	case 4:
-		ctxt.Arch.ByteOrder.PutUint32(s.P[off:], uint32(v))
-	case 8:
-		ctxt.Arch.ByteOrder.PutUint64(s.P[off:], uint64(v))
-	}
-
-	return off + wid
-}
-
-func adduintxx(ctxt *Link, s *LSym, v uint64, wid int) int64 {
-	off := s.Size
-	Setuintxx(ctxt, s, off, v, int64(wid))
-	return off
-}
-
-func Adduint32(ctxt *Link, s *LSym, v uint32) int64 {
-	return adduintxx(ctxt, s, uint64(v), 4)
-}
-
-func Adduint64(ctxt *Link, s *LSym, v uint64) int64 {
-	return adduintxx(ctxt, s, v, 8)
 }

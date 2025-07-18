@@ -17,6 +17,9 @@ hello:
 dev:
 	go run main.go p9asm -S ./tests/p9asm/hello.s
 
+dev-nm:
+	go run main.go p9nm ./tests/p9asm/hello.o
+
 dev-link:
 	go run main.go p9link -o a.out ./tests/p9asm/hello.o
 

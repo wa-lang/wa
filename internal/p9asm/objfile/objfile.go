@@ -36,7 +36,7 @@ type Sym struct {
 
 var openers = []func(*os.File) (rawFile, error){
 	openElf,
-	openGoobj,
+	openWaobj,
 	openMacho,
 	openPE,
 	openPlan9,

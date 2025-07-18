@@ -22,7 +22,7 @@ import (
 var CmdP9Asm = &cli.Command{
 	Hidden: true,
 	Name:   "p9asm",
-	Usage:  "p9asm language assembly tool",
+	Usage:  "assembly language tool",
 	Flags: []cli.Flag{
 		&cli.BoolFlag{
 			Name:  "debug",
@@ -69,7 +69,7 @@ var CmdP9Asm = &cli.Command{
 	},
 	Action: func(c *cli.Context) error {
 		if c.NArg() == 0 {
-			fmt.Fprintf(os.Stderr, "no input file")
+			fmt.Fprintln(os.Stderr, "no input file")
 			os.Exit(1)
 		}
 

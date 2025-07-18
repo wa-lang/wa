@@ -7,7 +7,7 @@
 // TODO(rsc): Decide where this package should live. (golang.org/issue/6932)
 // TODO(rsc): Decide the appropriate integer types for various fields.
 // TODO(rsc): Write tests. (File format still up in the air a little.)
-package goobj
+package waobj
 
 import (
 	"bufio"
@@ -420,7 +420,7 @@ func (r *objReader) readData() Data {
 // skip skips n bytes in the input.
 func (r *objReader) skip(n int64) {
 	if n < 0 {
-		r.error(fmt.Errorf("debug/goobj: internal error: misuse of skip"))
+		r.error(fmt.Errorf("p9asm/obj/waobj: internal error: misuse of skip"))
 	}
 	if n < int64(len(r.tmp)) {
 		// Since the data is so small, a just reading from the buffered

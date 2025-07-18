@@ -29,7 +29,7 @@ var CmdSsa = &cli.Command{
 	},
 	Action: func(c *cli.Context) error {
 		if c.NArg() == 0 {
-			fmt.Fprintf(os.Stderr, "no input file")
+			fmt.Fprintln(os.Stderr, "no input file")
 			os.Exit(1)
 		}
 

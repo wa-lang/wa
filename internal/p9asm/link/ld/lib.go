@@ -288,9 +288,7 @@ const (
 	BuildmodeShared
 )
 
-func (mode *BuildMode) Set(s string) error {
-	waos := obj.Getwaos()
-	waarch := obj.Getwaarch()
+func (mode *BuildMode) Set(waos, waarch, s string) error {
 	badmode := func() error {
 		return fmt.Errorf("buildmode %s not supported on %s/%s", s, waos, waarch)
 	}

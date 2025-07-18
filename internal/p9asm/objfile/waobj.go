@@ -10,45 +10,45 @@ import (
 	"fmt"
 	"os"
 
-	"wa-lang.org/wa/internal/p9asm/obj/goobj"
+	"wa-lang.org/wa/internal/p9asm/obj/waobj"
 )
 
-type goobjFile struct {
-	goobj *goobj.Package
+type waobjFile struct {
+	waobj *waobj.Package
 }
 
-func openGoobj(r *os.File) (rawFile, error) {
-	f, err := goobj.Parse(r, `""`)
+func openWaobj(r *os.File) (rawFile, error) {
+	f, err := waobj.Parse(r, `""`)
 	if err != nil {
 		return nil, err
 	}
-	return &goobjFile{f}, nil
+	return &waobjFile{f}, nil
 }
 
-func goobjName(id goobj.SymID) string {
+func goobjName(id waobj.SymID) string {
 	if id.Version == 0 {
 		return id.Name
 	}
 	return fmt.Sprintf("%s<%d>", id.Name, id.Version)
 }
 
-func (f *goobjFile) symbols() ([]Sym, error) {
-	seen := make(map[goobj.SymID]bool)
+func (f *waobjFile) symbols() ([]Sym, error) {
+	seen := make(map[waobj.SymID]bool)
 
 	var syms []Sym
-	for _, s := range f.goobj.Syms {
+	for _, s := range f.waobj.Syms {
 		seen[s.SymID] = true
 		sym := Sym{Addr: uint64(s.Data.Offset), Name: goobjName(s.SymID), Size: int64(s.Size), Type: s.Type.Name, Code: '?'}
 		switch s.Kind {
-		case goobj.STEXT, goobj.SELFRXSECT:
+		case waobj.STEXT, waobj.SELFRXSECT:
 			sym.Code = 'T'
-		case goobj.STYPE, goobj.SSTRING, goobj.SGOSTRING, goobj.SGOFUNC, goobj.SRODATA, goobj.SFUNCTAB, goobj.STYPELINK, goobj.SSYMTAB, goobj.SPCLNTAB, goobj.SELFROSECT:
+		case waobj.STYPE, waobj.SSTRING, waobj.SGOSTRING, waobj.SGOFUNC, waobj.SRODATA, waobj.SFUNCTAB, waobj.STYPELINK, waobj.SSYMTAB, waobj.SPCLNTAB, waobj.SELFROSECT:
 			sym.Code = 'R'
-		case goobj.SMACHOPLT, goobj.SELFSECT, goobj.SMACHO, goobj.SMACHOGOT, goobj.SNOPTRDATA, goobj.SINITARR, goobj.SDATA, goobj.SWINDOWS:
+		case waobj.SMACHOPLT, waobj.SELFSECT, waobj.SMACHO, waobj.SMACHOGOT, waobj.SNOPTRDATA, waobj.SINITARR, waobj.SDATA, waobj.SWINDOWS:
 			sym.Code = 'D'
-		case goobj.SBSS, goobj.SNOPTRBSS, goobj.STLSBSS:
+		case waobj.SBSS, waobj.SNOPTRBSS, waobj.STLSBSS:
 			sym.Code = 'B'
-		case goobj.SXREF, goobj.SMACHOSYMSTR, goobj.SMACHOSYMTAB, goobj.SMACHOINDIRECTPLT, goobj.SMACHOINDIRECTGOT, goobj.SFILE, goobj.SFILEPATH, goobj.SCONST, goobj.SDYNIMPORT, goobj.SHOSTOBJ:
+		case waobj.SXREF, waobj.SMACHOSYMSTR, waobj.SMACHOSYMTAB, waobj.SMACHOINDIRECTPLT, waobj.SMACHOINDIRECTGOT, waobj.SFILE, waobj.SFILEPATH, waobj.SCONST, waobj.SDYNIMPORT, waobj.SHOSTOBJ:
 			sym.Code = 'X' // should not see
 		}
 		if s.Version != 0 {
@@ -57,7 +57,7 @@ func (f *goobjFile) symbols() ([]Sym, error) {
 		syms = append(syms, sym)
 	}
 
-	for _, s := range f.goobj.Syms {
+	for _, s := range f.waobj.Syms {
 		for _, r := range s.Reloc {
 			if !seen[r.Sym] {
 				seen[r.Sym] = true
@@ -77,18 +77,18 @@ func (f *goobjFile) symbols() ([]Sym, error) {
 // pcln does not make sense for Go object files, because each
 // symbol has its own individual pcln table, so there is no global
 // space of addresses to map.
-func (f *goobjFile) pcln() (textStart uint64, symtab, pclntab []byte, err error) {
+func (f *waobjFile) pcln() (textStart uint64, symtab, pclntab []byte, err error) {
 	return 0, nil, nil, fmt.Errorf("pcln not available in go object file")
 }
 
 // text does not make sense for Go object files, because
 // each function has a separate section.
-func (f *goobjFile) text() (textStart uint64, text []byte, err error) {
+func (f *waobjFile) text() (textStart uint64, text []byte, err error) {
 	return 0, nil, fmt.Errorf("text not available in go object file")
 }
 
-// waarch makes sense but is not exposed in debug/goobj's API,
+// waarch makes sense but is not exposed in debug/waobj's API,
 // and we don't need it yet for any users of internal/objfile.
-func (f *goobjFile) waarch() string {
-	return "WAARCH unimplemented for debug/goobj files"
+func (f *waobjFile) waarch() string {
+	return "WAARCH unimplemented for debug/waobj files"
 }

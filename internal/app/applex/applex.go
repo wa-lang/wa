@@ -21,7 +21,7 @@ var CmdLex = &cli.Command{
 	Usage:  "lex Wa/wat source code and print token list",
 	Action: func(c *cli.Context) error {
 		if c.NArg() == 0 {
-			fmt.Fprintf(os.Stderr, "no input file")
+			fmt.Fprintln(os.Stderr, "no input file")
 			os.Exit(1)
 		}
 
