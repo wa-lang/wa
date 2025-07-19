@@ -1417,7 +1417,7 @@ func synthesizechantypes(die *DWDie) {
 
 // For use with pass.c::genasmsym
 func defdwsymb(sym *LSym, s string, t int, v int64, size int64, ver int, gotype *LSym) {
-	if strings.HasPrefix(s, "go.string.") {
+	if strings.HasPrefix(s, "wa.string.") {
 		return
 	}
 	if strings.HasPrefix(s, "runtime.gcbits.") {

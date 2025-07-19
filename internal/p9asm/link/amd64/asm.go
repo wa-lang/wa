@@ -69,7 +69,7 @@ func gentext() {
 		return
 	}
 	addmoduledata.Reachable = true
-	initfunc := ld.Linklookup(ld.Ctxt, "go.link.addmoduledata", 0)
+	initfunc := ld.Linklookup(ld.Ctxt, "wa.link.addmoduledata", 0)
 	initfunc.Type = obj.STEXT
 	initfunc.Local = true
 	initfunc.Reachable = true
@@ -95,7 +95,7 @@ func gentext() {
 		ld.Ctxt.Textp = initfunc
 	}
 	ld.Ctxt.Etextp = initfunc
-	initarray_entry := ld.Linklookup(ld.Ctxt, "go.link.addmoduledatainit", 0)
+	initarray_entry := ld.Linklookup(ld.Ctxt, "wa.link.addmoduledatainit", 0)
 	initarray_entry.Reachable = true
 	initarray_entry.Local = true
 	initarray_entry.Type = obj.SINITARR

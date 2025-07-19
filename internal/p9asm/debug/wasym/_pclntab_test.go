@@ -84,26 +84,26 @@ func crack(file string, t *testing.T) (*elf.File, *Table) {
 }
 
 func parse(file string, f *elf.File, t *testing.T) (*elf.File, *Table) {
-	s := f.Section(".gosymtab")
+	s := f.Section(".wasymtab")
 	if s == nil {
-		t.Skip("no .gosymtab section")
+		t.Skip("no .wasymtab section")
 	}
 	symdat, err := s.Data()
 	if err != nil {
 		f.Close()
-		t.Fatalf("reading %s gosymtab: %v", file, err)
+		t.Fatalf("reading %s wasymtab: %v", file, err)
 	}
-	pclndat, err := f.Section(".gopclntab").Data()
+	pclndat, err := f.Section(".wapclntab").Data()
 	if err != nil {
 		f.Close()
-		t.Fatalf("reading %s gopclntab: %v", file, err)
+		t.Fatalf("reading %s wapclntab: %v", file, err)
 	}
 
 	pcln := NewLineTable(pclndat, f.Section(".text").Addr)
 	tab, err := NewTable(symdat, pcln)
 	if err != nil {
 		f.Close()
-		t.Fatalf("parsing %s gosymtab: %v", file, err)
+		t.Fatalf("parsing %s wasymtab: %v", file, err)
 	}
 
 	return f, tab

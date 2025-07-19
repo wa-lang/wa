@@ -69,15 +69,11 @@ func (f *File) Symbols() ([]Sym, error) {
 	if err != nil {
 		return nil, err
 	}
-	sort.Sort(byAddr(syms))
+	sort.Slice(syms, func(i, j int) bool {
+		return syms[i].Addr < syms[j].Addr
+	})
 	return syms, nil
 }
-
-type byAddr []Sym
-
-func (x byAddr) Less(i, j int) bool { return x[i].Addr < x[j].Addr }
-func (x byAddr) Len() int           { return len(x) }
-func (x byAddr) Swap(i, j int)      { x[i], x[j] = x[j], x[i] }
 
 func (f *File) PCLineTable() (*wasym.Table, error) {
 	textStart, symtab, pclntab, err := f.raw.pcln()

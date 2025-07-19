@@ -67,12 +67,12 @@ func (f *elfFile) pcln() (textStart uint64, symtab, pclntab []byte, err error) {
 	if sect := f.elf.Section(".text"); sect != nil {
 		textStart = sect.Addr
 	}
-	if sect := f.elf.Section(".gosymtab"); sect != nil {
+	if sect := f.elf.Section(".wasymtab"); sect != nil {
 		if symtab, err = sect.Data(); err != nil {
 			return 0, nil, nil, err
 		}
 	}
-	if sect := f.elf.Section(".gopclntab"); sect != nil {
+	if sect := f.elf.Section(".wapclntab"); sect != nil {
 		if pclntab, err = sect.Data(); err != nil {
 			return 0, nil, nil, err
 		}

@@ -12,7 +12,6 @@ package waobj
 import (
 	"bufio"
 	"bytes"
-	"errors"
 	"fmt"
 	"io"
 	"strconv"
@@ -39,8 +38,8 @@ const (
 	// readonly, non-executable
 	STYPE      SymKind = obj.STYPE
 	SSTRING    SymKind = obj.SSTRING
-	SGOSTRING  SymKind = obj.SGOSTRING
-	SGOFUNC    SymKind = obj.SGOFUNC
+	SWASTRING  SymKind = obj.SWASTRING
+	SWAFUNC    SymKind = obj.SWAFUNC
 	SRODATA    SymKind = obj.SRODATA
 	SFUNCTAB   SymKind = obj.SFUNCTAB
 	STYPELINK  SymKind = obj.STYPELINK
@@ -86,8 +85,8 @@ var symKindStrings = []string{
 	SFILE:             "SFILE",
 	SFILEPATH:         "SFILEPATH",
 	SFUNCTAB:          "SFUNCTAB",
-	SGOFUNC:           "SGOFUNC",
-	SGOSTRING:         "SGOSTRING",
+	SWAFUNC:           "SWAFUNC",
+	SWASTRING:         "SWASTRING",
 	SHOSTOBJ:          "SHOSTOBJ",
 	SINITARR:          "SINITARR",
 	SMACHO:            "SMACHO",
@@ -220,18 +219,18 @@ type Package struct {
 	MaxVersion int      // maximum Version in any SymID in Syms
 }
 
-var (
-	archiveHeader = []byte("!<arch>\n")
-	archiveMagic  = []byte("`\n")
-	waobjHeader   = []byte("wa objec") // truncated to size of archiveHeader
+const (
+	archiveHeader = "!<arch>\n"
+	archiveMagic  = "`\n"
+	waobjHeader   = "wa objec" // truncated to size of archiveHeader
 
-	errCorruptArchive   = errors.New("corrupt archive")
-	errTruncatedArchive = errors.New("truncated archive")
-	errNotArchive       = errors.New("unrecognized archive format")
+	errCorruptArchive   = errorString("corrupt archive")
+	errTruncatedArchive = errorString("truncated archive")
+	errNotArchive       = errorString("unrecognized archive format")
 
-	errCorruptObject   = errors.New("corrupt object file")
-	errTruncatedObject = errors.New("truncated object file")
-	errNotObject       = errors.New("unrecognized object file format")
+	errCorruptObject   = errorString("corrupt object file")
+	errTruncatedObject = errorString("truncated object file")
+	errNotObject       = errorString("unrecognized object file format")
 )
 
 // An objReader is an object file reader.
@@ -468,12 +467,12 @@ func Parse(r io.ReadSeeker, pkgpath string) (*Package, error) {
 	default:
 		return nil, errNotObject
 
-	case bytes.Equal(rd.tmp[:8], archiveHeader):
+	case string(rd.tmp[:8]) == archiveHeader:
 		if err := rd.parseArchive(); err != nil {
 			return nil, err
 		}
-	case bytes.Equal(rd.tmp[:8], waobjHeader):
-		if err := rd.parseObject(waobjHeader); err != nil {
+	case string(rd.tmp[:8]) == waobjHeader:
+		if err := rd.parseObject([]byte(waobjHeader)); err != nil {
 			return nil, err
 		}
 	}
@@ -517,7 +516,7 @@ func (r *objReader) parseArchive() error {
 		if len(data) < 60 {
 			return errTruncatedArchive
 		}
-		if !bytes.Equal(data[58:60], archiveMagic) {
+		if string(data[58:60]) != archiveMagic {
 			return errCorruptArchive
 		}
 		name := trimSpace(data[0:16])
@@ -531,7 +530,7 @@ func (r *objReader) parseArchive() error {
 			return errCorruptArchive
 		}
 		switch name {
-		case "__.SYMDEF", "__.GOSYMDEF", "__.PKGDEF":
+		case "__.SYMDEF", "__.WASYMDEF", "__.PKGDEF":
 			r.skip(size)
 		default:
 			oldLimit := r.limit

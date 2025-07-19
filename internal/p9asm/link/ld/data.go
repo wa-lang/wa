@@ -1490,7 +1490,7 @@ func dodata() {
 	sect.Length = uint64(datsize) - sect.Vaddr
 
 	/* gosymtab */
-	sect = addsection(segro, ".gosymtab", 04)
+	sect = addsection(segro, ".wasymtab", 04)
 
 	sect.Align = maxalign(s, obj.SPCLNTAB-1)
 	datsize = Rnd(datsize, int64(sect.Align))
@@ -1508,7 +1508,7 @@ func dodata() {
 	sect.Length = uint64(datsize) - sect.Vaddr
 
 	/* gopclntab */
-	sect = addsection(segro, ".gopclntab", 04)
+	sect = addsection(segro, ".wapclntab", 04)
 
 	sect.Align = maxalign(s, obj.SELFROSECT-1)
 	datsize = Rnd(datsize, int64(sect.Align))
@@ -1570,7 +1570,7 @@ func textbuildid() {
 		return
 	}
 
-	sym := Linklookup(Ctxt, "go.buildid", 0)
+	sym := Linklookup(Ctxt, "wa.buildid", 0)
 	sym.Reachable = true
 	// The \xff is invalid UTF-8, meant to make it less likely
 	// to find one of these accidentally.
@@ -1721,8 +1721,8 @@ func address() {
 	}
 
 	if Buildmode == BuildmodeShared {
-		s := Linklookup(Ctxt, "go.link.abihashbytes", 0)
-		sectSym := Linklookup(Ctxt, ".note.go.abihash", 0)
+		s := Linklookup(Ctxt, "wa.link.abihashbytes", 0)
+		sectSym := Linklookup(Ctxt, ".note.wa.abihash", 0)
 		s.Sect = sectSym.Sect
 		s.Value = int64(sectSym.Sect.Vaddr + 16)
 	}

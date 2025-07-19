@@ -42,7 +42,9 @@ func (f *machoFile) symbols() ([]Sym, error) {
 			addrs = append(addrs, s.Value)
 		}
 	}
-	sort.Sort(uint64s(addrs))
+	sort.Slice(addrs, func(i, j int) bool {
+		return addrs[i] < addrs[j]
+	})
 
 	var syms []Sym
 	for _, s := range f.macho.Symtab.Syms {
@@ -82,12 +84,12 @@ func (f *machoFile) pcln() (textStart uint64, symtab, pclntab []byte, err error)
 	if sect := f.macho.Section("__text"); sect != nil {
 		textStart = sect.Addr
 	}
-	if sect := f.macho.Section("__gosymtab"); sect != nil {
+	if sect := f.macho.Section("__wasymtab"); sect != nil {
 		if symtab, err = sect.Data(); err != nil {
 			return 0, nil, nil, err
 		}
 	}
-	if sect := f.macho.Section("__gopclntab"); sect != nil {
+	if sect := f.macho.Section("__wapclntab"); sect != nil {
 		if pclntab, err = sect.Data(); err != nil {
 			return 0, nil, nil, err
 		}
@@ -116,9 +118,3 @@ func (f *machoFile) waarch() string {
 	}
 	return ""
 }
-
-type uint64s []uint64
-
-func (x uint64s) Len() int           { return len(x) }
-func (x uint64s) Swap(i, j int)      { x[i], x[j] = x[j], x[i] }
-func (x uint64s) Less(i, j int) bool { return x[i] < x[j] }

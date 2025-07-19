@@ -250,7 +250,7 @@ const (
 )
 
 const (
-	symname = "__.GOSYMDEF"
+	symname = "__.WASYMDEF"
 	pkgname = "__.PKGDEF"
 )
 
@@ -665,7 +665,7 @@ func objfile(lib *Library) {
 		return
 	}
 
-	/* skip over optional __.GOSYMDEF and process __.PKGDEF */
+	/* skip over optional __.WASYMDEF and process __.PKGDEF */
 	off := obj.Boffset(f)
 
 	var arhdr ArHdr
@@ -715,7 +715,7 @@ func objfile(lib *Library) {
 	 * the individual symbols that are unused.
 	 *
 	 * loading every object will also make it possible to
-	 * load foreign objects not referenced by __.GOSYMDEF.
+	 * load foreign objects not referenced by __.WASYMDEF.
 	 */
 	for {
 		l = nextar(f, off, &arhdr)
@@ -1290,13 +1290,13 @@ func ldshlibsyms(shlib string) {
 		return
 	}
 
-	hash, err := readnote(f, ELF_NOTE_GO_NAME, ELF_NOTE_GOABIHASH_TAG)
+	hash, err := readnote(f, ELF_NOTE_WA_NAME, ELF_NOTE_WAABIHASH_TAG)
 	if err != nil {
 		Diag("cannot read ABI hash from shared library %s: %v", libpath, err)
 		return
 	}
 
-	depsbytes, err := readnote(f, ELF_NOTE_GO_NAME, ELF_NOTE_GODEPS_TAG)
+	depsbytes, err := readnote(f, ELF_NOTE_WA_NAME, ELF_NOTE_WADEPS_TAG)
 	if err != nil {
 		Diag("cannot read dep list from shared library %s: %v", libpath, err)
 		return
@@ -1762,8 +1762,8 @@ func genasmsym(put func(*LSym, string, int, int64, int64, int, *LSym)) {
 			obj.SMACHOGOT,
 			obj.STYPE,
 			obj.SSTRING,
-			obj.SGOSTRING,
-			obj.SGOFUNC,
+			obj.SWASTRING,
+			obj.SWAFUNC,
 			obj.SGCBITS,
 			obj.SWINDOWS:
 			if !s.Reachable {

@@ -1190,8 +1190,8 @@ func elfbuildinfo(sh *ElfShdr, startva uint64, resoff uint64) int {
 	return elfnote(sh, startva, resoff, n, true)
 }
 
-func elfgobuildid(sh *ElfShdr, startva uint64, resoff uint64) int {
-	n := len(ELF_NOTE_GO_NAME) + int(Rnd(int64(len(buildid)), 4))
+func elfwabuildid(sh *ElfShdr, startva uint64, resoff uint64) int {
+	n := len(ELF_NOTE_WA_NAME) + int(Rnd(int64(len(buildid)), 4))
 	return elfnote(sh, startva, resoff, n, true)
 }
 
@@ -1210,12 +1210,12 @@ func elfwritebuildinfo() int {
 }
 
 func elfwritegobuildid() int {
-	sh := elfwritenotehdr(".note.go.buildid", uint32(len(ELF_NOTE_GO_NAME)), uint32(len(buildid)), ELF_NOTE_GOBUILDID_TAG)
+	sh := elfwritenotehdr(".note.wa.buildid", uint32(len(ELF_NOTE_WA_NAME)), uint32(len(buildid)), ELF_NOTE_WABUILDID_TAG)
 	if sh == nil {
 		return 0
 	}
 
-	Cwrite(ELF_NOTE_GO_NAME)
+	Cwrite(ELF_NOTE_WA_NAME)
 	Cwrite([]byte(buildid))
 	var zero = make([]byte, 4)
 	Cwrite(zero[:int(Rnd(int64(len(buildid)), 4)-int64(len(buildid)))])
@@ -1223,15 +1223,15 @@ func elfwritegobuildid() int {
 	return int(sh.size)
 }
 
-// Go specific notes
+// Wa specific notes
 const (
-	ELF_NOTE_GOPKGLIST_TAG = 1
-	ELF_NOTE_GOABIHASH_TAG = 2
-	ELF_NOTE_GODEPS_TAG    = 3
-	ELF_NOTE_GOBUILDID_TAG = 4
+	ELF_NOTE_WAPKGLIST_TAG = 1
+	ELF_NOTE_WAABIHASH_TAG = 2
+	ELF_NOTE_WADEPS_TAG    = 3
+	ELF_NOTE_WABUILDID_TAG = 4
 )
 
-var ELF_NOTE_GO_NAME = []byte("Go\x00\x00")
+var ELF_NOTE_WA_NAME = []byte("Wa\x00\x00")
 
 var elfverneed int
 
@@ -1630,13 +1630,13 @@ func addgonote(sectionName string, tag uint32, desc []byte) {
 	s.Reachable = true
 	s.Type = obj.SELFROSECT
 	// namesz
-	Adduint32(Ctxt, s, uint32(len(ELF_NOTE_GO_NAME)))
+	Adduint32(Ctxt, s, uint32(len(ELF_NOTE_WA_NAME)))
 	// descsz
 	Adduint32(Ctxt, s, uint32(len(desc)))
 	// tag
 	Adduint32(Ctxt, s, tag)
 	// name + padding
-	s.P = append(s.P, ELF_NOTE_GO_NAME...)
+	s.P = append(s.P, ELF_NOTE_WA_NAME...)
 	for len(s.P)%4 != 0 {
 		s.P = append(s.P, 0)
 	}
@@ -1678,13 +1678,13 @@ func doelf() {
 		Addstring(shstrtab, ".note.gnu.build-id")
 	}
 	if buildid != "" {
-		Addstring(shstrtab, ".note.go.buildid")
+		Addstring(shstrtab, ".note.wa.buildid")
 	}
 	Addstring(shstrtab, ".elfdata")
 	Addstring(shstrtab, ".rodata")
 	Addstring(shstrtab, ".typelink")
-	Addstring(shstrtab, ".gosymtab")
-	Addstring(shstrtab, ".gopclntab")
+	Addstring(shstrtab, ".wasymtab")
+	Addstring(shstrtab, ".wapclntab")
 
 	if Linkmode == LinkExternal {
 		Debug['d'] = 1
@@ -1703,8 +1703,8 @@ func doelf() {
 			Addstring(shstrtab, ".rel.text")
 			Addstring(shstrtab, ".rel.rodata")
 			Addstring(shstrtab, ".rel.typelink")
-			Addstring(shstrtab, ".rel.gosymtab")
-			Addstring(shstrtab, ".rel.gopclntab")
+			Addstring(shstrtab, ".rel.wasymtab")
+			Addstring(shstrtab, ".rel.wapclntab")
 			Addstring(shstrtab, ".rel.noptrdata")
 			Addstring(shstrtab, ".rel.data")
 		}
@@ -1713,13 +1713,13 @@ func doelf() {
 		Addstring(shstrtab, ".note.GNU-stack")
 
 		if Buildmode == BuildmodeShared {
-			Addstring(shstrtab, ".note.go.abihash")
-			Addstring(shstrtab, ".note.go.pkg-list")
-			Addstring(shstrtab, ".note.go.deps")
+			Addstring(shstrtab, ".note.wa.abihash")
+			Addstring(shstrtab, ".note.wa.pkg-list")
+			Addstring(shstrtab, ".note.wa.deps")
 		}
 
 		if buildid != "" {
-			Addstring(shstrtab, ".note.go.buildid")
+			Addstring(shstrtab, ".note.wa.buildid")
 		}
 	}
 
@@ -1911,9 +1911,9 @@ func doelf() {
 	}
 
 	if Buildmode == BuildmodeShared {
-		// The go.link.abihashbytes symbol will be pointed at the appropriate
-		// part of the .note.go.abihash section in data.go:func address().
-		s := Linklookup(Ctxt, "go.link.abihashbytes", 0)
+		// The wa.link.abihashbytes symbol will be pointed at the appropriate
+		// part of the .note.wa.abihash section in data.wa:func address().
+		s := Linklookup(Ctxt, "wa.link.abihashbytes", 0)
 		s.Local = true
 		s.Type = obj.SRODATA
 		s.Special = 1
@@ -1925,17 +1925,17 @@ func doelf() {
 		for _, l := range Ctxt.Library {
 			h.Write(l.hash)
 		}
-		addgonote(".note.go.abihash", ELF_NOTE_GOABIHASH_TAG, h.Sum([]byte{}))
-		addgonote(".note.go.pkg-list", ELF_NOTE_GOPKGLIST_TAG, []byte(pkglistfornote))
+		addgonote(".note.wa.abihash", ELF_NOTE_WAABIHASH_TAG, h.Sum([]byte{}))
+		addgonote(".note.wa.pkg-list", ELF_NOTE_WAPKGLIST_TAG, []byte(pkglistfornote))
 		var deplist []string
 		for _, shlib := range Ctxt.Shlibs {
 			deplist = append(deplist, filepath.Base(shlib.Path))
 		}
-		addgonote(".note.go.deps", ELF_NOTE_GODEPS_TAG, []byte(strings.Join(deplist, "\n")))
+		addgonote(".note.wa.deps", ELF_NOTE_WADEPS_TAG, []byte(strings.Join(deplist, "\n")))
 	}
 
 	if Linkmode == LinkExternal && buildid != "" {
-		addgonote(".note.go.buildid", ELF_NOTE_GOBUILDID_TAG, []byte(buildid))
+		addgonote(".note.wa.buildid", ELF_NOTE_WABUILDID_TAG, []byte(buildid))
 	}
 }
 
@@ -2003,17 +2003,17 @@ func Asmbelf(symo int64) {
 		eh.phentsize = 0
 
 		if Buildmode == BuildmodeShared {
-			sh := elfshname(".note.go.pkg-list")
+			sh := elfshname(".note.wa.pkg-list")
 			sh.type_ = SHT_NOTE
-			sh = elfshname(".note.go.abihash")
+			sh = elfshname(".note.wa.abihash")
 			sh.type_ = SHT_NOTE
 			sh.flags = SHF_ALLOC
-			sh = elfshname(".note.go.deps")
+			sh = elfshname(".note.wa.deps")
 			sh.type_ = SHT_NOTE
 		}
 
 		if buildid != "" {
-			sh := elfshname(".note.go.buildid")
+			sh := elfshname(".note.wa.buildid")
 			sh.type_ = SHT_NOTE
 			sh.flags = SHF_ALLOC
 		}
@@ -2083,8 +2083,8 @@ func Asmbelf(symo int64) {
 	}
 
 	if buildid != "" {
-		sh := elfshname(".note.go.buildid")
-		resoff -= int64(elfgobuildid(sh, uint64(startva), uint64(resoff)))
+		sh := elfshname(".note.wa.buildid")
+		resoff -= int64(elfwabuildid(sh, uint64(startva), uint64(resoff)))
 
 		pnote := newElfPhdr()
 		pnote.type_ = PT_NOTE

@@ -32,7 +32,7 @@ func parse(t *testing.T, name, in string) *ast.File {
 func print(t *testing.T, name string, f *ast.File) string {
 	var buf bytes.Buffer
 	if err := format.Node(&buf, fset, f); err != nil {
-		t.Fatalf("%s gofmt: %v", name, err)
+		t.Fatalf("%s wa fmt: %v", name, err)
 	}
 	return buf.String()
 }

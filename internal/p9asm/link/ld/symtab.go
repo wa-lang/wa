@@ -356,15 +356,15 @@ func symtab() {
 		symtype = s
 	}
 
-	s = Linklookup(Ctxt, "go.string.*", 0)
-	s.Type = obj.SGOSTRING
+	s = Linklookup(Ctxt, "wa.string.*", 0)
+	s.Type = obj.SWASTRING
 	s.Local = true
 	s.Size = 0
 	s.Reachable = true
 	symgostring := s
 
-	s = Linklookup(Ctxt, "go.func.*", 0)
-	s.Type = obj.SGOFUNC
+	s = Linklookup(Ctxt, "wa.func.*", 0)
+	s.Type = obj.SWAFUNC
 	s.Local = true
 	s.Size = 0
 	s.Reachable = true
@@ -402,15 +402,15 @@ func symtab() {
 			s.Outer = symtype
 		}
 
-		if strings.HasPrefix(s.Name, "go.typelink.") {
+		if strings.HasPrefix(s.Name, "wa.typelink.") {
 			ntypelinks++
 			s.Type = obj.STYPELINK
 			s.Hide = 1
 			s.Outer = symtypelink
 		}
 
-		if strings.HasPrefix(s.Name, "go.string.") {
-			s.Type = obj.SGOSTRING
+		if strings.HasPrefix(s.Name, "wa.string.") {
+			s.Type = obj.SWASTRING
 			s.Hide = 1
 			s.Outer = symgostring
 		}
@@ -421,14 +421,14 @@ func symtab() {
 			s.Outer = symgcbits
 		}
 
-		if strings.HasPrefix(s.Name, "go.func.") {
-			s.Type = obj.SGOFUNC
+		if strings.HasPrefix(s.Name, "wa.func.") {
+			s.Type = obj.SWAFUNC
 			s.Hide = 1
 			s.Outer = symgofunc
 		}
 
 		if strings.HasPrefix(s.Name, "gcargs.") || strings.HasPrefix(s.Name, "gclocals.") || strings.HasPrefix(s.Name, "gclocals·") {
-			s.Type = obj.SGOFUNC
+			s.Type = obj.SWAFUNC
 			s.Hide = 1
 			s.Outer = symgofunc
 			s.Align = 4
@@ -437,10 +437,10 @@ func symtab() {
 	}
 
 	if Buildmode == BuildmodeShared {
-		abihashgostr := Linklookup(Ctxt, "go.link.abihash."+filepath.Base(outfile), 0)
+		abihashgostr := Linklookup(Ctxt, "wa.link.abihash."+filepath.Base(outfile), 0)
 		abihashgostr.Reachable = true
 		abihashgostr.Type = obj.SRODATA
-		hashsym := Linklookup(Ctxt, "go.link.abihashbytes", 0)
+		hashsym := Linklookup(Ctxt, "wa.link.abihashbytes", 0)
 		Addaddr(Ctxt, abihashgostr, hashsym)
 		adduint(Ctxt, abihashgostr, uint64(hashsym.Size))
 	}
@@ -496,9 +496,9 @@ func symtab() {
 			// it something slightly more comprehensible.
 			thismodulename = "the executable"
 		}
-		addgostring(moduledata, "go.link.thismodulename", thismodulename)
+		addgostring(moduledata, "wa.link.thismodulename", thismodulename)
 
-		modulehashes := Linklookup(Ctxt, "go.link.abihashes", 0)
+		modulehashes := Linklookup(Ctxt, "wa.link.abihashes", 0)
 		modulehashes.Reachable = true
 		modulehashes.Local = true
 		modulehashes.Type = obj.SRODATA
@@ -506,13 +506,13 @@ func symtab() {
 		for i, shlib := range Ctxt.Shlibs {
 			// modulehashes[i].modulename
 			modulename := filepath.Base(shlib.Path)
-			addgostring(modulehashes, fmt.Sprintf("go.link.libname.%d", i), modulename)
+			addgostring(modulehashes, fmt.Sprintf("wa.link.libname.%d", i), modulename)
 
 			// modulehashes[i].linktimehash
-			addgostring(modulehashes, fmt.Sprintf("go.link.linkhash.%d", i), string(shlib.Hash))
+			addgostring(modulehashes, fmt.Sprintf("wa.link.linkhash.%d", i), string(shlib.Hash))
 
 			// modulehashes[i].runtimehash
-			abihash := Linklookup(Ctxt, "go.link.abihash."+modulename, 0)
+			abihash := Linklookup(Ctxt, "wa.link.abihash."+modulename, 0)
 			abihash.Reachable = true
 			Addaddr(Ctxt, modulehashes, abihash)
 		}

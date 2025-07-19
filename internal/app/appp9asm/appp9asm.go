@@ -56,7 +56,7 @@ var CmdP9Asm = &cli.Command{
 		},
 		&cli.BoolFlag{
 			Name:  "dynlink",
-			Usage: "support references to Go symbols defined in other shared libraries",
+			Usage: "support references to Wa symbols defined in other shared libraries",
 		},
 		&cli.StringSliceFlag{
 			Name:  "D",

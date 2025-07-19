@@ -16,7 +16,7 @@ import (
 	"wa-lang.org/wa/internal/p9asm/obj"
 )
 
-// go-specific code shared across loaders (5l, 6l, 8l).
+// wa-specific code shared across loaders (5l, 6l, 8l).
 
 // replace all "". with pkg.
 func expandpkg(t0 string, pkg string) string {
@@ -582,7 +582,7 @@ func mark1(s *LSym, parent *LSym) {
 	if s == nil || s.Reachable {
 		return
 	}
-	if strings.HasPrefix(s.Name, "go.weak.") {
+	if strings.HasPrefix(s.Name, "wa.weak.") {
 		return
 	}
 	s.Reachable = true
@@ -679,7 +679,7 @@ func deadcode() {
 
 		// keep each beginning with 'typelink.' if the symbol it points at is being kept.
 		for s := Ctxt.Allsym; s != nil; s = s.Allsym {
-			if strings.HasPrefix(s.Name, "go.typelink.") {
+			if strings.HasPrefix(s.Name, "wa.typelink.") {
 				s.Reachable = len(s.R) == 1 && s.R[0].Sym.Reachable
 			}
 		}
@@ -711,7 +711,7 @@ func deadcode() {
 	}
 
 	for s := Ctxt.Allsym; s != nil; s = s.Allsym {
-		if strings.HasPrefix(s.Name, "go.weak.") {
+		if strings.HasPrefix(s.Name, "wa.weak.") {
 			s.Special = 1 // do not lay out in data segment
 			s.Reachable = true
 			s.Hide = 1
@@ -722,7 +722,7 @@ func deadcode() {
 	var buf bytes.Buffer
 	var p *LSym
 	for s := Ctxt.Allsym; s != nil; s = s.Allsym {
-		if strings.HasPrefix(s.Name, "go.track.") {
+		if strings.HasPrefix(s.Name, "wa.track.") {
 			s.Special = 1 // do not lay out in data segment
 			s.Hide = 1
 			if s.Reachable {
@@ -755,7 +755,7 @@ func doweak() {
 	// resolve weak references only if
 	// target symbol will be in binary anyway.
 	for s := Ctxt.Allsym; s != nil; s = s.Allsym {
-		if strings.HasPrefix(s.Name, "go.weak.") {
+		if strings.HasPrefix(s.Name, "wa.weak.") {
 			t = Linkrlookup(Ctxt, s.Name[8:], int(s.Version))
 			if t != nil && t.Type != 0 && t.Reachable {
 				s.Value = t.Value
