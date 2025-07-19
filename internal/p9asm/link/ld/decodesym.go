@@ -5,8 +5,7 @@
 package ld
 
 import (
-	"debug/elf"
-
+	"wa-lang.org/wa/internal/p9asm/debug/elf"
 	"wa-lang.org/wa/internal/p9asm/obj"
 )
 

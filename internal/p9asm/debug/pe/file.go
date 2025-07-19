@@ -6,13 +6,14 @@
 package pe
 
 import (
-	"debug/dwarf"
 	"encoding/binary"
 	"errors"
 	"fmt"
 	"io"
 	"os"
 	"strconv"
+
+	"wa-lang.org/wa/internal/p9asm/debug/dwarf"
 )
 
 // A File represents an open PE file.

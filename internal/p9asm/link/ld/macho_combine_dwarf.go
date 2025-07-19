@@ -6,13 +6,14 @@ package ld
 
 import (
 	"bytes"
-	"debug/macho"
 	"encoding/binary"
 	"fmt"
 	"io"
 	"os"
 	"reflect"
 	"unsafe"
+
+	"wa-lang.org/wa/internal/p9asm/debug/macho"
 )
 
 var fakedwarf, realdwarf, linkseg *macho.Segment

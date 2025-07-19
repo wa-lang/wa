@@ -6,7 +6,6 @@ package objfile
 
 import (
 	"bufio"
-	"debug/gosym"
 	"encoding/binary"
 	"fmt"
 	"io"
@@ -15,6 +14,7 @@ import (
 	"strings"
 	"text/tabwriter"
 
+	"wa-lang.org/wa/internal/p9asm/debug/wasym"
 	"wa-lang.org/wa/internal/p9asm/objfile/armasm"
 	"wa-lang.org/wa/internal/p9asm/objfile/x86asm"
 )
@@ -22,7 +22,7 @@ import (
 // Disasm is a disassembler for a given File.
 type Disasm struct {
 	syms      []Sym            //symbols in file, sorted by address
-	pcln      *gosym.Table     // pcln table
+	pcln      *wasym.Table     // pcln table
 	text      []byte           // bytes of text segment (actual instructions)
 	textStart uint64           // start PC of text
 	textEnd   uint64           // end PC of text

@@ -6,10 +6,11 @@
 package objfile
 
 import (
-	"debug/gosym"
 	"fmt"
 	"os"
 	"sort"
+
+	"wa-lang.org/wa/internal/p9asm/debug/wasym"
 )
 
 type rawFile interface {
@@ -78,12 +79,12 @@ func (x byAddr) Less(i, j int) bool { return x[i].Addr < x[j].Addr }
 func (x byAddr) Len() int           { return len(x) }
 func (x byAddr) Swap(i, j int)      { x[i], x[j] = x[j], x[i] }
 
-func (f *File) PCLineTable() (*gosym.Table, error) {
+func (f *File) PCLineTable() (*wasym.Table, error) {
 	textStart, symtab, pclntab, err := f.raw.pcln()
 	if err != nil {
 		return nil, err
 	}
-	return gosym.NewTable(symtab, gosym.NewLineTable(pclntab, textStart))
+	return wasym.NewTable(symtab, wasym.NewLineTable(pclntab, textStart))
 }
 
 func (f *File) Text() (uint64, []byte, error) {

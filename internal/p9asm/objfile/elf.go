@@ -7,9 +7,10 @@
 package objfile
 
 import (
-	"debug/elf"
 	"fmt"
 	"os"
+
+	"wa-lang.org/wa/internal/p9asm/debug/elf"
 )
 
 type elfFile struct {

@@ -7,10 +7,11 @@
 package objfile
 
 import (
-	"debug/macho"
 	"fmt"
 	"os"
 	"sort"
+
+	"wa-lang.org/wa/internal/p9asm/debug/macho"
 )
 
 const stabTypeMask = 0xe0

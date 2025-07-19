@@ -34,11 +34,9 @@ import (
 	"bufio"
 	"bytes"
 	"crypto/sha1"
-	"debug/elf"
 	"encoding/binary"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"log"
 	"os"
 	"os/exec"
@@ -46,6 +44,7 @@ import (
 	"runtime"
 	"strings"
 
+	"wa-lang.org/wa/internal/p9asm/debug/elf"
 	"wa-lang.org/wa/internal/p9asm/obj"
 )
 
@@ -819,7 +818,7 @@ func hostlinksetup() {
 
 	// create temporary directory and arrange cleanup
 	if tmpdir == "" {
-		dir, err := ioutil.TempDir("", "go-link-")
+		dir, err := os.MkdirTemp("", "go-link-")
 		if err != nil {
 			log.Fatal(err)
 		}

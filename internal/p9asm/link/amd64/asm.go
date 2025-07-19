@@ -31,10 +31,10 @@
 package amd64
 
 import (
-	"debug/elf"
 	"fmt"
 	"log"
 
+	"wa-lang.org/wa/internal/p9asm/debug/elf"
 	"wa-lang.org/wa/internal/p9asm/link/ld"
 	"wa-lang.org/wa/internal/p9asm/obj"
 )

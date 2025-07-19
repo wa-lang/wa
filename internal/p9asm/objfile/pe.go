@@ -7,10 +7,11 @@
 package objfile
 
 import (
-	"debug/pe"
 	"fmt"
 	"os"
 	"sort"
+
+	"wa-lang.org/wa/internal/p9asm/debug/pe"
 )
 
 type peFile struct {
