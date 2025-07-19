@@ -223,7 +223,7 @@ type Package struct {
 var (
 	archiveHeader = []byte("!<arch>\n")
 	archiveMagic  = []byte("`\n")
-	goobjHeader   = []byte("go objec") // truncated to size of archiveHeader
+	waobjHeader   = []byte("wa objec") // truncated to size of archiveHeader
 
 	errCorruptArchive   = errors.New("corrupt archive")
 	errTruncatedArchive = errors.New("truncated archive")
@@ -472,8 +472,8 @@ func Parse(r io.ReadSeeker, pkgpath string) (*Package, error) {
 		if err := rd.parseArchive(); err != nil {
 			return nil, err
 		}
-	case bytes.Equal(rd.tmp[:8], goobjHeader):
-		if err := rd.parseObject(goobjHeader); err != nil {
+	case bytes.Equal(rd.tmp[:8], waobjHeader):
+		if err := rd.parseObject(waobjHeader); err != nil {
 			return nil, err
 		}
 	}

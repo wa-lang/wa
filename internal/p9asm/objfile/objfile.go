@@ -34,14 +34,6 @@ type Sym struct {
 	Type string // XXX?
 }
 
-var openers = []func(*os.File) (rawFile, error){
-	openElf,
-	openWaobj,
-	openMacho,
-	openPE,
-	openPlan9,
-}
-
 // Open opens the named file.
 // The caller must call f.Close when the file is no longer needed.
 func Open(name string) (*File, error) {
@@ -49,11 +41,20 @@ func Open(name string) (*File, error) {
 	if err != nil {
 		return nil, err
 	}
-	for _, try := range openers {
-		if raw, err := try(r); err == nil {
-			return &File{r, raw}, nil
-		}
+
+	if raw, err := openWaobj(r); err == nil {
+		return &File{r, raw}, nil
 	}
+	if raw, err := openElf(r); err == nil {
+		return &File{r, raw}, nil
+	}
+	if raw, err := openPE(r); err == nil {
+		return &File{r, raw}, nil
+	}
+	if raw, err := openMacho(r); err == nil {
+		return &File{r, raw}, nil
+	}
+
 	r.Close()
 	return nil, fmt.Errorf("open %s: unrecognized object file", name)
 }
