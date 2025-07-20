@@ -117,7 +117,7 @@ type Table struct {
 
 type sym struct {
 	value  uint64
-	gotype uint64
+	watype uint64
 	typ    byte
 	name   []byte
 }
@@ -207,10 +207,10 @@ func walksymtab(data []byte, fn func(sym) error) error {
 				}
 				// fixed-width go type
 				if ptrsz == 8 {
-					s.gotype = order.Uint64(p[0:8])
+					s.watype = order.Uint64(p[0:8])
 					p = p[8:]
 				} else {
-					s.gotype = uint64(order.Uint32(p[0:4]))
+					s.watype = uint64(order.Uint32(p[0:4]))
 					p = p[4:]
 				}
 			}
@@ -259,8 +259,8 @@ func walksymtab(data []byte, fn func(sym) error) error {
 			if len(p) < 4 {
 				return &DecodingError{len(data), "unexpected EOF", nil}
 			}
-			// Go type.
-			s.gotype = uint64(order.Uint32(p[:4]))
+			// Wa type.
+			s.watype = uint64(order.Uint32(p[:4]))
 			p = p[4:]
 		}
 		fn(s)
@@ -295,7 +295,7 @@ func NewTable(symtab []byte, pcln *LineTable) (*Table, error) {
 		ts := &t.Syms[n]
 		ts.Type = s.typ
 		ts.Value = uint64(s.value)
-		ts.GoType = uint64(s.gotype)
+		ts.GoType = uint64(s.watype)
 		switch s.typ {
 		default:
 			// rewrite name to use . instead of · (c2 b7)

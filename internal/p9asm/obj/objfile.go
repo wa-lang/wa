@@ -24,8 +24,6 @@
 //	- magic footer: "\xff\xffwa01ld"
 //
 // All integers are stored in a zigzag varint format.
-// See golang.org/s/go12symtab for a definition.
-//
 // Data blocks and strings are both stored as an integer
 // followed by that many bytes.
 //
@@ -41,7 +39,7 @@
 //	- flags [int]
 //		1 dupok
 //	- size [int]
-//	- gotype [symbol reference]
+//	- watype [symbol reference]
 //	- p [data block]
 //	- nr [int]
 //	- r [nr relocations, sorted by off]
@@ -73,7 +71,7 @@
 //	- asym [symbol reference]
 //	- offset [int]
 //	- type [int]
-//	- gotype [symbol reference]
+//	- watype [symbol reference]
 //
 // The pcln table has the encoding:
 //
@@ -109,7 +107,10 @@ import (
 
 const (
 	MagicHeader = "\x00\x00wa01ld"
-	MagicFooter = "\x00\x00wa01ld"
+	MagicFooter = "\xff\xffwa01ld"
+
+	MagicSymbolStart = 0xfe
+	MagicFooterStart = 0xff
 )
 
 var outfile string

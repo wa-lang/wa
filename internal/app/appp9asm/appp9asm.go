@@ -113,8 +113,9 @@ var CmdP9Asm = &cli.Command{
 
 		ctxt.Diag = log.Fatalf
 		output := obj.Binitw(fd)
-		fmt.Fprintf(output, "wa object %s %s\n", c.String("os"), c.String("arch"))
-		fmt.Fprintf(output, "!\n")
+
+		// "\n!\n" 是文件头结束标志
+		fmt.Fprintf(output, "wa object %s %s\n!\n", c.String("os"), c.String("arch"))
 
 		lexer, err := lex.NewLexer(name, ctxt, flags)
 		if err != nil {

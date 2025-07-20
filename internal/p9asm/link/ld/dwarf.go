@@ -959,18 +959,18 @@ func dotypedef(parent *DWDie, name string, def *DWDie) {
 	newrefattr(die, DW_AT_type, def)
 }
 
-// Define gotype, for composite ones recurse into constituents.
-func defgotype(gotype *LSym) *DWDie {
-	if gotype == nil {
+// Define watype, for composite ones recurse into constituents.
+func defgotype(watype *LSym) *DWDie {
+	if watype == nil {
 		return mustFind(&dwtypes, "<unspecified>")
 	}
 
-	if !strings.HasPrefix(gotype.Name, "type.") {
-		Diag("dwarf: type name doesn't start with \".type\": %s", gotype.Name)
+	if !strings.HasPrefix(watype.Name, "type.") {
+		Diag("dwarf: type name doesn't start with \".type\": %s", watype.Name)
 		return mustFind(&dwtypes, "<unspecified>")
 	}
 
-	name := gotype.Name[5:] // could also decode from Type.string
+	name := watype.Name[5:] // could also decode from Type.string
 
 	die := find(&dwtypes, name)
 
@@ -979,11 +979,11 @@ func defgotype(gotype *LSym) *DWDie {
 	}
 
 	if false && Debug['v'] > 2 {
-		fmt.Printf("new type: %v\n", gotype)
+		fmt.Printf("new type: %v\n", watype)
 	}
 
-	kind := decodetype_kind(gotype)
-	bytesize := decodetype_size(gotype)
+	kind := decodetype_kind(watype)
+	bytesize := decodetype_size(watype)
 
 	switch kind {
 	case obj.KindBool:
@@ -1026,40 +1026,40 @@ func defgotype(gotype *LSym) *DWDie {
 		die = newdie(&dwtypes, DW_ABRV_ARRAYTYPE, name)
 		dotypedef(&dwtypes, name, die)
 		newattr(die, DW_AT_byte_size, DW_CLS_CONSTANT, bytesize, 0)
-		s := decodetype_arrayelem(gotype)
+		s := decodetype_arrayelem(watype)
 		newrefattr(die, DW_AT_type, defgotype(s))
 		fld := newdie(die, DW_ABRV_ARRAYRANGE, "range")
 
 		// use actual length not upper bound; correct for 0-length arrays.
-		newattr(fld, DW_AT_count, DW_CLS_CONSTANT, decodetype_arraylen(gotype), 0)
+		newattr(fld, DW_AT_count, DW_CLS_CONSTANT, decodetype_arraylen(watype), 0)
 
 		newrefattr(fld, DW_AT_type, mustFind(&dwtypes, "uintptr"))
 
 	case obj.KindChan:
 		die = newdie(&dwtypes, DW_ABRV_CHANTYPE, name)
 		newattr(die, DW_AT_byte_size, DW_CLS_CONSTANT, bytesize, 0)
-		s := decodetype_chanelem(gotype)
+		s := decodetype_chanelem(watype)
 		newrefattr(die, DW_AT_go_elem, defgotype(s))
 
 	case obj.KindFunc:
 		die = newdie(&dwtypes, DW_ABRV_FUNCTYPE, name)
 		dotypedef(&dwtypes, name, die)
 		newrefattr(die, DW_AT_type, mustFind(&dwtypes, "void"))
-		nfields := decodetype_funcincount(gotype)
+		nfields := decodetype_funcincount(watype)
 		var fld *DWDie
 		var s *LSym
 		for i := 0; i < nfields; i++ {
-			s = decodetype_funcintype(gotype, i)
+			s = decodetype_funcintype(watype, i)
 			fld = newdie(die, DW_ABRV_FUNCTYPEPARAM, s.Name[5:])
 			newrefattr(fld, DW_AT_type, defgotype(s))
 		}
 
-		if decodetype_funcdotdotdot(gotype) != 0 {
+		if decodetype_funcdotdotdot(watype) != 0 {
 			newdie(die, DW_ABRV_DOTDOTDOT, "...")
 		}
-		nfields = decodetype_funcoutcount(gotype)
+		nfields = decodetype_funcoutcount(watype)
 		for i := 0; i < nfields; i++ {
-			s = decodetype_funcouttype(gotype, i)
+			s = decodetype_funcouttype(watype, i)
 			fld = newdie(die, DW_ABRV_FUNCTYPEPARAM, s.Name[5:])
 			newrefattr(fld, DW_AT_type, defptrto(defgotype(s)))
 		}
@@ -1068,7 +1068,7 @@ func defgotype(gotype *LSym) *DWDie {
 		die = newdie(&dwtypes, DW_ABRV_IFACETYPE, name)
 		dotypedef(&dwtypes, name, die)
 		newattr(die, DW_AT_byte_size, DW_CLS_CONSTANT, bytesize, 0)
-		nfields := int(decodetype_ifacemethodcount(gotype))
+		nfields := int(decodetype_ifacemethodcount(watype))
 		var s *LSym
 		if nfields == 0 {
 			s = lookup_or_diag("type.runtime.eface")
@@ -1079,22 +1079,22 @@ func defgotype(gotype *LSym) *DWDie {
 
 	case obj.KindMap:
 		die = newdie(&dwtypes, DW_ABRV_MAPTYPE, name)
-		s := decodetype_mapkey(gotype)
+		s := decodetype_mapkey(watype)
 		newrefattr(die, DW_AT_go_key, defgotype(s))
-		s = decodetype_mapvalue(gotype)
+		s = decodetype_mapvalue(watype)
 		newrefattr(die, DW_AT_go_elem, defgotype(s))
 
 	case obj.KindPtr:
 		die = newdie(&dwtypes, DW_ABRV_PTRTYPE, name)
 		dotypedef(&dwtypes, name, die)
-		s := decodetype_ptrelem(gotype)
+		s := decodetype_ptrelem(watype)
 		newrefattr(die, DW_AT_type, defgotype(s))
 
 	case obj.KindSlice:
 		die = newdie(&dwtypes, DW_ABRV_SLICETYPE, name)
 		dotypedef(&dwtypes, name, die)
 		newattr(die, DW_AT_byte_size, DW_CLS_CONSTANT, bytesize, 0)
-		s := decodetype_arrayelem(gotype)
+		s := decodetype_arrayelem(watype)
 		newrefattr(die, DW_AT_go_elem, defgotype(s))
 
 	case obj.KindString:
@@ -1105,26 +1105,26 @@ func defgotype(gotype *LSym) *DWDie {
 		die = newdie(&dwtypes, DW_ABRV_STRUCTTYPE, name)
 		dotypedef(&dwtypes, name, die)
 		newattr(die, DW_AT_byte_size, DW_CLS_CONSTANT, bytesize, 0)
-		nfields := decodetype_structfieldcount(gotype)
+		nfields := decodetype_structfieldcount(watype)
 		var f string
 		var fld *DWDie
 		var s *LSym
 		for i := 0; i < nfields; i++ {
-			f = decodetype_structfieldname(gotype, i)
-			s = decodetype_structfieldtype(gotype, i)
+			f = decodetype_structfieldname(watype, i)
+			s = decodetype_structfieldtype(watype, i)
 			if f == "" {
 				f = s.Name[5:] // skip "type."
 			}
 			fld = newdie(die, DW_ABRV_STRUCTFIELD, f)
 			newrefattr(fld, DW_AT_type, defgotype(s))
-			newmemberoffsetattr(fld, int32(decodetype_structfieldoffs(gotype, i)))
+			newmemberoffsetattr(fld, int32(decodetype_structfieldoffs(watype, i)))
 		}
 
 	case obj.KindUnsafePointer:
 		die = newdie(&dwtypes, DW_ABRV_BARE_PTRTYPE, name)
 
 	default:
-		Diag("dwarf: definition of unknown kind %d: %s", kind, gotype.Name)
+		Diag("dwarf: definition of unknown kind %d: %s", kind, watype.Name)
 		die = newdie(&dwtypes, DW_ABRV_TYPEDECL, name)
 		newrefattr(die, DW_AT_type, mustFind(&dwtypes, "<unspecified>"))
 	}
@@ -1416,7 +1416,7 @@ func synthesizechantypes(die *DWDie) {
 }
 
 // For use with pass.c::genasmsym
-func defdwsymb(sym *LSym, s string, t int, v int64, size int64, ver int, gotype *LSym) {
+func defdwsymb(sym *LSym, s string, t int, v int64, size int64, ver int, watype *LSym) {
 	if strings.HasPrefix(s, "wa.string.") {
 		return
 	}
@@ -1445,7 +1445,7 @@ func defdwsymb(sym *LSym, s string, t int, v int64, size int64, ver int, gotype 
 		fallthrough
 
 	case 'a', 'p':
-		dt = defgotype(gotype)
+		dt = defgotype(watype)
 	}
 
 	if dv != nil {

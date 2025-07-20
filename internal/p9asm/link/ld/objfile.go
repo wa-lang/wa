@@ -43,7 +43,7 @@ package ld
 //	- flags [int]
 //		1 dupok
 //	- size [int]
-//	- gotype [symbol reference]
+//	- watype [symbol reference]
 //	- p [data block]
 //	- nr [int]
 //	- r [nr relocations, sorted by off]
@@ -75,7 +75,7 @@ package ld
 //	- asym [symbol reference]
 //	- offset [int]
 //	- type [int]
-//	- gotype [symbol reference]
+//	- watype [symbol reference]
 //
 // The pcln table has the encoding:
 //

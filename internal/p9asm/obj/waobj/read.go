@@ -218,7 +218,9 @@ type Package struct {
 const (
 	archiveHeader = "!<arch>\n"
 	archiveMagic  = "`\n"
-	waobjHeader   = "wa objec" // truncated to size of archiveHeader
+
+	// 完整的值为: wa object ${OS} ${ARCH}
+	waobjHeader = "wa object"
 
 	errCorruptArchive   = errorString("corrupt archive")
 	errTruncatedArchive = errorString("truncated archive")
@@ -378,12 +380,13 @@ func (r *objReader) readInt() int {
 
 // readString reads a length-delimited string from the input file.
 func (r *objReader) readString() string {
-	n := r.readInt()
+	n := r.readInt() // 长度信息, zigzag 变长编码
 	buf := make([]byte, n)
 	r.readFull(buf)
 	return string(buf)
 }
 
+// 每个标识符有个名字和更新的版本号
 // readSymID reads a SymID from the input file.
 func (r *objReader) readSymID() SymID {
 	name, vers := r.readString(), r.readInt()
@@ -459,20 +462,28 @@ func Parse(r io.ReadSeeker, pkgpath string) (*Package, error) {
 		return nil, err
 	}
 
-	switch {
-	default:
-		return nil, errNotObject
-
-	case string(rd.tmp[:8]) == archiveHeader:
+	// archive 格式的文件
+	if string(rd.tmp[:8]) == archiveHeader {
 		if err := rd.parseArchive(); err != nil {
 			return nil, err
 		}
-	case string(rd.tmp[:8]) == waobjHeader:
-		if err := rd.parseObject([]byte(waobjHeader)); err != nil {
-			return nil, err
-		}
+		return p, nil
 	}
 
+	// waobj 格式文件需要再读完头部
+	// 暂忽略 ${OS} 和 ${ARCH} 部分
+	rd.readFull(rd.tmp[8:][:len(waobjHeader)-8])
+	if string(rd.tmp[:len(waobjHeader)]) != waobjHeader {
+		return nil, errNotObject
+	}
+
+	// 解析waobj文件
+	// archive 格式内部也会复用到该方法解析
+	if err := rd.parseObject(); err != nil {
+		return nil, err
+	}
+
+	// OK
 	return p, nil
 }
 
@@ -494,7 +505,7 @@ func (r *objReader) parseArchive() error {
 		data := r.tmp[:60]
 
 		// Each file is preceded by this text header (slice indices in first column):
-		//	 0:16	name
+		//	 0:16 name
 		//	16:28 date
 		//	28:34 uid
 		//	34:40 gid
@@ -531,7 +542,7 @@ func (r *objReader) parseArchive() error {
 		default:
 			oldLimit := r.limit
 			r.limit = r.offset + size
-			if err := r.parseObject(nil); err != nil {
+			if err := r.parseObject(); err != nil {
 				return fmt.Errorf("parsing archive member %q: %v", name, err)
 			}
 			r.skip(r.limit - r.offset)
@@ -551,12 +562,12 @@ func (r *objReader) parseArchive() error {
 // and then the part we want to parse begins.
 // The format of that part is defined in a comment at the top
 // of src/liblink/objfile.c.
-func (r *objReader) parseObject(prefix []byte) error {
-	// TODO(rsc): Maybe use prefix and the initial input to
-	// record the header line from the file, which would
-	// give the architecture and other version information.
-
+func (r *objReader) parseObject() error {
 	r.p.MaxVersion++
+
+	// 跳过文件头部分, "\n!\n" 是文件头结束标志
+	// 对应 waobj 文件, 可能还有 ${OS} ${ARCH} 被忽略
+
 	var c1, c2, c3 byte
 	for {
 		c1, c2, c3 = c2, c3, r.readByte()
@@ -568,17 +579,20 @@ func (r *objReader) parseObject(prefix []byte) error {
 		}
 	}
 
-	r.readFull(r.tmp[:8])
-	if !bytes.Equal(r.tmp[:8], []byte(obj.MagicHeader)) {
+	// obj.MagicHeader 标注开始
+	r.readFull(r.tmp[:len(obj.MagicHeader)])
+	if string(r.tmp[:len(obj.MagicHeader)]) != obj.MagicHeader {
 		return r.error(errCorruptObject)
 	}
 
+	// 版本号
 	b := r.readByte()
 	if b != 1 {
 		return r.error(errCorruptObject)
 	}
 
-	// Direct package dependencies.
+	// 读取导入的包列表
+	// 空字符串表注 import 部分结束
 	for {
 		s := r.readString()
 		if s == "" {
@@ -587,24 +601,41 @@ func (r *objReader) parseObject(prefix []byte) error {
 		r.p.Imports = append(r.p.Imports, s)
 	}
 
-	// Symbols.
+	// 读取符号
 	for {
-		if b := r.readByte(); b != 0xfe {
-			if b != 0xff {
+		// 每个符号有个开始标记
+		if b := r.readByte(); b != obj.MagicSymbolStart {
+			// 必须是 waobj 结束, 否则为错误
+			if b != obj.MagicFooterStart {
 				return r.error(errCorruptObject)
 			}
 			break
 		}
 
-		typ := r.readInt()
-		s := &Sym{SymID: r.readSymID()}
+		s := new(Sym)
 		r.p.Syms = append(r.p.Syms, s)
-		s.Kind = SymKind(typ)
+
+		// 解析类型
+		s.Kind = SymKind(r.readInt())
+
+		// 解析名字(含版本号)
+		s.SymID = r.readSymID()
+
+		// 解析函数标志信息
 		flags := r.readInt()
 		s.DupOK = flags&1 != 0
+
+		// 数据大小
 		s.Size = r.readInt()
+
+		// 类型的名字
 		s.Type = r.readSymID()
+
+		// 读取数据
+		// 格式和字符串一样
 		s.Data = r.readData()
+
+		// 重定位信息
 		s.Reloc = make([]Reloc, r.readInt())
 		for i := range s.Reloc {
 			rel := &s.Reloc[i]
@@ -617,14 +648,26 @@ func (r *objReader) parseObject(prefix []byte) error {
 			r.readSymID() // Xsym - ignored
 		}
 
+		// 函数信息
 		if s.Kind == STEXT {
 			f := new(Func)
 			s.Func = f
+
+			// 参数个数
 			f.Args = r.readInt()
+
+			// 局部变量个数
+			// TODO(chai2010): 和后面的 Vars 有何区别?
 			f.Frame = r.readInt()
+
+			// nosplit 和 标志信息
+			// BUG(chai2010): 解析顺序和 obj 包注释不一致
+
 			flags := r.readInt()
 			f.Leaf = flags&1 != 0
 			f.NoSplit = r.readInt() != 0
+
+			// 局部变量信息
 			f.Var = make([]Var, r.readInt())
 			for i := range f.Var {
 				v := &f.Var[i]
@@ -634,13 +677,18 @@ func (r *objReader) parseObject(prefix []byte) error {
 				v.Type = r.readSymID()
 			}
 
+			// PC 表格信息
 			f.PCSP = r.readData()
 			f.PCFile = r.readData()
 			f.PCLine = r.readData()
+
+			// PCDATA 列表
 			f.PCData = make([]Data, r.readInt())
 			for i := range f.PCData {
 				f.PCData[i] = r.readData()
 			}
+
+			// FUNCDATA 列表
 			f.FuncData = make([]FuncData, r.readInt())
 			for i := range f.FuncData {
 				f.FuncData[i].Sym = r.readSymID()
@@ -648,6 +696,8 @@ func (r *objReader) parseObject(prefix []byte) error {
 			for i := range f.FuncData {
 				f.FuncData[i].Offset = int64(r.readInt()) // TODO
 			}
+
+			// 文件列表
 			f.File = make([]string, r.readInt())
 			for i := range f.File {
 				f.File[i] = r.readSymID().Name
@@ -655,10 +705,11 @@ func (r *objReader) parseObject(prefix []byte) error {
 		}
 	}
 
-	// 回填之前读取到的 0xff 对应完整的 MagicFooter
+	// obj.MagicFooter 标注结束
+	// 回填之前读取到的 0xff 对应完整的 obj.MagicFooter
 	r.tmp[0] = 0xff
-	r.readFull(r.tmp[1:][:7])
-	if string(r.tmp[:8]) != obj.MagicFooter {
+	r.readFull(r.tmp[1:][:len(obj.MagicFooter)-1])
+	if string(r.tmp[:len(obj.MagicFooter)]) != obj.MagicFooter {
 		return r.error(errCorruptObject)
 	}
 

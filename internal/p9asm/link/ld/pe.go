@@ -929,7 +929,7 @@ func newPEDWARFSection(name string, size int64) *IMAGE_SECTION_HEADER {
 	return h
 }
 
-func addpesym(s *LSym, name string, type_ int, addr int64, size int64, ver int, gotype *LSym) {
+func addpesym(s *LSym, name string, type_ int, addr int64, size int64, ver int, watype *LSym) {
 	if s == nil {
 		return
 	}

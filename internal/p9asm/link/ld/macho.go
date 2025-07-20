@@ -584,7 +584,7 @@ func symkind(s *LSym) int {
 	return SymKindLocal
 }
 
-func addsym(s *LSym, name string, type_ int, addr int64, size int64, ver int, gotype *LSym) {
+func addsym(s *LSym, name string, type_ int, addr int64, size int64, ver int, watype *LSym) {
 	if s == nil {
 		return
 	}
