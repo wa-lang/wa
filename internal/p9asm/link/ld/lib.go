@@ -9,6 +9,7 @@
 //	Portions Copyright © 2005-2007 C H Forsyth (forsyth@terzarima.net)
 //	Revisions Copyright © 2000-2007 Lucent Technologies Inc. and others
 //	Portions Copyright © 2009 The Go Authors.  All rights reserved.
+//	Portions Copyright © 2025 武汉凹语言科技有限公司.  All rights reserved.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -49,36 +50,6 @@ import (
 )
 
 // Data layout and relocation.
-
-// Derived from Inferno utils/6l/l.h
-// http://code.google.com/p/inferno-os/source/browse/utils/6l/l.h
-//
-//	Copyright © 1994-1999 Lucent Technologies Inc.  All rights reserved.
-//	Portions Copyright © 1995-1997 C H Forsyth (forsyth@terzarima.net)
-//	Portions Copyright © 1997-1999 Vita Nuova Limited
-//	Portions Copyright © 2000-2007 Vita Nuova Holdings Limited (www.vitanuova.com)
-//	Portions Copyright © 2004,2006 Bruce Ellis
-//	Portions Copyright © 2005-2007 C H Forsyth (forsyth@terzarima.net)
-//	Revisions Copyright © 2000-2007 Lucent Technologies Inc. and others
-//	Portions Copyright © 2009 The Go Authors.  All rights reserved.
-//
-// Permission is hereby granted, free of charge, to any person obtaining a copy
-// of this software and associated documentation files (the "Software"), to deal
-// in the Software without restriction, including without limitation the rights
-// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-// copies of the Software, and to permit persons to whom the Software is
-// furnished to do so, subject to the following conditions:
-//
-// The above copyright notice and this permission notice shall be included in
-// all copies or substantial portions of the Software.
-//
-// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL THE
-// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
-// THE SOFTWARE.
 
 const obj_Getgoversion = "1.5"
 
@@ -171,9 +142,9 @@ type Section struct {
 	Rellen  uint64
 }
 
-// DynlinkingGo returns whether we are producing Go code that can live
+// DynlinkingGo returns whether we are producing Wa code that can live
 // in separate shared libraries linked together at runtime.
-func DynlinkingGo() bool {
+func DynlinkingWa() bool {
 	return Buildmode == BuildmodeShared || Linkshared
 }
 
@@ -386,7 +357,7 @@ func libinit() {
 		}
 	}
 
-	if !DynlinkingGo() {
+	if !DynlinkingWa() {
 		Linklookup(Ctxt, INITENTRY, 0).Type = obj.SXREF
 	}
 }
@@ -525,7 +496,7 @@ func loadlib() {
 			if Ctxt.Library[i].Shlib != "" {
 				ldshlibsyms(Ctxt.Library[i].Shlib)
 			} else {
-				if DynlinkingGo() {
+				if DynlinkingWa() {
 					Exitf("cannot implicitly include runtime/cgo in a shared library")
 				}
 				objfile(Ctxt.Library[i])
@@ -710,7 +681,7 @@ func objfile(lib *Library) {
 	 * this gives us sequential file access and keeps us
 	 * from needing to come back later to pick up more
 	 * objects.  it breaks the usual C archive model, but
-	 * this is Go, not C.  the common case in Go is that
+	 * this is Wa, not C.  the common case in Wa is that
 	 * we need to load all the objects, and then we throw away
 	 * the individual symbols that are unused.
 	 *
@@ -1160,7 +1131,7 @@ func ldobj(f *obj.Biobuf, pkg string, length int64, pn string, file string, when
 	}
 
 	// Second, check that longer lines match each other exactly,
-	// so that the Go compiler and write additional information
+	// so that the Wa compiler and write additional information
 	// that must be the same from run to run.
 	if len(line) >= len(t)+10 {
 		if theline == "" {
@@ -1536,7 +1507,7 @@ func stkcheck(up *Chain, depth int) int {
 		// should never be called directly.
 		// only diagnose the direct caller.
 		// TODO(mwhudson): actually think about this.
-		if depth == 1 && s.Type != obj.SXREF && !DynlinkingGo() {
+		if depth == 1 && s.Type != obj.SXREF && !DynlinkingWa() {
 			Diag("call to external function %s", s.Name)
 		}
 		return -1
@@ -1965,10 +1936,10 @@ func checkgo() {
 		return
 	}
 
-	// TODO(rsc,khr): Eventually we want to get to no Go-called C functions at all,
+	// TODO(chai2010): Eventually we want to get to no Wa-called C functions at all,
 	// which would simplify this logic quite a bit.
 
-	// Mark every Go-called C function with cfunc=2, recursively.
+	// Mark every Wa-called C function with cfunc=2, recursively.
 	var changed int
 	var i int
 	var r *Reloc
@@ -1996,7 +1967,7 @@ func checkgo() {
 		}
 	}
 
-	// Complain about Go-called C functions that can split the stack
+	// Complain about Wa-called C functions that can split the stack
 	// (that can be preempted for garbage collection or trigger a stack copy).
 	for s := Ctxt.Textp; s != nil; s = s.Next {
 		if s.Cfunc == 0 || (s.Cfunc == 2 && s.Nosplit != 0) {
@@ -2007,9 +1978,9 @@ func checkgo() {
 				}
 				if (r.Type == obj.R_CALL || r.Type == obj.R_CALLARM) && r.Sym.Type == obj.STEXT {
 					if s.Cfunc == 0 && r.Sym.Cfunc == 2 && r.Sym.Nosplit == 0 {
-						fmt.Printf("Go %s calls C %s\n", s.Name, r.Sym.Name)
+						fmt.Printf("Wa %s calls C %s\n", s.Name, r.Sym.Name)
 					} else if s.Cfunc == 2 && s.Nosplit != 0 && r.Sym.Nosplit == 0 {
-						fmt.Printf("Go calls C %s calls %s\n", s.Name, r.Sym.Name)
+						fmt.Printf("Wa calls C %s calls %s\n", s.Name, r.Sym.Name)
 					}
 				}
 			}

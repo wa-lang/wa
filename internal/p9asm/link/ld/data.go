@@ -10,6 +10,7 @@
 //	Portions Copyright © 2005-2007 C H Forsyth (forsyth@terzarima.net)
 //	Revisions Copyright © 2000-2007 Lucent Technologies Inc. and others
 //	Portions Copyright © 2009 The Go Authors.  All rights reserved.
+//	Portions Copyright © 2025 武汉凹语言科技有限公司.  All rights reserved.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -356,7 +357,7 @@ func relocsym(s *LSym) {
 
 		// We need to be able to reference dynimport symbols when linking against
 		// shared libraries, and Solaris needs it always
-		if r.Sym != nil && r.Sym.Type == obj.SDYNIMPORT && !DynlinkingGo() {
+		if r.Sym != nil && r.Sym.Type == obj.SDYNIMPORT && !DynlinkingWa() {
 			Diag("unhandled relocation for %s (type %d rtype %d)", r.Sym.Name, r.Sym.Type, r.Type)
 		}
 		if r.Sym != nil && r.Sym.Type != obj.STLSBSS && !r.Sym.Reachable {
@@ -976,7 +977,7 @@ func Addstring(s *LSym, str string) int64 {
 	return int64(r)
 }
 
-// addgostring adds str, as a Go string value, to s. symname is the name of the
+// addgostring adds str, as a Wa string value, to s. symname is the name of the
 // symbol used to define the string data and must be unique per linked object.
 func addgostring(s *LSym, symname, str string) {
 	sym := Linklookup(Ctxt, symname, 0)
@@ -1090,7 +1091,7 @@ func (p *GCProg) AddSym(s *LSym) {
 	// Things without pointers should be in SNOPTRDATA or SNOPTRBSS;
 	// everything we see should have pointers and should therefore have a type.
 	if typ == nil {
-		Diag("missing Go type information for global symbol: %s size %d", s.Name, int(s.Size))
+		Diag("missing Wa type information for global symbol: %s size %d", s.Name, int(s.Size))
 		return
 	}
 
@@ -1562,9 +1563,9 @@ func dodata() {
 
 // Add buildid to beginning of text segment, on non-ELF systems.
 // Non-ELF binary formats are not always flexible enough to
-// give us a place to put the Go build ID. On those systems, we put it
+// give us a place to put the Wa build ID. On those systems, we put it
 // at the very beginning of the text segment.
-// This “header” is read by cmd/go.
+// This “header” is read by wa command.
 func textbuildid() {
 	if Iself || buildid == "" {
 		return
@@ -1574,7 +1575,7 @@ func textbuildid() {
 	sym.Reachable = true
 	// The \xff is invalid UTF-8, meant to make it less likely
 	// to find one of these accidentally.
-	data := "\xff Go build ID: " + strconv.Quote(buildid) + "\n \xff"
+	data := "\xff Wa build ID: " + strconv.Quote(buildid) + "\n \xff"
 	sym.Type = obj.STEXT
 	sym.P = []byte(data)
 	sym.Size = int64(len(sym.P))

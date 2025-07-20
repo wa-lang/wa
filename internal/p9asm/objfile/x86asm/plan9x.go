@@ -9,7 +9,7 @@ import (
 	"strings"
 )
 
-// Plan9Syntax returns the Go assembler syntax for the instruction.
+// Plan9Syntax returns the Wa assembler syntax for the instruction.
 // The syntax was originally defined by Plan 9.
 // The pc is the program counter of the instruction, used for expanding
 // PC-relative addresses into absolute ones.

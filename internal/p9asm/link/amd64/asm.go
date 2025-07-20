@@ -9,6 +9,7 @@
 //	Portions Copyright © 2005-2007 C H Forsyth (forsyth@terzarima.net)
 //	Revisions Copyright © 2000-2007 Lucent Technologies Inc. and others
 //	Portions Copyright © 2009 The Go Authors.  All rights reserved.
+//	Portions Copyright © 2025 武汉凹语言科技有限公司.  All rights reserved.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -59,7 +60,7 @@ func Addcall(ctxt *ld.Link, s *ld.LSym, t *ld.LSym) int64 {
 }
 
 func gentext() {
-	if !ld.DynlinkingGo() {
+	if !ld.DynlinkingWa() {
 		return
 	}
 	addmoduledata := ld.Linklookup(ld.Ctxt, "runtime.addmoduledata", 0)
@@ -351,7 +352,7 @@ func elfreloc1(r *ld.Reloc, sectoff int64) int {
 	case obj.R_CALL:
 		if r.Siz == 4 {
 			if r.Xsym.Type == obj.SDYNIMPORT {
-				if ld.DynlinkingGo() {
+				if ld.DynlinkingWa() {
 					ld.Thearch.Vput(ld.R_X86_64_PLT32 | uint64(elfsym)<<32)
 				} else {
 					ld.Thearch.Vput(ld.R_X86_64_GOTPCREL | uint64(elfsym)<<32)

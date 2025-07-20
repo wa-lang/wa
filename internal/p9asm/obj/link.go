@@ -9,6 +9,7 @@
 //	Portions Copyright © 2005-2007 C H Forsyth (forsyth@terzarima.net)
 //	Revisions Copyright © 2000-2007 Lucent Technologies Inc. and others
 //	Portions Copyright © 2009 The Go Authors.  All rights reserved.
+//	Portions Copyright © 2025 武汉凹语言科技有限公司.  All rights reserved.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -295,11 +296,11 @@ type LSym struct {
 	Leaf      uint8
 	Seenglobl uint8
 	Onlist    uint8
-	// Local means make the symbol local even when compiling Go code to reference Go
+	// Local means make the symbol local even when compiling Wa code to reference Wa
 	// symbols in other shared libraries, as in this mode symbols are global by
 	// default. "local" here means in the sense of the dynamic linker, i.e. not
 	// visible outside of the module (shared library or executable) that contains its
-	// definition. (When not compiling to support Go shared libraries, all symbols are
+	// definition. (When not compiling to support Wa shared libraries, all symbols are
 	// local in this sense unless there is a cgo_export_* directive).
 	Local  bool
 	Args   int32

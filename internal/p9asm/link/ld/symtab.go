@@ -9,6 +9,7 @@
 //	Portions Copyright © 2005-2007 C H Forsyth (forsyth@terzarima.net)
 //	Revisions Copyright © 2000-2007 Lucent Technologies Inc. and others
 //	Portions Copyright © 2009 The Go Authors.  All rights reserved.
+//	Portions Copyright © 2025 武汉凹语言科技有限公司.  All rights reserved.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -49,7 +50,7 @@ func putelfstr(s string) int {
 	// When dynamically linking, we create LSym's by reading the names from
 	// the symbol tables of the shared libraries and so the names need to
 	// match exactly.  Tools like DTrace will have to wait for now.
-	if !DynlinkingGo() {
+	if !DynlinkingWa() {
 		// Rewrite · to . for ASCII-only tools like DTrace (sigh)
 		s = strings.Replace(s, "·", ".", -1)
 	}
@@ -109,7 +110,7 @@ func putelfsym(x *LSym, s string, t int, addr int64, size int64, ver int, go_ *L
 		type_ = STT_OBJECT
 
 	case 'U':
-		// ElfType is only set for symbols read from Go shared libraries, but
+		// ElfType is only set for symbols read from Wa shared libraries, but
 		// for other symbols it is left as STT_NOTYPE which is fine.
 		type_ = int(x.ElfType)
 
@@ -150,9 +151,9 @@ func putelfsym(x *LSym, s string, t int, addr int64, size int64, ver int, go_ *L
 	// In external linking mode, we have to invoke gcc with -rdynamic
 	// to get the exported symbols put into the dynamic symbol table.
 	// To avoid filling the dynamic table with lots of unnecessary symbols,
-	// mark all Go symbols local (not global) in the final executable.
+	// mark all Wa symbols local (not global) in the final executable.
 	// But when we're dynamically linking, we need all those global symbols.
-	if !DynlinkingGo() && Linkmode == LinkExternal && x.Cgoexport&CgoExportStatic == 0 && elfshnum != SHN_UNDEF {
+	if !DynlinkingWa() && Linkmode == LinkExternal && x.Cgoexport&CgoExportStatic == 0 && elfshnum != SHN_UNDEF {
 		bind = STB_LOCAL
 	}
 
@@ -347,7 +348,7 @@ func symtab() {
 
 	// pseudo-symbols to mark locations of type, string, and go string data.
 	var symtype *LSym
-	if !DynlinkingGo() {
+	if !DynlinkingWa() {
 		s = Linklookup(Ctxt, "type.*", 0)
 
 		s.Type = obj.STYPE
@@ -396,7 +397,7 @@ func symtab() {
 			continue
 		}
 
-		if strings.HasPrefix(s.Name, "type.") && !DynlinkingGo() {
+		if strings.HasPrefix(s.Name, "type.") && !DynlinkingWa() {
 			s.Type = obj.STYPE
 			s.Hide = 1
 			s.Outer = symtype

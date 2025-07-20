@@ -183,7 +183,7 @@ type DWAttrForm struct {
 	form uint8
 }
 
-// Go-specific type attributes.
+// Wa-specific type attributes.
 const (
 	DW_AT_go_kind = 0x2900
 	DW_AT_go_key  = 0x2901

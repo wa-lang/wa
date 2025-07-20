@@ -4,9 +4,9 @@
 
 package ld
 
-// Writing and reading of Go object files.
+// Writing and reading of Wa object files.
 //
-// Originally, Go object files were Plan 9 object files, but no longer.
+// Originally, Wa object files were Plan 9 object files, but no longer.
 // Now they are more like standard object files, in that each symbol is defined
 // by an associated memory image (bytes) and a list of relocations to apply
 // during linking. We do not (yet?) use a standard file format, however.
@@ -110,17 +110,12 @@ import (
 	"wa-lang.org/wa/internal/p9asm/obj"
 )
 
-const (
-	startmagic = "\x00\x00wa01ld"
-	endmagic   = "\xff\xffwa01ld"
-)
-
 func ldobjfile(ctxt *Link, f *obj.Biobuf, pkg string, length int64, pn string) {
 	start := obj.Boffset(f)
 	ctxt.Version++
 	var buf [8]uint8
 	obj.Bread(f, buf[:])
-	if string(buf[:]) != startmagic {
+	if string(buf[:]) != obj.MagicHeader {
 		log.Fatalf("%s: invalid file start %x %x %x %x %x %x %x %x", pn, buf[0], buf[1], buf[2], buf[3], buf[4], buf[5], buf[6], buf[7])
 	}
 	c := obj.Bgetc(f)
@@ -150,7 +145,7 @@ func ldobjfile(ctxt *Link, f *obj.Biobuf, pkg string, length int64, pn string) {
 
 	buf = [8]uint8{}
 	obj.Bread(f, buf[:])
-	if string(buf[:]) != endmagic {
+	if string(buf[:]) != obj.MagicFooter {
 		log.Fatalf("%s: invalid file end", pn)
 	}
 

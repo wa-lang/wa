@@ -9,6 +9,7 @@
 //	Portions Copyright © 2005-2007 C H Forsyth (forsyth@terzarima.net)
 //	Revisions Copyright © 2000-2007 Lucent Technologies Inc. and others
 //	Portions Copyright © 2009 The Go Authors.  All rights reserved.
+//	Portions Copyright © 2025 武汉凹语言科技有限公司.  All rights reserved.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -80,7 +81,7 @@ func Ldmain() {
 			obj.Flagcount("8", "use 64-bit addresses in symbol table", &Debug['8'])
 		}
 		obj.Flagfn1("B", "add an ELF NT_GNU_BUILD_ID `note` when using ELF", addbuildinfo)
-		obj.Flagcount("C", "check Go calls to C code", &Debug['C'])
+		obj.Flagcount("C", "check Wa calls to C code", &Debug['C'])
 		obj.Flagint64("D", "set data segment `address`", &INITDAT)
 		obj.Flagstr("E", "set `entry` symbol name", &INITENTRY)
 		obj.Flagfn1("I", "use `linker` as ELF dynamic linker", setinterp)
@@ -92,7 +93,7 @@ func Ldmain() {
 		obj.Flagcount("W", "disassemble input", &Debug['W'])
 		obj.Flagfn1("X", "add string value `definition` of the form importpath.name=value", addstrdata1)
 		obj.Flagcount("a", "disassemble output", &Debug['a'])
-		obj.Flagstr("buildid", "record `id` as Go toolchain build id", &buildid)
+		obj.Flagstr("buildid", "record `id` as Wa toolchain build id", &buildid)
 		flag.Var(&Buildmode, "buildmode", "set build `mode`")
 		obj.Flagcount("c", "dump call graph", &Debug['c'])
 		obj.Flagcount("d", "disable dynamic executable", &Debug['d'])
@@ -104,7 +105,7 @@ func Ldmain() {
 		obj.Flagstr("installsuffix", "set package directory `suffix`", &flag_installsuffix)
 		obj.Flagstr("k", "set field tracking `symbol`", &tracksym)
 		obj.Flagfn1("linkmode", "set link `mode` (internal, external, auto)", setlinkmode)
-		flag.BoolVar(&Linkshared, "linkshared", false, "link against installed Go shared libraries")
+		flag.BoolVar(&Linkshared, "linkshared", false, "link against installed Wa shared libraries")
 		obj.Flagcount("n", "dump symbol table", &Debug['n'])
 		obj.Flagstr("o", "write output to `file`", &outfile)
 		flag.Var(&rpath, "r", "set the ELF dynamic linker search `path` to dir1:dir2:...")
@@ -126,7 +127,7 @@ func Ldmain() {
 
 	// Clumsy hack to preserve old two-argument -X name val syntax for old scripts.
 	// Rewrite that syntax into new syntax -X name=val.
-	// TODO(rsc): Delete this hack in Go 1.6 or later.
+	// TODO(chai2010): Delete this hack later.
 	var args []string
 	for i := 0; i < len(os.Args); i++ {
 		arg := os.Args[i]

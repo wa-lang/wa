@@ -3733,7 +3733,7 @@ func doasm(ctxt *obj.Link, p *obj.Prog) {
 				}
 
 				if yt.zcase == Zcallduff && ctxt.Flag_dynlink {
-					ctxt.Diag("directly calling duff when dynamically linking Go")
+					ctxt.Diag("directly calling duff when dynamically linking Wa")
 				}
 
 				if Framepointer_enabled && yt.zcase == Zcallduff && p.Mode == 64 {

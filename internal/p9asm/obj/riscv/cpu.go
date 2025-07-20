@@ -7,6 +7,7 @@
 //	Revisions Copyright © 2000-2008 Lucent Technologies Inc. and others
 //	Portions Copyright © 2009 The Go Authors.  All rights reserved.
 //	Portions Copyright © 2019 The Go Authors.  All rights reserved.
+//	Portions Copyright © 2025 武汉凹语言科技有限公司.  All rights reserved.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -177,7 +178,7 @@ const (
 	REG_T5   = REG_X30
 	REG_T6   = REG_X31 // aka REG_TMP
 
-	// Go runtime register names.
+	// Wa runtime register names.
 	REG_CTXT = REG_S10 // Context for closures.
 	REG_G    = REG_S11 // G pointer.
 	REG_LR   = REG_RA  // Link register.

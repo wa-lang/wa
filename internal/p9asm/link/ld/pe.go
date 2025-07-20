@@ -183,10 +183,6 @@ type PE64_IMAGE_OPTIONAL_HEADER struct {
 	DataDirectory               [16]IMAGE_DATA_DIRECTORY
 }
 
-// Copyright 2009 The Go Authors. All rights reserved.
-// Use of this source code is governed by a BSD-style
-// license that can be found in the LICENSE file.
-
 // PE (Portable Executable) file writing
 // http://www.microsoft.com/whdc/system/platform/firmware/PECOFF.mspx
 
@@ -1222,7 +1218,7 @@ func Asmbpe() {
 	// size otherwise reserve will be rounded up to a
 	// larger size, as verified with VMMap.
 
-	// Go code would be OK with 64k stacks, but we need larger stacks for cgo.
+	// Wa code would be OK with 64k stacks, but we need larger stacks for cgo.
 	// That default stack reserve size affects only the main thread,
 	// for other threads we specify stack size in runtime explicitly
 	// (runtime knows whether cgo is enabled or not).

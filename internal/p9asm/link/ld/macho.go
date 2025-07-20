@@ -89,10 +89,6 @@ const (
 	MACHO_FAKE_GOTPCREL           = 100
 )
 
-// Copyright 2009 The Go Authors. All rights reserved.
-// Use of this source code is governed by a BSD-style
-// license that can be found in the LICENSE file.
-
 // Mach-O file writing
 // http://developer.apple.com/mac/library/DOCUMENTATION/DeveloperTools/Conceptual/MachORuntime/Reference/reference.html
 
@@ -672,7 +668,7 @@ func machosymtab() {
 		s = sortsym[i]
 		Adduint32(Ctxt, symtab, uint32(symstr.Size))
 
-		// Only add _ to C symbols. Go symbols have dot in the name.
+		// Only add _ to C symbols. Wa symbols have dot in the name.
 		if !strings.Contains(s.Extname, ".") {
 			Adduint8(Ctxt, symstr, '_')
 		}
@@ -767,13 +763,13 @@ func Domacholink() int64 {
 	s4 := Linklookup(Ctxt, ".machosymstr", 0)
 
 	// Force the linkedit section to end on a 16-byte
-	// boundary.  This allows pure (non-cgo) Go binaries
+	// boundary.  This allows pure (non-cgo) Wa binaries
 	// to be code signed correctly.
 	//
 	// Apple's codesign_allocate (a helper utility for
 	// the codesign utility) can do this fine itself if
 	// it is run on a dynamic Mach-O binary.  However,
-	// when it is run on a pure (non-cgo) Go binary, where
+	// when it is run on a pure (non-cgo) Wa binary, where
 	// the linkedit section is mostly empty, it fails to
 	// account for the extra padding that it itself adds
 	// when adding the LC_CODE_SIGNATURE load command

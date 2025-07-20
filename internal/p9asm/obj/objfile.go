@@ -2,9 +2,9 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-// Writing of Go object files.
+// Writing of Wa object files.
 //
-// Originally, Go object files were Plan 9 object files, but no longer.
+// Originally, Wa object files were Plan 9 object files, but no longer.
 // Now they are more like standard object files, in that each symbol is defined
 // by an associated memory image (bytes) and a list of relocations to apply
 // during linking. We do not (yet?) use a standard file format, however.
@@ -107,10 +107,15 @@ import (
 	"strings"
 )
 
+const (
+	MagicHeader = "\x00\x00wa01ld"
+	MagicFooter = "\x00\x00wa01ld"
+)
+
 var outfile string
 
-// The Go and C compilers, and the assembler, call writeobj to write
-// out a Go object file.  The linker does not call this; the linker
+// The Wa and C compilers, and the assembler, call writeobj to write
+// out a Wa object file.  The linker does not call this; the linker
 // does not write out object files.
 func Writeobjdirect(ctxt *Link, b *Biobuf) {
 	var flag int
@@ -242,7 +247,7 @@ func Writeobjdirect(ctxt *Link, b *Biobuf) {
 			}
 
 			if p.As == AFUNCDATA {
-				// Rewrite reference to go_args_stackmap(SB) to the Go-provided declaration information.
+				// Rewrite reference to wa_args_stackmap(SB) to the Wa-provided declaration information.
 				if curtext == nil { // func _() {}
 					continue
 				}
@@ -263,7 +268,7 @@ func Writeobjdirect(ctxt *Link, b *Biobuf) {
 		}
 	}
 
-	// Add reference to Go arguments for C or assembly functions without them.
+	// Add reference to Wa arguments for C or assembly functions without them.
 	var found int
 	for s := text; s != nil; s = s.Next {
 		if !strings.HasPrefix(s.Name, "\"\".") {
@@ -299,10 +304,7 @@ func Writeobjdirect(ctxt *Link, b *Biobuf) {
 	}
 
 	// Emit header.
-	Bputc(b, 0)
-
-	Bputc(b, 0)
-	fmt.Fprintf(b, "wa01ld")
+	fmt.Fprintf(b, MagicHeader)
 	Bputc(b, 1) // version
 
 	// Emit autolib.
@@ -320,10 +322,7 @@ func Writeobjdirect(ctxt *Link, b *Biobuf) {
 	}
 
 	// Emit footer.
-	Bputc(b, 0xff)
-
-	Bputc(b, 0xff)
-	fmt.Fprintf(b, "wa01ld")
+	fmt.Fprintf(b, MagicFooter)
 }
 
 func writesym(ctxt *Link, b *Biobuf, s *LSym) {

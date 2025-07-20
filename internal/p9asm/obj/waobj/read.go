@@ -2,11 +2,7 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-// Package goobj implements reading of Go object files and archives.
-//
-// TODO(rsc): Decide where this package should live. (golang.org/issue/6932)
-// TODO(rsc): Decide the appropriate integer types for various fields.
-// TODO(rsc): Write tests. (File format still up in the air a little.)
+// Package goobj implements reading of Wa object files and archives.
 package waobj
 
 import (
@@ -26,8 +22,8 @@ type SymKind int
 // This list is taken from include/link.h.
 
 // Defined SymKind values.
-// TODO(rsc): Give idiomatic Go names.
-// TODO(rsc): Reduce the number of symbol types in the object files.
+// TODO(chai2010): Give idiomatic Wa names.
+// TODO(chai2010): Reduce the number of symbol types in the object files.
 const (
 	_ SymKind = iota
 
@@ -123,7 +119,7 @@ type Sym struct {
 	Kind  SymKind // kind of symbol
 	DupOK bool    // are duplicate definitions okay?
 	Size  int     // size of corresponding data
-	Type  SymID   // symbol for Go type information
+	Type  SymID   // symbol for Wa type information
 	Data  Data    // memory image of symbol
 	Reloc []Reloc // relocations to apply to Data
 	Func  *Func   // additional data for functions
@@ -182,10 +178,10 @@ type Var struct {
 	// identifies a variable in a function stack frame.
 	// Using fewer of these - in particular, using only Name - does not.
 	Name   string // Name of variable.
-	Kind   int    // TODO(rsc): Define meaning.
-	Offset int    // Frame offset. TODO(rsc): Define meaning.
+	Kind   int    // TODO(chai2010): Define meaning.
+	Offset int    // Frame offset. TODO(chai2010): Define meaning.
 
-	Type SymID // Go type for variable.
+	Type SymID // Wa type for variable.
 }
 
 // Func contains additional per-symbol information specific to functions.
@@ -211,7 +207,7 @@ type FuncData struct {
 	Offset int64 // offset into symbol for funcdata pointer
 }
 
-// A Package is a parsed Go object file or archive defining a Go package.
+// A Package is a parsed Wa object file or archive defining a Wa package.
 type Package struct {
 	ImportPath string   // import path denoting this package
 	Imports    []string // packages imported by this package
@@ -486,9 +482,9 @@ func trimSpace(b []byte) string {
 	return string(bytes.TrimRight(b, " "))
 }
 
-// parseArchive parses a Unix archive of Go object files.
-// TODO(rsc): Need to skip non-Go object files.
-// TODO(rsc): Maybe record table of contents in r.p so that
+// parseArchive parses a Unix archive of Wa object files.
+// TODO(chai2010): Need to skip non-Wa object files.
+// TODO(chai2010): Maybe record table of contents in r.p so that
 // linker can avoid having code to parse archives too.
 func (r *objReader) parseArchive() error {
 	for r.offset < r.limit {
@@ -548,7 +544,7 @@ func (r *objReader) parseArchive() error {
 	return nil
 }
 
-// parseObject parses a single Go object file.
+// parseObject parses a single Wa object file.
 // The prefix is the bytes already read from the file,
 // typically in order to detect that this is an object file.
 // The object file consists of a textual header ending in "\n!\n"
@@ -573,7 +569,7 @@ func (r *objReader) parseObject(prefix []byte) error {
 	}
 
 	r.readFull(r.tmp[:8])
-	if !bytes.Equal(r.tmp[:8], []byte("\x00\x00wa01ld")) {
+	if !bytes.Equal(r.tmp[:8], []byte(obj.MagicHeader)) {
 		return r.error(errCorruptObject)
 	}
 
@@ -659,8 +655,10 @@ func (r *objReader) parseObject(prefix []byte) error {
 		}
 	}
 
-	r.readFull(r.tmp[:7])
-	if !bytes.Equal(r.tmp[:7], []byte("\xffwa01ld")) {
+	// 回填之前读取到的 0xff 对应完整的 MagicFooter
+	r.tmp[0] = 0xff
+	r.readFull(r.tmp[1:][:7])
+	if string(r.tmp[:8]) != obj.MagicFooter {
 		return r.error(errCorruptObject)
 	}
 

@@ -14,7 +14,7 @@ import (
 // A LineHist records the history of the file input stack, which maps the virtual line number,
 // an incrementing count of lines processed in any input file and typically named lineno,
 // to a stack of file:line pairs showing the path of inclusions that led to that position.
-// The first line directive (//line in Go, #line in assembly) is treated as pushing
+// The first line directive (//line in Wa, #line in assembly) is treated as pushing
 // a new entry on the stack, so that errors can report both the actual and translated
 // line number.
 //
@@ -170,7 +170,7 @@ func (h *LineHist) Pop(lineno int) {
 }
 
 // Update records that at lineno the file name and line number were changed using
-// a line directive (//line in Go, #line in assembly).
+// a line directive (//line in Wa, #line in assembly).
 func (h *LineHist) Update(lineno int, file string, line int) {
 	top := h.Top
 	if top == nil {

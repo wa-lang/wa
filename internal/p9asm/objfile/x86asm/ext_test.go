@@ -275,7 +275,7 @@ func disasm(syntax string, mode int, src []byte) (inst Inst, text string) {
 
 // coverage returns a floating point number denoting the
 // test coverage until now. The number increases when new code paths are exercised,
-// both in the Go program and in the decoder byte code.
+// both in the Wa program and in the decoder byte code.
 func coverage() float64 {
 	/*
 		testing.Coverage is not in the main distribution.

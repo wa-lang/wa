@@ -9,6 +9,7 @@
 // 	Portions Copyright © 2005-2007 C H Forsyth (forsyth@terzarima.net)
 // 	Revisions Copyright © 2000-2007 Lucent Technologies Inc. and others
 // 	Portions Copyright © 2009 The Go Authors.  All rights reserved.
+//	Portions Copyright © 2025 武汉凹语言科技有限公司.  All rights reserved.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -214,13 +215,13 @@ const (
 	REGMIN = REG_R7  // register variables allocated from here to REGMAX
 	REGRT1 = REG_R16 // ARM64 IP0, for external linker, runtime, duffzero and duffcopy
 	REGRT2 = REG_R17 // ARM64 IP1, for external linker, runtime, duffcopy
-	REGPR  = REG_R18 // ARM64 platform register, unused in the Go toolchain
+	REGPR  = REG_R18 // ARM64 platform register, unused in the Wa toolchain
 	REGMAX = REG_R25
 
 	REGCTXT = REG_R26 // environment for closures
 	REGTMP  = REG_R27 // reserved for liblink
 	REGG    = REG_R28 // G
-	REGFP   = REG_R29 // frame pointer, unused in the Go toolchain
+	REGFP   = REG_R29 // frame pointer, unused in the Wa toolchain
 	REGLINK = REG_R30
 
 	// ARM64 uses R31 as both stack pointer and zero register,

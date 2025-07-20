@@ -436,7 +436,7 @@ func archRISCV64(CPU CPUType, linkArch *obj.LinkArch, shared bool) *Arch {
 	// Standard register names.
 	for i := riscv.REG_X0; i <= riscv.REG_X31; i++ {
 		// Disallow X3 in shared mode, as this will likely be used as the
-		// GP register, which could result in problems in non-Go code,
+		// GP register, which could result in problems in non-Wa code,
 		// including signal handlers.
 		if shared && i == riscv.REG_GP {
 			continue

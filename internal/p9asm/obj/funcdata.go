@@ -9,6 +9,7 @@
 //	Portions Copyright © 2005-2007 C H Forsyth (forsyth@terzarima.net)
 //	Revisions Copyright © 2000-2007 Lucent Technologies Inc. and others
 //	Portions Copyright © 2009 The Go Authors.  All rights reserved.
+//	Portions Copyright © 2025 武汉凹语言科技有限公司.  All rights reserved.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -30,36 +31,32 @@
 
 package obj
 
-// Copyright 2013 The Go Authors.  All rights reserved.
-// Use of this source code is governed by a BSD-style
-// license that can be found in the LICENSE file.
-
 // This file defines the IDs for PCDATA and FUNCDATA instructions
-// in Go binaries. It is included by assembly sources, so it must
+// in Wa binaries. It is included by assembly sources, so it must
 // be written using #defines.
 //
-// The Go compiler also #includes this file, for now.
+// The Wa compiler also #includes this file, for now.
 //
 // symtab.go also contains a copy of these constants.
 
 // Pseudo-assembly statements.
 
-// GO_ARGS, GO_RESULTS_INITIALIZED, and NO_LOCAL_POINTERS are macros
+// WA_ARGS, WA_RESULTS_INITIALIZED, and NO_LOCAL_POINTERS are macros
 // that communicate to the runtime information about the location and liveness
 // of pointers in an assembly function's arguments, results, and stack frame.
 // This communication is only required in assembly functions that make calls
 // to other functions that might be preempted or grow the stack.
 // NOSPLIT functions that make no calls do not need to use these macros.
 
-// GO_ARGS indicates that the Go prototype for this assembly function
+// WA_ARGS indicates that the Wa prototype for this assembly function
 // defines the pointer map for the function's arguments.
-// GO_ARGS should be the first instruction in a function that uses it.
+// WA_ARGS should be the first instruction in a function that uses it.
 // It can be omitted if there are no arguments at all.
-// GO_ARGS is inserted implicitly by the linker for any function
-// that also has a Go prototype and therefore is usually not necessary
+// WA_ARGS is inserted implicitly by the linker for any function
+// that also has a Wa prototype and therefore is usually not necessary
 // to write explicitly.
 
-// GO_RESULTS_INITIALIZED indicates that the assembly function
+// WA_RESULTS_INITIALIZED indicates that the assembly function
 // has initialized the stack space for its results and that those results
 // should be considered live for the remainder of the function.
 

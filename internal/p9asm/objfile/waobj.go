@@ -1,8 +1,5 @@
-// Copyright 2013 The Go Authors.  All rights reserved.
-// Use of this source code is governed by a BSD-style
-// license that can be found in the LICENSE file.
-
-// Parsing of Go intermediate object files and archives.
+// Copyright (C) 2024 武汉凹语言科技有限公司
+// SPDX-License-Identifier: AGPL-3.0-or-later
 
 package objfile
 
@@ -13,6 +10,9 @@ import (
 	"wa-lang.org/wa/internal/p9asm/obj/waobj"
 )
 
+// waobj是汇编后的目标文件, 类似凹语言源代码
+// 只有基本的符号等信息, 没有CPU类型和PC表等信息
+// 最终需要连接器才到可执行程序
 type waobjFile struct {
 	waobj *waobj.Package
 }

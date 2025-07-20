@@ -4,7 +4,7 @@
 
 // DWARF type information structures.
 // The format is heavily biased toward C, but for simplicity
-// the String methods use a pseudo-Go syntax.
+// the String methods use a pseudo-Wa syntax.
 
 package dwarf
 
@@ -273,7 +273,7 @@ type typeReader interface {
 	AddressSize() int
 }
 
-// Type reads the type at off in the DWARF ``info'' section.
+// Type reads the type at off in the DWARF “info” section.
 func (d *Data) Type(off Offset) (Type, error) {
 	return d.readType("info", d.Reader(), off, d.typeCache)
 }

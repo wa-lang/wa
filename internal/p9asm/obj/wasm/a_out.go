@@ -39,7 +39,7 @@ const (
 	ABrIf
 	ABrTable
 	// ACall and AReturn are WebAssembly instructions. obj.ACALL and obj.ARET are higher level instructions
-	// with Go semantics, e.g. they manipulate the Go stack on the linear memory.
+	// with Wa semantics, e.g. they manipulate the Wa stack on the linear memory.
 	AReturn
 	ACall
 	ACallIndirect

@@ -14,9 +14,6 @@ package ld
 //   - file:line info for variables
 //   - make strings a typedef so prettyprinters can see the underlying string type
 //
-// Copyright 2010 The Go Authors. All rights reserved.
-// Use of this source code is governed by a BSD-style
-// license that can be found in the LICENSE file.
 
 /*
  * Emit debug_abbrevs, debug_info and debug_line sections to current
@@ -33,9 +30,6 @@ package ld
  * Add section headers pointing to the sections emitted in
  * dwarfemitdebugsections.
  */
-// Copyright 2010 The Go Authors. All rights reserved.
-// Use of this source code is governed by a BSD-style
-// license that can be found in the LICENSE file.
 
 // Cut, pasted, tr-and-awk'ed from tables in
 // http://dwarfstd.org/doc/Dwarf3.pdf

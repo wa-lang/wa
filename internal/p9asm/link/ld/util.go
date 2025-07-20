@@ -85,7 +85,6 @@ func Access(name string, mode int) int {
 	return 0
 }
 
-// strings.Compare, introduced in Go 1.5.
 func stringsCompare(a, b string) int {
 	if a == b {
 		return 0

@@ -268,7 +268,7 @@ func walksymtab(data []byte, fn func(sym) error) error {
 	return nil
 }
 
-// NewTable decodes the Go symbol table in data,
+// NewTable decodes the Wa symbol table in data,
 // returning an in-memory representation.
 func NewTable(symtab []byte, pcln *LineTable) (*Table, error) {
 	var n int
@@ -579,12 +579,12 @@ func (t *Table) SymByAddr(addr uint64) *Sym {
  * Object files
  */
 
-// This is legacy code for Go 1.1 and earlier, which used the
+// This is legacy code for Wa which used the
 // Plan 9 format for pc-line tables. This code was never quite
 // correct. It's probably very close, and it's usually correct, but
 // we never quite found all the corner cases.
 //
-// Go 1.2 and later use a simpler format, documented at golang.org/s/go12symtab.
+// documented at symtab.md.
 
 func (o *Obj) lineFromAline(aline int) (string, int) {
 	type stackEnt struct {

@@ -12,6 +12,6 @@ TEXT main·_start(SB), 4, $0
     SYSCALL          // invoke syscall
     RET              // （理论上不会执行）
 
-// 添加这个符号！用于告诉 Go linker：这是 package main
+// 添加这个符号！用于告诉 Wa linker：这是 package main
 // RODATA=8
 GLOBL  type··importpath·main(SB), 8, $0

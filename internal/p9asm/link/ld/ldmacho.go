@@ -16,6 +16,7 @@ http://code.swtch.com/plan9port/src/tip/src/libmach/
 	Copyright © 2004 Russ Cox.
 	Portions Copyright © 2008-2010 Google Inc.
 	Portions Copyright © 2010 The Go Authors.
+	Portions Copyright © 2025 武汉凹语言科技有限公司.
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
