@@ -216,7 +216,7 @@ func (t *LineTable) go12Funcs() []Func {
 			Value:  f.Entry,
 			Type:   'T',
 			Name:   t.string(t.binary.Uint32(info[t.ptrsize:])),
-			GoType: 0,
+			WaType: 0,
 			Func:   f,
 		}
 	}

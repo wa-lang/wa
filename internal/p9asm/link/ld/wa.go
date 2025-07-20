@@ -609,7 +609,7 @@ func markflood() {
 				fmt.Fprintf(&Bso, "marktext %s\n", s.Name)
 			}
 			for a = s.Autom; a != nil; a = a.Link {
-				mark1(a.Gotype, s)
+				mark1(a.Watype, s)
 			}
 		}
 
@@ -622,7 +622,7 @@ func markflood() {
 			}
 		}
 
-		mark1(s.Gotype, s)
+		mark1(s.Watype, s)
 		mark1(s.Sub, s)
 		mark1(s.Outer, s)
 	}

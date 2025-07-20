@@ -26,8 +26,6 @@ package ld
 //	- magic footer: "\xff\xffwa01ld"
 //
 // All integers are stored in a zigzag varint format.
-// See golang.org/s/go12symtab for a definition.
-//
 // Data blocks and strings are both stored as an integer
 // followed by that many bytes.
 //
@@ -187,8 +185,8 @@ func readsym(ctxt *Link, f *obj.Biobuf, pkg string, pn string) {
 			if s.Size < int64(size) {
 				s.Size = int64(size)
 			}
-			if typ != nil && s.Gotype == nil {
-				s.Gotype = typ
+			if typ != nil && s.Watype == nil {
+				s.Watype = typ
 			}
 			return
 		}
@@ -224,10 +222,10 @@ overwrite:
 	}
 	s.Local = local
 	if typ != nil { // if bss sym defined multiple times, take type from any one def
-		s.Gotype = typ
+		s.Watype = typ
 	}
 	if dup != nil && typ != nil {
-		dup.Gotype = typ
+		dup.Watype = typ
 	}
 	s.P = data
 	s.P = s.P[:len(data)]
@@ -269,7 +267,7 @@ overwrite:
 			a.Asym = rdsym(ctxt, f, pkg)
 			a.Aoffset = rdint32(f)
 			a.Name = rdint16(f)
-			a.Gotype = rdsym(ctxt, f, pkg)
+			a.Watype = rdsym(ctxt, f, pkg)
 			a.Link = s.Autom
 			s.Autom = a
 		}

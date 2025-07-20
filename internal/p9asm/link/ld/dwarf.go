@@ -1744,7 +1744,7 @@ func writelines() {
 
 			dwvar = newdie(dwfunc, dt, n)
 			newcfaoffsetattr(dwvar, int32(offs))
-			newrefattr(dwvar, DW_AT_type, defgotype(a.Gotype))
+			newrefattr(dwvar, DW_AT_type, defgotype(a.Watype))
 
 			// push dwvar down dwfunc->child to preserve order
 			newattr(dwvar, DW_AT_internal_location, DW_CLS_CONSTANT, offs, nil)

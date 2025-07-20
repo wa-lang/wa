@@ -29,7 +29,7 @@ type Sym struct {
 	Value  uint64
 	Type   byte
 	Name   string
-	GoType uint64
+	WaType uint64
 	// If this symbol is a function symbol, the corresponding Func
 	Func *Func
 }
@@ -166,7 +166,7 @@ func walksymtab(data []byte, fn func(sym) error) error {
 			// Symbol type, value, Go type.
 			typ = p[0] & 0x3F
 			wideValue := p[0]&0x40 != 0
-			goType := p[0]&0x80 != 0
+			waType := p[0]&0x80 != 0
 			if typ < 26 {
 				typ += 'A'
 			} else {
@@ -201,7 +201,7 @@ func walksymtab(data []byte, fn func(sym) error) error {
 				s.value |= uint64(p[0]) << shift
 				p = p[1:]
 			}
-			if goType {
+			if waType {
 				if len(p) < ptrsz {
 					return &DecodingError{len(data), "unexpected EOF", nil}
 				}
@@ -295,7 +295,7 @@ func NewTable(symtab []byte, pcln *LineTable) (*Table, error) {
 		ts := &t.Syms[n]
 		ts.Type = s.typ
 		ts.Value = uint64(s.value)
-		ts.GoType = uint64(s.watype)
+		ts.WaType = uint64(s.watype)
 		switch s.typ {
 		default:
 			// rewrite name to use . instead of · (c2 b7)

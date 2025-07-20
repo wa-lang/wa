@@ -74,7 +74,7 @@ type LSym struct {
 	Next        *LSym
 	Sub         *LSym
 	Outer       *LSym
-	Gotype      *LSym
+	Watype      *LSym
 	Reachparent *LSym
 	Queue       *LSym
 	File        string
@@ -112,7 +112,7 @@ type Auto struct {
 	Link    *Auto
 	Aoffset int32
 	Name    int16
-	Gotype  *LSym
+	Watype  *LSym
 }
 
 type Shlib struct {

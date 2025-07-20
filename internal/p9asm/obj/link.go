@@ -155,7 +155,7 @@ type Addr struct {
 	Offset int64
 	Width  int64
 	Sym    *LSym
-	Gotype *LSym
+	Watype *LSym
 
 	// argument value:
 	//	for TYPE_SCONST, a string
@@ -308,7 +308,7 @@ type LSym struct {
 	Value  int64
 	Size   int64
 	Next   *LSym
-	Gotype *LSym
+	Watype *LSym
 	Autom  *Auto
 	Text   *Prog
 	Etext  *Prog
@@ -426,7 +426,7 @@ type Auto struct {
 	Link    *Auto
 	Aoffset int32
 	Name    int16
-	Gotype  *LSym
+	Watype  *LSym
 }
 
 // Auto.name

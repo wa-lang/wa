@@ -954,7 +954,7 @@ func checkstrdata() {
 	for _, s := range strdata {
 		if s.Type == obj.STEXT {
 			Diag("cannot use -X with text symbol %s", s.Name)
-		} else if s.Gotype != nil && s.Gotype.Name != "type.string" {
+		} else if s.Watype != nil && s.Watype.Name != "type.string" {
 			Diag("cannot use -X with non-string symbol %s", s.Name)
 		}
 	}
@@ -1087,7 +1087,7 @@ func (p *GCProg) End(size int64) {
 }
 
 func (p *GCProg) AddSym(s *LSym) {
-	typ := s.Gotype
+	typ := s.Watype
 	// Things without pointers should be in SNOPTRDATA or SNOPTRBSS;
 	// everything we see should have pointers and should therefore have a type.
 	if typ == nil {

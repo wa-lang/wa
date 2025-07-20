@@ -11,7 +11,6 @@
 // For now, the format is chosen to be as simple as possible to read and write.
 // It may change for reasons of efficiency, or we may even switch to a
 // standard file format if there are compelling benefits to doing so.
-// See golang.org/s/go13linker for more background.
 //
 // The file format is:
 //
@@ -113,8 +112,6 @@ const (
 	MagicFooterStart = 0xff
 )
 
-var outfile string
-
 // The Wa and C compilers, and the assembler, call writeobj to write
 // out a Wa object file.  The linker does not call this; the linker
 // does not write out object files.
@@ -165,7 +162,7 @@ func Writeobjdirect(ctxt *Link, b *Biobuf) {
 				a.Asym = p.From.Sym
 				a.Aoffset = int32(p.From.Offset)
 				a.Name = int16(p.From.Name)
-				a.Gotype = p.From.Gotype
+				a.Watype = p.From.Watype
 				a.Link = curtext.Autom
 				curtext.Autom = a
 				continue
@@ -304,30 +301,40 @@ func Writeobjdirect(ctxt *Link, b *Biobuf) {
 		linkpcln(ctxt, s)
 	}
 
-	// Emit header.
+	// 写 waobj 开始标志
 	fmt.Fprintf(b, MagicHeader)
-	Bputc(b, 1) // version
 
-	// Emit autolib.
+	// 版本信息
+	Bputc(b, 1)
+
+	// 写 import 列表
 	for _, pkg := range ctxt.Imports {
 		wrstring(b, pkg)
 	}
+
+	// 以空字符串作为 import 列表结尾
 	wrstring(b, "")
 
-	// Emit symbols.
+	// 生成函数标识符
 	for s := text; s != nil; s = s.Next {
 		writesym(ctxt, b, s)
 	}
+	// 生成变量标识符
 	for s := data; s != nil; s = s.Next {
 		writesym(ctxt, b, s)
 	}
 
-	// Emit footer.
+	// 写 waobj 结束标志
 	fmt.Fprintf(b, MagicFooter)
 }
 
+// 写具名的对象
 func writesym(ctxt *Link, b *Biobuf, s *LSym) {
+	// 打印文本格式的汇编信息
 	if ctxt.Debugasm != 0 {
+		// main 函数打印格式
+		// main.main t=1 nosplit size=32 value=0 args=0xffffffff80000000 locals=0x0
+
 		fmt.Fprintf(ctxt.Bso, "%s ", s.Name)
 		if s.Version != 0 {
 			fmt.Fprintf(ctxt.Bso, "v=%d ", s.Version)
@@ -335,6 +342,8 @@ func writesym(ctxt *Link, b *Biobuf, s *LSym) {
 		if s.Type != 0 {
 			fmt.Fprintf(ctxt.Bso, "t=%d ", s.Type)
 		}
+
+		// 打印 flags 标志
 		if s.Dupok != 0 {
 			fmt.Fprintf(ctxt.Bso, "dupok ")
 		}
@@ -344,31 +353,60 @@ func writesym(ctxt *Link, b *Biobuf, s *LSym) {
 		if s.Nosplit != 0 {
 			fmt.Fprintf(ctxt.Bso, "nosplit ")
 		}
+
+		// 打印内存大小和值
 		fmt.Fprintf(ctxt.Bso, "size=%d value=%d", int64(s.Size), int64(s.Value))
+
+		// 如果是函数类型
+		// 打印参数数目和局部变量数目, 是否叶子函数等信息
 		if s.Type == STEXT {
 			fmt.Fprintf(ctxt.Bso, " args=%#x locals=%#x", uint64(s.Args), uint64(s.Locals))
 			if s.Leaf != 0 {
 				fmt.Fprintf(ctxt.Bso, " leaf")
 			}
 		}
-
 		fmt.Fprintf(ctxt.Bso, "\n")
+
+		// 打印 pcln 表, 每行对应汇编指令
+		//
+		// 类似以下的格式:
+		// 0x0000 00000 (textflag.h:25)    TEXT    main.main(SB), 4, $0
+		// 0x0000 00000 (textflag.h:25)    NOP
+		// 0x0000 00000 (textflag.h:25)    NOP
+		// 0x0000 00000 (textflag.h:26)    MOVQ    $60, AX
+		// 0x0007 00007 (textflag.h:27)    MOVQ    $42, DI
+
 		for p := s.Text; p != nil; p = p.Link {
 			fmt.Fprintf(ctxt.Bso, "\t%#04x %v\n", uint(int(p.Pc)), p)
 		}
-		var c int
-		var j int
-		for i := 0; i < len(s.P); {
+
+		// 符号对应的原始内容, 最终写入目标文件
+		// 如果是函数, 则对应汇编指令的机器码
+		// 如果是变量, 则是其中的值内容
+		//
+		// 每次处理 16 个字节, 类似以下的格式:
+		// 0x0000 48 c7 c0 3c 00 00 00 48 c7 c7 2a 00 00 00 0f 05  H..<...H..*.....
+		// 0x0010 c3
+
+		for i := 0; i < len(s.P); i += 16 {
 			fmt.Fprintf(ctxt.Bso, "\t%#04x", uint(i))
+
+			var j int
 			for j = i; j < i+16 && j < len(s.P); j++ {
 				fmt.Fprintf(ctxt.Bso, " %02x", s.P[j])
 			}
+
+			// 不足 16 字节补充空格
 			for ; j < i+16; j++ {
 				fmt.Fprintf(ctxt.Bso, "   ")
 			}
+
+			// 16 字节数据对应的 ASCII 码形式打印
+			// 不能识别的符号以 "." 展示
+
 			fmt.Fprintf(ctxt.Bso, "  ")
-			for j = i; j < i+16 && j < len(s.P); j++ {
-				c = int(s.P[j])
+			for j := i; j < i+16 && j < len(s.P); j++ {
+				c := int(s.P[j])
 				if ' ' <= c && c <= 0x7e {
 					fmt.Fprintf(ctxt.Bso, "%c", c)
 				} else {
@@ -377,17 +415,17 @@ func writesym(ctxt *Link, b *Biobuf, s *LSym) {
 			}
 
 			fmt.Fprintf(ctxt.Bso, "\n")
-			i += 16
 		}
 
-		var r *Reloc
-		var name string
+		// 符号内的重定位项列表(地址引用, 符号引用等)
 		for i := 0; i < len(s.R); i++ {
-			r = &s.R[i]
-			name = ""
+			r := &s.R[i]
+			var name string
 			if r.Sym != nil {
 				name = r.Sym.Name
 			}
+
+			// 对应的是 `s.P[r.Off:][:r.Siz]` 中的位置, 最终需要根据引用的标识符名字计算出地址回填
 			if ctxt.Arch.Thechar == '5' || ctxt.Arch.Thechar == '9' {
 				fmt.Fprintf(ctxt.Bso, "\trel %d+%d t=%d %s+%x\n", int(r.Off), r.Siz, r.Type, name, uint64(int64(r.Add)))
 			} else {
@@ -396,23 +434,40 @@ func writesym(ctxt *Link, b *Biobuf, s *LSym) {
 		}
 	}
 
-	Bputc(b, 0xfe)
+	// 写标识符的开始标志
+	Bputc(b, MagicSymbolStart)
+
+	// 标识符类型
 	wrint(b, int64(s.Type))
+
+	// 标识符名字
 	wrstring(b, s.Name)
+
+	// 标识符版本
 	wrint(b, int64(s.Version))
+
+	// 写 flags 信息
 	flags := int64(s.Dupok)
 	if s.Local {
 		flags |= 2
 	}
 	wrint(b, flags)
+
+	// 对应的内存大小
 	wrint(b, s.Size)
-	wrsym(b, s.Gotype)
+
+	// 引用的类型符号
+	wrsym(b, s.Watype)
+
+	// 二进制数据
+	// 如果是函数, 则对应机器码数据
+	// 如果是变量, 则对应内存的值
 	wrdata(b, s.P)
 
+	// 重定位信息
 	wrint(b, int64(len(s.R)))
-	var r *Reloc
 	for i := 0; i < len(s.R); i++ {
-		r = &s.R[i]
+		r := &s.R[i]
 		wrint(b, int64(r.Off))
 		wrint(b, int64(r.Siz))
 		wrint(b, int64(r.Type))
@@ -422,56 +477,64 @@ func writesym(ctxt *Link, b *Biobuf, s *LSym) {
 		wrsym(b, nil) // Xsym, ignored
 	}
 
+	// 如果是函数
 	if s.Type == STEXT {
+		// 写参数/局部变量
 		wrint(b, int64(s.Args))
 		wrint(b, int64(s.Locals))
+
+		// 写 flags 信息
 		wrint(b, int64(s.Nosplit))
 		wrint(b, int64(s.Leaf)|int64(s.Cfunc)<<1)
+
+		// 自动变量(和locals的区别?)
 		n := 0
 		for a := s.Autom; a != nil; a = a.Link {
 			n++
 		}
 		wrint(b, int64(n))
 		for a := s.Autom; a != nil; a = a.Link {
+			// 标识符
 			wrsym(b, a.Asym)
 			wrint(b, int64(a.Aoffset))
-			if a.Name == NAME_AUTO {
+
+			// 类别
+			if a.Name == int16(NAME_AUTO) {
 				wrint(b, A_AUTO)
 			} else if a.Name == NAME_PARAM {
 				wrint(b, A_PARAM)
 			} else {
 				log.Fatalf("%s: invalid local variable type %d", s.Name, a.Name)
 			}
-			wrsym(b, a.Gotype)
+
+			// 对应类型的标识符
+			wrsym(b, a.Watype)
 		}
 
-		pc := s.Pcln
-		wrdata(b, pc.Pcsp.P)
-		wrdata(b, pc.Pcfile.P)
-		wrdata(b, pc.Pcline.P)
-		wrint(b, int64(len(pc.Pcdata)))
-		for i := 0; i < len(pc.Pcdata); i++ {
-			wrdata(b, pc.Pcdata[i].P)
+		// 写 pcln 数据
+		wrdata(b, s.Pcln.Pcsp.P)
+		wrdata(b, s.Pcln.Pcfile.P)
+		wrdata(b, s.Pcln.Pcline.P)
+		wrint(b, int64(len(s.Pcln.Pcdata)))
+		for i := 0; i < len(s.Pcln.Pcdata); i++ {
+			wrdata(b, s.Pcln.Pcdata[i].P)
 		}
-		wrint(b, int64(len(pc.Funcdataoff)))
-		for i := 0; i < len(pc.Funcdataoff); i++ {
-			wrsym(b, pc.Funcdata[i])
+		wrint(b, int64(len(s.Pcln.Funcdataoff)))
+		for i := 0; i < len(s.Pcln.Funcdataoff); i++ {
+			wrsym(b, s.Pcln.Funcdata[i])
 		}
-		for i := 0; i < len(pc.Funcdataoff); i++ {
-			wrint(b, pc.Funcdataoff[i])
+		for i := 0; i < len(s.Pcln.Funcdataoff); i++ {
+			wrint(b, s.Pcln.Funcdataoff[i])
 		}
-		wrint(b, int64(len(pc.File)))
-		for i := 0; i < len(pc.File); i++ {
-			wrpathsym(ctxt, b, pc.File[i])
+		wrint(b, int64(len(s.Pcln.File)))
+		for i := 0; i < len(s.Pcln.File); i++ {
+			wrpathsym(ctxt, b, s.Pcln.File[i])
 		}
 	}
 }
 
-// Reusable buffer to avoid allocations.
-// This buffer was responsible for 15% of gc's allocations.
-var varintbuf [10]uint8
-
 func wrint(b *Biobuf, sval int64) {
+	var varintbuf [10]uint8
 	var v uint64
 	uv := (uint64(sval) << 1) ^ uint64(int64(sval>>63))
 	p := varintbuf[:]

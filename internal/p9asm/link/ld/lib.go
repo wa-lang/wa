@@ -1740,7 +1740,7 @@ func genasmsym(put func(*LSym, string, int, int64, int64, int, *LSym)) {
 			if !s.Reachable {
 				continue
 			}
-			put(s, s.Name, 'D', Symaddr(s), s.Size, int(s.Version), s.Gotype)
+			put(s, s.Name, 'D', Symaddr(s), s.Size, int(s.Version), s.Watype)
 
 		case obj.SBSS, obj.SNOPTRBSS:
 			if !s.Reachable {
@@ -1749,7 +1749,7 @@ func genasmsym(put func(*LSym, string, int, int64, int64, int, *LSym)) {
 			if len(s.P) > 0 {
 				Diag("%s should not be bss (size=%d type=%d special=%d)", s.Name, int(len(s.P)), s.Type, s.Special)
 			}
-			put(s, s.Name, 'B', Symaddr(s), s.Size, int(s.Version), s.Gotype)
+			put(s, s.Name, 'B', Symaddr(s), s.Size, int(s.Version), s.Watype)
 
 		case obj.SFILE:
 			put(nil, s.Name, 'f', s.Value, 0, int(s.Version), nil)
@@ -1773,7 +1773,7 @@ func genasmsym(put func(*LSym, string, int, int64, int64, int, *LSym)) {
 				} else {
 					type_ = 't'
 				}
-				put(s, s.Name, type_, Symaddr(s), s.Size, int(s.Version), s.Gotype)
+				put(s, s.Name, type_, Symaddr(s), s.Size, int(s.Version), s.Watype)
 			}
 		}
 	}
@@ -1781,7 +1781,7 @@ func genasmsym(put func(*LSym, string, int, int64, int64, int, *LSym)) {
 	var a *Auto
 	var off int32
 	for s := Ctxt.Textp; s != nil; s = s.Next {
-		put(s, s.Name, 'T', s.Value, s.Size, int(s.Version), s.Gotype)
+		put(s, s.Name, 'T', s.Value, s.Size, int(s.Version), s.Watype)
 
 		// NOTE(ality): acid can't produce a stack trace without .frame symbols
 		put(nil, ".frame", 'm', int64(s.Locals)+int64(Thearch.Ptrsize), 0, 0, nil)
@@ -1802,13 +1802,13 @@ func genasmsym(put func(*LSym, string, int, int64, int64, int, *LSym)) {
 
 			// FP
 			if off >= 0 {
-				put(nil, a.Asym.Name, 'p', int64(off), 0, 0, a.Gotype)
+				put(nil, a.Asym.Name, 'p', int64(off), 0, 0, a.Watype)
 				continue
 			}
 
 			// SP
 			if off <= int32(-Thearch.Ptrsize) {
-				put(nil, a.Asym.Name, 'a', -(int64(off) + int64(Thearch.Ptrsize)), 0, 0, a.Gotype)
+				put(nil, a.Asym.Name, 'a', -(int64(off) + int64(Thearch.Ptrsize)), 0, 0, a.Watype)
 				continue
 			}
 		}
