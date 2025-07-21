@@ -37,6 +37,7 @@ import (
 	"os"
 	"strings"
 
+	"wa-lang.org/wa/internal/p9asm/bio"
 	"wa-lang.org/wa/internal/p9asm/obj"
 )
 
@@ -52,7 +53,7 @@ func Ldmain() {
 	Ctxt.Diag = Diag
 	Ctxt.Bso = &Bso
 
-	Bso = *obj.Binitw(os.Stdout)
+	Bso = *bio.Binitw(os.Stdout)
 	Debug = [128]int{}
 	nerrors = 0
 	outfile = ""

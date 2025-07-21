@@ -105,18 +105,19 @@ import (
 	"strconv"
 	"strings"
 
+	"wa-lang.org/wa/internal/p9asm/bio"
 	"wa-lang.org/wa/internal/p9asm/obj"
 )
 
-func ldobjfile(ctxt *Link, f *obj.Biobuf, pkg string, length int64, pn string) {
-	start := obj.Boffset(f)
+func ldobjfile(ctxt *Link, f *bio.Biobuf, pkg string, length int64, pn string) {
+	start := f.Boffset()
 	ctxt.Version++
 	var buf [8]uint8
-	obj.Bread(f, buf[:])
+	f.Bread(buf[:])
 	if string(buf[:]) != obj.MagicHeader {
 		log.Fatalf("%s: invalid file start %x %x %x %x %x %x %x %x", pn, buf[0], buf[1], buf[2], buf[3], buf[4], buf[5], buf[6], buf[7])
 	}
-	c := obj.Bgetc(f)
+	c := f.Bgetc()
 	if c != 1 {
 		log.Fatalf("%s: invalid file version number %d", pn, c)
 	}
@@ -142,20 +143,20 @@ func ldobjfile(ctxt *Link, f *obj.Biobuf, pkg string, length int64, pn string) {
 	}
 
 	buf = [8]uint8{}
-	obj.Bread(f, buf[:])
+	f.Bread(buf[:])
 	if string(buf[:]) != obj.MagicFooter {
 		log.Fatalf("%s: invalid file end", pn)
 	}
 
-	if obj.Boffset(f) != start+length {
-		log.Fatalf("%s: unexpected end at %d, want %d", pn, int64(obj.Boffset(f)), int64(start+length))
+	if f.Boffset() != start+length {
+		log.Fatalf("%s: unexpected end at %d, want %d", pn, f.Boffset(), int64(start+length))
 	}
 }
 
 var readsym_ndup int
 
-func readsym(ctxt *Link, f *obj.Biobuf, pkg string, pn string) {
-	if obj.Bgetc(f) != 0xfe {
+func readsym(ctxt *Link, f *bio.Biobuf, pkg string, pn string) {
+	if f.Bgetc() != 0xfe {
 		log.Fatalf("readsym out of sync")
 	}
 	t := rdint(f)
@@ -368,7 +369,7 @@ overwrite:
 	}
 }
 
-func rdint64(f *obj.Biobuf) int64 {
+func rdint64(f *bio.Biobuf) int64 {
 	var c int
 
 	uv := uint64(0)
@@ -376,7 +377,7 @@ func rdint64(f *obj.Biobuf) int64 {
 		if shift >= 64 {
 			log.Fatalf("corrupt input")
 		}
-		c = obj.Bgetc(f)
+		c = f.Bgetc()
 		uv |= uint64(c&0x7F) << uint(shift)
 		if c&0x80 == 0 {
 			break
@@ -386,7 +387,7 @@ func rdint64(f *obj.Biobuf) int64 {
 	return int64(uv>>1) ^ (int64(uint64(uv)<<63) >> 63)
 }
 
-func rdint(f *obj.Biobuf) int {
+func rdint(f *bio.Biobuf) int {
 	n := rdint64(f)
 	if int64(int(n)) != n {
 		log.Panicf("%v out of range for int", n)
@@ -394,7 +395,7 @@ func rdint(f *obj.Biobuf) int {
 	return int(n)
 }
 
-func rdint32(f *obj.Biobuf) int32 {
+func rdint32(f *bio.Biobuf) int32 {
 	n := rdint64(f)
 	if int64(int32(n)) != n {
 		log.Panicf("%v out of range for int32", n)
@@ -402,7 +403,7 @@ func rdint32(f *obj.Biobuf) int32 {
 	return int32(n)
 }
 
-func rdint16(f *obj.Biobuf) int16 {
+func rdint16(f *bio.Biobuf) int16 {
 	n := rdint64(f)
 	if int64(int16(n)) != n {
 		log.Panicf("%v out of range for int16", n)
@@ -410,7 +411,7 @@ func rdint16(f *obj.Biobuf) int16 {
 	return int16(n)
 }
 
-func rduint8(f *obj.Biobuf) uint8 {
+func rduint8(f *bio.Biobuf) uint8 {
 	n := rdint64(f)
 	if int64(uint8(n)) != n {
 		log.Panicf("%v out of range for uint8", n)
@@ -418,23 +419,23 @@ func rduint8(f *obj.Biobuf) uint8 {
 	return uint8(n)
 }
 
-func rdstring(f *obj.Biobuf) string {
+func rdstring(f *bio.Biobuf) string {
 	n := rdint64(f)
 	p := make([]byte, n)
-	obj.Bread(f, p)
+	f.Bread(p)
 	return string(p)
 }
 
-func rddata(f *obj.Biobuf) []byte {
+func rddata(f *bio.Biobuf) []byte {
 	n := rdint64(f)
 	p := make([]byte, n)
-	obj.Bread(f, p)
+	f.Bread(p)
 	return p
 }
 
 var symbuf []byte
 
-func rdsym(ctxt *Link, f *obj.Biobuf, pkg string) *LSym {
+func rdsym(ctxt *Link, f *bio.Biobuf, pkg string) *LSym {
 	n := rdint(f)
 	if n == 0 {
 		rdint64(f)
@@ -444,7 +445,7 @@ func rdsym(ctxt *Link, f *obj.Biobuf, pkg string) *LSym {
 	if len(symbuf) < n {
 		symbuf = make([]byte, n)
 	}
-	obj.Bread(f, symbuf[:n])
+	f.Bread(symbuf[:n])
 	p := string(symbuf[:n])
 	v := rdint(f)
 	if v != 0 {

@@ -5,19 +5,14 @@
 package obj
 
 import (
-	"bufio"
 	"bytes"
 	"fmt"
-	"io"
-	"log"
 	"os"
 	"runtime"
 	"strconv"
 	"strings"
 	"time"
 )
-
-const REG_NONE = 0
 
 var start time.Time
 
@@ -26,145 +21,6 @@ func Cputime() float64 {
 		start = time.Now()
 	}
 	return time.Since(start).Seconds()
-}
-
-type Biobuf struct {
-	f       *os.File
-	r       *bufio.Reader
-	w       *bufio.Writer
-	linelen int
-}
-
-func Bopenw(name string) (*Biobuf, error) {
-	f, err := os.Create(name)
-	if err != nil {
-		return nil, err
-	}
-	return &Biobuf{f: f, w: bufio.NewWriter(f)}, nil
-}
-
-func Bopenr(name string) (*Biobuf, error) {
-	f, err := os.Open(name)
-	if err != nil {
-		return nil, err
-	}
-	return &Biobuf{f: f, r: bufio.NewReader(f)}, nil
-}
-
-func Binitw(w io.Writer) *Biobuf {
-	return &Biobuf{w: bufio.NewWriter(w)}
-}
-
-func (b *Biobuf) Write(p []byte) (int, error) {
-	return b.w.Write(p)
-}
-
-func Bwritestring(b *Biobuf, p string) (int, error) {
-	return b.w.WriteString(p)
-}
-
-func Bseek(b *Biobuf, offset int64, whence int) int64 {
-	if b.w != nil {
-		if err := b.w.Flush(); err != nil {
-			log.Fatalf("writing output: %v", err)
-		}
-	} else if b.r != nil {
-		if whence == 1 {
-			offset -= int64(b.r.Buffered())
-		}
-	}
-	off, err := b.f.Seek(offset, whence)
-	if err != nil {
-		log.Fatalf("seeking in output: %v", err)
-	}
-	if b.r != nil {
-		b.r.Reset(b.f)
-	}
-	return off
-}
-
-func Boffset(b *Biobuf) int64 {
-	if b.w != nil {
-		if err := b.w.Flush(); err != nil {
-			log.Fatalf("writing output: %v", err)
-		}
-	}
-	off, err := b.f.Seek(0, 1)
-	if err != nil {
-		log.Fatalf("seeking in output [0, 1]: %v", err)
-	}
-	if b.r != nil {
-		off -= int64(b.r.Buffered())
-	}
-	return off
-}
-
-func (b *Biobuf) Flush() error {
-	return b.w.Flush()
-}
-
-func Bputc(b *Biobuf, c byte) {
-	b.w.WriteByte(c)
-}
-
-const Beof = -1
-
-func Bread(b *Biobuf, p []byte) int {
-	n, err := io.ReadFull(b.r, p)
-	if n == 0 {
-		if err != nil && err != io.EOF {
-			n = -1
-		}
-	}
-	return n
-}
-
-func Bgetc(b *Biobuf) int {
-	c, err := b.r.ReadByte()
-	if err != nil {
-		return -1
-	}
-	return int(c)
-}
-
-func Bgetrune(b *Biobuf) int {
-	r, _, err := b.r.ReadRune()
-	if err != nil {
-		return -1
-	}
-	return int(r)
-}
-
-func Bungetrune(b *Biobuf) {
-	b.r.UnreadRune()
-}
-
-func (b *Biobuf) Read(p []byte) (int, error) {
-	return b.r.Read(p)
-}
-
-func (b *Biobuf) Peek(n int) ([]byte, error) {
-	return b.r.Peek(n)
-}
-
-func Brdline(b *Biobuf, delim int) string {
-	s, err := b.r.ReadBytes(byte(delim))
-	if err != nil {
-		log.Fatalf("reading input: %v", err)
-	}
-	b.linelen = len(s)
-	return string(s)
-}
-
-func Brdstr(b *Biobuf, delim int, cut int) string {
-	s, err := b.r.ReadString(byte(delim))
-	if err != nil {
-		log.Fatalf("reading input: %v", err)
-	}
-	if len(s) > 0 && cut > 0 {
-		s = s[:len(s)-1]
-	}
-	return s
 }
 
 func Access(name string, mode int) int {
@@ -176,22 +32,6 @@ func Access(name string, mode int) int {
 		return -1
 	}
 	return 0
-}
-
-func Blinelen(b *Biobuf) int {
-	return b.linelen
-}
-
-func Bterm(b *Biobuf) error {
-	var err error
-	if b.w != nil {
-		err = b.w.Flush()
-	}
-	err1 := b.f.Close()
-	if err == nil {
-		err = err1
-	}
-	return err
 }
 
 func envOr(key, value string) string {
@@ -480,54 +320,6 @@ func offConv(off int64) string {
 	return fmt.Sprintf("%+d", off)
 }
 
-type regSet struct {
-	lo    int
-	hi    int
-	Rconv func(int) string
-}
-
-// Few enough architectures that a linear scan is fastest.
-// Not even worth sorting.
-var regSpace []regSet
-
-/*
-	Each architecture defines a register space as a unique
-	integer range.
-	Here is the list of architectures and the base of their register spaces.
-*/
-
-const (
-	// Because of masking operations in the encodings, each register
-	// space should start at 0 modulo some power of 2.
-	RBase386     = 1 * 1024
-	RBaseAMD64   = 2 * 1024
-	RBaseARM     = 3 * 1024
-	RBaseARM64   = 8 * 1024  // range [8k, 13k)
-	RBaseRISCV   = 15 * 1024 // range [15k, 16k)
-	RBaseWasm    = 16 * 1024
-	RBaseLOONG64 = 19 * 1024 // range [19K, 22k)
-)
-
-// RegisterRegister binds a pretty-printer (Rconv) for register
-// numbers to a given register number range.  Lo is inclusive,
-// hi exclusive (valid registers are lo through hi-1).
-func RegisterRegister(lo, hi int, Rconv func(int) string) {
-	regSpace = append(regSpace, regSet{lo, hi, Rconv})
-}
-
-func Rconv(reg int) string {
-	if reg == REG_NONE {
-		return "NONE"
-	}
-	for i := range regSpace {
-		rs := &regSpace[i]
-		if rs.lo <= reg && reg < rs.hi {
-			return rs.Rconv(reg)
-		}
-	}
-	return fmt.Sprintf("R???%d", reg)
-}
-
 func regListConv(list int) string {
 	str := ""
 
@@ -549,81 +341,4 @@ func regListConv(list int) string {
 
 	str += "]"
 	return str
-}
-
-/*
-	Each architecture defines an instruction (A*) space as a unique
-	integer range.
-	Global opcodes like CALL start at 0; the architecture-specific ones
-	start at a distinct, big-maskable offsets.
-	Here is the list of architectures and the base of their opcode spaces.
-*/
-
-const (
-	ABase386 = (1 + iota) << 11
-	ABaseARM
-	ABaseAMD64
-	ABaseARM64
-	ABaseLoong64
-	ABaseRISCV
-	ABaseWasm
-
-	AllowedOpCodes = 1 << 11            // The number of opcodes available for any given architecture.
-	AMask          = AllowedOpCodes - 1 // AND with this to use the opcode as an array index.
-)
-
-type opSet struct {
-	lo    int
-	names []string
-}
-
-// Not even worth sorting
-var aSpace []opSet
-
-// RegisterOpcode binds a list of instruction names
-// to a given instruction number range.
-func RegisterOpcode(lo int, Anames []string) {
-	aSpace = append(aSpace, opSet{lo, Anames})
-}
-
-func Aconv(a int) string {
-	if a < A_ARCHSPECIFIC {
-		return Anames[a]
-	}
-	for i := range aSpace {
-		as := &aSpace[i]
-		if as.lo <= a && a < as.lo+len(as.names) {
-			return as.names[a-as.lo]
-		}
-	}
-	return fmt.Sprintf("A???%d", a)
-}
-
-var Anames = []string{
-	"XXX",
-	"CALL",
-	"CHECKNIL",
-	"DATA",
-	"DUFFCOPY",
-	"DUFFZERO",
-	"END",
-	"FUNCDATA",
-	"GLOBL",
-	"JMP",
-	"NOP",
-	"PCDATA",
-	"RET",
-	"TEXT",
-	"TYPE",
-	"UNDEF",
-	"USEFIELD",
-	"VARDEF",
-	"VARKILL",
-}
-
-func Bool2int(b bool) int {
-	if b {
-		return 1
-	}
-	return 0
 }

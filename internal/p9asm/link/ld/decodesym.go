@@ -153,11 +153,6 @@ func decodetype_mapvalue(s *LSym) *LSym {
 	return decode_reloc_sym(s, int32(commonsize())+int32(Thearch.Ptrsize)) // 0x20 / 0x38
 }
 
-// Type.ChanType.elem
-func decodetype_chanelem(s *LSym) *LSym {
-	return decode_reloc_sym(s, int32(commonsize())) // 0x1c / 0x30
-}
-
 // Type.FuncType.dotdotdot
 func decodetype_funcdotdotdot(s *LSym) int {
 	return int(s.P[commonsize()])

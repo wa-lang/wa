@@ -209,7 +209,6 @@ const (
 	DW_ABRV_NULLTYPE
 	DW_ABRV_BASETYPE
 	DW_ABRV_ARRAYTYPE
-	DW_ABRV_CHANTYPE
 	DW_ABRV_FUNCTYPE
 	DW_ABRV_IFACETYPE
 	DW_ABRV_MAPTYPE
@@ -365,18 +364,6 @@ var abbrevs = [DW_NABRV]DWAbbrev{
 			{DW_AT_type, DW_FORM_ref_addr},
 			{DW_AT_byte_size, DW_FORM_udata},
 			{DW_AT_go_kind, DW_FORM_data1},
-		},
-	},
-
-	/* CHANTYPE */
-	{
-		DW_TAG_typedef,
-		DW_CHILDREN_no,
-		[]DWAttrForm{
-			{DW_AT_name, DW_FORM_string},
-			{DW_AT_type, DW_FORM_ref_addr},
-			{DW_AT_go_kind, DW_FORM_data1},
-			{DW_AT_go_elem, DW_FORM_ref_addr},
 		},
 	},
 
@@ -1035,12 +1022,6 @@ func defgotype(watype *LSym) *DWDie {
 
 		newrefattr(fld, DW_AT_type, mustFind(&dwtypes, "uintptr"))
 
-	case obj.KindChan:
-		die = newdie(&dwtypes, DW_ABRV_CHANTYPE, name)
-		newattr(die, DW_AT_byte_size, DW_CLS_CONSTANT, bytesize, 0)
-		s := decodetype_chanelem(watype)
-		newrefattr(die, DW_AT_go_elem, defgotype(s))
-
 	case obj.KindFunc:
 		die = newdie(&dwtypes, DW_ABRV_FUNCTYPE, name)
 		dotypedef(&dwtypes, name, die)
@@ -1351,66 +1332,6 @@ func synthesizemaptypes(die *DWDie) {
 		newattr(dwh, DW_AT_byte_size, DW_CLS_CONSTANT, getattr(hash, DW_AT_byte_size).value, nil)
 
 		// make map type a pointer to hash<K,V>
-		newrefattr(die, DW_AT_type, defptrto(dwh))
-	}
-}
-
-func synthesizechantypes(die *DWDie) {
-	sudog := walktypedef(defgotype(lookup_or_diag("type.runtime.sudog")))
-	waitq := walktypedef(defgotype(lookup_or_diag("type.runtime.waitq")))
-	hchan := walktypedef(defgotype(lookup_or_diag("type.runtime.hchan")))
-	if sudog == nil || waitq == nil || hchan == nil {
-		return
-	}
-
-	sudogsize := int(getattr(sudog, DW_AT_byte_size).value)
-
-	var a *DWAttr
-	var dwh *DWDie
-	var dws *DWDie
-	var dww *DWDie
-	var elemsize int
-	var elemtype *DWDie
-	for ; die != nil; die = die.link {
-		if die.abbrev != DW_ABRV_CHANTYPE {
-			continue
-		}
-		elemtype = getattr(die, DW_AT_go_elem).data.(*DWDie)
-		a = getattr(elemtype, DW_AT_byte_size)
-		if a != nil {
-			elemsize = int(a.value)
-		} else {
-			elemsize = Thearch.Ptrsize
-		}
-
-		// sudog<T>
-		dws = newdie(&dwtypes, DW_ABRV_STRUCTTYPE, mkinternaltypename("sudog", getattr(elemtype, DW_AT_name).data.(string), ""))
-
-		copychildren(dws, sudog)
-		substitutetype(dws, "elem", elemtype)
-		if elemsize > 8 {
-			elemsize -= 8
-		} else {
-			elemsize = 0
-		}
-		newattr(dws, DW_AT_byte_size, DW_CLS_CONSTANT, int64(sudogsize)+int64(elemsize), nil)
-
-		// waitq<T>
-		dww = newdie(&dwtypes, DW_ABRV_STRUCTTYPE, mkinternaltypename("waitq", getattr(elemtype, DW_AT_name).data.(string), ""))
-
-		copychildren(dww, waitq)
-		substitutetype(dww, "first", defptrto(dws))
-		substitutetype(dww, "last", defptrto(dws))
-		newattr(dww, DW_AT_byte_size, DW_CLS_CONSTANT, getattr(waitq, DW_AT_byte_size).value, nil)
-
-		// hchan<T>
-		dwh = newdie(&dwtypes, DW_ABRV_STRUCTTYPE, mkinternaltypename("hchan", getattr(elemtype, DW_AT_name).data.(string), ""))
-
-		copychildren(dwh, hchan)
-		substitutetype(dwh, "recvq", dww)
-		substitutetype(dwh, "sendq", dww)
-		newattr(dwh, DW_AT_byte_size, DW_CLS_CONSTANT, getattr(hchan, DW_AT_byte_size).value, nil)
-
 		newrefattr(die, DW_AT_type, defptrto(dwh))
 	}
 }
@@ -2189,7 +2110,6 @@ func Dwarfemitdebugsections() {
 	synthesizestringtypes(dwtypes.child)
 	synthesizeslicetypes(dwtypes.child)
 	synthesizemaptypes(dwtypes.child)
-	synthesizechantypes(dwtypes.child)
 
 	reversetree(&dwroot.child)
 	reversetree(&dwtypes.child)

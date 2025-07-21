@@ -8,6 +8,7 @@ import (
 	"sort"
 	"strings"
 
+	"wa-lang.org/wa/internal/p9asm/bio"
 	"wa-lang.org/wa/internal/p9asm/obj"
 )
 
@@ -267,7 +268,7 @@ type ElfSect struct {
 }
 
 type ElfObj struct {
-	f         *obj.Biobuf
+	f         *bio.Biobuf
 	base      int64 // offset in f where ELF begins
 	length    int64 // length of ELF
 	is64      int
@@ -317,13 +318,13 @@ func valuecmp(a *LSym, b *LSym) int {
 	return 0
 }
 
-func ldelf(f *obj.Biobuf, pkg string, length int64, pn string) {
+func ldelf(f *bio.Biobuf, pkg string, length int64, pn string) {
 	if Debug['v'] != 0 {
 		fmt.Fprintf(&Bso, "%5.2f ldelf %s\n", obj.Cputime(), pn)
 	}
 
 	Ctxt.Version++
-	base := int32(obj.Boffset(f))
+	base := int32(f.Boffset())
 
 	var add uint64
 	var e binary.ByteOrder
@@ -346,7 +347,7 @@ func ldelf(f *obj.Biobuf, pkg string, length int64, pn string) {
 	var sect *ElfSect
 	var sym ElfSym
 	var symbols []*LSym
-	if obj.Bread(f, hdrbuf[:]) != len(hdrbuf) {
+	if f.Bread(hdrbuf[:]) != len(hdrbuf) {
 		goto bad
 	}
 	hdr = new(ElfHdrBytes)
@@ -459,7 +460,7 @@ func ldelf(f *obj.Biobuf, pkg string, length int64, pn string) {
 
 	elfobj.nsect = uint(elfobj.shnum)
 	for i := 0; uint(i) < elfobj.nsect; i++ {
-		if obj.Bseek(f, int64(uint64(base)+elfobj.shoff+uint64(int64(i)*int64(elfobj.shentsize))), 0) < 0 {
+		if f.Bseek(int64(uint64(base)+elfobj.shoff+uint64(int64(i)*int64(elfobj.shentsize))), 0) < 0 {
 			goto bad
 		}
 		sect = &elfobj.sect[i]
@@ -828,7 +829,7 @@ func elfmap(elfobj *ElfObj, sect *ElfSect) (err error) {
 
 	sect.base = make([]byte, sect.size)
 	err = fmt.Errorf("short read")
-	if obj.Bseek(elfobj.f, int64(uint64(elfobj.base)+sect.off), 0) < 0 || obj.Bread(elfobj.f, sect.base) != len(sect.base) {
+	if elfobj.f.Bseek(int64(uint64(elfobj.base)+sect.off), 0) < 0 || elfobj.f.Bread(sect.base) != len(sect.base) {
 		return err
 	}
 

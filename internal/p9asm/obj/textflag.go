@@ -12,7 +12,7 @@ const (
 	// Don't profile the marked routine.
 	//
 	// Deprecated: Not implemented, do not use.
-	NOPROF = 1
+	_NOPROF = 1
 
 	// It is ok for the linker to get multiple of these symbols.  It will
 	// pick one of the duplicates to use.

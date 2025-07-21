@@ -5,7 +5,6 @@
 package obj
 
 // Must match runtime and reflect.
-// Included by cmd/gc.
 
 const (
 	KindBool = 1 + iota
@@ -25,7 +24,6 @@ const (
 	KindComplex64
 	KindComplex128
 	KindArray
-	KindChan
 	KindFunc
 	KindInterface
 	KindMap

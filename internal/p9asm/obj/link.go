@@ -31,7 +31,11 @@
 
 package obj
 
-import "encoding/binary"
+import (
+	"encoding/binary"
+
+	"wa-lang.org/wa/internal/p9asm/bio"
+)
 
 // An Addr is an argument to an instruction.
 // The general forms and their encodings are:
@@ -143,7 +147,6 @@ import "encoding/binary"
 //			reg = first register
 //			index = second register
 //			scale = 1
-//
 type Addr struct {
 	Type   int16
 	Reg    int16
@@ -253,37 +256,6 @@ type ProgInfo struct {
 	Regset   uint64 // registers implicitly set by this instruction
 	Regindex uint64 // registers used by addressing mode
 }
-
-// Prog.as opcodes.
-// These are the portable opcodes, common to all architectures.
-// Each architecture defines many more arch-specific opcodes,
-// with values starting at A_ARCHSPECIFIC.
-// Each architecture adds an offset to this so each machine has
-// distinct space for its instructions. The offset is a power of
-// two so it can be masked to return to origin zero.
-// See the definitions of ABase386 etc.
-const (
-	AXXX = 0 + iota
-	ACALL
-	ACHECKNIL
-	ADATA
-	ADUFFCOPY
-	ADUFFZERO
-	AEND
-	AFUNCDATA
-	AGLOBL
-	AJMP
-	ANOP
-	APCDATA
-	ARET
-	ATEXT
-	ATYPE
-	AUNDEF
-	AUSEFIELD
-	AVARDEF
-	AVARKILL
-	A_ARCHSPECIFIC
-)
 
 // An LSym is the sort of symbol that is written to an object file.
 type LSym struct {
@@ -440,7 +412,8 @@ type Pcdata struct {
 }
 
 // Pcdata iterator.
-//      for(pciterinit(ctxt, &it, &pcd); !it.done; pciternext(&it)) { it.value holds in [it.pc, it.nextpc) }
+//
+//	for(pciterinit(ctxt, &it, &pcd); !it.done; pciternext(&it)) { it.value holds in [it.pc, it.nextpc) }
 type Pciter struct {
 	d       Pcdata
 	p       []byte
@@ -471,7 +444,7 @@ type Link struct {
 	Debugpcln          int32
 	Flag_shared        int32
 	Flag_dynlink       bool
-	Bso                *Biobuf
+	Bso                *bio.Biobuf
 	Pathname           string
 	Windows            int32
 	Waos               string

@@ -3272,7 +3272,11 @@ func doasm(ctxt *obj.Link, p *obj.Prog) {
 	}
 	tt := int(p.Tt) * Ymax
 
-	xo := obj.Bool2int(o.op[0] == 0x0f)
+	xo := 0
+	if o.op[0] == 0x0f {
+		xo = 1
+	}
+
 	z := 0
 	var a *obj.Addr
 	var l int
