@@ -13,7 +13,6 @@ import (
 	"wa-lang.org/wa/internal/p9asm/obj/arm64"
 	"wa-lang.org/wa/internal/p9asm/obj/loong64"
 	"wa-lang.org/wa/internal/p9asm/obj/riscv"
-	"wa-lang.org/wa/internal/p9asm/obj/wasm"
 	"wa-lang.org/wa/internal/p9asm/obj/x86"
 )
 
@@ -28,7 +27,6 @@ const (
 	I386
 	LOONG64
 	RISCV64
-	Wasm
 )
 
 // Plan9 汇编语言的伪寄存器
@@ -81,8 +79,6 @@ func Set(cpu CPUType) *Arch {
 		return archLoong64(LOONG64, &loong64.Linkloong64)
 	case RISCV64:
 		return archRISCV64(RISCV64, &riscv.LinkRISCV64, false)
-	case Wasm:
-		return archWasm(Wasm, &wasm.Linkwasm)
 	default:
 		panic("unreachable")
 	}
@@ -554,36 +550,6 @@ func archRISCV64(CPU CPUType, linkArch *obj.LinkArch, shared bool) *Arch {
 			return true
 		}
 		return false
-	}
-
-	return p
-}
-
-func archWasm(CPU CPUType, linkArch *obj.LinkArch) *Arch {
-	p := &Arch{
-		CPU:      CPU,
-		LinkArch: linkArch,
-
-		Instructions:   map[string]int{},
-		Register:       wasm.Register,
-		RegisterPrefix: map[string]bool{},
-	}
-
-	for i, s := range obj.Anames {
-		p.Instructions[s] = i
-	}
-	for i, s := range wasm.Anames {
-		if i >= obj.A_ARCHSPECIFIC {
-			p.Instructions[s] = i + obj.ABaseWasm
-		}
-	}
-
-	p.RegisterNumber = func(name string, n int16) (int16, bool) {
-		return 0, false
-	}
-
-	p.IsJump = func(word string) bool {
-		return word == "JMP" || word == "CALL" || word == "Call" || word == "Br" || word == "BrIf"
 	}
 
 	return p

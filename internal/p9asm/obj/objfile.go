@@ -116,23 +116,19 @@ const (
 // out a Wa object file.  The linker does not call this; the linker
 // does not write out object files.
 func Writeobjdirect(ctxt *Link, b *Biobuf) {
-	var flag int
-	var s *LSym
-	var p *Prog
-	var plink *Prog
-	var a *Auto
-
 	// Build list of symbols, and assign instructions to lists.
 	// Ignore ctxt->plist boundaries. There are no guarantees there,
 	// and the C compilers and assemblers just use one big list.
-	var text *LSym
 
-	var curtext *LSym
+	var text *LSym
 	var data *LSym
+
+	var plink *Prog
+	var curtext *LSym
 	var etext *LSym
 	var edata *LSym
 	for pl := ctxt.Plist; pl != nil; pl = pl.Link {
-		for p = pl.Firstpc; p != nil; p = plink {
+		for p := pl.Firstpc; p != nil; p = plink {
 			if ctxt.Debugasm != 0 && ctxt.Debugvlog != 0 {
 				fmt.Printf("obj: %v\n", p)
 			}
@@ -143,6 +139,8 @@ func Writeobjdirect(ctxt *Link, b *Biobuf) {
 				continue
 			}
 
+			// 表示一个局部变量或函数参数的类型声明(类似调试信息)
+			// 会生成一个 Auto 节点, 并加到当前函数的 Autom 链表中
 			if p.As == ATYPE {
 				// Assume each TYPE instruction describes
 				// a different local variable or parameter,
@@ -158,7 +156,7 @@ func Writeobjdirect(ctxt *Link, b *Biobuf) {
 				if curtext == nil {
 					continue
 				}
-				a = new(Auto)
+				a := new(Auto)
 				a.Asym = p.From.Sym
 				a.Aoffset = int32(p.From.Offset)
 				a.Name = int16(p.From.Name)
@@ -168,8 +166,10 @@ func Writeobjdirect(ctxt *Link, b *Biobuf) {
 				continue
 			}
 
+			// 全局变量定义
+			// 会创建一个 LSym, 加入全局数据链表
 			if p.As == AGLOBL {
-				s = p.From.Sym
+				s := p.From.Sym
 				tmp6 := s.Seenglobl
 				s.Seenglobl++
 				if tmp6 != 0 {
@@ -189,7 +189,7 @@ func Writeobjdirect(ctxt *Link, b *Biobuf) {
 				if s.Type == 0 || s.Type == SXREF {
 					s.Type = SBSS
 				}
-				flag = int(p.From3.Offset)
+				flag := int(p.From3.Offset)
 				if flag&DUPOK != 0 {
 					s.Dupok = 1
 				}
@@ -202,13 +202,17 @@ func Writeobjdirect(ctxt *Link, b *Biobuf) {
 				continue
 			}
 
+			// 全局数据赋值语句
+			// 会调用 savedata() 保存数据内容到 LSym.P 中
 			if p.As == ADATA {
 				savedata(ctxt, p.From.Sym, p, "<input>")
 				continue
 			}
 
+			// 函数入口
+			// 创建并初始化一个 LSym, 标记为 STEXT, 建立指令链表头尾
 			if p.As == ATEXT {
-				s = p.From.Sym
+				s := p.From.Sym
 				if s == nil {
 					// func _() { }
 					curtext = nil
@@ -229,7 +233,7 @@ func Writeobjdirect(ctxt *Link, b *Biobuf) {
 					etext.Next = s
 				}
 				etext = s
-				flag = int(p.From3Offset())
+				flag := int(p.From3Offset())
 				if flag&DUPOK != 0 {
 					s.Dupok = 1
 				}
@@ -260,20 +264,23 @@ func Writeobjdirect(ctxt *Link, b *Biobuf) {
 			if curtext == nil {
 				continue
 			}
-			s = curtext
+			s := curtext
 			s.Etext.Link = p
 			s.Etext = p
 		}
 	}
 
-	// Add reference to Wa arguments for C or assembly functions without them.
+	// 确保所有函数都有 FUNCDATA go_args_stackmap 节点
+	// GC 需要知道函数的参数指针布局(用于栈扫描)
+	// 如果发现某函数缺少这个 FUNCDATA 条目，就补一个伪节点：
+
 	var found int
 	for s := text; s != nil; s = s.Next {
 		if !strings.HasPrefix(s.Name, "\"\".") {
 			continue
 		}
 		found = 0
-		for p = s.Text; p != nil; p = p.Link {
+		for p := s.Text; p != nil; p = p.Link {
 			if p.As == AFUNCDATA && p.From.Type == TYPE_CONST && p.From.Offset == FUNCDATA_ArgsPointerMaps {
 				found = 1
 				break
@@ -281,7 +288,7 @@ func Writeobjdirect(ctxt *Link, b *Biobuf) {
 		}
 
 		if found == 0 {
-			p = Appendp(ctxt, s.Text)
+			p := Appendp(ctxt, s.Text)
 			p.As = AFUNCDATA
 			p.From.Type = TYPE_CONST
 			p.From.Offset = FUNCDATA_ArgsPointerMaps
@@ -291,13 +298,25 @@ func Writeobjdirect(ctxt *Link, b *Biobuf) {
 		}
 	}
 
-	// Turn functions into machine code images.
+	// 生成最终的机器码
+	// 调用 Arch 的各个处理函数
 	for s := text; s != nil; s = s.Next {
+		// 初始化跳转伪指令的目标修复
 		mkfwd(s)
+
+		// 补丁处理, 修正重定位项(如 call/jump 地址)
 		linkpatch(ctxt, s)
+
+		// 架构相关, 可能展开指令
 		ctxt.Arch.Follow(ctxt, s)
+
+		// 架构相关, 预处理代码块(如压缩指令、编码优化)
 		ctxt.Arch.Preprocess(ctxt, s)
+
+		// 真正将指令编译为机器码, 写入 LSym.P
 		ctxt.Arch.Assemble(ctxt, s)
+
+		// 生成行号调试信息, 构建 LSym.Pcln
 		linkpcln(ctxt, s)
 	}
 

@@ -38,6 +38,7 @@ import (
 	"math"
 )
 
+// 增长符号对应的机器码列表
 func Symgrow(ctxt *Link, s *LSym, lsiz int64) {
 	siz := int(lsiz)
 	if int64(siz) != lsiz {
