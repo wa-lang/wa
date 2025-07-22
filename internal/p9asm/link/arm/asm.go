@@ -351,7 +351,7 @@ func archreloc(r *ld.Reloc, s *ld.LSym, val *int64) int {
 			// the section load address.
 			// we need to compensate that by removing the instruction's address
 			// from addend.
-			if ld.HEADTYPE == obj.Hdarwin {
+			if ld.HEADTYPE == int32(obj.Hdarwin) {
 				r.Xadd -= ld.Symaddr(s) + int64(r.Off)
 			}
 
@@ -530,7 +530,7 @@ func asmb() {
 	ld.Datblk(int64(ld.Segdata.Vaddr), int64(ld.Segdata.Filelen))
 
 	machlink := uint32(0)
-	if ld.HEADTYPE == obj.Hdarwin {
+	if ld.HEADTYPE == int32(obj.Hdarwin) {
 		if ld.Debug['v'] != 0 {
 			fmt.Fprintf(&ld.Bso, "%5.2f dwarf\n", obj.Cputime())
 		}
@@ -556,7 +556,7 @@ func asmb() {
 			fmt.Fprintf(&ld.Bso, "%5.2f sym\n", obj.Cputime())
 		}
 		ld.Bso.Flush()
-		switch ld.HEADTYPE {
+		switch obj.HExeType(ld.HEADTYPE) {
 		default:
 			if ld.Iself {
 				symo = uint32(ld.Segdata.Fileoff + ld.Segdata.Filelen)
@@ -568,7 +568,7 @@ func asmb() {
 		}
 
 		ld.Cseek(int64(symo))
-		switch ld.HEADTYPE {
+		switch obj.HExeType(ld.HEADTYPE) {
 		default:
 			if ld.Iself {
 				if ld.Debug['v'] != 0 {
@@ -601,7 +601,7 @@ func asmb() {
 	}
 	ld.Bso.Flush()
 	ld.Cseek(0)
-	switch ld.HEADTYPE {
+	switch obj.HExeType(ld.HEADTYPE) {
 	default:
 	case obj.Hlinux:
 		ld.Asmbelf(int64(symo))

@@ -87,13 +87,13 @@ func archinit() {
 		ld.Linkmode = ld.LinkInternal
 	}
 
-	switch ld.HEADTYPE {
+	switch obj.HExeType(ld.HEADTYPE) {
 	default:
 		if ld.Linkmode == ld.LinkAuto {
 			ld.Linkmode = ld.LinkInternal
 		}
 		if ld.Linkmode == ld.LinkExternal {
-			log.Fatalf("cannot use -linkmode=external with -H %s", ld.Headstr(int(ld.HEADTYPE)))
+			log.Fatalf("cannot use -linkmode=external with -H %s", obj.HExeType(ld.HEADTYPE))
 		}
 
 	case obj.Hlinux,
@@ -101,11 +101,11 @@ func archinit() {
 		break
 	}
 
-	switch ld.HEADTYPE {
+	switch obj.HExeType(ld.HEADTYPE) {
 	default:
 		ld.Exitf("unknown -H option: %v", ld.HEADTYPE)
 
-	case obj.Hlinux: /* arm elf */
+	case obj.Hlinux: // arm elf
 		ld.Debug['d'] = 0
 		// with dynamic linking
 		ld.Elfinit()
@@ -120,7 +120,7 @@ func archinit() {
 			ld.INITRND = 4096
 		}
 
-	case obj.Hdarwin: /* apple MACH */
+	case obj.Hdarwin: // apple MACH
 		ld.Debug['w'] = 1 // disable DWARF generataion
 		ld.Machoinit()
 		ld.HEADR = ld.INITIAL_MACHO_HEADR

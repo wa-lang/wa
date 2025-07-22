@@ -39,7 +39,7 @@ import (
 	"wa-lang.org/wa/internal/p9asm/obj"
 )
 
-// Reading object files.
+const waarch = "arm64"
 
 func Main() {
 	linkarchinit()
@@ -47,7 +47,7 @@ func Main() {
 }
 
 func linkarchinit() {
-	ld.Thestring = obj.Getwaarch()
+	ld.Thestring = waarch
 	ld.Thelinkarch = &ld.Linkarm64
 
 	ld.Thearch.Thechar = thechar
@@ -89,27 +89,27 @@ func archinit() {
 	}
 
 	// Darwin/arm64 only supports external linking
-	if ld.HEADTYPE == obj.Hdarwin {
+	if ld.HEADTYPE == int32(obj.Hdarwin) {
 		ld.Linkmode = ld.LinkExternal
 	}
 
-	switch ld.HEADTYPE {
+	switch obj.HExeType(ld.HEADTYPE) {
 	default:
 		if ld.Linkmode == ld.LinkAuto {
 			ld.Linkmode = ld.LinkInternal
 		}
 		if ld.Linkmode == ld.LinkExternal {
-			log.Fatalf("cannot use -linkmode=external with -H %s", ld.Headstr(int(ld.HEADTYPE)))
+			log.Fatalf("cannot use -linkmode=external with -H %s", obj.HExeType(ld.HEADTYPE))
 		}
 	case obj.Hlinux, obj.Hdarwin:
 		break
 	}
 
-	switch ld.HEADTYPE {
+	switch obj.HExeType(ld.HEADTYPE) {
 	default:
 		ld.Exitf("unknown -H option: %v", ld.HEADTYPE)
 
-	case obj.Hlinux: /* arm64 elf */
+	case obj.Hlinux: // arm64 elf
 		ld.Elfinit()
 		ld.HEADR = ld.ELFRESERVE
 		if ld.INITTEXT == -1 {
@@ -122,7 +122,7 @@ func archinit() {
 			ld.INITRND = 0x10000
 		}
 
-	case obj.Hdarwin: /* apple MACH */
+	case obj.Hdarwin: // apple MACH
 		ld.Debug['w'] = 1 // disable DWARF generation
 		ld.Machoinit()
 		ld.HEADR = ld.INITIAL_MACHO_HEADR

@@ -91,13 +91,13 @@ func archinit() {
 		ld.Linkmode = ld.LinkExternal
 	}
 
-	switch ld.HEADTYPE {
+	switch obj.HExeType(ld.HEADTYPE) {
 	default:
 		if ld.Linkmode == ld.LinkAuto {
 			ld.Linkmode = ld.LinkInternal
 		}
 		if ld.Linkmode == ld.LinkExternal {
-			log.Fatalf("cannot use -linkmode=external with -H %s", ld.Headstr(int(ld.HEADTYPE)))
+			log.Fatalf("cannot use -linkmode=external with -H %v", obj.HExeType(ld.HEADTYPE))
 		}
 
 	case obj.Hdarwin,
@@ -106,11 +106,11 @@ func archinit() {
 		break
 	}
 
-	switch ld.HEADTYPE {
+	switch obj.HExeType(ld.HEADTYPE) {
 	default:
 		ld.Exitf("unknown -H option: %v", ld.HEADTYPE)
 
-	case obj.Helf: /* elf32 executable */
+	case obj.Helf: // elf32 executable
 		ld.HEADR = int32(ld.Rnd(52+3*32, 16))
 
 		if ld.INITTEXT == -1 {
@@ -123,7 +123,7 @@ func archinit() {
 			ld.INITRND = 4096
 		}
 
-	case obj.Hdarwin: /* apple MACH */
+	case obj.Hdarwin: // apple MACH
 		ld.Machoinit()
 
 		ld.HEADR = ld.INITIAL_MACHO_HEADR
@@ -137,7 +137,7 @@ func archinit() {
 			ld.INITDAT = 0
 		}
 
-	case obj.Hlinux: /* elf64 executable */
+	case obj.Hlinux: // elf64 executable
 		ld.Elfinit()
 
 		ld.HEADR = ld.ELFRESERVE
@@ -151,7 +151,7 @@ func archinit() {
 			ld.INITRND = 4096
 		}
 
-	case obj.Hwindows: /* PE executable */
+	case obj.Hwindows: // PE executable
 		ld.Peinit()
 
 		ld.HEADR = ld.PEFILEHEADR

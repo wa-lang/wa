@@ -3,7 +3,10 @@
 
 package obj
 
-import "fmt"
+import (
+	"fmt"
+	"strconv"
+)
 
 // 各个平台通用的指令
 // 平台特殊的指令从 A_ARCHSPECIFIC 开始定义
@@ -138,8 +141,12 @@ func Rconv(reg int) string {
 }
 
 // executable header types
+
+// 可执行文件头类型
+type HExeType int
+
 const (
-	Hunknown = 0 + iota
+	Hunknown HExeType = 0 + iota
 	Hdarwin
 	Helf
 	Hlinux
@@ -148,7 +155,7 @@ const (
 
 var headers = []struct {
 	name string
-	val  int
+	val  HExeType
 }{
 	{"darwin", Hdarwin},
 	{"elf", Helf},
@@ -158,13 +165,22 @@ var headers = []struct {
 	{"windowsgui", Hwindows},
 }
 
-func headtype(name string) int {
+func Headtype(name string) HExeType {
 	for i := 0; i < len(headers); i++ {
 		if name == headers[i].name {
 			return headers[i].val
 		}
 	}
 	return -1
+}
+
+func (v HExeType) String() string {
+	for i := 0; i < len(headers); i++ {
+		if v == headers[i].val {
+			return headers[i].name
+		}
+	}
+	return strconv.Itoa(int(v))
 }
 
 // ARM scond byte

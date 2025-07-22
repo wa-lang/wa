@@ -2228,7 +2228,7 @@ func prefixof(ctxt *obj.Link, p *obj.Prog, a *obj.Addr) int {
 			if p.Mode == 32 {
 				switch ctxt.Headtype {
 				default:
-					log.Fatalf("unknown TLS base register for %s", obj.Headstr(ctxt.Headtype))
+					log.Fatalf("unknown TLS base register for %s", ctxt.Headtype)
 
 				case obj.Hdarwin:
 					return 0x65 // GS
@@ -2237,7 +2237,7 @@ func prefixof(ctxt *obj.Link, p *obj.Prog, a *obj.Addr) int {
 
 			switch ctxt.Headtype {
 			default:
-				log.Fatalf("unknown TLS base register for %s", obj.Headstr(ctxt.Headtype))
+				log.Fatalf("unknown TLS base register for %s", ctxt.Headtype)
 
 			case obj.Hlinux:
 				if ctxt.Flag_shared != 0 {
@@ -4064,7 +4064,7 @@ func doasm(ctxt *obj.Link, p *obj.Prog) {
 						// are handled in prefixof above and should not be listed here.
 						switch ctxt.Headtype {
 						default:
-							log.Fatalf("unknown TLS base location for %s", obj.Headstr(ctxt.Headtype))
+							log.Fatalf("unknown TLS base location for %s", ctxt.Headtype)
 
 						case obj.Hlinux:
 							// ELF TLS base is 0(GS).
@@ -4101,7 +4101,7 @@ func doasm(ctxt *obj.Link, p *obj.Prog) {
 
 					switch ctxt.Headtype {
 					default:
-						log.Fatalf("unknown TLS base location for %s", obj.Headstr(ctxt.Headtype))
+						log.Fatalf("unknown TLS base location for %s", ctxt.Headtype)
 
 					case obj.Hlinux:
 						if ctxt.Flag_shared == 0 {

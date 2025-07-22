@@ -195,7 +195,7 @@ func adddynrel(s *ld.LSym, r *ld.Reloc) {
 			return
 		}
 
-		if ld.HEADTYPE == obj.Hdarwin && s.Size == PtrSize && r.Off == 0 {
+		if ld.HEADTYPE == int32(obj.Hdarwin) && s.Size == PtrSize && r.Off == 0 {
 			// Mach-O relocations are a royal pain to lay out.
 			// They use a compact stateful bytecode representation
 			// that is too much bother to deal with.
@@ -220,7 +220,7 @@ func adddynrel(s *ld.LSym, r *ld.Reloc) {
 			return
 		}
 
-		if ld.HEADTYPE == obj.Hwindows && s.Size == PtrSize {
+		if ld.HEADTYPE == int32(obj.Hwindows) && s.Size == PtrSize {
 			// nothing to do, the relocation will be laid out in pereloc1
 			return
 		}
@@ -439,7 +439,7 @@ func addpltsym(ctxt *ld.Link, s *ld.LSym) {
 		ld.Adduint32(ctxt, rel, ld.ELF32_R_INFO(uint32(s.Dynid), ld.R_386_JMP_SLOT))
 
 		s.Plt = int32(plt.Size - 16)
-	} else if ld.HEADTYPE == obj.Hdarwin {
+	} else if ld.HEADTYPE == int32(obj.Hdarwin) {
 		// Same laziness as in 6l.
 
 		plt := ld.Linklookup(ctxt, ".plt", 0)
@@ -473,7 +473,7 @@ func addgotsym(ctxt *ld.Link, s *ld.LSym) {
 		rel := ld.Linklookup(ctxt, ".rel", 0)
 		ld.Addaddrplus(ctxt, rel, got, int64(s.Got))
 		ld.Adduint32(ctxt, rel, ld.ELF32_R_INFO(uint32(s.Dynid), ld.R_386_GLOB_DAT))
-	} else if ld.HEADTYPE == obj.Hdarwin {
+	} else if ld.HEADTYPE == int32(obj.Hdarwin) {
 		ld.Adduint32(ctxt, ld.Linklookup(ctxt, ".linkedit.got", 0), uint32(s.Dynid))
 	} else {
 		ld.Diag("addgotsym: unsupported binary format")
@@ -517,7 +517,7 @@ func asmb() {
 	ld.Datblk(int64(ld.Segdata.Vaddr), int64(ld.Segdata.Filelen))
 
 	machlink := uint32(0)
-	if ld.HEADTYPE == obj.Hdarwin {
+	if ld.HEADTYPE == int32(obj.Hdarwin) {
 		if ld.Debug['v'] != 0 {
 			fmt.Fprintf(&ld.Bso, "%5.2f dwarf\n", obj.Cputime())
 		}
@@ -542,7 +542,7 @@ func asmb() {
 			fmt.Fprintf(&ld.Bso, "%5.2f sym\n", obj.Cputime())
 		}
 		ld.Bso.Flush()
-		switch ld.HEADTYPE {
+		switch obj.HExeType(ld.HEADTYPE) {
 		default:
 			if ld.Iself {
 				symo = uint32(ld.Segdata.Fileoff + ld.Segdata.Filelen)
@@ -558,7 +558,7 @@ func asmb() {
 		}
 
 		ld.Cseek(int64(symo))
-		switch ld.HEADTYPE {
+		switch obj.HExeType(ld.HEADTYPE) {
 		default:
 			if ld.Iself {
 				if ld.Debug['v'] != 0 {
@@ -596,7 +596,7 @@ func asmb() {
 	}
 	ld.Bso.Flush()
 	ld.Cseek(0)
-	switch ld.HEADTYPE {
+	switch obj.HExeType(ld.HEADTYPE) {
 	default:
 	case obj.Hdarwin:
 		ld.Asmbmacho()

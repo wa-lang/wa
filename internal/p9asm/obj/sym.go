@@ -36,17 +36,7 @@ import (
 	"log"
 	"os"
 	"path/filepath"
-	"strconv"
 )
-
-func Headstr(v int) string {
-	for i := 0; i < len(headers); i++ {
-		if v == headers[i].val {
-			return headers[i].name
-		}
-	}
-	return strconv.Itoa(v)
-}
 
 func Linknew(arch *LinkArch, waos string) *Link {
 	ctxt := new(Link)
@@ -73,7 +63,7 @@ func Linknew(arch *LinkArch, waos string) *Link {
 	ctxt.LineHist.WAROOT_FINAL = ctxt.Waroot_final
 	ctxt.LineHist.Dir = ctxt.Pathname
 
-	ctxt.Headtype = headtype(ctxt.Waos)
+	ctxt.Headtype = Headtype(ctxt.Waos)
 	if ctxt.Headtype < 0 {
 		log.Fatalf("unknown waos %s", ctxt.Waos)
 	}
@@ -82,7 +72,7 @@ func Linknew(arch *LinkArch, waos string) *Link {
 	// TODO(chai2010): Move tlsoffset back into the linker.
 	switch ctxt.Headtype {
 	default:
-		log.Fatalf("unknown thread-local storage offset for %s", Headstr(ctxt.Headtype))
+		log.Fatalf("unknown thread-local storage offset for %v", ctxt.Headtype)
 
 	case Hwindows:
 		break
@@ -116,11 +106,6 @@ func Linknew(arch *LinkArch, waos string) *Link {
 		case '8':
 			ctxt.Tlsoffset = 0x468
 		}
-	}
-
-	// On arm, record goarm.
-	if ctxt.Arch.Thechar == '5' {
-		ctxt.Goarm = 6 // chaishushan: 强制arm最低版本
 	}
 
 	return ctxt

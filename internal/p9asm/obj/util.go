@@ -7,8 +7,6 @@ package obj
 import (
 	"bytes"
 	"fmt"
-	"os"
-	"runtime"
 	"strings"
 	"time"
 )
@@ -20,25 +18,6 @@ func Cputime() float64 {
 		start = time.Now()
 	}
 	return time.Since(start).Seconds()
-}
-
-func envOr(key, value string) string {
-	if x := os.Getenv(key); x != "" {
-		return x
-	}
-	return value
-}
-
-func Getwaroot() string {
-	return envOr("WAROOT", "")
-}
-
-func Getwaarch() string {
-	return envOr("WAARCH", runtime.GOARCH)
-}
-
-func Getwaos() string {
-	return envOr("WAOS", runtime.GOOS)
 }
 
 func (p *Prog) Line() string {

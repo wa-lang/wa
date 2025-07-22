@@ -36,7 +36,6 @@ import (
 	"log"
 	"os"
 	"path/filepath"
-	"strconv"
 
 	"wa-lang.org/wa/internal/p9asm/obj"
 )
@@ -45,26 +44,14 @@ func yy_isalpha(c int) bool {
 	return 'A' <= c && c <= 'Z' || 'a' <= c && c <= 'z'
 }
 
-var headers = []struct {
-	name string
-	val  int
-}{
-	{"darwin", obj.Hdarwin},
-	{"elf", obj.Helf},
-	{"linux", obj.Hlinux},
-	{"android", obj.Hlinux}, // must be after "linux" entry or else headstr(Hlinux) == "android"
-	{"windows", obj.Hwindows},
-	{"windowsgui", obj.Hwindows},
-}
-
 func linknew(arch *LinkArch) *Link {
 	ctxt := new(Link)
 	ctxt.Hash = make(map[symVer]*LSym)
 	ctxt.Arch = arch
 	ctxt.Version = obj.HistVersion
-	ctxt.Waroot = obj.Getwaroot()
+	ctxt.Waroot = obj_Getwaroot()
 
-	p := obj.Getwaarch()
+	p := obj_Getwaarch()
 	if p != arch.Name {
 		log.Fatalf("invalid waarch %s (want %s)", p, arch.Name)
 	}
@@ -76,16 +63,16 @@ func linknew(arch *LinkArch) *Link {
 	}
 	buf = filepath.ToSlash(buf)
 
-	ctxt.Headtype = headtype(obj.Getwaos())
+	ctxt.Headtype = obj.Headtype(obj_Getwaos())
 	if ctxt.Headtype < 0 {
-		log.Fatalf("unknown waos %s", obj.Getwaos())
+		log.Fatalf("unknown waos %s", obj_Getwaos())
 	}
 
 	// Record thread-local storage offset.
 	// TODO(chai2010): Move tlsoffset back into the linker.
 	switch ctxt.Headtype {
 	default:
-		log.Fatalf("unknown thread-local storage offset for %s", Headstr(ctxt.Headtype))
+		log.Fatalf("unknown thread-local storage offset for %s", ctxt.Headtype)
 
 	case obj.Hwindows:
 		break
@@ -176,22 +163,4 @@ func Linklookup(ctxt *Link, name string, v int) *LSym {
 // read-only lookup
 func Linkrlookup(ctxt *Link, name string, v int) *LSym {
 	return _lookup(ctxt, name, v, 0)
-}
-
-func Headstr(v int) string {
-	for i := 0; i < len(headers); i++ {
-		if v == headers[i].val {
-			return headers[i].name
-		}
-	}
-	return strconv.Itoa(v)
-}
-
-func headtype(name string) int {
-	for i := 0; i < len(headers); i++ {
-		if name == headers[i].name {
-			return headers[i].val
-		}
-	}
-	return -1
 }

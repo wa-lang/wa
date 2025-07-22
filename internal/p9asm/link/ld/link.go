@@ -37,6 +37,7 @@ import (
 
 	"wa-lang.org/wa/internal/p9asm/bio"
 	"wa-lang.org/wa/internal/p9asm/debug/elf"
+	"wa-lang.org/wa/internal/p9asm/obj"
 )
 
 type LSym struct {
@@ -126,7 +127,7 @@ type Link struct {
 	Thechar   int32
 	Thestring string
 	Goarm     int32
-	Headtype  int
+	Headtype  obj.HExeType
 	Arch      *LinkArch
 	Debugasm  int32
 	Debugvlog int32

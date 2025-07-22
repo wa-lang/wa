@@ -139,14 +139,6 @@ import (
 //	reg, reg
 //		Register pair for ARM.
 //		TYPE_REGREG2
-//
-//	(reg+reg)
-//		Register pair for PPC64.
-//		Encoding:
-//			type = TYPE_MEM
-//			reg = first register
-//			index = second register
-//			scale = 1
 type Addr struct {
 	Type   int16
 	Reg    int16
@@ -307,8 +299,7 @@ type Pciter struct {
 // Link holds the context for writing object code from a compiler
 // to be linker input or for reading that input into the linker.
 type Link struct {
-	Goarm              int32
-	Headtype           int
+	Headtype           HExeType // waos 决定 link 文件类型
 	Arch               *LinkArch
 	Debugasm           int32
 	Debugvlog          int32
@@ -334,7 +325,6 @@ type Link struct {
 	Sym_mod            *LSym
 	Sym_modu           *LSym
 	Tlsg               *LSym
-	Plan9privates      *LSym
 	Curp               *Prog
 	Printp             *Prog
 	Blitrl             *Prog
@@ -386,9 +376,7 @@ type Plist struct {
 	Link    *Plist
 }
 
-/*
- * start a new Prog list.
- */
+// start a new Prog list.
 func Linknewplist(ctxt *Link) *Plist {
 	pl := new(Plist)
 	if ctxt.Plist == nil {

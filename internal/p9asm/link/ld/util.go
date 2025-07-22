@@ -169,3 +169,22 @@ var start = time.Now()
 func elapsed() float64 {
 	return time.Since(start).Seconds()
 }
+
+func envOr(key, value string) string {
+	if x := os.Getenv(key); x != "" {
+		return x
+	}
+	return value
+}
+
+func obj_Getwaroot() string {
+	return envOr("WAROOT", "")
+}
+
+func obj_Getwaarch() string {
+	return envOr("WAARCH", runtime.GOARCH)
+}
+
+func obj_Getwaos() string {
+	return envOr("WAOS", runtime.GOOS)
+}

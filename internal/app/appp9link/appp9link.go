@@ -27,7 +27,6 @@ var CmdP9Link = &cli.Command{
 	Action: func(c *cli.Context) error {
 		// obj 文件隐含了 arch 信息
 		waarch := c.String("arch")
-		//_ = obj.Getwaarch()
 		switch waarch {
 		default:
 			fmt.Fprintf(os.Stderr, "link: unknown architecture %q\n", waarch)
