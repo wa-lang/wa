@@ -10,7 +10,7 @@ import (
 )
 
 // GNUSyntax returns the GNU assembler syntax for the instruction, as defined by GNU binutils.
-// This general form is often called ``AT&T syntax'' as a reference to AT&T System V Unix.
+// This general form is often called "AT&T syntax" as a reference to AT&T System V Unix.
 func GNUSyntax(inst Inst) string {
 	// Rewrite instruction to mimic GNU peculiarities.
 	// Note that inst has been passed by value and contains
@@ -23,7 +23,7 @@ func GNUSyntax(inst Inst) string {
 		// DC E0, DC F0: libopcodes swaps FSUBR/FSUB and FDIVR/FDIV, at least
 		// if you believe the Intel manual is correct (the encoding is irregular as given;
 		// libopcodes uses the more regular expected encoding).
-		// TODO(rsc): Test to ensure Intel manuals are correct and report to libopcodes maintainers?
+		// TODO(chai2010): Test to ensure Intel manuals are correct and report to libopcodes maintainers?
 		// NOTE: iant thinks this is deliberate, but we can't find the history.
 		_, reg1 := inst.Args[0].(Reg)
 		_, reg2 := inst.Args[1].(Reg)

@@ -167,7 +167,7 @@ type Reloc struct {
 
 	// The Type records the form of address expected in the bytes
 	// described by the previous fields: absolute, PC-relative, and so on.
-	// TODO(rsc): The interpretation of Type is not exposed by this package.
+	// TODO(chai2010): The interpretation of Type is not exposed by this package.
 	Type int
 }
 

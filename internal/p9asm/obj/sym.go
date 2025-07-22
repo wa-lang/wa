@@ -39,27 +39,6 @@ import (
 	"strconv"
 )
 
-var headers = []struct {
-	name string
-	val  int
-}{
-	{"darwin", Hdarwin},
-	{"elf", Helf},
-	{"linux", Hlinux},
-	{"android", Hlinux}, // must be after "linux" entry or else headstr(Hlinux) == "android"
-	{"windows", Hwindows},
-	{"windowsgui", Hwindows},
-}
-
-func headtype(name string) int {
-	for i := 0; i < len(headers); i++ {
-		if name == headers[i].name {
-			return headers[i].val
-		}
-	}
-	return -1
-}
-
 func Headstr(v int) string {
 	for i := 0; i < len(headers); i++ {
 		if v == headers[i].val {
@@ -78,7 +57,7 @@ func Linknew(arch *LinkArch, waos string) *Link {
 	ctxt.Waroot = ""       // Getwaroot()
 	ctxt.Waroot_final = "" // os.Getenv("WAROOT_FINAL")
 	if ctxt.Waos == "windows" {
-		// TODO(rsc): Remove ctxt.Windows and let callers use runtime.GOOS.
+		// TODO(chai2010): Remove ctxt.Windows and let callers use runtime.GOOS.
 		ctxt.Windows = 1
 	}
 
@@ -100,7 +79,7 @@ func Linknew(arch *LinkArch, waos string) *Link {
 	}
 
 	// Record thread-local storage offset.
-	// TODO(rsc): Move tlsoffset back into the linker.
+	// TODO(chai2010): Move tlsoffset back into the linker.
 	switch ctxt.Headtype {
 	default:
 		log.Fatalf("unknown thread-local storage offset for %s", Headstr(ctxt.Headtype))

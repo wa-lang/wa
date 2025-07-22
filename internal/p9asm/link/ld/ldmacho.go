@@ -311,7 +311,7 @@ func macholoadrel(m *LdMachoObj, sect *LdMachoSect) int {
 		p = buf[i*8:]
 		r.addr = m.e.Uint32(p)
 
-		// TODO(rsc): Wrong interpretation for big-endian bitfields?
+		// TODO(chai2010): Wrong interpretation for big-endian bitfields?
 		if r.addr&0x80000000 != 0 {
 			// scatterbrained relocation
 			r.scattered = 1

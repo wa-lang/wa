@@ -1468,7 +1468,7 @@ func elfshbits(sect *Section) *ElfShdr {
 	// flags are already correct, but the other fields still need filling in.
 	if sh.type_ == SHT_NOTE {
 		if Linkmode != LinkExternal {
-			// TODO(mwhudson): the approach here will work OK when
+			// TODO(chai2010): the approach here will work OK when
 			// linking internally for notes that we want to be included
 			// in a loadable segment (e.g. the abihash note) but not for
 			// notes that we do not want to be mapped (e.g. the package
@@ -2410,7 +2410,7 @@ func Elfadddynsym(ctxt *Link, s *LSym) {
 		name := s.Extname
 		Adduint32(ctxt, d, uint32(Addstring(Linklookup(ctxt, ".dynstr", 0), name)))
 
-		/* type */
+		// type
 		t := STB_GLOBAL << 4
 
 		if s.Cgoexport != 0 && s.Type&obj.SMASK == obj.STEXT {
@@ -2420,24 +2420,24 @@ func Elfadddynsym(ctxt *Link, s *LSym) {
 		}
 		Adduint8(ctxt, d, uint8(t))
 
-		/* reserved */
+		// reserved
 		Adduint8(ctxt, d, 0)
 
-		/* section where symbol is defined */
+		// section where symbol is defined
 		if s.Type == obj.SDYNIMPORT {
 			Adduint16(ctxt, d, SHN_UNDEF)
 		} else {
 			Adduint16(ctxt, d, 1)
 		}
 
-		/* value */
+		// value
 		if s.Type == obj.SDYNIMPORT {
 			Adduint64(ctxt, d, 0)
 		} else {
 			Addaddr(ctxt, d, s)
 		}
 
-		/* size of object */
+		// size of object
 		Adduint64(ctxt, d, uint64(s.Size))
 
 		if Thearch.Thechar == '6' && s.Cgoexport&CgoExportDynamic == 0 && s.Dynimplib != "" && !seenlib[s.Dynimplib] {
@@ -2449,25 +2449,25 @@ func Elfadddynsym(ctxt *Link, s *LSym) {
 
 		d := Linklookup(ctxt, ".dynsym", 0)
 
-		/* name */
+		// name
 		name := s.Extname
 
 		Adduint32(ctxt, d, uint32(Addstring(Linklookup(ctxt, ".dynstr", 0), name)))
 
-		/* value */
+		// value
 		if s.Type == obj.SDYNIMPORT {
 			Adduint32(ctxt, d, 0)
 		} else {
 			Addaddr(ctxt, d, s)
 		}
 
-		/* size */
+		// size
 		Adduint32(ctxt, d, 0)
 
-		/* type */
+		// type
 		t := STB_GLOBAL << 4
 
-		// TODO(mwhudson): presumably the behaviour should actually be the same on both arm and 386.
+		// TODO(chai2010): presumably the behaviour should actually be the same on both arm and 386.
 		if Thearch.Thechar == '8' && s.Cgoexport != 0 && s.Type&obj.SMASK == obj.STEXT {
 			t |= STT_FUNC
 		} else if Thearch.Thechar == '5' && s.Cgoexport&CgoExportDynamic != 0 && s.Type&obj.SMASK == obj.STEXT {
@@ -2478,7 +2478,7 @@ func Elfadddynsym(ctxt *Link, s *LSym) {
 		Adduint8(ctxt, d, uint8(t))
 		Adduint8(ctxt, d, 0)
 
-		/* shndx */
+		// shndx
 		if s.Type == obj.SDYNIMPORT {
 			Adduint16(ctxt, d, SHN_UNDEF)
 		} else {

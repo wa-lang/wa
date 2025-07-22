@@ -40,11 +40,9 @@ package obj
  *	pkg: package import path, e.g. container/vector
  */
 
-const (
-	LOG = 5
-)
-
 func mkfwd(sym *LSym) {
+	const LOG = 5
+
 	var dwn [LOG]int32
 	var cnt [LOG]int32
 	var lst [LOG]*Prog

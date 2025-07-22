@@ -536,7 +536,7 @@ func (t *Table) LineToPC(file string, line int) (pc uint64, fn *Func, err error)
 // LookupSym returns the text, data, or bss symbol with the given name,
 // or nil if no such symbol is found.
 func (t *Table) LookupSym(name string) *Sym {
-	// TODO(austin) Maybe make a map
+	// TODO(chai2010) Maybe make a map
 	for i := range t.Syms {
 		s := &t.Syms[i]
 		switch s.Type {

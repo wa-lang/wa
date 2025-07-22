@@ -170,39 +170,8 @@ type Addr struct {
 	Node interface{} // for use by compiler
 }
 
-const (
-	NAME_NONE = 0 + iota
-	NAME_EXTERN
-	NAME_STATIC
-	NAME_AUTO
-	NAME_PARAM
-	// A reference to name@GOT(SB) is a reference to the entry in the global offset
-	// table for 'name'.
-	NAME_GOTREF
-)
-
-const (
-	TYPE_NONE = 0
-)
-
-const (
-	TYPE_BRANCH = 5 + iota
-	TYPE_TEXTSIZE
-	TYPE_MEM
-	TYPE_CONST
-	TYPE_FCONST
-	TYPE_SCONST
-	TYPE_REG
-	TYPE_ADDR
-	TYPE_SHIFT
-	TYPE_REGREG
-	TYPE_REGREG2
-	TYPE_INDIR
-	TYPE_REGLIST
-)
-
-// TODO(rsc): Describe prog.
-// TODO(rsc): Describe TEXT/GLOBL flag in from3, DATA width in from3.
+// TODO(chai2010): Describe prog.
+// TODO(chai2010): Describe TEXT/GLOBL flag in from3, DATA width in from3.
 type Prog struct {
 	Ctxt   *Link
 	Link   *Prog
@@ -301,50 +270,6 @@ type Pcln struct {
 	Lastindex   int
 }
 
-// LSym.type
-const (
-	Sxxx = iota
-	STEXT
-	SELFRXSECT
-	STYPE
-	SSTRING
-	SWASTRING
-	SWAFUNC
-	SGCBITS
-	SRODATA
-	SFUNCTAB
-	STYPELINK
-	SSYMTAB
-	SPCLNTAB
-	SELFROSECT
-	SMACHOPLT
-	SELFSECT
-	SMACHO
-	SMACHOGOT
-	SWINDOWS
-	SELFGOT
-	SNOPTRDATA
-	SINITARR
-	SDATA
-	SBSS
-	SNOPTRBSS
-	STLSBSS
-	SXREF
-	SMACHOSYMSTR
-	SMACHOSYMTAB
-	SMACHOINDIRECTPLT
-	SMACHOINDIRECTGOT
-	SFILE
-	SFILEPATH
-	SCONST
-	SDYNIMPORT
-	SHOSTOBJ
-	SSUB       = 1 << 8
-	SMASK      = SSUB - 1
-	SHIDDEN    = 1 << 9
-	SCONTAINER = 1 << 10 // has a sub-symbol
-)
-
 type Reloc struct {
 	Off  int32
 	Siz  uint8
@@ -353,46 +278,6 @@ type Reloc struct {
 	Sym  *LSym
 }
 
-// Reloc.type
-const (
-	R_ADDR = 1 + iota
-	R_ADDRPOWER
-	R_ADDRARM64
-	R_SIZE
-	R_CALL
-	R_CALLARM
-	R_CALLARM64
-	R_CALLIND
-	R_CALLPOWER
-	R_CONST
-	R_PCREL
-	// R_TLS (only used on arm currently, and not on android and darwin where tlsg is
-	// a regular variable) resolves to data needed to access the thread-local g. It is
-	// interpreted differently depending on toolchain flags to implement either the
-	// "local exec" or "inital exec" model for tls access.
-	// TODO(mwhudson): change to use R_TLS_LE or R_TLS_IE as appropriate, not having
-	// R_TLS do double duty.
-	R_TLS
-	// R_TLS_LE (only used on 386 and amd64 currently) resolves to the offset of the
-	// thread-local g from the thread local base and is used to implement the "local
-	// exec" model for tls access (r.Sym is not set by the compiler for this case but
-	// is set to Tlsg in the linker when externally linking).
-	R_TLS_LE
-	// R_TLS_IE (only used on 386 and amd64 currently) resolves to the PC-relative
-	// offset to a GOT slot containing the offset the thread-local g from the thread
-	// local base and is used to implemented the "initial exec" model for tls access
-	// (r.Sym is not set by the compiler for this case but is set to Tlsg in the
-	// linker when externally linking).
-	R_TLS_IE
-	R_GOTOFF
-	R_PLT0
-	R_PLT1
-	R_PLT2
-	R_USEFIELD
-	R_POWER_TOC
-	R_GOTPCREL
-)
-
 type Auto struct {
 	Asym    *LSym
 	Link    *Auto
@@ -400,12 +285,6 @@ type Auto struct {
 	Name    int16
 	Watype  *LSym
 }
-
-// Auto.name
-const (
-	A_AUTO = 1 + iota
-	A_PARAM
-)
 
 type Pcdata struct {
 	P []byte
@@ -424,12 +303,6 @@ type Pciter struct {
 	start   int
 	done    int
 }
-
-// symbol version, incremented each time a file is loaded.
-// version==1 is reserved for savehist.
-const (
-	HistVersion = 1
-)
 
 // Link holds the context for writing object code from a compiler
 // to be linker input or for reading that input into the linker.
@@ -505,15 +378,6 @@ type LinkArch struct {
 	Ptrsize    int
 	Regsize    int
 }
-
-/* executable header types */
-const (
-	Hunknown = 0 + iota
-	Hdarwin
-	Helf
-	Hlinux
-	Hwindows
-)
 
 type Plist struct {
 	Name    *LSym

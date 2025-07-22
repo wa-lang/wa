@@ -137,7 +137,7 @@ func progedit(ctxt *obj.Link, p *obj.Prog) {
 		//	NOP
 		//	... off(TLS) ...
 		//
-		// TODO(rsc): Remove the Hsolaris special case. It exists only to
+		// TODO(chai2010): Remove the Hsolaris special case. It exists only to
 		// guarantee we are producing byte-identical binaries as before this code.
 		// But it should be unnecessary.
 		if (p.As == AMOVQ || p.As == AMOVL) && p.From.Type == obj.TYPE_REG && p.From.Reg == REG_TLS && p.To.Type == obj.TYPE_REG && REG_AX <= p.To.Reg && p.To.Reg <= REG_R15 {
@@ -468,12 +468,12 @@ func preprocess(ctxt *obj.Link, cursym *obj.LSym) {
 	cursym.Args = int32(textarg)
 	cursym.Locals = int32(p.To.Offset)
 
-	// TODO(rsc): Remove.
+	// TODO(chai2010): Remove.
 	if p.Mode == 32 && cursym.Locals < 0 {
 		cursym.Locals = 0
 	}
 
-	// TODO(rsc): Remove 'p.Mode == 64 &&'.
+	// TODO(chai2010): Remove 'p.Mode == 64 &&'.
 	if p.Mode == 64 && autoffset < obj.StackSmall && p.From3Offset()&obj.NOSPLIT == 0 {
 		for q := p; q != nil; q = q.Link {
 			if q.As == obj.ACALL {

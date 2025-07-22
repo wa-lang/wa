@@ -892,7 +892,7 @@ func readelfsym(elfobj *ElfObj, i int, sym *ElfSym, needSym int) (err error) {
 				// symbol hash table, but mark them as hidden.
 				// __i686.get_pc_thunk.bx is allowed to be duplicated, to
 				// workaround that we set dupok.
-				// TODO(minux): correctly handle __i686.get_pc_thunk.bx without
+				// TODO(chai2010): correctly handle __i686.get_pc_thunk.bx without
 				// set dupok generally. See http://codereview.appspot.com/5823055/
 				// comment #5 for details.
 				if s != nil && sym.other == 2 {

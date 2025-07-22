@@ -88,7 +88,7 @@ func elfreloc1(r *ld.Reloc, sectoff int64) int {
 }
 
 func elfsetupplt() {
-	// TODO(aram)
+	// TODO(chai2010)
 	return
 }
 

@@ -84,7 +84,7 @@ func checkaddr(ctxt *Link, p *Prog, a *Addr) {
 	case TYPE_MEM:
 		return
 
-		// TODO(rsc): After fixing SHRQ, check a->index != 0 too.
+		// TODO(chai2010): After fixing SHRQ, check a->index != 0 too.
 	case TYPE_CONST:
 		if a.Name != 0 || a.Sym != nil || a.Reg != 0 {
 			ctxt.Diag("argument is TYPE_CONST, should be TYPE_ADDR, in %v", p)
@@ -102,8 +102,8 @@ func checkaddr(ctxt *Link, p *Prog, a *Addr) {
 		}
 		return
 
-	// TODO(rsc): After fixing PINSRQ, check a->offset != 0 too.
-	// TODO(rsc): After fixing SHRQ, check a->index != 0 too.
+	// TODO(chai2010): After fixing PINSRQ, check a->offset != 0 too.
+	// TODO(chai2010): After fixing SHRQ, check a->index != 0 too.
 	case TYPE_REG:
 		if a.Scale != 0 || a.Name != 0 || a.Sym != nil {
 			break

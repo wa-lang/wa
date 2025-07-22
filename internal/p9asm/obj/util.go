@@ -9,7 +9,6 @@ import (
 	"fmt"
 	"os"
 	"runtime"
-	"strconv"
 	"strings"
 	"time"
 )
@@ -21,17 +20,6 @@ func Cputime() float64 {
 		start = time.Now()
 	}
 	return time.Since(start).Seconds()
-}
-
-func Access(name string, mode int) int {
-	if mode != 0 {
-		panic("bad access")
-	}
-	_, err := os.Stat(name)
-	if err != nil {
-		return -1
-	}
-	return 0
 }
 
 func envOr(key, value string) string {
@@ -53,64 +41,8 @@ func Getwaos() string {
 	return envOr("WAOS", runtime.GOOS)
 }
 
-func Atoi(s string) int {
-	i, _ := strconv.Atoi(s)
-	return i
-}
-
 func (p *Prog) Line() string {
 	return p.Ctxt.LineHist.LineString(int(p.Lineno))
-}
-
-var armCondCode = []string{
-	".EQ",
-	".NE",
-	".CS",
-	".CC",
-	".MI",
-	".PL",
-	".VS",
-	".VC",
-	".HI",
-	".LS",
-	".GE",
-	".LT",
-	".GT",
-	".LE",
-	"",
-	".NV",
-}
-
-/* ARM scond byte */
-const (
-	C_SCOND     = (1 << 4) - 1
-	C_SBIT      = 1 << 4
-	C_PBIT      = 1 << 5
-	C_WBIT      = 1 << 6
-	C_FBIT      = 1 << 7
-	C_UBIT      = 1 << 7
-	C_SCOND_XOR = 14
-)
-
-// CConv formats ARM condition codes.
-func CConv(s uint8) string {
-	if s == 0 {
-		return ""
-	}
-	sc := armCondCode[(s&C_SCOND)^C_SCOND_XOR]
-	if s&C_SBIT != 0 {
-		sc += ".S"
-	}
-	if s&C_PBIT != 0 {
-		sc += ".P"
-	}
-	if s&C_WBIT != 0 {
-		sc += ".W"
-	}
-	if s&C_UBIT != 0 { /* ambiguous with FBIT */
-		sc += ".U"
-	}
-	return sc
 }
 
 func (p *Prog) String() string {
@@ -183,7 +115,7 @@ func Dconv(p *Prog, a *Addr) string {
 		}
 
 	case TYPE_REG:
-		// TODO(rsc): This special case is for x86 instructions like
+		// TODO(chai2010): This special case is for x86 instructions like
 		//	PINSRQ	CX,$1,X6
 		// where the $1 is included in the p->to Addr.
 		// Move into a new field.

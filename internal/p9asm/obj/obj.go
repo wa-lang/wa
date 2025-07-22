@@ -44,7 +44,7 @@ type LineStack struct {
 	AbsFile   string     // absolute file name, for pcln tables
 	FileLine  int        // line number in file at Lineno
 	Directive bool
-	Sym       *LSym // for linkgetline - TODO(rsc): remove
+	Sym       *LSym // for linkgetline - TODO(chai2010): remove
 }
 
 func (stk *LineStack) fileLineAt(lineno int) int {

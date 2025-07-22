@@ -362,7 +362,7 @@ func (r RegShiftReg) String() string {
 
 // A PCRel describes a memory address (usually a code label)
 // as a distance relative to the program counter.
-// TODO(rsc): Define which program counter (PC+4? PC+8? PC?).
+// TODO(chai2010): Define which program counter (PC+4? PC+8? PC?).
 type PCRel int32
 
 func (PCRel) IsArg() {}

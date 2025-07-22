@@ -87,7 +87,7 @@
 //
 // The file layout and meaning of type integers are architecture-independent.
 //
-// TODO(rsc): The file format is good for a first pass but needs work.
+// TODO(chai2010): The file format is good for a first pass but needs work.
 //	- There are SymID in the object file that should really just be strings.
 //	- The actual symbol memory images are interlaced with the symbol
 //	  metadata. They should be separated, to reduce the I/O required to
@@ -104,14 +104,6 @@ import (
 	"strings"
 
 	"wa-lang.org/wa/internal/p9asm/bio"
-)
-
-const (
-	MagicHeader = "\x00\x00wa01ld"
-	MagicFooter = "\xff\xffwa01ld"
-
-	MagicSymbolStart = 0xfe
-	MagicFooterStart = 0xff
 )
 
 // The Wa and C compilers, and the assembler, call writeobj to write

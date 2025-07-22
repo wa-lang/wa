@@ -380,7 +380,7 @@ func (d *Data) readType(name string, r typeReader, off Offset, typeCache map[Off
 		// Accumulate dimensions,
 		var dims []int64
 		for kid := next(); kid != nil; kid = next() {
-			// TODO(rsc): Can also be TagEnumerationType
+			// TODO(chai2010): Can also be TagEnumerationType
 			// but haven't seen that in the wild yet.
 			switch kid.Tag {
 			case TagSubrangeType:

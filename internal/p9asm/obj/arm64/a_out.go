@@ -286,7 +286,7 @@ const (
 	C_LACON // 32-bit offset in auto constant $a(FP)
 	C_AECON // ADDCON offset in extern constant $e(SB)
 
-	// TODO(aram): only one branch class should be enough
+	// TODO(chai2010): only one branch class should be enough
 	C_SBRA // for TYPE_BRANCH
 	C_LBRA
 
@@ -308,7 +308,7 @@ const (
 	C_SEXT16 // 0 to 65520
 	C_LEXT
 
-	// TODO(aram): s/AUTO/INDIR/
+	// TODO(chai2010): s/AUTO/INDIR/
 	C_ZOREG  // 0(R)
 	C_NPOREG // mirror NPAUTO, etc
 	C_NSOREG
@@ -321,7 +321,7 @@ const (
 	C_UOREG64K
 	C_LOREG
 
-	C_ADDR // TODO(aram): explain difference from C_VCONADDR
+	C_ADDR // TODO(chai2010): explain difference from C_VCONADDR
 	C_ROFF // register offset (including register extended)
 
 	C_GOK

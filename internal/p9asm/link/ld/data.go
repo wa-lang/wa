@@ -579,7 +579,7 @@ func relocsym(s *LSym) {
 			Diag("bad reloc size %#x for %s", uint32(siz), r.Sym.Name)
 			fallthrough
 
-			// TODO(rsc): Remove.
+			// TODO(chai2010): Remove.
 		case 1:
 			s.P[off] = byte(int8(o))
 

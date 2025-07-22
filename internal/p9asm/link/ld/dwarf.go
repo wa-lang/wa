@@ -2515,7 +2515,7 @@ func dwarfaddmachoheaders(ms *MachoSeg) {
 		}
 	}
 
-	// TODO(lvd) fix gdb/python to load MachO (16 char section name limit)
+	// TODO(chai2010) fix gdb/python to load MachO (16 char section name limit)
 	if gdbscriptsize > 0 {
 		msect := newMachoSect(ms, "__debug_gdb_scripts", "__DWARF")
 		msect.off = uint32(gdbscripto)

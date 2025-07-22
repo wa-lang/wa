@@ -403,7 +403,7 @@ func loadinternal(name string) {
 			if Debug['v'] != 0 {
 				fmt.Fprintf(&Bso, "searching for %s.a in %s\n", name, shlibname)
 			}
-			if obj.Access(shlibname, obj_AEXIST) >= 0 {
+			if Access(shlibname, obj_AEXIST) >= 0 {
 				addlibpath(Ctxt, "internal", "internal", "", name, shlibname)
 				found = 1
 				break
@@ -413,7 +413,7 @@ func loadinternal(name string) {
 		if Debug['v'] != 0 {
 			fmt.Fprintf(&Bso, "searching for %s.a in %s\n", name, pname)
 		}
-		if obj.Access(pname, obj_AEXIST) >= 0 {
+		if Access(pname, obj_AEXIST) >= 0 {
 			addlibpath(Ctxt, "internal", "internal", pname, name, "")
 			found = 1
 			break
@@ -529,7 +529,7 @@ func loadlib() {
 	// relocation. However, the Android and Darwin arm ports need it
 	// to be a real variable.
 	//
-	// TODO(crawshaw): android should require leaving the tlsg->type
+	// TODO(chai2010): android should require leaving the tlsg->type
 	// alone (as the runtime-provided SNOPTRBSS) just like darwin/arm.
 	// But some other part of the linker is expecting STLSBSS.
 	if tlsg.Type != obj.SDYNIMPORT && (waos != "darwin" || Thearch.Thechar != '5') {
@@ -924,7 +924,7 @@ func hostlink() {
 			argv = append(argv, "-shared")
 		}
 	case BuildmodeShared:
-		// TODO(mwhudson): unless you do this, dynamic relocations fill
+		// TODO(chai2010): unless you do this, dynamic relocations fill
 		// out the findfunctab table and for some reason shared libraries
 		// and the executable both define a main function and putting the
 		// address of executable's main into the shared libraries
@@ -1507,7 +1507,7 @@ func stkcheck(up *Chain, depth int) int {
 		// external function.
 		// should never be called directly.
 		// only diagnose the direct caller.
-		// TODO(mwhudson): actually think about this.
+		// TODO(chai2010): actually think about this.
 		if depth == 1 && s.Type != obj.SXREF && !DynlinkingWa() {
 			Diag("call to external function %s", s.Name)
 		}

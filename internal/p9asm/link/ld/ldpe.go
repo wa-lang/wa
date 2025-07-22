@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"log"
 	"sort"
+	"strconv"
 	"strings"
 
 	"wa-lang.org/wa/internal/p9asm/bio"
@@ -193,7 +194,8 @@ func ldpe(f *bio.Biobuf, pkg string, length int64, pn string) {
 		if peobj.sect[i].name[0] != '/' {
 			continue
 		}
-		l = uint32(obj.Atoi(peobj.sect[i].name[1:]))
+		v, _ := strconv.Atoi(peobj.sect[i].name[1:])
+		l = uint32(v)
 		peobj.sect[i].name = cstring(peobj.snames[l:])
 	}
 

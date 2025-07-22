@@ -82,7 +82,7 @@ func linknew(arch *LinkArch) *Link {
 	}
 
 	// Record thread-local storage offset.
-	// TODO(rsc): Move tlsoffset back into the linker.
+	// TODO(chai2010): Move tlsoffset back into the linker.
 	switch ctxt.Headtype {
 	default:
 		log.Fatalf("unknown thread-local storage offset for %s", Headstr(ctxt.Headtype))
