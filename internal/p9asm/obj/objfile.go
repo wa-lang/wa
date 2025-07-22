@@ -153,7 +153,7 @@ func Writeobjdirect(ctxt *Link, b *bio.Biobuf) {
 				a := new(Auto)
 				a.Asym = p.From.Sym
 				a.Aoffset = int32(p.From.Offset)
-				a.Name = int16(p.From.Name)
+				a.Name = p.From.Name
 				a.Watype = p.From.Watype
 				a.Link = curtext.Autom
 				curtext.Autom = a
@@ -512,7 +512,7 @@ func writesym(ctxt *Link, b *bio.Biobuf, s *LSym) {
 			wrint(b, int64(a.Aoffset))
 
 			// 类别
-			if a.Name == int16(NAME_AUTO) {
+			if a.Name == NAME_AUTO {
 				wrint(b, A_AUTO)
 			} else if a.Name == NAME_PARAM {
 				wrint(b, A_PARAM)

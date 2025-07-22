@@ -64,7 +64,7 @@ func savedata(ctxt *Link, s *LSym, p *Prog, pn string) {
 	}
 	Symgrow(ctxt, s, int64(off+siz))
 
-	switch int(p.To.Type) {
+	switch p.To.Type {
 	default:
 		ctxt.Diag("bad data: %v", p)
 
@@ -86,7 +86,7 @@ func savedata(ctxt *Link, s *LSym, p *Prog, pn string) {
 		copy(s.P[off:off+siz], p.To.Val.(string))
 
 	case TYPE_CONST, TYPE_ADDR:
-		if p.To.Sym != nil || int(p.To.Type) == TYPE_ADDR {
+		if p.To.Sym != nil || p.To.Type == TYPE_ADDR {
 			r := Addrel(s)
 			r.Off = off
 			r.Siz = uint8(siz)

@@ -43,7 +43,7 @@ import (
 type LSym struct {
 	Name       string
 	Extname    string
-	Type       int16
+	Type       obj.SymKind
 	Version    int16
 	Dupok      uint8
 	Cfunc      uint8
@@ -100,7 +100,7 @@ type Reloc struct {
 	Off     int32
 	Siz     uint8
 	Done    uint8
-	Type    int32
+	Type    obj.RelocType
 	Variant int32
 	Add     int64
 	Xadd    int64

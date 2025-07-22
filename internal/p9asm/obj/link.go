@@ -140,11 +140,11 @@ import (
 //		Register pair for ARM.
 //		TYPE_REGREG2
 type Addr struct {
-	Type   int16
+	Type   TypeType
 	Reg    int16
 	Index  int16
 	Scale  int16 // Sometimes holds a register.
-	Name   int8
+	Name   NameType
 	Class  int8
 	Etype  uint8
 	Offset int64
@@ -193,7 +193,7 @@ type Prog struct {
 }
 
 // From3Type returns From3.Type, or TYPE_NONE when From3 is nil.
-func (p *Prog) From3Type() int16 {
+func (p *Prog) From3Type() TypeType {
 	if p.From3 == nil {
 		return TYPE_NONE
 	}
@@ -221,7 +221,7 @@ type ProgInfo struct {
 // An LSym is the sort of symbol that is written to an object file.
 type LSym struct {
 	Name      string
-	Type      int16
+	Type      SymKind
 	Version   int16
 	Dupok     uint8
 	Cfunc     uint8
@@ -265,7 +265,7 @@ type Pcln struct {
 type Reloc struct {
 	Off  int32
 	Siz  uint8
-	Type int32
+	Type RelocType
 	Add  int64
 	Sym  *LSym
 }
@@ -274,7 +274,7 @@ type Auto struct {
 	Asym    *LSym
 	Link    *Auto
 	Aoffset int32
-	Name    int16
+	Name    NameType
 	Watype  *LSym
 }
 

@@ -771,7 +771,7 @@ func ldelf(f *bio.Biobuf, pkg string, length int64, pn string) {
 				rp.Sym = sym.sym
 			}
 
-			rp.Type = int32(reltype(pn, int(uint32(info)), &rp.Siz))
+			rp.Type = reltype(pn, int(uint32(info)), &rp.Siz)
 			if rela != 0 {
 				rp.Add = int64(add)
 			} else {
@@ -972,7 +972,7 @@ func (x rbyoff) Less(i, j int) bool {
 	return false
 }
 
-func reltype(pn string, elftype int, siz *uint8) int {
+func reltype(pn string, elftype int, siz *uint8) obj.RelocType {
 	switch uint32(Thearch.Thechar) | uint32(elftype)<<24 {
 	default:
 		Diag("%s: unknown relocation type %d; compiled without -fpic?", pn, elftype)
@@ -1018,5 +1018,6 @@ func reltype(pn string, elftype int, siz *uint8) int {
 		*siz = 8
 	}
 
-	return 256 + elftype
+	// TODO(chai2010): 增加了 256 的目的是什么?
+	return obj.RelocType(256 + elftype)
 }

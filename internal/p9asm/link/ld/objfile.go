@@ -159,7 +159,7 @@ func readsym(ctxt *Link, f *bio.Biobuf, pkg string, pn string) {
 	if f.Bgetc() != 0xfe {
 		log.Fatalf("readsym out of sync")
 	}
-	t := rdint(f)
+	t := obj.SymKind(rdint(f))
 	name := expandpkg(rdstring(f), pkg)
 	v := rdint(f)
 	if v != 0 && v != 1 {
@@ -215,9 +215,9 @@ overwrite:
 		log.Fatalf("missing type for %s in %s", name, pn)
 	}
 	if t == obj.SBSS && (s.Type == obj.SRODATA || s.Type == obj.SNOPTRBSS) {
-		t = int(s.Type)
+		t = s.Type
 	}
-	s.Type = int16(t)
+	s.Type = t
 	if s.Size < int64(size) {
 		s.Size = int64(size)
 	}
@@ -238,7 +238,7 @@ overwrite:
 			r = &s.R[i]
 			r.Off = rdint32(f)
 			r.Siz = rduint8(f)
-			r.Type = rdint32(f)
+			r.Type = obj.RelocType(rdint32(f))
 			r.Add = rdint64(f)
 			rdint64(f) // Xadd, ignored
 			r.Sym = rdsym(ctxt, f, pkg)

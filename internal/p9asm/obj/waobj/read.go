@@ -21,53 +21,49 @@ type SymKind int
 
 // This list is taken from include/link.h.
 
-// Defined SymKind values.
-// TODO(chai2010): Give idiomatic Wa names.
 // TODO(chai2010): Reduce the number of symbol types in the object files.
 const (
-	_ SymKind = iota
-
 	// readonly, executable
-	STEXT      SymKind = obj.STEXT
-	SELFRXSECT SymKind = obj.SELFRXSECT
+	STEXT      = obj.STEXT
+	SELFRXSECT = obj.SELFRXSECT
 
 	// readonly, non-executable
-	STYPE      SymKind = obj.STYPE
-	SSTRING    SymKind = obj.SSTRING
-	SWASTRING  SymKind = obj.SWASTRING
-	SWAFUNC    SymKind = obj.SWAFUNC
-	SRODATA    SymKind = obj.SRODATA
-	SFUNCTAB   SymKind = obj.SFUNCTAB
-	STYPELINK  SymKind = obj.STYPELINK
-	SSYMTAB    SymKind = obj.SSYMTAB // TODO: move to unmapped section
-	SPCLNTAB   SymKind = obj.SPCLNTAB
-	SELFROSECT SymKind = obj.SELFROSECT
+	STYPE      = obj.STYPE
+	SSTRING    = obj.SSTRING
+	SWASTRING  = obj.SWASTRING
+	SWAFUNC    = obj.SWAFUNC
+	SRODATA    = obj.SRODATA
+	SFUNCTAB   = obj.SFUNCTAB
+	STYPELINK  = obj.STYPELINK
+	SSYMTAB    = obj.SSYMTAB // TODO: move to unmapped section
+	SPCLNTAB   = obj.SPCLNTAB
+	SELFROSECT = obj.SELFROSECT
 
 	// writable, non-executable
-	SMACHOPLT  SymKind = obj.SMACHOPLT
-	SELFSECT   SymKind = obj.SELFSECT
-	SMACHO     SymKind = obj.SMACHO // Mach-O __nl_symbol_ptr
-	SMACHOGOT  SymKind = obj.SMACHOGOT
-	SWINDOWS   SymKind = obj.SWINDOWS
-	SELFGOT    SymKind = obj.SELFGOT
-	SNOPTRDATA SymKind = obj.SNOPTRDATA
-	SINITARR   SymKind = obj.SINITARR
-	SDATA      SymKind = obj.SDATA
-	SBSS       SymKind = obj.SBSS
-	SNOPTRBSS  SymKind = obj.SNOPTRBSS
-	STLSBSS    SymKind = obj.STLSBSS
+	SMACHOPLT  = obj.SMACHOPLT
+	SELFSECT   = obj.SELFSECT
+	SMACHO     = obj.SMACHO // Mach-O __nl_symbol_ptr
+	SMACHOGOT  = obj.SMACHOGOT
+	SWINDOWS   = obj.SWINDOWS
+	SELFGOT    = obj.SELFGOT
+	SNOPTRDATA = obj.SNOPTRDATA
+	SINITARR   = obj.SINITARR
+	SDATA      = obj.SDATA
+	SBSS       = obj.SBSS
+	SNOPTRBSS  = obj.SNOPTRBSS
+	STLSBSS    = obj.STLSBSS
 
 	// not mapped
-	SXREF             SymKind = obj.SXREF
-	SMACHOSYMSTR      SymKind = obj.SMACHOSYMSTR
-	SMACHOSYMTAB      SymKind = obj.SMACHOSYMTAB
-	SMACHOINDIRECTPLT SymKind = obj.SMACHOINDIRECTPLT
-	SMACHOINDIRECTGOT SymKind = obj.SMACHOINDIRECTGOT
-	SFILE             SymKind = obj.SFILE
-	SFILEPATH         SymKind = obj.SFILEPATH
-	SCONST            SymKind = obj.SCONST
-	SDYNIMPORT        SymKind = obj.SDYNIMPORT
-	SHOSTOBJ          SymKind = obj.SHOSTOBJ
+	SXREF             = obj.SXREF
+	SMACHOSYMSTR      = obj.SMACHOSYMSTR
+	SMACHOSYMTAB      = obj.SMACHOSYMTAB
+	SMACHOINDIRECTPLT = obj.SMACHOINDIRECTPLT
+	SMACHOINDIRECTGOT = obj.SMACHOINDIRECTGOT
+	SFILE             = obj.SFILE
+	SFILEPATH         = obj.SFILEPATH
+	SCONST            = obj.SCONST
+	SDYNIMPORT        = obj.SDYNIMPORT
+	SHOSTOBJ          = obj.SHOSTOBJ
 )
 
 var symKindStrings = []string{
@@ -115,14 +111,14 @@ func (k SymKind) String() string {
 
 // A Sym is a named symbol in an object file.
 type Sym struct {
-	SymID         // symbol identifier (name and version)
-	Kind  SymKind // kind of symbol
-	DupOK bool    // are duplicate definitions okay?
-	Size  int     // size of corresponding data
-	Type  SymID   // symbol for Wa type information
-	Data  Data    // memory image of symbol
-	Reloc []Reloc // relocations to apply to Data
-	Func  *Func   // additional data for functions
+	SymID             // symbol identifier (name and version)
+	Kind  obj.SymKind // kind of symbol
+	DupOK bool        // are duplicate definitions okay?
+	Size  int         // size of corresponding data
+	Type  SymID       // symbol for Wa type information
+	Data  Data        // memory image of symbol
+	Reloc []Reloc     // relocations to apply to Data
+	Func  *Func       // additional data for functions
 }
 
 // A SymID - the combination of Name and Version - uniquely identifies
@@ -616,7 +612,7 @@ func (r *objReader) parseObject() error {
 		r.p.Syms = append(r.p.Syms, s)
 
 		// 解析类型
-		s.Kind = SymKind(r.readInt())
+		s.Kind = obj.SymKind(r.readInt())
 
 		// 解析名字(含版本号)
 		s.SymID = r.readSymID()

@@ -104,7 +104,7 @@ func Dconv(p *Prog, a *Addr) string {
 		}
 
 		str = Rconv(int(a.Reg))
-		if a.Name != TYPE_NONE || a.Sym != nil {
+		if a.Name != NAME_NONE || a.Sym != nil {
 			str = fmt.Sprintf("%v(%v)(REG)", Mconv(a), Rconv(int(a.Reg)))
 		}
 
@@ -181,6 +181,7 @@ func Dconv(p *Prog, a *Addr) string {
 	return str
 }
 
+// 将表示地址的结构 *Addr 转换为字符串
 func Mconv(a *Addr) string {
 	var str string
 
@@ -234,8 +235,9 @@ func offConv(off int64) string {
 
 // 有bit位组成的寄存器列表转位字符串格式
 func regListConv(list int) string {
+	// 通常出现在ARM, 最多有16个寄存器列表
 	var sb strings.Builder
-	for i := 0; i < 16; i++ { // TODO: 16 is ARM-specific.
+	for i := 0; i < 16; i++ {
 		if list&(1<<uint(i)) != 0 {
 			if sb.Len() == 0 {
 				// 需要区分是否为第一个出现的寄存器

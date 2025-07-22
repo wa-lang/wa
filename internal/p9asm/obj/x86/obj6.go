@@ -680,11 +680,11 @@ func preprocess(ctxt *obj.Link, cursym *obj.LSym) {
 		}
 	}
 
-	var a int
+	var a obj.NameType
 	var pcsize int
 	for ; p != nil; p = p.Link {
 		pcsize = int(p.Mode) / 8
-		a = int(p.From.Name)
+		a = p.From.Name
 		if a == obj.NAME_AUTO {
 			p.From.Offset += int64(deltasp) - int64(bpsize)
 		}
@@ -692,7 +692,7 @@ func preprocess(ctxt *obj.Link, cursym *obj.LSym) {
 			p.From.Offset += int64(deltasp) + int64(pcsize)
 		}
 		if p.From3 != nil {
-			a = int(p.From3.Name)
+			a = p.From3.Name
 			if a == obj.NAME_AUTO {
 				p.From3.Offset += int64(deltasp) - int64(bpsize)
 			}
@@ -700,7 +700,7 @@ func preprocess(ctxt *obj.Link, cursym *obj.LSym) {
 				p.From3.Offset += int64(deltasp) + int64(pcsize)
 			}
 		}
-		a = int(p.To.Name)
+		a = p.To.Name
 		if a == obj.NAME_AUTO {
 			p.To.Offset += int64(deltasp) - int64(bpsize)
 		}

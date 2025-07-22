@@ -1830,9 +1830,9 @@ func Symaddr(s *LSym) int64 {
 	return s.Value
 }
 
-func xdefine(p string, t int, v int64) {
+func xdefine(p string, t obj.SymKind, v int64) {
 	s := Linklookup(Ctxt, p, 0)
-	s.Type = int16(t)
+	s.Type = t
 	s.Value = v
 	s.Reachable = true
 	s.Special = 1

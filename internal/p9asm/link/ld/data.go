@@ -1044,11 +1044,10 @@ func aligndatsize(datsize int64, s *LSym) int64 {
 
 // maxalign returns the maximum required alignment for
 // the list of symbols s; the list stops when s->type exceeds type.
-func maxalign(s *LSym, type_ int) int32 {
+func maxalign(s *LSym, type_ obj.SymKind) int32 {
 	var align int32
-
 	max := int32(0)
-	for ; s != nil && int(s.Type) <= type_; s = s.Next {
+	for ; s != nil && s.Type <= type_; s = s.Next {
 		align = symalign(s)
 		if max < align {
 			max = align
