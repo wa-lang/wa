@@ -224,6 +224,7 @@ func Mconv(a *Addr) string {
 	return str
 }
 
+// 为偏移量生成对应的汇编格式字符串
 func offConv(off int64) string {
 	if off == 0 {
 		return ""
@@ -231,25 +232,29 @@ func offConv(off int64) string {
 	return fmt.Sprintf("%+d", off)
 }
 
+// 有bit位组成的寄存器列表转位字符串格式
 func regListConv(list int) string {
-	str := ""
-
+	var sb strings.Builder
 	for i := 0; i < 16; i++ { // TODO: 16 is ARM-specific.
 		if list&(1<<uint(i)) != 0 {
-			if str == "" {
-				str += "["
+			if sb.Len() == 0 {
+				// 需要区分是否为第一个出现的寄存器
+				sb.WriteRune('[')
 			} else {
-				str += ","
+				sb.WriteRune(',')
 			}
-			// This is ARM-specific; R10 is g.
+			// 寄存器列表是 ARM 的用法, R10 对应 g 寄存器
 			if i == 10 {
-				str += "g"
+				sb.WriteRune('g')
 			} else {
-				str += fmt.Sprintf("R%d", i)
+				sb.WriteString(fmt.Sprintf("R%d", i))
 			}
 		}
 	}
-
-	str += "]"
-	return str
+	// 有可能没有任何寄存器
+	if sb.Len() == 0 {
+		sb.WriteRune('[')
+	}
+	sb.WriteRune(']')
+	return sb.String()
 }
