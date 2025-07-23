@@ -94,13 +94,13 @@ func arm64RegisterNumber(name string, n int16) (int16, bool) {
 
 // IsARM64CMP reports whether the op (as defined by an arm.A* constant) is
 // one of the comparison instructions that require special handling.
-func IsARM64CMP(op int) bool {
+func IsARM64CMP(op obj.As) bool {
 	panic("TODO")
 }
 
 // IsARM64STLXR reports whether the op (as defined by an arm64.A*
 // constant) is one of the STLXR-like instructions that require special
 // handling.
-func IsARM64STLXR(op int) bool {
+func IsARM64STLXR(op obj.As) bool {
 	panic("TODO")
 }

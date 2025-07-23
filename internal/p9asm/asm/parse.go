@@ -20,7 +20,7 @@ import (
 )
 
 // Plan9 汇编语言的伪指令
-var _Pseudos = map[string]int{
+var _Pseudos = map[string]obj.As{
 	"DATA":     obj.ADATA,
 	"FUNCDATA": obj.AFUNCDATA,
 	"GLOBL":    obj.AGLOBL,
@@ -204,7 +204,7 @@ func (p *Parser) line() bool {
 	return true
 }
 
-func (p *Parser) instruction(op int, word, cond string, operands [][]lex.Token) {
+func (p *Parser) instruction(op obj.As, word, cond string, operands [][]lex.Token) {
 	p.addr = p.addr[0:0]
 	isJump := p.arch.IsJump(word)
 	for _, op := range operands {
@@ -221,7 +221,7 @@ func (p *Parser) instruction(op int, word, cond string, operands [][]lex.Token) 
 	p.asmInstruction(op, cond, p.addr)
 }
 
-func (p *Parser) pseudo(op int, word string, operands [][]lex.Token) {
+func (p *Parser) pseudo(op obj.As, word string, operands [][]lex.Token) {
 	switch op {
 	case obj.ATEXT:
 		p.asmText(word, operands)

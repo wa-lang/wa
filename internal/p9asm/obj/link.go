@@ -140,11 +140,11 @@ import (
 //		Register pair for ARM.
 //		TYPE_REGREG2
 type Addr struct {
-	Type   TypeType
+	Type   AddrType
 	Reg    int16
 	Index  int16
 	Scale  int16 // Sometimes holds a register.
-	Name   NameType
+	Name   AddrName
 	Class  int8
 	Etype  uint8
 	Offset int64
@@ -177,7 +177,7 @@ type Prog struct {
 	Pc     int64
 	Lineno int32
 	Spadj  int32
-	As     int16
+	As     As
 	Reg    int16
 	RegTo2 int16 // 2nd register output operand
 	Mark   uint16
@@ -193,7 +193,7 @@ type Prog struct {
 }
 
 // From3Type returns From3.Type, or TYPE_NONE when From3 is nil.
-func (p *Prog) From3Type() TypeType {
+func (p *Prog) From3Type() AddrType {
 	if p.From3 == nil {
 		return TYPE_NONE
 	}
@@ -274,7 +274,7 @@ type Auto struct {
 	Asym    *LSym
 	Link    *Auto
 	Aoffset int32
-	Name    NameType
+	Name    AddrName
 	Watype  *LSym
 }
 
@@ -299,7 +299,7 @@ type Pciter struct {
 // Link holds the context for writing object code from a compiler
 // to be linker input or for reading that input into the linker.
 type Link struct {
-	Headtype           HExeType // waos 决定 link 文件类型
+	Headtype           HeadType // waos 决定 link 文件类型
 	Arch               *LinkArch
 	Debugasm           int32
 	Debugvlog          int32
@@ -363,7 +363,7 @@ type LinkArch struct {
 	Assemble   func(*Link, *LSym)
 	Follow     func(*Link, *LSym)
 	Progedit   func(*Link, *Prog)
-	UnaryDst   map[int]bool // Instruction takes one operand, a destination.
+	UnaryDst   map[As]bool // Instruction takes one operand, a destination.
 	Minlc      int
 	Ptrsize    int
 	Regsize    int

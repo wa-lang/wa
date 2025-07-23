@@ -172,7 +172,7 @@ var (
 	debug_s            int // backup old value of debug['s']
 	Ctxt               *Link
 	HEADR              int32
-	HEADTYPE           int32
+	HEADTYPE           obj.HeadType
 	INITRND            int32
 	INITTEXT           int64
 	INITDAT            int64
@@ -205,7 +205,7 @@ const (
 )
 
 var (
-	headstring string
+	//headstring string
 	// buffered output
 	Bso bio.Biobuf
 )
@@ -475,7 +475,7 @@ func loadlib() {
 		// dependency problems when compiling natively (external linking requires
 		// runtime/cgo, runtime/cgo requires cmd/cgo, but cmd/cgo needs to be
 		// compiled using external linking.)
-		if (Thearch.Thechar == '5' || Thearch.Thechar == '7') && HEADTYPE == int32(obj.Hdarwin) && iscgo {
+		if (Thearch.Thechar == '5' || Thearch.Thechar == '7') && HEADTYPE == obj.Hdarwin && iscgo {
 			Linkmode = LinkExternal
 		}
 	}
@@ -572,7 +572,7 @@ func loadlib() {
 	// binaries, so leave it enabled on OS X (Mach-O) binaries.
 	// Also leave it enabled on Solaris which doesn't support
 	// statically linked binaries.
-	if Buildmode == BuildmodeExe && havedynamic == 0 && HEADTYPE != int32(obj.Hdarwin) {
+	if Buildmode == BuildmodeExe && havedynamic == 0 && HEADTYPE != obj.Hdarwin {
 		Debug['d'] = 1
 	}
 
@@ -896,11 +896,11 @@ func hostlink() {
 		argv = append(argv, "-s")
 	}
 
-	if HEADTYPE == int32(obj.Hdarwin) {
+	if HEADTYPE == obj.Hdarwin {
 		argv = append(argv, "-Wl,-no_pie,-headerpad,1144")
 	}
-	if HEADTYPE == int32(obj.Hwindows) {
-		if headstring == "windowsgui" {
+	if HEADTYPE == obj.Hwindows {
+		if HEADTYPE.String() == "windowsgui" {
 			argv = append(argv, "-mwindows")
 		} else {
 			argv = append(argv, "-mconsole")
@@ -913,11 +913,11 @@ func hostlink() {
 
 	switch Buildmode {
 	case BuildmodeExe:
-		if HEADTYPE == int32(obj.Hdarwin) {
+		if HEADTYPE == obj.Hdarwin {
 			argv = append(argv, "-Wl,-pagezero_size,4000000")
 		}
 	case BuildmodeCShared:
-		if HEADTYPE == int32(obj.Hdarwin) {
+		if HEADTYPE == obj.Hdarwin {
 			argv = append(argv, "-dynamiclib")
 		} else {
 			argv = append(argv, "-Wl,-Bsymbolic")
@@ -1027,7 +1027,7 @@ func hostlink() {
 			}
 		}
 	}
-	if HEADTYPE == int32(obj.Hwindows) {
+	if HEADTYPE == obj.Hwindows {
 		argv = append(argv, peimporteddlls()...)
 	}
 
@@ -1047,7 +1047,7 @@ func hostlink() {
 		Bso.Flush()
 	}
 
-	if Debug['s'] == 0 && debug_s == 0 && HEADTYPE == int32(obj.Hdarwin) {
+	if Debug['s'] == 0 && debug_s == 0 && HEADTYPE == obj.Hdarwin {
 		// Skip combining dwarf on arm.
 		if Thearch.Thechar != '5' && Thearch.Thechar != '7' {
 			dsym := fmt.Sprintf("%s/go.dwarf", tmpdir)
@@ -1686,16 +1686,6 @@ func Cput(c uint8) {
 	coutbuf.WriteByte(c)
 }
 
-func setheadtype(s string) {
-	h := obj.Headtype(s)
-	if h < 0 {
-		Exitf("unknown header type -H %s", s)
-	}
-
-	headstring = s
-	HEADTYPE = int32(h)
-}
-
 func setinterp(s string) {
 	Debug['I'] = 1 // denote cmdline interpreter override
 	interpreter = s
@@ -1756,7 +1746,7 @@ func genasmsym(put func(*LSym, string, int, int64, int64, int, *LSym)) {
 			put(nil, s.Name, 'f', s.Value, 0, int(s.Version), nil)
 
 		case obj.SHOSTOBJ:
-			if HEADTYPE == int32(obj.Hwindows) || Iself {
+			if HEADTYPE == obj.Hwindows || Iself {
 				put(s, s.Name, 'U', s.Value, 0, int(s.Version), nil)
 			}
 

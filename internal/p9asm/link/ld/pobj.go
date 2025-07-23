@@ -176,7 +176,7 @@ func Ldmain() {
 
 	if outfile == "" {
 		outfile = "a.out"
-		if HEADTYPE == int32(obj.Hwindows) {
+		if HEADTYPE == obj.Hwindows {
 			outfile += ".exe"
 		}
 	}
@@ -184,12 +184,9 @@ func Ldmain() {
 	libinit() // creates outfile
 
 	if HEADTYPE == -1 {
-		HEADTYPE = int32(obj.Headtype(waos))
+		HEADTYPE.Set(waos)
 	}
-	Ctxt.Headtype = obj.HExeType(HEADTYPE)
-	if headstring == "" {
-		headstring = obj.HExeType(HEADTYPE).String()
-	}
+	Ctxt.Headtype = HEADTYPE
 
 	Thearch.Archinit()
 
@@ -235,11 +232,11 @@ func Ldmain() {
 	callgraph()
 
 	doelf()
-	if HEADTYPE == int32(obj.Hdarwin) {
+	if HEADTYPE == obj.Hdarwin {
 		domacho()
 	}
 	dostkcheck()
-	if HEADTYPE == int32(obj.Hwindows) {
+	if HEADTYPE == obj.Hwindows {
 		dope()
 	}
 	addexport()

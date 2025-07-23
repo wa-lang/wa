@@ -89,13 +89,13 @@ func archinit() {
 		ld.Linkmode = ld.LinkInternal
 	}
 
-	switch obj.HExeType(ld.HEADTYPE) {
+	switch ld.HEADTYPE {
 	default:
 		if ld.Linkmode == ld.LinkAuto {
 			ld.Linkmode = ld.LinkInternal
 		}
 		if ld.Linkmode == ld.LinkExternal && obj_Getgoextlinkenabled != "1" {
-			log.Fatalf("cannot use -linkmode=external with -H %s", obj.HExeType(ld.HEADTYPE))
+			log.Fatalf("cannot use -linkmode=external with -H %s", ld.HEADTYPE)
 		}
 
 	case obj.Hdarwin,
@@ -104,7 +104,7 @@ func archinit() {
 		break
 	}
 
-	switch obj.HExeType(ld.HEADTYPE) {
+	switch ld.HEADTYPE {
 	default:
 		ld.Exitf("unknown -H option: %v", ld.HEADTYPE)
 

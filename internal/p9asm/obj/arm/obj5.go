@@ -2,7 +2,7 @@ package arm
 
 import "wa-lang.org/wa/internal/p9asm/obj"
 
-var unaryDst = map[int]bool{
+var unaryDst = map[obj.As]bool{
 	ASWI:  true,
 	AWORD: true,
 }

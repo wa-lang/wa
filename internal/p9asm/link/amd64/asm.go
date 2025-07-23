@@ -243,7 +243,7 @@ func adddynrel(s *ld.LSym, r *ld.Reloc) {
 	switch r.Type {
 	case obj.R_CALL,
 		obj.R_PCREL:
-		if ld.HEADTYPE == int32(obj.Hwindows) {
+		if ld.HEADTYPE == obj.Hwindows {
 			// nothing to do, the relocation will be laid out in pereloc1
 			return
 		} else {
@@ -283,7 +283,7 @@ func adddynrel(s *ld.LSym, r *ld.Reloc) {
 			return
 		}
 
-		if ld.HEADTYPE == int32(obj.Hdarwin) && s.Size == int64(ld.Thearch.Ptrsize) && r.Off == 0 {
+		if ld.HEADTYPE == obj.Hdarwin && s.Size == int64(ld.Thearch.Ptrsize) && r.Off == 0 {
 			// Mach-O relocations are a royal pain to lay out.
 			// They use a compact stateful bytecode representation
 			// that is too much bother to deal with.
@@ -308,7 +308,7 @@ func adddynrel(s *ld.LSym, r *ld.Reloc) {
 			return
 		}
 
-		if ld.HEADTYPE == int32(obj.Hwindows) {
+		if ld.HEADTYPE == obj.Hwindows {
 			// nothing to do, the relocation will be laid out in pereloc1
 			return
 		}
@@ -558,7 +558,7 @@ func addpltsym(s *ld.LSym) {
 		ld.Adduint64(ld.Ctxt, rela, 0)
 
 		s.Plt = int32(plt.Size - 16)
-	} else if ld.HEADTYPE == int32(obj.Hdarwin) {
+	} else if ld.HEADTYPE == obj.Hdarwin {
 		// To do lazy symbol lookup right, we're supposed
 		// to tell the dynamic loader which library each
 		// symbol comes from and format the link info
@@ -600,7 +600,7 @@ func addgotsym(s *ld.LSym) {
 		ld.Addaddrplus(ld.Ctxt, rela, got, int64(s.Got))
 		ld.Adduint64(ld.Ctxt, rela, ld.ELF64_R_INFO(uint32(s.Dynid), ld.R_X86_64_GLOB_DAT))
 		ld.Adduint64(ld.Ctxt, rela, 0)
-	} else if ld.HEADTYPE == int32(obj.Hdarwin) {
+	} else if ld.HEADTYPE == obj.Hdarwin {
 		ld.Adduint32(ld.Ctxt, ld.Linklookup(ld.Ctxt, ".linkedit.got", 0), uint32(s.Dynid))
 	} else {
 		ld.Diag("addgotsym: unsupported binary format")
@@ -649,7 +649,7 @@ func asmb() {
 	ld.Datblk(int64(ld.Segdata.Vaddr), int64(ld.Segdata.Filelen))
 
 	machlink := int64(0)
-	if ld.HEADTYPE == int32(obj.Hdarwin) {
+	if ld.HEADTYPE == obj.Hdarwin {
 		if ld.Debug['v'] != 0 {
 			fmt.Fprintf(&ld.Bso, "%5.2f dwarf\n", obj.Cputime())
 		}
@@ -664,9 +664,9 @@ func asmb() {
 		machlink = ld.Domacholink()
 	}
 
-	switch obj.HExeType(ld.HEADTYPE) {
+	switch ld.HEADTYPE {
 	default:
-		ld.Diag("unknown header type %d", ld.HEADTYPE)
+		ld.Diag("unknown header type %v", ld.HEADTYPE)
 		fallthrough
 
 	case obj.Helf:
@@ -691,7 +691,7 @@ func asmb() {
 			fmt.Fprintf(&ld.Bso, "%5.2f sym\n", obj.Cputime())
 		}
 		ld.Bso.Flush()
-		switch obj.HExeType(ld.HEADTYPE) {
+		switch ld.HEADTYPE {
 		default:
 		case obj.Helf:
 			ld.Debug['s'] = 1
@@ -710,7 +710,7 @@ func asmb() {
 		}
 
 		ld.Cseek(symo)
-		switch obj.HExeType(ld.HEADTYPE) {
+		switch ld.HEADTYPE {
 		default:
 			if ld.Iself {
 				ld.Cseek(symo)
@@ -748,7 +748,7 @@ func asmb() {
 	}
 	ld.Bso.Flush()
 	ld.Cseek(0)
-	switch obj.HExeType(ld.HEADTYPE) {
+	switch ld.HEADTYPE {
 	default:
 	case obj.Hdarwin:
 		ld.Asmbmacho()

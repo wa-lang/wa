@@ -63,9 +63,8 @@ func Linknew(arch *LinkArch, waos string) *Link {
 	ctxt.LineHist.WAROOT_FINAL = ctxt.Waroot_final
 	ctxt.LineHist.Dir = ctxt.Pathname
 
-	ctxt.Headtype = Headtype(ctxt.Waos)
-	if ctxt.Headtype < 0 {
-		log.Fatalf("unknown waos %s", ctxt.Waos)
+	if err := ctxt.Headtype.Set(ctxt.Waos); err != nil {
+		log.Fatal(err)
 	}
 
 	// Record thread-local storage offset.

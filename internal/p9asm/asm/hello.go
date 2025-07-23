@@ -12,13 +12,14 @@ import (
 	"wa-lang.org/wa/internal/p9asm/asm"
 	"wa-lang.org/wa/internal/p9asm/asm/arch"
 	"wa-lang.org/wa/internal/p9asm/asm/lex"
+	"wa-lang.org/wa/internal/p9asm/bio"
 	"wa-lang.org/wa/internal/p9asm/obj"
 )
 
 func main() {
 	flags := &arch.Flags{}
 	arch := arch.Set(arch.AMD64)
-	ctxt := obj.Linknew(arch.LinkArch)
+	ctxt := obj.Linknew(arch.LinkArch, "linux")
 
 	lexer, err := lex.NewLexer("hello.p9asm", ctxt, flags)
 	if err != nil {
@@ -33,7 +34,7 @@ func main() {
 	}
 
 	var buf bytes.Buffer
-	output := obj.Binitw(&buf)
+	output := bio.Binitw(&buf)
 	obj.Writeobjdirect(ctxt, output)
 	output.Flush()
 

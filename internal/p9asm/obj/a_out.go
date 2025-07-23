@@ -8,10 +8,14 @@ import (
 	"strconv"
 )
 
+// 指令机器码
+type As int16
+
 // 各个平台通用的指令
 // 平台特殊的指令从 A_ARCHSPECIFIC 开始定义
+// TODO(chai2010): 精简伪指令
 const (
-	AXXX = 0 + iota
+	AXXX As = iota
 	ACALL
 	ACHECKNIL
 	ADATA
@@ -72,19 +76,20 @@ const (
 
 // 每个平台寄存也有独立的空间
 // 比如 RBaseAMD64 开始的是 AMD64 平台的特有的寄存器
+// 每个平台寄存器范围不超过 1k
 const (
-	REG_NONE     = 0 // 寄存器编号为空
-	RBase386     = 1 * 1024
-	RBaseAMD64   = 2 * 1024
-	RBaseARM     = 3 * 1024
-	RBaseARM64   = 8 * 1024  // range [8k, 13k)
-	RBaseRISCV   = 15 * 1024 // range [15k, 16k)
-	RBaseLOONG64 = 19 * 1024 // range [19K, 22k)
+	REG_NONE = iota * 1024 // 寄存器编号为空
+	RBase386
+	RBaseAMD64
+	RBaseARM
+	RBaseARM64
+	RBaseRISCV
+	RBaseLOONG64
 )
 
 // 机器码和对应的名字
 type opSet struct {
-	lo    int
+	lo    As
 	names []string
 }
 
@@ -92,18 +97,18 @@ type opSet struct {
 var aSpace []opSet
 
 // 注册不同平台的指令区间
-func RegisterOpcode(lo int, Anames []string) {
+func RegisterOpcode(lo As, Anames []string) {
 	aSpace = append(aSpace, opSet{lo, Anames})
 }
 
 // 指令机器码转为字符串名字
-func Aconv(a int) string {
+func Aconv(a As) string {
 	if a < A_ARCHSPECIFIC {
 		return Anames[a]
 	}
 	for i := range aSpace {
 		as := &aSpace[i]
-		if as.lo <= a && a < as.lo+len(as.names) {
+		if as.lo <= a && a < as.lo+As(len(as.names)) {
 			return as.names[a-as.lo]
 		}
 	}
@@ -143,10 +148,10 @@ func Rconv(reg int) string {
 // executable header types
 
 // 可执行文件头类型
-type HExeType int
+type HeadType int
 
 const (
-	Hunknown HExeType = 0 + iota
+	Hunknown HeadType = 0 + iota
 	Hdarwin
 	Helf
 	Hlinux
@@ -155,7 +160,7 @@ const (
 
 var headers = []struct {
 	name string
-	val  HExeType
+	val  HeadType
 }{
 	{"darwin", Hdarwin},
 	{"elf", Helf},
@@ -165,16 +170,17 @@ var headers = []struct {
 	{"windowsgui", Hwindows},
 }
 
-func Headtype(name string) HExeType {
+func (h *HeadType) Set(name string) error {
 	for i := 0; i < len(headers); i++ {
 		if name == headers[i].name {
-			return headers[i].val
+			*h = headers[i].val
+			return nil
 		}
 	}
-	return -1
+	return fmt.Errorf("invalid headtype: %q", name)
 }
 
-func (v HExeType) String() string {
+func (v HeadType) String() string {
 	for i := 0; i < len(headers); i++ {
 		if v == headers[i].val {
 			return headers[i].name
@@ -368,10 +374,10 @@ const (
 )
 
 // 符号(LSym)名字类别定义
-type NameType int8
+type AddrName int8
 
 const (
-	NAME_NONE   NameType = 0 + iota
+	NAME_NONE   AddrName = 0 + iota
 	NAME_EXTERN          // 外部符号, 对应 ELF中的 STB_GLOBAL
 	NAME_STATIC          // 文件级私有静态符号, 对应 ELF 中的 STB_LOCAL
 	NAME_AUTO            // 函数内部的自动变量(栈上变量, 较少直接暴露), 但在 debug 或 backend 编译阶段会存在
@@ -385,21 +391,21 @@ const (
 )
 
 // 操作数类型常量
-type TypeType int16
+type AddrType int16
 
 const (
-	TYPE_NONE     TypeType = 0        // 操作数不存在
-	TYPE_BRANCH   TypeType = 5 + iota // 跳转地址, 例如 JMP target
-	TYPE_TEXTSIZE                     // 用于 .text 段中设置函数大小的标记(用于链接器调试或优化目的)
-	TYPE_MEM                          // 内存访问, 例如 [R1+4] 在 MOV 等指令中用于读取或写入内存
-	TYPE_CONST                        // 整型常量值, 例如 MOV $1, R0 中的 $1
-	TYPE_FCONST                       // 浮点常量, 例如 $3.14
-	TYPE_SCONST                       // 字符串常量, 例 .string "hello"
-	TYPE_REG                          // 单一寄存器, 如 AX, R1, X0
-	TYPE_ADDR                         // 地址引用, 比如 MOV $foo(SB), AX 中的 foo(SB). 这是静态地址访问, 常用于全局变量
-	TYPE_SHIFT                        // 表示移位操作, 常见于 ARM 或其他 RISC 架构. 如 LSL R1, R2, #3 (逻辑左移)
-	TYPE_REGREG                       // 两个寄存器, 例如 CMP R1, R2
-	TYPE_REGREG2                      // 用于三寄存器形式的指令, 或者链接器特殊用途
-	TYPE_INDIR                        // 间接寻址, 如 *(R1) 或 [R1]. 可与 TYPE_MEM 组合使用?
-	TYPE_REGLIST                      // 寄存器列表, 常用于 PUSH {R1-R4} 或 POP 操作, 在 ARM 架构中常见
+	TYPE_NONE     AddrType = iota // 操作数不存在
+	TYPE_BRANCH                   // 跳转地址, 例如 JMP target
+	TYPE_TEXTSIZE                 // 用于 .text 段中设置函数大小的标记(用于链接器调试或优化目的)
+	TYPE_MEM                      // 内存访问, 例如 [R1+4] 在 MOV 等指令中用于读取或写入内存
+	TYPE_CONST                    // 整型常量值, 例如 MOV $1, R0 中的 $1
+	TYPE_FCONST                   // 浮点常量, 例如 $3.14
+	TYPE_SCONST                   // 字符串常量, 例 .string "hello"
+	TYPE_REG                      // 单一寄存器, 如 AX, R1, X0
+	TYPE_ADDR                     // 地址引用, 比如 MOV $foo(SB), AX 中的 foo(SB). 这是静态地址访问, 常用于全局变量
+	TYPE_SHIFT                    // 表示移位操作, 常见于 ARM 或其他 RISC 架构. 如 LSL R1, R2, #3 (逻辑左移)
+	TYPE_REGREG                   // 两个寄存器, 例如 CMP R1, R2
+	TYPE_REGREG2                  // 用于三寄存器形式的指令, 或者链接器特殊用途
+	TYPE_INDIR                    // 间接寻址, 如 *(R1) 或 [R1]. 可与 TYPE_MEM 组合使用?
+	TYPE_REGLIST                  // 寄存器列表, 常用于 PUSH {R1-R4} 或 POP 操作, 在 ARM 架构中常见
 )

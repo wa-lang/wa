@@ -28,7 +28,7 @@ const (
 )
 
 type Optab struct {
-	as    int
+	as    obj.As
 	from1 uint8
 	reg   uint8
 	from3 uint8
@@ -357,7 +357,7 @@ var optab = []Optab{
 	{obj.AXXX, C_NONE, C_NONE, C_NONE, C_NONE, C_NONE, 0, 4, 0, 0},
 }
 
-var atomicInst = map[int]uint32{
+var atomicInst = map[obj.As]uint32{
 	AAMSWAPB:   0x070B8 << 15, // amswap.b
 	AAMSWAPH:   0x070B9 << 15, // amswap.h
 	AAMSWAPW:   0x070C0 << 15, // amswap.w
@@ -408,7 +408,7 @@ var atomicInst = map[int]uint32{
 	AAMMINDBVU: 0x070E3 << 15, // ammin_db.du
 }
 
-func IsAtomicInst(as int) bool {
+func IsAtomicInst(as obj.As) bool {
 	_, ok := atomicInst[as]
 
 	return ok

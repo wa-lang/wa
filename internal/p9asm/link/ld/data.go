@@ -462,7 +462,7 @@ func relocsym(s *LSym) {
 					if Thearch.Thechar == '6' {
 						o = 0
 					}
-				} else if HEADTYPE == int32(obj.Hdarwin) {
+				} else if HEADTYPE == obj.Hdarwin {
 					// ld64 for arm64 has a bug where if the address pointed to by o exists in the
 					// symbol table (dynid >= 0), or is inside a symbol that exists in the symbol
 					// table, then it will add o twice into the relocated value.
@@ -476,10 +476,10 @@ func relocsym(s *LSym) {
 							o += Symaddr(rs)
 						}
 					}
-				} else if HEADTYPE == int32(obj.Hwindows) {
+				} else if HEADTYPE == obj.Hwindows {
 					// nothing to do
 				} else {
-					Diag("unhandled pcrel relocation for %s", headstring)
+					Diag("unhandled pcrel relocation for %s", HEADTYPE)
 				}
 
 				break
@@ -522,7 +522,7 @@ func relocsym(s *LSym) {
 					if Thearch.Thechar == '6' {
 						o = 0
 					}
-				} else if HEADTYPE == int32(obj.Hdarwin) {
+				} else if HEADTYPE == obj.Hdarwin {
 					if r.Type == obj.R_CALL {
 						if rs.Type != obj.SHOSTOBJ {
 							o += int64(uint64(Symaddr(rs)) - rs.Sect.Vaddr)
@@ -531,7 +531,7 @@ func relocsym(s *LSym) {
 					} else {
 						o += int64(r.Siz)
 					}
-				} else if HEADTYPE == int32(obj.Hwindows) && Thearch.Thechar == '6' { // only amd64 needs PCREL
+				} else if HEADTYPE == obj.Hwindows && Thearch.Thechar == '6' { // only amd64 needs PCREL
 					// PE/COFF's PC32 relocation uses the address after the relocated
 					// bytes as the base. Compensate by skewing the addend.
 					o += int64(r.Siz)
@@ -539,7 +539,7 @@ func relocsym(s *LSym) {
 					// relocated address, compensate that.
 					o -= int64(s.Sect.Vaddr - PEBASE)
 				} else {
-					Diag("unhandled pcrel relocation for %s", headstring)
+					Diag("unhandled pcrel relocation for %s", HEADTYPE)
 				}
 
 				break
@@ -625,7 +625,7 @@ func reloc() {
 }
 
 func dynrelocsym(s *LSym) {
-	if HEADTYPE == int32(obj.Hwindows) && Linkmode != LinkExternal {
+	if HEADTYPE == obj.Hwindows && Linkmode != LinkExternal {
 		rel := Linklookup(Ctxt, ".rel", 0)
 		if s == rel {
 			return
@@ -684,7 +684,7 @@ func dynrelocsym(s *LSym) {
 func dynreloc() {
 	// -d suppresses dynamic loader format, so we may as well not
 	// compute these sections or mark their symbols as reachable.
-	if Debug['d'] != 0 && HEADTYPE != int32(obj.Hwindows) {
+	if Debug['d'] != 0 && HEADTYPE != obj.Hwindows {
 		return
 	}
 	if Debug['v'] != 0 {
@@ -1174,7 +1174,7 @@ func dodata() {
 	 *
 	 * on darwin, we need the symbol table numbers for dynreloc.
 	 */
-	if HEADTYPE == int32(obj.Hdarwin) {
+	if HEADTYPE == obj.Hdarwin {
 		machosymorder()
 	}
 	dynreloc()
@@ -1665,7 +1665,7 @@ func address() {
 	Segdata.Vaddr = va
 	Segdata.Fileoff = va - Segtext.Vaddr + Segtext.Fileoff
 	Segdata.Filelen = 0
-	if HEADTYPE == int32(obj.Hwindows) {
+	if HEADTYPE == obj.Hwindows {
 		Segdata.Fileoff = Segtext.Fileoff + uint64(Rnd(int64(Segtext.Length), PEFILEALIGN))
 	}
 

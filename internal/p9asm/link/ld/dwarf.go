@@ -684,7 +684,7 @@ func adddwarfrel(sec *LSym, sym *LSym, offsetbase int64, siz int, addend int64) 
 	if Iself && Thearch.Thechar == '6' {
 		addend = 0
 	}
-	if HEADTYPE == int32(obj.Hdarwin) {
+	if HEADTYPE == obj.Hdarwin {
 		addend += sym.Value
 	}
 	switch siz {
@@ -1996,7 +1996,7 @@ func writegdbscript() int64 {
 }
 
 func align(size int64) {
-	if HEADTYPE == int32(obj.Hwindows) { // Only Windows PE need section align.
+	if HEADTYPE == obj.Hwindows { // Only Windows PE need section align.
 		strnput("", int(Rnd(size, PEFILEALIGN)-size))
 	}
 }
@@ -2010,7 +2010,7 @@ func writedwarfreloc(s *LSym) int64 {
 		r = &s.R[ri]
 		if Iself {
 			i = Thearch.Elfreloc1(r, int64(r.Off))
-		} else if HEADTYPE == int32(obj.Hdarwin) {
+		} else if HEADTYPE == obj.Hdarwin {
 			i = Thearch.Machoreloc1(r, int64(r.Off))
 		} else {
 			i = -1
@@ -2046,10 +2046,10 @@ func Dwarfemitdebugsections() {
 	}
 
 	if Linkmode == LinkExternal {
-		if !Iself && HEADTYPE != int32(obj.Hdarwin) {
+		if !Iself && HEADTYPE != obj.Hdarwin {
 			return
 		}
-		if HEADTYPE == int32(obj.Hdarwin) {
+		if HEADTYPE == obj.Hdarwin {
 			sect := Segdata.Sect
 			// find the last section.
 			for sect.Next != nil {
@@ -2163,7 +2163,7 @@ func Dwarfemitdebugsections() {
 	for Cpos()&7 != 0 {
 		Cput(0)
 	}
-	if HEADTYPE != int32(obj.Hdarwin) {
+	if HEADTYPE != obj.Hdarwin {
 		dwarfemitreloc()
 	}
 }

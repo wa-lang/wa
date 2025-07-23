@@ -46,7 +46,7 @@ type Arch struct {
 
 	// 指令集表
 	// 比如 X86 平台的 JCC 指令对应 x86.AJCC
-	Instructions map[string]int
+	Instructions map[string]obj.As
 
 	// 通用寄存器表
 	// 比如 X86 平台的 AX 寄存器对应 x86.REG_AX
@@ -89,7 +89,7 @@ func archX86(CPU CPUType, linkArch *obj.LinkArch) *Arch {
 		CPU:      CPU,
 		LinkArch: linkArch,
 
-		Instructions:   map[string]int{},
+		Instructions:   map[string]obj.As{},
 		Register:       map[string]int16{},
 		RegisterPrefix: map[string]bool{},
 	}
@@ -112,11 +112,12 @@ func archX86(CPU CPUType, linkArch *obj.LinkArch) *Arch {
 
 	// 初始化 Plan9 汇编语言的通用指令
 	for i, s := range obj.Anames {
-		p.Instructions[s] = i
+		p.Instructions[s] = obj.As(i)
 	}
 
 	// 初始化 X86 平台的指令
 	for i, s := range x86.Anames {
+		i := obj.As(i)
 		if i >= obj.A_ARCHSPECIFIC {
 			p.Instructions[s] = i + obj.ABaseAMD64
 		}
@@ -192,7 +193,7 @@ func archArm64(CPU CPUType, linkArch *obj.LinkArch) *Arch {
 		CPU:      CPU,
 		LinkArch: linkArch,
 
-		Instructions:   map[string]int{},
+		Instructions:   map[string]obj.As{},
 		Register:       map[string]int16{},
 		RegisterPrefix: map[string]bool{},
 	}
@@ -264,11 +265,12 @@ func archArm64(CPU CPUType, linkArch *obj.LinkArch) *Arch {
 
 	// 注册 Plan9 汇编语言通用指令
 	for i, s := range obj.Anames {
-		p.Instructions[s] = i
+		p.Instructions[s] = obj.As(i)
 	}
 
 	// 注册 ARM64 指令
 	for i, s := range arm64.Anames {
+		i := obj.As(i)
 		if i >= obj.A_ARCHSPECIFIC {
 			p.Instructions[s] = i + obj.ABaseARM64
 		}
@@ -290,7 +292,7 @@ func archArm(CPU CPUType, linkArch *obj.LinkArch) *Arch {
 		CPU:      CPU,
 		LinkArch: linkArch,
 
-		Instructions:   map[string]int{},
+		Instructions:   map[string]obj.As{},
 		Register:       map[string]int16{},
 		RegisterPrefix: map[string]bool{},
 	}
@@ -327,9 +329,10 @@ func archArm(CPU CPUType, linkArch *obj.LinkArch) *Arch {
 	p.Register["MB_OSHST"] = arm.REG_MB_OSHST
 
 	for i, s := range obj.Anames {
-		p.Instructions[s] = i
+		p.Instructions[s] = obj.As(i)
 	}
 	for i, s := range arm.Anames {
+		i := obj.As(i)
 		if i >= obj.A_ARCHSPECIFIC {
 			p.Instructions[s] = i + obj.ABaseARM
 		}
@@ -352,7 +355,7 @@ func archLoong64(CPU CPUType, linkArch *obj.LinkArch) *Arch {
 		CPU:      CPU,
 		LinkArch: linkArch,
 
-		Instructions:   map[string]int{},
+		Instructions:   map[string]obj.As{},
 		Register:       map[string]int16{},
 		RegisterPrefix: map[string]bool{},
 	}
@@ -403,9 +406,10 @@ func archLoong64(CPU CPUType, linkArch *obj.LinkArch) *Arch {
 	p.RegisterNumber = loong64RegisterNumber
 
 	for i, s := range obj.Anames {
-		p.Instructions[s] = i
+		p.Instructions[s] = obj.As(i)
 	}
 	for i, s := range loong64.Anames {
+		i := obj.As(i)
 		if i >= obj.A_ARCHSPECIFIC {
 			p.Instructions[s] = i + obj.ABaseLoong64
 		}
@@ -424,7 +428,7 @@ func archRISCV64(CPU CPUType, linkArch *obj.LinkArch, shared bool) *Arch {
 		CPU:      CPU,
 		LinkArch: linkArch,
 
-		Instructions:   map[string]int{},
+		Instructions:   map[string]obj.As{},
 		Register:       map[string]int16{},
 		RegisterPrefix: map[string]bool{},
 	}
@@ -531,9 +535,10 @@ func archRISCV64(CPU CPUType, linkArch *obj.LinkArch, shared bool) *Arch {
 	p.Register["PC"] = RPC
 
 	for i, s := range obj.Anames {
-		p.Instructions[s] = i
+		p.Instructions[s] = obj.As(i)
 	}
 	for i, s := range riscv.Anames {
+		i := obj.As(i)
 		if i >= obj.A_ARCHSPECIFIC {
 			p.Instructions[s] = i + obj.ABaseRISCV
 		}

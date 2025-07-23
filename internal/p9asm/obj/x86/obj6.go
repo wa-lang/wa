@@ -680,7 +680,7 @@ func preprocess(ctxt *obj.Link, cursym *obj.LSym) {
 		}
 	}
 
-	var a obj.NameType
+	var a obj.AddrName
 	var pcsize int
 	for ; p != nil; p = p.Link {
 		pcsize = int(p.Mode) / 8
@@ -841,7 +841,7 @@ func stacksplit(ctxt *obj.Link, p *obj.Prog, framesize int32, textarg int32) *ob
 		//	CMPQ SP, stackguard
 		p = obj.Appendp(ctxt, p)
 
-		p.As = int16(cmp)
+		p.As = cmp
 		p.From.Type = obj.TYPE_REG
 		p.From.Reg = REG_SP
 		indir_cx(ctxt, p, &p.To)
@@ -855,7 +855,7 @@ func stacksplit(ctxt *obj.Link, p *obj.Prog, framesize int32, textarg int32) *ob
 		//	CMPQ AX, stackguard
 		p = obj.Appendp(ctxt, p)
 
-		p.As = int16(lea)
+		p.As = lea
 		p.From.Type = obj.TYPE_MEM
 		p.From.Reg = REG_SP
 		p.From.Offset = -(int64(framesize) - obj.StackSmall)
@@ -863,7 +863,7 @@ func stacksplit(ctxt *obj.Link, p *obj.Prog, framesize int32, textarg int32) *ob
 		p.To.Reg = REG_AX
 
 		p = obj.Appendp(ctxt, p)
-		p.As = int16(cmp)
+		p.As = cmp
 		p.From.Type = obj.TYPE_REG
 		p.From.Reg = REG_AX
 		indir_cx(ctxt, p, &p.To)
@@ -889,7 +889,7 @@ func stacksplit(ctxt *obj.Link, p *obj.Prog, framesize int32, textarg int32) *ob
 
 		p = obj.Appendp(ctxt, p)
 
-		p.As = int16(mov)
+		p.As = mov
 		indir_cx(ctxt, p, &p.From)
 		p.From.Offset = 2 * int64(ctxt.Arch.Ptrsize) // G.stackguard0
 		if ctxt.Cursym.Cfunc != 0 {
@@ -899,7 +899,7 @@ func stacksplit(ctxt *obj.Link, p *obj.Prog, framesize int32, textarg int32) *ob
 		p.To.Reg = REG_SI
 
 		p = obj.Appendp(ctxt, p)
-		p.As = int16(cmp)
+		p.As = cmp
 		p.From.Type = obj.TYPE_REG
 		p.From.Reg = REG_SI
 		p.To.Type = obj.TYPE_CONST
@@ -914,7 +914,7 @@ func stacksplit(ctxt *obj.Link, p *obj.Prog, framesize int32, textarg int32) *ob
 		q1 = p
 
 		p = obj.Appendp(ctxt, p)
-		p.As = int16(lea)
+		p.As = lea
 		p.From.Type = obj.TYPE_MEM
 		p.From.Reg = REG_SP
 		p.From.Offset = obj.StackGuard
@@ -922,14 +922,14 @@ func stacksplit(ctxt *obj.Link, p *obj.Prog, framesize int32, textarg int32) *ob
 		p.To.Reg = REG_AX
 
 		p = obj.Appendp(ctxt, p)
-		p.As = int16(sub)
+		p.As = sub
 		p.From.Type = obj.TYPE_REG
 		p.From.Reg = REG_SI
 		p.To.Type = obj.TYPE_REG
 		p.To.Reg = REG_AX
 
 		p = obj.Appendp(ctxt, p)
-		p.As = int16(cmp)
+		p.As = cmp
 		p.From.Type = obj.TYPE_REG
 		p.From.Reg = REG_AX
 		p.To.Type = obj.TYPE_CONST
@@ -982,7 +982,7 @@ func follow(ctxt *obj.Link, s *obj.LSym) {
 	s.Text = firstp.Link
 }
 
-func nofollow(a int) bool {
+func nofollow(a obj.As) bool {
 	switch a {
 	case obj.AJMP,
 		obj.ARET,
@@ -999,7 +999,7 @@ func nofollow(a int) bool {
 	return false
 }
 
-func pushpop(a int) bool {
+func pushpop(a obj.As) bool {
 	switch a {
 	case APUSHL,
 		APUSHFL,
@@ -1019,7 +1019,7 @@ func pushpop(a int) bool {
 	return false
 }
 
-func relinv(a int16) int16 {
+func relinv(a obj.As) obj.As {
 	switch a {
 	case AJEQ:
 		return AJNE
@@ -1055,14 +1055,14 @@ func relinv(a int16) int16 {
 		return AJOS
 	}
 
-	log.Fatalf("unknown relation: %s", obj.Aconv(int(a)))
+	log.Fatalf("unknown relation: %s", obj.Aconv(a))
 	return 0
 }
 
 func xfol(ctxt *obj.Link, p *obj.Prog, last **obj.Prog) {
 	var q *obj.Prog
 	var i int
-	var a int
+	var a obj.As
 
 loop:
 	if p == nil {
@@ -1095,7 +1095,7 @@ loop:
 			if q == *last {
 				break
 			}
-			a = int(q.As)
+			a = q.As
 			if a == obj.ANOP {
 				i--
 				continue
@@ -1121,7 +1121,7 @@ loop:
 				q.Mark = 1
 				(*last).Link = q
 				*last = q
-				if int(q.As) != a || q.Pcond == nil || q.Pcond.Mark != 0 {
+				if q.As != a || q.Pcond == nil || q.Pcond.Mark != 0 {
 					continue
 				}
 
@@ -1152,7 +1152,7 @@ loop:
 
 	(*last).Link = p
 	*last = p
-	a = int(p.As)
+	a = p.As
 
 	/* continue loop with what comes after p */
 	if nofollow(a) {
@@ -1178,7 +1178,7 @@ loop:
 				 * expect conditional jump to be taken.
 				 * rewrite so that's the fall-through case.
 				 */
-				p.As = relinv(int16(a))
+				p.As = relinv(a)
 
 				q = p.Link
 				p.Link = p.Pcond
@@ -1188,7 +1188,7 @@ loop:
 			q = p.Link
 			if q.Mark != 0 {
 				if a != ALOOP {
-					p.As = relinv(int16(a))
+					p.As = relinv(a)
 					p.Link = p.Pcond
 					p.Pcond = q
 				}
@@ -1207,7 +1207,7 @@ loop:
 	goto loop
 }
 
-var unaryDst = map[int]bool{
+var unaryDst = map[obj.As]bool{
 	ABSWAPL:    true,
 	ABSWAPQ:    true,
 	ACMPXCHG8B: true,

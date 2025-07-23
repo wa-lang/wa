@@ -78,7 +78,7 @@ const (
 
 // 指令机器码规范信息
 type Optab struct {
-	as     int16     // 指令种类(opcode 编号), 比如 AADD、AMOV 等
+	as     obj.As    // 指令种类(opcode 编号), 比如 AADD、AMOV 等
 	ytab   []ytab    // 类型映射表: 描述操作数类型组合对应的编码
 	prefix uint8     // 前缀字节, X86 有 0xF2, 0xF3, 0x66 等
 	op     [23]uint8 // 输出的机器码模板
@@ -95,7 +95,7 @@ type ytab struct {
 
 // 描述 MOV 指令编码方式 的表项, 用来把不同操作数类型映射到不同机器码模板
 type Movtab struct {
-	as   int16    // 指令代号, 比如 AMOVB, AMOVW, AMOVL, 代表不同大小的 MOV 指令
+	as   obj.As   // 指令代号, 比如 AMOVB, AMOVW, AMOVL, 代表不同大小的 MOV 指令
 	ft   uint8    // 第一个操作数(from)的类型(内部枚举, 比如寄存器/内存/立即数等)
 	f3t  uint8    // 可选第三个操作数的类型. 多数情况下是 0, 只对少数指令有用, 比如三操作数指令
 	tt   uint8    // 第二个操作数(to)的类型
@@ -1888,7 +1888,7 @@ func naclpad(ctxt *obj.Link, s *obj.LSym, c int32, pad int32) int32 {
 	return c + pad
 }
 
-func spadjop(ctxt *obj.Link, p *obj.Prog, l int, q int) int {
+func spadjop(ctxt *obj.Link, p *obj.Prog, l, q obj.As) obj.As {
 	if p.Mode != 64 || ctxt.Arch.Ptrsize == 4 {
 		return l
 	}
@@ -1918,9 +1918,9 @@ func span6(ctxt *obj.Link, s *obj.LSym) {
 			p.To.Reg = REG_SP
 			v = int32(-p.From.Offset)
 			p.From.Offset = int64(v)
-			p.As = int16(spadjop(ctxt, p, AADDL, AADDQ))
+			p.As = spadjop(ctxt, p, AADDL, AADDQ)
 			if v < 0 {
-				p.As = int16(spadjop(ctxt, p, ASUBL, ASUBQ))
+				p.As = spadjop(ctxt, p, ASUBL, ASUBQ)
 				v = -v
 				p.From.Offset = int64(v)
 			}
@@ -1945,9 +1945,9 @@ func span6(ctxt *obj.Link, s *obj.LSym) {
 			p.To.Reg = REG_SP
 			v = int32(-p.From.Offset)
 			p.From.Offset = int64(v)
-			p.As = int16(spadjop(ctxt, p, AADDL, AADDQ))
+			p.As = spadjop(ctxt, p, AADDL, AADDQ)
 			if v < 0 {
-				p.As = int16(spadjop(ctxt, p, ASUBL, ASUBQ))
+				p.As = spadjop(ctxt, p, ASUBL, ASUBQ)
 				v = -v
 				p.From.Offset = int64(v)
 			}
@@ -2064,10 +2064,10 @@ func span6(ctxt *obj.Link, s *obj.LSym) {
 }
 
 func instinit() {
-	var c int
+	var c obj.As
 
 	for i := 1; optab[i].as != 0; i++ {
-		c = int(optab[i].as)
+		c = optab[i].as
 		if opindex[c&obj.AMask] != nil {
 			log.Fatalf("phase error in optab: %d (%v)", i, obj.Aconv(c))
 		}

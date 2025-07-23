@@ -53,7 +53,7 @@ func progedit(ctxt *obj.Link, p *obj.Prog) {
 	panic("TODO")
 }
 
-var unaryDst = map[int]bool{
+var unaryDst = map[obj.As]bool{
 	AWORD:  true,
 	ADWORD: true,
 	ABL:    true,

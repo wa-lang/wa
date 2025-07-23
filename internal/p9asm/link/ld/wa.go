@@ -418,7 +418,7 @@ func loadcgo(file string, pkg string, p string) {
 				// to force a link of foo.so.
 				havedynamic = 1
 
-				if HEADTYPE == int32(obj.Hdarwin) {
+				if HEADTYPE == obj.Hdarwin {
 					Machoadddynlib(lib)
 				} else {
 					dynlib = append(dynlib, lib)
@@ -566,9 +566,9 @@ func Adddynsym(ctxt *Link, s *LSym) {
 
 	if Iself {
 		Elfadddynsym(ctxt, s)
-	} else if HEADTYPE == int32(obj.Hdarwin) {
+	} else if HEADTYPE == obj.Hdarwin {
 		Diag("adddynsym: missed symbol %s (%s)", s.Name, s.Extname)
-	} else if HEADTYPE == int32(obj.Hwindows) {
+	} else if HEADTYPE == obj.Hwindows {
 		// already taken care of
 	} else {
 		Diag("adddynsym: unsupported binary format")
@@ -773,7 +773,7 @@ func doweak() {
 }
 
 func addexport() {
-	if HEADTYPE == int32(obj.Hdarwin) {
+	if HEADTYPE == obj.Hdarwin {
 		return
 	}
 

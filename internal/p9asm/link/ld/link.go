@@ -127,7 +127,7 @@ type Link struct {
 	Thechar   int32
 	Thestring string
 	Goarm     int32
-	Headtype  obj.HExeType
+	Headtype  obj.HeadType
 	Arch      *LinkArch
 	Debugasm  int32
 	Debugvlog int32

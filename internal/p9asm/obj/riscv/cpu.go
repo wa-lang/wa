@@ -1225,7 +1225,7 @@ const (
 //
 // Any instructions not listed here are assumed to either be non-unary or to read
 // from its argument.
-var unaryDst = map[int]bool{
+var unaryDst = map[obj.As]bool{
 	ARDCYCLE:   true,
 	ARDTIME:    true,
 	ARDINSTRET: true,

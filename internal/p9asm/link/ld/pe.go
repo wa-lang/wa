@@ -1202,7 +1202,7 @@ func Asmbpe() {
 	oh.SizeOfImage = uint32(nextsectoff)
 	oh64.SizeOfHeaders = uint32(PEFILEHEADR)
 	oh.SizeOfHeaders = uint32(PEFILEHEADR)
-	if headstring == "windowsgui" {
+	if HEADTYPE.String() == "windowsgui" {
 		oh64.Subsystem = IMAGE_SUBSYSTEM_WINDOWS_GUI
 		oh.Subsystem = IMAGE_SUBSYSTEM_WINDOWS_GUI
 	} else {

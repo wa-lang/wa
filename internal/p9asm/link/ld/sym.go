@@ -63,9 +63,8 @@ func linknew(arch *LinkArch) *Link {
 	}
 	buf = filepath.ToSlash(buf)
 
-	ctxt.Headtype = obj.Headtype(obj_Getwaos())
-	if ctxt.Headtype < 0 {
-		log.Fatalf("unknown waos %s", obj_Getwaos())
+	if err := ctxt.Headtype.Set(obj_Getwaos()); err != nil {
+		log.Fatal(err)
 	}
 
 	// Record thread-local storage offset.

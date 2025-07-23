@@ -89,7 +89,7 @@ func jumpArm(word string) bool {
 
 // IsARMCMP reports whether the op (as defined by an arm.A* constant) is
 // one of the comparison instructions that require special handling.
-func IsARMCMP(op int) bool {
+func IsARMCMP(op obj.As) bool {
 	switch op {
 	case arm.ACMN, arm.ACMP, arm.ATEQ, arm.ATST:
 		return true
@@ -99,7 +99,7 @@ func IsARMCMP(op int) bool {
 
 // IsARMSTREX reports whether the op (as defined by an arm.A* constant) is
 // one of the STREX-like instructions that require special handling.
-func IsARMSTREX(op int) bool {
+func IsARMSTREX(op obj.As) bool {
 	switch op {
 	case arm.ASTREX, arm.ASTREXD, arm.ASTREXB, arm.ASWPW, arm.ASWPBU:
 		return true
@@ -114,7 +114,7 @@ const aMCR = arm.ALAST + 1
 
 // IsARMMRC reports whether the op (as defined by an arm.A* constant) is
 // MRC or MCR.
-func IsARMMRC(op int) bool {
+func IsARMMRC(op obj.As) bool {
 	switch op {
 	case arm.AMRC, aMCR: // Note: aMCR is defined in this package.
 		return true
@@ -124,7 +124,7 @@ func IsARMMRC(op int) bool {
 
 // IsARMBFX reports whether the op (as defined by an arm.A* constant) is one the
 // BFX-like instructions which are in the form of "op $width, $LSB, (Reg,) Reg".
-func IsARMBFX(op int) bool {
+func IsARMBFX(op obj.As) bool {
 	switch op {
 	case arm.ABFX, arm.ABFXU, arm.ABFC, arm.ABFI:
 		return true
@@ -133,7 +133,7 @@ func IsARMBFX(op int) bool {
 }
 
 // IsARMFloatCmp reports whether the op is a floating comparison instruction.
-func IsARMFloatCmp(op int) bool {
+func IsARMFloatCmp(op obj.As) bool {
 	switch op {
 	case arm.ACMPF, arm.ACMPD:
 		return true
@@ -145,7 +145,7 @@ func IsARMFloatCmp(op int) bool {
 // The difference between MRC and MCR is represented by a bit high in the word, not
 // in the usual way by the opcode itself. Asm must use AMRC for both instructions, so
 // we return the opcode for MRC so that asm doesn't need to import obj/arm.
-func ARMMRCOffset(op int, cond string, x0, x1, x2, x3, x4, x5 int64) (offset int64, op0 int, ok bool) {
+func ARMMRCOffset(op obj.As, cond string, x0, x1, x2, x3, x4, x5 int64) (offset int64, op0 obj.As, ok bool) {
 	op1 := int64(0)
 	if op == arm.AMRC {
 		op1 = 1
@@ -169,7 +169,7 @@ func ARMMRCOffset(op int, cond string, x0, x1, x2, x3, x4, x5 int64) (offset int
 
 // IsARMMULA reports whether the op (as defined by an arm.A* constant) is
 // MULA, MULS, MMULA, MMULS, MULABB, MULAWB or MULAWT, the 4-operand instructions.
-func IsARMMULA(op int) bool {
+func IsARMMULA(op obj.As) bool {
 	switch op {
 	case arm.AMULA, arm.AMULS, arm.AMMULA, arm.AMMULS, arm.AMULABB, arm.AMULAWB, arm.AMULAWT:
 		return true
@@ -177,7 +177,7 @@ func IsARMMULA(op int) bool {
 	return false
 }
 
-var bcode = []int{
+var bcode = []obj.As{
 	arm.ABEQ,
 	arm.ABNE,
 	arm.ABCS,
@@ -208,7 +208,7 @@ func ARMConditionCodes(prog *obj.Prog, cond string) bool {
 	}
 	/* hack to make B.NE etc. work: turn it into the corresponding conditional */
 	if prog.As == arm.AB {
-		prog.As = int16(bcode[(bits^arm.C_SCOND_XOR)&0xf])
+		prog.As = bcode[(bits^arm.C_SCOND_XOR)&0xf]
 		bits = (bits &^ 0xf) | arm.C_SCOND_NONE
 	}
 	prog.Scond = bits

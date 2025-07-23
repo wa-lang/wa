@@ -203,7 +203,7 @@ func archreloc(r *ld.Reloc, s *ld.LSym, val *int64) int {
 			// the BR26 relocation should be fully resolved at link time.
 			// That is the reason why the next if block is disabled. When the bug in ld64
 			// is fixed, we can enable this block and also enable duff's device in cmd/7g.
-			if false && ld.HEADTYPE == int32(obj.Hdarwin) {
+			if false && ld.HEADTYPE == obj.Hdarwin {
 				// Mach-O wants the addend to be encoded in the instruction
 				// Note that although Mach-O supports ARM64_RELOC_ADDEND, it
 				// can only encode 24-bit of signed addend, but the instructions
@@ -314,7 +314,7 @@ func asmb() {
 	ld.Datblk(int64(ld.Segdata.Vaddr), int64(ld.Segdata.Filelen))
 
 	machlink := uint32(0)
-	if ld.HEADTYPE == int32(obj.Hdarwin) {
+	if ld.HEADTYPE == obj.Hdarwin {
 		if ld.Debug['v'] != 0 {
 			fmt.Fprintf(&ld.Bso, "%5.2f dwarf\n", obj.Cputime())
 		}
@@ -340,7 +340,7 @@ func asmb() {
 			fmt.Fprintf(&ld.Bso, "%5.2f sym\n", obj.Cputime())
 		}
 		ld.Bso.Flush()
-		switch obj.HExeType(ld.HEADTYPE) {
+		switch ld.HEADTYPE {
 		default:
 			if ld.Iself {
 				symo = uint32(ld.Segdata.Fileoff + ld.Segdata.Filelen)
@@ -352,7 +352,7 @@ func asmb() {
 		}
 
 		ld.Cseek(int64(symo))
-		switch obj.HExeType(ld.HEADTYPE) {
+		switch ld.HEADTYPE {
 		default:
 			if ld.Iself {
 				if ld.Debug['v'] != 0 {
@@ -385,7 +385,7 @@ func asmb() {
 	}
 	ld.Bso.Flush()
 	ld.Cseek(0)
-	switch obj.HExeType(ld.HEADTYPE) {
+	switch ld.HEADTYPE {
 	default:
 	case obj.Hlinux:
 		ld.Asmbelf(int64(symo))

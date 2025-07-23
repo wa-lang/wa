@@ -12,6 +12,6 @@ var Linkloong64 = obj.LinkArch{
 	//Preprocess:     preprocess,
 	//Assemble:       span0,
 	//Progedit:       progedit,
-	UnaryDst: map[int]bool{},
+	UnaryDst: map[obj.As]bool{},
 	//DWARFRegisters: LOONG64DWARFRegisters,
 }

@@ -9,13 +9,14 @@
 package arch
 
 import (
+	"wa-lang.org/wa/internal/p9asm/obj"
 	"wa-lang.org/wa/internal/p9asm/obj/riscv"
 )
 
 // IsRISCV64AMO reports whether the op (as defined by a riscv.A*
 // constant) is one of the AMO instructions that requires special
 // handling.
-func IsRISCV64AMO(op int) bool {
+func IsRISCV64AMO(op obj.As) bool {
 	switch op {
 	case riscv.ASCW, riscv.ASCD, riscv.AAMOSWAPW, riscv.AAMOSWAPD, riscv.AAMOADDW, riscv.AAMOADDD,
 		riscv.AAMOANDW, riscv.AAMOANDD, riscv.AAMOORW, riscv.AAMOORD, riscv.AAMOXORW, riscv.AAMOXORD,
