@@ -5,7 +5,6 @@ package obj
 
 import (
 	"fmt"
-	"strconv"
 )
 
 // 指令机器码
@@ -15,26 +14,26 @@ type As int16
 // 平台特殊的指令从 A_ARCHSPECIFIC 开始定义
 // TODO(chai2010): 精简伪指令
 const (
-	AXXX As = iota
-	ACALL
-	ACHECKNIL
-	ADATA
-	ADUFFCOPY
-	ADUFFZERO
-	AEND
-	AFUNCDATA
-	AGLOBL
-	AJMP
-	ANOP
-	APCDATA
-	ARET
-	ATEXT
-	ATYPE
-	AUNDEF
-	AUSEFIELD
-	AVARDEF
-	AVARKILL
-	A_ARCHSPECIFIC
+	AXXX           As = iota // 无效或未初始化的指令
+	ACALL                    // 调用函数
+	ACHECKNIL                // 空指针检查, 用于 runtime 插入的 nil-check
+	ADATA                    // 静态数据段的数据定义
+	ADUFFCOPY                // Duff's device 复制优化入口，用于快速 memcopy
+	ADUFFZERO                // Duff's device 清零优化入口
+	AEND                     // 汇编文件结尾标志(需要吗?)
+	AFUNCDATA                // 函数级的元信息注入, 常见的是 gcmap、defer info 等
+	AGLOBL                   // 全局变量定义(类似于 .globl)
+	AJMP                     // 无条件跳转指令
+	ANOP                     // 空操作指令, 用于填充, 对齐或占位
+	APCDATA                  // 异常栈, 调试元信息(比如 PC 到 stack map 的映射)
+	ARET                     // 函数返回指令
+	ATEXT                    // 函数定义入口标记, 指定函数名和属性
+	ATYPE                    // 类型信息
+	AUNDEF                   // 未定义的操作, 或执行到这里就崩溃(像 trap)
+	AUSEFIELD                // 用于反射优化, 标记 struct field 被使用
+	AVARDEF                  // 标记局部变量的生命周期开始(调试, GC 用)
+	AVARKILL                 // 标记局部变量生命周期结束
+	A_ARCHSPECIFIC           // 架构专属操作码的起点
 )
 
 // 指令的名字
@@ -151,42 +150,39 @@ func Rconv(reg int) string {
 type HeadType int
 
 const (
-	Hunknown HeadType = 0 + iota
-	Hdarwin
+	Hunknown HeadType = iota
 	Helf
+	Hdarwin
 	Hlinux
 	Hwindows
 )
 
-var headers = []struct {
-	name string
-	val  HeadType
-}{
-	{"darwin", Hdarwin},
-	{"elf", Helf},
-	{"linux", Hlinux},
-	{"android", Hlinux}, // must be after "linux" entry or else headstr(Hlinux) == "android"
-	{"windows", Hwindows},
-	{"windowsgui", Hwindows},
-}
-
 func (h *HeadType) Set(name string) error {
-	for i := 0; i < len(headers); i++ {
-		if name == headers[i].name {
-			*h = headers[i].val
-			return nil
-		}
+	switch name {
+	case "darwin", "ios":
+		*h = Hdarwin
+	case "elf":
+		*h = Helf
+	case "linux", "android":
+		*h = Hlinux
+	case "windows":
+		*h = Hwindows
 	}
 	return fmt.Errorf("invalid headtype: %q", name)
 }
 
 func (v HeadType) String() string {
-	for i := 0; i < len(headers); i++ {
-		if v == headers[i].val {
-			return headers[i].name
-		}
+	switch v {
+	case Hdarwin:
+		return "darwin"
+	case Helf:
+		return "elf"
+	case Hlinux:
+		return "linux"
+	case Hwindows:
+		return "windows"
 	}
-	return strconv.Itoa(int(v))
+	return fmt.Sprintf("HeadType(%d)", int(v))
 }
 
 // ARM scond byte
@@ -244,20 +240,12 @@ func CConv(s uint8) string {
 // For the linkers. Must match Wa definitions.
 // TODO(chai2010): Share Wa definitions with linkers directly.
 
-// chaishushan: 临时增加, 用于跳过构建错误
-const stackGuardMultiplier = 1
-
 const (
-	STACKSYSTEM = 0
-	StackSystem = STACKSYSTEM
-	StackBig    = 4096
-	StackGuard  = 640*stackGuardMultiplier + StackSystem
-	StackSmall  = 128
-	StackLimit  = StackGuard - StackSystem - StackSmall
-)
+	StackBig   = 4096 // 大帧判断阈值
+	StackSmall = 128  // 最小预留空间
+	StackGuard = 640  // 栈溢出保护区
 
-const (
-	StackPreempt = -1314 // 0xfff...fade
+	StackLimit = StackGuard - StackSmall // 剩余触发点, 可触发自动报告或任务失败处理
 )
 
 // Wa obj 文件魔数
@@ -287,17 +275,17 @@ const (
 type RelocType int32
 
 const (
-	R_ADDR RelocType = 1 + iota
-	R_ADDRPOWER
-	R_ADDRARM64
+	R_ADDR      RelocType = 1 + iota // 表示一个绝对地址, 需要填入的是目标符号的实际地址
+	R_ADDRPOWER                      // 特定平台上绝对地址重定位方式的差异
+	R_ADDRARM64                      // 特定平台上绝对地址重定位方式的差异。
 	R_SIZE
-	R_CALL
+	R_CALL // 常规函数调用
 	R_CALLARM
 	R_CALLARM64
-	R_CALLIND
+	R_CALLIND // 间接调用(通过函数指针)
 	R_CALLPOWER
-	R_CONST
-	R_PCREL
+	R_CONST // 一个常数值重定位, 不会被链接器修改
+	R_PCREL // 表示 PC 相对寻址, 典型用于跳转指令, 比如 call 或 jmp
 	// R_TLS (only used on arm currently, and not on android and darwin where tlsg is
 	// a regular variable) resolves to data needed to access the thread-local g. It is
 	// interpreted differently depending on toolchain flags to implement either the
@@ -316,13 +304,12 @@ const (
 	// (r.Sym is not set by the compiler for this case but is set to Tlsg in the
 	// linker when externally linking).
 	R_TLS_IE
-	R_GOTOFF
-	R_PLT0
+	R_GOTOFF // 全局变量地址与 GOT 表基地址的偏移
+	R_PLT0   // 用于动态链接库调用时的跳板(plt stub)入口构建
 	R_PLT1
 	R_PLT2
 	R_USEFIELD
-	R_POWER_TOC
-	R_GOTPCREL
+	R_GOTPCREL // 通过 GOT 表(Global Offset Table)进行 PC 相对寻址
 )
 
 // LSym.type

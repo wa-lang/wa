@@ -494,7 +494,7 @@ func preprocess(ctxt *obj.Link, cursym *obj.LSym) {
 	}
 
 	if cursym.Text.From3Offset()&obj.NOSPLIT == 0 {
-		p = stacksplit(ctxt, p, autoffset, int32(textarg)) // emit split check
+		p = stacksplit_(ctxt, p, autoffset, int32(textarg)) // emit split check
 	}
 
 	if autoffset != 0 {
@@ -822,7 +822,7 @@ func load_g_cx(ctxt *obj.Link, p *obj.Prog) *obj.Prog {
 // Appends to (does not overwrite) p.
 // Assumes g is in CX.
 // Returns last new instruction.
-func stacksplit(ctxt *obj.Link, p *obj.Prog, framesize int32, textarg int32) *obj.Prog {
+func stacksplit_(ctxt *obj.Link, p *obj.Prog, framesize int32, textarg int32) *obj.Prog {
 	cmp := ACMPQ
 	lea := ALEAQ
 	mov := AMOVQ
@@ -903,9 +903,13 @@ func stacksplit(ctxt *obj.Link, p *obj.Prog, framesize int32, textarg int32) *ob
 		p.From.Type = obj.TYPE_REG
 		p.From.Reg = REG_SI
 		p.To.Type = obj.TYPE_CONST
-		p.To.Offset = obj.StackPreempt
+
+		// 设置为负数, 表示需要被调度
+		// 对于固定栈当前函数值需要检查可能的溢出即可
+		const obj_StackPreempt = -1314
+		p.To.Offset = obj_StackPreempt
 		if p.Mode == 32 {
-			p.To.Offset = int64(uint32(obj.StackPreempt & (1<<32 - 1)))
+			p.To.Offset = int64(uint32(obj_StackPreempt & (1<<32 - 1)))
 		}
 
 		p = obj.Appendp(ctxt, p)
