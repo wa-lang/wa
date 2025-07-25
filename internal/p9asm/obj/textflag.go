@@ -1,38 +1,12 @@
-// Copyright 2013 The Go Authors.  All rights reserved.
-// Use of this source code is governed by a BSD-style
-// license that can be found in the LICENSE file.
-
-// This file defines flags attached to various functions
-// and data objects.  The compilers, assemblers, and linker must
-// all agree on these values.
+// Copyright (C) 2025 武汉凹语言科技有限公司
+// SPDX-License-Identifier: AGPL-3.0-or-later
 
 package obj
 
+// 函数不再包含标志位, 默认都是固定栈
+
 const (
-	// Don't profile the marked routine.
-	//
-	// Deprecated: Not implemented, do not use.
-	_NOPROF = 1
-
-	// It is ok for the linker to get multiple of these symbols.  It will
-	// pick one of the duplicates to use.
-	DUPOK = 2
-
-	// Don't insert stack check preamble.
-	NOSPLIT = 4
-
-	// Put this data in a read-only section.
-	RODATA = 8
-
-	// This data contains no pointers.
-	NOPTR = 16
-
-	// This is a wrapper function and should not count as disabling 'recover'.
-	WRAPPER = 32
-
-	// This function uses its incoming context register.
-	NEEDCTXT = 64
-
-	// When passed to ggloblsym, causes Local to be set to true on the LSym it creates.
-	LOCAL = 128
+	DUPOK  = 1 // 可以出现多个重名符号, 取第一个
+	RODATA = 2 // 只读数据段
+	NOPTR  = 4 // 不包含指针的数据
 )

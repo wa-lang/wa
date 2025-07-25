@@ -1446,29 +1446,10 @@ func dostkcheck() {
 
 	ch.limit = obj.StackLimit - callsize()
 
-	// Check every function, but do the nosplit functions in a first pass,
-	// to make the printed failure chains as short as possible.
 	for s := Ctxt.Textp; s != nil; s = s.Next {
-		// runtime.racesymbolizethunk is called from gcc-compiled C
-		// code running on the operating system thread stack.
-		// It uses more than the usual amount of stack but that's okay.
-		if s.Name == "runtime.racesymbolizethunk" {
-			continue
-		}
-
-		if s.Nosplit != 0 {
-			Ctxt.Cursym = s
-			ch.sym = s
-			stkcheck(&ch, 0)
-		}
-	}
-
-	for s := Ctxt.Textp; s != nil; s = s.Next {
-		if s.Nosplit == 0 {
-			Ctxt.Cursym = s
-			ch.sym = s
-			stkcheck(&ch, 0)
-		}
+		Ctxt.Cursym = s
+		ch.sym = s
+		stkcheck(&ch, 0)
 	}
 }
 
@@ -1516,23 +1497,6 @@ func stkcheck(up *Chain, depth int) int {
 
 	var ch Chain
 	ch.up = up
-
-	if s.Nosplit == 0 {
-		// Ensure we have enough stack to call morestack.
-		ch.limit = limit - callsize()
-		ch.sym = morestack
-		if stkcheck(&ch, depth+1) < 0 {
-			return -1
-		}
-		if !top {
-			return 0
-		}
-		// Raise limit to allow frame.
-		limit = int(obj.StackLimit + s.Locals)
-		if haslinkregister() {
-			limit += Thearch.Regsize
-		}
-	}
 
 	// Walk through sp adjustments in function, consuming relocs.
 	ri := 0
@@ -1593,20 +1557,13 @@ func stkprint(ch *Chain, limit int) {
 
 	if ch.sym != nil {
 		name = ch.sym.Name
-		if ch.sym.Nosplit != 0 {
-			name += " (nosplit)"
-		}
 	} else {
 		name = "function pointer"
 	}
 
 	if ch.up == nil {
 		// top of chain.  ch->sym != nil.
-		if ch.sym.Nosplit != 0 {
-			fmt.Printf("\t%d\tassumed on entry to %s\n", ch.limit, name)
-		} else {
-			fmt.Printf("\t%d\tguaranteed after split check in %s\n", ch.limit, name)
-		}
+		fmt.Printf("\t%d\tassumed on entry to %s\n", ch.limit, name)
 	} else {
 		stkprint(ch.up, ch.limit+callsize())
 		if !haslinkregister() {
@@ -1903,63 +1860,6 @@ func Diag(format string, args ...interface{}) {
 	}
 	if nerrors > 20 {
 		Exitf("too many errors")
-	}
-}
-
-func checkgo() {
-	if Debug['C'] == 0 {
-		return
-	}
-
-	// TODO(chai2010): Eventually we want to get to no Wa-called C functions at all,
-	// which would simplify this logic quite a bit.
-
-	// Mark every Wa-called C function with cfunc=2, recursively.
-	var changed int
-	var i int
-	var r *Reloc
-	var s *LSym
-	for {
-		changed = 0
-		for s = Ctxt.Textp; s != nil; s = s.Next {
-			if s.Cfunc == 0 || (s.Cfunc == 2 && s.Nosplit != 0) {
-				for i = 0; i < len(s.R); i++ {
-					r = &s.R[i]
-					if r.Sym == nil {
-						continue
-					}
-					if (r.Type == obj.R_CALL || r.Type == obj.R_CALLARM) && r.Sym.Type == obj.STEXT {
-						if r.Sym.Cfunc == 1 {
-							changed = 1
-							r.Sym.Cfunc = 2
-						}
-					}
-				}
-			}
-		}
-		if changed == 0 {
-			break
-		}
-	}
-
-	// Complain about Wa-called C functions that can split the stack
-	// (that can be preempted for garbage collection or trigger a stack copy).
-	for s := Ctxt.Textp; s != nil; s = s.Next {
-		if s.Cfunc == 0 || (s.Cfunc == 2 && s.Nosplit != 0) {
-			for i = 0; i < len(s.R); i++ {
-				r = &s.R[i]
-				if r.Sym == nil {
-					continue
-				}
-				if (r.Type == obj.R_CALL || r.Type == obj.R_CALLARM) && r.Sym.Type == obj.STEXT {
-					if s.Cfunc == 0 && r.Sym.Cfunc == 2 && r.Sym.Nosplit == 0 {
-						fmt.Printf("Wa %s calls C %s\n", s.Name, r.Sym.Name)
-					} else if s.Cfunc == 2 && s.Nosplit != 0 && r.Sym.Nosplit == 0 {
-						fmt.Printf("Wa calls C %s calls %s\n", s.Name, r.Sym.Name)
-					}
-				}
-			}
-		}
 	}
 }
 

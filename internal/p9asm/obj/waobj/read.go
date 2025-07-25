@@ -184,8 +184,6 @@ type Var struct {
 type Func struct {
 	Args     int        // size in bytes of argument frame: inputs and outputs
 	Frame    int        // size in bytes of local variable frame
-	Leaf     bool       // function omits save of link register (ARM)
-	NoSplit  bool       // function omits stack split prologue
 	Var      []Var      // detail about local variables
 	PCSP     Data       // PC → SP offset map
 	PCFile   Data       // PC → file number map (index into File)
@@ -655,13 +653,6 @@ func (r *objReader) parseObject() error {
 			// 局部变量个数
 			// TODO(chai2010): 和后面的 Vars 有何区别?
 			f.Frame = r.readInt()
-
-			// nosplit 和 标志信息
-			// BUG(chai2010): 解析顺序和 obj 包注释不一致
-
-			flags := r.readInt()
-			f.Leaf = flags&1 != 0
-			f.NoSplit = r.readInt() != 0
 
 			// 局部变量信息
 			f.Var = make([]Var, r.readInt())

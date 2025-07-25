@@ -86,10 +86,10 @@ func (p *Parser) validateImmediate(pseudo string, addr *obj.Addr) {
 }
 
 // asmText assembles a TEXT pseudo-op.
-// TEXT runtime·sigtramp(SB),4,$0-0
+// TEXT runtime·sigtramp(SB),$0-0
 func (p *Parser) asmText(word string, operands [][]lex.Token) {
-	if len(operands) != 2 && len(operands) != 3 {
-		p.errorf("expect two or three operands for TEXT")
+	if len(operands) != 2 {
+		p.errorf("expect two operands for TEXT") // 函数不再支持 flags 标志
 	}
 
 	// Labels are function scoped. Patch existing labels and
@@ -103,13 +103,6 @@ func (p *Parser) asmText(word string, operands [][]lex.Token) {
 	p.validateSymbol("TEXT", &nameAddr, false)
 	name := nameAddr.Sym.Name
 	next := 1
-
-	// Next operand is the optional text flag, a literal integer.
-	var flag = int64(0)
-	if len(operands) == 3 {
-		flag = p.evalInteger("TEXT", operands[1])
-		next++
-	}
 
 	// Next operand is the frame and arg size.
 	// Bizarre syntax: $frameSize-argSize is two words, not subtraction.
@@ -151,8 +144,7 @@ func (p *Parser) asmText(word string, operands [][]lex.Token) {
 		Lineno: p.histLineNum,
 		From:   nameAddr,
 		From3: &obj.Addr{
-			Type:   obj.TYPE_CONST,
-			Offset: flag,
+			Type: obj.TYPE_CONST,
 		},
 		To: obj.Addr{
 			Type:   obj.TYPE_TEXTSIZE,

@@ -46,15 +46,12 @@ type LSym struct {
 	Type       obj.SymKind
 	Version    int16
 	Dupok      uint8
-	Cfunc      uint8
 	External   uint8
-	Nosplit    uint8
 	Reachable  bool
 	Cgoexport  uint8
 	Special    uint8
 	Stkcheck   uint8
 	Hide       uint8
-	Leaf       uint8
 	Localentry uint8
 	Onlist     uint8
 	// ElfType is set for symbols read from shared libraries by ldshlibsyms. It

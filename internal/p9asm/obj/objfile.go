@@ -48,9 +48,6 @@
 //	- args [int]
 //	- locals [int]
 //	- nosplit [int]
-//	- flags [int]
-//		1 leaf
-//		2 C function
 //	- nlocal [int]
 //	- local [nlocal automatics]
 //	- pcln [pcln table]
@@ -231,9 +228,6 @@ func Writeobjdirect(ctxt *Link, b *bio.Biobuf) {
 				if flag&DUPOK != 0 {
 					s.Dupok = 1
 				}
-				if flag&NOSPLIT != 0 {
-					s.Nosplit = 1
-				}
 				s.Next = nil
 				s.Type = STEXT
 				s.Text = p
@@ -356,15 +350,9 @@ func writesym(ctxt *Link, b *bio.Biobuf, s *LSym) {
 			fmt.Fprintf(ctxt.Bso, "t=%d ", s.Type)
 		}
 
-		// 打印 flags 标志
+		// 打印 flags 标志(仅针对数据)
 		if s.Dupok != 0 {
 			fmt.Fprintf(ctxt.Bso, "dupok ")
-		}
-		if s.Cfunc != 0 {
-			fmt.Fprintf(ctxt.Bso, "cfunc ")
-		}
-		if s.Nosplit != 0 {
-			fmt.Fprintf(ctxt.Bso, "nosplit ")
 		}
 
 		// 打印内存大小和值
@@ -374,9 +362,6 @@ func writesym(ctxt *Link, b *bio.Biobuf, s *LSym) {
 		// 打印参数数目和局部变量数目, 是否叶子函数等信息
 		if s.Type == STEXT {
 			fmt.Fprintf(ctxt.Bso, " args=%#x locals=%#x", uint64(s.Args), uint64(s.Locals))
-			if s.Leaf != 0 {
-				fmt.Fprintf(ctxt.Bso, " leaf")
-			}
 		}
 		fmt.Fprintf(ctxt.Bso, "\n")
 
@@ -495,10 +480,6 @@ func writesym(ctxt *Link, b *bio.Biobuf, s *LSym) {
 		// 写参数/局部变量
 		wrint(b, int64(s.Args))
 		wrint(b, int64(s.Locals))
-
-		// 写 flags 信息
-		wrint(b, int64(s.Nosplit))
-		wrint(b, int64(s.Leaf)|int64(s.Cfunc)<<1)
 
 		// 自动变量(和locals的区别?)
 		n := 0

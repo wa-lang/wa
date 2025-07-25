@@ -257,10 +257,6 @@ overwrite:
 	if s.Type == obj.STEXT {
 		s.Args = rdint32(f)
 		s.Locals = rdint32(f)
-		s.Nosplit = rduint8(f)
-		v := rdint(f)
-		s.Leaf = uint8(v & 1)
-		s.Cfunc = uint8(v & 2)
 		n := rdint(f)
 		var a *Auto
 		for i := 0; i < n; i++ {
@@ -325,12 +321,6 @@ overwrite:
 		}
 		if s.Dupok != 0 {
 			fmt.Fprintf(ctxt.Bso, "dupok ")
-		}
-		if s.Cfunc != 0 {
-			fmt.Fprintf(ctxt.Bso, "cfunc ")
-		}
-		if s.Nosplit != 0 {
-			fmt.Fprintf(ctxt.Bso, "nosplit ")
 		}
 		fmt.Fprintf(ctxt.Bso, "size=%d value=%d", int64(s.Size), int64(s.Value))
 		if s.Type == obj.STEXT {

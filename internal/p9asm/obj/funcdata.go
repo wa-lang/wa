@@ -46,7 +46,6 @@ package obj
 // of pointers in an assembly function's arguments, results, and stack frame.
 // This communication is only required in assembly functions that make calls
 // to other functions that might be preempted or grow the stack.
-// NOSPLIT functions that make no calls do not need to use these macros.
 
 // WA_ARGS indicates that the Wa prototype for this assembly function
 // defines the pointer map for the function's arguments.

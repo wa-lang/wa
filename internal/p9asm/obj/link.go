@@ -224,9 +224,6 @@ type LSym struct {
 	Type      SymKind
 	Version   int16
 	Dupok     uint8
-	Cfunc     uint8
-	Nosplit   uint8
-	Leaf      uint8
 	Seenglobl uint8
 	Onlist    uint8
 	// Local means make the symbol local even when compiling Wa code to reference Wa

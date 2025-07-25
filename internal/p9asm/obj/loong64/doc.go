@@ -47,7 +47,7 @@ Examples:
 
 Examples:
 
-	TEXT ·Add(SB),NOSPLIT|NOFRAME,$0
+	TEXT ·Add(SB),$0
 
 start:
 
