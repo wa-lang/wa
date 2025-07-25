@@ -650,10 +650,6 @@ var markextra = []string{
 }
 
 func deadcode() {
-	if Debug['v'] != 0 {
-		fmt.Fprintf(&Bso, "%5.2f deadcode\n", obj.Cputime())
-	}
-
 	if Buildmode == BuildmodeShared {
 		// Mark all symbols defined in this library as reachable when
 		// building a shared library.

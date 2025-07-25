@@ -167,8 +167,10 @@ func (h *HeadType) Set(name string) error {
 		*h = Hlinux
 	case "windows":
 		*h = Hwindows
+	default:
+		return fmt.Errorf("invalid headtype: %q", name)
 	}
-	return fmt.Errorf("invalid headtype: %q", name)
+	return nil
 }
 
 func (v HeadType) String() string {

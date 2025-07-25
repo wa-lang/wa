@@ -611,11 +611,6 @@ func relocsym(s *LSym) {
 }
 
 func reloc() {
-	if Debug['v'] != 0 {
-		fmt.Fprintf(&Bso, "%5.2f reloc\n", obj.Cputime())
-	}
-	Bso.Flush()
-
 	for s := Ctxt.Textp; s != nil; s = s.Next {
 		relocsym(s)
 	}
@@ -687,10 +682,6 @@ func dynreloc() {
 	if Debug['d'] != 0 && HEADTYPE != obj.Hwindows {
 		return
 	}
-	if Debug['v'] != 0 {
-		fmt.Fprintf(&Bso, "%5.2f reloc\n", obj.Cputime())
-	}
-	Bso.Flush()
 
 	for s := Ctxt.Textp; s != nil; s = s.Next {
 		dynrelocsym(s)
@@ -1133,11 +1124,6 @@ func growdatsize(datsizep *int64, s *LSym) {
 }
 
 func dodata() {
-	if Debug['v'] != 0 {
-		fmt.Fprintf(&Bso, "%5.2f dodata\n", obj.Cputime())
-	}
-	Bso.Flush()
-
 	var last *LSym
 	datap = nil
 

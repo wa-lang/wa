@@ -130,10 +130,6 @@ type PeObj struct {
 }
 
 func ldpe(f *bio.Biobuf, pkg string, length int64, pn string) {
-	if Debug['v'] != 0 {
-		fmt.Fprintf(&Bso, "%5.2f ldpe %s\n", obj.Cputime(), pn)
-	}
-
 	var sect *PeSect
 	Ctxt.Version++
 	base := int32(f.Boffset())

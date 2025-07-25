@@ -447,9 +447,6 @@ func loadlib() {
 
 	var i int
 	for i = 0; i < len(Ctxt.Library); i++ {
-		if Debug['v'] > 1 {
-			fmt.Fprintf(&Bso, "%5.2f autolib: %s (from %s)\n", obj.Cputime(), Ctxt.Library[i].File, Ctxt.Library[i].Objref)
-		}
 		iscgo = iscgo || Ctxt.Library[i].Pkg == "runtime/cgo"
 		if Ctxt.Library[i].Shlib != "" {
 			ldshlibsyms(Ctxt.Library[i].Shlib)
@@ -614,10 +611,6 @@ func nextar(bp *bio.Biobuf, off int64, a *ArHdr) int64 {
 func objfile(lib *Library) {
 	pkg := pathtoprefix(lib.Pkg)
 
-	if Debug['v'] > 1 {
-		fmt.Fprintf(&Bso, "%5.2f ldobj: %s (%s)\n", obj.Cputime(), lib.File, pkg)
-	}
-	Bso.Flush()
 	var err error
 	var f *bio.Biobuf
 	f, err = bio.Bopenr(lib.File)
@@ -1251,10 +1244,6 @@ func ldshlibsyms(shlib string) {
 			return
 		}
 	}
-	if Ctxt.Debugvlog > 1 && Ctxt.Bso != nil {
-		fmt.Fprintf(Ctxt.Bso, "%5.2f ldshlibsyms: found library with name %s at %s\n", obj.Cputime(), shlib, libpath)
-		Ctxt.Bso.Flush()
-	}
 
 	f, err := elf.Open(libpath)
 	if err != nil {
@@ -1805,11 +1794,6 @@ func genasmsym(put func(*LSym, string, int, int64, int64, int, *LSym)) {
 		}
 	}
 
-	// Otherwise, off is addressing the saved program counter.
-	// Something underhanded is going on. Say nothing.
-	if Debug['v'] != 0 || Debug['n'] != 0 {
-		fmt.Fprintf(&Bso, "%5.2f symsize = %d\n", obj.Cputime(), uint32(Symsize))
-	}
 	Bso.Flush()
 }
 

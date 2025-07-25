@@ -8,17 +8,7 @@ import (
 	"bytes"
 	"fmt"
 	"strings"
-	"time"
 )
-
-var start time.Time
-
-func Cputime() float64 {
-	if start.IsZero() {
-		start = time.Now()
-	}
-	return time.Since(start).Seconds()
-}
 
 func (p *Prog) Line() string {
 	return p.Ctxt.LineHist.LineString(int(p.Lineno))

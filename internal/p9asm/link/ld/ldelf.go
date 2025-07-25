@@ -319,10 +319,6 @@ func valuecmp(a *LSym, b *LSym) int {
 }
 
 func ldelf(f *bio.Biobuf, pkg string, length int64, pn string) {
-	if Debug['v'] != 0 {
-		fmt.Fprintf(&Bso, "%5.2f ldelf %s\n", obj.Cputime(), pn)
-	}
-
 	Ctxt.Version++
 	base := int32(f.Boffset())
 

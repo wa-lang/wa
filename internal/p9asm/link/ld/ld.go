@@ -39,8 +39,6 @@ import (
 	"path"
 	"strconv"
 	"strings"
-
-	"wa-lang.org/wa/internal/p9asm/obj"
 )
 
 func addlib(ctxt *Link, src string, obj string, pathname string) {
@@ -105,10 +103,6 @@ func addlibpath(ctxt *Link, srcref string, objref string, file string, pkg strin
 		if pkg == ctxt.Library[i].Pkg {
 			return
 		}
-	}
-
-	if ctxt.Debugvlog > 1 && ctxt.Bso != nil {
-		fmt.Fprintf(ctxt.Bso, "%5.2f addlibpath: srcref: %s objref: %s file: %s pkg: %s shlibnamefile: %s\n", obj.Cputime(), srcref, objref, file, pkg, shlibnamefile)
 	}
 
 	ctxt.Library = append(ctxt.Library, &Library{})

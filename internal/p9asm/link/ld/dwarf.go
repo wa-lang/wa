@@ -2127,9 +2127,6 @@ func Dwarfemitdebugsections() {
 	gdbscripto = infoe
 
 	if fwdcount > 0 {
-		if Debug['v'] != 0 {
-			fmt.Fprintf(&Bso, "%5.2f dwarf pass 2.\n", obj.Cputime())
-		}
 		Cseek(infoo)
 		writeinfo()
 		if fwdcount > 0 {

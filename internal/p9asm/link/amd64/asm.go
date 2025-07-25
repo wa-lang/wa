@@ -32,7 +32,6 @@
 package amd64
 
 import (
-	"fmt"
 	"log"
 
 	"wa-lang.org/wa/internal/p9asm/debug/elf"
@@ -608,14 +607,6 @@ func addgotsym(s *ld.LSym) {
 }
 
 func asmb() {
-	if ld.Debug['v'] != 0 {
-		fmt.Fprintf(&ld.Bso, "%5.2f asmb\n", obj.Cputime())
-	}
-	ld.Bso.Flush()
-
-	if ld.Debug['v'] != 0 {
-		fmt.Fprintf(&ld.Bso, "%5.2f codeblk\n", obj.Cputime())
-	}
 	ld.Bso.Flush()
 
 	if ld.Iself {
@@ -631,29 +622,16 @@ func asmb() {
 	}
 
 	if ld.Segrodata.Filelen > 0 {
-		if ld.Debug['v'] != 0 {
-			fmt.Fprintf(&ld.Bso, "%5.2f rodatblk\n", obj.Cputime())
-		}
 		ld.Bso.Flush()
-
 		ld.Cseek(int64(ld.Segrodata.Fileoff))
 		ld.Datblk(int64(ld.Segrodata.Vaddr), int64(ld.Segrodata.Filelen))
 	}
-
-	if ld.Debug['v'] != 0 {
-		fmt.Fprintf(&ld.Bso, "%5.2f datblk\n", obj.Cputime())
-	}
-	ld.Bso.Flush()
 
 	ld.Cseek(int64(ld.Segdata.Fileoff))
 	ld.Datblk(int64(ld.Segdata.Vaddr), int64(ld.Segdata.Filelen))
 
 	machlink := int64(0)
 	if ld.HEADTYPE == obj.Hdarwin {
-		if ld.Debug['v'] != 0 {
-			fmt.Fprintf(&ld.Bso, "%5.2f dwarf\n", obj.Cputime())
-		}
-
 		dwarfoff := ld.Rnd(int64(uint64(ld.HEADR)+ld.Segtext.Length), int64(ld.INITRND)) + ld.Rnd(int64(ld.Segdata.Filelen), int64(ld.INITRND))
 		ld.Cseek(dwarfoff)
 
@@ -687,10 +665,6 @@ func asmb() {
 	ld.Lcsize = 0
 	symo := int64(0)
 	if ld.Debug['s'] == 0 {
-		if ld.Debug['v'] != 0 {
-			fmt.Fprintf(&ld.Bso, "%5.2f sym\n", obj.Cputime())
-		}
-		ld.Bso.Flush()
 		switch ld.HEADTYPE {
 		default:
 		case obj.Helf:
@@ -718,10 +692,6 @@ func asmb() {
 				ld.Cflush()
 				ld.Cwrite(ld.Elfstrdat)
 
-				if ld.Debug['v'] != 0 {
-					fmt.Fprintf(&ld.Bso, "%5.2f dwarf\n", obj.Cputime())
-				}
-
 				ld.Dwarfemitdebugsections()
 
 				if ld.Linkmode == ld.LinkExternal {
@@ -730,10 +700,6 @@ func asmb() {
 			}
 
 		case obj.Hwindows:
-			if ld.Debug['v'] != 0 {
-				fmt.Fprintf(&ld.Bso, "%5.2f dwarf\n", obj.Cputime())
-			}
-
 			ld.Dwarfemitdebugsections()
 
 		case obj.Hdarwin:
@@ -743,10 +709,6 @@ func asmb() {
 		}
 	}
 
-	if ld.Debug['v'] != 0 {
-		fmt.Fprintf(&ld.Bso, "%5.2f headr\n", obj.Cputime())
-	}
-	ld.Bso.Flush()
 	ld.Cseek(0)
 	switch ld.HEADTYPE {
 	default:

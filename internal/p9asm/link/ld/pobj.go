@@ -254,11 +254,6 @@ func Ldmain() {
 	undef()
 	hostlink()
 	archive()
-	if Debug['v'] != 0 {
-		fmt.Fprintf(&Bso, "%5.2f cpu time\n", obj.Cputime())
-		fmt.Fprintf(&Bso, "%d symbols\n", Ctxt.Nsymbol)
-		fmt.Fprintf(&Bso, "%d liveness data\n", liveness)
-	}
 
 	Bso.Flush()
 
