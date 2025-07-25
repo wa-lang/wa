@@ -30,7 +30,9 @@ type functionGenerator struct {
 
 	locals_map map[ssa.Value]valueWrap
 
-	registers    []wir.Value
+	registers      []wir.Value
+	none_rc_registers map[wir.Value]bool
+
 	cur_local_id int
 
 	var_block_selector wir.Value
@@ -362,7 +364,9 @@ func (g *functionGenerator) genFunction(f *ssa.Function) *wir.Function {
 	}
 
 	for _, i := range g.registers {
-		wir_fn.Insts = append(wir_fn.Insts, i.EmitRelease()...)
+		if g.none_rc_registers == nil || !g.none_rc_registers[i] {
+			wir_fn.Insts = append(wir_fn.Insts, i.EmitRelease()...)
+		}
 	}
 
 	wir_fn.Locals = g.registers
@@ -441,7 +445,11 @@ func (g *functionGenerator) genInstruction(inst ssa.Instruction) (insts []wat.In
 			} else {
 				nv := g.addRegister(t)
 				g.locals_map[inst] = valueWrap{value: nv}
-				s = append(s, nv.EmitPop()...)
+				if g.none_rc_registers != nil && g.none_rc_registers[nv] {
+					s = append(s, nv.EmitPopNoRelease()...)
+				} else {
+					s = append(s, nv.EmitPop()...)
+				}
 			}
 		}
 		insts = append(insts, s...)
@@ -458,6 +466,12 @@ func (g *functionGenerator) genInstruction(inst ssa.Instruction) (insts []wat.In
 
 	case *ssa.RunDefers:
 		insts = append(insts, wat.NewInstCall("runtime.popRunDeferStack"))
+
+	case *ssa.RcDisable:
+		g.module.RcDisable = true
+
+	case *ssa.RcEnable:
+		g.module.RcDisable = false
 
 	default:
 		logger.Fatalf("Todo: %[1]v: %[1]T", inst)
@@ -1647,6 +1661,12 @@ func (g *functionGenerator) addRegister(typ wir.ValueType) wir.Value {
 	name := "$t" + strconv.Itoa(g.cur_local_id)
 	v := wir.NewLocal(name, typ)
 	g.registers = append(g.registers, v)
+	if g.module.RcDisable {
+		if g.none_rc_registers == nil {
+			g.none_rc_registers = make(map[wir.Value]bool)
+		}
+		g.none_rc_registers[v] = true
+	}
 	return v
 }
 

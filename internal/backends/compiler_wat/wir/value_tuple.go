@@ -94,4 +94,5 @@ func (v *aTuple) raw() []wat.Value        { return v.aStruct.raw() }
 func (v *aTuple) EmitInit() []wat.Inst    { return v.aStruct.EmitInit() }
 func (v *aTuple) EmitPush() []wat.Inst    { return v.aStruct.EmitPush() }
 func (v *aTuple) EmitPop() []wat.Inst     { return v.aStruct.EmitPop() }
+func (v *aTuple) EmitPopNoRelease() []wat.Inst { return v.aStruct.EmitPopNoRelease() }
 func (v *aTuple) EmitRelease() []wat.Inst { return v.aStruct.EmitRelease() }

@@ -55,6 +55,7 @@ type Value interface {
 	EmitPush() []wat.Inst
 	EmitPushNoRetain() []wat.Inst
 	EmitPop() []wat.Inst
+	EmitPopNoRelease() []wat.Inst
 	EmitRelease() []wat.Inst
 	emitStoreToAddr(addr Value, offset int) []wat.Inst
 	emitStore(offset int) []wat.Inst

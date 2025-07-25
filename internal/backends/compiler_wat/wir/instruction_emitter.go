@@ -440,7 +440,11 @@ func (m *Module) EmitGenFieldAddr(x Value, field_id int) (insts []wat.Inst, ret_
 		r_type := m.GenValueType_Ref(field.Type())
 		ret_type = r_type
 		if x.Kind() != ValueKindConst || x.ExtractByName("b").Name() != "0" {
-			insts = append(insts, x.EmitPush()...)
+			if m.RcDisable {
+				insts = append(insts, x.EmitPushNoRetain()...)
+			} else {
+				insts = append(insts, x.EmitPush()...)
+			}
 			insts = append(insts, NewConst(strconv.Itoa(field._start), m.I32).EmitPush()...)
 			insts = append(insts, wat.NewInstAdd(wat.I32{}))
 		} else {
@@ -449,7 +453,11 @@ func (m *Module) EmitGenFieldAddr(x Value, field_id int) (insts []wat.Inst, ret_
 	case *aPtr:
 		field := x.Type().(*Ptr).Base.(*Struct).fields[field_id]
 		ret_type = m.GenValueType_Ptr(field.Type())
-		insts = append(insts, x.EmitPush()...)
+		if m.RcDisable {
+			insts = append(insts, x.EmitPushNoRetain()...)
+		} else {
+			insts = append(insts, x.EmitPush()...)
+		}
 		insts = append(insts, NewConst(strconv.Itoa(field._start), m.I32).EmitPush()...)
 		insts = append(insts, wat.NewInstAdd(wat.I32{}))
 

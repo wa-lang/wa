@@ -1746,3 +1746,34 @@ func (v *Const) Operands(rands []*Value) []*Value     { return rands }
 func (v *Function) Operands(rands []*Value) []*Value  { return rands }
 func (v *Global) Operands(rands []*Value) []*Value    { return rands }
 func (v *Parameter) Operands(rands []*Value) []*Value { return rands }
+
+// RcDisable SSA 指令：关闭引用计数
+// RcEnable SSA 指令：开启引用计数
+
+type RcDisable struct {
+    anInstruction
+    pos token.Pos
+}
+
+type RcEnable struct {
+    anInstruction
+    pos token.Pos
+}
+
+func (s *RcDisable) String() string { return "rc_disable" }
+func (s *RcEnable) String() string  { return "rc_enable" }
+
+func (s *RcDisable) Parent() *Function { return s.block.parent }
+func (s *RcEnable) Parent() *Function  { return s.block.parent }
+
+func (s *RcDisable) Block() *BasicBlock { return s.block }
+func (s *RcEnable) Block() *BasicBlock  { return s.block }
+
+func (s *RcDisable) setBlock(block *BasicBlock) { s.block = block }
+func (s *RcEnable) setBlock(block *BasicBlock)  { s.block = block }
+
+func (s *RcDisable) Operands(rands []*Value) []*Value { return rands }
+func (s *RcEnable) Operands(rands []*Value) []*Value  { return rands }
+
+func (s *RcDisable) Pos() token.Pos { return s.pos }
+func (s *RcEnable) Pos() token.Pos  { return s.pos }

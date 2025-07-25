@@ -146,6 +146,11 @@ func (v *aBlock) EmitPop() (insts []wat.Inst) {
 	return
 }
 
+func (v *aBlock) EmitPopNoRelease() (insts []wat.Inst) {
+	insts = append(insts, v.pop(v.name))
+	return
+}
+
 func (v *aBlock) EmitRelease() (insts []wat.Inst) {
 	if v.Kind() == ValueKindConst && v.Name() == "0" {
 		return

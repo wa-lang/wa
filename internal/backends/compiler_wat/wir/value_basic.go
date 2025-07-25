@@ -135,6 +135,7 @@ func (v *aBasic) raw() []wat.Value             { return []wat.Value{wat.NewVar(v
 func (v *aBasic) EmitPush() []wat.Inst         { return []wat.Inst{v.push(v.name)} }
 func (v *aBasic) EmitPushNoRetain() []wat.Inst { return []wat.Inst{v.push(v.name)} }
 func (v *aBasic) EmitPop() []wat.Inst          { return []wat.Inst{v.pop(v.name)} }
+func (v *aBasic) EmitPopNoRelease() []wat.Inst { return []wat.Inst{v.pop(v.name)} }
 func (v *aBasic) EmitRelease() []wat.Inst      { return nil }
 
 func (v *aBasic) EmitInit() (insts []wat.Inst) {

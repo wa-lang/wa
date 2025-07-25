@@ -280,6 +280,16 @@ func (v *aStruct) EmitPop() []wat.Inst {
 	return insts
 }
 
+func (v *aStruct) EmitPopNoRelease() []wat.Inst {
+	var insts []wat.Inst
+	for i := range v.typ.fields {
+		m := v.typ.fields[len(v.typ.fields)-i-1]
+		t := v.genSubValue(m)
+		insts = append(insts, t.EmitPopNoRelease()...)
+	}
+	return insts
+}
+
 func (v *aStruct) EmitRelease() []wat.Inst {
 	var insts []wat.Inst
 	for i := range v.typ.fields {

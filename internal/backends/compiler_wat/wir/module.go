@@ -49,6 +49,8 @@ type Module struct {
 	DataSeg *wat.DataSeg
 
 	BaseWat string
+
+	RcDisable bool
 }
 
 func NewModule(stkSize int) *Module {

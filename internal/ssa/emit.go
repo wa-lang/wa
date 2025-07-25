@@ -381,7 +381,9 @@ func emitImplicitSelections(f *Function, v Value, indices []int) Value {
 				Field: index,
 			}
 			instr.setType(types.NewPointer(fld.Type()))
+			emitRcDisable(f, instr.Pos())
 			v = f.emit(instr)
+			emitRcEnable(f, instr.Pos())
 			// Load the field's value iff indirectly embedded.
 			if isPointer(fld.Type()) {
 				v = emitLoad(f, v)
@@ -392,7 +394,9 @@ func emitImplicitSelections(f *Function, v Value, indices []int) Value {
 				Field: index,
 			}
 			instr.setType(fld.Type())
+			emitRcDisable(f, instr.Pos())
 			v = f.emit(instr)
+			emitRcEnable(f, instr.Pos())
 		}
 	}
 	return v
@@ -413,7 +417,9 @@ func emitFieldSelection(f *Function, v Value, index int, wantAddr bool, id *ast.
 		}
 		instr.setPos(id.Pos())
 		instr.setType(types.NewPointer(fld.Type()))
+		emitRcDisable(f, id.Pos())
 		v = f.emit(instr)
+		emitRcEnable(f, id.Pos())
 		// Load the field's value iff we don't want its address.
 		if !wantAddr {
 			v = emitLoad(f, v)
@@ -425,7 +431,9 @@ func emitFieldSelection(f *Function, v Value, index int, wantAddr bool, id *ast.
 		}
 		instr.setPos(id.Pos())
 		instr.setType(fld.Type())
+		emitRcDisable(f, id.Pos())
 		v = f.emit(instr)
+		emitRcEnable(f, id.Pos())
 	}
 	emitDebugRef(f, id, v, wantAddr)
 	return v
@@ -477,4 +485,14 @@ func createRecoverBlock(f *Function) {
 	f.emit(&Return{Results: results})
 
 	f.currentBlock = saved
+}
+
+// emitRcDisable emits an RcDisable instruction to disable rc counting.
+func emitRcDisable(f *Function, pos token.Pos) {
+	f.emit(&RcDisable{pos: pos})
+}
+
+// emitRcEnable emits an RcEnable instruction to enable rc counting.
+func emitRcEnable(f *Function, pos token.Pos) {
+	f.emit(&RcEnable{pos: pos})
 }
