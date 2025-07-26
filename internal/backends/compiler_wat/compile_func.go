@@ -656,6 +656,13 @@ func (g *functionGenerator) genCall(call *ssa.CallCommon) (insts []wat.Inst, ret
 		ret_type = g.tLib.compile(call.Signature().Results())
 
 		t := g.tLib.find(call.Value.Type())
+		if t == nil {
+			t = g.tLib.compile(call.Value.Type())
+			if t == nil {
+				logger.Fatalf("invoke: %v, type: %T", call.Value, call.Value)
+				return nil, nil
+			}
+		}
 		for id := 0; id < t.NumMethods(); id++ {
 			m := t.Method(id)
 			if m.Name == call.Method.Name() {

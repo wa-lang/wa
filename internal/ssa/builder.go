@@ -366,6 +366,7 @@ func (b *builder) addr(fn *Function, e ast.Expr, escaping bool) lvalue {
 			et = types.NewPointer(t.Elem())
 		case *types.Pointer: // *array
 			x = b.expr(fn, e.X)
+			emitNilCheck(fn, x, e.X.Pos())
 			et = types.NewPointer(t.Elem().Underlying().(*types.Array).Elem())
 		case *types.Slice:
 			x = b.expr(fn, e.X)
@@ -389,7 +390,7 @@ func (b *builder) addr(fn *Function, e ast.Expr, escaping bool) lvalue {
 		return &address{addr: fn.emit(v), pos: e.Lbrack, expr: e}
 
 	case *ast.StarExpr:
-		return &address{addr: b.expr(fn, e.X), pos: e.Star, expr: e}
+		return &address{addr: b.exprDeref(fn, e.X), pos: e.Star, expr: e}
 	}
 
 	panic(fmt.Sprintf("unexpected address expression: %T", e))
@@ -502,6 +503,28 @@ func (b *builder) expr(fn *Function, e ast.Expr) Value {
 	} else {
 		v = b.expr0(fn, e, tv)
 	}
+	if fn.debugInfo() {
+		emitDebugRef(fn, e, v, false)
+	}
+	return v
+}
+
+func (b *builder) exprDeref(fn *Function, e ast.Expr) Value {
+	e = unparen(e)
+
+	tv := fn.Pkg.info.Types[e]
+
+	if tv.Value != nil {
+		panic("exprDeref: unexpected constant")
+	}
+
+	var v Value
+	if tv.Addressable() {
+		v = b.addr(fn, e, false).load(fn)
+	} else {
+		v = b.expr0(fn, e, tv)
+	}
+	emitNilCheck(fn, v, e.Pos())
 	if fn.debugInfo() {
 		emitDebugRef(fn, e, v, false)
 	}
@@ -705,6 +728,9 @@ func (b *builder) expr0(fn *Function, e ast.Expr, tv types.TypeAndValue) Value {
 			indices := sel.Index()
 			last := len(indices) - 1
 			v := b.expr(fn, e.X)
+			if tv := fn.Pkg.info.Types[unparen(e.X)]; isPointer(tv.Type) {
+				emitNilCheck(fn, v, e.X.Pos())
+			}
 			v = emitImplicitSelections(fn, v, indices[:last])
 			v = emitFieldSelection(fn, v, indices[last], false, e.Sel)
 			return v
@@ -786,6 +812,9 @@ func (b *builder) receiver(fn *Function, e ast.Expr, wantAddr, escaping bool, se
 		v = b.expr(fn, e)
 	}
 
+	if tv := fn.Pkg.info.Types[unparen(e)]; isPointer(tv.Type) || isInterface(tv.Type) {
+		emitNilCheck(fn, v, e.Pos())
+	}
 	last := len(sel.Index()) - 1
 	v = emitImplicitSelections(fn, v, sel.Index()[:last])
 	if !wantAddr && isPointer(v.Type()) {
@@ -854,6 +883,11 @@ func (b *builder) setCallFunc(fn *Function, e *ast.CallExpr, c *CallCommon) {
 
 	// Evaluate the function operand in the usual way.
 	c.Value = b.expr(fn, e.Fun)
+	switch c.Value.(type) {
+	case *Function, *Builtin:
+	default:
+		emitNilCheck(fn, c.Value, e.Pos())
+	}
 }
 
 // emitCallArgs emits to f code for the actual parameters of call e to

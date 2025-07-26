@@ -25,7 +25,7 @@ func (module *Module) GenValueType_Map(key_type, elem_type ValueType, name strin
 	if len(name) > 0 {
 		map_t.name = name
 	} else {
-		map_t.name = "runtime.map." + key_type.Named() + "." + elem_type.Named()
+		map_t.name = "runtime.map." + key_type.Named() + "." + elem_type.Named() + ".map"
 	}
 
 	t, ok := module.findValueType(map_t.name)

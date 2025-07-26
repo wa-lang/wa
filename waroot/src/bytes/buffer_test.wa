@@ -261,14 +261,6 @@ func TestCapWithSliceAndWrittenData {
 	}
 }
 
-func TestNil {
-	b: *Buffer
-	if b.String() != "<nil>" {
-		assert(false)
-		//t.Errorf("expected <nil>; got %q", b.String())
-	}
-}
-
 func TestReadFrom {
 	buf: Buffer
 	for i := 3; i < 30; i += 3 {

@@ -1,0 +1,864 @@
+// 版权 @2025 凹语言 作者。保留所有权利。
+
+func ExampleNilPointerDerefBasic {
+	// 测试1: 直接解引用空指针
+	ptr: *i32
+	ptr = nil
+	// 以下语句应该触发空指针解引用错误
+	_ = *ptr // 应该panic: nil pointer dereferenced
+	// Output(panic):
+	// nil pointer dereferenced
+}
+
+func ExampleNilPointerDerefFuncReturn {
+	// 测试2: 通过函数返回空指针并解引用
+	ptr := getNilPtr()
+	// 以下语句应该触发空指针解引用错误
+	_ = *ptr // 应该panic: nil pointer dereferenced
+	// Output(panic):
+	// nil pointer dereferenced
+}
+
+func ExampleNilPointerDerefStructField {
+	// 测试3: 结构体指针字段的空指针解引用
+	person: *Person
+	person = nil
+	// 以下语句应该触发空指针解引用错误
+	_ = person.name // 应该panic: nil pointer dereferenced
+	// Output(panic):
+	// nil pointer dereferenced
+}
+
+func ExampleNilPointerDerefArrayPtr {
+	// 测试4: 数组指针的空指针解引用
+	arr: *[5]i32
+	arr = nil
+	// 以下语句应该触发空指针解引用错误
+	_ = arr[0] // 应该panic: nil pointer dereferenced
+	// Output(panic):
+	// nil pointer dereferenced
+}
+
+func ExampleNilPointerDerefSlicePtr {
+	// 测试5: 切片指针的空指针解引用
+	slice: *[]i32
+	slice = nil
+	// 以下语句应该触发空指针解引用错误
+	_ = (*slice)[0] // 应该panic: nil pointer dereferenced
+	// Output(panic):
+	// nil pointer dereferenced
+}
+
+// 返回空指针的函数
+func getNilPtr() => *i32 {
+	return nil
+}
+
+// 定义结构体
+type Person :struct {
+	name: string
+	age:  i32
+}
+
+func ExampleNilPointerDerefConditional {
+	// 测试6: 条件分支中的空指针解引用
+	ptr: *i32
+	ptr = nil
+
+	if true {
+		// 以下语句应该触发空指针解引用错误
+		_ = *ptr // 应该panic: nil pointer dereferenced
+	}
+	// Output(panic):
+	// nil pointer dereferenced
+}
+
+func ExampleNilPointerDerefLoop {
+	// 测试7: 循环中的空指针解引用
+	ptrs: []*i32
+	ptrs = append(ptrs, nil)
+	ptrs = append(ptrs, nil)
+
+	for i := 0; i < len(ptrs); i++ {
+		// 以下语句应该触发空指针解引用错误
+		_ = *ptrs[i] // 应该panic: nil pointer dereferenced
+	}
+	// Output(panic):
+	// nil pointer dereferenced
+}
+
+func ExampleNilPointerDerefMethodCall {
+	// 测试8: 空指针调用方法
+	emp: *Employee
+	emp = nil
+	// 以下语句应该触发空指针解引用错误
+	_ = emp.getName() // 应该panic: nil pointer dereferenced
+	// Output(panic):
+	// nil pointer dereferenced
+}
+
+func ExampleNilPointerDerefMethodReturn {
+	// 测试9: 通过方法返回空指针并解引用
+	emp: *Employee
+	emp = nil
+	addr := emp.getAddress() // 应该panic: nil pointer dereferenced
+	_ = addr.street          // 如果上面没有panic，这里应该panic
+	// Output(panic):
+	// nil pointer dereferenced
+}
+
+func ExampleNilPointerDerefNestedStruct {
+	// 测试10: 嵌套结构体的空指针解引用
+	emp: *Employee
+	emp = nil
+	// 以下语句应该触发空指针解引用错误
+	_ = emp.address.street // 应该panic: nil pointer dereferenced
+	// Output(panic):
+	// nil pointer dereferenced
+}
+
+func ExampleNilPointerDerefSliceElements {
+	// 测试11: 切片中空指针元素的解引用
+	employees: []*Employee
+	employees = append(employees, nil)
+	employees = append(employees, nil)
+
+	// 以下语句应该触发空指针解引用错误
+	_ = employees[0].name // 应该panic: nil pointer dereferenced
+	// Output(panic):
+	// nil pointer dereferenced
+}
+
+func ExampleNilPointerDerefStructField2 {
+	// 测试12: 结构体字段的空指针解引用
+	company: Company
+	company.ceo = nil
+
+	// 以下语句应该触发空指针解引用错误
+	_ = company.ceo.name // 应该panic: nil pointer dereferenced
+	// Output(panic):
+	// nil pointer dereferenced
+}
+
+// 定义结构体
+type Employee :struct {
+	name:    string
+	address: *Address
+	salary:  i32
+}
+
+type Address :struct {
+	street: string
+	city:   string
+}
+
+type Company :struct {
+	name:      string
+	employees: []*Employee
+	ceo:       *Employee
+}
+
+// 为Employee定义方法
+func Employee.getName() => string {
+	return this.name
+}
+
+func Employee.getAddress() => *Address {
+	return this.address
+}
+
+func ExampleNilPointerDerefInterface {
+	// 测试13: 接口的空指针解引用
+	printer: Printer
+	printer = nil
+	// 以下语句应该触发空指针解引用错误
+	printer.print() // 应该panic: nil pointer dereferenced
+	// Output(panic):
+	// nil pointer dereferenced
+}
+
+func ExampleNilPointerDerefInterfaceTypeAssert {
+	// 测试14: 接口类型断言的空指针解引用
+	printer: Printer
+	printer = nil
+	sp, ok := printer.(*StringPrinter)
+	if !ok {
+		// 以下语句应该触发空指针解引用错误
+		println(sp.text)
+	}
+	// Output(panic):
+	// nil pointer dereferenced
+}
+
+func ExampleNilPointerDerefFuncPtr {
+	// 测试15: 函数指针的空指针调用
+	handler: Handler
+	// 以下语句应该触发空指针解引用错误
+	_ = handler(42) // 应该panic: nil pointer dereferenced
+	// Output(panic):
+	// nil pointer dereferenced
+}
+
+func ExampleNilPointerDerefFuncParam {
+	// 测试16: 通过函数参数传递空指针并解引用
+	ptr: *i32
+	ptr = nil
+	// 以下语句应该触发空指针解引用错误
+	_ = derefPtr(ptr) // 应该panic: nil pointer dereferenced
+	// Output(panic):
+	// nil pointer dereferenced
+}
+
+func ExampleNilPointerDerefArrayPtrIndex {
+	// 测试17: 数组指针索引访问
+	arr: *[5]i32
+	arr = nil
+	// 以下语句应该触发空指针解引用错误
+	_ = arr[2] // 应该panic: nil pointer dereferenced
+	// Output(panic):
+	// nil pointer dereferenced
+}
+
+func ExampleNilPointerDerefSlicePtrIndex {
+	// 测试18: 切片指针索引访问
+	slice: *[]i32
+	slice = nil
+	// 以下语句应该触发空指针解引用错误
+	_ = (*slice)[1] // 应该panic: nil pointer dereferenced
+	// Output(panic):
+	// nil pointer dereferenced
+}
+
+func ExampleNilPointerDerefMultiplePtr {
+	// 测试19: 多重指针解引用
+	ptr1: **i32
+	ptr1 = nil
+	// 以下语句应该触发空指针解引用错误
+	_ = **ptr1 // 应该panic: nil pointer dereferenced
+	// Output(panic):
+	// nil pointer dereferenced
+}
+
+func ExampleNilPointerDerefStructFuncPtr {
+	// 测试20: 结构体函数指针调用
+	obj: *StructWithFunc
+	obj = nil
+	// 以下语句应该触发空指针解引用错误
+	_ = obj.handler(10) // 应该panic: nil pointer dereferenced
+	// Output(panic):
+	// nil pointer dereferenced
+}
+
+func ExampleNilPointerDerefRecursiveStruct {
+	// 测试21: 递归结构体空指针解引用
+	node: *Node
+	node = nil
+	// 以下语句应该触发空指针解引用错误
+	_ = node.next.value // 应该panic: nil pointer dereferenced
+	// Output(panic):
+	// nil pointer dereferenced
+}
+
+func ExampleNilPointerDerefStructPtrArray {
+	// 测试22: 结构体指针数组访问
+	people: *[3]*Person
+	people = nil
+	// 以下语句应该触发空指针解引用错误
+	_ = people[0].name // 应该panic: nil pointer dereferenced
+	// Output(panic):
+	// nil pointer dereferenced
+}
+
+// 通过函数参数传递空指针并解引用
+func derefPtr(ptr: *i32) => i32 {
+	return *ptr // 如果ptr是nil，应该panic
+}
+
+// 定义接口
+type Printer :interface {
+	print()
+}
+
+type StringPrinter :struct {
+	text: string
+}
+
+func StringPrinter.print {
+	println(this.text)
+}
+
+// 定义函数类型
+type Handler :func(i32) => string
+
+type StructWithFunc :struct {
+	handler: Handler
+}
+
+type Node :struct {
+	value: i32
+	next:  *Node
+}
+
+func ExampleNilPointerDerefClosure {
+	// 测试23: 通过函数闭包捕获的空指针解引用
+	ptr: *i32
+	ptr = nil
+
+	closure := createClosure(ptr)
+	// 以下语句应该触发空指针解引用错误
+	_ = closure() // 应该panic: nil pointer dereferenced
+	// Output(panic):
+	// nil pointer dereferenced
+}
+
+func ExampleNilPointerDerefDefer {
+	// 测试24: 通过defer语句的空指针解引用
+	ptr: *i32
+
+	defer func() {
+		// defer中的空指针解引用应该panic
+		_ = *ptr // 应该panic: nil pointer dereferenced
+	}()
+
+	ptr = nil
+
+	// Output(panic):
+	// nil pointer dereferenced
+}
+
+func ExampleNilPointerDerefComplexInterface {
+	// 测试25: 通过接口类型断言的复杂空指针场景
+	cs: ComplexStruct
+	cs.value = nil
+
+	ci: ComplexInterface
+	ci = &cs
+
+	// 以下语句应该触发空指针解引用错误
+	ptr := ci.getValue() // 应该返回nil
+	_ = *ptr             // 应该panic: nil pointer dereferenced
+	// Output(panic):
+	// nil pointer dereferenced
+}
+
+func ExampleNilPointerDerefAnonymousStruct {
+	// 测试26: 匿名结构体的空指针解引用
+	anon: *struct {
+		field: *i32
+	}
+	anon = nil
+	// 以下语句应该触发空指针解引用错误
+	_ = anon.field // 应该panic: nil pointer dereferenced
+	// Output(panic):
+	// nil pointer dereferenced
+}
+
+func ExampleNilPointerDerefTypeConversion {
+	// 测试27: 类型转换后的空指针解引用
+	ptr: *i32
+	ptr = nil
+	// 以下语句应该触发空指针解引用错误
+	_ = *(*i32)(ptr) // 应该panic: nil pointer dereferenced
+	// Output(panic):
+	// nil pointer dereferenced
+}
+
+func ExampleNilPointerDerefPtrArithmetic {
+	// 测试28: 指针算术运算后的空指针解引用
+	// 测试2: 通过指针运算得到的空指针解引用
+	arr: *[5]i32
+	arr = nil
+
+	// 以下语句应该触发空指针解引用错误
+	_ = arr[0] // 应该panic: nil pointer dereferenced
+	// Output(panic):
+	// nil pointer dereferenced
+}
+
+func ExampleNilPointerDerefPtrSlice {
+	// 测试29: 指针切片操作后的空指针解引用
+	ptrs: []*i32
+	ptrs = append(ptrs, nil)
+	ptrs = append(ptrs, nil)
+
+	// 以下语句应该触发空指针解引用错误
+	_ = *ptrs[0] // 应该panic: nil pointer dereferenced
+	_ = *ptrs[1] // 应该panic: nil pointer dereferenced
+	// Output(panic):
+	// nil pointer dereferenced
+}
+
+func ExampleNilPointerDerefMapPtr {
+	// 测试30: Map指针的空指针解引用
+	m: *map[string]i32
+	m = nil
+	// 以下语句应该触发空指针解引用错误
+	_ = (*m)["key"] // 应该panic: nil pointer dereferenced
+	// Output(panic):
+	// nil pointer dereferenced
+}
+
+func ExampleNilPointerDerefZeroValue {
+	// 测试31: 零值指针的解引用
+	ptr: *i32 // 零值，相当于nil
+	// 以下语句应该触发空指针解引用错误
+	_ = *ptr // 应该panic: nil pointer dereferenced
+	// Output(panic):
+	// nil pointer dereferenced
+}
+
+func ExampleNilPointerDerefRecursive {
+	// 测试32: 递归函数中的空指针解引用
+	ptr: *i32
+	ptr = nil
+	// 以下语句应该触发空指针解引用错误
+	_ = recursiveDeref(ptr) // 应该panic: nil pointer dereferenced
+	// Output(panic):
+	// nil pointer dereferenced
+}
+
+// 通过函数闭包捕获的空指针解引用
+func createClosure(ptr: *i32) => func() => i32 {
+	return func() => i32 {
+		return *ptr // 如果ptr是nil，应该panic
+	}
+}
+
+// 递归函数中的空指针解引用
+func recursiveDeref(ptr: *i32) => i32 {
+	if ptr == nil {
+		return *ptr // 应该panic: nil pointer dereferenced
+	}
+	return *ptr
+}
+
+// 定义接口
+type ComplexInterface :interface {
+	getValue() => *i32
+}
+
+type ComplexStruct :struct {
+	value: *i32
+}
+
+func ComplexStruct.getValue() => *i32 {
+	return this.value
+}
+
+func ExampleNilPointerDerefBasicStar {
+	// 测试33: 基本的使用*号解引用空指针测试
+	ptr: *i32
+	*ptr = 42 // 应该panic: nil pointer dereferenced
+	// Output(panic):
+	// nil pointer dereferenced
+}
+
+func ExampleNilPointerDerefAssignmentStar {
+	// 测试34: 赋值语句中空指针解引用
+	ptr1: *i32
+	ptr2: *i32
+	ptr2 = nil
+
+	*ptr1 = *ptr2 // 应该panic: nil pointer dereferenced
+	// Output(panic):
+	// nil pointer dereferenced
+}
+
+func ExampleNilPointerDerefArithmeticStar {
+	// 测试35: 空指针解引用后进行算术运算
+	ptr: *i32
+	result := *ptr + 10 // 应该panic: nil pointer dereferenced
+	_ = result
+	// Output(panic):
+	// nil pointer dereferenced
+}
+
+func ExampleNilPointerDerefComparisonStar {
+	// 测试36: 空指针解引用后进行比较运算
+	ptr: *i32
+	result := *ptr > 0 // 应该panic: nil pointer dereferenced
+	_ = result
+	// Output(panic):
+	// nil pointer dereferenced
+}
+
+func ExampleNilPointerDerefConditionalStar {
+	// 测试37: 条件语句中的空指针解引用
+	ptr: *i32
+	if *ptr == 0 { // 应该panic: nil pointer dereferenced
+		println("zero")
+	}
+	// Output(panic):
+	// nil pointer dereferenced
+}
+
+func ExampleNilPointerDerefLoopStar {
+	// 测试38: 循环中的空指针解引用
+	ptr: *i32
+	for *ptr < 10 { // 应该panic: nil pointer dereferenced
+		println("loop")
+	}
+	// Output(panic):
+	// nil pointer dereferenced
+}
+
+func ExampleNilPointerDerefSwitchStar {
+	// 测试39: switch语句中的空指针解引用
+	ptr: *i32
+	switch *ptr { // 应该panic: nil pointer dereferenced
+	case 1:
+		println("one")
+	default:
+		println("other")
+	}
+	// Output(panic):
+	// nil pointer dereferenced
+}
+
+// 辅助函数
+func processValue(value: i32) => i32 {
+	return value * 2
+}
+
+func ExampleNilPointerDerefFunctionArgStar {
+	// 测试40: 函数参数中的空指针解引用
+	ptr: *i32
+	_ = processValue(*ptr) // 应该panic: nil pointer dereferenced
+	// Output(panic):
+	// nil pointer dereferenced
+}
+
+func returnDerefNil() => i32 {
+	ptr: *i32
+	return *ptr
+}
+
+func ExampleNilPointerDerefFunctionReturnStar {
+	// 测试41: 函数返回中的空指针解引用
+	_ = returnDerefNil() // 应该panic: nil pointer dereferenced
+	// Output(panic):
+	// nil pointer dereferenced
+}
+
+func ExampleNilPointerDerefArrayElementStar {
+	// 测试42: 数组元素中的空指针解引用
+	arr: []*i32
+	arr = append(arr, nil)
+	_ = *arr[0] // 应该panic: nil pointer dereferenced
+	// Output(panic):
+	// nil pointer dereferenced
+}
+
+func ExampleNilPointerDerefSliceElementStar {
+	// 测试43: 切片元素中的空指针解引用
+	slice: []*i32
+	slice = append(slice, nil)
+	_ = *slice[0] // 应该panic: nil pointer dereferenced
+	// Output(panic):
+	// nil pointer dereferenced
+}
+
+func ExampleNilPointerDerefStructFieldStar {
+	// 测试44: 结构体字段中的空指针解引用
+	obj: *TestStruct
+	obj = nil
+	_ = *obj.field // 应该panic: nil pointer dereferenced
+	// Output(panic):
+	// nil pointer dereferenced
+}
+
+func ExampleNilPointerDerefMapValueStar {
+	// 测试45: Map值中的空指针解引用
+	ptrMap: map[string]*i32
+	ptrMap = make(map[string]*i32)
+	ptrMap["key"] = nil
+	*ptrMap["key"] = 42 // 应该panic: nil pointer dereferenced
+	// Output(panic):
+	// nil pointer dereferenced
+}
+
+func ExampleNilPointerDerefInterfaceStar {
+	// 测试46: 接口中的空指针解引用
+	iface: interface{}
+	ptr, ok := iface.(*i32)
+	if !ok {
+		println(*ptr)
+	}
+	// Output(panic):
+	// nil pointer dereferenced
+}
+
+func ExampleNilPointerDerefMultipleStar {
+	// 测试47: 多重解引用
+	ptr: **i32
+	_ = **ptr // 应该panic: nil pointer dereferenced
+	// Output(panic):
+	// nil pointer dereferenced
+}
+
+func ExampleNilPointerDerefMultipleStar2 {
+	// 测试48: 多重解引用
+	// 多重指针解引用
+	ptr1: **i32
+	**ptr1 = 42 // 应该panic: nil pointer dereferenced
+	// Output(panic):
+	// nil pointer dereferenced
+}
+
+func ExampleNilPointerDerefNestedStar {
+	// 测试49: 嵌套解引用
+	ptr: *TestStruct
+	ptr = nil
+	_ = *ptr.field // 应该panic: nil pointer dereferenced
+	// Output(panic):
+	// nil pointer dereferenced
+}
+
+func ExampleNilPointerDerefReadStar {
+	// 测试50: 读取操作中的空指针解引用
+	ptr: *i32
+	value := *ptr // 应该panic: nil pointer dereferenced
+	_ = value
+	// Output(panic):
+	// nil pointer dereferenced
+}
+
+// 定义结构体
+type TestStruct :struct {
+	field: *i32
+}
+
+// 空指针访问测试（不触发panic的测试）
+
+func ExampleNilPointerAccessComparison {
+	// 测试1: 空指针比较
+	ptr1, ptr2: *i32
+	ptr1 = nil
+	ptr2 = nil
+
+	// 这些比较应该正常工作，不应该panic
+	if ptr1 == nil {
+		println("ptr1 is nil")
+	}
+	if ptr2 == nil {
+		println("ptr2 is nil")
+	}
+	if ptr1 == ptr2 {
+		println("both pointers are nil")
+	}
+
+	println("空指针比较测试通过")
+	// Output:
+	// ptr1 is nil
+	// ptr2 is nil
+	// both pointers are nil
+	// 空指针比较测试通过
+}
+
+func ExampleNilPointerAccessAssignment {
+	// 测试2: 空指针赋值
+	ptr: *i32
+	ptr = nil // 应该正常工作
+
+	ptr2: *i32
+	ptr2 = ptr // 应该正常工作，ptr2也变成nil
+
+	if ptr2 == nil {
+		println("ptr2 is nil after assignment")
+	}
+
+	println("空指针赋值测试通过")
+	// Output:
+	// ptr2 is nil after assignment
+	// 空指针赋值测试通过
+}
+
+func ExampleNilPointerAccessFuncParam {
+	// 测试3: 空指针作为函数参数传递（不解引用）
+	ptr: *i32
+	ptr = nil
+	// 以下语句应该正常工作，不应该panic
+	result := acceptPtr(ptr)
+	if result {
+		println("ptr is nil")
+	}
+
+	println("空指针函数参数测试通过")
+	// Output:
+	// ptr is nil
+	// 空指针函数参数测试通过
+}
+
+func ExampleNilPointerAccessFuncReturn {
+	// 测试4: 空指针作为返回值
+	// 以下语句应该正常工作，不应该panic
+	ptr := returnNilPtr()
+	if ptr == nil {
+		println("returned pointer is nil")
+	}
+
+	println("空指针返回值测试通过")
+	// Output:
+	// returned pointer is nil
+	// 空指针返回值测试通过
+}
+
+func ExampleNilPointerAccessStructField {
+	// 测试5: 结构体字段的空指针赋值
+	container: Container
+	container.ptr = nil // 应该正常工作
+
+	ptr: *i32
+	ptr = nil
+	container.ptr = ptr // 应该正常工作
+
+	if container.ptr == nil {
+		println("container.ptr is nil")
+	}
+
+	println("结构体字段空指针赋值测试通过")
+	// Output:
+	// container.ptr is nil
+	// 结构体字段空指针赋值测试通过
+}
+
+func ExampleNilPointerAccessArraySlice {
+	// 测试6: 数组和切片的空指针操作
+	// 这些操作应该正常工作，不应该panic
+	slice: []*i32
+	slice = append(slice, nil)
+
+	if slice[0] == nil {
+		println("slice[0] is nil")
+	}
+
+	arr: [3]*i32
+	arr[0] = nil
+
+	if arr[0] == nil {
+		println("arr[0] is nil")
+	}
+
+	println("数组切片空指针操作测试通过")
+	// Output:
+	// slice[0] is nil
+	// arr[0] is nil
+	// 数组切片空指针操作测试通过
+}
+
+func ExampleNilPointerAccessConditionCheck {
+	// 测试7: 条件检查中的空指针操作
+	ptr: *i32
+	ptr = nil
+
+	// 这些条件检查应该正常工作，不应该panic
+	if ptr == nil {
+		println("ptr is nil in condition")
+	}
+
+	if ptr != nil {
+		println("ptr is not nil")
+	} else {
+		println("ptr is nil in else branch")
+	}
+
+	println("条件检查空指针操作测试通过")
+	// Output:
+	// ptr is nil in condition
+	// ptr is nil in else branch
+	// 条件检查空指针操作测试通过
+}
+
+func ExampleNilPointerAccessTypeCheck {
+	// 测试8: 类型检查中的空指针操作
+	iface: interface{}
+	iface = nil
+
+	// 这些类型检查应该正常工作，不应该panic
+	if iface == nil {
+		println("interface is nil")
+	}
+
+	_, ok := iface.(*i32)
+	if !ok {
+		println("type assertion failed as expected")
+	}
+
+	println("类型检查空指针操作测试通过")
+	// Output:
+	// interface is nil
+	// type assertion failed as expected
+	// 类型检查空指针操作测试通过
+}
+
+func ExampleNilPointerAccessCompositeLiteral {
+	// 测试9: 复合字面量中的空指针操作
+	// 这些操作应该正常工作，不应该panic
+	slice: []*i32
+	slice = append(slice, nil)
+	slice = append(slice, nil)
+
+	for i, ptr := range slice {
+		if ptr == nil {
+			println("slice[", i, "] is nil")
+		}
+	}
+
+	map1 := map[string]*i32{
+		"key1": nil,
+		"key2": nil,
+	}
+
+	for key, ptr := range map1 {
+		if ptr == nil {
+			println("map[", key, "] is nil")
+		}
+	}
+
+	println("复合字面量空指针操作测试通过")
+	// Output:
+	// slice[ 0 ] is nil
+	// slice[ 1 ] is nil
+	// map[ key1 ] is nil
+	// map[ key2 ] is nil
+	// 复合字面量空指针操作测试通过
+}
+
+func ExampleNilPointerAccessInterface {
+	// 测试10: 接口中的空指针操作
+	iface: interface{}
+	iface = nil
+
+	// 这些接口操作应该正常工作，不应该panic
+	if iface == nil {
+		println("interface is nil")
+	}
+
+	// 类型断言应该失败而不是panic
+	if _, ok := iface.(*i32); !ok {
+		println("type assertion failed, ptr is nil")
+	} else {
+		println("type assertion succeeded")
+	}
+
+	println("接口空指针操作测试通过")
+	// Output:
+	// interface is nil
+	// type assertion failed, ptr is nil
+	// 接口空指针操作测试通过
+}
+
+// 接受指针参数但不解引用的函数
+func acceptPtr(ptr: *i32) => bool {
+	return ptr == nil
+}
+
+// 返回空指针的函数
+func returnNilPtr() => *i32 {
+	return nil
+}
+
+// 定义结构体
+type Container :struct {
+	ptr: *i32
+}

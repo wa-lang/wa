@@ -48,6 +48,11 @@ ci-test-all:
 	cd waroot && go run ../main.go run hello.wa
 
 	make -C ./waroot/examples ci-test-all
+
+	@echo "== nil check test begin =="
+	go run main.go test ./waroot/tests/nil-check/nil_pointer_deref_test.wa
+	@echo "== nil check test ok =="
+
 	wa -v
 
 wasm-js:

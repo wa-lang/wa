@@ -496,3 +496,31 @@ func emitRcDisable(f *Function, pos token.Pos) {
 func emitRcEnable(f *Function, pos token.Pos) {
 	f.emit(&RcEnable{pos: pos})
 }
+
+// emitNilCheck emits to f a nil check for pointer value v.
+// If v is nil, it will panic with a runtime error.
+// pos is the position for the panic instruction.
+func emitNilCheck(f *Function, v Value, pos token.Pos) {
+	// Create a comparison: v == nil
+	nilVal := nilConst(v.Type())
+	cond := emitCompare(f, token.EQL, v, nilVal, pos)
+
+	// Create panic block
+	panicBlock := f.newBasicBlock("nil_check_panic")
+
+	// Create continue block
+	continueBlock := f.newBasicBlock("nil_check_continue")
+
+	// Emit conditional jump
+	emitIf(f, cond, panicBlock, continueBlock)
+
+	// In panic block, emit panic with nil pointer error message
+	f.currentBlock = panicBlock
+	panicMsg := stringConst("nil pointer dereferenced")
+	panicInstr := &Panic{X: panicMsg}
+	panicInstr.pos = pos
+	f.emit(panicInstr)
+
+	// Set current block to continue block
+	f.currentBlock = continueBlock
+}
