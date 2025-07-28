@@ -52,17 +52,17 @@ func commonsize() int {
 
 // Type.commonType.kind
 func decodetype_kind(s *LSym) uint8 {
-	return uint8(s.P[2*Thearch.Ptrsize+7] & obj.KindMask) //  0x13 / 0x1f
+	return uint8(s.P[2*Thearch.Ptrsize+7] & KindMask) //  0x13 / 0x1f
 }
 
 // Type.commonType.kind
 func decodetype_noptr(s *LSym) uint8 {
-	return uint8(s.P[2*Thearch.Ptrsize+7] & obj.KindNoPointers) //  0x13 / 0x1f
+	return uint8(s.P[2*Thearch.Ptrsize+7] & KindNoPointers) //  0x13 / 0x1f
 }
 
 // Type.commonType.kind
 func decodetype_usegcprog(s *LSym) uint8 {
-	return uint8(s.P[2*Thearch.Ptrsize+7] & obj.KindGCProg) //  0x13 / 0x1f
+	return uint8(s.P[2*Thearch.Ptrsize+7] & KindGCProg) //  0x13 / 0x1f
 }
 
 // Type.commonType.size

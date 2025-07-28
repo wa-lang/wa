@@ -2,7 +2,7 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-package obj
+package ld
 
 // 类型信息, 和 reflect 包保存一致
 

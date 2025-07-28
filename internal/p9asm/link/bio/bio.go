@@ -19,14 +19,6 @@ type Biobuf struct {
 	linelen int
 }
 
-func Bopenw(name string) (*Biobuf, error) {
-	f, err := os.Create(name)
-	if err != nil {
-		return nil, err
-	}
-	return &Biobuf{f: f, w: bufio.NewWriter(f)}, nil
-}
-
 func Bopenr(name string) (*Biobuf, error) {
 	f, err := os.Open(name)
 	if err != nil {
@@ -41,10 +33,6 @@ func Binitw(w io.Writer) *Biobuf {
 
 func (b *Biobuf) Write(p []byte) (int, error) {
 	return b.w.Write(p)
-}
-
-func (b *Biobuf) WriteString(s string) (int, error) {
-	return b.w.WriteString(s)
 }
 
 func (b *Biobuf) Bseek(offset int64, whence int) int64 {
@@ -87,10 +75,6 @@ func (b *Biobuf) Flush() error {
 	return b.w.Flush()
 }
 
-func (b *Biobuf) Bputc(c byte) {
-	b.w.WriteByte(c)
-}
-
 func (b *Biobuf) Bread(p []byte) int {
 	n, err := io.ReadFull(b.r, p)
 	if n == 0 {
@@ -109,18 +93,6 @@ func (b *Biobuf) Bgetc() int {
 	return int(c)
 }
 
-func (b *Biobuf) Bgetrune() int {
-	r, _, err := b.r.ReadRune()
-	if err != nil {
-		return -1
-	}
-	return int(r)
-}
-
-func (b *Biobuf) Bungetrune() {
-	b.r.UnreadRune()
-}
-
 func (b *Biobuf) Read(p []byte) (int, error) {
 	return b.r.Read(p)
 }
@@ -136,17 +108,6 @@ func (b *Biobuf) Brdline(delim int) string {
 	}
 	b.linelen = len(s)
 	return string(s)
-}
-
-func (b *Biobuf) Brdstr(delim int, cut int) string {
-	s, err := b.r.ReadString(byte(delim))
-	if err != nil {
-		log.Fatalf("reading input: %v", err)
-	}
-	if len(s) > 0 && cut > 0 {
-		s = s[:len(s)-1]
-	}
-	return s
 }
 
 func (b *Biobuf) Blinelen() int {

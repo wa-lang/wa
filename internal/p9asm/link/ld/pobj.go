@@ -37,7 +37,7 @@ import (
 	"os"
 	"strings"
 
-	"wa-lang.org/wa/internal/p9asm/bio"
+	"wa-lang.org/wa/internal/p9asm/link/bio"
 	"wa-lang.org/wa/internal/p9asm/obj"
 )
 

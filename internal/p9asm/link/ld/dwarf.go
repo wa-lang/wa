@@ -973,43 +973,43 @@ func defgotype(watype *LSym) *DWDie {
 	bytesize := decodetype_size(watype)
 
 	switch kind {
-	case obj.KindBool:
+	case KindBool:
 		die = newdie(&dwtypes, DW_ABRV_BASETYPE, name)
 		newattr(die, DW_AT_encoding, DW_CLS_CONSTANT, DW_ATE_boolean, 0)
 		newattr(die, DW_AT_byte_size, DW_CLS_CONSTANT, bytesize, 0)
 
-	case obj.KindInt,
-		obj.KindInt8,
-		obj.KindInt16,
-		obj.KindInt32,
-		obj.KindInt64:
+	case KindInt,
+		KindInt8,
+		KindInt16,
+		KindInt32,
+		KindInt64:
 		die = newdie(&dwtypes, DW_ABRV_BASETYPE, name)
 		newattr(die, DW_AT_encoding, DW_CLS_CONSTANT, DW_ATE_signed, 0)
 		newattr(die, DW_AT_byte_size, DW_CLS_CONSTANT, bytesize, 0)
 
-	case obj.KindUint,
-		obj.KindUint8,
-		obj.KindUint16,
-		obj.KindUint32,
-		obj.KindUint64,
-		obj.KindUintptr:
+	case KindUint,
+		KindUint8,
+		KindUint16,
+		KindUint32,
+		KindUint64,
+		KindUintptr:
 		die = newdie(&dwtypes, DW_ABRV_BASETYPE, name)
 		newattr(die, DW_AT_encoding, DW_CLS_CONSTANT, DW_ATE_unsigned, 0)
 		newattr(die, DW_AT_byte_size, DW_CLS_CONSTANT, bytesize, 0)
 
-	case obj.KindFloat32,
-		obj.KindFloat64:
+	case KindFloat32,
+		KindFloat64:
 		die = newdie(&dwtypes, DW_ABRV_BASETYPE, name)
 		newattr(die, DW_AT_encoding, DW_CLS_CONSTANT, DW_ATE_float, 0)
 		newattr(die, DW_AT_byte_size, DW_CLS_CONSTANT, bytesize, 0)
 
-	case obj.KindComplex64,
-		obj.KindComplex128:
+	case KindComplex64,
+		KindComplex128:
 		die = newdie(&dwtypes, DW_ABRV_BASETYPE, name)
 		newattr(die, DW_AT_encoding, DW_CLS_CONSTANT, DW_ATE_complex_float, 0)
 		newattr(die, DW_AT_byte_size, DW_CLS_CONSTANT, bytesize, 0)
 
-	case obj.KindArray:
+	case KindArray:
 		die = newdie(&dwtypes, DW_ABRV_ARRAYTYPE, name)
 		dotypedef(&dwtypes, name, die)
 		newattr(die, DW_AT_byte_size, DW_CLS_CONSTANT, bytesize, 0)
@@ -1022,7 +1022,7 @@ func defgotype(watype *LSym) *DWDie {
 
 		newrefattr(fld, DW_AT_type, mustFind(&dwtypes, "uintptr"))
 
-	case obj.KindFunc:
+	case KindFunc:
 		die = newdie(&dwtypes, DW_ABRV_FUNCTYPE, name)
 		dotypedef(&dwtypes, name, die)
 		newrefattr(die, DW_AT_type, mustFind(&dwtypes, "void"))
@@ -1045,7 +1045,7 @@ func defgotype(watype *LSym) *DWDie {
 			newrefattr(fld, DW_AT_type, defptrto(defgotype(s)))
 		}
 
-	case obj.KindInterface:
+	case KindInterface:
 		die = newdie(&dwtypes, DW_ABRV_IFACETYPE, name)
 		dotypedef(&dwtypes, name, die)
 		newattr(die, DW_AT_byte_size, DW_CLS_CONSTANT, bytesize, 0)
@@ -1058,31 +1058,31 @@ func defgotype(watype *LSym) *DWDie {
 		}
 		newrefattr(die, DW_AT_type, defgotype(s))
 
-	case obj.KindMap:
+	case KindMap:
 		die = newdie(&dwtypes, DW_ABRV_MAPTYPE, name)
 		s := decodetype_mapkey(watype)
 		newrefattr(die, DW_AT_go_key, defgotype(s))
 		s = decodetype_mapvalue(watype)
 		newrefattr(die, DW_AT_go_elem, defgotype(s))
 
-	case obj.KindPtr:
+	case KindPtr:
 		die = newdie(&dwtypes, DW_ABRV_PTRTYPE, name)
 		dotypedef(&dwtypes, name, die)
 		s := decodetype_ptrelem(watype)
 		newrefattr(die, DW_AT_type, defgotype(s))
 
-	case obj.KindSlice:
+	case KindSlice:
 		die = newdie(&dwtypes, DW_ABRV_SLICETYPE, name)
 		dotypedef(&dwtypes, name, die)
 		newattr(die, DW_AT_byte_size, DW_CLS_CONSTANT, bytesize, 0)
 		s := decodetype_arrayelem(watype)
 		newrefattr(die, DW_AT_go_elem, defgotype(s))
 
-	case obj.KindString:
+	case KindString:
 		die = newdie(&dwtypes, DW_ABRV_STRINGTYPE, name)
 		newattr(die, DW_AT_byte_size, DW_CLS_CONSTANT, bytesize, 0)
 
-	case obj.KindStruct:
+	case KindStruct:
 		die = newdie(&dwtypes, DW_ABRV_STRUCTTYPE, name)
 		dotypedef(&dwtypes, name, die)
 		newattr(die, DW_AT_byte_size, DW_CLS_CONSTANT, bytesize, 0)
@@ -1101,7 +1101,7 @@ func defgotype(watype *LSym) *DWDie {
 			newmemberoffsetattr(fld, int32(decodetype_structfieldoffs(watype, i)))
 		}
 
-	case obj.KindUnsafePointer:
+	case KindUnsafePointer:
 		die = newdie(&dwtypes, DW_ABRV_BARE_PTRTYPE, name)
 
 	default:
@@ -2090,7 +2090,7 @@ func Dwarfemitdebugsections() {
 	die := newdie(&dwtypes, DW_ABRV_BASETYPE, "uintptr") // needed for array size
 	newattr(die, DW_AT_encoding, DW_CLS_CONSTANT, DW_ATE_unsigned, 0)
 	newattr(die, DW_AT_byte_size, DW_CLS_CONSTANT, int64(Thearch.Ptrsize), 0)
-	newattr(die, DW_AT_go_kind, DW_CLS_CONSTANT, obj.KindUintptr, 0)
+	newattr(die, DW_AT_go_kind, DW_CLS_CONSTANT, KindUintptr, 0)
 
 	// Needed by the prettyprinter code for interface inspection.
 	defgotype(lookup_or_diag("type.runtime._type"))

@@ -96,17 +96,16 @@ package obj
 
 import (
 	"fmt"
+	"io"
 	"log"
 	"path/filepath"
 	"strings"
-
-	"wa-lang.org/wa/internal/p9asm/bio"
 )
 
 // The Wa and C compilers, and the assembler, call writeobj to write
 // out a Wa object file.  The linker does not call this; the linker
 // does not write out object files.
-func Writeobjdirect(ctxt *Link, b *bio.Biobuf) {
+func Writeobjdirect(ctxt *Link, b io.Writer) {
 	// Build list of symbols, and assign instructions to lists.
 	// Ignore ctxt->plist boundaries. There are no guarantees there,
 	// and the C compilers and assemblers just use one big list.
@@ -312,7 +311,7 @@ func Writeobjdirect(ctxt *Link, b *bio.Biobuf) {
 	fmt.Fprintf(b, MagicHeader)
 
 	// 版本信息
-	b.Bputc(1)
+	b.Write([]byte{1})
 
 	// 写 import 列表
 	for _, pkg := range ctxt.Imports {
@@ -336,7 +335,7 @@ func Writeobjdirect(ctxt *Link, b *bio.Biobuf) {
 }
 
 // 写具名的对象
-func writesym(ctxt *Link, b *bio.Biobuf, s *LSym) {
+func writesym(ctxt *Link, b io.Writer, s *LSym) {
 	// 打印文本格式的汇编信息
 	if ctxt.Debugasm != 0 {
 		// main 函数打印格式
@@ -433,7 +432,7 @@ func writesym(ctxt *Link, b *bio.Biobuf, s *LSym) {
 	}
 
 	// 写标识符的开始标志
-	b.Bputc(MagicSymbolStart)
+	b.Write([]byte{MagicSymbolStart})
 
 	// 标识符类型
 	wrint(b, int64(s.Type))
@@ -527,7 +526,7 @@ func writesym(ctxt *Link, b *bio.Biobuf, s *LSym) {
 	}
 }
 
-func wrint(b *bio.Biobuf, sval int64) {
+func wrint(b io.Writer, sval int64) {
 	var varintbuf [10]uint8
 	var v uint64
 	uv := (uint64(sval) << 1) ^ uint64(int64(sval>>63))
@@ -541,23 +540,23 @@ func wrint(b *bio.Biobuf, sval int64) {
 	b.Write(varintbuf[:len(varintbuf)-len(p)])
 }
 
-func wrstring(b *bio.Biobuf, s string) {
+func wrstring(b io.Writer, s string) {
 	wrint(b, int64(len(s)))
-	b.WriteString(s)
+	b.Write([]byte(s))
 }
 
 // wrpath writes a path just like a string, but on windows, it
 // translates '\\' to '/' in the process.
-func wrpath(ctxt *Link, b *bio.Biobuf, p string) {
+func wrpath(ctxt *Link, b io.Writer, p string) {
 	wrstring(b, filepath.ToSlash(p))
 }
 
-func wrdata(b *bio.Biobuf, v []byte) {
+func wrdata(b io.Writer, v []byte) {
 	wrint(b, int64(len(v)))
 	b.Write(v)
 }
 
-func wrpathsym(ctxt *Link, b *bio.Biobuf, s *LSym) {
+func wrpathsym(ctxt *Link, b io.Writer, s *LSym) {
 	if s == nil {
 		wrint(b, 0)
 		wrint(b, 0)
@@ -568,7 +567,7 @@ func wrpathsym(ctxt *Link, b *bio.Biobuf, s *LSym) {
 	wrint(b, int64(s.Version))
 }
 
-func wrsym(b *bio.Biobuf, s *LSym) {
+func wrsym(b io.Writer, s *LSym) {
 	if s == nil {
 		wrint(b, 0)
 		wrint(b, 0)

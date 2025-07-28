@@ -62,10 +62,6 @@ func (ctxt *Link) Line(n int) string {
 	return ctxt.LineHist.LineString(n)
 }
 
-func Getcallerpc(interface{}) uintptr {
-	return 1
-}
-
 func (ctxt *Link) Dconv(a *Addr) string {
 	return Dconv(nil, a)
 }

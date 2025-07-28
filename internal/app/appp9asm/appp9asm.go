@@ -16,7 +16,6 @@ import (
 	"wa-lang.org/wa/internal/p9asm/asm"
 	"wa-lang.org/wa/internal/p9asm/asm/arch"
 	"wa-lang.org/wa/internal/p9asm/asm/lex"
-	"wa-lang.org/wa/internal/p9asm/bio"
 	"wa-lang.org/wa/internal/p9asm/obj"
 )
 
@@ -108,12 +107,12 @@ var CmdP9Asm = &cli.Command{
 			fmt.Fprint(os.Stderr, err)
 			os.Exit(1)
 		}
+		defer fd.Close()
 
-		ctxt.Bso = bio.Binitw(os.Stdout)
-		defer ctxt.Bso.Flush()
+		ctxt.Bso = os.Stdout
 
 		ctxt.Diag = log.Fatalf
-		output := bio.Binitw(fd)
+		output := fd
 
 		// "\n!\n" 是文件头结束标志
 		fmt.Fprintf(output, "wa object %s %s\n!\n", c.String("os"), c.String("arch"))
@@ -134,7 +133,6 @@ var CmdP9Asm = &cli.Command{
 			os.Exit(1)
 		}
 		obj.Writeobjdirect(ctxt, output)
-		output.Flush()
 		return nil
 	},
 }

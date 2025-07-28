@@ -33,8 +33,7 @@ package obj
 
 import (
 	"encoding/binary"
-
-	"wa-lang.org/wa/internal/p9asm/bio"
+	"io"
 )
 
 // An Addr is an argument to an instruction.
@@ -305,7 +304,7 @@ type Link struct {
 	Debugpcln          int32
 	Flag_shared        int32
 	Flag_dynlink       bool
-	Bso                *bio.Biobuf
+	Bso                io.Writer
 	Pathname           string
 	Windows            int32
 	Waos               string

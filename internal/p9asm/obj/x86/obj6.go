@@ -803,7 +803,9 @@ loop:
 					continue
 				}
 
-				q = obj.Copyp(ctxt, p)
+				q = ctxt.NewProg()
+				*q = *p
+
 				p = p.Link
 				q.Mark = 1
 				(*last).Link = q

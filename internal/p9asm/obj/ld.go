@@ -75,12 +75,6 @@ func mkfwd(sym *LSym) {
 	}
 }
 
-func Copyp(ctxt *Link, q *Prog) *Prog {
-	p := ctxt.NewProg()
-	*p = *q
-	return p
-}
-
 func Appendp(ctxt *Link, q *Prog) *Prog {
 	p := ctxt.NewProg()
 	p.Link = q.Link
