@@ -98,6 +98,7 @@ import (
 	"fmt"
 	"io"
 	"log"
+	"math"
 	"path/filepath"
 	"strings"
 )
@@ -240,9 +241,9 @@ func Writeobjdirect(ctxt *Link, b io.Writer) {
 				if curtext == nil { // func _() {}
 					continue
 				}
-				if p.To.Sym.Name == "go_args_stackmap" {
+				if p.To.Sym.Name == "wa_args_stackmap" {
 					if p.From.Type != TYPE_CONST || p.From.Offset != FUNCDATA_ArgsPointerMaps {
-						ctxt.Diag("FUNCDATA use of go_args_stackmap(SB) without FUNCDATA_ArgsPointerMaps")
+						ctxt.Diag("FUNCDATA use of wa_args_stackmap(SB) without FUNCDATA_ArgsPointerMaps")
 					}
 					p.To.Sym = Linklookup(ctxt, fmt.Sprintf("%s.args_stackmap", curtext.Name), int(curtext.Version))
 				}
@@ -257,7 +258,7 @@ func Writeobjdirect(ctxt *Link, b io.Writer) {
 		}
 	}
 
-	// 确保所有函数都有 FUNCDATA go_args_stackmap 节点
+	// 确保所有函数都有 FUNCDATA wa_args_stackmap 节点
 	// GC 需要知道函数的参数指针布局(用于栈扫描)
 	// 如果发现某函数缺少这个 FUNCDATA 条目，就补一个伪节点：
 
@@ -522,6 +523,69 @@ func writesym(ctxt *Link, b io.Writer, s *LSym) {
 		wrint(b, int64(len(s.Pcln.File)))
 		for i := 0; i < len(s.Pcln.File); i++ {
 			wrpathsym(ctxt, b, s.Pcln.File[i])
+		}
+	}
+}
+
+func savedata(ctxt *Link, s *LSym, p *Prog, pn string) {
+	off := int32(p.From.Offset)
+	siz := int32(p.From3.Offset)
+	if off < 0 || siz < 0 || off >= 1<<30 || siz >= 100 {
+		panic(fmt.Errorf("%s: mangled input file", pn))
+	}
+	if ctxt.Enforce_data_order != 0 && off < int32(len(s.P)) {
+		ctxt.Diag("data out of order (already have %d)\n%v", len(s.P), p)
+	}
+
+	// 调整符号对应的机器码切片的容量
+	if len(s.P) < int(off+siz) {
+		s.P = append(s.P, make([]byte, int(off+siz)-len(s.P))...)
+	}
+
+	switch p.To.Type {
+	default:
+		ctxt.Diag("bad data: %v", p)
+
+	case TYPE_FCONST:
+		switch siz {
+		default:
+			ctxt.Diag("unexpected %d-byte floating point constant", siz)
+
+		case 4:
+			flt := math.Float32bits(float32(p.To.Val.(float64)))
+			ctxt.Arch.ByteOrder.PutUint32(s.P[off:], flt)
+
+		case 8:
+			flt := math.Float64bits(p.To.Val.(float64))
+			ctxt.Arch.ByteOrder.PutUint64(s.P[off:], flt)
+		}
+
+	case TYPE_SCONST:
+		copy(s.P[off:off+siz], p.To.Val.(string))
+
+	case TYPE_CONST, TYPE_ADDR:
+		if p.To.Sym != nil || p.To.Type == TYPE_ADDR {
+			s.R = append(s.R, Reloc{
+				Off:  off,
+				Siz:  uint8(siz),
+				Sym:  p.To.Sym,
+				Type: R_ADDR,
+				Add:  p.To.Offset,
+			})
+			break
+		}
+		o := p.To.Offset
+		switch siz {
+		default:
+			ctxt.Diag("unexpected %d-byte integer constant", siz)
+		case 1:
+			s.P[off] = byte(o)
+		case 2:
+			ctxt.Arch.ByteOrder.PutUint16(s.P[off:], uint16(o))
+		case 4:
+			ctxt.Arch.ByteOrder.PutUint32(s.P[off:], uint32(o))
+		case 8:
+			ctxt.Arch.ByteOrder.PutUint64(s.P[off:], uint64(o))
 		}
 	}
 }

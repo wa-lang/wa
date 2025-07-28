@@ -7,6 +7,15 @@ import (
 	"fmt"
 )
 
+// 函数的参数/局部变量/帧大小信息
+const (
+	PCDATA_StackMapIndex       = 0
+	FUNCDATA_ArgsPointerMaps   = 0
+	FUNCDATA_LocalsPointerMaps = 1
+	FUNCDATA_DeadValueMaps     = 2
+	ArgsSizeUnknown            = -0x80000000 // 帧大小未知, 比如 C 的 printf 函数
+)
+
 // 指令机器码
 type As int16
 
@@ -76,8 +85,11 @@ const (
 // 每个平台寄存也有独立的空间
 // 比如 RBaseAMD64 开始的是 AMD64 平台的特有的寄存器
 // 每个平台寄存器范围不超过 1k
+
+type RBaseType int16
+
 const (
-	REG_NONE = iota * 1024 // 寄存器编号为空
+	REG_NONE RBaseType = iota * 1024 // 寄存器编号为空
 	RBase386
 	RBaseAMD64
 	RBaseARM
@@ -96,12 +108,12 @@ type opSet struct {
 var aSpace []opSet
 
 // 注册不同平台的指令区间
-func RegisterOpcode(lo As, Anames []string) {
-	aSpace = append(aSpace, opSet{lo, Anames})
+func RegisterOpcode(lo As, anames []string) {
+	aSpace = append(aSpace, opSet{lo, anames})
 }
 
 // 指令机器码转为字符串名字
-func Aconv(a As) string {
+func (a As) String() string {
 	if a < A_ARCHSPECIFIC {
 		return Anames[a]
 	}
@@ -116,9 +128,9 @@ func Aconv(a As) string {
 
 // 寄存器区间
 type regSet struct {
-	lo    int              // 开始
-	hi    int              // 结束(开区间)
-	Rconv func(int) string // 用于打印
+	lo    RBaseType              // 开始
+	hi    RBaseType              // 结束(开区间)
+	Rconv func(RBaseType) string // 用于打印
 }
 
 // 用于注册不同架构下的寄存器
@@ -126,12 +138,12 @@ type regSet struct {
 var regSpace []regSet
 
 // 注册不同平台的寄存器区间
-func RegisterRegister(lo, hi int, Rconv func(int) string) {
+func RegisterRegister(lo, hi RBaseType, Rconv func(RBaseType) string) {
 	regSpace = append(regSpace, regSet{lo, hi, Rconv})
 }
 
 // 将寄存器编号转为字符串名字
-func Rconv(reg int) string {
+func (reg RBaseType) String() string {
 	if reg == REG_NONE {
 		return "NONE"
 	}
@@ -143,8 +155,6 @@ func Rconv(reg int) string {
 	}
 	return fmt.Sprintf("R???%d", reg)
 }
-
-// executable header types
 
 // 可执行文件头类型
 type HeadType int

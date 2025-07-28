@@ -36,7 +36,7 @@ type Optab struct {
 	to2   uint8
 	type_ int8
 	size  int8
-	param int16
+	param obj.RBaseType
 	flag  uint8
 }
 

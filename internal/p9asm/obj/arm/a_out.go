@@ -47,7 +47,7 @@ const (
 )
 
 const (
-	REG_R0 = obj.RBaseARM + iota // must be 16-aligned
+	REG_R0 obj.RBaseType = obj.RBaseARM + iota // must be 16-aligned
 	REG_R1
 	REG_R2
 	REG_R3
@@ -111,12 +111,12 @@ const (
 )
 
 // http://infocenter.arm.com/help/topic/com.arm.doc.ihi0040b/IHI0040B_aadwarf.pdf
-var ARMDWARFRegisters = map[int16]int16{}
+var ARMDWARFRegisters = map[obj.RBaseType]obj.RBaseType{}
 
 func init() {
 	// f assigns dwarfregisters[from:to] = (base):(step*(to-from)+base)
-	f := func(from, to, base, step int16) {
-		for r := int16(from); r <= to; r++ {
+	f := func(from, to, base, step obj.RBaseType) {
+		for r := obj.RBaseType(from); r <= to; r++ {
 			ARMDWARFRegisters[r] = step*(r-from) + base
 		}
 	}

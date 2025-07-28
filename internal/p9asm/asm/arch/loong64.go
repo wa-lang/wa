@@ -74,7 +74,7 @@ var loong64LasxArngExtMap = map[string]int16{
 	"Q2":  loong64.ARNG_2Q,
 }
 
-func loong64RegisterNumber(name string, n int16) (int16, bool) {
+func loong64RegisterNumber(name string, n obj.RBaseType) (obj.RBaseType, bool) {
 	switch name {
 	case "F":
 		if 0 <= n && n <= 31 {

@@ -224,7 +224,7 @@ const (
 )
 
 // https://github.com/riscv-non-isa/riscv-elf-psabi-doc/blob/master/riscv-dwarf.adoc#dwarf-register-numbers
-var RISCV64DWARFRegisters = map[int16]int16{
+var RISCV64DWARFRegisters = map[obj.RBaseType]obj.RBaseType{
 	// Integer Registers.
 	REG_X0:  0,
 	REG_X1:  1,

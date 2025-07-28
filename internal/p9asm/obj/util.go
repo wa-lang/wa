@@ -23,7 +23,7 @@ func (p *Prog) String() string {
 
 	var buf bytes.Buffer
 
-	fmt.Fprintf(&buf, "%.5d (%v)\t%v%s", p.Pc, p.Line(), Aconv(p.As), sc)
+	fmt.Fprintf(&buf, "%.5d (%v)\t%v%s", p.Pc, p.Line(), p.As, sc)
 	sep := "\t"
 	if p.From.Type != TYPE_NONE {
 		fmt.Fprintf(&buf, "%s%v", sep, Dconv(p, &p.From))
@@ -31,7 +31,7 @@ func (p *Prog) String() string {
 	}
 	if p.Reg != REG_NONE {
 		// Should not happen but might as well show it if it does.
-		fmt.Fprintf(&buf, "%s%v", sep, Rconv(int(p.Reg)))
+		fmt.Fprintf(&buf, "%s%v", sep, p.Reg)
 		sep = ", "
 	}
 	if p.From3Type() != TYPE_NONE {
@@ -47,7 +47,7 @@ func (p *Prog) String() string {
 		fmt.Fprintf(&buf, "%s%v", sep, Dconv(p, &p.To))
 	}
 	if p.RegTo2 != REG_NONE {
-		fmt.Fprintf(&buf, "%s%v", sep, Rconv(int(p.RegTo2)))
+		fmt.Fprintf(&buf, "%s%v", sep, p.RegTo2)
 	}
 	return buf.String()
 }
@@ -76,7 +76,7 @@ func Dconv(p *Prog, a *Addr) string {
 	case TYPE_NONE:
 		str = ""
 		if a.Name != NAME_NONE || a.Reg != 0 || a.Sym != nil {
-			str = fmt.Sprintf("%v(%v)(NONE)", Mconv(a), Rconv(int(a.Reg)))
+			str = fmt.Sprintf("%v(%v)(NONE)", Mconv(a), a.Reg)
 		}
 
 	case TYPE_REG:
@@ -85,13 +85,13 @@ func Dconv(p *Prog, a *Addr) string {
 		// where the $1 is included in the p->to Addr.
 		// Move into a new field.
 		if a.Offset != 0 {
-			str = fmt.Sprintf("$%d,%v", a.Offset, Rconv(int(a.Reg)))
+			str = fmt.Sprintf("$%d,%v", a.Offset, a.Reg)
 			break
 		}
 
-		str = Rconv(int(a.Reg))
+		str = a.Reg.String()
 		if a.Name != NAME_NONE || a.Sym != nil {
-			str = fmt.Sprintf("%v(%v)(REG)", Mconv(a), Rconv(int(a.Reg)))
+			str = fmt.Sprintf("%v(%v)(REG)", Mconv(a), a.Reg)
 		}
 
 	case TYPE_BRANCH:
@@ -110,13 +110,13 @@ func Dconv(p *Prog, a *Addr) string {
 
 	case TYPE_MEM:
 		str = Mconv(a)
-		if a.Index != REG_NONE {
-			str += fmt.Sprintf("(%v*%d)", Rconv(int(a.Index)), int(a.Scale))
+		if a.Index != int16(REG_NONE) {
+			str += fmt.Sprintf("(%v*%d)", RBaseType(a.Index), int(a.Scale))
 		}
 
 	case TYPE_CONST:
 		if a.Reg != 0 {
-			str = fmt.Sprintf("$%v(%v)", Mconv(a), Rconv(int(a.Reg)))
+			str = fmt.Sprintf("$%v(%v)", Mconv(a), a.Reg)
 		} else {
 			str = fmt.Sprintf("$%v", Mconv(a))
 		}
@@ -151,14 +151,14 @@ func Dconv(p *Prog, a *Addr) string {
 			str = fmt.Sprintf("R%d%c%c%d", v&15, op[0], op[1], (v>>7)&31)
 		}
 		if a.Reg != 0 {
-			str += fmt.Sprintf("(%v)", Rconv(int(a.Reg)))
+			str += fmt.Sprintf("(%v)", a.Reg)
 		}
 
 	case TYPE_REGREG:
-		str = fmt.Sprintf("(%v, %v)", Rconv(int(a.Reg)), Rconv(int(a.Offset)))
+		str = fmt.Sprintf("(%v, %v)", a.Reg, RBaseType(a.Offset))
 
 	case TYPE_REGREG2:
-		str = fmt.Sprintf("%v, %v", Rconv(int(a.Reg)), Rconv(int(a.Offset)))
+		str = fmt.Sprintf("%v, %v", a.Reg, RBaseType(a.Offset))
 
 	case TYPE_REGLIST:
 		str = regListConv(int(a.Offset))
@@ -180,9 +180,9 @@ func Mconv(a *Addr) string {
 		case a.Reg == REG_NONE:
 			str = fmt.Sprint(a.Offset)
 		case a.Offset == 0:
-			str = fmt.Sprintf("(%v)", Rconv(int(a.Reg)))
+			str = fmt.Sprintf("(%v)", a.Reg)
 		case a.Offset != 0:
-			str = fmt.Sprintf("%d(%v)", a.Offset, Rconv(int(a.Reg)))
+			str = fmt.Sprintf("%d(%v)", a.Offset, a.Reg)
 		}
 
 	case NAME_EXTERN:

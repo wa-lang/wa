@@ -50,7 +50,7 @@ type Arch struct {
 
 	// 通用寄存器表
 	// 比如 X86 平台的 AX 寄存器对应 x86.REG_AX
-	Register map[string]int16
+	Register map[string]obj.RBaseType
 
 	// 通用寄存器名字前缀表格, 比如 R(0) 的前缀为 R, SPR(268) 的前缀为 SPR
 	// 该表格需要和 this.RegisterNumber() 辅助函数配合使用
@@ -58,7 +58,7 @@ type Arch struct {
 
 	// 根据通用寄存器的名字前缀和编号, 转化为底层唯一的机器码对应的编号.
 	// 比如 R(10) 对应 arm64.REG_R10.
-	RegisterNumber func(string, int16) (int16, bool)
+	RegisterNumber func(string, obj.RBaseType) (obj.RBaseType, bool)
 
 	// 判断是否为 jump 跳转指令
 	IsJump func(word string) bool
@@ -90,14 +90,13 @@ func archX86(CPU CPUType, linkArch *obj.LinkArch) *Arch {
 		LinkArch: linkArch,
 
 		Instructions:   map[string]obj.As{},
-		Register:       map[string]int16{},
+		Register:       map[string]obj.RBaseType{},
 		RegisterPrefix: map[string]bool{},
 	}
 
 	// 构造寄存器名查询表
-	p.Register = make(map[string]int16)
 	for i, s := range x86.Register {
-		p.Register[s] = int16(i + x86.REG_AL)
+		p.Register[s] = obj.RBaseType(i) + x86.REG_AL
 	}
 
 	// Plan9 汇编语言伪寄存器
@@ -108,7 +107,7 @@ func archX86(CPU CPUType, linkArch *obj.LinkArch) *Arch {
 
 	// X86 没有通用前缀名的寄存器
 	p.RegisterPrefix = map[string]bool{}
-	p.RegisterNumber = func(name string, n int16) (int16, bool) { return 0, false }
+	p.RegisterNumber = func(name string, n obj.RBaseType) (obj.RBaseType, bool) { return 0, false }
 
 	// 初始化 Plan9 汇编语言的通用指令
 	for i, s := range obj.Anames {
@@ -194,21 +193,21 @@ func archArm64(CPU CPUType, linkArch *obj.LinkArch) *Arch {
 		LinkArch: linkArch,
 
 		Instructions:   map[string]obj.As{},
-		Register:       map[string]int16{},
+		Register:       map[string]obj.RBaseType{},
 		RegisterPrefix: map[string]bool{},
 	}
 
 	// ARM64 的寄存器表
 	// 注册方式和 AMD64 稍微有点区别
-	p.Register[arm64.Rconv(arm64.REGSP)] = int16(arm64.REGSP)
+	p.Register[arm64.Rconv(arm64.REGSP)] = arm64.REGSP
 	for i := arm64.REG_R0; i <= arm64.REG_R31; i++ {
-		p.Register[arm64.Rconv(i)] = int16(i)
+		p.Register[arm64.Rconv(i)] = obj.RBaseType(i)
 	}
 	for i := arm64.REG_F0; i <= arm64.REG_F31; i++ {
-		p.Register[arm64.Rconv(i)] = int16(i)
+		p.Register[arm64.Rconv(i)] = obj.RBaseType(i)
 	}
 	for i := arm64.REG_V0; i <= arm64.REG_V31; i++ {
-		p.Register[arm64.Rconv(i)] = int16(i)
+		p.Register[arm64.Rconv(i)] = obj.RBaseType(i)
 	}
 
 	p.Register["LR"] = arm64.REGLINK
@@ -293,20 +292,20 @@ func archArm(CPU CPUType, linkArch *obj.LinkArch) *Arch {
 		LinkArch: linkArch,
 
 		Instructions:   map[string]obj.As{},
-		Register:       map[string]int16{},
+		Register:       map[string]obj.RBaseType{},
 		RegisterPrefix: map[string]bool{},
 	}
 
 	// Create maps for easy lookup of instruction names etc.
 	// Note that there is no list of names as there is for x86.
 	for i := arm.REG_R0; i < arm.REG_SPSR; i++ {
-		p.Register[obj.Rconv(i)] = int16(i)
+		p.Register[i.String()] = obj.RBaseType(i)
 	}
 	// Avoid unintentionally clobbering g using R10.
 	delete(p.Register, "R10")
 	p.Register["g"] = arm.REG_R10
 	for i := 0; i < 16; i++ {
-		p.Register[fmt.Sprintf("C%d", i)] = int16(i)
+		p.Register[fmt.Sprintf("C%d", i)] = obj.RBaseType(i)
 	}
 
 	// Pseudo-registers.
@@ -356,34 +355,34 @@ func archLoong64(CPU CPUType, linkArch *obj.LinkArch) *Arch {
 		LinkArch: linkArch,
 
 		Instructions:   map[string]obj.As{},
-		Register:       map[string]int16{},
+		Register:       map[string]obj.RBaseType{},
 		RegisterPrefix: map[string]bool{},
 	}
 
 	// Create maps for easy lookup of instruction names etc.
 	// Note that there is no list of names as there is for x86.
 	for i := loong64.REG_R0; i <= loong64.REG_R31; i++ {
-		p.Register[obj.Rconv(i)] = int16(i)
+		p.Register[i.String()] = i
 	}
 
 	for i := loong64.REG_F0; i <= loong64.REG_F31; i++ {
-		p.Register[obj.Rconv(i)] = int16(i)
+		p.Register[i.String()] = i
 	}
 
 	for i := loong64.REG_FCSR0; i <= loong64.REG_FCSR31; i++ {
-		p.Register[obj.Rconv(i)] = int16(i)
+		p.Register[i.String()] = i
 	}
 
 	for i := loong64.REG_FCC0; i <= loong64.REG_FCC31; i++ {
-		p.Register[obj.Rconv(i)] = int16(i)
+		p.Register[i.String()] = i
 	}
 
 	for i := loong64.REG_V0; i <= loong64.REG_V31; i++ {
-		p.Register[obj.Rconv(i)] = int16(i)
+		p.Register[i.String()] = i
 	}
 
 	for i := loong64.REG_X0; i <= loong64.REG_X31; i++ {
-		p.Register[obj.Rconv(i)] = int16(i)
+		p.Register[i.String()] = i
 	}
 
 	// Pseudo-registers.
@@ -429,7 +428,7 @@ func archRISCV64(CPU CPUType, linkArch *obj.LinkArch, shared bool) *Arch {
 		LinkArch: linkArch,
 
 		Instructions:   map[string]obj.As{},
-		Register:       map[string]int16{},
+		Register:       map[string]obj.RBaseType{},
 		RegisterPrefix: map[string]bool{},
 	}
 
@@ -445,15 +444,15 @@ func archRISCV64(CPU CPUType, linkArch *obj.LinkArch, shared bool) *Arch {
 			continue
 		}
 		name := fmt.Sprintf("X%d", i-riscv.REG_X0)
-		p.Register[name] = int16(i)
+		p.Register[name] = obj.RBaseType(i)
 	}
 	for i := riscv.REG_F0; i <= riscv.REG_F31; i++ {
 		name := fmt.Sprintf("F%d", i-riscv.REG_F0)
-		p.Register[name] = int16(i)
+		p.Register[name] = obj.RBaseType(i)
 	}
 	for i := riscv.REG_V0; i <= riscv.REG_V31; i++ {
 		name := fmt.Sprintf("V%d", i-riscv.REG_V0)
-		p.Register[name] = int16(i)
+		p.Register[name] = obj.RBaseType(i)
 	}
 
 	// General registers with ABI names.
@@ -544,7 +543,7 @@ func archRISCV64(CPU CPUType, linkArch *obj.LinkArch, shared bool) *Arch {
 		}
 	}
 
-	p.RegisterNumber = func(name string, n int16) (int16, bool) {
+	p.RegisterNumber = func(name string, n obj.RBaseType) (obj.RBaseType, bool) {
 		return 0, false
 	}
 

@@ -33,6 +33,8 @@ package arm64
 
 import (
 	"fmt"
+
+	"wa-lang.org/wa/internal/p9asm/obj"
 )
 
 var strcond = [16]string{
@@ -54,7 +56,7 @@ var strcond = [16]string{
 	"NV",
 }
 
-func Rconv(r int) string {
+func Rconv(r obj.RBaseType) string {
 	if r == REGG {
 		return "g"
 	}

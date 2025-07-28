@@ -321,8 +321,8 @@ func (p *Parser) asmJump(op obj.As, cond string, a []obj.Addr) {
 				Type:   obj.TYPE_CONST,
 				Offset: p.getConstant(prog, op, &a[0]),
 			}
-			reg := int16(p.getConstant(prog, op, &a[1]))
-			reg, ok := p.arch.RegisterNumber("R", int16(reg))
+			reg := obj.RBaseType(p.getConstant(prog, op, &a[1]))
+			reg, ok := p.arch.RegisterNumber("R", reg)
 			if !ok {
 				p.errorf("bad register number %d", reg)
 			}
@@ -331,7 +331,7 @@ func (p *Parser) asmJump(op obj.As, cond string, a []obj.Addr) {
 		}
 		fallthrough
 	default:
-		p.errorf("wrong number of arguments to %s instruction", obj.Aconv(op))
+		p.errorf("wrong number of arguments to %v instruction", op)
 		return
 	}
 	switch {
@@ -446,7 +446,7 @@ func (p *Parser) asmInstruction(op obj.As, cond string, a []obj.Addr) {
 					prog.To = a[1]
 					break
 				}
-				p.errorf("unrecognized addressing for %s", obj.Aconv(op))
+				p.errorf("unrecognized addressing for %s", op)
 			}
 		} else if p.arch.LinkArch.Thechar == '7' && arch.IsARM64CMP(op) {
 			prog.From = a[0]
@@ -479,7 +479,7 @@ func (p *Parser) asmInstruction(op obj.As, cond string, a []obj.Addr) {
 				prog.From = a[0]
 				prog.To = a[1]
 				if a[2].Type != obj.TYPE_REG {
-					p.errorf("invalid addressing modes for third operand to %s instruction, must be register", obj.Aconv(op))
+					p.errorf("invalid addressing modes for third operand to %s instruction, must be register", op)
 				}
 				prog.RegTo2 = a[2].Reg
 				break
@@ -507,7 +507,7 @@ func (p *Parser) asmInstruction(op obj.As, cond string, a []obj.Addr) {
 				prog.From3 = newAddr(a[1])
 				prog.To = a[2]
 			default:
-				p.errorf("invalid addressing modes for %s instruction", obj.Aconv(op))
+				p.errorf("invalid addressing modes for %s instruction", op)
 			}
 		default:
 			p.errorf("TODO: implement three-operand instructions for this architecture")
@@ -533,9 +533,9 @@ func (p *Parser) asmInstruction(op obj.As, cond string, a []obj.Addr) {
 			prog.To = a[3]
 			break
 		}
-		p.errorf("can't handle %s instruction with 4 operands", obj.Aconv(op))
+		p.errorf("can't handle %s instruction with 4 operands", op)
 	case 5:
-		p.errorf("can't handle %s instruction with 5 operands", obj.Aconv(op))
+		p.errorf("can't handle %s instruction with 5 operands", op)
 	case 6:
 		if p.arch.LinkArch.Thechar == '5' && arch.IsARMMRC(op) {
 			// Strange special case: MCR, MRC.
@@ -558,7 +558,7 @@ func (p *Parser) asmInstruction(op obj.As, cond string, a []obj.Addr) {
 		}
 		fallthrough
 	default:
-		p.errorf("can't handle %s instruction with %d operands", obj.Aconv(op), len(a))
+		p.errorf("can't handle %s instruction with %d operands", op, len(a))
 	}
 
 	p.append(prog, cond, true)
@@ -584,7 +584,7 @@ func (p *Parser) getConstantPseudo(pseudo string, addr *obj.Addr) int64 {
 // getConstant checks that addr represents a plain constant and returns its value.
 func (p *Parser) getConstant(prog *obj.Prog, op obj.As, addr *obj.Addr) int64 {
 	if addr.Type != obj.TYPE_MEM || addr.Name != 0 || addr.Reg != 0 || addr.Index != 0 {
-		p.errorf("%s: expected integer constant; found %s", obj.Aconv(op), obj.Dconv(prog, addr))
+		p.errorf("%s: expected integer constant; found %s", op, obj.Dconv(prog, addr))
 	}
 	return addr.Offset
 }
@@ -592,15 +592,15 @@ func (p *Parser) getConstant(prog *obj.Prog, op obj.As, addr *obj.Addr) int64 {
 // getImmediate checks that addr represents an immediate constant and returns its value.
 func (p *Parser) getImmediate(prog *obj.Prog, op obj.As, addr *obj.Addr) int64 {
 	if addr.Type != obj.TYPE_CONST || addr.Name != 0 || addr.Reg != 0 || addr.Index != 0 {
-		p.errorf("%s: expected immediate constant; found %s", obj.Aconv(op), obj.Dconv(prog, addr))
+		p.errorf("%s: expected immediate constant; found %s", op, obj.Dconv(prog, addr))
 	}
 	return addr.Offset
 }
 
 // getRegister checks that addr represents a register and returns its value.
-func (p *Parser) getRegister(prog *obj.Prog, op obj.As, addr *obj.Addr) int16 {
+func (p *Parser) getRegister(prog *obj.Prog, op obj.As, addr *obj.Addr) obj.RBaseType {
 	if addr.Type != obj.TYPE_REG || addr.Offset != 0 || addr.Name != 0 || addr.Index != 0 {
-		p.errorf("%s: expected register; found %s", obj.Aconv(op), obj.Dconv(prog, addr))
+		p.errorf("%s: expected register; found %s", op, obj.Dconv(prog, addr))
 	}
 	return addr.Reg
 }

@@ -438,7 +438,7 @@ func (p *Parser) atRegisterShift() bool {
 }
 
 // registerReference parses a register given either the name, R10, or a parenthesized form, SPR(10).
-func (p *Parser) registerReference(name string) (int16, bool) {
+func (p *Parser) registerReference(name string) (obj.RBaseType, bool) {
 	r, present := p.arch.Register[name]
 	if present {
 		return r, true
@@ -455,7 +455,7 @@ func (p *Parser) registerReference(name string) (int16, bool) {
 		p.errorf("parsing register list: %s", err)
 		return 0, false
 	}
-	r, ok := p.arch.RegisterNumber(name, int16(num))
+	r, ok := p.arch.RegisterNumber(name, obj.RBaseType(num))
 	if !ok {
 		p.errorf("illegal register %s(%d)", name, r)
 		return 0, false
@@ -465,7 +465,7 @@ func (p *Parser) registerReference(name string) (int16, bool) {
 
 // register parses a full register reference where there is no symbol present (as in 4(R0) or R(10) but not sym(SB))
 // including forms involving multiple registers such as R1:R2.
-func (p *Parser) register(name string, prefix rune) (r1, r2 int16, scale int8, ok bool) {
+func (p *Parser) register(name string, prefix rune) (r1, r2 obj.RBaseType, scale int8, ok bool) {
 	// R1 or R(1) R1:R2 R1,R2 R1+R2, or R1*scale.
 	r1, ok = p.registerReference(name)
 	if !ok {
@@ -541,7 +541,7 @@ func (p *Parser) registerShift(name string, prefix rune) int64 {
 		if !ok {
 			p.errorf("rhs of shift must be register or integer: %s", str)
 		}
-		count = (r2&15)<<8 | 1<<4
+		count = (int16(r2)&15)<<8 | 1<<4
 	case scanner.Int, '(':
 		p.back()
 		x := int64(p.expr())
@@ -552,7 +552,7 @@ func (p *Parser) registerShift(name string, prefix rune) int64 {
 	default:
 		p.errorf("unexpected %s in register shift", tok.String())
 	}
-	return int64((r1 & 15) | op<<5 | count)
+	return int64((int16(r1) & 15) | op<<5 | count)
 }
 
 // symbolReference parses a symbol that is known not to be a register.
@@ -683,13 +683,13 @@ func (p *Parser) registerIndirect(a *obj.Addr, prefix rune) {
 		if r2 != 0 {
 			p.errorf("unimplemented two-register form")
 		}
-		a.Index = r1
+		a.Index = int16(r1)
 		a.Scale = int16(scale)
 		p.get(')')
 	} else if scale != 0 {
 		// First (R) was missing, all we have is (R*scale).
 		a.Reg = 0
-		a.Index = r1
+		a.Index = int16(r1)
 		a.Scale = int16(scale)
 	}
 }

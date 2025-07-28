@@ -243,7 +243,7 @@ func parseARMCondition(cond string, ls, scond map[string]uint8) (uint8, bool) {
 	return bits, true
 }
 
-func armRegisterNumber(name string, n int16) (int16, bool) {
+func armRegisterNumber(name string, n obj.RBaseType) (obj.RBaseType, bool) {
 	if n < 0 || 15 < n {
 		return 0, false
 	}

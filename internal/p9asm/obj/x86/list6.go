@@ -154,12 +154,12 @@ var Register = []string{
 }
 
 func init() {
-	obj.RegisterRegister(REG_AL, REG_AL+len(Register), Rconv)
+	obj.RegisterRegister(REG_AL, REG_AL+obj.RBaseType(len(Register)), Rconv)
 	obj.RegisterOpcode(obj.ABaseAMD64, Anames)
 }
 
-func Rconv(r int) string {
-	if REG_AL <= r && r-REG_AL < len(Register) {
+func Rconv(r obj.RBaseType) string {
+	if REG_AL <= r && r-REG_AL < obj.RBaseType(len(Register)) {
 		return Register[r-REG_AL]
 	}
 	return fmt.Sprintf("Rgok(%d)", r-obj.RBaseAMD64)

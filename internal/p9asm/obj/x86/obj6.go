@@ -143,13 +143,13 @@ func progedit(ctxt *obj.Link, p *obj.Prog) {
 		if (p.As == AMOVQ || p.As == AMOVL) && p.From.Type == obj.TYPE_REG && p.From.Reg == REG_TLS && p.To.Type == obj.TYPE_REG && REG_AX <= p.To.Reg && p.To.Reg <= REG_R15 {
 			obj_Nopout(p)
 		}
-		if p.From.Type == obj.TYPE_MEM && p.From.Index == REG_TLS && REG_AX <= p.From.Reg && p.From.Reg <= REG_R15 {
+		if p.From.Type == obj.TYPE_MEM && obj.RBaseType(p.From.Index) == REG_TLS && REG_AX <= p.From.Reg && p.From.Reg <= REG_R15 {
 			p.From.Reg = REG_TLS
 			p.From.Scale = 0
 			p.From.Index = REG_NONE
 		}
 
-		if p.To.Type == obj.TYPE_MEM && p.To.Index == REG_TLS && REG_AX <= p.To.Reg && p.To.Reg <= REG_R15 {
+		if p.To.Type == obj.TYPE_MEM && obj.RBaseType(p.To.Index) == REG_TLS && REG_AX <= p.To.Reg && p.To.Reg <= REG_R15 {
 			p.To.Reg = REG_TLS
 			p.To.Scale = 0
 			p.To.Index = REG_NONE
@@ -167,7 +167,7 @@ func progedit(ctxt *obj.Link, p *obj.Prog) {
 			q.From = p.From
 			q.From.Type = obj.TYPE_MEM
 			q.From.Reg = p.To.Reg
-			q.From.Index = REG_TLS
+			q.From.Index = int16(REG_TLS)
 			q.From.Scale = 2 // TODO: use 1
 			q.To = p.To
 			p.From.Type = obj.TYPE_REG
@@ -179,10 +179,10 @@ func progedit(ctxt *obj.Link, p *obj.Prog) {
 
 	// TODO: Remove.
 	if ctxt.Headtype == obj.Hwindows && p.Mode == 64 {
-		if p.From.Scale == 1 && p.From.Index == REG_TLS {
+		if p.From.Scale == 1 && obj.RBaseType(p.From.Index) == REG_TLS {
 			p.From.Scale = 2
 		}
-		if p.To.Scale == 1 && p.To.Index == REG_TLS {
+		if p.To.Scale == 1 && obj.RBaseType(p.To.Index) == REG_TLS {
 			p.To.Scale = 2
 		}
 	}
@@ -425,7 +425,7 @@ func nacladdr(ctxt *obj.Link, p *obj.Prog, a *obj.Addr) {
 			if a.Index != REG_NONE {
 				ctxt.Diag("invalid address %v", p)
 			}
-			a.Index = a.Reg
+			a.Index = int16(a.Reg)
 			if a.Index != REG_NONE {
 				a.Scale = 1
 			}
@@ -652,7 +652,7 @@ func load_g_cx(ctxt *obj.Link, p *obj.Prog) *obj.Prog {
 		p = p.Link
 	}
 
-	if p.From.Index == REG_TLS {
+	if obj.RBaseType(p.From.Index) == REG_TLS {
 		p.From.Scale = 2
 	}
 
@@ -742,7 +742,7 @@ func relinv(a obj.As) obj.As {
 		return AJOS
 	}
 
-	log.Fatalf("unknown relation: %s", obj.Aconv(a))
+	log.Fatalf("unknown relation: %v", a)
 	return 0
 }
 

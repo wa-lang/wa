@@ -10,7 +10,7 @@ import (
 	"wa-lang.org/wa/internal/p9asm/obj"
 )
 
-func RegName(r int) string {
+func RegName(r obj.RBaseType) string {
 	switch {
 	case r == 0:
 		return "NONE"

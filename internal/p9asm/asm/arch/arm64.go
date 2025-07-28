@@ -74,7 +74,7 @@ func ParseARM64Suffix(cond string) (uint8, bool) {
 	return 0, false // parseARMCondition(cond, arm64LS, nil)
 }
 
-func arm64RegisterNumber(name string, n int16) (int16, bool) {
+func arm64RegisterNumber(name string, n obj.RBaseType) (obj.RBaseType, bool) {
 	switch name {
 	case "F":
 		if 0 <= n && n <= 31 {

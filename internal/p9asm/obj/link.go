@@ -140,7 +140,7 @@ import (
 //		TYPE_REGREG2
 type Addr struct {
 	Type   AddrType
-	Reg    int16
+	Reg    RBaseType
 	Index  int16
 	Scale  int16 // Sometimes holds a register.
 	Name   AddrName
@@ -177,8 +177,8 @@ type Prog struct {
 	Lineno int32
 	Spadj  int32
 	As     As
-	Reg    int16
-	RegTo2 int16 // 2nd register output operand
+	Reg    RBaseType
+	RegTo2 RBaseType // 2nd register output operand
 	Mark   uint16
 	Optab  uint16
 	Scond  uint8

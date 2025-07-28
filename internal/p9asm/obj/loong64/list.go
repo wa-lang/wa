@@ -51,7 +51,7 @@ func arrange(a int16) string {
 	}
 }
 
-func rconv(r int) string {
+func rconv(r obj.RBaseType) string {
 	switch {
 	case r == 0:
 		return "NONE"
