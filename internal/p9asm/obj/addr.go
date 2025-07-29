@@ -3,6 +3,11 @@
 
 package obj
 
+import (
+	"errors"
+	"fmt"
+)
+
 // An Addr is an argument to an instruction.
 // The general forms and their encodings are:
 //
@@ -164,3 +169,137 @@ const (
 	TYPE_INDIR                    // 间接寻址, 如 *(R1) 或 [R1]. 可与 TYPE_MEM 组合使用?
 	TYPE_REGLIST                  // 寄存器列表, 常用于 PUSH {R1-R4} 或 POP 操作, 在 ARM 架构中常见
 )
+
+func (a *Addr) checkaddr() error {
+	// Check expected encoding, especially TYPE_CONST vs TYPE_ADDR.
+	switch a.Type {
+	case TYPE_NONE:
+		return nil
+
+	case TYPE_BRANCH:
+		if a.Reg != 0 || a.Index != 0 || a.Scale != 0 || a.Name != 0 {
+			break
+		}
+		return nil
+
+	case TYPE_TEXTSIZE:
+		if a.Reg != 0 || a.Index != 0 || a.Scale != 0 || a.Name != 0 {
+			break
+		}
+		return nil
+
+	case TYPE_MEM:
+		return nil
+
+	case TYPE_CONST:
+		if a.Name != 0 || a.Sym != nil || a.Reg != 0 {
+			return errors.New("argument is TYPE_CONST, should be TYPE_ADDR")
+		}
+
+		if a.Reg != 0 || a.Scale != 0 || a.Name != 0 || a.Sym != nil || a.Val != nil {
+			break
+		}
+		return nil
+
+	case TYPE_FCONST, TYPE_SCONST:
+		if a.Reg != 0 || a.Index != 0 || a.Scale != 0 || a.Name != 0 || a.Offset != 0 || a.Sym != nil {
+			break
+		}
+		return nil
+
+	case TYPE_REG:
+		if a.Scale != 0 || a.Name != 0 || a.Sym != nil {
+			break
+		}
+		return nil
+
+	case TYPE_ADDR:
+		if a.Val != nil {
+			break
+		}
+		if a.Reg == 0 && a.Index == 0 && a.Scale == 0 && a.Name == 0 && a.Sym == nil {
+			return errors.New("argument is TYPE_ADDR, should be TYPE_CONST")
+		}
+		return nil
+
+	case TYPE_SHIFT:
+		if a.Index != 0 || a.Scale != 0 || a.Name != 0 || a.Sym != nil || a.Val != nil {
+			break
+		}
+		return nil
+
+	case TYPE_REGREG:
+		if a.Index != 0 || a.Scale != 0 || a.Name != 0 || a.Sym != nil || a.Val != nil {
+			break
+		}
+		return nil
+
+	case TYPE_REGREG2:
+		return nil
+
+	case TYPE_REGLIST:
+		return nil
+
+	// Expect sym and name to be set, nothing else.
+	// Technically more is allowed, but this is only used for *name(SB).
+	case TYPE_INDIR:
+		if a.Reg != 0 || a.Index != 0 || a.Scale != 0 || a.Name == 0 || a.Offset != 0 || a.Sym == nil || a.Val != nil {
+			break
+		}
+		return nil
+	}
+
+	return fmt.Errorf("invalid encoding for argument %v", a)
+}
+
+// 将表示地址的结构 *Addr 转换为字符串
+func (a *Addr) String() string {
+	var str string
+
+	switch a.Name {
+	default:
+		str = fmt.Sprintf("name=%d", a.Name)
+
+	case NAME_NONE:
+		switch {
+		case a.Reg == REG_NONE:
+			str = fmt.Sprint(a.Offset)
+		case a.Offset == 0:
+			str = fmt.Sprintf("(%v)", a.Reg)
+		case a.Offset != 0:
+			str = fmt.Sprintf("%d(%v)", a.Offset, a.Reg)
+		}
+
+	case NAME_EXTERN:
+		str = fmt.Sprintf("%s%s(SB)", a.Sym.Name, a.offString())
+
+	case NAME_GOTREF:
+		str = fmt.Sprintf("%s%s@GOT(SB)", a.Sym.Name, a.offString())
+
+	case NAME_STATIC:
+		str = fmt.Sprintf("%s<>%s(SB)", a.Sym.Name, a.offString())
+
+	case NAME_AUTO:
+		if a.Sym != nil {
+			str = fmt.Sprintf("%s%s(SP)", a.Sym.Name, a.offString())
+		} else {
+			str = fmt.Sprintf("%s(SP)", a.offString())
+		}
+
+	case NAME_PARAM:
+		if a.Sym != nil {
+			str = fmt.Sprintf("%s%s(FP)", a.Sym.Name, a.offString())
+		} else {
+			str = fmt.Sprintf("%s(FP)", a.offString())
+		}
+	}
+	return str
+}
+
+// 为偏移量生成对应的汇编格式字符串
+func (a *Addr) offString() string {
+	if a.Offset == 0 {
+		return ""
+	}
+	return fmt.Sprintf("%+d", a.Offset)
+}

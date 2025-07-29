@@ -39,6 +39,10 @@ var CmdP9Asm = &cli.Command{
 			Value: runtime.GOOS,
 		},
 		&cli.StringFlag{
+			Name:  "work-dir",
+			Usage: "set work dir",
+		},
+		&cli.StringFlag{
 			Name:  "o",
 			Usage: "output file; default foo.6 for /a/b/c/foo.s on amd64",
 		},
@@ -91,7 +95,7 @@ var CmdP9Asm = &cli.Command{
 		}
 
 		arch := arch.Set(arch.AMD64)
-		ctxt := obj.Linknew(arch.LinkArch, c.String("os"))
+		ctxt := obj.Linknew(arch.LinkArch, c.String("os"), c.String("work-dir"))
 
 		if flags.PrintOut {
 			ctxt.Debugasm = 1
@@ -132,7 +136,10 @@ var CmdP9Asm = &cli.Command{
 			os.Remove(flags.OutputFile)
 			os.Exit(1)
 		}
-		ctxt.Writeobjdirect(output)
+		if err := ctxt.Writeobjdirect(output); err != nil {
+			fmt.Fprintln(os.Stderr, err)
+			os.Exit(1)
+		}
 		return nil
 	},
 }

@@ -36,8 +36,6 @@ import (
 	"encoding/binary"
 	"io"
 	"log"
-	"os"
-	"path/filepath"
 )
 
 // LinkArch is the definition of a single architecture.
@@ -68,11 +66,7 @@ type Link struct {
 	Flag_shared        int32
 	Flag_dynlink       bool
 	Bso                io.Writer
-	Pathname           string
 	Windows            int32
-	Waos               string
-	Waroot             string
-	Waroot_final       string
 	Enforce_data_order int32
 	Hash               map[SymVer]*LSym
 	LineHist           LineHist
@@ -120,32 +114,14 @@ type SymVer struct {
 	Version int // TODO: make int16 to match LSym.Version?
 }
 
-func Linknew(arch *LinkArch, waos string) *Link {
+func Linknew(arch *LinkArch, targetOS, workDir string) *Link {
 	ctxt := new(Link)
 	ctxt.Hash = make(map[SymVer]*LSym)
 	ctxt.Arch = arch
 	ctxt.Version = HistVersion
-	ctxt.Waos = waos
-	ctxt.Waroot = ""       // Getwaroot()
-	ctxt.Waroot_final = "" // os.Getenv("WAROOT_FINAL")
-	if ctxt.Waos == "windows" {
-		// TODO(chai2010): Remove ctxt.Windows and let callers use runtime.GOOS.
-		ctxt.Windows = 1
-	}
+	ctxt.LineHist.Dir = workDir
 
-	var buf string
-	buf, _ = os.Getwd()
-	if buf == "" {
-		buf = "/???"
-	}
-	buf = filepath.ToSlash(buf)
-	ctxt.Pathname = buf
-
-	ctxt.LineHist.WAROOT = ctxt.Waroot
-	ctxt.LineHist.WAROOT_FINAL = ctxt.Waroot_final
-	ctxt.LineHist.Dir = ctxt.Pathname
-
-	if err := ctxt.Headtype.Set(ctxt.Waos); err != nil {
+	if err := ctxt.Headtype.Set(targetOS); err != nil {
 		log.Fatal(err)
 	}
 
@@ -222,11 +198,6 @@ func (ctxt *Link) NewPlist() *Plist {
 	return pl
 }
 
-// AddImport adds a package to the list of imported packages.
-func (ctxt *Link) AddImport(pkg string) {
-	ctxt.Imports = append(ctxt.Imports, pkg)
-}
-
 // This is a simplified copy of linklinefmt above.
 // It doesn't allow printing the full stack, and it returns the file name and line number separately.
 // TODO: Unify with linklinefmt somehow.
@@ -242,159 +213,4 @@ func (ctxt *Link) linkgetline(lineno int32, f **LSym, l *int32) {
 	}
 	*f = stk.Sym
 	*l = int32(stk.fileLineAt(int(lineno)))
-}
-
-func (ctxt *Link) linkpatch(sym *LSym) {
-	var c int32
-	var name string
-	var q *Prog
-
-	ctxt.Cursym = sym
-
-	for p := sym.Text; p != nil; p = p.Link {
-		ctxt.checkaddr(p, &p.From)
-		if p.From3 != nil {
-			ctxt.checkaddr(p, p.From3)
-		}
-		ctxt.checkaddr(p, &p.To)
-
-		if ctxt.Arch.Progedit != nil {
-			ctxt.Arch.Progedit(ctxt, p)
-		}
-		if p.To.Type != TYPE_BRANCH {
-			continue
-		}
-		if p.To.Val != nil {
-			// TODO: Remove To.Val.(*Prog) in favor of p->pcond.
-			p.Pcond = p.To.Val.(*Prog)
-			continue
-		}
-
-		if p.To.Sym != nil {
-			continue
-		}
-		c = int32(p.To.Offset)
-		for q = sym.Text; q != nil; {
-			if int64(c) == q.Pc {
-				break
-			}
-			if q.Forwd != nil && int64(c) >= q.Forwd.Pc {
-				q = q.Forwd
-			} else {
-				q = q.Link
-			}
-		}
-
-		if q == nil {
-			name = "<nil>"
-			if p.To.Sym != nil {
-				name = p.To.Sym.Name
-			}
-			ctxt.Diag("branch out of range (%#x)\n%v [%s]", uint32(c), p, name)
-			p.To.Type = TYPE_NONE
-		}
-
-		p.To.Val = q
-		p.Pcond = q
-	}
-
-	for p := sym.Text; p != nil; p = p.Link {
-		p.Mark = 0 /* initialization for follow */
-		if p.Pcond != nil {
-			p.Pcond = p.Pcond.brloop()
-			if p.Pcond != nil {
-				if p.To.Type == TYPE_BRANCH {
-					p.To.Offset = p.Pcond.Pc
-				}
-			}
-		}
-	}
-}
-
-func (ctxt *Link) checkaddr(p *Prog, a *Addr) {
-	// Check expected encoding, especially TYPE_CONST vs TYPE_ADDR.
-	switch a.Type {
-	case TYPE_NONE:
-		return
-
-	case TYPE_BRANCH:
-		if a.Reg != 0 || a.Index != 0 || a.Scale != 0 || a.Name != 0 {
-			break
-		}
-		return
-
-	case TYPE_TEXTSIZE:
-		if a.Reg != 0 || a.Index != 0 || a.Scale != 0 || a.Name != 0 {
-			break
-		}
-		return
-
-		//if(a->u.bits != 0)
-	//	break;
-	case TYPE_MEM:
-		return
-
-		// TODO(chai2010): After fixing SHRQ, check a->index != 0 too.
-	case TYPE_CONST:
-		if a.Name != 0 || a.Sym != nil || a.Reg != 0 {
-			ctxt.Diag("argument is TYPE_CONST, should be TYPE_ADDR, in %v", p)
-			return
-		}
-
-		if a.Reg != 0 || a.Scale != 0 || a.Name != 0 || a.Sym != nil || a.Val != nil {
-			break
-		}
-		return
-
-	case TYPE_FCONST, TYPE_SCONST:
-		if a.Reg != 0 || a.Index != 0 || a.Scale != 0 || a.Name != 0 || a.Offset != 0 || a.Sym != nil {
-			break
-		}
-		return
-
-	// TODO(chai2010): After fixing PINSRQ, check a->offset != 0 too.
-	// TODO(chai2010): After fixing SHRQ, check a->index != 0 too.
-	case TYPE_REG:
-		if a.Scale != 0 || a.Name != 0 || a.Sym != nil {
-			break
-		}
-		return
-
-	case TYPE_ADDR:
-		if a.Val != nil {
-			break
-		}
-		if a.Reg == 0 && a.Index == 0 && a.Scale == 0 && a.Name == 0 && a.Sym == nil {
-			ctxt.Diag("argument is TYPE_ADDR, should be TYPE_CONST, in %v", p)
-		}
-		return
-
-	case TYPE_SHIFT:
-		if a.Index != 0 || a.Scale != 0 || a.Name != 0 || a.Sym != nil || a.Val != nil {
-			break
-		}
-		return
-
-	case TYPE_REGREG:
-		if a.Index != 0 || a.Scale != 0 || a.Name != 0 || a.Sym != nil || a.Val != nil {
-			break
-		}
-		return
-
-	case TYPE_REGREG2:
-		return
-
-	case TYPE_REGLIST:
-		return
-
-	// Expect sym and name to be set, nothing else.
-	// Technically more is allowed, but this is only used for *name(SB).
-	case TYPE_INDIR:
-		if a.Reg != 0 || a.Index != 0 || a.Scale != 0 || a.Name == 0 || a.Offset != 0 || a.Sym == nil || a.Val != nil {
-			break
-		}
-		return
-	}
-
-	ctxt.Diag("invalid encoding for argument %v", p)
 }

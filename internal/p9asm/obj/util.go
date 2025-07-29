@@ -76,7 +76,7 @@ func Dconv(p *Prog, a *Addr) string {
 	case TYPE_NONE:
 		str = ""
 		if a.Name != NAME_NONE || a.Reg != 0 || a.Sym != nil {
-			str = fmt.Sprintf("%v(%v)(NONE)", Mconv(a), a.Reg)
+			str = fmt.Sprintf("%v(%v)(NONE)", a, a.Reg)
 		}
 
 	case TYPE_REG:
@@ -91,7 +91,7 @@ func Dconv(p *Prog, a *Addr) string {
 
 		str = a.Reg.String()
 		if a.Name != NAME_NONE || a.Sym != nil {
-			str = fmt.Sprintf("%v(%v)(REG)", Mconv(a), a.Reg)
+			str = fmt.Sprintf("%v(%v)(REG)", a, a.Reg)
 		}
 
 	case TYPE_BRANCH:
@@ -106,19 +106,19 @@ func Dconv(p *Prog, a *Addr) string {
 		}
 
 	case TYPE_INDIR:
-		str = fmt.Sprintf("*%s", Mconv(a))
+		str = fmt.Sprintf("*%v", a)
 
 	case TYPE_MEM:
-		str = Mconv(a)
+		str = a.String()
 		if a.Index != int16(REG_NONE) {
 			str += fmt.Sprintf("(%v*%d)", RBaseType(a.Index), int(a.Scale))
 		}
 
 	case TYPE_CONST:
 		if a.Reg != 0 {
-			str = fmt.Sprintf("$%v(%v)", Mconv(a), a.Reg)
+			str = fmt.Sprintf("$%v(%v)", a, a.Reg)
 		} else {
-			str = fmt.Sprintf("$%v", Mconv(a))
+			str = fmt.Sprintf("$%v", a)
 		}
 
 	case TYPE_TEXTSIZE:
@@ -140,7 +140,7 @@ func Dconv(p *Prog, a *Addr) string {
 		str = fmt.Sprintf("$%q", a.Val.(string))
 
 	case TYPE_ADDR:
-		str = fmt.Sprintf("$%s", Mconv(a))
+		str = fmt.Sprintf("$%v", a)
 
 	case TYPE_SHIFT:
 		v := int(a.Offset)
@@ -165,58 +165,6 @@ func Dconv(p *Prog, a *Addr) string {
 	}
 
 	return str
-}
-
-// 将表示地址的结构 *Addr 转换为字符串
-func Mconv(a *Addr) string {
-	var str string
-
-	switch a.Name {
-	default:
-		str = fmt.Sprintf("name=%d", a.Name)
-
-	case NAME_NONE:
-		switch {
-		case a.Reg == REG_NONE:
-			str = fmt.Sprint(a.Offset)
-		case a.Offset == 0:
-			str = fmt.Sprintf("(%v)", a.Reg)
-		case a.Offset != 0:
-			str = fmt.Sprintf("%d(%v)", a.Offset, a.Reg)
-		}
-
-	case NAME_EXTERN:
-		str = fmt.Sprintf("%s%s(SB)", a.Sym.Name, offConv(a.Offset))
-
-	case NAME_GOTREF:
-		str = fmt.Sprintf("%s%s@GOT(SB)", a.Sym.Name, offConv(a.Offset))
-
-	case NAME_STATIC:
-		str = fmt.Sprintf("%s<>%s(SB)", a.Sym.Name, offConv(a.Offset))
-
-	case NAME_AUTO:
-		if a.Sym != nil {
-			str = fmt.Sprintf("%s%s(SP)", a.Sym.Name, offConv(a.Offset))
-		} else {
-			str = fmt.Sprintf("%s(SP)", offConv(a.Offset))
-		}
-
-	case NAME_PARAM:
-		if a.Sym != nil {
-			str = fmt.Sprintf("%s%s(FP)", a.Sym.Name, offConv(a.Offset))
-		} else {
-			str = fmt.Sprintf("%s(FP)", offConv(a.Offset))
-		}
-	}
-	return str
-}
-
-// 为偏移量生成对应的汇编格式字符串
-func offConv(off int64) string {
-	if off == 0 {
-		return ""
-	}
-	return fmt.Sprintf("%+d", off)
 }
 
 // 有bit位组成的寄存器列表转位字符串格式
@@ -245,38 +193,4 @@ func regListConv(list int) string {
 	}
 	sb.WriteRune(']')
 	return sb.String()
-}
-
-// Does s have t as a path prefix?
-// That is, does s == t or does s begin with t followed by a slash?
-// For portability, we allow ASCII case folding, so that hasPathPrefix("a/b/c", "A/B") is true.
-// Similarly, we allow slash folding, so that hasPathPrefix("a/b/c", "a\\b") is true.
-// We do not allow full Unicode case folding, for fear of causing more confusion
-// or harm than good. (For an example of the kinds of things that can go wrong,
-// see http://article.gmane.org/gmane.linux.kernel/1853266.)
-func hasPathPrefix(s string, t string) bool {
-	if len(t) > len(s) {
-		return false
-	}
-	var i int
-	for i = 0; i < len(t); i++ {
-		cs := int(s[i])
-		ct := int(t[i])
-		if 'A' <= cs && cs <= 'Z' {
-			cs += 'a' - 'A'
-		}
-		if 'A' <= ct && ct <= 'Z' {
-			ct += 'a' - 'A'
-		}
-		if cs == '\\' {
-			cs = '/'
-		}
-		if ct == '\\' {
-			ct = '/'
-		}
-		if cs != ct {
-			return false
-		}
-	}
-	return i >= len(s) || s[i] == '/' || s[i] == '\\'
 }

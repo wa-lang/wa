@@ -106,7 +106,7 @@ import (
 // The Wa and C compilers, and the assembler, call writeobj to write
 // out a Wa object file.  The linker does not call this; the linker
 // does not write out object files.
-func (ctxt *Link) Writeobjdirect(b io.Writer) {
+func (ctxt *Link) Writeobjdirect(b io.Writer) error {
 	// Build list of symbols, and assign instructions to lists.
 	// Ignore ctxt->plist boundaries. There are no guarantees there,
 	// and the C compilers and assemblers just use one big list.
@@ -196,7 +196,9 @@ func (ctxt *Link) Writeobjdirect(b io.Writer) {
 			// 全局数据赋值语句
 			// 会调用 savedata() 保存数据内容到 LSym.P 中
 			if p.As == ADATA {
-				savedata(ctxt, p.From.Sym, p, "<input>")
+				if err := savedata(ctxt, p.From.Sym, p, "<input>"); err != nil {
+					return err
+				}
 				continue
 			}
 
@@ -243,7 +245,7 @@ func (ctxt *Link) Writeobjdirect(b io.Writer) {
 				}
 				if p.To.Sym.Name == "wa_args_stackmap" {
 					if p.From.Type != TYPE_CONST || p.From.Offset != FUNCDATA_ArgsPointerMaps {
-						ctxt.Diag("FUNCDATA use of wa_args_stackmap(SB) without FUNCDATA_ArgsPointerMaps")
+						return fmt.Errorf("FUNCDATA use of wa_args_stackmap(SB) without FUNCDATA_ArgsPointerMaps")
 					}
 					p.To.Sym = ctxt.Lookup(fmt.Sprintf("%s.args_stackmap", curtext.Name), int(curtext.Version))
 				}
@@ -296,7 +298,9 @@ func (ctxt *Link) Writeobjdirect(b io.Writer) {
 		s.mkfwd()
 
 		// 补丁处理, 修正重定位项(如 call/jump 地址)
-		ctxt.linkpatch(s)
+		if err := s.linkpatch(ctxt); err != nil {
+			return err
+		}
 
 		// 架构相关, 可能展开指令
 		ctxt.Arch.Follow(ctxt, s)
@@ -308,7 +312,7 @@ func (ctxt *Link) Writeobjdirect(b io.Writer) {
 		ctxt.Arch.Assemble(ctxt, s)
 
 		// 生成行号调试信息, 构建 LSym.Pcln
-		ctxt.linkpcln(s)
+		s.linkpcln(ctxt)
 	}
 
 	// 写 waobj 开始标志
@@ -336,6 +340,8 @@ func (ctxt *Link) Writeobjdirect(b io.Writer) {
 
 	// 写 waobj 结束标志
 	fmt.Fprintf(b, MagicFooter)
+
+	return nil
 }
 
 // 写具名的对象
@@ -530,14 +536,14 @@ func (ctxt *Link) writesym(b io.Writer, s *LSym) {
 	}
 }
 
-func savedata(ctxt *Link, s *LSym, p *Prog, pn string) {
+func savedata(ctxt *Link, s *LSym, p *Prog, pn string) error {
 	off := int32(p.From.Offset)
 	siz := int32(p.From3.Offset)
 	if off < 0 || siz < 0 || off >= 1<<30 || siz >= 100 {
-		panic(fmt.Errorf("%s: mangled input file", pn))
+		return fmt.Errorf("%s: mangled input file", pn)
 	}
 	if ctxt.Enforce_data_order != 0 && off < int32(len(s.P)) {
-		ctxt.Diag("data out of order (already have %d)\n%v", len(s.P), p)
+		return fmt.Errorf("data out of order (already have %d)\n%v", len(s.P), p)
 	}
 
 	// 调整符号对应的机器码切片的容量
@@ -547,12 +553,12 @@ func savedata(ctxt *Link, s *LSym, p *Prog, pn string) {
 
 	switch p.To.Type {
 	default:
-		ctxt.Diag("bad data: %v", p)
+		return fmt.Errorf("bad data: %v", p)
 
 	case TYPE_FCONST:
 		switch siz {
 		default:
-			ctxt.Diag("unexpected %d-byte floating point constant", siz)
+			return fmt.Errorf("unexpected %d-byte floating point constant", siz)
 
 		case 4:
 			flt := math.Float32bits(float32(p.To.Val.(float64)))
@@ -580,7 +586,7 @@ func savedata(ctxt *Link, s *LSym, p *Prog, pn string) {
 		o := p.To.Offset
 		switch siz {
 		default:
-			ctxt.Diag("unexpected %d-byte integer constant", siz)
+			return fmt.Errorf("unexpected %d-byte integer constant", siz)
 		case 1:
 			s.P[off] = byte(o)
 		case 2:
@@ -591,6 +597,8 @@ func savedata(ctxt *Link, s *LSym, p *Prog, pn string) {
 			ctxt.Arch.ByteOrder.PutUint64(s.P[off:], uint64(o))
 		}
 	}
+
+	return nil
 }
 
 func wrint(b io.Writer, sval int64) {

@@ -9,7 +9,11 @@ import (
 	"log"
 )
 
-func addvarint(ctxt *Link, d *Pcdata, val uint32) {
+type Pcdata struct {
+	P []byte
+}
+
+func (d *Pcdata) addvarint(val uint32) {
 	var v uint32
 	for v = val; v >= 0x80; v >>= 7 {
 		d.P = append(d.P, uint8(v|0x80))
@@ -27,7 +31,7 @@ func addvarint(ctxt *Link, d *Pcdata, val uint32) {
 //
 // where func is the function, val is the current value, p is the instruction being
 // considered, and arg can be used to further parameterize valfunc.
-func funcpctab(ctxt *Link, dst *Pcdata, func_ *LSym, desc string, valfunc func(*Link, *LSym, int32, *Prog, int32, interface{}) int32, arg interface{}) {
+func (dst *Pcdata) funcpctab(ctxt *Link, func_ *LSym, desc string, valfunc func(*Link, *LSym, int32, *Prog, int32, interface{}) int32, arg interface{}) {
 	// To debug a specific function, uncomment second line and change name.
 	dbg := 0
 
@@ -100,7 +104,7 @@ func funcpctab(ctxt *Link, dst *Pcdata, func_ *LSym, desc string, valfunc func(*
 		}
 
 		if started != 0 {
-			addvarint(ctxt, dst, uint32((p.Pc-pc)/int64(ctxt.Arch.Minlc)))
+			dst.addvarint(uint32((p.Pc - pc) / int64(ctxt.Arch.Minlc)))
 			pc = p.Pc
 		}
 
@@ -110,7 +114,7 @@ func funcpctab(ctxt *Link, dst *Pcdata, func_ *LSym, desc string, valfunc func(*
 		} else {
 			delta <<= 1
 		}
-		addvarint(ctxt, dst, delta)
+		dst.addvarint(delta)
 		oldval = val
 		started = 1
 		val = valfunc(ctxt, func_, val, p, 1, arg)
@@ -120,8 +124,8 @@ func funcpctab(ctxt *Link, dst *Pcdata, func_ *LSym, desc string, valfunc func(*
 		if ctxt.Debugpcln != 0 {
 			fmt.Fprintf(ctxt.Bso, "%6x done\n", uint64(int64(func_.Text.Pc)+func_.Size))
 		}
-		addvarint(ctxt, dst, uint32((func_.Value+func_.Size-pc)/int64(ctxt.Arch.Minlc)))
-		addvarint(ctxt, dst, 0) // terminator
+		dst.addvarint(uint32((func_.Value + func_.Size - pc) / int64(ctxt.Arch.Minlc)))
+		dst.addvarint(0) // terminator
 	}
 
 	if ctxt.Debugpcln != 0 {
@@ -139,7 +143,7 @@ func funcpctab(ctxt *Link, dst *Pcdata, func_ *LSym, desc string, valfunc func(*
 // or the line number (arg == 1) to use at p.
 // Because p->lineno applies to p, phase == 0 (before p)
 // takes care of the update.
-func pctofileline(ctxt *Link, sym *LSym, oldval int32, p *Prog, phase int32, arg interface{}) int32 {
+func (ctxt *Link) pctofileline(sym *LSym, oldval int32, p *Prog, phase int32, arg interface{}) int32 {
 	if p.As == ATEXT || p.As == ANOP || p.As == AUSEFIELD || p.Lineno == 0 || phase == 1 {
 		return oldval
 	}
@@ -179,7 +183,7 @@ func pctofileline(ctxt *Link, sym *LSym, oldval int32, p *Prog, phase int32, arg
 // It is oldval plus any adjustment made by p itself.
 // The adjustment by p takes effect only after p, so we
 // apply the change during phase == 1.
-func pctospadj(ctxt *Link, sym *LSym, oldval int32, p *Prog, phase int32, arg interface{}) int32 {
+func (ctxt *Link) pctospadj(sym *LSym, oldval int32, p *Prog, phase int32, arg interface{}) int32 {
 	if oldval == -1 { // starting
 		oldval = 0
 	}
@@ -199,19 +203,18 @@ func pctospadj(ctxt *Link, sym *LSym, oldval int32, p *Prog, phase int32, arg in
 // non-PCDATA instructions.
 // Since PCDATA instructions have no width in the final code,
 // it does not matter which phase we use for the update.
-func pctopcdata(ctxt *Link, sym *LSym, oldval int32, p *Prog, phase int32, arg interface{}) int32 {
+func (*Link) pctopcdata(sym *LSym, oldval int32, p *Prog, phase int32, arg interface{}) int32 {
 	if phase == 0 || p.As != APCDATA || p.From.Offset != int64(arg.(uint32)) {
 		return oldval
 	}
 	if int64(int32(p.To.Offset)) != p.To.Offset {
-		ctxt.Diag("overflow in PCDATA instruction: %v", p)
-		log.Fatalf("bad code")
+		panic(fmt.Sprintf("overflow in PCDATA instruction: %v", p))
 	}
 
 	return int32(p.To.Offset)
 }
 
-func (ctxt *Link) linkpcln(cursym *LSym) {
+func (cursym *LSym) linkpcln(ctxt *Link) {
 	ctxt.Cursym = cursym
 
 	pcln := new(Pcln)
@@ -234,9 +237,9 @@ func (ctxt *Link) linkpcln(cursym *LSym) {
 	pcln.Funcdataoff = make([]int64, nfuncdata)
 	pcln.Funcdataoff = pcln.Funcdataoff[:nfuncdata]
 
-	funcpctab(ctxt, &pcln.Pcsp, cursym, "pctospadj", pctospadj, nil)
-	funcpctab(ctxt, &pcln.Pcfile, cursym, "pctofile", pctofileline, pcln)
-	funcpctab(ctxt, &pcln.Pcline, cursym, "pctoline", pctofileline, nil)
+	pcln.Pcsp.funcpctab(ctxt, cursym, "pctospadj", (*Link).pctospadj, nil)
+	pcln.Pcfile.funcpctab(ctxt, cursym, "pctofile", (*Link).pctofileline, pcln)
+	pcln.Pcline.funcpctab(ctxt, cursym, "pctoline", (*Link).pctofileline, nil)
 
 	// tabulate which pc and func data we have.
 	havepc := make([]uint32, (npcdata+31)/32)
@@ -259,7 +262,7 @@ func (ctxt *Link) linkpcln(cursym *LSym) {
 		if (havepc[i/32]>>uint(i%32))&1 == 0 {
 			continue
 		}
-		funcpctab(ctxt, &pcln.Pcdata[i], cursym, "pctopcdata", pctopcdata, interface{}(uint32(i)))
+		pcln.Pcdata[i].funcpctab(ctxt, cursym, "pctopcdata", (*Link).pctopcdata, interface{}(uint32(i)))
 	}
 
 	// funcdata

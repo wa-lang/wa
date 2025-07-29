@@ -11,40 +11,38 @@ import (
 	"strings"
 )
 
-// A LineHist records the history of the file input stack, which maps the virtual line number,
-// an incrementing count of lines processed in any input file and typically named lineno,
-// to a stack of file:line pairs showing the path of inclusions that led to that position.
-// The first line directive (//line in Wa, #line in assembly) is treated as pushing
-// a new entry on the stack, so that errors can report both the actual and translated
-// line number.
+// LineHist 用于记录文件输入栈的历史
 //
-// In typical use, the virtual lineno begins at 1, and file line numbers also begin at 1,
-// but the only requirements placed upon the numbers by this code are:
-//   - calls to Push, Update, and Pop must be monotonically increasing in lineno
-//   - except as specified by those methods, virtual and file line number increase
-//     together, so that given (only) calls Push(10, "x.go", 1) and Pop(15),
-//     virtual line 12 corresponds to x.go line 3.
+// 它将虚拟行号(即在任意输入文件中处理的行数, 通常称为 lineno)
+// 映射到一个由文件名和行号组成的栈, 表示导致当前位置的 include 路径
+//
+// 比如 `//line` 或 `#line` 为一个行指令, 将入栈一个新的位置信息
+// 这样在报错时既可以显示真实位置, 也可以显示转换后的行号
+//
+// 在典型用法中, 虚拟行号从 1 开始, 每个文件中的行号也从 1 开始.
+// 在调用 Push、Update 和 Pop 时必须按 lineno 单调递增.
+// 虚拟行号和文件行号应同时递增. 比如在仅调用了 Push(10, "x.wa", 1) 和 Pop(15) 的情况下,
+// 虚拟行号 12 对应的就是 x.go 文件的第 3 行.
+
+// 虚拟行历史
 type LineHist struct {
-	Top            *LineStack  // current top of stack
-	Ranges         []LineRange // ranges for lookup
-	Dir            string      // directory to qualify relative paths
-	TrimPathPrefix string      // remove leading TrimPath from recorded file names
-	WAROOT         string      // current WAROOT
-	WAROOT_FINAL   string      // target WAROOT
+	Top            *LineStack  // 当前行号映射栈的栈顶
+	Ranges         []LineRange // 行号查找用的区间范围
+	Dir            string      // 用于将相对路径转换为绝对路径的目录
+	TrimPathPrefix string      // 在记录文件名时去除的前缀路径(用于简化路径显示)
 }
 
-// A LineStack is an entry in the recorded line history.
-// Although the history at any given line number is a stack,
-// the record for all line processed forms a tree, with common
-// stack prefixes acting as parents.
+// LineStack 表示记录在行号历史中的一个栈条目
+// 历史是一个栈结构, 类似一个树结构
+// 具有相同栈前缀的条目会共享相同的父节点
 type LineStack struct {
-	Parent    *LineStack // parent in inclusion stack
-	Lineno    int        // virtual line number where this entry takes effect
-	File      string     // file name used to open source file, for error messages
-	AbsFile   string     // absolute file name, for pcln tables
-	FileLine  int        // line number in file at Lineno
-	Directive bool
-	Sym       *LSym // for linkgetline - TODO(chai2010): remove
+	Parent    *LineStack // 父节点
+	Lineno    int        // 当前生效的虚拟行号
+	File      string     // 对应的文件名, 用于错误显示
+	AbsFile   string     // 文件绝对路径名, 用于 pcln 表格
+	FileLine  int        // 在文件中对应的行号
+	Directive bool       // 是否来自 //line 或 #line 指令
+	Sym       *LSym      // 用于 linkgetline 的符号指针
 }
 
 // The span of valid linenos in the recorded line history can be broken
@@ -71,14 +69,12 @@ func (h *LineHist) setFile(stk *LineStack, file string) {
 	}
 
 	// Remove leading TrimPathPrefix, or else rewrite $GOROOT to $GOROOT_FINAL.
-	if h.TrimPathPrefix != "" && hasPathPrefix(abs, h.TrimPathPrefix) {
+	if h.TrimPathPrefix != "" && h.hasPathPrefix(abs, h.TrimPathPrefix) {
 		if abs == h.TrimPathPrefix {
 			abs = ""
 		} else {
 			abs = abs[len(h.TrimPathPrefix)+1:]
 		}
-	} else if h.WAROOT_FINAL != "" && h.WAROOT_FINAL != h.WAROOT && hasPathPrefix(abs, h.WAROOT) {
-		abs = h.WAROOT_FINAL + abs[len(h.WAROOT):]
 	}
 	if abs == "" {
 		abs = "??"
@@ -220,4 +216,38 @@ func (h *LineHist) AbsFileLine(lineno int) (file string, line int) {
 
 func (stk *LineStack) fileLineAt(lineno int) int {
 	return stk.FileLine + lineno - stk.Lineno
+}
+
+// Does s have t as a path prefix?
+// That is, does s == t or does s begin with t followed by a slash?
+// For portability, we allow ASCII case folding, so that hasPathPrefix("a/b/c", "A/B") is true.
+// Similarly, we allow slash folding, so that hasPathPrefix("a/b/c", "a\\b") is true.
+// We do not allow full Unicode case folding, for fear of causing more confusion
+// or harm than good. (For an example of the kinds of things that can go wrong,
+// see http://article.gmane.org/gmane.linux.kernel/1853266.)
+func (h *LineHist) hasPathPrefix(s string, t string) bool {
+	if len(t) > len(s) {
+		return false
+	}
+	var i int
+	for i = 0; i < len(t); i++ {
+		cs := int(s[i])
+		ct := int(t[i])
+		if 'A' <= cs && cs <= 'Z' {
+			cs += 'a' - 'A'
+		}
+		if 'A' <= ct && ct <= 'Z' {
+			ct += 'a' - 'A'
+		}
+		if cs == '\\' {
+			cs = '/'
+		}
+		if ct == '\\' {
+			ct = '/'
+		}
+		if cs != ct {
+			return false
+		}
+	}
+	return i >= len(s) || s[i] == '/' || s[i] == '\\'
 }

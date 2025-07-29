@@ -32,6 +32,8 @@
 
 package obj
 
+import "fmt"
+
 // 对应的是将被写入目标文件的符号, 比如函数/变量/常量/调试信息等
 type LSym struct {
 	Name      string  // 符号名字
@@ -82,10 +84,6 @@ type Reloc struct {
 	Type RelocType
 	Add  int64
 	Sym  *LSym
-}
-
-type Pcdata struct {
-	P []byte
 }
 
 // Auto.name
@@ -183,6 +181,81 @@ const (
 	SHIDDEN    = 1 << 9   // 符号隐藏(如不导出符号)
 	SCONTAINER = 1 << 10  // 包含子符号(如容器符号)
 )
+
+func (sym *LSym) linkpatch(ctxt *Link) error {
+	var c int32
+	var name string
+	var q *Prog
+
+	ctxt.Cursym = sym
+
+	for p := sym.Text; p != nil; p = p.Link {
+		if err := p.From.checkaddr(); err != nil {
+			return fmt.Errorf("%w in %v", err, p)
+		}
+		if p.From3 != nil {
+			if err := p.From3.checkaddr(); err != nil {
+				return fmt.Errorf("%w in %v", err, p)
+			}
+		}
+		if err := p.To.checkaddr(); err != nil {
+			return fmt.Errorf("%w in %v", err, p)
+		}
+
+		if ctxt.Arch.Progedit != nil {
+			ctxt.Arch.Progedit(ctxt, p)
+		}
+		if p.To.Type != TYPE_BRANCH {
+			continue
+		}
+		if p.To.Val != nil {
+			// TODO: Remove To.Val.(*Prog) in favor of p->pcond.
+			p.Pcond = p.To.Val.(*Prog)
+			continue
+		}
+
+		if p.To.Sym != nil {
+			continue
+		}
+		c = int32(p.To.Offset)
+		for q = sym.Text; q != nil; {
+			if int64(c) == q.Pc {
+				break
+			}
+			if q.Forwd != nil && int64(c) >= q.Forwd.Pc {
+				q = q.Forwd
+			} else {
+				q = q.Link
+			}
+		}
+
+		if q == nil {
+			name = "<nil>"
+			if p.To.Sym != nil {
+				name = p.To.Sym.Name
+			}
+			p.To.Type = TYPE_NONE
+			return fmt.Errorf("branch out of range (%#x)\n%v [%s]", uint32(c), p, name)
+		}
+
+		p.To.Val = q
+		p.Pcond = q
+	}
+
+	for p := sym.Text; p != nil; p = p.Link {
+		p.Mark = 0 /* initialization for follow */
+		if p.Pcond != nil {
+			p.Pcond = p.Pcond.brloop()
+			if p.Pcond != nil {
+				if p.To.Type == TYPE_BRANCH {
+					p.To.Offset = p.Pcond.Pc
+				}
+			}
+		}
+	}
+
+	return nil
+}
 
 // 加速指令链的遍历
 // 通过为 sym.Text 链表上的某些节点设置 Forwd 快捷指针来构建 跳跃表 式的结构
