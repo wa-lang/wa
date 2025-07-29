@@ -106,7 +106,7 @@ import (
 // The Wa and C compilers, and the assembler, call writeobj to write
 // out a Wa object file.  The linker does not call this; the linker
 // does not write out object files.
-func Writeobjdirect(ctxt *Link, b io.Writer) {
+func (ctxt *Link) Writeobjdirect(b io.Writer) {
 	// Build list of symbols, and assign instructions to lists.
 	// Ignore ctxt->plist boundaries. There are no guarantees there,
 	// and the C compilers and assemblers just use one big list.
@@ -245,7 +245,7 @@ func Writeobjdirect(ctxt *Link, b io.Writer) {
 					if p.From.Type != TYPE_CONST || p.From.Offset != FUNCDATA_ArgsPointerMaps {
 						ctxt.Diag("FUNCDATA use of wa_args_stackmap(SB) without FUNCDATA_ArgsPointerMaps")
 					}
-					p.To.Sym = Linklookup(ctxt, fmt.Sprintf("%s.args_stackmap", curtext.Name), int(curtext.Version))
+					p.To.Sym = ctxt.Lookup(fmt.Sprintf("%s.args_stackmap", curtext.Name), int(curtext.Version))
 				}
 			}
 
@@ -276,13 +276,16 @@ func Writeobjdirect(ctxt *Link, b io.Writer) {
 		}
 
 		if found == 0 {
-			p := Appendp(ctxt, s.Text)
+			p := ctxt.NewProg()
+			p.Link, s.Text.Link = s.Text.Link, p
+			p.Lineno = s.Text.Lineno
+			p.Mode = s.Text.Mode
 			p.As = AFUNCDATA
 			p.From.Type = TYPE_CONST
 			p.From.Offset = FUNCDATA_ArgsPointerMaps
 			p.To.Type = TYPE_MEM
 			p.To.Name = NAME_EXTERN
-			p.To.Sym = Linklookup(ctxt, fmt.Sprintf("%s.args_stackmap", s.Name), int(s.Version))
+			p.To.Sym = ctxt.Lookup(fmt.Sprintf("%s.args_stackmap", s.Name), int(s.Version))
 		}
 	}
 
@@ -290,10 +293,10 @@ func Writeobjdirect(ctxt *Link, b io.Writer) {
 	// 调用 Arch 的各个处理函数
 	for s := text; s != nil; s = s.Next {
 		// 初始化跳转伪指令的目标修复
-		mkfwd(s)
+		s.mkfwd()
 
 		// 补丁处理, 修正重定位项(如 call/jump 地址)
-		linkpatch(ctxt, s)
+		ctxt.linkpatch(s)
 
 		// 架构相关, 可能展开指令
 		ctxt.Arch.Follow(ctxt, s)
@@ -305,7 +308,7 @@ func Writeobjdirect(ctxt *Link, b io.Writer) {
 		ctxt.Arch.Assemble(ctxt, s)
 
 		// 生成行号调试信息, 构建 LSym.Pcln
-		linkpcln(ctxt, s)
+		ctxt.linkpcln(s)
 	}
 
 	// 写 waobj 开始标志
@@ -324,11 +327,11 @@ func Writeobjdirect(ctxt *Link, b io.Writer) {
 
 	// 生成函数标识符
 	for s := text; s != nil; s = s.Next {
-		writesym(ctxt, b, s)
+		ctxt.writesym(b, s)
 	}
 	// 生成变量标识符
 	for s := data; s != nil; s = s.Next {
-		writesym(ctxt, b, s)
+		ctxt.writesym(b, s)
 	}
 
 	// 写 waobj 结束标志
@@ -336,7 +339,7 @@ func Writeobjdirect(ctxt *Link, b io.Writer) {
 }
 
 // 写具名的对象
-func writesym(ctxt *Link, b io.Writer, s *LSym) {
+func (ctxt *Link) writesym(b io.Writer, s *LSym) {
 	// 打印文本格式的汇编信息
 	if ctxt.Debugasm != 0 {
 		// main 函数打印格式

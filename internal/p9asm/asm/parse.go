@@ -576,7 +576,7 @@ func (p *Parser) symbolReference(a *obj.Addr, name string, prefix rune) {
 	if p.peek() == '+' || p.peek() == '-' {
 		a.Offset = int64(p.expr())
 	}
-	a.Sym = obj.Linklookup(p.ctxt, name, isStatic)
+	a.Sym = p.ctxt.Lookup(name, isStatic)
 	if p.peek() == scanner.EOF {
 		if prefix != 0 {
 			p.errorf("illegal addressing mode for symbol %s", name)

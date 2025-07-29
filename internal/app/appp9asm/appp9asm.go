@@ -124,7 +124,7 @@ var CmdP9Asm = &cli.Command{
 		}
 		parser := asm.NewParser(ctxt, arch, lexer, flags)
 
-		pList := obj.Linknewplist(ctxt)
+		pList := ctxt.NewPlist()
 		var ok bool
 		pList.Firstpc, ok = parser.Parse()
 		if !ok {
@@ -132,7 +132,7 @@ var CmdP9Asm = &cli.Command{
 			os.Remove(flags.OutputFile)
 			os.Exit(1)
 		}
-		obj.Writeobjdirect(ctxt, output)
+		ctxt.Writeobjdirect(output)
 		return nil
 	},
 }

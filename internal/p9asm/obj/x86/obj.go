@@ -25,3 +25,23 @@ func obj_Symgrow(s *obj.LSym, lsiz int64) {
 	}
 	s.P = s.P[:siz]
 }
+
+func obj_Appendp(ctxt *obj.Link, q *obj.Prog) *obj.Prog {
+	p := ctxt.NewProg()
+	p.Link = q.Link
+	q.Link = p
+	p.Lineno = q.Lineno
+	p.Mode = q.Mode
+	return p
+}
+
+func obj_Brchain(ctxt *obj.Link, p *obj.Prog) *obj.Prog {
+	for i := 0; i < 20; i++ {
+		if p == nil || p.As != obj.AJMP || p.Pcond == nil {
+			return p
+		}
+		p = p.Pcond
+	}
+
+	return nil
+}

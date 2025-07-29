@@ -145,7 +145,7 @@ func pctofileline(ctxt *Link, sym *LSym, oldval int32, p *Prog, phase int32, arg
 	}
 	var l int32
 	var f *LSym
-	linkgetline(ctxt, p.Lineno, &f, &l)
+	ctxt.linkgetline(p.Lineno, &f, &l)
 	if f == nil {
 		//	print("getline failed for %s %v\n", ctxt->cursym->name, p);
 		return oldval
@@ -211,7 +211,7 @@ func pctopcdata(ctxt *Link, sym *LSym, oldval int32, p *Prog, phase int32, arg i
 	return int32(p.To.Offset)
 }
 
-func linkpcln(ctxt *Link, cursym *LSym) {
+func (ctxt *Link) linkpcln(cursym *LSym) {
 	ctxt.Cursym = cursym
 
 	pcln := new(Pcln)

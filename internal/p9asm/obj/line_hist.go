@@ -47,10 +47,6 @@ type LineStack struct {
 	Sym       *LSym // for linkgetline - TODO(chai2010): remove
 }
 
-func (stk *LineStack) fileLineAt(lineno int) int {
-	return stk.FileLine + lineno - stk.Lineno
-}
-
 // The span of valid linenos in the recorded line history can be broken
 // into a set of ranges, each with a particular stack.
 // A LineRange records one such range.
@@ -62,7 +58,7 @@ type LineRange struct {
 // startRange starts a new range with the given top of stack.
 func (h *LineHist) startRange(lineno int, top *LineStack) {
 	h.Top = top
-	h.Ranges = append(h.Ranges, LineRange{top.Lineno, top})
+	h.Ranges = append(h.Ranges, LineRange{lineno, top})
 }
 
 // setFile sets stk.File = file and also derives stk.AbsFile.
@@ -94,40 +90,6 @@ func (h *LineHist) setFile(stk *LineStack, file string) {
 		file = "??"
 	}
 	stk.File = file
-}
-
-// Does s have t as a path prefix?
-// That is, does s == t or does s begin with t followed by a slash?
-// For portability, we allow ASCII case folding, so that hasPathPrefix("a/b/c", "A/B") is true.
-// Similarly, we allow slash folding, so that hasPathPrefix("a/b/c", "a\\b") is true.
-// We do not allow full Unicode case folding, for fear of causing more confusion
-// or harm than good. (For an example of the kinds of things that can go wrong,
-// see http://article.gmane.org/gmane.linux.kernel/1853266.)
-func hasPathPrefix(s string, t string) bool {
-	if len(t) > len(s) {
-		return false
-	}
-	var i int
-	for i = 0; i < len(t); i++ {
-		cs := int(s[i])
-		ct := int(t[i])
-		if 'A' <= cs && cs <= 'Z' {
-			cs += 'a' - 'A'
-		}
-		if 'A' <= ct && ct <= 'Z' {
-			ct += 'a' - 'A'
-		}
-		if cs == '\\' {
-			cs = '/'
-		}
-		if ct == '\\' {
-			ct = '/'
-		}
-		if cs != ct {
-			return false
-		}
-	}
-	return i >= len(s) || s[i] == '/' || s[i] == '\\'
 }
 
 // Push records that at that lineno a new file with the given name was pushed onto the input stack.
@@ -196,11 +158,6 @@ func (h *LineHist) Update(lineno int, file string, line int) {
 	h.startRange(lineno, stk)
 }
 
-// AddImport adds a package to the list of imported packages.
-func (ctxt *Link) AddImport(pkg string) {
-	ctxt.Imports = append(ctxt.Imports, pkg)
-}
-
 // At returns the input stack in effect at lineno.
 func (h *LineHist) At(lineno int) *LineStack {
 	i := sort.Search(len(h.Ranges), func(i int) bool {
@@ -261,23 +218,6 @@ func (h *LineHist) AbsFileLine(lineno int) (file string, line int) {
 	return stk.AbsFile, stk.fileLineAt(lineno)
 }
 
-// This is a simplified copy of linklinefmt above.
-// It doesn't allow printing the full stack, and it returns the file name and line number separately.
-// TODO: Unify with linklinefmt somehow.
-func linkgetline(ctxt *Link, lineno int32, f **LSym, l *int32) {
-	stk := ctxt.LineHist.At(int(lineno))
-	if stk == nil || stk.AbsFile == "" {
-		*f = Linklookup(ctxt, "??", HistVersion)
-		*l = 0
-		return
-	}
-	if stk.Sym == nil {
-		stk.Sym = Linklookup(ctxt, stk.AbsFile, HistVersion)
-	}
-	*f = stk.Sym
-	*l = int32(stk.fileLineAt(int(lineno)))
-}
-
-func Linkprfile(ctxt *Link, line int) {
-	fmt.Printf("%s ", ctxt.LineHist.LineString(line))
+func (stk *LineStack) fileLineAt(lineno int) int {
+	return stk.FileLine + lineno - stk.Lineno
 }

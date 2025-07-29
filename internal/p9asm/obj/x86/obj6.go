@@ -162,7 +162,7 @@ func progedit(ctxt *obj.Link, p *obj.Prog) {
 		//	MOVQ TLS, BX
 		//	MOVQ 0(BX)(TLS*1), BX
 		if (p.As == AMOVQ || p.As == AMOVL) && p.From.Type == obj.TYPE_MEM && p.From.Reg == REG_TLS && p.To.Type == obj.TYPE_REG && REG_AX <= p.To.Reg && p.To.Reg <= REG_R15 {
-			q := obj.Appendp(ctxt, p)
+			q := obj_Appendp(ctxt, p)
 			q.As = p.As
 			q.From = p.From
 			q.From.Type = obj.TYPE_MEM
@@ -250,7 +250,7 @@ func progedit(ctxt *obj.Link, p *obj.Prog) {
 			f32 := float32(p.From.Val.(float64))
 			i32 := math.Float32bits(f32)
 			literal := fmt.Sprintf("$f32.%08x", i32)
-			s := obj.Linklookup(ctxt, literal, 0)
+			s := ctxt.Lookup(literal, 0)
 			p.From.Type = obj.TYPE_MEM
 			p.From.Name = obj.NAME_EXTERN
 			p.From.Sym = s
@@ -289,7 +289,7 @@ func progedit(ctxt *obj.Link, p *obj.Prog) {
 		if p.From.Type == obj.TYPE_FCONST {
 			i64 := math.Float64bits(p.From.Val.(float64))
 			literal := fmt.Sprintf("$f64.%016x", i64)
-			s := obj.Linklookup(ctxt, literal, 0)
+			s := ctxt.Lookup(literal, 0)
 			p.From.Type = obj.TYPE_MEM
 			p.From.Name = obj.NAME_EXTERN
 			p.From.Sym = s
@@ -301,9 +301,9 @@ func progedit(ctxt *obj.Link, p *obj.Prog) {
 	if ctxt.Flag_dynlink && (p.As == obj.ADUFFCOPY || p.As == obj.ADUFFZERO) {
 		var sym *obj.LSym
 		if p.As == obj.ADUFFZERO {
-			sym = obj.Linklookup(ctxt, "runtime.duffzero", 0)
+			sym = ctxt.Lookup("runtime.duffzero", 0)
 		} else {
-			sym = obj.Linklookup(ctxt, "runtime.duffcopy", 0)
+			sym = ctxt.Lookup("runtime.duffcopy", 0)
 		}
 		offset := p.To.Offset
 		p.As = AMOVQ
@@ -314,13 +314,13 @@ func progedit(ctxt *obj.Link, p *obj.Prog) {
 		p.To.Reg = REG_R15
 		p.To.Offset = 0
 		p.To.Sym = nil
-		p1 := obj.Appendp(ctxt, p)
+		p1 := obj_Appendp(ctxt, p)
 		p1.As = AADDQ
 		p1.From.Type = obj.TYPE_CONST
 		p1.From.Offset = offset
 		p1.To.Type = obj.TYPE_REG
 		p1.To.Reg = REG_R15
-		p2 := obj.Appendp(ctxt, p1)
+		p2 := obj_Appendp(ctxt, p1)
 		p2.As = obj.ACALL
 		p2.To.Type = obj.TYPE_REG
 		p2.To.Reg = REG_R15
@@ -341,7 +341,7 @@ func progedit(ctxt *obj.Link, p *obj.Prog) {
 			p.From.Type = obj.TYPE_MEM
 			p.From.Name = obj.NAME_GOTREF
 			if p.From.Offset != 0 {
-				q := obj.Appendp(ctxt, p)
+				q := obj_Appendp(ctxt, p)
 				q.As = AADDQ
 				q.From.Type = obj.TYPE_CONST
 				q.From.Offset = p.From.Offset
@@ -369,8 +369,8 @@ func progedit(ctxt *obj.Link, p *obj.Prog) {
 		if source.Type != obj.TYPE_MEM {
 			ctxt.Diag("don't know how to handle %v with -dynlink", p)
 		}
-		p1 := obj.Appendp(ctxt, p)
-		p2 := obj.Appendp(ctxt, p1)
+		p1 := obj_Appendp(ctxt, p)
+		p2 := obj_Appendp(ctxt, p1)
 
 		p1.As = AMOVQ
 		p1.From.Type = obj.TYPE_MEM
@@ -436,7 +436,7 @@ func nacladdr(ctxt *obj.Link, p *obj.Prog, a *obj.Addr) {
 
 func preprocess(ctxt *obj.Link, cursym *obj.LSym) {
 	if ctxt.Tlsg == nil {
-		ctxt.Tlsg = obj.Linklookup(ctxt, "runtime.tlsg", 0)
+		ctxt.Tlsg = ctxt.Lookup("runtime.tlsg", 0)
 	}
 
 	ctxt.Cursym = cursym
@@ -477,7 +477,7 @@ func preprocess(ctxt *obj.Link, cursym *obj.LSym) {
 		if autoffset%int32(ctxt.Arch.Regsize) != 0 {
 			ctxt.Diag("unaligned stack size %d", autoffset)
 		}
-		p = obj.Appendp(ctxt, p)
+		p = obj_Appendp(ctxt, p)
 		p.As = AADJSP
 		p.From.Type = obj.TYPE_CONST
 		p.From.Offset = int64(autoffset)
@@ -486,11 +486,11 @@ func preprocess(ctxt *obj.Link, cursym *obj.LSym) {
 		// zero-byte stack adjustment.
 		// Insert a fake non-zero adjustment so that stkcheck can
 		// recognize the end of the stack-splitting prolog.
-		p = obj.Appendp(ctxt, p)
+		p = obj_Appendp(ctxt, p)
 
 		p.As = obj.ANOP
 		p.Spadj = int32(-ctxt.Arch.Ptrsize)
-		p = obj.Appendp(ctxt, p)
+		p = obj_Appendp(ctxt, p)
 		p.As = obj.ANOP
 		p.Spadj = int32(ctxt.Arch.Ptrsize)
 	}
@@ -499,7 +499,7 @@ func preprocess(ctxt *obj.Link, cursym *obj.LSym) {
 
 	if bpsize > 0 {
 		// Save caller's BP
-		p = obj.Appendp(ctxt, p)
+		p = obj_Appendp(ctxt, p)
 
 		p.As = AMOVQ
 		p.From.Type = obj.TYPE_REG
@@ -510,7 +510,7 @@ func preprocess(ctxt *obj.Link, cursym *obj.LSym) {
 		p.To.Offset = int64(autoffset) - int64(bpsize)
 
 		// Move current frame to BP
-		p = obj.Appendp(ctxt, p)
+		p = obj_Appendp(ctxt, p)
 
 		p.As = ALEAQ
 		p.From.Type = obj.TYPE_MEM
@@ -602,14 +602,14 @@ func preprocess(ctxt *obj.Link, cursym *obj.LSym) {
 				p.From.Offset = int64(autoffset) - int64(bpsize)
 				p.To.Type = obj.TYPE_REG
 				p.To.Reg = REG_BP
-				p = obj.Appendp(ctxt, p)
+				p = obj_Appendp(ctxt, p)
 			}
 
 			p.As = AADJSP
 			p.From.Type = obj.TYPE_CONST
 			p.From.Offset = int64(-autoffset)
 			p.Spadj = -autoffset
-			p = obj.Appendp(ctxt, p)
+			p = obj_Appendp(ctxt, p)
 			p.As = obj.ARET
 
 			// If there are instructions following
@@ -853,11 +853,11 @@ loop:
 		 * recurse to follow one path.
 		 * continue loop on the other.
 		 */
-		q = obj.Brchain(ctxt, p.Pcond)
+		q = obj_Brchain(ctxt, p.Pcond)
 		if q != nil {
 			p.Pcond = q
 		}
-		q = obj.Brchain(ctxt, p.Link)
+		q = obj_Brchain(ctxt, p.Link)
 		if q != nil {
 			p.Link = q
 		}
