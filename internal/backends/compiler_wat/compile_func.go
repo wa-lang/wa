@@ -516,7 +516,7 @@ func (g *functionGenerator) genValue(v ssa.Value) ([]wat.Inst, wir.ValueType) {
 		return g.genExtract(v)
 
 	case *ssa.Field:
-		return g.genFiled(v)
+		return g.genField(v)
 
 	case *ssa.FieldAddr:
 		return g.genFieldAddr(v)
@@ -1049,7 +1049,7 @@ func (g *functionGenerator) genExtract(inst *ssa.Extract) ([]wat.Inst, wir.Value
 	return g.module.EmitGenExtract(v.value, inst.Index)
 }
 
-func (g *functionGenerator) genFiled(inst *ssa.Field) ([]wat.Inst, wir.ValueType) {
+func (g *functionGenerator) genField(inst *ssa.Field) ([]wat.Inst, wir.ValueType) {
 	x := g.getValue(inst.X)
 	return g.module.EmitGenField(x.value, inst.Field)
 }

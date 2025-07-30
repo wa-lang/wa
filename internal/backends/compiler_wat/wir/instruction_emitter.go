@@ -423,7 +423,11 @@ func (m *Module) EmitGenField(x Value, field_id int) (insts []wat.Inst, ret_type
 	switch x := x.(type) {
 	case *aStruct:
 		field := x.ExtractByID(field_id)
-		insts = append(insts, field.EmitPush()...)
+		if m.RcDisable {
+			insts = append(insts, field.EmitPushNoRetain()...)
+		} else {
+			insts = append(insts, field.EmitPush()...)
+		}
 		ret_type = field.Type()
 
 	default:
