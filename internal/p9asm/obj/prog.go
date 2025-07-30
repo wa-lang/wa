@@ -3,15 +3,18 @@
 
 package obj
 
-// TODO(chai2010): Describe prog.
-// TODO(chai2010): Describe TEXT/GLOBL flag in from3, DATA width in from3.
+import (
+	"bytes"
+	"fmt"
+)
+
+// Prog 对应一条汇编指令
 type Prog struct {
 	Ctxt   *Link
 	Link   *Prog
 	From   Addr
 	From3  *Addr // optional
 	To     Addr
-	Opt    interface{}
 	Forwd  *Prog
 	Pcond  *Prog
 	Rel    *Prog // Source of forward jumps on x86; pcrel on arm
@@ -29,8 +32,7 @@ type Prog struct {
 	Tt     uint8
 	Isize  uint8
 	Mode   int8
-
-	Info ProgInfo
+	Info   ProgInfo
 }
 
 // ProgInfo holds information about the instruction for use
@@ -41,6 +43,12 @@ type ProgInfo struct {
 	Reguse   uint64 // registers implicitly used by this instruction
 	Regset   uint64 // registers implicitly set by this instruction
 	Regindex uint64 // registers used by addressing mode
+}
+
+func NewProg(ctxt *Link) *Prog {
+	p := new(Prog)
+	p.Ctxt = ctxt
+	return p
 }
 
 // From3Type returns From3.Type, or TYPE_NONE when From3 is nil.
@@ -57,6 +65,49 @@ func (p *Prog) From3Offset() int64 {
 		return 0
 	}
 	return p.From3.Offset
+}
+
+func (p *Prog) String() string {
+	if p.Ctxt == nil {
+		return "<Prog without ctxt>"
+	}
+
+	sc := CConv(p.Scond)
+
+	var buf bytes.Buffer
+
+	fmt.Fprintf(&buf, "%.5d (%v)\t%v%s",
+		p.Pc,
+		p.Ctxt.LineHist.LineString(int(p.Lineno)),
+		p.As,
+		sc,
+	)
+	sep := "\t"
+	if p.From.Type != TYPE_NONE {
+		fmt.Fprintf(&buf, "%s%v", sep, p.From.Dconv(p))
+		sep = ", "
+	}
+	if p.Reg != REG_NONE {
+		// Should not happen but might as well show it if it does.
+		fmt.Fprintf(&buf, "%s%v", sep, p.Reg)
+		sep = ", "
+	}
+	if p.From3Type() != TYPE_NONE {
+		if p.From3.Type == TYPE_CONST && (p.As == ADATA || p.As == ATEXT || p.As == AGLOBL) {
+			// Special case - omit $.
+			fmt.Fprintf(&buf, "%s%d", sep, p.From3.Offset)
+		} else {
+			fmt.Fprintf(&buf, "%s%v", sep, p.From3.Dconv(p))
+		}
+		sep = ", "
+	}
+	if p.To.Type != TYPE_NONE {
+		fmt.Fprintf(&buf, "%s%v", sep, p.To.Dconv(p))
+	}
+	if p.RegTo2 != REG_NONE {
+		fmt.Fprintf(&buf, "%s%v", sep, p.RegTo2)
+	}
+	return buf.String()
 }
 
 func (p *Prog) brloop() *Prog {

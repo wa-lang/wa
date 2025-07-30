@@ -27,7 +27,7 @@ func obj_Symgrow(s *obj.LSym, lsiz int64) {
 }
 
 func obj_Appendp(ctxt *obj.Link, q *obj.Prog) *obj.Prog {
-	p := ctxt.NewProg()
+	p := obj.NewProg(ctxt)
 	p.Link = q.Link
 	q.Link = p
 	p.Lineno = q.Lineno

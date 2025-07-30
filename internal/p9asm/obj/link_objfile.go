@@ -278,7 +278,7 @@ func (ctxt *Link) Writeobjdirect(b io.Writer) error {
 		}
 
 		if found == 0 {
-			p := ctxt.NewProg()
+			p := NewProg(ctxt)
 			p.Link, s.Text.Link = s.Text.Link, p
 			p.Lineno = s.Text.Lineno
 			p.Mode = s.Text.Mode

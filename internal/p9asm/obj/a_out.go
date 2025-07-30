@@ -249,9 +249,6 @@ func CConv(s uint8) string {
 	return sc
 }
 
-// For the linkers. Must match Wa definitions.
-// TODO(chai2010): Share Wa definitions with linkers directly.
-
 const (
 	StackBig   = 4096 // 大帧判断阈值
 	StackSmall = 128  // 最小预留空间

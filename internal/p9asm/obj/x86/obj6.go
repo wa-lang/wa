@@ -662,7 +662,7 @@ func load_g_cx(ctxt *obj.Link, p *obj.Prog) *obj.Prog {
 func follow(ctxt *obj.Link, s *obj.LSym) {
 	ctxt.Cursym = s
 
-	firstp := ctxt.NewProg()
+	firstp := obj.NewProg(ctxt)
 	lastp := firstp
 	xfol(ctxt, s.Text, &lastp)
 	lastp.Link = nil
@@ -803,7 +803,7 @@ loop:
 					continue
 				}
 
-				q = ctxt.NewProg()
+				q = obj.NewProg(ctxt)
 				*q = *p
 
 				p = p.Link
@@ -824,10 +824,9 @@ loop:
 					return
 				}
 				goto loop
-				/* */
 			}
 		}
-		q = ctxt.NewProg()
+		q = obj.NewProg(ctxt)
 		q.As = obj.AJMP
 		q.Lineno = p.Lineno
 		q.To.Type = obj.TYPE_BRANCH
