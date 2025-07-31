@@ -151,7 +151,6 @@ func (ctxt *Link) Writeobjdirect(b io.Writer) error {
 				a.Asym = p.From.Sym
 				a.Aoffset = int32(p.From.Offset)
 				a.Name = p.From.Name
-				a.Watype = p.From.Watype
 				a.Link = curtext.Autom
 				curtext.Autom = a
 				continue

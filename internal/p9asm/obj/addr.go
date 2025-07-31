@@ -9,120 +9,95 @@ import (
 	"strings"
 )
 
-// An Addr is an argument to an instruction.
-// The general forms and their encodings are:
+// Addr 对应汇编指令的一个参数. 有以下几种寻址形式:
 //
-//	sym±offset(symkind)(reg)(index*scale)
-//		Memory reference at address &sym(symkind) + offset + reg + index*scale.
-//		Any of sym(symkind), ±offset, (reg), (index*scale), and *scale can be omitted.
-//		If (reg) and *scale are both omitted, the resulting expression (index) is parsed as (reg).
-//		To force a parsing as index*scale, write (index*1).
-//		Encoding:
-//			type = TYPE_MEM
-//			name = symkind (NAME_AUTO, ...) or 0 (NAME_NONE)
-//			sym = sym
-//			offset = ±offset
-//			reg = reg (REG_*)
-//			index = index (REG_*)
-//			scale = scale (1, 2, 4, 8)
+// - `sym±offset(symkind)(reg)(index*scale)`
 //
-//	$<mem>
-//		Effective address of memory reference <mem>, defined above.
-//		Encoding: same as memory reference, but type = TYPE_ADDR.
+// 对应的内存地址为: `&sym(symkind) + offset + reg + index*scale`.
+// 任何一个 `sym(symkind)`, `±offset`, `(reg)`, `(index*scale)` 和 `*scale` 都是可省略的.
+// 如果 `(reg)` 和 `*scale` 都被省略, 那么解析得到的 `(index)` 将被视为 `(reg)`.
+// 这就要求 `(index)` 必须写成 `(index*1)` 的形式, 避免被误认为是 `(reg)`.
 //
-//	$<±integer value>
-//		This is a special case of $<mem>, in which only ±offset is present.
-//		It has a separate type for easy recognition.
-//		Encoding:
-//			type = TYPE_CONST
-//			offset = ±integer value
+// 对应: `Addr{Type:TYPE_MEM; sym:sym; Offset:ofset; Reg:REG_*; index:REG_*; Scale: (1, 2, 4, 8) }`
 //
-//	*<mem>
-//		Indirect reference through memory reference <mem>, defined above.
-//		Only used on x86 for CALL/JMP *sym(SB), which calls/jumps to a function
-//		pointer stored in the data word sym(SB), not a function named sym(SB).
-//		Encoding: same as above, but type = TYPE_INDIR.
+// - `$<mem>`
 //
-//	$*$<mem>
-//		No longer used.
-//		On machines with actual SB registers, $*$<mem> forced the
-//		instruction encoding to use a full 32-bit constant, never a
-//		reference relative to SB.
+// `<mem>`对应内存的地址. 对应: `Addr{Type:TYPE_ADDR}`, 其他和`TYPE_MEM`相似.
 //
-//	$<floating point literal>
-//		Floating point constant value.
-//		Encoding:
-//			type = TYPE_FCONST
-//			val = floating point value
+// - `$<±integer_value>`
 //
-//	$<string literal, up to 8 chars>
-//		String literal value (raw bytes used for DATA instruction).
-//		Encoding:
-//			type = TYPE_SCONST
-//			val = string
+// 这是`$<mem>`形式的特殊情况, 只是其中只有 `±offset` 部分.
+// 对应 `Addr{Type:TYPE_CONST; Offset:±integer_value}`
 //
-//	<register name>
-//		Any register: integer, floating point, control, segment, and so on.
-//		If looking for specific register kind, must check type and reg value range.
-//		Encoding:
-//			type = TYPE_REG
-//			reg = reg (REG_*)
+// - `*<mem>`
 //
-//	x(PC)
-//		Encoding:
-//			type = TYPE_BRANCH
-//			val = Prog* reference OR ELSE offset = target pc (branch takes priority)
+// 间接内存寻址. 仅在 X86 平台用于 `CALL/JMP *sym(SB)` 指令, `sym(SB)` 对应的内存是指针数据.
+// 表示形式同上, 但是对应 `TYPE_INDIR` 类型.
 //
-//	$±x-±y
-//		Final argument to TEXT, specifying local frame size x and argument size y.
-//		In this form, x and y are integer literals only, not arbitrary expressions.
-//		This avoids parsing ambiguities due to the use of - as a separator.
-//		The ± are optional.
-//		If the final argument to TEXT omits the -±y, the encoding should still
-//		use TYPE_TEXTSIZE (not TYPE_CONST), with u.argsize = ArgsSizeUnknown.
-//		Encoding:
-//			type = TYPE_TEXTSIZE
-//			offset = x
-//			val = int32(y)
+// - `$<floating_point_literal>`
 //
-//	reg<<shift, reg>>shift, reg->shift, reg@>shift
-//		Shifted register value, for ARM.
-//		In this form, reg must be a register and shift can be a register or an integer constant.
-//		Encoding:
-//			type = TYPE_SHIFT
-//			offset = (reg&15) | shifttype<<5 | count
-//			shifttype = 0, 1, 2, 3 for <<, >>, ->, @>
-//			count = (reg&15)<<8 | 1<<4 for a register shift count, (n&31)<<7 for an integer constant.
+// 浮点数常量. 表示形式 `Addr{Type:TYPE_FCONST: Val:floating_point_literal}`
 //
-//	(reg, reg)
-//		A destination register pair. When used as the last argument of an instruction,
-//		this form makes clear that both registers are destinations.
-//		Encoding:
-//			type = TYPE_REGREG
-//			reg = first register
-//			offset = second register
+// - `$<string_literal>`, 最多8个字符
 //
-//	[reg, reg, reg-reg]
-//		Register list for ARM.
-//		Encoding:
-//			type = TYPE_REGLIST
-//			offset = bit mask of registers in list; R0 is low bit.
+// 字符串面值, 用于 `DATA` 指令的原始数据.
+// 表示形式 `Addr{Type:TYPE_SCONST; Val:string}`
 //
-//	reg, reg
-//		Register pair for ARM.
-//		TYPE_REGREG2
+// - `<register name>`
+//
+// 可以是任何的寄存器名字, 比如 整数/浮点/控制/段等寄存器类型.
+// 如果要查找特殊种类的寄存器, 必须检查类型和寄存器的范围(比如有些是浮点数寄存器, 且有数量限制).
+// 表示形式 `Addr{Type:TYPE_REG; Reg:REG_*}`
+//
+// - `x(PC)`
+//
+// 对应跳转指令的地址.
+// 表示形式 `Addr{Type:TYPE_BRANCH; Val: Prog* reference OR ELSE offset = target pc (branch takes priority) }`
+//
+// - `$±x-±y`
+//
+// `TEXT` 伪指令最后的参数(TODO:第二个已经废弃), 用于表示函数帧的大小为`x`, 参数的大小为`y`.
+// 在这里形式中 `x` 和 `y` 都是整数, 主要是为了避免中间的 `-` 对解析产生的干扰.
+// 而 `±` 部分是可省的.
+//
+// 如果 `TEXT` 指令省略了第2个参数 `-±y` 部分, 类型依然是 `TYPE_TEXTSIZE`,
+// 但是参数大小用 `ArgsSizeUnknown` 表示.
+//
+// 表示形式 `Addr{Type:TYPE_TEXTSIZE; Offset:x; Val:int32(y)}`
+//
+// - `reg<<shift, reg>>shift, reg->shift, reg@>shift`
+//
+// ARM平台的移位寄存器. 这种形式中, reg 部分必须是寄存器, shift 部分可以是寄存器或整数常量.
+//
+// 表示形式:
+//
+//	type = TYPE_SHIFT
+//	offset = (reg&15) | shifttype<<5 | count
+//	shifttype = 0, 1, 2, 3 for <<, >>, ->, @>
+//	count = (reg&15)<<8 | 1<<4 for a register shift count, (n&31)<<7 for an integer constant.
+//
+// - `(reg1, reg2)`
+//
+// 目标寄存器对. 当用作指令的最后一个参数时, 这种形式明确表示两个寄存器都是目标寄存器.
+// 表示形式 `Addr{Type:TYPE_REGREG; Reg:reg1; Offset:reg2}`
+//
+// - `[reg, reg, reg-reg]`
+//
+// ARM 平台的寄存器列表.
+// 表示形式 `Addr{Type: TYPE_REGLIST; Offset: bit mask of registers in list; R0 is low bit.}`
+//
+// - `reg, reg`
+//
+// ARM 的寄存器对. 对应 `Addr{Type:TYPE_REGREG2}`
 type Addr struct {
-	Type   AddrType
+	Type AddrType
+	Name AddrName
+	Sym  *LSym
+
+	Offset int64
 	Reg    RBaseType
 	Index  int16
 	Scale  int16 // Sometimes holds a register.
-	Name   AddrName
-	Class  int8
-	Etype  uint8
-	Offset int64
-	Width  int64
-	Sym    *LSym
-	Watype *LSym
 
 	// argument value:
 	//	for TYPE_SCONST, a string
@@ -130,8 +105,6 @@ type Addr struct {
 	//	for TYPE_BRANCH, a *Prog (optional)
 	//	for TYPE_TEXTSIZE, an int32 (optional)
 	Val interface{}
-
-	Node interface{} // for use by compiler
 }
 
 // 符号(LSym)名字类别定义
