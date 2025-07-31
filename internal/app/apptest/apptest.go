@@ -87,9 +87,6 @@ func runTest(cfg *config.Config, pkgpath, runPattern string, appArgs ...string) 
 		os.Exit(1)
 	}
 
-	// wat 落盘(仅用于调试)
-	os.WriteFile("a.out.wat", []byte(watOutput), 0666)
-
 	fsetBytes := prog.Fset.ToJson()
 
 	// 编译为 wasm
@@ -316,11 +313,11 @@ func runTest(cfg *config.Config, pkgpath, runPattern string, appArgs ...string) 
 		}
 	}
 	if firstError != nil {
-		fmt.Printf("FAIL %s %v\n", prog.Manifest.MainPkg, time.Now().Sub(startTime).Round(time.Millisecond))
+		fmt.Printf("FAIL %s %v\n", prog.Manifest.MainPkg, time.Since(startTime).Round(time.Millisecond))
 		os.Exit(1)
 	}
 
-	fmt.Printf("ok   %s %v\n", prog.Manifest.MainPkg, time.Now().Sub(startTime).Round(time.Millisecond))
+	fmt.Printf("ok   %s %v\n", prog.Manifest.MainPkg, time.Since(startTime).Round(time.Millisecond))
 
 	return
 }

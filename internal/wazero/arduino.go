@@ -17,7 +17,7 @@ func ArduinoInstantiate(ctx context.Context, rt wazero.Runtime) (api.Closer, err
 	return rt.NewHostModuleBuilder(config.WaOS_arduino).
 		NewFunctionBuilder().
 		WithFunc(func(ctx context.Context, m api.Module) int32 {
-			t := time.Now().Sub(startTime).Milliseconds()
+			t := time.Since(startTime).Milliseconds()
 			fmt.Printf("arduino.millis(): %v\n", t)
 			return int32(t)
 		}).

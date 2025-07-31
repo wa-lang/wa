@@ -1,0 +1,62 @@
+// Copyright (C) 2025 武汉凹语言科技有限公司
+// SPDX-License-Identifier: AGPL-3.0-or-later
+
+// 1, 1, 2, 3, 5, ...
+func Fibonacci(i: int) => int {
+	if i < 0 {
+		return 0
+	}
+	if i >= 2 {
+		return Fibonacci(i-1) + Fibonacci(i-2)
+	}
+	return 1
+}
+
+func Example {
+	for i := range 10 {
+		println(Fibonacci(i))
+	}
+
+	// Output:
+	// 1
+	// 1
+	// 2
+	// 3
+	// 5
+	// 8
+	// 13
+	// 21
+	// 34
+	// 55
+}
+
+func ExampleFibonacci_invalid {
+	println(Fibonacci(-1))
+
+	// Output:
+	// 0
+}
+
+func TestFibonacci {
+	// assert(Fibonacci(-1) == 1, "expect 0")
+
+	assert(Fibonacci(0) == 1)
+	assert(Fibonacci(1) == 1)
+	assert(Fibonacci(2) == 2)
+	assert(Fibonacci(3) == 3)
+	assert(Fibonacci(4) == 5)
+}
+
+func FibonacciV2(i: int) => int {
+	if i < 0 {
+		panic("invalid")
+	}
+	return Fibonacci(i)
+}
+
+func ExampleFibonacci {
+	FibonacciV2(-1)
+
+	// Output(panic):
+	// invalid
+}

@@ -1,0 +1,27 @@
+// Copyright (C) 2025 武汉凹语言科技有限公司
+// SPDX-License-Identifier: AGPL-3.0-or-later
+
+func main {
+	for i := range 10 {
+		println(Fibonacci(i))
+	}
+
+	// Output:
+	// 1
+	// 1
+	// 2
+	// 3
+	// 8
+	// 13
+	// 21
+	// 34
+	// 55
+}
+
+// 1, 1, 2, 3, 5, ...
+func Fibonacci(i: int) => int {
+	if i >= 2 {
+		return Fibonacci(i-1) + Fibonacci(i-2)
+	}
+	return 1
+}
