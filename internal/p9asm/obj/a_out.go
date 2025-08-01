@@ -209,6 +209,7 @@ const (
 )
 
 // ARM条件指令
+// 比如 ADD 指令通过添加 .NE 后缀变成条件支持 ADD.NE
 var armCondCode = []string{
 	".EQ",
 	".NE",

@@ -41,7 +41,7 @@ const (
 	NREG   = 16
 )
 
-/* -1 disables use of REGARG */
+// -1 disables use of REGARG
 const (
 	REGARG = -1
 )
@@ -60,10 +60,11 @@ const (
 	REG_R10
 	REG_R11
 	REG_R12
-	REG_R13
-	REG_R14
-	REG_R15
+	REG_R13 // SP 寄存器
+	REG_R14 // LINK 寄存器
+	REG_R15 // PC 寄存器
 
+	// 浮点数寄存器
 	REG_F0 // must be 16-aligned
 	REG_F1
 	REG_F2
@@ -81,33 +82,36 @@ const (
 	REG_F14
 	REG_F15
 
+	// 浮点数状态?
 	REG_FPSR // must be 2-aligned
 	REG_FPCR
 
-	REG_CPSR // must be 2-aligned
-	REG_SPSR
+	REG_CPSR // 当前状态寄存器, must be 2-aligned
+	REG_SPSR // 异常时保存当前状态寄存器
 
-	REGRET = REG_R0
-	/* compiler allocates R1 up as temps */
-	/* compiler allocates register variables R3 up */
-	/* compiler allocates external registers R10 down */
+	REGRET = REG_R0 // 入参/返回值
+
+	// compiler allocates R1 up as temps
+	// compiler allocates register variables R3 up
+	// compiler allocates external registers R10 down
 	REGEXT = REG_R10
-	/* these two registers are declared in runtime.h */
-	REGG = REGEXT - 0
-	REGM = REGEXT - 1
+	// these two registers are declared in runtime.h
+	REGG = REGEXT - 0 // TODO(chai2010): 删除
+	REGM = REGEXT - 1 // TODO(chai2010): 删除
 
-	REGCTXT = REG_R7
-	REGTMP  = REG_R11
-	REGSP   = REG_R13
-	REGLINK = REG_R14
-	REGPC   = REG_R15
+	REGCTXT = REG_R7  // 闭包上下文?
+	REGTMP  = REG_R11 // 临时数据?
+	REGSP   = REG_R13 // SP 寄存器
+	REGLINK = REG_R14 // LINK 寄存器
+	REGPC   = REG_R15 // PC 寄存器
 
-	NFREG = 16
-	/* compiler allocates register variables F0 up */
-	/* compiler allocates external registers F7 down */
-	FREGRET = REG_F0
+	NFREG = 16 // 浮点数寄存器的个数
+
+	// compiler allocates register variables F0 up
+	// compiler allocates external registers F7 down
+	FREGRET = REG_F0 // 入参/返回值
 	FREGEXT = REG_F7
-	FREGTMP = REG_F15
+	FREGTMP = REG_F15 // 临时数据?
 )
 
 // http://infocenter.arm.com/help/topic/com.arm.doc.ihi0040b/IHI0040B_aadwarf.pdf
@@ -146,34 +150,34 @@ const (
 	C_REGREG
 	C_REGREG2
 	C_REGLIST
-	C_SHIFT     /* register shift R>>x */
-	C_SHIFTADDR /* memory address with shifted offset R>>x(R) */
+	C_SHIFT     // register shift R>>x
+	C_SHIFTADDR // memory address with shifted offset R>>x(R)
 	C_FREG
 	C_PSR
 	C_FCR
-	C_SPR /* REG_MB_SY */
+	C_SPR // REG_MB_SY
 
-	C_RCON   /* 0xff rotated */
-	C_NCON   /* ~RCON */
-	C_RCON2A /* OR of two disjoint C_RCON constants */
-	C_RCON2S /* subtraction of two disjoint C_RCON constants */
-	C_SCON   /* 0xffff */
+	C_RCON   // 0xff rotated
+	C_NCON   // ~RCON
+	C_RCON2A // OR of two disjoint C_RCON constants
+	C_RCON2S // subtraction of two disjoint C_RCON constants
+	C_SCON   // 0xffff
 	C_LCON
 	C_LCONADDR
 	C_ZFCON
 	C_SFCON
 	C_LFCON
 
-	C_RACON /* <=0xff rotated constant offset from auto */
-	C_LACON /* Large Auto CONstant, i.e. large offset from SP */
+	C_RACON // <=0xff rotated constant offset from auto
+	C_LACON // Large Auto CONstant, i.e. large offset from SP
 
 	C_SBRA
 	C_LBRA
 
-	C_HAUTO  /* halfword insn offset (-0xff to 0xff) */
-	C_FAUTO  /* float insn offset (0 to 0x3fc, word aligned) */
-	C_HFAUTO /* both H and F */
-	C_SAUTO  /* -0xfff to 0xfff */
+	C_HAUTO  // halfword insn offset (-0xff to 0xff)
+	C_FAUTO  // float insn offset (0 to 0x3fc, word aligned)
+	C_HFAUTO // both H and F
+	C_SAUTO  // -0xfff to 0xfff
 	C_LAUTO
 
 	C_HOREG
@@ -181,14 +185,14 @@ const (
 	C_HFOREG
 	C_SOREG
 	C_ROREG
-	C_SROREG /* both nil and R */
+	C_SROREG // both nil and R
 	C_LOREG
 
 	C_PC
 	C_SP
 	C_HREG
 
-	C_ADDR /* reference to relocatable address */
+	C_ADDR // reference to relocatable address
 
 	// TLS "var" in local exec mode: will become a constant offset from
 	// thread local base that is ultimately chosen by the program linker.
@@ -203,7 +207,7 @@ const (
 
 	C_GOK
 
-	C_NCLASS /* must be the last */
+	C_NCLASS // must be the last
 )
 
 const (
@@ -224,10 +228,9 @@ const (
 
 	AMVN
 
-	/*
-	 * Do not reorder or fragment the conditional branch
-	 * opcodes, or the predication code will break
-	 */
+	// Do not reorder or fragment the conditional branch
+	// opcodes, or the predication code will break
+
 	ABEQ
 	ABNE
 	ABCS
@@ -331,12 +334,12 @@ const (
 	ABXRET
 	ADWORD
 
-	ALDREX
-	ASTREX
-	ALDREXD
-	ALDREXB
-	ASTREXD
-	ASTREXB
+	ALDREX  // Load i32
+	ASTREX  // Store i32
+	ALDREXD // Load i64
+	ALDREXB // Load i8
+	ASTREXD // Store i64
+	ASTREXB // Store i8
 
 	ADMB
 
@@ -374,14 +377,14 @@ const (
 	ABL = obj.ACALL
 )
 
-/* scond byte */
+// scond byte
 const (
 	C_SCOND = (1 << 4) - 1
 	C_SBIT  = 1 << 4
 	C_PBIT  = 1 << 5
 	C_WBIT  = 1 << 6
-	C_FBIT  = 1 << 7 /* psr flags-only */
-	C_UBIT  = 1 << 7 /* up bit, unsigned bit */
+	C_FBIT  = 1 << 7 // psr flags-only
+	C_UBIT  = 1 << 7 // up bit, unsigned bit
 
 	// These constants are the ARM condition codes encodings,
 	// XORed with 14 so that C_SCOND_NONE has value 0,
@@ -405,7 +408,7 @@ const (
 	C_SCOND_NONE = 14 ^ C_SCOND_XOR
 	C_SCOND_NV   = 15 ^ C_SCOND_XOR
 
-	/* D_SHIFT type */
+	// D_SHIFT type
 	SHIFT_LL = 0 << 5
 	SHIFT_LR = 1 << 5
 	SHIFT_AR = 2 << 5

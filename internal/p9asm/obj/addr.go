@@ -6,6 +6,7 @@ package obj
 import (
 	"errors"
 	"fmt"
+	"strconv"
 	"strings"
 )
 
@@ -17,6 +18,7 @@ import (
 // 任何一个 `sym(symkind)`, `±offset`, `(reg)`, `(index*scale)` 和 `*scale` 都是可省略的.
 // 如果 `(reg)` 和 `*scale` 都被省略, 那么解析得到的 `(index)` 将被视为 `(reg)`.
 // 这就要求 `(index)` 必须写成 `(index*1)` 的形式, 避免被误认为是 `(reg)`.
+// `sym` 前缀类似这个地址的名字, 用于注释或调试信息, 并不参与真正的地址计算.
 //
 // 对应: `Addr{Type:TYPE_MEM; sym:sym; Offset:ofset; Reg:REG_*; index:REG_*; Scale: (1, 2, 4, 8) }`
 //
@@ -65,7 +67,7 @@ import (
 //
 // 表示形式 `Addr{Type:TYPE_TEXTSIZE; Offset:x; Val:int32(y)}`
 //
-// - `reg<<shift, reg>>shift, reg->shift, reg@>shift`
+// - `reg<<shift` 逻辑左移, `reg>>shift` 逻辑右移, `reg->shift` 数学右移, `reg@>shift` 循环右移
 //
 // ARM平台的移位寄存器. 这种形式中, reg 部分必须是寄存器, shift 部分可以是寄存器或整数常量.
 //
@@ -143,6 +145,41 @@ const (
 	TYPE_INDIR                    // 间接寻址, 如 *(R1) 或 [R1]. 可与 TYPE_MEM 组合使用?
 	TYPE_REGLIST                  // 寄存器列表, 常用于 PUSH {R1-R4} 或 POP 操作, 在 ARM 架构中常见
 )
+
+func (dt AddrType) String() string {
+	switch dt {
+	default:
+		return fmt.Sprintf("AddrType(%d)", int(dt))
+	case TYPE_NONE:
+		return "TYPE_NONE"
+	case TYPE_BRANCH:
+		return "TYPE_BRANCH"
+	case TYPE_TEXTSIZE:
+		return "TYPE_TEXTSIZE"
+	case TYPE_MEM:
+		return "TYPE_MEM"
+	case TYPE_CONST:
+		return "TYPE_CONST"
+	case TYPE_FCONST:
+		return "TYPE_FCONST"
+	case TYPE_SCONST:
+		return "TYPE_SCONST"
+	case TYPE_REG:
+		return "TYPE_REG"
+	case TYPE_ADDR:
+		return "TYPE_ADDR"
+	case TYPE_SHIFT:
+		return "TYPE_SHIFT"
+	case TYPE_REGREG:
+		return "TYPE_REGREG"
+	case TYPE_REGREG2:
+		return "TYPE_REGREG2"
+	case TYPE_INDIR:
+		return "TYPE_INDIR"
+	case TYPE_REGLIST:
+		return "TYPE_REGLIST"
+	}
+}
 
 // 根据地址的类型生成不同格式的字符串
 // 通常用于生成完整的操作数字符串, 可能包含寄存器/符号/偏移量等复合信息
@@ -224,6 +261,7 @@ func (a *Addr) Dconv(p *Prog) string {
 
 	case TYPE_SHIFT:
 		v := int(a.Offset)
+		// `<<`, `>>`, `->`, `@>`
 		op := string("<<>>->@>"[((v>>5)&3)<<1:])
 		if v&(1<<4) != 0 {
 			str = fmt.Sprintf("R%d%c%cR%d", v&15, op[0], op[1], (v>>8)&15)
@@ -241,7 +279,29 @@ func (a *Addr) Dconv(p *Prog) string {
 		str = fmt.Sprintf("%v, %v", a.Reg, RBaseType(a.Offset))
 
 	case TYPE_REGLIST:
-		str = a.regListConv(int(a.Offset))
+		// 通常出现在ARM, 最多有16个寄存器列表
+		var sb strings.Builder
+		for i := 0; i < 16; i++ {
+			if a.Offset&(1<<uint(i)) != 0 {
+				if sb.Len() == 0 {
+					sb.WriteRune('[')
+				} else {
+					sb.WriteRune(',')
+				}
+				// 寄存器列表是 ARM 的用法, R10 对应 g 寄存器
+				if i == 10 {
+					sb.WriteRune('g')
+				} else {
+					sb.WriteRune('R')
+					sb.WriteString(strconv.Itoa(i))
+				}
+			}
+		}
+		if sb.Len() == 0 {
+			sb.WriteRune('[')
+		}
+		sb.WriteRune(']')
+		str = sb.String()
 	}
 
 	return str
@@ -372,34 +432,6 @@ func (a *Addr) checkaddr() error {
 	}
 
 	return fmt.Errorf("invalid encoding for argument %v", a)
-}
-
-// 有bit位组成的寄存器列表转位字符串格式
-func (*Addr) regListConv(list int) string {
-	// 通常出现在ARM, 最多有16个寄存器列表
-	var sb strings.Builder
-	for i := 0; i < 16; i++ {
-		if list&(1<<uint(i)) != 0 {
-			if sb.Len() == 0 {
-				// 需要区分是否为第一个出现的寄存器
-				sb.WriteRune('[')
-			} else {
-				sb.WriteRune(',')
-			}
-			// 寄存器列表是 ARM 的用法, R10 对应 g 寄存器
-			if i == 10 {
-				sb.WriteRune('g')
-			} else {
-				sb.WriteString(fmt.Sprintf("R%d", i))
-			}
-		}
-	}
-	// 有可能没有任何寄存器
-	if sb.Len() == 0 {
-		sb.WriteRune('[')
-	}
-	sb.WriteRune(']')
-	return sb.String()
 }
 
 // 为偏移量生成对应的汇编格式字符串
