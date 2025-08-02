@@ -8,7 +8,6 @@ type Flags struct {
 	Debug      bool   // 调试模式 dump instructions as they are parsed
 	OutputFile string // 输出文件 output file; default foo.6 for /a/b/c/foo.s on amd64
 	PrintOut   bool   // 打印汇编和机器码 print assembly and machine code
-	TrimPath   string // 删除路径前缀 remove prefix from recorded source file paths
 	Shared     bool   // 生成动态库 generate code that can be linked into a shared library
 	Dynlink    bool   // 生成可重定位的符号 support references to symbols defined in other shared libraries
 

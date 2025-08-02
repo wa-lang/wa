@@ -83,7 +83,6 @@ var CmdP9Asm = &cli.Command{
 			Debug:       c.Bool("debug"),
 			OutputFile:  c.String("o"),
 			PrintOut:    c.Bool("S"),
-			TrimPath:    c.String("trimpath"),
 			Shared:      c.Bool("shared"),
 			Dynlink:     c.Bool("dynlink"),
 			Defines:     c.StringSlice("D"),
@@ -100,7 +99,6 @@ var CmdP9Asm = &cli.Command{
 		if flags.PrintOut {
 			ctxt.Debugasm = 1
 		}
-		ctxt.LineHist.TrimPathPrefix = flags.TrimPath
 		ctxt.Flag_dynlink = flags.Dynlink
 		if flags.Shared || flags.Dynlink {
 			ctxt.Flag_shared = 1
