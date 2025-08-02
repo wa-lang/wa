@@ -197,6 +197,7 @@ func (a *Addr) Dconv(p *Prog) string {
 		}
 
 	case TYPE_REG:
+		// 寄存器
 		// TODO(chai2010): This special case is for x86 instructions like
 		//	PINSRQ	CX,$1,X6
 		// where the $1 is included in the p->to Addr.
@@ -212,6 +213,7 @@ func (a *Addr) Dconv(p *Prog) string {
 		}
 
 	case TYPE_BRANCH:
+		// 跳转的地址
 		if a.Sym != nil {
 			str = fmt.Sprintf("%s(SB)", a.Sym.Name)
 		} else if p != nil && p.Pcond != nil {
@@ -223,15 +225,18 @@ func (a *Addr) Dconv(p *Prog) string {
 		}
 
 	case TYPE_INDIR:
+		// 间接寻址
 		str = fmt.Sprintf("*%v", a.Mconv())
 
 	case TYPE_MEM:
+		// 内存地址
 		str = a.Mconv()
 		if a.Index != int16(REG_NONE) {
 			str += fmt.Sprintf("(%v*%d)", RBaseType(a.Index), int(a.Scale))
 		}
 
 	case TYPE_CONST:
+		// 常量
 		if a.Reg != 0 {
 			str = fmt.Sprintf("$%v(%v)", a.Mconv(), a.Reg)
 		} else {
@@ -239,13 +244,12 @@ func (a *Addr) Dconv(p *Prog) string {
 		}
 
 	case TYPE_TEXTSIZE:
-		if a.Val.(int32) == ArgsSizeUnknown {
-			str = fmt.Sprintf("$%d", a.Offset)
-		} else {
-			str = fmt.Sprintf("$%d-%d", a.Offset, a.Val.(int32))
-		}
+		// TEXT pkg·foo(SB),$framesize-argsize
+		// 参数的大小必须是固定的, 不再支持 printf 形式的可变参数
+		str = fmt.Sprintf("$%d-%d", a.Offset, a.Val.(int32))
 
 	case TYPE_FCONST:
+		// 浮点数常量
 		str = fmt.Sprintf("%.17g", a.Val.(float64))
 		// Make sure 1 prints as 1.0
 		if !strings.ContainsAny(str, ".e") {
@@ -254,9 +258,11 @@ func (a *Addr) Dconv(p *Prog) string {
 		str = fmt.Sprintf("$(%s)", str)
 
 	case TYPE_SCONST:
+		// 字符串常量
 		str = fmt.Sprintf("$%q", a.Val.(string))
 
 	case TYPE_ADDR:
+		// 地址是必须满足特定的格式特征, 以便于和 TYPE_SCONST 区分
 		str = fmt.Sprintf("$%v", a.Mconv())
 
 	case TYPE_SHIFT:
@@ -327,33 +333,62 @@ func (a *Addr) Mconv() string {
 		}
 
 	case NAME_EXTERN:
-		str = fmt.Sprintf("%s%s(SB)", a.Sym.Name, a.offString())
+		if a.Offset != 0 {
+			str = fmt.Sprintf("%s%+d(SB)", a.Sym.Name, a.Offset)
+		} else {
+			str = fmt.Sprintf("%s(SB)", a.Sym.Name)
+		}
 
 	case NAME_GOTREF:
-		str = fmt.Sprintf("%s%s@GOT(SB)", a.Sym.Name, a.offString())
+		if a.Offset != 0 {
+			str = fmt.Sprintf("%s%+d@GOT(SB)", a.Sym.Name, a.Offset)
+		} else {
+			str = fmt.Sprintf("%s@GOT(SB)", a.Sym.Name)
+		}
 
 	case NAME_STATIC:
-		str = fmt.Sprintf("%s<>%s(SB)", a.Sym.Name, a.offString())
+		if a.Offset != 0 {
+			str = fmt.Sprintf("%s<>%+d(SB)", a.Sym.Name, a.Offset)
+		} else {
+			str = fmt.Sprintf("%s<>(SB)", a.Sym.Name)
+		}
 
 	case NAME_AUTO:
 		if a.Sym != nil {
-			str = fmt.Sprintf("%s%s(SP)", a.Sym.Name, a.offString())
+			if a.Offset != 0 {
+				str = fmt.Sprintf("%s%+d(SP)", a.Sym.Name, a.Offset)
+			} else {
+				str = fmt.Sprintf("%s(SP)", a.Sym.Name)
+			}
 		} else {
-			str = fmt.Sprintf("%s(SP)", a.offString())
+			if a.Offset != 0 {
+				str = fmt.Sprintf("%+d(SP)", a.Offset)
+			} else {
+				str = "(SP)"
+			}
 		}
 
 	case NAME_PARAM:
 		if a.Sym != nil {
-			str = fmt.Sprintf("%s%s(FP)", a.Sym.Name, a.offString())
+			if a.Offset != 0 {
+				str = fmt.Sprintf("%s%+d(FP)", a.Sym.Name, a.Offset)
+			} else {
+				str = fmt.Sprintf("%s(FP)", a.Sym.Name)
+			}
 		} else {
-			str = fmt.Sprintf("%s(FP)", a.offString())
+			if a.Offset != 0 {
+				str = fmt.Sprintf("%+d(FP)", a.Offset)
+			} else {
+				str = "(FP)"
+			}
 		}
 	}
 	return str
 }
 
-func (a *Addr) checkaddr() error {
-	// Check expected encoding, especially TYPE_CONST vs TYPE_ADDR.
+// 检查地址形式是否合法
+// 特别是 TYPE_CONST 和 TYPE_ADDR 类型
+func (a *Addr) checkAddr() error {
 	switch a.Type {
 	case TYPE_NONE:
 		return nil
@@ -432,12 +467,4 @@ func (a *Addr) checkaddr() error {
 	}
 
 	return fmt.Errorf("invalid encoding for argument %v", a)
-}
-
-// 为偏移量生成对应的汇编格式字符串
-func (a *Addr) offString() string {
-	if a.Offset == 0 {
-		return ""
-	}
-	return fmt.Sprintf("%+d", a.Offset)
 }

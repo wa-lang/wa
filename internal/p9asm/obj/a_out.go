@@ -13,7 +13,6 @@ const (
 	FUNCDATA_ArgsPointerMaps   = 0
 	FUNCDATA_LocalsPointerMaps = 1
 	FUNCDATA_DeadValueMaps     = 2
-	ArgsSizeUnknown            = -0x80000000 // 帧大小未知, 比如 C 的 printf 函数
 )
 
 // 指令机器码

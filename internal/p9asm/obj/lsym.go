@@ -190,15 +190,15 @@ func (sym *LSym) linkpatch(ctxt *Link) error {
 	ctxt.Cursym = sym
 
 	for p := sym.Text; p != nil; p = p.Link {
-		if err := p.From.checkaddr(); err != nil {
+		if err := p.From.checkAddr(); err != nil {
 			return fmt.Errorf("%w in %v", err, p)
 		}
 		if p.From3 != nil {
-			if err := p.From3.checkaddr(); err != nil {
+			if err := p.From3.checkAddr(); err != nil {
 				return fmt.Errorf("%w in %v", err, p)
 			}
 		}
-		if err := p.To.checkaddr(); err != nil {
+		if err := p.To.checkAddr(); err != nil {
 			return fmt.Errorf("%w in %v", err, p)
 		}
 

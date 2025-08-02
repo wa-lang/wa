@@ -86,7 +86,8 @@ func (p *Parser) validateImmediate(pseudo string, addr *obj.Addr) {
 }
 
 // asmText assembles a TEXT pseudo-op.
-// TEXT runtime·sigtramp(SB),$0-0
+// TEXT pkg·foo(SB),$framesize-argsize
+// argsize 缺少时为 0
 func (p *Parser) asmText(word string, operands [][]lex.Token) {
 	if len(operands) != 2 {
 		p.errorf("expect two operands for TEXT") // 函数不再支持 flags 标志
@@ -130,14 +131,17 @@ func (p *Parser) asmText(word string, operands [][]lex.Token) {
 		frameSize = -frameSize
 	}
 	op = op[1:]
-	argSize := int64(obj.ArgsSizeUnknown)
+
+	// argsize不能省略, 不再支持 printf 那种参数未知的调用
+	// There is an argument size. It must be a minus sign followed by a non-negative integer literal.
+	argSize := int32(0)
 	if len(op) > 0 {
-		// There is an argument size. It must be a minus sign followed by a non-negative integer literal.
 		if len(op) != 2 || op[0].ScanToken != '-' || op[1].ScanToken != scanner.Int {
 			p.errorf("TEXT %s: argument size must be of form -integer", name)
 		}
-		argSize = p.positiveAtoi(op[1].String())
+		argSize = int32(p.positiveAtoi(op[1].String()))
 	}
+
 	prog := &obj.Prog{
 		Ctxt:   p.ctxt,
 		As:     obj.ATEXT,
@@ -149,10 +153,9 @@ func (p *Parser) asmText(word string, operands [][]lex.Token) {
 		To: obj.Addr{
 			Type:   obj.TYPE_TEXTSIZE,
 			Offset: frameSize,
-			// Argsize set below.
+			Val:    int32(argSize),
 		},
 	}
-	prog.To.Val = int32(argSize)
 
 	p.append(prog, "", true)
 }
