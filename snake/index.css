@@ -1,0 +1,410 @@
+* {
+  margin: 0;
+  padding: 0;
+}
+
+@font-face {
+  font-family: 'Rocher';
+  src: url('./RocherColorGX.woff2') format('woff2');
+}
+
+@font-palette-values --pink {
+  font-family: Rocher;
+  base-palette: 1;
+}
+
+@font-palette-values --mint {
+  font-family: Rocher;
+  base-palette: 7;
+}
+
+:root {
+  --wa-color: #00A39A;
+  --wa-bg: #2e2e2e;
+  --wa-bg2: #202020;
+  --wa-trans: translate(-50%, -50%);
+  --wa-handle-dir: calc(50% - 30px);
+  --wa-shadow: 
+    rgb(45 35 66 / 40%) 0 2px 4px,
+    rgb(45 35 66 / 30%) 0 7px 13px -3px;
+}
+
+.tips {
+  position: absolute;
+  top: calc(50% - 355px);
+  left: calc(50% - 392px);
+  color: var(--wa-bg);
+  font-family: Rocher;
+  font-size: 2em;
+  font-palette: --mint;
+}
+
+#box {
+  background: var(--wa-color);
+  border-radius: 1em;
+  box-shadow: 0.2em 0.2em 2em rgba(46, 46, 46, 0.5);
+  padding: 0.5em;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: var(--wa-trans)
+}
+
+#game {
+  background: var(--wa-color);
+  border-radius: 1em;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+}
+
+#game::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  box-shadow:
+    10px 10px 30px #006E67,
+    -10px -10px 40px #006E67,
+    inset -10px -10px 10px #008880,
+    inset 10px 10px 10px #008880,
+    inset 10px 10px 10px var(--wa-color);
+  filter: blur(3px);
+}
+
+.game__title {
+  font-size: 1.2em;
+  text-align: left;
+  padding: 0 0.6em;
+  margin: 0.2em 0;
+  display: block;
+  font-family: 'Rocher';
+  position: relative;
+  z-index: 1;
+}
+
+.game__title sup {
+  font-size: 0.6em;
+  color: #fff;
+}
+ 
+#game__screen {
+  background: var(--wa-bg);
+  box-shadow: var(--wa-shadow), var(--wa-bg2) 0 -3px 0 inset;
+  border-radius: 1em;
+  margin: 0 0.3em 0.3em;
+  padding: 0.6em;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  position: relative;
+  z-index: 1;
+}
+
+#game__screen-content {
+  width: 320px;
+  height: 320px;
+  border-radius: 0.5em;
+  overflow: hidden;
+  aspect-ratio: 1;
+  place-content: center;
+  background: #8C957B;
+}
+
+#game__operate {
+  flex: 1;
+  padding: 0.3em;
+  display: flex;
+}
+
+#game__operate-direction,
+.game__operate-ghost {
+  margin: 0.5em;
+  width: 180px;
+  height: 180px;
+  position: relative;
+}
+
+#game__operate-direction .direction__item {
+  align-items: center;
+  appearance: none;
+  background: var(--wa-bg);
+  border-radius: 50%;
+  border-width: 0;
+  box-shadow: var(--wa-shadow), var(--wa-bg2) 0 -3px 0 inset;
+  height: 60px;
+  width: 60px;
+  position: absolute;
+  user-select: none;
+  -webkit-user-select: none;
+  touch-action: manipulation;
+  white-space: nowrap;
+  will-change: box-shadow, transform;
+}
+
+#game__operate-direction .direction__item::after {
+  content: '';
+  position: absolute;
+  top: -10px;
+  left: -10px;
+  right: -10px;
+  bottom: -10px;
+}
+
+#game__operate-direction .direction__item::before {
+  content: '';
+  display: block;
+  width: 0;
+  height: 0;
+  border-style: solid;
+  border-width: 0 0.5em 0.866em 0.5em;
+  border-color: transparent transparent #fff transparent;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+}
+
+#game__operate-direction--up {
+  top: 0;
+  left: var(--wa-handle-dir);
+}
+
+#game__operate-direction--up::before {
+  transform: var(--wa-trans)
+}
+
+#game__operate-direction--right {
+  top: var(--wa-handle-dir);
+  right: 0;
+}
+
+#game__operate-direction--right::before {
+  transform: var(--wa-trans) rotate(90deg);
+}
+
+#game__operate-direction--down {
+  bottom: 0;
+  left: var(--wa-handle-dir);
+}
+
+#game__operate-direction--down::before {
+  transform: var(--wa-trans) rotate(180deg);
+}
+
+#game__operate-direction--left {
+  top: var(--wa-handle-dir);
+  left: 0;
+}
+
+#game__operate-direction--left::before {
+  transform: var(--wa-trans) rotate(270deg);
+}
+
+.game__operate-ghost {
+  border-radius: 50%;
+  background: rgba(46, 46, 46, 0.8);
+  box-shadow: var(--wa-shadow), var(--wa-bg2) 0 -3px 0 inset;
+}
+
+.game__operate-ghost::before {
+  content: '';
+  display: block;
+  width: 55px;
+  height: 55px;
+  background: var(--wa-bg);
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: var(--wa-trans);
+  z-index: 1;
+}
+
+.game__operate-ghost span {
+  background: var(--wa-bg);
+  height: 55px;
+  width: 55px;
+  position: absolute;
+}
+
+.game__operate-ghost span:nth-child(1) {
+  top: 10px;
+  left: 50%;
+  transform: translateX(-50%);
+  border-radius: 10px 10px 0 0;
+  box-shadow: var(--wa-shadow), var(--wa-bg2) -3px 0px 0 inset;
+}
+
+.game__operate-ghost span::before {
+  content: '';
+  display: block;
+  width: 0;
+  height: 0;
+  border-style: solid;
+  border-width: 0 10px 16px 10px;
+  border-color: transparent transparent var(--wa-bg2) transparent;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+}
+
+.game__operate-ghost span:nth-child(1)::before {
+  transform: var(--wa-trans);
+}
+
+.game__operate-ghost span:nth-child(2) {
+  top: 50%;
+  left: 10px;
+  transform: translateY(-50%);
+  border-radius: 10px 0 0 10px;
+  box-shadow: var(--wa-shadow), var(--wa-bg2) 0px -3px 0 inset;
+}
+
+.game__operate-ghost span:nth-child(2)::before {
+  transform: var(--wa-trans) rotate(270deg);
+}
+
+.game__operate-ghost span:nth-child(3) {
+  top: 50%;
+  right: 10px;
+  transform: translateY(-50%);
+  border-radius: 0 10px 10px 0;
+  box-shadow: var(--wa-shadow), var(--wa-bg2) -3px 0px 0 inset;
+}
+
+.game__operate-ghost span:nth-child(3)::before {
+  transform: var(--wa-trans) rotate(90deg);
+}
+
+.game__operate-ghost span:nth-child(4) {
+  bottom: 10px;
+  left: 50%;
+  transform: translateX(-50%);
+  border-radius: 0 0 10px 10px;
+  box-shadow: var(--wa-shadow), var(--wa-bg2) -3px -3px 0 inset;
+}
+
+.game__operate-ghost span:nth-child(4)::before {
+  transform: var(--wa-trans) rotate(180deg);
+}
+
+.game__operate-assist {
+  flex: 1;
+  display: flex;
+  position: relative;
+}
+
+.game__operate-assist--btns {
+  position: absolute;
+  top: 0;
+  width: 8em;
+  height: 2em;
+}
+
+.game__operate-assist--btns span:nth-child(1)::before,
+.game__operate-assist--btns span:nth-child(1)::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  width: 3em;
+  height: 2em;
+  align-items: center;
+  appearance: none;
+  background: var(--wa-bg);
+  border-width: 0;
+  box-shadow: var(--wa-shadow), var(--wa-bg2) 0 -3px 0 inset;;
+  box-sizing: border-box;
+  height: 1em;
+  width: 3em;
+  border-radius: 0.5em;
+}
+
+.game__operate-assist--btns span:nth-child(1)::before {
+  left: 0.6em;
+}
+
+.game__operate-assist--btns span:nth-child(1)::after {
+  left: 4.6em;
+}
+
+.game__operate-assist--btns span:nth-child(2)::before,
+.game__operate-assist--btns span:nth-child(2)::after {
+  position: absolute;
+  width: 3em;
+  height: 2em;
+  color: var(--wa-bg2);
+  font-size: 0.6em;
+  font-family: 'Rocher';
+  font-palette: --pink;
+}
+
+.game__operate-assist--btns span:nth-child(2)::before {
+  content: "SELECT";
+  top: 2em;
+  left: 1.4em;
+}
+
+.game__operate-assist--btns span:nth-child(2)::after {
+  content: "START";
+  top: 2em;
+  left: 8.4em;
+}
+
+.game__operate-assist--audio {
+  position: absolute;
+  bottom: 0;
+  width: 5em;
+  height: 3em;
+  margin: 0 0 0.6em 0.6em;
+}
+
+.game__operate-assist--audio::before {
+  --s: 6px;
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background:radial-gradient(var(--wa-bg) 24%,#0000 15%);
+  background-size: var(--s) var(--s); 
+}
+
+@media screen and (min-width: 768px) {
+  #box {
+    width: 768px;
+    max-width: 768px;
+  }
+
+  .game__title {
+    margin: 0.8em 0.2em;
+  }
+
+  .game__operate-assist {
+    flex-direction: column;
+    justify-content: space-between;
+    align-items: center;
+  }
+}
+
+@media screen and (max-width: 768px) {
+  .tips {
+    display: none;
+  }
+
+  #box {
+    width: 100%;
+    max-width: fit-content;
+  }
+
+  .game__operate-ghost {
+    display: none;
+  }
+
+  #game__operate-direction .direction__item:active {
+    box-shadow: var(--wa-bg2) 0 3px 7px inset;
+    transform: translateY(2px);
+  }
+  
+}
