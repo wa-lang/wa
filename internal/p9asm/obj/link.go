@@ -102,18 +102,6 @@ type Link struct {
 	Etextp             *LSym
 }
 
-type Plist struct {
-	Name    *LSym
-	Firstpc *Prog
-	Recur   int
-	Link    *Plist
-}
-
-type SymVer struct {
-	Name    string
-	Version int // TODO: make int16 to match LSym.Version?
-}
-
 func Linknew(arch *LinkArch, targetOS, workDir string) *Link {
 	ctxt := new(Link)
 	ctxt.Hash = make(map[SymVer]*LSym)
@@ -168,49 +156,14 @@ func Linknew(arch *LinkArch, targetOS, workDir string) *Link {
 	return ctxt
 }
 
-func (ctxt *Link) Lookup(symb string, v int) *LSym {
+func (ctxt *Link) Lookup(symb string, v int16) *LSym {
 	s := ctxt.Hash[SymVer{symb, v}]
 	if s != nil {
 		return s
 	}
 
-	s = &LSym{
-		Name:    symb,
-		Type:    0,
-		Version: int16(v),
-		Value:   0,
-		Size:    0,
-	}
+	s = &LSym{Name: symb, Version: v}
 	ctxt.Hash[SymVer{symb, v}] = s
 
 	return s
-}
-
-// start a new Prog list.
-func (ctxt *Link) NewPlist() *Plist {
-	pl := new(Plist)
-	if ctxt.Plist == nil {
-		ctxt.Plist = pl
-	} else {
-		ctxt.Plast.Link = pl
-	}
-	ctxt.Plast = pl
-	return pl
-}
-
-// This is a simplified copy of linklinefmt above.
-// It doesn't allow printing the full stack, and it returns the file name and line number separately.
-// TODO: Unify with linklinefmt somehow.
-func (ctxt *Link) linkgetline(lineno int32, f **LSym, l *int32) {
-	stk := ctxt.LineHist.At(int(lineno))
-	if stk == nil || stk.AbsFile == "" {
-		*f = ctxt.Lookup("??", HistVersion)
-		*l = 0
-		return
-	}
-	if stk.Sym == nil {
-		stk.Sym = ctxt.Lookup(stk.AbsFile, HistVersion)
-	}
-	*f = stk.Sym
-	*l = int32(stk.fileLineAt(int(lineno)))
 }

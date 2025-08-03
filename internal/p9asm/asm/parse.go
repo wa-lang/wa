@@ -19,15 +19,6 @@ import (
 	"wa-lang.org/wa/internal/p9asm/obj"
 )
 
-// Plan9 汇编语言的伪指令
-var _Pseudos = map[string]obj.As{
-	"DATA":     obj.ADATA,
-	"FUNCDATA": obj.AFUNCDATA,
-	"GLOBL":    obj.AGLOBL,
-	"PCDATA":   obj.APCDATA,
-	"TEXT":     obj.ATEXT,
-}
-
 type Parser struct {
 	Flags *arch.Flags
 
@@ -190,52 +181,31 @@ func (p *Parser) line() bool {
 			p.errorf("missing operand")
 		}
 	}
-	i, present := _Pseudos[word]
-	if present {
-		p.pseudo(i, word, operands)
+
+	switch word {
+	case "DATA":
+		p.asmData(operands)
+		return true
+	case "FUNCDATA":
+		p.asmFuncData(operands)
+		return true
+	case "GLOBL":
+		p.asmGlobl(operands)
+		return true
+	case "PCDATA":
+		p.asmPCData(operands)
+		return true
+	case "TEXT":
+		p.asmText(operands)
 		return true
 	}
-	i, present = p.arch.Instructions[word]
-	if present {
+
+	if i, ok := p.arch.Instructions[word]; ok {
 		p.instruction(i, word, cond, operands)
 		return true
 	}
 	p.errorf("unrecognized instruction %q", word)
 	return true
-}
-
-func (p *Parser) instruction(op obj.As, word, cond string, operands [][]lex.Token) {
-	p.addr = p.addr[0:0]
-	isJump := p.arch.IsJump(word)
-	for _, op := range operands {
-		addr := p.address(op)
-		if !isJump && addr.Reg < 0 { // Jumps refer to PC, a pseudo.
-			p.errorf("illegal use of pseudo-register in %s", word)
-		}
-		p.addr = append(p.addr, addr)
-	}
-	if isJump {
-		p.asmJump(op, cond, p.addr)
-		return
-	}
-	p.asmInstruction(op, cond, p.addr)
-}
-
-func (p *Parser) pseudo(op obj.As, word string, operands [][]lex.Token) {
-	switch op {
-	case obj.ATEXT:
-		p.asmText(word, operands)
-	case obj.ADATA:
-		p.asmData(word, operands)
-	case obj.AGLOBL:
-		p.asmGlobl(word, operands)
-	case obj.APCDATA:
-		p.asmPCData(word, operands)
-	case obj.AFUNCDATA:
-		p.asmFuncData(word, operands)
-	default:
-		p.errorf("unimplemented: %s", word)
-	}
 }
 
 func (p *Parser) start(operand []lex.Token) {
@@ -566,6 +536,8 @@ func (p *Parser) symbolReference(a *obj.Addr, name string, prefix rune) {
 	case '*':
 		a.Type = obj.TYPE_INDIR
 	}
+
+	// 内部静态变量 '<>' 用作版本号
 	// Weirdness with statics: Might now have "<>".
 	isStatic := 0 // TODO: Really a boolean, but Linklookup wants a "version" integer.
 	if p.peek() == '<' {
@@ -576,7 +548,9 @@ func (p *Parser) symbolReference(a *obj.Addr, name string, prefix rune) {
 	if p.peek() == '+' || p.peek() == '-' {
 		a.Offset = int64(p.expr())
 	}
-	a.Sym = p.ctxt.Lookup(name, isStatic)
+
+	// TODO(chai2010): 和 obj 包中的 SymVer 定义有分歧
+	a.Sym = p.ctxt.Lookup(name, int16(isStatic))
 	if p.peek() == scanner.EOF {
 		if prefix != 0 {
 			p.errorf("illegal addressing mode for symbol %s", name)
@@ -908,14 +882,6 @@ func (p *Parser) atoi(str string) uint64 {
 
 func (p *Parser) atof(str string) float64 {
 	value, err := strconv.ParseFloat(str, 64)
-	if err != nil {
-		p.errorf("%s", err)
-	}
-	return value
-}
-
-func (p *Parser) atos(str string) string {
-	value, err := strconv.Unquote(str)
 	if err != nil {
 		p.errorf("%s", err)
 	}

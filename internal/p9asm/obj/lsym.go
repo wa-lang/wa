@@ -34,6 +34,13 @@ package obj
 
 import "fmt"
 
+// 带版本号的名字
+// 用作缓存 map 的 key
+type SymVer struct {
+	Name    string
+	Version int16 // TODO: make int16 to match LSym.Version?
+}
+
 // 对应的是将被写入目标文件的符号, 比如函数/变量/常量/调试信息等
 type LSym struct {
 	Name      string  // 符号名字

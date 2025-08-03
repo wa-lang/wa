@@ -195,7 +195,7 @@ func (ctxt *Link) Writeobjdirect(b io.Writer) error {
 			// 全局数据赋值语句
 			// 会调用 savedata() 保存数据内容到 LSym.P 中
 			if p.As == ADATA {
-				if err := savedata(ctxt, p.From.Sym, p, "<input>"); err != nil {
+				if err := ctxt.savedata(p.From.Sym, p, "<input>"); err != nil {
 					return err
 				}
 				continue
@@ -246,7 +246,7 @@ func (ctxt *Link) Writeobjdirect(b io.Writer) error {
 					if p.From.Type != TYPE_CONST || p.From.Offset != FUNCDATA_ArgsPointerMaps {
 						return fmt.Errorf("FUNCDATA use of wa_args_stackmap(SB) without FUNCDATA_ArgsPointerMaps")
 					}
-					p.To.Sym = ctxt.Lookup(fmt.Sprintf("%s.args_stackmap", curtext.Name), int(curtext.Version))
+					p.To.Sym = ctxt.Lookup(fmt.Sprintf("%s.args_stackmap", curtext.Name), curtext.Version)
 				}
 			}
 
@@ -286,7 +286,7 @@ func (ctxt *Link) Writeobjdirect(b io.Writer) error {
 			p.From.Offset = FUNCDATA_ArgsPointerMaps
 			p.To.Type = TYPE_MEM
 			p.To.Name = NAME_EXTERN
-			p.To.Sym = ctxt.Lookup(fmt.Sprintf("%s.args_stackmap", s.Name), int(s.Version))
+			p.To.Sym = ctxt.Lookup(fmt.Sprintf("%s.args_stackmap", s.Name), s.Version)
 		}
 	}
 
@@ -315,18 +315,18 @@ func (ctxt *Link) Writeobjdirect(b io.Writer) error {
 	}
 
 	// 写 waobj 开始标志
-	fmt.Fprintf(b, MagicHeader)
+	b.Write([]byte(MagicHeader))
 
 	// 版本信息
 	b.Write([]byte{1})
 
 	// 写 import 列表
 	for _, pkg := range ctxt.Imports {
-		wrstring(b, pkg)
+		ctxt.wrstring(b, pkg)
 	}
 
 	// 以空字符串作为 import 列表结尾
-	wrstring(b, "")
+	ctxt.wrstring(b, "")
 
 	// 生成函数标识符
 	for s := text; s != nil; s = s.Next {
@@ -338,7 +338,7 @@ func (ctxt *Link) Writeobjdirect(b io.Writer) error {
 	}
 
 	// 写 waobj 结束标志
-	fmt.Fprintf(b, MagicFooter)
+	b.Write([]byte(MagicFooter))
 
 	return nil
 }
@@ -444,98 +444,99 @@ func (ctxt *Link) writesym(b io.Writer, s *LSym) {
 	b.Write([]byte{MagicSymbolStart})
 
 	// 标识符类型
-	wrint(b, int64(s.Type))
+	ctxt.wrint(b, int64(s.Type))
 
 	// 标识符名字
-	wrstring(b, s.Name)
+	ctxt.wrstring(b, s.Name)
 
 	// 标识符版本
-	wrint(b, int64(s.Version))
+	ctxt.wrint(b, int64(s.Version))
 
 	// 写 flags 信息
 	flags := int64(s.Dupok)
 	if s.Local {
 		flags |= 2
 	}
-	wrint(b, flags)
+	ctxt.wrint(b, flags)
 
 	// 对应的内存大小
-	wrint(b, s.Size)
+	ctxt.wrint(b, s.Size)
 
 	// 引用的类型符号
-	wrsym(b, s.Watype)
+	ctxt.wrsym(b, s.Watype)
 
 	// 二进制数据
 	// 如果是函数, 则对应机器码数据
 	// 如果是变量, 则对应内存的值
-	wrdata(b, s.P)
+	ctxt.wrdata(b, s.P)
 
 	// 重定位信息
-	wrint(b, int64(len(s.R)))
+	ctxt.wrint(b, int64(len(s.R)))
 	for i := 0; i < len(s.R); i++ {
 		r := &s.R[i]
-		wrint(b, int64(r.Off))
-		wrint(b, int64(r.Siz))
-		wrint(b, int64(r.Type))
-		wrint(b, r.Add)
-		wrint(b, 0) // Xadd, ignored
-		wrsym(b, r.Sym)
-		wrsym(b, nil) // Xsym, ignored
+		ctxt.wrint(b, int64(r.Off))
+		ctxt.wrint(b, int64(r.Siz))
+		ctxt.wrint(b, int64(r.Type))
+		ctxt.wrint(b, r.Add)
+		ctxt.wrint(b, 0) // Xadd, ignored
+		ctxt.wrsym(b, r.Sym)
+		ctxt.wrsym(b, nil) // Xsym, ignored
 	}
 
 	// 如果是函数
 	if s.Type == STEXT {
 		// 写参数/局部变量
-		wrint(b, int64(s.Args))
-		wrint(b, int64(s.Locals))
+		ctxt.wrint(b, int64(s.Args))
+		ctxt.wrint(b, int64(s.Locals))
 
 		// 自动变量(和locals的区别?)
 		n := 0
 		for a := s.Autom; a != nil; a = a.Link {
 			n++
 		}
-		wrint(b, int64(n))
+		ctxt.wrint(b, int64(n))
 		for a := s.Autom; a != nil; a = a.Link {
 			// 标识符
-			wrsym(b, a.Asym)
-			wrint(b, int64(a.Aoffset))
+			ctxt.wrsym(b, a.Asym)
+			ctxt.wrint(b, int64(a.Aoffset))
 
 			// 类别
-			if a.Name == NAME_AUTO {
-				wrint(b, A_AUTO)
-			} else if a.Name == NAME_PARAM {
-				wrint(b, A_PARAM)
-			} else {
+			switch a.Name {
+			case NAME_AUTO:
+				ctxt.wrint(b, A_AUTO)
+			case NAME_PARAM:
+				ctxt.wrint(b, A_PARAM)
+			default:
 				log.Fatalf("%s: invalid local variable type %d", s.Name, a.Name)
 			}
 
 			// 对应类型的标识符
-			wrsym(b, a.Watype)
+			ctxt.wrsym(b, a.Watype)
 		}
 
 		// 写 pcln 数据
-		wrdata(b, s.Pcln.Pcsp.P)
-		wrdata(b, s.Pcln.Pcfile.P)
-		wrdata(b, s.Pcln.Pcline.P)
-		wrint(b, int64(len(s.Pcln.Pcdata)))
+		ctxt.wrdata(b, s.Pcln.Pcsp.P)
+		ctxt.wrdata(b, s.Pcln.Pcfile.P)
+		ctxt.wrdata(b, s.Pcln.Pcline.P)
+		ctxt.wrint(b, int64(len(s.Pcln.Pcdata)))
 		for i := 0; i < len(s.Pcln.Pcdata); i++ {
-			wrdata(b, s.Pcln.Pcdata[i].P)
+			ctxt.wrdata(b, s.Pcln.Pcdata[i].P)
 		}
-		wrint(b, int64(len(s.Pcln.Funcdataoff)))
+		ctxt.wrint(b, int64(len(s.Pcln.Funcdataoff)))
 		for i := 0; i < len(s.Pcln.Funcdataoff); i++ {
-			wrsym(b, s.Pcln.Funcdata[i])
+			ctxt.wrsym(b, s.Pcln.Funcdata[i])
 		}
 		for i := 0; i < len(s.Pcln.Funcdataoff); i++ {
-			wrint(b, s.Pcln.Funcdataoff[i])
+			ctxt.wrint(b, s.Pcln.Funcdataoff[i])
 		}
-		wrint(b, int64(len(s.Pcln.File)))
+		ctxt.wrint(b, int64(len(s.Pcln.File)))
 		for i := 0; i < len(s.Pcln.File); i++ {
-			wrpathsym(ctxt, b, s.Pcln.File[i])
+			ctxt.wrpathsym(b, s.Pcln.File[i])
 		}
 	}
 }
 
-func savedata(ctxt *Link, s *LSym, p *Prog, pn string) error {
+func (ctxt *Link) savedata(s *LSym, p *Prog, pn string) error {
 	off := int32(p.From.Offset)
 	siz := int32(p.From3.Offset)
 	if off < 0 || siz < 0 || off >= 1<<30 || siz >= 100 {
@@ -600,7 +601,7 @@ func savedata(ctxt *Link, s *LSym, p *Prog, pn string) error {
 	return nil
 }
 
-func wrint(b io.Writer, sval int64) {
+func (ctxt *Link) wrint(b io.Writer, sval int64) {
 	var varintbuf [10]uint8
 	var v uint64
 	uv := (uint64(sval) << 1) ^ uint64(int64(sval>>63))
@@ -614,40 +615,34 @@ func wrint(b io.Writer, sval int64) {
 	b.Write(varintbuf[:len(varintbuf)-len(p)])
 }
 
-func wrstring(b io.Writer, s string) {
-	wrint(b, int64(len(s)))
+func (ctxt *Link) wrstring(b io.Writer, s string) {
+	ctxt.wrint(b, int64(len(s)))
 	b.Write([]byte(s))
 }
 
-// wrpath writes a path just like a string, but on windows, it
-// translates '\\' to '/' in the process.
-func wrpath(ctxt *Link, b io.Writer, p string) {
-	wrstring(b, filepath.ToSlash(p))
-}
-
-func wrdata(b io.Writer, v []byte) {
-	wrint(b, int64(len(v)))
+func (ctxt *Link) wrdata(b io.Writer, v []byte) {
+	ctxt.wrint(b, int64(len(v)))
 	b.Write(v)
 }
 
-func wrpathsym(ctxt *Link, b io.Writer, s *LSym) {
+func (ctxt *Link) wrpathsym(b io.Writer, s *LSym) {
 	if s == nil {
-		wrint(b, 0)
-		wrint(b, 0)
+		ctxt.wrint(b, 0)
+		ctxt.wrint(b, 0)
 		return
 	}
 
-	wrpath(ctxt, b, s.Name)
-	wrint(b, int64(s.Version))
+	ctxt.wrstring(b, filepath.ToSlash(s.Name))
+	ctxt.wrint(b, int64(s.Version))
 }
 
-func wrsym(b io.Writer, s *LSym) {
+func (ctxt *Link) wrsym(b io.Writer, s *LSym) {
 	if s == nil {
-		wrint(b, 0)
-		wrint(b, 0)
+		ctxt.wrint(b, 0)
+		ctxt.wrint(b, 0)
 		return
 	}
 
-	wrstring(b, s.Name)
-	wrint(b, int64(s.Version))
+	ctxt.wrstring(b, s.Name)
+	ctxt.wrint(b, int64(s.Version))
 }
