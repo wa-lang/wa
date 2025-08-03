@@ -15,31 +15,55 @@ import (
 	"wa-lang.org/wa/internal/p9asm/asm/arch"
 )
 
-// Input is the main input: a stack of readers and some macro definitions.
+var _ TokenReader = (*_Input)(nil)
+
+// _Input is the main input: a stack of readers and some macro definitions.
 // It also handles #include processing (by pushing onto the input stack)
 // and parses and instantiates macro definitions.
-type Input struct {
-	Stack
+type _Input struct {
+	stk             _Stack
 	includes        []string
 	beginningOfLine bool
 	ifdefStack      []bool
-	macros          map[string]*Macro
+	macros          map[string]*_MacroDefine
 	text            string // Text of last token returned by Next.
 	peek            bool
 	peekToken       ScanToken
 	peekText        string
 }
 
-// NewInput returns a
-func NewInput(name string, flags *arch.Flags) (*Input, error) {
+// #define 宏指令
+type _MacroDefine struct {
+	name   string   // 宏的名字
+	args   []string // 宏函数的参数部分
+	tokens []Token  // 宏主体内容
+}
+
+func newInput(name string, flags *arch.Flags) (*_Input, error) {
 	if flags == nil {
 		flags = new(arch.Flags)
 	}
-	macros, err := predefine(flags.Defines)
-	if err != nil {
-		return nil, err
+
+	// 解析命令行预定义的宏
+	// 比如 -D -VERSION=123
+	macros := make(map[string]*_MacroDefine)
+	for _, name := range flags.Defines {
+		value := "1"
+		i := strings.IndexRune(name, '=')
+		if i > 0 {
+			name, value = name[:i], name[i+1:]
+		}
+		tokens := LexString(name)
+		if len(tokens) != 1 || tokens[0].ScanToken != scanner.Ident {
+			return nil, fmt.Errorf("asm: parsing -D: %q is not a valid identifier name", tokens[0])
+		}
+		macros[name] = &_MacroDefine{
+			name:   name,
+			tokens: LexString(value),
+		}
 	}
-	p := &Input{
+
+	p := &_Input{
 		// include directories: look in source dir, then -I directories.
 		includes:        append([]string{filepath.Dir(name)}, flags.IncludeDirs...),
 		beginningOfLine: true,
@@ -48,51 +72,29 @@ func NewInput(name string, flags *arch.Flags) (*Input, error) {
 	return p, nil
 }
 
-// predefine installs the macros set by the -D flag on the command line.
-func predefine(defines []string) (map[string]*Macro, error) {
-	macros := make(map[string]*Macro)
-	for _, name := range defines {
-		value := "1"
-		i := strings.IndexRune(name, '=')
-		if i > 0 {
-			name, value = name[:i], name[i+1:]
-		}
-		tokens := Tokenize(name)
-		if len(tokens) != 1 || tokens[0].ScanToken != scanner.Ident {
-			return nil, fmt.Errorf("asm: parsing -D: %q is not a valid identifier name\n", tokens[0])
-		}
-		macros[name] = &Macro{
-			name:   name,
-			args:   nil,
-			tokens: Tokenize(value),
-		}
-	}
-	return macros, nil
-}
-
-func (in *Input) Error(args ...interface{}) {
-	fmt.Fprintf(os.Stderr, "%s:%d: %s", in.File(), in.Line(), fmt.Sprintln(args...))
+func (in *_Input) Error(args ...interface{}) {
+	fmt.Fprintf(os.Stderr, "%s:%d: %s", in.stk.File(), in.stk.Line(), fmt.Sprintln(args...))
 	os.Exit(1)
 }
 
 // expectText is like Error but adds "got XXX" where XXX is a quoted representation of the most recent token.
-func (in *Input) expectText(args ...interface{}) {
-	in.Error(append(args, "; got", strconv.Quote(in.Stack.Text()))...)
+func (in *_Input) expectText(args ...interface{}) {
+	in.Error(append(args, "; got", strconv.Quote(in.stk.Text()))...)
 }
 
 // enabled reports whether the input is enabled by an ifdef, or is at the top level.
-func (in *Input) enabled() bool {
+func (in *_Input) enabled() bool {
 	return len(in.ifdefStack) == 0 || in.ifdefStack[len(in.ifdefStack)-1]
 }
 
-func (in *Input) expectNewline(directive string) {
-	tok := in.Stack.Next()
+func (in *_Input) expectNewline(directive string) {
+	tok := in.stk.Next()
 	if tok != '\n' {
 		in.expectText("expected newline after", directive)
 	}
 }
 
-func (in *Input) Next() ScanToken {
+func (in *_Input) Next() ScanToken {
 	if in.peek {
 		in.peek = false
 		tok := in.peekToken
@@ -102,7 +104,7 @@ func (in *Input) Next() ScanToken {
 	// If we cannot generate a token after 100 macro invocations, we're in trouble.
 	// The usual case is caught by Push, below, but be safe.
 	for nesting := 0; nesting < 100; {
-		tok := in.Stack.Next()
+		tok := in.stk.Next()
 		switch tok {
 		case '#':
 			if !in.beginningOfLine {
@@ -111,7 +113,7 @@ func (in *Input) Next() ScanToken {
 			in.beginningOfLine = in.hash()
 		case scanner.Ident:
 			// Is it a macro name?
-			name := in.Stack.Text()
+			name := in.stk.Text()
 			macro := in.macros[name]
 			if macro != nil {
 				nesting++
@@ -122,7 +124,7 @@ func (in *Input) Next() ScanToken {
 		default:
 			in.beginningOfLine = tok == '\n'
 			if in.enabled() {
-				in.text = in.Stack.Text()
+				in.text = in.stk.Text()
 				return tok
 			}
 		}
@@ -131,28 +133,44 @@ func (in *Input) Next() ScanToken {
 	return 0
 }
 
-func (in *Input) Text() string {
+func (in *_Input) Text() string {
 	return in.text
 }
 
+func (in *_Input) File() string {
+	return in.stk.File()
+}
+
+func (in *_Input) Line() int {
+	return in.stk.Line()
+}
+
+func (in *_Input) Col() int {
+	return in.stk.Col()
+}
+
+func (in *_Input) SetPos(line int, file string) {
+	in.stk.SetPos(line, file)
+}
+
 // hash processes a # preprocessor directive. It returns true iff it completes.
-func (in *Input) hash() bool {
+func (in *_Input) hash() bool {
 	// We have a '#'; it must be followed by a known word (define, include, etc.).
-	tok := in.Stack.Next()
+	tok := in.stk.Next()
 	if tok != scanner.Ident {
 		in.expectText("expected identifier after '#'")
 	}
 	if !in.enabled() {
 		// Can only start including again if we are at #else or #endif.
 		// We let #line through because it might affect errors.
-		switch in.Stack.Text() {
+		switch in.stk.Text() {
 		case "else", "endif", "line":
 			// Press on.
 		default:
 			return false
 		}
 	}
-	switch in.Stack.Text() {
+	switch in.stk.Text() {
 	case "define":
 		in.define()
 	case "else":
@@ -170,35 +188,35 @@ func (in *Input) hash() bool {
 	case "undef":
 		in.undef()
 	default:
-		in.Error("unexpected token after '#':", in.Stack.Text())
+		in.Error("unexpected token after '#':", in.stk.Text())
 	}
 	return true
 }
 
 // macroName returns the name for the macro being referenced.
-func (in *Input) macroName() string {
+func (in *_Input) macroName() string {
 	// We use the Stack's input method; no macro processing at this stage.
-	tok := in.Stack.Next()
+	tok := in.stk.Next()
 	if tok != scanner.Ident {
 		in.expectText("expected identifier after # directive")
 	}
 	// Name is alphanumeric by definition.
-	return in.Stack.Text()
+	return in.stk.Text()
 }
 
 // #define processing.
-func (in *Input) define() {
+func (in *_Input) define() {
 	name := in.macroName()
 	args, tokens := in.macroDefinition(name)
 	in.defineMacro(name, args, tokens)
 }
 
-// defineMacro stores the macro definition in the Input.
-func (in *Input) defineMacro(name string, args []string, tokens []Token) {
+// defineMacro stores the macro definition in the _Input.
+func (in *_Input) defineMacro(name string, args []string, tokens []Token) {
 	if in.macros[name] != nil {
 		in.Error("redefinition of macro:", name)
 	}
-	in.macros[name] = &Macro{
+	in.macros[name] = &_MacroDefine{
 		name:   name,
 		args:   args,
 		tokens: tokens,
@@ -208,9 +226,9 @@ func (in *Input) defineMacro(name string, args []string, tokens []Token) {
 // macroDefinition returns the list of formals and the tokens of the definition.
 // The argument list is nil for no parens on the definition; otherwise a list of
 // formal argument names.
-func (in *Input) macroDefinition(name string) ([]string, []Token) {
-	prevCol := in.Stack.Col()
-	tok := in.Stack.Next()
+func (in *_Input) macroDefinition(name string) ([]string, []Token) {
+	prevCol := in.stk.Col()
+	tok := in.stk.Next()
 	if tok == '\n' || tok == scanner.EOF {
 		return nil, nil // No definition for macro
 	}
@@ -223,16 +241,16 @@ func (in *Input) macroDefinition(name string) ([]string, []Token) {
 	// Distinguish these cases using the column number, since we don't
 	// see the space itself. Note that text/scanner reports the position at the
 	// end of the token. It's where you are now, and you just read this token.
-	if tok == '(' && in.Stack.Col() == prevCol+1 {
+	if tok == '(' && in.stk.Col() == prevCol+1 {
 		// Macro has arguments. Scan list of formals.
 		acceptArg := true
 		args = []string{} // Zero length but not nil.
 	Loop:
 		for {
-			tok = in.Stack.Next()
+			tok = in.stk.Next()
 			switch tok {
 			case ')':
-				tok = in.Stack.Next() // First token of macro definition.
+				tok = in.stk.Next() // First token of macro definition.
 				break Loop
 			case ',':
 				if acceptArg {
@@ -243,7 +261,7 @@ func (in *Input) macroDefinition(name string) ([]string, []Token) {
 				if !acceptArg {
 					in.Error("bad syntax in definition for macro:", name)
 				}
-				arg := in.Stack.Text()
+				arg := in.stk.Text()
 				if i := lookup(args, arg); i >= 0 {
 					in.Error("duplicate argument", arg, "in definition for macro:", name)
 				}
@@ -258,13 +276,13 @@ func (in *Input) macroDefinition(name string) ([]string, []Token) {
 	// Scan to newline. Backslashes escape newlines.
 	for tok != '\n' {
 		if tok == '\\' {
-			tok = in.Stack.Next()
+			tok = in.stk.Next()
 			if tok != '\n' && tok != '\\' {
 				in.Error(`can only escape \ or \n in definition for macro:`, name)
 			}
 		}
-		tokens = append(tokens, Make(tok, in.Stack.Text()))
-		tok = in.Stack.Next()
+		tokens = append(tokens, Token{tok, in.stk.Text()})
+		tok = in.stk.Next()
 	}
 	return args, tokens
 }
@@ -281,20 +299,20 @@ func lookup(args []string, arg string) int {
 // invokeMacro pushes onto the input Stack a Slice that holds the macro definition with the actual
 // parameters substituted for the formals.
 // Invoking a macro does not touch the PC/line history.
-func (in *Input) invokeMacro(macro *Macro) {
+func (in *_Input) invokeMacro(macro *_MacroDefine) {
 	// If the macro has no arguments, just substitute the text.
 	if macro.args == nil {
-		in.Push(NewSlice(in.File(), in.Line(), macro.tokens))
+		in.Push(newSlice(in.stk.File(), in.stk.Line(), macro.tokens))
 		return
 	}
-	tok := in.Stack.Next()
+	tok := in.stk.Next()
 	if tok != '(' {
 		// If the macro has arguments but is invoked without them, all we push is the macro name.
 		// First, put back the token.
 		in.peekToken = tok
 		in.peekText = in.text
 		in.peek = true
-		in.Push(NewSlice(in.File(), in.Line(), []Token{Make(macroName, macro.name)}))
+		in.Push(newSlice(in.stk.File(), in.stk.Line(), []Token{{macroName, macro.name}}))
 		return
 	}
 	actuals := in.argsFor(macro)
@@ -304,19 +322,19 @@ func (in *Input) invokeMacro(macro *Macro) {
 			tokens = append(tokens, tok)
 			continue
 		}
-		substitution := actuals[tok.text]
+		substitution := actuals[tok.Text]
 		if substitution == nil {
 			tokens = append(tokens, tok)
 			continue
 		}
 		tokens = append(tokens, substitution...)
 	}
-	in.Push(NewSlice(in.File(), in.Line(), tokens))
+	in.Push(newSlice(in.stk.File(), in.stk.Line(), tokens))
 }
 
 // argsFor returns a map from formal name to actual value for this argumented macro invocation.
 // The opening parenthesis has been absorbed.
-func (in *Input) argsFor(macro *Macro) map[string][]Token {
+func (in *_Input) argsFor(macro *_MacroDefine) map[string][]Token {
 	var args [][]Token
 	// One macro argument per iteration. Collect them all and check counts afterwards.
 	for argNum := 0; ; argNum++ {
@@ -342,11 +360,11 @@ func (in *Input) argsFor(macro *Macro) map[string][]Token {
 // collectArgument returns the actual tokens for a single argument of a macro.
 // It also returns the token that terminated the argument, which will always
 // be either ',' or ')'. The starting '(' has been scanned.
-func (in *Input) collectArgument(macro *Macro) ([]Token, ScanToken) {
+func (in *_Input) collectArgument(macro *_MacroDefine) ([]Token, ScanToken) {
 	nesting := 0
 	var tokens []Token
 	for {
-		tok := in.Stack.Next()
+		tok := in.stk.Next()
 		if tok == scanner.EOF || tok == '\n' {
 			in.Error("unterminated arg list invoking macro:", macro.name)
 		}
@@ -359,12 +377,12 @@ func (in *Input) collectArgument(macro *Macro) ([]Token, ScanToken) {
 		if tok == ')' {
 			nesting--
 		}
-		tokens = append(tokens, Make(tok, in.Stack.Text()))
+		tokens = append(tokens, Token{tok, in.stk.Text()})
 	}
 }
 
 // #ifdef and #ifndef processing.
-func (in *Input) ifdef(truth bool) {
+func (in *_Input) ifdef(truth bool) {
 	name := in.macroName()
 	in.expectNewline("#if[n]def")
 	if _, defined := in.macros[name]; !defined {
@@ -374,7 +392,7 @@ func (in *Input) ifdef(truth bool) {
 }
 
 // #else processing
-func (in *Input) else_() {
+func (in *_Input) else_() {
 	in.expectNewline("#else")
 	if len(in.ifdefStack) == 0 {
 		in.Error("unmatched #else")
@@ -383,7 +401,7 @@ func (in *Input) else_() {
 }
 
 // #endif processing.
-func (in *Input) endif() {
+func (in *_Input) endif() {
 	in.expectNewline("#endif")
 	if len(in.ifdefStack) == 0 {
 		in.Error("unmatched #endif")
@@ -392,13 +410,13 @@ func (in *Input) endif() {
 }
 
 // #include processing.
-func (in *Input) include() {
+func (in *_Input) include() {
 	// Find and parse string.
-	tok := in.Stack.Next()
+	tok := in.stk.Next()
 	if tok != scanner.String {
 		in.expectText("expected string after #include")
 	}
-	name, err := strconv.Unquote(in.Stack.Text())
+	name, err := strconv.Unquote(in.stk.Text())
 	if err != nil {
 		in.Error("unquoting include file name: ", err)
 	}
@@ -416,55 +434,56 @@ func (in *Input) include() {
 			in.Error("#include:", err)
 		}
 	}
-	in.Push(NewTokenizer(name, fd, fd))
+	in.Push(newTokenizer(name, fd, fd))
 }
 
 // #line processing.
-func (in *Input) line() {
+func (in *_Input) line() {
 	// Only need to handle Plan 9 format: #line 337 "filename"
-	tok := in.Stack.Next()
+	tok := in.stk.Next()
 	if tok != scanner.Int {
 		in.expectText("expected line number after #line")
 	}
-	line, err := strconv.Atoi(in.Stack.Text())
+	line, err := strconv.Atoi(in.stk.Text())
 	if err != nil {
 		in.Error("error parsing #line (cannot happen):", err)
 	}
-	tok = in.Stack.Next()
+	tok = in.stk.Next()
 	if tok != scanner.String {
 		in.expectText("expected file name in #line")
 	}
-	file, err := strconv.Unquote(in.Stack.Text())
+	file, err := strconv.Unquote(in.stk.Text())
 	if err != nil {
 		in.Error("unquoting #line file name: ", err)
 	}
-	tok = in.Stack.Next()
+	tok = in.stk.Next()
 	if tok != '\n' {
 		in.Error("unexpected token at end of #line: ", tok)
 	}
-	in.Stack.SetPos(line, file)
+	in.stk.SetPos(line, file)
 }
 
 // #undef processing
-func (in *Input) undef() {
+func (in *_Input) undef() {
 	name := in.macroName()
 	if in.macros[name] == nil {
 		in.Error("#undef for undefined macro:", name)
 	}
 	// Newline must be next.
-	tok := in.Stack.Next()
+	tok := in.stk.Next()
 	if tok != '\n' {
 		in.Error("syntax error in #undef for macro:", name)
 	}
 	delete(in.macros, name)
 }
 
-func (in *Input) Push(r TokenReader) {
-	if len(in.tr) > 100 {
+func (in *_Input) Push(r TokenReader) {
+	if len(in.stk.tr) > 100 {
 		in.Error("input recursion")
 	}
-	in.Stack.Push(r)
+	in.stk.Push(r)
 }
 
-func (in *Input) Close() {
+func (in *_Input) Close() {
+	in.stk.Close()
 }

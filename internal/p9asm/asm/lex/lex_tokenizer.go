@@ -12,10 +12,10 @@ import (
 	"unicode"
 )
 
-// A Tokenizer is a simple wrapping of text/scanner.Scanner, configured
-// for our purposes and made a TokenReader. It forms the lowest level,
-// turning text from readers into tokens.
-type Tokenizer struct {
+var _ TokenReader = (*_Tokenizer)(nil)
+
+// 基于 text/scanner.Scanner 包装的词法分析器
+type _Tokenizer struct {
 	tok      ScanToken
 	s        *scanner.Scanner
 	line     int
@@ -23,7 +23,7 @@ type Tokenizer struct {
 	file     *os.File // If non-nil, file descriptor to close.
 }
 
-func NewTokenizer(name string, r io.Reader, file *os.File) *Tokenizer {
+func newTokenizer(name string, r io.Reader, file *os.File) *_Tokenizer {
 	var s scanner.Scanner
 	s.Init(r)
 	// Newline is like a semicolon; other space characters are fine.
@@ -40,7 +40,7 @@ func NewTokenizer(name string, r io.Reader, file *os.File) *Tokenizer {
 	if file != nil {
 		linkCtxt.LineHist.Push(histLine, name)
 	}
-	return &Tokenizer{
+	return &_Tokenizer{
 		s:        &s,
 		line:     1,
 		fileName: name,
@@ -65,7 +65,7 @@ func isIdentRune(ch rune, i int) bool {
 	return i > 0 && unicode.IsDigit(ch)
 }
 
-func (t *Tokenizer) Text() string {
+func (t *_Tokenizer) Text() string {
 	switch t.tok {
 	case LSH:
 		return "<<"
@@ -79,24 +79,24 @@ func (t *Tokenizer) Text() string {
 	return t.s.TokenText()
 }
 
-func (t *Tokenizer) File() string {
+func (t *_Tokenizer) File() string {
 	return t.fileName
 }
 
-func (t *Tokenizer) Line() int {
+func (t *_Tokenizer) Line() int {
 	return t.line
 }
 
-func (t *Tokenizer) Col() int {
+func (t *_Tokenizer) Col() int {
 	return t.s.Pos().Column
 }
 
-func (t *Tokenizer) SetPos(line int, file string) {
+func (t *_Tokenizer) SetPos(line int, file string) {
 	t.line = line
 	t.fileName = file
 }
 
-func (t *Tokenizer) Next() ScanToken {
+func (t *_Tokenizer) Next() ScanToken {
 	s := t.s
 	for {
 		t.tok = ScanToken(s.Scan())
@@ -143,7 +143,7 @@ func (t *Tokenizer) Next() ScanToken {
 	return t.tok
 }
 
-func (t *Tokenizer) Close() {
+func (t *_Tokenizer) Close() {
 	if t.file != nil {
 		t.file.Close()
 		// It's an open file, so pop the line history.

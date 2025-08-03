@@ -31,7 +31,7 @@ func (p *Parser) atRegisterShift() bool {
 		return false
 	}
 	// R1<<...
-	if lex.IsRegisterShift(p.peek()) {
+	if p.peek().IsRegisterShift() {
 		return true
 	}
 	// R(1)<<...   Ugly check. TODO: Rethink how we handle ARM register shifts to be
@@ -39,7 +39,7 @@ func (p *Parser) atRegisterShift() bool {
 	if p.peek() != '(' || len(p.input)-p.inputPos < 4 {
 		return false
 	}
-	return p.at('(', scanner.Int, ')') && lex.IsRegisterShift(p.input[p.inputPos+3].ScanToken)
+	return p.at('(', scanner.Int, ')') && p.input[p.inputPos+3].ScanToken.IsRegisterShift()
 }
 
 // registerReference parses a register given either the name, R10, or a parenthesized form, SPR(10).

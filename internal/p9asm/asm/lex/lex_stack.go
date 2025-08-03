@@ -6,47 +6,48 @@ package lex
 
 import "text/scanner"
 
-// A Stack is a stack of TokenReaders. As the top TokenReader hits EOF,
-// it resumes reading the next one down.
-type Stack struct {
+var _ TokenReader = (*_Stack)(nil)
+
+// TokenReader 栈, 用于处理 #include 宏指令
+type _Stack struct {
 	tr []TokenReader
 }
 
-// Push adds tr to the top (end) of the input stack. (Popping happens automatically.)
-func (s *Stack) Push(tr TokenReader) {
+func (s *_Stack) Push(tr TokenReader) {
 	s.tr = append(s.tr, tr)
 }
 
-func (s *Stack) Next() ScanToken {
+// 下一个 Token,
+// 当前 TokenReader 结束时自动弹出
+func (s *_Stack) Next() ScanToken {
 	tos := s.tr[len(s.tr)-1]
 	tok := tos.Next()
 	for tok == scanner.EOF && len(s.tr) > 1 {
-		// Pop the topmost item from the stack and resume with the next one down.
 		s.tr = s.tr[:len(s.tr)-1]
 		tok = s.Next()
 	}
 	return tok
 }
 
-func (s *Stack) Text() string {
+func (s *_Stack) Text() string {
 	return s.tr[len(s.tr)-1].Text()
 }
 
-func (s *Stack) File() string {
+func (s *_Stack) File() string {
 	return s.tr[len(s.tr)-1].File()
 }
 
-func (s *Stack) Line() int {
+func (s *_Stack) Line() int {
 	return s.tr[len(s.tr)-1].Line()
 }
 
-func (s *Stack) Col() int {
+func (s *_Stack) Col() int {
 	return s.tr[len(s.tr)-1].Col()
 }
 
-func (s *Stack) SetPos(line int, file string) {
+func (s *_Stack) SetPos(line int, file string) {
 	s.tr[len(s.tr)-1].SetPos(line, file)
 }
 
-func (s *Stack) Close() { // Unused.
+func (s *_Stack) Close() {
 }

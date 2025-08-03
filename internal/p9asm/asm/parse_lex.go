@@ -9,12 +9,9 @@ import (
 	"wa-lang.org/wa/internal/p9asm/asm/lex"
 )
 
-// EOF represents the end of input.
-var EOF = lex.Make(scanner.EOF, "EOF")
-
 func (p *Parser) next() lex.Token {
 	if !p.more() {
-		return EOF
+		return lex.Token{ScanToken: scanner.EOF, Text: "EOF"}
 	}
 	tok := p.input[p.inputPos]
 	p.inputPos++

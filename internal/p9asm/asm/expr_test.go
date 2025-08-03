@@ -60,7 +60,7 @@ var exprTests = []exprTest{
 func TestExpr(t *testing.T) {
 	p := NewParser(nil, nil, nil, nil) // Expression evaluation uses none of these fields of the parser.
 	for i, test := range exprTests {
-		p.input = lex.Tokenize(test.input)
+		p.input = lex.LexString(test.input)
 		p.inputPos = 0
 
 		result := int64(p.expr())
@@ -124,7 +124,7 @@ func runBadTest(test badExprTest, t *testing.T) (err error) {
 		p.panicOnError = false
 	}()
 
-	p.input = lex.Tokenize(test.input)
+	p.input = lex.LexString(test.input)
 	p.inputPos = 0
 
 	defer func() {

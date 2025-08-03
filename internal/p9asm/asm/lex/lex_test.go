@@ -126,11 +126,11 @@ var lexTests = []lexTest{
 
 func TestLex(t *testing.T) {
 	for _, test := range lexTests {
-		input, err := NewInput(test.name, &arch.Flags{})
+		input, err := newInput(test.name, &arch.Flags{})
 		if err != nil {
 			t.Fatal(err)
 		}
-		input.Push(NewTokenizer(test.name, strings.NewReader(test.input), nil))
+		input.Push(newTokenizer(test.name, strings.NewReader(test.input), nil))
 		result := drain(input)
 		if result != test.output {
 			t.Errorf("%s: got %q expected %q", test.name, result, test.output)
@@ -144,7 +144,7 @@ func lines(a ...string) string {
 }
 
 // drain returns a single string representing the processed input tokens.
-func drain(input *Input) string {
+func drain(input *_Input) string {
 	var buf bytes.Buffer
 	for {
 		tok := input.Next()

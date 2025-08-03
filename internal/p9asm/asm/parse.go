@@ -159,7 +159,7 @@ func (p *Parser) parseLine() bool {
 			if tok == ')' || tok == ']' {
 				nesting--
 			}
-			items = append(items, lex.Make(tok, p.lex.Text()))
+			items = append(items, lex.Token{ScanToken: tok, Text: p.lex.Text()})
 		}
 		if len(items) > 0 {
 			operands = append(operands, items)
