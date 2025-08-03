@@ -13,6 +13,7 @@ type _Stack struct {
 	tr []TokenReader
 }
 
+// 主要用于宏展开时压栈
 func (s *_Stack) Push(tr TokenReader) {
 	s.tr = append(s.tr, tr)
 }

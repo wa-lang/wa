@@ -1,6 +1,8 @@
 // Copyright (C) 2025 武汉凹语言科技有限公司
 // SPDX-License-Identifier: AGPL-3.0-or-later
 
+// 说明: 汇编语言的宏只保留 #define 定义
+
 package lex
 
 import (
