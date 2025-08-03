@@ -39,7 +39,8 @@ jobs:
           path-to-profile: profile.cov
 
   build-and-test-windows:
-    runs-on: windows-latest
+    # https://github.com/actions/runner-images
+    runs-on: windows-2022
     steps:
       - name: Git checkout
         uses: actions/checkout@v2
