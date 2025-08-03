@@ -18,8 +18,7 @@ type Parser struct {
 	Flags *arch.Flags
 
 	lex           lex.TokenReader
-	lineNum       int   // Line number in source file.
-	histLineNum   int32 // Cumulative line number across source files.
+	lineNum       int32 // Line number in source file.
 	errorLine     int32 // (Cumulative) line number of last error.
 	errorCount    int   // Number of errors.
 	pc            int64 // virtual PC; count of Progs; doesn't advance for GLOBL or DATA.
@@ -94,8 +93,7 @@ func (p *Parser) parseLine() bool {
 		// We save the line number here so error messages from this instruction
 		// are labeled with this line. Otherwise we complain after we've absorbed
 		// the terminating newline and the line numbers are off by one in errors.
-		p.lineNum = p.lex.Line()
-		p.histLineNum = lex.HistLine()
+		p.lineNum = int32(p.lex.Line())
 		switch tok {
 		case '\n', ';':
 			continue

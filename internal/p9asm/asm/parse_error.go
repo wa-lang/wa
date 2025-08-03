@@ -13,11 +13,11 @@ func (p *Parser) errorf(format string, args ...interface{}) {
 	if p.panicOnError {
 		panic(fmt.Errorf(format, args...))
 	}
-	if p.histLineNum == p.errorLine {
+	if p.lineNum == p.errorLine {
 		// Only one error per line.
 		return
 	}
-	p.errorLine = p.histLineNum
+	p.errorLine = p.lineNum
 	// Put file and line information on head of message.
 	format = "%s:%d: " + format + "\n"
 	args = append([]interface{}{p.lex.File(), p.lineNum}, args...)

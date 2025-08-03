@@ -54,10 +54,10 @@ func (p *Parser) append(prog *obj.Prog, cond string, doLabel bool) {
 	}
 	prog.Pc = int64(p.pc)
 	if p.Flags.Debug {
-		fmt.Println(p.histLineNum, prog)
+		fmt.Println(p.lineNum, prog)
 	}
 	if testOut != nil {
-		fmt.Fprintln(testOut, p.histLineNum, prog)
+		fmt.Fprintln(testOut, p.lineNum, prog)
 	}
 }
 

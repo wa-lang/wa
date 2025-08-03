@@ -13,6 +13,7 @@ import (
 	"text/scanner"
 
 	"wa-lang.org/wa/internal/p9asm/asm/arch"
+	"wa-lang.org/wa/internal/p9asm/obj"
 )
 
 var _ TokenReader = (*_Input)(nil)
@@ -21,6 +22,7 @@ var _ TokenReader = (*_Input)(nil)
 // It also handles #include processing (by pushing onto the input stack)
 // and parses and instantiates macro definitions.
 type _Input struct {
+	ctxt            *obj.Link
 	stk             _Stack
 	includes        []string
 	beginningOfLine bool
@@ -39,7 +41,10 @@ type _MacroDefine struct {
 	tokens []Token  // 宏主体内容
 }
 
-func newInput(name string, flags *arch.Flags) (*_Input, error) {
+func newInput(ctxt *obj.Link, name string, flags *arch.Flags) (*_Input, error) {
+	if ctxt == nil {
+		ctxt = new(obj.Link)
+	}
 	if flags == nil {
 		flags = new(arch.Flags)
 	}
@@ -64,7 +69,7 @@ func newInput(name string, flags *arch.Flags) (*_Input, error) {
 	}
 
 	p := &_Input{
-		// include directories: look in source dir, then -I directories.
+		ctxt:            ctxt,
 		includes:        append([]string{filepath.Dir(name)}, flags.IncludeDirs...),
 		beginningOfLine: true,
 		macros:          macros,
@@ -434,7 +439,7 @@ func (in *_Input) include() {
 			in.Error("#include:", err)
 		}
 	}
-	in.Push(newTokenizer(name, fd, fd))
+	in.Push(newTokenizer(in.ctxt, name, fd, fd))
 }
 
 // #line processing.

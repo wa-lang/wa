@@ -58,7 +58,7 @@ func (p *Parser) asmData(operands [][]lex.Token) {
 	prog := &obj.Prog{
 		Ctxt:   p.ctxt,
 		As:     obj.ADATA,
-		Lineno: p.histLineNum,
+		Lineno: p.lineNum,
 		From:   nameAddr,
 		From3: &obj.Addr{
 			Offset: int64(scale),

@@ -30,7 +30,7 @@ type Token struct {
 
 // 解析字符串为 Token 列表
 func LexString(str string) []Token {
-	t := newTokenizer("command line", strings.NewReader(str), nil)
+	t := newTokenizer(nil, "command line", strings.NewReader(str), nil)
 	var tokens []Token
 	for {
 		tok := t.Next()

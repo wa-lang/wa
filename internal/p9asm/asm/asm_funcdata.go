@@ -26,7 +26,7 @@ func (p *Parser) asmFuncData(operands [][]lex.Token) {
 	prog := &obj.Prog{
 		Ctxt:   p.ctxt,
 		As:     obj.AFUNCDATA,
-		Lineno: p.histLineNum,
+		Lineno: p.lineNum,
 		From:   valueAddr,
 		To:     nameAddr,
 	}

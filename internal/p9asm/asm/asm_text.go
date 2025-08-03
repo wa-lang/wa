@@ -84,7 +84,7 @@ func (p *Parser) asmText(operands [][]lex.Token) {
 	prog := &obj.Prog{
 		Ctxt:   p.ctxt,
 		As:     obj.ATEXT,
-		Lineno: p.histLineNum,
+		Lineno: p.lineNum,
 		From:   nameAddr,
 		From3: &obj.Addr{
 			Type: obj.TYPE_CONST,

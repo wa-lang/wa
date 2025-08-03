@@ -26,9 +26,8 @@ type TokenReader interface {
 }
 
 // TODO: 基于 vfs 读文件
-func NewTokenReader(name string, ctxt *obj.Link, flags *arch.Flags) (TokenReader, error) {
-	linkCtxt = ctxt
-	input, err := newInput(name, flags)
+func NewTokenReader(ctxt *obj.Link, name string, flags *arch.Flags) (TokenReader, error) {
+	input, err := newInput(ctxt, name, flags)
 	if err != nil {
 		return nil, err
 	}
@@ -36,22 +35,6 @@ func NewTokenReader(name string, ctxt *obj.Link, flags *arch.Flags) (TokenReader
 	if err != nil {
 		return nil, fmt.Errorf("asm: %s", err)
 	}
-	input.Push(newTokenizer(name, fd, fd))
+	input.Push(newTokenizer(input.ctxt, name, fd, fd))
 	return input, nil
-}
-
-var (
-	// TODO(chai2010): 移除全局变量
-	// It might be nice if these weren't global.
-	linkCtxt *obj.Link     // The link context for all instructions.
-	histLine int       = 1 // The cumulative count of lines processed.
-)
-
-// TODO(chai2010): 删除
-// HistLine reports the cumulative source line number of the token,
-// for use in the Prog structure for the linker. (It's always handling the
-// instruction from the current lex line.)
-// It returns int32 because that's what type ../asm prefers.
-func HistLine() int32 {
-	return int32(histLine)
 }

@@ -10,12 +10,15 @@ import (
 	"strings"
 	"text/scanner"
 	"unicode"
+
+	"wa-lang.org/wa/internal/p9asm/obj"
 )
 
 var _ TokenReader = (*_Tokenizer)(nil)
 
 // 基于 text/scanner.Scanner 包装的词法分析器
 type _Tokenizer struct {
+	ctxt     *obj.Link
 	tok      ScanToken
 	s        *scanner.Scanner
 	line     int
@@ -23,7 +26,7 @@ type _Tokenizer struct {
 	file     *os.File // If non-nil, file descriptor to close.
 }
 
-func newTokenizer(name string, r io.Reader, file *os.File) *_Tokenizer {
+func newTokenizer(ctxt *obj.Link, name string, r io.Reader, file *os.File) *_Tokenizer {
 	var s scanner.Scanner
 	s.Init(r)
 	// Newline is like a semicolon; other space characters are fine.
@@ -37,10 +40,8 @@ func newTokenizer(name string, r io.Reader, file *os.File) *_Tokenizer {
 		scanner.ScanComments
 	s.Position.Filename = name
 	s.IsIdentRune = isIdentRune
-	if file != nil {
-		linkCtxt.LineHist.Push(histLine, name)
-	}
 	return &_Tokenizer{
+		ctxt:     ctxt,
 		s:        &s,
 		line:     1,
 		fileName: name,
@@ -105,15 +106,11 @@ func (t *_Tokenizer) Next() ScanToken {
 		}
 		length := strings.Count(s.TokenText(), "\n")
 		t.line += length
-		histLine += length
 		// TODO: If we ever have //go: comments in assembly, will need to keep them here.
 		// For now, just discard all comments.
 	}
 	switch t.tok {
 	case '\n':
-		if t.file != nil {
-			histLine++
-		}
 		t.line++
 	case '-':
 		if s.Peek() == '>' {
@@ -146,7 +143,5 @@ func (t *_Tokenizer) Next() ScanToken {
 func (t *_Tokenizer) Close() {
 	if t.file != nil {
 		t.file.Close()
-		// It's an open file, so pop the line history.
-		linkCtxt.LineHist.Pop(histLine)
 	}
 }

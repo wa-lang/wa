@@ -34,7 +34,7 @@ func (p *Parser) asmJump(op obj.As, cond string, a []obj.Addr) {
 	var target *obj.Addr
 	prog := &obj.Prog{
 		Ctxt:   p.ctxt,
-		Lineno: p.histLineNum,
+		Lineno: p.lineNum,
 		As:     op,
 	}
 	switch len(a) {
@@ -121,7 +121,7 @@ func (p *Parser) asmInstruction(op obj.As, cond string, a []obj.Addr) {
 	// fmt.Printf("%s %+v\n", obj.Aconv(op), a)
 	prog := &obj.Prog{
 		Ctxt:   p.ctxt,
-		Lineno: p.histLineNum,
+		Lineno: p.lineNum,
 		As:     op,
 	}
 	switch len(a) {

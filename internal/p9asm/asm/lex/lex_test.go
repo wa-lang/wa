@@ -126,11 +126,11 @@ var lexTests = []lexTest{
 
 func TestLex(t *testing.T) {
 	for _, test := range lexTests {
-		input, err := newInput(test.name, &arch.Flags{})
+		input, err := newInput(nil, test.name, &arch.Flags{})
 		if err != nil {
 			t.Fatal(err)
 		}
-		input.Push(newTokenizer(test.name, strings.NewReader(test.input), nil))
+		input.Push(newTokenizer(input.ctxt, test.name, strings.NewReader(test.input), nil))
 		result := drain(input)
 		if result != test.output {
 			t.Errorf("%s: got %q expected %q", test.name, result, test.output)

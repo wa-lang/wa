@@ -36,7 +36,7 @@ func (p *Parser) asmGlobl(operands [][]lex.Token) {
 	prog := &obj.Prog{
 		Ctxt:   p.ctxt,
 		As:     obj.AGLOBL,
-		Lineno: p.histLineNum,
+		Lineno: p.lineNum,
 		From:   nameAddr,
 		From3: &obj.Addr{
 			Offset: flag,
