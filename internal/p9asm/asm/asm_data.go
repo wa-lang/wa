@@ -25,7 +25,16 @@ func (p *Parser) asmData(operands [][]lex.Token) {
 	if n < 3 || op[n-2].ScanToken != '/' || op[n-1].ScanToken != scanner.Int {
 		p.errorf("expect /size for DATA argument")
 	}
-	scale := p.parseScale(op[n-1].String())
+
+	var scale int8
+	switch s := op[n-1].String(); s {
+	case "1", "2", "4", "8":
+		scale = int8(s[0] - '0')
+	default:
+		p.errorf("bad scale: %s", s)
+		scale = 0
+	}
+
 	op = op[:n-2]
 	nameAddr := p.address(op)
 	p.validateSymbol("DATA", &nameAddr, true)

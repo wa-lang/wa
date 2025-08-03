@@ -93,7 +93,10 @@ func (p *Parser) asmJump(op obj.As, cond string, a []obj.Addr) {
 		if targetProg == nil {
 			p.toPatch = append(p.toPatch, Patch{prog, target.Sym.Name})
 		} else {
-			p.branch(prog, targetProg)
+			prog.To = obj.Addr{
+				Type: obj.TYPE_BRANCH,
+				Val:  targetProg,
+			}
 		}
 	case target.Type == obj.TYPE_MEM && target.Name == obj.NAME_NONE:
 		// JMP 4(R0)
@@ -277,4 +280,20 @@ func (p *Parser) asmInstruction(op obj.As, cond string, a []obj.Addr) {
 	}
 
 	p.append(prog, cond, true)
+}
+
+// getRegister checks that addr represents a register and returns its value.
+func (p *Parser) getRegister(prog *obj.Prog, op obj.As, addr *obj.Addr) obj.RBaseType {
+	if addr.Type != obj.TYPE_REG || addr.Offset != 0 || addr.Name != 0 || addr.Index != 0 {
+		p.errorf("%s: expected register; found %s", op, addr.Dconv(prog))
+	}
+	return addr.Reg
+}
+
+// getConstant checks that addr represents a plain constant and returns its value.
+func (p *Parser) getConstant(prog *obj.Prog, op obj.As, addr *obj.Addr) int64 {
+	if addr.Type != obj.TYPE_MEM || addr.Name != 0 || addr.Reg != 0 || addr.Index != 0 {
+		p.errorf("%s: expected integer constant; found %s", op, addr.Dconv(prog))
+	}
+	return addr.Offset
 }

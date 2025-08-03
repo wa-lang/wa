@@ -60,7 +60,9 @@ var exprTests = []exprTest{
 func TestExpr(t *testing.T) {
 	p := NewParser(nil, nil, nil, nil) // Expression evaluation uses none of these fields of the parser.
 	for i, test := range exprTests {
-		p.start(lex.Tokenize(test.input))
+		p.input = lex.Tokenize(test.input)
+		p.inputPos = 0
+
 		result := int64(p.expr())
 		if result != test.output {
 			t.Errorf("%d: %q evaluated to %d; expected %d", i, test.input, result, test.output)
@@ -98,10 +100,6 @@ var badExprTests = []badExprTest{
 }
 
 func TestBadExpr(t *testing.T) {
-	panicOnError = true
-	defer func() {
-		panicOnError = false
-	}()
 	for i, test := range badExprTests {
 		err := runBadTest(test, t)
 		if err == nil {
@@ -119,7 +117,16 @@ func TestBadExpr(t *testing.T) {
 
 func runBadTest(test badExprTest, t *testing.T) (err error) {
 	p := NewParser(nil, nil, nil, nil) // Expression evaluation uses none of these fields of the parser.
-	p.start(lex.Tokenize(test.input))
+
+	// 将错误以异常方式抛出
+	p.panicOnError = true
+	defer func() {
+		p.panicOnError = false
+	}()
+
+	p.input = lex.Tokenize(test.input)
+	p.inputPos = 0
+
 	defer func() {
 		e := recover()
 		var ok bool

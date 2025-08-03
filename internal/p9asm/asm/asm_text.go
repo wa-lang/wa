@@ -20,7 +20,21 @@ func (p *Parser) asmText(operands [][]lex.Token) {
 
 	// Labels are function scoped. Patch existing labels and
 	// create a new label space for this TEXT.
-	p.patch()
+	for _, patch := range p.toPatch {
+		targetProg := p.labels[patch.label]
+		if targetProg == nil {
+			p.errorf("undefined label %s", patch.label)
+		} else {
+			patch.prog.To = obj.Addr{
+				Type: obj.TYPE_BRANCH,
+				Val:  targetProg,
+			}
+		}
+	}
+
+	// 清空 toPatch 列表, 已经完成
+	p.toPatch = p.toPatch[:0]
+
 	p.labels = make(map[string]*obj.Prog)
 
 	// Operand 0 is the symbol name in the form foo(SB).

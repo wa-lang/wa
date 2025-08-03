@@ -89,27 +89,3 @@ func (p *Parser) validateImmediate(pseudo string, addr *obj.Addr) {
 		p.errorf("%s: expected immediate constant; found %s", pseudo, addr.Dconv(&emptyProg))
 	}
 }
-
-func (p *Parser) branch(jmp, target *obj.Prog) {
-	jmp.To = obj.Addr{
-		Type:  obj.TYPE_BRANCH,
-		Index: 0,
-	}
-	jmp.To.Val = target
-}
-
-// getConstant checks that addr represents a plain constant and returns its value.
-func (p *Parser) getConstant(prog *obj.Prog, op obj.As, addr *obj.Addr) int64 {
-	if addr.Type != obj.TYPE_MEM || addr.Name != 0 || addr.Reg != 0 || addr.Index != 0 {
-		p.errorf("%s: expected integer constant; found %s", op, addr.Dconv(prog))
-	}
-	return addr.Offset
-}
-
-// getRegister checks that addr represents a register and returns its value.
-func (p *Parser) getRegister(prog *obj.Prog, op obj.As, addr *obj.Addr) obj.RBaseType {
-	if addr.Type != obj.TYPE_REG || addr.Offset != 0 || addr.Name != 0 || addr.Index != 0 {
-		p.errorf("%s: expected register; found %s", op, addr.Dconv(prog))
-	}
-	return addr.Reg
-}
