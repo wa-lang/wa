@@ -69,7 +69,6 @@ type Link struct {
 	Windows            int32
 	Enforce_data_order int32
 	Hash               map[SymVer]*LSym
-	LineHist           LineHist
 	Imports            []string
 	Plist              *Plist
 	Plast              *Plist
@@ -102,12 +101,11 @@ type Link struct {
 	Etextp             *LSym
 }
 
-func Linknew(arch *LinkArch, targetOS, workDir string) *Link {
+func Linknew(arch *LinkArch, targetOS, _workDir string) *Link {
 	ctxt := new(Link)
 	ctxt.Hash = make(map[SymVer]*LSym)
 	ctxt.Arch = arch
 	ctxt.Version = HistVersion
-	ctxt.LineHist.Dir = workDir
 
 	if err := ctxt.Headtype.Set(targetOS); err != nil {
 		log.Fatal(err)

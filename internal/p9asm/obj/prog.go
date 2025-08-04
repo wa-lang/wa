@@ -76,9 +76,9 @@ func (p *Prog) String() string {
 
 	var buf bytes.Buffer
 
-	fmt.Fprintf(&buf, "%.5d (%v)\t%v%s",
+	fmt.Fprintf(&buf, "%.5d (file:%v)\t%v%s",
 		p.Pc,
-		p.Ctxt.LineHist.LineString(int(p.Lineno)),
+		p.Lineno,
 		p.As,
 		sc,
 	)

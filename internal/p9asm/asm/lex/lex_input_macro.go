@@ -23,7 +23,7 @@ func (in *_Input) defineMacro() {
 		// 第一个是带参数的宏, 第二个没有参数, 区别在于第二个中间有空格
 		if tok == '(' && in.stk.Col() == prevCol+1 {
 			acceptArg := true // 宏是带参数的
-			args = []string{} // 空参数和 nil 是由区别的
+			args = []string{} // 空参数和 nil 是有区别的
 
 		Loop:
 			for {

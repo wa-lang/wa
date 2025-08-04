@@ -286,15 +286,6 @@ func (cursym *LSym) linkpcln(ctxt *Link) {
 // It doesn't allow printing the full stack, and it returns the file name and line number separately.
 // TODO: Unify with linklinefmt somehow.
 func (ctxt *Link) linkgetline(lineno int32, f **LSym, l *int32) {
-	stk := ctxt.LineHist.At(int(lineno))
-	if stk == nil || stk.AbsFile == "" {
-		*f = ctxt.Lookup("??", HistVersion)
-		*l = 0
-		return
-	}
-	if stk.Sym == nil {
-		stk.Sym = ctxt.Lookup(stk.AbsFile, HistVersion)
-	}
-	*f = stk.Sym
-	*l = int32(stk.fileLineAt(int(lineno)))
+	*f = ctxt.Lookup("??", HistVersion)
+	*l = 0
 }
