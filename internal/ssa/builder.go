@@ -261,6 +261,12 @@ func (b *builder) builtin(fn *Function, obj *types.Builtin, args []ast.Expr, typ
 	case "new":
 		alloc := emitNew(fn, deref(typ), pos)
 		alloc.Comment = "new"
+
+		// new(int, 123)
+		if len(args) == 2 {
+			emitStore(fn, alloc, b.expr(fn, args[1]), args[1].Pos())
+		}
+
 		return alloc
 
 	case "len", "cap":

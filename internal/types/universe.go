@@ -202,7 +202,7 @@ var predeclaredFuncs = [...]struct {
 	_Imag:    {"imag", 1, false, expression},
 	_Len:     {"len", 1, false, expression},
 	_Make:    {"make", 1, true, expression},
-	_New:     {"new", 1, false, expression},
+	_New:     {"new", 1, true, expression},
 	_Panic:   {"panic", 1, false, statement},
 	_Print:   {"print", 0, true, statement},
 	_Println: {"println", 0, true, statement},

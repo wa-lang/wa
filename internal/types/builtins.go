@@ -450,16 +450,37 @@ func (check *Checker) builtin(x *operand, call *ast.CallExpr, id builtinId) (_ b
 
 	case _New:
 		// new(T)
+		// new(T, initValue)
 		// (no argument evaluated yet)
 		T := check.typ(call.Args[0])
 		if T == Typ[Invalid] {
 			return
 		}
 
+		if nargs != 1 && nargs != 2 {
+			check.errorf(call.Pos(), "%v expects 2 or 3 arguments; found %d", call, nargs)
+			return
+		}
+
+		var sig *Signature
+		if nargs == 2 {
+			sig = makeSig(x.typ, T, T)
+
+			// 检查第二个参数类型
+			var arg1 operand
+			check.multiExpr(&arg1, call.Args[1])
+			if arg1.mode != invalid {
+				context := check.sprintf("argument to %s", call.Fun)
+				check.argument(sig, 1, &arg1, token.NoPos, context)
+			}
+		} else {
+			sig = makeSig(x.typ, T)
+		}
+
 		x.mode = value
 		x.typ = &Pointer{base: T}
 		if check.Types != nil {
-			check.recordBuiltinType(call.Fun, makeSig(x.typ, T))
+			check.recordBuiltinType(call.Fun, sig)
 		}
 
 	case _Panic:
