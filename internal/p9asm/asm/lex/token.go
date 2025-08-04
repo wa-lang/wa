@@ -5,8 +5,9 @@ package lex
 
 import (
 	"fmt"
-	"strings"
 	"text/scanner"
+
+	"wa-lang.org/wa/internal/p9asm/objabi"
 )
 
 // 对应符号类别
@@ -26,18 +27,20 @@ const (
 type Token struct {
 	ScanToken ScanToken
 	Text      string
+	Pos       objabi.Pos
 }
 
 // 解析字符串为 Token 列表
+// 只是在 asm parser 的单元测试用到
 func LexString(str string) []Token {
-	t := newTokenizer(nil, "command line", strings.NewReader(str), nil)
+	t := newTokenizer(nil, "command line", []byte(str))
 	var tokens []Token
 	for {
 		tok := t.Next()
 		if tok == scanner.EOF {
 			break
 		}
-		tokens = append(tokens, Token{tok, t.Text()})
+		tokens = append(tokens, Token{tok, t.Text(), t.Pos()})
 	}
 	return tokens
 }
@@ -69,6 +72,16 @@ func (t ScanToken) String() string {
 		return "raw string constant"
 	case scanner.Comment:
 		return "comment"
+
+	case LSH:
+		return "<<"
+	case RSH:
+		return ">>"
+	case ARR:
+		return "->"
+	case ROT:
+		return "@>"
+
 	default:
 		return fmt.Sprintf("%q", rune(t))
 	}

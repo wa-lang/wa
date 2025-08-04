@@ -78,9 +78,10 @@ func (p *Prog) String() string {
 
 	var buf bytes.Buffer
 
-	fmt.Fprintf(&buf, "%.5d (file:%v)\t%v%s",
+	position := p.Ctxt.Fset.Position(p.Lineno)
+	fmt.Fprintf(&buf, "%.5d (%v)\t%v%s",
 		p.Pc,
-		p.Lineno,
+		position,
 		p.As,
 		sc,
 	)

@@ -6,7 +6,10 @@
 package lex
 
 import (
-	"fmt"
+	"bytes"
+	"errors"
+	"io"
+	"io/fs"
 	"os"
 
 	"wa-lang.org/wa/internal/p9asm/asm/arch"
@@ -17,28 +20,45 @@ import (
 // Token读取接口
 type TokenReader interface {
 	Next() ScanToken
-
 	Text() string
-	File() string
-	Line() int
-	Col() int
-
 	Pos() objabi.Pos
-	SetPos(line int, file string)
-
-	Close()
 }
 
-// TODO: 基于 vfs 读文件
-func NewTokenReader(ctxt *obj.Link, name string, flags *arch.Flags) (TokenReader, error) {
-	input, err := newInput(ctxt, name, flags)
+func NewTokenReader(ctxt *obj.Link, vfs fs.FS, filename string, src interface{}, flags *arch.Flags) (TokenReader, error) {
+	input, err := newInput(ctxt, filename, flags)
 	if err != nil {
 		return nil, err
 	}
-	fd, err := os.Open(name)
+
+	// get source
+	text, err := readSource(vfs, filename, src)
 	if err != nil {
-		return nil, fmt.Errorf("asm: %s", err)
+		return nil, err
 	}
-	input.Push(newTokenizer(input.ctxt, name, fd, fd))
+
+	input.Push(newTokenizer(input.ctxt, filename, text))
 	return input, nil
+}
+
+func readSource(vfs fs.FS, filename string, src interface{}) ([]byte, error) {
+	if src != nil {
+		switch s := src.(type) {
+		case string:
+			return []byte(s), nil
+		case []byte:
+			return s, nil
+		case *bytes.Buffer:
+			// is io.Reader, but src is already available in []byte form
+			if s != nil {
+				return s.Bytes(), nil
+			}
+		case io.Reader:
+			return io.ReadAll(s)
+		}
+		return nil, errors.New("invalid source")
+	}
+	if vfs != nil {
+		return fs.ReadFile(vfs, filename)
+	}
+	return os.ReadFile(filename)
 }

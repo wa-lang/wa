@@ -5,9 +5,7 @@
 package lex
 
 import (
-	"io"
-	"os"
-	"strings"
+	"bytes"
 	"text/scanner"
 	"unicode"
 
@@ -19,19 +17,29 @@ var _ TokenReader = (*_Tokenizer)(nil)
 
 // 基于 text/scanner.Scanner 包装的词法分析器
 type _Tokenizer struct {
-	ctxt     *obj.Link
-	tok      ScanToken
-	s        *scanner.Scanner
-	line     int
-	fileName string
-	file     *os.File // If non-nil, file descriptor to close.
+	ctxt *obj.Link
+	tok  ScanToken
+	s    *scanner.Scanner
+	file *objabi.File
 }
 
-func newTokenizer(ctxt *obj.Link, name string, r io.Reader, file *os.File) *_Tokenizer {
+func newTokenizer(ctxt *obj.Link, fileName string, text []byte) *_Tokenizer {
+	if ctxt == nil {
+		ctxt = new(obj.Link)
+	}
+	if ctxt.Fset == nil {
+		ctxt.Fset = objabi.NewFileSet()
+	}
+
+	f := ctxt.Fset.AddFile(fileName, -1, len(text))
+	f.SetLinesForContent(text)
+
 	var s scanner.Scanner
-	s.Init(r)
+	s.Init(bytes.NewReader(text))
+
 	// Newline is like a semicolon; other space characters are fine.
 	s.Whitespace = 1<<'\t' | 1<<'\r' | 1<<' '
+
 	// Don't skip comments: we need to count newlines.
 	s.Mode = scanner.ScanChars |
 		scanner.ScanFloats |
@@ -39,14 +47,14 @@ func newTokenizer(ctxt *obj.Link, name string, r io.Reader, file *os.File) *_Tok
 		scanner.ScanInts |
 		scanner.ScanStrings |
 		scanner.ScanComments
-	s.Position.Filename = name
+
+	s.Position.Filename = fileName
 	s.IsIdentRune = isIdentRune
+
 	return &_Tokenizer{
-		ctxt:     ctxt,
-		s:        &s,
-		line:     1,
-		fileName: name,
-		file:     file,
+		ctxt: ctxt,
+		s:    &s,
+		file: f,
 	}
 }
 
@@ -81,24 +89,8 @@ func (t *_Tokenizer) Text() string {
 	return t.s.TokenText()
 }
 
-func (t *_Tokenizer) File() string {
-	return t.fileName
-}
-
-func (t *_Tokenizer) Line() int {
-	return t.line
-}
-
-func (t *_Tokenizer) Col() int {
-	return t.s.Pos().Column
-}
-
-// TODO: 补充 pos 信息
-func (in *_Tokenizer) Pos() objabi.Pos { return objabi.NoPos }
-
-func (t *_Tokenizer) SetPos(line int, file string) {
-	t.line = line
-	t.fileName = file
+func (in *_Tokenizer) Pos() objabi.Pos {
+	return objabi.Pos(in.file.Base() + in.s.Pos().Offset)
 }
 
 func (t *_Tokenizer) Next() ScanToken {
@@ -108,14 +100,8 @@ func (t *_Tokenizer) Next() ScanToken {
 		if t.tok != scanner.Comment {
 			break
 		}
-		length := strings.Count(s.TokenText(), "\n")
-		t.line += length
-		// TODO: If we ever have //go: comments in assembly, will need to keep them here.
-		// For now, just discard all comments.
 	}
 	switch t.tok {
-	case '\n':
-		t.line++
 	case '-':
 		if s.Peek() == '>' {
 			s.Next()
@@ -142,10 +128,4 @@ func (t *_Tokenizer) Next() ScanToken {
 		}
 	}
 	return t.tok
-}
-
-func (t *_Tokenizer) Close() {
-	if t.file != nil {
-		t.file.Close()
-	}
 }

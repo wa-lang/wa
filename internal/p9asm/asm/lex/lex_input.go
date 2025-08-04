@@ -45,6 +45,9 @@ func newInput(ctxt *obj.Link, name string, flags *arch.Flags) (*_Input, error) {
 	if ctxt == nil {
 		ctxt = new(obj.Link)
 	}
+	if ctxt.Fset == nil {
+		ctxt.Fset = objabi.NewFileSet()
+	}
 	if flags == nil {
 		flags = new(arch.Flags)
 	}
@@ -85,15 +88,10 @@ func (in *_Input) Push(r TokenReader) {
 }
 
 func (in *_Input) Text() string { return in.text }
-func (in *_Input) File() string { return in.stk.File() }
-func (in *_Input) Line() int    { return in.stk.Line() }
-func (in *_Input) Col() int     { return in.stk.Col() }
 
-// TODO: 补充 pos 信息
-func (in *_Input) Pos() objabi.Pos              { return objabi.NoPos }
-func (in *_Input) SetPos(line int, file string) { in.stk.SetPos(line, file) }
-
-func (in *_Input) Close() { in.stk.Close() }
+func (in *_Input) Pos() objabi.Pos {
+	return in.stk.Pos()
+}
 
 func (in *_Input) Next() ScanToken {
 	if in.peek {
@@ -146,7 +144,8 @@ func (in *_Input) Next() ScanToken {
 }
 
 func (in *_Input) Error(args ...interface{}) {
-	fmt.Fprintf(os.Stderr, "%s:%d: %s", in.stk.File(), in.stk.Line(), fmt.Sprintln(args...))
+	pos := in.ctxt.Fset.Position(in.stk.Pos())
+	fmt.Fprintf(os.Stderr, "%v: %s", pos, fmt.Sprintln(args...))
 	os.Exit(1)
 }
 

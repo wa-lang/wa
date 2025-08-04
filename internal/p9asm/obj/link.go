@@ -106,6 +106,7 @@ type Link struct {
 
 func Linknew(arch *LinkArch, targetOS, _workDir string) *Link {
 	ctxt := new(Link)
+	ctxt.Fset = objabi.NewFileSet()
 	ctxt.Hash = make(map[SymVer]*LSym)
 	ctxt.Arch = arch
 	ctxt.Version = HistVersion

@@ -119,7 +119,7 @@ var CmdP9Asm = &cli.Command{
 		// "\n!\n" 是文件头结束标志
 		fmt.Fprintf(output, "wa object %s %s\n!\n", c.String("os"), c.String("arch"))
 
-		lexer, err := lex.NewTokenReader(ctxt, name, flags)
+		lexer, err := lex.NewTokenReader(ctxt, nil, name, nil, flags)
 		if err != nil {
 			fmt.Fprint(os.Stderr, err)
 			os.Exit(1)

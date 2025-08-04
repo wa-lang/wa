@@ -38,24 +38,6 @@ func (s *_Stack) Text() string {
 	return s.tr[len(s.tr)-1].Text()
 }
 
-func (s *_Stack) File() string {
-	return s.tr[len(s.tr)-1].File()
-}
-
-func (s *_Stack) Line() int {
-	return s.tr[len(s.tr)-1].Line()
-}
-
-func (s *_Stack) Col() int {
-	return s.tr[len(s.tr)-1].Col()
-}
-
-// TODO: 补充 pos 信息
-func (in *_Stack) Pos() objabi.Pos { return objabi.NoPos }
-
-func (s *_Stack) SetPos(line int, file string) {
-	s.tr[len(s.tr)-1].SetPos(line, file)
-}
-
-func (s *_Stack) Close() {
+func (s *_Stack) Pos() objabi.Pos {
+	return s.tr[len(s.tr)-1].Pos()
 }

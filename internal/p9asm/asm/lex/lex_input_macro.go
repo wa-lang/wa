@@ -13,7 +13,7 @@ func (in *_Input) defineMacro() {
 	}
 	name := in.stk.Text()
 
-	prevCol := in.stk.Col()
+	prevCol := in.stk.Pos()
 	tok = in.stk.Next()
 
 	var args []string
@@ -21,7 +21,7 @@ func (in *_Input) defineMacro() {
 	if tok != '\n' && tok != scanner.EOF {
 		// 需要小心区分 `#define A(x)` 和 `#define A (x)`
 		// 第一个是带参数的宏, 第二个没有参数, 区别在于第二个中间有空格
-		if tok == '(' && in.stk.Col() == prevCol+1 {
+		if tok == '(' && in.stk.Pos() == prevCol+1 {
 			acceptArg := true // 宏是带参数的
 			args = []string{} // 空参数和 nil 是有区别的
 
@@ -60,7 +60,7 @@ func (in *_Input) defineMacro() {
 					in.Error(`can only escape \ or \n in definition for macro:`, name)
 				}
 			}
-			tokens = append(tokens, Token{tok, in.stk.Text()})
+			tokens = append(tokens, Token{tok, in.stk.Text(), in.stk.Pos()})
 			tok = in.stk.Next()
 		}
 	}
@@ -79,17 +79,20 @@ func (in *_Input) defineMacro() {
 func (in *_Input) invokeMacro(macro *_MacroDefine) {
 	// len(macro.args) == 0 和 nil 是有区别的, 前者表示有参数的宏, 后者表示普通替换
 	if macro.args == nil {
-		in.Push(newSlice(in.stk.File(), in.stk.Line(), macro.tokens))
+		pos := in.ctxt.Fset.Position(in.stk.Pos())
+		in.Push(newSlice(pos.Filename, pos.Line, macro.tokens))
 		return
 	}
 	tok := in.stk.Next()
 	if tok != '(' {
+		pos := in.ctxt.Fset.Position(in.stk.Pos())
+
 		// If the macro has arguments but is invoked without them, all we push is the macro name.
 		// First, put back the token.
 		in.peekToken = tok
 		in.peekText = in.text
 		in.peek = true
-		in.Push(newSlice(in.stk.File(), in.stk.Line(), []Token{{macroName, macro.name}}))
+		in.Push(newSlice(pos.Filename, pos.Line, []Token{{macroName, macro.name, in.stk.Pos()}}))
 		return
 	}
 	actuals := in.argsFor(macro)
@@ -106,7 +109,9 @@ func (in *_Input) invokeMacro(macro *_MacroDefine) {
 		}
 		tokens = append(tokens, substitution...)
 	}
-	in.Push(newSlice(in.stk.File(), in.stk.Line(), tokens))
+
+	pos := in.ctxt.Fset.Position(in.stk.Pos())
+	in.Push(newSlice(pos.Filename, pos.Line, tokens))
 }
 
 // argsFor returns a map from formal name to actual value for this argumented macro invocation.
@@ -154,6 +159,6 @@ func (in *_Input) collectArgument(macro *_MacroDefine) ([]Token, ScanToken) {
 		if tok == ')' {
 			nesting--
 		}
-		tokens = append(tokens, Token{tok, in.stk.Text()})
+		tokens = append(tokens, Token{tok, in.stk.Text(), in.stk.Pos()})
 	}
 }

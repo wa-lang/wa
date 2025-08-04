@@ -130,7 +130,7 @@ func TestLex(t *testing.T) {
 		if err != nil {
 			t.Fatal(err)
 		}
-		input.Push(newTokenizer(input.ctxt, test.name, strings.NewReader(test.input), nil))
+		input.Push(newTokenizer(input.ctxt, test.name, []byte(test.input)))
 		result := drain(input)
 		if result != test.output {
 			t.Errorf("%s: got %q expected %q", test.name, result, test.output)
