@@ -12,16 +12,17 @@ import (
 	"wa-lang.org/wa/internal/p9asm/asm/arch"
 	"wa-lang.org/wa/internal/p9asm/asm/lex"
 	"wa-lang.org/wa/internal/p9asm/obj"
+	"wa-lang.org/wa/internal/p9asm/objabi"
 )
 
 type Parser struct {
 	Flags *arch.Flags
 
 	lex           lex.TokenReader
-	lineNum       int32 // Line number in source file.
-	errorLine     int32 // (Cumulative) line number of last error.
-	errorCount    int   // Number of errors.
-	pc            int64 // virtual PC; count of Progs; doesn't advance for GLOBL or DATA.
+	lineNum       objabi.Pos // Line number in source file.
+	errorLine     objabi.Pos // (Cumulative) line number of last error.
+	errorCount    int        // Number of errors.
+	pc            int64      // virtual PC; count of Progs; doesn't advance for GLOBL or DATA.
 	input         []lex.Token
 	inputPos      int
 	pendingLabels []string // Labels to attach to next instruction.
@@ -93,7 +94,7 @@ func (p *Parser) parseLine() bool {
 		// We save the line number here so error messages from this instruction
 		// are labeled with this line. Otherwise we complain after we've absorbed
 		// the terminating newline and the line numbers are off by one in errors.
-		p.lineNum = int32(p.lex.Line())
+		p.lineNum = p.lex.Pos()
 		switch tok {
 		case '\n', ';':
 			continue

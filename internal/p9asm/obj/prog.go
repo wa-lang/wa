@@ -6,6 +6,8 @@ package obj
 import (
 	"bytes"
 	"fmt"
+
+	"wa-lang.org/wa/internal/p9asm/objabi"
 )
 
 // Prog 对应一条汇编指令
@@ -19,7 +21,7 @@ type Prog struct {
 	Pcond  *Prog
 	Rel    *Prog // Source of forward jumps on x86; pcrel on arm
 	Pc     int64
-	Lineno int32
+	Lineno objabi.Pos // 根据 Ctxt.Fset 进行定位
 	Spadj  int32
 	As     As
 	Reg    RBaseType

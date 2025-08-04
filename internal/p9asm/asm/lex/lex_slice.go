@@ -4,7 +4,11 @@
 
 package lex
 
-import "text/scanner"
+import (
+	"text/scanner"
+
+	"wa-lang.org/wa/internal/p9asm/objabi"
+)
 
 var _ TokenReader = (*_Slice)(nil)
 
@@ -49,6 +53,9 @@ func (s *_Slice) Col() int {
 	// Col is only called when defining a macro, which can't reach here.
 	panic("cannot happen: slice col")
 }
+
+// TODO: 补充 pos 信息
+func (in *_Slice) Pos() objabi.Pos { return objabi.NoPos }
 
 func (s *_Slice) SetPos(line int, file string) {
 	// Cannot happen because we only have slices of already-scanned

@@ -4,7 +4,11 @@
 
 package lex
 
-import "text/scanner"
+import (
+	"text/scanner"
+
+	"wa-lang.org/wa/internal/p9asm/objabi"
+)
 
 var _ TokenReader = (*_Stack)(nil)
 
@@ -45,6 +49,9 @@ func (s *_Stack) Line() int {
 func (s *_Stack) Col() int {
 	return s.tr[len(s.tr)-1].Col()
 }
+
+// TODO: 补充 pos 信息
+func (in *_Stack) Pos() objabi.Pos { return objabi.NoPos }
 
 func (s *_Stack) SetPos(line int, file string) {
 	s.tr[len(s.tr)-1].SetPos(line, file)

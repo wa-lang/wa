@@ -99,7 +99,6 @@ import (
 	"io"
 	"log"
 	"math"
-	"path/filepath"
 	"strings"
 )
 
@@ -531,7 +530,8 @@ func (ctxt *Link) writesym(b io.Writer, s *LSym) {
 		}
 		ctxt.wrint(b, int64(len(s.Pcln.File)))
 		for i := 0; i < len(s.Pcln.File); i++ {
-			ctxt.wrpathsym(b, s.Pcln.File[i])
+			// TODO(chai2010): 修改了格式, 需要验证
+			ctxt.wrstring(b, s.Pcln.File[i])
 		}
 	}
 }
@@ -623,17 +623,6 @@ func (ctxt *Link) wrstring(b io.Writer, s string) {
 func (ctxt *Link) wrdata(b io.Writer, v []byte) {
 	ctxt.wrint(b, int64(len(v)))
 	b.Write(v)
-}
-
-func (ctxt *Link) wrpathsym(b io.Writer, s *LSym) {
-	if s == nil {
-		ctxt.wrint(b, 0)
-		ctxt.wrint(b, 0)
-		return
-	}
-
-	ctxt.wrstring(b, filepath.ToSlash(s.Name))
-	ctxt.wrint(b, int64(s.Version))
 }
 
 func (ctxt *Link) wrsym(b io.Writer, s *LSym) {

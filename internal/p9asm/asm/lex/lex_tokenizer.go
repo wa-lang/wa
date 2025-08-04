@@ -12,6 +12,7 @@ import (
 	"unicode"
 
 	"wa-lang.org/wa/internal/p9asm/obj"
+	"wa-lang.org/wa/internal/p9asm/objabi"
 )
 
 var _ TokenReader = (*_Tokenizer)(nil)
@@ -91,6 +92,9 @@ func (t *_Tokenizer) Line() int {
 func (t *_Tokenizer) Col() int {
 	return t.s.Pos().Column
 }
+
+// TODO: 补充 pos 信息
+func (in *_Tokenizer) Pos() objabi.Pos { return objabi.NoPos }
 
 func (t *_Tokenizer) SetPos(line int, file string) {
 	t.line = line

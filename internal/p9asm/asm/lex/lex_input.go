@@ -14,6 +14,7 @@ import (
 
 	"wa-lang.org/wa/internal/p9asm/asm/arch"
 	"wa-lang.org/wa/internal/p9asm/obj"
+	"wa-lang.org/wa/internal/p9asm/objabi"
 )
 
 var _ TokenReader = (*_Input)(nil)
@@ -88,6 +89,8 @@ func (in *_Input) File() string { return in.stk.File() }
 func (in *_Input) Line() int    { return in.stk.Line() }
 func (in *_Input) Col() int     { return in.stk.Col() }
 
+// TODO: 补充 pos 信息
+func (in *_Input) Pos() objabi.Pos              { return objabi.NoPos }
 func (in *_Input) SetPos(line int, file string) { in.stk.SetPos(line, file) }
 
 func (in *_Input) Close() { in.stk.Close() }

@@ -36,6 +36,8 @@ import (
 	"encoding/binary"
 	"io"
 	"log"
+
+	"wa-lang.org/wa/internal/p9asm/objabi"
 )
 
 // LinkArch is the definition of a single architecture.
@@ -56,8 +58,9 @@ type LinkArch struct {
 // Link holds the context for writing object code from a compiler
 // to be linker input or for reading that input into the linker.
 type Link struct {
-	Headtype           HeadType // waos 决定 link 文件类型
+	Headtype           HeadType
 	Arch               *LinkArch
+	Fset               *objabi.FileSet
 	Debugasm           int32
 	Debugvlog          int32
 	Debugzerostack     int32

@@ -11,6 +11,7 @@ import (
 
 	"wa-lang.org/wa/internal/p9asm/asm/arch"
 	"wa-lang.org/wa/internal/p9asm/obj"
+	"wa-lang.org/wa/internal/p9asm/objabi"
 )
 
 // Token读取接口
@@ -22,6 +23,7 @@ type TokenReader interface {
 	Line() int
 	Col() int
 
+	Pos() objabi.Pos
 	SetPos(line int, file string)
 
 	Close()

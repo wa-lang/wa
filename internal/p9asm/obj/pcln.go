@@ -147,36 +147,33 @@ func (ctxt *Link) pctofileline(sym *LSym, oldval int32, p *Prog, phase int32, ar
 	if p.As == ATEXT || p.As == ANOP || p.As == AUSEFIELD || p.Lineno == 0 || phase == 1 {
 		return oldval
 	}
-	var l int32
-	var f *LSym
-	ctxt.linkgetline(p.Lineno, &f, &l)
-	if f == nil {
-		//	print("getline failed for %s %v\n", ctxt->cursym->name, p);
+
+	position := ctxt.Fset.Position(p.Lineno)
+	if position.Filename == "" {
 		return oldval
 	}
 
 	if arg == nil {
-		return l
+		return int32(position.Line)
 	}
-	pcln := arg.(*Pcln)
 
-	if f == pcln.Lastfile {
+	pcln := arg.(*Pcln)
+	if position.Filename == pcln.Lastfile {
 		return int32(pcln.Lastindex)
 	}
 
-	var i int32
-	for i = 0; i < int32(len(pcln.File)); i++ {
-		file := pcln.File[i]
-		if file == f {
-			pcln.Lastfile = f
-			pcln.Lastindex = int(i)
+	for i := 0; i < len(pcln.File); i++ {
+		if pcln.File[i] == position.Filename {
+			pcln.Lastfile = position.Filename
+			pcln.Lastindex = i
 			return int32(i)
 		}
 	}
-	pcln.File = append(pcln.File, f)
-	pcln.Lastfile = f
-	pcln.Lastindex = int(i)
-	return i
+
+	pcln.File = append(pcln.File, position.Filename)
+	pcln.Lastfile = position.Filename
+	pcln.Lastindex = len(pcln.File) - 1
+	return int32(pcln.Lastindex)
 }
 
 // pctospadj computes the sp adjustment in effect.
@@ -280,12 +277,4 @@ func (cursym *LSym) linkpcln(ctxt *Link) {
 			}
 		}
 	}
-}
-
-// This is a simplified copy of linklinefmt above.
-// It doesn't allow printing the full stack, and it returns the file name and line number separately.
-// TODO: Unify with linklinefmt somehow.
-func (ctxt *Link) linkgetline(lineno int32, f **LSym, l *int32) {
-	*f = ctxt.Lookup("??", HistVersion)
-	*l = 0
 }
