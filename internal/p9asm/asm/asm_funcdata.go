@@ -6,6 +6,7 @@ package asm
 import (
 	"wa-lang.org/wa/internal/p9asm/asm/lex"
 	"wa-lang.org/wa/internal/p9asm/obj"
+	"wa-lang.org/wa/internal/p9asm/objabi"
 )
 
 // asmFuncData assembles a FUNCDATA pseudo-op.
@@ -25,7 +26,7 @@ func (p *Parser) asmFuncData(operands [][]lex.Token) {
 
 	prog := &obj.Prog{
 		Ctxt:   p.ctxt,
-		As:     obj.AFUNCDATA,
+		As:     objabi.AFUNCDATA,
 		Lineno: p.lineNum,
 		From:   valueAddr,
 		To:     nameAddr,

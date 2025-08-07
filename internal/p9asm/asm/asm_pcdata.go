@@ -6,6 +6,7 @@ package asm
 import (
 	"wa-lang.org/wa/internal/p9asm/asm/lex"
 	"wa-lang.org/wa/internal/p9asm/obj"
+	"wa-lang.org/wa/internal/p9asm/objabi"
 )
 
 // asmPCData assembles a PCDATA pseudo-op.
@@ -26,7 +27,7 @@ func (p *Parser) asmPCData(operands [][]lex.Token) {
 	// log.Printf("PCDATA $%d, $%d", key.Offset, value.Offset)
 	prog := &obj.Prog{
 		Ctxt:   p.ctxt,
-		As:     obj.APCDATA,
+		As:     objabi.APCDATA,
 		Lineno: p.lineNum,
 		From:   key,
 		To:     value,

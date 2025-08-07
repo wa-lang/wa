@@ -7,9 +7,10 @@ import (
 	"wa-lang.org/wa/internal/p9asm/asm/arch"
 	"wa-lang.org/wa/internal/p9asm/asm/lex"
 	"wa-lang.org/wa/internal/p9asm/obj"
+	"wa-lang.org/wa/internal/p9asm/objabi"
 )
 
-func (p *Parser) instruction(op obj.As, word, cond string, operands [][]lex.Token) {
+func (p *Parser) instruction(op objabi.As, word, cond string, operands [][]lex.Token) {
 	p.addr = p.addr[0:0]
 	isJump := p.arch.IsJump(word)
 	for _, op := range operands {
@@ -30,7 +31,7 @@ func (p *Parser) instruction(op obj.As, word, cond string, operands [][]lex.Toke
 // JMP	R1
 // JMP	exit
 // JMP	3(PC)
-func (p *Parser) asmJump(op obj.As, cond string, a []obj.Addr) {
+func (p *Parser) asmJump(op objabi.As, cond string, a []obj.Addr) {
 	var target *obj.Addr
 	prog := &obj.Prog{
 		Ctxt:   p.ctxt,
@@ -53,7 +54,7 @@ func (p *Parser) asmJump(op obj.As, cond string, a []obj.Addr) {
 				Type:   obj.TYPE_CONST,
 				Offset: p.getConstant(prog, op, &a[0]),
 			}
-			reg := obj.RBaseType(p.getConstant(prog, op, &a[1]))
+			reg := objabi.RBaseType(p.getConstant(prog, op, &a[1]))
 			reg, ok := p.arch.RegisterNumber("R", reg)
 			if !ok {
 				p.errorf("bad register number %d", reg)
@@ -117,7 +118,7 @@ func (p *Parser) asmJump(op obj.As, cond string, a []obj.Addr) {
 
 // asmInstruction assembles an instruction.
 // MOVW R9, (R10)
-func (p *Parser) asmInstruction(op obj.As, cond string, a []obj.Addr) {
+func (p *Parser) asmInstruction(op objabi.As, cond string, a []obj.Addr) {
 	// fmt.Printf("%s %+v\n", obj.Aconv(op), a)
 	prog := &obj.Prog{
 		Ctxt:   p.ctxt,
@@ -283,7 +284,7 @@ func (p *Parser) asmInstruction(op obj.As, cond string, a []obj.Addr) {
 }
 
 // getRegister checks that addr represents a register and returns its value.
-func (p *Parser) getRegister(prog *obj.Prog, op obj.As, addr *obj.Addr) obj.RBaseType {
+func (p *Parser) getRegister(prog *obj.Prog, op objabi.As, addr *obj.Addr) objabi.RBaseType {
 	if addr.Type != obj.TYPE_REG || addr.Offset != 0 || addr.Name != 0 || addr.Index != 0 {
 		p.errorf("%s: expected register; found %s", op, addr.Dconv(prog))
 	}
@@ -291,7 +292,7 @@ func (p *Parser) getRegister(prog *obj.Prog, op obj.As, addr *obj.Addr) obj.RBas
 }
 
 // getConstant checks that addr represents a plain constant and returns its value.
-func (p *Parser) getConstant(prog *obj.Prog, op obj.As, addr *obj.Addr) int64 {
+func (p *Parser) getConstant(prog *obj.Prog, op objabi.As, addr *obj.Addr) int64 {
 	if addr.Type != obj.TYPE_MEM || addr.Name != 0 || addr.Reg != 0 || addr.Index != 0 {
 		p.errorf("%s: expected integer constant; found %s", op, addr.Dconv(prog))
 	}

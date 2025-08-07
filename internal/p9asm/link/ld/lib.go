@@ -48,6 +48,7 @@ import (
 	"wa-lang.org/wa/internal/p9asm/debug/elf"
 	"wa-lang.org/wa/internal/p9asm/link/bio"
 	"wa-lang.org/wa/internal/p9asm/obj"
+	"wa-lang.org/wa/internal/p9asm/objabi"
 )
 
 // Data layout and relocation.
@@ -172,7 +173,7 @@ var (
 	debug_s            int // backup old value of debug['s']
 	Ctxt               *Link
 	HEADR              int32
-	HEADTYPE           obj.HeadType
+	HEADTYPE           objabi.HeadType
 	INITRND            int32
 	INITTEXT           int64
 	INITDAT            int64
@@ -472,7 +473,7 @@ func loadlib() {
 		// dependency problems when compiling natively (external linking requires
 		// runtime/cgo, runtime/cgo requires cmd/cgo, but cmd/cgo needs to be
 		// compiled using external linking.)
-		if (Thearch.Thechar == '5' || Thearch.Thechar == '7') && HEADTYPE == obj.Hdarwin && iscgo {
+		if (Thearch.Thechar == '5' || Thearch.Thechar == '7') && HEADTYPE == objabi.Hdarwin && iscgo {
 			Linkmode = LinkExternal
 		}
 	}
@@ -569,7 +570,7 @@ func loadlib() {
 	// binaries, so leave it enabled on OS X (Mach-O) binaries.
 	// Also leave it enabled on Solaris which doesn't support
 	// statically linked binaries.
-	if Buildmode == BuildmodeExe && havedynamic == 0 && HEADTYPE != obj.Hdarwin {
+	if Buildmode == BuildmodeExe && havedynamic == 0 && HEADTYPE != objabi.Hdarwin {
 		Debug['d'] = 1
 	}
 
@@ -889,10 +890,10 @@ func hostlink() {
 		argv = append(argv, "-s")
 	}
 
-	if HEADTYPE == obj.Hdarwin {
+	if HEADTYPE == objabi.Hdarwin {
 		argv = append(argv, "-Wl,-no_pie,-headerpad,1144")
 	}
-	if HEADTYPE == obj.Hwindows {
+	if HEADTYPE == objabi.Hwindows {
 		if HEADTYPE.String() == "windowsgui" {
 			argv = append(argv, "-mwindows")
 		} else {
@@ -906,11 +907,11 @@ func hostlink() {
 
 	switch Buildmode {
 	case BuildmodeExe:
-		if HEADTYPE == obj.Hdarwin {
+		if HEADTYPE == objabi.Hdarwin {
 			argv = append(argv, "-Wl,-pagezero_size,4000000")
 		}
 	case BuildmodeCShared:
-		if HEADTYPE == obj.Hdarwin {
+		if HEADTYPE == objabi.Hdarwin {
 			argv = append(argv, "-dynamiclib")
 		} else {
 			argv = append(argv, "-Wl,-Bsymbolic")
@@ -1020,7 +1021,7 @@ func hostlink() {
 			}
 		}
 	}
-	if HEADTYPE == obj.Hwindows {
+	if HEADTYPE == objabi.Hwindows {
 		argv = append(argv, peimporteddlls()...)
 	}
 
@@ -1040,7 +1041,7 @@ func hostlink() {
 		Bso.Flush()
 	}
 
-	if Debug['s'] == 0 && debug_s == 0 && HEADTYPE == obj.Hdarwin {
+	if Debug['s'] == 0 && debug_s == 0 && HEADTYPE == objabi.Hdarwin {
 		// Skip combining dwarf on arm.
 		if Thearch.Thechar != '5' && Thearch.Thechar != '7' {
 			dsym := fmt.Sprintf("%s/go.dwarf", tmpdir)
@@ -1692,7 +1693,7 @@ func genasmsym(put func(*LSym, string, int, int64, int64, int, *LSym)) {
 			put(nil, s.Name, 'f', s.Value, 0, int(s.Version), nil)
 
 		case obj.SHOSTOBJ:
-			if HEADTYPE == obj.Hwindows || Iself {
+			if HEADTYPE == objabi.Hwindows || Iself {
 				put(s, s.Name, 'U', s.Value, 0, int(s.Version), nil)
 			}
 

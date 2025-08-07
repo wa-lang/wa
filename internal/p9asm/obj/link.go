@@ -49,7 +49,7 @@ type LinkArch struct {
 	Assemble   func(*Link, *LSym)
 	Follow     func(*Link, *LSym)
 	Progedit   func(*Link, *Prog)
-	UnaryDst   map[As]bool // Instruction takes one operand, a destination.
+	UnaryDst   map[objabi.As]bool // Instruction takes one operand, a destination.
 	Minlc      int
 	Ptrsize    int
 	Regsize    int
@@ -58,7 +58,7 @@ type LinkArch struct {
 // Link holds the context for writing object code from a compiler
 // to be linker input or for reading that input into the linker.
 type Link struct {
-	Headtype           HeadType
+	Headtype           objabi.HeadType
 	Arch               *LinkArch
 	Fset               *objabi.FileSet
 	Debugasm           int32
@@ -121,7 +121,7 @@ func Linknew(arch *LinkArch, targetOS, _workDir string) *Link {
 	default:
 		log.Fatalf("unknown thread-local storage offset for %v", ctxt.Headtype)
 
-	case Hwindows:
+	case objabi.Hwindows:
 		break
 
 		/*
@@ -129,14 +129,14 @@ func Linknew(arch *LinkArch, targetOS, _workDir string) *Link {
 		 * Translate 0(FS) and 8(FS) into -16(FS) and -8(FS).
 		 * Known to low-level assembly in package runtime and runtime/cgo.
 		 */
-	case Hlinux:
+	case objabi.Hlinux:
 		ctxt.Tlsoffset = -1 * ctxt.Arch.Ptrsize
 
 		/*
 		 * OS X system constants - offset from 0(GS) to our TLS.
 		 * Explained in ../../runtime/cgo/gcc_darwin_*.c.
 		 */
-	case Hdarwin:
+	case objabi.Hdarwin:
 		switch ctxt.Arch.Thechar {
 		default:
 			log.Fatalf("unknown thread-local storage offset for darwin/%s", ctxt.Arch.Name)

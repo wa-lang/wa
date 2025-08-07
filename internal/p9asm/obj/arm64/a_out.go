@@ -31,7 +31,9 @@
 
 package arm64
 
-import "wa-lang.org/wa/internal/p9asm/obj"
+import (
+	"wa-lang.org/wa/internal/p9asm/objabi"
+)
 
 const (
 	NSNAME = 8
@@ -43,7 +45,7 @@ const (
 // General purpose registers, kept in the low bits of Prog.Reg.
 const (
 	// integer
-	REG_R0 = obj.RBaseARM64 + iota
+	REG_R0 = objabi.RBaseARM64 + iota
 	REG_R1
 	REG_R2
 	REG_R3
@@ -171,7 +173,7 @@ const (
 // constants to indicate extended register conversion.  When checking,
 // you should subtract obj.RBaseARM64 first. From this difference, bit 11
 // indicates extended register, bits 8-10 select the conversion mode.
-const REG_EXT = obj.RBaseARM64 + 1<<11
+const REG_EXT = objabi.RBaseARM64 + 1<<11
 
 const (
 	REG_UXTB = REG_EXT + iota<<8
@@ -187,7 +189,7 @@ const (
 // Special registers, after subtracting obj.RBaseARM64, bit 12 indicates
 // a special register and the low bits select the register.
 const (
-	REG_SPECIAL = obj.RBaseARM64 + 1<<12 + iota
+	REG_SPECIAL = objabi.RBaseARM64 + 1<<12 + iota
 	REG_DAIF
 	REG_NZCV
 	REG_FPSR
@@ -337,7 +339,7 @@ const (
 //go:generate go run ../stringer.go -i $GOFILE -o anames.go -p arm64
 
 const (
-	AADC = obj.ABaseARM64 + obj.A_ARCHSPECIFIC + iota
+	AADC = objabi.ABaseARM64 + objabi.A_ARCHSPECIFIC + iota
 	AADCS
 	AADCSW
 	AADCW
@@ -707,6 +709,6 @@ const (
 	ASHA256SU0
 	ASHA256SU1
 	ALAST
-	AB  = obj.AJMP
-	ABL = obj.ACALL
+	AB  = objabi.AJMP
+	ABL = objabi.ACALL
 )

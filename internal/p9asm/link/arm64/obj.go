@@ -36,7 +36,7 @@ import (
 	"log"
 
 	"wa-lang.org/wa/internal/p9asm/link/ld"
-	"wa-lang.org/wa/internal/p9asm/obj"
+	"wa-lang.org/wa/internal/p9asm/objabi"
 )
 
 const waarch = "arm64"
@@ -89,7 +89,7 @@ func archinit() {
 	}
 
 	// Darwin/arm64 only supports external linking
-	if ld.HEADTYPE == obj.Hdarwin {
+	if ld.HEADTYPE == objabi.Hdarwin {
 		ld.Linkmode = ld.LinkExternal
 	}
 
@@ -101,7 +101,7 @@ func archinit() {
 		if ld.Linkmode == ld.LinkExternal {
 			log.Fatalf("cannot use -linkmode=external with -H %s", ld.HEADTYPE)
 		}
-	case obj.Hlinux, obj.Hdarwin:
+	case objabi.Hlinux, objabi.Hdarwin:
 		break
 	}
 
@@ -109,7 +109,7 @@ func archinit() {
 	default:
 		ld.Exitf("unknown -H option: %v", ld.HEADTYPE)
 
-	case obj.Hlinux: // arm64 elf
+	case objabi.Hlinux: // arm64 elf
 		ld.Elfinit()
 		ld.HEADR = ld.ELFRESERVE
 		if ld.INITTEXT == -1 {
@@ -122,7 +122,7 @@ func archinit() {
 			ld.INITRND = 0x10000
 		}
 
-	case obj.Hdarwin: // apple MACH
+	case objabi.Hdarwin: // apple MACH
 		ld.Debug['w'] = 1 // disable DWARF generation
 		ld.Machoinit()
 		ld.HEADR = ld.INITIAL_MACHO_HEADR

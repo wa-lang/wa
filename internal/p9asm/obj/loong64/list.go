@@ -7,7 +7,7 @@ package loong64
 import (
 	"fmt"
 
-	"wa-lang.org/wa/internal/p9asm/obj"
+	"wa-lang.org/wa/internal/p9asm/objabi"
 )
 
 func arrange(a int16) string {
@@ -51,7 +51,7 @@ func arrange(a int16) string {
 	}
 }
 
-func rconv(r obj.RBaseType) string {
+func rconv(r objabi.RBaseType) string {
 	switch {
 	case r == 0:
 		return "NONE"
@@ -94,7 +94,7 @@ func rconv(r obj.RBaseType) string {
 		return fmt.Sprintf("%s%d.%s", reg_prefix, reg_num, arrange(arng_type))
 	}
 
-	return fmt.Sprintf("badreg(%d)", r-obj.RBaseLOONG64)
+	return fmt.Sprintf("badreg(%d)", r-objabi.RBaseLOONG64)
 }
 
 func DRconv(a int) string {

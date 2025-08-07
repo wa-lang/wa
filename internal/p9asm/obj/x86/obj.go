@@ -4,6 +4,7 @@ import (
 	"log"
 
 	"wa-lang.org/wa/internal/p9asm/obj"
+	"wa-lang.org/wa/internal/p9asm/objabi"
 )
 
 func obj_Addrel(s *obj.LSym) *obj.Reloc {
@@ -37,7 +38,7 @@ func obj_Appendp(ctxt *obj.Link, q *obj.Prog) *obj.Prog {
 
 func obj_Brchain(ctxt *obj.Link, p *obj.Prog) *obj.Prog {
 	for i := 0; i < 20; i++ {
-		if p == nil || p.As != obj.AJMP || p.Pcond == nil {
+		if p == nil || p.As != objabi.AJMP || p.Pcond == nil {
 			return p
 		}
 		p = p.Pcond

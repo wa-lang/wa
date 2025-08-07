@@ -33,14 +33,14 @@ import (
 	"errors"
 	"fmt"
 
-	"wa-lang.org/wa/internal/p9asm/obj"
+	"wa-lang.org/wa/internal/p9asm/objabi"
 )
 
 //go:generate go run ../stringer.go -i $GOFILE -o anames.go -p riscv
 
 const (
 	// Base register numberings.
-	REG_X0 = obj.RBaseRISCV + iota
+	REG_X0 = objabi.RBaseRISCV + iota
 	REG_X1
 	REG_X2
 	REG_X3
@@ -224,7 +224,7 @@ const (
 )
 
 // https://github.com/riscv-non-isa/riscv-elf-psabi-doc/blob/master/riscv-dwarf.adoc#dwarf-register-numbers
-var RISCV64DWARFRegisters = map[obj.RBaseType]obj.RBaseType{
+var RISCV64DWARFRegisters = map[objabi.RBaseType]objabi.RBaseType{
 	// Integer Registers.
 	REG_X0:  0,
 	REG_X1:  1,
@@ -334,7 +334,7 @@ const (
 	//
 
 	// 2.4: Integer Computational Instructions
-	AADDI = obj.ABaseRISCV + obj.A_ARCHSPECIFIC + iota
+	AADDI = objabi.ABaseRISCV + objabi.A_ARCHSPECIFIC + iota
 	ASLTI
 	ASLTIU
 	AANDI
@@ -1225,7 +1225,7 @@ const (
 //
 // Any instructions not listed here are assumed to either be non-unary or to read
 // from its argument.
-var unaryDst = map[obj.As]bool{
+var unaryDst = map[objabi.As]bool{
 	ARDCYCLE:   true,
 	ARDTIME:    true,
 	ARDINSTRET: true,

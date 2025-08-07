@@ -8,6 +8,8 @@ import (
 	"fmt"
 	"strconv"
 	"strings"
+
+	"wa-lang.org/wa/internal/p9asm/objabi"
 )
 
 // Addr 对应汇编指令的一个参数. 有以下几种寻址形式:
@@ -97,7 +99,7 @@ type Addr struct {
 	Sym  *LSym
 
 	Offset int64
-	Reg    RBaseType
+	Reg    objabi.RBaseType
 	Index  int16
 	Scale  int16 // Sometimes holds a register.
 
@@ -231,8 +233,8 @@ func (a *Addr) Dconv(p *Prog) string {
 	case TYPE_MEM:
 		// 内存地址
 		str = a.Mconv()
-		if a.Index != int16(REG_NONE) {
-			str += fmt.Sprintf("(%v*%d)", RBaseType(a.Index), int(a.Scale))
+		if a.Index != int16(objabi.REG_NONE) {
+			str += fmt.Sprintf("(%v*%d)", objabi.RBaseType(a.Index), int(a.Scale))
 		}
 
 	case TYPE_CONST:
@@ -279,10 +281,10 @@ func (a *Addr) Dconv(p *Prog) string {
 		}
 
 	case TYPE_REGREG:
-		str = fmt.Sprintf("(%v, %v)", a.Reg, RBaseType(a.Offset))
+		str = fmt.Sprintf("(%v, %v)", a.Reg, objabi.RBaseType(a.Offset))
 
 	case TYPE_REGREG2:
-		str = fmt.Sprintf("%v, %v", a.Reg, RBaseType(a.Offset))
+		str = fmt.Sprintf("%v, %v", a.Reg, objabi.RBaseType(a.Offset))
 
 	case TYPE_REGLIST:
 		// 通常出现在ARM, 最多有16个寄存器列表
@@ -324,7 +326,7 @@ func (a *Addr) Mconv() string {
 
 	case NAME_NONE:
 		switch {
-		case a.Reg == REG_NONE:
+		case a.Reg == objabi.REG_NONE:
 			str = fmt.Sprint(a.Offset)
 		case a.Offset == 0:
 			str = fmt.Sprintf("(%v)", a.Reg)

@@ -7,10 +7,10 @@ package riscv
 import (
 	"fmt"
 
-	"wa-lang.org/wa/internal/p9asm/obj"
+	"wa-lang.org/wa/internal/p9asm/objabi"
 )
 
-func RegName(r obj.RBaseType) string {
+func RegName(r objabi.RBaseType) string {
 	switch {
 	case r == 0:
 		return "NONE"
@@ -25,7 +25,7 @@ func RegName(r obj.RBaseType) string {
 	case REG_V0 <= r && r <= REG_V31:
 		return fmt.Sprintf("V%d", r-REG_V0)
 	default:
-		return fmt.Sprintf("Rgok(%d)", r-obj.RBaseRISCV)
+		return fmt.Sprintf("Rgok(%d)", r-objabi.RBaseRISCV)
 	}
 }
 

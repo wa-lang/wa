@@ -35,6 +35,7 @@ import (
 	"encoding/binary"
 
 	"wa-lang.org/wa/internal/p9asm/obj"
+	"wa-lang.org/wa/internal/p9asm/objabi"
 )
 
 func preprocess(ctxt *obj.Link, cursym *obj.LSym) {
@@ -53,7 +54,7 @@ func progedit(ctxt *obj.Link, p *obj.Prog) {
 	panic("TODO")
 }
 
-var unaryDst = map[obj.As]bool{
+var unaryDst = map[objabi.As]bool{
 	AWORD:  true,
 	ADWORD: true,
 	ABL:    true,

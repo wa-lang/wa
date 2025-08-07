@@ -100,6 +100,8 @@ import (
 	"log"
 	"math"
 	"strings"
+
+	"wa-lang.org/wa/internal/p9asm/objabi"
 )
 
 // The Wa and C compilers, and the assembler, call writeobj to write
@@ -125,13 +127,13 @@ func (ctxt *Link) Writeobjdirect(b io.Writer) error {
 			plink = p.Link
 			p.Link = nil
 
-			if p.As == AEND {
+			if p.As == objabi.AEND {
 				continue
 			}
 
 			// 表示一个局部变量或函数参数的类型声明(类似调试信息)
 			// 会生成一个 Auto 节点, 并加到当前函数的 Autom 链表中
-			if p.As == ATYPE {
+			if p.As == objabi.ATYPE {
 				// Assume each TYPE instruction describes
 				// a different local variable or parameter,
 				// so no dedup.
@@ -157,7 +159,7 @@ func (ctxt *Link) Writeobjdirect(b io.Writer) error {
 
 			// 全局变量定义
 			// 会创建一个 LSym, 加入全局数据链表
-			if p.As == AGLOBL {
+			if p.As == objabi.AGLOBL {
 				s := p.From.Sym
 				tmp6 := s.Seenglobl
 				s.Seenglobl++
@@ -179,12 +181,12 @@ func (ctxt *Link) Writeobjdirect(b io.Writer) error {
 					s.Type = SBSS
 				}
 				flag := int(p.From3.Offset)
-				if flag&DUPOK != 0 {
+				if flag&objabi.DUPOK != 0 {
 					s.Dupok = 1
 				}
-				if flag&RODATA != 0 {
+				if flag&objabi.RODATA != 0 {
 					s.Type = SRODATA
-				} else if flag&NOPTR != 0 {
+				} else if flag&objabi.NOPTR != 0 {
 					s.Type = SNOPTRBSS
 				}
 				edata = s
@@ -193,7 +195,7 @@ func (ctxt *Link) Writeobjdirect(b io.Writer) error {
 
 			// 全局数据赋值语句
 			// 会调用 savedata() 保存数据内容到 LSym.P 中
-			if p.As == ADATA {
+			if p.As == objabi.ADATA {
 				if err := ctxt.savedata(p.From.Sym, p, "<input>"); err != nil {
 					return err
 				}
@@ -202,7 +204,7 @@ func (ctxt *Link) Writeobjdirect(b io.Writer) error {
 
 			// 函数入口
 			// 创建并初始化一个 LSym, 标记为 STEXT, 建立指令链表头尾
-			if p.As == ATEXT {
+			if p.As == objabi.ATEXT {
 				s := p.From.Sym
 				if s == nil {
 					// func _() { }
@@ -225,7 +227,7 @@ func (ctxt *Link) Writeobjdirect(b io.Writer) error {
 				}
 				etext = s
 				flag := int(p.From3Offset())
-				if flag&DUPOK != 0 {
+				if flag&objabi.DUPOK != 0 {
 					s.Dupok = 1
 				}
 				s.Next = nil
@@ -236,13 +238,13 @@ func (ctxt *Link) Writeobjdirect(b io.Writer) error {
 				continue
 			}
 
-			if p.As == AFUNCDATA {
+			if p.As == objabi.AFUNCDATA {
 				// Rewrite reference to wa_args_stackmap(SB) to the Wa-provided declaration information.
 				if curtext == nil { // func _() {}
 					continue
 				}
 				if p.To.Sym.Name == "wa_args_stackmap" {
-					if p.From.Type != TYPE_CONST || p.From.Offset != FUNCDATA_ArgsPointerMaps {
+					if p.From.Type != TYPE_CONST || p.From.Offset != objabi.FUNCDATA_ArgsPointerMaps {
 						return fmt.Errorf("FUNCDATA use of wa_args_stackmap(SB) without FUNCDATA_ArgsPointerMaps")
 					}
 					p.To.Sym = ctxt.Lookup(fmt.Sprintf("%s.args_stackmap", curtext.Name), curtext.Version)
@@ -269,7 +271,7 @@ func (ctxt *Link) Writeobjdirect(b io.Writer) error {
 		}
 		found = 0
 		for p := s.Text; p != nil; p = p.Link {
-			if p.As == AFUNCDATA && p.From.Type == TYPE_CONST && p.From.Offset == FUNCDATA_ArgsPointerMaps {
+			if p.As == objabi.AFUNCDATA && p.From.Type == TYPE_CONST && p.From.Offset == objabi.FUNCDATA_ArgsPointerMaps {
 				found = 1
 				break
 			}
@@ -280,9 +282,9 @@ func (ctxt *Link) Writeobjdirect(b io.Writer) error {
 			p.Link, s.Text.Link = s.Text.Link, p
 			p.Lineno = s.Text.Lineno
 			p.Mode = s.Text.Mode
-			p.As = AFUNCDATA
+			p.As = objabi.AFUNCDATA
 			p.From.Type = TYPE_CONST
-			p.From.Offset = FUNCDATA_ArgsPointerMaps
+			p.From.Offset = objabi.FUNCDATA_ArgsPointerMaps
 			p.To.Type = TYPE_MEM
 			p.To.Name = NAME_EXTERN
 			p.To.Sym = ctxt.Lookup(fmt.Sprintf("%s.args_stackmap", s.Name), s.Version)

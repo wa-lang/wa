@@ -10,6 +10,7 @@ import (
 	"wa-lang.org/wa/internal/p9asm/asm/arch"
 	"wa-lang.org/wa/internal/p9asm/asm/lex"
 	"wa-lang.org/wa/internal/p9asm/obj"
+	"wa-lang.org/wa/internal/p9asm/objabi"
 )
 
 // atStartOfRegister reports whether the parser is at the start of a register definition.
@@ -43,7 +44,7 @@ func (p *Parser) atRegisterShift() bool {
 }
 
 // registerReference parses a register given either the name, R10, or a parenthesized form, SPR(10).
-func (p *Parser) registerReference(name string) (obj.RBaseType, bool) {
+func (p *Parser) registerReference(name string) (objabi.RBaseType, bool) {
 	r, present := p.arch.Register[name]
 	if present {
 		return r, true
@@ -60,7 +61,7 @@ func (p *Parser) registerReference(name string) (obj.RBaseType, bool) {
 		p.errorf("parsing register list: %s", err)
 		return 0, false
 	}
-	r, ok := p.arch.RegisterNumber(name, obj.RBaseType(num))
+	r, ok := p.arch.RegisterNumber(name, objabi.RBaseType(num))
 	if !ok {
 		p.errorf("illegal register %s(%d)", name, r)
 		return 0, false
@@ -70,7 +71,7 @@ func (p *Parser) registerReference(name string) (obj.RBaseType, bool) {
 
 // register parses a full register reference where there is no symbol present (as in 4(R0) or R(10) but not sym(SB))
 // including forms involving multiple registers such as R1:R2.
-func (p *Parser) register(name string, prefix rune) (r1, r2 obj.RBaseType, scale int8, ok bool) {
+func (p *Parser) register(name string, prefix rune) (r1, r2 objabi.RBaseType, scale int8, ok bool) {
 	// R1 or R(1) R1:R2 R1,R2 R1+R2, or R1*scale.
 	r1, ok = p.registerReference(name)
 	if !ok {

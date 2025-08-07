@@ -1,8 +1,11 @@
 package arm
 
-import "wa-lang.org/wa/internal/p9asm/obj"
+import (
+	"wa-lang.org/wa/internal/p9asm/obj"
+	"wa-lang.org/wa/internal/p9asm/objabi"
+)
 
-var unaryDst = map[obj.As]bool{
+var unaryDst = map[objabi.As]bool{
 	ASWI:  true,
 	AWORD: true,
 }

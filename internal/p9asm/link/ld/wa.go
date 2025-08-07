@@ -15,6 +15,7 @@ import (
 
 	"wa-lang.org/wa/internal/p9asm/link/bio"
 	"wa-lang.org/wa/internal/p9asm/obj"
+	"wa-lang.org/wa/internal/p9asm/objabi"
 )
 
 // wa-specific code shared across loaders (5l, 6l, 8l).
@@ -418,7 +419,7 @@ func loadcgo(file string, pkg string, p string) {
 				// to force a link of foo.so.
 				havedynamic = 1
 
-				if HEADTYPE == obj.Hdarwin {
+				if HEADTYPE == objabi.Hdarwin {
 					Machoadddynlib(lib)
 				} else {
 					dynlib = append(dynlib, lib)
@@ -566,9 +567,9 @@ func Adddynsym(ctxt *Link, s *LSym) {
 
 	if Iself {
 		Elfadddynsym(ctxt, s)
-	} else if HEADTYPE == obj.Hdarwin {
+	} else if HEADTYPE == objabi.Hdarwin {
 		Diag("adddynsym: missed symbol %s (%s)", s.Name, s.Extname)
-	} else if HEADTYPE == obj.Hwindows {
+	} else if HEADTYPE == objabi.Hwindows {
 		// already taken care of
 	} else {
 		Diag("adddynsym: unsupported binary format")
@@ -769,7 +770,7 @@ func doweak() {
 }
 
 func addexport() {
-	if HEADTYPE == obj.Hdarwin {
+	if HEADTYPE == objabi.Hdarwin {
 		return
 	}
 

@@ -7,6 +7,8 @@ package obj
 import (
 	"fmt"
 	"log"
+
+	"wa-lang.org/wa/internal/p9asm/objabi"
 )
 
 type Pcdata struct {
@@ -144,7 +146,7 @@ func (dst *Pcdata) funcpctab(ctxt *Link, func_ *LSym, desc string, valfunc func(
 // Because p->lineno applies to p, phase == 0 (before p)
 // takes care of the update.
 func (ctxt *Link) pctofileline(sym *LSym, oldval int32, p *Prog, phase int32, arg interface{}) int32 {
-	if p.As == ATEXT || p.As == ANOP || p.As == AUSEFIELD || p.Lineno == 0 || phase == 1 {
+	if p.As == objabi.ATEXT || p.As == objabi.ANOP || p.As == objabi.AUSEFIELD || p.Lineno == 0 || phase == 1 {
 		return oldval
 	}
 
@@ -201,7 +203,7 @@ func (ctxt *Link) pctospadj(sym *LSym, oldval int32, p *Prog, phase int32, arg i
 // Since PCDATA instructions have no width in the final code,
 // it does not matter which phase we use for the update.
 func (*Link) pctopcdata(sym *LSym, oldval int32, p *Prog, phase int32, arg interface{}) int32 {
-	if phase == 0 || p.As != APCDATA || p.From.Offset != int64(arg.(uint32)) {
+	if phase == 0 || p.As != objabi.APCDATA || p.From.Offset != int64(arg.(uint32)) {
 		return oldval
 	}
 	if int64(int32(p.To.Offset)) != p.To.Offset {
@@ -220,10 +222,10 @@ func (cursym *LSym) linkpcln(ctxt *Link) {
 	npcdata := 0
 	nfuncdata := 0
 	for p := cursym.Text; p != nil; p = p.Link {
-		if p.As == APCDATA && p.From.Offset >= int64(npcdata) {
+		if p.As == objabi.APCDATA && p.From.Offset >= int64(npcdata) {
 			npcdata = int(p.From.Offset + 1)
 		}
-		if p.As == AFUNCDATA && p.From.Offset >= int64(nfuncdata) {
+		if p.As == objabi.AFUNCDATA && p.From.Offset >= int64(nfuncdata) {
 			nfuncdata = int(p.From.Offset + 1)
 		}
 	}
@@ -242,14 +244,14 @@ func (cursym *LSym) linkpcln(ctxt *Link) {
 	havepc := make([]uint32, (npcdata+31)/32)
 	havefunc := make([]uint32, (nfuncdata+31)/32)
 	for p := cursym.Text; p != nil; p = p.Link {
-		if p.As == AFUNCDATA {
+		if p.As == objabi.AFUNCDATA {
 			if (havefunc[p.From.Offset/32]>>uint64(p.From.Offset%32))&1 != 0 {
 				ctxt.Diag("multiple definitions for FUNCDATA $%d", p.From.Offset)
 			}
 			havefunc[p.From.Offset/32] |= 1 << uint64(p.From.Offset%32)
 		}
 
-		if p.As == APCDATA {
+		if p.As == objabi.APCDATA {
 			havepc[p.From.Offset/32] |= 1 << uint64(p.From.Offset%32)
 		}
 	}
@@ -266,7 +268,7 @@ func (cursym *LSym) linkpcln(ctxt *Link) {
 	if nfuncdata > 0 {
 		var i int
 		for p := cursym.Text; p != nil; p = p.Link {
-			if p.As == AFUNCDATA {
+			if p.As == objabi.AFUNCDATA {
 				i = int(p.From.Offset)
 				pcln.Funcdataoff[i] = p.To.Offset
 				if p.To.Type != TYPE_CONST {

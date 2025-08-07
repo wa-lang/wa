@@ -38,10 +38,11 @@ import (
 	"math"
 
 	"wa-lang.org/wa/internal/p9asm/obj"
+	"wa-lang.org/wa/internal/p9asm/objabi"
 )
 
 func obj_Nopout(p *obj.Prog) {
-	p.As = obj.ANOP
+	p.As = objabi.ANOP
 	p.Scond = 0
 	p.From = obj.Addr{}
 	p.From3 = nil
@@ -52,8 +53,8 @@ func obj_Nopout(p *obj.Prog) {
 func canuse1insntls(ctxt *obj.Link) bool {
 	if ctxt.Arch.Regsize == 4 {
 		switch ctxt.Headtype {
-		case obj.Hlinux,
-			obj.Hwindows:
+		case objabi.Hlinux,
+			objabi.Hwindows:
 			return false
 		}
 
@@ -61,9 +62,9 @@ func canuse1insntls(ctxt *obj.Link) bool {
 	}
 
 	switch ctxt.Headtype {
-	case obj.Hwindows:
+	case objabi.Hwindows:
 		return false
-	case obj.Hlinux:
+	case objabi.Hlinux:
 		return ctxt.Flag_shared == 0
 	}
 
@@ -143,13 +144,13 @@ func progedit(ctxt *obj.Link, p *obj.Prog) {
 		if (p.As == AMOVQ || p.As == AMOVL) && p.From.Type == obj.TYPE_REG && p.From.Reg == REG_TLS && p.To.Type == obj.TYPE_REG && REG_AX <= p.To.Reg && p.To.Reg <= REG_R15 {
 			obj_Nopout(p)
 		}
-		if p.From.Type == obj.TYPE_MEM && obj.RBaseType(p.From.Index) == REG_TLS && REG_AX <= p.From.Reg && p.From.Reg <= REG_R15 {
+		if p.From.Type == obj.TYPE_MEM && objabi.RBaseType(p.From.Index) == REG_TLS && REG_AX <= p.From.Reg && p.From.Reg <= REG_R15 {
 			p.From.Reg = REG_TLS
 			p.From.Scale = 0
 			p.From.Index = REG_NONE
 		}
 
-		if p.To.Type == obj.TYPE_MEM && obj.RBaseType(p.To.Index) == REG_TLS && REG_AX <= p.To.Reg && p.To.Reg <= REG_R15 {
+		if p.To.Type == obj.TYPE_MEM && objabi.RBaseType(p.To.Index) == REG_TLS && REG_AX <= p.To.Reg && p.To.Reg <= REG_R15 {
 			p.To.Reg = REG_TLS
 			p.To.Scale = 0
 			p.To.Index = REG_NONE
@@ -178,11 +179,11 @@ func progedit(ctxt *obj.Link, p *obj.Prog) {
 	}
 
 	// TODO: Remove.
-	if ctxt.Headtype == obj.Hwindows && p.Mode == 64 {
-		if p.From.Scale == 1 && obj.RBaseType(p.From.Index) == REG_TLS {
+	if ctxt.Headtype == objabi.Hwindows && p.Mode == 64 {
+		if p.From.Scale == 1 && objabi.RBaseType(p.From.Index) == REG_TLS {
 			p.From.Scale = 2
 		}
-		if p.To.Scale == 1 && obj.RBaseType(p.To.Index) == REG_TLS {
+		if p.To.Scale == 1 && objabi.RBaseType(p.To.Index) == REG_TLS {
 			p.To.Scale = 2
 		}
 	}
@@ -198,7 +199,7 @@ func progedit(ctxt *obj.Link, p *obj.Prog) {
 
 	// Rewrite CALL/JMP/RET to symbol as TYPE_BRANCH.
 	switch p.As {
-	case obj.ACALL, obj.AJMP, obj.ARET:
+	case objabi.ACALL, objabi.AJMP, objabi.ARET:
 		if p.To.Type == obj.TYPE_MEM && (p.To.Name == obj.NAME_EXTERN || p.To.Name == obj.NAME_STATIC) && p.To.Sym != nil {
 			p.To.Type = obj.TYPE_BRANCH
 		}
@@ -298,9 +299,9 @@ func progedit(ctxt *obj.Link, p *obj.Prog) {
 		}
 	}
 
-	if ctxt.Flag_dynlink && (p.As == obj.ADUFFCOPY || p.As == obj.ADUFFZERO) {
+	if ctxt.Flag_dynlink && (p.As == objabi.ADUFFCOPY || p.As == objabi.ADUFFZERO) {
 		var sym *obj.LSym
-		if p.As == obj.ADUFFZERO {
+		if p.As == objabi.ADUFFZERO {
 			sym = ctxt.Lookup("runtime.duffzero", 0)
 		} else {
 			sym = ctxt.Lookup("runtime.duffcopy", 0)
@@ -321,7 +322,7 @@ func progedit(ctxt *obj.Link, p *obj.Prog) {
 		p1.To.Type = obj.TYPE_REG
 		p1.To.Reg = REG_R15
 		p2 := obj_Appendp(ctxt, p1)
-		p2.As = obj.ACALL
+		p2.As = objabi.ACALL
 		p2.To.Type = obj.TYPE_REG
 		p2.To.Reg = REG_R15
 	}
@@ -363,7 +364,7 @@ func progedit(ctxt *obj.Link, p *obj.Prog) {
 		} else {
 			return
 		}
-		if p.As == obj.ATEXT || p.As == obj.AFUNCDATA || p.As == obj.ACALL || p.As == obj.ARET || p.As == obj.AJMP {
+		if p.As == objabi.ATEXT || p.As == objabi.AFUNCDATA || p.As == objabi.ACALL || p.As == objabi.ARET || p.As == objabi.AJMP {
 			return
 		}
 		if source.Type != obj.TYPE_MEM {
@@ -488,10 +489,10 @@ func preprocess(ctxt *obj.Link, cursym *obj.LSym) {
 		// recognize the end of the stack-splitting prolog.
 		p = obj_Appendp(ctxt, p)
 
-		p.As = obj.ANOP
+		p.As = objabi.ANOP
 		p.Spadj = int32(-ctxt.Arch.Ptrsize)
 		p = obj_Appendp(ctxt, p)
-		p.As = obj.ANOP
+		p.As = objabi.ANOP
 		p.Spadj = int32(ctxt.Arch.Ptrsize)
 	}
 
@@ -583,7 +584,7 @@ func preprocess(ctxt *obj.Link, cursym *obj.LSym) {
 			p.Spadj = -2
 			continue
 
-		case obj.ARET:
+		case objabi.ARET:
 			break
 		}
 
@@ -610,7 +611,7 @@ func preprocess(ctxt *obj.Link, cursym *obj.LSym) {
 			p.From.Offset = int64(-autoffset)
 			p.Spadj = -autoffset
 			p = obj_Appendp(ctxt, p)
-			p.As = obj.ARET
+			p.As = objabi.ARET
 
 			// If there are instructions following
 			// this ARET, they come from a branch
@@ -620,7 +621,7 @@ func preprocess(ctxt *obj.Link, cursym *obj.LSym) {
 		}
 
 		if p.To.Sym != nil { // retjmp
-			p.As = obj.AJMP
+			p.As = objabi.AJMP
 		}
 	}
 }
@@ -652,7 +653,7 @@ func load_g_cx(ctxt *obj.Link, p *obj.Prog) *obj.Prog {
 		p = p.Link
 	}
 
-	if obj.RBaseType(p.From.Index) == REG_TLS {
+	if objabi.RBaseType(p.From.Index) == REG_TLS {
 		p.From.Scale = 2
 	}
 
@@ -669,24 +670,24 @@ func follow(ctxt *obj.Link, s *obj.LSym) {
 	s.Text = firstp.Link
 }
 
-func nofollow(a obj.As) bool {
+func nofollow(a objabi.As) bool {
 	switch a {
-	case obj.AJMP,
-		obj.ARET,
+	case objabi.AJMP,
+		objabi.ARET,
 		AIRETL,
 		AIRETQ,
 		AIRETW,
 		ARETFL,
 		ARETFQ,
 		ARETFW,
-		obj.AUNDEF:
+		objabi.AUNDEF:
 		return true
 	}
 
 	return false
 }
 
-func pushpop(a obj.As) bool {
+func pushpop(a objabi.As) bool {
 	switch a {
 	case APUSHL,
 		APUSHFL,
@@ -706,7 +707,7 @@ func pushpop(a obj.As) bool {
 	return false
 }
 
-func relinv(a obj.As) obj.As {
+func relinv(a objabi.As) objabi.As {
 	switch a {
 	case AJEQ:
 		return AJNE
@@ -749,15 +750,15 @@ func relinv(a obj.As) obj.As {
 func xfol(ctxt *obj.Link, p *obj.Prog, last **obj.Prog) {
 	var q *obj.Prog
 	var i int
-	var a obj.As
+	var a objabi.As
 
 loop:
 	if p == nil {
 		return
 	}
-	if p.As == obj.AJMP {
+	if p.As == objabi.AJMP {
 		q = p.Pcond
-		if q != nil && q.As != obj.ATEXT {
+		if q != nil && q.As != objabi.ATEXT {
 			/* mark instruction as done and continue layout at target of jump */
 			p.Mark = 1
 
@@ -783,7 +784,7 @@ loop:
 				break
 			}
 			a = q.As
-			if a == obj.ANOP {
+			if a == objabi.ANOP {
 				i--
 				continue
 			}
@@ -794,11 +795,11 @@ loop:
 			if q.Pcond == nil || q.Pcond.Mark != 0 {
 				continue
 			}
-			if a == obj.ACALL || a == ALOOP {
+			if a == objabi.ACALL || a == ALOOP {
 				continue
 			}
 			for {
-				if p.As == obj.ANOP {
+				if p.As == objabi.ANOP {
 					p = p.Link
 					continue
 				}
@@ -827,7 +828,7 @@ loop:
 			}
 		}
 		q = obj.NewProg(ctxt)
-		q.As = obj.AJMP
+		q.As = objabi.AJMP
 		q.Lineno = p.Lineno
 		q.To.Type = obj.TYPE_BRANCH
 		q.To.Offset = p.Pc
@@ -846,7 +847,7 @@ loop:
 	if nofollow(a) {
 		return
 	}
-	if p.Pcond != nil && a != obj.ACALL {
+	if p.Pcond != nil && a != objabi.ACALL {
 		/*
 		 * some kind of conditional branch.
 		 * recurse to follow one path.
@@ -895,7 +896,7 @@ loop:
 	goto loop
 }
 
-var unaryDst = map[obj.As]bool{
+var unaryDst = map[objabi.As]bool{
 	ABSWAPL:    true,
 	ABSWAPQ:    true,
 	ACMPXCHG8B: true,

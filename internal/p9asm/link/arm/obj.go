@@ -37,6 +37,7 @@ import (
 
 	"wa-lang.org/wa/internal/p9asm/link/ld"
 	"wa-lang.org/wa/internal/p9asm/obj"
+	"wa-lang.org/wa/internal/p9asm/objabi"
 )
 
 // Reading object files.
@@ -96,8 +97,8 @@ func archinit() {
 			log.Fatalf("cannot use -linkmode=external with -H %s", ld.HEADTYPE)
 		}
 
-	case obj.Hlinux,
-		obj.Hdarwin:
+	case objabi.Hlinux,
+		objabi.Hdarwin:
 		break
 	}
 
@@ -105,7 +106,7 @@ func archinit() {
 	default:
 		ld.Exitf("unknown -H option: %v", ld.HEADTYPE)
 
-	case obj.Hlinux: // arm elf
+	case objabi.Hlinux: // arm elf
 		ld.Debug['d'] = 0
 		// with dynamic linking
 		ld.Elfinit()
@@ -120,7 +121,7 @@ func archinit() {
 			ld.INITRND = 4096
 		}
 
-	case obj.Hdarwin: // apple MACH
+	case objabi.Hdarwin: // apple MACH
 		ld.Debug['w'] = 1 // disable DWARF generataion
 		ld.Machoinit()
 		ld.HEADR = ld.INITIAL_MACHO_HEADR

@@ -33,7 +33,9 @@
 
 package x86
 
-import "wa-lang.org/wa/internal/p9asm/obj"
+import (
+	"wa-lang.org/wa/internal/p9asm/objabi"
+)
 
 // 寄存器
 
@@ -43,7 +45,7 @@ const (
 
 const (
 	// int8
-	REG_AL = obj.RBaseAMD64 + iota
+	REG_AL = objabi.RBaseAMD64 + iota
 	REG_CL
 	REG_DL
 	REG_BL
@@ -218,7 +220,7 @@ const (
 // X86 指令集
 
 const (
-	AAAA = obj.ABaseAMD64 + obj.A_ARCHSPECIFIC + iota
+	AAAA = objabi.ABaseAMD64 + objabi.A_ARCHSPECIFIC + iota
 	AAAD
 	AAAM
 	AAAS

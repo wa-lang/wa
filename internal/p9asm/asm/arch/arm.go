@@ -13,6 +13,7 @@ import (
 
 	"wa-lang.org/wa/internal/p9asm/obj"
 	"wa-lang.org/wa/internal/p9asm/obj/arm"
+	"wa-lang.org/wa/internal/p9asm/objabi"
 )
 
 var armLS = map[string]uint8{
@@ -89,7 +90,7 @@ func jumpArm(word string) bool {
 
 // IsARMCMP reports whether the op (as defined by an arm.A* constant) is
 // one of the comparison instructions that require special handling.
-func IsARMCMP(op obj.As) bool {
+func IsARMCMP(op objabi.As) bool {
 	switch op {
 	case arm.ACMN, arm.ACMP, arm.ATEQ, arm.ATST:
 		return true
@@ -99,7 +100,7 @@ func IsARMCMP(op obj.As) bool {
 
 // IsARMSTREX reports whether the op (as defined by an arm.A* constant) is
 // one of the STREX-like instructions that require special handling.
-func IsARMSTREX(op obj.As) bool {
+func IsARMSTREX(op objabi.As) bool {
 	switch op {
 	case arm.ASTREX, arm.ASTREXD, arm.ASTREXB, arm.ASWPW, arm.ASWPBU:
 		return true
@@ -114,7 +115,7 @@ const aMCR = arm.ALAST + 1
 
 // IsARMMRC reports whether the op (as defined by an arm.A* constant) is
 // MRC or MCR.
-func IsARMMRC(op obj.As) bool {
+func IsARMMRC(op objabi.As) bool {
 	switch op {
 	case arm.AMRC, aMCR: // Note: aMCR is defined in this package.
 		return true
@@ -124,7 +125,7 @@ func IsARMMRC(op obj.As) bool {
 
 // IsARMBFX reports whether the op (as defined by an arm.A* constant) is one the
 // BFX-like instructions which are in the form of "op $width, $LSB, (Reg,) Reg".
-func IsARMBFX(op obj.As) bool {
+func IsARMBFX(op objabi.As) bool {
 	switch op {
 	case arm.ABFX, arm.ABFXU, arm.ABFC, arm.ABFI:
 		return true
@@ -133,7 +134,7 @@ func IsARMBFX(op obj.As) bool {
 }
 
 // IsARMFloatCmp reports whether the op is a floating comparison instruction.
-func IsARMFloatCmp(op obj.As) bool {
+func IsARMFloatCmp(op objabi.As) bool {
 	switch op {
 	case arm.ACMPF, arm.ACMPD:
 		return true
@@ -145,7 +146,7 @@ func IsARMFloatCmp(op obj.As) bool {
 // The difference between MRC and MCR is represented by a bit high in the word, not
 // in the usual way by the opcode itself. Asm must use AMRC for both instructions, so
 // we return the opcode for MRC so that asm doesn't need to import obj/arm.
-func ARMMRCOffset(op obj.As, cond string, x0, x1, x2, x3, x4, x5 int64) (offset int64, op0 obj.As, ok bool) {
+func ARMMRCOffset(op objabi.As, cond string, x0, x1, x2, x3, x4, x5 int64) (offset int64, op0 objabi.As, ok bool) {
 	op1 := int64(0)
 	if op == arm.AMRC {
 		op1 = 1
@@ -169,7 +170,7 @@ func ARMMRCOffset(op obj.As, cond string, x0, x1, x2, x3, x4, x5 int64) (offset 
 
 // IsARMMULA reports whether the op (as defined by an arm.A* constant) is
 // MULA, MULS, MMULA, MMULS, MULABB, MULAWB or MULAWT, the 4-operand instructions.
-func IsARMMULA(op obj.As) bool {
+func IsARMMULA(op objabi.As) bool {
 	switch op {
 	case arm.AMULA, arm.AMULS, arm.AMMULA, arm.AMMULS, arm.AMULABB, arm.AMULAWB, arm.AMULAWT:
 		return true
@@ -177,7 +178,7 @@ func IsARMMULA(op obj.As) bool {
 	return false
 }
 
-var bcode = []obj.As{
+var bcode = []objabi.As{
 	arm.ABEQ,
 	arm.ABNE,
 	arm.ABCS,
@@ -193,7 +194,7 @@ var bcode = []obj.As{
 	arm.ABGT,
 	arm.ABLE,
 	arm.AB,
-	obj.ANOP,
+	objabi.ANOP,
 }
 
 // ARMConditionCodes handles the special condition code situation for the ARM.
@@ -243,7 +244,7 @@ func parseARMCondition(cond string, ls, scond map[string]uint8) (uint8, bool) {
 	return bits, true
 }
 
-func armRegisterNumber(name string, n obj.RBaseType) (obj.RBaseType, bool) {
+func armRegisterNumber(name string, n objabi.RBaseType) (objabi.RBaseType, bool) {
 	if n < 0 || 15 < n {
 		return 0, false
 	}

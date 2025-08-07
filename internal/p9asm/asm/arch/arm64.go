@@ -11,6 +11,7 @@ package arch
 import (
 	"wa-lang.org/wa/internal/p9asm/obj"
 	"wa-lang.org/wa/internal/p9asm/obj/arm64"
+	"wa-lang.org/wa/internal/p9asm/objabi"
 )
 
 var arm64LS = map[string]uint8{
@@ -74,7 +75,7 @@ func ParseARM64Suffix(cond string) (uint8, bool) {
 	return 0, false // parseARMCondition(cond, arm64LS, nil)
 }
 
-func arm64RegisterNumber(name string, n obj.RBaseType) (obj.RBaseType, bool) {
+func arm64RegisterNumber(name string, n objabi.RBaseType) (objabi.RBaseType, bool) {
 	switch name {
 	case "F":
 		if 0 <= n && n <= 31 {
@@ -94,13 +95,13 @@ func arm64RegisterNumber(name string, n obj.RBaseType) (obj.RBaseType, bool) {
 
 // IsARM64CMP reports whether the op (as defined by an arm.A* constant) is
 // one of the comparison instructions that require special handling.
-func IsARM64CMP(op obj.As) bool {
+func IsARM64CMP(op objabi.As) bool {
 	panic("TODO")
 }
 
 // IsARM64STLXR reports whether the op (as defined by an arm64.A*
 // constant) is one of the STLXR-like instructions that require special
 // handling.
-func IsARM64STLXR(op obj.As) bool {
+func IsARM64STLXR(op objabi.As) bool {
 	panic("TODO")
 }

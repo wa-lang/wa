@@ -9,8 +9,8 @@
 package arch
 
 import (
-	"wa-lang.org/wa/internal/p9asm/obj"
 	"wa-lang.org/wa/internal/p9asm/obj/loong64"
+	"wa-lang.org/wa/internal/p9asm/objabi"
 )
 
 func jumpLoong64(word string) bool {
@@ -23,7 +23,7 @@ func jumpLoong64(word string) bool {
 
 // IsLoong64MUL reports whether the op (as defined by an loong64.A* constant) is
 // one of the MUL/DIV/REM instructions that require special handling.
-func IsLoong64MUL(op obj.As) bool {
+func IsLoong64MUL(op objabi.As) bool {
 	switch op {
 	case loong64.AMUL, loong64.AMULU, loong64.AMULV, loong64.AMULVU,
 		loong64.ADIV, loong64.ADIVU, loong64.ADIVV, loong64.ADIVVU,
@@ -36,7 +36,7 @@ func IsLoong64MUL(op obj.As) bool {
 // IsLoong64RDTIME reports whether the op (as defined by an loong64.A*
 // constant) is one of the RDTIMELW/RDTIMEHW/RDTIMED instructions that
 // require special handling.
-func IsLoong64RDTIME(op obj.As) bool {
+func IsLoong64RDTIME(op objabi.As) bool {
 	switch op {
 	case loong64.ARDTIMELW, loong64.ARDTIMEHW, loong64.ARDTIMED:
 		return true
@@ -44,7 +44,7 @@ func IsLoong64RDTIME(op obj.As) bool {
 	return false
 }
 
-func IsLoong64AMO(op obj.As) bool {
+func IsLoong64AMO(op objabi.As) bool {
 	return loong64.IsAtomicInst(op)
 }
 
@@ -74,7 +74,7 @@ var loong64LasxArngExtMap = map[string]int16{
 	"Q2":  loong64.ARNG_2Q,
 }
 
-func loong64RegisterNumber(name string, n obj.RBaseType) (obj.RBaseType, bool) {
+func loong64RegisterNumber(name string, n objabi.RBaseType) (objabi.RBaseType, bool) {
 	switch name {
 	case "F":
 		if 0 <= n && n <= 31 {

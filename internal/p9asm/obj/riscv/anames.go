@@ -2,10 +2,10 @@
 
 package riscv
 
-import "wa-lang.org/wa/internal/p9asm/obj"
+import "wa-lang.org/wa/internal/p9asm/objabi"
 
 var Anames = []string{
-	obj.A_ARCHSPECIFIC: "ADDI",
+	objabi.A_ARCHSPECIFIC: "ADDI",
 	"SLTI",
 	"SLTIU",
 	"ANDI",

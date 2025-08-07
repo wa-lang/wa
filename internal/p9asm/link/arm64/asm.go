@@ -38,6 +38,7 @@ import (
 
 	"wa-lang.org/wa/internal/p9asm/link/ld"
 	"wa-lang.org/wa/internal/p9asm/obj"
+	"wa-lang.org/wa/internal/p9asm/objabi"
 )
 
 func gentext() {}
@@ -203,7 +204,7 @@ func archreloc(r *ld.Reloc, s *ld.LSym, val *int64) int {
 			// the BR26 relocation should be fully resolved at link time.
 			// That is the reason why the next if block is disabled. When the bug in ld64
 			// is fixed, we can enable this block and also enable duff's device in cmd/7g.
-			if false && ld.HEADTYPE == obj.Hdarwin {
+			if false && ld.HEADTYPE == objabi.Hdarwin {
 				// Mach-O wants the addend to be encoded in the instruction
 				// Note that although Mach-O supports ARM64_RELOC_ADDEND, it
 				// can only encode 24-bit of signed addend, but the instructions
@@ -299,7 +300,7 @@ func asmb() {
 	ld.Datblk(int64(ld.Segdata.Vaddr), int64(ld.Segdata.Filelen))
 
 	machlink := uint32(0)
-	if ld.HEADTYPE == obj.Hdarwin {
+	if ld.HEADTYPE == objabi.Hdarwin {
 		dwarfoff := uint32(ld.Rnd(int64(uint64(ld.HEADR)+ld.Segtext.Length), int64(ld.INITRND)) + ld.Rnd(int64(ld.Segdata.Filelen), int64(ld.INITRND)))
 		ld.Cseek(int64(dwarfoff))
 
@@ -323,7 +324,7 @@ func asmb() {
 				symo = uint32(ld.Rnd(int64(symo), int64(ld.INITRND)))
 			}
 
-		case obj.Hdarwin:
+		case objabi.Hdarwin:
 			symo = uint32(ld.Segdwarf.Fileoff + uint64(ld.Rnd(int64(ld.Segdwarf.Filelen), int64(ld.INITRND))) + uint64(machlink))
 		}
 
@@ -342,7 +343,7 @@ func asmb() {
 				}
 			}
 
-		case obj.Hdarwin:
+		case objabi.Hdarwin:
 			if ld.Linkmode == ld.LinkExternal {
 				ld.Machoemitreloc()
 			}
@@ -354,10 +355,10 @@ func asmb() {
 	ld.Cseek(0)
 	switch ld.HEADTYPE {
 	default:
-	case obj.Hlinux:
+	case objabi.Hlinux:
 		ld.Asmbelf(int64(symo))
 
-	case obj.Hdarwin:
+	case objabi.Hdarwin:
 		ld.Asmbmacho()
 	}
 

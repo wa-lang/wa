@@ -13,6 +13,7 @@ import (
 	"strings"
 
 	"wa-lang.org/wa/internal/p9asm/obj"
+	"wa-lang.org/wa/internal/p9asm/objabi"
 )
 
 /*
@@ -782,7 +783,7 @@ func Elfinit() {
 	// 32-bit architectures
 	case '5':
 		// we use EABI on both linux/arm and freebsd/arm.
-		if HEADTYPE == obj.Hlinux {
+		if HEADTYPE == objabi.Hlinux {
 			ehdr.flags = 0x5000002 // has entry point, Version5 EABI
 		}
 		fallthrough
@@ -2055,7 +2056,7 @@ func Asmbelf(symo int64) {
 		sh.addralign = 1
 		if interpreter == "" {
 			switch HEADTYPE {
-			case obj.Hlinux:
+			case objabi.Hlinux:
 				interpreter = Thearch.Linuxdynld
 			}
 		}
@@ -2259,7 +2260,7 @@ func Asmbelf(symo int64) {
 		}
 	}
 
-	if HEADTYPE == obj.Hlinux {
+	if HEADTYPE == objabi.Hlinux {
 		ph := newElfPhdr()
 		ph.type_ = PT_GNU_STACK
 		ph.flags = PF_W + PF_R

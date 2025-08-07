@@ -5,7 +5,7 @@
 package loong64
 
 import (
-	"wa-lang.org/wa/internal/p9asm/obj"
+	"wa-lang.org/wa/internal/p9asm/objabi"
 )
 
 //go:generate go run ../stringer.go -i $GOFILE -o anames.go -p loong64
@@ -20,7 +20,7 @@ const (
 )
 
 const (
-	REG_R0 = obj.RBaseLOONG64 + iota // must be a multiple of 32
+	REG_R0 = objabi.RBaseLOONG64 + iota // must be a multiple of 32
 	REG_R1
 	REG_R2
 	REG_R3
@@ -235,11 +235,11 @@ const (
 	FREGRET = REG_F0  // not use
 )
 
-var LOONG64DWARFRegisters = map[obj.RBaseType]obj.RBaseType{}
+var LOONG64DWARFRegisters = map[objabi.RBaseType]objabi.RBaseType{}
 
 func init() {
 	// f assigns dwarfregisters[from:to] = (base):(to-from+base)
-	f := func(from, to, base obj.RBaseType) {
+	f := func(from, to, base objabi.RBaseType) {
 		for r := from; r <= to; r++ {
 			LOONG64DWARFRegisters[r] = (r - from) + base
 		}
@@ -296,8 +296,8 @@ const (
 // bits 5-9 indicates arrangement: <T>
 // bits 10 indicates SMID type: 0: LSX, 1: LASX
 const (
-	REG_ARNG = obj.RBaseLOONG64 + (1 << 10) + (iota << 11) // Vn.<T>
-	REG_ELEM                                               // Vn.<T>[index]
+	REG_ARNG = objabi.RBaseLOONG64 + (1 << 10) + (iota << 11) // Vn.<T>
+	REG_ELEM                                                  // Vn.<T>[index]
 	REG_ELEM_END
 )
 
@@ -358,7 +358,7 @@ const (
 )
 
 const (
-	AABSD = obj.ABaseLoong64 + obj.A_ARCHSPECIFIC + iota
+	AABSD = objabi.ABaseLoong64 + objabi.A_ARCHSPECIFIC + iota
 	AABSF
 	AADD
 	AADDD
@@ -704,9 +704,9 @@ const (
 	ALAST
 
 	// aliases
-	AJMP = obj.AJMP
-	AJAL = obj.ACALL
-	ARET = obj.ARET
+	AJMP = objabi.AJMP
+	AJAL = objabi.ACALL
+	ARET = objabi.ARET
 )
 
 func init() {

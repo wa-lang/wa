@@ -37,6 +37,7 @@ import (
 	"strings"
 
 	"wa-lang.org/wa/internal/p9asm/obj"
+	"wa-lang.org/wa/internal/p9asm/objabi"
 )
 
 // 使用帧指针
@@ -78,7 +79,7 @@ const (
 
 // 指令机器码规范信息
 type Optab struct {
-	as     obj.As    // 指令种类(opcode 编号), 比如 AADD、AMOV 等
+	as     objabi.As // 指令种类(opcode 编号), 比如 AADD、AMOV 等
 	ytab   []ytab    // 类型映射表: 描述操作数类型组合对应的编码
 	prefix uint8     // 前缀字节, X86 有 0xF2, 0xF3, 0x66 等
 	op     [23]uint8 // 输出的机器码模板
@@ -95,12 +96,12 @@ type ytab struct {
 
 // 描述 MOV 指令编码方式 的表项, 用来把不同操作数类型映射到不同机器码模板
 type Movtab struct {
-	as   obj.As   // 指令代号, 比如 AMOVB, AMOVW, AMOVL, 代表不同大小的 MOV 指令
-	ft   uint8    // 第一个操作数(from)的类型(内部枚举, 比如寄存器/内存/立即数等)
-	f3t  uint8    // 可选第三个操作数的类型. 多数情况下是 0, 只对少数指令有用, 比如三操作数指令
-	tt   uint8    // 第二个操作数(to)的类型
-	code uint8    // 编码方式编号，告诉后端怎么生成机器码
-	op   [4]uint8 // 机器码模板, 最多 4 字节(因为 MOV 类指令通常很短)
+	as   objabi.As // 指令代号, 比如 AMOVB, AMOVW, AMOVL, 代表不同大小的 MOV 指令
+	ft   uint8     // 第一个操作数(from)的类型(内部枚举, 比如寄存器/内存/立即数等)
+	f3t  uint8     // 可选第三个操作数的类型. 多数情况下是 0, 只对少数指令有用, 比如三操作数指令
+	tt   uint8     // 第二个操作数(to)的类型
+	code uint8     // 编码方式编号，告诉后端怎么生成机器码
+	op   [4]uint8  // 机器码模板, 最多 4 字节(因为 MOV 类指令通常很短)
 }
 
 // 操作数类型枚举表
@@ -1187,7 +1188,7 @@ var optab = []Optab{
 	{ABTSW, ybtl, Pq, [23]uint8{0xba, 05, 0xab}},
 	{ABTW, ybtl, Pq, [23]uint8{0xba, 04, 0xa3}},
 	{ABYTE, ybyte, Px, [23]uint8{1}},
-	{obj.ACALL, ycall, Px, [23]uint8{0xff, 02, 0xff, 0x15, 0xe8}},
+	{objabi.ACALL, ycall, Px, [23]uint8{0xff, 02, 0xff, 0x15, 0xe8}},
 	{ACDQ, ynone, Px, [23]uint8{0x99}},
 	{ACLC, ynone, Px, [23]uint8{0xf8}},
 	{ACLD, ynone, Px, [23]uint8{0xfc}},
@@ -1284,7 +1285,7 @@ var optab = []Optab{
 	{ACQO, ynone, Pw, [23]uint8{0x99}},
 	{ADAA, ynone, P32, [23]uint8{0x27}},
 	{ADAS, ynone, P32, [23]uint8{0x2f}},
-	{obj.ADATA, nil, 0, [23]uint8{}},
+	{objabi.ADATA, nil, 0, [23]uint8{}},
 	{ADECB, yincb, Pb, [23]uint8{0xfe, 01}},
 	{ADECL, yincl, Px1, [23]uint8{0x48, 0xff, 01}},
 	{ADECQ, yincq, Pw, [23]uint8{0xff, 01}},
@@ -1303,7 +1304,7 @@ var optab = []Optab{
 	{AFXSAVE, ysvrs, Pm, [23]uint8{0xae, 00, 0xae, 00}},
 	{AFXRSTOR64, ysvrs, Pw, [23]uint8{0x0f, 0xae, 01, 0x0f, 0xae, 01}},
 	{AFXSAVE64, ysvrs, Pw, [23]uint8{0x0f, 0xae, 00, 0x0f, 0xae, 00}},
-	{obj.AGLOBL, nil, 0, [23]uint8{}},
+	{objabi.AGLOBL, nil, 0, [23]uint8{}},
 	{AHLT, ynone, Px, [23]uint8{0xf4}},
 	{AIDIVB, ydivb, Pb, [23]uint8{0xf6, 07}},
 	{AIDIVL, ydivl, Px, [23]uint8{0xf7, 07}},
@@ -1342,7 +1343,7 @@ var optab = []Optab{
 	{AJLS, yjcond, Px, [23]uint8{0x76, 0x86}},
 	{AJLT, yjcond, Px, [23]uint8{0x7c, 0x8c}},
 	{AJMI, yjcond, Px, [23]uint8{0x78, 0x88}},
-	{obj.AJMP, yjmp, Px, [23]uint8{0xff, 04, 0xeb, 0xe9}},
+	{objabi.AJMP, yjmp, Px, [23]uint8{0xff, 04, 0xeb, 0xe9}},
 	{AJNE, yjcond, Px, [23]uint8{0x75, 0x85}},
 	{AJOC, yjcond, Px, [23]uint8{0x71, 0x81, 00}},
 	{AJOS, yjcond, Px, [23]uint8{0x70, 0x80, 00}},
@@ -1433,7 +1434,7 @@ var optab = []Optab{
 	{ANEGL, yscond, Px, [23]uint8{0xf7, 03}},
 	{ANEGQ, yscond, Pw, [23]uint8{0xf7, 03}},
 	{ANEGW, yscond, Pe, [23]uint8{0xf7, 03}},
-	{obj.ANOP, ynop, Px, [23]uint8{0, 0}},
+	{objabi.ANOP, ynop, Px, [23]uint8{0, 0}},
 	{ANOTB, yscond, Pb, [23]uint8{0xf6, 02}},
 	{ANOTL, yscond, Px, [23]uint8{0xf7, 02}}, // TODO(chai2010): yscond is wrong here.
 	{ANOTQ, yscond, Pw, [23]uint8{0xf7, 02}},
@@ -1571,7 +1572,7 @@ var optab = []Optab{
 	{ARCRW, yshl, Pe, [23]uint8{0xd1, 03, 0xc1, 03, 0xd3, 03, 0xd3, 03}},
 	{AREP, ynone, Px, [23]uint8{0xf3}},
 	{AREPN, ynone, Px, [23]uint8{0xf2}},
-	{obj.ARET, ynone, Px, [23]uint8{0xc3}},
+	{objabi.ARET, ynone, Px, [23]uint8{0xc3}},
 	{ARETFW, yret, Pe, [23]uint8{0xcb, 0xca}},
 	{ARETFL, yret, Px, [23]uint8{0xcb, 0xca}},
 	{ARETFQ, yret, Pw, [23]uint8{0xcb, 0xca}},
@@ -1654,7 +1655,7 @@ var optab = []Optab{
 	{ATESTL, ytestl, Px, [23]uint8{0xa9, 0xf7, 00, 0x85, 0x85}},
 	{ATESTQ, ytestl, Pw, [23]uint8{0xa9, 0xf7, 00, 0x85, 0x85}},
 	{ATESTW, ytestl, Pe, [23]uint8{0xa9, 0xf7, 00, 0x85, 0x85}},
-	{obj.ATEXT, ytext, Px, [23]uint8{}},
+	{objabi.ATEXT, ytext, Px, [23]uint8{}},
 	{AUCOMISD, yxcmp, Pe, [23]uint8{0x2e}},
 	{AUCOMISS, yxcmp, Pm, [23]uint8{0x2e}},
 	{AUNPCKHPD, yxm, Pe, [23]uint8{0x15}},
@@ -1815,7 +1816,7 @@ var optab = []Optab{
 	{APREFETCHT2, yprefetch, Pm, [23]uint8{0x18, 03}},
 	{APREFETCHNTA, yprefetch, Pm, [23]uint8{0x18, 00}},
 	{AMOVQL, yrl_ml, Px, [23]uint8{0x89}},
-	{obj.AUNDEF, ynone, Px, [23]uint8{0x0f, 0x0b}},
+	{objabi.AUNDEF, ynone, Px, [23]uint8{0x0f, 0x0b}},
 	{AAESENC, yaes, Pq, [23]uint8{0x38, 0xdc, 0}},
 	{AAESENCLAST, yaes, Pq, [23]uint8{0x38, 0xdd, 0}},
 	{AAESDEC, yaes, Pq, [23]uint8{0x38, 0xde, 0}},
@@ -1824,22 +1825,22 @@ var optab = []Optab{
 	{AAESKEYGENASSIST, yaes2, Pq, [23]uint8{0x3a, 0xdf, 0}},
 	{APSHUFD, yxshuf, Pq, [23]uint8{0x70, 0}},
 	{APCLMULQDQ, yxshuf, Pq, [23]uint8{0x3a, 0x44, 0}},
-	{obj.AUSEFIELD, ynop, Px, [23]uint8{0, 0}},
-	{obj.ATYPE, nil, 0, [23]uint8{}},
-	{obj.AFUNCDATA, yfuncdata, Px, [23]uint8{0, 0}},
-	{obj.APCDATA, ypcdata, Px, [23]uint8{0, 0}},
-	{obj.ACHECKNIL, nil, 0, [23]uint8{}},
-	{obj.AVARDEF, nil, 0, [23]uint8{}},
-	{obj.AVARKILL, nil, 0, [23]uint8{}},
-	{obj.ADUFFCOPY, yduff, Px, [23]uint8{0xe8}},
-	{obj.ADUFFZERO, yduff, Px, [23]uint8{0xe8}},
-	{obj.AEND, nil, 0, [23]uint8{}},
+	{objabi.AUSEFIELD, ynop, Px, [23]uint8{0, 0}},
+	{objabi.ATYPE, nil, 0, [23]uint8{}},
+	{objabi.AFUNCDATA, yfuncdata, Px, [23]uint8{0, 0}},
+	{objabi.APCDATA, ypcdata, Px, [23]uint8{0, 0}},
+	{objabi.ACHECKNIL, nil, 0, [23]uint8{}},
+	{objabi.AVARDEF, nil, 0, [23]uint8{}},
+	{objabi.AVARKILL, nil, 0, [23]uint8{}},
+	{objabi.ADUFFCOPY, yduff, Px, [23]uint8{0xe8}},
+	{objabi.ADUFFZERO, yduff, Px, [23]uint8{0xe8}},
+	{objabi.AEND, nil, 0, [23]uint8{}},
 	{0, nil, 0, [23]uint8{}},
 }
 
 // 快速索引表
 // 因为原始的指令比较稀疏(涉及多个指令集), 取低bit可以更紧凑
-var opindex [(ALAST + 1) & obj.AMask]*Optab
+var opindex [(ALAST + 1) & objabi.AMask]*Optab
 
 // isextern reports whether s describes an external symbol that must avoid pc-relative addressing.
 // This happens on systems like Solaris that call .so functions instead of system calls.
@@ -1882,7 +1883,7 @@ func fillnop(p []byte, n int) {
 	}
 }
 
-func spadjop(ctxt *obj.Link, p *obj.Prog, l, q obj.As) obj.As {
+func spadjop(ctxt *obj.Link, p *obj.Prog, l, q objabi.As) objabi.As {
 	if p.Mode != 64 || ctxt.Arch.Ptrsize == 4 {
 		return l
 	}
@@ -1920,7 +1921,7 @@ func span6(ctxt *obj.Link, s *obj.LSym) {
 			}
 
 			if v == 0 {
-				p.As = obj.ANOP
+				p.As = objabi.ANOP
 			}
 		}
 	}
@@ -1947,7 +1948,7 @@ func span6(ctxt *obj.Link, s *obj.LSym) {
 			}
 
 			if v == 0 {
-				p.As = obj.ANOP
+				p.As = objabi.ANOP
 			}
 		}
 	}
@@ -2058,14 +2059,14 @@ func span6(ctxt *obj.Link, s *obj.LSym) {
 }
 
 func instinit() {
-	var c obj.As
+	var c objabi.As
 
 	for i := 1; optab[i].as != 0; i++ {
 		c = optab[i].as
-		if opindex[c&obj.AMask] != nil {
+		if opindex[c&objabi.AMask] != nil {
 			log.Fatalf("phase error in optab: %d (%v)", i, c)
 		}
-		opindex[c&obj.AMask] = &optab[i]
+		opindex[c&objabi.AMask] = &optab[i]
 	}
 
 	for i := 0; i < Ymax; i++ {
@@ -2224,7 +2225,7 @@ func prefixof(ctxt *obj.Link, p *obj.Prog, a *obj.Addr) int {
 				default:
 					log.Fatalf("unknown TLS base register for %s", ctxt.Headtype)
 
-				case obj.Hdarwin:
+				case objabi.Hdarwin:
 					return 0x65 // GS
 				}
 			}
@@ -2233,14 +2234,14 @@ func prefixof(ctxt *obj.Link, p *obj.Prog, a *obj.Addr) int {
 			default:
 				log.Fatalf("unknown TLS base register for %s", ctxt.Headtype)
 
-			case obj.Hlinux:
+			case objabi.Hlinux:
 				if ctxt.Flag_shared != 0 {
 					log.Fatalf("unknown TLS base register for linux with -shared")
 				} else {
 					return 0x64 // FS
 				}
 
-			case obj.Hdarwin:
+			case objabi.Hdarwin:
 				return 0x65 // GS
 			}
 		}
@@ -2250,7 +2251,7 @@ func prefixof(ctxt *obj.Link, p *obj.Prog, a *obj.Addr) int {
 		return 0
 	}
 
-	switch obj.RBaseType(a.Index) {
+	switch objabi.RBaseType(a.Index) {
 	case REG_CS:
 		return 0x2e
 
@@ -2564,7 +2565,7 @@ func oclass(ctxt *obj.Link, p *obj.Prog, a *obj.Addr) int {
 func asmidx(ctxt *obj.Link, scale int, index int, base int) {
 	var i int
 
-	switch obj.RBaseType(index) {
+	switch objabi.RBaseType(index) {
 	default:
 		goto bad
 
@@ -2613,7 +2614,7 @@ func asmidx(ctxt *obj.Link, scale int, index int, base int) {
 	}
 
 bas:
-	switch obj.RBaseType(base) {
+	switch objabi.RBaseType(base) {
 	default:
 		goto bad
 
@@ -3130,7 +3131,7 @@ func isax(a *obj.Addr) bool {
 	return false
 }
 
-func subreg(p *obj.Prog, from, to obj.RBaseType) {
+func subreg(p *obj.Prog, from, to objabi.RBaseType) {
 	if false { /* debug['Q'] */
 		fmt.Printf("\n%v\ts/%v/%v/\n", p, Rconv(from), Rconv(to))
 	}
@@ -3145,12 +3146,12 @@ func subreg(p *obj.Prog, from, to obj.RBaseType) {
 		p.Tt = 0
 	}
 
-	if obj.RBaseType(p.From.Index) == from {
+	if objabi.RBaseType(p.From.Index) == from {
 		p.From.Index = int16(to)
 		p.Ft = 0
 	}
 
-	if obj.RBaseType(p.To.Index) == from {
+	if objabi.RBaseType(p.To.Index) == from {
 		p.To.Index = int16(to)
 		p.Tt = 0
 	}
@@ -3200,7 +3201,7 @@ var bpduff2 = []byte{
 func doasm(ctxt *obj.Link, p *obj.Prog) {
 	ctxt.Curp = p // TODO
 
-	o := opindex[p.As&obj.AMask]
+	o := opindex[p.As&objabi.AMask]
 
 	if o == nil {
 		ctxt.Diag("asmins: missing op %v", p)
@@ -3225,7 +3226,7 @@ func doasm(ctxt *obj.Link, p *obj.Prog) {
 	if (p.From.Type == obj.TYPE_CONST || p.From.Type == obj.TYPE_REG) && p.From.Index != REG_NONE && p.From.Scale == 0 {
 		p.From3 = new(obj.Addr)
 		p.From3.Type = obj.TYPE_REG
-		p.From3.Reg = obj.RBaseType(p.From.Index)
+		p.From3.Reg = objabi.RBaseType(p.From.Index)
 		p.From.Index = 0
 	}
 
@@ -3969,7 +3970,7 @@ func doasm(ctxt *obj.Link, p *obj.Prog) {
 						ctxt.Andptr[0] = t[0]
 						ctxt.Andptr = ctxt.Andptr[1:]
 					}
-					switch obj.RBaseType(p.To.Index) {
+					switch objabi.RBaseType(p.To.Index) {
 					default:
 						goto bad
 
@@ -4060,7 +4061,7 @@ func doasm(ctxt *obj.Link, p *obj.Prog) {
 						default:
 							log.Fatalf("unknown TLS base location for %s", ctxt.Headtype)
 
-						case obj.Hlinux:
+						case objabi.Hlinux:
 							// ELF TLS base is 0(GS).
 							pp.From = p.From
 
@@ -4075,7 +4076,7 @@ func doasm(ctxt *obj.Link, p *obj.Prog) {
 							ctxt.Andptr = ctxt.Andptr[1:]
 							asmand(ctxt, p, &pp.From, &p.To)
 
-						case obj.Hwindows:
+						case objabi.Hwindows:
 							// Windows TLS base is always 0x14(FS).
 							pp.From = p.From
 
@@ -4097,7 +4098,7 @@ func doasm(ctxt *obj.Link, p *obj.Prog) {
 					default:
 						log.Fatalf("unknown TLS base location for %s", ctxt.Headtype)
 
-					case obj.Hlinux:
+					case objabi.Hlinux:
 						if ctxt.Flag_shared == 0 {
 							log.Fatalf("unknown TLS base location for linux without -shared")
 						}
@@ -4123,7 +4124,7 @@ func doasm(ctxt *obj.Link, p *obj.Prog) {
 						r.Add = -4
 						put4(ctxt, 0)
 
-					case obj.Hwindows:
+					case objabi.Hwindows:
 						// Windows TLS base is always 0x28(GS).
 						pp.From = p.From
 
@@ -4264,7 +4265,7 @@ bad:
 // which is not referenced in a.
 // If a is empty, it returns BX to account for MULB-like instructions
 // that might use DX and AX.
-func byteswapreg(ctxt *obj.Link, a *obj.Addr) obj.RBaseType {
+func byteswapreg(ctxt *obj.Link, a *obj.Addr) objabi.RBaseType {
 	cand := 1
 	canc := cand
 	canb := canc
@@ -4296,7 +4297,7 @@ func byteswapreg(ctxt *obj.Link, a *obj.Addr) obj.RBaseType {
 	}
 
 	if a.Type == obj.TYPE_MEM || a.Type == obj.TYPE_ADDR {
-		switch obj.RBaseType(a.Index) {
+		switch objabi.RBaseType(a.Index) {
 		case REG_AX:
 			cana = 0
 
@@ -4384,7 +4385,7 @@ var naclstos = []uint8{
 	0x3f, // LEAQ (R15)(DI*1), DI
 }
 
-func nacltrunc(ctxt *obj.Link, reg obj.RBaseType) {
+func nacltrunc(ctxt *obj.Link, reg objabi.RBaseType) {
 	if reg >= REG_R8 {
 		ctxt.Andptr[0] = 0x45
 		ctxt.Andptr = ctxt.Andptr[1:]
@@ -4400,7 +4401,7 @@ func asmins(ctxt *obj.Link, p *obj.Prog) {
 	ctxt.Andptr = ctxt.And[:]
 	ctxt.Asmode = int(p.Mode)
 
-	if p.As == obj.AUSEFIELD {
+	if p.As == objabi.AUSEFIELD {
 		r := obj_Addrel(ctxt.Cursym)
 		r.Off = 0
 		r.Siz = 0

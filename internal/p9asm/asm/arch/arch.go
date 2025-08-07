@@ -14,6 +14,7 @@ import (
 	"wa-lang.org/wa/internal/p9asm/obj/loong64"
 	"wa-lang.org/wa/internal/p9asm/obj/riscv"
 	"wa-lang.org/wa/internal/p9asm/obj/x86"
+	"wa-lang.org/wa/internal/p9asm/objabi"
 )
 
 // 处理器类型
@@ -46,11 +47,11 @@ type Arch struct {
 
 	// 指令集表
 	// 比如 X86 平台的 JCC 指令对应 x86.AJCC
-	Instructions map[string]obj.As
+	Instructions map[string]objabi.As
 
 	// 通用寄存器表
 	// 比如 X86 平台的 AX 寄存器对应 x86.REG_AX
-	Register map[string]obj.RBaseType
+	Register map[string]objabi.RBaseType
 
 	// 通用寄存器名字前缀表格, 比如 R(0) 的前缀为 R, SPR(268) 的前缀为 SPR
 	// 该表格需要和 this.RegisterNumber() 辅助函数配合使用
@@ -58,7 +59,7 @@ type Arch struct {
 
 	// 根据通用寄存器的名字前缀和编号, 转化为底层唯一的机器码对应的编号.
 	// 比如 R(10) 对应 arm64.REG_R10.
-	RegisterNumber func(string, obj.RBaseType) (obj.RBaseType, bool)
+	RegisterNumber func(string, objabi.RBaseType) (objabi.RBaseType, bool)
 
 	// 判断是否为 jump 跳转指令
 	IsJump func(word string) bool
@@ -89,14 +90,14 @@ func archX86(CPU CPUType, linkArch *obj.LinkArch) *Arch {
 		CPU:      CPU,
 		LinkArch: linkArch,
 
-		Instructions:   map[string]obj.As{},
-		Register:       map[string]obj.RBaseType{},
+		Instructions:   map[string]objabi.As{},
+		Register:       map[string]objabi.RBaseType{},
 		RegisterPrefix: map[string]bool{},
 	}
 
 	// 构造寄存器名查询表
 	for i, s := range x86.Register {
-		p.Register[s] = obj.RBaseType(i) + x86.REG_AL
+		p.Register[s] = objabi.RBaseType(i) + x86.REG_AL
 	}
 
 	// Plan9 汇编语言伪寄存器
@@ -107,18 +108,18 @@ func archX86(CPU CPUType, linkArch *obj.LinkArch) *Arch {
 
 	// X86 没有通用前缀名的寄存器
 	p.RegisterPrefix = map[string]bool{}
-	p.RegisterNumber = func(name string, n obj.RBaseType) (obj.RBaseType, bool) { return 0, false }
+	p.RegisterNumber = func(name string, n objabi.RBaseType) (objabi.RBaseType, bool) { return 0, false }
 
 	// 初始化 Plan9 汇编语言的通用指令
-	for i, s := range obj.Anames {
-		p.Instructions[s] = obj.As(i)
+	for i, s := range objabi.Anames {
+		p.Instructions[s] = objabi.As(i)
 	}
 
 	// 初始化 X86 平台的指令
 	for i, s := range x86.Anames {
-		i := obj.As(i)
-		if i >= obj.A_ARCHSPECIFIC {
-			p.Instructions[s] = i + obj.ABaseAMD64
+		i := objabi.As(i)
+		if i >= objabi.A_ARCHSPECIFIC {
+			p.Instructions[s] = i + objabi.ABaseAMD64
 		}
 	}
 
@@ -192,8 +193,8 @@ func archArm64(CPU CPUType, linkArch *obj.LinkArch) *Arch {
 		CPU:      CPU,
 		LinkArch: linkArch,
 
-		Instructions:   map[string]obj.As{},
-		Register:       map[string]obj.RBaseType{},
+		Instructions:   map[string]objabi.As{},
+		Register:       map[string]objabi.RBaseType{},
 		RegisterPrefix: map[string]bool{},
 	}
 
@@ -201,13 +202,13 @@ func archArm64(CPU CPUType, linkArch *obj.LinkArch) *Arch {
 	// 注册方式和 AMD64 稍微有点区别
 	p.Register[arm64.Rconv(arm64.REGSP)] = arm64.REGSP
 	for i := arm64.REG_R0; i <= arm64.REG_R31; i++ {
-		p.Register[arm64.Rconv(i)] = obj.RBaseType(i)
+		p.Register[arm64.Rconv(i)] = objabi.RBaseType(i)
 	}
 	for i := arm64.REG_F0; i <= arm64.REG_F31; i++ {
-		p.Register[arm64.Rconv(i)] = obj.RBaseType(i)
+		p.Register[arm64.Rconv(i)] = objabi.RBaseType(i)
 	}
 	for i := arm64.REG_V0; i <= arm64.REG_V31; i++ {
-		p.Register[arm64.Rconv(i)] = obj.RBaseType(i)
+		p.Register[arm64.Rconv(i)] = objabi.RBaseType(i)
 	}
 
 	p.Register["LR"] = arm64.REGLINK
@@ -263,15 +264,15 @@ func archArm64(CPU CPUType, linkArch *obj.LinkArch) *Arch {
 	}
 
 	// 注册 Plan9 汇编语言通用指令
-	for i, s := range obj.Anames {
-		p.Instructions[s] = obj.As(i)
+	for i, s := range objabi.Anames {
+		p.Instructions[s] = objabi.As(i)
 	}
 
 	// 注册 ARM64 指令
 	for i, s := range arm64.Anames {
-		i := obj.As(i)
-		if i >= obj.A_ARCHSPECIFIC {
-			p.Instructions[s] = i + obj.ABaseARM64
+		i := objabi.As(i)
+		if i >= objabi.A_ARCHSPECIFIC {
+			p.Instructions[s] = i + objabi.ABaseARM64
 		}
 	}
 
@@ -291,21 +292,21 @@ func archArm(CPU CPUType, linkArch *obj.LinkArch) *Arch {
 		CPU:      CPU,
 		LinkArch: linkArch,
 
-		Instructions:   map[string]obj.As{},
-		Register:       map[string]obj.RBaseType{},
+		Instructions:   map[string]objabi.As{},
+		Register:       map[string]objabi.RBaseType{},
 		RegisterPrefix: map[string]bool{},
 	}
 
 	// Create maps for easy lookup of instruction names etc.
 	// Note that there is no list of names as there is for x86.
 	for i := arm.REG_R0; i < arm.REG_SPSR; i++ {
-		p.Register[i.String()] = obj.RBaseType(i)
+		p.Register[i.String()] = objabi.RBaseType(i)
 	}
 	// Avoid unintentionally clobbering g using R10.
 	delete(p.Register, "R10")
 	p.Register["g"] = arm.REG_R10
 	for i := 0; i < 16; i++ {
-		p.Register[fmt.Sprintf("C%d", i)] = obj.RBaseType(i)
+		p.Register[fmt.Sprintf("C%d", i)] = objabi.RBaseType(i)
 	}
 
 	// Pseudo-registers.
@@ -327,18 +328,18 @@ func archArm(CPU CPUType, linkArch *obj.LinkArch) *Arch {
 	p.Register["MB_OSH"] = arm.REG_MB_OSH
 	p.Register["MB_OSHST"] = arm.REG_MB_OSHST
 
-	for i, s := range obj.Anames {
-		p.Instructions[s] = obj.As(i)
+	for i, s := range objabi.Anames {
+		p.Instructions[s] = objabi.As(i)
 	}
 	for i, s := range arm.Anames {
-		i := obj.As(i)
-		if i >= obj.A_ARCHSPECIFIC {
-			p.Instructions[s] = i + obj.ABaseARM
+		i := objabi.As(i)
+		if i >= objabi.A_ARCHSPECIFIC {
+			p.Instructions[s] = i + objabi.ABaseARM
 		}
 	}
 	// Annoying aliases.
-	p.Instructions["B"] = obj.AJMP
-	p.Instructions["BL"] = obj.ACALL
+	p.Instructions["B"] = objabi.AJMP
+	p.Instructions["BL"] = objabi.ACALL
 	// MCR differs from MRC by the way fields of the word are encoded.
 	// (Details in arm.go). Here we add the instruction so parse will find
 	// it, but give it an opcode number known only to us.
@@ -354,8 +355,8 @@ func archLoong64(CPU CPUType, linkArch *obj.LinkArch) *Arch {
 		CPU:      CPU,
 		LinkArch: linkArch,
 
-		Instructions:   map[string]obj.As{},
-		Register:       map[string]obj.RBaseType{},
+		Instructions:   map[string]objabi.As{},
+		Register:       map[string]objabi.RBaseType{},
 		RegisterPrefix: map[string]bool{},
 	}
 
@@ -404,13 +405,13 @@ func archLoong64(CPU CPUType, linkArch *obj.LinkArch) *Arch {
 	}
 	p.RegisterNumber = loong64RegisterNumber
 
-	for i, s := range obj.Anames {
-		p.Instructions[s] = obj.As(i)
+	for i, s := range objabi.Anames {
+		p.Instructions[s] = objabi.As(i)
 	}
 	for i, s := range loong64.Anames {
-		i := obj.As(i)
-		if i >= obj.A_ARCHSPECIFIC {
-			p.Instructions[s] = i + obj.ABaseLoong64
+		i := objabi.As(i)
+		if i >= objabi.A_ARCHSPECIFIC {
+			p.Instructions[s] = i + objabi.ABaseLoong64
 		}
 	}
 
@@ -427,8 +428,8 @@ func archRISCV64(CPU CPUType, linkArch *obj.LinkArch, shared bool) *Arch {
 		CPU:      CPU,
 		LinkArch: linkArch,
 
-		Instructions:   map[string]obj.As{},
-		Register:       map[string]obj.RBaseType{},
+		Instructions:   map[string]objabi.As{},
+		Register:       map[string]objabi.RBaseType{},
 		RegisterPrefix: map[string]bool{},
 	}
 
@@ -444,15 +445,15 @@ func archRISCV64(CPU CPUType, linkArch *obj.LinkArch, shared bool) *Arch {
 			continue
 		}
 		name := fmt.Sprintf("X%d", i-riscv.REG_X0)
-		p.Register[name] = obj.RBaseType(i)
+		p.Register[name] = objabi.RBaseType(i)
 	}
 	for i := riscv.REG_F0; i <= riscv.REG_F31; i++ {
 		name := fmt.Sprintf("F%d", i-riscv.REG_F0)
-		p.Register[name] = obj.RBaseType(i)
+		p.Register[name] = objabi.RBaseType(i)
 	}
 	for i := riscv.REG_V0; i <= riscv.REG_V31; i++ {
 		name := fmt.Sprintf("V%d", i-riscv.REG_V0)
-		p.Register[name] = obj.RBaseType(i)
+		p.Register[name] = objabi.RBaseType(i)
 	}
 
 	// General registers with ABI names.
@@ -533,17 +534,17 @@ func archRISCV64(CPU CPUType, linkArch *obj.LinkArch, shared bool) *Arch {
 	p.Register["FP"] = RFP
 	p.Register["PC"] = RPC
 
-	for i, s := range obj.Anames {
-		p.Instructions[s] = obj.As(i)
+	for i, s := range objabi.Anames {
+		p.Instructions[s] = objabi.As(i)
 	}
 	for i, s := range riscv.Anames {
-		i := obj.As(i)
-		if i >= obj.A_ARCHSPECIFIC {
-			p.Instructions[s] = i + obj.ABaseRISCV
+		i := objabi.As(i)
+		if i >= objabi.A_ARCHSPECIFIC {
+			p.Instructions[s] = i + objabi.ABaseRISCV
 		}
 	}
 
-	p.RegisterNumber = func(name string, n obj.RBaseType) (obj.RBaseType, bool) {
+	p.RegisterNumber = func(name string, n objabi.RBaseType) (objabi.RBaseType, bool) {
 		return 0, false
 	}
 

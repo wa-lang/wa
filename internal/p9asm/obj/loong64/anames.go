@@ -2,10 +2,10 @@
 
 package loong64
 
-import "wa-lang.org/wa/internal/p9asm/obj"
+import "wa-lang.org/wa/internal/p9asm/objabi"
 
 var Anames = []string{
-	obj.A_ARCHSPECIFIC: "ABSD",
+	objabi.A_ARCHSPECIFIC: "ABSD",
 	"ABSF",
 	"ADD",
 	"ADDD",

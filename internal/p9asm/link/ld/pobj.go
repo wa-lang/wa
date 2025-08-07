@@ -38,7 +38,7 @@ import (
 	"strings"
 
 	"wa-lang.org/wa/internal/p9asm/link/bio"
-	"wa-lang.org/wa/internal/p9asm/obj"
+	"wa-lang.org/wa/internal/p9asm/objabi"
 )
 
 var (
@@ -176,7 +176,7 @@ func Ldmain() {
 
 	if outfile == "" {
 		outfile = "a.out"
-		if HEADTYPE == obj.Hwindows {
+		if HEADTYPE == objabi.Hwindows {
 			outfile += ".exe"
 		}
 	}
@@ -231,11 +231,11 @@ func Ldmain() {
 	callgraph()
 
 	doelf()
-	if HEADTYPE == obj.Hdarwin {
+	if HEADTYPE == objabi.Hdarwin {
 		domacho()
 	}
 	dostkcheck()
-	if HEADTYPE == obj.Hwindows {
+	if HEADTYPE == objabi.Hwindows {
 		dope()
 	}
 	addexport()

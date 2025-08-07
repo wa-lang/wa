@@ -20,6 +20,7 @@ const (
 	// 特殊符号
 	operator_beg
 	// TODO
+	// 参考lex包的移位运算符
 	operator_end
 
 	// 面值类型
@@ -29,6 +30,9 @@ const (
 	FLOAT  // 123.45
 	CHAR   // 'a'
 	STRING // "abc"
+
+	// 把指令当作一种面值
+	AS // 汇编指令
 	literal_end
 
 	// 关键字

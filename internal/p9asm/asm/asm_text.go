@@ -8,6 +8,7 @@ import (
 
 	"wa-lang.org/wa/internal/p9asm/asm/lex"
 	"wa-lang.org/wa/internal/p9asm/obj"
+	"wa-lang.org/wa/internal/p9asm/objabi"
 )
 
 // TEXT 汇编伪指令
@@ -83,7 +84,7 @@ func (p *Parser) asmText(operands [][]lex.Token) {
 
 	prog := &obj.Prog{
 		Ctxt:   p.ctxt,
-		As:     obj.ATEXT,
+		As:     objabi.ATEXT,
 		Lineno: p.lineNum,
 		From:   nameAddr,
 		From3: &obj.Addr{

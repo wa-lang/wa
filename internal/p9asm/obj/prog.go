@@ -23,9 +23,9 @@ type Prog struct {
 	Pc     int64
 	Lineno objabi.Pos // 根据 Ctxt.Fset 进行定位
 	Spadj  int32
-	As     As
-	Reg    RBaseType
-	RegTo2 RBaseType // 2nd register output operand
+	As     objabi.As
+	Reg    objabi.RBaseType
+	RegTo2 objabi.RBaseType // 2nd register output operand
 	Mark   uint16
 	Optab  uint16
 	Scond  uint8
@@ -90,13 +90,13 @@ func (p *Prog) String() string {
 		fmt.Fprintf(&buf, "%s%v", sep, p.From.Dconv(p))
 		sep = ", "
 	}
-	if p.Reg != REG_NONE {
+	if p.Reg != objabi.REG_NONE {
 		// Should not happen but might as well show it if it does.
 		fmt.Fprintf(&buf, "%s%v", sep, p.Reg)
 		sep = ", "
 	}
 	if p.From3Type() != TYPE_NONE {
-		if p.From3.Type == TYPE_CONST && (p.As == ADATA || p.As == ATEXT || p.As == AGLOBL) {
+		if p.From3.Type == TYPE_CONST && (p.As == objabi.ADATA || p.As == objabi.ATEXT || p.As == objabi.AGLOBL) {
 			// Special case - omit $.
 			fmt.Fprintf(&buf, "%s%d", sep, p.From3.Offset)
 		} else {
@@ -107,7 +107,7 @@ func (p *Prog) String() string {
 	if p.To.Type != TYPE_NONE {
 		fmt.Fprintf(&buf, "%s%v", sep, p.To.Dconv(p))
 	}
-	if p.RegTo2 != REG_NONE {
+	if p.RegTo2 != objabi.REG_NONE {
 		fmt.Fprintf(&buf, "%s%v", sep, p.RegTo2)
 	}
 	return buf.String()
@@ -118,7 +118,7 @@ func (p *Prog) brloop() *Prog {
 
 	c := 0
 	for q = p; q != nil; q = q.Pcond {
-		if q.As != AJMP || q.Pcond == nil {
+		if q.As != objabi.AJMP || q.Pcond == nil {
 			break
 		}
 		c++

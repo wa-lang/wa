@@ -37,6 +37,7 @@ import (
 	"wa-lang.org/wa/internal/p9asm/debug/elf"
 	"wa-lang.org/wa/internal/p9asm/link/ld"
 	"wa-lang.org/wa/internal/p9asm/obj"
+	"wa-lang.org/wa/internal/p9asm/objabi"
 )
 
 func PADDR(x uint32) uint32 {
@@ -242,7 +243,7 @@ func adddynrel(s *ld.LSym, r *ld.Reloc) {
 	switch r.Type {
 	case obj.R_CALL,
 		obj.R_PCREL:
-		if ld.HEADTYPE == obj.Hwindows {
+		if ld.HEADTYPE == objabi.Hwindows {
 			// nothing to do, the relocation will be laid out in pereloc1
 			return
 		} else {
@@ -282,7 +283,7 @@ func adddynrel(s *ld.LSym, r *ld.Reloc) {
 			return
 		}
 
-		if ld.HEADTYPE == obj.Hdarwin && s.Size == int64(ld.Thearch.Ptrsize) && r.Off == 0 {
+		if ld.HEADTYPE == objabi.Hdarwin && s.Size == int64(ld.Thearch.Ptrsize) && r.Off == 0 {
 			// Mach-O relocations are a royal pain to lay out.
 			// They use a compact stateful bytecode representation
 			// that is too much bother to deal with.
@@ -307,7 +308,7 @@ func adddynrel(s *ld.LSym, r *ld.Reloc) {
 			return
 		}
 
-		if ld.HEADTYPE == obj.Hwindows {
+		if ld.HEADTYPE == objabi.Hwindows {
 			// nothing to do, the relocation will be laid out in pereloc1
 			return
 		}
@@ -557,7 +558,7 @@ func addpltsym(s *ld.LSym) {
 		ld.Adduint64(ld.Ctxt, rela, 0)
 
 		s.Plt = int32(plt.Size - 16)
-	} else if ld.HEADTYPE == obj.Hdarwin {
+	} else if ld.HEADTYPE == objabi.Hdarwin {
 		// To do lazy symbol lookup right, we're supposed
 		// to tell the dynamic loader which library each
 		// symbol comes from and format the link info
@@ -599,7 +600,7 @@ func addgotsym(s *ld.LSym) {
 		ld.Addaddrplus(ld.Ctxt, rela, got, int64(s.Got))
 		ld.Adduint64(ld.Ctxt, rela, ld.ELF64_R_INFO(uint32(s.Dynid), ld.R_X86_64_GLOB_DAT))
 		ld.Adduint64(ld.Ctxt, rela, 0)
-	} else if ld.HEADTYPE == obj.Hdarwin {
+	} else if ld.HEADTYPE == objabi.Hdarwin {
 		ld.Adduint32(ld.Ctxt, ld.Linklookup(ld.Ctxt, ".linkedit.got", 0), uint32(s.Dynid))
 	} else {
 		ld.Diag("addgotsym: unsupported binary format")
@@ -631,7 +632,7 @@ func asmb() {
 	ld.Datblk(int64(ld.Segdata.Vaddr), int64(ld.Segdata.Filelen))
 
 	machlink := int64(0)
-	if ld.HEADTYPE == obj.Hdarwin {
+	if ld.HEADTYPE == objabi.Hdarwin {
 		dwarfoff := ld.Rnd(int64(uint64(ld.HEADR)+ld.Segtext.Length), int64(ld.INITRND)) + ld.Rnd(int64(ld.Segdata.Filelen), int64(ld.INITRND))
 		ld.Cseek(dwarfoff)
 
@@ -647,16 +648,16 @@ func asmb() {
 		ld.Diag("unknown header type %v", ld.HEADTYPE)
 		fallthrough
 
-	case obj.Helf:
+	case objabi.Helf:
 		break
 
-	case obj.Hdarwin:
+	case objabi.Hdarwin:
 		ld.Debug['8'] = 1 /* 64-bit addresses */
 
-	case obj.Hlinux:
+	case objabi.Hlinux:
 		ld.Debug['8'] = 1 /* 64-bit addresses */
 
-	case obj.Hwindows:
+	case objabi.Hwindows:
 		break
 	}
 
@@ -667,18 +668,18 @@ func asmb() {
 	if ld.Debug['s'] == 0 {
 		switch ld.HEADTYPE {
 		default:
-		case obj.Helf:
+		case objabi.Helf:
 			ld.Debug['s'] = 1
 			symo = int64(ld.Segdata.Fileoff + ld.Segdata.Filelen)
 
-		case obj.Hdarwin:
+		case objabi.Hdarwin:
 			symo = int64(ld.Segdwarf.Fileoff + uint64(ld.Rnd(int64(ld.Segdwarf.Filelen), int64(ld.INITRND))) + uint64(machlink))
 
-		case obj.Hlinux:
+		case objabi.Hlinux:
 			symo = int64(ld.Segdata.Fileoff + ld.Segdata.Filelen)
 			symo = ld.Rnd(symo, int64(ld.INITRND))
 
-		case obj.Hwindows:
+		case objabi.Hwindows:
 			symo = int64(ld.Segdata.Fileoff + ld.Segdata.Filelen)
 			symo = ld.Rnd(symo, ld.PEFILEALIGN)
 		}
@@ -699,10 +700,10 @@ func asmb() {
 				}
 			}
 
-		case obj.Hwindows:
+		case objabi.Hwindows:
 			ld.Dwarfemitdebugsections()
 
-		case obj.Hdarwin:
+		case objabi.Hdarwin:
 			if ld.Linkmode == ld.LinkExternal {
 				ld.Machoemitreloc()
 			}
@@ -712,13 +713,13 @@ func asmb() {
 	ld.Cseek(0)
 	switch ld.HEADTYPE {
 	default:
-	case obj.Hdarwin:
+	case objabi.Hdarwin:
 		ld.Asmbmacho()
 
-	case obj.Hlinux:
+	case objabi.Hlinux:
 		ld.Asmbelf(symo)
 
-	case obj.Hwindows:
+	case objabi.Hwindows:
 		ld.Asmbpe()
 	}
 

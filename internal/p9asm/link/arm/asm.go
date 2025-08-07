@@ -37,6 +37,7 @@ import (
 
 	"wa-lang.org/wa/internal/p9asm/link/ld"
 	"wa-lang.org/wa/internal/p9asm/obj"
+	"wa-lang.org/wa/internal/p9asm/objabi"
 )
 
 func gentext() {
@@ -351,7 +352,7 @@ func archreloc(r *ld.Reloc, s *ld.LSym, val *int64) int {
 			// the section load address.
 			// we need to compensate that by removing the instruction's address
 			// from addend.
-			if ld.HEADTYPE == obj.Hdarwin {
+			if ld.HEADTYPE == objabi.Hdarwin {
 				r.Xadd -= ld.Symaddr(s) + int64(r.Off)
 			}
 
@@ -515,7 +516,7 @@ func asmb() {
 	ld.Datblk(int64(ld.Segdata.Vaddr), int64(ld.Segdata.Filelen))
 
 	machlink := uint32(0)
-	if ld.HEADTYPE == obj.Hdarwin {
+	if ld.HEADTYPE == objabi.Hdarwin {
 		dwarfoff := uint32(ld.Rnd(int64(uint64(ld.HEADR)+ld.Segtext.Length), int64(ld.INITRND)) + ld.Rnd(int64(ld.Segdata.Filelen), int64(ld.INITRND)))
 		ld.Cseek(int64(dwarfoff))
 
@@ -539,7 +540,7 @@ func asmb() {
 				symo = uint32(ld.Rnd(int64(symo), int64(ld.INITRND)))
 			}
 
-		case obj.Hdarwin:
+		case objabi.Hdarwin:
 			symo = uint32(ld.Segdwarf.Fileoff + uint64(ld.Rnd(int64(ld.Segdwarf.Filelen), int64(ld.INITRND))) + uint64(machlink))
 		}
 
@@ -558,7 +559,7 @@ func asmb() {
 				}
 			}
 
-		case obj.Hdarwin:
+		case objabi.Hdarwin:
 			if ld.Linkmode == ld.LinkExternal {
 				ld.Machoemitreloc()
 			}
@@ -570,10 +571,10 @@ func asmb() {
 	ld.Cseek(0)
 	switch ld.HEADTYPE {
 	default:
-	case obj.Hlinux:
+	case objabi.Hlinux:
 		ld.Asmbelf(int64(symo))
 
-	case obj.Hdarwin:
+	case objabi.Hdarwin:
 		ld.Asmbmacho()
 	}
 

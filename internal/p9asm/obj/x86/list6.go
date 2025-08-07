@@ -34,7 +34,7 @@ package x86
 import (
 	"fmt"
 
-	"wa-lang.org/wa/internal/p9asm/obj"
+	"wa-lang.org/wa/internal/p9asm/objabi"
 )
 
 var Register = []string{
@@ -154,13 +154,13 @@ var Register = []string{
 }
 
 func init() {
-	obj.RegisterRegister(REG_AL, REG_AL+obj.RBaseType(len(Register)), Rconv)
-	obj.RegisterOpcode(obj.ABaseAMD64, Anames)
+	objabi.RegisterRegister(REG_AL, REG_AL+objabi.RBaseType(len(Register)), Rconv)
+	objabi.RegisterOpcode(objabi.ABaseAMD64, Anames)
 }
 
-func Rconv(r obj.RBaseType) string {
-	if REG_AL <= r && r-REG_AL < obj.RBaseType(len(Register)) {
+func Rconv(r objabi.RBaseType) string {
+	if REG_AL <= r && r-REG_AL < objabi.RBaseType(len(Register)) {
 		return Register[r-REG_AL]
 	}
-	return fmt.Sprintf("Rgok(%d)", r-obj.RBaseAMD64)
+	return fmt.Sprintf("Rgok(%d)", r-objabi.RBaseAMD64)
 }

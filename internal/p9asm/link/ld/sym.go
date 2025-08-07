@@ -38,6 +38,7 @@ import (
 	"path/filepath"
 
 	"wa-lang.org/wa/internal/p9asm/obj"
+	"wa-lang.org/wa/internal/p9asm/objabi"
 )
 
 func yy_isalpha(c int) bool {
@@ -73,7 +74,7 @@ func linknew(arch *LinkArch) *Link {
 	default:
 		log.Fatalf("unknown thread-local storage offset for %s", ctxt.Headtype)
 
-	case obj.Hwindows:
+	case objabi.Hwindows:
 		break
 
 		/*
@@ -81,14 +82,14 @@ func linknew(arch *LinkArch) *Link {
 		 * Translate 0(FS) and 8(FS) into -16(FS) and -8(FS).
 		 * Known to low-level assembly in package runtime and runtime/cgo.
 		 */
-	case obj.Hlinux:
+	case objabi.Hlinux:
 		ctxt.Tlsoffset = -1 * ctxt.Arch.Ptrsize
 
 		/*
 		 * OS X system constants - offset from 0(GS) to our TLS.
 		 * Explained in ../../runtime/cgo/gcc_darwin_*.c.
 		 */
-	case obj.Hdarwin:
+	case objabi.Hdarwin:
 		switch ctxt.Arch.Thechar {
 		default:
 			log.Fatalf("unknown thread-local storage offset for darwin/%s", ctxt.Arch.Name)
