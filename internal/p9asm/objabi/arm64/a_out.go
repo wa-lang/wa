@@ -339,6 +339,7 @@ const (
 //go:generate go run ../stringer.go -i $GOFILE -o anames.go -p arm64
 
 const (
+	// TODO(chai2010): 为何还要加上 A_ARCHSPECIFIC 偏移量?
 	AADC = objabi.ABaseARM64 + objabi.A_ARCHSPECIFIC + iota
 	AADCS
 	AADCSW

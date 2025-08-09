@@ -4,59 +4,43 @@
 package token
 
 import (
+	"fmt"
 	"strconv"
-	"strings"
+
+	"wa-lang.org/wa/internal/p9asm/objabi"
+	"wa-lang.org/wa/internal/p9asm/objabi/x86"
 )
 
 // 记号类型
 type Token int
 
 const (
-	// 非法/结尾/注释
-	ILLEGAL Token = iota
-	EOF
-	COMMENT
+	ILLEGAL Token = iota // 非法
+	EOF                  // 结尾
+	COMMENT              // 注释
 
-	// 特殊符号
-	operator_beg
-	// TODO
-	// 参考lex包的移位运算符
-	operator_end
-
-	// 面值类型
-	literal_beg
-	IDENT  // 标识符, 比如 $name
+	IDENT  // 标识符
+	REG    // 寄存器
 	INT    // 12345
 	FLOAT  // 123.45
 	CHAR   // 'a'
 	STRING // "abc"
 
-	// 把指令当作一种面值
-	AS // 汇编指令
-	literal_end
+	LSH // << 左移
+	RSH // >> 逻辑右移
+	ARR // -> 数学右移, 用于 ARM 的第 3 类移动指令
+	ROT // @> 循环右移, 用于 ARM 的第 4 类移动指令
 
-	// 关键字
-	keyword_beg
+	// 特殊指令和寄存器开始
+	objabi_base
 
-	// TODO
+	// 汇编指令 开始
+	instruction_beg = Token(objabi.ABase)
+	instruction_end = Token(objabi.ABaseMax)
 
-	TEXT
-	GLOBL
-
-	keyword_end
-
-	// 指令是关键字, 同时有指令码
-	// 前面需要空出一个空间, 确保后续的部分可以和指令机器码自然对应
-	// 多普通的指令空间需要在这里划分好
-
-	// 但是只能同时选择一个平台, 因为不同的平台指令名字可能相同
-	// 只针对解析的限制
-
-	instruction_beg
-
-	// TODO
-
-	instruction_end
+	// 寄存器开始
+	register_beg = Token(objabi.RBase)
+	register_end = Token(objabi.RBaseMax)
 )
 
 var tokens = [...]string{
@@ -65,77 +49,73 @@ var tokens = [...]string{
 	COMMENT: "COMMENT",
 
 	IDENT:  "IDENT",
+	REG:    "REG",
 	INT:    "INT",
 	FLOAT:  "FLOAT",
 	CHAR:   "CHAR",
 	STRING: "STRING",
 
-	// TODO
+	LSH: "<<",
+	RSH: ">>",
+	ARR: "->",
+	ROT: "@>",
 }
 
 func (tok Token) String() string {
-	s := ""
+	// 普通 token
 	if 0 <= tok && tok < Token(len(tokens)) {
-		s = tokens[tok]
+		return tokens[tok]
 	}
-	if s == "" {
-		s = "token(" + strconv.Itoa(int(tok)) + ")"
+
+	// 基础汇编指令
+	if objabi.ABase <= tok && tok < Token(objabi.A_ARCHSPECIFIC) {
+		return objabi.Anames[tok]
 	}
-	return s
+
+	// 不同平台的汇编指令
+	if tok.IsInstruction() {
+		switch {
+		case tok >= objabi.ABaseAMD64 && tok < Token(objabi.ABaseAMD64+len(x86.Anames)):
+			return x86.Anames[tok-Token(objabi.ABaseAMD64+len(x86.Anames))]
+		default:
+			panic("TODO")
+		}
+	}
+
+	// 不同平台的寄存器
+	if tok.IsReginster() {
+		switch {
+		case tok >= Token(objabi.RBaseAMD64) && tok < Token(x86.MAXREG):
+			return x86.Rconv(objabi.RBaseType(tok))
+		default:
+			panic("TODO")
+		}
+	}
+
+	return "token(" + strconv.Itoa(int(tok)) + ")"
 }
 
-var (
-	keywords     map[string]Token
-	instructions map[string]Token
-)
-
-func init() {
-	keywords = make(map[string]Token)
-	instructions = make(map[string]Token)
-
-	for i := keyword_beg + 1; i < keyword_end; i++ {
-		keywords[tokens[i]] = i
-	}
-
-	for i := instruction_beg + 1; i < instruction_end; i++ {
-		instructions[tokens[i]] = i
-	}
-}
-
-func Lookup(ident string) Token {
-	// 标识符 $name
-	if strings.HasPrefix(ident, "$") {
-		return IDENT
-	}
-
-	// 关键字
-	if tok, is_keyword := keywords[ident]; is_keyword {
-		return tok
-	}
-
-	// 指令
-	if tok, is_ins := instructions[ident]; is_ins {
-		return tok
+func Lookup(arch objabi.CPUType, ident string) Token {
+	switch arch {
+	case objabi.X386:
+	case objabi.AMD64:
+		// TODO: 指令
+		// TODO: 寄存器
+	case objabi.ARM:
+	case objabi.ARM64:
+	case objabi.Loong64:
+	case objabi.RISCV:
+	default:
+		panic(fmt.Sprintf("invalid arch: %v", arch))
 	}
 
 	return ILLEGAL
 }
 
-// 常量面值
-func (tok Token) IsLiteral() bool {
-	return literal_beg < tok && tok < literal_end
-}
-
-// 关键字
-func (tok Token) IsKeyword() bool {
-	return keyword_beg < tok && tok < keyword_end
-}
-
-// 特殊符号
-func (tok Token) IsOperator() bool {
-	return operator_beg < tok && tok < operator_end
-}
-
-func (tok Token) IsIsntruction() bool {
+func (tok Token) IsInstruction() bool {
 	return instruction_beg < tok && tok < instruction_end
+}
+
+func (tok Token) IsReginster() bool {
+	return register_beg < tok && tok < register_end
 }

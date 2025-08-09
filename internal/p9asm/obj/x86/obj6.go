@@ -168,7 +168,7 @@ func progedit(ctxt *obj.Link, p *obj.Prog) {
 			q.From = p.From
 			q.From.Type = obj.TYPE_MEM
 			q.From.Reg = p.To.Reg
-			q.From.Index = int16(REG_TLS)
+			q.From.Index = int32(REG_TLS)
 			q.From.Scale = 2 // TODO: use 1
 			q.To = p.To
 			p.From.Type = obj.TYPE_REG
@@ -426,7 +426,7 @@ func nacladdr(ctxt *obj.Link, p *obj.Prog, a *obj.Addr) {
 			if a.Index != REG_NONE {
 				ctxt.Diag("invalid address %v", p)
 			}
-			a.Index = int16(a.Reg)
+			a.Index = int32(a.Reg)
 			if a.Index != REG_NONE {
 				a.Scale = 1
 			}

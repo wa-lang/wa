@@ -2193,7 +2193,7 @@ func instinit() {
 }
 
 func prefixof(ctxt *obj.Link, p *obj.Prog, a *obj.Addr) int {
-	if a.Reg < REG_CS && a.Index < int16(REG_CS) { // fast path
+	if a.Reg < REG_CS && a.Index < int32(REG_CS) { // fast path
 		return 0
 	}
 	if a.Type == obj.TYPE_MEM && a.Name == obj.NAME_NONE {
@@ -2772,7 +2772,7 @@ func asmandsz(ctxt *obj.Link, p *obj.Prog, a *obj.Addr, r int, rex int, m64 int)
 		if a.Name == obj.NAME_NONE {
 			ctxt.Diag("unexpected TYPE_ADDR with NAME_NONE")
 		}
-		if a.Index == int16(REG_TLS) {
+		if a.Index == int32(REG_TLS) {
 			ctxt.Diag("unexpected TYPE_ADDR with index==REG_TLS")
 		}
 		goto bad
@@ -2794,7 +2794,7 @@ func asmandsz(ctxt *obj.Link, p *obj.Prog, a *obj.Addr, r int, rex int, m64 int)
 		goto bad
 	}
 
-	if a.Index != REG_NONE && a.Index != int16(REG_TLS) {
+	if a.Index != REG_NONE && a.Index != int32(REG_TLS) {
 		base := int(a.Reg)
 		switch a.Name {
 		case obj.NAME_EXTERN,
@@ -2904,7 +2904,7 @@ func asmandsz(ctxt *obj.Link, p *obj.Prog, a *obj.Addr, r int, rex int, m64 int)
 	}
 
 	if int(REG_AX) <= base && base <= int(REG_R15) {
-		if a.Index == int16(REG_TLS) && ctxt.Flag_shared == 0 {
+		if a.Index == int32(REG_TLS) && ctxt.Flag_shared == 0 {
 			rel = obj.Reloc{}
 			rel.Type = obj.R_TLS_LE
 			rel.Siz = 4
@@ -3125,7 +3125,7 @@ func isax(a *obj.Addr) bool {
 		return true
 	}
 
-	if a.Index == int16(REG_AX) {
+	if a.Index == int32(REG_AX) {
 		return true
 	}
 	return false
@@ -3147,12 +3147,12 @@ func subreg(p *obj.Prog, from, to objabi.RBaseType) {
 	}
 
 	if objabi.RBaseType(p.From.Index) == from {
-		p.From.Index = int16(to)
+		p.From.Index = int32(to)
 		p.Ft = 0
 	}
 
 	if objabi.RBaseType(p.To.Index) == from {
-		p.To.Index = int16(to)
+		p.To.Index = int32(to)
 		p.Tt = 0
 	}
 

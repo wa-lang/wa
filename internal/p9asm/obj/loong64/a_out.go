@@ -708,28 +708,3 @@ const (
 	AJAL = objabi.ACALL
 	ARET = objabi.ARET
 )
-
-func init() {
-	// The asm encoder generally assumes that the lowest 5 bits of the
-	// REG_XX constants match the machine instruction encoding, i.e.
-	// the lowest 5 bits is the register number.
-	// Check this here.
-	if REG_R0%32 != 0 {
-		panic("REG_R0 is not a multiple of 32")
-	}
-	if REG_F0%32 != 0 {
-		panic("REG_F0 is not a multiple of 32")
-	}
-	if REG_FCSR0%32 != 0 {
-		panic("REG_FCSR0 is not a multiple of 32")
-	}
-	if REG_FCC0%32 != 0 {
-		panic("REG_FCC0 is not a multiple of 32")
-	}
-	if REG_V0%32 != 0 {
-		panic("REG_V0 is not a multiple of 32")
-	}
-	if REG_X0%32 != 0 {
-		panic("REG_X0 is not a multiple of 32")
-	}
-}

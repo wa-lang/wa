@@ -100,7 +100,7 @@ type Addr struct {
 
 	Offset int64
 	Reg    objabi.RBaseType
-	Index  int16
+	Index  int32 // 原本是 int16, 低16bit用于避开和指令的重叠, 最终达到全部token统一编号的目的
 	Scale  int16 // Sometimes holds a register.
 
 	// argument value:
@@ -233,7 +233,7 @@ func (a *Addr) Dconv(p *Prog) string {
 	case TYPE_MEM:
 		// 内存地址
 		str = a.Mconv()
-		if a.Index != int16(objabi.REG_NONE) {
+		if a.Index != int32(objabi.REG_NONE) {
 			str += fmt.Sprintf("(%v*%d)", objabi.RBaseType(a.Index), int(a.Scale))
 		}
 

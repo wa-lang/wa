@@ -6,6 +6,7 @@ package objabi
 import "fmt"
 
 // 指令的名字
+// 中间有空隙忽略
 var Anames = []string{
 	AXXX:      "XXX",
 	ACALL:     "CALL",
