@@ -312,13 +312,13 @@ func (p *Parser) registerIndirect(a *obj.Addr, prefix rune) {
 		if r2 != 0 {
 			p.errorf("unimplemented two-register form")
 		}
-		a.Index = int32(r1)
+		a.Index = int16(r1)
 		a.Scale = int16(scale)
 		p.get(')')
 	} else if scale != 0 {
 		// First (R) was missing, all we have is (R*scale).
 		a.Reg = 0
-		a.Index = int32(r1)
+		a.Index = int16(r1)
 		a.Scale = int16(scale)
 	}
 }

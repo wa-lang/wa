@@ -85,8 +85,8 @@ func (tok Token) String() string {
 	// 不同平台的寄存器
 	if tok.IsReginster() {
 		switch {
-		case tok >= Token(objabi.RBaseAMD64) && tok < Token(x86.MAXREG):
-			return x86.Rconv(objabi.RBaseType(tok))
+		case tok >= Token(objabi.RBaseAMD64) && tok < Token(x86.RegMax):
+			return x86.RegString(objabi.RBaseType(tok))
 		default:
 			panic("TODO")
 		}
@@ -97,8 +97,11 @@ func (tok Token) String() string {
 
 func Lookup(arch objabi.CPUType, ident string) Token {
 	switch arch {
-	case objabi.X386:
+	case objabi.X86:
 	case objabi.AMD64:
+		if x := x86.LoopupRegister(ident); x != objabi.REG_NONE {
+			return Token(x)
+		}
 		// TODO: 指令
 		// TODO: 寄存器
 	case objabi.ARM:

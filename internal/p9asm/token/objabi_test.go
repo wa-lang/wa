@@ -4,7 +4,6 @@
 package token
 
 import (
-	"log"
 	"testing"
 
 	"wa-lang.org/wa/internal/p9asm/objabi"
@@ -12,23 +11,23 @@ import (
 
 func TestObjabi(t *testing.T) {
 	// 确保预留给普通token类型的空间足够
-	if objabi_base >= instruction_beg {
-		log.Fatal("invalid objabi.ABase")
+	if objabi_base > instruction_beg {
+		t.Fatal("invalid objabi.ABase")
 	}
-	if register_beg <= instruction_end {
-		log.Fatal("invalid objabi.RBase")
+	if register_beg < instruction_end {
+		t.Fatal("invalid objabi.RBase")
 	}
 
 	// 验证 objabi.Anames 表格成功初始化
 	if len(objabi.Anames) != int(objabi.A_ARCHSPECIFIC) {
-		log.Fatal("invalid objabi.Anames")
+		t.Fatal("invalid objabi.Anames")
 	}
 	if objabi.Anames[0] != "XXX" {
-		log.Fatal("invalid objabi.Anames[0]")
+		t.Fatal("invalid objabi.Anames[0]")
 	}
-	for i := 1; i < objabi.ABase; i++ {
+	for i := 1; i < int(objabi.ABase); i++ {
 		if objabi.Anames[i] != "" {
-			log.Fatalf("invalid objabi.Anames[%d]", i)
+			t.Fatalf("invalid objabi.Anames[%d]", i)
 		}
 	}
 }

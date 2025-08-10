@@ -37,15 +37,18 @@ import (
 	"wa-lang.org/wa/internal/p9asm/objabi"
 )
 
-// 寄存器
-
+// 编号范围
 const (
-	REG_NONE = 0 // 无效
+	ABase = objabi.ABaseAMD64 + objabi.A_ARCHSPECIFIC
+	AsMax = ALAST
+
+	RBase  = objabi.RBaseAMD64
+	RegMax = reg_MAX
 )
 
 const (
 	// int8
-	REG_AL = objabi.RBaseAMD64 + iota
+	REG_AL = RBase + iota
 	REG_CL
 	REG_DL
 	REG_BL
@@ -186,7 +189,7 @@ const (
 	REG_TLS
 
 	// 寄存器变化的总数目
-	MAXREG
+	reg_MAX
 
 	// 几个硬件寄存器的别名
 	REG_CR = REG_CR0
@@ -220,7 +223,7 @@ const (
 // X86 指令集
 
 const (
-	AAAA = objabi.ABaseAMD64 + objabi.A_ARCHSPECIFIC + iota
+	AAAA = ABase + iota
 	AAAD
 	AAAM
 	AAAS
