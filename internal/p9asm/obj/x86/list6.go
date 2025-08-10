@@ -153,6 +153,7 @@ var Register = []string{
 	"MAXREG", /* [MAXREG] */
 }
 
+// TODO: 删除 init
 func init() {
 	objabi.RegisterRegister(REG_AL, REG_AL+objabi.RBaseType(len(Register)), Rconv)
 	objabi.RegisterOpcode(objabi.ABaseAMD64, Anames)

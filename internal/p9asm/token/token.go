@@ -78,6 +78,12 @@ func (tok Token) String() string {
 
 	// 不同平台的汇编指令
 	if tok.IsInstruction() {
+		// 是否为通用的汇编指令
+		if tok >= Token(objabi.ABase) && tok < Token(objabi.A_ARCHSPECIFIC) {
+			return objabi.Anames[tok-Token(objabi.ABase)]
+		}
+
+		// 是否为某个具体平台的汇编指令
 		switch {
 		case tok >= Token(x86.ABase) && tok < Token(x86.AsMax):
 			return x86.Anames[tok-Token(x86.ABase)]
@@ -112,6 +118,12 @@ func (tok Token) String() string {
 }
 
 func Lookup(arch objabi.CPUType, ident string) Token {
+	// 优先查找通用的汇编指令
+	if x := objabi.LookupAs(ident); x != objabi.AXXX {
+		return Token(x)
+	}
+
+	// 查询特殊普通的汇编指令和寄存器
 	switch arch {
 	case objabi.X86, objabi.AMD64:
 		if x := x86.LookupRegister(ident); x != objabi.REG_NONE {
@@ -152,7 +164,8 @@ func Lookup(arch objabi.CPUType, ident string) Token {
 		panic(fmt.Sprintf("invalid arch: %v", arch))
 	}
 
-	return ILLEGAL
+	// 不是指令和寄存器就作为标识符
+	return IDENT
 }
 
 func (tok Token) IsInstruction() bool {
