@@ -125,7 +125,7 @@ var Register = []string{
 }
 
 // 根据名字查找寄存器, 失败返回 objabi.REG_NONE
-func LoopupRegister(regName string) objabi.RBaseType {
+func LookupRegister(regName string) objabi.RBaseType {
 	for i, s := range Register {
 		if s == regName {
 			return RBase + objabi.RBaseType(i)
@@ -143,7 +143,7 @@ func RegString(r objabi.RBaseType) string {
 }
 
 // 根据名字查找汇编指令, 失败返回 objabi.AXXX
-func LoopupAs(asName string) objabi.As {
+func LookupAs(asName string) objabi.As {
 	for i, s := range Anames {
 		if s == asName {
 			return ABase + objabi.As(i)

@@ -35,6 +35,15 @@ import (
 	"wa-lang.org/wa/internal/p9asm/objabi"
 )
 
+// 编号范围
+const (
+	ABase = objabi.ABaseARM64 + objabi.A_ARCHSPECIFIC
+	AsMax = ALAST
+
+	RBase  = objabi.RBaseARM64
+	RegMax = REG_V31 + 1
+)
+
 const (
 	NSNAME = 8
 	NSYM   = 50
@@ -222,7 +231,6 @@ const (
 
 	REGCTXT = REG_R26 // environment for closures
 	REGTMP  = REG_R27 // reserved for liblink
-	REGG    = REG_R28 // G
 	REGFP   = REG_R29 // frame pointer, unused in the Wa toolchain
 	REGLINK = REG_R30
 

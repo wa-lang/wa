@@ -2,13 +2,22 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
+//go:generate go run ../stringer.go -i $GOFILE -o anames.go -p loong64
+
 package loong64
 
 import (
 	"wa-lang.org/wa/internal/p9asm/objabi"
 )
 
-//go:generate go run ../stringer.go -i $GOFILE -o anames.go -p loong64
+// 编号范围
+const (
+	ABase = objabi.ABaseLoong64 + objabi.A_ARCHSPECIFIC
+	AsMax = ALAST
+
+	RBase  = objabi.RBaseLOONG64
+	RegMax = REG_X31 + 1
+)
 
 const (
 	NSNAME = 8
@@ -20,7 +29,7 @@ const (
 )
 
 const (
-	REG_R0 = objabi.RBaseLOONG64 + iota // must be a multiple of 32
+	REG_R0 = RBase + iota // must be a multiple of 32
 	REG_R1
 	REG_R2
 	REG_R3
@@ -230,27 +239,9 @@ const (
 	REGRT1  = REG_R20 // reserved for runtime, duffzero and duffcopy
 	REGRT2  = REG_R21 // reserved for runtime, duffcopy
 	REGCTXT = REG_R29 // context for closures
-	REGG    = REG_R22 // G in loong64
 	REGTMP  = REG_R30 // used by the assembler
 	FREGRET = REG_F0  // not use
 )
-
-var LOONG64DWARFRegisters = map[objabi.RBaseType]objabi.RBaseType{}
-
-func init() {
-	// f assigns dwarfregisters[from:to] = (base):(to-from+base)
-	f := func(from, to, base objabi.RBaseType) {
-		for r := from; r <= to; r++ {
-			LOONG64DWARFRegisters[r] = (r - from) + base
-		}
-	}
-	f(REG_R0, REG_R31, 0)
-	f(REG_F0, REG_F31, 32)
-
-	// The lower bits of V and X registers are alias to F registers
-	f(REG_V0, REG_V31, 32)
-	f(REG_X0, REG_X31, 32)
-}
 
 const (
 	BIG = 2046
@@ -358,7 +349,7 @@ const (
 )
 
 const (
-	AABSD = objabi.ABaseLoong64 + objabi.A_ARCHSPECIFIC + iota
+	AABSD = ABase + iota
 	AABSF
 	AADD
 	AADDD
@@ -708,28 +699,3 @@ const (
 	AJAL = objabi.ACALL
 	ARET = objabi.ARET
 )
-
-func init() {
-	// The asm encoder generally assumes that the lowest 5 bits of the
-	// REG_XX constants match the machine instruction encoding, i.e.
-	// the lowest 5 bits is the register number.
-	// Check this here.
-	if REG_R0%32 != 0 {
-		panic("REG_R0 is not a multiple of 32")
-	}
-	if REG_F0%32 != 0 {
-		panic("REG_F0 is not a multiple of 32")
-	}
-	if REG_FCSR0%32 != 0 {
-		panic("REG_FCSR0 is not a multiple of 32")
-	}
-	if REG_FCC0%32 != 0 {
-		panic("REG_FCC0 is not a multiple of 32")
-	}
-	if REG_V0%32 != 0 {
-		panic("REG_V0 is not a multiple of 32")
-	}
-	if REG_X0%32 != 0 {
-		panic("REG_X0 is not a multiple of 32")
-	}
-}

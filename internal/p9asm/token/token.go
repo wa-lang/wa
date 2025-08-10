@@ -8,6 +8,10 @@ import (
 	"strconv"
 
 	"wa-lang.org/wa/internal/p9asm/objabi"
+	"wa-lang.org/wa/internal/p9asm/objabi/arm"
+	"wa-lang.org/wa/internal/p9asm/objabi/arm64"
+	"wa-lang.org/wa/internal/p9asm/objabi/loong64"
+	"wa-lang.org/wa/internal/p9asm/objabi/riscv"
 	"wa-lang.org/wa/internal/p9asm/objabi/x86"
 )
 
@@ -75,20 +79,32 @@ func (tok Token) String() string {
 	// 不同平台的汇编指令
 	if tok.IsInstruction() {
 		switch {
-		case tok >= objabi.ABaseAMD64 && tok < Token(objabi.ABaseAMD64+len(x86.Anames)):
-			return x86.Anames[tok-Token(objabi.ABaseAMD64+len(x86.Anames))]
-		default:
-			panic("TODO")
+		case tok >= Token(x86.ABase) && tok < Token(x86.AsMax):
+			return x86.Anames[tok-Token(x86.ABase)]
+		case tok >= Token(riscv.ABase) && tok < Token(riscv.AsMax):
+			return riscv.Anames[tok-Token(riscv.ABase)]
+		case tok >= Token(loong64.ABase) && tok < Token(loong64.AsMax):
+			return loong64.Anames[tok-Token(loong64.ABase)]
+		case tok >= Token(arm.ABase) && tok < Token(arm.AsMax):
+			return arm.Anames[tok-Token(arm.ABase)]
+		case tok >= Token(arm64.ABase) && tok < Token(arm64.AsMax):
+			return arm64.Anames[tok-Token(arm64.ABase)]
 		}
 	}
 
 	// 不同平台的寄存器
 	if tok.IsReginster() {
 		switch {
-		case tok >= Token(objabi.RBaseAMD64) && tok < Token(x86.RegMax):
+		case tok >= Token(x86.RBase) && tok < Token(x86.RegMax):
 			return x86.RegString(objabi.RBaseType(tok))
-		default:
-			panic("TODO")
+		case tok >= Token(riscv.RBase) && tok < Token(riscv.RegMax):
+			return riscv.RegString(objabi.RBaseType(tok))
+		case tok >= Token(loong64.RBase) && tok < Token(loong64.RegMax):
+			return loong64.RegString(objabi.RBaseType(tok))
+		case tok >= Token(arm.RBase) && tok < Token(arm.RegMax):
+			return arm.RegString(objabi.RBaseType(tok))
+		case tok >= Token(arm64.RBase) && tok < Token(arm64.RegMax):
+			return arm64.RegString(objabi.RBaseType(tok))
 		}
 	}
 
@@ -97,17 +113,41 @@ func (tok Token) String() string {
 
 func Lookup(arch objabi.CPUType, ident string) Token {
 	switch arch {
-	case objabi.X86:
-	case objabi.AMD64:
-		if x := x86.LoopupRegister(ident); x != objabi.REG_NONE {
+	case objabi.X86, objabi.AMD64:
+		if x := x86.LookupRegister(ident); x != objabi.REG_NONE {
 			return Token(x)
 		}
-		// TODO: 指令
-		// TODO: 寄存器
+		if x := x86.LookupAs(ident); x != objabi.AXXX {
+			return Token(x)
+		}
 	case objabi.ARM:
+		if x := arm.LookupRegister(ident); x != objabi.REG_NONE {
+			return Token(x)
+		}
+		if x := arm.LookupAs(ident); x != objabi.AXXX {
+			return Token(x)
+		}
 	case objabi.ARM64:
+		if x := arm64.LookupRegister(ident); x != objabi.REG_NONE {
+			return Token(x)
+		}
+		if x := arm64.LookupAs(ident); x != objabi.AXXX {
+			return Token(x)
+		}
 	case objabi.Loong64:
+		if x := loong64.LookupRegister(ident); x != objabi.REG_NONE {
+			return Token(x)
+		}
+		if x := loong64.LookupAs(ident); x != objabi.AXXX {
+			return Token(x)
+		}
 	case objabi.RISCV:
+		if x := riscv.LookupRegister(ident); x != objabi.REG_NONE {
+			return Token(x)
+		}
+		if x := riscv.LookupAs(ident); x != objabi.AXXX {
+			return Token(x)
+		}
 	default:
 		panic(fmt.Sprintf("invalid arch: %v", arch))
 	}

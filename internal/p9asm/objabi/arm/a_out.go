@@ -29,27 +29,25 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
+//go:generate go run ../stringer.go -i $GOFILE -o anames.go -p arm
+
 package arm
 
 import (
 	"wa-lang.org/wa/internal/p9asm/objabi"
 )
 
-//go:generate go run ../stringer.go -i $GOFILE -o anames.go -p arm
-
+// 编号范围
 const (
-	NSNAME = 8
-	NSYM   = 50
-	NREG   = 16
-)
+	ABase = objabi.ABaseARM + objabi.A_ARCHSPECIFIC
+	AsMax = ALAST
 
-// -1 disables use of REGARG
-const (
-	REGARG = -1
+	RBase  = objabi.RBaseARM
+	RegMax = MAXREG
 )
 
 const (
-	REG_R0 objabi.RBaseType = objabi.RBaseARM + iota // must be 16-aligned
+	REG_R0 = RBase + iota // must be 16-aligned
 	REG_R1
 	REG_R2
 	REG_R3
@@ -98,7 +96,6 @@ const (
 	// compiler allocates external registers R10 down
 	REGEXT = REG_R10
 	// these two registers are declared in runtime.h
-	REGG = REGEXT - 0 // TODO(chai2010): 删除
 	REGM = REGEXT - 1 // TODO(chai2010): 删除
 
 	REGCTXT = REG_R7  // 闭包上下文?
@@ -116,24 +113,9 @@ const (
 	FREGTMP = REG_F15 // 临时数据?
 )
 
-// http://infocenter.arm.com/help/topic/com.arm.doc.ihi0040b/IHI0040B_aadwarf.pdf
-var ARMDWARFRegisters = map[objabi.RBaseType]objabi.RBaseType{}
-
-func init() {
-	// f assigns dwarfregisters[from:to] = (base):(step*(to-from)+base)
-	f := func(from, to, base, step objabi.RBaseType) {
-		for r := objabi.RBaseType(from); r <= to; r++ {
-			ARMDWARFRegisters[r] = step*(r-from) + base
-		}
-	}
-	f(REG_R0, REG_R15, 0, 1)
-	f(REG_F0, REG_F15, 64, 2) // Use d0 through D15, aka S0, S2, ..., S30
-}
-
-// Special registers, after subtracting obj.RBaseARM, bit 9 indicates
-// a special register and the low bits select the register.
+// 特殊的寄存器, 必须控制在 1024 范围内
 const (
-	REG_SPECIAL = objabi.RBaseARM + 1<<9 + iota
+	REG_SPECIAL = RBase + 1<<9 + iota
 	REG_MB_SY
 	REG_MB_ST
 	REG_MB_ISH
@@ -147,73 +129,7 @@ const (
 )
 
 const (
-	C_NONE = iota
-	C_REG
-	C_REGREG
-	C_REGREG2
-	C_REGLIST
-	C_SHIFT     // register shift R>>x
-	C_SHIFTADDR // memory address with shifted offset R>>x(R)
-	C_FREG
-	C_PSR
-	C_FCR
-	C_SPR // REG_MB_SY
-
-	C_RCON   // 0xff rotated
-	C_NCON   // ~RCON
-	C_RCON2A // OR of two disjoint C_RCON constants
-	C_RCON2S // subtraction of two disjoint C_RCON constants
-	C_SCON   // 0xffff
-	C_LCON
-	C_LCONADDR
-	C_ZFCON
-	C_SFCON
-	C_LFCON
-
-	C_RACON // <=0xff rotated constant offset from auto
-	C_LACON // Large Auto CONstant, i.e. large offset from SP
-
-	C_SBRA
-	C_LBRA
-
-	C_HAUTO  // halfword insn offset (-0xff to 0xff)
-	C_FAUTO  // float insn offset (0 to 0x3fc, word aligned)
-	C_HFAUTO // both H and F
-	C_SAUTO  // -0xfff to 0xfff
-	C_LAUTO
-
-	C_HOREG
-	C_FOREG
-	C_HFOREG
-	C_SOREG
-	C_ROREG
-	C_SROREG // both nil and R
-	C_LOREG
-
-	C_PC
-	C_SP
-	C_HREG
-
-	C_ADDR // reference to relocatable address
-
-	// TLS "var" in local exec mode: will become a constant offset from
-	// thread local base that is ultimately chosen by the program linker.
-	C_TLS_LE
-
-	// TLS "var" in initial exec mode: will become a memory address (chosen
-	// by the program linker) that the dynamic linker will fill with the
-	// offset from the thread local base.
-	C_TLS_IE
-
-	C_TEXTSIZE
-
-	C_GOK
-
-	C_NCLASS // must be the last
-)
-
-const (
-	AAND = objabi.ABaseARM + objabi.A_ARCHSPECIFIC + iota
+	AAND = ABase + iota
 	AEOR
 	ASUB
 	ARSB
@@ -377,42 +293,4 @@ const (
 	// aliases
 	AB  = objabi.AJMP
 	ABL = objabi.ACALL
-)
-
-// scond byte
-const (
-	C_SCOND = (1 << 4) - 1
-	C_SBIT  = 1 << 4
-	C_PBIT  = 1 << 5
-	C_WBIT  = 1 << 6
-	C_FBIT  = 1 << 7 // psr flags-only
-	C_UBIT  = 1 << 7 // up bit, unsigned bit
-
-	// These constants are the ARM condition codes encodings,
-	// XORed with 14 so that C_SCOND_NONE has value 0,
-	// so that a zeroed Prog.scond means "always execute".
-	C_SCOND_XOR = 14
-
-	C_SCOND_EQ   = 0 ^ C_SCOND_XOR
-	C_SCOND_NE   = 1 ^ C_SCOND_XOR
-	C_SCOND_HS   = 2 ^ C_SCOND_XOR
-	C_SCOND_LO   = 3 ^ C_SCOND_XOR
-	C_SCOND_MI   = 4 ^ C_SCOND_XOR
-	C_SCOND_PL   = 5 ^ C_SCOND_XOR
-	C_SCOND_VS   = 6 ^ C_SCOND_XOR
-	C_SCOND_VC   = 7 ^ C_SCOND_XOR
-	C_SCOND_HI   = 8 ^ C_SCOND_XOR
-	C_SCOND_LS   = 9 ^ C_SCOND_XOR
-	C_SCOND_GE   = 10 ^ C_SCOND_XOR
-	C_SCOND_LT   = 11 ^ C_SCOND_XOR
-	C_SCOND_GT   = 12 ^ C_SCOND_XOR
-	C_SCOND_LE   = 13 ^ C_SCOND_XOR
-	C_SCOND_NONE = 14 ^ C_SCOND_XOR
-	C_SCOND_NV   = 15 ^ C_SCOND_XOR
-
-	// D_SHIFT type
-	SHIFT_LL = 0 << 5
-	SHIFT_LR = 1 << 5
-	SHIFT_AR = 2 << 5
-	SHIFT_RR = 3 << 5
 )
