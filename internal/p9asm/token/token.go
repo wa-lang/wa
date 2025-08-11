@@ -23,17 +23,42 @@ const (
 	EOF                  // 结尾
 	COMMENT              // 注释
 
+	literal_beg
 	IDENT  // 标识符
 	REG    // 寄存器
 	INT    // 12345
 	FLOAT  // 123.45
 	CHAR   // 'a'
 	STRING // "abc"
+	literal_end
+
+	operator_beg
+
+	ADD  // +
+	SUB  // -
+	MUL  // *
+	QUO  // /
+	REM  // %
+	HASH // #
 
 	LSH // << 左移
 	RSH // >> 逻辑右移
 	ARR // -> 数学右移, 用于 ARM 的第 3 类移动指令
 	ROT // @> 循环右移, 用于 ARM 的第 4 类移动指令
+
+	LPAREN // (
+	LBRACK // [
+	LBRACE // {
+	COMMA  // ,
+	PERIOD // .
+
+	RPAREN    // )
+	RBRACK    // ]
+	RBRACE    // }
+	SEMICOLON // ;
+	COLON     // :
+
+	operator_end
 
 	// 特殊指令和寄存器开始
 	objabi_base
@@ -59,10 +84,29 @@ var tokens = [...]string{
 	CHAR:   "CHAR",
 	STRING: "STRING",
 
+	ADD:  "+",
+	SUB:  "-",
+	MUL:  "*",
+	QUO:  "/",
+	REM:  "%",
+	HASH: "#",
+
 	LSH: "<<",
 	RSH: ">>",
 	ARR: "->",
 	ROT: "@>",
+
+	LPAREN: "(",
+	LBRACK: "[",
+	LBRACE: "{",
+	COMMA:  ",",
+	PERIOD: ".",
+
+	RPAREN:    ")",
+	RBRACK:    "]",
+	RBRACE:    "}",
+	SEMICOLON: ";",
+	COLON:     ":",
 }
 
 func (tok Token) String() string {
