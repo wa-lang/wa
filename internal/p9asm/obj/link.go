@@ -62,46 +62,23 @@ type Link struct {
 	Arch               *LinkArch
 	Fset               *objabi.FileSet
 	Debugasm           int32
-	Debugvlog          int32
-	Debugzerostack     int32
-	Debugdivmod        int32
 	Debugpcln          int32
 	Flag_shared        int32
 	Flag_dynlink       bool
 	Bso                io.Writer
-	Windows            int32
 	Enforce_data_order int32
 	Hash               map[SymVer]*LSym
 	Imports            []string
-	Plist              *Plist
-	Plast              *Plist
-	Sym_div            *LSym
-	Sym_divu           *LSym
-	Sym_mod            *LSym
-	Sym_modu           *LSym
-	Tlsg               *LSym
 	Curp               *Prog
-	Printp             *Prog
-	Blitrl             *Prog
-	Elitrl             *Prog
 	Rexflag            int
-	Rep                int
-	Repn               int
-	Lock               int
 	Asmode             int
 	Andptr             []byte
 	And                [100]uint8
-	Instoffset         int64
-	Autosize           int32
-	Armsize            int32
-	Pc                 int64
 	Tlsoffset          int
 	Diag               func(string, ...interface{})
 	Mode               int
 	Cursym             *LSym
 	Version            int
-	Textp              *LSym
-	Etextp             *LSym
 }
 
 func Linknew(arch *LinkArch, targetOS, _workDir string) *Link {

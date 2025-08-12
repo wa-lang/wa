@@ -27,24 +27,12 @@ type Prog struct {
 	Reg    objabi.RBaseType
 	RegTo2 objabi.RBaseType // 2nd register output operand
 	Mark   uint16
-	Optab  uint16
 	Scond  uint8
 	Back   uint8
 	Ft     uint8
 	Tt     uint8
 	Isize  uint8
 	Mode   int8
-	Info   ProgInfo
-}
-
-// ProgInfo holds information about the instruction for use
-// by clients such as the compiler. The exact meaning of this
-// data is up to the client and is not interpreted by the cmd/internal/obj/... packages.
-type ProgInfo struct {
-	Flags    uint32 // flag bits
-	Reguse   uint64 // registers implicitly used by this instruction
-	Regset   uint64 // registers implicitly set by this instruction
-	Regindex uint64 // registers used by addressing mode
 }
 
 func NewProg(ctxt *Link) *Prog {

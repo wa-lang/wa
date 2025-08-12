@@ -107,7 +107,7 @@ import (
 // The Wa and C compilers, and the assembler, call writeobj to write
 // out a Wa object file.  The linker does not call this; the linker
 // does not write out object files.
-func (ctxt *Link) Writeobjdirect(b io.Writer) error {
+func (ctxt *Link) Writeobjdirect(prog *Prog, b io.Writer) error {
 	// Build list of symbols, and assign instructions to lists.
 	// Ignore ctxt->plist boundaries. There are no guarantees there,
 	// and the C compilers and assemblers just use one big list.
@@ -119,145 +119,140 @@ func (ctxt *Link) Writeobjdirect(b io.Writer) error {
 	var curtext *LSym
 	var etext *LSym
 	var edata *LSym
-	for pl := ctxt.Plist; pl != nil; pl = pl.Link {
-		for p := pl.Firstpc; p != nil; p = plink {
-			if ctxt.Debugasm != 0 && ctxt.Debugvlog != 0 {
-				fmt.Printf("obj: %v\n", p)
-			}
-			plink = p.Link
-			p.Link = nil
+	for p := prog; p != nil; p = plink {
+		plink = p.Link
+		p.Link = nil
 
-			if p.As == objabi.AEND {
-				continue
-			}
+		if p.As == objabi.AEND {
+			continue
+		}
 
-			// 表示一个局部变量或函数参数的类型声明(类似调试信息)
-			// 会生成一个 Auto 节点, 并加到当前函数的 Autom 链表中
-			if p.As == objabi.ATYPE {
-				// Assume each TYPE instruction describes
-				// a different local variable or parameter,
-				// so no dedup.
-				// Using only the TYPE instructions means
-				// that we discard location information about local variables
-				// in C and assembly functions; that information is inferred
-				// from ordinary references, because there are no TYPE
-				// instructions there. Without the type information, gdb can't
-				// use the locations, so we don't bother to save them.
-				// If something else could use them, we could arrange to
-				// preserve them.
-				if curtext == nil {
-					continue
-				}
-				a := new(Auto)
-				a.Asym = p.From.Sym
-				a.Aoffset = int32(p.From.Offset)
-				a.Name = p.From.Name
-				a.Link = curtext.Autom
-				curtext.Autom = a
-				continue
-			}
-
-			// 全局变量定义
-			// 会创建一个 LSym, 加入全局数据链表
-			if p.As == objabi.AGLOBL {
-				s := p.From.Sym
-				tmp6 := s.Seenglobl
-				s.Seenglobl++
-				if tmp6 != 0 {
-					fmt.Printf("duplicate %v\n", p)
-				}
-				if s.Onlist != 0 {
-					log.Fatalf("symbol %s listed multiple times", s.Name)
-				}
-				s.Onlist = 1
-				if data == nil {
-					data = s
-				} else {
-					edata.Next = s
-				}
-				s.Next = nil
-				s.Size = p.To.Offset
-				if s.Type == 0 || s.Type == SXREF {
-					s.Type = SBSS
-				}
-				flag := int(p.From3.Offset)
-				if flag&objabi.DUPOK != 0 {
-					s.Dupok = 1
-				}
-				if flag&objabi.RODATA != 0 {
-					s.Type = SRODATA
-				} else if flag&objabi.NOPTR != 0 {
-					s.Type = SNOPTRBSS
-				}
-				edata = s
-				continue
-			}
-
-			// 全局数据赋值语句
-			// 会调用 savedata() 保存数据内容到 LSym.P 中
-			if p.As == objabi.ADATA {
-				if err := ctxt.savedata(p.From.Sym, p, "<input>"); err != nil {
-					return err
-				}
-				continue
-			}
-
-			// 函数入口
-			// 创建并初始化一个 LSym, 标记为 STEXT, 建立指令链表头尾
-			if p.As == objabi.ATEXT {
-				s := p.From.Sym
-				if s == nil {
-					// func _() { }
-					curtext = nil
-
-					continue
-				}
-
-				if s.Text != nil {
-					log.Fatalf("duplicate TEXT for %s", s.Name)
-				}
-				if s.Onlist != 0 {
-					log.Fatalf("symbol %s listed multiple times", s.Name)
-				}
-				s.Onlist = 1
-				if text == nil {
-					text = s
-				} else {
-					etext.Next = s
-				}
-				etext = s
-				flag := int(p.From3Offset())
-				if flag&objabi.DUPOK != 0 {
-					s.Dupok = 1
-				}
-				s.Next = nil
-				s.Type = STEXT
-				s.Text = p
-				s.Etext = p
-				curtext = s
-				continue
-			}
-
-			if p.As == objabi.AFUNCDATA {
-				// Rewrite reference to wa_args_stackmap(SB) to the Wa-provided declaration information.
-				if curtext == nil { // func _() {}
-					continue
-				}
-				if p.To.Sym.Name == "wa_args_stackmap" {
-					if p.From.Type != TYPE_CONST || p.From.Offset != objabi.FUNCDATA_ArgsPointerMaps {
-						return fmt.Errorf("FUNCDATA use of wa_args_stackmap(SB) without FUNCDATA_ArgsPointerMaps")
-					}
-					p.To.Sym = ctxt.Lookup(fmt.Sprintf("%s.args_stackmap", curtext.Name), curtext.Version)
-				}
-			}
-
+		// 表示一个局部变量或函数参数的类型声明(类似调试信息)
+		// 会生成一个 Auto 节点, 并加到当前函数的 Autom 链表中
+		if p.As == objabi.ATYPE {
+			// Assume each TYPE instruction describes
+			// a different local variable or parameter,
+			// so no dedup.
+			// Using only the TYPE instructions means
+			// that we discard location information about local variables
+			// in C and assembly functions; that information is inferred
+			// from ordinary references, because there are no TYPE
+			// instructions there. Without the type information, gdb can't
+			// use the locations, so we don't bother to save them.
+			// If something else could use them, we could arrange to
+			// preserve them.
 			if curtext == nil {
 				continue
 			}
-			s := curtext
-			s.Etext.Link = p
-			s.Etext = p
+			a := new(Auto)
+			a.Asym = p.From.Sym
+			a.Aoffset = int32(p.From.Offset)
+			a.Name = p.From.Name
+			a.Link = curtext.Autom
+			curtext.Autom = a
+			continue
 		}
+
+		// 全局变量定义
+		// 会创建一个 LSym, 加入全局数据链表
+		if p.As == objabi.AGLOBL {
+			s := p.From.Sym
+			tmp6 := s.Seenglobl
+			s.Seenglobl++
+			if tmp6 != 0 {
+				fmt.Printf("duplicate %v\n", p)
+			}
+			if s.Onlist != 0 {
+				log.Fatalf("symbol %s listed multiple times", s.Name)
+			}
+			s.Onlist = 1
+			if data == nil {
+				data = s
+			} else {
+				edata.Next = s
+			}
+			s.Next = nil
+			s.Size = p.To.Offset
+			if s.Type == 0 || s.Type == SXREF {
+				s.Type = SBSS
+			}
+			flag := int(p.From3.Offset)
+			if flag&objabi.DUPOK != 0 {
+				s.Dupok = 1
+			}
+			if flag&objabi.RODATA != 0 {
+				s.Type = SRODATA
+			} else if flag&objabi.NOPTR != 0 {
+				s.Type = SNOPTRBSS
+			}
+			edata = s
+			continue
+		}
+
+		// 全局数据赋值语句
+		// 会调用 savedata() 保存数据内容到 LSym.P 中
+		if p.As == objabi.ADATA {
+			if err := ctxt.savedata(p.From.Sym, p, "<input>"); err != nil {
+				return err
+			}
+			continue
+		}
+
+		// 函数入口
+		// 创建并初始化一个 LSym, 标记为 STEXT, 建立指令链表头尾
+		if p.As == objabi.ATEXT {
+			s := p.From.Sym
+			if s == nil {
+				// func _() { }
+				curtext = nil
+
+				continue
+			}
+
+			if s.Text != nil {
+				log.Fatalf("duplicate TEXT for %s", s.Name)
+			}
+			if s.Onlist != 0 {
+				log.Fatalf("symbol %s listed multiple times", s.Name)
+			}
+			s.Onlist = 1
+			if text == nil {
+				text = s
+			} else {
+				etext.Next = s
+			}
+			etext = s
+			flag := int(p.From3Offset())
+			if flag&objabi.DUPOK != 0 {
+				s.Dupok = 1
+			}
+			s.Next = nil
+			s.Type = STEXT
+			s.Text = p
+			s.Etext = p
+			curtext = s
+			continue
+		}
+
+		if p.As == objabi.AFUNCDATA {
+			// Rewrite reference to wa_args_stackmap(SB) to the Wa-provided declaration information.
+			if curtext == nil { // func _() {}
+				continue
+			}
+			if p.To.Sym.Name == "wa_args_stackmap" {
+				if p.From.Type != TYPE_CONST || p.From.Offset != objabi.FUNCDATA_ArgsPointerMaps {
+					return fmt.Errorf("FUNCDATA use of wa_args_stackmap(SB) without FUNCDATA_ArgsPointerMaps")
+				}
+				p.To.Sym = ctxt.Lookup(fmt.Sprintf("%s.args_stackmap", curtext.Name), curtext.Version)
+			}
+		}
+
+		if curtext == nil {
+			continue
+		}
+		s := curtext
+		s.Etext.Link = p
+		s.Etext = p
 	}
 
 	// 确保所有函数都有 FUNCDATA wa_args_stackmap 节点

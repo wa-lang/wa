@@ -126,15 +126,13 @@ var CmdP9Asm = &cli.Command{
 		}
 		parser := asm.NewParser(ctxt, arch, lexer, flags)
 
-		pList := ctxt.NewPlist()
-		var ok bool
-		pList.Firstpc, ok = parser.Parse()
+		prog, ok := parser.Parse()
 		if !ok {
 			log.Printf("asm: assembly of %s failed", flag.Arg(0))
 			os.Remove(flags.OutputFile)
 			os.Exit(1)
 		}
-		if err := ctxt.Writeobjdirect(output); err != nil {
+		if err := ctxt.Writeobjdirect(prog, output); err != nil {
 			fmt.Fprintln(os.Stderr, err)
 			os.Exit(1)
 		}

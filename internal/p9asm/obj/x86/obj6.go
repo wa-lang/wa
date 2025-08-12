@@ -436,10 +436,6 @@ func nacladdr(ctxt *obj.Link, p *obj.Prog, a *obj.Addr) {
 }
 
 func preprocess(ctxt *obj.Link, cursym *obj.LSym) {
-	if ctxt.Tlsg == nil {
-		ctxt.Tlsg = ctxt.Lookup("runtime.tlsg", 0)
-	}
-
 	ctxt.Cursym = cursym
 
 	if cursym.Text == nil || cursym.Text.Link == nil {
