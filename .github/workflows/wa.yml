@@ -34,10 +34,6 @@ jobs:
       - run: cd waroot && wa run -target=wasi hello.wa
       - run: cd waroot && wa run -target=unknown hello.wa 
 
-      - uses: shogo82148/actions-goveralls@v1
-        with:
-          path-to-profile: profile.cov
-
   build-and-test-windows:
     # https://github.com/actions/runner-images
     runs-on: windows-2022
