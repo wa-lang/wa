@@ -4,6 +4,9 @@
 // go1.21 support wasip1/wasm
 // go1.24 support wasmexport
 
+//go:build go1.17
+// +build go1.17
+
 // 凹语言打包程序: Windows/Linux/macOS/wasm
 package main
 
@@ -22,7 +25,6 @@ import (
 	"runtime"
 	"strings"
 
-	"wa-lang.org/wa/internal/3rdparty/gover"
 	"wa-lang.org/wa/internal/version"
 	"wa-lang.org/wa/waroot"
 )
@@ -371,9 +373,27 @@ func (p *Builder) getWarootPath(waos, waarch string) string {
 }
 
 func isWasip1Enabled() bool {
-	// go1.24 support wasmexport
-	goversion := strings.TrimPrefix(runtime.Version(), "go")
-	return gover.Compare(goversion, "1.24") >= 0
+	// 凹语言最低版本是Go1.17
+	// go1.24 开始支持 wasmexport
+	var verList = []string{
+		"go1.17",
+		"go1.18",
+		"go1.19",
+		"go1.20",
+		"go1.21",
+		"go1.22",
+		"go1.23",
+	}
+	// 判断是否是不支持的老版本
+	for _, ver := range verList {
+		if runtime.Version() == ver {
+			return false
+		}
+		if strings.HasPrefix(runtime.Version(), ver+".") {
+			return false
+		}
+	}
+	return true
 }
 
 func cpDir(dst, src string) (total int) {
