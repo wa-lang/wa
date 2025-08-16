@@ -49,8 +49,6 @@ const (
 	operator_end // 运算符结束
 
 	keyword_beg // 关键字开始
-	IMPORT      // 导入
-	CONST       // 编译时符号
 	GLOBAL      // 全局符号
 	FUNC        // 函数
 	keyword_end // 关键字结束
@@ -92,8 +90,6 @@ var tokens = [...]string{
 	SEMICOLON: ";",
 	COLON:     ":",
 
-	IMPORT: "import",
-	CONST:  "const",
 	GLOBAL: "global",
 	FUNC:   "func",
 }
