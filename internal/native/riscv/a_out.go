@@ -3,9 +3,12 @@
 
 package riscv
 
+// 寄存器类型
+type RegType int16
+
 const (
 	// 通用寄存器
-	REG_X0 = iota
+	REG_X0 RegType = iota
 	REG_X1
 	REG_X2
 	REG_X3
@@ -144,8 +147,78 @@ const (
 	REG_FT11 = REG_F31
 )
 
+// 指令类型
+type As int32
+
 // 优先支持最小指令集
+//
+// https://github.com/riscv/riscv-isa-manual
+// https://riscv.github.io/riscv-isa-manual/snapshot/unprivileged/#rv32-64g
+// 35. RV32/64G Instruction Set Listings
 const (
-	AADDI = iota
-	// TODO
+	//
+	// Unprivileged ISA (version 20191213)
+	//
+
+	// 2.4: Integer Computational Instructions (RV32I)
+	AADDI As = iota
+	ASLTI
+	ASLTIU
+	AANDI
+	AORI
+	AXORI
+	ASLLI
+	ASRLI
+	ASRAI
+	ALUI
+	AAUIPC
+	AADD
+	ASLT
+	ASLTU
+	AAND
+	AOR
+	AXOR
+	ASLL
+	ASRL
+	ASUB
+	ASRA
+
+	// 2.5: Control Transfer Instructions (RV32I)
+	AJAL
+	AJALR
+	ABEQ
+	ABNE
+	ABLT
+	ABLTU
+	ABGE
+	ABGEU
+
+	// 2.6: Load and Store Instructions (RV32I)
+	ALW
+	ALH
+	ALHU
+	ALB
+	ALBU
+	ASW
+	ASH
+	ASB
+
+	// 5.2: Integer Computational Instructions (RV64I)
+	AADDIW
+	ASLLIW
+	ASRLIW
+	ASRAIW
+	AADDW
+	ASLLW
+	ASRLW
+	ASUBW
+	ASRAW
+
+	// 5.3: Load and Store Instructions (RV64I)
+	ALWU
+	ALD
+	ASD
+
+	// End marker
+	ALAST
 )

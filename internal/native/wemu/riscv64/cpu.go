@@ -7,6 +7,7 @@ package riscv64
 type Riscv64VM struct {
 	Mem  Memory      // 内存
 	Sys  Syscall     // 系统调用
+	CSR  uint32      // 状态寄存器
 	RegX [32]uint64  // 整数寄存器
 	RegF [32]float64 // 浮点数寄存器
 	PC   uint64      // PC指针
