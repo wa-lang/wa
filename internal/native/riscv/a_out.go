@@ -203,6 +203,10 @@ const (
 	ASH
 	ASB
 
+	// 2.8: Environment Call and Breakpoint (RV32I)
+	AECALL
+	AEBREAK
+
 	// 5.2: Integer Computational Instructions (RV64I)
 	AADDIW
 	ASLLIW
@@ -218,6 +222,121 @@ const (
 	ALWU
 	ALD
 	ASD
+
+	// 7.1: Multiplication Operations (RV32M/RV64M)
+	AMUL
+	AMULH
+	AMULHU
+	AMULHSU
+	AMULW // RV64M
+	ADIV
+	ADIVU
+	AREM
+	AREMU
+	ADIVW  // RV64M
+	ADIVUW // RV64M
+	AREMW  // RV64M
+	AREMUW // RV64M
+
+	// 9.1: CSR Instructions (Zicsr)
+	ACSRRW
+	ACSRRS
+	ACSRRC
+	ACSRRWI
+	ACSRRSI
+	ACSRRCI
+
+	// 11.2: Floating-Point Control and Status Register (F)
+	AFRCSR
+	AFSCSR
+	AFRRM
+	AFSRM
+	AFRFLAGS
+	AFSFLAGS
+
+	// 11.5: Single-Precision Load and Store Instructions (F)
+	AFLW
+	AFSW
+
+	// 11.6: Single-Precision Floating-Point Computational Instructions
+	AFADDS
+	AFSUBS
+	AFMULS
+	AFDIVS
+	AFSQRTS
+	AFMINS
+	AFMAXS
+	AFMADDS
+	AFMSUBS
+	AFNMADDS
+	AFNMSUBS
+
+	// 11.7: Single-Precision Floating-Point Conversion and Move Instructions
+	AFCVTWS
+	AFCVTLS
+	AFCVTSW
+	AFCVTSL
+	AFCVTWUS
+	AFCVTLUS
+	AFCVTSWU
+	AFCVTSLU
+	AFSGNJS
+	AFSGNJNS
+	AFSGNJXS
+	AFMVXS
+	AFMVSX
+	AFMVXW
+	AFMVWX
+
+	// 11.8: Single-Precision Floating-Point Compare Instructions
+	AFEQS
+	AFLTS
+	AFLES
+
+	// 11.9: Single-Precision Floating-Point Classify Instruction
+	AFCLASSS
+
+	// 12.3: Double-Precision Load and Store Instructions (D)
+	AFLD
+	AFSD
+
+	// 12.4: Double-Precision Floating-Point Computational Instructions
+	AFADDD
+	AFSUBD
+	AFMULD
+	AFDIVD
+	AFMIND
+	AFMAXD
+	AFSQRTD
+	AFMADDD
+	AFMSUBD
+	AFNMADDD
+	AFNMSUBD
+
+	// 12.5: Double-Precision Floating-Point Conversion and Move Instructions
+	AFCVTWD
+	AFCVTLD
+	AFCVTDW
+	AFCVTDL
+	AFCVTWUD
+	AFCVTLUD
+	AFCVTDWU
+	AFCVTDLU
+	AFCVTSD
+	AFCVTDS
+	AFSGNJD
+	AFSGNJND
+	AFSGNJXD
+	AFMVXD
+	AFMVDX
+
+	// 12.6: Double-Precision Floating-Point Compare Instructions
+	AFEQD
+	AFLTD
+	AFLED
+
+	// 12.7: Double-Precision Floating-Point Classify Instruction
+	AFCLASSD
 
 	// End marker
 	ALAST

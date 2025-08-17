@@ -43,7 +43,6 @@ finished:
 
     sw   t1, 0(t0)
 
-    # 如果 QEMU 不支持 exit 设备，就等待中断进入低功耗模式并死循环
+    # 如果 QEMU 不支持 exit 设备，就进入并死循环
 forever:
-    wfi
     jal x0, forever
