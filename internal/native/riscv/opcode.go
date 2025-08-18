@@ -61,6 +61,7 @@ type OptabType struct {
 // https://riscv.github.io/riscv-isa-manual/snapshot/unprivileged/#rv32-64g
 var AOpTab = []OptabType{
 	// RV32I Base Instruction Set
+
 	ALUI:    {Optype: U, Opcode: 0b0110111},
 	AAUIPC:  {Optype: U, Opcode: 0b0010111},
 	AJAL:    {Optype: J, Opcode: 0b1101111},
@@ -85,9 +86,9 @@ var AOpTab = []OptabType{
 	AXORI:   {Optype: I, Opcode: 0b0010011, Funct3: 0b100},
 	AORI:    {Optype: I, Opcode: 0b0010011, Funct3: 0b110},
 	AANDI:   {Optype: I, Opcode: 0b0010011, Funct3: 0b111},
-	ASLLI:   {Optype: R, Opcode: 0b0010011, Funct3: 0b001, Funct7: 0b0000000},
-	ASRLI:   {Optype: R, Opcode: 0b0010011, Funct3: 0b101, Funct7: 0b0000000},
-	ASRAI:   {Optype: R, Opcode: 0b0010011, Funct3: 0b101, Funct7: 0b0100000},
+	ASLLI:   {Optype: I, Opcode: 0b0010011, Funct3: 0b001, Funct7: 0b0000000},
+	ASRLI:   {Optype: I, Opcode: 0b0010011, Funct3: 0b101, Funct7: 0b0000000},
+	ASRAI:   {Optype: I, Opcode: 0b0010011, Funct3: 0b101, Funct7: 0b0100000},
 	AADD:    {Optype: R, Opcode: 0b0110011, Funct3: 0b000, Funct7: 0b0000000},
 	ASUB:    {Optype: R, Opcode: 0b0110011, Funct3: 0b000, Funct7: 0b0100000},
 	ASLL:    {Optype: R, Opcode: 0b0110011, Funct3: 0b001, Funct7: 0b0000000},
@@ -98,16 +99,52 @@ var AOpTab = []OptabType{
 	ASRA:    {Optype: R, Opcode: 0b0110011, Funct3: 0b101, Funct7: 0b0100000},
 	AOR:     {Optype: R, Opcode: 0b0110011, Funct3: 0b110, Funct7: 0b0000000},
 	AAND:    {Optype: R, Opcode: 0b0110011, Funct3: 0b111, Funct7: 0b0000000},
+	AFENCE:  {Optype: I, Opcode: 0b0001111, Funct3: 0b000},
 	AECALL:  {Optype: I, Opcode: 0b1110011, Rs2: 0, Funct7: 0}, // imm[11:0] = 0b000000000000
 	AEBREAK: {Optype: I, Opcode: 0b1110011, Rs2: 1, Funct7: 0}, // imm[11:0] = 0b000000000001
 
-	// TODO: RV64I Base Instruction Set (in addition to RV32I)
+	// RV64I Base Instruction Set (in addition to RV32I)
 
-	// TODO: RV32/RV64 Zicsr Standard Extension
+	ALWU:   {Optype: I, Opcode: 0b0000011, Funct3: 0b110},
+	ALD:    {Optype: I, Opcode: 0b0000011, Funct3: 0b011},
+	ASD:    {Optype: S, Opcode: 0b0100011},
+	AADDIW: {Optype: I, Opcode: 0b0011011, Funct3: 0b000},
+	ASLLIW: {Optype: R, Opcode: 0b0011011, Funct3: 0b001, Funct7: 0b0000000},
+	ASRLIW: {Optype: R, Opcode: 0b0011011, Funct3: 0b101, Funct7: 0b0000000},
+	ASRAIW: {Optype: R, Opcode: 0b0011011, Funct3: 0b101, Funct7: 0b0100000},
+	AADDW:  {Optype: R, Opcode: 0b0111011, Funct3: 0b000, Funct7: 0b0000000},
+	ASUBW:  {Optype: R, Opcode: 0b0111011, Funct3: 0b000, Funct7: 0b0100000},
+	ASLLW:  {Optype: R, Opcode: 0b0111011, Funct3: 0b001, Funct7: 0b0000000},
+	ASRLW:  {Optype: R, Opcode: 0b0111011, Funct3: 0b101, Funct7: 0b0000000},
+	ASRAW:  {Optype: R, Opcode: 0b0111011, Funct3: 0b101, Funct7: 0b0100000},
 
-	// TODO: RV32M Standard Extension
+	// RV32/RV64 Zicsr Standard Extension
 
-	// TODO: RV64M Standard Extension (in addition to RV32M)
+	ACSRRW:  {Optype: I, Opcode: 0b1110011, Funct3: 0b001},
+	ACSRRS:  {Optype: I, Opcode: 0b1110011, Funct3: 0b010},
+	ACSRRC:  {Optype: I, Opcode: 0b1110011, Funct3: 0b011},
+	ACSRRWI: {Optype: I, Opcode: 0b1110011, Funct3: 0b101},
+	ACSRRSI: {Optype: I, Opcode: 0b1110011, Funct3: 0b110},
+	ACSRRCI: {Optype: I, Opcode: 0b1110011, Funct3: 0b111},
+
+	// RV32M Standard Extension
+
+	AMUL:    {Optype: R, Opcode: 0b0110011, Funct3: 0b000, Funct7: 0b0000001},
+	AMULH:   {Optype: R, Opcode: 0b0110011, Funct3: 0b001, Funct7: 0b0000001},
+	AMULHSU: {Optype: R, Opcode: 0b0110011, Funct3: 0b010, Funct7: 0b0000001},
+	AMULHU:  {Optype: R, Opcode: 0b0110011, Funct3: 0b011, Funct7: 0b0000001},
+	ADIV:    {Optype: R, Opcode: 0b0110011, Funct3: 0b100, Funct7: 0b0000001},
+	ADIVU:   {Optype: R, Opcode: 0b0110011, Funct3: 0b101, Funct7: 0b0000001},
+	AREM:    {Optype: R, Opcode: 0b0110011, Funct3: 0b110, Funct7: 0b0000001},
+	AREMU:   {Optype: R, Opcode: 0b0110011, Funct3: 0b111, Funct7: 0b0000001},
+
+	// RV64M Standard Extension (in addition to RV32M)
+
+	AMULW:  {Optype: R, Opcode: 0b0111011, Funct3: 0b000, Funct7: 0b0000001},
+	ADIVW:  {Optype: R, Opcode: 0b0111011, Funct3: 0b100, Funct7: 0b0000001},
+	ADIVUW: {Optype: R, Opcode: 0b0111011, Funct3: 0b101, Funct7: 0b0000001},
+	AREMW:  {Optype: R, Opcode: 0b0111011, Funct3: 0b110, Funct7: 0b0000001},
+	AREMUW: {Optype: R, Opcode: 0b0111011, Funct3: 0b111, Funct7: 0b0000001},
 
 	// TODO: RV32F Standard Extension
 

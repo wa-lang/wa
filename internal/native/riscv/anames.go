@@ -53,6 +53,9 @@ var Anames = []string{
 	"ECALL",
 	"EBREAK",
 
+	// 3: Instruction-Fetch Fence (RV32I)
+	"FENCE",
+
 	// 5.2: Integer Computational Instructions (RV64I)
 	"ADDIW",
 	"SLLIW",

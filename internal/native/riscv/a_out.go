@@ -207,6 +207,9 @@ const (
 	AECALL
 	AEBREAK
 
+	// 3: Instruction-Fetch Fence (RV32I)
+	AFENCE
+
 	// 5.2: Integer Computational Instructions (RV64I)
 	AADDIW
 	ASLLIW
