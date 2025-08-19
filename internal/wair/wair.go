@@ -10,6 +10,38 @@ package wair
 //-------------------------------------
 
 /**************************************
+Module: 定义了一个 wair 模块，对应于 ast.Program
+**************************************/
+type Module struct {
+	Types   Types
+	Globals []Value
+	Funcs   []*Function
+}
+
+// 初始化 Module
+func (m *Module) Init() {
+	m.Types.Init()
+}
+
+// 创建一个 Value。注意该函数仅创建值，并不会将其合并至 Module 的相应位置（如 Globals）
+func (m *Module) NewValue(name string, kind ValueKind, typ ValueType, pos int, obj interface{}) Value {
+	return m.newValue(name, kind, typ, pos, obj)
+}
+
+//-------------------------------------
+
+/**************************************
+ValueKind: 值的类别，取值见后续常量
+**************************************/
+type ValueKind int
+
+const (
+	ValueKindLocal ValueKind = iota
+	ValueKindGlobal
+	ValueKindConst
+)
+
+/**************************************
 TypeKind: 值类型的类别，取值见后续常量
 **************************************/
 type TypeKind int
@@ -77,29 +109,23 @@ type Method struct {
 Value: 值，所有可以作为指令参数的对象，都满足该接口
 **************************************/
 type Value interface {
-	// 获取值的名字
+	// 该值的名字
 	// 全局变量、局部变量（含参数）、具名函数的名字与其源代码中的对应标识符保持一直
 	// 常量的名字是其字面值
 	// 中间变量（虚拟寄存器）的名字为 $t0、$t1 等
 	Name() string
 
-	// 获取值的类型
+	// 该值的类别
+	Kind() ValueKind
+
+	// 该值的类型
 	Type() ValueType
 
-	// 获取该值在源码中的位置
+	// 该值在源码中的位置
 	Pos() int
-}
 
-/**************************************
-Block: 指令块，对应于 {...}，指令块本身也满足指令接口，意味着指令块可嵌套
-指令块定义了作用域，块内的值无法在块外访问
-函数体对应的指令块，其 Parent 应为 nil
-Todo: Block 是否满足 Value（既是否可有返回值）待讨论
-**************************************/
-type Block struct {
-	Comment string        // 附加注释
-	Locals  []Value       // 该块内定义的局部变量
-	Instrs  []Instruction // 该块所含的指令
+	// 与该值关联的 AST 结点。对凹语言前端，应为 types.Object
+	Object() interface{}
 }
 
 /**************************************
@@ -128,4 +154,16 @@ type Function struct {
 	Params       []Value     // 参数列表
 	Results      []ValueType //返回值列表
 	Body         *Block      // 函数体，为 nil 表明该函数为外部导入
+}
+
+/**************************************
+Block: 指令块，对应于 {...}，指令块本身也满足指令接口，意味着指令块可嵌套
+指令块定义了作用域，块内的值无法在块外访问
+函数体对应的指令块，其 Parent 应为 nil
+Todo: Block 是否满足 Value（既是否可有返回值）待讨论
+**************************************/
+type Block struct {
+	Comment string        // 附加注释
+	Locals  []Value       // 该块内定义的局部变量
+	Instrs  []Instruction // 该块所含的指令
 }

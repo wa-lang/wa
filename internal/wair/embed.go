@@ -19,18 +19,18 @@ type anInstruction struct {
 	parent *Block
 }
 
-func (i *anInstruction) Parent() *Block     { return i.parent }
-func (i *anInstruction) setParent(p *Block) { i.parent = p }
-func (i *anInstruction) Pos() int           { return i.pos }
+func (v *anInstruction) Parent() *Block     { return v.parent }
+func (v *anInstruction) setParent(p *Block) { v.parent = p }
+func (v *anInstruction) Pos() int           { return v.pos }
 
 /**************************************
-aRegister: 实现 Value 接口与 Type、Name 相关的方法
+imv: InterMediateValue，中间值，实现 Value 接口与 Type、Name 相关的方法
 **************************************/
-type aRegister struct {
+type imv struct {
 	anInstruction
 	id  int       // 在函数内虚拟寄存器数组中的下标，函数内唯一
 	typ ValueType // 值类型
 }
 
-func (r *aRegister) Name() string    { return fmt.Sprintf("$t%d", r.id) }
-func (r *aRegister) Type() ValueType { return r.typ }
+func (v *imv) Name() string    { return fmt.Sprintf("$t%d", v.id) }
+func (v *imv) Type() ValueType { return v.typ }
