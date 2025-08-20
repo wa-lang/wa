@@ -35,11 +35,12 @@ package riscv
 // +--------+ +--------------------+ +---------------------------+---------+------------------------------+---------+
 //
 
-// 指令编码类型
-type OpType int
+// 指令格式类型
+type OpFormatType int
 
 const (
-	R OpType = iota + 1
+	_ OpFormatType = iota
+	R
 	I
 	S
 	B
@@ -47,9 +48,101 @@ const (
 	J
 )
 
+// Base opecode map (inst[0:1] = 11)
+// +-----------+--------+----------+----------+----------+--------+----------+----------------+---------+
+// | inst[2:4] | 000    | 001      | 010      | 011      | 100    | 101      | 110            | 111     |
+// | inst[5:6] |        |          |          |          |        |          |                | (> 32b) |
+// +-----------+--------+----------+----------+----------+--------+----------+----------------+---------+
+// |       00  | LOAD   | LOAD-FP  | custom-0 | MISC-MEM | OP-IMM | AUIPC    | OP-IMM-32      | 48b     |
+// +-----------+--------+----------+----------+----------+--------+----------+----------------+---------+
+// |       01  | STORE  | STORE-FP | custom-1 | AMO      | OP     | LUI      | OP-32          | 64b     |
+// +-----------+--------+----------+----------+----------+--------+----------+----------------+---------+
+// |       10  | MADD   | MSUB     | NMSUB    | NMADD    | OP-FP  | reserved | custom-2/rv128 | 48b     |
+// +-----------+--------+----------+----------+----------+--------+----------+----------------+---------+
+// |       11  | BRANCH | JALR     | reserved | JAL      | SYSTEM | reserved | custom-3/rv128 | >= 80b  |
+// +-----------+--------+----------+----------+----------+--------+----------+----------------+---------+
+
+// 基础 opcode 分类
+type OpcodeType uint32
+
+const (
+	OpBase_LOAD      OpcodeType = 0b_00_000_11
+	OpBase_LOAD_FP   OpcodeType = 0b_00_001_11
+	OpBase_CUSTOM_0  OpcodeType = 0b_00_010_11
+	OpBase_MISC_MEN  OpcodeType = 0b_00_011_11
+	OpBase_OP_IMM    OpcodeType = 0b_00_100_11
+	OpBase_AUIPC     OpcodeType = 0b_00_101_11
+	OpBase_OP_IMM_32 OpcodeType = 0b_00_110_11
+
+	OpBase_STORE    OpcodeType = 0b_01_000_11
+	OpBase_STORE_FP OpcodeType = 0b_01_001_11
+	OpBase_CUSTOM_1 OpcodeType = 0b_01_010_11
+	OpBase_AMO      OpcodeType = 0b_01_011_11
+	OpBase_OP       OpcodeType = 0b_01_100_11
+	OpBase_LUI      OpcodeType = 0b_01_101_11
+	OpBase_OP_32    OpcodeType = 0b_01_110_11
+
+	OpBase_MADD     OpcodeType = 0b_10_000_11
+	OpBase_MSUB     OpcodeType = 0b_10_001_11
+	OpBase_NMSUB    OpcodeType = 0b_10_010_11
+	OpBase_NMADD    OpcodeType = 0b_10_011_11
+	OpBase_OP_FP    OpcodeType = 0b_10_100_11
+	_               OpcodeType = 0b_10_101_11
+	OpBase_CUSTOM_2 OpcodeType = 0b_10_110_11
+
+	OpBase_BRANCH   OpcodeType = 0b_11_000_11
+	OpBase_JALR     OpcodeType = 0b_11_001_11
+	_               OpcodeType = 0b_11_010_11
+	OpBase_JAL      OpcodeType = 0b_11_011_11
+	OpBase_SYSTEM   OpcodeType = 0b_11_100_11
+	_               OpcodeType = 0b_11_101_11
+	OpBase_CUSTOM_3 OpcodeType = 0b_11_110_11
+)
+
+// 指令的编码格式
+func (opcode OpcodeType) FormatType() OpFormatType {
+	switch opcode & 0b_11_111_11 {
+	case OpBase_OP,
+		OpBase_OP_32,
+		OpBase_OP_FP,
+		OpBase_MADD,
+		OpBase_MSUB,
+		OpBase_NMSUB,
+		OpBase_NMADD:
+		return R
+	case OpBase_OP_IMM,
+		OpBase_OP_IMM_32,
+		OpBase_JALR,
+		OpBase_LOAD,
+		OpBase_LOAD_FP,
+		OpBase_MISC_MEN,
+		OpBase_SYSTEM:
+		return I
+	case OpBase_STORE,
+		OpBase_STORE_FP,
+		OpBase_AMO:
+		return S
+	case OpBase_BRANCH:
+		return B
+	case OpBase_LUI,
+		OpBase_AUIPC:
+		return U
+	case OpBase_JAL:
+		return J
+
+	case OpBase_CUSTOM_0,
+		OpBase_CUSTOM_1,
+		OpBase_CUSTOM_2,
+		OpBase_CUSTOM_3:
+		return 0
+
+	default:
+		return 0
+	}
+}
+
 type OptabType struct {
-	Optype OpType
-	Opcode uint32
+	Opcode OpcodeType
 	Funct3 uint32
 	Rs1    uint32
 	Rs2    uint32
@@ -62,89 +155,89 @@ type OptabType struct {
 var AOpTab = []OptabType{
 	// RV32I Base Instruction Set
 
-	ALUI:    {Optype: U, Opcode: 0b0110111},
-	AAUIPC:  {Optype: U, Opcode: 0b0010111},
-	AJAL:    {Optype: J, Opcode: 0b1101111},
-	AJALR:   {Optype: I, Opcode: 0b1100111, Funct3: 0b000},
-	ABEQ:    {Optype: B, Opcode: 0b1100011, Funct3: 0b000},
-	ABNE:    {Optype: B, Opcode: 0b1100011, Funct3: 0b001},
-	ABLT:    {Optype: B, Opcode: 0b1100011, Funct3: 0b100},
-	ABGE:    {Optype: B, Opcode: 0b1100011, Funct3: 0b101},
-	ABLTU:   {Optype: B, Opcode: 0b1100011, Funct3: 0b110},
-	ABGEU:   {Optype: B, Opcode: 0b1100011, Funct3: 0b111},
-	ALB:     {Optype: I, Opcode: 0b0000011, Funct3: 0b000},
-	ALH:     {Optype: I, Opcode: 0b0000011, Funct3: 0b001},
-	ALW:     {Optype: I, Opcode: 0b0000011, Funct3: 0b010},
-	ALBU:    {Optype: I, Opcode: 0b0000011, Funct3: 0b100},
-	ALHU:    {Optype: I, Opcode: 0b0000011, Funct3: 0b101},
-	ASB:     {Optype: S, Opcode: 0b0100011, Funct3: 0b000},
-	ASH:     {Optype: S, Opcode: 0b0100011, Funct3: 0b001},
-	ASW:     {Optype: S, Opcode: 0b0100011, Funct3: 0b010},
-	AADDI:   {Optype: I, Opcode: 0b0010011, Funct3: 0b000},
-	ASLTI:   {Optype: I, Opcode: 0b0010011, Funct3: 0b010},
-	ASLTIU:  {Optype: I, Opcode: 0b0010011, Funct3: 0b011},
-	AXORI:   {Optype: I, Opcode: 0b0010011, Funct3: 0b100},
-	AORI:    {Optype: I, Opcode: 0b0010011, Funct3: 0b110},
-	AANDI:   {Optype: I, Opcode: 0b0010011, Funct3: 0b111},
-	ASLLI:   {Optype: I, Opcode: 0b0010011, Funct3: 0b001, Funct7: 0b0000000},
-	ASRLI:   {Optype: I, Opcode: 0b0010011, Funct3: 0b101, Funct7: 0b0000000},
-	ASRAI:   {Optype: I, Opcode: 0b0010011, Funct3: 0b101, Funct7: 0b0100000},
-	AADD:    {Optype: R, Opcode: 0b0110011, Funct3: 0b000, Funct7: 0b0000000},
-	ASUB:    {Optype: R, Opcode: 0b0110011, Funct3: 0b000, Funct7: 0b0100000},
-	ASLL:    {Optype: R, Opcode: 0b0110011, Funct3: 0b001, Funct7: 0b0000000},
-	ASLT:    {Optype: R, Opcode: 0b0110011, Funct3: 0b010, Funct7: 0b0000000},
-	ASLTU:   {Optype: R, Opcode: 0b0110011, Funct3: 0b011, Funct7: 0b0000000},
-	AXOR:    {Optype: R, Opcode: 0b0110011, Funct3: 0b100, Funct7: 0b0000000},
-	ASRL:    {Optype: R, Opcode: 0b0110011, Funct3: 0b101, Funct7: 0b0000000},
-	ASRA:    {Optype: R, Opcode: 0b0110011, Funct3: 0b101, Funct7: 0b0100000},
-	AOR:     {Optype: R, Opcode: 0b0110011, Funct3: 0b110, Funct7: 0b0000000},
-	AAND:    {Optype: R, Opcode: 0b0110011, Funct3: 0b111, Funct7: 0b0000000},
-	AFENCE:  {Optype: I, Opcode: 0b0001111, Funct3: 0b000},
-	AECALL:  {Optype: I, Opcode: 0b1110011, Rs2: 0, Funct7: 0}, // imm[11:0] = 0b000000000000
-	AEBREAK: {Optype: I, Opcode: 0b1110011, Rs2: 1, Funct7: 0}, // imm[11:0] = 0b000000000001
+	ALUI:    {Opcode: OpBase_LUI},
+	AAUIPC:  {Opcode: OpBase_AUIPC},
+	AJAL:    {Opcode: OpBase_JAL},
+	AJALR:   {Opcode: OpBase_JALR, Funct3: 0b000},
+	ABEQ:    {Opcode: OpBase_BRANCH, Funct3: 0b000},
+	ABNE:    {Opcode: OpBase_BRANCH, Funct3: 0b001},
+	ABLT:    {Opcode: OpBase_BRANCH, Funct3: 0b100},
+	ABGE:    {Opcode: OpBase_BRANCH, Funct3: 0b101},
+	ABLTU:   {Opcode: OpBase_BRANCH, Funct3: 0b110},
+	ABGEU:   {Opcode: OpBase_BRANCH, Funct3: 0b111},
+	ALB:     {Opcode: OpBase_LOAD, Funct3: 0b000},
+	ALH:     {Opcode: OpBase_LOAD, Funct3: 0b001},
+	ALW:     {Opcode: OpBase_LOAD, Funct3: 0b010},
+	ALBU:    {Opcode: OpBase_LOAD, Funct3: 0b100},
+	ALHU:    {Opcode: OpBase_LOAD, Funct3: 0b101},
+	ASB:     {Opcode: OpBase_STORE, Funct3: 0b000},
+	ASH:     {Opcode: OpBase_STORE, Funct3: 0b001},
+	ASW:     {Opcode: OpBase_STORE, Funct3: 0b010},
+	AADDI:   {Opcode: OpBase_OP_IMM, Funct3: 0b000},
+	ASLTI:   {Opcode: OpBase_OP_IMM, Funct3: 0b010},
+	ASLTIU:  {Opcode: OpBase_OP_IMM, Funct3: 0b011},
+	AXORI:   {Opcode: OpBase_OP_IMM, Funct3: 0b100},
+	AORI:    {Opcode: OpBase_OP_IMM, Funct3: 0b110},
+	AANDI:   {Opcode: OpBase_OP_IMM, Funct3: 0b111},
+	ASLLI:   {Opcode: OpBase_OP_IMM, Funct3: 0b001, Funct7: 0b0000000},
+	ASRLI:   {Opcode: OpBase_OP_IMM, Funct3: 0b101, Funct7: 0b0000000},
+	ASRAI:   {Opcode: OpBase_OP_IMM, Funct3: 0b101, Funct7: 0b0100000},
+	AADD:    {Opcode: OpBase_OP, Funct3: 0b000, Funct7: 0b0000000},
+	ASUB:    {Opcode: OpBase_OP, Funct3: 0b000, Funct7: 0b0100000},
+	ASLL:    {Opcode: OpBase_OP, Funct3: 0b001, Funct7: 0b0000000},
+	ASLT:    {Opcode: OpBase_OP, Funct3: 0b010, Funct7: 0b0000000},
+	ASLTU:   {Opcode: OpBase_OP, Funct3: 0b011, Funct7: 0b0000000},
+	AXOR:    {Opcode: OpBase_OP, Funct3: 0b100, Funct7: 0b0000000},
+	ASRL:    {Opcode: OpBase_OP, Funct3: 0b101, Funct7: 0b0000000},
+	ASRA:    {Opcode: OpBase_OP, Funct3: 0b101, Funct7: 0b0100000},
+	AOR:     {Opcode: OpBase_OP, Funct3: 0b110, Funct7: 0b0000000},
+	AAND:    {Opcode: OpBase_OP, Funct3: 0b111, Funct7: 0b0000000},
+	AFENCE:  {Opcode: OpBase_MISC_MEN, Funct3: 0b000},
+	AECALL:  {Opcode: OpBase_SYSTEM, Rs2: 0, Funct7: 0}, // imm[11:0] = 0b000000000000
+	AEBREAK: {Opcode: OpBase_SYSTEM, Rs2: 1, Funct7: 0}, // imm[11:0] = 0b000000000001
 
 	// RV64I Base Instruction Set (in addition to RV32I)
 
-	ALWU:   {Optype: I, Opcode: 0b0000011, Funct3: 0b110},
-	ALD:    {Optype: I, Opcode: 0b0000011, Funct3: 0b011},
-	ASD:    {Optype: S, Opcode: 0b0100011},
-	AADDIW: {Optype: I, Opcode: 0b0011011, Funct3: 0b000},
-	ASLLIW: {Optype: R, Opcode: 0b0011011, Funct3: 0b001, Funct7: 0b0000000},
-	ASRLIW: {Optype: R, Opcode: 0b0011011, Funct3: 0b101, Funct7: 0b0000000},
-	ASRAIW: {Optype: R, Opcode: 0b0011011, Funct3: 0b101, Funct7: 0b0100000},
-	AADDW:  {Optype: R, Opcode: 0b0111011, Funct3: 0b000, Funct7: 0b0000000},
-	ASUBW:  {Optype: R, Opcode: 0b0111011, Funct3: 0b000, Funct7: 0b0100000},
-	ASLLW:  {Optype: R, Opcode: 0b0111011, Funct3: 0b001, Funct7: 0b0000000},
-	ASRLW:  {Optype: R, Opcode: 0b0111011, Funct3: 0b101, Funct7: 0b0000000},
-	ASRAW:  {Optype: R, Opcode: 0b0111011, Funct3: 0b101, Funct7: 0b0100000},
+	ALWU:   {Opcode: OpBase_LOAD, Funct3: 0b110},
+	ALD:    {Opcode: OpBase_LOAD, Funct3: 0b011},
+	ASD:    {Opcode: OpBase_STORE},
+	AADDIW: {Opcode: OpBase_OP_IMM_32, Funct3: 0b000},
+	ASLLIW: {Opcode: OpBase_OP_IMM_32, Funct3: 0b001, Funct7: 0b0000000},
+	ASRLIW: {Opcode: OpBase_OP_IMM_32, Funct3: 0b101, Funct7: 0b0000000},
+	ASRAIW: {Opcode: OpBase_OP_IMM_32, Funct3: 0b101, Funct7: 0b0100000},
+	AADDW:  {Opcode: OpBase_OP_32, Funct3: 0b000, Funct7: 0b0000000},
+	ASUBW:  {Opcode: OpBase_OP_32, Funct3: 0b000, Funct7: 0b0100000},
+	ASLLW:  {Opcode: OpBase_OP_32, Funct3: 0b001, Funct7: 0b0000000},
+	ASRLW:  {Opcode: OpBase_OP_32, Funct3: 0b101, Funct7: 0b0000000},
+	ASRAW:  {Opcode: OpBase_OP_32, Funct3: 0b101, Funct7: 0b0100000},
 
 	// RV32/RV64 Zicsr Standard Extension
 
-	ACSRRW:  {Optype: I, Opcode: 0b1110011, Funct3: 0b001},
-	ACSRRS:  {Optype: I, Opcode: 0b1110011, Funct3: 0b010},
-	ACSRRC:  {Optype: I, Opcode: 0b1110011, Funct3: 0b011},
-	ACSRRWI: {Optype: I, Opcode: 0b1110011, Funct3: 0b101},
-	ACSRRSI: {Optype: I, Opcode: 0b1110011, Funct3: 0b110},
-	ACSRRCI: {Optype: I, Opcode: 0b1110011, Funct3: 0b111},
+	ACSRRW:  {Opcode: OpBase_SYSTEM, Funct3: 0b001},
+	ACSRRS:  {Opcode: OpBase_SYSTEM, Funct3: 0b010},
+	ACSRRC:  {Opcode: OpBase_SYSTEM, Funct3: 0b011},
+	ACSRRWI: {Opcode: OpBase_SYSTEM, Funct3: 0b101},
+	ACSRRSI: {Opcode: OpBase_SYSTEM, Funct3: 0b110},
+	ACSRRCI: {Opcode: OpBase_SYSTEM, Funct3: 0b111},
 
 	// RV32M Standard Extension
 
-	AMUL:    {Optype: R, Opcode: 0b0110011, Funct3: 0b000, Funct7: 0b0000001},
-	AMULH:   {Optype: R, Opcode: 0b0110011, Funct3: 0b001, Funct7: 0b0000001},
-	AMULHSU: {Optype: R, Opcode: 0b0110011, Funct3: 0b010, Funct7: 0b0000001},
-	AMULHU:  {Optype: R, Opcode: 0b0110011, Funct3: 0b011, Funct7: 0b0000001},
-	ADIV:    {Optype: R, Opcode: 0b0110011, Funct3: 0b100, Funct7: 0b0000001},
-	ADIVU:   {Optype: R, Opcode: 0b0110011, Funct3: 0b101, Funct7: 0b0000001},
-	AREM:    {Optype: R, Opcode: 0b0110011, Funct3: 0b110, Funct7: 0b0000001},
-	AREMU:   {Optype: R, Opcode: 0b0110011, Funct3: 0b111, Funct7: 0b0000001},
+	AMUL:    {Opcode: OpBase_OP, Funct3: 0b000, Funct7: 0b0000001},
+	AMULH:   {Opcode: OpBase_OP, Funct3: 0b001, Funct7: 0b0000001},
+	AMULHSU: {Opcode: OpBase_OP, Funct3: 0b010, Funct7: 0b0000001},
+	AMULHU:  {Opcode: OpBase_OP, Funct3: 0b011, Funct7: 0b0000001},
+	ADIV:    {Opcode: OpBase_OP, Funct3: 0b100, Funct7: 0b0000001},
+	ADIVU:   {Opcode: OpBase_OP, Funct3: 0b101, Funct7: 0b0000001},
+	AREM:    {Opcode: OpBase_OP, Funct3: 0b110, Funct7: 0b0000001},
+	AREMU:   {Opcode: OpBase_OP, Funct3: 0b111, Funct7: 0b0000001},
 
 	// RV64M Standard Extension (in addition to RV32M)
 
-	AMULW:  {Optype: R, Opcode: 0b0111011, Funct3: 0b000, Funct7: 0b0000001},
-	ADIVW:  {Optype: R, Opcode: 0b0111011, Funct3: 0b100, Funct7: 0b0000001},
-	ADIVUW: {Optype: R, Opcode: 0b0111011, Funct3: 0b101, Funct7: 0b0000001},
-	AREMW:  {Optype: R, Opcode: 0b0111011, Funct3: 0b110, Funct7: 0b0000001},
-	AREMUW: {Optype: R, Opcode: 0b0111011, Funct3: 0b111, Funct7: 0b0000001},
+	AMULW:  {Opcode: OpBase_OP_32, Funct3: 0b000, Funct7: 0b0000001},
+	ADIVW:  {Opcode: OpBase_OP_32, Funct3: 0b100, Funct7: 0b0000001},
+	ADIVUW: {Opcode: OpBase_OP_32, Funct3: 0b101, Funct7: 0b0000001},
+	AREMW:  {Opcode: OpBase_OP_32, Funct3: 0b110, Funct7: 0b0000001},
+	AREMUW: {Opcode: OpBase_OP_32, Funct3: 0b111, Funct7: 0b0000001},
 
 	// TODO: RV32F Standard Extension
 
