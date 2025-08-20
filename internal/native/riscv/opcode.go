@@ -35,19 +35,6 @@ package riscv
 // +--------+ +--------------------+ +---------------------------+---------+------------------------------+---------+
 //
 
-// 指令格式类型
-type OpFormatType int
-
-const (
-	_ OpFormatType = iota
-	R
-	I
-	S
-	B
-	U
-	J
-)
-
 // Base opecode map (inst[0:1] = 11)
 // +-----------+--------+----------+----------+----------+--------+----------+----------------+---------+
 // | inst[2:4] | 000    | 001      | 010      | 011      | 100    | 101      | 110            | 111     |
@@ -101,49 +88,8 @@ const (
 	OpBase_Mask OpcodeType = 0b_11_111_11
 )
 
-// 指令的编码格式
-func (opcode OpcodeType) FormatType() OpFormatType {
-	switch opcode & OpBase_Mask {
-	case OpBase_OP,
-		OpBase_OP_32,
-		OpBase_OP_FP,
-		OpBase_MADD,
-		OpBase_MSUB,
-		OpBase_NMSUB,
-		OpBase_NMADD:
-		return R
-	case OpBase_OP_IMM,
-		OpBase_OP_IMM_32,
-		OpBase_JALR,
-		OpBase_LOAD,
-		OpBase_LOAD_FP,
-		OpBase_MISC_MEN,
-		OpBase_SYSTEM:
-		return I
-	case OpBase_STORE,
-		OpBase_STORE_FP,
-		OpBase_AMO:
-		return S
-	case OpBase_BRANCH:
-		return B
-	case OpBase_LUI,
-		OpBase_AUIPC:
-		return U
-	case OpBase_JAL:
-		return J
-
-	case OpBase_CUSTOM_0,
-		OpBase_CUSTOM_1,
-		OpBase_CUSTOM_2,
-		OpBase_CUSTOM_3:
-		return 0
-
-	default:
-		return 0
-	}
-}
-
-type OptabType struct {
+// 操作码上下文信息
+type OpContextType struct {
 	Opcode OpcodeType
 	Funct3 uint32
 	Rs1    uint32
@@ -154,7 +100,7 @@ type OptabType struct {
 
 // 指令编码信息表
 // https://riscv.github.io/riscv-isa-manual/snapshot/unprivileged/#rv32-64g
-var AOpTab = []OptabType{
+var AOpContextTable = []OpContextType{
 	// RV32I Base Instruction Set
 
 	ALUI:    {Opcode: OpBase_LUI},
