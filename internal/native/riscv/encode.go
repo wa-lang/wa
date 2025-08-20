@@ -7,11 +7,11 @@ import "fmt"
 
 // 指令参数
 type AsArgument struct {
-	Rd  uint32 // 目标寄存器
-	Rs1 uint32 // 原寄存器1
-	Rs2 uint32 // 原寄存器2
-	Rs3 uint32 // 原寄存器3
-	Imm int32  // 立即数
+	Rd  RegType // 目标寄存器
+	Rs1 RegType // 原寄存器1
+	Rs2 RegType // 原寄存器2
+	Rs3 RegType // 原寄存器3
+	Imm int32   // 立即数
 }
 
 // 编码指令
@@ -21,121 +21,98 @@ func (as As) Encode(arg *AsArgument) (uint32, error) {
 }
 
 func (ctx *OpContextType) encode(as As, arg *AsArgument) (uint32, error) {
-	switch ctx.Opcode & OpBase_Mask {
-	case OpBase_LOAD:
-		// imm[11:0], rs1, funct3, rd, opcode
-		if arg.Imm < -2048 || arg.Imm > 2047 {
-			return 0, fmt.Errorf("imm out of range for LOAD: %d", arg.Imm)
-		}
-		return ctx.encodeI(arg.Rd, arg.Rs1, arg.Imm), nil
-
-	case OpBase_LOAD_FP:
-		// imm[11:0] | rs1 | funct3 | rd | opcode
-		imm := uint32(ctx.maskImm(arg.Imm, 12))
-		return (imm << 20) | (arg.Rs1 << 15) | (ctx.Funct3 << 12) | (arg.Rd << 7) | 0x07, nil
-
-	case OpBase_CUSTOM_0:
-		return 0, fmt.Errorf("riscv.Encode(%v): unsupport", as)
-
-	case OpBase_MISC_MEN:
-		// imm[11:0] | rs1=0 | funct3 | rd=0 | opcode
-		imm := uint32(ctx.maskImm(arg.Imm, 12))
-		return (imm << 20) | (ctx.Funct3 << 12) | 0x0F, nil
-
-	case OpBase_OP_IMM:
-		imm := uint32(ctx.maskImm(arg.Imm, 12))
-		return (imm << 20) | (arg.Rs1 << 15) | (ctx.Funct3 << 12) | (arg.Rd << 7) | 0x13, nil
-
-	case OpBase_AUIPC:
-		imm := uint32(ctx.maskImm(arg.Imm, 20)) // 高 20 位立即数
-		return (imm << 12) | (arg.Rd << 7) | 0x17, nil
-
-	case OpBase_OP_IMM_32:
-		imm := uint32(ctx.maskImm(arg.Imm, 12))
-		return (imm << 20) | (arg.Rs1 << 15) | (ctx.Funct3 << 12) | (arg.Rd << 7) | 0x1B, nil
-
-	case OpBase_STORE:
-		if arg.Imm < -2048 || arg.Imm > 2047 {
-			return 0, fmt.Errorf("imm out of range for STORE: %d", arg.Imm)
-		}
-		return ctx.encodeS(arg.Rs1, arg.Rs2, arg.Imm), nil
-
-	case OpBase_STORE_FP:
-		return ctx.encodeS(arg.Rs1, arg.Rs2, ctx.maskImm(arg.Imm, 12)), nil
-
-	case OpBase_CUSTOM_1:
-		return 0, fmt.Errorf("riscv.Encode(%v): unsupport", as)
-
-	case OpBase_AMO:
-		return ctx.encodeR(arg.Rd, arg.Rs1, arg.Rs2), nil
-
-	case OpBase_OP:
-		return ctx.encodeR(arg.Rd, arg.Rs1, arg.Rs2), nil
-
-	case OpBase_LUI:
-		return ctx.encodeU(arg.Rd, arg.Imm), nil
-
-	case OpBase_OP_32:
-		return ctx.encodeR(arg.Rd, arg.Rs1, arg.Rs2), nil
-
-	case OpBase_MADD:
-		return ctx.encodeR4(arg.Rd, arg.Rs1, arg.Rs2, arg.Rs3), nil
-
-	case OpBase_MSUB:
-		return ctx.encodeR4(arg.Rd, arg.Rs1, arg.Rs2, arg.Rs3), nil
-
-	case OpBase_NMSUB:
-		return ctx.encodeR4(arg.Rd, arg.Rs1, arg.Rs2, arg.Rs3), nil
-
-	case OpBase_NMADD:
-		return ctx.encodeR4(arg.Rd, arg.Rs1, arg.Rs2, arg.Rs3), nil
-
-	case OpBase_OP_FP:
-		return ctx.encodeR(arg.Rd, arg.Rs1, arg.Rs2), nil
-
-	case OpBase_CUSTOM_2:
-		return 0, fmt.Errorf("riscv.Encode(%v): unsupport", as)
-
-	case OpBase_BRANCH:
-		if arg.Imm%2 != 0 {
-			return 0, fmt.Errorf("branch imm must be 2-byte aligned")
-		}
-		if arg.Imm < -4096 || arg.Imm > 4094 {
-			return 0, fmt.Errorf("imm out of range for BRANCH: %d", arg.Imm)
-		}
-		return ctx.encodeB(arg.Rs1, arg.Rs2, arg.Imm), nil
-
-	case OpBase_JALR:
-		// imm[11:0] + rs1 + funct3 + rd + opcode
-		imm := ctx.maskImm(arg.Imm, 12)
-		ins := ctx.encodeI(arg.Rd, arg.Rs1, imm)
-		return ins, nil
-
-	case OpBase_JAL:
-		if arg.Imm%2 != 0 {
-			return 0, fmt.Errorf("jal imm must be 2-byte aligned")
-		}
-		return ctx.encodeJ(arg.Rd, arg.Imm), nil
-
-	case OpBase_SYSTEM:
-		// SYSTEM 有两类情况：ECALL/EBREAK 和 CSR指令
-		switch as {
-		case AECALL: // ECALL = imm=0, rs1=0, rd=0, funct3=0
-			return ctx.encodeI(0, 0, 0), nil
-		case AEBREAK: // EBREAK = imm=1, rs1=0, rd=0, funct3=0
-			return ctx.encodeI(0, 0, 1), nil
+	switch ctx.Opcode.FormatType() {
+	case R:
+		switch ctx.Opcode & OpBase_Mask {
+		case OpBase_OP:
+			return ctx.encodeR(ctx.regI(arg.Rd), ctx.regI(arg.Rs1), ctx.regI(arg.Rs2)), nil
+		case OpBase_OP_32:
+			return ctx.encodeR(ctx.regI(arg.Rd), ctx.regI(arg.Rs1), ctx.regI(arg.Rs2)), nil
+		case OpBase_OP_FP:
+			return ctx.encodeR(ctx.regF(arg.Rd), ctx.regF(arg.Rs1), ctx.regF(arg.Rs2)), nil
+		case OpBase_AMO:
+			return ctx.encodeR(ctx.regI(arg.Rd), ctx.regI(arg.Rs1), ctx.regI(arg.Rs2)), nil
 		default:
-			// CSR 指令：imm = CSR 地址
-			imm := ctx.maskImm(arg.Imm, 12)
-			ins := ctx.encodeI(arg.Rd, arg.Rs1, imm)
-			return ins, nil
+			panic("unreachable")
+		}
+	case R4:
+		switch ctx.Opcode & OpBase_Mask {
+		case OpBase_MADD:
+			return ctx.encodeR4(ctx.regI(arg.Rd), ctx.regI(arg.Rs1), ctx.regI(arg.Rs2), ctx.regI(arg.Rs3)), nil
+		case OpBase_MSUB:
+			return ctx.encodeR4(ctx.regI(arg.Rd), ctx.regI(arg.Rs1), ctx.regI(arg.Rs2), ctx.regI(arg.Rs3)), nil
+		case OpBase_NMSUB:
+			return ctx.encodeR4(ctx.regI(arg.Rd), ctx.regI(arg.Rs1), ctx.regI(arg.Rs2), ctx.regI(arg.Rs3)), nil
+		case OpBase_NMADD:
+			return ctx.encodeR4(ctx.regI(arg.Rd), ctx.regI(arg.Rs1), ctx.regI(arg.Rs2), ctx.regI(arg.Rs3)), nil
+		default:
+			panic("unreachable")
 		}
 
-	case OpBase_CUSTOM_3:
-		return 0, fmt.Errorf("riscv.Encode(%v): unsupport", as)
+	case I:
+		switch ctx.Opcode & OpBase_Mask {
+		case OpBase_OP_IMM:
+			return ctx.encodeI(ctx.regI(arg.Rd), ctx.regI(arg.Rs1), ctx.maskImm(arg.Imm, 12)), nil
+		case OpBase_OP_IMM_32:
+			return ctx.encodeI(ctx.regI(arg.Rd), ctx.regI(arg.Rs1), ctx.maskImm(arg.Imm, 12)), nil
+		case OpBase_JALR:
+			return ctx.encodeI(ctx.regI(arg.Rd), ctx.regI(arg.Rs1), ctx.maskImm(arg.Imm, 12)), nil
+		case OpBase_LOAD:
+			return ctx.encodeI(ctx.regI(arg.Rd), ctx.regI(arg.Rs1), ctx.maskImm(arg.Imm, 12)), nil
+		case OpBase_LOAD_FP:
+			return ctx.encodeI(ctx.regI(arg.Rd), ctx.regI(arg.Rs1), ctx.maskImm(arg.Imm, 12)), nil
+		case OpBase_MISC_MEN:
+			return ctx.encodeI(ctx.regI(arg.Rd), ctx.regI(arg.Rs1), ctx.maskImm(arg.Imm, 12)), nil
+		case OpBase_SYSTEM:
+			// SYSTEM 有两类情况：ECALL/EBREAK 和 CSR指令
+			switch as {
+			case AECALL: // ECALL = imm=0, rs1=0, rd=0, funct3=0
+				return ctx.encodeI(0, 0, 0), nil
+			case AEBREAK: // EBREAK = imm=1, rs1=0, rd=0, funct3=0
+				return ctx.encodeI(0, 0, 1), nil
+			default:
+				return ctx.encodeI(ctx.regI(arg.Rd), ctx.regI(arg.Rs1), ctx.maskImm(arg.Imm, 12)), nil
+			}
+		default:
+			panic("unreachable")
+		}
+	case S:
+		switch ctx.Opcode & OpBase_Mask {
+		case OpBase_STORE:
+			return ctx.encodeS(ctx.regI(arg.Rs1), ctx.regI(arg.Rs2), ctx.rangeImm(arg.Imm, -2048, 2047)), nil
+		case OpBase_STORE_FP:
+			return ctx.encodeS(ctx.regF(arg.Rs1), ctx.regF(arg.Rs2), ctx.rangeImm(arg.Imm, -2048, 2047)), nil
+		default:
+			panic("unreachable")
+		}
+	case B:
+		switch ctx.Opcode & OpBase_Mask {
+		case OpBase_BRANCH:
+			imm := ctx.alignImm(arg.Imm, 2)
+			imm = ctx.rangeImm(imm, -4096, 4095)
+			return ctx.encodeB(ctx.regI(arg.Rs1), ctx.regI(arg.Rs2), imm), nil
+		default:
+			panic("unreachable")
+		}
+	case U:
+		switch ctx.Opcode & OpBase_Mask {
+		case OpBase_LUI:
+			return ctx.encodeU(ctx.regI(arg.Rd), arg.Imm), nil
+		case OpBase_AUIPC:
+			return ctx.encodeU(ctx.regI(arg.Rd), ctx.maskImm(arg.Imm, 20)), nil
+		default:
+			panic("unreachable")
+		}
+	case J:
+		switch ctx.Opcode & OpBase_Mask {
+		case OpBase_JAL:
+			return ctx.encodeJ(ctx.regI(arg.Rd), ctx.alignImm(arg.Imm, 2)), nil
+		default:
+			panic("unreachable")
+		}
 
 	default:
-		return 0, fmt.Errorf("riscv.Encode(%v): unsupport", as)
+		return 0, fmt.Errorf("riscv.Encode(%v): no implement", as)
 	}
 }
 
@@ -144,7 +121,7 @@ func (ctx *OpContextType) encodeR(rd, rs1, rs2 uint32) uint32 {
 	return ctx.Funct7<<25 | rs2<<20 | rs1<<15 | ctx.Funct3<<12 | rd<<7 | uint32(ctx.Opcode)
 }
 
-// R4-type (浮点四寄存器, MADD/MSUB/NMSUB/NMADD)
+// R4-type
 func (ctx *OpContextType) encodeR4(rd, rs1, rs2, rs3 uint32) uint32 {
 	return (rs3 << 27) |
 		(ctx.Funct7 << 25) |
@@ -189,8 +166,42 @@ func (ctx *OpContextType) encodeJ(rd uint32, imm int32) uint32 {
 		rd<<7 | uint32(ctx.Opcode)
 }
 
-// maskImm 立即数掩码
+// 立即数取低N个bit
 func (ctx *OpContextType) maskImm(imm int32, bits int) int32 {
 	mask := int32(1<<bits - 1)
 	return int32(imm & mask)
+}
+
+// 立即数掩码校验范围
+func (ctx *OpContextType) rangeImm(imm int32, min, max int32) int32 {
+	if imm < min || imm > max {
+		panic(fmt.Sprintf("imm out of range, want %d <= %d <= %d", min, imm, max))
+	}
+	return imm
+}
+
+// 立即数必须是n字节对齐
+func (ctx *OpContextType) alignImm(imm int32, n int32) int32 {
+	if (imm % n) != 0 {
+		panic(fmt.Sprintf("imm must be 2-byte aligned, want %d%%%d == 0", imm, n))
+	}
+	return imm
+}
+
+// 返回寄存器机器码编号
+func (ctx *OpContextType) regI(r RegType) uint32 {
+	return ctx.regVal(r, REG_X0, REG_X31)
+}
+
+// 返回浮点数寄存器机器码编号
+func (ctx *OpContextType) regF(r RegType) uint32 {
+	return ctx.regVal(r, REG_F0, REG_F31)
+}
+
+// 返回寄存器机器码编号
+func (ctx *OpContextType) regVal(r, min, max RegType) uint32 {
+	if r < min || r > max {
+		panic(fmt.Sprintf("register out of range, want %d <= %d <= %d", min, r, max))
+	}
+	return uint32(r - min)
 }
