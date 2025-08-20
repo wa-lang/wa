@@ -97,11 +97,13 @@ const (
 	OpBase_SYSTEM   OpcodeType = 0b_11_100_11
 	_               OpcodeType = 0b_11_101_11
 	OpBase_CUSTOM_3 OpcodeType = 0b_11_110_11
+
+	OpBase_Mask OpcodeType = 0b_11_111_11
 )
 
 // 指令的编码格式
 func (opcode OpcodeType) FormatType() OpFormatType {
-	switch opcode & 0b_11_111_11 {
+	switch opcode & OpBase_Mask {
 	case OpBase_OP,
 		OpBase_OP_32,
 		OpBase_OP_FP,
