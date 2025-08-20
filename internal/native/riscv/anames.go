@@ -6,187 +6,209 @@ package riscv
 // 指令的名字
 // 保持和指令定义相同的顺序
 var Anames = []string{
+	// 各平台通用的伪指令
+	AXXX:   "XXX",
+	AGLOBL: "GLOBL",
+	ADATA:  "DATA",
+	ATEXT:  "TEXT",
+	ACALL:  "CALL",
+	ARET:   "RET",
+	AJMP:   "JMP",
+	ANOP:   "NOP",
+
+	//
+	// Unprivileged ISA (version 20240411)
+	//
+
 	// 2.4: Integer Computational Instructions (RV32I)
-	"ADDI",
-	"SLTI",
-	"SLTIU",
-	"ANDI",
-	"ORI",
-	"XORI",
-	"SLLI",
-	"SRLI",
-	"SRAI",
-	"LUI",
-	"AUIPC",
-	"ADD",
-	"SLT",
-	"SLTU",
-	"AND",
-	"OR",
-	"XOR",
-	"SLL",
-	"SRL",
-	"SUB",
-	"SRA",
+	AADDI:  "ADDI",
+	ASLTI:  "SLTI",
+	ASLTIU: "SLTIU",
+	AANDI:  "ANDI",
+	AORI:   "ORI",
+	AXORI:  "XORI",
+	ASLLI:  "SLLI",
+	ASRLI:  "SRLI",
+	ASRAI:  "SRAI",
+	ALUI:   "LUI",
+	AAUIPC: "AUIPC",
+	AADD:   "ADD",
+	ASLT:   "SLT",
+	ASLTU:  "SLTU",
+	AAND:   "AND",
+	AOR:    "OR",
+	AXOR:   "XOR",
+	ASLL:   "SLL",
+	ASRL:   "SRL",
+	ASUB:   "SUB",
+	ASRA:   "SRA",
 
 	// 2.5: Control Transfer Instructions (RV32I)
-	"JAL",
-	"JALR",
-	"BEQ",
-	"BNE",
-	"BLT",
-	"BLTU",
-	"BGE",
-	"BGEU",
+	AJAL:  "JAL",
+	AJALR: "JALR",
+	ABEQ:  "BEQ",
+	ABNE:  "BNE",
+	ABLT:  "BLT",
+	ABLTU: "BLTU",
+	ABGE:  "BGE",
+	ABGEU: "BGEU",
 
 	// 2.6: Load and Store Instructions (RV32I)
-	"LW",
-	"LH",
-	"LHU",
-	"LB",
-	"LBU",
-	"SW",
-	"SH",
-	"SB",
+	ALW:  "LW",
+	ALH:  "LH",
+	ALHU: "LHU",
+	ALB:  "LB",
+	ALBU: "LBU",
+	ASW:  "SW",
+	ASH:  "SH",
+	ASB:  "SB",
 
-	// 2.8: Environment Call and Breakpoint (RV32I)
-	"ECALL",
-	"EBREAK",
+	// 2.7: Memory Ordering Instructions (RV32I)
+	AFENCE: "FENCE",
 
-	// 3: Instruction-Fetch Fence (RV32I)
-	"FENCE",
+	// 4.2: Integer Computational Instructions (RV64I)
+	AADDIW: "ADDIW",
+	ASLLIW: "SLLIW",
+	ASRLIW: "SRLIW",
+	ASRAIW: "SRAIW",
+	AADDW:  "ADDW",
+	ASLLW:  "SLLW",
+	ASRLW:  "SRLW",
+	ASUBW:  "SUBW",
+	ASRAW:  "SRAW",
 
-	// 5.2: Integer Computational Instructions (RV64I)
-	"ADDIW",
-	"SLLIW",
-	"SRLIW",
-	"SRAIW",
-	"ADDW",
-	"SLLW",
-	"SRLW",
-	"SUBW",
-	"SRAW",
+	// 4.3: Load and Store Instructions (RV64I)
+	ALWU: "LWU",
+	ALD:  "LD",
+	ASD:  "SD",
 
-	// 5.3: Load and Store Instructions (RV64I)
-	"LWU",
-	"LD",
-	"SD",
+	// 7.1: CSR Instructions (Zicsr)
+	ACSRRW:  "CSRRW",
+	ACSRRS:  "CSRRS",
+	ACSRRC:  "CSRRC",
+	ACSRRWI: "CSRRWI",
+	ACSRRSI: "CSRRSI",
+	ACSRRCI: "CSRRCI",
 
-	// 7.1: Multiplication Operations (RV32M/RV64M)
-	"MUL",
-	"MULH",
-	"MULHU",
-	"MULHSU",
-	"MULW", // RV64M
-	"DIV",
-	"DIVU",
-	"REM",
-	"REMU",
-	"DIVW",  // RV64M
-	"DIVUW", // RV64M
-	"REMW",  // RV64M
-	"REMUW", // RV64M
+	// 13.1: Multiplication Operations (RV32M/RV64M)
+	AMUL:    "MUL",
+	AMULH:   "MULH",
+	AMULHU:  "MULHU",
+	AMULHSU: "MULHSU",
+	AMULW:   "MULW", // RV64M
 
-	// 9.1: CSR Instructions (Zicsr)
-	"CSRRW",
-	"CSRRS",
-	"CSRRC",
-	"CSRRWI",
-	"CSRRSI",
-	"CSRRCI",
+	// 13.2: Division Operations (RV32M/RV64M)
+	ADIV:   "DIV",
+	ADIVU:  "DIVU",
+	AREM:   "REM",
+	AREMU:  "REMU",
+	ADIVW:  "DIVW",  // RV64M
+	ADIVUW: "DIVUW", // RV64M
+	AREMW:  "REMW",  // RV64M
+	AREMUW: "REMUW", // RV64M
 
-	// 11.2: Floating-Point Control and Status Register (F)
-	"FRCSR",
-	"FSCSR",
-	"FRRM",
-	"FSRM",
-	"FRFLAGS",
-	"FSFLAGS",
+	// 20.5: Single-Precision Load and Store Instructions (F)
+	AFLW: "FLW",
+	AFSW: "FSW",
 
-	// 11.5: Single-Precision Load and Store Instructions (F)
-	"FLW",
-	"FSW",
+	// 20.6: Single-Precision Floating-Point Computational Instructions
+	AFADDS:   "FADDS",
+	AFSUBS:   "FSUBS",
+	AFMULS:   "FMULS",
+	AFDIVS:   "FDIVS",
+	AFSQRTS:  "FSQRTS",
+	AFMINS:   "FMINS",
+	AFMAXS:   "FMAXS",
+	AFMADDS:  "FMADDS",
+	AFMSUBS:  "FMSUBS",
+	AFNMADDS: "FNMADDS",
+	AFNMSUBS: "FNMSUBS",
 
-	// 11.6: Single-Precision Floating-Point Computational Instructions
-	"FADDS",
-	"FSUBS",
-	"FMULS",
-	"FDIVS",
-	"FSQRTS",
-	"FMINS",
-	"FMAXS",
-	"FMADDS",
-	"FMSUBS",
-	"FNMADDS",
-	"FNMSUBS",
+	// 20.7: Single-Precision Floating-Point Conversion and Move Instructions
+	AFCVTWS:  "FCVTWS",
+	AFCVTLS:  "FCVTLS",
+	AFCVTSW:  "FCVTSW",
+	AFCVTSL:  "FCVTSL",
+	AFCVTWUS: "FCVTWUS",
+	AFCVTLUS: "FCVTLUS",
+	AFCVTSWU: "FCVTSWU",
+	AFCVTSLU: "FCVTSLU",
+	AFSGNJS:  "FSGNJS",
+	AFSGNJNS: "FSGNJNS",
+	AFSGNJXS: "FSGNJXS",
+	AFMVXS:   "FMVXS",
+	AFMVSX:   "FMVSX",
+	AFMVXW:   "FMVXW",
+	AFMVWX:   "FMVWX",
 
-	// 11.7: Single-Precision Floating-Point Conversion and Move Instructions
-	"FCVTWS",
-	"FCVTLS",
-	"FCVTSW",
-	"FCVTSL",
-	"FCVTWUS",
-	"FCVTLUS",
-	"FCVTSWU",
-	"FCVTSLU",
-	"FSGNJS",
-	"FSGNJNS",
-	"FSGNJXS",
-	"FMVXS",
-	"FMVSX",
-	"FMVXW",
-	"FMVWX",
+	// 20.8: Single-Precision Floating-Point Compare Instructions
+	AFEQS: "FEQS",
+	AFLTS: "FLTS",
+	AFLES: "FLES",
 
-	// 11.8: Single-Precision Floating-Point Compare Instructions
-	"FEQS",
-	"FLTS",
-	"FLES",
+	// 20.9: Single-Precision Floating-Point Classify Instruction
+	AFCLASSS: "FCLASSS",
 
-	// 11.9: Single-Precision Floating-Point Classify Instruction
-	"FCLASSS",
+	// 21.3: Double-Precision Load and Store Instructions (D)
+	AFLD: "FLD",
+	AFSD: "FSD",
 
-	// 12.3: Double-Precision Load and Store Instructions (D)
-	"FLD",
-	"FSD",
+	// 21.4: Double-Precision Floating-Point Computational Instructions
+	AFADDD:   "FADDD",
+	AFSUBD:   "FSUBD",
+	AFMULD:   "FMULD",
+	AFDIVD:   "FDIVD",
+	AFMIND:   "FMIND",
+	AFMAXD:   "FMAXD",
+	AFSQRTD:  "FSQRTD",
+	AFMADDD:  "FMADDD",
+	AFMSUBD:  "FMSUBD",
+	AFNMADDD: "FNMADDD",
+	AFNMSUBD: "FNMSUBD",
 
-	// 12.4: Double-Precision Floating-Point Computational Instructions
-	"FADDD",
-	"FSUBD",
-	"FMULD",
-	"FDIVD",
-	"FMIND",
-	"FMAXD",
-	"FSQRTD",
-	"FMADDD",
-	"FMSUBD",
-	"FNMADDD",
-	"FNMSUBD",
+	// 21.5: Double-Precision Floating-Point Conversion and Move Instructions
+	AFCVTWD:  "FCVTWD",
+	AFCVTLD:  "FCVTLD",
+	AFCVTDW:  "FCVTDW",
+	AFCVTDL:  "FCVTDL",
+	AFCVTWUD: "FCVTWUD",
+	AFCVTLUD: "FCVTLUD",
+	AFCVTDWU: "FCVTDWU",
+	AFCVTDLU: "FCVTDLU",
+	AFCVTSD:  "FCVTSD",
+	AFCVTDS:  "FCVTDS",
+	AFSGNJD:  "FSGNJD",
+	AFSGNJND: "FSGNJND",
+	AFSGNJXD: "FSGNJXD",
+	AFMVXD:   "FMVXD",
+	AFMVDX:   "FMVDX",
 
-	// 12.5: Double-Precision Floating-Point Conversion and Move Instructions
-	"FCVTWD",
-	"FCVTLD",
-	"FCVTDW",
-	"FCVTDL",
-	"FCVTWUD",
-	"FCVTLUD",
-	"FCVTDWU",
-	"FCVTDLU",
-	"FCVTSD",
-	"FCVTDS",
-	"FSGNJD",
-	"FSGNJND",
-	"FSGNJXD",
-	"FMVXD",
-	"FMVDX",
+	// 21.6: Double-Precision Floating-Point Compare Instructions
+	AFEQD: "FEQD",
+	AFLTD: "FLTD",
+	AFLED: "FLED",
 
-	// 12.6: Double-Precision Floating-Point Compare Instructions
-	"FEQD",
-	"FLTD",
-	"FLED",
+	// 21.7: Double-Precision Floating-Point Classify Instruction
+	AFCLASSD: "FCLASSD",
 
-	// 12.7: Double-Precision Floating-Point Classify Instruction
-	"FCLASSD",
+	//
+	// Privileged ISA (version 20240411)
+	//
+
+	// 3.3.1: Environment Call and Breakpoint
+	AECALL:  "ECALL",
+	ASCALL:  "SCALL",
+	AEBREAK: "EBREAK",
+	ASBREAK: "SBREAK",
+
+	// 3.3.2: Trap-Return Instructions
+	AMRET: "MRET",
+	ASRET: "SRET",
+	ADRET: "DRET",
+
+	// 3.3.3: Wait for Interrupt
+	AWFI: "WFI",
 
 	// End marker
-	"LAST",
+	ALAST: "LAST",
 }
