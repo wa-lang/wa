@@ -14,15 +14,33 @@ type AsArgument struct {
 	Imm int32   // 立即数
 }
 
-// 编码指令
-func (as As) Encode(arg *AsArgument) (uint32, error) {
+// 编码RISCV32指令
+func (as As) EncodeRV32(arg *AsArgument) (uint32, error) {
 	ctx := &AOpContextTable[as]
-	return ctx.encode(as, arg)
+	return ctx.encode(32, as, arg)
 }
 
-func (ctx *OpContextType) encode(as As, arg *AsArgument) (uint32, error) {
+// 编码RISCV64指令
+func (as As) EncodeRV64(arg *AsArgument) (uint32, error) {
+	ctx := &AOpContextTable[as]
+	return ctx.encode(64, as, arg)
+}
+
+func (ctx *OpContextType) encode(xlen int, as As, arg *AsArgument) (uint32, error) {
 	switch ctx.Opcode.FormatType() {
 	case R:
+		if ctx.Funct3&0b_111 != 0 {
+			panic(fmt.Sprintf("encodeR: %d is invalid funct3", ctx.Funct3))
+		}
+		if ctx.Funct7&0b_111_1111 != 0 {
+			panic(fmt.Sprintf("encodeR: %d is invalid funct7", ctx.Funct7))
+		}
+		if arg.Rs3 != 0 {
+			panic("encodeR: rs3 was nonzero")
+		}
+		if arg.Imm != 0 {
+			panic("encodeR: imm was nonzero")
+		}
 		switch ctx.Opcode & OpBase_Mask {
 		case OpBase_OP:
 			return ctx.encodeR(ctx.regI(arg.Rd), ctx.regI(arg.Rs1), ctx.regI(arg.Rs2)), nil
@@ -36,77 +54,268 @@ func (ctx *OpContextType) encode(as As, arg *AsArgument) (uint32, error) {
 			panic("unreachable")
 		}
 	case R4:
+		if ctx.Funct3&0b_111 != 0 {
+			panic(fmt.Sprintf("encodeR4: %d is invalid funct3", ctx.Funct3))
+		}
+		if funct2 := ctx.Funct7; funct2&0b_11 != 0 {
+			panic(fmt.Sprintf("encodeR4: %d is invalid funct2", funct2))
+		}
+		if arg.Imm != 0 {
+			panic("encodeR4: imm was nonzero")
+		}
 		switch ctx.Opcode & OpBase_Mask {
 		case OpBase_MADD:
-			return ctx.encodeR4(ctx.regI(arg.Rd), ctx.regI(arg.Rs1), ctx.regI(arg.Rs2), ctx.regI(arg.Rs3)), nil
+			return ctx.encodeR4(ctx.regF(arg.Rd), ctx.regF(arg.Rs1), ctx.regF(arg.Rs2), ctx.regF(arg.Rs3)), nil
 		case OpBase_MSUB:
-			return ctx.encodeR4(ctx.regI(arg.Rd), ctx.regI(arg.Rs1), ctx.regI(arg.Rs2), ctx.regI(arg.Rs3)), nil
+			return ctx.encodeR4(ctx.regF(arg.Rd), ctx.regF(arg.Rs1), ctx.regF(arg.Rs2), ctx.regF(arg.Rs3)), nil
 		case OpBase_NMSUB:
-			return ctx.encodeR4(ctx.regI(arg.Rd), ctx.regI(arg.Rs1), ctx.regI(arg.Rs2), ctx.regI(arg.Rs3)), nil
+			return ctx.encodeR4(ctx.regF(arg.Rd), ctx.regF(arg.Rs1), ctx.regF(arg.Rs2), ctx.regF(arg.Rs3)), nil
 		case OpBase_NMADD:
-			return ctx.encodeR4(ctx.regI(arg.Rd), ctx.regI(arg.Rs1), ctx.regI(arg.Rs2), ctx.regI(arg.Rs3)), nil
+			return ctx.encodeR4(ctx.regF(arg.Rd), ctx.regF(arg.Rs1), ctx.regF(arg.Rs2), ctx.regF(arg.Rs3)), nil
 		default:
 			panic("unreachable")
 		}
 
 	case I:
+		if arg.Rs2 != 0 {
+			panic("encodeI: rs2 was nonzero")
+		}
+		if arg.Rs3 != 0 {
+			panic("encodeI: rs3 was nonzero")
+		}
+		if arg.Rs3 != 0 {
+			panic("encodeI: rs3 was nonzero")
+		}
 		switch ctx.Opcode & OpBase_Mask {
 		case OpBase_OP_IMM:
-			return ctx.encodeI(ctx.regI(arg.Rd), ctx.regI(arg.Rs1), ctx.maskImm(arg.Imm, 12)), nil
-		case OpBase_OP_IMM_32:
-			return ctx.encodeI(ctx.regI(arg.Rd), ctx.regI(arg.Rs1), ctx.maskImm(arg.Imm, 12)), nil
-		case OpBase_JALR:
-			return ctx.encodeI(ctx.regI(arg.Rd), ctx.regI(arg.Rs1), ctx.maskImm(arg.Imm, 12)), nil
-		case OpBase_LOAD:
-			return ctx.encodeI(ctx.regI(arg.Rd), ctx.regI(arg.Rs1), ctx.maskImm(arg.Imm, 12)), nil
-		case OpBase_LOAD_FP:
-			return ctx.encodeI(ctx.regI(arg.Rd), ctx.regI(arg.Rs1), ctx.maskImm(arg.Imm, 12)), nil
-		case OpBase_MISC_MEN:
-			return ctx.encodeI(ctx.regI(arg.Rd), ctx.regI(arg.Rs1), ctx.maskImm(arg.Imm, 12)), nil
-		case OpBase_SYSTEM:
-			// SYSTEM 有两类情况：ECALL/EBREAK 和 CSR指令
 			switch as {
-			case AECALL: // ECALL = imm=0, rs1=0, rd=0, funct3=0
-				return ctx.encodeI(0, 0, 0), nil
-			case AEBREAK: // EBREAK = imm=1, rs1=0, rd=0, funct3=0
-				return ctx.encodeI(0, 0, 1), nil
+			case ASRA, ASRAI, ASRAIW:
+				// 右移符号位
+				if ctx.Funct7 != 0b_100_0000 {
+					panic("encodeI: invalid funct7")
+				}
 			default:
-				return ctx.encodeI(ctx.regI(arg.Rd), ctx.regI(arg.Rs1), ctx.maskImm(arg.Imm, 12)), nil
+				if ctx.Funct7 != 0b_000_0000 {
+					panic("encodeI: invalid funct7")
+				}
+			}
+			switch xlen {
+			case 32:
+				if arg.Imm < 0 || arg.Imm > 0b_1_1111 {
+					panic("encodeI: imm(shamt5bit) overflow")
+				}
+			case 64:
+				if arg.Imm < 0 || arg.Imm > 0b_11_1111 {
+					panic("encodeI: imm(shamt6bit) overflow")
+				}
+			default:
+				panic("encodeI: xlen must be 32 or 64")
+			}
+			// funct7 和 shamt6bit 可能存在 1bit 重叠, 但是已经检查过了
+			return ctx.encodeI(ctx.regI(arg.Rd), ctx.regI(arg.Rs1), ctx.Funct7<<5|uint32(arg.Imm)), nil
+		case OpBase_OP_IMM_32:
+			switch as {
+			case AADDIW:
+				if ctx.Funct7 != 0 {
+					panic("encodeI: funct7 was nonzero")
+				}
+				if arg.Imm < -2048 || arg.Imm > 2047 {
+					panic("encodeI: imm must be in [-2048, 2047]")
+				}
+
+				return ctx.encodeI(ctx.regI(arg.Rd), ctx.regI(arg.Rs1), uint32(arg.Imm)), nil
+
+			case ASRAIW:
+				if ctx.Funct7 != 0b_010_0000 {
+					panic("encodeI: funct7 != 0b_010_0000")
+				}
+				if arg.Imm < 0 || arg.Imm > 0b_1_1111 {
+					panic("encodeI: imm(shamt5bit) overflow")
+				}
+			case ASLLIW, ASRLIW:
+				if arg.Imm < 0 || arg.Imm > 0b_1_1111 {
+					panic("encodeI: imm(shamt5bit) overflow")
+				}
+			default:
+				panic("unreachable")
+			}
+			return ctx.encodeI(ctx.regI(arg.Rd), ctx.regI(arg.Rs1), ctx.Funct7<<5|uint32(arg.Imm)), nil
+		case OpBase_JALR:
+			if ctx.Funct3 != 0 {
+				panic("encodeI: funct3 was nonzero")
+			}
+			if ctx.Funct7 != 0 {
+				panic("encodeI: funct7 was nonzero")
+			}
+			if arg.Imm < -2048 || arg.Imm > 2047 {
+				panic("encodeI: imm must be in [-2048, 2047]")
+			}
+			return ctx.encodeI(ctx.regI(arg.Rd), ctx.regI(arg.Rs1), uint32(arg.Imm)), nil
+		case OpBase_LOAD:
+			if ctx.Funct3 != 0 {
+				panic("encodeI: funct3 was nonzero")
+			}
+			if ctx.Funct7 != 0 {
+				panic("encodeI: funct7 was nonzero")
+			}
+			if arg.Imm < -2048 || arg.Imm > 2047 {
+				panic("encodeI: imm must be in [-2048, 2047]")
+			}
+			return ctx.encodeI(ctx.regI(arg.Rd), ctx.regI(arg.Rs1), uint32(arg.Imm)), nil
+		case OpBase_LOAD_FP:
+			if ctx.Funct3 != 0 {
+				panic("encodeI: funct3 was nonzero")
+			}
+			if ctx.Funct7 != 0 {
+				panic("encodeI: funct7 was nonzero")
+			}
+			return ctx.encodeI(ctx.regF(arg.Rd), ctx.regF(arg.Rs1), uint32(arg.Imm)), nil
+		case OpBase_MISC_MEN:
+			if ctx.Funct7 != 0 {
+				panic("encodeI: funct7 was nonzero")
+			}
+			switch as {
+			case AFENCE:
+				if ctx.Funct3 != 0 {
+					panic("encodeI: funct3 was nonzero")
+				}
+				// 检查 fm, pred, succ
+			default:
+				panic("unreachable")
+			}
+			return ctx.encodeI(ctx.regI(arg.Rd), ctx.regI(arg.Rs1), uint32(arg.Imm)), nil
+		case OpBase_SYSTEM:
+			if ctx.Funct7 != 0 {
+				panic("encodeI: funct7 was nonzero")
+			}
+			switch as {
+			case AECALL, AEBREAK:
+				if ctx.Funct3 != 0 {
+					panic("encodeI: funct3 was nonzero")
+				}
+				if arg.Rd != 0 {
+					panic("encodeI: rd must be zero")
+				}
+				if arg.Rs1 != 0 {
+					panic("encodeI: rs1 must be zero")
+				}
+			}
+
+			switch as {
+			case AECALL:
+				if arg.Imm != 0b_0000_0000_0000 {
+					panic("encodeI: imm must be 0b_0000_0000_0000")
+				}
+				return ctx.encodeI(0, 0, 0b_0000_0000_0000), nil
+			case AEBREAK:
+				if arg.Imm != 0b_0000_0000_0001 {
+					panic("encodeI: imm must be 0b_0000_0000_0001")
+				}
+				return ctx.encodeI(0, 0, 0b_0000_0000_0001), nil
+			default:
+				if arg.Imm < 0 || arg.Imm > 4096 {
+					panic("encodeI: imm(csr) must be in [0, 4096]")
+				}
+				return ctx.encodeI(ctx.regI(arg.Rd), ctx.regI(arg.Rs1), uint32(arg.Imm)), nil
 			}
 		default:
 			panic("unreachable")
 		}
 	case S:
+		if ctx.Funct7 != 0 {
+			panic("encodeS: funct7 was nonzero")
+		}
+		if arg.Rd != 0 {
+			panic("encodeS: rd was nonzero")
+		}
+		if arg.Rs3 != 0 {
+			panic("encodeS: rs3 was nonzero")
+		}
+		if arg.Imm < -2048 || arg.Imm > 2047 {
+			panic("encodeI: imm must be in [-2048, 2047]")
+		}
 		switch ctx.Opcode & OpBase_Mask {
 		case OpBase_STORE:
-			return ctx.encodeS(ctx.regI(arg.Rs1), ctx.regI(arg.Rs2), ctx.rangeImm(arg.Imm, -2048, 2047)), nil
+			return ctx.encodeS(ctx.regI(arg.Rs1), ctx.regI(arg.Rs2), uint32(arg.Imm)), nil
 		case OpBase_STORE_FP:
-			return ctx.encodeS(ctx.regF(arg.Rs1), ctx.regF(arg.Rs2), ctx.rangeImm(arg.Imm, -2048, 2047)), nil
+			return ctx.encodeS(ctx.regF(arg.Rs1), ctx.regF(arg.Rs2), uint32(arg.Imm)), nil
 		default:
 			panic("unreachable")
 		}
 	case B:
+		if ctx.Funct7 != 0 {
+			panic("encodeB: funct7 was nonzero")
+		}
+		if arg.Rd != 0 {
+			panic("encodeB: rd was nonzero")
+		}
+		if arg.Rs3 != 0 {
+			panic("encodeB: rs3 was nonzero")
+		}
+		if arg.Imm < -4096 || arg.Imm > 4095 {
+			panic("encodeB: imm must be in [-4096, 4095]")
+		}
+		if arg.Imm%2 != 0 {
+			panic("encodeB: imm must align 2bytes")
+		}
 		switch ctx.Opcode & OpBase_Mask {
 		case OpBase_BRANCH:
-			imm := ctx.alignImm(arg.Imm, 2)
-			imm = ctx.rangeImm(imm, -4096, 4095)
-			return ctx.encodeB(ctx.regI(arg.Rs1), ctx.regI(arg.Rs2), imm), nil
+			return ctx.encodeB(ctx.regI(arg.Rs1), ctx.regI(arg.Rs2), uint32(arg.Imm)), nil
 		default:
 			panic("unreachable")
 		}
 	case U:
+		if ctx.Funct3 != 0 {
+			panic("encodeU: funct3 was nonzero")
+		}
+		if ctx.Funct7 != 0 {
+			panic("encodeU: funct7 was nonzero")
+		}
+		if arg.Rs1 != 0 {
+			panic("encodeU: rs1 was nonzero")
+		}
+		if arg.Rs2 != 0 {
+			panic("encodeU: rs2 was nonzero")
+		}
+		if arg.Rs3 != 0 {
+			panic("encodeU: rs3 was nonzero")
+		}
+		if arg.Imm&0b_1111_1111_1111 != 0 {
+			panic("encodeU: imm must be align 2^13 bytes")
+		}
 		switch ctx.Opcode & OpBase_Mask {
 		case OpBase_LUI:
-			return ctx.encodeU(ctx.regI(arg.Rd), arg.Imm), nil
+			return ctx.encodeU(ctx.regI(arg.Rd), uint32(arg.Imm)), nil
 		case OpBase_AUIPC:
-			return ctx.encodeU(ctx.regI(arg.Rd), ctx.maskImm(arg.Imm, 20)), nil
+			return ctx.encodeU(ctx.regI(arg.Rd), uint32(arg.Imm)), nil
 		default:
 			panic("unreachable")
 		}
 	case J:
+		if ctx.Funct3 != 0 {
+			panic("encodeJ: funct3 was nonzero")
+		}
+		if ctx.Funct7 != 0 {
+			panic("encodeJ: funct7 was nonzero")
+		}
+		if arg.Rs1 != 0 {
+			panic("encodeJ: rs1 was nonzero")
+		}
+		if arg.Rs2 != 0 {
+			panic("encodeJ: rs2 was nonzero")
+		}
+		if arg.Rs3 != 0 {
+			panic("encodeJ: rs3 was nonzero")
+		}
+		if min, max := -(1 << 21), 1<<21-1; arg.Imm < int32(min) || arg.Imm > int32(max) {
+			panic(fmt.Sprintf("encodeU: imm must be in [%d, %d]", min, max))
+		}
+		if arg.Imm&0b1 != 0 {
+			panic("encodeU: imm must be align 2 bytes")
+		}
 		switch ctx.Opcode & OpBase_Mask {
 		case OpBase_JAL:
-			return ctx.encodeJ(ctx.regI(arg.Rd), ctx.alignImm(arg.Imm, 2)), nil
+			return ctx.encodeJ(ctx.regI(arg.Rd), uint32(arg.Imm)), nil
 		default:
 			panic("unreachable")
 		}
@@ -123,69 +332,39 @@ func (ctx *OpContextType) encodeR(rd, rs1, rs2 uint32) uint32 {
 
 // R4-type
 func (ctx *OpContextType) encodeR4(rd, rs1, rs2, rs3 uint32) uint32 {
-	return (rs3 << 27) |
-		(ctx.Funct7 << 25) |
-		(rs2 << 20) |
-		(rs1 << 15) |
-		(ctx.Funct3 << 12) |
-		(rd << 7) |
-		uint32(ctx.Opcode)
+	funct2 := ctx.Funct7
+	return rs3<<27 | funct2<<25 | rs2<<20 | rs1<<15 | ctx.Funct3<<12 | rd<<7 | uint32(ctx.Opcode)
 }
 
 // I-type
-func (ctx *OpContextType) encodeI(rd, rs1 uint32, imm int32) uint32 {
-	imm12 := uint32(imm) & 0xFFF
-	return imm12<<20 | rs1<<15 | ctx.Funct3<<12 | rd<<7 | uint32(ctx.Opcode)
+func (ctx *OpContextType) encodeI(rd, rs1 uint32, imm uint32) uint32 {
+	return imm<<20 | rs1<<15 | ctx.Funct3<<12 | rd<<7 | uint32(ctx.Opcode)
 }
 
 // S-type
-func (ctx *OpContextType) encodeS(rs1, rs2 uint32, imm int32) uint32 {
-	imm12 := uint32(imm) & 0xFFF
-	return (imm12>>5)<<25 | rs2<<20 | rs1<<15 | ctx.Funct3<<12 | (imm12&0x1F)<<7 | uint32(ctx.Opcode)
+func (ctx *OpContextType) encodeS(rs1, rs2 uint32, imm uint32) uint32 {
+	return (imm>>5)<<25 | rs2<<20 | rs1<<15 | ctx.Funct3<<12 | (imm&0b_1_1111)<<7 | uint32(ctx.Opcode)
 }
 
 // B-type
-func (ctx *OpContextType) encodeB(rs1, rs2 uint32, imm int32) uint32 {
-	imm13 := uint32(imm) & 0x1FFF
-	return ((imm13>>12)&1)<<31 | ((imm13>>5)&0x3F)<<25 |
-		rs2<<20 | rs1<<15 | ctx.Funct3<<12 |
-		((imm13>>1)&0xF)<<8 | ((imm13>>11)&1)<<7 | uint32(ctx.Opcode)
+func (ctx *OpContextType) encodeB(rs1, rs2 uint32, imm uint32) uint32 {
+	return ctx.encodeB_Imm(imm) | rs2<<20 | rs1<<15 | ctx.Funct3<<12 | uint32(ctx.Opcode)
+}
+func (ctx *OpContextType) encodeB_Imm(imm uint32) uint32 {
+	return (imm>>12)<<31 | ((imm>>5)&0x3f)<<25 | ((imm>>1)&0xf)<<8 | ((imm>>11)&0x1)<<7
 }
 
 // U-type
-func (ctx *OpContextType) encodeU(rd uint32, imm int32) uint32 {
-	imm20 := uint32(imm) & 0xFFFFF000
-	return imm20 | rd<<7 | uint32(ctx.Opcode)
+func (ctx *OpContextType) encodeU(rd uint32, imm uint32) uint32 {
+	return imm | rd<<7 | uint32(ctx.Opcode)
 }
 
 // J-type
-func (ctx *OpContextType) encodeJ(rd uint32, imm int32) uint32 {
-	imm21 := uint32(imm) & 0x1FFFFF
-	return ((imm21>>20)&1)<<31 | ((imm21>>1)&0x3FF)<<21 |
-		((imm21>>11)&1)<<20 | ((imm21>>12)&0xFF)<<12 |
-		rd<<7 | uint32(ctx.Opcode)
+func (ctx *OpContextType) encodeJ(rd uint32, imm uint32) uint32 {
+	return ctx.encodeJ_Imm(imm) | rd<<7 | uint32(ctx.Opcode)
 }
-
-// 立即数取低N个bit
-func (ctx *OpContextType) maskImm(imm int32, bits int) int32 {
-	mask := int32(1<<bits - 1)
-	return int32(imm & mask)
-}
-
-// 立即数掩码校验范围
-func (ctx *OpContextType) rangeImm(imm int32, min, max int32) int32 {
-	if imm < min || imm > max {
-		panic(fmt.Sprintf("imm out of range, want %d <= %d <= %d", min, imm, max))
-	}
-	return imm
-}
-
-// 立即数必须是n字节对齐
-func (ctx *OpContextType) alignImm(imm int32, n int32) int32 {
-	if (imm % n) != 0 {
-		panic(fmt.Sprintf("imm must be 2-byte aligned, want %d%%%d == 0", imm, n))
-	}
-	return imm
+func (ctx *OpContextType) encodeJ_Imm(imm uint32) uint32 {
+	return (imm>>20)<<31 | ((imm>>1)&0x3ff)<<21 | ((imm>>11)&0x1)<<20 | ((imm>>12)&0xff)<<12
 }
 
 // 返回寄存器机器码编号
