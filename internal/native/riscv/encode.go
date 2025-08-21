@@ -47,6 +47,12 @@ func (ctx *OpContextType) encode(xlen int, as As, arg *AsArgument) (uint32, erro
 		case OpBase_OP_32:
 			return ctx.encodeR(ctx.regI(arg.Rd), ctx.regI(arg.Rs1), ctx.regI(arg.Rs2)), nil
 		case OpBase_OP_FP:
+			if ctx.Rs2 != nil {
+				if arg.Rs2 != 0 {
+					panic("encodeR: rs2 was nonzero")
+				}
+				return ctx.encodeR(ctx.regF(arg.Rd), ctx.regF(arg.Rs1), *ctx.Rs2), nil
+			}
 			return ctx.encodeR(ctx.regF(arg.Rd), ctx.regF(arg.Rs1), ctx.regF(arg.Rs2)), nil
 		case OpBase_AMO:
 			return ctx.encodeR(ctx.regI(arg.Rd), ctx.regI(arg.Rs1), ctx.regI(arg.Rs2)), nil
@@ -79,9 +85,6 @@ func (ctx *OpContextType) encode(xlen int, as As, arg *AsArgument) (uint32, erro
 	case I:
 		if arg.Rs2 != 0 {
 			panic("encodeI: rs2 was nonzero")
-		}
-		if arg.Rs3 != 0 {
-			panic("encodeI: rs3 was nonzero")
 		}
 		if arg.Rs3 != 0 {
 			panic("encodeI: rs3 was nonzero")
@@ -163,9 +166,6 @@ func (ctx *OpContextType) encode(xlen int, as As, arg *AsArgument) (uint32, erro
 			}
 			return ctx.encodeI(ctx.regI(arg.Rd), ctx.regI(arg.Rs1), uint32(arg.Imm)), nil
 		case OpBase_LOAD_FP:
-			if ctx.Funct3 != 0 {
-				panic("encodeI: funct3 was nonzero")
-			}
 			if ctx.Funct7 != 0 {
 				panic("encodeI: funct7 was nonzero")
 			}

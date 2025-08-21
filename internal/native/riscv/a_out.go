@@ -156,10 +156,6 @@ const (
 	AGLOBL                   // 全局变量定义(类似于 .globl)
 	ADATA                    // 静态数据段的数据定义
 	ATEXT                    // 函数定义入口标记, 指定函数名和属性
-	ACALL                    // 调用函数
-	ARET                     // 函数返回指令
-	AJMP                     // 无条件跳转指令
-	ANOP                     // 空操作指令, 用于填充, 对齐或占位
 	A_ARCHSPECIFIC           // 架构专属操作码的起点
 )
 
@@ -218,6 +214,10 @@ const (
 
 	// 2.7: Memory Ordering Instructions (RV32I)
 	AFENCE
+
+	// 3.3.1: Environment Call and Breakpoint
+	AECALL
+	AEBREAK
 
 	// 4.2: Integer Computational Instructions (RV64I)
 	AADDIW
@@ -289,8 +289,6 @@ const (
 	AFSGNJS
 	AFSGNJNS
 	AFSGNJXS
-	AFMVXS
-	AFMVSX
 	AFMVXW
 	AFMVWX
 
@@ -343,24 +341,6 @@ const (
 
 	// 21.7: Double-Precision Floating-Point Classify Instruction
 	AFCLASSD
-
-	//
-	// Privileged ISA (version 20240411)
-	//
-
-	// 3.3.1: Environment Call and Breakpoint
-	AECALL
-	ASCALL
-	AEBREAK
-	ASBREAK
-
-	// 3.3.2: Trap-Return Instructions
-	AMRET
-	ASRET
-	ADRET
-
-	// 3.3.3: Wait for Interrupt
-	AWFI
 
 	// End marker
 	ALAST

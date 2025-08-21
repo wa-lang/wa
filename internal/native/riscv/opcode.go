@@ -155,6 +155,7 @@ type OpContextType struct {
 	Opcode OpcodeType
 	Funct3 uint32
 	Funct7 uint32 // 和 Funct2 共用
+	Rs2    *uint32
 }
 
 // 指令编码信息表
@@ -189,16 +190,16 @@ var AOpContextTable = []OpContextType{
 	ASLLI:   {Opcode: OpBase_OP_IMM, Funct3: 0b_001, Funct7: 0b_000_0000},
 	ASRLI:   {Opcode: OpBase_OP_IMM, Funct3: 0b_101, Funct7: 0b_000_0000},
 	ASRAI:   {Opcode: OpBase_OP_IMM, Funct3: 0b_101, Funct7: 0b_010_0000},
-	AADD:    {Opcode: OpBase_OP, Funct3: 0b_000, Funct7: 0b_0000000},
-	ASUB:    {Opcode: OpBase_OP, Funct3: 0b_000, Funct7: 0b_0100000},
-	ASLL:    {Opcode: OpBase_OP, Funct3: 0b_001, Funct7: 0b_0000000},
-	ASLT:    {Opcode: OpBase_OP, Funct3: 0b_010, Funct7: 0b_0000000},
-	ASLTU:   {Opcode: OpBase_OP, Funct3: 0b_011, Funct7: 0b_0000000},
-	AXOR:    {Opcode: OpBase_OP, Funct3: 0b_100, Funct7: 0b_0000000},
-	ASRL:    {Opcode: OpBase_OP, Funct3: 0b_101, Funct7: 0b_0000000},
-	ASRA:    {Opcode: OpBase_OP, Funct3: 0b_101, Funct7: 0b_0100000},
-	AOR:     {Opcode: OpBase_OP, Funct3: 0b_110, Funct7: 0b_0000000},
-	AAND:    {Opcode: OpBase_OP, Funct3: 0b_111, Funct7: 0b_0000000},
+	AADD:    {Opcode: OpBase_OP, Funct3: 0b_000, Funct7: 0b_000_0000},
+	ASUB:    {Opcode: OpBase_OP, Funct3: 0b_000, Funct7: 0b_010_0000},
+	ASLL:    {Opcode: OpBase_OP, Funct3: 0b_001, Funct7: 0b_000_0000},
+	ASLT:    {Opcode: OpBase_OP, Funct3: 0b_010, Funct7: 0b_000_0000},
+	ASLTU:   {Opcode: OpBase_OP, Funct3: 0b_011, Funct7: 0b_000_0000},
+	AXOR:    {Opcode: OpBase_OP, Funct3: 0b_100, Funct7: 0b_000_0000},
+	ASRL:    {Opcode: OpBase_OP, Funct3: 0b_101, Funct7: 0b_000_0000},
+	ASRA:    {Opcode: OpBase_OP, Funct3: 0b_101, Funct7: 0b_010_0000},
+	AOR:     {Opcode: OpBase_OP, Funct3: 0b_110, Funct7: 0b_000_0000},
+	AAND:    {Opcode: OpBase_OP, Funct3: 0b_111, Funct7: 0b_000_0000},
 	AFENCE:  {Opcode: OpBase_MISC_MEN, Funct3: 0b_000},
 	AECALL:  {Opcode: OpBase_SYSTEM, Funct3: 0b_000}, // imm[11:0] = 0b000000000000
 	AEBREAK: {Opcode: OpBase_SYSTEM, Funct3: 0b_000}, // imm[11:0] = 0b000000000001
@@ -212,11 +213,11 @@ var AOpContextTable = []OpContextType{
 	ASLLIW: {Opcode: OpBase_OP_IMM_32, Funct3: 0b_001, Funct7: 0b_000_0000},
 	ASRLIW: {Opcode: OpBase_OP_IMM_32, Funct3: 0b_101, Funct7: 0b_000_0000},
 	ASRAIW: {Opcode: OpBase_OP_IMM_32, Funct3: 0b_101, Funct7: 0b_010_0000},
-	AADDW:  {Opcode: OpBase_OP_32, Funct3: 0b_000, Funct7: 0b_0000000},
-	ASUBW:  {Opcode: OpBase_OP_32, Funct3: 0b_000, Funct7: 0b_0100000},
-	ASLLW:  {Opcode: OpBase_OP_32, Funct3: 0b_001, Funct7: 0b_0000000},
-	ASRLW:  {Opcode: OpBase_OP_32, Funct3: 0b_101, Funct7: 0b_0000000},
-	ASRAW:  {Opcode: OpBase_OP_32, Funct3: 0b_101, Funct7: 0b_0100000},
+	AADDW:  {Opcode: OpBase_OP_32, Funct3: 0b_000, Funct7: 0b_000_0000},
+	ASUBW:  {Opcode: OpBase_OP_32, Funct3: 0b_000, Funct7: 0b_010_0000},
+	ASLLW:  {Opcode: OpBase_OP_32, Funct3: 0b_001, Funct7: 0b_000_0000},
+	ASRLW:  {Opcode: OpBase_OP_32, Funct3: 0b_101, Funct7: 0b_000_0000},
+	ASRAW:  {Opcode: OpBase_OP_32, Funct3: 0b_101, Funct7: 0b_010_0000},
 
 	// RV32/RV64 Zicsr Standard Extension
 
@@ -229,30 +230,98 @@ var AOpContextTable = []OpContextType{
 
 	// RV32M Standard Extension
 
-	AMUL:    {Opcode: OpBase_OP, Funct3: 0b_000, Funct7: 0b_0000001},
-	AMULH:   {Opcode: OpBase_OP, Funct3: 0b_001, Funct7: 0b_0000001},
-	AMULHSU: {Opcode: OpBase_OP, Funct3: 0b_010, Funct7: 0b_0000001},
-	AMULHU:  {Opcode: OpBase_OP, Funct3: 0b_011, Funct7: 0b_0000001},
-	ADIV:    {Opcode: OpBase_OP, Funct3: 0b_100, Funct7: 0b_0000001},
-	ADIVU:   {Opcode: OpBase_OP, Funct3: 0b_101, Funct7: 0b_0000001},
-	AREM:    {Opcode: OpBase_OP, Funct3: 0b_110, Funct7: 0b_0000001},
-	AREMU:   {Opcode: OpBase_OP, Funct3: 0b_111, Funct7: 0b_0000001},
+	AMUL:    {Opcode: OpBase_OP, Funct3: 0b_000, Funct7: 0b_000_0001},
+	AMULH:   {Opcode: OpBase_OP, Funct3: 0b_001, Funct7: 0b_000_0001},
+	AMULHSU: {Opcode: OpBase_OP, Funct3: 0b_010, Funct7: 0b_000_0001},
+	AMULHU:  {Opcode: OpBase_OP, Funct3: 0b_011, Funct7: 0b_000_0001},
+	ADIV:    {Opcode: OpBase_OP, Funct3: 0b_100, Funct7: 0b_000_0001},
+	ADIVU:   {Opcode: OpBase_OP, Funct3: 0b_101, Funct7: 0b_000_0001},
+	AREM:    {Opcode: OpBase_OP, Funct3: 0b_110, Funct7: 0b_000_0001},
+	AREMU:   {Opcode: OpBase_OP, Funct3: 0b_111, Funct7: 0b_000_0001},
 
 	// RV64M Standard Extension (in addition to RV32M)
 
-	AMULW:  {Opcode: OpBase_OP_32, Funct3: 0b_000, Funct7: 0b_0000001},
-	ADIVW:  {Opcode: OpBase_OP_32, Funct3: 0b_100, Funct7: 0b_0000001},
-	ADIVUW: {Opcode: OpBase_OP_32, Funct3: 0b_101, Funct7: 0b_0000001},
-	AREMW:  {Opcode: OpBase_OP_32, Funct3: 0b_110, Funct7: 0b_0000001},
-	AREMUW: {Opcode: OpBase_OP_32, Funct3: 0b_111, Funct7: 0b_0000001},
+	AMULW:  {Opcode: OpBase_OP_32, Funct3: 0b_000, Funct7: 0b_000_0001},
+	ADIVW:  {Opcode: OpBase_OP_32, Funct3: 0b_100, Funct7: 0b_000_0001},
+	ADIVUW: {Opcode: OpBase_OP_32, Funct3: 0b_101, Funct7: 0b_000_0001},
+	AREMW:  {Opcode: OpBase_OP_32, Funct3: 0b_110, Funct7: 0b_000_0001},
+	AREMUW: {Opcode: OpBase_OP_32, Funct3: 0b_111, Funct7: 0b_000_0001},
 
-	// TODO: RV32F Standard Extension
+	// RV32F Standard Extension
 
-	// TODO: RV64F Standard Extension (in addition to RV32F)
+	AFLW:     {Opcode: OpBase_LOAD_FP, Funct3: 0b_010},
+	AFSW:     {Opcode: OpBase_STORE_FP, Funct3: 0b_010},
+	AFMADDS:  {Opcode: OpBase_MADD, Funct7: 0b_00},  // funct2
+	AFMSUBS:  {Opcode: OpBase_MSUB, Funct7: 0b_00},  // funct2
+	AFNMSUBS: {Opcode: OpBase_NMADD, Funct7: 0b_00}, // funct2
+	AFNMADDS: {Opcode: OpBase_NMSUB, Funct7: 0b_00}, // funct2
+	AFADDS:   {Opcode: OpBase_OP_FP, Funct7: 0b_000_0000},
+	AFSUBS:   {Opcode: OpBase_OP_FP, Funct7: 0b_000_0100},
+	AFMULS:   {Opcode: OpBase_OP_FP, Funct7: 0b_000_1000},
+	AFDIVS:   {Opcode: OpBase_OP_FP, Funct7: 0b_000_1100},
+	AFSQRTS:  {Opcode: OpBase_OP_FP, Funct7: 0b_000_1100, Rs2: newU32(0b_0_0000)},
+	AFSGNJS:  {Opcode: OpBase_OP_FP, Funct7: 0b_001_0000},
+	AFSGNJNS: {Opcode: OpBase_OP_FP, Funct7: 0b_001_0000},
+	AFSGNJXS: {Opcode: OpBase_OP_FP, Funct7: 0b_001_0000},
+	AFMINS:   {Opcode: OpBase_OP_FP, Funct7: 0b_001_0100, Rs2: newU32(0b_0_0000)},
+	AFMAXS:   {Opcode: OpBase_OP_FP, Funct7: 0b_001_0100, Rs2: newU32(0b_0_0001)},
+	AFCVTWS:  {Opcode: OpBase_OP_FP, Funct7: 0b_110_0000, Rs2: newU32(0b_0_0000)},
+	AFCVTWUS: {Opcode: OpBase_OP_FP, Funct7: 0b_110_0000},
+	AFMVXW:   {Opcode: OpBase_OP_FP, Funct7: 0b_111_0000},
+	AFEQS:    {Opcode: OpBase_OP_FP, Funct7: 0b_101_0000},
+	AFLTS:    {Opcode: OpBase_OP_FP, Funct7: 0b_101_0000},
+	AFLES:    {Opcode: OpBase_OP_FP, Funct7: 0b_101_0000},
+	AFCLASSS: {Opcode: OpBase_OP_FP, Funct7: 0b_111_0000, Rs2: newU32(0b_0_0000)},
+	AFCVTSW:  {Opcode: OpBase_OP_FP, Funct7: 0b_110_1000, Rs2: newU32(0b_0_0000)},
+	AFCVTSWU: {Opcode: OpBase_OP_FP, Funct7: 0b_110_1000, Rs2: newU32(0b_0_0001)},
+	AFMVWX:   {Opcode: OpBase_OP_FP, Funct7: 0b_111_1000, Rs2: newU32(0b_0_0000)},
 
-	// TODO: RV32D Standard Extension
+	// RV64F Standard Extension (in addition to RV32F)
 
-	// TODO: RV64D Standard Extension (in addition to RV32D)
+	AFCVTLS:  {Opcode: OpBase_OP_FP, Funct7: 0b_110_0000, Rs2: newU32(0b_0_0010)},
+	AFCVTLUS: {Opcode: OpBase_OP_FP, Funct7: 0b_110_0000, Rs2: newU32(0b_0_0011)},
+	AFCVTSL:  {Opcode: OpBase_OP_FP, Funct7: 0b_110_1000, Rs2: newU32(0b_0_0010)},
+	AFCVTSLU: {Opcode: OpBase_OP_FP, Funct7: 0b_110_1000, Rs2: newU32(0b_0_0011)},
 
-	// TODO: 验证遗漏的指令
+	// RV32D Standard Extension
+
+	AFLD:     {Opcode: OpBase_LOAD_FP, Funct3: 0b_011},
+	AFSD:     {Opcode: OpBase_STORE_FP, Funct3: 0b_011},
+	AFMADDD:  {Opcode: OpBase_MADD, Funct7: 0b_00},  // funct2
+	AFMSUBD:  {Opcode: OpBase_MSUB, Funct7: 0b_00},  // funct2
+	AFNMSUBD: {Opcode: OpBase_NMADD, Funct7: 0b_00}, // funct2
+	AFNMADDD: {Opcode: OpBase_NMSUB, Funct7: 0b_00}, // funct2
+	AFADDD:   {Opcode: OpBase_OP_FP, Funct7: 0b_000_0001},
+	AFSUBD:   {Opcode: OpBase_OP_FP, Funct7: 0b_000_0101},
+	AFMULD:   {Opcode: OpBase_OP_FP, Funct7: 0b_000_1001},
+	AFDIVD:   {Opcode: OpBase_OP_FP, Funct7: 0b_000_1101},
+	AFSQRTD:  {Opcode: OpBase_OP_FP, Funct7: 0b_010_1101, Rs2: newU32(0b_0_0000)},
+	AFSGNJD:  {Opcode: OpBase_OP_FP, Funct7: 0b_001_0001},
+	AFSGNJND: {Opcode: OpBase_OP_FP, Funct7: 0b_001_0001},
+	AFSGNJXD: {Opcode: OpBase_OP_FP, Funct7: 0b_001_0001},
+	AFMIND:   {Opcode: OpBase_OP_FP, Funct7: 0b_001_0101},
+	AFMAXD:   {Opcode: OpBase_OP_FP, Funct7: 0b_001_0101},
+	AFCVTSD:  {Opcode: OpBase_OP_FP, Funct7: 0b_010_0000, Rs2: newU32(0b_0_0001)},
+	AFCVTDS:  {Opcode: OpBase_OP_FP, Funct7: 0b_010_0001, Rs2: newU32(0b_0_0000)},
+	AFEQD:    {Opcode: OpBase_OP_FP, Funct7: 0b_101_0001},
+	AFLTD:    {Opcode: OpBase_OP_FP, Funct7: 0b_101_0001},
+	AFLED:    {Opcode: OpBase_OP_FP, Funct7: 0b_101_0001},
+	AFCLASSD: {Opcode: OpBase_OP_FP, Funct7: 0b_111_0001, Rs2: newU32(0b_0_0000)},
+	AFCVTWD:  {Opcode: OpBase_OP_FP, Funct7: 0b_110_0001, Rs2: newU32(0b_0_0000)},
+	AFCVTWUD: {Opcode: OpBase_OP_FP, Funct7: 0b_110_0001, Rs2: newU32(0b_0_0001)},
+	AFCVTDW:  {Opcode: OpBase_OP_FP, Funct7: 0b_110_1001, Rs2: newU32(0b_0_0000)},
+	AFCVTDWU: {Opcode: OpBase_OP_FP, Funct7: 0b_110_1001, Rs2: newU32(0b_0_0001)},
+
+	// RV64D Standard Extension (in addition to RV32D)
+
+	AFCVTLD:  {Opcode: OpBase_OP_FP, Funct7: 0b_110_0001, Rs2: newU32(0b_0_0010)},
+	AFCVTLUD: {Opcode: OpBase_OP_FP, Funct7: 0b_110_0001, Rs2: newU32(0b_0_0011)},
+	AFMVXD:   {Opcode: OpBase_OP_FP, Funct7: 0b_111_0001, Rs2: newU32(0b_0_0000)},
+	AFCVTDL:  {Opcode: OpBase_OP_FP, Funct7: 0b_110_1001, Rs2: newU32(0b_0_0010)},
+	AFCVTDLU: {Opcode: OpBase_OP_FP, Funct7: 0b_110_1001, Rs2: newU32(0b_0_0011)},
+	AFMVDX:   {Opcode: OpBase_OP_FP, Funct7: 0b_111_1001, Rs2: newU32(0b_0_0000)},
+
+	// End marker
+
+	ALAST: {},
 }

@@ -11,10 +11,6 @@ var Anames = []string{
 	AGLOBL: "GLOBL",
 	ADATA:  "DATA",
 	ATEXT:  "TEXT",
-	ACALL:  "CALL",
-	ARET:   "RET",
-	AJMP:   "JMP",
-	ANOP:   "NOP",
 
 	//
 	// Unprivileged ISA (version 20240411)
@@ -65,6 +61,10 @@ var Anames = []string{
 
 	// 2.7: Memory Ordering Instructions (RV32I)
 	AFENCE: "FENCE",
+
+	// 3.3.1: Environment Call and Breakpoint
+	AECALL:  "ECALL",
+	AEBREAK: "EBREAK",
 
 	// 4.2: Integer Computational Instructions (RV64I)
 	AADDIW: "ADDIW",
@@ -136,8 +136,6 @@ var Anames = []string{
 	AFSGNJS:  "FSGNJS",
 	AFSGNJNS: "FSGNJNS",
 	AFSGNJXS: "FSGNJXS",
-	AFMVXS:   "FMVXS",
-	AFMVSX:   "FMVSX",
 	AFMVXW:   "FMVXW",
 	AFMVWX:   "FMVWX",
 
@@ -190,24 +188,6 @@ var Anames = []string{
 
 	// 21.7: Double-Precision Floating-Point Classify Instruction
 	AFCLASSD: "FCLASSD",
-
-	//
-	// Privileged ISA (version 20240411)
-	//
-
-	// 3.3.1: Environment Call and Breakpoint
-	AECALL:  "ECALL",
-	ASCALL:  "SCALL",
-	AEBREAK: "EBREAK",
-	ASBREAK: "SBREAK",
-
-	// 3.3.2: Trap-Return Instructions
-	AMRET: "MRET",
-	ASRET: "SRET",
-	ADRET: "DRET",
-
-	// 3.3.3: Wait for Interrupt
-	AWFI: "WFI",
 
 	// End marker
 	ALAST: "LAST",
