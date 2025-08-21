@@ -3,6 +3,150 @@
 
 package riscv
 
+// 寄存器名字列表
+var Register = []string{
+	// 通用寄存器
+	REG_X0:  "X0",
+	REG_X1:  "X1",
+	REG_X2:  "X2",
+	REG_X3:  "X3",
+	REG_X4:  "X4",
+	REG_X5:  "X5",
+	REG_X6:  "X6",
+	REG_X7:  "X7",
+	REG_X8:  "X8",
+	REG_X9:  "X9",
+	REG_X10: "X10",
+	REG_X11: "X11",
+	REG_X12: "X12",
+	REG_X13: "X13",
+	REG_X14: "X14",
+	REG_X15: "X15",
+	REG_X16: "X16",
+	REG_X17: "X17",
+	REG_X18: "X18",
+	REG_X19: "X19",
+	REG_X20: "X20",
+	REG_X21: "X21",
+	REG_X22: "X22",
+	REG_X23: "X23",
+	REG_X24: "X24",
+	REG_X25: "X25",
+	REG_X26: "X26",
+	REG_X27: "X27",
+	REG_X28: "X28",
+	REG_X29: "X29",
+	REG_X30: "X30",
+	REG_X31: "X31",
+
+	// 浮点数寄存器(F/D扩展)
+	REG_F0:  "F0",
+	REG_F1:  "F1",
+	REG_F2:  "F2",
+	REG_F3:  "F3",
+	REG_F4:  "F4",
+	REG_F5:  "F5",
+	REG_F6:  "F6",
+	REG_F7:  "F7",
+	REG_F8:  "F8",
+	REG_F9:  "F9",
+	REG_F10: "F10",
+	REG_F11: "F11",
+	REG_F12: "F12",
+	REG_F13: "F13",
+	REG_F14: "F14",
+	REG_F15: "F15",
+	REG_F16: "F16",
+	REG_F17: "F17",
+	REG_F18: "F18",
+	REG_F19: "F19",
+	REG_F20: "F20",
+	REG_F21: "F21",
+	REG_F22: "F22",
+	REG_F23: "F23",
+	REG_F24: "F24",
+	REG_F25: "F25",
+	REG_F26: "F26",
+	REG_F27: "F27",
+	REG_F28: "F28",
+	REG_F29: "F29",
+	REG_F30: "F30",
+	REG_F31: "F31",
+}
+
+// 寄存器别名
+var RegisterAlias = []string{
+	REG_ZERO: "ZERO", // 零寄存器
+	REG_RA:   "RA",   // 返回地址
+	REG_SP:   "SP",   // 栈指针
+	REG_GP:   "GP",   // 全局基指针
+	REG_TP:   "TP",   // 线程指针
+	REG_T0:   "T0",   // 临时变量
+	REG_T1:   "T1",   // 临时变量
+	REG_T2:   "T2",   // 临时变量
+	REG_S0:   "S0",   // Saved register, 帧指针
+	REG_S1:   "S1",   // Saved register
+	REG_A0:   "A0",   // 函数参数/返回值
+	REG_A1:   "A1",   // 函数参数/返回值
+	REG_A2:   "A2",   // 函数参数
+	REG_A3:   "A3",   // 函数参数
+	REG_A4:   "A4",   // 函数参数
+	REG_A5:   "A5",   // 函数参数
+	REG_A6:   "A6",   // 函数参数
+	REG_A7:   "A7",   // 函数参数
+	REG_S2:   "S2",   // Saved register
+	REG_S3:   "S3",   // Saved register
+	REG_S4:   "S4",   // Saved register
+	REG_S5:   "S5",   // Saved register
+	REG_S6:   "S6",   // Saved register
+	REG_S7:   "S7",   // Saved register
+	REG_S8:   "S8",   // Saved register
+	REG_S9:   "S9",   // Saved register
+	REG_S10:  "S10",  // Saved register
+	REG_S11:  "S10",  // Saved register
+	REG_T3:   "T3",   // 临时变量
+	REG_T4:   "T4",   // 临时变量
+	REG_T5:   "T5",   // 临时变量
+	REG_T6:   "T6",   // 临时变量
+
+	REG_FT0:  "FT0",  // 临时变量
+	REG_FT1:  "FT1",  // 临时变量
+	REG_FT2:  "FT2",  // 临时变量
+	REG_FT3:  "FT3",  // 临时变量
+	REG_FT4:  "FT4",  // 临时变量
+	REG_FT5:  "FT5",  // 临时变量
+	REG_FT6:  "FT6",  // 临时变量
+	REG_FT7:  "FT7",  // 临时变量
+	REG_FS0:  "FS0",  // Saved register
+	REG_FS1:  "FS1",  // Saved register
+	REG_FA0:  "FA0",  // 函数参数/返回值
+	REG_FA1:  "FA1",  // 函数参数/返回值
+	REG_FA2:  "FA2",  // 函数参数
+	REG_FA3:  "FA3",  // 函数参数
+	REG_FA4:  "FA4",  // 函数参数
+	REG_FA5:  "FA5",  // 函数参数
+	REG_FA6:  "FA6",  // 函数参数
+	REG_FA7:  "FA7",  // 函数参数
+	REG_FS2:  "FS2",  // Saved register
+	REG_FS3:  "FS3",  // Saved register
+	REG_FS4:  "FS4",  // Saved register
+	REG_FS5:  "FS5",  // Saved register
+	REG_FS6:  "FS6",  // Saved register
+	REG_FS7:  "FS7",  // Saved register
+	REG_FS8:  "FS8",  // Saved register
+	REG_FS9:  "FS9",  // Saved register
+	REG_FS10: "FS10", // Saved register
+	REG_FS11: "FS11", // Saved register
+	REG_FT8:  "FT8",  // 临时变量
+	REG_FT9:  "FT9",  // 临时变量
+	REG_FT10: "FT10", // 临时变量
+	REG_FT11: "FT11", // 临时变量
+}
+
+func (r RegType) String() string {
+	return RegString(r)
+}
+
 // 指令的名字
 // 保持和指令定义相同的顺序
 var Anames = []string{
@@ -191,4 +335,8 @@ var Anames = []string{
 
 	// End marker
 	ALAST: "LAST",
+}
+
+func (as As) String() string {
+	return Anames[as]
 }

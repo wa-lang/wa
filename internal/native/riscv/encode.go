@@ -7,11 +7,12 @@ import "fmt"
 
 // 指令参数
 type AsArgument struct {
-	Rd  RegType // 目标寄存器
-	Rs1 RegType // 原寄存器1
-	Rs2 RegType // 原寄存器2
-	Rs3 RegType // 原寄存器3
-	Imm int32   // 立即数
+	Rd      RegType // 目标寄存器
+	Rs1     RegType // 原寄存器1
+	Rs2     RegType // 原寄存器2
+	Rs3     RegType // 原寄存器3
+	Imm     int32   // 立即数
+	ImmName string  // 立即数名字, 可能是 Label/符号, 用于打印
 }
 
 // 编码RISCV32指令
