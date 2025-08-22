@@ -7,7 +7,7 @@ import "io"
 
 // 内存读写接口
 type Memory interface {
-	io.WriterAt
+	io.ReaderAt
 	io.WriterAt
 }
 
