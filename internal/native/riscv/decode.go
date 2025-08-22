@@ -173,7 +173,7 @@ func (op OpcodeType) decodeS(x uint32) (as As, arg *AsArgument, err error) {
 
 	rs1 := (x >> 15) & 0b_1_1111
 	rs2 := (x >> 20) & 0b_1_1111
-	imm := (int32(x)>>20)<<5 | int32(x>>7)&0b_1_1111
+	imm := (int32(x)>>25)<<5 | int32(x>>7)&0b_1_1111
 
 	funct3 := (x >> 12) & 0b_111
 
@@ -295,18 +295,20 @@ func (op OpcodeType) decodeJ(x uint32) (as As, arg *AsArgument, err error) {
 
 	rd := (x >> 7) & 0b_1_1111
 
-	imm20 := x & (1 << 31)
-	imm12_19 := ((x >> 12) & 0b_1111_1111) << 12
-	imm11 := ((x >> 20) & 0b_1) << 11
-	imm1_10 := ((x >> 21) & 0b_11_1111_1111) << 1
-
-	imm := int32(imm20 | imm12_19 | imm11 | imm1_10)
+	imm20 := (x >> 31) << 20
+	imm1_10 := (x << 1) >> 22 << 1
+	imm11 := (x << 11) >> 31 << 11
+	imm12_19 := (x << 12) >> 24 << 12
+	imm := imm20 | imm12_19 | imm11 | imm1_10
+	if imm>>uint32(21-1) == 1 {
+		imm |= 0x7ff << 21
+	}
 
 	if arg.Rd, err = op.decodeRegI(rd); err != nil {
 		return 0, nil, err
 	}
 
-	arg.Imm = imm
+	arg.Imm = int32(imm)
 
 	// 查询表格
 	for i, ctx := range AOpContextTable {
