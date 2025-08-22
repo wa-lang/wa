@@ -74,3 +74,45 @@ func ExampleAs_EncodeRV64() {
 	// 0x0062A023 # SW T1, 0(T0)
 	// 0x0000006F # JAL ZERO, 0x80000038
 }
+
+func ExampleDecode() {
+	const start_pc = 0x80000000
+	var instData = []uint32{
+		0x00000517,
+		0x03C50513,
+		0x00054583,
+		0x00058C63,
+		0x100002B7,
+		0x00028293,
+		// 0x00B28023, // TODO: fix test
+		// 0x00150513,
+		// 0xFE9FF06F,
+		// 0x001002B7,
+		// 0x00028293,
+		// 0x00005337,
+		// 0x55530313,
+		// 0x0062A023,
+		// 0x0000006F,
+	}
+	for i, x := range instData {
+		as, arg, err := riscv.Decode(x)
+		if err != nil {
+			log.Fatalf("%d: riscv.Decode(0x%08X): %v", i, x, err)
+		}
+
+		pc := start_pc + int64(i)*4
+		x, err := riscv.EncodeRV64(as, arg)
+		if err != nil {
+			log.Fatal(i, err)
+		}
+		fmt.Printf("0x%08X # %v\n", x, riscv.AsmSyntaxEx(pc, as, arg, riscv.RegAliasString))
+	}
+
+	// Output:
+	// 0x00000517 # AUIPC A0, 0x0
+	// 0x03C50513 # ADDI A0, 60(A0)
+	// 0x00054583 # LBU A1, 0(A0)
+	// 0x00058C63 # BEQ A1, ZERO, 0x80000024
+	// 0x100002B7 # LUI T0, 0x10000
+	// 0x00028293 # ADDI T0, 0(T0)
+}
