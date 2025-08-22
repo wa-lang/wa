@@ -16,6 +16,16 @@ type AsArgument struct {
 }
 
 // 编码RISCV32指令
+func EncodeRV32(as As, arg *AsArgument) (uint32, error) {
+	return as.EncodeRV32(arg)
+}
+
+// 编码RISCV64指令
+func EncodeRV64(as As, arg *AsArgument) (uint32, error) {
+	return as.EncodeRV64(arg)
+}
+
+// 编码RISCV32指令
 func (as As) EncodeRV32(arg *AsArgument) (uint32, error) {
 	ctx := &AOpContextTable[as]
 	return ctx.encode(32, as, arg)
@@ -92,30 +102,31 @@ func (ctx *OpContextType) encode(xlen int, as As, arg *AsArgument) (uint32, erro
 		}
 		switch ctx.Opcode & OpBase_Mask {
 		case OpBase_OP_IMM:
-			switch as {
-			case ASRA, ASRAI, ASRAIW:
-				// 右移符号位
-				if ctx.Funct7 != 0b_100_0000 {
-					panic("encodeI: invalid funct7")
-				}
-			default:
-				if ctx.Funct7 != 0b_000_0000 {
-					panic("encodeI: invalid funct7")
+			// 是否是移位命令
+			// 移位是 I 格式的变化版本
+			if ctx.HasShamt {
+				switch as {
+				// SLLI/SRLI/SRAI 只有这3个指令在 RV32/RV64 中不同
+				case ASLLI, ASRLI, ASRAI:
+					switch xlen {
+					case 32:
+						if arg.Imm < 0 || arg.Imm > 0b_1_1111 {
+							panic("encodeI: imm(shamt5bit) overflow")
+						}
+					case 64:
+						if arg.Imm < 0 || arg.Imm > 0b_11_1111 {
+							panic("encodeI: imm(shamt6bit) overflow")
+						}
+					default:
+						panic("encodeI: xlen must be 32 or 64")
+					}
+				default:
+					// 其他都是 5bit
+					if arg.Imm < 0 || arg.Imm > 0b_1_1111 {
+						panic("encodeI: imm(shamt5bit) overflow")
+					}
 				}
 			}
-			switch xlen {
-			case 32:
-				if arg.Imm < 0 || arg.Imm > 0b_1_1111 {
-					panic("encodeI: imm(shamt5bit) overflow")
-				}
-			case 64:
-				if arg.Imm < 0 || arg.Imm > 0b_11_1111 {
-					panic("encodeI: imm(shamt6bit) overflow")
-				}
-			default:
-				panic("encodeI: xlen must be 32 or 64")
-			}
-			// funct7 和 shamt6bit 可能存在 1bit 重叠, 但是已经检查过了
 			return ctx.encodeI(ctx.regI(arg.Rd), ctx.regI(arg.Rs1), ctx.Funct7<<5|uint32(arg.Imm)), nil
 		case OpBase_OP_IMM_32:
 			switch as {
@@ -156,9 +167,6 @@ func (ctx *OpContextType) encode(xlen int, as As, arg *AsArgument) (uint32, erro
 			}
 			return ctx.encodeI(ctx.regI(arg.Rd), ctx.regI(arg.Rs1), uint32(arg.Imm)), nil
 		case OpBase_LOAD:
-			if ctx.Funct3 != 0 {
-				panic("encodeI: funct3 was nonzero")
-			}
 			if ctx.Funct7 != 0 {
 				panic("encodeI: funct7 was nonzero")
 			}
@@ -247,9 +255,6 @@ func (ctx *OpContextType) encode(xlen int, as As, arg *AsArgument) (uint32, erro
 		if ctx.Funct7 != 0 {
 			panic("encodeB: funct7 was nonzero")
 		}
-		if arg.Rd != 0 {
-			panic("encodeB: rd was nonzero")
-		}
 		if arg.Rs3 != 0 {
 			panic("encodeB: rs3 was nonzero")
 		}
@@ -281,9 +286,8 @@ func (ctx *OpContextType) encode(xlen int, as As, arg *AsArgument) (uint32, erro
 		if arg.Rs3 != 0 {
 			panic("encodeU: rs3 was nonzero")
 		}
-		if arg.Imm&0b_1111_1111_1111 != 0 {
-			panic("encodeU: imm must be align 2^13 bytes")
-		}
+
+		// imm 对应 imm20, 不包含低 12bit
 		switch ctx.Opcode & OpBase_Mask {
 		case OpBase_LUI:
 			return ctx.encodeU(ctx.regI(arg.Rd), uint32(arg.Imm)), nil
@@ -357,7 +361,7 @@ func (ctx *OpContextType) encodeB_Imm(imm uint32) uint32 {
 
 // U-type
 func (ctx *OpContextType) encodeU(rd uint32, imm uint32) uint32 {
-	return imm | rd<<7 | uint32(ctx.Opcode)
+	return (imm << 12) | rd<<7 | uint32(ctx.Opcode)
 }
 
 // J-type

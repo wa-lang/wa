@@ -266,7 +266,7 @@ func (op OpcodeType) decodeU(x uint32) (as As, arg *AsArgument, err error) {
 
 	rd := (x >> 7) & 0b_1_1111
 
-	imm := int32((x >> 12) << 12)
+	imm := int32(x >> 12) // U 模式汇编指令不包含低 12bit 部分
 
 	if arg.Rd, err = op.decodeRegI(rd); err != nil {
 		return 0, nil, err

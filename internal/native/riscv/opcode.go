@@ -152,10 +152,11 @@ func (opcode OpcodeType) FormatType() OpFormatType {
 
 // 操作码上下文信息
 type OpContextType struct {
-	Opcode OpcodeType
-	Funct3 uint32
-	Funct7 uint32 // 和 Funct2 共用
-	Rs2    *uint32
+	Opcode   OpcodeType
+	Funct3   uint32
+	Funct7   uint32 // 和 Funct2 共用
+	Rs2      *uint32
+	HasShamt bool // 是否有 shamt 参数. SLLI/SRLI/SRAI 在 RV32 是 5bit, RV64 是 6bit
 }
 
 // 指令编码信息表
@@ -187,9 +188,9 @@ var AOpContextTable = []OpContextType{
 	AXORI:   {Opcode: OpBase_OP_IMM, Funct3: 0b_100},
 	AORI:    {Opcode: OpBase_OP_IMM, Funct3: 0b_110},
 	AANDI:   {Opcode: OpBase_OP_IMM, Funct3: 0b_111},
-	ASLLI:   {Opcode: OpBase_OP_IMM, Funct3: 0b_001, Funct7: 0b_000_0000},
-	ASRLI:   {Opcode: OpBase_OP_IMM, Funct3: 0b_101, Funct7: 0b_000_0000},
-	ASRAI:   {Opcode: OpBase_OP_IMM, Funct3: 0b_101, Funct7: 0b_010_0000},
+	ASLLI:   {Opcode: OpBase_OP_IMM, Funct3: 0b_001, HasShamt: true, Funct7: 0b_000_0000},
+	ASRLI:   {Opcode: OpBase_OP_IMM, Funct3: 0b_101, HasShamt: true, Funct7: 0b_000_0000},
+	ASRAI:   {Opcode: OpBase_OP_IMM, Funct3: 0b_101, HasShamt: true, Funct7: 0b_010_0000},
 	AADD:    {Opcode: OpBase_OP, Funct3: 0b_000, Funct7: 0b_000_0000},
 	ASUB:    {Opcode: OpBase_OP, Funct3: 0b_000, Funct7: 0b_010_0000},
 	ASLL:    {Opcode: OpBase_OP, Funct3: 0b_001, Funct7: 0b_000_0000},
@@ -210,9 +211,9 @@ var AOpContextTable = []OpContextType{
 	ALD:    {Opcode: OpBase_LOAD, Funct3: 0b_011},
 	ASD:    {Opcode: OpBase_STORE, Funct3: 0b_011},
 	AADDIW: {Opcode: OpBase_OP_IMM_32, Funct3: 0b_000},
-	ASLLIW: {Opcode: OpBase_OP_IMM_32, Funct3: 0b_001, Funct7: 0b_000_0000},
-	ASRLIW: {Opcode: OpBase_OP_IMM_32, Funct3: 0b_101, Funct7: 0b_000_0000},
-	ASRAIW: {Opcode: OpBase_OP_IMM_32, Funct3: 0b_101, Funct7: 0b_010_0000},
+	ASLLIW: {Opcode: OpBase_OP_IMM_32, Funct3: 0b_001, HasShamt: true, Funct7: 0b_000_0000},
+	ASRLIW: {Opcode: OpBase_OP_IMM_32, Funct3: 0b_101, HasShamt: true, Funct7: 0b_000_0000},
+	ASRAIW: {Opcode: OpBase_OP_IMM_32, Funct3: 0b_101, HasShamt: true, Funct7: 0b_010_0000},
 	AADDW:  {Opcode: OpBase_OP_32, Funct3: 0b_000, Funct7: 0b_000_0000},
 	ASUBW:  {Opcode: OpBase_OP_32, Funct3: 0b_000, Funct7: 0b_010_0000},
 	ASLLW:  {Opcode: OpBase_OP_32, Funct3: 0b_001, Funct7: 0b_000_0000},
