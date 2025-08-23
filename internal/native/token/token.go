@@ -3,8 +3,12 @@
 
 package token
 
+// 注意: 禁止依赖 riscv 等子包
+
 import (
 	"strconv"
+
+	"wa-lang.org/wa/internal/native/abi"
 )
 
 // 记号类型
@@ -56,21 +60,26 @@ const (
 	keyword_end // 关键字结束
 )
 
-// 寄存器和指令到 Token 空间的映射
+// 寄存器到 Token 空间的映射
 const (
 	// 寄存器编号空间
 	// 每个平台不超过 100 个, 至少保证 10 个独立空间
-	REG_BEGIN             = 1000
-	REG_RISCV_BEGIN Token = REG_BEGIN + 100*0
-	REG_RISCV_END   Token = REG_RISCV_BEGIN + 100
-	REG_END               = REG_RISCV_END
+	REG_RISCV_BEGIN Token = 1000 + 100*iota
 
+	REG_BEGIN     = REG_RISCV_BEGIN
+	REG_RISCV_END = REG_RISCV_BEGIN + 100
+	REG_END       = REG_RISCV_END
+)
+
+// 指令到 Token 空间的映射
+const (
 	// 指令编号空间
 	// 每个平台不超过 2000 个, 至少保证 10 个独立空间
-	A_BEGIN             = 2000
-	A_RISCV_BEGIN Token = A_BEGIN + 2000*0
-	A_RISCV_END   Token = A_RISCV_BEGIN + 2000
-	A_END               = A_RISCV_END
+	A_RISCV_BEGIN Token = 2000 + 2000*iota
+
+	A_BEGIN     = A_RISCV_BEGIN
+	A_RISCV_END = A_RISCV_BEGIN + 2000
+	A_END       = A_RISCV_END
 )
 
 var tokens = [...]string{
@@ -170,6 +179,22 @@ func (tok Token) IsRegister() bool { return REG_BEGIN <= tok && tok < REG_END }
 
 // 指令
 func (tok Token) IsAs() bool { return A_BEGIN <= tok && tok < A_END }
+
+// 原始寄存器值
+func (tok Token) RawReg() abi.RegType {
+	if REG_RISCV_BEGIN <= tok && tok < REG_RISCV_END {
+		return abi.RegType(tok - REG_RISCV_BEGIN)
+	}
+	return 0
+}
+
+// 原始指令值
+func (tok Token) RawAs() abi.As {
+	if A_RISCV_BEGIN <= tok && tok < A_RISCV_END {
+		return abi.As(tok - A_RISCV_BEGIN)
+	}
+	return 0
+}
 
 // 是否是导出的符号
 func IsExported(name string) bool {
