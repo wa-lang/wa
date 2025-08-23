@@ -3,7 +3,9 @@
 
 package token
 
-import "strconv"
+import (
+	"strconv"
+)
 
 // 记号类型
 type Token int
@@ -52,6 +54,23 @@ const (
 	GLOBAL      // 全局符号
 	FUNC        // 函数
 	keyword_end // 关键字结束
+)
+
+// 寄存器和指令到 Token 空间的映射
+const (
+	// 寄存器编号空间
+	// 每个平台不超过 100 个, 至少保证 10 个独立空间
+	REG_BEGIN             = 1000
+	REG_RISCV_BEGIN Token = REG_BEGIN + 100*0
+	REG_RISCV_END   Token = REG_RISCV_BEGIN + 100
+	REG_END               = REG_RISCV_END
+
+	// 指令编号空间
+	// 每个平台不超过 2000 个, 至少保证 10 个独立空间
+	A_BEGIN             = 2000
+	A_RISCV_BEGIN Token = A_BEGIN + 2000*0
+	A_RISCV_END   Token = A_RISCV_BEGIN + 2000
+	A_END               = A_RISCV_END
 )
 
 var tokens = [...]string{
@@ -116,15 +135,23 @@ func init() {
 }
 
 // 查询标识符的类型
-func Lookup(ident string, isRegister, isInstruction func(ident string) bool) Token {
+// 寄存器和指令负责和 Token 名字空间的映射关系, 查询失败返回 0
+func Lookup(ident string,
+	lookupRegister func(ident string) Token,
+	lookupAs func(ident string) Token,
+) Token {
 	if tok, is_keyword := keywords[ident]; is_keyword {
 		return tok
 	}
-	if isRegister != nil && isRegister(ident) {
-		return REG
+	if lookupRegister != nil {
+		if reg := lookupRegister(ident); reg != 0 {
+			return reg
+		}
 	}
-	if isInstruction != nil && isInstruction(ident) {
-		return INST
+	if lookupAs != nil {
+		if as := lookupAs(ident); as != 0 {
+			return as
+		}
 	}
 	return IDENT
 }
@@ -137,6 +164,12 @@ func (tok Token) IsOperator() bool { return operator_beg < tok && tok < operator
 
 // 关键字
 func (tok Token) IsKeyword() bool { return keyword_beg < tok && tok < keyword_end }
+
+// 寄存器
+func (tok Token) IsRegister() bool { return REG_BEGIN <= tok && tok < REG_END }
+
+// 指令
+func (tok Token) IsAs() bool { return A_BEGIN <= tok && tok < A_END }
 
 // 是否是导出的符号
 func IsExported(name string) bool {

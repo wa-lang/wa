@@ -143,18 +143,10 @@ var RegisterAlias = []string{
 	REG_FT11: "FT11", // 临时变量
 }
 
-func (r RegType) String() string {
-	return RegString(r)
-}
-
 // 指令的名字
 // 保持和指令定义相同的顺序
 var Anames = []string{
-	// 各平台通用的伪指令
-	AXXX:   "XXX",
-	AGLOBL: "GLOBL",
-	ADATA:  "DATA",
-	ATEXT:  "TEXT",
+	AXXX: "XXX",
 
 	//
 	// Unprivileged ISA (version 20240411)
@@ -335,8 +327,4 @@ var Anames = []string{
 
 	// End marker
 	ALAST: "LAST",
-}
-
-func (as As) String() string {
-	return Anames[as]
 }

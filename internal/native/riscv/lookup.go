@@ -5,25 +5,27 @@ package riscv
 
 import (
 	"fmt"
+
+	"wa-lang.org/wa/internal/native/abi"
 )
 
 // 根据名字查找寄存器
-func LookupRegister(regName string) (r RegType, ok bool) {
+func LookupRegister(regName string) (r abi.RegType, ok bool) {
 	for i, s := range Register {
 		if s == regName {
-			return RegType(i), true
+			return abi.RegType(i), true
 		}
 	}
 	for i, s := range RegisterAlias {
 		if s == regName {
-			return RegType(i), true
+			return abi.RegType(i), true
 		}
 	}
 	return 0, false
 }
 
 // 寄存器转字符串格式
-func RegString(r RegType) string {
+func RegString(r abi.RegType) string {
 	switch {
 	case REG_X0 <= r && r <= REG_X31:
 		return fmt.Sprintf("X%d", r-REG_X0)
@@ -34,7 +36,7 @@ func RegString(r RegType) string {
 }
 
 // 寄存器别名
-func RegAliasString(r RegType) string {
+func RegAliasString(r abi.RegType) string {
 	if r >= REG_X0 && r < REG_END {
 		if s := RegisterAlias[r]; s != "" {
 			return s
@@ -44,16 +46,19 @@ func RegAliasString(r RegType) string {
 }
 
 // 根据名字查找汇编指令
-func LookupAs(asName string) (as As, ok bool) {
+func LookupAs(asName string) (as abi.As, ok bool) {
 	for i, s := range Anames {
 		if s == asName {
-			return As(i), true
+			return abi.As(i), true
 		}
 	}
 	return 0, false
 }
 
 // 汇编指令转字符串格式
-func AsString(as As) string {
-	return Anames[as]
+func AsString(as abi.As) string {
+	if int(as) < len(Anames) {
+		return Anames[as]
+	}
+	return fmt.Sprintf("riscv.badas(%d)", int(as))
 }

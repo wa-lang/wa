@@ -3,41 +3,25 @@
 
 package riscv
 
-import "fmt"
+import (
+	"fmt"
 
-// 指令参数
-type AsArgument struct {
-	Rd      RegType // 目标寄存器
-	Rs1     RegType // 原寄存器1
-	Rs2     RegType // 原寄存器2
-	Rs3     RegType // 原寄存器3
-	Imm     int32   // 立即数
-	ImmName string  // 立即数名字, 可能是 Label/符号, 用于打印
-}
+	"wa-lang.org/wa/internal/native/abi"
+)
 
 // 编码RISCV32指令
-func EncodeRV32(as As, arg *AsArgument) (uint32, error) {
-	return as.EncodeRV32(arg)
-}
-
-// 编码RISCV64指令
-func EncodeRV64(as As, arg *AsArgument) (uint32, error) {
-	return as.EncodeRV64(arg)
-}
-
-// 编码RISCV32指令
-func (as As) EncodeRV32(arg *AsArgument) (uint32, error) {
+func EncodeRV32(as abi.As, arg *abi.AsArgument) (uint32, error) {
 	ctx := &AOpContextTable[as]
 	return ctx.encode(32, as, arg)
 }
 
 // 编码RISCV64指令
-func (as As) EncodeRV64(arg *AsArgument) (uint32, error) {
+func EncodeRV64(as abi.As, arg *abi.AsArgument) (uint32, error) {
 	ctx := &AOpContextTable[as]
 	return ctx.encode(64, as, arg)
 }
 
-func (ctx *OpContextType) encode(xlen int, as As, arg *AsArgument) (uint32, error) {
+func (ctx *OpContextType) encode(xlen int, as abi.As, arg *abi.AsArgument) (uint32, error) {
 	switch ctx.Opcode.FormatType() {
 	case R:
 		if ctx.Funct3&0b_111 != 0 {
@@ -373,17 +357,17 @@ func (ctx *OpContextType) encodeJ_Imm(imm uint32) uint32 {
 }
 
 // 返回寄存器机器码编号
-func (ctx *OpContextType) regI(r RegType) uint32 {
+func (ctx *OpContextType) regI(r abi.RegType) uint32 {
 	return ctx.regVal(r, REG_X0, REG_X31)
 }
 
 // 返回浮点数寄存器机器码编号
-func (ctx *OpContextType) regF(r RegType) uint32 {
+func (ctx *OpContextType) regF(r abi.RegType) uint32 {
 	return ctx.regVal(r, REG_F0, REG_F31)
 }
 
 // 返回寄存器机器码编号
-func (ctx *OpContextType) regVal(r, min, max RegType) uint32 {
+func (ctx *OpContextType) regVal(r, min, max abi.RegType) uint32 {
 	if r < min || r > max {
 		panic(fmt.Sprintf("register out of range, want %d <= %d <= %d", min, r, max))
 	}

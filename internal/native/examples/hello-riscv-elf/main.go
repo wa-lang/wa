@@ -11,6 +11,7 @@ import (
 	"log"
 	"os"
 
+	"wa-lang.org/wa/internal/native/abi"
 	"wa-lang.org/wa/internal/native/riscv"
 )
 
@@ -176,32 +177,29 @@ func main() {
 }
 
 func genTextData() []byte {
-	const start_pc = 0x80000000
 	instList := []struct {
-		pc  int64
-		as  riscv.As
-		arg *riscv.AsArgument
+		as  abi.As
+		arg *abi.AsArgument
 	}{
-		{0, riscv.AAUIPC, &riscv.AsArgument{Rd: riscv.REG_A0, Imm: 0}},
-		{0, riscv.AADDI, &riscv.AsArgument{Rd: riscv.REG_A0, Rs1: riscv.REG_A0, Imm: 60}},
-		{0, riscv.ALBU, &riscv.AsArgument{Rd: riscv.REG_A1, Rs1: riscv.REG_A0, Imm: 0}},
-		{0, riscv.ABEQ, &riscv.AsArgument{Rs1: riscv.REG_A1, Rs2: riscv.REG_ZERO, Imm: 24}},
-		{0, riscv.ALUI, &riscv.AsArgument{Rd: riscv.REG_T0, Imm: 0x10000}},
-		{0, riscv.AADDI, &riscv.AsArgument{Rd: riscv.REG_T0, Rs1: riscv.REG_T0, Imm: 0}},
-		{0, riscv.ASB, &riscv.AsArgument{Rs1: riscv.REG_T0, Rs2: riscv.REG_A1, Imm: 0}},
-		{0, riscv.AADDI, &riscv.AsArgument{Rd: riscv.REG_A0, Rs1: riscv.REG_A0, Imm: 1}},
-		{0, riscv.AJAL, &riscv.AsArgument{Rd: riscv.REG_ZERO, Imm: -24}},
-		{0, riscv.ALUI, &riscv.AsArgument{Rd: riscv.REG_T0, Imm: 0x100}},
-		{0, riscv.AADDI, &riscv.AsArgument{Rd: riscv.REG_T0, Rs1: riscv.REG_T0, Imm: 0}},
-		{0, riscv.ALUI, &riscv.AsArgument{Rd: riscv.REG_T1, Imm: 0x5}},
-		{0, riscv.AADDI, &riscv.AsArgument{Rd: riscv.REG_T1, Rs1: riscv.REG_T1, Imm: 0x555}},
-		{0, riscv.ASW, &riscv.AsArgument{Rs1: riscv.REG_T0, Rs2: riscv.REG_T1, Imm: 0}},
-		{0, riscv.AJAL, &riscv.AsArgument{Rd: riscv.REG_ZERO, Imm: 0}},
+		{riscv.AAUIPC, &abi.AsArgument{Rd: riscv.REG_A0, Imm: 0}},
+		{riscv.AADDI, &abi.AsArgument{Rd: riscv.REG_A0, Rs1: riscv.REG_A0, Imm: 60}},
+		{riscv.ALBU, &abi.AsArgument{Rd: riscv.REG_A1, Rs1: riscv.REG_A0, Imm: 0}},
+		{riscv.ABEQ, &abi.AsArgument{Rs1: riscv.REG_A1, Rs2: riscv.REG_ZERO, Imm: 24}},
+		{riscv.ALUI, &abi.AsArgument{Rd: riscv.REG_T0, Imm: 0x10000}},
+		{riscv.AADDI, &abi.AsArgument{Rd: riscv.REG_T0, Rs1: riscv.REG_T0, Imm: 0}},
+		{riscv.ASB, &abi.AsArgument{Rs1: riscv.REG_T0, Rs2: riscv.REG_A1, Imm: 0}},
+		{riscv.AADDI, &abi.AsArgument{Rd: riscv.REG_A0, Rs1: riscv.REG_A0, Imm: 1}},
+		{riscv.AJAL, &abi.AsArgument{Rd: riscv.REG_ZERO, Imm: -24}},
+		{riscv.ALUI, &abi.AsArgument{Rd: riscv.REG_T0, Imm: 0x100}},
+		{riscv.AADDI, &abi.AsArgument{Rd: riscv.REG_T0, Rs1: riscv.REG_T0, Imm: 0}},
+		{riscv.ALUI, &abi.AsArgument{Rd: riscv.REG_T1, Imm: 0x5}},
+		{riscv.AADDI, &abi.AsArgument{Rd: riscv.REG_T1, Rs1: riscv.REG_T1, Imm: 0x555}},
+		{riscv.ASW, &abi.AsArgument{Rs1: riscv.REG_T0, Rs2: riscv.REG_T1, Imm: 0}},
+		{riscv.AJAL, &abi.AsArgument{Rd: riscv.REG_ZERO, Imm: 0}},
 	}
 
 	var buf bytes.Buffer
 	for i, inst := range instList {
-		inst.pc = start_pc + int64(i)*4
 		x, err := riscv.EncodeRV64(inst.as, inst.arg)
 		if err != nil {
 			log.Fatal(i, err)

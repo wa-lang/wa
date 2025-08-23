@@ -3,12 +3,13 @@
 
 package riscv
 
-// 寄存器类型
-type RegType int16
+import (
+	"wa-lang.org/wa/internal/native/abi"
+)
 
 const (
 	// 通用寄存器
-	REG_X0 RegType = iota
+	REG_X0 abi.RegType = iota
 	REG_X1
 	REG_X2
 	REG_X3
@@ -147,30 +148,20 @@ const (
 	REG_FT11 = REG_F31 // 临时变量
 )
 
-// 指令类型
-type As int32
-
-// 各平台通用的伪指令
-const (
-	AXXX           As = iota // 无效或未初始化的指令
-	AGLOBL                   // 全局变量定义(类似于 .globl)
-	ADATA                    // 静态数据段的数据定义
-	ATEXT                    // 函数定义入口标记, 指定函数名和属性
-	A_ARCHSPECIFIC           // 架构专属操作码的起点
-)
-
 // 优先支持最小指令集
 //
 // https://github.com/riscv/riscv-isa-manual
 // https://riscv.github.io/riscv-isa-manual/snapshot/unprivileged/#rv32-64g
 // 35. RV32/64G Instruction Set Listings
 const (
+	AXXX abi.As = iota // 无效或未初始化的指令
+
 	//
 	// Unprivileged ISA (version 20240411)
 	//
 
 	// 2.4: Integer Computational Instructions (RV32I)
-	AADDI As = A_ARCHSPECIFIC + iota
+	AADDI
 	ASLTI
 	ASLTIU
 	AANDI

@@ -162,6 +162,8 @@ type OpContextType struct {
 // 指令编码信息表
 // https://riscv.github.io/riscv-isa-manual/snapshot/unprivileged/#rv32-64g
 var AOpContextTable = []OpContextType{
+	AXXX: {},
+
 	// RV32I Base Instruction Set
 
 	ALUI:    {Opcode: OpBase_LUI},
