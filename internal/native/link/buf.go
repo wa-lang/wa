@@ -37,10 +37,8 @@ func (m *_MemBuffer) Seek(offset int64, whence int) (int64, error) {
 }
 
 func (m *_MemBuffer) Write(p []byte) (int, error) {
-	if int(m.off)+len(p) > len(m.buf) {
-		newBuf := make([]byte, int(m.off)+len(p))
-		copy(newBuf, m.buf)
-		m.buf = newBuf
+	if n := int(m.off) + len(p); n > cap(m.buf) {
+		m.grow(n)
 	}
 	copy(m.buf[m.off:], p)
 	m.off += int64(len(p))
@@ -51,8 +49,8 @@ func (m *_MemBuffer) WriteAt(p []byte, off int64) (int, error) {
 	if off < 0 {
 		return 0, errors.New("negative offset")
 	}
-	if int(off)+len(p) > len(m.buf) {
-		return 0, io.ErrShortWrite
+	if n := int(off) + len(p); n > cap(m.buf) {
+		m.grow(n)
 	}
 	copy(m.buf[off:], p)
 	return len(p), nil
@@ -60,4 +58,10 @@ func (m *_MemBuffer) WriteAt(p []byte, off int64) (int, error) {
 
 func (m *_MemBuffer) Bytes() []byte {
 	return m.buf
+}
+
+func (m *_MemBuffer) grow(n int) {
+	newBuf := make([]byte, n)
+	copy(newBuf, m.buf)
+	m.buf = newBuf
 }
