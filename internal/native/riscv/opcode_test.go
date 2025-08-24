@@ -6,8 +6,12 @@ package riscv
 import "testing"
 
 func TestAOpContextTable(t *testing.T) {
-	for i := AXXX + 1; i < ALAST; i++ {
-		if AOpContextTable[i].Opcode == 0 {
+	for i := AADDI; i < ALAST; i++ {
+		ctx := AOpContextTable[i]
+		if ctx.Pseudo {
+			continue
+		}
+		if ctx.Opcode == 0 {
 			t.Fatalf("invalid AOpContextTable[%s]", AsString(i))
 		}
 	}

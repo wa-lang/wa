@@ -22,6 +22,9 @@ func EncodeRV64(as abi.As, arg *abi.AsArgument) (uint32, error) {
 }
 
 func (ctx *OpContextType) encode(xlen int, as abi.As, arg *abi.AsArgument) (uint32, error) {
+	if ctx.Pseudo {
+		return ctx.encodePseudo(xlen, as, arg)
+	}
 	switch ctx.Opcode.FormatType() {
 	case R:
 		if ctx.Funct3&0b_111 != 0 {

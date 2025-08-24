@@ -9,7 +9,7 @@ import (
 
 const (
 	// 通用寄存器
-	REG_X0 abi.RegType = iota
+	REG_X0 abi.RegType = iota + 1 // 0 是无效的编号
 	REG_X1
 	REG_X2
 	REG_X3
@@ -154,14 +154,12 @@ const (
 // https://riscv.github.io/riscv-isa-manual/snapshot/unprivileged/#rv32-64g
 // 35. RV32/64G Instruction Set Listings
 const (
-	AXXX abi.As = iota // 无效或未初始化的指令
-
 	//
 	// Unprivileged ISA (version 20240411)
 	//
 
 	// 2.4: Integer Computational Instructions (RV32I)
-	AADDI
+	AADDI abi.As = iota + 1 // 0 是无效的编号
 	ASLTI
 	ASLTIU
 	AANDI
@@ -332,6 +330,61 @@ const (
 
 	// 21.7: Double-Precision Floating-Point Classify Instruction
 	AFCLASSD
+
+	// 伪指令
+	// ISA (version 20191213)
+	// 25: RISC-V Assembly Programmer's Handbook
+
+	ALA
+	ALLA
+	ANOP
+	ALI
+	AMV
+	ANOT
+	ANEG
+	ANEGW
+	ASEXT_W
+	ASEQZ
+	ASNEZ
+	ASLTZ
+	ASGTZ
+	AFMV_S
+	AFABS_S
+	AFNEG_S
+	AFMV_D
+	AFABS_D
+	AFNEG_D
+	ABEQZ
+	ABNEZ
+	ABLEZ
+	ABGEZ
+	ABLTZ
+	ABGTZ
+	ABGT
+	ABLE
+	ABGTU
+	ABLEU
+	AJ
+	AJR
+	ARET
+	ACALL
+	ATAIL
+	ARDINSTRET
+	ARDCYCLE
+	ARDTIME
+	ACSRR
+	ACSRW
+	ACSRS
+	ACSRC
+	ACSRWI
+	ACSRSI
+	ACSRCI
+	AFRCSR
+	AFSCSR
+	AFRRM
+	AFSRM
+	AFRFLAGS
+	AFSFLAGS
 
 	// End marker
 	ALAST

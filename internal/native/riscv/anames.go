@@ -146,8 +146,6 @@ var RegisterAlias = []string{
 // 指令的名字
 // 保持和指令定义相同的顺序
 var Anames = []string{
-	AXXX: "XXX",
-
 	//
 	// Unprivileged ISA (version 20240411)
 	//
@@ -324,6 +322,61 @@ var Anames = []string{
 
 	// 21.7: Double-Precision Floating-Point Classify Instruction
 	AFCLASSD: "FCLASSD",
+
+	// 伪指令
+	// ISA (version 20191213)
+	// 25: RISC-V Assembly Programmer's Handbook
+
+	ALA:        "LA",
+	ALLA:       "LLA",
+	ANOP:       "NOP",
+	ALI:        "LI",
+	AMV:        "MV",
+	ANOT:       "NOT",
+	ANEG:       "NEG",
+	ANEGW:      "NEGW",
+	ASEXT_W:    "SEXT_W",
+	ASEQZ:      "SEQZ",
+	ASNEZ:      "SNEZ",
+	ASLTZ:      "SLTZ",
+	ASGTZ:      "SGTZ",
+	AFMV_S:     "FMV_S",
+	AFABS_S:    "FABS_S",
+	AFNEG_S:    "FNEG_S",
+	AFMV_D:     "FMV_D",
+	AFABS_D:    "FABS_D",
+	AFNEG_D:    "FNEG_D",
+	ABEQZ:      "BEQZ",
+	ABNEZ:      "BNEZ",
+	ABLEZ:      "BLEZ",
+	ABGEZ:      "BGEZ",
+	ABLTZ:      "BLTZ",
+	ABGTZ:      "BGTZ",
+	ABGT:       "BGT",
+	ABLE:       "BLE",
+	ABGTU:      "BGTU",
+	ABLEU:      "BLEU",
+	AJ:         "J",
+	AJR:        "JR",
+	ARET:       "RET",
+	ACALL:      "CALL",
+	ATAIL:      "TAIL",
+	ARDINSTRET: "RDINSTRET",
+	ARDCYCLE:   "RDCYCLE",
+	ARDTIME:    "RDTIME",
+	ACSRR:      "CSRR",
+	ACSRW:      "CSRW",
+	ACSRS:      "CSRS",
+	ACSRC:      "CSRC",
+	ACSRWI:     "CSRWI",
+	ACSRSI:     "CSRSI",
+	ACSRCI:     "CSRCI",
+	AFRCSR:     "FRCSR",
+	AFSCSR:     "FSCSR",
+	AFRRM:      "FRRM",
+	AFSRM:      "FSRM",
+	AFRFLAGS:   "FRFLAGS",
+	AFSFLAGS:   "FSFLAGS",
 
 	// End marker
 	ALAST: "LAST",

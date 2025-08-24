@@ -157,13 +157,12 @@ type OpContextType struct {
 	Funct7   uint32 // 和 Funct2 共用
 	Rs2      *uint32
 	HasShamt bool // 是否有 shamt 参数. SLLI/SRLI/SRAI 在 RV32 是 5bit, RV64 是 6bit
+	Pseudo   bool // 伪指令
 }
 
 // 指令编码信息表
 // https://riscv.github.io/riscv-isa-manual/snapshot/unprivileged/#rv32-64g
 var AOpContextTable = []OpContextType{
-	AXXX: {},
-
 	// RV32I Base Instruction Set
 
 	ALUI:    {Opcode: OpBase_LUI},
@@ -323,6 +322,61 @@ var AOpContextTable = []OpContextType{
 	AFCVTDL:  {Opcode: OpBase_OP_FP, Funct7: 0b_110_1001, Rs2: newU32(0b_0_0010)},
 	AFCVTDLU: {Opcode: OpBase_OP_FP, Funct7: 0b_110_1001, Rs2: newU32(0b_0_0011)},
 	AFMVDX:   {Opcode: OpBase_OP_FP, Funct7: 0b_111_1001, Rs2: newU32(0b_0_0000)},
+
+	// 伪指令
+	// ISA (version 20191213)
+	// 25: RISC-V Assembly Programmer's Handbook
+
+	ALA:        {Pseudo: true},
+	ALLA:       {Pseudo: true},
+	ANOP:       {Pseudo: true},
+	ALI:        {Pseudo: true},
+	AMV:        {Pseudo: true},
+	ANOT:       {Pseudo: true},
+	ANEG:       {Pseudo: true},
+	ANEGW:      {Pseudo: true},
+	ASEXT_W:    {Pseudo: true},
+	ASEQZ:      {Pseudo: true},
+	ASNEZ:      {Pseudo: true},
+	ASLTZ:      {Pseudo: true},
+	ASGTZ:      {Pseudo: true},
+	AFMV_S:     {Pseudo: true},
+	AFABS_S:    {Pseudo: true},
+	AFNEG_S:    {Pseudo: true},
+	AFMV_D:     {Pseudo: true},
+	AFABS_D:    {Pseudo: true},
+	AFNEG_D:    {Pseudo: true},
+	ABEQZ:      {Pseudo: true},
+	ABNEZ:      {Pseudo: true},
+	ABLEZ:      {Pseudo: true},
+	ABGEZ:      {Pseudo: true},
+	ABLTZ:      {Pseudo: true},
+	ABGTZ:      {Pseudo: true},
+	ABGT:       {Pseudo: true},
+	ABLE:       {Pseudo: true},
+	ABGTU:      {Pseudo: true},
+	ABLEU:      {Pseudo: true},
+	AJ:         {Pseudo: true},
+	AJR:        {Pseudo: true},
+	ARET:       {Pseudo: true},
+	ACALL:      {Pseudo: true},
+	ATAIL:      {Pseudo: true},
+	ARDINSTRET: {Pseudo: true},
+	ARDCYCLE:   {Pseudo: true},
+	ARDTIME:    {Pseudo: true},
+	ACSRR:      {Pseudo: true},
+	ACSRW:      {Pseudo: true},
+	ACSRS:      {Pseudo: true},
+	ACSRC:      {Pseudo: true},
+	ACSRWI:     {Pseudo: true},
+	ACSRSI:     {Pseudo: true},
+	ACSRCI:     {Pseudo: true},
+	AFRCSR:     {Pseudo: true},
+	AFSCSR:     {Pseudo: true},
+	AFRRM:      {Pseudo: true},
+	AFSRM:      {Pseudo: true},
+	AFRFLAGS:   {Pseudo: true},
+	AFSFLAGS:   {Pseudo: true},
 
 	// End marker
 

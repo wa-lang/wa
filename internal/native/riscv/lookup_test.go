@@ -19,6 +19,9 @@ func TestAnames(t *testing.T) {
 
 func TestRegisterNames(t *testing.T) {
 	for i, name := range Register {
+		if i == 0 {
+			continue
+		}
 		reg, ok := LookupRegister(name)
 		if !ok {
 			t.Fatalf("%d: %q not found", i, name)
