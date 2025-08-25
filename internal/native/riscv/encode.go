@@ -33,6 +33,13 @@ func (ctx *OpContextType) encodeRaw(xlen int, as abi.As, arg *abi.AsArgument) (u
 	if ctx.PseudoAs != 0 {
 		panic("unreachable")
 	}
+
+	// 检查模板和参数
+	if err := ctx.checkArgMarks(xlen, as, arg, ctx.ArgMarks); err != nil {
+		return 0, err
+	}
+
+	// 编码指令
 	switch ctx.Opcode.FormatType() {
 	case R:
 		if ctx.Funct3&0b_111 != 0 {
