@@ -8,7 +8,7 @@ import "testing"
 func TestAOpContextTable(t *testing.T) {
 	for i := AADDI; i < ALAST; i++ {
 		ctx := AOpContextTable[i]
-		if ctx.Pseudo {
+		if ctx.PseudoAs != 0 {
 			continue
 		}
 		if ctx.Opcode == 0 {

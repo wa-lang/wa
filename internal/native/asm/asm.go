@@ -16,7 +16,8 @@ import (
 func AssemblerRV64(fnBody *ast.FuncBody) []byte {
 	var buf bytes.Buffer
 	for i, inst := range fnBody.Insts {
-		x, err := riscv.EncodeRawRV64(inst.As, inst.Arg)
+		// TODO: 处理长地址跳转
+		x, err := riscv.EncodeRV64(inst.As, inst.Arg)
 		if err != nil {
 			log.Fatal(i, err)
 		}

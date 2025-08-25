@@ -9,15 +9,15 @@ import (
 	"wa-lang.org/wa/internal/native/abi"
 )
 
-// 根据名字查找寄存器
+// 根据名字查找寄存器(忽略大小写, 忽略下划线和点的区别)
 func LookupRegister(regName string) (r abi.RegType, ok bool) {
 	for i, s := range Register {
-		if s == regName {
+		if strEqualFold(s, regName) {
 			return abi.RegType(i), true
 		}
 	}
 	for i, s := range RegisterAlias {
-		if s == regName {
+		if strEqualFold(s, regName) {
 			return abi.RegType(i), true
 		}
 	}
@@ -45,10 +45,10 @@ func RegAliasString(r abi.RegType) string {
 	return RegString(r)
 }
 
-// 根据名字查找汇编指令
+// 根据名字查找汇编指令(忽略大小写, 忽略下划线和点的区别)
 func LookupAs(asName string) (as abi.As, ok bool) {
 	for i, s := range Anames {
-		if s == asName {
+		if strEqualFold(s, asName) {
 			return abi.As(i), true
 		}
 	}

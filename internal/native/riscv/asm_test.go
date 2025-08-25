@@ -22,7 +22,7 @@ func ExampleAsmSyntax() {
 	// ADD X1, X2, X3
 }
 
-func ExampleEncodeRawRV64() {
+func ExampleEncodeRV64() {
 	// 数据来源: ../examples/hello-riscv
 	const start_pc = 0x80000000
 	instList := []struct {
@@ -49,7 +49,7 @@ func ExampleEncodeRawRV64() {
 
 	for i, inst := range instList {
 		inst.pc = start_pc + int64(i)*4
-		x, err := riscv.EncodeRawRV64(inst.as, inst.arg)
+		x, err := riscv.EncodeRV64(inst.as, inst.arg)
 		if err != nil {
 			log.Fatal(i, err)
 		}
@@ -102,7 +102,7 @@ func ExampleDecode() {
 		}
 
 		pc := start_pc + int64(i)*4
-		x, err := riscv.EncodeRawRV64(as, arg)
+		x, err := riscv.EncodeRV64(as, arg)
 		if err != nil {
 			log.Fatal(i, err)
 		}

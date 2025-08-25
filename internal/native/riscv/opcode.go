@@ -3,6 +3,8 @@
 
 package riscv
 
+import "wa-lang.org/wa/internal/native/abi"
+
 //
 // 0        6 7                   11 12      14 15                  19 20                  24 25                   31
 // +--------+ +--------------------+ +--------+ +--------------------+ +--------------------+ +---------------------+
@@ -150,14 +152,58 @@ func (opcode OpcodeType) FormatType() OpFormatType {
 	}
 }
 
+func (opFormatType OpFormatType) ArgMarks() ArgMarks {
+	switch opFormatType {
+	case R:
+		return ARG_RType
+	case R4:
+		return ARG_R4Type
+	case I:
+		return ARG_IType
+	case S:
+		return ARG_SType
+	case B:
+		return ARG_BType
+	case U:
+		return ARG_UType
+	case J:
+		return ARG_JType
+	default:
+		return 0
+	}
+}
+
+// 参数标志
+type ArgMarks uint16
+
+const (
+	ARG_RD ArgMarks = 1 << iota
+	ARG_RS1
+	ARG_RS2
+	ARG_RS3
+	ARG_IMM
+	ARG_FUNCT3
+	ARG_FUNCT7
+	ARG_FUNCT2
+
+	ARG_RType  = ARG_RD | ARG_RS1 | ARG_RS2 | ARG_FUNCT3
+	ARG_R4Type = ARG_RType | ARG_RS3 | ARG_FUNCT2
+	ARG_IType  = ARG_RD | ARG_RS1 | ARG_IMM | ARG_FUNCT3
+	ARG_SType  = ARG_RS1 | ARG_RS2 | ARG_IMM | ARG_FUNCT3
+	ARG_BType  = ARG_RS1 | ARG_RS2 | ARG_IMM | ARG_FUNCT3
+	ARG_UType  = ARG_RD | ARG_IMM
+	ARG_JType  = ARG_RD | ARG_IMM
+)
+
 // 操作码上下文信息
 type OpContextType struct {
-	Opcode   OpcodeType
-	Funct3   uint32
-	Funct7   uint32 // 和 Funct2 共用
-	Rs2      *uint32
-	HasShamt bool // 是否有 shamt 参数. SLLI/SRLI/SRAI 在 RV32 是 5bit, RV64 是 6bit
-	Pseudo   bool // 伪指令
+	Opcode         OpcodeType
+	Funct3         uint32
+	Funct7         uint32   // 和 Funct2 共用
+	Rs2            *uint32  // 是否用到 Rs2 模板
+	HasShamt       bool     // 是否有 shamt 参数. SLLI/SRLI/SRAI 在 RV32 是 5bit, RV64 是 6bit
+	PseudoAs       abi.As   // 伪指令对应的原生指令
+	PseudoArgMarks ArgMarks // 伪指令的参数
 }
 
 // 指令编码信息表
@@ -327,56 +373,53 @@ var AOpContextTable = []OpContextType{
 	// ISA (version 20191213)
 	// 25: RISC-V Assembly Programmer's Handbook
 
-	ALA:        {Pseudo: true},
-	ALLA:       {Pseudo: true},
-	ANOP:       {Pseudo: true},
-	ALI:        {Pseudo: true},
-	AMV:        {Pseudo: true},
-	ANOT:       {Pseudo: true},
-	ANEG:       {Pseudo: true},
-	ANEGW:      {Pseudo: true},
-	ASEXT_W:    {Pseudo: true},
-	ASEQZ:      {Pseudo: true},
-	ASNEZ:      {Pseudo: true},
-	ASLTZ:      {Pseudo: true},
-	ASGTZ:      {Pseudo: true},
-	AFMV_S:     {Pseudo: true},
-	AFABS_S:    {Pseudo: true},
-	AFNEG_S:    {Pseudo: true},
-	AFMV_D:     {Pseudo: true},
-	AFABS_D:    {Pseudo: true},
-	AFNEG_D:    {Pseudo: true},
-	ABEQZ:      {Pseudo: true},
-	ABNEZ:      {Pseudo: true},
-	ABLEZ:      {Pseudo: true},
-	ABGEZ:      {Pseudo: true},
-	ABLTZ:      {Pseudo: true},
-	ABGTZ:      {Pseudo: true},
-	ABGT:       {Pseudo: true},
-	ABLE:       {Pseudo: true},
-	ABGTU:      {Pseudo: true},
-	ABLEU:      {Pseudo: true},
-	AJ:         {Pseudo: true},
-	AJR:        {Pseudo: true},
-	ARET:       {Pseudo: true},
-	ACALL:      {Pseudo: true},
-	ATAIL:      {Pseudo: true},
-	ARDINSTRET: {Pseudo: true},
-	ARDCYCLE:   {Pseudo: true},
-	ARDTIME:    {Pseudo: true},
-	ACSRR:      {Pseudo: true},
-	ACSRW:      {Pseudo: true},
-	ACSRS:      {Pseudo: true},
-	ACSRC:      {Pseudo: true},
-	ACSRWI:     {Pseudo: true},
-	ACSRSI:     {Pseudo: true},
-	ACSRCI:     {Pseudo: true},
-	AFRCSR:     {Pseudo: true},
-	AFSCSR:     {Pseudo: true},
-	AFRRM:      {Pseudo: true},
-	AFSRM:      {Pseudo: true},
-	AFRFLAGS:   {Pseudo: true},
-	AFSFLAGS:   {Pseudo: true},
+	// TODO: 补充 PseudoArgMarks
+
+	ANOP:       {PseudoAs: AADDI, PseudoArgMarks: 0},    // nop                      => addi     x0, x0, 0
+	AMV:        {PseudoAs: AADDI, PseudoArgMarks: 0},    // mv        rd, rs         => addi     rd, rs, 0
+	ANOT:       {PseudoAs: AXORI, PseudoArgMarks: 0},    // not       rd, rs         => xori     rd, rs, -1
+	ANEG:       {PseudoAs: ASUB, PseudoArgMarks: 0},     // neg       rd, rs         => sub      rd, x0, rs
+	ANEGW:      {PseudoAs: ASUBW, PseudoArgMarks: 0},    // negw      rd, rs         => subw     rd, x0, rs
+	ASEXT_W:    {PseudoAs: AADDIW, PseudoArgMarks: 0},   // sext.w    rs, rs         => addiw    rd, rs, 0
+	ASEQZ:      {PseudoAs: ASLTIU, PseudoArgMarks: 0},   // seqz      rd, rs         => sltiu    rd, rs, 1
+	ASNEZ:      {PseudoAs: ASLTU, PseudoArgMarks: 0},    // snez      rd, rs         => sltu     rd, x0, rs
+	ASLTZ:      {PseudoAs: ASLT, PseudoArgMarks: 0},     // sltz      rd, rs         => slt      rd, rs, x0
+	ASGTZ:      {PseudoAs: ASLT, PseudoArgMarks: 0},     // sgtz      rd, rs         => slt      rd, x0, rs
+	AFMV_S:     {PseudoAs: AFSGNJS, PseudoArgMarks: 0},  // fmv.s     rd, rs         => fsgnj.s  rd, rs, rs
+	AFABS_S:    {PseudoAs: AFSGNJXS, PseudoArgMarks: 0}, // fabc.s    rd, rs         => fsgnjx.s rd, rs, rs
+	AFNEG_S:    {PseudoAs: AFSGNJNS, PseudoArgMarks: 0}, // fneg.s    rd, rs         => fsgnjn.s rd, rs, rs
+	AFMV_D:     {PseudoAs: AFSGNJD, PseudoArgMarks: 0},  // fmv.d     rd, rs         => fsgnj.d  rd, rs, rs
+	AFABS_D:    {PseudoAs: AFSGNJXD, PseudoArgMarks: 0}, // fabs.d    rd, rs         => fsgnjx.d rd, rs, rs
+	AFNEG_D:    {PseudoAs: AFSGNJND, PseudoArgMarks: 0}, // fneg.d    rd, rs         => fsgnjn.d rd, rs, rs
+	ABEQZ:      {PseudoAs: ABEQ, PseudoArgMarks: 0},     // beqz      rs, offset     => beq      rs, x0, pffset
+	ABNEZ:      {PseudoAs: ABNE, PseudoArgMarks: 0},     // bnez      rs, offset     => bne      rs, x0, pffset
+	ABLEZ:      {PseudoAs: ABGE, PseudoArgMarks: 0},     // blez      rs, offset     => bge      x0, rs, pffset
+	ABGEZ:      {PseudoAs: ABGE, PseudoArgMarks: 0},     // bgez      rs, offset     => bge      rs, x0, pffset
+	ABLTZ:      {PseudoAs: ABLT, PseudoArgMarks: 0},     // bltz      rs, offset     => blt      rs, x0, pffset
+	ABGTZ:      {PseudoAs: ABLT, PseudoArgMarks: 0},     // bgtz      rs, offset     => blt      x0, rs, pffset
+	ABGT:       {PseudoAs: ABLT, PseudoArgMarks: 0},     // bgt       rs, rt, offset => blt      rt, rs, offset
+	ABLE:       {PseudoAs: ABGE, PseudoArgMarks: 0},     // ble       rs, rt, offset => bge      rt, rs, offset
+	ABGTU:      {PseudoAs: ABLTU, PseudoArgMarks: 0},    // bgtu      rs, rt, offset => bltu     rt, rs, offset
+	ABLEU:      {PseudoAs: ABGEU, PseudoArgMarks: 0},    // bleu      rs, rt, offset => bgeu     rt, rs, offset
+	AJ:         {PseudoAs: AJAL, PseudoArgMarks: 0},     // j         offset         => jal      x0, offset
+	AJR:        {PseudoAs: AJALR, PseudoArgMarks: 0},    // jr        rs             => jalr     x0, 0(rs)
+	ARET:       {PseudoAs: AJALR, PseudoArgMarks: 0},    // ret                      => jalr     x0, 0(x1)
+	ARDINSTRET: {PseudoAs: ACSRRW, PseudoArgMarks: 0},   // rdinstret rd             => csrrs    rd, instret, x0
+	ARDCYCLE:   {PseudoAs: ACSRRW, PseudoArgMarks: 0},   // rdcyle    rd             => csrrs    rd, cycle, x0
+	ARDTIME:    {PseudoAs: ACSRRW, PseudoArgMarks: 0},   // rdtime    rd             => csrrs    rd, time, x0
+	ACSRR:      {PseudoAs: ACSRRW, PseudoArgMarks: 0},   // csrr      rd, csr        => csrrs    rd, csr, x0
+	ACSRW:      {PseudoAs: ACSRRW, PseudoArgMarks: 0},   // csrr      csr, rd        => csrrs    x0, csr, rs
+	ACSRS:      {PseudoAs: ACSRRW, PseudoArgMarks: 0},   // csrr      csr, rd        => csrrs    x0, csr, rs
+	ACSRC:      {PseudoAs: ACSRRW, PseudoArgMarks: 0},   // csrr      csr, rd        => csrrs    x0, csr, rs
+	ACSRWI:     {PseudoAs: ACSRRWI, PseudoArgMarks: 0},  // csrwi     csr, imm       => csrrwi   x0 csr, imm
+	ACSRSI:     {PseudoAs: ACSRRSI, PseudoArgMarks: 0},  // csrsi     csr, imm       => csrrsi   x0 csr, imm
+	ACSRCI:     {PseudoAs: ACSRRCI, PseudoArgMarks: 0},  // csrci     csr, imm       => csrrci   x0 csr, imm
+	AFRCSR:     {PseudoAs: ACSRRS, PseudoArgMarks: 0},   // frcsr     rd             => csrrs    rd, fcsr
+	AFSCSR:     {PseudoAs: ACSRRW, PseudoArgMarks: 0},   // fscsr     rd, rs         => csrrw    rd, fcsr, rs # rd 可省略
+	AFRRM:      {PseudoAs: ACSRRS, PseudoArgMarks: 0},   // frrm      rd             => csrrs    rd, frm, x0
+	AFSRM:      {PseudoAs: ACSRRW, PseudoArgMarks: 0},   // fsrm      rd, rs         => csrrw    rd, frm, rs # rd 可省略
+	AFRFLAGS:   {PseudoAs: ACSRRS, PseudoArgMarks: 0},   // frflags   rd             => csrrs    rd, fflags, x0
+	AFSFLAGS:   {PseudoAs: ACSRRW, PseudoArgMarks: 0},   // fsflags   rd, rs         => csrrw    rd, fflags, rs # rd 可省略
 
 	// End marker
 

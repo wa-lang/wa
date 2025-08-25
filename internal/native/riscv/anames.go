@@ -326,11 +326,10 @@ var Anames = []string{
 	// 伪指令
 	// ISA (version 20191213)
 	// 25: RISC-V Assembly Programmer's Handbook
+	// 只保留可以1:1映射到原生指令的类型
+	// 长地址跳转需要用户手动处理
 
-	ALA:        "LA",
-	ALLA:       "LLA",
 	ANOP:       "NOP",
-	ALI:        "LI",
 	AMV:        "MV",
 	ANOT:       "NOT",
 	ANEG:       "NEG",
@@ -359,8 +358,6 @@ var Anames = []string{
 	AJ:         "J",
 	AJR:        "JR",
 	ARET:       "RET",
-	ACALL:      "CALL",
-	ATAIL:      "TAIL",
 	ARDINSTRET: "RDINSTRET",
 	ARDCYCLE:   "RDCYCLE",
 	ARDTIME:    "RDTIME",

@@ -23,7 +23,7 @@ func TestSplit32BitImmediate(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		low, high, err := split32BitImmediate(tt.imm)
+		low, high, err := Split32BitImmediate(tt.imm)
 		if tt.shouldErr {
 			if err == nil {
 				t.Errorf("imm=%d: expected error, got none", tt.imm)
