@@ -59,6 +59,17 @@ func immIFitsIntN(x int64, nbits uint) error {
 	return nil
 }
 
+// 检查 imm 的范围
+func immFitsRange(imm int64, immRange ImmRange) error {
+	if imm < immRange.Min || imm > immRange.Max {
+		return fmt.Errorf("immediate %d must be in [%d, %d]", imm, immRange.Min, immRange.Max)
+	}
+	if imm%immRange.Align != 0 {
+		return fmt.Errorf("immediate %d must align with %d", imm, immRange.Align)
+	}
+	return nil
+}
+
 // 把 val 的低 bit 位当作一个有符号数扩展成 int64
 func i64SignExtend(val int64, bit uint) int64 {
 	// 1. 先左移, 把符号位移到最高位

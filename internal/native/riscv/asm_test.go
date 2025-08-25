@@ -5,7 +5,6 @@ package riscv_test
 
 import (
 	"fmt"
-	"log"
 
 	"wa-lang.org/wa/internal/native/abi"
 	"wa-lang.org/wa/internal/native/riscv"
@@ -51,7 +50,7 @@ func ExampleEncodeRV64() {
 		inst.pc = start_pc + int64(i)*4
 		x, err := riscv.EncodeRV64(inst.as, inst.arg)
 		if err != nil {
-			log.Fatal(i, err)
+			panic(fmt.Sprint(i, err))
 		}
 		fmt.Printf("0x%08X # %v\n", x, riscv.AsmSyntaxEx(inst.pc, inst.as, inst.arg, riscv.RegAliasString))
 	}
@@ -98,13 +97,13 @@ func ExampleDecode() {
 	for i, x := range instData {
 		as, arg, err := riscv.Decode(x)
 		if err != nil {
-			log.Fatalf("%d: riscv.Decode(0x%08X): %v", i, x, err)
+			panic(fmt.Errorf("%d: riscv.Decode(0x%08X): %v", i, x, err))
 		}
 
 		pc := start_pc + int64(i)*4
 		x, err := riscv.EncodeRV64(as, arg)
 		if err != nil {
-			log.Fatal(i, err)
+			panic(fmt.Sprint(i, err))
 		}
 		fmt.Printf("0x%08X # %v\n", x, riscv.AsmSyntaxEx(pc, as, arg, riscv.RegAliasString))
 	}

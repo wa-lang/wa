@@ -184,9 +184,24 @@ type OpContextType struct {
 	Rs2      *uint32    // 是否用到 Rs2 模板
 	HasShamt bool       // 是否有 shamt 参数. SLLI/SRLI/SRAI 在 RV32 是 5bit, RV64 是 6bit
 	PseudoAs abi.As     // 伪指令对应的原生指令
-	ImmMin   int64      // Imm 最小值
-	ImmMax   int64      // Imm 最大值
 }
+
+// Imm 取值范围
+type ImmRange struct {
+	Align int64
+	Min   int64
+	Max   int64
+}
+
+var (
+	ImmRanges_IType   = ImmRange{Align: 1, Min: -(1 << 11), Max: (1 << 11) - 1}
+	ImmRanges_SType   = ImmRange{Align: 1, Min: -(1 << 11), Max: (1 << 11) - 1}
+	ImmRanges_BType   = ImmRange{Align: 1 << 1, Min: -(1 << 12), Max: (1 << 12) - 2}
+	ImmRanges_UType   = ImmRange{Align: 1, Min: -(1 << 20), Max: (1 << 20) - 1}
+	ImmRanges_JType   = ImmRange{Align: 1, Min: -(1 << 20), Max: (1 << 20) - 2}
+	ImmRanges_Shamt32 = ImmRange{Align: 1, Min: 0, Max: (1 << 5) - 1}
+	ImmRanges_Shamt64 = ImmRange{Align: 1, Min: 0, Max: (1 << 6) - 1}
+)
 
 // 指令编码信息表
 // https://riscv.github.io/riscv-isa-manual/snapshot/unprivileged/#rv32-64g

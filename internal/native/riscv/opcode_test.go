@@ -40,11 +40,5 @@ func TestAOpContextTable(t *testing.T) {
 				t.Fatalf("%s: invalid funct2", AsString(i))
 			}
 		}
-		if ctx.ArgMarks&ARG_IMM != 0 {
-			if ctx.ImmMin >= ctx.ImmMax {
-				// TODO: 填充 imm 范围信息
-				// t.Fatalf("%s: invalid imm range: [%d, %d]", AsString(i), ctx.ImmMin, ctx.ImmMax)
-			}
-		}
 	}
 }

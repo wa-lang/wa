@@ -62,16 +62,37 @@ func (ctx *OpContextType) checkArgImm(xlen int, as abi.As, arg *abi.AsArgument, 
 	if ctx.HasShamt {
 		switch xlen {
 		case 32:
+			if err := immFitsRange(int64(arg.Imm), ImmRanges_Shamt32); err != nil {
+				return fmt.Errorf("%s: %w", AsString(as), err)
+			}
 		case 64:
+			if err := immFitsRange(int64(arg.Imm), ImmRanges_Shamt64); err != nil {
+				return fmt.Errorf("%s: %w", AsString(as), err)
+			}
 		default:
 			panic("unreachable")
 		}
+		return nil
 	}
 
-	if ctx.ImmMin < ctx.ImmMax {
-		if imm := int64(arg.Imm); imm < ctx.ImmMin || imm > ctx.ImmMax {
-			return fmt.Errorf("%s: imm must be in [%d, %d]", AsString(as), ctx.ImmMin, ctx.ImmMax)
-		}
+	var err error
+	switch ctx.Opcode.FormatType() {
+	case I:
+		err = immFitsRange(int64(arg.Imm), ImmRanges_IType)
+	case S:
+		err = immFitsRange(int64(arg.Imm), ImmRanges_SType)
+	case B:
+		err = immFitsRange(int64(arg.Imm), ImmRanges_BType)
+	case U:
+		err = immFitsRange(int64(arg.Imm), ImmRanges_UType)
+	case J:
+		err = immFitsRange(int64(arg.Imm), ImmRanges_JType)
+	default:
+		panic("unreachable")
 	}
+	if err != nil {
+		return fmt.Errorf("%s: %w", AsString(as), err)
+	}
+
 	return nil
 }
