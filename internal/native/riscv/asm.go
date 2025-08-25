@@ -31,28 +31,28 @@ func (ctx *OpContextType) asmSyntax(pc int64, as abi.As, arg *abi.AsArgument, rN
 	case R4:
 		return fmt.Sprintf("%s %s, %s, %s, %s", AsString(as), rName(arg.Rd), rName(arg.Rs1), rName(arg.Rs2), rName(arg.Rs3))
 	case I:
-		if arg.ImmName != "" {
-			return fmt.Sprintf("%s %s, %s(%s)", AsString(as), rName(arg.Rd), arg.ImmName, rName(arg.Rs1))
+		if arg.Symbol != "" {
+			return fmt.Sprintf("%s %s, %s(%s)", AsString(as), rName(arg.Rd), arg.Symbol, rName(arg.Rs1))
 		}
 		return fmt.Sprintf("%s %s, %d(%s)", AsString(as), rName(arg.Rd), arg.Imm, rName(arg.Rs1))
 	case S:
-		if arg.ImmName != "" {
-			return fmt.Sprintf("%s %s, %s(%s)", AsString(as), rName(arg.Rs2), arg.ImmName, rName(arg.Rs1))
+		if arg.Symbol != "" {
+			return fmt.Sprintf("%s %s, %s(%s)", AsString(as), rName(arg.Rs2), arg.Symbol, rName(arg.Rs1))
 		}
 		return fmt.Sprintf("%s %s, %d(%s)", AsString(as), rName(arg.Rs2), arg.Imm, rName(arg.Rs1))
 	case B:
-		if arg.ImmName != "" {
-			return fmt.Sprintf("%s %s, %s, %s", AsString(as), rName(arg.Rs1), rName(arg.Rs2), arg.ImmName)
+		if arg.Symbol != "" {
+			return fmt.Sprintf("%s %s, %s, %s", AsString(as), rName(arg.Rs1), rName(arg.Rs2), arg.Symbol)
 		}
 		return fmt.Sprintf("%s %s, %s, 0x%X", AsString(as), rName(arg.Rs1), rName(arg.Rs2), pc+int64(arg.Imm))
 	case U:
-		if arg.ImmName != "" {
-			return fmt.Sprintf("%s %s, %s", AsString(as), rName(arg.Rd), arg.ImmName)
+		if arg.Symbol != "" {
+			return fmt.Sprintf("%s %s, %s", AsString(as), rName(arg.Rd), arg.Symbol)
 		}
 		return fmt.Sprintf("%s %s, 0x%X", AsString(as), rName(arg.Rd), arg.Imm)
 	case J:
-		if arg.ImmName != "" {
-			return fmt.Sprintf("%s %s, %s", AsString(as), rName(arg.Rd), arg.ImmName)
+		if arg.Symbol != "" {
+			return fmt.Sprintf("%s %s, %s", AsString(as), rName(arg.Rd), arg.Symbol)
 		}
 		return fmt.Sprintf("%s %s, 0x%X", AsString(as), rName(arg.Rd), pc+int64(arg.Imm))
 	default:

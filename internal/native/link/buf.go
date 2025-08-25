@@ -61,7 +61,9 @@ func (m *_MemBuffer) Bytes() []byte {
 }
 
 func (m *_MemBuffer) grow(n int) {
-	newBuf := make([]byte, n)
-	copy(newBuf, m.buf)
-	m.buf = newBuf
+	if n > cap(m.buf) {
+		newBuf := make([]byte, n)
+		copy(newBuf, m.buf)
+		m.buf = newBuf
+	}
 }

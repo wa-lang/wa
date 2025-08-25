@@ -9,21 +9,40 @@ import (
 	"wa-lang.org/wa/internal/native/abi"
 )
 
-// 编码RISCV32指令
-func EncodeRV32(as abi.As, arg *abi.AsArgument) (uint32, error) {
-	ctx := &AOpContextTable[as]
-	return ctx.encode(32, as, arg)
+type U32Slice []byte
+
+// 编码RISCV32指令(含伪指令)
+func EncodeRV32(w *U32Slice, as abi.As, arg *abi.AsArgument) (n int, err error) {
+	// la 需要 PC 信息
+	panic("TODO")
 }
 
-// 编码RISCV64指令
-func EncodeRV64(as abi.As, arg *abi.AsArgument) (uint32, error) {
-	ctx := &AOpContextTable[as]
-	return ctx.encode(64, as, arg)
+// 编码RISCV64指令(含伪指令)
+func EncodeRV64(as abi.As, arg *abi.AsArgument) error {
+	panic("TODO")
 }
 
-func (ctx *OpContextType) encode(xlen int, as abi.As, arg *abi.AsArgument) (uint32, error) {
+// 编码RISCV32原生指令(不含伪指令, 并忽略标识符使用立即数)
+func EncodeRawRV32(as abi.As, arg *abi.AsArgument) (uint32, error) {
+	ctx := &AOpContextTable[as]
 	if ctx.Pseudo {
-		return ctx.encodePseudo(xlen, as, arg)
+		return 0, fmt.Errorf("%v is pseudo instruction", as)
+	}
+	return ctx.encodeRaw(32, as, arg)
+}
+
+// 编码RISCV64原生指令(不含伪指令, 并忽略标识符使用立即数)
+func EncodeRawRV64(as abi.As, arg *abi.AsArgument) (uint32, error) {
+	ctx := &AOpContextTable[as]
+	if ctx.Pseudo {
+		return 0, fmt.Errorf("%v is pseudo instruction", as)
+	}
+	return ctx.encodeRaw(64, as, arg)
+}
+
+func (ctx *OpContextType) encodeRaw(xlen int, as abi.As, arg *abi.AsArgument) (uint32, error) {
+	if ctx.Pseudo {
+		panic("unreachable")
 	}
 	switch ctx.Opcode.FormatType() {
 	case R:

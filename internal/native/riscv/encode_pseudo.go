@@ -9,3 +9,7 @@ func (ctx *OpContextType) encodePseudo(xlen int, as abi.As, arg *abi.AsArgument)
 	// TODO: 展开伪代码 后 继续调用 ctx.encode() 处理
 	panic("TODO")
 }
+
+// 其他涉及地址的指令
+// 超出范围的跳转需要拆分为2个指令
+// if offset < -(1<<20) || (1<<20) <= offset {}

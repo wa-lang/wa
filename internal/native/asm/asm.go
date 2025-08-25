@@ -16,7 +16,7 @@ import (
 func AssemblerRV64(fnBody *ast.FuncBody) []byte {
 	var buf bytes.Buffer
 	for i, inst := range fnBody.Insts {
-		x, err := riscv.EncodeRV64(inst.As, inst.Arg)
+		x, err := riscv.EncodeRawRV64(inst.As, inst.Arg)
 		if err != nil {
 			log.Fatal(i, err)
 		}
