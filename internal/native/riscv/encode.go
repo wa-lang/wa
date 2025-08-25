@@ -9,11 +9,9 @@ import (
 	"wa-lang.org/wa/internal/native/abi"
 )
 
-type U32Slice []byte
-
 // 编码RISCV32指令
 func EncodeRV32(as abi.As, arg *abi.AsArgument) (uint32, error) {
-	ctx := &AOpContextTable[as]
+	ctx := &_AOpContextTable[as]
 	if ctx.PseudoAs != 0 {
 		return ctx.encodePseudo(32, as, arg)
 	}
@@ -22,14 +20,20 @@ func EncodeRV32(as abi.As, arg *abi.AsArgument) (uint32, error) {
 
 // 编码RISCV64指令
 func EncodeRV64(as abi.As, arg *abi.AsArgument) (uint32, error) {
-	ctx := &AOpContextTable[as]
+	ctx := &_AOpContextTable[as]
 	if ctx.PseudoAs != 0 {
 		return ctx.encodePseudo(64, as, arg)
 	}
 	return ctx.encodeRaw(64, as, arg)
 }
 
-func (ctx *OpContextType) encodeRaw(xlen int, as abi.As, arg *abi.AsArgument) (uint32, error) {
+// 输入一个 32 位有符号立即数 imm, 输出 low(12bit)/high(20bit)
+// 满足 imm 约等于 (high << 12) + low, 以便于进行长地址跳转的拆分
+func Split32BitImmediate(imm int64) (low12bit, high20bit int64, err error) {
+	return split32BitImmediate(imm)
+}
+
+func (ctx *_OpContextType) encodeRaw(xlen int, as abi.As, arg *abi.AsArgument) (uint32, error) {
 	if ctx.PseudoAs != 0 {
 		panic("unreachable")
 	}
@@ -41,11 +45,11 @@ func (ctx *OpContextType) encodeRaw(xlen int, as abi.As, arg *abi.AsArgument) (u
 
 	// 编码指令
 	switch ctx.Opcode.FormatType() {
-	case R:
+	case _R:
 		return ctx.encodeR(ctx.regI(arg.Rd), ctx.regI(arg.Rs1), ctx.regI(arg.Rs2)), nil
-	case R4:
+	case _R4:
 		return ctx.encodeR4(ctx.regF(arg.Rd), ctx.regF(arg.Rs1), ctx.regF(arg.Rs2), ctx.regF(arg.Rs3)), nil
-	case I:
+	case _I:
 		switch as {
 		case AECALL:
 			return ctx.encodeI(0, 0, 0b_0000_0000_0000), nil
@@ -54,13 +58,13 @@ func (ctx *OpContextType) encodeRaw(xlen int, as abi.As, arg *abi.AsArgument) (u
 		default:
 			return ctx.encodeI(ctx.regI(arg.Rd), ctx.regI(arg.Rs1), uint32(arg.Imm)), nil
 		}
-	case S:
+	case _S:
 		return ctx.encodeS(ctx.regI(arg.Rs1), ctx.regI(arg.Rs2), uint32(arg.Imm)), nil
-	case B:
+	case _B:
 		return ctx.encodeB(ctx.regI(arg.Rs1), ctx.regI(arg.Rs2), uint32(arg.Imm)), nil
-	case U:
+	case _U:
 		return ctx.encodeU(ctx.regI(arg.Rd), uint32(arg.Imm)), nil
-	case J:
+	case _J:
 		return ctx.encodeJ(ctx.regI(arg.Rd), uint32(arg.Imm)), nil
 
 	default:
@@ -69,59 +73,59 @@ func (ctx *OpContextType) encodeRaw(xlen int, as abi.As, arg *abi.AsArgument) (u
 }
 
 // R-type
-func (ctx *OpContextType) encodeR(rd, rs1, rs2 uint32) uint32 {
+func (ctx *_OpContextType) encodeR(rd, rs1, rs2 uint32) uint32 {
 	return ctx.Funct7<<25 | rs2<<20 | rs1<<15 | ctx.Funct3<<12 | rd<<7 | uint32(ctx.Opcode)
 }
 
 // R4-type
-func (ctx *OpContextType) encodeR4(rd, rs1, rs2, rs3 uint32) uint32 {
+func (ctx *_OpContextType) encodeR4(rd, rs1, rs2, rs3 uint32) uint32 {
 	funct2 := ctx.Funct7
 	return rs3<<27 | funct2<<25 | rs2<<20 | rs1<<15 | ctx.Funct3<<12 | rd<<7 | uint32(ctx.Opcode)
 }
 
 // I-type
-func (ctx *OpContextType) encodeI(rd, rs1 uint32, imm uint32) uint32 {
+func (ctx *_OpContextType) encodeI(rd, rs1 uint32, imm uint32) uint32 {
 	return imm<<20 | rs1<<15 | ctx.Funct3<<12 | rd<<7 | uint32(ctx.Opcode)
 }
 
 // S-type
-func (ctx *OpContextType) encodeS(rs1, rs2 uint32, imm uint32) uint32 {
+func (ctx *_OpContextType) encodeS(rs1, rs2 uint32, imm uint32) uint32 {
 	return (imm>>5)<<25 | rs2<<20 | rs1<<15 | ctx.Funct3<<12 | (imm&0b_1_1111)<<7 | uint32(ctx.Opcode)
 }
 
 // B-type
-func (ctx *OpContextType) encodeB(rs1, rs2 uint32, imm uint32) uint32 {
+func (ctx *_OpContextType) encodeB(rs1, rs2 uint32, imm uint32) uint32 {
 	return ctx.encodeB_Imm(imm) | rs2<<20 | rs1<<15 | ctx.Funct3<<12 | uint32(ctx.Opcode)
 }
-func (ctx *OpContextType) encodeB_Imm(imm uint32) uint32 {
+func (ctx *_OpContextType) encodeB_Imm(imm uint32) uint32 {
 	return (imm>>12)<<31 | ((imm>>5)&0x3f)<<25 | ((imm>>1)&0xf)<<8 | ((imm>>11)&0x1)<<7
 }
 
 // U-type
-func (ctx *OpContextType) encodeU(rd uint32, imm uint32) uint32 {
+func (ctx *_OpContextType) encodeU(rd uint32, imm uint32) uint32 {
 	return (imm << 12) | rd<<7 | uint32(ctx.Opcode)
 }
 
 // J-type
-func (ctx *OpContextType) encodeJ(rd uint32, imm uint32) uint32 {
+func (ctx *_OpContextType) encodeJ(rd uint32, imm uint32) uint32 {
 	return ctx.encodeJ_Imm(imm) | rd<<7 | uint32(ctx.Opcode)
 }
-func (ctx *OpContextType) encodeJ_Imm(imm uint32) uint32 {
+func (ctx *_OpContextType) encodeJ_Imm(imm uint32) uint32 {
 	return (imm>>20)<<31 | ((imm>>1)&0x3ff)<<21 | ((imm>>11)&0x1)<<20 | ((imm>>12)&0xff)<<12
 }
 
 // 返回寄存器机器码编号
-func (ctx *OpContextType) regI(r abi.RegType) uint32 {
+func (ctx *_OpContextType) regI(r abi.RegType) uint32 {
 	return ctx.regVal(r, REG_X0, REG_X31)
 }
 
 // 返回浮点数寄存器机器码编号
-func (ctx *OpContextType) regF(r abi.RegType) uint32 {
+func (ctx *_OpContextType) regF(r abi.RegType) uint32 {
 	return ctx.regVal(r, REG_F0, REG_F31)
 }
 
 // 返回寄存器机器码编号
-func (ctx *OpContextType) regVal(r, min, max abi.RegType) uint32 {
+func (ctx *_OpContextType) regVal(r, min, max abi.RegType) uint32 {
 	if r < min || r > max {
 		panic(fmt.Sprintf("register out of range, want %d <= %d <= %d", min, r, max))
 	}

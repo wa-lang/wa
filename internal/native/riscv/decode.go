@@ -12,23 +12,23 @@ import (
 // 解析机器码指令
 func Decode(x uint32) (as abi.As, arg *abi.AsArgument, err error) {
 	// 根据 opcode 查指令类型
-	opcode := OpcodeType(x) & OpBase_Mask
+	opcode := _OpcodeType(x) & _OpBase_Mask
 
 	// 根据指令类型解析参数和功能码
 	switch opcode.FormatType() {
-	case R:
+	case _R:
 		return opcode.decodeR(x)
-	case R4:
+	case _R4:
 		return opcode.decodeR4(x)
-	case I:
+	case _I:
 		return opcode.decodeI(x)
-	case S:
+	case _S:
 		return opcode.decodeS(x)
-	case B:
+	case _B:
 		return opcode.decodeB(x)
-	case U:
+	case _U:
 		return opcode.decodeU(x)
-	case J:
+	case _J:
 		return opcode.decodeJ(x)
 	default:
 		err = fmt.Errorf("unknown opcode %07b", opcode)
@@ -36,7 +36,7 @@ func Decode(x uint32) (as abi.As, arg *abi.AsArgument, err error) {
 	}
 }
 
-func (op OpcodeType) decodeR(x uint32) (as abi.As, arg *abi.AsArgument, err error) {
+func (op _OpcodeType) decodeR(x uint32) (as abi.As, arg *abi.AsArgument, err error) {
 	arg = new(abi.AsArgument)
 
 	rd := (x >> 7) & 0b_1_1111
@@ -46,7 +46,7 @@ func (op OpcodeType) decodeR(x uint32) (as abi.As, arg *abi.AsArgument, err erro
 	funct3 := (x >> 12) & 0b_111
 	funct7 := (x >> 25) & 0b_111_1111
 
-	if op == OpBase_OP_FP {
+	if op == _OpBase_OP_FP {
 		if arg.Rd, err = op.decodeRegF(rd); err != nil {
 			return 0, nil, err
 		}
@@ -69,7 +69,7 @@ func (op OpcodeType) decodeR(x uint32) (as abi.As, arg *abi.AsArgument, err erro
 	}
 
 	// 查询表格
-	for i, ctx := range AOpContextTable {
+	for i, ctx := range _AOpContextTable {
 		if ctx.Opcode == op {
 			if ctx.Funct3 == funct3 && ctx.Funct7 == funct7 {
 				as = abi.As(i)
@@ -86,7 +86,7 @@ func (op OpcodeType) decodeR(x uint32) (as abi.As, arg *abi.AsArgument, err erro
 	return
 }
 
-func (op OpcodeType) decodeR4(x uint32) (as abi.As, arg *abi.AsArgument, err error) {
+func (op _OpcodeType) decodeR4(x uint32) (as abi.As, arg *abi.AsArgument, err error) {
 	arg = new(abi.AsArgument)
 
 	rd := (x >> 7) & 0b_1_1111
@@ -111,7 +111,7 @@ func (op OpcodeType) decodeR4(x uint32) (as abi.As, arg *abi.AsArgument, err err
 	}
 
 	// 查询表格
-	for i, ctx := range AOpContextTable {
+	for i, ctx := range _AOpContextTable {
 		if ctx.Opcode == op {
 			if ctx.Funct3 == funct3 && ctx.Funct7 == funct2 {
 				as = abi.As(i)
@@ -128,7 +128,7 @@ func (op OpcodeType) decodeR4(x uint32) (as abi.As, arg *abi.AsArgument, err err
 	return
 }
 
-func (op OpcodeType) decodeI(x uint32) (as abi.As, arg *abi.AsArgument, err error) {
+func (op _OpcodeType) decodeI(x uint32) (as abi.As, arg *abi.AsArgument, err error) {
 	arg = new(abi.AsArgument)
 
 	rd := (x >> 7) & 0b_1_1111
@@ -137,7 +137,7 @@ func (op OpcodeType) decodeI(x uint32) (as abi.As, arg *abi.AsArgument, err erro
 
 	funct3 := (x >> 12) & 0b_111
 
-	if op == OpBase_LOAD_FP {
+	if op == _OpBase_LOAD_FP {
 		if arg.Rd, err = op.decodeRegF(rd); err != nil {
 			return 0, nil, err
 		}
@@ -155,7 +155,7 @@ func (op OpcodeType) decodeI(x uint32) (as abi.As, arg *abi.AsArgument, err erro
 	arg.Imm = imm
 
 	// 查询表格
-	for i, ctx := range AOpContextTable {
+	for i, ctx := range _AOpContextTable {
 		if ctx.Opcode == op {
 			if ctx.Funct3 == funct3 {
 				as = abi.As(i)
@@ -172,7 +172,7 @@ func (op OpcodeType) decodeI(x uint32) (as abi.As, arg *abi.AsArgument, err erro
 	return
 }
 
-func (op OpcodeType) decodeS(x uint32) (as abi.As, arg *abi.AsArgument, err error) {
+func (op _OpcodeType) decodeS(x uint32) (as abi.As, arg *abi.AsArgument, err error) {
 	arg = new(abi.AsArgument)
 
 	rs1 := (x >> 15) & 0b_1_1111
@@ -181,7 +181,7 @@ func (op OpcodeType) decodeS(x uint32) (as abi.As, arg *abi.AsArgument, err erro
 
 	funct3 := (x >> 12) & 0b_111
 
-	if op == OpBase_STORE_FP {
+	if op == _OpBase_STORE_FP {
 		if arg.Rs1, err = op.decodeRegF(rs1); err != nil {
 			return 0, nil, err
 		}
@@ -199,7 +199,7 @@ func (op OpcodeType) decodeS(x uint32) (as abi.As, arg *abi.AsArgument, err erro
 	arg.Imm = imm
 
 	// 查询表格
-	for i, ctx := range AOpContextTable {
+	for i, ctx := range _AOpContextTable {
 		if ctx.Opcode == op {
 			if ctx.Funct3 == funct3 {
 				as = abi.As(i)
@@ -216,7 +216,7 @@ func (op OpcodeType) decodeS(x uint32) (as abi.As, arg *abi.AsArgument, err erro
 	return
 }
 
-func (op OpcodeType) decodeB(x uint32) (as abi.As, arg *abi.AsArgument, err error) {
+func (op _OpcodeType) decodeB(x uint32) (as abi.As, arg *abi.AsArgument, err error) {
 	arg = new(abi.AsArgument)
 
 	rs1 := (x >> 15) & 0b_1_1111
@@ -230,7 +230,7 @@ func (op OpcodeType) decodeB(x uint32) (as abi.As, arg *abi.AsArgument, err erro
 
 	funct3 := (x >> 12) & 0b_111
 
-	if op == OpBase_STORE_FP {
+	if op == _OpBase_STORE_FP {
 		if arg.Rs1, err = op.decodeRegF(rs1); err != nil {
 			return 0, nil, err
 		}
@@ -248,7 +248,7 @@ func (op OpcodeType) decodeB(x uint32) (as abi.As, arg *abi.AsArgument, err erro
 	arg.Imm = imm
 
 	// 查询表格
-	for i, ctx := range AOpContextTable {
+	for i, ctx := range _AOpContextTable {
 		if ctx.Opcode == op {
 			if ctx.Funct3 == funct3 {
 				as = abi.As(i)
@@ -265,7 +265,7 @@ func (op OpcodeType) decodeB(x uint32) (as abi.As, arg *abi.AsArgument, err erro
 	return
 }
 
-func (op OpcodeType) decodeU(x uint32) (as abi.As, arg *abi.AsArgument, err error) {
+func (op _OpcodeType) decodeU(x uint32) (as abi.As, arg *abi.AsArgument, err error) {
 	arg = new(abi.AsArgument)
 
 	rd := (x >> 7) & 0b_1_1111
@@ -279,7 +279,7 @@ func (op OpcodeType) decodeU(x uint32) (as abi.As, arg *abi.AsArgument, err erro
 	arg.Imm = imm
 
 	// 查询表格
-	for i, ctx := range AOpContextTable {
+	for i, ctx := range _AOpContextTable {
 		if ctx.Opcode == op {
 			as = abi.As(i)
 			break
@@ -294,7 +294,7 @@ func (op OpcodeType) decodeU(x uint32) (as abi.As, arg *abi.AsArgument, err erro
 	return
 }
 
-func (op OpcodeType) decodeJ(x uint32) (as abi.As, arg *abi.AsArgument, err error) {
+func (op _OpcodeType) decodeJ(x uint32) (as abi.As, arg *abi.AsArgument, err error) {
 	arg = new(abi.AsArgument)
 
 	rd := (x >> 7) & 0b_1_1111
@@ -315,7 +315,7 @@ func (op OpcodeType) decodeJ(x uint32) (as abi.As, arg *abi.AsArgument, err erro
 	arg.Imm = int32(imm)
 
 	// 查询表格
-	for i, ctx := range AOpContextTable {
+	for i, ctx := range _AOpContextTable {
 		if ctx.Opcode == op {
 			as = abi.As(i)
 			break
@@ -331,7 +331,7 @@ func (op OpcodeType) decodeJ(x uint32) (as abi.As, arg *abi.AsArgument, err erro
 }
 
 // 解码寄存器
-func (op OpcodeType) decodeRegI(r uint32) (reg abi.RegType, err error) {
+func (op _OpcodeType) decodeRegI(r uint32) (reg abi.RegType, err error) {
 	if r <= 31 {
 		return abi.RegType(r) + REG_X0, nil
 	}
@@ -339,7 +339,7 @@ func (op OpcodeType) decodeRegI(r uint32) (reg abi.RegType, err error) {
 }
 
 // 解码寄存器(浮点数)
-func (op OpcodeType) decodeRegF(r uint32) (reg abi.RegType, err error) {
+func (op _OpcodeType) decodeRegF(r uint32) (reg abi.RegType, err error) {
 	if r <= 31 {
 		return abi.RegType(r) + REG_F0, nil
 	}

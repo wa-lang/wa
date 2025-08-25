@@ -11,12 +11,12 @@ import (
 
 // 根据名字查找寄存器(忽略大小写, 忽略下划线和点的区别)
 func LookupRegister(regName string) (r abi.RegType, ok bool) {
-	for i, s := range Register {
+	for i, s := range _Register {
 		if strEqualFold(s, regName) {
 			return abi.RegType(i), true
 		}
 	}
-	for i, s := range RegisterAlias {
+	for i, s := range _RegisterAlias {
 		if strEqualFold(s, regName) {
 			return abi.RegType(i), true
 		}
@@ -38,7 +38,7 @@ func RegString(r abi.RegType) string {
 // 寄存器别名
 func RegAliasString(r abi.RegType) string {
 	if r >= REG_X0 && r < REG_END {
-		if s := RegisterAlias[r]; s != "" {
+		if s := _RegisterAlias[r]; s != "" {
 			return s
 		}
 	}
@@ -47,7 +47,7 @@ func RegAliasString(r abi.RegType) string {
 
 // 根据名字查找汇编指令(忽略大小写, 忽略下划线和点的区别)
 func LookupAs(asName string) (as abi.As, ok bool) {
-	for i, s := range Anames {
+	for i, s := range _Anames {
 		if strEqualFold(s, asName) {
 			return abi.As(i), true
 		}
@@ -57,8 +57,8 @@ func LookupAs(asName string) (as abi.As, ok bool) {
 
 // 汇编指令转字符串格式
 func AsString(as abi.As) string {
-	if int(as) < len(Anames) {
-		return Anames[as]
+	if int(as) < len(_Anames) {
+		return _Anames[as]
 	}
 	return fmt.Sprintf("riscv.badas(%d)", int(as))
 }

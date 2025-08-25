@@ -15,7 +15,7 @@ func newU32(v uint32) *uint32 {
 
 // 输入一个 32 位有符号立即数 imm, 输出 low(12bit)/high(20bit)
 // 满足 imm 约等于 (high << 12) + low, 以便于进行长地址跳转的拆分
-func Split32BitImmediate(imm int64) (low12bit, high20bit int64, err error) {
+func split32BitImmediate(imm int64) (low12bit, high20bit int64, err error) {
 	// 确保 imm 在 32 位有符号整数范围内
 	if err := immIFitsIntN(imm, 32); err != nil {
 		return 0, 0, err
@@ -60,7 +60,7 @@ func immIFitsIntN(x int64, nbits uint) error {
 }
 
 // 检查 imm 的范围
-func immFitsRange(imm int64, immRange ImmRange) error {
+func immFitsRange(imm int64, immRange _ImmRange) error {
 	if imm < immRange.Min || imm > immRange.Max {
 		return fmt.Errorf("immediate %d must be in [%d, %d]", imm, immRange.Min, immRange.Max)
 	}

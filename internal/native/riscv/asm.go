@@ -14,43 +14,43 @@ import (
 
 // 汇编语言格式
 func AsmSyntax(pc int64, as abi.As, arg *abi.AsArgument) string {
-	ctx := &AOpContextTable[as]
+	ctx := &_AOpContextTable[as]
 	return ctx.asmSyntax(pc, as, arg, RegString)
 }
 
 // 汇编语言格式, 自定义寄存器名字
 func AsmSyntaxEx(pc int64, as abi.As, arg *abi.AsArgument, fnRegName func(r abi.RegType) string) string {
-	ctx := &AOpContextTable[as]
+	ctx := &_AOpContextTable[as]
 	return ctx.asmSyntax(pc, as, arg, fnRegName)
 }
 
-func (ctx *OpContextType) asmSyntax(pc int64, as abi.As, arg *abi.AsArgument, rName func(r abi.RegType) string) string {
+func (ctx *_OpContextType) asmSyntax(pc int64, as abi.As, arg *abi.AsArgument, rName func(r abi.RegType) string) string {
 	switch ctx.Opcode.FormatType() {
-	case R:
+	case _R:
 		return fmt.Sprintf("%s %s, %s, %s", AsString(as), rName(arg.Rd), rName(arg.Rs1), rName(arg.Rs2))
-	case R4:
+	case _R4:
 		return fmt.Sprintf("%s %s, %s, %s, %s", AsString(as), rName(arg.Rd), rName(arg.Rs1), rName(arg.Rs2), rName(arg.Rs3))
-	case I:
+	case _I:
 		if arg.Symbol != "" {
 			return fmt.Sprintf("%s %s, %s(%s)", AsString(as), rName(arg.Rd), arg.Symbol, rName(arg.Rs1))
 		}
 		return fmt.Sprintf("%s %s, %d(%s)", AsString(as), rName(arg.Rd), arg.Imm, rName(arg.Rs1))
-	case S:
+	case _S:
 		if arg.Symbol != "" {
 			return fmt.Sprintf("%s %s, %s(%s)", AsString(as), rName(arg.Rs2), arg.Symbol, rName(arg.Rs1))
 		}
 		return fmt.Sprintf("%s %s, %d(%s)", AsString(as), rName(arg.Rs2), arg.Imm, rName(arg.Rs1))
-	case B:
+	case _B:
 		if arg.Symbol != "" {
 			return fmt.Sprintf("%s %s, %s, %s", AsString(as), rName(arg.Rs1), rName(arg.Rs2), arg.Symbol)
 		}
 		return fmt.Sprintf("%s %s, %s, 0x%X", AsString(as), rName(arg.Rs1), rName(arg.Rs2), pc+int64(arg.Imm))
-	case U:
+	case _U:
 		if arg.Symbol != "" {
 			return fmt.Sprintf("%s %s, %s", AsString(as), rName(arg.Rd), arg.Symbol)
 		}
 		return fmt.Sprintf("%s %s, 0x%X", AsString(as), rName(arg.Rd), arg.Imm)
-	case J:
+	case _J:
 		if arg.Symbol != "" {
 			return fmt.Sprintf("%s %s, %s", AsString(as), rName(arg.Rd), arg.Symbol)
 		}

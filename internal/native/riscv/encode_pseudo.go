@@ -6,7 +6,7 @@ package riscv
 import "wa-lang.org/wa/internal/native/abi"
 
 // 伪指令只产生1个机器指令
-func (ctx *OpContextType) encodePseudo(xlen int, as abi.As, arg *abi.AsArgument) (uint32, error) {
+func (ctx *_OpContextType) encodePseudo(xlen int, as abi.As, arg *abi.AsArgument) (uint32, error) {
 	if ctx.PseudoAs == 0 {
 		panic("unreachable")
 	}

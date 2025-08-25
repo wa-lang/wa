@@ -6,7 +6,7 @@ package riscv
 import "testing"
 
 func TestAnames(t *testing.T) {
-	for i, name := range Anames {
+	for i, name := range _Anames {
 		as, ok := LookupAs(name)
 		if !ok {
 			t.Fatalf("%d: %q not found", i, name)
@@ -18,7 +18,7 @@ func TestAnames(t *testing.T) {
 }
 
 func TestRegisterNames(t *testing.T) {
-	for i, name := range Register {
+	for i, name := range _Register {
 		if i == 0 {
 			continue
 		}

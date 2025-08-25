@@ -4,7 +4,7 @@
 package riscv
 
 // 寄存器名字列表
-var Register = []string{
+var _Register = []string{
 	// 通用寄存器
 	REG_X0:  "X0",
 	REG_X1:  "X1",
@@ -75,7 +75,7 @@ var Register = []string{
 }
 
 // 寄存器别名
-var RegisterAlias = []string{
+var _RegisterAlias = []string{
 	REG_ZERO: "ZERO", // 零寄存器
 	REG_RA:   "RA",   // 返回地址
 	REG_SP:   "SP",   // 栈指针
@@ -145,7 +145,7 @@ var RegisterAlias = []string{
 
 // 指令的名字
 // 保持和指令定义相同的顺序
-var Anames = []string{
+var _Anames = []string{
 	//
 	// Unprivileged ISA (version 20240411)
 	//
