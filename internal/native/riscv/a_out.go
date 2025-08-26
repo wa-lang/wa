@@ -254,134 +254,134 @@ const (
 	AFSW
 
 	// 20.6: Single-Precision Floating-Point Computational Instructions
-	AFADDS
-	AFSUBS
-	AFMULS
-	AFDIVS
-	AFMINS
-	AFMAXS
-	AFSQRTS
-	AFMADDS
-	AFMSUBS
-	AFNMADDS
-	AFNMSUBS
+	AFADD_S
+	AFSUB_S
+	AFMUL_S
+	AFDIV_S
+	AFMIN_S
+	AFMAX_S
+	AFSQRT_S
+	AFMADD_S
+	AFMSUB_S
+	AFNMADD_S
+	AFNMSUB_S
 
 	// 20.7: Single-Precision Floating-Point Conversion and Move Instructions
-	AFCVTWS
-	AFCVTLS
-	AFCVTSW
-	AFCVTSL
-	AFCVTWUS
-	AFCVTLUS
-	AFCVTSWU
-	AFCVTSLU
-	AFSGNJS
-	AFSGNJNS
-	AFSGNJXS
-	AFMVXW
-	AFMVWX
+	AFCVT_W_S
+	AFCVT_L_S
+	AFCVT_S_W
+	AFCVT_S_L
+	AFCVT_WU_S
+	AFCVT_LU_S
+	AFCVT_S_WU
+	AFCVT_S_LU
+	AFSGNJ_S
+	AFSGNJN_S
+	AFSGNJX_S
+	AFMV_X_W
+	AFMV_W_X
 
 	// 20.8: Single-Precision Floating-Point Compare Instructions
-	AFEQS
-	AFLTS
-	AFLES
+	AFEQ_S
+	AFLT_S
+	AFLE_S
 
 	// 20.9: Single-Precision Floating-Point Classify Instruction
-	AFCLASSS
+	AFCLASS_S
 
 	// 21.3: Double-Precision Load and Store Instructions (D)
 	AFLD
 	AFSD
 
 	// 21.4: Double-Precision Floating-Point Computational Instructions
-	AFADDD
-	AFSUBD
-	AFMULD
-	AFDIVD
-	AFMIND
-	AFMAXD
-	AFSQRTD
-	AFMADDD
-	AFMSUBD
-	AFNMADDD
-	AFNMSUBD
+	AFADD_D
+	AFSUB_D
+	AFMUL_D
+	AFDIV_D
+	AFMIN_D
+	AFMAX_D
+	AFSQRT_D
+	AFMADD_D
+	AFMSUB_D
+	AFNMADD_D
+	AFNMSUB_D
 
 	// 21.5: Double-Precision Floating-Point Conversion and Move Instructions
-	AFCVTWD
-	AFCVTLD
-	AFCVTDW
-	AFCVTDL
-	AFCVTWUD
-	AFCVTLUD
-	AFCVTDWU
-	AFCVTDLU
-	AFCVTSD
-	AFCVTDS
-	AFSGNJD
-	AFSGNJND
-	AFSGNJXD
-	AFMVXD
-	AFMVDX
+	AFCVT_W_D
+	AFCVT_L_D
+	AFCVT_D_W
+	AFCVT_D_L
+	AFCVT_WU_D
+	AFCVT_LU_D
+	AFCVT_D_WU
+	AFCVT_D_LU
+	AFCVT_S_D
+	AFCVT_D_S
+	AFSGNJ_D
+	AFSGNJN_D
+	AFSGNJX_D
+	AFMV_X_D
+	AFMV_D_X
 
 	// 21.6: Double-Precision Floating-Point Compare Instructions
-	AFEQD
-	AFLTD
-	AFLED
+	AFEQ_D
+	AFLT_D
+	AFLE_D
 
 	// 21.7: Double-Precision Floating-Point Classify Instruction
-	AFCLASSD
+	AFCLASS_D
 
-	// 伪指令
+	// 伪指令(A_开头以区分)
 	// ISA (version 20191213)
 	// 25: RISC-V Assembly Programmer's Handbook
 	// 只保留可以1:1映射到原生指令的类型
 	// 长地址跳转需要用户手动处理
 
-	ANOP
-	AMV
-	ANOT
-	ANEG
-	ANEGW
-	ASEXT_W
-	ASEQZ
-	ASNEZ
-	ASLTZ
-	ASGTZ
-	AFMV_S
-	AFABS_S
-	AFNEG_S
-	AFMV_D
-	AFABS_D
-	AFNEG_D
-	ABEQZ
-	ABNEZ
-	ABLEZ
-	ABGEZ
-	ABLTZ
-	ABGTZ
-	ABGT
-	ABLE
-	ABGTU
-	ABLEU
-	AJ
-	AJR
-	ARET
-	ARDINSTRET
-	ARDCYCLE
-	ARDTIME
-	ACSRR
-	ACSRW
-	ACSRS
-	ACSRC
-	ACSRWI
-	ACSRSI
-	ACSRCI
-	AFRCSR
-	AFSCSR
-	AFRRM
-	AFSRM
-	AFRFLAGS
-	AFSFLAGS
+	A_NOP
+	A_MV
+	A_NOT
+	A_NEG
+	A_NEGW
+	A_SEXT_W
+	A_SEQZ
+	A_SNEZ
+	A_SLTZ
+	A_SGTZ
+	A_FMV_S
+	A_FABS_S
+	A_FNEG_S
+	A_FMV_D
+	A_FABS_D
+	A_FNEG_D
+	A_BEQZ
+	A_BNEZ
+	A_BLEZ
+	A_BGEZ
+	A_BLTZ
+	A_BGTZ
+	A_BGT
+	A_BLE
+	A_BGTU
+	A_BLEU
+	A_J
+	A_JR
+	A_RET
+	A_RDINSTRET
+	A_RDCYCLE
+	A_RDTIME
+	A_CSRR
+	A_CSRW
+	A_CSRS
+	A_CSRC
+	A_CSRWI
+	A_CSRSI
+	A_CSRCI
+	A_FRCSR
+	A_FSCSR
+	A_FRRM
+	A_FSRM
+	A_FRFLAGS
+	A_FSFLAGS
 
 	// End marker
 	ALAST

@@ -156,7 +156,8 @@ func (opcode _OpcodeType) FormatType() _OpFormatType {
 type _ArgMarks uint16
 
 const (
-	_ARG_RD _ArgMarks = 1 << iota
+	_ARG_RD      _ArgMarks = 1 << iota
+	_ARG_RD_IS_X           // 有少部分伪指令 rd 是可选的, 参数检查需要跳过
 	_ARG_RS1
 	_ARG_RS2
 	_ARG_RS3
@@ -210,7 +211,7 @@ var _AOpContextTable = []_OpContextType{
 
 	ALUI:    {Opcode: _OpBase_LUI, ArgMarks: _ARG_UType},
 	AAUIPC:  {Opcode: _OpBase_AUIPC, ArgMarks: _ARG_UType},
-	AJAL:    {Opcode: _OpBase_JAL, ArgMarks: _ARG_JType},
+	AJAL:    {Opcode: _OpBase_JAL, ArgMarks: _ARG_JType | _ARG_RD_IS_X}, // 伪指令同名, RD 可选
 	AJALR:   {Opcode: _OpBase_JALR, ArgMarks: _ARG_IType, Funct3: 0b_000},
 	ABEQ:    {Opcode: _OpBase_BRANCH, ArgMarks: _ARG_BType, Funct3: 0b_000},
 	ABNE:    {Opcode: _OpBase_BRANCH, ArgMarks: _ARG_BType, Funct3: 0b_001},
@@ -245,9 +246,9 @@ var _AOpContextTable = []_OpContextType{
 	ASRA:    {Opcode: _OpBase_OP, ArgMarks: _ARG_RType, Funct3: 0b_101, Funct7: 0b_010_0000},
 	AOR:     {Opcode: _OpBase_OP, ArgMarks: _ARG_RType, Funct3: 0b_110, Funct7: 0b_000_0000},
 	AAND:    {Opcode: _OpBase_OP, ArgMarks: _ARG_RType, Funct3: 0b_111, Funct7: 0b_000_0000},
-	AFENCE:  {Opcode: _OpBase_MISC_MEN, ArgMarks: _ARG_IType, Funct3: 0b_000},
-	AECALL:  {Opcode: _OpBase_SYSTEM, ArgMarks: _ARG_IType, Funct3: 0b_000}, // imm[11:0] = 0b000000000000
-	AEBREAK: {Opcode: _OpBase_SYSTEM, ArgMarks: _ARG_IType, Funct3: 0b_000}, // imm[11:0] = 0b000000000001
+	AFENCE:  {Opcode: _OpBase_MISC_MEN, ArgMarks: _ARG_IType, Funct3: 0b_000}, // 伪指令同名, 两个参数都可选
+	AECALL:  {Opcode: _OpBase_SYSTEM, ArgMarks: _ARG_IType, Funct3: 0b_000},   // imm[11:0] = 0b000000000000
+	AEBREAK: {Opcode: _OpBase_SYSTEM, ArgMarks: _ARG_IType, Funct3: 0b_000},   // imm[11:0] = 0b000000000001
 
 	// RV64I Base Instruction Set (in addition to RV32I)
 
@@ -294,127 +295,127 @@ var _AOpContextTable = []_OpContextType{
 
 	// RV32F Standard Extension
 
-	AFLW:     {Opcode: _OpBase_LOAD_FP, ArgMarks: _ARG_IType, Funct3: 0b_010},
-	AFSW:     {Opcode: _OpBase_STORE_FP, ArgMarks: _ARG_SType, Funct3: 0b_010},
-	AFMADDS:  {Opcode: _OpBase_MADD, ArgMarks: _ARG_R4Type, Funct7: 0b_00},  // funct2
-	AFMSUBS:  {Opcode: _OpBase_MSUB, ArgMarks: _ARG_R4Type, Funct7: 0b_00},  // funct2
-	AFNMSUBS: {Opcode: _OpBase_NMADD, ArgMarks: _ARG_R4Type, Funct7: 0b_00}, // funct2
-	AFNMADDS: {Opcode: _OpBase_NMSUB, ArgMarks: _ARG_R4Type, Funct7: 0b_00}, // funct2
-	AFADDS:   {Opcode: _OpBase_OP_FP, ArgMarks: _ARG_RType, Funct7: 0b_000_0000},
-	AFSUBS:   {Opcode: _OpBase_OP_FP, ArgMarks: _ARG_RType, Funct7: 0b_000_0100},
-	AFMULS:   {Opcode: _OpBase_OP_FP, ArgMarks: _ARG_RType, Funct7: 0b_000_1000},
-	AFDIVS:   {Opcode: _OpBase_OP_FP, ArgMarks: _ARG_RType, Funct7: 0b_000_1100},
-	AFSQRTS:  {Opcode: _OpBase_OP_FP, ArgMarks: _ARG_RType, Funct7: 0b_000_1100, Rs2: newU32(0b_0_0000)},
-	AFSGNJS:  {Opcode: _OpBase_OP_FP, ArgMarks: _ARG_RType, Funct7: 0b_001_0000},
-	AFSGNJNS: {Opcode: _OpBase_OP_FP, ArgMarks: _ARG_RType, Funct7: 0b_001_0000},
-	AFSGNJXS: {Opcode: _OpBase_OP_FP, ArgMarks: _ARG_RType, Funct7: 0b_001_0000},
-	AFMINS:   {Opcode: _OpBase_OP_FP, ArgMarks: _ARG_RType, Funct7: 0b_001_0100, Rs2: newU32(0b_0_0000)},
-	AFMAXS:   {Opcode: _OpBase_OP_FP, ArgMarks: _ARG_RType, Funct7: 0b_001_0100, Rs2: newU32(0b_0_0001)},
-	AFCVTWS:  {Opcode: _OpBase_OP_FP, ArgMarks: _ARG_RType, Funct7: 0b_110_0000, Rs2: newU32(0b_0_0000)},
-	AFCVTWUS: {Opcode: _OpBase_OP_FP, ArgMarks: _ARG_RType, Funct7: 0b_110_0000},
-	AFMVXW:   {Opcode: _OpBase_OP_FP, ArgMarks: _ARG_RType, Funct7: 0b_111_0000},
-	AFEQS:    {Opcode: _OpBase_OP_FP, ArgMarks: _ARG_RType, Funct7: 0b_101_0000},
-	AFLTS:    {Opcode: _OpBase_OP_FP, ArgMarks: _ARG_RType, Funct7: 0b_101_0000},
-	AFLES:    {Opcode: _OpBase_OP_FP, ArgMarks: _ARG_RType, Funct7: 0b_101_0000},
-	AFCLASSS: {Opcode: _OpBase_OP_FP, ArgMarks: _ARG_RType, Funct7: 0b_111_0000, Rs2: newU32(0b_0_0000)},
-	AFCVTSW:  {Opcode: _OpBase_OP_FP, ArgMarks: _ARG_RType, Funct7: 0b_110_1000, Rs2: newU32(0b_0_0000)},
-	AFCVTSWU: {Opcode: _OpBase_OP_FP, ArgMarks: _ARG_RType, Funct7: 0b_110_1000, Rs2: newU32(0b_0_0001)},
-	AFMVWX:   {Opcode: _OpBase_OP_FP, ArgMarks: _ARG_RType, Funct7: 0b_111_1000, Rs2: newU32(0b_0_0000)},
+	AFLW:       {Opcode: _OpBase_LOAD_FP, ArgMarks: _ARG_IType, Funct3: 0b_010},
+	AFSW:       {Opcode: _OpBase_STORE_FP, ArgMarks: _ARG_SType, Funct3: 0b_010},
+	AFMADD_S:   {Opcode: _OpBase_MADD, ArgMarks: _ARG_R4Type, Funct7: 0b_00},  // funct2
+	AFMSUB_S:   {Opcode: _OpBase_MSUB, ArgMarks: _ARG_R4Type, Funct7: 0b_00},  // funct2
+	AFNMSUB_S:  {Opcode: _OpBase_NMADD, ArgMarks: _ARG_R4Type, Funct7: 0b_00}, // funct2
+	AFNMADD_S:  {Opcode: _OpBase_NMSUB, ArgMarks: _ARG_R4Type, Funct7: 0b_00}, // funct2
+	AFADD_S:    {Opcode: _OpBase_OP_FP, ArgMarks: _ARG_RType, Funct7: 0b_000_0000},
+	AFSUB_S:    {Opcode: _OpBase_OP_FP, ArgMarks: _ARG_RType, Funct7: 0b_000_0100},
+	AFMUL_S:    {Opcode: _OpBase_OP_FP, ArgMarks: _ARG_RType, Funct7: 0b_000_1000},
+	AFDIV_S:    {Opcode: _OpBase_OP_FP, ArgMarks: _ARG_RType, Funct7: 0b_000_1100},
+	AFSQRT_S:   {Opcode: _OpBase_OP_FP, ArgMarks: _ARG_RType, Funct7: 0b_000_1100, Rs2: newU32(0b_0_0000)},
+	AFSGNJ_S:   {Opcode: _OpBase_OP_FP, ArgMarks: _ARG_RType, Funct7: 0b_001_0000},
+	AFSGNJN_S:  {Opcode: _OpBase_OP_FP, ArgMarks: _ARG_RType, Funct7: 0b_001_0000},
+	AFSGNJX_S:  {Opcode: _OpBase_OP_FP, ArgMarks: _ARG_RType, Funct7: 0b_001_0000},
+	AFMIN_S:    {Opcode: _OpBase_OP_FP, ArgMarks: _ARG_RType, Funct7: 0b_001_0100, Rs2: newU32(0b_0_0000)},
+	AFMAX_S:    {Opcode: _OpBase_OP_FP, ArgMarks: _ARG_RType, Funct7: 0b_001_0100, Rs2: newU32(0b_0_0001)},
+	AFCVT_W_S:  {Opcode: _OpBase_OP_FP, ArgMarks: _ARG_RType, Funct7: 0b_110_0000, Rs2: newU32(0b_0_0000)},
+	AFCVT_WU_S: {Opcode: _OpBase_OP_FP, ArgMarks: _ARG_RType, Funct7: 0b_110_0000},
+	AFMV_X_W:   {Opcode: _OpBase_OP_FP, ArgMarks: _ARG_RType, Funct7: 0b_111_0000},
+	AFEQ_S:     {Opcode: _OpBase_OP_FP, ArgMarks: _ARG_RType, Funct7: 0b_101_0000},
+	AFLT_S:     {Opcode: _OpBase_OP_FP, ArgMarks: _ARG_RType, Funct7: 0b_101_0000},
+	AFLE_S:     {Opcode: _OpBase_OP_FP, ArgMarks: _ARG_RType, Funct7: 0b_101_0000},
+	AFCLASS_S:  {Opcode: _OpBase_OP_FP, ArgMarks: _ARG_RType, Funct7: 0b_111_0000, Rs2: newU32(0b_0_0000)},
+	AFCVT_S_W:  {Opcode: _OpBase_OP_FP, ArgMarks: _ARG_RType, Funct7: 0b_110_1000, Rs2: newU32(0b_0_0000)},
+	AFCVT_S_WU: {Opcode: _OpBase_OP_FP, ArgMarks: _ARG_RType, Funct7: 0b_110_1000, Rs2: newU32(0b_0_0001)},
+	AFMV_W_X:   {Opcode: _OpBase_OP_FP, ArgMarks: _ARG_RType, Funct7: 0b_111_1000, Rs2: newU32(0b_0_0000)},
 
 	// RV64F Standard Extension (in addition to RV32F)
 
-	AFCVTLS:  {Opcode: _OpBase_OP_FP, ArgMarks: _ARG_RType, Funct7: 0b_110_0000, Rs2: newU32(0b_0_0010)},
-	AFCVTLUS: {Opcode: _OpBase_OP_FP, ArgMarks: _ARG_RType, Funct7: 0b_110_0000, Rs2: newU32(0b_0_0011)},
-	AFCVTSL:  {Opcode: _OpBase_OP_FP, ArgMarks: _ARG_RType, Funct7: 0b_110_1000, Rs2: newU32(0b_0_0010)},
-	AFCVTSLU: {Opcode: _OpBase_OP_FP, ArgMarks: _ARG_RType, Funct7: 0b_110_1000, Rs2: newU32(0b_0_0011)},
+	AFCVT_L_S:  {Opcode: _OpBase_OP_FP, ArgMarks: _ARG_RType, Funct7: 0b_110_0000, Rs2: newU32(0b_0_0010)},
+	AFCVT_LU_S: {Opcode: _OpBase_OP_FP, ArgMarks: _ARG_RType, Funct7: 0b_110_0000, Rs2: newU32(0b_0_0011)},
+	AFCVT_S_L:  {Opcode: _OpBase_OP_FP, ArgMarks: _ARG_RType, Funct7: 0b_110_1000, Rs2: newU32(0b_0_0010)},
+	AFCVT_S_LU: {Opcode: _OpBase_OP_FP, ArgMarks: _ARG_RType, Funct7: 0b_110_1000, Rs2: newU32(0b_0_0011)},
 
 	// RV32D Standard Extension
 
-	AFLD:     {Opcode: _OpBase_LOAD_FP, ArgMarks: _ARG_IType, Funct3: 0b_011},
-	AFSD:     {Opcode: _OpBase_STORE_FP, ArgMarks: _ARG_SType, Funct3: 0b_011},
-	AFMADDD:  {Opcode: _OpBase_MADD, ArgMarks: _ARG_R4Type, Funct7: 0b_00},  // funct2
-	AFMSUBD:  {Opcode: _OpBase_MSUB, ArgMarks: _ARG_R4Type, Funct7: 0b_00},  // funct2
-	AFNMSUBD: {Opcode: _OpBase_NMADD, ArgMarks: _ARG_R4Type, Funct7: 0b_00}, // funct2
-	AFNMADDD: {Opcode: _OpBase_NMSUB, ArgMarks: _ARG_R4Type, Funct7: 0b_00}, // funct2
-	AFADDD:   {Opcode: _OpBase_OP_FP, ArgMarks: _ARG_RType, Funct7: 0b_000_0001},
-	AFSUBD:   {Opcode: _OpBase_OP_FP, ArgMarks: _ARG_RType, Funct7: 0b_000_0101},
-	AFMULD:   {Opcode: _OpBase_OP_FP, ArgMarks: _ARG_RType, Funct7: 0b_000_1001},
-	AFDIVD:   {Opcode: _OpBase_OP_FP, ArgMarks: _ARG_RType, Funct7: 0b_000_1101},
-	AFSQRTD:  {Opcode: _OpBase_OP_FP, ArgMarks: _ARG_RType, Funct7: 0b_010_1101, Rs2: newU32(0b_0_0000)},
-	AFSGNJD:  {Opcode: _OpBase_OP_FP, ArgMarks: _ARG_RType, Funct7: 0b_001_0001},
-	AFSGNJND: {Opcode: _OpBase_OP_FP, ArgMarks: _ARG_RType, Funct7: 0b_001_0001},
-	AFSGNJXD: {Opcode: _OpBase_OP_FP, ArgMarks: _ARG_RType, Funct7: 0b_001_0001},
-	AFMIND:   {Opcode: _OpBase_OP_FP, ArgMarks: _ARG_RType, Funct7: 0b_001_0101},
-	AFMAXD:   {Opcode: _OpBase_OP_FP, ArgMarks: _ARG_RType, Funct7: 0b_001_0101},
-	AFCVTSD:  {Opcode: _OpBase_OP_FP, ArgMarks: _ARG_RType, Funct7: 0b_010_0000, Rs2: newU32(0b_0_0001)},
-	AFCVTDS:  {Opcode: _OpBase_OP_FP, ArgMarks: _ARG_RType, Funct7: 0b_010_0001, Rs2: newU32(0b_0_0000)},
-	AFEQD:    {Opcode: _OpBase_OP_FP, ArgMarks: _ARG_RType, Funct7: 0b_101_0001},
-	AFLTD:    {Opcode: _OpBase_OP_FP, ArgMarks: _ARG_RType, Funct7: 0b_101_0001},
-	AFLED:    {Opcode: _OpBase_OP_FP, ArgMarks: _ARG_RType, Funct7: 0b_101_0001},
-	AFCLASSD: {Opcode: _OpBase_OP_FP, ArgMarks: _ARG_RType, Funct7: 0b_111_0001, Rs2: newU32(0b_0_0000)},
-	AFCVTWD:  {Opcode: _OpBase_OP_FP, ArgMarks: _ARG_RType, Funct7: 0b_110_0001, Rs2: newU32(0b_0_0000)},
-	AFCVTWUD: {Opcode: _OpBase_OP_FP, ArgMarks: _ARG_RType, Funct7: 0b_110_0001, Rs2: newU32(0b_0_0001)},
-	AFCVTDW:  {Opcode: _OpBase_OP_FP, ArgMarks: _ARG_RType, Funct7: 0b_110_1001, Rs2: newU32(0b_0_0000)},
-	AFCVTDWU: {Opcode: _OpBase_OP_FP, ArgMarks: _ARG_RType, Funct7: 0b_110_1001, Rs2: newU32(0b_0_0001)},
+	AFLD:       {Opcode: _OpBase_LOAD_FP, ArgMarks: _ARG_IType, Funct3: 0b_011},
+	AFSD:       {Opcode: _OpBase_STORE_FP, ArgMarks: _ARG_SType, Funct3: 0b_011},
+	AFMADD_D:   {Opcode: _OpBase_MADD, ArgMarks: _ARG_R4Type, Funct7: 0b_00},  // funct2
+	AFMSUB_D:   {Opcode: _OpBase_MSUB, ArgMarks: _ARG_R4Type, Funct7: 0b_00},  // funct2
+	AFNMSUB_D:  {Opcode: _OpBase_NMADD, ArgMarks: _ARG_R4Type, Funct7: 0b_00}, // funct2
+	AFNMADD_D:  {Opcode: _OpBase_NMSUB, ArgMarks: _ARG_R4Type, Funct7: 0b_00}, // funct2
+	AFADD_D:    {Opcode: _OpBase_OP_FP, ArgMarks: _ARG_RType, Funct7: 0b_000_0001},
+	AFSUB_D:    {Opcode: _OpBase_OP_FP, ArgMarks: _ARG_RType, Funct7: 0b_000_0101},
+	AFMUL_D:    {Opcode: _OpBase_OP_FP, ArgMarks: _ARG_RType, Funct7: 0b_000_1001},
+	AFDIV_D:    {Opcode: _OpBase_OP_FP, ArgMarks: _ARG_RType, Funct7: 0b_000_1101},
+	AFSQRT_D:   {Opcode: _OpBase_OP_FP, ArgMarks: _ARG_RType, Funct7: 0b_010_1101, Rs2: newU32(0b_0_0000)},
+	AFSGNJ_D:   {Opcode: _OpBase_OP_FP, ArgMarks: _ARG_RType, Funct7: 0b_001_0001},
+	AFSGNJN_D:  {Opcode: _OpBase_OP_FP, ArgMarks: _ARG_RType, Funct7: 0b_001_0001},
+	AFSGNJX_D:  {Opcode: _OpBase_OP_FP, ArgMarks: _ARG_RType, Funct7: 0b_001_0001},
+	AFMIN_D:    {Opcode: _OpBase_OP_FP, ArgMarks: _ARG_RType, Funct7: 0b_001_0101},
+	AFMAX_D:    {Opcode: _OpBase_OP_FP, ArgMarks: _ARG_RType, Funct7: 0b_001_0101},
+	AFCVT_S_D:  {Opcode: _OpBase_OP_FP, ArgMarks: _ARG_RType, Funct7: 0b_010_0000, Rs2: newU32(0b_0_0001)},
+	AFCVT_D_S:  {Opcode: _OpBase_OP_FP, ArgMarks: _ARG_RType, Funct7: 0b_010_0001, Rs2: newU32(0b_0_0000)},
+	AFEQ_D:     {Opcode: _OpBase_OP_FP, ArgMarks: _ARG_RType, Funct7: 0b_101_0001},
+	AFLT_D:     {Opcode: _OpBase_OP_FP, ArgMarks: _ARG_RType, Funct7: 0b_101_0001},
+	AFLE_D:     {Opcode: _OpBase_OP_FP, ArgMarks: _ARG_RType, Funct7: 0b_101_0001},
+	AFCLASS_D:  {Opcode: _OpBase_OP_FP, ArgMarks: _ARG_RType, Funct7: 0b_111_0001, Rs2: newU32(0b_0_0000)},
+	AFCVT_W_D:  {Opcode: _OpBase_OP_FP, ArgMarks: _ARG_RType, Funct7: 0b_110_0001, Rs2: newU32(0b_0_0000)},
+	AFCVT_WU_D: {Opcode: _OpBase_OP_FP, ArgMarks: _ARG_RType, Funct7: 0b_110_0001, Rs2: newU32(0b_0_0001)},
+	AFCVT_D_W:  {Opcode: _OpBase_OP_FP, ArgMarks: _ARG_RType, Funct7: 0b_110_1001, Rs2: newU32(0b_0_0000)},
+	AFCVT_D_WU: {Opcode: _OpBase_OP_FP, ArgMarks: _ARG_RType, Funct7: 0b_110_1001, Rs2: newU32(0b_0_0001)},
 
 	// RV64D Standard Extension (in addition to RV32D)
 
-	AFCVTLD:  {Opcode: _OpBase_OP_FP, ArgMarks: _ARG_RType, Funct7: 0b_110_0001, Rs2: newU32(0b_0_0010)},
-	AFCVTLUD: {Opcode: _OpBase_OP_FP, ArgMarks: _ARG_RType, Funct7: 0b_110_0001, Rs2: newU32(0b_0_0011)},
-	AFMVXD:   {Opcode: _OpBase_OP_FP, ArgMarks: _ARG_RType, Funct7: 0b_111_0001, Rs2: newU32(0b_0_0000)},
-	AFCVTDL:  {Opcode: _OpBase_OP_FP, ArgMarks: _ARG_RType, Funct7: 0b_110_1001, Rs2: newU32(0b_0_0010)},
-	AFCVTDLU: {Opcode: _OpBase_OP_FP, ArgMarks: _ARG_RType, Funct7: 0b_110_1001, Rs2: newU32(0b_0_0011)},
-	AFMVDX:   {Opcode: _OpBase_OP_FP, ArgMarks: _ARG_RType, Funct7: 0b_111_1001, Rs2: newU32(0b_0_0000)},
+	AFCVT_L_D:  {Opcode: _OpBase_OP_FP, ArgMarks: _ARG_RType, Funct7: 0b_110_0001, Rs2: newU32(0b_0_0010)},
+	AFCVT_LU_D: {Opcode: _OpBase_OP_FP, ArgMarks: _ARG_RType, Funct7: 0b_110_0001, Rs2: newU32(0b_0_0011)},
+	AFMV_X_D:   {Opcode: _OpBase_OP_FP, ArgMarks: _ARG_RType, Funct7: 0b_111_0001, Rs2: newU32(0b_0_0000)},
+	AFCVT_D_L:  {Opcode: _OpBase_OP_FP, ArgMarks: _ARG_RType, Funct7: 0b_110_1001, Rs2: newU32(0b_0_0010)},
+	AFCVT_D_LU: {Opcode: _OpBase_OP_FP, ArgMarks: _ARG_RType, Funct7: 0b_110_1001, Rs2: newU32(0b_0_0011)},
+	AFMV_D_X:   {Opcode: _OpBase_OP_FP, ArgMarks: _ARG_RType, Funct7: 0b_111_1001, Rs2: newU32(0b_0_0000)},
 
 	// 伪指令
 	// ISA (version 20191213)
 	// 25: RISC-V Assembly Programmer's Handbook
 
-	ANOP:       {PseudoAs: AADDI, ArgMarks: 0},                              // nop                        => addi     x0, x0, 0
-	AMV:        {PseudoAs: AADDI, ArgMarks: _ARG_RD | _ARG_RS1},             // mv        rd, rs1          => addi     rd, rs1, 0
-	ANOT:       {PseudoAs: AXORI, ArgMarks: _ARG_RD | _ARG_RS1},             // not       rd, rs1          => xori     rd, rs1, -1
-	ANEG:       {PseudoAs: ASUB, ArgMarks: _ARG_RD | _ARG_RS1},              // neg       rd, rs1          => sub      rd, x0, rs1
-	ANEGW:      {PseudoAs: ASUBW, ArgMarks: _ARG_RD | _ARG_RS1},             // negw      rd, rs1          => subw     rd, x0, rs1
-	ASEXT_W:    {PseudoAs: AADDIW, ArgMarks: _ARG_RD | _ARG_RS1},            // sext.w    rs, rs1          => addiw    rd, rs1, 0
-	ASEQZ:      {PseudoAs: ASLTIU, ArgMarks: _ARG_RD | _ARG_RS1},            // seqz      rd, rs1          => sltiu    rd, rs1, 1
-	ASNEZ:      {PseudoAs: ASLTU, ArgMarks: _ARG_RD | _ARG_RS1},             // snez      rd, rs1          => sltu     rd, x0, rs1
-	ASLTZ:      {PseudoAs: ASLT, ArgMarks: _ARG_RD | _ARG_RS1},              // sltz      rd, rs1          => slt      rd, rs1, x0
-	ASGTZ:      {PseudoAs: ASLT, ArgMarks: _ARG_RD | _ARG_RS1},              // sgtz      rd, rs1          => slt      rd, x0, rs1
-	AFMV_S:     {PseudoAs: AFSGNJS, ArgMarks: _ARG_RD | _ARG_RS1},           // fmv.s     rd, rs1          => fsgnj.s  rd, rs1, rs1
-	AFABS_S:    {PseudoAs: AFSGNJXS, ArgMarks: _ARG_RD | _ARG_RS1},          // fabc.s    rd, rs1          => fsgnjx.s rd, rs1, rs1
-	AFNEG_S:    {PseudoAs: AFSGNJNS, ArgMarks: _ARG_RD | _ARG_RS1},          // fneg.s    rd, rs1          => fsgnjn.s rd, rs1, rs1
-	AFMV_D:     {PseudoAs: AFSGNJD, ArgMarks: _ARG_RD | _ARG_RS1},           // fmv.d     rd, rs1          => fsgnj.d  rd, rs1, rs1
-	AFABS_D:    {PseudoAs: AFSGNJXD, ArgMarks: _ARG_RD | _ARG_RS1},          // fabs.d    rd, rs1          => fsgnjx.d rd, rs1, rs1
-	AFNEG_D:    {PseudoAs: AFSGNJND, ArgMarks: _ARG_RD | _ARG_RS1},          // fneg.d    rd, rs1          => fsgnjn.d rd, rs1, rs1
-	ABEQZ:      {PseudoAs: ABEQ, ArgMarks: _ARG_RS1 | _ARG_IMM},             // beqz      rs1, offset      => beq      rs1, x0, offset
-	ABNEZ:      {PseudoAs: ABNE, ArgMarks: _ARG_RS1 | _ARG_IMM},             // bnez      rs1, offset      => bne      rs1, x0, offset
-	ABLEZ:      {PseudoAs: ABGE, ArgMarks: _ARG_RS1 | _ARG_IMM},             // blez      rs1, offset      => bge      x0, rs1, offset
-	ABGEZ:      {PseudoAs: ABGE, ArgMarks: _ARG_RS1 | _ARG_IMM},             // bgez      rs1, offset      => bge      rs1, x0, offset
-	ABLTZ:      {PseudoAs: ABLT, ArgMarks: _ARG_RS1 | _ARG_IMM},             // bltz      rs1, offset      => blt      rs1, x0, offset
-	ABGTZ:      {PseudoAs: ABLT, ArgMarks: _ARG_RS1 | _ARG_IMM},             // bgtz      rs1, offset      => blt      x0, rs1, offset
-	ABGT:       {PseudoAs: ABLT, ArgMarks: _ARG_RS1 | _ARG_RS2 | _ARG_IMM},  // bgt       rs1, rs2, offset => blt      rs2, rs1, offset
-	ABLE:       {PseudoAs: ABGE, ArgMarks: _ARG_RS1 | _ARG_RS2 | _ARG_IMM},  // ble       rs1, rs2, offset => bge      rs2, rs1, offset
-	ABGTU:      {PseudoAs: ABLTU, ArgMarks: _ARG_RS1 | _ARG_RS2 | _ARG_IMM}, // bgtu      rs1, rs2, offset => bltu     rs2, rs1, offset
-	ABLEU:      {PseudoAs: ABGEU, ArgMarks: _ARG_RS1 | _ARG_RS2 | _ARG_IMM}, // bleu      rs1, rs2, offset => bgeu     rs2, rs1, offset
-	AJ:         {PseudoAs: AJAL, ArgMarks: _ARG_IMM},                        // j         offset           => jal      x0, offset
-	AJR:        {PseudoAs: AJALR, ArgMarks: _ARG_RS1},                       // jr        rs1              => jalr     x0, 0(rs1)
-	ARET:       {PseudoAs: AJALR, ArgMarks: 0},                              // ret                        => jalr     x0, 0(x1)
-	ARDINSTRET: {PseudoAs: ACSRRW, ArgMarks: _ARG_RD},                       // rdinstret rd               => csrrs    rd, instret, x0
-	ARDCYCLE:   {PseudoAs: ACSRRW, ArgMarks: _ARG_RD},                       // rdcyle    rd               => csrrs    rd, cycle, x0
-	ARDTIME:    {PseudoAs: ACSRRW, ArgMarks: _ARG_RD},                       // rdtime    rd               => csrrs    rd, time, x0
-	ACSRR:      {PseudoAs: ACSRRW, ArgMarks: _ARG_RD | _ARG_IMM},            // csrr      rd, csr          => csrrs    rd, csr, x0
-	ACSRW:      {PseudoAs: ACSRRW, ArgMarks: _ARG_RS1 | _ARG_IMM},           // csrr      csr, rd          => csrrs    x0, csr, rs1
-	ACSRS:      {PseudoAs: ACSRRW, ArgMarks: _ARG_RS1 | _ARG_IMM},           // csrr      csr, rd          => csrrs    x0, csr, rs1
-	ACSRC:      {PseudoAs: ACSRRW, ArgMarks: _ARG_RS1 | _ARG_IMM},           // csrr      csr, rd          => csrrs    x0, csr, rs1
-	ACSRWI:     {PseudoAs: ACSRRWI, ArgMarks: _ARG_RS1 | _ARG_IMM},          // csrwi     csr, imm         => csrrwi   x0 csr, imm
-	ACSRSI:     {PseudoAs: ACSRRSI, ArgMarks: _ARG_RS1 | _ARG_IMM},          // csrsi     csr, imm         => csrrsi   x0 csr, imm
-	ACSRCI:     {PseudoAs: ACSRRCI, ArgMarks: _ARG_RS1 | _ARG_IMM},          // csrci     csr, imm         => csrrci   x0 csr, imm
-	AFRCSR:     {PseudoAs: ACSRRS, ArgMarks: _ARG_RD},                       // frcsr     rd               => csrrs    rd, fcsr
-	AFSCSR:     {PseudoAs: ACSRRW, ArgMarks: _ARG_RD | _ARG_RS1},            // fscsr     rd, rs1          => csrrw    rd, fcsr, rs1 # rd 可省略
-	AFRRM:      {PseudoAs: ACSRRS, ArgMarks: _ARG_RD},                       // frrm      rd               => csrrs    rd, frm, x0
-	AFSRM:      {PseudoAs: ACSRRW, ArgMarks: _ARG_RD | _ARG_RS1},            // fsrm      rd, rs1          => csrrw    rd, frm, rs1 # rd 可省略
-	AFRFLAGS:   {PseudoAs: ACSRRS, ArgMarks: _ARG_RD},                       // frflags   rd               => csrrs    rd, fflags, x0
-	AFSFLAGS:   {PseudoAs: ACSRRW, ArgMarks: _ARG_RD | _ARG_RS1},            // fsflags   rd, rs1          => csrrw    rd, fflags, rs1 # rd 可省略
+	A_NOP:       {PseudoAs: AADDI, ArgMarks: 0},                              // nop                        => addi     x0, x0, 0
+	A_MV:        {PseudoAs: AADDI, ArgMarks: _ARG_RD | _ARG_RS1},             // mv        rd, rs1          => addi     rd, rs1, 0
+	A_NOT:       {PseudoAs: AXORI, ArgMarks: _ARG_RD | _ARG_RS1},             // not       rd, rs1          => xori     rd, rs1, -1
+	A_NEG:       {PseudoAs: ASUB, ArgMarks: _ARG_RD | _ARG_RS1},              // neg       rd, rs1          => sub      rd, x0, rs1
+	A_NEGW:      {PseudoAs: ASUBW, ArgMarks: _ARG_RD | _ARG_RS1},             // negw      rd, rs1          => subw     rd, x0, rs1
+	A_SEXT_W:    {PseudoAs: AADDIW, ArgMarks: _ARG_RD | _ARG_RS1},            // sext.w    rd, rs1          => addiw    rd, rs1, 0
+	A_SEQZ:      {PseudoAs: ASLTIU, ArgMarks: _ARG_RD | _ARG_RS1},            // seqz      rd, rs1          => sltiu    rd, rs1, 1
+	A_SNEZ:      {PseudoAs: ASLTU, ArgMarks: _ARG_RD | _ARG_RS1},             // snez      rd, rs1          => sltu     rd, x0, rs1
+	A_SLTZ:      {PseudoAs: ASLT, ArgMarks: _ARG_RD | _ARG_RS1},              // sltz      rd, rs1          => slt      rd, rs1, x0
+	A_SGTZ:      {PseudoAs: ASLT, ArgMarks: _ARG_RD | _ARG_RS1},              // sgtz      rd, rs1          => slt      rd, x0, rs1
+	A_FMV_S:     {PseudoAs: AFSGNJ_S, ArgMarks: _ARG_RD | _ARG_RS1},          // fmv.s     rd, rs1          => fsgnj.s  rd, rs1, rs1
+	A_FABS_S:    {PseudoAs: AFSGNJX_S, ArgMarks: _ARG_RD | _ARG_RS1},         // fabs.s    rd, rs1          => fsgnjx.s rd, rs1, rs1
+	A_FNEG_S:    {PseudoAs: AFSGNJN_S, ArgMarks: _ARG_RD | _ARG_RS1},         // fneg.s    rd, rs1          => fsgnjn.s rd, rs1, rs1
+	A_FMV_D:     {PseudoAs: AFSGNJ_D, ArgMarks: _ARG_RD | _ARG_RS1},          // fmv.d     rd, rs1          => fsgnj.d  rd, rs1, rs1
+	A_FABS_D:    {PseudoAs: AFSGNJX_D, ArgMarks: _ARG_RD | _ARG_RS1},         // fabs.d    rd, rs1          => fsgnjx.d rd, rs1, rs1
+	A_FNEG_D:    {PseudoAs: AFSGNJN_D, ArgMarks: _ARG_RD | _ARG_RS1},         // fneg.d    rd, rs1          => fsgnjn.d rd, rs1, rs1
+	A_BEQZ:      {PseudoAs: ABEQ, ArgMarks: _ARG_RS1 | _ARG_IMM},             // beqz      rs1, offset      => beq      rs1, x0, offset
+	A_BNEZ:      {PseudoAs: ABNE, ArgMarks: _ARG_RS1 | _ARG_IMM},             // bnez      rs1, offset      => bne      rs1, x0, offset
+	A_BLEZ:      {PseudoAs: ABGE, ArgMarks: _ARG_RS1 | _ARG_IMM},             // blez      rs1, offset      => bge      x0, rs1, offset
+	A_BGEZ:      {PseudoAs: ABGE, ArgMarks: _ARG_RS1 | _ARG_IMM},             // bgez      rs1, offset      => bge      rs1, x0, offset
+	A_BLTZ:      {PseudoAs: ABLT, ArgMarks: _ARG_RS1 | _ARG_IMM},             // bltz      rs1, offset      => blt      rs1, x0, offset
+	A_BGTZ:      {PseudoAs: ABLT, ArgMarks: _ARG_RS1 | _ARG_IMM},             // bgtz      rs1, offset      => blt      x0, rs1, offset
+	A_BGT:       {PseudoAs: ABLT, ArgMarks: _ARG_RS1 | _ARG_RS2 | _ARG_IMM},  // bgt       rs1, rs2, offset => blt      rs2, rs1, offset
+	A_BLE:       {PseudoAs: ABGE, ArgMarks: _ARG_RS1 | _ARG_RS2 | _ARG_IMM},  // ble       rs1, rs2, offset => bge      rs2, rs1, offset
+	A_BGTU:      {PseudoAs: ABLTU, ArgMarks: _ARG_RS1 | _ARG_RS2 | _ARG_IMM}, // bgtu      rs1, rs2, offset => bltu     rs2, rs1, offset
+	A_BLEU:      {PseudoAs: ABGEU, ArgMarks: _ARG_RS1 | _ARG_RS2 | _ARG_IMM}, // bleu      rs1, rs2, offset => bgeu     rs2, rs1, offset
+	A_J:         {PseudoAs: AJAL, ArgMarks: _ARG_IMM},                        // j         offset           => jal      x0, offset
+	A_JR:        {PseudoAs: AJALR, ArgMarks: _ARG_RS1},                       // jr        rs1              => jalr     x0, 0(rs1)
+	A_RET:       {PseudoAs: AJALR, ArgMarks: 0},                              // ret                        => jalr     x0, 0(x1)
+	A_RDINSTRET: {PseudoAs: ACSRRW, ArgMarks: _ARG_RD},                       // rdinstret rd               => csrrs    rd, instret, x0
+	A_RDCYCLE:   {PseudoAs: ACSRRW, ArgMarks: _ARG_RD},                       // rdcyle    rd               => csrrs    rd, cycle, x0
+	A_RDTIME:    {PseudoAs: ACSRRW, ArgMarks: _ARG_RD},                       // rdtime    rd               => csrrs    rd, time, x0
+	A_CSRR:      {PseudoAs: ACSRRW, ArgMarks: _ARG_RD | _ARG_IMM},            // csrr      rd, csr          => csrrs    rd, csr, x0
+	A_CSRW:      {PseudoAs: ACSRRW, ArgMarks: _ARG_RS1 | _ARG_IMM},           // csrw      csr, rs1         => csrrw    x0, csr, rs1
+	A_CSRS:      {PseudoAs: ACSRRW, ArgMarks: _ARG_RS1 | _ARG_IMM},           // csrw      csr, rs1         => csrrs    x0, csr, rs1
+	A_CSRC:      {PseudoAs: ACSRRW, ArgMarks: _ARG_RS1 | _ARG_IMM},           // csrc      csr, rs1         => csrrc    x0, csr, rs1
+	A_CSRWI:     {PseudoAs: ACSRRWI, ArgMarks: _ARG_RS1 | _ARG_IMM},          // csrwi     csr, imm         => csrrwi   x0 csr, imm
+	A_CSRSI:     {PseudoAs: ACSRRSI, ArgMarks: _ARG_RS1 | _ARG_IMM},          // csrsi     csr, imm         => csrrsi   x0 csr, imm
+	A_CSRCI:     {PseudoAs: ACSRRCI, ArgMarks: _ARG_RS1 | _ARG_IMM},          // csrci     csr, imm         => csrrci   x0 csr, imm
+	A_FRCSR:     {PseudoAs: ACSRRS, ArgMarks: _ARG_RD},                       // frcsr     rd               => csrrs    rd, fcsr, x0
+	A_FSCSR:     {PseudoAs: ACSRRW, ArgMarks: _ARG_RD_IS_X | _ARG_RS1},       // fscsr     rd, rs1          => csrrw    rd, fcsr, rs1 # rd 可省略
+	A_FRRM:      {PseudoAs: ACSRRS, ArgMarks: _ARG_RD},                       // frrm      rd               => csrrs    rd, frm, x0
+	A_FSRM:      {PseudoAs: ACSRRW, ArgMarks: _ARG_RD_IS_X | _ARG_RS1},       // fsrm      rd, rs1          => csrrw    rd, frm, rs1 # rd 可省略
+	A_FRFLAGS:   {PseudoAs: ACSRRS, ArgMarks: _ARG_RD},                       // frflags   rd               => csrrs    rd, fflags, x0
+	A_FSFLAGS:   {PseudoAs: ACSRRW, ArgMarks: _ARG_RD_IS_X | _ARG_RS1},       // fsflags   rd, rs1          => csrrw    rd, fflags, rs1 # rd 可省略
 
 	// End marker
 

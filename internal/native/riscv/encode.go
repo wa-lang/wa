@@ -65,6 +65,12 @@ func (ctx *_OpContextType) encodeRaw(xlen int, as abi.As, arg *abi.AsArgument) (
 	case _U:
 		return ctx.encodeU(ctx.regI(arg.Rd), uint32(arg.Imm)), nil
 	case _J:
+		// jal 伪指令和基础指令同名, 但是 rd 参数可选
+		if ctx.ArgMarks&_ARG_RD_IS_X != 0 {
+			if arg.Rd == 0 {
+				return ctx.encodeJ(ctx.regI(REG_X0), uint32(arg.Imm)), nil
+			}
+		}
 		return ctx.encodeJ(ctx.regI(arg.Rd), uint32(arg.Imm)), nil
 
 	default:

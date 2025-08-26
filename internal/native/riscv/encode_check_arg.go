@@ -11,13 +11,15 @@ import (
 
 // 检查模板和参数
 func (ctx *_OpContextType) checkArgMarks(xlen int, as abi.As, arg *abi.AsArgument, marks _ArgMarks) error {
-	if marks&_ARG_RD != 0 {
-		if arg.Rd == 0 {
-			return fmt.Errorf("%s: rd missing; arg: %v", AsString(as), arg)
-		}
-	} else {
-		if arg.Rd != 0 {
-			return fmt.Errorf("%s: rd was nozero; arg: %v", AsString(as), arg)
+	if marks&_ARG_RD_IS_X == 0 {
+		if marks&_ARG_RD != 0 {
+			if arg.Rd == 0 {
+				return fmt.Errorf("%s: rd missing; arg: %v", AsString(as), arg)
+			}
+		} else {
+			if arg.Rd != 0 {
+				return fmt.Errorf("%s: rd was nozero; arg: %v", AsString(as), arg)
+			}
 		}
 	}
 	if marks&_ARG_RS1 != 0 {
