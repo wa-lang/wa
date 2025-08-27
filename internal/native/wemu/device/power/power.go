@@ -22,55 +22,65 @@ const (
 // 电源设备(4个字节)
 type Power struct {
 	name string
+	addr uint64
 	data []byte
 }
 
-func NewPower(name string) *Power {
-	return &Power{name, make([]byte, 4)}
+func NewPower(name string, addr uint64) *Power {
+	return &Power{name, addr, make([]byte, 4)}
 }
 
-func (p *Power) Name() string { return p.name }
-func (p *Power) Size() uint64 { return uint64(len(p.data)) }
+func (p *Power) Name() string      { return p.name }
+func (p *Power) AddrBegin() uint64 { return p.addr }
+func (p *Power) AddrEnd() uint64   { return p.addr + uint64(len(p.data)) }
 
 // 电源状态
 func (p *Power) Status() Status {
 	return Status(binary.LittleEndian.Uint32(p.data))
 }
 
+// 是否已经关机
+func (p *Power) IsShutdown() bool {
+	if s := p.Status(); s == ExitOK || s == ExitFail {
+		return true
+	}
+	return false
+}
+
 func (p *Power) Read(addr, size uint64) (uint64, error) {
-	if addr+size >= p.Size() {
+	if addr < p.AddrBegin() || addr >= p.AddrEnd() {
 		return 0, fmt.Errorf("%s: bad address [0x%08X, 0x%x08X)", p.name, addr, addr+size)
 	}
 	switch size {
 	case 1:
-		return uint64(p.data[addr]), nil
+		return uint64(p.data[addr-p.addr]), nil
 	case 2:
-		return uint64(binary.LittleEndian.Uint16(p.data[addr:])), nil
+		return uint64(binary.LittleEndian.Uint16(p.data[addr-p.addr:])), nil
 	case 4:
-		return uint64(binary.LittleEndian.Uint32(p.data[addr:])), nil
+		return uint64(binary.LittleEndian.Uint32(p.data[addr-p.addr:])), nil
 	case 8:
-		return binary.LittleEndian.Uint64(p.data[addr:]), nil
+		return binary.LittleEndian.Uint64(p.data[addr-p.addr:]), nil
 	default:
-		panic(fmt.Sprintf("rom: size %d must 1/2/4/8", size))
+		return 0, fmt.Errorf("%s: bad size, %d must one of 1/2/4/8", p.name, size)
 	}
 }
 
 func (p *Power) Write(addr, size, value uint64) error {
-	if addr+size >= p.Size() {
+	if addr < p.AddrBegin() || addr >= p.AddrEnd() {
 		return fmt.Errorf("%s: bad address [0x%08X, 0x%x08X)", p.name, addr, addr+size)
 	}
 	switch size {
 	case 1:
-		p.data[addr] = uint8(value)
+		p.data[addr-p.addr] = uint8(value)
 		return nil
 	case 2:
-		binary.LittleEndian.PutUint16(p.data[addr:], uint16(value))
+		binary.LittleEndian.PutUint16(p.data[addr-p.addr:], uint16(value))
 		return nil
 	case 4:
-		binary.LittleEndian.PutUint32(p.data[addr:], uint32(value))
+		binary.LittleEndian.PutUint32(p.data[addr-p.addr:], uint32(value))
 		return nil
 	case 8:
-		binary.LittleEndian.PutUint64(p.data[addr:], uint64(value))
+		binary.LittleEndian.PutUint64(p.data[addr-p.addr:], uint64(value))
 		return nil
 	default:
 		return fmt.Errorf("%s: bad size, %d must one of 1/2/4/8", p.name, size)

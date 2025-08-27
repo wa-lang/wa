@@ -11,7 +11,10 @@ import (
 // 设备无法提前预知被挂载的地址, 这里读写的地址是设备自身的地址
 type Device interface {
 	Name() string // 设备的名字
-	Size() uint64 // 设备的地址范围 [0, device.Size())
+
+	AddrBegin() uint64 // 开始地址
+	AddrEnd() uint64   // 介绍地址(开区间)
+
 	Read(addr, size uint64) (uint64, error)
 	Write(addr, size, value uint64) error
 }
@@ -20,53 +23,61 @@ type Device interface {
 // 对应全部的外设抽象
 // 地址不得重叠, 名字也不得相同
 type Bus struct {
-	Devices map[uint64]Device // 设备列表
+	Devices map[string]Device // 设备列表
 }
 
 // 构造总线
 func NewBus() *Bus {
 	return &Bus{
-		Devices: make(map[uint64]Device),
+		Devices: make(map[string]Device),
 	}
 }
 
 // 内存映射设备
-func (bus *Bus) MapDevice(d Device, startAddr uint64) {
-	if d.Name() == "" || d.Size() == 0 {
+func (bus *Bus) MapDevice(d Device) {
+	if d.Name() == "" {
 		panic("invalid device")
 	}
 
-	// 判断名字和地址是否重叠
-	endAddr := startAddr + d.Size()
-	for xStart, xDevice := range bus.Devices {
-		if d.Name() == xDevice.Name() {
-			panic(fmt.Sprintf("device(%s) exists", d.Name()))
+	// 设备的名字必须唯一
+	if _, ok := bus.Devices[d.Name()]; ok {
+		panic(fmt.Sprintf("%s: device exists", d.Name()))
+	}
+
+	// 判断地址是否重叠
+	start := d.AddrBegin()
+	end := d.AddrEnd()
+	for _, x := range bus.Devices {
+		if end < x.AddrBegin() || start >= x.AddrEnd() {
+			continue // 没有交集
 		}
-		if xStart < endAddr || xStart+xDevice.Size() > startAddr {
-			panic(fmt.Sprintf("hte address space([%d,%d]) has been used", startAddr, endAddr-1))
-		}
+		panic(fmt.Sprintf("%s: device %s use the same address space([%08X,%08X][%08X,%08X])",
+			d.Name(), x.Name(),
+			d.AddrBegin(), d.AddrEnd(),
+			x.AddrBegin(), x.AddrEnd(),
+		))
 	}
 
 	// OK
-	bus.Devices[startAddr] = d
+	bus.Devices[d.Name()] = d
 }
 
 // 从总线上指定地址读数据
 func (bus *Bus) Read(addr, size uint64) (uint64, error) {
-	for xStart, xDevice := range bus.Devices {
-		if xStart <= addr && addr < xStart+xDevice.Size() {
-			return xDevice.Read(addr-xStart, size)
+	for _, x := range bus.Devices {
+		if x.AddrBegin() <= addr && addr < x.AddrEnd() {
+			return x.Read(addr, size)
 		}
 	}
-	panic(fmt.Sprintf("bus: no devide at [0x%08X, 0x%08X)", addr, addr+size))
+	panic(fmt.Sprintf("bus: no devide at [0x%08X]", addr))
 }
 
 // 向总线上指定地址写数据
 func (bus *Bus) Write(addr, size, value uint64) error {
-	for xStart, xDevice := range bus.Devices {
-		if xStart <= addr && addr < xStart+xDevice.Size() {
-			return xDevice.Write(addr-xStart, size, value)
+	for _, x := range bus.Devices {
+		if x.AddrBegin() <= addr && addr < x.AddrEnd() {
+			return x.Write(addr, size, value)
 		}
 	}
-	panic(fmt.Sprintf("bus: no devide at [0x%08X, 0x%08X)", addr, addr+size))
+	panic(fmt.Sprintf("bus: no devide at [0x%08X]", addr))
 }

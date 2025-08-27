@@ -22,6 +22,7 @@ const (
 
 type UART struct {
 	name string
+	addr uint64
 	data []byte
 
 	rx    uint8 // 最近接收到的字符
@@ -29,20 +30,21 @@ type UART struct {
 	hasRX bool  // 是否有待读数据(需要通过其他Goroutine管道传入)
 }
 
-func NewUART(name string) *UART {
-	u := &UART{name: name}
+func NewUART(name string, addr uint64) *UART {
+	u := &UART{name: name, addr: addr}
 	u.data = make([]byte, UART_SIZE)
 	return u
 }
 
-func (p *UART) Name() string { return p.name }
-func (p *UART) Size() uint64 { return uint64(len(p.data)) }
+func (p *UART) Name() string      { return p.name }
+func (p *UART) AddrBegin() uint64 { return p.addr }
+func (p *UART) AddrEnd() uint64   { return p.addr + uint64(len(p.data)) }
 
 func (p *UART) Read(addr, size uint64) (uint64, error) {
-	if addr+size >= p.Size() {
+	if addr < p.AddrBegin() || addr >= p.AddrEnd() {
 		return 0, fmt.Errorf("%s: bad address [0x%08X, 0x%x08X)", p.name, addr, addr+size)
 	}
-	switch addr {
+	switch addr - p.addr {
 	case 0: // RHR
 		if p.hasRX {
 			p.hasRX = false
@@ -58,15 +60,15 @@ func (p *UART) Read(addr, size uint64) (uint64, error) {
 		}
 		return lsr, nil
 	default:
-		return 0, fmt.Errorf("uart: unhandled read offset 0x%x", addr)
+		return 0, fmt.Errorf("%s: unhandled read offset 0x%x", p.name, addr)
 	}
 }
 
 func (p *UART) Write(addr, size, value uint64) error {
-	if addr+size >= p.Size() {
+	if addr < p.AddrBegin() || addr >= p.AddrEnd() {
 		return fmt.Errorf("%s: bad address [0x%08X, 0x%x08X)", p.name, addr, addr+size)
 	}
-	switch addr {
+	switch addr - p.addr {
 	case 0: // THR
 		p.tx = uint8(value)
 		fmt.Printf("%c", p.tx)
@@ -74,6 +76,6 @@ func (p *UART) Write(addr, size, value uint64) error {
 	case 3: // LCR
 		return nil
 	default:
-		return fmt.Errorf("uart: unhandled write offset 0x%x", addr)
+		return fmt.Errorf("%s: unhandled write offset 0x%x", p.name, addr)
 	}
 }
