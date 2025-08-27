@@ -3,6 +3,13 @@
 
 package riscv
 
+// 机器模式
+var _ModeNames = []string{
+	UserMode:       "User",
+	SupervisorMode: "Supervisor",
+	MachineMode:    "Machine",
+}
+
 // 寄存器名字列表
 var _Register = []string{
 	// 通用寄存器

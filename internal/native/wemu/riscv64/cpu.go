@@ -3,22 +3,24 @@
 
 package riscv64
 
-// Riscv64虚拟机
-type Riscv64VM struct {
-	Mem  Memory      // 内存
-	Sys  Syscall     // 系统调用
-	CSR  uint32      // 状态寄存器
-	RegX [32]uint64  // 整数寄存器
-	RegF [32]float64 // 浮点数寄存器
-	PC   uint64      // PC指针
+import (
+	"wa-lang.org/wa/internal/native/riscv"
+)
+
+// 处理器
+type CPU struct {
+	Bus  *Bus         // 外设总线
+	Mode riscv.Mode   // 工作模式
+	RegX [32]uint64   // 整数寄存器
+	RegF [32]float64  // 浮点数寄存器
+	CSR  [4096]uint64 // 状态寄存器
+	PC   uint64       // PC指针
 }
 
-// 构造新的虚拟机
-func New(mem Memory, sys Syscall) *Riscv64VM {
-	return &Riscv64VM{Mem: mem, Sys: sys}
-}
-
-// 单步执行
-func (p *Riscv64VM) StepRun() error {
-	panic("TODO")
+// 构建模拟器并初始化PC和SP
+func NewCPU(bus *Bus, pc, sp uint64) *CPU {
+	p := &CPU{Bus: bus}
+	p.RegX[riscv.REG_SP] = sp
+	p.PC = pc
+	return p
 }

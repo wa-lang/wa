@@ -7,6 +7,15 @@ import (
 	"wa-lang.org/wa/internal/native/abi"
 )
 
+// 机器模式
+type Mode uint32
+
+const (
+	UserMode       = 0b_00 // 用户级
+	SupervisorMode = 0b_01 // 管理员
+	MachineMode    = 0b_11 // 机器级
+)
+
 const (
 	// 通用寄存器
 	REG_X0 abi.RegType = iota + 1 // 0 是无效的编号
