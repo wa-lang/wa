@@ -11,9 +11,9 @@ import (
 type Mode uint32
 
 const (
-	UserMode       = 0b_00 // 用户级
-	SupervisorMode = 0b_01 // 管理员
-	MachineMode    = 0b_11 // 机器级
+	UserMode       Mode = 0b_00 // 用户级
+	SupervisorMode Mode = 0b_01 // 管理员
+	MachineMode    Mode = 0b_11 // 机器级
 )
 
 const (

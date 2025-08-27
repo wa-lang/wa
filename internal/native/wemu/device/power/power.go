@@ -1,43 +1,43 @@
 // Copyright (C) 2025 武汉凹语言科技有限公司
 // SPDX-License-Identifier: AGPL-3.0-or-later
 
-package dram
+package power
 
 import (
 	"encoding/binary"
 	"fmt"
 )
 
-// Same as QEMU virt machine, DRAM starts at 0x80000000.
-const DRAM_BASE = 0x80000000
+// 退出设备的寄存器地址
+const POWER_BASE = 0x100000
 
-// 内存设备
-type DRAM struct {
-	name     string
-	data     []byte
-	readonly bool
+// 退出的状态
+type Status uint32
+
+const (
+	ExitOK   = Status(0x5555) // 正常退出
+	ExitFail = Status(0x3333) // 异常退出
+)
+
+// 电源设备(4个字节)
+type Power struct {
+	name string
+	data []byte
 }
 
-// 长度必须是4的倍数
-func NewDRAM(name string, size uint64, readonly bool) *DRAM {
-	if size == 0 {
-		panic("rom size wa zero")
-	}
-	if size%4 != 0 {
-		panic("rom size must align with 4")
-	}
-	return &DRAM{name, make([]byte, size), readonly}
+func NewPower(name string) *Power {
+	return &Power{name, make([]byte, 4)}
 }
 
-func (p *DRAM) Name() string { return p.name }
-func (p *DRAM) Size() uint64 { return uint64(len(p.data)) }
+func (p *Power) Name() string { return p.name }
+func (p *Power) Size() uint64 { return uint64(len(p.data)) }
 
-// 初始化内存数据
-func (p *DRAM) Init(data []byte) {
-	copy(p.data, data)
+// 电源状态
+func (p *Power) Status() Status {
+	return Status(binary.LittleEndian.Uint32(p.data))
 }
 
-func (p *DRAM) Read(addr, size uint64) (uint64, error) {
+func (p *Power) Read(addr, size uint64) (uint64, error) {
 	if addr+size >= p.Size() {
 		return 0, fmt.Errorf("%s: bad address [0x%08X, 0x%x08X)", p.name, addr, addr+size)
 	}
@@ -55,12 +55,9 @@ func (p *DRAM) Read(addr, size uint64) (uint64, error) {
 	}
 }
 
-func (p *DRAM) Write(addr, size, value uint64) error {
+func (p *Power) Write(addr, size, value uint64) error {
 	if addr+size >= p.Size() {
 		return fmt.Errorf("%s: bad address [0x%08X, 0x%x08X)", p.name, addr, addr+size)
-	}
-	if p.readonly {
-		return fmt.Errorf("%s: is readonly", p.name)
 	}
 	switch size {
 	case 1:

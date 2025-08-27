@@ -9,6 +9,16 @@ import (
 	"wa-lang.org/wa/internal/native/abi"
 )
 
+// 返回寄存器机器码编号
+func RegI(r abi.RegType) uint32 {
+	return (*_OpContextType)(nil).regI(r)
+}
+
+// 返回浮点数寄存器机器码编号
+func RegF(r abi.RegType) uint32 {
+	return (*_OpContextType)(nil).regF(r)
+}
+
 // 编码RISCV32指令
 func EncodeRV32(as abi.As, arg *abi.AsArgument) (uint32, error) {
 	ctx := &_AOpContextTable[as]
