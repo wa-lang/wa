@@ -80,13 +80,13 @@ Debug (enter h for help)...
 Enter command: h
 Commands are:
   h)elp           show help command list
-  g)o             run instructions until HALT
+  g)o             run instructions until power off
   s)tep  <n>      run n (default 1) instructions
   j)ump  <b>      jump to the b (default is current location)
   r)egs           print the contents of the registers
   i)Mem  <b <n>>  print n iMem locations starting at b
   d)Mem  <b <n>>  print n dMem locations starting at b
-  a(lter <b <v>>  change the memory value at v
+  a)lter <b <v>>  change the memory value at b
   t)race          toggle instruction trace
   p)rint          toggle print of total instructions executed
   c)lear          reset VM
