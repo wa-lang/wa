@@ -70,7 +70,7 @@ func (p *WEmu) resetProgram() error {
 
 	// 重新设置PC和SP
 	p.CPU.PC = uint64(p.Prog.TextAddr)
-	p.CPU.RegX[riscv.REG_SP] = dram.DRAM_BASE + dram.DRAM_SIZE
+	p.CPU.RegX[riscv.REG_SP] = p.Dram.AddrEnd()
 	return nil
 }
 
@@ -94,7 +94,11 @@ func (p *WEmu) Run() error {
 }
 
 // 调试模式执行
-func (p *WEmu) DebugRun() {
+func (p *WEmu) DebugRun() error {
+	if err := p.resetProgram(); err != nil {
+		return err
+	}
+
 	var (
 		stepcnt int
 		pntflag bool
@@ -179,7 +183,7 @@ func (p *WEmu) DebugRun() {
 
 		case "regs", "r":
 			regStart := 0
-			regNum := 1
+			regNum := len(p.CPU.RegX)
 			if n > 1 {
 				regStart = x1
 			}
@@ -193,32 +197,36 @@ func (p *WEmu) DebugRun() {
 			}
 
 		case "iMem", "imem", "i":
-			x1 := uint64(x1)
-			if n < 2 {
-				x1 = p.CPU.PC
+			pc := p.CPU.PC
+			cnt := 1
+			if n >= 2 {
+				pc = uint64(x1)
 			}
-			if n < 3 {
-				x2 = 1
+			if n >= 3 {
+				cnt = x2
 			}
 
-			fmt.Print(p.FormatInstruction(x1, x2))
+			fmt.Print(p.FormatInstruction(pc, cnt))
 
 		case "dMem", "dmem", "d":
-			x1 := uint64(x1)
-			if n < 2 {
-				x1 = p.CPU.PC
+			pc := p.CPU.PC
+			cnt := 1
+
+			if n >= 2 {
+				pc = uint64(x1)
 			}
-			if n < 3 {
-				x2 = 1
+			if n >= 3 {
+				cnt = x2
 			}
 
-			for i := 0; i < x2; i++ {
-				v, err := p.Dram.Read(x1, 4)
+			for i := 0; i < cnt; i++ {
+				addr := pc + uint64(i)*4
+				v, err := p.Dram.Read(addr, 4)
 				if err != nil {
-					fmt.Printf("mem[%08X] = %v\n", x1, err)
+					fmt.Printf("mem[%08X] = ERR:%v\n", addr, err)
 					break
 				}
-				fmt.Printf("mem[%08x] = %08x\n", x1, v)
+				fmt.Printf("mem[%08x] = %08x\n", addr, v)
 				x1++
 			}
 
@@ -255,7 +263,7 @@ func (p *WEmu) DebugRun() {
 			stepcnt = 0
 
 		case "quit", "q":
-			return
+			return nil
 
 		default:
 			fmt.Println("unknown command:", cmd)
@@ -283,8 +291,8 @@ func (p *WEmu) DebugHelp() string {
 // 格式化pc开始的n个指令
 func (p *WEmu) FormatInstruction(pc uint64, n int) string {
 	var buf bytes.Buffer
-	var addr = pc - dram.DRAM_BASE
 	for i := 0; i < n; i++ {
+		addr := pc + uint64(i)*4
 		inst, err := p.Bus.Read(addr, 4)
 		if err != nil {
 			fmt.Fprintf(&buf, "mem[%08X]: %v\n", addr, err)

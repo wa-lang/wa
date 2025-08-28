@@ -43,7 +43,7 @@ func (p *DRAM) Fill(addr uint64, data []byte) error {
 	if addr < p.AddrBegin() || addr >= p.AddrEnd() {
 		return fmt.Errorf("%s: bad address [0x%08X, 0x%x08X)", p.name, addr, addr+uint64(len(data)))
 	}
-	copy(p.data[addr:], data)
+	copy(p.data[addr-p.AddrBegin():], data)
 	return nil
 }
 

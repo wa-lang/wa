@@ -8,12 +8,14 @@ import "fmt"
 
 // 默认的地址
 const (
-	UART_BASE   = 0x10000000
-	UART_SIZE   = 0x100
-	UART_RHR    = UART_BASE + 0
-	UART_THR    = UART_BASE + 0
-	UART_LCR    = UART_BASE + 3
-	UART_LSR    = UART_BASE + 5
+	UART_BASE = 0x10000000
+	UART_SIZE = 0x100
+
+	// 相对于 Base 的偏移
+	UART_RHR    = 0
+	UART_THR    = 0
+	UART_LCR    = 3
+	UART_LSR    = 5
 	UART_LSR_RX = 1
 	UART_LSR_TX = 1 << 5
 
@@ -45,15 +47,16 @@ func (p *UART) Read(addr, size uint64) (uint64, error) {
 		return 0, fmt.Errorf("%s: bad address [0x%08X, 0x%x08X)", p.name, addr, addr+size)
 	}
 	switch addr - p.addr {
-	case 0: // RHR
+	case UART_RHR: // RHR
+		// TODO: 输入需要通过 Goroutine 支持
 		if p.hasRX {
 			p.hasRX = false
 			return uint64(p.rx), nil
 		}
 		return 0, nil
-	case 3: // LCR
+	case UART_LCR: // LCR
 		return 0x03, nil
-	case 5: // LSR
+	case UART_LSR: // LSR
 		lsr := uint64(UART_LSR_TX)
 		if p.hasRX {
 			lsr |= UART_LSR_RX
@@ -69,11 +72,11 @@ func (p *UART) Write(addr, size, value uint64) error {
 		return fmt.Errorf("%s: bad address [0x%08X, 0x%x08X)", p.name, addr, addr+size)
 	}
 	switch addr - p.addr {
-	case 0: // THR
+	case UART_RHR: // THR
 		p.tx = uint8(value)
 		fmt.Printf("%c", p.tx)
 		return nil
-	case 3: // LCR
+	case UART_LCR: // LCR
 		return nil
 	default:
 		return fmt.Errorf("%s: unhandled write offset 0x%x", p.name, addr)

@@ -18,12 +18,20 @@ var CmdWEmu = &cli.Command{
 	Name:      "wemu",
 	Usage:     "debug run elf program with WEnum (riscv64 emulator)",
 	ArgsUsage: "<file.elf>",
-	Flags:     []cli.Flag{},
+	Flags: []cli.Flag{
+		&cli.BoolFlag{
+			Name:    "debug",
+			Aliases: []string{"d"},
+			Usage:   "wemu debug run mode",
+		},
+	},
 	Action: func(c *cli.Context) error {
 		if c.NArg() == 0 {
 			fmt.Fprintln(os.Stderr, "no input file")
 			os.Exit(1)
 		}
+
+		debugRun := c.Bool("debug")
 
 		// 1. 解析 elf 文件
 		prog, err := readELF(c.Args().First())
@@ -35,8 +43,19 @@ var CmdWEmu = &cli.Command{
 		// 2. 创建 VM
 		vm := wemu.NewWEmu(prog)
 
-		// 3. 调试执行
-		vm.DebugRun()
+		// 3. 执行
+		if debugRun {
+			if err := vm.DebugRun(); err != nil {
+				fmt.Println(err)
+				os.Exit(1)
+			}
+		} else {
+			if err := vm.Run(); err != nil {
+				fmt.Println(err)
+				os.Exit(1)
+			}
+		}
+
 		return nil
 	},
 }
