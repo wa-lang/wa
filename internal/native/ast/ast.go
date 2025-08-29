@@ -53,7 +53,8 @@ type FuncBody struct {
 
 // 机器指令
 type Instruction struct {
-	Pos token.Pos       // 位置
-	As  abi.As          // 汇编指令
-	Arg *abi.AsArgument // 指令参数
+	Pos   token.Pos       // 位置
+	Label string          // 指令对应的 Label
+	As    abi.As          // 汇编指令
+	Arg   *abi.AsArgument // 指令参数
 }
