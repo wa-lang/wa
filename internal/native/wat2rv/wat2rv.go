@@ -14,12 +14,21 @@ import (
 const DebugMode = false
 
 type Options struct {
-	Xlen  int    // riscv32 or riscv64
 	Ttext uint64 // 代码段开始地址
+	Tdata uint64 // 数据段开始地址
 }
 
-// Wat程序转译到 RISCV
-func Wat2rv(filename string, source []byte, opt Options) (m *watast.Module, f *ast.File, err error) {
+// Wat程序转译到 RISCV32
+func Wat2rv32(filename string, source []byte, opt Options) (m *watast.Module, f *ast.File, err error) {
+	return wat2rv(filename, source, opt, 32)
+}
+
+// Wat程序转译到 RISCV64
+func Wat2rv64(filename string, source []byte, opt Options) (m *watast.Module, f *ast.File, err error) {
+	return wat2rv(filename, source, opt, 64)
+}
+
+func wat2rv(filename string, source []byte, opt Options, xlen int) (m *watast.Module, f *ast.File, err error) {
 	m, err = watparser.ParseModule(filename, source)
 	if err != nil {
 		return m, nil, err
