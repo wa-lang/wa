@@ -128,8 +128,10 @@ func (s *StdSizes) Sizeof(T Type) int64 {
 			}
 		}
 		if k == String {
-			return s.WordSize * 2
+			return s.WordSize * (2 + 1) // 多一个引用指针
 		}
+	case *Pointer:
+		return s.WordSize * 2 // 多一个引用指针
 	case *Array:
 		n := t.len
 		if n <= 0 {
@@ -140,7 +142,7 @@ func (s *StdSizes) Sizeof(T Type) int64 {
 		z := s.Sizeof(t.elem)
 		return align(z, a)*(n-1) + z
 	case *Slice:
-		return s.WordSize * 3
+		return s.WordSize * (3 + 1) // 多一个引用指针
 	case *Struct:
 		n := t.NumFields()
 		if n == 0 {
@@ -156,13 +158,11 @@ func (s *StdSizes) Sizeof(T Type) int64 {
 
 // common architecture word sizes and alignments
 var gcArchSizes = map[string]*StdSizes{
-	"386":      {4, 4},
-	"arm":      {4, 4},
-	"arm64":    {8, 8},
-	"amd64":    {8, 8},
-	"amd64p32": {4, 8},
-	"riscv64":  {8, 8},
-	"wasm":     {8, 8},
+	"arm64":   {8, 8},
+	"amd64":   {8, 8},
+	"riscv64": {8, 8},
+	"riscv32": {4, 4},
+	"wasm":    {4, 4},
 	// When adding more architectures here,
 	// update the doc string of SizesFor below.
 }
@@ -170,9 +170,8 @@ var gcArchSizes = map[string]*StdSizes{
 // SizesFor returns the Sizes used for an architecture.
 // The result is nil if a architecture is not known.
 //
-// Supported architectures for compiler "gc":
-// "386", "arm", "arm64", "amd64", "amd64p32",
-// "riscv64", "wasm".
+// Supported architectures for compiler:
+// "wasm", "riscv32", "riscv64", "arm64", "amd64".
 func SizesFor(arch string) Sizes {
 	s, ok := gcArchSizes[arch]
 	if !ok {
@@ -182,7 +181,7 @@ func SizesFor(arch string) Sizes {
 }
 
 // stdSizes is used if Config.Sizes == nil.
-var stdSizes = SizesFor("amd64")
+var stdSizes = SizesFor("wasm")
 
 func (conf *Config) alignof(T Type) int64 {
 	if s := conf.Sizes; s != nil {
