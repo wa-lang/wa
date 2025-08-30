@@ -117,10 +117,14 @@ func (p *_Loader) loadProgram(vfs *config.PkgVFS, manifest *config.Manifest) (*P
 	// import "runtime"
 	if _loadRuntime {
 		logger.Trace(&config.EnableTrace_loader, "import runtime")
-		if _, err := p.Import("runtime"); err != nil {
+		runtimePkg, err := p.Import("runtime")
+		if err != nil {
 			logger.Tracef(&config.EnableTrace_loader, "err: %v", err)
 			return nil, err
 		}
+
+		// 注册 runtime.SetFinalizer 等内置函数
+		types.DefPredeclaredRuntimeFuncs(runtimePkg)
 	}
 
 	// import "main"

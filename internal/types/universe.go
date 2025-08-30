@@ -174,6 +174,7 @@ const (
 	_Raw
 	_unsafe_Raw
 	_SetFinalizer
+	_runtime_SetFinalizer
 
 	// wz
 	_长
@@ -212,8 +213,8 @@ var predeclaredFuncs = [...]struct {
 	_Raw:        {"raw", 1, false, expression},
 	_unsafe_Raw: {"Raw", 1, false, expression},
 
-	// todo: 移到 runtime
-	_SetFinalizer: {"setFinalizer", 2, false, statement},
+	_SetFinalizer:         {"setFinalizer", 2, false, statement},
+	_runtime_SetFinalizer: {"SetFinalizer", 2, false, statement},
 
 	_长: {"长", 1, false, expression},
 
@@ -228,11 +229,22 @@ var predeclaredFuncs = [...]struct {
 func defPredeclaredFuncs() {
 	for i := range predeclaredFuncs {
 		id := builtinId(i)
+		if id == _runtime_SetFinalizer {
+			continue // 在加载 runtime 包时导入
+		}
 		if id == _Assert || id == _Trace {
 			continue // only define these in testing environment
 		}
 		def(newBuiltin(id))
 	}
+}
+
+// 注册运行时函数
+func DefPredeclaredRuntimeFuncs(runtimePkg *Package) {
+	if runtimePkg.scope.Lookup("SetFinalize") != nil {
+		return // already defined
+	}
+	defInPackage(runtimePkg, newBuiltin(_runtime_SetFinalizer))
 }
 
 // DefPredeclaredTestFuncs defines the assert and trace built-ins.
@@ -301,6 +313,30 @@ func def(obj Object) {
 		default:
 			unreachable()
 		}
+	}
+	if scope.Insert(obj) != nil {
+		panic("internal error: double declaration")
+	}
+}
+
+func defInPackage(pkg *Package, obj Object) {
+	assert(obj.color() == black)
+	name := obj.Name()
+	if strings.Contains(name, " ") {
+		return // nothing to do
+	}
+	// fix Obj link for named types
+	if typ, ok := obj.Type().(*Named); ok {
+		typ.obj = obj.(*TypeName)
+	}
+	scope := pkg.Scope()
+	switch obj := obj.(type) {
+	case *TypeName:
+		obj.pkg = pkg
+	case *Builtin:
+		obj.pkg = pkg
+	default:
+		unreachable()
 	}
 	if scope.Insert(obj) != nil {
 		panic("internal error: double declaration")

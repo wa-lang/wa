@@ -702,7 +702,7 @@ func (g *functionGenerator) genCall(call *ssa.CallCommon) (insts []wat.Inst, ret
 
 	case *ssa.Builtin:
 		var args []wir.Value
-		if call.Value.Name() == "setFinalizer" {
+		if s := call.Value.Name(); s == "setFinalizer" || s == "SetFinalizer" {
 			var fn_id int
 			callee := call.Args[1].(*ssa.Function)
 			g.module.AddFunc(newFunctionGenerator(g.prog, g.module, g.tLib).genFunction(callee))
@@ -869,7 +869,7 @@ func (g *functionGenerator) genBuiltin(name string, pos token.Pos, args []wir.Va
 		insts = g.module.EmitGenRaw(args[0])
 		ret_type = g.module.BYTES
 
-	case "setFinalizer":
+	case "setFinalizer", "SetFinalizer": // runtime.SetFinalizer
 		if len(args) != 2 {
 			panic("len(call.Args) != 2")
 		}
@@ -1495,7 +1495,7 @@ func (g *functionGenerator) genMakeDefer(inst *ssa.Defer) (insts []wat.Inst) {
 		return
 
 	case *ssa.Builtin:
-		if inst.Call.Value.Name() == "setFinalizer" {
+		if s := inst.Call.Value.Name(); s == "setFinalizer" || s == "SetFinalizer" {
 			logger.Fatal("Can't use setFinalizer() as defers.")
 		}
 

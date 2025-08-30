@@ -570,7 +570,7 @@ func (check *Checker) builtin(x *operand, call *ast.CallExpr, id builtinId) (_ b
 		x.mode = value
 		x.typ = retType
 
-	case _SetFinalizer:
+	case _SetFinalizer, _runtime_SetFinalizer:
 		var params []Type
 		if nargs > 0 {
 			params = make([]Type, nargs)
