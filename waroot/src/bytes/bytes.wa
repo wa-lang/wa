@@ -1,4 +1,5 @@
-// 版权 @2023 凹语言 作者。保留所有权利。
+// Copyright (C) 2024 武汉凹语言科技有限公司
+// SPDX-License-Identifier: MIT
 
 import (
 	"unicode/ctypes"
@@ -427,7 +428,7 @@ func Fields(s: []byte) => [][]byte {
 func FieldsFunc(s: []byte, f: func(rune) => bool) => [][]byte {
 	// A span is used to record a slice of s of the form s[start:end].
 	// The start index is inclusive and the end index is exclusive.
-	type span struct {
+	type span :struct {
 		start: int
 		end:   int
 	}
@@ -828,7 +829,7 @@ func makeCutsetFunc(cutset: string) => func(r: rune) => bool {
 // most-significant bit of the highest word, map to the full range of all
 // 128 ASCII characters. The 128-bits of the upper 16 bytes will be zeroed,
 // ensuring that any non-ASCII character will be reported as not in the set.
-type asciiSet struct {
+type asciiSet :struct {
 	Data: [8]uint32
 }
 

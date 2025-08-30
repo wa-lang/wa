@@ -4,6 +4,7 @@ import (
 	"encoding/qrcode"
 	"image"
 	"js/canvas"
+	"unsafe"
 )
 
 func main {
@@ -35,7 +36,7 @@ func main {
 	}
 
 	ctx.PutImageData(
-		raw(m.Pix), 0, 0, 0, 0,
+		unsafe.Raw(m.Pix), 0, 0, 0, 0,
 		f32(m.Width), f32(m.Height),
 	)
 }

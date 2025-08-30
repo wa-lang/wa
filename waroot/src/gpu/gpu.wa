@@ -1,56 +1,60 @@
+// Copyright (C) 2024 武汉凹语言科技有限公司
+// SPDX-License-Identifier: MIT
 
 import "js"
 
 //---------------------------------------------------------------
 
-type Color struct {
-    R, G, B, A: f32
+type Color :struct {
+	R, G, B, A: f32
 }
 
 //---------------------------------------------------------------
 
-type LoadOp u32
+type LoadOp :u32
 
 const (
-    LoadOp_none: LoadOp = iota
-    LoadOp_clear
-    LoadOp_load
+	LoadOp_none :LoadOp = iota
+	LoadOp_clear
+	LoadOp_load
 )
 
-global loadOpSymbols = [...]string {
-    LoadOp_clear: "clear",
-    LoadOp_load:  "load",
+global loadOpSymbols = [...]string{
+	LoadOp_clear: "clear",
+	LoadOp_load:  "load",
 }
 
 //---------------------------------------------------------------
 
-type StoreOp u32
+type StoreOp :u32
 
 const (
-    StoreOp_none: StoreOp = iota
-    StoreOp_store
-    StoreOp_discard
+	StoreOp_none :StoreOp = iota
+	StoreOp_store
+	StoreOp_discard
 )
 
-global storeOpSymbols = [...]string {
-    StoreOp_store:   "store",
-    StoreOp_discard: "discard",
+global storeOpSymbols = [...]string{
+	StoreOp_store:   "store",
+	StoreOp_discard: "discard",
 }
 
 //---------------------------------------------------------------
 
-type IndexFormat u32
+type IndexFormat :u32
+
 const (
-    IndexFormat_u16: IndexFormat = iota
-    IndexFormat_u32
+	IndexFormat_u16 :IndexFormat = iota
+	IndexFormat_u32
 )
 
 //---------------------------------------------------------------
 
 // 获取 Canvas 纹理格式
 func GetPreferredCanvasFormat() => TextureFormat {
-    return jsGpuGetPreferredCanvasFormat()
+	return jsGpuGetPreferredCanvasFormat()
 }
+
 #wa:import webgpu gpu_get_preferred_canvas_format
 func jsGpuGetPreferredCanvasFormat() => TextureFormat
 
@@ -59,43 +63,45 @@ func jsGpuGetPreferredCanvasFormat() => TextureFormat
 // 获取 Adapter，异步
 #wa:generic RequestAdapter_Handler
 func RequestAdapter(requestor: AdapterRequestor) {
-    if requestor == nil  {
-        panic("AdapterRequestor can't be nil.")
-    }
-    tid := asyncTasks.Alloc(nil, requestor)
-    jsGpuRequestAdapter(tid, 0)
+	if requestor == nil {
+		panic("AdapterRequestor can't be nil.")
+	}
+	tid := asyncTasks.Alloc(nil, requestor)
+	jsGpuRequestAdapter(tid, 0)
 }
-type AdapterRequestor interface {
-    OnRequested(adapter: Adapter)
+
+type AdapterRequestor :interface {
+	OnRequested(adapter: Adapter)
 }
 
 func RequestAdapter_Handler(handler: AdatperRequestHandler) {
-    if handler == nil {
-        panic("AdatperRequestHandler can't be nil.")
-    }
-    tid := asyncTasks.Alloc(nil, handler)
-    jsGpuRequestAdapter(tid, 0)
+	if handler == nil {
+		panic("AdatperRequestHandler can't be nil.")
+	}
+	tid := asyncTasks.Alloc(nil, handler)
+	jsGpuRequestAdapter(tid, 0)
 }
-type AdatperRequestHandler func(adapter: Adapter)
+
+type AdatperRequestHandler :func(adapter: Adapter)
 
 #wa:import webgpu gpu_request_adapter
 func jsGpuRequestAdapter(tid: int, option: js.Handle)
 
 #wa:export gpu.onAdapterRequested
 func onAdapterRequested(tid: int, ah: js.Handle) {
-    _, handler := asyncTasks.Get(tid)
-    adapter: Adapter
-    adapter._extobj = js.WrapExtObj(ah)
+	_, handler := asyncTasks.Get(tid)
+	adapter: Adapter
+	adapter._extobj = js.WrapExtObj(ah)
 
-    switch h := handler.(type) {
-    case AdapterRequestor:
-        h.OnRequested(adapter)
+	switch h := handler.(type) {
+	case AdapterRequestor:
+		h.OnRequested(adapter)
 
-    case AdatperRequestHandler:
-        h(adapter)
-    }
+	case AdatperRequestHandler:
+		h(adapter)
+	}
 
-    asyncTasks.Free(tid)
+	asyncTasks.Free(tid)
 }
 
 //---------------------------------------------------------------

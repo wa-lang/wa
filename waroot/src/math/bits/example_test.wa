@@ -1,4 +1,5 @@
-// 版权 @2023 凹语言 作者。保留所有权利。
+// Copyright (C) 2024 武汉凹语言科技有限公司
+// SPDX-License-Identifier: MIT
 
 func TestLeadingZeros8 {
 	assert(0b00000001 == 1)
@@ -77,7 +78,6 @@ func TestRotateLeft32 {
 	assert(0b00000000000000000000000000111100 == RotateLeft32(15, 2))
 	assert(0b11000000000000000000000000000011 == RotateLeft32(15, -2))
 }
-
 
 func TestRotateLeft64 {
 	assert(0b0000000000000000000000000000000000000000000000000000000000001111 == 15)

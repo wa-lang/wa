@@ -1,3 +1,5 @@
+// Copyright (C) 2024 武汉凹语言科技有限公司
+// SPDX-License-Identifier: MIT
 
 import "js"
 
@@ -5,13 +7,13 @@ import "js"
 
 // 不能使用该类型直接声明值。通过 Device.CreateComputePipeline() 创建
 #wa:need-constructor
-type ComputePipeline struct {
-    _extobj: js.ExtObj
+type ComputePipeline :struct {
+	_extobj: js.ExtObj
 }
 
 // 获取标签
 func ComputePipeline.Label() => string {
-    return jsObjGetLabel(this._extobj.GetHandle())
+	return jsObjGetLabel(this._extobj.GetHandle())
 }
 
 //func ComputePipeline.GetBindGroupLayout()() - Todo

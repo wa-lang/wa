@@ -1,4 +1,5 @@
-// 版权 @2023 凹语言 作者。保留所有权利。
+// Copyright (C) 2024 武汉凹语言科技有限公司
+// SPDX-License-Identifier: MIT
 
 import (
 	"bytes"
@@ -22,7 +23,7 @@ import (
 // advanced arbitrarily far past the last token. Programs that need more
 // control over error handling or large tokens, or must run sequential scans
 // on a reader, should use bufio.Reader instead.
-type Scanner struct {
+type Scanner :struct {
 	r:            io.Reader // The reader provided by the client.
 	split:        SplitFunc // The function to split the tokens.
 	maxTokenSize: int       // Maximum size of a token; modified by tests.
@@ -58,7 +59,7 @@ type Scanner struct {
 // The function is never called with an empty data slice unless atEOF
 // is true. If atEOF is true, however, data may be non-empty and,
 // as always, holds unprocessed text.
-type SplitFunc func(data: []byte, atEOF: bool) => (advance: int, token: []byte, err: error)
+type SplitFunc :func(data: []byte, atEOF: bool) => (advance: int, token: []byte, err: error)
 
 // Errors returned by Scanner.
 global (

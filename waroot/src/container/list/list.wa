@@ -1,6 +1,7 @@
-// 版权 @2024 凹语言 作者。保留所有权利。
+// Copyright (C) 2024 武汉凹语言科技有限公司
+// SPDX-License-Identifier: MIT
 
-type Element struct {
+type Element :struct {
 	next, prev: *Element
 	list:       *List
 
@@ -11,7 +12,7 @@ func Element.Next => *Element { return this.next }
 
 func Element.Prev => *Element { return this.prev }
 
-type List struct {
+type List :struct {
 	front, back: *Element
 	len:         int
 }

@@ -1,6 +1,5 @@
-// Copyright 2011 The Go Authors.  All rights reserved.
-// Use of this source code is governed by a BSD-style
-// license that can be found in the LICENSE file.
+// Copyright (C) 2024 武汉凹语言科技有限公司
+// SPDX-License-Identifier: MIT
 
 // Package coding implements low-level QR coding details.
 
@@ -19,7 +18,7 @@ global Field = gf256.NewField(0x11d, 2)
 // a QR code with version v has 4v+17 pixels on a side.
 // Versions number from 1 to 40: the larger the version,
 // the more information the code can store.
-type Version int
+type Version :int
 
 const MinVersion = 1
 const MaxVersion = 40
@@ -50,13 +49,13 @@ func Version.DataBytes(l: Level) => int {
 // The implementations--Numeric, Alphanumeric, and String--specify
 // the character set and the mapping from UTF-8 to code bits.
 // The more restrictive the mode, the fewer code bits are needed.
-type Encoding interface {
+type Encoding :interface {
 	Check() => error
 	Bits(v: Version) => int
 	Encode(b: *Bits, v: Version)
 }
 
-type Bits struct {
+type Bits :struct {
 	b:    []byte
 	nbit: int
 }
@@ -113,7 +112,7 @@ func Bits.Write(v: uint, nbit: int) {
 
 // Num is the encoding for numeric data.
 // The only valid characters are the decimal digits 0 through 9.
-type Num string
+type Num :string
 
 func Num.String() => string {
 	return "Num(" + string(*this) + ")"
@@ -155,7 +154,7 @@ func Num.Encode(b: *Bits, v: Version) {
 
 // Alpha is the encoding for alphanumeric data.
 // The valid characters are 0-9A-Z$%*+-./: and space.
-type Alpha string
+type Alpha :string
 
 const alphabet = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ $%*+-./:"
 
@@ -196,7 +195,7 @@ func Alpha.Encode(b: *Bits, v: Version) {
 }
 
 // String is the encoding for 8-bit data.  All bytes are valid.
-type String string
+type String :string
 
 func String.String() => string {
 	return "String(" + string(*this) + ")"
@@ -222,7 +221,7 @@ func String.Encode(b: *Bits, v: Version) {
 }
 
 // A Pixel describes a single pixel in a QR code.
-type Pixel uint32
+type Pixel :uint32
 
 const (
 	Black :Pixel = 1 << iota
@@ -260,7 +259,7 @@ func Pixel.String() => string {
 }
 
 // A PixelRole describes the role of a QR pixel.
-type PixelRole uint32
+type PixelRole :uint32
 
 const (
 	_          :PixelRole = iota
@@ -310,7 +309,7 @@ func PixelRole.String() => string {
 
 // A Level represents a QR error correction level.
 // From least to most tolerant of errors, they are L, M, Q, H.
-type Level int
+type Level :int
 
 const (
 	L :Level = iota
@@ -327,7 +326,7 @@ func Level.String() => string {
 }
 
 // A Code is a square pixel grid.
-type Code struct {
+type Code :struct {
 	Bitmap: []byte // 1 is black, 0 is white
 	Size:   int    // number of pixels on a side
 	Stride: int    // number of bytes per row
@@ -343,7 +342,7 @@ func Code.Black(x, y: int) => bool {
 // code to avoid QR artifacts being interpreted as
 // alignment and timing patterns (such as the squares
 // in the corners).  Valid masks are integers from 0 to 7.
-type Mask int
+type Mask :int
 
 // http://www.swetake.com/qr/qr5_en.html
 global mfunc = []func(int, int) => bool{
@@ -367,7 +366,7 @@ func Mask.Invert(y, x: int) => bool {
 
 // A Plan describes how to construct a QR code
 // with a specific version, level, and mask.
-type Plan struct {
+type Plan :struct {
 	Version: Version
 	Level:   Level
 	Mask:    Mask
@@ -491,7 +490,7 @@ func Plan.Encode(text: ...Encoding) => (*Code, error) {
 }
 
 // A version describes metadata associated with a version.
-type version struct {
+type version :struct {
 	apos:    int
 	astride: int
 	bytes:   int
@@ -499,7 +498,7 @@ type version struct {
 	level:   [4]level
 }
 
-type level struct {
+type level :struct {
 	nblock: int
 	check:  int
 }

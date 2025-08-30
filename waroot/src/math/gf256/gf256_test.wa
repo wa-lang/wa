@@ -1,11 +1,8 @@
-// Copyright 2010 The Go Authors.  All rights reserved.
-// Use of this source code is governed by a BSD-style
-// license that can be found in the LICENSE file.
+// Copyright (C) 2024 武汉凹语言科技有限公司
+// SPDX-License-Identifier: MIT
 
 import (
 	"bytes"
-	//"fmt"
-	//"testing"
 )
 
 global f = NewField(0x11d, 2) // x^8 + x^4 + x^3 + x^2 + 1

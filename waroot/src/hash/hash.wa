@@ -1,4 +1,5 @@
-// 版权 @2023 凹语言 作者。保留所有权利。
+// Copyright (C) 2024 武汉凹语言科技有限公司
+// SPDX-License-Identifier: MIT
 
 import "io"
 
@@ -18,7 +19,7 @@ import "io"
 // decode data written with any previously released version,
 // subject to issues such as security fixes.
 // See the Go compatibility document for background: https://golang.org/doc/go1compat
-type Hash interface {
+type Hash :interface {
 	// Write (via the embedded io.Writer interface) adds more data to the running hash.
 	// It never returns an error.
 	io.Writer
@@ -41,13 +42,13 @@ type Hash interface {
 }
 
 // Hash32 is the common interface implemented by all 32-bit hash functions.
-type Hash32 interface {
+type Hash32 :interface {
 	Hash
 	Sum32() => uint32
 }
 
 // Hash64 is the common interface implemented by all 64-bit hash functions.
-type Hash64 interface {
+type Hash64 :interface {
 	Hash
 	Sum64() => uint64
 }

@@ -1,3 +1,5 @@
+// Copyright (C) 2024 武汉凹语言科技有限公司
+// SPDX-License-Identifier: MIT
 
 #wa:import extobj new_obj
 func jsNewObj() => Handle

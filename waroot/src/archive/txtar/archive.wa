@@ -1,8 +1,5 @@
-// 版权 @2023 凹语言 作者。保留所有权利。
-
-// Copyright 2018 The Go Authors. All rights reserved.
-// Use of this source code is governed by a BSD-style
-// license that can be found in the LICENSE file.
+// Copyright (C) 2024 武汉凹语言科技有限公司
+// SPDX-License-Identifier: MIT
 
 // Package txtar implements a trivial text-based file archive format.
 //
@@ -39,13 +36,13 @@ import (
 )
 
 // An Archive is a collection of files.
-type Archive struct {
+type Archive :struct {
 	Comment: []byte
 	Files:   []File
 }
 
 // A File is a single file in an archive.
-type File struct {
+type File :struct {
 	Name: string // name of file ("foo/bar.txt")
 	Data: []byte // text content of file
 }

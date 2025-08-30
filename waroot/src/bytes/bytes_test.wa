@@ -1,4 +1,5 @@
-// 版权 @2023 凹语言 作者。保留所有权利。
+// Copyright (C) 2024 武汉凹语言科技有限公司
+// SPDX-License-Identifier: MIT
 
 import (
 	"unicode"
@@ -6,7 +7,7 @@ import (
 	"unicode/utf8"
 )
 
-type BinOpTest struct {
+type BinOpTest :struct {
 	a: string
 	b: string
 	i: int
@@ -76,7 +77,7 @@ func TestNotEqual {
 	}
 }
 
-var indexTests = []BinOpTest{
+global indexTests = []BinOpTest{
 	{"", "", 0},
 	{"", "a", -1},
 	{"", "foo", -1},
@@ -382,7 +383,7 @@ func TestCountByteNoMatch {
 	}
 }
 
-type SplitTest struct {
+type SplitTest :struct {
 	s:   string
 	sep: string
 	n:   int
@@ -530,7 +531,7 @@ func TestSplitAfter {
 	}
 }
 
-type FieldsTest struct {
+type FieldsTest :struct {
 	s: string
 	a: []string
 }
@@ -627,7 +628,7 @@ func TestFieldsFunc {
 
 // Test case for any function which accepts and returns a byte slice.
 // For ease of creation, we write the input byte slice as a string.
-type StringTest struct {
+type StringTest :struct {
 	in:  string
 	out: []byte
 }
@@ -824,7 +825,7 @@ func TestTrimSpace {
 	runStringTests(TrimSpace, "TrimSpace", trimSpaceTests)
 }
 
-type RepeatTest struct {
+type RepeatTest :struct {
 	in, out: string
 	count:   int
 }
@@ -864,7 +865,7 @@ func runesEqual(a, b: []rune) => bool {
 	return true
 }
 
-type RunesTest struct {
+type RunesTest :struct {
 	in:    string
 	out:   []rune
 	lossy: bool
@@ -901,7 +902,7 @@ func TestRunes {
 	}
 }
 
-type TrimTest struct {
+type TrimTest :struct {
 	f:            string
 	in, arg, out: string
 }
@@ -971,7 +972,7 @@ func TestTrim {
 	}
 }
 
-type ReplaceTest struct {
+type ReplaceTest :struct {
 	in:       string
 	old, new: string
 	n:        int
@@ -1023,7 +1024,7 @@ func TestReplace {
 	}
 }
 
-type TitleTest struct {
+type TitleTest :struct {
 	in, out: string
 }
 

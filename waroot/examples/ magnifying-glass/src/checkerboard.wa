@@ -13,6 +13,7 @@ import (
 	"math"
 	"strconv"
 	"strings"
+	"unsafe"
 )
 
 global (
@@ -82,7 +83,7 @@ func StepGame {
 
 	// 绘制到 Canvas
 	ctxCanvas.PutImageData(
-		raw(cellsRGBA.Pix), 0, 0, 0, 0,
+		unsafe.Raw(cellsRGBA.Pix), 0, 0, 0, 0,
 		f32(width), f32(height),
 	)
 }

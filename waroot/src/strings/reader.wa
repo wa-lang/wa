@@ -1,4 +1,5 @@
-// 版权 @2023 凹语言 作者。保留所有权利。
+// Copyright (C) 2024 武汉凹语言科技有限公司
+// SPDX-License-Identifier: MIT
 
 import (
 	"errors"
@@ -10,7 +11,7 @@ import (
 // io.RuneReader, io.RuneScanner, io.Seeker, and io.WriterTo interfaces by reading
 // from a string.
 // The zero value for Reader operates like a Reader of an empty string.
-type Reader struct {
+type Reader :struct {
 	s:        string
 	i:        int // current reading index
 	prevRune: int // index of previous rune; or < 0

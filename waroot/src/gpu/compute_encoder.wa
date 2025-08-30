@@ -1,3 +1,5 @@
+// Copyright (C) 2024 武汉凹语言科技有限公司
+// SPDX-License-Identifier: MIT
 
 import "js"
 
@@ -6,13 +8,13 @@ import "js"
 // 不能使用该类型直接声明值。通过 CommandEncoder.BeginComputePass() 创建
 // 该对象对应 GPUComputePassEncoder
 #wa:need-constructor
-type ComputeEncoder struct {
-    _extobj: js.ExtObj
+type ComputeEncoder :struct {
+	_extobj: js.ExtObj
 }
 
 // 获取标签
 func ComputeEncoder.Label() => string {
-    return jsObjGetLabel(this._extobj.GetHandle())
+	return jsObjGetLabel(this._extobj.GetHandle())
 }
 
 //func ComputeEncoder.DispatchWorkgroups() - Todo

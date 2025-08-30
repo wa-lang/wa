@@ -1,4 +1,5 @@
-// 版权 @2023 凹语言 作者。保留所有权利。
+// Copyright (C) 2024 武汉凹语言科技有限公司
+// SPDX-License-Identifier: MIT
 
 // Copyright 2009 The Go Authors. All rights reserved.
 // Use of this source code is governed by a BSD-style
@@ -9,11 +10,11 @@ import (
 	"unicode/utf8"
 )
 
-const N = 10000       // make this bigger for a larger (and slower) test
+const N = 10000           // make this bigger for a larger (and slower) test
 global testString: string // test data for write tests
 global testBytes: []byte  // test data; same as testString but as a slice.
 
-type negativeReader: struct{}
+type negativeReader :struct{}
 
 func negativeReader.Read(_: []byte) => (int, error) { return -1, nil }
 
@@ -212,7 +213,7 @@ func TestLargeStringReads {
 	check("TestLargeStringReads (3)", &buf, "")
 }
 
-func TestLargeByteReads{
+func TestLargeByteReads {
 	buf: Buffer
 	for i := 3; i < 30; i += 3 {
 		s := fillBytes("TestLargeReads (1)", &buf, "", 5, testBytes[0:len(testBytes)/i])
@@ -397,7 +398,6 @@ func TestNext {
 		}
 	}
 }
-
 
 global readBytesTests = []struct {
 	buffer:   string

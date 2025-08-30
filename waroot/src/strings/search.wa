@@ -1,11 +1,12 @@
-// 版权 @2023 凹语言 作者。保留所有权利。
+// Copyright (C) 2024 武汉凹语言科技有限公司
+// SPDX-License-Identifier: MIT
 
 // stringFinder efficiently finds strings in a source text. It's implemented
 // using the Boyer-Moore string search algorithm:
 // https://en.wikipedia.org/wiki/Boyer-Moore_string_search_algorithm
 // https://www.cs.utexas.edu/~moore/publications/fstrpos.pdf (note: this aged
 // document uses 1-based indexing)
-type stringFinder struct {
+type stringFinder :struct {
 	// pattern is the string that we are searching for in the text.
 	pattern: string
 

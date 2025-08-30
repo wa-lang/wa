@@ -1,11 +1,12 @@
-// 版权 @2023 凹语言 作者。保留所有权利。
+// Copyright (C) 2024 武汉凹语言科技有限公司
+// SPDX-License-Identifier: MIT
 
 // ----------------------------------------------------------------------------
 // Testing support
 
 const DeBruijn64 = deBruijn64
 
-type entry struct {
+type entry :struct {
 	nlz, ntz, pop: int
 }
 

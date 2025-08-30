@@ -1,9 +1,10 @@
-// 版权 @2023 凹语言 作者。保留所有权利。
+// Copyright (C) 2024 武汉凹语言科技有限公司
+// SPDX-License-Identifier: MIT
 
 // A type, typically a collection, that satisfies sort.Interface can be
 // sorted by the routines in this package.  The methods require that the
 // elements of the collection be enumerated by an integer index.
-type Interface interface {
+type Interface :interface {
 	// Len is the number of elements in the collection.
 	Len() => int
 	// Less reports whether the element with
@@ -194,7 +195,7 @@ func Sort(data: Interface) {
 	quickSort(data, 0, n, maxDepth)
 }
 
-type reverse struct {
+type reverse :struct {
 	// This embedded Interface permits Reverse to use the methods of
 	// another Interface implementation.
 	Interface
@@ -224,7 +225,7 @@ func IsSorted(data: Interface) => bool {
 // Convenience types for common cases
 
 // IntSlice attaches the methods of Interface to []int, sorting in increasing order.
-type IntSlice struct {
+type IntSlice :struct {
 	V: []int
 }
 
@@ -242,7 +243,7 @@ func IntSlice.Swap(i, j: int) {
 func IntSlice.Sort() { Sort(this) }
 
 // Float64Slice attaches the methods of Interface to []float64, sorting in increasing order.
-type Float64Slice struct {
+type Float64Slice :struct {
 	V: []float64
 }
 
@@ -265,7 +266,7 @@ func isNaN(f: float64) => bool {
 func Float64Slice.Sort() { Sort(this) }
 
 // StringSlice attaches the methods of Interface to []string, sorting in increasing order.
-type StringSlice struct {
+type StringSlice :struct {
 	V: []string
 }
 

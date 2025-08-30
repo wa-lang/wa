@@ -1,8 +1,10 @@
-// 版权 @2019 凹语言 作者。保留所有权利。
+// Copyright (C) 2024 武汉凹语言科技有限公司
+// SPDX-License-Identifier: MIT
+
 // 不要轻易修改本文件！
 // Don't modify this file unless you know what you're doing!
 
-type _type struct {
+type _type :struct {
 	size:  u32
 	hash:  i32
 	kind:  u8
@@ -11,62 +13,62 @@ type _type struct {
 	name:  string
 }
 
-type _sptrType struct {
+type _sptrType :struct {
 	_type
 	elemType: uintptr //@_type
 	uncommon: uintptr //@_uncommonType
 }
 
-type _arrayType struct {
+type _arrayType :struct {
 	_type
 	elemType: uintptr //@_type
 	cap:      uintptr
 }
 
-type _sliceType struct {
+type _sliceType :struct {
 	_type
 	elemType: uintptr //@_type
 }
 
-type _structType struct {
+type _structType :struct {
 	_type
 	fieldCount: u32
 } //followed by [fieldCount]_structField
 
-type _structField struct {
+type _structField :struct {
 	name: string
 	typ:  uintptr //@_type
 }
 
-type _uncommonType struct {
+type _uncommonType :struct {
 	pkgName:     string
 	methodCount: u32
 } //followed by [methodCount]_method
 
-type _method struct {
+type _method :struct {
 	name:   string
 	fnType: uintptr //@_fntype
 	fnID:   u32     //id for call_indirect
 }
 
-type _fnType struct {
+type _fnType :struct {
 	//_type  //Todo
 	paramCount:  u32
 	resultCount: u32
 } //followed by [paramCount]@_type + [resultCount]@_type
 
-type _interfaceType struct {
+type _interfaceType :struct {
 	_type
 	pkgName:     string
 	methodCount: u32
 } //followed by [methodCount]_imethod
 
-type _imethod struct {
+type _imethod :struct {
 	name:   string
 	fnType: uintptr //@_fntype
 }
 
-type _itab struct {
+type _itab :struct {
 	dhash: i32 //hash of data's type
 	ihash: i32 //hash of interface
 } //followed by [itype.methodCound]fnID, fnID=>id for call_indirect

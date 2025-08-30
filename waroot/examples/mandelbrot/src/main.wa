@@ -4,6 +4,7 @@ import "js/canvas"
 import "image"
 import "image/color"
 import "math/cmplx"
+import "unsafe"
 
 func main {
 	println("你好，凹语言！")
@@ -24,7 +25,7 @@ func main {
 	}
 
 	ctx.PutImageData(
-		raw(m.Pix), 0, 0, 0, 0,
+		unsafe.Raw(m.Pix), 0, 0, 0, 0,
 		f32(m.Width), f32(m.Height),
 	)
 }

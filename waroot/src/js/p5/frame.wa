@@ -1,4 +1,7 @@
-// 版权 @2024 凹语言 作者。保留所有权利。
+// Copyright (C) 2024 武汉凹语言科技有限公司
+// SPDX-License-Identifier: MIT
+
+import "unsafe"
 
 global (
 	Width  :int = 100 // 画布宽度
@@ -50,7 +53,7 @@ func onDraw_after {
 	PMouseY = MouseY
 
 	p5CanvasCtx.PutImageData(
-		raw(p5CanvasBuffer.Pix), 0, 0, 0, 0,
+		unsafe.Raw(p5CanvasBuffer.Pix), 0, 0, 0, 0,
 		f32(p5CanvasBuffer.Width),
 		f32(p5CanvasBuffer.Height),
 	)

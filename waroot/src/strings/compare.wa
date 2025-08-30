@@ -1,4 +1,5 @@
-// 版权 @2023 凹语言 作者。保留所有权利。
+// Copyright (C) 2024 武汉凹语言科技有限公司
+// SPDX-License-Identifier: MIT
 
 // Compare returns an integer comparing two strings lexicographically.
 // The result will be 0 if a == b, -1 if a < b, and +1 if a > b.

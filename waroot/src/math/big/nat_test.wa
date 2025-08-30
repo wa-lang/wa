@@ -1,4 +1,5 @@
-// 版权 @2023 凹语言 作者。保留所有权利。
+// Copyright (C) 2024 武汉凹语言科技有限公司
+// SPDX-License-Identifier: MIT
 
 // test好像并不执行该文件夹, 改为导出方法放在外层执行
 func Test_Norm {
@@ -27,8 +28,8 @@ func Test_set {
 }
 
 // 参考go单元测试的内容
-type funNN func(z: nat, x: nat, y: nat) => nat
-type argNN struct {
+type funNN :func(z: nat, x: nat, y: nat) => nat
+type argNN :struct {
 	z: nat
 	x: nat
 	y: nat

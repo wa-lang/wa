@@ -1,4 +1,5 @@
-// 版权 @2023 凹语言 作者。保留所有权利。
+// Copyright (C) 2024 武汉凹语言科技有限公司
+// SPDX-License-Identifier: MIT
 
 // Sin returns the sine of the radian argument x.
 //
@@ -52,14 +53,14 @@ func sin(x: f64) => f64 {
 		sign = true
 	}
 
-	var j: u64
-	var y, z: f64
+	j: u64
+	y, z: f64
 	//if x >= reduceThreshold {
 	//	j, z = trigReduce(x)
-	//} else 
+	//} else
 	{
 		j = u64(x * (4 / Pi)) // integer part of x/(Pi/4), as integer for tests on the phase angle
-		y = f64(j)           // integer part of x/(Pi/4), as float
+		y = f64(j)            // integer part of x/(Pi/4), as float
 
 		// map zeros to origin
 		if j&1 == 1 {
@@ -87,7 +88,7 @@ func sin(x: f64) => f64 {
 }
 
 // sin coefficients
-var _sin = [...]f64{
+global _sin = [...]f64{
 	1.58962301576546568060e-10, // 0x3de5d8fd1fd19ccd
 	-2.50507477628578072866e-8, // 0xbe5ae5e5a9291f5d
 	2.75573136213857245213e-6,  // 0x3ec71de3567d48a1
@@ -97,7 +98,7 @@ var _sin = [...]f64{
 }
 
 // cos coefficients
-var _cos = [...]f64{
+global _cos = [...]f64{
 	-1.13585365213876817300e-11, // 0xbda8fa49a0861a9b
 	2.08757008419747316778e-9,   // 0x3e21ee9d7b4e3f05
 	-2.75573141792967388112e-7,  // 0xbe927e4f7eac4bc6
@@ -105,7 +106,6 @@ var _cos = [...]f64{
 	-1.38888888888730564116e-3,  // 0xbf56c16c16c14f91
 	4.16666666666665929218e-2,   // 0x3fa555555555554b
 }
-
 
 func cos(x: f64) => f64 {
 	const (
@@ -123,14 +123,14 @@ func cos(x: f64) => f64 {
 	sign := false
 	x = Abs(x)
 
-	var j: u64
-	var y, z: f64
+	j: u64
+	y, z: f64
 	//if x >= reduceThreshold {
 	//	j, z = trigReduce(x)
-	//} else 
+	//} else
 	{
 		j = u64(x * (4 / Pi)) // integer part of x/(Pi/4), as integer for tests on the phase angle
-		y = f64(j)           // integer part of x/(Pi/4), as float
+		y = f64(j)            // integer part of x/(Pi/4), as float
 
 		// map zeros to origin
 		if j&1 == 1 {

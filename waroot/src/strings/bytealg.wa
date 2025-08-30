@@ -1,4 +1,5 @@
-// 版权 @2023 凹语言 作者。保留所有权利。
+// Copyright (C) 2024 武汉凹语言科技有限公司
+// SPDX-License-Identifier: MIT
 
 // MaxLen is the maximum length of the string to be searched for (argument b) in Index.
 // If MaxLen is not 0, make sure MaxLen >= 4.

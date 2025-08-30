@@ -1,12 +1,13 @@
-// 版权 @2024 凹语言 作者。保留所有权利。
+// Copyright (C) 2024 武汉凹语言科技有限公司
+// SPDX-License-Identifier: MIT
 
 import "hash"
 
 type (
-	sum32  uint32
-	sum32a uint32
-	sum64  uint64
-	sum64a uint64
+	sum32  :uint32
+	sum32a :uint32
+	sum64  :uint64
+	sum64a :uint64
 )
 
 const (

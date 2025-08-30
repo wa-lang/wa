@@ -1,4 +1,5 @@
-// 版权 @2023 凹语言 作者。保留所有权利。
+// Copyright (C) 2024 武汉凹语言科技有限公司
+// SPDX-License-Identifier: MIT
 
 // Copyright 2012 The Go Authors. All rights reserved.
 // Use of this source code is governed by a BSD-style
@@ -106,7 +107,7 @@ func TestReaderAt {
 			}
 		}
 		//if fmt.Sprintf("%v", err) != fmt.Sprintf("%v", ) {
-			//t.Errorf("%d. got error = %v; want %v", i, err, tt.wanterr)
+		//t.Errorf("%d. got error = %v; want %v", i, err, tt.wanterr)
 		//}
 	}
 }
@@ -214,14 +215,14 @@ func TestReaderDoubleUnreadRune {
 // verify that copying from an empty reader always has the same results,
 // regardless of the presence of a WriteTo method.
 func TestReaderCopyNothing {
-	type nErr struct {
+	type nErr :struct {
 		n:   i64
 		err: error
 	}
-	type justReader struct {
+	type justReader :struct {
 		io.Reader
 	}
-	type justWriter struct {
+	type justWriter :struct {
 		io.Writer
 	}
 	discard := &justWriter{io.Discard} // hide ReadFrom

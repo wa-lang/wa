@@ -1,10 +1,11 @@
-// 版权 @2023 凹语言 作者。保留所有权利。
+// Copyright (C) 2024 武汉凹语言科技有限公司
+// SPDX-License-Identifier: MIT
 
 // A Source represents a source of uniformly-distributed
 // pseudo-random int64 values in the range [0, 1<<63).
 //
 // A Source is not safe for concurrent use by multiple goroutines.
-type Source interface {
+type Source :interface {
 	Int63() => int64
 	Seed(seed: int64)
 }
@@ -15,7 +16,7 @@ type Source interface {
 // If a Rand r's underlying Source s implements Source64,
 // then r.Uint64 returns the result of one call to s.Uint64
 // instead of making two calls to s.Int63.
-type Source64 interface {
+type Source64 :interface {
 	Source
 	Uint64() => uint64
 }
@@ -35,7 +36,7 @@ func newSource(seed: int64) => *rngSource {
 }
 
 // A Rand is a source of random numbers.
-type Rand struct {
+type Rand :struct {
 	src: Source
 	s64: Source64 // non-nil if src is source64
 

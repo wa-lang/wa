@@ -10,9 +10,9 @@
   <pre id="output"></pre>
 </div>
 
-<script type="text/javascript" src="./p5app.js"></script>
+<script type="module">
+  import { WaApp } from "./p5app.js";
 
-<script>
   let app = new WaApp();
   app.init().then((result) => {
     app.main();

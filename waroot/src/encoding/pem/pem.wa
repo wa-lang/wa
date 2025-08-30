@@ -1,4 +1,5 @@
-// 版权 @2024 凹语言 作者。保留所有权利。
+// Copyright (C) 2024 武汉凹语言科技有限公司
+// SPDX-License-Identifier: MIT
 
 import (
 	"bytes"
@@ -6,13 +7,13 @@ import (
 	"io"
 )
 
-type Block struct {
+type Block :struct {
 	Type:    string
 	Headers: []Header
 	Bytes:   []byte
 }
 
-type Header struct {
+type Header :struct {
 	Key:   string
 	Value: string
 }
@@ -120,7 +121,7 @@ func decodeError(data, rest: []byte) => (*Block, []byte) {
 
 const pemLineLength = 64
 
-type lineBreaker struct {
+type lineBreaker :struct {
 	line: [pemLineLength]byte
 	used: int
 	out:  io.Writer

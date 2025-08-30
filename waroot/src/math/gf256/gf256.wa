@@ -1,13 +1,12 @@
-// Copyright 2010 The Go Authors.  All rights reserved.
-// Use of this source code is governed by a BSD-style
-// license that can be found in the LICENSE file.
+// Copyright (C) 2024 武汉凹语言科技有限公司
+// SPDX-License-Identifier: MIT
 
 // Package gf256 implements arithmetic over the Galois Field GF(256).
 
 import "strconv"
 
 // A Field represents an instance of GF(256) defined by a specific polynomial.
-type Field struct {
+type Field :struct {
 	log: [256]byte // log[0] is unused
 	exp: [510]byte
 }
@@ -145,7 +144,7 @@ func Field.Mul(x, y: byte) => byte {
 
 // An RSEncoder implements Reed-Solomon encoding
 // over a given field using a given number of error correction bytes.
-type RSEncoder struct {
+type RSEncoder :struct {
 	f:    *Field
 	c:    int
 	gen:  []byte

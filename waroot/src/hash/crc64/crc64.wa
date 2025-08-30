@@ -1,4 +1,5 @@
-// 版权 @2023 凹语言 作者。保留所有权利。
+// Copyright (C) 2024 武汉凹语言科技有限公司
+// SPDX-License-Identifier: MIT
 
 // Package crc64 implements the 64-bit cyclic redundancy check, or CRC-64,
 // checksum. See https://en.wikipedia.org/wiki/Cyclic_redundancy_check for
@@ -22,7 +23,7 @@ const (
 )
 
 // Table is a 256-word table representing the polynomial for efficient processing.
-type Table [256]uint64
+type Table :[256]uint64
 
 global (
 	slicing8TablesBuildOnce :bool
@@ -87,7 +88,7 @@ func makeSlicingBy8Table(t: *Table) => *[8]Table {
 }
 
 // digest represents the partial evaluation of a checksum.
-type digest struct {
+type digest :struct {
 	crc: uint64
 	tab: *Table
 }

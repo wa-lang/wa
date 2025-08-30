@@ -1,4 +1,5 @@
-// 版权 @2023 凹语言 作者。保留所有权利。
+// Copyright (C) 2024 武汉凹语言科技有限公司
+// SPDX-License-Identifier: MIT
 
 // Package utf8 implements functions and constants to support text encoded in
 // UTF-8. It includes functions to translate between runes and UTF-8 byte sequences.
@@ -82,7 +83,7 @@ global first = [256]u8{
 
 // acceptRange gives the range of valid values for the second byte in a UTF-8
 // sequence.
-type acceptRange struct {
+type acceptRange :struct {
 	lo: u8 // lowest value for second byte.
 	hi: u8 // highest value for second byte.
 }

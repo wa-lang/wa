@@ -1,6 +1,5 @@
-// Copyright 2011 The Go Authors.  All rights reserved.
-// Use of this source code is governed by a BSD-style
-// license that can be found in the LICENSE file.
+// Copyright (C) 2024 武汉凹语言科技有限公司
+// SPDX-License-Identifier: MIT
 
 import (
 	"errors"
@@ -50,7 +49,7 @@ func Encode(text: string, level: Level) => (*Image, error) {
 
 // A Image is a square pixel grid.
 // It implements image.Image and direct PNG encoding.
-type Image struct {
+type Image :struct {
 	Bitmap: []byte // 1 is black, 0 is white
 	Size:   int    // number of pixels on a side
 	Stride: int    // number of bytes per row

@@ -5,6 +5,7 @@ import (
 	"image/color"
 	"js/canvas"
 	"math/rand"
+	"unsafe"
 )
 
 global (
@@ -105,7 +106,7 @@ func LifeStep {
 
 	// 绘制到 Canvas
 	ctxCanvas.PutImageData(
-		raw(cellsRGBA.Pix), 0, 0, 0, 0,
+		unsafe.Raw(cellsRGBA.Pix), 0, 0, 0, 0,
 		f32(width), f32(height),
 	)
 }

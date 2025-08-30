@@ -7,9 +7,9 @@
   <div>Text: https://wa-lang.org/</div>
 </div>
 
-<script type="text/javascript" src="./qrcode.js"></script>
+<script type="module">
+  import { WaApp } from "./qrcode.js";
 
-<script>
   let app = new WaApp();
   app.init().then((result) => {
     app.main();

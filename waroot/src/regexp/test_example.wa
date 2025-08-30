@@ -1,17 +1,18 @@
-// 版权 @2023 凹语言 作者。保留所有权利。
+// Copyright (C) 2024 武汉凹语言科技有限公司
+// SPDX-License-Identifier: MIT
 
 func TestMatch {
 	for _, t := range tests {
-		assert(Match(t.regexp, t.text) == t.ok, t.name + ": Match(" + t.regexp + ", " + t.text + ") failed")
+		assert(Match(t.regexp, t.text) == t.ok, t.name+": Match("+t.regexp+", "+t.text+") failed")
 	}
 }
 
 global tests = []struct {
-	name   :string
-	regexp :string
-	text   :string
-	ok     :bool
-} {
+	name:   string
+	regexp: string
+	text:   string
+	ok:     bool
+}{
 	{"wa", "^wa.*$", "wa-lang", true},
 
 	{"EmptyBoth", "", "", true},

@@ -1,4 +1,5 @@
-// 版权 @2023 凹语言 作者。保留所有权利。
+// Copyright (C) 2024 武汉凹语言科技有限公司
+// SPDX-License-Identifier: MIT
 
 import (
 	"encoding/binary"
@@ -10,7 +11,7 @@ import (
 // encoding defined in RFC 4648 and used in MIME (RFC 2045) and PEM
 // (RFC 1421).  RFC 4648 also defines an alternate encoding, which is
 // the standard encoding with - and _ substituted for + and /.
-type Encoding struct {
+type Encoding :struct {
 	encode:    [64]byte
 	decodeMap: [256]byte
 	padChar:   rune
@@ -188,7 +189,7 @@ func Encoding.EncodeToString(src: []byte) => string {
 	return string(buf)
 }
 
-type encoder struct {
+type encoder :struct {
 	err:  error
 	enc:  *Encoding
 	w:    io.Writer
@@ -276,7 +277,7 @@ func Encoding.EncodedLen(n: int) => int {
 	return (n + 2) / 3 * 4 // minimum # 4-char quanta, 3 bytes each
 }
 
-type CorruptInputError struct {
+type CorruptInputError :struct {
 	V: int64
 }
 
@@ -415,7 +416,7 @@ func Encoding.DecodeString(s: string) => ([]byte, error) {
 	return dbuf[:n], err
 }
 
-type decoder struct {
+type decoder :struct {
 	err:     error
 	readErr: error // error from r.Read
 	enc:     *Encoding
@@ -605,7 +606,7 @@ func assemble64(n1, n2, n3, n4, n5, n6, n7, n8: byte) => (dn: uint64, ok: bool) 
 		true
 }
 
-type newlineFilteringReader struct {
+type newlineFilteringReader :struct {
 	wrapped: io.Reader
 }
 

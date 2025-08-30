@@ -1,11 +1,12 @@
-// 版权 @2024 凹语言 作者。保留所有权利。
+// Copyright (C) 2024 武汉凹语言科技有限公司
+// SPDX-License-Identifier: MIT
 
 import (
 	"io"
 	"strconv"
 )
 
-type Encoding struct {
+type Encoding :struct {
 	encode:    string
 	decodeMap: [256]byte
 }
@@ -119,7 +120,7 @@ func Encoding.EncodeToString(src: []byte) => string {
 	return string(buf)
 }
 
-type encoder struct {
+type encoder :struct {
 	err:  error
 	enc:  *Encoding
 	w:    io.Writer
@@ -191,7 +192,7 @@ func NewEncoder(enc: *Encoding, w: io.Writer) => io.WriteCloser {
 
 func Encoding.EncodedLen(n: int) => int { return (n + 4) / 5 * 8 }
 
-type CorruptInputError struct {
+type CorruptInputError :struct {
 	V: int64
 }
 
@@ -285,7 +286,7 @@ func Encoding.DecodeString(s: string) => ([]byte, error) {
 	return dbuf[:n], err
 }
 
-type decoder struct {
+type decoder :struct {
 	err:    error
 	enc:    *Encoding
 	r:      io.Reader

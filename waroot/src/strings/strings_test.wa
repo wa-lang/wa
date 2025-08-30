@@ -1,4 +1,5 @@
-// 版权 @2023 凹语言 作者。保留所有权利。
+// Copyright (C) 2024 武汉凹语言科技有限公司
+// SPDX-License-Identifier: MIT
 
 import (
 	"unicode/ctypes"
@@ -21,7 +22,7 @@ global faces = "☺☻☹"
 global commas = "1,2,3,4"
 global dots = "1....2....3....4"
 
-type IndexTest struct {
+type IndexTest :struct {
 	s:   string
 	sep: string
 	out: int
@@ -298,7 +299,7 @@ func TestIndexRune {
 	}
 }
 
-type SplitTest struct {
+type SplitTest :struct {
 	s:   string
 	sep: string
 	n:   int
@@ -393,7 +394,7 @@ func _TestSplitAfter {
 	}
 }
 
-type FieldsTest struct {
+type FieldsTest :struct {
 	s: string
 	a: []string
 }

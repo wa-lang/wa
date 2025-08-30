@@ -1,4 +1,5 @@
-// 版权 @2023 凹语言 作者。保留所有权利。
+// Copyright (C) 2024 武汉凹语言科技有限公司
+// SPDX-License-Identifier: MIT
 
 // Copyright 2009 The Go Authors. All rights reserved.
 // Use of this source code is governed by a BSD-style
@@ -19,7 +20,7 @@ const smallBufferSize = 64
 // the buffer, so that UnreadRune and UnreadByte can check for
 // invalid usage. opReadRuneX constants are chosen such that
 // converted to int they correspond to the rune size that was read.
-type readOp byte
+type readOp :byte
 
 // Don't use iota for these, as the values need to correspond with the
 // names and comments, which is easier to see when being explicit.
@@ -34,7 +35,7 @@ const (
 
 // A Buffer is a variable-sized buffer of bytes with Read and Write methods.
 // The zero value for Buffer is an empty buffer ready to use.
-type Buffer struct {
+type Buffer :struct {
 	buf:      []byte // contents are the bytes buf[off : len(buf)]
 	off:      int    // read at &buf[off], write at &buf[len(buf)]
 	lastRead: readOp // last read operation, so that Unread* can work correctly.

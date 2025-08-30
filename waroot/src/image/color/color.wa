@@ -1,8 +1,9 @@
-// 版权 @2023 凹语言 作者。保留所有权利。
+// Copyright (C) 2024 武汉凹语言科技有限公司
+// SPDX-License-Identifier: MIT
 
-type Gray u8
+type Gray :u8
 
-type RGBA u32
+type RGBA :u32
 
 func RGBAFrom(r, g, b, a: u8) => RGBA {
 	return RGBA(u32(a)<<24 + u32(b)<<16 + u32(g)<<8 + u32(r))

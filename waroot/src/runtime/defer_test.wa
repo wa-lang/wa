@@ -1,4 +1,5 @@
-// 版权 @2024 凹语言 作者。保留所有权利。
+// Copyright (C) 2024 武汉凹语言科技有限公司
+// SPDX-License-Identifier: MIT
 
 func ExampleDefer_demo1 {
 	func {
@@ -31,7 +32,7 @@ func ExampleDefer_for1 {
 func ExampleDefer_for2 {
 	func {
 		for i := 0; i < 3; i++ {
-			defer func { println("i:", i) } ()
+			defer func { println("i:", i) }()
 		}
 	}()
 
@@ -45,7 +46,7 @@ func ExampleDefer_for3 {
 	func {
 		for i := 0; i < 3; i++ {
 			i := i
-			defer func { println("i:", i) } ()
+			defer func { println("i:", i) }()
 		}
 	}()
 

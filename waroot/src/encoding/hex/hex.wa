@@ -1,4 +1,5 @@
-// 版权 @2023 凹语言 作者。保留所有权利。
+// Copyright (C) 2024 武汉凹语言科技有限公司
+// SPDX-License-Identifier: MIT
 
 import (
 	"errors"
@@ -51,7 +52,7 @@ func Encode(dst, src: []byte) => int {
 global ErrLength = errors.New("encoding/hex: odd length hex string")
 
 // InvalidByteError values describe errors resulting from an invalid byte in a hex string.
-type InvalidByteError struct {
+type InvalidByteError :struct {
 	V: byte
 }
 
@@ -141,7 +142,7 @@ func Dump(data: []byte) => string {
 // bufferSize is the number of hexadecimal characters to buffer in encoder and decoder.
 const bufferSize = 1024
 
-type encoder struct {
+type encoder :struct {
 	w:   io.Writer
 	err: error
 	out: [bufferSize]byte // output buffer
@@ -169,7 +170,7 @@ func encoder.Write(p: []byte) => (n: int, err: error) {
 	return n, e.err
 }
 
-type decoder struct {
+type decoder :struct {
 	r:   io.Reader
 	err: error
 	in:  []byte           // input buffer (encoded form)
@@ -223,7 +224,7 @@ func Dumper(w: io.Writer) => io.WriteCloser {
 	return &dumper{w: w}
 }
 
-type dumper struct {
+type dumper :struct {
 	w:          io.Writer
 	rightChars: [18]byte
 	buf:        [14]byte

@@ -1,4 +1,5 @@
-// 版权 @2023 凹语言 作者。保留所有权利。
+// Copyright (C) 2024 武汉凹语言科技有限公司
+// SPDX-License-Identifier: MIT
 
 /*
  * Uniform distribution
@@ -15,7 +16,7 @@ const (
 	int32max = (1 << 31) - 1
 )
 
-var (
+global (
 	// rngCooked used for seeding. See gen_cooked.go for details.
 	rngCooked: [rngLen]i64 = [...]i64{
 		-4181792142133755926, -4576982950128230565, 1395769623340756751, 5333664234075297259,
@@ -173,7 +174,7 @@ var (
 	}
 )
 
-type rngSource struct {
+type rngSource :struct {
 	tap:  int         // index into vec
 	feed: int         // index into vec
 	vec:  [rngLen]i64 // current feedback register

@@ -1,4 +1,5 @@
-// 版权 @2023 凹语言 作者。保留所有权利。
+// Copyright (C) 2024 武汉凹语言科技有限公司
+// SPDX-License-Identifier: MIT
 
 import (
 	"bytes"
@@ -22,7 +23,7 @@ global (
 // Buffered input.
 
 // Reader implements buffering for an io.Reader object.
-type Reader struct {
+type Reader :struct {
 	buf:          []byte
 	rd:           io.Reader // reader provided by the client
 	r, w:         int       // buf read and write positions
@@ -585,7 +586,7 @@ func Reader.writeBuf(w: io.Writer) => (int64, error) {
 // After all data has been written, the client should call the
 // Flush method to guarantee all data has been forwarded to
 // the underlying io.Writer.
-type Writer struct {
+type Writer :struct {
 	err: error
 	buf: []byte
 	n:   int
@@ -847,7 +848,7 @@ func Writer.ReadFrom(r: io.Reader) => (n: int64, err: error) {
 
 // ReadWriter stores pointers to a Reader and a Writer.
 // It implements io.ReadWriter.
-type ReadWriter struct {
+type ReadWriter :struct {
 	*Reader
 	*Writer
 }

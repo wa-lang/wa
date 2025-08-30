@@ -1,4 +1,5 @@
-// 版权 @2023 凹语言 作者。保留所有权利。
+// Copyright (C) 2024 武汉凹语言科技有限公司
+// SPDX-License-Identifier: MIT
 
 import (
 	"unicode"
@@ -26,7 +27,7 @@ func TestConstants {
 	}
 }
 
-type Utf8Map struct {
+type Utf8Map :struct {
 	r:   rune
 	str: string
 }
@@ -352,7 +353,7 @@ func runtimeDecodeRune(s: string) => rune {
 }
 
 func testSequence(s: string) {
-	type info struct {
+	type info :struct {
 		index: int
 		r:     rune
 	}
@@ -432,7 +433,7 @@ func TestNegativeRune {
 	}
 }
 
-type RuneCountTest struct {
+type RuneCountTest :struct {
 	in:  string
 	out: int
 }
@@ -459,7 +460,7 @@ func TestRuneCount {
 	}
 }
 
-type RuneLenTest struct {
+type RuneLenTest :struct {
 	r:    rune
 	size: int
 }
@@ -486,7 +487,7 @@ func TestRuneLen {
 	}
 }
 
-type ValidTest struct {
+type ValidTest :struct {
 	in:  string
 	out: bool
 }
@@ -525,7 +526,7 @@ func TestValid {
 	}
 }
 
-type ValidRuneTest struct {
+type ValidRuneTest :struct {
 	r:  rune
 	ok: bool
 }
