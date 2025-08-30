@@ -15,6 +15,7 @@ const (
 	__LINE__    = 0  // line number, starting at 1
 	__COLUMN__  = 0  // column number, starting at 1
 	__FUNC__    = "" // func or method name
+	__POS__     = 0  // pos
 )
 
 // u8 is the set of all unsigned 8-bit integers.
@@ -46,6 +47,14 @@ type f32 :f32
 
 // float64 is the set of all IEEE-754 64-bit floating-point numbers.
 type f64 :f64
+
+// complex64 is the set of all complex numbers with float32 real and
+// imaginary parts.
+type complex64 :complex64
+
+// complex128 is the set of all complex numbers with float64 real and
+// imaginary parts.
+type complex128 :complex128
 
 // string is the set of all strings of 8-bit bytes, conventionally but not
 // necessarily representing UTF-8-encoded text. A string may be empty, but
@@ -143,7 +152,7 @@ func make(t: Type, size: ...IntegerType) => Type
 // The new built-in function allocates memory. The first argument is a type,
 // not a value, and the value returned is a pointer to a newly
 // allocated zero value of that type.
-func new(Type) => *Type
+func new(Type, initValue: ...Type) => *Type
 
 // The panic built-in function stops normal execution of the current
 // application.

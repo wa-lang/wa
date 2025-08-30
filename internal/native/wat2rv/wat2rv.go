@@ -11,6 +11,8 @@ import (
 	wattoken "wa-lang.org/wa/internal/wat/token"
 )
 
+// TODO: 自动化汇编指令地址回填, 需要一个手动构建指令序列的方式
+
 const DebugMode = false
 
 type Options struct {
@@ -131,47 +133,4 @@ func (p *wat2rvWorker) BuildProgram() (f *ast.File, err error) {
 	}
 
 	return file, nil
-}
-
-func (p *wat2rvWorker) buildImport() error {
-	return nil
-}
-func (p *wat2rvWorker) buildMemory() error {
-	return nil
-}
-func (p *wat2rvWorker) buildTable() error {
-	return nil
-}
-
-func (p *wat2rvWorker) buildGlobal() error {
-	for i, g := range p.m.Globals {
-		switch g.Type {
-		case wattoken.I32:
-		case wattoken.I64:
-		case wattoken.F32:
-		case wattoken.F64:
-		default:
-			panic("unreachable")
-		}
-		_ = i
-		_ = g
-	}
-	return nil
-}
-
-func (p *wat2rvWorker) buildFuncs() error {
-	for _, f := range p.m.Funcs {
-		if err := p.buildFunc(f); err != nil {
-			return err
-		}
-	}
-	return nil
-}
-
-func (p *wat2rvWorker) buildTable_elem() error {
-	return nil
-}
-
-func (p *wat2rvWorker) buildMemory_data() error {
-	return nil
 }

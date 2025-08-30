@@ -172,9 +172,7 @@ const (
 
 	// wa
 	_Raw
-	_unsafe_Raw
 	_SetFinalizer
-	_runtime_SetFinalizer
 
 	// wz
 	_长
@@ -183,6 +181,10 @@ const (
 	_unsafe_Alignof
 	_unsafe_Offsetof
 	_unsafe_Sizeof
+	_unsafe_Raw
+
+	// package runtime
+	_runtime_SetFinalizer
 
 	// testing support
 	_Assert
