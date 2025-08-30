@@ -56,8 +56,8 @@ type wat2rvWorker struct {
 	scopeStackBases []int              // if/block/loop, 开始的栈位置
 	scopeResults    [][]wattoken.Token // 对应块的返回值数量和类型
 
-	file *ast.File // 当前输出文件
-	fn   *ast.Func // 当前编译的函数
+	dataSection []*ast.Global
+	textSection []*ast.Func
 
 	trace bool // 调试开关
 }
@@ -96,6 +96,9 @@ func newWat2rvWorker(mWat *watast.Module, opt Options) *wat2rvWorker {
 }
 
 func (p *wat2rvWorker) BuildProgram() (f *ast.File, err error) {
+	p.dataSection = p.dataSection[:0]
+	p.textSection = p.textSection[:0]
+
 	if err := p.buildImport(); err != nil {
 		return nil, err
 	}
@@ -121,21 +124,39 @@ func (p *wat2rvWorker) BuildProgram() (f *ast.File, err error) {
 		return nil, err
 	}
 
-	return p.file, nil
+	file := &ast.File{
+		Name:    p.m.Name,
+		Globals: p.dataSection,
+		Funcs:   p.textSection,
+	}
+
+	return file, nil
 }
 
 func (p *wat2rvWorker) buildImport() error {
-	panic("TODO")
+	return nil
 }
 func (p *wat2rvWorker) buildMemory() error {
-	panic("TODO")
+	return nil
 }
 func (p *wat2rvWorker) buildTable() error {
-	panic("TODO")
+	return nil
 }
 
 func (p *wat2rvWorker) buildGlobal() error {
-	panic("TODO")
+	for i, g := range p.m.Globals {
+		switch g.Type {
+		case wattoken.I32:
+		case wattoken.I64:
+		case wattoken.F32:
+		case wattoken.F64:
+		default:
+			panic("unreachable")
+		}
+		_ = i
+		_ = g
+	}
+	return nil
 }
 
 func (p *wat2rvWorker) buildFuncs() error {
@@ -144,13 +165,13 @@ func (p *wat2rvWorker) buildFuncs() error {
 			return err
 		}
 	}
-	panic("TODO")
+	return nil
 }
 
 func (p *wat2rvWorker) buildTable_elem() error {
-	panic("TODO")
+	return nil
 }
 
 func (p *wat2rvWorker) buildMemory_data() error {
-	panic("TODO")
+	return nil
 }
