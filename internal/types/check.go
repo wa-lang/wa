@@ -313,6 +313,8 @@ func (check *Checker) recordBuiltinType(f ast.Expr, sig *Signature) {
 		switch p := f.(type) {
 		case *ast.Ident:
 			return // we're done
+		case *ast.SelectorExpr:
+			f = p.Sel
 		case *ast.ParenExpr:
 			f = p.X
 		default:

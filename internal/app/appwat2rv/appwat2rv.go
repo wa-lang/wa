@@ -8,10 +8,9 @@ import (
 	"os"
 	"strings"
 
-	"wa-lang.org/wa/internal/native/printer"
-
 	"wa-lang.org/wa/internal/3rdparty/cli"
 	"wa-lang.org/wa/internal/native/ast"
+	"wa-lang.org/wa/internal/native/printer"
 	"wa-lang.org/wa/internal/native/wat2rv"
 	"wa-lang.org/wa/internal/native/wemu/device/dram"
 )

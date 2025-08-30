@@ -30,7 +30,7 @@ type functionGenerator struct {
 
 	locals_map map[ssa.Value]valueWrap
 
-	registers      []wir.Value
+	registers         []wir.Value
 	none_rc_registers map[wir.Value]bool
 
 	cur_local_id int
@@ -862,7 +862,7 @@ func (g *functionGenerator) genBuiltin(name string, pos token.Pos, args []wir.Va
 		insts = g.module.EmitGenCopy(args[0], args[1])
 		ret_type = g.module.I32
 
-	case "raw":
+	case "raw", "Raw": // unsafe.Raw
 		if len(args) != 1 {
 			panic("len(cap.Args) != 1")
 		}

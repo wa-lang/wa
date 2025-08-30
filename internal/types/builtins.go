@@ -62,7 +62,7 @@ func (check *Checker) builtin(x *operand, call *ast.CallExpr, id builtinId) (_ b
 				return
 			}
 		}
-	case _Make, _New, _Offsetof, _Trace:
+	case _Make, _New, _unsafe_Offsetof, _Trace:
 		// arguments require special handling
 	}
 
@@ -554,7 +554,7 @@ func (check *Checker) builtin(x *operand, call *ast.CallExpr, id builtinId) (_ b
 			check.recordBuiltinType(call.Fun, makeSig(x.typ))
 		}
 
-	case _Raw:
+	case _Raw, _unsafe_Raw:
 		if _, ok := x.typ.Underlying().(*Slice); !ok {
 			check.invalidArg(x.pos(), "%s is not a slice", x.typ)
 			return
@@ -612,34 +612,7 @@ func (check *Checker) builtin(x *operand, call *ast.CallExpr, id builtinId) (_ b
 			check.recordBuiltinType(call.Fun, makeSig(nil, params...))
 		}
 
-	case _Printf:
-		S := x.typ
-		if s, _ := S.Underlying().(*Basic); s == nil || (s.kind != String && s.kind != UntypedString) {
-			check.invalidArg(x.pos(), "%s is not a string", x)
-			return
-		}
-
-		var params []Type
-		if nargs > 0 {
-			params = make([]Type, nargs)
-			for i := 0; i < nargs; i++ {
-				if i > 0 {
-					arg(x, i) // first argument already evaluated
-				}
-				check.assignment(x, nil, "argument to "+predeclaredFuncs[id].name)
-				if x.mode == invalid {
-					return
-				}
-				params[i] = x.typ
-			}
-		}
-
-		x.mode = novalue
-		if check.Types != nil {
-			check.recordBuiltinType(call.Fun, makeSig(nil, params...))
-		}
-
-	case _Alignof:
+	case _unsafe_Alignof:
 		// unsafe.Alignof(x T) uintptr
 		check.assignment(x, nil, "argument to unsafe.Alignof")
 		if x.mode == invalid {
@@ -651,7 +624,7 @@ func (check *Checker) builtin(x *operand, call *ast.CallExpr, id builtinId) (_ b
 		x.typ = Typ[Uintptr]
 		// result is constant - no need to record signature
 
-	case _Offsetof:
+	case _unsafe_Offsetof:
 		// unsafe.Offsetof(x T) uintptr, where x must be a selector
 		// (no argument evaluated yet)
 		arg0 := call.Args[0]
@@ -696,7 +669,7 @@ func (check *Checker) builtin(x *operand, call *ast.CallExpr, id builtinId) (_ b
 		x.typ = Typ[Uintptr]
 		// result is constant - no need to record signature
 
-	case _Sizeof:
+	case _unsafe_Sizeof:
 		// unsafe.Sizeof(x T) uintptr
 		check.assignment(x, nil, "argument to unsafe.Sizeof")
 		if x.mode == invalid {

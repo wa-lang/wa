@@ -172,16 +172,16 @@ const (
 
 	// wa
 	_Raw
+	_unsafe_Raw
 	_SetFinalizer
-	_Printf
 
 	// wz
 	_长
 
 	// package unsafe
-	_Alignof
-	_Offsetof
-	_Sizeof
+	_unsafe_Alignof
+	_unsafe_Offsetof
+	_unsafe_Sizeof
 
 	// testing support
 	_Assert
@@ -209,15 +209,17 @@ var predeclaredFuncs = [...]struct {
 	_Real:    {"real", 1, false, expression},
 	_Recover: {"recover", 0, false, statement},
 
-	_Raw:          {"raw", 1, false, expression},
+	_Raw:        {"raw", 1, false, expression},
+	_unsafe_Raw: {"Raw", 1, false, expression},
+
+	// todo: 移到 runtime
 	_SetFinalizer: {"setFinalizer", 2, false, statement},
-	_Printf:       {"printf", 1, true, statement},
 
 	_长: {"长", 1, false, expression},
 
-	_Alignof:  {"Alignof", 1, false, expression},
-	_Offsetof: {"Offsetof", 1, false, expression},
-	_Sizeof:   {"Sizeof", 1, false, expression},
+	_unsafe_Alignof:  {"Alignof", 1, false, expression},
+	_unsafe_Offsetof: {"Offsetof", 1, false, expression},
+	_unsafe_Sizeof:   {"Sizeof", 1, false, expression},
 
 	_Assert: {"assert", 1, true, statement},
 	_Trace:  {"trace", 0, true, statement},
