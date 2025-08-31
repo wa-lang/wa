@@ -292,6 +292,17 @@ func (check *Checker) typInternal(e ast.Expr, def *Named) Type {
 			check.errorf(x.pos(), "%s is not a type", &x)
 		}
 
+	case *ast.IndexExpr:
+		typ := check.typInternal(e.X, def)
+		if basic, ok := typ.(*Basic); ok {
+			if basic.kind == UnsafePointer {
+				// 只有 unsafe.Pointer[T] 支持类型参数
+				typ = &Pointer{base: check.typInternal(e.Index, def), unsafePtr: true}
+				return typ
+			}
+		}
+		check.errorf(e.Pos(), "%s is not a generic type", e.X)
+
 	case *ast.ParenExpr:
 		return check.definedType(e.X, def)
 

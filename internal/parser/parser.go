@@ -1071,11 +1071,32 @@ func (p *parser) parseMapType() *ast.MapType {
 	return &ast.MapType{Map: pos, Key: key, Value: value}
 }
 
+func (p *parser) parseTypeInstance(typ ast.Expr) ast.Expr {
+	if p.trace {
+		defer un(trace(p, "TypeInstance"))
+	}
+
+	opening := p.expect(token.LBRACK)
+	typeParam := p.parseType()
+	closing := p.expectClosing(token.RBRACK, "type argument")
+
+	return &ast.IndexExpr{
+		X:      typ,
+		Lbrack: opening,
+		Index:  typeParam,
+		Rbrack: closing,
+	}
+}
+
 // If the result is an identifier, it is not resolved.
 func (p *parser) tryIdentOrType() ast.Expr {
 	switch p.tok {
 	case token.IDENT:
-		return p.parseTypeName()
+		typ := p.parseTypeName()
+		if p.tok == token.LBRACK {
+			typ = p.parseTypeInstance(typ)
+		}
+		return typ
 	case token.LBRACK:
 		return p.parseArrayType()
 	case token.STRUCT:
