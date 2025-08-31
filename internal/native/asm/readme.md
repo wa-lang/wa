@@ -11,10 +11,10 @@
 
 - 关键字位小写字母, 比如 `func` 表示定义函数, `global` 表示定义全局变量
 - 全局标识符以 `$` 开头, 比如 `$main` 表示 main 函数
+- 局部标识符以 `%` 开头, 比如 `%a` 表示局部变量名
 - 指令不区分大小写, 比如 `CALL` 和 `call` 等价
 - 寄存器不区分大小写, 比如 `PC` 和 `pc` 等价
 - `_.$`和字母数字都是合法的字符
-- 局部变量不能与其他名字重复
 
 ## 字面值
 
@@ -112,9 +112,9 @@ global $ptr = $info
 ```go
 // 参数和返回值根据调用约定对齐
 // 参数和返回值只支持基础的数据类型, 不支持结构体和数组值传入
-func $add(a, b, c: i32) => f64 {
-    local d: i32 // 局部变量必须先声明, i32 大小的空间
-    local e: 10  // 10 个字节, 默认值为 0
+func $add(%a, %b, %c: i32) => f64 {
+    local %d: i32 // 局部变量必须先声明, i32 大小的空间
+    local %e: 10  // 10 个字节, 默认值为 0
 
     // 指令
 Loop:
@@ -127,8 +127,8 @@ Loop:
 
 - `MOVQ X1, $info # X0 = $info`, 加载全局地址
 - `MOVQ X1, $info+2 # X0 = $info`, 加载全局地址, 加偏移量
-- `MOVQ e, X1 # e[0] = X1`, 局部变量地址
-- `MOVQ e+10, X1 # e[9] = X1`, 局部变量地址, 加偏移量
+- `MOVQ %e, X1 # e[0] = X1`, 局部变量地址
+- `MOVQ %e+10, X1 # e[9] = X1`, 局部变量地址, 加偏移量
 - `MOVQ X2, Loop`, 局部标号
 
 ## 指令格式
@@ -149,27 +149,27 @@ global $message = "Hello RISC-V Baremetal!\n"
 
 // 主函数
 func $main() {
-_start:
+%start:
     # a0 = 字符串地址
     MOVQ a1, $message
 
-print_loop:
+%print_loop:
     lbu  a1, 0(a0)        # 取一个字节
     beq  a1, x0, finished # 如果是0则结束
    
     MOVQ t0, $UART0       # t0 = $UART0 地址
     sb   a1, 0(t0)        # 写到UART寄存器
     addi a0, a0, 1        # 下一个字符
-    jal  x0, print_loop
+    jal  x0, %print_loop
 
-finished:
+%finished:
     # 写退出码 0 到 EXIT_DEVICE，让 QEMU 退出
     MOVQ t0, $EXIT_DEVICE  # t0 = $EXIT_DEVICE
     MOVQ t1, 0x5555        # t1 = 0x5555
     sw t1, 0(t0)           # [t0] = t1
 
-forever:
+%forever:
     # 如果 QEMU 不支持 exit 设备，就进入并死循环
-    jal x0, forever
+    jal x0, %forever
 }
 ```
