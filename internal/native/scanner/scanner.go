@@ -393,7 +393,9 @@ func isDigit(ch rune) bool {
 
 func (s *Scanner) scanIdentifier() string {
 	offs := s.offset
-	for isLetter(s.ch) || isDigit(s.ch) {
+	s.next()
+	// `_.$`和字母数字都是合法的字符
+	for isLetter(s.ch) || isDigit(s.ch) || s.ch == '$' || s.ch == '.' || s.ch == '_' {
 		s.next()
 	}
 	return string(s.src[offs:s.offset])
@@ -710,34 +712,6 @@ func stripCR(b []byte, comment bool) []byte {
 	return c[:i]
 }
 
-func (s *Scanner) scanRawString() string {
-	// '`' opening already consumed
-	offs := s.offset - 1
-
-	hasCR := false
-	for {
-		ch := s.ch
-		if ch < 0 {
-			s.error(offs, "raw string literal not terminated")
-			break
-		}
-		s.next()
-		if ch == '`' {
-			break
-		}
-		if ch == '\r' {
-			hasCR = true
-		}
-	}
-
-	lit := s.src[offs:s.offset]
-	if hasCR {
-		lit = stripCR(lit, false)
-	}
-
-	return string(lit)
-}
-
 func (s *Scanner) skipWhitespace() {
 	for s.ch == ' ' || s.ch == '\t' || s.ch == '\n' && !s.insertSemi || s.ch == '\r' {
 		s.next()
@@ -784,7 +758,7 @@ scanAgain:
 	// determine token value
 	insertSemi := false
 	switch ch := s.ch; {
-	case isLetter(ch):
+	case isLetter(ch) || ch == '$' || ch == '%':
 		lit = s.scanIdentifier()
 		if len(lit) > 1 {
 			// keywords are longer than one letter - avoid lookup otherwise
@@ -823,10 +797,16 @@ scanAgain:
 			insertSemi = true
 			tok = token.CHAR
 			lit = s.scanRune()
-		case '`':
-			insertSemi = true
-			tok = token.STRING
-			lit = s.scanRawString()
+		case '+':
+			tok = token.ADD
+			lit = "+"
+		case '=':
+			if s.ch == '>' {
+				s.next()
+				tok = token.ARROW
+			} else {
+				tok = token.ASSIGN
+			}
 		case ':':
 			tok = token.COLON
 			lit = ":"
@@ -840,25 +820,11 @@ scanAgain:
 		case ')':
 			insertSemi = true
 			tok = token.RPAREN
-		case '[':
-			tok = token.LBRACK
-		case ']':
-			insertSemi = true
-			tok = token.RBRACK
 		case '{':
 			tok = token.LBRACE
 		case '}':
 			insertSemi = true
 			tok = token.RBRACE
-		case '+':
-			tok = token.ADD
-			lit = "+"
-		case '-':
-			tok = token.ADD
-			lit = "-"
-		case '*':
-			tok = token.MUL
-			lit = "*"
 		case '#':
 			// #-style comment
 			if s.insertSemi && s.findLineEnd('#') {
@@ -896,13 +862,7 @@ scanAgain:
 				}
 				tok = token.COMMENT
 				lit = comment
-			} else {
-				tok = token.QUO
-				lit = "/"
 			}
-		case '%':
-			tok = token.REM
-			lit = "%"
 
 		default:
 			// next reports unexpected BOMs - don't repeat

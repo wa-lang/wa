@@ -7,6 +7,7 @@ package token
 
 import (
 	"strconv"
+	"strings"
 
 	"wa-lang.org/wa/internal/native/abi"
 )
@@ -20,7 +21,7 @@ const (
 	COMMENT              // 注释
 
 	literal_beg // 面值开始
-	IDENT       // 标识符
+	IDENT       // 标识符, 以 $ 或 % 开头, $ 表示全局变量
 	REG         // 寄存器
 	INST        // 机器指令
 	INT         // 12345
@@ -31,32 +32,22 @@ const (
 
 	operator_beg // 运算符开始
 	ADD          // +
-	SUB          // -
-	MUL          // *
-	QUO          // /
-	REM          // %
-
-	LSH // << 左移
-	RSH // >> 逻辑右移
-	ARR // -> 数学右移, 用于 ARM 的第 3 类移动指令
-	ROT // @> 循环右移, 用于 ARM 的第 4 类移动指令
-
-	LPAREN // (
-	LBRACK // [
-	LBRACE // {
-	COMMA  // ,
-	PERIOD // .
-
-	RPAREN       // )
-	RBRACK       // ]
-	RBRACE       // }
-	SEMICOLON    // ;
+	ASSIGN       // =
+	ARROW        // =>
 	COLON        // :
+	COMMA        // ,
+	SEMICOLON    // ;
+	LPAREN       // (
+	RPAREN       // )
+	LBRACE       // {
+	RBRACE       // }
 	operator_end // 运算符结束
 
 	keyword_beg // 关键字开始
+	CONST       // 常量
 	GLOBAL      // 全局符号
 	FUNC        // 函数
+	RETURN      // 返回
 	keyword_end // 关键字结束
 )
 
@@ -95,31 +86,21 @@ var tokens = [...]string{
 	CHAR:   "CHAR",
 	STRING: "STRING",
 
-	ADD: "+",
-	SUB: "-",
-	MUL: "*",
-	QUO: "/",
-	REM: "%",
-
-	LPAREN: "(",
-	LBRACK: "[",
-	LBRACE: "{",
-	COMMA:  ",",
-	PERIOD: ".",
-
-	LSH: "<<",
-	RSH: ">>",
-	ARR: "->",
-	ROT: "@>",
-
-	RPAREN:    ")",
-	RBRACK:    "]",
-	RBRACE:    "}",
-	SEMICOLON: ";",
+	ADD:       "+",
+	ASSIGN:    "=",
+	ARROW:     "=>",
 	COLON:     ":",
+	COMMA:     ",",
+	SEMICOLON: ";",
+	LPAREN:    "(",
+	RPAREN:    ")",
+	LBRACE:    "{",
+	RBRACE:    "}",
 
+	CONST:  "const",
 	GLOBAL: "global",
 	FUNC:   "func",
+	RETURN: "return",
 }
 
 func (tok Token) String() string {
@@ -149,6 +130,8 @@ func Lookup(ident string,
 	lookupRegister func(ident string) Token,
 	lookupAs func(ident string) Token,
 ) Token {
+	// 因为标识符采用特殊的前缀, 处理的流程可以再简化
+
 	if tok, is_keyword := keywords[ident]; is_keyword {
 		return tok
 	}
@@ -162,7 +145,14 @@ func Lookup(ident string,
 			return as
 		}
 	}
-	return IDENT
+
+	// 标识符以 $ 或 % 开头
+	if strings.HasPrefix(ident, "$") || strings.HasPrefix(ident, "%") {
+		return IDENT
+	}
+
+	// 失败
+	return ILLEGAL
 }
 
 // 面值类型
