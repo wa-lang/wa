@@ -131,6 +131,10 @@ func (s *StdSizes) Sizeof(T Type) int64 {
 			return s.WordSize * (2 + 1) // 多一个引用指针
 		}
 	case *Pointer:
+		if t.IsUnsafePointer() {
+			// 带类型的裸指针没有引用信息
+			return s.WordSize
+		}
 		return s.WordSize * 2 // 多一个引用指针
 	case *Array:
 		n := t.len

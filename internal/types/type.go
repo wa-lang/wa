@@ -158,7 +158,7 @@ func (s *Struct) Tag(i int) string {
 // A Pointer represents a pointer type.
 type Pointer struct {
 	base      Type // element type
-	unsafePtr bool // unsafe.Pointer[T], 仅占位, 没有使用
+	unsafePtr bool // unsafe.Pointer[T]
 }
 
 // NewPointer returns a new pointer type for the given element (base) type.
@@ -166,6 +166,9 @@ func NewPointer(elem Type) *Pointer { return &Pointer{base: elem} }
 
 // Elem returns the element type for the given pointer p.
 func (p *Pointer) Elem() Type { return p.base }
+
+// 是否为裸指针
+func (p *Pointer) IsUnsafePointer() bool { return p.unsafePtr }
 
 // A Tuple represents an ordered list of variables; a nil *Tuple is a valid (empty) tuple.
 // Tuples are used as components of signatures and to represent the type of multiple
