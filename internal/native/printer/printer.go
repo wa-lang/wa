@@ -16,7 +16,7 @@ func PrintInstruction(w io.Writer, pc int64, inst ast.Instruction) {
 	fmt.Fprint(w, riscv.AsmSyntax(pc, inst.As, inst.Arg))
 }
 
-// 打印文件
+// 打印汇编格式
 func Fprint(w io.Writer, pc int64, f *ast.File) {
 	for _, fn := range f.Funcs {
 		fmt.Fprintln(w, f.Name)

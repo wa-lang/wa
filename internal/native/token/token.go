@@ -44,10 +44,13 @@ const (
 	operator_end // 运算符结束
 
 	keyword_beg // 关键字开始
+	I32         // int32
+	I64         // int64
+	F32         // float32
+	F64         // float64
 	CONST       // 常量
 	GLOBAL      // 全局符号
 	FUNC        // 函数
-	RETURN      // 返回
 	keyword_end // 关键字结束
 )
 
@@ -97,10 +100,13 @@ var tokens = [...]string{
 	LBRACE:    "{",
 	RBRACE:    "}",
 
+	I32:    "i32",
+	I64:    "i64",
+	F32:    "f32",
+	F64:    "f64",
 	CONST:  "const",
 	GLOBAL: "global",
 	FUNC:   "func",
-	RETURN: "return",
 }
 
 func (tok Token) String() string {
