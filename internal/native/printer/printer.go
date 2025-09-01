@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io"
 
+	"wa-lang.org/wa/internal/native/abi"
 	"wa-lang.org/wa/internal/native/ast"
 	"wa-lang.org/wa/internal/native/riscv"
 )
@@ -17,12 +18,33 @@ func PrintInstruction(w io.Writer, pc int64, inst ast.Instruction) {
 }
 
 // 打印汇编格式
-func Fprint(w io.Writer, pc int64, f *ast.File) {
-	for _, fn := range f.Funcs {
-		fmt.Fprintln(w, f.Name)
-		for _, inst := range fn.Body.Insts {
-			fmt.Fprint(w, riscv.AsmSyntax(pc, inst.As, inst.Arg))
-			pc += 4
-		}
+func Fprint(w io.Writer, f *ast.File) error {
+	return new(wsPrinter).Fprint(w, f)
+}
+
+type wsPrinter struct {
+	cpu abi.CPUType
+
+	f *ast.File
+	w io.Writer
+
+	indent string
+}
+
+func (p *wsPrinter) Fprint(w io.Writer, f *ast.File) error {
+	p.f = f
+	p.w = w
+	p.indent = "\t"
+
+	if err := p.printConsts(); err != nil {
+		return err
 	}
+	if err := p.printGlobals(); err != nil {
+		return err
+	}
+	if err := p.printFuncs(); err != nil {
+		return err
+	}
+
+	return nil
 }

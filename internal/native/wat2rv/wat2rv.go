@@ -127,7 +127,6 @@ func (p *wat2rvWorker) BuildProgram() (f *ast.File, err error) {
 	}
 
 	file := &ast.File{
-		Name:    p.m.Name,
 		Globals: p.dataSection,
 		Funcs:   p.textSection,
 	}

@@ -63,10 +63,10 @@ var CmdWat2rv = &cli.Command{
 					outfile = outfile[:n1-n2]
 				}
 			}
-			outfile += ".c"
+			outfile += ".ws"
 		}
-		if !strings.HasSuffix(outfile, ".c") {
-			outfile += ".c"
+		if !strings.HasSuffix(outfile, ".ws") {
+			outfile += ".ws"
 		}
 
 		source, err := os.ReadFile(infile)
@@ -91,7 +91,7 @@ var CmdWat2rv = &cli.Command{
 		}
 
 		// 输出汇编格式
-		printer.Fprint(os.Stdout, int64(opt.Ttext), f)
+		printer.Fprint(os.Stdout, f)
 		return nil
 	},
 }

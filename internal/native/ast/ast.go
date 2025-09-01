@@ -13,7 +13,6 @@ import (
 // 只在链接阶段处理外部的符号依赖, 并做符号地址检查
 type File struct {
 	Pos     token.Pos // 位置
-	Name    string    // 模块名
 	Consts  []*Const  // 全局常量
 	Globals []*Global // 全局对象
 	Funcs   []*Func   // 函数对象
@@ -22,13 +21,11 @@ type File struct {
 
 // 全局常量
 type Const struct {
-	Pos      token.Pos   // 位置
-	Name     string      // 常量名
-	Type     token.Token // I32/I64/F32/F64
-	I32Value int32       // I32值
-	I64Value int64       // I64值
-	F32Value float32     // F32值
-	F64Value float64     // F64值
+	Pos        token.Pos   // 位置
+	Name       string      // 常量名
+	Type       token.Token // I32/I64/F32/F64
+	IntValue   int64       // I32/I64 值
+	FloatValue float64     // F32/F64 值
 }
 
 // 全局对象
@@ -36,19 +33,18 @@ type Global struct {
 	Pos  token.Pos   // 位置
 	Name string      // 全局变量名
 	Size int         // 大小
+	Type token.Token // 类型, 缺少时用 .Size 表示, 语法糖
 	Init []InitValue // 初始数据
 }
 
 // 初始化的面值
 type InitValue struct {
-	Type     token.Token // I32/I64/F32/F64
-	Offset   int         // 相对偏移
-	I32Value int32       // I32值
-	I64Value int64       // I64值
-	F32Value float32     // F32值
-	F64Value float64     // F64值
-	Symbal   string      // 其他符号或常量, 非空时有效
-	StrValue *string     // 字符串, 指针非空时有效
+	Offset     int         // 相对偏移
+	Type       token.Token // 初始化值的类型
+	IntValue   int64       // I32/I64 值
+	FloatValue float64     // F32/F64 值
+	Symbal     string      // 其他符号或常量, 非空时有效
+	StrValue   *string     // 字符串, 指针非空时有效
 }
 
 // 函数对象
