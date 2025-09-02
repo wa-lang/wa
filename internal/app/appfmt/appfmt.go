@@ -15,6 +15,7 @@ import (
 	"wa-lang.org/wa/internal/app/appbase"
 	"wa-lang.org/wa/internal/config"
 	"wa-lang.org/wa/internal/format"
+	natfmt "wa-lang.org/wa/internal/native/format"
 	"wa-lang.org/wa/internal/wat/watutil/watfmt"
 )
 
@@ -39,6 +40,10 @@ func Fmt(path string) error {
 	}
 	if appbase.IsNativeFile(path, ".wa", ".wz") {
 		_, err := fmtFile(path)
+		return err
+	}
+	if appbase.IsNativeFile(path, ".s") {
+		err := fmtNativeAsmFile(path)
 		return err
 	}
 
@@ -108,6 +113,22 @@ func fmtWatFile(path string) (err error) {
 		return err
 	}
 	data, err := watfmt.Format(path, src)
+	if err != nil {
+		return err
+	}
+	os.Stdout.Write(data)
+	if !bytes.HasSuffix(data, []byte("\n")) {
+		os.Stdout.Write([]byte("\n"))
+	}
+	return nil
+}
+
+func fmtNativeAsmFile(path string) (err error) {
+	src, err := os.ReadFile(path)
+	if err != nil {
+		return err
+	}
+	data, err := natfmt.Format(path, src)
 	if err != nil {
 		return err
 	}

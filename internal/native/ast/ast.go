@@ -12,11 +12,18 @@ import (
 // 每个文件只是一个代码片段, 不能识别外部的符号类型, 只针对指令做简单的语义检查
 // 只在链接阶段处理外部的符号依赖, 并做符号地址检查
 type File struct {
-	Pos     token.Pos // 位置
-	Consts  []*Const  // 全局常量
-	Globals []*Global // 全局对象
-	Funcs   []*Func   // 函数对象
-	Start   string    // start 函数
+	Pos      token.Pos  // 位置
+	Consts   []*Const   // 全局常量
+	Globals  []*Global  // 全局对象
+	Funcs    []*Func    // 函数对象
+	Start    string     // start 函数
+	Comments []*Comment // 注释列表, 可根据 pos 定位
+}
+
+// 注释
+type Comment struct {
+	Pos  token.Pos // 位置
+	Text string    // 注释文本
 }
 
 // 全局常量

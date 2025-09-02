@@ -5,6 +5,7 @@ package parser
 
 import (
 	"fmt"
+	"strconv"
 
 	"wa-lang.org/wa/internal/native/ast"
 	"wa-lang.org/wa/internal/native/scanner"
@@ -120,6 +121,10 @@ func (p *parser) next0() {
 // 跳过注释
 func (p *parser) consumeComments() {
 	for p.tok == token.COMMENT {
+		p.prog.Comments = append(p.prog.Comments, &ast.Comment{
+			Pos:  p.pos,
+			Text: p.lit,
+		})
 		p.next()
 	}
 }
@@ -150,6 +155,7 @@ func (p *parser) parseFile() {
 	p.next()
 
 	for {
+		fmt.Println("native parseFile aa")
 		if p.err != nil {
 			return
 		}
@@ -171,13 +177,127 @@ func (p *parser) parseFile() {
 	}
 }
 
-func (p *parser) parseConst() {
-	// TODO
+// 解析标别符
+func (p *parser) parseIdent() string {
+	s := p.lit
+	p.acceptToken(token.IDENT)
+	return s
 }
 
-func (p *parser) parseGlobal() {
-	// TODO
+// 解析整数常量面值解析整数常量面值
+func (p *parser) parseIntLit() int {
+	pos, lit := p.pos, p.lit
+	p.acceptToken(token.INT)
+
+	if len(lit) > 2 && lit[0] == '0' && (lit[1] == 'x' || lit[1] == 'X') {
+		n, err := strconv.ParseInt(lit[2:], 16, 64)
+		if err != nil {
+			p.errorf(pos, "expect int, got %q", lit)
+		}
+		return int(n)
+	}
+
+	n, err := strconv.ParseInt(lit, 10, 64)
+	if err != nil {
+		p.errorf(pos, "expect int, got %q", lit)
+	}
+	return int(n)
 }
-func (p *parser) parseFunc() {
-	// TODO
+
+func (p *parser) parseInt32Lit() int32 {
+	pos, lit := p.pos, p.lit
+
+	if p.tok == token.CHAR {
+		p.acceptToken(token.CHAR)
+		return int32(lit[1]) // '?'
+	}
+
+	p.acceptToken(token.INT)
+
+	if len(lit) > 2 && lit[0] == '0' && (lit[1] == 'x' || lit[1] == 'X') {
+		n, err := strconv.ParseInt(lit[2:], 16, 32)
+		if err != nil {
+			p.errorf(pos, "expect int32, got %q", lit)
+		}
+		return int32(n)
+	}
+
+	// 需要支持 u32 和 -1 两种格式
+	n, err := strconv.ParseInt(lit, 10, 32)
+	if err != nil {
+		if n, errx := strconv.ParseUint(lit, 10, 32); errx == nil {
+			return int32(uint32(n))
+		} else {
+			p.errorf(pos, "expect int32, got %q, err = %v", lit, err)
+		}
+
+	}
+	return int32(n)
+}
+
+func (p *parser) parseInt64Lit() int64 {
+	pos, lit := p.pos, p.lit
+	p.acceptToken(token.INT)
+
+	if len(lit) > 2 && lit[0] == '0' && (lit[1] == 'x' || lit[1] == 'X') {
+		n, err := strconv.ParseInt(lit[2:], 16, 64)
+		if err != nil {
+			p.errorf(pos, "expect int64, got %q", lit)
+		}
+		return int64(n)
+	}
+
+	n, err := strconv.ParseInt(lit, 10, 64)
+	if err != nil {
+		p.errorf(pos, "expect int64, got %q", lit)
+	}
+	return int64(uint64(n))
+}
+
+// 解析浮点数常量面值
+func (p *parser) parseFloat32Lit() float32 {
+	pos, lit := p.pos, p.lit
+	p.acceptToken(token.FLOAT, token.INT)
+
+	n, err := strconv.ParseFloat(lit, 32)
+	if err != nil {
+		p.errorf(pos, "expect float32, got %q", lit)
+	}
+	return float32(n)
+}
+func (p *parser) parseFloat64Lit() float64 {
+	pos, lit := p.pos, p.lit
+	p.acceptToken(token.FLOAT, token.INT)
+
+	n, err := strconv.ParseFloat(lit, 64)
+	if err != nil {
+		p.errorf(pos, "expect float64, got %q", lit)
+	}
+	return n
+}
+
+// 解析字符串常量面值(含二进制数据)
+func (p *parser) parseStringLit() string {
+	s := p.lit
+	p.acceptToken(token.STRING)
+	return s
+}
+
+func (p *parser) parseNumberType() token.Token {
+	switch p.tok {
+	case token.I32, token.I64, token.F32, token.F64:
+		tok := p.tok
+		p.next()
+		return tok
+	default:
+		p.errorf(p.pos, "export %v, got %v", "i32|i64|f32|f64", p.tok)
+	}
+	panic("unreachable")
+}
+
+// 解析索引, 标识符或整数
+func (p *parser) parseIdentOrIndex() string {
+	s := p.lit
+	p.acceptToken(token.IDENT, token.INT)
+	return s
 }

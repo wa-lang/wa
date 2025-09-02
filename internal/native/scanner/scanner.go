@@ -191,39 +191,6 @@ func (s *Scanner) scanComment(firstRune rune) string {
 		goto exit
 	}
 
-	//-style comment
-	if s.ch == '/' {
-		// (the final '\n' is not considered part of the comment)
-		s.next()
-		for s.ch != '\n' && s.ch >= 0 {
-			if s.ch == '\r' {
-				numCR++
-			}
-			s.next()
-		}
-		// if we are at '\n', the position following the comment is afterwards
-		next = s.offset
-		if s.ch == '\n' {
-			next++
-		}
-		goto exit
-	}
-
-	/*-style comment */
-	s.next()
-	for s.ch >= 0 {
-		ch := s.ch
-		if ch == '\r' {
-			numCR++
-		}
-		s.next()
-		if ch == '*' && s.ch == '/' {
-			s.next()
-			next = s.offset
-			goto exit
-		}
-	}
-
 	s.error(offs, "comment not terminated")
 
 exit:
@@ -843,26 +810,6 @@ scanAgain:
 			}
 			tok = token.COMMENT
 			lit = comment
-		case '/':
-			if s.ch == '/' || s.ch == '*' {
-				// comment
-				if s.insertSemi && s.findLineEnd('/') {
-					// reset position to the beginning of the comment
-					s.ch = '/'
-					s.offset = s.file.Offset(pos)
-					s.rdOffset = s.offset + 1
-					s.insertSemi = false // newline consumed
-					return pos, token.SEMICOLON, "\n"
-				}
-				comment := s.scanComment('/')
-				if s.mode&ScanComments == 0 {
-					// skip comment
-					s.insertSemi = false // newline consumed
-					goto scanAgain
-				}
-				tok = token.COMMENT
-				lit = comment
-			}
 
 		default:
 			// next reports unexpected BOMs - don't repeat
