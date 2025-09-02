@@ -14,17 +14,21 @@ import (
 
 func (p *wsPrinter) printConsts() error {
 	for _, x := range p.f.Consts {
-		switch x.Type {
+		switch x.Value.Type {
 		case token.I32:
-			fmt.Fprintf(p.w, "const %s = %v\n", x.Name, int32(x.IntValue))
+			fmt.Fprintf(p.w, "const %s = %v\n", x.Name, int32(x.Value.IntValue))
 		case token.I64:
-			fmt.Fprintf(p.w, "const %s = %v\n", x.Name, x.IntValue)
+			fmt.Fprintf(p.w, "const %s = %v\n", x.Name, x.Value.IntValue)
 		case token.F32:
-			fmt.Fprintf(p.w, "const %s = %v\n", x.Name, float32(x.FloatValue))
+			fmt.Fprintf(p.w, "const %s = %v\n", x.Name, float32(x.Value.FloatValue))
 		case token.F64:
-			fmt.Fprintf(p.w, "const %s = %v\n", x.Name, x.FloatValue)
+			fmt.Fprintf(p.w, "const %s = %v\n", x.Name, x.Value.FloatValue)
 		default:
-			panic("unreachable")
+			if x.Value.StrValue != nil {
+				fmt.Fprintf(p.w, "const %s = %q\n", x.Name, *x.Value.StrValue)
+			} else {
+				panic("unreachable")
+			}
 		}
 	}
 	return nil

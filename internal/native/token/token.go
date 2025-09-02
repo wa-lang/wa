@@ -48,7 +48,6 @@ const (
 	I64         // int64
 	F32         // float32
 	F64         // float64
-	PTR         // 地址类型
 	CONST       // 常量
 	GLOBAL      // 全局符号
 	FUNC        // 函数
@@ -105,7 +104,6 @@ var tokens = [...]string{
 	I64:    "i64",
 	F32:    "f32",
 	F64:    "f64",
-	PTR:    "ptr",
 	CONST:  "const",
 	GLOBAL: "global",
 	FUNC:   "func",
