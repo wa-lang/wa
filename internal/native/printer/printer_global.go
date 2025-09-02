@@ -216,11 +216,19 @@ func (p *wsPrinter) printGlobals() error {
 						}
 					}
 				case xInit.GlobalAddr != nil:
-					// 地址的初始化强制类型转义, 因为地址的宽度不是稳定的
-					if xInit.Offset != 0 {
-						fmt.Fprintf(p.w, "global %s:%v = {%d: %s(%v)}", g.Name, xInit.Type, xInit.Offset, xInit.Type, xInit.GlobalAddr.Name)
+					// 全局变量地址本地没有固定的类型(和CPU字长有关)
+					if xInit.Type != 0 {
+						if xInit.Offset != 0 {
+							fmt.Fprintf(p.w, "global %s:%v = {%d: %s(%v)}", g.Name, xInit.Type, xInit.Offset, xInit.Type, xInit.GlobalAddr.Name)
+						} else {
+							fmt.Fprintf(p.w, "global %s:%v = %s(%v)", g.Name, xInit.Type, xInit.Type, xInit.GlobalAddr.Name)
+						}
 					} else {
-						fmt.Fprintf(p.w, "global %s:%v = %s(%v)", g.Name, xInit.Type, xInit.Type, xInit.GlobalAddr.Name)
+						if xInit.Offset != 0 {
+							fmt.Fprintf(p.w, "global %s:%v = {%d: %v}", g.Name, xInit.Type, xInit.Offset, xInit.GlobalAddr.Name)
+						} else {
+							fmt.Fprintf(p.w, "global %s:%v = %v", g.Name, xInit.Type, xInit.GlobalAddr.Name)
+						}
 					}
 				default:
 					panic("unreachable")
