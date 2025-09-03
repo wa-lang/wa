@@ -16,7 +16,8 @@ import (
 type Token int
 
 const (
-	ILLEGAL Token = iota // 非法
+	NONE    Token = iota // 零值, 表示空
+	ILLEGAL              // 非法
 	EOF                  // 结尾
 	COMMENT              // 注释
 
@@ -46,8 +47,11 @@ const (
 	keyword_beg // 关键字开始
 	I32         // int32
 	I64         // int64
+	U32         // uint32
+	U64         // uint64
 	F32         // float32
 	F64         // float64
+	PTR         // uint pointer
 	CONST       // 常量
 	GLOBAL      // 全局符号
 	LOCAL       // 局部变量
@@ -78,6 +82,7 @@ const (
 )
 
 var tokens = [...]string{
+	NONE:    "NONE",
 	ILLEGAL: "ILLEGAL",
 	EOF:     "EOF",
 	COMMENT: "COMMENT",
@@ -103,8 +108,11 @@ var tokens = [...]string{
 
 	I32:    "i32",
 	I64:    "i64",
+	U32:    "u32",
+	U64:    "u64",
 	F32:    "f32",
 	F64:    "f64",
+	PTR:    "ptr",
 	CONST:  "const",
 	GLOBAL: "global",
 	LOCAL:  "local",

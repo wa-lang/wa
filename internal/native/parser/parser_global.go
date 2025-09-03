@@ -79,8 +79,8 @@ func (p *parser) parseGlobal_initValue(offset int) ast.InitValue {
 		return ast.InitValue{
 			Offset: offset,
 			Type:   token.I32,
-			LitValue: &ast.LitValue{
-				Kind:     token.INT,
+			LitValue: &ast.Value{
+				LitKind:  token.INT,
 				IntValue: int64(p.parseInt32Lit()),
 			},
 		}
@@ -93,8 +93,8 @@ func (p *parser) parseGlobal_initValue(offset int) ast.InitValue {
 		return ast.InitValue{
 			Offset: offset,
 			Type:   token.I32,
-			LitValue: &ast.LitValue{
-				Kind:     token.INT,
+			LitValue: &ast.Value{
+				LitKind:  token.INT,
 				IntValue: int64(p.parseInt32Lit()),
 			},
 		}
@@ -107,8 +107,8 @@ func (p *parser) parseGlobal_initValue(offset int) ast.InitValue {
 		return ast.InitValue{
 			Offset: offset,
 			Type:   token.I32,
-			LitValue: &ast.LitValue{
-				Kind:     token.INT,
+			LitValue: &ast.Value{
+				LitKind:  token.INT,
 				IntValue: int64(p.parseInt64Lit()),
 			},
 		}
@@ -117,8 +117,8 @@ func (p *parser) parseGlobal_initValue(offset int) ast.InitValue {
 		return ast.InitValue{
 			Offset: offset,
 			Type:   token.F32,
-			LitValue: &ast.LitValue{
-				Kind:       token.FLOAT,
+			LitValue: &ast.Value{
+				LitKind:    token.FLOAT,
 				FloatValue: float64(p.parseFloat32Lit()),
 			},
 		}
@@ -131,8 +131,8 @@ func (p *parser) parseGlobal_initValue(offset int) ast.InitValue {
 		return ast.InitValue{
 			Offset: offset,
 			Type:   token.F32,
-			LitValue: &ast.LitValue{
-				Kind:       token.FLOAT,
+			LitValue: &ast.Value{
+				LitKind:    token.FLOAT,
 				FloatValue: float64(p.parseFloat32Lit()),
 			},
 		}
@@ -145,8 +145,8 @@ func (p *parser) parseGlobal_initValue(offset int) ast.InitValue {
 		return ast.InitValue{
 			Offset: offset,
 			Type:   token.F32,
-			LitValue: &ast.LitValue{
-				Kind:       token.FLOAT,
+			LitValue: &ast.Value{
+				LitKind:    token.FLOAT,
 				FloatValue: float64(p.parseFloat64Lit()),
 			},
 		}
@@ -155,8 +155,8 @@ func (p *parser) parseGlobal_initValue(offset int) ast.InitValue {
 		return ast.InitValue{
 			Offset: offset,
 			Type:   token.STRING,
-			LitValue: &ast.LitValue{
-				Kind:     token.STRING,
+			LitValue: &ast.Value{
+				LitKind:  token.STRING,
 				StrValue: p.parseStringLit(),
 			},
 		}

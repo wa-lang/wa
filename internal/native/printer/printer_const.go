@@ -15,7 +15,7 @@ import (
 
 func (p *wsPrinter) printConsts() error {
 	for _, x := range p.f.Consts {
-		switch x.Value.Kind {
+		switch x.Value.LitKind {
 		case token.INT:
 			fmt.Fprintf(p.w, "const %s = %v\n", x.Name, x.Value.IntValue)
 		case token.FLOAT:

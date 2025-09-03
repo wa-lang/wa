@@ -29,35 +29,35 @@ func (p *wsPrinter) printGlobals() error {
 			case xInit.LitValue != nil:
 				switch xInit.Type {
 				case token.I32:
-					assert(xInit.LitValue.Kind == token.INT)
+					assert(xInit.LitValue.LitKind == token.INT)
 					if xInit.Offset != 0 {
 						fmt.Fprintf(p.w, "global %s:%v = {%d: i32(%v)}", g.Name, xInit.Type, xInit.Offset, int32(xInit.LitValue.IntValue))
 					} else {
 						fmt.Fprintf(p.w, "global %s:%v = i32(%v)", g.Name, xInit.Type, int32(xInit.LitValue.IntValue))
 					}
 				case token.I64:
-					assert(xInit.LitValue.Kind == token.INT)
+					assert(xInit.LitValue.LitKind == token.INT)
 					if xInit.Offset != 0 {
 						fmt.Fprintf(p.w, "global %s:%v = {%d: i64(%v)}", g.Name, xInit.Type, xInit.Offset, int32(xInit.LitValue.IntValue))
 					} else {
 						fmt.Fprintf(p.w, "global %s:%v = i64(%v)", g.Name, xInit.Type, int64(xInit.LitValue.IntValue))
 					}
 				case token.F32:
-					assert(xInit.LitValue.Kind == token.FLOAT)
+					assert(xInit.LitValue.LitKind == token.FLOAT)
 					if xInit.Offset != 0 {
 						fmt.Fprintf(p.w, "global %s:%v = {%d: f32(%v)}", g.Name, xInit.Type, xInit.Offset, float32(xInit.LitValue.FloatValue))
 					} else {
 						fmt.Fprintf(p.w, "global %s:%v = %v", g.Name, xInit.Type, float32(xInit.LitValue.FloatValue))
 					}
 				case token.F64:
-					assert(xInit.LitValue.Kind == token.FLOAT)
+					assert(xInit.LitValue.LitKind == token.FLOAT)
 					if xInit.Offset != 0 {
 						fmt.Fprintf(p.w, "global %s:%v = {%d: f64(%v)}", g.Name, xInit.Type, xInit.Offset, float32(xInit.LitValue.FloatValue))
 					} else {
 						fmt.Fprintf(p.w, "global %s:%v = f64(%v)", g.Name, xInit.Type, float64(xInit.LitValue.FloatValue))
 					}
 				case token.STRING:
-					assert(xInit.LitValue.Kind == token.STRING)
+					assert(xInit.LitValue.LitKind == token.STRING)
 					if xInit.Offset != 0 {
 						fmt.Fprintf(p.w, "global %s:%v = {%d: %q}\n", g.Name, g.Size, xInit.Offset, xInit.LitValue.StrValue)
 					} else {
@@ -70,7 +70,7 @@ func (p *wsPrinter) printGlobals() error {
 				switch xInit.Type {
 				case token.I32:
 					assert(g.Size >= 4)
-					assert(xInit.ConstValue.Value.Kind == token.INT)
+					assert(xInit.ConstValue.Value.LitKind == token.INT)
 					if xInit.Offset != 0 {
 						fmt.Fprintf(p.w, "global %s:%v = {%d: i32(%v)}", g.Name, xInit.Type, xInit.Offset, xInit.ConstValue.Name)
 					} else {
@@ -78,7 +78,7 @@ func (p *wsPrinter) printGlobals() error {
 					}
 				case token.I64:
 					assert(g.Size >= 8)
-					assert(xInit.ConstValue.Value.Kind == token.INT)
+					assert(xInit.ConstValue.Value.LitKind == token.INT)
 					if xInit.Offset != 0 {
 						fmt.Fprintf(p.w, "global %s:%v = {%d: i64(%v)}", g.Name, xInit.Type, xInit.Offset, xInit.ConstValue.Name)
 					} else {
@@ -86,7 +86,7 @@ func (p *wsPrinter) printGlobals() error {
 					}
 				case token.F32:
 					assert(g.Size >= 4)
-					assert(xInit.ConstValue.Value.Kind == token.FLOAT)
+					assert(xInit.ConstValue.Value.LitKind == token.FLOAT)
 					if xInit.Offset != 0 {
 						fmt.Fprintf(p.w, "global %s:%v = {%d: f32(%v)}", g.Name, xInit.Type, xInit.Offset, xInit.ConstValue.Name)
 					} else {
@@ -94,7 +94,7 @@ func (p *wsPrinter) printGlobals() error {
 					}
 				case token.F64:
 					assert(g.Size >= 8)
-					assert(xInit.ConstValue.Value.Kind == token.FLOAT)
+					assert(xInit.ConstValue.Value.LitKind == token.FLOAT)
 					if xInit.Offset != 0 {
 						fmt.Fprintf(p.w, "global %s:%v = {%d: f64(%v)}", g.Name, xInit.Type, xInit.Offset, xInit.ConstValue.Name)
 					} else {
@@ -102,7 +102,7 @@ func (p *wsPrinter) printGlobals() error {
 					}
 				case token.STRING:
 					// TODO: 长度要特殊处理转义的字符
-					assert(xInit.ConstValue.Value.Kind == token.STRING)
+					assert(xInit.ConstValue.Value.LitKind == token.STRING)
 					if xInit.Offset != 0 {
 						fmt.Fprintf(p.w, "global %s:%v = {%d: %v}", g.Name, xInit.Type, xInit.Offset, xInit.ConstValue.Name)
 					} else {
@@ -127,19 +127,19 @@ func (p *wsPrinter) printGlobals() error {
 				case xInit.LitValue != nil:
 					switch xInit.Type {
 					case token.I32:
-						assert(xInit.LitValue.Kind == token.INT)
+						assert(xInit.LitValue.LitKind == token.INT)
 						fmt.Fprintf(p.w, "\t%d = i32(%v),", xInit.Offset, int32(xInit.LitValue.IntValue))
 					case token.I64:
-						assert(xInit.LitValue.Kind == token.INT)
+						assert(xInit.LitValue.LitKind == token.INT)
 						fmt.Fprintf(p.w, "\t%d = i64(%v),", xInit.Offset, int64(xInit.LitValue.IntValue))
 					case token.F32:
-						assert(xInit.LitValue.Kind == token.FLOAT)
+						assert(xInit.LitValue.LitKind == token.FLOAT)
 						fmt.Fprintf(p.w, "\t%d = f32(%v),", xInit.Offset, float32(xInit.LitValue.FloatValue))
 					case token.F64:
-						assert(xInit.LitValue.Kind == token.FLOAT)
+						assert(xInit.LitValue.LitKind == token.FLOAT)
 						fmt.Fprintf(p.w, "\t%d = f64(%v),", xInit.Offset, float64(xInit.LitValue.FloatValue))
 					case token.STRING:
-						assert(xInit.LitValue.Kind == token.STRING)
+						assert(xInit.LitValue.LitKind == token.STRING)
 						fmt.Fprintf(p.w, "\t%d: %q,\n", xInit.Offset, xInit.LitValue.StrValue)
 					default:
 						panic("unreachable")
@@ -148,23 +148,23 @@ func (p *wsPrinter) printGlobals() error {
 					switch xInit.Type {
 					case token.I32:
 						assert(g.Size >= 4)
-						assert(xInit.ConstValue.Value.Kind == token.INT)
+						assert(xInit.ConstValue.Value.LitKind == token.INT)
 						fmt.Fprintf(p.w, "\t%d: i32(%v),", xInit.Offset, xInit.ConstValue.Name)
 					case token.I64:
 						assert(g.Size >= 8)
-						assert(xInit.ConstValue.Value.Kind == token.INT)
+						assert(xInit.ConstValue.Value.LitKind == token.INT)
 						fmt.Fprintf(p.w, "\t%d: i64(%v),", xInit.Offset, xInit.ConstValue.Name)
 					case token.F32:
 						assert(g.Size >= 4)
-						assert(xInit.ConstValue.Value.Kind == token.FLOAT)
+						assert(xInit.ConstValue.Value.LitKind == token.FLOAT)
 						fmt.Fprintf(p.w, "\t%d: f32(%v),", xInit.Offset, xInit.ConstValue.Name)
 					case token.F64:
 						assert(g.Size >= 8)
-						assert(xInit.ConstValue.Value.Kind == token.FLOAT)
+						assert(xInit.ConstValue.Value.LitKind == token.FLOAT)
 						fmt.Fprintf(p.w, "\t%d: f64(%v),", xInit.Offset, xInit.ConstValue.Name)
 					case token.STRING:
 						// TODO: 长度要特殊处理转义的字符
-						assert(xInit.ConstValue.Value.Kind == token.STRING)
+						assert(xInit.ConstValue.Value.LitKind == token.STRING)
 						fmt.Fprintf(p.w, "\t%d: %v,", xInit.Offset, xInit.ConstValue.Name)
 					}
 				case xInit.GlobalAddr != nil:
