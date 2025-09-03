@@ -9,26 +9,21 @@ import (
 	"wa-lang.org/wa/internal/native/token"
 )
 
-// const $UART0       = 0x10000000
-// const $EXIT_DEVICE = 0x100000
+// const $A  = 0x10000000
+// const $BB = 12.5
+// const $ID = "name"
 
 func (p *wsPrinter) printConsts() error {
 	for _, x := range p.f.Consts {
-		switch x.Value.Type {
-		case token.I32:
-			fmt.Fprintf(p.w, "const %s = %v\n", x.Name, int32(x.Value.IntValue))
-		case token.I64:
+		switch x.Value.Kind {
+		case token.INT:
 			fmt.Fprintf(p.w, "const %s = %v\n", x.Name, x.Value.IntValue)
-		case token.F32:
-			fmt.Fprintf(p.w, "const %s = %v\n", x.Name, float32(x.Value.FloatValue))
-		case token.F64:
+		case token.FLOAT:
 			fmt.Fprintf(p.w, "const %s = %v\n", x.Name, x.Value.FloatValue)
+		case token.STRING:
+			fmt.Fprintf(p.w, "const %s = %v\n", x.Name, x.Value.StrValue)
 		default:
-			if x.Value.StrValue != nil {
-				fmt.Fprintf(p.w, "const %s = %q\n", x.Name, *x.Value.StrValue)
-			} else {
-				panic("unreachable")
-			}
+			panic("unreachable")
 		}
 	}
 	return nil

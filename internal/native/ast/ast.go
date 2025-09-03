@@ -37,15 +37,14 @@ type Const struct {
 type Global struct {
 	Pos  token.Pos   // 位置
 	Name string      // 全局变量名
-	Type token.Token // 类型, 缺少时用 .Size 表示, 语法糖
-	Size int         // 大小, 对应结构体
+	Size int         // 内存大小(没有类型信息)
 	Init []InitValue // 初始数据
 }
 
 // 初始化的面值
 type InitValue struct {
 	Offset     int         // 相对偏移
-	Type       token.Token // 目标类型(可以i64转型为i32)
+	Type       token.Token // 目标类型, I32/I64/F32/F64/STRING
 	LitValue   *LitValue   // 常量面值
 	ConstValue *Const      // 全局常量
 	GlobalAddr *Global     // 全局变量地址
@@ -53,10 +52,10 @@ type InitValue struct {
 
 // 常量面值
 type LitValue struct {
-	Type       token.Token // 初始化值的类型
-	IntValue   int64       // I32/I64 值
-	FloatValue float64     // F32/F64 值
-	StrValue   *string     // 字符串, 指针非空时有效
+	Kind       token.Token // INT/FLOAT/STRING
+	IntValue   int64       // INT 值
+	FloatValue float64     // FLOAT 值
+	StrValue   string      // 字符串
 }
 
 // 函数对象

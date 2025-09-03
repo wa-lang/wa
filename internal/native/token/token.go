@@ -50,6 +50,7 @@ const (
 	F64         // float64
 	CONST       // 常量
 	GLOBAL      // 全局符号
+	LOCAL       // 局部变量
 	FUNC        // 函数
 	keyword_end // 关键字结束
 )
@@ -106,6 +107,7 @@ var tokens = [...]string{
 	F64:    "f64",
 	CONST:  "const",
 	GLOBAL: "global",
+	LOCAL:  "local",
 	FUNC:   "func",
 }
 
