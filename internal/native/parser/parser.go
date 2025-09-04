@@ -43,6 +43,7 @@ func (e *parserError) Error() string {
 
 func newParser(cpu abi.CPUType, fset *token.FileSet, filename string, src []byte) *parser {
 	p := &parser{
+		cpu:      cpu,
 		fset:     fset,
 		file:     fset.AddFile(filename, -1, len(src)),
 		filename: filename,
@@ -285,21 +286,22 @@ func (p *parser) parseStringLit() string {
 	return s
 }
 
-func (p *parser) parseNumberType() token.Token {
-	switch p.tok {
-	case token.I32, token.I64, token.F32, token.F64:
-		tok := p.tok
-		p.next()
-		return tok
-	default:
-		p.errorf(p.pos, "export %v, got %v", "i32|i64|f32|f64", p.tok)
+// 解析寄存器
+func (p *parser) parseRegister() abi.RegType {
+	if !p.tok.IsRegister() {
+		p.errorf(p.pos, "expect register, got %v", p.tok)
 	}
-	panic("unreachable")
+	reg := p.tok.RawReg()
+	p.acceptToken(p.tok)
+	return reg
 }
 
-// 解析索引, 标识符或整数
-func (p *parser) parseIdentOrIndex() string {
-	s := p.lit
-	p.acceptToken(token.IDENT, token.INT)
-	return s
+// 解析指令
+func (p *parser) parseAs() abi.As {
+	if !p.tok.IsAs() {
+		p.errorf(p.pos, "expect as, got %v", p.tok)
+	}
+	as := p.tok.RawAs()
+	p.acceptToken(p.tok)
+	return as
 }
