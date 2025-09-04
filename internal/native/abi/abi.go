@@ -18,6 +18,16 @@ type RegType int16
 // 指令类型
 type As int16
 
+// 内置的重定位函数
+type BuiltinFn int16
+
+const (
+	BuiltinFn_HI       = iota + 1 // %hi(symbol) # 绝对地址 HI20, 指令 lui
+	BuiltinFn_LO                  // %lo(symbol) # 绝对地址 LO12, 指令 load/store/add
+	BuiltinFn_PCREL_HI            // %pcrel_hi(symbol) # PC相对地址 HI20, auipc
+	BuiltinFn_PCREL_LO            // %pcrel_lo(symbol) # PC相对地址 LO12, load/store/add
+)
+
 // 指令参数
 type AsArgument struct {
 	Rd  RegType // 目标寄存器
@@ -26,9 +36,8 @@ type AsArgument struct {
 	Rs3 RegType // 原寄存器3
 	Imm int32   // 立即数
 
-	Symbol    string // 可能是 Label/全局符号, 用于重定位和输出文本
-	SymbolVal int64  // 符号对应的地址, 用于和 PC 计算得到相对的地址, 用于 Imm 值
-	PC        int64  // 涉及label跳转或者函数调用, 需要当前pc才能编码
+	Symbol      string    // 可能是 Label/全局符号, 用于重定位和输出文本
+	SymbolDecor BuiltinFn // 符号的修饰函数, 可能要重新计算
 }
 
 // 指令原生参数

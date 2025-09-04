@@ -65,6 +65,7 @@ type InitValue struct {
 	LitValue   *Value        // 常量面值
 	ConstValue *Const        // 全局常量
 	GlobalAddr *Global       // 全局变量地址
+	FuncAddr   string        // 函数的地址(TODO)
 }
 
 // 函数对象

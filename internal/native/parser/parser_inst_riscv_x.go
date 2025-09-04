@@ -10,13 +10,6 @@ import (
 	"wa-lang.org/wa/internal/native/token"
 )
 
-// 解析立即数部分
-func (p *parser) parseInst_riscv_imm(inst *ast.Instruction) {
-	// TODO: 立即数如何表示?
-	// TODO: 常量/函数地址/面值/伪指令参数
-	panic("TODO")
-}
-
 func (p *parser) parseInst_riscv() (inst ast.Instruction) {
 	assert(p.cpu == abi.RISCV64 || p.cpu == abi.RISCV32)
 
@@ -39,7 +32,7 @@ func (p *parser) parseInst_riscv() (inst ast.Instruction) {
 		p.acceptToken(token.COMMA)
 		inst.Arg.Rs1 = p.parseRegister()
 		p.acceptToken(token.COMMA)
-		p.parseInst_riscv_imm(&inst)
+		p.parseInst_riscv_immAddr(&inst)
 		return inst
 
 	case riscv.ASLTI:
@@ -63,13 +56,13 @@ func (p *parser) parseInst_riscv() (inst ast.Instruction) {
 		// lui t1, 0x5 # 高 20 位 (0x5 << 12 = 0x5000)
 		inst.Arg.Rd = p.parseRegister()
 		p.acceptToken(token.COMMA)
-		p.parseInst_riscv_imm(&inst)
+		p.parseInst_riscv_immAddr(&inst)
 		return inst
 	case riscv.AAUIPC:
 		// auipc a0, %pcrel_hi(message) # 高20位 = 当前PC + 偏移
 		inst.Arg.Rd = p.parseRegister()
 		p.acceptToken(token.COMMA)
-		p.parseInst_riscv_imm(&inst)
+		p.parseInst_riscv_immAddr(&inst)
 	case riscv.AADD:
 		panic("TODO")
 	case riscv.ASLT:
@@ -96,7 +89,7 @@ func (p *parser) parseInst_riscv() (inst ast.Instruction) {
 		// jal x0, print_loop
 		inst.Arg.Rs1 = p.parseRegister()
 		p.acceptToken(token.COMMA)
-		p.parseInst_riscv_imm(&inst)
+		p.parseInst_riscv_immAddr(&inst)
 		return inst
 	case riscv.AJALR:
 		panic("TODO")
@@ -106,7 +99,7 @@ func (p *parser) parseInst_riscv() (inst ast.Instruction) {
 		p.acceptToken(token.COMMA)
 		inst.Arg.Rs2 = p.parseRegister()
 		p.acceptToken(token.COMMA)
-		p.parseInst_riscv_imm(&inst)
+		p.parseInst_riscv_immAddr(&inst)
 		return inst
 	case riscv.ABNE:
 		panic("TODO")
@@ -132,13 +125,13 @@ func (p *parser) parseInst_riscv() (inst ast.Instruction) {
 		// lbu a1, 0(a0) # 取一个字节
 		inst.Arg.Rs1 = p.parseRegister()
 		p.acceptToken(token.COMMA)
-		p.parseInst_riscv_imm(&inst)
+		p.parseInst_riscv_immAddr(&inst)
 		return inst
 	case riscv.ASW:
 		// sw t1, 0(t0)
 		inst.Arg.Rs1 = p.parseRegister()
 		p.acceptToken(token.COMMA)
-		p.parseInst_riscv_imm(&inst)
+		p.parseInst_riscv_immAddr(&inst)
 		return inst
 	case riscv.ASH:
 		panic("TODO")
@@ -146,7 +139,7 @@ func (p *parser) parseInst_riscv() (inst ast.Instruction) {
 		// sb a1, 0(t0) # 写到UART寄存器
 		inst.Arg.Rs1 = p.parseRegister()
 		p.acceptToken(token.COMMA)
-		p.parseInst_riscv_imm(&inst)
+		p.parseInst_riscv_immAddr(&inst)
 		return inst
 
 	// 2.7: Memory Ordering Instructions (RV32I)
@@ -473,4 +466,43 @@ func (p *parser) parseInst_riscv() (inst ast.Instruction) {
 	}
 
 	panic("unreachable")
+}
+
+// 解析地址立即数
+func (p *parser) parseInst_riscv_immAddr(inst *ast.Instruction) {
+	if p.tok == token.INT {
+		inst.Arg.Imm = p.parseInt32Lit()
+		return
+	}
+
+	if p.tok != token.IDENT {
+		p.errorf(p.pos, "export IDENT, got %v", p.tok)
+	}
+
+	pos := p.pos
+	symbolOrDecor := p.parseIdent()
+
+	// 没有重定位修饰函数
+	if p.tok != token.LPAREN {
+		inst.Arg.Symbol = symbolOrDecor
+		return
+	}
+
+	// 判断重定位修饰函数
+	switch symbolOrDecor {
+	case "%hi":
+		inst.Arg.SymbolDecor = abi.BuiltinFn_HI
+	case "%lo":
+		inst.Arg.SymbolDecor = abi.BuiltinFn_LO
+	case "%pcrel_hi":
+		inst.Arg.SymbolDecor = abi.BuiltinFn_PCREL_HI
+	case "%pcrel_lo":
+		inst.Arg.SymbolDecor = abi.BuiltinFn_PCREL_LO
+	default:
+		p.errorf(pos, "unknow symbol decorator %s", symbolOrDecor)
+	}
+
+	p.acceptToken(token.LPAREN)
+	inst.Arg.Symbol = p.parseIdent()
+	p.acceptToken(token.RPAREN)
 }
