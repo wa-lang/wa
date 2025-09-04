@@ -4,6 +4,7 @@
 package parser
 
 import (
+	"wa-lang.org/wa/internal/native/abi"
 	"wa-lang.org/wa/internal/native/ast"
 	"wa-lang.org/wa/internal/native/token"
 )
@@ -16,7 +17,10 @@ import (
 // }
 
 func (p *parser) parseFunc() *ast.Func {
-	fn := new(ast.Func)
+	fn := &ast.Func{
+		Type: new(ast.FuncType),
+		Body: new(ast.FuncBody),
+	}
 
 	p.acceptToken(token.FUNC)
 	fn.Name = p.parseIdent()
@@ -29,32 +33,90 @@ func (p *parser) parseFunc() *ast.Func {
 }
 
 func (p *parser) parseFunc_args(fn *ast.Func) {
-	_ = fn
-	panic("TODO")
+	p.acceptToken(token.LPAREN)
+	defer p.acceptToken(token.RPAREN)
+
+	for p.tok == token.IDENT {
+		argPos := p.pos
+		argName := p.parseIdent()
+		argType := token.NONE
+
+		p.acceptToken(token.COLON)
+
+		switch p.tok {
+		case token.I32, token.I64, token.F32, token.F64, token.PTR:
+			argType = p.tok
+			p.acceptToken(p.tok)
+		default:
+			p.errorf(p.pos, "expect argument type(i32/i64/f32/f64/ptr), got %v", p.tok)
+		}
+		fn.Type.Args = append(fn.Type.Args, ast.Argument{
+			Pos:  argPos,
+			Name: argName,
+			Type: argType,
+		})
+
+		if p.tok == token.COMMA {
+			p.acceptToken(token.COMMA)
+			continue
+		} else {
+			break
+		}
+	}
 }
 
 func (p *parser) parseFunc_return(fn *ast.Func) {
-	_ = fn
-	panic("TODO")
+	if p.tok != token.ARROW {
+		return
+	}
+
+	p.acceptToken(token.ARROW)
+
+	switch p.tok {
+	case token.I32, token.I64, token.F32, token.F64, token.PTR:
+		fn.Type.Return = p.tok
+		p.acceptToken(p.tok)
+	default:
+		p.errorf(p.pos, "expect return type(i32/i64/f32/f64/ptr), got %v", p.tok)
+	}
 }
 
 func (p *parser) parseFunc_body(fn *ast.Func) {
+	p.acceptToken(token.LBRACE)
+	defer p.acceptToken(token.RBRACE)
+
 	for p.tok == token.LOCAL {
 		p.parseFunc_body_local(fn)
 	}
-	for p.tok.IsAs() {
-		p.parseFunc_body_inst(fn)
+
+	switch {
+	case p.cpu == abi.RISCV64 || p.cpu == abi.RISCV32:
+		for p.tok.IsAs() {
+			fn.Body.Insts = append(fn.Body.Insts, p.parseInst_riscv())
+		}
+	default:
+		panic("unreachable")
 	}
+
 }
 
 func (p *parser) parseFunc_body_local(fn *ast.Func) {
-	_ = fn
-	p.next()
-	panic("TODO")
-}
+	for p.tok == token.LOCAL {
+		localPos := p.pos
+		p.acceptToken(token.LOCAL)
+		localName := p.parseIdent()
+		p.acceptToken(token.COLON)
 
-func (p *parser) parseFunc_body_inst(fn *ast.Func) {
-	_ = fn
-	p.next()
-	panic("TODO")
+		switch p.tok {
+		case token.I32, token.I64, token.F32, token.F64, token.PTR:
+			fn.Body.Locals = append(fn.Body.Locals, ast.Local{
+				Pos:  localPos,
+				Name: localName,
+				Type: p.tok,
+			})
+			p.acceptToken(p.tok)
+		default:
+			p.errorf(p.pos, "expect local type(i32/i64/f32/f64/ptr), got %v", p.tok)
+		}
+	}
 }

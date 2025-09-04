@@ -15,6 +15,7 @@ import (
 	"wa-lang.org/wa/internal/app/appbase"
 	"wa-lang.org/wa/internal/config"
 	"wa-lang.org/wa/internal/format"
+	"wa-lang.org/wa/internal/native/abi"
 	natfmt "wa-lang.org/wa/internal/native/format"
 	"wa-lang.org/wa/internal/wat/watutil/watfmt"
 )
@@ -23,9 +24,15 @@ var CmdFmt = &cli.Command{
 	Name:      "fmt",
 	Usage:     "format Wa source code file",
 	ArgsUsage: "[<file.wa>|<path>|<path>/...]",
+	Flags: []cli.Flag{
+		&cli.BoolFlag{
+			Name:  "riscv",
+			Usage: "set riscv cpu type for assembly code",
+		},
+	},
 	Action: func(c *cli.Context) error {
 		for _, path := range c.Args().Slice() {
-			if err := Fmt(path); err != nil {
+			if err := Fmt(c, path); err != nil {
 				fmt.Println(err)
 				os.Exit(1)
 			}
@@ -34,7 +41,7 @@ var CmdFmt = &cli.Command{
 	},
 }
 
-func Fmt(path string) error {
+func Fmt(c *cli.Context, path string) error {
 	if appbase.IsNativeFile(path, ".wat") {
 		return fmtWatFile(path)
 	}
@@ -43,7 +50,7 @@ func Fmt(path string) error {
 		return err
 	}
 	if appbase.IsNativeFile(path, ".s") {
-		err := fmtNativeAsmFile(path)
+		err := fmtNativeAsmFile(c, path)
 		return err
 	}
 
@@ -123,12 +130,15 @@ func fmtWatFile(path string) (err error) {
 	return nil
 }
 
-func fmtNativeAsmFile(path string) (err error) {
+func fmtNativeAsmFile(c *cli.Context, path string) (err error) {
+	if !c.Bool("riscv") {
+		return fmt.Errorf("only support ricv type")
+	}
 	src, err := os.ReadFile(path)
 	if err != nil {
 		return err
 	}
-	data, err := natfmt.Format(path, src)
+	data, err := natfmt.Format(abi.RISCV64, path, src)
 	if err != nil {
 		return err
 	}

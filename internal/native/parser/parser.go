@@ -7,12 +7,14 @@ import (
 	"fmt"
 	"strconv"
 
+	"wa-lang.org/wa/internal/native/abi"
 	"wa-lang.org/wa/internal/native/ast"
 	"wa-lang.org/wa/internal/native/scanner"
 	"wa-lang.org/wa/internal/native/token"
 )
 
 type parser struct {
+	cpu      abi.CPUType
 	filename string
 	src      []byte
 
@@ -39,7 +41,7 @@ func (e *parserError) Error() string {
 	return fmt.Sprintf("%v: %s", e.pos, e.msg)
 }
 
-func newParser(fset *token.FileSet, filename string, src []byte) *parser {
+func newParser(cpu abi.CPUType, fset *token.FileSet, filename string, src []byte) *parser {
 	p := &parser{
 		fset:     fset,
 		file:     fset.AddFile(filename, -1, len(src)),

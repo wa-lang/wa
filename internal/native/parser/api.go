@@ -9,13 +9,14 @@ import (
 	"io"
 	"os"
 
+	"wa-lang.org/wa/internal/native/abi"
 	"wa-lang.org/wa/internal/native/ast"
 	"wa-lang.org/wa/internal/native/token"
 )
 
 var DebugMode = false
 
-func ParseFile(fset *token.FileSet, filename string, src []byte) (f *ast.File, err error) {
+func ParseFile(cpu abi.CPUType, fset *token.FileSet, filename string, src []byte) (f *ast.File, err error) {
 	if fset == nil {
 		panic("parser.ParseFile: no token.FileSet provided (fset == nil)")
 	}
@@ -26,7 +27,7 @@ func ParseFile(fset *token.FileSet, filename string, src []byte) (f *ast.File, e
 		return nil, err
 	}
 
-	p := newParser(fset, filename, text)
+	p := newParser(cpu, fset, filename, text)
 	p.trace = DebugMode
 
 	f, err = p.ParseFile()
