@@ -99,7 +99,7 @@ func (p *parser) parseInst_riscv() (inst ast.Instruction) {
 		p.acceptToken(token.COMMA)
 		inst.Arg.Rs2 = p.parseRegister()
 		p.acceptToken(token.COMMA)
-		p.parseInst_riscv_immAddr(&inst)
+		p.parseInst_riscv_relAddr(&inst)
 		return inst
 	case riscv.ABNE:
 		panic("TODO")
@@ -125,13 +125,17 @@ func (p *parser) parseInst_riscv() (inst ast.Instruction) {
 		// lbu a1, 0(a0) # 取一个字节
 		inst.Arg.Rs1 = p.parseRegister()
 		p.acceptToken(token.COMMA)
-		p.parseInst_riscv_immAddr(&inst)
+		reg, off := p.parseInst_riscv_baseOffset()
+		inst.Arg.Rs1 = reg
+		inst.Arg.Imm = off
 		return inst
 	case riscv.ASW:
 		// sw t1, 0(t0)
 		inst.Arg.Rs1 = p.parseRegister()
 		p.acceptToken(token.COMMA)
-		p.parseInst_riscv_immAddr(&inst)
+		reg, off := p.parseInst_riscv_baseOffset()
+		inst.Arg.Rs2 = reg
+		inst.Arg.Imm = off
 		return inst
 	case riscv.ASH:
 		panic("TODO")
@@ -139,7 +143,9 @@ func (p *parser) parseInst_riscv() (inst ast.Instruction) {
 		// sb a1, 0(t0) # 写到UART寄存器
 		inst.Arg.Rs1 = p.parseRegister()
 		p.acceptToken(token.COMMA)
-		p.parseInst_riscv_immAddr(&inst)
+		reg, off := p.parseInst_riscv_baseOffset()
+		inst.Arg.Rs2 = reg
+		inst.Arg.Imm = off
 		return inst
 
 	// 2.7: Memory Ordering Instructions (RV32I)
@@ -468,7 +474,42 @@ func (p *parser) parseInst_riscv() (inst ast.Instruction) {
 	panic("unreachable")
 }
 
+// 基于寄存器的内地地址解析
+// 只能出现在 I-type 和 S-type 这两类指令中
+// (t0)
+// 4(t0)
+// -4(t0)
+func (p *parser) parseInst_riscv_baseOffset() (reg abi.RegType, offset int32) {
+	if p.tok == token.INT {
+		offset = p.parseInt32Lit()
+	}
+	p.acceptToken(token.LPAREN)
+	reg = p.parseRegister()
+	p.acceptToken(token.RPAREN)
+	return
+}
+
+// 解析相对地址
+// 只能是label或相对PC的数值
+func (p *parser) parseInst_riscv_relAddr(inst *ast.Instruction) {
+	switch p.tok {
+	case token.IDENT:
+		inst.Arg.Symbol = p.parseIdent()
+		return
+	case token.INT:
+		inst.Arg.Imm = p.parseInt32Lit()
+		return
+	default:
+		p.errorf(p.pos, "expect label or int, got %v", p.tok)
+	}
+	panic("unreachable")
+}
+
 // 解析地址立即数
+// 不涉及寄存器解析
+// 12
+// _start
+// %lo(_start)
 func (p *parser) parseInst_riscv_immAddr(inst *ast.Instruction) {
 	if p.tok == token.INT {
 		inst.Arg.Imm = p.parseInt32Lit()
