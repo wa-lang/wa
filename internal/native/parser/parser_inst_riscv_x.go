@@ -36,21 +36,61 @@ func (p *parser) parseInst_riscv() (inst ast.Instruction) {
 		return inst
 
 	case riscv.ASLTI:
-		panic("TODO")
+		inst.Arg.Rd = p.parseRegister()
+		p.acceptToken(token.COMMA)
+		inst.Arg.Rs1 = p.parseRegister()
+		p.acceptToken(token.COMMA)
+		p.parseInst_riscv_immAddr(&inst)
+		return inst
 	case riscv.ASLTIU:
-		panic("TODO")
+		inst.Arg.Rd = p.parseRegister()
+		p.acceptToken(token.COMMA)
+		inst.Arg.Rs1 = p.parseRegister()
+		p.acceptToken(token.COMMA)
+		p.parseInst_riscv_immAddr(&inst)
+		return inst
 	case riscv.AANDI:
-		panic("TODO")
+		inst.Arg.Rd = p.parseRegister()
+		p.acceptToken(token.COMMA)
+		inst.Arg.Rs1 = p.parseRegister()
+		p.acceptToken(token.COMMA)
+		p.parseInst_riscv_immAddr(&inst)
+		return inst
 	case riscv.AORI:
-		panic("TODO")
+		inst.Arg.Rd = p.parseRegister()
+		p.acceptToken(token.COMMA)
+		inst.Arg.Rs1 = p.parseRegister()
+		p.acceptToken(token.COMMA)
+		p.parseInst_riscv_immAddr(&inst)
+		return inst
 	case riscv.AXORI:
-		panic("TODO")
+		inst.Arg.Rd = p.parseRegister()
+		p.acceptToken(token.COMMA)
+		inst.Arg.Rs1 = p.parseRegister()
+		p.acceptToken(token.COMMA)
+		p.parseInst_riscv_immAddr(&inst)
+		return inst
 	case riscv.ASLLI:
-		panic("TODO")
+		inst.Arg.Rd = p.parseRegister()
+		p.acceptToken(token.COMMA)
+		inst.Arg.Rs1 = p.parseRegister()
+		p.acceptToken(token.COMMA)
+		inst.Arg.Imm = p.parseInt32Lit() // shamt
+		return inst
 	case riscv.ASRLI:
-		panic("TODO")
+		inst.Arg.Rd = p.parseRegister()
+		p.acceptToken(token.COMMA)
+		inst.Arg.Rs1 = p.parseRegister()
+		p.acceptToken(token.COMMA)
+		inst.Arg.Imm = p.parseInt32Lit() // shamt
+		return inst
 	case riscv.ASRAI:
-		panic("TODO")
+		inst.Arg.Rd = p.parseRegister()
+		p.acceptToken(token.COMMA)
+		inst.Arg.Rs1 = p.parseRegister()
+		p.acceptToken(token.COMMA)
+		inst.Arg.Imm = p.parseInt32Lit() // shamt
+		return inst
 	case riscv.ALUI:
 		// lui t0, %hi(UART0) # UART0 高20位
 		// lui t1, 0x5 # 高 20 位 (0x5 << 12 = 0x5000)
@@ -64,35 +104,88 @@ func (p *parser) parseInst_riscv() (inst ast.Instruction) {
 		p.acceptToken(token.COMMA)
 		p.parseInst_riscv_immAddr(&inst)
 	case riscv.AADD:
-		panic("TODO")
+		inst.Arg.Rd = p.parseRegister()
+		p.acceptToken(token.COMMA)
+		inst.Arg.Rs1 = p.parseRegister()
+		p.acceptToken(token.COMMA)
+		inst.Arg.Rs2 = p.parseRegister()
+		return inst
 	case riscv.ASLT:
-		panic("TODO")
+		inst.Arg.Rd = p.parseRegister()
+		p.acceptToken(token.COMMA)
+		inst.Arg.Rs1 = p.parseRegister()
+		p.acceptToken(token.COMMA)
+		inst.Arg.Rs2 = p.parseRegister()
+		return inst
 	case riscv.ASLTU:
-		panic("TODO")
+		inst.Arg.Rd = p.parseRegister()
+		p.acceptToken(token.COMMA)
+		inst.Arg.Rs1 = p.parseRegister()
+		p.acceptToken(token.COMMA)
+		inst.Arg.Rs2 = p.parseRegister()
+		return inst
 	case riscv.AAND:
-		panic("TODO")
+		inst.Arg.Rd = p.parseRegister()
+		p.acceptToken(token.COMMA)
+		inst.Arg.Rs1 = p.parseRegister()
+		p.acceptToken(token.COMMA)
+		inst.Arg.Rs2 = p.parseRegister()
+		return inst
 	case riscv.AOR:
-		panic("TODO")
+		inst.Arg.Rd = p.parseRegister()
+		p.acceptToken(token.COMMA)
+		inst.Arg.Rs1 = p.parseRegister()
+		p.acceptToken(token.COMMA)
+		inst.Arg.Rs2 = p.parseRegister()
+		return inst
 	case riscv.AXOR:
-		panic("TODO")
+		inst.Arg.Rd = p.parseRegister()
+		p.acceptToken(token.COMMA)
+		inst.Arg.Rs1 = p.parseRegister()
+		p.acceptToken(token.COMMA)
+		inst.Arg.Rs2 = p.parseRegister()
+		return inst
 	case riscv.ASLL:
-		panic("TODO")
+		inst.Arg.Rd = p.parseRegister()
+		p.acceptToken(token.COMMA)
+		inst.Arg.Rs1 = p.parseRegister()
+		p.acceptToken(token.COMMA)
+		inst.Arg.Rs2 = p.parseRegister()
+		return inst
 	case riscv.ASRL:
-		panic("TODO")
+		inst.Arg.Rd = p.parseRegister()
+		p.acceptToken(token.COMMA)
+		inst.Arg.Rs1 = p.parseRegister()
+		p.acceptToken(token.COMMA)
+		inst.Arg.Rs2 = p.parseRegister()
+		return inst
 	case riscv.ASUB:
-		panic("TODO")
+		inst.Arg.Rd = p.parseRegister()
+		p.acceptToken(token.COMMA)
+		inst.Arg.Rs1 = p.parseRegister()
+		p.acceptToken(token.COMMA)
+		inst.Arg.Rs2 = p.parseRegister()
+		return inst
 	case riscv.ASRA:
-		panic("TODO")
+		inst.Arg.Rd = p.parseRegister()
+		p.acceptToken(token.COMMA)
+		inst.Arg.Rs1 = p.parseRegister()
+		p.acceptToken(token.COMMA)
+		inst.Arg.Rs2 = p.parseRegister()
+		return inst
 
 	// 2.5: Control Transfer Instructions (RV32I)
 	case riscv.AJAL:
 		// jal x0, print_loop
-		inst.Arg.Rs1 = p.parseRegister()
+		inst.Arg.Rd = p.parseRegister()
 		p.acceptToken(token.COMMA)
 		p.parseInst_riscv_immAddr(&inst)
 		return inst
 	case riscv.AJALR:
-		panic("TODO")
+		inst.Arg.Rd = p.parseRegister()
+		p.acceptToken(token.COMMA)
+		inst.Arg.Rs1, inst.Arg.Imm = p.parseInst_riscv_baseOffset()
+		return inst
 	case riscv.ABEQ:
 		// beq a1, x0, finished
 		inst.Arg.Rs1 = p.parseRegister()
@@ -102,276 +195,727 @@ func (p *parser) parseInst_riscv() (inst ast.Instruction) {
 		p.parseInst_riscv_relAddr(&inst)
 		return inst
 	case riscv.ABNE:
-		panic("TODO")
+		inst.Arg.Rs1 = p.parseRegister()
+		p.acceptToken(token.COMMA)
+		inst.Arg.Rs2 = p.parseRegister()
+		p.acceptToken(token.COMMA)
+		p.parseInst_riscv_relAddr(&inst)
+		return inst
 	case riscv.ABLT:
-		panic("TODO")
+		inst.Arg.Rs1 = p.parseRegister()
+		p.acceptToken(token.COMMA)
+		inst.Arg.Rs2 = p.parseRegister()
+		p.acceptToken(token.COMMA)
+		p.parseInst_riscv_relAddr(&inst)
+		return inst
 	case riscv.ABLTU:
-		panic("TODO")
+		inst.Arg.Rs1 = p.parseRegister()
+		p.acceptToken(token.COMMA)
+		inst.Arg.Rs2 = p.parseRegister()
+		p.acceptToken(token.COMMA)
+		p.parseInst_riscv_relAddr(&inst)
+		return inst
 	case riscv.ABGE:
-		panic("TODO")
+		inst.Arg.Rs1 = p.parseRegister()
+		p.acceptToken(token.COMMA)
+		inst.Arg.Rs2 = p.parseRegister()
+		p.acceptToken(token.COMMA)
+		p.parseInst_riscv_relAddr(&inst)
+		return inst
 	case riscv.ABGEU:
-		panic("TODO")
+		inst.Arg.Rs1 = p.parseRegister()
+		p.acceptToken(token.COMMA)
+		inst.Arg.Rs2 = p.parseRegister()
+		p.acceptToken(token.COMMA)
+		p.parseInst_riscv_relAddr(&inst)
+		return inst
 
 	// 2.6: Load and Store Instructions (RV32I)
 	case riscv.ALW:
-		panic("TODO")
+		inst.Arg.Rd = p.parseRegister()
+		p.acceptToken(token.COMMA)
+		inst.Arg.Rs1, inst.Arg.Imm = p.parseInst_riscv_baseOffset()
+		return inst
 	case riscv.ALH:
-		panic("TODO")
+		inst.Arg.Rd = p.parseRegister()
+		p.acceptToken(token.COMMA)
+		inst.Arg.Rs1, inst.Arg.Imm = p.parseInst_riscv_baseOffset()
+		return inst
 	case riscv.ALHU:
-		panic("TODO")
+		inst.Arg.Rd = p.parseRegister()
+		p.acceptToken(token.COMMA)
+		inst.Arg.Rs1, inst.Arg.Imm = p.parseInst_riscv_baseOffset()
+		return inst
 	case riscv.ALB:
-		panic("TODO")
+		inst.Arg.Rd = p.parseRegister()
+		p.acceptToken(token.COMMA)
+		inst.Arg.Rs1, inst.Arg.Imm = p.parseInst_riscv_baseOffset()
+		return inst
 	case riscv.ALBU:
 		// lbu a1, 0(a0) # 取一个字节
-		inst.Arg.Rs1 = p.parseRegister()
+		inst.Arg.Rd = p.parseRegister()
 		p.acceptToken(token.COMMA)
-		reg, off := p.parseInst_riscv_baseOffset()
-		inst.Arg.Rs1 = reg
-		inst.Arg.Imm = off
+		inst.Arg.Rs1, inst.Arg.Imm = p.parseInst_riscv_baseOffset()
 		return inst
 	case riscv.ASW:
 		// sw t1, 0(t0)
-		inst.Arg.Rs1 = p.parseRegister()
+		inst.Arg.Rs2 = p.parseRegister()
 		p.acceptToken(token.COMMA)
-		reg, off := p.parseInst_riscv_baseOffset()
-		inst.Arg.Rs2 = reg
-		inst.Arg.Imm = off
+		inst.Arg.Rs1, inst.Arg.Imm = p.parseInst_riscv_baseOffset()
 		return inst
 	case riscv.ASH:
-		panic("TODO")
+		inst.Arg.Rs2 = p.parseRegister()
+		p.acceptToken(token.COMMA)
+		inst.Arg.Rs1, inst.Arg.Imm = p.parseInst_riscv_baseOffset()
+		return inst
 	case riscv.ASB:
 		// sb a1, 0(t0) # 写到UART寄存器
-		inst.Arg.Rs1 = p.parseRegister()
+		inst.Arg.Rs2 = p.parseRegister()
 		p.acceptToken(token.COMMA)
-		reg, off := p.parseInst_riscv_baseOffset()
-		inst.Arg.Rs2 = reg
-		inst.Arg.Imm = off
+		inst.Arg.Rs1, inst.Arg.Imm = p.parseInst_riscv_baseOffset()
 		return inst
 
 	// 2.7: Memory Ordering Instructions (RV32I)
 	case riscv.AFENCE:
-		panic("TODO")
+		return inst
 
 	// 3.3.1: Environment Call and Breakpoint
 	case riscv.AECALL:
-		panic("TODO")
+		return inst
+
 	case riscv.AEBREAK:
-		panic("TODO")
+		return inst
 
 	// 4.2: Integer Computational Instructions (RV64I)
 	case riscv.AADDIW:
-		panic("TODO")
+		inst.Arg.Rd = p.parseRegister()
+		p.acceptToken(token.COMMA)
+		inst.Arg.Rs1 = p.parseRegister()
+		p.acceptToken(token.COMMA)
+		p.parseInst_riscv_immAddr(&inst)
+		return inst
 	case riscv.ASLLIW:
-		panic("TODO")
+		inst.Arg.Rd = p.parseRegister()
+		p.acceptToken(token.COMMA)
+		inst.Arg.Rs1 = p.parseRegister()
+		p.acceptToken(token.COMMA)
+		inst.Arg.Imm = p.parseInt32Lit() // shamt
+		return inst
 	case riscv.ASRLIW:
-		panic("TODO")
+		inst.Arg.Rd = p.parseRegister()
+		p.acceptToken(token.COMMA)
+		inst.Arg.Rs1 = p.parseRegister()
+		p.acceptToken(token.COMMA)
+		inst.Arg.Imm = p.parseInt32Lit() // shamt
+		return inst
 	case riscv.ASRAIW:
-		panic("TODO")
+		inst.Arg.Rd = p.parseRegister()
+		p.acceptToken(token.COMMA)
+		inst.Arg.Rs1 = p.parseRegister()
+		p.acceptToken(token.COMMA)
+		inst.Arg.Imm = p.parseInt32Lit() // shamt
+		return inst
 	case riscv.AADDW:
-		panic("TODO")
+		inst.Arg.Rd = p.parseRegister()
+		p.acceptToken(token.COMMA)
+		inst.Arg.Rs1 = p.parseRegister()
+		p.acceptToken(token.COMMA)
+		inst.Arg.Rs2 = p.parseRegister()
+		return inst
 	case riscv.ASLLW:
-		panic("TODO")
+		inst.Arg.Rd = p.parseRegister()
+		p.acceptToken(token.COMMA)
+		inst.Arg.Rs1 = p.parseRegister()
+		p.acceptToken(token.COMMA)
+		inst.Arg.Rs2 = p.parseRegister()
+		return inst
 	case riscv.ASRLW:
-		panic("TODO")
+		inst.Arg.Rd = p.parseRegister()
+		p.acceptToken(token.COMMA)
+		inst.Arg.Rs1 = p.parseRegister()
+		p.acceptToken(token.COMMA)
+		inst.Arg.Rs2 = p.parseRegister()
+		return inst
 	case riscv.ASUBW:
-		panic("TODO")
+		inst.Arg.Rd = p.parseRegister()
+		p.acceptToken(token.COMMA)
+		inst.Arg.Rs1 = p.parseRegister()
+		p.acceptToken(token.COMMA)
+		inst.Arg.Rs2 = p.parseRegister()
+		return inst
 	case riscv.ASRAW:
-		panic("TODO")
+		inst.Arg.Rd = p.parseRegister()
+		p.acceptToken(token.COMMA)
+		inst.Arg.Rs1 = p.parseRegister()
+		p.acceptToken(token.COMMA)
+		inst.Arg.Rs2 = p.parseRegister()
+		return inst
 
 	// 4.3: Load and Store Instructions (RV64I)
 	case riscv.ALWU:
-		panic("TODO")
+		inst.Arg.Rd = p.parseRegister()
+		p.acceptToken(token.COMMA)
+		inst.Arg.Rs1, inst.Arg.Imm = p.parseInst_riscv_baseOffset()
+		return inst
 	case riscv.ALD:
-		panic("TODO")
+		inst.Arg.Rd = p.parseRegister()
+		p.acceptToken(token.COMMA)
+		inst.Arg.Rs1, inst.Arg.Imm = p.parseInst_riscv_baseOffset()
+		return inst
 	case riscv.ASD:
-		panic("TODO")
+		inst.Arg.Rs2 = p.parseRegister()
+		p.acceptToken(token.COMMA)
+		inst.Arg.Rs1, inst.Arg.Imm = p.parseInst_riscv_baseOffset()
+		return inst
 
 	// 7.1: CSR Instructions (Zicsr)
 	case riscv.ACSRRW:
-		panic("TODO")
+		inst.Arg.Rd = p.parseRegister()
+		p.acceptToken(token.COMMA)
+		inst.Arg.Rs1 = p.parseRegister()
+		p.acceptToken(token.COMMA)
+		inst.Arg.Imm = p.parseInt32Lit()
+		return inst
 	case riscv.ACSRRS:
-		panic("TODO")
+		inst.Arg.Rd = p.parseRegister()
+		p.acceptToken(token.COMMA)
+		inst.Arg.Rs1 = p.parseRegister()
+		p.acceptToken(token.COMMA)
+		inst.Arg.Imm = p.parseInt32Lit()
+		return inst
 	case riscv.ACSRRC:
-		panic("TODO")
+		inst.Arg.Rd = p.parseRegister()
+		p.acceptToken(token.COMMA)
+		inst.Arg.Rs1 = p.parseRegister()
+		p.acceptToken(token.COMMA)
+		inst.Arg.Imm = p.parseInt32Lit()
+		return inst
 	case riscv.ACSRRWI:
-		panic("TODO")
+		inst.Arg.Rd = p.parseRegister()
+		p.acceptToken(token.COMMA)
+		inst.Arg.Imm = p.parseInt32Lit()
+		p.acceptToken(token.COMMA)
+		inst.Arg.Rs1 = p.parseRegister()
+		return inst
 	case riscv.ACSRRSI:
-		panic("TODO")
+		inst.Arg.Rd = p.parseRegister()
+		p.acceptToken(token.COMMA)
+		inst.Arg.Imm = p.parseInt32Lit()
+		p.acceptToken(token.COMMA)
+		inst.Arg.Rs1 = p.parseRegister()
+		return inst
 	case riscv.ACSRRCI:
-		panic("TODO")
+		inst.Arg.Rd = p.parseRegister()
+		p.acceptToken(token.COMMA)
+		inst.Arg.Imm = p.parseInt32Lit()
+		p.acceptToken(token.COMMA)
+		inst.Arg.Rs1 = p.parseRegister()
+		return inst
 
 	// 13.1: Multiplication Operations (RV32M/RV64M)
 	case riscv.AMUL:
-		panic("TODO")
+		inst.Arg.Rd = p.parseRegister()
+		p.acceptToken(token.COMMA)
+		inst.Arg.Rs1 = p.parseRegister()
+		p.acceptToken(token.COMMA)
+		inst.Arg.Rs2 = p.parseRegister()
+		return inst
 	case riscv.AMULH:
-		panic("TODO")
+		inst.Arg.Rd = p.parseRegister()
+		p.acceptToken(token.COMMA)
+		inst.Arg.Rs1 = p.parseRegister()
+		p.acceptToken(token.COMMA)
+		inst.Arg.Rs2 = p.parseRegister()
+		return inst
 	case riscv.AMULHU:
-		panic("TODO")
+		inst.Arg.Rd = p.parseRegister()
+		p.acceptToken(token.COMMA)
+		inst.Arg.Rs1 = p.parseRegister()
+		p.acceptToken(token.COMMA)
+		inst.Arg.Rs2 = p.parseRegister()
+		return inst
 	case riscv.AMULHSU:
-		panic("TODO")
+		inst.Arg.Rd = p.parseRegister()
+		p.acceptToken(token.COMMA)
+		inst.Arg.Rs1 = p.parseRegister()
+		p.acceptToken(token.COMMA)
+		inst.Arg.Rs2 = p.parseRegister()
+		return inst
 	case riscv.AMULW: // RV64M
-		panic("TODO")
+		inst.Arg.Rd = p.parseRegister()
+		p.acceptToken(token.COMMA)
+		inst.Arg.Rs1 = p.parseRegister()
+		p.acceptToken(token.COMMA)
+		inst.Arg.Rs2 = p.parseRegister()
+		return inst
 
 	// 13.2: Division Operations (RV32M/RV64M)
 	case riscv.ADIV:
-		panic("TODO")
+		inst.Arg.Rd = p.parseRegister()
+		p.acceptToken(token.COMMA)
+		inst.Arg.Rs1 = p.parseRegister()
+		p.acceptToken(token.COMMA)
+		inst.Arg.Rs2 = p.parseRegister()
+		return inst
 	case riscv.ADIVU:
-		panic("TODO")
+		inst.Arg.Rd = p.parseRegister()
+		p.acceptToken(token.COMMA)
+		inst.Arg.Rs1 = p.parseRegister()
+		p.acceptToken(token.COMMA)
+		inst.Arg.Rs2 = p.parseRegister()
+		return inst
 	case riscv.AREM:
-		panic("TODO")
+		inst.Arg.Rd = p.parseRegister()
+		p.acceptToken(token.COMMA)
+		inst.Arg.Rs1 = p.parseRegister()
+		p.acceptToken(token.COMMA)
+		inst.Arg.Rs2 = p.parseRegister()
+		return inst
 	case riscv.AREMU:
-		panic("TODO")
+		inst.Arg.Rd = p.parseRegister()
+		p.acceptToken(token.COMMA)
+		inst.Arg.Rs1 = p.parseRegister()
+		p.acceptToken(token.COMMA)
+		inst.Arg.Rs2 = p.parseRegister()
+		return inst
 	case riscv.ADIVW:
-		panic("TODO") // RV64M
+		inst.Arg.Rd = p.parseRegister()
+		p.acceptToken(token.COMMA)
+		inst.Arg.Rs1 = p.parseRegister()
+		p.acceptToken(token.COMMA)
+		inst.Arg.Rs2 = p.parseRegister()
+		return inst
 	case riscv.ADIVUW:
-		panic("TODO") // RV64M
+		inst.Arg.Rd = p.parseRegister()
+		p.acceptToken(token.COMMA)
+		inst.Arg.Rs1 = p.parseRegister()
+		p.acceptToken(token.COMMA)
+		inst.Arg.Rs2 = p.parseRegister()
+		return inst
 	case riscv.AREMW:
-		panic("TODO") // RV64M
+		inst.Arg.Rd = p.parseRegister()
+		p.acceptToken(token.COMMA)
+		inst.Arg.Rs1 = p.parseRegister()
+		p.acceptToken(token.COMMA)
+		inst.Arg.Rs2 = p.parseRegister()
+		return inst
 	case riscv.AREMUW:
-		panic("TODO") // RV64M
+		inst.Arg.Rd = p.parseRegister()
+		p.acceptToken(token.COMMA)
+		inst.Arg.Rs1 = p.parseRegister()
+		p.acceptToken(token.COMMA)
+		inst.Arg.Rs2 = p.parseRegister()
+		return inst
 
 	// 20.5: Single-Precision Load and Store Instructions (F)
 	case riscv.AFLW:
-		panic("TODO")
+		inst.Arg.Rd = p.parseRegister()
+		p.acceptToken(token.COMMA)
+		inst.Arg.Rs1, inst.Arg.Imm = p.parseInst_riscv_baseOffset()
+		return inst
 	case riscv.AFSW:
-		panic("TODO")
+		inst.Arg.Rs2 = p.parseRegister()
+		p.acceptToken(token.COMMA)
+		inst.Arg.Rs1, inst.Arg.Imm = p.parseInst_riscv_baseOffset()
+		return inst
 
 	// 20.6: Single-Precision Floating-Point Computational Instructions
 	case riscv.AFADD_S:
-		panic("TODO")
+		inst.Arg.Rd = p.parseRegister()
+		p.acceptToken(token.COMMA)
+		inst.Arg.Rs1 = p.parseRegister()
+		p.acceptToken(token.COMMA)
+		inst.Arg.Rs2 = p.parseRegister()
+		return inst
 	case riscv.AFSUB_S:
-		panic("TODO")
+		inst.Arg.Rd = p.parseRegister()
+		p.acceptToken(token.COMMA)
+		inst.Arg.Rs1 = p.parseRegister()
+		p.acceptToken(token.COMMA)
+		inst.Arg.Rs2 = p.parseRegister()
+		return inst
 	case riscv.AFMUL_S:
-		panic("TODO")
+		inst.Arg.Rd = p.parseRegister()
+		p.acceptToken(token.COMMA)
+		inst.Arg.Rs1 = p.parseRegister()
+		p.acceptToken(token.COMMA)
+		inst.Arg.Rs2 = p.parseRegister()
+		return inst
 	case riscv.AFDIV_S:
-		panic("TODO")
+		inst.Arg.Rd = p.parseRegister()
+		p.acceptToken(token.COMMA)
+		inst.Arg.Rs1 = p.parseRegister()
+		p.acceptToken(token.COMMA)
+		inst.Arg.Rs2 = p.parseRegister()
+		return inst
 	case riscv.AFMIN_S:
-		panic("TODO")
+		inst.Arg.Rd = p.parseRegister()
+		p.acceptToken(token.COMMA)
+		inst.Arg.Rs1 = p.parseRegister()
+		p.acceptToken(token.COMMA)
+		inst.Arg.Rs2 = p.parseRegister()
+		return inst
 	case riscv.AFMAX_S:
-		panic("TODO")
+		inst.Arg.Rd = p.parseRegister()
+		p.acceptToken(token.COMMA)
+		inst.Arg.Rs1 = p.parseRegister()
+		p.acceptToken(token.COMMA)
+		inst.Arg.Rs2 = p.parseRegister()
+		return inst
 	case riscv.AFSQRT_S:
-		panic("TODO")
+		inst.Arg.Rd = p.parseRegister()
+		p.acceptToken(token.COMMA)
+		inst.Arg.Rs1 = p.parseRegister()
+		p.acceptToken(token.COMMA)
+		inst.Arg.Rs2 = p.parseRegister()
+		return inst
 	case riscv.AFMADD_S:
-		panic("TODO")
+		inst.Arg.Rd = p.parseRegister()
+		p.acceptToken(token.COMMA)
+		inst.Arg.Rs1 = p.parseRegister()
+		p.acceptToken(token.COMMA)
+		inst.Arg.Rs2 = p.parseRegister()
+		p.acceptToken(token.COMMA)
+		inst.Arg.Rs3 = p.parseRegister()
+		return inst
 	case riscv.AFMSUB_S:
-		panic("TODO")
+		inst.Arg.Rd = p.parseRegister()
+		p.acceptToken(token.COMMA)
+		inst.Arg.Rs1 = p.parseRegister()
+		p.acceptToken(token.COMMA)
+		inst.Arg.Rs2 = p.parseRegister()
+		p.acceptToken(token.COMMA)
+		inst.Arg.Rs3 = p.parseRegister()
+		return inst
 	case riscv.AFNMADD_S:
-		panic("TODO")
+		inst.Arg.Rd = p.parseRegister()
+		p.acceptToken(token.COMMA)
+		inst.Arg.Rs1 = p.parseRegister()
+		p.acceptToken(token.COMMA)
+		inst.Arg.Rs2 = p.parseRegister()
+		p.acceptToken(token.COMMA)
+		inst.Arg.Rs3 = p.parseRegister()
+		return inst
 	case riscv.AFNMSUB_S:
-		panic("TODO")
+		inst.Arg.Rd = p.parseRegister()
+		p.acceptToken(token.COMMA)
+		inst.Arg.Rs1 = p.parseRegister()
+		p.acceptToken(token.COMMA)
+		inst.Arg.Rs2 = p.parseRegister()
+		p.acceptToken(token.COMMA)
+		inst.Arg.Rs3 = p.parseRegister()
+		return inst
 
 	// 20.7: Single-Precision Floating-Point Conversion and Move Instructions
 	case riscv.AFCVT_W_S:
-		panic("TODO")
+		inst.Arg.Rd = p.parseRegister()
+		p.acceptToken(token.COMMA)
+		inst.Arg.Rs1 = p.parseRegister()
+		return inst
 	case riscv.AFCVT_L_S:
-		panic("TODO")
+		inst.Arg.Rd = p.parseRegister()
+		p.acceptToken(token.COMMA)
+		inst.Arg.Rs1 = p.parseRegister()
+		return inst
 	case riscv.AFCVT_S_W:
-		panic("TODO")
+		inst.Arg.Rd = p.parseRegister()
+		p.acceptToken(token.COMMA)
+		inst.Arg.Rs1 = p.parseRegister()
+		return inst
 	case riscv.AFCVT_S_L:
-		panic("TODO")
+		inst.Arg.Rd = p.parseRegister()
+		p.acceptToken(token.COMMA)
+		inst.Arg.Rs1 = p.parseRegister()
+		return inst
 	case riscv.AFCVT_WU_S:
-		panic("TODO")
+		inst.Arg.Rd = p.parseRegister()
+		p.acceptToken(token.COMMA)
+		inst.Arg.Rs1 = p.parseRegister()
+		return inst
 	case riscv.AFCVT_LU_S:
-		panic("TODO")
+		inst.Arg.Rd = p.parseRegister()
+		p.acceptToken(token.COMMA)
+		inst.Arg.Rs1 = p.parseRegister()
+		return inst
 	case riscv.AFCVT_S_WU:
-		panic("TODO")
+		inst.Arg.Rd = p.parseRegister()
+		p.acceptToken(token.COMMA)
+		inst.Arg.Rs1 = p.parseRegister()
+		return inst
 	case riscv.AFCVT_S_LU:
-		panic("TODO")
+		inst.Arg.Rd = p.parseRegister()
+		p.acceptToken(token.COMMA)
+		inst.Arg.Rs1 = p.parseRegister()
+		return inst
 	case riscv.AFSGNJ_S:
-		panic("TODO")
+		inst.Arg.Rd = p.parseRegister()
+		p.acceptToken(token.COMMA)
+		inst.Arg.Rs1 = p.parseRegister()
+		p.acceptToken(token.COMMA)
+		inst.Arg.Rs2 = p.parseRegister()
+		return inst
 	case riscv.AFSGNJN_S:
-		panic("TODO")
+		inst.Arg.Rd = p.parseRegister()
+		p.acceptToken(token.COMMA)
+		inst.Arg.Rs1 = p.parseRegister()
+		p.acceptToken(token.COMMA)
+		inst.Arg.Rs2 = p.parseRegister()
+		return inst
 	case riscv.AFSGNJX_S:
-		panic("TODO")
+		inst.Arg.Rd = p.parseRegister()
+		p.acceptToken(token.COMMA)
+		inst.Arg.Rs1 = p.parseRegister()
+		p.acceptToken(token.COMMA)
+		inst.Arg.Rs2 = p.parseRegister()
+		return inst
 	case riscv.AFMV_X_W:
-		panic("TODO")
+		inst.Arg.Rd = p.parseRegister()
+		return inst
 	case riscv.AFMV_W_X:
-		panic("TODO")
+		inst.Arg.Rd = p.parseRegister()
+		return inst
 
 	// 20.8: Single-Precision Floating-Point Compare Instructions
 	case riscv.AFEQ_S:
-		panic("TODO")
+		inst.Arg.Rd = p.parseRegister()
+		p.acceptToken(token.COMMA)
+		inst.Arg.Rs1 = p.parseRegister()
+		p.acceptToken(token.COMMA)
+		inst.Arg.Rs2 = p.parseRegister()
+		return inst
 	case riscv.AFLT_S:
-		panic("TODO")
+		inst.Arg.Rd = p.parseRegister()
+		p.acceptToken(token.COMMA)
+		inst.Arg.Rs1 = p.parseRegister()
+		p.acceptToken(token.COMMA)
+		inst.Arg.Rs2 = p.parseRegister()
+		return inst
 	case riscv.AFLE_S:
-		panic("TODO")
+		inst.Arg.Rd = p.parseRegister()
+		p.acceptToken(token.COMMA)
+		inst.Arg.Rs1 = p.parseRegister()
+		p.acceptToken(token.COMMA)
+		inst.Arg.Rs2 = p.parseRegister()
+		return inst
 
 	// 20.9: Single-Precision Floating-Point Classify Instruction
 	case riscv.AFCLASS_S:
-		panic("TODO")
+		inst.Arg.Rd = p.parseRegister()
+		p.acceptToken(token.COMMA)
+		inst.Arg.Rs1 = p.parseRegister()
+		return inst
 
 	// 21.3: Double-Precision Load and Store Instructions (D)
 	case riscv.AFLD:
-		panic("TODO")
+		inst.Arg.Rd = p.parseRegister()
+		p.acceptToken(token.COMMA)
+		inst.Arg.Rs1, inst.Arg.Imm = p.parseInst_riscv_baseOffset()
+		return inst
 	case riscv.AFSD:
-		panic("TODO")
+		inst.Arg.Rs2 = p.parseRegister()
+		p.acceptToken(token.COMMA)
+		inst.Arg.Rs1, inst.Arg.Imm = p.parseInst_riscv_baseOffset()
+		return inst
 
 	// 21.4: Double-Precision Floating-Point Computational Instructions
 	case riscv.AFADD_D:
-		panic("TODO")
+		inst.Arg.Rd = p.parseRegister()
+		p.acceptToken(token.COMMA)
+		inst.Arg.Rs1 = p.parseRegister()
+		p.acceptToken(token.COMMA)
+		inst.Arg.Rs2 = p.parseRegister()
+		return inst
 	case riscv.AFSUB_D:
-		panic("TODO")
+		inst.Arg.Rd = p.parseRegister()
+		p.acceptToken(token.COMMA)
+		inst.Arg.Rs1 = p.parseRegister()
+		p.acceptToken(token.COMMA)
+		inst.Arg.Rs2 = p.parseRegister()
+		return inst
 	case riscv.AFMUL_D:
-		panic("TODO")
+		inst.Arg.Rd = p.parseRegister()
+		p.acceptToken(token.COMMA)
+		inst.Arg.Rs1 = p.parseRegister()
+		p.acceptToken(token.COMMA)
+		inst.Arg.Rs2 = p.parseRegister()
+		return inst
 	case riscv.AFDIV_D:
-		panic("TODO")
+		inst.Arg.Rd = p.parseRegister()
+		p.acceptToken(token.COMMA)
+		inst.Arg.Rs1 = p.parseRegister()
+		p.acceptToken(token.COMMA)
+		inst.Arg.Rs2 = p.parseRegister()
+		return inst
 	case riscv.AFMIN_D:
-		panic("TODO")
+		inst.Arg.Rd = p.parseRegister()
+		p.acceptToken(token.COMMA)
+		inst.Arg.Rs1 = p.parseRegister()
+		p.acceptToken(token.COMMA)
+		inst.Arg.Rs2 = p.parseRegister()
+		return inst
 	case riscv.AFMAX_D:
-		panic("TODO")
+		inst.Arg.Rd = p.parseRegister()
+		p.acceptToken(token.COMMA)
+		inst.Arg.Rs1 = p.parseRegister()
+		p.acceptToken(token.COMMA)
+		inst.Arg.Rs2 = p.parseRegister()
+		return inst
 	case riscv.AFSQRT_D:
-		panic("TODO")
+		inst.Arg.Rd = p.parseRegister()
+		p.acceptToken(token.COMMA)
+		inst.Arg.Rs1 = p.parseRegister()
+		p.acceptToken(token.COMMA)
+		inst.Arg.Rs2 = p.parseRegister()
+		return inst
 	case riscv.AFMADD_D:
-		panic("TODO")
+		inst.Arg.Rd = p.parseRegister()
+		p.acceptToken(token.COMMA)
+		inst.Arg.Rs1 = p.parseRegister()
+		p.acceptToken(token.COMMA)
+		inst.Arg.Rs2 = p.parseRegister()
+		p.acceptToken(token.COMMA)
+		inst.Arg.Rs3 = p.parseRegister()
+		return inst
 	case riscv.AFMSUB_D:
-		panic("TODO")
+		inst.Arg.Rd = p.parseRegister()
+		p.acceptToken(token.COMMA)
+		inst.Arg.Rs1 = p.parseRegister()
+		p.acceptToken(token.COMMA)
+		inst.Arg.Rs2 = p.parseRegister()
+		p.acceptToken(token.COMMA)
+		inst.Arg.Rs3 = p.parseRegister()
+		return inst
 	case riscv.AFNMADD_D:
-		panic("TODO")
+		inst.Arg.Rd = p.parseRegister()
+		p.acceptToken(token.COMMA)
+		inst.Arg.Rs1 = p.parseRegister()
+		p.acceptToken(token.COMMA)
+		inst.Arg.Rs2 = p.parseRegister()
+		p.acceptToken(token.COMMA)
+		inst.Arg.Rs3 = p.parseRegister()
+		return inst
 	case riscv.AFNMSUB_D:
-		panic("TODO")
+		inst.Arg.Rd = p.parseRegister()
+		p.acceptToken(token.COMMA)
+		inst.Arg.Rs1 = p.parseRegister()
+		p.acceptToken(token.COMMA)
+		inst.Arg.Rs2 = p.parseRegister()
+		p.acceptToken(token.COMMA)
+		inst.Arg.Rs3 = p.parseRegister()
+		return inst
 
 	// 21.5: Double-Precision Floating-Point Conversion and Move Instructions
 	case riscv.AFCVT_W_D:
-		panic("TODO")
+		inst.Arg.Rd = p.parseRegister()
+		p.acceptToken(token.COMMA)
+		inst.Arg.Rs1 = p.parseRegister()
+		return inst
 	case riscv.AFCVT_L_D:
-		panic("TODO")
+		inst.Arg.Rd = p.parseRegister()
+		p.acceptToken(token.COMMA)
+		inst.Arg.Rs1 = p.parseRegister()
+		return inst
 	case riscv.AFCVT_D_W:
-		panic("TODO")
+		inst.Arg.Rd = p.parseRegister()
+		p.acceptToken(token.COMMA)
+		inst.Arg.Rs1 = p.parseRegister()
+		return inst
 	case riscv.AFCVT_D_L:
-		panic("TODO")
+		inst.Arg.Rd = p.parseRegister()
+		p.acceptToken(token.COMMA)
+		inst.Arg.Rs1 = p.parseRegister()
+		return inst
 	case riscv.AFCVT_WU_D:
-		panic("TODO")
+		inst.Arg.Rd = p.parseRegister()
+		p.acceptToken(token.COMMA)
+		inst.Arg.Rs1 = p.parseRegister()
+		return inst
 	case riscv.AFCVT_LU_D:
-		panic("TODO")
+		inst.Arg.Rd = p.parseRegister()
+		p.acceptToken(token.COMMA)
+		inst.Arg.Rs1 = p.parseRegister()
+		return inst
 	case riscv.AFCVT_D_WU:
-		panic("TODO")
+		inst.Arg.Rd = p.parseRegister()
+		p.acceptToken(token.COMMA)
+		inst.Arg.Rs1 = p.parseRegister()
+		return inst
 	case riscv.AFCVT_D_LU:
-		panic("TODO")
+		inst.Arg.Rd = p.parseRegister()
+		p.acceptToken(token.COMMA)
+		inst.Arg.Rs1 = p.parseRegister()
+		return inst
 	case riscv.AFCVT_S_D:
-		panic("TODO")
+		inst.Arg.Rd = p.parseRegister()
+		p.acceptToken(token.COMMA)
+		inst.Arg.Rs1 = p.parseRegister()
+		return inst
 	case riscv.AFCVT_D_S:
-		panic("TODO")
+		inst.Arg.Rd = p.parseRegister()
+		p.acceptToken(token.COMMA)
+		inst.Arg.Rs1 = p.parseRegister()
+		return inst
 	case riscv.AFSGNJ_D:
-		panic("TODO")
+		inst.Arg.Rd = p.parseRegister()
+		p.acceptToken(token.COMMA)
+		inst.Arg.Rs1 = p.parseRegister()
+		p.acceptToken(token.COMMA)
+		inst.Arg.Rs2 = p.parseRegister()
+		return inst
 	case riscv.AFSGNJN_D:
-		panic("TODO")
+		inst.Arg.Rd = p.parseRegister()
+		p.acceptToken(token.COMMA)
+		inst.Arg.Rs1 = p.parseRegister()
+		p.acceptToken(token.COMMA)
+		inst.Arg.Rs2 = p.parseRegister()
+		return inst
 	case riscv.AFSGNJX_D:
-		panic("TODO")
+		inst.Arg.Rd = p.parseRegister()
+		p.acceptToken(token.COMMA)
+		inst.Arg.Rs1 = p.parseRegister()
+		p.acceptToken(token.COMMA)
+		inst.Arg.Rs2 = p.parseRegister()
+		return inst
 	case riscv.AFMV_X_D:
-		panic("TODO")
+		inst.Arg.Rd = p.parseRegister()
+		p.acceptToken(token.COMMA)
+		inst.Arg.Rs1 = p.parseRegister()
+		return inst
 	case riscv.AFMV_D_X:
-		panic("TODO")
+		inst.Arg.Rd = p.parseRegister()
+		p.acceptToken(token.COMMA)
+		inst.Arg.Rs1 = p.parseRegister()
+		return inst
 
 	// 21.6: Double-Precision Floating-Point Compare Instructions
 	case riscv.AFEQ_D:
-		panic("TODO")
+		inst.Arg.Rd = p.parseRegister()
+		p.acceptToken(token.COMMA)
+		inst.Arg.Rs1 = p.parseRegister()
+		p.acceptToken(token.COMMA)
+		inst.Arg.Rs2 = p.parseRegister()
+		return inst
 	case riscv.AFLT_D:
-		panic("TODO")
+		inst.Arg.Rd = p.parseRegister()
+		p.acceptToken(token.COMMA)
+		inst.Arg.Rs1 = p.parseRegister()
+		p.acceptToken(token.COMMA)
+		inst.Arg.Rs2 = p.parseRegister()
+		return inst
 	case riscv.AFLE_D:
-		panic("TODO")
+		inst.Arg.Rd = p.parseRegister()
+		p.acceptToken(token.COMMA)
+		inst.Arg.Rs1 = p.parseRegister()
+		p.acceptToken(token.COMMA)
+		inst.Arg.Rs2 = p.parseRegister()
+		return inst
 
 	// 21.7: Double-Precision Floating-Point Classify Instruction
 	case riscv.AFCLASS_D:
+		inst.Arg.Rd = p.parseRegister()
+		p.acceptToken(token.COMMA)
+		inst.Arg.Rs1 = p.parseRegister()
+		return inst
 
 	// 伪指令(A_开头以区分)
 	// ISA (version 20191213)
