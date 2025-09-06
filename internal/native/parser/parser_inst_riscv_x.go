@@ -924,95 +924,260 @@ func (p *parser) parseInst_riscv() (inst ast.Instruction) {
 	// 长地址跳转需要用户手动处理
 
 	case riscv.A_NOP:
-		panic("TODO")
+		// nop => addi x0, x0, 0
+		return inst
 	case riscv.A_MV:
-		panic("TODO")
+		// mv rd, rs1 => addi rd, rs1, 0
+		inst.Arg.Rd = p.parseRegister()
+		p.acceptToken(token.COMMA)
+		inst.Arg.Rs1 = p.parseRegister()
+		return inst
 	case riscv.A_NOT:
-		panic("TODO")
+		// not rd, rs1 => xori rd, rs1, -1
+		inst.Arg.Rd = p.parseRegister()
+		p.acceptToken(token.COMMA)
+		inst.Arg.Rs1 = p.parseRegister()
+		return inst
 	case riscv.A_NEG:
-		panic("TODO")
+		// neg rd, rs1 => sub rd, x0, rs1
+		inst.Arg.Rd = p.parseRegister()
+		p.acceptToken(token.COMMA)
+		inst.Arg.Rs1 = p.parseRegister()
+		return inst
 	case riscv.A_NEGW:
-		panic("TODO")
+		// negw rd, rs1 => subw rd, x0, rs1
+		inst.Arg.Rd = p.parseRegister()
+		p.acceptToken(token.COMMA)
+		inst.Arg.Rs1 = p.parseRegister()
+		return inst
 	case riscv.A_SEXT_W:
-		panic("TODO")
+		// sext.w rd, rs1 => addiw rd, rs1, 0
+		inst.Arg.Rd = p.parseRegister()
+		p.acceptToken(token.COMMA)
+		inst.Arg.Rs1 = p.parseRegister()
+		return inst
 	case riscv.A_SEQZ:
-		panic("TODO")
+		// seqz rd, rs1 => sltiu rd, rs1, 1
+		inst.Arg.Rd = p.parseRegister()
+		p.acceptToken(token.COMMA)
+		inst.Arg.Rs1 = p.parseRegister()
+		return inst
 	case riscv.A_SNEZ:
-		panic("TODO")
+		// snez rd, rs1 => sltu rd, x0, rs1
+		inst.Arg.Rd = p.parseRegister()
+		p.acceptToken(token.COMMA)
+		inst.Arg.Rs1 = p.parseRegister()
+		return inst
 	case riscv.A_SLTZ:
-		panic("TODO")
+		// sltz rd, rs1 => slt rd, rs1, x0
+		inst.Arg.Rd = p.parseRegister()
+		p.acceptToken(token.COMMA)
+		inst.Arg.Rs1 = p.parseRegister()
+		return inst
 	case riscv.A_SGTZ:
-		panic("TODO")
+		// sgtz rd, rs1 => slt rd, x0, rs1
+		inst.Arg.Rd = p.parseRegister()
+		p.acceptToken(token.COMMA)
+		inst.Arg.Rs1 = p.parseRegister()
+		return inst
 	case riscv.A_FMV_S:
-		panic("TODO")
+		inst.Arg.Rd = p.parseRegister()
+		p.acceptToken(token.COMMA)
+		inst.Arg.Rs1 = p.parseRegister()
+		return inst
 	case riscv.A_FABS_S:
-		panic("TODO")
+		// fabs.s rd, rs1 => fsgnjx.s rd, rs1, rs1
+		inst.Arg.Rd = p.parseRegister()
+		p.acceptToken(token.COMMA)
+		inst.Arg.Rs1 = p.parseRegister()
+		return inst
 	case riscv.A_FNEG_S:
-		panic("TODO")
+		// fneg.s rd, rs1 => fsgnjn.s rd, rs1, rs1
+		inst.Arg.Rd = p.parseRegister()
+		p.acceptToken(token.COMMA)
+		inst.Arg.Rs1 = p.parseRegister()
+		return inst
 	case riscv.A_FMV_D:
-		panic("TODO")
+		// fmv.d rd, rs1 => fsgnj.d  rd, rs1, rs1
+		inst.Arg.Rd = p.parseRegister()
+		p.acceptToken(token.COMMA)
+		inst.Arg.Rs1 = p.parseRegister()
+		return inst
 	case riscv.A_FABS_D:
-		panic("TODO")
+		// fabs.d rd, rs1 => fsgnjx.d rd, rs1, rs1
+		inst.Arg.Rd = p.parseRegister()
+		p.acceptToken(token.COMMA)
+		inst.Arg.Rs1 = p.parseRegister()
+		return inst
 	case riscv.A_FNEG_D:
-		panic("TODO")
+		// fneg.d rd, rs1 => fsgnjn.d rd, rs1, rs1
+		inst.Arg.Rd = p.parseRegister()
+		p.acceptToken(token.COMMA)
+		inst.Arg.Rs1 = p.parseRegister()
+		return inst
 	case riscv.A_BEQZ:
-		panic("TODO")
+		// beqz rs1, offset => beq rs1, x0, offset
+		inst.Arg.Rd = p.parseRegister()
+		p.acceptToken(token.COMMA)
+		p.parseInst_riscv_immAddr(&inst)
+		return inst
 	case riscv.A_BNEZ:
-		panic("TODO")
+		// bnez rs1, offset => bne rs1, x0, offset
+		inst.Arg.Rd = p.parseRegister()
+		p.acceptToken(token.COMMA)
+		p.parseInst_riscv_immAddr(&inst)
+		return inst
 	case riscv.A_BLEZ:
-		panic("TODO")
+		// blez rs1, offset => bge x0, rs1, offset
+		inst.Arg.Rs1 = p.parseRegister()
+		p.acceptToken(token.COMMA)
+		p.parseInst_riscv_immAddr(&inst)
+		return inst
 	case riscv.A_BGEZ:
-		panic("TODO")
+		// bgez rs1, offset => bge rs1, x0, offset
+		inst.Arg.Rs1 = p.parseRegister()
+		p.acceptToken(token.COMMA)
+		p.parseInst_riscv_immAddr(&inst)
+		return inst
 	case riscv.A_BLTZ:
-		panic("TODO")
+		// bltz rs1, offset => blt rs1, x0, offset
+		inst.Arg.Rs1 = p.parseRegister()
+		p.acceptToken(token.COMMA)
+		p.parseInst_riscv_immAddr(&inst)
+		return inst
 	case riscv.A_BGTZ:
-		panic("TODO")
+		// bgtz rs1, offset => blt x0, rs1, offset
+		inst.Arg.Rs1 = p.parseRegister()
+		p.acceptToken(token.COMMA)
+		p.parseInst_riscv_immAddr(&inst)
+		return inst
 	case riscv.A_BGT:
-		panic("TODO")
+		// bgt rs1, rs2, offset => blt rs2, rs1, offset
+		inst.Arg.Rs1 = p.parseRegister()
+		p.acceptToken(token.COMMA)
+		inst.Arg.Rs2 = p.parseRegister()
+		p.acceptToken(token.COMMA)
+		p.parseInst_riscv_immAddr(&inst)
+		return inst
 	case riscv.A_BLE:
-		panic("TODO")
+		// ble rs1, rs2, offset => bge rs2, rs1, offset
+		inst.Arg.Rs1 = p.parseRegister()
+		p.acceptToken(token.COMMA)
+		inst.Arg.Rs2 = p.parseRegister()
+		p.acceptToken(token.COMMA)
+		p.parseInst_riscv_immAddr(&inst)
+		return inst
 	case riscv.A_BGTU:
-		panic("TODO")
+		// bgtu rs1, rs2, offset => bltu rs2, rs1, offset
+		inst.Arg.Rs1 = p.parseRegister()
+		p.acceptToken(token.COMMA)
+		inst.Arg.Rs2 = p.parseRegister()
+		p.acceptToken(token.COMMA)
+		p.parseInst_riscv_immAddr(&inst)
+		return inst
 	case riscv.A_BLEU:
-		panic("TODO")
+		// bleu rs1, rs2, offset => bgeu rs2, rs1, offset
+		inst.Arg.Rs1 = p.parseRegister()
+		p.acceptToken(token.COMMA)
+		inst.Arg.Rs2 = p.parseRegister()
+		p.acceptToken(token.COMMA)
+		p.parseInst_riscv_immAddr(&inst)
+		return inst
 	case riscv.A_J:
-		panic("TODO")
+		// j offset => jal x0, offset
+		p.parseInst_riscv_immAddr(&inst)
+		return inst
 	case riscv.A_JR:
-		panic("TODO")
+		// jr rs1 => jalr x0, 0(rs1)
+		inst.Arg.Rs1 = p.parseRegister()
+		return inst
 	case riscv.A_RET:
-		panic("TODO")
+		// ret => jalr x0, 0(x1)
+		return inst
 	case riscv.A_RDINSTRET:
-		panic("TODO")
+		// rdinstret rd => csrrs rd, instret, x0
+		inst.Arg.Rd = p.parseRegister()
+		return inst
 	case riscv.A_RDCYCLE:
-		panic("TODO")
+		// rdcyle rd => csrrs rd, cycle, x0
+		inst.Arg.Rd = p.parseRegister()
+		return inst
 	case riscv.A_RDTIME:
-		panic("TODO")
+		// rdtime rd => csrrs rd, time, x0
+		inst.Arg.Rd = p.parseRegister()
+		return inst
 	case riscv.A_CSRR:
-		panic("TODO")
+		// csrr rd, csr => csrrs rd, csr, x0
+		inst.Arg.Rd = p.parseRegister()
+		p.acceptToken(token.COMMA)
+		p.parseInst_riscv_immAddr(&inst)
+		return inst
 	case riscv.A_CSRW:
-		panic("TODO")
+		// csrw csr, rs1 => csrrw x0, csr, rs1
+		p.parseInst_riscv_immAddr(&inst)
+		p.acceptToken(token.COMMA)
+		inst.Arg.Rs1 = p.parseRegister()
+		return inst
 	case riscv.A_CSRS:
-		panic("TODO")
+		// csrs csr, rs1 => csrrs x0, csr, rs1
+		p.parseInst_riscv_immAddr(&inst)
+		p.acceptToken(token.COMMA)
+		inst.Arg.Rs1 = p.parseRegister()
+		return inst
 	case riscv.A_CSRC:
-		panic("TODO")
+		// csrc csr, rs1 => csrrc x0, csr, rs1
+		p.parseInst_riscv_immAddr(&inst)
+		p.acceptToken(token.COMMA)
+		inst.Arg.Rs1 = p.parseRegister()
+		return inst
 	case riscv.A_CSRWI:
-		panic("TODO")
+		// csrwi csr, imm => csrrwi x0 csr, imm
+		inst.Arg.Rs1 = p.parseRegister() // todo: arg 增加 csr 命令参数
+		p.parseInst_riscv_immAddr(&inst)
+		p.acceptToken(token.COMMA)
+		return inst
 	case riscv.A_CSRSI:
-		panic("TODO")
+		// csrsi csr, imm => csrrsi x0 csr, imm
+		inst.Arg.Rs1 = p.parseRegister() // todo: arg 增加 csr 命令参数
+		p.parseInst_riscv_immAddr(&inst)
+		p.acceptToken(token.COMMA)
+		return inst
 	case riscv.A_CSRCI:
-		panic("TODO")
+		// csrci csr, imm => csrrci x0 csr, imm
+		inst.Arg.Rs1 = p.parseRegister() // todo: arg 增加 csr 命令参数
+		p.parseInst_riscv_immAddr(&inst)
+		p.acceptToken(token.COMMA)
+		return inst
 	case riscv.A_FRCSR:
-		panic("TODO")
+		// frcsr rd => csrrs rd, fcsr, x0
+		inst.Arg.Rd = p.parseRegister()
+		return inst
 	case riscv.A_FSCSR:
-		panic("TODO")
+		// fscsr rd, rs1 => csrrw rd, fcsr, rs1 # rd 可省略
+		inst.Arg.Rd = p.parseRegister()
+		p.acceptToken(token.COMMA)
+		inst.Arg.Rs1 = p.parseRegister()
+		return inst
 	case riscv.A_FRRM:
-		panic("TODO")
+		// frrm rd => csrrs rd, frm, x0
+		inst.Arg.Rd = p.parseRegister()
+		return inst
 	case riscv.A_FSRM:
-		panic("TODO")
+		// fsrm rd, rs1 => csrrw rd, frm, rs1 # rd 可省略
+		inst.Arg.Rd = p.parseRegister()
+		p.acceptToken(token.COMMA)
+		inst.Arg.Rs1 = p.parseRegister()
+		return inst
 	case riscv.A_FRFLAGS:
-		panic("TODO")
+		// frflags rd => csrrs rd, fflags, x0
+		inst.Arg.Rd = p.parseRegister()
+		return inst
 	case riscv.A_FSFLAGS:
-		panic("TODO")
+		// fsflags rd, rs1 => csrrw rd, fflags, rs1 # rd 可省略
+		inst.Arg.Rd = p.parseRegister()
+		p.acceptToken(token.COMMA)
+		inst.Arg.Rs1 = p.parseRegister()
+		return inst
 	}
 
 	panic("unreachable")
