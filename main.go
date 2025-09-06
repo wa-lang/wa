@@ -27,6 +27,7 @@ import (
 	"wa-lang.org/wa/internal/app/applsp"
 	"wa-lang.org/wa/internal/app/appplay"
 	"wa-lang.org/wa/internal/app/apprun"
+	"wa-lang.org/wa/internal/app/apprv2elf"
 	"wa-lang.org/wa/internal/app/appssa"
 	"wa-lang.org/wa/internal/app/apptest"
 	"wa-lang.org/wa/internal/app/appwat2c"
@@ -111,6 +112,7 @@ func main() {
 		appwat2c.CmdWat2c,
 
 		// 待完善的子命令(隐藏)
+		apprv2elf.CmdRv2elf,
 		appwat2rv.CmdWat2rv,
 		appwemu.CmdWEmu,
 		appgo2wa.CmdGo2wa,
