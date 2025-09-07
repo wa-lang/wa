@@ -9,7 +9,7 @@ import (
 	"fmt"
 	"os"
 
-	"wa-lang.org/wa/internal/native/link"
+	"wa-lang.org/wa/internal/native/abi"
 	"wa-lang.org/wa/internal/native/riscv"
 	"wa-lang.org/wa/internal/native/wemu/device"
 	"wa-lang.org/wa/internal/native/wemu/device/dram"
@@ -26,16 +26,16 @@ const (
 
 // 模拟器
 type WEmu struct {
-	CPU   riscv64.CPU   // 处理器
-	Bus   *device.Bus   // 外设总线
-	Power *power.Power  // 电源设备
-	Dram  *dram.DRAM    // 内存设备
-	Uart  *uart.UART    // 串口设备
-	Prog  *link.Program // 程序
+	CPU   riscv64.CPU        // 处理器
+	Bus   *device.Bus        // 外设总线
+	Power *power.Power       // 电源设备
+	Dram  *dram.DRAM         // 内存设备
+	Uart  *uart.UART         // 串口设备
+	Prog  *abi.LinkedProgram // 程序
 }
 
 // 构建模拟器
-func NewWEmu(prog *link.Program) *WEmu {
+func NewWEmu(prog *abi.LinkedProgram) *WEmu {
 	p := &WEmu{
 		Bus:   device.NewBus(),
 		Power: power.NewPower("power", power.POWER_BASE),

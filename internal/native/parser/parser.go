@@ -82,6 +82,8 @@ func (p *parser) ParseFile() (prog *ast.File, err error) {
 		}
 	}()
 
+	p.prog = &ast.File{CPU: p.cpu}
+
 	p.scanner.Init(p.file, p.src,
 		func(pos token.Position, msg string) {
 			if p.err != nil {

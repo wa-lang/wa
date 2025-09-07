@@ -7,24 +7,16 @@ import (
 	"encoding/binary"
 	"io"
 
+	"wa-lang.org/wa/internal/native/abi"
 	"wa-lang.org/wa/internal/native/link/elf"
 )
 
-// 程序数据(临时)
-type Program struct {
-	TextAddr int64  // 程序段地址
-	TextData []byte // 程序段数据
-	DataAddr int64  // 数据段地址
-	DataData []byte // 数据段数据
-
-	RoDataAddr int64  // .rodata
-	RoDataData []byte // .rodata
-	SDataAddr  int64  // .sdata
-	SDataData  []byte // .sdata
+// 生成 ELF 格式文件
+func LinkELF(prog *abi.LinkedProgram) ([]byte, error) {
+	return _LinkELF_RV64(prog)
 }
 
-// 生成 ELF 格式文件
-func LinkELF_RV64(prog *Program) ([]byte, error) {
+func _LinkELF_RV64(prog *abi.LinkedProgram) ([]byte, error) {
 	var (
 		ehOff = int64(0)
 		phOff = int64(elf.ELF64HDRSIZE)

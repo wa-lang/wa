@@ -4,6 +4,7 @@
 package wat2rv
 
 import (
+	"wa-lang.org/wa/internal/native/abi"
 	"wa-lang.org/wa/internal/native/ast"
 	"wa-lang.org/wa/internal/wasm"
 	watast "wa-lang.org/wa/internal/wat/ast"
@@ -21,16 +22,16 @@ type Options struct {
 }
 
 // Wat程序转译到 RISCV32
-func Wat2rv32(filename string, source []byte, opt Options) (m *watast.Module, f *ast.File, err error) {
+func Wat2rv32(filename string, source []byte, opt *abi.LinkOptions) (m *watast.Module, f *ast.File, err error) {
 	return wat2rv(filename, source, opt, 32)
 }
 
 // Wat程序转译到 RISCV64
-func Wat2rv64(filename string, source []byte, opt Options) (m *watast.Module, f *ast.File, err error) {
+func Wat2rv64(filename string, source []byte, opt *abi.LinkOptions) (m *watast.Module, f *ast.File, err error) {
 	return wat2rv(filename, source, opt, 64)
 }
 
-func wat2rv(filename string, source []byte, opt Options, xlen int) (m *watast.Module, f *ast.File, err error) {
+func wat2rv(filename string, source []byte, opt *abi.LinkOptions, xlen int) (m *watast.Module, f *ast.File, err error) {
 	m, err = watparser.ParseModule(filename, source)
 	if err != nil {
 		return m, nil, err
@@ -42,7 +43,7 @@ func wat2rv(filename string, source []byte, opt Options, xlen int) (m *watast.Mo
 }
 
 type wat2rvWorker struct {
-	opt Options
+	opt *abi.LinkOptions
 
 	m *watast.Module
 
@@ -70,7 +71,7 @@ type inlinedTypeIndex struct {
 	inlinedIdx wasm.Index
 }
 
-func newWat2rvWorker(mWat *watast.Module, opt Options) *wat2rvWorker {
+func newWat2rvWorker(mWat *watast.Module, opt *abi.LinkOptions) *wat2rvWorker {
 	p := &wat2rvWorker{m: mWat, opt: opt, trace: DebugMode}
 
 	// 统计导入的global和func索引

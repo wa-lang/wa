@@ -21,7 +21,7 @@ var (
 func main() {
 	flag.Parse()
 
-	data, err := link.LinkELF_RV64(prog)
+	data, err := link.LinkELF(prog)
 	if err != nil {
 		panic(err)
 	}
@@ -29,7 +29,7 @@ func main() {
 	os.WriteFile(*flagOutput, data, 0777)
 }
 
-var prog = &link.Program{
+var prog = &abi.LinkedProgram{
 	TextAddr: 0x80000000,
 	TextData: asm.AssemblerRV64(fnBody),
 	DataAddr: 0x8000003c,

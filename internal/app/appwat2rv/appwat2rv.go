@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	"wa-lang.org/wa/internal/3rdparty/cli"
+	"wa-lang.org/wa/internal/native/abi"
 	"wa-lang.org/wa/internal/native/ast"
 	"wa-lang.org/wa/internal/native/printer"
 	"wa-lang.org/wa/internal/native/wat2rv"
@@ -52,7 +53,7 @@ var CmdWat2rv = &cli.Command{
 		infile := c.Args().First()
 		outfile := c.String("output")
 
-		opt := wat2rv.Options{}
+		opt := &abi.LinkOptions{}
 		opt.Ttext = uint64(c.Int64("Ttext"))
 		opt.Tdata = uint64(c.Int64("Tdata"))
 

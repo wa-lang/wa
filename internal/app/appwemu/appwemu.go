@@ -9,7 +9,7 @@ import (
 	"os"
 
 	"wa-lang.org/wa/internal/3rdparty/cli"
-	"wa-lang.org/wa/internal/native/link"
+	"wa-lang.org/wa/internal/native/abi"
 	"wa-lang.org/wa/internal/native/wemu"
 )
 
@@ -61,14 +61,14 @@ var CmdWEmu = &cli.Command{
 }
 
 // 读取 elf 文件
-func readELF(filename string) (prog *link.Program, err error) {
+func readELF(filename string) (prog *abi.LinkedProgram, err error) {
 	f, err := elf.Open(filename)
 	if err != nil {
 		panic(err)
 	}
 	defer f.Close()
 
-	prog = new(link.Program)
+	prog = new(abi.LinkedProgram)
 	for _, sec := range f.Sections {
 		switch sec.Name {
 		case ".text":

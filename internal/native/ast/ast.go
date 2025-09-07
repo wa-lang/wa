@@ -12,12 +12,13 @@ import (
 // 每个文件只是一个代码片段, 不能识别外部的符号类型, 只针对指令做简单的语义检查
 // 只在链接阶段处理外部的符号依赖, 并做符号地址检查
 type File struct {
-	Pos      token.Pos  // 位置
-	Consts   []*Const   // 全局常量
-	Globals  []*Global  // 全局对象
-	Funcs    []*Func    // 函数对象
-	Start    string     // start 函数
-	Comments []*Comment // 原始的注释列表, 可根据 pos 定位没有被关联的注释
+	Pos      token.Pos   // 位置
+	CPU      abi.CPUType // CPU类型
+	Consts   []*Const    // 全局常量
+	Globals  []*Global   // 全局对象
+	Funcs    []*Func     // 函数对象
+	Start    string      // start 函数
+	Comments []*Comment  // 原始的注释列表, 可根据 pos 定位没有被关联的注释
 }
 
 // 单行注释
