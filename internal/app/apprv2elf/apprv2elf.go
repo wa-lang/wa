@@ -58,6 +58,8 @@ var CmdRv2elf = &cli.Command{
 		opt.Ttext = uint64(c.Int64("Ttext"))
 		opt.Tdata = uint64(c.Int64("Tdata"))
 
+		parser.DebugMode = c.Bool("debug")
+
 		if outfile == "" {
 			outfile = infile
 			if n1, n2 := len(outfile), len(".s"); n1 > n2 {

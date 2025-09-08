@@ -9,6 +9,7 @@ import (
 
 	"wa-lang.org/wa/internal/native/abi"
 	"wa-lang.org/wa/internal/native/ast"
+	"wa-lang.org/wa/internal/native/riscv"
 	"wa-lang.org/wa/internal/native/scanner"
 	"wa-lang.org/wa/internal/native/token"
 )
@@ -20,7 +21,7 @@ type parser struct {
 
 	fset    *token.FileSet
 	file    *token.File
-	scanner scanner.Scanner
+	scanner *scanner.Scanner
 	prog    *ast.File
 
 	pos token.Pos
@@ -48,6 +49,25 @@ func newParser(cpu abi.CPUType, fset *token.FileSet, filename string, src []byte
 		file:     fset.AddFile(filename, -1, len(src)),
 		filename: filename,
 		src:      src,
+	}
+
+	switch cpu {
+	case abi.RISCV32, abi.RISCV64:
+		p.scanner = scanner.NewScanner(
+			func(ident string) token.Token {
+				// 将原始的寄存器映射到 token.Token 编码
+				if reg, ok := riscv.LookupRegister(ident); ok {
+					return token.REG_RISCV_BEGIN + token.Token(reg)
+				}
+				// 将原始的指令映射到 token.Token 编码
+				if reg, ok := riscv.LookupAs(ident); ok {
+					return token.A_RISCV_BEGIN + token.Token(reg)
+				}
+				return token.NONE
+			},
+		)
+	default:
+		panic(fmt.Errorf("unknown cpu: %v", cpu))
 	}
 
 	p.scanner.Init(p.file, p.src,
@@ -134,6 +154,13 @@ func (p *parser) consumeComments() {
 	}
 }
 
+// 跳过后续连续的 token, 可以缺少
+func (p *parser) consumeTokenList(expectToken token.Token) {
+	for p.tok == expectToken {
+		p.next()
+	}
+}
+
 // 吃掉一个预期的 token
 func (p *parser) acceptToken(expectToken token.Token, moreExpectTokens ...token.Token) {
 	if p.tok == expectToken {
@@ -160,7 +187,6 @@ func (p *parser) parseFile() {
 	p.next()
 
 	for {
-		fmt.Println("native parseFile aa")
 		if p.err != nil {
 			return
 		}
@@ -176,8 +202,7 @@ func (p *parser) parseFile() {
 		case token.FUNC:
 			p.parseFunc()
 		default:
-			p.err = fmt.Errorf("unkonw token: %v", p.tok)
-			return
+			p.errorf(p.pos, "unkonw token: %v", p.tok)
 		}
 	}
 }

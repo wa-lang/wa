@@ -30,5 +30,7 @@ func (p *parser) parseConst() *ast.Const {
 		pConst.Value.StrValue = p.parseStringLit()
 	}
 
+	p.consumeTokenList(token.SEMICOLON)
+
 	return pConst
 }

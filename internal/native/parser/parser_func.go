@@ -25,9 +25,15 @@ func (p *parser) parseFunc() *ast.Func {
 	p.acceptToken(token.FUNC)
 	fn.Name = p.parseIdent()
 
-	p.parseFunc_args(fn)
-	p.parseFunc_return(fn)
+	if p.tok == token.LPAREN {
+		p.parseFunc_args(fn)
+	}
+	if p.tok == token.ARROW {
+		p.parseFunc_return(fn)
+	}
+
 	p.parseFunc_body(fn)
+	p.consumeTokenList(token.SEMICOLON)
 
 	return fn
 }
@@ -66,10 +72,6 @@ func (p *parser) parseFunc_args(fn *ast.Func) {
 }
 
 func (p *parser) parseFunc_return(fn *ast.Func) {
-	if p.tok != token.ARROW {
-		return
-	}
-
 	p.acceptToken(token.ARROW)
 
 	switch p.tok {
@@ -91,13 +93,13 @@ func (p *parser) parseFunc_body(fn *ast.Func) {
 
 	switch {
 	case p.cpu == abi.RISCV64 || p.cpu == abi.RISCV32:
-		for p.tok.IsAs() {
+		for p.tok == token.IDENT || p.tok.IsAs() {
 			fn.Body.Insts = append(fn.Body.Insts, p.parseInst_riscv())
 		}
+		return
 	default:
 		panic("unreachable")
 	}
-
 }
 
 func (p *parser) parseFunc_body_local(fn *ast.Func) {
@@ -118,5 +120,7 @@ func (p *parser) parseFunc_body_local(fn *ast.Func) {
 		default:
 			p.errorf(p.pos, "expect local type(i32/i64/f32/f64/ptr), got %v", p.tok)
 		}
+
+		p.consumeTokenList(token.SEMICOLON)
 	}
 }

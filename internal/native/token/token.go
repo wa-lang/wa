@@ -142,33 +142,26 @@ func init() {
 
 // 查询标识符的类型
 // 寄存器和指令负责和 Token 名字空间的映射关系, 查询失败返回 0
-func Lookup(ident string,
-	lookupRegister func(ident string) Token,
-	lookupAs func(ident string) Token,
-) Token {
-	// 因为标识符采用特殊的前缀, 处理的流程可以再简化
-
-	if tok, is_keyword := keywords[ident]; is_keyword {
-		return tok
-	}
-	if lookupRegister != nil {
-		if reg := lookupRegister(ident); reg != 0 {
-			return reg
-		}
-	}
-	if lookupAs != nil {
-		if as := lookupAs(ident); as != 0 {
-			return as
-		}
-	}
-
-	// 标识符以 $ 或 % 开头
+func Lookup(ident string, lookupRegisterOrAs func(ident string) Token) Token {
+	// 以 $ 或 % 开头分别为全局和局部符号
 	if strings.HasPrefix(ident, "$") || strings.HasPrefix(ident, "%") {
 		return IDENT
 	}
 
-	// 失败
-	return ILLEGAL
+	// 关键字类型
+	if tok, is_keyword := keywords[ident]; is_keyword {
+		return tok
+	}
+
+	// 寄存器或汇编指令
+	if lookupRegisterOrAs != nil {
+		if tok := lookupRegisterOrAs(ident); tok != 0 {
+			return tok
+		}
+	}
+
+	// 函数名
+	return IDENT
 }
 
 // 面值类型

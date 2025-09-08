@@ -24,24 +24,27 @@ func (p *parser) parseGlobal() *ast.Global {
 	p.acceptToken(token.GLOBAL)
 	g.Name = p.parseIdent()
 
-	p.acceptToken(token.COLON)
-	switch p.tok {
-	case token.I32:
-		g.Size = 4
-		p.acceptToken(token.I32)
-	case token.I64:
-		g.Size = 8
-		p.acceptToken(token.I64)
-	case token.F32:
-		g.Size = 4
-		p.acceptToken(token.F32)
-	case token.F64:
-		g.Size = 8
-		p.acceptToken(token.F64)
-	case token.INT:
-		g.Size = p.parseIntLit()
-	default:
-		p.errorf(p.pos, "expect %v, got %v", "I32/I64/F32/F64/INT", p.tok)
+	if p.tok == token.COLON {
+
+		p.acceptToken(token.COLON)
+		switch p.tok {
+		case token.I32:
+			g.Size = 4
+			p.acceptToken(token.I32)
+		case token.I64:
+			g.Size = 8
+			p.acceptToken(token.I64)
+		case token.F32:
+			g.Size = 4
+			p.acceptToken(token.F32)
+		case token.F64:
+			g.Size = 8
+			p.acceptToken(token.F64)
+		case token.INT:
+			g.Size = p.parseIntLit()
+		default:
+			p.errorf(p.pos, "expect %v, got %v", "I32/I64/F32/F64/INT", p.tok)
+		}
 	}
 
 	p.acceptToken(token.ASSIGN)
@@ -51,6 +54,8 @@ func (p *parser) parseGlobal() *ast.Global {
 	} else {
 		g.Init = []ast.InitValue{p.parseGlobal_initValue(0)}
 	}
+
+	p.consumeTokenList(token.SEMICOLON)
 
 	return g
 }

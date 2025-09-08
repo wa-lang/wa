@@ -29,8 +29,7 @@ type ErrorHandler func(pos token.Position, msg string)
 // structure but must be initialized via Init before use.
 type Scanner struct {
 	// 查询特定平台的指令和寄存器
-	lookupRegister func(ident string) token.Token
-	lookupAs       func(ident string) token.Token
+	lookupRegisterOrAs func(ident string) token.Token
 
 	// immutable state
 	file *token.File  // source file handle
@@ -53,13 +52,9 @@ type Scanner struct {
 
 const bom = 0xFEFF // byte order mark, only permitted as very first character
 
-func NewScanner(
-	lookupRegister func(ident string) token.Token,
-	lookupAs func(ident string) token.Token,
-) *Scanner {
+func NewScanner(lookupRegisterOrAs func(ident string) token.Token) *Scanner {
 	s := &Scanner{}
-	s.lookupRegister = lookupRegister
-	s.lookupAs = lookupAs
+	s.lookupRegisterOrAs = lookupRegisterOrAs
 	return s
 }
 
@@ -729,7 +724,7 @@ scanAgain:
 		lit = s.scanIdentifier()
 		if len(lit) > 1 {
 			// keywords are longer than one letter - avoid lookup otherwise
-			tok = token.Lookup(lit, s.lookupRegister, s.lookupAs)
+			tok = token.Lookup(lit, s.lookupRegisterOrAs)
 			switch tok {
 			case token.IDENT:
 				insertSemi = true

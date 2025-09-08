@@ -13,9 +13,14 @@ import (
 func (p *parser) parseInst_riscv() (inst ast.Instruction) {
 	assert(p.cpu == abi.RISCV64 || p.cpu == abi.RISCV32)
 
+	defer p.consumeTokenList(token.SEMICOLON)
+
 	inst.Pos = p.pos
+	if p.tok == token.IDENT {
+		inst.Label = p.parseIdent()
+		p.acceptToken(token.COLON)
+	}
 	inst.As = p.parseAs()
-	p.acceptToken(p.tok)
 	inst.Arg = new(abi.AsArgument)
 
 	switch inst.As {
@@ -103,6 +108,7 @@ func (p *parser) parseInst_riscv() (inst ast.Instruction) {
 		inst.Arg.Rd = p.parseRegister()
 		p.acceptToken(token.COMMA)
 		p.parseInst_riscv_immAddr(&inst)
+		return inst
 	case riscv.AADD:
 		inst.Arg.Rd = p.parseRegister()
 		p.acceptToken(token.COMMA)
