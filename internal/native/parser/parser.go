@@ -182,6 +182,17 @@ func (p *parser) acceptToken(expectToken token.Token, moreExpectTokens ...token.
 	}
 }
 
+// 吃掉其中一个
+func (p *parser) acceptTokenAorB(expectTokenA, expectTokenB token.Token) {
+	assert(expectTokenA != expectTokenB)
+	switch p.tok {
+	case expectTokenA, expectTokenB:
+		p.next()
+	default:
+		p.errorf(p.pos, "expect %v or %v, got %v", expectTokenA, expectTokenB, p.tok)
+	}
+}
+
 func (p *parser) parseFile() {
 	// 读取第一个Token
 	p.next()
@@ -195,11 +206,11 @@ func (p *parser) parseFile() {
 		}
 
 		switch p.tok {
-		case token.CONST:
+		case token.CONST, token.CONST_zh:
 			p.parseConst()
-		case token.GLOBAL:
+		case token.GLOBAL, token.GLOBAL_zh:
 			p.parseGlobal()
-		case token.FUNC:
+		case token.FUNC, token.FUNC_zh:
 			p.parseFunc()
 		default:
 			p.errorf(p.pos, "unkonw token: %v", p.tok)
@@ -265,6 +276,37 @@ func (p *parser) parseInt32Lit() int32 {
 	return int32(n)
 }
 
+func (p *parser) parseUint32Lit() uint32 {
+	pos, lit := p.pos, p.lit
+
+	if p.tok == token.CHAR {
+		p.acceptToken(token.CHAR)
+		return uint32(lit[1]) // '?'
+	}
+
+	p.acceptToken(token.INT)
+
+	if len(lit) > 2 && lit[0] == '0' && (lit[1] == 'x' || lit[1] == 'X') {
+		n, err := strconv.ParseUint(lit[2:], 16, 32)
+		if err != nil {
+			p.errorf(pos, "expect int32, got %q", lit)
+		}
+		return uint32(n)
+	}
+
+	// 需要支持 u32 和 -1 两种格式
+	n, err := strconv.ParseUint(lit, 10, 32)
+	if err != nil {
+		if n, errx := strconv.ParseUint(lit, 10, 32); errx == nil {
+			return uint32(n)
+		} else {
+			p.errorf(pos, "expect int32, got %q, err = %v", lit, err)
+		}
+
+	}
+	return uint32(n)
+}
+
 func (p *parser) parseInt64Lit() int64 {
 	pos, lit := p.pos, p.lit
 	p.acceptToken(token.INT)
@@ -282,6 +324,25 @@ func (p *parser) parseInt64Lit() int64 {
 		p.errorf(pos, "expect int64, got %q", lit)
 	}
 	return int64(uint64(n))
+}
+
+func (p *parser) parseUint64Lit() uint64 {
+	pos, lit := p.pos, p.lit
+	p.acceptToken(token.INT)
+
+	if len(lit) > 2 && lit[0] == '0' && (lit[1] == 'x' || lit[1] == 'X') {
+		n, err := strconv.ParseUint(lit[2:], 16, 64)
+		if err != nil {
+			p.errorf(pos, "expect int64, got %q", lit)
+		}
+		return uint64(n)
+	}
+
+	n, err := strconv.ParseUint(lit, 10, 64)
+	if err != nil {
+		p.errorf(pos, "expect int64, got %q", lit)
+	}
+	return uint64(n)
 }
 
 // 解析浮点数常量面值

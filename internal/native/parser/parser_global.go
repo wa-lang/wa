@@ -21,32 +21,51 @@ import (
 func (p *parser) parseGlobal() *ast.Global {
 	g := &ast.Global{Pos: p.pos}
 
-	p.acceptToken(token.GLOBAL)
+	p.acceptTokenAorB(token.GLOBAL, token.GLOBAL_zh)
 	g.Name = p.parseIdent()
 
 	if p.tok == token.COLON {
-
 		p.acceptToken(token.COLON)
 		switch p.tok {
-		case token.I32:
+		case token.I32, token.I32_zh:
+			g.Type = p.tok
 			g.Size = 4
-			p.acceptToken(token.I32)
-		case token.I64:
+			p.acceptToken(p.tok)
+		case token.I64, token.I64_zh:
+			g.Type = p.tok
 			g.Size = 8
-			p.acceptToken(token.I64)
+			p.acceptToken(p.tok)
+		case token.U32, token.U32_zh:
+			g.Type = p.tok
+			g.Size = 4
+			p.acceptToken(p.tok)
+		case token.U64, token.U64_zh:
+			g.Type = p.tok
+			g.Size = 8
+			p.acceptToken(p.tok)
 		case token.F32:
+			g.Type = p.tok
 			g.Size = 4
 			p.acceptToken(token.F32)
 		case token.F64:
+			g.Type = p.tok
 			g.Size = 8
 			p.acceptToken(token.F64)
+		case token.PTR:
+			// ptr 大小依赖于平台
+			g.Type = token.PTR
+			g.Size = 0
 		case token.INT:
+			// 没有固定类型, 只有内存大小
+			g.Type = token.NONE
 			g.Size = p.parseIntLit()
 		default:
-			p.errorf(p.pos, "expect %v, got %v", "I32/I64/F32/F64/INT", p.tok)
+			// 不需要显式指定类型或内存大小的情况
+			// global x = INT/FLOAT/STRING
 		}
 	}
 
+	// 全局变量必须显式初始化
 	p.acceptToken(token.ASSIGN)
 
 	if p.tok == token.LBRACE {
@@ -65,6 +84,9 @@ func (p *parser) parseGlobal_initGroup() []ast.InitValue {
 	defer p.acceptToken(token.RBRACE)
 
 	var initGroup []ast.InitValue
+
+	// 结构体初始化
+	// 必须显式以整数字面值指定要初始化的偏移地址
 	for p.tok == token.INT {
 		initGroup = append(initGroup, p.parseGlobal_initGroup_elem())
 	}
@@ -80,95 +102,18 @@ func (p *parser) parseGlobal_initGroup_elem() ast.InitValue {
 
 func (p *parser) parseGlobal_initValue(offset int) ast.InitValue {
 	switch p.tok {
-	case token.INT:
+	case token.IDENT:
 		return ast.InitValue{
 			Offset: offset,
-			Type:   token.I32,
-			LitValue: &ast.Value{
-				LitKind:  token.INT,
-				IntValue: int64(p.parseInt32Lit()),
-			},
+			Type:   token.IDENT,
+			Symbal: p.parseIdent(),
 		}
-
-	case token.I32:
-		p.acceptToken(token.I32)
-		p.acceptToken(token.LPAREN)
-		defer p.acceptToken(token.RPAREN)
-
-		return ast.InitValue{
-			Offset: offset,
-			Type:   token.I32,
-			LitValue: &ast.Value{
-				LitKind:  token.INT,
-				IntValue: int64(p.parseInt32Lit()),
-			},
-		}
-
-	case token.I64:
-		p.acceptToken(token.I32)
-		p.acceptToken(token.LPAREN)
-		defer p.acceptToken(token.RPAREN)
-
-		return ast.InitValue{
-			Offset: offset,
-			Type:   token.I32,
-			LitValue: &ast.Value{
-				LitKind:  token.INT,
-				IntValue: int64(p.parseInt64Lit()),
-			},
-		}
-
-	case token.FLOAT:
-		return ast.InitValue{
-			Offset: offset,
-			Type:   token.F32,
-			LitValue: &ast.Value{
-				LitKind:    token.FLOAT,
-				FloatValue: float64(p.parseFloat32Lit()),
-			},
-		}
-
-	case token.F32:
-		p.acceptToken(token.F32)
-		p.acceptToken(token.LPAREN)
-		defer p.acceptToken(token.RPAREN)
-
-		return ast.InitValue{
-			Offset: offset,
-			Type:   token.F32,
-			LitValue: &ast.Value{
-				LitKind:    token.FLOAT,
-				FloatValue: float64(p.parseFloat32Lit()),
-			},
-		}
-
-	case token.F64:
-		p.acceptToken(token.F64)
-		p.acceptToken(token.LPAREN)
-		defer p.acceptToken(token.RPAREN)
-
-		return ast.InitValue{
-			Offset: offset,
-			Type:   token.F32,
-			LitValue: &ast.Value{
-				LitKind:    token.FLOAT,
-				FloatValue: float64(p.parseFloat64Lit()),
-			},
-		}
-
-	case token.STRING:
-		return ast.InitValue{
-			Offset: offset,
-			Type:   token.STRING,
-			LitValue: &ast.Value{
-				LitKind:  token.STRING,
-				StrValue: p.parseStringLit(),
-			},
-		}
-
 	default:
-		p.errorf(p.pos, "expect global init value, got %v", p.tok)
+		val := p.parseValue()
+		return ast.InitValue{
+			Offset:   offset,
+			Type:     val.Type,
+			LitValue: val,
+		}
 	}
-
-	panic("unreachable")
 }

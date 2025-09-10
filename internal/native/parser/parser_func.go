@@ -22,7 +22,7 @@ func (p *parser) parseFunc() *ast.Func {
 		Body: new(ast.FuncBody),
 	}
 
-	p.acceptToken(token.FUNC)
+	p.acceptTokenAorB(token.FUNC, token.FUNC_zh)
 	fn.Name = p.parseIdent()
 
 	if p.tok == token.LPAREN {
@@ -87,7 +87,7 @@ func (p *parser) parseFunc_body(fn *ast.Func) {
 	p.acceptToken(token.LBRACE)
 	defer p.acceptToken(token.RBRACE)
 
-	for p.tok == token.LOCAL {
+	for p.tok == token.LOCAL || p.tok == token.LOCAL_zh {
 		p.parseFunc_body_local(fn)
 	}
 
@@ -105,12 +105,19 @@ func (p *parser) parseFunc_body(fn *ast.Func) {
 func (p *parser) parseFunc_body_local(fn *ast.Func) {
 	for p.tok == token.LOCAL {
 		localPos := p.pos
-		p.acceptToken(token.LOCAL)
+		p.acceptTokenAorB(token.LOCAL, token.LOCAL_zh)
 		localName := p.parseIdent()
 		p.acceptToken(token.COLON)
 
 		switch p.tok {
-		case token.I32, token.I64, token.F32, token.F64, token.PTR:
+		case token.I32, token.I64,
+			token.U32, token.U64,
+			token.F32, token.F64,
+			token.PTR,
+			token.I32_zh, token.I64_zh,
+			token.U32_zh, token.U64_zh,
+			token.F32_zh, token.F64_zh,
+			token.PTR_zh:
 			fn.Body.Locals = append(fn.Body.Locals, ast.Local{
 				Pos:  localPos,
 				Name: localName,

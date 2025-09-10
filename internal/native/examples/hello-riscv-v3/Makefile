@@ -5,6 +5,9 @@ WA:=go run ../../../../main.go
 
 run:
 	$(WA) rv2elf hello_riscv64.ws
+	
+run-zh:
+	$(WA) rv2elf hello_riscv64_zh.ws
 
 debug:
 	$(WA) -debug rv2elf hello_riscv64.ws

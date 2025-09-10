@@ -16,19 +16,10 @@ import (
 func (p *parser) parseConst() *ast.Const {
 	pConst := &ast.Const{Pos: p.pos}
 
-	p.acceptToken(token.CONST)
+	p.acceptTokenAorB(token.CONST, token.CONST_zh)
 	pConst.Name = p.parseIdent()
 	p.acceptToken(token.ASSIGN)
-
-	// 无类型的面值
-	switch p.tok {
-	case token.INT:
-		pConst.Value.IntValue = p.parseInt64Lit()
-	case token.FLOAT:
-		pConst.Value.FloatValue = p.parseFloat64Lit()
-	case token.STRING:
-		pConst.Value.StrValue = p.parseStringLit()
-	}
+	pConst.Value = p.parseValue()
 
 	p.consumeTokenList(token.SEMICOLON)
 

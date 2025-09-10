@@ -302,46 +302,6 @@ func (s *Scanner) findLineEnd(startRune rune) bool {
 		return true
 	}
 
-	// initial '/' already consumed
-
-	defer func(offs int) {
-		// reset scanner state to where it was upon calling findLineEnd
-		s.ch = '/'
-		s.offset = offs
-		s.rdOffset = offs + 1
-		s.next() // consume initial '/' again
-	}(s.offset - 1)
-
-	// read ahead until a newline, EOF, or non-comment token is found
-	for s.ch == '/' || s.ch == '*' {
-		if s.ch == '/' {
-			//-style comment always contains a newline
-			return true
-		}
-		/*-style comment: look for newline */
-		s.next()
-		for s.ch >= 0 {
-			ch := s.ch
-			if ch == '\n' {
-				return true
-			}
-			s.next()
-			if ch == '*' && s.ch == '/' {
-				s.next()
-				break
-			}
-		}
-		s.skipWhitespace() // s.insertSemi is set
-		if s.ch < 0 || s.ch == '\n' {
-			return true
-		}
-		if s.ch != '/' {
-			// non-comment token
-			return false
-		}
-		s.next() // consume '/'
-	}
-
 	return false
 }
 
@@ -769,17 +729,17 @@ scanAgain:
 			} else {
 				tok = token.ASSIGN
 			}
-		case ':':
+		case ':', '：':
 			tok = token.COLON
 			lit = ":"
-		case ',':
+		case ',', '，':
 			tok = token.COMMA
-		case ';':
+		case ';', '；':
 			tok = token.SEMICOLON
 			lit = ";"
-		case '(':
+		case '(', '（':
 			tok = token.LPAREN
-		case ')':
+		case ')', '）':
 			insertSemi = true
 			tok = token.RPAREN
 		case '{':

@@ -34,11 +34,14 @@ type CommentGroup struct {
 
 // 常量值
 type Value struct {
+	Pos        token.Pos   // 位置
 	Type       token.Token // 目标类型, I32/I64/U32/U64/F32/F64/PTR/STRING
 	LitKind    token.Token // CHAR/INT/FLOAT/STRING/NONE, NONE 表示不带显式类型
 	IntValue   int64       // INT 值
+	UintValue  uint64      // 无符号 值
 	FloatValue float64     // FLOAT 值
 	StrValue   string      // 字符串
+	Symbal     string      // 标识符号
 }
 
 // 全局常量
@@ -46,7 +49,7 @@ type Const struct {
 	Doc   *CommentGroup // 关联文档
 	Pos   token.Pos     // 位置
 	Name  string        // 常量名
-	Value Value         // 常量面值
+	Value *Value        // 常量面值
 }
 
 // 全局对象
@@ -54,19 +57,18 @@ type Global struct {
 	Doc  *CommentGroup // 关联文档
 	Pos  token.Pos     // 位置
 	Name string        // 全局变量名
+	Type token.Token   // I32/I64/U32/U64/PTR/NONE
 	Size int           // 内存大小(没有类型信息)
 	Init []InitValue   // 初始数据
 }
 
 // 初始化的面值
 type InitValue struct {
-	Doc        *CommentGroup // 关联文档(可能在前面或者尾部单行注释)
-	Offset     int           // 相对偏移
-	Type       token.Token   // 目标类型, I32/I64/F32/F64/STRING
-	LitValue   *Value        // 常量面值
-	ConstValue *Const        // 全局常量
-	GlobalAddr *Global       // 全局变量地址
-	FuncAddr   string        // 函数的地址(TODO)
+	Doc      *CommentGroup // 关联文档(可能在前面或者尾部单行注释)
+	Offset   int           // 相对偏移
+	Type     token.Token   // 目标类型, I32/I64/F32/F64/STRING
+	LitValue *Value        // 常量面值
+	Symbal   string        // 全局符号
 }
 
 // 函数对象

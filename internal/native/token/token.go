@@ -45,17 +45,35 @@ const (
 	operator_end // 运算符结束
 
 	keyword_beg // 关键字开始
-	I32         // int32
-	I64         // int64
-	U32         // uint32
-	U64         // uint64
-	F32         // float32
-	F64         // float64
-	PTR         // uint pointer
-	CONST       // 常量
-	GLOBAL      // 全局符号
-	LOCAL       // 局部变量
-	FUNC        // 函数
+
+	// 英文版关键字
+
+	I32    // int32
+	I64    // int64
+	U32    // uint32
+	U64    // uint64
+	F32    // float32
+	F64    // float64
+	PTR    // uint pointer
+	CONST  // 常量
+	GLOBAL // 全局符号
+	LOCAL  // 局部变量
+	FUNC   // 函数
+
+	// 中文版关键字
+
+	I32_zh    // 整32
+	I64_zh    // 整64
+	U32_zh    // 无整32
+	U64_zh    // 无整64
+	F32_zh    // 浮32
+	F64_zh    // 浮64
+	PTR_zh    // 指针
+	CONST_zh  // 常量
+	GLOBAL_zh // 全局
+	LOCAL_zh  // 局部
+	FUNC_zh   // 函数
+
 	keyword_end // 关键字结束
 )
 
@@ -117,6 +135,18 @@ var tokens = [...]string{
 	GLOBAL: "global",
 	LOCAL:  "local",
 	FUNC:   "func",
+
+	I32_zh:    "整32",
+	I64_zh:    "整64",
+	U32_zh:    "无整32",
+	U64_zh:    "无整64",
+	F32_zh:    "浮32",
+	F64_zh:    "浮64",
+	PTR_zh:    "指针",
+	CONST_zh:  "常量",
+	GLOBAL_zh: "全局",
+	LOCAL_zh:  "局部",
+	FUNC_zh:   "函数",
 }
 
 func (tok Token) String() string {

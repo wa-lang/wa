@@ -66,55 +66,11 @@ func (p *wsPrinter) printGlobals() error {
 				default:
 					panic("unreachable")
 				}
-			case xInit.ConstValue != nil:
-				switch xInit.Type {
-				case token.I32:
-					assert(g.Size >= 4)
-					assert(xInit.ConstValue.Value.LitKind == token.INT)
-					if xInit.Offset != 0 {
-						fmt.Fprintf(p.w, "global %s:%v = {%d: i32(%v)}", g.Name, xInit.Type, xInit.Offset, xInit.ConstValue.Name)
-					} else {
-						fmt.Fprintf(p.w, "global %s:%v = i32(%v)", g.Name, xInit.Type, xInit.ConstValue.Name)
-					}
-				case token.I64:
-					assert(g.Size >= 8)
-					assert(xInit.ConstValue.Value.LitKind == token.INT)
-					if xInit.Offset != 0 {
-						fmt.Fprintf(p.w, "global %s:%v = {%d: i64(%v)}", g.Name, xInit.Type, xInit.Offset, xInit.ConstValue.Name)
-					} else {
-						fmt.Fprintf(p.w, "global %s:%v = i64(%v)", g.Name, xInit.Type, xInit.ConstValue.Name)
-					}
-				case token.F32:
-					assert(g.Size >= 4)
-					assert(xInit.ConstValue.Value.LitKind == token.FLOAT)
-					if xInit.Offset != 0 {
-						fmt.Fprintf(p.w, "global %s:%v = {%d: f32(%v)}", g.Name, xInit.Type, xInit.Offset, xInit.ConstValue.Name)
-					} else {
-						fmt.Fprintf(p.w, "global %s:%v = f32(%v)", g.Name, xInit.Type, xInit.ConstValue.Name)
-					}
-				case token.F64:
-					assert(g.Size >= 8)
-					assert(xInit.ConstValue.Value.LitKind == token.FLOAT)
-					if xInit.Offset != 0 {
-						fmt.Fprintf(p.w, "global %s:%v = {%d: f64(%v)}", g.Name, xInit.Type, xInit.Offset, xInit.ConstValue.Name)
-					} else {
-						fmt.Fprintf(p.w, "global %s:%v = f64(%v)", g.Name, xInit.Type, xInit.ConstValue.Name)
-					}
-				case token.STRING:
-					// TODO: 长度要特殊处理转义的字符
-					assert(xInit.ConstValue.Value.LitKind == token.STRING)
-					if xInit.Offset != 0 {
-						fmt.Fprintf(p.w, "global %s:%v = {%d: %v}", g.Name, xInit.Type, xInit.Offset, xInit.ConstValue.Name)
-					} else {
-						fmt.Fprintf(p.w, "global %s:%v = %v", g.Name, xInit.Type, xInit.ConstValue.Name)
-					}
-				}
-			case xInit.GlobalAddr != nil:
-				// 地址的初始化强制类型转义, 因为地址的宽度不是稳定的
+			case xInit.Symbal != "":
 				if xInit.Offset != 0 {
-					fmt.Fprintf(p.w, "global %s:%v = {%d: %v}", g.Name, xInit.Type, xInit.Offset, xInit.GlobalAddr.Name)
+					fmt.Fprintf(p.w, "global %s:%v = {%d: %v}", g.Name, xInit.Type, xInit.Offset, xInit.Symbal)
 				} else {
-					fmt.Fprintf(p.w, "global %s:%v = %v", g.Name, xInit.Type, xInit.GlobalAddr.Name)
+					fmt.Fprintf(p.w, "global %s:%v = %v", g.Name, xInit.Type, xInit.Symbal)
 				}
 			default:
 				panic("unreachable")
@@ -144,32 +100,8 @@ func (p *wsPrinter) printGlobals() error {
 					default:
 						panic("unreachable")
 					}
-				case xInit.ConstValue != nil:
-					switch xInit.Type {
-					case token.I32:
-						assert(g.Size >= 4)
-						assert(xInit.ConstValue.Value.LitKind == token.INT)
-						fmt.Fprintf(p.w, "\t%d: i32(%v),", xInit.Offset, xInit.ConstValue.Name)
-					case token.I64:
-						assert(g.Size >= 8)
-						assert(xInit.ConstValue.Value.LitKind == token.INT)
-						fmt.Fprintf(p.w, "\t%d: i64(%v),", xInit.Offset, xInit.ConstValue.Name)
-					case token.F32:
-						assert(g.Size >= 4)
-						assert(xInit.ConstValue.Value.LitKind == token.FLOAT)
-						fmt.Fprintf(p.w, "\t%d: f32(%v),", xInit.Offset, xInit.ConstValue.Name)
-					case token.F64:
-						assert(g.Size >= 8)
-						assert(xInit.ConstValue.Value.LitKind == token.FLOAT)
-						fmt.Fprintf(p.w, "\t%d: f64(%v),", xInit.Offset, xInit.ConstValue.Name)
-					case token.STRING:
-						// TODO: 长度要特殊处理转义的字符
-						assert(xInit.ConstValue.Value.LitKind == token.STRING)
-						fmt.Fprintf(p.w, "\t%d: %v,", xInit.Offset, xInit.ConstValue.Name)
-					}
-				case xInit.GlobalAddr != nil:
-					// 全局变量地址本地没有固定的类型(和CPU字长有关)
-					fmt.Fprintf(p.w, "\t%d: %v,", xInit.Offset, xInit.GlobalAddr.Name)
+				case xInit.Symbal != "":
+					fmt.Fprintf(p.w, "\t%d: %v,", xInit.Offset, xInit.Symbal)
 				default:
 					panic("unreachable")
 				}
