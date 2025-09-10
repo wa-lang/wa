@@ -37,7 +37,7 @@ var prog = &abi.LinkedProgram{
 }
 
 var fnBody = &ast.FuncBody{
-	Insts: []ast.Instruction{
+	Insts: []*ast.Instruction{
 		{As: riscv.AAUIPC, Arg: &abi.AsArgument{Rd: riscv.REG_A0, Imm: 0}},
 		{As: riscv.AADDI, Arg: &abi.AsArgument{Rd: riscv.REG_A0, Rs1: riscv.REG_A0, Imm: 60}},
 		{As: riscv.ALBU, Arg: &abi.AsArgument{Rd: riscv.REG_A1, Rs1: riscv.REG_A0, Imm: 0}},

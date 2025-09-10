@@ -10,12 +10,15 @@ import (
 	"wa-lang.org/wa/internal/native/token"
 )
 
-func (p *parser) parseInst_riscv() (inst ast.Instruction) {
-	assert(p.cpu == abi.RISCV64 || p.cpu == abi.RISCV32)
+func (p *parser) parseInst_riscv(fn *ast.Func) *ast.Instruction {
+	inst := &ast.Instruction{Pos: p.pos}
 
-	defer p.consumeTokenList(token.SEMICOLON)
+	inst.Doc = p.parseDocComment(&fn.Body.Comments, inst.Pos)
+	defer func() {
+		inst.Comment = p.parseTailComment(inst.Pos)
+		p.consumeSemicolonList()
+	}()
 
-	inst.Pos = p.pos
 	if p.tok == token.IDENT {
 		inst.Label = p.parseIdent()
 		p.acceptToken(token.COLON)
@@ -37,7 +40,7 @@ func (p *parser) parseInst_riscv() (inst ast.Instruction) {
 		p.acceptToken(token.COMMA)
 		inst.Arg.Rs1 = p.parseRegister()
 		p.acceptToken(token.COMMA)
-		p.parseInst_riscv_immAddr(&inst)
+		p.parseInst_riscv_immAddr(inst)
 		return inst
 
 	case riscv.ASLTI:
@@ -45,35 +48,35 @@ func (p *parser) parseInst_riscv() (inst ast.Instruction) {
 		p.acceptToken(token.COMMA)
 		inst.Arg.Rs1 = p.parseRegister()
 		p.acceptToken(token.COMMA)
-		p.parseInst_riscv_immAddr(&inst)
+		p.parseInst_riscv_immAddr(inst)
 		return inst
 	case riscv.ASLTIU:
 		inst.Arg.Rd = p.parseRegister()
 		p.acceptToken(token.COMMA)
 		inst.Arg.Rs1 = p.parseRegister()
 		p.acceptToken(token.COMMA)
-		p.parseInst_riscv_immAddr(&inst)
+		p.parseInst_riscv_immAddr(inst)
 		return inst
 	case riscv.AANDI:
 		inst.Arg.Rd = p.parseRegister()
 		p.acceptToken(token.COMMA)
 		inst.Arg.Rs1 = p.parseRegister()
 		p.acceptToken(token.COMMA)
-		p.parseInst_riscv_immAddr(&inst)
+		p.parseInst_riscv_immAddr(inst)
 		return inst
 	case riscv.AORI:
 		inst.Arg.Rd = p.parseRegister()
 		p.acceptToken(token.COMMA)
 		inst.Arg.Rs1 = p.parseRegister()
 		p.acceptToken(token.COMMA)
-		p.parseInst_riscv_immAddr(&inst)
+		p.parseInst_riscv_immAddr(inst)
 		return inst
 	case riscv.AXORI:
 		inst.Arg.Rd = p.parseRegister()
 		p.acceptToken(token.COMMA)
 		inst.Arg.Rs1 = p.parseRegister()
 		p.acceptToken(token.COMMA)
-		p.parseInst_riscv_immAddr(&inst)
+		p.parseInst_riscv_immAddr(inst)
 		return inst
 	case riscv.ASLLI:
 		inst.Arg.Rd = p.parseRegister()
@@ -101,13 +104,13 @@ func (p *parser) parseInst_riscv() (inst ast.Instruction) {
 		// lui t1, 0x5 # 高 20 位 (0x5 << 12 = 0x5000)
 		inst.Arg.Rd = p.parseRegister()
 		p.acceptToken(token.COMMA)
-		p.parseInst_riscv_immAddr(&inst)
+		p.parseInst_riscv_immAddr(inst)
 		return inst
 	case riscv.AAUIPC:
 		// auipc a0, %pcrel_hi(message) # 高20位 = 当前PC + 偏移
 		inst.Arg.Rd = p.parseRegister()
 		p.acceptToken(token.COMMA)
-		p.parseInst_riscv_immAddr(&inst)
+		p.parseInst_riscv_immAddr(inst)
 		return inst
 	case riscv.AADD:
 		inst.Arg.Rd = p.parseRegister()
@@ -185,7 +188,7 @@ func (p *parser) parseInst_riscv() (inst ast.Instruction) {
 		// jal x0, print_loop
 		inst.Arg.Rd = p.parseRegister()
 		p.acceptToken(token.COMMA)
-		p.parseInst_riscv_immAddr(&inst)
+		p.parseInst_riscv_immAddr(inst)
 		return inst
 	case riscv.AJALR:
 		inst.Arg.Rd = p.parseRegister()
@@ -198,42 +201,42 @@ func (p *parser) parseInst_riscv() (inst ast.Instruction) {
 		p.acceptToken(token.COMMA)
 		inst.Arg.Rs2 = p.parseRegister()
 		p.acceptToken(token.COMMA)
-		p.parseInst_riscv_relAddr(&inst)
+		p.parseInst_riscv_relAddr(inst)
 		return inst
 	case riscv.ABNE:
 		inst.Arg.Rs1 = p.parseRegister()
 		p.acceptToken(token.COMMA)
 		inst.Arg.Rs2 = p.parseRegister()
 		p.acceptToken(token.COMMA)
-		p.parseInst_riscv_relAddr(&inst)
+		p.parseInst_riscv_relAddr(inst)
 		return inst
 	case riscv.ABLT:
 		inst.Arg.Rs1 = p.parseRegister()
 		p.acceptToken(token.COMMA)
 		inst.Arg.Rs2 = p.parseRegister()
 		p.acceptToken(token.COMMA)
-		p.parseInst_riscv_relAddr(&inst)
+		p.parseInst_riscv_relAddr(inst)
 		return inst
 	case riscv.ABLTU:
 		inst.Arg.Rs1 = p.parseRegister()
 		p.acceptToken(token.COMMA)
 		inst.Arg.Rs2 = p.parseRegister()
 		p.acceptToken(token.COMMA)
-		p.parseInst_riscv_relAddr(&inst)
+		p.parseInst_riscv_relAddr(inst)
 		return inst
 	case riscv.ABGE:
 		inst.Arg.Rs1 = p.parseRegister()
 		p.acceptToken(token.COMMA)
 		inst.Arg.Rs2 = p.parseRegister()
 		p.acceptToken(token.COMMA)
-		p.parseInst_riscv_relAddr(&inst)
+		p.parseInst_riscv_relAddr(inst)
 		return inst
 	case riscv.ABGEU:
 		inst.Arg.Rs1 = p.parseRegister()
 		p.acceptToken(token.COMMA)
 		inst.Arg.Rs2 = p.parseRegister()
 		p.acceptToken(token.COMMA)
-		p.parseInst_riscv_relAddr(&inst)
+		p.parseInst_riscv_relAddr(inst)
 		return inst
 
 	// 2.6: Load and Store Instructions (RV32I)
@@ -298,7 +301,7 @@ func (p *parser) parseInst_riscv() (inst ast.Instruction) {
 		p.acceptToken(token.COMMA)
 		inst.Arg.Rs1 = p.parseRegister()
 		p.acceptToken(token.COMMA)
-		p.parseInst_riscv_immAddr(&inst)
+		p.parseInst_riscv_immAddr(inst)
 		return inst
 	case riscv.ASLLIW:
 		inst.Arg.Rd = p.parseRegister()
@@ -1025,37 +1028,37 @@ func (p *parser) parseInst_riscv() (inst ast.Instruction) {
 		// beqz rs1, offset => beq rs1, x0, offset
 		inst.Arg.Rd = p.parseRegister()
 		p.acceptToken(token.COMMA)
-		p.parseInst_riscv_immAddr(&inst)
+		p.parseInst_riscv_immAddr(inst)
 		return inst
 	case riscv.A_BNEZ:
 		// bnez rs1, offset => bne rs1, x0, offset
 		inst.Arg.Rd = p.parseRegister()
 		p.acceptToken(token.COMMA)
-		p.parseInst_riscv_immAddr(&inst)
+		p.parseInst_riscv_immAddr(inst)
 		return inst
 	case riscv.A_BLEZ:
 		// blez rs1, offset => bge x0, rs1, offset
 		inst.Arg.Rs1 = p.parseRegister()
 		p.acceptToken(token.COMMA)
-		p.parseInst_riscv_immAddr(&inst)
+		p.parseInst_riscv_immAddr(inst)
 		return inst
 	case riscv.A_BGEZ:
 		// bgez rs1, offset => bge rs1, x0, offset
 		inst.Arg.Rs1 = p.parseRegister()
 		p.acceptToken(token.COMMA)
-		p.parseInst_riscv_immAddr(&inst)
+		p.parseInst_riscv_immAddr(inst)
 		return inst
 	case riscv.A_BLTZ:
 		// bltz rs1, offset => blt rs1, x0, offset
 		inst.Arg.Rs1 = p.parseRegister()
 		p.acceptToken(token.COMMA)
-		p.parseInst_riscv_immAddr(&inst)
+		p.parseInst_riscv_immAddr(inst)
 		return inst
 	case riscv.A_BGTZ:
 		// bgtz rs1, offset => blt x0, rs1, offset
 		inst.Arg.Rs1 = p.parseRegister()
 		p.acceptToken(token.COMMA)
-		p.parseInst_riscv_immAddr(&inst)
+		p.parseInst_riscv_immAddr(inst)
 		return inst
 	case riscv.A_BGT:
 		// bgt rs1, rs2, offset => blt rs2, rs1, offset
@@ -1063,7 +1066,7 @@ func (p *parser) parseInst_riscv() (inst ast.Instruction) {
 		p.acceptToken(token.COMMA)
 		inst.Arg.Rs2 = p.parseRegister()
 		p.acceptToken(token.COMMA)
-		p.parseInst_riscv_immAddr(&inst)
+		p.parseInst_riscv_immAddr(inst)
 		return inst
 	case riscv.A_BLE:
 		// ble rs1, rs2, offset => bge rs2, rs1, offset
@@ -1071,7 +1074,7 @@ func (p *parser) parseInst_riscv() (inst ast.Instruction) {
 		p.acceptToken(token.COMMA)
 		inst.Arg.Rs2 = p.parseRegister()
 		p.acceptToken(token.COMMA)
-		p.parseInst_riscv_immAddr(&inst)
+		p.parseInst_riscv_immAddr(inst)
 		return inst
 	case riscv.A_BGTU:
 		// bgtu rs1, rs2, offset => bltu rs2, rs1, offset
@@ -1079,7 +1082,7 @@ func (p *parser) parseInst_riscv() (inst ast.Instruction) {
 		p.acceptToken(token.COMMA)
 		inst.Arg.Rs2 = p.parseRegister()
 		p.acceptToken(token.COMMA)
-		p.parseInst_riscv_immAddr(&inst)
+		p.parseInst_riscv_immAddr(inst)
 		return inst
 	case riscv.A_BLEU:
 		// bleu rs1, rs2, offset => bgeu rs2, rs1, offset
@@ -1087,11 +1090,11 @@ func (p *parser) parseInst_riscv() (inst ast.Instruction) {
 		p.acceptToken(token.COMMA)
 		inst.Arg.Rs2 = p.parseRegister()
 		p.acceptToken(token.COMMA)
-		p.parseInst_riscv_immAddr(&inst)
+		p.parseInst_riscv_immAddr(inst)
 		return inst
 	case riscv.A_J:
 		// j offset => jal x0, offset
-		p.parseInst_riscv_immAddr(&inst)
+		p.parseInst_riscv_immAddr(inst)
 		return inst
 	case riscv.A_JR:
 		// jr rs1 => jalr x0, 0(rs1)
@@ -1116,42 +1119,42 @@ func (p *parser) parseInst_riscv() (inst ast.Instruction) {
 		// csrr rd, csr => csrrs rd, csr, x0
 		inst.Arg.Rd = p.parseRegister()
 		p.acceptToken(token.COMMA)
-		p.parseInst_riscv_immAddr(&inst)
+		p.parseInst_riscv_immAddr(inst)
 		return inst
 	case riscv.A_CSRW:
 		// csrw csr, rs1 => csrrw x0, csr, rs1
-		p.parseInst_riscv_immAddr(&inst)
+		p.parseInst_riscv_immAddr(inst)
 		p.acceptToken(token.COMMA)
 		inst.Arg.Rs1 = p.parseRegister()
 		return inst
 	case riscv.A_CSRS:
 		// csrs csr, rs1 => csrrs x0, csr, rs1
-		p.parseInst_riscv_immAddr(&inst)
+		p.parseInst_riscv_immAddr(inst)
 		p.acceptToken(token.COMMA)
 		inst.Arg.Rs1 = p.parseRegister()
 		return inst
 	case riscv.A_CSRC:
 		// csrc csr, rs1 => csrrc x0, csr, rs1
-		p.parseInst_riscv_immAddr(&inst)
+		p.parseInst_riscv_immAddr(inst)
 		p.acceptToken(token.COMMA)
 		inst.Arg.Rs1 = p.parseRegister()
 		return inst
 	case riscv.A_CSRWI:
 		// csrwi csr, imm => csrrwi x0 csr, imm
 		inst.Arg.Rs1 = p.parseRegister() // todo: arg 增加 csr 命令参数
-		p.parseInst_riscv_immAddr(&inst)
+		p.parseInst_riscv_immAddr(inst)
 		p.acceptToken(token.COMMA)
 		return inst
 	case riscv.A_CSRSI:
 		// csrsi csr, imm => csrrsi x0 csr, imm
 		inst.Arg.Rs1 = p.parseRegister() // todo: arg 增加 csr 命令参数
-		p.parseInst_riscv_immAddr(&inst)
+		p.parseInst_riscv_immAddr(inst)
 		p.acceptToken(token.COMMA)
 		return inst
 	case riscv.A_CSRCI:
 		// csrci csr, imm => csrrci x0 csr, imm
 		inst.Arg.Rs1 = p.parseRegister() // todo: arg 增加 csr 命令参数
-		p.parseInst_riscv_immAddr(&inst)
+		p.parseInst_riscv_immAddr(inst)
 		p.acceptToken(token.COMMA)
 		return inst
 	case riscv.A_FRCSR:

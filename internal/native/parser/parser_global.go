@@ -21,6 +21,7 @@ import (
 func (p *parser) parseGlobal() *ast.Global {
 	g := &ast.Global{Pos: p.pos}
 
+	g.Doc = p.parseDocComment(&p.prog.Comments, g.Pos)
 	p.acceptTokenAorB(token.GLOBAL, token.GLOBAL_zh)
 	g.Name = p.parseIdent()
 
@@ -69,51 +70,40 @@ func (p *parser) parseGlobal() *ast.Global {
 	p.acceptToken(token.ASSIGN)
 
 	if p.tok == token.LBRACE {
-		g.Init = p.parseGlobal_initGroup()
+		p.parseGlobal_initGroup(g)
 	} else {
-		g.Init = []ast.InitValue{p.parseGlobal_initValue(0)}
+		initV := ast.InitValue{Pos: p.pos}
+		initV.Doc = p.parseDocComment(&p.prog.Comments, initV.Pos)
+		initV.Value = p.parseValue()
+		initV.Comment = p.parseTailComment(initV.Pos)
+		g.Init = []ast.InitValue{initV}
 	}
 
-	p.consumeTokenList(token.SEMICOLON)
+	p.consumeSemicolonList()
 
 	return g
 }
 
-func (p *parser) parseGlobal_initGroup() []ast.InitValue {
+func (p *parser) parseGlobal_initGroup(g *ast.Global) {
 	p.acceptToken(token.LBRACE)
 	defer p.acceptToken(token.RBRACE)
 
-	var initGroup []ast.InitValue
-
 	// 结构体初始化
 	// 必须显式以整数字面值指定要初始化的偏移地址
-	for p.tok == token.INT {
-		initGroup = append(initGroup, p.parseGlobal_initGroup_elem())
-	}
-
-	return initGroup
-}
-
-func (p *parser) parseGlobal_initGroup_elem() ast.InitValue {
-	offset := p.parseIntLit()
-	p.acceptToken(token.COLON)
-	return p.parseGlobal_initValue(offset)
-}
-
-func (p *parser) parseGlobal_initValue(offset int) ast.InitValue {
-	switch p.tok {
-	case token.IDENT:
-		return ast.InitValue{
-			Offset: offset,
-			Type:   token.IDENT,
-			Symbal: p.parseIdent(),
-		}
-	default:
-		val := p.parseValue()
-		return ast.InitValue{
-			Offset:   offset,
-			Type:     val.Type,
-			LitValue: val,
+	for {
+		switch p.tok {
+		case token.COMMENT:
+			g.Comments = append(g.Comments, p.parseCommentGroup())
+		case token.INT:
+			initV := ast.InitValue{Pos: p.pos}
+			initV.Doc = p.parseDocComment(&g.Comments, initV.Pos)
+			initV.Offset = p.parseIntLit()
+			p.acceptToken(token.COLON)
+			initV.Value = p.parseValue()
+			initV.Comment = p.parseTailComment(initV.Pos)
+			g.Init = append(g.Init, initV)
+		default:
+			return
 		}
 	}
 }

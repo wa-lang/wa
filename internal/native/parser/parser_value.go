@@ -34,7 +34,7 @@ func (p *parser) parseValue() *ast.Value {
 
 	switch p.tok {
 	case token.I32, token.I32_zh:
-		pVal.Type = p.tok
+		pVal.TypeDecor = p.tok
 		p.acceptToken(p.tok)
 		if p.tok == token.IDENT {
 			pVal.Symbal = p.parseIdent()
@@ -42,7 +42,7 @@ func (p *parser) parseValue() *ast.Value {
 			pVal.IntValue = int64(p.parseInt32Lit())
 		}
 	case token.I64, token.I64_zh:
-		pVal.Type = p.tok
+		pVal.TypeDecor = p.tok
 		p.acceptToken(p.tok)
 		if p.tok == token.IDENT {
 			pVal.Symbal = p.parseIdent()
@@ -50,7 +50,7 @@ func (p *parser) parseValue() *ast.Value {
 			pVal.IntValue = int64(p.parseInt64Lit())
 		}
 	case token.U32, token.U32_zh:
-		pVal.Type = p.tok
+		pVal.TypeDecor = p.tok
 		p.acceptToken(p.tok)
 		if p.tok == token.IDENT {
 			pVal.Symbal = p.parseIdent()
@@ -58,7 +58,7 @@ func (p *parser) parseValue() *ast.Value {
 			pVal.UintValue = uint64(p.parseUint32Lit())
 		}
 	case token.U64, token.U64_zh:
-		pVal.Type = p.tok
+		pVal.TypeDecor = p.tok
 		p.acceptToken(p.tok)
 		if p.tok == token.IDENT {
 			pVal.Symbal = p.parseIdent()
@@ -66,7 +66,7 @@ func (p *parser) parseValue() *ast.Value {
 			pVal.UintValue = uint64(p.parseUint64Lit())
 		}
 	case token.F32, token.F32_zh:
-		pVal.Type = p.tok
+		pVal.TypeDecor = p.tok
 		p.acceptToken(p.tok)
 		if p.tok == token.IDENT {
 			pVal.Symbal = p.parseIdent()
@@ -74,7 +74,7 @@ func (p *parser) parseValue() *ast.Value {
 			pVal.FloatValue = float64(p.parseFloat32Lit())
 		}
 	case token.F64, token.F64_zh:
-		pVal.Type = p.tok
+		pVal.TypeDecor = p.tok
 		p.acceptToken(p.tok)
 		if p.tok == token.IDENT {
 			pVal.Symbal = p.parseIdent()
@@ -82,7 +82,7 @@ func (p *parser) parseValue() *ast.Value {
 			pVal.FloatValue = float64(p.parseFloat64Lit())
 		}
 	case token.PTR, token.PTR_zh:
-		pVal.Type = p.tok
+		pVal.TypeDecor = p.tok
 		p.acceptToken(p.tok)
 		if p.tok == token.IDENT {
 			pVal.Symbal = p.parseIdent()

@@ -16,12 +16,14 @@ import (
 func (p *parser) parseConst() *ast.Const {
 	pConst := &ast.Const{Pos: p.pos}
 
+	pConst.Doc = p.parseDocComment(&p.prog.Comments, pConst.Pos)
 	p.acceptTokenAorB(token.CONST, token.CONST_zh)
 	pConst.Name = p.parseIdent()
 	p.acceptToken(token.ASSIGN)
 	pConst.Value = p.parseValue()
+	pConst.Comment = p.parseTailComment(pConst.Pos)
 
-	p.consumeTokenList(token.SEMICOLON)
+	p.consumeSemicolonList()
 
 	return pConst
 }

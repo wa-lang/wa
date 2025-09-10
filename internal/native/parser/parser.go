@@ -113,6 +113,9 @@ func (p *parser) ParseFile() (prog *ast.File, err error) {
 		scanner.ScanComments,
 	)
 
+	// 读取第一个Token
+	p.next()
+
 	p.parseFile()
 
 	prog = p.prog
@@ -129,34 +132,22 @@ func (p *parser) errorf(pos token.Pos, format string, a ...interface{}) {
 	panic(p.err)
 }
 
+// pos 转行号
+func (p *parser) posLine(pos token.Pos) int {
+	return p.fset.Position(pos).Line
+}
+
 // 下一个 token
 func (p *parser) next() {
-	p.next0()
-	if p.tok == token.COMMENT {
-		p.consumeComments()
-	}
-}
-func (p *parser) next0() {
 	p.pos, p.tok, p.lit = p.scanner.Scan()
 	if p.trace {
 		fmt.Println(p.fset.Position(p.pos), p.tok, p.lit)
 	}
 }
 
-// 跳过注释
-func (p *parser) consumeComments() {
-	for p.tok == token.COMMENT {
-		p.prog.Comments = append(p.prog.Comments, &ast.Comment{
-			Pos:  p.pos,
-			Text: p.lit,
-		})
-		p.next()
-	}
-}
-
-// 跳过后续连续的 token, 可以缺少
-func (p *parser) consumeTokenList(expectToken token.Token) {
-	for p.tok == expectToken {
+// 跳过分号列表
+func (p *parser) consumeSemicolonList() {
+	for p.tok == token.SEMICOLON {
 		p.next()
 	}
 }
@@ -190,31 +181,6 @@ func (p *parser) acceptTokenAorB(expectTokenA, expectTokenB token.Token) {
 		p.next()
 	default:
 		p.errorf(p.pos, "expect %v or %v, got %v", expectTokenA, expectTokenB, p.tok)
-	}
-}
-
-func (p *parser) parseFile() {
-	// 读取第一个Token
-	p.next()
-
-	for {
-		if p.err != nil {
-			return
-		}
-		if p.tok == token.EOF {
-			return
-		}
-
-		switch p.tok {
-		case token.CONST, token.CONST_zh:
-			p.parseConst()
-		case token.GLOBAL, token.GLOBAL_zh:
-			p.parseGlobal()
-		case token.FUNC, token.FUNC_zh:
-			p.parseFunc()
-		default:
-			p.errorf(p.pos, "unkonw token: %v", p.tok)
-		}
 	}
 }
 
