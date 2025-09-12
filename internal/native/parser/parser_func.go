@@ -91,8 +91,11 @@ func (p *parser) parseFunc_body(fn *ast.Func) {
 	p.acceptToken(token.LBRACE)
 	defer p.acceptToken(token.RBRACE)
 
+Loop:
 	for {
 		switch p.tok {
+		case token.RBRACE:
+			break Loop
 		case token.COMMENT:
 			fn.Body.Comments = append(fn.Body.Comments, p.parseCommentGroup())
 		case token.LOCAL, token.LOCAL_zh:

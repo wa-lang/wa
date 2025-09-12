@@ -49,7 +49,7 @@ func Fmt(c *cli.Context, path string) error {
 		_, err := fmtFile(path)
 		return err
 	}
-	if appbase.IsNativeFile(path, ".s") {
+	if appbase.IsNativeFile(path, ".ws") && c.Bool("riscv") {
 		err := fmtNativeAsmFile(c, path)
 		return err
 	}
@@ -134,6 +134,11 @@ func fmtNativeAsmFile(c *cli.Context, path string) (err error) {
 	if !c.Bool("riscv") {
 		return fmt.Errorf("only support ricv type")
 	}
+
+	if c.Bool("debug") {
+		natfmt.SetDebug()
+	}
+
 	src, err := os.ReadFile(path)
 	if err != nil {
 		return err

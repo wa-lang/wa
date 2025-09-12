@@ -12,6 +12,11 @@ import (
 	"wa-lang.org/wa/internal/native/token"
 )
 
+// 启动调试模式
+func SetDebug() {
+	parser.DebugMode = true
+}
+
 // 格式化汇编代码(丢了注释)
 func Format(cpu abi.CPUType, path string, src []byte) ([]byte, error) {
 	fset := token.NewFileSet()

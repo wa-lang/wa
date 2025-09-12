@@ -74,7 +74,11 @@ func (p *parser) parseGlobal() *ast.Global {
 	} else {
 		initV := ast.InitValue{Pos: p.pos}
 		initV.Doc = p.parseDocComment(&p.prog.Comments, initV.Pos)
-		initV.Value = p.parseValue()
+		if p.tok == token.IDENT {
+			initV.Symbal = p.parseIdent()
+		} else {
+			initV.Lit = p.parseLitValue()
+		}
 		initV.Comment = p.parseTailComment(initV.Pos)
 		g.Init = []ast.InitValue{initV}
 	}
@@ -90,8 +94,11 @@ func (p *parser) parseGlobal_initGroup(g *ast.Global) {
 
 	// 结构体初始化
 	// 必须显式以整数字面值指定要初始化的偏移地址
+Loop:
 	for {
 		switch p.tok {
+		case token.RBRACE:
+			break Loop
 		case token.COMMENT:
 			g.Comments = append(g.Comments, p.parseCommentGroup())
 		case token.INT:
@@ -99,11 +106,15 @@ func (p *parser) parseGlobal_initGroup(g *ast.Global) {
 			initV.Doc = p.parseDocComment(&g.Comments, initV.Pos)
 			initV.Offset = p.parseIntLit()
 			p.acceptToken(token.COLON)
-			initV.Value = p.parseValue()
+			if p.tok == token.IDENT {
+				initV.Symbal = p.parseIdent()
+			} else {
+				initV.Lit = p.parseLitValue()
+			}
 			initV.Comment = p.parseTailComment(initV.Pos)
 			g.Init = append(g.Init, initV)
 		default:
-			return
+			p.errorf(p.pos, "unknown token %v", p.tok)
 		}
 	}
 }

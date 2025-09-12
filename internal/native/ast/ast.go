@@ -32,16 +32,12 @@ type CommentGroup struct {
 	List []*Comment // len(List) > 0
 }
 
-// 值
-type Value struct {
-	Pos        token.Pos   // 位置
-	TypeDecor  token.Token // 类型修饰, 强制转型为  I32/I64/U32/U64/F32/F64/PTR/STRING 等类型, 可为 NONE
-	LitKind    token.Token // CHAR/INT/FLOAT/STRING, 面值 token 对应的类型
-	IntValue   int64       // INT 值
-	UintValue  uint64      // 无符号 值
-	FloatValue float64     // FLOAT 值
-	StrValue   string      // 字符串
-	Symbal     string      // 标识符号
+// 基本的面值
+type BasicLit struct {
+	Pos      token.Pos   // 位置
+	Kind     token.Token // INT/FLOAT/CHAR/STRING, 默认类型 INT=>I64, FLOAT=>F64, CHAR => I32
+	TypeCast token.Token // 默认类型强制转型, I32/U32/I64/U64/F32/F64/NONE
+	Value    string      // 42, 0x7f, 3.14, 1e-9, 'a', '\x7f', "foo" or `\m\n\o`
 }
 
 // 全局常量
@@ -49,7 +45,7 @@ type Const struct {
 	Pos     token.Pos     // 位置
 	Doc     *CommentGroup // 关联文档
 	Name    string        // 常量名
-	Value   *Value        // 常量面值
+	Value   *BasicLit     // 常量面值
 	Comment *Comment      // 尾部单行注释
 }
 
@@ -69,7 +65,8 @@ type InitValue struct {
 	Pos     token.Pos     // 位置
 	Doc     *CommentGroup // 关联文档(可能在前面或者尾部单行注释)
 	Offset  int           // 相对偏移
-	Value   *Value        // 常量面值
+	Lit     *BasicLit     // 或字面值
+	Symbal  string        // 或标识符
 	Comment *Comment      // 尾部单行注释
 }
 
@@ -116,7 +113,7 @@ type Local struct {
 type Instruction struct {
 	Pos     token.Pos       // 位置
 	Doc     *CommentGroup   // 关联文档
-	Label   string          // 指令对应的 Label
+	Label   string          // 指令对应的 Label, 可以只是 Label
 	As      abi.As          // 汇编指令
 	Arg     *abi.AsArgument // 指令参数
 	Comment *Comment        // 尾部单行注释

@@ -22,6 +22,11 @@ func (p *parser) parseInst_riscv(fn *ast.Func) *ast.Instruction {
 	if p.tok == token.IDENT {
 		inst.Label = p.parseIdent()
 		p.acceptToken(token.COLON)
+
+		// 后续如果不是指令则结束
+		if !p.tok.IsAs() {
+			return inst
+		}
 	}
 	inst.As = p.parseAs()
 	inst.Arg = new(abi.AsArgument)

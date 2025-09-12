@@ -225,6 +225,18 @@ func (tok Token) RawAs() abi.As {
 	return 0
 }
 
+// 默认的数值类型
+func (tok Token) DefaultNumberType() Token {
+	switch tok {
+	case CHAR, INT:
+		return I32
+	case FLOAT:
+		return F32
+	default:
+		panic("unreachable")
+	}
+}
+
 // 是否是导出的符号
 func IsExported(name string) bool {
 	ch := name[0]

@@ -20,7 +20,7 @@ func (p *parser) parseConst() *ast.Const {
 	p.acceptTokenAorB(token.CONST, token.CONST_zh)
 	pConst.Name = p.parseIdent()
 	p.acceptToken(token.ASSIGN)
-	pConst.Value = p.parseValue()
+	pConst.Value = p.parseLitValue()
 	pConst.Comment = p.parseTailComment(pConst.Pos)
 
 	p.consumeSemicolonList()

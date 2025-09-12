@@ -333,6 +333,13 @@ func (p *parser) parseFloat64Lit() float64 {
 	return n
 }
 
+// 解析字符常量面值(含二进制数据)
+func (p *parser) parseCharLit() string {
+	s := p.lit
+	p.acceptToken(token.CHAR)
+	return s
+}
+
 // 解析字符串常量面值(含二进制数据)
 func (p *parser) parseStringLit() string {
 	s := p.lit

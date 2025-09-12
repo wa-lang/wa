@@ -28,7 +28,7 @@ func (p *parser) parseCommentGroup() *ast.CommentGroup {
 	// 跳过分号列表
 	p.consumeSemicolonList()
 
-	return nil
+	return comment
 }
 
 // 解析关联的注释

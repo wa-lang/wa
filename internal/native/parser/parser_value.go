@@ -9,86 +9,39 @@ import (
 )
 
 // 解析值
-func (p *parser) parseValue() *ast.Value {
-	pVal := &ast.Value{Pos: p.pos}
-
-	// 无类型的面值
-	switch p.tok {
-	case token.INT:
-		pVal.IntValue = p.parseInt64Lit()
-		return pVal
-	case token.FLOAT:
-		pVal.FloatValue = p.parseFloat64Lit()
-		return pVal
-	case token.STRING:
-		pVal.StrValue = p.parseStringLit()
-		return pVal
-	case token.IDENT:
-		pVal.Symbal = p.parseIdent()
-		return pVal
-	}
+func (p *parser) parseLitValue() *ast.BasicLit {
+	pVal := &ast.BasicLit{Pos: p.pos}
 
 	// 带类型的常量
 	// const $D = i64('D') # i64
 	// 常量 $甲 = 整64（‘A’） # i64
 
 	switch p.tok {
-	case token.I32, token.I32_zh:
-		pVal.TypeDecor = p.tok
-		p.acceptToken(p.tok)
-		if p.tok == token.IDENT {
-			pVal.Symbal = p.parseIdent()
-		} else {
-			pVal.IntValue = int64(p.parseInt32Lit())
+	case token.I32, token.I32_zh,
+		token.I64, token.I64_zh,
+		token.U32, token.U32_zh,
+		token.U64, token.U64_zh,
+		token.F32, token.F32_zh,
+		token.F64, token.F64_zh,
+		token.PTR, token.PTR_zh:
+		pVal.TypeCast = p.tok
+		p.acceptToken(token.LPAREN)
+		defer p.acceptToken(token.RPAREN)
+	}
+
+	// 默认类型
+	switch p.tok {
+	case token.CHAR, token.INT, token.FLOAT:
+		pVal.Kind = p.tok
+		if pVal.TypeCast == token.NONE {
+			pVal.TypeCast = p.tok.DefaultNumberType()
 		}
-	case token.I64, token.I64_zh:
-		pVal.TypeDecor = p.tok
-		p.acceptToken(p.tok)
-		if p.tok == token.IDENT {
-			pVal.Symbal = p.parseIdent()
-		} else {
-			pVal.IntValue = int64(p.parseInt64Lit())
-		}
-	case token.U32, token.U32_zh:
-		pVal.TypeDecor = p.tok
-		p.acceptToken(p.tok)
-		if p.tok == token.IDENT {
-			pVal.Symbal = p.parseIdent()
-		} else {
-			pVal.UintValue = uint64(p.parseUint32Lit())
-		}
-	case token.U64, token.U64_zh:
-		pVal.TypeDecor = p.tok
-		p.acceptToken(p.tok)
-		if p.tok == token.IDENT {
-			pVal.Symbal = p.parseIdent()
-		} else {
-			pVal.UintValue = uint64(p.parseUint64Lit())
-		}
-	case token.F32, token.F32_zh:
-		pVal.TypeDecor = p.tok
-		p.acceptToken(p.tok)
-		if p.tok == token.IDENT {
-			pVal.Symbal = p.parseIdent()
-		} else {
-			pVal.FloatValue = float64(p.parseFloat32Lit())
-		}
-	case token.F64, token.F64_zh:
-		pVal.TypeDecor = p.tok
-		p.acceptToken(p.tok)
-		if p.tok == token.IDENT {
-			pVal.Symbal = p.parseIdent()
-		} else {
-			pVal.FloatValue = float64(p.parseFloat64Lit())
-		}
-	case token.PTR, token.PTR_zh:
-		pVal.TypeDecor = p.tok
-		p.acceptToken(p.tok)
-		if p.tok == token.IDENT {
-			pVal.Symbal = p.parseIdent()
-		} else {
-			pVal.UintValue = p.parseUint64Lit()
-		}
+		pVal.Value = p.lit
+		return pVal
+	case token.STRING:
+		pVal.Kind = p.tok
+		pVal.Value = p.lit
+		return pVal
 	default:
 		p.errorf(p.pos, "expect type or lit, got %v", p.tok)
 	}
