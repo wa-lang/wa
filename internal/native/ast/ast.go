@@ -34,10 +34,11 @@ type CommentGroup struct {
 
 // 基本的面值
 type BasicLit struct {
-	Pos      token.Pos   // 位置
-	Kind     token.Token // INT/FLOAT/CHAR/STRING, 默认类型 INT=>I64, FLOAT=>F64, CHAR => I32
-	TypeCast token.Token // 默认类型强制转型, I32/U32/I64/U64/F32/F64/NONE
-	Value    string      // 42, 0x7f, 3.14, 1e-9, 'a', '\x7f', "foo" or `\m\n\o`
+	Pos       token.Pos   // 位置
+	TypeCast  token.Token // 默认类型强制转型, I32/U32/I64/U64/F32/F64/NONE
+	LitKind   token.Token // INT/FLOAT/CHAR/STRING, 默认类型 INT=>I64, FLOAT=>F64, CHAR => I32
+	LitString string      // 原始的字符串: 42, 0x7f, 3.14, 1e-9, 'a', '\x7f', "foo" or `\m\n\o`
+	ConstV    interface{} // 解析后的常量值, 对应的类型: int64, float64, string
 }
 
 // 全局常量

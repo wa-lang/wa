@@ -13,7 +13,7 @@ import (
 
 func (p *wsPrinter) printConsts() error {
 	for _, x := range p.f.Consts {
-		fmt.Fprintf(p.w, "const %s = %v\n", x.Name, x.Value.Value)
+		fmt.Fprintf(p.w, "const %s = %v\n", x.Name, x.Value.LitString)
 	}
 	return nil
 }

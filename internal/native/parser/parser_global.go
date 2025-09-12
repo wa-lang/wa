@@ -77,7 +77,7 @@ func (p *parser) parseGlobal() *ast.Global {
 		if p.tok == token.IDENT {
 			initV.Symbal = p.parseIdent()
 		} else {
-			initV.Lit = p.parseLitValue()
+			initV.Lit = p.parseBasicLit()
 		}
 		initV.Comment = p.parseTailComment(initV.Pos)
 		g.Init = []ast.InitValue{initV}
@@ -109,7 +109,7 @@ Loop:
 			if p.tok == token.IDENT {
 				initV.Symbal = p.parseIdent()
 			} else {
-				initV.Lit = p.parseLitValue()
+				initV.Lit = p.parseBasicLit()
 			}
 			initV.Comment = p.parseTailComment(initV.Pos)
 			g.Init = append(g.Init, initV)

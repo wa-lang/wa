@@ -24,10 +24,10 @@ func (p *wsPrinter) printGlobals() error {
 		case len(g.Init) == 1 && g.Init[0].Offset == 0:
 			xInit := g.Init[0]
 			if xInit.Lit != nil {
-				if xInit.Lit.Kind.DefaultNumberType() != xInit.Lit.TypeCast {
-					fmt.Fprintf(p.w, "global %s:%d = %v(%s)\n", g.Name, g.Size, xInit.Lit.TypeCast, xInit.Lit.Value)
+				if xInit.Lit.LitKind.DefaultNumberType() != xInit.Lit.TypeCast {
+					fmt.Fprintf(p.w, "global %s:%d = %v(%s)\n", g.Name, g.Size, xInit.Lit.TypeCast, xInit.Lit.LitString)
 				} else {
-					fmt.Fprintf(p.w, "global %s:%d = %s\n", g.Name, g.Size, xInit.Lit.Value)
+					fmt.Fprintf(p.w, "global %s:%d = %s\n", g.Name, g.Size, xInit.Lit.LitString)
 				}
 			} else {
 				fmt.Fprintf(p.w, "global %s:%d = %s\n", g.Name, g.Size, xInit.Symbal)
@@ -37,10 +37,10 @@ func (p *wsPrinter) printGlobals() error {
 			fmt.Fprintf(p.w, "global %s:%d = {\n", g.Name, g.Size)
 			for _, xInit := range g.Init {
 				if xInit.Lit != nil {
-					if xInit.Lit.Kind.DefaultNumberType() != xInit.Lit.TypeCast {
-						fmt.Fprintf(p.w, "\t%d: %v(%s),\n", xInit.Offset, xInit.Lit.TypeCast, xInit.Lit.Value)
+					if xInit.Lit.LitKind.DefaultNumberType() != xInit.Lit.TypeCast {
+						fmt.Fprintf(p.w, "\t%d: %v(%s),\n", xInit.Offset, xInit.Lit.TypeCast, xInit.Lit.LitString)
 					} else {
-						fmt.Fprintf(p.w, "\t%d: %s,\n", xInit.Offset, xInit.Lit.Value)
+						fmt.Fprintf(p.w, "\t%d: %s,\n", xInit.Offset, xInit.Lit.LitString)
 					}
 				} else {
 					fmt.Fprintf(p.w, "\t%d: %s,\n", xInit.Offset, xInit.Symbal)
