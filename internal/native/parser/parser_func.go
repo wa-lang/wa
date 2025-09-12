@@ -97,7 +97,7 @@ Loop:
 		case token.RBRACE:
 			break Loop
 		case token.COMMENT:
-			fn.Body.Comments = append(fn.Body.Comments, p.parseCommentGroup())
+			fn.Body.Comments = append(fn.Body.Comments, p.parseCommentGroup(false))
 		case token.LOCAL, token.LOCAL_zh:
 			if len(fn.Body.Insts) > 0 {
 				p.errorf(p.pos, "local must before the instruction list")

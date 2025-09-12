@@ -7,7 +7,7 @@ import "wa-lang.org/wa/internal/native/token"
 
 func (p *parser) parseFile() {
 	// 解析开头的关联文档
-	p.prog.Doc = p.parseCommentGroup()
+	p.prog.Doc = p.parseCommentGroup(true)
 
 	// 解析代码主体
 	for {
@@ -20,7 +20,7 @@ func (p *parser) parseFile() {
 
 		switch p.tok {
 		case token.COMMENT:
-			p.prog.Comments = append(p.prog.Comments, p.parseCommentGroup())
+			p.prog.Comments = append(p.prog.Comments, p.parseCommentGroup(true))
 		case token.CONST, token.CONST_zh:
 			p.prog.Consts = append(p.prog.Consts, p.parseConst())
 		case token.GLOBAL, token.GLOBAL_zh:

@@ -72,7 +72,7 @@ func (p *parser) parseGlobal() *ast.Global {
 	if p.tok == token.LBRACE {
 		p.parseGlobal_initGroup(g)
 	} else {
-		initV := ast.InitValue{Pos: p.pos}
+		initV := &ast.InitValue{Pos: p.pos}
 		initV.Doc = p.parseDocComment(&p.prog.Comments, initV.Pos)
 		if p.tok == token.IDENT {
 			initV.Symbal = p.parseIdent()
@@ -80,7 +80,7 @@ func (p *parser) parseGlobal() *ast.Global {
 			initV.Lit = p.parseBasicLit()
 		}
 		initV.Comment = p.parseTailComment(initV.Pos)
-		g.Init = []ast.InitValue{initV}
+		g.Init = []*ast.InitValue{initV}
 	}
 
 	p.consumeSemicolonList()
@@ -100,9 +100,9 @@ Loop:
 		case token.RBRACE:
 			break Loop
 		case token.COMMENT:
-			g.Comments = append(g.Comments, p.parseCommentGroup())
+			g.Comments = append(g.Comments, p.parseCommentGroup(false))
 		case token.INT:
-			initV := ast.InitValue{Pos: p.pos}
+			initV := &ast.InitValue{Pos: p.pos}
 			initV.Doc = p.parseDocComment(&g.Comments, initV.Pos)
 			initV.Offset = p.parseIntLit()
 			p.acceptToken(token.COLON)

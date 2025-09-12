@@ -29,7 +29,8 @@ type Comment struct {
 
 // 一组相邻的注释
 type CommentGroup struct {
-	List []*Comment // len(List) > 0
+	TopLevel bool       // 是否为全局类型的注释
+	List     []*Comment // len(List) > 0
 }
 
 // 基本的面值
@@ -57,7 +58,7 @@ type Global struct {
 	Name     string          // 全局变量名
 	Type     token.Token     // I32/I64/U32/U64/PTR/NONE
 	Size     int             // 内存大小(没有类型信息)
-	Init     []InitValue     // 初始数据
+	Init     []*InitValue    // 初始数据
 	Comments []*CommentGroup // 孤立的注释
 }
 

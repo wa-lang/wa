@@ -9,8 +9,9 @@ import (
 )
 
 // 解析多个相邻的注释
-func (p *parser) parseCommentGroup() *ast.CommentGroup {
-	comment := &ast.CommentGroup{}
+func (p *parser) parseCommentGroup(isTopLevel bool) *ast.CommentGroup {
+	comment := &ast.CommentGroup{TopLevel: isTopLevel}
+
 	for p.tok == token.COMMENT {
 		// 如果注释出现空行, 则结束
 		if len(comment.List) > 0 {

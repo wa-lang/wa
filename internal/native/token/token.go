@@ -233,7 +233,7 @@ func (tok Token) DefaultNumberType() Token {
 	case FLOAT:
 		return F32
 	default:
-		panic("unreachable")
+		return tok
 	}
 }
 
