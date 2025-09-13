@@ -44,6 +44,7 @@ func (p *parser) parseDocComment(comments *[]*ast.CommentGroup, pos token.Pos) *
 
 // 解析同一行的尾部注释
 func (p *parser) parseTailComment(pos token.Pos) *ast.Comment {
+	p.consumeSemicolonList()
 	if p.tok == token.COMMENT && p.posLine(pos) == p.posLine(p.pos) {
 		comment := &ast.Comment{Pos: p.pos, Text: p.lit}
 		p.acceptToken(token.COMMENT)

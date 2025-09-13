@@ -20,7 +20,7 @@ func (p *File) String() string {
 		sb.WriteRune('\n')
 	}
 
-	if len(p.Objects) != 0 {
+	if len(p.Objects) > 0 {
 		// 优先以原始的顺序输出
 		var prevObj Object
 		for _, obj := range p.Objects {
@@ -122,7 +122,7 @@ func (p *Global) String() string {
 		sb.WriteString(p.Init[0].String())
 	default:
 		sb.WriteString("{")
-		if len(p.Objects) != 0 {
+		if len(p.Objects) > 0 {
 			var prevObj Object
 			for _, obj := range p.Objects {
 				if obj.GetDoc() != nil || !isSameType(obj, prevObj) {
@@ -185,13 +185,27 @@ func (p *Func) String() string {
 	sb.WriteString(" ")
 	sb.WriteString(p.Name)
 	sb.WriteString(p.Type.String())
+	sb.WriteString(" ")
+	sb.WriteString("{\n")
 
-	sb.WriteString("{")
-
-	if len(p.Body.Objects) == 0 {
+	if len(p.Body.Objects) > 0 {
 		var prevObj Object
-		for _, obj := range p.Body.Objects {
-			if obj.GetDoc() != nil || !isSameType(obj, prevObj) {
+		for i, obj := range p.Body.Objects {
+			insertBlankLine := false
+			if i > 0 {
+				// 当前语句带文档, 前一个不是 Label, 尽量前面保持分开
+				if obj.GetDoc() != nil || !isSameType(obj, prevObj) {
+					if inst, ok := prevObj.(*Instruction); ok && inst.Label == "" {
+						insertBlankLine = true
+					}
+				}
+
+				// 当前语句是 Label
+				if inst, ok := obj.(*Instruction); ok && inst.Label != "" {
+					insertBlankLine = true
+				}
+			}
+			if insertBlankLine {
 				sb.WriteString("\n")
 			}
 			sb.WriteString(obj.String())
@@ -268,7 +282,7 @@ func (p *Local) String() string {
 	sb.WriteString(":")
 	sb.WriteString(p.Type.String())
 	if p.Comment != nil {
-		sb.WriteString(" # ")
+		sb.WriteString(" ")
 		sb.WriteString(p.Comment.String())
 	}
 	sb.WriteString("\n")
@@ -283,15 +297,18 @@ func (p *Instruction) String() string {
 	}
 	if p.Label != "" {
 		sb.WriteString(p.Label)
-		sb.WriteString(":\n")
+		sb.WriteString(":")
 	}
 	if p.As != 0 {
+		if p.Label != "" {
+			sb.WriteString("\n")
+		}
 		// pc 是否可以省略?
 		sb.WriteString("\t")
 		sb.WriteString(riscv.AsmSyntax(0, p.As, p.Arg))
 	}
 	if p.Comment != nil {
-		sb.WriteString(" # ")
+		sb.WriteString(" ")
 		sb.WriteString(p.Comment.String())
 	}
 	return sb.String()
