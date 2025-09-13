@@ -174,14 +174,16 @@ func (p *parser) acceptToken(expectToken token.Token, moreExpectTokens ...token.
 }
 
 // 吃掉其中一个
-func (p *parser) acceptTokenAorB(expectTokenA, expectTokenB token.Token) {
+func (p *parser) acceptTokenAorB(expectTokenA, expectTokenB token.Token) (got token.Token) {
 	assert(expectTokenA != expectTokenB)
+	got = p.tok
 	switch p.tok {
 	case expectTokenA, expectTokenB:
 		p.next()
 	default:
 		p.errorf(p.pos, "expect %v or %v, got %v", expectTokenA, expectTokenB, p.tok)
 	}
+	return got
 }
 
 // 解析标别符

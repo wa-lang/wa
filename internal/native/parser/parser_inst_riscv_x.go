@@ -10,10 +10,14 @@ import (
 	"wa-lang.org/wa/internal/native/token"
 )
 
-func (p *parser) parseInst_riscv(fn *ast.Func) *ast.Instruction {
-	inst := &ast.Instruction{Pos: p.pos}
+func (p *parser) parseInst_riscv(fn *ast.Func) (inst *ast.Instruction) {
+	inst = &ast.Instruction{Pos: p.pos}
 
 	inst.Doc = p.parseDocComment(&fn.Body.Comments, inst.Pos)
+	if inst.Doc != nil {
+		fn.Body.Objects = fn.Body.Objects[:len(fn.Body.Objects)-1]
+	}
+
 	defer func() {
 		inst.Comment = p.parseTailComment(inst.Pos)
 		p.consumeSemicolonList()

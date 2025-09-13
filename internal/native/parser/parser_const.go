@@ -17,7 +17,11 @@ func (p *parser) parseConst() *ast.Const {
 	pConst := &ast.Const{Pos: p.pos}
 
 	pConst.Doc = p.parseDocComment(&p.prog.Comments, pConst.Pos)
-	p.acceptTokenAorB(token.CONST, token.CONST_zh)
+	if pConst.Doc != nil {
+		p.prog.Objects = p.prog.Objects[:len(p.prog.Objects)-1]
+	}
+
+	pConst.Tok = p.acceptTokenAorB(token.CONST, token.CONST_zh)
 	pConst.Name = p.parseIdent()
 	p.acceptToken(token.ASSIGN)
 	pConst.Value = p.parseBasicLit()

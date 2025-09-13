@@ -41,10 +41,12 @@ func (p *parser) parseBasicLit() *ast.BasicLit {
 			pVal.TypeCast = p.tok.DefaultNumberType()
 		}
 		pVal.LitString = p.lit
+		p.acceptToken(p.tok)
 		return pVal
 	case token.STRING:
 		pVal.LitKind = p.tok
 		pVal.LitString = p.lit
+		p.acceptToken(p.tok)
 		return pVal
 	default:
 		p.errorf(p.pos, "expect type or lit, got %v", p.tok)

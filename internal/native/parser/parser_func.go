@@ -19,12 +19,16 @@ import (
 func (p *parser) parseFunc() *ast.Func {
 	fn := &ast.Func{
 		Pos:  p.pos,
-		Type: new(ast.FuncType),
+		Type: &ast.FuncType{Pos: p.pos},
 		Body: new(ast.FuncBody),
 	}
 
 	fn.Doc = p.parseDocComment(&p.prog.Comments, fn.Pos)
-	p.acceptTokenAorB(token.FUNC, token.FUNC_zh)
+	if fn.Doc != nil {
+		p.prog.Objects = p.prog.Objects[:len(p.prog.Objects)-1]
+	}
+
+	fn.Tok = p.acceptTokenAorB(token.FUNC, token.FUNC_zh)
 	fn.Name = p.parseIdent()
 
 	if p.tok == token.LPAREN {
@@ -88,6 +92,7 @@ func (p *parser) parseFunc_return(fn *ast.Func) {
 func (p *parser) parseFunc_body(fn *ast.Func) {
 	assert(p.cpu == abi.RISCV64 || p.cpu == abi.RISCV32)
 
+	fn.Body.Pos = p.pos
 	p.acceptToken(token.LBRACE)
 	defer p.acceptToken(token.RBRACE)
 
@@ -97,15 +102,21 @@ Loop:
 		case token.RBRACE:
 			break Loop
 		case token.COMMENT:
-			fn.Body.Comments = append(fn.Body.Comments, p.parseCommentGroup(false))
+			commentObj := p.parseCommentGroup(false)
+			fn.Body.Comments = append(fn.Body.Comments, commentObj)
+			fn.Body.Objects = append(fn.Body.Objects, commentObj)
 		case token.LOCAL, token.LOCAL_zh:
 			if len(fn.Body.Insts) > 0 {
 				p.errorf(p.pos, "local must before the instruction list")
 			}
-			fn.Body.Locals = append(fn.Body.Locals, p.parseFunc_body_local())
+			localObj := p.parseFunc_body_local(fn)
+			fn.Body.Locals = append(fn.Body.Locals, localObj)
+			fn.Body.Objects = append(fn.Body.Objects, localObj)
 		default:
 			if p.tok == token.IDENT || p.tok.IsAs() {
-				fn.Body.Insts = append(fn.Body.Insts, p.parseInst_riscv(fn))
+				inst := p.parseInst_riscv(fn)
+				fn.Body.Insts = append(fn.Body.Insts, inst)
+				fn.Body.Objects = append(fn.Body.Objects, inst)
 			} else {
 				p.errorf(p.pos, "unknow as %v", p.tok)
 			}
@@ -113,11 +124,15 @@ Loop:
 	}
 }
 
-func (p *parser) parseFunc_body_local() *ast.Local {
+func (p *parser) parseFunc_body_local(fn *ast.Func) *ast.Local {
 	local := &ast.Local{Pos: p.pos}
 
-	local.Doc = p.parseDocComment(&p.prog.Comments, local.Pos)
-	p.acceptTokenAorB(token.LOCAL, token.LOCAL_zh)
+	local.Doc = p.parseDocComment(&fn.Body.Comments, local.Pos)
+	if local.Doc != nil {
+		fn.Body.Objects = fn.Body.Objects[:len(fn.Body.Objects)-1]
+	}
+
+	local.Tok = p.acceptTokenAorB(token.LOCAL, token.LOCAL_zh)
 	local.Name = p.parseIdent()
 	p.acceptToken(token.COLON)
 

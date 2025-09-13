@@ -5,6 +5,7 @@ package ast
 
 import (
 	"fmt"
+	"strconv"
 	"strings"
 
 	"wa-lang.org/wa/internal/native/riscv"
@@ -19,16 +20,43 @@ func (p *File) String() string {
 		sb.WriteRune('\n')
 	}
 
-	for _, obj := range p.Objects {
-		sb.WriteString(obj.String())
-		sb.WriteString("\n\n")
+	if len(p.Objects) != 0 {
+		// 优先以原始的顺序输出
+		var prevObj Object
+		for _, obj := range p.Objects {
+			if obj.GetDoc() != nil || !isSameType(obj, prevObj) {
+				sb.WriteString("\n")
+			}
+			sb.WriteString(obj.String())
+			sb.WriteString("\n")
+			prevObj = obj
+		}
+	} else {
+		// 孤立的注释输出位置将失去上下文相关性
+		for _, obj := range p.Comments {
+			sb.WriteString(obj.String())
+			sb.WriteString("\n\n")
+		}
+
+		for _, obj := range p.Consts {
+			sb.WriteString(obj.String())
+			sb.WriteString("\n\n")
+		}
+		for _, obj := range p.Globals {
+			sb.WriteString(obj.String())
+			sb.WriteString("\n\n")
+		}
+		for _, obj := range p.Funcs {
+			sb.WriteString(obj.String())
+			sb.WriteString("\n\n")
+		}
 	}
 
 	return sb.String()
 }
 
 func (p *Comment) String() string {
-	return fmt.Sprintf("# %s", p.Text)
+	return p.Text
 }
 
 func (p *CommentGroup) String() string {
@@ -37,7 +65,7 @@ func (p *CommentGroup) String() string {
 		if i > 0 {
 			sb.WriteRune('\n')
 		}
-		if p.TopLevel {
+		if !p.TopLevel {
 			sb.WriteByte('\t')
 		}
 		sb.WriteString(c.String())
@@ -58,7 +86,7 @@ func (p *Const) String() string {
 		sb.WriteString(p.Doc.String())
 		sb.WriteRune('\n')
 	}
-	sb.WriteString(fmt.Sprintf("const %s = %v", p.Name, p.Value))
+	sb.WriteString(fmt.Sprintf("%v %s = %v", p.Tok, p.Name, p.Value))
 	if p.Comment != nil {
 		sb.WriteString(p.Comment.String())
 	}
@@ -73,25 +101,53 @@ func (p *Global) String() string {
 	}
 
 	if p.Type != token.NONE {
-		sb.WriteString(fmt.Sprintf("global %s:%v = ", p.Name, p.Type))
+		sb.WriteString(fmt.Sprintf("%v %s:%v = ", p.Tok, p.Name, p.Type))
+	} else if p.Size != 0 {
+		sb.WriteString(fmt.Sprintf("%v %s:%d = ", p.Tok, p.Name, p.Size))
 	} else {
-		sb.WriteString(fmt.Sprintf("global %s:%d = ", p.Name, p.Size))
+		sb.WriteString(fmt.Sprintf("%v %s = ", p.Tok, p.Name))
 	}
-
-	// TODO: 保留孤立注释的顺序
 
 	switch {
 	case len(p.Init) == 0:
 		sb.WriteString("{}")
 	case len(p.Init) == 1 && p.Init[0].Doc == nil && p.Init[0].Offset == 0:
+		xInit := p.Init[0]
+		if xInit.Lit != nil {
+			sb.WriteString(xInit.Lit.String())
+		} else {
+			sb.WriteString(xInit.Symbal)
+		}
+
 		sb.WriteString(p.Init[0].String())
 	default:
 		sb.WriteString("{")
-		for i, xInit := range p.Init {
-			if i > 0 {
-				sb.WriteByte('\n')
+		if len(p.Objects) != 0 {
+			var prevObj Object
+			for _, obj := range p.Objects {
+				if obj.GetDoc() != nil || !isSameType(obj, prevObj) {
+					sb.WriteString("\n")
+				}
+				sb.WriteString("\t")
+				sb.WriteString(obj.String())
+				sb.WriteString(",\n")
+				prevObj = obj
 			}
-			sb.WriteString(xInit.String())
+		} else {
+			// 孤立的注释输出位置将失去上下文相关性
+			for _, obj := range p.Comments {
+				sb.WriteString(obj.String())
+				sb.WriteString("\n\n")
+			}
+
+			for i, xInit := range p.Init {
+				if i > 0 {
+					sb.WriteByte('\n')
+				}
+				sb.WriteString("\t")
+				sb.WriteString(xInit.String())
+				sb.WriteString(",\n")
+			}
 		}
 		sb.WriteString("}")
 	}
@@ -105,14 +161,12 @@ func (p *InitValue) String() string {
 		sb.WriteString(p.Doc.String())
 		sb.WriteByte('\n')
 	}
+	sb.WriteString(strconv.Itoa(p.Offset))
+	sb.WriteString(": ")
 	if p.Lit != nil {
-		sb.WriteByte('\t')
 		sb.WriteString(p.Lit.String())
-		sb.WriteByte(',')
 	} else {
-		sb.WriteByte('\t')
 		sb.WriteString(p.Symbal)
-		sb.WriteByte(',')
 	}
 	if p.Comment != nil {
 		sb.WriteString(p.Comment.String())
@@ -127,19 +181,41 @@ func (p *Func) String() string {
 		sb.WriteString(p.Doc.String())
 		sb.WriteRune('\n')
 	}
-	sb.WriteString("func ")
+	sb.WriteString(p.Tok.String())
+	sb.WriteString(" ")
 	sb.WriteString(p.Name)
 	sb.WriteString(p.Type.String())
+
+	sb.WriteString("{")
+
 	if len(p.Body.Objects) == 0 {
-		sb.WriteString("{")
+		var prevObj Object
 		for _, obj := range p.Body.Objects {
+			if obj.GetDoc() != nil || !isSameType(obj, prevObj) {
+				sb.WriteString("\n")
+			}
+			sb.WriteString(obj.String())
+			sb.WriteString("\n")
+			prevObj = obj
+		}
+	} else {
+		// 孤立的注释输出位置将失去上下文相关性
+		for _, obj := range p.Body.Comments {
 			sb.WriteString(obj.String())
 			sb.WriteString("\n\n")
 		}
-		sb.WriteString("}\n")
-	} else {
-		sb.WriteString("{}\n")
+
+		for _, obj := range p.Body.Locals {
+			sb.WriteString(obj.String())
+			sb.WriteString("\n\n")
+		}
+		for _, obj := range p.Body.Insts {
+			sb.WriteString(obj.String())
+			sb.WriteString("\n\n")
+		}
 	}
+	sb.WriteString("}\n")
+
 	return sb.String()
 }
 
@@ -185,7 +261,9 @@ func (p *Local) String() string {
 		sb.WriteString(p.Doc.String())
 		sb.WriteString("\n")
 	}
-	sb.WriteString("\tlocal ")
+	sb.WriteString("\t")
+	sb.WriteString(p.Tok.String())
+	sb.WriteString(" ")
 	sb.WriteString(p.Name)
 	sb.WriteString(":")
 	sb.WriteString(p.Type.String())
@@ -209,12 +287,12 @@ func (p *Instruction) String() string {
 	}
 	if p.As != 0 {
 		// pc 是否可以省略?
+		sb.WriteString("\t")
 		sb.WriteString(riscv.AsmSyntax(0, p.As, p.Arg))
 	}
 	if p.Comment != nil {
 		sb.WriteString(" # ")
 		sb.WriteString(p.Comment.String())
 	}
-	sb.WriteString("\n")
 	return sb.String()
 }

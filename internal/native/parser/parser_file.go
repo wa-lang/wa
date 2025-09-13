@@ -20,13 +20,21 @@ func (p *parser) parseFile() {
 
 		switch p.tok {
 		case token.COMMENT:
-			p.prog.Comments = append(p.prog.Comments, p.parseCommentGroup(true))
+			commentObj := p.parseCommentGroup(true)
+			p.prog.Comments = append(p.prog.Comments, commentObj)
+			p.prog.Objects = append(p.prog.Objects, commentObj)
 		case token.CONST, token.CONST_zh:
-			p.prog.Consts = append(p.prog.Consts, p.parseConst())
+			constObj := p.parseConst()
+			p.prog.Consts = append(p.prog.Consts, constObj)
+			p.prog.Objects = append(p.prog.Objects, constObj)
 		case token.GLOBAL, token.GLOBAL_zh:
-			p.prog.Globals = append(p.prog.Globals, p.parseGlobal())
+			globalObj := p.parseGlobal()
+			p.prog.Globals = append(p.prog.Globals, globalObj)
+			p.prog.Objects = append(p.prog.Objects, globalObj)
 		case token.FUNC, token.FUNC_zh:
-			p.prog.Funcs = append(p.prog.Funcs, p.parseFunc())
+			funcObj := p.parseFunc()
+			p.prog.Funcs = append(p.prog.Funcs, funcObj)
+			p.prog.Objects = append(p.prog.Objects, funcObj)
 		default:
 			p.errorf(p.pos, "unkonw token: %v", p.tok)
 		}

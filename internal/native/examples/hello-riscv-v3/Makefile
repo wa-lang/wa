@@ -10,7 +10,7 @@ run-zh:
 	$(WA) rv2elf hello_riscv64_zh.ws
 
 fmt:
-	$(WA) -debug fmt -riscv hello_riscv64_zh.ws
+	$(WA) fmt -riscv hello_riscv64_zh.ws > a.out.ws
 
 debug:
 	$(WA) -debug rv2elf hello_riscv64.ws

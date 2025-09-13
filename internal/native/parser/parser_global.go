@@ -22,7 +22,11 @@ func (p *parser) parseGlobal() *ast.Global {
 	g := &ast.Global{Pos: p.pos}
 
 	g.Doc = p.parseDocComment(&p.prog.Comments, g.Pos)
-	p.acceptTokenAorB(token.GLOBAL, token.GLOBAL_zh)
+	if g.Doc != nil {
+		p.prog.Objects = p.prog.Objects[:len(p.prog.Objects)-1]
+	}
+
+	g.Tok = p.acceptTokenAorB(token.GLOBAL, token.GLOBAL_zh)
 	g.Name = p.parseIdent()
 
 	if p.tok == token.COLON {
@@ -73,7 +77,11 @@ func (p *parser) parseGlobal() *ast.Global {
 		p.parseGlobal_initGroup(g)
 	} else {
 		initV := &ast.InitValue{Pos: p.pos}
-		initV.Doc = p.parseDocComment(&p.prog.Comments, initV.Pos)
+		initV.Doc = p.parseDocComment(&g.Comments, initV.Pos)
+		if initV.Doc != nil {
+			g.Objects = g.Objects[:len(g.Objects)-1]
+		}
+
 		if p.tok == token.IDENT {
 			initV.Symbal = p.parseIdent()
 		} else {
@@ -100,19 +108,29 @@ Loop:
 		case token.RBRACE:
 			break Loop
 		case token.COMMENT:
-			g.Comments = append(g.Comments, p.parseCommentGroup(false))
+			commentObj := p.parseCommentGroup(false)
+			g.Comments = append(g.Comments, commentObj)
+			g.Objects = append(g.Objects, commentObj)
 		case token.INT:
 			initV := &ast.InitValue{Pos: p.pos}
-			initV.Doc = p.parseDocComment(&g.Comments, initV.Pos)
-			initV.Offset = p.parseIntLit()
-			p.acceptToken(token.COLON)
-			if p.tok == token.IDENT {
-				initV.Symbal = p.parseIdent()
-			} else {
-				initV.Lit = p.parseBasicLit()
+			{
+				initV.Doc = p.parseDocComment(&g.Comments, initV.Pos)
+				if initV.Doc != nil {
+					g.Objects = g.Objects[:len(g.Objects)-1]
+				}
+
+				initV.Offset = p.parseIntLit()
+				p.acceptToken(token.COLON)
+				if p.tok == token.IDENT {
+					initV.Symbal = p.parseIdent()
+				} else {
+					initV.Lit = p.parseBasicLit()
+				}
+				initV.Comment = p.parseTailComment(initV.Pos)
 			}
-			initV.Comment = p.parseTailComment(initV.Pos)
 			g.Init = append(g.Init, initV)
+			g.Objects = append(g.Objects, initV)
+
 		default:
 			p.errorf(p.pos, "unknown token %v", p.tok)
 		}

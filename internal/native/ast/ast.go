@@ -22,12 +22,6 @@ type File struct {
 	Objects  []Object        // 保序的列表
 }
 
-// 元素抽象
-type Object interface {
-	BeginPos() token.Pos
-	String() string
-}
-
 // 单行注释
 type Comment struct {
 	Pos  token.Pos // # 位置
@@ -52,6 +46,7 @@ type BasicLit struct {
 // 全局常量
 type Const struct {
 	Pos     token.Pos     // 位置
+	Tok     token.Token   // 关键字(可能有多语言)
 	Doc     *CommentGroup // 关联文档
 	Name    string        // 常量名
 	Value   *BasicLit     // 常量面值
@@ -61,6 +56,7 @@ type Const struct {
 // 全局对象
 type Global struct {
 	Pos      token.Pos       // 位置
+	Tok      token.Token     // 关键字(可能有多语言)
 	Doc      *CommentGroup   // 关联文档
 	Name     string          // 全局变量名
 	Type     token.Token     // I32/I64/U32/U64/PTR/NONE
@@ -83,6 +79,7 @@ type InitValue struct {
 // 函数对象
 type Func struct {
 	Pos  token.Pos     // 位置
+	Tok  token.Token   // 关键字(可能有多语言)
 	Doc  *CommentGroup // 关联文档
 	Name string        // 函数名
 	Type *FuncType     // 函数类型
@@ -91,12 +88,14 @@ type Func struct {
 
 // 函数类型
 type FuncType struct {
+	Pos    token.Pos   // 位置
 	Args   []*Argument // 参数列表
 	Return token.Token // 返回值类型
 }
 
 // 函数定义
 type FuncBody struct {
+	Pos      token.Pos       // 位置
 	Locals   []*Local        // 局部变量
 	Insts    []*Instruction  // 指令列表
 	Comments []*CommentGroup // 孤立的注释
@@ -113,6 +112,7 @@ type Argument struct {
 // 局部变量
 type Local struct {
 	Pos     token.Pos     // 位置
+	Tok     token.Token   // 关键字(可能有多语言)
 	Doc     *CommentGroup // 关联文档
 	Name    string        // 名字
 	Type    token.Token   // 类型
