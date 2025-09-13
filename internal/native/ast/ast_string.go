@@ -7,8 +7,25 @@ import (
 	"fmt"
 	"strings"
 
+	"wa-lang.org/wa/internal/native/riscv"
 	"wa-lang.org/wa/internal/native/token"
 )
+
+func (p *File) String() string {
+	var sb strings.Builder
+
+	if p.Doc != nil {
+		sb.WriteString(p.Doc.String())
+		sb.WriteRune('\n')
+	}
+
+	for _, obj := range p.Objects {
+		sb.WriteString(obj.String())
+		sb.WriteString("\n\n")
+	}
+
+	return sb.String()
+}
 
 func (p *Comment) String() string {
 	return fmt.Sprintf("# %s", p.Text)
@@ -61,6 +78,8 @@ func (p *Global) String() string {
 		sb.WriteString(fmt.Sprintf("global %s:%d = ", p.Name, p.Size))
 	}
 
+	// TODO: 保留孤立注释的顺序
+
 	switch {
 	case len(p.Init) == 0:
 		sb.WriteString("{}")
@@ -101,9 +120,101 @@ func (p *InitValue) String() string {
 	return sb.String()
 }
 
-func (p *Func) String() string        { panic("TODO") }
-func (p *FuncType) String() string    { panic("TODO") }
-func (p *FuncBody) String() string    { panic("TODO") }
-func (p *Argument) String() string    { panic("TODO") }
-func (p *Local) String() string       { panic("TODO") }
-func (p *Instruction) String() string { panic("TODO") }
+func (p *Func) String() string {
+	var sb strings.Builder
+
+	if p.Doc != nil {
+		sb.WriteString(p.Doc.String())
+		sb.WriteRune('\n')
+	}
+	sb.WriteString("func ")
+	sb.WriteString(p.Name)
+	sb.WriteString(p.Type.String())
+	if len(p.Body.Objects) == 0 {
+		sb.WriteString("{")
+		for _, obj := range p.Body.Objects {
+			sb.WriteString(obj.String())
+			sb.WriteString("\n\n")
+		}
+		sb.WriteString("}\n")
+	} else {
+		sb.WriteString("{}\n")
+	}
+	return sb.String()
+}
+
+func (p *FuncType) String() string {
+	var sb strings.Builder
+	if len(p.Args) > 0 {
+		sb.WriteString("(")
+		for i, arg := range p.Args {
+			if i > 0 {
+				sb.WriteString(", ")
+			}
+			sb.WriteString(arg.String())
+		}
+		sb.WriteString(")")
+	}
+	if p.Return != token.NONE {
+		sb.WriteString(" => ")
+		sb.WriteString(p.Return.String())
+	}
+	return sb.String()
+}
+
+func (p *FuncBody) String() string {
+	var sb strings.Builder
+	for _, obj := range p.Objects {
+		sb.WriteString(obj.String())
+		sb.WriteString("\n")
+	}
+	return sb.String()
+}
+
+func (p *Argument) String() string {
+	var sb strings.Builder
+	sb.WriteString(p.Name)
+	sb.WriteString(":")
+	sb.WriteString(p.Type.String())
+	return sb.String()
+}
+
+func (p *Local) String() string {
+	var sb strings.Builder
+	if p.Doc != nil {
+		sb.WriteString(p.Doc.String())
+		sb.WriteString("\n")
+	}
+	sb.WriteString("\tlocal ")
+	sb.WriteString(p.Name)
+	sb.WriteString(":")
+	sb.WriteString(p.Type.String())
+	if p.Comment != nil {
+		sb.WriteString(" # ")
+		sb.WriteString(p.Comment.String())
+	}
+	sb.WriteString("\n")
+	return sb.String()
+}
+
+func (p *Instruction) String() string {
+	var sb strings.Builder
+	if p.Doc != nil {
+		sb.WriteString(p.Doc.String())
+		sb.WriteString("\n")
+	}
+	if p.Label != "" {
+		sb.WriteString(p.Label)
+		sb.WriteString(":\n")
+	}
+	if p.As != 0 {
+		// pc 是否可以省略?
+		sb.WriteString(riscv.AsmSyntax(0, p.As, p.Arg))
+	}
+	if p.Comment != nil {
+		sb.WriteString(" # ")
+		sb.WriteString(p.Comment.String())
+	}
+	sb.WriteString("\n")
+	return sb.String()
+}

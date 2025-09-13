@@ -19,11 +19,18 @@ type File struct {
 	Globals  []*Global       // 全局对象
 	Funcs    []*Func         // 函数对象
 	Comments []*CommentGroup // 孤立的注释
+	Objects  []Object        // 保序的列表
+}
+
+// 元素抽象
+type Object interface {
+	BeginPos() token.Pos
+	String() string
 }
 
 // 单行注释
 type Comment struct {
-	Pos  token.Pos // 位置
+	Pos  token.Pos // # 位置
 	Text string    // 注释文本
 }
 
@@ -60,6 +67,7 @@ type Global struct {
 	Size     int             // 内存大小(没有类型信息)
 	Init     []*InitValue    // 初始数据
 	Comments []*CommentGroup // 孤立的注释
+	Objects  []Object        // 保序的对象
 }
 
 // 初始化的面值
@@ -92,6 +100,7 @@ type FuncBody struct {
 	Locals   []*Local        // 局部变量
 	Insts    []*Instruction  // 指令列表
 	Comments []*CommentGroup // 孤立的注释
+	Objects  []Object        // 保序对象列表
 }
 
 // 函数参数
