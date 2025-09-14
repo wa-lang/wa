@@ -67,13 +67,11 @@ func (p *wsPrinter) printFuncs_body(fn *ast.Func) error {
 	// 打印函数指令
 	switch p.cpu {
 	case abi.RISCV32, abi.RISCV64:
-		var pc int64
 		for _, inst := range fn.Body.Insts {
 			if inst.Label != "" {
 				fmt.Fprintf(p.w, "%s:\n", inst.Label)
 			}
-			fmt.Fprintf(p.w, "%s%s\n", p.indent, riscv.AsmSyntax(pc, inst.As, inst.Arg))
-			pc += 4 // TODO: 是否可以省略 pc?
+			fmt.Fprintf(p.w, "%s%s\n", p.indent, riscv.AsmSyntax(inst.As, inst.Arg))
 		}
 	}
 

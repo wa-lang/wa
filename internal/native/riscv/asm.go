@@ -13,18 +13,18 @@ import (
 // TODO: 根据编码后的指令反汇编出汇编程序, 然后通过 riscv 工具链编译链接执行验证
 
 // 汇编语言格式
-func AsmSyntax(pc int64, as abi.As, arg *abi.AsArgument) string {
+func AsmSyntax(as abi.As, arg *abi.AsArgument) string {
 	ctx := &_AOpContextTable[as]
-	return ctx.asmSyntax(pc, as, arg, RegString)
+	return ctx.asmSyntax(as, arg, RegString)
 }
 
 // 汇编语言格式, 自定义寄存器名字
-func AsmSyntaxEx(pc int64, as abi.As, arg *abi.AsArgument, fnRegName func(r abi.RegType) string) string {
+func AsmSyntaxEx(as abi.As, arg *abi.AsArgument, fnRegName func(r abi.RegType) string) string {
 	ctx := &_AOpContextTable[as]
-	return ctx.asmSyntax(pc, as, arg, fnRegName)
+	return ctx.asmSyntax(as, arg, fnRegName)
 }
 
-func (ctx *_OpContextType) asmSyntax(pc int64, as abi.As, arg *abi.AsArgument, rName func(r abi.RegType) string) string {
+func (ctx *_OpContextType) asmSyntax(as abi.As, arg *abi.AsArgument, rName func(r abi.RegType) string) string {
 	switch ctx.Opcode.FormatType() {
 	case _R:
 		return fmt.Sprintf("%s %s, %s, %s", AsString(as), rName(arg.Rd), rName(arg.Rs1), rName(arg.Rs2))
@@ -44,7 +44,7 @@ func (ctx *_OpContextType) asmSyntax(pc int64, as abi.As, arg *abi.AsArgument, r
 		if arg.Symbol != "" {
 			return fmt.Sprintf("%s %s, %s, %s", AsString(as), rName(arg.Rs1), rName(arg.Rs2), arg.Symbol)
 		}
-		return fmt.Sprintf("%s %s, %s, 0x%X", AsString(as), rName(arg.Rs1), rName(arg.Rs2), pc+int64(arg.Imm))
+		return fmt.Sprintf("%s %s, %s, %d", AsString(as), rName(arg.Rs1), rName(arg.Rs2), int64(arg.Imm))
 	case _U:
 		if arg.Symbol != "" {
 			return fmt.Sprintf("%s %s, %s", AsString(as), rName(arg.Rd), arg.Symbol)
@@ -54,7 +54,7 @@ func (ctx *_OpContextType) asmSyntax(pc int64, as abi.As, arg *abi.AsArgument, r
 		if arg.Symbol != "" {
 			return fmt.Sprintf("%s %s, %s", AsString(as), rName(arg.Rd), arg.Symbol)
 		}
-		return fmt.Sprintf("%s %s, 0x%X", AsString(as), rName(arg.Rd), pc+int64(arg.Imm))
+		return fmt.Sprintf("%s %s, %d", AsString(as), rName(arg.Rd), int64(arg.Imm))
 	default:
 		return AsString(as)
 	}

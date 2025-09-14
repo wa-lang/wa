@@ -13,8 +13,8 @@ import (
 )
 
 // 打印指令
-func PrintInstruction(w io.Writer, pc int64, inst ast.Instruction) {
-	fmt.Fprint(w, riscv.AsmSyntax(pc, inst.As, inst.Arg))
+func PrintInstruction(w io.Writer, inst ast.Instruction) {
+	fmt.Fprint(w, riscv.AsmSyntax(inst.As, inst.Arg))
 }
 
 // 打印汇编格式

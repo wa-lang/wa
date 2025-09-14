@@ -303,9 +303,8 @@ func (p *Instruction) String() string {
 		if p.Label != "" {
 			sb.WriteString("\n")
 		}
-		// pc 是否可以省略?
 		sb.WriteString("\t")
-		sb.WriteString(riscv.AsmSyntax(0, p.As, p.Arg))
+		sb.WriteString(riscv.AsmSyntax(p.As, p.Arg))
 	}
 	if p.Comment != nil {
 		sb.WriteString(" ")
