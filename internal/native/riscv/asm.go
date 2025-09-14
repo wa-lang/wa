@@ -37,54 +37,93 @@ func (ctx *_OpContextType) asmSyntax(
 	if arg.SymbolDecor != 0 {
 		symbol = fmt.Sprintf("%v(%s)", arg.SymbolDecor, arg.Symbol)
 	}
-	switch ctx.Opcode.FormatType() {
-	case _R:
+
+	switch ctx.Opcode & _OpBase_Mask {
+	case _OpBase_OP, _OpBase_OP_32, _OpBase_OP_FP, _OpBase_AMO:
 		// XXX rd, rs1, rs2
 		return fmt.Sprintf("%s %s, %s, %s", asName(as), rName(arg.Rd), rName(arg.Rs1), rName(arg.Rs2))
-	case _R4:
+
+	case _OpBase_MADD, _OpBase_MSUB, _OpBase_NMSUB, _OpBase_NMADD:
 		// XXX rd, rs1, rs2, rs3
 		return fmt.Sprintf("%s %s, %s, %s, %s", asName(as), rName(arg.Rd), rName(arg.Rs1), rName(arg.Rs2), rName(arg.Rs3))
-	case _I:
-		switch ctx.Opcode {
-		case _OpBase_LOAD, _OpBase_LOAD_FP:
-			// XXX rd, imm(rs1)
+
+	case _OpBase_OP_IMM, _OpBase_OP_IMM_32:
+		// XXX rd, rs1, imm
+		if symbol != "" {
+			return fmt.Sprintf("%s %s, %s, %v", asName(as), rName(arg.Rd), rName(arg.Rs1), symbol)
+		}
+		return fmt.Sprintf("%s %s, %s, %d", asName(as), rName(arg.Rd), rName(arg.Rs1), arg.Imm)
+
+	case _OpBase_LOAD, _OpBase_LOAD_FP:
+		// XXX rd, offset(rs1)
+		if symbol != "" {
+			return fmt.Sprintf("%s %s, %v(%s)", asName(as), rName(arg.Rd), symbol, rName(arg.Rs1))
+		}
+		return fmt.Sprintf("%s %s, %d(%s)", asName(as), rName(arg.Rd), arg.Imm, rName(arg.Rs1))
+
+	case _OpBase_MISC_MEN:
+		// fence iorw, iorw
+		return fmt.Sprintf("%s %s, %s", asName(as), rName(arg.Rd), rName(arg.Rs1))
+
+	case _OpBase_SYSTEM:
+		switch as {
+		case ACSRRW, ACSRRS, ACSRRC:
+			// XXX rd, csr, rs1
 			if symbol != "" {
-				return fmt.Sprintf("%s %s, %v(%s)", asName(as), rName(arg.Rd), symbol, rName(arg.Rs1))
+				return fmt.Sprintf("%s %s, %d, %s", asName(as), rName(arg.Rd), arg.Imm, rName(arg.Rs1))
 			}
-			return fmt.Sprintf("%s %s, %d(%s)", asName(as), rName(arg.Rd), arg.Imm, rName(arg.Rs1))
+			return fmt.Sprintf("%s %s, %d, %s", asName(as), rName(arg.Rd), arg.Imm, rName(arg.Rs1))
+
+		case ACSRRWI, ACSRRSI, ACSRRCI:
+			// XXX rd, csr, uimm
+			if symbol != "" {
+				return fmt.Sprintf("%s %s, %d, %d", asName(as), rName(arg.Rd), arg.Imm, ctx.regI(arg.Rs1))
+			}
+			return fmt.Sprintf("%s %s, %d, %d", asName(as), rName(arg.Rd), arg.Imm, ctx.regI(arg.Rs1))
+
 		default:
-			// XXX rd, rs1, imm
-			if symbol != "" {
-				return fmt.Sprintf("%s %s, %s, %v", asName(as), rName(arg.Rd), rName(arg.Rs1), symbol)
-			}
-			return fmt.Sprintf("%s %s, %s, %d", asName(as), rName(arg.Rd), rName(arg.Rs1), arg.Imm)
+			panic("unreachable")
 		}
 
-	case _S:
+	case _OpBase_STORE, _OpBase_STORE_FP:
 		// XXX rs2, offset(rs1)
 		if symbol != "" {
 			return fmt.Sprintf("%s %s, %s(%s)", asName(as), rName(arg.Rs2), symbol, rName(arg.Rs1))
 		}
 		return fmt.Sprintf("%s %s, %d(%s)", asName(as), rName(arg.Rs2), arg.Imm, rName(arg.Rs1))
-	case _B:
+
+	case _OpBase_BRANCH:
 		// XXX rs1, rs2, label
 		if symbol != "" {
 			return fmt.Sprintf("%s %s, %s, %s", asName(as), rName(arg.Rs1), rName(arg.Rs2), symbol)
 		}
 		return fmt.Sprintf("%s %s, %s, %d", asName(as), rName(arg.Rs1), rName(arg.Rs2), int64(arg.Imm))
-	case _U:
+
+	case _OpBase_LUI, _OpBase_AUIPC:
 		// XXX rd, imm
 		if symbol != "" {
 			return fmt.Sprintf("%s %s, %s", asName(as), rName(arg.Rd), symbol)
 		}
 		return fmt.Sprintf("%s %s, 0x%X", asName(as), rName(arg.Rd), arg.Imm)
-	case _J:
+
+	case _OpBase_JAL:
 		// XXX rd, offset
 		if symbol != "" {
 			return fmt.Sprintf("%s %s, %s", asName(as), rName(arg.Rd), symbol)
 		}
 		return fmt.Sprintf("%s %s, %d", asName(as), rName(arg.Rd), int64(arg.Imm))
+
+	case _OpBase_JALR:
+		// XXX rd, offset(rs1)
+		if symbol != "" {
+			return fmt.Sprintf("%s %s, %v(%s)", asName(as), rName(arg.Rd), symbol, rName(arg.Rs1))
+		}
+		return fmt.Sprintf("%s %s, %d(%s)", asName(as), rName(arg.Rd), arg.Imm, rName(arg.Rs1))
+
+	case _OpBase_CUSTOM_0, _OpBase_CUSTOM_1, _OpBase_CUSTOM_2, _OpBase_CUSTOM_3:
+		panic("unreachable")
+
 	default:
-		return asName(as)
+		panic("unreachable")
 	}
 }
