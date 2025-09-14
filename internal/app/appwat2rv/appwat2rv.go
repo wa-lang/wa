@@ -11,7 +11,6 @@ import (
 	"wa-lang.org/wa/internal/3rdparty/cli"
 	"wa-lang.org/wa/internal/native/abi"
 	"wa-lang.org/wa/internal/native/ast"
-	"wa-lang.org/wa/internal/native/printer"
 	"wa-lang.org/wa/internal/native/wat2rv"
 	"wa-lang.org/wa/internal/native/wemu/device/dram"
 )
@@ -92,7 +91,7 @@ var CmdWat2rv = &cli.Command{
 		}
 
 		// 输出汇编格式
-		printer.Fprint(os.Stdout, f)
+		fmt.Print(f.String())
 		return nil
 	},
 }
