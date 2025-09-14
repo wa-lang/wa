@@ -304,7 +304,7 @@ func (p *WEmu) FormatInstruction(pc uint64, n int) string {
 			continue
 		}
 		fmt.Fprintf(&buf, "mem[%08X]: %s\n", addr,
-			riscv.AsmSyntaxEx(as, arg, riscv.RegAliasString),
+			riscv.AsmSyntax(as, arg),
 		)
 	}
 

@@ -14,3 +14,17 @@ func (cpu CPUType) String() string {
 	}
 	return fmt.Sprintf("abi.CPUType(%d)", int(cpu))
 }
+
+func (fn BuiltinFn) String() string {
+	switch fn {
+	case BuiltinFn_HI:
+		return "%hi"
+	case BuiltinFn_LO:
+		return "%lo"
+	case BuiltinFn_PCREL_HI:
+		return "%pcrel_hi"
+	case BuiltinFn_PCREL_LO:
+		return "%pcrel_lo"
+	}
+	return fmt.Sprintf("abi.BuiltinFn(%d)", int(fn))
+}

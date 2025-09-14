@@ -11,7 +11,7 @@ import (
 )
 
 func (p *parser) parseInst_riscv(fn *ast.Func) (inst *ast.Instruction) {
-	inst = &ast.Instruction{Pos: p.pos}
+	inst = new(ast.Instruction)
 
 	inst.Doc = p.parseDocComment(&fn.Body.Comments, inst.Pos)
 	if inst.Doc != nil {
@@ -24,6 +24,7 @@ func (p *parser) parseInst_riscv(fn *ast.Func) (inst *ast.Instruction) {
 	}()
 
 	if p.tok == token.IDENT {
+		inst.Pos = p.pos
 		inst.Label = p.parseIdent()
 		p.acceptToken(token.COLON)
 
@@ -32,6 +33,8 @@ func (p *parser) parseInst_riscv(fn *ast.Func) (inst *ast.Instruction) {
 			return inst
 		}
 	}
+
+	inst.Pos = p.pos
 	inst.As = p.parseAs()
 	inst.Arg = new(abi.AsArgument)
 

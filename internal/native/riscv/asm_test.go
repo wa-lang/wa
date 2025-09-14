@@ -11,11 +11,19 @@ import (
 )
 
 func ExampleAsmSyntax() {
-	fmt.Println(riscv.AsmSyntax(riscv.AADD, &abi.AsArgument{
-		Rd:  riscv.REG_X1,
-		Rs1: riscv.REG_X2,
-		Rs2: riscv.REG_X3,
-	}))
+	fmt.Println(riscv.AsmSyntaxEx(
+		riscv.AADD, &abi.AsArgument{
+			Rd:  riscv.REG_X1,
+			Rs1: riscv.REG_X2,
+			Rs2: riscv.REG_X3,
+		},
+		func(r abi.RegType) string {
+			return riscv.RegString(r)
+		},
+		func(x abi.As) string {
+			return riscv.AsString(x)
+		},
+	))
 
 	// Output:
 	// ADD X1, X2, X3
@@ -50,23 +58,23 @@ func ExampleEncodeRV64() {
 		if err != nil {
 			panic(fmt.Sprint(i, err))
 		}
-		fmt.Printf("0x%08X # %v\n", x, riscv.AsmSyntaxEx(inst.as, inst.arg, riscv.RegAliasString))
+		fmt.Printf("0x%08X # %v\n", x, riscv.AsmSyntax(inst.as, inst.arg))
 	}
 
 	// Output:
 	// 0x00000517 # AUIPC A0, 0x0
-	// 0x03C50513 # ADDI A0, 60(A0)
+	// 0x03C50513 # ADDI A0, A0, 60
 	// 0x00054583 # LBU A1, 0(A0)
 	// 0x00058C63 # BEQ A1, ZERO, 24
 	// 0x100002B7 # LUI T0, 0x10000
-	// 0x00028293 # ADDI T0, 0(T0)
+	// 0x00028293 # ADDI T0, T0, 0
 	// 0x00B28023 # SB A1, 0(T0)
-	// 0x00150513 # ADDI A0, 1(A0)
+	// 0x00150513 # ADDI A0, A0, 1
 	// 0xFE9FF06F # JAL ZERO, -24
 	// 0x001002B7 # LUI T0, 0x100
-	// 0x00028293 # ADDI T0, 0(T0)
+	// 0x00028293 # ADDI T0, T0, 0
 	// 0x00005337 # LUI T1, 0x5
-	// 0x55530313 # ADDI T1, 1365(T1)
+	// 0x55530313 # ADDI T1, T1, 1365
 	// 0x0062A023 # SW T1, 0(T0)
 	// 0x0000006F # JAL ZERO, 0
 }
@@ -99,23 +107,23 @@ func ExampleDecode() {
 		if err != nil {
 			panic(fmt.Sprint(i, err))
 		}
-		fmt.Printf("0x%08X # %v\n", x, riscv.AsmSyntaxEx(as, arg, riscv.RegAliasString))
+		fmt.Printf("0x%08X # %v\n", x, riscv.AsmSyntax(as, arg))
 	}
 
 	// Output:
 	// 0x00000517 # AUIPC A0, 0x0
-	// 0x03C50513 # ADDI A0, 60(A0)
+	// 0x03C50513 # ADDI A0, A0, 60
 	// 0x00054583 # LBU A1, 0(A0)
 	// 0x00058C63 # BEQ A1, ZERO, 24
 	// 0x100002B7 # LUI T0, 0x10000
-	// 0x00028293 # ADDI T0, 0(T0)
+	// 0x00028293 # ADDI T0, T0, 0
 	// 0x00B28023 # SB A1, 0(T0)
-	// 0x00150513 # ADDI A0, 1(A0)
+	// 0x00150513 # ADDI A0, A0, 1
 	// 0xFE9FF06F # JAL ZERO, -24
 	// 0x001002B7 # LUI T0, 0x100
-	// 0x00028293 # ADDI T0, 0(T0)
+	// 0x00028293 # ADDI T0, T0, 0
 	// 0x00005337 # LUI T1, 0x5
-	// 0x55530313 # ADDI T1, 1365(T1)
+	// 0x55530313 # ADDI T1, T1, 1365
 	// 0x0062A023 # SW T1, 0(T0)
 	// 0x0000006F # JAL ZERO, 0
 }

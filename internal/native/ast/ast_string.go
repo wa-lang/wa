@@ -118,8 +118,6 @@ func (p *Global) String() string {
 		} else {
 			sb.WriteString(xInit.Symbal)
 		}
-
-		sb.WriteString(p.Init[0].String())
 	default:
 		sb.WriteString("{")
 		if len(p.Objects) > 0 {

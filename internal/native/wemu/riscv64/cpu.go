@@ -45,7 +45,7 @@ func (p *CPU) StepRun(bus *device.Bus) error {
 
 	if err := p.execInst(bus, as, argRaw); err != nil {
 		return fmt.Errorf("exec instruntion(%08d:%s) failed at 0x%08X: %v", inst,
-			riscv.AsmSyntaxEx(as, arg, riscv.RegAliasString),
+			riscv.AsmSyntax(as, arg),
 			p.PC,
 			err,
 		)
