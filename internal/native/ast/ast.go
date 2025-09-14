@@ -55,15 +55,16 @@ type Const struct {
 
 // 全局对象
 type Global struct {
-	Pos      token.Pos       // 位置
-	Tok      token.Token     // 关键字(可能有多语言)
-	Doc      *CommentGroup   // 关联文档
-	Name     string          // 全局变量名
-	Type     token.Token     // I32/I64/U32/U64/PTR/NONE
-	Size     int             // 内存大小(没有类型信息)
-	Init     []*InitValue    // 初始数据
-	Comments []*CommentGroup // 孤立的注释
-	Objects  []Object        // 保序的对象
+	Pos      token.Pos         // 位置
+	Tok      token.Token       // 关键字(可能有多语言)
+	Doc      *CommentGroup     // 关联文档
+	Name     string            // 全局变量名
+	Type     token.Token       // I32/I64/U32/U64/PTR/NONE
+	Size     int               // 内存大小(没有类型信息)
+	Init     []*InitValue      // 初始数据
+	Comments []*CommentGroup   // 孤立的注释
+	Objects  []Object          // 保序的对象
+	LinkInfo *abi.LinkedSymbol // 链接信息
 }
 
 // 初始化的面值
@@ -78,12 +79,13 @@ type InitValue struct {
 
 // 函数对象
 type Func struct {
-	Pos  token.Pos     // 位置
-	Tok  token.Token   // 关键字(可能有多语言)
-	Doc  *CommentGroup // 关联文档
-	Name string        // 函数名
-	Type *FuncType     // 函数类型
-	Body *FuncBody     // 函数体
+	Pos      token.Pos         // 位置
+	Tok      token.Token       // 关键字(可能有多语言)
+	Doc      *CommentGroup     // 关联文档
+	Name     string            // 函数名
+	Type     *FuncType         // 函数类型
+	Body     *FuncBody         // 函数体
+	LinkInfo *abi.LinkedSymbol // 链接信息
 }
 
 // 函数类型

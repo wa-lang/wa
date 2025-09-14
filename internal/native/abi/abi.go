@@ -14,8 +14,17 @@ const (
 
 // 链接参数
 type LinkOptions struct {
-	Ttext uint64 // 代码段开始地址
-	Tdata uint64 // 数据段开始地址
+	CPU      CPUType // CPU类型
+	DRAMBase int64   // 代码段开始地址
+	DRAMSize int64   // 数据段开始地址
+}
+
+// 链接后的符号
+type LinkedSymbol struct {
+	Name string // 名字
+	Addr int64  // 内存地址
+	Size int64  // 内存大小
+	Data []byte // 内存数据
 }
 
 // 程链接后的程序

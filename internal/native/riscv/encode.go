@@ -20,6 +20,18 @@ func RegF(r abi.RegType) uint32 {
 }
 
 // 编码RISCV32指令
+func Encode(cpu abi.CPUType, as abi.As, arg *abi.AsArgument) (uint32, error) {
+	switch cpu {
+	case abi.RISCV32:
+		return EncodeRV32(as, arg)
+	case abi.RISCV64:
+		return EncodeRV64(as, arg)
+	default:
+		return 0, fmt.Errorf("unknonw cpu: %v", cpu)
+	}
+}
+
+// 编码RISCV32指令
 func EncodeRV32(as abi.As, arg *abi.AsArgument) (uint32, error) {
 	ctx := &_AOpContextTable[as]
 	if ctx.PseudoAs != 0 {

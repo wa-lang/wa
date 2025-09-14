@@ -33,14 +33,14 @@ var CmdWat2rv = &cli.Command{
 			Value: "riscv64",
 		},
 		&cli.Int64Flag{
-			Name:  "Ttext",
-			Usage: "set address of .text segment",
+			Name:  "DRAM-base",
+			Usage: "set DRAM address",
 			Value: dram.DRAM_BASE,
 		},
 		&cli.Int64Flag{
-			Name:  "Tdata",
-			Usage: "set address of .data segment",
-			Value: 0,
+			Name:  "DRAM-size",
+			Usage: "set DRAM size",
+			Value: dram.DRAM_SIZE,
 		},
 	},
 	Action: func(c *cli.Context) error {
@@ -53,8 +53,17 @@ var CmdWat2rv = &cli.Command{
 		outfile := c.String("output")
 
 		opt := &abi.LinkOptions{}
-		opt.Ttext = uint64(c.Int64("Ttext"))
-		opt.Tdata = uint64(c.Int64("Tdata"))
+		opt.DRAMBase = c.Int64("DRAM-base")
+		opt.DRAMSize = c.Int64("DRAM-size")
+		switch arch := c.String("arch"); arch {
+		case "riscv32":
+			opt.CPU = abi.RISCV32
+		case "riscv64":
+			opt.CPU = abi.RISCV64
+		default:
+			fmt.Printf("unknown arch: %s\n", arch)
+			os.Exit(1)
+		}
 
 		if outfile == "" {
 			outfile = infile

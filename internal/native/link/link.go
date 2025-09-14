@@ -21,8 +21,10 @@ func _LinkELF_RV64(prog *abi.LinkedProgram) ([]byte, error) {
 		ehOff = int64(0)
 		phOff = int64(elf.ELF64HDRSIZE)
 
-		textOff = int64(elf.ELF64HDRSIZE + 2*elf.ELF64PHDRSIZE)
-		dataOff = textOff + int64(len(prog.TextData))
+		textOff   = int64(elf.ELF64HDRSIZE + 2*elf.ELF64PHDRSIZE)
+		dataOff   = textOff + int64(len(prog.TextData))
+		roDataOff = textOff + int64(len(prog.TextData)) + int64(len(prog.DataData))
+		sDataOff  = textOff + int64(len(prog.TextData)) + int64(len(prog.DataData)) + int64(len(prog.RoDataData))
 	)
 
 	var eh elf.ElfHeader64
@@ -44,6 +46,13 @@ func _LinkELF_RV64(prog *abi.LinkedProgram) ([]byte, error) {
 	eh.Shnum = 0                                    // 节头表中表项的数量
 	eh.Shstrndx = 0                                 // 节头表中与节名字表相对应的表项的索引
 
+	if len(prog.RoDataData) != 0 {
+		eh.Phnum++
+	}
+	if len(prog.SDataData) != 0 {
+		eh.Phnum++
+	}
+
 	// 程序头: .text (RX)
 	textPh := elf.ElfProgHeader{
 		Type:   elf.PT_LOAD,
@@ -56,7 +65,7 @@ func _LinkELF_RV64(prog *abi.LinkedProgram) ([]byte, error) {
 		Align:  1,                          // 设为1避免 vaddr/offset 对齐约束
 	}
 
-	// 程序头
+	// 程序头: .data
 	dataPh := elf.ElfProgHeader{
 		Type:   elf.PT_LOAD,
 		Flags:  elf.PF_R | elf.PF_W,        // 可读写
@@ -66,6 +75,30 @@ func _LinkELF_RV64(prog *abi.LinkedProgram) ([]byte, error) {
 		Filesz: uint64(len(prog.DataData)), // 数据段文件大小
 		Memsz:  uint64(len(prog.DataData)), // 内存大小
 		Align:  1,                          // 设为1避免 vaddr/offset 对齐约束
+	}
+
+	// 程序头: .rodata
+	roDataPh := elf.ElfProgHeader{
+		Type:   elf.PT_LOAD,
+		Flags:  elf.PF_R,                     // 可读
+		Off:    uint64(roDataOff),            // 数据段 offset
+		Vaddr:  uint64(prog.RoDataAddr),      // 虚拟内存地址
+		Paddr:  uint64(prog.RoDataAddr),      // 物理内存地址
+		Filesz: uint64(len(prog.RoDataData)), // 数据段文件大小
+		Memsz:  uint64(len(prog.RoDataData)), // 内存大小
+		Align:  1,                            // 设为1避免 vaddr/offset 对齐约束
+	}
+
+	// 程序头: .sdata
+	sDataPh := elf.ElfProgHeader{
+		Type:   elf.PT_LOAD,
+		Flags:  elf.PF_R | elf.PF_W,         // 可读写
+		Off:    uint64(sDataOff),            // 数据段 offset
+		Vaddr:  uint64(prog.SDataAddr),      // 虚拟内存地址
+		Paddr:  uint64(prog.SDataAddr),      // 物理内存地址
+		Filesz: uint64(len(prog.SDataData)), // 数据段文件大小
+		Memsz:  uint64(len(prog.SDataData)), // 内存大小
+		Align:  1,                           // 设为1避免 vaddr/offset 对齐约束
 	}
 
 	// 构造内存缓存
@@ -85,10 +118,26 @@ func _LinkELF_RV64(prog *abi.LinkedProgram) ([]byte, error) {
 	if err := binary.Write(&buf, binary.LittleEndian, &dataPh); err != nil {
 		return nil, err
 	}
+	if len(prog.RoDataData) != 0 {
+		if err := binary.Write(&buf, binary.LittleEndian, &roDataPh); err != nil {
+			return nil, err
+		}
+	}
+	if len(prog.SDataData) != 0 {
+		if err := binary.Write(&buf, binary.LittleEndian, &sDataPh); err != nil {
+			return nil, err
+		}
+	}
 
 	// 写段内容
 	buf.WriteAt(prog.TextData, textOff)
 	buf.WriteAt(prog.DataData, dataOff)
+	if len(prog.RoDataData) != 0 {
+		buf.WriteAt(prog.RoDataData, roDataOff)
+	}
+	if len(prog.SDataData) != 0 {
+		buf.WriteAt(prog.SDataData, sDataOff)
+	}
 
 	// OK
 	return buf.Bytes(), nil

@@ -4,11 +4,13 @@
 package main
 
 import (
+	"bytes"
+	"encoding/binary"
 	"flag"
+	"fmt"
 	"os"
 
 	"wa-lang.org/wa/internal/native/abi"
-	"wa-lang.org/wa/internal/native/asm"
 	"wa-lang.org/wa/internal/native/ast"
 	"wa-lang.org/wa/internal/native/link"
 	"wa-lang.org/wa/internal/native/riscv"
@@ -29,9 +31,26 @@ func main() {
 	os.WriteFile(*flagOutput, data, 0777)
 }
 
+// 汇编代码翻译位机器码
+func AssemblerRV64(fnBody *ast.FuncBody) []byte {
+	var buf bytes.Buffer
+	for i, inst := range fnBody.Insts {
+		// TODO: 处理长地址跳转
+		x, err := riscv.EncodeRV64(inst.As, inst.Arg)
+		if err != nil {
+			panic(fmt.Errorf("%d: %w", i, err))
+		}
+		err = binary.Write(&buf, binary.LittleEndian, x)
+		if err != nil {
+			panic(fmt.Errorf("%d: %w", i, err))
+		}
+	}
+	return buf.Bytes()
+}
+
 var prog = &abi.LinkedProgram{
 	TextAddr: 0x80000000,
-	TextData: asm.AssemblerRV64(fnBody),
+	TextData: AssemblerRV64(fnBody),
 	DataAddr: 0x8000003c,
 	DataData: []byte("Hello wa-lang:native/RISC-V!\n\x00"),
 }
