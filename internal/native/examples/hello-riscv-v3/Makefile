@@ -7,7 +7,7 @@ run:
 	$(WA) rv2elf hello_riscv64.ws
 	
 run-zh:
-	$(WA) rv2elf hello_riscv64_zh.ws
+	$(WA) -debug rv2elf hello_riscv64_zh.ws
 
 fmt:
 	$(WA) fmt -riscv hello_riscv64_zh.ws > a.out.ws

@@ -12,6 +12,7 @@ import (
 
 func (p *parser) parseInst_riscv(fn *ast.Func) (inst *ast.Instruction) {
 	inst = new(ast.Instruction)
+	inst.Arg = new(abi.AsArgument)
 
 	inst.Doc = p.parseDocComment(&fn.Body.Comments, inst.Pos)
 	if inst.Doc != nil {
@@ -36,7 +37,6 @@ func (p *parser) parseInst_riscv(fn *ast.Func) (inst *ast.Instruction) {
 
 	inst.Pos = p.pos
 	inst.As = p.parseAs()
-	inst.Arg = new(abi.AsArgument)
 
 	switch inst.As {
 	default:

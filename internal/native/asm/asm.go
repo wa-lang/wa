@@ -6,7 +6,7 @@ package asm
 import (
 	"bytes"
 	"encoding/binary"
-	"log"
+	"fmt"
 
 	"wa-lang.org/wa/internal/native/abi"
 	"wa-lang.org/wa/internal/native/ast"
@@ -21,11 +21,11 @@ func AssemblerRV64(fnBody *ast.FuncBody) []byte {
 		// TODO: 处理长地址跳转
 		x, err := riscv.EncodeRV64(inst.As, inst.Arg)
 		if err != nil {
-			log.Fatal(i, err)
+			panic(fmt.Errorf("%d: %w", i, err))
 		}
 		err = binary.Write(&buf, binary.LittleEndian, x)
 		if err != nil {
-			log.Fatal(i, err)
+			panic(fmt.Errorf("%d: %w", i, err))
 		}
 	}
 	return buf.Bytes()
@@ -49,14 +49,21 @@ func AssembleFile(fset *token.FileSet, file *ast.File, opt *abi.LinkOptions) (pr
 	var bufText bytes.Buffer
 	for _, fn := range file.Funcs {
 		for _, inst := range fn.Body.Insts {
+			if inst.Label != "" {
+				panic("TODO: gen Label address")
+			}
+			if inst.As == 0 {
+				continue
+			}
+
 			// TODO: 处理长地址跳转
 			x, err := riscv.EncodeRV64(inst.As, inst.Arg)
 			if err != nil {
-				return nil, err
+				panic(fmt.Errorf("%v: %w", inst, err))
 			}
 			err = binary.Write(&bufText, binary.LittleEndian, x)
 			if err != nil {
-				return nil, err
+				panic(fmt.Errorf("%v: %w", inst, err))
 			}
 		}
 	}
