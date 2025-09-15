@@ -42,12 +42,10 @@ func (p *parser) parseBasicLit() *ast.BasicLit {
 		}
 		pVal.LitString = p.lit
 		p.acceptToken(p.tok)
-		return pVal
 	case token.STRING:
 		pVal.LitKind = p.tok
 		pVal.LitString = p.lit
 		p.acceptToken(p.tok)
-		return pVal
 	default:
 		p.errorf(p.pos, "expect type or lit, got %v", p.tok)
 	}
@@ -57,6 +55,8 @@ func (p *parser) parseBasicLit() *ast.BasicLit {
 	case token.INT:
 		if x, err := strconv.ParseInt(pVal.LitString, 0, 64); err == nil {
 			pVal.ConstV = int64(x)
+		} else {
+			p.errorf(pVal.Pos, "int %v %v", pVal.LitString, err)
 		}
 	case token.FLOAT:
 		if f, ok := new(big.Float).SetString(pVal.LitString); ok {
@@ -73,12 +73,16 @@ func (p *parser) parseBasicLit() *ast.BasicLit {
 		if n := len(pVal.LitString); n >= 2 {
 			if code, _, _, err := strconv.UnquoteChar(pVal.LitString[1:n-1], '\''); err == nil {
 				pVal.ConstV = int64(code)
+			} else {
+				p.errorf(pVal.Pos, "char %v %v", pVal.LitString, err)
 			}
 		}
 
 	case token.STRING:
 		if s, err := strconv.Unquote(pVal.LitString); err == nil {
 			pVal.ConstV = s
+		} else {
+			p.errorf(pVal.Pos, "string %q %v", pVal.LitString, err)
 		}
 
 	default:
