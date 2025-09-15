@@ -44,7 +44,6 @@ func main() {
 	cliApp := cli.NewApp()
 	cliApp.Name = "Wa"
 	cliApp.Usage = "Wa is a tool for managing Wa source code."
-	cliApp.Copyright = "Copyright 2018 The Wa Authors. All rights reserved."
 	cliApp.Version = version.Version
 	cliApp.EnableBashCompletion = true
 	cliApp.HideHelpCommand = true

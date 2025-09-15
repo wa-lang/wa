@@ -84,6 +84,7 @@ type Func struct {
 	Doc      *CommentGroup     // 关联文档
 	Name     string            // 函数名
 	Type     *FuncType         // 函数类型
+	Size     int               // 指令大小(没有类型信息)
 	Body     *FuncBody         // 函数体
 	LinkInfo *abi.LinkedSymbol // 链接信息
 }

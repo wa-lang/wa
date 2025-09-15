@@ -4,7 +4,6 @@
 package asm
 
 import (
-	"bytes"
 	"encoding/binary"
 	"fmt"
 	"math"
@@ -73,8 +72,26 @@ func (p *_Assembler) asmFile(filename string, source []byte, opt *abi.LinkOption
 		return nil, err
 	}
 
+	// 全局变量分配内存空间
+	for _, g := range p.file.Globals {
+		g.LinkInfo = &abi.LinkedSymbol{
+			Name: g.Name,
+			Addr: p.alloc(int64(g.Size), 8),
+			Data: make([]byte, g.Size),
+		}
+	}
+
+	// 全局函数分配内存空间
+	for _, fn := range p.file.Funcs {
+		fn.Size = int(p.funcBodyLen(fn))
+		fn.LinkInfo = &abi.LinkedSymbol{
+			Name: fn.Name,
+			Addr: p.alloc(int64(fn.Size), 8),
+			Data: make([]byte, fn.Size),
+		}
+	}
+
 	// 编译全局变量
-	p.prog.DataAddr = p.dramNextAddr
 	for _, g := range p.file.Globals {
 		if err := p.asmGlobal(g); err != nil {
 			return nil, err
@@ -82,30 +99,49 @@ func (p *_Assembler) asmFile(filename string, source []byte, opt *abi.LinkOption
 	}
 
 	// 编译函数
-	p.prog.TextAddr = p.dramNextAddr
 	for _, fn := range p.file.Funcs {
 		if err := p.asmFunc(fn); err != nil {
 			return nil, err
 		}
 	}
 
-	// TODO: 回填未知的符号
-	// TODO: 合并全部数据
+	// 收集全部信息
+	{
+		p.prog.DataAddr = opt.DRAMBase
+		p.prog.TextAddr = opt.DRAMBase
+		p.prog.DataData = nil
+		p.prog.TextData = nil
+
+		if len(p.file.Globals) > 0 {
+			p.prog.DataAddr = p.file.Globals[0].LinkInfo.Addr
+		}
+		if len(p.file.Funcs) > 0 {
+			p.prog.TextAddr = p.file.Funcs[0].LinkInfo.Addr
+		}
+
+		for _, g := range p.file.Globals {
+			p.prog.DataData = append(p.prog.DataData, g.LinkInfo.Data...)
+		}
+		for _, fn := range p.file.Funcs {
+			p.prog.TextData = append(p.prog.TextData, fn.LinkInfo.Data...)
+		}
+	}
 
 	return p.prog, nil
 }
 
 func (p *_Assembler) asmGlobal(g *ast.Global) (err error) {
-	g.LinkInfo = &abi.LinkedSymbol{
-		Name: g.Name,
-		Addr: p.alloc(int64(g.Size), 8),
-		Size: int64(g.Size),
-		Data: make([]byte, g.Size),
-	}
-
 	for _, xInit := range g.Init {
 		if xInit.Symbal != "" {
-			// 符号在后续同续处理
+			v, ok := p.symbolAddress(xInit.Symbal, nil)
+			if !ok {
+				panic(fmt.Errorf("symbol %q not found", xInit.Symbal))
+			}
+			if p.opt.CPU == abi.RISCV32 {
+				binary.LittleEndian.PutUint32(g.LinkInfo.Data, uint32(v))
+			} else {
+				binary.LittleEndian.PutUint64(g.LinkInfo.Data, uint64(v))
+			}
 			continue
 		}
 
@@ -167,41 +203,106 @@ func (p *_Assembler) asmFunc(fn *ast.Func) (err error) {
 	}
 
 	// 第二遍编码指令
-	var bufText bytes.Buffer
+	var pc = fn.LinkInfo.Addr
 	for _, inst := range fn.Body.Insts {
 		if inst.As == 0 {
 			// 跳过空的指令, 比如标号
 			continue
 		}
 
-		// 优先处理参数中引用的局部标号
-		// 其他全局的符号后续再处理(后续的处理将不包含局部符号引用)
+		// 指令对 label 或全局的符号引用
+		// 因为指令长度的关系, 指令并不会直接访问符号对应的绝对地址
+		// 需要解决 %hi/%lo/%pcrel_hi/%pcrel_lo 等转化为最终可编码到指令的值
 		if inst.Arg.Symbol != "" {
-			if x, ok := labelAddrMap[inst.Arg.Symbol]; ok {
-				_ = x
+			addr, ok := p.symbolAddress(inst.Arg.Symbol, labelAddrMap)
+			if !ok {
+				panic(fmt.Errorf("symbol %q not found", inst.Arg.Symbol))
+			}
+
+			switch inst.Arg.SymbolDecor {
+			case abi.BuiltinFn_HI: // 高20bit
+				inst.Arg.Imm = int32(uint32(addr) >> 12)
+			case abi.BuiltinFn_LO: // 低12bit
+				inst.Arg.Imm = int32(uint32(addr) & 0b_1111_1111_1111)
+			case abi.BuiltinFn_PCREL_HI:
+				relAddr := int32(addr - pc)
+				inst.Arg.Imm = int32(uint32(relAddr) >> 12)
+			case abi.BuiltinFn_PCREL_LO:
+				relAddr := int32(addr - pc)
+				inst.Arg.Imm = int32(uint32(relAddr) & 0b_1111_1111_1111)
+			default:
+				panic(fmt.Errorf("can not use real symbal address"))
 			}
 		}
 
-		// TODO: 编码指令需要延后, 需要生成全部的全局符号地址
+		// 编码使用的是符号被处理后对应的立即数
 		x, err := riscv.Encode(p.opt.CPU, inst.As, inst.Arg)
 		if err != nil {
 			return fmt.Errorf("%v: %w", inst, err)
 		}
-		err = binary.Write(&bufText, binary.LittleEndian, x)
-		if err != nil {
-			return fmt.Errorf("%v: %w", inst, err)
-		}
+
+		// 保存指令编码后的机器码
+		binary.LittleEndian.PutUint32(
+			fn.LinkInfo.Data[int(pc-fn.LinkInfo.Addr):],
+			x,
+		)
+
+		// 更新下一个指令对应的 pc 位置
+		pc += p.instLen(inst)
 	}
 
-	p.prog.TextData = bufText.Bytes()
 	return nil
 }
 
-func (p *_Assembler) instLen(*ast.Instruction) int64 {
+func (p *_Assembler) funcBodyLen(fn *ast.Func) (n int64) {
+	for _, inst := range fn.Body.Insts {
+		n += p.instLen(inst)
+	}
+	return
+}
+
+func (p *_Assembler) instLen(inst *ast.Instruction) int64 {
+	if inst.Label == "" && inst.As == 0 {
+		return 0
+	}
 	switch p.opt.CPU {
 	case abi.RISCV32, abi.RISCV64:
 		return 4
 	default:
 		panic("unreachable")
 	}
+}
+
+// 全局变量或函数的地址
+func (p *_Assembler) symbolAddress(s string, labelMap map[string]int64) (int64, bool) {
+	// 优先查找局部的label
+	if len(labelMap) != 0 {
+		if x, ok := labelMap[s]; ok {
+			return x, true
+		}
+	}
+
+	// 查找全局的常量(只会引用整数类型)
+	for _, x := range p.file.Consts {
+		if x.Name == s {
+			return x.Value.ConstV.(int64), true
+		}
+	}
+
+	// 查找全局变量
+	for _, x := range p.file.Globals {
+		if x.Name == s {
+			return x.LinkInfo.Addr, true
+		}
+	}
+
+	// 查找全局函数
+	for _, x := range p.file.Funcs {
+		if x.Name == s {
+			return x.LinkInfo.Addr, true
+		}
+	}
+
+	// 查找失败
+	return 0, false
 }
