@@ -52,10 +52,9 @@ func (p *_Assembler) init(filename string, source []byte, opt *abi.LinkOptions) 
 	}
 
 	switch p.opt.CPU {
-	case abi.RISCV32:
+	case abi.RISCV32, abi.RISCV64:
+		// RISCV64 也是 4 字节对齐
 		p.defaultAlign = 4
-	case abi.RISCV64:
-		p.defaultAlign = 8
 	default:
 		panic("unreachable")
 	}
@@ -99,6 +98,7 @@ func (p *_Assembler) asmFile(filename string, source []byte, opt *abi.LinkOption
 
 	// 全局变量分配内存空间
 	for _, g := range p.file.Globals {
+		assert(g.Size > 0)
 		g.LinkInfo = &abi.LinkedSymbol{
 			Name: g.Name,
 			Addr: p.alloc(int64(g.Size), 0),
@@ -231,6 +231,7 @@ func (p *_Assembler) asmFunc(fn *ast.Func) (err error) {
 	return nil
 }
 
+// 计算函数指令需要的内存大小
 func (p *_Assembler) funcBodyLen(fn *ast.Func) (n int64) {
 	for _, inst := range fn.Body.Insts {
 		n += p.instLen(inst)
@@ -239,7 +240,7 @@ func (p *_Assembler) funcBodyLen(fn *ast.Func) (n int64) {
 }
 
 func (p *_Assembler) instLen(inst *ast.Instruction) int64 {
-	if inst.Label == "" && inst.As == 0 {
+	if inst.As == 0 {
 		return 0
 	}
 	switch p.opt.CPU {
@@ -294,7 +295,7 @@ func (p *_Assembler) asmGlobal(g *ast.Global) (err error) {
 			}
 		default:
 			assert(xInit.Lit.LitKind == token.STRING)
-			copy(g.LinkInfo.Data, []byte(xInit.Lit.LitString))
+			copy(g.LinkInfo.Data, []byte(xInit.Lit.ConstV.(string)))
 		}
 	}
 

@@ -84,11 +84,33 @@ func (p *parser) parseGlobal() *ast.Global {
 
 		if p.tok == token.IDENT {
 			initV.Symbal = p.parseIdent()
+			if g.Size == 0 {
+				g.Size = p.ptrSize()
+			}
 		} else {
 			initV.Lit = p.parseBasicLit()
+			if g.Size == 0 {
+				if initV.Lit.LitKind == token.STRING {
+					g.Size = len(initV.Lit.ConstV.(string))
+				} else {
+					switch tok := initV.Lit.TypeCast; tok {
+					case token.NONE:
+						panic("unreachable")
+					case token.PTR, token.PTR_zh:
+						g.Size = p.ptrSize()
+					default:
+						g.Size = int(tok.NumberTypeSize())
+					}
+				}
+
+			}
 		}
 		initV.Comment = p.parseTailComment(initV.Pos)
 		g.Init = []*ast.InitValue{initV}
+	}
+
+	if g.Size == 0 {
+		p.errorf(p.pos, "unknown global %s memory size", g.Name)
 	}
 
 	p.consumeSemicolonList()

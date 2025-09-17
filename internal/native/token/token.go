@@ -237,6 +237,27 @@ func (tok Token) DefaultNumberType() Token {
 	}
 }
 
+// 数值类型的内存大小(不含指针和字符串类型)
+func (tok Token) NumberTypeSize() Token {
+
+	switch tok {
+	case I32, I32_zh:
+		return 4
+	case I64, I64_zh:
+		return 8
+	case U32, U32_zh:
+		return 4
+	case U64, U64_zh:
+		return 8
+	case F32, F32_zh:
+		return 4
+	case F64, F64_zh:
+		return 8
+	default:
+		return 0
+	}
+}
+
 // 是否是导出的符号
 func IsExported(name string) bool {
 	ch := name[0]
