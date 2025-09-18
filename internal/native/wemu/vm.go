@@ -7,6 +7,7 @@ import (
 	"bufio"
 	"bytes"
 	"fmt"
+	"math"
 	"os"
 
 	"wa-lang.org/wa/internal/native/abi"
@@ -181,7 +182,7 @@ func (p *WEmu) DebugRun() error {
 				fmt.Println("invalid command")
 			}
 
-		case "regs", "r":
+		case "xregs", "x":
 			regStart := 0
 			regNum := len(p.CPU.RegX)
 			if n > 1 {
@@ -191,9 +192,37 @@ func (p *WEmu) DebugRun() error {
 				regNum = x2
 			}
 
-			fmt.Printf("PC = 0x%08X\n", p.CPU.PC)
+			fmt.Printf("PC  = 0x%08X\n", p.CPU.PC)
 			for i := regStart; i < len(p.CPU.RegX) && i < (regStart+regNum); i++ {
-				fmt.Printf("REG_X[%d] = 0x%08X\n", i, p.CPU.RegX[i])
+				reg, ok := riscv.LookupRegister(fmt.Sprintf("X%d", i))
+				if !ok {
+					break
+				}
+				fmt.Printf("X%-2d = 0x%08X # %s\n",
+					i, p.CPU.RegX[i], riscv.RegAliasString(reg),
+				)
+			}
+
+		case "fregs", "f":
+			regStart := 0
+			regNum := len(p.CPU.RegF)
+			if n > 1 {
+				regStart = x1
+			}
+			if n > 2 {
+				regNum = x2
+			}
+
+			fmt.Printf("PC  = 0x%08X\n", p.CPU.PC)
+			for i := regStart; i < len(p.CPU.RegX) && i < (regStart+regNum); i++ {
+				reg, ok := riscv.LookupRegister(fmt.Sprintf("F%d", i))
+				if !ok {
+					break
+				}
+				fmt.Printf("F%-2d = %v (0x%08X) # %s\n",
+					i, p.CPU.RegF[i], math.Float64bits(p.CPU.RegF[i]),
+					riscv.RegAliasString(reg),
+				)
 			}
 
 		case "iMem", "imem", "i":
@@ -277,7 +306,8 @@ func (p *WEmu) DebugHelp() string {
   g)o             run instructions until power off
   s)tep  <n>      run n (default 1) instructions
   j)ump  <b>      jump to the b (default is current location)
-  r)egs           print the contents of the registers
+  x)regs          print the contents of the int registers
+  f)regs          print the contents of the float registers
   i)Mem  <b <n>>  print n iMem locations starting at b
   d)Mem  <b <n>>  print n dMem locations starting at b
   a)lter <b <v>>  change the memory value at b
