@@ -20,13 +20,18 @@
 				stroke-width: 2;	/* 边线粗细 */
 				
 			}
+	
+			/* 确保动画以中心为原点 */
+			.animate-center {
+				transform-origin: center center;
+			}
 		</style>
 
 		<!-- ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
 
 		<!-- 眼睛 -->
 		<symbol id="eye" viewBox="0 0 150 50">
-			<use href="#eye-left" x="0" y="0" transform="scale(0.4)" />
+			<use href="#eye-left" x="00" y="0" transform="scale(0.4)" />
 			<use href="#eye-right" x="70" y="0" transform="scale(0.4)" />
 
 		</symbol>
@@ -40,24 +45,44 @@
 			<ellipse cx="28" cy="25" rx="15" ry="18" class="black-color" />
 
 			<!-- 瞳孔发高: 小星星 -->
-			<use href="#eye-simpleStar" x="30" y="25" transform="scale(0.5)" />
+			<use href="#eye-simpleStar" x="10" y="5" transform="scale(0.5)" class="animate-center">
+				<animateTransform 
+					attributeName="transform"
+					type="scale"
+					from="0.5"
+					to="1.2"
+					dur="2s"
+					repeatCount="indefinite"
+					additive="sum"
+				/>
+			</use>
 		</symbol>
 
 		<!-- 右眼睛, 需要手动和左眼睛保持同步 -->
 		<symbol id="eye-right" viewBox="0 0 50 50">
 			<ellipse cx="25" cy="25" rx="18" ry="20" class="white-color outline" />
 			<ellipse cx="22" cy="25" rx="15" ry="18" class="black-color" />
-			<use href="#eye-simpleStar" x="20" y="25" transform="scale(0.5)" />
+			<use href="#eye-simpleStar" x="0" y="5" transform="scale(0.5)" class="animate-center">
+				<animateTransform 
+					attributeName="transform"
+					type="scale"
+					from="0.5"
+					to="1.2"
+					dur="2s"
+					repeatCount="indefinite"
+					additive="sum"
+				/>
+			</use>
 		</symbol>
 		
 		<!-- 瞳孔的星星形状 -->
-		<symbol id="eye-simpleStar" viewBox="0 0 20 20">
+		<symbol id="eye-simpleStar" viewBox="-10 -10 20 20">
 			<polygon
 				class="face-color"
-				points="10,0 12.5,7.5 20,10 12.5,12.5 10,20 7.5,12.5 0,10 7.5,7.5"
+				points="0,-10 2.5,-2.5 10,0 2.5,2.5 0,10 -2.5,2.5 -10,0 -2.5,-2.5"
 			/>
 		</symbol>
-		
+
 		<!-- ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
 		
 		<!-- 嘴巴: TODO -->
