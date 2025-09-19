@@ -1,0 +1,95 @@
+<!-- 
+// 版权 @2025 凹语言 作者。保留所有权利。
+// https://wa-lang.org
+-->
+
+<svg width="400" height="400" viewBox="0 0 400 400" xmlns="http://www.w3.org/2000/svg">
+	<defs>
+		<!-- 定义样式 -->
+		<style>
+			.body-color { fill: #3498db; }  /* 身体蓝色 */
+			.face-color { fill: #f1c40f; }  /* 闪光黄色 */
+			.blush-color { fill: #e74c3c; } /* 脸颊红色 */
+			.mouse-color { fill: #e74c3c; } /* 脸颊红色 */
+			.white-color { fill: #ffffff; } /* 白色部分 */
+			.black-color { fill: #2c3e50; } /* 黑色瞳孔 */
+
+			/* 边线样式 */
+			.outline {
+				stroke: #1a3a1a;  /* 边线颜色 */
+				stroke-width: 2;	/* 边线粗细 */
+				
+			}
+		</style>
+
+		<!-- ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
+
+		<!-- 眼睛 -->
+		<symbol id="eye" viewBox="0 0 150 50">
+			<use href="#eye-left" x="0" y="0" transform="scale(0.4)" />
+			<use href="#eye-right" x="70" y="0" transform="scale(0.4)" />
+
+		</symbol>
+
+		<!-- 左眼睛 -->
+		<symbol id="eye-left" viewBox="0 0 50 50">
+			<!-- 眼球: 眼睛外部大椭圆 -->
+			<ellipse cx="25" cy="25" rx="18" ry="20" class="white-color outline" />
+
+			<!-- 瞳孔: 眼睛内部小椭圆 -->
+			<ellipse cx="28" cy="25" rx="15" ry="18" class="black-color" />
+
+			<!-- 瞳孔发高: 小星星 -->
+			<use href="#eye-simpleStar" x="30" y="25" transform="scale(0.5)" />
+		</symbol>
+
+		<!-- 右眼睛, 需要手动和左眼睛保持同步 -->
+		<symbol id="eye-right" viewBox="0 0 50 50">
+			<ellipse cx="25" cy="25" rx="18" ry="20" class="white-color outline" />
+			<ellipse cx="22" cy="25" rx="15" ry="18" class="black-color" />
+			<use href="#eye-simpleStar" x="20" y="25" transform="scale(0.5)" />
+		</symbol>
+		
+		<!-- 瞳孔的星星形状 -->
+		<symbol id="eye-simpleStar" viewBox="0 0 20 20">
+			<polygon
+				class="face-color"
+				points="10,0 12.5,7.5 20,10 12.5,12.5 10,20 7.5,12.5 0,10 7.5,7.5"
+			/>
+		</symbol>
+		
+		<!-- ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
+		
+		<!-- 嘴巴: TODO -->
+		<symbol id="mouse" viewBox="0 0 20 20">
+		</symbol>
+		
+		<!-- 身体: TODO -->
+		<symbol id="body" viewBox="0 0 20 20">
+		</symbol>
+		
+		<!-- 四肢: TODO -->
+		<symbol id="arm-leg" viewBox="0 0 20 20">
+		</symbol>
+
+		<!-- 尾部: TODO -->
+		<symbol id="tail" viewBox="0 0 20 20">
+		</symbol>
+		
+		<!-- 胸口装饰: TODO -->
+		<symbol id="logo" viewBox="0 0 20 20">
+		</symbol>
+		
+		<!-- 头发: TODO -->
+		<symbol id="hair" viewBox="0 0 20 20">
+		</symbol>
+		
+		<!-- 信号图标: TODO -->
+		<symbol id="wifi" viewBox="0 0 20 20">
+		</symbol>
+	</defs>
+
+	<!-- 组合主体 -->
+	<use href="#eye" x="0" y="0" width="200" height="200" />
+
+</svg>
