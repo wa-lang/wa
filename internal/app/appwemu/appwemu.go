@@ -6,6 +6,7 @@ package appwemu
 import (
 	"debug/elf"
 	"fmt"
+	"io"
 	"os"
 
 	"wa-lang.org/wa/internal/3rdparty/cli"
@@ -62,33 +63,31 @@ var CmdWEmu = &cli.Command{
 
 // 读取 elf 文件
 func readELF(filename string) (prog *abi.LinkedProgram, err error) {
+	prog = new(abi.LinkedProgram)
+
 	f, err := elf.Open(filename)
 	if err != nil {
-		panic(err)
+		return nil, err
 	}
 	defer f.Close()
 
-	prog = new(abi.LinkedProgram)
-	for _, sec := range f.Sections {
-		switch sec.Name {
-		case ".text":
-			prog.TextAddr = int64(sec.Addr)
-			if prog.TextData, err = sec.Data(); err != nil {
+	for _, p := range f.Progs {
+		if p.Type != elf.PT_LOAD || p.Flags&elf.PF_R == 0 {
+			continue // 跳过不可读部分
+		}
+
+		if p.Flags&elf.PF_X != 0 {
+			prog.TextAddr = int64(p.Vaddr)
+			prog.TextData = make([]byte, p.Filesz)
+			_, err := io.ReadFull(p.Open(), prog.TextData)
+			if err != nil {
 				return nil, err
 			}
-		case ".data":
-			prog.DataAddr = int64(sec.Addr)
-			if prog.DataData, err = sec.Data(); err != nil {
-				return nil, err
-			}
-		case ".rodata":
-			prog.RoDataAddr = int64(sec.Addr)
-			if prog.RoDataData, err = sec.Data(); err != nil {
-				return nil, err
-			}
-		case ".sdata":
-			prog.SDataAddr = int64(sec.Addr)
-			if prog.SDataData, err = sec.Data(); err != nil {
+		} else {
+			prog.DataAddr = int64(p.Vaddr)
+			prog.DataData = make([]byte, p.Filesz)
+			_, err := io.ReadFull(p.Open(), prog.DataData)
+			if err != nil {
 				return nil, err
 			}
 		}

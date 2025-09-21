@@ -35,11 +35,6 @@ type LinkedProgram struct {
 	TextData []byte // 程序段数据
 	DataAddr int64  // 数据段地址
 	DataData []byte // 数据段数据
-
-	RoDataAddr int64  // .rodata
-	RoDataData []byte // .rodata
-	SDataAddr  int64  // .sdata
-	SDataData  []byte // .sdata
 }
 
 // 寄存器类型

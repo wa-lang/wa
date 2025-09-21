@@ -59,14 +59,10 @@ func (p *WEmu) resetProgram() error {
 		return err
 	}
 	// 重新加载数据段
-	if err := p.Dram.Fill(uint64(p.Prog.DataAddr), p.Prog.DataData); err != nil {
-		return err
-	}
-	if err := p.Dram.Fill(uint64(p.Prog.RoDataAddr), p.Prog.RoDataData); err != nil {
-		return err
-	}
-	if err := p.Dram.Fill(uint64(p.Prog.SDataAddr), p.Prog.SDataData); err != nil {
-		return err
+	if len(p.Prog.DataData) != 0 {
+		if err := p.Dram.Fill(uint64(p.Prog.DataAddr), p.Prog.DataData); err != nil {
+			return err
+		}
 	}
 
 	// 重新设置PC和SP
