@@ -14,6 +14,7 @@ import (
 	"go/format"
 	"io"
 	"log"
+	"math/bits"
 	"os"
 )
 
@@ -82,10 +83,6 @@ func rev8(x uint8) (r uint8) {
 	return
 }
 
-func len8(x uint8) (n uint8) {
-	for x != 0 {
-		x >>= 1
-		n++
-	}
-	return
+func len8(x uint8) uint8 {
+	return uint8(bits.Len8(x))
 }
