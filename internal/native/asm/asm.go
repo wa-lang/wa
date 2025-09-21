@@ -147,16 +147,41 @@ func (p *_Assembler) asmFile(filename string, source []byte, opt *abi.LinkOption
 }
 
 func (p *_Assembler) asmFunc(fn *ast.Func) (err error) {
+	// 标签上下文信息
+	type LabelContext struct {
+		Name            string // 标签名称
+		PC              int64  // 对应的PC
+		Pcrel_hi_symbol string // 用于 %pcrel_lo(label) 查询
+	}
+
 	// 第一遍扫描Label, 生成对应的地址
-	labelAddrMap := make(map[string]int64)
+	labelContextMap := make(map[string]*LabelContext)
 	labelAddr := fn.LinkInfo.Addr
-	for _, inst := range fn.Body.Insts {
+	for i, inst := range fn.Body.Insts {
 		if inst.Label != "" {
-			labelAddrMap[inst.Label] = labelAddr
+			labelContextMap[inst.Label] = &LabelContext{
+				Name: inst.Label,
+				PC:   labelAddr,
+			}
 		}
 		if inst.As == 0 {
 			continue
 		}
+
+		// 记录 %pcrel_hi(symbol) 符号参数
+		if inst.Arg.SymbolDecor == abi.BuiltinFn_PCREL_HI {
+			for k := i; k >= 0; k-- {
+				if x := fn.Body.Insts[k]; x.Label != "" {
+					if labelCtx, ok := labelContextMap[x.Label]; ok {
+						if labelCtx.Pcrel_hi_symbol == "" {
+							labelCtx.Pcrel_hi_symbol = inst.Arg.Symbol
+						}
+					}
+					break
+				}
+			}
+		}
+
 		labelAddr += p.instLen(inst)
 	}
 
@@ -172,9 +197,26 @@ func (p *_Assembler) asmFunc(fn *ast.Func) (err error) {
 		// 因为指令长度的关系, 指令并不会直接访问符号对应的绝对地址
 		// 需要解决 %hi/%lo/%pcrel_hi/%pcrel_lo 等转化为最终可编码到指令的值
 		if inst.Arg.Symbol != "" {
-			addr, ok := p.symbolAddress(inst.Arg.Symbol, labelAddrMap)
-			if !ok {
-				panic(fmt.Errorf("symbol %q not found", inst.Arg.Symbol))
+			addr, ok := int64(0), bool(false)
+			if inst.Arg.SymbolDecor == abi.BuiltinFn_PCREL_LO {
+				labelCtx := labelContextMap[inst.Arg.Symbol]
+				if labelCtx == nil {
+					panic(fmt.Errorf("label %q not found", inst.Arg.Symbol))
+				}
+				addr, ok = p.symbolAddress(labelCtx.Pcrel_hi_symbol)
+				if !ok {
+					panic(fmt.Errorf("symbol %q not found", inst.Arg.Symbol))
+				}
+			} else {
+				labelCtx := labelContextMap[inst.Arg.Symbol]
+				if labelCtx != nil {
+					addr, ok = labelCtx.PC, true
+				} else {
+					addr, ok = p.symbolAddress(inst.Arg.Symbol)
+					if !ok {
+						panic(fmt.Errorf("symbol %q not found", inst.Arg.Symbol))
+					}
+				}
 			}
 
 			switch inst.Arg.SymbolDecor {
@@ -201,8 +243,8 @@ func (p *_Assembler) asmFunc(fn *ast.Func) (err error) {
 					inst.Arg.Imm = offset >> 12
 				}
 			case abi.BuiltinFn_PCREL_LO:
-				// BUG: 以下指令计算错误
-				// addi a0, a0, %pcrel_lo(_start)
+				// https://sourceware.org/binutils/docs/as/RISC_002dV_002dModifiers.html
+				// https://stackoverflow.com/questions/65879012/what-do-pcrel-hi-and-pcrel-lo-actually-do
 				offset := int32(addr - pc)
 				inst.Arg.Imm = offset & 0xFFF
 			default:
@@ -254,7 +296,7 @@ func (p *_Assembler) instLen(inst *ast.Instruction) int64 {
 func (p *_Assembler) asmGlobal(g *ast.Global) (err error) {
 	for _, xInit := range g.Init {
 		if xInit.Symbal != "" {
-			v, ok := p.symbolAddress(xInit.Symbal, nil)
+			v, ok := p.symbolAddress(xInit.Symbal)
 			if !ok {
 				panic(fmt.Errorf("symbol %q not found", xInit.Symbal))
 			}
@@ -305,14 +347,7 @@ func (p *_Assembler) asmGlobal(g *ast.Global) (err error) {
 }
 
 // 全局变量或函数的地址
-func (p *_Assembler) symbolAddress(s string, labelMap map[string]int64) (int64, bool) {
-	// 优先查找局部的label
-	if len(labelMap) != 0 {
-		if x, ok := labelMap[s]; ok {
-			return x, true
-		}
-	}
-
+func (p *_Assembler) symbolAddress(s string) (int64, bool) {
 	// 查找全局的常量(只会引用整数类型)
 	for _, x := range p.file.Consts {
 		if x.Name == s {

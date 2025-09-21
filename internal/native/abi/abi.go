@@ -55,7 +55,7 @@ const (
 	BuiltinFn_HI       = iota + 1 // %hi(symbol) # 绝对地址 HI20, 指令 lui
 	BuiltinFn_LO                  // %lo(symbol) # 绝对地址 LO12, 指令 load/store/add
 	BuiltinFn_PCREL_HI            // %pcrel_hi(symbol) # PC相对地址 HI20, auipc
-	BuiltinFn_PCREL_LO            // %pcrel_lo(symbol) # PC相对地址 LO12, load/store/add
+	BuiltinFn_PCREL_LO            // %pcrel_lo(label)  # label 对应的指令中, 计算出的PC相对地址的 LO12 部分, 参数必须是 label
 )
 
 // 指令参数
