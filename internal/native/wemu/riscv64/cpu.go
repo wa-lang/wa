@@ -21,14 +21,14 @@ type CPU struct {
 }
 
 // 构建处理器
-func (p *CPU) NewCPU() *CPU {
+func NewCPU() *CPU {
 	return new(CPU)
 }
 
 // 重置CPU
 func (p *CPU) Reset(pc, sp uint64) {
 	*p = CPU{}
-	p.RegX[riscv.REG_SP] = sp
+	p.RegX[riscv.RegI(riscv.REG_SP)] = sp
 	p.PC = pc
 }
 
@@ -59,7 +59,10 @@ func (p *CPU) execInst(bus *device.Bus, as abi.As, arg *abi.AsRawArgument) error
 	p.RegX[0] = 0
 	p.RegF[0] = 0
 
-	// 调整PC
+	// 当前的PC
+	curPC := p.PC
+
+	// 调整PC(少数跳转指令会覆盖)
 	p.PC += 4
 
 	// 执行指令
@@ -72,38 +75,40 @@ func (p *CPU) execInst(bus *device.Bus, as abi.As, arg *abi.AsRawArgument) error
 	case riscv.ALUI:
 		p.RegX[arg.Rd] = uint64(arg.Imm << 12)
 	case riscv.AAUIPC:
-		p.RegX[arg.Rd] = uint64(p.PC) + uint64(arg.Imm) - 4
+		p.RegX[arg.Rd] = curPC + uint64(arg.Imm)
 	case riscv.AJAL:
-		t := p.PC
-		p.PC = p.PC + uint64(arg.Imm) - 4
-		p.RegX[arg.Rd] = t
+		// rd 寄存器先保存下一个指令对应的 PC
+		p.RegX[arg.Rd] = p.PC
+		// 然后根据当前指令对应的 PC 计算出跳转地址覆盖当前的 PC
+		p.PC = curPC + uint64(arg.Imm)
 	case riscv.AJALR:
-		t := p.PC
+		// rd 寄存器先保存下一个指令对应的 PC
+		p.RegX[arg.Rd] = p.PC
+		// 然后根据计算出跳转地址覆盖当前的 PC
 		p.PC = p.RegX[arg.Rs1] + uint64(arg.Imm)
-		p.RegX[arg.Rd] = t
 	case riscv.ABEQ:
 		if p.RegX[arg.Rs1] == p.RegX[arg.Rs2] {
-			p.PC = p.PC + uint64(arg.Imm) - 4
+			p.PC = curPC + uint64(arg.Imm)
 		}
 	case riscv.ABNE:
 		if p.RegX[arg.Rs1] != p.RegX[arg.Rs2] {
-			p.PC = p.PC + uint64(arg.Imm) - 4
+			p.PC = curPC + uint64(arg.Imm)
 		}
 	case riscv.ABLT:
 		if int64(p.RegX[arg.Rs1]) < int64(p.RegX[arg.Rs2]) {
-			p.PC = p.PC + uint64(arg.Imm) - 4
+			p.PC = curPC + uint64(arg.Imm)
 		}
 	case riscv.ABGE:
 		if int64(p.RegX[arg.Rs1]) > int64(p.RegX[arg.Rs2]) {
-			p.PC = p.PC + uint64(arg.Imm) - 4
+			p.PC = curPC + uint64(arg.Imm)
 		}
 	case riscv.ABLTU:
 		if p.RegX[arg.Rs1] < p.RegX[arg.Rs2] {
-			p.PC = p.PC + uint64(arg.Imm) - 4
+			p.PC = curPC + uint64(arg.Imm)
 		}
 	case riscv.ABGEU:
 		if p.RegX[arg.Rs1] > p.RegX[arg.Rs2] {
-			p.PC = p.PC + uint64(arg.Imm) - 4
+			p.PC = curPC + uint64(arg.Imm)
 		}
 	case riscv.ALB:
 		addr := p.RegX[arg.Rs1] + uint64(arg.Imm)

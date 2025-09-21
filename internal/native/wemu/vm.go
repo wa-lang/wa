@@ -70,8 +70,7 @@ func (p *WEmu) resetProgram() error {
 	}
 
 	// 重新设置PC和SP
-	p.CPU.PC = uint64(p.Prog.TextAddr)
-	p.CPU.RegX[riscv.REG_SP] = p.Dram.AddrEnd()
+	p.CPU.Reset(uint64(p.Prog.TextAddr), p.Dram.AddrEnd())
 	return nil
 }
 
