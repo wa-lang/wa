@@ -5,9 +5,13 @@ WA:=go run ../../../../main.go
 
 run:
 	$(WA) rv2elf hello_riscv64.ws
-	
+
+	qemu-system-riscv64 -machine virt -nographic -bios none -kernel hello_riscv64.ws.elf.exe
+
 run-zh:
-	$(WA) -debug rv2elf hello_riscv64_zh.ws
+	$(WA) rv2elf hello_riscv64_zh.ws
+
+	qemu-system-riscv64 -machine virt -nographic -bios none -kernel hello_riscv64_zh.ws.elf.exe
 
 fmt:
 	$(WA) fmt -riscv hello_riscv64_zh.ws > a.out.ws

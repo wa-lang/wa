@@ -6,13 +6,14 @@
 常量 $EXIT_DEVICE = 0x100000
 
 # 用于输出的字符串
-全局 $message = "Hello RISC-V Baremetal!\n"
+全局 $message = "Hello RISC-V Baremetal!\n\x00"
 
 # 主函数
 函数 _start {
+%begin:
     # a0 = 字符串地址
     auipc   a0, %pcrel_hi($message)    # 高20位 = 当前PC + 偏移
-    addi    a0, a0, %pcrel_lo(_start)  # 低12位
+    addi    a0, a0, %pcrel_lo(%begin)  # 低12位
 
 %print_loop:
     lbu  a1, 0(a0)         # 取一个字节

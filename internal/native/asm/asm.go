@@ -197,12 +197,14 @@ func (p *_Assembler) asmFunc(fn *ast.Func) (err error) {
 		// 因为指令长度的关系, 指令并不会直接访问符号对应的绝对地址
 		// 需要解决 %hi/%lo/%pcrel_hi/%pcrel_lo 等转化为最终可编码到指令的值
 		if inst.Arg.Symbol != "" {
+			PCREL_LO_PC := pc // 可能不是当前的 pc
 			addr, ok := int64(0), bool(false)
 			if inst.Arg.SymbolDecor == abi.BuiltinFn_PCREL_LO {
 				labelCtx := labelContextMap[inst.Arg.Symbol]
 				if labelCtx == nil {
 					panic(fmt.Errorf("label %q not found", inst.Arg.Symbol))
 				}
+				PCREL_LO_PC = labelCtx.PC
 				addr, ok = p.symbolAddress(labelCtx.Pcrel_hi_symbol)
 				if !ok {
 					panic(fmt.Errorf("symbol %q not found", inst.Arg.Symbol))
@@ -245,7 +247,7 @@ func (p *_Assembler) asmFunc(fn *ast.Func) (err error) {
 			case abi.BuiltinFn_PCREL_LO:
 				// https://sourceware.org/binutils/docs/as/RISC_002dV_002dModifiers.html
 				// https://stackoverflow.com/questions/65879012/what-do-pcrel-hi-and-pcrel-lo-actually-do
-				offset := int32(addr - pc)
+				offset := int32(addr - PCREL_LO_PC)
 				inst.Arg.Imm = offset & 0xFFF
 			default:
 				// 因为riscv指令只有32bit宽度, 默认是无法完全编码绝对地址的
