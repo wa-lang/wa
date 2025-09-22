@@ -81,6 +81,77 @@ var _Register = []string{
 	REG_F31: "F31",
 }
 
+// 寄存器名字列表(中文)
+var _ZhRegister = []string{
+	// 通用寄存器
+	REG_X0:  "甲格",
+	REG_X1:  "乙格",
+	REG_X2:  "丙格",
+	REG_X3:  "丁格",
+	REG_X4:  "戊格",
+	REG_X5:  "己格",
+	REG_X6:  "庚格",
+	REG_X7:  "辛格",
+	REG_X8:  "壬格",
+	REG_X9:  "癸格",
+	REG_X10: "子格",
+	REG_X11: "丑格",
+	REG_X12: "寅格",
+	REG_X13: "卯格",
+	REG_X14: "辰格",
+	REG_X15: "巳格",
+	REG_X16: "午格",
+	REG_X17: "未格",
+	REG_X18: "申格",
+	REG_X19: "酉格",
+	REG_X20: "戌格",
+	REG_X21: "亥格",
+	REG_X22: "乾格",
+	REG_X23: "坤格",
+	REG_X24: "震格",
+	REG_X25: "巽格",
+	REG_X26: "坎格",
+	REG_X27: "离格",
+	REG_X28: "艮格",
+	REG_X29: "兑格",
+	REG_X30: "阴格",
+	REG_X31: "阳格",
+
+	// 浮点数寄存器(F/D扩展)
+	REG_F0:  "甲皿",
+	REG_F1:  "乙皿",
+	REG_F2:  "丙皿",
+	REG_F3:  "丁皿",
+	REG_F4:  "戊皿",
+	REG_F5:  "己皿",
+	REG_F6:  "庚皿",
+	REG_F7:  "辛皿",
+	REG_F8:  "壬皿",
+	REG_F9:  "癸皿",
+	REG_F10: "子皿",
+	REG_F11: "丑皿",
+	REG_F12: "寅皿",
+	REG_F13: "卯皿",
+	REG_F14: "辰皿",
+	REG_F15: "巳皿",
+	REG_F16: "午皿",
+	REG_F17: "未皿",
+	REG_F18: "申皿",
+	REG_F19: "酉皿",
+	REG_F20: "戌皿",
+	REG_F21: "亥皿",
+	REG_F22: "乾皿",
+	REG_F23: "坤皿",
+	REG_F24: "震皿",
+	REG_F25: "巽皿",
+	REG_F26: "坎皿",
+	REG_F27: "离皿",
+	REG_F28: "艮皿",
+	REG_F29: "兑皿",
+	REG_F30: "阴皿",
+	REG_F31: "阳皿",
+}
+
 // 寄存器别名
 var _RegisterAlias = []string{
 	REG_ZERO: "ZERO", // 零寄存器
@@ -148,6 +219,73 @@ var _RegisterAlias = []string{
 	REG_FT9:  "FT9",  // 临时变量
 	REG_FT10: "FT10", // 临时变量
 	REG_FT11: "FT11", // 临时变量
+}
+var _ZhRegisterAlias = []string{
+	REG_ZERO: "零格",  // 零寄存器
+	REG_RA:   "回格",  // 返回地址
+	REG_SP:   "栈格",  // 栈指针
+	REG_GP:   "基格",  // 全局基指针
+	REG_TP:   "线格",  // 线程指针
+	REG_T0:   "暂甲格", // 临时变量
+	REG_T1:   "暂乙格", // 临时变量
+	REG_T2:   "暂丙格", // 临时变量
+	REG_S0:   "守甲格", // Saved register, 帧指针
+	REG_S1:   "守乙格", // Saved register
+	REG_A0:   "参甲格", // 函数参数/返回值
+	REG_A1:   "参乙格", // 函数参数/返回值
+	REG_A2:   "参丙格", // 函数参数
+	REG_A3:   "参丁格", // 函数参数
+	REG_A4:   "参戊格", // 函数参数
+	REG_A5:   "参己格", // 函数参数
+	REG_A6:   "参庚格", // 函数参数
+	REG_A7:   "参辛格", // 函数参数
+	REG_S2:   "守丙格", // Saved register
+	REG_S3:   "守丁格", // Saved register
+	REG_S4:   "守戊格", // Saved register
+	REG_S5:   "守己格", // Saved register
+	REG_S6:   "守庚格", // Saved register
+	REG_S7:   "守辛格", // Saved register
+	REG_S8:   "守壬格", // Saved register
+	REG_S9:   "守癸格", // Saved register
+	REG_S10:  "守子格", // Saved register
+	REG_S11:  "守丑格", // Saved register
+	REG_T3:   "暂丁格", // 临时变量
+	REG_T4:   "暂戊格", // 临时变量
+	REG_T5:   "暂己格", // 临时变量
+	REG_T6:   "暂庚格", // 临时变量
+
+	REG_FT0:  "暂甲皿", // 临时变量
+	REG_FT1:  "暂乙皿", // 临时变量
+	REG_FT2:  "暂丙皿", // 临时变量
+	REG_FT3:  "暂丁皿", // 临时变量
+	REG_FT4:  "暂戊皿", // 临时变量
+	REG_FT5:  "暂己皿", // 临时变量
+	REG_FT6:  "暂庚皿", // 临时变量
+	REG_FT7:  "暂辛皿", // 临时变量
+	REG_FS0:  "守甲皿", // Saved register
+	REG_FS1:  "守乙皿", // Saved register
+	REG_FA0:  "参甲皿", // 函数参数/返回值
+	REG_FA1:  "参乙皿", // 函数参数/返回值
+	REG_FA2:  "参丙皿", // 函数参数
+	REG_FA3:  "参丁皿", // 函数参数
+	REG_FA4:  "参戊皿", // 函数参数
+	REG_FA5:  "参己皿", // 函数参数
+	REG_FA6:  "参庚皿", // 函数参数
+	REG_FA7:  "参辛皿", // 函数参数
+	REG_FS2:  "守丙皿", // Saved register
+	REG_FS3:  "守丁皿", // Saved register
+	REG_FS4:  "守戊皿", // Saved register
+	REG_FS5:  "守己皿", // Saved register
+	REG_FS6:  "守庚皿", // Saved register
+	REG_FS7:  "守辛皿", // Saved register
+	REG_FS8:  "守壬皿", // Saved register
+	REG_FS9:  "守癸皿", // Saved register
+	REG_FS10: "守子皿", // Saved register
+	REG_FS11: "守丑皿", // Saved register
+	REG_FT8:  "暂壬皿", // 临时变量
+	REG_FT9:  "暂癸皿", // 临时变量
+	REG_FT10: "暂子皿", // 临时变量
+	REG_FT11: "暂丑皿", // 临时变量
 }
 
 // 指令的名字

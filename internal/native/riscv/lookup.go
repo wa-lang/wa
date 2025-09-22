@@ -16,7 +16,17 @@ func LookupRegister(regName string) (r abi.RegType, ok bool) {
 			return abi.RegType(i), true
 		}
 	}
+	for i, s := range _ZhRegister {
+		if strEqualFold(s, regName) {
+			return abi.RegType(i), true
+		}
+	}
 	for i, s := range _RegisterAlias {
+		if strEqualFold(s, regName) {
+			return abi.RegType(i), true
+		}
+	}
+	for i, s := range _ZhRegisterAlias {
 		if strEqualFold(s, regName) {
 			return abi.RegType(i), true
 		}
@@ -34,11 +44,28 @@ func RegString(r abi.RegType) string {
 	}
 	return fmt.Sprintf("riscv.badreg(%d)", r)
 }
+func ZhRegString(r abi.RegType) string {
+	switch {
+	case REG_X0 <= r && r <= REG_X31:
+		return _ZhRegister[r]
+	case REG_F0 <= r && r <= REG_F31:
+		return _ZhRegister[r]
+	}
+	return fmt.Sprintf("riscv.badreg(%d)", r)
+}
 
 // 寄存器别名
 func RegAliasString(r abi.RegType) string {
 	if r >= REG_X0 && r < REG_END {
 		if s := _RegisterAlias[r]; s != "" {
+			return s
+		}
+	}
+	return RegString(r)
+}
+func ZhRegAliasString(r abi.RegType) string {
+	if r >= REG_X0 && r < REG_END {
+		if s := _ZhRegisterAlias[r]; s != "" {
 			return s
 		}
 	}

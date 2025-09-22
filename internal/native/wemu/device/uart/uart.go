@@ -4,7 +4,10 @@
 // 串口设备
 package uart
 
-import "fmt"
+import (
+	"fmt"
+	"unicode/utf8"
+)
 
 // 默认的地址
 const (
@@ -27,14 +30,16 @@ type UART struct {
 	addr uint64
 	data []byte
 
-	rx    uint8 // 最近接收到的字符
-	tx    uint8 // 最近写出的字符
-	hasRX bool  // 是否有待读数据(需要通过其他Goroutine管道传入)
+	rx      uint8 // 最近接收到的字符
+	tx      uint8 // 最近写出的字符
+	hasRX   bool  // 是否有待读数据(需要通过其他Goroutine管道传入)
+	utf8Buf []byte
 }
 
 func NewUART(name string, addr uint64) *UART {
 	u := &UART{name: name, addr: addr}
 	u.data = make([]byte, UART_SIZE)
+	u.utf8Buf = make([]byte, 0, 4)
 	return u
 }
 
@@ -74,7 +79,12 @@ func (p *UART) Write(addr, size, value uint64) error {
 	switch addr - p.addr {
 	case UART_RHR: // THR
 		p.tx = uint8(value)
-		fmt.Printf("%c", p.tx)
+		p.utf8Buf = append(p.utf8Buf, p.tx)
+		if utf8.FullRune(p.utf8Buf) {
+			r, _ := utf8.DecodeRune(p.utf8Buf)
+			p.utf8Buf = p.utf8Buf[:0]
+			fmt.Printf("%c", r)
+		}
 		return nil
 	case UART_LCR: // LCR
 		return nil

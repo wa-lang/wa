@@ -25,6 +25,15 @@ func (fn BuiltinFn) String() string {
 		return "%pcrel_hi"
 	case BuiltinFn_PCREL_LO:
 		return "%pcrel_lo"
+
+	case BuiltinFn_HI_zh:
+		return "%高位"
+	case BuiltinFn_LO_zh:
+		return "%低位"
+	case BuiltinFn_PCREL_HI_zh:
+		return "%程隅高位"
+	case BuiltinFn_PCREL_LO_zh:
+		return "%程隅低位"
 	}
 	return fmt.Sprintf("abi.BuiltinFn(%d)", int(fn))
 }

@@ -1,45 +1,45 @@
 # Copyright (C) 2025 武汉凹语言科技有限公司
 # SPDX-License-Identifier: AGPL-3.0-or-later
 
-# QEMU virt 机器 UART0 和 exit device 的基地址
-常量 $UART0 = 0x10000000
-常量 $EXIT_DEVICE = 0x100000
+# QEMU virt 机器 串口 和 关机 的基地址
+常量 $串口 = 0x10000000
+常量 $关机 = 0x100000
 
 # 用于输出的字符串
-全局 $message = "Hello RISC-V Baremetal!\n\x00"
+全局 $信札 = "你好, 睿斯克发威裸金属(RISC-V Baremetal)!\n\x00"
 
 # 主函数
 函数 _start {
-%begin:
-    # a0 = 字符串地址
-    auipc   a0, %pcrel_hi($message)    # 高20位 = 当前PC + 偏移
-    addi    a0, a0, %pcrel_lo(%begin)  # 低12位
+%开篇:
+    # 参甲格 = 字符串地址
+    auipc   参甲格, %程隅高位($信札)         # 高20位 = 当前PC + 偏移
+    addi    参甲格, 参甲格, %程隅低位(%开篇)  # 低12位
 
-%print_loop:
-    lbu  a1, 0(a0)         # 取一个字节
-    beq  a1, x0, %finished # 如果是0则结束
+%精卫填海:
+    lbu  参乙格, 0(参甲格)         # 取一个字节
+    beq  参乙格, 零格, %收工 # 如果是0则结束
 
-    # t0 = UART0 地址
-    lui     t0, %hi($UART0)           # UART0 高20位
-    addi    t0, t0, %lo($UART0)       # UART0 低12位
+    # 暂甲格 = 串口 地址
+    lui     暂甲格, %高位($串口)           # 串口 高20位
+    addi    暂甲格, 暂甲格, %低位($串口)   # 串口 低12位
 
-    sb   a1, 0(t0)        # 写到UART寄存器
-    addi a0, a0, 1        # 下一个字符
-    jal  x0, %print_loop
+    sb   参乙格, 0(暂甲格)        # 写到UART寄存器
+    addi 参甲格, 参甲格, 1        # 下一个字符
+    jal  零格, %精卫填海
 
-%finished:
+%收工:
     # 写退出码 0 到 EXIT_DEVICE让,  QEMU 退出
-    lui     t0, %hi($EXIT_DEVICE)     # exit device 地址
-    addi    t0, t0, %lo($EXIT_DEVICE)
+    lui     暂甲格, %高位($关机)     # exit device 地址
+    addi    暂甲格, 暂甲格, %低位($关机)
 
-    # t1 = 0x5555
+    # 暂乙格 = 0x5555
     # addi rd, rs1, imm 的 imm 范围是 [-2048, +2047](12 位有符号立即数)
-    lui   t1, 0x5             # 高 20 位 (0x5 << 12 = 0x5000)
-    addi  t1, t1, 0x555       # 结果 = 0x5000 + 0x555 = 0x5555
+    lui   暂乙格, 0x5             # 高 20 位 (0x5 << 12 = 0x5000)
+    addi  暂乙格, 暂乙格, 0x555   # 结果 = 0x5000 + 0x555 = 0x5555
 
-    sw   t1, 0(t0)
+    sw   暂乙格, 0(暂甲格)
 
     # 如果 QEMU 不支持 exit 设备，就进入并死循环
-%forever:
-    jal x0, %forever
+%苦海:
+    jal 零格, %苦海
 }

@@ -1269,6 +1269,15 @@ func (p *parser) parseInst_riscv_immAddr(inst *ast.Instruction) {
 		inst.Arg.SymbolDecor = abi.BuiltinFn_PCREL_HI
 	case "%pcrel_lo":
 		inst.Arg.SymbolDecor = abi.BuiltinFn_PCREL_LO
+
+	case "%高位":
+		inst.Arg.SymbolDecor = abi.BuiltinFn_HI_zh
+	case "%低位":
+		inst.Arg.SymbolDecor = abi.BuiltinFn_LO_zh
+	case "%程隅高位":
+		inst.Arg.SymbolDecor = abi.BuiltinFn_PCREL_HI_zh
+	case "%程隅低位":
+		inst.Arg.SymbolDecor = abi.BuiltinFn_PCREL_LO_zh
 	default:
 		p.errorf(pos, "unknow symbol decorator %s", symbolOrDecor)
 	}

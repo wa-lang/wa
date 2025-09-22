@@ -169,7 +169,7 @@ func (p *_Assembler) asmFunc(fn *ast.Func) (err error) {
 		}
 
 		// 记录 %pcrel_hi(symbol) 符号参数
-		if inst.Arg.SymbolDecor == abi.BuiltinFn_PCREL_HI {
+		if inst.Arg.SymbolDecor == abi.BuiltinFn_PCREL_HI || inst.Arg.SymbolDecor == abi.BuiltinFn_PCREL_HI_zh {
 			for k := i; k >= 0; k-- {
 				if x := fn.Body.Insts[k]; x.Label != "" {
 					if labelCtx, ok := labelContextMap[x.Label]; ok {
@@ -199,7 +199,7 @@ func (p *_Assembler) asmFunc(fn *ast.Func) (err error) {
 		if inst.Arg.Symbol != "" {
 			PCREL_LO_PC := pc // 可能不是当前的 pc
 			addr, ok := int64(0), bool(false)
-			if inst.Arg.SymbolDecor == abi.BuiltinFn_PCREL_LO {
+			if inst.Arg.SymbolDecor == abi.BuiltinFn_PCREL_LO || inst.Arg.SymbolDecor == abi.BuiltinFn_PCREL_LO_zh {
 				labelCtx := labelContextMap[inst.Arg.Symbol]
 				if labelCtx == nil {
 					panic(fmt.Errorf("label %q not found", inst.Arg.Symbol))
@@ -222,7 +222,7 @@ func (p *_Assembler) asmFunc(fn *ast.Func) (err error) {
 			}
 
 			switch inst.Arg.SymbolDecor {
-			case abi.BuiltinFn_HI: // 高20bit
+			case abi.BuiltinFn_HI, abi.BuiltinFn_HI_zh: // 高20bit
 				x := int32(addr)
 				// 检查 lo(x) 的符号位（第 11 位）
 				// (x & 0x800) == 0x800 等价于 (x << 20) >> 31 == -1
@@ -232,11 +232,11 @@ func (p *_Assembler) asmFunc(fn *ast.Func) (err error) {
 				} else {
 					inst.Arg.Imm = x >> 12
 				}
-			case abi.BuiltinFn_LO: // 低12bit
+			case abi.BuiltinFn_LO, abi.BuiltinFn_LO_zh: // 低12bit
 				x := int32(addr)
 				// 简单地取低 12 位
 				inst.Arg.Imm = x & 0xFFF
-			case abi.BuiltinFn_PCREL_HI:
+			case abi.BuiltinFn_PCREL_HI, abi.BuiltinFn_PCREL_HI_zh:
 				offset := int32(addr - pc)
 				// 检查 lo(offset) 的符号位
 				if (offset & 0x800) == 0x800 {
@@ -244,7 +244,7 @@ func (p *_Assembler) asmFunc(fn *ast.Func) (err error) {
 				} else {
 					inst.Arg.Imm = offset >> 12
 				}
-			case abi.BuiltinFn_PCREL_LO:
+			case abi.BuiltinFn_PCREL_LO, abi.BuiltinFn_PCREL_LO_zh:
 				// https://sourceware.org/binutils/docs/as/RISC_002dV_002dModifiers.html
 				// https://stackoverflow.com/questions/65879012/what-do-pcrel-hi-and-pcrel-lo-actually-do
 				offset := int32(addr - PCREL_LO_PC)
