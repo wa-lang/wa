@@ -187,41 +187,50 @@ Loop:
 
 - `ADD X1, X2, X3 # X1 = X2 + X3`
 
-## 例子
+## 例子(中文版)
 
 QEMU 裸机输出字符串的例子:
 
 ```go
-# QEMU virt 机器 UART0 和 exit device 的基地址
-const $UART0       = 0x10000000
-const $EXIT_DEVICE = 0x100000
+# 兼容 QEMU virt 机器的 串口 和 关机 设备地址
+常量 $串口 = 0x10000000
+常量 $关机 = 0x100000
 
-# 字符串
-global $message = "Hello RISC-V Baremetal!\n"
+# 用于输出的字符串
+全局 $信札 = "你好, 睿斯克发威 裸金属(RISC-V Baremetal)!\n\x00"
 
 # 主函数
-func $main() {
-%start:
-    # a0 = 字符串地址
-    MOVQ a1, $message
+函数 _启动 {
+%开篇:
+    # 参甲格 = 字符串地址
+    auipc   参甲格, %相对高位($信札)         # 高20位 = 当前PC + 偏移
+    addi    参甲格, 参甲格, %相对低位(%开篇)  # 低12位
 
-%print_loop:
-    lbu  a1, 0(a0)        # 取一个字节
-    beq  a1, x0, finished # 如果是0则结束
-   
-    MOVQ t0, $UART0       # t0 = $UART0 地址
-    sb   a1, 0(t0)        # 写到UART寄存器
-    addi a0, a0, 1        # 下一个字符
-    jal  x0, %print_loop
+%精卫填海:
+    lbu  参乙格, 0(参甲格)   # 取一个字节
+    beq  参乙格, 零格, %收工 # 如果是0则结束
 
-%finished:
-    # 写退出码 0 到 EXIT_DEVICE，让 QEMU 退出
-    MOVQ t0, $EXIT_DEVICE  # t0 = $EXIT_DEVICE
-    MOVQ t1, 0x5555        # t1 = 0x5555
-    sw t1, 0(t0)           # [t0] = t1
+    # 暂甲格 = 串口 地址
+    lui     暂甲格, %高位($串口)           # 串口 高20位
+    addi    暂甲格, 暂甲格, %低位($串口)   # 串口 低12位
 
-%forever:
-    # 如果 QEMU 不支持 exit 设备，就进入并死循环
-    jal x0, %forever
+    sb   参乙格, 0(暂甲格)        # 写到 串口 寄存器
+    addi 参甲格, 参甲格, 1        # 下一个字符
+    jal  零格, %精卫填海
+
+%收工:
+    # 写退出码 0 到 关机 寄存器, 退出模拟器
+    lui     暂甲格, %高位($关机)     # 关机寄存器地址
+    addi    暂甲格, 暂甲格, %低位($关机)
+
+    # 暂乙格 = 0x5555
+    lui   暂乙格, 0x5             # 高 20 位 (0x5 << 12 = 0x5000)
+    addi  暂乙格, 暂乙格, 0x555   # 结果 = 0x5000 + 0x555 = 0x5555
+
+    sw   暂乙格, 0(暂甲格)
+
+    # 如果不支持 关机设备，就进入 苦海无边 死循环
+%苦海:
+    jal 零格, %苦海
 }
 ```

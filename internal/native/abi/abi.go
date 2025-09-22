@@ -3,6 +3,12 @@
 
 package abi
 
+// 默认的入口函数
+const (
+	DefaultEntryFunc   = "_start"
+	DefaultEntryFuncZh = "_启动"
+)
+
 // CPU类型
 // 对应不同的汇编指令
 type CPUType int
@@ -14,9 +20,10 @@ const (
 
 // 链接参数
 type LinkOptions struct {
-	CPU      CPUType // CPU类型
-	DRAMBase int64   // 代码段开始地址
-	DRAMSize int64   // 数据段开始地址
+	CPU       CPUType // CPU类型
+	DRAMBase  int64   // 代码段开始地址
+	DRAMSize  int64   // 数据段开始地址
+	EntryFunc string  // 入口函数
 }
 
 // 链接后的符号

@@ -122,21 +122,53 @@ func (p *_Assembler) asmFile(filename string, source []byte, opt *abi.LinkOption
 
 	// 收集全部信息
 	{
-		p.prog.TextAddr = opt.DRAMBase
-		if len(p.file.Funcs) > 0 {
-			p.prog.TextAddr = p.file.Funcs[0].LinkInfo.Addr
+		p.prog.TextAddr = 0
+
+		// 优先查找指定的入口函数
+		if opt.EntryFunc != "" {
+			for _, fn := range p.file.Funcs {
+				if fn.Name == opt.EntryFunc {
+					p.prog.TextAddr = fn.LinkInfo.Addr
+				}
+			}
 		}
 
+		// 然后查找默认的入口函数(中文)
+		if p.prog.TextAddr == 0 {
+			for _, fn := range p.file.Funcs {
+				if fn.Name == abi.DefaultEntryFuncZh {
+					p.prog.TextAddr = fn.LinkInfo.Addr
+				}
+			}
+		}
+
+		// 然后查找默认的入口函数(英文)
+		if p.prog.TextAddr == 0 {
+			for _, fn := range p.file.Funcs {
+				if fn.Name == abi.DefaultEntryFunc {
+					p.prog.TextAddr = fn.LinkInfo.Addr
+				}
+			}
+		}
+
+		// 查找失败
+		if p.prog.TextAddr == 0 {
+			return nil, fmt.Errorf("entry %q not found", opt.EntryFunc)
+		}
+
+		// data 段地址
 		p.prog.DataAddr = opt.DRAMBase
 		if len(p.file.Globals) > 0 {
 			p.prog.DataAddr = p.file.Globals[0].LinkInfo.Addr
 		}
 
+		// text 段数据
 		p.prog.TextData = nil
 		for _, fn := range p.file.Funcs {
 			p.prog.TextData = append(p.prog.TextData, fn.LinkInfo.Data...)
 		}
 
+		// data 段数据
 		p.prog.DataData = nil
 		for _, g := range p.file.Globals {
 			p.prog.DataData = append(p.prog.DataData, g.LinkInfo.Data...)

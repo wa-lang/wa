@@ -42,6 +42,11 @@ var CmdRv2elf = &cli.Command{
 			Usage: "set DRAM size",
 			Value: dram.DRAM_SIZE,
 		},
+		&cli.StringFlag{
+			Name:  "entry",
+			Usage: "set entry func name",
+			Value: "",
+		},
 	},
 	Action: func(c *cli.Context) error {
 		if c.NArg() == 0 {
@@ -65,6 +70,9 @@ var CmdRv2elf = &cli.Command{
 		default:
 			fmt.Printf("unknown arch: %s\n", arch)
 			os.Exit(1)
+		}
+		if s := c.String("entry"); s != "" {
+			opt.EntryFunc = s
 		}
 
 		if outfile == "" {
