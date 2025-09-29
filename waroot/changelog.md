@@ -2,6 +2,8 @@
 
 - v1.2.0 (2025-09-29)
   - `new` 内置函数实验性增加第二个可选参数, 用于指定初始值
+  - `unsafe` 包修复 `unsafe.Sizeof` 错误, 增加 `unsafe.Raw` 函数用于替代内置的 `raw` 函数
+  - `runtime` 包增加 `runtime.SetFinalizer` 用于替代内置的 `setFinalizer` 函数
   - 实验性增加 `wa rv2elf` 凹汇编器, 支持中英文汇编语法输出到 RISC-V 本地 elf 格式的裸机可执行程序
   - 实验性增加 `wa wemu` 模拟器用于执行 RISC-V 裸机程序
 - v1.1.0 (2025-07-16)
