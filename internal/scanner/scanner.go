@@ -29,6 +29,7 @@ type ErrorHandler func(pos token.Position, msg string)
 // structure but must be initialized via Init before use.
 type Scanner struct {
 	WagoMode bool // WaGo 模式, 解析 func
+	W2Mode   bool // w2 前端模式, 关键字不同
 
 	// immutable state
 	file *token.File  // source file handle
@@ -824,7 +825,7 @@ scanAgain:
 		lit = s.scanIdentifier()
 		if len(lit) > 1 {
 			// keywords are longer than one letter - avoid lookup otherwise
-			tok = token.Lookup(lit)
+			tok = token.LookupEx(lit, s.W2Mode)
 			switch tok {
 			case token.IDENT, token.BREAK, token.CONTINUE, token.RETURN:
 				insertSemi = true

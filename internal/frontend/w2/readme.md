@@ -241,23 +241,20 @@ func 任意底的对数 {
 
 - break: 跳出
 - case: 岔道
-- const: 常量
+- const: 常量/定义
 - continue: 继续
 - default: 主道
 - defer: 押后
 - else: 若否
 - for: 当始/当终
 - func: 算始/算终, 函始/函终
-- global: 全局/定义
+- global: 全局
 - if: 若始/若另/若终
 - import: 引入
-- interface: 接口
 - map: 字典
-- range: 迭代
 - return: 返回
 - struct: 类始/类终
 - switch: 岔始/岔终
-- type: ?
 
 内置具名对象的对应:
 
