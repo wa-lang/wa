@@ -126,43 +126,46 @@ const (
 	w2_keyword_beg
 	// Keywords
 
-	未定义 // undefined
+	Zh_未定义 // undefined
 
-	真 // true
-	假 // false
+	Zh_真 // true
+	Zh_假 // false
 
-	引入 // import
+	Zh_引入 // import
 
-	常量 // const
-	定义 // const
-	全局 // flobal
+	Zh_常量 // const
+	Zh_定义 // const
+	Zh_全局 // flobal
 
-	算始 // func
-	算终 // func {}
-	函始 // func
-	函终 // func {}
+	Zh_算始 // func
+	Zh_算终 // func {}
+	Zh_函始 // func
+	Zh_函终 // func {}
 
-	若始 // if
-	若另 // else if
-	若否 // else
-	若终 // {}
+	Zh_若始 // if
+	Zh_若另 // else if
+	Zh_若否 // else
+	Zh_若终 // {}
 
-	岔始 // switch
-	岔终 // {}
-	岔道 // case
-	主道 // default
+	Zh_岔始 // switch
+	Zh_岔终 // {}
+	Zh_岔道 // case
+	Zh_主道 // default
 
-	当始 // for
-	当终 // {}
-	跳出 // break
-	继续 // continue
+	Zh_当始 // for
+	Zh_当终 // {}
+	Zh_跳出 // break
+	Zh_继续 // continue
 
-	类始 // struct
-	类终 // {}
+	Zh_类始 // struct
+	Zh_类终 // {}
 
-	返回 // return
-	押后 // defer
-	字典 // map
+	Zh_返回 // return
+	Zh_押后 // defer
+	Zh_字典 // map
+
+	Zh_类型 // type
+	Zh_接口 // interface
 
 	w2_keyword_end
 )
@@ -263,43 +266,46 @@ var tokens = [...]string{
 	TYPE:   "type",
 	VAR:    "var",
 
-	未定义: "未定义",
+	Zh_未定义: "未定义",
 
-	真: "真",
-	假: "假",
+	Zh_真: "真",
+	Zh_假: "假",
 
-	引入: "引入",
+	Zh_引入: "引入",
 
-	常量: "常量",
-	定义: "定义",
-	全局: "全局",
+	Zh_常量: "常量",
+	Zh_定义: "定义",
+	Zh_全局: "全局",
 
-	算始: "算始",
-	算终: "算终",
-	函始: "函始",
-	函终: "函终",
+	Zh_算始: "算始",
+	Zh_算终: "算终",
+	Zh_函始: "函始",
+	Zh_函终: "函终",
 
-	若始: "若始",
-	若另: "若另",
-	若否: "若否",
-	若终: "若终",
+	Zh_若始: "若始",
+	Zh_若另: "若另",
+	Zh_若否: "若否",
+	Zh_若终: "若终",
 
-	岔始: "岔始",
-	岔终: "岔终",
-	岔道: "岔道",
-	主道: "主道",
+	Zh_岔始: "岔始",
+	Zh_岔终: "岔终",
+	Zh_岔道: "岔道",
+	Zh_主道: "主道",
 
-	当始: "当始",
-	当终: "当终",
-	跳出: "跳出",
-	继续: "继续",
+	Zh_当始: "当始",
+	Zh_当终: "当终",
+	Zh_跳出: "跳出",
+	Zh_继续: "继续",
 
-	类始: "类始",
-	类终: "类终",
+	Zh_类始: "类始",
+	Zh_类终: "类终",
 
-	返回: "返回",
-	押后: "押后",
-	字典: "字典",
+	Zh_返回: "返回",
+	Zh_押后: "押后",
+	Zh_字典: "字典",
+
+	Zh_类型: "类型",
+	Zh_接口: "接口",
 }
 
 // String returns the string corresponding to the token tok.

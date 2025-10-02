@@ -784,7 +784,7 @@ func (p *parser) parseStructType() *ast.StructType {
 	rbrace := p.expect(token.RBRACE)
 
 	return &ast.StructType{
-		Struct: pos,
+		TokPos: pos,
 		Fields: &ast.FieldList{
 			Opening: lbrace,
 			List:    list,
@@ -986,7 +986,7 @@ func (p *parser) parseFuncType() (*ast.FuncType, *ast.Scope) {
 	params, results, arrowPos := p.parseSignature(scope)
 
 	return &ast.FuncType{
-		Func:     pos,
+		TokPos:   pos,
 		Params:   params,
 		ArrowPos: arrowPos,
 		Results:  results,
@@ -1012,7 +1012,7 @@ func (p *parser) parseMethodSpec(scope *ast.Scope) *ast.Field {
 		scope := ast.NewScope(nil) // method scope
 		params, results, arrowPos := p.parseSignature(scope)
 		typ = &ast.FuncType{
-			Func:     watoken.NoPos,
+			TokPos:   watoken.NoPos,
 			Params:   params,
 			ArrowPos: arrowPos,
 			Results:  results,
@@ -1045,7 +1045,7 @@ func (p *parser) parseInterfaceType() *ast.InterfaceType {
 	rbrace := p.expect(token.RBRACE)
 
 	return &ast.InterfaceType{
-		Interface: pos,
+		TokPos: pos,
 		Methods: &ast.FieldList{
 			Opening: lbrace,
 			List:    list,
@@ -1769,7 +1769,7 @@ func (p *parser) parseDeferStmt() ast.Stmt {
 		return &ast.BadStmt{From: pos, To: pos + 5} // len("defer")
 	}
 
-	return &ast.DeferStmt{Defer: pos, Call: call}
+	return &ast.DeferStmt{TokPos: pos, Call: call}
 }
 
 func (p *parser) parseReturnStmt() *ast.ReturnStmt {
@@ -1785,7 +1785,7 @@ func (p *parser) parseReturnStmt() *ast.ReturnStmt {
 	}
 	p.expectSemi()
 
-	return &ast.ReturnStmt{Return: pos, Results: x}
+	return &ast.ReturnStmt{TokPos: pos, Results: x}
 }
 
 func (p *parser) 解析返回语句() *ast.ReturnStmt {
@@ -1802,7 +1802,7 @@ func (p *parser) 解析返回语句() *ast.ReturnStmt {
 	}
 	p.expectSemi()
 
-	return &ast.ReturnStmt{Return: pos, Results: x}
+	return &ast.ReturnStmt{TokPos: pos, Results: x}
 }
 
 func (p *parser) parseBranchStmt(tok token.Token) *ast.BranchStmt {
@@ -1930,7 +1930,7 @@ func (p *parser) parseIfStmt() *ast.IfStmt {
 		p.expectSemi()
 	}
 
-	return &ast.IfStmt{If: pos, Init: init, Cond: cond, Body: body, Else: else_}
+	return &ast.IfStmt{TokePos: pos, Init: init, Cond: cond, Body: body, Else: else_}
 }
 
 func (p *parser) 解析条件语句() *ast.IfStmt {
@@ -1966,7 +1966,7 @@ func (p *parser) 解析条件语句() *ast.IfStmt {
 		// p.expectSemi()
 	}
 
-	return &ast.IfStmt{If: pos, Init: init, Cond: cond, Body: body, Else: else_}
+	return &ast.IfStmt{TokePos: pos, Init: init, Cond: cond, Body: body, Else: else_}
 }
 
 func (p *parser) parseTypeList() (list []ast.Expr) {
@@ -2006,7 +2006,7 @@ func (p *parser) parseCaseClause(typeSwitch bool) *ast.CaseClause {
 	body := p.parseStmtList()
 	p.closeScope()
 
-	return &ast.CaseClause{Case: pos, List: list, Colon: colon, Body: body}
+	return &ast.CaseClause{TokPos: pos, List: list, Colon: colon, Body: body}
 }
 
 func isTypeSwitchAssert(x ast.Expr) bool {
@@ -2087,10 +2087,10 @@ func (p *parser) parseSwitchStmt() ast.Stmt {
 	body := &ast.BlockStmt{Lbrace: lbrace, List: list, Rbrace: rbrace}
 
 	if typeSwitch {
-		return &ast.TypeSwitchStmt{Switch: pos, Init: s1, Assign: s2, Body: body}
+		return &ast.TypeSwitchStmt{TokPos: pos, Init: s1, Assign: s2, Body: body}
 	}
 
-	return &ast.SwitchStmt{Switch: pos, Init: s1, Tag: p.makeExpr(s2, "switch expression"), Body: body}
+	return &ast.SwitchStmt{TokPos: pos, Init: s1, Tag: p.makeExpr(s2, "switch expression"), Body: body}
 }
 
 func (p *parser) parseCommClause() *ast.CommClause {
@@ -2202,7 +2202,7 @@ func (p *parser) parseForStmt() ast.Stmt {
 		// is a single unary expression of the form "range x"
 		x := as.Rhs[0].(*ast.UnaryExpr).X
 		return &ast.RangeStmt{
-			For:    pos,
+			ForPos: pos,
 			Key:    key,
 			Value:  value,
 			TokPos: as.TokPos,
@@ -2214,11 +2214,11 @@ func (p *parser) parseForStmt() ast.Stmt {
 
 	// regular for statement
 	return &ast.ForStmt{
-		For:  pos,
-		Init: s1,
-		Cond: p.makeExpr(s2, "boolean or range expression"),
-		Post: s3,
-		Body: body,
+		TokPos: pos,
+		Init:   s1,
+		Cond:   p.makeExpr(s2, "boolean or range expression"),
+		Post:   s3,
+		Body:   body,
 	}
 }
 
@@ -2517,7 +2517,7 @@ func (p *parser) parseFuncDecl() *ast.FuncDecl {
 		Recv: recv,
 		Name: ident,
 		Type: &ast.FuncType{
-			Func:     pos,
+			TokPos:   pos,
 			Params:   params,
 			ArrowPos: arrowPos,
 			Results:  results,
@@ -2703,7 +2703,7 @@ func (p *parser) 解析函数定义() *ast.FuncDecl {
 		Recv: recv,
 		Name: ident,
 		Type: &ast.FuncType{
-			Func:     pos,
+			TokPos:   pos,
 			Params:   params,
 			ArrowPos: arrowPos,
 			Results:  results,
@@ -2907,7 +2907,7 @@ func (p *parser) 解析类型定义() *ast.GenDecl {
 	// rbrace := p.expect(token.RBRACE)
 
 	spec.Type = &ast.StructType{
-		Struct: pos,
+		TokPos: pos,
 		Fields: &ast.FieldList{
 			Opening: lbrace,
 			List:    list,
@@ -2950,7 +2950,7 @@ func (p *parser) 解析直到语句() ast.Stmt {
 
 	// regular for statement
 	return &ast.ForStmt{
-		For: pos,
+		TokPos: pos,
 		// Hack here
 		Cond: &ast.UnaryExpr{Op: watoken.Token(token.NOT), X: p.makeExpr(cond, "boolean or range expression")},
 		Post: post,
@@ -2983,8 +2983,8 @@ func (p *parser) 解析三段循环语句() ast.Stmt {
 
 	// regular for statement
 	return &ast.ForStmt{
-		For:  pos,
-		Init: init,
+		TokPos: pos,
+		Init:   init,
 		// Hack here
 		Cond: &ast.UnaryExpr{Op: watoken.Token(token.NOT), X: p.makeExpr(cond, "boolean or range expression")},
 		Post: post,
@@ -3017,11 +3017,11 @@ func (p *parser) 解析循环语句() ast.Stmt {
 	// p.expectSemi()
 
 	return &ast.ForStmt{
-		For:  pos,
-		Init: initStmt,
-		Cond: condExpr,
-		Post: postStmt,
-		Body: body,
+		TokPos: pos,
+		Init:   initStmt,
+		Cond:   condExpr,
+		Post:   postStmt,
+		Body:   body,
 	}
 }
 
@@ -3048,7 +3048,7 @@ func (p *parser) 解析择路语句() ast.Stmt {
 	rbrace := p.expect(token.TK_句号)
 	body := &ast.BlockStmt{Lbrace: lbrace, List: list, Rbrace: rbrace}
 
-	return &ast.SwitchStmt{Switch: pos, Init: nil, Tag: id, Body: body}
+	return &ast.SwitchStmt{TokPos: pos, Init: nil, Tag: id, Body: body}
 }
 
 func (p *parser) 解析择路分支() *ast.CaseClause {
@@ -3072,5 +3072,5 @@ func (p *parser) 解析择路分支() *ast.CaseClause {
 	body := p.parseStmtList()
 	p.closeScope()
 
-	return &ast.CaseClause{Case: pos, List: list, Colon: colon, Body: body}
+	return &ast.CaseClause{TokPos: pos, List: list, Colon: colon, Body: body}
 }

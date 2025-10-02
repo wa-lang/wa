@@ -58,7 +58,7 @@ type Decl interface {
 
 // A Comment node represents a single //-style or /*-style comment.
 type Comment struct {
-	Slash token.Pos // position of "/" starting the comment
+	Slash token.Pos // position of "/" or "#" starting the comment
 	Text  string    // comment text (excluding '\n' for //-style comments)
 }
 
@@ -255,8 +255,9 @@ type (
 
 	// A FuncLit node represents a function literal.
 	FuncLit struct {
-		Type *FuncType  // function type
-		Body *BlockStmt // function body
+		Tok  token.Token // FUNC, Zh_函始
+		Type *FuncType   // function type
+		Body *BlockStmt  // function body
 	}
 
 	// A CompositeLit node represents a composite literal.
@@ -376,26 +377,29 @@ type (
 
 	// A StructType node represents a struct type.
 	StructType struct {
-		Struct     token.Pos  // position of "struct" keyword
-		Fields     *FieldList // list of field declarations
-		Incomplete bool       // true if (source) fields are missing in the Fields list
+		TokPos     token.Pos   // position of keyword
+		Tok        token.Token // STRUCT, Zh_类始
+		Fields     *FieldList  // list of field declarations
+		Incomplete bool        // true if (source) fields are missing in the Fields list
 	}
 
 	// Pointer types are represented via StarExpr nodes.
 
 	// A FuncType node represents a function type.
 	FuncType struct {
-		Func     token.Pos  // position of "func" keyword (token.NoPos if there is no "func")
-		Params   *FieldList // (incoming) parameters; non-nil
-		ArrowPos token.Pos  // position of "=>" operator (token.NoPos if there is no "=>")
-		Results  *FieldList // (outgoing) results; or nil
+		TokPos   token.Pos   // position of keyword (token.NoPos if there is no "func")
+		Tok      token.Token // FUNC, Zh_函始
+		Params   *FieldList  // (incoming) parameters; non-nil
+		ArrowPos token.Pos   // position of "=>" operator (token.NoPos if there is no "=>")
+		Results  *FieldList  // (outgoing) results; or nil
 	}
 
 	// An InterfaceType node represents an interface type.
 	InterfaceType struct {
-		Interface  token.Pos  // position of "interface" keyword
-		Methods    *FieldList // list of methods
-		Incomplete bool       // true if (source) methods are missing in the Methods list
+		TokPos     token.Pos   // position of keyword
+		Tok        token.Token // interface, 接口
+		Methods    *FieldList  // list of methods
+		Incomplete bool        // true if (source) methods are missing in the Methods list
 	}
 
 	// A MapType node represents a map type.
@@ -431,14 +435,14 @@ func (x *UnaryExpr) Pos() token.Pos      { return x.OpPos }
 func (x *BinaryExpr) Pos() token.Pos     { return x.X.Pos() }
 func (x *KeyValueExpr) Pos() token.Pos   { return x.Key.Pos() }
 func (x *ArrayType) Pos() token.Pos      { return x.Lbrack }
-func (x *StructType) Pos() token.Pos     { return x.Struct }
+func (x *StructType) Pos() token.Pos     { return x.TokPos }
 func (x *FuncType) Pos() token.Pos {
-	if x.Func.IsValid() || x.Params == nil { // see issue 3870
-		return x.Func
+	if x.TokPos.IsValid() || x.Params == nil { // see issue 3870
+		return x.TokPos
 	}
 	return x.Params.Pos() // interface method declarations have no "func" keyword
 }
-func (x *InterfaceType) Pos() token.Pos { return x.Interface }
+func (x *InterfaceType) Pos() token.Pos { return x.TokPos }
 func (x *MapType) Pos() token.Pos       { return x.Map }
 
 func (x *BadExpr) End() token.Pos { return x.To }
@@ -581,22 +585,23 @@ type (
 
 	// A DeferStmt node represents a defer statement.
 	DeferStmt struct {
-		Defer token.Pos // position of "defer" keyword
-		Call  *CallExpr
+		TokPos token.Pos   // position of keyword
+		Tok    token.Token // defer, 押后
+		Call   *CallExpr
 	}
 
 	// A ReturnStmt node represents a return statement.
 	ReturnStmt struct {
-		Return  token.Pos // position of "return" keyword
-		Results []Expr    // result expressions; or nil
+		TokPos  token.Pos   // position of keyword
+		Tok     token.Token // return, 返回
+		Results []Expr      // result expressions; or nil
 	}
 
-	// A BranchStmt node represents a break, continue, goto,
-	// or fallthrough statement.
+	// A BranchStmt node represents a break or continue statement.
 	//
 	BranchStmt struct {
 		TokPos token.Pos   // position of Tok
-		Tok    token.Token // keyword token (BREAK, CONTINUE, GOTO, FALLTHROUGH)
+		Tok    token.Token // keyword token (BREAK, CONTINUE, Zh_跳出, Zh_继续)
 		Label  *Ident      // label name; or nil
 	}
 
@@ -609,38 +614,43 @@ type (
 
 	// An IfStmt node represents an if statement.
 	IfStmt struct {
-		If   token.Pos // position of "if" keyword
-		Init Stmt      // initialization statement; or nil
-		Cond Expr      // condition
-		Body *BlockStmt
-		Else Stmt // else branch; or nil
+		TokePos token.Pos   // position of keyword
+		Tok     token.Token // if, 若始
+		Init    Stmt        // initialization statement; or nil
+		Cond    Expr        // condition
+		Body    *BlockStmt
+		Else    Stmt // else branch; or nil
 	}
 
 	// A CaseClause represents a case of an expression or type switch statement.
 	CaseClause struct {
-		Case  token.Pos // position of "case" or "default" keyword
-		List  []Expr    // list of expressions or types; nil means default case
-		Colon token.Pos // position of ":"
-		Body  []Stmt    // statement list; or nil
+		TokPos token.Pos   // position of keyword
+		Tok    token.Token // case, default, 岔道, 主道
+		List   []Expr      // list of expressions or types; nil means default case
+		Colon  token.Pos   // position of ":"
+		Body   []Stmt      // statement list; or nil
 	}
 
 	// A SwitchStmt node represents an expression switch statement.
 	SwitchStmt struct {
-		Switch token.Pos  // position of "switch" keyword
-		Init   Stmt       // initialization statement; or nil
-		Tag    Expr       // tag expression; or nil
-		Body   *BlockStmt // CaseClauses only
+		TokPos token.Pos   // position of keyword
+		Tok    token.Token // switch, 岔始
+		Init   Stmt        // initialization statement; or nil
+		Tag    Expr        // tag expression; or nil
+		Body   *BlockStmt  // CaseClauses only
 	}
 
 	// An TypeSwitchStmt node represents a type switch statement.
 	TypeSwitchStmt struct {
-		Switch token.Pos  // position of "switch" keyword
-		Init   Stmt       // initialization statement; or nil
-		Assign Stmt       // x := y.(type) or y.(type)
-		Body   *BlockStmt // CaseClauses only
+		TokPos token.Pos   // position of "switch" keyword
+		Tok    token.Token // switch, 岔始
+		Init   Stmt        // initialization statement; or nil
+		Assign Stmt        // x := y.(type) or y.(type)
+		Body   *BlockStmt  // CaseClauses only
 	}
 
 	// A CommClause node represents a case of a select statement.
+	// TODO: 管道相关, 删除
 	CommClause struct {
 		Case  token.Pos // position of "case" or "default" keyword
 		Comm  Stmt      // send or receive statement; nil means default case
@@ -650,16 +660,18 @@ type (
 
 	// A ForStmt represents a for statement.
 	ForStmt struct {
-		For  token.Pos // position of "for" keyword
-		Init Stmt      // initialization statement; or nil
-		Cond Expr      // condition; or nil
-		Post Stmt      // post iteration statement; or nil
-		Body *BlockStmt
+		TokPos token.Pos   // position of "for" keyword
+		Tok    token.Token // for, 当始
+		Init   Stmt        // initialization statement; or nil
+		Cond   Expr        // condition; or nil
+		Post   Stmt        // post iteration statement; or nil
+		Body   *BlockStmt
 	}
 
 	// A RangeStmt represents a for statement with a range clause.
 	RangeStmt struct {
-		For        token.Pos   // position of "for" keyword
+		ForPos     token.Pos   // position of keyword
+		ForTok     token.Token // for, 当始
 		Key, Value Expr        // Key, Value may be nil
 		TokPos     token.Pos   // position of Tok; invalid if Key == nil
 		Tok        token.Token // ILLEGAL if Key == nil, ASSIGN, DEFINE
@@ -677,17 +689,17 @@ func (s *LabeledStmt) Pos() token.Pos    { return s.Label.Pos() }
 func (s *ExprStmt) Pos() token.Pos       { return s.X.Pos() }
 func (s *IncDecStmt) Pos() token.Pos     { return s.X.Pos() }
 func (s *AssignStmt) Pos() token.Pos     { return s.Lhs[0].Pos() }
-func (s *DeferStmt) Pos() token.Pos      { return s.Defer }
-func (s *ReturnStmt) Pos() token.Pos     { return s.Return }
+func (s *DeferStmt) Pos() token.Pos      { return s.TokPos }
+func (s *ReturnStmt) Pos() token.Pos     { return s.TokPos }
 func (s *BranchStmt) Pos() token.Pos     { return s.TokPos }
 func (s *BlockStmt) Pos() token.Pos      { return s.Lbrace }
-func (s *IfStmt) Pos() token.Pos         { return s.If }
-func (s *CaseClause) Pos() token.Pos     { return s.Case }
-func (s *SwitchStmt) Pos() token.Pos     { return s.Switch }
-func (s *TypeSwitchStmt) Pos() token.Pos { return s.Switch }
+func (s *IfStmt) Pos() token.Pos         { return s.TokePos }
+func (s *CaseClause) Pos() token.Pos     { return s.TokPos }
+func (s *SwitchStmt) Pos() token.Pos     { return s.TokPos }
+func (s *TypeSwitchStmt) Pos() token.Pos { return s.TokPos }
 func (s *CommClause) Pos() token.Pos     { return s.Case }
-func (s *ForStmt) Pos() token.Pos        { return s.For }
-func (s *RangeStmt) Pos() token.Pos      { return s.For }
+func (s *ForStmt) Pos() token.Pos        { return s.TokPos }
+func (s *RangeStmt) Pos() token.Pos      { return s.ForPos }
 
 func (s *BadStmt) End() token.Pos  { return s.To }
 func (s *DeclStmt) End() token.Pos { return s.Decl.End() }
@@ -708,7 +720,7 @@ func (s *ReturnStmt) End() token.Pos {
 	if n := len(s.Results); n > 0 {
 		return s.Results[n-1].End()
 	}
-	return s.Return + 6 // len("return")
+	return s.TokPos + token.Pos(len(s.Tok.String())) // len("return")
 }
 func (s *BranchStmt) End() token.Pos {
 	if s.Label != nil {
@@ -864,7 +876,7 @@ type (
 	GenDecl struct {
 		Doc    *CommentGroup // associated documentation; or nil
 		TokPos token.Pos     // position of Tok
-		Tok    token.Token   // IMPORT, CONST, TYPE, VAR, GLOBAL
+		Tok    token.Token   // IMPORT, CONST, TYPE, VAR, GLOBAL, Zh_常量, Zh_定义, Zh_全局
 		Lparen token.Pos     // position of '(', if any
 		Specs  []Spec
 		Rparen token.Pos // position of ')', if any

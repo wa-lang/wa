@@ -546,7 +546,7 @@ func (b *builder) expr0(fn *Function, e ast.Expr, tv types.TypeAndValue) Value {
 		fn2 := &Function{
 			name:      fmt.Sprintf("%s$%d", fn.Name(), 1+len(fn.AnonFuncs)),
 			Signature: fn.Pkg.typeOf(e.Type).Underlying().(*types.Signature),
-			pos:       e.Type.Func,
+			pos:       e.Type.TokPos,
 			parent:    fn,
 			Pkg:       fn.Pkg,
 			Prog:      fn.Prog,
@@ -1412,7 +1412,7 @@ func (b *builder) typeSwitchStmt(fn *Function, s *ast.TypeSwitchStmt, label *lbl
 				condv = emitCompare(fn, token.EQL, x, nilConst(x.Type()), token.NoPos)
 				ti = x
 			} else {
-				yok := emitTypeTest(fn, x, casetype, cc.Case)
+				yok := emitTypeTest(fn, x, casetype, cc.TokPos)
 				ti = emitExtract(fn, yok, 0)
 				condv = emitExtract(fn, yok, 1)
 			}
@@ -1793,18 +1793,18 @@ func (b *builder) rangeStmt(fn *Function, s *ast.RangeStmt, label *lblock) {
 	var loop, done *BasicBlock
 	switch rt := x.Type().Underlying().(type) {
 	case *types.Slice, *types.Array, *types.Pointer: // *array
-		k, v, loop, done = b.rangeIndexed(fn, x, tv, s.For)
+		k, v, loop, done = b.rangeIndexed(fn, x, tv, s.ForPos)
 
 	case *types.Map:
-		k, v, loop, done = b.rangeIterMapOrString(fn, x, tk, tv, s.For)
+		k, v, loop, done = b.rangeIterMapOrString(fn, x, tk, tv, s.ForPos)
 	case *types.Basic: // string,integer
 		if rt.Info()&types.IsString != 0 {
-			k, v, loop, done = b.rangeIterMapOrString(fn, x, tk, tv, s.For)
+			k, v, loop, done = b.rangeIterMapOrString(fn, x, tk, tv, s.ForPos)
 		} else if rt.Info()&types.IsInteger != 0 {
-			k, loop, done = b.rangeIterInteger(fn, x, tk, s.For)
+			k, loop, done = b.rangeIterInteger(fn, x, tk, s.ForPos)
 		}
 	case *types.Signature:
-		k, v, loop, done = b.rangeIterClosure(fn, x, tk, tv, s.For)
+		k, v, loop, done = b.rangeIterClosure(fn, x, tk, tv, s.ForPos)
 
 	default:
 		panic("Cannot range over: " + rt.String())
@@ -1894,7 +1894,7 @@ start:
 	case *ast.DeferStmt:
 		// The "intrinsics" new/make/len/cap are forbidden here.
 		// panic is treated like an ordinary function call.
-		v := Defer{pos: s.Defer}
+		v := Defer{pos: s.TokPos}
 		b.setCall(fn, s.Call, &v.Call)
 		fn.emit(&v)
 
@@ -1924,7 +1924,7 @@ start:
 			// Function has named result parameters (NRPs).
 			// Perform parallel assignment of return operands to NRPs.
 			for i, r := range results {
-				emitStore(fn, fn.namedResults[i], r, s.Return)
+				emitStore(fn, fn.namedResults[i], r, s.TokPos)
 			}
 		}
 		// Run function calls deferred in this
@@ -1937,7 +1937,7 @@ start:
 				results = append(results, emitLoad(fn, r))
 			}
 		}
-		fn.emit(&Return{Results: results, pos: s.Return})
+		fn.emit(&Return{Results: results, pos: s.TokPos})
 		fn.currentBlock = fn.newBasicBlock("unreachable")
 
 	case *ast.BranchStmt:

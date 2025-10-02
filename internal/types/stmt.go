@@ -446,7 +446,7 @@ func (check *Checker) stmt(ctxt stmtContext, s ast.Stmt) {
 				}
 			} else {
 				// return has results or result parameters are unnamed
-				check.initVars(res.vars, s.Results, s.Return)
+				check.initVars(res.vars, s.Results, s.TokPos)
 			}
 		} else if len(s.Results) > 0 {
 			check.error(s.Results[0].Pos(), "no result values expected")
