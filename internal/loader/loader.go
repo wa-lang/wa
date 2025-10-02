@@ -60,7 +60,7 @@ func (p *_Loader) LoadProgram(appPath string) (*Program, error) {
 	logger.Tracef(&config.EnableTrace_loader, "cfg: %+v", p.cfg)
 	logger.Tracef(&config.EnableTrace_loader, "appPath: %s", appPath)
 
-	if isWaFile(appPath) || isWzFile(appPath) {
+	if isWaFile(appPath) || isWzFile(appPath) || isW2File(appPath) {
 		vfs, manifest, err := loadProgramFileMeta(&p.cfg, appPath, nil)
 		if err != nil {
 			logger.Tracef(&config.EnableTrace_loader, "err: %v", err)

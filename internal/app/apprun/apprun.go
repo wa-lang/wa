@@ -83,7 +83,7 @@ func CmdRunAction(c *cli.Context) error {
 	}
 
 	var opt = appbase.BuildOptions(c)
-	if appbase.HasExt(input, ".wa") {
+	if appbase.HasExt(input, ".wa", ".wz", ".w2") {
 		// 执行单个 wa 脚本, 避免写磁盘
 		opt.RunFileMode = true
 	}

@@ -2239,7 +2239,7 @@ func (p *parser) parseStmt() (s ast.Stmt) {
 	switch p.tok {
 	case token.CONST, token.TYPE, token.VAR:
 		// TODO(chai2010): var declaration not allowed in func body
-		s = &ast.DeclStmt{Decl: p.parseDecl(stmtStart)}
+		s = &ast.DeclStmt{Decl: p.parseDecl(stmtStart, false)}
 	case
 		// tokens that may start an expression
 		token.IDENT, token.INT, token.FLOAT, token.IMAG, token.CHAR, token.STRING, token.FUNC, token.LPAREN, // operands
@@ -2560,7 +2560,7 @@ func (p *parser) parseFuncDecl(keyword token.Token) *ast.FuncDecl {
 	return decl
 }
 
-func (p *parser) parseDecl(sync map[token.Token]bool) ast.Decl {
+func (p *parser) parseDecl(sync map[token.Token]bool, isPkgScope bool) ast.Decl {
 	if p.trace {
 		defer un(trace(p, "Declaration"))
 	}
@@ -2642,7 +2642,7 @@ func (p *parser) parseFile() *ast.File {
 		if p.mode&ImportsOnly == 0 {
 			// rest of package body
 			for p.tok != token.EOF {
-				decls = append(decls, p.parseDecl(declStart))
+				decls = append(decls, p.parseDecl(declStart, true))
 			}
 		}
 	}

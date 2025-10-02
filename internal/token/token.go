@@ -370,6 +370,10 @@ func init() {
 	for i := keyword_beg + 1; i < keyword_end; i++ {
 		keywords[tokens[i]] = i
 	}
+
+	for i := w2_keyword_beg + 1; i < w2_keyword_end; i++ {
+		keywords[tokens[i]] = i
+	}
 }
 
 // Lookup maps an identifier to its keyword token or IDENT (if not a keyword).
