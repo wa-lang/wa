@@ -131,12 +131,8 @@ func (check *Checker) multipleDefaults(list []ast.Stmt) {
 			if len(c.List) == 0 {
 				d = s
 			}
-		case *ast.CommClause:
-			if c.Comm == nil {
-				d = s
-			}
 		default:
-			check.invalidAST(s.Pos(), "case/communication clause expected")
+			check.invalidAST(s.Pos(), "case clause expected")
 		}
 		if d != nil {
 			if first != nil {

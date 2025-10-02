@@ -239,9 +239,6 @@ func (check *Checker) blockBranches(all *Scope, parent *block, lstmt *ast.Labele
 		case *ast.TypeSwitchStmt:
 			stmtBranches(s.Body)
 
-		case *ast.CommClause:
-			blockBranches(nil, s.Body)
-
 		case *ast.ForStmt:
 			stmtBranches(s.Body)
 

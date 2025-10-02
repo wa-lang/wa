@@ -649,15 +649,6 @@ type (
 		Body   *BlockStmt  // CaseClauses only
 	}
 
-	// A CommClause node represents a case of a select statement.
-	// TODO: 管道相关, 删除
-	CommClause struct {
-		Case  token.Pos // position of "case" or "default" keyword
-		Comm  Stmt      // send or receive statement; nil means default case
-		Colon token.Pos // position of ":"
-		Body  []Stmt    // statement list; or nil
-	}
-
 	// A ForStmt represents a for statement.
 	ForStmt struct {
 		TokPos token.Pos   // position of "for" keyword
@@ -697,7 +688,6 @@ func (s *IfStmt) Pos() token.Pos         { return s.TokePos }
 func (s *CaseClause) Pos() token.Pos     { return s.TokPos }
 func (s *SwitchStmt) Pos() token.Pos     { return s.TokPos }
 func (s *TypeSwitchStmt) Pos() token.Pos { return s.TokPos }
-func (s *CommClause) Pos() token.Pos     { return s.Case }
 func (s *ForStmt) Pos() token.Pos        { return s.TokPos }
 func (s *RangeStmt) Pos() token.Pos      { return s.ForPos }
 
@@ -743,14 +733,8 @@ func (s *CaseClause) End() token.Pos {
 }
 func (s *SwitchStmt) End() token.Pos     { return s.Body.End() }
 func (s *TypeSwitchStmt) End() token.Pos { return s.Body.End() }
-func (s *CommClause) End() token.Pos {
-	if n := len(s.Body); n > 0 {
-		return s.Body[n-1].End()
-	}
-	return s.Colon + 1
-}
-func (s *ForStmt) End() token.Pos   { return s.Body.End() }
-func (s *RangeStmt) End() token.Pos { return s.Body.End() }
+func (s *ForStmt) End() token.Pos        { return s.Body.End() }
+func (s *RangeStmt) End() token.Pos      { return s.Body.End() }
 
 // stmtNode() ensures that only statement nodes can be
 // assigned to a Stmt.
@@ -769,7 +753,6 @@ func (*IfStmt) stmtNode()         {}
 func (*CaseClause) stmtNode()     {}
 func (*SwitchStmt) stmtNode()     {}
 func (*TypeSwitchStmt) stmtNode() {}
-func (*CommClause) stmtNode()     {}
 func (*ForStmt) stmtNode()        {}
 func (*RangeStmt) stmtNode()      {}
 

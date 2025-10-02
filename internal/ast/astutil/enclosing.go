@@ -249,16 +249,6 @@ func childrenOf(n ast.Node) []ast.Node {
 		}
 		children = append(children, tok(n.Colon, len(":")))
 
-	case *ast.CommClause:
-		if n.Comm == nil {
-			children = append(children,
-				tok(n.Case, len("default")))
-		} else {
-			children = append(children,
-				tok(n.Case, len("case")))
-		}
-		children = append(children, tok(n.Colon, len(":")))
-
 	case *ast.Comment:
 		// nop
 
@@ -496,8 +486,6 @@ func NodeDescription(n ast.Node) string {
 		return "function call"
 	case *ast.CaseClause:
 		return "case clause"
-	case *ast.CommClause:
-		return "communication clause"
 	case *ast.Comment:
 		return "comment"
 	case *ast.CommentGroup:

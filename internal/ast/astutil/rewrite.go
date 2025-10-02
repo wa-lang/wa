@@ -40,7 +40,6 @@ type ApplyFunc func(*Cursor) bool
 // Children are traversed in the order in which they appear in the
 // respective node's struct definition. A package's files are
 // traversed in the filenames' alphabetical order.
-//
 func Apply(root ast.Node, pre, post ApplyFunc) (result ast.Node) {
 	parent := &struct{ ast.Node }{root}
 	defer func() {
@@ -64,8 +63,8 @@ var abort = new(int) // singleton, to signal termination of Apply
 // c.Parent(), and f is the field identifier with name c.Name(),
 // the following invariants hold:
 //
-//   p.f            == c.Node()  if c.Index() <  0
-//   p.f[c.Index()] == c.Node()  if c.Index() >= 0
+//	p.f            == c.Node()  if c.Index() <  0
+//	p.f[c.Index()] == c.Node()  if c.Index() >= 0
 //
 // The methods Replace, Delete, InsertBefore, and InsertAfter
 // can be used to change the AST without disrupting Apply.
@@ -354,10 +353,6 @@ func (a *application) apply(parent ast.Node, name string, iter *iterator, n ast.
 		a.apply(n, "Init", nil, n.Init)
 		a.apply(n, "Assign", nil, n.Assign)
 		a.apply(n, "Body", nil, n.Body)
-
-	case *ast.CommClause:
-		a.apply(n, "Comm", nil, n.Comm)
-		a.applyList(n, "Body")
 
 	case *ast.ForStmt:
 		a.apply(n, "Init", nil, n.Init)

@@ -248,12 +248,6 @@ func Walk(v Visitor, node Node) {
 		Walk(v, n.Assign)
 		Walk(v, n.Body)
 
-	case *CommClause:
-		if n.Comm != nil {
-			Walk(v, n.Comm)
-		}
-		walkStmtList(v, n.Body)
-
 	case *ForStmt:
 		if n.Init != nil {
 			Walk(v, n.Init)

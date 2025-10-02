@@ -137,9 +137,6 @@ func hasBreak(s ast.Stmt, label string, implicit bool) bool {
 			return true
 		}
 
-	case *ast.CommClause:
-		return hasBreakList(s.Body, label, implicit)
-
 	case *ast.ForStmt:
 		if label != "" && hasBreak(s.Body, label, false) {
 			return true

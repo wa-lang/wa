@@ -24,7 +24,6 @@ const (
 	nCallExpr
 	nCaseClause
 	nChanType
-	nCommClause
 	nComment
 	nCommentGroup
 	nCompositeLit
@@ -113,8 +112,6 @@ func typeOf(n ast.Node) uint64 {
 		return 1 << nCallExpr
 	case *ast.CaseClause:
 		return 1 << nCaseClause
-	case *ast.CommClause:
-		return 1 << nCommClause
 	case *ast.Comment:
 		return 1 << nComment
 	case *ast.CommentGroup:

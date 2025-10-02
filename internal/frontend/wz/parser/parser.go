@@ -2093,52 +2093,6 @@ func (p *parser) parseSwitchStmt() ast.Stmt {
 	return &ast.SwitchStmt{TokPos: pos, Init: s1, Tag: p.makeExpr(s2, "switch expression"), Body: body}
 }
 
-func (p *parser) parseCommClause() *ast.CommClause {
-	if p.trace {
-		defer un(trace(p, "CommClause"))
-	}
-
-	p.openScope()
-	pos := p.pos
-	var comm ast.Stmt
-	if p.tok == token.CASE {
-		p.next()
-		lhs := p.parseLhsList()
-		// RecvStmt
-		if tok := p.tok; tok == token.ASSIGN || tok == token.DEFINE {
-			// RecvStmt with assignment
-			if len(lhs) > 2 {
-				p.errorExpected(lhs[0].Pos(), "1 or 2 expressions")
-				// continue with first two expressions
-				lhs = lhs[0:2]
-			}
-			pos := p.pos
-			p.next()
-			rhs := p.parseRhs()
-			as := &ast.AssignStmt{Lhs: lhs, TokPos: pos, Tok: token.ToWaTok(tok), Rhs: []ast.Expr{rhs}}
-			if tok == token.DEFINE {
-				p.shortVarDecl(as, lhs)
-			}
-			comm = as
-		} else {
-			// lhs must be single receive operation
-			if len(lhs) > 1 {
-				p.errorExpected(lhs[0].Pos(), "1 expression")
-				// continue with first expression
-			}
-			comm = &ast.ExprStmt{X: lhs[0]}
-		}
-	} else {
-		p.expect(token.DEFAULT)
-	}
-
-	colon := p.expect(token.COLON)
-	body := p.parseStmtList()
-	p.closeScope()
-
-	return &ast.CommClause{Case: pos, Comm: comm, Colon: colon, Body: body}
-}
-
 func (p *parser) parseForStmt() ast.Stmt {
 	if p.trace {
 		defer un(trace(p, "ForStmt"))
@@ -2801,7 +2755,7 @@ func (p *parser) 解析条件头() (init ast.Stmt, cond ast.Expr) {
 		// accept potential variable declaration but complain
 		if p.tok == token.VAR {
 			p.next()
-			p.error(p.pos, fmt.Sprintf("var declaration not allowed in 'IF' initializer"))
+			p.error(p.pos, "var declaration not allowed in 'IF' initializer")
 		}
 		init, _ = p.parseSimpleStmt(basic)
 	}
