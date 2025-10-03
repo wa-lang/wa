@@ -23,7 +23,6 @@ import (
 // If src != nil, readSource converts src to a []byte if possible;
 // otherwise it returns an error. If src == nil, readSource returns
 // the result of reading the file specified by filename.
-//
 func readSource(vfs fs.FS, filename string, src interface{}) ([]byte, error) {
 	if src != nil {
 		switch s := src.(type) {
@@ -50,7 +49,6 @@ func readSource(vfs fs.FS, filename string, src interface{}) ([]byte, error) {
 // A Mode value is a set of flags (or 0).
 // They control the amount of source code parsed and other optional
 // parser functionality.
-//
 type Mode uint
 
 const (
@@ -81,7 +79,6 @@ const (
 // errors were found, the result is a partial AST (with ast.Bad* nodes
 // representing the fragments of erroneous source code). Multiple errors
 // are returned via a scanner.ErrorList which is sorted by file position.
-//
 func ParseFile(vfs fs.FS, fset *token.FileSet, filename string, src interface{}, mode Mode) (f *ast.File, err error) {
 	if fset == nil {
 		panic("parser.ParseFile: no token.FileSet provided (fset == nil)")
@@ -119,7 +116,11 @@ func ParseFile(vfs fs.FS, fset *token.FileSet, filename string, src interface{},
 
 	// parse source
 	p.init(fset, filename, text, mode)
-	f = p.parseFile()
+	if p.w2Mode {
+		f = p.parseFile_zh()
+	} else {
+		f = p.parseFile()
+	}
 
 	return
 }
@@ -136,7 +137,6 @@ func ParseFile(vfs fs.FS, fset *token.FileSet, filename string, src interface{},
 // If the directory couldn't be read, a nil map and the respective error are
 // returned. If a parse error occurred, a non-nil but incomplete map and the
 // first error encountered are returned.
-//
 func ParseDir(vfs fs.FS, fset *token.FileSet, path string, filter func(os.FileInfo) bool, mode Mode) (pkgs map[string]*ast.Package, first error) {
 	fd, err := os.Open(path)
 	if err != nil {
@@ -151,7 +151,7 @@ func ParseDir(vfs fs.FS, fset *token.FileSet, path string, filter func(os.FileIn
 
 	pkgs = make(map[string]*ast.Package)
 	for _, d := range list {
-		if strHasSuffix(d.Name(), ".wa") {
+		if strHasSuffix(d.Name(), ".wa", ".w2") {
 			if filter == nil || filter(d) {
 				filename := filepath.Join(path, d.Name())
 				if src, err := ParseFile(vfs, fset, filename, nil, mode); err == nil {
@@ -188,7 +188,6 @@ func strHasSuffix(s string, ext ...string) bool {
 // The arguments have the same meaning as for ParseFile, but the source must
 // be a valid Go (type or value) expression. Specifically, fset must not
 // be nil.
-//
 func ParseExprFrom(fset *token.FileSet, filename string, src interface{}, mode Mode) (ast.Expr, error) {
 	if fset == nil {
 		panic("parser.ParseExprFrom: no token.FileSet provided (fset == nil)")
@@ -242,7 +241,6 @@ func ParseExprFrom(fset *token.FileSet, filename string, src interface{}, mode M
 // ParseExpr is a convenience function for obtaining the AST of an expression x.
 // The position information recorded in the AST is undefined. The filename used
 // in error messages is the empty string.
-//
 func ParseExpr(x string) (ast.Expr, error) {
 	return ParseExprFrom(token.NewFileSet(), "", []byte(x), 0)
 }

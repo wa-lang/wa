@@ -260,4 +260,6 @@ func 任意底的对数 {
 
 - nil: 未定义
 - true/false: 真/假
-
+- init: 准备
+- main: 主控
+- this: 自身

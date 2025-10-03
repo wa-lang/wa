@@ -776,12 +776,7 @@ func (p *parser) parseStructType(keyword token.Token) *ast.StructType {
 		// (parseFieldDecl will check and complain if necessary)
 		list = append(list, p.parseFieldDecl(scope))
 	}
-	rbrace := token.NoPos
-	if keyword == token.STRUCT {
-		rbrace = p.expect(token.RBRACE)
-	} else {
-		rbrace = p.expect(token.Zh_类终)
-	}
+	rbrace := p.expect(token.RBRACE)
 
 	return &ast.StructType{
 		TokPos: pos,
@@ -1017,7 +1012,7 @@ func (p *parser) parseMethodSpec(scope *ast.Scope) *ast.Field {
 	}
 
 	var keyword token.Token
-	if p.tok == token.FUNC || p.tok == token.Zh_函始 {
+	if p.tok == token.FUNC {
 		keyword = p.tok
 		p.next()
 	}
@@ -1118,11 +1113,11 @@ func (p *parser) tryIdentOrType() ast.Expr {
 		return typ
 	case token.LBRACK:
 		return p.parseArrayType()
-	case token.STRUCT, token.Zh_类始:
+	case token.STRUCT:
 		return p.parseStructType(p.tok)
 	case token.MUL:
 		return p.parsePointerType()
-	case token.FUNC, token.Zh_算始, token.Zh_函始:
+	case token.FUNC:
 		typ, _ := p.parseFuncType(p.tok)
 		return typ
 	case token.INTERFACE:
@@ -1245,7 +1240,7 @@ func (p *parser) parseOperand(lhs bool) ast.Expr {
 		rparen := p.expect(token.RPAREN)
 		return &ast.ParenExpr{Lparen: lparen, X: x, Rparen: rparen}
 
-	case token.FUNC, token.Zh_函始:
+	case token.FUNC:
 		return p.parseFuncTypeOrLit(p.tok)
 	}
 
@@ -1999,7 +1994,7 @@ func (p *parser) parseIfStmt(keyword token.Token) *ast.IfStmt {
 	if p.tok == token.ELSE {
 		p.next()
 		switch p.tok {
-		case token.IF, token.Zh_若始:
+		case token.IF:
 			else_ = p.parseIfStmt(p.tok)
 		case token.LBRACE:
 			else_ = p.parseBlockStmt()
@@ -2037,7 +2032,7 @@ func (p *parser) parseCaseClause(typeSwitch bool) *ast.CaseClause {
 	pos := p.pos
 	var list []ast.Expr
 	var keyword token.Token
-	if p.tok == token.CASE || p.tok == token.Zh_岔道 {
+	if p.tok == token.CASE {
 		keyword = p.tok
 		p.next()
 		if typeSwitch {
@@ -2047,11 +2042,7 @@ func (p *parser) parseCaseClause(typeSwitch bool) *ast.CaseClause {
 		}
 	} else {
 		keyword = p.tok
-		if p.tok == token.DEFAULT {
-			p.expect(token.DEFAULT)
-		} else {
-			p.expect(token.Zh_主道)
-		}
+		p.expect(token.DEFAULT)
 	}
 
 	colon := p.expect(token.COLON)
@@ -2239,7 +2230,7 @@ func (p *parser) parseStmt() (s ast.Stmt) {
 	switch p.tok {
 	case token.CONST, token.TYPE, token.VAR:
 		// TODO(chai2010): var declaration not allowed in func body
-		s = &ast.DeclStmt{Decl: p.parseDecl(stmtStart, false)}
+		s = &ast.DeclStmt{Decl: p.parseDecl(stmtStart)}
 	case
 		// tokens that may start an expression
 		token.IDENT, token.INT, token.FLOAT, token.IMAG, token.CHAR, token.STRING, token.FUNC, token.LPAREN, // operands
@@ -2252,20 +2243,20 @@ func (p *parser) parseStmt() (s ast.Stmt) {
 		if _, isLabeledStmt := s.(*ast.LabeledStmt); !isLabeledStmt {
 			p.expectSemi()
 		}
-	case token.DEFER, token.Zh_押后:
+	case token.DEFER:
 		s = p.parseDeferStmt(p.tok)
-	case token.RETURN, token.Zh_返回:
+	case token.RETURN:
 		s = p.parseReturnStmt(p.tok)
 	case token.BREAK, token.CONTINUE:
 		s = p.parseBranchStmt(p.tok)
 	case token.LBRACE:
 		s = p.parseBlockStmt()
 		p.expectSemi()
-	case token.IF, token.Zh_若始:
+	case token.IF:
 		s = p.parseIfStmt(p.tok)
-	case token.SWITCH, token.Zh_岔始:
+	case token.SWITCH:
 		s = p.parseSwitchStmt(p.tok)
-	case token.FOR, token.Zh_当始:
+	case token.FOR:
 		s = p.parseForStmt(p.tok)
 	case token.SEMICOLON:
 		// Is it ever possible to have an implicit semicolon
@@ -2393,11 +2384,11 @@ func (p *parser) parseValueSpec(doc *ast.CommentGroup, keyword token.Token, iota
 	p.expectSemi() // call before accessing p.linecomment
 
 	switch keyword {
-	case token.VAR, token.GLOBAL, token.Zh_全局:
+	case token.VAR, token.GLOBAL:
 		if typ == nil && values == nil {
 			p.error(pos, "missing variable type or initialization")
 		}
-	case token.CONST, token.Zh_常量, token.Zh_定义:
+	case token.CONST:
 		if typ == nil && values == nil && iota == 0 {
 			p.error(pos, "missing const type or initialization")
 		}
@@ -2560,7 +2551,7 @@ func (p *parser) parseFuncDecl(keyword token.Token) *ast.FuncDecl {
 	return decl
 }
 
-func (p *parser) parseDecl(sync map[token.Token]bool, isPkgScope bool) ast.Decl {
+func (p *parser) parseDecl(sync map[token.Token]bool) ast.Decl {
 	if p.trace {
 		defer un(trace(p, "Declaration"))
 	}
@@ -2570,21 +2561,15 @@ func (p *parser) parseDecl(sync map[token.Token]bool, isPkgScope bool) ast.Decl 
 	case token.CONST, token.VAR, token.GLOBAL:
 		f = p.parseValueSpec
 
-	case token.Zh_常量, token.Zh_定义, token.Zh_全局:
-		f = p.parseValueSpec
-
 	case token.TYPE:
 		f = p.parseTypeSpec
 
 	case token.FUNC:
 		return p.parseFuncDecl(p.tok)
 
-	case token.Zh_算始, token.Zh_函始:
-		return p.parseFuncDecl(p.tok)
-
 	default:
 		pos := p.pos
-		p.errorExpected(pos, "declaration")
+		p.errorExpected(pos, "declaration:"+p.lit+p.tok.String())
 		p.advance(sync)
 		return &ast.BadDecl{From: pos, To: p.pos}
 	}
@@ -2635,14 +2620,14 @@ func (p *parser) parseFile() *ast.File {
 	var decls []ast.Decl
 	if p.mode&PackageClauseOnly == 0 {
 		// import decls
-		for p.tok == token.IMPORT || p.tok == token.Zh_引入 {
+		for p.tok == token.IMPORT {
 			decls = append(decls, p.parseGenDecl(p.tok, p.parseImportSpec))
 		}
 
 		if p.mode&ImportsOnly == 0 {
 			// rest of package body
 			for p.tok != token.EOF {
-				decls = append(decls, p.parseDecl(declStart, true))
+				decls = append(decls, p.parseDecl(declStart))
 			}
 		}
 	}
