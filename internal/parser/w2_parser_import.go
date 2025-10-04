@@ -18,7 +18,7 @@ func (p *parser) parseImportSpec_zh(doc *ast.CommentGroup, _ token.Token, _ int)
 	if p.tok == token.STRING {
 		path = p.lit
 		if !isValidImport(path) {
-			p.error(pos, "invalid import path: "+path)
+			p.error(pos, "无效的引入路径: "+path)
 		}
 		p.next()
 	} else {

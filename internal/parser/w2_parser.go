@@ -65,7 +65,7 @@ func (p *parser) parseFile_zh() *ast.File {
 
 func (p *parser) expectSemi_zh() {
 	// semicolon is optional before a closing ')' or '}'
-	if p.tok != token.RPAREN && p.tok != token.RBRACE {
+	if p.tok != token.RPAREN && p.tok != token.RBRACE && !p.tok.IsW2BlockEnd() {
 		switch p.tok {
 		case token.COMMA:
 			// permit a ',' instead of a ';' but complain

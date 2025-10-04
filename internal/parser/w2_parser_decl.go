@@ -42,27 +42,15 @@ func (p *parser) parseGenDecl_zh(keyword token.Token, f parseSpecFunction) *ast.
 	doc := p.leadComment
 	pos := p.expect(keyword)
 
-	var lparen, rparen token.Pos
-	var list []ast.Spec
-	if p.tok == token.LPAREN {
-		lparen = p.pos
-		p.next()
-		for iota := 0; p.tok != token.RPAREN && p.tok != token.EOF; iota++ {
-			list = append(list, f(p.leadComment, keyword, iota))
-		}
-		rparen = p.expect(token.RPAREN)
-		p.expectSemi()
-	} else {
-		list = append(list, f(nil, keyword, 0))
-	}
+	list := []ast.Spec{f(nil, keyword, 0)}
 
 	return &ast.GenDecl{
 		Doc:    doc,
 		TokPos: pos,
 		Tok:    keyword,
-		Lparen: lparen,
+		Lparen: token.NoPos,
 		Specs:  list,
-		Rparen: rparen,
+		Rparen: token.NoPos,
 	}
 }
 

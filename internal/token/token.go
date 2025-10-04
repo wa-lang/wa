@@ -167,6 +167,8 @@ const (
 	Zh_类型 // type
 	Zh_接口 // interface
 
+	// TODO: 字典/接口 的结束? 或者结尾统一?
+
 	w2_keyword_end
 )
 
@@ -414,6 +416,16 @@ func (tok Token) IsOperator() bool { return operator_beg < tok && tok < operator
 func (tok Token) IsKeyword() bool { return keyword_beg < tok && tok < keyword_end }
 
 func (tok Token) IsW2Keyword() bool { return w2_keyword_beg < tok && tok < w2_keyword_end }
+
+// 是否为块结尾
+func (tok Token) IsW2BlockEnd() bool {
+	switch tok {
+	case Zh_算终, Zh_函终, Zh_若终, Zh_岔终, Zh_当终, Zh_类终:
+		return true
+	default:
+		return false
+	}
+}
 
 // IsExported reports whether name is exported.
 func IsExported(name string) bool {

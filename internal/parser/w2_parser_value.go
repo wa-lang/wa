@@ -16,16 +16,15 @@ func (p *parser) parseValueSpec_zh(doc *ast.CommentGroup, keyword token.Token, i
 	pos := p.pos
 	idents := p.parseIdentList()
 	var colonPos token.Pos
-	if !p.wagoMode {
-		if p.tok == token.COLON {
-			colonPos = p.pos
-			p.next()
-		} else {
-			if p.tok != token.ASSIGN && p.tok != token.SEMICOLON {
-				p.expect(token.COLON)
-			}
+	if p.tok == token.COLON {
+		colonPos = p.pos
+		p.next()
+	} else {
+		if p.tok != token.ASSIGN && p.tok != token.SEMICOLON {
+			p.expect(token.COLON)
 		}
 	}
+
 	typ := p.tryType()
 	var values []ast.Expr
 	// always permit optional initialization for more tolerant parsing
@@ -36,13 +35,13 @@ func (p *parser) parseValueSpec_zh(doc *ast.CommentGroup, keyword token.Token, i
 	p.expectSemi() // call before accessing p.linecomment
 
 	switch keyword {
-	case token.VAR, token.GLOBAL:
+	case token.VAR, token.GLOBAL, token.Zh_全局:
 		if typ == nil && values == nil {
-			p.error(pos, "missing variable type or initialization")
+			p.error(pos, "缺少变量的类型或初始值")
 		}
-	case token.CONST:
+	case token.CONST, token.Zh_定义, token.Zh_常量:
 		if typ == nil && values == nil && iota == 0 {
-			p.error(pos, "missing const type or initialization")
+			p.error(pos, "缺少常量的类型或初始值")
 		}
 
 		// if values == nil && (iota == 0 || typ != nil) {
@@ -63,7 +62,7 @@ func (p *parser) parseValueSpec_zh(doc *ast.CommentGroup, keyword token.Token, i
 		Comment:  p.lineComment,
 	}
 	kind := ast.Con
-	if keyword == token.VAR || keyword == token.GLOBAL {
+	if keyword == token.VAR || keyword == token.GLOBAL || keyword == token.Zh_全局 {
 		kind = ast.Var
 	}
 	p.declare(spec, iota, p.topScope, kind, idents...)
