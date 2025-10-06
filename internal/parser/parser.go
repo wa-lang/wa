@@ -379,10 +379,6 @@ func (p *parser) error(pos token.Pos, msg string) {
 }
 
 func (p *parser) errorExpected(pos token.Pos, msg string) {
-	if p.w2Mode {
-		p.errorExpected_zh(pos, msg)
-		return
-	}
 	msg = "expected " + msg
 	if pos == p.pos {
 		// the error happened at the current position;
@@ -498,14 +494,6 @@ var stmtStart = map[token.Token]bool{
 	token.SWITCH:   true,
 	token.TYPE:     true,
 	token.VAR:      true,
-
-	token.Zh_跳出: true,
-	token.Zh_继续: true,
-	token.Zh_押后: true,
-	token.Zh_当始: true,
-	token.Zh_若始: true,
-	token.Zh_返回: true,
-	token.Zh_岔始: true,
 }
 
 var declStart = map[token.Token]bool{
@@ -513,11 +501,6 @@ var declStart = map[token.Token]bool{
 	token.TYPE:   true,
 	token.VAR:    true,
 	token.GLOBAL: true,
-
-	token.Zh_常量: true,
-	token.Zh_定义: true,
-	token.Zh_全局: true,
-	token.Zh_类型: true,
 }
 
 var exprEnd = map[token.Token]bool{
@@ -527,13 +510,6 @@ var exprEnd = map[token.Token]bool{
 	token.RPAREN:    true,
 	token.RBRACK:    true,
 	token.RBRACE:    true,
-
-	token.Zh_算终: true,
-	token.Zh_函终: true,
-	token.Zh_若终: true,
-	token.Zh_岔终: true,
-	token.Zh_当终: true,
-	token.Zh_类终: true,
 }
 
 // safePos returns a valid file position for a given position: If pos

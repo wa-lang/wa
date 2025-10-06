@@ -230,21 +230,21 @@ func childrenOf(n ast.Node) []ast.Node {
 		}
 
 	case *ast.CaseClause:
-		if n.Tok.IsW2Keyword() {
+		if n.Tok.IsWzKeyword() {
 			if n.List == nil {
 				children = append(children,
-					tok(n.TokPos, len("主道")))
+					tok(n.TokPos, len(token.K_没辙)))
 			} else {
 				children = append(children,
-					tok(n.TokPos, len("岔道")))
+					tok(n.TokPos, len(token.K_有辙)))
 			}
 		} else {
 			if n.List == nil {
 				children = append(children,
-					tok(n.TokPos, len("default")))
+					tok(n.TokPos, len(token.K_default)))
 			} else {
 				children = append(children,
-					tok(n.TokPos, len("case")))
+					tok(n.TokPos, len(token.K_case)))
 			}
 		}
 		children = append(children, tok(n.Colon, len(":")))

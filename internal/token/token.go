@@ -123,53 +123,37 @@ const (
 
 	keyword_end
 
-	w2_keyword_beg
+	wz_keyword_beg
 	// Keywords
-
-	Zh_未定义 // undefined
-
-	Zh_真 // true
-	Zh_假 // false
-
 	Zh_引入 // import
 
 	Zh_常量 // const
-	Zh_定义 // const
-	Zh_全局 // flobal
-
-	Zh_算始 // func
-	Zh_算终 // func {}
-	Zh_函始 // func
-	Zh_函终 // func {}
-
-	Zh_若始 // if
-	Zh_若另 // else if
-	Zh_若否 // else
-	Zh_若终 // {}
-
-	Zh_岔始 // switch
-	Zh_岔终 // {}
-	Zh_岔道 // case
-	Zh_主道 // default
-
-	Zh_当始 // for
-	Zh_当终 // {}
-	Zh_跳出 // break
-	Zh_继续 // continue
-
-	Zh_类始 // struct
-	Zh_类终 // {}
-
-	Zh_返回 // return
-	Zh_押后 // defer
-	Zh_字典 // map
-
+	Zh_全局 // global
 	Zh_类型 // type
+	Zh_定义 // func
+
+	Zh_结构 // struct
+	Zh_字典 // map
 	Zh_接口 // interface
 
-	// TODO: 字典/接口 的结束? 或者结尾统一?
+	Zh_如果 // if
+	Zh_或者 // else if [新加]
+	Zh_否则 // else
 
-	w2_keyword_end
+	Zh_找辙 // switch
+	Zh_有辙 // case
+	Zh_没辙 // default
+
+	Zh_循环 // for
+	Zh_迭代 // range
+	Zh_继续 // continue
+	Zh_跳出 // break
+
+	Zh_押后 // defer
+	Zh_返回 // return
+
+	Zh_完毕 // } [新加]
+	wz_keyword_end
 )
 
 var tokens = [...]string{
@@ -268,46 +252,34 @@ var tokens = [...]string{
 	TYPE:   "type",
 	VAR:    "var",
 
-	Zh_未定义: "未定义",
+	Zh_引入: K_引入,
 
-	Zh_真: "真",
-	Zh_假: "假",
+	Zh_常量: K_常量,
+	Zh_全局: K_全局,
+	Zh_类型: K_类型,
+	Zh_定义: K_定义,
 
-	Zh_引入: "引入",
+	Zh_结构: K_结构,
+	Zh_字典: K_字典,
+	Zh_接口: K_接口,
 
-	Zh_常量: "常量",
-	Zh_定义: "定义",
-	Zh_全局: "全局",
+	Zh_如果: K_如果,
+	Zh_或者: K_或者,
+	Zh_否则: K_否则,
 
-	Zh_算始: "算始",
-	Zh_算终: "算终",
-	Zh_函始: "函始",
-	Zh_函终: "函终",
+	Zh_找辙: K_找辙,
+	Zh_有辙: K_有辙,
+	Zh_没辙: K_没辙,
 
-	Zh_若始: "若始",
-	Zh_若另: "若另",
-	Zh_若否: "若否",
-	Zh_若终: "若终",
+	Zh_循环: K_循环,
+	Zh_迭代: K_迭代,
+	Zh_继续: K_继续,
+	Zh_跳出: K_跳出,
 
-	Zh_岔始: "岔始",
-	Zh_岔终: "岔终",
-	Zh_岔道: "岔道",
-	Zh_主道: "主道",
+	Zh_押后: K_押后,
+	Zh_返回: K_返回,
 
-	Zh_当始: "当始",
-	Zh_当终: "当终",
-	Zh_跳出: "跳出",
-	Zh_继续: "继续",
-
-	Zh_类始: "类始",
-	Zh_类终: "类终",
-
-	Zh_返回: "返回",
-	Zh_押后: "押后",
-	Zh_字典: "字典",
-
-	Zh_类型: "类型",
-	Zh_接口: "接口",
+	Zh_完毕: K_完毕,
 }
 
 // String returns the string corresponding to the token tok.
@@ -373,7 +345,7 @@ func init() {
 		keywords[tokens[i]] = i
 	}
 
-	for i := w2_keyword_beg + 1; i < w2_keyword_end; i++ {
+	for i := wz_keyword_beg + 1; i < wz_keyword_end; i++ {
 		keywords[tokens[i]] = i
 	}
 }
@@ -386,10 +358,10 @@ func Lookup(ident string) Token {
 	return IDENT
 }
 
-func LookupEx(ident string, useW2Mode bool) Token {
+func LookupEx(ident string, useWzMode bool) Token {
 	if tok, is_keyword := keywords[ident]; is_keyword {
-		if useW2Mode {
-			if tok.IsW2Keyword() {
+		if useWzMode {
+			if tok.IsWzKeyword() {
 				return tok
 			}
 		} else {
@@ -415,17 +387,7 @@ func (tok Token) IsOperator() bool { return operator_beg < tok && tok < operator
 // it returns false otherwise.
 func (tok Token) IsKeyword() bool { return keyword_beg < tok && tok < keyword_end }
 
-func (tok Token) IsW2Keyword() bool { return w2_keyword_beg < tok && tok < w2_keyword_end }
-
-// 是否为块结尾
-func (tok Token) IsW2BlockEnd() bool {
-	switch tok {
-	case Zh_算终, Zh_函终, Zh_若终, Zh_岔终, Zh_当终, Zh_类终:
-		return true
-	default:
-		return false
-	}
-}
+func (tok Token) IsWzKeyword() bool { return wz_keyword_beg < tok && tok < wz_keyword_end }
 
 // IsExported reports whether name is exported.
 func IsExported(name string) bool {

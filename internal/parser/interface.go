@@ -116,11 +116,7 @@ func ParseFile(vfs fs.FS, fset *token.FileSet, filename string, src interface{},
 
 	// parse source
 	p.init(fset, filename, text, mode)
-	if p.w2Mode {
-		f = p.parseFile_zh()
-	} else {
-		f = p.parseFile()
-	}
+	f = p.parseFile()
 
 	return
 }
