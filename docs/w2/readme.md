@@ -98,6 +98,7 @@ func main {
 - nil: 空
 - true: 真
 - false: 假
+- iota: 自增
 - init: 准备
 - main: 主控
 - this: 自身
@@ -117,7 +118,6 @@ func main {
 - string: 字串
 - byte: 字节
 - rune: 符文
-- int: 无符
 - i8: 微整型
 - i16: 短整型
 - i32: 普整型
