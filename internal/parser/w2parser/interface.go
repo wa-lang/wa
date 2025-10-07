@@ -83,7 +83,7 @@ func ParseFile(vfs fs.FS, fset *token.FileSet, filename string, src interface{},
 	if fset == nil {
 		panic("parser.ParseFile: no token.FileSet provided (fset == nil)")
 	}
-	if !strings.HasSuffix(filename, "*.w2") {
+	if !strings.HasSuffix(filename, ".w2") {
 		panic("filename must has .w2 suffix")
 	}
 
