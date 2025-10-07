@@ -94,8 +94,20 @@ const (
 	K_准备 = "准备" // init
 	K_主控 = "主控" // main
 	K_自身 = "自身" // this
+
+	K_追加 = "追加" // append
+	K_容量 = "容量" // cap
+	K_复数 = "复数" // complex
+	K_拷贝 = "拷贝" // copy
+	K_删除 = "删除" // delete
+	K_虚部 = "虚部" // imag
+	K_长度 = "长度" // len
+	K_构建 = "构建" // make
+	K_新建 = "新建" // new
+	K_崩溃 = "崩溃" // panic
 	K_输出 = "输出" // println
 	K_打印 = "打印" // print
+	K_实部 = "实部" // real
 
 	K_主包 = "主包" // main
 	K_太初 = "太初" // builtin
