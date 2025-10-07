@@ -4,7 +4,7 @@
 
 // This file contains the exported entry points for invoking the parser.
 
-package parser
+package w2parser
 
 import (
 	"bytes"
@@ -17,7 +17,6 @@ import (
 	"strings"
 
 	"wa-lang.org/wa/internal/ast"
-	"wa-lang.org/wa/internal/parser/w2parser"
 	"wa-lang.org/wa/internal/token"
 )
 
@@ -84,9 +83,8 @@ func ParseFile(vfs fs.FS, fset *token.FileSet, filename string, src interface{},
 	if fset == nil {
 		panic("parser.ParseFile: no token.FileSet provided (fset == nil)")
 	}
-
-	if strings.HasSuffix(filename, ".w2") {
-		return w2parser.ParseFile(vfs, fset, filename, src, mode)
+	if !strings.HasSuffix(filename, "*.w2") {
+		panic("filename must has .w2 suffix")
 	}
 
 	// get source

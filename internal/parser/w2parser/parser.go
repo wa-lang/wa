@@ -13,7 +13,7 @@
 // treated like an ordinary parameter list and thus may contain multiple
 // entries where the spec permits exactly one. Consequently, the corresponding
 // field in the AST (ast.FuncDecl.Recv) field is not restricted to one entry.
-package parser
+package w2parser
 
 import (
 	"fmt"
@@ -28,16 +28,14 @@ import (
 
 // The parser structure holds the parser's internal state.
 type parser struct {
-	wagoMode bool // *.wa.go 模式
-
 	file    *token.File
 	errors  scanner.ErrorList
 	scanner scanner.Scanner
 
 	// Tracing/debugging
-	mode   ast.ParserMode // parsing mode
-	trace  bool           // == (mode & Trace != 0)
-	indent int            // indentation used for tracing output
+	mode   Mode // parsing mode
+	trace  bool // == (mode & Trace != 0)
+	indent int  // indentation used for tracing output
 
 	// Comments
 	comments    []*ast.CommentGroup
@@ -72,21 +70,18 @@ type parser struct {
 	targetStack [][]*ast.Ident // stack of unresolved labels
 }
 
-func (p *parser) init(fset *token.FileSet, filename string, src []byte, mode ast.ParserMode) {
-	if strings.HasSuffix(filename, ".go") {
-		p.wagoMode = true
-	}
-
+func (p *parser) init(fset *token.FileSet, filename string, src []byte, mode Mode) {
 	p.file = fset.AddFile(filename, -1, len(src))
 	var m scanner.Mode
-	if mode&ast.ParseComments != 0 {
+	if mode&ParseComments != 0 {
 		m = scanner.ScanComments
 	}
 	eh := func(pos token.Position, msg string) { p.errors.Add(pos, msg) }
+	p.scanner.W2Mode = true
 	p.scanner.Init(p.file, src, eh, m)
 
 	p.mode = mode
-	p.trace = mode&ast.Trace != 0 // for convenience (p.trace is used frequently)
+	p.trace = mode&Trace != 0 // for convenience (p.trace is used frequently)
 
 	p.next()
 }
@@ -113,7 +108,7 @@ func (p *parser) closeLabelScope() {
 	scope := p.labelScope
 	for _, ident := range p.targetStack[n] {
 		ident.Obj = scope.Lookup(ident.Name)
-		if ident.Obj == nil && p.mode&ast.DeclarationErrors != 0 {
+		if ident.Obj == nil && p.mode&DeclarationErrors != 0 {
 			p.error(ident.Pos(), fmt.Sprintf("label %s undefined", ident.Name))
 		}
 	}
@@ -132,7 +127,7 @@ func (p *parser) declare(decl, data interface{}, scope *ast.Scope, kind ast.ObjK
 		obj.Data = data
 		ident.Obj = obj
 		if ident.Name != "_" {
-			if alt := scope.Insert(obj); alt != nil && p.mode&ast.DeclarationErrors != 0 {
+			if alt := scope.Insert(obj); alt != nil && p.mode&DeclarationErrors != 0 {
 				prevDecl := ""
 				if pos := alt.Pos(); pos.IsValid() {
 					prevDecl = fmt.Sprintf("\n\tprevious declaration at %s", p.file.Position(pos))
@@ -166,7 +161,7 @@ func (p *parser) shortVarDecl(decl *ast.AssignStmt, list []ast.Expr) {
 			p.errorExpected(x.Pos(), "identifier on left side of :=")
 		}
 	}
-	if n == 0 && p.mode&ast.DeclarationErrors != 0 {
+	if n == 0 && p.mode&DeclarationErrors != 0 {
 		p.error(list[0].Pos(), "no new variables on left side of :=")
 	}
 }
@@ -360,7 +355,7 @@ func (p *parser) error(pos token.Pos, msg string) {
 	// If AllErrors is not set, discard errors reported on the same line
 	// as the last recorded error and stop parsing if there are more than
 	// 10 errors.
-	if p.mode&ast.AllErrors == 0 {
+	if p.mode&AllErrors == 0 {
 		n := len(p.errors)
 		if n > 0 && p.errors[n-1].Pos.Line == epos.Line {
 			return // discard - likely a spurious error
@@ -846,14 +841,12 @@ func (p *parser) parseParameterList(scope *ast.Scope, ellipsisOk bool) (params [
 
 	// Wa 必须加 ':'
 	var colonPos token.Pos
-	if !p.wagoMode {
-		if p.tok == token.COLON {
-			colonPos = p.pos
-			p.next()
-		} else {
-			if p.tok != token.RPAREN {
-				p.expect(token.COLON)
-			}
+	if p.tok == token.COLON {
+		colonPos = p.pos
+		p.next()
+	} else {
+		if p.tok != token.RPAREN {
+			p.expect(token.COLON)
 		}
 	}
 
@@ -873,14 +866,13 @@ func (p *parser) parseParameterList(scope *ast.Scope, ellipsisOk bool) (params [
 		p.next()
 		for p.tok != token.RPAREN && p.tok != token.EOF {
 			idents := p.parseIdentList()
-			if !p.wagoMode {
-				if p.tok == token.COLON {
-					colonPos = p.pos
-					p.next()
-				} else {
-					p.expect(token.COLON)
-				}
+			if p.tok == token.COLON {
+				colonPos = p.pos
+				p.next()
+			} else {
+				p.expect(token.COLON)
 			}
+
 			typ := p.parseVarType(ellipsisOk)
 			field := &ast.Field{Names: idents, ColonPos: colonPos, Type: typ}
 			params = append(params, field)
@@ -953,29 +945,23 @@ func (p *parser) parseSignature(scope *ast.Scope) (params, results *ast.FieldLis
 	// 无参数和返回值时可省略 `()`
 	// func main
 	// func main { ... }
-	if !p.wagoMode {
-		if p.tok == token.LBRACE || p.tok == token.SEMICOLON {
-			params = new(ast.FieldList)
-			results = new(ast.FieldList)
-			return
-		}
+	if p.tok == token.LBRACE || p.tok == token.SEMICOLON {
+		params = new(ast.FieldList)
+		results = new(ast.FieldList)
+		return
 	}
 
 	// func answer => i32 {}
-	if !p.wagoMode {
-		if p.tok == token.ARROW {
-			params = new(ast.FieldList)
-			p.next()
-		} else {
-			params = p.parseParameters(scope, true)
-
-			if p.tok == token.ARROW {
-				arrowPos = p.pos
-				p.next()
-			}
-		}
+	if p.tok == token.ARROW {
+		params = new(ast.FieldList)
+		p.next()
 	} else {
 		params = p.parseParameters(scope, true)
+
+		if p.tok == token.ARROW {
+			arrowPos = p.pos
+			p.next()
+		}
 	}
 
 	results = p.parseResult(scope)
@@ -2295,15 +2281,6 @@ func (p *parser) parseImportSpec(doc *ast.CommentGroup, _ token.Token, _ int) as
 	}
 
 	var ident *ast.Ident
-	if p.wagoMode {
-		switch p.tok {
-		case token.PERIOD:
-			ident = &ast.Ident{NamePos: p.pos, Name: "."}
-			p.next()
-		case token.IDENT:
-			ident = p.parseIdent()
-		}
-	}
 
 	pos := p.pos
 	var path string
@@ -2319,20 +2296,18 @@ func (p *parser) parseImportSpec(doc *ast.CommentGroup, _ token.Token, _ int) as
 
 	// parse => asname
 	var arrowPos token.Pos
-	if !p.wagoMode {
-		if ident == nil && p.tok == token.ARROW {
-			arrowPos = p.pos
-			p.next() // skip =>
+	if ident == nil && p.tok == token.ARROW {
+		arrowPos = p.pos
+		p.next() // skip =>
 
-			switch p.tok {
-			case token.PERIOD:
-				ident = &ast.Ident{NamePos: p.pos, Name: "."}
-				p.next()
-			case token.IDENT:
-				ident = p.parseIdent()
-			default:
-				p.expect(token.IDENT)
-			}
+		switch p.tok {
+		case token.PERIOD:
+			ident = &ast.Ident{NamePos: p.pos, Name: "."}
+			p.next()
+		case token.IDENT:
+			ident = p.parseIdent()
+		default:
+			p.expect(token.IDENT)
 		}
 	}
 
@@ -2359,16 +2334,15 @@ func (p *parser) parseValueSpec(doc *ast.CommentGroup, keyword token.Token, iota
 	pos := p.pos
 	idents := p.parseIdentList()
 	var colonPos token.Pos
-	if !p.wagoMode {
-		if p.tok == token.COLON {
-			colonPos = p.pos
-			p.next()
-		} else {
-			if p.tok != token.ASSIGN && p.tok != token.SEMICOLON {
-				p.expect(token.COLON)
-			}
+	if p.tok == token.COLON {
+		colonPos = p.pos
+		p.next()
+	} else {
+		if p.tok != token.ASSIGN && p.tok != token.SEMICOLON {
+			p.expect(token.COLON)
 		}
 	}
+
 	typ := p.tryType()
 	var values []ast.Expr
 	// always permit optional initialization for more tolerant parsing
@@ -2489,25 +2463,20 @@ func (p *parser) parseFuncDecl(keyword token.Token) *ast.FuncDecl {
 	ident := p.parseIdent()
 
 	// func Type.method()
-	if !p.wagoMode {
-		//if recv != nil {
-		//	panic("unreachable")
-		//}
-		if p.tok == token.PERIOD {
-			thisIdent := &ast.Ident{Name: "this"}
-			thisField := &ast.Field{
-				Names: []*ast.Ident{thisIdent},
-				Type:  &ast.StarExpr{X: ident},
-			}
-			recv = &ast.FieldList{
-				List: []*ast.Field{thisField},
-			}
-
-			p.declare(thisField, nil, scope, ast.Var, thisIdent)
-
-			p.next()
-			ident = p.parseIdent()
+	if p.tok == token.PERIOD {
+		thisIdent := &ast.Ident{Name: "this"}
+		thisField := &ast.Field{
+			Names: []*ast.Ident{thisIdent},
+			Type:  &ast.StarExpr{X: ident},
 		}
+		recv = &ast.FieldList{
+			List: []*ast.Field{thisField},
+		}
+
+		p.declare(thisField, nil, scope, ast.Var, thisIdent)
+
+		p.next()
+		ident = p.parseIdent()
 	}
 
 	params, results, arrowPos := p.parseSignature(scope)
@@ -2598,7 +2567,7 @@ func (p *parser) parseFile() *ast.File {
 		// Go spec: The package clause is not a declaration;
 		// the package name does not appear in any scope.
 		ident = p.parseIdent()
-		if ident.Name == "_" && p.mode&ast.DeclarationErrors != 0 {
+		if ident.Name == "_" && p.mode&DeclarationErrors != 0 {
 			p.error(p.pos, "invalid package name _")
 		}
 		p.expectSemi()
@@ -2613,13 +2582,13 @@ func (p *parser) parseFile() *ast.File {
 	p.openScope()
 	p.pkgScope = p.topScope
 	var decls []ast.Decl
-	if p.mode&ast.PackageClauseOnly == 0 {
+	if p.mode&PackageClauseOnly == 0 {
 		// import decls
 		for p.tok == token.IMPORT {
 			decls = append(decls, p.parseGenDecl(p.tok, p.parseImportSpec))
 		}
 
-		if p.mode&ast.ImportsOnly == 0 {
+		if p.mode&ImportsOnly == 0 {
 			// rest of package body
 			for p.tok != token.EOF {
 				decls = append(decls, p.parseDecl(declStart))
