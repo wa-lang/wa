@@ -13,11 +13,11 @@ func (p *parser) parseBlockStmt() *ast.BlockStmt {
 		defer un(trace(p, "BlockStmt"))
 	}
 
-	lbrace := p.expect(token.LBRACE)
+	lbrace := p.expect(token.COLON)
 	p.openScope()
 	list := p.parseStmtList()
 	p.closeScope()
-	rbrace := p.expect(token.RBRACE)
+	rbrace := p.expect(token.Zh_完毕)
 
 	return &ast.BlockStmt{Lbrace: lbrace, List: list, Rbrace: rbrace}
 }

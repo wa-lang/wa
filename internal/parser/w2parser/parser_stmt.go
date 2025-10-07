@@ -15,19 +15,31 @@ const (
 	rangeOk
 )
 
+func (p *parser) parseStmtList() (list []ast.Stmt) {
+	if p.trace {
+		defer un(trace(p, "StatementList"))
+	}
+
+	for p.tok != token.Zh_有辙 && p.tok != token.Zh_没辙 && p.tok != token.Zh_完毕 && p.tok != token.EOF {
+		list = append(list, p.parseStmt())
+	}
+
+	return
+}
+
 func (p *parser) parseStmt() (s ast.Stmt) {
 	if p.trace {
 		defer un(trace(p, "Statement"))
 	}
 
 	switch p.tok {
-	case token.CONST, token.TYPE, token.VAR:
+	case token.Zh_常量, token.Zh_类型:
 		// TODO(chai2010): var declaration not allowed in func body
 		s = &ast.DeclStmt{Decl: p.parseDecl(stmtStart)}
 	case
 		// tokens that may start an expression
-		token.IDENT, token.INT, token.FLOAT, token.IMAG, token.CHAR, token.STRING, token.FUNC, token.LPAREN, // operands
-		token.LBRACK, token.STRUCT, token.MAP, token.INTERFACE, // composite types
+		token.IDENT, token.INT, token.FLOAT, token.IMAG, token.CHAR, token.STRING, token.Zh_函数, token.LPAREN, // operands
+		token.LBRACK, token.Zh_结构, token.Zh_字典, token.Zh_接口, // composite types
 		token.ADD, token.SUB, token.MUL, token.AND, token.XOR, token.NOT: // unary operators
 		s, _ = p.parseSimpleStmt(labelOk)
 		// because of the required look-ahead, labeled statements are
@@ -36,20 +48,21 @@ func (p *parser) parseStmt() (s ast.Stmt) {
 		if _, isLabeledStmt := s.(*ast.LabeledStmt); !isLabeledStmt {
 			p.expectSemi()
 		}
-	case token.DEFER:
+	case token.Zh_押后:
 		s = p.parseDeferStmt(p.tok)
-	case token.RETURN:
+	case token.Zh_返回:
 		s = p.parseReturnStmt(p.tok)
-	case token.BREAK, token.CONTINUE:
+	case token.Zh_跳出, token.Zh_继续:
 		s = p.parseBranchStmt(p.tok)
-	case token.LBRACE:
+	case token.Zh_区块:
+		p.expect(token.Zh_区块)
 		s = p.parseBlockStmt()
 		p.expectSemi()
-	case token.IF:
+	case token.Zh_如果:
 		s = p.parseIfStmt(p.tok)
-	case token.SWITCH:
+	case token.Zh_找辙:
 		s = p.parseSwitchStmt(p.tok)
-	case token.FOR:
+	case token.Zh_循环:
 		s = p.parseForStmt(p.tok)
 	case token.SEMICOLON:
 		// Is it ever possible to have an implicit semicolon
@@ -57,7 +70,7 @@ func (p *parser) parseStmt() (s ast.Stmt) {
 		// (handle correctly anyway)
 		s = &ast.EmptyStmt{Semicolon: p.pos, Implicit: p.lit == "\n"}
 		p.next()
-	case token.RBRACE:
+	case token.Zh_完毕:
 		// a semicolon may be omitted before a closing "}"
 		s = &ast.EmptyStmt{Semicolon: p.pos, Implicit: true}
 	default:
@@ -66,18 +79,6 @@ func (p *parser) parseStmt() (s ast.Stmt) {
 		p.errorExpected(pos, "statement")
 		p.advance(stmtStart)
 		s = &ast.BadStmt{From: pos, To: p.pos}
-	}
-
-	return
-}
-
-func (p *parser) parseStmtList() (list []ast.Stmt) {
-	if p.trace {
-		defer un(trace(p, "StatementList"))
-	}
-
-	for p.tok != token.CASE && p.tok != token.DEFAULT && p.tok != token.RBRACE && p.tok != token.EOF {
-		list = append(list, p.parseStmt())
 	}
 
 	return
@@ -101,7 +102,7 @@ func (p *parser) parseSimpleStmt(mode int) (ast.Stmt, bool) {
 		p.next()
 
 		// Wa 只有 for 和 switch 有 Label
-		if p.tok == token.FOR || p.tok == token.SWITCH {
+		if p.tok == token.Zh_循环 || p.tok == token.Zh_找辙 {
 			break // 继续后面的 Label 解析
 		}
 
@@ -168,7 +169,7 @@ func (p *parser) parseSimpleStmt(mode int) (ast.Stmt, bool) {
 		p.next()
 		var y []ast.Expr
 		isRange := false
-		if mode == rangeOk && p.tok == token.RANGE && (tok == token.DEFINE || tok == token.ASSIGN) {
+		if mode == rangeOk && p.tok == token.Zh_迭代 && (tok == token.DEFINE || tok == token.ASSIGN) {
 			pos := p.pos
 			p.next()
 			y = []ast.Expr{&ast.UnaryExpr{OpPos: pos, Op: token.RANGE, X: p.parseRhs()}}
@@ -193,7 +194,7 @@ func (p *parser) parseSimpleStmt(mode int) (ast.Stmt, bool) {
 		colon := colonPos
 
 		// 只有 for 和 switch 有 Label
-		if p.tok != token.FOR && p.tok != token.SWITCH {
+		if p.tok != token.Zh_循环 && p.tok != token.Zh_找辙 {
 			p.errorExpected(p.pos, "for or switch")
 		}
 

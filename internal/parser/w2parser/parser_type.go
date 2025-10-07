@@ -52,13 +52,13 @@ func (p *parser) parseInterfaceType(keyword token.Token) *ast.InterfaceType {
 	}
 
 	pos := p.expect(keyword)
-	lbrace := p.expect(token.LBRACE)
+	lbrace := p.expect(token.COLON)
 	scope := ast.NewScope(nil) // interface scope
 	var list []*ast.Field
-	for p.tok == token.FUNC || p.tok == token.IDENT {
+	for p.tok == token.Zh_函数 || p.tok == token.IDENT {
 		list = append(list, p.parseMethodSpec(scope))
 	}
-	rbrace := p.expect(token.RBRACE)
+	rbrace := p.expect(token.Zh_完毕)
 
 	return &ast.InterfaceType{
 		TokPos: pos,
@@ -76,53 +76,32 @@ func (p *parser) parseMapType() *ast.MapType {
 		defer un(trace(p, "MapType"))
 	}
 
-	pos := p.expect(token.MAP)
-	p.expect(token.LBRACK)
+	pos := p.expect(token.Zh_字典)
+	p.expect(token.COLON)
 	key := p.parseType()
-	p.expect(token.RBRACK)
+	p.expect(token.Zh_完毕)
 	value := p.parseType()
 
 	return &ast.MapType{Map: pos, Key: key, Value: value}
-}
-
-func (p *parser) parseTypeInstance(typ ast.Expr) ast.Expr {
-	if p.trace {
-		defer un(trace(p, "TypeInstance"))
-	}
-
-	opening := p.expect(token.LBRACK)
-	typeParam := p.parseType()
-	closing := p.expectClosing(token.RBRACK, "type argument")
-
-	return &ast.IndexExpr{
-		X:      typ,
-		Lbrack: opening,
-		Index:  typeParam,
-		Rbrack: closing,
-	}
 }
 
 // If the result is an identifier, it is not resolved.
 func (p *parser) tryIdentOrType() ast.Expr {
 	switch p.tok {
 	case token.IDENT:
-		typ := p.parseTypeName()
-		if p.tok == token.LBRACK {
-			typ = p.parseTypeInstance(typ)
-		}
-		return typ
+		return p.parseTypeName()
 	case token.LBRACK:
 		return p.parseArrayType()
 	case token.STRUCT:
 		return p.parseStructType(p.tok)
 	case token.MUL:
 		return p.parsePointerType()
-	case token.FUNC:
+	case token.Zh_函数:
 		typ, _ := p.parseFuncType(p.tok)
 		return typ
-	case token.INTERFACE:
+	case token.Zh_接口:
 		return p.parseInterfaceType(p.tok)
-	case token.MAP:
+	case token.Zh_字典:
 		return p.parseMapType()
 	case token.LPAREN:
 		lparen := p.pos
@@ -217,8 +196,8 @@ func (p *parser) parseStructType(keyword token.Token) *ast.StructType {
 
 	pos := p.expect(keyword)
 	lbrace := token.NoPos
-	if keyword == token.STRUCT {
-		lbrace = p.expect(token.LBRACE)
+	if keyword == token.Zh_结构 {
+		lbrace = p.expect(token.COLON)
 	}
 	scope := ast.NewScope(nil) // struct scope
 	var list []*ast.Field
@@ -228,7 +207,7 @@ func (p *parser) parseStructType(keyword token.Token) *ast.StructType {
 		// (parseFieldDecl will check and complain if necessary)
 		list = append(list, p.parseFieldDecl(scope))
 	}
-	rbrace := p.expect(token.RBRACE)
+	rbrace := p.expect(token.Zh_完毕)
 
 	return &ast.StructType{
 		TokPos: pos,

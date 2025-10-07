@@ -35,11 +35,11 @@ func (p *parser) parseValueSpec(doc *ast.CommentGroup, keyword token.Token, iota
 	p.expectSemi() // call before accessing p.linecomment
 
 	switch keyword {
-	case token.VAR, token.GLOBAL:
+	case token.Zh_全局:
 		if typ == nil && values == nil {
 			p.error(pos, "missing variable type or initialization")
 		}
-	case token.CONST:
+	case token.Zh_常量:
 		if typ == nil && values == nil && iota == 0 {
 			p.error(pos, "missing const type or initialization")
 		}
@@ -62,7 +62,7 @@ func (p *parser) parseValueSpec(doc *ast.CommentGroup, keyword token.Token, iota
 		Comment:  p.lineComment,
 	}
 	kind := ast.Con
-	if keyword == token.VAR || keyword == token.GLOBAL {
+	if keyword == token.Zh_全局 {
 		kind = ast.Var
 	}
 	p.declare(spec, iota, p.topScope, kind, idents...)

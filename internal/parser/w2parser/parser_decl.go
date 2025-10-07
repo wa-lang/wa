@@ -21,13 +21,14 @@ func (p *parser) parseGenDecl(
 
 	var lparen, rparen token.Pos
 	var list []ast.Spec
-	if p.tok == token.LPAREN {
+	if p.tok == token.COLON {
+		// XXX: ... 完毕
 		lparen = p.pos
 		p.next()
-		for iota := 0; p.tok != token.RPAREN && p.tok != token.EOF; iota++ {
+		for iota := 0; p.tok != token.Zh_完毕 && p.tok != token.EOF; iota++ {
 			list = append(list, fn(p.leadComment, keyword, iota))
 		}
-		rparen = p.expect(token.RPAREN)
+		rparen = p.expect(token.Zh_完毕)
 		p.expectSemi()
 	} else {
 		list = append(list, fn(nil, keyword, 0))
@@ -50,13 +51,13 @@ func (p *parser) parseDecl(sync map[token.Token]bool) ast.Decl {
 
 	var fn func(doc *ast.CommentGroup, keyword token.Token, iota int) ast.Spec
 	switch p.tok {
-	case token.CONST, token.VAR, token.GLOBAL:
+	case token.Zh_常量, token.Zh_全局:
 		fn = p.parseValueSpec
 
-	case token.TYPE:
+	case token.Zh_类型:
 		fn = p.parseTypeSpec
 
-	case token.FUNC:
+	case token.Zh_函数:
 		return p.parseFuncDecl(p.tok)
 
 	default:

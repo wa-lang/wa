@@ -19,15 +19,15 @@ func (p *parser) parseForStmt(keyword token.Token) ast.Stmt {
 
 	var s1, s2, s3 ast.Stmt
 	var isRange bool
-	if p.tok != token.LBRACE {
+	if p.tok != token.COLON {
 		prevLev := p.exprLev
 		p.exprLev = -1
 		if p.tok != token.SEMICOLON {
-			if p.tok == token.RANGE {
+			if p.tok == token.Zh_迭代 {
 				// "for range x" (nil lhs in assignment)
 				pos := p.pos
 				p.next()
-				y := []ast.Expr{&ast.UnaryExpr{OpPos: pos, Op: token.RANGE, X: p.parseRhs()}}
+				y := []ast.Expr{&ast.UnaryExpr{OpPos: pos, Op: token.Zh_迭代, X: p.parseRhs()}}
 				s2 = &ast.AssignStmt{Rhs: y}
 				isRange = true
 			} else {
@@ -42,7 +42,7 @@ func (p *parser) parseForStmt(keyword token.Token) ast.Stmt {
 				s2, _ = p.parseSimpleStmt(basic)
 			}
 			p.expectSemi()
-			if p.tok != token.LBRACE {
+			if p.tok != token.COLON {
 				s3, _ = p.parseSimpleStmt(basic)
 			}
 		}

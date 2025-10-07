@@ -468,7 +468,7 @@ func (p *parser) parseOperand(lhs bool) ast.Expr {
 		rparen := p.expect(token.RPAREN)
 		return &ast.ParenExpr{Lparen: lparen, X: x, Rparen: rparen}
 
-	case token.FUNC:
+	case token.Zh_函数:
 		return p.parseFuncTypeOrLit(p.tok)
 	}
 
@@ -502,7 +502,7 @@ func (p *parser) parseFuncTypeOrLit(keywork token.Token) ast.Expr {
 	}
 
 	typ, scope := p.parseFuncType(keywork)
-	if p.tok != token.LBRACE {
+	if p.tok != token.COLON {
 		// function type only
 		return typ
 	}

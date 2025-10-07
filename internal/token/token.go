@@ -130,7 +130,7 @@ const (
 	Zh_常量 // const
 	Zh_全局 // global
 	Zh_类型 // type
-	Zh_定义 // func
+	Zh_函数 // func
 
 	Zh_结构 // struct
 	Zh_字典 // map
@@ -152,6 +152,7 @@ const (
 	Zh_押后 // defer
 	Zh_返回 // return
 
+	Zh_区块 // { [新加]
 	Zh_完毕 // } [新加]
 	wz_keyword_end
 )
@@ -257,7 +258,7 @@ var tokens = [...]string{
 	Zh_常量: K_常量,
 	Zh_全局: K_全局,
 	Zh_类型: K_类型,
-	Zh_定义: K_定义,
+	Zh_函数: K_函数,
 
 	Zh_结构: K_结构,
 	Zh_字典: K_字典,
@@ -279,6 +280,7 @@ var tokens = [...]string{
 	Zh_押后: K_押后,
 	Zh_返回: K_返回,
 
+	Zh_区块: K_区块,
 	Zh_完毕: K_完毕,
 }
 

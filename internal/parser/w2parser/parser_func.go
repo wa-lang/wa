@@ -18,17 +18,15 @@ func (p *parser) parseFuncDecl(keyword token.Token) *ast.FuncDecl {
 	scope := ast.NewScope(p.topScope) // function scope
 
 	var recv *ast.FieldList
-	//if p.wagoMode {
 	if p.tok == token.LPAREN {
 		recv = p.parseParameters(scope, false)
 	}
-	//}
 
 	ident := p.parseIdent()
 
 	// func Type.method()
 	if p.tok == token.PERIOD {
-		thisIdent := &ast.Ident{Name: "this"}
+		thisIdent := &ast.Ident{Name: token.K_自身}
 		thisField := &ast.Field{
 			Names: []*ast.Ident{thisIdent},
 			Type:  &ast.StarExpr{X: ident},
@@ -46,7 +44,7 @@ func (p *parser) parseFuncDecl(keyword token.Token) *ast.FuncDecl {
 	params, results, arrowPos := p.parseSignature(scope)
 
 	var body *ast.BlockStmt
-	if p.tok == token.LBRACE {
+	if p.tok == token.COLON {
 		body = p.parseFuncBody(scope)
 	}
 	p.expectSemi()
@@ -71,7 +69,7 @@ func (p *parser) parseFuncDecl(keyword token.Token) *ast.FuncDecl {
 		//
 		// init() functions cannot be referred to and there may
 		// be more than one - don't put them in the pkgScope
-		if ident.Name != "init" {
+		if ident.Name != token.K_准备 {
 			p.declare(decl, nil, p.pkgScope, ast.Fun, ident)
 		}
 	}
@@ -84,13 +82,13 @@ func (p *parser) parseFuncBody(scope *ast.Scope) *ast.BlockStmt {
 		defer un(trace(p, "Body"))
 	}
 
-	lbrace := p.expect(token.LBRACE)
+	lbrace := p.expect(token.COLON)
 	p.topScope = scope // open function scope
 	p.openLabelScope()
 	list := p.parseStmtList()
 	p.closeLabelScope()
 	p.closeScope()
-	rbrace := p.expect(token.RBRACE)
+	rbrace := p.expect(token.Zh_完毕)
 
 	return &ast.BlockStmt{Lbrace: lbrace, List: list, Rbrace: rbrace}
 }
@@ -221,7 +219,9 @@ func (p *parser) parseSignature(scope *ast.Scope) (params, results *ast.FieldLis
 	// 无参数和返回值时可省略 `()`
 	// func main
 	// func main { ... }
-	if p.tok == token.LBRACE || p.tok == token.SEMICOLON {
+	// 定义 主控
+	// 定义 主控: 完毕
+	if p.tok == token.COLON || p.tok == token.SEMICOLON {
 		params = new(ast.FieldList)
 		results = new(ast.FieldList)
 		return

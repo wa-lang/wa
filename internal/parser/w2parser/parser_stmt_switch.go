@@ -18,7 +18,7 @@ func (p *parser) parseSwitchStmt(keyword token.Token) ast.Stmt {
 	defer p.closeScope()
 
 	var s1, s2 ast.Stmt
-	if p.tok != token.LBRACE {
+	if p.tok != token.COLON {
 		prevLev := p.exprLev
 		p.exprLev = -1
 		if p.tok != token.SEMICOLON {
@@ -28,7 +28,7 @@ func (p *parser) parseSwitchStmt(keyword token.Token) ast.Stmt {
 			p.next()
 			s1 = s2
 			s2 = nil
-			if p.tok != token.LBRACE {
+			if p.tok != token.COLON {
 				// A TypeSwitchGuard may declare a variable in addition
 				// to the variable declared in the initial SimpleStmt.
 				// Introduce extra scope to avoid redeclaration errors:
@@ -50,12 +50,12 @@ func (p *parser) parseSwitchStmt(keyword token.Token) ast.Stmt {
 	}
 
 	typeSwitch := p.isTypeSwitchGuard(s2)
-	lbrace := p.expect(token.LBRACE)
+	lbrace := p.expect(token.COLON)
 	var list []ast.Stmt
-	for p.tok == token.CASE || p.tok == token.DEFAULT {
+	for p.tok == token.Zh_有辙 || p.tok == token.Zh_没辙 {
 		list = append(list, p.parseCaseClause(typeSwitch))
 	}
-	rbrace := p.expect(token.RBRACE)
+	rbrace := p.expect(token.Zh_完毕)
 	p.expectSemi()
 	body := &ast.BlockStmt{Lbrace: lbrace, List: list, Rbrace: rbrace}
 
@@ -100,7 +100,7 @@ func (p *parser) parseCaseClause(typeSwitch bool) *ast.CaseClause {
 	pos := p.pos
 	var list []ast.Expr
 	var keyword token.Token
-	if p.tok == token.CASE {
+	if p.tok == token.Zh_有辙 {
 		keyword = p.tok
 		p.next()
 		if typeSwitch {
@@ -110,7 +110,7 @@ func (p *parser) parseCaseClause(typeSwitch bool) *ast.CaseClause {
 		}
 	} else {
 		keyword = p.tok
-		p.expect(token.DEFAULT)
+		p.expect(token.Zh_没辙)
 	}
 
 	colon := p.expect(token.COLON)

@@ -220,7 +220,7 @@ func (p *parser) next0() {
 		switch {
 		case p.tok.IsLiteral():
 			p.printTrace(s, p.lit)
-		case p.tok.IsOperator(), p.tok.IsKeyword():
+		case p.tok.IsOperator(), p.tok.IsWzKeyword():
 			p.printTrace("\"" + s + "\"")
 		default:
 			p.printTrace(s)
@@ -325,32 +325,30 @@ func (p *parser) advance(to map[token.Token]bool) {
 }
 
 var stmtStart = map[token.Token]bool{
-	token.BREAK:    true,
-	token.CONST:    true,
-	token.CONTINUE: true,
-	token.DEFER:    true,
-	token.FOR:      true,
-	token.IF:       true,
-	token.RETURN:   true,
-	token.SWITCH:   true,
-	token.TYPE:     true,
-	token.VAR:      true,
+	token.Zh_跳出: true, // break
+	token.Zh_常量: true, // const
+	token.Zh_继续: true, // continue
+	token.Zh_押后: true, // defer
+	token.Zh_循环: true, // for
+	token.Zh_如果: true, // if
+	token.Zh_返回: true, // return
+	token.Zh_找辙: true, // switch
+	token.Zh_类型: true, // type
 }
 
 var declStart = map[token.Token]bool{
-	token.CONST:  true,
-	token.TYPE:   true,
-	token.VAR:    true,
-	token.GLOBAL: true,
+	token.Zh_常量: true, // const
+	token.Zh_类型: true, // type
+	token.Zh_全局: true, // global
 }
 
 var exprEnd = map[token.Token]bool{
-	token.COMMA:     true,
-	token.COLON:     true,
-	token.SEMICOLON: true,
-	token.RPAREN:    true,
-	token.RBRACK:    true,
-	token.RBRACE:    true,
+	token.COMMA:     true, // ,
+	token.COLON:     true, // :
+	token.SEMICOLON: true, // ;
+	token.RPAREN:    true, // )
+	token.RBRACK:    true, // ]
+	token.RBRACE:    true, // }
 }
 
 // safePos returns a valid file position for a given position: If pos

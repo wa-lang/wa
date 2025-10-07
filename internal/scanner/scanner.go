@@ -380,7 +380,7 @@ func isDigit(ch rune) bool {
 	return isDecimal(ch) || ch >= utf8.RuneSelf && unicode.IsDigit(ch)
 }
 
-func (s *Scanner) scanIdentifier() string {
+func (s *Scanner) scanIdentifierOrLineComment() string {
 	offs := s.offset
 	for isLetter(s.ch) || isDigit(s.ch) {
 		s.next()
@@ -822,17 +822,21 @@ scanAgain:
 	insertSemi := false
 	switch ch := s.ch; {
 	case isLetter(ch):
-		lit = s.scanIdentifier()
-		if len(lit) > 1 {
-			// keywords are longer than one letter - avoid lookup otherwise
-			tok = token.LookupEx(lit, s.W2Mode)
-			switch tok {
-			case token.IDENT, token.BREAK, token.CONTINUE, token.RETURN:
-				insertSemi = true
-			}
+		lit = s.scanIdentifierOrLineComment()
+		if lit == token.K_注+":" {
+			panic("TODO")
 		} else {
-			insertSemi = true
-			tok = token.IDENT
+			if len(lit) > 1 {
+				// keywords are longer than one letter - avoid lookup otherwise
+				tok = token.LookupEx(lit, s.W2Mode)
+				switch tok {
+				case token.IDENT, token.BREAK, token.CONTINUE, token.RETURN:
+					insertSemi = true
+				}
+			} else {
+				insertSemi = true
+				tok = token.IDENT
+			}
 		}
 	case isDecimal(ch) || ch == '.' && isDecimal(rune(s.peek())):
 		insertSemi = true

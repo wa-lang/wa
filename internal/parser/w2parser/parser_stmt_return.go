@@ -16,7 +16,7 @@ func (p *parser) parseReturnStmt(keyword token.Token) *ast.ReturnStmt {
 	pos := p.pos
 	p.expect(keyword)
 	var x []ast.Expr
-	if p.tok != token.SEMICOLON && p.tok != token.RBRACE {
+	if p.tok != token.SEMICOLON && p.tok != token.Zh_完毕 {
 		x = p.parseRhsList()
 	}
 	p.expectSemi()
