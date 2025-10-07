@@ -156,10 +156,32 @@ func (s *Scanner) errorf(offs int, format string, args ...interface{}) {
 }
 
 func (s *Scanner) scanComment(firstRune rune) string {
+	// 因为涉及中文语法的注释, 第一个符号长度不一定为 1
+	firstRuneLen := len(string(firstRune))
+
 	// initial '/' already consumed; s.ch == '/' || s.ch == '*'
-	offs := s.offset - 1 // position of initial '/'
-	next := -1           // position immediately following the comment; < 0 means invalid comment
+	offs := s.offset - firstRuneLen // position of initial '/'
+	next := -firstRuneLen           // position immediately following the comment; < 0 means invalid comment
 	numCR := 0
+
+	// 注：-style comment
+	if string(firstRune) == token.K_注 {
+		offs = s.offset - firstRuneLen // position of initial '注'
+
+		// (the final '\n' is not considered part of the comment)
+		for s.ch != '\n' && s.ch >= 0 {
+			if s.ch == '\r' {
+				numCR++
+			}
+			s.next()
+		}
+		// if we are at '\n', the position following the comment is afterwards
+		next = s.offset
+		if s.ch == '\n' {
+			next++
+		}
+		goto exit
+	}
 
 	// #-style comment
 	if firstRune == '#' {
@@ -329,6 +351,11 @@ func (s *Scanner) findLineEnd(startRune rune) bool {
 		return true
 	}
 
+	// 单行注释总是以换行结尾
+	if string(startRune) == token.K_注 {
+		return true
+	}
+
 	// initial '/' already consumed
 
 	defer func(offs int) {
@@ -380,7 +407,7 @@ func isDigit(ch rune) bool {
 	return isDecimal(ch) || ch >= utf8.RuneSelf && unicode.IsDigit(ch)
 }
 
-func (s *Scanner) scanIdentifierOrLineComment() string {
+func (s *Scanner) scanIdentifier() string {
 	offs := s.offset
 	for isLetter(s.ch) || isDigit(s.ch) {
 		s.next()
@@ -821,22 +848,60 @@ scanAgain:
 	// determine token value
 	insertSemi := false
 	switch ch := s.ch; {
-	case isLetter(ch):
-		lit = s.scanIdentifierOrLineComment()
-		if lit == token.K_注+":" {
-			panic("TODO")
+	case string(ch) == token.K_注:
+		s.next()
+		if s.ch == ':' || s.ch == '：' {
+			// comment
+			if s.insertSemi && s.findLineEnd(ch) {
+				// reset position to the beginning of the comment
+				s.ch = ch
+				s.offset = s.file.Offset(pos)
+				s.rdOffset = s.offset + len(token.K_注)
+				s.insertSemi = false // newline consumed
+				return pos, token.SEMICOLON, "\n"
+			}
+			comment := s.scanComment(ch)
+			if s.mode&ScanComments == 0 {
+				// skip comment
+				s.insertSemi = false // newline consumed
+				goto scanAgain
+			}
+			tok = token.COMMENT
+			lit = comment
 		} else {
-			if len(lit) > 1 {
-				// keywords are longer than one letter - avoid lookup otherwise
-				tok = token.LookupEx(lit, s.W2Mode)
+			lit = token.K_注 + s.scanIdentifier()
+			tok = token.LookupEx(lit, s.W2Mode)
+			if s.W2Mode {
+				switch tok {
+				case token.IDENT, token.Zh_跳出, token.Zh_继续, token.Zh_返回:
+					insertSemi = true
+				}
+			} else {
 				switch tok {
 				case token.IDENT, token.BREAK, token.CONTINUE, token.RETURN:
 					insertSemi = true
 				}
-			} else {
-				insertSemi = true
-				tok = token.IDENT
 			}
+		}
+	case isLetter(ch):
+		lit = s.scanIdentifier()
+		if len(lit) > 1 {
+			// keywords are longer than one letter - avoid lookup otherwise
+			tok = token.LookupEx(lit, s.W2Mode)
+			if s.W2Mode {
+				switch tok {
+				case token.IDENT, token.Zh_跳出, token.Zh_继续, token.Zh_返回:
+					insertSemi = true
+				}
+			} else {
+				switch tok {
+				case token.IDENT, token.BREAK, token.CONTINUE, token.RETURN:
+					insertSemi = true
+				}
+			}
+		} else {
+			insertSemi = true
+			tok = token.IDENT
 		}
 	case isDecimal(ch) || ch == '.' && isDecimal(rune(s.peek())):
 		insertSemi = true

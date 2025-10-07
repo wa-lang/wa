@@ -45,3 +45,39 @@ func ExampleScanner_Scan() {
 	// 1:20	;	"\n"
 	// 1:20	COMMENT	"# Euler"
 }
+
+func ExampleScanner_Scan_w2() {
+	const code = `
+注: 这是注释
+
+函数 主控:
+	输出 ("Hello, world!")
+完毕
+`
+	fset := token.NewFileSet()
+	file := fset.AddFile("hello.w2", fset.Base(), len(code))
+
+	var s scanner.Scanner
+	s.W2Mode = true // 中文模式
+	s.Init(file, []byte(code), nil, scanner.ScanComments)
+
+	for {
+		pos, tok, lit := s.Scan()
+		if tok == token.EOF {
+			break
+		}
+		fmt.Printf("%s\t%s\t%q\n", fset.Position(pos), tok, lit)
+	}
+
+	// output:
+	// hello.w2:2:1	COMMENT	"注: 这是注释"
+	// hello.w2:4:1	函数	"函数"
+	// hello.w2:4:8	IDENT	"主控"
+	// hello.w2:4:14	:	""
+	// hello.w2:5:2	IDENT	"输出"
+	// hello.w2:5:9	(	""
+	// hello.w2:5:10	STRING	"\"Hello, world!\""
+	// hello.w2:5:25	)	""
+	// hello.w2:5:26	;	"\n"
+	// hello.w2:6:1	完毕	"完毕"
+}
