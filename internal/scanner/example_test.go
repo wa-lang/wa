@@ -80,4 +80,5 @@ func ExampleScanner_Scan_w2() {
 	// hello.w2:5:25	)	""
 	// hello.w2:5:26	;	"\n"
 	// hello.w2:6:1	完毕	"完毕"
+	// hello.w2:6:7	;	"\n"
 }

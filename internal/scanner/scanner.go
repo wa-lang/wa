@@ -892,6 +892,8 @@ scanAgain:
 				switch tok {
 				case token.IDENT, token.Zh_跳出, token.Zh_继续, token.Zh_返回:
 					insertSemi = true
+				case token.Zh_完毕:
+					insertSemi = true
 				}
 			} else {
 				switch tok {
