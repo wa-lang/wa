@@ -923,6 +923,7 @@ func (*FuncDecl) declNode() {}
 // and Comment comments directly associated with nodes, the remaining comments
 // are "free-floating" (see also issues #18593, #20744).
 type File struct {
+	W2Mode     bool              // 中文模式
 	Shebang    string            // `#!` 第一行开头的 Shebang 模式注释
 	Doc        *CommentGroup     // associated documentation; or nil
 	Package    token.Pos         // position of "package" keyword
@@ -946,6 +947,7 @@ func (f *File) End() token.Pos {
 // A Package node represents a set of source files
 // collectively building a Go package.
 type Package struct {
+	W2Mode  bool               // 中文模式
 	Name    string             // package name
 	Scope   *Scope             // package scope across all files
 	Imports map[string]*Object // map of package id -> package object

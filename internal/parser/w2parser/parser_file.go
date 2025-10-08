@@ -63,6 +63,7 @@ func (p *parser) parseFile() *ast.File {
 	}
 
 	return &ast.File{
+		W2Mode:     true,
 		Doc:        doc,
 		Package:    pos,
 		Name:       ident,

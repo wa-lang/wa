@@ -8,6 +8,7 @@ package types
 
 import (
 	"strings"
+	"unicode/utf8"
 
 	"wa-lang.org/wa/internal/constant"
 	"wa-lang.org/wa/internal/token"
@@ -170,6 +171,10 @@ const (
 	_Real
 	_Recover
 
+	// w2
+	_打印 // print
+	_输出 // println
+
 	// wa
 	_Raw
 	_SetFinalizer
@@ -211,6 +216,9 @@ var predeclaredFuncs = [...]struct {
 	_Println: {"println", 0, true, statement},
 	_Real:    {"real", 1, false, expression},
 	_Recover: {"recover", 0, false, statement},
+
+	_打印: {token.K_打印, 0, true, statement},
+	_输出: {token.K_输出, 0, true, statement},
 
 	_Raw:        {"raw", 1, false, expression},
 	_unsafe_Raw: {"Raw", 1, false, expression},
@@ -288,7 +296,8 @@ func init() {
 // a scope. Objects with exported names are inserted in the unsafe package
 // scope; other objects are inserted in the universe scope.
 func isCNKeyword(name string) bool {
-	return name == "数" || name == "文" || name == "字" || name == "长"
+	_, size := utf8.DecodeRuneInString(name)
+	return size > 1
 }
 
 func def(obj Object) {

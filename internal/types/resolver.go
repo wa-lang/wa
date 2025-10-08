@@ -108,18 +108,49 @@ func validatedImportPath(path string) (string, error) {
 func (check *Checker) declarePkgObj(ident *ast.Ident, obj Object, d *declInfo) {
 	assert(ident.Name == obj.Name())
 
-	// spec: "A package-scope or file-scope identifier with name init
-	// may only be declared to be a function with this (func()) signature."
-	if ident.Name == "init" {
-		check.errorf(ident.Pos(), "cannot declare init - must be func")
-		return
-	}
+	if check.pkg.W2Mode {
+		// spec: "A package-scope or file-scope identifier with name init
+		// may only be declared to be a function with this (func()) signature."
+		if ident.Name == "init" {
+			check.errorf(ident.Pos(), "cannot declare init - must be func")
+			return
+		}
 
-	// spec: "The main package must have package name main and declare
-	// a function main that takes no arguments and returns no value."
-	if ident.Name == "main" && check.pkg.name == "main" {
-		check.errorf(ident.Pos(), "cannot declare main - must be func")
-		return
+		// spec: "The main package must have package name main and declare
+		// a function main that takes no arguments and returns no value."
+		if ident.Name == "main" && check.pkg.name == "main" {
+			check.errorf(ident.Pos(), "cannot declare main - must be func")
+			return
+		}
+
+		// spec: "A package-scope or file-scope identifier with name init
+		// may only be declared to be a function with this (func()) signature."
+		if ident.Name == token.K_准备 {
+			check.errorf(ident.Pos(), "cannot declare init - must be func")
+			return
+		}
+
+		// spec: "The main package must have package name main and declare
+		// a function main that takes no arguments and returns no value."
+		if ident.Name == token.K_主控 && check.pkg.name == token.K_主包 {
+			check.errorf(ident.Pos(), "cannot declare main - must be func")
+			return
+		}
+	} else {
+
+		// spec: "A package-scope or file-scope identifier with name init
+		// may only be declared to be a function with this (func()) signature."
+		if ident.Name == "init" {
+			check.errorf(ident.Pos(), "cannot declare init - must be func")
+			return
+		}
+
+		// spec: "The main package must have package name main and declare
+		// a function main that takes no arguments and returns no value."
+		if ident.Name == "main" && check.pkg.name == "main" {
+			check.errorf(ident.Pos(), "cannot declare main - must be func")
+			return
+		}
 	}
 
 	check.declare(check.pkg.scope, ident, obj, token.NoPos)

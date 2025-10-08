@@ -71,7 +71,6 @@ type Importer func(imports map[string]*Object, path string) (pkg *Object, err er
 // belong to different packages, one package name is selected and files with
 // different package names are reported and then ignored.
 // The result is a package node and a scanner.ErrorList if there were errors.
-//
 func NewPackage(fset *token.FileSet, files map[string]*File, importer Importer, universe *Scope) (*Package, error) {
 	var p pkgBuilder
 	p.fset = fset
@@ -171,5 +170,5 @@ func NewPackage(fset *token.FileSet, files map[string]*File, importer Importer, 
 	}
 
 	p.errors.Sort()
-	return &Package{pkgName, pkgScope, imports, files}, p.errors.Err()
+	return &Package{false, pkgName, pkgScope, imports, files}, p.errors.Err()
 }

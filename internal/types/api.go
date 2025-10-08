@@ -339,6 +339,12 @@ func (init *Initializer) String() string {
 // The clean path must not be empty or dot (".").
 func (conf *Config) Check(path string, fset *token.FileSet, files []*ast.File, info *Info) (*Package, error) {
 	pkg := NewPackage(path, "")
+	if len(files) > 0 {
+		pkg.W2Mode = files[0].W2Mode
+	}
+	for _, f := range files {
+		assert(pkg.W2Mode == f.W2Mode)
+	}
 	return pkg, NewChecker(conf, fset, pkg, info).Files(files)
 }
 

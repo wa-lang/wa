@@ -9,6 +9,7 @@ package parser
 import (
 	"bytes"
 	"errors"
+	"fmt"
 	"io"
 	"io/fs"
 	"io/ioutil"
@@ -145,9 +146,34 @@ func ParseDir(vfs fs.FS, fset *token.FileSet, path string, filter func(os.FileIn
 	}
 	defer fd.Close()
 
-	list, err := fd.Readdir(-1)
-	if err != nil {
-		return nil, err
+	var list []os.FileInfo
+	{
+		allList, err := fd.Readdir(-1)
+		if err != nil {
+			return nil, err
+		}
+
+		// 一个包只能有一种中英文模式, 禁止混用
+		var waList []os.FileInfo
+		var w2List []os.FileInfo
+		for _, d := range allList {
+			if strHasSuffix(d.Name(), ".wa") {
+				waList = append(waList, d)
+			}
+			if strHasSuffix(d.Name(), ".w2") {
+				w2List = append(w2List, d)
+			}
+		}
+		if len(waList) > 0 && len(w2List) > 0 {
+			err = fmt.Errorf("%s donot support wa and w2 mode in same package")
+			return nil, err
+		}
+		if len(waList) > 0 {
+			list = waList
+		}
+		if len(w2List) > 0 {
+			list = w2List
+		}
 	}
 
 	pkgs = make(map[string]*ast.Package)
@@ -160,11 +186,13 @@ func ParseDir(vfs fs.FS, fset *token.FileSet, path string, filter func(os.FileIn
 					pkg, found := pkgs[name]
 					if !found {
 						pkg = &ast.Package{
-							Name:  name,
-							Files: make(map[string]*ast.File),
+							W2Mode: strHasSuffix(d.Name(), ".w2"),
+							Name:   name,
+							Files:  make(map[string]*ast.File),
 						}
 						pkgs[name] = pkg
 					}
+					assert(pkg.W2Mode == src.W2Mode, "package only support same mode, wa or w2")
 					pkg.Files[filename] = src
 				} else if first == nil {
 					first = err

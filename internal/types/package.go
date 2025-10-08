@@ -10,8 +10,9 @@ import (
 	"wa-lang.org/wa/internal/token"
 )
 
-// A Package describes a Go package.
+// A Package describes a Wa package.
 type Package struct {
+	W2Mode   bool // 中文包
 	path     string
 	name     string
 	scope    *Scope

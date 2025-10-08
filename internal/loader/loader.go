@@ -186,7 +186,7 @@ func (p *_Loader) Import(pkgpath string) (*types.Package, error) {
 	var pkg Package
 	var filenames []string
 
-	if pkgpath == "unsafe" {
+	if pkgpath == "unsafe" || pkgpath == token.K_太初 {
 		pkg.Pkg = types.Unsafe
 		pkg.Info = &types.Info{
 			Types:      make(map[ast.Expr]types.TypeAndValue),
@@ -527,7 +527,7 @@ func (p *_Loader) ParseDir(pkgpath string) (filenames []string, files []*ast.Fil
 
 	var (
 		pkgVFS       fs.FS
-		extNames          = []string{".wa", ".wz", ".wa.go"}
+		extNames          = []string{".wa", ".wz", ".w2", ".wa.go"}
 		unitTestMode bool = false
 		datas        [][]byte
 	)

@@ -522,7 +522,7 @@ func (check *Checker) builtin(x *operand, call *ast.CallExpr, id builtinId) (_ b
 			check.recordBuiltinType(call.Fun, makeSig(nil, &emptyInterface))
 		}
 
-	case _Print, _Println:
+	case _Print, _Println, _打印, _输出:
 		// print(x, y, ...)
 		// println(x, y, ...)
 		var params []Type

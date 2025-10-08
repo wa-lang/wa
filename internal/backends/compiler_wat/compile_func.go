@@ -777,7 +777,7 @@ func (g *functionGenerator) genBuiltin(name string, pos token.Pos, args []wir.Va
 			panic("len(call.Args) == 1 or 2")
 		}
 
-	case "print", "println":
+	case "print", "println", token.K_打印, token.K_输出:
 		for i, av := range args {
 			avt := av.Type()
 
@@ -829,7 +829,7 @@ func (g *functionGenerator) genBuiltin(name string, pos token.Pos, args []wir.Va
 			}
 		}
 
-		if name == "println" {
+		if name == "println" || name == token.K_输出 {
 			insts = append(insts, wir.NewConst(strconv.Itoa('\n'), g.module.I32).EmitPushNoRetain()...)
 			insts = append(insts, wat.NewInstCall("$runtime.waPrintChar"))
 		}

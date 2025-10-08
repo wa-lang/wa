@@ -331,7 +331,7 @@ var separator = &Comment{token.NoPos, "//"}
 
 // MergePackageFiles creates a file AST by merging the ASTs of the
 // files belonging to a package. The mode flags control merging behavior.
-func MergePackageFiles(pkg *Package, mode MergeMode) *File {
+func _MergePackageFiles(pkg *Package, mode MergeMode) *File {
 	// Count the number of package docs, comments and declarations across
 	// all package files. Also, compute sorted list of filenames, so that
 	// subsequent iterations can always iterate in the same order.
@@ -480,5 +480,5 @@ func MergePackageFiles(pkg *Package, mode MergeMode) *File {
 	}
 
 	// TODO(gri) need to compute unresolved identifiers!
-	return &File{"", doc, pos, NewIdent(pkg.Name), decls, pkg.Scope, imports, nil, comments, nil}
+	return &File{false, "", doc, pos, NewIdent(pkg.Name), decls, pkg.Scope, imports, nil, comments, nil}
 }

@@ -41,6 +41,16 @@ func (p *parser) parseFuncDecl(keyword token.Token) *ast.FuncDecl {
 		ident = p.parseIdent()
 	}
 
+	// 临时方案: init/main 函数
+	if recv == nil {
+		switch ident.Name {
+		case token.K_准备:
+			ident.Name = "init"
+		case token.K_主控:
+			ident.Name = "main"
+		}
+	}
+
 	params, results, arrowPos := p.parseSignature(scope)
 
 	var body *ast.BlockStmt
