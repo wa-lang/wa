@@ -165,7 +165,7 @@ func ParseDir(vfs fs.FS, fset *token.FileSet, path string, filter func(os.FileIn
 			}
 		}
 		if len(waList) > 0 && len(w2List) > 0 {
-			err = fmt.Errorf("%s donot support wa and w2 mode in same package")
+			err = fmt.Errorf("%s donot support wa and w2 mode in same package", path)
 			return nil, err
 		}
 		if len(waList) > 0 {

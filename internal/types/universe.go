@@ -76,8 +76,10 @@ var Typ = []*Basic{
 
 var aliases = [...]*Basic{
 	{Byte, IsInteger | IsUnsigned, "byte"},
+	{Byte, IsInteger | IsUnsigned, token.K_字节},
 	{Byte, IsInteger | IsUnsigned, "字"},
 	{Rune, IsInteger, "rune"},
+	{Rune, IsInteger, token.K_符文},
 
 	{Int8, IsInteger, "__wa_i8"},
 	{Int16, IsInteger, "__wa_i16"},
@@ -85,20 +87,30 @@ var aliases = [...]*Basic{
 	{Int64, IsInteger, "i64"},
 	{Int, IsInteger, "数"},
 
+	{Int8, IsInteger, token.K_微整型},
+	{Int16, IsInteger, token.K_短整型},
+	{Int32, IsInteger, token.K_普整型},
+	{Int64, IsInteger, token.K_长整型},
+	{Int, IsInteger, token.K_整型},
+
 	{Uint8, IsInteger | IsUnsigned, "u8"},
 	{Uint16, IsInteger | IsUnsigned, "u16"},
 	{Uint32, IsInteger | IsUnsigned, "u32"},
 	{Uint64, IsInteger | IsUnsigned, "u64"},
-	{Uint64, IsInteger | IsUnsigned, "u128"},
-	{Uint64, IsInteger | IsUnsigned, "u256"},
+
+	{Uint8, IsInteger | IsUnsigned, token.K_微正整},
+	{Uint16, IsInteger | IsUnsigned, token.K_短正整},
+	{Uint32, IsInteger | IsUnsigned, token.K_普正整},
+	{Uint64, IsInteger | IsUnsigned, token.K_长正整},
 
 	{Float32, IsFloat, "f32"},
 	{Float64, IsFloat, "f64"},
 
-	{Float32, IsFloat, "float"},
-	{Float64, IsFloat, "double"},
+	{Float32, IsFloat, token.K_单精},
+	{Float64, IsFloat, token.K_双精},
 
 	{String, IsString, "文"},
+	{String, IsString, token.K_字串},
 }
 
 func defPredeclaredTypes() {
@@ -149,6 +161,7 @@ func defPredeclaredConsts() {
 
 func defPredeclaredNil() {
 	def(&Nil{object{name: "nil", typ: Typ[UntypedNil], color_: black}})
+	def(&Nil{object{name: token.K_空, typ: Typ[UntypedNil], color_: black}})
 }
 
 // A builtinId is the id of a builtin function.
@@ -172,8 +185,19 @@ const (
 	_Recover
 
 	// w2
-	_打印 // print
+	_追加 // append
+	_容量 // cap
+	_复数 // complex
+	_拷贝 // copy
+	_删除 // delete
+	_虚部 // imag
+	_长度 // len
+	_构建 // make
+	_新建 // new
+	_崩溃 // panic
 	_输出 // println
+	_打印 // print
+	_实部 // real
 
 	// wa
 	_Raw
@@ -194,6 +218,8 @@ const (
 	// testing support
 	_Assert
 	_Trace
+
+	_断言
 )
 
 var predeclaredFuncs = [...]struct {
@@ -217,8 +243,19 @@ var predeclaredFuncs = [...]struct {
 	_Real:    {"real", 1, false, expression},
 	_Recover: {"recover", 0, false, statement},
 
-	_打印: {token.K_打印, 0, true, statement},
+	_追加: {token.K_追加, 1, true, expression},
+	_容量: {token.K_容量, 1, false, expression},
+	_复数: {token.K_复数, 2, false, expression},
+	_拷贝: {token.K_拷贝, 2, false, statement},
+	_删除: {token.K_删除, 2, false, statement},
+	_虚部: {token.K_虚部, 1, false, expression},
+	_长度: {token.K_长度, 1, false, expression},
+	_构建: {token.K_构建, 1, true, expression},
+	_新建: {token.K_新建, 1, true, expression},
+	_崩溃: {token.K_崩溃, 1, false, statement},
 	_输出: {token.K_输出, 0, true, statement},
+	_打印: {token.K_打印, 0, true, statement},
+	_实部: {token.K_实部, 1, false, expression},
 
 	_Raw:        {"raw", 1, false, expression},
 	_unsafe_Raw: {"Raw", 1, false, expression},
@@ -234,6 +271,8 @@ var predeclaredFuncs = [...]struct {
 
 	_Assert: {"assert", 1, true, statement},
 	_Trace:  {"trace", 0, true, statement},
+
+	_断言: {token.K_断言, 1, true, statement},
 }
 
 func defPredeclaredFuncs() {
@@ -242,7 +281,7 @@ func defPredeclaredFuncs() {
 		if id == _runtime_SetFinalizer {
 			continue // 在加载 runtime 包时导入
 		}
-		if id == _Assert || id == _Trace {
+		if id == _Assert || id == _Trace || id == _断言 {
 			continue // only define these in testing environment
 		}
 		def(newBuiltin(id))
@@ -266,6 +305,8 @@ func DefPredeclaredTestFuncs() {
 	}
 	def(newBuiltin(_Assert))
 	def(newBuiltin(_Trace))
+
+	def(newBuiltin(_断言))
 }
 
 func init() {
@@ -326,7 +367,7 @@ func def(obj Object) {
 		}
 	}
 	if scope.Insert(obj) != nil {
-		panic("internal error: double declaration")
+		panic("internal error: double declaration:" + obj.Name())
 	}
 }
 

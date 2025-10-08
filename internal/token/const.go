@@ -6,6 +6,14 @@ package token
 // 关键字定义为常量, 避免直接引用字符串错误
 
 const (
+	K_nil    = "nil"
+	K_true   = "true"
+	K_false  = "false"
+	K_iota   = "iota"
+	K_byte   = "byte"
+	K_rune   = "rune"
+	K_string = "string"
+
 	K_break    = "break"
 	K_case     = "case"
 	K_const    = "const"
@@ -93,7 +101,7 @@ const (
 
 	K_错误 = "错误" // error
 
-	K_自增 = "自增" // iota
+	K_约塔 = "约塔" // iota
 	K_准备 = "准备" // init
 	K_主控 = "主控" // main
 	K_自身 = "自身" // this
@@ -111,6 +119,8 @@ const (
 	K_输出 = "输出" // println
 	K_打印 = "打印" // print
 	K_实部 = "实部" // real
+
+	K_断言 = "断言" // assert
 
 	K_主包 = "主包" // main
 	K_太初 = "太初" // builtin
