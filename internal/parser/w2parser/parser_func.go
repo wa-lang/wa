@@ -26,7 +26,7 @@ func (p *parser) parseFuncDecl(keyword token.Token) *ast.FuncDecl {
 
 	// func Type.method()
 	if p.tok == token.PERIOD {
-		thisIdent := &ast.Ident{Name: token.K_自身}
+		thisIdent := &ast.Ident{Name: token.K_我的}
 		thisField := &ast.Field{
 			Names: []*ast.Ident{thisIdent},
 			Type:  &ast.StarExpr{X: ident},

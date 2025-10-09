@@ -22,31 +22,6 @@ func (p *parser) parseTypeList() (list []ast.Expr) {
 	return
 }
 
-func (p *parser) parseInterfaceType(keyword token.Token) *ast.InterfaceType {
-	if p.trace {
-		defer un(trace(p, "InterfaceType"))
-	}
-
-	pos := p.expect(keyword)
-	lbrace := p.expect(token.COLON)
-	scope := ast.NewScope(nil) // interface scope
-	var list []*ast.Field
-	for p.tok == token.Zh_函数 || p.tok == token.IDENT {
-		list = append(list, p.parseMethodSpec(scope))
-	}
-	rbrace := p.expect(token.Zh_完毕)
-
-	return &ast.InterfaceType{
-		TokPos: pos,
-		Tok:    keyword,
-		Methods: &ast.FieldList{
-			Opening: lbrace,
-			List:    list,
-			Closing: rbrace,
-		},
-	}
-}
-
 func (p *parser) parseMapType() *ast.MapType {
 	if p.trace {
 		defer un(trace(p, "MapType"))
@@ -70,6 +45,8 @@ func (p *parser) tryIdentOrType() ast.Expr {
 		return p.parseArrayType()
 	case token.MUL:
 		return p.parsePointerType()
+	case token.Zh_结构:
+		//return p.parseStructType(p.tok)
 	case token.Zh_函数:
 		typ, _ := p.parseFuncType(p.tok)
 		return typ

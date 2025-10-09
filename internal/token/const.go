@@ -83,8 +83,8 @@ const (
 	K_正整 = "正整" // uint
 	K_单精 = "单精" // float32
 	K_双精 = "双精" // float64
-	K_复单 = "复单" // complex64
-	K_复双 = "复双" // complex128
+	K_单复 = "单复" // complex64
+	K_双复 = "双复" // complex128
 	K_针型 = "针型" // uintptr
 	K_字串 = "字串" // string
 	K_字节 = "字节" // byte
@@ -104,7 +104,7 @@ const (
 	K_约塔 = "约塔" // iota
 	K_准备 = "准备" // init
 	K_主控 = "主控" // main
-	K_自身 = "自身" // this
+	K_我的 = "我的" // this
 
 	K_追加 = "追加" // append
 	K_容量 = "容量" // cap

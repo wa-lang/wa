@@ -8,6 +8,7 @@ import (
 	"wa-lang.org/wa/internal/token"
 )
 
+// 顶层的声明入口
 func (p *parser) parseDecl(sync map[token.Token]bool) ast.Decl {
 	if p.trace {
 		defer un(trace(p, "Declaration"))
@@ -20,6 +21,8 @@ func (p *parser) parseDecl(sync map[token.Token]bool) ast.Decl {
 		return p.parseGenDecl_global(p.tok)
 	case token.Zh_结构:
 		return p.parseStructDecl(p.tok)
+	case token.Zh_接口:
+		return p.parseInterfaceDecl(p.tok)
 	case token.Zh_函数:
 		return p.parseFuncDecl(p.tok)
 
