@@ -21,6 +21,7 @@ import (
 	"wa-lang.org/wa/internal/app/appdoc"
 	"wa-lang.org/wa/internal/app/appfmt"
 	"wa-lang.org/wa/internal/app/appgo2wa"
+	"wa-lang.org/wa/internal/app/appgo2wz"
 	"wa-lang.org/wa/internal/app/appinit"
 	"wa-lang.org/wa/internal/app/applex"
 	"wa-lang.org/wa/internal/app/applogo"
@@ -115,6 +116,7 @@ func main() {
 		appwat2rv.CmdWat2rv,
 		appwemu.CmdWEmu,
 		appgo2wa.CmdGo2wa,
+		appgo2wz.CmdGo2wz,
 		appcir.CmdCir,
 		appdoc.CmdDoc,
 	}
