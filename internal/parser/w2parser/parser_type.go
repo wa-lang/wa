@@ -8,30 +8,6 @@ import (
 	"wa-lang.org/wa/internal/token"
 )
 
-func (p *parser) parseTypeSpec(doc *ast.CommentGroup, _ token.Token, _ int) ast.Spec {
-	if p.trace {
-		defer un(trace(p, "TypeSpec"))
-	}
-
-	ident := p.parseIdent()
-
-	// Go spec: The scope of a type identifier declared inside a function begins
-	// at the identifier in the TypeSpec and ends at the end of the innermost
-	// containing block.
-	// (Global identifiers are resolved in a separate phase after parsing.)
-	spec := &ast.TypeSpec{Doc: doc, Name: ident}
-	p.declare(spec, nil, p.topScope, ast.Typ, ident)
-	if p.tok == token.COLON {
-		spec.ColonPos = p.pos
-		p.next()
-	}
-	spec.Type = p.parseType()
-	p.expectSemi() // call before accessing p.linecomment
-	spec.Comment = p.lineComment
-
-	return spec
-}
-
 func (p *parser) parseTypeList() (list []ast.Expr) {
 	if p.trace {
 		defer un(trace(p, "TypeList"))
@@ -77,9 +53,9 @@ func (p *parser) parseMapType() *ast.MapType {
 	}
 
 	pos := p.expect(token.Zh_字典)
-	p.expect(token.COLON)
+	p.expect(token.LBRACK)
 	key := p.parseType()
-	p.expect(token.Zh_完毕)
+	p.expect(token.RBRACK)
 	value := p.parseType()
 
 	return &ast.MapType{Map: pos, Key: key, Value: value}
@@ -92,8 +68,6 @@ func (p *parser) tryIdentOrType() ast.Expr {
 		return p.parseTypeName()
 	case token.LBRACK:
 		return p.parseArrayType()
-	case token.STRUCT:
-		return p.parseStructType(p.tok)
 	case token.MUL:
 		return p.parsePointerType()
 	case token.Zh_函数:
@@ -187,37 +161,6 @@ func (p *parser) parseFieldDecl(scope *ast.Scope) *ast.Field {
 	p.resolve(typ)
 
 	return field
-}
-
-func (p *parser) parseStructType(keyword token.Token) *ast.StructType {
-	if p.trace {
-		defer un(trace(p, "StructType"))
-	}
-
-	pos := p.expect(keyword)
-	lbrace := token.NoPos
-	if keyword == token.Zh_结构 {
-		lbrace = p.expect(token.COLON)
-	}
-	scope := ast.NewScope(nil) // struct scope
-	var list []*ast.Field
-	for p.tok == token.IDENT || p.tok == token.MUL || p.tok == token.LPAREN {
-		// a field declaration cannot start with a '(' but we accept
-		// it here for more robust parsing and better error messages
-		// (parseFieldDecl will check and complain if necessary)
-		list = append(list, p.parseFieldDecl(scope))
-	}
-	rbrace := p.expect(token.Zh_完毕)
-
-	return &ast.StructType{
-		TokPos: pos,
-		Tok:    keyword,
-		Fields: &ast.FieldList{
-			Opening: lbrace,
-			List:    list,
-			Closing: rbrace,
-		},
-	}
 }
 
 func (p *parser) parsePointerType() *ast.StarExpr {

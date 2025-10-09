@@ -36,7 +36,7 @@ func (p *parser) parseFile() *ast.File {
 	if p.mode&PackageClauseOnly == 0 {
 		// import decls
 		for p.tok == token.Zh_引入 {
-			decls = append(decls, p.parseGenDecl(p.tok, p.parseImportSpec))
+			decls = append(decls, p.parseGenDecl_import(p.tok))
 		}
 
 		if p.mode&ImportsOnly == 0 {

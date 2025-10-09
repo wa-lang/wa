@@ -12,6 +12,39 @@ import (
 	"wa-lang.org/wa/internal/token"
 )
 
+func (p *parser) parseGenDecl_import(keyword token.Token) *ast.GenDecl {
+	if p.trace {
+		defer un(trace(p, "GenDecl("+keyword.String()+")"))
+	}
+
+	doc := p.leadComment
+	pos := p.expect(keyword)
+
+	var lparen, rparen token.Pos
+	var list []ast.Spec
+	if p.tok == token.COLON {
+		// XXX: ... 完毕
+		lparen = p.pos
+		p.next()
+		for iota := 0; p.tok != token.Zh_完毕 && p.tok != token.EOF; iota++ {
+			list = append(list, p.parseImportSpec(p.leadComment, keyword, iota))
+		}
+		rparen = p.expect(token.Zh_完毕)
+		p.expectSemi()
+	} else {
+		list = append(list, p.parseImportSpec(nil, keyword, 0))
+	}
+
+	return &ast.GenDecl{
+		Doc:    doc,
+		TokPos: pos,
+		Tok:    keyword,
+		Lparen: lparen,
+		Specs:  list,
+		Rparen: rparen,
+	}
+}
+
 func (p *parser) parseImportSpec(doc *ast.CommentGroup, _ token.Token, _ int) ast.Spec {
 	if p.trace {
 		defer un(trace(p, "ImportSpec"))

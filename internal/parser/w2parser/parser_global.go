@@ -8,10 +8,45 @@ import (
 	"wa-lang.org/wa/internal/token"
 )
 
-func (p *parser) parseValueSpec(doc *ast.CommentGroup, keyword token.Token, iota int) ast.Spec {
+func (p *parser) parseGenDecl_global(keyword token.Token) *ast.GenDecl {
+	if p.trace {
+		defer un(trace(p, "GenDecl("+keyword.String()+")"))
+	}
+
+	doc := p.leadComment
+	pos := p.expect(keyword)
+
+	var lparen, rparen token.Pos
+	var list []ast.Spec
+	if p.tok == token.COLON {
+		// XXX: ... 完毕
+		lparen = p.pos
+		p.next()
+		for iota := 0; p.tok != token.Zh_完毕 && p.tok != token.EOF; iota++ {
+			list = append(list, p.parseValueSpec_global(p.leadComment, keyword, iota))
+		}
+		rparen = p.expect(token.Zh_完毕)
+		p.expectSemi()
+	} else {
+		list = append(list, p.parseValueSpec_global(nil, keyword, 0))
+	}
+
+	return &ast.GenDecl{
+		Doc:    doc,
+		TokPos: pos,
+		Tok:    token.VAR, // todo: fix
+		Lparen: lparen,
+		Specs:  list,
+		Rparen: rparen,
+	}
+}
+
+func (p *parser) parseValueSpec_global(doc *ast.CommentGroup, keyword token.Token, iota int) ast.Spec {
 	if p.trace {
 		defer un(trace(p, keyword.String()+"Spec"))
 	}
+
+	assert(keyword == token.Zh_全局, "global")
 
 	pos := p.pos
 	idents := p.parseIdentList()
@@ -34,19 +69,8 @@ func (p *parser) parseValueSpec(doc *ast.CommentGroup, keyword token.Token, iota
 	}
 	p.expectSemi() // call before accessing p.linecomment
 
-	switch keyword {
-	case token.Zh_全局:
-		if typ == nil && values == nil {
-			p.error(pos, "missing variable type or initialization")
-		}
-	case token.Zh_常量:
-		if typ == nil && values == nil && iota == 0 {
-			p.error(pos, "missing const type or initialization")
-		}
-
-		// if values == nil && (iota == 0 || typ != nil) {
-		//     p.error(pos, "missing constant value")
-		// }
+	if typ == nil && values == nil {
+		p.error(pos, "missing variable type or initialization")
 	}
 
 	// Wa spec: The scope of a constant or variable identifier declared inside
@@ -61,11 +85,8 @@ func (p *parser) parseValueSpec(doc *ast.CommentGroup, keyword token.Token, iota
 		Values:   values,
 		Comment:  p.lineComment,
 	}
-	kind := ast.Con
-	if keyword == token.Zh_全局 {
-		kind = ast.Var
-	}
-	p.declare(spec, iota, p.topScope, kind, idents...)
+
+	p.declare(spec, iota, p.topScope, ast.Var, idents...)
 
 	return spec
 }
