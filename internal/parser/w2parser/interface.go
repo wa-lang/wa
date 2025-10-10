@@ -83,8 +83,8 @@ func ParseFile(vfs fs.FS, fset *token.FileSet, filename string, src interface{},
 	if fset == nil {
 		panic("parser.ParseFile: no token.FileSet provided (fset == nil)")
 	}
-	if !strings.HasSuffix(filename, ".w2") {
-		panic("filename must has .w2 suffix")
+	if !strings.HasSuffix(filename, ".wz") {
+		panic("filename must has .wz suffix")
 	}
 
 	// get source
@@ -150,7 +150,7 @@ func ParseDir(vfs fs.FS, fset *token.FileSet, path string, filter func(os.FileIn
 
 	pkgs = make(map[string]*ast.Package)
 	for _, d := range list {
-		if strHasSuffix(d.Name(), ".wa", ".w2") {
+		if strHasSuffix(d.Name(), ".wa", ".wz") {
 			if filter == nil || filter(d) {
 				filename := filepath.Join(path, d.Name())
 				if src, err := ParseFile(vfs, fset, filename, nil, mode); err == nil {

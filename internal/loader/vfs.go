@@ -256,10 +256,3 @@ func isWzFile(path string) bool {
 	}
 	return false
 }
-
-func isW2File(path string) bool {
-	if fi, err := os.Lstat(path); err == nil && fi.Mode().IsRegular() {
-		return strings.HasSuffix(strings.ToLower(path), ".w2")
-	}
-	return false
-}

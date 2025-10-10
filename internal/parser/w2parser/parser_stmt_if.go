@@ -25,10 +25,11 @@ func (p *parser) parseIfStmt(keyword token.Token) *ast.IfStmt {
 	case token.Zh_或者: // else if
 		else_ = p.parseIfStmt(p.tok)
 	case token.Zh_否则: // else
+		p.expect(p.tok)
 		else_ = p.parseBlockStmt(token.Zh_完毕)
 		p.expectSemi()
 	default:
-		p.errorExpected(p.pos, "if statement or block")
+		p.errorExpected(p.pos, "if statement or block:"+p.tok.String())
 		else_ = &ast.BadStmt{From: p.pos, To: p.pos}
 	}
 
@@ -49,7 +50,7 @@ func (p *parser) parseIfHeader() (init ast.Stmt, cond ast.Expr) {
 	p.exprLev = -1
 
 	if p.tok != token.SEMICOLON {
-		init, _ = p.parseSimpleStmt(basic)
+		init, _ = p.parseSimpleStmt(token.Zh_如果, basic)
 	}
 
 	var condStmt ast.Stmt
@@ -66,7 +67,7 @@ func (p *parser) parseIfHeader() (init ast.Stmt, cond ast.Expr) {
 			p.expect(token.SEMICOLON)
 		}
 		if p.tok != token.COLON {
-			condStmt, _ = p.parseSimpleStmt(basic)
+			condStmt, _ = p.parseSimpleStmt(token.Zh_如果, basic)
 		}
 	} else {
 		condStmt = init

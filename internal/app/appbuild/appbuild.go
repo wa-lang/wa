@@ -125,7 +125,7 @@ func BuildApp(opt *appbase.Option, input, outfile string) (mainFunc string, wasm
 	}
 
 	// 只编译 wa/wz 文件, 输出路径相同, 后缀名调整
-	if appbase.HasExt(input, ".wa", ".wz", ".w2") {
+	if appbase.HasExt(input, ".wa", ".wz") {
 		prog, _, watOutput, err := buildWat(opt, input)
 		if err != nil {
 			fmt.Println(err)

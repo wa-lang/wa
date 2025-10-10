@@ -55,7 +55,7 @@ func ExampleScanner_Scan_w2() {
 完毕
 `
 	fset := token.NewFileSet()
-	file := fset.AddFile("hello.w2", fset.Base(), len(code))
+	file := fset.AddFile("hello.wz", fset.Base(), len(code))
 
 	var s scanner.Scanner
 	s.W2Mode = true // 中文模式
@@ -70,15 +70,15 @@ func ExampleScanner_Scan_w2() {
 	}
 
 	// output:
-	// hello.w2:2:1	COMMENT	"注: 这是注释"
-	// hello.w2:4:1	函数	"函数"
-	// hello.w2:4:8	IDENT	"主控"
-	// hello.w2:4:14	:	""
-	// hello.w2:5:2	IDENT	"输出"
-	// hello.w2:5:9	(	""
-	// hello.w2:5:10	STRING	"\"Hello, world!\""
-	// hello.w2:5:25	)	""
-	// hello.w2:5:26	;	"\n"
-	// hello.w2:6:1	完毕	"完毕"
-	// hello.w2:6:7	;	"\n"
+	// hello.wz:2:1	COMMENT	"注: 这是注释"
+	// hello.wz:4:1	函数	"函数"
+	// hello.wz:4:8	IDENT	"主控"
+	// hello.wz:4:14	:	""
+	// hello.wz:5:2	IDENT	"输出"
+	// hello.wz:5:9	(	""
+	// hello.wz:5:10	STRING	"\"Hello, world!\""
+	// hello.wz:5:25	)	""
+	// hello.wz:5:26	;	"\n"
+	// hello.wz:6:1	完毕	"完毕"
+	// hello.wz:6:7	;	"\n"
 }

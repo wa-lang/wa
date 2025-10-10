@@ -40,7 +40,7 @@ func PrintAST(filename string) error {
 	if appbase.IsNativeFile(filename, ".wat") {
 		return PrintWatAST(filename)
 	}
-	if !appbase.HasExt(filename, ".wa", ".wz", ".w2") {
+	if !appbase.HasExt(filename, ".wa", ".wz") {
 		return fmt.Errorf("%q is not Wa file", filename)
 	}
 

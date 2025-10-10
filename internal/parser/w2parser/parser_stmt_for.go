@@ -31,7 +31,7 @@ func (p *parser) parseForStmt(keyword token.Token) ast.Stmt {
 				s2 = &ast.AssignStmt{Rhs: y}
 				isRange = true
 			} else {
-				s2, isRange = p.parseSimpleStmt(rangeOk)
+				s2, isRange = p.parseSimpleStmt(keyword, rangeOk)
 			}
 		}
 		if !isRange && p.tok == token.SEMICOLON {
@@ -39,11 +39,11 @@ func (p *parser) parseForStmt(keyword token.Token) ast.Stmt {
 			s1 = s2
 			s2 = nil
 			if p.tok != token.SEMICOLON {
-				s2, _ = p.parseSimpleStmt(basic)
+				s2, _ = p.parseSimpleStmt(keyword, basic)
 			}
 			p.expectSemi()
 			if p.tok != token.COLON {
-				s3, _ = p.parseSimpleStmt(basic)
+				s3, _ = p.parseSimpleStmt(keyword, basic)
 			}
 		}
 		p.exprLev = prevLev

@@ -22,7 +22,7 @@ func (p *parser) parseSwitchStmt(keyword token.Token) ast.Stmt {
 		prevLev := p.exprLev
 		p.exprLev = -1
 		if p.tok != token.SEMICOLON {
-			s2, _ = p.parseSimpleStmt(basic)
+			s2, _ = p.parseSimpleStmt(keyword, basic)
 		}
 		if p.tok == token.SEMICOLON {
 			p.next()
@@ -43,7 +43,7 @@ func (p *parser) parseSwitchStmt(keyword token.Token) ast.Stmt {
 				// Having the extra nested but empty scope won't affect it.
 				p.openScope()
 				defer p.closeScope()
-				s2, _ = p.parseSimpleStmt(basic)
+				s2, _ = p.parseSimpleStmt(keyword, basic)
 			}
 		}
 		p.exprLev = prevLev

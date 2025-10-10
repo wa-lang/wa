@@ -86,7 +86,7 @@ func ParseFile(vfs fs.FS, fset *token.FileSet, filename string, src interface{},
 		panic("parser.ParseFile: no token.FileSet provided (fset == nil)")
 	}
 
-	if strings.HasSuffix(filename, ".w2") {
+	if strings.HasSuffix(filename, ".wz") {
 		return w2parser.ParseFile(vfs, fset, filename, src, mode)
 	}
 
@@ -160,12 +160,12 @@ func ParseDir(vfs fs.FS, fset *token.FileSet, path string, filter func(os.FileIn
 			if strHasSuffix(d.Name(), ".wa") {
 				waList = append(waList, d)
 			}
-			if strHasSuffix(d.Name(), ".w2") {
+			if strHasSuffix(d.Name(), ".wz") {
 				w2List = append(w2List, d)
 			}
 		}
 		if len(waList) > 0 && len(w2List) > 0 {
-			err = fmt.Errorf("%s donot support wa and w2 mode in same package", path)
+			err = fmt.Errorf("%s donot support wa and wz mode in same package", path)
 			return nil, err
 		}
 		if len(waList) > 0 {
@@ -178,7 +178,7 @@ func ParseDir(vfs fs.FS, fset *token.FileSet, path string, filter func(os.FileIn
 
 	pkgs = make(map[string]*ast.Package)
 	for _, d := range list {
-		if strHasSuffix(d.Name(), ".wa", ".w2") {
+		if strHasSuffix(d.Name(), ".wa", ".wz") {
 			if filter == nil || filter(d) {
 				filename := filepath.Join(path, d.Name())
 				if src, err := ParseFile(vfs, fset, filename, nil, mode); err == nil {
@@ -186,7 +186,7 @@ func ParseDir(vfs fs.FS, fset *token.FileSet, path string, filter func(os.FileIn
 					pkg, found := pkgs[name]
 					if !found {
 						pkg = &ast.Package{
-							W2Mode: strHasSuffix(d.Name(), ".w2"),
+							W2Mode: strHasSuffix(d.Name(), ".wz"),
 							Name:   name,
 							Files:  make(map[string]*ast.File),
 						}

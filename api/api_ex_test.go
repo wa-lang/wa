@@ -99,16 +99,16 @@ func ExampleRunCode_genericChainCalls() {
 
 func ExampleRunCode_wz() {
 	const code = `
-		#wa:syntax=wz
+		注: 版权 @2022 _examples/hello-zh 作者。保留所有权利。
 
-		引于 "书"
+		引入 "书"
 
-		【启】：
-		  书·说："你好，凹语言中文版！"
-		。
+		函数 主控:
+		    书·说("你好，凹语言中文版！")
+		完毕
 	`
 
-	output, err := api.RunCode(api.DefaultConfig(), "hello.wa", code, "__main__.main")
+	output, err := api.RunCode(api.DefaultConfig(), "hello.wz", code, "__main__.main")
 	if err != nil {
 		if len(output) != 0 {
 			log.Println(string(output))

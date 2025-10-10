@@ -15,10 +15,10 @@ import (
 	"wa-lang.org/wa/internal/ast"
 	"wa-lang.org/wa/internal/ast/astutil"
 	"wa-lang.org/wa/internal/config"
-	wzparser "wa-lang.org/wa/internal/frontend/wz/parser"
 	"wa-lang.org/wa/internal/loader/buildtag"
 	"wa-lang.org/wa/internal/logger"
 	"wa-lang.org/wa/internal/parser"
+	"wa-lang.org/wa/internal/parser/w2parser"
 	"wa-lang.org/wa/internal/ssa"
 	"wa-lang.org/wa/internal/token"
 	"wa-lang.org/wa/internal/types"
@@ -60,7 +60,7 @@ func (p *_Loader) LoadProgram(appPath string) (*Program, error) {
 	logger.Tracef(&config.EnableTrace_loader, "cfg: %+v", p.cfg)
 	logger.Tracef(&config.EnableTrace_loader, "appPath: %s", appPath)
 
-	if isWaFile(appPath) || isWzFile(appPath) || isW2File(appPath) {
+	if isWaFile(appPath) || isWzFile(appPath) {
 		vfs, manifest, err := loadProgramFileMeta(&p.cfg, appPath, nil)
 		if err != nil {
 			logger.Tracef(&config.EnableTrace_loader, "err: %v", err)
@@ -527,7 +527,7 @@ func (p *_Loader) ParseDir(pkgpath string) (filenames []string, files []*ast.Fil
 
 	var (
 		pkgVFS       fs.FS
-		extNames          = []string{".wa", ".wz", ".w2", ".wa.go"}
+		extNames          = []string{".wa", ".wz", ".wa.go"}
 		unitTestMode bool = false
 		datas        [][]byte
 	)
@@ -578,7 +578,7 @@ func (p *_Loader) ParseDir(pkgpath string) (filenames []string, files []*ast.Fil
 	for i, filename := range filenames {
 		var f *ast.File
 		if wamime.GetCodeMime(filename, datas[i]) == "wz" {
-			f, err = wzparser.ParseFile(nil, p.prog.Fset, filename, datas[i], wzparser.AllErrors|wzparser.ParseComments)
+			f, err = w2parser.ParseFile(nil, p.prog.Fset, filename, datas[i], w2parser.AllErrors|w2parser.ParseComments)
 		} else {
 			f, err = parser.ParseFile(nil, p.prog.Fset, filename, datas[i], parser.AllErrors|parser.ParseComments)
 		}

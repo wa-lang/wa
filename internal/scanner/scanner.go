@@ -937,7 +937,7 @@ scanAgain:
 			lit = s.scanRawString()
 		case ':', '：':
 			tok = s.switch2(token.COLON, token.DEFINE)
-		case '.':
+		case '.', '·':
 			// fractions starting with a '.' are handled by outer switch
 			tok = token.PERIOD
 			if s.ch == '.' && s.peek() == '.' {

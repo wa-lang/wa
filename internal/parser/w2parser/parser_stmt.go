@@ -20,7 +20,7 @@ func (p *parser) parseStmtList() (list []ast.Stmt) {
 		defer un(trace(p, "StatementList"))
 	}
 
-	for p.tok != token.Zh_有辙 && p.tok != token.Zh_没辙 && p.tok != token.Zh_完毕 && p.tok != token.EOF {
+	for p.tok != token.Zh_有辙 && p.tok != token.Zh_没辙 && p.tok != token.Zh_或者 && p.tok != token.Zh_否则 && p.tok != token.Zh_完毕 && p.tok != token.EOF {
 		list = append(list, p.parseStmt())
 	}
 
@@ -40,7 +40,7 @@ func (p *parser) parseStmt() (s ast.Stmt) {
 		token.IDENT, token.INT, token.FLOAT, token.IMAG, token.CHAR, token.STRING, token.Zh_函数, token.LPAREN, // operands
 		token.LBRACK, token.Zh_结构, token.Zh_字典, token.Zh_接口, // composite types
 		token.ADD, token.SUB, token.MUL, token.AND, token.XOR, token.NOT: // unary operators
-		s, _ = p.parseSimpleStmt(labelOk)
+		s, _ = p.parseSimpleStmt(0, labelOk)
 		// because of the required look-ahead, labeled statements are
 		// parsed by parseSimpleStmt - don't expect a semicolon after
 		// them
@@ -75,7 +75,7 @@ func (p *parser) parseStmt() (s ast.Stmt) {
 	default:
 		// no statement found
 		pos := p.pos
-		p.errorExpected(pos, "statement")
+		p.errorExpected(pos, "statement"+p.tok.String())
 		p.advance(stmtStart)
 		s = &ast.BadStmt{From: pos, To: p.pos}
 	}
@@ -87,7 +87,7 @@ func (p *parser) parseStmt() (s ast.Stmt) {
 // of a range clause (with mode == rangeOk). The returned statement is an
 // assignment with a right-hand side that is a single unary expression of
 // the form "range x". No guarantees are given for the left-hand side.
-func (p *parser) parseSimpleStmt(mode int) (ast.Stmt, bool) {
+func (p *parser) parseSimpleStmt(keyword token.Token, mode int) (ast.Stmt, bool) {
 	if p.trace {
 		defer un(trace(p, "SimpleStmt"))
 	}
@@ -97,6 +97,11 @@ func (p *parser) parseSimpleStmt(mode int) (ast.Stmt, bool) {
 
 	switch p.tok {
 	case token.COLON:
+		// ‘:’, 对应 if/switch/for 的区块开始, 不能吃掉
+		if keyword != token.ILLEGAL {
+			// break
+		}
+
 		colonPos = p.pos
 		p.next()
 
