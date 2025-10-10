@@ -33,9 +33,8 @@ func (p *parser) parseStmt() (s ast.Stmt) {
 	}
 
 	switch p.tok {
-	case token.Zh_常量, token.Zh_类型:
-		// TODO(chai2010): var declaration not allowed in func body
-		s = &ast.DeclStmt{Decl: p.parseDecl(stmtStart)}
+	case token.Zh_常量:
+		s = &ast.DeclStmt{Decl: p.parseGenDecl_const(p.tok)}
 	case
 		// tokens that may start an expression
 		token.IDENT, token.INT, token.FLOAT, token.IMAG, token.CHAR, token.STRING, token.Zh_函数, token.LPAREN, // operands
@@ -56,7 +55,7 @@ func (p *parser) parseStmt() (s ast.Stmt) {
 		s = p.parseBranchStmt(p.tok)
 	case token.Zh_区块:
 		p.expect(token.Zh_区块)
-		s = p.parseBlockStmt()
+		s = p.parseBlockStmt(token.Zh_完毕)
 		p.expectSemi()
 	case token.Zh_如果:
 		s = p.parseIfStmt(p.tok)

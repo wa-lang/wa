@@ -163,7 +163,7 @@ L:
 				x = p.parseTypeAssertion(p.checkExpr(x))
 			default:
 				pos := p.pos
-				p.errorExpected(pos, "selector or type assertion")
+				p.errorExpected(pos, "type assertion")
 				p.next() // make progress
 				sel := &ast.Ident{NamePos: pos, Name: "_"}
 				x = &ast.SelectorExpr{X: x, Sel: sel}
@@ -312,7 +312,7 @@ func (p *parser) parseTypeAssertion(x ast.Expr) ast.Expr {
 
 	lparen := p.expect(token.LPAREN)
 	var typ ast.Expr
-	if p.tok == token.TYPE {
+	if p.tok == token.Zh_类型 {
 		// type switch: typ == nil
 		p.next()
 	} else {

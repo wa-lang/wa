@@ -49,7 +49,7 @@ func (p *parser) parseForStmt(keyword token.Token) ast.Stmt {
 		p.exprLev = prevLev
 	}
 
-	body := p.parseBlockStmt()
+	body := p.parseBlockStmt(token.Zh_完毕)
 	p.expectSemi()
 
 	if isRange {

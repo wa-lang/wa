@@ -42,7 +42,24 @@ func (p *parser) parseFile() *ast.File {
 		if p.mode&ImportsOnly == 0 {
 			// rest of package body
 			for p.tok != token.EOF {
-				decls = append(decls, p.parseDecl(declStart))
+				switch p.tok {
+				case token.Zh_常量:
+					decls = append(decls, p.parseGenDecl_const(p.tok))
+				case token.Zh_全局:
+					decls = append(decls, p.parseGenDecl_global(p.tok))
+				case token.Zh_结构:
+					decls = append(decls, p.parseGenDecl_struct(p.tok))
+				case token.Zh_接口:
+					decls = append(decls, p.parseGenDecl_interface(p.tok))
+				case token.Zh_函数:
+					decls = append(decls, p.parseFuncDecl(p.tok))
+
+				default:
+					pos := p.pos
+					p.errorExpected(pos, "declaration:"+p.lit+p.tok.String())
+					p.advance(declStart)
+					decls = append(decls, &ast.BadDecl{From: pos, To: p.pos})
+				}
 			}
 		}
 	}

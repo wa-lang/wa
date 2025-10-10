@@ -18,14 +18,14 @@ func (p *parser) parseIfStmt(keyword token.Token) *ast.IfStmt {
 	defer p.closeScope()
 
 	init, cond := p.parseIfHeader()
-	body := p.parseBlockStmt()
+	body := p.parseBlockStmt(token.Zh_完毕, token.Zh_或者, token.Zh_否则)
 
 	var else_ ast.Stmt
 	switch p.tok {
 	case token.Zh_或者: // else if
 		else_ = p.parseIfStmt(p.tok)
 	case token.Zh_否则: // else
-		else_ = p.parseBlockStmt()
+		else_ = p.parseBlockStmt(token.Zh_完毕)
 		p.expectSemi()
 	default:
 		p.errorExpected(p.pos, "if statement or block")

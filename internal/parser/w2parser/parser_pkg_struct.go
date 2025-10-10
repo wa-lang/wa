@@ -8,7 +8,7 @@ import (
 	"wa-lang.org/wa/internal/token"
 )
 
-func (p *parser) parseStructDecl(keyword token.Token) *ast.GenDecl {
+func (p *parser) parseGenDecl_struct(keyword token.Token) *ast.GenDecl {
 	if p.trace {
 		defer un(trace(p, "GenDecl("+keyword.String()+")"))
 	}

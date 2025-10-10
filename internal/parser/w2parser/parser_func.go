@@ -279,7 +279,7 @@ func (p *parser) parseMethodSpec(scope *ast.Scope) *ast.Field {
 	}
 
 	var keyword token.Token
-	if p.tok == token.FUNC {
+	if p.tok == token.Zh_函数 {
 		keyword = p.tok
 		p.next()
 	}

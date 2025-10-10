@@ -8,7 +8,7 @@ import (
 	"wa-lang.org/wa/internal/token"
 )
 
-func (p *parser) parseInterfaceDecl(keyword token.Token) *ast.GenDecl {
+func (p *parser) parseGenDecl_interface(keyword token.Token) *ast.GenDecl {
 	if p.trace {
 		defer un(trace(p, "GenDecl("+keyword.String()+")"))
 	}
@@ -46,30 +46,5 @@ func (p *parser) parseInterfaceDecl(keyword token.Token) *ast.GenDecl {
 		TokPos: pos,
 		Tok:    keyword,
 		Specs:  []ast.Spec{spec},
-	}
-}
-
-func (p *parser) parseInterfaceType(keyword token.Token) *ast.InterfaceType {
-	if p.trace {
-		defer un(trace(p, "InterfaceType"))
-	}
-
-	pos := p.expect(keyword)
-	lbrace := p.expect(token.COLON)
-	scope := ast.NewScope(nil) // interface scope
-	var list []*ast.Field
-	for p.tok == token.Zh_函数 || p.tok == token.IDENT {
-		list = append(list, p.parseMethodSpec(scope))
-	}
-	rbrace := p.expect(token.Zh_完毕)
-
-	return &ast.InterfaceType{
-		TokPos: pos,
-		Tok:    keyword,
-		Methods: &ast.FieldList{
-			Opening: lbrace,
-			List:    list,
-			Closing: rbrace,
-		},
 	}
 }

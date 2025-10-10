@@ -45,13 +45,9 @@ func (p *parser) tryIdentOrType() ast.Expr {
 		return p.parseArrayType()
 	case token.MUL:
 		return p.parsePointerType()
-	case token.Zh_结构:
-		//return p.parseStructType(p.tok)
 	case token.Zh_函数:
 		typ, _ := p.parseFuncType(p.tok)
 		return typ
-	case token.Zh_接口:
-		return p.parseInterfaceType(p.tok)
 	case token.Zh_字典:
 		return p.parseMapType()
 	case token.LPAREN:
@@ -61,6 +57,9 @@ func (p *parser) tryIdentOrType() ast.Expr {
 		rparen := p.expect(token.RPAREN)
 		return &ast.ParenExpr{Lparen: lparen, X: typ, Rparen: rparen}
 	}
+
+	// 不再支持 结构/接口 匿名类型
+	// 函数类型只需要解析签名, 依然保留
 
 	// no type found
 	return nil
