@@ -145,6 +145,10 @@ var predeclaredConsts = [...]struct {
 	{"false", UntypedBool, constant.MakeBool(false)},
 	{"iota", UntypedInt, constant.MakeInt64(0)},
 
+	{token.K_真, UntypedBool, constant.MakeBool(true)},
+	{token.K_假, UntypedBool, constant.MakeBool(false)},
+	{token.K_约塔, UntypedInt, constant.MakeInt64(0)},
+
 	{"__PACKAGE__", UntypedString, constant.MakeString("<wa-lang:__PACKAGE__>")},
 	{"__FILE__", UntypedString, constant.MakeString("<wa-lang:__FILE__>")},
 	{"__LINE__", UntypedInt, constant.MakeInt64(0)},

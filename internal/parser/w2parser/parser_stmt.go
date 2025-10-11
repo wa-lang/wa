@@ -35,6 +35,8 @@ func (p *parser) parseStmt() (s ast.Stmt) {
 	switch p.tok {
 	case token.Zh_常量:
 		s = &ast.DeclStmt{Decl: p.parseGenDecl_const(p.tok)}
+	case token.Zh_设定:
+		s = &ast.DeclStmt{Decl: p.parseGenDecl_var(p.tok)}
 	case
 		// tokens that may start an expression
 		token.IDENT, token.INT, token.FLOAT, token.IMAG, token.CHAR, token.STRING, token.Zh_函数, token.LPAREN, // operands
@@ -96,73 +98,6 @@ func (p *parser) parseSimpleStmt(keyword token.Token, mode int) (ast.Stmt, bool)
 	var colonPos token.Pos
 
 	switch p.tok {
-	case token.COLON:
-		// ‘:’, 对应 if/switch/for 的区块开始, 不能吃掉
-		if keyword != token.ILLEGAL {
-			// break
-		}
-
-		colonPos = p.pos
-		p.next()
-
-		// Wa 只有 for 和 switch 有 Label
-		if p.tok == token.Zh_循环 || p.tok == token.Zh_找辙 {
-			break // 继续后面的 Label 解析
-		}
-
-		// x: int
-		// x: int = 123
-		// END: int = 123 // 这里的 END 是 变量
-		// a, b: int
-		// a, b: int = 123, 456
-
-		// 解析 idents 列表
-		var idents = make([]*ast.Ident, 0, len(x))
-		for _, xi := range x {
-			if ident, ok := xi.(*ast.Ident); ok {
-				idents = append(idents, ident)
-			} else {
-				p.errorExpected(xi.Pos(), "identifier on left side of :type")
-				break
-			}
-		}
-
-		typ := p.tryType()
-		if typ == nil {
-			p.error(colonPos, "missing variable type")
-		}
-
-		var values []ast.Expr
-		// always permit optional initialization for more tolerant parsing
-		if p.tok == token.ASSIGN {
-			p.next()
-			values = p.parseRhsList()
-		}
-
-		// Go spec: The scope of a constant or variable identifier declared inside
-		// a function begins at the end of the ConstSpec or VarSpec and ends at
-		// the end of the innermost containing block.
-		// (Global identifiers are resolved in a separate phase after parsing.)
-		spec := &ast.ValueSpec{
-			Names:    idents,
-			ColonPos: colonPos,
-			Type:     typ,
-			Values:   values,
-			Comment:  p.lineComment,
-		}
-
-		p.declare(spec, nil, p.topScope, ast.Var, idents...)
-
-		declStmt := &ast.DeclStmt{
-			Decl: &ast.GenDecl{
-				TokPos: x[0].Pos(),
-				Tok:    token.VAR,
-				Specs:  []ast.Spec{spec},
-			},
-		}
-
-		return declStmt, false
-
 	case
 		token.DEFINE, token.ASSIGN, token.ADD_ASSIGN,
 		token.SUB_ASSIGN, token.MUL_ASSIGN, token.QUO_ASSIGN,

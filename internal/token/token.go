@@ -132,6 +132,8 @@ const (
 	Zh_类型 // type
 	Zh_函数 // func
 
+	Zh_设定 // var
+
 	Zh_结构 // struct
 	Zh_字典 // map
 	Zh_接口 // interface
@@ -259,6 +261,8 @@ var tokens = [...]string{
 	Zh_全局: K_全局,
 	Zh_类型: K_类型,
 	Zh_函数: K_函数,
+
+	Zh_设定: K_设定,
 
 	Zh_结构: K_结构,
 	Zh_字典: K_字典,

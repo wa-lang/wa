@@ -29,8 +29,7 @@ func (p *parser) parseIfStmt(keyword token.Token) *ast.IfStmt {
 		else_ = p.parseBlockStmt(token.Zh_完毕)
 		p.expectSemi()
 	default:
-		p.errorExpected(p.pos, "if statement or block:"+p.tok.String())
-		else_ = &ast.BadStmt{From: p.pos, To: p.pos}
+		p.expectSemi()
 	}
 
 	return &ast.IfStmt{TokePos: pos, Tok: keyword, Init: init, Cond: cond, Body: body, Else: else_}
