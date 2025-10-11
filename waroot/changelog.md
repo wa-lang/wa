@@ -1,5 +1,8 @@
 # 版本日志
 
+- v1.3.0-dev (2025-??-??)
+  - 凹语言中文版完善
+  - [GitCode](https://gitcode.com/wa-lang/wa) 平台支持凹语言语法高亮
 - v1.2.0 (2025-09-29)
   - `new` 内置函数实验性增加第二个可选参数, 用于指定初始值
   - `unsafe` 包修复 `unsafe.Sizeof` 错误, 增加 `unsafe.Raw` 函数用于替代内置的 `raw` 函数

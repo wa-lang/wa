@@ -83,7 +83,29 @@ The project is still in the prototype stage. If you have co-construction or PR n
 
 ![](docs/images/arduino-nano33-01.png)
 
-## Example: Print Wa
+
+## Example: Print (Chinese)
+
+Print string and call function：
+
+```wz
+注: 你好，世界！
+
+引入 "书"
+
+函数 主控:
+	书·说("你好，凹语言中文版！")
+完毕
+```
+
+Execute the program:
+
+```
+$ wa run hello.wz 
+你好，凹语言中文版！
+```
+
+## Example: Print (English)
 
 Print rune and call function：
 
