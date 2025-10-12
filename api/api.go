@@ -12,7 +12,7 @@ import (
 	"wa-lang.org/wa/internal/format"
 	"wa-lang.org/wa/internal/loader"
 	"wa-lang.org/wa/internal/logger"
-	"wa-lang.org/wa/internal/wamime"
+	"wa-lang.org/wa/internal/xlang"
 )
 
 // 调试参数
@@ -109,5 +109,5 @@ func FormatCode(filename, code string) (string, error) {
 
 // 获取代码语法类型
 func GetCodeSyntax(filename string, code []byte) string {
-	return wamime.GetCodeMime(filename, code)
+	return xlang.DetectLang(filename, code).String()
 }

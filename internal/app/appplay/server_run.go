@@ -11,7 +11,8 @@ import (
 	"os"
 
 	"wa-lang.org/wa/api"
-	"wa-lang.org/wa/internal/wamime"
+	"wa-lang.org/wa/internal/token"
+	"wa-lang.org/wa/internal/xlang"
 )
 
 func (p *WebServer) runHandler(w http.ResponseWriter, r *http.Request) {
@@ -44,7 +45,7 @@ func (p *WebServer) compileAndRun(req *Request) (*Response, error) {
 	defer os.RemoveAll(tmpDir)
 
 	filename := "prog.wa"
-	if wamime.GetCodeMime(filename, []byte(req.Body)) == "wz" {
+	if xlang.DetectLang(filename, []byte(req.Body)) == token.LangType_Wz {
 		filename = "prog.wz"
 	}
 

@@ -22,7 +22,7 @@ import (
 	"wa-lang.org/wa/internal/ssa"
 	"wa-lang.org/wa/internal/token"
 	"wa-lang.org/wa/internal/types"
-	"wa-lang.org/wa/internal/wamime"
+	"wa-lang.org/wa/internal/xlang"
 	wasrc "wa-lang.org/wa/waroot/src"
 )
 
@@ -577,10 +577,13 @@ func (p *_Loader) ParseDir(pkgpath string) (filenames []string, files []*ast.Fil
 
 	for i, filename := range filenames {
 		var f *ast.File
-		if wamime.GetCodeMime(filename, datas[i]) == "wz" {
-			f, err = w2parser.ParseFile(nil, p.prog.Fset, filename, datas[i], w2parser.AllErrors|w2parser.ParseComments)
-		} else {
+		switch xlang.DetectLang(filename, datas[i]) {
+		case token.LangType_Wa:
 			f, err = parser.ParseFile(nil, p.prog.Fset, filename, datas[i], parser.AllErrors|parser.ParseComments)
+		case token.LangType_Wz:
+			f, err = w2parser.ParseFile(nil, p.prog.Fset, filename, datas[i], w2parser.AllErrors|w2parser.ParseComments)
+		default:
+			panic("unreachable")
 		}
 		if err != nil {
 			logger.Tracef(&config.EnableTrace_loader, "filename: %v", filename)

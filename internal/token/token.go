@@ -8,6 +8,7 @@ package token
 
 import (
 	"strconv"
+	"strings"
 	"unicode"
 	"unicode/utf8"
 )
@@ -394,6 +395,11 @@ func (tok Token) IsOperator() bool { return operator_beg < tok && tok < operator
 func (tok Token) IsKeyword() bool { return keyword_beg < tok && tok < keyword_end }
 
 func (tok Token) IsWzKeyword() bool { return wz_keyword_beg < tok && tok < wz_keyword_end }
+
+// 是否为中文语法的注释
+func (tok Token) IsWzComment(lit string) bool {
+	return tok == COMMENT && strings.HasPrefix(lit, K_注)
+}
 
 // IsExported reports whether name is exported.
 func IsExported(name string) bool {

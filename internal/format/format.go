@@ -27,7 +27,7 @@ import (
 	"wa-lang.org/wa/internal/parser"
 	"wa-lang.org/wa/internal/printer"
 	"wa-lang.org/wa/internal/token"
-	"wa-lang.org/wa/internal/wamime"
+	"wa-lang.org/wa/internal/xlang"
 )
 
 var config = printer.Config{Mode: printer.UseSpaces | printer.TabIndent, Tabwidth: 8}
@@ -65,15 +65,23 @@ func File(vfs fs.FS, filename string, src interface{}) (text []byte, changed boo
 	if err != nil {
 		return nil, false, err
 	}
-	// TODO: 支持中文格式化
-	if wamime.GetCodeMime(filename, text) == "wa" {
+	switch xlang.DetectLang(filename, text) {
+	case token.LangType_Wa:
 		golden, err := SourceFile(text)
 		if bytes.Equal(text, golden) {
 			return text, false, nil
 		}
 		return golden, true, err
+	case token.LangType_Wz:
+		return text, false, nil
+	case token.LangType_Wat:
+		return text, false, nil
+	case token.LangType_Native:
+		return text, false, nil
+
+	default:
+		panic("unreachable")
 	}
-	return text, false, nil
 }
 
 // Node formats node in canonical gofmt style and writes the result to dst.

@@ -9,7 +9,8 @@ import (
 	"net/http"
 
 	"wa-lang.org/wa/api"
-	"wa-lang.org/wa/internal/wamime"
+	"wa-lang.org/wa/internal/token"
+	"wa-lang.org/wa/internal/xlang"
 )
 
 func (p *WebServer) fmtHandler(w http.ResponseWriter, r *http.Request) {
@@ -30,9 +31,16 @@ func (p *WebServer) fmtHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func (p *WebServer) fmtCode(code []byte) (*fmtResponse, error) {
-	filename := "prog.wa"
-	if wamime.GetCodeMime(filename, code) == "wz" {
+	var filename string
+	switch xlang.DetectLang("", code) {
+	case token.LangType_Wa:
+		filename = "prog.wa"
+	case token.LangType_Wz:
 		filename = "prog.wz"
+	default:
+		return &fmtResponse{
+			Body: string(code),
+		}, nil
 	}
 
 	output, err := api.FormatCode(filename, string(code))
