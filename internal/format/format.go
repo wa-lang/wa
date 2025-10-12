@@ -73,7 +73,11 @@ func File(vfs fs.FS, filename string, src interface{}) (text []byte, changed boo
 		}
 		return golden, true, err
 	case token.LangType_Wz:
-		return text, false, nil
+		golden, err := _SourceFile_wz(text)
+		if bytes.Equal(text, golden) {
+			return text, false, nil
+		}
+		return golden, true, err
 	case token.LangType_Wat:
 		return text, false, nil
 	case token.LangType_Native:

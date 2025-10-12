@@ -305,14 +305,6 @@ func (tok Token) String() string {
 	return s
 }
 
-func (tok Token) WaGoString() string {
-	return tok.String()
-}
-
-func (tok Token) WaZhString() string {
-	return tok.String()
-}
-
 // A set of constants for precedence-based expression parsing.
 // Non-operators have lowest precedence, followed by operators
 // starting with precedence 1 up to unary operators. The highest

@@ -14,6 +14,10 @@ const (
 	K_rune   = "rune"
 	K_string = "string"
 
+	K_init = "init"
+	K_main = "main"
+	K_this = "this"
+
 	K_break    = "break"
 	K_case     = "case"
 	K_const    = "const"
