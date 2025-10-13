@@ -7,11 +7,11 @@ import (
 	"bytes"
 
 	"wa-lang.org/wa/internal/parser/w2parser"
-	"wa-lang.org/wa/internal/printer"
+	"wa-lang.org/wa/internal/printer/w2printer"
 	"wa-lang.org/wa/internal/token"
 )
 
-var config_zh = printer.Config{Mode: printer.WaZh | printer.UseSpaces | printer.TabIndent, Tabwidth: 8}
+var config_zh = w2printer.Config{Mode: w2printer.WaZh | w2printer.UseSpaces | w2printer.TabIndent, Tabwidth: 8}
 
 func _SourceFile_wz(src []byte) ([]byte, error) {
 	fset := token.NewFileSet()

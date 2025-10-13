@@ -3,7 +3,7 @@
 // license that can be found in the LICENSE file.
 
 // Package printer implements printing of AST nodes.
-package printer
+package w2printer
 
 import (
 	"fmt"
@@ -956,6 +956,9 @@ func (p *printer) print(args ...interface{}) {
 			switch x {
 			case token.BREAK, token.CONTINUE, token.RETURN,
 				token.INC, token.DEC, token.RPAREN, token.RBRACK, token.RBRACE:
+				impliedSemi = true
+
+			case token.Zh_跳出, token.Zh_继续, token.Zh_返回:
 				impliedSemi = true
 			}
 			p.lastTok = x

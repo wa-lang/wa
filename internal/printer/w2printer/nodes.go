@@ -6,7 +6,7 @@
 // expressions, statements, declarations, and files. It uses
 // the print functionality implemented in printer.go.
 
-package printer
+package w2printer
 
 import (
 	"bytes"
@@ -508,12 +508,20 @@ func (p *printer) fieldList(fields *ast.FieldList, isStruct, isIncomplete bool) 
 		// possibly a one-line struct/interface
 		if len(list) == 0 {
 			// no blank between keyword and {} in this case
-			p.print(lbrace, token.LBRACE, rbrace, token.RBRACE)
+			if p.Config.Mode&WaZh != 0 {
+				p.print(lbrace, token.COLON, rbrace, token.Zh_完毕)
+			} else {
+				p.print(lbrace, token.LBRACE, rbrace, token.RBRACE)
+			}
 			return
 		} else if p.isOneLineFieldList(list) {
 			// small enough - print on one line
 			// (don't use identList and ignore source line breaks)
-			p.print(lbrace, token.LBRACE, blank)
+			if p.Config.Mode&WaZh != 0 {
+				p.print(lbrace, token.COLON, blank)
+			} else {
+				p.print(lbrace, token.LBRACE, blank)
+			}
 			f := list[0]
 			if isStruct {
 				for i, x := range f.Names {
@@ -539,13 +547,21 @@ func (p *printer) fieldList(fields *ast.FieldList, isStruct, isIncomplete bool) 
 					p.expr(f.Type)
 				}
 			}
-			p.print(blank, rbrace, token.RBRACE)
+			if p.Config.Mode&WaZh != 0 {
+				p.print(blank, rbrace, token.Zh_完毕)
+			} else {
+				p.print(blank, rbrace, token.RBRACE)
+			}
 			return
 		}
 	}
 	// hasComments || !srcIsOneLine
 
-	p.print(blank, lbrace, token.LBRACE, indent)
+	if p.Config.Mode&WaZh != 0 {
+		p.print(blank, lbrace, token.COLON, indent)
+	} else {
+		p.print(blank, lbrace, token.LBRACE, indent)
+	}
 	if hasComments || len(list) > 0 {
 		p.print(formfeed)
 	}
@@ -595,7 +611,11 @@ func (p *printer) fieldList(fields *ast.FieldList, isStruct, isIncomplete bool) 
 			if len(list) > 0 {
 				p.print(formfeed)
 			}
-			p.flush(p.posFor(rbrace), token.RBRACE) // make sure we don't lose the last line comment
+			if p.Config.Mode&WaZh != 0 {
+				p.flush(p.posFor(rbrace), token.Zh_完毕) // make sure we don't lose the last line comment
+			} else {
+				p.flush(p.posFor(rbrace), token.RBRACE) // make sure we don't lose the last line comment
+			}
 			p.setLineComment("// " + filteredMsg)
 		}
 
@@ -622,12 +642,20 @@ func (p *printer) fieldList(fields *ast.FieldList, isStruct, isIncomplete bool) 
 			if len(list) > 0 {
 				p.print(formfeed)
 			}
-			p.flush(p.posFor(rbrace), token.RBRACE) // make sure we don't lose the last line comment
+			if p.Config.Mode&WaZh != 0 {
+				p.flush(p.posFor(rbrace), token.Zh_完毕) // make sure we don't lose the last line comment
+			} else {
+				p.flush(p.posFor(rbrace), token.RBRACE) // make sure we don't lose the last line comment
+			}
 			p.setLineComment("// contains filtered or unexported methods")
 		}
 
 	}
-	p.print(unindent, formfeed, rbrace, token.RBRACE)
+	if p.Config.Mode&WaZh != 0 {
+		p.print(unindent, formfeed, rbrace, token.Zh_完毕)
+	} else {
+		p.print(unindent, formfeed, rbrace, token.RBRACE)
+	}
 }
 
 // ----------------------------------------------------------------------------
@@ -847,7 +875,7 @@ func (p *printer) expr1(expr ast.Expr, prec1, depth int) {
 		} else {
 			// no parenthesis needed
 			p.print(x.Op)
-			if x.Op == token.RANGE {
+			if x.Op == token.RANGE || x.Op == token.Zh_迭代 {
 				// TODO(gri) Remove this code if it cannot be reached.
 				p.print(blank)
 			}
@@ -881,7 +909,11 @@ func (p *printer) expr1(expr ast.Expr, prec1, depth int) {
 		if x.Type != nil {
 			p.expr(x.Type)
 		} else {
-			p.print(token.TYPE)
+			if p.Config.Mode&WaZh != 0 {
+				p.print(token.Zh_类型)
+			} else {
+				p.print(token.TYPE)
+			}
 		}
 		p.print(x.Rparen, token.RPAREN)
 
@@ -1004,19 +1036,35 @@ func (p *printer) expr1(expr ast.Expr, prec1, depth int) {
 		p.expr(x.Elt)
 
 	case *ast.StructType:
-		p.print(token.STRUCT)
+		if p.Config.Mode&WaZh != 0 {
+			// skip: 已经打印过了
+		} else {
+			p.print(token.STRUCT)
+		}
 		p.fieldList(x.Fields, true, x.Incomplete)
 
 	case *ast.FuncType:
-		p.print(token.FUNC)
+		if p.Config.Mode&WaZh != 0 {
+			p.print(token.Zh_函数)
+		} else {
+			p.print(token.FUNC)
+		}
 		p.signature(x)
 
 	case *ast.InterfaceType:
-		p.print(token.INTERFACE)
+		if p.Config.Mode&WaZh != 0 {
+			// skip: 已经打印过了
+		} else {
+			p.print(token.INTERFACE)
+		}
 		p.fieldList(x.Methods, false, x.Incomplete)
 
 	case *ast.MapType:
-		p.print(token.MAP, token.LBRACK)
+		if p.Config.Mode&WaZh != 0 {
+			p.print(token.Zh_字典, token.LBRACK)
+		} else {
+			p.print(token.MAP, token.LBRACK)
+		}
 		p.expr(x.Key)
 		p.print(token.RBRACK)
 		p.expr(x.Value)
@@ -1055,6 +1103,11 @@ func (p *printer) expr0(x ast.Expr, depth int) {
 }
 
 func (p *printer) expr(x ast.Expr) {
+	const depth = 1
+	p.expr1(x, token.LowestPrec, depth)
+}
+
+func (p *printer) exprTypeSpec(x ast.Expr) {
 	const depth = 1
 	p.expr1(x, token.LowestPrec, depth)
 }
@@ -1103,11 +1156,18 @@ func (p *printer) stmtList(list []ast.Stmt, nindent int, nextIsRBrace bool) {
 }
 
 // block prints an *ast.BlockStmt; it always spans at least two lines.
-func (p *printer) block(b *ast.BlockStmt, nindent int) {
-	p.print(b.Lbrace, token.LBRACE)
-	p.stmtList(b.List, nindent, true)
-	p.linebreak(p.lineFor(b.Rbrace), 1, ignore, true)
-	p.print(b.Rbrace, token.RBRACE)
+func (p *printer) block(b *ast.BlockStmt, nindent int, closeTok token.Token) {
+	if p.Config.Mode&WaZh != 0 {
+		p.print(b.Lbrace, token.COLON)
+		p.stmtList(b.List, nindent, true)
+		p.linebreak(p.lineFor(b.Rbrace), 1, ignore, true)
+		p.print(b.Rbrace, closeTok)
+	} else {
+		p.print(b.Lbrace, token.LBRACE)
+		p.stmtList(b.List, nindent, true)
+		p.linebreak(p.lineFor(b.Rbrace), 1, ignore, true)
+		p.print(b.Rbrace, token.RBRACE)
+	}
 }
 
 func isTypeName(x ast.Expr) bool {
@@ -1270,11 +1330,19 @@ func (p *printer) stmt(stmt ast.Stmt, nextIsRBrace bool) {
 		p.exprList(s.TokPos, s.Rhs, depth, 0, token.NoPos, false)
 
 	case *ast.DeferStmt:
-		p.print(token.DEFER, blank)
+		if p.Config.Mode&WaZh != 0 {
+			p.print(token.Zh_押后, blank)
+		} else {
+			p.print(token.DEFER, blank)
+		}
 		p.expr(s.Call)
 
 	case *ast.ReturnStmt:
-		p.print(token.RETURN)
+		if p.Config.Mode&WaZh != 0 {
+			p.print(token.Zh_返回)
+		} else {
+			p.print(token.RETURN)
+		}
 		if s.Results != nil {
 			p.print(blank)
 			// Use indentList heuristic to make corner cases look
@@ -1299,75 +1367,162 @@ func (p *printer) stmt(stmt ast.Stmt, nextIsRBrace bool) {
 		}
 
 	case *ast.BlockStmt:
-		p.block(s, 1)
+		if p.Config.Mode&WaZh != 0 {
+			p.print(token.Zh_区块)
+			p.block(s, 1, token.Zh_完毕)
+		} else {
+			p.block(s, 1, token.RBRACE)
+		}
 
 	case *ast.IfStmt:
-		p.print(token.IF)
+		if p.Config.Mode&WaZh != 0 {
+			p.print(token.Zh_如果)
+		} else {
+			p.print(token.IF)
+		}
 		p.controlClause(false, s.Init, s.Cond, nil)
-		p.block(s.Body, 1)
+
+		closeTok := token.RBRACE
 		if s.Else != nil {
-			p.print(blank, token.ELSE, blank)
-			switch s.Else.(type) {
-			case *ast.BlockStmt, *ast.IfStmt:
-				p.stmt(s.Else, nextIsRBrace)
-			default:
-				// This can only happen with an incorrectly
-				// constructed AST. Permit it but print so
-				// that it can be parsed without errors.
-				p.print(token.LBRACE, indent, formfeed)
-				p.stmt(s.Else, true)
-				p.print(unindent, formfeed, token.RBRACE)
+			if _, ok := s.Else.(*ast.IfStmt); ok {
+				closeTok = token.Zh_或者
+			} else {
+				closeTok = token.Zh_否则
+			}
+		}
+
+		p.block(s.Body, 1, closeTok)
+
+		if s.Else != nil {
+			if p.Config.Mode&WaZh != 0 {
+				switch s.Else.(type) {
+				case *ast.IfStmt:
+					p.print(blank, token.Zh_或者, blank)
+					p.controlClause(false, s.Init, s.Cond, nil)
+					p.stmt(s.Else, nextIsRBrace)
+				default:
+					p.print(blank, token.Zh_否则, blank)
+					p.stmt(s.Else, nextIsRBrace)
+				}
+			} else {
+				switch s.Else.(type) {
+				case *ast.BlockStmt, *ast.IfStmt:
+					p.print(blank, token.ELSE, blank)
+					p.stmt(s.Else, nextIsRBrace)
+				default:
+					p.print(blank, token.ELSE, blank)
+					// This can only happen with an incorrectly
+					// constructed AST. Permit it but print so
+					// that it can be parsed without errors.
+					p.print(token.LBRACE, indent, formfeed)
+					p.stmt(s.Else, true)
+					p.print(unindent, formfeed, token.RBRACE)
+				}
 			}
 		}
 
 	case *ast.CaseClause:
-		if s.List != nil {
-			p.print(token.CASE, blank)
-			p.exprList(s.Pos(), s.List, 1, 0, s.Colon, false)
+		if p.Config.Mode&WaZh != 0 {
+			if s.List != nil {
+				p.print(token.Zh_有辙, blank)
+				p.exprList(s.Pos(), s.List, 1, 0, s.Colon, false)
+			} else {
+				p.print(token.Zh_没辙)
+			}
+			p.print(s.Colon, token.COLON)
+			p.stmtList(s.Body, 1, nextIsRBrace)
 		} else {
-			p.print(token.DEFAULT)
+			if s.List != nil {
+				p.print(token.CASE, blank)
+				p.exprList(s.Pos(), s.List, 1, 0, s.Colon, false)
+			} else {
+				p.print(token.DEFAULT)
+			}
+			p.print(s.Colon, token.COLON)
+			p.stmtList(s.Body, 1, nextIsRBrace)
 		}
-		p.print(s.Colon, token.COLON)
-		p.stmtList(s.Body, 1, nextIsRBrace)
 
 	case *ast.SwitchStmt:
-		p.print(token.SWITCH)
-		p.controlClause(false, s.Init, s.Tag, nil)
-		p.block(s.Body, 0)
+		if p.Config.Mode&WaZh != 0 {
+			p.print(token.Zh_找辙)
+			p.controlClause(false, s.Init, s.Tag, nil)
+			p.block(s.Body, 0, token.Zh_完毕)
+		} else {
+			p.print(token.SWITCH)
+			p.controlClause(false, s.Init, s.Tag, nil)
+			p.block(s.Body, 0, token.RBRACE)
+		}
 
 	case *ast.TypeSwitchStmt:
-		p.print(token.SWITCH)
-		if s.Init != nil {
+		if p.Config.Mode&WaZh != 0 {
+			p.print(token.Zh_找辙)
+			if s.Init != nil {
+				p.print(blank)
+				p.stmt(s.Init, false)
+				p.print(token.SEMICOLON)
+			}
 			p.print(blank)
-			p.stmt(s.Init, false)
-			p.print(token.SEMICOLON)
+			p.stmt(s.Assign, false)
+			p.print(blank)
+			p.block(s.Body, 0, token.Zh_完毕)
+		} else {
+			p.print(token.SWITCH)
+			if s.Init != nil {
+				p.print(blank)
+				p.stmt(s.Init, false)
+				p.print(token.SEMICOLON)
+			}
+			p.print(blank)
+			p.stmt(s.Assign, false)
+			p.print(blank)
+			p.block(s.Body, 0, token.RBRACE)
 		}
-		p.print(blank)
-		p.stmt(s.Assign, false)
-		p.print(blank)
-		p.block(s.Body, 0)
 
 	case *ast.ForStmt:
-		p.print(token.FOR)
-		p.controlClause(true, s.Init, s.Cond, s.Post)
-		p.block(s.Body, 1)
+		if p.Config.Mode&WaZh != 0 {
+			p.print(token.Zh_循环)
+			p.controlClause(true, s.Init, s.Cond, s.Post)
+			p.block(s.Body, 1, token.Zh_完毕)
+		} else {
+			p.print(token.FOR)
+			p.controlClause(true, s.Init, s.Cond, s.Post)
+			p.block(s.Body, 1, token.RBRACE)
+		}
 
 	case *ast.RangeStmt:
-		p.print(token.FOR, blank)
-		if s.Key != nil {
-			p.expr(s.Key)
-			if s.Value != nil {
-				// use position of value following the comma as
-				// comma position for correct comment placement
-				p.print(s.Value.Pos(), token.COMMA, blank)
-				p.expr(s.Value)
+		if p.Config.Mode&WaZh != 0 {
+			p.print(token.Zh_循环, blank)
+			if s.Key != nil {
+				p.expr(s.Key)
+				if s.Value != nil {
+					// use position of value following the comma as
+					// comma position for correct comment placement
+					p.print(s.Value.Pos(), token.COMMA, blank)
+					p.expr(s.Value)
+				}
+				p.print(blank, s.TokPos, s.Tok, blank)
 			}
-			p.print(blank, s.TokPos, s.Tok, blank)
+			p.print(token.Zh_迭代, blank)
+			p.expr(stripParens(s.X))
+			p.print(blank)
+			p.block(s.Body, 1, token.Zh_完毕)
+		} else {
+			p.print(token.FOR, blank)
+			if s.Key != nil {
+				p.expr(s.Key)
+				if s.Value != nil {
+					// use position of value following the comma as
+					// comma position for correct comment placement
+					p.print(s.Value.Pos(), token.COMMA, blank)
+					p.expr(s.Value)
+				}
+				p.print(blank, s.TokPos, s.Tok, blank)
+			}
+			p.print(token.RANGE, blank)
+			p.expr(stripParens(s.X))
+			p.print(blank)
+			p.block(s.Body, 1, token.RBRACE)
 		}
-		p.print(token.RANGE, blank)
-		p.expr(stripParens(s.X))
-		p.print(blank)
-		p.block(s.Body, 1)
 
 	default:
 		panic("unreachable")
@@ -1545,16 +1700,27 @@ func (p *printer) spec(spec ast.Spec, n int, doIndent bool) {
 		p.setComment(s.Comment)
 
 	case *ast.TypeSpec:
-		p.setComment(s.Doc)
-		p.expr(s.Name)
-		if n == 1 {
-			p.print(blank)
+		if p.Config.Mode&WaZh != 0 {
+			// 中文不存在 type ( ... ) 用法
+
+			p.setComment(s.Doc)
+			p.expr(s.Name)
+			p.exprTypeSpec(s.Type)
+			p.setComment(s.Comment)
+
 		} else {
-			p.print(vtab)
+			p.setComment(s.Doc)
+			p.expr(s.Name)
+			if n == 1 {
+				p.print(blank)
+			} else {
+				p.print(vtab)
+			}
+
+			p.print(token.COLON)
+			p.exprTypeSpec(s.Type)
+			p.setComment(s.Comment)
 		}
-		p.print(token.COLON)
-		p.expr(s.Type)
-		p.setComment(s.Comment)
 
 	default:
 		panic("unreachable")
@@ -1565,12 +1731,26 @@ func (p *printer) genDecl(d *ast.GenDecl, isFileScope bool) {
 	p.setComment(d.Doc)
 
 	// 内部省略 var
-	if isFileScope || d.Tok != token.VAR || d.Lparen != token.NoPos {
-		tok := d.Tok
-		if isFileScope && d.Tok == token.VAR {
-			tok = token.GLOBAL
+	if p.Config.Mode&WaZh != 0 {
+		if isFileScope || d.Tok != token.VAR || d.Lparen != token.NoPos {
+			tok := d.Tok
+			if d.Tok == token.VAR {
+				if isFileScope {
+					tok = token.Zh_全局
+				} else {
+					tok = token.Zh_设定
+				}
+			}
+			p.print(d.Pos(), tok, blank)
 		}
-		p.print(d.Pos(), tok, blank)
+	} else {
+		if isFileScope || d.Tok != token.VAR || d.Lparen != token.NoPos {
+			tok := d.Tok
+			if isFileScope && d.Tok == token.VAR {
+				tok = token.GLOBAL
+			}
+			p.print(d.Pos(), tok, blank)
+		}
 	}
 
 	if d.Lparen.IsValid() || len(d.Specs) > 1 {
@@ -1578,7 +1758,7 @@ func (p *printer) genDecl(d *ast.GenDecl, isFileScope bool) {
 		p.print(d.Lparen, token.LPAREN)
 		if n := len(d.Specs); n > 0 {
 			p.print(indent, formfeed)
-			if n > 1 && (d.Tok == token.CONST || d.Tok == token.VAR || d.Tok == token.GLOBAL) {
+			if n > 1 && (d.Tok == token.CONST || d.Tok == token.VAR || d.Tok == token.GLOBAL || d.Tok == token.Zh_全局 || d.Tok == token.Zh_设定) {
 				// two or more grouped const/var declarations:
 				// determine if the type column must be kept
 				keepType := keepTypeColumn(d.Specs)
@@ -1700,7 +1880,11 @@ func (p *printer) funcBody(headerSize int, sep whiteSpace, b *ast.BlockStmt) {
 
 	const maxSize = 100
 	if headerSize+p.bodySize(b, maxSize) <= maxSize {
-		p.print(sep, b.Lbrace, token.LBRACE)
+		if p.Config.Mode&WaZh != 0 {
+			p.print(sep, b.Lbrace, token.COLON)
+		} else {
+			p.print(sep, b.Lbrace, token.LBRACE)
+		}
 		if len(b.List) > 0 {
 			p.print(blank)
 			for i, s := range b.List {
@@ -1711,14 +1895,26 @@ func (p *printer) funcBody(headerSize int, sep whiteSpace, b *ast.BlockStmt) {
 			}
 			p.print(blank)
 		}
-		p.print(noExtraLinebreak, b.Rbrace, token.RBRACE, noExtraLinebreak)
+		if p.Config.Mode&WaZh != 0 {
+			p.print(noExtraLinebreak, b.Rbrace, token.Zh_完毕, noExtraLinebreak)
+		} else {
+			p.print(noExtraLinebreak, b.Rbrace, token.RBRACE, noExtraLinebreak)
+		}
 		return
 	}
 
 	if sep != ignore {
-		p.print(blank) // always use blank
+		if p.Config.Mode&WaZh != 0 {
+			// 忽略
+		} else {
+			p.print(blank) // always use blank
+		}
 	}
-	p.block(b, 1)
+	if p.Config.Mode&WaZh != 0 {
+		p.block(b, 1, token.Zh_完毕)
+	} else {
+		p.block(b, 1, token.RBRACE)
+	}
 }
 
 // distanceFrom returns the column difference between from and p.pos (the current
@@ -1735,10 +1931,14 @@ func (p *printer) distanceFrom(from token.Pos) int {
 
 func (p *printer) funcDecl(d *ast.FuncDecl) {
 	p.setComment(d.Doc)
-	p.print(d.Pos(), token.FUNC, blank)
+	if p.Config.Mode&WaZh != 0 {
+		p.print(d.Pos(), token.Zh_函数, blank)
+	} else {
+		p.print(d.Pos(), token.FUNC, blank)
+	}
 	if d.Recv != nil {
 		var thisTypeIdent *ast.Ident
-		if d.Recv.List[0].Names[0].Name == "this" {
+		if s := d.Recv.List[0].Names[0].Name; s == token.K_this || s == token.K_我的 {
 			if typ, ok := d.Recv.List[0].Type.(*ast.StarExpr); ok {
 				if ident, ok := typ.X.(*ast.Ident); ok {
 					thisTypeIdent = ident
@@ -1753,7 +1953,15 @@ func (p *printer) funcDecl(d *ast.FuncDecl) {
 			p.print(blank)
 		}
 	}
-	p.expr(d.Name)
+	if p.Config.Mode&WaZh != 0 {
+		if d.Name.Name == token.K_main {
+			p.print(token.K_主控)
+		} else {
+			p.expr(d.Name)
+		}
+	} else {
+		p.expr(d.Name)
+	}
 	p.signature(d.Type)
 	p.funcBody(p.distanceFrom(d.Pos()), vtab, d.Body)
 }
@@ -1774,22 +1982,20 @@ func (p *printer) decl(decl ast.Decl, isFileScope bool) {
 // ----------------------------------------------------------------------------
 // Files
 
-func declToken(decl ast.Decl) (tok token.Token) {
-	tok = token.ILLEGAL
-	switch d := decl.(type) {
-	case *ast.GenDecl:
-		tok = d.Tok
-	case *ast.FuncDecl:
-		tok = token.FUNC
-	}
-	return
-}
-
 func (p *printer) declList(list []ast.Decl, isFileScope bool) {
 	tok := token.ILLEGAL
 	for _, d := range list {
 		prev := tok
-		tok = declToken(d)
+
+		switch d := d.(type) {
+		case *ast.GenDecl:
+			tok = d.Tok
+		case *ast.FuncDecl:
+			tok = d.Type.Tok
+		default:
+			tok = token.ILLEGAL
+		}
+
 		// If the declaration token changed (e.g., from CONST to TYPE)
 		// or the next declaration has documentation associated with it,
 		// print an empty line between top-level declarations.
@@ -1806,8 +2012,9 @@ func (p *printer) declList(list []ast.Decl, isFileScope bool) {
 			}
 			// start a new section if the next declaration is a function
 			// that spans multiple lines (see also issue #19544)
-			p.linebreak(p.lineFor(d.Pos()), min, ignore, tok == token.FUNC && p.numLines(d) > 1)
+			p.linebreak(p.lineFor(d.Pos()), min, ignore, (tok == token.FUNC || tok == token.Zh_函数) && p.numLines(d) > 1)
 		}
+
 		p.decl(d, isFileScope)
 	}
 }
@@ -1830,5 +2037,6 @@ func (p *printer) file(src *ast.File) {
 		p.expr(src.Name)
 	}
 	p.declList(src.Decls, true)
+
 	p.print(newline)
 }
