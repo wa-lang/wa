@@ -508,12 +508,20 @@ func (p *printer) fieldList(fields *ast.FieldList, isStruct, isIncomplete bool) 
 		// possibly a one-line struct/interface
 		if len(list) == 0 {
 			// no blank between keyword and {} in this case
-			p.print(lbrace, token.LBRACE, rbrace, token.RBRACE)
+			if p.Config.Mode&WaZh != 0 {
+				p.print(lbrace, token.COLON, rbrace, token.Zh_完毕)
+			} else {
+				p.print(lbrace, token.LBRACE, rbrace, token.RBRACE)
+			}
 			return
 		} else if p.isOneLineFieldList(list) {
 			// small enough - print on one line
 			// (don't use identList and ignore source line breaks)
-			p.print(lbrace, token.LBRACE, blank)
+			if p.Config.Mode&WaZh != 0 {
+				p.print(lbrace, token.COLON, blank)
+			} else {
+				p.print(lbrace, token.LBRACE, blank)
+			}
 			f := list[0]
 			if isStruct {
 				for i, x := range f.Names {
@@ -539,13 +547,21 @@ func (p *printer) fieldList(fields *ast.FieldList, isStruct, isIncomplete bool) 
 					p.expr(f.Type)
 				}
 			}
-			p.print(blank, rbrace, token.RBRACE)
+			if p.Config.Mode&WaZh != 0 {
+				p.print(blank, rbrace, token.Zh_完毕)
+			} else {
+				p.print(blank, rbrace, token.RBRACE)
+			}
 			return
 		}
 	}
 	// hasComments || !srcIsOneLine
 
-	p.print(blank, lbrace, token.LBRACE, indent)
+	if p.Config.Mode&WaZh != 0 {
+		p.print(blank, lbrace, token.COLON, indent)
+	} else {
+		p.print(blank, lbrace, token.LBRACE, indent)
+	}
 	if hasComments || len(list) > 0 {
 		p.print(formfeed)
 	}
@@ -595,7 +611,11 @@ func (p *printer) fieldList(fields *ast.FieldList, isStruct, isIncomplete bool) 
 			if len(list) > 0 {
 				p.print(formfeed)
 			}
-			p.flush(p.posFor(rbrace), token.RBRACE) // make sure we don't lose the last line comment
+			if p.Config.Mode&WaZh != 0 {
+				p.flush(p.posFor(rbrace), token.Zh_完毕) // make sure we don't lose the last line comment
+			} else {
+				p.flush(p.posFor(rbrace), token.RBRACE) // make sure we don't lose the last line comment
+			}
 			p.setLineComment("// " + filteredMsg)
 		}
 
@@ -622,12 +642,20 @@ func (p *printer) fieldList(fields *ast.FieldList, isStruct, isIncomplete bool) 
 			if len(list) > 0 {
 				p.print(formfeed)
 			}
-			p.flush(p.posFor(rbrace), token.RBRACE) // make sure we don't lose the last line comment
+			if p.Config.Mode&WaZh != 0 {
+				p.flush(p.posFor(rbrace), token.Zh_完毕) // make sure we don't lose the last line comment
+			} else {
+				p.flush(p.posFor(rbrace), token.RBRACE) // make sure we don't lose the last line comment
+			}
 			p.setLineComment("// contains filtered or unexported methods")
 		}
 
 	}
-	p.print(unindent, formfeed, rbrace, token.RBRACE)
+	if p.Config.Mode&WaZh != 0 {
+		p.print(unindent, formfeed, rbrace, token.Zh_完毕)
+	} else {
+		p.print(unindent, formfeed, rbrace, token.RBRACE)
+	}
 }
 
 // ----------------------------------------------------------------------------
@@ -1009,7 +1037,7 @@ func (p *printer) expr1(expr ast.Expr, prec1, depth int) {
 
 	case *ast.StructType:
 		if p.Config.Mode&WaZh != 0 {
-			p.print(token.Zh_结构)
+			// skip: 已经打印过了
 		} else {
 			p.print(token.STRUCT)
 		}
@@ -1025,7 +1053,7 @@ func (p *printer) expr1(expr ast.Expr, prec1, depth int) {
 
 	case *ast.InterfaceType:
 		if p.Config.Mode&WaZh != 0 {
-			p.print(token.Zh_接口)
+			// skip: 已经打印过了
 		} else {
 			p.print(token.INTERFACE)
 		}
@@ -1075,6 +1103,11 @@ func (p *printer) expr0(x ast.Expr, depth int) {
 }
 
 func (p *printer) expr(x ast.Expr) {
+	const depth = 1
+	p.expr1(x, token.LowestPrec, depth)
+}
+
+func (p *printer) exprTypeSpec(x ast.Expr) {
 	const depth = 1
 	p.expr1(x, token.LowestPrec, depth)
 }
@@ -1667,16 +1700,27 @@ func (p *printer) spec(spec ast.Spec, n int, doIndent bool) {
 		p.setComment(s.Comment)
 
 	case *ast.TypeSpec:
-		p.setComment(s.Doc)
-		p.expr(s.Name)
-		if n == 1 {
-			p.print(blank)
+		if p.Config.Mode&WaZh != 0 {
+			// 中文不存在 type ( ... ) 用法
+
+			p.setComment(s.Doc)
+			p.expr(s.Name)
+			p.exprTypeSpec(s.Type)
+			p.setComment(s.Comment)
+
 		} else {
-			p.print(vtab)
+			p.setComment(s.Doc)
+			p.expr(s.Name)
+			if n == 1 {
+				p.print(blank)
+			} else {
+				p.print(vtab)
+			}
+
+			p.print(token.COLON)
+			p.exprTypeSpec(s.Type)
+			p.setComment(s.Comment)
 		}
-		p.print(token.COLON)
-		p.expr(s.Type)
-		p.setComment(s.Comment)
 
 	default:
 		panic("unreachable")
@@ -1938,22 +1982,20 @@ func (p *printer) decl(decl ast.Decl, isFileScope bool) {
 // ----------------------------------------------------------------------------
 // Files
 
-func declToken(decl ast.Decl) (tok token.Token) {
-	tok = token.ILLEGAL
-	switch d := decl.(type) {
-	case *ast.GenDecl:
-		tok = d.Tok
-	case *ast.FuncDecl:
-		tok = d.Type.Tok
-	}
-	return
-}
-
 func (p *printer) declList(list []ast.Decl, isFileScope bool) {
 	tok := token.ILLEGAL
 	for _, d := range list {
 		prev := tok
-		tok = declToken(d)
+
+		switch d := d.(type) {
+		case *ast.GenDecl:
+			tok = d.Tok
+		case *ast.FuncDecl:
+			tok = d.Type.Tok
+		default:
+			tok = token.ILLEGAL
+		}
+
 		// If the declaration token changed (e.g., from CONST to TYPE)
 		// or the next declaration has documentation associated with it,
 		// print an empty line between top-level declarations.
@@ -1972,6 +2014,7 @@ func (p *printer) declList(list []ast.Decl, isFileScope bool) {
 			// that spans multiple lines (see also issue #19544)
 			p.linebreak(p.lineFor(d.Pos()), min, ignore, (tok == token.FUNC || tok == token.Zh_函数) && p.numLines(d) > 1)
 		}
+
 		p.decl(d, isFileScope)
 	}
 }
@@ -1994,5 +2037,6 @@ func (p *printer) file(src *ast.File) {
 		p.expr(src.Name)
 	}
 	p.declList(src.Decls, true)
+
 	p.print(newline)
 }

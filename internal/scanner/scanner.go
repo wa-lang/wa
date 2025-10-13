@@ -849,38 +849,62 @@ scanAgain:
 	insertSemi := false
 	switch ch := s.ch; {
 	case string(ch) == token.K_注:
-		s.next()
-		if s.ch == ':' || s.ch == '：' {
-			// comment
-			if s.insertSemi && s.findLineEnd(ch) {
-				// reset position to the beginning of the comment
-				s.ch = ch
-				s.offset = s.file.Offset(pos)
-				s.rdOffset = s.offset + len(token.K_注)
-				s.insertSemi = false // newline consumed
-				return pos, token.SEMICOLON, "\n"
+		if s.W2Mode {
+			s.next()
+			if s.ch == ':' || s.ch == '：' {
+				// comment
+				if s.insertSemi && s.findLineEnd(ch) {
+					// reset position to the beginning of the comment
+					s.ch = ch
+					s.offset = s.file.Offset(pos)
+					s.rdOffset = s.offset + len(token.K_注)
+					s.insertSemi = false // newline consumed
+					return pos, token.SEMICOLON, "\n"
+				}
+				comment := s.scanComment(ch)
+				if s.mode&ScanComments == 0 {
+					// skip comment
+					s.insertSemi = false // newline consumed
+					goto scanAgain
+				}
+				tok = token.COMMENT
+				lit = comment
+			} else {
+				lit = token.K_注 + s.scanIdentifier()
+				tok = token.LookupEx(lit, s.W2Mode)
+				if s.W2Mode {
+					switch tok {
+					case token.IDENT, token.Zh_跳出, token.Zh_继续, token.Zh_返回:
+						insertSemi = true
+					}
+				} else {
+					switch tok {
+					case token.IDENT, token.BREAK, token.CONTINUE, token.RETURN:
+						insertSemi = true
+					}
+				}
 			}
-			comment := s.scanComment(ch)
-			if s.mode&ScanComments == 0 {
-				// skip comment
-				s.insertSemi = false // newline consumed
-				goto scanAgain
-			}
-			tok = token.COMMENT
-			lit = comment
 		} else {
-			lit = token.K_注 + s.scanIdentifier()
-			tok = token.LookupEx(lit, s.W2Mode)
-			if s.W2Mode {
-				switch tok {
-				case token.IDENT, token.Zh_跳出, token.Zh_继续, token.Zh_返回:
-					insertSemi = true
+			lit = s.scanIdentifier()
+			if len(lit) > 1 {
+				// keywords are longer than one letter - avoid lookup otherwise
+				tok = token.LookupEx(lit, s.W2Mode)
+				if s.W2Mode {
+					switch tok {
+					case token.IDENT, token.Zh_跳出, token.Zh_继续, token.Zh_返回:
+						insertSemi = true
+					case token.Zh_完毕:
+						insertSemi = true
+					}
+				} else {
+					switch tok {
+					case token.IDENT, token.BREAK, token.CONTINUE, token.RETURN:
+						insertSemi = true
+					}
 				}
 			} else {
-				switch tok {
-				case token.IDENT, token.BREAK, token.CONTINUE, token.RETURN:
-					insertSemi = true
-				}
+				insertSemi = true
+				tok = token.IDENT
 			}
 		}
 	case isLetter(ch):

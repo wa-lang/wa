@@ -30,7 +30,7 @@ Wa (Chinese name "凹", which pronounced "Wa") is a general-purpose programming 
 ## How to contribute
 The project is still in the prototype stage. If you have co-construction or PR needs, please refer to [How to contribute](./wca/readme_en.md). We no longer accept PRs for modifications to third-party libraries.
 
-> Note: Our canonical Git repository is located at https://gitcode.com/wa-lang/wa. There is a mirror of the repository at https://github.com/wa-lang/wa. Unless otherwise noted, the Wa source files are distributed under the AGPL-v3 license found in the LICENSE file.
+> Note: Our canonical Git repository is located at https://gitcode.com/wa-lang/wa. There is a mirror of the repository at https://github.com/wa-lang/wa.
 
 > Note: Submitting a PR to this repository is deemed to be your recognition and acceptance of the [Wa Contributor Agreement](./wca/wca.md)(Aka WCA), but your PRs will not be reviewed or accepted until WCA is actually signed.
 
@@ -170,32 +170,6 @@ $ cd waroot && wa run -target=wasi examples/prime
 23
 29
 ```
-
-## Example: Print Prime with Chinese syntax
-
-Print prime numbers up to 30:
-
-```wz
-引于 "书"
-
-【启】：
-  // 输出30以内的素数
-  从n=2，到n>30，有n++：
-    设素=1
-    从i=2，到i*i>n，有i++：
-      设x=n%i
-      若x==0则：
-        素=0
-      。
-    。
-    若素!=0则：
-      书·曰：n
-    。
-  。
-。
-```
-
-Output is the same as the previous example.
 
 ## Example: Chrome Native AI
 
