@@ -107,6 +107,10 @@ func fmtFile(path string) (changed bool, err error) {
 		return false, err
 	}
 	if changed {
+		if strings.HasSuffix(path, ".wz") {
+			fmt.Println(string(code))
+			return false, nil
+		}
 		if err = os.WriteFile(path, code, 0666); err != nil {
 			return false, err
 		}

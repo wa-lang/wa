@@ -932,12 +932,6 @@ func (p *printer) print(args ...interface{}) {
 
 		case token.Token:
 			s := x.String()
-			switch {
-			case p.Mode&WaGo != 0:
-				s = x.String()
-			case p.Mode&WaZh != 0:
-				s = x.String()
-			}
 			if mayCombine(p.lastTok, s[0]) {
 				// the previous and the current token must be
 				// separated by a blank otherwise they combine
@@ -1278,8 +1272,6 @@ const (
 	TabIndent                  // use tabs for indentation independent of UseSpaces
 	UseSpaces                  // use spaces instead of tabs for alignment
 	SourcePos                  // emit //line directives to preserve original source positions
-	WaZh                       // 中文关键字 模式
-	WaGo                       // WaGo 模式
 )
 
 // A Config node controls the output of Fprint.
