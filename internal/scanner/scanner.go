@@ -913,6 +913,12 @@ scanAgain:
 			// keywords are longer than one letter - avoid lookup otherwise
 			tok = token.LookupEx(lit, s.W2Mode)
 			if s.W2Mode {
+				if tok.IsWzKeyword() {
+					// 中文关键字后的点号可作为分隔符
+					if s.ch == '.' || s.ch == '·' {
+						s.next()
+					}
+				}
 				switch tok {
 				case token.IDENT, token.Zh_跳出, token.Zh_继续, token.Zh_返回:
 					insertSemi = true
