@@ -11,8 +11,6 @@ import (
 	"wa-lang.org/wa/internal/token"
 )
 
-var config_zh = w2printer.Config{Mode: w2printer.UseSpaces | w2printer.TabIndent, Tabwidth: 8}
-
 func _SourceFile_wz(src []byte) ([]byte, error) {
 	fset := token.NewFileSet()
 	file, err := w2parser.ParseFile(nil, fset, "prog.wz", src, parserMode)
@@ -21,7 +19,7 @@ func _SourceFile_wz(src []byte) ([]byte, error) {
 	}
 
 	var buf bytes.Buffer
-	err = config_zh.Fprint(&buf, fset, file)
+	err = w2printer.Fprint(&buf, fset, file)
 	if err != nil {
 		return nil, err
 	}

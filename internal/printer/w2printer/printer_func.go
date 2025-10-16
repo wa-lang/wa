@@ -22,7 +22,7 @@ func (p *printer) funcDecl(d *ast.FuncDecl) {
 		}
 		if thisTypeIdent != nil {
 			p.print(thisTypeIdent.Name)
-			p.print(".")
+			p.print(token.K_点)
 		} else {
 			p.parameters(d.Recv, funcParam) // method: print receiver
 			p.print(blank)
@@ -31,7 +31,7 @@ func (p *printer) funcDecl(d *ast.FuncDecl) {
 	if d.Name.Name == token.K_main {
 		p.print(token.K_主控)
 	} else {
-		p.expr(d.Name)
+		p.print(d.Name.Name)
 	}
 	p.signature(d.Type)
 	p.funcBody(p.distanceFrom(d.Pos()), vtab, d.Body)

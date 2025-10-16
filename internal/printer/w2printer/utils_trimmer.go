@@ -5,13 +5,14 @@ package w2printer
 
 import (
 	"io"
-	"text/tabwriter"
 )
 
-// A trimmer is an io.Writer filter for stripping tabwriter.Escape
+const kEscape = '\xff'
+
+// A trimmer is an io.Writer filter for stripping kEscape
 // characters, trailing blanks and tabs, and for converting formfeed
 // and vtab characters into newlines and htabs (in case no tabwriter
-// is used). Text bracketed by tabwriter.Escape characters is passed
+// is used). Text bracketed by kEscape characters is passed
 // through unchanged.
 type trimmer struct {
 	output io.Writer
@@ -23,7 +24,7 @@ type trimmer struct {
 // It can be in one of the following states:
 const (
 	inSpace  = iota // inside space
-	inEscape        // inside text bracketed by tabwriter.Escapes
+	inEscape        // inside text bracketed by kEscapes
 	inText          // inside text
 )
 
@@ -60,17 +61,17 @@ func (p *trimmer) Write(data []byte) (n int, err error) {
 			case '\n', '\f':
 				p.resetSpace() // discard trailing space
 				_, err = p.output.Write(aNewline)
-			case tabwriter.Escape:
+			case kEscape:
 				_, err = p.output.Write(p.space)
 				p.state = inEscape
-				m = n + 1 // +1: skip tabwriter.Escape
+				m = n + 1 // +1: skip kEscape
 			default:
 				_, err = p.output.Write(p.space)
 				p.state = inText
 				m = n
 			}
 		case inEscape:
-			if b == tabwriter.Escape {
+			if b == kEscape {
 				_, err = p.output.Write(data[m:n])
 				p.resetSpace()
 			}
@@ -86,10 +87,10 @@ func (p *trimmer) Write(data []byte) (n int, err error) {
 				if err == nil {
 					_, err = p.output.Write(aNewline)
 				}
-			case tabwriter.Escape:
+			case kEscape:
 				_, err = p.output.Write(data[m:n])
 				p.state = inEscape
-				m = n + 1 // +1: skip tabwriter.Escape
+				m = n + 1 // +1: skip kEscape
 			}
 		default:
 			panic("unreachable")

@@ -7,9 +7,7 @@ package w2printer
 
 import (
 	"fmt"
-	"io"
 	"os"
-	"text/tabwriter"
 
 	"wa-lang.org/wa/internal/ast"
 	"wa-lang.org/wa/internal/token"
@@ -50,7 +48,6 @@ type commentInfo struct {
 
 type printer struct {
 	// Configuration (does not change after initialization)
-	Config
 	fset *token.FileSet
 
 	// Current state
@@ -90,63 +87,13 @@ type printer struct {
 	cachedLine int // line corresponding to cachedPos
 }
 
-func (p *printer) init(cfg *Config, fset *token.FileSet, nodeSizes map[ast.Node]int) {
-	p.Config = *cfg
+func (p *printer) init(fset *token.FileSet, nodeSizes map[ast.Node]int) {
 	p.fset = fset
 	p.pos = token.Position{Line: 1, Column: 1}
 	p.out = token.Position{Line: 1, Column: 1}
 	p.wsbuf = make([]whiteSpace, 0, 16) // whitespace sequences are short
 	p.nodeSizes = nodeSizes
 	p.cachedPos = -1
-}
-
-// fprint implements Fprint and takes a nodesSizes map for setting up the printer state.
-func (cfg *Config) fprint(output io.Writer, fset *token.FileSet, node interface{}, nodeSizes map[ast.Node]int) (err error) {
-	// print node
-	var p printer
-	p.init(cfg, fset, nodeSizes)
-	if err = p.printNode(node); err != nil {
-		return
-	}
-	// print outstanding comments
-	p.impliedSemi = false // EOF acts like a newline
-	p.flush(token.Position{Offset: infinity, Line: infinity}, token.EOF)
-
-	// redirect output through a trimmer to eliminate trailing whitespace
-	// (Input to a tabwriter must be untrimmed since trailing tabs provide
-	// formatting information. The tabwriter could provide trimming
-	// functionality but no tabwriter is used when RawFormat is set.)
-	output = &trimmer{output: output}
-
-	// redirect output through a tabwriter if necessary
-	if cfg.Mode&RawFormat == 0 {
-		minwidth := cfg.Tabwidth
-
-		padchar := byte('\t')
-		if cfg.Mode&UseSpaces != 0 {
-			padchar = ' '
-		}
-
-		twmode := tabwriter.DiscardEmptyColumns
-		if cfg.Mode&TabIndent != 0 {
-			minwidth = 0
-			twmode |= tabwriter.TabIndent
-		}
-
-		output = tabwriter.NewWriter(output, minwidth, cfg.Tabwidth, 1, padchar, twmode)
-	}
-
-	// write printer result via tabwriter/trimmer to output
-	if _, err = output.Write(p.output); err != nil {
-		return
-	}
-
-	// flush tabwriter, if any
-	if tw, _ := output.(*tabwriter.Writer); tw != nil {
-		err = tw.Flush()
-	}
-
-	return
 }
 
 func (p *printer) flush(next token.Position, tok token.Token) (wroteNewline, droppedFF bool) {

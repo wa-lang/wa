@@ -5,7 +5,6 @@ package w2printer
 
 import (
 	"fmt"
-	"text/tabwriter"
 
 	"wa-lang.org/wa/internal/token"
 )
@@ -14,7 +13,7 @@ import (
 func (p *printer) writeIndent() {
 	// use "hard" htabs - indentation columns
 	// must not be discarded by the tabwriter
-	n := p.Config.Indent + p.indent // include base indentation
+	n := p.indent // include base indentation
 	for i := 0; i < n; i++ {
 		p.output = append(p.output, '\t')
 	}
@@ -65,7 +64,7 @@ func (p *printer) writeByte(ch byte, n int) {
 }
 
 // writeString writes the string s to p.output and updates p.pos, p.out,
-// and p.last. If isLit is set, s is escaped w/ tabwriter.Escape characters
+// and p.last. If isLit is set, s is escaped w/ kEscape characters
 // to protect s from being interpreted by the tabwriter.
 //
 // Note: writeString is only used to write Go tokens, literals, and
@@ -76,9 +75,6 @@ func (p *printer) writeByte(ch byte, n int) {
 // printer benchmark by up to 10%.
 func (p *printer) writeString(pos token.Position, s string, isLit bool) {
 	if p.out.Column == 1 {
-		if p.Config.Mode&SourcePos != 0 {
-			p.writeLineDirective(pos)
-		}
 		p.writeIndent()
 	}
 
@@ -93,9 +89,9 @@ func (p *printer) writeString(pos token.Position, s string, isLit bool) {
 	if isLit {
 		// Protect s such that is passes through the tabwriter
 		// unchanged. Note that valid Go programs cannot contain
-		// tabwriter.Escape bytes since they do not appear in legal
+		// kEscape bytes since they do not appear in legal
 		// UTF-8 sequences.
-		p.output = append(p.output, tabwriter.Escape)
+		p.output = append(p.output, kEscape)
 	}
 
 	if debug {
@@ -131,7 +127,7 @@ func (p *printer) writeString(pos token.Position, s string, isLit bool) {
 	}
 
 	if isLit {
-		p.output = append(p.output, tabwriter.Escape)
+		p.output = append(p.output, kEscape)
 	}
 
 	p.last = p.pos

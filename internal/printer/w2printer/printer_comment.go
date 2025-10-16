@@ -4,9 +4,7 @@
 package w2printer
 
 import (
-	"fmt"
 	"strings"
-	"text/tabwriter"
 
 	"wa-lang.org/wa/internal/ast"
 	"wa-lang.org/wa/internal/token"
@@ -71,18 +69,6 @@ func (p *printer) commentSizeBefore(next token.Position) int {
 		p.nextComment()
 	}
 	return size
-}
-
-// writeLineDirective writes a //line directive if necessary.
-func (p *printer) writeLineDirective(pos token.Position) {
-	if pos.IsValid() && (p.out.Line != pos.Line || p.out.Filename != pos.Filename) {
-		p.output = append(p.output, tabwriter.Escape) // protect '\n' in //line from tabwriter interpretation
-		p.output = append(p.output, fmt.Sprintf("//line %s:%d\n", pos.Filename, pos.Line)...)
-		p.output = append(p.output, tabwriter.Escape)
-		// p.out must match the //line directive
-		p.out.Filename = pos.Filename
-		p.out.Line = pos.Line
-	}
 }
 
 // writeCommentPrefix writes the whitespace before a comment.

@@ -12,8 +12,7 @@ import (
 
 func (p *printer) printNode(node interface{}) error {
 	if n, ok := node.(*ast.File); ok {
-		// use ast.File comments, if any
-		p.comments = n.Comments
+		return p.printFile(n)
 	}
 
 	// if there are no comments, use node comments
@@ -46,10 +45,6 @@ func (p *printer) printNode(node interface{}) error {
 			}
 		}
 		p.stmtList(n, 0, false)
-	case []ast.Decl:
-		p.declList(n, false)
-	case *ast.File:
-		p.file(n)
 	default:
 		goto unsupported
 	}
@@ -57,7 +52,7 @@ func (p *printer) printNode(node interface{}) error {
 	return nil
 
 unsupported:
-	return fmt.Errorf("wa-lang.org/wa/internal/printer: unsupported node type %T", node)
+	return fmt.Errorf("wa-lang.org/wa/internal/printer/w2printer: unsupported node type %T", node)
 }
 
 // nodeSize determines the size of n in chars after formatting.
@@ -79,9 +74,8 @@ func (p *printer) nodeSize(n ast.Node, maxSize int) (size int) {
 	// nodeSize computation must be independent of particular
 	// style so that we always get the same decision; print
 	// in RawFormat
-	cfg := Config{Mode: RawFormat}
 	var buf bytes.Buffer
-	if err := cfg.fprint(&buf, p.fset, n, p.nodeSizes); err != nil {
+	if err := fprintNode(&buf, p.fset, n, p.nodeSizes); err != nil {
 		return
 	}
 	if buf.Len() <= maxSize {

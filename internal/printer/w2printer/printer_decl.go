@@ -21,43 +21,6 @@ func (p *printer) decl(decl ast.Decl, isFileScope bool) {
 	}
 }
 
-func (p *printer) declList(list []ast.Decl, isFileScope bool) {
-	tok := token.ILLEGAL
-	for _, d := range list {
-		prev := tok
-
-		switch d := d.(type) {
-		case *ast.GenDecl:
-			tok = d.Tok
-		case *ast.FuncDecl:
-			tok = d.Type.Tok
-		default:
-			tok = token.ILLEGAL
-		}
-
-		// If the declaration token changed (e.g., from CONST to TYPE)
-		// or the next declaration has documentation associated with it,
-		// print an empty line between top-level declarations.
-		// (because p.linebreak is called with the position of d, which
-		// is past any documentation, the minimum requirement is satisfied
-		// even w/o the extra getDoc(d) nil-check - leave it in case the
-		// linebreak logic improves - there's already a TODO).
-		if len(p.output) > 0 {
-			// only print line break if we are not at the beginning of the output
-			// (i.e., we are not printing only a partial program)
-			min := 1
-			if prev != tok || getDoc(d) != nil {
-				min = 2
-			}
-			// start a new section if the next declaration is a function
-			// that spans multiple lines (see also issue #19544)
-			p.linebreak(p.lineFor(d.Pos()), min, ignore, (tok == token.FUNC || tok == token.Zh_函数) && p.numLines(d) > 1)
-		}
-
-		p.decl(d, isFileScope)
-	}
-}
-
 func (p *printer) genDecl(d *ast.GenDecl, isFileScope bool) {
 	p.setComment(d.Doc)
 

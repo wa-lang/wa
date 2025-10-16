@@ -10,27 +10,42 @@ import (
 	"wa-lang.org/wa/internal/token"
 )
 
-// A Mode value is a set of flags (or 0). They control printing.
-type Mode uint
+func Fprint(output io.Writer, fset *token.FileSet, f *ast.File) (err error) {
+	var p printer
+	p.init(fset, make(map[ast.Node]int))
+	if err = p.printFile(f); err != nil {
+		return
+	}
+	// print outstanding comments
+	p.impliedSemi = false // EOF acts like a newline
+	p.flush(token.Position{Offset: infinity, Line: infinity}, token.EOF)
 
-const (
-	RawFormat Mode = 1 << iota // do not use a tabwriter; if set, UseSpaces is ignored
-	TabIndent                  // use tabs for indentation independent of UseSpaces
-	UseSpaces                  // use spaces instead of tabs for alignment
-	SourcePos                  // emit //line directives to preserve original source positions
-)
-
-// A Config node controls the output of Fprint.
-type Config struct {
-	Mode     Mode // default: 0
-	Tabwidth int  // default: 8
-	Indent   int  // default: 0 (all code is indented at least by this much)
+	output = &trimmer{output: output}
+	_, err = output.Write(p.output)
+	return
 }
 
-func Fprint(output io.Writer, fset *token.FileSet, node interface{}) error {
-	return (&Config{Tabwidth: 8}).Fprint(output, fset, node)
-}
+// fprint implements Fprint and takes a nodesSizes map for setting up the printer state.
+func fprintNode(output io.Writer, fset *token.FileSet, node interface{}, nodeSizes map[ast.Node]int) (err error) {
+	var p printer
+	p.init(fset, nodeSizes)
+	if err = p.printNode(node); err != nil {
+		return
+	}
+	// print outstanding comments
+	p.impliedSemi = false // EOF acts like a newline
+	p.flush(token.Position{Offset: infinity, Line: infinity}, token.EOF)
 
-func (cfg *Config) Fprint(output io.Writer, fset *token.FileSet, node interface{}) error {
-	return cfg.fprint(output, fset, node, make(map[ast.Node]int))
+	// redirect output through a trimmer to eliminate trailing whitespace
+	// (Input to a tabwriter must be untrimmed since trailing tabs provide
+	// formatting information. The tabwriter could provide trimming
+	// functionality but no tabwriter is used when RawFormat is set.)
+	output = &trimmer{output: output}
+
+	// write printer result via tabwriter/trimmer to output
+	if _, err = output.Write(p.output); err != nil {
+		return
+	}
+
+	return
 }
