@@ -4,8 +4,8 @@
 package types
 
 var (
-	WzUniverse *Scope
-	WzUnsafe   *Package
+	WaUniverse *Scope
+	WaUnsafe   *Package
 )
 
 func init() {

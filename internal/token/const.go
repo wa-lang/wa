@@ -6,13 +6,15 @@ package token
 // 关键字定义为常量, 避免直接引用字符串错误
 
 const (
-	K_nil    = "nil"
-	K_true   = "true"
-	K_false  = "false"
-	K_iota   = "iota"
-	K_byte   = "byte"
-	K_rune   = "rune"
-	K_string = "string"
+	K_nil      = "nil"
+	K_true     = "true"
+	K_false    = "false"
+	K_iota     = "iota"
+	K_byte     = "byte"
+	K_rune     = "rune"
+	K_string   = "string"
+	K_any      = "any"
+	K_universe = "universe"
 
 	K_init = "init"
 	K_main = "main"
@@ -96,6 +98,7 @@ const (
 	K_字串 = "字串" // string
 	K_字节 = "字节" // byte
 	K_符文 = "符文" // rune
+	K_皮囊 = "皮囊" // any
 
 	K_微整型 = "微整型" // i8
 	K_短整型 = "短整型" // i16
@@ -107,6 +110,7 @@ const (
 	K_长正整 = "长正整" // u64
 
 	K_错误 = "错误" // error
+	K_报错 = "报错" // err.Error
 
 	K_约塔 = "约塔" // iota
 	K_准备 = "准备" // init
@@ -130,7 +134,23 @@ const (
 	K_断言 = "断言" // assert
 
 	K_主包 = "主包" // main
-	K_太初 = "太初" // builtin
+	K_太初 = "太初" // builtin/universe
 	K_鸿蒙 = "鸿蒙" // unsafe
 	K_周行 = "周行" // runtime
+)
+
+const (
+	K__PACKAGE__ = "__PACKAGE__"
+	K__FILE__    = "__FILE__"
+	K__LINE__    = "__LINE__"
+	K__COLUMN__  = "__COLUMN__"
+	K__FUNC__    = "__FUNC__"
+	K__POS__     = "__POS__"
+
+	K__包__  = "__包__"
+	K__文件__ = "__文件__"
+	K__行号__ = "__行号__"
+	K__列号__ = "__列号__"
+	K__函数__ = "__函数__"
+	K__位置__ = "__位置__"
 )
