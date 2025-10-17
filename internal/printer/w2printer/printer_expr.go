@@ -310,7 +310,7 @@ func (p *printer) expr1(expr ast.Expr, prec1, depth int) {
 
 	case *ast.TypeAssertExpr:
 		p.expr1(x.X, token.HighestPrec, depth)
-		p.print(token.PERIOD, x.Lparen, token.LPAREN)
+		p.print(token.K_点, x.Lparen, token.LPAREN)
 		if x.Type != nil {
 			p.expr(x.Type)
 		} else {
@@ -471,7 +471,7 @@ func (p *printer) possibleSelectorExpr(expr ast.Expr, prec1, depth int) bool {
 // multiple lines.
 func (p *printer) selectorExpr(x *ast.SelectorExpr, depth int, isMethod bool) bool {
 	p.expr1(x.X, token.HighestPrec, depth)
-	p.print(token.PERIOD)
+	p.print(token.K_点)
 	if line := p.lineFor(x.Sel.Pos()); p.pos.IsValid() && p.pos.Line < line {
 		p.print(indent, newline, x.Sel.Pos(), x.Sel)
 		if !isMethod {

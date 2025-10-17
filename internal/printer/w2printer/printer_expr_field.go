@@ -57,7 +57,7 @@ func (p *printer) fieldList(fields *ast.FieldList, isStruct, isIncomplete bool) 
 		}
 	}
 	// hasComments || !srcIsOneLine
-	p.print(blank, lbrace, token.COLON, indent)
+	p.print(lbrace, token.COLON, indent)
 	if hasComments || len(list) > 0 {
 		p.print(formfeed)
 	}

@@ -8,9 +8,10 @@ import (
 	"wa-lang.org/wa/internal/token"
 )
 
-func (p *printer) funcDecl(d *ast.FuncDecl) {
+func (p *printer) funcDecl_pkg(d *ast.FuncDecl) {
 	p.setComment(d.Doc)
-	p.print(d.Pos(), token.Zh_函数, blank)
+	p.print(d.Pos(), token.Zh_函数, token.K_点)
+
 	if d.Recv != nil {
 		var thisTypeIdent *ast.Ident
 		if s := d.Recv.List[0].Names[0].Name; s == token.K_this || s == token.K_我的 {

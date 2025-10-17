@@ -21,10 +21,6 @@ func (p *printer) printFile(file *ast.File) error {
 	}
 
 	p.setComment(file.Doc)
-	if file.Name != nil && file.Name.Name != "" {
-		p.print(file.Pos(), token.PACKAGE, blank)
-		p.expr(file.Name)
-	}
 
 	tok := token.ILLEGAL
 	for _, d := range file.Decls {
@@ -64,11 +60,12 @@ func (p *printer) printFile(file *ast.File) error {
 
 		case *ast.GenDecl:
 			p.setComment(d.Doc)
-			p.print(d.Pos(), d.Tok, blank)
 
 			assert(len(d.Specs) == 1)
 			switch s := d.Specs[0].(type) {
 			case *ast.ImportSpec:
+				p.print(d.Pos(), token.Zh_引入, blank)
+
 				p.setComment(s.Doc)
 				p.expr(sanitizeImportPath(s.Path))
 				if s.Name != nil {
@@ -82,21 +79,25 @@ func (p *printer) printFile(file *ast.File) error {
 				p.print(s.EndPos)
 
 			case *ast.ValueSpec:
+				p.print(d.Pos(), token.Zh_全局, token.K_点)
 				p.spec_ValueSpec(s, 1, true)
 
 			case *ast.TypeSpec:
-				// 结构/接口
-				p.setComment(s.Doc)
-				p.expr(s.Name)
-				p.exprTypeSpec(s.Type)
-				p.setComment(s.Comment)
+				switch s.Type.(type) {
+				case *ast.StructType:
+					p.declStructType(s)
+				case *ast.InterfaceType:
+					p.declInterfaceType(s)
+				default:
+					panic("unreachable")
+				}
 
 			default:
 				panic("unreachable")
 			}
 
 		case *ast.FuncDecl:
-			p.funcDecl(d)
+			p.funcDecl_pkg(d)
 
 		default:
 			panic("unreachable")
@@ -105,4 +106,14 @@ func (p *printer) printFile(file *ast.File) error {
 
 	p.print(newline)
 	return nil
+}
+
+// numLines returns the number of lines spanned by node n in the original source.
+func (p *printer) numLines(n ast.Node) int {
+	if from := n.Pos(); from.IsValid() {
+		if to := n.End(); to.IsValid() {
+			return p.lineFor(to) - p.lineFor(from) + 1
+		}
+	}
+	return infinity
 }

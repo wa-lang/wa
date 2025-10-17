@@ -73,7 +73,7 @@ func Fmt(c *cli.Context, path string) error {
 		waFileList = append(waFileList, path)
 	case strings.HasSuffix(path, ".wz"):
 		waFileList = append(waFileList, path)
-	case strings.HasSuffix(path, "/..."):
+	case strings.HasSuffix(path, "/...") || strings.HasSuffix(path, "\\..."):
 		waFileList = getDirWaFileList(
 			strings.TrimSuffix(path, "..."),
 			true, ".wa", ".wz", // 包含子目录
@@ -107,10 +107,10 @@ func fmtFile(path string) (changed bool, err error) {
 		return false, err
 	}
 	if changed {
-		if strings.HasSuffix(path, ".wz") {
-			fmt.Println(string(code))
-			return false, nil
-		}
+		//if strings.HasSuffix(path, ".wz") {
+		//	fmt.Println(string(code))
+		//	return false, nil
+		//}
 		if err = os.WriteFile(path, code, 0666); err != nil {
 			return false, err
 		}
@@ -161,7 +161,7 @@ func fmtNativeAsmFile(c *cli.Context, path string) (err error) {
 func getDirWaFileList(dir string, walkSubDir bool, extList ...string) []string {
 	var waFileList []string
 	if !walkSubDir {
-		files, err := os.ReadDir(".")
+		files, err := os.ReadDir(dir)
 		if err != nil {
 			return nil
 		}

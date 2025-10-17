@@ -8,6 +8,7 @@ import (
 	"fmt"
 
 	"wa-lang.org/wa/internal/ast"
+	"wa-lang.org/wa/internal/token"
 )
 
 func (p *printer) printNode(node interface{}) error {
@@ -33,7 +34,28 @@ func (p *printer) printNode(node interface{}) error {
 		}
 		p.stmt(n, false)
 	case ast.Decl:
-		p.decl(n)
+		switch d := n.(type) {
+		case *ast.BadDecl:
+			p.print(d.Pos(), "BadDecl")
+
+		case *ast.GenDecl:
+			p.setComment(d.Doc)
+			assert(len(d.Specs) == 1)
+			if s, ok := d.Specs[0].(*ast.ValueSpec); ok {
+				assert(d.Tok == token.VAR)
+				p.print(d.Pos(), token.Zh_设定, token.K_点)
+				p.spec_ValueSpec(s, 1, true)
+			} else {
+				panic("unreachable")
+			}
+
+		case *ast.FuncDecl:
+			panic("unreachable")
+
+		default:
+			panic("unreachable")
+		}
+
 	case ast.Spec:
 		if s, ok := n.(*ast.ValueSpec); ok {
 			p.spec_ValueSpec(s, 1, false)

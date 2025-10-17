@@ -21,18 +21,19 @@ import (
 // and looked up by name. The zero value for Scope is a ready-to-use
 // empty scope.
 type Scope struct {
-	parent   *Scope
-	children []*Scope
-	elems    map[string]Object // lazily allocated
-	pos, end token.Pos         // scope extent; may be invalid
-	comment  string            // for debugging only
-	isFunc   bool              // set if this is a function scope (internal use only)
+	parent     *Scope
+	children   []*Scope
+	elems      map[string]Object // lazily allocated
+	pos, end   token.Pos         // scope extent; may be invalid
+	comment    string            // for debugging only
+	isFunc     bool              // set if this is a function scope (internal use only)
+	isUniverse bool              // builtin 包
 }
 
 // NewScope returns a new, empty scope contained in the given parent
 // scope, if any. The comment is for debugging only.
 func NewScope(parent *Scope, pos, end token.Pos, comment string) *Scope {
-	s := &Scope{parent, nil, nil, pos, end, comment, false}
+	s := &Scope{parent, nil, nil, pos, end, comment, false, false}
 	// don't add children to Universe scope!
 	if parent != nil && parent != Universe {
 		parent.children = append(parent.children, s)

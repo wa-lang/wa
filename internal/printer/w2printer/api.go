@@ -5,6 +5,7 @@ package w2printer
 
 import (
 	"io"
+	"text/tabwriter"
 
 	"wa-lang.org/wa/internal/ast"
 	"wa-lang.org/wa/internal/token"
@@ -21,7 +22,26 @@ func Fprint(output io.Writer, fset *token.FileSet, f *ast.File) (err error) {
 	p.flush(token.Position{Offset: infinity, Line: infinity}, token.EOF)
 
 	output = &trimmer{output: output}
-	_, err = output.Write(p.output)
+
+	// redirect output through a tabwriter if necessary
+	{
+		minwidth := 0
+		tabwidth := 8
+		padchar := byte(' ')
+		twmode := tabwriter.DiscardEmptyColumns | tabwriter.TabIndent
+		output = tabwriter.NewWriter(output, minwidth, tabwidth, 1, padchar, twmode)
+	}
+
+	// write printer result via tabwriter/trimmer to output
+	if _, err = output.Write(p.output); err != nil {
+		return
+	}
+
+	// flush tabwriter, if any
+	if tw, _ := output.(*tabwriter.Writer); tw != nil {
+		err = tw.Flush()
+	}
+
 	return
 }
 
@@ -42,9 +62,23 @@ func fprintNode(output io.Writer, fset *token.FileSet, node interface{}, nodeSiz
 	// functionality but no tabwriter is used when RawFormat is set.)
 	output = &trimmer{output: output}
 
+	// redirect output through a tabwriter if necessary
+	{
+		minwidth := 0
+		tabwidth := 8
+		padchar := byte(' ')
+		twmode := tabwriter.DiscardEmptyColumns | tabwriter.TabIndent
+		output = tabwriter.NewWriter(output, minwidth, tabwidth, 1, padchar, twmode)
+	}
+
 	// write printer result via tabwriter/trimmer to output
 	if _, err = output.Write(p.output); err != nil {
 		return
+	}
+
+	// flush tabwriter, if any
+	if tw, _ := output.(*tabwriter.Writer); tw != nil {
+		err = tw.Flush()
 	}
 
 	return

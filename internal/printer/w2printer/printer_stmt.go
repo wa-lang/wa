@@ -56,7 +56,27 @@ func (p *printer) stmt(stmt ast.Stmt, nextIsRBrace bool) {
 		p.print("BadStmt")
 
 	case *ast.DeclStmt:
-		p.decl(s.Decl)
+		switch d := s.Decl.(type) {
+		case *ast.BadDecl:
+			p.print(d.Pos(), "BadDecl")
+
+		case *ast.GenDecl:
+			p.setComment(d.Doc)
+			assert(len(d.Specs) == 1)
+			if s, ok := d.Specs[0].(*ast.ValueSpec); ok {
+				assert(d.Tok == token.VAR)
+				p.print(d.Pos(), token.Zh_设定, token.K_点)
+				p.spec_ValueSpec(s, 1, true)
+			} else {
+				panic("unreachable")
+			}
+
+		case *ast.FuncDecl:
+			panic("unreachable")
+
+		default:
+			panic("unreachable")
+		}
 
 	case *ast.EmptyStmt:
 		// nothing to do
@@ -130,31 +150,7 @@ func (p *printer) stmt(stmt ast.Stmt, nextIsRBrace bool) {
 		p.block(s, 1, token.Zh_完毕)
 
 	case *ast.IfStmt:
-		p.print(token.Zh_如果)
-		p.controlClause(false, s.Init, s.Cond, nil)
-
-		closeTok := token.RBRACE
-		if s.Else != nil {
-			if _, ok := s.Else.(*ast.IfStmt); ok {
-				closeTok = token.Zh_或者
-			} else {
-				closeTok = token.Zh_否则
-			}
-		}
-
-		p.block(s.Body, 1, closeTok)
-
-		if s.Else != nil {
-			switch s.Else.(type) {
-			case *ast.IfStmt:
-				p.print(blank, token.Zh_或者, blank)
-				p.controlClause(false, s.Init, s.Cond, nil)
-				p.stmt(s.Else, nextIsRBrace)
-			default:
-				p.print(blank, token.Zh_否则, blank)
-				p.stmt(s.Else, nextIsRBrace)
-			}
-		}
+		p.stmtIf(s, nextIsRBrace)
 
 	case *ast.CaseClause:
 		if s.List != nil {
@@ -167,43 +163,16 @@ func (p *printer) stmt(stmt ast.Stmt, nextIsRBrace bool) {
 		p.stmtList(s.Body, 1, nextIsRBrace)
 
 	case *ast.SwitchStmt:
-		p.print(token.Zh_找辙)
-		p.controlClause(false, s.Init, s.Tag, nil)
-		p.block(s.Body, 0, token.Zh_完毕)
+		p.stmtSwitch(s)
 
 	case *ast.TypeSwitchStmt:
-		p.print(token.Zh_找辙)
-		if s.Init != nil {
-			p.print(blank)
-			p.stmt(s.Init, false)
-			p.print(token.SEMICOLON)
-		}
-		p.print(blank)
-		p.stmt(s.Assign, false)
-		p.print(blank)
-		p.block(s.Body, 0, token.Zh_完毕)
+		p.stmtSwitchType(s)
 
 	case *ast.ForStmt:
-		p.print(token.Zh_循环)
-		p.controlClause(true, s.Init, s.Cond, s.Post)
-		p.block(s.Body, 1, token.Zh_完毕)
+		p.stmtFor(s)
 
 	case *ast.RangeStmt:
-		p.print(token.Zh_循环, blank)
-		if s.Key != nil {
-			p.expr(s.Key)
-			if s.Value != nil {
-				// use position of value following the comma as
-				// comma position for correct comment placement
-				p.print(s.Value.Pos(), token.COMMA, blank)
-				p.expr(s.Value)
-			}
-			p.print(blank, s.TokPos, s.Tok, blank)
-		}
-		p.print(token.Zh_迭代, blank)
-		p.expr(stripParens(s.X))
-		p.print(blank)
-		p.block(s.Body, 1, token.Zh_完毕)
+		p.stmtForRange(s)
 
 	default:
 		panic("unreachable")
@@ -250,40 +219,6 @@ func (p *printer) indentList(list []ast.Expr) bool {
 		}
 	}
 	return false
-}
-
-func (p *printer) controlClause(isForStmt bool, init ast.Stmt, expr ast.Expr, post ast.Stmt) {
-	p.print(blank)
-	needsBlank := false
-	if init == nil && post == nil {
-		// no semicolons required
-		if expr != nil {
-			p.expr(stripParens(expr))
-			needsBlank = true
-		}
-	} else {
-		// all semicolons required
-		// (they are not separators, print them explicitly)
-		if init != nil {
-			p.stmt(init, false)
-		}
-		p.print(token.SEMICOLON, blank)
-		if expr != nil {
-			p.expr(stripParens(expr))
-			needsBlank = true
-		}
-		if isForStmt {
-			p.print(token.SEMICOLON, blank)
-			needsBlank = false
-			if post != nil {
-				p.stmt(post, false)
-				needsBlank = true
-			}
-		}
-	}
-	if needsBlank {
-		p.print(blank)
-	}
 }
 
 func stripParens(x ast.Expr) ast.Expr {
