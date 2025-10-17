@@ -12,76 +12,23 @@ import (
 	"wa-lang.org/wa/internal/token"
 )
 
-// The parameter n is the number of specs in the group. If doIndent is set,
-// multi-line identifier lists in the spec are indented when the first
-// linebreak is encountered.
-func (p *printer) spec(spec ast.Spec, n int, doIndent bool) {
-	switch s := spec.(type) {
-	case *ast.ImportSpec:
-		p.setComment(s.Doc)
-		p.expr(sanitizeImportPath(s.Path))
-		if s.Name != nil {
-			p.print(blank)
-			p.print(token.ARROW)
-			p.print(blank)
-
-			p.expr(s.Name)
-		}
-		p.setComment(s.Comment)
-		p.print(s.EndPos)
-
-	case *ast.ValueSpec:
-		if n != 1 {
-			p.internalError("expected n = 1; got", n)
-		}
-		p.setComment(s.Doc)
-		p.identList(s.Names, doIndent) // always present
-		if s.Type != nil {
-			p.print(token.COLON)
-			p.print(blank)
-			p.expr(s.Type)
-		}
-		if s.Values != nil {
-			p.print(blank, token.ASSIGN, blank)
-			p.exprList(token.NoPos, s.Values, 1, 0, token.NoPos, false)
-		}
-		p.setComment(s.Comment)
-
-	case *ast.TypeSpec:
-		// 中文不存在 type ( ... ) 用法
-		p.setComment(s.Doc)
-		p.expr(s.Name)
-		p.exprTypeSpec(s.Type)
-		p.setComment(s.Comment)
-
-	default:
-		panic("unreachable")
+func (p *printer) spec_ValueSpec(s *ast.ValueSpec, n int, doIndent bool) {
+	if n != 1 {
+		p.internalError("expected n = 1; got", n)
 	}
-}
-
-func (p *printer) valueSpec(s *ast.ValueSpec, keepType bool) {
 	p.setComment(s.Doc)
-	p.identList(s.Names, false) // always present
-	extraTabs := 3
-	if s.Type != nil || keepType {
-		p.print(vtab)
-		extraTabs--
-	}
+	p.identList(s.Names, doIndent) // always present
 	if s.Type != nil {
 		p.print(token.COLON)
+		p.print(blank)
 		p.expr(s.Type)
 	}
 	if s.Values != nil {
-		p.print(vtab, token.ASSIGN, blank)
+		p.print(blank, token.ASSIGN, blank)
 		p.exprList(token.NoPos, s.Values, 1, 0, token.NoPos, false)
-		extraTabs--
 	}
-	if s.Comment != nil {
-		for ; extraTabs > 0; extraTabs-- {
-			p.print(vtab)
-		}
-		p.setComment(s.Comment)
-	}
+	p.setComment(s.Comment)
+
 }
 
 func sanitizeImportPath(lit *ast.BasicLit) *ast.BasicLit {

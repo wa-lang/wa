@@ -56,7 +56,7 @@ func (p *printer) stmt(stmt ast.Stmt, nextIsRBrace bool) {
 		p.print("BadStmt")
 
 	case *ast.DeclStmt:
-		p.decl(s.Decl, false)
+		p.decl(s.Decl)
 
 	case *ast.EmptyStmt:
 		// nothing to do

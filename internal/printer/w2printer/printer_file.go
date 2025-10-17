@@ -58,7 +58,49 @@ func (p *printer) printFile(file *ast.File) error {
 			p.linebreak(p.lineFor(d.Pos()), min, ignore, tok == token.Zh_函数 && p.numLines(d) > 1)
 		}
 
-		p.decl(d, true)
+		switch d := d.(type) {
+		case *ast.BadDecl:
+			p.print(d.Pos(), "BadDecl")
+
+		case *ast.GenDecl:
+			p.setComment(d.Doc)
+			p.print(d.Pos(), d.Tok, blank)
+
+			assert(len(d.Specs) == 1)
+			switch s := d.Specs[0].(type) {
+			case *ast.ImportSpec:
+				p.setComment(s.Doc)
+				p.expr(sanitizeImportPath(s.Path))
+				if s.Name != nil {
+					p.print(blank)
+					p.print(token.ARROW)
+					p.print(blank)
+
+					p.expr(s.Name)
+				}
+				p.setComment(s.Comment)
+				p.print(s.EndPos)
+
+			case *ast.ValueSpec:
+				p.spec_ValueSpec(s, 1, true)
+
+			case *ast.TypeSpec:
+				// 结构/接口
+				p.setComment(s.Doc)
+				p.expr(s.Name)
+				p.exprTypeSpec(s.Type)
+				p.setComment(s.Comment)
+
+			default:
+				panic("unreachable")
+			}
+
+		case *ast.FuncDecl:
+			p.funcDecl(d)
+
+		default:
+			panic("unreachable")
+		}
 	}
 
 	p.print(newline)

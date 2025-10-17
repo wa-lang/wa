@@ -4,11 +4,23 @@
 package w2printer
 
 import (
+	"fmt"
 	"strings"
 	"unicode"
 
 	"wa-lang.org/wa/internal/token"
 )
+
+func assert(cond bool, a ...string) {
+	if !cond {
+		if len(a) > 0 {
+			msg := fmt.Sprint(a)
+			panic("wa-lang.org/wa/internal/parser/w2printer internal error: " + msg)
+		} else {
+			panic("wa-lang.org/wa/internal/parser/w2printer internal error: " + "assert failed")
+		}
+	}
+}
 
 // nlines limits n to maxNewlines.
 func nlimit(n int) int {

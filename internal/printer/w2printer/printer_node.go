@@ -33,9 +33,13 @@ func (p *printer) printNode(node interface{}) error {
 		}
 		p.stmt(n, false)
 	case ast.Decl:
-		p.decl(n, false)
+		p.decl(n)
 	case ast.Spec:
-		p.spec(n, 1, false)
+		if s, ok := n.(*ast.ValueSpec); ok {
+			p.spec_ValueSpec(s, 1, false)
+		} else {
+			panic("unreachable")
+		}
 	case []ast.Stmt:
 		// A labeled statement will un-indent to position the label.
 		// Set p.indent to 1 so we don't get indent "underflow".
