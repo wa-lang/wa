@@ -32,7 +32,6 @@ var (
 
 var wzAliases = [...]*Basic{
 	{Byte, IsInteger | IsUnsigned, token.K_字节},
-	{Rune, IsInteger, "rune"},
 	{Rune, IsInteger, token.K_符文},
 
 	{Int8, IsInteger, token.K_微整型},
@@ -56,7 +55,7 @@ func wzDefPredeclaredTypes() {
 	for _, t := range Typ {
 		wzDef(NewTypeName(token.NoPos, nil, t.name, t))
 	}
-	for _, t := range aliases {
+	for _, t := range wzAliases {
 		wzDef(NewTypeName(token.NoPos, nil, t.name, t))
 	}
 
@@ -122,17 +121,16 @@ var wzPredeclaredFuncs = [...]struct {
 	_打印: {token.K_打印, 0, true, statement},
 	_实部: {token.K_实部, 1, false, expression},
 
-	_Raw:        {"raw", 1, false, expression},
-	_unsafe_Raw: {"Raw", 1, false, expression},
-
-	_SetFinalizer:         {"setFinalizer", 2, false, statement},
-	_runtime_SetFinalizer: {"SetFinalizer", 2, false, statement},
-
-	_unsafe_Alignof:  {"Alignof", 1, false, expression},
-	_unsafe_Offsetof: {"Offsetof", 1, false, expression},
-	_unsafe_Sizeof:   {"Sizeof", 1, false, expression},
-
+	// 测试环境
 	_断言: {token.K_断言, 1, true, statement},
+	_跟踪: {token.K_跟踪, 0, true, statement},
+
+	_unsafe_Raw:      {token.K_unsafe_原生, 1, false, expression},
+	_unsafe_Alignof:  {token.K_unsafe_对齐倍数, 1, false, expression},
+	_unsafe_Offsetof: {token.K_unsafe_字节偏移量, 1, false, expression},
+	_unsafe_Sizeof:   {token.K_unsafe_字节大小, 1, false, expression},
+
+	_runtime_SetFinalizer: {token.K_runtime_设置终结函数, 2, false, statement},
 }
 
 func wzDefPredeclaredFuncs() {
@@ -141,7 +139,7 @@ func wzDefPredeclaredFuncs() {
 		if id == _runtime_SetFinalizer {
 			continue // 在加载 runtime 包时导入
 		}
-		if id == _Assert || id == _Trace || id == _断言 {
+		if id == _断言 || id == _跟踪 {
 			continue // only define these in testing environment
 		}
 		wzDef(newBuiltin(id))
@@ -225,7 +223,7 @@ func init() {
 	WzUniverse = NewScope(nil, token.NoPos, token.NoPos, token.K_太初)
 	WzUniverse.isUniverse = true
 
-	WzUnsafe = NewPackage(token.K_鸿蒙, token.K_鸿蒙)
+	WzUnsafe = NewPackage(token.K_洪荒, token.K_洪荒)
 	WzUnsafe.complete = true
 
 	wzDefPredeclaredTypes()

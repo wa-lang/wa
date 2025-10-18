@@ -224,6 +224,7 @@ const (
 	_Trace
 
 	_断言
+	_跟踪
 )
 
 var predeclaredFuncs = [...]struct {
