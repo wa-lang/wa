@@ -338,7 +338,8 @@ func (init *Initializer) String() string {
 // file set, and the package path the package is identified with.
 // The clean path must not be empty or dot (".").
 func (conf *Config) Check(path string, fset *token.FileSet, files []*ast.File, info *Info) (*Package, error) {
-	pkg := NewPackage(path, "")
+	assert(len(files) > 0)
+	pkg := NewPackage(path, "", files[0].W2Mode)
 	if len(files) > 0 {
 		pkg.W2Mode = files[0].W2Mode
 	}

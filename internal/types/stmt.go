@@ -181,7 +181,7 @@ func (check *Checker) suspendedCall(keyword string, call *ast.CallExpr) {
 	default:
 		unreachable()
 	}
-	check.errorf(x.pos(), "%s %s %s", keyword, msg, &x)
+	check.errorf(x.pos(), "%s %s %s", keyword, msg, x.XString(check.isW2Mode()))
 }
 
 // goVal returns the Go value for val, or nil.
@@ -253,7 +253,7 @@ L:
 			// (quadratic algorithm, but these lists tend to be very short)
 			for _, vt := range seen[val] {
 				if Identical(v.typ, vt.typ) {
-					check.errorf(v.pos(), "duplicate case %s in expression switch", &v)
+					check.errorf(v.pos(), "duplicate case %s in expression switch", v.XString(check.isW2Mode()))
 					check.error(vt.pos, "\tprevious case") // secondary error, \t indented
 					continue L
 				}
@@ -342,7 +342,7 @@ func (check *Checker) stmt(ctxt stmtContext, s ast.Stmt) {
 		case typexpr:
 			msg = "is not an expression"
 		}
-		check.errorf(x.pos(), "%s %s", &x, msg)
+		check.errorf(x.pos(), "%s %s", x.XString(check.isW2Mode()), msg)
 
 	case *ast.IncDecStmt:
 		if expr := check.tryFixOperatorCall(s.X); expr != nil {
@@ -615,7 +615,7 @@ func (check *Checker) stmt(ctxt stmtContext, s ast.Stmt) {
 		}
 		xtyp, _ := x.typ.Underlying().(*Interface)
 		if xtyp == nil {
-			check.errorf(x.pos(), "%s is not an interface", &x)
+			check.errorf(x.pos(), "%s is not an interface", x.XString(check.isW2Mode()))
 			return
 		}
 
@@ -717,7 +717,7 @@ func (check *Checker) stmt(ctxt stmtContext, s ast.Stmt) {
 			case *Basic:
 				if isString(typ) {
 					key = Typ[Int]
-					val = universeRune // use 'rune' name
+					val = check._universeRune() // use 'rune' name
 				}
 				// 基于数值类型的迭代
 				if _UseFeature_forRangeIter {
@@ -763,12 +763,12 @@ func (check *Checker) stmt(ctxt stmtContext, s ast.Stmt) {
 		}
 
 		if key == nil {
-			check.errorf(x.pos(), "cannot range over %s", &x)
+			check.errorf(x.pos(), "cannot range over %s", x.XString(check.isW2Mode()))
 			// ok to continue
 		}
 
 		if val == nil && s.Value != nil {
-			check.errorf(s.Value.Pos(), "range over %s permits only one iteration variable", &x)
+			check.errorf(s.Value.Pos(), "range over %s permits only one iteration variable", x.XString(check.isW2Mode()))
 		}
 
 		// check assignment to/declaration of iteration variables

@@ -48,7 +48,7 @@ func (*A) g()
 		{"struct{A}", "(struct{A}).f (*struct{A}).g"},
 		{"*struct{A}", "(*struct{A}).f (*struct{A}).g"},
 	} {
-		tv, err := types.Eval(fset, pkg, 0, test.expr)
+		tv, err := types.Eval(fset, pkg, 0, test.expr, false)
 		if err != nil {
 			t.Errorf("Eval(%s) failed: %v", test.expr, err)
 		}

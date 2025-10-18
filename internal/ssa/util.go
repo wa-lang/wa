@@ -85,10 +85,17 @@ func anonVar(typ types.Type) *types.Var {
 var lenResults = types.NewTuple(anonVar(tInt))
 
 // makeLen returns the len builtin specialized to type func(T)int.
-func makeLen(T types.Type) *Builtin {
+func makeLen(T types.Type, wzMode bool) *Builtin {
 	lenParams := types.NewTuple(anonVar(T))
-	return &Builtin{
-		name: "len",
-		sig:  types.NewSignature(nil, lenParams, lenResults, false),
+	if wzMode {
+		return &Builtin{
+			name: token.K_长度,
+			sig:  types.NewSignature(nil, lenParams, lenResults, false),
+		}
+	} else {
+		return &Builtin{
+			name: token.K_len,
+			sig:  types.NewSignature(nil, lenParams, lenResults, false),
+		}
 	}
 }

@@ -21,21 +21,20 @@ import (
 // and looked up by name. The zero value for Scope is a ready-to-use
 // empty scope.
 type Scope struct {
-	parent     *Scope
-	children   []*Scope
-	elems      map[string]Object // lazily allocated
-	pos, end   token.Pos         // scope extent; may be invalid
-	comment    string            // for debugging only
-	isFunc     bool              // set if this is a function scope (internal use only)
-	isUniverse bool              // builtin 包
+	parent   *Scope
+	children []*Scope
+	elems    map[string]Object // lazily allocated
+	pos, end token.Pos         // scope extent; may be invalid
+	comment  string            // for debugging only
+	isFunc   bool              // set if this is a function scope (internal use only)
 }
 
 // NewScope returns a new, empty scope contained in the given parent
 // scope, if any. The comment is for debugging only.
 func NewScope(parent *Scope, pos, end token.Pos, comment string) *Scope {
-	s := &Scope{parent, nil, nil, pos, end, comment, false, false}
+	s := &Scope{parent, nil, nil, pos, end, comment, false}
 	// don't add children to Universe scope!
-	if parent != nil && parent != Universe {
+	if parent != nil && (parent != WaUniverse || parent != WzUniverse) {
 		parent.children = append(parent.children, s)
 	}
 	return s
@@ -71,7 +70,7 @@ func (s *Scope) Lookup(name string) Object {
 	if obj, ok := s.elems[name]; ok {
 		return obj
 	}
-	if s.parent == Universe {
+	if s.parent == WaUniverse || s.parent == WzUniverse {
 		if strings.HasPrefix(name, "#{func}:") {
 			return s.elems[name[len("#{func}:"):]]
 		}
@@ -95,7 +94,7 @@ func (s *Scope) LookupParent(name string, pos token.Pos) (*Scope, Object) {
 		if obj := s.elems[name]; obj != nil && (!pos.IsValid() || obj.scopePos() <= pos) {
 			return s, obj
 		}
-		if s.parent == Universe {
+		if s.parent == WaUniverse || s.parent == WzUniverse {
 			if strings.HasPrefix(name, "#{func}:") {
 				if obj, ok := s.elems[name[len("#{func}:"):]]; ok {
 					return s, obj
@@ -148,7 +147,7 @@ func (s *Scope) Contains(pos token.Pos) bool {
 func (s *Scope) Innermost(pos token.Pos) *Scope {
 	// Package scopes do not have extents since they may be
 	// discontiguous, so iterate over the package's files.
-	if s.parent == Universe {
+	if s.parent == WaUniverse || s.parent == WzUniverse {
 		for _, s := range s.children {
 			if inner := s.Innermost(pos); inner != nil {
 				return inner

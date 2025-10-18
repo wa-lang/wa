@@ -22,7 +22,7 @@ import (
 // same as in CheckExpr. An error is returned if expr cannot
 // be parsed successfully, or the resulting expr AST cannot be
 // type-checked.
-func Eval(fset *token.FileSet, pkg *Package, pos token.Pos, expr string) (_ TypeAndValue, err error) {
+func Eval(fset *token.FileSet, pkg *Package, pos token.Pos, expr string, wzMode bool) (_ TypeAndValue, err error) {
 	// parse expressions
 	node, err := parser.ParseExprFrom(fset, "eval", expr, 0)
 	if err != nil {
@@ -32,7 +32,7 @@ func Eval(fset *token.FileSet, pkg *Package, pos token.Pos, expr string) (_ Type
 	info := &Info{
 		Types: make(map[ast.Expr]TypeAndValue),
 	}
-	err = CheckExpr(fset, pkg, pos, node, info)
+	err = CheckExpr(fset, pkg, pos, node, info, wzMode)
 	return info.Types[node], err
 }
 
@@ -53,11 +53,15 @@ func Eval(fset *token.FileSet, pkg *Package, pos token.Pos, expr string) (_ Type
 // functions ignore the context in which an expression is used (e.g., an
 // assignment). Thus, top-level untyped constants will return an
 // untyped type rather then the respective context-specific type.
-func CheckExpr(fset *token.FileSet, pkg *Package, pos token.Pos, expr ast.Expr, info *Info) (err error) {
+func CheckExpr(fset *token.FileSet, pkg *Package, pos token.Pos, expr ast.Expr, info *Info, wzMode bool) (err error) {
 	// determine scope
 	var scope *Scope
 	if pkg == nil {
-		scope = Universe
+		if wzMode {
+			scope = WzUniverse
+		} else {
+			scope = WaUniverse
+		}
 		pos = token.NoPos
 	} else if !pos.IsValid() {
 		scope = pkg.scope

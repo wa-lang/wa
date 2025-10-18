@@ -202,7 +202,7 @@ func (prog *Program) ConstValue(obj *types.Const) *Const {
 	// Consts for const objects and constant ast.Exprs.
 
 	// Universal constant? {true,false,nil}
-	if obj.Parent() == types.Universe {
+	if x := obj.Parent(); x == types.WaUniverse || x == types.WzUniverse {
 		return NewConst(obj.Val(), obj.Type())
 	}
 	// Package-level named constant?

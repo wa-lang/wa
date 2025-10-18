@@ -95,7 +95,7 @@ func waDefPredeclaredConsts() {
 }
 
 func waDefPredeclaredNil() {
-	waDef(&Nil{object{name: token.K_空, typ: Typ[UntypedNil], color_: black}})
+	waDef(&Nil{object{name: token.K_nil, typ: Typ[UntypedNil], color_: black}})
 }
 
 var waPredeclaredFuncs = [...]struct {
@@ -122,16 +122,16 @@ var waPredeclaredFuncs = [...]struct {
 	_Assert: {token.K_assert, 1, true, statement},
 	_Trace:  {token.K_trace, 0, true, statement},
 
-	// 临时保留, 确保中文的例子代码可以执行
-	_输出: {token.K_输出, 0, true, statement},
-	_打印: {token.K_打印, 0, true, statement},
-
 	_unsafe_Raw:      {token.K_unsafe_Raw, 1, false, expression},
 	_unsafe_Alignof:  {token.K_unsafe_Alignof, 1, false, expression},
 	_unsafe_Offsetof: {token.K_unsafe_Offsetof, 1, false, expression},
 	_unsafe_Sizeof:   {token.K_unsafe_Sizeof, 1, false, expression},
 
 	_runtime_SetFinalizer: {token.K_runtime_SetFinalizer, 2, false, statement},
+}
+
+func waNewBuiltin(id builtinId) *Builtin {
+	return &Builtin{object{name: waPredeclaredFuncs[id].name, typ: Typ[Invalid], color_: black}, id}
 }
 
 func waDefPredeclaredFuncs() {
@@ -143,7 +143,7 @@ func waDefPredeclaredFuncs() {
 		if id == _Assert || id == _Trace {
 			continue // only define these in testing environment
 		}
-		waDef(newBuiltin(id))
+		waDef(waNewBuiltin(id))
 	}
 }
 
@@ -152,7 +152,7 @@ func WaDefPredeclaredRuntimeFuncs(runtimePkg *Package) {
 	if runtimePkg.scope.Lookup(token.K_runtime_SetFinalizer) != nil {
 		return // already defined
 	}
-	waDefInPackage(runtimePkg, newBuiltin(_runtime_SetFinalizer))
+	waDefInPackage(runtimePkg, waNewBuiltin(_runtime_SetFinalizer))
 }
 
 // DefPredeclaredTestFuncs defines the assert and trace built-ins.
@@ -162,7 +162,8 @@ func WaDefPredeclaredTestFuncs() {
 	if WaUniverse.Lookup(token.K_assert) != nil {
 		return // already defined
 	}
-	def(newBuiltin(_Assert))
+	waDef(waNewBuiltin(_Assert))
+	waDef(waNewBuiltin(_Trace))
 }
 
 func waDef(obj Object) {
@@ -176,8 +177,11 @@ func waDef(obj Object) {
 		typ.obj = obj.(*TypeName)
 	}
 
+	// 区分 builtin 还是 unsafe
+	// runtime 只有 1 个函数已经被过滤了
+	// 因此如果是导出的一定是 unsafe 包的
 	scope := WaUniverse
-	if !isCNKeyword(obj.Name()) && obj.Exported() {
+	if obj.Exported() {
 		scope = WaUnsafe.scope
 		// set Pkg field
 		switch obj := obj.(type) {
@@ -220,9 +224,7 @@ func waDefInPackage(pkg *Package, obj Object) {
 
 func init() {
 	WaUniverse = NewScope(nil, token.NoPos, token.NoPos, token.K_universe)
-	WaUniverse.isUniverse = true
-
-	WaUnsafe = NewPackage(token.K_unsafe, token.K_unsafe)
+	WaUnsafe = NewPackage(token.K_unsafe, token.K_unsafe, false)
 	WaUnsafe.complete = true
 
 	waDefPredeclaredTypes()

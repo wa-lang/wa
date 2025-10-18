@@ -553,7 +553,7 @@ func (check *Checker) convertUntyped(x *operand, target Type) {
 			if !t.Empty() {
 				goto Error
 			}
-			target = Default(x.typ)
+			target = Default(x.typ, check.isW2Mode())
 		}
 	case *Pointer, *Signature, *Slice, *Map:
 		if !x.isNil() {
@@ -570,7 +570,7 @@ func (check *Checker) convertUntyped(x *operand, target Type) {
 	return
 
 Error:
-	check.errorf(x.pos(), "cannot convert %s to %s", x, target)
+	check.errorf(x.pos(), "cannot convert %s to %s", x.XString(check.isW2Mode()), target)
 	x.mode = invalid
 }
 
@@ -623,8 +623,8 @@ func (check *Checker) comparison(x, y *operand, op token.Token) {
 		// time will be materialized. Update the expression trees.
 		// If the current types are untyped, the materialized type
 		// is the respective default type.
-		check.updateExprType(x.expr, Default(x.typ), true)
-		check.updateExprType(y.expr, Default(y.typ), true)
+		check.updateExprType(x.expr, Default(x.typ, check.isW2Mode()), true)
+		check.updateExprType(y.expr, Default(y.typ, check.isW2Mode()), true)
 	}
 
 	// x <=> y, 返回 -1/0/1
@@ -899,7 +899,7 @@ func (check *Checker) index(index ast.Expr, max int64) (i int64, valid bool) {
 		}
 		i, valid = constant.Int64Val(constant.ToInt(x.val))
 		if !valid || max >= 0 && i >= max {
-			check.errorf(x.pos(), "index %s is out of bounds", &x)
+			check.errorf(x.pos(), "index %s is out of bounds", x.XString(check.isW2Mode()))
 			return i, false
 		}
 		// 0 <= i [ && i < max ]
@@ -975,7 +975,7 @@ func (check *Checker) rawExpr(x *operand, e ast.Expr, hint Type) exprKind {
 		check.indent++
 		defer func() {
 			check.indent--
-			check.trace(e.Pos(), "=> %s", x)
+			check.trace(e.Pos(), "=> %s", x.XString(check.isW2Mode()))
 		}()
 	}
 
@@ -1296,7 +1296,7 @@ func (check *Checker) exprInternal(x *operand, e ast.Expr, hint Type) exprKind {
 				// (not a constant) even if the string and the
 				// index are constant
 				x.mode = value
-				x.typ = universeByte // use 'byte' name
+				x.typ = check._universeByte() // use 'byte' name
 			}
 
 		case *Array:
@@ -1568,7 +1568,7 @@ func (check *Checker) typeAssertion(pos token.Pos, x *operand, xtyp *Interface, 
 	} else {
 		msg = "missing method"
 	}
-	check.errorf(pos, "%s cannot have dynamic type %s (%s %s)", x, T, msg, method.name)
+	check.errorf(pos, "%s cannot have dynamic type %s (%s %s)", x.XString(check.isW2Mode()), T, msg, method.name)
 }
 
 func (check *Checker) singleValue(x *operand) {
@@ -1576,7 +1576,7 @@ func (check *Checker) singleValue(x *operand) {
 		// tuple types are never named - no need for underlying type below
 		if t, ok := x.typ.(*Tuple); ok {
 			assert(t.Len() != 1)
-			check.errorf(x.pos(), "%d-valued %s where single value is expected", t.Len(), x)
+			check.errorf(x.pos(), "%d-valued %s where single value is expected", t.Len(), x.XString(check.isW2Mode()))
 			x.mode = invalid
 		}
 	}
@@ -1636,7 +1636,7 @@ func (check *Checker) exprOrType(x *operand, e ast.Expr) {
 	check.rawExpr(x, e, nil)
 	check.singleValue(x)
 	if x.mode == novalue {
-		check.errorf(x.pos(), "%s used as value or type", x)
+		check.errorf(x.pos(), "%s used as value or type", x.XString(check.isW2Mode()))
 		x.mode = invalid
 	}
 }

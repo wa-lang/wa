@@ -638,10 +638,10 @@ func (b *builder) expr0(fn *Function, e ast.Expr, tv types.TypeAndValue) Value {
 		case token.EQL, token.NEQ, token.GTR, token.LSS, token.LEQ, token.GEQ:
 			cmp := emitCompare(fn, e.Op, b.expr(fn, e.X), b.expr(fn, e.Y), e.OpPos)
 			// The type of x==y may be UntypedBool.
-			return emitConv(fn, cmp, types.Default(tv.Type))
+			return emitConv(fn, cmp, types.Default(tv.Type, fn.Pkg.Pkg.W2Mode))
 		case token.SPACESHIP:
 			cmp := emitCompare(fn, e.Op, b.expr(fn, e.X), b.expr(fn, e.Y), e.OpPos)
-			return emitConv(fn, cmp, types.Default(tv.Type))
+			return emitConv(fn, cmp, types.Default(tv.Type, fn.Pkg.Pkg.W2Mode))
 		default:
 			panic("illegal op in BinaryExpr: " + e.Op.String())
 		}
@@ -682,7 +682,11 @@ func (b *builder) expr0(fn *Function, e ast.Expr, tv types.TypeAndValue) Value {
 		// Universal built-in or nil?
 		switch obj := obj.(type) {
 		case *types.Builtin:
-			return &Builtin{name: obj.Name(), sig: tv.Type.(*types.Signature)}
+			return &Builtin{
+				W2Mode: fn.Pkg.Pkg.W2Mode,
+				name:   obj.Name(),
+				sig:    tv.Type.(*types.Signature),
+			}
 		case *types.Nil:
 			return nilConst(tv.Type)
 		}
@@ -1537,7 +1541,7 @@ func (b *builder) rangeIndexed(fn *Function, x Value, tv types.Type, pos token.P
 	} else {
 		// length = len(x).
 		var c Call
-		c.Call.Value = makeLen(x.Type())
+		c.Call.Value = makeLen(x.Type(), fn.Pkg.Pkg.W2Mode)
 		c.Call.Args = []Value{x}
 		c.setType(tInt)
 		length = fn.emit(&c)

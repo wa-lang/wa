@@ -26,7 +26,12 @@ func (check *Checker) builtin(x *operand, call *ast.CallExpr, id builtinId) (_ b
 	}
 
 	// append is the only built-in that permits the use of ... for the last argument
-	bin := predeclaredFuncs[id]
+	bin := waPredeclaredFuncs[0] // 取 x[0] 避免溢出
+	if check.isW2Mode() {
+		bin = wzPredeclaredFuncs[id]
+	} else {
+		bin = waPredeclaredFuncs[id]
+	}
 	if call.Ellipsis.IsValid() && id != _Append {
 		check.invalidOp(call.Ellipsis, "invalid use of ... with built-in %s", bin.name)
 		check.use(call.Args...)
@@ -38,7 +43,7 @@ func (check *Checker) builtin(x *operand, call *ast.CallExpr, id builtinId) (_ b
 	// false for the evaluation of x so that we can check it afterwards.
 	// Note: We must do this _before_ calling unpack because unpack evaluates the
 	//       first argument before we even call arg(x, 0)!
-	if id == _Len || id == _Cap || id == _长 {
+	if id == _Len || id == _Cap {
 		defer func(b bool) {
 			check.hasCallOrRecv = b
 		}(check.hasCallOrRecv)
@@ -102,14 +107,14 @@ func (check *Checker) builtin(x *operand, call *ast.CallExpr, id builtinId) (_ b
 		// spec: "As a special case, append also accepts a first argument assignable
 		// to type []byte with a second argument of string type followed by ... .
 		// This form appends the bytes of the string.
-		if nargs == 2 && call.Ellipsis.IsValid() && x.assignableTo(check, NewSlice(universeByte), nil) {
+		if nargs == 2 && call.Ellipsis.IsValid() && x.assignableTo(check, NewSlice(check._universeByte()), nil) {
 			arg(x, 1)
 			if x.mode == invalid {
 				return
 			}
 			if isString(x.typ) {
 				if check.Types != nil {
-					sig := makeSig(S, S, x.typ)
+					sig := makeSig(check.isW2Mode(), S, S, x.typ)
 					sig.variadic = true
 					check.recordBuiltinType(call.Fun, sig)
 				}
@@ -122,7 +127,7 @@ func (check *Checker) builtin(x *operand, call *ast.CallExpr, id builtinId) (_ b
 		}
 
 		// check general case by creating custom signature
-		sig := makeSig(S, S, NewSlice(T)) // []T required for variadic signature
+		sig := makeSig(check.isW2Mode(), S, S, NewSlice(T)) // []T required for variadic signature
 		sig.variadic = true
 		check.arguments(x, call, sig, func(x *operand, i int) {
 			// only evaluate arguments that have not been evaluated before
@@ -140,7 +145,7 @@ func (check *Checker) builtin(x *operand, call *ast.CallExpr, id builtinId) (_ b
 			check.recordBuiltinType(call.Fun, sig)
 		}
 
-	case _Cap, _Len, _长:
+	case _Cap, _Len:
 		// cap(x)
 		// len(x)
 		mode := invalid
@@ -148,7 +153,7 @@ func (check *Checker) builtin(x *operand, call *ast.CallExpr, id builtinId) (_ b
 		var val constant.Value
 		switch typ = implicitArrayDeref(x.typ.Underlying()); t := typ.(type) {
 		case *Basic:
-			if isString(t) && (id == _Len || id == _长) {
+			if isString(t) && id == _Len {
 				if x.mode == constant_ {
 					mode = constant_
 					val = constant.MakeInt64(int64(len(constant.StringVal(x.val))))
@@ -176,7 +181,7 @@ func (check *Checker) builtin(x *operand, call *ast.CallExpr, id builtinId) (_ b
 			mode = value
 
 		case *Map:
-			if id == _Len || id == _长 {
+			if id == _Len {
 				mode = value
 			}
 		}
@@ -190,7 +195,7 @@ func (check *Checker) builtin(x *operand, call *ast.CallExpr, id builtinId) (_ b
 		x.typ = Typ[Int]
 		x.val = val
 		if check.Types != nil && mode != constant_ {
-			check.recordBuiltinType(call.Fun, makeSig(x.typ, typ))
+			check.recordBuiltinType(call.Fun, makeSig(check.isW2Mode(), x.typ, typ))
 		}
 
 	case _Complex:
@@ -280,7 +285,7 @@ func (check *Checker) builtin(x *operand, call *ast.CallExpr, id builtinId) (_ b
 		resTyp := Typ[res]
 
 		if check.Types != nil && x.mode != constant_ {
-			check.recordBuiltinType(call.Fun, makeSig(resTyp, x.typ, x.typ))
+			check.recordBuiltinType(call.Fun, makeSig(check.isW2Mode(), resTyp, x.typ, x.typ))
 		}
 
 		x.typ = resTyp
@@ -301,7 +306,7 @@ func (check *Checker) builtin(x *operand, call *ast.CallExpr, id builtinId) (_ b
 		switch t := y.typ.Underlying().(type) {
 		case *Basic:
 			if isString(y.typ) {
-				src = universeByte
+				src = check._universeByte()
 			}
 		case *Slice:
 			src = t.elem
@@ -318,7 +323,7 @@ func (check *Checker) builtin(x *operand, call *ast.CallExpr, id builtinId) (_ b
 		}
 
 		if check.Types != nil {
-			check.recordBuiltinType(call.Fun, makeSig(Typ[Int], x.typ, y.typ))
+			check.recordBuiltinType(call.Fun, makeSig(check.isW2Mode(), Typ[Int], x.typ, y.typ))
 		}
 		x.mode = value
 		x.typ = Typ[Int]
@@ -342,7 +347,7 @@ func (check *Checker) builtin(x *operand, call *ast.CallExpr, id builtinId) (_ b
 
 		x.mode = novalue
 		if check.Types != nil {
-			check.recordBuiltinType(call.Fun, makeSig(nil, m, m.key))
+			check.recordBuiltinType(call.Fun, makeSig(check.isW2Mode(), nil, m, m.key))
 		}
 
 	case _Imag, _Real:
@@ -402,7 +407,7 @@ func (check *Checker) builtin(x *operand, call *ast.CallExpr, id builtinId) (_ b
 		resTyp := Typ[res]
 
 		if check.Types != nil && x.mode != constant_ {
-			check.recordBuiltinType(call.Fun, makeSig(resTyp, x.typ))
+			check.recordBuiltinType(call.Fun, makeSig(check.isW2Mode(), resTyp, x.typ))
 		}
 
 		x.typ = resTyp
@@ -445,7 +450,7 @@ func (check *Checker) builtin(x *operand, call *ast.CallExpr, id builtinId) (_ b
 		x.typ = T
 		if check.Types != nil {
 			params := [...]Type{T, Typ[Int], Typ[Int]}
-			check.recordBuiltinType(call.Fun, makeSig(x.typ, params[:1+len(sizes)]...))
+			check.recordBuiltinType(call.Fun, makeSig(check.isW2Mode(), x.typ, params[:1+len(sizes)]...))
 		}
 
 	case _New:
@@ -464,7 +469,7 @@ func (check *Checker) builtin(x *operand, call *ast.CallExpr, id builtinId) (_ b
 
 		var sig *Signature
 		if nargs == 2 {
-			sig = makeSig(x.typ, T, T)
+			sig = makeSig(check.isW2Mode(), x.typ, T, T)
 
 			// 检查第二个参数类型
 			var arg1 operand
@@ -474,7 +479,7 @@ func (check *Checker) builtin(x *operand, call *ast.CallExpr, id builtinId) (_ b
 				check.argument(sig, 1, &arg1, token.NoPos, context)
 			}
 		} else {
-			sig = makeSig(x.typ, T)
+			sig = makeSig(check.isW2Mode(), x.typ, T)
 		}
 
 		x.mode = value
@@ -519,10 +524,10 @@ func (check *Checker) builtin(x *operand, call *ast.CallExpr, id builtinId) (_ b
 
 		x.mode = novalue
 		if check.Types != nil {
-			check.recordBuiltinType(call.Fun, makeSig(nil, &emptyInterface))
+			check.recordBuiltinType(call.Fun, makeSig(check.isW2Mode(), nil, &emptyInterface))
 		}
 
-	case _Print, _Println, _打印, _输出:
+	case _Print, _Println:
 		// print(x, y, ...)
 		// println(x, y, ...)
 		var params []Type
@@ -532,7 +537,11 @@ func (check *Checker) builtin(x *operand, call *ast.CallExpr, id builtinId) (_ b
 				if i > 0 {
 					arg(x, i) // first argument already evaluated
 				}
-				check.assignment(x, nil, "argument to "+predeclaredFuncs[id].name)
+				if check.isW2Mode() {
+					check.assignment(x, nil, "argument to "+wzPredeclaredFuncs[id].name)
+				} else {
+					check.assignment(x, nil, "argument to "+waPredeclaredFuncs[id].name)
+				}
 				if x.mode == invalid {
 					// TODO(gri) "use" all arguments?
 					return
@@ -543,18 +552,10 @@ func (check *Checker) builtin(x *operand, call *ast.CallExpr, id builtinId) (_ b
 
 		x.mode = novalue
 		if check.Types != nil {
-			check.recordBuiltinType(call.Fun, makeSig(nil, params...))
+			check.recordBuiltinType(call.Fun, makeSig(check.isW2Mode(), nil, params...))
 		}
 
-	case _Recover:
-		// recover() interface{}
-		x.mode = value
-		x.typ = &emptyInterface
-		if check.Types != nil {
-			check.recordBuiltinType(call.Fun, makeSig(x.typ))
-		}
-
-	case _Raw, _unsafe_Raw:
+	case _unsafe_Raw:
 		if _, ok := x.typ.Underlying().(*Slice); !ok {
 			check.invalidArg(x.pos(), "%s is not a slice", x.typ)
 			return
@@ -563,14 +564,14 @@ func (check *Checker) builtin(x *operand, call *ast.CallExpr, id builtinId) (_ b
 		retType := NewSlice(Typ[Uint8])
 		if check.Types != nil {
 			check.recordBuiltinType(
-				call.Fun, makeSig(retType, x.typ),
+				call.Fun, makeSig(check.isW2Mode(), retType, x.typ),
 			)
 		}
 
 		x.mode = value
 		x.typ = retType
 
-	case _SetFinalizer, _runtime_SetFinalizer:
+	case _runtime_SetFinalizer:
 		var params []Type
 		if nargs > 0 {
 			params = make([]Type, nargs)
@@ -578,7 +579,11 @@ func (check *Checker) builtin(x *operand, call *ast.CallExpr, id builtinId) (_ b
 				if i > 0 {
 					arg(x, i) // first argument already evaluated
 				}
-				check.assignment(x, nil, "argument to "+predeclaredFuncs[id].name)
+				if check.isW2Mode() {
+					check.assignment(x, nil, "argument to "+wzPredeclaredFuncs[id].name)
+				} else {
+					check.assignment(x, nil, "argument to "+waPredeclaredFuncs[id].name)
+				}
 				if x.mode == invalid {
 					// TODO(gri) "use" all arguments?
 					return
@@ -609,7 +614,7 @@ func (check *Checker) builtin(x *operand, call *ast.CallExpr, id builtinId) (_ b
 		}
 		x.mode = novalue
 		if check.Types != nil {
-			check.recordBuiltinType(call.Fun, makeSig(nil, params...))
+			check.recordBuiltinType(call.Fun, makeSig(check.isW2Mode(), nil, params...))
 		}
 
 	case _unsafe_Alignof:
@@ -714,7 +719,7 @@ func (check *Checker) builtin(x *operand, call *ast.CallExpr, id builtinId) (_ b
 
 			x.mode = novalue
 			if check.Types != nil {
-				check.recordBuiltinType(call.Fun, makeSig(nil, x.typ))
+				check.recordBuiltinType(call.Fun, makeSig(check.isW2Mode(), nil, x.typ))
 			}
 		} else if strings.HasSuffix(filename, ".wa.go") {
 			// assert(pred) causes a typechecker error if pred is false.
@@ -725,7 +730,7 @@ func (check *Checker) builtin(x *operand, call *ast.CallExpr, id builtinId) (_ b
 				return
 			}
 			if x.val.Kind() != constant.Bool {
-				check.errorf(x.pos(), "internal error: value of %s should be a boolean constant", x)
+				check.errorf(x.pos(), "internal error: value of %s should be a boolean constant", x.XString(check.isW2Mode()))
 				return
 			}
 			if !constant.BoolVal(x.val) {
@@ -754,7 +759,7 @@ func (check *Checker) builtin(x *operand, call *ast.CallExpr, id builtinId) (_ b
 			}
 
 			check.rawExpr(x1, arg, nil) // permit trace for types, e.g.: new(trace(T))
-			check.dump("%v: %s", x1.pos(), x1)
+			check.dump("%v: %s", x1.pos(), x1.XString(check.isW2Mode()))
 			x1 = &t // use incoming x only for first argument
 		}
 		// trace is only available in test mode - no need to record signature
@@ -768,10 +773,10 @@ func (check *Checker) builtin(x *operand, call *ast.CallExpr, id builtinId) (_ b
 
 // makeSig makes a signature for the given argument and result types.
 // Default types are used for untyped arguments, and res may be nil.
-func makeSig(res Type, args ...Type) *Signature {
+func makeSig(wzMode bool, res Type, args ...Type) *Signature {
 	list := make([]*Var, len(args))
 	for i, param := range args {
-		list[i] = NewVar(token.NoPos, nil, "", Default(param))
+		list[i] = NewVar(token.NoPos, nil, "", Default(param, wzMode))
 	}
 	params := NewTuple(list...)
 	var result *Tuple

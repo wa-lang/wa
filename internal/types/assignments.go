@@ -41,7 +41,7 @@ func (check *Checker) assignment(x *operand, T Type, context string) {
 				x.mode = invalid
 				return
 			}
-			target = Default(x.typ)
+			target = Default(x.typ, check.isW2Mode())
 		}
 		check.convertUntyped(x, target)
 		if x.mode == invalid {
@@ -59,9 +59,9 @@ func (check *Checker) assignment(x *operand, T Type, context string) {
 
 	if reason := ""; !x.assignableTo(check, T, &reason) {
 		if reason != "" {
-			check.errorf(x.pos(), "cannot use %s as %s value in %s: %s", x, T, context, reason)
+			check.errorf(x.pos(), "cannot use %s as %s value in %s: %s", x.XString(check.isW2Mode()), T, context, reason)
 		} else {
-			check.errorf(x.pos(), "cannot use %s as %s value in %s", x, T, context)
+			check.errorf(x.pos(), "cannot use %s as %s value in %s", x.XString(check.isW2Mode()), T, context)
 		}
 		x.mode = invalid
 	}
@@ -77,7 +77,7 @@ func (check *Checker) initConst(lhs *Const, x *operand) {
 
 	// rhs must be a constant
 	if x.mode != constant_ {
-		check.errorf(x.pos(), "%s is not constant", x)
+		check.errorf(x.pos(), "%s is not constant", x.XString(check.isW2Mode()))
 		if lhs.typ == nil {
 			lhs.typ = Typ[Invalid]
 		}
@@ -116,7 +116,7 @@ func (check *Checker) initVar(lhs *Var, x *operand, context string) Type {
 				lhs.typ = Typ[Invalid]
 				return nil
 			}
-			typ = Default(typ)
+			typ = Default(typ, check.isW2Mode())
 		}
 		lhs.typ = typ
 	}
@@ -190,7 +190,7 @@ func (check *Checker) assignVar(lhs ast.Expr, x *operand) Type {
 				return nil
 			}
 		}
-		check.errorf(z.pos(), "cannot assign to %s", &z)
+		check.errorf(z.pos(), "cannot assign to %s", z.XString(check.isW2Mode()))
 		return nil
 	}
 

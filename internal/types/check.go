@@ -103,6 +103,10 @@ type Checker struct {
 	indent int // indentation for tracing
 }
 
+func (check *Checker) isW2Mode() bool {
+	return check.pkg.W2Mode
+}
+
 // addUnusedImport adds the position of a dot-imported package
 // pkg to the map of dot imports for the given file scope.
 func (check *Checker) addUnusedDotImport(scope *Scope, pkg *Package, pos token.Pos) {

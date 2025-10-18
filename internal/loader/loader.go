@@ -96,7 +96,8 @@ func (p *_Loader) loadProgram(vfs *config.PkgVFS, manifest *config.Manifest) (*P
 
 	// 注册 assert 函数
 	if p.cfg.UnitTest {
-		types.DefPredeclaredTestFuncs()
+		types.WaDefPredeclaredTestFuncs()
+		types.WzDefPredeclaredTestFuncs()
 	}
 
 	p.vfs = *vfs
@@ -116,15 +117,19 @@ func (p *_Loader) loadProgram(vfs *config.PkgVFS, manifest *config.Manifest) (*P
 
 	// import "runtime"
 	if _loadRuntime {
+		// 中英文共享同一个 runtime 包
 		logger.Trace(&config.EnableTrace_loader, "import runtime")
-		runtimePkg, err := p.Import("runtime")
+		runtimePkg, err := p.Import(token.K_runtime)
 		if err != nil {
 			logger.Tracef(&config.EnableTrace_loader, "err: %v", err)
 			return nil, err
 		}
 
-		// 注册 runtime.SetFinalizer 等内置函数
-		types.DefPredeclaredRuntimeFuncs(runtimePkg)
+		// 注册 'runtime.SetFinalizer' 内置函数
+		types.WaDefPredeclaredRuntimeFuncs(runtimePkg)
+
+		// 注册 '檀中.设置终结函数' 内置函数
+		types.WzDefPredeclaredRuntimeFuncs(runtimePkg)
 	}
 
 	// import "main"
@@ -178,16 +183,14 @@ func (p *_Loader) buildSSA(pkgpath string) error {
 func (p *_Loader) Import(pkgpath string) (*types.Package, error) {
 	logger.Tracef(&config.EnableTrace_loader, "pkgpath: %v", pkgpath)
 
-	if pkg, ok := p.prog.Pkgs[pkgpath]; ok {
-		return pkg.Pkg, nil
-	}
-
-	var err error
-	var pkg Package
-	var filenames []string
-
-	if pkgpath == "unsafe" || pkgpath == token.K_太初 {
-		pkg.Pkg = types.Unsafe
+	// unsafe 包
+	if pkgpath == token.K_unsafe || pkgpath == token.K_洪荒 {
+		var pkg Package
+		if pkgpath == token.K_unsafe {
+			pkg.Pkg = types.WaUnsafe
+		} else {
+			pkg.Pkg = types.WzUnsafe
+		}
 		pkg.Info = &types.Info{
 			Types:      make(map[ast.Expr]types.TypeAndValue),
 			Defs:       make(map[*ast.Ident]types.Object),
@@ -200,6 +203,20 @@ func (p *_Loader) Import(pkgpath string) (*types.Package, error) {
 		p.prog.Pkgs[pkgpath] = &pkg
 		return pkg.Pkg, nil
 	}
+
+	// 中英文的 runtime 包是同一个
+	if pkgpath == token.K_runtime || pkgpath == token.K_檀中 {
+		pkgpath = token.K_runtime
+	}
+
+	// 查询包是否已经加载
+	if pkg, ok := p.prog.Pkgs[pkgpath]; ok {
+		return pkg.Pkg, nil
+	}
+
+	var err error
+	var pkg Package
+	var filenames []string
 
 	// 解析当前包的汇编代码
 	pkg.WsFiles, err = p.ParseDir_wsFiles(pkgpath)
@@ -224,13 +241,23 @@ func (p *_Loader) Import(pkgpath string) (*types.Package, error) {
 
 	// main 包隐式导入 runtime
 	if _loadRuntime {
-		if pkgpath == p.prog.Manifest.MainPkg && pkgpath != "runtime" {
+		if pkgpath == p.prog.Manifest.MainPkg && pkgpath != token.K_runtime {
 			if len(pkg.Files) > 0 {
-				f, err := parser.ParseFile(nil, p.prog.Fset, "_$main$runtime.wa", `import "runtime" => _`, parser.AllErrors)
-				if err != nil {
-					panic(err)
+				if pkg.Files[0].W2Mode {
+					importCode := fmt.Sprintf(`引入 "%s" => _`, token.K_檀中)
+					f, err := parser.ParseFile(nil, p.prog.Fset, "_$main$runtime.wz", importCode, parser.AllErrors)
+					if err != nil {
+						panic(err)
+					}
+					pkg.Files[0].Decls = append(f.Decls, pkg.Files[0].Decls...)
+				} else {
+					importCode := fmt.Sprintf(`import "%s" => _`, token.K_runtime)
+					f, err := parser.ParseFile(nil, p.prog.Fset, "_$main$runtime.wa", importCode, parser.AllErrors)
+					if err != nil {
+						panic(err)
+					}
+					pkg.Files[0].Decls = append(f.Decls, pkg.Files[0].Decls...)
 				}
-				pkg.Files[0].Decls = append(f.Decls, pkg.Files[0].Decls...)
 			}
 		}
 	}

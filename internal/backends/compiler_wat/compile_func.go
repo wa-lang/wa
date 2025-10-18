@@ -736,7 +736,7 @@ func (g *functionGenerator) genCall(call *ssa.CallCommon) (insts []wat.Inst, ret
 
 func (g *functionGenerator) genBuiltin(name string, pos token.Pos, args []wir.Value) (insts []wat.Inst, ret_type wir.ValueType) {
 	switch name {
-	case "assert":
+	case token.K_assert, token.K_断言:
 		for i, av := range args {
 			avt := av.Type()
 
@@ -777,7 +777,7 @@ func (g *functionGenerator) genBuiltin(name string, pos token.Pos, args []wir.Va
 			panic("len(call.Args) == 1 or 2")
 		}
 
-	case "print", "println", token.K_打印, token.K_输出:
+	case token.K_print, token.K_println, token.K_打印, token.K_输出:
 		for i, av := range args {
 			avt := av.Type()
 
@@ -829,47 +829,47 @@ func (g *functionGenerator) genBuiltin(name string, pos token.Pos, args []wir.Va
 			}
 		}
 
-		if name == "println" || name == token.K_输出 {
+		if name == token.K_println || name == token.K_输出 {
 			insts = append(insts, wir.NewConst(strconv.Itoa('\n'), g.module.I32).EmitPushNoRetain()...)
 			insts = append(insts, wat.NewInstCall("$runtime.waPrintChar"))
 		}
 		ret_type = g.module.VOID
 
-	case "append":
+	case token.K_append, token.K_追加:
 		if len(args) != 2 {
 			panic("len(call.Args) != 2")
 		}
 		insts, ret_type = g.module.EmitGenAppend(args[0], args[1])
 
-	case "len", "长":
+	case token.K_len, token.K_长度:
 		if len(args) != 1 {
 			panic("len(call.Args) != 1")
 		}
 		insts = g.module.EmitGenLen(args[0])
 		ret_type = g.module.I32
 
-	case "cap":
+	case token.K_cap, token.K_容量:
 		if len(args) != 1 {
 			panic("len(cap.Args) != 1")
 		}
 		insts = g.module.EmitGenCap(args[0])
 		ret_type = g.module.I32
 
-	case "copy":
+	case token.K_copy, token.K_拷贝:
 		if len(args) != 2 {
 			logger.Fatal("len(copy.Args) != 2")
 		}
 		insts = g.module.EmitGenCopy(args[0], args[1])
 		ret_type = g.module.I32
 
-	case "raw", "Raw": // unsafe.Raw
+	case "raw", token.K_unsafe_Raw, token.K_unsafe_原生: // unsafe.Raw
 		if len(args) != 1 {
 			panic("len(cap.Args) != 1")
 		}
 		insts = g.module.EmitGenRaw(args[0])
 		ret_type = g.module.BYTES
 
-	case "setFinalizer", "SetFinalizer": // runtime.SetFinalizer
+	case "setFinalizer", token.K_runtime_SetFinalizer, token.K_runtime_设置终结函数: // runtime.SetFinalizer
 		if len(args) != 2 {
 			panic("len(call.Args) != 2")
 		}
@@ -882,17 +882,17 @@ func (g *functionGenerator) genBuiltin(name string, pos token.Pos, args []wir.Va
 
 		ret_type = g.module.VOID
 
-	case "real":
+	case token.K_real, token.K_实部:
 		v := wir.ComplexExtractReal(args[0])
 		insts = append(insts, v.EmitPush()...)
 		ret_type = v.Type()
 
-	case "imag":
+	case token.K_imag, token.K_虚部:
 		v := wir.ComplexExtractImag(args[0])
 		insts = append(insts, v.EmitPush()...)
 		ret_type = v.Type()
 
-	case "complex":
+	case token.K_complex, token.K_复数:
 		insts = append(insts, args[0].EmitPush()...)
 		insts = append(insts, args[1].EmitPush()...)
 		if args[0].Type().Equal(g.module.F32) {
@@ -901,11 +901,11 @@ func (g *functionGenerator) genBuiltin(name string, pos token.Pos, args []wir.Va
 			ret_type = g.module.COMPLEX128
 		}
 
-	case "ssa:wrapnilchk":
+	case token.K_ssa_wrapnilchk:
 		insts = args[0].EmitPushNoRetain()
 		ret_type = args[0].Type()
 
-	case "delete":
+	case token.K_delete, token.K_删除:
 		insts = g.module.EmitGenDelete(args[0], args[1])
 		ret_type = g.module.VOID
 

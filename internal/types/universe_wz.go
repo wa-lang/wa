@@ -107,23 +107,19 @@ var wzPredeclaredFuncs = [...]struct {
 	variadic bool
 	kind     exprKind
 }{
-	_追加: {token.K_追加, 1, true, expression},
-	_容量: {token.K_容量, 1, false, expression},
-	_复数: {token.K_复数, 2, false, expression},
-	_拷贝: {token.K_拷贝, 2, false, statement},
-	_删除: {token.K_删除, 2, false, statement},
-	_虚部: {token.K_虚部, 1, false, expression},
-	_长度: {token.K_长度, 1, false, expression},
-	_构建: {token.K_构建, 1, true, expression},
-	_新建: {token.K_新建, 1, true, expression},
-	_崩溃: {token.K_崩溃, 1, false, statement},
-	_输出: {token.K_输出, 0, true, statement},
-	_打印: {token.K_打印, 0, true, statement},
-	_实部: {token.K_实部, 1, false, expression},
-
-	// 测试环境
-	_断言: {token.K_断言, 1, true, statement},
-	_跟踪: {token.K_跟踪, 0, true, statement},
+	_Append:  {token.K_追加, 1, true, expression},
+	_Cap:     {token.K_容量, 1, false, expression},
+	_Complex: {token.K_复数, 2, false, expression},
+	_Copy:    {token.K_拷贝, 2, false, statement},
+	_Delete:  {token.K_删除, 2, false, statement},
+	_Imag:    {token.K_虚部, 1, false, expression},
+	_Len:     {token.K_长度, 1, false, expression},
+	_Make:    {token.K_构建, 1, true, expression},
+	_New:     {token.K_新建, 1, true, expression},
+	_Panic:   {token.K_崩溃, 1, false, statement},
+	_Print:   {token.K_输出, 0, true, statement},
+	_Println: {token.K_打印, 0, true, statement},
+	_Real:    {token.K_实部, 1, false, expression},
 
 	_unsafe_Raw:      {token.K_unsafe_原生, 1, false, expression},
 	_unsafe_Alignof:  {token.K_unsafe_对齐倍数, 1, false, expression},
@@ -131,6 +127,14 @@ var wzPredeclaredFuncs = [...]struct {
 	_unsafe_Sizeof:   {token.K_unsafe_字节大小, 1, false, expression},
 
 	_runtime_SetFinalizer: {token.K_runtime_设置终结函数, 2, false, statement},
+
+	// 测试环境
+	_Assert: {token.K_断言, 1, true, statement},
+	_Trace:  {token.K_跟踪, 0, true, statement},
+}
+
+func wzNewBuiltin(id builtinId) *Builtin {
+	return &Builtin{object{name: wzPredeclaredFuncs[id].name, typ: Typ[Invalid], color_: black}, id}
 }
 
 func wzDefPredeclaredFuncs() {
@@ -139,19 +143,19 @@ func wzDefPredeclaredFuncs() {
 		if id == _runtime_SetFinalizer {
 			continue // 在加载 runtime 包时导入
 		}
-		if id == _断言 || id == _跟踪 {
+		if id == _Assert || id == _Trace {
 			continue // only define these in testing environment
 		}
-		wzDef(newBuiltin(id))
+		wzDef(wzNewBuiltin(id))
 	}
 }
 
 // 注册运行时函数
 func WzDefPredeclaredRuntimeFuncs(runtimePkg *Package) {
-	if runtimePkg.scope.Lookup("SetFinalize") != nil {
+	if runtimePkg.scope.Lookup(token.K_runtime_设置终结函数) != nil {
 		return // already defined
 	}
-	wzDefInPackage(runtimePkg, newBuiltin(_runtime_SetFinalizer))
+	wzDefInPackage(runtimePkg, wzNewBuiltin(_runtime_SetFinalizer))
 }
 
 // DefPredeclaredTestFuncs defines the assert and trace built-ins.
@@ -161,7 +165,8 @@ func WzDefPredeclaredTestFuncs() {
 	if WzUniverse.Lookup(token.K_断言) != nil {
 		return // already defined
 	}
-	def(newBuiltin(_断言))
+	wzDef(wzNewBuiltin(_Assert))
+	wzDef(wzNewBuiltin(_Trace))
 }
 
 func wzDef(obj Object) {
@@ -175,10 +180,10 @@ func wzDef(obj Object) {
 		typ.obj = obj.(*TypeName)
 	}
 
-	// TODO: 中文的名字都是导出的, 因此需要区分 builtin 和 unsafe
-
+	// 中文无法区分 builtin 还是 unsafe (runtime 只有 1 个函数已经被过滤了)
 	scope := WzUniverse
-	if !isCNKeyword(obj.Name()) && obj.Exported() {
+	switch obj.Name() {
+	case token.K_unsafe_Raw, token.K_unsafe_Alignof, token.K_unsafe_Offsetof, token.K_unsafe_Sizeof:
 		scope = WzUnsafe.scope
 		// set Pkg field
 		switch obj := obj.(type) {
@@ -221,9 +226,7 @@ func wzDefInPackage(pkg *Package, obj Object) {
 
 func init() {
 	WzUniverse = NewScope(nil, token.NoPos, token.NoPos, token.K_太初)
-	WzUniverse.isUniverse = true
-
-	WzUnsafe = NewPackage(token.K_洪荒, token.K_洪荒)
+	WzUnsafe = NewPackage(token.K_洪荒, token.K_洪荒, true)
 	WzUnsafe.complete = true
 
 	wzDefPredeclaredTypes()

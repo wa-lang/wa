@@ -56,7 +56,11 @@ func (check *Checker) call(x *operand, e *ast.CallExpr) exprKind {
 		if x.mode != invalid && x.mode != constant_ {
 			check.hasCallOrRecv = true
 		}
-		return predeclaredFuncs[id].kind
+		if check.isW2Mode() {
+			return wzPredeclaredFuncs[id].kind
+		} else {
+			return waPredeclaredFuncs[id].kind
+		}
 
 	default:
 		// function/method call
@@ -296,7 +300,7 @@ func (check *Checker) argument(sig *Signature, i int, x *operand, ellipsis token
 			return
 		}
 		if _, ok := x.typ.Underlying().(*Slice); !ok && x.typ != Typ[UntypedNil] { // see issue #18268
-			check.errorf(x.pos(), "cannot use %s as parameter of type %s", x, typ)
+			check.errorf(x.pos(), "cannot use %s as parameter of type %s", x.XString(check.isW2Mode()), typ)
 			return
 		}
 	} else if sig.variadic && i >= n-1 {

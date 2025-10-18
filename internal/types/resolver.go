@@ -108,7 +108,7 @@ func validatedImportPath(path string) (string, error) {
 func (check *Checker) declarePkgObj(ident *ast.Ident, obj Object, d *declInfo) {
 	assert(ident.Name == obj.Name())
 
-	if check.pkg.W2Mode {
+	if check.isW2Mode() {
 		// spec: "A package-scope or file-scope identifier with name init
 		// may only be declared to be a function with this (func()) signature."
 		if ident.Name == "init" {
@@ -214,7 +214,7 @@ func (check *Checker) importPackage(pos token.Pos, path, dir string) *Package {
 				if i := strings.LastIndex(name, "/"); i >= 0 {
 					name = name[i+1:]
 				}
-				imp = NewPackage(path, name)
+				imp = NewPackage(path, name, check.isW2Mode())
 			}
 			// continue to use the package as best as we can
 			imp.fake = true // avoid follow-up lookup failures

@@ -38,7 +38,7 @@ func (check *Checker) conversion(x *operand, T Type) {
 	}
 
 	if !ok {
-		check.errorf(x.pos(), "cannot convert %s to %s", x, T)
+		check.errorf(x.pos(), "cannot convert %s to %s", x.XString(check.isW2Mode()), T)
 		x.mode = invalid
 		return
 	}
@@ -56,7 +56,7 @@ func (check *Checker) conversion(x *operand, T Type) {
 		// - For integer to string conversions, keep the argument type.
 		//   (See also the TODO below.)
 		if IsInterface(T) || constArg && !isConstType(T) {
-			final = Default(x.typ)
+			final = Default(x.typ, check.isW2Mode())
 		} else if isInteger(x.typ) && isString(T) {
 			final = x.typ
 		}

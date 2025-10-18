@@ -40,7 +40,7 @@ func (check *Checker) sprintf(format string, args ...interface{}) string {
 		case operand:
 			panic("internal error: should always pass *operand")
 		case *operand:
-			arg = operandString(a, check.qualifier)
+			arg = operandString(a, check.qualifier, check.isW2Mode())
 		case token.Pos:
 			arg = check.fset.Position(a).String()
 		case ast.Expr:

@@ -227,7 +227,7 @@ func emitConv(f *Function, val Value, typ types.Type) Value {
 
 		// Convert (non-nil) "untyped" literals to their default type.
 		if t, ok := ut_src.(*types.Basic); ok && t.Info()&types.IsUntyped != 0 {
-			val = emitConv(f, val, types.Default(ut_src))
+			val = emitConv(f, val, types.Default(ut_src, f.Pkg.Pkg.W2Mode))
 		}
 
 		f.Pkg.Prog.needMethodsOf(val.Type())

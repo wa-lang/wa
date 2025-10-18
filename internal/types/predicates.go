@@ -292,7 +292,7 @@ func identical(x, y Type, cmpTags bool, p *ifacePair) bool {
 // it returns the incoming type for all other types. The default type
 // for untyped nil is untyped nil.
 //
-func Default(typ Type) Type {
+func Default(typ Type, wzMode bool) Type {
 	if t, ok := typ.(*Basic); ok {
 		switch t.kind {
 		case UntypedBool:
@@ -300,7 +300,11 @@ func Default(typ Type) Type {
 		case UntypedInt:
 			return Typ[Int]
 		case UntypedRune:
-			return universeRune // use 'rune' name
+			if wzMode {
+				return wzUniverseRune // use 'rune' name
+			} else {
+				return waUniverseRune // use 'rune' name
+			}
 		case UntypedFloat:
 			return Typ[Float64]
 		case UntypedComplex:

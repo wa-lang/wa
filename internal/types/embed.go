@@ -37,9 +37,16 @@ func (check *Checker) processGlobalEmbed() {
 			}
 
 			scope, obj := check.pkg.scope.LookupParent(typeIdent.Name, valueSpec.Pos())
-			if scope != Universe || obj.Type() != universeString {
-				check.errorf(constObj.Pos(), "wa:embed invalid global type %v", obj)
-				continue
+			if check.isW2Mode() {
+				if scope != WzUniverse || obj.Type() != wzUniverseString {
+					check.errorf(constObj.Pos(), "wa:embed invalid global type %v", obj)
+					continue
+				}
+			} else {
+				if scope != WaUniverse || obj.Type() != waUniverseString {
+					check.errorf(constObj.Pos(), "wa:embed invalid global type %v", obj)
+					continue
+				}
 			}
 
 			// read file data

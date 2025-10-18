@@ -88,6 +88,8 @@ const (
 	K_assert = "assert" // assert
 	K_trace  = "trace"  // trace
 
+	K_ssa_wrapnilchk = "ssa:wrapnilchk" // ssa:wrapnilchk
+
 	K_universe = "universe"
 	K_unsafe   = "unsafe"
 	K_runtime  = "runtime"

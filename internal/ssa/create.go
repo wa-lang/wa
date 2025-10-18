@@ -48,7 +48,7 @@ func memberFromObject(pkg *Package, obj types.Object, syntax ast.Node) {
 	name := obj.Name()
 	switch obj := obj.(type) {
 	case *types.Builtin:
-		if pkg.Pkg != types.Unsafe {
+		if pkg.Pkg != types.WaUnsafe && pkg.Pkg != types.WzUnsafe {
 			panic("unexpected builtin object: " + obj.String())
 		}
 

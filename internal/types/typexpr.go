@@ -70,25 +70,25 @@ func (check *Checker) ident(x *operand, e *ast.Ident, def *Named, wantType bool)
 			return
 		}
 		switch obj {
-		case universeIota:
+		case check._universeIota():
 			if check.iota == nil {
 				check.errorf(e.Pos(), "cannot use iota outside constant declaration")
 				return
 			}
 			x.val = check.iota
 
-		case universe__PACKAGE__:
+		case check._universe__PACKAGE__():
 			x.val = constant.MakeString(check.pkg.path)
-		case universe__FILE__:
+		case check._universe__FILE__():
 			pos := check.fset.Position(e.Pos())
 			x.val = constant.MakeString(pos.Filename)
-		case universe__LINE__:
+		case check._universe__LINE__():
 			pos := check.fset.Position(e.Pos())
 			x.val = constant.MakeInt64(int64(pos.Line))
-		case universe__COLUMN__:
+		case check._universe__COLUMN__():
 			pos := check.fset.Position(e.Pos())
 			x.val = constant.MakeInt64(int64(pos.Column))
-		case universe__FUNC__:
+		case check._universe__FUNC__():
 			if check.sig == nil {
 				check.errorf(e.Pos(), "cannot use __FUNC__ outside func or method declaration")
 				return
@@ -107,7 +107,7 @@ func (check *Checker) ident(x *operand, e *ast.Ident, def *Named, wantType bool)
 				funcName := check.decl.fdecl.Name.Name
 				x.val = constant.MakeString(funcName)
 			}
-		case universe__POS__:
+		case check._universe__POS__():
 			x.val = constant.MakeInt64(int64(e.Pos()))
 
 		default:
@@ -270,9 +270,9 @@ func (check *Checker) typInternal(e ast.Expr, def *Named) Type {
 		case invalid:
 			// ignore - error reported before
 		case novalue:
-			check.errorf(x.pos(), "%s used as type", &x)
+			check.errorf(x.pos(), "%s used as type", x.XString(check.isW2Mode()))
 		default:
-			check.errorf(x.pos(), "%s is not a type", &x)
+			check.errorf(x.pos(), "%s is not a type", x.XString(check.isW2Mode()))
 		}
 
 	case *ast.SelectorExpr:
@@ -287,9 +287,9 @@ func (check *Checker) typInternal(e ast.Expr, def *Named) Type {
 		case invalid:
 			// ignore - error reported before
 		case novalue:
-			check.errorf(x.pos(), "%s used as type", &x)
+			check.errorf(x.pos(), "%s used as type", x.XString(check.isW2Mode()))
 		default:
-			check.errorf(x.pos(), "%s is not a type", &x)
+			check.errorf(x.pos(), "%s is not a type", x.XString(check.isW2Mode()))
 		}
 
 	case *ast.IndexExpr:
@@ -385,7 +385,7 @@ func (check *Checker) typOrNil(e ast.Expr) Type {
 	case invalid:
 		// ignore - error reported before
 	case novalue:
-		check.errorf(x.pos(), "%s used as type", &x)
+		check.errorf(x.pos(), "%s used as type", x.XString(check.isW2Mode()))
 	case typexpr:
 		return x.typ
 	case value:
@@ -394,7 +394,7 @@ func (check *Checker) typOrNil(e ast.Expr) Type {
 		}
 		fallthrough
 	default:
-		check.errorf(x.pos(), "%s is not a type", &x)
+		check.errorf(x.pos(), "%s is not a type", x.XString(check.isW2Mode()))
 	}
 	return Typ[Invalid]
 }
@@ -407,7 +407,7 @@ func (check *Checker) arrayLength(e ast.Expr) int64 {
 	check.expr(&x, e)
 	if x.mode != constant_ {
 		if x.mode != invalid {
-			check.errorf(x.pos(), "array length %s must be constant", &x)
+			check.errorf(x.pos(), "array length %s must be constant", x.XString(check.isW2Mode()))
 		}
 		return -1
 	}
@@ -417,12 +417,12 @@ func (check *Checker) arrayLength(e ast.Expr) int64 {
 				if n, ok := constant.Int64Val(val); ok && n >= 0 {
 					return n
 				}
-				check.errorf(x.pos(), "invalid array length %s", &x)
+				check.errorf(x.pos(), "invalid array length %s", x.XString(check.isW2Mode()))
 				return -1
 			}
 		}
 	}
-	check.errorf(x.pos(), "array length %s must be integer", &x)
+	check.errorf(x.pos(), "array length %s must be integer", x.XString(check.isW2Mode()))
 	return -1
 }
 
