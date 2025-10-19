@@ -5,6 +5,8 @@ import "syscall/wasm4" => _
 
 const WAOS = "wasm4"
 
+const 内力 = "瓦力四象门"
+
 #wa:import env traceUtf8
 func traceUtf8(msgPtr, msgLen: i32)
 

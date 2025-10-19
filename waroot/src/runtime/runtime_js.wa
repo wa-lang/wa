@@ -5,6 +5,8 @@ import "syscall/js"
 
 const WAOS = "js"
 
+const 内力 = "假死门"
+
 #wa:linkname $runtime.argsSizesGet
 func argsSizesGet(result_argc: i32, result_argv_len: i32) => (errno: i32) {
 	return

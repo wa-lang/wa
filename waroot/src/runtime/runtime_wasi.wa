@@ -5,6 +5,8 @@ import "syscall/wasi"
 
 const WAOS = "wasi"
 
+const 内力 = "瓦斯门"
+
 #wa:linkname $runtime.argsSizesGet
 func argsSizesGet(result_argc: i32, result_argv_len: i32) => (errno: i32) {
 	return wasi.ArgsSizesGet(result_argc, result_argv_len)
