@@ -127,8 +127,6 @@ func (p *_Loader) loadProgram(vfs *config.PkgVFS, manifest *config.Manifest) (*P
 
 		// 注册 'runtime.SetFinalizer' 内置函数
 		types.WaDefPredeclaredRuntimeFuncs(runtimePkg)
-
-		// 注册 '檀中.设置终结函数' 内置函数
 		types.WzDefPredeclaredRuntimeFuncs(runtimePkg)
 	}
 
@@ -205,7 +203,7 @@ func (p *_Loader) Import(pkgpath string) (*types.Package, error) {
 	}
 
 	// 中英文的 runtime 包是同一个
-	if pkgpath == token.K_runtime || pkgpath == token.K_檀中 {
+	if pkgpath == token.K_runtime || pkgpath == token.K_丹田 {
 		pkgpath = token.K_runtime
 	}
 
@@ -244,7 +242,7 @@ func (p *_Loader) Import(pkgpath string) (*types.Package, error) {
 		if pkgpath == p.prog.Manifest.MainPkg && pkgpath != token.K_runtime {
 			if len(pkg.Files) > 0 {
 				if pkg.Files[0].W2Mode {
-					importCode := fmt.Sprintf(`引入 "%s" => _`, token.K_檀中)
+					importCode := fmt.Sprintf(`引入 "%s" => _`, token.K_丹田)
 					f, err := parser.ParseFile(nil, p.prog.Fset, "_$main$runtime.wz", importCode, parser.AllErrors)
 					if err != nil {
 						panic(err)

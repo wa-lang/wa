@@ -286,6 +286,18 @@ func (check *Checker) collectObjects() {
 							continue
 						}
 
+						// 处理 wz 导入 runtime 重定向的问题
+						if path == token.K_丹田 {
+							path = token.K_runtime
+							s.Path.Value = `"` + token.K_runtime + `"`
+							if s.Name == nil {
+								s.Name = &ast.Ident{}
+							}
+							if s.Name.Name == "" {
+								s.Name.Name = token.K_丹田
+							}
+						}
+
 						imp := check.importPackage(s.Path.Pos(), path, fileDir)
 						if imp == nil {
 							continue

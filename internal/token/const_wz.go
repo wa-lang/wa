@@ -100,7 +100,7 @@ const (
 	K_主包 = "主包" // main
 	K_太初 = "太初" // builtin/universe
 	K_洪荒 = "洪荒" // unsafe
-	K_檀中 = "檀中" // runtime, 穴道名
+	K_丹田 = "丹田" // runtime
 
 	// unsafe
 	K_unsafe_原生    = "原生"    // unsafe.Raw
@@ -124,3 +124,5 @@ const (
 // "鸿蒙" => unsafe
 // "照见" => reflect
 // "三省" => reflect
+// "气海" => runtime ?
+// "檀中" => runtime ?
