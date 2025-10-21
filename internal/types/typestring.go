@@ -9,6 +9,8 @@ package types
 import (
 	"bytes"
 	"fmt"
+
+	"wa-lang.org/wa/internal/token"
 )
 
 // A Qualifier controls how named package-level objects are printed in
@@ -21,7 +23,6 @@ import (
 //
 // Using a nil Qualifier is equivalent to using (*Package).Path: the
 // object is qualified by the import path, e.g., "encoding/json.Marshal".
-//
 type Qualifier func(*Package) string
 
 // RelativeTo returns a Qualifier that fully qualifies members of
@@ -41,10 +42,10 @@ func RelativeTo(pkg *Package) Qualifier {
 // If gcCompatibilityMode is set, printing of types is modified
 // to match the representation of some types in the gc compiler:
 //
-//	- byte and rune lose their alias name and simply stand for
-//	  uint8 and int32 respectively
-//	- embedded interfaces get flattened (the embedding info is lost,
-//	  and certain recursive interface types cannot be printed anymore)
+//   - byte and rune lose their alias name and simply stand for
+//     uint8 and int32 respectively
+//   - embedded interfaces get flattened (the embedding info is lost,
+//     and certain recursive interface types cannot be printed anymore)
 //
 // This makes it easier to compare packages computed with the type-
 // checker vs packages imported from gc export data.
@@ -144,6 +145,14 @@ func writeType(buf *bytes.Buffer, typ Type, qf Qualifier, visited []Type) {
 		writeSignature(buf, t, qf, visited)
 
 	case *Interface:
+		if t == waUniverseAny.Type() {
+			buf.WriteString(token.K_any)
+			break
+		}
+		if t == wzUniverseAny.Type() {
+			buf.WriteString(token.K_空)
+			break
+		}
 		// We write the source-level methods and embedded types rather
 		// than the actual method set since resolved method signatures
 		// may have non-printable cycles if parameters have embedded

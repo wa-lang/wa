@@ -499,6 +499,11 @@ func writeObject(buf *bytes.Buffer, obj Object, qf Qualifier) {
 		}
 	}
 
+	if obj == waUniverseAny || obj == wzUniverseAny {
+		assert(Identical(typ, &emptyInterface))
+		typ = &emptyInterface
+	}
+
 	buf.WriteByte(' ')
 	WriteType(buf, typ, qf)
 }

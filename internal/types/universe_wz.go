@@ -183,7 +183,11 @@ func wzDef(obj Object) {
 	// 中文无法区分 builtin 还是 unsafe (runtime 只有 1 个函数已经被过滤了)
 	scope := WzUniverse
 	switch obj.Name() {
-	case token.K_unsafe_Raw, token.K_unsafe_Alignof, token.K_unsafe_Offsetof, token.K_unsafe_Sizeof:
+	case token.K_unsafe_原生,
+		token.K_unsafe_对齐倍数,
+		token.K_unsafe_字节偏移量,
+		token.K_unsafe_字节大小:
+
 		scope = WzUnsafe.scope
 		// set Pkg field
 		switch obj := obj.(type) {
