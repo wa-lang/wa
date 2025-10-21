@@ -49,6 +49,9 @@ var wzAliases = [...]*Basic{
 	{Float64, IsFloat, token.K_双精},
 
 	{String, IsString, token.K_字串},
+
+	{Uintptr, IsInteger | IsUnsigned, token.K_地址型},
+	{UnsafePointer, 0, token.K_unsafe_指针},
 }
 
 func wzDefPredeclaredTypes() {
@@ -68,7 +71,7 @@ func wzDefPredeclaredTypes() {
 	// Error has a nil package in its qualified name since it is in no package
 	res := NewVar(token.NoPos, nil, "", Typ[String])
 	sig := &Signature{results: NewTuple(res)}
-	err := NewFunc(token.NoPos, nil, token.K_报错, sig)
+	err := NewFunc(token.NoPos, nil, token.K_报错信息, sig)
 	typ := &Named{underlying: NewInterfaceType([]*Func{err}, nil).Complete()}
 	sig.recv = NewVar(token.NoPos, nil, "", typ)
 	wzDef(NewTypeName(token.NoPos, nil, token.K_错误, typ))
@@ -81,7 +84,7 @@ var wzPredeclaredConsts = [...]struct {
 }{
 	{token.K_真, UntypedBool, constant.MakeBool(true)},
 	{token.K_假, UntypedBool, constant.MakeBool(false)},
-	{token.K_约塔, UntypedInt, constant.MakeInt64(0)},
+	{token.K_嘀嗒, UntypedInt, constant.MakeInt64(0)},
 
 	{token.K__包__, UntypedString, constant.MakeString("<wa-lang:__PACKAGE__>")},
 	{token.K__文件__, UntypedString, constant.MakeString("<wa-lang:__FILE__>")},
@@ -183,7 +186,8 @@ func wzDef(obj Object) {
 	// 中文无法区分 builtin 还是 unsafe (runtime 只有 1 个函数已经被过滤了)
 	scope := WzUniverse
 	switch obj.Name() {
-	case token.K_unsafe_原生,
+	case token.K_unsafe_指针,
+		token.K_unsafe_原生,
 		token.K_unsafe_对齐倍数,
 		token.K_unsafe_字节偏移量,
 		token.K_unsafe_字节大小:
@@ -238,7 +242,7 @@ func init() {
 	wzDefPredeclaredNil()
 	wzDefPredeclaredFuncs()
 
-	wzUniverseIota = WzUniverse.Lookup(token.K_约塔).(*Const)
+	wzUniverseIota = WzUniverse.Lookup(token.K_嘀嗒).(*Const)
 	wzUniverseByte = WzUniverse.Lookup(token.K_字节).(*TypeName).typ.(*Basic)
 	wzUniverseRune = WzUniverse.Lookup(token.K_符文).(*TypeName).typ.(*Basic)
 	wzUniverseString = WzUniverse.Lookup(token.K_字串).(*TypeName).typ.(*Basic)

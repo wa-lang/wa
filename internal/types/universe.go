@@ -6,6 +6,8 @@
 
 package types
 
+import "wa-lang.org/wa/internal/token"
+
 // Typ contains the predeclared *Basic types indexed by their
 // corresponding BasicKind.
 //
@@ -32,7 +34,7 @@ var Typ = []*Basic{
 	Complex64:     {Complex64, IsComplex, "complex64"},
 	Complex128:    {Complex128, IsComplex, "complex128"},
 	String:        {String, IsString, "string"},
-	UnsafePointer: {UnsafePointer, 0, "Pointer"},
+	UnsafePointer: {UnsafePointer, 0, token.K_unsafe_Pointer},
 
 	UntypedBool:    {UntypedBool, IsBoolean | IsUntyped, "untyped bool"},
 	UntypedInt:     {UntypedInt, IsInteger | IsUntyped, "untyped int"},
@@ -113,20 +115,6 @@ func (p *Checker) _universeRune() *Basic {
 		return wzUniverseRune
 	} else {
 		return waUniverseRune
-	}
-}
-func (p *Checker) _universeString() *Basic {
-	if p.pkg.W2Mode {
-		return wzUniverseString
-	} else {
-		return waUniverseString
-	}
-}
-func (p *Checker) _universeAny() Object {
-	if p.pkg.W2Mode {
-		return wzUniverseAny
-	} else {
-		return waUniverseAny
 	}
 }
 

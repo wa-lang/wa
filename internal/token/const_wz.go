@@ -49,7 +49,7 @@ const (
 	K_真 = "真" // true
 	K_假 = "假" // false
 
-	K_约塔 = "约塔" // iota
+	K_嘀嗒 = "嘀嗒" // iota
 	K_字节 = "字节" // byte
 	K_符文 = "符文" // rune
 	K_字串 = "字串" // string
@@ -62,7 +62,6 @@ const (
 	K_双精 = "双精" // float64
 	K_单复 = "单复" // complex64
 	K_双复 = "双复" // complex128
-	K_针型 = "针型" // uintptr
 
 	K_微整型 = "微整型" // i8
 	K_短整型 = "短整型" // i16
@@ -73,8 +72,10 @@ const (
 	K_普正整 = "普正整" // u32
 	K_长正整 = "长正整" // u64
 
-	K_错误 = "错误" // error
-	K_报错 = "报错" // err.Error
+	K_地址型 = "地址型" // uintptr
+
+	K_错误   = "错误"   // error
+	K_报错信息 = "报错信息" // err.Error
 
 	K_准备 = "准备" // init
 	K_主控 = "主控" // main
@@ -103,6 +104,7 @@ const (
 	K_丹田 = "丹田" // runtime
 
 	// unsafe
+	K_unsafe_指针    = "指针"    // unsafe.Pointer
 	K_unsafe_原生    = "原生"    // unsafe.Raw
 	K_unsafe_对齐倍数  = "对齐倍数"  // unsafe.Alignof
 	K_unsafe_字节偏移量 = "字节偏移量" // unsafe.Offsetof
@@ -119,10 +121,3 @@ const (
 	K__函数__ = "__函数__"
 	K__位置__ = "__位置__"
 )
-
-// 待候选使用的名字
-// "鸿蒙" => unsafe
-// "照见" => reflect
-// "三省" => reflect
-// "气海" => runtime ?
-// "檀中" => runtime ?

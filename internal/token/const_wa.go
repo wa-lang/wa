@@ -95,6 +95,7 @@ const (
 	K_runtime  = "runtime"
 
 	// unsafe
+	K_unsafe_Pointer  = "Pointer" // unsafe.Pointer
 	K_unsafe_Raw      = "Raw"
 	K_unsafe_Alignof  = "Alignof"
 	K_unsafe_Offsetof = "Offsetof"
