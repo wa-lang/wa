@@ -76,7 +76,7 @@ func SimpleManifest(mainPkg, appName string) *Manifest {
 
 // 加载 WaModFile 文件
 // 如果 vfs 为空则从本地文件系统读取
-func LoadManifest(vfs fs.FS, appPath string) (p *Manifest, err error) {
+func LoadManifest(vfs fs.FS, appPath string, isW2Mode bool) (p *Manifest, err error) {
 	if appPath == "" {
 		return nil, fmt.Errorf("loader.LoadManifest: appPath is empty")
 	}
@@ -116,6 +116,9 @@ func LoadManifest(vfs fs.FS, appPath string) (p *Manifest, err error) {
 	}
 
 	// 当前 app 默认目录
+	if isW2Mode {
+		p.W2Mode = isW2Mode // 可能还没有识别前端模式
+	}
 	p.Root = filepath.Dir(kManifestPath)
 	p.MainPkg, _ = filepath.Rel(p.Root, appPath)
 
@@ -153,7 +156,7 @@ func isValidAppName(s string) bool {
 	if s == "" || s[0] == '_' || (s[0] >= '0' && s[0] <= '9') {
 		return false
 	}
-	for _, c := range []rune(s) {
+	for _, c := range s {
 		if c == '-' || c == '.' {
 			continue
 		}

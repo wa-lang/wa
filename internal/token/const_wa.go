@@ -90,10 +90,10 @@ const (
 
 	K_ssa_wrapnilchk = "ssa:wrapnilchk" // ssa:wrapnilchk
 
-	K_pkg_main = "__main__"
-	K_universe = "universe"
-	K_unsafe   = "unsafe"
-	K_runtime  = "runtime"
+	K_pkg_main     = "__main__"
+	K_pkg_universe = "universe"
+	K_pkg_unsafe   = "unsafe"
+	K_pkg_runtime  = "runtime"
 
 	// unsafe
 	K_unsafe_Pointer  = "Pointer" // unsafe.Pointer

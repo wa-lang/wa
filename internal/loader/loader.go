@@ -80,7 +80,7 @@ func (p *_Loader) LoadProgram(appPath string) (*Program, error) {
 }
 
 func (p *_Loader) LoadProgramVFS(vfs *config.PkgVFS, appPath string) (*Program, error) {
-	manifest, err := config.LoadManifest(vfs.App, appPath)
+	manifest, err := config.LoadManifest(vfs.App, appPath, false)
 	if err != nil {
 		logger.Tracef(&config.EnableTrace_loader, "err: %v", err)
 		return nil, err
@@ -119,7 +119,7 @@ func (p *_Loader) loadProgram(vfs *config.PkgVFS, manifest *config.Manifest) (*P
 	if _loadRuntime {
 		// 中英文共享同一个 runtime 包
 		logger.Trace(&config.EnableTrace_loader, "import runtime")
-		runtimePkg, err := p.Import(token.K_runtime)
+		runtimePkg, err := p.Import(token.K_pkg_runtime)
 		if err != nil {
 			logger.Tracef(&config.EnableTrace_loader, "err: %v", err)
 			return nil, err
@@ -182,9 +182,9 @@ func (p *_Loader) Import(pkgpath string) (*types.Package, error) {
 	logger.Tracef(&config.EnableTrace_loader, "pkgpath: %v", pkgpath)
 
 	// unsafe 包
-	if pkgpath == token.K_unsafe || pkgpath == token.K_洪荒 {
+	if pkgpath == token.K_pkg_unsafe || pkgpath == token.K_pkg_洪荒 {
 		var pkg Package
-		if pkgpath == token.K_unsafe {
+		if pkgpath == token.K_pkg_unsafe {
 			pkg.Pkg = types.WaUnsafe
 		} else {
 			pkg.Pkg = types.WzUnsafe
@@ -203,8 +203,8 @@ func (p *_Loader) Import(pkgpath string) (*types.Package, error) {
 	}
 
 	// 中英文的 runtime 包是同一个
-	if pkgpath == token.K_runtime || pkgpath == token.K_丹田 {
-		pkgpath = token.K_runtime
+	if pkgpath == token.K_pkg_runtime || pkgpath == token.K_pkg_丹田 {
+		pkgpath = token.K_pkg_runtime
 	}
 
 	// 查询包是否已经加载
@@ -237,19 +237,28 @@ func (p *_Loader) Import(pkgpath string) (*types.Package, error) {
 		return nil, err
 	}
 
+	// 设置main包的前端模式
+	if pkgpath == p.prog.Manifest.MainPkg {
+		if len(pkg.Files) > 0 {
+			if pkg.Files[0].W2Mode {
+				p.prog.Manifest.W2Mode = true
+			}
+		}
+	}
+
 	// main 包隐式导入 runtime
 	if _loadRuntime {
-		if pkgpath == p.prog.Manifest.MainPkg && pkgpath != token.K_runtime {
+		if pkgpath == p.prog.Manifest.MainPkg && pkgpath != token.K_pkg_runtime {
 			if len(pkg.Files) > 0 {
 				if pkg.Files[0].W2Mode {
-					importCode := fmt.Sprintf(`引入 "%s" => _`, token.K_丹田)
+					importCode := fmt.Sprintf(`引入 "%s" => _`, token.K_pkg_丹田)
 					f, err := parser.ParseFile(nil, p.prog.Fset, "_$main$runtime.wz", importCode, parser.AllErrors)
 					if err != nil {
 						panic(err)
 					}
 					pkg.Files[0].Decls = append(f.Decls, pkg.Files[0].Decls...)
 				} else {
-					importCode := fmt.Sprintf(`import "%s" => _`, token.K_runtime)
+					importCode := fmt.Sprintf(`import "%s" => _`, token.K_pkg_runtime)
 					f, err := parser.ParseFile(nil, p.prog.Fset, "_$main$runtime.wa", importCode, parser.AllErrors)
 					if err != nil {
 						panic(err)

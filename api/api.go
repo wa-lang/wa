@@ -52,7 +52,7 @@ func DefaultConfig() *Config {
 // 加载 WaModFile 文件
 // 如果 vfs 为空则从本地文件系统读取
 func LoadManifest(vfs fs.FS, appPath string) (p *Manifest, err error) {
-	return config.LoadManifest(vfs, appPath)
+	return config.LoadManifest(vfs, appPath, false)
 }
 
 // 加载程序

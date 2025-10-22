@@ -98,10 +98,10 @@ const (
 	K_断言 = "断言" // assert
 	K_跟踪 = "跟踪" // trace
 
-	K_主包 = "主包" // main
-	K_太初 = "太初" // builtin/universe
-	K_洪荒 = "洪荒" // unsafe
-	K_丹田 = "丹田" // runtime
+	K_pkg_主包 = "__主包__" // main
+	K_pkg_太初 = "太初"     // builtin/universe
+	K_pkg_洪荒 = "洪荒"     // unsafe
+	K_pkg_丹田 = "丹田"     // runtime
 
 	// unsafe
 	K_unsafe_指针    = "指针"    // unsafe.Pointer

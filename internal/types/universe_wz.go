@@ -233,8 +233,8 @@ func wzDefInPackage(pkg *Package, obj Object) {
 }
 
 func init() {
-	WzUniverse = NewScope(nil, token.NoPos, token.NoPos, token.K_太初)
-	WzUnsafe = NewPackage(token.K_洪荒, token.K_洪荒, true)
+	WzUniverse = NewScope(nil, token.NoPos, token.NoPos, token.K_pkg_太初)
+	WzUnsafe = NewPackage(token.K_pkg_洪荒, token.K_pkg_洪荒, true)
 	WzUnsafe.complete = true
 
 	wzDefPredeclaredTypes()

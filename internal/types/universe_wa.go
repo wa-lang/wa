@@ -223,8 +223,8 @@ func waDefInPackage(pkg *Package, obj Object) {
 }
 
 func init() {
-	WaUniverse = NewScope(nil, token.NoPos, token.NoPos, token.K_universe)
-	WaUnsafe = NewPackage(token.K_unsafe, token.K_unsafe, false)
+	WaUniverse = NewScope(nil, token.NoPos, token.NoPos, token.K_pkg_universe)
+	WaUnsafe = NewPackage(token.K_pkg_unsafe, token.K_pkg_unsafe, false)
 	WaUnsafe.complete = true
 
 	waDefPredeclaredTypes()

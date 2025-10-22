@@ -24,7 +24,7 @@ func (p *LSPServer) loadModule(uri protocol.DocumentURI) (*WaModule, bool) {
 	if m, ok := p.waModules[uri]; ok {
 		return m, true
 	}
-	m, err := config.LoadManifest(nil, uri.Path())
+	m, err := config.LoadManifest(nil, uri.Path(), false)
 	module := &WaModule{manifest: m}
 	p.waModules[uri] = module
 	return module, err == nil

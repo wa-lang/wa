@@ -48,6 +48,11 @@ func loadProgramFileMeta(cfg *config.Config, filename string, src interface{}) (
 	logger.Tracef(&config.EnableTrace_loader, "cfg: %+v", cfg)
 	logger.Tracef(&config.EnableTrace_loader, "filename: %s", filename)
 
+	var isW2Mode = false
+	if strings.HasSuffix(filename, ".wz") {
+		isW2Mode = true
+	}
+
 	// 读取代码
 	srcData, err := readSource(filename, src)
 	if err != nil {
@@ -55,25 +60,26 @@ func loadProgramFileMeta(cfg *config.Config, filename string, src interface{}) (
 	}
 
 	// 尝试加载本地的 manifest
-	manifest, err = config.LoadManifest(nil, filepath.Dir(filename))
+	manifest, err = config.LoadManifest(nil, filepath.Dir(filename), isW2Mode)
 	if err != nil {
 		err = nil // 忽略错误
 	}
 
 	// 重新构造 manifest
 	if manifest == nil {
+		mainPkgPath := token.K_pkg_main
+		if isW2Mode {
+			mainPkgPath = token.K_pkg_主包
+		}
 		manifest = &config.Manifest{
-			Root:    token.K_pkg_main,
-			MainPkg: token.K_pkg_main,
+			W2Mode:  isW2Mode,
+			Root:    mainPkgPath,
+			MainPkg: mainPkgPath,
 			Pkg: config.Manifest_package{
 				Name:    filepath.Base(filename),
-				Pkgpath: token.K_pkg_main,
+				Pkgpath: mainPkgPath,
 			},
 		}
-	}
-
-	if strings.HasSuffix(filename, ".wz") {
-		manifest.W2Mode = true
 	}
 
 	if cfg.Target != "" {
@@ -174,7 +180,7 @@ func loadProgramMeta(cfg *config.Config, appPath string) (
 		return
 	}
 
-	manifest, err = config.LoadManifest(nil, appPath)
+	manifest, err = config.LoadManifest(nil, appPath, false)
 	if err != nil {
 		logger.Tracef(&config.EnableTrace_loader, "err: %v", err)
 		return nil, nil, err

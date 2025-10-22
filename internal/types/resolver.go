@@ -118,7 +118,7 @@ func (check *Checker) declarePkgObj(ident *ast.Ident, obj Object, d *declInfo) {
 
 		// spec: "The main package must have package name main and declare
 		// a function main that takes no arguments and returns no value."
-		if ident.Name == token.K_主控 && check.pkg.name == token.K_主包 {
+		if ident.Name == token.K_主控 && check.pkg.name == token.K_pkg_主包 {
 			check.errorf(ident.Pos(), "cannot declare main - must be func")
 			return
 		}
@@ -273,14 +273,14 @@ func (check *Checker) collectObjects() {
 						}
 
 						// 处理 wz 导入 runtime 重定向的问题
-						if path == token.K_丹田 {
-							path = token.K_runtime
-							s.Path.Value = `"` + token.K_runtime + `"`
+						if path == token.K_pkg_丹田 {
+							path = token.K_pkg_runtime
+							s.Path.Value = `"` + token.K_pkg_runtime + `"`
 							if s.Name == nil {
 								s.Name = &ast.Ident{}
 							}
 							if s.Name.Name == "" {
-								s.Name.Name = token.K_丹田
+								s.Name.Name = token.K_pkg_丹田
 							}
 						}
 

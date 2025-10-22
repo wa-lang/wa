@@ -179,7 +179,7 @@ func BuildApp(opt *appbase.Option, input, outfile string) (mainFunc string, wasm
 
 		// OK
 		if appbase.HasExt(input, ".wz") {
-			return token.K_pkg_main + "." + token.K_主控, wasmBytes, prog.Fset.ToJson(), nil
+			return token.K_pkg_主包 + "." + token.K_主控, wasmBytes, prog.Fset.ToJson(), nil
 		}
 
 		return token.K_pkg_main + "." + token.K_main, wasmBytes, prog.Fset.ToJson(), nil
@@ -193,7 +193,7 @@ func BuildApp(opt *appbase.Option, input, outfile string) (mainFunc string, wasm
 		}
 
 		// 尝试读取模块信息
-		manifest, err := config.LoadManifest(nil, input)
+		manifest, err := config.LoadManifest(nil, input, false)
 		if err != nil {
 			fmt.Printf("%q is invalid wa moudle\n", input)
 			os.Exit(1)
