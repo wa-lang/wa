@@ -369,7 +369,7 @@ func (check *Checker) collectObjects() {
 
 					case *ast.ValueSpec:
 						switch d.Tok {
-						case token.CONST:
+						case token.CONST, token.Zh_常量:
 							hasEmbed := false
 							if len(s.Names) == 1 {
 								info := astutil.ParseCommentInfo(d.Doc)
@@ -406,7 +406,7 @@ func (check *Checker) collectObjects() {
 
 							check.arityMatch(s, last, hasEmbed)
 
-						case token.VAR, token.GLOBAL:
+						case token.VAR, token.GLOBAL, token.Zh_全局, token.Zh_设定:
 							lhs := make([]*Var, len(s.Names))
 							// If there's exactly one rhs initializer, use
 							// the same declInfo d1 for all lhs variables

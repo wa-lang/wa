@@ -61,9 +61,10 @@ func (p *printer) printFile(file *ast.File) error {
 		case *ast.GenDecl:
 			p.setComment(d.Doc)
 
-			assert(len(d.Specs) == 1)
 			switch s := d.Specs[0].(type) {
 			case *ast.ImportSpec:
+				assert(len(d.Specs) == 1)
+
 				p.print(d.Pos(), token.Zh_引入, blank)
 
 				p.setComment(s.Doc)
@@ -79,10 +80,60 @@ func (p *printer) printFile(file *ast.File) error {
 				p.print(s.EndPos)
 
 			case *ast.ValueSpec:
-				p.print(d.Pos(), token.Zh_全局, token.K_点)
-				p.spec_ValueSpec(s, 1, true)
+				if len(d.Specs) > 1 {
+					var tok token.Token
+					switch d.Tok {
+					case token.VAR, token.GLOBAL, token.Zh_全局:
+						tok = token.Zh_全局
+					case token.CONST, token.Zh_常量:
+						tok = token.Zh_常量
+					default:
+						panic("unreachale")
+					}
+					p.print(d.Lparen, tok, token.COLON)
+					if n := len(d.Specs); n > 0 {
+						p.print(indent, formfeed)
+						if n > 1 {
+							// two or more grouped const/var declarations:
+							// determine if the type column must be kept
+							keepType := keepTypeColumn(d.Specs)
+							var line int
+							for i, s := range d.Specs {
+								if i > 0 {
+									p.linebreak(p.lineFor(s.Pos()), 1, ignore, p.linesFrom(line) > 0)
+								}
+								p.recordLine(&line)
+								p.valueSpec(s.(*ast.ValueSpec), keepType[i])
+							}
+						} else {
+							var line int
+							for i, s := range d.Specs {
+								if i > 0 {
+									p.linebreak(p.lineFor(s.Pos()), 1, ignore, p.linesFrom(line) > 0)
+								}
+								p.recordLine(&line)
+								p.spec_ValueSpec(s.(*ast.ValueSpec), n, false)
+							}
+						}
+						p.print(unindent, formfeed)
+					}
+					p.print(d.Rparen, token.Zh_完毕)
+				} else {
+					switch d.Tok {
+					case token.CONST, token.Zh_常量:
+						p.print(d.Pos(), token.Zh_常量, token.K_点)
+						p.spec_ValueSpec(s, 1, true)
+					case token.VAR, token.GLOBAL, token.Zh_全局:
+						p.print(d.Pos(), token.Zh_全局, token.K_点)
+						p.spec_ValueSpec(s, 1, true)
+					default:
+						panic("unreachable")
+					}
+				}
 
 			case *ast.TypeSpec:
+				assert(len(d.Specs) == 1)
+
 				switch s.Type.(type) {
 				case *ast.StructType:
 					p.declStructType(s)
@@ -116,4 +167,93 @@ func (p *printer) numLines(n ast.Node) int {
 		}
 	}
 	return infinity
+}
+
+func (p *printer) valueSpec(s *ast.ValueSpec, keepType bool) {
+	p.setComment(s.Doc)
+	p.identList(s.Names, false) // always present
+	extraTabs := 3
+	if s.Type != nil || keepType {
+		p.print(vtab)
+		extraTabs--
+	}
+	if s.Type != nil {
+		p.print(token.COLON)
+		p.expr(s.Type)
+	}
+	if s.Values != nil {
+		p.print(vtab, token.ASSIGN, blank)
+		p.exprList(token.NoPos, s.Values, 1, 0, token.NoPos, false)
+		extraTabs--
+	}
+	if s.Comment != nil {
+		for ; extraTabs > 0; extraTabs-- {
+			p.print(vtab)
+		}
+		p.setComment(s.Comment)
+	}
+}
+
+// The keepTypeColumn function determines if the type column of a series of
+// consecutive const or var declarations must be kept, or if initialization
+// values (V) can be placed in the type column (T) instead. The i'th entry
+// in the result slice is true if the type column in spec[i] must be kept.
+//
+// For example, the declaration:
+//
+//		const (
+//			foobar int = 42 // comment
+//			x          = 7  // comment
+//			foo
+//	             bar = 991
+//		)
+//
+// leads to the type/values matrix below. A run of value columns (V) can
+// be moved into the type column if there is no type for any of the values
+// in that column (we only move entire columns so that they align properly).
+//
+//		matrix        formatted     result
+//	                   matrix
+//		T  V    ->    T  V     ->   true      there is a T and so the type
+//		-  V          -  V          true      column must be kept
+//		-  -          -  -          false
+//		-  V          V  -          false     V is moved into T column
+func keepTypeColumn(specs []ast.Spec) []bool {
+	m := make([]bool, len(specs))
+
+	populate := func(i, j int, keepType bool) {
+		if keepType {
+			for ; i < j; i++ {
+				m[i] = true
+			}
+		}
+	}
+
+	i0 := -1 // if i0 >= 0 we are in a run and i0 is the start of the run
+	var keepType bool
+	for i, s := range specs {
+		t := s.(*ast.ValueSpec)
+		if t.Values != nil {
+			if i0 < 0 {
+				// start of a run of ValueSpecs with non-nil Values
+				i0 = i
+				keepType = false
+			}
+		} else {
+			if i0 >= 0 {
+				// end of a run
+				populate(i0, i, keepType)
+				i0 = -1
+			}
+		}
+		if t.Type != nil {
+			keepType = true
+		}
+	}
+	if i0 >= 0 {
+		// end of a run
+		populate(i0, len(specs), keepType)
+	}
+
+	return m
 }
