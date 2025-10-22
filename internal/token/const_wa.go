@@ -90,6 +90,7 @@ const (
 
 	K_ssa_wrapnilchk = "ssa:wrapnilchk" // ssa:wrapnilchk
 
+	K_pkg_main = "__main__"
 	K_universe = "universe"
 	K_unsafe   = "unsafe"
 	K_runtime  = "runtime"

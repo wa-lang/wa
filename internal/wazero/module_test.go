@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"wa-lang.org/wa/api"
+	"wa-lang.org/wa/internal/token"
 	"wa-lang.org/wa/internal/wat/watutil"
 	"wa-lang.org/wa/internal/wazero"
 )
@@ -31,7 +32,7 @@ func Add(a:i32, b:i32) => i32 {
 	defer m.Close()
 
 	// main 执行
-	stdout, _, err := m.RunMain("__main__.main")
+	stdout, _, err := m.RunMain(token.K_pkg_main + "." + token.K_main)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -40,7 +41,7 @@ func Add(a:i32, b:i32) => i32 {
 	}
 
 	// add 函数执行
-	result, _, _, err := m.RunFunc("__main__.Add", 1, 2)
+	result, _, _, err := m.RunFunc(token.K_pkg_main+".Add", 1, 2)
 	if err != nil {
 		t.Fatal(err)
 	}

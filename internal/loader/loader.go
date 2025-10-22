@@ -283,7 +283,7 @@ func (p *_Loader) Import(pkgpath string) (*types.Package, error) {
 	for _, f := range pkg.Files {
 		if f.Name.Name == "" {
 			if pkgpath == p.prog.Manifest.MainPkg {
-				f.Name.Name = "main"
+				f.Name.Name = token.K_main
 			} else {
 				pkgname := pkgpath
 				if idx := strings.LastIndex(pkgname, "/"); idx != -1 {

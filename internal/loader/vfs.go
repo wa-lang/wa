@@ -63,13 +63,17 @@ func loadProgramFileMeta(cfg *config.Config, filename string, src interface{}) (
 	// 重新构造 manifest
 	if manifest == nil {
 		manifest = &config.Manifest{
-			Root:    "__main__",
-			MainPkg: "__main__",
+			Root:    token.K_pkg_main,
+			MainPkg: token.K_pkg_main,
 			Pkg: config.Manifest_package{
 				Name:    filepath.Base(filename),
-				Pkgpath: "__main__",
+				Pkgpath: token.K_pkg_main,
 			},
 		}
+	}
+
+	if strings.HasSuffix(filename, ".wz") {
+		manifest.W2Mode = true
 	}
 
 	if cfg.Target != "" {

@@ -8,6 +8,7 @@ import (
 	"log"
 
 	"wa-lang.org/wa/api"
+	"wa-lang.org/wa/internal/token"
 )
 
 func ExampleRunCode() {
@@ -23,7 +24,7 @@ func ExampleRunCode() {
 		}
 	`
 
-	output, err := api.RunCode(api.DefaultConfig(), "hello.wa", code, "__main__.main")
+	output, err := api.RunCode(api.DefaultConfig(), "hello.wa", code, token.K_pkg_main+"."+token.K_main)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -85,7 +86,7 @@ func ExampleRunCode_genericChainCalls() {
 		}
 	`
 
-	output, err := api.RunCode(api.DefaultConfig(), "hello.wa", code, "__main__.main")
+	output, err := api.RunCode(api.DefaultConfig(), "hello.wa", code, token.K_pkg_main+"."+token.K_main)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -108,7 +109,7 @@ func ExampleRunCode_wz() {
 		完毕
 	`
 
-	output, err := api.RunCode(api.DefaultConfig(), "hello.wz", code, "__main__.main")
+	output, err := api.RunCode(api.DefaultConfig(), "hello.wz", code, token.K_pkg_main+"."+token.K_主控)
 	if err != nil {
 		if len(output) != 0 {
 			log.Println(string(output))

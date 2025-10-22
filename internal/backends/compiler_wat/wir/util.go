@@ -4,12 +4,12 @@
 package wir
 
 import (
-	"strconv"
 	"strings"
 	"unicode/utf8"
 
 	"wa-lang.org/wa/internal/logger"
 	"wa-lang.org/wa/internal/ssa"
+	"wa-lang.org/wa/internal/token"
 	"wa-lang.org/wa/internal/types"
 )
 
@@ -186,7 +186,7 @@ func GetFnMangleName(v interface{}, mainPkg string) (internal string, external s
 			//if recv.Pkg().Path() != mainPkg {
 			//	exported = false
 			//} else {
-			//	if f.Object() == nil || (!f.Object().Exported() && f.Object().Name() != "main") {
+			//	if f.Object() == nil || (!f.Object().Exported() && f.Object().Name() != token.K_main) {
 			//		exported = false
 			//	}
 			//}
@@ -216,7 +216,7 @@ func GetFnMangleName(v interface{}, mainPkg string) (internal string, external s
 				if f.Pkg.Pkg.Path() != mainPkg {
 					exported = false
 				} else {
-					if f.Object() == nil || (!f.Object().Exported() && f.Object().Name() != "main") {
+					if f.Object() == nil || (!f.Object().Exported() && f.Object().Name() != token.K_main) {
 						exported = false
 					}
 				}
@@ -290,11 +290,12 @@ func GenSymbolName(src string) string {
 		return src
 	}
 
-	s := "$0x"
-	for i := 0; i < len(src); i++ {
-		s += strconv.FormatUint(uint64(src[i]), 16)
-	}
-	return s
+	//s := "$0x"
+	//for i := 0; i < len(src); i++ {
+	//	s += strconv.FormatUint(uint64(src[i]), 16)
+	//}
+	//return s
+	return src
 }
 
 func ExtractFieldByName(x Value, field_name string) Value {

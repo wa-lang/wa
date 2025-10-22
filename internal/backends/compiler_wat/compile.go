@@ -17,6 +17,7 @@ import (
 	"wa-lang.org/wa/internal/loader"
 	"wa-lang.org/wa/internal/logger"
 	"wa-lang.org/wa/internal/ssa"
+	"wa-lang.org/wa/internal/token"
 	wasrc "wa-lang.org/wa/waroot/src"
 )
 
@@ -93,7 +94,7 @@ func (p *Compiler) Compile(prog *loader.Program) (output string, err error) {
 		var f wir.Function
 		f.InternalName, f.ExternalName = "_main", "_main"
 		n, _ := wir.GetPkgMangleName(prog.SSAMainPkg.Pkg.Path())
-		n += ".main"
+		n += "." + token.K_main
 		if p.module.FindFunc(n) != nil {
 			f.Insts = append(f.Insts, wat.NewInstCall(n))
 		}

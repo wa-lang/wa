@@ -12,6 +12,7 @@ import (
 	"wa-lang.org/wa/internal/format"
 	"wa-lang.org/wa/internal/loader"
 	"wa-lang.org/wa/internal/logger"
+	"wa-lang.org/wa/internal/token"
 	"wa-lang.org/wa/internal/xlang"
 )
 
@@ -80,7 +81,12 @@ func BuildFile(cfg *config.Config, filename string, src interface{}) (mainFunc s
 		return "", nil, nil, err
 	}
 
-	mainFunc = prog.Manifest.MainPkg + ".main"
+	if prog.Manifest.W2Mode {
+		mainFunc = prog.Manifest.MainPkg + "." + token.K_主控
+	} else {
+		mainFunc = prog.Manifest.MainPkg + "." + token.K_main
+	}
+
 	watOut, err := compiler_wat.New().Compile(prog)
 	fset = prog.Fset.ToJson()
 	return mainFunc, []byte(watOut), fset, err

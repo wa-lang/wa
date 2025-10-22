@@ -29,11 +29,9 @@ func (p *printer) funcDecl_pkg(d *ast.FuncDecl) {
 			p.print(blank)
 		}
 	}
-	if d.Name.Name == token.K_main {
-		p.print(token.K_主控)
-	} else {
-		p.print(d.Name.Name)
-	}
+
+	p.print(d.Name.Name)
+
 	p.signature(d.Type)
 	p.funcBody(p.distanceFrom(d.Pos()), vtab, d.Body)
 }

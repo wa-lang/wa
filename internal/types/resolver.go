@@ -111,20 +111,6 @@ func (check *Checker) declarePkgObj(ident *ast.Ident, obj Object, d *declInfo) {
 	if check.isW2Mode() {
 		// spec: "A package-scope or file-scope identifier with name init
 		// may only be declared to be a function with this (func()) signature."
-		if ident.Name == "init" {
-			check.errorf(ident.Pos(), "cannot declare init - must be func")
-			return
-		}
-
-		// spec: "The main package must have package name main and declare
-		// a function main that takes no arguments and returns no value."
-		if ident.Name == "main" && check.pkg.name == "main" {
-			check.errorf(ident.Pos(), "cannot declare main - must be func")
-			return
-		}
-
-		// spec: "A package-scope or file-scope identifier with name init
-		// may only be declared to be a function with this (func()) signature."
 		if ident.Name == token.K_准备 {
 			check.errorf(ident.Pos(), "cannot declare init - must be func")
 			return
@@ -140,14 +126,14 @@ func (check *Checker) declarePkgObj(ident *ast.Ident, obj Object, d *declInfo) {
 
 		// spec: "A package-scope or file-scope identifier with name init
 		// may only be declared to be a function with this (func()) signature."
-		if ident.Name == "init" {
+		if ident.Name == token.K_init {
 			check.errorf(ident.Pos(), "cannot declare init - must be func")
 			return
 		}
 
 		// spec: "The main package must have package name main and declare
 		// a function main that takes no arguments and returns no value."
-		if ident.Name == "main" && check.pkg.name == "main" {
+		if ident.Name == token.K_main && check.pkg.name == token.K_main {
 			check.errorf(ident.Pos(), "cannot declare main - must be func")
 			return
 		}

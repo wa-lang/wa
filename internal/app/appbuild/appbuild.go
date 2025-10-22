@@ -15,6 +15,7 @@ import (
 	"wa-lang.org/wa/internal/backends/compiler_wat"
 	"wa-lang.org/wa/internal/config"
 	"wa-lang.org/wa/internal/loader"
+	"wa-lang.org/wa/internal/token"
 	"wa-lang.org/wa/internal/wat/watutil"
 	"wa-lang.org/wa/internal/wat/watutil/wat2c"
 	"wa-lang.org/wa/internal/wat/watutil/watstrip"
@@ -177,7 +178,11 @@ func BuildApp(opt *appbase.Option, input, outfile string) (mainFunc string, wasm
 		}
 
 		// OK
-		return "__main__.main", wasmBytes, prog.Fset.ToJson(), nil
+		if appbase.HasExt(input, ".wz") {
+			return token.K_pkg_main + "." + token.K_主控, wasmBytes, prog.Fset.ToJson(), nil
+		}
+
+		return token.K_pkg_main + "." + token.K_main, wasmBytes, prog.Fset.ToJson(), nil
 	}
 
 	// 构建目录
@@ -411,7 +416,12 @@ func BuildApp(opt *appbase.Option, input, outfile string) (mainFunc string, wasm
 		}
 
 		// 主函数
-		mainFunc := manifest.MainPkg + ".main"
+		var mainFunc string
+		if manifest.W2Mode {
+			mainFunc = manifest.MainPkg + "." + token.K_主控
+		} else {
+			mainFunc = manifest.MainPkg + "." + token.K_main
+		}
 
 		// OK
 		return mainFunc, wasmBytes, fsetBytes, nil
