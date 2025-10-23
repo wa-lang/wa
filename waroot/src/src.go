@@ -191,4 +191,8 @@ var stdPkgs = []string{
 
 var wzStdPkgs = []string{
 	"书",
+	"图像",     // image
+	"图像/颜色",  // image/color
+	"数学/随机数", // math/rand
+	"假死门/画布", // js/canvas
 }

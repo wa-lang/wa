@@ -649,6 +649,10 @@ func Context2D.Restore() {
 	jsRestore(this.GetHandle())
 }
 
+func Canvas.获取平面上下文() => (ctx: Context2D, succ: bool) {
+	return this.GetContext2D()
+}
+
 func Canvas.GetContext2D() => (ctx: Context2D, succ: bool) {
 	h := jsGetContext2D(this.GetHandle())
 	if h != 0 {

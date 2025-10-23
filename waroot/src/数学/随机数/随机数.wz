@@ -1,0 +1,12 @@
+注: Copyright (C) 2024 武汉凹语言科技有限公司
+注: SPDX-License-Identifier: MIT
+
+引入 "math/rand"
+
+函数·点火(火种: 长整型):
+	rand·Seed(火种)
+完毕
+
+函数·整数 => 整型:
+	返回 rand·Int()
+完毕

@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+
+<title>凹语言生命游戏</title>
+
+<div style="text-align: center;">
+  <canvas id="canvas" width="400" height="400"></canvas>
+  <div>R键:重置; 空格键:暂停</div>
+</div>
+
+<script type="module">
+  import { WaApp } from "./life.js";
+
+  let 生命游戏 = new WaApp();
+
+  window.onload = () => {
+    生命游戏.init().then((result) => {
+      生命游戏.主控();
+
+      let keyPausing = false;
+      let preTimeStamp = 1;
+
+      // 初始化
+      生命游戏.初始化(400, 400, preTimeStamp);
+
+      document.addEventListener('keyup', (event) => {
+        switch (event.key) {
+          case ' ':
+            keyPausing = !keyPausing;
+            生命游戏.进化暂停()
+            break;
+          case 'r':
+            生命游戏.初始化(400, 400, preTimeStamp);
+            break;
+        }
+      });
+
+      let stepAnima = function (timeStamp) {
+        生命游戏.进化迭代();
+        preTimeStamp = timeStamp;
+        window.requestAnimationFrame(stepAnima);
+      }
+      window.requestAnimationFrame(stepAnima);
+    })
+  };
+</script>

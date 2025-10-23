@@ -31,6 +31,7 @@ var (
 )
 
 var wzAliases = [...]*Basic{
+	{Bool, IsBoolean, token.K_布尔},
 	{Byte, IsInteger | IsUnsigned, token.K_字节},
 	{Rune, IsInteger, token.K_符文},
 

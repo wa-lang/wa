@@ -1,0 +1,3 @@
+/output/*.wasm
+/output/*.wat
+/output/*.fset
