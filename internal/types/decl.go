@@ -683,7 +683,7 @@ func (check *Checker) declStmt(decl ast.Decl) {
 				check.declare(check.scope, s.Name, obj, scopePos)
 				// mark and unmark type before calling typeDecl; its type is still nil (see Checker.objDecl)
 				obj.setColor(grey + color(check.push(obj)))
-				check.typeDecl(obj, s.Type, nil, false)
+				check.typeDecl(obj, s.Type, nil, s.Assign.IsValid())
 				check.pop().setColor(black)
 			default:
 				check.invalidAST(s.Pos(), "const, type, or var declaration expected")

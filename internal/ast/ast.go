@@ -795,6 +795,7 @@ type (
 		Doc      *CommentGroup // associated documentation; or nil
 		Name     *Ident        // type name
 		ColonPos token.Pos     // position of ":" operator (token.NoPos if there is no ":")
+		Assign   token.Pos     // 类型别名, 中文前端只有这一种声明用法
 		Type     Expr          // *Ident, *ParenExpr, *SelectorExpr, *StarExpr, or any of the *XxxTypes
 		Comment  *CommentGroup // line comments; or nil
 	}

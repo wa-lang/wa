@@ -140,7 +140,11 @@ func (p *printer) printFile(file *ast.File) error {
 				case *ast.InterfaceType:
 					p.declInterfaceType(s)
 				default:
-					panic("unreachable")
+					if s.Assign.IsValid() {
+						p.declTypeAssign(s)
+					} else {
+						panic("unreachable")
+					}
 				}
 
 			default:

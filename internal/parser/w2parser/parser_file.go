@@ -43,6 +43,8 @@ func (p *parser) parseFile() *ast.File {
 			// rest of package body
 			for p.tok != token.EOF {
 				switch p.tok {
+				case token.Zh_类型:
+					decls = append(decls, p.parseGenDecl_type(p.tok))
 				case token.Zh_常量:
 					decls = append(decls, p.parseGenDecl_const(p.tok))
 				case token.Zh_全局:
