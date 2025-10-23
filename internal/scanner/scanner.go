@@ -953,11 +953,11 @@ scanAgain:
 			// from s.skipWhitespace()
 			s.insertSemi = false // newline consumed
 			return pos, token.SEMICOLON, "\n"
-		case '"', '“', '”':
+		case '"', '“':
 			insertSemi = true
 			tok = token.STRING
 			lit = s.scanString()
-		case '\'', '‘', '’':
+		case '\'', '‘':
 			insertSemi = true
 			tok = token.CHAR
 			lit = s.scanRune()
@@ -975,6 +975,8 @@ scanAgain:
 				s.next() // consume last '.'
 				tok = token.ELLIPSIS
 			}
+		case '…':
+			tok = token.ELLIPSIS
 		case ',', '，':
 			tok = token.COMMA
 		case ';', '；':

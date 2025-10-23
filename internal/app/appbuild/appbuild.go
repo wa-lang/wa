@@ -222,6 +222,9 @@ func BuildApp(opt *appbase.Option, input, outfile string) (mainFunc string, wasm
 			os.Exit(1)
 		}
 
+		// 用返回的 prog 替代, 状态可能有更新(W2Mode)
+		manifest = prog.Manifest
+
 		if s := manifest.Pkg.Target; opt.Optimize || s == config.WaOS_wasm4 || s == config.WaOS_arduino {
 			watOutput, err = watstrip.WatStrip(input, watOutput)
 			if err != nil {

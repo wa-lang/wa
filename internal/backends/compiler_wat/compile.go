@@ -94,7 +94,11 @@ func (p *Compiler) Compile(prog *loader.Program) (output string, err error) {
 		var f wir.Function
 		f.InternalName, f.ExternalName = "_main", "_main"
 		n, _ := wir.GetPkgMangleName(prog.SSAMainPkg.Pkg.Path())
-		n += "." + token.K_main
+		if p.prog.Manifest.W2Mode {
+			n += "." + token.K_主控
+		} else {
+			n += "." + token.K_main
+		}
 		if p.module.FindFunc(n) != nil {
 			f.Insts = append(f.Insts, wat.NewInstCall(n))
 		}

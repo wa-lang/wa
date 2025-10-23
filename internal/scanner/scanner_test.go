@@ -738,7 +738,7 @@ var errors = []struct {
 }{
 	{"\a", token.ILLEGAL, 0, "", "illegal character U+0007"},
 	//{`#`, token.ILLEGAL, 0, "", "illegal character U+0023 '#'"},
-	{`…`, token.ILLEGAL, 0, "", "illegal character U+2026 '…'"},
+	//{`…`, token.ILLEGAL, 0, "", "illegal character U+2026 '…'"},
 	{"..", token.PERIOD, 0, "", ""}, // two periods, not invalid token (issue #28112)
 	{`' '`, token.CHAR, 0, `' '`, ""},
 	{`''`, token.CHAR, 0, `''`, "illegal rune literal"},

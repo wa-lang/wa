@@ -161,8 +161,8 @@ func ReadImportModuleName(wasmBytes []byte) (string, error) {
 	return "", nil
 }
 
-// 是否包含用户自定义的宿主函数
-func HasUnknownImportFunc(wasmBytes []byte) bool {
+// 是否包含 console 不支持的宿主函数
+func HasUnknownConsoleImportFunc(wasmBytes []byte) bool {
 	wazeroCtx := context.Background()
 	rt := wazero.NewRuntime(wazeroCtx)
 
