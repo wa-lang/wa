@@ -6,6 +6,9 @@ run:
 build:
 	go run ../../../../main.go build -wat2c-native .
 
+fmt:
+	go run ../../../../main.go fmt ./src/...
+
 test:
 	go run ../../../../main.go test .
 

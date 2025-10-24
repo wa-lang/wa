@@ -697,7 +697,7 @@ func (check *Checker) builtin(x *operand, call *ast.CallExpr, id builtinId) (_ b
 
 		// assert 语义变化:
 		// 变成 testing 环境使用的运行时函数
-		if strings.HasSuffix(filename, ".wa") {
+		if strings.HasSuffix(filename, ".wa") || strings.HasSuffix(filename, ".wz") {
 			// 放松检查, bool 变量放到运行时处理
 			if !isBoolean(x.typ) {
 				check.invalidArg(x.pos(), "%s is not a boolean type", x)

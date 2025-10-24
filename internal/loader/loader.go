@@ -372,28 +372,54 @@ func (p *_Loader) parseTestInfo(pkg *Package, filenames []string) (*TestInfo, er
 					}
 				}
 
-				switch {
-				case strings.HasPrefix(name, "Test"):
-					output, isPanic := p.parseExampleOutputComment(file, fn)
-					tInfo.Tests = append(tInfo.Tests, TestFuncInfo{
-						FuncPos:     obj.Pos(),
-						Name:        name,
-						Output:      output,
-						OutputPanic: isPanic,
-					})
-				case strings.HasPrefix(name, "Bench"):
-					tInfo.Benchs = append(tInfo.Benchs, TestFuncInfo{
-						FuncPos: obj.Pos(),
-						Name:    name,
-					})
-				case strings.HasPrefix(name, "Example"):
-					output, isPanic := p.parseExampleOutputComment(file, fn)
-					tInfo.Examples = append(tInfo.Examples, TestFuncInfo{
-						FuncPos:     obj.Pos(),
-						Name:        name,
-						Output:      output,
-						OutputPanic: isPanic,
-					})
+				if file.W2Mode {
+					switch {
+					case strings.HasPrefix(name, "测") && strings.HasSuffix(name, "功能"):
+						output, isPanic := p.parseExampleOutputComment(file, fn)
+						tInfo.Tests = append(tInfo.Tests, TestFuncInfo{
+							FuncPos:     obj.Pos(),
+							Name:        name,
+							Output:      output,
+							OutputPanic: isPanic,
+						})
+					case strings.HasPrefix(name, "测") && strings.HasSuffix(name, "性能"):
+						tInfo.Benchs = append(tInfo.Benchs, TestFuncInfo{
+							FuncPos: obj.Pos(),
+							Name:    name,
+						})
+					case strings.HasSuffix(name, "示例"):
+						output, isPanic := p.parseExampleOutputComment(file, fn)
+						tInfo.Examples = append(tInfo.Examples, TestFuncInfo{
+							FuncPos:     obj.Pos(),
+							Name:        name,
+							Output:      output,
+							OutputPanic: isPanic,
+						})
+					}
+				} else {
+					switch {
+					case strings.HasPrefix(name, "Test"):
+						output, isPanic := p.parseExampleOutputComment(file, fn)
+						tInfo.Tests = append(tInfo.Tests, TestFuncInfo{
+							FuncPos:     obj.Pos(),
+							Name:        name,
+							Output:      output,
+							OutputPanic: isPanic,
+						})
+					case strings.HasPrefix(name, "Bench"):
+						tInfo.Benchs = append(tInfo.Benchs, TestFuncInfo{
+							FuncPos: obj.Pos(),
+							Name:    name,
+						})
+					case strings.HasPrefix(name, "Example"):
+						output, isPanic := p.parseExampleOutputComment(file, fn)
+						tInfo.Examples = append(tInfo.Examples, TestFuncInfo{
+							FuncPos:     obj.Pos(),
+							Name:        name,
+							Output:      output,
+							OutputPanic: isPanic,
+						})
+					}
 				}
 			}
 		}
@@ -412,6 +438,43 @@ func (p *_Loader) parseExampleOutputComment(f *ast.File, fn *ast.FuncDecl) (outp
 		}
 
 		for j, comment := range commentGroup.List {
+			if f.W2Mode {
+				switch comment.Text {
+				case "注: 输出:":
+					var lineTexts []string
+					for _, x := range commentGroup.List[j+1:] {
+						if !strings.HasPrefix(x.Text, token.K_注+":") {
+							break
+						}
+						text := strings.TrimPrefix(x.Text, token.K_注+":")
+						lineTexts = append(lineTexts, strings.TrimSpace(text))
+					}
+
+					linesText := strings.Join(lineTexts, "\n")
+					if linesText == "" {
+						linesText = "?"
+					}
+
+					return linesText, false
+
+				case "注: 输出(异常):":
+					var lineTexts []string
+					for _, x := range commentGroup.List[j+1:] {
+						if !strings.HasPrefix(x.Text, "//") {
+							break
+						}
+						lineTexts = append(lineTexts, strings.TrimSpace(x.Text[2:]))
+					}
+
+					linesText := strings.Join(lineTexts, "\n")
+					if linesText == "" {
+						linesText = "?"
+					}
+
+					return linesText, true
+				}
+			}
+
 			switch comment.Text {
 			case "// Output:":
 				var lineTexts []string
@@ -422,7 +485,12 @@ func (p *_Loader) parseExampleOutputComment(f *ast.File, fn *ast.FuncDecl) (outp
 					lineTexts = append(lineTexts, strings.TrimSpace(x.Text[2:]))
 				}
 
-				return strings.Join(lineTexts, "\n"), false
+				linesText := strings.Join(lineTexts, "\n")
+				if linesText == "" {
+					linesText = "?"
+				}
+
+				return linesText, false
 
 			case "// Output(panic):":
 				var lineTexts []string
@@ -433,7 +501,12 @@ func (p *_Loader) parseExampleOutputComment(f *ast.File, fn *ast.FuncDecl) (outp
 					lineTexts = append(lineTexts, strings.TrimSpace(x.Text[2:]))
 				}
 
-				return strings.Join(lineTexts, "\n"), true
+				linesText := strings.Join(lineTexts, "\n")
+				if linesText == "" {
+					linesText = "?"
+				}
+
+				return linesText, true
 			}
 		}
 	}
