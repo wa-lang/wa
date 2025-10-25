@@ -1,0 +1,15 @@
+注: Copyright (C) 2025 武汉凹语言科技有限公司
+注: SPDX-License-Identifier: MIT
+
+引入 "image"
+
+类型·灰色图像 = image·Gray
+类型·彩色图像 = image·RGBA
+
+函数·新建灰色图像(宽, 高: 整型) => *灰色图像:
+	返回 image·NewGray(宽, 高)
+完毕
+
+函数·新建彩色图像(宽, 高: 整型) => *彩色图像:
+	返回 image·NewRGBA(宽, 高)
+完毕

@@ -15,6 +15,10 @@ type MyInt :struct {
 	V: int
 }
 
+func NewMyInt(x: int) => MyInt {
+	return MyInt{V: x}
+}
+
 #wa:generic AddF64
 func MyInt.Add(a: int) {
 	this.V += a

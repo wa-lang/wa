@@ -34,3 +34,7 @@ func RGBA.RGBAAt(x, y: int) => color.RGBA {
 func RGBA.SetRGBA(x, y: int, c: color.RGBA) {
 	this.Pix[y*this.Width+x] = c
 }
+
+func RGBA.设置彩色(x, y: int, c: color.RGBA) {
+	this.Pix[y*this.Width+x] = c
+}

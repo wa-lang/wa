@@ -190,7 +190,8 @@ var stdPkgs = []string{
 }
 
 var wzStdPkgs = []string{
-	"书",
+	"菠萝",     // apple
+	"书",      // fmt
 	"图像",     // image
 	"图像/颜色",  // image/color
 	"数学/随机数", // math/rand

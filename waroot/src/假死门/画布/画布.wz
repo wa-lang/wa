@@ -3,6 +3,10 @@
 
 引入 "js/canvas"
 
-函数·查询画布(代号: 字串) => (canvas·Canvas, 布尔):
+类型·画布 = canvas·Canvas
+
+类型·平面上下文 = canvas·Context2D
+
+函数·查询画布(代号: 字串) => (画布, 布尔):
 	返回 canvas·QueryCanvas(代号)
 完毕

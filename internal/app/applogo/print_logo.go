@@ -13,9 +13,12 @@ func PrintLogoSvg() {
 }
 
 func PrintLogo(more bool) {
-	if is1024Day() {
+	switch {
+	case is1010Day():
+		fmt.Print(logo1010)
+	case is1024Day():
 		fmt.Print(logo1024)
-	} else {
+	default:
 		fmt.Print(logo)
 	}
 
@@ -23,6 +26,11 @@ func PrintLogo(more bool) {
 		fmt.Print(moreLogos)
 	}
 	fmt.Println()
+}
+
+func is1010Day() bool {
+	_, month, day := time.Now().Date()
+	return month == 10 && day == 10
 }
 
 func is1024Day() bool {
@@ -36,6 +44,16 @@ const logo = `
 |   +----+   |
 |            |
 |     Wa     |
+|            |
++------------+
+`
+
+const logo1010 = `
++---+    +---+
+| o |    | o |
+|   +----+   |
+|            |
+|    1010    |
 |            |
 +------------+
 `

@@ -611,6 +611,10 @@ func Context2D.PutImageData(imagedata: []u8, dx, dy: f32, dirtyX, dirtyY, dirtyW
 	jsPutImageData(this.GetHandle(), imagedata, dx, dy, dirtyX, dirtyY, dirtyWidth, dirtyHeight)
 }
 
+func Context2D.装填图像数据(imagedata: []u8, dx, dy: f32, dirtyX, dirtyY, dirtyWidth, dirtyHeight: f32) {
+	jsPutImageData(this.GetHandle(), imagedata, dx, dy, dirtyX, dirtyY, dirtyWidth, dirtyHeight)
+}
+
 /*****************************************
 *                                        *
 *                Synthesis               *

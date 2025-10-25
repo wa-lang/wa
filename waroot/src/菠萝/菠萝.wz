@@ -1,0 +1,10 @@
+注: Copyright (C) 2025 武汉凹语言科技有限公司
+注: SPDX-License-Identifier: MIT
+
+引入 "apple"
+
+类型·我的整型 = apple·MyInt
+
+函数·创建我的整型(某: 整型) => 我的整型:
+	返回 apple·NewMyInt(某)
+完毕
