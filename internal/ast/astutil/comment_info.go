@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"wa-lang.org/wa/internal/ast"
+	"wa-lang.org/wa/internal/token"
 )
 
 // 注释中的指令
@@ -53,44 +54,55 @@ func ParseCommentInfo(docList ...*ast.CommentGroup) (info CommentInfo) {
 			return
 		}
 		for _, comment := range doc.List {
-			if !strContainPrefix(comment.Text, "#wa:", "//wa:") {
+			if !strContainPrefix(comment.Text, token.K_X_wa, token.K_X_wz) {
 				continue
 			}
 			parts := strings.Fields(comment.Text)
 			switch parts[0] {
-			case "#wa:build", "//wa:build":
+			case token.K_X_wa_build, token.K_X_wz_build:
 				if len(parts) >= 2 {
-					info.BuildIgnore = parts[1] == "ignore"
+					switch parts[0] {
+					case token.K_X_wa_build:
+						if s := parts[1]; s == token.K_X_wa_build_arg_ignore {
+							info.BuildIgnore = true
+						}
+					case token.K_X_wz_build:
+						if s := parts[1]; s == token.K_X_wz_build_arg_ignore {
+							info.BuildIgnore = true
+						}
+					default:
+						panic("unreachable")
+					}
 				}
 				info.BuildTags = parts[1:]
-			case "#wa:linkname", "//wa:linkname":
+			case token.K_X_wa_linkname, token.K_X_wz_linkname:
 				if len(parts) >= 2 {
 					info.LinkName = strings.Join(parts[1:], " ")
 				}
-			case "#wa:export", "//wa:export":
+			case token.K_X_wa_export, token.K_X_wz_export:
 				if len(parts) >= 2 {
 					info.ExportName = parts[1]
 				}
-			case "#wa:import", "//wa:import":
+			case token.K_X_wa_import, token.K_X_wz_import:
 				if len(parts) >= 3 {
 					info.ImportName[0] = parts[1]
 					info.ImportName[1] = parts[2]
 				}
-			case "#wa:force_register", "//wa:force_register":
+			case token.K_X_wa_force_register, token.K_X_wz_force_register:
 				info.ForceRegister = true
-			case "#wa:runtime_getter", "//wa:runtime_getter":
+			case token.K_X_wa_runtime_getter, token.K_X_wz_runtime_getter:
 				info.RuntimeGetter = true
-			case "#wa:runtime_setter", "//wa:runtime_setter":
+			case token.K_X_wa_runtime_setter, token.K_X_wz_runtime_setter:
 				info.RuntimeSetter = true
-			case "#wa:runtime_sizer":
+			case token.K_X_wa_runtime_sizer, token.K_X_wz_runtime_sizer:
 				info.RuntimeSizer = true
 
-			case "#wa:generic":
+			case token.K_X_wa_generic, token.K_X_wz_generic:
 				info.Generic = append(info.Generic, parts[1:]...)
-			case "#wa:operator":
+			case token.K_X_wa_operator, token.K_X_wz_operator:
 				info.Operator = append(info.Operator, parts[1:])
 
-			case "#wa:embed":
+			case token.K_X_wa_embed, token.K_X_wz_embed:
 				if len(parts) >= 2 {
 					info.Embed = parts[1]
 				}

@@ -10,6 +10,24 @@ const (
 )
 
 const (
+	K_X_wa       = "#wa:"
+	K_X_wa_build = "#wa:build"
+
+	K_X_wa_linkname       = "#wa:linkname"
+	K_X_wa_export         = "#wa:export"
+	K_X_wa_import         = "#wa:import"
+	K_X_wa_force_register = "#wa:force_register"
+	K_X_wa_runtime_getter = "#wa:runtime_getter"
+	K_X_wa_runtime_setter = "#wa:runtime_setter"
+	K_X_wa_runtime_sizer  = "#wa:runtime_sizer"
+	K_X_wa_generic        = "#wa:generic"
+	K_X_wa_operator       = "#wa:operator"
+	K_X_wa_embed          = "#wa:embed"
+
+	K_X_wa_build_arg_ignore = "ignore"
+)
+
+const (
 	K_break    = "break"
 	K_case     = "case"
 	K_const    = "const"

@@ -16,14 +16,14 @@ const (
 
 global ui: *UI = nil
 
-//wa:export start
+#wa:export start
 func Start {
 	seed := u32(478194671)
 
 	ui = NewUI(game.New(seed), palettes.IceCreamGB)
 }
 
-//wa:export update
+#wa:export update
 func Update {
 	ui.frame++
 	ui.show()

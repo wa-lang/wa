@@ -11,6 +11,24 @@ const (
 )
 
 const (
+	K_X_wz       = "#凹:"
+	K_X_wz_build = "#凹:构建"
+
+	K_X_wz_linkname       = "#凹:连接名"
+	K_X_wz_export         = "#凹:导出"
+	K_X_wz_import         = "#凹:引入"
+	K_X_wz_force_register = "#凹:强制寄存器"
+	K_X_wz_runtime_getter = "#凹:运行时获取器"
+	K_X_wz_runtime_setter = "#凹:运行时设置器"
+	K_X_wz_runtime_sizer  = "#凹:运行时度量"
+	K_X_wz_generic        = "#凹:泛型"
+	K_X_wz_operator       = "#凹:运算符"
+	K_X_wz_embed          = "#凹:嵌入"
+
+	K_X_wz_build_arg_ignore = "忽略"
+)
+
+const (
 	K_引入 = "引入" // import
 
 	K_常量 = "常量" // const
