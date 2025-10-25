@@ -108,6 +108,9 @@ func (tLib *typeLib) compile(from types.Type) wir.ValueType {
 		case types.String:
 			newType = tLib.module.STRING
 
+		case types.UnsafePointer:
+			newType = tLib.module.UPTR
+
 		default:
 			logger.Fatalf("Unknown type:%s", t)
 			return nil
