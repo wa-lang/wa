@@ -1,0 +1,232 @@
+注: 版权 @2025 W4-snake-wz 作者。保留所有权利。
+
+引入 "math/rand"
+引入 "syscall/wasm4"
+
+// The length of a side of one snake segment, in pixels.
+常量·size = 8
+
+常量:
+	Transparent = 0
+	Light       = 1
+	Primary     = 2
+	Secondary   = 3
+	Dark        = 4
+完毕
+
+全局:
+	snake = Snake{}
+
+	// The 全局 counter of frames. Used to skip some because wasm-4 has 60 FPS
+	// but that's too fast.
+	frameCount = 0
+
+	// The fruit position. Place the first one in the center of the screen.
+	fruit = Point{X: 80, Y: 80}
+
+	// The raw binary content of a sprite for the fruit.
+	// A nicer solution would be to use go:embed but it doesn't work with wasm target.
+	fruitSprite = []字节{0x00, 0xa0, 0x02, 0x00, 0x0e, 0xf0, 0x36, 0x5c, 0xd6, 0x57, 0xd5, 0x57, 0x35, 0x5c, 0x0f, 0xf0}
+
+	// Randomization function for placing the fruit.
+	// We can't use a 全局 random instance because there is no way to make a 全局
+	// random seed in pure wasm.
+	randInt = rand·New(rand·NewSource(1))·Intn
+完毕
+
+// Update the snake direction based on the buttons pressed on the gamepad.
+函数·input():
+	gamePad := wasm4·GetGamePad1()
+
+	如果 gamePad&wasm4·BUTTON_1 != 0:
+		snake·Stoped = 真
+	完毕
+	如果 gamePad&wasm4·BUTTON_2 != 0:
+		snake·Stoped = 假
+	完毕
+
+	如果 gamePad&wasm4·BUTTON_UP != 0:
+		snake·Up()
+	完毕
+	如果 gamePad&wasm4·BUTTON_DOWN != 0:
+		snake·Down()
+	完毕
+	如果 gamePad&wasm4·BUTTON_LEFT != 0:
+		snake·Left()
+	完毕
+	如果 gamePad&wasm4·BUTTON_RIGHT != 0:
+		snake·Right()
+	完毕
+完毕
+
+#凹:导出 start
+函数·start:
+	// https://wasm4.org/docs/tutorials/snake/setting-color-palette
+	wasm4·SetPalette(
+		(0xfb<<16)|(0xf7<<8)|(0xf3), // R: 0xfb, G: 0xf7, B: 0xf3
+		(0xe5<<16)|(0xb0<<8)|(0x83), // R: 0xe5, G: 0xb0, B: 0x83
+		(0x42<<16)|(0x6e<<8)|(0x5d), // R: 0x42, G: 0x6e, B: 0x5d
+		(0x20<<16)|(0x28<<8)|(0x3d), // R: 0x20, G: 0x28, B: 0x3d
+	)
+	snake·Reset()
+完毕
+
+#凹:导出 update
+函数·update:
+	input()
+	frameCount++
+	// Skip every 10th frame so that the snake doesn't move too fast
+	如果 frameCount%10 == 0:
+		snake·Update()
+		// If snake eats itself, reset it to the initial state.
+		如果 snake·IsDead():
+			snake·Reset()
+		完毕
+		// If the snake's head is on the tile with the fruit,
+		// increase the snake's length and update the fruit's position.
+		如果 snake·Body[0] == fruit:
+			snake·Body = 追加(snake·Body, snake·Body[长度(snake·Body)-1])
+			fruit·X = 微正整(randInt(20) * size)
+			fruit·Y = 微正整(randInt(20) * size)
+			sfxEat·play()
+		完毕
+	完毕
+	snake·Draw()
+
+	// Draw the fruit.
+	wasm4·SetDrawColors(Light, Primary, Secondary, Dark)
+	wasm4·Blit(fruitSprite, 普整型(fruit·X), 普整型(fruit·Y), size, size, wasm4·BLIT_2BPP)
+完毕
+
+结构·Point:
+	X: 微正整
+	Y: 微正整
+完毕
+
+结构·Direction:
+	X: 整型
+	Y: 整型
+完毕
+
+结构·Snake:
+	Body:      []Point
+	Direction: Direction
+	Stoped:    布尔
+完毕
+
+// Place the snake at the start with 3-segment length and moving to the right.
+函数·Snake·Reset:
+	我的·Body = []Point{
+		{X: size * 2, Y: 0},
+		{X: size, Y: 0},
+		{X: 0, Y: 0},
+	}
+	我的·Direction = Direction{X: size, Y: 0}
+完毕
+
+// Draw the snake's body
+函数·Snake·Draw:
+	// Draw green rectangles with blue outline for body segments.
+	wasm4·SetDrawColors(Secondary, Dark, Secondary, Dark)
+
+	循环 _, part := 迭代 我的·Body:
+		wasm4·Rect(普整型(part·X), 普整型(part·Y), size, size)
+	完毕
+
+	// Draw blue rectangle for the head.
+	wasm4·SetDrawColors(Dark, Transparent, Secondary, Dark)
+	head := 我的·Body[0]
+	wasm4·Rect(普整型(head·X), 普整型(head·Y), size, size)
+完毕
+
+函数·Snake·Update:
+	如果 我的·Stoped:
+		返回
+	完毕
+
+	// Shift the snake's segments
+	循环 i := 长度(我的·Body) - 1; i > 0; i--:
+		我的·Body[i] = 我的·Body[i-1]
+	完毕
+
+	// Shift the snake's head in the movement direction,
+	// wrapping it around the screen 如果 necessary.
+	我的·Body[0]·X = 微正整((整型(我的·Body[0]·X) + 我的·Direction·X) % 160)
+	我的·Body[0]·Y = 微正整((整型(我的·Body[0]·Y) + 我的·Direction·Y) % 160)
+	// It is more than 160 如果 the integer overflows.
+	如果 我的·Body[0]·X > 160:
+		我的·Body[0]·X = 160 - size
+	完毕
+	如果 我的·Body[0]·Y > 160:
+		我的·Body[0]·Y = 160 - size
+	完毕
+完毕
+
+函数·Snake·Up:
+	如果 我的·Stoped:
+		返回
+	完毕
+	如果 我的·Direction·Y == 0:
+		我的·Direction·X, 我的·Direction·Y = 0, -size
+	完毕
+完毕
+
+函数·Snake·Down:
+	如果 我的·Stoped:
+		返回
+	完毕
+	如果 我的·Direction·Y == 0:
+		我的·Direction·X, 我的·Direction·Y = 0, size
+	完毕
+完毕
+
+函数·Snake·Left:
+	如果 我的·Stoped:
+		返回
+	完毕
+	如果 我的·Direction·X == 0:
+		我的·Direction·X, 我的·Direction·Y = -size, 0
+	完毕
+完毕
+
+函数·Snake·Right:
+	如果 我的·Stoped:
+		返回
+	完毕
+	如果 我的·Direction·X == 0:
+		我的·Direction·X, 我的·Direction·Y = size, 0
+	完毕
+完毕
+
+// Check 如果 the snake's head is on the same position as one of its segments.
+函数·Snake·IsDead => 布尔:
+	循环 index := 1; index < 长度(我的·Body); index++:
+		如果 我的·Body[0] == 我的·Body[index]:
+			返回 真
+		完毕
+	完毕
+	返回 假
+完毕
+
+结构·Sound:
+	freq1:   正整
+	freq2:   正整
+	attack:  正整
+	decay:   正整
+	sustain: 正整
+	release: 正整
+	volume:  正整
+	channel: 正整
+	mode:    正整
+完毕
+
+函数·Sound·play:
+	s := 我的
+	freq := s·freq1 | s·freq2<<16
+	duration := s·attack<<24 | s·decay<<16 | s·sustain | s·release<<8
+	flags := s·channel | s·mode<<2
+
+	wasm4·Tone(整型(freq), 整型(duration), 整型(s·volume), 整型(flags))
+完毕
+
+全局·sfxEat = Sound{140, 20, 4, 10, 0, 0, 0, 0, 2}

@@ -45,6 +45,7 @@ var wzAliases = [...]*Basic{
 	{Uint16, IsInteger | IsUnsigned, token.K_短正整},
 	{Uint32, IsInteger | IsUnsigned, token.K_普正整},
 	{Uint64, IsInteger | IsUnsigned, token.K_长正整},
+	{Uint, IsInteger | IsUnsigned, token.K_正整},
 
 	{Float32, IsFloat, token.K_单精},
 	{Float64, IsFloat, token.K_双精},
