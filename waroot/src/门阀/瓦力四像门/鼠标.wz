@@ -1,0 +1,29 @@
+注: Copyright (C) 2024 武汉凹语言科技有限公司
+注: SPDX-License-Identifier: MIT
+
+引入 "syscall/wasm4"
+
+常量:
+	按键1 = wasm4·BUTTON_1
+	按键2 = wasm4·BUTTON_2
+	左键  = wasm4·BUTTON_1
+	右键  = wasm4·BUTTON_RIGHT
+	按键起 = wasm4·BUTTON_UP
+	按键落 = wasm4·BUTTON_DOWN
+
+	鼠标左键 = wasm4·MOUSE_LEFT
+	鼠标右键 = wasm4·MOUSE_RIGHT
+	鼠标中键 = wasm4·MOUSE_MIDDLE
+完毕
+
+函数·读取鼠标X坐标 => 整型:
+	返回 wasm4·GetMouseX()
+完毕
+
+函数·读取鼠标Y坐标 => 整型:
+	返回 wasm4·GetMouseY()
+完毕
+
+函数·读取鼠标按键 => 字节:
+	返回 wasm4·GetMouseButtons()
+完毕

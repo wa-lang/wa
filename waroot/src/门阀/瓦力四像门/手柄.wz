@@ -1,0 +1,20 @@
+注: Copyright (C) 2024 武汉凹语言科技有限公司
+注: SPDX-License-Identifier: MIT
+
+引入 "syscall/wasm4"
+
+函数·读取控制键1 => 微正整:
+	返回 wasm4·GetGamePad1()
+完毕
+
+函数·读取控制键2 => 微正整:
+	返回 wasm4·GetGamePad2()
+完毕
+
+函数·读取控制键3 => 微正整:
+	返回 wasm4·GetGamePad3()
+完毕
+
+函数·读取控制键4 => 微正整:
+	返回 wasm4·GetGamePad4()
+完毕

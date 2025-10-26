@@ -1,0 +1,48 @@
+注: Copyright (C) 2024 武汉凹语言科技有限公司
+注: SPDX-License-Identifier: MIT
+
+引入 "syscall/wasm4"
+
+函数·读调色板 => (普正整, 普正整, 普正整, 普正整):
+	返回 wasm4·GetPalette()
+完毕
+
+函数·写调试板(a0, a1, a2, a3: 普正整):
+	wasm4·SetPalette(a0, a1, a2, a3)
+完毕
+
+函数·写调试板0(a: 整型):
+	wasm4·SetPalette0(a)
+完毕
+
+函数·写调试板1(a: 整型):
+	wasm4·SetPalette1(a)
+完毕
+
+函数·写调试板2(a: 整型):
+	wasm4·SetPalette2(a)
+完毕
+
+函数·写调试板3(a: 整型):
+	wasm4·SetPalette3(3)
+完毕
+
+函数·读绘图颜色 => (a, b, c, d: 微正整):
+	返回 wasm4·GetDrawColors()
+完毕
+
+函数·读绘图颜色短正整格式 => 短正整:
+	返回 wasm4·GetDrawColorsU16()
+完毕
+
+函数·设置绘图颜色(甲, 乙, 丙, 丁: 微正整):
+	wasm4·SetDrawColors(甲, 乙, 丙, 丁)
+完毕
+
+函数·设置绘图颜色索引格式(idx: 整型, v: 微正整):
+	wasm4·SetDrawColorsByIndex(idx, v)
+完毕
+
+函数·设置绘图颜色短正整格式(x: 短正整):
+	wasm4·SetDrawColorsU16(x)
+完毕

@@ -1,0 +1,12 @@
+注: Copyright (C) 2024 武汉凹语言科技有限公司
+注: SPDX-License-Identifier: MIT
+
+引入 "syscall/wasm4"
+
+函数·绘制文本(文: 字串, 甲, 乙: 普整型):
+	wasm4·Text(文, 甲, 乙)
+完毕
+
+函数·打印调试信息(文: 字串):
+	wasm4·Trace(文)
+完毕

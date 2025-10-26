@@ -1,0 +1,12 @@
+注: Copyright (C) 2024 武汉凹语言科技有限公司
+注: SPDX-License-Identifier: MIT
+
+引入 "syscall/wasm4"
+
+函数·读磁盘数据(data: []字节) => 整型:
+	返回 wasm4·DiskR(data)
+完毕
+
+函数·写磁盘数据(data: []字节) => 整型:
+	返回 wasm4·DiskW(data)
+完毕

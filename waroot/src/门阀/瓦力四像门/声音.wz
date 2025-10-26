@@ -1,0 +1,22 @@
+注: Copyright (C) 2024 武汉凹语言科技有限公司
+注: SPDX-License-Identifier: MIT
+
+引入 "syscall/wasm4"
+
+常量:
+	TONE_PULSE1    = wasm4·TONE_PULSE1
+	TONE_PULSE2    = wasm4·TONE_PULSE2
+	TONE_TRIANGLE  = wasm4·TONE_TRIANGLE
+	TONE_NOISE     = wasm4·TONE_NOISE
+	TONE_MODE1     = wasm4·TONE_MODE1
+	TONE_MODE2     = wasm4·TONE_MODE2
+	TONE_MODE3     = wasm4·TONE_MODE3
+	TONE_MODE4     = wasm4·TONE_MODE4
+	TONE_PAN_LEFT  = wasm4·TONE_PAN_LEFT
+	TONE_PAN_RIGHT = wasm4·TONE_PAN_RIGHT
+	TONE_NOTE_MODE = wasm4·TONE_NOTE_MODE
+完毕
+
+函数·播放声音(frequency, duration, volume, flags: 整型):
+	wasm4·Tone(frequency, duration, volume, flags)
+完毕

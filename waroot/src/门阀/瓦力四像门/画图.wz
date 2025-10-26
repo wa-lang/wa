@@ -1,0 +1,26 @@
+注: Copyright (C) 2024 武汉凹语言科技有限公司
+注: SPDX-License-Identifier: MIT
+
+引入 "syscall/wasm4"
+
+常量·屏幕大小 = wasm4·SCREEN_SIZE
+
+函数·画线段(x1, y1, x2, y2: 整型):
+	wasm4·Line(x1, y1, x2, y2)
+完毕
+
+函数·画水平的线段(x, y, len: 整型):
+	wasm4·HLine(x, y, len)
+完毕
+
+函数·画竖直的线段(x, y, len: 整型):
+	wasm4·VLine(x, y, len)
+完毕
+
+函数·画椭圆或圆(x, y, width, height: 整型):
+	wasm4·Oval(x, y, width, height)
+完毕
+
+函数·画矩形(x, y, width, height: 整型):
+	wasm4·Rect(x, y, width, height)
+完毕
