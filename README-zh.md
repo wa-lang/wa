@@ -43,6 +43,8 @@
 ## WASM4游戏
 
 - Wasm4/Snake: https://wa-lang.org/wa/w4-snake/
+  - 贪吃蛇源码 (英文): https://gitcode.com/wa-lang/wa/tree/master/waroot/examples/w4-snake/
+  - 贪吃蛇源码 (中文): https://gitcode.com/wa-lang/wa/tree/master/waroot/examples/w4-snake-wz/
 - Wasm4/2048: https://wa-lang.org/wa/w4-2048/
 
 ![](docs/images/wasm4-game-snake-2048.png)

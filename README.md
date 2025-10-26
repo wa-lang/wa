@@ -50,6 +50,8 @@ The project is still in the prototype stage. If you have co-construction or PR n
 ## WASM4 Game
 
 - Wasm4/Snake: https://wa-lang.org/wa/w4-snake/
+  - Source Code (English): https://github.com/wa-lang/wa/tree/master/waroot/examples/w4-snake/
+  - Source Code (Chinese): https://github.com/wa-lang/wa/tree/master/waroot/examples/w4-snake-wz/
 - Wasm4/2048: https://wa-lang.org/wa/w4-2048/
 
 ![](docs/images/wasm4-game-snake-2048.png)
