@@ -1,2 +1,57 @@
 注: Copyright (C) 2025 武汉凹语言科技有限公司
 注: SPDX-License-Identifier: MIT
+
+引入 "syscall/arduino"
+
+全局:
+	低电平 = arduino·LOW
+	高电平 = arduino·HIGH
+
+	输入模式   = arduino·INPUT
+	输出模式   = arduino·OUTPUT
+	输入上拉模式 = arduino·INPUT_PULLUP
+完毕
+
+函数·毫秒数() => 普整型:
+	返回 arduino·Millis()
+完毕
+
+函数·延迟毫秒数(ms: 普整型):
+	arduino·Delay(ms)
+完毕
+
+函数·延迟微秒数(us: 普整型):
+	arduino·DelayMicroseconds(us)
+完毕
+
+函数·引脚模式(pin, mode: 普整型):
+	arduino·PinMode(pin, mode)
+完毕
+
+函数·数字模式读(pin: 普整型) => 普整型:
+	返回 arduino·DigitalRead(pin)
+完毕
+
+函数·数字模式写(pin, value: 普整型):
+	arduino·DigitalWrite(pin, value)
+完毕
+
+函数·模拟模式读(pin: 普整型) => 普整型:
+	返回 arduino·AnalogRead(pin)
+完毕
+
+函数·模拟模式写(pin, value: 普整型):
+	arduino·AnalogWrite(pin, value)
+完毕
+
+函数·获取LED灯引脚() => 普整型:
+	返回 arduino·GetPinLED()
+完毕
+
+函数·打印不换行(s: 字串):
+	arduino·Print(s)
+完毕
+
+函数·打印(s: 字串):
+	arduino·Println(s)
+完毕
