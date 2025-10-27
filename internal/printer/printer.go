@@ -10,10 +10,10 @@ import (
 	"io"
 	"os"
 	"strings"
-	"text/tabwriter"
 	"unicode"
 
 	"wa-lang.org/wa/internal/ast"
+	"wa-lang.org/wa/internal/printer/tabwriter"
 	"wa-lang.org/wa/internal/token"
 )
 

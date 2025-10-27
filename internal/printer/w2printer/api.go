@@ -5,9 +5,9 @@ package w2printer
 
 import (
 	"io"
-	"text/tabwriter"
 
 	"wa-lang.org/wa/internal/ast"
+	"wa-lang.org/wa/internal/printer/tabwriter"
 	"wa-lang.org/wa/internal/token"
 )
 
