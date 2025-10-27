@@ -1,0 +1,4 @@
+/output/*.fset
+/output/*.js
+/output/*.wasm
+/output/*.wat

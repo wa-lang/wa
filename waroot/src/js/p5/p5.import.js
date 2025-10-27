@@ -12,7 +12,7 @@ p5js: new function() {
         this._inited = true;
 
         // 有 main 函数则不生成框架代码
-        if(theApp.main) { return; }
+        if(theApp.main || theApp.主控) { return; }
 
         // 生成空的 main 函数
         theApp.main = () => {}
@@ -127,7 +127,16 @@ p5js: new function() {
         }
 
         // 帧函数
-        if(theApp.Draw) {
+        if(theApp.画画 && typeof theApp.画画 === 'function') {
+            let stepAnima = function (timeStamp) {
+                theApp.p5js_onDraw_before(timeStamp/1000.0);
+                theApp.画画();
+                theApp.p5js_onDraw_after();
+
+                window.requestAnimationFrame(stepAnima);
+            }
+            window.requestAnimationFrame(stepAnima);
+        } else if(theApp.Draw && typeof theApp.Draw === 'function') {
             let stepAnima = function (timeStamp) {
                 theApp.p5js_onDraw_before(timeStamp/1000.0);
                 theApp.Draw();

@@ -1,0 +1,23 @@
+注: Copyright (C) 2025 武汉凹语言科技有限公司
+注: SPDX-License-Identifier: MIT
+
+引入 "js/p5"
+
+注: 临时处理为函数
+
+结构·点:
+	X: 整型
+	Y: 整型
+完毕
+
+函数·画笔落下 => 布尔:
+	返回 p5·MouseIsPressed
+完毕
+
+函数·画笔刚才位置 => 点:
+	返回 点{X: p5·PMouseX, Y: p5·PMouseY}
+完毕
+
+函数·画笔现在位置 => 点:
+	返回 点{X: p5·MouseX, Y: p5·MouseY}
+完毕

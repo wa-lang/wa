@@ -57,7 +57,7 @@ func CreateCanvasSquare(wh: int) {
 }
 
 // 设置画布背景
-#wa:generic BackgroundColor BackgroundRGBA
+#wa:generic BackgroundGray BackgroundRGBA
 func Background(red, green, blue: int) {
 	p5BackgroundColor = color.RGBAFrom(
 		u8(red), u8(green), u8(blue),
@@ -72,7 +72,7 @@ func Background(red, green, blue: int) {
 }
 
 // 设置画布背景, 小于256时用灰度
-func BackgroundColor(v: color.Gray) {
+func BackgroundGray(v: color.Gray) {
 	p5BackgroundColor = color.RGBAFrom(
 		u8(v), u8(v), u8(v),
 		0xff,

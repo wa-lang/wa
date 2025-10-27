@@ -1,0 +1,48 @@
+注: Copyright (C) 2025 武汉凹语言科技有限公司
+注: SPDX-License-Identifier: MIT
+
+引入 "js/p5"
+引入 "image/color"
+
+#凹:泛型 准备正方形画纸
+函数·准备画纸(宽, 高: 整型):
+	p5·CreateCanvas(宽, 高)
+完毕
+
+函数·准备正方形画纸(宽高: 整型):
+	p5·CreateCanvasSquare(宽高)
+完毕
+
+#凹:泛型 涂背景色为灰色 涂背景色为彩色
+函数·涂背景色(红, 绿, 蓝: 整型):
+	p5·Background(红, 绿, 蓝)
+完毕
+
+函数·涂背景色为灰色(v: color·Gray):
+	p5·BackgroundGray(v)
+完毕
+
+函数·涂背景色为彩色(v: color·RGBA):
+	p5·BackgroundRGBA(v)
+完毕
+
+#凹:泛型 设置画笔为灰色 设置画笔为彩色
+函数·设置画笔颜色(红, 绿, 蓝: 整型):
+	p5·Stroke(红, 绿, 蓝)
+完毕
+
+函数·设置画笔为灰色(v: color·Gray):
+	p5·StrokeColor(v)
+完毕
+
+函数·设置画笔为彩色(v: color·RGBA):
+	p5·StrokeRGBA(v)
+完毕
+
+函数·画点(pt: 点):
+	p5·Point(pt·X, pt·Y)
+完毕
+
+函数·画线(pt1, pt2: 点):
+	p5·Line(pt1·X, pt1·Y, pt2·X, pt2·Y)
+完毕

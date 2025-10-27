@@ -193,9 +193,9 @@ var wzStdPkgs = []string{
 	"菠萝",       // apple
 	"书",        // fmt
 	"图像",       // image
+	"小画家",      // js/p5
 	"图像/颜色",    // image/color
 	"数学/随机数",   // math/rand
-	"假死门/程序绘图", // js/p5
 	"假死门/画布",   // js/canvas
 	"门阀/阿多一诺门", // syscall/arduino
 	"门阀/假死门",   // syscall/js
