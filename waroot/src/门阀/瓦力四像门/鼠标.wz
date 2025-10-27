@@ -6,10 +6,11 @@
 常量:
 	按键1 = wasm4·BUTTON_1
 	按键2 = wasm4·BUTTON_2
-	左键  = wasm4·BUTTON_1
-	右键  = wasm4·BUTTON_RIGHT
-	按键起 = wasm4·BUTTON_UP
-	按键落 = wasm4·BUTTON_DOWN
+
+	向左键 = wasm4·BUTTON_LEFT
+	向右键 = wasm4·BUTTON_RIGHT
+	向上键 = wasm4·BUTTON_UP
+	向下键 = wasm4·BUTTON_DOWN
 
 	鼠标左键 = wasm4·MOUSE_LEFT
 	鼠标右键 = wasm4·MOUSE_RIGHT

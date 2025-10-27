@@ -1,232 +1,207 @@
 注: 版权 @2025 W4-snake-wz 作者。保留所有权利。
 
-引入 "math/rand"
-引入 "syscall/wasm4"
+引入 "数学/随机数"
+引入 "门阀/瓦力四像门"
 
-// The length of a side of one snake segment, in pixels.
-常量·size = 8
+常量·寸长 = 8
 
 常量:
-	Transparent = 0
-	Light       = 1
-	Primary     = 2
-	Secondary   = 3
-	Dark        = 4
+	透明 = 0
+	亮色 = 1
+	主色 = 2
+	副色 = 3
+	暗色 = 4
 完毕
 
 全局:
-	snake = Snake{}
+	饿死鬼  = 贪吃蛇{}
+	游戏帧数 = 0
+	食物位置 = 点{X: 80, Y: 80}
 
-	// The 全局 counter of frames. Used to skip some because wasm-4 has 60 FPS
-	// but that's too fast.
-	frameCount = 0
-
-	// The fruit position. Place the first one in the center of the screen.
-	fruit = Point{X: 80, Y: 80}
-
-	// The raw binary content of a sprite for the fruit.
-	// A nicer solution would be to use go:embed but it doesn't work with wasm target.
-	fruitSprite = []字节{0x00, 0xa0, 0x02, 0x00, 0x0e, 0xf0, 0x36, 0x5c, 0xd6, 0x57, 0xd5, 0x57, 0x35, 0x5c, 0x0f, 0xf0}
-
-	// Randomization function for placing the fruit.
-	// We can't use a 全局 random instance because there is no way to make a 全局
-	// random seed in pure wasm.
-	randInt = rand·New(rand·NewSource(1))·Intn
+	食物图像  = []字节{0x00, 0xa0, 0x02, 0x00, 0x0e, 0xf0, 0x36, 0x5c, 0xd6, 0x57, 0xd5, 0x57, 0x35, 0x5c, 0x0f, 0xf0}
+	进食的声音 = 声音{140, 20, 4, 10, 0, 0, 0, 0, 2}
 完毕
 
-// Update the snake direction based on the buttons pressed on the gamepad.
-函数·input():
-	gamePad := wasm4·GetGamePad1()
+结构·声音:
+	频率1: 正整
+	频率2: 正整
+	起音:  正整
+	衰减:  正整
+	持续:  正整
+	释音:  正整
+	音量:  正整
+	声道:  正整
+	模式:  正整
+完毕
 
-	如果 gamePad&wasm4·BUTTON_1 != 0:
-		snake·Stoped = 真
+函数·声音·播放:
+	s := 我的
+	频率 := s·频率1 | s·频率2<<16
+	时长 := s·起音<<24 | s·衰减<<16 | s·持续 | s·释音<<8
+	标志位 := s·声道 | s·模式<<2
+
+	瓦力四像门·播放声音(整型(频率), 整型(时长), 整型(s·音量), 整型(标志位))
+完毕
+
+函数·处理输入():
+	游戏按键 := 瓦力四像门·读取控制键1()
+
+	如果 游戏按键&瓦力四像门·按键1 != 0:
+		饿死鬼·休眠 = 真
 	完毕
-	如果 gamePad&wasm4·BUTTON_2 != 0:
-		snake·Stoped = 假
+	如果 游戏按键&瓦力四像门·按键2 != 0:
+		饿死鬼·休眠 = 假
 	完毕
 
-	如果 gamePad&wasm4·BUTTON_UP != 0:
-		snake·Up()
+	如果 游戏按键&瓦力四像门·向上键 != 0:
+		饿死鬼·往上游动()
 	完毕
-	如果 gamePad&wasm4·BUTTON_DOWN != 0:
-		snake·Down()
+	如果 游戏按键&瓦力四像门·向下键 != 0:
+		饿死鬼·往下游动()
 	完毕
-	如果 gamePad&wasm4·BUTTON_LEFT != 0:
-		snake·Left()
+	如果 游戏按键&瓦力四像门·向左键 != 0:
+		饿死鬼·往左游动()
 	完毕
-	如果 gamePad&wasm4·BUTTON_RIGHT != 0:
-		snake·Right()
+	如果 游戏按键&瓦力四像门·向右键 != 0:
+		饿死鬼·往右游动()
 	完毕
 完毕
 
 #凹:导出 start
-函数·start:
-	// https://wasm4.org/docs/tutorials/snake/setting-color-palette
-	wasm4·SetPalette(
+函数·启动游戏:
+	瓦力四像门·写调试板(
 		(0xfb<<16)|(0xf7<<8)|(0xf3), // R: 0xfb, G: 0xf7, B: 0xf3
 		(0xe5<<16)|(0xb0<<8)|(0x83), // R: 0xe5, G: 0xb0, B: 0x83
 		(0x42<<16)|(0x6e<<8)|(0x5d), // R: 0x42, G: 0x6e, B: 0x5d
 		(0x20<<16)|(0x28<<8)|(0x3d), // R: 0x20, G: 0x28, B: 0x3d
 	)
-	snake·Reset()
+	饿死鬼·重生()
 完毕
 
 #凹:导出 update
-函数·update:
-	input()
-	frameCount++
-	// Skip every 10th frame so that the snake doesn't move too fast
-	如果 frameCount%10 == 0:
-		snake·Update()
-		// If snake eats itself, reset it to the initial state.
-		如果 snake·IsDead():
-			snake·Reset()
+函数·更新游戏状态:
+	处理输入()
+
+	游戏帧数++
+
+	如果 游戏帧数%10 == 0:
+		饿死鬼·更新()
+		如果 饿死鬼·死了吗():
+			饿死鬼·重生()
 		完毕
-		// If the snake's head is on the tile with the fruit,
-		// increase the snake's length and update the fruit's position.
-		如果 snake·Body[0] == fruit:
-			snake·Body = 追加(snake·Body, snake·Body[长度(snake·Body)-1])
-			fruit·X = 微正整(randInt(20) * size)
-			fruit·Y = 微正整(randInt(20) * size)
-			sfxEat·play()
+
+		如果 饿死鬼·蛇身[0] == 食物位置:
+			饿死鬼·蛇身 = 追加(饿死鬼·蛇身, 饿死鬼·蛇身[长度(饿死鬼·蛇身)-1])
+			食物位置·X = 微正整(随机数·范围内整数(20) * 寸长)
+			食物位置·Y = 微正整(随机数·范围内整数(20) * 寸长)
+			进食的声音·播放()
 		完毕
 	完毕
-	snake·Draw()
+	饿死鬼·美图秀秀()
 
-	// Draw the fruit.
-	wasm4·SetDrawColors(Light, Primary, Secondary, Dark)
-	wasm4·Blit(fruitSprite, 普整型(fruit·X), 普整型(fruit·Y), size, size, wasm4·BLIT_2BPP)
+	瓦力四像门·设置绘图颜色(亮色, 主色, 副色, 暗色)
+	瓦力四像门·位图块传输(食物图像, 整型(食物位置·X), 整型(食物位置·Y), 寸长, 寸长, 瓦力四像门·每像素2位)
 完毕
 
-结构·Point:
+结构·点:
 	X: 微正整
 	Y: 微正整
 完毕
 
-结构·Direction:
+结构·游走方向:
 	X: 整型
 	Y: 整型
 完毕
 
-结构·Snake:
-	Body:      []Point
-	Direction: Direction
-	Stoped:    布尔
+结构·贪吃蛇:
+	蛇身:   []点
+	游走方向: 游走方向
+	休眠:   布尔
 完毕
 
-// Place the snake at the start with 3-segment length and moving to the right.
-函数·Snake·Reset:
-	我的·Body = []Point{
-		{X: size * 2, Y: 0},
-		{X: size, Y: 0},
+函数·贪吃蛇·重生:
+	我的·蛇身 = []点{
+		{X: 寸长 * 2, Y: 0},
+		{X: 寸长, Y: 0},
 		{X: 0, Y: 0},
 	}
-	我的·Direction = Direction{X: size, Y: 0}
+	我的·游走方向 = 游走方向{X: 寸长, Y: 0}
 完毕
 
-// Draw the snake's body
-函数·Snake·Draw:
-	// Draw green rectangles with blue outline for body segments.
-	wasm4·SetDrawColors(Secondary, Dark, Secondary, Dark)
+函数·贪吃蛇·美图秀秀:
+	瓦力四像门·设置绘图颜色(副色, 暗色, 副色, 暗色)
 
-	循环 _, part := 迭代 我的·Body:
-		wasm4·Rect(普整型(part·X), 普整型(part·Y), size, size)
+	循环 _, 几寸 := 迭代 我的·蛇身:
+		瓦力四像门·画矩形(整型(几寸·X), 整型(几寸·Y), 寸长, 寸长)
 	完毕
 
-	// Draw blue rectangle for the head.
-	wasm4·SetDrawColors(Dark, Transparent, Secondary, Dark)
-	head := 我的·Body[0]
-	wasm4·Rect(普整型(head·X), 普整型(head·Y), size, size)
+	瓦力四像门·设置绘图颜色(暗色, 透明, 副色, 暗色)
+
+	蛇头 := 我的·蛇身[0]
+	瓦力四像门·画矩形(整型(蛇头·X), 整型(蛇头·Y), 寸长, 寸长)
 完毕
 
-函数·Snake·Update:
-	如果 我的·Stoped:
+函数·贪吃蛇·更新:
+	如果 我的·休眠:
 		返回
 	完毕
 
-	// Shift the snake's segments
-	循环 i := 长度(我的·Body) - 1; i > 0; i--:
-		我的·Body[i] = 我的·Body[i-1]
+	循环 i := 长度(我的·蛇身) - 1; i > 0; i--:
+		我的·蛇身[i] = 我的·蛇身[i-1]
 	完毕
 
-	// Shift the snake's head in the movement direction,
-	// wrapping it around the screen 如果 necessary.
-	我的·Body[0]·X = 微正整((整型(我的·Body[0]·X) + 我的·Direction·X) % 160)
-	我的·Body[0]·Y = 微正整((整型(我的·Body[0]·Y) + 我的·Direction·Y) % 160)
-	// It is more than 160 如果 the integer overflows.
-	如果 我的·Body[0]·X > 160:
-		我的·Body[0]·X = 160 - size
+	我的·蛇身[0]·X = 微正整((整型(我的·蛇身[0]·X) + 我的·游走方向·X) % 160)
+	我的·蛇身[0]·Y = 微正整((整型(我的·蛇身[0]·Y) + 我的·游走方向·Y) % 160)
+
+	如果 我的·蛇身[0]·X > 160:
+		我的·蛇身[0]·X = 160 - 寸长
 	完毕
-	如果 我的·Body[0]·Y > 160:
-		我的·Body[0]·Y = 160 - size
+	如果 我的·蛇身[0]·Y > 160:
+		我的·蛇身[0]·Y = 160 - 寸长
 	完毕
 完毕
 
-函数·Snake·Up:
-	如果 我的·Stoped:
+函数·贪吃蛇·往上游动:
+	如果 我的·休眠:
 		返回
 	完毕
-	如果 我的·Direction·Y == 0:
-		我的·Direction·X, 我的·Direction·Y = 0, -size
+	如果 我的·游走方向·Y == 0:
+		我的·游走方向·X, 我的·游走方向·Y = 0, -寸长
 	完毕
 完毕
 
-函数·Snake·Down:
-	如果 我的·Stoped:
+函数·贪吃蛇·往下游动:
+	如果 我的·休眠:
 		返回
 	完毕
-	如果 我的·Direction·Y == 0:
-		我的·Direction·X, 我的·Direction·Y = 0, size
+	如果 我的·游走方向·Y == 0:
+		我的·游走方向·X, 我的·游走方向·Y = 0, 寸长
 	完毕
 完毕
 
-函数·Snake·Left:
-	如果 我的·Stoped:
+函数·贪吃蛇·往左游动:
+	如果 我的·休眠:
 		返回
 	完毕
-	如果 我的·Direction·X == 0:
-		我的·Direction·X, 我的·Direction·Y = -size, 0
+	如果 我的·游走方向·X == 0:
+		我的·游走方向·X, 我的·游走方向·Y = -寸长, 0
 	完毕
 完毕
 
-函数·Snake·Right:
-	如果 我的·Stoped:
+函数·贪吃蛇·往右游动:
+	如果 我的·休眠:
 		返回
 	完毕
-	如果 我的·Direction·X == 0:
-		我的·Direction·X, 我的·Direction·Y = size, 0
+	如果 我的·游走方向·X == 0:
+		我的·游走方向·X, 我的·游走方向·Y = 寸长, 0
 	完毕
 完毕
 
-// Check 如果 the snake's head is on the same position as one of its segments.
-函数·Snake·IsDead => 布尔:
-	循环 index := 1; index < 长度(我的·Body); index++:
-		如果 我的·Body[0] == 我的·Body[index]:
+函数·贪吃蛇·死了吗 => 布尔:
+	循环 index := 1; index < 长度(我的·蛇身); index++:
+		如果 我的·蛇身[0] == 我的·蛇身[index]:
 			返回 真
 		完毕
 	完毕
 	返回 假
 完毕
-
-结构·Sound:
-	freq1:   正整
-	freq2:   正整
-	attack:  正整
-	decay:   正整
-	sustain: 正整
-	release: 正整
-	volume:  正整
-	channel: 正整
-	mode:    正整
-完毕
-
-函数·Sound·play:
-	s := 我的
-	freq := s·freq1 | s·freq2<<16
-	duration := s·attack<<24 | s·decay<<16 | s·sustain | s·release<<8
-	flags := s·channel | s·mode<<2
-
-	wasm4·Tone(整型(freq), 整型(duration), 整型(s·volume), 整型(flags))
-完毕
-
-全局·sfxEat = Sound{140, 20, 4, 10, 0, 0, 0, 0, 2}
