@@ -2083,11 +2083,20 @@ func (b *builder) buildFuncDecl(pkg *Package, decl *ast.FuncDecl) {
 		return // discard
 	}
 	fn := pkg.values[pkg.info.Defs[id]].(*Function)
-	if decl.Recv == nil && id.Name == "init" {
-		var v Call
-		v.Call.Value = fn
-		v.setType(types.NewTuple())
-		pkg.init.emit(&v)
+	if pkg.Pkg.W2Mode {
+		if decl.Recv == nil && id.Name == token.K_准备 {
+			var v Call
+			v.Call.Value = fn
+			v.setType(types.NewTuple())
+			pkg.init.emit(&v)
+		}
+	} else {
+		if decl.Recv == nil && id.Name == token.K_init {
+			var v Call
+			v.Call.Value = fn
+			v.setType(types.NewTuple())
+			pkg.init.emit(&v)
+		}
 	}
 	b.buildFunction(fn)
 }
@@ -2147,9 +2156,16 @@ func (p *Package) build() {
 
 	if p.Prog.mode&BareInits == 0 {
 		// Make init() skip if package is already initialized.
-		initguard := p.Var("init$guard")
+		var initguard *Global
+		if p.Pkg.W2Mode {
+			initguard = p.Var(token.K_准备 + "$guard")
+		} else {
+			initguard = p.Var(token.K_init + "$guard")
+		}
+
 		doinit := init.newBasicBlock("init.start")
 		done = init.newBasicBlock("init.done")
+
 		emitIf(init, emitLoad(init, initguard), done, doinit)
 		init.currentBlock = doinit
 		emitStore(init, initguard, vTrue, token.NoPos)

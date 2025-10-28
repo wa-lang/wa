@@ -46,9 +46,9 @@ type Program struct {
 type Package struct {
 	Prog    *Program               // the owning program
 	Pkg     *types.Package         // the corresponding go/types.Package
-	Members map[string]Member      // all package members keyed by name (incl. init and init#%d)
+	Members map[string]Member      // all package members keyed by name (incl. init/准备 and init#%d/准备#%d)
 	values  map[types.Object]Value // package members (incl. types and methods), keyed by object
-	init    *Function              // Func("init"); the package's init function
+	init    *Function              // Func("init") or Func("准备"); the package's init function
 	debug   bool                   // include full debug info in this package
 
 	// The following fields are set transiently, then cleared

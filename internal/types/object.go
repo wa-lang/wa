@@ -7,6 +7,7 @@ package types
 import (
 	"bytes"
 	"fmt"
+	"strings"
 
 	"wa-lang.org/wa/internal/ast"
 	"wa-lang.org/wa/internal/constant"
@@ -153,7 +154,19 @@ func (obj *object) Type() Type { return obj.typ }
 // Exported reports whether the object is exported (starts with a capital letter).
 // It doesn't take into account whether the object is in a local (function) scope
 // or not.
-func (obj *object) Exported() bool { return token.IsExported(obj.name) }
+func (obj *object) Exported() bool {
+	if obj.pkg != nil && obj.pkg.W2Mode {
+		if obj.name == token.K_准备 {
+			return false
+		}
+		if strings.HasPrefix(obj.name, token.K_准备+"#") {
+			return false
+		}
+	} else {
+		// init 小写字母开头, 属于未导出
+	}
+	return token.IsExported(obj.name)
+}
 
 // Id is a wrapper for Id(obj.Pkg(), obj.Name()).
 func (obj *object) Id() string { return Id(obj.pkg, obj.name) }

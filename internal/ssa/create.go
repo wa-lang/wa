@@ -80,9 +80,16 @@ func memberFromObject(pkg *Package, obj types.Object, syntax ast.Node) {
 
 	case *types.Func:
 		sig := obj.Type().(*types.Signature)
-		if sig.Recv() == nil && name == "init" {
-			pkg.ninit++
-			name = fmt.Sprintf("init#%d", pkg.ninit)
+		if pkg.Pkg.W2Mode {
+			if sig.Recv() == nil && name == token.K_准备 {
+				pkg.ninit++
+				name = fmt.Sprintf(token.K_准备+"#%d", pkg.ninit)
+			}
+		} else {
+			if sig.Recv() == nil && name == token.K_init {
+				pkg.ninit++
+				name = fmt.Sprintf(token.K_init+"#%d", pkg.ninit)
+			}
 		}
 		fn := &Function{
 			name:      name,
@@ -169,14 +176,25 @@ func (prog *Program) CreatePackage(pkg *types.Package, files []*ast.File, info *
 	}
 
 	// Add init() function.
-	p.init = &Function{
-		name:      "init",
-		Signature: new(types.Signature),
-		Synthetic: "package initializer",
-		Pkg:       p,
-		Prog:      prog,
+	if pkg.W2Mode {
+		p.init = &Function{
+			name:      token.K_准备,
+			Signature: new(types.Signature),
+			Synthetic: "package initializer",
+			Pkg:       p,
+			Prog:      prog,
+		}
+		p.Members[p.init.name] = p.init
+	} else {
+		p.init = &Function{
+			name:      token.K_init,
+			Signature: new(types.Signature),
+			Synthetic: "package initializer",
+			Pkg:       p,
+			Prog:      prog,
+		}
+		p.Members[p.init.name] = p.init
 	}
-	p.Members[p.init.name] = p.init
 
 	// CREATE phase.
 	// Allocate all package members: vars, funcs, consts and types.
@@ -207,12 +225,21 @@ func (prog *Program) CreatePackage(pkg *types.Package, files []*ast.File, info *
 
 	if prog.mode&BareInits == 0 {
 		// Add initializer guard variable.
-		initguard := &Global{
-			Pkg:  p,
-			name: "init$guard",
-			typ:  types.NewPointer(tBool),
+		if pkg.W2Mode {
+			initguard := &Global{
+				Pkg:  p,
+				name: token.K_准备 + "$guard",
+				typ:  types.NewPointer(tBool),
+			}
+			p.Members[initguard.Name()] = initguard
+		} else {
+			initguard := &Global{
+				Pkg:  p,
+				name: token.K_init + "$guard",
+				typ:  types.NewPointer(tBool),
+			}
+			p.Members[initguard.Name()] = initguard
 		}
-		p.Members[initguard.Name()] = initguard
 	}
 
 	if prog.mode&GlobalDebug != 0 {

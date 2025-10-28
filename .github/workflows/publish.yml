@@ -38,6 +38,7 @@ jobs:
       - run: make -C waroot/examples/w4-rocket publish
       - run: make -C waroot/examples/w4-magnifying-glass publish
       - run: make -C waroot/examples/brainfuck publish
+      - run: make -C waroot/examples/p5-hello-wz publish
 
       - name: Deploy
         uses: peaceiris/actions-gh-pages@v3

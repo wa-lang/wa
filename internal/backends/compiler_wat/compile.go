@@ -76,7 +76,11 @@ func (p *Compiler) Compile(prog *loader.Program) (output string, err error) {
 		var f wir.Function
 		f.InternalName, f.ExternalName = "_start", "_start"
 		n, _ := wir.GetPkgMangleName(prog.SSAMainPkg.Pkg.Path())
-		n += ".init"
+		if prog.SSAMainPkg.Pkg.W2Mode {
+			n += "." + token.K_准备
+		} else {
+			n += "." + token.K_init
+		}
 		f.Insts = append(f.Insts, wat.NewInstCall(n))
 
 		//if mainFunc != "" {

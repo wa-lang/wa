@@ -6,6 +6,7 @@ package compiler_wat
 import (
 	"wa-lang.org/wa/internal/backends/compiler_wat/wir"
 	"wa-lang.org/wa/internal/ssa"
+	"wa-lang.org/wa/internal/token"
 	"wa-lang.org/wa/internal/types"
 )
 
@@ -14,7 +15,13 @@ func (p *Compiler) compileGlobal(g *ssa.Global) {
 		p.module.AddGlobal(g.LinkName(), "", p.tLib.compile(g.Type().(*types.Pointer).Elem()), false, g)
 	} else {
 		pkg_name, _ := wir.GetPkgMangleName(g.Pkg.Pkg.Path())
-		if g.Name() == "init$guard" || g.ForceRegister() {
+		var initGuard string
+		if g.Pkg.Pkg.W2Mode {
+			initGuard = token.K_准备 + "$guard"
+		} else {
+			initGuard = token.K_init + "$guard"
+		}
+		if g.Name() == initGuard || g.ForceRegister() {
 			p.module.AddGlobal(pkg_name+"."+g.Name(), "", p.tLib.compile(g.Type().(*types.Pointer).Elem()), false, g)
 		} else {
 			name_exp := ""

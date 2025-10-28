@@ -112,14 +112,14 @@ func (check *Checker) declarePkgObj(ident *ast.Ident, obj Object, d *declInfo) {
 		// spec: "A package-scope or file-scope identifier with name init
 		// may only be declared to be a function with this (func()) signature."
 		if ident.Name == token.K_准备 {
-			check.errorf(ident.Pos(), "cannot declare init - must be func")
+			check.errorf(ident.Pos(), "cannot declare %s - must be func", token.K_准备)
 			return
 		}
 
 		// spec: "The main package must have package name main and declare
 		// a function main that takes no arguments and returns no value."
 		if ident.Name == token.K_主控 && check.pkg.name == token.K_pkg_主包 {
-			check.errorf(ident.Pos(), "cannot declare main - must be func")
+			check.errorf(ident.Pos(), "cannot declare %s - must be func", token.K_主控)
 			return
 		}
 	} else {
@@ -127,14 +127,14 @@ func (check *Checker) declarePkgObj(ident *ast.Ident, obj Object, d *declInfo) {
 		// spec: "A package-scope or file-scope identifier with name init
 		// may only be declared to be a function with this (func()) signature."
 		if ident.Name == token.K_init {
-			check.errorf(ident.Pos(), "cannot declare init - must be func")
+			check.errorf(ident.Pos(), "cannot declare %s - must be func", token.K_init)
 			return
 		}
 
 		// spec: "The main package must have package name main and declare
 		// a function main that takes no arguments and returns no value."
-		if ident.Name == token.K_main && check.pkg.name == token.K_main {
-			check.errorf(ident.Pos(), "cannot declare main - must be func")
+		if ident.Name == token.K_main && check.pkg.name == token.K_pkg_main {
+			check.errorf(ident.Pos(), "cannot declare %s - must be func", token.K_main)
 			return
 		}
 	}
@@ -306,9 +306,17 @@ func (check *Checker) collectObjects() {
 								check.errorf(s.Name.Pos(), `cannot rename import "C"`)
 								continue
 							}
-							if name == "init" {
-								check.errorf(s.Name.Pos(), "cannot declare init - must be func")
-								continue
+
+							if check.pkg.W2Mode {
+								if name == token.K_准备 {
+									check.errorf(s.Name.Pos(), "cannot declare %s - must be func", token.K_准备)
+									continue
+								}
+							} else {
+								if name == token.K_init {
+									check.errorf(s.Name.Pos(), "cannot declare %s - must be func", token.K_init)
+									continue
+								}
 							}
 						}
 
@@ -459,16 +467,30 @@ func (check *Checker) collectObjects() {
 				obj.setNode(d)
 				if d.Recv == nil {
 					// regular function
-					if name == "init" {
-						// don't declare init functions in the package scope - they are invisible
-						obj.parent = pkg.scope
-						check.recordDef(d.Name, obj)
-						// init functions must have a body
-						if d.Body == nil {
-							check.softErrorf(obj.pos, "missing function body")
+					if check.pkg.W2Mode {
+						if name == token.K_准备 {
+							// don't declare init functions in the package scope - they are invisible
+							obj.parent = pkg.scope
+							check.recordDef(d.Name, obj)
+							// init functions must have a body
+							if d.Body == nil {
+								check.softErrorf(obj.pos, "missing function body")
+							}
+						} else {
+							check.declare(pkg.scope, d.Name, obj, token.NoPos)
 						}
 					} else {
-						check.declare(pkg.scope, d.Name, obj, token.NoPos)
+						if name == token.K_init {
+							// don't declare init functions in the package scope - they are invisible
+							obj.parent = pkg.scope
+							check.recordDef(d.Name, obj)
+							// init functions must have a body
+							if d.Body == nil {
+								check.softErrorf(obj.pos, "missing function body")
+							}
+						} else {
+							check.declare(pkg.scope, d.Name, obj, token.NoPos)
+						}
 					}
 				} else {
 					// method

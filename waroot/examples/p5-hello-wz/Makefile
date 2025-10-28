@@ -6,4 +6,10 @@ dev:
 run:
 	go run ../../../main.go run .
 
+publish:
+	go run ../../../main.go build  .
+	-rm -rf ../../../docs/p5-hello-wz/
+	mkdir -p ../../../docs/p5-hello-wz
+	cp ./output/* ../../../docs/p5-hello-wz/
+
 clean:

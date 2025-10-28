@@ -13,6 +13,7 @@ import (
 	"os"
 	"strings"
 
+	"wa-lang.org/wa/internal/token"
 	"wa-lang.org/wa/internal/types"
 )
 
@@ -31,7 +32,6 @@ type sanity struct {
 //
 // Sanity-checking is intended to facilitate the debugging of code
 // transformation passes.
-//
 func sanityCheck(fn *Function, reporter io.Writer) bool {
 	if reporter == nil {
 		reporter = os.Stderr
@@ -41,7 +41,6 @@ func sanityCheck(fn *Function, reporter io.Writer) bool {
 
 // mustSanityCheck is like sanityCheck but panics instead of returning
 // a negative result.
-//
 func mustSanityCheck(fn *Function, reporter io.Writer) {
 	if !sanityCheck(fn, reporter) {
 		fn.WriteTo(os.Stderr)
@@ -516,12 +515,22 @@ func sanityCheckPackage(pkg *Package) {
 			continue // not all members have typechecker objects
 		}
 		if obj.Name() != name {
-			if obj.Name() == "init" && strings.HasPrefix(mem.Name(), "init#") {
-				// Ok.  The name of a declared init function varies between
-				// its types.Func ("init") and its ssa.Function ("init#%d").
+			if pkg.Pkg.W2Mode {
+				if obj.Name() == token.K_准备 && strings.HasPrefix(mem.Name(), token.K_准备+"#") {
+					// Ok.  The name of a declared 准备 function varies between
+					// its types.Func ("准备") and its ssa.Function ("准备#%d").
+				} else {
+					panic(fmt.Sprintf("%s: %T.Object().Name() = %s, want %s",
+						pkg.Pkg.Path(), mem, obj.Name(), name))
+				}
 			} else {
-				panic(fmt.Sprintf("%s: %T.Object().Name() = %s, want %s",
-					pkg.Pkg.Path(), mem, obj.Name(), name))
+				if obj.Name() == token.K_init && strings.HasPrefix(mem.Name(), token.K_init+"#") {
+					// Ok.  The name of a declared init function varies between
+					// its types.Func ("init") and its ssa.Function ("init#%d").
+				} else {
+					panic(fmt.Sprintf("%s: %T.Object().Name() = %s, want %s",
+						pkg.Pkg.Path(), mem, obj.Name(), name))
+				}
 			}
 		}
 		if obj.Pos() != mem.Pos() {
