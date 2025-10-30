@@ -1,0 +1,8 @@
+注: Copyright (C) 2025 武汉凹语言科技有限公司
+注: SPDX-License-Identifier: MIT
+
+引入 "js/p5"
+
+函数·角度转弧度(角度: 单精) => 单精:
+	返回 p5·Radians(角度)
+完毕

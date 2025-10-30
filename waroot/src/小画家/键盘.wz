@@ -1,0 +1,35 @@
+注: Copyright (C) 2025 武汉凹语言科技有限公司
+注: SPDX-License-Identifier: MIT
+
+引入 "js/p5"
+
+常量:
+	回车键 = p5·ENTER
+	Tab键  = p5·TAB
+	空格键 = p5·SPACE
+
+	向上键 = p5·ARROW_UP
+	向下键 = p5·ARROW_DOWN
+	向左键 = p5·ARROW_LEFT
+	向右键 = p5·ARROW_RIGHT
+
+	ESCAPE    = p5·ESCAPE    // Esc
+	BACKSPACE = p5·BACKSPACE // 回退
+	DELETE    = p5·DELETE    // 删除
+	SHIFT     = p5·SHIFT     // Shift
+	CONTROL   = p5·CONTROL   // Ctrl
+	OPTION    = p5·OPTION    // Option
+	ALT       = p5·ALT       // Alt
+完毕
+
+函数·有按键按键 => 布尔:
+	返回 p5·KeyIsPressed
+完毕
+
+函数·按键 => 整型:
+	返回 p5·Key
+完毕
+
+函数·按键码 => 整型:
+	返回 p5·KeyCode
+完毕

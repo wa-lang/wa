@@ -233,10 +233,10 @@ func childrenOf(n ast.Node) []ast.Node {
 		if n.Tok.IsWzKeyword() {
 			if n.List == nil {
 				children = append(children,
-					tok(n.TokPos, len(token.K_没辙)))
+					tok(n.TokPos, len(token.Zh_没辙.String())))
 			} else {
 				children = append(children,
-					tok(n.TokPos, len(token.K_有辙)))
+					tok(n.TokPos, len(token.Zh_有辙.String())))
 			}
 		} else {
 			if n.List == nil {

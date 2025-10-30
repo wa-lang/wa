@@ -39,10 +39,30 @@
 	p5·StrokeRGBA(v)
 完毕
 
+函数·设置填充颜色(红, 绿, 蓝: 整型):
+	p5·Fill(红, 绿, 蓝)
+完毕
+
 函数·画点(pt: 点):
 	p5·Point(pt·X, pt·Y)
 完毕
 
 函数·画线(pt1, pt2: 点):
 	p5·Line(pt1·X, pt1·Y, pt2·X, pt2·Y)
+完毕
+
+函数·画矩形(x, y, w, h: 整型):
+	p5·Rect(x, y, w, h)
+完毕
+
+函数·绘制四边形(x1, y1, x2, y2, x3, y3, x4, y4: 整型):
+	p5·Quad(x1, y1, x2, y2, x3, y3, x4, y4)
+完毕
+
+函数·绘制三角形(x1, y1, x2, y2, x3, y3: 整型):
+	p5·Triangle(x1, y1, x2, y2, x3, y3)
+完毕
+
+函数·绘制椭圆(x, y, w, h: 整型):
+	p5·Ellipse(x, y, w, h)
 完毕

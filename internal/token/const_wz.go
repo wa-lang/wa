@@ -14,7 +14,7 @@ const (
 	K_X_wz       = "#凹:"
 	K_X_wz_build = "#凹:构建"
 
-	K_X_wz_linkname       = "#凹:连接名"
+	K_X_wz_linkname       = "#凹:链接名"
 	K_X_wz_export         = "#凹:导出"
 	K_X_wz_import         = "#凹:引入"
 	K_X_wz_force_register = "#凹:强制寄存器"

@@ -1,0 +1,28 @@
+注: Copyright (C) 2025 武汉凹语言科技有限公司
+注: SPDX-License-Identifier: MIT
+
+引入 "js/p5"
+
+函数·画布宽度 => 整型:
+	返回 p5·Width
+完毕
+
+函数·画布高度 => 整型:
+	返回 p5·Height
+完毕
+
+函数·过去的时间 => 单精:
+	返回 p5·DeltaTime
+完毕
+
+函数·帧计数 => 整型:
+	返回 p5·FrameCount
+完毕
+
+函数·帧率 => 整型:
+	返回 p5·FrameRate
+完毕
+
+函数·是否获得焦点 => 布尔:
+	返回 p5·Focused
+完毕
