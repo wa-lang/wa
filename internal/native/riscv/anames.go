@@ -296,139 +296,139 @@ var _Anames = []string{
 	//
 
 	// 2.4: Integer Computational Instructions (RV32I)
-	AADDI:  "ADDI",
-	ASLTI:  "SLTI",
-	ASLTIU: "SLTIU",
-	AANDI:  "ANDI",
-	AORI:   "ORI",
-	AXORI:  "XORI",
-	ASLLI:  "SLLI",
-	ASRLI:  "SRLI",
-	ASRAI:  "SRAI",
-	ALUI:   "LUI",
-	AAUIPC: "AUIPC",
-	AADD:   "ADD",
-	ASLT:   "SLT",
-	ASLTU:  "SLTU",
-	AAND:   "AND",
-	AOR:    "OR",
-	AXOR:   "XOR",
-	ASLL:   "SLL",
-	ASRL:   "SRL",
-	ASUB:   "SUB",
-	ASRA:   "SRA",
+	AADDI:  "ADDI",  // 常加, 加常量
+	ASLTI:  "SLTI",  // 小常, 小于有符号常量时置位
+	ASLTIU: "SLTIU", // 低常, 小于无符号常量时置位
+	AANDI:  "ANDI",  // 常与, 常量与
+	AORI:   "ORI",   // 常或, 常量或
+	AXORI:  "XORI",  // 常异, 常量异或
+	ASLLI:  "SLLI",  // 常左, 逻辑左移常量位
+	ASRLI:  "SRLI",  // 常右, 逻辑右移常量位
+	ASRAI:  "SRAI",  // 常佑, 算术右移常量位
+	ALUI:   "LUI",   // 常载, 加载常量
+	AAUIPC: "AUIPC", // 加计, 常量加程序计数器PC
+	AADD:   "ADD",   // 相加, 加法
+	ASLT:   "SLT",   // 小于, 有符号小于时置位
+	ASLTU:  "SLTU",  // 低于, 无符号小于时置位
+	AAND:   "AND",   // 相与, 与
+	AOR:    "OR",    // 相或, 或
+	AXOR:   "XOR",   // 异或, 异或
+	ASLL:   "SLL",   // 左移, 逻辑左移
+	ASRL:   "SRL",   // 右移, 逻辑右移
+	ASUB:   "SUB",   // 相减, 减法
+	ASRA:   "SRA",   // 佑移, 算术右移
 
 	// 2.5: Control Transfer Instructions (RV32I)
-	AJAL:  "JAL",
-	AJALR: "JALR",
-	ABEQ:  "BEQ",
-	ABNE:  "BNE",
-	ABLT:  "BLT",
-	ABLTU: "BLTU",
-	ABGE:  "BGE",
-	ABGEU: "BGEU",
+	AJAL:  "JAL",  // 常转, 跳转到常量偏移地址
+	AJALR: "JALR", // 寄转, 跳转到寄存器偏移地址
+	ABEQ:  "BEQ",  // 等转, 相等则跳转
+	ABNE:  "BNE",  // 异转, 不等则跳转
+	ABLT:  "BLT",  // 小转, 有符号小于则跳转
+	ABLTU: "BLTU", // 低转, 无符号小于则跳转
+	ABGE:  "BGE",  // 大转, 有符号答疑则跳转
+	ABGEU: "BGEU", // 高转, 无符号答疑则跳转
 
 	// 2.6: Load and Store Instructions (RV32I)
-	ALW:  "LW",
-	ALH:  "LH",
-	ALHU: "LHU",
-	ALB:  "LB",
-	ALBU: "LBU",
-	ASW:  "SW",
-	ASH:  "SH",
-	ASB:  "SB",
+	ALW:  "LW",  // 读普整, 读I32
+	ALH:  "LH",  // 读短整, 读I16
+	ALHU: "LHU", // 读短正, 读U16
+	ALB:  "LB",  // 读微整, 读I8
+	ALBU: "LBU", // 读微正, 读U8
+	ASW:  "SW",  // 写普整, 写I32
+	ASH:  "SH",  // 写短整, 写I16
+	ASB:  "SB",  // 写微整, 写I8
 
 	// 2.7: Memory Ordering Instructions (RV32I)
-	AFENCE: "FENCE",
+	AFENCE: "FENCE", // 读写毕, 读写屏障
 
 	// 3.3.1: Environment Call and Breakpoint
-	AECALL:  "ECALL",
-	AEBREAK: "EBREAK",
+	AECALL:  "ECALL",  // 环境调用
+	AEBREAK: "EBREAK", // 环境断点
 
 	// 4.2: Integer Computational Instructions (RV64I)
-	AADDIW: "ADDIW",
-	ASLLIW: "SLLIW",
-	ASRLIW: "SRLIW",
-	ASRAIW: "SRAIW",
-	AADDW:  "ADDW",
-	ASLLW:  "SLLW",
-	ASRLW:  "SRLW",
-	ASUBW:  "SUBW",
-	ASRAW:  "SRAW",
+	AADDIW: "ADDIW", // 常加.普整
+	ASLLIW: "SLLIW", // 常左.普整
+	ASRLIW: "SRLIW", // 常右.普整
+	ASRAIW: "SRAIW", // 常右.普整
+	AADDW:  "ADDW",  // 相加.普整
+	ASLLW:  "SLLW",  // 左移.普整
+	ASRLW:  "SRLW",  // 右移.普整
+	ASUBW:  "SUBW",  // 相减.普整
+	ASRAW:  "SRAW",  // 佑移.普整
 
 	// 4.3: Load and Store Instructions (RV64I)
-	ALWU: "LWU",
-	ALD:  "LD",
-	ASD:  "SD",
+	ALWU: "LWU", // 读普正, 读U32
+	ALD:  "LD",  // 读长整, 读I64
+	ASD:  "SD",  // 写长整, 写I64
 
 	// 7.1: CSR Instructions (Zicsr)
-	ACSRRW:  "CSRRW",
-	ACSRRS:  "CSRRS",
-	ACSRRC:  "CSRRC",
-	ACSRRWI: "CSRRWI",
-	ACSRRSI: "CSRRSI",
-	ACSRRCI: "CSRRCI",
+	ACSRRW:  "CSRRW",  // CSR写读
+	ACSRRS:  "CSRRS",  // CSR置读
+	ACSRRC:  "CSRRC",  // CSR清读
+	ACSRRWI: "CSRRWI", // CSR常写读
+	ACSRRSI: "CSRRSI", // CSR常置读
+	ACSRRCI: "CSRRCI", // CSR常清读
 
 	// 13.1: Multiplication Operations (RV32M/RV64M)
-	AMUL:    "MUL",
-	AMULH:   "MULH",
-	AMULHU:  "MULHU",
-	AMULHSU: "MULHSU",
-	AMULW:   "MULW", // RV64M
+	AMUL:    "MUL",    // 相乘
+	AMULH:   "MULH",   // 相乘.高整
+	AMULHU:  "MULHU",  // 相乘.高正
+	AMULHSU: "MULHSU", // 相乘.高混
+	AMULW:   "MULW",   // 乘法.普整, RV64M
 
 	// 13.2: Division Operations (RV32M/RV64M)
-	ADIV:   "DIV",
-	ADIVU:  "DIVU",
-	AREM:   "REM",
-	AREMU:  "REMU",
-	ADIVW:  "DIVW",  // RV64M
-	ADIVUW: "DIVUW", // RV64M
-	AREMW:  "REMW",  // RV64M
-	AREMUW: "REMUW", // RV64M
+	ADIV:   "DIV",   // 相除
+	ADIVU:  "DIVU",  // 相除.正整
+	AREM:   "REM",   // 取余
+	AREMU:  "REMU",  // 取余.正整
+	ADIVW:  "DIVW",  // 相除.普整, RV64M
+	ADIVUW: "DIVUW", // 相除.普正, RV64M
+	AREMW:  "REMW",  // 取余.普整, RV64M
+	AREMUW: "REMUW", // 取余.普正, RV64M
 
 	// 20.5: Single-Precision Load and Store Instructions (F)
-	AFLW: "FLW",
-	AFSW: "FSW",
+	AFLW: "FLW", // 读浮点.单精
+	AFSW: "FSW", // 写浮点.单精
 
 	// 20.6: Single-Precision Floating-Point Computational Instructions
-	AFADD_S:   "FADD_S",
-	AFSUB_S:   "FSUB_S",
-	AFMUL_S:   "FMUL_S",
-	AFDIV_S:   "FDIV_S",
-	AFSQRT_S:  "FSQRT_S",
-	AFMIN_S:   "FMIN_S",
-	AFMAX_S:   "FMAX_S",
-	AFMADD_S:  "FMADD_S",
-	AFMSUB_S:  "FMSUB_S",
-	AFNMADD_S: "FNMADD_S",
-	AFNMSUB_S: "FNMSUB_S",
+	AFADD_S:   "FADD_S",   // 浮点加.单精
+	AFSUB_S:   "FSUB_S",   // 浮点减.单精
+	AFMUL_S:   "FMUL_S",   // 浮点乘.单精
+	AFDIV_S:   "FDIV_S",   // 浮点除.单精
+	AFSQRT_S:  "FSQRT_S",  // 浮点平方根.单精度
+	AFMIN_S:   "FMIN_S",   // 浮点最小值.单精度
+	AFMAX_S:   "FMAX_S",   // 浮点最大值.单精度
+	AFMADD_S:  "FMADD_S",  // 浮点乘加.单精度
+	AFMSUB_S:  "FMSUB_S",  // 浮点乘减.单精度
+	AFNMADD_S: "FNMADD_S", // 浮点负乘加.单精度
+	AFNMSUB_S: "FNMSUB_S", // 浮点负乘减.单精度
 
 	// 20.7: Single-Precision Floating-Point Conversion and Move Instructions
-	AFCVT_W_S:  "FCVT_W_S",
-	AFCVT_L_S:  "FCVT_L_S",
-	AFCVT_S_W:  "FCVT_S_W",
-	AFCVT_S_L:  "FCVT_S_L",
-	AFCVT_WU_S: "FCVT_WU_S",
-	AFCVT_LU_S: "FCVT_LU_S",
-	AFCVT_S_WU: "FCVT_S_WU",
-	AFCVT_S_LU: "FCVT_S_LU",
-	AFSGNJ_S:   "FSGNJ_S",
-	AFSGNJN_S:  "FSGNJN_S",
-	AFSGNJX_S:  "FSGNJX_S",
-	AFMV_X_W:   "FMV_X_W",
-	AFMV_W_X:   "FMV_W_X",
+	AFCVT_W_S:  "FCVT_W_S",  // 浮点转换为字（有符号）
+	AFCVT_L_S:  "FCVT_L_S",  // 浮点转换为长字（有符号，RV64）
+	AFCVT_S_W:  "FCVT_S_W",  // 字转换为浮点（有符号）
+	AFCVT_S_L:  "FCVT_S_L",  // 长字转换为浮点（有符号，RV64）
+	AFCVT_WU_S: "FCVT_WU_S", // 浮点转换为字（无符号）
+	AFCVT_LU_S: "FCVT_LU_S", // 浮点转换为长字（无符号，RV64）
+	AFCVT_S_WU: "FCVT_S_WU", // 无符号字转换为浮点
+	AFCVT_S_LU: "FCVT_S_LU", // 无符号长字转换为浮点（RV64）
+	AFSGNJ_S:   "FSGNJ_S",   // 浮点符号复制
+	AFSGNJN_S:  "FSGNJN_S",  // 浮点符号取反复制
+	AFSGNJX_S:  "FSGNJX_S",  // 浮点符号异或复制
+	AFMV_X_W:   "FMV_X_W",   // 浮点位模式移动到整数寄存器
+	AFMV_W_X:   "FMV_W_X",   // 整数位模式移动到浮点寄存器
 
 	// 20.8: Single-Precision Floating-Point Compare Instructions
-	AFEQ_S: "FEQ_S",
-	AFLT_S: "FLT_S",
-	AFLE_S: "FLE_S",
+	AFEQ_S: "FEQ_S", // 浮点相等比较.单精
+	AFLT_S: "FLT_S", // 浮点小于比较.单精
+	AFLE_S: "FLE_S", // 浮点小于或等于比较.单精
 
 	// 20.9: Single-Precision Floating-Point Classify Instruction
-	AFCLASS_S: "FCLASS_S",
+	AFCLASS_S: "FCLASS_S", // 浮点数分类.单精
 
 	// 21.3: Double-Precision Load and Store Instructions (D)
-	AFLD: "FLD",
-	AFSD: "FSD",
+	AFLD: "FLD", // 读浮点.双精
+	AFSD: "FSD", // 写浮点.双精
 
 	// 21.4: Double-Precision Floating-Point Computational Instructions
 	AFADD_D:   "FADD_D",
