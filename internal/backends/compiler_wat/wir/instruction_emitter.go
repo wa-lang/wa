@@ -869,6 +869,21 @@ func (m *Module) EmitGenAppend(x, y Value) (insts []wat.Inst, ret_type ValueType
 	return
 }
 
+func (m *Module) EmitGenData(x Value) (insts []wat.Inst) {
+	switch x := x.(type) {
+	case *aSlice:
+		insts = x.ExtractByName("d").EmitPushNoRetain()
+
+	case *aString:
+		insts = x.ExtractByName("d").EmitPushNoRetain()
+
+	default:
+		logger.Fatalf("Todo: %T", x)
+	}
+
+	return
+}
+
 func (m *Module) EmitGenLen(x Value) (insts []wat.Inst) {
 	switch x := x.(type) {
 	case *aArray:

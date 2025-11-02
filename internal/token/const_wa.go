@@ -114,11 +114,12 @@ const (
 	K_pkg_runtime  = "runtime"
 
 	// unsafe
-	K_unsafe_Pointer  = "Pointer" // unsafe.Pointer
-	K_unsafe_Raw      = "Raw"
-	K_unsafe_Alignof  = "Alignof"
-	K_unsafe_Offsetof = "Offsetof"
-	K_unsafe_Sizeof   = "Sizeof"
+	K_unsafe_Pointer   = "Pointer" // unsafe.Pointer
+	K_unsafe_Raw       = "Raw"
+	K_unsafe_Alignof   = "Alignof"
+	K_unsafe_Offsetof  = "Offsetof"
+	K_unsafe_Sizeof    = "Sizeof"
+	K_unsafe_SliceData = "SliceData"
 
 	// runtime
 	K_runtime_SetFinalizer = "SetFinalizer"

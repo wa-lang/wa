@@ -127,6 +127,7 @@ const (
 	K_unsafe_对齐倍数  = "对齐倍数"  // unsafe.Alignof
 	K_unsafe_字节偏移量 = "字节偏移量" // unsafe.Offsetof
 	K_unsafe_字节大小  = "字节大小"  // unsafe.Sizeof
+	K_unsafe_切片数据  = "切片数据"  // unsafe.SliceData
 
 	// runtime
 	K_runtime_设置终结函数 = "设置终结函数" // runtime.SetFinalizer

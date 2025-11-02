@@ -702,7 +702,7 @@ func (g *functionGenerator) genCall(call *ssa.CallCommon) (insts []wat.Inst, ret
 
 	case *ssa.Builtin:
 		var args []wir.Value
-		if s := call.Value.Name(); s == "setFinalizer" || s == "SetFinalizer" {
+		if s := call.Value.Name(); s == token.K_runtime_SetFinalizer || s == token.K_runtime_设置终结函数 {
 			var fn_id int
 			callee := call.Args[1].(*ssa.Function)
 			g.module.AddFunc(newFunctionGenerator(g.prog, g.module, g.tLib).genFunction(callee))
@@ -862,14 +862,21 @@ func (g *functionGenerator) genBuiltin(name string, pos token.Pos, args []wir.Va
 		insts = g.module.EmitGenCopy(args[0], args[1])
 		ret_type = g.module.I32
 
-	case "raw", token.K_unsafe_Raw, token.K_unsafe_原生: // unsafe.Raw
+	case token.K_unsafe_Raw, token.K_unsafe_原生: // unsafe.Raw
 		if len(args) != 1 {
 			panic("len(cap.Args) != 1")
 		}
 		insts = g.module.EmitGenRaw(args[0])
 		ret_type = g.module.BYTES
 
-	case "setFinalizer", token.K_runtime_SetFinalizer, token.K_runtime_设置终结函数: // runtime.SetFinalizer
+	case token.K_unsafe_SliceData, token.K_unsafe_切片数据: // unsafe.SliceData
+		if len(args) != 1 {
+			panic("len(cap.Args) != 1")
+		}
+		insts = g.module.EmitGenData(args[0])
+		ret_type = g.module.UPTR
+
+	case token.K_runtime_SetFinalizer, token.K_runtime_设置终结函数: // runtime.SetFinalizer
 		if len(args) != 2 {
 			panic("len(call.Args) != 2")
 		}
@@ -1495,8 +1502,8 @@ func (g *functionGenerator) genMakeDefer(inst *ssa.Defer) (insts []wat.Inst) {
 		return
 
 	case *ssa.Builtin:
-		if s := inst.Call.Value.Name(); s == "setFinalizer" || s == "SetFinalizer" {
-			logger.Fatal("Can't use setFinalizer() as defers.")
+		if s := inst.Call.Value.Name(); s == token.K_runtime_SetFinalizer || s == token.K_runtime_设置终结函数 {
+			logger.Fatalf("Can't use %s() as defers.", s)
 		}
 
 		for i, v := range inst.Call.Args {

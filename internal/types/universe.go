@@ -69,6 +69,7 @@ const (
 	_unsafe_Offsetof
 	_unsafe_Sizeof
 	_unsafe_Raw
+	_unsafe_SliceData
 
 	// package runtime
 	_runtime_SetFinalizer

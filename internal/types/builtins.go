@@ -571,6 +571,22 @@ func (check *Checker) builtin(x *operand, call *ast.CallExpr, id builtinId) (_ b
 		x.mode = value
 		x.typ = retType
 
+	case _unsafe_SliceData:
+		if _, ok := x.typ.Underlying().(*Slice); !ok {
+			check.invalidArg(x.pos(), "%s is not a slice", x.typ)
+			return
+		}
+
+		retType := Typ[Uintptr]
+		if check.Types != nil {
+			check.recordBuiltinType(
+				call.Fun, makeSig(check.isW2Mode(), retType, x.typ),
+			)
+		}
+
+		x.mode = value
+		x.typ = retType
+
 	case _runtime_SetFinalizer:
 		var params []Type
 		if nargs > 0 {
