@@ -5,6 +5,7 @@ package wazero
 import (
 	"context"
 	"fmt"
+	"io"
 	"os"
 
 	"wa-lang.org/wa/internal/3rdparty/wazero"
@@ -27,6 +28,64 @@ func (p *Module) JsInstantiate(ctx context.Context, rt wazero.Runtime) (api.Clos
 		}).
 		WithParameterNames("pos").
 		Export("print_position").
+
+		// func get_stdin_size() i32
+		NewFunctionBuilder().
+		WithFunc(func(ctx context.Context, m api.Module) int32 {
+			if cap(p.stdinBuffer) == 0 {
+				sysCtx := walang.ModCallContextSys(m)
+				p.stdinBuffer, _ = io.ReadAll(sysCtx.Stdin())
+			}
+			if cap(p.stdinBuffer) == 0 {
+				p.stdinBuffer = p.stdinBuffer[:0:0]
+			}
+			return int32(len(p.stdinBuffer))
+		}).
+		WithParameterNames().
+		Export("get_stdin_size").
+
+		// func get_stdin_data(ptr i32)
+		NewFunctionBuilder().
+		WithFunc(func(ctx context.Context, m api.Module, ptr uint32) {
+			if cap(p.stdinBuffer) == 0 {
+				sysCtx := walang.ModCallContextSys(m)
+				p.stdinBuffer, _ = io.ReadAll(sysCtx.Stdin())
+			}
+			if cap(p.stdinBuffer) == 0 {
+				p.stdinBuffer = p.stdinBuffer[:0:0]
+			}
+
+			m.Memory().Write(ctx, ptr, p.stdinBuffer)
+		}).
+		WithParameterNames("ptr").
+		Export("get_stdin_data").
+
+		// func get_argument_count() i32
+		NewFunctionBuilder().
+		WithFunc(func(ctx context.Context, m api.Module) int32 {
+			return int32(len(p.wasmArgs))
+		}).
+		WithParameterNames().
+		Export("get_argument_count").
+
+		// func get_argument_length(index i32) i32
+		NewFunctionBuilder().
+		WithFunc(func(ctx context.Context, m api.Module, index uint32) int32 {
+			if i := int(index); i >= 0 && i < len(p.wasmArgs) {
+				return int32(len(p.wasmArgs[i]))
+			}
+			return 0
+		}).
+		WithParameterNames("index").
+		Export("get_argument_length").
+
+		// func get_argument_data(index i32, ptr i32)
+		NewFunctionBuilder().
+		WithFunc(func(ctx context.Context, m api.Module, index, ptr uint32) {
+			m.Memory().Write(ctx, ptr, []byte(p.wasmArgs[index]))
+		}).
+		WithParameterNames("index", "ptr").
+		Export("get_argument_data").
 
 		// func print_bool(v: bool)
 		NewFunctionBuilder().

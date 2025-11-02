@@ -10,7 +10,6 @@ import (
 	"os"
 	"runtime"
 	"strings"
-	"sync"
 
 	"wa-lang.org/wa/internal/3rdparty/wazero"
 	"wa-lang.org/wa/internal/3rdparty/wazero/api"
@@ -25,11 +24,12 @@ type Module struct {
 	fsetBytes []byte
 	wasmArgs  []string
 
+	stdinBuffer []byte // cap(x) == 0
+
 	fset         *token.FileSet
 	stdoutBuffer bytes.Buffer
 	stderrBuffer bytes.Buffer
 
-	wazeroOnce          sync.Once
 	wazeroCtx           context.Context
 	wazeroConf          wazero.ModuleConfig
 	wazeroRuntime       wazero.Runtime
