@@ -5,8 +5,4 @@ func ExampleTest {
 	for i, s := range Args {
 		println("arg:", i, s)
 	}
-
-	for i, s := range Environ() {
-		println("env:", i, s)
-	}
 }

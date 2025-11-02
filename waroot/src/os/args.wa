@@ -1,0 +1,26 @@
+// Copyright (C) 2025 武汉凹语言科技有限公司
+// SPDX-License-Identifier: MIT
+
+import "unsafe"
+
+#wa:import syscall_js get_argument_count
+func get_argument_count => i32
+
+#wa:import syscall_js get_argument_length
+func get_argument_length(index: i32) => i32
+
+#wa:import syscall_js get_argument_data
+func get_argument_data(index, ptr: i32)
+
+global Args: []string
+
+func init {
+	n := int(get_argument_count())
+	Args = make([]string, n, n+1)
+
+	for i := 0; i < n; i++ {
+		d := make([]byte, get_argument_length(i32(i)))
+		get_argument_data(i32(i), i32(unsafe.SliceData(d)))
+		Args[i] = string(d)
+	}
+}

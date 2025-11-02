@@ -96,7 +96,7 @@ func CmdRunAction(c *cli.Context) error {
 
 	var appArgs []string
 	if c.NArg() > 1 {
-		appArgs = c.Args().Slice()[1:]
+		appArgs = c.Args().Slice()
 	}
 
 	// 根据导入的宿主类型判断是否为 Web 模式

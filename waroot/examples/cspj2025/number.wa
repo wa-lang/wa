@@ -1,23 +1,12 @@
 // CSP 2025入门组第二轮 第1题
 
-#wa:import syscall_js get_stdin_size
-func get_stdin_size => i32
-
-#wa:import syscall_js get_stdin_data
-func get_stdin_data(ptr: i32)
-
-#wa:linkname $wa.runtime.slice_to_ptr
-func byte_slice_to_ptr(t: []byte) => i32
+import "os"
 
 func main {
-	n := int(get_stdin_size())
-	d := make([]byte, n)
-	get_stdin_data(byte_slice_to_ptr(d))
-
-	solve(string(d))
+	solve(os.StdinData())
 }
 
-func solve(s: string) {
+func solve(s: []byte) {
 	digits := make([]int, 10)
 
 	// 统计数字的个数

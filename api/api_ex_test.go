@@ -47,9 +47,9 @@ func ExampleRunCode_args() {
 	`
 
 	cfg := api.DefaultConfig()
-	cfg.Target = api.WaOS_wasi
+	cfg.Target = api.WaOS_js
 
-	args := []string{"aa", "bb"}
+	args := []string{"hello.test", "aa", "bb"}
 	output, err := api.RunCode(cfg, "hello.wa", code, args...)
 	if err != nil {
 		if len(output) != 0 {

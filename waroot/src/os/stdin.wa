@@ -1,0 +1,22 @@
+// Copyright (C) 2025 武汉凹语言科技有限公司
+// SPDX-License-Identifier: MIT
+
+import "unsafe"
+
+#wa:import syscall_js get_stdin_size
+func get_stdin_size => i32
+
+#wa:import syscall_js get_stdin_data
+func get_stdin_data(ptr: i32)
+
+global _StdinData: []byte
+
+func StdinData() => []byte {
+	if cap(_StdinData) == 0 {
+		n := int(get_stdin_size())
+		_StdinData = make([]byte, n, n+1)
+		get_stdin_data(i32(unsafe.SliceData(_StdinData)))
+	}
+
+	return _StdinData
+}

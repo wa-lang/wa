@@ -42,9 +42,7 @@ var CmdTest = &cli.Command{
 
 		if c.Args().Len() > 0 {
 			pkgpath = c.Args().First()
-		}
-		if c.Args().Len() > 1 {
-			appArgs = c.Args().Slice()[1:]
+			appArgs = c.Args().Slice()
 		}
 
 		RunTest(opt.Config(), pkgpath, runPattern, appArgs...)
@@ -73,7 +71,7 @@ func runTest(cfg *config.Config, pkgpath, runPattern string, appArgs ...string) 
 	startTime := time.Now()
 	mainPkg := prog.Pkgs[prog.Manifest.MainPkg]
 	wasmName := "unittest://" + pkgpath
-	wasmArgs := []string{}
+	wasmArgs := append([]string{wasmName}, appArgs...)
 
 	if len(mainPkg.TestInfo.Files) == 0 {
 		fmt.Printf("?    %s [no test files]\n", prog.Manifest.MainPkg)
