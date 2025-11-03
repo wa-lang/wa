@@ -69,7 +69,6 @@ var tokens = [...]elt{
 	{token.FLOAT, "1e-100", literal},
 	{token.FLOAT, "2.71828e-1000", literal},
 	{token.CHAR, "'a'", literal},
-	{token.STRING, `"wasi_snapshot_preview1"`, literal},
 	//{token.STRING, `"abc\12\ab\CD\n\t\r"`, literal},
 
 	// Keywords

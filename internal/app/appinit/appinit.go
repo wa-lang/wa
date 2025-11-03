@@ -42,10 +42,6 @@ var CmdInit = &cli.Command{
 			Usage: "wasm4 game",
 		},
 		&cli.BoolFlag{
-			Name:  "wasi",
-			Usage: "wasi example",
-		},
-		&cli.BoolFlag{
 			Name:  "arduino",
 			Usage: "arduino nano 33 example",
 		},
@@ -59,7 +55,7 @@ var CmdInit = &cli.Command{
 	Action: func(c *cli.Context) error {
 		err := InitApp(
 			c.String("name"), c.String("pkgpath"),
-			c.Bool("p5"), c.Bool("wasm4"), c.Bool("wasi"), c.Bool("arduino"),
+			c.Bool("p5"), c.Bool("wasm4"), c.Bool("arduino"),
 			c.Bool("update"),
 		)
 		if err != nil {
@@ -70,7 +66,7 @@ var CmdInit = &cli.Command{
 	},
 }
 
-func InitApp(name, pkgpath string, isP5App, isWasm4App, isWasiApp, isArduinoApp, update bool) error {
+func InitApp(name, pkgpath string, isP5App, isWasm4App, isArduinoApp, update bool) error {
 	if name == "" {
 		return fmt.Errorf("init failed: <%s> is empty", name)
 	}
@@ -89,7 +85,6 @@ func InitApp(name, pkgpath string, isP5App, isWasm4App, isWasiApp, isArduinoApp,
 	}
 
 	if isP5App {
-		isWasiApp = false
 		isWasm4App = false
 	}
 
@@ -106,7 +101,6 @@ func InitApp(name, pkgpath string, isP5App, isWasm4App, isWasiApp, isArduinoApp,
 		Year         int
 		IsP5App      bool
 		IsWasm4App   bool
-		IsWasiApp    bool
 		IsArduinoApp bool
 	}{
 		Name:         name,
@@ -114,7 +108,6 @@ func InitApp(name, pkgpath string, isP5App, isWasm4App, isWasiApp, isArduinoApp,
 		Year:         time.Now().Year(),
 		IsP5App:      isP5App,
 		IsWasm4App:   isWasm4App,
-		IsWasiApp:    isWasiApp,
 		IsArduinoApp: isArduinoApp,
 	}
 
@@ -167,7 +160,7 @@ func InitApp(name, pkgpath string, isP5App, isWasm4App, isWasiApp, isArduinoApp,
 	}
 
 	// 只有默认的 js 生成定制的 index.html
-	if isP5App || isWasm4App || isWasiApp || isArduinoApp {
+	if isP5App || isWasm4App || isArduinoApp {
 		os.Remove(filepath.Join(name, "output", "index.html"))
 	}
 

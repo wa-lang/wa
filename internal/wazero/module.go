@@ -148,8 +148,6 @@ func ReadImportModuleName(wasmBytes []byte) (string, error) {
 		switch moduleName {
 		case "syscall_js":
 			return config.WaOS_js, nil
-		case "wasi_snapshot_preview1":
-			return config.WaOS_wasi, nil
 		case "arduino":
 			return config.WaOS_arduino, nil
 		case "env":
@@ -179,7 +177,7 @@ func HasUnknownConsoleImportFunc(wasmBytes []byte) bool {
 		}
 
 		switch moduleName {
-		case "syscall_js", "wasi_snapshot_preview1", "arduino":
+		case "syscall_js", "arduino":
 		default: // wasm4, unknown, ...
 			return true
 		}
@@ -244,11 +242,6 @@ func (p *Module) buildModule() error {
 			break
 		}
 
-		if moduleName == "wasi_snapshot_preview1" {
-			waOS = config.WaOS_wasi
-			break
-		}
-
 		if moduleName == "arduino" {
 			waOS = config.WaOS_arduino
 			break
@@ -263,11 +256,6 @@ func (p *Module) buildModule() error {
 	switch waOS {
 	case config.WaOS_unknown:
 		if _, err = UnknownInstantiate(p.wazeroCtx, p.wazeroRuntime); err != nil {
-			p.wazeroInitErr = err
-			return err
-		}
-	case config.WaOS_wasi:
-		if _, err = WasiInstantiate(p.wazeroCtx, p.wazeroRuntime); err != nil {
 			p.wazeroInitErr = err
 			return err
 		}

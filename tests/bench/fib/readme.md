@@ -62,7 +62,7 @@ go version go1.21.0 darwin/amd64
 wasmer -V
 wasmer 4.3.7
 
-wa build -optimize -target=wasi -output=fib_wa.wasm fib_wa.wa
+wa build -optimize -output=fib_wa.wasm fib_wa.wa
 GOOS=wasip1 GOARCH=wasm go build -o fib_go.wasm
 
 du -sh fib_*.wasm

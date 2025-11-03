@@ -77,8 +77,6 @@ func BuildOptions(c *cli.Context, waBackend ...string) *Option {
 		// read from default or wa.mod
 	case config.WaOS_js:
 		opt.Target = config.WaOS_js
-	case config.WaOS_wasi:
-		opt.Target = config.WaOS_wasi
 	case config.WaOS_wasm4:
 		opt.Target = config.WaOS_wasm4
 	case config.WaOS_arduino:

@@ -37,7 +37,6 @@ const (
 	WaOS_Default = wasrc.WaOS_js // 默认
 
 	WaOS_js      = wasrc.WaOS_js      // 浏览器 JS
-	WaOS_wasi    = wasrc.WaOS_wasi    // WASI 接口
 	WaOS_wasm4   = wasrc.WaOS_wasm4   // WASM4 接口
 	WaOS_arduino = wasrc.WaOS_arduino // Arduino
 	WaOS_unknown = wasrc.WaOS_unknown // Unknown

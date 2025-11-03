@@ -71,8 +71,6 @@ func GetBaseImportCode(waos string) string {
 		return baseImportFile_js
 	case WaOS_unknown:
 		return ""
-	case WaOS_wasi:
-		return ""
 	case WaOS_wasm4:
 		return ""
 	}
@@ -180,7 +178,6 @@ var stdPkgs = []string{
 	"strings",         // API 完整, wat2wasm ok
 	"syscall",         // API 完整
 	"syscall/js",      //
-	"syscall/wasi",    //
 	"syscall/wasm4",   // WASM4 游戏
 	"syscall/unknown", //
 	"text/template",   // 无
@@ -199,6 +196,5 @@ var wzStdPkgs = []string{
 	"假死门/画布",   // js/canvas
 	"门阀/阿多一诺门", // syscall/arduino
 	"门阀/假死门",   // syscall/js
-	"门阀/瓦力四像门", // syscall/wasi
-	"门阀/瓦斯门",   // syscall/wasm4
+	"门阀/瓦力四像门", // syscall/wasm4
 }
