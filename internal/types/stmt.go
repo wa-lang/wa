@@ -522,7 +522,11 @@ func (check *Checker) stmt(ctxt stmtContext, s ast.Stmt) {
 			x.mode = constant_
 			x.typ = Typ[Bool]
 			x.val = constant.MakeBool(true)
-			x.expr = &ast.Ident{NamePos: s.Body.Lbrace, Name: "true"}
+			if check.isW2Mode() {
+				x.expr = &ast.Ident{NamePos: s.Body.Lbrace, Name: token.K_真}
+			} else {
+				x.expr = &ast.Ident{NamePos: s.Body.Lbrace, Name: token.K_true}
+			}
 		}
 
 		check.multipleDefaults(s.Body.List)

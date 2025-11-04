@@ -10,6 +10,7 @@ import (
 	"wa-lang.org/wa/internal/loader"
 	"wa-lang.org/wa/internal/logger"
 	"wa-lang.org/wa/internal/ssa"
+	"wa-lang.org/wa/internal/token"
 	"wa-lang.org/wa/internal/types"
 )
 
@@ -72,7 +73,7 @@ func (tLib *typeLib) compile(from types.Type) wir.ValueType {
 			newType = tLib.module.U32
 
 		case types.Int32:
-			if t.Name() == "rune" {
+			if s := t.Name(); s == token.K_rune || s == token.K_符文 {
 				newType = tLib.module.RUNE
 			} else {
 				newType = tLib.module.I32
@@ -228,7 +229,7 @@ func (tLib *typeLib) compile(from types.Type) wir.ValueType {
 				newType = tLib.module.GenValueType_u32(type_name)
 
 			case types.Int32:
-				if ut.Name() == "rune" {
+				if s := ut.Name(); s == token.K_rune || s == token.K_符文 {
 					newType = tLib.module.GenValueType_rune(type_name)
 				} else {
 					newType = tLib.module.GenValueType_i32(type_name)

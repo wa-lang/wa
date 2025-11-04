@@ -98,7 +98,7 @@ func (g *functionGenerator) getValue(i ssa.Value) valueWrap {
 
 			case types.Int32, types.Int, types.UntypedInt:
 				val, _ := constant.Int64Val(v.Value)
-				if t.Name() == "rune" {
+				if s := t.Name(); s == token.K_rune || s == token.K_符文 {
 					return valueWrap{value: wir.NewConst(strconv.Itoa(int(val)), g.module.RUNE)}
 				} else {
 					return valueWrap{value: wir.NewConst(strconv.Itoa(int(val)), g.module.I32)}
@@ -198,7 +198,7 @@ func (g *functionGenerator) getValue(i ssa.Value) valueWrap {
 
 				case types.Int32, types.Int:
 					val, _ := constant.Int64Val(v.Value)
-					if t.Underlying().(*types.Basic).Name() == "rune" {
+					if s := t.Underlying().(*types.Basic).Name(); s == token.K_rune || s == token.K_符文 {
 						return valueWrap{value: wir.NewConst(strconv.Itoa(int(val)), g.tLib.compile(t))}
 					} else {
 						return valueWrap{value: wir.NewConst(strconv.Itoa(int(val)), g.tLib.compile(t))}

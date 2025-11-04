@@ -217,7 +217,7 @@ func (b *builder) exprN(fn *Function, e ast.Expr) Value {
 // call.
 func (b *builder) builtin(fn *Function, obj *types.Builtin, args []ast.Expr, typ types.Type, pos token.Pos) Value {
 	switch obj.Name() {
-	case "make":
+	case token.K_make, token.K_构建:
 		switch typ.Underlying().(type) {
 		case *types.Slice:
 			n := b.expr(fn, args[1])
@@ -258,9 +258,9 @@ func (b *builder) builtin(fn *Function, obj *types.Builtin, args []ast.Expr, typ
 			return fn.emit(v)
 		}
 
-	case "new":
+	case token.K_new, token.K_新建:
 		alloc := emitNew(fn, deref(typ), pos)
-		alloc.Comment = "new"
+		alloc.Comment = obj.Name()
 
 		// new(int, 123)
 		if len(args) == 2 {
@@ -269,7 +269,7 @@ func (b *builder) builtin(fn *Function, obj *types.Builtin, args []ast.Expr, typ
 
 		return alloc
 
-	case "len", "cap":
+	case token.K_len, token.K_cap, token.K_长度, token.K_容量:
 		// Special case: len or cap of an array or *array is
 		// based on the type, not the value which may be nil.
 		// We must still evaluate the value, though.  (If it
@@ -282,7 +282,7 @@ func (b *builder) builtin(fn *Function, obj *types.Builtin, args []ast.Expr, typ
 		}
 		// Otherwise treat as normal.
 
-	case "panic":
+	case token.K_panic, token.K_崩溃:
 		fn.emit(&Panic{
 			X:   b.expr(fn, args[0]),
 			pos: pos,
