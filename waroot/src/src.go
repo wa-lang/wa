@@ -194,6 +194,7 @@ var wzStdPkgs = []string{
 	"图像/颜色",    // image/color
 	"数学/随机数",   // math/rand
 	"假死门/画布",   // js/canvas
+	"操作系统",     // os
 	"门阀/阿多一诺门", // syscall/arduino
 	"门阀/假死门",   // syscall/js
 	"门阀/瓦力四像门", // syscall/wasm4

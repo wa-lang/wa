@@ -193,7 +193,8 @@ func wzDef(obj Object) {
 		token.K_unsafe_原生,
 		token.K_unsafe_对齐倍数,
 		token.K_unsafe_字节偏移量,
-		token.K_unsafe_字节大小:
+		token.K_unsafe_字节大小,
+		token.K_unsafe_切片数据:
 
 		scope = WzUnsafe.scope
 		// set Pkg field
