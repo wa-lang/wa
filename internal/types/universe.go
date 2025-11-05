@@ -70,6 +70,7 @@ const (
 	_unsafe_Sizeof
 	_unsafe_Raw
 	_unsafe_SliceData
+	_unsafe_StringData
 
 	// package runtime
 	_runtime_SetFinalizer

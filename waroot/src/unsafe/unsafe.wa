@@ -14,4 +14,10 @@ func Offsetof(x: ArbitraryType) => uintptr
 func Alignof(x: ArbitraryType) => uintptr
 
 // 返回切片的底层数据
-func Raw(sclice: []ArbitraryType) => []byte
+func Raw(slice: []ArbitraryType) => []byte
+
+// 切片的底层数据指针
+func SliceData(slice: []ArbitraryType) => uintptr
+
+// 字符串的底层数据指针
+func StringData(s: string) => uintptr

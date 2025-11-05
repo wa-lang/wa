@@ -876,6 +876,13 @@ func (g *functionGenerator) genBuiltin(name string, pos token.Pos, args []wir.Va
 		insts = g.module.EmitGenData(args[0])
 		ret_type = g.module.UPTR
 
+	case token.K_unsafe_StringData, token.K_unsafe_字串数据: // unsafe.StringData
+		if len(args) != 1 {
+			panic("len(cap.Args) != 1")
+		}
+		insts = g.module.EmitGenData(args[0])
+		ret_type = g.module.UPTR
+
 	case token.K_runtime_SetFinalizer, token.K_runtime_设置终结函数: // runtime.SetFinalizer
 		if len(args) != 2 {
 			panic("len(call.Args) != 2")

@@ -587,6 +587,22 @@ func (check *Checker) builtin(x *operand, call *ast.CallExpr, id builtinId) (_ b
 		x.mode = value
 		x.typ = retType
 
+	case _unsafe_StringData:
+		if ok := isString(x.typ.Underlying()); !ok {
+			check.invalidArg(x.pos(), "%s is not a string", x.typ)
+			return
+		}
+
+		retType := Typ[Uintptr]
+		if check.Types != nil {
+			check.recordBuiltinType(
+				call.Fun, makeSig(check.isW2Mode(), retType, x.typ),
+			)
+		}
+
+		x.mode = value
+		x.typ = retType
+
 	case _runtime_SetFinalizer:
 		var params []Type
 		if nargs > 0 {

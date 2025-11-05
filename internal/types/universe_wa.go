@@ -122,11 +122,12 @@ var waPredeclaredFuncs = [...]struct {
 	_Assert: {token.K_assert, 1, true, statement},
 	_Trace:  {token.K_trace, 0, true, statement},
 
-	_unsafe_Raw:       {token.K_unsafe_Raw, 1, false, expression},
-	_unsafe_Alignof:   {token.K_unsafe_Alignof, 1, false, expression},
-	_unsafe_Offsetof:  {token.K_unsafe_Offsetof, 1, false, expression},
-	_unsafe_Sizeof:    {token.K_unsafe_Sizeof, 1, false, expression},
-	_unsafe_SliceData: {token.K_unsafe_SliceData, 1, false, expression},
+	_unsafe_Raw:        {token.K_unsafe_Raw, 1, false, expression},
+	_unsafe_Alignof:    {token.K_unsafe_Alignof, 1, false, expression},
+	_unsafe_Offsetof:   {token.K_unsafe_Offsetof, 1, false, expression},
+	_unsafe_Sizeof:     {token.K_unsafe_Sizeof, 1, false, expression},
+	_unsafe_SliceData:  {token.K_unsafe_SliceData, 1, false, expression},
+	_unsafe_StringData: {token.K_unsafe_StringData, 1, false, expression},
 
 	_runtime_SetFinalizer: {token.K_runtime_SetFinalizer, 2, false, statement},
 }

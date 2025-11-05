@@ -126,11 +126,12 @@ var wzPredeclaredFuncs = [...]struct {
 	_Println: {token.K_打印, 0, true, statement},
 	_Real:    {token.K_实部, 1, false, expression},
 
-	_unsafe_Raw:       {token.K_unsafe_原生, 1, false, expression},
-	_unsafe_Alignof:   {token.K_unsafe_对齐倍数, 1, false, expression},
-	_unsafe_Offsetof:  {token.K_unsafe_字节偏移量, 1, false, expression},
-	_unsafe_Sizeof:    {token.K_unsafe_字节大小, 1, false, expression},
-	_unsafe_SliceData: {token.K_unsafe_切片数据, 1, false, expression},
+	_unsafe_Raw:        {token.K_unsafe_原生, 1, false, expression},
+	_unsafe_Alignof:    {token.K_unsafe_对齐倍数, 1, false, expression},
+	_unsafe_Offsetof:   {token.K_unsafe_字节偏移量, 1, false, expression},
+	_unsafe_Sizeof:     {token.K_unsafe_字节大小, 1, false, expression},
+	_unsafe_SliceData:  {token.K_unsafe_切片数据, 1, false, expression},
+	_unsafe_StringData: {token.K_unsafe_字串数据, 1, false, expression},
 
 	_runtime_SetFinalizer: {token.K_runtime_设置终结函数, 2, false, statement},
 
@@ -194,7 +195,8 @@ func wzDef(obj Object) {
 		token.K_unsafe_对齐倍数,
 		token.K_unsafe_字节偏移量,
 		token.K_unsafe_字节大小,
-		token.K_unsafe_切片数据:
+		token.K_unsafe_切片数据,
+		token.K_unsafe_字串数据:
 
 		scope = WzUnsafe.scope
 		// set Pkg field
