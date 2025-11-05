@@ -22,6 +22,7 @@ type Option struct {
 	Wat2CNative  bool
 	Wat2CPrefix  string
 	Wat2CExports map[string]string
+	RiscvNative  bool
 	LD_StackSize int
 	LD_MaxMemory int
 	Optimize     bool // 优化
@@ -62,6 +63,7 @@ func BuildOptions(c *cli.Context, waBackend ...string) *Option {
 		Wat2CNative:  c.Bool("wat2c-native"),
 		Wat2CPrefix:  c.String("wat2c-prefix"),
 		Wat2CExports: c.StringSliceAsMap("wat2c-exports"),
+		RiscvNative:  c.Bool("riscv-native"),
 		LD_StackSize: c.Int("ld-stack-size"),
 		LD_MaxMemory: c.Int("ld-max-memory"),
 		Optimize:     c.Bool("optimize"),

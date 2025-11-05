@@ -15,6 +15,7 @@ import (
 	"wa-lang.org/wa/internal/backends/compiler_wat"
 	"wa-lang.org/wa/internal/config"
 	"wa-lang.org/wa/internal/loader"
+	"wa-lang.org/wa/internal/native/wair2rv"
 	"wa-lang.org/wa/internal/token"
 	"wa-lang.org/wa/internal/wat/watutil"
 	"wa-lang.org/wa/internal/wat/watutil/wat2c"
@@ -60,6 +61,7 @@ var CmdBuild = &cli.Command{
 		appbase.MakeFlag_ld_max_memory(),
 		appbase.MakeFlag_optimize(),
 		appbase.MakeFlag_wat2c_native(),
+		appbase.MakeFlag_riscv_native(),
 	},
 	Action: CmdBuildAction,
 }
@@ -73,6 +75,11 @@ func CmdBuildAction(c *cli.Context) error {
 	}
 
 	var opt = appbase.BuildOptions(c)
+
+	if opt.RiscvNative {
+		return buildRiscvNative(opt, input)
+	}
+
 	_, _, _, err := BuildApp(opt, input, outfile)
 	return err
 }
@@ -449,4 +456,24 @@ func buildWat(opt *appbase.Option, filename string) (
 	}
 
 	return prog, compiler, []byte(output), nil
+}
+
+func buildRiscvNative(opt *appbase.Option, filename string) (err error) {
+	cfg := opt.Config()
+	prog, err := loader.LoadProgram(cfg, filename)
+	if err != nil {
+		return err
+	}
+
+	asmCode, err := wair2rv.GenRiscvAssembly(prog)
+	if err != nil {
+		return err
+	}
+
+	err = os.WriteFile("a.out.s", asmCode, 0666)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
