@@ -160,6 +160,7 @@ var stdPkgs = []string{
 	"image",           // ?, wat2wasm ok
 	"image/color",     // ?
 	"io",              // API 部分, wat2wasm ok
+	"io/ioutil",       // ?
 	"js",              // ?
 	"js/canvas",       // ?
 	"js/p5",           // ?
@@ -187,15 +188,21 @@ var stdPkgs = []string{
 }
 
 var wzStdPkgs = []string{
-	"菠萝",       // apple
-	"书",        // fmt
-	"图像",       // image
-	"小画家",      // js/p5
-	"图像/颜色",    // image/color
-	"数学/随机数",   // math/rand
-	"假死门/画布",   // js/canvas
-	"操作系统",     // os
-	"门阀/阿多一诺门", // syscall/arduino
-	"门阀/假死门",   // syscall/js
-	"门阀/瓦力四像门", // syscall/wasm4
+	"菠萝",         // apple
+	"操作系统",       // os
+	"丹田",         // runtime
+	"读写接口",       // io
+	"读写接口/读写工具箱", // io/ioutil
+	"洪荒",         // unsafe
+	"假死门/画布",     // js/canvas
+	"门阀/阿多一诺门",   // syscall/arduino
+	"门阀/瓦力四像门",   // syscall/wasm4
+	"书",          // fmt
+	"数学/随机数",     // math/rand
+	"太初",         // builtin
+	"图像",         // image
+	"图像/颜色",      // image/color
+	"小画家",        // js/p5
+	"字串包",        // strings
+	"字节包",        // bytes
 }

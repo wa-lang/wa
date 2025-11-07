@@ -6,5 +6,11 @@ wa:
 wz:
 	go run ../../../main.go run number.wz < number.in
 
+seat-wa:
+	go run ../../../main.go run seat.wa < seat.in
+
+seat-wz:
+	go run ../../../main.go run seat.wz < seat.in
+
 clean:
 

@@ -1,0 +1,71 @@
+// CSP 2025入门组第二轮 第2题
+// https://www.luogu.com.cn/problem/P14358
+
+import (
+	"bytes"
+	"io/ioutil"
+	"os"
+)
+
+func main {
+	r := ioutil.NewIntReader(bytes.NewReader(os.StdinData()))
+
+	n := 0
+	m := 0
+	scores: []int
+
+	for i, v := range r.Iter() {
+		switch i {
+		case 0:
+			n = v
+		case 1:
+			m = v
+		default:
+			scores = append(scores, v)
+		}
+	}
+
+	solve(n, m, scores)
+}
+
+func solve(n, m: int, scores: []int) {
+	// 小 R 的成绩是 a1 (scores[0])
+	rScore := scores[0]
+
+	// 第一步：确定小 R 的排名 k (从高到低)
+
+	// 1. 统计大于小 R 成绩的考生人数
+	// 由于成绩互不相同，只需统计大于 rScore 的成绩个数
+	countGreater := 0
+	for _, score := range scores {
+		if score > rScore {
+			countGreater++
+		}
+	}
+
+	// 排名 k = (大于 rScore 的人数) + 1
+	k := countGreater + 1
+
+	// 第二步：根据排名 k 计算座位 (c, r)
+
+	// 1. 计算列 c
+	// n 为每列的座位数
+	c := (k-1)/n + 1
+
+	// 2. 计算行 r
+	// 确定 k 在当前列中的相对位置 (从 1 到 n)
+	rowIndex := (k-1)%n + 1
+
+	r: int
+	// 判断列 c 的奇偶性
+	// 奇数列 (1, 3, 5, ...) 是从上到下 (1行 -> n行) 分配
+	// 偶数列 (2, 4, 6, ...) 是从下到上 (n行 -> 1行) 分配
+	if c%2 != 0 {
+		r = rowIndex
+	} else {
+		r = n - rowIndex + 1
+	}
+
+	// 输出结果
+	println(c, r)
+}

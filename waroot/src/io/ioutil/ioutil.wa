@@ -1,0 +1,51 @@
+// Copyright (C) 2025 武汉凹语言科技有限公司
+// SPDX-License-Identifier: MIT
+
+import (
+	"bufio"
+	"io"
+	"strconv"
+)
+
+type IntReader :struct {
+	scanner: *bufio.Scanner
+	err:     error
+}
+
+func NewIntReader(r: io.Reader) => *IntReader {
+	scanner := bufio.NewScanner(r)
+	scanner.Split(bufio.ScanWords)
+
+	return &IntReader{
+		scanner: scanner,
+		err:     nil,
+	}
+}
+
+func IntReader.Iter => func => (ok: bool, k, v: int) {
+	idx: int
+	return func => (ok: bool, k, v: int) {
+		if this.err != nil {
+			ok = false
+			return
+		}
+
+		if !this.scanner.Scan() {
+			ok = false
+			return
+		}
+
+		token := this.scanner.Text()
+		v, this.err = strconv.Atoi(token)
+		if this.err != nil {
+			ok = false
+			return
+		}
+
+		ok = true
+		k = idx
+		idx++
+
+		return
+	}
+}

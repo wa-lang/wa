@@ -1,0 +1,51 @@
+注: Copyright (C) 2025 武汉凹语言科技有限公司
+注: SPDX-License-Identifier: MIT
+
+引入 "bufio"
+引入 "io"
+引入 "strconv"
+
+// TODO: error 需要完善
+
+结构·整数读者:
+	scanner: *bufio·Scanner
+	err:     皮囊 // any
+完毕
+
+函数·来个整数读者(r: io·Reader) => *整数读者:
+	scanner := bufio·NewScanner(r)
+	scanner·Split(bufio·ScanWords)
+
+	返回 &整数读者{
+		scanner: scanner,
+		err:     空,
+	}
+完毕
+
+函数·整数读者·迭代器 => 函数 => (ok: 布尔, k, v: 整型):
+	设定·idx: 整型
+	返回 函数 => (ok: 布尔, k, v: 整型):
+		如果 我的·err != 空:
+			ok = 假
+			返回
+		完毕
+
+		如果 !我的·scanner·Scan():
+			ok = 假
+			返回
+		完毕
+
+		token := 我的·scanner·Text()
+		v, 我的·err = strconv·Atoi(token)
+		如果 我的·err != 空:
+			ok = 假
+			返回
+		完毕
+
+		ok = 真
+		k = idx
+		idx++
+
+		返回
+	完毕
+完毕
