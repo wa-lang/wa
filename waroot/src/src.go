@@ -190,6 +190,8 @@ var stdPkgs = []string{
 var wzStdPkgs = []string{
 	"菠萝",         // apple
 	"操作系统",       // os
+	"从容读写",       // bufio
+	"错误包",        // error
 	"丹田",         // runtime
 	"读写接口",       // io
 	"读写接口/读写工具箱", // io/ioutil
@@ -204,5 +206,6 @@ var wzStdPkgs = []string{
 	"图像/颜色",      // image/color
 	"小画家",        // js/p5
 	"字串包",        // strings
+	"字串转译",       //strconv
 	"字节包",        // bytes
 }

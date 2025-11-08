@@ -21,6 +21,7 @@ var (
 	wzUniverseRune   *Basic // int32 alias, but has name "rune"
 	wzUniverseString *Basic
 	wzUniverseAny    Object
+	wzUniverseError  Object
 
 	wzUniverse__PACKAGE__ *Const
 	wzUniverse__FILE__    *Const
@@ -238,7 +239,7 @@ func wzDefInPackage(pkg *Package, obj Object) {
 	}
 }
 
-func init() {
+func initWz() {
 	WzUniverse = NewScope(nil, token.NoPos, token.NoPos, token.K_pkg_太初)
 	WzUnsafe = NewPackage(token.K_pkg_洪荒, token.K_pkg_洪荒, true)
 	WzUnsafe.complete = true
@@ -253,6 +254,7 @@ func init() {
 	wzUniverseRune = WzUniverse.Lookup(token.K_符文).(*TypeName).typ.(*Basic)
 	wzUniverseString = WzUniverse.Lookup(token.K_字串).(*TypeName).typ.(*Basic)
 	wzUniverseAny = WzUniverse.Lookup(token.K_皮囊)
+	wzUniverseError = WzUniverse.Lookup(token.K_错误)
 
 	wzUniverse__PACKAGE__ = WzUniverse.Lookup(token.K__包__).(*Const)
 	wzUniverse__FILE__ = WzUniverse.Lookup(token.K__文件__).(*Const)

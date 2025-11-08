@@ -21,6 +21,7 @@ var (
 	waUniverseRune   *Basic // int32 alias, but has name "rune"
 	waUniverseString *Basic
 	waUniverseAny    Object
+	waUniverseError  Object
 
 	waUniverse__PACKAGE__ *Const
 	waUniverse__FILE__    *Const
@@ -224,7 +225,7 @@ func waDefInPackage(pkg *Package, obj Object) {
 	}
 }
 
-func init() {
+func initWa() {
 	WaUniverse = NewScope(nil, token.NoPos, token.NoPos, token.K_pkg_universe)
 	WaUnsafe = NewPackage(token.K_pkg_unsafe, token.K_pkg_unsafe, false)
 	WaUnsafe.complete = true
@@ -239,6 +240,7 @@ func init() {
 	waUniverseRune = WaUniverse.Lookup(token.K_rune).(*TypeName).typ.(*Basic)
 	waUniverseString = WaUniverse.Lookup(token.K_string).(*TypeName).typ.(*Basic)
 	waUniverseAny = WaUniverse.Lookup(token.K_any)
+	waUniverseError = WaUniverse.Lookup(token.K_error)
 
 	waUniverse__PACKAGE__ = WaUniverse.Lookup(token.K__PACKAGE__).(*Const)
 	waUniverse__FILE__ = WaUniverse.Lookup(token.K__FILE__).(*Const)

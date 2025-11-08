@@ -1,0 +1,28 @@
+注: Copyright (C) 2025 武汉凹语言科技有限公司
+注: SPDX-License-Identifier: MIT
+
+引入 "bufio"
+引入 "读写接口"
+
+结构·扫描仪:
+	牛马: *bufio·Scanner
+完毕
+
+函数·来个扫描仪(输入: 读写接口·读者) => *扫描仪:
+	scanner := bufio·NewScanner(&waReader{牛马: 输入})
+
+	// TODO: 暂时绑定牛马工作模式
+	scanner·Split(bufio·ScanWords)
+
+	返回 &扫描仪{
+		牛马: scanner,
+	}
+完毕
+
+函数·扫描仪·干活 => 布尔:
+	返回 我的·牛马·Scan()
+完毕
+
+函数·扫描仪·成果 => 字串:
+	返回 我的·牛马·Text()
+完毕
