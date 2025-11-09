@@ -145,13 +145,19 @@ func InitApp(name, pkgpath string, isP5App, isWasm4App, isArduinoApp, update boo
 			return err
 		}
 
-		code, _, err := format.File(nil, path, buf.Bytes())
-		if err != nil {
-			code = buf.Bytes()
-		}
+		if appbase.HasExt(path, ".wa", ".wz") {
+			code, _, err := format.File(nil, path, buf.Bytes())
+			if err != nil {
+				code = buf.Bytes()
+			}
 
-		if _, err := f.Write(code); err != nil {
-			return err
+			if _, err := f.Write(code); err != nil {
+				return err
+			}
+		} else {
+			if _, err := f.Write(buf.Bytes()); err != nil {
+				return err
+			}
 		}
 		return nil
 	})

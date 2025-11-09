@@ -34,7 +34,7 @@ func DetectLang(filename string, code []byte) token.LangType {
 
 		for {
 			_, tok, lit := s.Scan()
-			if tok == token.ILLEGAL {
+			if tok == token.EOF || tok == token.ILLEGAL {
 				break
 			}
 
