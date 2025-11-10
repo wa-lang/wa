@@ -184,7 +184,7 @@ func waDef(obj Object) {
 	// runtime 只有 1 个函数已经被过滤了
 	// 因此如果是导出的一定是 unsafe 包的
 	scope := WaUniverse
-	if obj.Exported() {
+	if obj.Exported() && obj.Name() != token.K_错误 {
 		scope = WaUnsafe.scope
 		// set Pkg field
 		switch obj := obj.(type) {

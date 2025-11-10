@@ -59,6 +59,9 @@ func DetectLang(filename string, code []byte) token.LangType {
 			if tok == token.COMMENT {
 				continue
 			}
+
+			// 如果不能识别的其他token, 就结束
+			return token.LangType_Unknown
 		}
 	}
 

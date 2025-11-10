@@ -1,0 +1,42 @@
+// Copyright (C) 2025 武汉凹语言科技有限公司
+// SPDX-License-Identifier: MIT
+
+func From(err: 错误) => error {
+	if xerr, ok := err.(error); ok {
+		return xerr
+	}
+	return &_Error{err}
+}
+
+func To(err: error) => 错误 {
+	if xerr, ok := err.(错误); ok {
+		return xerr
+	}
+	return &_Error{err}
+}
+
+type _Error :struct {
+	err: interface{}
+}
+
+func _Error.Error => string {
+	switch xerr := this.err.(type) {
+	case error:
+		return xerr.Error()
+	case 错误:
+		return xerr.报错信息()
+	default:
+		panic("unreachable")
+	}
+}
+
+func _Error.报错信息 => string {
+	switch xerr := this.err.(type) {
+	case error:
+		return xerr.Error()
+	case 错误:
+		return xerr.报错信息()
+	default:
+		panic("unreachable")
+	}
+}

@@ -13,3 +13,7 @@ type errorString :struct {
 func errorString.Error => string {
 	return this.s
 }
+
+func errorString.报错信息 => string {
+	return this.s
+}
