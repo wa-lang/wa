@@ -281,7 +281,7 @@ func (b *Builder) returnStmt(s *ast.ReturnStmt, f *Func, block *wire.Block) {
 	if f.namedResults != nil {
 		// 函数包含具名返回值，具名返回值赋值
 		for i, r := range results {
-			block.EmitStore(f.namedResults[i], r, int(s.Return))
+			block.EmitStore(f.namedResults[i], r, int(s.TokPos))
 		}
 	}
 
@@ -291,11 +291,11 @@ func (b *Builder) returnStmt(s *ast.ReturnStmt, f *Func, block *wire.Block) {
 		// 重新装载具名返回值
 		results = results[:0]
 		for _, r := range f.namedResults {
-			results = append(results, block.EmitLoad(r, r.DataType(), int(s.Return)))
+			results = append(results, block.EmitLoad(r, r.DataType(), int(s.TokPos)))
 		}
 	}
 
-	block.EmitReturn(results, int(s.Return))
+	block.EmitReturn(results, int(s.TokPos))
 }
 
 // location 方法返回一个左值表达式的位置
