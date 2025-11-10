@@ -29,16 +29,3 @@ type Location interface {
 	// 与该位置关联的 AST 结点。对凹语言前端，应为 types.Object
 	Object() interface{}
 }
-
-/**************************************
-Blank: 匿名变量 "_"
-**************************************/
-type Blank struct{}
-
-func (*Blank) Name() string               { return "_" }
-func (*Blank) Kind() ValueKind            { return ValueKindLocal }
-func (*Blank) Type() ValueType            { panic("Blank.Type() is unimplemented") }
-func (*Blank) Pos() int                   { panic("Blank.Pos() is unimplemented") }
-func (*Blank) Object() interface{}        { panic("Blank.Object() is unimplemented") }
-func (*Blank) LocationKind() LocationKind { return LocationKindStack }
-func (*Blank) DataType() ValueType        { panic("Balck.DataType() is unimplemented") }
