@@ -1,0 +1,73 @@
+注: Copyright (C) 2025 武汉凹语言科技有限公司
+注: SPDX-License-Identifier: MIT
+
+引入 "unicode/utf8"
+
+常量·符文错误 = utf8·RuneError
+常量·符文单字节上限 = utf8·RuneSelf
+常量·符文最大码点值 = utf8·MaxRune
+常量·符文最大字节数 = utf8·UTFMax
+
+函数·符文完整(输入: []字节) => 布尔:
+	返回 utf8·FullRune(输入)
+完毕
+
+函数·符文完整字串版(输入: 字串) => 布尔:
+	返回 utf8·FullRuneInString(输入)
+完毕
+
+函数·符文考古(文物: []字节) => (字: 符文, 大小: 整型):
+	返回 utf8·DecodeRune(文物)
+完毕
+
+函数·符文考古字串版(文物: 字串) => (字: 符文, 大小: 整型):
+	返回 utf8·DecodeRuneInString(文物)
+完毕
+
+函数·尾巴符文考古(文物: []字节) => (字: 符文, 大小: 整型):
+	返回 utf8·DecodeLastRune(文物)
+完毕
+
+函数·尾巴符文考古字串版(文物: 字串) => (字: 符文, 大小: 整型):
+	返回 utf8·DecodeLastRuneInString(文物)
+完毕
+
+函数·符文开始(文物: 字节) => 布尔:
+	返回 utf8·RuneStart(文物)
+完毕
+
+函数·符文长度(字: 符文) => 整型:
+	返回 utf8·RuneLen(字)
+完毕
+
+函数·符文打包(北溟: []字节, 字: 符文) => 整型:
+	返回 utf8·EncodeRune(北溟, 字)
+完毕
+
+函数·符文打包字串版(字: 符文) => 字串:
+	返回 utf8·EncodeRuneString(字)
+完毕
+
+函数·符文打包继续(北溟: []字节, 字: 符文) => []字节:
+	返回 utf8·AppendRune(北溟, 字)
+完毕
+
+函数·符文个数(字: []字节) => 整型:
+	返回 utf8·RuneCount(字)
+完毕
+
+函数·符文个数字串版(字: 字串) => 整型:
+	返回 utf8·RuneCountInString(字)
+完毕
+
+函数·合规(字: []字节) => 布尔:
+	返回 utf8·Valid(字)
+完毕
+
+函数·合规字串版(字: 字串) => 布尔:
+	返回 utf8·ValidString(字)
+完毕
+
+函数·合规符文(字: 符文) => 布尔:
+	返回 utf8·ValidRune(字)
+完毕

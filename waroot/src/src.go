@@ -204,6 +204,7 @@ var wzStdPkgs = []string{
 	"太初",         // builtin
 	"图像",         // image
 	"图像/颜色",      // image/color
+	"万国码/码八方",    // unicode/utf8
 	"小画家",        // js/p5
 	"字串包",        // strings
 	"字串转译",       //strconv
