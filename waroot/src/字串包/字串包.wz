@@ -1,2 +1,12 @@
 注: Copyright (C) 2025 武汉凹语言科技有限公司
 注: SPDX-License-Identifier: MIT
+
+引入 "strings"
+
+函数·删首尾空白(文本: 字串) => 字串:
+	返回 strings·TrimSpace(文本)
+完毕
+
+函数·分隔(文本, 分隔符: 字串) => []字串:
+	返回 strings·Split(文本, 分隔符)
+完毕
