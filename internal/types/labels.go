@@ -175,7 +175,7 @@ func (check *Checker) blockBranches(all *Scope, parent *block, lstmt *ast.Labele
 			// determine and validate target
 			name := s.Label.Name
 			switch s.Tok {
-			case token.BREAK:
+			case token.BREAK, token.Zh_跳出:
 				// spec: "If there is a label, it must be that of an enclosing
 				// "for", "switch", or "select" statement, and that is the one
 				// whose execution terminates."
@@ -191,7 +191,7 @@ func (check *Checker) blockBranches(all *Scope, parent *block, lstmt *ast.Labele
 					return
 				}
 
-			case token.CONTINUE:
+			case token.CONTINUE, token.Zh_继续:
 				// spec: "If there is a label, it must be that of an enclosing
 				// "for" statement, and that is the one whose execution advances."
 				valid := false

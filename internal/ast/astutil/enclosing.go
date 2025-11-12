@@ -474,9 +474,9 @@ func NodeDescription(n ast.Node) string {
 		return "block"
 	case *ast.BranchStmt:
 		switch n.Tok {
-		case token.BREAK:
+		case token.BREAK, token.Zh_跳出:
 			return "break statement"
-		case token.CONTINUE:
+		case token.CONTINUE, token.Zh_继续:
 			return "continue statement"
 		}
 	case *ast.CallExpr:

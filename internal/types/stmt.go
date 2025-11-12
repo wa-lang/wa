@@ -455,11 +455,11 @@ func (check *Checker) stmt(ctxt stmtContext, s ast.Stmt) {
 			return // checked in 2nd pass (check.labels)
 		}
 		switch s.Tok {
-		case token.BREAK:
+		case token.BREAK, token.Zh_跳出:
 			if ctxt&breakOk == 0 {
 				check.error(s.Pos(), "break not in for, switch, or select statement")
 			}
-		case token.CONTINUE:
+		case token.CONTINUE, token.Zh_继续:
 			if ctxt&continueOk == 0 {
 				check.error(s.Pos(), "continue not in for statement")
 			}

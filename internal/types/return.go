@@ -106,7 +106,7 @@ func hasBreak(s ast.Stmt, label string, implicit bool) bool {
 		return hasBreak(s.Stmt, label, implicit)
 
 	case *ast.BranchStmt:
-		if s.Tok == token.BREAK {
+		if s.Tok == token.BREAK || s.Tok == token.Zh_跳出 {
 			if s.Label == nil {
 				return implicit
 			}

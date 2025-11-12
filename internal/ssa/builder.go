@@ -1947,7 +1947,7 @@ start:
 	case *ast.BranchStmt:
 		var block *BasicBlock
 		switch s.Tok {
-		case token.BREAK:
+		case token.BREAK, token.Zh_跳出:
 			if s.Label != nil {
 				block = fn.labelledBlock(s.Label)._break
 			} else {
@@ -1956,7 +1956,7 @@ start:
 				}
 			}
 
-		case token.CONTINUE:
+		case token.CONTINUE, token.Zh_继续:
 			if s.Label != nil {
 				block = fn.labelledBlock(s.Label)._continue
 			} else {
