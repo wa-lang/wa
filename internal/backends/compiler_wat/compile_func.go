@@ -788,7 +788,11 @@ func (g *functionGenerator) genBuiltin(name string, pos token.Pos, args []wir.Va
 
 			if avt.Equal(g.module.BOOL) {
 				insts = append(insts, av.EmitPushNoRetain()...)
-				insts = append(insts, wat.NewInstCall("$runtime.waPrintBool"))
+				if name == token.K_打印 || name == token.K_输出 {
+					insts = append(insts, wat.NewInstCall("$runtime.waPrintBoolWz"))
+				} else {
+					insts = append(insts, wat.NewInstCall("$runtime.waPrintBool"))
+				}
 			} else if avt.Equal(g.module.I32) {
 				insts = append(insts, av.EmitPushNoRetain()...)
 				insts = append(insts, wat.NewInstCall("$runtime.waPrintI32"))

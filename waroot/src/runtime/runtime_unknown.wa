@@ -57,6 +57,15 @@ func waPrintBool(i: bool) {
 	printBool(i)
 }
 
+#wa:linkname $runtime.waPrintBoolWz
+func waPrintBoolWz(i: bool) {
+	if i {
+		printString("真")
+	} else {
+		printString("假")
+	}
+}
+
 #wa:linkname $runtime.waPrintI32
 func waPrintI32(i: i32) {
 	printI64(i64(i))
