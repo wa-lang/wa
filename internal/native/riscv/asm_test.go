@@ -12,7 +12,7 @@ import (
 
 func ExampleAsmSyntax() {
 	fmt.Println(riscv.AsmSyntaxEx(
-		riscv.AADD, &abi.AsArgument{
+		riscv.AADD, "", &abi.AsArgument{
 			Rd:  riscv.REG_X1,
 			Rs1: riscv.REG_X2,
 			Rs2: riscv.REG_X3,
@@ -20,8 +20,8 @@ func ExampleAsmSyntax() {
 		func(r abi.RegType) string {
 			return riscv.RegString(r)
 		},
-		func(x abi.As) string {
-			return riscv.AsString(x)
+		func(x abi.As, xName string) string {
+			return riscv.AsString(x, xName)
 		},
 	))
 
@@ -58,7 +58,7 @@ func ExampleEncodeRV64() {
 		if err != nil {
 			panic(fmt.Sprint(i, err))
 		}
-		fmt.Printf("0x%08X # %v\n", x, riscv.AsmSyntax(inst.as, inst.arg))
+		fmt.Printf("0x%08X # %v\n", x, riscv.AsmSyntax(inst.as, "", inst.arg))
 	}
 
 	// Output:
@@ -107,7 +107,7 @@ func ExampleDecode() {
 		if err != nil {
 			panic(fmt.Sprint(i, err))
 		}
-		fmt.Printf("0x%08X # %v\n", x, riscv.AsmSyntax(as, arg))
+		fmt.Printf("0x%08X # %v\n", x, riscv.AsmSyntax(as, "", arg))
 	}
 
 	// Output:

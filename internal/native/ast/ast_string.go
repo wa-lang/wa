@@ -302,7 +302,7 @@ func (p *Instruction) String() string {
 			sb.WriteString("\n")
 		}
 		sb.WriteString("\t")
-		sb.WriteString(riscv.AsmSyntax(p.As, p.Arg))
+		sb.WriteString(riscv.AsmSyntax(p.As, p.AsName, p.Arg))
 	}
 	if p.Comment != nil {
 		sb.WriteString(" ")

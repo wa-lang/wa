@@ -296,37 +296,37 @@ var _Anames = []string{
 	//
 
 	// 2.4: Integer Computational Instructions (RV32I)
-	AADDI:  "ADDI",  // 常加, 加常量
-	ASLTI:  "SLTI",  // 小常, 小于有符号常量时置位
-	ASLTIU: "SLTIU", // 低常, 小于无符号常量时置位
-	AANDI:  "ANDI",  // 常与, 常量与
-	AORI:   "ORI",   // 常或, 常量或
-	AXORI:  "XORI",  // 常异, 常量异或
-	ASLLI:  "SLLI",  // 常左, 逻辑左移常量位
-	ASRLI:  "SRLI",  // 常右, 逻辑右移常量位
-	ASRAI:  "SRAI",  // 常佑, 算术右移常量位
-	ALUI:   "LUI",   // 常载, 加载常量
-	AAUIPC: "AUIPC", // 加计, 常量加程序计数器PC
-	AADD:   "ADD",   // 相加, 加法
-	ASLT:   "SLT",   // 小于, 有符号小于时置位
-	ASLTU:  "SLTU",  // 低于, 无符号小于时置位
-	AAND:   "AND",   // 相与, 与
-	AOR:    "OR",    // 相或, 或
-	AXOR:   "XOR",   // 异或, 异或
-	ASLL:   "SLL",   // 左移, 逻辑左移
-	ASRL:   "SRL",   // 右移, 逻辑右移
-	ASUB:   "SUB",   // 相减, 减法
-	ASRA:   "SRA",   // 佑移, 算术右移
+	AADDI:  "ADDI",  // 某加常, 加常量
+	ASLTI:  "SLTI",  // 某小常, 小于有符号常量时置位
+	ASLTIU: "SLTIU", // 某低常, 小于无符号常量时置位
+	AANDI:  "ANDI",  // 某与常, 常量与
+	AORI:   "ORI",   // 某或常, 常量或
+	AXORI:  "XORI",  // 某异常, 常量异或
+	ASLLI:  "SLLI",  // 某左常, 逻辑左移常量位
+	ASRLI:  "SRLI",  // 某右常, 逻辑右移常量位
+	ASRAI:  "SRAI",  // 某佑常, 算术右移常量位
+	ALUI:   "LUI",   // 常赋某, 加载常量
+	AAUIPC: "AUIPC", // 计加常, 常量加程序计数器PC
+	AADD:   "ADD",   // 某加某, 加法
+	ASLT:   "SLT",   // 某小某, 有符号小于时置位
+	ASLTU:  "SLTU",  // 某低某, 无符号小于时置位
+	AAND:   "AND",   // 某与某, 与
+	AOR:    "OR",    // 某或某, 或
+	AXOR:   "XOR",   // 某异某, 异或
+	ASLL:   "SLL",   // 某左某, 逻辑左移
+	ASRL:   "SRL",   // 某右某, 逻辑右移
+	ASUB:   "SUB",   // 某减某, 减法
+	ASRA:   "SRA",   // 某佑某, 算术右移
 
 	// 2.5: Control Transfer Instructions (RV32I)
-	AJAL:  "JAL",  // 常转, 跳转到常量偏移地址
-	AJALR: "JALR", // 寄转, 跳转到寄存器偏移地址
-	ABEQ:  "BEQ",  // 等转, 相等则跳转
-	ABNE:  "BNE",  // 异转, 不等则跳转
-	ABLT:  "BLT",  // 小转, 有符号小于则跳转
-	ABLTU: "BLTU", // 低转, 无符号小于则跳转
-	ABGE:  "BGE",  // 大转, 有符号答疑则跳转
-	ABGEU: "BGEU", // 高转, 无符号答疑则跳转
+	AJAL:  "JAL",  // 转常址, 跳转到常量偏移地址
+	AJALR: "JALR", // 转某址, 跳转到寄存器偏移地址
+	ABEQ:  "BEQ",  // 若等转, 相等则跳转
+	ABNE:  "BNE",  // 若异转, 不等则跳转
+	ABLT:  "BLT",  // 若小转, 有符号小于则跳转
+	ABLTU: "BLTU", // 若低转, 无符号小于则跳转
+	ABGE:  "BGE",  // 若大转, 有符号答疑则跳转
+	ABGEU: "BGEU", // 若高转, 无符号答疑则跳转
 
 	// 2.6: Load and Store Instructions (RV32I)
 	ALW:  "LW",  // 读普整, 读I32
@@ -342,19 +342,19 @@ var _Anames = []string{
 	AFENCE: "FENCE", // 读写毕, 读写屏障
 
 	// 3.3.1: Environment Call and Breakpoint
-	AECALL:  "ECALL",  // 环境调用
-	AEBREAK: "EBREAK", // 环境断点
+	AECALL:  "ECALL",  // 调用某
+	AEBREAK: "EBREAK", // 暂断点
 
 	// 4.2: Integer Computational Instructions (RV64I)
-	AADDIW: "ADDIW", // 常加.普整
-	ASLLIW: "SLLIW", // 常左.普整
-	ASRLIW: "SRLIW", // 常右.普整
-	ASRAIW: "SRAIW", // 常右.普整
-	AADDW:  "ADDW",  // 相加.普整
-	ASLLW:  "SLLW",  // 左移.普整
-	ASRLW:  "SRLW",  // 右移.普整
-	ASUBW:  "SUBW",  // 相减.普整
-	ASRAW:  "SRAW",  // 佑移.普整
+	AADDIW: "ADDIW", // 某加常.普整
+	ASLLIW: "SLLIW", // 某左常.普整
+	ASRLIW: "SRLIW", // 某右常.普整
+	ASRAIW: "SRAIW", // 某佑常.普整
+	AADDW:  "ADDW",  // 某加某.普整
+	ASLLW:  "SLLW",  // 某左某.普整
+	ASRLW:  "SRLW",  // 某右某.普整
+	ASUBW:  "SUBW",  // 某减某.普整
+	ASRAW:  "SRAW",  // 某佑某.普整
 
 	// 4.3: Load and Store Instructions (RV64I)
 	ALWU: "LWU", // 读普正, 读U32
@@ -370,103 +370,103 @@ var _Anames = []string{
 	ACSRRCI: "CSRRCI", // CSR常清读
 
 	// 13.1: Multiplication Operations (RV32M/RV64M)
-	AMUL:    "MUL",    // 相乘
-	AMULH:   "MULH",   // 相乘.高整
-	AMULHU:  "MULHU",  // 相乘.高正
-	AMULHSU: "MULHSU", // 相乘.高混
-	AMULW:   "MULW",   // 乘法.普整, RV64M
+	AMUL:    "MUL",    // 某乘某
+	AMULH:   "MULH",   // 某乘某.高整
+	AMULHU:  "MULHU",  // 某乘某.高正
+	AMULHSU: "MULHSU", // 某乘某.高混
+	AMULW:   "MULW",   // 某乘某.普整, RV64M
 
 	// 13.2: Division Operations (RV32M/RV64M)
-	ADIV:   "DIV",   // 相除
-	ADIVU:  "DIVU",  // 相除.正整
-	AREM:   "REM",   // 取余
-	AREMU:  "REMU",  // 取余.正整
-	ADIVW:  "DIVW",  // 相除.普整, RV64M
-	ADIVUW: "DIVUW", // 相除.普正, RV64M
-	AREMW:  "REMW",  // 取余.普整, RV64M
-	AREMUW: "REMUW", // 取余.普正, RV64M
+	ADIV:   "DIV",   // 某除某
+	ADIVU:  "DIVU",  // 某模某.正整
+	AREM:   "REM",   // 某模某
+	AREMU:  "REMU",  // 某模某.正整
+	ADIVW:  "DIVW",  // 某除某.普整, RV64M
+	ADIVUW: "DIVUW", // 某除某.普正, RV64M
+	AREMW:  "REMW",  // 某模某.普整, RV64M
+	AREMUW: "REMUW", // 某模某.普正, RV64M
 
 	// 20.5: Single-Precision Load and Store Instructions (F)
-	AFLW: "FLW", // 读浮点.单精
-	AFSW: "FSW", // 写浮点.单精
+	AFLW: "FLW", // 读浮点
+	AFSW: "FSW", // 写浮点
 
 	// 20.6: Single-Precision Floating-Point Computational Instructions
-	AFADD_S:   "FADD_S",   // 浮点加.单精
-	AFSUB_S:   "FSUB_S",   // 浮点减.单精
-	AFMUL_S:   "FMUL_S",   // 浮点乘.单精
-	AFDIV_S:   "FDIV_S",   // 浮点除.单精
-	AFSQRT_S:  "FSQRT_S",  // 浮点平方根.单精度
-	AFMIN_S:   "FMIN_S",   // 浮点最小值.单精度
-	AFMAX_S:   "FMAX_S",   // 浮点最大值.单精度
-	AFMADD_S:  "FMADD_S",  // 浮点乘加.单精度
-	AFMSUB_S:  "FMSUB_S",  // 浮点乘减.单精度
-	AFNMADD_S: "FNMADD_S", // 浮点负乘加.单精度
-	AFNMSUB_S: "FNMSUB_S", // 浮点负乘减.单精度
+	AFADD_S:   "FADD_S",   // 浮加浮
+	AFSUB_S:   "FSUB_S",   // 浮减浮
+	AFMUL_S:   "FMUL_S",   // 浮乘浮
+	AFDIV_S:   "FDIV_S",   // 浮除浮
+	AFSQRT_S:  "FSQRT_S",  // 浮平方根
+	AFMIN_S:   "FMIN_S",   // 浮最小值
+	AFMAX_S:   "FMAX_S",   // 浮最大值
+	AFMADD_S:  "FMADD_S",  // 浮正乘加
+	AFMSUB_S:  "FMSUB_S",  // 浮正乘减
+	AFNMADD_S: "FNMADD_S", // 浮负乘加
+	AFNMSUB_S: "FNMSUB_S", // 浮负乘减
 
 	// 20.7: Single-Precision Floating-Point Conversion and Move Instructions
-	AFCVT_W_S:  "FCVT_W_S",  // 浮点转换为字（有符号）
-	AFCVT_L_S:  "FCVT_L_S",  // 浮点转换为长字（有符号，RV64）
-	AFCVT_S_W:  "FCVT_S_W",  // 字转换为浮点（有符号）
-	AFCVT_S_L:  "FCVT_S_L",  // 长字转换为浮点（有符号，RV64）
-	AFCVT_WU_S: "FCVT_WU_S", // 浮点转换为字（无符号）
-	AFCVT_LU_S: "FCVT_LU_S", // 浮点转换为长字（无符号，RV64）
-	AFCVT_S_WU: "FCVT_S_WU", // 无符号字转换为浮点
-	AFCVT_S_LU: "FCVT_S_LU", // 无符号长字转换为浮点（RV64）
-	AFSGNJ_S:   "FSGNJ_S",   // 浮点符号复制
-	AFSGNJN_S:  "FSGNJN_S",  // 浮点符号取反复制
-	AFSGNJX_S:  "FSGNJX_S",  // 浮点符号异或复制
-	AFMV_X_W:   "FMV_X_W",   // 浮点位模式移动到整数寄存器
-	AFMV_W_X:   "FMV_W_X",   // 整数位模式移动到浮点寄存器
+	AFCVT_W_S:  "FCVT_W_S",  // 浮转普整
+	AFCVT_L_S:  "FCVT_L_S",  // 浮转长整(RV64)
+	AFCVT_S_W:  "FCVT_S_W",  // 普整转浮
+	AFCVT_S_L:  "FCVT_S_L",  // 长整转浮(RV64)
+	AFCVT_WU_S: "FCVT_WU_S", // 浮转普正
+	AFCVT_LU_S: "FCVT_LU_S", // 浮转长正(RV64)
+	AFCVT_S_WU: "FCVT_S_WU", // 普正转浮
+	AFCVT_S_LU: "FCVT_S_LU", // 长正转浮(RV64)
+	AFSGNJ_S:   "FSGNJ_S",   // 浮符号正复制
+	AFSGNJN_S:  "FSGNJN_S",  // 浮符号负复制
+	AFSGNJX_S:  "FSGNJX_S",  // 浮符号异复制
+	AFMV_X_W:   "FMV_X_W",   // 浮赋某.位模式
+	AFMV_W_X:   "FMV_W_X",   // 某赋浮.位模式
 
 	// 20.8: Single-Precision Floating-Point Compare Instructions
-	AFEQ_S: "FEQ_S", // 浮点相等比较.单精
-	AFLT_S: "FLT_S", // 浮点小于比较.单精
-	AFLE_S: "FLE_S", // 浮点小于或等于比较.单精
+	AFEQ_S: "FEQ_S", // 浮等浮
+	AFLT_S: "FLT_S", // 浮小浮
+	AFLE_S: "FLE_S", // 浮弱浮
 
 	// 20.9: Single-Precision Floating-Point Classify Instruction
-	AFCLASS_S: "FCLASS_S", // 浮点数分类.单精
+	AFCLASS_S: "FCLASS_S", // 浮点分类
 
 	// 21.3: Double-Precision Load and Store Instructions (D)
-	AFLD: "FLD", // 读浮点.双精
-	AFSD: "FSD", // 写浮点.双精
+	AFLD: "FLD", // 读双精
+	AFSD: "FSD", // 写双精
 
 	// 21.4: Double-Precision Floating-Point Computational Instructions
-	AFADD_D:   "FADD_D",
-	AFSUB_D:   "FSUB_D",
-	AFMUL_D:   "FMUL_D",
-	AFDIV_D:   "FDIV_D",
-	AFMIN_D:   "FMIN_D",
-	AFMAX_D:   "FMAX_D",
-	AFSQRT_D:  "FSQRT_D",
-	AFMADD_D:  "FMADD_D",
-	AFMSUB_D:  "FMSUB_D",
-	AFNMADD_D: "FNMADD_D",
-	AFNMSUB_D: "FNMSUB_D",
+	AFADD_D:   "FADD_D",   // 双精加
+	AFSUB_D:   "FSUB_D",   // 双精减
+	AFMUL_D:   "FMUL_D",   // 双精乘
+	AFDIV_D:   "FDIV_D",   // 双精除
+	AFMIN_D:   "FMIN_D",   // 双精平方根
+	AFMAX_D:   "FMAX_D",   // 双精最小值
+	AFSQRT_D:  "FSQRT_D",  // 双精最大值
+	AFMADD_D:  "FMADD_D",  // 双精正乘加
+	AFMSUB_D:  "FMSUB_D",  // 双精正乘减
+	AFNMADD_D: "FNMADD_D", // 双精负乘加
+	AFNMSUB_D: "FNMSUB_D", // 双精负乘减
 
 	// 21.5: Double-Precision Floating-Point Conversion and Move Instructions
-	AFCVT_W_D:  "FCVT_W_D",
-	AFCVT_L_D:  "FCVT_L_D",
-	AFCVT_D_W:  "FCVT_D_W",
-	AFCVT_D_L:  "FCVT_D_L",
-	AFCVT_WU_D: "FCVT_WU_D",
-	AFCVT_LU_D: "FCVT_LU_D",
-	AFCVT_D_WU: "FCVT_D_WU",
-	AFCVT_D_LU: "FCVT_D_LU",
-	AFCVT_S_D:  "FCVT_S_D",
-	AFCVT_D_S:  "FCVT_D_S",
-	AFSGNJ_D:   "FSGNJ_D",
-	AFSGNJN_D:  "FSGNJN_D",
-	AFSGNJX_D:  "FSGNJX_D",
-	AFMV_X_D:   "FMV_X_D",
-	AFMV_D_X:   "FMV_D_X",
+	AFCVT_W_D:  "FCVT_W_D",  // 双精转普整
+	AFCVT_L_D:  "FCVT_L_D",  // 双精转长整
+	AFCVT_D_W:  "FCVT_D_W",  // 普整转双精
+	AFCVT_D_L:  "FCVT_D_L",  // 长整转双精
+	AFCVT_WU_D: "FCVT_WU_D", // 双精转普正
+	AFCVT_LU_D: "FCVT_LU_D", // 双精转长正
+	AFCVT_D_WU: "FCVT_D_WU", // 普正转双精
+	AFCVT_D_LU: "FCVT_D_LU", // 长正转双精
+	AFCVT_S_D:  "FCVT_S_D",  // 双精转单精
+	AFCVT_D_S:  "FCVT_D_S",  // 单精转双精
+	AFSGNJ_D:   "FSGNJ_D",   // 双精符号正复制
+	AFSGNJN_D:  "FSGNJN_D",  // 双精符号负复制
+	AFSGNJX_D:  "FSGNJX_D",  // 双精符号异复制
+	AFMV_X_D:   "FMV_X_D",   // 双精赋某.位模式
+	AFMV_D_X:   "FMV_D_X",   // 某赋双精.位模式
 
 	// 21.6: Double-Precision Floating-Point Compare Instructions
-	AFEQ_D: "FEQ_D",
-	AFLT_D: "FLT_D",
-	AFLE_D: "FLE_D",
+	AFEQ_D: "FEQ_D", // 双精等
+	AFLT_D: "FLT_D", // 双精小
+	AFLE_D: "FLE_D", // 双精弱
 
 	// 21.7: Double-Precision Floating-Point Classify Instruction
-	AFCLASS_D: "FCLASS_D",
+	AFCLASS_D: "FCLASS_D", // 双精分类
 
 	// 伪指令(A_开头以区分)
 	// ISA (version 20191213)
@@ -522,4 +522,183 @@ var _Anames = []string{
 
 	// End marker
 	ALAST: "LAST",
+}
+
+var _ZhAnames = []string{
+	//
+	// Unprivileged ISA (version 20240411)
+	//
+
+	// 2.4: Integer Computational Instructions (RV32I)
+	AADDI:  "某加常", // 某加常, 加常量
+	ASLTI:  "某小常", // 某小常, 小于有符号常量时置位
+	ASLTIU: "某低常", // 某低常, 小于无符号常量时置位
+	AANDI:  "某与常", // 某与常, 常量与
+	AORI:   "某或常", // 某或常, 常量或
+	AXORI:  "某异常", // 某异常, 常量异或
+	ASLLI:  "某左常", // 某左常, 逻辑左移常量位
+	ASRLI:  "某右常", // 某右常, 逻辑右移常量位
+	ASRAI:  "某佑常", // 某佑常, 算术右移常量位
+	ALUI:   "常赋某", // 常赋某, 加载常量
+	AAUIPC: "计加常", // 计加常, 常量加程序计数器PC
+	AADD:   "某加某", // 某加某, 加法
+	ASLT:   "某小某", // 某小某, 有符号小于时置位
+	ASLTU:  "某低某", // 某低某, 无符号小于时置位
+	AAND:   "某与某", // 某与某, 与
+	AOR:    "某或某", // 某或某, 或
+	AXOR:   "某异某", // 某异某, 异或
+	ASLL:   "某左某", // 某左某, 逻辑左移
+	ASRL:   "某右某", // 某右某, 逻辑右移
+	ASUB:   "某减某", // 某减某, 减法
+	ASRA:   "某佑某", // 某佑某, 算术右移
+
+	// 2.5: Control Transfer Instructions (RV32I)
+	AJAL:  "转常址", // 转常址, 跳转到常量偏移地址
+	AJALR: "转某址", // 转某址, 跳转到寄存器偏移地址
+	ABEQ:  "若等转", // 若等转, 相等则跳转
+	ABNE:  "若异转", // 若异转, 不等则跳转
+	ABLT:  "若小转", // 若小转, 有符号小于则跳转
+	ABLTU: "若低转", // 若低转, 无符号小于则跳转
+	ABGE:  "若大转", // 若大转, 有符号答疑则跳转
+	ABGEU: "若高转", // 若高转, 无符号答疑则跳转
+
+	// 2.6: Load and Store Instructions (RV32I)
+	ALW:  "读普整", // 读普整, 读I32
+	ALH:  "读短整", // 读短整, 读I16
+	ALHU: "读短正", // 读短正, 读U16
+	ALB:  "读微整", // 读微整, 读I8
+	ALBU: "读微正", // 读微正, 读U8
+	ASW:  "写普整", // 写普整, 写I32
+	ASH:  "写短整", // 写短整, 写I16
+	ASB:  "写微整", // 写微整, 写I8
+
+	// 2.7: Memory Ordering Instructions (RV32I)
+	AFENCE: "读写毕", // 读写毕, 读写屏障
+
+	// 3.3.1: Environment Call and Breakpoint
+	AECALL:  "调用某", // 调用某
+	AEBREAK: "暂断点", // 暂断点
+
+	// 4.2: Integer Computational Instructions (RV64I)
+	AADDIW: "某加常.普整", // 某加常.普整
+	ASLLIW: "某左常.普整", // 某左常.普整
+	ASRLIW: "某右常.普整", // 某右常.普整
+	ASRAIW: "某佑常.普整", // 某佑常.普整
+	AADDW:  "某加某.普整", // 某加某.普整
+	ASLLW:  "某左某.普整", // 某左某.普整
+	ASRLW:  "某右某.普整", // 某右某.普整
+	ASUBW:  "某减某.普整", // 某减某.普整
+	ASRAW:  "某佑某.普整", // 某佑某.普整
+
+	// 4.3: Load and Store Instructions (RV64I)
+	ALWU: "读普正", // 读普正, 读U32
+	ALD:  "读长整", // 读长整, 读I64
+	ASD:  "写长整", // 写长整, 写I64
+
+	// 7.1: CSR Instructions (Zicsr)
+	ACSRRW:  "CSR写读",  // CSR写读
+	ACSRRS:  "CSR置读",  // CSR置读
+	ACSRRC:  "CSR清读",  // CSR清读
+	ACSRRWI: "CSR常写读", // CSR常写读
+	ACSRRSI: "CSR常置读", // CSR常置读
+	ACSRRCI: "CSR常清读", // CSR常清读
+
+	// 13.1: Multiplication Operations (RV32M/RV64M)
+	AMUL:    "某乘某",    // 某乘某
+	AMULH:   "某乘某.高整", // 某乘某.高整
+	AMULHU:  "某乘某.高正", // 某乘某.高正
+	AMULHSU: "某乘某.高混", // 某乘某.高混
+	AMULW:   "某乘某.普整", // 某乘某.普整, RV64M
+
+	// 13.2: Division Operations (RV32M/RV64M)
+	ADIV:   "某除某",    // 某除某
+	ADIVU:  "某模某.正整", // 某模某.正整
+	AREM:   "某模某",    // 某模某
+	AREMU:  "某模某.正整", // 某模某.正整
+	ADIVW:  "某除某.普整", // 某除某.普整, RV64M
+	ADIVUW: "某除某.普正", // 某除某.普正, RV64M
+	AREMW:  "某模某.普整", // 某模某.普整, RV64M
+	AREMUW: "某模某.普正", // 某模某.普正, RV64M
+
+	// 20.5: Single-Precision Load and Store Instructions (F)
+	AFLW: "读浮点", // 读浮点
+	AFSW: "写浮点", // 写浮点
+
+	// 20.6: Single-Precision Floating-Point Computational Instructions
+	AFADD_S:   "浮加浮",  // 浮加浮
+	AFSUB_S:   "浮减浮",  // 浮减浮
+	AFMUL_S:   "浮乘浮",  // 浮乘浮
+	AFDIV_S:   "浮除浮",  // 浮除浮
+	AFSQRT_S:  "浮平方根", // 浮平方根
+	AFMIN_S:   "浮最小值", // 浮最小值
+	AFMAX_S:   "浮最大值", // 浮最大值
+	AFMADD_S:  "浮正乘加", // 浮正乘加
+	AFMSUB_S:  "浮正乘减", // 浮正乘减
+	AFNMADD_S: "浮负乘加", // 浮负乘加
+	AFNMSUB_S: "浮负乘减", // 浮负乘减
+
+	// 20.7: Single-Precision Floating-Point Conversion and Move Instructions
+	AFCVT_W_S:  "浮转普整",    // 浮转普整
+	AFCVT_L_S:  "浮转长整",    // 浮转长整(RV64)
+	AFCVT_S_W:  "普整转浮",    // 普整转浮
+	AFCVT_S_L:  "长整转浮",    // 长整转浮(RV64)
+	AFCVT_WU_S: "浮转普正",    // 浮转普正
+	AFCVT_LU_S: "浮转长正",    // 浮转长正(RV64)
+	AFCVT_S_WU: "普正转浮",    // 普正转浮
+	AFCVT_S_LU: "长正转浮",    // 长正转浮(RV64)
+	AFSGNJ_S:   "浮符号正复制",  // 浮符号正复制
+	AFSGNJN_S:  "浮符号负复制",  // 浮符号负复制
+	AFSGNJX_S:  "浮符号异复制",  // 浮符号异复制
+	AFMV_X_W:   "浮赋某.位模式", // 浮赋某.位模式
+	AFMV_W_X:   "某赋浮.位模式", // 某赋浮.位模式
+
+	// 20.8: Single-Precision Floating-Point Compare Instructions
+	AFEQ_S: "浮等浮", // 浮等浮
+	AFLT_S: "浮小浮", // 浮小浮
+	AFLE_S: "浮弱浮", // 浮弱浮
+
+	// 20.9: Single-Precision Floating-Point Classify Instruction
+	AFCLASS_S: "浮点分类", // 浮点分类
+
+	// 21.3: Double-Precision Load and Store Instructions (D)
+	AFLD: "FLD", // 读双精
+	AFSD: "FSD", // 写双精
+
+	// 21.4: Double-Precision Floating-Point Computational Instructions
+	AFADD_D:   "双精加",   // 双精加
+	AFSUB_D:   "双精减",   // 双精减
+	AFMUL_D:   "双精乘",   // 双精乘
+	AFDIV_D:   "双精除",   // 双精除
+	AFMIN_D:   "双精平方根", // 双精平方根
+	AFMAX_D:   "双精最小值", // 双精最小值
+	AFSQRT_D:  "双精最大值", // 双精最大值
+	AFMADD_D:  "双精正乘加", // 双精正乘加
+	AFMSUB_D:  "双精正乘减", // 双精正乘减
+	AFNMADD_D: "双精负乘加", // 双精负乘加
+	AFNMSUB_D: "双精负乘减", // 双精负乘减
+
+	// 21.5: Double-Precision Floating-Point Conversion and Move Instructions
+	AFCVT_W_D:  "双精转普整",    // 双精转普整
+	AFCVT_L_D:  "双精转长整",    // 双精转长整
+	AFCVT_D_W:  "普整转双精",    // 普整转双精
+	AFCVT_D_L:  "长整转双精",    // 长整转双精
+	AFCVT_WU_D: "双精转普正",    // 双精转普正
+	AFCVT_LU_D: "双精转长正",    // 双精转长正
+	AFCVT_D_WU: "普正转双精",    // 普正转双精
+	AFCVT_D_LU: "长正转双精",    // 长正转双精
+	AFCVT_S_D:  "双精转单精",    // 双精转单精
+	AFCVT_D_S:  "单精转双精",    // 单精转双精
+	AFSGNJ_D:   "双精符号正复制",  // 双精符号正复制
+	AFSGNJN_D:  "双精符号负复制",  // 双精符号负复制
+	AFSGNJX_D:  "双精符号异复制",  // 双精符号异复制
+	AFMV_X_D:   "双精赋某.位模式", // 双精赋某.位模式
+	AFMV_D_X:   "某赋双精.位模式", // 某赋双精.位模式
+
+	// 21.6: Double-Precision Floating-Point Compare Instructions
+	AFEQ_D: "双精等", // 双精等
+	AFLT_D: "双精小", // 双精小
+	AFLE_D: "双精弱", // 双精弱
+
+	// 21.7: Double-Precision Floating-Point Classify Instruction
+	AFCLASS_D: "双精分类", // 双精分类
 }

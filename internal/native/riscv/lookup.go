@@ -11,6 +11,9 @@ import (
 
 // 根据名字查找寄存器(忽略大小写, 忽略下划线和点的区别)
 func LookupRegister(regName string) (r abi.RegType, ok bool) {
+	if regName == "" {
+		return
+	}
 	for i, s := range _Register {
 		if strEqualFold(s, regName) {
 			return abi.RegType(i), true
@@ -74,7 +77,15 @@ func ZhRegAliasString(r abi.RegType) string {
 
 // 根据名字查找汇编指令(忽略大小写, 忽略下划线和点的区别)
 func LookupAs(asName string) (as abi.As, ok bool) {
+	if asName == "" {
+		return
+	}
 	for i, s := range _Anames {
+		if strEqualFold(s, asName) {
+			return abi.As(i), true
+		}
+	}
+	for i, s := range _ZhAnames {
 		if strEqualFold(s, asName) {
 			return abi.As(i), true
 		}
@@ -83,7 +94,10 @@ func LookupAs(asName string) (as abi.As, ok bool) {
 }
 
 // 汇编指令转字符串格式
-func AsString(as abi.As) string {
+func AsString(as abi.As, asName string) string {
+	if asName != "" {
+		return asName
+	}
 	if int(as) < len(_Anames) {
 		return _Anames[as]
 	}

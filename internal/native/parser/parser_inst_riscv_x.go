@@ -36,6 +36,7 @@ func (p *parser) parseInst_riscv(fn *ast.Func) (inst *ast.Instruction) {
 	}
 
 	inst.Pos = p.pos
+	inst.AsName = p.lit
 	inst.As = p.parseAs()
 
 	switch inst.As {

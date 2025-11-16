@@ -45,7 +45,7 @@ func (p *CPU) StepRun(bus *device.Bus) error {
 
 	if err := p.execInst(bus, as, argRaw); err != nil {
 		return fmt.Errorf("exec instruntion(%08d:%s) failed at 0x%08X: %v", inst,
-			riscv.AsmSyntax(as, arg),
+			riscv.AsmSyntax(as, "", arg),
 			p.PC,
 			err,
 		)
@@ -68,7 +68,7 @@ func (p *CPU) execInst(bus *device.Bus, as abi.As, arg *abi.AsRawArgument) error
 	// 执行指令
 	switch as {
 	default:
-		return fmt.Errorf("unsupport: %s", riscv.AsString(as))
+		return fmt.Errorf("unsupport: %s", riscv.AsString(as, ""))
 
 	// RV32I Base Instruction Set
 
@@ -221,10 +221,10 @@ func (p *CPU) execInst(bus *device.Bus, as abi.As, arg *abi.AsRawArgument) error
 		// NOP
 	case riscv.AECALL:
 		// 涉及 CSR, 暂不支持
-		return fmt.Errorf("%s: unsupport", riscv.AsString(as))
+		return fmt.Errorf("%s: unsupport", riscv.AsString(as, ""))
 	case riscv.AEBREAK:
 		// 涉及 CSR, 暂不支持
-		return fmt.Errorf("%s: unsupport", riscv.AsString(as))
+		return fmt.Errorf("%s: unsupport", riscv.AsString(as, ""))
 
 	// RV64I Base Instruction Set (in addition to RV32I)
 
@@ -268,33 +268,33 @@ func (p *CPU) execInst(bus *device.Bus, as abi.As, arg *abi.AsRawArgument) error
 
 	case riscv.ACSRRW:
 		// 涉及 CSR, 暂不支持
-		return fmt.Errorf("%s: unsupport", riscv.AsString(as))
+		return fmt.Errorf("%s: unsupport", riscv.AsString(as, ""))
 	case riscv.ACSRRS:
 		// 涉及 CSR, 暂不支持
-		return fmt.Errorf("%s: unsupport", riscv.AsString(as))
+		return fmt.Errorf("%s: unsupport", riscv.AsString(as, ""))
 	case riscv.ACSRRC:
 		// 涉及 CSR, 暂不支持
-		return fmt.Errorf("%s: unsupport", riscv.AsString(as))
+		return fmt.Errorf("%s: unsupport", riscv.AsString(as, ""))
 	case riscv.ACSRRWI:
 		// 涉及 CSR, 暂不支持
-		return fmt.Errorf("%s: unsupport", riscv.AsString(as))
+		return fmt.Errorf("%s: unsupport", riscv.AsString(as, ""))
 	case riscv.ACSRRSI:
 		// 涉及 CSR, 暂不支持
-		return fmt.Errorf("%s: unsupport", riscv.AsString(as))
+		return fmt.Errorf("%s: unsupport", riscv.AsString(as, ""))
 	case riscv.ACSRRCI:
 		// 涉及 CSR, 暂不支持
-		return fmt.Errorf("%s: unsupport", riscv.AsString(as))
+		return fmt.Errorf("%s: unsupport", riscv.AsString(as, ""))
 
 	// RV32M Standard Extension
 
 	case riscv.AMUL:
 		p.RegX[arg.Rd] = p.RegX[arg.Rs1] * p.RegX[arg.Rs2]
 	case riscv.AMULH:
-		return fmt.Errorf("%s: unsupport", riscv.AsString(as))
+		return fmt.Errorf("%s: unsupport", riscv.AsString(as, ""))
 	case riscv.AMULHSU:
-		return fmt.Errorf("%s: unsupport", riscv.AsString(as))
+		return fmt.Errorf("%s: unsupport", riscv.AsString(as, ""))
 	case riscv.AMULHU:
-		return fmt.Errorf("%s: unsupport", riscv.AsString(as))
+		return fmt.Errorf("%s: unsupport", riscv.AsString(as, ""))
 	case riscv.ADIV:
 		if p.RegX[arg.Rs2] != 0 {
 			p.RegX[arg.Rd] = uint64(int64(p.RegX[arg.Rs1]) / int64(p.RegX[arg.Rs2]))

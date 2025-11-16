@@ -7,11 +7,14 @@ import "testing"
 
 func TestAnames(t *testing.T) {
 	for i, name := range _Anames {
+		if name == "" {
+			continue
+		}
 		as, ok := LookupAs(name)
 		if !ok {
 			t.Fatalf("%d: %q not found", i, name)
 		}
-		if got := AsString(as); got != name {
+		if got := AsString(as, ""); got != name {
 			t.Fatalf("%d: expect = %q, got = %q", i, name, got)
 		}
 	}

@@ -129,6 +129,7 @@ type Instruction struct {
 	Doc     *CommentGroup   // 关联文档
 	Label   string          // 指令对应的 Label, 可以只是 Label
 	As      abi.As          // 汇编指令
+	AsName  string          // 指令的名字(支持多语言)
 	Arg     *abi.AsArgument // 指令参数
 	Comment *Comment        // 尾部单行注释
 }
