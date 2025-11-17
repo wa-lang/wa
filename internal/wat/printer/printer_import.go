@@ -32,7 +32,7 @@ func (p *watPrinter) printImport() error {
 			fmt.Fprintf(p.w, "(import %q %q", importSpec.ObjModule, importSpec.ObjName)
 			fmt.Fprintf(p.w, " (memory")
 			if s := importSpec.Memory.Name; s != "" {
-				fmt.Fprintf(p.w, " $"+s)
+				fmt.Fprint(p.w, " $"+s)
 			}
 			fmt.Fprintf(p.w, " %d", importSpec.Memory.Pages)
 			if importSpec.Memory.MaxPages != 0 {
@@ -55,7 +55,6 @@ func (p *watPrinter) printImport_global(importSpec *ast.ImportSpec) {
 		watPrinter_identOrIndex(importSpec.GlobalName),
 		importSpec.GlobalType,
 	)
-	return
 }
 
 func (p *watPrinter) printImport_func(importSpec *ast.ImportSpec) {
@@ -76,5 +75,4 @@ func (p *watPrinter) printImport_func(importSpec *ast.ImportSpec) {
 	}
 
 	fmt.Fprint(p.w, ")")
-	return
 }

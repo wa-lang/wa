@@ -64,8 +64,6 @@ func (p *watPrinter) printFuncs_body(fn *ast.Func) {
 	for _, ins := range fn.Body.Insts {
 		p.printFuncs_body_ins(ins, 0)
 	}
-
-	return
 }
 
 func watPrinter_printFuncs_indent(w io.Writer, indent string, blkLevel int) {

@@ -43,5 +43,4 @@ func (p *watPrinter) printType_func(typ *ast.TypeSection) {
 	}
 
 	fmt.Fprintln(p.w, "))")
-	return
 }

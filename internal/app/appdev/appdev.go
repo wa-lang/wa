@@ -90,7 +90,7 @@ func RunCountCodeLines(c *cli.Context) {
 }
 
 func needSkip(path string, data []byte) bool {
-	if !hasExt(path, ".wa", ".go", ".ws") {
+	if !hasExt(path, ".wa", ".wz", ".go", ".ws") {
 		return true
 	}
 	if strings.Contains(path, "3rdparty") {
