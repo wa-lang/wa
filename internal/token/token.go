@@ -335,14 +335,10 @@ func (op Token) Precedence() int {
 	return LowestPrec
 }
 
-var (
-	keywords      map[string]Token
-	keywords_中文乱序 map[string]Token
-)
+var keywords map[string]Token
 
 func init() {
 	keywords = make(map[string]Token)
-	keywords_中文乱序 = make(map[string]Token)
 
 	for i := keyword_beg + 1; i < keyword_end; i++ {
 		keywords[tokens[i]] = i
@@ -351,20 +347,6 @@ func init() {
 	for i := wz_keyword_beg + 1; i < wz_keyword_end; i++ {
 		keywords[tokens[i]] = i
 	}
-
-	// 中文乱序的关键字
-	for i := wz_keyword_beg + 1; i < wz_keyword_end; i++ {
-		keyword := 中文字符串逆序(tokens[i])
-		keywords_中文乱序[keyword] = i
-	}
-}
-
-func 中文字符串逆序(s string) string {
-	runes := []rune(s)
-	for i, j := 0, len(runes)-1; i < j; i, j = i+1, j-1 {
-		runes[i], runes[j] = runes[j], runes[i]
-	}
-	return string(runes)
 }
 
 // Lookup maps an identifier to its keyword token or IDENT (if not a keyword).
@@ -372,25 +354,11 @@ func Lookup(ident string) Token {
 	if tok, is_keyword := keywords[ident]; is_keyword {
 		return tok
 	}
-	if tok, is_keyword := keywords_中文乱序[ident]; is_keyword {
-		return tok
-	}
 	return IDENT
 }
 
 func LookupEx(ident string, useWzMode bool) Token {
 	if tok, is_keyword := keywords[ident]; is_keyword {
-		if useWzMode {
-			if tok.IsWzKeyword() {
-				return tok
-			}
-		} else {
-			if tok.IsKeyword() {
-				return tok
-			}
-		}
-	}
-	if tok, is_keyword := keywords_中文乱序[ident]; is_keyword {
 		if useWzMode {
 			if tok.IsWzKeyword() {
 				return tok
