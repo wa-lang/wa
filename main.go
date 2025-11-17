@@ -19,6 +19,7 @@ import (
 	"wa-lang.org/wa/internal/app/appcir"
 	"wa-lang.org/wa/internal/app/appdev"
 	"wa-lang.org/wa/internal/app/appdoc"
+	"wa-lang.org/wa/internal/app/appflash"
 	"wa-lang.org/wa/internal/app/appfmt"
 	"wa-lang.org/wa/internal/app/appgo2wa"
 	"wa-lang.org/wa/internal/app/appgo2wz"
@@ -112,6 +113,7 @@ func main() {
 		appwat2c.CmdWat2c,
 
 		// 待完善的子命令(隐藏)
+		appflash.CmdFlash,
 		apprv2elf.CmdRv2elf,
 		appwat2rv.CmdWat2rv,
 		appwemu.CmdWEmu,
