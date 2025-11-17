@@ -16,9 +16,17 @@ import (
 // Loop:
 // }
 
-func (p *parser) parseFunc() *ast.Func {
+// 函数 $add(%a:普整, %b:普整, %c:普整) => 双精:
+//     local %d: i32 # 局部变量必须先声明, i32 大小的空间
+//
+//     # 指令
+// Loop:
+// 完毕
+
+func (p *parser) parseFunc(tok token.Token) *ast.Func {
 	fn := &ast.Func{
 		Pos:  p.pos,
+		Tok:  tok,
 		Type: &ast.FuncType{Pos: p.pos},
 		Body: new(ast.FuncBody),
 	}
@@ -93,13 +101,21 @@ func (p *parser) parseFunc_body(fn *ast.Func) {
 	assert(p.cpu == abi.RISCV64 || p.cpu == abi.RISCV32)
 
 	fn.Body.Pos = p.pos
-	p.acceptToken(token.LBRACE)
-	defer p.acceptToken(token.RBRACE)
+
+	if fn.Tok == token.FUNC_zh {
+		p.acceptToken(token.COLON)
+		defer p.acceptToken(token.END_zh)
+	} else {
+		p.acceptToken(token.LBRACE)
+		defer p.acceptToken(token.RBRACE)
+	}
 
 Loop:
 	for {
 		switch p.tok {
-		case token.RBRACE:
+		case token.EOF, token.ILLEGAL:
+			break Loop
+		case token.RBRACE, token.END_zh:
 			break Loop
 		case token.COMMENT:
 			commentObj := p.parseCommentGroup(false)

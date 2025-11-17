@@ -62,17 +62,18 @@ const (
 
 	// 中文版关键字
 
-	I32_zh    // 整32
-	I64_zh    // 整64
-	U32_zh    // 无整32
-	U64_zh    // 无整64
-	F32_zh    // 浮32
-	F64_zh    // 浮64
+	I32_zh    // 普整
+	I64_zh    // 长整
+	U32_zh    // 普正
+	U64_zh    // 长正
+	F32_zh    // 单精
+	F64_zh    // 双精
 	PTR_zh    // 指针
 	CONST_zh  // 常量
 	GLOBAL_zh // 全局
 	LOCAL_zh  // 局部
 	FUNC_zh   // 函数
+	END_zh    // 完毕
 
 	keyword_end // 关键字结束
 )
@@ -136,17 +137,18 @@ var tokens = [...]string{
 	LOCAL:  "local",
 	FUNC:   "func",
 
-	I32_zh:    "整32",
-	I64_zh:    "整64",
-	U32_zh:    "无整32",
-	U64_zh:    "无整64",
-	F32_zh:    "浮32",
-	F64_zh:    "浮64",
+	I32_zh:    "普整",
+	I64_zh:    "长整",
+	U32_zh:    "普正",
+	U64_zh:    "长正",
+	F32_zh:    "单精",
+	F64_zh:    "双精",
 	PTR_zh:    "指针",
 	CONST_zh:  "常量",
 	GLOBAL_zh: "全局",
 	LOCAL_zh:  "局部",
 	FUNC_zh:   "函数",
+	END_zh:    "完毕",
 }
 
 func (tok Token) String() string {

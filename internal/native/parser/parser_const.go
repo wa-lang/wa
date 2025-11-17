@@ -13,8 +13,8 @@ import (
 // const $B = 12.5
 // const $C = "abc"
 
-func (p *parser) parseConst() *ast.Const {
-	pConst := &ast.Const{Pos: p.pos}
+func (p *parser) parseConst(tok token.Token) *ast.Const {
+	pConst := &ast.Const{Pos: p.pos, Tok: tok}
 
 	pConst.Doc = p.parseDocComment(&p.prog.Comments, pConst.Pos)
 	if pConst.Doc != nil {

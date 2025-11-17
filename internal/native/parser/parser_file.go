@@ -24,15 +24,15 @@ func (p *parser) parseFile() {
 			p.prog.Comments = append(p.prog.Comments, commentObj)
 			p.prog.Objects = append(p.prog.Objects, commentObj)
 		case token.CONST, token.CONST_zh:
-			constObj := p.parseConst()
+			constObj := p.parseConst(p.tok)
 			p.prog.Consts = append(p.prog.Consts, constObj)
 			p.prog.Objects = append(p.prog.Objects, constObj)
 		case token.GLOBAL, token.GLOBAL_zh:
-			globalObj := p.parseGlobal()
+			globalObj := p.parseGlobal(p.tok)
 			p.prog.Globals = append(p.prog.Globals, globalObj)
 			p.prog.Objects = append(p.prog.Objects, globalObj)
 		case token.FUNC, token.FUNC_zh:
-			funcObj := p.parseFunc()
+			funcObj := p.parseFunc(p.tok)
 			p.prog.Funcs = append(p.prog.Funcs, funcObj)
 			p.prog.Objects = append(p.prog.Objects, funcObj)
 		default:

@@ -18,8 +18,8 @@ import (
 //     9: i32(123), # 从第9字节开始
 // }
 
-func (p *parser) parseGlobal() *ast.Global {
-	g := &ast.Global{Pos: p.pos}
+func (p *parser) parseGlobal(tok token.Token) *ast.Global {
+	g := &ast.Global{Pos: p.pos, Tok: tok}
 
 	g.Doc = p.parseDocComment(&p.prog.Comments, g.Pos)
 	if g.Doc != nil {
