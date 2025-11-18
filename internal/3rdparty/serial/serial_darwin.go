@@ -94,15 +94,11 @@ func openPort(name string, baud int, databits byte, parity Parity, stopbits Stop
 	t.Cc[syscall.VMIN] = vmin
 	t.Cc[syscall.VTIME] = vtime
 
-	// 在 Darwin/x86_64 和 arm64 上, TIOCSETA 的值依赖于 _IOC_SIZEBITS 和 sizeof(struct termios)
-	// 常见的 TIOCSETA 值是 0x40487408 (对应 68 字节 Termios 结构体)
-	// WARN: 硬编码常量
-	const tiocseta = 0x40487408
-
+	// WARN: 需要验证 Darwin 系统下 unix_TIOCSETA 是否有效
 	if _, _, errno := syscall.Syscall6(
 		syscall.SYS_IOCTL,
 		uintptr(fd),
-		tiocseta,
+		unix_TIOCSETA,
 		uintptr(unsafe.Pointer(&t)),
 		0,
 		0,
