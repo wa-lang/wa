@@ -1,67 +1,66 @@
-# Firmware Image Format
+# 固件镜像格式
 
 https://docs.espressif.com/projects/esptool/en/latest/esp32c3/advanced-topics/firmware-image-format.html
 
-This is technical documentation for the firmware image format used by the ROM bootloader. These are the images created by `esptool elf2image`.
+本文档是ROM引导程序所使用的固件镜像格式的技术文档。这些是由`esptool elf2image`创建的镜像。
 
 ![](./images/firmware_image_format.png)
 
-The firmware file consists of a header, an extended header, a variable number of data segments and a footer. Multi-byte fields are little-endian.
+固件文件由头部、扩展头部、可变数量的数据段和尾部组成。多字节字段是小端序。
 
-## File Header
+## 文件头部(Image header)
 
 ![](./images/firmware_image_header_format.png)
 
-The image header is 8 bytes long:
+镜像头部长度为8字节：
 
-| Byte | Description |
+| 字节 | 描述 |
 | ---- | ----------- |
-| 0    | Magic number (always `0xE9`) |
-| 1    | Number of segments |
-| 2    | SPI Flash Mode (0 = QIO, 1 = QOUT, 2 = DIO, 3 = DOUT) |
-| 3    | High four bits - Flash size (0 = 1MB, 1 = 2MB, 2 = 4MB, 3 = 8MB, 4 = 16MB) |
-| 3   | Low four bits - Flash frequency (0 = 40MHz, 1 = 26MHz, 2 = 20MHz, 0xf = 80MHz) |
-| 4-7  | Entry point address |
+| 0    | 魔术数字（始终为`0xE9`） |
+| 1    | 段数 |
+| 2    | SPI Flash模式（0 = QIO，1 = QOUT，2 = DIO，3 = DOUT） |
+| 3    | 高四位 - Flash大小（0 = 1MB，1 = 2MB，2 = 4MB，3 = 8MB，4 = 16MB） |
+| 3   | 低四位 - Flash频率（0 = 40MHz，1 = 26MHz，2 = 20MHz，0xf = 80MHz） |
+| 4-7  | 入口点地址 |
 
-`esptool` overrides the 2nd and 3rd (counted from 0) bytes according to the SPI flash info provided through the command line options (see :ref:`flash-modes`).
-These bytes are only overridden if this is a bootloader image (an image written to a correct bootloader offset of {IDF_TARGET_BOOTLOADER_OFFSET}).
-In this case, the appended SHA256 digest, which is a cryptographic hash used to verify the integrity of the image, is also updated to reflect the header changes.
-Generating images without SHA256 digest can be achieved by running `esptool elf2image` with the `--dont-append-digest` argument.
+`esptool`根据通过命令行选项提供的SPI闪存信息覆盖第2和第3（从0开始计数）字节（参见: [Flash Modes](https://docs.espressif.com/projects/esptool/en/latest/esp32c3/esptool/flash-modes.html#flash-modes)）。
+仅当这是引导程序镜像（写入 0x0 的正确引导程序偏移量的镜像）时，才会覆盖这些字节。
+在这种情况下，附加的SHA256摘要（用于验证镜像完整性的加密哈希）也会更新以反映头部变化。
+可以通过运行带有`--dont-append-digest`参数的`esptool elf2image`来生成没有SHA256摘要的镜像。
 
-## Extended File Header
+## 扩展文件头部(Image extended header)
 
 ![](./images/firmware_image_ext_header_format.png)
 
-| Byte | Description |
+| 字节 | 描述 |
 | ---- | ----------- |
-| 0    | WP pin when SPI pins set via eFuse (read by ROM bootloader)
-| 1-3  | Drive settings for the SPI flash pins (read by ROM bootloader)
-| 4-5  | Chip ID (which ESP device is this image for)
-| 6    | Minimal chip revision supported by the image (deprecated, use the following field)
-| 7-8  | Minimal chip revision supported by the image (in format: major * 100 + minor)
-| 9-10 | Maximal chip revision supported by the image (in format: major * 100 + minor)
-| 11-14 | Reserved bytes in additional header space, currently unused
-| 15 | Hash appended (If 1, SHA256 digest is appended after the checksum)
+| 0    | 通过eFuse设置SPI引脚时的WP引脚（由ROM引导程序读取） |
+| 1-3  | SPI闪存引脚的驱动设置（由ROM引导程序读取） |
+| 4-5  | 芯片ID（此镜像是为哪个ESP设备准备的） |
+| 6    | 镜像支持的最低芯片版本（已弃用，请使用以下字段） |
+| 7-8  | 镜像支持的最低芯片版本（格式：major * 100 + minor） |
+| 9-10 | 镜像支持的最高芯片版本（格式：major * 100 + minor） |
+| 11-14 | 附加头部空间中的保留字节，当前未使用 |
+| 15 | 附加的哈希（如果为1，则SHA256摘要附加在校验和之后） |
 
-## Segment
+## 段
 
-| Byte | Description |
+| 字节 | 描述 |
 | ---- | ----------- |
-| 0-3  | Memory offset |
-| 4-7  | Segment size
-| 8…n  | Data |
+| 0-3  | 内存偏移量 |
+| 4-7  | 段大小 |
+| 8…n  | 数据 |
 
 
-## Footer
+## 尾部
 
-The file is padded with zeros until its size is one byte less than a multiple of 16 bytes. A last byte (thus making the file size a multiple of 16) is the checksum of the data of all segments. The checksum is defined as the xor-sum of all bytes and the byte `0xEF`.
+文件用零填充，直到其大小比16字节的倍数少1字节。最后一个字节（从而使文件大小成为16的倍数）是所有段数据的校验和。校验和定义为所有字节与字节`0xEF`的异或和。
 
-If `hash appended` in the extended file header is `0x01`, a SHA256 digest “simple hash” (of the entire image) is appended after the checksum. This digest is separate to secure boot and only used for detecting corruption. The SPI flash info cannot be changed during flashing if hash is appended after the image.
+如果扩展文件头部中的“附加的哈希”为`0x01`，则在校验和之后附加（整个镜像的）SHA256摘要“简单哈希”。此摘要与安全启动分开，仅用于检测损坏。如果镜像后附加了哈希，则在烧写期间不能更改SPI闪存信息。
 
-If secure boot is enabled, a signature is also appended (and the simple hash is included in the signed data). This image signature is [Secure Boot V1](https://docs.espressif.com/projects/esp-idf/en/latest/esp32/security/secure-boot-v1.html#image-signing-algorithm) and [Secure Boot V2](https://docs.espressif.com/projects/esp-idf/en/latest/esp32/security/secure-boot-v2.html#signature-block-format) specific.
+如果启用了安全启动，还会附加签名（并且简单哈希包含在已签名的数据中）。此镜像签名是[Secure Boot V1](https://docs.espressif.com/projects/esp-idf/en/latest/esp32/security/secure-boot-v1.html#image-signing-algorithm)和[Secure Boot V2](https://docs.espressif.com/projects/esp-idf/en/latest/esp32/security/secure-boot-v2.html#signature-block-format)特定的。
 
 
-## Analyzing a Binary Image
+## 分析二进制镜像
 
-To analyze a binary image and get a complete summary of its headers and segments, use the [image-info](https://docs.espressif.com/projects/esptool/en/latest/esp32c3/esptool/basic-commands.html#image-info) command.
-
+要分析二进制镜像并获取其头部和段的完整摘要，请使用[image-info](https://docs.espressif.com/projects/esptool/en/latest/esp32c3/esptool/basic-commands.html#image-info)命令。
