@@ -8,9 +8,18 @@ run:
 	$(WA) wemu hello_riscv64.ws.elf.exe
 	qemu-system-riscv64 -machine virt -nographic -bios none -kernel hello_riscv64.ws.elf.exe
 
+run32:
+	$(WA) rv2elf -arch=riscv32 hello_riscv32.ws
+	$(WA) wemu hello_riscv32.ws.elf.exe
+	qemu-system-riscv32 -machine virt -nographic -bios none -kernel hello_riscv32.ws.elf.exe
+
 run-zh:
 	$(WA) rv2elf hello_riscv64_zh.ws
 	$(WA) wemu hello_riscv64_zh.ws.elf.exe
+
+run32-zh:
+	$(WA) rv2elf -arch=riscv32 hello_riscv32_zh.ws
+	$(WA) wemu hello_riscv32_zh.ws.elf.exe
 
 fmt:
 	$(WA) fmt -riscv hello_riscv64_zh.ws > a.out.ws

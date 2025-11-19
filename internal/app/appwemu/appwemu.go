@@ -12,6 +12,7 @@ import (
 	"wa-lang.org/wa/internal/3rdparty/cli"
 	"wa-lang.org/wa/internal/native/abi"
 	"wa-lang.org/wa/internal/native/wemu"
+	"wa-lang.org/wa/internal/native/wemu/device/uart"
 )
 
 var CmdWEmu = &cli.Command{
@@ -25,6 +26,11 @@ var CmdWEmu = &cli.Command{
 			Aliases: []string{"d"},
 			Usage:   "wemu debug run mode",
 		},
+		&cli.StringFlag{
+			Name:  "uart",
+			Usage: "set uart type(qemu|esp32c3)",
+			Value: "qemu",
+		},
 	},
 	Action: func(c *cli.Context) error {
 		if c.NArg() == 0 {
@@ -33,6 +39,18 @@ var CmdWEmu = &cli.Command{
 		}
 
 		debugRun := c.Bool("debug")
+		opt := new(wemu.Option)
+
+		// 串口映射的类型
+		switch s := c.String("uart"); s {
+		case "esp32c3":
+			opt.UARTBase = uart.UART_BASE_ESP32_C3
+		case "qemu":
+			opt.UARTBase = uart.UART_BASE_QEMU
+		default:
+			fmt.Fprintf(os.Stderr, "invalid uart type: %q\n", s)
+			os.Exit(1)
+		}
 
 		// 1. 解析 elf 文件
 		prog, err := readELF(c.Args().First())
@@ -42,7 +60,7 @@ var CmdWEmu = &cli.Command{
 		}
 
 		// 2. 创建 VM
-		vm := wemu.NewWEmu(prog)
+		vm := wemu.NewWEmu(prog, opt)
 
 		// 3. 执行
 		if debugRun {
@@ -71,6 +89,22 @@ func readELF(filename string) (prog *abi.LinkedProgram, err error) {
 	}
 	defer f.Close()
 
+	// 判断CPU类型
+	if f.Machine != elf.EM_RISCV {
+		return nil, fmt.Errorf("wemu: donot support machine %v", f.Machine)
+	}
+
+	// 判断机器指针长度
+	switch f.Class {
+	case elf.ELFCLASS32:
+		prog.CPU = abi.RISCV32
+	case elf.ELFCLASS64:
+		prog.CPU = abi.RISCV64
+	default:
+		return nil, fmt.Errorf("unsupported ELF class: %v", f.Class)
+	}
+
+	// 读取数据段和指令段
 	for _, p := range f.Progs {
 		if p.Type != elf.PT_LOAD || p.Flags&elf.PF_R == 0 {
 			continue // 跳过不可读部分

@@ -16,6 +16,7 @@ import (
 	"wa-lang.org/wa/internal/native/wemu/device/dram"
 	"wa-lang.org/wa/internal/native/wemu/device/power"
 	"wa-lang.org/wa/internal/native/wemu/device/uart"
+	"wa-lang.org/wa/internal/native/wemu/riscv32"
 	"wa-lang.org/wa/internal/native/wemu/riscv64"
 )
 
@@ -25,9 +26,14 @@ const (
 	KDeviceAddr_uart  = 0
 )
 
+// 外设配置
+type Option struct {
+	UARTBase uint64
+}
+
 // 模拟器
 type WEmu struct {
-	CPU   riscv64.CPU        // 处理器
+	CPU   device.CPU         // 处理器
 	Bus   *device.Bus        // 外设总线
 	Power *power.Power       // 电源设备
 	Dram  *dram.DRAM         // 内存设备
@@ -36,13 +42,29 @@ type WEmu struct {
 }
 
 // 构建模拟器
-func NewWEmu(prog *abi.LinkedProgram) *WEmu {
+func NewWEmu(prog *abi.LinkedProgram, opt *Option) *WEmu {
+	if opt == nil {
+		opt = new(Option)
+	}
+	if opt.UARTBase == 0 {
+		opt.UARTBase = uart.UART_BASE_DEFAULT
+	}
+
 	p := &WEmu{
 		Bus:   device.NewBus(),
 		Power: power.NewPower("power", power.POWER_BASE),
 		Dram:  dram.NewDRAM("memory", dram.DRAM_BASE, dram.DRAM_SIZE, false),
-		Uart:  uart.NewUART("uart", uart.UART_BASE),
+		Uart:  uart.NewUART("uart", opt.UARTBase),
 		Prog:  prog,
+	}
+
+	switch prog.CPU {
+	case abi.RISCV32:
+		p.CPU = riscv32.NewCPU()
+	case abi.RISCV64:
+		p.CPU = riscv64.NewCPU()
+	default:
+		panic(fmt.Sprintf("unknown cpu type: %v", prog.CPU))
 	}
 
 	// 映射总线设备
@@ -134,7 +156,7 @@ func (p *WEmu) DebugRun() error {
 			for !p.Power.IsShutdown() {
 				stepcnt++
 				if traflag {
-					fmt.Print(p.FormatInstruction(p.CPU.PC, 1))
+					fmt.Print(p.FormatInstruction(p.CPU.GetPC(), 1))
 				}
 
 				// 单步执行(可能执行HALT关机指令)
@@ -159,7 +181,7 @@ func (p *WEmu) DebugRun() error {
 			var i int
 			for i = 0; i < stepcnt && !p.Power.IsShutdown(); i++ {
 				if traflag {
-					fmt.Print(p.FormatInstruction(p.CPU.PC, 1))
+					fmt.Print(p.FormatInstruction(p.CPU.GetPC(), 1))
 				}
 
 				// 单步执行(可能执行关机指令)
@@ -171,7 +193,7 @@ func (p *WEmu) DebugRun() error {
 
 		case "jump", "j":
 			if n >= 2 {
-				p.CPU.PC = uint64(x1)
+				p.CPU.SetPC(uint64(x1))
 				fmt.Printf("PC = 0x%08X\n", x1)
 			} else {
 				fmt.Println("invalid command")
@@ -179,7 +201,7 @@ func (p *WEmu) DebugRun() error {
 
 		case "xregs", "x":
 			regStart := 0
-			regNum := len(p.CPU.RegX)
+			regNum := p.CPU.XRegNum()
 			if n > 1 {
 				regStart = x1
 			}
@@ -187,20 +209,20 @@ func (p *WEmu) DebugRun() error {
 				regNum = x2
 			}
 
-			fmt.Printf("PC  = 0x%08X\n", p.CPU.PC)
-			for i := regStart; i < len(p.CPU.RegX) && i < (regStart+regNum); i++ {
+			fmt.Printf("PC  = 0x%08X\n", p.CPU.GetPC())
+			for i := regStart; i < p.CPU.XRegNum() && i < (regStart+regNum); i++ {
 				reg, ok := riscv.LookupRegister(fmt.Sprintf("X%d", i))
 				if !ok {
 					break
 				}
 				fmt.Printf("X%-2d = 0x%08X # %s\n",
-					i, p.CPU.RegX[i], riscv.RegAliasString(reg),
+					i, p.CPU.GetXReg(i), riscv.RegAliasString(reg),
 				)
 			}
 
 		case "fregs", "f":
 			regStart := 0
-			regNum := len(p.CPU.RegF)
+			regNum := p.CPU.FRegNum()
 			if n > 1 {
 				regStart = x1
 			}
@@ -208,20 +230,20 @@ func (p *WEmu) DebugRun() error {
 				regNum = x2
 			}
 
-			fmt.Printf("PC  = 0x%08X\n", p.CPU.PC)
-			for i := regStart; i < len(p.CPU.RegX) && i < (regStart+regNum); i++ {
+			fmt.Printf("PC  = 0x%08X\n", p.CPU.GetPC())
+			for i := regStart; i < p.CPU.FRegNum() && i < (regStart+regNum); i++ {
 				reg, ok := riscv.LookupRegister(fmt.Sprintf("F%d", i))
 				if !ok {
 					break
 				}
 				fmt.Printf("F%-2d = %v (0x%08X) # %s\n",
-					i, p.CPU.RegF[i], math.Float64bits(p.CPU.RegF[i]),
+					i, p.CPU.GetFReg(i), math.Float64bits(p.CPU.GetFReg(i)),
 					riscv.RegAliasString(reg),
 				)
 			}
 
 		case "iMem", "imem", "i":
-			pc := p.CPU.PC
+			pc := p.CPU.GetPC()
 			cnt := 1
 			if n >= 2 {
 				pc = uint64(x1)
@@ -233,7 +255,7 @@ func (p *WEmu) DebugRun() error {
 			fmt.Print(p.FormatInstruction(pc, cnt))
 
 		case "dMem", "dmem", "d":
-			pc := p.CPU.PC
+			pc := p.CPU.GetPC()
 			cnt := 1
 
 			if n >= 2 {

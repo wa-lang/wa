@@ -3,7 +3,7 @@
 
 // 重要: 请保持 RV32 和 RV64 版本完全一致, RVUInt 在另一个文件定义.
 
-package riscv64
+package riscv32
 
 import (
 	"fmt"

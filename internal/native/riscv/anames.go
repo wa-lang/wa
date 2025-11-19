@@ -661,8 +661,8 @@ var _ZhAnames = []string{
 	AFCLASS_S: "浮点分类", // 浮点分类
 
 	// 21.3: Double-Precision Load and Store Instructions (D)
-	AFLD: "FLD", // 读双精
-	AFSD: "FSD", // 写双精
+	AFLD: "读双精", // 读双精
+	AFSD: "写双精", // 写双精
 
 	// 21.4: Double-Precision Floating-Point Computational Instructions
 	AFADD_D:   "双精加",   // 双精加

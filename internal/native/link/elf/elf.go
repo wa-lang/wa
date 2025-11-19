@@ -104,7 +104,25 @@ const (
 	PF_MASKPROC ProgFlag = 0xf0000000 // Processor-specific.
 )
 
-// ELF 头
+// ELF32 头
+type ElfHeader32 struct {
+	Ident     [EI_NIDENT]byte // File identification.
+	Type      uint16          // File type.
+	Machine   uint16          // Machine architecture.
+	Version   uint32          // ELF format version.
+	Entry     uint32          // Entry point.
+	Phoff     uint32          // Program header file offset.
+	Shoff     uint32          // Section header file offset.
+	Flags     uint32          // Architecture-specific flags.
+	Ehsize    uint16          // Size of ELF header in bytes.
+	Phentsize uint16          // Size of program header entry.
+	Phnum     uint16          // Number of program header entries.
+	Shentsize uint16          // Size of section header entry.
+	Shnum     uint16          // Number of section header entries.
+	Shstrndx  uint16          // Section name strings section.
+}
+
+// ELF64 头
 type ElfHeader64 struct {
 	Ident     [EI_NIDENT]byte // File identification.
 	Type      uint16          // File type.
@@ -122,8 +140,50 @@ type ElfHeader64 struct {
 	Shstrndx  uint16          // Section name strings section.
 }
 
-// ELF 程序头
-type ElfProgHeader struct {
+// ELF32 段数据头
+type ElfSection32 struct {
+	Name      uint32 // Section name (index into the section header string table).
+	Type      uint32 // Section type.
+	Flags     uint32 // Section flags.
+	Addr      uint32 // Address in memory image.
+	Off       uint32 // Offset in file.
+	Size      uint32 // Size in bytes.
+	Link      uint32 // Index of a related section.
+	Info      uint32 // Depends on section type.
+	Addralign uint32 // Alignment in bytes.
+	Entsize   uint32 // Size of each entry in section.
+}
+
+// ELF64 段数据头
+type ElfSection64 struct {
+	Name      uint32 // Section name (index into the section header string table).
+	Type      uint32 // Section type.
+	Flags     uint64 // Section flags.
+	Addr      uint64 // Address in memory image.
+	Off       uint64 // Offset in file.
+	Size      uint64 // Size in bytes.
+	Link      uint32 // Index of a related section.
+	Info      uint32 // Depends on section type.
+	Addralign uint64 // Alignment in bytes.
+	Entsize   uint64 // Size of each entry in section.
+}
+
+// ELF32 程序头
+// 注意: ELF32 和 ELF64 成员顺序不同
+type ElfProgHeader32 struct {
+	Type   ProgType // Entry type.
+	Off    uint32   // File offset of contents.
+	Vaddr  uint32   // Virtual address in memory image.
+	Paddr  uint32   // Physical address (not used).
+	Filesz uint32   // Size of contents in file.
+	Memsz  uint32   // Size of contents in memory.
+	Flags  ProgFlag // Access permission flags.
+	Align  uint32   // Alignment in memory and file.
+}
+
+// ELF64 程序头
+// 注意: ELF32 和 ELF64 成员顺序不同
+type ElfProgHeader64 struct {
 	Type   ProgType
 	Flags  ProgFlag
 	Off    uint64

@@ -11,8 +11,11 @@ import (
 
 // 默认的地址
 const (
-	UART_BASE = 0x10000000
-	UART_SIZE = 0x100
+	UART_BASE_QEMU     = 0x10000000
+	UART_BASE_ESP32_C3 = 0x60000000
+
+	UART_BASE_DEFAULT = UART_BASE_QEMU
+	UART_SIZE         = 0x100
 
 	// 相对于 Base 的偏移
 	UART_RHR    = 0
@@ -49,7 +52,7 @@ func (p *UART) AddrEnd() uint64   { return p.addr + uint64(len(p.data)) }
 
 func (p *UART) Read(addr, size uint64) (uint64, error) {
 	if addr < p.AddrBegin() || addr >= p.AddrEnd() {
-		return 0, fmt.Errorf("%s: bad address [0x%08X, 0x%x08X)", p.name, addr, addr+size)
+		return 0, fmt.Errorf("%s.Read: bad address [0x%08X, 0x%x08X)", p.name, addr, addr+size)
 	}
 	switch addr - p.addr {
 	case UART_RHR: // RHR
@@ -68,13 +71,13 @@ func (p *UART) Read(addr, size uint64) (uint64, error) {
 		}
 		return lsr, nil
 	default:
-		return 0, fmt.Errorf("%s: unhandled read offset 0x%x", p.name, addr)
+		return 0, fmt.Errorf("%s.Read: unhandled read offset 0x%x", p.name, addr)
 	}
 }
 
 func (p *UART) Write(addr, size, value uint64) error {
 	if addr < p.AddrBegin() || addr >= p.AddrEnd() {
-		return fmt.Errorf("%s: bad address [0x%08X, 0x%x08X)", p.name, addr, addr+size)
+		return fmt.Errorf("%s.Write: bad address [0x%08X, 0x%x08X)", p.name, addr, addr+size)
 	}
 	switch addr - p.addr {
 	case UART_RHR: // THR
@@ -89,6 +92,6 @@ func (p *UART) Write(addr, size, value uint64) error {
 	case UART_LCR: // LCR
 		return nil
 	default:
-		return fmt.Errorf("%s: unhandled write offset 0x%x", p.name, addr)
+		return fmt.Errorf("%s.Write: unhandled write offset 0x%x", p.name, addr)
 	}
 }

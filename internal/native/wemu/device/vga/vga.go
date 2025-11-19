@@ -84,7 +84,7 @@ func (vga *VGA) WriteScreen(offset uint64, value uint32) {
 
 func (p *VGA) Read(addr, size uint64) (uint64, error) {
 	if addr < p.AddrBegin() || addr >= p.AddrEnd() {
-		return 0, fmt.Errorf("%s: bad address [0x%08X, 0x%x08X)", p.name, addr, addr+size)
+		return 0, fmt.Errorf("%s.Read: bad address [0x%08X, 0x%x08X)", p.name, addr, addr+size)
 	}
 	switch off := addr - p.addr; true {
 	case off < 256*4:
@@ -96,7 +96,7 @@ func (p *VGA) Read(addr, size uint64) (uint64, error) {
 
 func (p *VGA) Write(addr, size, value uint64) error {
 	if addr < p.AddrBegin() || addr >= p.AddrEnd() {
-		return fmt.Errorf("%s: bad address [0x%08X, 0x%x08X)", p.name, addr, addr+size)
+		return fmt.Errorf("%s.Read: bad address [0x%08X, 0x%x08X)", p.name, addr, addr+size)
 	}
 
 	switch off := addr - p.addr; true {

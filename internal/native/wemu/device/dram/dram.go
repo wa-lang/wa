@@ -41,7 +41,7 @@ func (p *DRAM) AddrEnd() uint64   { return p.addr + uint64(len(p.data)) }
 // 填充内存数据
 func (p *DRAM) Fill(addr uint64, data []byte) error {
 	if addr < p.AddrBegin() || addr >= p.AddrEnd() {
-		return fmt.Errorf("%s: bad address [0x%08X, 0x%x08X)", p.name, addr, addr+uint64(len(data)))
+		return fmt.Errorf("%s.Fill: bad address [0x%08X, 0x%x08X)", p.name, addr, addr+uint64(len(data)))
 	}
 	copy(p.data[addr-p.AddrBegin():], data)
 	return nil
@@ -49,7 +49,7 @@ func (p *DRAM) Fill(addr uint64, data []byte) error {
 
 func (p *DRAM) Read(addr, size uint64) (uint64, error) {
 	if addr < p.AddrBegin() || addr >= p.AddrEnd() {
-		return 0, fmt.Errorf("%s: bad address [0x%08X, 0x%x08X)", p.name, addr, addr+size)
+		return 0, fmt.Errorf("%s.Read: bad address [0x%08X, 0x%x08X)", p.name, addr, addr+size)
 	}
 	switch size {
 	case 1:
@@ -61,16 +61,16 @@ func (p *DRAM) Read(addr, size uint64) (uint64, error) {
 	case 8:
 		return binary.LittleEndian.Uint64(p.data[addr-p.addr:]), nil
 	default:
-		return 0, fmt.Errorf("%s: bad size, %d must one of 1/2/4/8", p.name, size)
+		return 0, fmt.Errorf("%s.Read: bad size, %d must one of 1/2/4/8", p.name, size)
 	}
 }
 
 func (p *DRAM) Write(addr, size, value uint64) error {
 	if addr < p.AddrBegin() || addr >= p.AddrEnd() {
-		return fmt.Errorf("%s: bad address [0x%08X, 0x%x08X)", p.name, addr, addr+size)
+		return fmt.Errorf("%s.Write: bad address [0x%08X, 0x%x08X)", p.name, addr, addr+size)
 	}
 	if p.readonly {
-		return fmt.Errorf("%s: is readonly", p.name)
+		return fmt.Errorf("%s.Write: is readonly", p.name)
 	}
 	switch size {
 	case 1:
@@ -86,6 +86,6 @@ func (p *DRAM) Write(addr, size, value uint64) error {
 		binary.LittleEndian.PutUint64(p.data[addr-p.addr:], uint64(value))
 		return nil
 	default:
-		return fmt.Errorf("%s: bad size, %d must one of 1/2/4/8", p.name, size)
+		return fmt.Errorf("%s.Write: bad size, %d must one of 1/2/4/8", p.name, size)
 	}
 }

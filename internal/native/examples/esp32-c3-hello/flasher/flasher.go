@@ -7,7 +7,7 @@ import (
 	"os"
 	"time"
 
-	"go.bug.st/serial"
+	"wa-lang.org/wa/internal/3rdparty/serial"
 )
 
 // 烧写配置
@@ -20,14 +20,8 @@ const (
 
 func main() {
 	// 1. 打开串口
-	mode := &serial.Mode{
-		BaudRate: baudRate,
-		DataBits: 8,
-		Parity:   serial.NoParity,
-		StopBits: serial.OneStopBit,
-	}
-
-	port, err := serial.Open(portName, mode)
+	c := &serial.Config{Name: portName, Baud: baudRate}
+	port, err := serial.OpenPort(c)
 	if err != nil {
 		log.Fatalf("无法打开串口 %s: %v", portName, err)
 	}
