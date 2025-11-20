@@ -52,11 +52,6 @@ var CmdESP32Build = &cli.Command{
 			os.Exit(1)
 		}
 
-		if c.NArg() == 0 {
-			fmt.Fprintln(os.Stderr, "no input file")
-			os.Exit(1)
-		}
-
 		parser.DebugMode = c.Bool("debug")
 
 		infile := c.Args().First()
