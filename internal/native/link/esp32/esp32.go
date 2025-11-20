@@ -8,6 +8,12 @@ package esp32
 // 魔数
 const Magic = uint8(0xE9)
 
+// 头部大小
+const ImageHeaderSize = 8 + 16
+
+// 段头部大小
+const SegmentHeaderSize = 8
+
 // 芯片ID
 type ChipIDType uint16
 
@@ -61,23 +67,19 @@ const (
 
 // 文件头部(Image header)
 type ImageHeader struct {
-	Magic        uint8          // 固定的 Magic 字节 0xE9
-	SegmentCount uint8          // 段的数量
-	SpiMode      SPIMode        // Flash 模式
-	SpiSpeedSize FlashSpeedSize // Flash 大小和频率
-	EntryAddr    uint32         // 程序的入口点地址 (_start)
-}
-
-// 扩展头部(Image extended header)
-type ImageExtendedHeader struct {
-	WPPin          uint8      // 写保护引脚, C3的例子默认是 0xEE
-	SpiPinDrv      [3]uint8   // SPI Flash 引脚的驱动设置, 默认值 0x00
-	ChipID         ChipIDType // 芯片ID
-	MinChipRev     uint8      // 镜像支持的最低芯片版本(已弃用)
-	MinChipRevFull uint16     // 镜像支持的最低芯片版本, 格式: major * 100 + minor
-	MaxChipRevFull uint16     // 镜像支持的最高芯片版本, 格式: major * 100 + minor
-	Reserved       [4]byte    // 保留字节
-	HashAppended   uint8      // 如果为1, 则SHA256摘要附加在校验和之后
+	Magic          uint8          // 固定的 Magic 字节 0xE9
+	SegmentCount   uint8          // 段的数量
+	SpiMode        SPIMode        // Flash 模式
+	SpiSpeedSize   FlashSpeedSize // Flash 大小和频率
+	EntryAddr      uint32         // 程序的入口点地址 (_start)
+	WPPin          uint8          // 写保护引脚, C3的例子默认是 0xEE
+	SpiPinDrv      [3]uint8       // SPI Flash 引脚的驱动设置, 默认值 0x00
+	ChipID         ChipIDType     // 芯片ID
+	MinChipRev     uint8          // 镜像支持的最低芯片版本(已弃用)
+	MinChipRevFull uint16         // 镜像支持的最低芯片版本, 格式: major * 100 + minor
+	MaxChipRevFull uint16         // 镜像支持的最高芯片版本, 格式: major * 100 + minor
+	Reserved       [4]byte        // 保留字节
+	HashAppended   uint8          // 如果为1, 则SHA256摘要附加在校验和之后
 }
 
 // 段数据头部

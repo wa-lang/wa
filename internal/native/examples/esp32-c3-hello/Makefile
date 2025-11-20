@@ -7,6 +7,12 @@ run:
 	$(WA) rv2elf -arch=riscv32 hello_riscv32_zh.ws
 	$(WA) wemu -uart=esp32c3 hello_riscv32_zh.ws.elf.exe
 
+build:
+	$(WA) esp32build -arch=riscv32 hello_riscv32_zh.ws
+
+write-flash:
+	esptool.py --chip esp32c3  --port COM3  --baud 460800 write_flash -z 0x0000 hello_riscv32_zh.ws.esp32.bin
+
 fmt:
 	$(WA) fmt -riscv hello_riscv32_zh.ws > a.out.ws
 

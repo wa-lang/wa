@@ -151,11 +151,6 @@ func (p *_Assembler) asmFile(filename string, source []byte, opt *abi.LinkOption
 			}
 		}
 
-		// 查找失败
-		if p.prog.TextAddr == 0 {
-			return nil, fmt.Errorf("entry %q not found", opt.EntryFunc)
-		}
-
 		// data 段地址
 		p.prog.DataAddr = opt.DRAMBase
 		if len(p.file.Globals) > 0 {

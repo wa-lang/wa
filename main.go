@@ -19,6 +19,8 @@ import (
 	"wa-lang.org/wa/internal/app/appcir"
 	"wa-lang.org/wa/internal/app/appdev"
 	"wa-lang.org/wa/internal/app/appdoc"
+	"wa-lang.org/wa/internal/app/appesp32build"
+	"wa-lang.org/wa/internal/app/appesp32dump"
 	"wa-lang.org/wa/internal/app/appflash"
 	"wa-lang.org/wa/internal/app/appfmt"
 	"wa-lang.org/wa/internal/app/appgo2wa"
@@ -113,6 +115,8 @@ func main() {
 		appwat2c.CmdWat2c,
 
 		// 待完善的子命令(隐藏)
+		appesp32build.CmdESP32Build,
+		appesp32dump.CmdESP32Dump,
 		appflash.CmdFlash,
 		apprv2elf.CmdRv2elf,
 		appwat2rv.CmdWat2rv,
