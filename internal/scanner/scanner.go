@@ -977,6 +977,16 @@ scanAgain:
 			}
 		case '…':
 			tok = token.ELLIPSIS
+		case '×':
+			tok = token.MUL
+		case '÷':
+			tok = token.QUO
+		case '≥', '⩾':
+			tok = token.GEQ
+		case '≤', '⩽':
+			tok = token.LEQ
+		case '≠':
+			tok = token.NEQ
 		case ',', '，':
 			tok = token.COMMA
 		case ';', '；':
