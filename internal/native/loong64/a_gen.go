@@ -1,8 +1,11 @@
 // Copyright (C) 2025 武汉凹语言科技有限公司
 // SPDX-License-Identifier: AGPL-3.0-or-later
 
-// 龙芯英文版指令集
-// https://loongson.github.io/LoongArch-Documentation/LoongArch-Vol1-EN.pdf
+// 生成龙芯英文版指令集表格
+// 1. 下载英文版到当前目录 https://loongson.github.io/LoongArch-Documentation/LoongArch-Vol1-EN.pdf
+// 2. 执行 `go run a_gen.go`, 生成 `a_out.go` 文件
+
+//go:build ignore
 
 package main
 
@@ -10,6 +13,7 @@ import (
 	"bytes"
 	"flag"
 	"fmt"
+	"go/format"
 	"log"
 	"math"
 	"os"
@@ -24,7 +28,7 @@ import (
 var (
 	flagPdf     = flag.String("pdf", "LoongArch-Vol1-EN.pdf", "set loong64 spec pdf")
 	flagPackage = flag.String("pkg", "loong64", "set package name")
-	flagOutput  = flag.String("output", "tables.go", "set output file")
+	flagOutput  = flag.String("output", "a_out.go", "set output file")
 )
 
 func init() {
@@ -56,22 +60,170 @@ func main() {
 		log.Fatal(err)
 	}
 	var prologue bytes.Buffer
-	prologue.Write([]byte(`// 此代码是程序生成, 不要手动修改!!!
-
-// Copyright (C) 2025 武汉凹语言科技有限公司
+	prologue.Write([]byte(`// Copyright (C) 2025 武汉凹语言科技有限公司
 // SPDX-License-Identifier: AGPL-3.0-or-later
 
-//go:build ignore
+// 注意: 此代码是程序生成, 不要手动修改!!!
 
 package loong64
+
+import "wa-lang.org/wa/internal/native/abi"
+
+const (
+	// 通用寄存器
+	REG_R0 abi.RegType = iota + 1 // 0 是无效的编号
+	REG_R1
+	REG_R2
+	REG_R3
+	REG_R4
+	REG_R5
+	REG_R6
+	REG_R7
+	REG_R8
+	REG_R9
+	REG_R10
+	REG_R11
+	REG_R12
+	REG_R13
+	REG_R14
+	REG_R15
+	REG_R16
+	REG_R17
+	REG_R18
+	REG_R19
+	REG_R20
+	REG_R21
+	REG_R22
+	REG_R23
+	REG_R24
+	REG_R25
+	REG_R26
+	REG_R27
+	REG_R28
+	REG_R29
+	REG_R30
+	REG_R31
+
+	// 浮点数寄存器(F/D扩展)
+	REG_F0
+	REG_F1
+	REG_F2
+	REG_F3
+	REG_F4
+	REG_F5
+	REG_F6
+	REG_F7
+	REG_F8
+	REG_F9
+	REG_F10
+	REG_F11
+	REG_F12
+	REG_F13
+	REG_F14
+	REG_F15
+	REG_F16
+	REG_F17
+	REG_F18
+	REG_F19
+	REG_F20
+	REG_F21
+	REG_F22
+	REG_F23
+	REG_F24
+	REG_F25
+	REG_F26
+	REG_F27
+	REG_F28
+	REG_F29
+	REG_F30
+	REG_F31
+
+	// 寄存器编号结束
+	REG_END
+
+	REGZERO = REG_R0 // set to zero
+	REGLINK = REG_R1
+	REGSP   = REG_R3
+	REGRET  = REG_R20 // not use
+	REGARG  = -1      // -1 disables passing the first argument in register
+	REGRT1  = REG_R20 // reserved for runtime, duffzero and duffcopy
+	REGRT2  = REG_R21 // reserved for runtime, duffcopy
+	REGCTXT = REG_R29 // context for closures
+	REGG    = REG_R22 // G in loong64
+	REGTMP  = REG_R30 // used by the assembler
+	FREGRET = REG_F0  // not use
+)
+
+type instArg uint16
+
+// 指令每个参数
+const (
+	_ instArg = iota // 0 是无效参数, 表示列表结束
+	// 1-5 bit
+	arg_fd
+	arg_fj
+	arg_fk
+	arg_fa
+	arg_rd
+	// 6-10 bit
+	arg_rj
+	arg_rk
+	arg_op_4_0
+	arg_fcsr_4_0
+	arg_fcsr_9_5
+	// 11-15 bit
+	arg_csr_23_10
+	arg_cd
+	arg_cj
+	arg_ca
+	arg_sa2_16_15
+	// 16-20 bit
+	arg_sa3_17_15
+	arg_code_4_0
+	arg_code_14_0
+	arg_ui5_14_10
+	arg_ui6_15_10
+	// 21-25 bit
+	arg_ui12_21_10
+	arg_lsbw
+	arg_msbw
+	arg_lsbd
+	arg_msbd
+	// 26-30 bit
+	arg_hint_4_0
+	arg_hint_14_0
+	arg_level_14_0
+	arg_level_17_10
+	arg_seq_17_10
+	// 31-35 bit
+	arg_si12_21_10
+	arg_si14_23_10
+	arg_si16_25_10
+	arg_si20_24_5
+	arg_offset_20_0
+	// 36~
+	arg_offset_25_0
+	arg_offset_15_0
+)
+
+// 指令参数列表打包为数组结构, 可以简化初始化
+type instArgs [5]instArg
+
+// 指令编码格式
+type instFormat struct {
+	mask  uint32   // opcode 掩码
+	value uint32   // opcode 值
+	op    abi.As   // 操作码定义
+	args  instArgs // args[i] 表示结束
+}
 
 `))
 
 	var op_f bytes.Buffer
-	op_f.Write([]byte("const (\n\t_ Op = iota\n"))
+	op_f.Write([]byte("const (\n\t_ abi.As = iota\n"))
 
 	var opstr_f bytes.Buffer
-	opstr_f.Write([]byte("var opstr = [...]string{\n"))
+	opstr_f.Write([]byte("var _Anames = [...]string{\n"))
 
 	var instFormats_f bytes.Buffer
 	instFormats_f.Write([]byte("var instFormats = [...]instFormat{\n"))
@@ -108,30 +260,37 @@ package loong64
 	sort.Strings(ops)
 
 	for _, op := range ops {
-		// 1. write op
-		op_f.Write([]byte(fmt.Sprintf("\t%s\n", op)))
-		// 2. write opstr
-		opstr_f.Write([]byte(fmt.Sprintf("\t%s\n", opstrs[op])))
-		// 3. write instFormat
-		instFormats_f.Write([]byte(fmt.Sprintf("\t%s\n\t%s\n", instFormatComments[op], instFormats[op])))
+		// 1. 指令枚举值定义, 加 A 前缀, 比如 AADD_W
+		op_f.Write([]byte(fmt.Sprintf("\t%s%s %s\n", "A", op, instFormatComments[op])))
+		// 2. 指令枚举值对应的名字字符串
+		opstr_f.Write([]byte(fmt.Sprintf("\t%s%s\n", "A", opstrs[op])))
+		// 3. 指令的参数格式, 枚举值对应列表的下标
+		instFormats_f.Write([]byte(fmt.Sprintf("\t%s%s:%s\n", "A", op, instFormats[op])))
 	}
+
+	// 增加一个结尾的指令标记
+	op_f.Write([]byte("\n\tALAST\n"))
 
 	op_f.Write([]byte(")\n\n"))
 	opstr_f.Write([]byte("}\n\n"))
 	instFormats_f.Write([]byte("}\n"))
 
-	fileTables, err := os.Create(*flagOutput)
-	if err != nil {
-		panic(err)
-	}
-	defer fileTables.Close()
-
+	var fileTables bytes.Buffer
 	fileTables.Write(prologue.Bytes())
 	fileTables.Write(op_f.Bytes())
 	fileTables.Write(opstr_f.Bytes())
 	fileTables.Write(instFormats_f.Bytes())
 
-	fileTables.Close()
+	// 格式化输出代码
+	outputCode := fileTables.Bytes()
+	if goodCode, err := format.Source(outputCode); err == nil {
+		outputCode = goodCode
+	}
+
+	// 保存到文件
+	if err := os.WriteFile(*flagOutput, outputCode, 0666); err != nil {
+		panic(err)
+	}
 }
 
 func isFirstPage(page pdf.Page) bool {
@@ -328,9 +487,9 @@ func dealWithFcmp(ds string) (fcmpConditions map[string]map[string]string) {
 		instFormatComment := fmt.Sprintf("// FCMP.%s.%s cd, fj, fk", k, ds)
 		var instFormat string
 		if ds == "D" {
-			instFormat = fmt.Sprintf("{mask: 0xffff8018, value: 0x0c2%s000, op: FCMP_%s_%s, args: instArgs{arg_cd, arg_fj, arg_fk}},", v, k, ds)
+			instFormat = fmt.Sprintf("{mask: 0xffff8018, value: 0x0c2%s000, args: instArgs{arg_cd, arg_fj, arg_fk}},", v)
 		} else {
-			instFormat = fmt.Sprintf("{mask: 0xffff8018, value: 0x0c1%s000, op: FCMP_%s_%s, args: instArgs{arg_cd, arg_fj, arg_fk}},", v, k, ds)
+			instFormat = fmt.Sprintf("{mask: 0xffff8018, value: 0x0c1%s000, args: instArgs{arg_cd, arg_fj, arg_fk}},", v)
 		}
 
 		fcmpConditions[op] = make(map[string]string)
@@ -556,7 +715,7 @@ func parsePage(num int, p pdf.Page, isFP bool) (ops []string, opstrs map[string]
 		if strings.HasPrefix(op, "AM") {
 			instArgs = "arg_rd, arg_rk, arg_rj"
 		}
-		instFormat := fmt.Sprintf("{mask: %s, value: %s, op: %s, args: instArgs{%s}},", binstrToHex(binMask), binstrToHex(binValue), op, instArgs)
+		instFormat := fmt.Sprintf("{mask: %s, value: %s, args: instArgs{%s}},", binstrToHex(binMask), binstrToHex(binValue), instArgs)
 		instFormats[op] = instFormat
 
 		i = j // next instruction
