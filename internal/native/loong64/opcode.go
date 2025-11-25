@@ -151,98 +151,104 @@ func (ctx *_OpContextType) encodeRaw(as abi.As, arg *abi.AsArgument) (uint32, er
 func (ctx *_OpContextType) encodeArg(argTyp instArg, arg *abi.AsArgument) uint32 {
 	// 根据参数类型分别编码
 	switch argTyp {
-	case 0:
+	case 0: // 空参数
 		return 0
 
 	// 1-5 bit
 	case arg_fd:
 		return ctx.regF(arg.Rd)
 	case arg_fj:
-		return ctx.regF(arg.Rd) << 5
+		return ctx.regF(arg.Rs1) << 5
 	case arg_fk:
-		return ctx.regF(arg.Rd) << 10
+		return ctx.regF(arg.Rs2) << 10
 	case arg_fa:
-		return ctx.regF(arg.Rd) << 15
+		return ctx.regF(arg.Rs3) << 15
 	case arg_rd:
 		return ctx.regI(arg.Rd)
 
 	// 6-10 bit
 	case arg_rj:
-		return ctx.regI(arg.Rd) << 5
+		return ctx.regI(arg.Rs1) << 5
 	case arg_rk:
-		return ctx.regI(arg.Rd) << 10
+		return ctx.regI(arg.Rs2) << 10
 	case arg_op_4_0:
 		panic("TODO")
 	case arg_fcsr_4_0:
-		panic("TODO")
+		return (uint32(arg.Imm) & 0b11)
 	case arg_fcsr_9_5:
-		panic("TODO")
+		return (uint32(arg.Imm) & 0b_1_1111_1111) << 5
 
 	// 11-15 bit
 	case arg_csr_23_10:
-		panic("TODO")
+		return (uint32(arg.Imm) & 0b11) << 10
 	case arg_cd:
-		panic("TODO")
+		return (ctx.regI(arg.Rd) | 0b_11000)
 	case arg_cj:
-		panic("TODO")
+		return (ctx.regI(arg.Rs1) | 0b_11000) << 5
 	case arg_ca:
-		panic("TODO")
+		return (ctx.regI(arg.Rs2) | 0b_11000) << 10
 	case arg_sa2_16_15:
-		panic("TODO")
+		return (uint32(arg.Imm) & 0b11) << 15
 
 	// 16-20 bit
 	case arg_sa3_17_15:
-		panic("TODO")
+		return (uint32(arg.Imm) & 0b111) << 15
 	case arg_code_4_0:
-		panic("TODO")
+		return (uint32(arg.Imm) & 0b11)
 	case arg_code_14_0:
-		panic("TODO")
+		return (uint32(arg.Imm) & 0b_0111_1111_1111_1111)
 	case arg_ui5_14_10:
-		panic("TODO")
+		return (uint32(arg.Imm) & 0b_0111_1111_1111_1111) << 10
 	case arg_ui6_15_10:
-		panic("TODO")
+		return (uint32(arg.Imm) & 0b_1111_1111_1111_1111) << 10
 
 	// 21-25 bit
 	case arg_ui12_21_10:
-		panic("TODO")
+		return (uint32(arg.Imm) & 0b_1111_1111_1111) << 10
 	case arg_lsbw:
-		panic("TODO")
+		panic("TODO") // 需要2个立即数
 	case arg_msbw:
-		panic("TODO")
+		panic("TODO") // 需要2个立即数
 	case arg_lsbd:
-		panic("TODO")
+		panic("TODO") // 需要2个立即数
 	case arg_msbd:
-		panic("TODO")
+		panic("TODO") // 需要2个立即数
 
 	// 26-30 bit
 	case arg_hint_4_0:
-		panic("TODO")
+		return uint32(arg.Imm) & 0b_1_1111
 	case arg_hint_14_0:
-		panic("TODO")
+		return uint32(arg.Imm) & 0b_0111_1111_1111_1111
 	case arg_level_14_0:
-		panic("TODO")
+		return uint32(arg.Imm) & 0b_0111_1111_1111_1111
 	case arg_level_17_10:
-		panic("TODO")
+		return uint32(arg.Imm) << 10
+
 	case arg_seq_17_10:
-		panic("TODO")
+		return uint32(arg.Imm) << 10
 
 	// 31-35 bit
 	case arg_si12_21_10:
-		panic("TODO")
+		return (uint32(arg.Imm) & 0b_1111_1111_1111) << 10
 	case arg_si14_23_10:
-		panic("TODO")
+		return (uint32(arg.Imm) & 0b_0011_1111_1111_1111) << 10
 	case arg_si16_25_10:
-		panic("TODO")
+		return (uint32(arg.Imm) & 0xFFFF) << 10
 	case arg_si20_24_5:
-		panic("TODO")
+		return (uint32(arg.Imm) & 0xFFFFF) << 5
 	case arg_offset_20_0:
-		panic("TODO")
+		offs := uint32(arg.Imm)
+		return (offs&0xFFFF)<<10 | ((offs >> 16) & 0b_11111)
 
 	// 36~
 	case arg_offset_25_0:
-		panic("TODO")
+		// op, offs[15:0], offs[25:16]
+		offs := uint32(arg.Imm)
+		bit0_9 := (offs >> 16) & 0b_11111_11111
+		bit10_25 := (offs & 0xFFFF) << 10
+		return bit0_9 | bit10_25
 	case arg_offset_15_0:
-		panic("TODO")
+		return (uint32(arg.Imm) & 0xFFFF) << 10
 	}
 
 	panic("unreachable")
