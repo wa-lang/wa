@@ -154,69 +154,6 @@ const (
 	FREGRET = REG_F0  // not use
 )
 
-type instArg uint16
-
-// 指令每个参数
-const (
-	_ instArg = iota // 0 是无效参数, 表示列表结束
-	// 1-5 bit
-	arg_fd
-	arg_fj
-	arg_fk
-	arg_fa
-	arg_rd
-	// 6-10 bit
-	arg_rj
-	arg_rk
-	arg_op_4_0
-	arg_fcsr_4_0
-	arg_fcsr_9_5
-	// 11-15 bit
-	arg_csr_23_10
-	arg_cd
-	arg_cj
-	arg_ca
-	arg_sa2_16_15
-	// 16-20 bit
-	arg_sa3_17_15
-	arg_code_4_0
-	arg_code_14_0
-	arg_ui5_14_10
-	arg_ui6_15_10
-	// 21-25 bit
-	arg_ui12_21_10
-	arg_lsbw
-	arg_msbw
-	arg_lsbd
-	arg_msbd
-	// 26-30 bit
-	arg_hint_4_0
-	arg_hint_14_0
-	arg_level_14_0
-	arg_level_17_10
-	arg_seq_17_10
-	// 31-35 bit
-	arg_si12_21_10
-	arg_si14_23_10
-	arg_si16_25_10
-	arg_si20_24_5
-	arg_offset_20_0
-	// 36~
-	arg_offset_25_0
-	arg_offset_15_0
-)
-
-// 指令参数列表打包为数组结构, 可以简化初始化
-type instArgs [5]instArg
-
-// 指令编码格式
-type instFormat struct {
-	mask  uint32   // opcode 掩码
-	value uint32   // opcode 值
-	op    abi.As   // 操作码定义
-	args  instArgs // args[i] 表示结束
-}
-
 `))
 
 	var op_f bytes.Buffer
@@ -226,7 +163,8 @@ type instFormat struct {
 	opstr_f.Write([]byte("var _Anames = [...]string{\n"))
 
 	var instFormats_f bytes.Buffer
-	instFormats_f.Write([]byte("var instFormats = [...]instFormat{\n"))
+	instFormats_f.Write([]byte("// 指令编码信息表\n"))
+	instFormats_f.Write([]byte("var _AOpContextTable = [...]_OpContextType{\n"))
 
 	// Scan document looking for instructions.
 	n := f.NumPage()

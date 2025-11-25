@@ -29,7 +29,7 @@ var CmdRv2elf = &cli.Command{
 		},
 		&cli.StringFlag{
 			Name:  "arch",
-			Usage: "set target architecture (riscv32|riscv64)",
+			Usage: "set target architecture (riscv32|riscv64|loong64)",
 			Value: "riscv64",
 		},
 		&cli.Int64Flag{
@@ -67,6 +67,8 @@ var CmdRv2elf = &cli.Command{
 			opt.CPU = abi.RISCV32
 		case "riscv64":
 			opt.CPU = abi.RISCV64
+		case "loong64":
+			opt.CPU = abi.LOONG64
 		default:
 			fmt.Printf("unknown arch: %s\n", arch)
 			os.Exit(1)

@@ -16,6 +16,7 @@ type CPUType int
 const (
 	RISCV64 CPUType = iota + 1
 	RISCV32
+	LOONG64
 )
 
 // 链接参数

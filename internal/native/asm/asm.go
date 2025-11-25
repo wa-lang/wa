@@ -11,7 +11,6 @@ import (
 	"wa-lang.org/wa/internal/native/abi"
 	"wa-lang.org/wa/internal/native/ast"
 	"wa-lang.org/wa/internal/native/parser"
-	"wa-lang.org/wa/internal/native/riscv"
 	"wa-lang.org/wa/internal/native/token"
 )
 
@@ -284,7 +283,7 @@ func (p *_Assembler) asmFunc(fn *ast.Func) (err error) {
 		}
 
 		// 编码使用的是符号被处理后对应的立即数
-		x, err := riscv.Encode(p.opt.CPU, inst.As, inst.Arg)
+		x, err := encodeInst(p.opt.CPU, inst.As, inst.Arg)
 		if err != nil {
 			return fmt.Errorf("%v: %w", inst, err)
 		}
