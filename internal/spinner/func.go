@@ -374,8 +374,7 @@ func (b *Builder) expr(e ast.Expr, block *wire.Block) wire.Value {
 	var v wire.Value
 	if tv.Addressable() {
 		loc := b.location(e, false, block)
-		typ := b.BuildType(deref(tv.Type))
-		v = block.EmitLoad(loc, typ, int(e.Pos()))
+		v = block.EmitLoad(loc, loc.DataType(), int(e.Pos()))
 	} else {
 		v = b.expr0(e, tv, block)
 	}
@@ -399,12 +398,37 @@ func (b *Builder) expr0(e ast.Expr, tv types.TypeAndValue, block *wire.Block) wi
 
 		if _, ok := obj.(*types.Var); ok {
 			loc := block.Lookup(obj, false)
-			typ := b.BuildType(obj.Type())
-			return block.EmitLoad(loc, typ, int(obj.Pos()))
+			return block.EmitLoad(loc, loc.DataType(), int(obj.Pos()))
 		}
 
 		// 函数
 		panic("Todo")
+		// :*ast.Ident
+
+	case *ast.UnaryExpr:
+		switch e.Op {
+		case token.AND: // &x, 逃逸
+			loc := b.location(e.X, true, block)
+			if _, ok := unparen(e.X).(*ast.StarExpr); ok {
+				// Todo: p 为空时，&*p 应panic
+			}
+			return loc
+		case token.ADD: // +x, 等价于x
+			return b.expr(e.X, block)
+		case token.NOT:
+			x := b.expr(e.X, block)
+			return block.EmitUnopNot(x, int(e.OpPos))
+		case token.SUB:
+			x := b.expr(e.X, block)
+			return block.EmitUnopSub(x, int(e.OpPos))
+		case token.XOR:
+			x := b.expr(e.X, block)
+			return block.EmitUnopXor(x, int(e.OpPos))
+
+		default:
+			panic(e.Op)
+		} // :*ast.UnaryExpr
+
 	}
 
 	panic(fmt.Sprintf("unexpected expr: %T", e))

@@ -146,6 +146,33 @@ func (b *Block) EmitReturn(results []Value, pos int) *InstReturn {
 	return v
 }
 
+func (b *Block) EmitUnopNot(x Value, pos int) *InstUnopNot {
+	v := &InstUnopNot{X: x}
+	v.Stringer = v
+	v.pos = pos
+
+	b.emit(v)
+	return v
+}
+
+func (b *Block) EmitUnopSub(x Value, pos int) *InstUnopSub {
+	v := &InstUnopSub{X: x}
+	v.Stringer = v
+	v.pos = pos
+
+	b.emit(v)
+	return v
+}
+
+func (b *Block) EmitUnopXor(x Value, pos int) *InstUnopXor {
+	v := &InstUnopXor{X: x}
+	v.Stringer = v
+	v.pos = pos
+
+	b.emit(v)
+	return v
+}
+
 // Emit
 func (b *Block) EmitBlock(comment string, pos int) *Block {
 	block := &Block{}

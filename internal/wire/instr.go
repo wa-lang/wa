@@ -110,3 +110,39 @@ func (i *InstReturn) String() string {
 	}
 	return s
 }
+
+/**************************************
+InstUnopNot:  一元非指令
+**************************************/
+type InstUnopNot struct {
+	aImv
+	X Value
+}
+
+func (i *InstUnopNot) String() string {
+	return fmt.Sprintf("!%s", i.X.Name())
+}
+
+/**************************************
+InstUnopSub:  取负指令
+**************************************/
+type InstUnopSub struct {
+	aImv
+	X Value
+}
+
+func (i *InstUnopSub) String() string {
+	return fmt.Sprintf("-%s", i.X.Name())
+}
+
+/**************************************
+InstUnopXor:  一元异或指令
+**************************************/
+type InstUnopXor struct {
+	aImv
+	X Value
+}
+
+func (i *InstUnopXor) String() string {
+	return fmt.Sprintf("^%s", i.X.Name())
+}

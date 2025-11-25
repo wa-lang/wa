@@ -5,8 +5,11 @@ package spinner
 
 import (
 	"wa-lang.org/wa/internal/ast"
+	"wa-lang.org/wa/internal/ast/astutil"
 	"wa-lang.org/wa/internal/types"
 )
+
+func unparen(e ast.Expr) ast.Expr { return astutil.Unparen(e) }
 
 // 判断 e 是否为 "_"
 func isBlankIdent(e ast.Expr) bool {
