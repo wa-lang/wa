@@ -1,7 +1,7 @@
 // Copyright (C) 2025 武汉凹语言科技有限公司
 // SPDX-License-Identifier: AGPL-3.0-or-later
 
-package apprv2elf
+package appasm2elf
 
 import (
 	"fmt"
@@ -16,10 +16,10 @@ import (
 	"wa-lang.org/wa/internal/native/wemu/device/dram"
 )
 
-var CmdRv2elf = &cli.Command{
+var CmdAsm2elf = &cli.Command{
 	Hidden:    true,
-	Name:      "rv2elf",
-	Usage:     "convert riscv assembly code to elf binary format",
+	Name:      "asm2elf",
+	Usage:     "convert wa native assembly code to elf binary format",
 	ArgsUsage: "<file.s>",
 	Flags: []cli.Flag{
 		&cli.StringFlag{

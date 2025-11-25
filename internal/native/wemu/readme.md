@@ -54,7 +54,7 @@
 然后通过以下命令构建elf文件:
 
 ```
-$ wa rv2elf hello_riscv64.ws
+$ wa asm2elf hello_riscv64.ws
 ```
 
 需要注意的是以上构建命令设置了代码段的开始地址. 该地址是 Qemu 模拟器的默认地址, 因此构建成功后可以选择Qemu等模拟器测试下:

@@ -13,6 +13,7 @@ import (
 	"strings"
 
 	"wa-lang.org/wa/internal/3rdparty/cli"
+	"wa-lang.org/wa/internal/app/appasm2elf"
 	"wa-lang.org/wa/internal/app/appast"
 	"wa-lang.org/wa/internal/app/appbase"
 	"wa-lang.org/wa/internal/app/appbuild"
@@ -32,7 +33,6 @@ import (
 	"wa-lang.org/wa/internal/app/applsp"
 	"wa-lang.org/wa/internal/app/appplay"
 	"wa-lang.org/wa/internal/app/apprun"
-	"wa-lang.org/wa/internal/app/apprv2elf"
 	"wa-lang.org/wa/internal/app/appssa"
 	"wa-lang.org/wa/internal/app/apptest"
 	"wa-lang.org/wa/internal/app/appwat2c"
@@ -116,11 +116,11 @@ func main() {
 		appwat2c.CmdWat2c,
 
 		// 待完善的子命令(隐藏)
+		appasm2elf.CmdAsm2elf,
 		appesp32build.CmdESP32Build,
 		appesp32dump.CmdESP32Dump,
 		appesp32flash.CmdESP32Flash,
 		appflash.CmdFlash,
-		apprv2elf.CmdRv2elf,
 		appwat2rv.CmdWat2rv,
 		appwemu.CmdWEmu,
 		appgo2wa.CmdGo2wa,
