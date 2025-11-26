@@ -68,6 +68,18 @@ func (i *InstLoad) String() string {
 	return fmt.Sprintf("*%s", i.Loc.Name())
 }
 
+// 在 Block 中添加一条 Load 指令
+func (b *Block) EmitLoad(loc Location, typ ValueType, pos int) *InstLoad {
+	v := &InstLoad{}
+	v.Stringer = v
+	v.Loc = loc
+	v.typ = typ
+	v.pos = pos
+
+	b.emit(v)
+	return v
+}
+
 /**************************************
 InstStore: Store 指令，将 Val 存储到 Loc 指定的位置
 **************************************/
@@ -81,6 +93,18 @@ func (i *InstStore) String() string {
 	return fmt.Sprintf("*%s = %s", i.Loc.Name(), i.Val.Name())
 }
 
+// 在 Block 中添加一条 Store 指令
+func (b *Block) EmitStore(loc Location, val Value, pos int) *InstStore {
+	v := &InstStore{}
+	v.Stringer = v
+	v.Loc = loc
+	v.Val = val
+	v.pos = pos
+
+	b.emit(v)
+	return v
+}
+
 /**************************************
 InstExtract: Extract 指令，提取元组 Tuple 的第 Index 个元素
 **************************************/
@@ -92,6 +116,18 @@ type InstExtract struct {
 
 func (i *InstExtract) String() string {
 	return fmt.Sprintf("extract %s #%d", i.Tuple.Name(), i.Index)
+}
+
+// 在 Block 中添加一条 Extract 指令
+func (b *Block) EmitExtract(tuple Value, index int, pos int) *InstExtract {
+	v := &InstExtract{}
+	v.Stringer = v
+	v.Tuple = tuple
+	v.Index = index
+	v.pos = pos
+
+	b.emit(v)
+	return v
 }
 
 /**************************************
@@ -111,8 +147,19 @@ func (i *InstReturn) String() string {
 	return s
 }
 
+// 在 Block 中添加一条 Return 指令
+func (b *Block) EmitReturn(results []Value, pos int) *InstReturn {
+	v := &InstReturn{}
+	v.Stringer = v
+	v.Results = results
+	v.pos = pos
+
+	b.emit(v)
+	return v
+}
+
 /**************************************
-InstUnopNot:  一元非指令
+InstUnopNot:  一元非指令，!x
 **************************************/
 type InstUnopNot struct {
 	aImv
@@ -123,8 +170,18 @@ func (i *InstUnopNot) String() string {
 	return fmt.Sprintf("!%s", i.X.Name())
 }
 
+// 在 Block 中添加一条 UnopNot 指令
+func (b *Block) EmitUnopNot(x Value, pos int) *InstUnopNot {
+	v := &InstUnopNot{X: x}
+	v.Stringer = v
+	v.pos = pos
+
+	b.emit(v)
+	return v
+}
+
 /**************************************
-InstUnopSub:  取负指令
+InstUnopSub:  取负指令，-x
 **************************************/
 type InstUnopSub struct {
 	aImv
@@ -135,8 +192,18 @@ func (i *InstUnopSub) String() string {
 	return fmt.Sprintf("-%s", i.X.Name())
 }
 
+// 在 Block 中添加一条 UnopSub 指令
+func (b *Block) EmitUnopSub(x Value, pos int) *InstUnopSub {
+	v := &InstUnopSub{X: x}
+	v.Stringer = v
+	v.pos = pos
+
+	b.emit(v)
+	return v
+}
+
 /**************************************
-InstUnopXor:  一元异或指令
+InstUnopXor:  一元异或指令，^x
 **************************************/
 type InstUnopXor struct {
 	aImv
@@ -145,4 +212,454 @@ type InstUnopXor struct {
 
 func (i *InstUnopXor) String() string {
 	return fmt.Sprintf("^%s", i.X.Name())
+}
+
+// 在 Block 中添加一条 UnopXor 指令
+func (b *Block) EmitUnopXor(x Value, pos int) *InstUnopXor {
+	v := &InstUnopXor{X: x}
+	v.Stringer = v
+	v.pos = pos
+
+	b.emit(v)
+	return v
+}
+
+/**************************************
+InstLAND:  逻辑与指令，x && y
+**************************************/
+type InstLAND struct {
+	aImv
+	X, Y Value
+}
+
+func (i *InstLAND) String() string {
+	return fmt.Sprintf("%s && %s", i.X.Name(), i.Y.Name())
+}
+
+// 在 Block 中添加一条 BiopLAND 指令
+func (b *Block) EmitInstLAND(x, y Value, pos int) *InstLAND {
+	v := &InstLAND{X: x, Y: y}
+	v.Stringer = v
+	v.pos = pos
+
+	b.emit(v)
+	return v
+}
+
+/**************************************
+InstLOR:  逻辑或指令，x || y
+**************************************/
+type InstLOR struct {
+	aImv
+	X, Y Value
+}
+
+func (i *InstLOR) String() string {
+	return fmt.Sprintf("%s || %s", i.X.Name(), i.Y.Name())
+}
+
+// 在 Block 中添加一条 BiopLOR 指令
+func (b *Block) EmitInstLOR(x, y Value, pos int) *InstLOR {
+	v := &InstLOR{X: x, Y: y}
+	v.Stringer = v
+	v.pos = pos
+
+	b.emit(v)
+	return v
+}
+
+/**************************************
+InstSHL:  左移指令，x << y
+**************************************/
+type InstSHL struct {
+	aImv
+	X, Y Value
+}
+
+func (i *InstSHL) String() string {
+	return fmt.Sprintf("%s << %s", i.X.Name(), i.Y.Name())
+}
+
+// 在 Block 中添加一条 InstSHL 指令
+func (b *Block) EmitInstSHL(x, y Value, pos int) *InstSHL {
+	v := &InstSHL{X: x, Y: y}
+	v.Stringer = v
+	v.pos = pos
+
+	b.emit(v)
+	return v
+}
+
+/**************************************
+InstSHR:  右移指令，x >> y
+**************************************/
+type InstSHR struct {
+	aImv
+	X, Y Value
+}
+
+func (i *InstSHR) String() string {
+	return fmt.Sprintf("%s >> %s", i.X.Name(), i.Y.Name())
+}
+
+// 在 Block 中添加一条 InstSHR 指令
+func (b *Block) EmitInstSHR(x, y Value, pos int) *InstSHR {
+	v := &InstSHR{X: x, Y: y}
+	v.Stringer = v
+	v.pos = pos
+
+	b.emit(v)
+	return v
+}
+
+/**************************************
+InstADD:  加指令，x + y
+**************************************/
+type InstADD struct {
+	aImv
+	X, Y Value
+}
+
+func (i *InstADD) String() string {
+	return fmt.Sprintf("%s + %s", i.X.Name(), i.Y.Name())
+}
+
+// 在 Block 中添加一条 InstADD 指令
+func (b *Block) EmitInstADD(x, y Value, pos int) *InstADD {
+	v := &InstADD{X: x, Y: y}
+	v.Stringer = v
+	v.pos = pos
+
+	b.emit(v)
+	return v
+}
+
+/**************************************
+InstSUB:  减指令，x - y
+**************************************/
+type InstSUB struct {
+	aImv
+	X, Y Value
+}
+
+func (i *InstSUB) String() string {
+	return fmt.Sprintf("%s - %s", i.X.Name(), i.Y.Name())
+}
+
+// 在 Block 中添加一条 InstSUB 指令
+func (b *Block) EmitInstSUB(x, y Value, pos int) *InstSUB {
+	v := &InstSUB{X: x, Y: y}
+	v.Stringer = v
+	v.pos = pos
+
+	b.emit(v)
+	return v
+}
+
+/**************************************
+InstMUL:  乘指令，x - y
+**************************************/
+type InstMUL struct {
+	aImv
+	X, Y Value
+}
+
+func (i *InstMUL) String() string {
+	return fmt.Sprintf("%s * %s", i.X.Name(), i.Y.Name())
+}
+
+// 在 Block 中添加一条 InstMUL 指令
+func (b *Block) EmitInstMUL(x, y Value, pos int) *InstMUL {
+	v := &InstMUL{X: x, Y: y}
+	v.Stringer = v
+	v.pos = pos
+
+	b.emit(v)
+	return v
+}
+
+/**************************************
+InstQUO:  除指令，x / y
+**************************************/
+type InstQUO struct {
+	aImv
+	X, Y Value
+}
+
+func (i *InstQUO) String() string {
+	return fmt.Sprintf("%s / %s", i.X.Name(), i.Y.Name())
+}
+
+// 在 Block 中添加一条 InstQUO 指令
+func (b *Block) EmitInstQUO(x, y Value, pos int) *InstQUO {
+	v := &InstQUO{X: x, Y: y}
+	v.Stringer = v
+	v.pos = pos
+
+	b.emit(v)
+	return v
+}
+
+/**************************************
+InstREM:  取余指令，x % y
+**************************************/
+type InstREM struct {
+	aImv
+	X, Y Value
+}
+
+func (i *InstREM) String() string {
+	return fmt.Sprintf("%s %% %s", i.X.Name(), i.Y.Name())
+}
+
+// 在 Block 中添加一条 InstREM 指令
+func (b *Block) EmitInstREM(x, y Value, pos int) *InstREM {
+	v := &InstREM{X: x, Y: y}
+	v.Stringer = v
+	v.pos = pos
+
+	b.emit(v)
+	return v
+}
+
+/**************************************
+InstAND:  与指令，x & y
+**************************************/
+type InstAND struct {
+	aImv
+	X, Y Value
+}
+
+func (i *InstAND) String() string {
+	return fmt.Sprintf("%s & %s", i.X.Name(), i.Y.Name())
+}
+
+// 在 Block 中添加一条 InstAND 指令
+func (b *Block) EmitInstAND(x, y Value, pos int) *InstAND {
+	v := &InstAND{X: x, Y: y}
+	v.Stringer = v
+	v.pos = pos
+
+	b.emit(v)
+	return v
+}
+
+/**************************************
+InstOR:  或指令，x & y
+**************************************/
+type InstOR struct {
+	aImv
+	X, Y Value
+}
+
+func (i *InstOR) String() string {
+	return fmt.Sprintf("%s | %s", i.X.Name(), i.Y.Name())
+}
+
+// 在 Block 中添加一条 InstOR 指令
+func (b *Block) EmitInstOR(x, y Value, pos int) *InstOR {
+	v := &InstOR{X: x, Y: y}
+	v.Stringer = v
+	v.pos = pos
+
+	b.emit(v)
+	return v
+}
+
+/**************************************
+InstXOR:  异或指令，x ^ y
+**************************************/
+type InstXOR struct {
+	aImv
+	X, Y Value
+}
+
+func (i *InstXOR) String() string {
+	return fmt.Sprintf("%s ^ %s", i.X.Name(), i.Y.Name())
+}
+
+// 在 Block 中添加一条 InstXOR 指令
+func (b *Block) EmitInstXOR(x, y Value, pos int) *InstXOR {
+	v := &InstXOR{X: x, Y: y}
+	v.Stringer = v
+	v.pos = pos
+
+	b.emit(v)
+	return v
+}
+
+/**************************************
+InstANDNOT:  与或指令，x &^ y
+**************************************/
+type InstANDNOT struct {
+	aImv
+	X, Y Value
+}
+
+func (i *InstANDNOT) String() string {
+	return fmt.Sprintf("%s &^ %s", i.X.Name(), i.Y.Name())
+}
+
+// 在 Block 中添加一条 InstANDNOT 指令
+func (b *Block) EmitInstANDNOT(x, y Value, pos int) *InstANDNOT {
+	v := &InstANDNOT{X: x, Y: y}
+	v.Stringer = v
+	v.pos = pos
+
+	b.emit(v)
+	return v
+}
+
+/**************************************
+InstEQL:  等于指令，x == y
+**************************************/
+type InstEQL struct {
+	aImv
+	X, Y Value
+}
+
+func (i *InstEQL) String() string {
+	return fmt.Sprintf("%s == %s", i.X.Name(), i.Y.Name())
+}
+
+// 在 Block 中添加一条 InstEQL 指令
+func (b *Block) EmitInstEQL(x, y Value, pos int) *InstEQL {
+	v := &InstEQL{X: x, Y: y}
+	v.Stringer = v
+	v.pos = pos
+
+	b.emit(v)
+	return v
+}
+
+/**************************************
+InstNEQ:  不等于指令，x == y
+**************************************/
+type InstNEQ struct {
+	aImv
+	X, Y Value
+}
+
+func (i *InstNEQ) String() string {
+	return fmt.Sprintf("%s != %s", i.X.Name(), i.Y.Name())
+}
+
+// 在 Block 中添加一条 InstNEQ 指令
+func (b *Block) EmitInstNEQ(x, y Value, pos int) *InstNEQ {
+	v := &InstNEQ{X: x, Y: y}
+	v.Stringer = v
+	v.pos = pos
+
+	b.emit(v)
+	return v
+}
+
+/**************************************
+InstGTR:  大于指令，x > y
+**************************************/
+type InstGTR struct {
+	aImv
+	X, Y Value
+}
+
+func (i *InstGTR) String() string {
+	return fmt.Sprintf("%s > %s", i.X.Name(), i.Y.Name())
+}
+
+// 在 Block 中添加一条 InstGTR 指令
+func (b *Block) EmitInstGTR(x, y Value, pos int) *InstGTR {
+	v := &InstGTR{X: x, Y: y}
+	v.Stringer = v
+	v.pos = pos
+
+	b.emit(v)
+	return v
+}
+
+/**************************************
+InstLSS:  小于指令，x < y
+**************************************/
+type InstLSS struct {
+	aImv
+	X, Y Value
+}
+
+func (i *InstLSS) String() string {
+	return fmt.Sprintf("%s < %s", i.X.Name(), i.Y.Name())
+}
+
+// 在 Block 中添加一条 InstLSS 指令
+func (b *Block) EmitInstLSS(x, y Value, pos int) *InstLSS {
+	v := &InstLSS{X: x, Y: y}
+	v.Stringer = v
+	v.pos = pos
+
+	b.emit(v)
+	return v
+}
+
+/**************************************
+InstGEQ:  大等于指令，x >= y
+**************************************/
+type InstGEQ struct {
+	aImv
+	X, Y Value
+}
+
+func (i *InstGEQ) String() string {
+	return fmt.Sprintf("%s >= %s", i.X.Name(), i.Y.Name())
+}
+
+// 在 Block 中添加一条 InstGEQ 指令
+func (b *Block) EmitInstGEQ(x, y Value, pos int) *InstGEQ {
+	v := &InstGEQ{X: x, Y: y}
+	v.Stringer = v
+	v.pos = pos
+
+	b.emit(v)
+	return v
+}
+
+/**************************************
+InstLEQ:  小等于指令，x <= y
+**************************************/
+type InstLEQ struct {
+	aImv
+	X, Y Value
+}
+
+func (i *InstLEQ) String() string {
+	return fmt.Sprintf("%s <= %s", i.X.Name(), i.Y.Name())
+}
+
+// 在 Block 中添加一条 InstLEQ 指令
+func (b *Block) EmitInstLEQ(x, y Value, pos int) *InstLEQ {
+	v := &InstLEQ{X: x, Y: y}
+	v.Stringer = v
+	v.pos = pos
+
+	b.emit(v)
+	return v
+}
+
+/**************************************
+InstCOMP:  比较指令，x <=> y
+**************************************/
+type InstCOMP struct {
+	aImv
+	X, Y Value
+}
+
+func (i *InstCOMP) String() string {
+	return fmt.Sprintf("%s <=> %s", i.X.Name(), i.Y.Name())
+}
+
+// 在 Block 中添加一条 InstCOMP 指令
+func (b *Block) EmitInstCOMP(x, y Value, pos int) *InstCOMP {
+	v := &InstCOMP{X: x, Y: y}
+	v.Stringer = v
+	v.pos = pos
+
+	b.emit(v)
+	return v
 }

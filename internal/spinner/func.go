@@ -405,7 +405,7 @@ func (b *Builder) expr0(e ast.Expr, tv types.TypeAndValue, block *wire.Block) wi
 		panic("Todo")
 		// :*ast.Ident
 
-	case *ast.UnaryExpr:
+	case *ast.UnaryExpr: // 一元算符
 		switch e.Op {
 		case token.AND: // &x, 逃逸
 			loc := b.location(e.X, true, block)
@@ -413,15 +413,15 @@ func (b *Builder) expr0(e ast.Expr, tv types.TypeAndValue, block *wire.Block) wi
 				// Todo: p 为空时，&*p 应panic
 			}
 			return loc
-		case token.ADD: // +x, 等价于x
+		case token.ADD: // +x, 等价于 x
 			return b.expr(e.X, block)
-		case token.NOT:
+		case token.NOT: // !x
 			x := b.expr(e.X, block)
 			return block.EmitUnopNot(x, int(e.OpPos))
-		case token.SUB:
+		case token.SUB: // -x
 			x := b.expr(e.X, block)
 			return block.EmitUnopSub(x, int(e.OpPos))
-		case token.XOR:
+		case token.XOR: // ^x
 			x := b.expr(e.X, block)
 			return block.EmitUnopXor(x, int(e.OpPos))
 
@@ -429,6 +429,86 @@ func (b *Builder) expr0(e ast.Expr, tv types.TypeAndValue, block *wire.Block) wi
 			panic(e.Op)
 		} // :*ast.UnaryExpr
 
+	case *ast.BinaryExpr: // 二元算符
+		x := b.expr(e.X, block)
+		y := b.expr(e.Y, block)
+		switch e.Op {
+		case token.LAND:
+			return block.EmitInstLAND(x, y, int(e.OpPos))
+		case token.LOR:
+			return block.EmitInstLOR(x, y, int(e.OpPos))
+		case token.SHL:
+			return block.EmitInstSHL(x, y, int(e.OpPos))
+		case token.SHR:
+			return block.EmitInstSHR(x, y, int(e.OpPos))
+		case token.ADD:
+			return block.EmitInstADD(x, y, int(e.OpPos))
+		case token.SUB:
+			return block.EmitInstSUB(x, y, int(e.OpPos))
+		case token.MUL:
+			return block.EmitInstMUL(x, y, int(e.OpPos))
+		case token.QUO:
+			return block.EmitInstQUO(x, y, int(e.OpPos))
+		case token.REM:
+			return block.EmitInstREM(x, y, int(e.OpPos))
+		case token.AND:
+			return block.EmitInstAND(x, y, int(e.OpPos))
+		case token.OR:
+			return block.EmitInstOR(x, y, int(e.OpPos))
+		case token.XOR:
+			return block.EmitInstXOR(x, y, int(e.OpPos))
+		case token.AND_NOT:
+			return block.EmitInstANDNOT(x, y, int(e.OpPos))
+
+		case token.EQL:
+			return block.EmitInstEQL(x, y, int(e.OpPos))
+		case token.NEQ:
+			return block.EmitInstNEQ(x, y, int(e.OpPos))
+		case token.GTR:
+			return block.EmitInstGTR(x, y, int(e.OpPos))
+		case token.LSS:
+			return block.EmitInstLSS(x, y, int(e.OpPos))
+		case token.GEQ:
+			return block.EmitInstGEQ(x, y, int(e.OpPos))
+		case token.LEQ:
+			return block.EmitInstLEQ(x, y, int(e.OpPos))
+		case token.SPACESHIP:
+			return block.EmitInstCOMP(x, y, int(e.OpPos))
+		default:
+			panic("illegal op in BinaryExpr: " + e.Op.String())
+		} // :*ast.BinaryExpr
+
+	case *ast.FuncLit:
+		// Todo
+		panic("")
+
+	case *ast.TypeAssertExpr:
+		// Todo
+		panic("")
+
+	case *ast.CallExpr:
+		// Todo
+		panic("")
+
+	case *ast.SliceExpr:
+		// Todo
+		panic("")
+
+	case *ast.SelectorExpr:
+		// Todo
+		panic("")
+
+	case *ast.IndexExpr:
+		// Todo
+		panic("")
+
+	case *ast.CompositeLit:
+		// Todo
+		panic("")
+
+	case *ast.StarExpr:
+		// Todo
+		panic("")
 	}
 
 	panic(fmt.Sprintf("unexpected expr: %T", e))
