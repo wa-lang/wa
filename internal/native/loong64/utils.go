@@ -9,6 +9,12 @@ import (
 	"unicode/utf8"
 )
 
+func assert(ok bool) {
+	if !ok {
+		panic("assert failed")
+	}
+}
+
 func newU32(v uint32) *uint32 {
 	return &v
 }

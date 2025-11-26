@@ -1,7 +1,7 @@
 // Copyright (C) 2025 武汉凹语言科技有限公司
 // SPDX-License-Identifier: AGPL-3.0-or-later
 
-package apprv2elf
+package appasm2elf
 
 import (
 	"fmt"
@@ -16,10 +16,10 @@ import (
 	"wa-lang.org/wa/internal/native/wemu/device/dram"
 )
 
-var CmdRv2elf = &cli.Command{
+var CmdAsm2elf = &cli.Command{
 	Hidden:    true,
-	Name:      "rv2elf",
-	Usage:     "convert riscv assembly code to elf binary format",
+	Name:      "asm2elf",
+	Usage:     "convert wa native assembly code to elf binary format",
 	ArgsUsage: "<file.s>",
 	Flags: []cli.Flag{
 		&cli.StringFlag{
@@ -29,7 +29,7 @@ var CmdRv2elf = &cli.Command{
 		},
 		&cli.StringFlag{
 			Name:  "arch",
-			Usage: "set target architecture (riscv32|riscv64)",
+			Usage: "set target architecture (riscv32|riscv64|loong64)",
 			Value: "riscv64",
 		},
 		&cli.Int64Flag{
@@ -67,6 +67,8 @@ var CmdRv2elf = &cli.Command{
 			opt.CPU = abi.RISCV32
 		case "riscv64":
 			opt.CPU = abi.RISCV64
+		case "loong64":
+			opt.CPU = abi.LOONG64
 		default:
 			fmt.Printf("unknown arch: %s\n", arch)
 			os.Exit(1)

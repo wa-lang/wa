@@ -73,10 +73,12 @@ const (
 type Machine uint16
 
 const (
-	EM_NONE    Machine = 0   // Unknown machine.
-	EM_X86_64  Machine = 62  // Advanced Micro Devices x86-64
-	EM_AARCH64 Machine = 183 // ARM 64-bit Architecture (AArch64)
-	EM_RISCV   Machine = 243 // RISC-V
+	EM_NONE      Machine = 0   // Unknown machine.
+	EM_X86_64    Machine = 62  // Advanced Micro Devices x86-64
+	EM_AARCH64   Machine = 183 // ARM 64-bit Architecture (AArch64)
+	EM_RISCV     Machine = 243 // RISC-V
+	EM_BPF       Machine = 247 // Linux BPF – in-kernel virtual machine
+	EM_LOONGARCH Machine = 258 // LoongArch
 )
 
 // Prog.Type

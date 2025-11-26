@@ -11,6 +11,8 @@ func (cpu CPUType) String() string {
 		return "RISCV64"
 	case RISCV32:
 		return "RISCV32"
+	case LOONG64:
+		return "LOONG64"
 	}
 	return fmt.Sprintf("abi.CPUType(%d)", int(cpu))
 }

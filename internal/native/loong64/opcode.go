@@ -3,6 +3,12 @@
 
 package loong64
 
+import (
+	"fmt"
+
+	"wa-lang.org/wa/internal/native/abi"
+)
+
 //
 // 31                                                           10 9            5 4            0
 // +-------------------------------------------------------------+ +------------+ +------------+
@@ -65,3 +71,203 @@ const (
 	OpFormatType_1RI21
 	OpFormatType_I26
 )
+
+type instArg uint16
+
+// 指令每个参数
+const (
+	_ instArg = iota // 0 是无效参数, 表示列表结束
+	// 1-5 bit
+	arg_fd
+	arg_fj
+	arg_fk
+	arg_fa
+	arg_rd
+	// 6-10 bit
+	arg_rj
+	arg_rk
+	arg_op_4_0
+	arg_fcsr_4_0
+	arg_fcsr_9_5
+	// 11-15 bit
+	arg_csr_23_10
+	arg_cd
+	arg_cj
+	arg_ca
+	arg_sa2_16_15
+	// 16-20 bit
+	arg_sa3_17_15
+	arg_code_4_0
+	arg_code_14_0
+	arg_ui5_14_10
+	arg_ui6_15_10
+	// 21-25 bit
+	arg_ui12_21_10
+	arg_lsbw
+	arg_msbw
+	arg_lsbd
+	arg_msbd
+	// 26-30 bit
+	arg_hint_4_0
+	arg_hint_14_0
+	arg_level_14_0
+	arg_level_17_10
+	arg_seq_17_10
+	// 31-35 bit
+	arg_si12_21_10
+	arg_si14_23_10
+	arg_si16_25_10
+	arg_si20_24_5
+	arg_offset_20_0
+	// 36~
+	arg_offset_25_0
+	arg_offset_15_0
+)
+
+// 指令参数列表打包为数组结构, 可以简化初始化
+type instArgs [5]instArg
+
+// 指令编码格式
+type _OpContextType struct {
+	mask  uint32   // opcode 掩码
+	value uint32   // opcode 值
+	op    abi.As   // 操作码定义
+	args  instArgs // args[i] 表示结束
+}
+
+func (ctx *_OpContextType) encodeRaw(as abi.As, arg *abi.AsArgument) (uint32, error) {
+	assert(ctx != nil)
+	assert(ctx.op == as)
+	assert(arg != nil)
+
+	var x = ctx.mask & ctx.value
+	for _, argTyp := range ctx.args {
+		x &= ctx.encodeArg(argTyp, arg)
+	}
+
+	return x, nil
+}
+
+func (ctx *_OpContextType) encodeArg(argTyp instArg, arg *abi.AsArgument) uint32 {
+	// 根据参数类型分别编码
+	switch argTyp {
+	case 0: // 空参数
+		return 0
+
+	// 1-5 bit
+	case arg_fd:
+		return ctx.regF(arg.Rd)
+	case arg_fj:
+		return ctx.regF(arg.Rs1) << 5
+	case arg_fk:
+		return ctx.regF(arg.Rs2) << 10
+	case arg_fa:
+		return ctx.regF(arg.Rs3) << 15
+	case arg_rd:
+		return ctx.regI(arg.Rd)
+
+	// 6-10 bit
+	case arg_rj:
+		return ctx.regI(arg.Rs1) << 5
+	case arg_rk:
+		return ctx.regI(arg.Rs2) << 10
+	case arg_op_4_0:
+		panic("TODO")
+	case arg_fcsr_4_0:
+		return (uint32(arg.Imm) & 0b11)
+	case arg_fcsr_9_5:
+		return (uint32(arg.Imm) & 0b_1_1111_1111) << 5
+
+	// 11-15 bit
+	case arg_csr_23_10:
+		return (uint32(arg.Imm) & 0b11) << 10
+	case arg_cd:
+		return (ctx.regI(arg.Rd) | 0b_11000)
+	case arg_cj:
+		return (ctx.regI(arg.Rs1) | 0b_11000) << 5
+	case arg_ca:
+		return (ctx.regI(arg.Rs2) | 0b_11000) << 10
+	case arg_sa2_16_15:
+		return (uint32(arg.Imm) & 0b11) << 15
+
+	// 16-20 bit
+	case arg_sa3_17_15:
+		return (uint32(arg.Imm) & 0b111) << 15
+	case arg_code_4_0:
+		return (uint32(arg.Imm) & 0b11)
+	case arg_code_14_0:
+		return (uint32(arg.Imm) & 0b_0111_1111_1111_1111)
+	case arg_ui5_14_10:
+		return (uint32(arg.Imm) & 0b_0111_1111_1111_1111) << 10
+	case arg_ui6_15_10:
+		return (uint32(arg.Imm) & 0b_1111_1111_1111_1111) << 10
+
+	// 21-25 bit
+	case arg_ui12_21_10:
+		return (uint32(arg.Imm) & 0b_1111_1111_1111) << 10
+	case arg_lsbw:
+		panic("TODO") // 需要2个立即数
+	case arg_msbw:
+		panic("TODO") // 需要2个立即数
+	case arg_lsbd:
+		panic("TODO") // 需要2个立即数
+	case arg_msbd:
+		panic("TODO") // 需要2个立即数
+
+	// 26-30 bit
+	case arg_hint_4_0:
+		return uint32(arg.Imm) & 0b_1_1111
+	case arg_hint_14_0:
+		return uint32(arg.Imm) & 0b_0111_1111_1111_1111
+	case arg_level_14_0:
+		return uint32(arg.Imm) & 0b_0111_1111_1111_1111
+	case arg_level_17_10:
+		return uint32(arg.Imm) << 10
+
+	case arg_seq_17_10:
+		return uint32(arg.Imm) << 10
+
+	// 31-35 bit
+	case arg_si12_21_10:
+		return (uint32(arg.Imm) & 0b_1111_1111_1111) << 10
+	case arg_si14_23_10:
+		return (uint32(arg.Imm) & 0b_0011_1111_1111_1111) << 10
+	case arg_si16_25_10:
+		return (uint32(arg.Imm) & 0xFFFF) << 10
+	case arg_si20_24_5:
+		return (uint32(arg.Imm) & 0xFFFFF) << 5
+	case arg_offset_20_0:
+		offs := uint32(arg.Imm)
+		return (offs&0xFFFF)<<10 | ((offs >> 16) & 0b_11111)
+
+	// 36~
+	case arg_offset_25_0:
+		// op, offs[15:0], offs[25:16]
+		offs := uint32(arg.Imm)
+		bit0_9 := (offs >> 16) & 0b_11111_11111
+		bit10_25 := (offs & 0xFFFF) << 10
+		return bit0_9 | bit10_25
+	case arg_offset_15_0:
+		return (uint32(arg.Imm) & 0xFFFF) << 10
+	}
+
+	panic("unreachable")
+}
+
+// 返回寄存器机器码编号
+func (ctx *_OpContextType) regI(r abi.RegType) uint32 {
+	return ctx.regVal(r, REG_R0, REG_R31)
+}
+
+// 返回浮点数寄存器机器码编号
+func (ctx *_OpContextType) regF(r abi.RegType) uint32 {
+	return ctx.regVal(r, REG_F0, REG_F31)
+}
+
+// 返回寄存器机器码编号
+func (ctx *_OpContextType) regVal(r, min, max abi.RegType) uint32 {
+	if r < min || r > max {
+		panic(fmt.Sprintf("register out of range, want %d <= %d <= %d", min, r, max))
+	}
+	return uint32(r - min)
+}
