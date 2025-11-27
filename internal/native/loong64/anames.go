@@ -72,3 +72,72 @@ var _Register = []string{
 	REG_F30: "F30",
 	REG_F31: "F31",
 }
+
+// 寄存器别名
+var _RegisterAlias = []string{
+	REG_ZERO: "ZERO", // 零寄存器
+	REG_RA:   "RA",   // 返回地址
+	REG_TP:   "TP",   // 线程指针
+	REG_SP:   "SP",   // 栈指针
+	REG_A0:   "A0",   // 函数参数/返回值
+	REG_A1:   "A1",   // 函数参数/返回值
+	REG_A2:   "A2",   // 函数参数
+	REG_A3:   "A3",   // 函数参数
+	REG_A4:   "A4",   // 函数参数
+	REG_A5:   "A5",   // 函数参数
+	REG_A6:   "A6",   // 函数参数
+	REG_A7:   "A7",   // 函数参数
+	REG_T0:   "T0",   // 临时变量
+	REG_T1:   "T1",   // 临时变量
+	REG_T2:   "T2",   // 临时变量
+	REG_T3:   "T3",   // 临时变量
+	REG_T4:   "T4",   // 临时变量
+	REG_T5:   "T5",   // 临时变量
+	REG_T6:   "T6",   // 临时变量
+	REG_T7:   "T7",   // 临时变量
+	REG_T8:   "T8",   // 临时变量
+	REG_X:    "X",    // 保留寄存器
+	REG_FP:   "FP",   // 帧指针
+	REG_S0:   "S0",   // Saved register
+	REG_S1:   "S1",   // Saved register
+	REG_S2:   "S2",   // Saved register
+	REG_S3:   "S3",   // Saved register
+	REG_S4:   "S4",   // Saved register
+	REG_S5:   "S5",   // Saved register
+	REG_S6:   "S6",   // Saved register
+	REG_S7:   "S7",   // Saved register
+	REG_S8:   "S8",   // Saved register
+
+	REG_FA0:  "FA0",  // 函数参数/返回值
+	REG_FA1:  "FA1",  // 函数参数/返回值
+	REG_FA2:  "FA2",  // 函数参数
+	REG_FA3:  "FA3",  // 函数参数
+	REG_FA4:  "FA4",  // 函数参数
+	REG_FA5:  "FA5",  // 函数参数
+	REG_FA6:  "FA6",  // 函数参数
+	REG_FA7:  "FA7",  // 函数参数
+	REG_FT0:  "FT0",  // 临时变量
+	REG_FT1:  "FT1",  // 临时变量
+	REG_FT2:  "FT2",  // 临时变量
+	REG_FT3:  "FT3",  // 临时变量
+	REG_FT4:  "FT4",  // 临时变量
+	REG_FT5:  "FT5",  // 临时变量
+	REG_FT6:  "FT6",  // 临时变量
+	REG_FT7:  "FT7",  // 临时变量
+	REG_FT8:  "FT8",  // 临时变量
+	REG_FT9:  "FT9",  // 临时变量
+	REG_FT10: "FT10", // 临时变量
+	REG_FT11: "FT11", // 临时变量
+	REG_FT12: "FT12", // 临时变量
+	REG_FT13: "FT13", // 临时变量
+	REG_FT14: "FT14", // 临时变量
+	REG_FT15: "FT15", // 临时变量
+	REG_FS0:  "FS0",  // Saved register
+	REG_FS1:  "FS1",  // Saved register
+	REG_FS2:  "FS2",  // Saved register
+	REG_FS3:  "FS3",  // Saved register
+	REG_FS4:  "FS4",  // Saved register
+	REG_FS5:  "FS5",  // Saved register
+	REG_FS6:  "FS6",  // Saved register
+	REG_FS7:  "FS7",  // Saved register
+}

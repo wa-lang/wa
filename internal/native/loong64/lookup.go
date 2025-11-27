@@ -19,6 +19,11 @@ func LookupRegister(regName string) (r abi.RegType, ok bool) {
 			return abi.RegType(i), true
 		}
 	}
+	for i, s := range _RegisterAlias {
+		if strEqualFold(s, regName) {
+			return abi.RegType(i), true
+		}
+	}
 	return 0, false
 }
 
@@ -31,6 +36,16 @@ func RegString(r abi.RegType) string {
 		return fmt.Sprintf("F%d", r-REG_F0)
 	}
 	return fmt.Sprintf("riscv.badreg(%d)", r)
+}
+
+// 寄存器别名
+func RegAliasString(r abi.RegType) string {
+	if r >= REG_R0 && r < REG_END {
+		if s := _RegisterAlias[r]; s != "" {
+			return s
+		}
+	}
+	return RegString(r)
 }
 
 // 根据名字查找汇编指令(忽略大小写, 忽略下划线和点的区别)
