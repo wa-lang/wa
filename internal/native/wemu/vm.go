@@ -16,6 +16,7 @@ import (
 	"wa-lang.org/wa/internal/native/wemu/device/dram"
 	"wa-lang.org/wa/internal/native/wemu/device/power"
 	"wa-lang.org/wa/internal/native/wemu/device/uart"
+	"wa-lang.org/wa/internal/native/wemu/loong64"
 	"wa-lang.org/wa/internal/native/wemu/riscv32"
 	"wa-lang.org/wa/internal/native/wemu/riscv64"
 )
@@ -63,6 +64,8 @@ func NewWEmu(prog *abi.LinkedProgram, opt *Option) *WEmu {
 		p.CPU = riscv32.NewCPU()
 	case abi.RISCV64:
 		p.CPU = riscv64.NewCPU()
+	case abi.LOONG64:
+		p.CPU = loong64.NewCPU()
 	default:
 		panic(fmt.Sprintf("unknown cpu type: %v", prog.CPU))
 	}
