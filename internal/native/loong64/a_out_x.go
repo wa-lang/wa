@@ -3,7 +3,11 @@
 
 package loong64
 
-import "wa-lang.org/wa/internal/native/abi"
+import (
+	"fmt"
+
+	"wa-lang.org/wa/internal/native/abi"
+)
 
 const (
 	// 通用寄存器
@@ -144,3 +148,35 @@ const (
 	REG_FS6  = REG_F30 // Saved register
 	REG_FS7  = REG_F31 // Saved register
 )
+
+// 浮点数控制状态寄存器
+type Fcsr uint8
+
+const (
+	FCSR0 Fcsr = iota
+	FCSR1
+	FCSR2
+	FCSR3
+)
+
+func (f Fcsr) String() string {
+	return fmt.Sprintf("$fcsr%d", uint8(f))
+}
+
+// 浮点数条件标志寄存器
+type Fcc uint8
+
+const (
+	FCC0 Fcc = iota
+	FCC1
+	FCC2
+	FCC3
+	FCC4
+	FCC5
+	FCC6
+	FCC7
+)
+
+func (f Fcc) String() string {
+	return fmt.Sprintf("$fcc%d", uint8(f))
+}

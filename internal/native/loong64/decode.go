@@ -35,121 +35,220 @@ func (op _OpContextType) decodeInst(x uint32) (as abi.As, arg *abi.AsArgument, a
 	arg = new(abi.AsArgument)
 	argRaw = new(abi.AsRawArgument)
 
-	rd := (x >> (5 * 0)) & 0b11111
-	rj := (x >> (5 * 1)) & 0b11111
-	rk := (x >> (5 * 2)) & 0b11111
-	ra := (x >> (5 * 3)) & 0b11111
+	rd := (x >> (5 * 0)) & 0b11111 // 4:0 位
+	rj := (x >> (5 * 1)) & 0b11111 // 9:5 位
+	rk := (x >> (5 * 2)) & 0b11111 // 14:10 位
+	ra := (x >> (5 * 3)) & 0b11111 // 19:15 位
 
 	_, _, _, _ = rd, rj, rk, ra
 
 	for _, argTyp := range op.args {
+		if argTyp == 0 {
+			break
+		}
 		switch argTyp {
-		case 0: // 空参数
-			return
-
-		// 1-5 bit
 		case arg_fd:
 			argRaw.Rd = rd
 			arg.Rd, _ = op.decodeRegF(rd)
 		case arg_fj:
 			argRaw.Rs1 = rj
-			arg.Rs1, _ = op.decodeRegF(rd)
+			arg.Rs1, _ = op.decodeRegF(rj)
 		case arg_fk:
 			argRaw.Rs2 = rk
-			arg.Rs2, _ = op.decodeRegF(rd)
+			arg.Rs2, _ = op.decodeRegF(rk)
 		case arg_fa:
 			argRaw.Rs3 = ra
-			arg.Rs3, _ = op.decodeRegF(rd)
+			arg.Rs3, _ = op.decodeRegF(ra)
+
 		case arg_rd:
 			argRaw.Rd = rd
 			arg.Rd, _ = op.decodeRegI(rd)
-
-		// 6-10 bit
 		case arg_rj:
 			argRaw.Rs1 = rj
-			arg.Rs1, _ = op.decodeRegI(rd)
+			arg.Rs1, _ = op.decodeRegI(rj)
 		case arg_rk:
 			argRaw.Rs2 = rk
-			arg.Rs2, _ = op.decodeRegI(rd)
+			arg.Rs2, _ = op.decodeRegI(rk)
+
 		case arg_op_4_0:
-			panic("TODO")
+			argRaw.Imm = int32(rd)
+			arg.Imm = int32(rd)
 		case arg_fcsr_4_0:
-			panic("TODO")
+			argRaw.Imm = int32(rd)
+			arg.Imm = int32(rd)
 		case arg_fcsr_9_5:
-			panic("TODO")
-
-		// 11-15 bit
+			argRaw.Imm = int32(rj)
+			arg.Imm = int32(rj)
 		case arg_csr_23_10:
-			panic("TODO")
+			v := (x >> 10) & ((1 << 14) - 1)
+			argRaw.Imm = int32(v)
+			arg.Imm = int32(v)
+
 		case arg_cd:
-			panic("TODO")
+			v := FCC0 + Fcc(x&((1<<3)-1))
+			argRaw.Imm = int32(v)
+			arg.Imm = int32(v)
 		case arg_cj:
-			panic("TODO")
+			v := FCC0 + Fcc((x>>5)&((1<<3)-1))
+			argRaw.Imm = int32(v)
+			arg.Imm = int32(v)
 		case arg_ca:
-			panic("TODO")
+			v := FCC0 + Fcc((x>>15)&((1<<3)-1))
+			argRaw.Imm = int32(v)
+			arg.Imm = int32(v)
+
 		case arg_sa2_16_15:
-			panic("TODO")
-
-		// 16-20 bit
+			v := (x >> 15) & ((1 << 2) - 1)
+			argRaw.Imm = int32(v)
+			arg.Imm = int32(v)
 		case arg_sa3_17_15:
-			panic("TODO")
+			v := (x >> 15) & ((1 << 3) - 1)
+			argRaw.Imm = int32(v)
+			arg.Imm = int32(v)
+
 		case arg_code_4_0:
-			panic("TODO")
+			v := x & ((1 << 5) - 1)
+			argRaw.Imm = int32(v)
+			arg.Imm = int32(v)
 		case arg_code_14_0:
-			panic("TODO")
+			v := x & ((1 << 15) - 1)
+			argRaw.Imm = int32(v)
+			arg.Imm = int32(v)
+
 		case arg_ui5_14_10:
-			panic("TODO")
+			v := (x >> 10) & ((1 << 5) - 1)
+			argRaw.Imm = int32(v)
+			arg.Imm = int32(v)
 		case arg_ui6_15_10:
-			panic("TODO")
-
-		// 21-25 bit
+			v := (x >> 10) & ((1 << 6) - 1)
+			argRaw.Imm = int32(v)
+			arg.Imm = int32(v)
 		case arg_ui12_21_10:
-			panic("TODO")
-		case arg_lsbw:
-			panic("TODO") // 需要2个立即数
-		case arg_msbw:
-			panic("TODO") // 需要2个立即数
-		case arg_lsbd:
-			panic("TODO") // 需要2个立即数
-		case arg_msbd:
-			panic("TODO") // 需要2个立即数
+			v := ((x >> 10) & ((1 << 12) - 1) & 0xfff)
+			argRaw.Imm = int32(v)
+			arg.Imm = int32(v)
 
-		// 26-30 bit
+		case arg_lsbw:
+			v := (x >> 10) & ((1 << 5) - 1)
+			argRaw.Imm = int32(v)
+			arg.Imm = int32(v)
+		case arg_msbw:
+			v := (x >> 16) & ((1 << 5) - 1)
+			argRaw.Imm = int32(v)
+			arg.Imm = int32(v)
+		case arg_lsbd:
+			v := (x >> 10) & ((1 << 6) - 1)
+			argRaw.Imm = int32(v)
+			arg.Imm = int32(v)
+		case arg_msbd:
+			v := (x >> 16) & ((1 << 6) - 1)
+			argRaw.Imm = int32(v)
+			arg.Imm = int32(v)
+
 		case arg_hint_4_0:
-			panic("TODO")
+			v := x & ((1 << 5) - 1)
+			argRaw.Imm = int32(v)
+			arg.Imm = int32(v)
 		case arg_hint_14_0:
-			panic("TODO")
+			v := x & ((1 << 15) - 1)
+			argRaw.Imm = int32(v)
+			arg.Imm = int32(v)
+
 		case arg_level_14_0:
-			panic("TODO")
+			v := x & ((1 << 15) - 1)
+			argRaw.Imm = int32(v)
+			arg.Imm = int32(v)
 		case arg_level_17_10:
-			panic("TODO")
+			v := (x >> 10) & ((1 << 8) - 1)
+			argRaw.Imm = int32(v)
+			arg.Imm = int32(v)
 
 		case arg_seq_17_10:
-			panic("TODO")
+			v := (x >> 10) & ((1 << 8) - 1)
+			argRaw.Imm = int32(v)
+			arg.Imm = int32(v)
 
-		// 31-35 bit
 		case arg_si12_21_10:
-			panic("TODO")
+			if (x & 0x200000) == 0x200000 {
+				v := ((x >> 10) & ((1 << 12) - 1)) | 0xf000
+				argRaw.Imm = int32(v)
+				arg.Imm = int32(v)
+			} else {
+				v := (x >> 10) & ((1 << 12) - 1)
+				argRaw.Imm = int32(v)
+				arg.Imm = int32(v)
+			}
+
 		case arg_si14_23_10:
-			panic("TODO")
+			if (x & 0x800000) == 0x800000 {
+				v := (((x >> 10) & ((1 << 14) - 1)) << 2) | 0xffff0000
+				argRaw.Imm = int32(v)
+				arg.Imm = int32(v)
+			} else {
+				v := (((x >> 10) & ((1 << 14) - 1)) << 2)
+				argRaw.Imm = int32(v)
+				arg.Imm = int32(v)
+			}
 		case arg_si16_25_10:
-			panic("TODO")
+			if (x & 0x2000000) == 0x2000000 {
+				v := ((x >> 10) & ((1 << 16) - 1)) | 0xffff0000
+				argRaw.Imm = int32(v)
+				arg.Imm = int32(v)
+			} else {
+				v := ((x >> 10) & ((1 << 16) - 1))
+				argRaw.Imm = int32(v)
+				arg.Imm = int32(v)
+			}
 		case arg_si20_24_5:
-			panic("TODO")
+			if (x & 0x1000000) == 0x1000000 {
+				v := ((x >> 5) & ((1 << 20) - 1)) | 0xfff00000
+				argRaw.Imm = int32(v)
+				arg.Imm = int32(v)
+			} else {
+				v := ((x >> 5) & ((1 << 20) - 1))
+				argRaw.Imm = int32(v)
+				arg.Imm = int32(v)
+			}
 		case arg_offset_20_0:
-			panic("TODO")
+			if (x & 0x10) == 0x10 {
+				v := ((((x << 16) | ((x >> 10) & ((1 << 16) - 1))) & ((1 << 21) - 1)) << 2) | 0xff800000
+				argRaw.Imm = int32(v)
+				arg.Imm = int32(v)
+			} else {
+				v := (((x << 16) | ((x >> 10) & ((1 << 16) - 1))) & ((1 << 21) - 1)) << 2
+				argRaw.Imm = int32(v)
+				arg.Imm = int32(v)
+			}
 
-		// 36~
 		case arg_offset_25_0:
-			panic("TODO")
+			if (x & 0x200) == 0x200 {
+				v := ((((x << 16) | ((x >> 10) & ((1 << 16) - 1))) & ((1 << 26) - 1)) << 2) | 0xf0000000
+				argRaw.Imm = int32(v)
+				arg.Imm = int32(v)
+			} else {
+				v := ((((x << 16) | ((x >> 10) & ((1 << 16) - 1))) & ((1 << 26) - 1)) << 2)
+				argRaw.Imm = int32(v)
+				arg.Imm = int32(v)
+			}
 		case arg_offset_15_0:
-			panic("TODO")
-		}
+			if (x & 0x2000000) == 0x2000000 {
+				v := (((x >> 10) & ((1 << 16) - 1)) << 2) | 0xfffc0000
+				argRaw.Imm = int32(v)
+				arg.Imm = int32(v)
+			} else {
+				v := (((x >> 10) & ((1 << 16) - 1)) << 2)
+				argRaw.Imm = int32(v)
+				arg.Imm = int32(v)
+			}
 
-		panic("unreachable")
+		default:
+			// 遇到无法识别的参数类型，返回错误
+			return 0, nil, nil, fmt.Errorf("unknown argument type: %d", argTyp)
+		}
 	}
 
-	panic("TODO")
+	// 成功解码所有参数后，返回结果
+	return as, arg, argRaw, nil
 }
 
 // 解码寄存器
