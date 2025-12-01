@@ -568,7 +568,11 @@ func parsePage(num int, p pdf.Page, isFP bool) (ops []string, opstrs map[string]
 		if strings.HasPrefix(op, "AM") {
 			instArgs = "arg_rd, arg_rk, arg_rj"
 		}
-		instFormat := fmt.Sprintf("{mask: %s, value: %s, args: instArgs{%s}},", binstrToHex(binMask), binstrToHex(binValue), instArgs)
+		instFormat := fmt.Sprintf(
+			"{mask: %s, value: %s, op: A%s, args: instArgs{%s}},",
+			binstrToHex(binMask), binstrToHex(binValue),
+			op, instArgs,
+		)
 		instFormats[op] = instFormat
 
 		i = j // next instruction
