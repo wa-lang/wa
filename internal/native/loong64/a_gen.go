@@ -340,9 +340,15 @@ func dealWithFcmp(ds string) (fcmpConditions map[string]map[string]string) {
 		instFormatComment := fmt.Sprintf("// FCMP.%s.%s cd, fj, fk", k, ds)
 		var instFormat string
 		if ds == "D" {
-			instFormat = fmt.Sprintf("{mask: 0xffff8018, value: 0x0c2%s000, args: instArgs{arg_cd, arg_fj, arg_fk}},", v)
+			instFormat = fmt.Sprintf(
+				"{mask: 0xffff8018, value: 0x0c2%s000, op: A%s, args: instArgs{arg_cd, arg_fj, arg_fk}},",
+				v, op,
+			)
 		} else {
-			instFormat = fmt.Sprintf("{mask: 0xffff8018, value: 0x0c1%s000, args: instArgs{arg_cd, arg_fj, arg_fk}},", v)
+			instFormat = fmt.Sprintf(
+				"{mask: 0xffff8018, value: 0x0c1%s000, op: A%s,args: instArgs{arg_cd, arg_fj, arg_fk}},",
+				v, op,
+			)
 		}
 
 		fcmpConditions[op] = make(map[string]string)
