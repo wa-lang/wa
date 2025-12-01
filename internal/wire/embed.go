@@ -30,6 +30,8 @@ func (v *anInstruction) Format(tab string, sb *strings.Builder) {
 	sb.WriteString(tab)
 	if va, ok := v.Stringer.(Value); ok {
 		sb.WriteString(va.Name())
+		sb.WriteString(" : ")
+		sb.WriteString(va.Type().Name())
 		sb.WriteString(" = ")
 	}
 	sb.WriteString(v.String())
@@ -44,11 +46,9 @@ imv: InterMediateValue，中间值，实现 Value 接口与 Name、Kind、Type �
 **************************************/
 type aImv struct {
 	anInstruction
-	id  int       // 在函数内虚拟寄存器数组中的下标，在 Function.EndBody() 前该值无意义
-	typ ValueType // 值类型
+	id int // 在函数内虚拟寄存器数组中的下标，在 Function.EndBody() 前该值无意义
 }
 
 func (v *aImv) Name() string    { return fmt.Sprintf("$t%d", v.id) }
 func (v *aImv) Kind() ValueKind { return ValueKindLocal }
-func (v *aImv) Type() ValueType { return v.typ }
 func (v *aImv) setId(id int)    { v.id = id }

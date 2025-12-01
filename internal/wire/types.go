@@ -425,6 +425,42 @@ func (tl *Types) GenPtr(base ValueType) *Ptr {
 }
 
 /**************************************
+Tuple: 元组
+**************************************/
+type Tuple struct {
+	tCommon
+	fields []ValueType
+}
+
+func (t *Tuple) Kind() TypeKind { return TypeKindTuple }
+func (t *Tuple) Equal(u ValueType) bool {
+	ut, ok := u.(*Tuple)
+	if !ok {
+		return false
+	}
+
+	if len(t.fields) != len(ut.fields) {
+		return false
+	}
+
+	for i := range t.fields {
+		if !t.fields[i].Equal(ut.fields[i]) {
+			return false
+		}
+	}
+
+	return true
+}
+
+func (tl *Types) GenTuple(fields []ValueType) *Tuple {
+	panic("Todo") //name
+
+	nt := Tuple{fields: fields}
+	tl.Add(&nt)
+	return &nt
+}
+
+/**************************************
 Struct: 结构体
 **************************************/
 type Struct struct {

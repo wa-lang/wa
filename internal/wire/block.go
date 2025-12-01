@@ -88,7 +88,7 @@ func (b *Block) Format(tab string, sb *strings.Builder) {
 func (b *Block) AddLocal(name string, typ ValueType, pos int, obj interface{}) Location {
 	v := &InstAlloc{}
 	v.Stringer = v
-	v.typ = b.types.GenPtr(typ)
+	v.refType = b.types.GenPtr(typ)
 	v.dataType = typ
 	v.pos = pos
 	v.object = obj

@@ -35,6 +35,7 @@ type InstAlloc struct {
 	aImv
 	Location LocationKind
 	dataType ValueType
+	refType  ValueType
 	object   interface{} // 与该值关联的 AST 结点。对凹语言前端，应为 types.Object
 }
 
@@ -48,7 +49,15 @@ func (i *InstAlloc) String() string {
 		op = "alloc.heap"
 	}
 
-	return fmt.Sprintf("%s %s", op, i.Type().Name())
+	return op
+}
+
+func (i *InstAlloc) Type() ValueType {
+	if i.Location == LocationKindRegister {
+		return i.dataType
+	} else {
+		return i.refType
+	}
 }
 
 // Location 接口相关
@@ -62,10 +71,15 @@ InstLoad: Load 指令，装载 Loc 处的变量
 type InstLoad struct {
 	aImv
 	Loc Location
+	typ ValueType
 }
 
 func (i *InstLoad) String() string {
 	return fmt.Sprintf("*%s", i.Loc.Name())
+}
+
+func (i *InstLoad) Type() ValueType {
+	return i.typ
 }
 
 // 在 Block 中添加一条 Load 指令
@@ -110,19 +124,23 @@ InstExtract: Extract 指令，提取元组 Tuple 的第 Index 个元素
 **************************************/
 type InstExtract struct {
 	aImv
-	Tuple Value
+	X     Value
 	Index int
 }
 
 func (i *InstExtract) String() string {
-	return fmt.Sprintf("extract %s #%d", i.Tuple.Name(), i.Index)
+	return fmt.Sprintf("extract %s #%d", i.X.Name(), i.Index)
+}
+
+func (i *InstExtract) Type() ValueType {
+	return i.X.Type().(*Tuple).fields[i.Index]
 }
 
 // 在 Block 中添加一条 Extract 指令
 func (b *Block) EmitExtract(tuple Value, index int, pos int) *InstExtract {
 	v := &InstExtract{}
 	v.Stringer = v
-	v.Tuple = tuple
+	v.X = tuple
 	v.Index = index
 	v.pos = pos
 
@@ -170,6 +188,10 @@ func (i *InstUnopNot) String() string {
 	return fmt.Sprintf("!%s", i.X.Name())
 }
 
+func (i *InstUnopNot) Type() ValueType {
+	return i.X.Type()
+}
+
 // 在 Block 中添加一条 UnopNot 指令
 func (b *Block) EmitUnopNot(x Value, pos int) *InstUnopNot {
 	v := &InstUnopNot{X: x}
@@ -190,6 +212,10 @@ type InstUnopSub struct {
 
 func (i *InstUnopSub) String() string {
 	return fmt.Sprintf("-%s", i.X.Name())
+}
+
+func (i *InstUnopSub) Type() ValueType {
+	return i.X.Type()
 }
 
 // 在 Block 中添加一条 UnopSub 指令
@@ -214,6 +240,10 @@ func (i *InstUnopXor) String() string {
 	return fmt.Sprintf("^%s", i.X.Name())
 }
 
+func (i *InstUnopXor) Type() ValueType {
+	return i.X.Type()
+}
+
 // 在 Block 中添加一条 UnopXor 指令
 func (b *Block) EmitUnopXor(x Value, pos int) *InstUnopXor {
 	v := &InstUnopXor{X: x}
@@ -230,6 +260,10 @@ InstLAND:  逻辑与指令，x && y
 type InstLAND struct {
 	aImv
 	X, Y Value
+}
+
+func (i *InstLAND) Type() ValueType {
+	return i.X.Type()
 }
 
 func (i *InstLAND) String() string {
@@ -258,6 +292,10 @@ func (i *InstLOR) String() string {
 	return fmt.Sprintf("%s || %s", i.X.Name(), i.Y.Name())
 }
 
+func (i *InstLOR) Type() ValueType {
+	return i.X.Type()
+}
+
 // 在 Block 中添加一条 BiopLOR 指令
 func (b *Block) EmitInstLOR(x, y Value, pos int) *InstLOR {
 	v := &InstLOR{X: x, Y: y}
@@ -274,6 +312,10 @@ InstSHL:  左移指令，x << y
 type InstSHL struct {
 	aImv
 	X, Y Value
+}
+
+func (i *InstSHL) Type() ValueType {
+	return i.X.Type()
 }
 
 func (i *InstSHL) String() string {
@@ -302,6 +344,10 @@ func (i *InstSHR) String() string {
 	return fmt.Sprintf("%s >> %s", i.X.Name(), i.Y.Name())
 }
 
+func (i *InstSHR) Type() ValueType {
+	return i.X.Type()
+}
+
 // 在 Block 中添加一条 InstSHR 指令
 func (b *Block) EmitInstSHR(x, y Value, pos int) *InstSHR {
 	v := &InstSHR{X: x, Y: y}
@@ -322,6 +368,10 @@ type InstADD struct {
 
 func (i *InstADD) String() string {
 	return fmt.Sprintf("%s + %s", i.X.Name(), i.Y.Name())
+}
+
+func (i *InstADD) Type() ValueType {
+	return i.X.Type()
 }
 
 // 在 Block 中添加一条 InstADD 指令
@@ -346,6 +396,10 @@ func (i *InstSUB) String() string {
 	return fmt.Sprintf("%s - %s", i.X.Name(), i.Y.Name())
 }
 
+func (i *InstSUB) Type() ValueType {
+	return i.X.Type()
+}
+
 // 在 Block 中添加一条 InstSUB 指令
 func (b *Block) EmitInstSUB(x, y Value, pos int) *InstSUB {
 	v := &InstSUB{X: x, Y: y}
@@ -357,11 +411,15 @@ func (b *Block) EmitInstSUB(x, y Value, pos int) *InstSUB {
 }
 
 /**************************************
-InstMUL:  乘指令，x - y
+InstMUL:  乘指令，x * y
 **************************************/
 type InstMUL struct {
 	aImv
 	X, Y Value
+}
+
+func (i *InstMUL) Type() ValueType {
+	return i.X.Type()
 }
 
 func (i *InstMUL) String() string {
@@ -384,6 +442,10 @@ InstQUO:  除指令，x / y
 type InstQUO struct {
 	aImv
 	X, Y Value
+}
+
+func (i *InstQUO) Type() ValueType {
+	return i.X.Type()
 }
 
 func (i *InstQUO) String() string {
@@ -412,6 +474,10 @@ func (i *InstREM) String() string {
 	return fmt.Sprintf("%s %% %s", i.X.Name(), i.Y.Name())
 }
 
+func (i *InstREM) Type() ValueType {
+	return i.X.Type()
+}
+
 // 在 Block 中添加一条 InstREM 指令
 func (b *Block) EmitInstREM(x, y Value, pos int) *InstREM {
 	v := &InstREM{X: x, Y: y}
@@ -432,6 +498,10 @@ type InstAND struct {
 
 func (i *InstAND) String() string {
 	return fmt.Sprintf("%s & %s", i.X.Name(), i.Y.Name())
+}
+
+func (i *InstAND) Type() ValueType {
+	return i.X.Type()
 }
 
 // 在 Block 中添加一条 InstAND 指令
@@ -456,6 +526,10 @@ func (i *InstOR) String() string {
 	return fmt.Sprintf("%s | %s", i.X.Name(), i.Y.Name())
 }
 
+func (i *InstOR) Type() ValueType {
+	return i.X.Type()
+}
+
 // 在 Block 中添加一条 InstOR 指令
 func (b *Block) EmitInstOR(x, y Value, pos int) *InstOR {
 	v := &InstOR{X: x, Y: y}
@@ -476,6 +550,10 @@ type InstXOR struct {
 
 func (i *InstXOR) String() string {
 	return fmt.Sprintf("%s ^ %s", i.X.Name(), i.Y.Name())
+}
+
+func (i *InstXOR) Type() ValueType {
+	return i.X.Type()
 }
 
 // 在 Block 中添加一条 InstXOR 指令
@@ -500,6 +578,10 @@ func (i *InstANDNOT) String() string {
 	return fmt.Sprintf("%s &^ %s", i.X.Name(), i.Y.Name())
 }
 
+func (i *InstANDNOT) Type() ValueType {
+	return i.X.Type()
+}
+
 // 在 Block 中添加一条 InstANDNOT 指令
 func (b *Block) EmitInstANDNOT(x, y Value, pos int) *InstANDNOT {
 	v := &InstANDNOT{X: x, Y: y}
@@ -516,10 +598,15 @@ InstEQL:  等于指令，x == y
 type InstEQL struct {
 	aImv
 	X, Y Value
+	typ  ValueType
 }
 
 func (i *InstEQL) String() string {
 	return fmt.Sprintf("%s == %s", i.X.Name(), i.Y.Name())
+}
+
+func (i *InstEQL) Type() ValueType {
+	return i.typ
 }
 
 // 在 Block 中添加一条 InstEQL 指令
@@ -527,21 +614,27 @@ func (b *Block) EmitInstEQL(x, y Value, pos int) *InstEQL {
 	v := &InstEQL{X: x, Y: y}
 	v.Stringer = v
 	v.pos = pos
+	v.typ = b.types.GenBool("bool")
 
 	b.emit(v)
 	return v
 }
 
 /**************************************
-InstNEQ:  不等于指令，x == y
+InstNEQ:  不等于指令，x != y
 **************************************/
 type InstNEQ struct {
 	aImv
 	X, Y Value
+	typ  ValueType
 }
 
 func (i *InstNEQ) String() string {
 	return fmt.Sprintf("%s != %s", i.X.Name(), i.Y.Name())
+}
+
+func (i *InstNEQ) Type() ValueType {
+	return i.typ
 }
 
 // 在 Block 中添加一条 InstNEQ 指令
@@ -549,6 +642,7 @@ func (b *Block) EmitInstNEQ(x, y Value, pos int) *InstNEQ {
 	v := &InstNEQ{X: x, Y: y}
 	v.Stringer = v
 	v.pos = pos
+	v.typ = b.types.GenBool("bool")
 
 	b.emit(v)
 	return v
@@ -560,10 +654,15 @@ InstGTR:  大于指令，x > y
 type InstGTR struct {
 	aImv
 	X, Y Value
+	typ  ValueType
 }
 
 func (i *InstGTR) String() string {
 	return fmt.Sprintf("%s > %s", i.X.Name(), i.Y.Name())
+}
+
+func (i *InstGTR) Type() ValueType {
+	return i.typ
 }
 
 // 在 Block 中添加一条 InstGTR 指令
@@ -571,6 +670,7 @@ func (b *Block) EmitInstGTR(x, y Value, pos int) *InstGTR {
 	v := &InstGTR{X: x, Y: y}
 	v.Stringer = v
 	v.pos = pos
+	v.typ = b.types.GenBool("bool")
 
 	b.emit(v)
 	return v
@@ -582,10 +682,15 @@ InstLSS:  小于指令，x < y
 type InstLSS struct {
 	aImv
 	X, Y Value
+	typ  ValueType
 }
 
 func (i *InstLSS) String() string {
 	return fmt.Sprintf("%s < %s", i.X.Name(), i.Y.Name())
+}
+
+func (i *InstLSS) Type() ValueType {
+	return i.typ
 }
 
 // 在 Block 中添加一条 InstLSS 指令
@@ -593,6 +698,7 @@ func (b *Block) EmitInstLSS(x, y Value, pos int) *InstLSS {
 	v := &InstLSS{X: x, Y: y}
 	v.Stringer = v
 	v.pos = pos
+	v.typ = b.types.GenBool("bool")
 
 	b.emit(v)
 	return v
@@ -604,10 +710,15 @@ InstGEQ:  大等于指令，x >= y
 type InstGEQ struct {
 	aImv
 	X, Y Value
+	typ  ValueType
 }
 
 func (i *InstGEQ) String() string {
 	return fmt.Sprintf("%s >= %s", i.X.Name(), i.Y.Name())
+}
+
+func (i *InstGEQ) Type() ValueType {
+	return i.typ
 }
 
 // 在 Block 中添加一条 InstGEQ 指令
@@ -615,6 +726,7 @@ func (b *Block) EmitInstGEQ(x, y Value, pos int) *InstGEQ {
 	v := &InstGEQ{X: x, Y: y}
 	v.Stringer = v
 	v.pos = pos
+	v.typ = b.types.GenBool("bool")
 
 	b.emit(v)
 	return v
@@ -626,10 +738,15 @@ InstLEQ:  小等于指令，x <= y
 type InstLEQ struct {
 	aImv
 	X, Y Value
+	typ  ValueType
 }
 
 func (i *InstLEQ) String() string {
 	return fmt.Sprintf("%s <= %s", i.X.Name(), i.Y.Name())
+}
+
+func (i *InstLEQ) Type() ValueType {
+	return i.typ
 }
 
 // 在 Block 中添加一条 InstLEQ 指令
@@ -637,6 +754,7 @@ func (b *Block) EmitInstLEQ(x, y Value, pos int) *InstLEQ {
 	v := &InstLEQ{X: x, Y: y}
 	v.Stringer = v
 	v.pos = pos
+	v.typ = b.types.GenBool("bool")
 
 	b.emit(v)
 	return v
@@ -648,10 +766,15 @@ InstCOMP:  比较指令，x <=> y
 type InstCOMP struct {
 	aImv
 	X, Y Value
+	typ  ValueType
 }
 
 func (i *InstCOMP) String() string {
 	return fmt.Sprintf("%s <=> %s", i.X.Name(), i.Y.Name())
+}
+
+func (i *InstCOMP) Type() ValueType {
+	return i.typ
 }
 
 // 在 Block 中添加一条 InstCOMP 指令
@@ -659,6 +782,7 @@ func (b *Block) EmitInstCOMP(x, y Value, pos int) *InstCOMP {
 	v := &InstCOMP{X: x, Y: y}
 	v.Stringer = v
 	v.pos = pos
+	v.typ = b.types.GenI32("i32")
 
 	b.emit(v)
 	return v
