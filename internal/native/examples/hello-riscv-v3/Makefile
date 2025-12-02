@@ -4,7 +4,7 @@
 WA:=go run ../../../../main.go
 
 run:
-	$(WA) asm2elf hello_riscv64.ws
+	$(WA) asm2elf -arch=riscv32 hello_riscv64.ws
 	$(WA) wemu hello_riscv64.ws.elf.exe
 	qemu-system-riscv64 -machine virt -nographic -bios none -kernel hello_riscv64.ws.elf.exe
 

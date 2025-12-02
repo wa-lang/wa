@@ -60,7 +60,7 @@ import (
 type OpFormatType int
 
 const (
-	_ OpFormatType = iota + 1
+	_ OpFormatType = iota // 其他格式数量较少
 	OpFormatType_2R
 	OpFormatType_3R
 	OpFormatType_4R
@@ -68,64 +68,65 @@ const (
 	OpFormatType_2RI12
 	OpFormatType_2RI14
 	OpFormatType_2RI16
+	OpFormatType_1RI20 // 新加, 参考手册没有
 	OpFormatType_1RI21
 	OpFormatType_I26
 )
 
-type instArg uint16
+type InstArg uint16
 
 // 指令每个参数
 const (
-	_ instArg = iota // 0 是无效参数, 表示列表结束
+	_ InstArg = iota // 0 是无效参数, 表示列表结束
 	// 1-5 bit
-	arg_fd
-	arg_fj
-	arg_fk
-	arg_fa
-	arg_rd
+	Arg_fd
+	Arg_fj
+	Arg_fk
+	Arg_fa
+	Arg_rd
 	// 6-10 bit
-	arg_rj
-	arg_rk
-	arg_op_4_0
-	arg_fcsr_4_0
-	arg_fcsr_9_5
+	Arg_rj
+	Arg_rk
+	Arg_op_4_0
+	Arg_fcsr_4_0
+	Arg_fcsr_9_5
 	// 11-15 bit
-	arg_csr_23_10
-	arg_cd
-	arg_cj
-	arg_ca
-	arg_sa2_16_15
+	Arg_csr_23_10
+	Arg_cd
+	Arg_cj
+	Arg_ca
+	Arg_sa2_16_15
 	// 16-20 bit
-	arg_sa3_17_15
-	arg_code_4_0
-	arg_code_14_0
-	arg_ui5_14_10
-	arg_ui6_15_10
+	Arg_sa3_17_15
+	Arg_code_4_0
+	Arg_code_14_0
+	Arg_ui5_14_10
+	Arg_ui6_15_10
 	// 21-25 bit
-	arg_ui12_21_10
-	arg_lsbw
-	arg_msbw
-	arg_lsbd
-	arg_msbd
+	Arg_ui12_21_10
+	Arg_lsbw
+	Arg_msbw
+	Arg_lsbd
+	Arg_msbd
 	// 26-30 bit
-	arg_hint_4_0
-	arg_hint_14_0
-	arg_level_14_0
-	arg_level_17_10
-	arg_seq_17_10
+	Arg_hint_4_0
+	Arg_hint_14_0
+	Arg_level_14_0
+	Arg_level_17_10
+	Arg_seq_17_10
 	// 31-35 bit
-	arg_si12_21_10
-	arg_si14_23_10
-	arg_si16_25_10
-	arg_si20_24_5
-	arg_offset_20_0
+	Arg_si12_21_10
+	Arg_si14_23_10
+	Arg_si16_25_10
+	Arg_si20_24_5
+	Arg_offset_20_0
 	// 36~
-	arg_offset_25_0
-	arg_offset_15_0
+	Arg_offset_25_0
+	Arg_offset_15_0
 )
 
 // 指令参数列表打包为数组结构, 可以简化初始化
-type instArgs [5]instArg
+type instArgs [5]InstArg
 
 // 指令编码格式
 type _OpContextType struct {
@@ -148,106 +149,153 @@ func (ctx *_OpContextType) encodeRaw(as abi.As, arg *abi.AsArgument) (uint32, er
 	return x, nil
 }
 
-func (ctx *_OpContextType) encodeArg(argTyp instArg, arg *abi.AsArgument) uint32 {
+// 指令的编码格式
+func (opcode _OpContextType) FormatType() OpFormatType {
+	regCount := 0
+	for _, argTyp := range opcode.args {
+		if argTyp == 0 {
+			break
+		}
+		switch argTyp {
+		default:
+			panic(fmt.Errorf("op: %v, arg: %v", AsString(opcode.op, ""), argTyp))
+		case Arg_fd, Arg_fj, Arg_fk, Arg_fa:
+			regCount++
+		case Arg_rd, Arg_rj, Arg_rk:
+			regCount++
+		case Arg_ui5_14_10:
+			return OpFormatType_2RI8
+		case Arg_ui6_15_10:
+			return OpFormatType_2RI8
+		case Arg_si12_21_10:
+			return OpFormatType_2RI12
+		case Arg_si14_23_10:
+			return OpFormatType_2RI14
+		case Arg_si16_25_10:
+			return OpFormatType_1RI21
+		case Arg_si20_24_5:
+			return OpFormatType_1RI20
+		case Arg_offset_20_0:
+			return OpFormatType_1RI21
+		case Arg_offset_25_0:
+			return OpFormatType_I26
+		case Arg_offset_15_0:
+			return OpFormatType_2RI16
+		}
+	}
+
+	switch regCount {
+	case 2:
+		return OpFormatType_2R
+	case 3:
+		return OpFormatType_3R
+	case 4:
+		return OpFormatType_4R
+	}
+
+	return 0
+}
+
+func (ctx *_OpContextType) encodeArg(argTyp InstArg, arg *abi.AsArgument) uint32 {
 	// 根据参数类型分别编码
 	switch argTyp {
 	case 0: // 空参数
 		return 0
 
 	// 1-5 bit
-	case arg_fd:
+	case Arg_fd:
 		return ctx.regF(arg.Rd)
-	case arg_fj:
+	case Arg_fj:
 		return ctx.regF(arg.Rs1) << 5
-	case arg_fk:
+	case Arg_fk:
 		return ctx.regF(arg.Rs2) << 10
-	case arg_fa:
+	case Arg_fa:
 		return ctx.regF(arg.Rs3) << 15
-	case arg_rd:
+	case Arg_rd:
 		return ctx.regI(arg.Rd)
 
 	// 6-10 bit
-	case arg_rj:
+	case Arg_rj:
 		return ctx.regI(arg.Rs1) << 5
-	case arg_rk:
+	case Arg_rk:
 		return ctx.regI(arg.Rs2) << 10
-	case arg_op_4_0:
+	case Arg_op_4_0:
 		panic("TODO")
-	case arg_fcsr_4_0:
+	case Arg_fcsr_4_0:
 		return (uint32(arg.Imm) & 0b11)
-	case arg_fcsr_9_5:
+	case Arg_fcsr_9_5:
 		return (uint32(arg.Imm) & 0b_1_1111_1111) << 5
 
 	// 11-15 bit
-	case arg_csr_23_10:
+	case Arg_csr_23_10:
 		return (uint32(arg.Imm) & 0b11) << 10
-	case arg_cd:
+	case Arg_cd:
 		return (ctx.regI(arg.Rd) | 0b_11000)
-	case arg_cj:
+	case Arg_cj:
 		return (ctx.regI(arg.Rs1) | 0b_11000) << 5
-	case arg_ca:
+	case Arg_ca:
 		return (ctx.regI(arg.Rs2) | 0b_11000) << 10
-	case arg_sa2_16_15:
+	case Arg_sa2_16_15:
 		return (uint32(arg.Imm) & 0b11) << 15
 
 	// 16-20 bit
-	case arg_sa3_17_15:
+	case Arg_sa3_17_15:
 		return (uint32(arg.Imm) & 0b111) << 15
-	case arg_code_4_0:
+	case Arg_code_4_0:
 		return (uint32(arg.Imm) & 0b11)
-	case arg_code_14_0:
+	case Arg_code_14_0:
 		return (uint32(arg.Imm) & 0b_0111_1111_1111_1111)
-	case arg_ui5_14_10:
+	case Arg_ui5_14_10:
 		return (uint32(arg.Imm) & 0b_0111_1111_1111_1111) << 10
-	case arg_ui6_15_10:
+	case Arg_ui6_15_10:
 		return (uint32(arg.Imm) & 0b_1111_1111_1111_1111) << 10
 
 	// 21-25 bit
-	case arg_ui12_21_10:
+	case Arg_ui12_21_10:
 		return (uint32(arg.Imm) & 0b_1111_1111_1111) << 10
-	case arg_lsbw:
+	case Arg_lsbw:
 		panic("TODO") // 需要2个立即数
-	case arg_msbw:
+	case Arg_msbw:
 		panic("TODO") // 需要2个立即数
-	case arg_lsbd:
+	case Arg_lsbd:
 		panic("TODO") // 需要2个立即数
-	case arg_msbd:
+	case Arg_msbd:
 		panic("TODO") // 需要2个立即数
 
 	// 26-30 bit
-	case arg_hint_4_0:
+	case Arg_hint_4_0:
 		return uint32(arg.Imm) & 0b_1_1111
-	case arg_hint_14_0:
+	case Arg_hint_14_0:
 		return uint32(arg.Imm) & 0b_0111_1111_1111_1111
-	case arg_level_14_0:
+	case Arg_level_14_0:
 		return uint32(arg.Imm) & 0b_0111_1111_1111_1111
-	case arg_level_17_10:
+	case Arg_level_17_10:
 		return uint32(arg.Imm) << 10
 
-	case arg_seq_17_10:
+	case Arg_seq_17_10:
 		return uint32(arg.Imm) << 10
 
 	// 31-35 bit
-	case arg_si12_21_10:
+	case Arg_si12_21_10:
 		return (uint32(arg.Imm) & 0b_1111_1111_1111) << 10
-	case arg_si14_23_10:
+	case Arg_si14_23_10:
 		return (uint32(arg.Imm) & 0b_0011_1111_1111_1111) << 10
-	case arg_si16_25_10:
+	case Arg_si16_25_10:
 		return (uint32(arg.Imm) & 0xFFFF) << 10
-	case arg_si20_24_5:
+	case Arg_si20_24_5:
 		return (uint32(arg.Imm) & 0xFFFFF) << 5
-	case arg_offset_20_0:
+	case Arg_offset_20_0:
 		offs := uint32(arg.Imm)
 		return (offs&0xFFFF)<<10 | ((offs >> 16) & 0b_11111)
 
 	// 36~
-	case arg_offset_25_0:
+	case Arg_offset_25_0:
 		// op, offs[15:0], offs[25:16]
 		offs := uint32(arg.Imm)
 		bit0_9 := (offs >> 16) & 0b_11111_11111
 		bit10_25 := (offs & 0xFFFF) << 10
 		return bit0_9 | bit10_25
-	case arg_offset_15_0:
+	case Arg_offset_15_0:
 		return (uint32(arg.Imm) & 0xFFFF) << 10
 	}
 

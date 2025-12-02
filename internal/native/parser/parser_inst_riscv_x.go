@@ -11,6 +11,8 @@ import (
 )
 
 func (p *parser) parseInst_riscv(fn *ast.Func) (inst *ast.Instruction) {
+	assert(p.cpu == abi.RISCV32 || p.cpu == abi.RISCV64)
+
 	inst = new(ast.Instruction)
 	inst.Arg = new(abi.AsArgument)
 

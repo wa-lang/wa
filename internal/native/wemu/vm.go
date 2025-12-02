@@ -60,12 +60,12 @@ func NewWEmu(prog *abi.LinkedProgram, opt *Option) *WEmu {
 	}
 
 	switch prog.CPU {
+	case abi.LOONG64:
+		p.CPU = loong64.NewCPU()
 	case abi.RISCV32:
 		p.CPU = riscv32.NewCPU()
 	case abi.RISCV64:
 		p.CPU = riscv64.NewCPU()
-	case abi.LOONG64:
-		p.CPU = loong64.NewCPU()
 	default:
 		panic(fmt.Sprintf("unknown cpu type: %v", prog.CPU))
 	}

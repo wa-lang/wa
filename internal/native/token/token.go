@@ -83,21 +83,25 @@ const (
 	// 寄存器编号空间
 	// 每个平台不超过 100 个, 至少保证 10 个独立空间
 	REG_RISCV_BEGIN Token = 1000 + 100*iota
+	REG_LOONG_BEGIN
 
 	REG_BEGIN     = REG_RISCV_BEGIN
 	REG_RISCV_END = REG_RISCV_BEGIN + 100
-	REG_END       = REG_RISCV_END
+	REG_LOONG_END = REG_LOONG_BEGIN + 100
+	REG_END       = REG_LOONG_END
 )
 
 // 指令到 Token 空间的映射
 const (
 	// 指令编号空间
 	// 每个平台不超过 2000 个, 至少保证 10 个独立空间
-	A_RISCV_BEGIN Token = 2000 + 2000*iota
+	A_LOONG_BEGIN Token = 2000 + 2000*iota
+	A_RISCV_BEGIN
+	A_END
 
 	A_BEGIN     = A_RISCV_BEGIN
+	A_LOONG_END = A_LOONG_BEGIN + 2000
 	A_RISCV_END = A_RISCV_BEGIN + 2000
-	A_END       = A_RISCV_END
 )
 
 var tokens = [...]string{
@@ -213,6 +217,9 @@ func (tok Token) IsAs() bool { return A_BEGIN <= tok && tok < A_END }
 
 // 原始寄存器值
 func (tok Token) RawReg() abi.RegType {
+	if REG_LOONG_BEGIN <= tok && tok < REG_LOONG_END {
+		return abi.RegType(tok - REG_LOONG_BEGIN)
+	}
 	if REG_RISCV_BEGIN <= tok && tok < REG_RISCV_END {
 		return abi.RegType(tok - REG_RISCV_BEGIN)
 	}
@@ -221,6 +228,9 @@ func (tok Token) RawReg() abi.RegType {
 
 // 原始指令值
 func (tok Token) RawAs() abi.As {
+	if A_LOONG_BEGIN <= tok && tok < A_LOONG_END {
+		return abi.As(tok - A_LOONG_BEGIN)
+	}
 	if A_RISCV_BEGIN <= tok && tok < A_RISCV_END {
 		return abi.As(tok - A_RISCV_BEGIN)
 	}

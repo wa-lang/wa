@@ -9,6 +9,16 @@ import (
 	"wa-lang.org/wa/internal/native/abi"
 )
 
+// 指令码有效
+func AsValid(as abi.As) bool {
+	return as > 0 && as < ALAST
+}
+
+// 寄存器有效
+func RegValid(reg abi.RegType) bool {
+	return reg > 0 && reg < REG_END
+}
+
 // 根据名字查找寄存器(忽略大小写, 忽略下划线和点的区别)
 func LookupRegister(regName string) (r abi.RegType, ok bool) {
 	if regName == "" {
@@ -102,4 +112,22 @@ func AsString(as abi.As, asName string) string {
 		return _Anames[as]
 	}
 	return fmt.Sprintf("riscv.badas(%d)", int(as))
+}
+
+// 汇编指令的参数格式
+func AsArgs(as abi.As) [5]InstArg {
+	if as > 0 && int(as) < len(_AOpContextTable) {
+		ctx := _AOpContextTable[as]
+		return ctx.args
+	}
+	return [5]InstArg{}
+}
+
+// 指令的编码格式
+func AsFormatType(as abi.As) OpFormatType {
+	if as > 0 && int(as) < len(_AOpContextTable) {
+		ctx := _AOpContextTable[as]
+		return ctx.FormatType()
+	}
+	return 0
 }

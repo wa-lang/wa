@@ -98,7 +98,7 @@ func (p *parser) parseFunc_return(fn *ast.Func) {
 }
 
 func (p *parser) parseFunc_body(fn *ast.Func) {
-	assert(p.cpu == abi.RISCV64 || p.cpu == abi.RISCV32)
+	assert(p.cpu == abi.RISCV64 || p.cpu == abi.RISCV32 || p.cpu == abi.LOONG64)
 
 	fn.Body.Pos = p.pos
 
@@ -130,7 +130,7 @@ Loop:
 			fn.Body.Objects = append(fn.Body.Objects, localObj)
 		default:
 			if p.tok == token.IDENT || p.tok.IsAs() {
-				inst := p.parseInst_riscv(fn)
+				inst := p.parseInst(fn)
 				fn.Body.Insts = append(fn.Body.Insts, inst)
 				fn.Body.Objects = append(fn.Body.Objects, inst)
 			} else {

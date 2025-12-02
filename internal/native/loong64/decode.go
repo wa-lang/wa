@@ -47,128 +47,128 @@ func (op _OpContextType) decodeInst(x uint32) (as abi.As, arg *abi.AsArgument, a
 			break
 		}
 		switch argTyp {
-		case arg_fd:
+		case Arg_fd:
 			argRaw.Rd = rd
 			arg.Rd, _ = op.decodeRegF(rd)
-		case arg_fj:
+		case Arg_fj:
 			argRaw.Rs1 = rj
 			arg.Rs1, _ = op.decodeRegF(rj)
-		case arg_fk:
+		case Arg_fk:
 			argRaw.Rs2 = rk
 			arg.Rs2, _ = op.decodeRegF(rk)
-		case arg_fa:
+		case Arg_fa:
 			argRaw.Rs3 = ra
 			arg.Rs3, _ = op.decodeRegF(ra)
 
-		case arg_rd:
+		case Arg_rd:
 			argRaw.Rd = rd
 			arg.Rd, _ = op.decodeRegI(rd)
-		case arg_rj:
+		case Arg_rj:
 			argRaw.Rs1 = rj
 			arg.Rs1, _ = op.decodeRegI(rj)
-		case arg_rk:
+		case Arg_rk:
 			argRaw.Rs2 = rk
 			arg.Rs2, _ = op.decodeRegI(rk)
 
-		case arg_op_4_0:
+		case Arg_op_4_0:
 			argRaw.Imm = int32(rd)
 			arg.Imm = int32(rd)
-		case arg_fcsr_4_0:
+		case Arg_fcsr_4_0:
 			argRaw.Imm = int32(rd)
 			arg.Imm = int32(rd)
-		case arg_fcsr_9_5:
+		case Arg_fcsr_9_5:
 			argRaw.Imm = int32(rj)
 			arg.Imm = int32(rj)
-		case arg_csr_23_10:
+		case Arg_csr_23_10:
 			v := (x >> 10) & ((1 << 14) - 1)
 			argRaw.Imm = int32(v)
 			arg.Imm = int32(v)
 
-		case arg_cd:
+		case Arg_cd:
 			v := FCC0 + Fcc(x&((1<<3)-1))
 			argRaw.Imm = int32(v)
 			arg.Imm = int32(v)
-		case arg_cj:
+		case Arg_cj:
 			v := FCC0 + Fcc((x>>5)&((1<<3)-1))
 			argRaw.Imm = int32(v)
 			arg.Imm = int32(v)
-		case arg_ca:
+		case Arg_ca:
 			v := FCC0 + Fcc((x>>15)&((1<<3)-1))
 			argRaw.Imm = int32(v)
 			arg.Imm = int32(v)
 
-		case arg_sa2_16_15:
+		case Arg_sa2_16_15:
 			v := (x >> 15) & ((1 << 2) - 1)
 			argRaw.Imm = int32(v)
 			arg.Imm = int32(v)
-		case arg_sa3_17_15:
+		case Arg_sa3_17_15:
 			v := (x >> 15) & ((1 << 3) - 1)
 			argRaw.Imm = int32(v)
 			arg.Imm = int32(v)
 
-		case arg_code_4_0:
+		case Arg_code_4_0:
 			v := x & ((1 << 5) - 1)
 			argRaw.Imm = int32(v)
 			arg.Imm = int32(v)
-		case arg_code_14_0:
+		case Arg_code_14_0:
 			v := x & ((1 << 15) - 1)
 			argRaw.Imm = int32(v)
 			arg.Imm = int32(v)
 
-		case arg_ui5_14_10:
+		case Arg_ui5_14_10:
 			v := (x >> 10) & ((1 << 5) - 1)
 			argRaw.Imm = int32(v)
 			arg.Imm = int32(v)
-		case arg_ui6_15_10:
+		case Arg_ui6_15_10:
 			v := (x >> 10) & ((1 << 6) - 1)
 			argRaw.Imm = int32(v)
 			arg.Imm = int32(v)
-		case arg_ui12_21_10:
+		case Arg_ui12_21_10:
 			v := ((x >> 10) & ((1 << 12) - 1) & 0xfff)
 			argRaw.Imm = int32(v)
 			arg.Imm = int32(v)
 
-		case arg_lsbw:
+		case Arg_lsbw:
 			v := (x >> 10) & ((1 << 5) - 1)
 			argRaw.Imm = int32(v)
 			arg.Imm = int32(v)
-		case arg_msbw:
+		case Arg_msbw:
 			v := (x >> 16) & ((1 << 5) - 1)
 			argRaw.Imm = int32(v)
 			arg.Imm = int32(v)
-		case arg_lsbd:
+		case Arg_lsbd:
 			v := (x >> 10) & ((1 << 6) - 1)
 			argRaw.Imm = int32(v)
 			arg.Imm = int32(v)
-		case arg_msbd:
+		case Arg_msbd:
 			v := (x >> 16) & ((1 << 6) - 1)
 			argRaw.Imm = int32(v)
 			arg.Imm = int32(v)
 
-		case arg_hint_4_0:
+		case Arg_hint_4_0:
 			v := x & ((1 << 5) - 1)
 			argRaw.Imm = int32(v)
 			arg.Imm = int32(v)
-		case arg_hint_14_0:
+		case Arg_hint_14_0:
 			v := x & ((1 << 15) - 1)
 			argRaw.Imm = int32(v)
 			arg.Imm = int32(v)
 
-		case arg_level_14_0:
+		case Arg_level_14_0:
 			v := x & ((1 << 15) - 1)
 			argRaw.Imm = int32(v)
 			arg.Imm = int32(v)
-		case arg_level_17_10:
+		case Arg_level_17_10:
 			v := (x >> 10) & ((1 << 8) - 1)
 			argRaw.Imm = int32(v)
 			arg.Imm = int32(v)
 
-		case arg_seq_17_10:
+		case Arg_seq_17_10:
 			v := (x >> 10) & ((1 << 8) - 1)
 			argRaw.Imm = int32(v)
 			arg.Imm = int32(v)
 
-		case arg_si12_21_10:
+		case Arg_si12_21_10:
 			if (x & 0x200000) == 0x200000 {
 				v := ((x >> 10) & ((1 << 12) - 1)) | 0xf000
 				argRaw.Imm = int32(v)
@@ -179,7 +179,7 @@ func (op _OpContextType) decodeInst(x uint32) (as abi.As, arg *abi.AsArgument, a
 				arg.Imm = int32(v)
 			}
 
-		case arg_si14_23_10:
+		case Arg_si14_23_10:
 			if (x & 0x800000) == 0x800000 {
 				v := (((x >> 10) & ((1 << 14) - 1)) << 2) | 0xffff0000
 				argRaw.Imm = int32(v)
@@ -189,7 +189,7 @@ func (op _OpContextType) decodeInst(x uint32) (as abi.As, arg *abi.AsArgument, a
 				argRaw.Imm = int32(v)
 				arg.Imm = int32(v)
 			}
-		case arg_si16_25_10:
+		case Arg_si16_25_10:
 			if (x & 0x2000000) == 0x2000000 {
 				v := ((x >> 10) & ((1 << 16) - 1)) | 0xffff0000
 				argRaw.Imm = int32(v)
@@ -199,7 +199,7 @@ func (op _OpContextType) decodeInst(x uint32) (as abi.As, arg *abi.AsArgument, a
 				argRaw.Imm = int32(v)
 				arg.Imm = int32(v)
 			}
-		case arg_si20_24_5:
+		case Arg_si20_24_5:
 			if (x & 0x1000000) == 0x1000000 {
 				v := ((x >> 5) & ((1 << 20) - 1)) | 0xfff00000
 				argRaw.Imm = int32(v)
@@ -209,7 +209,7 @@ func (op _OpContextType) decodeInst(x uint32) (as abi.As, arg *abi.AsArgument, a
 				argRaw.Imm = int32(v)
 				arg.Imm = int32(v)
 			}
-		case arg_offset_20_0:
+		case Arg_offset_20_0:
 			if (x & 0x10) == 0x10 {
 				v := ((((x << 16) | ((x >> 10) & ((1 << 16) - 1))) & ((1 << 21) - 1)) << 2) | 0xff800000
 				argRaw.Imm = int32(v)
@@ -220,7 +220,7 @@ func (op _OpContextType) decodeInst(x uint32) (as abi.As, arg *abi.AsArgument, a
 				arg.Imm = int32(v)
 			}
 
-		case arg_offset_25_0:
+		case Arg_offset_25_0:
 			if (x & 0x200) == 0x200 {
 				v := ((((x << 16) | ((x >> 10) & ((1 << 16) - 1))) & ((1 << 26) - 1)) << 2) | 0xf0000000
 				argRaw.Imm = int32(v)
@@ -230,7 +230,7 @@ func (op _OpContextType) decodeInst(x uint32) (as abi.As, arg *abi.AsArgument, a
 				argRaw.Imm = int32(v)
 				arg.Imm = int32(v)
 			}
-		case arg_offset_15_0:
+		case Arg_offset_15_0:
 			if (x & 0x2000000) == 0x2000000 {
 				v := (((x >> 10) & ((1 << 16) - 1)) << 2) | 0xfffc0000
 				argRaw.Imm = int32(v)

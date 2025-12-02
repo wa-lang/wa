@@ -9,6 +9,7 @@ import (
 
 	"wa-lang.org/wa/internal/native/abi"
 	"wa-lang.org/wa/internal/native/ast"
+	"wa-lang.org/wa/internal/native/loong64"
 	"wa-lang.org/wa/internal/native/riscv"
 	"wa-lang.org/wa/internal/native/scanner"
 	"wa-lang.org/wa/internal/native/token"
@@ -52,6 +53,20 @@ func newParser(cpu abi.CPUType, fset *token.FileSet, filename string, src []byte
 	}
 
 	switch cpu {
+	case abi.LOONG64:
+		p.scanner = scanner.NewScanner(
+			func(ident string) token.Token {
+				// 将原始的寄存器映射到 token.Token 编码
+				if reg, ok := loong64.LookupRegister(ident); ok {
+					return token.REG_LOONG_BEGIN + token.Token(reg)
+				}
+				// 将原始的指令映射到 token.Token 编码
+				if reg, ok := loong64.LookupAs(ident); ok {
+					return token.A_LOONG_BEGIN + token.Token(reg)
+				}
+				return token.NONE
+			},
+		)
 	case abi.RISCV32, abi.RISCV64:
 		p.scanner = scanner.NewScanner(
 			func(ident string) token.Token {

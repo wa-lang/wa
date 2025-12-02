@@ -134,8 +134,12 @@ import "wa-lang.org/wa/internal/native/abi"
 	fileTables.Write(opstr_f.Bytes())
 	fileTables.Write(instFormats_f.Bytes())
 
-	// 格式化输出代码
 	outputCode := fileTables.Bytes()
+
+	// 修复参数信息的大小写
+	outputCode = bytes.ReplaceAll(outputCode, []byte("arg_"), []byte("Arg_"))
+
+	// 格式化输出代码
 	if goodCode, err := format.Source(outputCode); err == nil {
 		outputCode = goodCode
 	}

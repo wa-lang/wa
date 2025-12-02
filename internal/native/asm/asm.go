@@ -51,8 +51,9 @@ func (p *_Assembler) init(filename string, source []byte, opt *abi.LinkOptions) 
 	}
 
 	switch p.opt.CPU {
+	case abi.LOONG64:
+		p.defaultAlign = 4
 	case abi.RISCV32, abi.RISCV64:
-		// RISCV64 也是 4 字节对齐
 		p.defaultAlign = 4
 	default:
 		panic("unreachable")
