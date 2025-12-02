@@ -60,7 +60,7 @@ import (
 type OpFormatType int
 
 const (
-	_ OpFormatType = iota // 其他格式数量较少
+	OpFormatType_NULL OpFormatType = iota // 其他格式数量较少
 	OpFormatType_2R
 	OpFormatType_3R
 	OpFormatType_4R
@@ -70,9 +70,33 @@ const (
 	OpFormatType_2RI16
 	OpFormatType_1RI20 // 新加, 参考手册没有
 	OpFormatType_1RI21
-	OpFormatType_I26
-
-	// TODO: 根据 arg 类型补齐全部指令格式(基础指令部分)
+	OpFormatType_I26  // OpFormatType_offset
+	OpFormatType_0_2R // 后面都是新加
+	OpFormatType_3R_s2
+	OpFormatType_3R_s3
+	OpFormatType_code
+	OpFormatType_code_1R_si12
+	OpFormatType_msbw_lsbw
+	OpFormatType_msbd_lsbd
+	OpFormatType_fcsr_1R
+	OpFormatType_1R_fcsr
+	OpFormatType_cd_1R
+	OpFormatType_cd_2R
+	OpFormatType_1R_cj
+	OpFormatType_1R_csr
+	OpFormatType_2R_csr
+	OpFormatType_2R_level
+	OpFormatType_level
+	OpFormatType_0_1R_seq
+	OpFormatType_3R_ca
+	OpFormatType_hint_1R_si
+	OpFormatType_hint_2R
+	OpFormatType_hint
+	OpFormatType_cj_offset
+	OpFormatType_rj_offset
+	OpFormatType_rj_rd_offset
+	OpFormatType_rd_rj_offset
+	OpFormatType_offset
 )
 
 type InstArg uint16
@@ -154,13 +178,11 @@ func (ctx *_OpContextType) encodeRaw(as abi.As, arg *abi.AsArgument) (uint32, er
 // 指令的编码格式
 func (opcode _OpContextType) FormatType() OpFormatType {
 	regCount := 0
-	for _, argTyp := range opcode.args {
+	for i, argTyp := range opcode.args {
 		if argTyp == 0 {
 			break
 		}
 		switch argTyp {
-		default:
-			panic(fmt.Errorf("op: %v, arg: %v", AsString(opcode.op, ""), argTyp))
 		case Arg_fd, Arg_fj, Arg_fk, Arg_fa:
 			regCount++
 		case Arg_rd, Arg_rj, Arg_rk:
@@ -178,16 +200,107 @@ func (opcode _OpContextType) FormatType() OpFormatType {
 		case Arg_si20_24_5:
 			return OpFormatType_1RI20
 		case Arg_offset_20_0:
-			return OpFormatType_1RI21
+			switch opcode.args[0] {
+			case Arg_rj:
+				return OpFormatType_rj_offset
+			case Arg_cj:
+				return OpFormatType_cj_offset
+			default:
+				panic("unreachable")
+			}
 		case Arg_offset_25_0:
-			return OpFormatType_I26
+			return OpFormatType_offset
 		case Arg_offset_15_0:
-			return OpFormatType_2RI16
+			assert(i == 2)
+			switch {
+			case opcode.args[0] == Arg_rd:
+				assert(opcode.args[1] == Arg_rj)
+				return OpFormatType_rd_rj_offset
+			case opcode.args[0] == Arg_rj:
+				assert(opcode.args[1] == Arg_rd)
+				return OpFormatType_rj_rd_offset
+			default:
+				panic("unreachable")
+			}
+		case Arg_sa2_16_15:
+			return OpFormatType_3R_s2
+		case Arg_sa3_17_15:
+			return OpFormatType_3R_s3
+		case Arg_code_4_0:
+			return OpFormatType_code_1R_si12
+		case Arg_code_14_0:
+			return OpFormatType_code
+
+		case Arg_lsbw, Arg_msbw:
+			return OpFormatType_msbw_lsbw
+		case Arg_lsbd, Arg_msbd:
+			return OpFormatType_msbd_lsbd
+
+		case Arg_fcsr_4_0:
+			if opcode.args[0] == Arg_fcsr_4_0 {
+				return OpFormatType_fcsr_1R
+			} else {
+				return OpFormatType_1R_fcsr
+			}
+
+		case Arg_cd:
+			if arg2 := opcode.args[2]; arg2 == Arg_fk {
+				return OpFormatType_cd_2R
+			} else {
+				return OpFormatType_cd_1R
+			}
+
+		case Arg_cj:
+			assert(opcode.args[0] == Arg_fd || opcode.args[0] == Arg_rd)
+			return OpFormatType_1R_cj
+
+		case Arg_csr_23_10:
+			if i == 1 {
+				return OpFormatType_1R_csr
+			} else {
+				assert(i == 2)
+				return OpFormatType_2R_csr
+			}
+
+		case Arg_level_14_0:
+			return OpFormatType_level
+		case Arg_level_17_10:
+			return OpFormatType_2R_level
+
+		case Arg_seq_17_10:
+			return OpFormatType_0_1R_seq
+
+		case Arg_ca:
+			assert(opcode.args[1] == Arg_fd)
+			assert(opcode.args[1] == Arg_fj)
+			assert(opcode.args[2] == Arg_fk)
+			assert(i == 3)
+			return OpFormatType_3R_ca
+
+		case Arg_hint_4_0:
+			assert(i == 0)
+			if opcode.args[2] == Arg_rk {
+				return OpFormatType_hint_2R
+			} else {
+				assert(opcode.args[2] == Arg_si12_21_10)
+				return OpFormatType_hint_1R_si
+			}
+		case Arg_hint_14_0:
+			return OpFormatType_hint
+
+		default:
+			panic("unreachable")
 		}
 	}
 
 	switch regCount {
+	case 0:
+		return OpFormatType_NULL
 	case 2:
+		if opcode.args[0] != Arg_rd {
+			assert(opcode.op == AASRTLE_D || opcode.op == AASRTGT_D)
+			return OpFormatType_0_2R
+		}
 		return OpFormatType_2R
 	case 3:
 		return OpFormatType_3R

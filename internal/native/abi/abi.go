@@ -68,18 +68,20 @@ const (
 
 // 指令参数
 type AsArgument struct {
-	Rd  RegType // 目标寄存器
-	Rs1 RegType // 原寄存器1
-	Rs2 RegType // 原寄存器2
-	Rs3 RegType // 原寄存器3
-	Imm int32   // 立即数
+	Rd   RegType // 目标寄存器
+	Rs1  RegType // 原寄存器1
+	Rs2  RegType // 原寄存器2
+	Rs3  RegType // 原寄存器3
+	Imm  int32   // 立即数
+	Imm2 int32   // 立即数2
 
 	// 参数的名字, 用于格式化
-	RdName  string
-	Rs1Name string
-	Rs2Name string
-	Rs3Name string
-	ImmName string
+	RdName   string
+	Rs1Name  string
+	Rs2Name  string
+	Rs3Name  string
+	ImmName  string
+	Imm2Name string
 
 	Symbol      string    // 可能是 Label/全局符号, 用于重定位和输出文本
 	SymbolDecor BuiltinFn // 符号的修饰函数, 可能要重新计算
@@ -87,9 +89,10 @@ type AsArgument struct {
 
 // 指令原生参数
 type AsRawArgument struct {
-	Rd  uint32 // 目标寄存器
-	Rs1 uint32 // 原寄存器1
-	Rs2 uint32 // 原寄存器2
-	Rs3 uint32 // 原寄存器3
-	Imm int32  // 立即数
+	Rd   uint32 // 目标寄存器
+	Rs1  uint32 // 原寄存器1
+	Rs2  uint32 // 原寄存器2
+	Rs3  uint32 // 原寄存器3
+	Imm  int32  // 立即数
+	Imm2 int32  // 立即数2
 }

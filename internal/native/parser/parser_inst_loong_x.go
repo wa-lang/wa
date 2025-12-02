@@ -47,6 +47,8 @@ func (p *parser) parseInst_loong(fn *ast.Func) (inst *ast.Instruction) {
 	}
 
 	switch loong64.AsFormatType(inst.As) {
+	case loong64.OpFormatType_NULL:
+		return inst
 	case loong64.OpFormatType_2R:
 		inst.Arg.Rd = p.parseRegister()
 		p.acceptToken(token.COMMA)
@@ -114,9 +116,179 @@ func (p *parser) parseInst_loong(fn *ast.Func) (inst *ast.Instruction) {
 		p.parseInst_loong_immAddr(inst)
 		return inst
 
+	case loong64.OpFormatType_0_2R:
+		// 没有Rd
+		inst.Arg.Rs1 = p.parseRegister()
+		p.acceptToken(token.COMMA)
+		inst.Arg.Rs2 = p.parseRegister()
+		return inst
+
+	case loong64.OpFormatType_3R_s2:
+		inst.Arg.Rd = p.parseRegister()
+		p.acceptToken(token.COMMA)
+		inst.Arg.Rs1 = p.parseRegister()
+		p.acceptToken(token.COMMA)
+		inst.Arg.Rs2 = p.parseRegister()
+		p.acceptToken(token.COMMA)
+		p.parseInst_loong_imm(inst)
+		return inst
+	case loong64.OpFormatType_3R_s3:
+		inst.Arg.Rd = p.parseRegister()
+		p.acceptToken(token.COMMA)
+		inst.Arg.Rs1 = p.parseRegister()
+		p.acceptToken(token.COMMA)
+		inst.Arg.Rs2 = p.parseRegister()
+		p.acceptToken(token.COMMA)
+		p.parseInst_loong_imm(inst)
+		return inst
+
+	case loong64.OpFormatType_code:
+		p.parseInst_loong_imm(inst)
+		return inst
+
+	case loong64.OpFormatType_code_1R_si12:
+		// TODO: 可能需要通过名字解析code
+		code := p.parseInt32Lit()
+		inst.Arg.Rd = abi.RegType(code) + loong64.REG_R0
+		p.acceptToken(token.COMMA)
+		inst.Arg.Rs1 = p.parseRegister()
+		p.acceptToken(token.COMMA)
+		p.parseInst_loong_imm(inst)
+		return inst
+
+	case loong64.OpFormatType_msbw_lsbw:
+		inst.Arg.Rd = p.parseRegister()
+		p.acceptToken(token.COMMA)
+		inst.Arg.Rs1 = p.parseRegister()
+		p.acceptToken(token.COMMA)
+		p.parseInst_loong_imm(inst)
+		p.acceptToken(token.COMMA)
+		inst.Arg.Imm2 = p.parseInt32Lit()
+		return inst
+	case loong64.OpFormatType_msbd_lsbd:
+		inst.Arg.Rd = p.parseRegister()
+		p.acceptToken(token.COMMA)
+		inst.Arg.Rs1 = p.parseRegister()
+		p.acceptToken(token.COMMA)
+		p.parseInst_loong_imm(inst)
+		p.acceptToken(token.COMMA)
+		inst.Arg.Imm2 = p.parseInt32Lit()
+		return inst
+
+	case loong64.OpFormatType_fcsr_1R:
+		// TODO: 解析 fcsr
+		inst.Arg.Imm = p.parseInt32Lit()
+		p.acceptToken(token.COMMA)
+		inst.Arg.Rs1 = p.parseRegister()
+		return inst
+	case loong64.OpFormatType_1R_fcsr:
+		// TODO: 解析 fcsr
+		inst.Arg.Rd = p.parseRegister()
+		p.acceptToken(token.COMMA)
+		inst.Arg.Imm = p.parseInt32Lit()
+		return inst
+
+	case loong64.OpFormatType_cd_1R:
+		inst.Arg.Imm = p.parseInt32Lit()
+		p.acceptToken(token.COMMA)
+		inst.Arg.Rs1 = p.parseRegister()
+		return inst
+	case loong64.OpFormatType_cd_2R:
+		inst.Arg.Imm = p.parseInt32Lit()
+		p.acceptToken(token.COMMA)
+		inst.Arg.Rs1 = p.parseRegister()
+		p.acceptToken(token.COMMA)
+		inst.Arg.Rs2 = p.parseRegister()
+		return inst
+	case loong64.OpFormatType_1R_cj:
+		inst.Arg.Rd = p.parseRegister()
+		p.acceptToken(token.COMMA)
+		inst.Arg.Imm = p.parseInt32Lit()
+		return inst
+	case loong64.OpFormatType_1R_csr:
+		inst.Arg.Rd = p.parseRegister()
+		p.acceptToken(token.COMMA)
+		inst.Arg.Imm = p.parseInt32Lit()
+		return inst
+	case loong64.OpFormatType_2R_csr:
+		inst.Arg.Rd = p.parseRegister()
+		p.acceptToken(token.COMMA)
+		inst.Arg.Rs1 = p.parseRegister()
+		p.acceptToken(token.COMMA)
+		inst.Arg.Imm = p.parseInt32Lit()
+		return inst
+	case loong64.OpFormatType_2R_level:
+		inst.Arg.Rd = p.parseRegister()
+		p.acceptToken(token.COMMA)
+		inst.Arg.Rs1 = p.parseRegister()
+		p.acceptToken(token.COMMA)
+		inst.Arg.Imm = p.parseInt32Lit()
+		return inst
+	case loong64.OpFormatType_level:
+		inst.Arg.Imm = p.parseInt32Lit()
+		return inst
+	case loong64.OpFormatType_0_1R_seq:
+		inst.Arg.Rs1 = p.parseRegister()
+		p.acceptToken(token.COMMA)
+		inst.Arg.Imm = p.parseInt32Lit()
+		return inst
+
+	case loong64.OpFormatType_3R_ca:
+		inst.Arg.Rd = p.parseRegister()
+		p.acceptToken(token.COMMA)
+		inst.Arg.Rs1 = p.parseRegister()
+		p.acceptToken(token.COMMA)
+		inst.Arg.Rs2 = p.parseRegister()
+		p.acceptToken(token.COMMA)
+		inst.Arg.Imm = p.parseInt32Lit()
+		return inst
+
+	case loong64.OpFormatType_hint_1R_si:
+		inst.Arg.Imm = p.parseInt32Lit()
+		p.acceptToken(token.COMMA)
+		inst.Arg.Rs1 = p.parseRegister()
+		return inst
+	case loong64.OpFormatType_hint_2R:
+		inst.Arg.Imm = p.parseInt32Lit()
+		p.acceptToken(token.COMMA)
+		inst.Arg.Rs1 = p.parseRegister()
+		p.acceptToken(token.COMMA)
+		inst.Arg.Rs2 = p.parseRegister()
+		return inst
+	case loong64.OpFormatType_hint:
+		inst.Arg.Imm = p.parseInt32Lit()
+		return inst
+
+	case loong64.OpFormatType_cj_offset:
+		inst.Arg.Rs1 = p.parseRegister()
+		p.acceptToken(token.COMMA)
+		inst.Arg.Imm = p.parseInt32Lit()
+		return inst
+	case loong64.OpFormatType_rj_offset:
+		inst.Arg.Rs1 = p.parseRegister()
+		p.acceptToken(token.COMMA)
+		inst.Arg.Imm = p.parseInt32Lit()
+		return inst
+	case loong64.OpFormatType_rj_rd_offset:
+		inst.Arg.Rs1 = p.parseRegister()
+		p.acceptToken(token.COMMA)
+		inst.Arg.Rd = p.parseRegister()
+		p.acceptToken(token.COMMA)
+		inst.Arg.Imm = p.parseInt32Lit()
+		return inst
+	case loong64.OpFormatType_rd_rj_offset:
+		inst.Arg.Rd = p.parseRegister()
+		p.acceptToken(token.COMMA)
+		inst.Arg.Rs1 = p.parseRegister()
+		p.acceptToken(token.COMMA)
+		inst.Arg.Imm = p.parseInt32Lit()
+		return inst
+	case loong64.OpFormatType_offset:
+		inst.Arg.Imm = p.parseInt32Lit()
+		return inst
+
 	default:
-		// TODO: 补齐不同类型的定义
-		panic("TODO")
+		panic("unreachable")
 	}
 }
 
