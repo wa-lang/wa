@@ -71,6 +71,8 @@ const (
 	OpFormatType_1RI20 // 新加, 参考手册没有
 	OpFormatType_1RI21
 	OpFormatType_I26
+
+	// TODO: 根据 arg 类型补齐全部指令格式(基础指令部分)
 )
 
 type InstArg uint16
