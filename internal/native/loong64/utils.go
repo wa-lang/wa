@@ -19,6 +19,22 @@ func newU32(v uint32) *uint32 {
 	return &v
 }
 
+// 提取无符号立即数 (unsigned immediate)
+func uimm(x uint32, startBit, width uint32) uint32 {
+	mask := (uint32(1) << width) - 1
+	return (x >> startBit) & mask
+}
+
+// 提取有符号立即数 (signed immediate)
+func simm(x uint32, startBit, width uint32) int32 {
+	val := uimm(x, startBit, width)
+	if (val >> (width - 1)) == 1 {
+		// 符号位为1，进行符号扩展
+		return int32(val) - (int32(1) << width)
+	}
+	return int32(val)
+}
+
 // 输入一个 32 位有符号立即数 imm, 输出 low(12bit)/high(20bit)
 // 满足 imm 约等于 (high << 12) + low, 以便于进行长地址跳转的拆分
 func split32BitImmediate(imm int64) (low12bit, high20bit int64, err error) {

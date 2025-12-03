@@ -38,213 +38,174 @@ func (op _OpContextType) decodeInst(x uint32) (as abi.As, arg *abi.AsArgument, a
 	rd := (x >> (5 * 0)) & 0b11111 // 4:0 位
 	rj := (x >> (5 * 1)) & 0b11111 // 9:5 位
 	rk := (x >> (5 * 2)) & 0b11111 // 14:10 位
-	ra := (x >> (5 * 3)) & 0b11111 // 19:15 位
+	fa := (x >> (5 * 3)) & 0b11111 // 19:15 位
 
-	_, _, _, _ = rd, rj, rk, ra
-
-	for _, argTyp := range op.args {
-		if argTyp == 0 {
-			break
-		}
-		switch argTyp {
-		case Arg_fd:
-			argRaw.Rd = rd
-			arg.Rd, _ = op.decodeRegF(rd)
-		case Arg_fj:
-			argRaw.Rs1 = rj
-			arg.Rs1, _ = op.decodeRegF(rj)
-		case Arg_fk:
-			argRaw.Rs2 = rk
-			arg.Rs2, _ = op.decodeRegF(rk)
-		case Arg_fa:
-			argRaw.Rs3 = ra
-			arg.Rs3, _ = op.decodeRegF(ra)
-
-		case Arg_rd:
-			argRaw.Rd = rd
-			arg.Rd, _ = op.decodeRegI(rd)
-		case Arg_rj:
-			argRaw.Rs1 = rj
-			arg.Rs1, _ = op.decodeRegI(rj)
-		case Arg_rk:
-			argRaw.Rs2 = rk
-			arg.Rs2, _ = op.decodeRegI(rk)
-
-		case Arg_op_4_0:
-			argRaw.Imm = int32(rd)
-			arg.Imm = int32(rd)
-		case Arg_fcsr_4_0:
-			argRaw.Imm = int32(rd)
-			arg.Imm = int32(rd)
-		case Arg_fcsr_9_5:
-			argRaw.Imm = int32(rj)
-			arg.Imm = int32(rj)
-		case Arg_csr_23_10:
-			v := (x >> 10) & ((1 << 14) - 1)
-			argRaw.Imm = int32(v)
-			arg.Imm = int32(v)
-
-		case Arg_cd:
-			v := FCC0 + Fcc(x&((1<<3)-1))
-			argRaw.Imm = int32(v)
-			arg.Imm = int32(v)
-		case Arg_cj:
-			v := FCC0 + Fcc((x>>5)&((1<<3)-1))
-			argRaw.Imm = int32(v)
-			arg.Imm = int32(v)
-		case Arg_ca:
-			v := FCC0 + Fcc((x>>15)&((1<<3)-1))
-			argRaw.Imm = int32(v)
-			arg.Imm = int32(v)
-
-		case Arg_sa2_16_15:
-			v := (x >> 15) & ((1 << 2) - 1)
-			argRaw.Imm = int32(v)
-			arg.Imm = int32(v)
-		case Arg_sa3_17_15:
-			v := (x >> 15) & ((1 << 3) - 1)
-			argRaw.Imm = int32(v)
-			arg.Imm = int32(v)
-
-		case Arg_code_4_0:
-			v := x & ((1 << 5) - 1)
-			argRaw.Imm = int32(v)
-			arg.Imm = int32(v)
-		case Arg_code_14_0:
-			v := x & ((1 << 15) - 1)
-			argRaw.Imm = int32(v)
-			arg.Imm = int32(v)
-
-		case Arg_ui5_14_10:
-			v := (x >> 10) & ((1 << 5) - 1)
-			argRaw.Imm = int32(v)
-			arg.Imm = int32(v)
-		case Arg_ui6_15_10:
-			v := (x >> 10) & ((1 << 6) - 1)
-			argRaw.Imm = int32(v)
-			arg.Imm = int32(v)
-		case Arg_ui12_21_10:
-			v := ((x >> 10) & ((1 << 12) - 1) & 0xfff)
-			argRaw.Imm = int32(v)
-			arg.Imm = int32(v)
-
-		case Arg_lsbw:
-			v := (x >> 10) & ((1 << 5) - 1)
-			argRaw.Imm = int32(v)
-			arg.Imm = int32(v)
-		case Arg_msbw:
-			v := (x >> 16) & ((1 << 5) - 1)
-			argRaw.Imm = int32(v)
-			arg.Imm = int32(v)
-		case Arg_lsbd:
-			v := (x >> 10) & ((1 << 6) - 1)
-			argRaw.Imm = int32(v)
-			arg.Imm = int32(v)
-		case Arg_msbd:
-			v := (x >> 16) & ((1 << 6) - 1)
-			argRaw.Imm = int32(v)
-			arg.Imm = int32(v)
-
-		case Arg_hint_4_0:
-			v := x & ((1 << 5) - 1)
-			argRaw.Imm = int32(v)
-			arg.Imm = int32(v)
-		case Arg_hint_14_0:
-			v := x & ((1 << 15) - 1)
-			argRaw.Imm = int32(v)
-			arg.Imm = int32(v)
-
-		case Arg_level_14_0:
-			v := x & ((1 << 15) - 1)
-			argRaw.Imm = int32(v)
-			arg.Imm = int32(v)
-		case Arg_level_17_10:
-			v := (x >> 10) & ((1 << 8) - 1)
-			argRaw.Imm = int32(v)
-			arg.Imm = int32(v)
-
-		case Arg_seq_17_10:
-			v := (x >> 10) & ((1 << 8) - 1)
-			argRaw.Imm = int32(v)
-			arg.Imm = int32(v)
-
-		case Arg_si12_21_10:
-			if (x & 0x200000) == 0x200000 {
-				v := ((x >> 10) & ((1 << 12) - 1)) | 0xf000
-				argRaw.Imm = int32(v)
-				arg.Imm = int32(v)
-			} else {
-				v := (x >> 10) & ((1 << 12) - 1)
-				argRaw.Imm = int32(v)
-				arg.Imm = int32(v)
-			}
-
-		case Arg_si14_23_10:
-			if (x & 0x800000) == 0x800000 {
-				v := (((x >> 10) & ((1 << 14) - 1)) << 2) | 0xffff0000
-				argRaw.Imm = int32(v)
-				arg.Imm = int32(v)
-			} else {
-				v := (((x >> 10) & ((1 << 14) - 1)) << 2)
-				argRaw.Imm = int32(v)
-				arg.Imm = int32(v)
-			}
-		case Arg_si16_25_10:
-			if (x & 0x2000000) == 0x2000000 {
-				v := ((x >> 10) & ((1 << 16) - 1)) | 0xffff0000
-				argRaw.Imm = int32(v)
-				arg.Imm = int32(v)
-			} else {
-				v := ((x >> 10) & ((1 << 16) - 1))
-				argRaw.Imm = int32(v)
-				arg.Imm = int32(v)
-			}
-		case Arg_si20_24_5:
-			if (x & 0x1000000) == 0x1000000 {
-				v := ((x >> 5) & ((1 << 20) - 1)) | 0xfff00000
-				argRaw.Imm = int32(v)
-				arg.Imm = int32(v)
-			} else {
-				v := ((x >> 5) & ((1 << 20) - 1))
-				argRaw.Imm = int32(v)
-				arg.Imm = int32(v)
-			}
-		case Arg_offset_20_0:
-			if (x & 0x10) == 0x10 {
-				v := ((((x << 16) | ((x >> 10) & ((1 << 16) - 1))) & ((1 << 21) - 1)) << 2) | 0xff800000
-				argRaw.Imm = int32(v)
-				arg.Imm = int32(v)
-			} else {
-				v := (((x << 16) | ((x >> 10) & ((1 << 16) - 1))) & ((1 << 21) - 1)) << 2
-				argRaw.Imm = int32(v)
-				arg.Imm = int32(v)
-			}
-
-		case Arg_offset_25_0:
-			if (x & 0x200) == 0x200 {
-				v := ((((x << 16) | ((x >> 10) & ((1 << 16) - 1))) & ((1 << 26) - 1)) << 2) | 0xf0000000
-				argRaw.Imm = int32(v)
-				arg.Imm = int32(v)
-			} else {
-				v := ((((x << 16) | ((x >> 10) & ((1 << 16) - 1))) & ((1 << 26) - 1)) << 2)
-				argRaw.Imm = int32(v)
-				arg.Imm = int32(v)
-			}
-		case Arg_offset_15_0:
-			if (x & 0x2000000) == 0x2000000 {
-				v := (((x >> 10) & ((1 << 16) - 1)) << 2) | 0xfffc0000
-				argRaw.Imm = int32(v)
-				arg.Imm = int32(v)
-			} else {
-				v := (((x >> 10) & ((1 << 16) - 1)) << 2)
-				argRaw.Imm = int32(v)
-				arg.Imm = int32(v)
-			}
-
-		default:
-			// 遇到无法识别的参数类型，返回错误
-			return 0, nil, nil, fmt.Errorf("unknown argument type: %d", argTyp)
-		}
+	switch op.fmt {
+	case OpFormatType_NULL:
+		return
+	case OpFormatType_2R:
+		argRaw.Rd = rd
+		arg.Rd = op.decodeRegI(rd)
+		return
+	case OpFormatType_2F:
+		argRaw.Rd = rd
+		arg.Rd = op.decodeRegF(rd)
+		return
+	case OpFormatType_1F_1R:
+		argRaw.Rd = rd
+		argRaw.Rs1 = rj
+		arg.Rd = op.decodeRegF(rd)
+		arg.Rs1 = op.decodeRegI(rj)
+		return
+	case OpFormatType_1R_1F:
+		argRaw.Rd = rd
+		argRaw.Rs1 = rj
+		arg.Rd = op.decodeRegI(rd)
+		arg.Rs1 = op.decodeRegF(rj)
+		return
+	case OpFormatType_3R:
+		argRaw.Rd = rd
+		argRaw.Rs1 = rj
+		argRaw.Rs2 = rk
+		arg.Rd = op.decodeRegI(rd)
+		arg.Rs1 = op.decodeRegI(rj)
+		arg.Rs2 = op.decodeRegI(rk)
+		return
+	case OpFormatType_3F:
+		argRaw.Rd = rd
+		argRaw.Rs1 = rj
+		argRaw.Rs2 = rk
+		arg.Rd = op.decodeRegF(rd)
+		arg.Rs1 = op.decodeRegF(rj)
+		arg.Rs2 = op.decodeRegF(rk)
+		return
+	case OpFormatType_1F_2R:
+		argRaw.Rd = rd
+		argRaw.Rs1 = rj
+		argRaw.Rs2 = rk
+		arg.Rd = op.decodeRegF(rd)
+		arg.Rs1 = op.decodeRegI(rj)
+		arg.Rs2 = op.decodeRegI(rk)
+		return
+	case OpFormatType_4F:
+		argRaw.Rd = rd
+		argRaw.Rs1 = rj
+		argRaw.Rs2 = rk
+		argRaw.Rs3 = fa
+		arg.Rd = op.decodeRegF(rd)
+		arg.Rs1 = op.decodeRegF(rj)
+		arg.Rs2 = op.decodeRegF(rk)
+		arg.Rs3 = op.decodeRegF(fa)
+		return
+	case OpFormatType_2R_ui5:
+		argRaw.Rd = rd
+		argRaw.Rs1 = rj
+		arg.Rd = op.decodeRegF(rd)
+		arg.Rs1 = op.decodeRegF(rj)
+		arg.Imm = simm(x, 10, 5)
+		return
+	case OpFormatType_2R_ui6:
+		argRaw.Rd = rd
+		argRaw.Rs1 = rj
+		arg.Rd = op.decodeRegF(rd)
+		arg.Rs1 = op.decodeRegF(rj)
+		arg.Imm = simm(x, 10, 6)
+		return
+	case OpFormatType_2R_si12:
+		argRaw.Rd = rd
+		argRaw.Rs1 = rj
+		arg.Rd = op.decodeRegF(rd)
+		arg.Rs1 = op.decodeRegF(rj)
+		arg.Imm = simm(x, 10, 12)
+		return
+	case OpFormatType_2R_ui12:
+		argRaw.Rd = rd
+		argRaw.Rs1 = rj
+		arg.Rd = op.decodeRegF(rd)
+		arg.Rs1 = op.decodeRegF(rj)
+		arg.Imm = simm(x, 10, 12)
+		return
+	case OpFormatType_2R_si14:
+		argRaw.Rd = rd
+		argRaw.Rs1 = rj
+		arg.Rd = op.decodeRegF(rd)
+		arg.Rs1 = op.decodeRegF(rj)
+		arg.Imm = simm(x, 10, 14)
+		return
+	case OpFormatType_2R_si16:
+		argRaw.Rd = rd
+		argRaw.Rs1 = rj
+		arg.Rd = op.decodeRegF(rd)
+		arg.Rs1 = op.decodeRegF(rj)
+		arg.Imm = simm(x, 10, 16)
+		return
+	case OpFormatType_1R_si20:
+		argRaw.Rd = rd
+		arg.Rd = op.decodeRegF(rd)
+		arg.Imm = simm(x, 10, 20)
+		return
+	case OpFormatType_0_2R:
+		panic("TODO")
+	case OpFormatType_3R_s2:
+		panic("TODO")
+	case OpFormatType_3R_s3:
+		panic("TODO")
+	case OpFormatType_code:
+		panic("TODO")
+	case OpFormatType_code_1R_si12:
+		panic("TODO")
+	case OpFormatType_msbw_lsbw:
+		panic("TODO")
+	case OpFormatType_msbd_lsbd:
+		panic("TODO")
+	case OpFormatType_fcsr_1R:
+		panic("TODO")
+	case OpFormatType_1R_fcsr:
+		panic("TODO")
+	case OpFormatType_cd_1R:
+		panic("TODO")
+	case OpFormatType_cd_1F:
+		panic("TODO")
+	case OpFormatType_cd_2R:
+		panic("TODO")
+	case OpFormatType_cd_2F:
+		panic("TODO")
+	case OpFormatType_1R_cj:
+		panic("TODO")
+	case OpFormatType_1F_cj:
+		panic("TODO")
+	case OpFormatType_1R_csr:
+		panic("TODO")
+	case OpFormatType_2R_csr:
+		panic("TODO")
+	case OpFormatType_2R_level:
+		panic("TODO")
+	case OpFormatType_level:
+		panic("TODO")
+	case OpFormatType_0_1R_seq:
+		panic("TODO")
+	case OpFormatType_op_2R:
+		panic("TODO")
+	case OpFormatType_3R_ca:
+		panic("TODO")
+	case OpFormatType_hint_1R_si12:
+		panic("TODO")
+	case OpFormatType_hint_2R:
+		panic("TODO")
+	case OpFormatType_hint:
+		panic("TODO")
+	case OpFormatType_cj_offset:
+		panic("TODO")
+	case OpFormatType_rj_offset:
+		panic("TODO")
+	case OpFormatType_rj_rd_offset:
+		panic("TODO")
+	case OpFormatType_rd_rj_offset:
+		panic("TODO")
+	case OpFormatType_offset:
+		panic("TODO")
+	default:
+		panic("unreachable")
 	}
 
 	// 成功解码所有参数后，返回结果
@@ -252,17 +213,11 @@ func (op _OpContextType) decodeInst(x uint32) (as abi.As, arg *abi.AsArgument, a
 }
 
 // 解码寄存器
-func (op _OpContextType) decodeRegI(r uint32) (reg abi.RegType, err error) {
-	if r <= 31 {
-		return abi.RegType(r) + REG_R0, nil
-	}
-	return 0, fmt.Errorf("badreg(%d)", r)
+func (op _OpContextType) decodeRegI(r uint32) abi.RegType {
+	return abi.RegType(r) + REG_R0
 }
 
 // 解码寄存器(浮点数)
-func (op _OpContextType) decodeRegF(r uint32) (reg abi.RegType, err error) {
-	if r <= 31 {
-		return abi.RegType(r) + REG_F0, nil
-	}
-	return 0, fmt.Errorf("badreg(%d)", r)
+func (op _OpContextType) decodeRegF(r uint32) abi.RegType {
+	return abi.RegType(r) + REG_F0
 }

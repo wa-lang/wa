@@ -54,6 +54,12 @@ func (p *parser) parseInst_loong(fn *ast.Func) (inst *ast.Instruction) {
 		p.acceptToken(token.COMMA)
 		inst.Arg.Rs1 = p.parseRegister()
 		return inst
+	case loong64.OpFormatType_2F:
+		panic("TODO")
+	case loong64.OpFormatType_1F_1R:
+		panic("TODO")
+	case loong64.OpFormatType_1R_1F:
+		panic("TODO")
 	case loong64.OpFormatType_3R:
 		inst.Arg.Rd = p.parseRegister()
 		p.acceptToken(token.COMMA)
@@ -61,7 +67,11 @@ func (p *parser) parseInst_loong(fn *ast.Func) (inst *ast.Instruction) {
 		p.acceptToken(token.COMMA)
 		inst.Arg.Rs2 = p.parseRegister()
 		return inst
-	case loong64.OpFormatType_4R:
+	case loong64.OpFormatType_3F:
+		panic("TODO")
+	case loong64.OpFormatType_1F_2R:
+		panic("TODO")
+	case loong64.OpFormatType_4F:
 		inst.Arg.Rd = p.parseRegister()
 		p.acceptToken(token.COMMA)
 		inst.Arg.Rs1 = p.parseRegister()
@@ -71,48 +81,36 @@ func (p *parser) parseInst_loong(fn *ast.Func) (inst *ast.Instruction) {
 		inst.Arg.Rs3 = p.parseRegister()
 		return inst
 
-	case loong64.OpFormatType_2RI8:
+	case loong64.OpFormatType_2R_ui5:
 		inst.Arg.Rd = p.parseRegister()
 		p.acceptToken(token.COMMA)
 		inst.Arg.Rs1 = p.parseRegister()
 		p.acceptToken(token.COMMA)
 		p.parseInst_loong_imm(inst)
 		return inst
-	case loong64.OpFormatType_2RI12:
+	case loong64.OpFormatType_2R_ui6:
+		panic("TODO")
+	case loong64.OpFormatType_2R_si12:
 		inst.Arg.Rd = p.parseRegister()
 		p.acceptToken(token.COMMA)
 		inst.Arg.Rs1 = p.parseRegister()
 		p.acceptToken(token.COMMA)
 		p.parseInst_loong_imm(inst)
 		return inst
-	case loong64.OpFormatType_2RI14:
+	case loong64.OpFormatType_2R_ui12:
+		panic("TODO")
+	case loong64.OpFormatType_2R_si14:
 		inst.Arg.Rd = p.parseRegister()
 		p.acceptToken(token.COMMA)
 		inst.Arg.Rs1 = p.parseRegister()
 		p.acceptToken(token.COMMA)
 		p.parseInst_loong_imm(inst)
 		return inst
-	case loong64.OpFormatType_2RI16:
+	case loong64.OpFormatType_2R_si16:
+		panic("TODO")
+	case loong64.OpFormatType_1R_si20:
 		inst.Arg.Rd = p.parseRegister()
 		p.acceptToken(token.COMMA)
-		inst.Arg.Rs1 = p.parseRegister()
-		p.acceptToken(token.COMMA)
-		p.parseInst_loong_imm(inst)
-		return inst
-
-	case loong64.OpFormatType_1RI20:
-		inst.Arg.Rd = p.parseRegister()
-		p.acceptToken(token.COMMA)
-		p.parseInst_loong_immAddr(inst)
-		return inst
-
-	case loong64.OpFormatType_1RI21:
-		inst.Arg.Rd = p.parseRegister()
-		p.acceptToken(token.COMMA)
-		p.parseInst_loong_immAddr(inst)
-		return inst
-
-	case loong64.OpFormatType_I26:
 		p.parseInst_loong_immAddr(inst)
 		return inst
 
@@ -193,6 +191,8 @@ func (p *parser) parseInst_loong(fn *ast.Func) (inst *ast.Instruction) {
 		p.acceptToken(token.COMMA)
 		inst.Arg.Rs1 = p.parseRegister()
 		return inst
+	case loong64.OpFormatType_cd_1F:
+		panic("TODO")
 	case loong64.OpFormatType_cd_2R:
 		inst.Arg.Imm = p.parseInt32Lit()
 		p.acceptToken(token.COMMA)
@@ -200,11 +200,15 @@ func (p *parser) parseInst_loong(fn *ast.Func) (inst *ast.Instruction) {
 		p.acceptToken(token.COMMA)
 		inst.Arg.Rs2 = p.parseRegister()
 		return inst
+	case loong64.OpFormatType_cd_2F:
+		panic("TODO")
 	case loong64.OpFormatType_1R_cj:
 		inst.Arg.Rd = p.parseRegister()
 		p.acceptToken(token.COMMA)
 		inst.Arg.Imm = p.parseInt32Lit()
 		return inst
+	case loong64.OpFormatType_1F_cj:
+		panic("TODO")
 	case loong64.OpFormatType_1R_csr:
 		inst.Arg.Rd = p.parseRegister()
 		p.acceptToken(token.COMMA)
@@ -249,7 +253,7 @@ func (p *parser) parseInst_loong(fn *ast.Func) (inst *ast.Instruction) {
 		inst.Arg.Imm = p.parseInt32Lit()
 		return inst
 
-	case loong64.OpFormatType_hint_1R_si:
+	case loong64.OpFormatType_hint_1R_si12:
 		inst.Arg.Imm = p.parseInt32Lit()
 		p.acceptToken(token.COMMA)
 		inst.Arg.Rs1 = p.parseRegister()

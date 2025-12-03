@@ -1,14 +1,6 @@
 // Copyright (C) 2025 武汉凹语言科技有限公司
 // SPDX-License-Identifier: AGPL-3.0-or-later
 
-// 生成龙芯英文版指令集表格
-// 1. 下载英文版到当前目录 https://loongson.github.io/LoongArch-Documentation/LoongArch-Vol1-EN.pdf
-// 2. 先执行 `go run a_gen.go`, 生成 `a_out.go` 文件
-// 3. 删除 `a_out2.go` 文件(生成的代码可能有错误), 重新生成
-// 4. 再执行 `go run a_gen2.go`, 生成 `a_out2.go` 文件
-
-//go:build ignore
-
 package main
 
 import (
@@ -17,19 +9,23 @@ import (
 	"fmt"
 	"go/format"
 	"os"
+	"sort"
 	"strings"
-
-	"wa-lang.org/wa/internal/native/abi"
-	. "wa-lang.org/wa/internal/native/loong64"
 )
 
 var (
-	flagOutput = flag.String("output", "a_out2.go", "set output file")
+	flagPkgname = flag.String("pkg", "main", "set package name")
+	flagOutput  = flag.String("out", "a_out2.go.txt", "set output file")
 )
 
 func main() {
 	flag.Parse()
 
+	if *flagPkgname == "" {
+		fmt.Fprintf(os.Stderr, "usage: package name missing\n")
+		flag.Usage()
+		os.Exit(2)
+	}
 	if *flagOutput == "" {
 		fmt.Fprintf(os.Stderr, "usage: output file missing\n")
 		flag.Usage()
@@ -39,7 +35,7 @@ func main() {
 	var out bytes.Buffer
 
 	// 将 OpFormatType 表格化
-	genOpFormatType_table(&out)
+	genOpFormatType_table(&out, *flagPkgname)
 
 	outputCode := out.Bytes()
 
@@ -49,9 +45,6 @@ func main() {
 	// 格式化输出代码
 	if goodCode, err := format.Source(outputCode); err == nil {
 		outputCode = goodCode
-	} else {
-		outputCode = append([]byte("//go:build ignore\n\n/*"), outputCode...)
-		outputCode = append(outputCode, []byte("\n*/\n")...)
 	}
 
 	// 保存到文件
@@ -60,70 +53,109 @@ func main() {
 	}
 }
 
-func genOpFormatType_table(w *bytes.Buffer) {
+func genOpFormatType_table(w *bytes.Buffer, pkgname string) {
 	const headCode = `// Copyright (C) 2025 武汉凹语言科技有限公司
 // SPDX-License-Identifier: AGPL-3.0-or-later
 
 // 注意: 此代码是程序生成, 不要手动修改!!!
 
-package loong64
-
-import "wa-lang.org/wa/internal/native/abi"
-
-// 指令的编码格式
-func AsFormatType(as abi.As) OpFormatType {
-	if as > 0 && int(as) < len(_AOpContextTable) {
-		return _AOpFormatTypeTable[as]
-	}
-	return OpFormatType_NULL
-}
-
-// 指令编码类型表
-var _AOpFormatTypeTable = [...]OpFormatType{
 `
-	const footCode = `}`
 
 	w.Write([]byte(headCode))
-	defer w.Write([]byte(footCode))
 
-	for as := abi.As(0); as < ALAST; as++ {
-		if !AsValid(as) {
-			continue
+	w.WriteString(fmt.Sprintf("package %s\n\n", pkgname))
+	w.WriteString(`import "wa-lang.org/wa/internal/native/abi"` + "\n")
+
+	// 根据 op 名字排序
+	opKeyList := make([]string, 0, len(AOpContextTable))
+	opIdxMap := make(map[string]int)
+	for i, op := range AOpContextTable {
+		opKeyList = append(opKeyList, op.name)
+		opIdxMap[op.name] = i
+	}
+	sort.Slice(opKeyList, func(i, j int) bool {
+		// 点转为下划线之后, 以保持最终的key顺序
+		si := strings.ReplaceAll(opKeyList[i], ".", "_")
+		sj := strings.ReplaceAll(opKeyList[j], ".", "_")
+		return si < sj
+	})
+
+	// 1. 生成指令定义列表
+	{
+		w.WriteString("const (\n")
+		w.WriteString("_ abi.As = iota\n")
+
+		for _, key := range opKeyList {
+			i := opIdxMap[key]
+			op := AOpContextTable[i]
+			opName := "A" + strings.ReplaceAll(op.name, ".", "_")
+			opComment := AOpContextTable_comment[i]
+			w.WriteString(opName)
+			w.WriteString(opComment)
+			w.WriteRune('\n')
 		}
 
-		asStr := "A" + AsString(as, "")
-		asStr = strings.ReplaceAll(asStr, ".", "_")
-
-		fmt.Fprintf(w, "\t%s: %s,\n", asStr, OpFormatTypeString(getOpFormatType(as)))
+		w.WriteRune('\n')
+		w.WriteString("ALAST\n")
+		w.WriteString(")\n")
 	}
+
+	// 2. 生成指令名字列表
+	w.WriteString(`var _Anames = [...]string{` + "\n")
+	for _, key := range opKeyList {
+		i := opIdxMap[key]
+		op := AOpContextTable[i]
+		opName := "A" + strings.ReplaceAll(op.name, ".", "_")
+		w.WriteString(opName)
+		w.WriteString(`:"`)
+		w.WriteString(op.name)
+		w.WriteString(`",`)
+		w.WriteRune('\n')
+	}
+	w.WriteString("}\n")
+
+	// 3. 生成指令编码元信息列表
+
+	w.WriteString("// 指令编码信息表\n")
+	w.WriteString(`var _AOpContextTable = [...]_OpContextType{` + "\n")
+	for _, key := range opKeyList {
+		i := opIdxMap[key]
+		op := AOpContextTable[i]
+		opName := "A" + strings.ReplaceAll(op.name, ".", "_")
+		fmt.Fprintf(w, "\t%s: {mask: 0x%08x, value: 0x%08x, op: %s, fmt:%s},\n",
+			opName, op.mask, op.value, opName,
+			OpFormatTypeString(getOpFormatType(i, op.args)),
+		)
+	}
+	w.WriteString("}\n")
 }
 
-func getOpFormatType(as abi.As) OpFormatType {
-	asArgs := AsArgs(as)
+func getOpFormatType(as int, asArgs instArgs) OpFormatType {
 	regCount := 0
+	regFCount := 0
 	for i, argTyp := range asArgs {
 		if argTyp == 0 {
 			break
 		}
 		switch argTyp {
 		case Arg_fd, Arg_fj, Arg_fk, Arg_fa:
-			regCount++
+			regFCount++
 		case Arg_rd, Arg_rj, Arg_rk:
 			regCount++
 		case Arg_ui5_14_10:
-			return OpFormatType_2RI8
+			return OpFormatType_2R_ui5
 		case Arg_ui6_15_10:
-			return OpFormatType_2RI8
+			return OpFormatType_2R_ui6
 		case Arg_ui12_21_10:
-			return OpFormatType_2RI12
+			return OpFormatType_2R_ui12
 		case Arg_si12_21_10:
-			return OpFormatType_2RI12
+			return OpFormatType_2R_si12
 		case Arg_si14_23_10:
-			return OpFormatType_2RI14
+			return OpFormatType_2R_si14
 		case Arg_si16_25_10:
-			return OpFormatType_1RI21
+			return OpFormatType_2R_si14
 		case Arg_si20_24_5:
-			return OpFormatType_1RI20
+			return OpFormatType_1R_si20
 		case Arg_offset_20_0:
 			switch asArgs[0] {
 			case Arg_rj:
@@ -216,7 +248,7 @@ func getOpFormatType(as abi.As) OpFormatType {
 				return OpFormatType_hint_2R
 			} else {
 				assert(asArgs[2] == Arg_si12_21_10)
-				return OpFormatType_hint_1R_si
+				return OpFormatType_hint_1R_si12
 			}
 		case Arg_hint_14_0:
 			return OpFormatType_hint
@@ -229,22 +261,50 @@ func getOpFormatType(as abi.As) OpFormatType {
 		}
 	}
 
-	switch regCount {
-	case 0:
+	switch {
+	case regCount == 0 && regFCount == 0:
 		return OpFormatType_NULL
-	case 2:
-		if asArgs[0] != Arg_rd {
-			// assert(opcode.op == AASRTLE_D || opcode.op == AASRTGT_D)
-			return OpFormatType_0_2R
-		}
-		return OpFormatType_2R
-	case 3:
-		return OpFormatType_3R
-	case 4:
-		return OpFormatType_4R
-	}
 
-	return OpFormatType_NULL
+	case regCount > 0 && regFCount == 0:
+		switch regCount {
+		case 2:
+			if asArgs[0] != Arg_rd {
+				return OpFormatType_0_2R
+			}
+			return OpFormatType_2R
+		case 3:
+			return OpFormatType_3R
+		default:
+			panic("unreachable")
+		}
+	case regCount == 0 && regFCount > 0:
+		switch regFCount {
+		case 2:
+			return OpFormatType_2F
+		case 3:
+			return OpFormatType_3F
+		case 4:
+			return OpFormatType_4F
+		default:
+			panic("unreachable")
+		}
+	default:
+		switch {
+		case regFCount == 1 && regCount == 1:
+			switch {
+			case asArgs[0] == Arg_fd && asArgs[1] == Arg_rj:
+				return OpFormatType_1F_1R
+			case asArgs[0] == Arg_rd && asArgs[1] == Arg_fj:
+				return OpFormatType_1R_1F
+			default:
+				panic("unreachable")
+			}
+		case regFCount == 1 && regCount == 2:
+			return OpFormatType_1F_2R
+		default:
+			panic(fmt.Sprintf("AS: %s", AOpContextTable[as].name))
+		}
+	}
 }
 
 func OpFormatTypeString(x OpFormatType) string {
@@ -255,24 +315,34 @@ func OpFormatTypeString(x OpFormatType) string {
 		return "OpFormatType_NULL"
 	case OpFormatType_2R:
 		return "OpFormatType_2R"
+	case OpFormatType_2F:
+		return "OpFormatType_2F"
+	case OpFormatType_1F_1R:
+		return "OpFormatType_1F_1R"
+	case OpFormatType_1R_1F:
+		return "OpFormatType_1R_1F"
 	case OpFormatType_3R:
 		return "OpFormatType_3R"
-	case OpFormatType_4R:
-		return "OpFormatType_4R"
-	case OpFormatType_2RI8:
-		return "OpFormatType_2RI8"
-	case OpFormatType_2RI12:
-		return "OpFormatType_2RI12"
-	case OpFormatType_2RI14:
-		return "OpFormatType_2RI14"
-	case OpFormatType_2RI16:
-		return "OpFormatType_2RI16"
-	case OpFormatType_1RI20:
-		return "OpFormatType_1RI20"
-	case OpFormatType_1RI21:
-		return "OpFormatType_1RI21"
-	case OpFormatType_I26:
-		return "OpFormatType_I26"
+	case OpFormatType_3F:
+		return "OpFormatType_3F"
+	case OpFormatType_1F_2R:
+		return "OpFormatType_1F_2R"
+	case OpFormatType_4F:
+		return "OpFormatType_4F"
+	case OpFormatType_2R_ui5:
+		return "OpFormatType_2R_ui5"
+	case OpFormatType_2R_ui6:
+		return "OpFormatType_2R_ui6"
+	case OpFormatType_2R_si12:
+		return "OpFormatType_2R_si12"
+	case OpFormatType_2R_ui12:
+		return "OpFormatType_2R_ui12"
+	case OpFormatType_2R_si14:
+		return "OpFormatType_2R_si14"
+	case OpFormatType_2R_si16:
+		return "OpFormatType_2R_si16"
+	case OpFormatType_1R_si20:
+		return "OpFormatType_1R_si20"
 	case OpFormatType_0_2R:
 		return "OpFormatType_0_2R"
 	case OpFormatType_3R_s2:
@@ -293,10 +363,16 @@ func OpFormatTypeString(x OpFormatType) string {
 		return "OpFormatType_1R_fcsr"
 	case OpFormatType_cd_1R:
 		return "OpFormatType_cd_1R"
+	case OpFormatType_cd_1F:
+		return "OpFormatType_cd_1F"
 	case OpFormatType_cd_2R:
 		return "OpFormatType_cd_2R"
+	case OpFormatType_cd_2F:
+		return "OpFormatType_cd_2F"
 	case OpFormatType_1R_cj:
 		return "OpFormatType_1R_cj"
+	case OpFormatType_1F_cj:
+		return "OpFormatType_1F_cj"
 	case OpFormatType_1R_csr:
 		return "OpFormatType_1R_csr"
 	case OpFormatType_2R_csr:
@@ -311,8 +387,8 @@ func OpFormatTypeString(x OpFormatType) string {
 		return "OpFormatType_op_2R"
 	case OpFormatType_3R_ca:
 		return "OpFormatType_3R_ca"
-	case OpFormatType_hint_1R_si:
-		return "OpFormatType_hint_1R_si"
+	case OpFormatType_hint_1R_si12:
+		return "OpFormatType_hint_1R_si12"
 	case OpFormatType_hint_2R:
 		return "OpFormatType_hint_2R"
 	case OpFormatType_hint:

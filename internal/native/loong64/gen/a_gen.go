@@ -65,21 +65,9 @@ func main() {
 
 // 注意: 此代码是程序生成, 不要手动修改!!!
 
-package loong64
-
-import "wa-lang.org/wa/internal/native/abi"
+package main
 
 `))
-
-	var op_f bytes.Buffer
-	op_f.Write([]byte("const (\n\t_ abi.As = iota\n"))
-
-	var opstr_f bytes.Buffer
-	opstr_f.Write([]byte("var _Anames = [...]string{\n"))
-
-	var instFormats_f bytes.Buffer
-	instFormats_f.Write([]byte("// 指令编码信息表\n"))
-	instFormats_f.Write([]byte("var _AOpContextTable = [...]_OpContextType{\n"))
 
 	// Scan document looking for instructions.
 	n := f.NumPage()
@@ -112,26 +100,36 @@ import "wa-lang.org/wa/internal/native/abi"
 
 	sort.Strings(ops)
 
+	var instFormats_f bytes.Buffer
+	instFormats_f.Write([]byte("// 指令编码信息表\n"))
+	instFormats_f.Write([]byte("var AOpContextTable = [...]OpContextType{\n"))
+
 	for _, op := range ops {
-		// 1. 指令枚举值定义, 加 A 前缀, 比如 AADD_W
-		op_f.Write([]byte(fmt.Sprintf("\t%s%s %s\n", "A", op, instFormatComments[op])))
-		// 2. 指令枚举值对应的名字字符串
-		opstr_f.Write([]byte(fmt.Sprintf("\t%s%s\n", "A", opstrs[op])))
-		// 3. 指令的参数格式, 枚举值对应列表的下标
-		instFormats_f.Write([]byte(fmt.Sprintf("\t%s%s:%s\n", "A", op, instFormats[op])))
+		// 指令的参数格式, 枚举值对应列表的下标
+		instFormats_f.WriteString(instFormats[op])
+		instFormats_f.WriteRune(' ')
+		instFormats_f.WriteString(instFormatComments[op])
+		instFormats_f.WriteRune('\n')
 	}
 
-	// 增加一个结尾的指令标记
-	op_f.Write([]byte("\n\tALAST\n"))
+	instFormats_f.Write([]byte("}\n"))
 
-	op_f.Write([]byte(")\n\n"))
-	opstr_f.Write([]byte("}\n\n"))
+	// 重新生成一个注释表格
+
+	instFormats_f.Write([]byte("// 指令编码信息表\n"))
+	instFormats_f.Write([]byte("var AOpContextTable_comment = [...]string{\n"))
+
+	for _, op := range ops {
+		instFormats_f.WriteRune('"')
+		instFormats_f.WriteString(instFormatComments[op])
+		instFormats_f.WriteRune('"')
+		instFormats_f.WriteRune(',')
+		instFormats_f.WriteRune('\n')
+	}
 	instFormats_f.Write([]byte("}\n"))
 
 	var fileTables bytes.Buffer
 	fileTables.Write(prologue.Bytes())
-	fileTables.Write(op_f.Bytes())
-	fileTables.Write(opstr_f.Bytes())
 	fileTables.Write(instFormats_f.Bytes())
 
 	outputCode := fileTables.Bytes()
@@ -339,18 +337,18 @@ func dealWithFcmp(ds string) (fcmpConditions map[string]map[string]string) {
 	}
 	fcmpConditions = make(map[string]map[string]string)
 	for k, v := range conds {
-		op := fmt.Sprintf("FCMP_%s_%s", k, ds)
+		op := fmt.Sprintf("FCMP.%s.%s", k, ds)
 		opstr := fmt.Sprintf("FCMP_%s_%s:\t\"FCMP.%s.%s\",", k, ds, k, ds)
 		instFormatComment := fmt.Sprintf("// FCMP.%s.%s cd, fj, fk", k, ds)
 		var instFormat string
 		if ds == "D" {
 			instFormat = fmt.Sprintf(
-				"{mask: 0xffff8018, value: 0x0c2%s000, op: A%s, args: instArgs{arg_cd, arg_fj, arg_fk}},",
+				"{mask: 0xffff8018, value: 0x0c2%s000, name: \"%s\", args: instArgs{arg_cd, arg_fj, arg_fk}},",
 				v, op,
 			)
 		} else {
 			instFormat = fmt.Sprintf(
-				"{mask: 0xffff8018, value: 0x0c1%s000, op: A%s,args: instArgs{arg_cd, arg_fj, arg_fk}},",
+				"{mask: 0xffff8018, value: 0x0c1%s000, name: \"%s\",args: instArgs{arg_cd, arg_fj, arg_fk}},",
 				v, op,
 			)
 		}
@@ -467,7 +465,7 @@ func parsePage(num int, p pdf.Page, isFP bool) (ops []string, opstrs map[string]
 			continue
 		}
 
-		op := strings.Replace(text[i].S, ".", "_", -1)
+		op := text[i].S
 		opstr := fmt.Sprintf("%s:\t\"%s\",", op, text[i].S)
 		instFormatComment := ""
 		binValue := ""
@@ -579,7 +577,7 @@ func parsePage(num int, p pdf.Page, isFP bool) (ops []string, opstrs map[string]
 			instArgs = "arg_rd, arg_rk, arg_rj"
 		}
 		instFormat := fmt.Sprintf(
-			"{mask: %s, value: %s, op: A%s, args: instArgs{%s}},",
+			"{mask: %s, value: %s, name: \"%s\", args: instArgs{%s}},",
 			binstrToHex(binMask), binstrToHex(binValue),
 			op, instArgs,
 		)

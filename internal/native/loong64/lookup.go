@@ -114,11 +114,10 @@ func AsString(as abi.As, asName string) string {
 	return fmt.Sprintf("riscv.badas(%d)", int(as))
 }
 
-// 汇编指令的参数格式
-func AsArgs(as abi.As) [5]InstArg {
+// 指令的编码格式
+func AsFormatType(as abi.As) OpFormatType {
 	if as > 0 && int(as) < len(_AOpContextTable) {
-		ctx := _AOpContextTable[as]
-		return ctx.args
+		return _AOpContextTable[as].fmt
 	}
-	return [5]InstArg{}
+	return OpFormatType_NULL
 }
