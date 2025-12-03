@@ -77,12 +77,12 @@ const (
 	OpFormatType_2R_si16
 	OpFormatType_1R_si20
 	OpFormatType_0_2R
-	OpFormatType_3R_s2
-	OpFormatType_3R_s3
+	OpFormatType_3R_sa2
+	OpFormatType_3R_sa3
 	OpFormatType_code
 	OpFormatType_code_1R_si12
-	OpFormatType_msbw_lsbw
-	OpFormatType_msbd_lsbd
+	OpFormatType_2R_msbw_lsbw
+	OpFormatType_2R_msbd_lsbd
 	OpFormatType_fcsr_1R
 	OpFormatType_1R_fcsr
 	OpFormatType_cd_1R
@@ -170,18 +170,18 @@ func (x OpFormatType) String() string {
 		return "OpFormatType_1R_si20"
 	case OpFormatType_0_2R:
 		return "OpFormatType_0_2R"
-	case OpFormatType_3R_s2:
-		return "OpFormatType_3R_s2"
-	case OpFormatType_3R_s3:
-		return "OpFormatType_3R_s3"
+	case OpFormatType_3R_sa2:
+		return "OpFormatType_3R_sa2"
+	case OpFormatType_3R_sa3:
+		return "OpFormatType_3R_sa3"
 	case OpFormatType_code:
 		return "OpFormatType_code"
 	case OpFormatType_code_1R_si12:
 		return "OpFormatType_code_1R_si12"
-	case OpFormatType_msbw_lsbw:
-		return "OpFormatType_msbw_lsbw"
-	case OpFormatType_msbd_lsbd:
-		return "OpFormatType_msbd_lsbd"
+	case OpFormatType_2R_msbw_lsbw:
+		return "OpFormatType_2R_msbw_lsbw"
+	case OpFormatType_2R_msbd_lsbd:
+		return "OpFormatType_2R_msbd_lsbd"
 	case OpFormatType_fcsr_1R:
 		return "OpFormatType_fcsr_1R"
 	case OpFormatType_1R_fcsr:

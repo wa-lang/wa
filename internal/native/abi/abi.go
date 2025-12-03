@@ -76,15 +76,13 @@ type AsArgument struct {
 	Imm2 int32   // 立即数2
 
 	// 参数的名字, 用于格式化
-	RdName   string
-	Rs1Name  string
-	Rs2Name  string
-	Rs3Name  string
-	ImmName  string
-	Imm2Name string
+	RdName  string
+	Rs1Name string
+	Rs2Name string
+	Rs3Name string
 
-	Symbol      string    // 可能是 Label/全局符号, 用于重定位和输出文本
-	SymbolDecor BuiltinFn // 符号的修饰函数, 可能要重新计算
+	Symbol      string    // 可能是 Label/全局符号, 用于重定位和输出文本(不支持Imm2)
+	SymbolDecor BuiltinFn // 符号的修饰函数, 可能要重新计算(只用于跳转/加立即数部分)
 }
 
 // 指令原生参数

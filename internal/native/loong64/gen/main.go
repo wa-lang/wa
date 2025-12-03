@@ -180,18 +180,18 @@ func getOpFormatType(as int, asArgs instArgs) OpFormatType {
 				panic("unreachable")
 			}
 		case Arg_sa2_16_15:
-			return OpFormatType_3R_s2
+			return OpFormatType_3R_sa2
 		case Arg_sa3_17_15:
-			return OpFormatType_3R_s3
+			return OpFormatType_3R_sa3
 		case Arg_code_4_0:
 			return OpFormatType_code_1R_si12
 		case Arg_code_14_0:
 			return OpFormatType_code
 
 		case Arg_lsbw, Arg_msbw:
-			return OpFormatType_msbw_lsbw
+			return OpFormatType_2R_msbw_lsbw
 		case Arg_lsbd, Arg_msbd:
-			return OpFormatType_msbd_lsbd
+			return OpFormatType_2R_msbd_lsbd
 
 		case Arg_fcsr_4_0:
 			if asArgs[0] == Arg_fcsr_4_0 {
@@ -345,18 +345,18 @@ func OpFormatTypeString(x OpFormatType) string {
 		return "OpFormatType_1R_si20"
 	case OpFormatType_0_2R:
 		return "OpFormatType_0_2R"
-	case OpFormatType_3R_s2:
-		return "OpFormatType_3R_s2"
-	case OpFormatType_3R_s3:
-		return "OpFormatType_3R_s3"
+	case OpFormatType_3R_sa2:
+		return "OpFormatType_3R_sa2"
+	case OpFormatType_3R_sa3:
+		return "OpFormatType_3R_sa3"
 	case OpFormatType_code:
 		return "OpFormatType_code"
 	case OpFormatType_code_1R_si12:
 		return "OpFormatType_code_1R_si12"
-	case OpFormatType_msbw_lsbw:
-		return "OpFormatType_msbw_lsbw"
-	case OpFormatType_msbd_lsbd:
-		return "OpFormatType_msbd_lsbd"
+	case OpFormatType_2R_msbw_lsbw:
+		return "OpFormatType_2R_msbw_lsbw"
+	case OpFormatType_2R_msbd_lsbd:
+		return "OpFormatType_2R_msbd_lsbd"
 	case OpFormatType_fcsr_1R:
 		return "OpFormatType_fcsr_1R"
 	case OpFormatType_1R_fcsr:

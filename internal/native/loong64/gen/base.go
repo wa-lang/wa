@@ -32,12 +32,12 @@ const (
 	OpFormatType_2R_si16
 	OpFormatType_1R_si20
 	OpFormatType_0_2R
-	OpFormatType_3R_s2
-	OpFormatType_3R_s3
+	OpFormatType_3R_sa2
+	OpFormatType_3R_sa3
 	OpFormatType_code
 	OpFormatType_code_1R_si12
-	OpFormatType_msbw_lsbw
-	OpFormatType_msbd_lsbd
+	OpFormatType_2R_msbw_lsbw
+	OpFormatType_2R_msbd_lsbd
 	OpFormatType_fcsr_1R
 	OpFormatType_1R_fcsr
 	OpFormatType_cd_1R

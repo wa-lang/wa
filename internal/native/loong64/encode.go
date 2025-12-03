@@ -80,17 +80,17 @@ func (ctx *_OpContextType) encodeRaw(as abi.As, arg *abi.AsArgument) (x uint32, 
 		panic("TODO")
 	case OpFormatType_0_2R:
 		panic("TODO")
-	case OpFormatType_3R_s2:
+	case OpFormatType_3R_sa2:
 		panic("TODO")
-	case OpFormatType_3R_s3:
+	case OpFormatType_3R_sa3:
 		panic("TODO")
 	case OpFormatType_code:
 		panic("TODO")
 	case OpFormatType_code_1R_si12:
 		panic("TODO")
-	case OpFormatType_msbw_lsbw:
+	case OpFormatType_2R_msbw_lsbw:
 		panic("TODO")
-	case OpFormatType_msbd_lsbd:
+	case OpFormatType_2R_msbd_lsbd:
 		panic("TODO")
 	case OpFormatType_fcsr_1R:
 		panic("TODO")

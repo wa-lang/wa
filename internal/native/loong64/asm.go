@@ -97,17 +97,17 @@ func (ctx *_OpContextType) asmSyntax(
 		return fmt.Sprintf("%s %s, %s", asNameFn(as, asName), rName(arg.Rd), formatAddr())
 	case OpFormatType_0_2R:
 		return fmt.Sprintf("%s %s, %s", asNameFn(as, asName), rName(arg.Rs1), rName(arg.Rs2))
-	case OpFormatType_3R_s2:
+	case OpFormatType_3R_sa2:
 		return fmt.Sprintf("%s %s, %s, %s, %d", asNameFn(as, asName), rName(arg.Rd), rName(arg.Rs1), rName(arg.Rs2), arg.Imm)
-	case OpFormatType_3R_s3:
+	case OpFormatType_3R_sa3:
 		return fmt.Sprintf("%s %s, %s, %s, %d", asNameFn(as, asName), rName(arg.Rd), rName(arg.Rs1), rName(arg.Rs2), arg.Imm)
 	case OpFormatType_code:
 		return fmt.Sprintf("%s %d", asNameFn(as, asName), arg.Imm)
 	case OpFormatType_code_1R_si12:
 		return fmt.Sprintf("%s %d, %s, %s", asNameFn(as, asName), arg.Imm, rName(arg.Rs1), formatImm())
-	case OpFormatType_msbw_lsbw:
+	case OpFormatType_2R_msbw_lsbw:
 		return fmt.Sprintf("%s %s, %s, %d, %d", asNameFn(as, asName), rName(arg.Rd), rName(arg.Rs1), arg.Imm, arg.Imm2)
-	case OpFormatType_msbd_lsbd:
+	case OpFormatType_2R_msbd_lsbd:
 		return fmt.Sprintf("%s %s, %s, %d, %d", asNameFn(as, asName), rName(arg.Rd), rName(arg.Rs1), arg.Imm, arg.Imm2)
 	case OpFormatType_fcsr_1R:
 		return fmt.Sprintf("%s %d, %s", asNameFn(as, asName), arg.Imm, rName(arg.Rs1))
