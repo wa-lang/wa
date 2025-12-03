@@ -232,7 +232,13 @@ func (p *parser) parseInst_loong(fn *ast.Func) (inst *ast.Instruction) {
 		p.acceptToken(token.COMMA)
 		inst.Arg.Imm = p.parseInt32Lit()
 		return inst
-
+	case loong64.OpFormatType_op_2R:
+		inst.Arg.Imm = p.parseInt32Lit()
+		p.acceptToken(token.COMMA)
+		inst.Arg.Rs1 = p.parseRegister()
+		p.acceptToken(token.COMMA)
+		inst.Arg.Rs2 = p.parseRegister()
+		return inst
 	case loong64.OpFormatType_3R_ca:
 		inst.Arg.Rd = p.parseRegister()
 		p.acceptToken(token.COMMA)

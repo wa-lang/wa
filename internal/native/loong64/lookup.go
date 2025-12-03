@@ -122,12 +122,3 @@ func AsArgs(as abi.As) [5]InstArg {
 	}
 	return [5]InstArg{}
 }
-
-// 指令的编码格式
-func AsFormatType(as abi.As) OpFormatType {
-	if as > 0 && int(as) < len(_AOpContextTable) {
-		ctx := _AOpContextTable[as]
-		return ctx.FormatType()
-	}
-	return 0
-}

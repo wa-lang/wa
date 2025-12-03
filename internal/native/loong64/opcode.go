@@ -88,6 +88,7 @@ const (
 	OpFormatType_2R_level
 	OpFormatType_level
 	OpFormatType_0_1R_seq
+	OpFormatType_op_2R
 	OpFormatType_3R_ca
 	OpFormatType_hint_1R_si
 	OpFormatType_hint_2R
@@ -176,9 +177,12 @@ func (ctx *_OpContextType) encodeRaw(as abi.As, arg *abi.AsArgument) (uint32, er
 }
 
 // 指令的编码格式
+// 注意: 请保留该函数. 虽然可能有重复, 但是可以避免生成代码时的循环依赖
+// 注意: 该函数和 a_gen2.go 中的代码一样, 当修改时保持同步
 func (opcode _OpContextType) FormatType() OpFormatType {
+	asArgs := opcode.args
 	regCount := 0
-	for i, argTyp := range opcode.args {
+	for i, argTyp := range asArgs {
 		if argTyp == 0 {
 			break
 		}
@@ -191,6 +195,8 @@ func (opcode _OpContextType) FormatType() OpFormatType {
 			return OpFormatType_2RI8
 		case Arg_ui6_15_10:
 			return OpFormatType_2RI8
+		case Arg_ui12_21_10:
+			return OpFormatType_2RI12
 		case Arg_si12_21_10:
 			return OpFormatType_2RI12
 		case Arg_si14_23_10:
@@ -200,7 +206,7 @@ func (opcode _OpContextType) FormatType() OpFormatType {
 		case Arg_si20_24_5:
 			return OpFormatType_1RI20
 		case Arg_offset_20_0:
-			switch opcode.args[0] {
+			switch asArgs[0] {
 			case Arg_rj:
 				return OpFormatType_rj_offset
 			case Arg_cj:
@@ -213,11 +219,11 @@ func (opcode _OpContextType) FormatType() OpFormatType {
 		case Arg_offset_15_0:
 			assert(i == 2)
 			switch {
-			case opcode.args[0] == Arg_rd:
-				assert(opcode.args[1] == Arg_rj)
+			case asArgs[0] == Arg_rd:
+				assert(asArgs[1] == Arg_rj)
 				return OpFormatType_rd_rj_offset
-			case opcode.args[0] == Arg_rj:
-				assert(opcode.args[1] == Arg_rd)
+			case asArgs[0] == Arg_rj:
+				assert(asArgs[1] == Arg_rd)
 				return OpFormatType_rj_rd_offset
 			default:
 				panic("unreachable")
@@ -237,22 +243,30 @@ func (opcode _OpContextType) FormatType() OpFormatType {
 			return OpFormatType_msbd_lsbd
 
 		case Arg_fcsr_4_0:
-			if opcode.args[0] == Arg_fcsr_4_0 {
+			if asArgs[0] == Arg_fcsr_4_0 {
 				return OpFormatType_fcsr_1R
 			} else {
 				return OpFormatType_1R_fcsr
 			}
 
+		case Arg_fcsr_9_5:
+			return OpFormatType_1R_fcsr
+
 		case Arg_cd:
-			if arg2 := opcode.args[2]; arg2 == Arg_fk {
+			if arg2 := asArgs[2]; arg2 == Arg_fk {
 				return OpFormatType_cd_2R
 			} else {
 				return OpFormatType_cd_1R
 			}
 
 		case Arg_cj:
-			assert(opcode.args[0] == Arg_fd || opcode.args[0] == Arg_rd)
-			return OpFormatType_1R_cj
+			if i == 0 {
+				assert(asArgs[1] == Arg_offset_20_0)
+				return OpFormatType_cj_offset
+			} else {
+				assert(asArgs[0] == Arg_fd || asArgs[0] == Arg_rd)
+				return OpFormatType_1R_cj
+			}
 
 		case Arg_csr_23_10:
 			if i == 1 {
@@ -271,25 +285,28 @@ func (opcode _OpContextType) FormatType() OpFormatType {
 			return OpFormatType_0_1R_seq
 
 		case Arg_ca:
-			assert(opcode.args[1] == Arg_fd)
-			assert(opcode.args[1] == Arg_fj)
-			assert(opcode.args[2] == Arg_fk)
+			assert(asArgs[0] == Arg_fd)
+			assert(asArgs[1] == Arg_fj)
+			assert(asArgs[2] == Arg_fk)
 			assert(i == 3)
 			return OpFormatType_3R_ca
 
 		case Arg_hint_4_0:
 			assert(i == 0)
-			if opcode.args[2] == Arg_rk {
+			if asArgs[2] == Arg_rk {
 				return OpFormatType_hint_2R
 			} else {
-				assert(opcode.args[2] == Arg_si12_21_10)
+				assert(asArgs[2] == Arg_si12_21_10)
 				return OpFormatType_hint_1R_si
 			}
 		case Arg_hint_14_0:
 			return OpFormatType_hint
 
+		case Arg_op_4_0:
+			return OpFormatType_op_2R
+
 		default:
-			panic("unreachable")
+			panic(fmt.Sprintf("argTyp: %d", argTyp))
 		}
 	}
 
@@ -297,8 +314,8 @@ func (opcode _OpContextType) FormatType() OpFormatType {
 	case 0:
 		return OpFormatType_NULL
 	case 2:
-		if opcode.args[0] != Arg_rd {
-			assert(opcode.op == AASRTLE_D || opcode.op == AASRTGT_D)
+		if asArgs[0] != Arg_rd {
+			// assert(opcode.op == AASRTLE_D || opcode.op == AASRTGT_D)
 			return OpFormatType_0_2R
 		}
 		return OpFormatType_2R
@@ -308,7 +325,7 @@ func (opcode _OpContextType) FormatType() OpFormatType {
 		return OpFormatType_4R
 	}
 
-	return 0
+	return OpFormatType_NULL
 }
 
 func (ctx *_OpContextType) encodeArg(argTyp InstArg, arg *abi.AsArgument) uint32 {
