@@ -206,23 +206,6 @@ $ cd waroot && wa run examples/prime
 29
 ```
 
-## 例子：Chrome本地AI
-
-Chrome builtin Gemini Nano Demo:
-
-```wa
-import "ai"
-
-func main {
-	ai.RequestSession(func(session: ai.Session){
-		session.PromptAsync("Who are you?", func(res: string) {
-			println(res)
-		})
-	})
-}
-```
-
-
 更多例子 [waroot/examples](waroot/examples)
 
 ## 贡献者名单

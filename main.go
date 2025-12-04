@@ -103,7 +103,6 @@ func main() {
 		apprun.CmdRun,
 		appfmt.CmdFmt,
 		apptest.CmdTest,
-		applsp.CmdLsp,
 		appyacc.CmdYacc,
 		applogo.CmdLogo,
 
@@ -127,6 +126,7 @@ func main() {
 		appgo2wz.CmdGo2wz,
 		appcir.CmdCir,
 		appdoc.CmdDoc,
+		applsp.CmdLsp,
 	}
 
 	cliApp.Run(os.Args)
