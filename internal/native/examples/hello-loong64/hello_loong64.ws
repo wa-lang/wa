@@ -13,7 +13,7 @@ func _start {
 %begin:
     # a0 = 字符串地址
     lu12i.w a0, %hi($message)     # 高20位
-    addi.w  a0, a0, %lo($message) # 低12位
+    ori     a0, a0, %lo($message) # 低12位(不能使用addi.w)
 
 %print_loop:
     ld.bu  a1, 0(a0)         # 取一个字节
@@ -21,7 +21,7 @@ func _start {
 
     # t0 = UART0 地址
     lu12i.w t0, %hi($UART0)           # UART0 高20位
-    addi.w  t0, t0, %lo($UART0)       # UART0 低12位
+    ori     t0, t0, %lo($UART0)       # UART0 低12位
 
     st.b   a1, 0(t0)        # 写到UART寄存器
     addi.w a0, a0, 1        # 下一个字符

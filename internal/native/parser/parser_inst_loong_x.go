@@ -263,13 +263,13 @@ func (p *parser) parseInst_loong(fn *ast.Func) (inst *ast.Instruction) {
 		inst.Arg.Symbol = sa3Symbol
 		return inst
 	case loong64.OpFormatType_code:
-		code, codeSymbol := p.parseInst_loong_imm_code_5bit()
+		code, codeSymbol := p.parseInst_loong_imm_code_15bit()
 		inst.Arg.Imm = code
 		inst.Arg.Symbol = codeSymbol
 		return inst
 
 	case loong64.OpFormatType_code_1R_si12:
-		code, codeSymbol := p.parseInst_loong_imm_code_15bit()
+		code, codeSymbol := p.parseInst_loong_imm_code_5bit()
 		p.acceptToken(token.COMMA)
 		rj := p.parseRegister()
 		p.checkRegI_loong(rj)

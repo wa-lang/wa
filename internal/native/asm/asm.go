@@ -259,6 +259,11 @@ func (p *_Assembler) asmFunc(fn *ast.Func) (err error) {
 				} else {
 					inst.Arg.Imm = x >> 12
 				}
+			case abi.BuiltinFn_HI52, abi.BuiltinFn_HI52_zh: // 高20bit
+				// 绝对地址不需要负数, 因为 LO 部分也不需要相对地址可能产生的负数
+				x := (uint64(addr) >> 32) & 0xFFFFF
+				inst.Arg.Imm = int32(x)
+
 			case abi.BuiltinFn_LO, abi.BuiltinFn_LO_zh: // 低12bit
 				x := int32(addr)
 				// 简单地取低 12 位

@@ -86,6 +86,8 @@ func (p *CPU) execInst(bus *device.Bus, as abi.As, arg *abi.AsRawArgument) error
 		p.RegX[arg.Rd] = LAUInt(arg.Imm << 12)
 	case loong64.AADDI_W:
 		p.RegX[arg.Rd] = p.RegX[arg.Rs1] + LAUInt(arg.Imm)
+	case loong64.AORI:
+		p.RegX[arg.Rd] = p.RegX[arg.Rs1] | LAUInt(arg.Imm)
 	case loong64.ALD_BU:
 		addr := p.RegX[arg.Rs1] + LAUInt(arg.Imm)
 		value, err := bus.Read(uint64(addr), 1)
