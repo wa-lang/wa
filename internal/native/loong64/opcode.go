@@ -10,6 +10,9 @@ import (
 )
 
 //
+// 以下的指令编码是龙芯官方手册简化后的版本(9种)
+// 凹语言龙芯汇编器已经针对每个细粒度的不同编码作了定义区分处理(大约40+种)
+//
 // 31                                                           10 9            5 4            0
 // +-------------------------------------------------------------+ +------------+ +------------+
 // | opcode                                                      | | rj         | | rd         | 2R-type
@@ -56,7 +59,7 @@ import (
 // +--------------+ +--------------------------------------------+ +---------------------------+
 //
 
-// 指令格式类型9种
+// 龙芯指令格式类型
 type OpFormatType int
 
 const (
@@ -87,7 +90,6 @@ const (
 	OpFormatType_1R_fcsr
 	OpFormatType_cd_1R
 	OpFormatType_cd_1F
-	OpFormatType_cd_2R
 	OpFormatType_cd_2F
 	OpFormatType_1R_cj
 	OpFormatType_1F_cj
@@ -97,7 +99,7 @@ const (
 	OpFormatType_level
 	OpFormatType_0_1R_seq
 	OpFormatType_op_2R
-	OpFormatType_3R_ca
+	OpFormatType_3F_ca
 	OpFormatType_hint_1R_si12
 	OpFormatType_hint_2R
 	OpFormatType_hint
@@ -190,8 +192,6 @@ func (x OpFormatType) String() string {
 		return "OpFormatType_cd_1R"
 	case OpFormatType_cd_1F:
 		return "OpFormatType_cd_1F"
-	case OpFormatType_cd_2R:
-		return "OpFormatType_cd_2R"
 	case OpFormatType_cd_2F:
 		return "OpFormatType_cd_2F"
 	case OpFormatType_1R_cj:
@@ -210,8 +210,8 @@ func (x OpFormatType) String() string {
 		return "OpFormatType_0_1R_seq"
 	case OpFormatType_op_2R:
 		return "OpFormatType_op_2R"
-	case OpFormatType_3R_ca:
-		return "OpFormatType_3R_ca"
+	case OpFormatType_3F_ca:
+		return "OpFormatType_3F_ca"
 	case OpFormatType_hint_1R_si12:
 		return "OpFormatType_hint_1R_si12"
 	case OpFormatType_hint_2R:

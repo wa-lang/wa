@@ -117,8 +117,6 @@ func (ctx *_OpContextType) asmSyntax(
 		return fmt.Sprintf("%s %d, %s", asNameFn(as, asName), arg.Imm, rName(arg.Rs1))
 	case OpFormatType_cd_1F:
 		return fmt.Sprintf("%s %d, %s", asNameFn(as, asName), arg.Imm, rName(arg.Rs1))
-	case OpFormatType_cd_2R:
-		return fmt.Sprintf("%s %d, %s, %s", asNameFn(as, asName), arg.Imm, rName(arg.Rs1), rName(arg.Rs2))
 	case OpFormatType_cd_2F:
 		return fmt.Sprintf("%s %d, %s, %s", asNameFn(as, asName), arg.Imm, rName(arg.Rs1), rName(arg.Rs2))
 	case OpFormatType_1R_cj:
@@ -137,7 +135,7 @@ func (ctx *_OpContextType) asmSyntax(
 		return fmt.Sprintf("%s %s, %d", asNameFn(as, asName), rName(arg.Rs1), arg.Imm)
 	case OpFormatType_op_2R:
 		return fmt.Sprintf("%s %d, %s, %s", asNameFn(as, asName), arg.Imm, rName(arg.Rs1), rName(arg.Rs2))
-	case OpFormatType_3R_ca:
+	case OpFormatType_3F_ca:
 		return fmt.Sprintf("%s %s, %s, %s, %d", asNameFn(as, asName), rName(arg.Rd), rName(arg.Rs1), rName(arg.Rs2), arg.Imm)
 	case OpFormatType_hint_1R_si12:
 		return fmt.Sprintf("%s %d, %s, %s", asNameFn(as, asName), arg.Imm, rName(arg.Rs1), formatImm())

@@ -42,7 +42,6 @@ const (
 	OpFormatType_1R_fcsr
 	OpFormatType_cd_1R
 	OpFormatType_cd_1F
-	OpFormatType_cd_2R
 	OpFormatType_cd_2F
 	OpFormatType_1R_cj
 	OpFormatType_1F_cj
@@ -52,7 +51,7 @@ const (
 	OpFormatType_level
 	OpFormatType_0_1R_seq
 	OpFormatType_op_2R
-	OpFormatType_3R_ca
+	OpFormatType_3F_ca
 	OpFormatType_hint_1R_si12
 	OpFormatType_hint_2R
 	OpFormatType_hint

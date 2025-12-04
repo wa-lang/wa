@@ -166,8 +166,6 @@ func (op _OpContextType) decodeInst(x uint32) (as abi.As, arg *abi.AsArgument, a
 		panic("TODO")
 	case OpFormatType_cd_1F:
 		panic("TODO")
-	case OpFormatType_cd_2R:
-		panic("TODO")
 	case OpFormatType_cd_2F:
 		panic("TODO")
 	case OpFormatType_1R_cj:
@@ -186,7 +184,7 @@ func (op _OpContextType) decodeInst(x uint32) (as abi.As, arg *abi.AsArgument, a
 		panic("TODO")
 	case OpFormatType_op_2R:
 		panic("TODO")
-	case OpFormatType_3R_ca:
+	case OpFormatType_3F_ca:
 		panic("TODO")
 	case OpFormatType_hint_1R_si12:
 		panic("TODO")

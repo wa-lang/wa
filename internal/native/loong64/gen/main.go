@@ -205,7 +205,7 @@ func getOpFormatType(as int, asArgs instArgs) OpFormatType {
 
 		case Arg_cd:
 			if arg2 := asArgs[2]; arg2 == Arg_fk {
-				return OpFormatType_cd_2R
+				return OpFormatType_cd_2F
 			} else {
 				return OpFormatType_cd_1R
 			}
@@ -240,7 +240,7 @@ func getOpFormatType(as int, asArgs instArgs) OpFormatType {
 			assert(asArgs[1] == Arg_fj)
 			assert(asArgs[2] == Arg_fk)
 			assert(i == 3)
-			return OpFormatType_3R_ca
+			return OpFormatType_3F_ca
 
 		case Arg_hint_4_0:
 			assert(i == 0)
@@ -365,8 +365,6 @@ func OpFormatTypeString(x OpFormatType) string {
 		return "OpFormatType_cd_1R"
 	case OpFormatType_cd_1F:
 		return "OpFormatType_cd_1F"
-	case OpFormatType_cd_2R:
-		return "OpFormatType_cd_2R"
 	case OpFormatType_cd_2F:
 		return "OpFormatType_cd_2F"
 	case OpFormatType_1R_cj:
@@ -385,8 +383,8 @@ func OpFormatTypeString(x OpFormatType) string {
 		return "OpFormatType_0_1R_seq"
 	case OpFormatType_op_2R:
 		return "OpFormatType_op_2R"
-	case OpFormatType_3R_ca:
-		return "OpFormatType_3R_ca"
+	case OpFormatType_3F_ca:
+		return "OpFormatType_3F_ca"
 	case OpFormatType_hint_1R_si12:
 		return "OpFormatType_hint_1R_si12"
 	case OpFormatType_hint_2R:
