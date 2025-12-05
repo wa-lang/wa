@@ -192,7 +192,6 @@ func (p *parser) parseInst_loong(fn *ast.Func) (inst *ast.Instruction) {
 	case loong64.OpFormatType_1R_si20:
 		rd := p.parseRegI_loong()
 		p.acceptToken(token.COMMA)
-		p.acceptToken(token.COMMA)
 		si20, si20Symbol, si20SymbolDecor := p.parseInst_loong_imm_si20()
 		inst.Arg.Rd = rd
 		inst.Arg.Imm = si20
@@ -645,8 +644,7 @@ func (p *parser) parseInst_loong_immOrSymbolDecor() (imm int32, symbol string, s
 	}
 
 	p.acceptToken(token.LPAREN)
-	symbol = p.parseIdent()
-	p.acceptToken(token.RPAREN)
+	defer p.acceptToken(token.RPAREN)
 
 	switch p.tok {
 	case token.INT:

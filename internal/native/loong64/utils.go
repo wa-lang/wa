@@ -30,6 +30,13 @@ func simm(x uint32, startBit, width uint32) int32 {
 	return int32(val)
 }
 
+// 把 val 的低 bit 位当作一个有符号数扩展成 int32
+func i32SignExtend(val int32, bit uint) int32 {
+	// 1. 先左移, 把符号位移到最高位
+	// 2. 再算术右移(保持符号), 补全剩余的高位
+	return val << (32 - bit) >> (32 - bit)
+}
+
 // 忽略大小写
 // 下划线和"."视作相同
 func strEqualFold(s, t string) bool {

@@ -16,14 +16,14 @@ func _start {
     ori     a0, a0, %lo($message) # 低12位(不能使用addi.w)
 
 %print_loop:
-    ld.bu  a1, 0(a0)         # 取一个字节
+    ld.bu  a1, a0, 0         # 取一个字节
     beq  a1, zero, %finished # 如果是0则结束
 
     # t0 = UART0 地址
     lu12i.w t0, %hi($UART0)           # UART0 高20位
     ori     t0, t0, %lo($UART0)       # UART0 低12位
 
-    st.b   a1, 0(t0)        # 写到UART寄存器
+    st.b   a1, t0, 0        # 写到UART寄存器
     addi.w a0, a0, 1        # 下一个字符
     b      %print_loop
 

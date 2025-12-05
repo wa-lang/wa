@@ -97,46 +97,52 @@ func (ctx *_OpContextType) encodeRaw(as abi.As, arg *abi.AsArgument) (x uint32, 
 		x |= (fa << 15) | (fk << 10) | (fj << 5) | fd
 		return
 	case OpFormatType_2R_ui5:
+		assert(arg.Imm >= 0 && arg.Imm <= 31)
 		rd := ctx.regI(arg.Rd)
 		rj := ctx.regI(arg.Rs1)
 		ui5 := arg.Imm & 0x1F
 		x |= (uint32(ui5) << 10) | (rj << 5) | rd
 		return
 	case OpFormatType_2R_ui6:
+		assert(arg.Imm >= 0 && arg.Imm <= 63)
 		rd := ctx.regI(arg.Rd)
 		rj := ctx.regI(arg.Rs1)
 		ui5 := arg.Imm & 0x3F
 		x |= (uint32(ui5) << 10) | (rj << 5) | rd
 		return
 	case OpFormatType_2R_si12:
+		assert(arg.Imm >= -(1<<11) && arg.Imm < (1<<11))
 		rd := ctx.regI(arg.Rd)
 		rj := ctx.regI(arg.Rs1)
-		si12 := arg.Imm & 0xFFF // TODO: 符号位
-		x |= (uint32(si12) << 10) | (rj << 5) | rd
+		si12 := uint32(arg.Imm) & 0xFFF
+		x |= (si12 << 10) | (rj << 5) | rd
 		return
 	case OpFormatType_2R_ui12:
+		assert(arg.Imm >= 0 && arg.Imm < (1<<12))
 		rd := ctx.regI(arg.Rd)
 		rj := ctx.regI(arg.Rs1)
 		ui12 := arg.Imm & 0xFFF
 		x |= (uint32(ui12) << 10) | (rj << 5) | rd
 		return
 	case OpFormatType_2R_si14:
+		assert(arg.Imm >= -(1<<13) && arg.Imm < (1<<13))
 		rd := ctx.regI(arg.Rd)
 		rj := ctx.regI(arg.Rs1)
-		si14 := arg.Imm & 0x3FFF // TODO: 符号位
+		si14 := arg.Imm & 0x3FFF
 		x |= (uint32(si14) << 10) | (rj << 5) | rd
 		return
 	case OpFormatType_2R_si16:
+		assert(arg.Imm >= -(1<<15) && arg.Imm < (1<<15))
 		rd := ctx.regI(arg.Rd)
 		rj := ctx.regI(arg.Rs1)
-		si16 := arg.Imm & 0xFFFF // TODO: 符号位
+		si16 := arg.Imm & 0xFFFF
 		x |= (uint32(si16) << 10) | (rj << 5) | rd
 		return
 	case OpFormatType_1R_si20:
+		assert(arg.Imm >= -(1<<21) && arg.Imm < (1<<21))
 		rd := ctx.regI(arg.Rd)
-		rj := ctx.regI(arg.Rs1)
-		si20 := arg.Imm & 0xFFFFF // TODO: 符号位
-		x |= (uint32(si20) << 10) | (rj << 5) | rd
+		si20 := arg.Imm & 0xFFFFF
+		x |= (uint32(si20) << 5) | rd
 		return
 	case OpFormatType_0_2R:
 		rj := ctx.regI(arg.Rs1)
@@ -162,9 +168,10 @@ func (ctx *_OpContextType) encodeRaw(as abi.As, arg *abi.AsArgument) (x uint32, 
 		x |= uint32(code)
 		return
 	case OpFormatType_code_1R_si12:
+		assert(arg.Imm >= -(1<<11) && arg.Imm < (1<<11))
 		code := uint32(arg.Rd) & 0b_1_1111
 		rj := ctx.regI(arg.Rs1)
-		si12 := arg.Imm & 0xFFF // TODO: 符号位
+		si12 := arg.Imm & 0xFFF
 		x |= (uint32(si12) << 10) | (rj << 5) | code
 		return
 	case OpFormatType_2R_msbw_lsbw:

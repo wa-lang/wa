@@ -682,7 +682,7 @@ scanAgain:
 	switch ch := s.ch; {
 	case isLetter(ch) || ch == '$' || ch == '%':
 		lit = s.scanIdentifier()
-		if len(lit) > 1 {
+		if len(lit) > 1 || isLetter(ch) {
 			// keywords are longer than one letter - avoid lookup otherwise
 			tok = token.Lookup(lit, s.lookupRegisterOrAs)
 			switch tok {

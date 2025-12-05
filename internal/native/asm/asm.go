@@ -320,6 +320,8 @@ func (p *_Assembler) instLen(inst *ast.Instruction) int64 {
 		return 0
 	}
 	switch p.opt.CPU {
+	case abi.LOONG64:
+		return 4
 	case abi.RISCV32, abi.RISCV64:
 		return 4
 	default:

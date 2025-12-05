@@ -61,8 +61,8 @@ func newParser(cpu abi.CPUType, fset *token.FileSet, filename string, src []byte
 					return token.REG_LOONG_BEGIN + token.Token(reg)
 				}
 				// 将原始的指令映射到 token.Token 编码
-				if reg, ok := loong64.LookupAs(ident); ok {
-					return token.A_LOONG_BEGIN + token.Token(reg)
+				if as, ok := loong64.LookupAs(ident); ok {
+					return token.A_LOONG_BEGIN + token.Token(as)
 				}
 				return token.NONE
 			},
@@ -75,8 +75,8 @@ func newParser(cpu abi.CPUType, fset *token.FileSet, filename string, src []byte
 					return token.REG_RISCV_BEGIN + token.Token(reg)
 				}
 				// 将原始的指令映射到 token.Token 编码
-				if reg, ok := riscv.LookupAs(ident); ok {
-					return token.A_RISCV_BEGIN + token.Token(reg)
+				if as, ok := riscv.LookupAs(ident); ok {
+					return token.A_RISCV_BEGIN + token.Token(as)
 				}
 				return token.NONE
 			},
