@@ -1,3 +1,6 @@
+// Copyright (C) 2025 武汉凹语言科技有限公司
+// SPDX-License-Identifier: AGPL-3.0-or-later
+
 package loong64
 
 import (
@@ -49,96 +52,256 @@ func (ctx *_OpContextType) encodeRaw(as abi.As, arg *abi.AsArgument) (x uint32, 
 	case OpFormatType_NULL:
 		return
 	case OpFormatType_2R:
-		panic("TODO")
+		rd := ctx.regI(arg.Rd)
+		rj := ctx.regI(arg.Rs1)
+		x |= (rj << 5) | rd
+		return
 	case OpFormatType_2F:
-		panic("TODO")
+		fd := ctx.regF(arg.Rd)
+		fj := ctx.regF(arg.Rs1)
+		x |= (fj << 5) | fd
+		return
 	case OpFormatType_1F_1R:
-		panic("TODO")
+		fd := ctx.regF(arg.Rd)
+		rj := ctx.regI(arg.Rs1)
+		x |= (rj << 5) | fd
+		return
 	case OpFormatType_1R_1F:
-		panic("TODO")
+		rd := ctx.regI(arg.Rd)
+		fj := ctx.regF(arg.Rs1)
+		x |= (fj << 5) | rd
+		return
 	case OpFormatType_3R:
-		panic("TODO")
+		rd := ctx.regI(arg.Rd)
+		rj := ctx.regI(arg.Rs1)
+		rk := ctx.regI(arg.Rs2)
+		x |= (rk << 10) | (rj << 5) | rd
+		return
 	case OpFormatType_3F:
-		panic("TODO")
+		fd := ctx.regF(arg.Rd)
+		fj := ctx.regF(arg.Rs1)
+		fk := ctx.regF(arg.Rs2)
+		x |= (fk << 10) | (fj << 5) | fd
+		return
 	case OpFormatType_1F_2R:
-		panic("TODO")
+		fd := ctx.regF(arg.Rd)
+		rj := ctx.regI(arg.Rs1)
+		rk := ctx.regI(arg.Rs2)
+		x |= (rk << 10) | (rj << 5) | fd
+		return
 	case OpFormatType_4F:
-		panic("TODO")
+		fd := ctx.regF(arg.Rd)
+		fj := ctx.regF(arg.Rs1)
+		fk := ctx.regF(arg.Rs2)
+		fa := ctx.regF(arg.Rs3)
+		x |= (fa << 15) | (fk << 10) | (fj << 5) | fd
+		return
 	case OpFormatType_2R_ui5:
-		panic("TODO")
+		rd := ctx.regI(arg.Rd)
+		rj := ctx.regI(arg.Rs1)
+		ui5 := arg.Imm & 0x1F
+		x |= (uint32(ui5) << 10) | (rj << 5) | rd
+		return
 	case OpFormatType_2R_ui6:
-		panic("TODO")
+		rd := ctx.regI(arg.Rd)
+		rj := ctx.regI(arg.Rs1)
+		ui5 := arg.Imm & 0x3F
+		x |= (uint32(ui5) << 10) | (rj << 5) | rd
+		return
 	case OpFormatType_2R_si12:
-		panic("TODO")
+		rd := ctx.regI(arg.Rd)
+		rj := ctx.regI(arg.Rs1)
+		si12 := arg.Imm & 0xFFF // TODO: 符号位
+		x |= (uint32(si12) << 10) | (rj << 5) | rd
+		return
 	case OpFormatType_2R_ui12:
-		panic("TODO")
+		rd := ctx.regI(arg.Rd)
+		rj := ctx.regI(arg.Rs1)
+		ui12 := arg.Imm & 0xFFF
+		x |= (uint32(ui12) << 10) | (rj << 5) | rd
+		return
 	case OpFormatType_2R_si14:
-		panic("TODO")
+		rd := ctx.regI(arg.Rd)
+		rj := ctx.regI(arg.Rs1)
+		si14 := arg.Imm & 0x3FFF // TODO: 符号位
+		x |= (uint32(si14) << 10) | (rj << 5) | rd
+		return
 	case OpFormatType_2R_si16:
-		panic("TODO")
+		rd := ctx.regI(arg.Rd)
+		rj := ctx.regI(arg.Rs1)
+		si16 := arg.Imm & 0xFFFF // TODO: 符号位
+		x |= (uint32(si16) << 10) | (rj << 5) | rd
+		return
 	case OpFormatType_1R_si20:
-		panic("TODO")
+		rd := ctx.regI(arg.Rd)
+		rj := ctx.regI(arg.Rs1)
+		si20 := arg.Imm & 0xFFFFF // TODO: 符号位
+		x |= (uint32(si20) << 10) | (rj << 5) | rd
+		return
 	case OpFormatType_0_2R:
-		panic("TODO")
+		rj := ctx.regI(arg.Rs1)
+		rk := ctx.regI(arg.Rs2)
+		x |= (rk << 10) | (rj << 5)
+		return
 	case OpFormatType_3R_sa2:
-		panic("TODO")
+		rd := ctx.regI(arg.Rd)
+		rj := ctx.regI(arg.Rs1)
+		rk := ctx.regI(arg.Rs2)
+		sa2 := arg.Imm & 0xF
+		x |= (rk << 14) | (uint32(sa2) << 10) | (rj << 5) | rd
+		return
 	case OpFormatType_3R_sa3:
-		panic("TODO")
+		rd := ctx.regI(arg.Rd)
+		rj := ctx.regI(arg.Rs1)
+		rk := ctx.regI(arg.Rs2)
+		sa2 := arg.Imm & 0x1F
+		x |= (rk << 14) | (uint32(sa2) << 10) | (rj << 5) | rd
+		return
 	case OpFormatType_code:
-		panic("TODO")
+		code := arg.Imm & 0x7FFF
+		x |= uint32(code)
+		return
 	case OpFormatType_code_1R_si12:
-		panic("TODO")
+		code := uint32(arg.Rd) & 0b_1_1111
+		rj := ctx.regI(arg.Rs1)
+		si12 := arg.Imm & 0xFFF // TODO: 符号位
+		x |= (uint32(si12) << 10) | (rj << 5) | code
+		return
 	case OpFormatType_2R_msbw_lsbw:
-		panic("TODO")
+		rd := ctx.regI(arg.Rd)
+		rj := ctx.regI(arg.Rs1)
+		msbw := uint32(arg.Rs2) & 0b_0_1_1111
+		lsbw := uint32(arg.Rs3) & 0b_0_1_1111
+		x |= (msbw << 16) | (lsbw << 10) | (rj << 5) | rd
+		return
 	case OpFormatType_2R_msbd_lsbd:
-		panic("TODO")
+		rd := ctx.regI(arg.Rd)
+		rj := ctx.regI(arg.Rs1)
+		msbd := uint32(arg.Rs2) & 0b_1_1_1111
+		lsbd := uint32(arg.Rs3) & 0b_1_1_1111
+		x |= (msbd << 16) | (lsbd << 10) | (rj << 5) | rd
+		return
 	case OpFormatType_fcsr_1R:
-		panic("TODO")
+		fcsr := uint32(arg.Rd)
+		rj := ctx.regI(arg.Rs1)
+		x |= (rj << 5) | fcsr
+		return
 	case OpFormatType_1R_fcsr:
-		panic("TODO")
+		rd := ctx.regI(arg.Rd)
+		fcsr := uint32(arg.Rs1)
+		x |= (fcsr << 5) | rd
+		return
 	case OpFormatType_cd_1R:
-		panic("TODO")
+		cd := uint32(arg.Rd) & 0b_111
+		rj := ctx.regI(arg.Rs1)
+		x |= (rj << 5) | cd
+		return
 	case OpFormatType_cd_1F:
-		panic("TODO")
+		cd := uint32(arg.Rd) & 0b_111
+		fj := ctx.regF(arg.Rs1)
+		x |= (fj << 5) | cd
+		return
 	case OpFormatType_cd_2F:
-		panic("TODO")
+		cd := uint32(arg.Rd) & 0b_111
+		fj := ctx.regF(arg.Rs1)
+		fk := ctx.regF(arg.Rs1)
+		x |= (fk << 10) | (fj << 5) | cd
+		return
 	case OpFormatType_1R_cj:
-		panic("TODO")
+		rd := ctx.regI(arg.Rd)
+		cj := uint32(arg.Rs1) & 0b_111
+		x |= (cj << 5) | rd
+		return
 	case OpFormatType_1F_cj:
-		panic("TODO")
+		fd := ctx.regF(arg.Rd)
+		cj := uint32(arg.Rs1) & 0b_111
+		x |= (cj << 5) | fd
+		return
 	case OpFormatType_1R_csr:
-		panic("TODO")
+		rd := ctx.regI(arg.Rd)
+		csr := uint32(arg.Imm) & 0x3FFF
+		x |= (csr << 10) | rd
+		return
 	case OpFormatType_2R_csr:
-		panic("TODO")
+		rd := ctx.regI(arg.Rd)
+		rj := ctx.regI(arg.Rs1)
+		csr := uint32(arg.Imm) & 0x3FFF
+		x |= (csr << 10) | (rj << 5) | rd
+		return
 	case OpFormatType_2R_level:
-		panic("TODO")
+		rd := ctx.regI(arg.Rd)
+		rj := ctx.regI(arg.Rs1)
+		level := uint32(arg.Imm) & 0xFFFF
+		x |= (level << 10) | (rj << 5) | rd
+		return
 	case OpFormatType_level:
-		panic("TODO")
+		level := uint32(arg.Imm) & 0x7FFF
+		x |= level
+		return
 	case OpFormatType_0_1R_seq:
-		panic("TODO")
+		rj := ctx.regI(arg.Rs1)
+		seq := uint32(arg.Imm) & 0xFFFF
+		x |= (seq << 10) | (rj << 5)
+		return
 	case OpFormatType_op_2R:
-		panic("TODO")
+		op := uint32(arg.Rd) & 0b_1_1111
+		rj := ctx.regI(arg.Rs1)
+		rk := ctx.regI(arg.Rs2)
+		x |= (rk << 10) | (rj << 5) | op
+		return
 	case OpFormatType_3F_ca:
-		panic("TODO")
+		fd := ctx.regF(arg.Rd)
+		fj := ctx.regF(arg.Rs1)
+		fk := ctx.regF(arg.Rs2)
+		ca := uint32(arg.Imm) & 0b_111
+		x |= (ca << 15) | (fk << 10) | (fj << 5) | fd
+		return
 	case OpFormatType_hint_1R_si12:
-		panic("TODO")
+		hint := uint32(arg.Rd) & 0b_1_1111
+		rj := ctx.regI(arg.Rs1)
+		si12 := uint32(arg.Imm) & 0xFFF
+		x |= (si12 << 10) | (rj << 5) | hint
+		return
 	case OpFormatType_hint_2R:
-		panic("TODO")
+		hint := uint32(arg.Rd) & 0b_1_1111
+		rj := ctx.regI(arg.Rs1)
+		rk := ctx.regI(arg.Rs2)
+		x |= (rk << 10) | (rj << 5) | hint
+		return
 	case OpFormatType_hint:
-		panic("TODO")
+		hint := uint32(arg.Imm) & 0x7FFF
+		x |= hint
+		return
 	case OpFormatType_cj_offset:
-		panic("TODO")
+		off16_20 := (uint32(arg.Imm) >> 16) & 0b_1_1111
+		cj := uint32(arg.Rs1) & 0b_111
+		off0_15 := uint32(arg.Imm) & 0xFFFF
+		x |= (off0_15 << 10) | (cj << 5) | off16_20
+		return
 	case OpFormatType_rj_offset:
-		panic("TODO")
+		off16_20 := (uint32(arg.Imm) >> 16) & 0b_1_1111
+		rj := ctx.regI(arg.Rs1)
+		off0_15 := uint32(arg.Imm) & 0xFFFF
+		x |= (off0_15 << 10) | (rj << 5) | off16_20
+		return
 	case OpFormatType_rj_rd_offset:
-		panic("TODO")
+		rj := ctx.regI(arg.Rs1)
+		rd := ctx.regI(arg.Rd)
+		offset := uint32(arg.Imm) & 0xFFFF
+		x |= (offset << 10) | (rj << 5) | rd
+		return
 	case OpFormatType_rd_rj_offset:
-		panic("TODO")
+		rd := ctx.regI(arg.Rd)
+		rj := ctx.regI(arg.Rs1)
+		offset := uint32(arg.Imm) & 0xFFFF
+		x |= (offset << 10) | (rj << 5) | rd
+		return
 	case OpFormatType_offset:
-		panic("TODO")
+		off16_25 := (uint32(arg.Imm) >> 16) & 0b_11_1111_1111
+		off0_15 := uint32(arg.Imm) & 0xFFFF
+		x |= (off0_15 << 10) | off16_25
+		return
 	default:
 		panic("unreachable")
 	}
-
-	return x, nil
 }

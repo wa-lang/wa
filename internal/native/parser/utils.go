@@ -5,6 +5,8 @@ package parser
 
 import (
 	"fmt"
+
+	"wa-lang.org/wa/internal/native/abi"
 )
 
 func assert(ok bool, message ...interface{}) {
@@ -15,4 +17,13 @@ func assert(ok bool, message ...interface{}) {
 			panic("assert failed")
 		}
 	}
+}
+
+func lookupBuiltinFn(s string) abi.BuiltinFn {
+	for fn := abi.BuiltinFn(1); fn < abi.BuiltinFn_Max; fn++ {
+		if s == fn.String() {
+			return fn
+		}
+	}
+	return 0
 }

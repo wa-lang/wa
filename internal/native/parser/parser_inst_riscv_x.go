@@ -1263,25 +1263,9 @@ func (p *parser) parseInst_riscv_immAddr(inst *ast.Instruction) {
 	}
 
 	// 判断重定位修饰函数
-	switch symbolOrDecor {
-	case "%hi":
-		inst.Arg.SymbolDecor = abi.BuiltinFn_HI
-	case "%lo":
-		inst.Arg.SymbolDecor = abi.BuiltinFn_LO
-	case "%pcrel_hi":
-		inst.Arg.SymbolDecor = abi.BuiltinFn_PCREL_HI
-	case "%pcrel_lo":
-		inst.Arg.SymbolDecor = abi.BuiltinFn_PCREL_LO
-
-	case "%高位":
-		inst.Arg.SymbolDecor = abi.BuiltinFn_HI_zh
-	case "%低位":
-		inst.Arg.SymbolDecor = abi.BuiltinFn_LO_zh
-	case "%相对高位":
-		inst.Arg.SymbolDecor = abi.BuiltinFn_PCREL_HI_zh
-	case "%相对低位":
-		inst.Arg.SymbolDecor = abi.BuiltinFn_PCREL_LO_zh
-	default:
+	if fn := lookupBuiltinFn(symbolOrDecor); fn != 0 {
+		inst.Arg.SymbolDecor = lookupBuiltinFn(symbolOrDecor)
+	} else {
 		p.errorf(pos, "unknow symbol decorator %s", symbolOrDecor)
 	}
 

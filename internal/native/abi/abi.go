@@ -55,27 +55,30 @@ type As int16
 type BuiltinFn int16
 
 const (
-	BuiltinFn_HI       = iota + 1 // %hi(symbol) # 绝对地址 HI20, 指令 lui
-	BuiltinFn_LO                  // %lo(symbol) # 绝对地址 LO12, 指令 load/store/add
+	BuiltinFn_HI       = iota + 1 // %hi(symbol) # 绝对地址 HI20
+	BuiltinFn_LO                  // %lo(symbol) # 绝对地址 LO12
 	BuiltinFn_HI52                // %hi52(symbol) # 绝对地址 32-51 bit 部分, 总地址宽度 52bit
-	BuiltinFn_PCREL_HI            // %pcrel_hi(symbol) # PC相对地址 HI20, auipc
+	BuiltinFn_PCREL               // %pcrel(symbol) # PC相对地址
+	BuiltinFn_PCREL_HI            // %pcrel_hi(symbol) # PC相对地址 HI20
 	BuiltinFn_PCREL_LO            // %pcrel_lo(label)  # label 对应的指令中, 计算出的PC相对地址的 LO12 部分, 参数必须是 label
 
 	BuiltinFn_HI_zh
 	BuiltinFn_LO_zh
 	BuiltinFn_HI52_zh
+	BuiltinFn_PCREL_zh
 	BuiltinFn_PCREL_HI_zh
 	BuiltinFn_PCREL_LO_zh
+
+	BuiltinFn_Max // 标记结束
 )
 
 // 指令参数
 type AsArgument struct {
-	Rd   RegType // 目标寄存器
-	Rs1  RegType // 原寄存器1
-	Rs2  RegType // 原寄存器2
-	Rs3  RegType // 原寄存器3
-	Imm  int32   // 立即数
-	Imm2 int32   // 立即数2
+	Rd  RegType // 目标寄存器
+	Rs1 RegType // 原寄存器1
+	Rs2 RegType // 原寄存器2
+	Rs3 RegType // 原寄存器3
+	Imm int32   // 立即数
 
 	// 参数的名字, 用于格式化
 	RdName  string
@@ -89,10 +92,9 @@ type AsArgument struct {
 
 // 指令原生参数
 type AsRawArgument struct {
-	Rd   uint32 // 目标寄存器
-	Rs1  uint32 // 原寄存器1
-	Rs2  uint32 // 原寄存器2
-	Rs3  uint32 // 原寄存器3
-	Imm  int32  // 立即数
-	Imm2 int32  // 立即数2
+	Rd  uint32 // 目标寄存器
+	Rs1 uint32 // 原寄存器1
+	Rs2 uint32 // 原寄存器2
+	Rs3 uint32 // 原寄存器3
+	Imm int32  // 立即数
 }

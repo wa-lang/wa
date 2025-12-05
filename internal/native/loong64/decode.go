@@ -1,3 +1,6 @@
+// Copyright (C) 2025 武汉凹语言科技有限公司
+// SPDX-License-Identifier: AGPL-3.0-or-later
+
 package loong64
 
 import (
@@ -45,11 +48,15 @@ func (op _OpContextType) decodeInst(x uint32) (as abi.As, arg *abi.AsArgument, a
 		return
 	case OpFormatType_2R:
 		argRaw.Rd = rd
+		argRaw.Rs1 = rj
 		arg.Rd = op.decodeRegI(rd)
+		arg.Rs1 = op.decodeRegI(rj)
 		return
 	case OpFormatType_2F:
 		argRaw.Rd = rd
+		argRaw.Rs1 = rj
 		arg.Rd = op.decodeRegF(rd)
+		arg.Rs1 = op.decodeRegF(rj)
 		return
 	case OpFormatType_1F_1R:
 		argRaw.Rd = rd
@@ -98,116 +105,291 @@ func (op _OpContextType) decodeInst(x uint32) (as abi.As, arg *abi.AsArgument, a
 		arg.Rs3 = op.decodeRegF(fa)
 		return
 	case OpFormatType_2R_ui5:
+		imm := int32(uimm(x, 10, 5))
 		argRaw.Rd = rd
 		argRaw.Rs1 = rj
-		arg.Rd = op.decodeRegF(rd)
-		arg.Rs1 = op.decodeRegF(rj)
-		arg.Imm = simm(x, 10, 5)
+		argRaw.Imm = imm
+		arg.Rd = op.decodeRegI(rd)
+		arg.Rs1 = op.decodeRegI(rj)
+		arg.Imm = imm
 		return
 	case OpFormatType_2R_ui6:
+		imm := int32(uimm(x, 10, 6))
 		argRaw.Rd = rd
 		argRaw.Rs1 = rj
-		arg.Rd = op.decodeRegF(rd)
-		arg.Rs1 = op.decodeRegF(rj)
-		arg.Imm = simm(x, 10, 6)
+		argRaw.Imm = imm
+		arg.Rd = op.decodeRegI(rd)
+		arg.Rs1 = op.decodeRegI(rj)
+		arg.Imm = imm
 		return
 	case OpFormatType_2R_si12:
+		imm := simm(x, 10, 12)
 		argRaw.Rd = rd
 		argRaw.Rs1 = rj
-		arg.Rd = op.decodeRegF(rd)
-		arg.Rs1 = op.decodeRegF(rj)
-		arg.Imm = simm(x, 10, 12)
+		argRaw.Imm = imm
+		arg.Rd = op.decodeRegI(rd)
+		arg.Rs1 = op.decodeRegI(rj)
+		arg.Imm = imm
 		return
 	case OpFormatType_2R_ui12:
+		imm := int32(uimm(x, 10, 12))
 		argRaw.Rd = rd
 		argRaw.Rs1 = rj
-		arg.Rd = op.decodeRegF(rd)
-		arg.Rs1 = op.decodeRegF(rj)
-		arg.Imm = simm(x, 10, 12)
+		argRaw.Imm = imm
+		arg.Rd = op.decodeRegI(rd)
+		arg.Rs1 = op.decodeRegI(rj)
+		arg.Imm = imm
 		return
 	case OpFormatType_2R_si14:
+		imm := int32(uimm(x, 10, 14))
 		argRaw.Rd = rd
 		argRaw.Rs1 = rj
-		arg.Rd = op.decodeRegF(rd)
-		arg.Rs1 = op.decodeRegF(rj)
-		arg.Imm = simm(x, 10, 14)
+		argRaw.Imm = imm
+		arg.Rd = op.decodeRegI(rd)
+		arg.Rs1 = op.decodeRegI(rj)
+		arg.Imm = imm
 		return
 	case OpFormatType_2R_si16:
+		imm := int32(uimm(x, 10, 16))
+		argRaw.Rd = rd
+		argRaw.Rs1 = rj
+		argRaw.Imm = imm
+		arg.Rd = op.decodeRegI(rd)
+		arg.Rs1 = op.decodeRegI(rj)
+		arg.Imm = imm
+		return
+	case OpFormatType_1R_si20:
+		imm := int32(uimm(x, 5, 20))
+		argRaw.Rd = rd
+		argRaw.Imm = imm
+		arg.Rd = op.decodeRegF(rd)
+		arg.Imm = imm
+		return
+	case OpFormatType_0_2R:
+		argRaw.Rs1 = rj
+		argRaw.Rs2 = rk
+		arg.Rs1 = op.decodeRegI(rj)
+		arg.Rs2 = op.decodeRegI(rk)
+		return
+	case OpFormatType_3R_sa2:
+		imm := int32(uimm(x, 10, 2))
+		argRaw.Rd = rd
+		argRaw.Rs1 = rj
+		argRaw.Rs2 = rk
+		argRaw.Imm = imm
+		arg.Rd = op.decodeRegI(rd)
+		arg.Rs1 = op.decodeRegI(rj)
+		arg.Rs2 = op.decodeRegI(rk)
+		arg.Imm = imm
+		return
+	case OpFormatType_3R_sa3:
+		imm := int32(uimm(x, 10, 3))
+		argRaw.Rd = rd
+		argRaw.Rs1 = rj
+		argRaw.Rs2 = rk
+		argRaw.Imm = imm
+		arg.Rd = op.decodeRegI(rd)
+		arg.Rs1 = op.decodeRegI(rj)
+		arg.Rs2 = op.decodeRegI(rk)
+		arg.Imm = imm
+		return
+	case OpFormatType_code:
+		imm := int32(uimm(x, 0, 15))
+		argRaw.Imm = imm
+		arg.Imm = imm
+		return
+	case OpFormatType_code_1R_si12:
+		code := rd
+		imm := int32(uimm(x, 10, 12))
+		argRaw.Rd = code
+		argRaw.Rs1 = rj
+		argRaw.Imm = imm
+		arg.Rd = abi.RegType(code)
+		argRaw.Rs1 = rj
+		arg.Imm = imm
+		return
+	case OpFormatType_2R_msbw_lsbw:
+		argRaw.Rd = rd
+		argRaw.Rs1 = rj
+		argRaw.Rs2 = rk
+		argRaw.Rs3 = fa
+		arg.Rd = op.decodeRegI(rd)
+		arg.Rs1 = op.decodeRegI(rj)
+		arg.Rs2 = abi.RegType(rk)
+		arg.Rs3 = abi.RegType(fa)
+		return
+	case OpFormatType_2R_msbd_lsbd:
+		argRaw.Rd = rd
+		argRaw.Rs1 = rj
+		argRaw.Rs2 = rk
+		argRaw.Rs3 = fa
+		arg.Rd = op.decodeRegI(rd)
+		arg.Rs1 = op.decodeRegI(rj)
+		arg.Rs2 = abi.RegType(rk)
+		arg.Rs3 = abi.RegType(fa)
+		return
+	case OpFormatType_fcsr_1R:
+		argRaw.Rd = rd
+		argRaw.Rs1 = rj
+		arg.Rd = abi.RegType(rd)
+		arg.Rs1 = op.decodeRegI(rj)
+		return
+	case OpFormatType_1R_fcsr:
+		argRaw.Rd = rd
+		argRaw.Rs1 = rj
+		arg.Rd = op.decodeRegI(rd)
+		arg.Rs1 = abi.RegType(rj)
+		return
+	case OpFormatType_cd_1R:
+		argRaw.Rd = rd
+		argRaw.Rs1 = rj
+		arg.Rd = abi.RegType(rd)
+		arg.Rs1 = op.decodeRegI(rj)
+		return
+	case OpFormatType_cd_1F:
+		argRaw.Rd = rd
+		argRaw.Rs1 = rj
+		arg.Rd = abi.RegType(rd)
+		arg.Rs1 = op.decodeRegF(rj)
+		return
+	case OpFormatType_cd_2F:
+		argRaw.Rd = rd
+		argRaw.Rs1 = rj
+		argRaw.Rs2 = rk
+		arg.Rd = abi.RegType(rd)
+		arg.Rs1 = op.decodeRegF(rj)
+		arg.Rs2 = op.decodeRegF(rk)
+		return
+	case OpFormatType_1R_cj:
+		argRaw.Rd = rd
+		argRaw.Rs1 = rj
+		arg.Rd = op.decodeRegI(rd)
+		arg.Rs1 = abi.RegType(rj)
+		return
+	case OpFormatType_1F_cj:
 		argRaw.Rd = rd
 		argRaw.Rs1 = rj
 		arg.Rd = op.decodeRegF(rd)
-		arg.Rs1 = op.decodeRegF(rj)
-		arg.Imm = simm(x, 10, 16)
+		arg.Rs1 = abi.RegType(rj)
 		return
-	case OpFormatType_1R_si20:
-		argRaw.Rd = rd
-		arg.Rd = op.decodeRegF(rd)
-		arg.Imm = simm(x, 10, 20)
-		return
-	case OpFormatType_0_2R:
-		panic("TODO")
-	case OpFormatType_3R_sa2:
-		panic("TODO")
-	case OpFormatType_3R_sa3:
-		panic("TODO")
-	case OpFormatType_code:
-		panic("TODO")
-	case OpFormatType_code_1R_si12:
-		panic("TODO")
-	case OpFormatType_2R_msbw_lsbw:
-		panic("TODO")
-	case OpFormatType_2R_msbd_lsbd:
-		panic("TODO")
-	case OpFormatType_fcsr_1R:
-		panic("TODO")
-	case OpFormatType_1R_fcsr:
-		panic("TODO")
-	case OpFormatType_cd_1R:
-		panic("TODO")
-	case OpFormatType_cd_1F:
-		panic("TODO")
-	case OpFormatType_cd_2F:
-		panic("TODO")
-	case OpFormatType_1R_cj:
-		panic("TODO")
-	case OpFormatType_1F_cj:
-		panic("TODO")
 	case OpFormatType_1R_csr:
-		panic("TODO")
+		imm := int32(uimm(x, 10, 14))
+		argRaw.Rd = rd
+		argRaw.Imm = imm
+		arg.Rd = op.decodeRegI(rd)
+		arg.Imm = imm
+		return
 	case OpFormatType_2R_csr:
-		panic("TODO")
+		imm := int32(uimm(x, 10, 14))
+		argRaw.Rd = rd
+		argRaw.Rs1 = rj
+		argRaw.Imm = imm
+		arg.Rd = op.decodeRegI(rd)
+		arg.Rs1 = op.decodeRegI(rj)
+		arg.Imm = imm
+		return
 	case OpFormatType_2R_level:
-		panic("TODO")
+		imm := int32(uimm(x, 10, 8))
+		argRaw.Rd = rd
+		argRaw.Rs1 = rj
+		argRaw.Imm = imm
+		arg.Rd = op.decodeRegI(rd)
+		arg.Rs1 = op.decodeRegI(rj)
+		arg.Imm = imm
+		return
 	case OpFormatType_level:
-		panic("TODO")
+		imm := int32(uimm(x, 0, 15))
+		argRaw.Imm = imm
+		arg.Imm = imm
+		return
 	case OpFormatType_0_1R_seq:
-		panic("TODO")
+		imm := int32(uimm(x, 10, 8))
+		argRaw.Rs1 = rj
+		argRaw.Imm = imm
+		arg.Rs1 = op.decodeRegI(rj)
+		arg.Imm = imm
+		return
 	case OpFormatType_op_2R:
-		panic("TODO")
+		argRaw.Rd = rd
+		argRaw.Rs1 = rj
+		argRaw.Rs2 = rk
+		arg.Rd = abi.RegType(rd)
+		arg.Rs1 = op.decodeRegI(rj)
+		arg.Rs2 = abi.RegType(rk)
+		return
 	case OpFormatType_3F_ca:
-		panic("TODO")
+		imm := int32(uimm(x, 15, 3))
+		argRaw.Rd = rd
+		argRaw.Rs1 = rj
+		argRaw.Rs2 = rk
+		argRaw.Imm = imm
+		arg.Rd = op.decodeRegF(rd)
+		arg.Rs1 = op.decodeRegF(rj)
+		arg.Rs2 = op.decodeRegF(rk)
+		arg.Imm = imm
+		return
 	case OpFormatType_hint_1R_si12:
-		panic("TODO")
+		imm := int32(uimm(x, 10, 12))
+		argRaw.Rd = rd
+		argRaw.Rs1 = rj
+		argRaw.Imm = imm
+		arg.Rd = abi.RegType(rd)
+		arg.Rs1 = op.decodeRegI(rj)
+		arg.Imm = imm
+		return
 	case OpFormatType_hint_2R:
-		panic("TODO")
+		argRaw.Rd = rd
+		argRaw.Rs1 = rj
+		argRaw.Rs2 = rk
+		arg.Rd = abi.RegType(rd)
+		arg.Rs1 = op.decodeRegI(rj)
+		arg.Rs2 = op.decodeRegI(rk)
+		return
 	case OpFormatType_hint:
-		panic("TODO")
+		imm := int32(uimm(x, 0, 15))
+		argRaw.Imm = imm
+		arg.Imm = imm
+		return
 	case OpFormatType_cj_offset:
-		panic("TODO")
+		imm := int32(rd | (uimm(x, 10, 16) << 16))
+		argRaw.Rs1 = rj
+		argRaw.Imm = imm
+		arg.Rs1 = abi.RegType(rj)
+		arg.Imm = imm
+		return
 	case OpFormatType_rj_offset:
-		panic("TODO")
+		imm := int32(rd | (uimm(x, 10, 16) << 16))
+		argRaw.Rs1 = rj
+		argRaw.Imm = imm
+		arg.Rs1 = op.decodeRegI(rj)
+		arg.Imm = imm
+		return
 	case OpFormatType_rj_rd_offset:
-		panic("TODO")
+		imm := int32(uimm(x, 10, 16))
+		argRaw.Rs1 = rj
+		argRaw.Rd = rd
+		argRaw.Imm = imm
+		arg.Rs1 = op.decodeRegI(rj)
+		arg.Rd = op.decodeRegI(rd)
+		arg.Imm = imm
+		return
 	case OpFormatType_rd_rj_offset:
-		panic("TODO")
+		imm := int32(uimm(x, 10, 16))
+		argRaw.Rd = rd
+		argRaw.Rs1 = rj
+		argRaw.Imm = imm
+		arg.Rd = op.decodeRegI(rd)
+		arg.Rs1 = op.decodeRegI(rj)
+		arg.Imm = imm
+		return
 	case OpFormatType_offset:
-		panic("TODO")
+		imm := int32((uimm(x, 0, 10) << 10) | (uimm(x, 10, 16)))
+		argRaw.Imm = imm
+		arg.Imm = imm
+		return
 	default:
 		panic("unreachable")
 	}
-
-	// 成功解码所有参数后，返回结果
-	return as, arg, argRaw, nil
 }
 
 // 解码寄存器
