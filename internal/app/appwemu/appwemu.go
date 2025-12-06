@@ -90,18 +90,27 @@ func readELF(filename string) (prog *abi.LinkedProgram, err error) {
 	defer f.Close()
 
 	// 判断CPU类型
-	if f.Machine != elf.EM_RISCV {
-		return nil, fmt.Errorf("wemu: donot support machine %v", f.Machine)
-	}
-
-	// 判断机器指针长度
-	switch f.Class {
-	case elf.ELFCLASS32:
-		prog.CPU = abi.RISCV32
-	case elf.ELFCLASS64:
-		prog.CPU = abi.RISCV64
+	switch f.Machine {
+	case elf.EM_RISCV:
+		// 判断机器指针长度
+		switch f.Class {
+		case elf.ELFCLASS32:
+			prog.CPU = abi.RISCV32
+		case elf.ELFCLASS64:
+			prog.CPU = abi.RISCV64
+		default:
+			return nil, fmt.Errorf("unsupported ELF class: %v", f.Class)
+		}
+	case elf.EM_LOONGARCH:
+		// 判断机器指针长度
+		switch f.Class {
+		case elf.ELFCLASS64:
+			prog.CPU = abi.LOONG64
+		default:
+			return nil, fmt.Errorf("unsupported ELF class: %v", f.Class)
+		}
 	default:
-		return nil, fmt.Errorf("unsupported ELF class: %v", f.Class)
+		return nil, fmt.Errorf("wemu: donot support machine %v", f.Machine)
 	}
 
 	// 读取数据段和指令段

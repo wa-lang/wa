@@ -128,6 +128,29 @@ func genOpFormatType_table(w *bytes.Buffer, pkgname string) {
 		)
 	}
 	w.WriteString("}\n")
+
+	// 4. 生成不同编码类型下的指令列表注释
+	{
+		opFmtTypeMap := make(map[string][]string)
+		for _, key := range opKeyList {
+			i := opIdxMap[key]
+			op := AOpContextTable[i]
+			opName := "A" + strings.ReplaceAll(op.name, ".", "_")
+			opFmtType := OpFormatTypeString(getOpFormatType(i, op.args))
+			opFmtTypeMap[opFmtType] = append(opFmtTypeMap[opFmtType], opName)
+		}
+
+		w.WriteString("// 不同编码类型下的指令列表\n")
+		w.WriteString("var _ = map[OpFormatType][]abi.As {\n")
+		for _, k := range OpFormatTypeNameList {
+			w.WriteString(fmt.Sprintf("\t%s: { // len = %d\n", k, len(opFmtTypeMap[k])))
+			for _, opName := range opFmtTypeMap[k] {
+				w.WriteString(fmt.Sprintf("\t\t%s,\n", opName))
+			}
+			w.WriteString("},\n")
+		}
+		w.WriteString("}\n")
+	}
 }
 
 func getOpFormatType(as int, asArgs instArgs) OpFormatType {

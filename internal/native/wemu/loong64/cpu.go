@@ -78,36 +78,147 @@ func (p *CPU) execInst(bus *device.Bus, as abi.As, arg *abi.AsRawArgument) error
 	p.PC += 4
 
 	// 执行指令
-	switch as {
-	default:
-		return fmt.Errorf("unsupport: %s", loong64.AsString(as, ""))
+	// 基于指令编码分类
+	switch loong64.AsFormatType(as) {
+	case loong64.OpFormatType_NULL:
+		panic("TODO")
+	case loong64.OpFormatType_2R:
+		panic("TODO")
+	case loong64.OpFormatType_2F:
+		panic("TODO")
+	case loong64.OpFormatType_1F_1R:
+		panic("TODO")
+	case loong64.OpFormatType_1R_1F:
+		panic("TODO")
+	case loong64.OpFormatType_3R:
+		panic("TODO")
+	case loong64.OpFormatType_3F:
+		panic("TODO")
+	case loong64.OpFormatType_1F_2R:
+		panic("TODO")
+	case loong64.OpFormatType_4F:
+		panic("TODO")
+	case loong64.OpFormatType_2R_ui5:
+		panic("TODO")
+	case loong64.OpFormatType_2R_ui6:
+		panic("TODO")
+	case loong64.OpFormatType_2R_si12:
+		switch as {
+		default:
+			return fmt.Errorf("unsupport: %s", loong64.AsString(as, ""))
+		case loong64.AADDI_W:
+			p.RegX[arg.Rd] = p.RegX[arg.Rs1] + LAUInt(arg.Imm)
+			return nil
+		case loong64.ALD_BU:
+			addr := p.RegX[arg.Rs1] + LAUInt(arg.Imm)
+			value, err := bus.Read(uint64(addr), 1)
+			if err != nil {
+				return err
+			}
+			p.RegX[arg.Rd] = LAUInt(uint8(value))
+			return nil
+		case loong64.AST_B:
+			addr := p.RegX[arg.Rs1] + LAUInt(arg.Imm)
+			value := p.RegX[arg.Rs2]
+			if err := bus.Write(uint64(addr), 1, uint64(value)); err != nil {
+				return err
+			}
+			return nil
+		}
+	case loong64.OpFormatType_2R_ui12:
+		switch as {
+		default:
+			return fmt.Errorf("unsupport: %s", loong64.AsString(as, ""))
+		case loong64.AORI:
+			p.RegX[arg.Rd] = p.RegX[arg.Rs1] | LAUInt(arg.Imm)
+			return nil
+		}
+	case loong64.OpFormatType_2R_si14:
+		panic("TODO")
+	case loong64.OpFormatType_2R_si16:
+		panic("TODO")
+	case loong64.OpFormatType_1R_si20:
+		switch as {
+		default:
+			return fmt.Errorf("unsupport: %s", loong64.AsString(as, ""))
+		case loong64.ALU12I_W:
+			p.RegX[arg.Rd] = LAUInt(arg.Imm << 12)
+			return nil
+		}
+	case loong64.OpFormatType_0_2R:
+		panic("TODO")
+	case loong64.OpFormatType_3R_sa2:
+		panic("TODO")
+	case loong64.OpFormatType_3R_sa3:
+		panic("TODO")
+	case loong64.OpFormatType_code:
+		panic("TODO")
+	case loong64.OpFormatType_code_1R_si12:
+		panic("TODO")
+	case loong64.OpFormatType_2R_msbw_lsbw:
+		panic("TODO")
+	case loong64.OpFormatType_2R_msbd_lsbd:
+		panic("TODO")
+	case loong64.OpFormatType_fcsr_1R:
+		panic("TODO")
+	case loong64.OpFormatType_1R_fcsr:
+		panic("TODO")
+	case loong64.OpFormatType_cd_1R:
+		panic("TODO")
+	case loong64.OpFormatType_cd_1F:
+		panic("TODO")
+	case loong64.OpFormatType_cd_2F:
+		panic("TODO")
+	case loong64.OpFormatType_1R_cj:
+		panic("TODO")
+	case loong64.OpFormatType_1F_cj:
+		panic("TODO")
+	case loong64.OpFormatType_1R_csr:
+		panic("TODO")
+	case loong64.OpFormatType_2R_csr:
+		panic("TODO")
+	case loong64.OpFormatType_2R_level:
+		panic("TODO")
+	case loong64.OpFormatType_level:
+		panic("TODO")
+	case loong64.OpFormatType_0_1R_seq:
+		panic("TODO")
+	case loong64.OpFormatType_op_2R:
+		panic("TODO")
+	case loong64.OpFormatType_3F_ca:
+		panic("TODO")
+	case loong64.OpFormatType_hint_1R_si12:
+		panic("TODO")
+	case loong64.OpFormatType_hint_2R:
+		panic("TODO")
+	case loong64.OpFormatType_hint:
+		panic("TODO")
+	case loong64.OpFormatType_cj_offset:
+		panic("TODO")
+	case loong64.OpFormatType_rj_offset:
+		panic("TODO")
+	case loong64.OpFormatType_rj_rd_offset:
+		switch as {
+		default:
+			return fmt.Errorf("unsupport: %s", loong64.AsString(as, ""))
+		case loong64.ABEQ:
+			if p.RegX[arg.Rs1] == p.RegX[arg.Rs2] {
+				p.PC = curPC + LAUInt(arg.Imm)
+			}
+			return nil
+		}
+	case loong64.OpFormatType_rd_rj_offset:
+		panic("TODO")
+	case loong64.OpFormatType_offset:
+		switch as {
+		default:
+			return fmt.Errorf("unsupport: %s", loong64.AsString(as, ""))
 
-	case loong64.ALU12I_W:
-		p.RegX[arg.Rd] = LAUInt(arg.Imm << 12)
-	case loong64.AADDI_W:
-		p.RegX[arg.Rd] = p.RegX[arg.Rs1] + LAUInt(arg.Imm)
-	case loong64.AORI:
-		p.RegX[arg.Rd] = p.RegX[arg.Rs1] | LAUInt(arg.Imm)
-	case loong64.ALD_BU:
-		addr := p.RegX[arg.Rs1] + LAUInt(arg.Imm)
-		value, err := bus.Read(uint64(addr), 1)
-		if err != nil {
-			return err
-		}
-		p.RegX[arg.Rd] = LAUInt(uint8(value))
-	case loong64.AST_B:
-		addr := p.RegX[arg.Rs1] + LAUInt(arg.Imm)
-		value := p.RegX[arg.Rs2]
-		if err := bus.Write(uint64(addr), 1, uint64(value)); err != nil {
-			return err
-		}
-	case loong64.ABEQ:
-		if p.RegX[arg.Rs1] == p.RegX[arg.Rs2] {
+		case loong64.AB:
 			p.PC = curPC + LAUInt(arg.Imm)
+			return nil
 		}
-	case loong64.AB:
-		p.PC = curPC + LAUInt(arg.Imm)
+	default:
+		panic("unreachable")
 	}
-
-	return nil
 }
