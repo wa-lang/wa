@@ -31,6 +31,7 @@ import (
 	"wa-lang.org/wa/internal/app/applex"
 	"wa-lang.org/wa/internal/app/applogo"
 	"wa-lang.org/wa/internal/app/applsp"
+	"wa-lang.org/wa/internal/app/appobjdump"
 	"wa-lang.org/wa/internal/app/appplay"
 	"wa-lang.org/wa/internal/app/apprun"
 	"wa-lang.org/wa/internal/app/appssa"
@@ -113,6 +114,7 @@ func main() {
 		appwat2wasm.CmdWat2wasm,
 		appwatstrip.CmdWatStrip,
 		appwat2c.CmdWat2c,
+		appobjdump.CmdObjdump,
 
 		// 待完善的子命令(隐藏)
 		appasm2elf.CmdAsm2elf,

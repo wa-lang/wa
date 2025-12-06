@@ -16,3 +16,9 @@ TODO
 
 TODO
 
+<!--
+qemu-system-loongarch64 -machine virt -cpu loongarch64 -nographic -serial mon:stdio -kernel hello_loong64.ws.elf.exe
+entry point: 0x80000000
+uart 0x10000000
+-->
+

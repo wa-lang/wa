@@ -4,13 +4,13 @@
 package appwemu
 
 import (
-	"debug/elf"
 	"fmt"
 	"io"
 	"os"
 
 	"wa-lang.org/wa/internal/3rdparty/cli"
 	"wa-lang.org/wa/internal/native/abi"
+	"wa-lang.org/wa/internal/native/link/elf"
 	"wa-lang.org/wa/internal/native/wemu"
 	"wa-lang.org/wa/internal/native/wemu/device/uart"
 )
@@ -18,7 +18,7 @@ import (
 var CmdWEmu = &cli.Command{
 	Hidden:    true,
 	Name:      "wemu",
-	Usage:     "debug run elf program with WEnum (riscv64 emulator)",
+	Usage:     "debug run elf program with WEnum (loong64|riscv emulator)",
 	ArgsUsage: "<file.elf>",
 	Flags: []cli.Flag{
 		&cli.BoolFlag{
@@ -83,17 +83,17 @@ var CmdWEmu = &cli.Command{
 func readELF(filename string) (prog *abi.LinkedProgram, err error) {
 	prog = new(abi.LinkedProgram)
 
-	f, err := elf.Open(filename)
+	f, err := elfOpen(filename)
 	if err != nil {
 		return nil, err
 	}
 	defer f.Close()
 
 	// 判断CPU类型
-	switch f.Machine {
+	switch elf.Machine(f.Machine) {
 	case elf.EM_RISCV:
 		// 判断机器指针长度
-		switch f.Class {
+		switch elf.Class(f.Class) {
 		case elf.ELFCLASS32:
 			prog.CPU = abi.RISCV32
 		case elf.ELFCLASS64:
@@ -103,7 +103,7 @@ func readELF(filename string) (prog *abi.LinkedProgram, err error) {
 		}
 	case elf.EM_LOONGARCH:
 		// 判断机器指针长度
-		switch f.Class {
+		switch elf.Class(f.Class) {
 		case elf.ELFCLASS64:
 			prog.CPU = abi.LOONG64
 		default:
@@ -115,11 +115,11 @@ func readELF(filename string) (prog *abi.LinkedProgram, err error) {
 
 	// 读取数据段和指令段
 	for _, p := range f.Progs {
-		if p.Type != elf.PT_LOAD || p.Flags&elf.PF_R == 0 {
+		if elf.ProgType(p.Type) != elf.PT_LOAD || elf.ProgFlag(p.Flags)&elf.PF_R == 0 {
 			continue // 跳过不可读部分
 		}
 
-		if p.Flags&elf.PF_X != 0 {
+		if elf.ProgFlag(p.Flags)&elf.PF_X != 0 {
 			prog.TextAddr = int64(p.Vaddr)
 			prog.TextData = make([]byte, p.Filesz)
 			_, err := io.ReadFull(p.Open(), prog.TextData)
