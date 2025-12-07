@@ -9,6 +9,7 @@ import (
 	"io"
 	"os"
 	"strings"
+	"unicode"
 
 	"wa-lang.org/wa/internal/3rdparty/cli"
 )
@@ -65,6 +66,7 @@ func cmdProgdump(filename string) {
 
 	fmt.Printf("Machine: %v\n", f.Machine)
 	fmt.Printf("Class  : %v\n", f.Class)
+	fmt.Println()
 
 	for _, p := range f.Progs {
 		if p.Type != elf.PT_LOAD || p.Flags&elf.PF_R == 0 {
@@ -79,7 +81,7 @@ func cmdProgdump(filename string) {
 				fmt.Println("ERR:", err)
 				continue
 			}
-			printProgData(".text", textAddr, textData)
+			printProgText(textAddr, textData)
 		} else {
 			dataAddr := int64(p.Vaddr)
 			dataData := make([]byte, p.Filesz)
@@ -88,29 +90,54 @@ func cmdProgdump(filename string) {
 				fmt.Println("ERR:", err)
 				continue
 			}
-			printProgData(".data", dataAddr, dataData)
+			printProgData(dataAddr, dataData)
 		}
 	}
 }
 
-func printProgData(name string, addr int64, data []byte) {
-	fmt.Println()
-	fmt.Printf("%s:\n", name)
-	fmt.Printf("%08x ", addr)
+func printProgText(addr int64, data []byte) {
+	fmt.Printf("[.text.] ")
 	for i := 0; i < 16; i++ {
-		fmt.Printf("%04x ", i)
+		fmt.Printf("%02X ", i)
 	}
 	fmt.Println()
 
-	for i, v := range data {
-		if i%16 == 0 {
-			if i > 0 {
-				addr += 16
-				fmt.Println()
-			}
-			fmt.Printf("%08x ", addr)
+	for k := 0; k < len(data); k += 16 {
+		fmt.Printf("%08X ", addr+int64(k))
+		for i := 0; i < 16 && k+i < len(data); i++ {
+			fmt.Printf("%02X ", data[k+i])
 		}
-		fmt.Printf("%04x ", v)
+		fmt.Println()
+	}
+	fmt.Println()
+}
+
+func printProgData(addr int64, data []byte) {
+	fmt.Printf("[.data.] ")
+	for i := 0; i < 16; i++ {
+		fmt.Printf("%02X ", i)
+	}
+	fmt.Println()
+
+	for k := 0; k < len(data); k += 16 {
+		fmt.Printf("%08X ", addr+int64(k))
+		for i := 0; i < 16; i++ {
+			if k+i < len(data) {
+				fmt.Printf("%02X ", data[k+i])
+			} else {
+				fmt.Print("   ")
+			}
+		}
+		for i := 0; i < 16; i++ {
+			if k+i < len(data) {
+				if unicode.IsPrint(rune(data[k+i])) {
+					fmt.Printf("%c", data[k+i])
+				} else {
+					fmt.Print(".")
+				}
+			}
+		}
+		fmt.Println()
 	}
 	fmt.Println()
 }
