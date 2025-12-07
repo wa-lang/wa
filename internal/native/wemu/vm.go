@@ -11,6 +11,7 @@ import (
 	"os"
 
 	"wa-lang.org/wa/internal/native/abi"
+	loongarch "wa-lang.org/wa/internal/native/loong64"
 	"wa-lang.org/wa/internal/native/riscv"
 	"wa-lang.org/wa/internal/native/wemu/device"
 	"wa-lang.org/wa/internal/native/wemu/device/dram"
@@ -214,13 +215,23 @@ func (p *WEmu) DebugRun() error {
 
 			fmt.Printf("PC  = 0x%08X\n", p.CPU.GetPC())
 			for i := regStart; i < p.CPU.XRegNum() && i < (regStart+regNum); i++ {
-				reg, ok := riscv.LookupRegister(fmt.Sprintf("X%d", i))
-				if !ok {
-					break
+				if p.Prog.CPU == abi.LOONG64 {
+					reg, ok := loongarch.LookupRegister(fmt.Sprintf("R%d", i))
+					if !ok {
+						break
+					}
+					fmt.Printf("X%-2d = 0x%08X # %s\n",
+						i, p.CPU.GetXReg(i), loongarch.RegAliasString(reg),
+					)
+				} else {
+					reg, ok := riscv.LookupRegister(fmt.Sprintf("X%d", i))
+					if !ok {
+						break
+					}
+					fmt.Printf("X%-2d = 0x%08X # %s\n",
+						i, p.CPU.GetXReg(i), riscv.RegAliasString(reg),
+					)
 				}
-				fmt.Printf("X%-2d = 0x%08X # %s\n",
-					i, p.CPU.GetXReg(i), riscv.RegAliasString(reg),
-				)
 			}
 
 		case "fregs", "f":
@@ -235,14 +246,25 @@ func (p *WEmu) DebugRun() error {
 
 			fmt.Printf("PC  = 0x%08X\n", p.CPU.GetPC())
 			for i := regStart; i < p.CPU.FRegNum() && i < (regStart+regNum); i++ {
-				reg, ok := riscv.LookupRegister(fmt.Sprintf("F%d", i))
-				if !ok {
-					break
+				if p.Prog.CPU == abi.LOONG64 {
+					reg, ok := loongarch.LookupRegister(fmt.Sprintf("F%d", i))
+					if !ok {
+						break
+					}
+					fmt.Printf("F%-2d = %v (0x%08X) # %s\n",
+						i, p.CPU.GetFReg(i), math.Float64bits(p.CPU.GetFReg(i)),
+						loongarch.RegAliasString(reg),
+					)
+				} else {
+					reg, ok := riscv.LookupRegister(fmt.Sprintf("F%d", i))
+					if !ok {
+						break
+					}
+					fmt.Printf("F%-2d = %v (0x%08X) # %s\n",
+						i, p.CPU.GetFReg(i), math.Float64bits(p.CPU.GetFReg(i)),
+						riscv.RegAliasString(reg),
+					)
 				}
-				fmt.Printf("F%-2d = %v (0x%08X) # %s\n",
-					i, p.CPU.GetFReg(i), math.Float64bits(p.CPU.GetFReg(i)),
-					riscv.RegAliasString(reg),
-				)
 			}
 
 		case "iMem", "imem", "i":
@@ -348,14 +370,12 @@ func (p *WEmu) FormatInstruction(pc uint64, n int) string {
 			fmt.Fprintf(&buf, "mem[%08X]: %v\n", addr, err)
 			continue
 		}
-		as, arg, err := riscv.Decode(uint32(inst))
+		s, err := p.CPU.InstString(uint32(inst))
 		if err != nil {
 			fmt.Fprintf(&buf, "mem[%08X]: %v\n", addr, err)
 			continue
 		}
-		fmt.Fprintf(&buf, "mem[%08X]: %s\n", addr,
-			riscv.AsmSyntax(as, "", arg),
-		)
+		fmt.Fprintf(&buf, "mem[%08X]: %s\n", addr, s)
 	}
 
 	return buf.String()

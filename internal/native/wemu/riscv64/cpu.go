@@ -369,3 +369,11 @@ func (p *CPU) execInst(bus *device.Bus, as abi.As, arg *abi.AsRawArgument) error
 	}
 	return nil
 }
+
+func (p *CPU) InstString(x uint32) (string, error) {
+	as, arg, err := riscv.Decode(x)
+	if err != nil {
+		return "", err
+	}
+	return riscv.AsmSyntax(as, "", arg), nil
+}

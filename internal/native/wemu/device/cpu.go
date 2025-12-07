@@ -18,4 +18,6 @@ type CPU interface {
 
 	Reset(pc, sp uint64)
 	StepRun(bus *Bus) error
+
+	InstString(x uint32) (string, error)
 }

@@ -142,6 +142,7 @@ func (p *CPU) execInst(bus *device.Bus, as abi.As, arg *abi.AsRawArgument) error
 		default:
 			return fmt.Errorf("unsupport: %s", loong64.AsString(as, ""))
 		case loong64.ALU12I_W:
+			// TODO: Imm 是负数, 还是 si20 可能的正数?
 			p.RegX[arg.Rd] = LAUInt(arg.Imm << 12)
 			return nil
 		}
@@ -221,4 +222,12 @@ func (p *CPU) execInst(bus *device.Bus, as abi.As, arg *abi.AsRawArgument) error
 	default:
 		panic("unreachable")
 	}
+}
+
+func (p *CPU) InstString(x uint32) (string, error) {
+	as, arg, err := loong64.Decode(x)
+	if err != nil {
+		return "", err
+	}
+	return loong64.AsmSyntax(as, "", arg), nil
 }
