@@ -12,67 +12,67 @@ import (
 )
 
 /**************************************
-本文用于将类型转为 wire.ValueType
+本文用于将类型转为 wire.Type
 **************************************/
 
 //
-func (b *Builder) BuildType(t types.Type) wire.ValueType {
+func (b *Builder) BuildType(t types.Type) wire.Type {
 	if t, ok := t.(*types.Basic); ok {
 		switch t.Kind() {
 		case types.Bool, types.UntypedBool:
-			return b.Bool
+			return b.module.Types.Bool
 
 		case types.Uint8:
-			return b.U8
+			return b.module.Types.U8
 
 		case types.Uint16:
-			return b.U16
+			return b.module.Types.U16
 
 		case types.Uint32:
-			return b.U32
+			return b.module.Types.U32
 
 		case types.Uint64:
-			return b.U64
+			return b.module.Types.U64
 
 		case types.Int8:
-			return b.I8
+			return b.module.Types.I8
 
 		case types.Int16:
-			return b.I16
+			return b.module.Types.I16
 
 		case types.Int32:
 			if t.Name() == "rune" {
-				return b.Rune
+				return b.module.Types.Rune
 			} else {
-				return b.I32
+				return b.module.Types.I32
 			}
 
 		case types.Int64:
-			return b.I64
+			return b.module.Types.I64
 
 		case types.Float32:
-			return b.F32
+			return b.module.Types.F32
 
 		case types.Float64, types.UntypedFloat:
-			return b.F64
+			return b.module.Types.F64
 
 		case types.Complex64:
-			return b.Complex64
+			return b.module.Types.Complex64
 
 		case types.Complex128:
-			return b.Complex128
+			return b.module.Types.Complex128
 
 		case types.Uint:
-			return b.Uint
+			return b.module.Types.Uint
 
 		case types.Int, types.UntypedInt:
-			return b.Int
+			return b.module.Types.Int
 
 		case types.Uintptr:
-			return b.Uint
+			return b.module.Types.Uint
 
 		case types.String:
-			return b.String
+			return b.module.Types.String
 
 		default:
 			logger.Fatalf("Unknown type:%s", t)
@@ -85,21 +85,21 @@ func (b *Builder) BuildType(t types.Type) wire.ValueType {
 		return *v
 	}
 
-	var wtype wire.ValueType
+	var wtype wire.Type
 	b.typeTable[name] = &wtype
 
 	switch t := t.(type) {
 	case *types.Tuple:
 		switch t.Len() {
 		case 0:
-			wtype = b.Void
+			wtype = b.module.Types.Void
 
 		case 1:
 			wtype = b.BuildType(t.At(0).Type())
 
 		default:
 			panic("Todo")
-			//var feilds []wir.ValueType
+			//var feilds []wir.Type
 			//for i := 0; i < t.Len(); i++ {
 			//	feilds = append(feilds, tLib.compile(t.At(i).Type()))
 			//}

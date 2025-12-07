@@ -85,7 +85,7 @@ func (b *Block) Format(tab string, sb *strings.Builder) {
 }
 
 // AddLocal 在 Block 中分配一个局部变量，默认分配在栈上
-func (b *Block) AddLocal(name string, typ ValueType, pos int, obj interface{}) Location {
+func (b *Block) AddLocal(name string, typ Type, pos int, obj interface{}) Location {
 	v := &InstAlloc{}
 	v.Stringer = v
 	v.refType = b.types.GenPtr(typ)

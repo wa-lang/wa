@@ -66,6 +66,8 @@ const (
 	TypeKindI16
 	TypeKindI32
 	TypeKindI64
+	TypeKindInt
+	TypeKindUint
 	TypeKindF32
 	TypeKindF64
 	TypeKindComplex64
@@ -84,12 +86,21 @@ const (
 )
 
 /**************************************
-ValueType: 值类型
+Type: 值类型
 **************************************/
-type ValueType interface {
-	Name() string         //类型名，自定义类型应包含包路径，需要进行名字修饰
-	Kind() TypeKind       //该类型的类别
-	Equal(ValueType) bool //判断该类型与输入类型是否相等，注意该比较仅关心类别和结构，不关心类型名
+type Type interface {
+	Name() string    //类型名，自定义类型应包含包路径，需要进行名字修饰
+	Kind() TypeKind  //该类型的类别
+	Equal(Type) bool //判断该类型与输入类型是否相等，注意该比较仅关心类别和结构，不关心类型名
+}
+
+/**************************************
+NamedType: 具名值类型
+**************************************/
+type NamedType interface {
+	Name() string    //类型名，自定义类型应包含包路径，需要进行名字修饰
+	Kind() TypeKind  //该类型的类别
+	Equal(Type) bool //判断该类型与输入类型是否相等，注意该比较仅关心类别和结构，不关心类型名
 
 	AddMethod(m Method) int //为该类型添加方法，返回方法id
 	NumMethods() int        //该类型的方法数
@@ -110,7 +121,7 @@ type Value interface {
 	Kind() ValueKind
 
 	// 该值的类型
-	Type() ValueType
+	Type() Type
 
 	// 该值在源码中的位置
 	Pos() int
@@ -121,13 +132,13 @@ Param: 函数的输入参数，满足 Value 接口
 **************************************/
 type Param struct {
 	name string
-	typ  ValueType
+	typ  Type
 	pos  int
 }
 
 func (p *Param) Name() string    { return p.name }
 func (p *Param) Kind() ValueKind { return ValueKindLocal }
-func (p *Param) Type() ValueType { return p.typ }
+func (p *Param) Type() Type      { return p.typ }
 func (p *Param) Pos() int        { return p.pos }
 
 /**************************************
@@ -135,26 +146,26 @@ Const: 常量，满足 Value 接口
 **************************************/
 type Const struct {
 	name string
-	typ  ValueType
+	typ  Type
 	pos  int
 }
 
 func (p *Const) Name() string    { return p.name }
 func (p *Const) Kind() ValueKind { return ValueKindConst }
-func (p *Const) Type() ValueType { return p.typ }
+func (p *Const) Type() Type      { return p.typ }
 func (p *Const) Pos() int        { return p.pos }
 
 /**************************************
 FnSig: 函数签名
 **************************************/
 type FnSig struct {
-	Params  []ValueType //参数类型列表
-	Results []ValueType //返回值类型列表
+	Params  []Type //参数类型列表
+	Results []Type //返回值类型列表
 }
 
 func (p *FnSig) Name() string           { panic("FnSig.Name() is unimplemented") }
 func (p *FnSig) Kind() TypeKind         { return TypeKindSignature }
-func (p *FnSig) Equal(ValueType) bool   { panic("FnSig.Equal() is unimplemented") }
+func (p *FnSig) Equal(Type) bool        { panic("FnSig.Equal() is unimplemented") }
 func (p *FnSig) AddMethod(m Method) int { panic("FnSig.AddMethod() is unimplemented") }
 func (p *FnSig) NumMethods() int        { panic("FnSig.NumMethods() is unimplemented") }
 func (p *FnSig) Method(i int) Method    { panic("FnSig.Method() is unimplemented") }
@@ -173,7 +184,7 @@ FreeVar: 闭包捕获的外部变量
 **************************************/
 type FreeVar struct {
 	name   string
-	typ    ValueType
+	typ    Type
 	pos    int
 	object interface{}
 	outer  Value // 被捕获的闭包变量
@@ -181,11 +192,11 @@ type FreeVar struct {
 
 func (p *FreeVar) Name() string               { return p.name }
 func (p *FreeVar) Kind() ValueKind            { return ValueKindLocal }
-func (p *FreeVar) Type() ValueType            { return p.typ }
+func (p *FreeVar) Type() Type                 { return p.typ }
 func (p *FreeVar) Pos() int                   { return p.pos }
 func (p *FreeVar) Object() interface{}        { return p.object }
 func (p *FreeVar) LocationKind() LocationKind { return LocationKindHeap }
-func (p *FreeVar) DataType() ValueType        { return p.typ }
+func (p *FreeVar) DataType() Type             { return p.typ }
 
 /**************************************
 Builtin: 内置函数
@@ -197,6 +208,6 @@ type Builtin struct {
 
 func (p *Builtin) Name() string        { return p.name }
 func (p *Builtin) Kind() ValueKind     { panic("Builtin.Kind() is unimplemented") }
-func (p *Builtin) Type() ValueType     { return &p.sig }
+func (p *Builtin) Type() Type          { return &p.sig }
 func (p *Builtin) Pos() int            { panic("Builtin.Pos() is unimplemented") }
 func (p *Builtin) Object() interface{} { panic("Builtin.Object() is unimplemented") }
