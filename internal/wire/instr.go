@@ -34,8 +34,8 @@ InstAlloc: Alloc 指令，分配一个变量位置，该对象同时实现了 Lo
 type InstAlloc struct {
 	aImv
 	Location LocationKind
-	dataType ValueType
-	refType  ValueType
+	dataType Type
+	refType  Type
 	object   interface{} // 与该值关联的 AST 结点。对凹语言前端，应为 types.Object
 }
 
@@ -52,7 +52,7 @@ func (i *InstAlloc) String() string {
 	return op
 }
 
-func (i *InstAlloc) Type() ValueType {
+func (i *InstAlloc) Type() Type {
 	if i.Location == LocationKindRegister {
 		return i.dataType
 	} else {
@@ -62,7 +62,7 @@ func (i *InstAlloc) Type() ValueType {
 
 // Location 接口相关
 func (i *InstAlloc) LocationKind() LocationKind { return i.Location }
-func (i *InstAlloc) DataType() ValueType        { return i.dataType }
+func (i *InstAlloc) DataType() Type             { return i.dataType }
 func (i *InstAlloc) Object() interface{}        { return i.object }
 
 /**************************************
@@ -71,19 +71,19 @@ InstLoad: Load 指令，装载 Loc 处的变量
 type InstLoad struct {
 	aImv
 	Loc Location
-	typ ValueType
+	typ Type
 }
 
 func (i *InstLoad) String() string {
 	return fmt.Sprintf("*%s", i.Loc.Name())
 }
 
-func (i *InstLoad) Type() ValueType {
+func (i *InstLoad) Type() Type {
 	return i.typ
 }
 
 // 在 Block 中添加一条 Load 指令
-func (b *Block) EmitLoad(loc Location, typ ValueType, pos int) *InstLoad {
+func (b *Block) EmitLoad(loc Location, typ Type, pos int) *InstLoad {
 	v := &InstLoad{}
 	v.Stringer = v
 	v.Loc = loc
@@ -132,7 +132,7 @@ func (i *InstExtract) String() string {
 	return fmt.Sprintf("extract %s #%d", i.X.Name(), i.Index)
 }
 
-func (i *InstExtract) Type() ValueType {
+func (i *InstExtract) Type() Type {
 	return i.X.Type().(*Tuple).fields[i.Index]
 }
 
@@ -188,7 +188,7 @@ func (i *InstUnopNot) String() string {
 	return fmt.Sprintf("!%s", i.X.Name())
 }
 
-func (i *InstUnopNot) Type() ValueType {
+func (i *InstUnopNot) Type() Type {
 	return i.X.Type()
 }
 
@@ -214,7 +214,7 @@ func (i *InstUnopSub) String() string {
 	return fmt.Sprintf("-%s", i.X.Name())
 }
 
-func (i *InstUnopSub) Type() ValueType {
+func (i *InstUnopSub) Type() Type {
 	return i.X.Type()
 }
 
@@ -240,7 +240,7 @@ func (i *InstUnopXor) String() string {
 	return fmt.Sprintf("^%s", i.X.Name())
 }
 
-func (i *InstUnopXor) Type() ValueType {
+func (i *InstUnopXor) Type() Type {
 	return i.X.Type()
 }
 
@@ -262,7 +262,7 @@ type InstLAND struct {
 	X, Y Value
 }
 
-func (i *InstLAND) Type() ValueType {
+func (i *InstLAND) Type() Type {
 	return i.X.Type()
 }
 
@@ -292,7 +292,7 @@ func (i *InstLOR) String() string {
 	return fmt.Sprintf("%s || %s", i.X.Name(), i.Y.Name())
 }
 
-func (i *InstLOR) Type() ValueType {
+func (i *InstLOR) Type() Type {
 	return i.X.Type()
 }
 
@@ -314,7 +314,7 @@ type InstSHL struct {
 	X, Y Value
 }
 
-func (i *InstSHL) Type() ValueType {
+func (i *InstSHL) Type() Type {
 	return i.X.Type()
 }
 
@@ -344,7 +344,7 @@ func (i *InstSHR) String() string {
 	return fmt.Sprintf("%s >> %s", i.X.Name(), i.Y.Name())
 }
 
-func (i *InstSHR) Type() ValueType {
+func (i *InstSHR) Type() Type {
 	return i.X.Type()
 }
 
@@ -370,7 +370,7 @@ func (i *InstADD) String() string {
 	return fmt.Sprintf("%s + %s", i.X.Name(), i.Y.Name())
 }
 
-func (i *InstADD) Type() ValueType {
+func (i *InstADD) Type() Type {
 	return i.X.Type()
 }
 
@@ -396,7 +396,7 @@ func (i *InstSUB) String() string {
 	return fmt.Sprintf("%s - %s", i.X.Name(), i.Y.Name())
 }
 
-func (i *InstSUB) Type() ValueType {
+func (i *InstSUB) Type() Type {
 	return i.X.Type()
 }
 
@@ -418,7 +418,7 @@ type InstMUL struct {
 	X, Y Value
 }
 
-func (i *InstMUL) Type() ValueType {
+func (i *InstMUL) Type() Type {
 	return i.X.Type()
 }
 
@@ -444,7 +444,7 @@ type InstQUO struct {
 	X, Y Value
 }
 
-func (i *InstQUO) Type() ValueType {
+func (i *InstQUO) Type() Type {
 	return i.X.Type()
 }
 
@@ -474,7 +474,7 @@ func (i *InstREM) String() string {
 	return fmt.Sprintf("%s %% %s", i.X.Name(), i.Y.Name())
 }
 
-func (i *InstREM) Type() ValueType {
+func (i *InstREM) Type() Type {
 	return i.X.Type()
 }
 
@@ -500,7 +500,7 @@ func (i *InstAND) String() string {
 	return fmt.Sprintf("%s & %s", i.X.Name(), i.Y.Name())
 }
 
-func (i *InstAND) Type() ValueType {
+func (i *InstAND) Type() Type {
 	return i.X.Type()
 }
 
@@ -526,7 +526,7 @@ func (i *InstOR) String() string {
 	return fmt.Sprintf("%s | %s", i.X.Name(), i.Y.Name())
 }
 
-func (i *InstOR) Type() ValueType {
+func (i *InstOR) Type() Type {
 	return i.X.Type()
 }
 
@@ -552,7 +552,7 @@ func (i *InstXOR) String() string {
 	return fmt.Sprintf("%s ^ %s", i.X.Name(), i.Y.Name())
 }
 
-func (i *InstXOR) Type() ValueType {
+func (i *InstXOR) Type() Type {
 	return i.X.Type()
 }
 
@@ -578,7 +578,7 @@ func (i *InstANDNOT) String() string {
 	return fmt.Sprintf("%s &^ %s", i.X.Name(), i.Y.Name())
 }
 
-func (i *InstANDNOT) Type() ValueType {
+func (i *InstANDNOT) Type() Type {
 	return i.X.Type()
 }
 
@@ -598,14 +598,14 @@ InstEQL:  等于指令，x == y
 type InstEQL struct {
 	aImv
 	X, Y Value
-	typ  ValueType
+	typ  Type
 }
 
 func (i *InstEQL) String() string {
 	return fmt.Sprintf("%s == %s", i.X.Name(), i.Y.Name())
 }
 
-func (i *InstEQL) Type() ValueType {
+func (i *InstEQL) Type() Type {
 	return i.typ
 }
 
@@ -614,7 +614,7 @@ func (b *Block) EmitInstEQL(x, y Value, pos int) *InstEQL {
 	v := &InstEQL{X: x, Y: y}
 	v.Stringer = v
 	v.pos = pos
-	v.typ = b.types.GenBool("bool")
+	v.typ = b.types.Bool
 
 	b.emit(v)
 	return v
@@ -626,14 +626,14 @@ InstNEQ:  不等于指令，x != y
 type InstNEQ struct {
 	aImv
 	X, Y Value
-	typ  ValueType
+	typ  Type
 }
 
 func (i *InstNEQ) String() string {
 	return fmt.Sprintf("%s != %s", i.X.Name(), i.Y.Name())
 }
 
-func (i *InstNEQ) Type() ValueType {
+func (i *InstNEQ) Type() Type {
 	return i.typ
 }
 
@@ -642,7 +642,7 @@ func (b *Block) EmitInstNEQ(x, y Value, pos int) *InstNEQ {
 	v := &InstNEQ{X: x, Y: y}
 	v.Stringer = v
 	v.pos = pos
-	v.typ = b.types.GenBool("bool")
+	v.typ = b.types.Bool
 
 	b.emit(v)
 	return v
@@ -654,14 +654,14 @@ InstGTR:  大于指令，x > y
 type InstGTR struct {
 	aImv
 	X, Y Value
-	typ  ValueType
+	typ  Type
 }
 
 func (i *InstGTR) String() string {
 	return fmt.Sprintf("%s > %s", i.X.Name(), i.Y.Name())
 }
 
-func (i *InstGTR) Type() ValueType {
+func (i *InstGTR) Type() Type {
 	return i.typ
 }
 
@@ -670,7 +670,7 @@ func (b *Block) EmitInstGTR(x, y Value, pos int) *InstGTR {
 	v := &InstGTR{X: x, Y: y}
 	v.Stringer = v
 	v.pos = pos
-	v.typ = b.types.GenBool("bool")
+	v.typ = b.types.Bool
 
 	b.emit(v)
 	return v
@@ -682,14 +682,14 @@ InstLSS:  小于指令，x < y
 type InstLSS struct {
 	aImv
 	X, Y Value
-	typ  ValueType
+	typ  Type
 }
 
 func (i *InstLSS) String() string {
 	return fmt.Sprintf("%s < %s", i.X.Name(), i.Y.Name())
 }
 
-func (i *InstLSS) Type() ValueType {
+func (i *InstLSS) Type() Type {
 	return i.typ
 }
 
@@ -698,7 +698,7 @@ func (b *Block) EmitInstLSS(x, y Value, pos int) *InstLSS {
 	v := &InstLSS{X: x, Y: y}
 	v.Stringer = v
 	v.pos = pos
-	v.typ = b.types.GenBool("bool")
+	v.typ = b.types.Bool
 
 	b.emit(v)
 	return v
@@ -710,14 +710,14 @@ InstGEQ:  大等于指令，x >= y
 type InstGEQ struct {
 	aImv
 	X, Y Value
-	typ  ValueType
+	typ  Type
 }
 
 func (i *InstGEQ) String() string {
 	return fmt.Sprintf("%s >= %s", i.X.Name(), i.Y.Name())
 }
 
-func (i *InstGEQ) Type() ValueType {
+func (i *InstGEQ) Type() Type {
 	return i.typ
 }
 
@@ -726,7 +726,7 @@ func (b *Block) EmitInstGEQ(x, y Value, pos int) *InstGEQ {
 	v := &InstGEQ{X: x, Y: y}
 	v.Stringer = v
 	v.pos = pos
-	v.typ = b.types.GenBool("bool")
+	v.typ = b.types.Bool
 
 	b.emit(v)
 	return v
@@ -738,14 +738,14 @@ InstLEQ:  小等于指令，x <= y
 type InstLEQ struct {
 	aImv
 	X, Y Value
-	typ  ValueType
+	typ  Type
 }
 
 func (i *InstLEQ) String() string {
 	return fmt.Sprintf("%s <= %s", i.X.Name(), i.Y.Name())
 }
 
-func (i *InstLEQ) Type() ValueType {
+func (i *InstLEQ) Type() Type {
 	return i.typ
 }
 
@@ -754,7 +754,7 @@ func (b *Block) EmitInstLEQ(x, y Value, pos int) *InstLEQ {
 	v := &InstLEQ{X: x, Y: y}
 	v.Stringer = v
 	v.pos = pos
-	v.typ = b.types.GenBool("bool")
+	v.typ = b.types.Bool
 
 	b.emit(v)
 	return v
@@ -766,14 +766,14 @@ InstCOMP:  比较指令，x <=> y
 type InstCOMP struct {
 	aImv
 	X, Y Value
-	typ  ValueType
+	typ  Type
 }
 
 func (i *InstCOMP) String() string {
 	return fmt.Sprintf("%s <=> %s", i.X.Name(), i.Y.Name())
 }
 
-func (i *InstCOMP) Type() ValueType {
+func (i *InstCOMP) Type() Type {
 	return i.typ
 }
 
@@ -782,7 +782,7 @@ func (b *Block) EmitInstCOMP(x, y Value, pos int) *InstCOMP {
 	v := &InstCOMP{X: x, Y: y}
 	v.Stringer = v
 	v.pos = pos
-	v.typ = b.types.GenI32("i32")
+	v.typ = b.types.Int
 
 	b.emit(v)
 	return v

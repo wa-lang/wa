@@ -20,420 +20,287 @@ Types : 类型库，用于管理值类型，类型的名字是其身份标志
   - 若指定名称的类型已存在于类型库中，则返回现存的类型
 **************************************/
 type Types struct {
-	typs    map[string]ValueType
-	ptrSize int
+	typs map[string]Type
+
+	Void, Bool, U8, U16, U32, U64, Uint, I8, I16, I32, I64, Int, F32, F64, Complex64, Complex128, Rune, String Type
 }
 
 // Init 初始化类型库
 func (tl *Types) Init() {
-	tl.typs = make(map[string]ValueType)
-	tl.ptrSize = 4 //Todo 平台相关
+	tl.typs = make(map[string]Type)
+
+	tl.Void = &Void{}
+	tl.Bool = &Bool{}
+	tl.U8 = &U8{}
+	tl.U16 = &U16{}
+	tl.U32 = &U32{}
+	tl.U64 = &U64{}
+	tl.Uint = &Uint{}
+	tl.I8 = &I8{}
+	tl.I16 = &I16{}
+	tl.I32 = &I32{}
+	tl.I64 = &I64{}
+	tl.Int = &Int{}
+	tl.F32 = &F32{}
+	tl.F64 = &F64{}
+	tl.Complex64 = &Complex64{}
+	tl.Complex128 = &Complex128{}
+	tl.Rune = &Rune{}
+	tl.String = &String{}
+
+	tl.typs[tl.Void.Name()] = tl.Void
+	tl.typs[tl.Bool.Name()] = tl.Bool
+	tl.typs[tl.U8.Name()] = tl.U8
+	tl.typs[tl.U16.Name()] = tl.U16
+	tl.typs[tl.U32.Name()] = tl.U32
+	tl.typs[tl.U64.Name()] = tl.U64
+	tl.typs[tl.Uint.Name()] = tl.Uint
+	tl.typs[tl.I8.Name()] = tl.I8
+	tl.typs[tl.I16.Name()] = tl.I16
+	tl.typs[tl.I32.Name()] = tl.I32
+	tl.typs[tl.I64.Name()] = tl.I64
+	tl.typs[tl.Int.Name()] = tl.Int
+	tl.typs[tl.F32.Name()] = tl.F32
+	tl.typs[tl.F64.Name()] = tl.F64
+	tl.typs[tl.Complex64.Name()] = tl.Complex64
+	tl.typs[tl.Complex128.Name()] = tl.Complex128
+	tl.typs[tl.Rune.Name()] = tl.Rune
+	tl.typs[tl.String.Name()] = tl.String
+
 }
 
 // Lookup 根据给定的名字查找值类型
-func (tl *Types) Lookup(name string) (t ValueType, ok bool) {
+func (tl *Types) Lookup(name string) (t Type, ok bool) {
 	t, ok = tl.typs[name]
 	return
 }
 
-// Add 向 TypeLib 中添加一个新类型，注意不可重复添加
-func (tl *Types) Add(t ValueType) {
+// add 向 TypeLib 中添加一个新类型，注意不可重复添加
+func (tl *Types) add(t Type) {
 	if _, ok := tl.Lookup(t.Name()); ok {
-		logger.Fatalf("ValueType:%T already registered.", t)
+		logger.Fatalf("Type:%T already registered.", t)
 	}
 	tl.typs[t.Name()] = t
 }
 
-/**************************************
-tCommon: 实现 ValueType 接口 Name、Method 相关方法
-**************************************/
-type tCommon struct {
-	name    string
-	methods []Method
+func (tl *Types) All() map[string]Type {
+	return tl.typs
 }
 
-func (t *tCommon) Name() string { return t.name }
-func (t *tCommon) AddMethod(m Method) int {
-	t.methods = append(t.methods, m)
-	return len(t.methods) - 1
-}
-func (t *tCommon) NumMethods() int     { return len(t.methods) }
-func (t *tCommon) Method(i int) Method { return t.methods[i] }
+/**************************************
+tCommon: 实现 Type 接口 Name、Method 相关方法
+**************************************/
+//type tCommon struct {
+//	name string
+//	//methods []Method
+//}
+//
+//func (t *tCommon) Name() string { return t.name }
+//func (t *tCommon) AddMethod(m Method) int {
+//	t.methods = append(t.methods, m)
+//	return len(t.methods) - 1
+//}
+//func (t *tCommon) NumMethods() int     { return len(t.methods) }
+//func (t *tCommon) Method(i int) Method { return t.methods[i] }
 
 /**************************************
 Void: void，0字节
 **************************************/
-type Void struct {
-	tCommon
-}
+type Void struct{}
 
-func (t *Void) Kind() TypeKind         { return TypeKindVoid }
-func (t *Void) Equal(u ValueType) bool { _, ok := u.(*Void); return ok }
-
-func (tl *Types) GenVoid(name string) *Void {
-	if t, ok := tl.Lookup(name); ok {
-		return t.(*Void)
-	}
-
-	nt := Void{}
-	nt.name = name
-	tl.Add(&nt)
-	return &nt
-}
+func (t *Void) Name() string      { return "void" }
+func (t *Void) Kind() TypeKind    { return TypeKindVoid }
+func (t *Void) Equal(u Type) bool { _, ok := u.(*Void); return ok }
 
 /**************************************
 Bool: 布尔，1字节
 **************************************/
-type Bool struct {
-	tCommon
-}
+type Bool struct{}
 
-func (t *Bool) Kind() TypeKind         { return TypeKindBool }
-func (t *Bool) Equal(u ValueType) bool { _, ok := u.(*Bool); return ok }
-
-func (tl *Types) GenBool(name string) *Bool {
-	if t, ok := tl.Lookup(name); ok {
-		return t.(*Bool)
-	}
-
-	nt := Bool{}
-	nt.name = name
-	tl.Add(&nt)
-	return &nt
-}
+func (t *Bool) Name() string      { return "bool" }
+func (t *Bool) Kind() TypeKind    { return TypeKindBool }
+func (t *Bool) Equal(u Type) bool { _, ok := u.(*Bool); return ok }
 
 /**************************************
 I8: 8位有符号整数，1字节
 **************************************/
-type I8 struct {
-	tCommon
-}
+type I8 struct{}
 
-func (t *I8) Kind() TypeKind         { return TypeKindI8 }
-func (t *I8) Equal(u ValueType) bool { _, ok := u.(*I8); return ok }
-
-func (tl *Types) GenI8(name string) *I8 {
-	if t, ok := tl.Lookup(name); ok {
-		return t.(*I8)
-	}
-
-	nt := I8{}
-	nt.name = name
-	tl.Add(&nt)
-	return &nt
-}
+func (t *I8) Name() string      { return "i8" }
+func (t *I8) Kind() TypeKind    { return TypeKindI8 }
+func (t *I8) Equal(u Type) bool { _, ok := u.(*I8); return ok }
 
 /**************************************
 U8: 8位无符号整数，1字节
 **************************************/
-type U8 struct {
-	tCommon
-}
+type U8 struct{}
 
-func (t *U8) Kind() TypeKind         { return TypeKindU8 }
-func (t *U8) Equal(u ValueType) bool { _, ok := u.(*U8); return ok }
-
-func (tl *Types) GenU8(name string) *U8 {
-	if t, ok := tl.Lookup(name); ok {
-		return t.(*U8)
-	}
-
-	nt := U8{}
-	nt.name = name
-	tl.Add(&nt)
-	return &nt
-}
+func (t *U8) Name() string      { return "u8" }
+func (t *U8) Kind() TypeKind    { return TypeKindU8 }
+func (t *U8) Equal(u Type) bool { _, ok := u.(*U8); return ok }
 
 /**************************************
 I16: 16位有符号整数，2字节
 **************************************/
-type I16 struct {
-	tCommon
-}
+type I16 struct{}
 
-func (t *I16) Kind() TypeKind         { return TypeKindI16 }
-func (t *I16) Equal(u ValueType) bool { _, ok := u.(*I16); return ok }
-
-func (tl *Types) GenI16(name string) *I16 {
-	if t, ok := tl.Lookup(name); ok {
-		return t.(*I16)
-	}
-
-	nt := I16{}
-	nt.name = name
-	tl.Add(&nt)
-	return &nt
-}
+func (t *I16) Name() string      { return "i16" }
+func (t *I16) Kind() TypeKind    { return TypeKindI16 }
+func (t *I16) Equal(u Type) bool { _, ok := u.(*I16); return ok }
 
 /**************************************
 tU16: 16位无符号整数，2字节
 **************************************/
-type U16 struct {
-	tCommon
-}
+type U16 struct{}
 
-func (t *U16) Kind() TypeKind         { return TypeKindU16 }
-func (t *U16) Equal(u ValueType) bool { _, ok := u.(*U16); return ok }
-
-func (tl *Types) GenU16(name string) *U16 {
-	if t, ok := tl.Lookup(name); ok {
-		return t.(*U16)
-	}
-
-	nt := U16{}
-	nt.name = name
-	tl.Add(&nt)
-	return &nt
-}
+func (t *U16) Name() string      { return "u16" }
+func (t *U16) Kind() TypeKind    { return TypeKindU16 }
+func (t *U16) Equal(u Type) bool { _, ok := u.(*U16); return ok }
 
 /**************************************
 I32: 32位有符号整数，4字节
 **************************************/
-type I32 struct {
-	tCommon
-}
+type I32 struct{}
 
-func (t *I32) Kind() TypeKind         { return TypeKindI32 }
-func (t *I32) Equal(u ValueType) bool { _, ok := u.(*I32); return ok }
-
-func (tl *Types) GenI32(name string) *I32 {
-	if t, ok := tl.Lookup(name); ok {
-		return t.(*I32)
-	}
-
-	nt := I32{}
-	nt.name = name
-	tl.Add(&nt)
-	return &nt
-}
+func (t *I32) Name() string      { return "i32" }
+func (t *I32) Kind() TypeKind    { return TypeKindI32 }
+func (t *I32) Equal(u Type) bool { _, ok := u.(*I32); return ok }
 
 /**************************************
 U32: 32位无符号整数，4字节
 **************************************/
-type U32 struct {
-	tCommon
-}
+type U32 struct{}
 
-func (t *U32) Kind() TypeKind         { return TypeKindU32 }
-func (t *U32) Equal(u ValueType) bool { _, ok := u.(*U32); return ok }
-
-func (tl *Types) GenU32(name string) *U32 {
-	if t, ok := tl.Lookup(name); ok {
-		return t.(*U32)
-	}
-
-	nt := U32{}
-	nt.name = name
-	tl.Add(&nt)
-	return &nt
-}
+func (t *U32) Name() string      { return "u32" }
+func (t *U32) Kind() TypeKind    { return TypeKindU32 }
+func (t *U32) Equal(u Type) bool { _, ok := u.(*U32); return ok }
 
 /**************************************
 I64: 64位有符号整数，8字节
 **************************************/
-type I64 struct {
-	tCommon
-}
+type I64 struct{}
 
-func (t *I64) Kind() TypeKind         { return TypeKindI64 }
-func (t *I64) Equal(u ValueType) bool { _, ok := u.(*I64); return ok }
-
-func (tl *Types) GenI64(name string) *I64 {
-	if t, ok := tl.Lookup(name); ok {
-		return t.(*I64)
-	}
-
-	nt := I64{}
-	nt.name = name
-	tl.Add(&nt)
-	return &nt
-}
+func (t *I64) Name() string      { return "i64" }
+func (t *I64) Kind() TypeKind    { return TypeKindI64 }
+func (t *I64) Equal(u Type) bool { _, ok := u.(*I64); return ok }
 
 /**************************************
 U64: 64位无符号整数，8字节
 **************************************/
-type U64 struct {
-	tCommon
-}
+type U64 struct{}
 
-func (t *U64) Kind() TypeKind         { return TypeKindU64 }
-func (t *U64) Equal(u ValueType) bool { _, ok := u.(*U64); return ok }
+func (t *U64) Name() string      { return "u64" }
+func (t *U64) Kind() TypeKind    { return TypeKindU64 }
+func (t *U64) Equal(u Type) bool { _, ok := u.(*U64); return ok }
 
-func (tl *Types) GenU64(name string) *U64 {
-	if t, ok := tl.Lookup(name); ok {
-		return t.(*U64)
-	}
+/**************************************
+Uint: 平台相关无符号整型
+**************************************/
+type Uint struct{}
 
-	nt := U64{}
-	nt.name = name
-	tl.Add(&nt)
-	return &nt
-}
+func (t *Uint) Name() string      { return "uint" }
+func (t *Uint) Kind() TypeKind    { return TypeKindUint }
+func (t *Uint) Equal(u Type) bool { _, ok := u.(*Uint); return ok }
+
+/**************************************
+Int: 平台相关有符号整型
+**************************************/
+type Int struct{}
+
+func (t *Int) Name() string      { return "int" }
+func (t *Int) Kind() TypeKind    { return TypeKindInt }
+func (t *Int) Equal(u Type) bool { _, ok := u.(*Int); return ok }
 
 /**************************************
 F32: 单精度浮点数，4字节
 **************************************/
-type F32 struct {
-	tCommon
-}
+type F32 struct{}
 
-func (t *F32) Kind() TypeKind         { return TypeKindF32 }
-func (t *F32) Equal(u ValueType) bool { _, ok := u.(*F32); return ok }
-
-func (tl *Types) GenF32(name string) *F32 {
-	if t, ok := tl.Lookup(name); ok {
-		return t.(*F32)
-	}
-
-	nt := F32{}
-	nt.name = name
-	tl.Add(&nt)
-	return &nt
-}
+func (t *F32) Name() string      { return "f32" }
+func (t *F32) Kind() TypeKind    { return TypeKindF32 }
+func (t *F32) Equal(u Type) bool { _, ok := u.(*F32); return ok }
 
 /**************************************
 F64: 双精度浮点数，8字节
 **************************************/
-type F64 struct {
-	tCommon
-}
+type F64 struct{}
 
-func (t *F64) Kind() TypeKind         { return TypeKindF64 }
-func (t *F64) Equal(u ValueType) bool { _, ok := u.(*F64); return ok }
-
-func (tl *Types) GenF64(name string) *F64 {
-	if t, ok := tl.Lookup(name); ok {
-		return t.(*F64)
-	}
-
-	nt := F64{}
-	nt.name = name
-	tl.Add(&nt)
-	return &nt
-}
+func (t *F64) Name() string      { return "f64" }
+func (t *F64) Kind() TypeKind    { return TypeKindF64 }
+func (t *F64) Equal(u Type) bool { _, ok := u.(*F64); return ok }
 
 /**************************************
 Complex64: 单精度复数，8字节
 **************************************/
-type Complex64 struct {
-	tCommon
-}
+type Complex64 struct{}
 
-func (t *Complex64) Kind() TypeKind         { return TypeKindComplex64 }
-func (t *Complex64) Equal(u ValueType) bool { _, ok := u.(*Complex64); return ok }
-
-func (tl *Types) GenComplex64(name string) *Complex64 {
-	if t, ok := tl.Lookup(name); ok {
-		return t.(*Complex64)
-	}
-
-	nt := Complex64{}
-	nt.name = name
-	tl.Add(&nt)
-	return &nt
-}
+func (t *Complex64) Name() string      { return "complex64" }
+func (t *Complex64) Kind() TypeKind    { return TypeKindComplex64 }
+func (t *Complex64) Equal(u Type) bool { _, ok := u.(*Complex64); return ok }
 
 /**************************************
 Complex128: 双精度复数，16字节
 **************************************/
-type Complex128 struct {
-	tCommon
-}
+type Complex128 struct{}
 
-func (t *Complex128) Kind() TypeKind         { return TypeKindComplex128 }
-func (t *Complex128) Equal(u ValueType) bool { _, ok := u.(*Complex128); return ok }
-
-func (tl *Types) GenComplex128(name string) *Complex128 {
-	if t, ok := tl.Lookup(name); ok {
-		return t.(*Complex128)
-	}
-
-	nt := Complex128{}
-	nt.name = name
-	tl.Add(&nt)
-	return &nt
-}
+func (t *Complex128) Name() string      { return "complex128" }
+func (t *Complex128) Kind() TypeKind    { return TypeKindComplex128 }
+func (t *Complex128) Equal(u Type) bool { _, ok := u.(*Complex128); return ok }
 
 /**************************************
 Rune: unicode字符，4字节
 **************************************/
-type Rune struct {
-	tCommon
-}
+type Rune struct{}
 
-func (t *Rune) Kind() TypeKind         { return TypeKindRune }
-func (t *Rune) Equal(u ValueType) bool { _, ok := u.(*Rune); return ok }
-
-func (tl *Types) GenRune(name string) *Rune {
-	if t, ok := tl.Lookup(name); ok {
-		return t.(*Rune)
-	}
-
-	nt := Rune{}
-	nt.name = name
-	tl.Add(&nt)
-	return &nt
-}
+func (t *Rune) Name() string      { return "rune" }
+func (t *Rune) Kind() TypeKind    { return TypeKindRune }
+func (t *Rune) Equal(u Type) bool { _, ok := u.(*Rune); return ok }
 
 /**************************************
 String: 字符串
 **************************************/
-type String struct {
-	tCommon
-}
+type String struct{}
 
-func (t *String) Kind() TypeKind         { return TypeKindString }
-func (t *String) Equal(u ValueType) bool { _, ok := u.(*String); return ok }
-
-func (tl *Types) GenString(name string) *String {
-	if t, ok := tl.Lookup(name); ok {
-		return t.(*String)
-	}
-
-	nt := String{}
-	nt.name = name
-	tl.Add(&nt)
-	return &nt
-}
+func (t *String) Name() string      { return "string" }
+func (t *String) Kind() TypeKind    { return TypeKindString }
+func (t *String) Equal(u Type) bool { _, ok := u.(*String); return ok }
 
 /**************************************
 Ptr: 指针，长度取决于目标平台
 **************************************/
 type Ptr struct {
-	tCommon
-	Base ValueType
+	Base Type
 }
 
+func (t *Ptr) Name() string   { return t.Base.Name() + "$$ptr" }
 func (t *Ptr) Kind() TypeKind { return TypeKindPtr }
-func (t *Ptr) Equal(u ValueType) bool {
+func (t *Ptr) Equal(u Type) bool {
 	if ut, ok := u.(*Ptr); ok {
 		return t.Base.Equal(ut.Base)
 	}
 	return false
 }
 
-func (tl *Types) GenPtr(base ValueType) *Ptr {
-	name := base.Name() + "$$ptr"
-	if t, ok := tl.Lookup(name); ok {
+func (tl *Types) GenPtr(base Type) *Ptr {
+	nt := &Ptr{Base: base}
+	if t, ok := tl.Lookup(nt.Name()); ok {
 		return t.(*Ptr)
 	}
 
-	nt := Ptr{Base: base}
-	nt.name = name
-	tl.Add(&nt)
-	return &nt
+	tl.add(nt)
+	return nt
 }
 
 /**************************************
 Tuple: 元组
 **************************************/
 type Tuple struct {
-	tCommon
-	fields []ValueType
+	fields []Type
 }
 
+func (t *Tuple) Name() string   { panic("Todo") }
 func (t *Tuple) Kind() TypeKind { return TypeKindTuple }
-func (t *Tuple) Equal(u ValueType) bool {
+func (t *Tuple) Equal(u Type) bool {
 	ut, ok := u.(*Tuple)
 	if !ok {
 		return false
@@ -452,24 +319,24 @@ func (t *Tuple) Equal(u ValueType) bool {
 	return true
 }
 
-func (tl *Types) GenTuple(fields []ValueType) *Tuple {
+func (tl *Types) GenTuple(fields []Type) *Tuple {
 	panic("Todo") //name
 
-	nt := Tuple{fields: fields}
-	tl.Add(&nt)
-	return &nt
+	nt := &Tuple{fields: fields}
+	tl.add(nt)
+	return nt
 }
 
 /**************************************
 Struct: 结构体
 **************************************/
 type Struct struct {
-	tCommon
 	fields []*StructField
 }
 
+func (t *Struct) Name() string   { panic("Todo") }
 func (t *Struct) Kind() TypeKind { return TypeKindStruct }
-func (t *Struct) Equal(u ValueType) bool {
+func (t *Struct) Equal(u Type) bool {
 	ut, ok := u.(*Struct)
 	if !ok {
 		return false
@@ -488,15 +355,16 @@ func (t *Struct) Equal(u ValueType) bool {
 	return true
 }
 
-func (tl *Types) GenStruct(name string) (*Struct, bool) {
-	if t, ok := tl.Lookup(name); ok {
-		return t.(*Struct), true
-	}
-
-	var nt Struct
-	nt.name = name
-	tl.Add(&nt)
-	return &nt, false
+func (tl *Types) GenStruct() (*Struct, bool) {
+	panic("Todo")
+	//if t, ok := tl.Lookup(name); ok {
+	//	return t.(*Struct), true
+	//}
+	//
+	//var nt Struct
+	//nt.name = name
+	//tl.Add(&nt)
+	//return &nt, false
 }
 
 func (t *Struct) AppendField(f *StructField) {
@@ -506,7 +374,7 @@ func (t *Struct) AppendField(f *StructField) {
 
 type StructField struct {
 	Name string
-	Type ValueType
+	Type Type
 	id   int
 }
 

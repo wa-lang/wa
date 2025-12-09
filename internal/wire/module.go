@@ -58,7 +58,7 @@ func (m *Module) NewFunction() *Function {
 }
 
 // 创建一个 参数值
-func (m *Module) NewParam(name string, typ ValueType, pos int) Value {
+func (m *Module) NewParam(name string, typ Type, pos int) Value {
 	p := Param{
 		name: name,
 		typ:  typ,
@@ -68,7 +68,7 @@ func (m *Module) NewParam(name string, typ ValueType, pos int) Value {
 }
 
 // 创建一个 常量值
-func (m *Module) NewConst(name string, typ ValueType, pos int) Value {
+func (m *Module) NewConst(name string, typ Type, pos int) Value {
 	c := Const{
 		name: name,
 		typ:  typ,

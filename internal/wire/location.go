@@ -24,7 +24,7 @@ type Location interface {
 	LocationKind() LocationKind
 
 	// Location指向的对象的类型
-	DataType() ValueType
+	DataType() Type
 
 	// 与该位置关联的 AST 结点。对凹语言前端，应为 types.Object
 	Object() interface{}
