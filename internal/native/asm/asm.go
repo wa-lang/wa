@@ -175,6 +175,9 @@ func (p *_Assembler) asmFile(filename string, source []byte, opt *abi.LinkOption
 }
 
 func (p *_Assembler) asmFunc(fn *ast.Func) (err error) {
+	// label 的地址列表
+	label2pcMap := make(map[string]int64)
+
 	// 绝对地址拆分基于 symbol 名字
 	hi2loMap := make(map[string]int32)
 
@@ -182,8 +185,26 @@ func (p *_Assembler) asmFunc(fn *ast.Func) (err error) {
 	// 一个 label 只能有一个 symbol 相对 PC 寻址
 	label2loMap := make(map[string]int32)
 
-	// 编码指令
+	// 第一遍收集全部 label, 因为可能向前跳转没有出现的 label
 	pc := fn.LinkInfo.Addr
+	for _, inst := range fn.Body.Insts {
+		if inst.Label != "" {
+			if _, ok := label2pcMap[inst.Label]; ok {
+				panic(fmt.Errorf("label %q exists", inst.Label))
+			}
+			label2pcMap[inst.Label] = pc
+		}
+		if inst.As == 0 {
+			// 跳过空的指令, 比如标号
+			continue
+		}
+
+		// 更新下一个指令对应的 pc 位置
+		pc += p.instLen(inst)
+	}
+
+	// 第二遍遍历编码指令
+	pc = fn.LinkInfo.Addr
 	for i, inst := range fn.Body.Insts {
 		if inst.As == 0 {
 			// 跳过空的指令, 比如标号
@@ -194,9 +215,12 @@ func (p *_Assembler) asmFunc(fn *ast.Func) (err error) {
 		// 因为指令长度的关系, 指令并不会直接访问符号对应的绝对地址
 		// 需要解决 %hi/%lo/%pcrel_hi/%pcrel_lo 等转化为最终可编码到指令的值
 		if inst.Arg.Symbol != "" {
-			addr, ok := p.symbolAddress(inst.Arg.Symbol)
+			addr, ok := label2pcMap[inst.Arg.Symbol]
 			if !ok {
-				panic(fmt.Errorf("symbol %q not found", inst.Arg.Symbol))
+				addr, ok = p.symbolAddress(inst.Arg.Symbol)
+				if !ok {
+					panic(fmt.Errorf("symbol %q not found", inst.Arg.Symbol))
+				}
 			}
 
 			switch inst.Arg.SymbolDecor {
@@ -232,15 +256,17 @@ func (p *_Assembler) asmFunc(fn *ast.Func) (err error) {
 				// https://sourceware.org/binutils/docs/as/RISC_002dV_002dModifiers.html
 				// https://stackoverflow.com/questions/65879012/what-do-pcrel-hi-and-pcrel-lo-actually-do
 
-				lo, ok := label2loMap[inst.Label]
+				lo, ok := label2loMap[inst.Arg.Symbol]
 				if !ok {
 					panic(fmt.Errorf("symbol %q not found", inst.Arg.Symbol))
 				}
 				inst.Arg.Imm = lo
 
 			default:
-				// 其他情况下可能是一个普通的常量(不是地址), 只是简单记录
-				inst.Arg.Imm = int32(addr)
+				// 因为loong/riscv指令只有32bit宽度, 默认是无法完全编码绝对地址的
+				// 所以其他情况都也作为相对pc的地址
+				// 或者说汇编语言中不能直接使用面值
+				inst.Arg.Imm = int32(addr - pc)
 			}
 		}
 
