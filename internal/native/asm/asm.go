@@ -11,6 +11,7 @@ import (
 	"wa-lang.org/wa/internal/native/abi"
 	"wa-lang.org/wa/internal/native/ast"
 	"wa-lang.org/wa/internal/native/parser"
+	"wa-lang.org/wa/internal/native/pcrel"
 	"wa-lang.org/wa/internal/native/token"
 )
 
@@ -174,47 +175,16 @@ func (p *_Assembler) asmFile(filename string, source []byte, opt *abi.LinkOption
 }
 
 func (p *_Assembler) asmFunc(fn *ast.Func) (err error) {
-	// 标签上下文信息
-	type LabelContext struct {
-		Name            string // 标签名称
-		PC              int64  // 对应的PC
-		Pcrel_hi_symbol string // 用于 %pcrel_lo(label) 查询
-	}
+	// 绝对地址拆分基于 symbol 名字
+	hi2loMap := make(map[string]int32)
 
-	// 第一遍扫描Label, 生成对应的地址
-	labelContextMap := make(map[string]*LabelContext)
-	labelAddr := fn.LinkInfo.Addr
+	// 相对地址拆分基于 label 名字
+	// 一个 label 只能有一个 symbol 相对 PC 寻址
+	label2loMap := make(map[string]int32)
+
+	// 编码指令
+	pc := fn.LinkInfo.Addr
 	for i, inst := range fn.Body.Insts {
-		if inst.Label != "" {
-			labelContextMap[inst.Label] = &LabelContext{
-				Name: inst.Label,
-				PC:   labelAddr,
-			}
-		}
-		if inst.As == 0 {
-			continue
-		}
-
-		// 记录 %pcrel_hi(symbol) 符号参数
-		if inst.Arg.SymbolDecor == abi.BuiltinFn_PCREL_HI || inst.Arg.SymbolDecor == abi.BuiltinFn_PCREL_HI_zh {
-			for k := i; k >= 0; k-- {
-				if x := fn.Body.Insts[k]; x.Label != "" {
-					if labelCtx, ok := labelContextMap[x.Label]; ok {
-						if labelCtx.Pcrel_hi_symbol == "" {
-							labelCtx.Pcrel_hi_symbol = inst.Arg.Symbol
-						}
-					}
-					break
-				}
-			}
-		}
-
-		labelAddr += p.instLen(inst)
-	}
-
-	// 第二遍编码指令
-	var pc = fn.LinkInfo.Addr
-	for _, inst := range fn.Body.Insts {
 		if inst.As == 0 {
 			// 跳过空的指令, 比如标号
 			continue
@@ -224,67 +194,53 @@ func (p *_Assembler) asmFunc(fn *ast.Func) (err error) {
 		// 因为指令长度的关系, 指令并不会直接访问符号对应的绝对地址
 		// 需要解决 %hi/%lo/%pcrel_hi/%pcrel_lo 等转化为最终可编码到指令的值
 		if inst.Arg.Symbol != "" {
-			PCREL_LO_PC := pc // 可能不是当前的 pc
-			addr, ok := int64(0), bool(false)
-			if inst.Arg.SymbolDecor == abi.BuiltinFn_PCREL_LO || inst.Arg.SymbolDecor == abi.BuiltinFn_PCREL_LO_zh {
-				labelCtx := labelContextMap[inst.Arg.Symbol]
-				if labelCtx == nil {
-					panic(fmt.Errorf("label %q not found", inst.Arg.Symbol))
-				}
-				PCREL_LO_PC = labelCtx.PC
-				addr, ok = p.symbolAddress(labelCtx.Pcrel_hi_symbol)
-				if !ok {
-					panic(fmt.Errorf("symbol %q not found", inst.Arg.Symbol))
-				}
-			} else {
-				labelCtx := labelContextMap[inst.Arg.Symbol]
-				if labelCtx != nil {
-					addr, ok = labelCtx.PC, true
-				} else {
-					addr, ok = p.symbolAddress(inst.Arg.Symbol)
-					if !ok {
-						panic(fmt.Errorf("symbol %q not found", inst.Arg.Symbol))
-					}
-				}
+			addr, ok := p.symbolAddress(inst.Arg.Symbol)
+			if !ok {
+				panic(fmt.Errorf("symbol %q not found", inst.Arg.Symbol))
 			}
 
 			switch inst.Arg.SymbolDecor {
 			case abi.BuiltinFn_HI, abi.BuiltinFn_HI_zh: // 高20bit
-				x := int32(addr)
-				// 检查 lo(x) 的符号位（第 11 位）
-				// (x & 0x800) == 0x800 等价于 (x << 20) >> 31 == -1
-				if (x & 0x800) == 0x800 {
-					// 如果 lo(x) 是负数，则 hi(x) 加 1
-					inst.Arg.Imm = (x >> 12) + 1
-				} else {
-					inst.Arg.Imm = x >> 12
-				}
-			case abi.BuiltinFn_HI52, abi.BuiltinFn_HI52_zh: // 高20bit
-				// 绝对地址不需要负数, 因为 LO 部分也不需要相对地址可能产生的负数
-				x := (uint64(addr) >> 32) & 0xFFFFF
-				inst.Arg.Imm = int32(x)
+				hi, lo := pcrel.MakeAbs(uint32(addr))
+				hi2loMap[inst.Arg.Symbol] = lo
+				inst.Arg.Imm = hi
 
 			case abi.BuiltinFn_LO, abi.BuiltinFn_LO_zh: // 低12bit
-				x := int32(addr)
-				// 简单地取低 12 位
-				inst.Arg.Imm = x & 0xFFF
-			case abi.BuiltinFn_PCREL_HI, abi.BuiltinFn_PCREL_HI_zh:
-				offset := int32(addr - pc)
-				// 检查 lo(offset) 的符号位
-				if (offset & 0x800) == 0x800 {
-					inst.Arg.Imm = (offset >> 12) + 1
-				} else {
-					inst.Arg.Imm = offset >> 12
+				lo, ok := hi2loMap[inst.Arg.Symbol]
+				if !ok {
+					panic(fmt.Errorf("symbol %q not found", inst.Arg.Symbol))
 				}
+				inst.Arg.Imm = lo
+
+			case abi.BuiltinFn_PCREL_HI, abi.BuiltinFn_PCREL_HI_zh:
+				var labelName string
+				for k := i; k >= 0; k-- {
+					if x := fn.Body.Insts[k]; x.Label != "" {
+						labelName = x.Label
+						break
+					}
+				}
+				if labelName == "" {
+					panic(fmt.Errorf("symbol %q not found found", inst.Arg.Symbol))
+				}
+
+				hi, lo := pcrel.MakePCRel(addr, pc)
+				label2loMap[labelName] = lo
+				inst.Arg.Imm = hi
+
 			case abi.BuiltinFn_PCREL_LO, abi.BuiltinFn_PCREL_LO_zh:
 				// https://sourceware.org/binutils/docs/as/RISC_002dV_002dModifiers.html
 				// https://stackoverflow.com/questions/65879012/what-do-pcrel-hi-and-pcrel-lo-actually-do
-				offset := int32(addr - PCREL_LO_PC)
-				inst.Arg.Imm = offset & 0xFFF
+
+				lo, ok := label2loMap[inst.Label]
+				if !ok {
+					panic(fmt.Errorf("symbol %q not found", inst.Arg.Symbol))
+				}
+				inst.Arg.Imm = lo
+
 			default:
-				// 因为riscv指令只有32bit宽度, 默认是无法完全编码绝对地址的
-				// 所以其他情况都也作为相对pc的地址
-				inst.Arg.Imm = int32(addr - pc)
+				// 其他情况下可能是一个普通的常量(不是地址), 只是简单记录
+				inst.Arg.Imm = int32(addr)
 			}
 		}
 

@@ -11,11 +11,11 @@ import (
 // TestData 结构用于定义测试用例
 type TestData struct {
 	name          string
-	delta         int32  // 原始偏移量 (targetAddress - pc)
-	expectedHi    int32  // 期望的 %pcrel_hi
-	expectedLo    int32  // 期望的 %pcrel_lo (必须在 [-2048, 2047] 范围内)
-	targetAddress uint32 // 用于 MakePCRel 测试 (A)
-	pc            uint32 // 用于 MakePCRel 测试 (PC)
+	delta         int32 // 原始偏移量 (targetAddress - pc)
+	expectedHi    int32 // 期望的 %pcrel_hi
+	expectedLo    int32 // 期望的 %pcrel_lo (必须在 [-2048, 2047] 范围内)
+	targetAddress int64 // 用于 MakePCRel 测试 (A)
+	pc            int64 // 用于 MakePCRel 测试 (PC)
 }
 
 // 完整的测试用例列表 (已修复 uint32 溢出问题)

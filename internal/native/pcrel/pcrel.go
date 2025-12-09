@@ -16,9 +16,15 @@ func CombineOffset(pcrel_hi, pcrel_lo int32) (delta int32) {
 	return delta
 }
 
+// MakeAbs 将一个 32 位的绝对地址拆分为2个部分
+func MakeAbs(targetAddress uint32) (pcrel_hi, pcrel_lo int32) {
+	delta := int32(targetAddress)
+	return SplitOffset(delta)
+}
+
 // MakePCRel 计算目标地址相对于 PC 地址的相对偏移量
-func MakePCRel(targetAddress, pc uint32) (pcrel_hi, pcrel_lo int32) {
-	delta := int32(int64(targetAddress) - int64(pc))
+func MakePCRel(targetAddress, pc int64) (pcrel_hi, pcrel_lo int32) {
+	delta := int32(targetAddress - pc)
 	return SplitOffset(delta)
 }
 

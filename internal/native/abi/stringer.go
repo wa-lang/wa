@@ -23,8 +23,6 @@ func (fn BuiltinFn) String() string {
 		return "%hi"
 	case BuiltinFn_LO:
 		return "%lo"
-	case BuiltinFn_HI52:
-		return "%hi52"
 	case BuiltinFn_PCREL:
 		return "%pcrel"
 	case BuiltinFn_PCREL_HI:
@@ -36,8 +34,6 @@ func (fn BuiltinFn) String() string {
 		return "%高位"
 	case BuiltinFn_LO_zh:
 		return "%低位"
-	case BuiltinFn_HI52_zh:
-		return "%高位五二"
 	case BuiltinFn_PCREL_zh:
 		return "%相对偏移"
 	case BuiltinFn_PCREL_HI_zh:
