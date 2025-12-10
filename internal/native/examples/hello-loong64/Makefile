@@ -3,8 +3,13 @@
 
 WA:=go run ../../../../main.go
 
-dev:
-	$(WA) -debug asm2elf -arch=loong64 hello_loong64.ws
+run:
+	$(WA) asm2elf -arch=loong64 hello_loong64.ws
+	$(WA) wemu hello_loong64.ws.elf.exe
+
+run-zh:
+	$(WA) asm2elf -arch=loong64 hello_loong64_zh.ws
+	$(WA) wemu hello_loong64_zh.ws.elf.exe
 
 debug-run:
 	$(WA) wemu -debug hello_loong64.ws.elf.exe
@@ -17,9 +22,6 @@ qemu-run:
 
 asm2elf:
 	$(WA) asm2elf -arch=loong64 hello_loong64.ws
-
-run:
-	$(WA) wemu hello_loong64.ws.elf.exe
 
 clean:
 	-rm hello.o hello.elf.exe

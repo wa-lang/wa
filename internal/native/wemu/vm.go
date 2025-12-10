@@ -203,7 +203,7 @@ func (p *WEmu) DebugRun() error {
 				fmt.Println("invalid command")
 			}
 
-		case "xregs", "x":
+		case "regs", "r", "xregs", "x":
 			regStart := 0
 			regNum := p.CPU.XRegNum()
 			if n > 1 {
@@ -220,7 +220,7 @@ func (p *WEmu) DebugRun() error {
 					if !ok {
 						break
 					}
-					fmt.Printf("X%-2d = 0x%08X # %s\n",
+					fmt.Printf("R%-2d = 0x%08X # %s\n",
 						i, p.CPU.GetXReg(i), loongarch.RegAliasString(reg),
 					)
 				} else {
@@ -348,6 +348,7 @@ func (p *WEmu) DebugHelp() string {
   g)o             run instructions until power off
   s)tep  <n>      run n (default 1) instructions
   j)ump  <b>      jump to the b (default is current location)
+  r)egs           print the contents of the int registers
   x)regs          print the contents of the int registers
   f)regs          print the contents of the float registers
   i)Mem  <b <n>>  print n iMem locations starting at b

@@ -118,9 +118,16 @@ func (p *CPU) execInst(bus *device.Bus, as abi.As, arg *abi.AsRawArgument) error
 			p.RegX[arg.Rd] = LAUInt(uint8(value))
 			return nil
 		case loong64.AST_B:
+			value := p.RegX[arg.Rd]
 			addr := p.RegX[arg.Rs1] + LAUInt(arg.Imm)
-			value := p.RegX[arg.Rs2]
 			if err := bus.Write(uint64(addr), 1, uint64(value)); err != nil {
+				return err
+			}
+			return nil
+		case loong64.AST_W:
+			value := p.RegX[arg.Rd]
+			addr := p.RegX[arg.Rs1] + LAUInt(arg.Imm)
+			if err := bus.Write(uint64(addr), 4, uint64(value)); err != nil {
 				return err
 			}
 			return nil
@@ -141,8 +148,10 @@ func (p *CPU) execInst(bus *device.Bus, as abi.As, arg *abi.AsRawArgument) error
 		switch as {
 		default:
 			return fmt.Errorf("unsupport: %s", loong64.AsString(as, ""))
+		case loong64.APCADDU12I:
+			p.RegX[arg.Rd] = curPC + LAUInt(arg.Imm)
+			return nil
 		case loong64.ALU12I_W:
-			// TODO: Imm 是负数, 还是 si20 可能的正数?
 			p.RegX[arg.Rd] = LAUInt(arg.Imm << 12)
 			return nil
 		}
