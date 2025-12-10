@@ -178,17 +178,6 @@ func (p *parser) parseInst_loong(fn *ast.Func) (inst *ast.Instruction) {
 		inst.Arg.Imm = si14
 		inst.Arg.Symbol = si14Symbol
 		return inst
-	case loong64.OpFormatType_2R_si16:
-		rd := p.parseRegI_loong()
-		p.acceptToken(token.COMMA)
-		rj := p.parseRegI_loong()
-		p.acceptToken(token.COMMA)
-		si16, si16Symbol := p.parseInst_loong_imm_si16()
-		inst.Arg.Rd = rd
-		inst.Arg.Rs1 = rj
-		inst.Arg.Imm = si16
-		inst.Arg.Symbol = si16Symbol
-		return inst
 	case loong64.OpFormatType_1R_si20:
 		rd := p.parseRegI_loong()
 		p.acceptToken(token.COMMA)
@@ -525,10 +514,6 @@ func (p *parser) parseInst_loong_imm_ui12() (ui12 int32, symbol string) {
 }
 
 func (p *parser) parseInst_loong_imm_si14() (si14 int32, symbol string) {
-	return p.parseInst_loong_immOrSymbol()
-}
-
-func (p *parser) parseInst_loong_imm_si16() (si16 int32, symbol string) {
 	return p.parseInst_loong_immOrSymbol()
 }
 

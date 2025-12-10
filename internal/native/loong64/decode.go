@@ -149,15 +149,6 @@ func (op _OpContextType) decodeInst(x uint32) (as abi.As, arg *abi.AsArgument, a
 		arg.Rs1 = op.decodeRegI(rj)
 		arg.Imm = imm
 		return
-	case OpFormatType_2R_si16:
-		imm := simm(x, 10, 16)
-		argRaw.Rd = rd
-		argRaw.Rs1 = rj
-		argRaw.Imm = imm
-		arg.Rd = op.decodeRegI(rd)
-		arg.Rs1 = op.decodeRegI(rj)
-		arg.Imm = imm
-		return
 	case OpFormatType_1R_si20:
 		imm := simm(x, 5, 20)
 		argRaw.Rd = rd
@@ -352,7 +343,7 @@ func (op _OpContextType) decodeInst(x uint32) (as abi.As, arg *abi.AsArgument, a
 		return
 	case OpFormatType_cj_offset:
 		imm := int32((rd << 16) | uimm(x, 10, 16))
-		imm = i32SignExtend(imm, 21)
+		imm = i32SignExtend(imm, 21) << 2
 		argRaw.Rs1 = rj & 0b_111
 		argRaw.Imm = imm
 		arg.Rs1 = abi.RegType(rj)
@@ -360,7 +351,7 @@ func (op _OpContextType) decodeInst(x uint32) (as abi.As, arg *abi.AsArgument, a
 		return
 	case OpFormatType_rj_offset:
 		imm := int32((rd << 16) | uimm(x, 10, 16))
-		imm = i32SignExtend(imm, 21)
+		imm = i32SignExtend(imm, 21) << 2
 		argRaw.Rs1 = rj
 		argRaw.Imm = imm
 		arg.Rs1 = op.decodeRegI(rj)
@@ -368,7 +359,7 @@ func (op _OpContextType) decodeInst(x uint32) (as abi.As, arg *abi.AsArgument, a
 		return
 	case OpFormatType_rj_rd_offset:
 		imm := int32(uimm(x, 10, 16))
-		imm = i32SignExtend(imm, 16)
+		imm = i32SignExtend(imm, 16) << 2
 		argRaw.Rs1 = rj
 		argRaw.Rd = rd
 		argRaw.Imm = imm
@@ -378,7 +369,7 @@ func (op _OpContextType) decodeInst(x uint32) (as abi.As, arg *abi.AsArgument, a
 		return
 	case OpFormatType_rd_rj_offset:
 		imm := int32(uimm(x, 10, 16))
-		imm = i32SignExtend(imm, 16)
+		imm = i32SignExtend(imm, 16) << 2
 		argRaw.Rd = rd
 		argRaw.Rs1 = rj
 		argRaw.Imm = imm
@@ -388,7 +379,7 @@ func (op _OpContextType) decodeInst(x uint32) (as abi.As, arg *abi.AsArgument, a
 		return
 	case OpFormatType_offset:
 		imm := int32((uimm(x, 0, 10) << 16) | (uimm(x, 10, 16)))
-		imm = i32SignExtend(imm, 26)
+		imm = i32SignExtend(imm, 26) << 2
 		argRaw.Imm = imm
 		arg.Imm = imm
 		return

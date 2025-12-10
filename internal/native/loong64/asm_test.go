@@ -122,13 +122,13 @@ func ExampleEncodeLA64() {
 	// 0x14000004 # LU12I.W A0, 0
 	// 0x0280F084 # ADDI.W A0, A0, 60
 	// 0x2A000085 # LD.BU A1, A0, 0
-	// 0x58006005 # BEQ ZERO, A1, 24
+	// 0x58001805 # BEQ ZERO, A1, 24
 	// 0x1420000C # LU12I.W T0, 65536
 	// 0x0280018C # ADDI.W T0, T0, 0
 	// 0x29000185 # ST.B A1, T0, 0
 	// 0x02800484 # ADDI.W A0, A0, 1
-	// 0x53FFA3FF # B -24
-	// 0x53FFF3FF # B -4
+	// 0x53FFEBFF # B -24
+	// 0x53FFFFFF # B -4
 }
 
 func ExampleDecode() {
@@ -136,13 +136,13 @@ func ExampleDecode() {
 		0x14000004, // # LU12I.W A0, 0
 		0x0280F084, // # ADDI.W A0, A0, 60
 		0x2A000085, // # LD.BU A1, A0, 0
-		0x58006005, // # BEQ ZERO, A1, 24
+		0x58001805, // # BEQ ZERO, A1, 24
 		0x1420000C, // # LU12I.W T0, 65536
 		0x0280018C, // # ADDI.W T0, T0, 0
 		0x29000185, // # ST.B A1, T0, 0
 		0x02800484, // # ADDI.W A0, A0, 1
-		0x53FFA3FF, // # B -24
-		0x53FFF3FF, // # B -4
+		0x53FFEBFF, // # B -24
+		0x53FFFFFF, // # B -4
 	}
 	for i, x := range instData {
 		as, arg, err := loong64.Decode(x)
@@ -161,11 +161,11 @@ func ExampleDecode() {
 	// 0x14000004 # LU12I.W A0, 0
 	// 0x0280F084 # ADDI.W A0, A0, 60
 	// 0x2A000085 # LD.BU A1, A0, 0
-	// 0x58006005 # BEQ ZERO, A1, 24
+	// 0x58001805 # BEQ ZERO, A1, 24
 	// 0x1420000C # LU12I.W T0, 65536
 	// 0x0280018C # ADDI.W T0, T0, 0
 	// 0x29000185 # ST.B A1, T0, 0
 	// 0x02800484 # ADDI.W A0, A0, 1
-	// 0x53FFA3FF # B -24
-	// 0x53FFF3FF # B -4
+	// 0x53FFEBFF # B -24
+	// 0x53FFFFFF # B -4
 }

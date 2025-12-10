@@ -133,14 +133,6 @@ func (ctx *_OpContextType) encodeRaw(as abi.As, arg *abi.AsArgument) (x uint32, 
 		si14 := arg.Imm & 0x3FFF
 		x |= (uint32(si14) << 10) | (rj << 5) | rd
 		return
-	case OpFormatType_2R_si16:
-		// 编码时候带符号的立即数正数部分范围可以放宽到无符号
-		assert(arg.Imm >= -(1<<15) && arg.Imm < (1<<16))
-		rd := ctx.regI(arg.Rd)
-		rj := ctx.regI(arg.Rs1)
-		si16 := arg.Imm & 0xFFFF
-		x |= (uint32(si16) << 10) | (rj << 5) | rd
-		return
 	case OpFormatType_1R_si20:
 		// 编码时候带符号的立即数正数部分范围可以放宽到无符号
 		assert(arg.Imm >= -(1<<19) && arg.Imm < (1<<20))
@@ -287,32 +279,42 @@ func (ctx *_OpContextType) encodeRaw(as abi.As, arg *abi.AsArgument) (x uint32, 
 		x |= hint
 		return
 	case OpFormatType_cj_offset:
-		off16_20 := (uint32(arg.Imm) >> 16) & 0b_1_1111
+		assert(arg.Imm&0b11 == 0)
+		imm := uint32(arg.Imm >> 2)
+		off16_20 := (imm >> 16) & 0b_1_1111
 		cj := uint32(arg.Rs1) & 0b_111
-		off0_15 := uint32(arg.Imm) & 0xFFFF
+		off0_15 := imm & 0xFFFF
 		x |= (off0_15 << 10) | (cj << 5) | off16_20
 		return
 	case OpFormatType_rj_offset:
-		off16_20 := (uint32(arg.Imm) >> 16) & 0b_1_1111
+		assert(arg.Imm&0b11 == 0)
+		imm := uint32(arg.Imm >> 2)
+		off16_20 := (imm >> 16) & 0b_1_1111
 		rj := ctx.regI(arg.Rs1)
-		off0_15 := uint32(arg.Imm) & 0xFFFF
+		off0_15 := imm & 0xFFFF
 		x |= (off0_15 << 10) | (rj << 5) | off16_20
 		return
 	case OpFormatType_rj_rd_offset:
+		assert(arg.Imm&0b11 == 0)
+		imm := uint32(arg.Imm >> 2)
 		rj := ctx.regI(arg.Rs1)
 		rd := ctx.regI(arg.Rd)
-		offset := uint32(arg.Imm) & 0xFFFF
+		offset := imm & 0xFFFF
 		x |= (offset << 10) | (rj << 5) | rd
 		return
 	case OpFormatType_rd_rj_offset:
+		assert(arg.Imm&0b11 == 0)
+		imm := uint32(arg.Imm >> 2)
 		rd := ctx.regI(arg.Rd)
 		rj := ctx.regI(arg.Rs1)
-		offset := uint32(arg.Imm) & 0xFFFF
+		offset := imm & 0xFFFF
 		x |= (offset << 10) | (rj << 5) | rd
 		return
 	case OpFormatType_offset:
-		off16_25 := (uint32(arg.Imm) >> 16) & 0b_11_1111_1111
-		off0_15 := uint32(arg.Imm) & 0xFFFF
+		assert(arg.Imm&0b11 == 0)
+		imm := uint32(arg.Imm >> 2)
+		off16_25 := (imm >> 16) & 0b_11_1111_1111
+		off0_15 := imm & 0xFFFF
 		x |= (off0_15 << 10) | off16_25
 		return
 	default:

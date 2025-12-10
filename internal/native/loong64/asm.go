@@ -67,8 +67,6 @@ func (ctx *_OpContextType) asmSyntax(
 		return fmt.Sprintf("%s %s, %s, %s", asNameFn(as, asName), rName(arg.Rd), rName(arg.Rs1), immValue)
 	case OpFormatType_2R_si14:
 		return fmt.Sprintf("%s %s, %s, %s", asNameFn(as, asName), rName(arg.Rd), rName(arg.Rs1), immValue)
-	case OpFormatType_2R_si16:
-		return fmt.Sprintf("%s %s, %s, %s", asNameFn(as, asName), rName(arg.Rd), rName(arg.Rs1), immValue)
 	case OpFormatType_1R_si20:
 		return fmt.Sprintf("%s %s, %s", asNameFn(as, asName), rName(arg.Rd), immValue)
 	case OpFormatType_0_2R:

@@ -1122,10 +1122,10 @@ var _AOpContextTable = [...]_OpContextType{
 	AMOD_DU:       {mask: 0xffff8000, value: 0x00238000, op: AMOD_DU, fmt: OpFormatType_3R},
 	AMOD_W:        {mask: 0xffff8000, value: 0x00208000, op: AMOD_W, fmt: OpFormatType_3R},
 	AMOD_WU:       {mask: 0xffff8000, value: 0x00218000, op: AMOD_WU, fmt: OpFormatType_3R},
-	AMOVCF2FR:     {mask: 0xffffff00, value: 0x0114d400, op: AMOVCF2FR, fmt: OpFormatType_1R_cj},
+	AMOVCF2FR:     {mask: 0xffffff00, value: 0x0114d400, op: AMOVCF2FR, fmt: OpFormatType_1F_cj},
 	AMOVCF2GR:     {mask: 0xffffff00, value: 0x0114dc00, op: AMOVCF2GR, fmt: OpFormatType_1R_cj},
 	AMOVFCSR2GR:   {mask: 0xfffffc00, value: 0x0114c800, op: AMOVFCSR2GR, fmt: OpFormatType_1R_fcsr},
-	AMOVFR2CF:     {mask: 0xfffffc18, value: 0x0114d000, op: AMOVFR2CF, fmt: OpFormatType_cd_1R},
+	AMOVFR2CF:     {mask: 0xfffffc18, value: 0x0114d000, op: AMOVFR2CF, fmt: OpFormatType_cd_1F},
 	AMOVFR2GR_D:   {mask: 0xfffffc00, value: 0x0114b800, op: AMOVFR2GR_D, fmt: OpFormatType_1R_1F},
 	AMOVFR2GR_S:   {mask: 0xfffffc00, value: 0x0114b400, op: AMOVFR2GR_S, fmt: OpFormatType_1R_1F},
 	AMOVFRH2GR_S:  {mask: 0xfffffc00, value: 0x0114bc00, op: AMOVFRH2GR_S, fmt: OpFormatType_1R_1F},
@@ -1550,8 +1550,6 @@ var _ = map[OpFormatType][]abi.As{
 		ASTPTR_D,
 		ASTPTR_W,
 	},
-	OpFormatType_2R_si16: { // len = 0
-	},
 	OpFormatType_1R_si20: { // len = 6
 		ALU12I_W,
 		ALU32I_D,
@@ -1595,11 +1593,11 @@ var _ = map[OpFormatType][]abi.As{
 	OpFormatType_1R_fcsr: { // len = 1
 		AMOVFCSR2GR,
 	},
-	OpFormatType_cd_1R: { // len = 2
-		AMOVFR2CF,
+	OpFormatType_cd_1R: { // len = 1
 		AMOVGR2CF,
 	},
-	OpFormatType_cd_1F: { // len = 0
+	OpFormatType_cd_1F: { // len = 1
+		AMOVFR2CF,
 	},
 	OpFormatType_cd_2F: { // len = 44
 		AFCMP_CAF_D,
@@ -1647,11 +1645,11 @@ var _ = map[OpFormatType][]abi.As{
 		AFCMP_SUN_D,
 		AFCMP_SUN_S,
 	},
-	OpFormatType_1R_cj: { // len = 2
-		AMOVCF2FR,
+	OpFormatType_1R_cj: { // len = 1
 		AMOVCF2GR,
 	},
-	OpFormatType_1F_cj: { // len = 0
+	OpFormatType_1F_cj: { // len = 1
+		AMOVCF2FR,
 	},
 	OpFormatType_1R_csr: { // len = 2
 		ACSRRD,
