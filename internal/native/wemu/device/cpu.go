@@ -3,6 +3,8 @@
 
 package device
 
+import "wa-lang.org/wa/internal/native/abi"
+
 // CPU接口
 type CPU interface {
 	GetPC() uint64
@@ -18,6 +20,9 @@ type CPU interface {
 
 	Reset(pc, sp uint64)
 	StepRun(bus *Bus) error
+
+	LookupRegister(regName string) (r abi.RegType, ok bool)
+	RegAliasString(r abi.RegType) string
 
 	InstString(x uint32) (string, error)
 }

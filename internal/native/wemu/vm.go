@@ -11,8 +11,6 @@ import (
 	"os"
 
 	"wa-lang.org/wa/internal/native/abi"
-	loongarch "wa-lang.org/wa/internal/native/loong64"
-	"wa-lang.org/wa/internal/native/riscv"
 	"wa-lang.org/wa/internal/native/wemu/device"
 	"wa-lang.org/wa/internal/native/wemu/device/dram"
 	"wa-lang.org/wa/internal/native/wemu/device/power"
@@ -216,20 +214,20 @@ func (p *WEmu) DebugRun() error {
 			fmt.Printf("PC  = 0x%08X\n", p.CPU.GetPC())
 			for i := regStart; i < p.CPU.XRegNum() && i < (regStart+regNum); i++ {
 				if p.Prog.CPU == abi.LOONG64 {
-					reg, ok := loongarch.LookupRegister(fmt.Sprintf("R%d", i))
+					reg, ok := p.CPU.LookupRegister(fmt.Sprintf("R%d", i))
 					if !ok {
 						break
 					}
 					fmt.Printf("R%-2d = 0x%08X # %s\n",
-						i, p.CPU.GetXReg(i), loongarch.RegAliasString(reg),
+						i, p.CPU.GetXReg(i), p.CPU.RegAliasString(reg),
 					)
 				} else {
-					reg, ok := riscv.LookupRegister(fmt.Sprintf("X%d", i))
+					reg, ok := p.CPU.LookupRegister(fmt.Sprintf("X%d", i))
 					if !ok {
 						break
 					}
 					fmt.Printf("X%-2d = 0x%08X # %s\n",
-						i, p.CPU.GetXReg(i), riscv.RegAliasString(reg),
+						i, p.CPU.GetXReg(i), p.CPU.RegAliasString(reg),
 					)
 				}
 			}
@@ -247,22 +245,22 @@ func (p *WEmu) DebugRun() error {
 			fmt.Printf("PC  = 0x%08X\n", p.CPU.GetPC())
 			for i := regStart; i < p.CPU.FRegNum() && i < (regStart+regNum); i++ {
 				if p.Prog.CPU == abi.LOONG64 {
-					reg, ok := loongarch.LookupRegister(fmt.Sprintf("F%d", i))
+					reg, ok := p.CPU.LookupRegister(fmt.Sprintf("F%d", i))
 					if !ok {
 						break
 					}
 					fmt.Printf("F%-2d = %v (0x%08X) # %s\n",
 						i, p.CPU.GetFReg(i), math.Float64bits(p.CPU.GetFReg(i)),
-						loongarch.RegAliasString(reg),
+						p.CPU.RegAliasString(reg),
 					)
 				} else {
-					reg, ok := riscv.LookupRegister(fmt.Sprintf("F%d", i))
+					reg, ok := p.CPU.LookupRegister(fmt.Sprintf("F%d", i))
 					if !ok {
 						break
 					}
 					fmt.Printf("F%-2d = %v (0x%08X) # %s\n",
 						i, p.CPU.GetFReg(i), math.Float64bits(p.CPU.GetFReg(i)),
-						riscv.RegAliasString(reg),
+						p.CPU.RegAliasString(reg),
 					)
 				}
 			}

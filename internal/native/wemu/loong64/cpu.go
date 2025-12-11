@@ -1170,3 +1170,11 @@ func (p *CPU) InstString(x uint32) (string, error) {
 	}
 	return loong64.AsmSyntax(as, "", arg), nil
 }
+
+func (p *CPU) LookupRegister(regName string) (r abi.RegType, ok bool) {
+	return loong64.LookupRegister(regName)
+}
+
+func (p *CPU) RegAliasString(r abi.RegType) string {
+	return loong64.RegAliasString(r)
+}
