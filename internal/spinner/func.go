@@ -524,12 +524,6 @@ func (b *Builder) expr0(e ast.Expr, tv types.TypeAndValue, block *wire.Block) wi
 			}
 		}
 
-		//// Regular function call.
-		//var v Call
-		//b.setCall(fn, e, &v.Call)
-		//v.setType(tv.Type)
-		//return fn.emit(&v)
-
 	case *ast.FuncLit:
 		// Todo
 		panic("")
