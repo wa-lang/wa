@@ -787,3 +787,127 @@ func (b *Block) EmitInstCOMP(x, y Value, pos int) *InstCOMP {
 	b.emit(v)
 	return v
 }
+
+/**************************************
+InstCall:  函数调用指令，Call 为 StaticCall、BuiltinCall、MethodCall、InterfaceCall、ClosureCall 之一
+**************************************/
+type InstCall struct {
+	aImv
+	Call Value
+}
+
+func (i *InstCall) Type() Type     { return i.Call.Type() }
+func (i *InstCall) Pos() int       { return i.Call.Pos() }
+func (i *InstCall) String() string { return i.Call.(fmt.Stringer).String() }
+
+// 在 Block 中添加一条 InstCall 指令，Call 为 StaticCall、BuiltinCall、MethodCall、InterfaceCall、ClosureCall 之一
+func (b *Block) EmitInstCall(call Value) *InstCall {
+	v := &InstCall{Call: call}
+	v.Stringer = v
+	v.pos = call.Pos()
+
+	b.emit(v)
+	return v
+}
+
+///**************************************
+//InstCallBuiltin:  调用内置函数指令
+//**************************************/
+//type InstCallBuiltin struct {
+//	aImv
+//	BuiltinCall
+//}
+//
+//// 在 Block 中添加一条 InstCallBuiltin 指令
+//func (b *Block) EmitInstCallBuiltin(call BuiltinCall) *InstCallBuiltin {
+//	v := &InstCallBuiltin{BuiltinCall: call}
+//	v.Stringer = v
+//	v.pos = call.Pos()
+//
+//	b.emit(v)
+//	return v
+//}
+//
+///**************************************
+//InstCallStatic:  调用静态函数指令
+//**************************************/
+//type InstCallStatic struct {
+//	aImv
+//	StaticCall
+//}
+//
+//// 在 Block 中添加一条 InstCallStatic 指令
+//func (b *Block) EmitInstCallStatic(call StaticCall) *InstCallStatic {
+//	v := &InstCallStatic{StaticCall: call}
+//	v.Stringer = v
+//	v.pos = call.Pos()
+//
+//	b.emit(v)
+//	return v
+//}
+//
+///**************************************
+//InstCallMethod:  调用对象方法指令
+//**************************************/
+//type InstCallMethod struct {
+//	aImv
+//	MethodCall
+//}
+//
+//func (i *InstCallMethod) String() string {
+//	return i.Recv.Name() + i.Call.String()
+//}
+//
+//// 在 Block 中添加一条 InstCallMethod 指令
+//func (b *Block) EmitInstCallMethod(call MethodCall) *InstCallMethod {
+//	v := &InstCallMethod{MethodCall: call}
+//	v.Stringer = v
+//	v.pos = call.Pos()
+//
+//	b.emit(v)
+//	return v
+//}
+//
+///**************************************
+//InstCallClosure:  调用闭包指令
+//**************************************/
+//type InstCallClosure struct {
+//	aImv
+//	ClosureCall
+//}
+//
+//func (i *InstCallClosure) String() string {
+//	return i.Closure.Name() + i.Call.String()
+//}
+//
+//// 在 Block 中添加一条 InstCallMethod 指令
+//func (b *Block) EmitInstCallClosure(call ClosureCall) *InstCallClosure {
+//	v := &InstCallClosure{ClosureCall: call}
+//	v.Stringer = v
+//	v.pos = call.Pos()
+//
+//	b.emit(v)
+//	return v
+//}
+//
+///**************************************
+//InstInvoke:  调用接口方法指令
+//**************************************/
+//type InstInvoke struct {
+//	aImv
+//	InterfaceCall
+//}
+//
+//func (i *InstInvoke) String() string {
+//	return i.Interface.Name() + i.Call.String()
+//}
+//
+//// 在 Block 中添加一条 InstInvoke 指令
+//func (b *Block) EmitInstInvoke(call InterfaceCall) *InstInvoke {
+//	v := &InstInvoke{InterfaceCall: call}
+//	v.Stringer = v
+//	v.pos = call.Pos()
+//
+//	b.emit(v)
+//	return v
+//}

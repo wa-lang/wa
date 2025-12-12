@@ -160,7 +160,7 @@ FnSig: 函数签名
 **************************************/
 type FnSig struct {
 	Params  []Type //参数类型列表
-	Results []Type //返回值类型列表
+	Results Type   //返回值类型，无返回值: Void，多返回值：Tuple
 }
 
 func (p *FnSig) Name() string           { panic("FnSig.Name() is unimplemented") }
@@ -199,15 +199,62 @@ func (p *FreeVar) LocationKind() LocationKind { return LocationKindHeap }
 func (p *FreeVar) DataType() Type             { return p.typ }
 
 /**************************************
-Builtin: 内置函数
+StaticCall: 包函数、非闭包匿名函数调用。满足 Value 接口。
 **************************************/
-type Builtin struct {
-	name string
-	sig  FnSig
+type StaticCall struct {
+	Call
 }
 
-func (p *Builtin) Name() string        { return p.name }
-func (p *Builtin) Kind() ValueKind     { panic("Builtin.Kind() is unimplemented") }
-func (p *Builtin) Type() Type          { return &p.sig }
-func (p *Builtin) Pos() int            { panic("Builtin.Pos() is unimplemented") }
-func (p *Builtin) Object() interface{} { panic("Builtin.Object() is unimplemented") }
+func (p *StaticCall) Kind() ValueKind     { panic("StaticCall.Kind() is unimplemented") }
+func (p *StaticCall) Pos() int            { return p.Call.Pos }
+func (p *StaticCall) Object() interface{} { panic("StaticCall.Object() is unimplemented") }
+
+/**************************************
+BuiltinCall: 内置函数调用。内置函数调用为特殊的静态调用，满足 Value 接口
+**************************************/
+type BuiltinCall struct {
+	Call
+}
+
+func (p *BuiltinCall) Kind() ValueKind     { panic("Builtin.Kind() is unimplemented") }
+func (p *BuiltinCall) Pos() int            { return p.Call.Pos }
+func (p *BuiltinCall) Object() interface{} { panic("Builtin.Object() is unimplemented") }
+
+/**************************************
+MethodCall: 对象方法调用，满足 Value 接口
+**************************************/
+type MethodCall struct {
+	Recv Value // 被调用的对象，既 recv/接收器
+	Call
+}
+
+func (p *MethodCall) Kind() ValueKind     { panic("MethodCall.Kind() is unimplemented") }
+func (p *MethodCall) Pos() int            { return p.Call.Pos }
+func (p *MethodCall) Object() interface{} { panic("MethodCall.Object() is unimplemented") }
+func (p *MethodCall) String() string      { return p.Recv.Name() + "." + p.Call.String() }
+
+/**************************************
+InterfaceCall: 接口方法调用（既 Invoke），满足 Value 接口
+**************************************/
+type InterfaceCall struct {
+	Interface Value // 被调用的接口
+	Call
+}
+
+func (p *InterfaceCall) Kind() ValueKind     { panic("InterfaceCall.Kind() is unimplemented") }
+func (p *InterfaceCall) Pos() int            { return p.Call.Pos }
+func (p *InterfaceCall) Object() interface{} { panic("InterfaceCall.Object() is unimplemented") }
+func (p *InterfaceCall) String() string      { return p.Interface.Name() + "." + p.Call.String() }
+
+/**************************************
+ClosureCall: 闭包调用，满足 Value 接口
+**************************************/
+type ClosureCall struct {
+	Closure Value
+	Call
+}
+
+func (p *ClosureCall) Kind() ValueKind     { panic("ClosureCall.Kind() is unimplemented") }
+func (p *ClosureCall) Pos() int            { return p.Call.Pos }
+func (p *ClosureCall) Object() interface{} { panic("ClosureCall.Object() is unimplemented") }
+func (p *ClosureCall) String() string      { return p.Closure.Name() + "." + p.Call.String() }
