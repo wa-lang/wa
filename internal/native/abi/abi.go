@@ -57,17 +57,15 @@ type BuiltinFn int16
 const (
 	BuiltinFn_HI       = iota + 1 // %hi(symbol) # 绝对地址 HI20
 	BuiltinFn_LO                  // %lo(symbol) # 绝对地址 LO12
-	BuiltinFn_PCREL               // %pcrel(symbol) # PC相对地址
 	BuiltinFn_PCREL_HI            // %pcrel_hi(symbol) # PC相对地址 HI20
 	BuiltinFn_PCREL_LO            // %pcrel_lo(label)  # label 对应的指令中, 计算出的PC相对地址的 LO12 部分, 参数必须是 label
-	BuiltinFn_STRLEN              // %strlen(symbol) # 计算字符串面值长度
+	BuiltinFn_SIZEOF              // %sizeof(symbol) # 获取全局变量的内存大小
 
 	BuiltinFn_HI_zh
 	BuiltinFn_LO_zh
-	BuiltinFn_PCREL_zh
 	BuiltinFn_PCREL_HI_zh
 	BuiltinFn_PCREL_LO_zh
-	BuiltinFn_STRLEN_zh
+	BuiltinFn_SIZEOF_zh
 
 	BuiltinFn_Max // 标记结束
 )

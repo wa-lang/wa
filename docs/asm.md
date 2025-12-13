@@ -30,7 +30,7 @@
 - `f32`: `float32`
 - `f64`: `float63`
 - `ptr`: uint pointer
-- `const`: 定义全局常量
+- `const`: 定义全局常量(不含字符串)
 - `global`: 定义全局变量
 - `func`: 定义函数
 - 寄存器: 平台相关定义
@@ -163,6 +163,19 @@ func $add {
 Loop:
 }
 ```
+
+## 指令中的宏
+
+- `%hi(symbol)`: 绝对地址高20bit
+- `%lo(symbol)`: 绝对地址低12bit
+- `%pcrel_hi(symbol)`: PC相对地址高20bit
+- `%pcrel_lo(label)`: PC相对地址低12bit, 参数是 `%pcrel_hi(symbol)` 对应的 `label`
+- `%sizeof(symbol)`: 计算全局变量内存大小
+- `%高位(symbol)`: 绝对地址高20bit
+- `%低位(symbol)`: 绝对地址低12bit
+- `%相对高位(symbol)`: PC相对地址高20bit
+- `%相对低位(label)`: PC相对地址低12bit, 参数是 `%pcrel_hi(symbol)` 对应的 `label`
+- `%内存字节数(symbol)`: 计算全局变量内存大小
 
 ## 例子(中文版)
 

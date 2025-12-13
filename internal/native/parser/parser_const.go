@@ -25,6 +25,9 @@ func (p *parser) parseConst(tok token.Token) *ast.Const {
 	pConst.Name = p.parseIdent()
 	p.acceptToken(token.ASSIGN)
 	pConst.Value = p.parseBasicLit()
+	if pConst.Value.LitKind == token.STRING {
+		p.errorf(pConst.Value.Pos, "const(%s) donot support string type", pConst.Value.LitString)
+	}
 	pConst.Comment = p.parseTailComment(pConst.Pos)
 
 	p.consumeSemicolonList()

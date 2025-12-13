@@ -262,6 +262,19 @@ func (p *_Assembler) asmFunc(fn *ast.Func) (err error) {
 				}
 				inst.Arg.Imm = lo
 
+			case abi.BuiltinFn_SIZEOF, abi.BuiltinFn_SIZEOF_zh:
+				var g *ast.Global
+				for _, x := range p.file.Globals {
+					if x.Name == inst.Arg.Symbol {
+						g = x
+						break
+					}
+				}
+				if g == nil {
+					panic(fmt.Errorf("global %q not found", inst.Arg.Symbol))
+				}
+				inst.Arg.Imm = int32(g.Size)
+
 			default:
 				// 如果是label, 则为 pc 相对地址
 				if _, isLabel := label2pcMap[inst.Arg.Symbol]; isLabel {

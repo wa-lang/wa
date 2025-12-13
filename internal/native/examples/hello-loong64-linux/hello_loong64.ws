@@ -6,7 +6,7 @@ const $SYS_write = 64
 const $SYS_exit = 93
 
 # 用于输出的字符串
-global $message = "Hello Linux-loong64!\n\x00"
+global $message = "Hello Linux-loong64!\n"
 
 # 主函数
 func _start {
@@ -18,8 +18,8 @@ func _start {
     pcaddu12i a1, %pcrel_hi($message)   # 高20位
     addi.w    a1, a1, %pcrel_lo(%begin) # 低12位
 
-    # a2 = strlen($message)
-    ori a2, zero, %strlen($message)
+    # a2 = sizeof($message)
+    ori a2, zero, %sizeof($message)
 
     # 执行系统调用
     # a7 = SYS_write(64)

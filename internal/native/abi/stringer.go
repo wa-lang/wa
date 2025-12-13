@@ -23,27 +23,23 @@ func (fn BuiltinFn) String() string {
 		return "%hi"
 	case BuiltinFn_LO:
 		return "%lo"
-	case BuiltinFn_PCREL:
-		return "%pcrel"
 	case BuiltinFn_PCREL_HI:
 		return "%pcrel_hi"
 	case BuiltinFn_PCREL_LO:
 		return "%pcrel_lo"
-	case BuiltinFn_STRLEN:
-		return "%strlen"
+	case BuiltinFn_SIZEOF:
+		return "%sizeof"
 
 	case BuiltinFn_HI_zh:
 		return "%高位"
 	case BuiltinFn_LO_zh:
 		return "%低位"
-	case BuiltinFn_PCREL_zh:
-		return "%相对偏移"
 	case BuiltinFn_PCREL_HI_zh:
 		return "%相对高位"
 	case BuiltinFn_PCREL_LO_zh:
 		return "%相对低位"
-	case BuiltinFn_STRLEN_zh:
-		return "%字符串长度"
+	case BuiltinFn_SIZEOF_zh:
+		return "%内存字节数"
 	}
 	return fmt.Sprintf("abi.BuiltinFn(%d)", int(fn))
 }
