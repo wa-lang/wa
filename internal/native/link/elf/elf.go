@@ -54,6 +54,14 @@ const (
 	ELFDATA2MSB Data = 2 // 2's complement big-endian.
 )
 
+// OSABI is found in Header.Ident[EI_OSABI] and Header.OSABI.
+type OSABI byte
+
+const (
+	ELFOSABI_NONE  OSABI = 0 // UNIX System V ABI
+	ELFOSABI_LINUX OSABI = 3 // Linux
+)
+
 // Type is found in Header.Type.
 type Type uint16
 

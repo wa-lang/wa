@@ -29,6 +29,8 @@ func (fn BuiltinFn) String() string {
 		return "%pcrel_hi"
 	case BuiltinFn_PCREL_LO:
 		return "%pcrel_lo"
+	case BuiltinFn_STRLEN:
+		return "%strlen"
 
 	case BuiltinFn_HI_zh:
 		return "%高位"
@@ -40,6 +42,8 @@ func (fn BuiltinFn) String() string {
 		return "%相对高位"
 	case BuiltinFn_PCREL_LO_zh:
 		return "%相对低位"
+	case BuiltinFn_STRLEN_zh:
+		return "%字符串长度"
 	}
 	return fmt.Sprintf("abi.BuiltinFn(%d)", int(fn))
 }

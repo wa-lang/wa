@@ -263,10 +263,12 @@ func (p *_Assembler) asmFunc(fn *ast.Func) (err error) {
 				inst.Arg.Imm = lo
 
 			default:
-				// 因为loong/riscv指令只有32bit宽度, 默认是无法完全编码绝对地址的
-				// 所以其他情况都也作为相对pc的地址
-				// 或者说汇编语言中不能直接使用面值
-				inst.Arg.Imm = int32(addr - pc)
+				// 如果是label, 则为 pc 相对地址
+				if _, isLabel := label2pcMap[inst.Arg.Symbol]; isLabel {
+					inst.Arg.Imm = int32(addr - pc)
+				} else {
+					inst.Arg.Imm = int32(addr)
+				}
 			}
 		}
 
