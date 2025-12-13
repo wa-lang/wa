@@ -2,14 +2,14 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 
 # 系统调用编号
-const $SYS_write = 64
-const $SYS_exit = 93
+常量 $SYS_write = 64
+常量 $SYS_exit = 93
 
 # 用于输出的字符串
-global $信札 = "你好, 龙的传人(Loongson Linux)!\n\x00"
+全局 $信札 = "你好, 龙的传人(Loongson Linux)!\n\x00"
 
 # 主函数
-func _start {
+函数 _启动:
 %开篇:
     # 参甲格 = 标注输出(1)
     或立 参甲格, 零格, 1
@@ -30,4 +30,4 @@ func _start {
     或立 参甲格, 零格, 0
     或立 参辛格, 零格, $SYS_exit
     系统调用 0
-}
+完毕

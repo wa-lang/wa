@@ -182,7 +182,6 @@ func (p *Func) String() string {
 	sb.WriteString(p.Tok.String())
 	sb.WriteString(" ")
 	sb.WriteString(p.Name)
-	sb.WriteString(p.Type.String())
 	sb.WriteString(" ")
 	sb.WriteString("{\n")
 
@@ -217,10 +216,6 @@ func (p *Func) String() string {
 			sb.WriteString("\n\n")
 		}
 
-		for _, obj := range p.Body.Locals {
-			sb.WriteString(obj.String())
-			sb.WriteString("\n\n")
-		}
 		for _, obj := range p.Body.Insts {
 			sb.WriteString(obj.String())
 			sb.WriteString("\n\n")
@@ -231,59 +226,12 @@ func (p *Func) String() string {
 	return sb.String()
 }
 
-func (p *FuncType) String() string {
-	var sb strings.Builder
-	if len(p.Args) > 0 {
-		sb.WriteString("(")
-		for i, arg := range p.Args {
-			if i > 0 {
-				sb.WriteString(", ")
-			}
-			sb.WriteString(arg.String())
-		}
-		sb.WriteString(")")
-	}
-	if p.Return != token.NONE {
-		sb.WriteString(" => ")
-		sb.WriteString(p.Return.String())
-	}
-	return sb.String()
-}
-
 func (p *FuncBody) String() string {
 	var sb strings.Builder
 	for _, obj := range p.Objects {
 		sb.WriteString(obj.String())
 		sb.WriteString("\n")
 	}
-	return sb.String()
-}
-
-func (p *Argument) String() string {
-	var sb strings.Builder
-	sb.WriteString(p.Name)
-	sb.WriteString(":")
-	sb.WriteString(p.Type.String())
-	return sb.String()
-}
-
-func (p *Local) String() string {
-	var sb strings.Builder
-	if p.Doc != nil {
-		sb.WriteString(p.Doc.String())
-		sb.WriteString("\n")
-	}
-	sb.WriteString("\t")
-	sb.WriteString(p.Tok.String())
-	sb.WriteString(" ")
-	sb.WriteString(p.Name)
-	sb.WriteString(":")
-	sb.WriteString(p.Type.String())
-	if p.Comment != nil {
-		sb.WriteString(" ")
-		sb.WriteString(p.Comment.String())
-	}
-	sb.WriteString("\n")
 	return sb.String()
 }
 
