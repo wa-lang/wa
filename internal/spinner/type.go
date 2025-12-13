@@ -313,9 +313,12 @@ func (b *Builder) BuildType(t types.Type) wire.Type {
 				logger.Fatalf("Todo:%T", ut)
 			} //*/
 
+	default:
+		panic(fmt.Sprintf("Todo:%T", t))
+
 	}
 
-	panic(fmt.Sprintf("Todo:%T", t))
+	return wtype
 
 	// 需要处理 Signature
 }

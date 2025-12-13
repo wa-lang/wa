@@ -478,15 +478,63 @@ func (b *Builder) expr0(e ast.Expr, tv types.TypeAndValue, block *wire.Block) wi
 			panic("illegal op in BinaryExpr: " + e.Op.String())
 		} // :*ast.BinaryExpr
 
+	case *ast.CallExpr:
+		if b.info.Types[e.Fun].IsType() {
+			// 显式类型转换
+			panic("Todo")
+		}
+
+		var call wire.Call
+
+		if id, ok := unparen(e.Fun).(*ast.Ident); ok {
+			switch obj := b.info.Uses[id].(type) {
+			case *types.Builtin:
+				// 内置函数调用，如 make、panic 等，runtime.SetFinalizer 也在此处理
+				println(obj)
+				panic("Todo")
+
+			case *types.Func:
+				call.FnName = obj.FullName()
+				call.Sig = b.buildSig(obj.Type().(*types.Signature))
+				for _, v := range e.Args {
+					param := b.expr(v, block)
+					call.Args = append(call.Args, param)
+				}
+				call.Pos = int(e.Pos())
+
+				sc := wire.StaticCall{Call: call}
+				return block.EmitInstCall(&sc)
+			}
+		}
+
+		if selector, ok := unparen(e.Fun).(*ast.SelectorExpr); ok {
+			sel, ok := b.info.Selections[selector]
+			if ok && sel.Kind() == types.MethodVal {
+				obj := sel.Obj().(*types.Func)
+				recvType := obj.Type().(*types.Signature).Recv().Type()
+				if types.IsInterface(recvType) {
+					// 接口调用
+					panic("Todo")
+				} else {
+					// 对象方法调用
+					panic("Todo")
+				}
+			} else {
+				panic("")
+			}
+		}
+
+		//// Regular function call.
+		//var v Call
+		//b.setCall(fn, e, &v.Call)
+		//v.setType(tv.Type)
+		//return fn.emit(&v)
+
 	case *ast.FuncLit:
 		// Todo
 		panic("")
 
 	case *ast.TypeAssertExpr:
-		// Todo
-		panic("")
-
-	case *ast.CallExpr:
 		// Todo
 		panic("")
 
@@ -522,4 +570,13 @@ func (b *Builder) exprN(e ast.Expr, block *wire.Block) wire.Value {
 		return b.exprN(e.X, block)
 	}
 	panic(fmt.Sprintf("exprN(%T)", e))
+}
+
+func (b *Builder) buildSig(s *types.Signature) (d wire.FnSig) {
+	for i := 0; i < s.Params().Len(); i++ {
+		t := b.BuildType(s.Params().At(i).Type())
+		d.Params = append(d.Params, t)
+	}
+	d.Results = b.BuildType(s.Results())
+	return
 }
