@@ -27,25 +27,29 @@ import (
 
 // 编译器后端类型
 const (
-	WaBackend_Default = wasrc.WaBackend_wat // 默认
+	WaBackend_Default = wasrc.WaBackend_Default // 默认
 
-	WaBackend_wat = wasrc.WaBackend_wat // 输出 wat
+	WaBackend_wat  = wasrc.WaBackend_wat  // 输出 wat
+	WaBackend_wair = wasrc.WaBackend_wair // 输出 wair
 )
 
 // 目标平台类型, 可管理后缀名
 const (
-	WaOS_Default = wasrc.WaOS_js // 默认
+	WaOS_Default = wasrc.WaOS_Default // 默认
 
 	WaOS_js      = wasrc.WaOS_js      // 浏览器 JS
 	WaOS_wasm4   = wasrc.WaOS_wasm4   // WASM4 接口
 	WaOS_arduino = wasrc.WaOS_arduino // Arduino
+	WaOS_linux   = wasrc.WaOS_linux   // Linux
 	WaOS_unknown = wasrc.WaOS_unknown // Unknown
 )
 
 // 体系结构类型
 const (
-	WaArch_Default = wasrc.WaArch_wasm // 默认
-	WaArch_wasm    = wasrc.WaArch_wasm // wasm 平台
+	WaArch_Default = wasrc.WaArch_Default // 默认
+	WaArch_wasm    = wasrc.WaArch_wasm    // wasm 平台
+	WaArch_loong64 = wasrc.WaArch_loong64 // 龙芯64
+	WaArch_riscv32 = wasrc.WaArch_riscv32 // RISCV32
 )
 
 // 后端列表

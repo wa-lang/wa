@@ -24,7 +24,8 @@ package src
 const (
 	WaBackend_Default = WaBackend_wat // 默认
 
-	WaBackend_wat = "wat" // 输出 wat
+	WaBackend_wat  = "wat"  // 输出 wat
+	WaBackend_wair = "wair" // 输出 wair
 )
 
 // 目标平台类型, 可管理后缀名
@@ -34,6 +35,7 @@ const (
 	WaOS_js      = "js"      // 浏览器 JS
 	WaOS_wasm4   = "wasm4"   // WASM4 游戏
 	WaOS_arduino = "arduino" // Arduino 平台
+	WaOS_linux   = "linux"   // Linux
 	WaOS_unknown = "unknown" // Unknown
 )
 
@@ -41,11 +43,14 @@ const (
 const (
 	WaArch_Default = WaArch_wasm // 默认
 	WaArch_wasm    = "wasm"      // wasm 平台
+	WaArch_loong64 = "loong64"   // 龙芯64
+	WaArch_riscv32 = "riscv32"   // RISCV32
 )
 
 // 后端列表
 var WaBackend_List = []string{
 	WaBackend_wat,
+	WaBackend_wair,
 }
 
 // OS 列表
@@ -53,12 +58,15 @@ var WaOS_List = []string{
 	WaOS_js,
 	WaOS_wasm4,
 	WaOS_arduino,
+	WaOS_linux,
 	WaOS_unknown,
 }
 
 // CPU 列表
 var WaArch_List = []string{
 	WaArch_wasm,
+	WaArch_loong64,
+	WaArch_riscv32,
 }
 
 // 检查 OS 值是否 OK
