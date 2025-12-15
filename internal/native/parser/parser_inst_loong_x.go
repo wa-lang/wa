@@ -148,12 +148,12 @@ func (p *parser) parseInst_loong(fn *ast.Func) (inst *ast.Instruction) {
 		p.acceptToken(token.COMMA)
 		rj := p.parseRegI_loong()
 		p.acceptToken(token.COMMA)
-		si12, si12Symbol, ui12SymbolDecor := p.parseInst_loong_imm_si12()
+		si12, si12Symbol, symbolDecor := p.parseInst_loong_imm_si12()
 		inst.Arg.Rd = rd
 		inst.Arg.Rs1 = rj
 		inst.Arg.Imm = si12
 		inst.Arg.Symbol = si12Symbol
-		inst.Arg.SymbolDecor = ui12SymbolDecor
+		inst.Arg.SymbolDecor = symbolDecor
 		return inst
 
 	case loong64.OpFormatType_2R_ui12:
@@ -161,11 +161,12 @@ func (p *parser) parseInst_loong(fn *ast.Func) (inst *ast.Instruction) {
 		p.acceptToken(token.COMMA)
 		rj := p.parseRegI_loong()
 		p.acceptToken(token.COMMA)
-		ui12, ui12Symbol := p.parseInst_loong_imm_ui12()
+		ui12, ui12Symbol, symbolDecor := p.parseInst_loong_imm_ui12()
 		inst.Arg.Rd = rd
 		inst.Arg.Rs1 = rj
 		inst.Arg.Imm = ui12
 		inst.Arg.Symbol = ui12Symbol
+		inst.Arg.SymbolDecor = symbolDecor
 		return inst
 	case loong64.OpFormatType_2R_si14:
 		rd := p.parseRegI_loong()
@@ -509,8 +510,8 @@ func (p *parser) parseInst_loong_imm_si12() (s12 int32, symbol string, symbolDec
 }
 
 // 只有 ui12 和 si20 指令支持宏修饰函数
-func (p *parser) parseInst_loong_imm_ui12() (ui12 int32, symbol string) {
-	return p.parseInst_loong_immOrSymbol()
+func (p *parser) parseInst_loong_imm_ui12() (ui12 int32, symbol string, symbolDecor abi.BuiltinFn) {
+	return p.parseInst_loong_immOrSymbolDecor()
 }
 
 func (p *parser) parseInst_loong_imm_si14() (si14 int32, symbol string) {

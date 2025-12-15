@@ -12,5 +12,8 @@ build-zh:
 objdump:
 	$(WA) objdump -prog hello_loong64.ws.elf.exe
 
+run:
+	./hello_loong64.ws.elf.exe
+
 clean:
 	-rm hello.o hello.elf.exe
