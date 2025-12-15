@@ -5,6 +5,7 @@ package appobjdump
 
 import (
 	"debug/elf"
+	"encoding/binary"
 	"fmt"
 	"io"
 	"os"
@@ -12,6 +13,8 @@ import (
 	"unicode"
 
 	"wa-lang.org/wa/internal/3rdparty/cli"
+	"wa-lang.org/wa/internal/native/loong64"
+	"wa-lang.org/wa/internal/native/riscv"
 )
 
 var CmdObjdump = &cli.Command{
@@ -81,7 +84,7 @@ func cmdProgdump(filename string) {
 				fmt.Println("ERR:", err)
 				continue
 			}
-			printProgText(textAddr, textData)
+			printProgText(f.Machine, textAddr, textData)
 		} else {
 			dataAddr := int64(p.Vaddr)
 			dataData := make([]byte, p.Filesz)
@@ -95,21 +98,47 @@ func cmdProgdump(filename string) {
 	}
 }
 
-func printProgText(addr int64, data []byte) {
+func printProgText(machine elf.Machine, addr int64, data []byte) {
 	fmt.Printf("[.text.] ")
-	for i := 0; i < 16; i++ {
+	for i := 0; i < 4; i++ {
 		fmt.Printf("%02X ", i)
 	}
 	fmt.Println()
 
-	for k := 0; k < len(data); k += 16 {
+	for k := 0; k < len(data); k += 4 {
 		fmt.Printf("%08X ", addr+int64(k))
-		for i := 0; i < 16 && k+i < len(data); i++ {
-			fmt.Printf("%02X ", data[k+i])
+		for i := 0; i < 4; i++ {
+			if k+i < len(data) {
+				fmt.Printf("%02X ", data[k+i])
+			} else {
+				fmt.Print("   ")
+			}
 		}
-		fmt.Println()
+		x := binary.LittleEndian.Uint32(data[k:][:4])
+		fmt.Println("#", decodeInst(machine, x))
 	}
 	fmt.Println()
+}
+
+func decodeInst(machine elf.Machine, x uint32) string {
+	switch machine {
+	case elf.EM_LOONGARCH:
+		as, arg, err := loong64.Decode(x)
+		if err != nil {
+			return err.Error()
+		}
+		return loong64.AsmSyntax(as, "", arg)
+
+	case elf.EM_RISCV:
+		as, arg, err := riscv.Decode(x)
+		if err != nil {
+			return err.Error()
+		}
+		return riscv.AsmSyntax(as, "", arg)
+
+	default:
+		return fmt.Sprintf("unsupport %v", machine)
+	}
 }
 
 func printProgData(addr int64, data []byte) {
