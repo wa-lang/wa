@@ -4,7 +4,6 @@
 package appobjdump
 
 import (
-	"debug/elf"
 	"encoding/binary"
 	"fmt"
 	"io"
@@ -13,6 +12,7 @@ import (
 	"unicode"
 
 	"wa-lang.org/wa/internal/3rdparty/cli"
+	"wa-lang.org/wa/internal/native/link/elf"
 	"wa-lang.org/wa/internal/native/loong64"
 	"wa-lang.org/wa/internal/native/riscv"
 )
