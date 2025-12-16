@@ -14,10 +14,18 @@ const (
 type CPUType int
 
 const (
-	RISCV64 CPUType = iota + 1
-	RISCV32
+	CPU_Nil CPUType = iota
 	LOONG64
+	RISCV64
+	RISCV32
+	CPU_Max
 )
+
+var _CPUType_strings = []string{
+	LOONG64: "loong64",
+	RISCV64: "riscv64",
+	RISCV32: "riscv32",
+}
 
 // 链接参数
 type LinkOptions struct {
@@ -55,20 +63,82 @@ type As int16
 type BuiltinFn int16
 
 const (
-	BuiltinFn_HI       = iota + 1 // %hi(symbol) # 绝对地址 HI20
-	BuiltinFn_LO                  // %lo(symbol) # 绝对地址 LO12
-	BuiltinFn_PCREL_HI            // %pcrel_hi(symbol) # PC相对地址 HI20
-	BuiltinFn_PCREL_LO            // %pcrel_lo(label)  # label 对应的指令中, 计算出的PC相对地址的 LO12 部分, 参数必须是 label
-	BuiltinFn_SIZEOF              // %sizeof(symbol) # 获取全局变量的内存大小
+	BuiltinFn_Nil BuiltinFn = iota
 
-	BuiltinFn_HI_zh
-	BuiltinFn_LO_zh
-	BuiltinFn_PCREL_HI_zh
-	BuiltinFn_PCREL_LO_zh
-	BuiltinFn_SIZEOF_zh
+	// =============== 开始 ===============
+
+	// 龙芯内置宏(基础)
+	BuiltinFn_ABS_LO12   // %abs_lo12(symbol)
+	BuiltinFn_ABS_HI20   // %abs_hi20(symbol)
+	BuiltinFn_ABS64_LO20 // %abs_lo20(symbol)
+	BuiltinFn_ABS64_HI12 // %abs_hi12(symbol)
+	BuiltinFn_PC_LO12    // %pc_lo12(symbol)
+	BuiltinFn_PC_HI20    // %pc_hi20(symbol)
+	BuiltinFn_PC64_LO20  // %pc_lo20(symbol)
+	BuiltinFn_PC64_HI12  // %pc_hi12(symbol)
+
+	// RISCV 定义的宏(扩展)
+	BuiltinFn_HI       // %hi(symbol)
+	BuiltinFn_LO       // %lo(symbol)
+	BuiltinFn_PCREL_HI // %pcrel_hi(symbol)
+	BuiltinFn_PCREL_LO // %pcrel_lo(label) # 注意, RISCV 中该参数是 label
+
+	// 通用宏
+	BuiltinFn_SIZEOF // %sizeof(symbol) # 获取全局变量的内存大小
+
+	// =============== 以下是对应的中文定义 ===============
+
+	// 龙芯内置宏(基础)
+	BuiltinFn_ABS_LO12_zh   // %绝对.低12(符号)
+	BuiltinFn_ABS_HI20_zh   // %绝对.高20(符号)
+	BuiltinFn_ABS64_LO20_zh // %绝对64.低20(符号)
+	BuiltinFn_ABS64_HI12_zh // %绝对64.高12(符号)
+	BuiltinFn_PC_LO12_zh    // %相对.低12(符号)
+	BuiltinFn_PC_HI20_zh    // %相对.高20(符号)
+	BuiltinFn_PC64_LO20_zh  // %相对64.低20(符号)
+	BuiltinFn_PC64_HI12_zh  // %相对64.高12(符号)
+
+	// RISCV 定义的宏(扩展)
+	BuiltinFn_HI_zh       // %高位(符号)
+	BuiltinFn_LO_zh       // %低位(符号)
+	BuiltinFn_PCREL_HI_zh // %相对高位(符号)
+	BuiltinFn_PCREL_LO_zh // %相对低位(标签) # 注意, RISCV 中该参数是标签
+
+	BuiltinFn_SIZEOF_zh // %内存字节数
+
+	// =============== 结束 ===============
 
 	BuiltinFn_Max // 标记结束
 )
+
+var _BuiltinFn_strings = []string{
+	BuiltinFn_ABS_LO12:      "%abs_lo12",
+	BuiltinFn_ABS_HI20:      "%abs_hi20",
+	BuiltinFn_ABS64_LO20:    "%abs_lo20",
+	BuiltinFn_ABS64_HI12:    "%abs_hi12",
+	BuiltinFn_PC_LO12:       "%pc_lo12",
+	BuiltinFn_PC_HI20:       "%pc_hi20",
+	BuiltinFn_PC64_LO20:     "%pc_lo20",
+	BuiltinFn_PC64_HI12:     "%pc_hi12",
+	BuiltinFn_HI:            "%hi",
+	BuiltinFn_LO:            "%lo",
+	BuiltinFn_PCREL_HI:      "%pcrel_hi",
+	BuiltinFn_PCREL_LO:      "%pcrel_lo",
+	BuiltinFn_SIZEOF:        "%sizeof",
+	BuiltinFn_ABS_LO12_zh:   "%绝对.低12",
+	BuiltinFn_ABS_HI20_zh:   "%绝对.高20",
+	BuiltinFn_ABS64_LO20_zh: "%绝对64.低20",
+	BuiltinFn_ABS64_HI12_zh: "%绝对64.高12",
+	BuiltinFn_PC_LO12_zh:    "%相对.低12",
+	BuiltinFn_PC_HI20_zh:    "%相对.高20",
+	BuiltinFn_PC64_LO20_zh:  "%相对64.低20",
+	BuiltinFn_PC64_HI12_zh:  "%相对64.高12",
+	BuiltinFn_HI_zh:         "%高位",
+	BuiltinFn_LO_zh:         "%低位",
+	BuiltinFn_PCREL_HI_zh:   "%相对高位",
+	BuiltinFn_PCREL_LO_zh:   "%相对低位",
+	BuiltinFn_SIZEOF_zh:     "%内存字节数",
+}
 
 // 指令参数
 type AsArgument struct {

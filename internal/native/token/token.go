@@ -80,13 +80,13 @@ const (
 const (
 	// 寄存器编号空间
 	// 每个平台不超过 100 个, 至少保证 10 个独立空间
-	REG_RISCV_BEGIN Token = 1000 + 100*iota
-	REG_LOONG_BEGIN
+	REG_LOONG_BEGIN Token = 1000 + 100*iota
+	REG_RISCV_BEGIN
 
-	REG_BEGIN     = REG_RISCV_BEGIN
-	REG_RISCV_END = REG_RISCV_BEGIN + 100
+	REG_BEGIN     = REG_LOONG_BEGIN
 	REG_LOONG_END = REG_LOONG_BEGIN + 100
-	REG_END       = REG_LOONG_END
+	REG_RISCV_END = REG_RISCV_BEGIN + 100
+	REG_END       = REG_RISCV_END
 )
 
 // 指令到 Token 空间的映射

@@ -625,8 +625,8 @@ func (p *parser) parseInst_loong_immOrSymbolDecor() (imm int32, symbol string, s
 	}
 
 	// 判断重定位修饰函数
-	if fn := lookupBuiltinFn(symbolOrDecor); fn != 0 {
-		symbolDecor = lookupBuiltinFn(symbolOrDecor)
+	if fn := abi.ParseBuiltinFn(p.prog.CPU, symbolOrDecor); fn != abi.BuiltinFn_Nil {
+		symbolDecor = fn
 	} else {
 		p.errorf(pos, "unknow symbol decorator %s", symbolOrDecor)
 	}
