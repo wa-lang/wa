@@ -14,5 +14,13 @@ dev:
 objdump:
 	$(WA) objdump -prog hello_la64.out.exe
 
+info:
+	go run hello.go -f=hello_la64.out.exe -l
+	go run hello.go -f=hello_la64.out.exe -s=.text
+	go run hello.go -f=hello_la64.out.exe -s=.data
+
+info2:
+	objdump -d hello_la64.out.exe
+
 clean:
 	-rm *.out*
