@@ -67,7 +67,7 @@ func (p *_Assembler) asmFunc_loong64(fn *ast.Func) (err error) {
 
 			switch inst.Arg.SymbolDecor {
 			case abi.BuiltinFn_ABS_HI20, abi.BuiltinFn_ABS_HI20_zh: // 高20bit
-				hi, lo := pcrel.MakeAbs(uint32(addr))
+				hi, lo := pcrel.MakeAbs(uint32(addr)) // TODO: 验证拆分算法是否 OK
 				abs_hi2loMap[inst.Arg.Symbol] = lo
 				inst.Arg.Imm = hi
 
@@ -80,7 +80,7 @@ func (p *_Assembler) asmFunc_loong64(fn *ast.Func) (err error) {
 
 			case abi.BuiltinFn_PC_HI20, abi.BuiltinFn_PC_HI20_zh:
 				// 直接以符号名字作为 key 记录, 和 RISCV 处理不同
-				hi, lo := pcrel.MakePCRel(addr, pc)
+				hi, lo := pcrel.MakeLa64PCRel(addr, pc)
 				pc_hi2loMap[inst.Arg.Symbol] = lo
 				inst.Arg.Imm = hi
 

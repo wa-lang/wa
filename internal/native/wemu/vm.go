@@ -53,7 +53,6 @@ func NewWEmu(prog *abi.LinkedProgram, opt *Option) *WEmu {
 	p := &WEmu{
 		Bus:   device.NewBus(),
 		Power: power.NewPower("power", power.POWER_BASE),
-		Dram:  dram.NewDRAM("memory", dram.DRAM_BASE, dram.DRAM_SIZE, false),
 		Uart:  uart.NewUART("uart", opt.UARTBase),
 		Prog:  prog,
 	}
@@ -61,10 +60,13 @@ func NewWEmu(prog *abi.LinkedProgram, opt *Option) *WEmu {
 	switch prog.CPU {
 	case abi.LOONG64:
 		p.CPU = loong64.NewCPU()
+		p.Dram = dram.NewDRAM("memory", dram.DRAM_BASE_LA64, dram.DRAM_SIZE, false)
 	case abi.RISCV32:
 		p.CPU = riscv32.NewCPU()
+		p.Dram = dram.NewDRAM("memory", dram.DRAM_BASE_RISCV, dram.DRAM_SIZE, false)
 	case abi.RISCV64:
 		p.CPU = riscv64.NewCPU()
+		p.Dram = dram.NewDRAM("memory", dram.DRAM_BASE_RISCV, dram.DRAM_SIZE, false)
 	default:
 		panic(fmt.Sprintf("unknown cpu type: %v", prog.CPU))
 	}

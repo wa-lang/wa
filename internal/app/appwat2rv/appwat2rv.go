@@ -35,7 +35,7 @@ var CmdWat2rv = &cli.Command{
 		&cli.Int64Flag{
 			Name:  "DRAM-base",
 			Usage: "set DRAM address",
-			Value: dram.DRAM_BASE,
+			Value: dram.DRAM_BASE_RISCV,
 		},
 		&cli.Int64Flag{
 			Name:  "DRAM-size",

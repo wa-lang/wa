@@ -81,6 +81,22 @@ const (
 	ELFOSABI_LINUX OSABI = 3 // Linux
 )
 
+var _OSABI_Strings = []string{
+	ELFOSABI_NONE:  "UNIX System V ABI",
+	ELFOSABI_LINUX: "Linux",
+}
+
+func (i OSABI) String() string {
+	var s string
+	if int(i) < len(_OSABI_Strings) {
+		s = _OSABI_Strings[int(i)]
+	}
+	if s == "" {
+		s = fmt.Sprintf("elf.OSABI(%d)", int(i))
+	}
+	return s
+}
+
 // Type is found in Header.Type.
 type Type uint16
 

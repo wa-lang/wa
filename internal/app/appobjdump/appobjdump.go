@@ -67,8 +67,10 @@ func cmdProgdump(filename string) {
 	}
 	defer f.Close()
 
-	fmt.Printf("Machine: %v\n", f.Machine)
 	fmt.Printf("Class  : %v\n", f.Class)
+	fmt.Printf("Version: %v\n", f.Version)
+	fmt.Printf("OS/ABI : %v\n", f.OSABI)
+	fmt.Printf("Machine: %v\n", f.Machine)
 	fmt.Printf("Entry  : %x\n", f.Entry)
 	fmt.Println()
 
@@ -108,23 +110,11 @@ func cmdProgdump(filename string) {
 func printProgText(machine elf.Machine, addr uint64, data []byte) {
 	addrWidth := len(fmt.Sprintf("%x", addr))
 
-	fmt.Printf("%-*s", addrWidth+1, "[.text.]")
-	for i := 0; i < 4; i++ {
-		fmt.Printf("%02X ", i)
-	}
-	fmt.Println()
-
+	fmt.Println("[.text.]")
 	for k := 0; k < len(data); k += 4 {
-		fmt.Printf("%0*X ", addrWidth, addr+uint64(k))
-		for i := 0; i < 4; i++ {
-			if k+i < len(data) {
-				fmt.Printf("%02X ", data[k+i])
-			} else {
-				fmt.Print("   ")
-			}
-		}
+		fmt.Printf("%0*X: ", addrWidth, addr+uint64(k))
 		x := binary.LittleEndian.Uint32(data[k:][:4])
-		fmt.Println("#", decodeInst(machine, x))
+		fmt.Printf("%08X # %s\n", x, decodeInst(machine, x))
 	}
 	fmt.Println()
 }
@@ -153,14 +143,14 @@ func decodeInst(machine elf.Machine, x uint32) string {
 func printProgData(addr uint64, data []byte) {
 	addrWidth := len(fmt.Sprintf("%x", addr))
 
-	fmt.Printf("%-*s", addrWidth+1, "[.data.]")
+	fmt.Printf("%-*s ", addrWidth, "[.data.]")
 	for i := 0; i < 16; i++ {
-		fmt.Printf("%02X ", i)
+		fmt.Printf(" %02X", i)
 	}
 	fmt.Println()
 
 	for k := 0; k < len(data); k += 16 {
-		fmt.Printf("%0*X ", addrWidth, addr+uint64(k))
+		fmt.Printf("%0*X: ", addrWidth, addr+uint64(k))
 		for i := 0; i < 16; i++ {
 			if k+i < len(data) {
 				fmt.Printf("%02X ", data[k+i])

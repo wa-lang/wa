@@ -59,7 +59,7 @@ func (p *_Assembler) init(filename string, source []byte, opt *abi.LinkOptions) 
 		panic("unreachable")
 	}
 
-	p.dramNextAddr = align(opt.DRAMBase, 8)
+	p.dramNextAddr = align(opt.DRAMBase, 4)
 	p.dramEndAddr = opt.DRAMBase + opt.DRAMSize
 
 	p.symbalMap = make(map[string]*abi.LinkedSymbol)

@@ -11,8 +11,11 @@ import (
 // 默认的内存大小
 const DRAM_SIZE = 1024 * 1024 * 16
 
+// 龙芯的默认启动地址
+const DRAM_BASE_LA64 = 0x12000010c
+
 // Same as QEMU virt machine, DRAM starts at 0x80000000.
-const DRAM_BASE = 0x80000000
+const DRAM_BASE_RISCV = 0x80000000
 
 // 内存设备
 type DRAM struct {
