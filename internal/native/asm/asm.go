@@ -77,6 +77,16 @@ func (p *_Assembler) alloc(memSize, addrAlign int64) (addr int64) {
 	return addr
 }
 
+// 龙芯等带地址映射的平台需要进行页面对齐
+// 数据段必须进行页面对齐, 假设页为 64KB
+func (p *_Assembler) gotoNextPage(maxPageSize int64) {
+	offset := p.dramNextAddr % maxPageSize
+	p.dramNextAddr = align(p.dramNextAddr, maxPageSize)
+
+	// 页对齐的内部偏移量不变
+	p.dramNextAddr += offset
+}
+
 func (p *_Assembler) asmFile(filename string, source []byte, opt *abi.LinkOptions) (prog *abi.LinkedProgram, err error) {
 	p.init(filename, source, opt)
 
@@ -94,6 +104,12 @@ func (p *_Assembler) asmFile(filename string, source []byte, opt *abi.LinkOption
 			Addr: p.alloc(int64(fn.Size), 0),
 			Data: make([]byte, fn.Size),
 		}
+	}
+
+	// 龙芯数据段从下个页面开始
+	if p.opt.CPU == abi.LOONG64 {
+		const maxPageSize = 64 << 10 // 64KB 是最大的页大小
+		p.gotoNextPage(maxPageSize)
 	}
 
 	// 全局变量分配内存空间
@@ -245,10 +261,15 @@ func (p *_Assembler) asmGlobal(g *ast.Global) (err error) {
 			binary.LittleEndian.PutUint64(g.LinkInfo.Data, math.Float64bits(float64(v)))
 		case token.PTR, token.PTR_zh:
 			v := xInit.Lit.ConstV.(int64)
-			if p.opt.CPU == abi.RISCV32 {
-				binary.LittleEndian.PutUint32(g.LinkInfo.Data, uint32(v))
-			} else {
+			switch p.opt.CPU {
+			case abi.LOONG64:
 				binary.LittleEndian.PutUint64(g.LinkInfo.Data, uint64(v))
+			case abi.RISCV32:
+				binary.LittleEndian.PutUint32(g.LinkInfo.Data, uint32(v))
+			case abi.RISCV64:
+				binary.LittleEndian.PutUint64(g.LinkInfo.Data, uint64(v))
+			default:
+				panic("unreachable")
 			}
 		default:
 			assert(xInit.Lit.LitKind == token.STRING)

@@ -3,8 +3,14 @@
 
 package pcrel
 
+// GetTargetAddressLa64 根据 LoongArch PC 和指令参数计算出原始的目标地址
+func GetTargetAddressLa64(pc int64, pc_hi20, pc_lo12 int32) int64 {
+	aluOut := (pc + (int64(pc_hi20) << 12)) &^ 0xFFF
+	targetAddress := aluOut + int64(pc_lo12)
+	return targetAddress
+}
+
 // MakeLa64PCRel 计算龙芯64目标地址相对于 PC 地址的相对偏移量
-// TODO: hi20 结果有问题
 func MakeLa64PCRel(targetAddress, pc int64) (pc_hi20, pc_lo12 int32) {
 	delta := targetAddress - pc
 

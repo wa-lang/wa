@@ -9,6 +9,25 @@ import (
 	"wa-lang.org/wa/internal/native/pcrel"
 )
 
+func ExampleMakeLa64PCRel() {
+	const (
+		pc      = 0x12000010c
+		message = 0x120010130
+	)
+
+	pc_hi20, pc_lo12 := pcrel.MakeLa64PCRel(message, pc)
+	addr := pcrel.GetTargetAddressLa64(pc, pc_hi20, pc_lo12)
+
+	fmt.Printf("pc_hi20: %d\n", pc_hi20)
+	fmt.Printf("pc_lo12: %d\n", pc_lo12)
+	fmt.Printf("message: 0x%X\n", addr)
+
+	// Output:
+	// pc_hi20: 16
+	// pc_lo12: 304
+	// message: 0x120010130
+}
+
 func ExampleMakeAbs() {
 	const UART0 = 0x10000000
 	pcrel_hi, pcrel_lo := pcrel.MakeAbs(UART0)
