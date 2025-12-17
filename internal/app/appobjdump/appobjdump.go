@@ -69,6 +69,7 @@ func cmdProgdump(filename string) {
 
 	fmt.Printf("Machine: %v\n", f.Machine)
 	fmt.Printf("Class  : %v\n", f.Class)
+	fmt.Printf("Entry  : %x\n", f.Entry)
 	fmt.Println()
 
 	for _, p := range f.Progs {
@@ -77,16 +78,22 @@ func cmdProgdump(filename string) {
 		}
 
 		if p.Flags&elf.PF_X != 0 {
-			textAddr := int64(p.Vaddr)
+			textAddr := uint64(p.Vaddr)
 			textData := make([]byte, p.Filesz)
 			_, err := io.ReadFull(p.Open(), textData)
 			if err != nil {
 				fmt.Println("ERR:", err)
 				continue
 			}
+			if f.Entry > textAddr {
+				diff := f.Entry - textAddr
+				textData = textData[diff:]
+				textAddr = f.Entry
+			}
+
 			printProgText(f.Machine, textAddr, textData)
 		} else {
-			dataAddr := int64(p.Vaddr)
+			dataAddr := uint64(p.Vaddr)
 			dataData := make([]byte, p.Filesz)
 			_, err := io.ReadFull(p.Open(), dataData)
 			if err != nil {
@@ -98,15 +105,17 @@ func cmdProgdump(filename string) {
 	}
 }
 
-func printProgText(machine elf.Machine, addr int64, data []byte) {
-	fmt.Printf("[.text.] ")
+func printProgText(machine elf.Machine, addr uint64, data []byte) {
+	addrWidth := len(fmt.Sprintf("%x", addr))
+
+	fmt.Printf("%-*s", addrWidth+1, "[.text.]")
 	for i := 0; i < 4; i++ {
 		fmt.Printf("%02X ", i)
 	}
 	fmt.Println()
 
 	for k := 0; k < len(data); k += 4 {
-		fmt.Printf("%08X ", addr+int64(k))
+		fmt.Printf("%0*X ", addrWidth, addr+uint64(k))
 		for i := 0; i < 4; i++ {
 			if k+i < len(data) {
 				fmt.Printf("%02X ", data[k+i])
@@ -141,15 +150,17 @@ func decodeInst(machine elf.Machine, x uint32) string {
 	}
 }
 
-func printProgData(addr int64, data []byte) {
-	fmt.Printf("[.data.] ")
+func printProgData(addr uint64, data []byte) {
+	addrWidth := len(fmt.Sprintf("%x", addr))
+
+	fmt.Printf("%-*s", addrWidth+1, "[.data.]")
 	for i := 0; i < 16; i++ {
 		fmt.Printf("%02X ", i)
 	}
 	fmt.Println()
 
 	for k := 0; k < len(data); k += 16 {
-		fmt.Printf("%08X ", addr+int64(k))
+		fmt.Printf("%0*X ", addrWidth, addr+uint64(k))
 		for i := 0; i < 16; i++ {
 			if k+i < len(data) {
 				fmt.Printf("%02X ", data[k+i])
