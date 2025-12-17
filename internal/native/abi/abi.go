@@ -47,6 +47,7 @@ type LinkedSymbol struct {
 type LinkedProgram struct {
 	CPU CPUType // CPU类型
 
+	Entry    int64  // 入口地址
 	TextAddr int64  // 程序段地址
 	TextData []byte // 程序段数据
 	DataAddr int64  // 数据段地址

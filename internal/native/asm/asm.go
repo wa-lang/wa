@@ -90,6 +90,9 @@ func (p *_Assembler) gotoNextPage(maxPageSize int64) {
 func (p *_Assembler) asmFile(filename string, source []byte, opt *abi.LinkOptions) (prog *abi.LinkedProgram, err error) {
 	p.init(filename, source, opt)
 
+	// 最大的页大小
+	const maxPageSize = 64 << 10
+
 	// 解析汇编程序
 	p.file, err = parser.ParseFile(opt.CPU, p.fset, filename, source)
 	if err != nil {
@@ -97,6 +100,7 @@ func (p *_Assembler) asmFile(filename string, source []byte, opt *abi.LinkOption
 	}
 
 	// 全局函数分配内存空间
+	textAddrStart := p.dramNextAddr
 	for _, fn := range p.file.Funcs {
 		fn.Size = int(p.funcBodyLen(fn))
 		fn.LinkInfo = &abi.LinkedSymbol{
@@ -107,9 +111,10 @@ func (p *_Assembler) asmFile(filename string, source []byte, opt *abi.LinkOption
 	}
 
 	// 龙芯数据段从下个页面开始
+	dataAddrStart := p.dramNextAddr
 	if p.opt.CPU == abi.LOONG64 {
-		const maxPageSize = 64 << 10 // 64KB 是最大的页大小
 		p.gotoNextPage(maxPageSize)
+		dataAddrStart = p.dramNextAddr
 	}
 
 	// 全局变量分配内存空间
@@ -138,39 +143,37 @@ func (p *_Assembler) asmFile(filename string, source []byte, opt *abi.LinkOption
 
 	// 收集全部信息
 	{
-		p.prog.TextAddr = 0
+		p.prog.TextAddr = textAddrStart
+		p.prog.DataAddr = dataAddrStart
 
 		// 优先查找指定的入口函数
 		if opt.EntryFunc != "" {
 			for _, fn := range p.file.Funcs {
 				if fn.Name == opt.EntryFunc {
-					p.prog.TextAddr = fn.LinkInfo.Addr
+					p.prog.Entry = fn.LinkInfo.Addr
 				}
 			}
 		}
 
 		// 然后查找默认的入口函数(中文)
-		if p.prog.TextAddr == 0 {
+		if p.prog.Entry == 0 {
 			for _, fn := range p.file.Funcs {
 				if fn.Name == abi.DefaultEntryFuncZh {
-					p.prog.TextAddr = fn.LinkInfo.Addr
+					p.prog.Entry = fn.LinkInfo.Addr
 				}
 			}
 		}
 
 		// 然后查找默认的入口函数(英文)
-		if p.prog.TextAddr == 0 {
+		if p.prog.Entry == 0 {
 			for _, fn := range p.file.Funcs {
 				if fn.Name == abi.DefaultEntryFunc {
-					p.prog.TextAddr = fn.LinkInfo.Addr
+					p.prog.Entry = fn.LinkInfo.Addr
 				}
 			}
 		}
-
-		// data 段地址
-		p.prog.DataAddr = opt.DRAMBase
-		if len(p.file.Globals) > 0 {
-			p.prog.DataAddr = p.file.Globals[0].LinkInfo.Addr
+		if p.prog.Entry == 0 {
+			p.prog.Entry = textAddrStart
 		}
 
 		// text 段数据
