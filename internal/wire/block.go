@@ -19,7 +19,8 @@ Block 定义了作用域，块内的值无法在块外访问
 Todo: Block 是否满足 Value（既是否可有返回值）待讨论
 **************************************/
 type Block struct {
-	anInstruction
+	aImv
+	typ     Type
 	Comment string // 附加注释
 	//Locals  []Value       // 该块内定义的局部变量
 	Instrs []Instruction // 该块所含的指令
@@ -29,8 +30,13 @@ type Block struct {
 }
 
 // 初始化 Block
-func (b *Block) Init() {
+func (b *Block) init(typ Type) {
+	b.typ = typ
 	b.objects = make(map[interface{}]Location)
+}
+
+func (b *Block) Type() Type {
+	return b.typ
 }
 
 // Scope 接口相关
@@ -100,14 +106,23 @@ func (b *Block) AddLocal(name string, typ Type, pos int, obj interface{}) Locati
 	return v
 }
 
-// EmitBlock 在 Bloc 中添加一个子 Block
-func (b *Block) EmitBlock(comment string, pos int) *Block {
+// CreateBlock 创建一个 Block 初始化其 scope 等，但并不添加至父 Block 中
+func (b *Block) createBlock(comment string, typ Type, pos int) *Block {
 	block := &Block{}
 	block.Stringer = block
 	block.Comment = comment
+	block.typ = typ
 	block.pos = pos
 	block.objects = make(map[interface{}]Location)
 	block.types = b.types
+
+	block.setScope(b)
+	return block
+}
+
+// EmitBlock 在 Bloc 中添加一个子 Block
+func (b *Block) EmitBlock(comment string, typ Type, pos int) *Block {
+	block := b.createBlock(comment, typ, pos)
 
 	b.emit(block)
 	return block
