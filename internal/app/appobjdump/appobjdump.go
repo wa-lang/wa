@@ -124,19 +124,19 @@ func decodeInst(machine elf.Machine, x uint32) string {
 	case elf.EM_LOONGARCH:
 		as, arg, err := loong64.Decode(x)
 		if err != nil {
-			return err.Error()
+			return "???"
 		}
 		return loong64.AsmSyntax(as, "", arg)
 
 	case elf.EM_RISCV:
 		as, arg, err := riscv.Decode(x)
 		if err != nil {
-			return err.Error()
+			return "???"
 		}
 		return riscv.AsmSyntax(as, "", arg)
 
 	default:
-		return fmt.Sprintf("unsupport %v", machine)
+		panic(fmt.Sprintf("unsupport %v", machine))
 	}
 }
 

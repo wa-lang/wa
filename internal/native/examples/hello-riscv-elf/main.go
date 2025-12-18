@@ -49,6 +49,8 @@ func AssemblerRV64(fnBody *ast.FuncBody) []byte {
 }
 
 var prog = &abi.LinkedProgram{
+	CPU:      abi.RISCV32,
+	Entry:    0x80000000,
 	TextAddr: 0x80000000,
 	TextData: AssemblerRV64(fnBody),
 	DataAddr: 0x8000003c,
