@@ -23,7 +23,7 @@ func _start {
     syscall   0
 
     # SYS_exit(0)
-    addi.d a0, zero, 0
-    addi.d a7, zero, $SYS_exit
+    addi.d  a0, zero, 0
+    addi.d  a7, zero, $SYS_exit
     syscall 0
 }

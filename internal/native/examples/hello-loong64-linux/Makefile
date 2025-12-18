@@ -3,17 +3,16 @@
 
 WA:=go run ../../../../main.go
 
-build:
+run:
 	$(WA) asm2elf -arch=loong64 hello_loong64.ws
+	./hello_loong64.ws.elf.exe
 
-build-zh:
+run-zh:
 	$(WA) asm2elf -arch=loong64 hello_loong64_zh.ws
+	./hello_loong64_zh.ws.elf.exe
 
 objdump:
 	$(WA) objdump -prog hello_loong64.ws.elf.exe
-
-run:
-	./hello_loong64.ws.elf.exe
 
 clean:
 	-rm hello.o hello.elf.exe

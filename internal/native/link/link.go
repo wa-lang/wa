@@ -190,9 +190,6 @@ func _LinkELF_LA64(prog *abi.LinkedProgram) ([]byte, error) {
 	var (
 		ehOff = int64(0)
 		phOff = int64(elf.ELF64HDRSIZE)
-
-		textOff = int64(elf.ELF64HDRSIZE + 2*elf.ELF64PHDRSIZE)
-		dataOff = textOff + int64(len(prog.TextData))
 	)
 
 	var eh elf.ElfHeader64
@@ -221,7 +218,7 @@ func _LinkELF_LA64(prog *abi.LinkedProgram) ([]byte, error) {
 	textPh := elf.ElfProgHeader64{
 		Type:   elf.PT_LOAD,
 		Flags:  elf.PF_R | elf.PF_X,        // 可读+执行, 不可修改
-		Off:    uint64(textOff),            // 数据段 offset
+		Off:    uint64(0),                  // 指令在 prog.Entry-prog.TextAddr 开始位置
 		Vaddr:  uint64(prog.TextAddr),      // 虚拟内存地址
 		Paddr:  uint64(prog.TextAddr),      // 物理内存地址
 		Filesz: uint64(len(prog.TextData)), // 数据段文件大小
@@ -233,7 +230,7 @@ func _LinkELF_LA64(prog *abi.LinkedProgram) ([]byte, error) {
 	dataPh := elf.ElfProgHeader64{
 		Type:   elf.PT_LOAD,
 		Flags:  elf.PF_R | elf.PF_W,        // 可读写
-		Off:    uint64(dataOff),            // 数据段 offset
+		Off:    uint64(len(prog.TextData)), // 数据段 offset
 		Vaddr:  uint64(prog.DataAddr),      // 虚拟内存地址
 		Paddr:  uint64(prog.DataAddr),      // 物理内存地址
 		Filesz: uint64(len(prog.DataData)), // 数据段文件大小
@@ -260,14 +257,13 @@ func _LinkELF_LA64(prog *abi.LinkedProgram) ([]byte, error) {
 	}
 
 	// 填充指令段开头的数据
-	headerSpaceSize := int(prog.Entry - prog.TextAddr)
-	assert(headerSpaceSize >= elf.ELF64HDRSIZE*elf.ELF64PHDRSIZE*2)
-	assert(len(prog.TextData) > headerSpaceSize)
-	copy(prog.TextData[:headerSpaceSize], buf.buf)
+	fileHeaderSpaceSize := prog.Entry - prog.TextAddr
+	assert(fileHeaderSpaceSize >= elf.ELF64HDRSIZE+elf.ELF64PHDRSIZE*2)
+	assert(len(prog.TextData) > int(fileHeaderSpaceSize))
 
 	// 写段内容
-	buf.WriteAt(prog.TextData, textOff)
-	buf.WriteAt(prog.DataData, dataOff)
+	buf.WriteAt(prog.TextData[fileHeaderSpaceSize:], fileHeaderSpaceSize)
+	buf.WriteAt(prog.DataData, int64(len(prog.TextData)))
 
 	// OK
 	return buf.Bytes(), nil
