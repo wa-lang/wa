@@ -83,17 +83,17 @@ var CmdWEmu = &cli.Command{
 func readELF(filename string) (prog *abi.LinkedProgram, err error) {
 	prog = new(abi.LinkedProgram)
 
-	f, err := elfOpen(filename)
+	f, err := elf.Open(filename)
 	if err != nil {
 		return nil, err
 	}
 	defer f.Close()
 
 	// 判断CPU类型
-	switch elf.Machine(f.Machine) {
+	switch f.Machine {
 	case elf.EM_RISCV:
 		// 判断机器指针长度
-		switch elf.Class(f.Class) {
+		switch f.Class {
 		case elf.ELFCLASS32:
 			prog.CPU = abi.RISCV32
 		case elf.ELFCLASS64:
@@ -103,7 +103,7 @@ func readELF(filename string) (prog *abi.LinkedProgram, err error) {
 		}
 	case elf.EM_LOONGARCH:
 		// 判断机器指针长度
-		switch elf.Class(f.Class) {
+		switch f.Class {
 		case elf.ELFCLASS64:
 			prog.CPU = abi.LOONG64
 		default:

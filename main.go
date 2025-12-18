@@ -18,6 +18,7 @@ import (
 	"wa-lang.org/wa/internal/app/appbase"
 	"wa-lang.org/wa/internal/app/appbuild"
 	"wa-lang.org/wa/internal/app/appcir"
+	"wa-lang.org/wa/internal/app/appdap"
 	"wa-lang.org/wa/internal/app/appdev"
 	"wa-lang.org/wa/internal/app/appdoc"
 	"wa-lang.org/wa/internal/app/appesp32build"
@@ -129,6 +130,7 @@ func main() {
 		appcir.CmdCir,
 		appdoc.CmdDoc,
 		applsp.CmdLsp,
+		appdap.CmdDap,
 	}
 
 	cliApp.Run(os.Args)

@@ -3,43 +3,77 @@
 
 package abi
 
-import "fmt"
+import (
+	"fmt"
+	"strings"
+)
+
+func ParseCPUType(name string) CPUType {
+	for i, s := range _CPUType_strings {
+		if s != "" && strings.EqualFold(s, name) {
+			return CPUType(i)
+		}
+	}
+	return CPU_Nil
+}
 
 func (cpu CPUType) String() string {
-	switch cpu {
-	case RISCV64:
-		return "RISCV64"
-	case RISCV32:
-		return "RISCV32"
-	case LOONG64:
-		return "LOONG64"
+	if cpu >= 0 && int(cpu) < len(_CPUType_strings) {
+		return _CPUType_strings[cpu]
 	}
 	return fmt.Sprintf("abi.CPUType(%d)", int(cpu))
 }
 
-func (fn BuiltinFn) String() string {
-	switch fn {
-	case BuiltinFn_HI:
-		return "%hi"
-	case BuiltinFn_LO:
-		return "%lo"
-	case BuiltinFn_PCREL:
-		return "%pcrel"
-	case BuiltinFn_PCREL_HI:
-		return "%pcrel_hi"
-	case BuiltinFn_PCREL_LO:
-		return "%pcrel_lo"
+func ParseBuiltinFn(cpu CPUType, name string) BuiltinFn {
+	for i, s := range _BuiltinFn_strings {
+		if s != "" && strings.EqualFold(s, name) {
+			if fn := BuiltinFn(i); fn.IsValid(cpu) {
+				return fn
+			}
+		}
+	}
+	return BuiltinFn_Nil
+}
 
-	case BuiltinFn_HI_zh:
-		return "%高位"
-	case BuiltinFn_LO_zh:
-		return "%低位"
-	case BuiltinFn_PCREL_zh:
-		return "%相对偏移"
-	case BuiltinFn_PCREL_HI_zh:
-		return "%相对高位"
-	case BuiltinFn_PCREL_LO_zh:
-		return "%相对低位"
+func (fn BuiltinFn) String() string {
+	if fn >= 0 && int(fn) < len(_BuiltinFn_strings) {
+		return _BuiltinFn_strings[fn]
 	}
 	return fmt.Sprintf("abi.BuiltinFn(%d)", int(fn))
+}
+
+// 不同平台的内置函数不同
+func (fn BuiltinFn) IsValid(cpu CPUType) bool {
+	if fn <= BuiltinFn_Nil || fn >= BuiltinFn_Max {
+		return false
+	}
+
+	// sizeof 通用
+	if fn == BuiltinFn_SIZEOF || fn == BuiltinFn_SIZEOF_zh {
+		return true
+	}
+
+	// 少量是 RISCV 特有的
+	onlyRiscvEnabled := false
+	switch fn {
+	case BuiltinFn_HI,
+		BuiltinFn_LO,
+		BuiltinFn_PCREL_HI,
+		BuiltinFn_PCREL_LO:
+		onlyRiscvEnabled = false
+	case BuiltinFn_HI_zh,
+		BuiltinFn_LO_zh,
+		BuiltinFn_PCREL_HI_zh,
+		BuiltinFn_PCREL_LO_zh:
+		onlyRiscvEnabled = false
+	}
+
+	switch cpu {
+	case LOONG64:
+		return !onlyRiscvEnabled
+	case RISCV64, RISCV32:
+		return onlyRiscvEnabled
+	default:
+		return false
+	}
 }

@@ -1263,8 +1263,8 @@ func (p *parser) parseInst_riscv_immAddr(inst *ast.Instruction) {
 	}
 
 	// 判断重定位修饰函数
-	if fn := lookupBuiltinFn(symbolOrDecor); fn != 0 {
-		inst.Arg.SymbolDecor = lookupBuiltinFn(symbolOrDecor)
+	if fn := abi.ParseBuiltinFn(p.prog.CPU, symbolOrDecor); fn != abi.BuiltinFn_Nil {
+		inst.Arg.SymbolDecor = fn
 	} else {
 		p.errorf(pos, "unknow symbol decorator %s", symbolOrDecor)
 	}

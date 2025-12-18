@@ -13,12 +13,12 @@ import (
 
 func encodeInst(cpu abi.CPUType, as abi.As, arg *abi.AsArgument) (uint32, error) {
 	switch cpu {
+	case abi.LOONG64:
+		return loong64.EncodeLA64(as, arg)
 	case abi.RISCV32:
 		return riscv.EncodeRV32(as, arg)
 	case abi.RISCV64:
 		return riscv.EncodeRV64(as, arg)
-	case abi.LOONG64:
-		return loong64.EncodeLA64(as, arg)
 	default:
 		return 0, fmt.Errorf("unknonw cpu: %v", cpu)
 	}

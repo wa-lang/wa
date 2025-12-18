@@ -11,7 +11,6 @@ import (
 	"wa-lang.org/wa/internal/native/abi"
 	"wa-lang.org/wa/internal/native/ast"
 	"wa-lang.org/wa/internal/native/parser"
-	"wa-lang.org/wa/internal/native/pcrel"
 	"wa-lang.org/wa/internal/native/token"
 )
 
@@ -60,7 +59,7 @@ func (p *_Assembler) init(filename string, source []byte, opt *abi.LinkOptions) 
 		panic("unreachable")
 	}
 
-	p.dramNextAddr = align(opt.DRAMBase, 8)
+	p.dramNextAddr = align(opt.DRAMBase, 4)
 	p.dramEndAddr = opt.DRAMBase + opt.DRAMSize
 
 	p.symbalMap = make(map[string]*abi.LinkedSymbol)
@@ -78,8 +77,21 @@ func (p *_Assembler) alloc(memSize, addrAlign int64) (addr int64) {
 	return addr
 }
 
+// 龙芯等带地址映射的平台需要进行页面对齐
+// 数据段必须进行页面对齐, 假设页为 64KB
+func (p *_Assembler) gotoNextPage(maxPageSize int64) {
+	offset := p.dramNextAddr % maxPageSize
+	p.dramNextAddr = align(p.dramNextAddr, maxPageSize)
+
+	// 页对齐的内部偏移量不变
+	p.dramNextAddr += offset
+}
+
 func (p *_Assembler) asmFile(filename string, source []byte, opt *abi.LinkOptions) (prog *abi.LinkedProgram, err error) {
 	p.init(filename, source, opt)
+
+	// 最大的页大小
+	const maxPageSize = 64 << 10
 
 	// 解析汇编程序
 	p.file, err = parser.ParseFile(opt.CPU, p.fset, filename, source)
@@ -88,6 +100,7 @@ func (p *_Assembler) asmFile(filename string, source []byte, opt *abi.LinkOption
 	}
 
 	// 全局函数分配内存空间
+	textAddrStart := p.dramNextAddr
 	for _, fn := range p.file.Funcs {
 		fn.Size = int(p.funcBodyLen(fn))
 		fn.LinkInfo = &abi.LinkedSymbol{
@@ -95,6 +108,13 @@ func (p *_Assembler) asmFile(filename string, source []byte, opt *abi.LinkOption
 			Addr: p.alloc(int64(fn.Size), 0),
 			Data: make([]byte, fn.Size),
 		}
+	}
+
+	// 龙芯数据段从下个页面开始
+	dataAddrStart := p.dramNextAddr
+	if p.opt.CPU == abi.LOONG64 {
+		p.gotoNextPage(maxPageSize)
+		dataAddrStart = p.dramNextAddr
 	}
 
 	// 全局变量分配内存空间
@@ -123,39 +143,37 @@ func (p *_Assembler) asmFile(filename string, source []byte, opt *abi.LinkOption
 
 	// 收集全部信息
 	{
-		p.prog.TextAddr = 0
+		p.prog.TextAddr = textAddrStart
+		p.prog.DataAddr = dataAddrStart
 
 		// 优先查找指定的入口函数
 		if opt.EntryFunc != "" {
 			for _, fn := range p.file.Funcs {
 				if fn.Name == opt.EntryFunc {
-					p.prog.TextAddr = fn.LinkInfo.Addr
+					p.prog.Entry = fn.LinkInfo.Addr
 				}
 			}
 		}
 
 		// 然后查找默认的入口函数(中文)
-		if p.prog.TextAddr == 0 {
+		if p.prog.Entry == 0 {
 			for _, fn := range p.file.Funcs {
 				if fn.Name == abi.DefaultEntryFuncZh {
-					p.prog.TextAddr = fn.LinkInfo.Addr
+					p.prog.Entry = fn.LinkInfo.Addr
 				}
 			}
 		}
 
 		// 然后查找默认的入口函数(英文)
-		if p.prog.TextAddr == 0 {
+		if p.prog.Entry == 0 {
 			for _, fn := range p.file.Funcs {
 				if fn.Name == abi.DefaultEntryFunc {
-					p.prog.TextAddr = fn.LinkInfo.Addr
+					p.prog.Entry = fn.LinkInfo.Addr
 				}
 			}
 		}
-
-		// data 段地址
-		p.prog.DataAddr = opt.DRAMBase
-		if len(p.file.Globals) > 0 {
-			p.prog.DataAddr = p.file.Globals[0].LinkInfo.Addr
+		if p.prog.Entry == 0 {
+			p.prog.Entry = textAddrStart
 		}
 
 		// text 段数据
@@ -175,118 +193,16 @@ func (p *_Assembler) asmFile(filename string, source []byte, opt *abi.LinkOption
 }
 
 func (p *_Assembler) asmFunc(fn *ast.Func) (err error) {
-	// label 的地址列表
-	label2pcMap := make(map[string]int64)
-
-	// 绝对地址拆分基于 symbol 名字
-	hi2loMap := make(map[string]int32)
-
-	// 相对地址拆分基于 label 名字
-	// 一个 label 只能有一个 symbol 相对 PC 寻址
-	label2loMap := make(map[string]int32)
-
-	// 第一遍收集全部 label, 因为可能向前跳转没有出现的 label
-	pc := fn.LinkInfo.Addr
-	for _, inst := range fn.Body.Insts {
-		if inst.Label != "" {
-			if _, ok := label2pcMap[inst.Label]; ok {
-				panic(fmt.Errorf("label %q exists", inst.Label))
-			}
-			label2pcMap[inst.Label] = pc
-		}
-		if inst.As == 0 {
-			// 跳过空的指令, 比如标号
-			continue
-		}
-
-		// 更新下一个指令对应的 pc 位置
-		pc += p.instLen(inst)
+	switch p.prog.CPU {
+	case abi.LOONG64:
+		return p.asmFunc_loong64(fn)
+	case abi.RISCV32:
+		return p.asmFunc_riscv(fn)
+	case abi.RISCV64:
+		return p.asmFunc_riscv(fn)
+	default:
+		return fmt.Errorf("unknonw cpu: %v", p.prog.CPU)
 	}
-
-	// 第二遍遍历编码指令
-	pc = fn.LinkInfo.Addr
-	for i, inst := range fn.Body.Insts {
-		if inst.As == 0 {
-			// 跳过空的指令, 比如标号
-			continue
-		}
-
-		// 指令对 label 或全局的符号引用
-		// 因为指令长度的关系, 指令并不会直接访问符号对应的绝对地址
-		// 需要解决 %hi/%lo/%pcrel_hi/%pcrel_lo 等转化为最终可编码到指令的值
-		if inst.Arg.Symbol != "" {
-			addr, ok := label2pcMap[inst.Arg.Symbol]
-			if !ok {
-				addr, ok = p.symbolAddress(inst.Arg.Symbol)
-				if !ok {
-					panic(fmt.Errorf("symbol %q not found", inst.Arg.Symbol))
-				}
-			}
-
-			switch inst.Arg.SymbolDecor {
-			case abi.BuiltinFn_HI, abi.BuiltinFn_HI_zh: // 高20bit
-				hi, lo := pcrel.MakeAbs(uint32(addr))
-				hi2loMap[inst.Arg.Symbol] = lo
-				inst.Arg.Imm = hi
-
-			case abi.BuiltinFn_LO, abi.BuiltinFn_LO_zh: // 低12bit
-				lo, ok := hi2loMap[inst.Arg.Symbol]
-				if !ok {
-					panic(fmt.Errorf("symbol %q not found", inst.Arg.Symbol))
-				}
-				inst.Arg.Imm = lo
-
-			case abi.BuiltinFn_PCREL_HI, abi.BuiltinFn_PCREL_HI_zh:
-				var labelName string
-				for k := i; k >= 0; k-- {
-					if x := fn.Body.Insts[k]; x.Label != "" {
-						labelName = x.Label
-						break
-					}
-				}
-				if labelName == "" {
-					panic(fmt.Errorf("symbol %q not found found", inst.Arg.Symbol))
-				}
-
-				hi, lo := pcrel.MakePCRel(addr, pc)
-				label2loMap[labelName] = lo
-				inst.Arg.Imm = hi
-
-			case abi.BuiltinFn_PCREL_LO, abi.BuiltinFn_PCREL_LO_zh:
-				// https://sourceware.org/binutils/docs/as/RISC_002dV_002dModifiers.html
-				// https://stackoverflow.com/questions/65879012/what-do-pcrel-hi-and-pcrel-lo-actually-do
-
-				lo, ok := label2loMap[inst.Arg.Symbol]
-				if !ok {
-					panic(fmt.Errorf("symbol %q not found", inst.Arg.Symbol))
-				}
-				inst.Arg.Imm = lo
-
-			default:
-				// 因为loong/riscv指令只有32bit宽度, 默认是无法完全编码绝对地址的
-				// 所以其他情况都也作为相对pc的地址
-				// 或者说汇编语言中不能直接使用面值
-				inst.Arg.Imm = int32(addr - pc)
-			}
-		}
-
-		// 编码使用的是符号被处理后对应的立即数
-		x, err := encodeInst(p.opt.CPU, inst.As, inst.Arg)
-		if err != nil {
-			return fmt.Errorf("%v: %w", inst, err)
-		}
-
-		// 保存指令编码后的机器码
-		binary.LittleEndian.PutUint32(
-			fn.LinkInfo.Data[int(pc-fn.LinkInfo.Addr):],
-			x,
-		)
-
-		// 更新下一个指令对应的 pc 位置
-		pc += p.instLen(inst)
-	}
-
-	return nil
 }
 
 // 计算函数指令需要的内存大小
@@ -348,10 +264,15 @@ func (p *_Assembler) asmGlobal(g *ast.Global) (err error) {
 			binary.LittleEndian.PutUint64(g.LinkInfo.Data, math.Float64bits(float64(v)))
 		case token.PTR, token.PTR_zh:
 			v := xInit.Lit.ConstV.(int64)
-			if p.opt.CPU == abi.RISCV32 {
-				binary.LittleEndian.PutUint32(g.LinkInfo.Data, uint32(v))
-			} else {
+			switch p.opt.CPU {
+			case abi.LOONG64:
 				binary.LittleEndian.PutUint64(g.LinkInfo.Data, uint64(v))
+			case abi.RISCV32:
+				binary.LittleEndian.PutUint32(g.LinkInfo.Data, uint32(v))
+			case abi.RISCV64:
+				binary.LittleEndian.PutUint64(g.LinkInfo.Data, uint64(v))
+			default:
+				panic("unreachable")
 			}
 		default:
 			assert(xInit.Lit.LitKind == token.STRING)

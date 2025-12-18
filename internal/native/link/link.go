@@ -43,7 +43,7 @@ func _LinkELF_RV32(prog *abi.LinkedProgram) ([]byte, error) {
 	eh.Type = uint16(elf.ET_EXEC)                   // 可执行程序
 	eh.Machine = uint16(elf.EM_RISCV)               // CPU类型
 	eh.Version = uint32(elf.EV_CURRENT)             // ELF版本
-	eh.Entry = uint32(prog.TextAddr)                // 程序开始地址
+	eh.Entry = uint32(prog.Entry)                   // 程序开始地址
 	eh.Phoff = uint32(phOff)                        // 程序头位置
 	eh.Shoff = 0                                    // 不写节区表
 	eh.Flags = 0                                    // 处理器特殊标志
@@ -125,7 +125,7 @@ func _LinkELF_RV64(prog *abi.LinkedProgram) ([]byte, error) {
 	eh.Type = uint16(elf.ET_EXEC)                   // 可执行程序
 	eh.Machine = uint16(elf.EM_RISCV)               // CPU类型
 	eh.Version = uint32(elf.EV_CURRENT)             // ELF版本
-	eh.Entry = uint64(prog.TextAddr)                // 程序开始地址
+	eh.Entry = uint64(prog.Entry)                   // 程序开始地址
 	eh.Phoff = uint64(phOff)                        // 程序头位置
 	eh.Shoff = 0                                    // 不写节区表
 	eh.Flags = 0                                    // 处理器特殊标志
@@ -203,7 +203,7 @@ func _LinkELF_LA64(prog *abi.LinkedProgram) ([]byte, error) {
 	eh.Type = uint16(elf.ET_EXEC)                   // 可执行程序
 	eh.Machine = uint16(elf.EM_LOONGARCH)           // CPU类型: 龙芯64
 	eh.Version = uint32(elf.EV_CURRENT)             // ELF版本
-	eh.Entry = uint64(prog.TextAddr)                // 程序开始地址
+	eh.Entry = uint64(prog.Entry)                   // 程序开始地址
 	eh.Phoff = uint64(phOff)                        // 程序头位置
 	eh.Shoff = 0                                    // 不写节区表
 	eh.Flags = 0                                    // 处理器特殊标志
@@ -214,6 +214,9 @@ func _LinkELF_LA64(prog *abi.LinkedProgram) ([]byte, error) {
 	eh.Shnum = 0                                    // 节头表中表项的数量
 	eh.Shstrndx = 0                                 // 节头表中与节名字表相对应的表项的索引
 
+	// 最大的页大小
+	const maxPageSize = 64 << 10
+
 	// 程序头: .text (RX)
 	textPh := elf.ElfProgHeader64{
 		Type:   elf.PT_LOAD,
@@ -223,7 +226,7 @@ func _LinkELF_LA64(prog *abi.LinkedProgram) ([]byte, error) {
 		Paddr:  uint64(prog.TextAddr),      // 物理内存地址
 		Filesz: uint64(len(prog.TextData)), // 数据段文件大小
 		Memsz:  uint64(len(prog.TextData)), // 内存大小
-		Align:  1,                          // 设为1避免 vaddr/offset 对齐约束
+		Align:  maxPageSize,                // 龙芯设置为 64KB 页对齐
 	}
 
 	// 程序头: .data
@@ -235,7 +238,7 @@ func _LinkELF_LA64(prog *abi.LinkedProgram) ([]byte, error) {
 		Paddr:  uint64(prog.DataAddr),      // 物理内存地址
 		Filesz: uint64(len(prog.DataData)), // 数据段文件大小
 		Memsz:  uint64(len(prog.DataData)), // 内存大小
-		Align:  1,                          // 设为1避免 vaddr/offset 对齐约束
+		Align:  maxPageSize,                // 龙芯设置为 64KB 页对齐
 	}
 
 	// 构造内存缓存

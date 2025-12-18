@@ -56,8 +56,7 @@ const (
 	F64    // float64
 	PTR    // uint pointer
 	CONST  // 常量
-	GLOBAL // 全局符号
-	LOCAL  // 局部变量
+	GLOBAL // 全局
 	FUNC   // 函数
 
 	// 中文版关键字
@@ -71,7 +70,6 @@ const (
 	PTR_zh    // 指针
 	CONST_zh  // 常量
 	GLOBAL_zh // 全局
-	LOCAL_zh  // 局部
 	FUNC_zh   // 函数
 	END_zh    // 完毕
 
@@ -82,13 +80,13 @@ const (
 const (
 	// 寄存器编号空间
 	// 每个平台不超过 100 个, 至少保证 10 个独立空间
-	REG_RISCV_BEGIN Token = 1000 + 100*iota
-	REG_LOONG_BEGIN
+	REG_LOONG_BEGIN Token = 1000 + 100*iota
+	REG_RISCV_BEGIN
 
-	REG_BEGIN     = REG_RISCV_BEGIN
-	REG_RISCV_END = REG_RISCV_BEGIN + 100
+	REG_BEGIN     = REG_LOONG_BEGIN
 	REG_LOONG_END = REG_LOONG_BEGIN + 100
-	REG_END       = REG_LOONG_END
+	REG_RISCV_END = REG_RISCV_BEGIN + 100
+	REG_END       = REG_RISCV_END
 )
 
 // 指令到 Token 空间的映射
@@ -138,7 +136,6 @@ var tokens = [...]string{
 	PTR:    "ptr",
 	CONST:  "const",
 	GLOBAL: "global",
-	LOCAL:  "local",
 	FUNC:   "func",
 
 	I32_zh:    "普整",
@@ -150,7 +147,6 @@ var tokens = [...]string{
 	PTR_zh:    "指针",
 	CONST_zh:  "常量",
 	GLOBAL_zh: "全局",
-	LOCAL_zh:  "局部",
 	FUNC_zh:   "函数",
 	END_zh:    "完毕",
 }
