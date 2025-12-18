@@ -259,6 +259,12 @@ func _LinkELF_LA64(prog *abi.LinkedProgram) ([]byte, error) {
 		return nil, err
 	}
 
+	// 填充指令段开头的数据
+	headerSpaceSize := int(prog.Entry - prog.TextAddr)
+	assert(headerSpaceSize >= elf.ELF64HDRSIZE*elf.ELF64PHDRSIZE*2)
+	assert(len(prog.TextData) > headerSpaceSize)
+	copy(prog.TextData[:headerSpaceSize], buf.buf)
+
 	// 写段内容
 	buf.WriteAt(prog.TextData, textOff)
 	buf.WriteAt(prog.DataData, dataOff)

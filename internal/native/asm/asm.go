@@ -10,7 +10,6 @@ import (
 
 	"wa-lang.org/wa/internal/native/abi"
 	"wa-lang.org/wa/internal/native/ast"
-	"wa-lang.org/wa/internal/native/parser"
 	"wa-lang.org/wa/internal/native/token"
 )
 
@@ -37,6 +36,21 @@ type _Assembler struct {
 
 	// 符号表(不含const)
 	symbalMap map[string]*abi.LinkedSymbol
+}
+
+func (p *_Assembler) asmFile(filename string, source []byte, opt *abi.LinkOptions) (prog *abi.LinkedProgram, err error) {
+	p.init(filename, source, opt)
+
+	switch p.prog.CPU {
+	case abi.LOONG64:
+		return p.asmFile_loong64(filename, source, opt)
+	case abi.RISCV32:
+		return p.asmFile_riscv(filename, source, opt)
+	case abi.RISCV64:
+		return p.asmFile_riscv(filename, source, opt)
+	default:
+		return nil, fmt.Errorf("unknonw cpu: %v", p.prog.CPU)
+	}
 }
 
 func (p *_Assembler) init(filename string, source []byte, opt *abi.LinkOptions) {
@@ -77,134 +91,6 @@ func (p *_Assembler) alloc(memSize, addrAlign int64) (addr int64) {
 	return addr
 }
 
-// 龙芯等带地址映射的平台需要进行页面对齐
-// 数据段必须进行页面对齐, 假设页为 64KB
-func (p *_Assembler) gotoNextPage(maxPageSize int64) {
-	offset := p.dramNextAddr % maxPageSize
-	p.dramNextAddr = align(p.dramNextAddr, maxPageSize)
-
-	// 页对齐的内部偏移量不变
-	p.dramNextAddr += offset
-}
-
-func (p *_Assembler) asmFile(filename string, source []byte, opt *abi.LinkOptions) (prog *abi.LinkedProgram, err error) {
-	p.init(filename, source, opt)
-
-	// 最大的页大小
-	const maxPageSize = 64 << 10
-
-	// 解析汇编程序
-	p.file, err = parser.ParseFile(opt.CPU, p.fset, filename, source)
-	if err != nil {
-		return nil, err
-	}
-
-	// 全局函数分配内存空间
-	textAddrStart := p.dramNextAddr
-	for _, fn := range p.file.Funcs {
-		fn.Size = int(p.funcBodyLen(fn))
-		fn.LinkInfo = &abi.LinkedSymbol{
-			Name: fn.Name,
-			Addr: p.alloc(int64(fn.Size), 0),
-			Data: make([]byte, fn.Size),
-		}
-	}
-
-	// 龙芯数据段从下个页面开始
-	dataAddrStart := p.dramNextAddr
-	if p.opt.CPU == abi.LOONG64 {
-		p.gotoNextPage(maxPageSize)
-		dataAddrStart = p.dramNextAddr
-	}
-
-	// 全局变量分配内存空间
-	for _, g := range p.file.Globals {
-		assert(g.Size > 0)
-		g.LinkInfo = &abi.LinkedSymbol{
-			Name: g.Name,
-			Addr: p.alloc(int64(g.Size), 0),
-			Data: make([]byte, g.Size),
-		}
-	}
-
-	// 编译函数
-	for _, fn := range p.file.Funcs {
-		if err := p.asmFunc(fn); err != nil {
-			return nil, err
-		}
-	}
-
-	// 编译全局变量
-	for _, g := range p.file.Globals {
-		if err := p.asmGlobal(g); err != nil {
-			return nil, err
-		}
-	}
-
-	// 收集全部信息
-	{
-		p.prog.TextAddr = textAddrStart
-		p.prog.DataAddr = dataAddrStart
-
-		// 优先查找指定的入口函数
-		if opt.EntryFunc != "" {
-			for _, fn := range p.file.Funcs {
-				if fn.Name == opt.EntryFunc {
-					p.prog.Entry = fn.LinkInfo.Addr
-				}
-			}
-		}
-
-		// 然后查找默认的入口函数(中文)
-		if p.prog.Entry == 0 {
-			for _, fn := range p.file.Funcs {
-				if fn.Name == abi.DefaultEntryFuncZh {
-					p.prog.Entry = fn.LinkInfo.Addr
-				}
-			}
-		}
-
-		// 然后查找默认的入口函数(英文)
-		if p.prog.Entry == 0 {
-			for _, fn := range p.file.Funcs {
-				if fn.Name == abi.DefaultEntryFunc {
-					p.prog.Entry = fn.LinkInfo.Addr
-				}
-			}
-		}
-		if p.prog.Entry == 0 {
-			p.prog.Entry = textAddrStart
-		}
-
-		// text 段数据
-		p.prog.TextData = nil
-		for _, fn := range p.file.Funcs {
-			p.prog.TextData = append(p.prog.TextData, fn.LinkInfo.Data...)
-		}
-
-		// data 段数据
-		p.prog.DataData = nil
-		for _, g := range p.file.Globals {
-			p.prog.DataData = append(p.prog.DataData, g.LinkInfo.Data...)
-		}
-	}
-
-	return p.prog, nil
-}
-
-func (p *_Assembler) asmFunc(fn *ast.Func) (err error) {
-	switch p.prog.CPU {
-	case abi.LOONG64:
-		return p.asmFunc_loong64(fn)
-	case abi.RISCV32:
-		return p.asmFunc_riscv(fn)
-	case abi.RISCV64:
-		return p.asmFunc_riscv(fn)
-	default:
-		return fmt.Errorf("unknonw cpu: %v", p.prog.CPU)
-	}
-}
-
 // 计算函数指令需要的内存大小
 func (p *_Assembler) funcBodyLen(fn *ast.Func) (n int64) {
 	for _, inst := range fn.Body.Insts {
@@ -228,6 +114,7 @@ func (p *_Assembler) instLen(inst *ast.Instruction) int64 {
 }
 
 func (p *_Assembler) asmGlobal(g *ast.Global) (err error) {
+	// g.LinkInfo.Data 空间需要提前初始化
 	for _, xInit := range g.Init {
 		if xInit.Symbal != "" {
 			v, ok := p.symbolAddress(xInit.Symbal)
@@ -281,7 +168,6 @@ func (p *_Assembler) asmGlobal(g *ast.Global) (err error) {
 	}
 
 	p.symbalMap[g.Name] = g.LinkInfo
-	p.prog.DataData = append(p.prog.DataData, g.LinkInfo.Data...)
 	return nil
 }
 

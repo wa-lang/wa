@@ -9,8 +9,88 @@ import (
 
 	"wa-lang.org/wa/internal/native/abi"
 	"wa-lang.org/wa/internal/native/ast"
+	"wa-lang.org/wa/internal/native/loong64"
+	"wa-lang.org/wa/internal/native/parser"
 	"wa-lang.org/wa/internal/native/pcrel"
 )
+
+func (p *_Assembler) asmFile_loong64(filename string, source []byte, opt *abi.LinkOptions) (prog *abi.LinkedProgram, err error) {
+	// 最大的页大小
+	const maxPageSize = 64 << 10
+
+	// 解析汇编程序
+	p.file, err = parser.ParseFile(opt.CPU, p.fset, filename, source)
+	if err != nil {
+		return nil, err
+	}
+
+	// 指令段的地址必须页对齐
+	p.prog.TextAddr = p.dramNextAddr
+	assert(p.prog.TextAddr%maxPageSize == 0)
+
+	// 给 ELF 头和 程序头预留出空间
+	const fileHeaderSize = 64 + 56*2
+	p.prog.TextData = make([]byte, 0x10c)
+	assert(len(p.prog.TextData) > fileHeaderSize)
+	p.dramNextAddr += int64(len(p.prog.TextData))
+	p.prog.Entry = p.dramNextAddr
+
+	// 全局函数分配内存空间
+	for _, fn := range p.file.Funcs {
+		fn.Size = int(p.funcBodyLen(fn))
+		fn.LinkInfo = &abi.LinkedSymbol{
+			Name: fn.Name,
+			Addr: p.alloc(int64(fn.Size), 0),
+			Data: make([]byte, fn.Size),
+		}
+	}
+
+	// 数据段从下个页面开始
+	// 但是文件偏移量不变, 确保文件被映射到内存后依然是相似的布局
+	p.dramNextAddr += maxPageSize
+	p.prog.DataAddr = p.dramNextAddr
+
+	// 全局变量分配内存空间
+	for _, g := range p.file.Globals {
+		assert(g.Size > 0)
+		g.LinkInfo = &abi.LinkedSymbol{
+			Name: g.Name,
+			Addr: p.alloc(int64(g.Size), 0),
+			Data: make([]byte, g.Size),
+		}
+	}
+
+	// 编译函数
+	for _, fn := range p.file.Funcs {
+		if err := p.asmFunc_loong64(fn); err != nil {
+			return nil, err
+		}
+	}
+
+	// 编译全局变量
+	for _, g := range p.file.Globals {
+		if err := p.asmGlobal(g); err != nil {
+			return nil, err
+		}
+	}
+
+	// 收集全部信息
+	{
+		// text 段数据(头部空间保留)
+		assert(len(p.prog.TextData) == int(p.prog.Entry)-int(p.prog.TextAddr))
+		for _, fn := range p.file.Funcs {
+			p.prog.TextData = append(p.prog.TextData, fn.LinkInfo.Data...)
+		}
+
+		// data 段数据
+		assert(len(p.prog.DataData) == 0)
+		for _, g := range p.file.Globals {
+			p.prog.DataData = append(p.prog.DataData, g.LinkInfo.Data...)
+		}
+	}
+
+	return p.prog, nil
+}
 
 func (p *_Assembler) asmFunc_loong64(fn *ast.Func) (err error) {
 	// label 的地址列表
@@ -126,7 +206,7 @@ func (p *_Assembler) asmFunc_loong64(fn *ast.Func) (err error) {
 		}
 
 		// 编码使用的是符号被处理后对应的立即数
-		x, err := encodeInst(p.opt.CPU, inst.As, inst.Arg)
+		x, err := loong64.EncodeLA64(inst.As, inst.Arg)
 		if err != nil {
 			return fmt.Errorf("%v: %w", inst, err)
 		}

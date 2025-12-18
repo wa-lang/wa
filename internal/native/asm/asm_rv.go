@@ -9,8 +9,106 @@ import (
 
 	"wa-lang.org/wa/internal/native/abi"
 	"wa-lang.org/wa/internal/native/ast"
+	"wa-lang.org/wa/internal/native/parser"
 	"wa-lang.org/wa/internal/native/pcrel"
+	"wa-lang.org/wa/internal/native/riscv"
 )
+
+func (p *_Assembler) asmFile_riscv(filename string, source []byte, opt *abi.LinkOptions) (prog *abi.LinkedProgram, err error) {
+	// 解析汇编程序
+	p.file, err = parser.ParseFile(opt.CPU, p.fset, filename, source)
+	if err != nil {
+		return nil, err
+	}
+
+	// 全局函数分配内存空间
+	textAddrStart := p.dramNextAddr
+	for _, fn := range p.file.Funcs {
+		fn.Size = int(p.funcBodyLen(fn))
+		fn.LinkInfo = &abi.LinkedSymbol{
+			Name: fn.Name,
+			Addr: p.alloc(int64(fn.Size), 0),
+			Data: make([]byte, fn.Size),
+		}
+	}
+
+	// 龙芯数据段从下个页面开始
+	dataAddrStart := p.dramNextAddr
+
+	// 全局变量分配内存空间
+	for _, g := range p.file.Globals {
+		assert(g.Size > 0)
+		g.LinkInfo = &abi.LinkedSymbol{
+			Name: g.Name,
+			Addr: p.alloc(int64(g.Size), 0),
+			Data: make([]byte, g.Size),
+		}
+	}
+
+	// 编译函数
+	for _, fn := range p.file.Funcs {
+		if err := p.asmFunc_riscv(fn); err != nil {
+			return nil, err
+		}
+	}
+
+	// 编译全局变量
+	for _, g := range p.file.Globals {
+		if err := p.asmGlobal(g); err != nil {
+			return nil, err
+		}
+	}
+
+	// 收集全部信息
+	{
+		p.prog.TextAddr = textAddrStart
+		p.prog.DataAddr = dataAddrStart
+
+		// 优先查找指定的入口函数
+		if opt.EntryFunc != "" {
+			for _, fn := range p.file.Funcs {
+				if fn.Name == opt.EntryFunc {
+					p.prog.Entry = fn.LinkInfo.Addr
+				}
+			}
+		}
+
+		// 然后查找默认的入口函数(中文)
+		if p.prog.Entry == 0 {
+			for _, fn := range p.file.Funcs {
+				if fn.Name == abi.DefaultEntryFuncZh {
+					p.prog.Entry = fn.LinkInfo.Addr
+				}
+			}
+		}
+
+		// 然后查找默认的入口函数(英文)
+		if p.prog.Entry == 0 {
+			for _, fn := range p.file.Funcs {
+				if fn.Name == abi.DefaultEntryFunc {
+					p.prog.Entry = fn.LinkInfo.Addr
+				}
+			}
+		}
+		if p.prog.Entry == 0 {
+			p.prog.Entry = textAddrStart
+		}
+
+		// text 段数据
+		p.prog.TextData = nil
+		for _, fn := range p.file.Funcs {
+			p.prog.TextData = append(p.prog.TextData, fn.LinkInfo.Data...)
+		}
+
+		// data 段数据
+		p.prog.DataData = nil
+		for _, g := range p.file.Globals {
+			p.prog.DataData = append(p.prog.DataData, g.LinkInfo.Data...)
+		}
+	}
+
+	return p.prog, nil
+}
 
 func (p *_Assembler) asmFunc_riscv(fn *ast.Func) (err error) {
 	// label 的地址列表
@@ -130,7 +228,15 @@ func (p *_Assembler) asmFunc_riscv(fn *ast.Func) (err error) {
 		}
 
 		// 编码使用的是符号被处理后对应的立即数
-		x, err := encodeInst(p.opt.CPU, inst.As, inst.Arg)
+		var x uint32
+		switch p.opt.CPU {
+		case abi.RISCV32:
+			x, err = riscv.EncodeRV32(inst.As, inst.Arg)
+		case abi.RISCV64:
+			x, err = riscv.EncodeRV64(inst.As, inst.Arg)
+		default:
+			panic("unreachable")
+		}
 		if err != nil {
 			return fmt.Errorf("%v: %w", inst, err)
 		}
