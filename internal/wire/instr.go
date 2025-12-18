@@ -911,3 +911,47 @@ func (b *Block) EmitInstCall(call Value) *InstCall {
 //	b.emit(v)
 //	return v
 //}
+
+/**************************************
+InstIf:  条件指令
+**************************************/
+type InstIf struct {
+	aImv
+	Cond  Value  // 判断条件
+	True  *Block // 为 true 时的分支，不会为 nil
+	False *Block // 为 false 时的分支，不会为 nil
+}
+
+func (i *InstIf) Type() Type {
+	return i.True.Type()
+}
+
+func (i *InstIf) Format(tab string, sb *strings.Builder) {
+	sb.WriteString(tab)
+	sb.WriteString("if ")
+	sb.WriteString(i.Cond.Name())
+	sb.WriteString("\n")
+
+	i.True.Format(tab, sb)
+
+	sb.WriteString(tab)
+	sb.WriteString("else\n")
+	i.False.Format(tab, sb)
+}
+
+// 在 Block 中添加一条 InstIf 指令
+func (b *Block) EmitInstIf(cond Value, typ Type, pos int) *InstIf {
+	if !cond.Type().Equal(b.types.Bool) {
+		panic("cond must be bool.")
+	}
+
+	v := &InstIf{Cond: cond}
+	v.Stringer = v
+	v.pos = pos
+
+	v.True = b.createBlock("", typ, pos)
+	v.False = b.createBlock("", typ, pos)
+
+	b.emit(v)
+	return v
+}

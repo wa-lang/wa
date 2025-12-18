@@ -148,7 +148,7 @@ func (b *Builder) stmt(s ast.Stmt, f *Func, block *wire.Block) {
 		//
 
 	case *ast.BlockStmt:
-		newblock := block.EmitBlock("", int(s.Pos()))
+		newblock := block.EmitBlock("", b.module.Types.Void, int(s.Pos()))
 		b.blockStmt(s.List, f, newblock)
 
 	case *ast.DeclStmt: // Con, Var or Typ
@@ -172,6 +172,9 @@ func (b *Builder) stmt(s ast.Stmt, f *Func, block *wire.Block) {
 
 	case *ast.ReturnStmt:
 		b.returnStmt(s, f, block)
+
+	case *ast.IfStmt:
+		b.ifStmt(s, f, block)
 
 	default:
 		panic("Todo")
@@ -496,14 +499,6 @@ func (b *Builder) expr0(e ast.Expr, tv types.TypeAndValue, block *wire.Block) wi
 			case *types.Func:
 				call.FnName = obj.FullName()
 				call.Sig = b.buildSig(obj.Type().(*types.Signature))
-				for _, v := range e.Args {
-					param := b.expr(v, block)
-					call.Args = append(call.Args, param)
-				}
-				call.Pos = int(e.Pos())
-
-				sc := wire.StaticCall{Call: call}
-				return block.EmitInstCall(&sc)
 			}
 		}
 
@@ -523,6 +518,15 @@ func (b *Builder) expr0(e ast.Expr, tv types.TypeAndValue, block *wire.Block) wi
 				panic("")
 			}
 		}
+
+		for _, v := range e.Args {
+			param := b.expr(v, block)
+			call.Args = append(call.Args, param)
+		}
+		call.Pos = int(e.Pos())
+
+		sc := wire.StaticCall{Call: call}
+		return block.EmitInstCall(&sc)
 
 	case *ast.FuncLit:
 		// Todo
@@ -573,4 +577,36 @@ func (b *Builder) buildSig(s *types.Signature) (d wire.FnSig) {
 	}
 	d.Results = b.BuildType(s.Results())
 	return
+}
+
+func (b *Builder) ifStmt(s *ast.IfStmt, f *Func, block *wire.Block) {
+}
+
+func (b *Builder) emitIf(pos int, cond ast.Expr, initStmt, bodyStmt, elseStmt ast.Stmt, f *Func, block *wire.Block) {
+	if initStmt != nil {
+		block = block.EmitBlock("", b.module.Types.Void, pos)
+		b.stmt(initStmt, f, block)
+	}
+
+	switch cond := cond.(type) {
+	case *ast.ParenExpr:
+		b.emitIf(pos, cond.X, nil, bodyStmt, elseStmt, f, block)
+		return
+
+	case *ast.UnaryExpr:
+		if cond.Op == token.NOT {
+			b.emitIf(pos, cond.X, nil, elseStmt, bodyStmt, f, block)
+			return
+		}
+	}
+
+	i := block.EmitInstIf(b.expr(cond, block), b.module.Types.Void, pos)
+
+	if bodyStmt != nil {
+		b.stmt(bodyStmt, f, i.True)
+	}
+
+	if elseStmt != nil {
+		b.stmt(elseStmt, f, i.False)
+	}
 }

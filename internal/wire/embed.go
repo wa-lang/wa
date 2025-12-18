@@ -29,10 +29,13 @@ func (v *anInstruction) Pos() int           { return v.pos }
 func (v *anInstruction) Format(tab string, sb *strings.Builder) {
 	sb.WriteString(tab)
 	if va, ok := v.Stringer.(Value); ok {
-		sb.WriteString(va.Name())
-		sb.WriteString(" : ")
-		sb.WriteString(va.Type().Name())
-		sb.WriteString(" = ")
+		if va.Type() != nil && !va.Type().Equal(&Void{}) {
+			sb.WriteString(va.Name())
+			sb.WriteString(" : ")
+			sb.WriteString(va.Type().Name())
+			sb.WriteString(" = ")
+		}
+
 	}
 	sb.WriteString(v.String())
 }

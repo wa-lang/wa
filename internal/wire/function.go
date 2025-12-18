@@ -72,7 +72,7 @@ func (f *Function) StartBody() {
 	f.Body = &Block{}
 	f.Body.scope = f
 	f.Body.types = f.types
-	f.Body.Init()
+	f.Body.init(f.types.Void)
 }
 
 //
@@ -86,11 +86,23 @@ func (f *Function) EndBody() {
 
 func setImvId(num int, b *Block) int {
 	for _, i := range b.Instrs {
-		if block, ok := i.(*Block); ok {
-			num = setImvId(num, block)
-		} else if v, ok := i.(imv); ok {
-			v.setId(num)
-			num++
+		if v, ok := i.(imv); ok {
+			if av, ok := v.(Value); ok {
+				avt := av.Type()
+				if avt != nil && !avt.Equal(&Void{}) {
+					v.setId(num)
+					num++
+				}
+			}
+		}
+
+		switch i := i.(type) {
+		case *Block:
+			num = setImvId(num, i)
+
+		case *InstIf:
+			num = setImvId(num, i.True)
+			num = setImvId(num, i.False)
 		}
 	}
 	return num
