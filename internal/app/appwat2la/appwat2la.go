@@ -1,7 +1,7 @@
 // Copyright (C) 2025 武汉凹语言科技有限公司
 // SPDX-License-Identifier: AGPL-3.0-or-later
 
-package appwat2rv
+package appwat2la
 
 import (
 	"fmt"
@@ -11,14 +11,14 @@ import (
 	"wa-lang.org/wa/internal/3rdparty/cli"
 	"wa-lang.org/wa/internal/native/abi"
 	"wa-lang.org/wa/internal/native/ast"
-	"wa-lang.org/wa/internal/native/wat2rv"
+	"wa-lang.org/wa/internal/native/wat2la"
 	"wa-lang.org/wa/internal/native/wemu/device/dram"
 )
 
-var CmdWat2rv = &cli.Command{
+var CmdWat2la = &cli.Command{
 	Hidden:    true,
-	Name:      "wat2rv",
-	Usage:     "convert a WebAssembly text file to RISC-V",
+	Name:      "wat2la",
+	Usage:     "convert a WebAssembly text file to LoongArch",
 	ArgsUsage: "<file.wat>",
 	Flags: []cli.Flag{
 		&cli.StringFlag{
@@ -29,13 +29,13 @@ var CmdWat2rv = &cli.Command{
 		},
 		&cli.StringFlag{
 			Name:  "arch",
-			Usage: "set target architecture (riscv32|riscv64)",
-			Value: "riscv64",
+			Usage: "set target architecture (loong64)",
+			Value: "loong64",
 		},
 		&cli.Int64Flag{
 			Name:  "DRAM-base",
 			Usage: "set DRAM address",
-			Value: dram.DRAM_BASE_RISCV,
+			Value: dram.DRAM_BASE_LA64,
 		},
 		&cli.Int64Flag{
 			Name:  "DRAM-size",
@@ -56,10 +56,8 @@ var CmdWat2rv = &cli.Command{
 		opt.DRAMBase = c.Int64("DRAM-base")
 		opt.DRAMSize = c.Int64("DRAM-size")
 		switch arch := c.String("arch"); arch {
-		case "riscv32":
-			opt.CPU = abi.RISCV32
-		case "riscv64":
-			opt.CPU = abi.RISCV64
+		case "loong64":
+			opt.CPU = abi.LOONG64
 		default:
 			fmt.Printf("unknown arch: %s\n", arch)
 			os.Exit(1)
@@ -86,10 +84,8 @@ var CmdWat2rv = &cli.Command{
 
 		var f *ast.File
 		switch arch := c.String("arch"); true {
-		case strings.EqualFold(arch, "riscv64"):
-			_, f, err = wat2rv.Wat2rv64(infile, source, opt)
-		case strings.EqualFold(arch, "riscv32"):
-			_, f, err = wat2rv.Wat2rv32(infile, source, opt)
+		case strings.EqualFold(arch, "loong64"):
+			_, f, err = wat2la.Wat2LA64(infile, source, opt)
 		default:
 			fmt.Fprintln(os.Stderr, "unknown arch: "+arch)
 			os.Exit(1)

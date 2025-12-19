@@ -1,7 +1,7 @@
 // Copyright (C) 2025 武汉凹语言科技有限公司
 // SPDX-License-Identifier: AGPL-3.0-or-later
 
-package wat2rv
+package wat2la
 
 import (
 	"wa-lang.org/wa/internal/native/abi"
@@ -21,17 +21,12 @@ type Options struct {
 	Tdata uint64 // 数据段开始地址
 }
 
-// Wat程序转译到 RISCV32
-func Wat2rv32(filename string, source []byte, opt *abi.LinkOptions) (m *watast.Module, f *ast.File, err error) {
-	return wat2rv(filename, source, opt, 32)
-}
-
 // Wat程序转译到 RISCV64
-func Wat2rv64(filename string, source []byte, opt *abi.LinkOptions) (m *watast.Module, f *ast.File, err error) {
-	return wat2rv(filename, source, opt, 64)
+func Wat2LA64(filename string, source []byte, opt *abi.LinkOptions) (m *watast.Module, f *ast.File, err error) {
+	return wat2la(filename, source, opt, 64)
 }
 
-func wat2rv(filename string, source []byte, opt *abi.LinkOptions, xlen int) (m *watast.Module, f *ast.File, err error) {
+func wat2la(filename string, source []byte, opt *abi.LinkOptions, xlen int) (m *watast.Module, f *ast.File, err error) {
 	m, err = watparser.ParseModule(filename, source)
 	if err != nil {
 		return m, nil, err
@@ -42,7 +37,7 @@ func wat2rv(filename string, source []byte, opt *abi.LinkOptions, xlen int) (m *
 	return
 }
 
-type wat2rvWorker struct {
+type wat2laWorker struct {
 	opt *abi.LinkOptions
 
 	m *watast.Module
@@ -71,8 +66,8 @@ type inlinedTypeIndex struct {
 	inlinedIdx wasm.Index
 }
 
-func newWat2rvWorker(mWat *watast.Module, opt *abi.LinkOptions) *wat2rvWorker {
-	p := &wat2rvWorker{m: mWat, opt: opt, trace: DebugMode}
+func newWat2rvWorker(mWat *watast.Module, opt *abi.LinkOptions) *wat2laWorker {
+	p := &wat2laWorker{m: mWat, opt: opt, trace: DebugMode}
 
 	// 统计导入的global和func索引
 	p.importGlobalCount = 0
@@ -98,7 +93,7 @@ func newWat2rvWorker(mWat *watast.Module, opt *abi.LinkOptions) *wat2rvWorker {
 	return p
 }
 
-func (p *wat2rvWorker) BuildProgram() (f *ast.File, err error) {
+func (p *wat2laWorker) BuildProgram() (f *ast.File, err error) {
 	p.dataSection = p.dataSection[:0]
 	p.textSection = p.textSection[:0]
 

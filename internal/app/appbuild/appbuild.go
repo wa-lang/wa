@@ -15,7 +15,7 @@ import (
 	"wa-lang.org/wa/internal/backends/compiler_wat"
 	"wa-lang.org/wa/internal/config"
 	"wa-lang.org/wa/internal/loader"
-	"wa-lang.org/wa/internal/native/wair2rv"
+	"wa-lang.org/wa/internal/native/wair2la"
 	"wa-lang.org/wa/internal/token"
 	"wa-lang.org/wa/internal/wat/watutil"
 	"wa-lang.org/wa/internal/wat/watutil/wat2c"
@@ -465,7 +465,7 @@ func buildRiscvNative(opt *appbase.Option, filename string) (err error) {
 		return err
 	}
 
-	asmCode, err := wair2rv.GenRiscvAssembly(prog)
+	asmCode, err := wair2la.GenLoongAssembly(prog)
 	if err != nil {
 		return err
 	}

@@ -1,7 +1,7 @@
 // Copyright (C) 2025 武汉凹语言科技有限公司
 // SPDX-License-Identifier: AGPL-3.0-or-later
 
-package wat2rv
+package wat2la
 
 import (
 	"fmt"
@@ -10,7 +10,7 @@ import (
 	wattoken "wa-lang.org/wa/internal/wat/token"
 )
 
-func (p *wat2rvWorker) buildFunc_body(fn *watast.Func) error {
+func (p *wat2laWorker) buildFunc_body(fn *watast.Func) error {
 	for _, ins := range fn.Body.Insts {
 		if err := p.buildFunc_ins(fn, ins, 1); err != nil {
 			return err
@@ -19,7 +19,7 @@ func (p *wat2rvWorker) buildFunc_body(fn *watast.Func) error {
 	return nil
 }
 
-func (p *wat2rvWorker) buildFunc_ins(fn *watast.Func, i watast.Instruction, level int) error {
+func (p *wat2laWorker) buildFunc_ins(fn *watast.Func, i watast.Instruction, level int) error {
 	switch tok := i.Token(); tok {
 	default:
 		panic(fmt.Sprintf("unreachable: %v", tok))

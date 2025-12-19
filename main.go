@@ -38,7 +38,7 @@ import (
 	"wa-lang.org/wa/internal/app/appssa"
 	"wa-lang.org/wa/internal/app/apptest"
 	"wa-lang.org/wa/internal/app/appwat2c"
-	"wa-lang.org/wa/internal/app/appwat2rv"
+	"wa-lang.org/wa/internal/app/appwat2la"
 	"wa-lang.org/wa/internal/app/appwat2wasm"
 	"wa-lang.org/wa/internal/app/appwatstrip"
 	"wa-lang.org/wa/internal/app/appwemu"
@@ -123,7 +123,7 @@ func main() {
 		appesp32dump.CmdESP32Dump,
 		appesp32flash.CmdESP32Flash,
 		appflash.CmdFlash,
-		appwat2rv.CmdWat2rv,
+		appwat2la.CmdWat2la,
 		appwemu.CmdWEmu,
 		appgo2wa.CmdGo2wa,
 		appgo2wz.CmdGo2wz,

@@ -1,7 +1,7 @@
 // Copyright (C) 2025 武汉凹语言科技有限公司
 // SPDX-License-Identifier: AGPL-3.0-or-later
 
-package wat2rv
+package wat2la
 
 // 对齐到 a 的倍数
 func align(x, a int64) int64 {
