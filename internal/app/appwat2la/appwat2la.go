@@ -9,10 +9,7 @@ import (
 	"strings"
 
 	"wa-lang.org/wa/internal/3rdparty/cli"
-	"wa-lang.org/wa/internal/native/abi"
-	"wa-lang.org/wa/internal/native/ast"
 	"wa-lang.org/wa/internal/native/wat2la"
-	"wa-lang.org/wa/internal/native/wemu/device/dram"
 )
 
 var CmdWat2la = &cli.Command{
@@ -27,21 +24,6 @@ var CmdWat2la = &cli.Command{
 			Usage:   "set code output file",
 			Value:   "a.out.txt",
 		},
-		&cli.StringFlag{
-			Name:  "arch",
-			Usage: "set target architecture (loong64)",
-			Value: "loong64",
-		},
-		&cli.Int64Flag{
-			Name:  "DRAM-base",
-			Usage: "set DRAM address",
-			Value: dram.DRAM_BASE_LA64,
-		},
-		&cli.Int64Flag{
-			Name:  "DRAM-size",
-			Usage: "set DRAM size",
-			Value: dram.DRAM_SIZE,
-		},
 	},
 	Action: func(c *cli.Context) error {
 		if c.NArg() == 0 {
@@ -51,17 +33,6 @@ var CmdWat2la = &cli.Command{
 
 		infile := c.Args().First()
 		outfile := c.String("output")
-
-		opt := &abi.LinkOptions{}
-		opt.DRAMBase = c.Int64("DRAM-base")
-		opt.DRAMSize = c.Int64("DRAM-size")
-		switch arch := c.String("arch"); arch {
-		case "loong64":
-			opt.CPU = abi.LOONG64
-		default:
-			fmt.Printf("unknown arch: %s\n", arch)
-			os.Exit(1)
-		}
 
 		if outfile == "" {
 			outfile = infile
@@ -82,14 +53,7 @@ var CmdWat2la = &cli.Command{
 			os.Exit(1)
 		}
 
-		var f *ast.File
-		switch arch := c.String("arch"); true {
-		case strings.EqualFold(arch, "loong64"):
-			_, f, err = wat2la.Wat2LA64(infile, source, opt)
-		default:
-			fmt.Fprintln(os.Stderr, "unknown arch: "+arch)
-			os.Exit(1)
-		}
+		_, f, err := wat2la.Wat2LA64(infile, source)
 		if err != nil {
 			fmt.Println(err)
 			os.Exit(1)

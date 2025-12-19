@@ -23,20 +23,19 @@ var CmdObjdump = &cli.Command{
 	Usage:     "dump elf text and data sections",
 	ArgsUsage: "<file.elf>",
 	Flags: []cli.Flag{
-		&cli.StringFlag{
-			Name:    "section",
-			Aliases: []string{"s"},
-			Usage:   "set section name",
-			Value:   ".text",
+		&cli.BoolFlag{
+			Name:  "prog",
+			Usage: "print program data",
 		},
 		&cli.BoolFlag{
 			Name:    "list",
 			Aliases: []string{"l"},
 			Usage:   "list elf section name",
 		},
-		&cli.BoolFlag{
-			Name:  "prog",
-			Usage: "print program data",
+		&cli.StringFlag{
+			Name:    "section",
+			Aliases: []string{"s"},
+			Usage:   "set section name",
 		},
 	},
 	Action: func(c *cli.Context) error {
@@ -48,13 +47,13 @@ var CmdObjdump = &cli.Command{
 		infile := c.Args().First()
 		sectionName := c.String("section")
 		listSection := c.Bool("list")
-		prog := c.Bool("prog")
 
-		if prog {
-			cmdProgdump(infile)
-		} else {
+		if sectionName != "" || listSection {
 			cmdObjdump(infile, sectionName, listSection)
+		} else {
+			cmdProgdump(infile)
 		}
+
 		return nil
 	},
 }

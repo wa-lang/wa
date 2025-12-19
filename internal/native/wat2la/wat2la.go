@@ -4,7 +4,6 @@
 package wat2la
 
 import (
-	"wa-lang.org/wa/internal/native/abi"
 	"wa-lang.org/wa/internal/native/ast"
 	"wa-lang.org/wa/internal/wasm"
 	watast "wa-lang.org/wa/internal/wat/ast"
@@ -21,25 +20,23 @@ type Options struct {
 	Tdata uint64 // 数据段开始地址
 }
 
-// Wat程序转译到 RISCV64
-func Wat2LA64(filename string, source []byte, opt *abi.LinkOptions) (m *watast.Module, f *ast.File, err error) {
-	return wat2la(filename, source, opt, 64)
+// Wat程序转译到 龙芯汇编
+func Wat2LA64(filename string, source []byte) (m *watast.Module, f *ast.File, err error) {
+	return wat2la(filename, source)
 }
 
-func wat2la(filename string, source []byte, opt *abi.LinkOptions, xlen int) (m *watast.Module, f *ast.File, err error) {
+func wat2la(filename string, source []byte) (m *watast.Module, f *ast.File, err error) {
 	m, err = watparser.ParseModule(filename, source)
 	if err != nil {
 		return m, nil, err
 	}
 
-	worker := newWat2rvWorker(m, opt)
+	worker := newWat2rvWorker(m)
 	f, err = worker.BuildProgram()
 	return
 }
 
 type wat2laWorker struct {
-	opt *abi.LinkOptions
-
 	m *watast.Module
 
 	importGlobalCount int // 导入全局只读变量的数目
@@ -66,8 +63,8 @@ type inlinedTypeIndex struct {
 	inlinedIdx wasm.Index
 }
 
-func newWat2rvWorker(mWat *watast.Module, opt *abi.LinkOptions) *wat2laWorker {
-	p := &wat2laWorker{m: mWat, opt: opt, trace: DebugMode}
+func newWat2rvWorker(mWat *watast.Module) *wat2laWorker {
+	p := &wat2laWorker{m: mWat, trace: DebugMode}
 
 	// 统计导入的global和func索引
 	p.importGlobalCount = 0
