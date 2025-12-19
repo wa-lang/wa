@@ -124,5 +124,12 @@ func (p *wat2laWorker) BuildProgram() (f *ast.File, err error) {
 		Funcs:   p.textSection,
 	}
 
+	file.Doc = &ast.CommentGroup{
+		TopLevel: true,
+		List: []*ast.Comment{
+			{Text: "# 由程序自动生成, 不要直接修改!!!"},
+		},
+	}
+
 	return file, nil
 }

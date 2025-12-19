@@ -22,7 +22,7 @@ var CmdWat2la = &cli.Command{
 			Name:    "output",
 			Aliases: []string{"o"},
 			Usage:   "set code output file",
-			Value:   "a.out.txt",
+			Value:   "a.out.ws",
 		},
 	},
 	Action: func(c *cli.Context) error {
@@ -60,7 +60,11 @@ var CmdWat2la = &cli.Command{
 		}
 
 		// 输出汇编格式
-		fmt.Print(f.String())
+		err = os.WriteFile(outfile, []byte(f.String()), 0666)
+		if err != nil {
+			fmt.Println(err)
+			os.Exit(1)
+		}
 		return nil
 	},
 }

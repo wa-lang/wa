@@ -8,6 +8,8 @@ import (
 	"strconv"
 	"strings"
 
+	"wa-lang.org/wa/internal/native/abi"
+	"wa-lang.org/wa/internal/native/loong64"
 	"wa-lang.org/wa/internal/native/riscv"
 	"wa-lang.org/wa/internal/native/token"
 )
@@ -250,7 +252,14 @@ func (p *Instruction) String() string {
 			sb.WriteString("\n")
 		}
 		sb.WriteString("\t")
-		sb.WriteString(riscv.AsmSyntax(p.As, p.AsName, p.Arg))
+		switch p.CPU {
+		case abi.LOONG64:
+			sb.WriteString(loong64.AsmSyntax(p.As, p.AsName, p.Arg))
+		case abi.RISCV32, abi.RISCV64:
+			sb.WriteString(riscv.AsmSyntax(p.As, p.AsName, p.Arg))
+		default:
+			panic("unreachable")
+		}
 	}
 	if p.Comment != nil {
 		sb.WriteString(" ")

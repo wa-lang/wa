@@ -16,6 +16,7 @@ func (p *parser) parseInst_loong(fn *ast.Func) (inst *ast.Instruction) {
 	inst = new(ast.Instruction)
 	inst.Arg = new(abi.AsArgument)
 
+	inst.CPU = p.cpu
 	inst.Doc = p.parseDocComment(&fn.Body.Comments, inst.Pos)
 	if inst.Doc != nil {
 		fn.Body.Objects = fn.Body.Objects[:len(fn.Body.Objects)-1]
