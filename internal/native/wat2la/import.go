@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io"
 
+	"wa-lang.org/wa/internal/wat/ast"
 	"wa-lang.org/wa/internal/wat/token"
 )
 
@@ -18,38 +19,15 @@ func (p *wat2laWorker) buildImport(w io.Writer) error {
 	}
 
 	// 同一个对象可能被导入多次
-	var hostGlobalMap = make(map[string]bool)
 	var hostFuncMap = make(map[string]bool)
-
-	// 导入全局的只读变量
-	for _, importSpec := range p.m.Imports {
-		if importSpec.ObjKind != token.GLOBAL {
-			continue
-		}
-
-		globalName := importSpec.ObjModule + "." + importSpec.ObjName
-		globalType := importSpec.GlobalType
-
-		// 已经处理过
-		if hostGlobalMap[globalName] {
-			continue
-		}
-		hostGlobalMap[globalName] = true
-
-		fmt.Fprintf(w, "extern %s %s_%s;\n", p.getCType(globalType), p.opt.Prefix, toCName(globalName))
-	}
-	if len(hostGlobalMap) > 0 {
-		fmt.Fprintln(w)
-	}
 
 	// 声明原始的宿主函数
 	for _, importSpec := range p.m.Imports {
 		if importSpec.ObjKind != token.FUNC {
-			continue
+			panic(fmt.Sprintf("ERR: import global %s.%s", importSpec.ObjModule, importSpec.ObjName))
 		}
 
 		fnName := importSpec.ObjModule + "." + importSpec.ObjName
-		fnType := importSpec.FuncType
 
 		// 已经处理过
 		if hostFuncMap[fnName] {
@@ -57,77 +35,38 @@ func (p *wat2laWorker) buildImport(w io.Writer) error {
 		}
 		hostFuncMap[fnName] = true
 
-		// 返回值类型
-		cRetType := p.getHostFuncCRetType(fnType)
-		if len(fnType.Results) > 1 {
-			panic("wat2c: host func donot support multi return value")
-		}
-
-		// 返回值通过栈传递
-		fmt.Fprintf(w, "extern %s %s_%s(", cRetType, p.opt.Prefix, toCName(fnName))
-		if len(fnType.Params) > 0 {
-			for i, x := range fnType.Params {
-				var argName string
-				if x.Name != "" {
-					argName = toCName(x.Name)
-				} else {
-					argName = fmt.Sprintf("arg%d", i)
-				}
-				if i > 0 {
-					fmt.Fprint(w, ", ")
-				}
-
-				switch x.Type {
-				case token.I32:
-					fmt.Fprintf(w, "int32_t %v", argName)
-				case token.I64:
-					fmt.Fprintf(w, "int64_t %v", argName)
-				case token.F32:
-					fmt.Fprintf(w, "float %v", argName)
-				case token.F64:
-					fmt.Fprintf(w, "double %v", argName)
-				default:
-					unreachable()
-				}
-			}
-		}
-		fmt.Fprintf(w, ");\n")
+		// 检查导入系统调用的函数签名
+		p.checkSyscallSig(importSpec)
 	}
 	if len(hostFuncMap) > 0 {
-		fmt.Fprintln(w)
-	}
-
-	// 定义导入后的全局变量
-	for _, importSpec := range p.m.Imports {
-		if importSpec.ObjKind != token.GLOBAL {
-			continue
-		}
-
-		fmt.Fprintf(w, "#define %s_%s %s_%s // import %s.%s\n",
-			p.opt.Prefix, toCName(importSpec.GlobalName),
-			p.opt.Prefix, toCName(importSpec.ObjModule+"."+importSpec.ObjName),
-			importSpec.ObjModule, importSpec.ObjName,
-		)
-	}
-	if len(hostGlobalMap) > 0 {
-		fmt.Fprintln(w)
-	}
-
-	// 定义导入后的函数
-	for _, importSpec := range p.m.Imports {
-		if importSpec.ObjKind != token.FUNC {
-			continue
-		}
-
-		fmt.Fprintf(w, "#define %s_%s %s_%s // import %s.%s\n",
-			p.opt.Prefix, toCName(importSpec.FuncName),
-			p.opt.Prefix, toCName(importSpec.ObjModule+"."+importSpec.ObjName),
-			importSpec.ObjModule, importSpec.ObjName,
-		)
-	}
-	if len(hostFuncMap) > 0 {
-		fmt.Fprintln(w)
+		fmt.Fprint(w, syscallCode)
 	}
 
 	return nil
 }
+
+func (p *wat2laWorker) checkSyscallSig(spec *ast.ImportSpec) {
+	// TODO: 检查系统调用函数签名类型是否匹配
+}
+
+const syscallCode = `
+func $syscall.write(fd: i64, p: ptr, size: i64) => i64 {
+    # $sp = $sp - 16, sp 需要 16 字节对齐
+    # $ra = $sp + 8
+    addi.d $sp, $sp, -16
+    st.d   $ra, $sp, 8
+
+    # TODO
+
+    # return
+    ld.d $ra, $sp, 8
+    addi.d $sp, $sp, 16
+    jr $ra
+}
+
+func $syscall.exit(code: i64) {
+    ld.d    $a0, $sp, 0
+    addi.d  $a7, $zero, 64
+    syscall 0
+}
+`
