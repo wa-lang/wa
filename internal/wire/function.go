@@ -15,11 +15,11 @@ import "strings"
 Function: 函数。不可直接声明该类型的对象，必须通过 Module.NewFunction() 创建
 **************************************/
 type Function struct {
-	InternalName string  // 函数的内部名称(含包路径)，是其身份标识，应进行名字修饰
-	ExternalName string  // 函数的导出名称，非导出函数应为 nil
-	Params       []Value // 参数列表
-	Results      []Type  // 返回值列表。非具名返回值的名字为空
-	Body         *Block  // 函数体，为 nil 表明该函数为外部导入
+	InternalName string // 函数的内部名称(含包路径)，是其身份标识，应进行名字修饰
+	ExternalName string // 函数的导出名称，非导出函数应为 nil
+	Params       []Expr // 参数列表
+	Results      []Type // 返回值列表。非具名返回值的名字为空
+	Body         *Block // 函数体，为 nil 表明该函数为外部导入
 
 	scope Scope  // 匿名函数的父域为 Block，全局（非匿名）函数的父域为 Module
 	types *Types // 该函数所属 Module 的类型库，切勿手动修改
@@ -81,29 +81,29 @@ func (f *Function) EndBody() {
 		panic("StartBody first")
 	}
 
-	setImvId(0, f.Body)
+	//setImvId(0, f.Body)
 }
 
-func setImvId(num int, b *Block) int {
-	for _, i := range b.Instrs {
-		if v, ok := i.(imv); ok {
-			if av, ok := v.(Value); ok {
-				avt := av.Type()
-				if avt != nil && !avt.Equal(&Void{}) {
-					v.setId(num)
-					num++
-				}
-			}
-		}
-
-		switch i := i.(type) {
-		case *Block:
-			num = setImvId(num, i)
-
-		case *InstIf:
-			num = setImvId(num, i.True)
-			num = setImvId(num, i.False)
-		}
-	}
-	return num
-}
+//func setImvId(num int, b *Block) int {
+//	for _, i := range b.Instrs {
+//		if v, ok := i.(imv); ok {
+//			if av, ok := v.(Value); ok {
+//				avt := av.Type()
+//				if avt != nil && !avt.Equal(&Void{}) {
+//					v.setId(num)
+//					num++
+//				}
+//			}
+//		}
+//
+//		switch i := i.(type) {
+//		case *Block:
+//			num = setImvId(num, i)
+//
+//		case *InstIf:
+//			num = setImvId(num, i.True)
+//			num = setImvId(num, i.False)
+//		}
+//	}
+//	return num
+//}

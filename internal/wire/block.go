@@ -19,11 +19,11 @@ Block 定义了作用域，块内的值无法在块外访问
 Todo: Block 是否满足 Value（既是否可有返回值）待讨论
 **************************************/
 type Block struct {
-	aImv
+	aStmt
 	typ     Type
 	Comment string // 附加注释
 	//Locals  []Value       // 该块内定义的局部变量
-	Instrs []Instruction // 该块所含的指令
+	Stmts []Stmt // 该块所含的指令
 
 	objects map[interface{}]Location // 关联 AST 结点 -> 块内值
 	types   *Types                   // 该函数所属 Module 的类型库，切勿手动修改
@@ -43,7 +43,7 @@ func (b *Block) Type() Type {
 func (b *Block) ScopeKind() ScopeKind { return ScopeKindBlock }
 func (b *Block) Lookup(obj interface{}, escaping bool) Location {
 	if v, ok := b.objects[obj]; ok {
-		if alloc, ok := v.(*InstAlloc); ok {
+		if alloc, ok := v.(*Alloc); ok {
 			if escaping {
 				alloc.Location = LocationKindHeap
 			}
@@ -66,44 +66,30 @@ func (b *Block) Lookup(obj interface{}, escaping bool) Location {
 		return parent_fn.Lookup(obj, escaping)
 	}
 
-	// b 所属的函数是闭包，需要进行变量捕捉
-	outer := parent_fn.Lookup(obj, true)
-	v := &FreeVar{
-		name:   outer.Name(),
-		typ:    outer.Type(),
-		pos:    outer.Pos(),
-		object: outer.Object(),
-		outer:  outer,
-	}
-	return v
+	panic("")
+
+	//// b 所属的函数是闭包，需要进行变量捕捉
+	//outer := parent_fn.Lookup(obj, true)
+	//v := &FreeVar{
+	//	name:   outer.Name(),
+	//	typ:    outer.Type(),
+	//	pos:    outer.Pos(),
+	//	object: outer.Object(),
+	//	outer:  outer,
+	//}
+	//return v
 }
 func (b *Block) Format(tab string, sb *strings.Builder) {
 	sb.WriteString(tab)
 	sb.WriteString("{\n")
 
 	tab_t := tab + "  "
-	for _, v := range b.Instrs {
+	for _, v := range b.Stmts {
 		v.Format(tab_t, sb)
 		sb.WriteString("\n")
 	}
 	sb.WriteString(tab)
 	sb.WriteString("}")
-}
-
-// AddLocal 在 Block 中分配一个局部变量，默认分配在栈上
-func (b *Block) AddLocal(name string, typ Type, pos int, obj interface{}) Location {
-	v := &InstAlloc{}
-	v.Stringer = v
-	v.refType = b.types.GenPtr(typ)
-	v.dataType = typ
-	v.pos = pos
-	v.object = obj
-	if obj != nil {
-		b.objects[obj] = v
-	}
-
-	b.emit(v)
-	return v
 }
 
 // CreateBlock 创建一个 Block 初始化其 scope 等，但并不添加至父 Block 中
@@ -128,10 +114,8 @@ func (b *Block) EmitBlock(comment string, typ Type, pos int) *Block {
 	return block
 }
 
-// emit 向 Block 中添加一个指令，并返回指令对应的 imv
-func (b *Block) emit(inst Instruction) Value {
-	inst.setScope(b)
-	b.Instrs = append(b.Instrs, inst)
-	v, _ := inst.(Value)
-	return v
+// emit 向 Block 中添加一个指令
+func (b *Block) emit(stmt Stmt) {
+	stmt.setScope(b)
+	b.Stmts = append(b.Stmts, stmt)
 }

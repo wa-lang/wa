@@ -9,8 +9,8 @@ LocationKind: 位置类别
 type LocationKind int
 
 const (
-	LocationKindStack LocationKind = iota
-	LocationKindRegister
+	LocationKindLocal LocationKind = iota
+	LocationKindStack
 	LocationKindHeap
 )
 
@@ -18,7 +18,7 @@ const (
 Location: 可被赋值的位置，可能类别为栈地址、寄存器、堆地址
 **************************************/
 type Location interface {
-	Value
+	Expr
 
 	// 变量位置类型
 	LocationKind() LocationKind

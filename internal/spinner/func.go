@@ -96,7 +96,7 @@ func (b *Builder) buildFunc(f *Func) (fn *wire.Function) {
 		recv := b.module.NewParam(name, typ, int(r.Pos()))
 		fn.Params = append(fn.Params, recv)
 		loc := fn.Body.AddLocal(name, typ, int(r.Pos()), r)
-		fn.Body.EmitStore(loc, recv, int(recv.Pos()))
+		fn.Body.EmitStore(loc, recv, int(r.Pos()))
 	}
 
 	if params := f.sig.Params(); params != nil {
@@ -114,8 +114,8 @@ func (b *Builder) buildFunc(f *Func) (fn *wire.Function) {
 				// 具名参数
 				param := b.module.NewParam(name, typ, int(p.Pos()))
 				fn.Params = append(fn.Params, param)
-				loc := fn.Body.AddLocal(name, typ, int(p.Pos()), p)
-				fn.Body.EmitStore(loc, param, param.Pos())
+				loc := fn.Body.AddLocal("$"+name, typ, int(p.Pos()), p)
+				fn.Body.EmitStore(loc, param, int(p.Pos()))
 			}
 		}
 	}
@@ -191,35 +191,17 @@ func (b *Builder) blockStmt(list []ast.Stmt, f *Func, block *wire.Block) {
 
 // localValueSpec 将局部变量声明降解，追加至 wire.Block
 func (b *Builder) localValueSpec(spec *ast.ValueSpec, block *wire.Block) {
-	switch {
-	case len(spec.Values) == len(spec.Names):
-		// 1：1赋值，如：x, y := 1, 2
-		for i, id := range spec.Names {
-			var loc wire.Location = nil
-			if !isBlankIdent(id) {
-				loc = b.addLocalForIdent(id, block)
-			}
-			b.assign(loc, spec.Values[i], int(id.Pos()), block, nil)
+	var locs []wire.Location
+	for _, v := range spec.Names {
+		var loc wire.Location = nil
+		if !isBlankIdent(v) {
+			loc = b.addLocalForIdent(v, block)
 		}
+		locs = append(locs, loc)
+	}
 
-	case len(spec.Values) == 0:
-		// 未指定初始值，默认 0 值初始化
-		for _, id := range spec.Names {
-			if !isBlankIdent(id) {
-				b.addLocalForIdent(id, block)
-			}
-		}
-
-	default:
-		// 元组赋值给多个变量，如： x, y := swap(x, y)
-		tuple := b.exprN(spec.Values[0], block)
-		for i, id := range spec.Names {
-			if !isBlankIdent(id) {
-				loc := b.addLocalForIdent(id, block)
-				val := block.EmitExtract(tuple, i, int(id.Pos()))
-				block.EmitStore(loc, val, int(id.Pos()))
-			}
-		}
+	if len(spec.Values) > 0 {
+		b.assignN(locs, spec.Values, int(spec.Pos()), block)
 	}
 }
 
@@ -250,25 +232,11 @@ func (b *Builder) assignStmt(s *ast.AssignStmt, block *wire.Block) {
 		}
 	}
 
-	if len(s.Lhs) == len(s.Rhs) {
-		// 左右部数量相等，注意右部表达式可能引用左部，因此赋值操作需先暂存
-		var sb storebuf
-		for i := range s.Lhs {
-			b.assign(locs[i], s.Rhs[i], int(s.Pos()), block, &sb)
-		}
-		sb.emit(block)
-	} else {
-		// 将元组赋值给多个变量， 如 x, y = swap(x, y)
-		tuple := b.exprN(s.Rhs[0], block)
-		for i, loc := range locs {
-			rh := block.EmitExtract(tuple, i, int(s.Pos()))
-			block.EmitStore(loc, rh, int(s.Pos()))
-		}
-	}
+	b.assignN(locs, s.Rhs, int(s.Pos()), block)
 }
 
 func (b *Builder) returnStmt(s *ast.ReturnStmt, f *Func, block *wire.Block) {
-	var results []wire.Value
+	var results []wire.Expr
 
 	if len(s.Results) == 1 && f.sig.Results().Len() > 1 {
 		// 返回元组
@@ -283,9 +251,7 @@ func (b *Builder) returnStmt(s *ast.ReturnStmt, f *Func, block *wire.Block) {
 
 	if f.namedResults != nil {
 		// 函数包含具名返回值，具名返回值赋值
-		for i, r := range results {
-			block.EmitStore(f.namedResults[i], r, int(s.TokPos))
-		}
+		block.EmitStoreN(f.namedResults, results, int(s.TokPos))
 	}
 
 	// Todo：Defer
@@ -294,7 +260,7 @@ func (b *Builder) returnStmt(s *ast.ReturnStmt, f *Func, block *wire.Block) {
 		// 重新装载具名返回值
 		results = results[:0]
 		for _, r := range f.namedResults {
-			results = append(results, block.EmitLoad(r, r.DataType(), int(s.TokPos)))
+			results = append(results, block.NewLoad(r, int(s.TokPos)))
 		}
 	}
 
@@ -327,44 +293,26 @@ func (b *Builder) location(e ast.Expr, escaping bool, block *wire.Block) wire.Lo
 	panic(fmt.Sprintf("unexpected address expression: %T", e))
 }
 
-type store struct {
-	loc wire.Location
-	val wire.Value
-	pos int
-}
-
-type storebuf struct{ stores []store }
-
-func (sb *storebuf) store(loc wire.Location, val wire.Value, pos int) {
-	sb.stores = append(sb.stores, store{loc, val, pos})
-}
-
-func (sb *storebuf) emit(block *wire.Block) {
-	for _, s := range sb.stores {
-		block.EmitStore(s.loc, s.val, s.pos)
-	}
-}
-
-// assign 方法将表达式 e 赋值给位置 loc 的动作降解并追加至 block 中
+// assign 将表达式 e 赋值给位置 loc 的动作降解并追加至 block 中
 // loc 为 nil 是合法的，发生于向匿名变量 _ 赋值时
-// 存储缓冲 sb 不为空，则 Store 动作将保存在 sb 中，而非追加至 block 中，
-// 该情况出现在类似 x, y = inc(x), x+y 的多重赋值时，避免右值对左值交叉应用
-func (b *Builder) assign(loc wire.Location, e ast.Expr, pos int, block *wire.Block, sb *storebuf) {
+func (b *Builder) assign(loc wire.Location, e ast.Expr, pos int, block *wire.Block) {
 	val := b.expr(e, block)
+	block.EmitStore(loc, val, pos)
+}
 
-	if loc == nil {
-		return
+// assign 的多重赋值版本
+func (b *Builder) assignN(locs []wire.Location, exprs []ast.Expr, pos int, block *wire.Block) {
+	var vals []wire.Expr
+	for _, e := range exprs {
+		val := b.expr(e, block)
+		vals = append(vals, val)
 	}
 
-	if sb != nil {
-		sb.store(loc, val, pos)
-	} else {
-		block.EmitStore(loc, val, pos)
-	}
+	block.EmitStoreN(locs, vals, pos)
 }
 
 // expr 方法将表达式 e 降解为 wire 指令并追加至 block 中，返回 e 对应的 wire.Value
-func (b *Builder) expr(e ast.Expr, block *wire.Block) wire.Value {
+func (b *Builder) expr(e ast.Expr, block *wire.Block) wire.Expr {
 	e = astutil.Unparen(e)
 
 	tv := b.info.Types[e]
@@ -374,10 +322,10 @@ func (b *Builder) expr(e ast.Expr, block *wire.Block) wire.Value {
 		return b.constval(tv.Value, tv.Type, int(e.Pos()))
 	}
 
-	var v wire.Value
+	var v wire.Expr
 	if tv.Addressable() {
 		loc := b.location(e, false, block)
-		v = block.EmitLoad(loc, loc.DataType(), int(e.Pos()))
+		v = block.NewLoad(loc, int(e.Pos()))
 	} else {
 		v = b.expr0(e, tv, block)
 	}
@@ -385,7 +333,7 @@ func (b *Builder) expr(e ast.Expr, block *wire.Block) wire.Value {
 	return v
 }
 
-func (b *Builder) expr0(e ast.Expr, tv types.TypeAndValue, block *wire.Block) wire.Value {
+func (b *Builder) expr0(e ast.Expr, tv types.TypeAndValue, block *wire.Block) wire.Expr {
 	switch e := e.(type) {
 	case *ast.Ident:
 		obj := b.info.Uses[e]
@@ -401,7 +349,7 @@ func (b *Builder) expr0(e ast.Expr, tv types.TypeAndValue, block *wire.Block) wi
 
 		if _, ok := obj.(*types.Var); ok {
 			loc := block.Lookup(obj, false)
-			return block.EmitLoad(loc, loc.DataType(), int(obj.Pos()))
+			return block.NewLoad(loc, int(obj.Pos()))
 		}
 
 		// 函数
@@ -409,6 +357,7 @@ func (b *Builder) expr0(e ast.Expr, tv types.TypeAndValue, block *wire.Block) wi
 		// :*ast.Ident
 
 	case *ast.UnaryExpr: // 一元算符
+	/*
 		switch e.Op {
 		case token.AND: // &x, 逃逸
 			loc := b.location(e.X, true, block)
@@ -430,9 +379,10 @@ func (b *Builder) expr0(e ast.Expr, tv types.TypeAndValue, block *wire.Block) wi
 
 		default:
 			panic(e.Op)
-		} // :*ast.UnaryExpr
+		} // :*ast.UnaryExpr */
 
 	case *ast.BinaryExpr: // 二元算符
+	/*
 		x := b.expr(e.X, block)
 		y := b.expr(e.Y, block)
 		switch e.Op {
@@ -479,54 +429,55 @@ func (b *Builder) expr0(e ast.Expr, tv types.TypeAndValue, block *wire.Block) wi
 			return block.EmitInstCOMP(x, y, int(e.OpPos))
 		default:
 			panic("illegal op in BinaryExpr: " + e.Op.String())
-		} // :*ast.BinaryExpr
+		} // :*ast.BinaryExpr */
 
 	case *ast.CallExpr:
-		if b.info.Types[e.Fun].IsType() {
-			// 显式类型转换
-			panic("Todo")
-		}
-
-		var call wire.Call
-
-		if id, ok := unparen(e.Fun).(*ast.Ident); ok {
-			switch obj := b.info.Uses[id].(type) {
-			case *types.Builtin:
-				// 内置函数调用，如 make、panic 等，runtime.SetFinalizer 也在此处理
-				println(obj)
+		/*
+			if b.info.Types[e.Fun].IsType() {
+				// 显式类型转换
 				panic("Todo")
-
-			case *types.Func:
-				call.FnName = obj.FullName()
-				call.Sig = b.buildSig(obj.Type().(*types.Signature))
 			}
-		}
 
-		if selector, ok := unparen(e.Fun).(*ast.SelectorExpr); ok {
-			sel, ok := b.info.Selections[selector]
-			if ok && sel.Kind() == types.MethodVal {
-				obj := sel.Obj().(*types.Func)
-				recvType := obj.Type().(*types.Signature).Recv().Type()
-				if types.IsInterface(recvType) {
-					// 接口调用
+			var call wire.Call
+
+			if id, ok := unparen(e.Fun).(*ast.Ident); ok {
+				switch obj := b.info.Uses[id].(type) {
+				case *types.Builtin:
+					// 内置函数调用，如 make、panic 等，runtime.SetFinalizer 也在此处理
+					println(obj)
 					panic("Todo")
-				} else {
-					// 对象方法调用
-					panic("Todo")
+
+				case *types.Func:
+					call.FnName = obj.FullName()
+					call.Sig = b.buildSig(obj.Type().(*types.Signature))
 				}
-			} else {
-				panic("")
 			}
-		}
 
-		for _, v := range e.Args {
-			param := b.expr(v, block)
-			call.Args = append(call.Args, param)
-		}
-		call.Pos = int(e.Pos())
+			if selector, ok := unparen(e.Fun).(*ast.SelectorExpr); ok {
+				sel, ok := b.info.Selections[selector]
+				if ok && sel.Kind() == types.MethodVal {
+					obj := sel.Obj().(*types.Func)
+					recvType := obj.Type().(*types.Signature).Recv().Type()
+					if types.IsInterface(recvType) {
+						// 接口调用
+						panic("Todo")
+					} else {
+						// 对象方法调用
+						panic("Todo")
+					}
+				} else {
+					panic("")
+				}
+			}
 
-		sc := wire.StaticCall{Call: call}
-		return block.EmitInstCall(&sc)
+			for _, v := range e.Args {
+				param := b.expr(v, block)
+				call.Args = append(call.Args, param)
+			}
+			call.Pos = int(e.Pos())
+
+			sc := wire.StaticCall{Call: call}
+			return block.EmitInstCall(&sc)  //*/
 
 	case *ast.FuncLit:
 		// Todo
@@ -562,7 +513,7 @@ func (b *Builder) expr0(e ast.Expr, tv types.TypeAndValue, block *wire.Block) wi
 
 // exprN 方法将多返回值表达式 e 降解并追加至 block，返回的 wire.Value 是元组
 // 除自定义的的多返回值函数外，"v, ok" 形式的类型断言、Map查找等也属于多返回值表达式
-func (b *Builder) exprN(e ast.Expr, block *wire.Block) wire.Value {
+func (b *Builder) exprN(e ast.Expr, block *wire.Block) wire.Expr {
 	switch e := e.(type) {
 	case *ast.ParenExpr:
 		return b.exprN(e.X, block)
@@ -583,30 +534,30 @@ func (b *Builder) ifStmt(s *ast.IfStmt, f *Func, block *wire.Block) {
 }
 
 func (b *Builder) emitIf(pos int, cond ast.Expr, initStmt, bodyStmt, elseStmt ast.Stmt, f *Func, block *wire.Block) {
-	if initStmt != nil {
-		block = block.EmitBlock("", b.module.Types.Void, pos)
-		b.stmt(initStmt, f, block)
-	}
-
-	switch cond := cond.(type) {
-	case *ast.ParenExpr:
-		b.emitIf(pos, cond.X, nil, bodyStmt, elseStmt, f, block)
-		return
-
-	case *ast.UnaryExpr:
-		if cond.Op == token.NOT {
-			b.emitIf(pos, cond.X, nil, elseStmt, bodyStmt, f, block)
-			return
-		}
-	}
-
-	i := block.EmitInstIf(b.expr(cond, block), b.module.Types.Void, pos)
-
-	if bodyStmt != nil {
-		b.stmt(bodyStmt, f, i.True)
-	}
-
-	if elseStmt != nil {
-		b.stmt(elseStmt, f, i.False)
-	}
+	//	if initStmt != nil {
+	//		block = block.EmitBlock("", b.module.Types.Void, pos)
+	//		b.stmt(initStmt, f, block)
+	//	}
+	//
+	//	switch cond := cond.(type) {
+	//	case *ast.ParenExpr:
+	//		b.emitIf(pos, cond.X, nil, bodyStmt, elseStmt, f, block)
+	//		return
+	//
+	//	case *ast.UnaryExpr:
+	//		if cond.Op == token.NOT {
+	//			b.emitIf(pos, cond.X, nil, elseStmt, bodyStmt, f, block)
+	//			return
+	//		}
+	//	}
+	//
+	//	i := block.EmitInstIf(b.expr(cond, block), b.module.Types.Void, pos)
+	//
+	//	if bodyStmt != nil {
+	//		b.stmt(bodyStmt, f, i.True)
+	//	}
+	//
+	//	if elseStmt != nil {
+	//		b.stmt(elseStmt, f, i.False)
+	//	}
 }

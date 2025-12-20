@@ -3,80 +3,76 @@
 
 package wire
 
-import (
-	"fmt"
-	"strings"
-)
-
 /**************************************
 本文件包含了 wire 中的辅助对象
 **************************************/
 
 //-------------------------------------
 
-/**************************************
-anInstruction: 实现 Instruction 接口与 Pos、Scope 相关的方法
-**************************************/
-type anInstruction struct {
-	fmt.Stringer
-	pos   int
-	scope Scope
-}
+///**************************************
+//anInstruction: 实现 Instruction 接口与 Pos、Scope 相关的方法
+//**************************************/
+//type anInstruction struct {
+//	fmt.Stringer
+//	pos   int
+//	scope Scope
+//}
+//
+//func (v *anInstruction) ParentScope() Scope { return v.scope }
+//func (v *anInstruction) setScope(s Scope)   { v.scope = s }
+//func (v *anInstruction) Pos() int           { return v.pos }
+//func (v *anInstruction) Format(tab string, sb *strings.Builder) {
+//	sb.WriteString(tab)
+//	if va, ok := v.Stringer.(Value); ok {
+//		if va.Type() != nil && !va.Type().Equal(&Void{}) {
+//			sb.WriteString(va.Name())
+//			sb.WriteString(" : ")
+//			sb.WriteString(va.Type().Name())
+//			sb.WriteString(" = ")
+//		}
+//
+//	}
+//	sb.WriteString(v.String())
+//}
+//
+//type imv interface {
+//	setId(id int)
+//}
 
-func (v *anInstruction) ParentScope() Scope { return v.scope }
-func (v *anInstruction) setScope(s Scope)   { v.scope = s }
-func (v *anInstruction) Pos() int           { return v.pos }
-func (v *anInstruction) Format(tab string, sb *strings.Builder) {
-	sb.WriteString(tab)
-	if va, ok := v.Stringer.(Value); ok {
-		if va.Type() != nil && !va.Type().Equal(&Void{}) {
-			sb.WriteString(va.Name())
-			sb.WriteString(" : ")
-			sb.WriteString(va.Type().Name())
-			sb.WriteString(" = ")
-		}
-
-	}
-	sb.WriteString(v.String())
-}
-
-type imv interface {
-	setId(id int)
-}
-
-/**************************************
-imv: InterMediateValue，中间值，实现 Value 接口与 Name、Kind、Type 相关的方法
-**************************************/
-type aImv struct {
-	anInstruction
-	id int // 在函数内虚拟寄存器数组中的下标，在 Function.EndBody() 前该值无意义
-}
-
-func (v *aImv) Name() string    { return fmt.Sprintf("$t%d", v.id) }
-func (v *aImv) Kind() ValueKind { return ValueKindLocal }
-func (v *aImv) setId(id int)    { v.id = id }
-
-/**************************************
-CallInfo: 调用信息（函数名、函数签名、参数、调用位置）
-**************************************/
-type Call struct {
-	FnName string
-	Sig    FnSig
-	Args   []Value
-	Pos    int
-}
-
-func (v *Call) Name() string { return v.FnName }
-func (v *Call) Type() Type   { return v.Sig.Results }
-func (v *Call) String() string {
-	s := v.FnName
-	s += "("
-	for i, p := range v.Args {
-		if i > 0 {
-			s += ", "
-		}
-		s += p.Name()
-	}
-	s += ")"
-	return s
-}
+///**************************************
+//imv: InterMediateValue，中间值，实现 Value 接口与 Name、Kind、Type 相关的方法
+//**************************************/
+//type aImv struct {
+//	anInstruction
+//	id int // 在函数内虚拟寄存器数组中的下标，在 Function.EndBody() 前该值无意义
+//}
+//
+//func (v *aImv) Name() string    { return fmt.Sprintf("$t%d", v.id) }
+//func (v *aImv) Kind() ValueKind { return ValueKindLocal }
+//func (v *aImv) setId(id int)    { v.id = id }
+//
+///**************************************
+//CallInfo: 调用信息（函数名、函数签名、参数、调用位置）
+//**************************************/
+//type Call struct {
+//	FnName string
+//	Sig    FnSig
+//	Args   []Value
+//	Pos    int
+//}
+//
+//func (v *Call) Name() string { return v.FnName }
+//func (v *Call) Type() Type   { return v.Sig.Results }
+//func (v *Call) String() string {
+//	s := v.FnName
+//	s += "("
+//	for i, p := range v.Args {
+//		if i > 0 {
+//			s += ", "
+//		}
+//		s += p.Name()
+//	}
+//	s += ")"
+//	return s
+//}
+//
