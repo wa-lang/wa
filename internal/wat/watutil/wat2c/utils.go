@@ -17,7 +17,7 @@ func assert(condition bool, args ...interface{}) {
 		if msg := fmt.Sprint(args...); msg != "" {
 			panic(fmt.Sprintf("assert failed, %s", msg))
 		} else {
-			panic(fmt.Sprint("assert failed"))
+			panic("assert failed")
 		}
 	}
 }

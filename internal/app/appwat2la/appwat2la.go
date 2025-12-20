@@ -24,6 +24,16 @@ var CmdWat2la = &cli.Command{
 			Usage:   "set code output file",
 			Value:   "a.out.ws",
 		},
+		&cli.StringFlag{
+			Name:    "prefix",
+			Aliases: []string{"p"},
+			Usage:   "name prefix to use in generated code",
+			Value:   "app",
+		},
+		&cli.StringSliceFlag{
+			Name:  "exports",
+			Usage: "set export func list (K1=V1,K2=V2,...)",
+		},
 	},
 	Action: func(c *cli.Context) error {
 		if c.NArg() == 0 {
@@ -33,6 +43,8 @@ var CmdWat2la = &cli.Command{
 
 		infile := c.Args().First()
 		outfile := c.String("output")
+		prefix := c.String("prefix")
+		exports := c.StringSliceAsMap("exports")
 
 		if outfile == "" {
 			outfile = infile
@@ -53,14 +65,17 @@ var CmdWat2la = &cli.Command{
 			os.Exit(1)
 		}
 
-		_, f, err := wat2la.Wat2LA64(infile, source)
+		_, code, err := wat2la.Wat2LA64(infile, source, wat2la.Options{
+			Prefix:  prefix,
+			Exports: exports,
+		})
 		if err != nil {
 			fmt.Println(err)
 			os.Exit(1)
 		}
 
 		// 输出汇编格式
-		err = os.WriteFile(outfile, []byte(f.String()), 0666)
+		err = os.WriteFile(outfile, code, 0666)
 		if err != nil {
 			fmt.Println(err)
 			os.Exit(1)
