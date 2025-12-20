@@ -621,9 +621,9 @@ var _ZhAnames = []string{
 	AORI:          "或立",
 	AORN:          "反或",
 	APCADDI:       "计加立",
-	APCADDU12I:    "计加正12立",
-	APCADDU18I:    "计加正18立",
-	APCALAU12I:    "计算术左移正12立",
+	APCADDU12I:    "计加高12立",
+	APCADDU18I:    "计加高18立",
+	APCALAU12I:    "计齐加高12立", // PC ALign Add Upper 12 Immediate
 	APRELD:        "预取装载",
 	APRELDX:       "预取装载变址",
 	ARDTIMEH_W:    "读时间高位.字",
