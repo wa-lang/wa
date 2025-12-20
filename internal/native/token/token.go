@@ -40,6 +40,8 @@ const (
 	SEMICOLON    // ;
 	LPAREN       // (
 	RPAREN       // )
+	LBRACK       // [
+	RBRACK       // ]
 	LBRACE       // {
 	RBRACE       // }
 	operator_end // 运算符结束
@@ -57,6 +59,7 @@ const (
 	PTR    // uint pointer
 	CONST  // 常量
 	GLOBAL // 全局
+	LOCAL  // 局部
 	FUNC   // 函数
 
 	// 中文版关键字
@@ -70,6 +73,7 @@ const (
 	PTR_zh    // 指针
 	CONST_zh  // 常量
 	GLOBAL_zh // 全局
+	LOCAL_zh  // 局部
 	FUNC_zh   // 函数
 	END_zh    // 完毕
 
@@ -124,6 +128,8 @@ var tokens = [...]string{
 	SEMICOLON: ";",
 	LPAREN:    "(",
 	RPAREN:    ")",
+	LBRACK:    "[",
+	RBRACK:    "]",
 	LBRACE:    "{",
 	RBRACE:    "}",
 
@@ -136,6 +142,7 @@ var tokens = [...]string{
 	PTR:    "ptr",
 	CONST:  "const",
 	GLOBAL: "global",
+	LOCAL:  "local",
 	FUNC:   "func",
 
 	I32_zh:    "普整",
@@ -147,6 +154,7 @@ var tokens = [...]string{
 	PTR_zh:    "指针",
 	CONST_zh:  "常量",
 	GLOBAL_zh: "全局",
+	LOCAL_zh:  "局部",
 	FUNC_zh:   "函数",
 	END_zh:    "完毕",
 }

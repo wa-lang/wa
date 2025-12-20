@@ -158,11 +158,17 @@ global $ptr = $info # $info 的地址
 定义函数:
 
 ```go
-func $add {
+func $add(%a: i32, %b: i32) => i32 {
+    # 局部变量
+    local %sum: i32
+    local %tab: [32]i32
+
     # 指令
 Loop:
 }
 ```
+
+参数和局部变量类似一个局部常量, 定义了相对于栈帧都有固定的偏移量.
 
 ## 指令中的宏
 

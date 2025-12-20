@@ -83,17 +83,45 @@ type Func struct {
 	Tok      token.Token       // 关键字(可能有多语言)
 	Doc      *CommentGroup     // 关联文档
 	Name     string            // 函数名
+	Type     *FuncType         // 函数类型
 	Size     int               // 指令大小(没有类型信息)
 	Body     *FuncBody         // 函数体
 	LinkInfo *abi.LinkedSymbol // 链接信息
 }
 
+// 函数类型
+type FuncType struct {
+	Pos    token.Pos  // 位置
+	Args   *FieldList // 参数列表
+	Return *FieldList // 返回值类型
+}
+
+// 函数参数或返回值列表
+type FieldList struct {
+	Pos  token.Pos     // 位置
+	Name []string      // 名字
+	Type []token.Token // 类型
+}
+
 // 函数定义
 type FuncBody struct {
 	Pos      token.Pos       // 位置
+	Locals   []*Local        // 局部变量
 	Insts    []*Instruction  // 指令列表
 	Comments []*CommentGroup // 孤立的注释
 	Objects  []Object        // 保序对象列表
+}
+
+// 局部变量
+// 对应栈帧固定的偏移量
+type Local struct {
+	Pos     token.Pos     // 位置
+	Tok     token.Token   // 关键字(可能有多语言)
+	Doc     *CommentGroup // 关联文档
+	Name    string        // 名字
+	Cap     int           // 容量, 元素个数, 默认为1
+	Type    token.Token   // 类型
+	Comment *Comment      // 尾部单行注释
 }
 
 // 机器指令
