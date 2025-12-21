@@ -31,15 +31,24 @@ $ gcc --save-temps hello-gcc.c -o a.out.exe
     .file    "hello-gcc.c"
 
 # ---------------------------------------------------------
+# sizeof(int) == 4
 
     .text
     .align  2
     .globl  add
     .type   add, @function
 add:
+    # 栈帧大小 64 字节, sp 必须是 16 的倍数
+    # 其中 ra 没有变化没有保存
+    # 备份之前的 fp, 然后赋值为当前的 sp
+    # 调整 sp, 分配栈帧空间
+
     addi.d  $sp, $sp, -64
     st.d    $fp, $sp, 56
     addi.d  $fp, $sp, 64
+
+    # 将 a0-a7 备份到栈上
+    # 对于非叶子函数, 这些寄存器可能会在调用其他函数时破坏
 
     or      $t0, $a0, $zero
     or      $t7, $a1, $zero
@@ -49,6 +58,7 @@ add:
     or      $t3, $a5, $zero
     or      $t2, $a6, $zero
     or      $t1, $a7, $zero
+
     st.w    $t0, $fp, -36
     or      $t0, $t7, $zero
     st.w    $t0, $fp, -40
@@ -64,6 +74,7 @@ add:
     st.w    $t0, $fp, -60
     or      $t0, $t1, $zero
     st.w    $t0, $fp, -64
+
     ld.w    $t0, $fp, -36
     st.w    $t0, $fp, -32
     ld.d    $t0, $fp, -32
@@ -72,6 +83,9 @@ add:
     or      $t3, $t1, $zero
     or      $a0, $t2, $zero
     or      $a1, $t3, $zero
+
+    # 恢复 fp 和 sp, 函数返回
+
     ld.d    $fp, $sp, 56
     addi.d  $sp, $sp, 64
     jr      $ra
@@ -82,15 +96,23 @@ add:
     .globl  main
     .type   main, @function
 main:
+    # 栈帧大小 48 字节, sp 必须是 16 的倍数
+    # 备份之前的 ra, 调用函数后会被覆盖
+    # 备份之前的 fp, 然后赋值为当前的 sp
+    # 调整 sp, 分配栈帧空间
+
     addi.d  $sp, $sp, -48
     st.d    $ra, $sp, 40
     st.d    $fp, $sp, 32
     addi.d  $fp, $sp, 48
 
+    # 超出寄存器参数范围, 通过栈传递
     addi.w  $t0, $zero, 9      # 0x9
     st.d    $t0, $sp, 8
     addi.w  $t0, $zero, 8      # 0x8
     stptr.d $t0, $sp, 0
+
+    # 前 8 个参数用寄存器传递
     addi.w  $a7, $zero, 7      # 0x7
     addi.w  $a6, $zero, 6      # 0x6
     addi.w  $a5, $zero, 5      # 0x5
@@ -99,13 +121,23 @@ main:
     addi.w  $a2, $zero, 2      # 0x2
     addi.w  $a1, $zero, 1      # 0x1
     or      $a0, $zero, $zero  # 0x0
+
+    # 调用 add 函数
+    # 此时 sp 指向第 9/10 个参数在栈上的位置
+
     bl      add
+
+    # 接收函数的返回值
+    # 超出的部分在栈上传递
+
     or      $t0, $a0, $zero
     or      $t1, $a1, $zero
     st.d    $t0, $fp, -32
     st.d    $t1, $fp, -24
     or      $t0, $zero, $zero
     or      $a0, $t0, $zero
+
+    # 恢复 ra/fp/sp, 函数返回
 
     ld.d    $ra, $sp, 40
     ld.d    $fp, $sp, 32

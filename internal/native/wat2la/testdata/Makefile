@@ -17,5 +17,9 @@ gcc:
 	gcc --save-temps hello-gcc.c -o a.out.exe
 	./a.out.exe
 
+gcc2:
+	gcc --save-temps hello2-gcc.c -o a.out.exe
+	./a.out.exe
+
 clean:
 	-rm hello.elf.exe a.out*
