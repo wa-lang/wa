@@ -65,7 +65,7 @@ func (b *Builder) Init(info *types.Info) {
 	b.typeTable[b.module.Types.String.Name()] = &b.module.Types.String
 }
 
-func (b *Builder) constval(val constant.Value, typ types.Type, pos int) wire.Value {
+func (b *Builder) constval(val constant.Value, typ types.Type, pos int) wire.Expr {
 	t := b.BuildType(typ)
 
 	if t.Equal(b.module.Types.Bool) {
@@ -97,7 +97,7 @@ func (b *Builder) constval(val constant.Value, typ types.Type, pos int) wire.Val
 	panic("Todo")
 }
 
-func (b *Builder) nilConst(typ types.Type, pos int) wire.Value {
+func (b *Builder) nilConst(typ types.Type, pos int) wire.Expr {
 	t := b.BuildType(typ)
 	return b.module.NewConst("0", t, pos)
 }

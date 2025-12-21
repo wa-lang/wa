@@ -27,7 +27,7 @@ type Module struct {
 // Scope 接口相关
 func (m *Module) ScopeKind() ScopeKind { return ScopeKindModule }
 func (m *Module) ParentScope() Scope   { return nil }
-func (m *Module) Lookup(obj interface{}, escaping bool) Location {
+func (m *Module) Lookup(obj interface{}, level LocationKind) Location {
 	v, ok := m.Globals[obj]
 	if !ok {
 		panic(fmt.Sprintf("no Value for: %v", obj))
@@ -58,7 +58,7 @@ func (m *Module) NewFunction() *Function {
 }
 
 // 创建一个 参数值
-func (m *Module) NewParam(name string, typ Type, pos int) Value {
+func (m *Module) NewParam(name string, typ Type, pos int) Expr {
 	p := Param{
 		name: name,
 		typ:  typ,
@@ -68,7 +68,7 @@ func (m *Module) NewParam(name string, typ Type, pos int) Value {
 }
 
 // 创建一个 常量值
-func (m *Module) NewConst(name string, typ Type, pos int) Value {
+func (m *Module) NewConst(name string, typ Type, pos int) Expr {
 	c := Const{
 		name: name,
 		typ:  typ,
