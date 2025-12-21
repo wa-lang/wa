@@ -213,34 +213,38 @@ func (b *Block) EmitStoreN(locs []Location, vals []Expr, pos int) *InstStore {
 	return v
 }
 
-///**************************************
-//InstExtract: Extract 指令，提取元组 Tuple 的第 Index 个元素
-//**************************************/
-//type InstExtract struct {
-//	aImv
-//	X     Value
-//	Index int
-//}
-//
-//func (i *InstExtract) String() string {
-//	return fmt.Sprintf("extract %s #%d", i.X.Name(), i.Index)
-//}
-//
-//func (i *InstExtract) Type() Type {
-//	return i.X.Type().(*Tuple).fields[i.Index]
-//}
-//
-//// 在 Block 中添加一条 Extract 指令
-//func (b *Block) EmitExtract(tuple Value, index int, pos int) *InstExtract {
-//	v := &InstExtract{}
-//	v.Stringer = v
-//	v.X = tuple
-//	v.Index = index
-//	v.pos = pos
-//
-//	b.emit(v)
-//	return v
-//}
+/**************************************
+Extract: Extract 指令，提取元组 Tuple 的第 Index 个元素，Extract 实现了 Expr
+**************************************/
+type Extract struct {
+	aStmt
+	X     Expr
+	Index int
+}
+
+func (i *Extract) Name() string {
+	return i.String()
+}
+
+func (i *Extract) String() string {
+	return fmt.Sprintf("extract(%s, #%d)", i.X.Name(), i.Index)
+}
+
+func (i *Extract) Type() Type {
+	return i.X.Type().(*Tuple).fields[i.Index]
+}
+
+// 生成一条 Extract 指令
+func (b *Block) NewExtract(tuple Expr, index int, pos int) *Extract {
+	v := &Extract{}
+	v.Stringer = v
+	v.X = tuple
+	v.Index = index
+	v.pos = pos
+	v.setScope(b)
+
+	return v
+}
 
 /**************************************
 Return: Return 指令
@@ -252,7 +256,10 @@ type Return struct {
 
 func (i *Return) String() string {
 	s := "return"
-	for _, r := range i.Results {
+	for m, r := range i.Results {
+		if m > 0 {
+			s += ","
+		}
 		s += " "
 		s += r.Name()
 	}
@@ -270,618 +277,132 @@ func (b *Block) EmitReturn(results []Expr, pos int) *Return {
 	return v
 }
 
-///**************************************
-//InstUnopNot:  一元非指令，!x
-//**************************************/
-//type InstUnopNot struct {
-//	aImv
-//	X Value
-//}
-//
-//func (i *InstUnopNot) String() string {
-//	return fmt.Sprintf("!%s", i.X.Name())
-//}
-//
-//func (i *InstUnopNot) Type() Type {
-//	return i.X.Type()
-//}
-//
-//// 在 Block 中添加一条 UnopNot 指令
-//func (b *Block) EmitUnopNot(x Value, pos int) *InstUnopNot {
-//	v := &InstUnopNot{X: x}
-//	v.Stringer = v
-//	v.pos = pos
-//
-//	b.emit(v)
-//	return v
-//}
-//
-///**************************************
-//InstUnopSub:  取负指令，-x
-//**************************************/
-//type InstUnopSub struct {
-//	aImv
-//	X Value
-//}
-//
-//func (i *InstUnopSub) String() string {
-//	return fmt.Sprintf("-%s", i.X.Name())
-//}
-//
-//func (i *InstUnopSub) Type() Type {
-//	return i.X.Type()
-//}
-//
-//// 在 Block 中添加一条 UnopSub 指令
-//func (b *Block) EmitUnopSub(x Value, pos int) *InstUnopSub {
-//	v := &InstUnopSub{X: x}
-//	v.Stringer = v
-//	v.pos = pos
-//
-//	b.emit(v)
-//	return v
-//}
-//
-///**************************************
-//InstUnopXor:  一元异或指令，^x
-//**************************************/
-//type InstUnopXor struct {
-//	aImv
-//	X Value
-//}
-//
-//func (i *InstUnopXor) String() string {
-//	return fmt.Sprintf("^%s", i.X.Name())
-//}
-//
-//func (i *InstUnopXor) Type() Type {
-//	return i.X.Type()
-//}
-//
-//// 在 Block 中添加一条 UnopXor 指令
-//func (b *Block) EmitUnopXor(x Value, pos int) *InstUnopXor {
-//	v := &InstUnopXor{X: x}
-//	v.Stringer = v
-//	v.pos = pos
-//
-//	b.emit(v)
-//	return v
-//}
-//
-///**************************************
-//InstLAND:  逻辑与指令，x && y
-//**************************************/
-//type InstLAND struct {
-//	aImv
-//	X, Y Value
-//}
-//
-//func (i *InstLAND) Type() Type {
-//	return i.X.Type()
-//}
-//
-//func (i *InstLAND) String() string {
-//	return fmt.Sprintf("%s && %s", i.X.Name(), i.Y.Name())
-//}
-//
-//// 在 Block 中添加一条 BiopLAND 指令
-//func (b *Block) EmitInstLAND(x, y Value, pos int) *InstLAND {
-//	v := &InstLAND{X: x, Y: y}
-//	v.Stringer = v
-//	v.pos = pos
-//
-//	b.emit(v)
-//	return v
-//}
-//
-///**************************************
-//InstLOR:  逻辑或指令，x || y
-//**************************************/
-//type InstLOR struct {
-//	aImv
-//	X, Y Value
-//}
-//
-//func (i *InstLOR) String() string {
-//	return fmt.Sprintf("%s || %s", i.X.Name(), i.Y.Name())
-//}
-//
-//func (i *InstLOR) Type() Type {
-//	return i.X.Type()
-//}
-//
-//// 在 Block 中添加一条 BiopLOR 指令
-//func (b *Block) EmitInstLOR(x, y Value, pos int) *InstLOR {
-//	v := &InstLOR{X: x, Y: y}
-//	v.Stringer = v
-//	v.pos = pos
-//
-//	b.emit(v)
-//	return v
-//}
-//
-///**************************************
-//InstSHL:  左移指令，x << y
-//**************************************/
-//type InstSHL struct {
-//	aImv
-//	X, Y Value
-//}
-//
-//func (i *InstSHL) Type() Type {
-//	return i.X.Type()
-//}
-//
-//func (i *InstSHL) String() string {
-//	return fmt.Sprintf("%s << %s", i.X.Name(), i.Y.Name())
-//}
-//
-//// 在 Block 中添加一条 InstSHL 指令
-//func (b *Block) EmitInstSHL(x, y Value, pos int) *InstSHL {
-//	v := &InstSHL{X: x, Y: y}
-//	v.Stringer = v
-//	v.pos = pos
-//
-//	b.emit(v)
-//	return v
-//}
-//
-///**************************************
-//InstSHR:  右移指令，x >> y
-//**************************************/
-//type InstSHR struct {
-//	aImv
-//	X, Y Value
-//}
-//
-//func (i *InstSHR) String() string {
-//	return fmt.Sprintf("%s >> %s", i.X.Name(), i.Y.Name())
-//}
-//
-//func (i *InstSHR) Type() Type {
-//	return i.X.Type()
-//}
-//
-//// 在 Block 中添加一条 InstSHR 指令
-//func (b *Block) EmitInstSHR(x, y Value, pos int) *InstSHR {
-//	v := &InstSHR{X: x, Y: y}
-//	v.Stringer = v
-//	v.pos = pos
-//
-//	b.emit(v)
-//	return v
-//}
-//
-///**************************************
-//InstADD:  加指令，x + y
-//**************************************/
-//type InstADD struct {
-//	aImv
-//	X, Y Value
-//}
-//
-//func (i *InstADD) String() string {
-//	return fmt.Sprintf("%s + %s", i.X.Name(), i.Y.Name())
-//}
-//
-//func (i *InstADD) Type() Type {
-//	return i.X.Type()
-//}
-//
-//// 在 Block 中添加一条 InstADD 指令
-//func (b *Block) EmitInstADD(x, y Value, pos int) *InstADD {
-//	v := &InstADD{X: x, Y: y}
-//	v.Stringer = v
-//	v.pos = pos
-//
-//	b.emit(v)
-//	return v
-//}
-//
-///**************************************
-//InstSUB:  减指令，x - y
-//**************************************/
-//type InstSUB struct {
-//	aImv
-//	X, Y Value
-//}
-//
-//func (i *InstSUB) String() string {
-//	return fmt.Sprintf("%s - %s", i.X.Name(), i.Y.Name())
-//}
-//
-//func (i *InstSUB) Type() Type {
-//	return i.X.Type()
-//}
-//
-//// 在 Block 中添加一条 InstSUB 指令
-//func (b *Block) EmitInstSUB(x, y Value, pos int) *InstSUB {
-//	v := &InstSUB{X: x, Y: y}
-//	v.Stringer = v
-//	v.pos = pos
-//
-//	b.emit(v)
-//	return v
-//}
-//
-///**************************************
-//InstMUL:  乘指令，x * y
-//**************************************/
-//type InstMUL struct {
-//	aImv
-//	X, Y Value
-//}
-//
-//func (i *InstMUL) Type() Type {
-//	return i.X.Type()
-//}
-//
-//func (i *InstMUL) String() string {
-//	return fmt.Sprintf("%s * %s", i.X.Name(), i.Y.Name())
-//}
-//
-//// 在 Block 中添加一条 InstMUL 指令
-//func (b *Block) EmitInstMUL(x, y Value, pos int) *InstMUL {
-//	v := &InstMUL{X: x, Y: y}
-//	v.Stringer = v
-//	v.pos = pos
-//
-//	b.emit(v)
-//	return v
-//}
-//
-///**************************************
-//InstQUO:  除指令，x / y
-//**************************************/
-//type InstQUO struct {
-//	aImv
-//	X, Y Value
-//}
-//
-//func (i *InstQUO) Type() Type {
-//	return i.X.Type()
-//}
-//
-//func (i *InstQUO) String() string {
-//	return fmt.Sprintf("%s / %s", i.X.Name(), i.Y.Name())
-//}
-//
-//// 在 Block 中添加一条 InstQUO 指令
-//func (b *Block) EmitInstQUO(x, y Value, pos int) *InstQUO {
-//	v := &InstQUO{X: x, Y: y}
-//	v.Stringer = v
-//	v.pos = pos
-//
-//	b.emit(v)
-//	return v
-//}
-//
-///**************************************
-//InstREM:  取余指令，x % y
-//**************************************/
-//type InstREM struct {
-//	aImv
-//	X, Y Value
-//}
-//
-//func (i *InstREM) String() string {
-//	return fmt.Sprintf("%s %% %s", i.X.Name(), i.Y.Name())
-//}
-//
-//func (i *InstREM) Type() Type {
-//	return i.X.Type()
-//}
-//
-//// 在 Block 中添加一条 InstREM 指令
-//func (b *Block) EmitInstREM(x, y Value, pos int) *InstREM {
-//	v := &InstREM{X: x, Y: y}
-//	v.Stringer = v
-//	v.pos = pos
-//
-//	b.emit(v)
-//	return v
-//}
-//
-///**************************************
-//InstAND:  与指令，x & y
-//**************************************/
-//type InstAND struct {
-//	aImv
-//	X, Y Value
-//}
-//
-//func (i *InstAND) String() string {
-//	return fmt.Sprintf("%s & %s", i.X.Name(), i.Y.Name())
-//}
-//
-//func (i *InstAND) Type() Type {
-//	return i.X.Type()
-//}
-//
-//// 在 Block 中添加一条 InstAND 指令
-//func (b *Block) EmitInstAND(x, y Value, pos int) *InstAND {
-//	v := &InstAND{X: x, Y: y}
-//	v.Stringer = v
-//	v.pos = pos
-//
-//	b.emit(v)
-//	return v
-//}
-//
-///**************************************
-//InstOR:  或指令，x & y
-//**************************************/
-//type InstOR struct {
-//	aImv
-//	X, Y Value
-//}
-//
-//func (i *InstOR) String() string {
-//	return fmt.Sprintf("%s | %s", i.X.Name(), i.Y.Name())
-//}
-//
-//func (i *InstOR) Type() Type {
-//	return i.X.Type()
-//}
-//
-//// 在 Block 中添加一条 InstOR 指令
-//func (b *Block) EmitInstOR(x, y Value, pos int) *InstOR {
-//	v := &InstOR{X: x, Y: y}
-//	v.Stringer = v
-//	v.pos = pos
-//
-//	b.emit(v)
-//	return v
-//}
-//
-///**************************************
-//InstXOR:  异或指令，x ^ y
-//**************************************/
-//type InstXOR struct {
-//	aImv
-//	X, Y Value
-//}
-//
-//func (i *InstXOR) String() string {
-//	return fmt.Sprintf("%s ^ %s", i.X.Name(), i.Y.Name())
-//}
-//
-//func (i *InstXOR) Type() Type {
-//	return i.X.Type()
-//}
-//
-//// 在 Block 中添加一条 InstXOR 指令
-//func (b *Block) EmitInstXOR(x, y Value, pos int) *InstXOR {
-//	v := &InstXOR{X: x, Y: y}
-//	v.Stringer = v
-//	v.pos = pos
-//
-//	b.emit(v)
-//	return v
-//}
-//
-///**************************************
-//InstANDNOT:  与或指令，x &^ y
-//**************************************/
-//type InstANDNOT struct {
-//	aImv
-//	X, Y Value
-//}
-//
-//func (i *InstANDNOT) String() string {
-//	return fmt.Sprintf("%s &^ %s", i.X.Name(), i.Y.Name())
-//}
-//
-//func (i *InstANDNOT) Type() Type {
-//	return i.X.Type()
-//}
-//
-//// 在 Block 中添加一条 InstANDNOT 指令
-//func (b *Block) EmitInstANDNOT(x, y Value, pos int) *InstANDNOT {
-//	v := &InstANDNOT{X: x, Y: y}
-//	v.Stringer = v
-//	v.pos = pos
-//
-//	b.emit(v)
-//	return v
-//}
-//
-///**************************************
-//InstEQL:  等于指令，x == y
-//**************************************/
-//type InstEQL struct {
-//	aImv
-//	X, Y Value
-//	typ  Type
-//}
-//
-//func (i *InstEQL) String() string {
-//	return fmt.Sprintf("%s == %s", i.X.Name(), i.Y.Name())
-//}
-//
-//func (i *InstEQL) Type() Type {
-//	return i.typ
-//}
-//
-//// 在 Block 中添加一条 InstEQL 指令
-//func (b *Block) EmitInstEQL(x, y Value, pos int) *InstEQL {
-//	v := &InstEQL{X: x, Y: y}
-//	v.Stringer = v
-//	v.pos = pos
-//	v.typ = b.types.Bool
-//
-//	b.emit(v)
-//	return v
-//}
-//
-///**************************************
-//InstNEQ:  不等于指令，x != y
-//**************************************/
-//type InstNEQ struct {
-//	aImv
-//	X, Y Value
-//	typ  Type
-//}
-//
-//func (i *InstNEQ) String() string {
-//	return fmt.Sprintf("%s != %s", i.X.Name(), i.Y.Name())
-//}
-//
-//func (i *InstNEQ) Type() Type {
-//	return i.typ
-//}
-//
-//// 在 Block 中添加一条 InstNEQ 指令
-//func (b *Block) EmitInstNEQ(x, y Value, pos int) *InstNEQ {
-//	v := &InstNEQ{X: x, Y: y}
-//	v.Stringer = v
-//	v.pos = pos
-//	v.typ = b.types.Bool
-//
-//	b.emit(v)
-//	return v
-//}
-//
-///**************************************
-//InstGTR:  大于指令，x > y
-//**************************************/
-//type InstGTR struct {
-//	aImv
-//	X, Y Value
-//	typ  Type
-//}
-//
-//func (i *InstGTR) String() string {
-//	return fmt.Sprintf("%s > %s", i.X.Name(), i.Y.Name())
-//}
-//
-//func (i *InstGTR) Type() Type {
-//	return i.typ
-//}
-//
-//// 在 Block 中添加一条 InstGTR 指令
-//func (b *Block) EmitInstGTR(x, y Value, pos int) *InstGTR {
-//	v := &InstGTR{X: x, Y: y}
-//	v.Stringer = v
-//	v.pos = pos
-//	v.typ = b.types.Bool
-//
-//	b.emit(v)
-//	return v
-//}
-//
-///**************************************
-//InstLSS:  小于指令，x < y
-//**************************************/
-//type InstLSS struct {
-//	aImv
-//	X, Y Value
-//	typ  Type
-//}
-//
-//func (i *InstLSS) String() string {
-//	return fmt.Sprintf("%s < %s", i.X.Name(), i.Y.Name())
-//}
-//
-//func (i *InstLSS) Type() Type {
-//	return i.typ
-//}
-//
-//// 在 Block 中添加一条 InstLSS 指令
-//func (b *Block) EmitInstLSS(x, y Value, pos int) *InstLSS {
-//	v := &InstLSS{X: x, Y: y}
-//	v.Stringer = v
-//	v.pos = pos
-//	v.typ = b.types.Bool
-//
-//	b.emit(v)
-//	return v
-//}
-//
-///**************************************
-//InstGEQ:  大等于指令，x >= y
-//**************************************/
-//type InstGEQ struct {
-//	aImv
-//	X, Y Value
-//	typ  Type
-//}
-//
-//func (i *InstGEQ) String() string {
-//	return fmt.Sprintf("%s >= %s", i.X.Name(), i.Y.Name())
-//}
-//
-//func (i *InstGEQ) Type() Type {
-//	return i.typ
-//}
-//
-//// 在 Block 中添加一条 InstGEQ 指令
-//func (b *Block) EmitInstGEQ(x, y Value, pos int) *InstGEQ {
-//	v := &InstGEQ{X: x, Y: y}
-//	v.Stringer = v
-//	v.pos = pos
-//	v.typ = b.types.Bool
-//
-//	b.emit(v)
-//	return v
-//}
-//
-///**************************************
-//InstLEQ:  小等于指令，x <= y
-//**************************************/
-//type InstLEQ struct {
-//	aImv
-//	X, Y Value
-//	typ  Type
-//}
-//
-//func (i *InstLEQ) String() string {
-//	return fmt.Sprintf("%s <= %s", i.X.Name(), i.Y.Name())
-//}
-//
-//func (i *InstLEQ) Type() Type {
-//	return i.typ
-//}
-//
-//// 在 Block 中添加一条 InstLEQ 指令
-//func (b *Block) EmitInstLEQ(x, y Value, pos int) *InstLEQ {
-//	v := &InstLEQ{X: x, Y: y}
-//	v.Stringer = v
-//	v.pos = pos
-//	v.typ = b.types.Bool
-//
-//	b.emit(v)
-//	return v
-//}
-//
-///**************************************
-//InstCOMP:  比较指令，x <=> y
-//**************************************/
-//type InstCOMP struct {
-//	aImv
-//	X, Y Value
-//	typ  Type
-//}
-//
-//func (i *InstCOMP) String() string {
-//	return fmt.Sprintf("%s <=> %s", i.X.Name(), i.Y.Name())
-//}
-//
-//func (i *InstCOMP) Type() Type {
-//	return i.typ
-//}
-//
-//// 在 Block 中添加一条 InstCOMP 指令
-//func (b *Block) EmitInstCOMP(x, y Value, pos int) *InstCOMP {
-//	v := &InstCOMP{X: x, Y: y}
-//	v.Stringer = v
-//	v.pos = pos
-//	v.typ = b.types.Int
-//
-//	b.emit(v)
-//	return v
-//}
-//
+/**************************************
+OpCode: 运算符
+**************************************/
+type OpCode int
+
+const (
+	NOT OpCode = iota
+	NEG
+	XOR
+	LAND
+	LOR
+	SHL
+	SHR
+	ADD
+	SUB
+	MUL
+	QUO
+	REM
+	AND
+	OR
+	ANDNOT
+	EQL
+	NEQ
+	GTR
+	LSS
+	GEQ
+	LEQ
+	LEG
+)
+
+var OpCodeNames = [...]string{
+	NOT:    "!",
+	NEG:    "-",
+	XOR:    "^",
+	LAND:   "&&",
+	LOR:    "||",
+	SHL:    "<<",
+	SHR:    ">>",
+	ADD:    "+",
+	SUB:    "-",
+	MUL:    "*",
+	QUO:    "/",
+	REM:    "%",
+	AND:    "&",
+	ANDNOT: "&^",
+	OR:     "|",
+	EQL:    "==",
+	NEQ:    "!=",
+	GTR:    ">",
+	LSS:    "<",
+	GEQ:    ">=",
+	LEQ:    "<=",
+	LEG:    "<=>",
+}
+
+/**************************************
+Unop: 单目运算，算符范围[NOT, XOR]，Unop 实现了 Expr
+**************************************/
+type Unop struct {
+	aStmt
+	X  Expr
+	Op OpCode
+}
+
+func (i *Unop) Name() string {
+	return i.String()
+}
+
+func (i *Unop) Type() Type {
+	return i.X.Type()
+}
+
+func (i *Unop) String() string {
+	return fmt.Sprintf("%s%s", OpCodeNames[i.Op], i.X.Name())
+}
+
+// 生成一条 Unop 指令
+func (b *Block) NewUnop(x Expr, op OpCode, pos int) *Unop {
+	v := &Unop{X: x, Op: op}
+	v.Stringer = v
+	v.pos = pos
+	v.setScope(b)
+
+	return v
+}
+
+/**************************************
+Biop: 双目运算，算符范围[XOR, LEG]，BiOp 实现了 Expr
+**************************************/
+type Biop struct {
+	aStmt
+	X, Y Expr
+	Op   OpCode
+}
+
+func (i *Biop) Name() string {
+	return i.String()
+}
+
+func (i *Biop) Type() Type {
+	switch i.Op {
+	case LEG:
+		return i.scope.(*Block).types.Int
+
+	case EQL, NEQ, GTR, LSS, GEQ, LEQ:
+		return i.scope.(*Block).types.Bool
+
+	default:
+		return i.X.Type()
+	}
+}
+
+func (i *Biop) String() string {
+	return fmt.Sprintf("(%s %s %s)", i.X.Name(), OpCodeNames[i.Op], i.Y.Name())
+}
+
+// 生成一条 Biop 指令
+func (b *Block) NewBiop(x, y Expr, op OpCode, pos int) *Biop {
+	v := &Biop{X: x, Y: y, Op: op}
+	v.Stringer = v
+	v.pos = pos
+	v.setScope(b)
+
+	return v
+}
+
 ///**************************************
 //InstCall:  函数调用指令，Call 为 StaticCall、BuiltinCall、MethodCall、InterfaceCall、ClosureCall 之一
 //**************************************/

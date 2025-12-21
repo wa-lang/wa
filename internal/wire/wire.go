@@ -30,7 +30,7 @@ type Scope interface {
 	ParentScope() Scope
 
 	// 递归向上查找关联对象为 obj 的 变量位置，对凹语言前端，obj 应为 types.Object
-	Lookup(obj interface{}, escaping bool) Location
+	Lookup(obj interface{}, level LocationKind) Location
 
 	// 格式化输出
 	Format(tab string, sb *strings.Builder)

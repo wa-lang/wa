@@ -27,7 +27,7 @@ type Module struct {
 // Scope 接口相关
 func (m *Module) ScopeKind() ScopeKind { return ScopeKindModule }
 func (m *Module) ParentScope() Scope   { return nil }
-func (m *Module) Lookup(obj interface{}, escaping bool) Location {
+func (m *Module) Lookup(obj interface{}, level LocationKind) Location {
 	v, ok := m.Globals[obj]
 	if !ok {
 		panic(fmt.Sprintf("no Value for: %v", obj))

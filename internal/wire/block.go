@@ -41,11 +41,11 @@ func (b *Block) Type() Type {
 
 // Scope 接口相关
 func (b *Block) ScopeKind() ScopeKind { return ScopeKindBlock }
-func (b *Block) Lookup(obj interface{}, escaping bool) Location {
+func (b *Block) Lookup(obj interface{}, level LocationKind) Location {
 	if v, ok := b.objects[obj]; ok {
 		if alloc, ok := v.(*Alloc); ok {
-			if escaping {
-				alloc.Location = LocationKindHeap
+			if level > alloc.Location {
+				alloc.Location = level
 			}
 		}
 		return v
@@ -53,7 +53,7 @@ func (b *Block) Lookup(obj interface{}, escaping bool) Location {
 
 	if b.scope.ScopeKind() == ScopeKindBlock {
 		// b 的父域仍是 Block
-		return b.scope.Lookup(obj, escaping)
+		return b.scope.Lookup(obj, level)
 	}
 
 	parent_fn := b.scope
@@ -63,7 +63,7 @@ func (b *Block) Lookup(obj interface{}, escaping bool) Location {
 
 	if parent_fn.ParentScope().ScopeKind() == ScopeKindModule {
 		// b 所属的函数是全局函数
-		return parent_fn.Lookup(obj, escaping)
+		return parent_fn.Lookup(obj, level)
 	}
 
 	panic("")

@@ -226,7 +226,7 @@ func (b *Builder) assignStmt(s *ast.AssignStmt, block *wire.Block) {
 			if isDef {
 				loc = b.addLocalForIdent(lh.(*ast.Ident), block)
 			} else {
-				loc = b.location(lh, false, block) // 非逃逸
+				loc = b.location(lh, 0, block) // 非逃逸
 			}
 			locs[i] = loc
 		}
@@ -268,13 +268,14 @@ func (b *Builder) returnStmt(s *ast.ReturnStmt, f *Func, block *wire.Block) {
 }
 
 // location 方法返回一个左值表达式的位置
-// 当逃逸标志 escaping 为 true 时，本方法会将左值表达式的基变量标记为逃逸，如以下代码：
+// escaping 为逃逸等级，0为非逃逸，1为取地址但未逃逸，2为取地址且逃逸（分别对应Local、Stack、Heap）
+// 如以下代码：
 //   i := S{
 //      m: 1
 //   }
 //   return &i.m
 // 将导致 i 逃逸
-func (b *Builder) location(e ast.Expr, escaping bool, block *wire.Block) wire.Location {
+func (b *Builder) location(e ast.Expr, escaping wire.LocationKind, block *wire.Block) wire.Location {
 	switch e := e.(type) {
 	case *ast.Ident:
 		if isBlankIdent(e) {
@@ -324,7 +325,7 @@ func (b *Builder) expr(e ast.Expr, block *wire.Block) wire.Expr {
 
 	var v wire.Expr
 	if tv.Addressable() {
-		loc := b.location(e, false, block)
+		loc := b.location(e, 0, block)
 		v = block.NewLoad(loc, int(e.Pos()))
 	} else {
 		v = b.expr0(e, tv, block)
@@ -348,7 +349,7 @@ func (b *Builder) expr0(e ast.Expr, tv types.TypeAndValue, block *wire.Block) wi
 		}
 
 		if _, ok := obj.(*types.Var); ok {
-			loc := block.Lookup(obj, false)
+			loc := block.Lookup(obj, wire.LocationKindLocal)
 			return block.NewLoad(loc, int(obj.Pos()))
 		}
 
@@ -357,76 +358,75 @@ func (b *Builder) expr0(e ast.Expr, tv types.TypeAndValue, block *wire.Block) wi
 		// :*ast.Ident
 
 	case *ast.UnaryExpr: // 一元算符
-	/*
 		switch e.Op {
 		case token.AND: // &x, 逃逸
-			loc := b.location(e.X, true, block)
+			loc := b.location(e.X, wire.LocationKindHeap, block)
 			if _, ok := unparen(e.X).(*ast.StarExpr); ok {
 				// Todo: p 为空时，&*p 应panic
+				panic("Todo")
 			}
 			return loc
 		case token.ADD: // +x, 等价于 x
 			return b.expr(e.X, block)
 		case token.NOT: // !x
 			x := b.expr(e.X, block)
-			return block.EmitUnopNot(x, int(e.OpPos))
+			return block.NewUnop(x, wire.NOT, int(e.OpPos))
 		case token.SUB: // -x
 			x := b.expr(e.X, block)
-			return block.EmitUnopSub(x, int(e.OpPos))
+			return block.NewUnop(x, wire.NEG, int(e.OpPos))
 		case token.XOR: // ^x
 			x := b.expr(e.X, block)
-			return block.EmitUnopXor(x, int(e.OpPos))
+			return block.NewUnop(x, wire.XOR, int(e.OpPos))
 
 		default:
 			panic(e.Op)
 		} // :*ast.UnaryExpr */
 
 	case *ast.BinaryExpr: // 二元算符
-	/*
 		x := b.expr(e.X, block)
 		y := b.expr(e.Y, block)
 		switch e.Op {
-		case token.LAND:
-			return block.EmitInstLAND(x, y, int(e.OpPos))
-		case token.LOR:
-			return block.EmitInstLOR(x, y, int(e.OpPos))
-		case token.SHL:
-			return block.EmitInstSHL(x, y, int(e.OpPos))
-		case token.SHR:
-			return block.EmitInstSHR(x, y, int(e.OpPos))
-		case token.ADD:
-			return block.EmitInstADD(x, y, int(e.OpPos))
-		case token.SUB:
-			return block.EmitInstSUB(x, y, int(e.OpPos))
-		case token.MUL:
-			return block.EmitInstMUL(x, y, int(e.OpPos))
-		case token.QUO:
-			return block.EmitInstQUO(x, y, int(e.OpPos))
-		case token.REM:
-			return block.EmitInstREM(x, y, int(e.OpPos))
-		case token.AND:
-			return block.EmitInstAND(x, y, int(e.OpPos))
-		case token.OR:
-			return block.EmitInstOR(x, y, int(e.OpPos))
 		case token.XOR:
-			return block.EmitInstXOR(x, y, int(e.OpPos))
+			return block.NewBiop(x, y, wire.XOR, int(e.OpPos))
+		case token.LAND:
+			return block.NewBiop(x, y, wire.LAND, int(e.OpPos))
+		case token.LOR:
+			return block.NewBiop(x, y, wire.LOR, int(e.OpPos))
+		case token.SHL:
+			return block.NewBiop(x, y, wire.SHL, int(e.OpPos))
+		case token.SHR:
+			return block.NewBiop(x, y, wire.SHR, int(e.OpPos))
+		case token.ADD:
+			return block.NewBiop(x, y, wire.ADD, int(e.OpPos))
+		case token.SUB:
+			return block.NewBiop(x, y, wire.SUB, int(e.OpPos))
+		case token.MUL:
+			return block.NewBiop(x, y, wire.MUL, int(e.OpPos))
+		case token.QUO:
+			return block.NewBiop(x, y, wire.QUO, int(e.OpPos))
+		case token.REM:
+			return block.NewBiop(x, y, wire.REM, int(e.OpPos))
+		case token.AND:
+			return block.NewBiop(x, y, wire.AND, int(e.OpPos))
+		case token.OR:
+			return block.NewBiop(x, y, wire.OR, int(e.OpPos))
 		case token.AND_NOT:
-			return block.EmitInstANDNOT(x, y, int(e.OpPos))
+			return block.NewBiop(x, y, wire.ANDNOT, int(e.OpPos))
 
 		case token.EQL:
-			return block.EmitInstEQL(x, y, int(e.OpPos))
+			return block.NewBiop(x, y, wire.EQL, int(e.OpPos))
 		case token.NEQ:
-			return block.EmitInstNEQ(x, y, int(e.OpPos))
+			return block.NewBiop(x, y, wire.NEQ, int(e.OpPos))
 		case token.GTR:
-			return block.EmitInstGTR(x, y, int(e.OpPos))
+			return block.NewBiop(x, y, wire.GTR, int(e.OpPos))
 		case token.LSS:
-			return block.EmitInstLSS(x, y, int(e.OpPos))
+			return block.NewBiop(x, y, wire.LSS, int(e.OpPos))
 		case token.GEQ:
-			return block.EmitInstGEQ(x, y, int(e.OpPos))
+			return block.NewBiop(x, y, wire.GEQ, int(e.OpPos))
 		case token.LEQ:
-			return block.EmitInstLEQ(x, y, int(e.OpPos))
+			return block.NewBiop(x, y, wire.LEQ, int(e.OpPos))
 		case token.SPACESHIP:
-			return block.EmitInstCOMP(x, y, int(e.OpPos))
+			return block.NewBiop(x, y, wire.LEG, int(e.OpPos))
 		default:
 			panic("illegal op in BinaryExpr: " + e.Op.String())
 		} // :*ast.BinaryExpr */

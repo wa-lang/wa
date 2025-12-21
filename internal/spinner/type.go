@@ -107,7 +107,11 @@ func (b *Builder) BuildType(t types.Type) wire.Type {
 		}
 
 	case *types.Pointer:
-		panic("Todo")
+		delete(b.typeTable, name)
+		wtype = b.module.Types.GenPtr(b.BuildType(t.Elem()))
+		b.typeTable[name] = &wtype
+
+		//panic("Todo")
 		//delete(tLib.typeTable, from_name)
 		//newType = tLib.module.GenValueType_Ref(tLib.compile(t.Elem()))
 		//tLib.typeTable[from_name] = &newType
