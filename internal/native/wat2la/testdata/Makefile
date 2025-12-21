@@ -13,5 +13,9 @@ la64-build:
 la64-run:
 	./hello.elf.exe
 
+gcc:
+	gcc --save-temps hello-gcc.c -o a.out.exe
+	./a.out.exe
+
 clean:
-	-rm hello.elf.exe
+	-rm hello.elf.exe a.out*
