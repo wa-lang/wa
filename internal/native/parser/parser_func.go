@@ -4,6 +4,8 @@
 package parser
 
 import (
+	"fmt"
+
 	"wa-lang.org/wa/internal/native/abi"
 	"wa-lang.org/wa/internal/native/ast"
 	"wa-lang.org/wa/internal/native/token"
@@ -11,7 +13,7 @@ import (
 
 // 函数签名只用于文档注释, 不做语义检查
 
-// func $add(%a:i32, %b:i32, %c:i32) => f64 {
+// func $add[prop1=val1,prop2=val2](%a:i32, %b:i32, %c:i32) => f64 {
 //     local %d: i32 # 局部变量必须先声明, i32 大小的空间
 //     # 指令
 // Loop:
@@ -38,6 +40,10 @@ func (p *parser) parseFunc(tok token.Token) *ast.Func {
 	fn.Tok = p.acceptTokenAorB(token.FUNC, token.FUNC_zh)
 	fn.Name = p.parseIdent()
 
+	if p.tok == token.LBRACK {
+		p.parseFunc_prop(fn)
+	}
+
 	if p.tok == token.LPAREN {
 		p.parseFunc_args(fn)
 	}
@@ -49,6 +55,26 @@ func (p *parser) parseFunc(tok token.Token) *ast.Func {
 	p.consumeSemicolonList()
 
 	return fn
+}
+
+func (p *parser) parseFunc_prop(fn *ast.Func) {
+	p.acceptToken(token.LBRACK)
+	defer p.acceptToken(token.RBRACK)
+
+	for p.tok == token.IDENT {
+		propKey := p.parseIdent()
+		propVal := ""
+		if p.tok == token.ASSIGN {
+			p.acceptToken(token.ASSIGN)
+			propVal = p.lit
+			p.next()
+		}
+		if propVal != "" {
+			fn.Prop = append(fn.Prop, fmt.Sprintf("%s=%s", propKey, propVal))
+		} else {
+			fn.Prop = append(fn.Prop, propKey)
+		}
+	}
 }
 
 func (p *parser) parseFunc_args(fn *ast.Func) {

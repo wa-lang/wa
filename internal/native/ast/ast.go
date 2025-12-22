@@ -83,6 +83,7 @@ type Func struct {
 	Tok      token.Token       // 关键字(可能有多语言)
 	Doc      *CommentGroup     // 关联文档
 	Name     string            // 函数名
+	Prop     []string          // 属性列表, [Key=Val,...]
 	Type     *FuncType         // 函数类型
 	Size     int               // 指令大小(没有类型信息)
 	Body     *FuncBody         // 函数体

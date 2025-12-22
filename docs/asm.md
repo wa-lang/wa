@@ -158,7 +158,7 @@ global $ptr = $info # $info 的地址
 定义函数:
 
 ```go
-func $add(%a: i32, %b: i32) => i32 {
+func $add[prop1=val1,prop2=val2](%a: i32, %b: i32) => i32 {
     # 局部变量
     local %sum: i32
     local %tab: [32]i32

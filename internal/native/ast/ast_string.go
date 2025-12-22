@@ -184,6 +184,16 @@ func (p *Func) String() string {
 	sb.WriteString(p.Tok.String())
 	sb.WriteString(" ")
 	sb.WriteString(p.Name)
+	if len(p.Prop) > 0 {
+		sb.WriteString("[")
+		for i, prop := range p.Prop {
+			if i > 0 {
+				sb.WriteString(",")
+			}
+			sb.WriteString(prop)
+		}
+		sb.WriteString("]")
+	}
 	sb.WriteString(p.Type.String())
 	sb.WriteString(" ")
 	sb.WriteString("{\n")
