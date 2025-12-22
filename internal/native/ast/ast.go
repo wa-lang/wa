@@ -116,7 +116,7 @@ type Local struct {
 	Type    token.Token   // 类型
 	Comment *Comment      // 尾部单行注释
 	Reg     abi.RegType   // 对应的寄存器, 在生成机器码阶段计算
-	Off     int           // 相对于FP的偏移地址, 在生成机器码阶段计算, 0表示无效
+	Off     int           // 相对于FP的偏移地址, 在生成机器码阶段计算
 	Cap     int           // 容量, 元素个数, 默认为1
 }
 
