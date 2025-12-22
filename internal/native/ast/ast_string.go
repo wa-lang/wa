@@ -246,32 +246,34 @@ func (p *Func) String() string {
 
 func (p *FuncType) String() string {
 	var sb strings.Builder
-	if len(p.Args.Type) > 0 {
-		sb.WriteString(p.Args.String())
+	if len(p.Args) > 0 {
+		sb.WriteString("(")
+		for i, arg := range p.Args {
+			if i > 0 {
+				sb.WriteString(",")
+			}
+			sb.WriteString(arg.Name)
+			sb.WriteString(":")
+			sb.WriteString(arg.Type.String())
+		}
+		sb.WriteString(")")
 	}
-	if len(p.Return.Type) > 0 {
+	if len(p.Return) > 0 {
 		sb.WriteString(" => ")
-		sb.WriteString(p.Return.String())
-	}
-	return sb.String()
-}
-
-func (p *FieldList) String() string {
-	var sb strings.Builder
-	sb.WriteString("(")
-	for i, typ := range p.Type {
-		if i > 0 {
-			sb.WriteString(", ")
-		}
-		if p.Name[i] != "" {
-			sb.WriteString(p.Name[i])
-			sb.WriteString(": ")
-			sb.WriteString(typ.String())
+		if len(p.Return) == 1 && p.Return[0].Name == "" {
+			sb.WriteString(p.Return[0].Type.String())
 		} else {
-			sb.WriteString(typ.String())
+			for i, ret := range p.Return {
+				if i > 0 {
+					sb.WriteString(",")
+				}
+				sb.WriteString(ret.Name)
+				sb.WriteString(":")
+				sb.WriteString(ret.Type.String())
+			}
+			sb.WriteString(")")
 		}
 	}
-	sb.WriteString(")")
 	return sb.String()
 }
 

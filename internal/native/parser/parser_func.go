@@ -81,11 +81,8 @@ func (p *parser) parseFunc_args(fn *ast.Func) {
 	p.acceptToken(token.LPAREN)
 	defer p.acceptToken(token.RPAREN)
 
-	fn.Type.Args = &ast.FieldList{
-		Pos: p.pos,
-	}
-
 	for p.tok == token.IDENT {
+		argPos := p.pos
 		argName := p.parseIdent()
 		argType := token.NONE
 
@@ -102,8 +99,11 @@ func (p *parser) parseFunc_args(fn *ast.Func) {
 			p.errorf(p.pos, "expect argument type(i32/i64/f32/f64/ptr), got %v", p.tok)
 		}
 
-		fn.Type.Args.Name = append(fn.Type.Args.Name, argName)
-		fn.Type.Args.Type = append(fn.Type.Args.Type, argType)
+		fn.Type.Args = append(fn.Type.Args, &ast.Local{
+			Pos:  argPos,
+			Name: argName,
+			Type: argType,
+		})
 
 		if p.tok == token.COMMA {
 			p.acceptToken(token.COMMA)
@@ -122,29 +122,29 @@ func (p *parser) parseFunc_return(fn *ast.Func) {
 		p.acceptToken(token.LPAREN)
 		defer p.acceptToken(token.RPAREN)
 
-		fn.Type.Args = &ast.FieldList{
-			Pos: p.pos,
-		}
-
 		for p.tok == token.IDENT {
-			argName := p.parseIdent()
-			argType := token.NONE
+			retPos := p.pos
+			retName := p.parseIdent()
+			retType := token.NONE
 
 			p.acceptToken(token.COLON)
 
 			switch p.tok {
 			case token.I32, token.I64, token.F32, token.F64, token.PTR:
-				argType = p.tok
+				retType = p.tok
 				p.acceptToken(p.tok)
 			case token.I32_zh, token.I64_zh, token.F32_zh, token.F64_zh, token.PTR_zh:
-				argType = p.tok
+				retType = p.tok
 				p.acceptToken(p.tok)
 			default:
 				p.errorf(p.pos, "expect return type(i32/i64/f32/f64/ptr), got %v", p.tok)
 			}
 
-			fn.Type.Args.Name = append(fn.Type.Args.Name, argName)
-			fn.Type.Args.Type = append(fn.Type.Args.Type, argType)
+			fn.Type.Return = append(fn.Type.Args, &ast.Local{
+				Pos:  retPos,
+				Name: retName,
+				Type: retType,
+			})
 
 			if p.tok == token.COMMA {
 				p.acceptToken(token.COMMA)
@@ -158,18 +158,18 @@ func (p *parser) parseFunc_return(fn *ast.Func) {
 
 	switch p.tok {
 	case token.I32, token.I64, token.F32, token.F64, token.PTR:
-		fn.Type.Return = &ast.FieldList{
+		fn.Type.Return = append(fn.Type.Args, &ast.Local{
 			Pos:  p.pos,
-			Name: []string{""},
-			Type: []token.Token{p.tok},
-		}
+			Name: "",
+			Type: p.tok,
+		})
 		p.acceptToken(p.tok)
 	case token.I32_zh, token.I64_zh, token.F32_zh, token.F64_zh, token.PTR_zh:
-		fn.Type.Return = &ast.FieldList{
+		fn.Type.Return = append(fn.Type.Args, &ast.Local{
 			Pos:  p.pos,
-			Name: []string{""},
-			Type: []token.Token{p.tok},
-		}
+			Name: "",
+			Type: p.tok,
+		})
 		p.acceptToken(p.tok)
 	default:
 		p.errorf(p.pos, "expect return type(i32/i64/f32/f64/ptr), got %v", p.tok)
