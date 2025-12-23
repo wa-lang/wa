@@ -66,18 +66,16 @@ func (b *Block) Lookup(obj interface{}, level LocationKind) Location {
 		return parent_fn.Lookup(obj, level)
 	}
 
-	panic("")
-
-	//// b 所属的函数是闭包，需要进行变量捕捉
-	//outer := parent_fn.Lookup(obj, true)
-	//v := &FreeVar{
-	//	name:   outer.Name(),
-	//	typ:    outer.Type(),
-	//	pos:    outer.Pos(),
-	//	object: outer.Object(),
-	//	outer:  outer,
-	//}
-	//return v
+	// b 所属的函数是闭包，需要进行变量捕捉
+	outer := parent_fn.Lookup(obj, LocationKindHeap)
+	v := &FreeVar{
+		name:   outer.Name(),
+		typ:    outer.Type(),
+		pos:    outer.Pos(),
+		object: outer.Object(),
+		outer:  outer,
+	}
+	return v
 }
 func (b *Block) Format(tab string, sb *strings.Builder) {
 	sb.WriteString(tab)

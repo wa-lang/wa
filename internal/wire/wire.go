@@ -177,24 +177,25 @@ func (p *FnSig) Equal(Type) bool { panic("FnSig.Equal() is unimplemented") }
 //	FullFnName string //方法的函数全路径名（包括包路径、类型名，需要进行名字修饰）
 //}
 //
-///**************************************
-//FreeVar: 闭包捕获的外部变量
-//**************************************/
-//type FreeVar struct {
-//	name   string
-//	typ    Type
-//	pos    int
-//	object interface{}
-//	outer  Value // 被捕获的闭包变量
-//}
-//
-//func (p *FreeVar) Name() string               { return p.name }
-//func (p *FreeVar) Kind() ValueKind            { return ValueKindLocal }
-//func (p *FreeVar) Type() Type                 { return p.typ }
-//func (p *FreeVar) Pos() int                   { return p.pos }
-//func (p *FreeVar) Object() interface{}        { return p.object }
-//func (p *FreeVar) LocationKind() LocationKind { return LocationKindHeap }
-//func (p *FreeVar) DataType() Type             { return p.typ }
+
+/**************************************
+FreeVar: 闭包捕获的外部变量
+**************************************/
+type FreeVar struct {
+	name   string
+	typ    Type
+	pos    int
+	object interface{}
+	outer  Location // 被捕获的闭包变量
+}
+
+func (p *FreeVar) Name() string               { return p.name }
+func (p *FreeVar) Kind() ValueKind            { return ValueKindLocal }
+func (p *FreeVar) Type() Type                 { return p.typ }
+func (p *FreeVar) Pos() int                   { return p.pos }
+func (p *FreeVar) Object() interface{}        { return p.object }
+func (p *FreeVar) LocationKind() LocationKind { return LocationKindHeap }
+func (p *FreeVar) DataType() Type             { return p.typ }
 
 ///**************************************
 //StaticCall: 包函数、非闭包匿名函数调用。满足 Value 接口。
