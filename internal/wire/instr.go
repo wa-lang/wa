@@ -371,28 +371,29 @@ func (b *Block) NewBiop(x, y Expr, op OpCode, pos int) *Biop {
 	return v
 }
 
-///**************************************
-//InstCall:  函数调用指令，Call 为 StaticCall、BuiltinCall、MethodCall、InterfaceCall、ClosureCall 之一
-//**************************************/
-//type InstCall struct {
-//	aImv
-//	Call Value
-//}
-//
-//func (i *InstCall) Type() Type     { return i.Call.Type() }
-//func (i *InstCall) Pos() int       { return i.Call.Pos() }
-//func (i *InstCall) String() string { return i.Call.(fmt.Stringer).String() }
-//
-//// 在 Block 中添加一条 InstCall 指令，Call 为 StaticCall、BuiltinCall、MethodCall、InterfaceCall、ClosureCall 之一
-//func (b *Block) EmitInstCall(call Value) *InstCall {
-//	v := &InstCall{Call: call}
-//	v.Stringer = v
-//	v.pos = call.Pos()
-//
-//	b.emit(v)
-//	return v
-//}
-//
+/**************************************
+Call:  函数调用指令，Callee 为 StaticCall、BuiltinCall、MethodCall、InterfaceCall、ClosureCall 之一，Call 实现了 Expr
+**************************************/
+type Call struct {
+	aStmt
+	Callee Expr
+}
+
+func (i *Call) Name() string   { return i.String() }
+func (i *Call) Type() Type     { return i.Callee.Type() }
+func (i *Call) Pos() int       { return i.Callee.Pos() }
+func (i *Call) String() string { return i.Callee.(fmt.Stringer).String() }
+
+// 在 Block 中添加一条 InstCall 指令，callee 为 StaticCall、BuiltinCall、MethodCall、InterfaceCall、ClosureCall 之一
+func (b *Block) NewCall(callee Expr) *Call {
+	v := &Call{Callee: callee}
+	v.Stringer = v
+	v.pos = callee.Pos()
+	v.setScope(b)
+
+	return v
+}
+
 ///**************************************
 //InstIf:  条件指令
 //**************************************/

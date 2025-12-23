@@ -209,63 +209,53 @@ func (p *FreeVar) Object() interface{}        { return p.object }
 func (p *FreeVar) LocationKind() LocationKind { return LocationKindHeap }
 func (p *FreeVar) DataType() Type             { return p.typ }
 
-///**************************************
-//StaticCall: 包函数、非闭包匿名函数调用。满足 Value 接口。
-//**************************************/
-//type StaticCall struct {
-//	Call
-//}
-//
-//func (p *StaticCall) Kind() ValueKind     { panic("StaticCall.Kind() is unimplemented") }
-//func (p *StaticCall) Pos() int            { return p.Call.Pos }
-//func (p *StaticCall) Object() interface{} { panic("StaticCall.Object() is unimplemented") }
-//
-///**************************************
-//BuiltinCall: 内置函数调用。内置函数调用为特殊的静态调用，满足 Value 接口
-//**************************************/
-//type BuiltinCall struct {
-//	Call
-//}
-//
-//func (p *BuiltinCall) Kind() ValueKind     { panic("Builtin.Kind() is unimplemented") }
-//func (p *BuiltinCall) Pos() int            { return p.Call.Pos }
-//func (p *BuiltinCall) Object() interface{} { panic("Builtin.Object() is unimplemented") }
-//
-///**************************************
-//MethodCall: 对象方法调用，满足 Value 接口
-//**************************************/
-//type MethodCall struct {
-//	Recv Value // 被调用的对象，既 recv/接收器
-//	Call
-//}
+/**************************************
+StaticCall: 包函数、非闭包匿名函数调用。满足 Expr 接口。
+**************************************/
+type StaticCall struct {
+	CallCommon
+}
 
-//func (p *MethodCall) Kind() ValueKind     { panic("MethodCall.Kind() is unimplemented") }
-//func (p *MethodCall) Pos() int            { return p.Call.Pos }
-//func (p *MethodCall) Object() interface{} { panic("MethodCall.Object() is unimplemented") }
-//func (p *MethodCall) String() string      { return p.Recv.Name() + "." + p.Call.String() }
-//
-///**************************************
-//InterfaceCall: 接口方法调用（既 Invoke），满足 Value 接口
-//**************************************/
-//type InterfaceCall struct {
-//	Interface Value // 被调用的接口
-//	Call
-//}
-//
-//func (p *InterfaceCall) Kind() ValueKind     { panic("InterfaceCall.Kind() is unimplemented") }
-//func (p *InterfaceCall) Pos() int            { return p.Call.Pos }
-//func (p *InterfaceCall) Object() interface{} { panic("InterfaceCall.Object() is unimplemented") }
-//func (p *InterfaceCall) String() string      { return p.Interface.Name() + "." + p.Call.String() }
-//
-///**************************************
-//ClosureCall: 闭包调用，满足 Value 接口
-//**************************************/
-//type ClosureCall struct {
-//	Closure Value
-//	Call
-//}
-//
-//func (p *ClosureCall) Kind() ValueKind     { panic("ClosureCall.Kind() is unimplemented") }
-//func (p *ClosureCall) Pos() int            { return p.Call.Pos }
-//func (p *ClosureCall) Object() interface{} { panic("ClosureCall.Object() is unimplemented") }
-//func (p *ClosureCall) String() string      { return p.Closure.Name() + "." + p.Call.String() }
+func (p *StaticCall) Pos() int { return p.CallCommon.Pos }
+
+/**************************************
+BuiltinCall: 内置函数调用。内置函数调用为特殊的静态调用，满足 Expr 接口
+**************************************/
+type BuiltinCall struct {
+	CallCommon
+}
+
+func (p *BuiltinCall) Pos() int { return p.CallCommon.Pos }
+
+/**************************************
+MethodCall: 对象方法调用，满足 Expr 接口
+**************************************/
+type MethodCall struct {
+	Recv Expr // recv/接收器
+	CallCommon
+}
+
+func (p *MethodCall) Pos() int       { return p.CallCommon.Pos }
+func (p *MethodCall) String() string { return p.Recv.Name() + "." + p.CallCommon.String() }
+
+/**************************************
+InterfaceCall: 接口方法调用（既 Invoke），满足 Expr 接口
+**************************************/
+type InterfaceCall struct {
+	Interface Expr // 被调用的接口
+	CallCommon
+}
+
+func (p *InterfaceCall) Pos() int       { return p.CallCommon.Pos }
+func (p *InterfaceCall) String() string { return p.Interface.Name() + "." + p.CallCommon.String() }
+
+/**************************************
+ClosureCall: 闭包调用，满足 Expr 接口
+**************************************/
+type ClosureCall struct {
+	Closure Expr
+	CallCommon
+}
+
+func (p *ClosureCall) Pos() int       { return p.CallCommon.Pos }
+func (p *ClosureCall) String() string { return p.Closure.Name() + "." + p.CallCommon.String() }
