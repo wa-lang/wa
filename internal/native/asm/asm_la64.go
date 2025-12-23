@@ -6,6 +6,7 @@ package asm
 import (
 	"encoding/binary"
 	"fmt"
+	"sort"
 
 	"wa-lang.org/wa/internal/native/abi"
 	"wa-lang.org/wa/internal/native/ast"
@@ -215,8 +216,14 @@ func (p *_Assembler) asmFuncBody_local_loong64(fn *ast.Func) error {
 		}
 	}
 
+	// 为了减少栈内存碎片, 局部变量会重新排序
+	locals := append([]*ast.Local{}, fn.Body.Locals...)
+	sort.Slice(locals, func(i, j int) bool {
+		return localSize(locals[i]) < localSize(locals[j])
+	})
+
 	// 局部变量分配
-	for i, local := range fn.Body.Locals {
+	for _, local := range locals {
 		switch local.Type {
 		case token.I32, token.I32_zh:
 			local.Off = -4 - (FP_localOffsetBase + localOffset)
@@ -237,9 +244,6 @@ func (p *_Assembler) asmFuncBody_local_loong64(fn *ast.Func) error {
 			local.Off = -8 - (FP_localOffsetBase + localOffset)
 			localOffset += 8
 		}
-		_ = i
-		_ = local
-		_ = FP_localOffsetBase
 	}
 
 	if localOffset%8 != 0 {

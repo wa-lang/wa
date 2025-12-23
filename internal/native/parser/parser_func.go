@@ -236,6 +236,8 @@ func (p *parser) parseFunc_body_local(fn *ast.Func) *ast.Local {
 		p.acceptToken(token.LBRACK)
 		local.Cap = p.parseIntLit()
 		p.acceptToken(token.RBRACK)
+	} else {
+		local.Cap = 1
 	}
 
 	switch p.tok {
