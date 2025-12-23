@@ -26,7 +26,6 @@ func (p *InitValue) GetDoc() *CommentGroup    { return p.Doc }
 func (p *Func) GetDoc() *CommentGroup         { return p.Doc }
 func (p *FuncType) GetDoc() *CommentGroup     { return nil }
 func (p *FuncBody) GetDoc() *CommentGroup     { return nil }
-func (p *FieldList) GetDoc() *CommentGroup    { return nil }
 func (p *Local) GetDoc() *CommentGroup        { return p.Doc }
 func (p *Instruction) GetDoc() *CommentGroup  { return p.Doc }
 
@@ -40,7 +39,6 @@ func (p *InitValue) BeginPos() token.Pos    { return p.Pos }
 func (p *Func) BeginPos() token.Pos         { return p.Pos }
 func (p *FuncType) BeginPos() token.Pos     { return p.Pos }
 func (p *FuncBody) BeginPos() token.Pos     { return p.Pos }
-func (p *FieldList) BeginPos() token.Pos    { return p.Pos }
 func (p *Local) BeginPos() token.Pos        { return p.Pos }
 func (p *Instruction) BeginPos() token.Pos  { return p.Pos }
 

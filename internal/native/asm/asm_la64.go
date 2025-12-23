@@ -6,12 +6,14 @@ package asm
 import (
 	"encoding/binary"
 	"fmt"
+	"sort"
 
 	"wa-lang.org/wa/internal/native/abi"
 	"wa-lang.org/wa/internal/native/ast"
 	"wa-lang.org/wa/internal/native/loong64"
 	"wa-lang.org/wa/internal/native/parser"
 	"wa-lang.org/wa/internal/native/pcrel"
+	"wa-lang.org/wa/internal/native/token"
 )
 
 func (p *_Assembler) asmFile_loong64(filename string, source []byte, opt *abi.LinkOptions) (prog *abi.LinkedProgram, err error) {
@@ -93,6 +95,171 @@ func (p *_Assembler) asmFile_loong64(filename string, source []byte, opt *abi.Li
 }
 
 func (p *_Assembler) asmFunc_loong64(fn *ast.Func) (err error) {
+	if err := p.asmFuncBody_local_loong64(fn); err != nil {
+		return err
+	}
+	if err := p.asmFuncBody_inst_loong64(fn); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (p *_Assembler) asmFuncBody_local_loong64(fn *ast.Func) error {
+	const (
+		iArgRegEnd = loong64.REG_A7
+		fArgRegEnd = loong64.REG_F7
+
+		iRetRegEnd = loong64.REG_A1
+		fRetRegEnd = loong64.REG_F1
+
+		// 局部变量在 FP 低地址, 最终要取反为负数
+		// 开头有 ra 和 fp 两个空间要跳过
+		FP_localOffsetBase = (8 + 8)
+	)
+	var (
+		iArgReg = loong64.REG_A0
+		fArgReg = loong64.REG_F0
+
+		iRetReg = loong64.REG_A0
+		fRetReg = loong64.REG_F0
+
+		argRetOffset = 0 // 参数和返回值偏移, 包含返回值 从 0 开始, 正整数
+		localOffset  = 0 // 局部变量偏移
+	)
+
+	// 输入参数分配
+	for _, arg := range fn.Type.Args {
+		switch arg.Type {
+		case token.I32, token.I32_zh:
+			if iArgReg <= iArgRegEnd {
+				arg.Reg = iArgReg
+				iArgReg++
+			} else {
+				arg.Off = argRetOffset
+				argRetOffset += 4
+			}
+		case token.I64, token.I64_zh:
+			if iArgReg <= iArgRegEnd {
+				arg.Reg = iArgReg
+				iArgReg++
+			} else {
+				if argRetOffset%8 != 0 {
+					argRetOffset += 4
+				}
+				arg.Off = argRetOffset
+				argRetOffset += 8
+			}
+		case token.F32, token.F32_zh:
+			if fArgReg <= fArgRegEnd {
+				arg.Reg = fArgReg
+				fArgReg++
+			} else {
+				arg.Off = argRetOffset
+				argRetOffset += 4
+			}
+		case token.F64, token.F64_zh:
+			if fArgReg <= fArgRegEnd {
+				arg.Reg = fArgReg
+				fArgReg++
+			} else {
+				if argRetOffset%8 != 0 {
+					argRetOffset += 4
+				}
+				arg.Off = argRetOffset
+				argRetOffset += 8
+			}
+		}
+	}
+
+	// 返回值寄存器分配
+	// 栈传递部分和参数的栈转递部分相对关系?
+	for _, ret := range fn.Type.Return {
+		switch ret.Type {
+		case token.I32, token.I32_zh:
+			if iArgReg <= iRetRegEnd {
+				ret.Reg = iRetReg
+				iArgReg++
+			} else {
+				ret.Off = argRetOffset
+				argRetOffset += 4
+			}
+		case token.I64, token.I64_zh:
+			if iArgReg <= iRetRegEnd {
+				ret.Reg = iRetReg
+				iArgReg++
+			} else {
+				if argRetOffset%8 != 0 {
+					argRetOffset += 4
+				}
+				ret.Off = argRetOffset
+				argRetOffset += 8
+			}
+		case token.F32, token.F32_zh:
+			if fArgReg <= fRetRegEnd {
+				ret.Reg = fRetReg
+				fArgReg++
+			} else {
+				ret.Off = argRetOffset
+				argRetOffset += 4
+			}
+		case token.F64, token.F64_zh:
+			if fArgReg <= fRetRegEnd {
+				ret.Reg = fRetReg
+				fArgReg++
+			} else {
+				if argRetOffset%8 != 0 {
+					argRetOffset += 4
+				}
+				ret.Off = argRetOffset
+				argRetOffset += 8
+			}
+		}
+	}
+
+	// 为了减少栈内存碎片, 局部变量会重新排序
+	locals := append([]*ast.Local{}, fn.Body.Locals...)
+	sort.Slice(locals, func(i, j int) bool {
+		return localSize(locals[i]) < localSize(locals[j])
+	})
+
+	// 局部变量分配
+	for _, local := range locals {
+		switch local.Type {
+		case token.I32, token.I32_zh:
+			local.Off = -4 - (FP_localOffsetBase + localOffset)
+			localOffset += 4
+		case token.I64, token.I64_zh:
+			if localOffset%8 != 0 {
+				localOffset += 4
+			}
+			local.Off = -8 - (FP_localOffsetBase + localOffset)
+			localOffset += 8
+		case token.F32, token.F32_zh:
+			local.Off = -4 - (FP_localOffsetBase + localOffset)
+			localOffset += 4
+		case token.F64, token.F64_zh:
+			if localOffset%8 != 0 {
+				localOffset += 4
+			}
+			local.Off = -8 - (FP_localOffsetBase + localOffset)
+			localOffset += 8
+		}
+	}
+
+	if localOffset%8 != 0 {
+		localOffset += 4
+	}
+
+	// 函数栈上的参数和返回值大小
+	fn.LinkInfo.ArgsSize = argRetOffset
+
+	// 函数栈帧大小
+	fn.LinkInfo.FrameSize = FP_localOffsetBase + localOffset
+
+	return nil
+}
+
+func (p *_Assembler) asmFuncBody_inst_loong64(fn *ast.Func) (err error) {
 	// label 的地址列表
 	label2pcMap := make(map[string]int64)
 

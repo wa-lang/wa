@@ -83,6 +83,7 @@ type Func struct {
 	Tok      token.Token       // 关键字(可能有多语言)
 	Doc      *CommentGroup     // 关联文档
 	Name     string            // 函数名
+	Prop     []string          // 属性列表, [Key=Val,...]
 	Type     *FuncType         // 函数类型
 	Size     int               // 指令大小(没有类型信息)
 	Body     *FuncBody         // 函数体
@@ -91,16 +92,9 @@ type Func struct {
 
 // 函数类型
 type FuncType struct {
-	Pos    token.Pos  // 位置
-	Args   *FieldList // 参数列表
-	Return *FieldList // 返回值类型
-}
-
-// 函数参数或返回值列表
-type FieldList struct {
-	Pos  token.Pos     // 位置
-	Name []string      // 名字
-	Type []token.Token // 类型
+	Pos    token.Pos // 位置
+	Args   []*Local  // 参数列表
+	Return []*Local  // 返回值类型
 }
 
 // 函数定义
@@ -112,16 +106,18 @@ type FuncBody struct {
 	Objects  []Object        // 保序对象列表
 }
 
-// 局部变量
-// 对应栈帧固定的偏移量
+// 参数/返回值/局部变量
+// 对应寄存器或栈帧的偏移量都是固定的
 type Local struct {
 	Pos     token.Pos     // 位置
 	Tok     token.Token   // 关键字(可能有多语言)
 	Doc     *CommentGroup // 关联文档
 	Name    string        // 名字
-	Cap     int           // 容量, 元素个数, 默认为1
 	Type    token.Token   // 类型
 	Comment *Comment      // 尾部单行注释
+	Reg     abi.RegType   // 对应的寄存器, 在生成机器码阶段计算
+	Off     int           // 相对于FP的偏移地址, 在生成机器码阶段计算
+	Cap     int           // 容量, 元素个数, 默认为1
 }
 
 // 机器指令
