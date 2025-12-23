@@ -281,15 +281,3 @@ func (p *parser) parseAs() abi.As {
 	p.acceptToken(p.tok)
 	return as
 }
-
-// 地址大小
-func (p *parser) ptrSize() int {
-	switch p.cpu {
-	case abi.RISCV32:
-		return 4
-	case abi.RISCV64:
-		return 8
-	default:
-		panic("unreachable")
-	}
-}

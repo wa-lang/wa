@@ -56,10 +56,6 @@ func (p *parser) parseGlobal(tok token.Token) *ast.Global {
 			g.Type = p.tok
 			g.Size = 8
 			p.acceptToken(token.F64)
-		case token.PTR:
-			// ptr 大小依赖于平台
-			g.Type = token.PTR
-			g.Size = 0
 		case token.INT:
 			// 没有固定类型, 只有内存大小
 			g.Type = token.NONE
@@ -85,7 +81,7 @@ func (p *parser) parseGlobal(tok token.Token) *ast.Global {
 		if p.tok == token.IDENT {
 			initV.Symbal = p.parseIdent()
 			if g.Size == 0 {
-				g.Size = p.ptrSize()
+				g.Size = 8
 			}
 		} else {
 			initV.Lit = p.parseBasicLit()
@@ -96,13 +92,10 @@ func (p *parser) parseGlobal(tok token.Token) *ast.Global {
 					switch tok := initV.Lit.TypeCast; tok {
 					case token.NONE:
 						panic("unreachable")
-					case token.PTR, token.PTR_zh:
-						g.Size = p.ptrSize()
 					default:
 						g.Size = int(tok.NumberTypeSize())
 					}
 				}
-
 			}
 		}
 		initV.Comment = p.parseTailComment(initV.Pos)

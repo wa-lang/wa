@@ -149,18 +149,6 @@ func (p *_Assembler) asmGlobal(g *ast.Global) (err error) {
 		case token.F64, token.F64_zh:
 			v := xInit.Lit.ConstV.(float64)
 			binary.LittleEndian.PutUint64(g.LinkInfo.Data, math.Float64bits(float64(v)))
-		case token.PTR, token.PTR_zh:
-			v := xInit.Lit.ConstV.(int64)
-			switch p.opt.CPU {
-			case abi.LOONG64:
-				binary.LittleEndian.PutUint64(g.LinkInfo.Data, uint64(v))
-			case abi.RISCV32:
-				binary.LittleEndian.PutUint32(g.LinkInfo.Data, uint32(v))
-			case abi.RISCV64:
-				binary.LittleEndian.PutUint64(g.LinkInfo.Data, uint64(v))
-			default:
-				panic("unreachable")
-			}
 		default:
 			assert(xInit.Lit.LitKind == token.STRING)
 			copy(g.LinkInfo.Data, []byte(xInit.Lit.ConstV.(string)))

@@ -56,7 +56,6 @@ const (
 	U64    // uint64
 	F32    // float32
 	F64    // float64
-	PTR    // uint pointer
 	CONST  // 常量
 	GLOBAL // 全局
 	LOCAL  // 局部
@@ -70,7 +69,6 @@ const (
 	U64_zh    // 长正
 	F32_zh    // 单精
 	F64_zh    // 双精
-	PTR_zh    // 指针
 	CONST_zh  // 常量
 	GLOBAL_zh // 全局
 	LOCAL_zh  // 局部
@@ -139,7 +137,6 @@ var tokens = [...]string{
 	U64:    "u64",
 	F32:    "f32",
 	F64:    "f64",
-	PTR:    "ptr",
 	CONST:  "const",
 	GLOBAL: "global",
 	LOCAL:  "local",
@@ -151,7 +148,6 @@ var tokens = [...]string{
 	U64_zh:    "长正",
 	F32_zh:    "单精",
 	F64_zh:    "双精",
-	PTR_zh:    "指针",
 	CONST_zh:  "常量",
 	GLOBAL_zh: "全局",
 	LOCAL_zh:  "局部",
@@ -253,9 +249,28 @@ func (tok Token) DefaultNumberType() Token {
 	}
 }
 
+// 是否数值类型
+func (tok Token) IsNumberType() bool {
+	switch tok {
+	case I32, I32_zh:
+		return true
+	case I64, I64_zh:
+		return true
+	case U32, U32_zh:
+		return true
+	case U64, U64_zh:
+		return true
+	case F32, F32_zh:
+		return true
+	case F64, F64_zh:
+		return true
+	default:
+		return false
+	}
+}
+
 // 数值类型的内存大小(不含指针和字符串类型)
 func (tok Token) NumberTypeSize() Token {
-
 	switch tok {
 	case I32, I32_zh:
 		return 4
@@ -270,7 +285,7 @@ func (tok Token) NumberTypeSize() Token {
 	case F64, F64_zh:
 		return 8
 	default:
-		return 0
+		panic("unreachable")
 	}
 }
 

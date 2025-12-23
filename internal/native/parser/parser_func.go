@@ -105,10 +105,10 @@ func (p *parser) parseFunc_args(fn *ast.Func) {
 		}
 
 		switch p.tok {
-		case token.I32, token.I64, token.F32, token.F64, token.PTR:
+		case token.I32, token.I64, token.F32, token.F64:
 			arg.Type = p.tok
 			p.acceptToken(p.tok)
-		case token.I32_zh, token.I64_zh, token.F32_zh, token.F64_zh, token.PTR_zh:
+		case token.I32_zh, token.I64_zh, token.F32_zh, token.F64_zh:
 			arg.Type = p.tok
 			p.acceptToken(p.tok)
 		default:
@@ -147,10 +147,10 @@ func (p *parser) parseFunc_return(fn *ast.Func) {
 			}
 
 			switch p.tok {
-			case token.I32, token.I64, token.F32, token.F64, token.PTR:
+			case token.I32, token.I64, token.F32, token.F64:
 				ret.Type = p.tok
 				p.acceptToken(p.tok)
-			case token.I32_zh, token.I64_zh, token.F32_zh, token.F64_zh, token.PTR_zh:
+			case token.I32_zh, token.I64_zh, token.F32_zh, token.F64_zh:
 				ret.Type = p.tok
 				p.acceptToken(p.tok)
 			default:
@@ -171,7 +171,7 @@ func (p *parser) parseFunc_return(fn *ast.Func) {
 	}
 
 	switch p.tok {
-	case token.I32, token.I64, token.F32, token.F64, token.PTR:
+	case token.I32, token.I64, token.F32, token.F64:
 		retReg, retOff := p.fnArgRet.AllocArg(p.tok)
 		fn.Type.Return = append(fn.Type.Args, &ast.Local{
 			Pos:  p.pos,
@@ -180,7 +180,7 @@ func (p *parser) parseFunc_return(fn *ast.Func) {
 			Off:  retOff,
 		})
 		p.acceptToken(p.tok)
-	case token.I32_zh, token.I64_zh, token.F32_zh, token.F64_zh, token.PTR_zh:
+	case token.I32_zh, token.I64_zh, token.F32_zh, token.F64_zh:
 		retReg, retOff := p.fnArgRet.AllocArg(p.tok)
 		fn.Type.Return = append(fn.Type.Args, &ast.Local{
 			Pos:  p.pos,
@@ -233,7 +233,7 @@ Loop:
 			{
 				locals := append([]*ast.Local{}, fn.Body.Locals...)
 				sort.Slice(locals, func(i, j int) bool {
-					return localSize(locals[i]) < localSize(locals[j])
+					return locals[i].Type.NumberTypeSize() < locals[j].Type.NumberTypeSize()
 				})
 
 				// 局部变量分配
@@ -278,11 +278,9 @@ func (p *parser) parseFunc_body_local(fn *ast.Func) *ast.Local {
 	case token.I32, token.I64,
 		token.U32, token.U64,
 		token.F32, token.F64,
-		token.PTR,
 		token.I32_zh, token.I64_zh,
 		token.U32_zh, token.U64_zh,
-		token.F32_zh, token.F64_zh,
-		token.PTR_zh:
+		token.F32_zh, token.F64_zh:
 		local.Type = p.tok
 		p.acceptToken(p.tok)
 	default:

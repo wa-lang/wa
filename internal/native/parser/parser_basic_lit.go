@@ -26,8 +26,7 @@ func (p *parser) parseBasicLit() *ast.BasicLit {
 		token.U32, token.U32_zh,
 		token.U64, token.U64_zh,
 		token.F32, token.F32_zh,
-		token.F64, token.F64_zh,
-		token.PTR, token.PTR_zh:
+		token.F64, token.F64_zh:
 		pVal.TypeCast = p.tok
 		p.acceptToken(token.LPAREN)
 		defer p.acceptToken(token.RPAREN)
