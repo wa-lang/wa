@@ -50,29 +50,28 @@ package wire
 //func (v *aImv) Name() string    { return fmt.Sprintf("$t%d", v.id) }
 //func (v *aImv) Kind() ValueKind { return ValueKindLocal }
 //func (v *aImv) setId(id int)    { v.id = id }
-//
-///**************************************
-//CallInfo: 调用信息（函数名、函数签名、参数、调用位置）
-//**************************************/
-//type Call struct {
-//	FnName string
-//	Sig    FnSig
-//	Args   []Value
-//	Pos    int
-//}
-//
-//func (v *Call) Name() string { return v.FnName }
-//func (v *Call) Type() Type   { return v.Sig.Results }
-//func (v *Call) String() string {
-//	s := v.FnName
-//	s += "("
-//	for i, p := range v.Args {
-//		if i > 0 {
-//			s += ", "
-//		}
-//		s += p.Name()
-//	}
-//	s += ")"
-//	return s
-//}
-//
+
+/**************************************
+CallCommon: 调用基本信息（函数名、函数签名、参数、调用位置）
+**************************************/
+type CallCommon struct {
+	FnName string
+	Sig    FnSig
+	Args   []Expr
+	Pos    int
+}
+
+func (v *CallCommon) Name() string { return v.String() }
+func (v *CallCommon) Type() Type   { return v.Sig.Results }
+func (v *CallCommon) String() string {
+	s := v.FnName
+	s += "("
+	for i, p := range v.Args {
+		if i > 0 {
+			s += ", "
+		}
+		s += p.Name()
+	}
+	s += ")"
+	return s
+}
