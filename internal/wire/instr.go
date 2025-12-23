@@ -9,26 +9,6 @@ import (
 )
 
 /**************************************
-Stmt: 指令接口
-**************************************/
-type Stmt interface {
-	// 获取该指令的伪代码
-	String() string
-
-	// 获取该指令在源码中的位置
-	Pos() int
-
-	// 格式化输出
-	Format(tab string, sb *strings.Builder)
-
-	// 获取该指令所属的域
-	ParentScope() Scope
-
-	// 设置该指令所属的域
-	setScope(Scope)
-}
-
-/**************************************
 aStmt: 实现 Stmt 接口与 Pos、Scope 相关的方法
 包含 aStmt 的对象必须自行实现 Stringer 接口！
 **************************************/
@@ -44,21 +24,6 @@ func (v *aStmt) Pos() int           { return v.pos }
 func (v *aStmt) Format(tab string, sb *strings.Builder) {
 	sb.WriteString(tab)
 	sb.WriteString(v.String())
-}
-
-/**************************************
-Expr: 表达式，所有可以作为指令参数的对象，都满足该接口
-**************************************/
-type Expr interface {
-	// 表达式的名字
-	// 变量的名字是其变量名，常量的名字是其字面量，除此外多数表达式的名字是其指令伪代码
-	Name() string
-
-	// 该表达式的类型
-	Type() Type
-
-	// 表达式在源码中的位置
-	Pos() int
 }
 
 /**************************************

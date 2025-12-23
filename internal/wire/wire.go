@@ -38,16 +38,16 @@ type Scope interface {
 
 //-------------------------------------
 
-/**************************************
-ValueKind: 值的类别，取值见后续常量
-**************************************/
-type ValueKind int
-
-const (
-	ValueKindLocal ValueKind = iota
-	ValueKindGlobal
-	ValueKindConst
-)
+///**************************************
+//ValueKind: 值的类别，取值见后续常量
+//**************************************/
+//type ValueKind int
+//
+//const (
+//	ValueKindLocal ValueKind = iota
+//	ValueKindGlobal
+//	ValueKindConst
+//)
 
 /**************************************
 TypeKind: 值类型的类别，取值见后续常量
@@ -107,25 +107,40 @@ type Type interface {
 //	Method(i int) Method    //获取指定id的方法
 //}
 
-///**************************************
-//Value: 值，所有可以作为指令参数的对象，都满足该接口
-//**************************************/
-//type Value interface {
-//	// 该值的名字
-//	// 全局变量、局部变量（含参数）、具名函数的名字与其源代码中的对应标识符保持一直
-//	// 常量的名字是其字面值
-//	// 中间变量（虚拟寄存器）的名字为 $t0、$t1 等
-//	Name() string
-//
-//	// 该值的类别
-//	Kind() ValueKind
-//
-//	// 该值的类型
-//	Type() Type
-//
-//	// 该值在源码中的位置
-//	Pos() int
-//}
+/**************************************
+Stmt: 指令接口
+**************************************/
+type Stmt interface {
+	// 获取该指令的伪代码
+	String() string
+
+	// 获取该指令在源码中的位置
+	Pos() int
+
+	// 格式化输出
+	Format(tab string, sb *strings.Builder)
+
+	// 获取该指令所属的域
+	ParentScope() Scope
+
+	// 设置该指令所属的域
+	setScope(Scope)
+}
+
+/**************************************
+Expr: 表达式接口，所有可以作为指令参数的对象，都满足该接口
+**************************************/
+type Expr interface {
+	// 表达式的名字
+	// 变量的名字是其变量名，常量的名字是其字面量，除此外多数表达式的名字是其指令伪代码
+	Name() string
+
+	// 该表达式的类型
+	Type() Type
+
+	// 表达式在源码中的位置
+	Pos() int
+}
 
 /**************************************
 Param: 函数的输入参数，满足 Value 接口
@@ -136,11 +151,10 @@ type Param struct {
 	pos  int
 }
 
-func (p *Param) Name() string    { return p.name }
-func (p *Param) Format() string  { return p.name }
-func (p *Param) Kind() ValueKind { return ValueKindLocal }
-func (p *Param) Type() Type      { return p.typ }
-func (p *Param) Pos() int        { return p.pos }
+func (p *Param) Name() string   { return p.name }
+func (p *Param) Format() string { return p.name }
+func (p *Param) Type() Type     { return p.typ }
+func (p *Param) Pos() int       { return p.pos }
 
 /**************************************
 Const: 常量，满足 Value 接口
@@ -151,10 +165,9 @@ type Const struct {
 	pos  int
 }
 
-func (p *Const) Name() string    { return p.name }
-func (p *Const) Kind() ValueKind { return ValueKindConst }
-func (p *Const) Type() Type      { return p.typ }
-func (p *Const) Pos() int        { return p.pos }
+func (p *Const) Name() string { return p.name }
+func (p *Const) Type() Type   { return p.typ }
+func (p *Const) Pos() int     { return p.pos }
 
 /**************************************
 FnSig: 函数签名
@@ -190,7 +203,6 @@ type FreeVar struct {
 }
 
 func (p *FreeVar) Name() string               { return p.name }
-func (p *FreeVar) Kind() ValueKind            { return ValueKindLocal }
 func (p *FreeVar) Type() Type                 { return p.typ }
 func (p *FreeVar) Pos() int                   { return p.pos }
 func (p *FreeVar) Object() interface{}        { return p.object }
