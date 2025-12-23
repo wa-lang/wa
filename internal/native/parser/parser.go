@@ -23,9 +23,7 @@ type parser struct {
 	fset    *token.FileSet
 	file    *token.File
 	scanner *scanner.Scanner
-
-	prog     *ast.File
-	fnArgRet _AbiRegAlloctor
+	prog    *ast.File
 
 	pos token.Pos
 	tok token.Token
@@ -120,7 +118,6 @@ func (p *parser) ParseFile() (prog *ast.File, err error) {
 	}()
 
 	p.prog = &ast.File{CPU: p.cpu}
-	p.fnArgRet.cpu = p.cpu
 
 	p.scanner.Init(p.file, p.src,
 		func(pos token.Position, msg string) {
