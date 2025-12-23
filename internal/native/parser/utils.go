@@ -5,6 +5,9 @@ package parser
 
 import (
 	"fmt"
+
+	"wa-lang.org/wa/internal/native/ast"
+	"wa-lang.org/wa/internal/native/token"
 )
 
 func assert(ok bool, message ...interface{}) {
@@ -14,5 +17,20 @@ func assert(ok bool, message ...interface{}) {
 		} else {
 			panic("assert failed")
 		}
+	}
+}
+
+func localSize(x *ast.Local) int {
+	switch x.Type {
+	case token.I32, token.I32_zh:
+		return x.Cap * 4
+	case token.I64, token.I64_zh:
+		return x.Cap * 8
+	case token.F32, token.F32_zh:
+		return x.Cap * 4
+	case token.F64, token.F64_zh:
+		return x.Cap * 8
+	default:
+		panic("unreachable")
 	}
 }

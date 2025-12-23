@@ -51,71 +51,71 @@ func (p *parser) parseInst_loong(fn *ast.Func) (inst *ast.Instruction) {
 	case loong64.OpFormatType_NULL:
 		return inst
 	case loong64.OpFormatType_2R:
-		rd := p.parseRegI_loong()
+		rd := p.parseRegI_loong(fn)
 		p.acceptToken(token.COMMA)
-		rj := p.parseRegI_loong()
+		rj := p.parseRegI_loong(fn)
 		inst.Arg.Rd = rd
 		inst.Arg.Rs1 = rj
 		return inst
 	case loong64.OpFormatType_2F:
-		fd := p.parseRegF_loong()
+		fd := p.parseRegF_loong(fn)
 		p.acceptToken(token.COMMA)
-		fj := p.parseRegF_loong()
+		fj := p.parseRegF_loong(fn)
 		inst.Arg.Rd = fd
 		inst.Arg.Rs1 = fj
 		return inst
 	case loong64.OpFormatType_1F_1R:
-		fd := p.parseRegF_loong()
+		fd := p.parseRegF_loong(fn)
 		p.acceptToken(token.COMMA)
-		rj := p.parseRegI_loong()
+		rj := p.parseRegI_loong(fn)
 		inst.Arg.Rd = fd
 		inst.Arg.Rs1 = rj
 		return inst
 	case loong64.OpFormatType_1R_1F:
-		rd := p.parseRegI_loong()
+		rd := p.parseRegI_loong(fn)
 		p.acceptToken(token.COMMA)
-		fj := p.parseRegF_loong()
+		fj := p.parseRegF_loong(fn)
 		inst.Arg.Rd = rd
 		inst.Arg.Rs1 = fj
 		return inst
 	case loong64.OpFormatType_3R:
-		rd := p.parseRegI_loong()
+		rd := p.parseRegI_loong(fn)
 		p.acceptToken(token.COMMA)
-		rj := p.parseRegI_loong()
+		rj := p.parseRegI_loong(fn)
 		p.acceptToken(token.COMMA)
-		rk := p.parseRegI_loong()
+		rk := p.parseRegI_loong(fn)
 		inst.Arg.Rd = rd
 		inst.Arg.Rs1 = rj
 		inst.Arg.Rs2 = rk
 		return inst
 	case loong64.OpFormatType_3F:
-		fd := p.parseRegF_loong()
+		fd := p.parseRegF_loong(fn)
 		p.acceptToken(token.COMMA)
-		fj := p.parseRegF_loong()
+		fj := p.parseRegF_loong(fn)
 		p.acceptToken(token.COMMA)
-		fk := p.parseRegF_loong()
+		fk := p.parseRegF_loong(fn)
 		inst.Arg.Rd = fd
 		inst.Arg.Rs1 = fj
 		inst.Arg.Rs2 = fk
 		return inst
 	case loong64.OpFormatType_1F_2R:
-		fd := p.parseRegF_loong()
+		fd := p.parseRegF_loong(fn)
 		p.acceptToken(token.COMMA)
-		rj := p.parseRegI_loong()
+		rj := p.parseRegI_loong(fn)
 		p.acceptToken(token.COMMA)
-		rk := p.parseRegI_loong()
+		rk := p.parseRegI_loong(fn)
 		inst.Arg.Rd = fd
 		inst.Arg.Rs1 = rj
 		inst.Arg.Rs2 = rk
 		return inst
 	case loong64.OpFormatType_4F:
-		fd := p.parseRegF_loong()
+		fd := p.parseRegF_loong(fn)
 		p.acceptToken(token.COMMA)
-		fj := p.parseRegF_loong()
+		fj := p.parseRegF_loong(fn)
 		p.acceptToken(token.COMMA)
-		fk := p.parseRegF_loong()
+		fk := p.parseRegF_loong(fn)
 		p.acceptToken(token.COMMA)
-		fa := p.parseRegF_loong()
+		fa := p.parseRegF_loong(fn)
 		inst.Arg.Rd = fd
 		inst.Arg.Rs1 = fj
 		inst.Arg.Rs2 = fk
@@ -123,9 +123,9 @@ func (p *parser) parseInst_loong(fn *ast.Func) (inst *ast.Instruction) {
 		return inst
 
 	case loong64.OpFormatType_2R_ui5:
-		rd := p.parseRegI_loong()
+		rd := p.parseRegI_loong(fn)
 		p.acceptToken(token.COMMA)
-		rj := p.parseRegI_loong()
+		rj := p.parseRegI_loong(fn)
 		p.acceptToken(token.COMMA)
 		ui5, ui5Symbol := p.parseInst_loong_imm_ui5()
 		inst.Arg.Rd = rd
@@ -134,9 +134,9 @@ func (p *parser) parseInst_loong(fn *ast.Func) (inst *ast.Instruction) {
 		inst.Arg.Symbol = ui5Symbol
 		return inst
 	case loong64.OpFormatType_2R_ui6:
-		rd := p.parseRegI_loong()
+		rd := p.parseRegI_loong(fn)
 		p.acceptToken(token.COMMA)
-		rj := p.parseRegI_loong()
+		rj := p.parseRegI_loong(fn)
 		p.acceptToken(token.COMMA)
 		ui6, ui6Symbol := p.parseInst_loong_imm_ui6()
 		inst.Arg.Rd = rd
@@ -145,11 +145,11 @@ func (p *parser) parseInst_loong(fn *ast.Func) (inst *ast.Instruction) {
 		inst.Arg.Symbol = ui6Symbol
 		return inst
 	case loong64.OpFormatType_2R_si12:
-		rd := p.parseRegI_loong()
+		rd := p.parseRegI_loong(fn)
 		p.acceptToken(token.COMMA)
-		rj := p.parseRegI_loong()
+		rj := p.parseRegI_loong(fn)
 		p.acceptToken(token.COMMA)
-		si12, si12Symbol, symbolDecor := p.parseInst_loong_imm_si12()
+		si12, si12Symbol, symbolDecor := p.parseInst_loong_imm_si12(fn)
 		inst.Arg.Rd = rd
 		inst.Arg.Rs1 = rj
 		inst.Arg.Imm = si12
@@ -158,9 +158,9 @@ func (p *parser) parseInst_loong(fn *ast.Func) (inst *ast.Instruction) {
 		return inst
 
 	case loong64.OpFormatType_2R_ui12:
-		rd := p.parseRegI_loong()
+		rd := p.parseRegI_loong(fn)
 		p.acceptToken(token.COMMA)
-		rj := p.parseRegI_loong()
+		rj := p.parseRegI_loong(fn)
 		p.acceptToken(token.COMMA)
 		ui12, ui12Symbol, symbolDecor := p.parseInst_loong_imm_ui12()
 		inst.Arg.Rd = rd
@@ -170,9 +170,9 @@ func (p *parser) parseInst_loong(fn *ast.Func) (inst *ast.Instruction) {
 		inst.Arg.SymbolDecor = symbolDecor
 		return inst
 	case loong64.OpFormatType_2R_si14:
-		rd := p.parseRegI_loong()
+		rd := p.parseRegI_loong(fn)
 		p.acceptToken(token.COMMA)
-		rj := p.parseRegI_loong()
+		rj := p.parseRegI_loong(fn)
 		p.acceptToken(token.COMMA)
 		si14, si14Symbol := p.parseInst_loong_imm_si14()
 		inst.Arg.Rd = rd
@@ -181,7 +181,7 @@ func (p *parser) parseInst_loong(fn *ast.Func) (inst *ast.Instruction) {
 		inst.Arg.Symbol = si14Symbol
 		return inst
 	case loong64.OpFormatType_1R_si20:
-		rd := p.parseRegI_loong()
+		rd := p.parseRegI_loong(fn)
 		p.acceptToken(token.COMMA)
 		si20, si20Symbol, si20SymbolDecor := p.parseInst_loong_imm_si20()
 		inst.Arg.Rd = rd
@@ -190,18 +190,18 @@ func (p *parser) parseInst_loong(fn *ast.Func) (inst *ast.Instruction) {
 		inst.Arg.SymbolDecor = si20SymbolDecor
 		return inst
 	case loong64.OpFormatType_0_2R:
-		rj := p.parseRegI_loong()
+		rj := p.parseRegI_loong(fn)
 		p.acceptToken(token.COMMA)
-		rk := p.parseRegI_loong()
+		rk := p.parseRegI_loong(fn)
 		inst.Arg.Rs1 = rj
 		inst.Arg.Rs2 = rk
 		return inst
 	case loong64.OpFormatType_3R_sa2:
-		rd := p.parseRegI_loong()
+		rd := p.parseRegI_loong(fn)
 		p.acceptToken(token.COMMA)
-		rj := p.parseRegI_loong()
+		rj := p.parseRegI_loong(fn)
 		p.acceptToken(token.COMMA)
-		rk := p.parseRegI_loong()
+		rk := p.parseRegI_loong(fn)
 		p.acceptToken(token.COMMA)
 		sa2, sa2Symbol := p.parseInst_loong_imm_sa2()
 		inst.Arg.Rd = rd
@@ -211,11 +211,11 @@ func (p *parser) parseInst_loong(fn *ast.Func) (inst *ast.Instruction) {
 		inst.Arg.Symbol = sa2Symbol
 		return inst
 	case loong64.OpFormatType_3R_sa3:
-		rd := p.parseRegI_loong()
+		rd := p.parseRegI_loong(fn)
 		p.acceptToken(token.COMMA)
-		rj := p.parseRegI_loong()
+		rj := p.parseRegI_loong(fn)
 		p.acceptToken(token.COMMA)
-		rk := p.parseRegI_loong()
+		rk := p.parseRegI_loong(fn)
 		p.acceptToken(token.COMMA)
 		sa3, sa3Symbol := p.parseInst_loong_imm_sa3()
 		inst.Arg.Rd = rd
@@ -233,9 +233,9 @@ func (p *parser) parseInst_loong(fn *ast.Func) (inst *ast.Instruction) {
 	case loong64.OpFormatType_code_1R_si12:
 		code, codeSymbol := p.parseInst_loong_imm_code_5bit()
 		p.acceptToken(token.COMMA)
-		rj := p.parseRegI_loong()
+		rj := p.parseRegI_loong(fn)
 		p.acceptToken(token.COMMA)
-		si12, si12Symbol, ui12SymbolDecor := p.parseInst_loong_imm_si12()
+		si12, si12Symbol, ui12SymbolDecor := p.parseInst_loong_imm_si12(fn)
 		inst.Arg.Rs1 = rj
 		inst.Arg.Rd = abi.RegType(code) // Rd 寄存器参数位置用于记录 code
 		inst.Arg.RdName = codeSymbol
@@ -245,9 +245,9 @@ func (p *parser) parseInst_loong(fn *ast.Func) (inst *ast.Instruction) {
 		return inst
 
 	case loong64.OpFormatType_2R_msbw_lsbw:
-		rd := p.parseRegI_loong()
+		rd := p.parseRegI_loong(fn)
 		p.acceptToken(token.COMMA)
-		rj := p.parseRegI_loong()
+		rj := p.parseRegI_loong(fn)
 		p.acceptToken(token.COMMA)
 		msbw, msbwSymbol := p.parseInst_loong_imm_msbw_5bit()
 		p.acceptToken(token.COMMA)
@@ -260,9 +260,9 @@ func (p *parser) parseInst_loong(fn *ast.Func) (inst *ast.Instruction) {
 		inst.Arg.Rs3Name = lsbwSymbol
 		return inst
 	case loong64.OpFormatType_2R_msbd_lsbd:
-		rd := p.parseRegI_loong()
+		rd := p.parseRegI_loong(fn)
 		p.acceptToken(token.COMMA)
-		rj := p.parseRegI_loong()
+		rj := p.parseRegI_loong(fn)
 		p.acceptToken(token.COMMA)
 		msbd, msbdSymbol := p.parseInst_loong_imm_msbd_6bit()
 		p.acceptToken(token.COMMA)
@@ -277,13 +277,13 @@ func (p *parser) parseInst_loong(fn *ast.Func) (inst *ast.Instruction) {
 	case loong64.OpFormatType_fcsr_1R:
 		fcsr, fcsrSymbol := p.parseInst_loong_imm_fcsr_5bit()
 		p.acceptToken(token.COMMA)
-		rj := p.parseRegI_loong()
+		rj := p.parseRegI_loong(fn)
 		inst.Arg.Rd = abi.RegType(fcsr) // Rd 寄存器参数位置用于记录 fscr
 		inst.Arg.RdName = fcsrSymbol
 		inst.Arg.Rs1 = rj
 		return inst
 	case loong64.OpFormatType_1R_fcsr:
-		rd := p.parseRegI_loong()
+		rd := p.parseRegI_loong(fn)
 		p.acceptToken(token.COMMA)
 		fcsr, fcsrSymbol := p.parseInst_loong_imm_fcsr_5bit()
 		inst.Arg.Rd = rd
@@ -294,7 +294,7 @@ func (p *parser) parseInst_loong(fn *ast.Func) (inst *ast.Instruction) {
 	case loong64.OpFormatType_cd_1R:
 		cd, cdSymbol := p.parseInst_loong_imm_cd_2bit()
 		p.acceptToken(token.COMMA)
-		rj := p.parseRegI_loong()
+		rj := p.parseRegI_loong(fn)
 		p.acceptToken(token.COMMA)
 		inst.Arg.Rd = abi.RegType(cd) // Rd 寄存器参数位置用于记录 cd
 		inst.Arg.RdName = cdSymbol
@@ -303,7 +303,7 @@ func (p *parser) parseInst_loong(fn *ast.Func) (inst *ast.Instruction) {
 	case loong64.OpFormatType_cd_1F:
 		cd, cdSymbol := p.parseInst_loong_imm_cd_2bit()
 		p.acceptToken(token.COMMA)
-		fj := p.parseRegF_loong()
+		fj := p.parseRegF_loong(fn)
 		p.acceptToken(token.COMMA)
 		inst.Arg.Rd = abi.RegType(cd) // Rd 寄存器参数位置用于记录 cd
 		inst.Arg.RdName = cdSymbol
@@ -312,9 +312,9 @@ func (p *parser) parseInst_loong(fn *ast.Func) (inst *ast.Instruction) {
 	case loong64.OpFormatType_cd_2F:
 		cd, cdSymbol := p.parseInst_loong_imm_cd_2bit()
 		p.acceptToken(token.COMMA)
-		fj := p.parseRegF_loong()
+		fj := p.parseRegF_loong(fn)
 		p.acceptToken(token.COMMA)
-		fk := p.parseRegF_loong()
+		fk := p.parseRegF_loong(fn)
 		p.acceptToken(token.COMMA)
 		inst.Arg.Rd = abi.RegType(cd) // Rd 寄存器参数位置用于记录 cd
 		inst.Arg.RdName = cdSymbol
@@ -322,7 +322,7 @@ func (p *parser) parseInst_loong(fn *ast.Func) (inst *ast.Instruction) {
 		inst.Arg.Rs2 = fk
 		return inst
 	case loong64.OpFormatType_1R_cj:
-		rd := p.parseRegI_loong()
+		rd := p.parseRegI_loong(fn)
 		p.acceptToken(token.COMMA)
 		cj, cjSymbol := p.parseInst_loong_imm_cj_3bit()
 		inst.Arg.Rd = rd
@@ -330,7 +330,7 @@ func (p *parser) parseInst_loong(fn *ast.Func) (inst *ast.Instruction) {
 		inst.Arg.Rs1Name = cjSymbol
 		return inst
 	case loong64.OpFormatType_1F_cj:
-		fd := p.parseRegF_loong()
+		fd := p.parseRegF_loong(fn)
 		p.acceptToken(token.COMMA)
 		cj, cjSymbol := p.parseInst_loong_imm_cj_3bit()
 		inst.Arg.Rd = fd
@@ -338,7 +338,7 @@ func (p *parser) parseInst_loong(fn *ast.Func) (inst *ast.Instruction) {
 		inst.Arg.Rs1Name = cjSymbol
 		return inst
 	case loong64.OpFormatType_1R_csr:
-		rd := p.parseRegI_loong()
+		rd := p.parseRegI_loong(fn)
 		p.acceptToken(token.COMMA)
 		csr, csrSymbol := p.parseInst_loong_imm_csr_14bit()
 		inst.Arg.Rd = rd
@@ -346,9 +346,9 @@ func (p *parser) parseInst_loong(fn *ast.Func) (inst *ast.Instruction) {
 		inst.Arg.Symbol = csrSymbol
 		return inst
 	case loong64.OpFormatType_2R_csr:
-		rd := p.parseRegI_loong()
+		rd := p.parseRegI_loong(fn)
 		p.acceptToken(token.COMMA)
-		rj := p.parseRegI_loong()
+		rj := p.parseRegI_loong(fn)
 		p.acceptToken(token.COMMA)
 		csr, csrSymbol := p.parseInst_loong_imm_csr_14bit()
 		if rj == loong64.REG_R0 || rj != loong64.REG_R1 {
@@ -360,9 +360,9 @@ func (p *parser) parseInst_loong(fn *ast.Func) (inst *ast.Instruction) {
 		inst.Arg.Symbol = csrSymbol
 		return inst
 	case loong64.OpFormatType_2R_level:
-		rd := p.parseRegI_loong()
+		rd := p.parseRegI_loong(fn)
 		p.acceptToken(token.COMMA)
-		rj := p.parseRegI_loong()
+		rj := p.parseRegI_loong(fn)
 		p.acceptToken(token.COMMA)
 		level, levelSymbol := p.parseInst_loong_imm_level_8bit()
 		inst.Arg.Rd = rd
@@ -376,7 +376,7 @@ func (p *parser) parseInst_loong(fn *ast.Func) (inst *ast.Instruction) {
 		inst.Arg.Symbol = levelSymbol
 		return inst
 	case loong64.OpFormatType_0_1R_seq:
-		rj := p.parseRegI_loong()
+		rj := p.parseRegI_loong(fn)
 		p.acceptToken(token.COMMA)
 		seq, seqSymbol := p.parseInst_loong_imm_seq_8bit()
 		inst.Arg.Rs1 = rj
@@ -386,20 +386,20 @@ func (p *parser) parseInst_loong(fn *ast.Func) (inst *ast.Instruction) {
 	case loong64.OpFormatType_op_2R:
 		op, opSymbol := p.parseInst_loong_imm_op_5bit()
 		p.acceptToken(token.COMMA)
-		rj := p.parseRegI_loong()
+		rj := p.parseRegI_loong(fn)
 		p.acceptToken(token.COMMA)
-		rk := p.parseRegI_loong()
+		rk := p.parseRegI_loong(fn)
 		inst.Arg.Rd = abi.RegType(op) // Rd 寄存器存放 op
 		inst.Arg.RdName = opSymbol
 		inst.Arg.Rs1 = rj
 		inst.Arg.Rs2 = rk
 		return inst
 	case loong64.OpFormatType_3F_ca:
-		fd := p.parseRegF_loong()
+		fd := p.parseRegF_loong(fn)
 		p.acceptToken(token.COMMA)
-		fj := p.parseRegF_loong()
+		fj := p.parseRegF_loong(fn)
 		p.acceptToken(token.COMMA)
-		fk := p.parseRegF_loong()
+		fk := p.parseRegF_loong(fn)
 		p.acceptToken(token.COMMA)
 		ca, caSymbol := p.parseInst_loong_imm_ca_3bit()
 		inst.Arg.Rd = fd
@@ -411,9 +411,9 @@ func (p *parser) parseInst_loong(fn *ast.Func) (inst *ast.Instruction) {
 	case loong64.OpFormatType_hint_1R_si12:
 		hint, hintSymbol := p.parseInst_loong_imm_hint_5bit()
 		p.acceptToken(token.COMMA)
-		rj := p.parseRegI_loong()
+		rj := p.parseRegI_loong(fn)
 		p.acceptToken(token.COMMA)
-		si12, si12Symbol, ui12SymbolDecor := p.parseInst_loong_imm_si12()
+		si12, si12Symbol, ui12SymbolDecor := p.parseInst_loong_imm_si12(fn)
 		inst.Arg.Rd = abi.RegType(hint) // Rd 寄存器保存 hint
 		inst.Arg.RdName = hintSymbol
 		inst.Arg.Rs1 = rj
@@ -424,9 +424,9 @@ func (p *parser) parseInst_loong(fn *ast.Func) (inst *ast.Instruction) {
 	case loong64.OpFormatType_hint_2R:
 		hint, hintSymbol := p.parseInst_loong_imm_hint_5bit()
 		p.acceptToken(token.COMMA)
-		rj := p.parseRegI_loong()
+		rj := p.parseRegI_loong(fn)
 		p.acceptToken(token.COMMA)
-		rk := p.parseRegI_loong()
+		rk := p.parseRegI_loong(fn)
 		p.acceptToken(token.COMMA)
 		inst.Arg.Rd = abi.RegType(hint) // Rd 寄存器保存 hint
 		inst.Arg.RdName = hintSymbol
@@ -448,16 +448,16 @@ func (p *parser) parseInst_loong(fn *ast.Func) (inst *ast.Instruction) {
 		inst.Arg.Symbol = offSymbol
 		return inst
 	case loong64.OpFormatType_rj_offset:
-		rj := p.parseRegI_loong()
+		rj := p.parseRegI_loong(fn)
 		p.acceptToken(token.COMMA)
 		offSymbol := p.parseInst_loong_imm_offset()
 		inst.Arg.Rs1 = rj
 		inst.Arg.Symbol = offSymbol
 		return inst
 	case loong64.OpFormatType_rj_rd_offset:
-		rj := p.parseRegI_loong()
+		rj := p.parseRegI_loong(fn)
 		p.acceptToken(token.COMMA)
-		rd := p.parseRegI_loong()
+		rd := p.parseRegI_loong(fn)
 		p.acceptToken(token.COMMA)
 		offSymbol := p.parseInst_loong_imm_offset()
 		inst.Arg.Rd = rd
@@ -465,9 +465,9 @@ func (p *parser) parseInst_loong(fn *ast.Func) (inst *ast.Instruction) {
 		inst.Arg.Symbol = offSymbol
 		return inst
 	case loong64.OpFormatType_rd_rj_offset:
-		rd := p.parseRegI_loong()
+		rd := p.parseRegI_loong(fn)
 		p.acceptToken(token.COMMA)
-		rj := p.parseRegI_loong()
+		rj := p.parseRegI_loong(fn)
 		p.acceptToken(token.COMMA)
 		offSymbol := p.parseInst_loong_imm_offset()
 		inst.Arg.Rd = rd
@@ -484,14 +484,57 @@ func (p *parser) parseInst_loong(fn *ast.Func) (inst *ast.Instruction) {
 	}
 }
 
-func (p *parser) parseRegI_loong() abi.RegType {
+func (p *parser) parseRegI_loong(fn *ast.Func) abi.RegType {
+	// 参数和返回值 可能是寄存器
+	if p.tok == token.IDENT {
+		name := p.parseIdent()
+		for _, x := range fn.Type.Args {
+			if x.Name == name {
+				if x.Reg < loong64.REG_R0 || x.Reg > loong64.REG_R31 {
+					p.errorf(p.pos, "%v is not loongarch int register", x.Name)
+				}
+				return x.Reg
+			}
+		}
+		for _, x := range fn.Type.Return {
+			if x.Name == name {
+				if x.Reg < loong64.REG_R0 || x.Reg > loong64.REG_R31 {
+					p.errorf(p.pos, "%v is not loongarch int register", x.Name)
+				}
+				return x.Reg
+			}
+		}
+	}
+
 	x := p.parseRegister()
 	if x < loong64.REG_R0 || x > loong64.REG_R31 {
 		p.errorf(p.pos, "%v is not loongarch int register", x)
 	}
 	return x
 }
-func (p *parser) parseRegF_loong() abi.RegType {
+
+func (p *parser) parseRegF_loong(fn *ast.Func) abi.RegType {
+	// 参数和返回值 可能是寄存器
+	if p.tok == token.IDENT {
+		name := p.parseIdent()
+		for _, x := range fn.Type.Args {
+			if x.Name == name {
+				if x.Reg < loong64.REG_F0 || x.Reg > loong64.REG_F31 {
+					p.errorf(p.pos, "%v is not loongarch float register", x.Name)
+				}
+				return x.Reg
+			}
+		}
+		for _, x := range fn.Type.Return {
+			if x.Name == name {
+				if x.Reg < loong64.REG_F0 || x.Reg > loong64.REG_F31 {
+					p.errorf(p.pos, "%v is not loongarch float register", x.Name)
+				}
+				return x.Reg
+			}
+		}
+	}
+
 	x := p.parseRegister()
 	if x < loong64.REG_F0 || x > loong64.REG_F31 {
 		p.errorf(p.pos, "%v is not loongarch float register", x)
@@ -506,7 +549,36 @@ func (p *parser) parseInst_loong_imm_ui6() (ui6 int32, symbol string) {
 	return p.parseInst_loong_immOrSymbol()
 }
 
-func (p *parser) parseInst_loong_imm_si12() (s12 int32, symbol string, symbolDecor abi.BuiltinFn) {
+func (p *parser) parseInst_loong_imm_si12(fn *ast.Func) (s12 int32, symbol string, symbolDecor abi.BuiltinFn) {
+	// 参数/返回值/局部变量 都可能是在栈上
+	if p.tok == token.IDENT {
+		name := p.parseIdent()
+		for _, x := range fn.Type.Args {
+			if x.Name == name {
+				if x.Reg != 0 {
+					p.errorf(p.pos, "%v is register", x.Name)
+				}
+				s12 = int32(x.Off)
+				return
+			}
+		}
+		for _, x := range fn.Type.Return {
+			if x.Name == name {
+				if x.Reg != 0 {
+					p.errorf(p.pos, "%v is register", x.Name)
+				}
+				s12 = int32(x.Off)
+				return
+			}
+		}
+		for _, x := range fn.Body.Locals {
+			if x.Name == name {
+				s12 = int32(x.Off)
+				return
+			}
+		}
+	}
+
 	return p.parseInst_loong_immOrSymbolDecor()
 }
 

@@ -79,15 +79,17 @@ type InitValue struct {
 
 // 函数对象
 type Func struct {
-	Pos      token.Pos         // 位置
-	Tok      token.Token       // 关键字(可能有多语言)
-	Doc      *CommentGroup     // 关联文档
-	Name     string            // 函数名
-	Prop     []string          // 属性列表, [Key=Val,...]
-	Type     *FuncType         // 函数类型
-	Size     int               // 指令大小(没有类型信息)
-	Body     *FuncBody         // 函数体
-	LinkInfo *abi.LinkedSymbol // 链接信息
+	Pos       token.Pos         // 位置
+	Tok       token.Token       // 关键字(可能有多语言)
+	Doc       *CommentGroup     // 关联文档
+	Name      string            // 函数名
+	Prop      []string          // 属性列表, [Key=Val,...]
+	Type      *FuncType         // 函数类型
+	ArgsSize  int               // 参数和返回值在栈上的大小(不含走寄存器的)
+	LocalSize int               // 局部变量在栈帧上的大小(不含返回值)
+	BodySize  int               // 指令大小(没有类型信息)
+	Body      *FuncBody         // 函数体
+	LinkInfo  *abi.LinkedSymbol // 链接信息
 }
 
 // 函数类型

@@ -5,6 +5,8 @@ package parser
 
 import (
 	"fmt"
+	"sort"
+	"strings"
 
 	"wa-lang.org/wa/internal/native/abi"
 	"wa-lang.org/wa/internal/native/ast"
@@ -26,6 +28,8 @@ import (
 // 完毕
 
 func (p *parser) parseFunc(tok token.Token) *ast.Func {
+	p.fnArgRet.Reset()
+
 	fn := &ast.Func{
 		Pos:  p.pos,
 		Tok:  tok,
@@ -64,6 +68,14 @@ func (p *parser) parseFunc_prop(fn *ast.Func) {
 	for p.tok == token.IDENT {
 		propKey := p.parseIdent()
 		propVal := ""
+
+		// 检查属性是否重复定义
+		for _, s := range fn.Prop {
+			if s == propKey || strings.HasPrefix(s, propKey+"=") {
+				p.errorf(p.pos, "prop %s exists", propKey)
+			}
+		}
+
 		if p.tok == token.ASSIGN {
 			p.acceptToken(token.ASSIGN)
 			propVal = p.lit
@@ -84,26 +96,27 @@ func (p *parser) parseFunc_args(fn *ast.Func) {
 	for p.tok == token.IDENT {
 		argPos := p.pos
 		argName := p.parseIdent()
-		argType := token.NONE
 
 		p.acceptToken(token.COLON)
 
+		arg := &ast.Local{
+			Pos:  argPos,
+			Name: argName,
+		}
+
 		switch p.tok {
 		case token.I32, token.I64, token.F32, token.F64, token.PTR:
-			argType = p.tok
+			arg.Type = p.tok
 			p.acceptToken(p.tok)
 		case token.I32_zh, token.I64_zh, token.F32_zh, token.F64_zh, token.PTR_zh:
-			argType = p.tok
+			arg.Type = p.tok
 			p.acceptToken(p.tok)
 		default:
 			p.errorf(p.pos, "expect argument type(i32/i64/f32/f64/ptr), got %v", p.tok)
 		}
 
-		fn.Type.Args = append(fn.Type.Args, &ast.Local{
-			Pos:  argPos,
-			Name: argName,
-			Type: argType,
-		})
+		arg.Reg, arg.Off = p.fnArgRet.AllocArg(arg.Type)
+		fn.Type.Args = append(fn.Type.Args, arg)
 
 		if p.tok == token.COMMA {
 			p.acceptToken(token.COMMA)
@@ -125,26 +138,27 @@ func (p *parser) parseFunc_return(fn *ast.Func) {
 		for p.tok == token.IDENT {
 			retPos := p.pos
 			retName := p.parseIdent()
-			retType := token.NONE
 
 			p.acceptToken(token.COLON)
 
+			ret := &ast.Local{
+				Pos:  retPos,
+				Name: retName,
+			}
+
 			switch p.tok {
 			case token.I32, token.I64, token.F32, token.F64, token.PTR:
-				retType = p.tok
+				ret.Type = p.tok
 				p.acceptToken(p.tok)
 			case token.I32_zh, token.I64_zh, token.F32_zh, token.F64_zh, token.PTR_zh:
-				retType = p.tok
+				ret.Type = p.tok
 				p.acceptToken(p.tok)
 			default:
 				p.errorf(p.pos, "expect return type(i32/i64/f32/f64/ptr), got %v", p.tok)
 			}
 
-			fn.Type.Return = append(fn.Type.Args, &ast.Local{
-				Pos:  retPos,
-				Name: retName,
-				Type: retType,
-			})
+			ret.Reg, ret.Off = p.fnArgRet.AllocArg(ret.Type)
+			fn.Type.Return = append(fn.Type.Args, ret)
 
 			if p.tok == token.COMMA {
 				p.acceptToken(token.COMMA)
@@ -158,17 +172,21 @@ func (p *parser) parseFunc_return(fn *ast.Func) {
 
 	switch p.tok {
 	case token.I32, token.I64, token.F32, token.F64, token.PTR:
+		retReg, retOff := p.fnArgRet.AllocArg(p.tok)
 		fn.Type.Return = append(fn.Type.Args, &ast.Local{
 			Pos:  p.pos,
-			Name: "",
 			Type: p.tok,
+			Reg:  retReg,
+			Off:  retOff,
 		})
 		p.acceptToken(p.tok)
 	case token.I32_zh, token.I64_zh, token.F32_zh, token.F64_zh, token.PTR_zh:
+		retReg, retOff := p.fnArgRet.AllocArg(p.tok)
 		fn.Type.Return = append(fn.Type.Args, &ast.Local{
 			Pos:  p.pos,
-			Name: "",
 			Type: p.tok,
+			Reg:  retReg,
+			Off:  retOff,
 		})
 		p.acceptToken(p.tok)
 	default:
@@ -207,7 +225,23 @@ Loop:
 			localObj := p.parseFunc_body_local(fn)
 			fn.Body.Locals = append(fn.Body.Locals, localObj)
 			fn.Body.Objects = append(fn.Body.Objects, localObj)
+
 		default:
+
+			// 给局部变量在栈上预留空间预留
+			// 为了减少栈内存碎片, 局部变量会重新排序
+			{
+				locals := append([]*ast.Local{}, fn.Body.Locals...)
+				sort.Slice(locals, func(i, j int) bool {
+					return localSize(locals[i]) < localSize(locals[j])
+				})
+
+				// 局部变量分配
+				for _, local := range locals {
+					local.Off = p.fnArgRet.AllocLocal(local.Type, local.Cap)
+				}
+			}
+
 			if p.tok == token.IDENT || p.tok.IsAs() {
 				inst := p.parseInst(fn)
 				fn.Body.Insts = append(fn.Body.Insts, inst)

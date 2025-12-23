@@ -24,11 +24,11 @@ func (p *_Assembler) asmFile_riscv(filename string, source []byte, opt *abi.Link
 	// 全局函数分配内存空间
 	textAddrStart := p.dramNextAddr
 	for _, fn := range p.file.Funcs {
-		fn.Size = int(p.funcBodyLen(fn))
+		fn.BodySize = int(p.funcBodyLen(fn))
 		fn.LinkInfo = &abi.LinkedSymbol{
 			Name: fn.Name,
-			Addr: p.alloc(int64(fn.Size), 0),
-			Data: make([]byte, fn.Size),
+			Addr: p.alloc(int64(fn.BodySize), 0),
+			Data: make([]byte, fn.BodySize),
 		}
 	}
 

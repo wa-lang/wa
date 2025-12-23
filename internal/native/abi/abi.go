@@ -37,12 +37,10 @@ type LinkOptions struct {
 
 // 链接后的符号
 type LinkedSymbol struct {
-	Name      string // 名字
-	Addr      int64  // 内存地址
-	Size      int64  // 内存大小
-	Data      []byte // 内存数据
-	ArgsSize  int    // 函数栈上的参数和返回值大小
-	FrameSize int    // 函数栈帧大小
+	Name string // 名字
+	Addr int64  // 内存地址
+	Size int64  // 内存大小
+	Data []byte // 内存数据
 }
 
 // 程链接后的程序
