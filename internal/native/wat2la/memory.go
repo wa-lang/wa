@@ -16,24 +16,27 @@ func (p *wat2laWorker) buildMemory(w io.Writer) error {
 		return nil
 	}
 	if p.m.Memory.Name != "" {
-		fmt.Fprintf(w, "// memory $%s\n", p.m.Memory.Name)
+		fmt.Fprintf(w, "# memory $%s\n", p.m.Memory.Name)
 	}
 	if max := p.m.Memory.MaxPages; max > 0 {
-		fmt.Fprintf(w, "uint8_t*      %s_memory = NULL;\n", p.opt.Prefix)
-		fmt.Fprintf(w, "const int32_t %s_memory_init_max_pages = %d;\n", p.opt.Prefix, max)
-		fmt.Fprintf(w, "const int32_t %s_memory_init_pages = %d;\n", p.opt.Prefix, p.m.Memory.Pages)
-		fmt.Fprintf(w, "int32_t       %s_memory_size = %d;\n", p.opt.Prefix, 0)
+		fmt.Fprintf(w, "global $memory.addr: i64 = 0\n")
+		fmt.Fprintf(w, "global $memory.pages: i64 = %d\n", p.m.Memory.Pages)
+		fmt.Fprintf(w, "global $memory.maxPages: i64 = %d\n", max)
 	} else {
-		fmt.Fprintf(w, "uint8_t*      %s_memory = NULL;\n", p.opt.Prefix)
-		fmt.Fprintf(w, "const int32_t %s_memory_init_max_pages = %d;\n", p.opt.Prefix, p.m.Memory.Pages)
-		fmt.Fprintf(w, "const int32_t %s_memory_init_pages = %d;\n", p.opt.Prefix, p.m.Memory.Pages)
-		fmt.Fprintf(w, "int32_t       %s_memory_size = %d;\n", p.opt.Prefix, 0)
+		fmt.Fprintf(w, "global $memory.addr: i64 = 0\n")
+		fmt.Fprintf(w, "global $memory.pages: i64 = %d\n", p.m.Memory.Pages)
+		fmt.Fprintf(w, "global $memory.maxPages: i64 = %d\n", p.m.Memory.Pages)
 	}
 	fmt.Fprintln(w)
 
-	return nil
-}
+	// 生成需要填充内存的 data 段数据
+	// 需要在程序启动时调用相关函数进行填充
+	for i, d := range p.m.Data {
+		fmt.Fprintf(w, "# name = %s\n", d.Name)
+		fmt.Fprintf(w, "global $data.%08x.offset: i64 = 0x%08x\n", i, d.Offset)
+		fmt.Fprintf(w, "global $data.%08x.data: i64 = %q\n", i, d.Value)
 
-func (p *wat2laWorker) buildMemory_data(w io.Writer) error {
+	}
+
 	return nil
 }
