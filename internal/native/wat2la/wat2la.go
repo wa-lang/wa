@@ -123,24 +123,25 @@ func (p *wat2laWorker) BuildProgram() (code []byte, err error) {
 		return nil, err
 	}
 
-	if err := p.buildMemory(&out); err != nil {
-		return nil, err
-	}
-	if err := p.buildTable(&out); err != nil {
-		return nil, err
-	}
-
 	if err := p.buildGlobal(&out); err != nil {
 		return nil, err
 	}
-	if err := p.buildFuncs(&out); err != nil {
+
+	if err := p.buildTable(&out); err != nil {
 		return nil, err
 	}
-
 	if err := p.buildTable_elem(&out); err != nil {
 		return nil, err
 	}
+
+	if err := p.buildMemory(&out); err != nil {
+		return nil, err
+	}
 	if err := p.buildMemory_data(&out); err != nil {
+		return nil, err
+	}
+
+	if err := p.buildFuncs(&out); err != nil {
 		return nil, err
 	}
 

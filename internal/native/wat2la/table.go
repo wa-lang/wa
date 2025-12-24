@@ -10,8 +10,11 @@ import (
 	"wa-lang.org/wa/internal/wat/token"
 )
 
-// 是一个特殊的数据段
-// 其中存放函数的地址
+// table 是地址数组
+// global $info: 1024 = {
+//     4:  add,  # 函数
+//     12: main, # 函数
+// }
 
 func (p *wat2laWorker) buildTable(w io.Writer) error {
 	if p.m.Table == nil {
