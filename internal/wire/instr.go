@@ -398,8 +398,8 @@ func (b *Block) NewCall(callee Expr) *Call {
 //InstIf:  条件指令
 //**************************************/
 //type InstIf struct {
-//	aImv
-//	Cond  Value  // 判断条件
+//	aStmt
+//	Cond  Expr   // 判断条件
 //	True  *Block // 为 true 时的分支，不会为 nil
 //	False *Block // 为 false 时的分支，不会为 nil
 //}

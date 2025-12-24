@@ -72,7 +72,7 @@ func (f *Function) StartBody() {
 	f.Body = &Block{}
 	f.Body.scope = f
 	f.Body.types = f.types
-	f.Body.init(f.types.Void)
+	f.Body.init()
 }
 
 //
