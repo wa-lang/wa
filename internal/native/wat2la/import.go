@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"io"
 
-	"wa-lang.org/wa/internal/wat/ast"
 	"wa-lang.org/wa/internal/wat/token"
 )
 
@@ -38,35 +37,9 @@ func (p *wat2laWorker) buildImport(w io.Writer) error {
 		// 检查导入系统调用的函数签名
 		p.checkSyscallSig(importSpec)
 	}
-	if len(hostFuncMap) > 0 {
-		fmt.Fprint(w, syscallCode)
+	if err := p.buildSyscall(w, hostFuncMap); err != nil {
+		return err
 	}
 
 	return nil
 }
-
-func (p *wat2laWorker) checkSyscallSig(spec *ast.ImportSpec) {
-	// TODO: 检查系统调用函数签名类型是否匹配
-}
-
-const syscallCode = `
-func $syscall.write(fd: i64, p: ptr, size: i64) => i64 {
-    # $sp = $sp - 16, sp 需要 16 字节对齐
-    # $ra = $sp + 8
-    addi.d $sp, $sp, -16
-    st.d   $ra, $sp, 8
-
-    # TODO
-
-    # return
-    ld.d $ra, $sp, 8
-    addi.d $sp, $sp, 16
-    jr $ra
-}
-
-func $syscall.exit(code: i64) {
-    ld.d    $a0, $sp, 0
-    addi.d  $a7, $zero, 64
-    syscall 0
-}
-`

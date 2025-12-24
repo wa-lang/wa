@@ -5,6 +5,7 @@ package wat2la
 
 import (
 	"bytes"
+	"fmt"
 
 	"wa-lang.org/wa/internal/native/ast"
 	"wa-lang.org/wa/internal/wasm"
@@ -115,6 +116,8 @@ func (p *wat2laWorker) BuildProgram() (code []byte, err error) {
 	p.textSection = p.textSection[:0]
 
 	var out bytes.Buffer
+
+	fmt.Fprintf(&out, "# 自动生成的代码, 不要手动修改!!!\n\n")
 
 	if err := p.buildImport(&out); err != nil {
 		return nil, err
