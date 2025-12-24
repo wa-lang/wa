@@ -148,7 +148,7 @@ func (b *Builder) stmt(s ast.Stmt, f *Func, block *wire.Block) {
 		//
 
 	case *ast.BlockStmt:
-		newblock := block.EmitBlock("", b.module.Types.Void, int(s.Pos()))
+		newblock := block.EmitBlock("", int(s.Pos()))
 		b.blockStmt(s.List, f, newblock)
 
 	case *ast.DeclStmt: // Con, Var or Typ
