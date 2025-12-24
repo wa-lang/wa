@@ -9,6 +9,8 @@ import (
 	"io"
 	"strings"
 
+	"wa-lang.org/wa/internal/native/abi"
+	"wa-lang.org/wa/internal/native/loong64"
 	"wa-lang.org/wa/internal/wat/ast"
 	"wa-lang.org/wa/internal/wat/token"
 )
@@ -18,184 +20,57 @@ func (p *wat2laWorker) buildFuncs(w io.Writer) error {
 		return nil
 	}
 
-	// 函数声明
 	for _, f := range p.m.Funcs {
-		fmt.Fprintf(w, "// func $%s", f.Name)
+		fmt.Fprintf(w, "func $%s", f.Name)
 		if len(f.Type.Params) > 0 {
 			for i, x := range f.Type.Params {
-				if x.Name != "" {
-					fmt.Fprintf(w, " (param $%s %v)", x.Name, x.Type)
-				} else {
-					fmt.Fprintf(w, " (param $%d %v)", i, x.Type)
-				}
-			}
-		}
-		if len(f.Type.Results) > 0 {
-			fmt.Fprintf(w, " (result")
-			for _, x := range f.Type.Results {
-				fmt.Fprintf(w, " %v", x)
-			}
-			fmt.Fprint(w, ")")
-		}
-		fmt.Fprintln(w)
-
-		// 返回值类型
-		cRetType := p.getFuncCRetType(f.Type, f.Name)
-		if len(f.Type.Results) > 1 {
-			fmt.Fprintf(w, "typedef struct {")
-			for i := 0; i < len(f.Type.Results); i++ {
-				if i > 0 {
-					fmt.Fprintf(w, " ")
-				}
-				switch f.Type.Results[i] {
-				case token.I32:
-					fmt.Fprintf(w, "int32_t R%d;", i)
-				case token.I64:
-					fmt.Fprintf(w, "int64_t R%d;", i)
-				case token.F32:
-					fmt.Fprintf(w, "float R%d;", i)
-				case token.F64:
-					fmt.Fprintf(w, "double R%d;", i)
-				}
-			}
-			fmt.Fprintf(w, "} %s_%s_ret_t;\n", p.opt.Prefix, toCName(f.Name))
-		}
-
-		if f.ExportName == "" {
-			fmt.Fprintf(w, "static %s %s_%s(", cRetType, p.opt.Prefix, toCName(f.Name))
-		} else {
-			fmt.Fprintf(w, "extern %s %s_%s(", cRetType, p.opt.Prefix, toCName(f.Name))
-		}
-		if len(f.Type.Params) > 0 {
-			for i, x := range f.Type.Params {
-				if i > 0 {
-					fmt.Fprintf(w, ", ")
-				}
-				switch x.Type {
-				case token.I32:
-					if x.Name != "" {
-						fmt.Fprintf(w, "int32_t %v", toCName(x.Name))
-					} else {
-						fmt.Fprintf(w, "int32_t arg%d", i)
-					}
-				case token.I64:
-					if x.Name != "" {
-						fmt.Fprintf(w, "int64_t %v", toCName(x.Name))
-					} else {
-						fmt.Fprintf(w, "int64_t arg%d", i)
-					}
-				case token.F32:
-					if x.Name != "" {
-						fmt.Fprintf(w, "float %v", toCName(x.Name))
-					} else {
-						fmt.Fprintf(w, "float arg%d", i)
-					}
-				case token.F64:
-					if x.Name != "" {
-						fmt.Fprintf(w, "double %v", toCName(x.Name))
-					} else {
-						fmt.Fprintf(w, "double arg%d", i)
-					}
-				default:
-					unreachable()
-				}
-			}
-		}
-		fmt.Fprintf(w, ");\n")
-	}
-	fmt.Fprintln(w)
-
-	// 函数的实现
-	var funcImplBuf bytes.Buffer
-	var wBackup = w
-
-	w = &funcImplBuf
-	for _, f := range p.m.Funcs {
-		p.localNames = nil
-		p.localTypes = nil
-		p.scopeLabels = nil
-		p.scopeStackBases = nil
-		p.scopeResults = nil
-
-		cRetType := p.getFuncCRetType(f.Type, f.Name)
-
-		fmt.Fprintf(w, "// func %s", f.Name)
-		if len(f.Type.Params) > 0 {
-			for i, x := range f.Type.Params {
-				if x.Name != "" {
-					fmt.Fprintf(w, " (param $%s %v)", x.Name, x.Type)
-				} else {
-					fmt.Fprintf(w, " (param $%d %v)", i, x.Type)
-				}
-			}
-		}
-		if len(f.Type.Results) > 0 {
-			fmt.Fprintf(w, " (result")
-			for _, x := range f.Type.Results {
-				fmt.Fprintf(w, " %v", x)
-			}
-			fmt.Fprint(w, ")")
-		}
-		fmt.Fprintln(w)
-
-		// 返回值通过栈传递, 返回入栈的个数
-		if f.ExportName == "" {
-			fmt.Fprintf(w, "static %s %s_%s(", cRetType, p.opt.Prefix, toCName(f.Name))
-		} else {
-			fmt.Fprintf(w, "%s %s_%s(", cRetType, p.opt.Prefix, toCName(f.Name))
-		}
-		if len(f.Type.Params) > 0 {
-			for i, x := range f.Type.Params {
-				var argName string
-				if x.Name != "" {
-					argName = toCName(x.Name)
-				} else {
-					argName = fmt.Sprintf("arg%d", i)
-				}
-
-				p.localNames = append(p.localNames, argName)
-				p.localTypes = append(p.localTypes, x.Type)
-
 				if i > 0 {
 					fmt.Fprint(w, ", ")
 				}
-				switch x.Type {
-				case token.I32:
-					fmt.Fprintf(w, "int32_t %v", argName)
-				case token.I64:
-					fmt.Fprintf(w, "int64_t %v", argName)
-				case token.F32:
-					fmt.Fprintf(w, "float %v", argName)
-				case token.F64:
-					fmt.Fprintf(w, "double %v", argName)
-				default:
-					unreachable()
+				if x.Name != "" {
+					fmt.Fprintf(w, "$%s: %v)", x.Name, x.Type)
+				} else {
+					fmt.Fprintf(w, "$%d, %v)", i, x.Type)
 				}
 			}
 		}
-		fmt.Fprintf(w, ") {\n")
-		if err := p.buildFunc_body(w, f, cRetType); err != nil {
-			return err
+		if len(f.Type.Results) > 0 {
+			fmt.Fprintf(w, " => ")
+			for i, x := range f.Type.Results {
+				if i > 0 {
+					fmt.Fprint(w, ", ")
+				}
+				fmt.Fprintf(w, "$ret%d: %v", i, x)
+			}
+			fmt.Fprint(w, ")")
 		}
-		fmt.Fprintf(w, "}\n\n")
+		fmt.Fprintln(w, "{")
+
+		// 翻译函数实现
+		{
+			p.localNames = nil
+			p.localTypes = nil
+			p.scopeLabels = nil
+			p.scopeStackBases = nil
+			p.scopeResults = nil
+
+			if err := p.buildFunc_body(w, f); err != nil {
+				return err
+			}
+		}
+
+		fmt.Fprintln(w, "}")
 	}
 
-	// 恢复输出流
-	w = wBackup
-
-	// 复制函数实现
-	{
-		code := bytes.TrimSpace(funcImplBuf.Bytes())
-		if _, err := w.Write(code); err != nil {
-			return err
-		}
+	// 内置函数
+	if err := p.buildBuiltin(w); err != nil {
+		return err
 	}
 
-	fmt.Fprintln(w)
 	return nil
 }
 
-func (p *wat2laWorker) buildFunc_body(w io.Writer, fn *ast.Func, cRetType string) error {
+func (p *wat2laWorker) buildFunc_body(w io.Writer, fn *ast.Func) error {
 	p.Tracef("buildFunc_body: %s\n", fn.Name)
 
 	var stk valueTypeStack
@@ -252,11 +127,6 @@ func (p *wat2laWorker) buildFunc_body(w io.Writer, fn *ast.Func, cRetType string
 		if err := p.buildFunc_ins(&bufIns, fn, &stk, ins, 1); err != nil {
 			return err
 		}
-	}
-
-	// 返回值
-	if len(fn.Type.Results) > 1 {
-		fmt.Fprintf(w, "  %s result;\n", cRetType)
 	}
 
 	// 固定类型的寄存器
@@ -365,7 +235,10 @@ func (p *wat2laWorker) buildFunc_ins(w io.Writer, fn *ast.Func, stk *valueTypeSt
 	case token.INS_UNREACHABLE:
 		fmt.Fprintf(w, "%sabort(); // %s\n", indent, tok)
 	case token.INS_NOP:
-		fmt.Fprintf(w, "%s((void)0); // %s\n", indent, tok)
+		fmt.Fprintf(w, "    %s # %s\n",
+			loong64.AsmSyntax(loong64.AANDI, "", &abi.AsArgument{Rd: loong64.REG_ZERO, Rs1: loong64.REG_ZERO, Imm: 0}),
+			tok,
+		)
 
 	case token.INS_BLOCK:
 		i := i.(ast.Ins_Block)

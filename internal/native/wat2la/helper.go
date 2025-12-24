@@ -17,39 +17,6 @@ func (p *wat2laWorker) Tracef(foramt string, a ...interface{}) {
 	}
 }
 
-func (p *wat2laWorker) getCType(typ token.Token) string {
-	switch typ {
-	case token.I32:
-		return "int32_t"
-	case token.I64:
-		return "int64_t"
-	case token.F32:
-		return "float"
-	case token.F64:
-		return "double"
-	}
-	panic("unreachable")
-}
-
-func (p *wat2laWorker) getHostFuncRetType(fnType *ast.FuncType) string {
-	switch len(fnType.Results) {
-	case 0:
-		return "void"
-	case 1:
-		switch fnType.Results[0] {
-		case token.I32:
-			return "i32"
-		case token.I64:
-			return "i64"
-		case token.F32:
-			return "f32"
-		case token.F64:
-			return "f64"
-		}
-	}
-	panic("unreachable")
-}
-
 func (p *wat2laWorker) getFuncCRetType(fnType *ast.FuncType, fnName string) string {
 	switch len(fnType.Results) {
 	case 0:

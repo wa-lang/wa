@@ -10,10 +10,10 @@ import (
 	"wa-lang.org/wa/internal/wat/ast"
 )
 
-//go:embed syscall.was
+//go:embed z_syscall.was
 var syscall_was string
 
-//go:embed syscall.wzs
+//go:embed z_syscall.wzs
 var syscall_wzs string
 
 // 生成系统调用代码
