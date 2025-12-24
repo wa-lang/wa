@@ -22,7 +22,7 @@ var CmdWat2la = &cli.Command{
 			Name:    "output",
 			Aliases: []string{"o"},
 			Usage:   "set code output file",
-			Value:   "a.out.ws",
+			Value:   "a.out.was",
 		},
 		&cli.StringFlag{
 			Name:    "prefix",
@@ -53,10 +53,10 @@ var CmdWat2la = &cli.Command{
 					outfile = outfile[:n1-n2]
 				}
 			}
-			outfile += ".ws"
+			outfile += ".was"
 		}
-		if !strings.HasSuffix(outfile, ".ws") {
-			outfile += ".ws"
+		if !strings.HasSuffix(outfile, ".was") {
+			outfile += ".was"
 		}
 
 		source, err := os.ReadFile(infile)

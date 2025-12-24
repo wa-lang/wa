@@ -169,7 +169,7 @@ func $add[prop1=val1,prop2=val2](%a: i32, %b: i32) => i32 {
     local %tab: [32]i32
 
     # 指令
-Loop:
+%Loop:
 }
 ```
 

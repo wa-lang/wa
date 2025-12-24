@@ -1,0 +1,16 @@
+const $SYS_write = 64
+const $SYS_exit = 93
+
+func $syscall.write(%fd: i64, %ptr: i64, %size: i64) => i64 {
+    # return SYS_write(%fd, %ptr, %size)
+    addi.d  a7, zero, $SYS_write
+    syscall 0
+    jirl zero, ra, 0
+}
+
+func $syscall.exit(%code: i64) {
+    # SYS_exit(%code)
+    addi.d  a7, zero, $SYS_exit 
+    syscall 0
+    jirl zero, ra, 0
+}
