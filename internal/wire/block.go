@@ -97,7 +97,7 @@ func (b *Block) createBlock(comment string, pos int) *Block {
 	return block
 }
 
-// EmitBlock 在 Bloc 中添加一个子 Block
+// EmitBlock 在 Block 中添加一个子 Block
 func (b *Block) EmitBlock(comment string, pos int) *Block {
 	block := b.createBlock(comment, pos)
 

@@ -530,33 +530,24 @@ func (b *Builder) buildSig(s *types.Signature) (d wire.FnSig) {
 }
 
 func (b *Builder) ifStmt(s *ast.IfStmt, f *Func, block *wire.Block) {
-}
+	if s.Init != nil {
+		block = block.EmitBlock("", int(s.Pos()))
+		b.stmt(s.Init, f, block)
+	}
 
-func (b *Builder) emitIf(pos int, cond ast.Expr, initStmt, bodyStmt, elseStmt ast.Stmt, f *Func, block *wire.Block) {
-	//	if initStmt != nil {
-	//		block = block.EmitBlock("", b.module.Types.Void, pos)
-	//		b.stmt(initStmt, f, block)
-	//	}
-	//
-	//	switch cond := cond.(type) {
-	//	case *ast.ParenExpr:
-	//		b.emitIf(pos, cond.X, nil, bodyStmt, elseStmt, f, block)
-	//		return
-	//
-	//	case *ast.UnaryExpr:
-	//		if cond.Op == token.NOT {
-	//			b.emitIf(pos, cond.X, nil, elseStmt, bodyStmt, f, block)
-	//			return
-	//		}
-	//	}
-	//
-	//	i := block.EmitInstIf(b.expr(cond, block), b.module.Types.Void, pos)
-	//
-	//	if bodyStmt != nil {
-	//		b.stmt(bodyStmt, f, i.True)
-	//	}
-	//
-	//	if elseStmt != nil {
-	//		b.stmt(elseStmt, f, i.False)
-	//	}
+	cond := b.expr(s.Cond, block)
+	i := block.EmitInstIf(cond, int(s.Cond.Pos()))
+
+	if s.Body != nil {
+		b.blockStmt(s.Body.List, f, i.True)
+	}
+
+	if s.Else != nil {
+		if bs, ok := s.Else.(*ast.BlockStmt); ok {
+			b.blockStmt(bs.List, f, i.False)
+		} else {
+			b.stmt(s.Else, f, block)
+		}
+	}
+
 }
