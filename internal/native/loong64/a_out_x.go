@@ -78,7 +78,7 @@ const (
 	REG_F30
 	REG_F31
 
-	// LSX
+	// LSX: 128-bit vector register
 	REG_VF0
 	REG_VF1
 	REG_VF2
@@ -112,7 +112,7 @@ const (
 	REG_VF30
 	REG_VF31
 
-	// LASX
+	// LASX: 256-bit vector register
 	REG_XF0
 	REG_XF1
 	REG_XF2
@@ -154,6 +154,7 @@ const (
 	REG_RA   = REG_R1  // 返回地址
 	REG_TP   = REG_R2  // 线程指针
 	REG_SP   = REG_R3  // 栈指针
+	REG_GP   = REG_S8  // S8 复用于 WASM 的 Memory 地址, 临时方案
 	REG_A0   = REG_R4  // 函数参数/返回值
 	REG_A1   = REG_R5  // 函数参数/返回值
 	REG_A2   = REG_R6  // 函数参数

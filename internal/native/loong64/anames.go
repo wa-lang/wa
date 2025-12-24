@@ -287,6 +287,7 @@ var _RegisterAlias = []string{
 	REG_RA:   "RA",   // 返回地址
 	REG_TP:   "TP",   // 线程指针
 	REG_SP:   "SP",   // 栈指针
+	REG_GP:   "GP",   // 复用于 WASM 的 Memory 地址, 临时方案
 	REG_A0:   "A0",   // 函数参数/返回值
 	REG_A1:   "A1",   // 函数参数/返回值
 	REG_A2:   "A2",   // 函数参数
@@ -314,7 +315,6 @@ var _RegisterAlias = []string{
 	REG_S5:   "S5",   // Saved register
 	REG_S6:   "S6",   // Saved register
 	REG_S7:   "S7",   // Saved register
-	REG_S8:   "S8",   // Saved register
 
 	REG_FA0:  "FA0",  // 函数参数/返回值
 	REG_FA1:  "FA1",  // 函数参数/返回值
@@ -356,6 +356,7 @@ var _ZhRegisterAlias = []string{
 	REG_TP:   "线格",  // 线程指针
 	REG_SP:   "栈格",  // 栈指针
 	REG_FP:   "帧格",  // 帧指针
+	REG_GP:   "基格",  // 复用于 WASM 的 Memory 地址, 临时方案
 	REG_A0:   "参甲格", // 函数参数/返回值
 	REG_A1:   "参乙格", // 函数参数/返回值
 	REG_A2:   "参丙格", // 函数参数
@@ -382,7 +383,6 @@ var _ZhRegisterAlias = []string{
 	REG_S5:   "守己格", // Saved register
 	REG_S6:   "守庚格", // Saved register
 	REG_S7:   "守辛格", // Saved register
-	REG_S8:   "守壬格", // Saved register
 
 	REG_FA0:  "参甲皿", // 函数参数/返回值
 	REG_FA1:  "参乙皿", // 函数参数/返回值
