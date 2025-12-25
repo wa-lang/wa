@@ -18,33 +18,23 @@ import (
 
 const DebugMode = false
 
-type Options struct {
-	Prefix  string            // 输出名字的前缀
-	Exports map[string]string // 导出函数, 可能改名
-
-	Ttext uint64 // 代码段开始地址
-	Tdata uint64 // 数据段开始地址
-}
-
 // Wat程序转译到 龙芯汇编
-func Wat2LA64(filename string, source []byte, opt Options) (m *watast.Module, code []byte, err error) {
-	return wat2la(filename, source, opt)
+func Wat2LA64(filename string, source []byte) (m *watast.Module, code []byte, err error) {
+	return wat2la(filename, source)
 }
 
-func wat2la(filename string, source []byte, opt Options) (m *watast.Module, code []byte, err error) {
+func wat2la(filename string, source []byte) (m *watast.Module, code []byte, err error) {
 	m, err = watparser.ParseModule(filename, source)
 	if err != nil {
 		return m, nil, err
 	}
 
-	worker := newWat2rvWorker(m, opt)
+	worker := newWat2rvWorker(m)
 	code, err = worker.BuildProgram()
 	return
 }
 
 type wat2laWorker struct {
-	opt Options
-
 	m *watast.Module
 
 	importGlobalCount int // 导入全局只读变量的数目
@@ -62,10 +52,6 @@ type wat2laWorker struct {
 	dataSection []*ast.Global
 	textSection []*ast.Func
 
-	use_R_u32 bool // R_u32
-	use_R_u16 bool // R_u16
-	use_R_u8  bool // R_u8
-
 	trace bool // 调试开关
 }
 
@@ -75,17 +61,8 @@ type inlinedTypeIndex struct {
 	inlinedIdx wasm.Index
 }
 
-func newWat2rvWorker(mWat *watast.Module, opt Options) *wat2laWorker {
+func newWat2rvWorker(mWat *watast.Module) *wat2laWorker {
 	p := &wat2laWorker{m: mWat, trace: DebugMode}
-
-	p.opt.Prefix = toCName(opt.Prefix)
-
-	if p.opt.Exports == nil {
-		p.opt.Exports = map[string]string{}
-	}
-	for k, v := range opt.Exports {
-		p.opt.Exports[k] = v
-	}
 
 	// 统计导入的global和func索引
 	p.importGlobalCount = 0

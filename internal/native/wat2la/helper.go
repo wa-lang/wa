@@ -17,28 +17,6 @@ func (p *wat2laWorker) Tracef(foramt string, a ...interface{}) {
 	}
 }
 
-func (p *wat2laWorker) getFuncCRetType(fnType *ast.FuncType, fnName string) string {
-	switch len(fnType.Results) {
-	case 0:
-		return "void"
-	case 1:
-		switch fnType.Results[0] {
-		case token.I32:
-			return "int32_t"
-		case token.I64:
-			return "int64_t"
-		case token.F32:
-			return "float"
-		case token.F64:
-			return "double"
-		default:
-			panic("unreachable")
-		}
-	default:
-		return fmt.Sprintf("%s_%s_ret_t", p.opt.Prefix, toCName(fnName))
-	}
-}
-
 func (p *wat2laWorker) findGlobalType(ident string) token.Token {
 	if ident == "" {
 		panic("wat2c: empty global name")
