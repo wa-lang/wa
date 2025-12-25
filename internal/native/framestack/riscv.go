@@ -10,17 +10,21 @@ import (
 )
 
 type RVFramestack struct {
+	cpu abi.CPUType
+
 	iArgReg abi.RegType
 	fArgReg abi.RegType
 	iRetReg abi.RegType
 	fRetReg abi.RegType
 
+	argRegCount int // 参数中寄存器的数量
 	argsOffset  int // 参数和返回值在栈上的偏移
 	localOffset int // 局部变量偏移
 }
 
-func NewRVFramestack() *RVFramestack {
+func NewRVFramestack(cpu abi.CPUType) *RVFramestack {
 	return &RVFramestack{
+		cpu:     cpu,
 		iArgReg: riscv.REG_A0,
 		fArgReg: riscv.REG_FA0,
 		iRetReg: riscv.REG_A0,
@@ -28,10 +32,26 @@ func NewRVFramestack() *RVFramestack {
 	}
 }
 
+func (p *RVFramestack) HeadSize() int {
+	switch p.cpu {
+	case abi.RISCV32:
+		return 4 * 2
+	case abi.RISCV64:
+		return 8 * 2
+	default:
+		panic("unreachable")
+	}
+}
+
+func (p *RVFramestack) ArgRegNum() int {
+	return p.argRegCount
+}
+
 func (p *RVFramestack) AllocArg(typ token.Token) (reg abi.RegType, off int) {
 	switch typ {
 	case token.I32, token.U32, token.I32_zh, token.U32_zh:
 		if p.iArgReg <= riscv.REG_A7 {
+			p.argRegCount++
 			reg = p.iArgReg
 			p.iArgReg++
 		} else {
@@ -40,6 +60,7 @@ func (p *RVFramestack) AllocArg(typ token.Token) (reg abi.RegType, off int) {
 		}
 	case token.I64, token.U64, token.I64_zh, token.U64_zh:
 		if p.iArgReg <= riscv.REG_A7 {
+			p.argRegCount++
 			reg = p.iArgReg
 			p.iArgReg++
 		} else {
@@ -51,6 +72,7 @@ func (p *RVFramestack) AllocArg(typ token.Token) (reg abi.RegType, off int) {
 		}
 	case token.F32, token.F32_zh:
 		if p.fArgReg <= riscv.REG_FA7 {
+			p.argRegCount++
 			reg = p.fArgReg
 			p.fArgReg++
 		} else {
@@ -59,6 +81,7 @@ func (p *RVFramestack) AllocArg(typ token.Token) (reg abi.RegType, off int) {
 		}
 	case token.F64, token.F64_zh:
 		if p.fArgReg <= riscv.REG_FA7 {
+			p.argRegCount++
 			reg = p.fArgReg
 			p.fArgReg++
 		} else {

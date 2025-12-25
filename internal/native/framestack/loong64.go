@@ -10,17 +10,21 @@ import (
 )
 
 type LAFramestack struct {
+	cpu abi.CPUType
+
 	iArgReg abi.RegType
 	fArgReg abi.RegType
 	iRetReg abi.RegType
 	fRetReg abi.RegType
 
+	argRegCount int // 参数中寄存器的数量
 	argsOffset  int // 参数和返回值在栈上的偏移
 	localOffset int // 局部变量偏移
 }
 
-func NewLAFramestack() *LAFramestack {
+func NewLAFramestack(cpu abi.CPUType) *LAFramestack {
 	return &LAFramestack{
+		cpu:     cpu,
 		iArgReg: loong64.REG_A0,
 		fArgReg: loong64.REG_FA0,
 		iRetReg: loong64.REG_A0,
@@ -28,10 +32,19 @@ func NewLAFramestack() *LAFramestack {
 	}
 }
 
+func (p *LAFramestack) HeadSize() int {
+	return 8 * 2
+}
+
+func (p *LAFramestack) ArgRegNum() int {
+	return p.argRegCount
+}
+
 func (p *LAFramestack) AllocArg(typ token.Token) (reg abi.RegType, off int) {
 	switch typ {
 	case token.I32, token.U32, token.I32_zh, token.U32_zh:
 		if p.iArgReg <= loong64.REG_A7 {
+			p.argRegCount++
 			reg = p.iArgReg
 			p.iArgReg++
 		} else {
@@ -40,6 +53,7 @@ func (p *LAFramestack) AllocArg(typ token.Token) (reg abi.RegType, off int) {
 		}
 	case token.I64, token.U64, token.I64_zh, token.U64_zh:
 		if p.iArgReg <= loong64.REG_A7 {
+			p.argRegCount++
 			reg = p.iArgReg
 			p.iArgReg++
 		} else {
@@ -51,6 +65,7 @@ func (p *LAFramestack) AllocArg(typ token.Token) (reg abi.RegType, off int) {
 		}
 	case token.F32, token.F32_zh:
 		if p.fArgReg <= loong64.REG_FA7 {
+			p.argRegCount++
 			reg = p.fArgReg
 			p.fArgReg++
 		} else {
@@ -59,6 +74,7 @@ func (p *LAFramestack) AllocArg(typ token.Token) (reg abi.RegType, off int) {
 		}
 	case token.F64, token.F64_zh:
 		if p.fArgReg <= loong64.REG_FA7 {
+			p.argRegCount++
 			reg = p.fArgReg
 			p.fArgReg++
 		} else {
