@@ -5,12 +5,10 @@ package parser
 
 import (
 	"fmt"
-	"sort"
 	"strings"
 
 	"wa-lang.org/wa/internal/native/abi"
 	"wa-lang.org/wa/internal/native/ast"
-	"wa-lang.org/wa/internal/native/framestack"
 	"wa-lang.org/wa/internal/native/token"
 )
 
@@ -43,20 +41,23 @@ func (p *parser) parseFunc(tok token.Token) *ast.Func {
 	fn.Tok = p.acceptTokenAorB(token.FUNC, token.FUNC_zh)
 	fn.Name = p.parseIdent()
 
-	framestack := framestack.NewFramestack(p.cpu)
-
 	if p.tok == token.LBRACK {
 		p.parseFunc_prop(fn)
 	}
 
 	if p.tok == token.LPAREN {
-		p.parseFunc_args(fn, framestack)
+		p.parseFunc_args(fn)
 	}
 	if p.tok == token.ARROW {
-		p.parseFunc_return(fn, framestack)
+		p.parseFunc_return(fn)
 	}
 
-	p.parseFunc_body(fn, framestack)
+	// 构建栈帧中参数和返回值的位置
+	if err := p.buildFuncArgReturn_loong64(fn); err != nil {
+		p.errorf(p.pos, "build args/return frame failed: %v", err)
+	}
+
+	p.parseFunc_body(fn)
 	p.consumeSemicolonList()
 
 	return fn
@@ -90,7 +91,7 @@ func (p *parser) parseFunc_prop(fn *ast.Func) {
 	}
 }
 
-func (p *parser) parseFunc_args(fn *ast.Func, framestack framestack.Framestack) {
+func (p *parser) parseFunc_args(fn *ast.Func) {
 	p.acceptToken(token.LPAREN)
 	defer p.acceptToken(token.RPAREN)
 
@@ -116,7 +117,6 @@ func (p *parser) parseFunc_args(fn *ast.Func, framestack framestack.Framestack) 
 			p.errorf(p.pos, "expect argument type(i32/i64/f32/f64/ptr), got %v", p.tok)
 		}
 
-		arg.Reg, arg.Off = framestack.AllocArg(arg.Type)
 		fn.Type.Args = append(fn.Type.Args, arg)
 
 		if p.tok == token.COMMA {
@@ -128,7 +128,7 @@ func (p *parser) parseFunc_args(fn *ast.Func, framestack framestack.Framestack) 
 	}
 }
 
-func (p *parser) parseFunc_return(fn *ast.Func, framestack framestack.Framestack) {
+func (p *parser) parseFunc_return(fn *ast.Func) {
 	p.acceptToken(token.ARROW)
 
 	// 一组返回值
@@ -158,7 +158,6 @@ func (p *parser) parseFunc_return(fn *ast.Func, framestack framestack.Framestack
 				p.errorf(p.pos, "expect return type(i32/i64/f32/f64/ptr), got %v", p.tok)
 			}
 
-			ret.Reg, ret.Off = framestack.AllocArg(ret.Type)
 			fn.Type.Return = append(fn.Type.Args, ret)
 
 			if p.tok == token.COMMA {
@@ -173,21 +172,15 @@ func (p *parser) parseFunc_return(fn *ast.Func, framestack framestack.Framestack
 
 	switch p.tok {
 	case token.I32, token.I64, token.F32, token.F64:
-		retReg, retOff := framestack.AllocArg(p.tok)
 		fn.Type.Return = append(fn.Type.Args, &ast.Local{
 			Pos:  p.pos,
 			Type: p.tok,
-			Reg:  retReg,
-			Off:  retOff,
 		})
 		p.acceptToken(p.tok)
 	case token.I32_zh, token.I64_zh, token.F32_zh, token.F64_zh:
-		retReg, retOff := framestack.AllocArg(p.tok)
 		fn.Type.Return = append(fn.Type.Args, &ast.Local{
 			Pos:  p.pos,
 			Type: p.tok,
-			Reg:  retReg,
-			Off:  retOff,
 		})
 		p.acceptToken(p.tok)
 	default:
@@ -195,7 +188,7 @@ func (p *parser) parseFunc_return(fn *ast.Func, framestack framestack.Framestack
 	}
 }
 
-func (p *parser) parseFunc_body(fn *ast.Func, framestack framestack.Framestack) {
+func (p *parser) parseFunc_body(fn *ast.Func) {
 	assert(p.cpu == abi.RISCV64 || p.cpu == abi.RISCV32 || p.cpu == abi.LOONG64)
 
 	fn.Body.Pos = p.pos
@@ -223,24 +216,15 @@ Loop:
 			if len(fn.Body.Insts) > 0 {
 				p.errorf(p.pos, "local must before the instruction list")
 			}
-			localObj := p.parseFunc_body_local(fn, framestack)
+			localObj := p.parseFunc_body_local(fn)
 			fn.Body.Locals = append(fn.Body.Locals, localObj)
 			fn.Body.Objects = append(fn.Body.Objects, localObj)
 
 		default:
 
-			// 给局部变量在栈上预留空间预留
-			// 为了减少栈内存碎片, 局部变量会重新排序
-			{
-				locals := append([]*ast.Local{}, fn.Body.Locals...)
-				sort.Slice(locals, func(i, j int) bool {
-					return locals[i].Type.NumberTypeSize() < locals[j].Type.NumberTypeSize()
-				})
-
-				// 局部变量分配
-				for _, local := range locals {
-					local.Off = framestack.AllocLocal(local.Type, local.Cap)
-				}
+			// 构造局部遍历在栈帧的位置
+			if err := p.buildFuncLocals_loong64(fn); err != nil {
+				p.errorf(p.pos, "build locals failed: %v", err)
 			}
 
 			if p.tok == token.IDENT || p.tok.IsAs() {
@@ -254,7 +238,7 @@ Loop:
 	}
 }
 
-func (p *parser) parseFunc_body_local(fn *ast.Func, framestack framestack.Framestack) *ast.Local {
+func (p *parser) parseFunc_body_local(fn *ast.Func) *ast.Local {
 	local := &ast.Local{Pos: p.pos}
 
 	local.Doc = p.parseDocComment(&fn.Body.Comments, local.Pos)
