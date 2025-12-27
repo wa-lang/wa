@@ -48,6 +48,7 @@ type wat2laWorker struct {
 	scopeLabels     []string           // 嵌套的label查询, if/block/loop
 	scopeStackBases []int              // if/block/loop, 开始的栈位置
 	scopeResults    [][]wattoken.Token // 对应块的返回值数量和类型
+	fnWasmR0Base    int                // 当前函数的WASM栈R0位置
 
 	dataSection []*ast.Global
 	textSection []*ast.Func
