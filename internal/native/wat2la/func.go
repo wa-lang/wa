@@ -9,6 +9,10 @@ import (
 	"io"
 	"strings"
 
+	"wa-lang.org/wa/internal/native/abi"
+	nativeast "wa-lang.org/wa/internal/native/ast"
+	"wa-lang.org/wa/internal/native/ast/astutil"
+	"wa-lang.org/wa/internal/native/loong64"
 	"wa-lang.org/wa/internal/wat/ast"
 	"wa-lang.org/wa/internal/wat/token"
 )
@@ -103,21 +107,95 @@ func (p *wat2laWorker) buildFunc_body(w io.Writer, fn *ast.Func) error {
 		fmt.Fprintln(&bufIns)
 	}
 
+	// 转化为汇编的结构, 准备构建函数栈帧
+	fnNative := nativeast.Func{
+		Name: fn.Name,
+		Type: &nativeast.FuncType{
+			Args:   make([]*nativeast.Local, len(fn.Type.Params)),
+			Return: make([]*nativeast.Local, len(fn.Type.Results)),
+		},
+		Body: &nativeast.FuncBody{
+			Locals: make([]*nativeast.Local, len(fn.Body.Locals)),
+		},
+	}
+	for i, arg := range fn.Type.Params {
+		fnNative.Type.Args[i] = &nativeast.Local{
+			Name: arg.Name,
+			Type: wat2nativeType(arg.Type),
+			Cap:  1,
+		}
+	}
+	for i, typ := range fn.Type.Results {
+		fnNative.Type.Return[i] = &nativeast.Local{
+			Name: fmt.Sprintf("$ret.%d", i),
+			Type: wat2nativeType(typ),
+			Cap:  1,
+		}
+	}
+	for i, local := range fn.Body.Locals {
+		fnNative.Body.Locals[i] = &nativeast.Local{
+			Name: local.Name,
+			Type: wat2nativeType(local.Type),
+			Cap:  1,
+		}
+	}
+
+	// 模拟构建函数栈帧
+	// 后面需要根据参数是否走寄存器传递生成相关的入口代码和返回代码
+	if err := astutil.BuildFuncFrame(abi.LOONG64, &fnNative); err != nil {
+		return err
+	}
+
+	// 第一步构建 ra 和 fp
+	{
+		fmt.Fprintf(&bufIns, "     # 栈帧开始\n")
+		fmt.Fprintln(&bufIns, "    addi.d $sp, $sp, -16 # $sp = $sp - 16")
+		fmt.Fprintln(&bufIns, "    st.d   $ra, $sp, 8   # save $ra")
+		fmt.Fprintln(&bufIns, "    st.d   $fp, $sp, 0   # save $fp")
+		fmt.Fprintln(&bufIns, "    addi.d $fp, $sp, 16  # $fp = $sp + 16")
+
+		// TODO: 还需要给 local 和 wasmStack 预留出足够的空间
+		// TODO: wasmStack 空间需要遍历全部的指令, 因此需要回填, 因此只能分段生成
+	}
+
 	// 将寄存器参数备份到栈
 	if len(fn.Type.Params) > 0 {
-		fmt.Fprintf(&bufIns, "\n    # 将寄存器参数备份到栈\n")
-		for i, arg := range fn.Type.Params {
-			_ = i
-			_ = arg
-			// 目前的输出的是字符串
-			// 但是对于函数，还需要栈帧的信息
-			// 栈帧信息用于指示如何生成字符串形式的代码
-			// 因此，需要和 ABI 相互配合
+		fmt.Fprintf(&bufIns, "    # 将寄存器参数备份到栈\n")
+		for i, arg := range fnNative.Type.Args {
+			if arg.Reg == 0 {
+				continue // 走栈的输入参数不需要
+			}
 
-			// TODO: 需要将栈帧的代码独立出来。同时也可以从 native-parser 中拆分
-			// TODO: 只在生成代码部分，真正生成 ABI 相关的代码
+			// 将寄存器中的参数存储到对于的栈帧中
+			switch fn.Type.Params[i].Type {
+			case token.I32:
+				fmt.Fprintf(&bufIns, "    st.w %v, $fp, %d # save %s\n",
+					loong64.RegString(arg.Reg),
+					arg.Off,
+					arg.Name,
+				)
+			case token.I64:
+				fmt.Fprintf(&bufIns, "    st.d %v, $fp, %d # save %s\n",
+					loong64.RegString(arg.Reg),
+					arg.Off,
+					arg.Name,
+				)
+			case token.F32:
+				fmt.Fprintf(&bufIns, "    fst.s %v, $fp, %d # save %s\n",
+					loong64.RegString(arg.Reg),
+					arg.Off,
+					arg.Name,
+				)
+			case token.F64:
+				fmt.Fprintf(&bufIns, "    fst.d %v, $fp, %d # save %s\n",
+					loong64.RegString(arg.Reg),
+					arg.Off,
+					arg.Name,
+				)
+			default:
+				panic("unreachable")
+			}
 		}
-
 	}
 
 	// 至少要有一个指令
@@ -134,12 +212,39 @@ func (p *wat2laWorker) buildFunc_body(w io.Writer, fn *ast.Func) error {
 		}
 	}
 
-	// TODO 处理栈帧
+	// 根据ABI处理返回值
+	if len(fn.Type.Results) > 0 {
+		// 如果走内存, 返回地址
+		if len(fn.Type.Results) > 1 && fnNative.Type.Return[1].Reg == 0 {
+			fmt.Fprintf(&bufIns, "    addi.d a0, $fp, %d # ret.%s\n",
+				fnNative.Type.Return[0].Off,
+				fnNative.Type.Return[0].Name,
+			)
+		} else {
+			for i, ret := range fnNative.Type.Return {
+				if ret.Reg == 0 {
+					continue
+				}
+				fmt.Fprintf(&bufIns, "    ld.d %v, $fp, %d # ret.%s\n",
+					loong64.RegString(ret.Reg),
+					fnNative.Type.Return[i].Off,
+					fnNative.Type.Return[i].Name,
+				)
+			}
+		}
+	}
+
+	// 结束栈帧
+	{
+		fmt.Fprintf(&bufIns, "     # 栈帧结束\n")
+		fmt.Fprintln(&bufIns, "    addi.d   $sp, $fp, 0 # $sp = $fp")
+		fmt.Fprintln(&bufIns, "    ld.d $ra, $fp, -8    # restore $ra")
+		fmt.Fprintln(&bufIns, "    ld.d $fp, $fp, -16   # restore $fp")
+		fmt.Fprintln(&bufIns, "    jr $ra               # return")
+	}
 
 	// 指令复制到 w
 	io.Copy(w, &bufIns)
-
-	// TODO: 函数返回
 
 	// 有些函数最后的位置不是 return, 需要手动清理栈
 	switch tok := stk.LastInstruction().Token(); tok {
