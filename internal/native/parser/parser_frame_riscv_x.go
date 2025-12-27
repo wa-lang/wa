@@ -6,21 +6,21 @@ package parser
 import (
 	"wa-lang.org/wa/internal/native/abi"
 	"wa-lang.org/wa/internal/native/ast"
-	"wa-lang.org/wa/internal/native/loong64"
+	"wa-lang.org/wa/internal/native/riscv"
 	"wa-lang.org/wa/internal/native/token"
 )
 
 // 参考 /docs/asm_abi_la64.md
 
 // 构建栈帧中参数和返回值的位置
-func (p *parser) buildFuncArgReturn_loong64(fn *ast.Func) error {
+func (p *parser) buildFuncArgReturn_riscv(fn *ast.Func) error {
 	var (
 		headSize = p.getIntSize() * 2 // RA + FP
 
-		iArgReg abi.RegType = loong64.REG_A0
-		fArgReg abi.RegType = loong64.REG_FA0
-		iRetReg abi.RegType = loong64.REG_A0
-		fRetReg abi.RegType = loong64.REG_FA0
+		iArgReg abi.RegType = riscv.REG_A0
+		fArgReg abi.RegType = riscv.REG_FA0
+		iRetReg abi.RegType = riscv.REG_A0
+		fRetReg abi.RegType = riscv.REG_FA0
 
 		sp int = 0 - headSize // 栈顶位置
 	)
@@ -29,7 +29,7 @@ func (p *parser) buildFuncArgReturn_loong64(fn *ast.Func) error {
 	for i := len(fn.Type.Return) - 1; i >= 0; i-- {
 		switch ret := fn.Type.Return[i]; ret.Type {
 		case token.I32, token.U32, token.I32_zh, token.U32_zh:
-			if iRetReg <= loong64.REG_A1 {
+			if iRetReg <= riscv.REG_A1 {
 				ret.Reg = iRetReg
 				iRetReg++
 			}
@@ -37,7 +37,7 @@ func (p *parser) buildFuncArgReturn_loong64(fn *ast.Func) error {
 			ret.Off = sp
 
 		case token.I64, token.U64, token.I64_zh, token.U64_zh:
-			if iRetReg <= loong64.REG_A1 {
+			if iRetReg <= riscv.REG_A1 {
 				ret.Reg = iRetReg
 				iRetReg++
 			}
@@ -48,7 +48,7 @@ func (p *parser) buildFuncArgReturn_loong64(fn *ast.Func) error {
 			ret.Off = sp
 
 		case token.F32, token.F32_zh:
-			if fRetReg <= loong64.REG_FA1 {
+			if fRetReg <= riscv.REG_FA1 {
 				ret.Reg = fRetReg
 				fRetReg++
 			}
@@ -56,7 +56,7 @@ func (p *parser) buildFuncArgReturn_loong64(fn *ast.Func) error {
 			ret.Off = sp
 
 		case token.F64, token.F64_zh:
-			if fRetReg <= loong64.REG_FA1 {
+			if fRetReg <= riscv.REG_FA1 {
 				ret.Reg = fRetReg
 				fRetReg++
 			}
@@ -75,22 +75,22 @@ func (p *parser) buildFuncArgReturn_loong64(fn *ast.Func) error {
 	for _, arg := range fn.Type.Args {
 		switch arg.Type {
 		case token.I32, token.U32, token.I32_zh, token.U32_zh:
-			if iArgReg <= loong64.REG_A7 {
+			if iArgReg <= riscv.REG_A7 {
 				arg.Reg = iArgReg
 				iArgReg++
 			}
 		case token.I64, token.U64, token.I64_zh, token.U64_zh:
-			if iArgReg <= loong64.REG_A7 {
+			if iArgReg <= riscv.REG_A7 {
 				arg.Reg = iArgReg
 				iArgReg++
 			}
 		case token.F32, token.F32_zh:
-			if fArgReg <= loong64.REG_FA7 {
+			if fArgReg <= riscv.REG_FA7 {
 				arg.Reg = fArgReg
 				fArgReg++
 			}
 		case token.F64, token.F64_zh:
-			if fArgReg <= loong64.REG_FA7 {
+			if fArgReg <= riscv.REG_FA7 {
 				arg.Reg = fArgReg
 				fArgReg++
 			}
@@ -140,10 +140,10 @@ func (p *parser) buildFuncArgReturn_loong64(fn *ast.Func) error {
 }
 
 // 构造局部遍历在栈帧的位置
-func (p *parser) buildFuncLocals_loong64(fn *ast.Func) error {
+func (p *parser) buildFuncLocals_riscv(fn *ast.Func) error {
 	var (
-		headSize = p.getIntSize() * 2
-		sp       = 0 - headSize // 栈顶位置
+		headSize     = p.getIntSize() * 2 // RA + FP
+		sp       int = 0 - headSize       // 栈顶位置
 	)
 
 	if len(fn.Body.Locals) == 0 {
