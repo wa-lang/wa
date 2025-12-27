@@ -84,10 +84,7 @@ func (p *wat2laWorker) buildFuncs(w io.Writer) error {
 func (p *wat2laWorker) buildFunc_body(w io.Writer, fn *ast.Func) error {
 	p.Tracef("buildFunc_body: %s\n", fn.Name)
 
-	var stk valueTypeStack
-	var bufIns bytes.Buffer
-
-	stk.funcName = fn.Name
+	var bufHeader bytes.Buffer
 
 	if p.m.Memory != nil {
 		addrType := p.m.Memory.AddrType
@@ -102,9 +99,9 @@ func (p *wat2laWorker) buildFunc_body(w io.Writer, fn *ast.Func) error {
 		for _, x := range fn.Body.Locals {
 			p.localNames = append(p.localNames, x.Name)
 			p.localTypes = append(p.localTypes, x.Type)
-			fmt.Fprintf(&bufIns, "    local %s: %v\n", x.Name, x.Type)
+			fmt.Fprintf(&bufHeader, "    local %s: %v\n", x.Name, x.Type)
 		}
-		fmt.Fprintln(&bufIns)
+		fmt.Fprintln(&bufHeader)
 	}
 
 	// 转化为汇编的结构, 准备构建函数栈帧
@@ -148,19 +145,15 @@ func (p *wat2laWorker) buildFunc_body(w io.Writer, fn *ast.Func) error {
 
 	// 第一步构建 ra 和 fp
 	{
-		fmt.Fprintf(&bufIns, "     # 栈帧开始\n")
-		fmt.Fprintln(&bufIns, "    addi.d $sp, $sp, -16 # $sp = $sp - 16")
-		fmt.Fprintln(&bufIns, "    st.d   $ra, $sp, 8   # save $ra")
-		fmt.Fprintln(&bufIns, "    st.d   $fp, $sp, 0   # save $fp")
-		fmt.Fprintln(&bufIns, "    addi.d $fp, $sp, 16  # $fp = $sp + 16")
-
-		// TODO: 还需要给 local 和 wasmStack 预留出足够的空间
-		// TODO: wasmStack 空间需要遍历全部的指令, 因此需要回填, 因此只能分段生成
+		fmt.Fprintf(&bufHeader, "     # 栈帧开始\n")
+		fmt.Fprintln(&bufHeader, "    addi.d $sp, $sp, -16 # $sp = $sp - 16")
+		fmt.Fprintln(&bufHeader, "    st.d   $ra, $sp, 8   # save $ra")
+		fmt.Fprintln(&bufHeader, "    st.d   $fp, $sp, 0   # save $fp")
 	}
 
 	// 将寄存器参数备份到栈
 	if len(fn.Type.Params) > 0 {
-		fmt.Fprintf(&bufIns, "    # 将寄存器参数备份到栈\n")
+		fmt.Fprintf(&bufHeader, "    # 将寄存器参数备份到栈\n")
 		for i, arg := range fnNative.Type.Args {
 			if arg.Reg == 0 {
 				continue // 走栈的输入参数不需要
@@ -169,25 +162,25 @@ func (p *wat2laWorker) buildFunc_body(w io.Writer, fn *ast.Func) error {
 			// 将寄存器中的参数存储到对于的栈帧中
 			switch fn.Type.Params[i].Type {
 			case token.I32:
-				fmt.Fprintf(&bufIns, "    st.w %v, $fp, %d # save %s\n",
+				fmt.Fprintf(&bufHeader, "    st.w %v, $fp, %d # save %s\n",
 					loong64.RegString(arg.Reg),
 					arg.Off,
 					arg.Name,
 				)
 			case token.I64:
-				fmt.Fprintf(&bufIns, "    st.d %v, $fp, %d # save %s\n",
+				fmt.Fprintf(&bufHeader, "    st.d %v, $fp, %d # save %s\n",
 					loong64.RegString(arg.Reg),
 					arg.Off,
 					arg.Name,
 				)
 			case token.F32:
-				fmt.Fprintf(&bufIns, "    fst.s %v, $fp, %d # save %s\n",
+				fmt.Fprintf(&bufHeader, "    fst.s %v, $fp, %d # save %s\n",
 					loong64.RegString(arg.Reg),
 					arg.Off,
 					arg.Name,
 				)
 			case token.F64:
-				fmt.Fprintf(&bufIns, "    fst.d %v, $fp, %d # save %s\n",
+				fmt.Fprintf(&bufHeader, "    fst.d %v, $fp, %d # save %s\n",
 					loong64.RegString(arg.Reg),
 					arg.Off,
 					arg.Name,
@@ -198,12 +191,74 @@ func (p *wat2laWorker) buildFunc_body(w io.Writer, fn *ast.Func) error {
 		}
 	}
 
+	// 返回值初始化为 0
+	for i, ret := range fnNative.Type.Return {
+		switch fn.Type.Results[i] {
+		case token.I32:
+			fmt.Fprintf(&bufHeader, "    st.w zero, $fp, %d # save %s\n",
+				ret.Off,
+				ret.Name,
+			)
+		case token.I64:
+			fmt.Fprintf(&bufHeader, "    st.d zero, $fp, %d # save %s\n",
+				ret.Off,
+				ret.Name,
+			)
+		case token.F32:
+			fmt.Fprintf(&bufHeader, "    fst.s zero, $fp, %d # save %s\n",
+				ret.Off,
+				ret.Name,
+			)
+		case token.F64:
+			fmt.Fprintf(&bufHeader, "    fst.d zero, $fp, %d # save %s\n",
+				ret.Off,
+				ret.Name,
+			)
+		default:
+			panic("unreachable")
+		}
+	}
+
+	// 局部遍历初始化为 0
+	for i, ret := range fnNative.Type.Return {
+		switch fn.Body.Locals[i].Type {
+		case token.I32:
+			fmt.Fprintf(&bufHeader, "    st.w zero, $fp, %d # save %s\n",
+				ret.Off,
+				ret.Name,
+			)
+		case token.I64:
+			fmt.Fprintf(&bufHeader, "    st.d zero, $fp, %d # save %s\n",
+				ret.Off,
+				ret.Name,
+			)
+		case token.F32:
+			fmt.Fprintf(&bufHeader, "    fst.s zero, $fp, %d # save %s\n",
+				ret.Off,
+				ret.Name,
+			)
+		case token.F64:
+			fmt.Fprintf(&bufHeader, "    fst.d zero, $fp, %d # save %s\n",
+				ret.Off,
+				ret.Name,
+			)
+		default:
+			panic("unreachable")
+		}
+	}
+
 	// 至少要有一个指令
 	if len(fn.Body.Insts) == 0 {
 		fn.Body.Insts = []ast.Instruction{
 			ast.Ins_Return{OpToken: ast.OpToken(token.INS_RETURN)},
 		}
 	}
+
+	// 开始解析 wasm 指令
+	var stk valueTypeStack
+	var bufIns bytes.Buffer
+
+	stk.funcName = fn.Name
 
 	assert(stk.Len() == 0)
 	for _, ins := range fn.Body.Insts {
@@ -212,8 +267,20 @@ func (p *wat2laWorker) buildFunc_body(w io.Writer, fn *ast.Func) error {
 		}
 	}
 
+	// 头部代码: 更新栈底精确位置
+	{
+		n := len(fnNative.Type.Args) + len(fnNative.Type.Return) + len(fnNative.Body.Locals)
+		if n%16 != 0 {
+			n = ((n + 15) / 16) * 16
+		}
+		fmt.Fprintf(&bufHeader, "    addi.d $sp, $sp, -%d  # $sp = $sp - len(args)*8\n", n*8)
+	}
+
 	// 根据ABI处理返回值
-	if len(fn.Type.Results) > 0 {
+	{
+		// 返回代码位置
+		fmt.Fprintf(&bufIns, "$L.%s.return:\n", fn.Name)
+
 		// 如果走内存, 返回地址
 		if len(fn.Type.Results) > 1 && fnNative.Type.Return[1].Reg == 0 {
 			fmt.Fprintf(&bufIns, "    addi.d a0, $fp, %d # ret.%s\n",
@@ -243,6 +310,8 @@ func (p *wat2laWorker) buildFunc_body(w io.Writer, fn *ast.Func) error {
 		fmt.Fprintln(&bufIns, "    jr $ra               # return")
 	}
 
+	// 头部赋值到 w
+	io.Copy(w, &bufHeader)
 	// 指令复制到 w
 	io.Copy(w, &bufIns)
 
@@ -258,18 +327,6 @@ func (p *wat2laWorker) buildFunc_body(w io.Writer, fn *ast.Func) error {
 			}
 		}
 
-		// 补充 return
-		// stk 已经被清空
-		const indent = "  "
-		switch len(fn.Type.Results) {
-		case 0:
-			fmt.Fprintf(w, "%sreturn;\n", indent)
-		case 1:
-			fmt.Fprintf(w, "%sreturn 0;\n", indent)
-		default:
-			fmt.Fprintf(w, "%sreturn result;\n", indent)
-		}
-
 	default:
 		// 补充 return
 		assert(stk.Len() == len(fn.Type.Results))
@@ -277,38 +334,12 @@ func (p *wat2laWorker) buildFunc_body(w io.Writer, fn *ast.Func) error {
 		const indent = "  "
 		switch len(fn.Type.Results) {
 		case 0:
-			fmt.Fprintf(w, "%sreturn;\n", indent)
 		case 1:
-			sp0 := stk.Pop(fn.Type.Results[0])
-			switch fn.Type.Results[0] {
-			case token.I32:
-				fmt.Fprintf(w, "%sreturn R%d.i32;\n", indent, sp0)
-			case token.I64:
-				fmt.Fprintf(w, "%sreturn R%d.i64;\n", indent, sp0)
-			case token.F32:
-				fmt.Fprintf(w, "%sreturn R%d.f32;\n", indent, sp0)
-			case token.F64:
-				fmt.Fprintf(w, "%sreturn R%d.f64;\n", indent, sp0)
-			default:
-				unreachable()
-			}
+			stk.Pop(fn.Type.Results[0])
 		default:
-			for i, xType := range fn.Type.Results {
-				spi := stk.Pop(xType)
-				switch xType {
-				case token.I32:
-					fmt.Fprintf(w, "%sresult.R%d = R%d.i32;\n", indent, i, spi)
-				case token.I64:
-					fmt.Fprintf(w, "%sresult.R%d = R%d.i64;\n", indent, i, spi)
-				case token.F32:
-					fmt.Fprintf(w, "%sresult.R%d = R%d.f32;\n", indent, i, spi)
-				case token.F64:
-					fmt.Fprintf(w, "%sresult.R%d = R%d.f64;\n", indent, i, spi)
-				default:
-					unreachable()
-				}
+			for _, xType := range fn.Type.Results {
+				stk.Pop(xType)
 			}
-			fmt.Fprintf(w, "%sreturn result;\n", indent)
 		}
 	}
 	assert(stk.Len() == 0)
