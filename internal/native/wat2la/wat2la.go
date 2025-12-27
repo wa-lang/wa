@@ -116,5 +116,10 @@ func (p *wat2laWorker) BuildProgram() (code []byte, err error) {
 		return nil, err
 	}
 
+	// 内置函数
+	if err := p.buildBuiltin(&out); err != nil {
+		return nil, err
+	}
+
 	return out.Bytes(), nil
 }

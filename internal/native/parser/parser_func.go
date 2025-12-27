@@ -9,6 +9,7 @@ import (
 
 	"wa-lang.org/wa/internal/native/abi"
 	"wa-lang.org/wa/internal/native/ast"
+	"wa-lang.org/wa/internal/native/ast/astutil"
 	"wa-lang.org/wa/internal/native/token"
 )
 
@@ -50,17 +51,6 @@ func (p *parser) parseFunc(tok token.Token) *ast.Func {
 	}
 	if p.tok == token.ARROW {
 		p.parseFunc_return(fn)
-	}
-
-	// 构建栈帧中参数和返回值的位置
-	if p.cpu == abi.LOONG64 {
-		if err := p.buildFuncArgReturn_loong64(fn); err != nil {
-			p.errorf(p.pos, "build args/return frame failed: %v", err)
-		}
-	} else {
-		if err := p.buildFuncArgReturn_riscv(fn); err != nil {
-			p.errorf(p.pos, "build args/return frame failed: %v", err)
-		}
 	}
 
 	p.parseFunc_body(fn)
@@ -229,14 +219,8 @@ Loop:
 		default:
 
 			// 构造局部遍历在栈帧的位置
-			if p.cpu == abi.LOONG64 {
-				if err := p.buildFuncLocals_loong64(fn); err != nil {
-					p.errorf(p.pos, "build locals failed: %v", err)
-				}
-			} else {
-				if err := p.buildFuncLocals_riscv(fn); err != nil {
-					p.errorf(p.pos, "build locals failed: %v", err)
-				}
+			if err := astutil.BuildFuncFrame(p.cpu, fn); err != nil {
+				p.errorf(p.pos, "build stack frame failed: %v", err)
 			}
 
 			if p.tok == token.IDENT || p.tok.IsAs() {

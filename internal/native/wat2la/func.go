@@ -15,62 +15,12 @@ import (
 
 //
 // 函数栈帧布局
+// 参考 /docs/asm_abi_la64.md
 //
-// 栈帧的组成: Head + Locals + WasmStack
-//
-// - Head 对应 RA/FP/GP
-// - RA 对应的地址 FP - 8*1, 函数返回地址
-// - FP 对应的地址 FP - 8*2, 当前栈帧的地步
-// - args 备份地址, 用于在调用其他函数前备份输入参数
-// - return 备份地址, 用于在调用其他函数前备份返回值
-// - local 的地址为 FP - 2*8 - off, off 是从 FP 开始计算
-// - WatStk[0] 的地址为 SP + 0
-// - GP 单独保存 Wasm 内地的基地址, 不在栈帧中
-//
-//           +--------+
-//           | ...... |
-//           | return | 非寄存器返回值
-//           |  args  | 非寄存器输入参数
-//     +-----+--------+<---------+
-//     |     |   RA   |          |
-//     |     |   FP   |----------+
-//     |     +--------+
-//     |     | args0  | 输入参数备份空间
-//     |     | args1  |
-//     |     | .....  |
-//     |     | argsN  |
-//     |     +--------+
-//     |     |  ret0  | 返回值备份空间
-//     |     |  ret1  |
-//     |     |  ....  |
-//     |     |  retN  |
-//     |     +--------+
-//     |     | local0 | 局部变量
-// FrameStack| local1 |
-//     |     | ...... |
-//     |     | localN |
-//     |     +--------+
-//     |     | ...... | WASM 栈空间
-//     |     | ...... |
-//     |     | ...... |
-//     |     | WatStk |
-//     +-----+--------+<--- SP
-//           | ...... |
-//           | ...... |
-//           | ...... |
-//           +--------+
-//           | ...... |
-//           | Memory |
-//           | ...... |
-//           +--------+<--- GP
-//           |  data  |
-//           +--------+
-//           |  text  |
-//           +--------+<----+
-//           | ...... |     |
-//           +--------+     |
-//           |  Head  |-----+
-//           +--------+
+// 补充说明:
+// - GP 以 global 变量保存
+// - 预留出足够的 WasmStack 空间, 避免和子函数返回的数据空间冲突
+// - WasmStack 上的内存也通过 FP 定位
 //
 
 func (p *wat2laWorker) buildFuncs(w io.Writer) error {
@@ -89,20 +39,22 @@ func (p *wat2laWorker) buildFuncs(w io.Writer) error {
 				if x.Name != "" {
 					fmt.Fprintf(w, "$%s: %v", x.Name, x.Type)
 				} else {
-					fmt.Fprintf(w, "$%d, %v", i, x.Type)
+					fmt.Fprintf(w, "$arg.%d, %v", i, x.Type)
 				}
 			}
 			fmt.Fprint(w, ")")
 		}
-		if len(f.Type.Results) > 0 {
+		if len(f.Type.Results) > 1 {
 			fmt.Fprintf(w, " => (")
 			for i, x := range f.Type.Results {
 				if i > 0 {
 					fmt.Fprint(w, ", ")
 				}
-				fmt.Fprintf(w, "$ret%d: %v", i, x)
+				fmt.Fprintf(w, "$ret.%d: %v", i, x)
 			}
 			fmt.Fprint(w, ")")
+		} else if len(f.Type.Results) == 1 {
+			fmt.Fprintf(w, "%v", f.Type.Results[0])
 		}
 		fmt.Fprintln(w, " {")
 
@@ -120,11 +72,6 @@ func (p *wat2laWorker) buildFuncs(w io.Writer) error {
 		}
 
 		fmt.Fprintln(w, "}")
-	}
-
-	// 内置函数
-	if err := p.buildBuiltin(w); err != nil {
-		return err
 	}
 
 	return nil
@@ -154,6 +101,23 @@ func (p *wat2laWorker) buildFunc_body(w io.Writer, fn *ast.Func) error {
 			fmt.Fprintf(&bufIns, "    local %s: %v\n", x.Name, x.Type)
 		}
 		fmt.Fprintln(&bufIns)
+	}
+
+	// 将寄存器参数备份到栈
+	if len(fn.Type.Params) > 0 {
+		fmt.Fprintf(&bufIns, "\n    # 将寄存器参数备份到栈\n")
+		for i, arg := range fn.Type.Params {
+			_ = i
+			_ = arg
+			// 目前的输出的是字符串
+			// 但是对于函数，还需要栈帧的信息
+			// 栈帧信息用于指示如何生成字符串形式的代码
+			// 因此，需要和 ABI 相互配合
+
+			// TODO: 需要将栈帧的代码独立出来。同时也可以从 native-parser 中拆分
+			// TODO: 只在生成代码部分，真正生成 ABI 相关的代码
+		}
+
 	}
 
 	// 至少要有一个指令
