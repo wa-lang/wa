@@ -91,6 +91,8 @@ func (p *wat2laWorker) buildFunc_body(w io.Writer, fn *ast.Func) error {
 		assert(addrType == token.I32 || addrType == token.I64)
 	}
 
+	assert(p.m.Memory.AddrType == token.I32)
+
 	assert(len(p.scopeLabels) == 0)
 	assert(len(p.scopeStackBases) == 0)
 	assert(len(p.scopeResults) == 0)
@@ -149,6 +151,14 @@ func (p *wat2laWorker) buildFunc_body(w io.Writer, fn *ast.Func) error {
 		fmt.Fprintln(&bufHeader, "    addi.d $sp, $sp, -16 # $sp = $sp - 16")
 		fmt.Fprintln(&bufHeader, "    st.d   $ra, $sp, 8   # save $ra")
 		fmt.Fprintln(&bufHeader, "    st.d   $fp, $sp, 0   # save $fp")
+
+		fmt.Fprintf(&bufHeader, "    # memory address\n")
+		fmt.Fprintf(&bufHeader, "    pcalau12i %s, %%pc_hi20(%s)\n", kMemoryReg, kMemoryName)
+		fmt.Fprintf(&bufHeader, "    addi.d    %s, %s, %%pc_lo12(%s)\n", kMemoryReg, kMemoryReg, kMemoryName)
+
+		fmt.Fprintf(&bufHeader, "    # table address\n")
+		fmt.Fprintf(&bufHeader, "    pcalau12i %s, %%pc_hi20(%s)\n", kTableReg, kTableName)
+		fmt.Fprintf(&bufHeader, "    addi.d    %s, %s, %%pc_lo12(%s)\n", kTableReg, kTableReg, kTableName)
 	}
 
 	// 将寄存器参数备份到栈
@@ -1250,447 +1260,213 @@ func (p *wat2laWorker) buildFunc_ins(
 			unreachable()
 		}
 	case token.INS_TABLE_GET:
-		sp0 := stk.Pop(token.I32)
-		ret0 := stk.Push(token.FUNCREF) // funcref
+		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.I32)
+		ret0 := p.fnWasmR0Base - 8*stk.Push(token.FUNCREF) // funcref
 		fmt.Fprintf(w, "    # table.get\n")
-		fmt.Fprintf(w, "    pcalau12i t1, %%pc_hi20(%s)\n", "table")
-		fmt.Fprintf(w, "    addi.d    t1, t1, %%pc_lo12(%s)\n", "table")
-		fmt.Fprintf(w, "    ld.w      t0, fp, %d\n", p.fnWasmR0Base-sp0*8)
-		fmt.Fprintf(w, "    add.d     t0, t0, t1\n")
-		fmt.Fprintf(w, "    ld.w      t0, t0, 0\n")
-		fmt.Fprintf(w, "    st.w      t0, fp, %d\n", p.fnWasmR0Base-ret0*8)
+		fmt.Fprintf(w, "    ld.w  t0, fp, %d # t0 = [pop]\n", sp0)
+		fmt.Fprintf(w, "    add.d t0, t0, %s # t0 = table + t0\n", kTableReg)
+		fmt.Fprintf(w, "    ld.w  t0, t0, 0  # t0 = [t0]\n")
+		fmt.Fprintf(w, "    st.w  t0, fp, %d # push t0\n", ret0)
 	case token.INS_TABLE_SET:
-		sp0 := stk.Pop(token.FUNCREF) // funcref
-		sp1 := stk.Pop(token.I32)
+		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.FUNCREF) // funcref
+		sp1 := p.fnWasmR0Base - 8*stk.Pop(token.I32)
 		fmt.Fprintf(w, "    # table.get\n")
-		fmt.Fprintf(w, "    pcalau12i t1, %%pc_hi20(%s)\n", "table")
-		fmt.Fprintf(w, "    addi.d    t1, t1, %%pc_lo12(%s)\n", "table")
-		fmt.Fprintf(w, "    ld.w      t0, fp, %d\n", p.fnWasmR0Base-sp1*8)
-		fmt.Fprintf(w, "    add.d     t0, t0, t1\n")
-		fmt.Fprintf(w, "    ld.w      t1, fp, %d\n", p.fnWasmR0Base-sp0*8)
-		fmt.Fprintf(w, "    st.w      t1, t0, 0\n")
+		fmt.Fprintf(w, "    ld.w  t2, fp, %d # t2 = pop\n", sp0)
+		fmt.Fprintf(w, "    ld.w  t0, fp, %d # t0 = $pop\n", sp1)
+		fmt.Fprintf(w, "    add.d t0, t0, %s # t0 = table + t0\n", kTableReg)
+		fmt.Fprintf(w, "    st.w  t2, t0, 0\n")
 	case token.INS_I32_LOAD:
 		i := i.(ast.Ins_I32Load)
-		if p.m.Memory.AddrType == token.I32 {
-			sp0 := stk.Pop(token.I32)
-			ret0 := stk.Push(token.I32)
-			fmt.Fprintf(w, "%smemcpy(&R%d.i32, &memory[R%d.i32+%d], 4); // %s\n",
-				indent, ret0, sp0, i.Offset,
-				insString(i),
-			)
-		} else {
-			sp0 := stk.Pop(token.I64)
-			ret0 := stk.Push(token.I32)
-			fmt.Fprintf(w, "%smemcpy(&R%d.i32, &memory[R%d.i64+%d], 4); // %s\n",
-				indent, ret0, sp0, i.Offset,
-				insString(i),
-			)
-		}
+
+		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.I32)
+		ret0 := p.fnWasmR0Base - 8*stk.Push(token.I32)
+
+		fmt.Fprintf(w, "    # i32.load\n")
+		fmt.Fprintf(w, "    ld.w  t0, fp, %d # t0 = [pop]\n", sp0)
+		fmt.Fprintf(w, "    add.d t0, t0, %s # t0 = mempry + t0\n", kMemoryReg)
+		fmt.Fprintf(w, "    ld.w  t0, t0, %d # t0 = [t0+off]\n", i.Offset)
+		fmt.Fprintf(w, "    st.w  t0, fp, %d # push t0\n", ret0)
+
 	case token.INS_I64_LOAD:
 		i := i.(ast.Ins_I64Load)
-		if p.m.Memory.AddrType == token.I32 {
-			sp0 := stk.Pop(token.I32)
-			ret0 := stk.Push(token.I64)
-			fmt.Fprintf(w, "%smemcpy(&R%d.i64, &memory[R%d.i32+%d], 8); // %s\n",
-				indent, ret0, sp0, i.Offset,
-				insString(i),
-			)
-		} else {
-			sp0 := stk.Pop(token.I64)
-			ret0 := stk.Push(token.I64)
-			fmt.Fprintf(w, "%smemcpy(&R%d.i64, &memory[R%d.i64+%d], 8); // %s\n",
-				indent, ret0, sp0, i.Offset,
-				insString(i),
-			)
-		}
+
+		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.I32)
+		ret0 := p.fnWasmR0Base - 8*stk.Push(token.I64)
+
+		fmt.Fprintf(w, "    # i64.load\n")
+		fmt.Fprintf(w, "    ld.w  t0, fp, %d # t0 = [pop]\n", sp0)
+		fmt.Fprintf(w, "    add.d t0, t0, %s # t0 = mempry + t0\n", kMemoryReg)
+		fmt.Fprintf(w, "    ld.d  t0, t0, %d # t0 = [t0+off]\n", i.Offset)
+		fmt.Fprintf(w, "    st.d  t0, fp, %d # push t0\n", ret0)
+
 	case token.INS_F32_LOAD:
 		i := i.(ast.Ins_F32Load)
-		if p.m.Memory.AddrType == token.I32 {
-			sp0 := stk.Pop(token.I32)
-			ret0 := stk.Push(token.F32)
-			fmt.Fprintf(w, "%smemcpy(&R%d.f32, &memory[R%d.i32+%d], 4); // %s\n",
-				indent, ret0, sp0, i.Offset,
-				insString(i),
-			)
-		} else {
-			sp0 := stk.Pop(token.I64)
-			ret0 := stk.Push(token.F32)
-			fmt.Fprintf(w, "%smemcpy(&R%d.f32, &memory[R%d.i64+%d], 4); // %s\n",
-				indent, ret0, sp0, i.Offset,
-				insString(i),
-			)
-		}
+
+		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.I32)
+		ret0 := p.fnWasmR0Base - 8*stk.Push(token.F32)
+
+		fmt.Fprintf(w, "    # i64.load\n")
+		fmt.Fprintf(w, "    ld.w  t0, fp, %d # t0 = [pop]\n", sp0)
+		fmt.Fprintf(w, "    add.d t0, t0, %s # t0 = mempry + t0\n", kMemoryReg)
+		fmt.Fprintf(w, "    fld.s  t0, t0, %d # t0 = [t0+off]\n", i.Offset)
+		fmt.Fprintf(w, "    fst.s  t0, fp, %d # push t0\n", ret0)
+
 	case token.INS_F64_LOAD:
 		i := i.(ast.Ins_I32Load)
-		if p.m.Memory.AddrType == token.I32 {
-			sp0 := stk.Pop(token.I32)
-			ret0 := stk.Push(token.F64)
-			fmt.Fprintf(w, "%smemcpy(&R%d.f64, &memory[R%d.i32+%d], 8);// %s\n",
-				indent, ret0, sp0, i.Offset,
-				insString(i),
-			)
-		} else {
-			sp0 := stk.Pop(token.I64)
-			ret0 := stk.Push(token.F64)
-			fmt.Fprintf(w, "%smemcpy(&R%d.f64, &memory[R%d.i64+%d], 8); // %s\n",
-				indent, ret0, sp0, i.Offset,
-				insString(i),
-			)
-		}
+
+		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.I32)
+		ret0 := p.fnWasmR0Base - 8*stk.Push(token.F64)
+
+		fmt.Fprintf(w, "    # i64.load\n")
+		fmt.Fprintf(w, "    ld.w  t0, fp, %d # t0 = [pop]\n", sp0)
+		fmt.Fprintf(w, "    add.d t0, t0, %s # t0 = mempry + t0\n", kMemoryReg)
+		fmt.Fprintf(w, "    fld.d  t0, t0, %d # t0 = [t0+off]\n", i.Offset)
+		fmt.Fprintf(w, "    fst.d  t0, fp, %d # push t0\n", ret0)
+
 	case token.INS_I32_LOAD8_S:
-		i := i.(ast.Ins_I32Load8S)
-		if p.m.Memory.AddrType == token.I32 {
-			sp0 := stk.Pop(token.I32)
-			ret0 := stk.Push(token.I32)
-			fmt.Fprintf(w, "%smemcpy(&R_u8, &memory[R%d.i32+%d], 1); R%d.i32 = (int32_t)((int8_t)R_u8); // %s\n",
-				indent, sp0, i.Offset, ret0,
-				insString(i),
-			)
-		} else {
-			sp0 := stk.Pop(token.I64)
-			ret0 := stk.Push(token.I32)
-			fmt.Fprintf(w, "%smemcpy(&R_u8, &memory[R%d.i64+%d], 1); R%d.i32 = (int32_t)((int8_t)R_u8); // %s\n",
-				indent, sp0, i.Offset, ret0,
-				insString(i),
-			)
-		}
+		// i := i.(ast.Ins_I32Load8S)
+		// sp0 := stk.Pop(token.I32)
+		// ret0 := stk.Push(token.I32)
+		panic("TODO")
+
 	case token.INS_I32_LOAD8_U:
-		i := i.(ast.Ins_I32Load8U)
-		if p.m.Memory.AddrType == token.I32 {
-			sp0 := stk.Pop(token.I32)
-			ret0 := stk.Push(token.I32)
-			fmt.Fprintf(w, "%smemcpy(&R_u8, &memory[R%d.i32+%d], 1); R%d.i32 = (int32_t)((uint8_t)R_u8); // %s\n",
-				indent, sp0, i.Offset, ret0,
-				insString(i),
-			)
-		} else {
-			sp0 := stk.Pop(token.I64)
-			ret0 := stk.Push(token.I32)
-			fmt.Fprintf(w, "%smemcpy(&R_u8, &memory[R%d.i64+%d], 1); R%d.i32 = (int32_t)((uint8_t)R_u8); // %s\n",
-				indent, sp0, i.Offset, ret0,
-				insString(i),
-			)
-		}
+		// i := i.(ast.Ins_I32Load8U)
+		// sp0 := stk.Pop(token.I32)
+		// ret0 := stk.Push(token.I32)
+		panic("TODO")
+
 	case token.INS_I32_LOAD16_S:
-		i := i.(ast.Ins_I32Load16S)
-		if p.m.Memory.AddrType == token.I32 {
-			sp0 := stk.Pop(token.I32)
-			ret0 := stk.Push(token.I32)
-			fmt.Fprintf(w, "%smemcpy(&R_u16, &memory[R%d.i32+%d], 2); R%d.i32 = (int32_t)((int16_t)R_u16); // %s\n",
-				indent, sp0, i.Offset, ret0,
-				insString(i),
-			)
-		} else {
-			sp0 := stk.Pop(token.I64)
-			ret0 := stk.Push(token.I32)
-			fmt.Fprintf(w, "%smemcpy(&R_u16, &memory[R%d.i64+%d], 2); R%d.i32 = (int32_t)((int16_t)R_u16); // %s\n",
-				indent, sp0, i.Offset, ret0,
-				insString(i),
-			)
-		}
+		// i := i.(ast.Ins_I32Load16S)
+		// sp0 := stk.Pop(token.I32)
+		// ret0 := stk.Push(token.I32)
+		panic("TODO")
+
 	case token.INS_I32_LOAD16_U:
-		i := i.(ast.Ins_I32Load16U)
-		if p.m.Memory.AddrType == token.I32 {
-			sp0 := stk.Pop(token.I32)
-			ret0 := stk.Push(token.I32)
-			fmt.Fprintf(w, "%smemcpy(&R_u16, &memory[R%d.i32+%d], 2); R%d.i32 = (int32_t)((uint16_t)R_u16); // %s\n",
-				indent, sp0, i.Offset, ret0,
-				insString(i),
-			)
-		} else {
-			sp0 := stk.Pop(token.I64)
-			ret0 := stk.Push(token.I32)
-			fmt.Fprintf(w, "%smemcpy(&R_u16, &memory[R%d.i64+%d], 2); R%d.i32 = (int32_t)((uint16_t)R_u16); // %s\n",
-				indent, sp0, i.Offset, ret0,
-				insString(i),
-			)
-		}
+		// i := i.(ast.Ins_I32Load16U)
+		// sp0 := stk.Pop(token.I32)
+		// ret0 := stk.Push(token.I32)
+		panic("TODO")
+
 	case token.INS_I64_LOAD8_S:
-		i := i.(ast.Ins_I64Load8S)
-		if p.m.Memory.AddrType == token.I32 {
-			sp0 := stk.Pop(token.I32)
-			ret0 := stk.Push(token.I64)
-			fmt.Fprintf(w, "%smemcpy(&R_u8, &memory[R%d.i32+%d], 1); R%d.i64 = (int64_t)((int8_t)R_u8); // %s\n",
-				indent, sp0, i.Offset, ret0,
-				insString(i),
-			)
-		} else {
-			sp0 := stk.Pop(token.I64)
-			ret0 := stk.Push(token.I64)
-			fmt.Fprintf(w, "%smemcpy(&R_u8, &memory[R%d.i64+%d], 1); R%d.i64 = (int64_t)((int8_t)R_u8); // %s\n",
-				indent, sp0, i.Offset, ret0,
-				insString(i),
-			)
-		}
+		// i := i.(ast.Ins_I64Load8S)
+		// sp0 := stk.Pop(token.I32)
+		// ret0 := stk.Push(token.I64)
+		panic("TODO")
+
 	case token.INS_I64_LOAD8_U:
-		i := i.(ast.Ins_I64Load8U)
-		if p.m.Memory.AddrType == token.I32 {
-			sp0 := stk.Pop(token.I32)
-			ret0 := stk.Push(token.I64)
-			fmt.Fprintf(w, "%smemcpy(&R_u8, &memory[R%d.i32+%d], 1); R%d.i64 = (int64_t)((uint8_t)R_u8); // %s\n",
-				indent, sp0, i.Offset, ret0,
-				insString(i),
-			)
-		} else {
-			sp0 := stk.Pop(token.I64)
-			ret0 := stk.Push(token.I64)
-			fmt.Fprintf(w, "%smemcpy(&R_u8, &memory[R%d.i64+%d], 1); R%d.i64 = (int64_t)((uint8_t)R_u8); // %s\n",
-				indent, sp0, i.Offset, ret0,
-				insString(i),
-			)
-		}
+		// i := i.(ast.Ins_I64Load8U)
+		// sp0 := stk.Pop(token.I32)
+		// ret0 := stk.Push(token.I64)
+		panic("TODO")
+
 	case token.INS_I64_LOAD16_S:
-		i := i.(ast.Ins_I64Load16S)
-		if p.m.Memory.AddrType == token.I32 {
-			sp0 := stk.Pop(token.I32)
-			ret0 := stk.Push(token.I64)
-			fmt.Fprintf(w, "%smemcpy(&R_u16, &memory[R%d.i32+%d], 2); R%d.i64 = (int64_t)((int16_t)R_u16); // %s\n",
-				indent, sp0, i.Offset, ret0,
-				insString(i),
-			)
-		} else {
-			sp0 := stk.Pop(token.I64)
-			ret0 := stk.Push(token.I64)
-			fmt.Fprintf(w, "%smemcpy(&R_u16, &memory[R%d.i64+%d], 2); R%d.i64 = (int64_t)((int16_t)R_u16); // %s\n",
-				indent, sp0, i.Offset, ret0,
-				insString(i),
-			)
-		}
+		// i := i.(ast.Ins_I64Load16S)
+		// sp0 := stk.Pop(token.I32)
+		// ret0 := stk.Push(token.I64)
+		panic("TODO")
+
 	case token.INS_I64_LOAD16_U:
-		i := i.(ast.Ins_I64Load16U)
-		if p.m.Memory.AddrType == token.I32 {
-			sp0 := stk.Pop(token.I32)
-			ret0 := stk.Push(token.I64)
-			fmt.Fprintf(w, "%smemcpy(&R_u16, &memory[R%d.i32+%d], 2); R%d.i64 = (int64_t)((uint16_t)R_u16); // %s\n",
-				indent, sp0, i.Offset, ret0,
-				insString(i),
-			)
-		} else {
-			sp0 := stk.Pop(token.I64)
-			ret0 := stk.Push(token.I64)
-			fmt.Fprintf(w, "%smemcpy(&R_u16, &memory[R%d.i64+%d], 2); R%d.i64 = (int64_t)((uint16_t)R_u16); // %s\n",
-				indent, sp0, i.Offset, ret0,
-				insString(i),
-			)
-		}
+		// i := i.(ast.Ins_I64Load16U)
+		// sp0 := stk.Pop(token.I32)
+		// ret0 := stk.Push(token.I64)
+		panic("TODO")
+
 	case token.INS_I64_LOAD32_S:
-		i := i.(ast.Ins_I64Load32S)
-		if p.m.Memory.AddrType == token.I32 {
-			sp0 := stk.Pop(token.I32)
-			ret0 := stk.Push(token.I64)
-			fmt.Fprintf(w, "%smemcpy(&R_u32, &memory[R%d.i32+%d], 4); R%d.i64 = (int64_t)((int32_t)R_u32); // %s\n",
-				indent, sp0, i.Offset, ret0,
-				insString(i),
-			)
-		} else {
-			sp0 := stk.Pop(token.I64)
-			ret0 := stk.Push(token.I64)
-			fmt.Fprintf(w, "%smemcpy(&R_u32, &memory[R%d.i64+%d], 4); R%d.i64 = (int64_t)((int32_t)R_u32); // %s\n",
-				indent, sp0, i.Offset, ret0,
-				insString(i),
-			)
-		}
+		// i := i.(ast.Ins_I64Load32S)
+		// sp0 := stk.Pop(token.I32)
+		// ret0 := stk.Push(token.I64)
+		panic("TODO")
+
 	case token.INS_I64_LOAD32_U:
-		i := i.(ast.Ins_I64Load32U)
-		if p.m.Memory.AddrType == token.I32 {
-			sp0 := stk.Pop(token.I32)
-			ret0 := stk.Push(token.I64)
-			fmt.Fprintf(w, "%smemcpy(&R_u32, &memory[R%d.i32+%d], 4); R%d.i64 = (int64_t)((uint32_t)R_u32); // %s\n",
-				indent, sp0, i.Offset, ret0,
-				insString(i),
-			)
-		} else {
-			sp0 := stk.Pop(token.I64)
-			ret0 := stk.Push(token.I64)
-			fmt.Fprintf(w, "%smemcpy(&R_u32, &memory[R%d.i64+%d], 4); R%d.i64 = (int64_t)((uint32_t)R_u32); // %s\n",
-				indent, sp0, i.Offset, ret0,
-				insString(i),
-			)
-		}
+		// i := i.(ast.Ins_I64Load32U)
+		// sp0 := stk.Pop(token.I32)
+		// ret0 := stk.Push(token.I64)
+		panic("TODO")
+
 	case token.INS_I32_STORE:
-		i := i.(ast.Ins_I32Store)
-		if p.m.Memory.AddrType == token.I32 {
-			sp0 := stk.Pop(token.I32)
-			sp1 := stk.Pop(token.I32)
-			fmt.Fprintf(w, "%smemcpy(&memory[R%d.i32+%d], &R%d.i32, 4); // %s\n",
-				indent, sp1, i.Offset, sp0,
-				insString(i),
-			)
-		} else {
-			sp0 := stk.Pop(token.I32)
-			sp1 := stk.Pop(token.I64)
-			fmt.Fprintf(w, "%smemcpy(&memory[R%d.i64+%d], &R%d.i32, 4); // %s\n",
-				indent, sp1, i.Offset, sp0,
-				insString(i),
-			)
-		}
+		// i := i.(ast.Ins_I32Store)
+		// sp0 := stk.Pop(token.I32)
+		// sp1 := stk.Pop(token.I32)
+		panic("TODO")
+
 	case token.INS_I64_STORE:
-		i := i.(ast.Ins_I64Store)
-		if p.m.Memory.AddrType == token.I32 {
-			sp0 := stk.Pop(token.I64)
-			sp1 := stk.Pop(token.I32)
-			fmt.Fprintf(w, "%smemcpy(&memory[R%d.i32+%d], &R%d.i64, 8); // %s\n",
-				indent, sp1, i.Offset, sp0,
-				insString(i),
-			)
-		} else {
-			sp0 := stk.Pop(token.I64)
-			sp1 := stk.Pop(token.I64)
-			fmt.Fprintf(w, "%smemcpy(&memory[R%d.i64+%d], &R%d.i64, 8); // %s\n",
-				indent, sp1, i.Offset, sp0,
-				insString(i),
-			)
-		}
+		// i := i.(ast.Ins_I64Store)
+		// sp0 := stk.Pop(token.I64)
+		// sp1 := stk.Pop(token.I32)
+		panic("TODO")
+
 	case token.INS_F32_STORE:
-		i := i.(ast.Ins_F32Store)
-		if p.m.Memory.AddrType == token.I32 {
-			sp0 := stk.Pop(token.F32)
-			sp1 := stk.Pop(token.I32)
-			fmt.Fprintf(w, "%smemcpy(&memory[R%d.i32+%d], &R%d.f32, 4); // %s\n",
-				indent, sp1, i.Offset, sp0,
-				insString(i),
-			)
-		} else {
-			sp0 := stk.Pop(token.F32)
-			sp1 := stk.Pop(token.I64)
-			fmt.Fprintf(w, "%smemcpy(&memory[R%d.i64+%d], &R%d.f32, 4); // %s\n",
-				indent, sp1, i.Offset, sp0,
-				insString(i),
-			)
-		}
+		// i := i.(ast.Ins_F32Store)
+		// sp0 := stk.Pop(token.F32)
+		// sp1 := stk.Pop(token.I32)
+		panic("TODO")
+
 	case token.INS_F64_STORE:
-		i := i.(ast.Ins_F64Store)
-		if p.m.Memory.AddrType == token.I32 {
-			sp0 := stk.Pop(token.F64)
-			sp1 := stk.Pop(token.I32)
-			fmt.Fprintf(w, "%smemcpy(&memory[R%d.i32+%d], &R%d.f64, 8); // %s\n",
-				indent, sp1, i.Offset, sp0,
-				insString(i),
-			)
-		} else {
-			sp0 := stk.Pop(token.F64)
-			sp1 := stk.Pop(token.I64)
-			fmt.Fprintf(w, "%smemcpy(&memory[R%d.i64+%d], &R%d.f64, 8); // %s\n",
-				indent, sp1, i.Offset, sp0,
-				insString(i),
-			)
-		}
+		// i := i.(ast.Ins_F64Store)
+		// sp0 := stk.Pop(token.F64)
+		// sp1 := stk.Pop(token.I32)
+		panic("TODO")
+
 	case token.INS_I32_STORE8:
-		i := i.(ast.Ins_I32Store8)
-		if p.m.Memory.AddrType == token.I32 {
-			sp0 := stk.Pop(token.I32)
-			sp1 := stk.Pop(token.I32)
-			fmt.Fprintf(w, "%sR_u8 = (uint8_t)((int8_t)(R%d.i32)); memcpy(&memory[R%d.i32+%d], &R_u8, 1); // %s\n",
-				indent, sp0, sp1, i.Offset,
-				insString(i),
-			)
-		} else {
-			sp0 := stk.Pop(token.I32)
-			sp1 := stk.Pop(token.I64)
-			fmt.Fprintf(w, "%sR_u8 = (uint8_t)((int8_t)(R%d.i32)); memcpy(&memory[R%d.i64+%d], &R_u8, 1); // %s\n",
-				indent, sp0, sp1, i.Offset,
-				insString(i),
-			)
-		}
+		// i := i.(ast.Ins_I32Store8)
+		// sp0 := stk.Pop(token.I32)
+		// sp1 := stk.Pop(token.I32)
+		panic("TODO")
+
 	case token.INS_I32_STORE16:
-		i := i.(ast.Ins_I32Store16)
-		if p.m.Memory.AddrType == token.I32 {
-			sp0 := stk.Pop(token.I32)
-			sp1 := stk.Pop(token.I32)
-			fmt.Fprintf(w, "%sR_u16 = (uint16_t)((int16_t)(R%d.i32)); memcpy(&memory[R%d.i32+%d], &R_u16, 2); // %s\n",
-				indent, sp0, sp1, i.Offset,
-				insString(i),
-			)
-		} else {
-			sp0 := stk.Pop(token.I32)
-			sp1 := stk.Pop(token.I64)
-			fmt.Fprintf(w, "%sR_u16 = (uint16_t)((int16_t)(R%d.i32)); memcpy(&memory[R%d.i64+%d], &R_u16, 2); // %s\n",
-				indent, sp0, sp1, i.Offset,
-				insString(i),
-			)
-		}
+		// i := i.(ast.Ins_I32Store16)
+		// sp0 := stk.Pop(token.I32)
+		// sp1 := stk.Pop(token.I32)
+		panic("TODO")
+
 	case token.INS_I64_STORE8:
-		i := i.(ast.Ins_I64Store8)
-		if p.m.Memory.AddrType == token.I32 {
-			sp0 := stk.Pop(token.I64)
-			sp1 := stk.Pop(token.I32)
-			fmt.Fprintf(w, "%sR_u8 = (uint8_t)((int8_t)(R%d.i64)); memcpy(&memory[R%d.i32+%d], &R_u8, 1); // %s\n",
-				indent, sp0, sp1, i.Offset,
-				insString(i),
-			)
-		} else {
-			sp0 := stk.Pop(token.I64)
-			sp1 := stk.Pop(token.I64)
-			fmt.Fprintf(w, "%sR_u8 = (uint8_t)((int8_t)(R%d.i64)); memcpy(&memory[R%d.i64+%d], &R_u8, 1); // %s\n",
-				indent, sp0, sp1, i.Offset,
-				insString(i),
-			)
-		}
+		// i := i.(ast.Ins_I64Store8)
+		// sp0 := stk.Pop(token.I64)
+		// sp1 := stk.Pop(token.I32)
+		panic("TODO")
+
 	case token.INS_I64_STORE16:
-		i := i.(ast.Ins_I64Store16)
-		if p.m.Memory.AddrType == token.I32 {
-			sp0 := stk.Pop(token.I64)
-			sp1 := stk.Pop(token.I32)
-			fmt.Fprintf(w, "%sR_u16 = (uint16_t)((int16_t)(R%d.i64)); memcpy(&memory[R%d.i32+%d], &R_u16, 2); // %s\n",
-				indent, sp0, sp1, i.Offset,
-				insString(i),
-			)
-		} else {
-			sp0 := stk.Pop(token.I64)
-			sp1 := stk.Pop(token.I64)
-			fmt.Fprintf(w, "%sR_u16 = (uint16_t)((int16_t)(R%d.i64)); memcpy(&memory[R%d.i64+%d], &R_u16, 2); // %s\n",
-				indent, sp0, sp1, i.Offset,
-				insString(i),
-			)
-		}
+		// i := i.(ast.Ins_I64Store16)
+		// sp0 := stk.Pop(token.I64)
+		// sp1 := stk.Pop(token.I32)
+		panic("TODO")
+
 	case token.INS_I64_STORE32:
-		i := i.(ast.Ins_I64Store32)
-		if p.m.Memory.AddrType == token.I32 {
-			sp0 := stk.Pop(token.I64)
-			sp1 := stk.Pop(token.I32)
-			fmt.Fprintf(w, "%sR_u32 = (uint32_t)((int32_t)(R%d.i64)); memcpy(&memory[R%d.i32+%d], &R_u32, 4); // %s\n",
-				indent, sp0, sp1, i.Offset,
-				insString(i),
-			)
-		} else {
-			sp0 := stk.Pop(token.I64)
-			sp1 := stk.Pop(token.I64)
-			fmt.Fprintf(w, "%sR_u32 = (uint32_t)((int32_t)(R%d.i64)); memcpy(&memory[R%d.i64+%d], &R_u32, 4); // %s\n",
-				indent, sp0, sp1, i.Offset,
-				insString(i),
-			)
-		}
+		// i := i.(ast.Ins_I64Store32)
+		// sp0 := stk.Pop(token.I64)
+		// sp1 := stk.Pop(token.I32)
+		panic("TODO")
+
 	case token.INS_MEMORY_SIZE:
-		sp0 := stk.Push(token.I32)
-		fmt.Fprintf(w, "%sR%d.i32 = memory_size; // %s\n", indent, sp0, insString(i))
+		sp0 := p.fnWasmR0Base - 8*stk.Push(token.I32)
+		fmt.Fprintf(w, "    # memory.size\n")
+		fmt.Fprintf(w, "    pcalau12i t0, %%pc_hi20(%s)\n", kMemorySizeName)
+		fmt.Fprintf(w, "    addi.d    t0, t0, %%pc_lo12(%s)\n", kMemorySizeName)
+		fmt.Fprintf(w, "    st.w      t0, fp, %d\n", sp0)
 	case token.INS_MEMORY_GROW:
-		sp0 := stk.Pop(token.I32)
-		ret0 := stk.Push(token.I32)
-		fmt.Fprintf(w, "%sif(memory_size+R%d.i32 <= memory_init_max_pages) {\n",
-			indent, sp0,
-		)
-		{
-			fmt.Fprintf(w, "%sint32_t temp = memory_size;\n",
-				indent+indent,
-			)
-			fmt.Fprintf(w, "%smemory_size += R%d.i32;\n",
-				indent+indent, sp0,
-			)
-			fmt.Fprintf(w, "%sR%d.i32 = temp;\n",
-				indent+indent, ret0,
-			)
-		}
-		fmt.Fprintf(w, "%s} else {\n",
-			indent,
-		)
-		{
-			fmt.Fprintf(w, "%sR%d.i32 = -1;\n",
-				indent+indent, ret0,
-			)
-		}
-		fmt.Fprintf(w, "%s}\n",
-			indent,
-		)
+		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.I32)
+		ret0 := p.fnWasmR0Base - 8*stk.Push(token.I32)
+
+		// 最大内存在启动时就分配好, 这里只是调整全局变量
+
+		fmt.Fprintf(w, "    # memory.grow\n")
+		fmt.Fprintf(w, "    pcalau12i t0, %%pc_hi20(%s)\n", kMemorySizeName)
+		fmt.Fprintf(w, "    addi.d    t0, t0, %%pc_lo12(%s)\n", kMemorySizeName)
+
+		fmt.Fprintf(w, "    pcalau12i t1, %%pc_hi20(%s)\n", kMemoryMaxSizeName)
+		fmt.Fprintf(w, "    addi.d    t1, t1, %%pc_lo12(%s)\n", kMemoryMaxSizeName)
+
+		fmt.Fprintf(w, "    ld.w      t3, fp, %d\n", sp0)
+		fmt.Fprintf(w, "    add.d     t3, t3, t1\n")
+
+		fmt.Fprintf(w, "    blt       t1, t3, L.xxx.else\n")
+		fmt.Fprintf(w, "    st.w      t3, %s, 0\n", kMemorySizeName)
+		fmt.Fprintf(w, "    st.w      t0, fp, %d\n", ret0)
+		fmt.Fprintf(w, "    b         L.xxx.else\n")
+		fmt.Fprintf(w, "L.xxx.else:\n")
+		fmt.Fprintf(w, "    lui.w     t4, -1\n")
+		fmt.Fprintf(w, "    st.w      t4, fp, %d\n", ret0)
+		fmt.Fprintf(w, "L.xxx.end:\n")
 
 	case token.INS_MEMORY_INIT:
 		i := i.(ast.Ins_MemoryInit)
@@ -1698,6 +1474,11 @@ func (p *wat2laWorker) buildFunc_ins(
 		len := stk.Pop(token.I32)
 		off := stk.Pop(token.I32)
 		dst := stk.Pop(token.I32)
+
+		// data 字符串绑定到 text 段, 对于一个地址
+		// 然后通过地址来初始化
+
+		// 需要实现 memcpy/memset 函数
 
 		var sb strings.Builder
 		datai := p.m.Data[i.DataIdx].Value[off:][:len]

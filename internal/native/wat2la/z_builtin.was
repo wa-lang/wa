@@ -1,3 +1,11 @@
 func $builtin.panic {
     # TODO
 }
+
+func $builtin.memcpy(dst: i64, src: i64, len: i32) {
+    # TODO
+}
+
+func $builtin.memset(dst: i64, v: int32, len: i32) {
+    # TODO
+}
