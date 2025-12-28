@@ -2,10 +2,62 @@ func $builtin.panic {
     # TODO
 }
 
+# TODO: 代码需要验证
 func $builtin.memcpy(dst: i64, src: i64, len: i32) {
-    # TODO
+    move    $t0, $a0        # 备份目标地址用于返回
+
+.L_memcpy_loop8:
+    addi.d  $t1, $zero, 8
+    blt     $a2, $t1, .L_memcpy_loop1
+    ld.d    $t2, $a1, 0     # 加载 8 字节
+    st.d    $t2, $a0, 0     # 存储 8 字节
+    addi.d  $a0, $a0, 8
+    addi.d  $a1, $a1, 8
+    addi.d  $a2, $a2, -8
+    b       .L_memcpy_loop8
+
+.L_memcpy_loop1:
+    beq     $a2, $zero, .L_memcpy_done
+    ld.b    $t2, $a1, 0
+    st.b    $t2, $a0, 0
+    addi.d  $a0, $a0, 1
+    addi.d  $a1, $a1, 1
+    addi.d  $a2, $a2, -1
+    b       .L_memcpy_loop1
+
+.L_memcpy_done:
+    move    $a0, $t0
+    jr      $ra
 }
 
+# TODO: 代码需要验证
 func $builtin.memset(dst: i64, v: int32, len: i32) {
-    # TODO
+    move    $t0, $a0        # 备份起始地址用于返回
+    # 将填充值(1字节)扩展到整个64位寄存器中
+    andi    $a1, $a1, 0xff  # 只取低8位
+    slli.d  $t1, $a1, 8
+    or      $a1, $a1, $t1   # 填充 16 位
+    slli.d  $t1, $a1, 16
+    or      $a1, $a1, $t1   # 填充 32 位
+    slli.d  $t1, $a1, 32
+    or      $a1, $a1, $t1   # 现在 $a1 包含 8 个重复的填充字节
+
+.L_memset_loop8:
+    addi.d  $t1, $zero, 8
+    blt     $a2, $t1, .L_memset_loop1 # 长度不足8字节，跳出
+    st.d    $a1, $a0, 0     # 一次存 8 字节
+    addi.d  $a0, $a0, 8     # 指针后移
+    addi.d  $a2, $a2, -8    # 长度减 8
+    b       .L_memset_loop8
+
+.L_memset_loop1:
+    beq     $a2, $zero, .L_memset_done
+    st.b    $a1, $a0, 0     # 存 1 字节
+    addi.d  $a0, $a0, 1
+    addi.d  $a2, $a2, -1
+    b       .L_memset_loop1
+
+.L_memset_done:
+    move    $a0, $t0        # 返回原始地址
+    jr      $ra
 }

@@ -35,7 +35,6 @@ func (p *wat2laWorker) buildMemory(w io.Writer) error {
 		fmt.Fprintf(w, "# name = %s\n", d.Name)
 		fmt.Fprintf(w, "global $data.%08x.offset: i64 = 0x%08x\n", i, d.Offset)
 		fmt.Fprintf(w, "global $data.%08x.data: i64 = %q\n", i, d.Value)
-
 	}
 
 	return nil

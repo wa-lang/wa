@@ -7,7 +7,7 @@ import (
 	"bytes"
 	"fmt"
 	"io"
-	"strings"
+	"math"
 
 	"wa-lang.org/wa/internal/native/abi"
 	nativeast "wa-lang.org/wa/internal/native/ast"
@@ -1471,57 +1471,91 @@ func (p *wat2laWorker) buildFunc_ins(
 	case token.INS_MEMORY_INIT:
 		i := i.(ast.Ins_MemoryInit)
 
-		len := stk.Pop(token.I32)
-		off := stk.Pop(token.I32)
-		dst := stk.Pop(token.I32)
+		len := p.fnWasmR0Base - 8*stk.Pop(token.I32)
+		off := p.fnWasmR0Base - 8*stk.Pop(token.I32)
+		dst := p.fnWasmR0Base - 8*stk.Pop(token.I32)
 
-		// data 字符串绑定到 text 段, 对于一个地址
-		// 然后通过地址来初始化
+		fmt.Fprintf(w, "    ld.d a0, fp, %d\n", dst)
+		fmt.Fprintf(w, "    ld.d a1, fp, %d\n", off)
+		fmt.Fprintf(w, "    ld.d a2, fp, %d\n", len)
 
-		// 需要实现 memcpy/memset 函数
+		dataName := fmt.Sprintf("$data.%08x.data", p.m.Data[i.DataIdx].Offset)
+		fmt.Fprintf(w, "    pcalau12i t0, %%pc_hi20(%s)\n", dataName)
+		fmt.Fprintf(w, "    addi.d    t0, t0, %%pc_lo12(%s)\n", dataName)
+		fmt.Fprintf(w, "    add.d     a1, a1, t0\n")
+		fmt.Fprintf(w, "    bl        $builtin.memcpy\n")
 
-		var sb strings.Builder
-		datai := p.m.Data[i.DataIdx].Value[off:][:len]
-		for _, x := range datai {
-			sb.WriteString(fmt.Sprintf("\\x%02x", x))
-		}
-
-		fmt.Fprintf(w, "%smemcpy(&memory[R%d.i32], (void*)(\"%s\"), %d); // %s\n",
-			indent, dst, sb.String(), len,
-			insString(i),
-		)
 	case token.INS_MEMORY_COPY:
-		len := stk.Pop(token.I32)
-		src := stk.Pop(token.I32)
-		dst := stk.Pop(token.I32)
-		fmt.Fprintf(w, "%smemcpy(&memory[R%d.i32], &memory[R%d.i32], R%d.i32); // %s\n",
-			indent, dst, src, len,
-			insString(i),
-		)
+		len := p.fnWasmR0Base - 8*stk.Pop(token.I32)
+		src := p.fnWasmR0Base - 8*stk.Pop(token.I32)
+		dst := p.fnWasmR0Base - 8*stk.Pop(token.I32)
+
+		fmt.Fprintf(w, "    ld.d a0, fp, %d\n", dst)
+		fmt.Fprintf(w, "    ld.d a1, fp, %d\n", src)
+		fmt.Fprintf(w, "    ld.d a2, fp, %d\n", len)
+		fmt.Fprintf(w, "    bl   $builtin.memcpy\n")
+
 	case token.INS_MEMORY_FILL:
-		len := stk.Pop(token.I32)
-		val := stk.Pop(token.I32)
-		dst := stk.Pop(token.I32)
-		fmt.Fprintf(w, "%smemset(&memory[R%d.i32], R%d.i32, R%d.i32); // %s\n",
-			indent, dst, val, len,
-			insString(i),
-		)
+		len := p.fnWasmR0Base - 8*stk.Pop(token.I32)
+		val := p.fnWasmR0Base - 8*stk.Pop(token.I32)
+		dst := p.fnWasmR0Base - 8*stk.Pop(token.I32)
+
+		fmt.Fprintf(w, "    ld.d a0, fp, %d\n", dst)
+		fmt.Fprintf(w, "    ld.w a1, fp, %d\n", val)
+		fmt.Fprintf(w, "    ld.d a2, fp, %d\n", len)
+		fmt.Fprintf(w, "    bl   $builtin.memset\n")
+
 	case token.INS_I32_CONST:
 		i := i.(ast.Ins_I32Const)
-		sp0 := stk.Push(token.I32)
-		fmt.Fprintf(w, "%sR%d.i32 = %d; // %s\n", indent, sp0, i.X, insString(i))
+		p.registerConst(uint64(i.X))
+		gName := p.getConstGlobalName(uint64(i.X))
+
+		sp0 := p.fnWasmR0Base - 8*stk.Push(token.I32)
+
+		fmt.Fprintf(w, "    pcalau12i t0, %%pc_hi20(%s)\n", gName)
+		fmt.Fprintf(w, "    addi.d    t0, t0, %%pc_lo12(%s)\n", gName)
+		fmt.Fprintf(w, "    ld.w      t0, t0, 0\n")
+		fmt.Fprintf(w, "    st.w      t0, fp, %d\n", sp0)
+
 	case token.INS_I64_CONST:
 		i := i.(ast.Ins_I64Const)
-		sp0 := stk.Push(token.I64)
-		fmt.Fprintf(w, "%sR%d.i64 = %d; // %s\n", indent, sp0, i.X, insString(i))
+
+		p.registerConst(uint64(i.X))
+		gName := p.getConstGlobalName(uint64(i.X))
+
+		sp0 := p.fnWasmR0Base - 8*stk.Push(token.I64)
+
+		fmt.Fprintf(w, "    pcalau12i t0, %%pc_hi20(%s)\n", gName)
+		fmt.Fprintf(w, "    addi.d    t0, t0, %%pc_lo12(%s)\n", gName)
+		fmt.Fprintf(w, "    ld.d      t0, t0, 0\n")
+		fmt.Fprintf(w, "    st.d      t0, fp, %d\n", sp0)
+
 	case token.INS_F32_CONST:
 		i := i.(ast.Ins_F32Const)
-		sp0 := stk.Push(token.F32)
-		fmt.Fprintf(w, "%sR%d.f32 = %f; // %s\n", indent, sp0, i.X, insString(i))
+
+		p.registerConst(uint64(math.Float32bits(i.X)))
+		gName := p.getConstGlobalName(uint64(i.X))
+
+		sp0 := p.fnWasmR0Base - 8*stk.Push(token.F32)
+
+		fmt.Fprintf(w, "    pcalau12i t0, %%pc_hi20(%s)\n", gName)
+		fmt.Fprintf(w, "    addi.d    t0, t0, %%pc_lo12(%s)\n", gName)
+		fmt.Fprintf(w, "    fld.s     t0, t0, 0\n")
+		fmt.Fprintf(w, "    fst.s     t0, fp, %d\n", sp0)
+
 	case token.INS_F64_CONST:
 		i := i.(ast.Ins_F64Const)
-		sp0 := stk.Push(token.F64)
-		fmt.Fprintf(w, "%sR%d.f64 = %f; // %s\n", indent, sp0, i.X, insString(i))
+
+		p.registerConst(uint64(math.Float64bits(i.X)))
+		gName := p.getConstGlobalName(uint64(i.X))
+
+		sp0 := p.fnWasmR0Base - 8*stk.Push(token.F64)
+
+		fmt.Fprintf(w, "    pcalau12i t0, %%pc_hi20(%s)\n", gName)
+		fmt.Fprintf(w, "    addi.d    t0, t0, %%pc_lo12(%s)\n", gName)
+		fmt.Fprintf(w, "    fld.d     t0, t0, 0\n")
+		fmt.Fprintf(w, "    fst.d     t0, fp, %d\n", sp0)
+
 	case token.INS_I32_EQZ:
 		sp0 := stk.Pop(token.I32)
 		ret0 := stk.Push(token.I32)

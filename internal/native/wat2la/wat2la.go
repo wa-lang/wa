@@ -50,6 +50,8 @@ type wat2laWorker struct {
 	scopeResults    [][]wattoken.Token // 对应块的返回值数量和类型
 	fnWasmR0Base    int                // 当前函数的WASM栈R0位置
 
+	constLitMap map[uint64]uint64 // 常量列表
+
 	dataSection []*ast.Global
 	textSection []*ast.Func
 
@@ -93,6 +95,8 @@ func (p *wat2laWorker) BuildProgram() (code []byte, err error) {
 	p.dataSection = p.dataSection[:0]
 	p.textSection = p.textSection[:0]
 
+	p.constLitMap = map[uint64]uint64{}
+
 	var out bytes.Buffer
 
 	fmt.Fprintf(&out, "# 自动生成的代码, 不要手动修改!!!\n\n")
@@ -114,6 +118,11 @@ func (p *wat2laWorker) BuildProgram() (code []byte, err error) {
 	}
 
 	if err := p.buildFuncs(&out); err != nil {
+		return nil, err
+	}
+
+	// 生成常量
+	if err := p.buildConstList(&out); err != nil {
 		return nil, err
 	}
 
