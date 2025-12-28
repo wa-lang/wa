@@ -61,3 +61,11 @@ func $builtin.memset(dst: i64, v: int32, len: i32) {
     move    $a0, $t0        # 返回原始地址
     jr      $ra
 }
+
+func $builtin.pcnt.w(x: i32) => i32 {
+    # TODO
+}
+
+func $builtin.pcnt.d(x: i64) => i32 {
+    # TODO
+}
