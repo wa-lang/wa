@@ -1125,49 +1125,63 @@ func (p *wat2laWorker) buildFunc_ins(
 	case token.INS_LOCAL_GET:
 		i := i.(ast.Ins_LocalGet)
 		xType := p.findLocalType(fn, i.X)
+		xOff := p.findLocalOffset(fnNative, fn, i.X)
 		ret0 := stk.Push(xType)
 		switch xType {
 		case token.I32:
-			// TODO: 需要查询到 local 的 idx
-			fmt.Fprintf(w, "%sR%d.i32 = %s; // %s\n", indent, ret0, p.findLocalName(fn, i.X), insString(i))
+			fmt.Fprintf(w, "    ld.w t0, fp, %d # %s\n", xOff, p.findLocalName(fn, i.X))
+			fmt.Fprintf(w, "    st.w t0, fp, %d # %s\n", p.fnWasmR0Base-ret0*8, p.findLocalName(fn, i.X))
 		case token.I64:
-			fmt.Fprintf(w, "%sR%d.i64 = %s; // %s\n", indent, ret0, p.findLocalName(fn, i.X), insString(i))
+			fmt.Fprintf(w, "    ld.d t0, fp, %d # %s\n", xOff, p.findLocalName(fn, i.X))
+			fmt.Fprintf(w, "    st.d t0, fp, %d # %s\n", p.fnWasmR0Base-ret0*8, p.findLocalName(fn, i.X))
 		case token.F32:
-			fmt.Fprintf(w, "%sR%d.f32 = %s; // %s\n", indent, ret0, p.findLocalName(fn, i.X), insString(i))
+			fmt.Fprintf(w, "    fld.s ft0, fp, %d # %s\n", xOff, p.findLocalName(fn, i.X))
+			fmt.Fprintf(w, "    fst.s ft0, fp, %d # %s\n", p.fnWasmR0Base-ret0*8, p.findLocalName(fn, i.X))
 		case token.F64:
-			fmt.Fprintf(w, "%sR%d.f64 = %s; // %s\n", indent, ret0, p.findLocalName(fn, i.X), insString(i))
+			fmt.Fprintf(w, "    fld.d ft0, fp, %d # %s\n", xOff, p.findLocalName(fn, i.X))
+			fmt.Fprintf(w, "    fst.d ft0, fp, %d # %s\n", p.fnWasmR0Base-ret0*8, p.findLocalName(fn, i.X))
 		default:
 			unreachable()
 		}
 	case token.INS_LOCAL_SET:
 		i := i.(ast.Ins_LocalSet)
 		xType := p.findLocalType(fn, i.X)
+		xOff := p.findLocalOffset(fnNative, fn, i.X)
 		sp0 := stk.Pop(xType)
 		switch xType {
 		case token.I32:
-			fmt.Fprintf(w, "%s%s = R%d.i32; // %s\n", indent, p.findLocalName(fn, i.X), sp0, insString(i))
+			fmt.Fprintf(w, "    ld.w t0, fp, %d # %s\n", p.fnWasmR0Base-sp0*8, p.findLocalName(fn, i.X))
+			fmt.Fprintf(w, "    st.w t0, fp, %d # %s\n", xOff, p.findLocalName(fn, i.X))
 		case token.I64:
-			fmt.Fprintf(w, "%s%s = R%d.i64; // %s\n", indent, p.findLocalName(fn, i.X), sp0, insString(i))
+			fmt.Fprintf(w, "    ld.d t0, fp, %d # %s\n", p.fnWasmR0Base-sp0*8, p.findLocalName(fn, i.X))
+			fmt.Fprintf(w, "    st.d t0, fp, %d # %s\n", xOff, p.findLocalName(fn, i.X))
 		case token.F32:
-			fmt.Fprintf(w, "%s%s = R%d.f32; // %s\n", indent, p.findLocalName(fn, i.X), sp0, insString(i))
+			fmt.Fprintf(w, "    fld.w ft0, fp, %d # %s\n", p.fnWasmR0Base-sp0*8, p.findLocalName(fn, i.X))
+			fmt.Fprintf(w, "    fst.w ft0, fp, %d # %s\n", xOff, p.findLocalName(fn, i.X))
 		case token.F64:
-			fmt.Fprintf(w, "%s%s = R%d.f64; // %s\n", indent, p.findLocalName(fn, i.X), sp0, insString(i))
+			fmt.Fprintf(w, "    fld.w ft0, fp, %d # %s\n", p.fnWasmR0Base-sp0*8, p.findLocalName(fn, i.X))
+			fmt.Fprintf(w, "    fst.w ft0, fp, %d # %s\n", xOff, p.findLocalName(fn, i.X))
 		default:
 			unreachable()
 		}
 	case token.INS_LOCAL_TEE:
 		i := i.(ast.Ins_LocalTee)
 		xType := p.findLocalType(fn, i.X)
+		xOff := p.findLocalOffset(fnNative, fn, i.X)
 		sp0 := stk.Top(xType)
 		switch xType {
 		case token.I32:
-			fmt.Fprintf(w, "%s%s = R%d.i32; // %s\n", indent, p.findLocalName(fn, i.X), sp0, insString(i))
+			fmt.Fprintf(w, "    ld.w t0, fp, %d # %s\n", p.fnWasmR0Base-sp0*8, p.findLocalName(fn, i.X))
+			fmt.Fprintf(w, "    st.w t0, fp, %d # %s\n", xOff, p.findLocalName(fn, i.X))
 		case token.I64:
-			fmt.Fprintf(w, "%s%s = R%d.i64; // %s\n", indent, p.findLocalName(fn, i.X), sp0, insString(i))
+			fmt.Fprintf(w, "    ld.d t0, fp, %d # %s\n", p.fnWasmR0Base-sp0*8, p.findLocalName(fn, i.X))
+			fmt.Fprintf(w, "    st.d t0, fp, %d # %s\n", xOff, p.findLocalName(fn, i.X))
 		case token.F32:
-			fmt.Fprintf(w, "%s%s = R%d.f32; // %s\n", indent, p.findLocalName(fn, i.X), sp0, insString(i))
+			fmt.Fprintf(w, "    fld.w ft0, fp, %d # %s\n", p.fnWasmR0Base-sp0*8, p.findLocalName(fn, i.X))
+			fmt.Fprintf(w, "    fst.w ft0, fp, %d # %s\n", xOff, p.findLocalName(fn, i.X))
 		case token.F64:
-			fmt.Fprintf(w, "%s%s = R%d.f64; // %s\n", indent, p.findLocalName(fn, i.X), sp0, insString(i))
+			fmt.Fprintf(w, "    fld.w ft0, fp, %d # %s\n", p.fnWasmR0Base-sp0*8, p.findLocalName(fn, i.X))
+			fmt.Fprintf(w, "    fst.w ft0, fp, %d # %s\n", xOff, p.findLocalName(fn, i.X))
 		default:
 			unreachable()
 		}
@@ -1177,13 +1191,29 @@ func (p *wat2laWorker) buildFunc_ins(
 		ret0 := stk.Push(xType)
 		switch xType {
 		case token.I32:
-			fmt.Fprintf(w, "%sR%d.i32 = %s; // %s\n", indent, ret0, i.X, insString(i))
+			fmt.Fprintf(w, "    # global.get %s\n", i.X)
+			fmt.Fprintf(w, "    pcalau12i t1, %%pc_hi20(%s)\n", i.X)
+			fmt.Fprintf(w, "    addi.d    t1, t1, %%pc_lo12(%s)\n", i.X)
+			fmt.Fprintf(w, "    ld.w      t0, t1, 0\n")
+			fmt.Fprintf(w, "    st.w      t0, fp, %d # %s\n", p.fnWasmR0Base-ret0*8, p.findLocalName(fn, i.X))
 		case token.I64:
-			fmt.Fprintf(w, "%sR%d.i64 = %s; // %s\n", indent, ret0, i.X, insString(i))
+			fmt.Fprintf(w, "    # global.get %s\n", i.X)
+			fmt.Fprintf(w, "    pcalau12i t1, %%pc_hi20(%s)\n", i.X)
+			fmt.Fprintf(w, "    addi.d    t1, t1, %%pc_lo12(%s)\n", i.X)
+			fmt.Fprintf(w, "    ld.d      t0, t1, 0\n")
+			fmt.Fprintf(w, "    st.d      t0, fp, %d # %s\n", p.fnWasmR0Base-ret0*8, p.findLocalName(fn, i.X))
 		case token.F32:
-			fmt.Fprintf(w, "%sR%d.f32 = %s; // %s\n", indent, ret0, i.X, insString(i))
+			fmt.Fprintf(w, "    # global.get %s\n", i.X)
+			fmt.Fprintf(w, "    pcalau12i t1, %%pc_hi20(%s)\n", i.X)
+			fmt.Fprintf(w, "    addi.d    t1, t1, %%pc_lo12(%s)\n", i.X)
+			fmt.Fprintf(w, "    fld.s     ft0, t1, 0\n")
+			fmt.Fprintf(w, "    fst.s     ft0, fp, %d # %s\n", p.fnWasmR0Base-ret0*8, p.findLocalName(fn, i.X))
 		case token.F64:
-			fmt.Fprintf(w, "%sR%d.f64 = %s; // %s\n", indent, ret0, i.X, insString(i))
+			fmt.Fprintf(w, "    # global.get %s\n", i.X)
+			fmt.Fprintf(w, "    pcalau12i t1, %%pc_hi20(%s)\n", i.X)
+			fmt.Fprintf(w, "    addi.d    t1, t1, %%pc_lo12(%s)\n", i.X)
+			fmt.Fprintf(w, "    fld.d     ft0, t1, 0\n")
+			fmt.Fprintf(w, "    fst.d     ft0, fp, %d # %s\n", p.fnWasmR0Base-ret0*8, p.findLocalName(fn, i.X))
 		default:
 			unreachable()
 		}
@@ -1193,24 +1223,52 @@ func (p *wat2laWorker) buildFunc_ins(
 		sp0 := stk.Pop(xType)
 		switch xType {
 		case token.I32:
-			fmt.Fprintf(w, "%s%s = R%d.i32; // %s\n", indent, i.X, sp0, insString(i))
+			fmt.Fprintf(w, "    # global.set %s\n", i.X)
+			fmt.Fprintf(w, "    pcalau12i t1, %%pc_hi20(%s)\n", i.X)
+			fmt.Fprintf(w, "    addi.d    t1, t1, %%pc_lo12(%s)\n", i.X)
+			fmt.Fprintf(w, "    ld.w      t0, fp, %d\n", p.fnWasmR0Base-sp0*8)
+			fmt.Fprintf(w, "    st.w      t0, t1, 0\n")
 		case token.I64:
-			fmt.Fprintf(w, "%s%s = R%d.i64; // %s\n", indent, i.X, sp0, insString(i))
+			fmt.Fprintf(w, "    # global.set %s\n", i.X)
+			fmt.Fprintf(w, "    pcalau12i t1, %%pc_hi20(%s)\n", i.X)
+			fmt.Fprintf(w, "    addi.d    t1, t1, %%pc_lo12(%s)\n", i.X)
+			fmt.Fprintf(w, "    ld.d      t0, fp, %d\n", p.fnWasmR0Base-sp0*8)
+			fmt.Fprintf(w, "    st.d      t0, t1, 0\n")
 		case token.F32:
-			fmt.Fprintf(w, "%s%s = R%d.f32; // %s\n", indent, i.X, sp0, insString(i))
+			fmt.Fprintf(w, "    # global.set %s\n", i.X)
+			fmt.Fprintf(w, "    pcalau12i t1, %%pc_hi20(%s)\n", i.X)
+			fmt.Fprintf(w, "    addi.d    t1, t1, %%pc_lo12(%s)\n", i.X)
+			fmt.Fprintf(w, "    fld.s     ft0, fp, %d\n", p.fnWasmR0Base-sp0*8)
+			fmt.Fprintf(w, "    fst.s     ft0, t1, 0\n")
 		case token.F64:
-			fmt.Fprintf(w, "%s%s = R%d.f64; // %s\n", indent, i.X, sp0, insString(i))
+			fmt.Fprintf(w, "    # global.set %s\n", i.X)
+			fmt.Fprintf(w, "    pcalau12i t1, %%pc_hi20(%s)\n", i.X)
+			fmt.Fprintf(w, "    addi.d    t1, t1, %%pc_lo12(%s)\n", i.X)
+			fmt.Fprintf(w, "    fld.d     ft0, fp, %d\n", p.fnWasmR0Base-sp0*8)
+			fmt.Fprintf(w, "    fst.d     ft0, t1, 0\n")
 		default:
 			unreachable()
 		}
 	case token.INS_TABLE_GET:
 		sp0 := stk.Pop(token.I32)
 		ret0 := stk.Push(token.FUNCREF) // funcref
-		fmt.Fprintf(w, "%sR%d.ref = table[R%d.i32]; // %s\n", indent, ret0, sp0, insString(i))
+		fmt.Fprintf(w, "    # table.get\n")
+		fmt.Fprintf(w, "    pcalau12i t1, %%pc_hi20(%s)\n", "table")
+		fmt.Fprintf(w, "    addi.d    t1, t1, %%pc_lo12(%s)\n", "table")
+		fmt.Fprintf(w, "    ld.w      t0, fp, %d\n", p.fnWasmR0Base-sp0*8)
+		fmt.Fprintf(w, "    add.d     t0, t0, t1\n")
+		fmt.Fprintf(w, "    ld.w      t0, t0, 0\n")
+		fmt.Fprintf(w, "    st.w      t0, fp, %d\n", p.fnWasmR0Base-ret0*8)
 	case token.INS_TABLE_SET:
 		sp0 := stk.Pop(token.FUNCREF) // funcref
 		sp1 := stk.Pop(token.I32)
-		fmt.Fprintf(w, "%stable[R%d.i32] = R%d.ref; // %s\n", indent, sp1, sp0, insString(i))
+		fmt.Fprintf(w, "    # table.get\n")
+		fmt.Fprintf(w, "    pcalau12i t1, %%pc_hi20(%s)\n", "table")
+		fmt.Fprintf(w, "    addi.d    t1, t1, %%pc_lo12(%s)\n", "table")
+		fmt.Fprintf(w, "    ld.w      t0, fp, %d\n", p.fnWasmR0Base-sp1*8)
+		fmt.Fprintf(w, "    add.d     t0, t0, t1\n")
+		fmt.Fprintf(w, "    ld.w      t1, fp, %d\n", p.fnWasmR0Base-sp0*8)
+		fmt.Fprintf(w, "    st.w      t1, t0, 0\n")
 	case token.INS_I32_LOAD:
 		i := i.(ast.Ins_I32Load)
 		if p.m.Memory.AddrType == token.I32 {
