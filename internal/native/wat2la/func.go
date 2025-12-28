@@ -249,8 +249,9 @@ func (p *wat2laWorker) buildFunc_body(w io.Writer, fn *ast.Func) error {
 
 	// WASM 栈的开始位置
 	{
+		// WASM 栈底第一个元素相对于 FP 的偏移位置, 每个元素 8 字节
 		n := len(fnNative.Type.Args) + len(fnNative.Type.Return) + len(fnNative.Body.Locals)
-		p.fnWasmR0Base = (n + 2 + 1) * 8
+		p.fnWasmR0Base = 0 - (n+2+1)*8
 	}
 
 	// 至少要有一个指令
@@ -588,7 +589,9 @@ func (p *wat2laWorker) buildFunc_ins(
 		currentScopeStackBase := p.scopeStackBases[len(p.scopeLabels)-1]
 
 		sp0 := stk.Pop(token.I32)
-		fmt.Fprintf(w, "%sswitch(R%d.i32) {\n", indent, sp0)
+
+		fmt.Fprintf(w, "    # br_table\n")
+		fmt.Fprintf(w, "    ld.w t0, fp, %d\n", p.fnWasmR0Base-sp0*8)
 		{
 			// 当前block的返回值位置是相同的, 只能统一取一次
 			var retIdxList = make([]int, len(defaultScopeResults))
@@ -621,19 +624,23 @@ func (p *wat2laWorker) buildFunc_ins(
 					// 如果返回值位置和目标block的base不一致则需要逐个复制
 					if firstResultOffset > destScopeStackBase {
 						// 返回值是逆序出栈
-						fmt.Fprintf(w, "%s// copy br %s result\n", indent, labelName)
+						fmt.Fprintf(w, "%s# copy br_table %s result\n", indent, labelName)
 						for i := 0; i < len(destScopeResults); i++ {
 							xType := destScopeResults[i]
 							reti := retIdxList[i]
 							switch xType {
 							case token.I32:
-								fmt.Fprintf(w, "%sR%d.i32 = R%d.i32;\n", indent, destScopeStackBase+i, reti)
+								fmt.Fprintf(w, "    ld.w t1, fp, %d;\n", p.fnWasmR0Base-reti*8)
+								fmt.Fprintf(w, "    st.w t1, fp, %d;\n", p.fnWasmR0Base-(destScopeStackBase+i)*8)
 							case token.I64:
-								fmt.Fprintf(w, "%sR%d.i64 = R%d.i64;\n", indent, destScopeStackBase+i, reti)
+								fmt.Fprintf(w, "    ld.d t1, fp, %d;\n", p.fnWasmR0Base-reti*8)
+								fmt.Fprintf(w, "    st.d t1, fp, %d;\n", p.fnWasmR0Base-(destScopeStackBase+i)*8)
 							case token.F32:
-								fmt.Fprintf(w, "%sR%d.f32 = R%d.f32;\n", indent, destScopeStackBase+i, reti)
+								fmt.Fprintf(w, "    fld.w t1, fp, %d;\n", p.fnWasmR0Base-reti*8)
+								fmt.Fprintf(w, "    fst.w t1, fp, %d;\n", p.fnWasmR0Base-(destScopeStackBase+i)*8)
 							case token.F64:
-								fmt.Fprintf(w, "%sR%d.f64 = R%d.f64;\n", indent, destScopeStackBase+i, reti)
+								fmt.Fprintf(w, "    fld.d t1, fp, %d;\n", p.fnWasmR0Base-reti*8)
+								fmt.Fprintf(w, "    fst.d t1, fp, %d;\n", p.fnWasmR0Base-(destScopeStackBase+i)*8)
 							default:
 								unreachable()
 							}
@@ -641,15 +648,14 @@ func (p *wat2laWorker) buildFunc_ins(
 					}
 				}
 
-				if k == len(i.XList)-1 {
-					assert(labelName == defaultLabelName)
-					fmt.Fprintf(w, "%sdefault: goto L_%s_next;\n",
-						indent, defaultLabelName,
-					)
+				if k < len(i.XList)-1 {
+					fmt.Fprintf(w, "    # br_table case %d\n", k)
+					fmt.Fprintf(w, "    ld.w t1, zero, %d;\n", k)
+					fmt.Fprintf(w, "    bne  t0, t1 L.%s.next\n", labelName)
 				} else {
-					fmt.Fprintf(w, "%scase %d: goto L_%s_next;\n",
-						indent, k, labelName,
-					)
+					assert(labelName == defaultLabelName)
+					fmt.Fprintf(w, "    # br_table default\n")
+					fmt.Fprintf(w, "    b L.%s.next;\n", defaultLabelName)
 				}
 			}
 		}
@@ -665,7 +671,7 @@ func (p *wat2laWorker) buildFunc_ins(
 		// 中间栈帧的数据会在外层block指令时处理
 		assert(stk.Len() == currentScopeStackBase)
 
-		fmt.Fprintf(w, "%s}\n", indent)
+		fmt.Fprintf(w, "    # br_table end\n")
 
 	case token.INS_RETURN:
 		switch len(fn.Type.Results) {
@@ -722,7 +728,38 @@ func (p *wat2laWorker) buildFunc_ins(
 		i := i.(ast.Ins_Call)
 
 		fnCallType := p.findFuncType(i.X)
-		fnCallCRetType := fnCallType
+
+		// 构建被调用函数的栈帧信息
+		fnCallNative := &nativeast.Func{
+			Name: i.X,
+			Type: &nativeast.FuncType{
+				Args:   make([]*nativeast.Local, len(fnCallType.Params)),
+				Return: make([]*nativeast.Local, len(fnCallType.Results)),
+			},
+			Body: &nativeast.FuncBody{
+				// 不需要局部变量信息
+			},
+		}
+		for i, arg := range fnCallType.Params {
+			fnCallNative.Type.Args[i] = &nativeast.Local{
+				Name: arg.Name,
+				Type: wat2nativeType(arg.Type),
+				Cap:  1,
+			}
+		}
+		for i, typ := range fnCallType.Results {
+			fnCallNative.Type.Return[i] = &nativeast.Local{
+				Name: fmt.Sprintf("$ret.%d", i),
+				Type: wat2nativeType(typ),
+				Cap:  1,
+			}
+		}
+
+		// 模拟构建函数栈帧
+		// 后面需要根据参数是否走寄存器传递生成相关的入口代码和返回代码
+		if err := astutil.BuildFuncFrame(abi.LOONG64, fnCallNative); err != nil {
+			return err
+		}
 
 		// 参数列表
 		// 出栈的顺序相反
@@ -732,76 +769,169 @@ func (p *wat2laWorker) buildFunc_ins(
 			argList[k] = stk.Pop(x.Type)
 		}
 
-		// 需要定义临时变量保存返回值
-		switch len(fnCallType.Results) {
-		case 0:
-			fmt.Fprintf(w, "%s%s(", indent, i.X)
-		case 1:
-			ret0 := stk.Push(fnCallType.Results[0])
-			switch fnCallType.Results[0] {
-			case token.I32:
-				fmt.Fprintf(w, "%sR%d.i32 = %s(", indent, ret0, i.X)
-			case token.I64:
-				fmt.Fprintf(w, "%sR%d.i64 = %s(", indent, ret0, i.X)
-			case token.F32:
-				fmt.Fprintf(w, "%sR%d.f32 = %s(", indent, ret0, i.X)
-			case token.F64:
-				fmt.Fprintf(w, "%sR%d.f64 = %s(", indent, ret0, i.X)
-			default:
-				unreachable()
-			}
-		}
-
-		if len(fnCallType.Results) > 1 {
-			fmt.Fprintf(w, "%s{\n", indent)
-			fmt.Fprintf(w, "%s  %s ret = %s(", indent, fnCallCRetType, i.X)
-		}
-
+		// 准备调用参数
 		for k, x := range fnCallType.Params {
-			if k > 0 {
-				fmt.Fprintf(w, ", ")
-			}
 			switch x.Type {
 			case token.I32:
-				fmt.Fprintf(w, "R%d.i32", argList[k])
+				if arg := fnCallNative.Type.Args[k]; arg.Reg != 0 {
+					fmt.Fprintf(w, "    ld.w %s, fp, %d",
+						loong64.RegString(arg.Reg),
+						p.fnWasmR0Base+argList[k]*8,
+					)
+				} else {
+					fmt.Fprintf(w, "    ld.w t1, fp, %d",
+						p.fnWasmR0Base+argList[k]*8,
+					)
+					fmt.Fprintf(w, "    st.w t1, fp, %d",
+						arg.Off,
+					)
+				}
 			case token.I64:
-				fmt.Fprintf(w, "R%d.i64", argList[k])
+				if arg := fnCallNative.Type.Args[k]; arg.Reg != 0 {
+					fmt.Fprintf(w, "    ld.d %s, fp, %d",
+						loong64.RegString(arg.Reg),
+						p.fnWasmR0Base+argList[k]*8,
+					)
+				} else {
+					fmt.Fprintf(w, "    ld.d t1, fp, %d",
+						p.fnWasmR0Base+argList[k]*8,
+					)
+					fmt.Fprintf(w, "    st.d t1, fp, %d",
+						arg.Off,
+					)
+				}
 			case token.F32:
-				fmt.Fprintf(w, "R%d.f32", argList[k])
+				if arg := fnCallNative.Type.Args[k]; arg.Reg != 0 {
+					fmt.Fprintf(w, "    fld.s %s, fp, %d",
+						loong64.RegString(arg.Reg),
+						p.fnWasmR0Base+argList[k]*8,
+					)
+				} else {
+					fmt.Fprintf(w, "    fld.s t1, fp, %d",
+						p.fnWasmR0Base+argList[k]*8,
+					)
+					fmt.Fprintf(w, "    fst.s t1, fp, %d",
+						arg.Off,
+					)
+				}
 			case token.F64:
-				fmt.Fprintf(w, "R%d.f64", argList[k])
+				if arg := fnCallNative.Type.Args[k]; arg.Reg != 0 {
+					fmt.Fprintf(w, "    fld.d %s, fp, %d",
+						loong64.RegString(arg.Reg),
+						p.fnWasmR0Base+argList[k]*8,
+					)
+				} else {
+					fmt.Fprintf(w, "    fld.d t1, fp, %d",
+						p.fnWasmR0Base+argList[k]*8,
+					)
+					fmt.Fprintf(w, "    fst.d t1, fp, %d",
+						arg.Off,
+					)
+				}
 			default:
 				unreachable()
 			}
 		}
-		fmt.Fprintf(w, "); // %s\n", insString(i))
+		fmt.Fprintf(w, "    bl %s", i.X)
 
-		// 复制到当前stk
-		if len(fnCallType.Results) > 1 {
+		// 提取返回值
+		if len(fnCallNative.Type.Return) > 1 && fnCallNative.Type.Return[1].Reg == 0 {
+			// 走栈返回结果, a0 是地址
+			// 根据 ABI 规范获取返回值, 再保存到 WASM 栈中
 			for k, retType := range fnCallType.Results {
 				reti := stk.Push(retType)
 				switch retType {
 				case token.I32:
-					fmt.Fprintf(w, "%s  R%d.i32 = ret.R%d;\n", indent, reti, k)
+					fmt.Fprintf(w, "    ld.w t0, a0, %d\n", k*8)
+					fmt.Fprintf(w, "    st.w t0, fp, %d\n", p.fnWasmR0Base-reti*8)
 				case token.I64:
-					fmt.Fprintf(w, "%s  R%d.i64 = ret.R%d;\n", indent, reti, k)
+					fmt.Fprintf(w, "    ld.d t0, a0, %d\n", k*8)
+					fmt.Fprintf(w, "    st.d t0, fp, %d\n", p.fnWasmR0Base-reti*8)
 				case token.F32:
-					fmt.Fprintf(w, "%s  R%d.f32 = ret.R%d;\n", indent, reti, k)
+					fmt.Fprintf(w, "    fld.s t0, a0, %d\n", k*8)
+					fmt.Fprintf(w, "    fst.s t0, fp, %d\n", p.fnWasmR0Base-reti*8)
 				case token.F64:
-					fmt.Fprintf(w, "%s  R%d.f64 = ret.R%d;\n", indent, reti, k)
+					fmt.Fprintf(w, "    fld.d t0, a0, %d\n", k*8)
+					fmt.Fprintf(w, "    fst.d t0, fp, %d\n", p.fnWasmR0Base-reti*8)
 				default:
 					unreachable()
 				}
 			}
-			fmt.Fprintf(w, "%s}\n", indent)
+		} else {
+			// 走寄存器返回
+			for k, retType := range fnCallType.Results {
+				retNative := fnCallNative.Type.Return[k]
+				assert(retNative.Reg != 0)
+
+				reti := stk.Push(retType)
+				switch retType {
+				case token.I32:
+					fmt.Fprintf(w, "    st.w %s, fp, %d\n",
+						loong64.RegString(retNative.Reg),
+						p.fnWasmR0Base-reti*8,
+					)
+				case token.I64:
+					fmt.Fprintf(w, "    st.d %s, fp, %d\n",
+						loong64.RegString(retNative.Reg),
+						p.fnWasmR0Base-reti*8,
+					)
+				case token.F32:
+					fmt.Fprintf(w, "    fst.s %s, fp, %d\n",
+						loong64.RegString(retNative.Reg),
+						p.fnWasmR0Base-reti*8,
+					)
+				case token.F64:
+					fmt.Fprintf(w, "    fst.d %s, fp, %d\n",
+						loong64.RegString(retNative.Reg),
+						p.fnWasmR0Base-reti*8,
+					)
+				default:
+					unreachable()
+				}
+			}
 		}
 
 	case token.INS_CALL_INDIRECT:
 		i := i.(ast.Ins_CallIndirect)
 
-		sp0 := stk.Pop(token.I32)
 		fnCallType := p.findType(i.TypeIdx)
-		fnCallCRetType := fnCallType
+
+		// 构建被调用函数的栈帧信息
+		fnCallNative := &nativeast.Func{
+			Name: "", // 间接调用, 没有名字(TODO: 可以尝试根据地址查询名字)
+			Type: &nativeast.FuncType{
+				Args:   make([]*nativeast.Local, len(fnCallType.Params)),
+				Return: make([]*nativeast.Local, len(fnCallType.Results)),
+			},
+			Body: &nativeast.FuncBody{
+				// 不需要局部变量信息
+			},
+		}
+		for i, arg := range fnCallType.Params {
+			fnCallNative.Type.Args[i] = &nativeast.Local{
+				Name: arg.Name,
+				Type: wat2nativeType(arg.Type),
+				Cap:  1,
+			}
+		}
+		for i, typ := range fnCallType.Results {
+			fnCallNative.Type.Return[i] = &nativeast.Local{
+				Name: fmt.Sprintf("$ret.%d", i),
+				Type: wat2nativeType(typ),
+				Cap:  1,
+			}
+		}
+
+		// 模拟构建函数栈帧
+		// 后面需要根据参数是否走寄存器传递生成相关的入口代码和返回代码
+		if err := astutil.BuildFuncFrame(abi.LOONG64, fnCallNative); err != nil {
+			return err
+		}
+
+		// 获取函数地址
+		sp0 := stk.Pop(token.I32)
+		fnRegName := "t2"
+		fmt.Fprintf(w, "    ld.d %s, fp, %d\n", fnRegName, p.fnWasmR0Base-sp0*8)
 
 		// 参数列表
 		// 出栈的顺序相反
@@ -811,137 +941,131 @@ func (p *wat2laWorker) buildFunc_ins(
 			argList[k] = stk.Pop(x.Type)
 		}
 
-		// 生成要调用函数的类型
-		fmt.Fprintf(w, "%s{\n", indent)
-		{
-			if len(fnCallType.Results) > 1 {
-				fmt.Fprintf(w, "%s  typedef struct {", indent)
-				for i := 0; i < len(fnCallType.Results); i++ {
-					if i > 0 {
-						fmt.Fprintf(w, " ")
-					}
-					switch fnCallType.Results[i] {
-					case token.I32:
-						fmt.Fprintf(w, "int32_t R%d;", i)
-					case token.I64:
-						fmt.Fprintf(w, "int64_t R%d;", i)
-					case token.F32:
-						fmt.Fprintf(w, "float R%d;", i)
-					case token.F64:
-						fmt.Fprintf(w, "double R%d;", i)
-					default:
-						unreachable()
-					}
+		// 准备调用参数
+		for k, x := range fnCallType.Params {
+			switch x.Type {
+			case token.I32:
+				if arg := fnCallNative.Type.Args[k]; arg.Reg != 0 {
+					fmt.Fprintf(w, "    ld.w %s, fp, %d",
+						loong64.RegString(arg.Reg),
+						p.fnWasmR0Base+argList[k]*8,
+					)
+				} else {
+					fmt.Fprintf(w, "    ld.w t1, fp, %d",
+						p.fnWasmR0Base+argList[k]*8,
+					)
+					fmt.Fprintf(w, "    st.w t1, fp, %d",
+						arg.Off,
+					)
 				}
-				fmt.Fprintf(w, "} %s;\n", fnCallCRetType)
-			}
-
-			fmt.Fprintf(w, "%s  typedef %s (*fn_t)(", indent, fnCallCRetType)
-			if len(fnCallType.Params) > 0 {
-				for i, x := range fnCallType.Params {
-					var argName string
-					if x.Name != "" {
-						argName = x.Name
-					} else {
-						argName = fmt.Sprintf("arg%d", i)
-					}
-					if i > 0 {
-						fmt.Fprintf(w, ", ")
-					}
-					switch x.Type {
-					case token.I32:
-						fmt.Fprintf(w, "int32_t %s", argName)
-					case token.I64:
-						fmt.Fprintf(w, "int64_t %s", argName)
-					case token.F32:
-						fmt.Fprintf(w, "float %s", argName)
-					case token.F64:
-						fmt.Fprintf(w, "double %s", argName)
-					default:
-						unreachable()
-					}
+			case token.I64:
+				if arg := fnCallNative.Type.Args[k]; arg.Reg != 0 {
+					fmt.Fprintf(w, "    ld.d %s, fp, %d",
+						loong64.RegString(arg.Reg),
+						p.fnWasmR0Base+argList[k]*8,
+					)
+				} else {
+					fmt.Fprintf(w, "    ld.d t1, fp, %d",
+						p.fnWasmR0Base+argList[k]*8,
+					)
+					fmt.Fprintf(w, "    st.d t1, fp, %d",
+						arg.Off,
+					)
 				}
-			}
-			fmt.Fprintf(w, ");\n")
-
-			// 调用函数
-			switch len(fnCallType.Results) {
-			case 0:
-				fmt.Fprintf(w, "%s  ((fn_t)(table[R%d.i32]))(",
-					indent, sp0,
-				)
-			case 1:
-				ret0 := stk.Push(fnCallType.Results[0])
-				switch fnCallType.Results[0] {
-				case token.I32:
-					fmt.Fprintf(w, "%s  R%d.i32 = ((fn_t)(table[R%d.i32]))(",
-						indent, ret0, sp0,
+			case token.F32:
+				if arg := fnCallNative.Type.Args[k]; arg.Reg != 0 {
+					fmt.Fprintf(w, "    fld.s %s, fp, %d",
+						loong64.RegString(arg.Reg),
+						p.fnWasmR0Base+argList[k]*8,
 					)
-				case token.I64:
-					fmt.Fprintf(w, "%s  R%d.i64 = ((fn_t)(table[R%d.i32]))(",
-						indent, ret0, sp0,
+				} else {
+					fmt.Fprintf(w, "    fld.s t1, fp, %d",
+						p.fnWasmR0Base+argList[k]*8,
 					)
-				case token.F32:
-					fmt.Fprintf(w, "%s  R%d.f32 = ((fn_t)(table[R%d.i32]))(",
-						indent, ret0, sp0,
+					fmt.Fprintf(w, "    fst.s t1, fp, %d",
+						arg.Off,
 					)
-				case token.F64:
-					fmt.Fprintf(w, "%s  R%d.f64 = ((fn_t)(table[R%d.i32]))(",
-						indent, ret0, sp0,
-					)
-				default:
-					unreachable()
 				}
-
+			case token.F64:
+				if arg := fnCallNative.Type.Args[k]; arg.Reg != 0 {
+					fmt.Fprintf(w, "    fld.d %s, fp, %d",
+						loong64.RegString(arg.Reg),
+						p.fnWasmR0Base+argList[k]*8,
+					)
+				} else {
+					fmt.Fprintf(w, "    fld.d t1, fp, %d",
+						p.fnWasmR0Base+argList[k]*8,
+					)
+					fmt.Fprintf(w, "    fst.d t1, fp, %d",
+						arg.Off,
+					)
+				}
 			default:
-				fmt.Fprintf(w, "%s  %s ret = ((fn_t)(table[R%d.i32]))(",
-					indent, fnCallCRetType, sp0,
-				)
+				unreachable()
 			}
-			for i, x := range fnCallType.Params {
-				if i > 0 {
-					fmt.Fprintf(w, ", ")
-				}
-				argi := argList[i]
-				switch x.Type {
+		}
+		fmt.Fprintf(w, "    bl %s\n", fnRegName)
+
+		// 提取返回值
+		if len(fnCallNative.Type.Return) > 1 && fnCallNative.Type.Return[1].Reg == 0 {
+			// 走栈返回结果, a0 是地址
+			// 根据 ABI 规范获取返回值, 再保存到 WASM 栈中
+			for k, retType := range fnCallType.Results {
+				reti := stk.Push(retType)
+				switch retType {
 				case token.I32:
-					fmt.Fprintf(w, "R%d.i32", argi)
+					fmt.Fprintf(w, "    ld.w t0, a0, %d\n", k*8)
+					fmt.Fprintf(w, "    st.w t0, fp, %d\n", p.fnWasmR0Base-reti*8)
 				case token.I64:
-					fmt.Fprintf(w, "R%d.i64", argi)
+					fmt.Fprintf(w, "    ld.d t0, a0, %d\n", k*8)
+					fmt.Fprintf(w, "    st.d t0, fp, %d\n", p.fnWasmR0Base-reti*8)
 				case token.F32:
-					fmt.Fprintf(w, "R%d.f32", argi)
+					fmt.Fprintf(w, "    fld.s t0, a0, %d\n", k*8)
+					fmt.Fprintf(w, "    fst.s t0, fp, %d\n", p.fnWasmR0Base-reti*8)
 				case token.F64:
-					fmt.Fprintf(w, "R%d.f64", argi)
+					fmt.Fprintf(w, "    fld.d t0, a0, %d\n", k*8)
+					fmt.Fprintf(w, "    fst.d t0, fp, %d\n", p.fnWasmR0Base-reti*8)
 				default:
 					unreachable()
 				}
 			}
-			fmt.Fprintf(w, "); // %s\n", insString(i))
+		} else {
+			// 走寄存器返回
+			for k, retType := range fnCallType.Results {
+				retNative := fnCallNative.Type.Return[k]
+				assert(retNative.Reg != 0)
 
-			// 保存返回值
-			if len(fnCallType.Results) > 1 {
-				for k, retType := range fnCallType.Results {
-					reti := stk.Push(retType)
-					switch retType {
-					case token.I32:
-						fmt.Fprintf(w, "%s  R%d.i32 = ret.R%d;\n", indent, reti, k)
-					case token.I64:
-						fmt.Fprintf(w, "%s  R%d.i64 = ret.R%d;\n", indent, reti, k)
-					case token.F32:
-						fmt.Fprintf(w, "%s  R%d.f32 = ret.R%d;\n", indent, reti, k)
-					case token.F64:
-						fmt.Fprintf(w, "%s  R%d.f64 = ret.R%d;\n", indent, reti, k)
-					default:
-						unreachable()
-					}
+				reti := stk.Push(retType)
+				switch retType {
+				case token.I32:
+					fmt.Fprintf(w, "    st.w %s, fp, %d\n",
+						loong64.RegString(retNative.Reg),
+						p.fnWasmR0Base-reti*8,
+					)
+				case token.I64:
+					fmt.Fprintf(w, "    st.d %s, fp, %d\n",
+						loong64.RegString(retNative.Reg),
+						p.fnWasmR0Base-reti*8,
+					)
+				case token.F32:
+					fmt.Fprintf(w, "    fst.s %s, fp, %d\n",
+						loong64.RegString(retNative.Reg),
+						p.fnWasmR0Base-reti*8,
+					)
+				case token.F64:
+					fmt.Fprintf(w, "    fst.d %s, fp, %d\n",
+						loong64.RegString(retNative.Reg),
+						p.fnWasmR0Base-reti*8,
+					)
+				default:
+					unreachable()
 				}
 			}
 		}
-		fmt.Fprintf(w, "%s}\n", indent)
 
 	case token.INS_DROP:
 		sp0 := stk.DropAny()
-		fmt.Fprintf(w, "%s// drop R%d\n", indent, sp0)
+		fmt.Fprintf(w, "    addi zero, zero, 0 # drop R%d\n", sp0)
 	case token.INS_SELECT:
 		i := i.(ast.Ins_Select)
 
@@ -962,25 +1086,39 @@ func (p *wat2laWorker) buildFunc_ins(
 		// if sp0 != 0 { sp2 } else { sp1 }
 		switch valType {
 		case token.I32:
-			fmt.Fprintf(w, "%sR%d.i32 = R%d.i32? R%d.i32: R%d.i32; // %s\n",
-				indent, ret0, spCondition, spValueTrue, spValueFalse,
-				insString(i),
-			)
+			fmt.Fprintf(w, "    # select\n")
+			fmt.Fprintf(w, "    ld.w t1, fp, %d\n", p.fnWasmR0Base-spCondition*8)
+			fmt.Fprintf(w, "    ld.w t2, fp, %d\n", p.fnWasmR0Base-spValueTrue*8)
+			fmt.Fprintf(w, "    ld.w t3, fp, %d\n", p.fnWasmR0Base-spValueFalse*8)
+			fmt.Fprintf(w, "    masknez t0, t2, t1")
+			fmt.Fprintf(w, "    maskeqz t0, t3, t1")
+			fmt.Fprintf(w, "    st.w t0, fp, %d\n", p.fnWasmR0Base-ret0*8)
 		case token.I64:
-			fmt.Fprintf(w, "%sR%d.i64 = R%d.i32? R%d.i64: R%d.i64; // %s\n",
-				indent, ret0, spCondition, spValueTrue, spValueFalse,
-				insString(i),
-			)
+			fmt.Fprintf(w, "    # select\n")
+			fmt.Fprintf(w, "    ld.w t1, fp, %d\n", p.fnWasmR0Base-spCondition*8)
+			fmt.Fprintf(w, "    ld.d t2, fp, %d\n", p.fnWasmR0Base-spValueTrue*8)
+			fmt.Fprintf(w, "    ld.d t3, fp, %d\n", p.fnWasmR0Base-spValueFalse*8)
+			fmt.Fprintf(w, "    masknez t0, t2, t1")
+			fmt.Fprintf(w, "    maskeqz t0, t3, t1")
+			fmt.Fprintf(w, "    st.d t0, fp, %d\n", p.fnWasmR0Base-ret0*8)
 		case token.F32:
-			fmt.Fprintf(w, "%sR%d.f32 = R%d.i32? R%d.f32: R%d.f32; // %s\n",
-				indent, ret0, spCondition, spValueTrue, spValueFalse,
-				insString(i),
-			)
+			// TODO: 浮点数选择需要验证
+			fmt.Fprintf(w, "    # select\n")
+			fmt.Fprintf(w, "    ld.w t1, fp, %d\n", p.fnWasmR0Base-spCondition*8)
+			fmt.Fprintf(w, "    fld.s ft2, fp, %d\n", p.fnWasmR0Base-spValueTrue*8)
+			fmt.Fprintf(w, "    fld.s ft3, fp, %d\n", p.fnWasmR0Base-spValueFalse*8)
+			fmt.Fprintf(w, "    movgr2cf fcc0, t1")
+			fmt.Fprintf(w, "    fsel ft0, ft2, ft3, ")
+			fmt.Fprintf(w, "    fst.s t1, fp, %d\n", p.fnWasmR0Base-ret0*8)
 		case token.F64:
-			fmt.Fprintf(w, "%sR%d.f64 = R%d.i32? R%d.f64: R%d.f64; // %s\n",
-				indent, ret0, spCondition, spValueTrue, spValueFalse,
-				insString(i),
-			)
+			// TODO: 浮点数选择需要验证
+			fmt.Fprintf(w, "    # select\n")
+			fmt.Fprintf(w, "    ld.w t1, fp, %d\n", p.fnWasmR0Base-spCondition*8)
+			fmt.Fprintf(w, "    fld.d ft2, fp, %d\n", p.fnWasmR0Base-spValueTrue*8)
+			fmt.Fprintf(w, "    fld.d ft3, fp, %d\n", p.fnWasmR0Base-spValueFalse*8)
+			fmt.Fprintf(w, "    movgr2cf fcc0, t1")
+			fmt.Fprintf(w, "    fsel ft0, ft2, ft3, ")
+			fmt.Fprintf(w, "    fst.d t1, fp, %d\n", p.fnWasmR0Base-ret0*8)
 		default:
 			unreachable()
 		}
@@ -990,6 +1128,7 @@ func (p *wat2laWorker) buildFunc_ins(
 		ret0 := stk.Push(xType)
 		switch xType {
 		case token.I32:
+			// TODO: 需要查询到 local 的 idx
 			fmt.Fprintf(w, "%sR%d.i32 = %s; // %s\n", indent, ret0, p.findLocalName(fn, i.X), insString(i))
 		case token.I64:
 			fmt.Fprintf(w, "%sR%d.i64 = %s; // %s\n", indent, ret0, p.findLocalName(fn, i.X), insString(i))
