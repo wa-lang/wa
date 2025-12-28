@@ -1324,118 +1324,213 @@ func (p *wat2laWorker) buildFunc_ins(
 		fmt.Fprintf(w, "    fst.d  t0, fp, %d # push t0\n", ret0)
 
 	case token.INS_I32_LOAD8_S:
-		// i := i.(ast.Ins_I32Load8S)
-		// sp0 := stk.Pop(token.I32)
-		// ret0 := stk.Push(token.I32)
-		panic("TODO")
+		i := i.(ast.Ins_I32Load8S)
+		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.I32)
+		ret0 := p.fnWasmR0Base - 8*stk.Push(token.I32)
+
+		fmt.Fprintf(w, "    # i64.load8_s\n")
+		fmt.Fprintf(w, "    ld.w  t0, fp, %d # t0 = [pop]\n", sp0)
+		fmt.Fprintf(w, "    add.d t0, t0, %s # t0 = mempry + t0\n", kMemoryReg)
+		fmt.Fprintf(w, "    ld.b  t0, t0, %d # t0 = [t0+off]\n", i.Offset)
+		fmt.Fprintf(w, "    st.b  t0, fp, %d # push t0\n", ret0)
 
 	case token.INS_I32_LOAD8_U:
-		// i := i.(ast.Ins_I32Load8U)
-		// sp0 := stk.Pop(token.I32)
-		// ret0 := stk.Push(token.I32)
-		panic("TODO")
+		i := i.(ast.Ins_I32Load8U)
+		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.I32)
+		ret0 := p.fnWasmR0Base - 8*stk.Push(token.I32)
+
+		fmt.Fprintf(w, "    # i64.load8_u\n")
+		fmt.Fprintf(w, "    ld.w  t0, fp, %d # t0 = [pop]\n", sp0)
+		fmt.Fprintf(w, "    add.d t0, t0, %s # t0 = mempry + t0\n", kMemoryReg)
+		fmt.Fprintf(w, "    ld.bu t0, t0, %d # t0 = [t0+off]\n", i.Offset)
+		fmt.Fprintf(w, "    st.bu t0, fp, %d # push t0\n", ret0)
 
 	case token.INS_I32_LOAD16_S:
-		// i := i.(ast.Ins_I32Load16S)
-		// sp0 := stk.Pop(token.I32)
-		// ret0 := stk.Push(token.I32)
-		panic("TODO")
+		i := i.(ast.Ins_I32Load16S)
+		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.I32)
+		ret0 := p.fnWasmR0Base - 8*stk.Push(token.I32)
+
+		fmt.Fprintf(w, "    # i64.load16_s\n")
+		fmt.Fprintf(w, "    ld.w  t0, fp, %d # t0 = [pop]\n", sp0)
+		fmt.Fprintf(w, "    add.d t0, t0, %s # t0 = mempry + t0\n", kMemoryReg)
+		fmt.Fprintf(w, "    ld.h  t0, t0, %d # t0 = [t0+off]\n", i.Offset)
+		fmt.Fprintf(w, "    st.h  t0, fp, %d # push t0\n", ret0)
 
 	case token.INS_I32_LOAD16_U:
-		// i := i.(ast.Ins_I32Load16U)
-		// sp0 := stk.Pop(token.I32)
-		// ret0 := stk.Push(token.I32)
-		panic("TODO")
+		i := i.(ast.Ins_I32Load16U)
+		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.I32)
+		ret0 := p.fnWasmR0Base - 8*stk.Push(token.I32)
+
+		fmt.Fprintf(w, "    # i64.load16_u\n")
+		fmt.Fprintf(w, "    ld.w  t0, fp, %d # t0 = [pop]\n", sp0)
+		fmt.Fprintf(w, "    add.d t0, t0, %s # t0 = mempry + t0\n", kMemoryReg)
+		fmt.Fprintf(w, "    ld.hu t0, t0, %d # t0 = [t0+off]\n", i.Offset)
+		fmt.Fprintf(w, "    st.hu t0, fp, %d # push t0\n", ret0)
 
 	case token.INS_I64_LOAD8_S:
-		// i := i.(ast.Ins_I64Load8S)
-		// sp0 := stk.Pop(token.I32)
-		// ret0 := stk.Push(token.I64)
-		panic("TODO")
+		i := i.(ast.Ins_I64Load8S)
+		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.I32)
+		ret0 := p.fnWasmR0Base - 8*stk.Push(token.I64)
+
+		fmt.Fprintf(w, "    # i64.load8_s\n")
+		fmt.Fprintf(w, "    ld.w  t0, fp, %d # t0 = [pop]\n", sp0)
+		fmt.Fprintf(w, "    add.d t0, t0, %s # t0 = mempry + t0\n", kMemoryReg)
+		fmt.Fprintf(w, "    ld.hu t0, t0, %d # t0 = [t0+off]\n", i.Offset)
+		fmt.Fprintf(w, "    st.hu t0, fp, %d # push t0\n", ret0)
 
 	case token.INS_I64_LOAD8_U:
-		// i := i.(ast.Ins_I64Load8U)
-		// sp0 := stk.Pop(token.I32)
-		// ret0 := stk.Push(token.I64)
-		panic("TODO")
+		i := i.(ast.Ins_I64Load8U)
+		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.I32)
+		ret0 := p.fnWasmR0Base - 8*stk.Push(token.I64)
+
+		fmt.Fprintf(w, "    # i64.load8_u\n")
+		fmt.Fprintf(w, "    ld.w  t0, fp, %d # t0 = [pop]\n", sp0)
+		fmt.Fprintf(w, "    add.d t0, t0, %s # t0 = mempry + t0\n", kMemoryReg)
+		fmt.Fprintf(w, "    ld.hu t0, t0, %d # t0 = [t0+off]\n", i.Offset)
+		fmt.Fprintf(w, "    st.hu t0, fp, %d # push t0\n", ret0)
 
 	case token.INS_I64_LOAD16_S:
-		// i := i.(ast.Ins_I64Load16S)
-		// sp0 := stk.Pop(token.I32)
-		// ret0 := stk.Push(token.I64)
-		panic("TODO")
+		i := i.(ast.Ins_I64Load16S)
+		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.I32)
+		ret0 := p.fnWasmR0Base - 8*stk.Push(token.I64)
+
+		fmt.Fprintf(w, "    # i64.load16_u\n")
+		fmt.Fprintf(w, "    ld.w  t0, fp, %d # t0 = [pop]\n", sp0)
+		fmt.Fprintf(w, "    add.d t0, t0, %s # t0 = mempry + t0\n", kMemoryReg)
+		fmt.Fprintf(w, "    ld.hu t0, t0, %d # t0 = [t0+off]\n", i.Offset)
+		fmt.Fprintf(w, "    st.hu t0, fp, %d # push t0\n", ret0)
 
 	case token.INS_I64_LOAD16_U:
-		// i := i.(ast.Ins_I64Load16U)
-		// sp0 := stk.Pop(token.I32)
-		// ret0 := stk.Push(token.I64)
-		panic("TODO")
+		i := i.(ast.Ins_I64Load16U)
+		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.I32)
+		ret0 := p.fnWasmR0Base - 8*stk.Push(token.I64)
+
+		fmt.Fprintf(w, "    # i64.load16_u\n")
+		fmt.Fprintf(w, "    ld.w  t0, fp, %d # t0 = [pop]\n", sp0)
+		fmt.Fprintf(w, "    add.d t0, t0, %s # t0 = mempry + t0\n", kMemoryReg)
+		fmt.Fprintf(w, "    ld.hu t0, t0, %d # t0 = [t0+off]\n", i.Offset)
+		fmt.Fprintf(w, "    st.hu t0, fp, %d # push t0\n", ret0)
 
 	case token.INS_I64_LOAD32_S:
-		// i := i.(ast.Ins_I64Load32S)
-		// sp0 := stk.Pop(token.I32)
-		// ret0 := stk.Push(token.I64)
-		panic("TODO")
+		i := i.(ast.Ins_I64Load32S)
+		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.I32)
+		ret0 := p.fnWasmR0Base - 8*stk.Push(token.I64)
+
+		fmt.Fprintf(w, "    # i64.load32_s\n")
+		fmt.Fprintf(w, "    ld.w  t0, fp, %d # t0 = [pop]\n", sp0)
+		fmt.Fprintf(w, "    add.d t0, t0, %s # t0 = mempry + t0\n", kMemoryReg)
+		fmt.Fprintf(w, "    ld.hu t0, t0, %d # t0 = [t0+off]\n", i.Offset)
+		fmt.Fprintf(w, "    st.hu t0, fp, %d # push t0\n", ret0)
 
 	case token.INS_I64_LOAD32_U:
-		// i := i.(ast.Ins_I64Load32U)
-		// sp0 := stk.Pop(token.I32)
-		// ret0 := stk.Push(token.I64)
-		panic("TODO")
+		i := i.(ast.Ins_I64Load32U)
+		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.I32)
+		ret0 := p.fnWasmR0Base - 8*stk.Push(token.I64)
+
+		fmt.Fprintf(w, "    # i64.load32_u\n")
+		fmt.Fprintf(w, "    ld.w  t0, fp, %d # t0 = [pop]\n", sp0)
+		fmt.Fprintf(w, "    add.d t0, t0, %s # t0 = mempry + t0\n", kMemoryReg)
+		fmt.Fprintf(w, "    ld.hu t0, t0, %d # t0 = [t0+off]\n", i.Offset)
+		fmt.Fprintf(w, "    st.hu t0, fp, %d # push t0\n", ret0)
 
 	case token.INS_I32_STORE:
-		// i := i.(ast.Ins_I32Store)
-		// sp0 := stk.Pop(token.I32)
-		// sp1 := stk.Pop(token.I32)
-		panic("TODO")
+		i := i.(ast.Ins_I32Store)
+		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.I32)
+		sp1 := p.fnWasmR0Base - 8*stk.Pop(token.I32)
+
+		fmt.Fprintf(w, "    # i32.store_xx\n")
+		fmt.Fprintf(w, "    ld.w  t0, fp, %d # t0 = [pop]\n", sp0)
+		fmt.Fprintf(w, "    add.d t0, t0, %s # t0 = mempry + t0\n", kMemoryReg)
+		fmt.Fprintf(w, "    ld.hu t0, fp, %d # push t0\n", sp1)
+		fmt.Fprintf(w, "    st.hu t0, t0, %d # t0 = [t0+off]\n", i.Offset)
 
 	case token.INS_I64_STORE:
-		// i := i.(ast.Ins_I64Store)
-		// sp0 := stk.Pop(token.I64)
-		// sp1 := stk.Pop(token.I32)
-		panic("TODO")
+		i := i.(ast.Ins_I64Store)
+		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.I64)
+		sp1 := p.fnWasmR0Base - 8*stk.Pop(token.I32)
+
+		fmt.Fprintf(w, "    # i32.store_xx\n")
+		fmt.Fprintf(w, "    ld.w  t0, fp, %d # t0 = [pop]\n", sp0)
+		fmt.Fprintf(w, "    add.d t0, t0, %s # t0 = mempry + t0\n", kMemoryReg)
+		fmt.Fprintf(w, "    ld.hu t0, fp, %d # push t0\n", sp1)
+		fmt.Fprintf(w, "    st.hu t0, t0, %d # t0 = [t0+off]\n", i.Offset)
 
 	case token.INS_F32_STORE:
-		// i := i.(ast.Ins_F32Store)
-		// sp0 := stk.Pop(token.F32)
-		// sp1 := stk.Pop(token.I32)
-		panic("TODO")
+		i := i.(ast.Ins_F32Store)
+		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.F32)
+		sp1 := p.fnWasmR0Base - 8*stk.Pop(token.I32)
+
+		fmt.Fprintf(w, "    # i32.store_xx\n")
+		fmt.Fprintf(w, "    ld.w  t0, fp, %d # t0 = [pop]\n", sp0)
+		fmt.Fprintf(w, "    add.d t0, t0, %s # t0 = mempry + t0\n", kMemoryReg)
+		fmt.Fprintf(w, "    ld.hu t0, fp, %d # push t0\n", sp1)
+		fmt.Fprintf(w, "    st.hu t0, t0, %d # t0 = [t0+off]\n", i.Offset)
 
 	case token.INS_F64_STORE:
-		// i := i.(ast.Ins_F64Store)
-		// sp0 := stk.Pop(token.F64)
-		// sp1 := stk.Pop(token.I32)
-		panic("TODO")
+		i := i.(ast.Ins_F64Store)
+		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.F64)
+		sp1 := p.fnWasmR0Base - 8*stk.Pop(token.I32)
+
+		fmt.Fprintf(w, "    # i32.store_xx\n")
+		fmt.Fprintf(w, "    ld.w  t0, fp, %d # t0 = [pop]\n", sp0)
+		fmt.Fprintf(w, "    add.d t0, t0, %s # t0 = mempry + t0\n", kMemoryReg)
+		fmt.Fprintf(w, "    ld.hu t0, fp, %d # push t0\n", sp1)
+		fmt.Fprintf(w, "    st.hu t0, t0, %d # t0 = [t0+off]\n", i.Offset)
 
 	case token.INS_I32_STORE8:
-		// i := i.(ast.Ins_I32Store8)
-		// sp0 := stk.Pop(token.I32)
-		// sp1 := stk.Pop(token.I32)
-		panic("TODO")
+		i := i.(ast.Ins_I32Store8)
+		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.I32)
+		sp1 := p.fnWasmR0Base - 8*stk.Pop(token.I32)
+
+		fmt.Fprintf(w, "    # i32.store_xx\n")
+		fmt.Fprintf(w, "    ld.w  t0, fp, %d # t0 = [pop]\n", sp0)
+		fmt.Fprintf(w, "    add.d t0, t0, %s # t0 = mempry + t0\n", kMemoryReg)
+		fmt.Fprintf(w, "    ld.hu t0, fp, %d # push t0\n", sp1)
+		fmt.Fprintf(w, "    st.hu t0, t0, %d # t0 = [t0+off]\n", i.Offset)
 
 	case token.INS_I32_STORE16:
-		// i := i.(ast.Ins_I32Store16)
-		// sp0 := stk.Pop(token.I32)
-		// sp1 := stk.Pop(token.I32)
-		panic("TODO")
+		i := i.(ast.Ins_I32Store16)
+		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.I32)
+		sp1 := p.fnWasmR0Base - 8*stk.Pop(token.I32)
+
+		fmt.Fprintf(w, "    # i32.store_xx\n")
+		fmt.Fprintf(w, "    ld.w  t0, fp, %d # t0 = [pop]\n", sp0)
+		fmt.Fprintf(w, "    add.d t0, t0, %s # t0 = mempry + t0\n", kMemoryReg)
+		fmt.Fprintf(w, "    ld.hu t0, fp, %d # push t0\n", sp1)
+		fmt.Fprintf(w, "    st.hu t0, t0, %d # t0 = [t0+off]\n", i.Offset)
 
 	case token.INS_I64_STORE8:
-		// i := i.(ast.Ins_I64Store8)
-		// sp0 := stk.Pop(token.I64)
-		// sp1 := stk.Pop(token.I32)
-		panic("TODO")
+		i := i.(ast.Ins_I64Store8)
+		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.I64)
+		sp1 := p.fnWasmR0Base - 8*stk.Pop(token.I32)
+
+		fmt.Fprintf(w, "    # i32.store_xx\n")
+		fmt.Fprintf(w, "    ld.w  t0, fp, %d # t0 = [pop]\n", sp0)
+		fmt.Fprintf(w, "    add.d t0, t0, %s # t0 = mempry + t0\n", kMemoryReg)
+		fmt.Fprintf(w, "    ld.hu t0, fp, %d # push t0\n", sp1)
+		fmt.Fprintf(w, "    st.hu t0, t0, %d # t0 = [t0+off]\n", i.Offset)
 
 	case token.INS_I64_STORE16:
-		// i := i.(ast.Ins_I64Store16)
-		// sp0 := stk.Pop(token.I64)
-		// sp1 := stk.Pop(token.I32)
-		panic("TODO")
+		i := i.(ast.Ins_I64Store16)
+		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.I64)
+		sp1 := p.fnWasmR0Base - 8*stk.Pop(token.I32)
+
+		fmt.Fprintf(w, "    # i32.store_xx\n")
+		fmt.Fprintf(w, "    ld.w  t0, fp, %d # t0 = [pop]\n", sp0)
+		fmt.Fprintf(w, "    add.d t0, t0, %s # t0 = mempry + t0\n", kMemoryReg)
+		fmt.Fprintf(w, "    ld.hu t0, fp, %d # push t0\n", sp1)
+		fmt.Fprintf(w, "    st.hu t0, t0, %d # t0 = [t0+off]\n", i.Offset)
 
 	case token.INS_I64_STORE32:
-		// i := i.(ast.Ins_I64Store32)
-		// sp0 := stk.Pop(token.I64)
-		// sp1 := stk.Pop(token.I32)
-		panic("TODO")
+		i := i.(ast.Ins_I64Store32)
+		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.I64)
+		sp1 := p.fnWasmR0Base - 8*stk.Pop(token.I32)
+
+		fmt.Fprintf(w, "    # i32.store_xx\n")
+		fmt.Fprintf(w, "    ld.w  t0, fp, %d # t0 = [pop]\n", sp0)
+		fmt.Fprintf(w, "    add.d t0, t0, %s # t0 = mempry + t0\n", kMemoryReg)
+		fmt.Fprintf(w, "    ld.hu t0, fp, %d # push t0\n", sp1)
+		fmt.Fprintf(w, "    st.hu t0, t0, %d # t0 = [t0+off]\n", i.Offset)
 
 	case token.INS_MEMORY_SIZE:
 		sp0 := p.fnWasmR0Base - 8*stk.Push(token.I32)
@@ -1508,7 +1603,7 @@ func (p *wat2laWorker) buildFunc_ins(
 	case token.INS_I32_CONST:
 		i := i.(ast.Ins_I32Const)
 		p.registerConst(uint64(i.X))
-		gName := p.getConstGlobalName(uint64(i.X))
+		gName := p.getConstName(uint64(i.X))
 
 		sp0 := p.fnWasmR0Base - 8*stk.Push(token.I32)
 
@@ -1521,7 +1616,7 @@ func (p *wat2laWorker) buildFunc_ins(
 		i := i.(ast.Ins_I64Const)
 
 		p.registerConst(uint64(i.X))
-		gName := p.getConstGlobalName(uint64(i.X))
+		gName := p.getConstName(uint64(i.X))
 
 		sp0 := p.fnWasmR0Base - 8*stk.Push(token.I64)
 
@@ -1534,7 +1629,7 @@ func (p *wat2laWorker) buildFunc_ins(
 		i := i.(ast.Ins_F32Const)
 
 		p.registerConst(uint64(math.Float32bits(i.X)))
-		gName := p.getConstGlobalName(uint64(i.X))
+		gName := p.getConstName(uint64(i.X))
 
 		sp0 := p.fnWasmR0Base - 8*stk.Push(token.F32)
 
@@ -1547,7 +1642,7 @@ func (p *wat2laWorker) buildFunc_ins(
 		i := i.(ast.Ins_F64Const)
 
 		p.registerConst(uint64(math.Float64bits(i.X)))
-		gName := p.getConstGlobalName(uint64(i.X))
+		gName := p.getConstName(uint64(i.X))
 
 		sp0 := p.fnWasmR0Base - 8*stk.Push(token.F64)
 

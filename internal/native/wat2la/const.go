@@ -20,10 +20,6 @@ const (
 	kTableSizeName = "$wat2la.table.size"
 )
 
-func (p *wat2laWorker) getConstGlobalName(x uint64) string {
-	return fmt.Sprintf(" $const.0x%x", x)
-}
-
 // 注册常量
 func (p *wat2laWorker) registerConst(x uint64) {
 	p.constLitMap[x] = x
@@ -39,7 +35,7 @@ func (p *wat2laWorker) buildConstList(w io.Writer) error {
 		return xList[i] < xList[j]
 	})
 	for _, x := range xList {
-		fmt.Fprintf(w, "global %s: u64 = %d\n", p.getConstGlobalName(x), x)
+		fmt.Fprintf(w, "global %s: u64 = %d\n", p.getConstName(x), x)
 	}
 	return nil
 }
