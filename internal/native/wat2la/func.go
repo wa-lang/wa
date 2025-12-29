@@ -2360,213 +2360,263 @@ func (p *wat2laWorker) buildFunc_ins(
 	case token.INS_F32_ABS:
 		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.F32)
 		ret0 := p.fnWasmR0Base - 8*stk.Push(token.F32)
-		fmt.Fprintf(w, "%sR%d.f32 = fabsf(R%d.f32); // %s\n",
-			indent, ret0, sp0,
-			insString(i),
-		)
+
+		fmt.Fprintf(w, "    fld.s   fa0, fp, %d\n", sp0)
+		fmt.Fprintf(w, "    fabs.s  fa0, fa0\n")
+		fmt.Fprintf(w, "    fst.s   fa0, fp, %d\n", ret0)
+
 	case token.INS_F32_NEG:
 		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.F32)
 		ret0 := p.fnWasmR0Base - 8*stk.Push(token.F32)
-		fmt.Fprintf(w, "%sR%d.f32 = 0-R%d.f32; // %s\n",
-			indent, ret0, sp0,
-			insString(i),
-		)
+
+		fmt.Fprintf(w, "    fld.s   fa0, fp, %d\n", sp0)
+		fmt.Fprintf(w, "    fneg.s  fa0, a0\n")
+		fmt.Fprintf(w, "    fst.s   fa0, fp, %d\n", ret0)
+
 	case token.INS_F32_CEIL:
 		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.F32)
 		ret0 := p.fnWasmR0Base - 8*stk.Push(token.F32)
-		fmt.Fprintf(w, "%sR%d.f32 = ceilf(R%d.f32); // %s\n",
-			indent, ret0, sp0,
-			insString(i),
-		)
+
+		fmt.Fprintf(w, "    fld.s       fa0, fp, %d\n", sp0)
+		fmt.Fprintf(w, "    ftintrp.w.s fa1, fa0\n")
+		fmt.Fprintf(w, "    ffint.s.w   fa1, fa1\n")
+		fmt.Fprintf(w, "    fst.s       fa1, fp, %d\n", ret0)
+
 	case token.INS_F32_FLOOR:
 		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.F32)
 		ret0 := p.fnWasmR0Base - 8*stk.Push(token.F32)
-		fmt.Fprintf(w, "%sR%d.f32 = floorf(R%d.f32); // %s\n",
-			indent, ret0, sp0,
-			insString(i),
-		)
+
+		fmt.Fprintf(w, "    fld.s       fa0, fp, %d\n", sp0)
+		fmt.Fprintf(w, "    ftintrm.w.s fa1, fa0\n")
+		fmt.Fprintf(w, "    ffint.s.w   fa1, fa1\n")
+		fmt.Fprintf(w, "    fst.s       fa1, fp, %d\n", ret0)
+
 	case token.INS_F32_TRUNC:
 		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.F32)
 		ret0 := p.fnWasmR0Base - 8*stk.Push(token.F32)
-		fmt.Fprintf(w, "%sR%d.f32 = truncf(R%d.f32); // %s\n",
-			indent, ret0, sp0,
-			insString(i),
-		)
+
+		fmt.Fprintf(w, "    fld.s       fa0, fp, %d\n", sp0)
+		fmt.Fprintf(w, "    ftintrz.w.s fa1, fa0\n")
+		fmt.Fprintf(w, "    ffint.s.w   fa1, fa1\n")
+		fmt.Fprintf(w, "    fst.s       fa1, fp, %d\n", ret0)
+
 	case token.INS_F32_NEAREST:
 		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.F32)
 		ret0 := p.fnWasmR0Base - 8*stk.Push(token.F32)
-		fmt.Fprintf(w, "%sR%d.f32 = roundf(R%d.f32); // %s\n",
-			indent, ret0, sp0,
-			insString(i),
-		)
+
+		fmt.Fprintf(w, "    fld.s        fa0, fp, %d\n", sp0)
+		fmt.Fprintf(w, "    ftintrne.w.s fa1, fa0\n")
+		fmt.Fprintf(w, "    ffint.s.w    fa1, fa1\n")
+		fmt.Fprintf(w, "    fst.s        fa1, fp, %d\n", ret0)
+
 	case token.INS_F32_SQRT:
 		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.F32)
 		ret0 := p.fnWasmR0Base - 8*stk.Push(token.F32)
-		fmt.Fprintf(w, "%sR%d.f32 = sqrtf(R%d.f32); // %s\n",
-			indent, ret0, sp0,
-			insString(i),
-		)
+
+		fmt.Fprintf(w, "    fld.s   fa0, fp, %d\n", sp0)
+		fmt.Fprintf(w, "    fsqrt.s fa0, fa0\n")
+		fmt.Fprintf(w, "    fst.s   fa0, fp, %d\n", ret0)
+
 	case token.INS_F32_ADD:
 		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.F32)
 		sp1 := p.fnWasmR0Base - 8*stk.Pop(token.F32)
 		ret0 := p.fnWasmR0Base - 8*stk.Push(token.F32)
-		fmt.Fprintf(w, "%sR%d.f32 = R%d.f32 + R%d.f32; // %s\n",
-			indent, ret0, sp1, sp0,
-			insString(i),
-		)
+
+		fmt.Fprintf(w, "    fld.s   fa0, fp, %d\n", sp0)
+		fmt.Fprintf(w, "    fld.s   fa1, fp, %d\n", sp1)
+		fmt.Fprintf(w, "    fadd.s  fa0, fa0, fa1\n")
+		fmt.Fprintf(w, "    fst.s   fa0, fp, %d\n", ret0)
+
 	case token.INS_F32_SUB:
 		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.F32)
 		sp1 := p.fnWasmR0Base - 8*stk.Pop(token.F32)
 		ret0 := p.fnWasmR0Base - 8*stk.Push(token.F32)
-		fmt.Fprintf(w, "%sR%d.f32 = R%d.f32 - R%d.f32; // %s\n",
-			indent, ret0, sp1, sp0,
-			insString(i),
-		)
+
+		fmt.Fprintf(w, "    fld.s   fa0, fp, %d\n", sp0)
+		fmt.Fprintf(w, "    fld.s   fa1, fp, %d\n", sp1)
+		fmt.Fprintf(w, "    fsub.s  fa0, fa0, fa1\n")
+		fmt.Fprintf(w, "    fst.s   fa0, fp, %d\n", ret0)
+
 	case token.INS_F32_MUL:
 		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.F32)
 		sp1 := p.fnWasmR0Base - 8*stk.Pop(token.F32)
 		ret0 := p.fnWasmR0Base - 8*stk.Push(token.F32)
-		fmt.Fprintf(w, "%sR%d.f32 = R%d.f32 * R%d.f32; // %s\n",
-			indent, ret0, sp1, sp0,
-			insString(i),
-		)
+
+		fmt.Fprintf(w, "    fld.s   fa0, fp, %d\n", sp0)
+		fmt.Fprintf(w, "    fld.s   fa1, fp, %d\n", sp1)
+		fmt.Fprintf(w, "    fmul.s  fa0, fa0, fa1\n")
+		fmt.Fprintf(w, "    fst.s   fa0, fp, %d\n", ret0)
+
 	case token.INS_F32_DIV:
 		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.F32)
 		sp1 := p.fnWasmR0Base - 8*stk.Pop(token.F32)
 		ret0 := p.fnWasmR0Base - 8*stk.Push(token.F32)
-		fmt.Fprintf(w, "%sR%d.f32 = R%d.f32 / R%d.f32; // %s\n",
-			indent, ret0, sp1, sp0,
-			insString(i),
-		)
+
+		fmt.Fprintf(w, "    fld.s   fa0, fp, %d\n", sp0)
+		fmt.Fprintf(w, "    fld.s   fa1, fp, %d\n", sp1)
+		fmt.Fprintf(w, "    fdiv.s  fa0, fa0, fa1\n")
+		fmt.Fprintf(w, "    fst.s   fa0, fp, %d\n", ret0)
+
 	case token.INS_F32_MIN:
 		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.F32)
 		sp1 := p.fnWasmR0Base - 8*stk.Pop(token.F32)
 		ret0 := p.fnWasmR0Base - 8*stk.Push(token.F32)
-		fmt.Fprintf(w, "%sR%d.f32 = fminf(R%d.f32, R%d.f32); // %s\n",
-			indent, ret0, sp1, sp0,
-			insString(i),
-		)
+
+		fmt.Fprintf(w, "    fld.s   fa0, fp, %d\n", sp0)
+		fmt.Fprintf(w, "    fld.s   fa1, fp, %d\n", sp1)
+		fmt.Fprintf(w, "    fmin.s  fa0, fa0, fa1 fa1\n")
+		fmt.Fprintf(w, "    fst.s   fa0, fp, %d\n", ret0)
+
 	case token.INS_F32_MAX:
 		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.F32)
 		sp1 := p.fnWasmR0Base - 8*stk.Pop(token.F32)
 		ret0 := p.fnWasmR0Base - 8*stk.Push(token.F32)
-		fmt.Fprintf(w, "%sR%d.f32 = fmaxf(R%d.f32, R%d.f32); // %s\n",
-			indent, ret0, sp1, sp0,
-			insString(i),
-		)
+
+		fmt.Fprintf(w, "    fld.s   fa0, fp, %d\n", sp0)
+		fmt.Fprintf(w, "    fld.s   fa1, fp, %d\n", sp1)
+		fmt.Fprintf(w, "    fmax.s  fa0, fa0, fa1 fa1\n")
+		fmt.Fprintf(w, "    fst.s   fa0, fp, %d\n", ret0)
+
 	case token.INS_F32_COPYSIGN:
 		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.F32)
 		sp1 := p.fnWasmR0Base - 8*stk.Pop(token.F32)
 		ret0 := p.fnWasmR0Base - 8*stk.Push(token.F32)
-		fmt.Fprintf(w, "%sR%d.f32 = copysignf(R%d.f32, R%d.f32); // %s\n",
-			indent, ret0, sp1, sp0,
-			insString(i),
-		)
+
+		fmt.Fprintf(w, "    fld.s       fa0, fp, %d\n", sp0)
+		fmt.Fprintf(w, "    fld.s       fa1, fp, %d\n", sp1)
+		fmt.Fprintf(w, "    fcopysign.s fa0, fa0, fa1 fa1\n")
+		fmt.Fprintf(w, "    fst.s       fa0, fp, %d\n", ret0)
+
 	case token.INS_F64_ABS:
 		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.F64)
 		ret0 := p.fnWasmR0Base - 8*stk.Push(token.F64)
-		fmt.Fprintf(w, "%sR%d.f64 = fabs(R%d.f64); // %s\n",
-			indent, ret0, sp0,
-			insString(i),
-		)
+
+		fmt.Fprintf(w, "    fld.d   fa0, fp, %d\n", sp0)
+		fmt.Fprintf(w, "    fabs.d  fa0, fa0\n")
+		fmt.Fprintf(w, "    fst.d   fa0, fp, %d\n", ret0)
+
 	case token.INS_F64_NEG:
 		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.F64)
 		ret0 := p.fnWasmR0Base - 8*stk.Push(token.F64)
-		fmt.Fprintf(w, "%sR%d.f64 = 0-R%d.f64; // %s\n",
-			indent, ret0, sp0,
-			insString(i),
-		)
+
+		fmt.Fprintf(w, "    fld.d   fa0, fp, %d\n", sp0)
+		fmt.Fprintf(w, "    fneg.d  fa0, a0\n")
+		fmt.Fprintf(w, "    fst.d   fa0, fp, %d\n", ret0)
+
 	case token.INS_F64_CEIL:
 		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.F64)
 		ret0 := p.fnWasmR0Base - 8*stk.Push(token.F64)
-		fmt.Fprintf(w, "%sR%d.f64 = ceil(R%d.f64); // %s\n",
-			indent, ret0, sp0,
-			insString(i),
-		)
+
+		fmt.Fprintf(w, "    fld.d       fa0, fp, %d\n", sp0)
+		fmt.Fprintf(w, "    ftintrp.d.d fa1, fa0\n")
+		fmt.Fprintf(w, "    ffint.d.d   fa1, fa1\n")
+		fmt.Fprintf(w, "    fst.d       fa1, fp, %d\n", ret0)
+
 	case token.INS_F64_FLOOR:
 		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.F64)
 		ret0 := p.fnWasmR0Base - 8*stk.Push(token.F64)
-		fmt.Fprintf(w, "%sR%d.f64 = floor(R%d.f64); // %s\n",
-			indent, ret0, sp0,
-			insString(i),
-		)
+
+		fmt.Fprintf(w, "    fld.d       fa0, fp, %d\n", sp0)
+		fmt.Fprintf(w, "    ftintrm.d.d fa1, fa0\n")
+		fmt.Fprintf(w, "    ffint.d.d   fa1, fa1\n")
+		fmt.Fprintf(w, "    fst.d       fa1, fp, %d\n", ret0)
+
 	case token.INS_F64_TRUNC:
 		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.F64)
 		ret0 := p.fnWasmR0Base - 8*stk.Push(token.F64)
-		fmt.Fprintf(w, "%sR%d.f64 = trunc(R%d.f64); // %s\n",
-			indent, ret0, sp0,
-			insString(i),
-		)
+
+		fmt.Fprintf(w, "    fld.d       fa0, fp, %d\n", sp0)
+		fmt.Fprintf(w, "    ftintrz.d.d fa1, fa0\n")
+		fmt.Fprintf(w, "    ffint.d.d   fa1, fa1\n")
+		fmt.Fprintf(w, "    fst.d       fa1, fp, %d\n", ret0)
+
 	case token.INS_F64_NEAREST:
 		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.F64)
 		ret0 := p.fnWasmR0Base - 8*stk.Push(token.F64)
-		fmt.Fprintf(w, "%sR%d.f64 = round(R%d.f64); // %s\n",
-			indent, ret0, sp0,
-			insString(i),
-		)
+
+		fmt.Fprintf(w, "    fld.d        fa0, fp, %d\n", sp0)
+		fmt.Fprintf(w, "    ftintrne.d.d fa1, fa0\n")
+		fmt.Fprintf(w, "    ffint.d.d    fa1, fa1\n")
+		fmt.Fprintf(w, "    fst.d        fa1, fp, %d\n", ret0)
+
 	case token.INS_F64_SQRT:
 		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.F64)
 		ret0 := p.fnWasmR0Base - 8*stk.Push(token.F64)
-		fmt.Fprintf(w, "%sR%d.f64 = sqrt(R%d.f64); // %s\n",
-			indent, ret0, sp0,
-			insString(i),
-		)
+
+		fmt.Fprintf(w, "    fld.d   fa0, fp, %d\n", sp0)
+		fmt.Fprintf(w, "    fsqrt.d fa0, fa0\n")
+		fmt.Fprintf(w, "    fst.d   fa0, fp, %d\n", ret0)
+
 	case token.INS_F64_ADD:
 		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.F64)
 		sp1 := p.fnWasmR0Base - 8*stk.Pop(token.F64)
 		ret0 := p.fnWasmR0Base - 8*stk.Push(token.F64)
-		fmt.Fprintf(w, "%sR%d.f64 = R%d.f64 + R%d.f64; // %s\n",
-			indent, ret0, sp1, sp0,
-			insString(i),
-		)
+
+		fmt.Fprintf(w, "    fld.d   fa0, fp, %d\n", sp0)
+		fmt.Fprintf(w, "    fld.d   fa1, fp, %d\n", sp1)
+		fmt.Fprintf(w, "    fadd.d  fa0, fa0, fa1\n")
+		fmt.Fprintf(w, "    fst.d   fa0, fp, %d\n", ret0)
+
 	case token.INS_F64_SUB:
 		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.F64)
 		sp1 := p.fnWasmR0Base - 8*stk.Pop(token.F64)
 		ret0 := p.fnWasmR0Base - 8*stk.Push(token.F64)
-		fmt.Fprintf(w, "%sR%d.f64 = R%d.f64 - R%d.f64; // %s\n",
-			indent, ret0, sp1, sp0,
-			insString(i),
-		)
+
+		fmt.Fprintf(w, "    fld.d   fa0, fp, %d\n", sp0)
+		fmt.Fprintf(w, "    fld.d   fa1, fp, %d\n", sp1)
+		fmt.Fprintf(w, "    fsub.d  fa0, fa0, fa1\n")
+		fmt.Fprintf(w, "    fst.d   fa0, fp, %d\n", ret0)
+
 	case token.INS_F64_MUL:
 		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.F64)
 		sp1 := p.fnWasmR0Base - 8*stk.Pop(token.F64)
 		ret0 := p.fnWasmR0Base - 8*stk.Push(token.F64)
-		fmt.Fprintf(w, "%sR%d.f64 = R%d.f64 * R%d.f64; // %s\n",
-			indent, ret0, sp1, sp0,
-			insString(i),
-		)
+
+		fmt.Fprintf(w, "    fld.d   fa0, fp, %d\n", sp0)
+		fmt.Fprintf(w, "    fld.d   fa1, fp, %d\n", sp1)
+		fmt.Fprintf(w, "    fmul.d  fa0, fa0, fa1\n")
+		fmt.Fprintf(w, "    fst.d   fa0, fp, %d\n", ret0)
+
 	case token.INS_F64_DIV:
 		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.F64)
 		sp1 := p.fnWasmR0Base - 8*stk.Pop(token.F64)
 		ret0 := p.fnWasmR0Base - 8*stk.Push(token.F64)
-		fmt.Fprintf(w, "%sR%d.f64 = R%d.f64 / R%d.f64; // %s\n",
-			indent, ret0, sp1, sp0,
-			insString(i),
-		)
+
+		fmt.Fprintf(w, "    fld.d   fa0, fp, %d\n", sp0)
+		fmt.Fprintf(w, "    fld.d   fa1, fp, %d\n", sp1)
+		fmt.Fprintf(w, "    fdiv.d  fa0, fa0, fa1\n")
+		fmt.Fprintf(w, "    fst.d   fa0, fp, %d\n", ret0)
+
 	case token.INS_F64_MIN:
 		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.F64)
 		sp1 := p.fnWasmR0Base - 8*stk.Pop(token.F64)
 		ret0 := p.fnWasmR0Base - 8*stk.Push(token.F64)
-		fmt.Fprintf(w, "%sR%d.f64 = fmin(R%d.f64, R%d.f64); // %s\n",
-			indent, ret0, sp1, sp0,
-			insString(i),
-		)
+
+		fmt.Fprintf(w, "    fld.d   fa0, fp, %d\n", sp0)
+		fmt.Fprintf(w, "    fld.d   fa1, fp, %d\n", sp1)
+		fmt.Fprintf(w, "    fmin.d  fa0, fa0, fa1 fa1\n")
+		fmt.Fprintf(w, "    fst.d   fa0, fp, %d\n", ret0)
+
 	case token.INS_F64_MAX:
 		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.F64)
 		sp1 := p.fnWasmR0Base - 8*stk.Pop(token.F64)
 		ret0 := p.fnWasmR0Base - 8*stk.Push(token.F64)
-		fmt.Fprintf(w, "%sR%d.f64 = fmax(R%d.f64, R%d.f64); // %s\n",
-			indent, ret0, sp1, sp0,
-			insString(i),
-		)
+
+		fmt.Fprintf(w, "    fld.d   fa0, fp, %d\n", sp0)
+		fmt.Fprintf(w, "    fld.d   fa1, fp, %d\n", sp1)
+		fmt.Fprintf(w, "    fmax.d  fa0, fa0, fa1 fa1\n")
+		fmt.Fprintf(w, "    fst.d   fa0, fp, %d\n", ret0)
+
 	case token.INS_F64_COPYSIGN:
 		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.F64)
 		sp1 := p.fnWasmR0Base - 8*stk.Pop(token.F64)
 		ret0 := p.fnWasmR0Base - 8*stk.Push(token.F64)
-		fmt.Fprintf(w, "%sR%d.f64 = copysign(R%d.f64, R%d.f64); // %s\n",
-			indent, ret0, sp1, sp0,
-			insString(i),
-		)
+
+		fmt.Fprintf(w, "    fld.d       fa0, fp, %d\n", sp0)
+		fmt.Fprintf(w, "    fld.d       fa1, fp, %d\n", sp1)
+		fmt.Fprintf(w, "    fcopysign.d fa0, fa0, fa1 fa1\n")
+		fmt.Fprintf(w, "    fst.d       fa0, fp, %d\n", ret0)
+
 	case token.INS_I32_WRAP_I64:
 		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.I64)
 		ret0 := p.fnWasmR0Base - 8*stk.Push(token.I32)
