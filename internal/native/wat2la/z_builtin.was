@@ -1,3 +1,4 @@
+# 异常时输出的字符串
 global $panic_message = "panic: exit 1.\n\x00"
 
 func $builtin.panic {
