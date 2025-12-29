@@ -9,17 +9,6 @@ import (
 	"sort"
 )
 
-const (
-	kMemoryReg         = "T7"
-	kMemoryName        = "$wat2la.memory"
-	kMemorySizeName    = "$wat2la.memory.size"
-	kMemoryMaxSizeName = "$wat2la.memory.size.max"
-
-	kTableReg      = "T8"
-	kTableName     = "$wat2la.table"
-	kTableSizeName = "$wat2la.table.size"
-)
-
 // 注册常量
 func (p *wat2laWorker) registerConst(x uint64) {
 	p.constLitMap[x] = x

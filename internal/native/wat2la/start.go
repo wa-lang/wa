@@ -12,7 +12,7 @@ import (
 func (p *wat2laWorker) buildStart(w io.Writer) error {
 	fmt.Fprintln(w, "func _start {")
 	{
-		fmt.Fprintf(w, "    bl $wat2la.memory.init")
+		fmt.Fprintf(w, "    bl %s\n", kMemoryInitFuncName)
 	}
 	fmt.Fprintln(w, "}")
 

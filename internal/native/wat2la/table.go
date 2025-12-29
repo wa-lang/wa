@@ -10,6 +10,12 @@ import (
 	"wa-lang.org/wa/internal/wat/token"
 )
 
+const (
+	kTableReg      = "T7"
+	kTableName     = "$wat2la.table"
+	kTableSizeName = "$wat2la.table.size"
+)
+
 func (p *wat2laWorker) buildTable(w io.Writer) error {
 	if p.m.Table == nil {
 		return nil

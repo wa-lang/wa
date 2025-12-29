@@ -153,8 +153,8 @@ func (p *wat2laWorker) buildFunc_body(w io.Writer, fn *ast.Func) error {
 		fmt.Fprintln(&bufHeader, "    st.d   $fp, $sp, 0   # save $fp")
 
 		fmt.Fprintf(&bufHeader, "    # memory address\n")
-		fmt.Fprintf(&bufHeader, "    pcalau12i %s, %%pc_hi20(%s)\n", kMemoryReg, kMemoryName)
-		fmt.Fprintf(&bufHeader, "    addi.d    %s, %s, %%pc_lo12(%s)\n", kMemoryReg, kMemoryReg, kMemoryName)
+		fmt.Fprintf(&bufHeader, "    pcalau12i %s, %%pc_hi20(%s)\n", kMemoryReg, kMemoryAddrName)
+		fmt.Fprintf(&bufHeader, "    addi.d    %s, %s, %%pc_lo12(%s)\n", kMemoryReg, kMemoryReg, kMemoryAddrName)
 
 		fmt.Fprintf(&bufHeader, "    # table address\n")
 		fmt.Fprintf(&bufHeader, "    pcalau12i %s, %%pc_hi20(%s)\n", kTableReg, kTableName)
@@ -1535,8 +1535,8 @@ func (p *wat2laWorker) buildFunc_ins(
 	case token.INS_MEMORY_SIZE:
 		sp0 := p.fnWasmR0Base - 8*stk.Push(token.I32)
 		fmt.Fprintf(w, "    # memory.size\n")
-		fmt.Fprintf(w, "    pcalau12i t0, %%pc_hi20(%s)\n", kMemorySizeName)
-		fmt.Fprintf(w, "    addi.d    t0, t0, %%pc_lo12(%s)\n", kMemorySizeName)
+		fmt.Fprintf(w, "    pcalau12i t0, %%pc_hi20(%s)\n", kMemoryPagesName)
+		fmt.Fprintf(w, "    addi.d    t0, t0, %%pc_lo12(%s)\n", kMemoryPagesName)
 		fmt.Fprintf(w, "    st.w      t0, fp, %d\n", sp0)
 	case token.INS_MEMORY_GROW:
 		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.I32)
@@ -1545,17 +1545,17 @@ func (p *wat2laWorker) buildFunc_ins(
 		// 最大内存在启动时就分配好, 这里只是调整全局变量
 
 		fmt.Fprintf(w, "    # memory.grow\n")
-		fmt.Fprintf(w, "    pcalau12i t0, %%pc_hi20(%s)\n", kMemorySizeName)
-		fmt.Fprintf(w, "    addi.d    t0, t0, %%pc_lo12(%s)\n", kMemorySizeName)
+		fmt.Fprintf(w, "    pcalau12i t0, %%pc_hi20(%s)\n", kMemoryPagesName)
+		fmt.Fprintf(w, "    addi.d    t0, t0, %%pc_lo12(%s)\n", kMemoryPagesName)
 
-		fmt.Fprintf(w, "    pcalau12i t1, %%pc_hi20(%s)\n", kMemoryMaxSizeName)
-		fmt.Fprintf(w, "    addi.d    t1, t1, %%pc_lo12(%s)\n", kMemoryMaxSizeName)
+		fmt.Fprintf(w, "    pcalau12i t1, %%pc_hi20(%s)\n", kMemoryMaxPagesName)
+		fmt.Fprintf(w, "    addi.d    t1, t1, %%pc_lo12(%s)\n", kMemoryMaxPagesName)
 
 		fmt.Fprintf(w, "    ld.w      t3, fp, %d\n", sp0)
 		fmt.Fprintf(w, "    add.d     t3, t3, t1\n")
 
 		fmt.Fprintf(w, "    blt       t1, t3, L.xxx.else\n")
-		fmt.Fprintf(w, "    st.w      t3, %s, 0\n", kMemorySizeName)
+		fmt.Fprintf(w, "    st.w      t3, %s, 0\n", kMemoryPagesName)
 		fmt.Fprintf(w, "    st.w      t0, fp, %d\n", ret0)
 		fmt.Fprintf(w, "    b         L.xxx.else\n")
 		fmt.Fprintf(w, "L.xxx.else:\n")

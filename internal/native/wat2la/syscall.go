@@ -10,6 +10,13 @@ import (
 	"wa-lang.org/wa/internal/wat/ast"
 )
 
+const (
+	kSysWrite = "$syscall.write"
+	kSysExit  = "$syscall.exit"
+	kSysBrk   = "$syscall.brk"
+	kSysMmap  = "$syscall.mmap"
+)
+
 //go:embed z_syscall.was
 var syscall_was string
 

@@ -8,6 +8,12 @@ import (
 	"io"
 )
 
+const (
+	kBuiltinMemcpy = "$builtin.memcpy"
+	kBuiltinMemset = "$builtin.memset"
+	kBuiltinPanic  = "$builtin.panic"
+)
+
 //go:embed z_builtin.was
 var builtin_was string
 
