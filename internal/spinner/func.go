@@ -161,6 +161,10 @@ func (b *Builder) stmt(s ast.Stmt, f *Func, block *wire.Block) {
 			}
 		}
 
+	case *ast.ExprStmt:
+		v := b.expr(s.X, block)
+		block.EmitStore(nil, v, int(s.Pos()))
+
 	case *ast.AssignStmt:
 		switch s.Tok {
 		case token.ASSIGN, token.DEFINE:
@@ -536,7 +540,7 @@ func (b *Builder) ifStmt(s *ast.IfStmt, f *Func, block *wire.Block) {
 	}
 
 	cond := b.expr(s.Cond, block)
-	i := block.EmitInstIf(cond, int(s.Cond.Pos()))
+	i := block.EmitIf(cond, int(s.Cond.Pos()))
 
 	if s.Body != nil {
 		b.blockStmt(s.Body.List, f, i.True)

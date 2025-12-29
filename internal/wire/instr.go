@@ -138,6 +138,12 @@ func (i *InstStore) String() string {
 		if i > 0 {
 			sb.WriteString(", ")
 		}
+
+		if loc == nil {
+			sb.WriteRune('_')
+			continue
+		}
+
 		if loc.LocationKind() == LocationKindLocal {
 			sb.WriteString(loc.Name())
 		} else {
@@ -419,7 +425,7 @@ func (i *If) Format(tab string, sb *strings.Builder) {
 }
 
 // 在 Block 中添加一条 If 指令
-func (b *Block) EmitInstIf(cond Expr, pos int) *If {
+func (b *Block) EmitIf(cond Expr, pos int) *If {
 	if !cond.Type().Equal(b.types.Bool) {
 		panic("cond must be bool.")
 	}
