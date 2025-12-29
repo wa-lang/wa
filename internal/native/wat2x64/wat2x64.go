@@ -1,11 +1,10 @@
 // Copyright (C) 2025 武汉凹语言科技有限公司
 // SPDX-License-Identifier: AGPL-3.0-or-later
 
-package wat2la
+package wat2x64
 
 import (
-	"bytes"
-	"fmt"
+	"errors"
 
 	"wa-lang.org/wa/internal/native/ast"
 	"wa-lang.org/wa/internal/wasm"
@@ -14,27 +13,25 @@ import (
 	wattoken "wa-lang.org/wa/internal/wat/token"
 )
 
-// TODO: 自动化汇编指令地址回填, 需要一个手动构建指令序列的方式
-
 const DebugMode = false
 
 // Wat程序转译到 龙芯汇编
-func Wat2LA64(filename string, source []byte) (m *watast.Module, code []byte, err error) {
-	return wat2la(filename, source)
+func Wat2X64(filename string, source []byte) (m *watast.Module, code []byte, err error) {
+	return wat2x64(filename, source)
 }
 
-func wat2la(filename string, source []byte) (m *watast.Module, code []byte, err error) {
+func wat2x64(filename string, source []byte) (m *watast.Module, code []byte, err error) {
 	m, err = watparser.ParseModule(filename, source)
 	if err != nil {
 		return m, nil, err
 	}
 
-	worker := newWat2LAWorker(m)
+	worker := newWat2X64Worker(m)
 	code, err = worker.BuildProgram()
 	return
 }
 
-type wat2laWorker struct {
+type wat2X64Worker struct {
 	m *watast.Module
 
 	importGlobalCount int // 导入全局只读变量的数目
@@ -64,8 +61,8 @@ type inlinedTypeIndex struct {
 	inlinedIdx wasm.Index
 }
 
-func newWat2LAWorker(mWat *watast.Module) *wat2laWorker {
-	p := &wat2laWorker{m: mWat, trace: DebugMode}
+func newWat2X64Worker(mWat *watast.Module) *wat2X64Worker {
+	p := &wat2X64Worker{m: mWat, trace: DebugMode}
 
 	// 统计导入的global和func索引
 	p.importGlobalCount = 0
@@ -91,45 +88,6 @@ func newWat2LAWorker(mWat *watast.Module) *wat2laWorker {
 	return p
 }
 
-func (p *wat2laWorker) BuildProgram() (code []byte, err error) {
-	p.dataSection = p.dataSection[:0]
-	p.textSection = p.textSection[:0]
-
-	p.constLitMap = map[uint64]uint64{}
-
-	var out bytes.Buffer
-
-	fmt.Fprintf(&out, "# 自动生成的代码, 不要手动修改!!!\n\n")
-
-	if err := p.buildImport(&out); err != nil {
-		return nil, err
-	}
-
-	if err := p.buildGlobal(&out); err != nil {
-		return nil, err
-	}
-
-	if err := p.buildTable(&out); err != nil {
-		return nil, err
-	}
-
-	if err := p.buildMemory(&out); err != nil {
-		return nil, err
-	}
-
-	if err := p.buildFuncs(&out); err != nil {
-		return nil, err
-	}
-
-	// 生成常量
-	if err := p.buildConstList(&out); err != nil {
-		return nil, err
-	}
-
-	// 内置函数
-	if err := p.buildBuiltin(&out); err != nil {
-		return nil, err
-	}
-
-	return out.Bytes(), nil
+func (p *wat2X64Worker) BuildProgram() (code []byte, err error) {
+	return nil, errors.New("TODO")
 }

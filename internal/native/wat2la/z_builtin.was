@@ -1,5 +1,18 @@
+global $panic_message = "panic: exit 1.\n\x00"
+
 func $builtin.panic {
-    # TODO
+    # SYS_write(STDOUT, $panic_message, %sizeof($panic_message))
+    addi.d a0, zero, $STDOUT
+    pcalau12i a1, %pc_hi20($panic_message)   # 高20位
+    addi.d    a1, a1, %pc_lo12($panic_message) # 低12位
+    addi.d    a2, zero, %sizeof($panic_message)
+    addi.d    a7, zero, $SYS_write
+    syscall   0
+
+    # SYS_exit(1)
+    addi.d  a0, zero, 1
+    addi.d  a7, zero, $SYS_exit
+    syscall 0
 }
 
 # TODO: 代码需要验证
