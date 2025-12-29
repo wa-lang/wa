@@ -8,6 +8,7 @@ import (
 
 	"wa-lang.org/wa/internal/ast"
 	"wa-lang.org/wa/internal/ast/astutil"
+	"wa-lang.org/wa/internal/constant"
 	"wa-lang.org/wa/internal/token"
 	"wa-lang.org/wa/internal/types"
 	"wa-lang.org/wa/internal/wire"
@@ -161,13 +162,58 @@ func (b *Builder) stmt(s ast.Stmt, f *Func, block *wire.Block) {
 			}
 		}
 
+	case *ast.ExprStmt:
+		v := b.expr(s.X, block)
+		block.EmitStore(nil, v, int(s.Pos()))
+
+	case *ast.IncDecStmt:
+		op := wire.ADD
+		if s.Tok == token.DEC {
+			op = wire.SUB
+		}
+		loc := b.location(s.X, 0, block)
+		ov := block.NewLoad(loc, int(s.Pos()))
+		nv := block.NewBiop(ov, b.constval(constant.MakeInt64(1), b.info.TypeOf(s.X), int(s.Pos())), op, int(s.Pos()))
+		block.EmitStore(loc, nv, int(s.Pos()))
+
 	case *ast.AssignStmt:
 		switch s.Tok {
 		case token.ASSIGN, token.DEFINE:
 			b.assignStmt(s, block)
 
 		default: // += 等操作符
-			panic("Todo")
+			loc := b.location(s.Lhs[0], 0, block)
+			x := block.NewLoad(loc, int(s.Pos()))
+			y := b.expr(s.Rhs[0], block)
+			var op wire.OpCode
+			switch s.Tok {
+			case token.ADD_ASSIGN: // +=
+				op = wire.ADD
+			case token.SUB_ASSIGN: // -=
+				op = wire.SUB
+			case token.MUL_ASSIGN: // *=
+				op = wire.MUL
+			case token.QUO_ASSIGN: // /=
+				op = wire.QUO
+			case token.REM_ASSIGN: // %=
+				op = wire.REM
+			case token.AND_ASSIGN: // &=
+				op = wire.AND
+			case token.OR_ASSIGN: // |=
+				op = wire.OR
+			case token.XOR_ASSIGN: // ^=
+				op = wire.XOR
+			case token.SHL_ASSIGN: // <<=
+				op = wire.SHL
+			case token.SHR_ASSIGN: // >>=
+				op = wire.SHR
+			case token.AND_NOT_ASSIGN: // &^=
+				op = wire.ANDNOT
+			default:
+				panic(fmt.Sprintf("Unknown OpCode: %v", s.Tok))
+			}
+			nv := block.NewBiop(x, y, op, int(s.Pos()))
+			block.EmitStore(loc, nv, int(s.Pos()))
 		}
 
 	case *ast.ReturnStmt:
@@ -536,7 +582,7 @@ func (b *Builder) ifStmt(s *ast.IfStmt, f *Func, block *wire.Block) {
 	}
 
 	cond := b.expr(s.Cond, block)
-	i := block.EmitInstIf(cond, int(s.Cond.Pos()))
+	i := block.EmitIf(cond, int(s.Cond.Pos()))
 
 	if s.Body != nil {
 		b.blockStmt(s.Body.List, f, i.True)
