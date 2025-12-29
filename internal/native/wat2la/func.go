@@ -908,7 +908,7 @@ func (p *wat2laWorker) buildFunc_ins(
 
 		// 构建被调用函数的栈帧信息
 		fnCallNative := &nativeast.Func{
-			Name: "", // 间接调用, 没有名字(TODO: 可以尝试根据地址查询名字)
+			Name: "", // 间接调用, 没有名字(可以尝试根据地址查询名字)
 			Type: &nativeast.FuncType{
 				Args:   make([]*nativeast.Local, len(fnCallType.Params)),
 				Return: make([]*nativeast.Local, len(fnCallType.Results)),
@@ -2620,178 +2620,217 @@ func (p *wat2laWorker) buildFunc_ins(
 	case token.INS_I32_WRAP_I64:
 		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.I64)
 		ret0 := p.fnWasmR0Base - 8*stk.Push(token.I32)
-		fmt.Fprintf(w, "%sR%d.i32 = (int32_t)(R%d.i64); // %s\n",
-			indent, ret0, sp0,
-			insString(i),
-		)
+
+		fmt.Fprintf(w, "    ld.d    t0, fp, %d\n", sp0)
+		fmt.Fprintf(w, "    slli.w  t0, t0, 0\n")
+		fmt.Fprintf(w, "    st.d    t0, fp, %d\n", ret0)
+
 	case token.INS_I32_TRUNC_F32_S:
 		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.F32)
 		ret0 := p.fnWasmR0Base - 8*stk.Push(token.I32)
-		fmt.Fprintf(w, "%sR%d.i32 = (int32_t)(truncf(R%d.f32)); // %s\n",
-			indent, ret0, sp0,
-			insString(i),
-		)
+
+		fmt.Fprintf(w, "    fld.s    fa0, fp, %d\n", sp0)
+		fmt.Fprintf(w, "    ftintrz.w.s fa0, fa0\n") // 浮点转32位整型，存放在浮点寄存器
+		fmt.Fprintf(w, "    movfr2gr.w t0, fa0\n")   // 移回通用寄存器
+		fmt.Fprintf(w, "    st.d    t0, fp, %d\n", ret0)
+
 	case token.INS_I32_TRUNC_F32_U:
 		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.F32)
 		ret0 := p.fnWasmR0Base - 8*stk.Push(token.I32)
-		fmt.Fprintf(w, "%sR%d.i32 = (int32_t)(uint32_t)(truncf(R%d.f32)); // %s\n",
-			indent, ret0, sp0,
-			insString(i),
-		)
+
+		fmt.Fprintf(w, "    fld.s    fa0, fp, %d\n", sp0)
+		fmt.Fprintf(w, "    ftintrz.l.s fa0, fa0\n")
+		fmt.Fprintf(w, "    movfr2gr.d t0, fa0\n")
+		fmt.Fprintf(w, "    st.d    t0, fp, %d\n", ret0)
+
 	case token.INS_I32_TRUNC_F64_S:
 		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.F64)
 		ret0 := p.fnWasmR0Base - 8*stk.Push(token.I32)
-		fmt.Fprintf(w, "%sR%d.i32 = (int32_t)(trunc(R%d.f64)); // %s\n",
-			indent, ret0, sp0,
-			insString(i),
-		)
+
+		fmt.Fprintf(w, "    fld.d    fa0, fp, %d\n", sp0)
+		fmt.Fprintf(w, "    ftintrz.w.d fa0, fa0\n")
+		fmt.Fprintf(w, "    movfr2gr.w t0, fa0\n")
+		fmt.Fprintf(w, "    st.d    t0, fp, %d\n", ret0)
+
 	case token.INS_I32_TRUNC_F64_U:
 		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.F64)
 		ret0 := p.fnWasmR0Base - 8*stk.Push(token.I32)
-		fmt.Fprintf(w, "%sR%d.i32 = (int32_t)(uint32_t)(trunc(R%d.f64)); // %s\n",
-			indent, ret0, sp0,
-			insString(i),
-		)
+
+		fmt.Fprintf(w, "    fld.d    fa0, fp, %d\n", sp0)
+		fmt.Fprintf(w, "    ftintrz.l.d fa0, fa0\n")
+		fmt.Fprintf(w, "    movfr2gr.d t0, fa0\n")
+		fmt.Fprintf(w, "    st.d    t0, fp, %d\n", ret0)
+
 	case token.INS_I64_EXTEND_I32_S:
 		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.I32)
 		ret0 := p.fnWasmR0Base - 8*stk.Push(token.I64)
-		fmt.Fprintf(w, "%sR%d.i64 = (int64_t)(R%d.i32); // %s\n",
-			indent, ret0, sp0,
-			insString(i),
-		)
+
+		fmt.Fprintf(w, "    ld.w    t0, fp, %d\n", sp0) // ld.w 会自动符号扩展到64位
+		fmt.Fprintf(w, "    st.d    t0, fp, %d\n", ret0)
+
 	case token.INS_I64_EXTEND_I32_U:
 		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.I32)
 		ret0 := p.fnWasmR0Base - 8*stk.Push(token.I64)
-		fmt.Fprintf(w, "%sR%d.i64 = (int64_t)((uint32_t)(R%d.i32)); // %s\n",
-			indent, ret0, sp0,
-			insString(i),
-		)
+
+		fmt.Fprintf(w, "    ld.wu   t0, fp, %d\n", sp0) // ld.wu 零扩展到64位
+		fmt.Fprintf(w, "    st.d    t0, fp, %d\n", ret0)
+
 	case token.INS_I64_TRUNC_F32_S:
 		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.F32)
 		ret0 := p.fnWasmR0Base - 8*stk.Push(token.I64)
-		fmt.Fprintf(w, "%sR%d.i64 = (int64_t)(int32_t)(truncf(R%d.f32)); // %s\n",
-			indent, ret0, sp0,
-			insString(i),
-		)
+
+		fmt.Fprintf(w, "    fld.s    fa0, fp, %d\n", sp0)
+		fmt.Fprintf(w, "    ftintrz.l.s fa0, fa0\n")
+		fmt.Fprintf(w, "    movfr2gr.d t0, fa0\n")
+		fmt.Fprintf(w, "    st.d    t0, fp, %d\n", ret0)
+
 	case token.INS_I64_TRUNC_F32_U:
 		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.F32)
 		ret0 := p.fnWasmR0Base - 8*stk.Push(token.I64)
-		fmt.Fprintf(w, "%sR%d.i64 = (int64_t)(uint32_t)(truncf(R%d.f32)); // %s\n",
-			indent, ret0, sp0,
-			insString(i),
-		)
+
+		fmt.Fprintf(w, "    fld.s    fa0, fp, %d\n", sp0)
+		fmt.Fprintf(w, "    ftintrz.l.s fa0, fa0\n")
+		fmt.Fprintf(w, "    movfr2gr.d t0, fa0\n")
+		fmt.Fprintf(w, "    st.d    t0, fp, %d\n", ret0)
+
 	case token.INS_I64_TRUNC_F64_S:
 		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.F64)
 		ret0 := p.fnWasmR0Base - 8*stk.Push(token.I64)
-		fmt.Fprintf(w, "%sR%d.i64 = (int64_t)(trunc(R%d.f64)); // %s\n",
-			indent, ret0, sp0,
-			insString(i),
-		)
+
+		fmt.Fprintf(w, "    fld.d    fa0, fp, %d\n", sp0)
+		fmt.Fprintf(w, "    ftintrz.l.d fa0, fa0\n")
+		fmt.Fprintf(w, "    movfr2gr.d t0, fa0\n")
+		fmt.Fprintf(w, "    st.d    t0, fp, %d\n", ret0)
+
 	case token.INS_I64_TRUNC_F64_U:
 		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.F64)
 		ret0 := p.fnWasmR0Base - 8*stk.Push(token.I64)
-		fmt.Fprintf(w, "%sR%d.i64 = (int64_t)(uint64_t)(trunc(R%d.f64)); // %s\n",
-			indent, ret0, sp0,
-			insString(i),
-		)
+
+		fmt.Fprintf(w, "    fld.d    fa0, fp, %d\n", sp0)
+		fmt.Fprintf(w, "    ftintrz.l.d fa0, fa0\n")
+		fmt.Fprintf(w, "    movfr2gr.d t0, fa0\n")
+		fmt.Fprintf(w, "    st.d    t0, fp, %d\n", ret0)
+
 	case token.INS_F32_CONVERT_I32_S:
 		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.I32)
 		ret0 := p.fnWasmR0Base - 8*stk.Push(token.F32)
-		fmt.Fprintf(w, "%sR%d.f32 = (float)(R%d.i32); // %s\n",
-			indent, ret0, sp0,
-			insString(i),
-		)
+
+		fmt.Fprintf(w, "    ld.w     t0, fp, %d\n", sp0)
+		fmt.Fprintf(w, "    movgr2fr.w fa0, t0\n")
+		fmt.Fprintf(w, "    ffint.s.w  fa0, fa0\n")
+		fmt.Fprintf(w, "    fst.s    fa0, fp, %d\n", ret0)
+
 	case token.INS_F32_CONVERT_I32_U:
 		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.I32)
 		ret0 := p.fnWasmR0Base - 8*stk.Push(token.F32)
-		fmt.Fprintf(w, "%sR%d.f32 = (float)(R%d.u32); // %s\n",
-			indent, ret0, sp0,
-			insString(i),
-		)
+
+		fmt.Fprintf(w, "    ld.wu    t0, fp, %d\n", sp0)
+		fmt.Fprintf(w, "    movgr2fr.d fa0, t0\n")
+		fmt.Fprintf(w, "    ffint.s.l  fa0, fa0\n")
+		fmt.Fprintf(w, "    fst.s    fa0, fp, %d\n", ret0)
+
 	case token.INS_F32_CONVERT_I64_S:
 		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.I64)
 		ret0 := p.fnWasmR0Base - 8*stk.Push(token.F32)
-		fmt.Fprintf(w, "%sR%d.f32 = (float)(R%d.i64); // %s\n",
-			indent, ret0, sp0,
-			insString(i),
-		)
+
+		fmt.Fprintf(w, "    ld.d     t0, fp, %d\n", sp0)
+		fmt.Fprintf(w, "    movgr2fr.d fa0, t0\n")
+		fmt.Fprintf(w, "    ffint.s.l  fa0, fa0\n") // 64位有符号整数 -> f32
+		fmt.Fprintf(w, "    fst.s    fa0, fp, %d\n", ret0)
+
 	case token.INS_F32_CONVERT_I64_U:
 		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.I64)
 		ret0 := p.fnWasmR0Base - 8*stk.Push(token.F32)
-		fmt.Fprintf(w, "%sR%d.f32 = (float)(R%d.u64); // %s\n",
-			indent, ret0, sp0,
-			insString(i),
-		)
+
+		fmt.Fprintf(w, "    ld.d     t0, fp, %d\n", sp0)
+		fmt.Fprintf(w, "    movgr2fr.d fa0, t0\n")
+		fmt.Fprintf(w, "    ffint.s.l  fa0, fa0\n") // 临时替代方案，注意：这在处理大正数时会出错
+		fmt.Fprintf(w, "    fst.s    fa0, fp, %d\n", ret0)
+
 	case token.INS_F32_DEMOTE_F64:
 		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.I64)
 		ret0 := p.fnWasmR0Base - 8*stk.Push(token.F32)
-		fmt.Fprintf(w, "%sR%d.f32 = (float)(R%d.f64); // %s\n",
-			indent, ret0, sp0,
-			insString(i),
-		)
+
+		fmt.Fprintf(w, "    fld.d    fa0, fp, %d\n", sp0)
+		fmt.Fprintf(w, "    fcvt.s.d fa0, fa0\n")
+		fmt.Fprintf(w, "    fst.s    fa0, fp, %d\n", ret0)
+
 	case token.INS_F64_CONVERT_I32_S:
 		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.I32)
 		ret0 := p.fnWasmR0Base - 8*stk.Push(token.F64)
-		fmt.Fprintf(w, "%sR%d.f64 = (double)(R%d.i32); // %s\n",
-			indent, ret0, sp0,
-			insString(i),
-		)
+
+		fmt.Fprintf(w, "    ld.w     t0, fp, %d\n", sp0)
+		fmt.Fprintf(w, "    movgr2fr.w fa0, t0\n")
+		fmt.Fprintf(w, "    ffint.d.w  fa0, fa0\n")
+		fmt.Fprintf(w, "    fst.d    fa0, fp, %d\n", ret0)
+
 	case token.INS_F64_CONVERT_I32_U:
 		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.I32)
 		ret0 := p.fnWasmR0Base - 8*stk.Push(token.F64)
-		fmt.Fprintf(w, "%sR%d.f64 = (double)(R%d.u32); // %s\n",
-			indent, ret0, sp0,
-			insString(i),
-		)
+
+		fmt.Fprintf(w, "    ld.wu    t0, fp, %d\n", sp0)
+		fmt.Fprintf(w, "    movgr2fr.d fa0, t0\n")
+		fmt.Fprintf(w, "    ffint.d.l  fa0, fa0\n")
+		fmt.Fprintf(w, "    fst.d    fa0, fp, %d\n", ret0)
+
 	case token.INS_F64_CONVERT_I64_S:
 		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.I64)
 		ret0 := p.fnWasmR0Base - 8*stk.Push(token.F64)
-		fmt.Fprintf(w, "%sR%d.f64 = (double)(R%d.i64); // %s\n",
-			indent, ret0, sp0,
-			insString(i),
-		)
+
+		fmt.Fprintf(w, "    ld.d     t0, fp, %d\n", sp0)
+		fmt.Fprintf(w, "    movgr2fr.d fa0, t0\n")
+		fmt.Fprintf(w, "    ffint.d.l  fa0, fa0\n")
+		fmt.Fprintf(w, "    fst.d    fa0, fp, %d\n", ret0)
+
 	case token.INS_F64_CONVERT_I64_U:
 		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.I64)
 		ret0 := p.fnWasmR0Base - 8*stk.Push(token.F64)
-		fmt.Fprintf(w, "%sR%d.f64 = (double)(R%d.u64); // %s\n",
-			indent, ret0, sp0,
-			insString(i),
-		)
+
+		fmt.Fprintf(w, "    ld.d      t0, fp, %d\n", sp0)
+		fmt.Fprintf(w, "    movgr2fr.d fa0, t0\n")
+		fmt.Fprintf(w, "    ffint.d.l fa0, fa0\n")
+		fmt.Fprintf(w, "    fst.d      fa0, fp, %d\n", ret0)
+
 	case token.INS_F64_PROMOTE_F32:
 		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.F32)
 		ret0 := p.fnWasmR0Base - 8*stk.Push(token.F64)
-		fmt.Fprintf(w, "%sR%d.f64 = (double)(R%d.f32); // %s\n",
-			indent, ret0, sp0,
-			insString(i),
-		)
+
+		fmt.Fprintf(w, "    fld.s    fa0, fp, %d\n", sp0)
+		fmt.Fprintf(w, "    fcvt.d.s fa0, fa0\n")
+		fmt.Fprintf(w, "    fst.d    fa0, fp, %d\n", ret0)
+
 	case token.INS_I32_REINTERPRET_F32:
 		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.F32)
 		ret0 := p.fnWasmR0Base - 8*stk.Push(token.F64)
-		fmt.Fprintf(w, "%sR%d = R%d; // %s\n",
-			indent, ret0, sp0,
-			insString(i),
-		)
+
+		fmt.Fprintf(w, "    fld.s    fa0, fp, %d\n", sp0)
+		fmt.Fprintf(w, "    movfr2gr.s t0, fa0\n")
+		fmt.Fprintf(w, "    st.d    t0, fp, %d\n", ret0)
+
 	case token.INS_I64_REINTERPRET_F64:
 		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.I64)
 		ret0 := p.fnWasmR0Base - 8*stk.Push(token.F64)
-		fmt.Fprintf(w, "%sR%d = R%d; // %s\n",
-			indent, ret0, sp0,
-			insString(i),
-		)
+
+		fmt.Fprintf(w, "    fld.d    fa0, fp, %d\n", sp0)
+		fmt.Fprintf(w, "    movfr2gr.d t0, fa0\n")
+		fmt.Fprintf(w, "    st.d    t0, fp, %d\n", ret0)
+
 	case token.INS_F32_REINTERPRET_I32:
 		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.I32)
 		ret0 := p.fnWasmR0Base - 8*stk.Push(token.F32)
-		fmt.Fprintf(w, "%sR%d = R%d; // %s\n",
-			indent, ret0, sp0,
-			insString(i),
-		)
+
+		fmt.Fprintf(w, "    ld.w    t0, fp, %d\n", sp0)
+		fmt.Fprintf(w, "    movgr2fr.w fa0, t0\n")
+		fmt.Fprintf(w, "    fst.s    fa0, fp, %d\n", ret0)
+
 	case token.INS_F64_REINTERPRET_I64:
 		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.I64)
 		ret0 := p.fnWasmR0Base - 8*stk.Push(token.F64)
-		fmt.Fprintf(w, "%sR%d = R%d; // %s\n",
-			indent, ret0, sp0,
-			insString(i),
-		)
+
+		fmt.Fprintf(w, "    ld.d     t0, fp, %d\n", sp0)
+		fmt.Fprintf(w, "    movgr2fr.d fa0, t0\n")
+		fmt.Fprintf(w, "    fst.d    fa0, fp, %d\n", ret0)
+
 	default:
 		panic(fmt.Sprintf("unreachable: %T", i))
 	}
