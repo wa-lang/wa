@@ -14,6 +14,9 @@ import (
 
 // 构建栈帧中参数和返回值的位置
 func buildFuncFrame_loong64(cpu abi.CPUType, fn *ast.Func) error {
+	if cpu != abi.LOONG64 {
+		panic("unreachable")
+	}
 	if err := buildFuncArgReturn_loong64(fn); err != nil {
 		return err
 	}
@@ -98,11 +101,21 @@ func buildFuncArgReturn_loong64(fn *ast.Func) error {
 			if fArgReg <= loong64.REG_FA7 {
 				arg.Reg = fArgReg
 				fArgReg++
+			} else if iArgReg <= loong64.REG_A7 {
+				// 浮点数寄存器不足时可复用空闲的整数寄存器(英文ABI手册v2.01)
+				// 基于当前位置判断是否有空闲(据说基于尚未来公开的v2.50)
+				arg.Reg = iArgReg
+				iArgReg++
 			}
 		case token.F64, token.F64_zh:
 			if fArgReg <= loong64.REG_FA7 {
 				arg.Reg = fArgReg
 				fArgReg++
+			} else if iArgReg <= loong64.REG_A7 {
+				// 浮点数寄存器不足时可复用空闲的整数寄存器(英文ABI手册v2.01)
+				// 基于当前位置判断是否有空闲(据说基于尚未来公开的v2.50)
+				arg.Reg = iArgReg
+				iArgReg++
 			}
 		default:
 			panic("unreachable")

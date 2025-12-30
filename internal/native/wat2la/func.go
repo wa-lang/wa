@@ -133,14 +133,14 @@ func (p *wat2laWorker) buildFunc_body(w io.Writer, fn *ast.Func) error {
 	}
 	for i, typ := range fn.Type.Results {
 		fnNative.Type.Return[i] = &nativeast.Local{
-			Name: fmt.Sprintf("$ret.%d", i),
+			Name: fmt.Sprintf("%s%d", kFuncRetNamePrefix, i),
 			Type: wat2nativeType(typ),
 			Cap:  1,
 		}
 	}
 	for i, local := range fn.Body.Locals {
 		fnNative.Body.Locals[i] = &nativeast.Local{
-			Name: local.Name,
+			Name: fmt.Sprintf("%s%s", kFuncLocalNamePrefix, local.Name),
 			Type: wat2nativeType(local.Type),
 			Cap:  1,
 		}
@@ -155,9 +155,9 @@ func (p *wat2laWorker) buildFunc_body(w io.Writer, fn *ast.Func) error {
 	// 第一步构建 ra 和 fp
 	{
 		fmt.Fprintf(&bufHeader, "     # 栈帧开始\n")
-		fmt.Fprintln(&bufHeader, "    addi.d $sp, $sp, -16 # $sp = $sp - 16")
-		fmt.Fprintln(&bufHeader, "    st.d   $ra, $sp, 8   # save $ra")
-		fmt.Fprintln(&bufHeader, "    st.d   $fp, $sp, 0   # save $fp")
+		fmt.Fprintln(&bufHeader, "    addi.d sp, sp, -16 # sp = sp - 16")
+		fmt.Fprintln(&bufHeader, "    st.d   $ra, sp, 8   # save $ra")
+		fmt.Fprintln(&bufHeader, "    st.d   fp, sp, 0   # save fp")
 
 		fmt.Fprintf(&bufHeader, "    # memory address\n")
 		fmt.Fprintf(&bufHeader, "    pcalau12i %s, %%pc_hi20(%s)\n", kMemoryReg, kMemoryAddrName)
@@ -179,28 +179,24 @@ func (p *wat2laWorker) buildFunc_body(w io.Writer, fn *ast.Func) error {
 			// 将寄存器中的参数存储到对于的栈帧中
 			switch fn.Type.Params[i].Type {
 			case token.I32:
-				fmt.Fprintf(&bufHeader, "    st.w %v, $fp, %d # save %s\n",
-					loong64.RegString(arg.Reg),
-					arg.Off,
-					arg.Name,
+				fmt.Fprintf(&bufHeader, "    st.w %v, fp, %d # save %s%s\n",
+					loong64.RegString(arg.Reg), arg.Off,
+					kFuncArgNamePrefix, arg.Name,
 				)
 			case token.I64:
-				fmt.Fprintf(&bufHeader, "    st.d %v, $fp, %d # save %s\n",
-					loong64.RegString(arg.Reg),
-					arg.Off,
-					arg.Name,
+				fmt.Fprintf(&bufHeader, "    st.d %v, fp, %d # save %s%s\n",
+					loong64.RegString(arg.Reg), arg.Off,
+					kFuncArgNamePrefix, arg.Name,
 				)
 			case token.F32:
-				fmt.Fprintf(&bufHeader, "    fst.s %v, $fp, %d # save %s\n",
-					loong64.RegString(arg.Reg),
-					arg.Off,
-					arg.Name,
+				fmt.Fprintf(&bufHeader, "    fst.s %v, fp, %d # save %s%s\n",
+					loong64.RegString(arg.Reg), arg.Off,
+					kFuncArgNamePrefix, arg.Name,
 				)
 			case token.F64:
-				fmt.Fprintf(&bufHeader, "    fst.d %v, $fp, %d # save %s\n",
-					loong64.RegString(arg.Reg),
-					arg.Off,
-					arg.Name,
+				fmt.Fprintf(&bufHeader, "    fst.d %v, fp, %d # save %s%s\n",
+					loong64.RegString(arg.Reg), arg.Off,
+					kFuncArgNamePrefix, arg.Name,
 				)
 			default:
 				panic("unreachable")
@@ -212,52 +208,44 @@ func (p *wat2laWorker) buildFunc_body(w io.Writer, fn *ast.Func) error {
 	for i, ret := range fnNative.Type.Return {
 		switch fn.Type.Results[i] {
 		case token.I32:
-			fmt.Fprintf(&bufHeader, "    st.w zero, $fp, %d # save %s\n",
-				ret.Off,
-				ret.Name,
+			fmt.Fprintf(&bufHeader, "    st.w zero, fp, %d # %s%s = 0\n",
+				ret.Off, kFuncRetNamePrefix, ret.Name,
 			)
 		case token.I64:
-			fmt.Fprintf(&bufHeader, "    st.d zero, $fp, %d # save %s\n",
-				ret.Off,
-				ret.Name,
+			fmt.Fprintf(&bufHeader, "    st.d zero, fp, %d # %s%s = 0\n",
+				ret.Off, kFuncRetNamePrefix, ret.Name,
 			)
 		case token.F32:
-			fmt.Fprintf(&bufHeader, "    fst.s zero, $fp, %d # save %s\n",
-				ret.Off,
-				ret.Name,
+			fmt.Fprintf(&bufHeader, "    fst.s zero, fp, %d # %s%s = 0\n",
+				ret.Off, kFuncRetNamePrefix, ret.Name,
 			)
 		case token.F64:
-			fmt.Fprintf(&bufHeader, "    fst.d zero, $fp, %d # save %s\n",
-				ret.Off,
-				ret.Name,
+			fmt.Fprintf(&bufHeader, "    fst.d zero, fp, %d # %s%s = 0\n",
+				ret.Off, kFuncRetNamePrefix, ret.Name,
 			)
 		default:
 			panic("unreachable")
 		}
 	}
 
-	// 局部遍历初始化为 0
+	// 局部变量初始化为 0
 	for i, ret := range fnNative.Type.Return {
 		switch fn.Body.Locals[i].Type {
 		case token.I32:
-			fmt.Fprintf(&bufHeader, "    st.w zero, $fp, %d # save %s\n",
-				ret.Off,
-				ret.Name,
+			fmt.Fprintf(&bufHeader, "    st.w zero, fp, %d # %s%s = 0\n",
+				ret.Off, kFuncLocalNamePrefix, ret.Name,
 			)
 		case token.I64:
-			fmt.Fprintf(&bufHeader, "    st.d zero, $fp, %d # save %s\n",
-				ret.Off,
-				ret.Name,
+			fmt.Fprintf(&bufHeader, "    st.d zero, fp, %d # %s%s = 0\n",
+				ret.Off, kFuncLocalNamePrefix, ret.Name,
 			)
 		case token.F32:
-			fmt.Fprintf(&bufHeader, "    fst.s zero, $fp, %d # save %s\n",
-				ret.Off,
-				ret.Name,
+			fmt.Fprintf(&bufHeader, "    fst.s zero, fp, %d # %s%s = 0\n",
+				ret.Off, kFuncLocalNamePrefix, ret.Name,
 			)
 		case token.F64:
-			fmt.Fprintf(&bufHeader, "    fst.d zero, $fp, %d # save %s\n",
-				ret.Off,
-				ret.Name,
+			fmt.Fprintf(&bufHeader, "    fst.d zero, fp, %d # %s%s = 0\n",
+				ret.Off, kFuncLocalNamePrefix, ret.Name,
 			)
 		default:
 			panic("unreachable")
@@ -269,6 +257,8 @@ func (p *wat2laWorker) buildFunc_body(w io.Writer, fn *ast.Func) error {
 		// WASM 栈底第一个元素相对于 FP 的偏移位置, 每个元素 8 字节
 		n := len(fnNative.Type.Args) + len(fnNative.Type.Return) + len(fnNative.Body.Locals)
 		p.fnWasmR0Base = 0 - (n+2+1)*8
+
+		// BUG: Args 有部分走了寄存器
 	}
 
 	// 至少要有一个指令
@@ -304,7 +294,7 @@ func (p *wat2laWorker) buildFunc_body(w io.Writer, fn *ast.Func) error {
 			n = ((n + 15) / 16) * 16
 		}
 
-		fmt.Fprintf(&bufHeader, "    addi.d $sp, $sp, -%d  # $sp = $sp - len(args)*8\n", n*8)
+		fmt.Fprintf(&bufHeader, "    addi.d sp, sp, -%d  # sp = sp - len(args)*8\n", n*8)
 	}
 
 	// 根据ABI处理返回值
@@ -314,7 +304,7 @@ func (p *wat2laWorker) buildFunc_body(w io.Writer, fn *ast.Func) error {
 
 		// 如果走内存, 返回地址
 		if len(fn.Type.Results) > 1 && fnNative.Type.Return[1].Reg == 0 {
-			fmt.Fprintf(&bufIns, "    addi.d a0, $fp, %d # ret.%s\n",
+			fmt.Fprintf(&bufIns, "    addi.d a0, fp, %d # ret.%s\n",
 				fnNative.Type.Return[0].Off,
 				fnNative.Type.Return[0].Name,
 			)
@@ -323,7 +313,7 @@ func (p *wat2laWorker) buildFunc_body(w io.Writer, fn *ast.Func) error {
 				if ret.Reg == 0 {
 					continue
 				}
-				fmt.Fprintf(&bufIns, "    ld.d %v, $fp, %d # ret.%s\n",
+				fmt.Fprintf(&bufIns, "    ld.d %v, fp, %d # ret.%s\n",
 					loong64.RegString(ret.Reg),
 					fnNative.Type.Return[i].Off,
 					fnNative.Type.Return[i].Name,
@@ -335,9 +325,9 @@ func (p *wat2laWorker) buildFunc_body(w io.Writer, fn *ast.Func) error {
 	// 结束栈帧
 	{
 		fmt.Fprintf(&bufIns, "     # 栈帧结束\n")
-		fmt.Fprintln(&bufIns, "    addi.d   $sp, $fp, 0 # $sp = $fp")
-		fmt.Fprintln(&bufIns, "    ld.d $ra, $fp, -8    # restore $ra")
-		fmt.Fprintln(&bufIns, "    ld.d $fp, $fp, -16   # restore $fp")
+		fmt.Fprintln(&bufIns, "    addi.d   sp, fp, 0 # sp = fp")
+		fmt.Fprintln(&bufIns, "    ld.d $ra, fp, -8    # restore $ra")
+		fmt.Fprintln(&bufIns, "    ld.d fp, fp, -16   # restore fp")
 		fmt.Fprintln(&bufIns, "    jr $ra               # return")
 	}
 
