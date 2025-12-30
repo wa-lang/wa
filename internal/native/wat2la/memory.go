@@ -26,7 +26,9 @@ func (p *wat2laWorker) buildMemory(w io.Writer) error {
 		return nil
 	}
 	if p.m.Memory.Name != "" {
-		fmt.Fprintf(w, "# memory $%s\n", p.m.Memory.Name)
+		fmt.Fprintf(w, "# memory %s\n", p.m.Memory.Name)
+	} else {
+		fmt.Fprintf(w, "# memory\n")
 	}
 	if max := p.m.Memory.MaxPages; max > 0 {
 		fmt.Fprintf(w, "global %s: i64 = 0\n", kMemoryAddrName)
@@ -98,7 +100,7 @@ func (p *wat2laWorker) buildMemory(w io.Writer) error {
 			fmt.Fprintf(w, "    pcalau12i t1, %%pc_hi20(%s%d)\n", kMemoryDataOffsetPrefix, i)
 			fmt.Fprintf(w, "    addi.d    t1, t1, %%pc_lo12(%s%d)\n", kMemoryDataOffsetPrefix, i)
 			fmt.Fprintf(w, "    ld.d      a0, t1, 0\n")
-			fmt.Fprintf(w, "    add.d     a0, a0, t8\n")
+			fmt.Fprintf(w, "    add.d     a0, a0, %s\n", kMemoryReg)
 			fmt.Fprintln(w)
 
 			fmt.Fprintf(w, "    # ptr = data[%d].ptr\n", i)

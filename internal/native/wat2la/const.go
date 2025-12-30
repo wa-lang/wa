@@ -9,6 +9,10 @@ import (
 	"sort"
 )
 
+const (
+	kConstPrefix = "$wat2la.const."
+)
+
 // 注册常量
 func (p *wat2laWorker) registerConst(x uint64) {
 	p.constLitMap[x] = x
@@ -24,7 +28,7 @@ func (p *wat2laWorker) buildConstList(w io.Writer) error {
 		return xList[i] < xList[j]
 	})
 	for _, x := range xList {
-		fmt.Fprintf(w, "global %s: u64 = %d\n", p.getConstName(x), x)
+		fmt.Fprintf(w, "global %s%d: u64 = %d\n", kConstPrefix, x, x)
 	}
 	return nil
 }

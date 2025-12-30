@@ -25,5 +25,8 @@ func (p *wat2laWorker) buildBuiltin(w io.Writer) error {
 	if _, err := w.Write([]byte(builtin_was)); err != nil {
 		return err
 	}
+	if _, err := w.Write([]byte(builtin_wzs)); err != nil {
+		return err
+	}
 	return nil
 }

@@ -189,6 +189,39 @@ func (p *wat2laWorker) findFuncType(ident string) *ast.FuncType {
 	panic(fmt.Sprintf("wat2la: unknown func %q", ident))
 }
 
+func (p *wat2laWorker) findFuncIndex(ident string) int {
+	if ident == "" {
+		panic("wat2la: empty ident")
+	}
+
+	if idx, err := strconv.Atoi(ident); err == nil {
+		return idx
+	}
+
+	// 导入函数
+	{
+		var nextIndex int
+		for _, importSpec := range p.m.Imports {
+			if importSpec.ObjKind != token.FUNC {
+				continue
+			}
+			if ident == importSpec.FuncName {
+				return nextIndex
+			}
+			nextIndex++
+		}
+	}
+
+	// 查找本地定义的函数
+	for i, fn := range p.m.Funcs {
+		if fn.Name == ident {
+			return p.importFuncCount + i
+		}
+	}
+
+	panic(fmt.Sprintf("wat2la: unknown func %q", ident))
+}
+
 func (p *wat2laWorker) findLabelName(label string) string {
 	if label == "" {
 		panic("wat2la: empty label")

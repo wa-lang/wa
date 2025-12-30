@@ -31,6 +31,9 @@ func (p *wat2laWorker) buildSyscall(w io.Writer, hostFuncMap map[string]bool) er
 	if _, err := w.Write([]byte(syscall_was)); err != nil {
 		return err
 	}
+	if _, err := w.Write([]byte(syscall_wzs)); err != nil {
+		return err
+	}
 	return nil
 }
 

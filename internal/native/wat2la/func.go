@@ -17,6 +17,13 @@ import (
 	"wa-lang.org/wa/internal/wat/token"
 )
 
+const (
+	kFuncNamePrefix      = "$wat2la.func."
+	kFuncArgNamePrefix   = "$wat2la.func.arg."
+	kFuncRetNamePrefix   = "$wat2la.func.ret."
+	kFuncLocalNamePrefix = "$wat2la.func.local."
+)
+
 //
 // 函数栈帧布局
 // 参考 /docs/asm_abi_la64.md
@@ -33,17 +40,17 @@ func (p *wat2laWorker) buildFuncs(w io.Writer) error {
 	}
 
 	for _, f := range p.m.Funcs {
-		fmt.Fprintf(w, "func $%s", f.Name)
+		fmt.Fprintf(w, "func %s%s", kFuncNamePrefix, f.Name)
 		if len(f.Type.Params) > 0 {
 			fmt.Fprint(w, "(")
-			for i, x := range f.Type.Params {
+			for i, arg := range f.Type.Params {
 				if i > 0 {
 					fmt.Fprint(w, ", ")
 				}
-				if x.Name != "" {
-					fmt.Fprintf(w, "$%s: %v", x.Name, x.Type)
+				if arg.Name != "" {
+					fmt.Fprintf(w, "%s%s: %v", kFuncArgNamePrefix, arg.Name, arg.Type)
 				} else {
-					fmt.Fprintf(w, "$arg.%d, %v", i, x.Type)
+					fmt.Fprintf(w, "%s%d, %v", kFuncArgNamePrefix, i, arg.Type)
 				}
 			}
 			fmt.Fprint(w, ")")
@@ -54,7 +61,7 @@ func (p *wat2laWorker) buildFuncs(w io.Writer) error {
 				if i > 0 {
 					fmt.Fprint(w, ", ")
 				}
-				fmt.Fprintf(w, "$ret.%d: %v", i, x)
+				fmt.Fprintf(w, "%s%d: %v", kFuncRetNamePrefix, i, x)
 			}
 			fmt.Fprint(w, ")")
 		} else if len(f.Type.Results) == 1 {
@@ -101,7 +108,7 @@ func (p *wat2laWorker) buildFunc_body(w io.Writer, fn *ast.Func) error {
 		for _, x := range fn.Body.Locals {
 			p.localNames = append(p.localNames, x.Name)
 			p.localTypes = append(p.localTypes, x.Type)
-			fmt.Fprintf(&bufHeader, "    local %s: %v\n", x.Name, x.Type)
+			fmt.Fprintf(&bufHeader, "    local %s%s: %v\n", kFuncLocalNamePrefix, x.Name, x.Type)
 		}
 		fmt.Fprintln(&bufHeader)
 	}
@@ -157,8 +164,8 @@ func (p *wat2laWorker) buildFunc_body(w io.Writer, fn *ast.Func) error {
 		fmt.Fprintf(&bufHeader, "    addi.d    %s, %s, %%pc_lo12(%s)\n", kMemoryReg, kMemoryReg, kMemoryAddrName)
 
 		fmt.Fprintf(&bufHeader, "    # table address\n")
-		fmt.Fprintf(&bufHeader, "    pcalau12i %s, %%pc_hi20(%s)\n", kTableReg, kTableName)
-		fmt.Fprintf(&bufHeader, "    addi.d    %s, %s, %%pc_lo12(%s)\n", kTableReg, kTableReg, kTableName)
+		fmt.Fprintf(&bufHeader, "    pcalau12i %s, %%pc_hi20(%s)\n", kTableReg, kTableAddrName)
+		fmt.Fprintf(&bufHeader, "    addi.d    %s, %s, %%pc_lo12(%s)\n", kTableReg, kTableReg, kTableAddrName)
 	}
 
 	// 将寄存器参数备份到栈
@@ -1603,7 +1610,7 @@ func (p *wat2laWorker) buildFunc_ins(
 	case token.INS_I32_CONST:
 		i := i.(ast.Ins_I32Const)
 		p.registerConst(uint64(i.X))
-		gName := p.getConstName(uint64(i.X))
+		gName := fmt.Sprintf("%s%d", kConstPrefix, uint64(i.X))
 
 		sp0 := p.fnWasmR0Base - 8*stk.Push(token.I32)
 
@@ -1616,7 +1623,7 @@ func (p *wat2laWorker) buildFunc_ins(
 		i := i.(ast.Ins_I64Const)
 
 		p.registerConst(uint64(i.X))
-		gName := p.getConstName(uint64(i.X))
+		gName := fmt.Sprintf("%s%d", kConstPrefix, uint64(i.X))
 
 		sp0 := p.fnWasmR0Base - 8*stk.Push(token.I64)
 
@@ -1629,7 +1636,7 @@ func (p *wat2laWorker) buildFunc_ins(
 		i := i.(ast.Ins_F32Const)
 
 		p.registerConst(uint64(math.Float32bits(i.X)))
-		gName := p.getConstName(uint64(i.X))
+		gName := fmt.Sprintf("%s%d", kConstPrefix, uint64(i.X))
 
 		sp0 := p.fnWasmR0Base - 8*stk.Push(token.F32)
 
@@ -1642,7 +1649,7 @@ func (p *wat2laWorker) buildFunc_ins(
 		i := i.(ast.Ins_F64Const)
 
 		p.registerConst(uint64(math.Float64bits(i.X)))
-		gName := p.getConstName(uint64(i.X))
+		gName := fmt.Sprintf("%s%d", kConstPrefix, uint64(i.X))
 
 		sp0 := p.fnWasmR0Base - 8*stk.Push(token.F64)
 

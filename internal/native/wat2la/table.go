@@ -11,9 +11,12 @@ import (
 )
 
 const (
-	kTableReg      = "T7"
-	kTableName     = "$wat2la.table"
-	kTableSizeName = "$wat2la.table.size"
+	kTableReg         = "T7"
+	kTableAddrName    = "$wat2la.table.addr"
+	kTableSizeName    = "$wat2la.table.size"
+	kTableMaxSizeName = "$wat2la.table.maxSize"
+
+	kFuncIndexTableName = "$wat2la.func.index.table"
 )
 
 func (p *wat2laWorker) buildTable(w io.Writer) error {
@@ -27,19 +30,48 @@ func (p *wat2laWorker) buildTable(w io.Writer) error {
 	const IntSize = 8
 
 	if p.m.Table.Name != "" {
-		fmt.Fprintf(w, "# table $%s\n", p.m.Table.Name)
+		fmt.Fprintf(w, "# table %s\n", p.m.Table.Name)
+	} else {
+		fmt.Fprintf(w, "# table\n")
 	}
 	if max := p.m.Table.MaxSize; max > 0 {
-		fmt.Fprintf(w, "# table.size = %d, table.max = %d\n", p.m.Table.Size, max)
-		fmt.Fprintf(w, "global $table: %d = {\n", max*IntSize)
+		fmt.Fprintf(w, "global %s: i64 = %d\n", kTableSizeName, p.m.Table.Size)
+		fmt.Fprintf(w, "global %s: i64 = %d\n", kTableMaxSizeName, p.m.Table.MaxSize)
+		fmt.Fprintf(w, "global %s: %d = {\n", kTableAddrName, max*IntSize)
 	} else {
-		fmt.Fprintf(w, "# table.size = %d\n", p.m.Table.Size)
-		fmt.Fprintf(w, "global $table: %d = {\n", p.m.Table.Size*IntSize)
+		fmt.Fprintf(w, "global %s: i64 = %d\n", kTableSizeName, p.m.Table.Size)
+		fmt.Fprintf(w, "global %s: i64 = %d\n", kTableMaxSizeName, p.m.Table.Size)
+		fmt.Fprintf(w, "global %s: %d = {\n", kTableAddrName, p.m.Table.Size*IntSize)
 	}
-	for _, elem := range p.m.Elem {
-		off := elem.Offset
-		for i, fn := range elem.Values {
-			fmt.Fprintf(w, "    %d: %s,\n", int(off)+i*IntSize, fn)
+	{
+		// 为了更真实地模拟, 表格保存的是函数的索引!
+		for _, elem := range p.m.Elem {
+			for i, fnIdxOrName := range elem.Values {
+				fnIndex := p.findFuncIndex(fnIdxOrName)
+				fmt.Fprintf(w, "    %d: %d,\n", int(elem.Offset)+i*IntSize, fnIndex)
+			}
+		}
+	}
+	fmt.Fprintf(w, "}\n")
+	fmt.Fprintln(w)
+
+	// 函数索引列表
+	if max := p.m.Table.MaxSize; max > 0 {
+		fmt.Fprintf(w, "global %s: %d = {\n", kFuncIndexTableName, max*IntSize)
+	} else {
+		fmt.Fprintf(w, "global %s: %d = {\n", kFuncIndexTableName, p.m.Table.Size*IntSize)
+	}
+	{
+		// 索引从导入函数开始计算
+		var importFuncCount int
+		for i, x := range p.m.Imports {
+			if x.ObjKind == token.FUNC {
+				fmt.Fprintf(w, "    %d: %s,\n", i, x.FuncName)
+				importFuncCount++
+			}
+		}
+		for i, x := range p.m.Funcs {
+			fmt.Fprintf(w, "    %d: %s,\n", importFuncCount+i, x.Name)
 		}
 	}
 	fmt.Fprintf(w, "}\n")
