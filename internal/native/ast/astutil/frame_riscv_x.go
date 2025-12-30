@@ -147,6 +147,7 @@ func buildFuncArgReturn_riscv(cpu abi.CPUType, fn *ast.Func) error {
 		}
 	}
 
+	fn.FrameSize = 0 - sp
 	return nil
 }
 
@@ -201,5 +202,6 @@ func buildFuncLocals_riscv(cpu abi.CPUType, fn *ast.Func) error {
 		}
 	}
 
+	fn.FrameSize = 0 - sp
 	return nil
 }

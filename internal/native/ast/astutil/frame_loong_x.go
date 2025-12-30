@@ -159,6 +159,7 @@ func buildFuncArgReturn_loong64(fn *ast.Func) error {
 		}
 	}
 
+	fn.FrameSize = 0 - sp
 	return nil
 }
 
@@ -211,5 +212,6 @@ func buildFuncLocals_loong64(fn *ast.Func) error {
 		}
 	}
 
+	fn.FrameSize = 0 - sp
 	return nil
 }
