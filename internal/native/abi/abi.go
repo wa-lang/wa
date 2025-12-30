@@ -18,6 +18,7 @@ const (
 	LOONG64
 	RISCV64
 	RISCV32
+	X64
 	CPU_Max
 )
 
@@ -25,6 +26,7 @@ var _CPUType_strings = []string{
 	LOONG64: "loong64",
 	RISCV64: "riscv64",
 	RISCV32: "riscv32",
+	X64:     "x64",
 }
 
 // 链接参数

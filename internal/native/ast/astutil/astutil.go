@@ -18,6 +18,8 @@ func BuildFuncFrame(cpu abi.CPUType, fn *ast.Func) error {
 		return buildFuncFrame_riscv(cpu, fn)
 	case abi.RISCV64:
 		return buildFuncFrame_riscv(cpu, fn)
+	case abi.X64:
+		return buildFuncFrame_x64(cpu, fn)
 	default:
 		panic("unreachable")
 	}

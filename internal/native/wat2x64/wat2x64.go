@@ -15,7 +15,7 @@ import (
 
 const DebugMode = false
 
-// Wat程序转译到 龙芯汇编
+// Wat程序转译到 X64汇编
 func Wat2X64(filename string, source []byte) (m *watast.Module, code []byte, err error) {
 	return wat2x64(filename, source)
 }
