@@ -187,38 +187,38 @@ func (b *Block) EmitStoreN(locs []Location, vals []Expr, pos int) *InstStore {
 	return v
 }
 
-/**************************************
-Extract: Extract 指令，提取元组 Tuple 的第 Index 个元素，Extract 实现了 Expr
-**************************************/
-type Extract struct {
-	aStmt
-	X     Expr
-	Index int
-}
-
-func (i *Extract) Name() string {
-	return i.String()
-}
-
-func (i *Extract) String() string {
-	return fmt.Sprintf("extract(%s, #%d)", i.X.Name(), i.Index)
-}
-
-func (i *Extract) Type() Type {
-	return i.X.Type().(*Tuple).fields[i.Index]
-}
-
-// 生成一条 Extract 指令
-func (b *Block) NewExtract(tuple Expr, index int, pos int) *Extract {
-	v := &Extract{}
-	v.Stringer = v
-	v.X = tuple
-	v.Index = index
-	v.pos = pos
-	v.setScope(b)
-
-	return v
-}
+///**************************************
+//Extract: Extract 指令，提取元组 Tuple 的第 Index 个元素，Extract 实现了 Expr
+//**************************************/
+//type Extract struct {
+//	aStmt
+//	X     Expr
+//	Index int
+//}
+//
+//func (i *Extract) Name() string {
+//	return i.String()
+//}
+//
+//func (i *Extract) String() string {
+//	return fmt.Sprintf("extract(%s, #%d)", i.X.Name(), i.Index)
+//}
+//
+//func (i *Extract) Type() Type {
+//	return i.X.Type().(*Tuple).fields[i.Index]
+//}
+//
+//// 生成一条 Extract 指令
+//func (b *Block) NewExtract(tuple Expr, index int, pos int) *Extract {
+//	v := &Extract{}
+//	v.Stringer = v
+//	v.X = tuple
+//	v.Index = index
+//	v.pos = pos
+//	v.setScope(b)
+//
+//	return v
+//}
 
 /**************************************
 Return: Return 指令
@@ -378,7 +378,7 @@ func (b *Block) NewBiop(x, y Expr, op OpCode, pos int) *Biop {
 }
 
 /**************************************
-Call:  函数调用指令，Callee 为 StaticCall、BuiltinCall、MethodCall、InterfaceCall、ClosureCall 之一，Call 实现了 Expr
+Call: 函数调用指令，Callee 为 StaticCall、BuiltinCall、MethodCall、InterfaceCall、ClosureCall 之一，Call 实现了 Expr
 **************************************/
 type Call struct {
 	aStmt
@@ -401,7 +401,7 @@ func (b *Block) NewCall(callee Expr) *Call {
 }
 
 /**************************************
-If:  条件指令
+If: 条件指令
 **************************************/
 type If struct {
 	aStmt
@@ -436,6 +436,57 @@ func (b *Block) EmitIf(cond Expr, pos int) *If {
 
 	v.True = b.createBlock("", pos)
 	v.False = b.createBlock("", pos)
+
+	b.emit(v)
+	return v
+}
+
+/**************************************
+Loop: 循环指令，逻辑如下：
+loop $Label {
+	if cond_expr $Label.done {
+		block $Label.body {
+			...body...
+		}  // <- continue 转这里
+		...post...
+		br $Label
+	}  // <- break 转这里
+}
+**************************************/
+type Loop struct {
+	aStmt
+	Cond  Expr   // 循环条件
+	Label string //
+	Body  *Block // 循环体，不会为 nil
+	Post  *Block // 循环后处理，不会为 nil
+}
+
+func (i *Loop) Format(tab string, sb *strings.Builder) {
+	sb.WriteString(tab)
+	sb.WriteString("loop ")
+	sb.WriteString(i.Cond.Name())
+	sb.WriteString(" $")
+	sb.WriteString(i.Label)
+	sb.WriteString("\n")
+
+	i.Body.Format(tab, sb)
+
+	sb.WriteString(" post\n")
+	i.Post.Format(tab, sb)
+}
+
+// 在 Block 中添加一条 Loop 指令
+func (b *Block) EmitLoop(cond Expr, label string, pos int) *Loop {
+	if !cond.Type().Equal(b.types.Bool) {
+		panic("cond must be bool.")
+	}
+
+	v := &Loop{Cond: cond}
+	v.Stringer = v
+	v.pos = pos
+
+	v.Body = b.createBlock(label+".body", pos)
+	v.Post = b.createBlock(label+".post", pos)
 
 	b.emit(v)
 	return v

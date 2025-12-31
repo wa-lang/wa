@@ -146,7 +146,7 @@ func (b *Builder) buildFunc(f *Func) (fn *wire.Function) {
 func (b *Builder) stmt(s ast.Stmt, f *Func, block *wire.Block) {
 	switch s := s.(type) {
 	case *ast.EmptyStmt:
-		//
+		return
 
 	case *ast.BlockStmt:
 		newblock := block.EmitBlock("", int(s.Pos()))
@@ -222,10 +222,27 @@ func (b *Builder) stmt(s ast.Stmt, f *Func, block *wire.Block) {
 	case *ast.IfStmt:
 		b.ifStmt(s, f, block)
 
-	default:
-		panic("Todo")
-	}
+	case *ast.ForStmt:
+		b.forStmt(s, f, block)
 
+	case *ast.DeferStmt:
+		panic("Todo")
+
+	case *ast.BranchStmt:
+		panic("Todo")
+
+	case *ast.SwitchStmt:
+		panic("Todo")
+
+	case *ast.TypeSwitchStmt:
+		panic("Todo")
+
+	case *ast.RangeStmt:
+		panic("Todo")
+
+	default:
+		panic(fmt.Sprintf("unexpected statement kind: %T", s))
+	}
 }
 
 // blockStmt 将一组 AST 语句降解为 wire 指令，追加至 wire.Block
@@ -286,7 +303,8 @@ func (b *Builder) returnStmt(s *ast.ReturnStmt, f *Func, block *wire.Block) {
 
 	if len(s.Results) == 1 && f.sig.Results().Len() > 1 {
 		// 返回元组
-		panic("Todo")
+		v := b.exprN(s.Results[0], block)
+		results = append(results, v)
 	} else {
 		// 1:1返回
 		for _, r := range s.Results {
@@ -374,13 +392,13 @@ func (b *Builder) expr(e ast.Expr, block *wire.Block) wire.Expr {
 		loc := b.location(e, 0, block)
 		v = block.NewLoad(loc, int(e.Pos()))
 	} else {
-		v = b.expr0(e, tv, block)
+		v = b.expr1(e, tv, block)
 	}
 
 	return v
 }
 
-func (b *Builder) expr0(e ast.Expr, tv types.TypeAndValue, block *wire.Block) wire.Expr {
+func (b *Builder) expr1(e ast.Expr, tv types.TypeAndValue, block *wire.Block) wire.Expr {
 	switch e := e.(type) {
 	case *ast.Ident:
 		obj := b.info.Uses[e]
@@ -577,7 +595,7 @@ func (b *Builder) buildSig(s *types.Signature) (d wire.FnSig) {
 
 func (b *Builder) ifStmt(s *ast.IfStmt, f *Func, block *wire.Block) {
 	if s.Init != nil {
-		block = block.EmitBlock("", int(s.Pos()))
+		block = block.EmitBlock("if.begin", int(s.Pos()))
 		b.stmt(s.Init, f, block)
 	}
 
@@ -592,8 +610,30 @@ func (b *Builder) ifStmt(s *ast.IfStmt, f *Func, block *wire.Block) {
 		if bs, ok := s.Else.(*ast.BlockStmt); ok {
 			b.blockStmt(bs.List, f, i.False)
 		} else {
-			b.stmt(s.Else, f, block)
+			b.stmt(s.Else, f, i.False)
 		}
 	}
 
+}
+
+func (b *Builder) forStmt(s *ast.ForStmt, f *Func, block *wire.Block) {
+	block = block.EmitBlock("for.begin", int(s.Pos()))
+	if s.Init != nil {
+		b.stmt(s.Init, f, block)
+	}
+
+	cond := b.expr(s.Cond, block)
+	i := block.EmitLoop(cond, "", int(s.Cond.Pos()))
+
+	if s.Body != nil {
+		b.blockStmt(s.Body.List, f, i.Body)
+	}
+
+	if s.Post != nil {
+		if bs, ok := s.Post.(*ast.BlockStmt); ok {
+			b.blockStmt(bs.List, f, i.Post)
+		} else {
+			b.stmt(s.Post, f, i.Post)
+		}
+	}
 }
