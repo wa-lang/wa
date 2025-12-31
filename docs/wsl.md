@@ -5,4 +5,9 @@
 - 启动 `wsl -d Ubuntu-24.04`, 进入 Linux 环境
 - 安装 Go 语言
 - 切换到仓库目录 `cd /mnt/.../wa` 
-- 执行 `go run main.go`
+- 编译 `go build` 生成 `wa` 文件
+- 执行 `./wa`
+
+或者在 Windows 命令行环境执行:
+
+- `wsl ./wa`
