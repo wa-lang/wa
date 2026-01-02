@@ -1,0 +1,25 @@
+     1                                  ; Copyright (C) 2026 武汉凹语言科技有限公司
+     2                                  ; SPDX-License-Identifier: AGPL-3.0-or-later
+     3                                  
+     4                                  ; hello.wa.s
+     5                                  
+     6                                  section .data
+     7 00000000 68656C6C6F2C20776F-         msg db "hello, world",10,0
+     7 00000009 726C640A00         
+     8                                  
+     9                                  section .bss
+    10                                  
+    11                                  section .text
+    12                                      global main
+    13                                  
+    14                                  main:
+    15 00000000 B801000000                  mov rax, 1
+    16 00000005 BF01000000                  mov rdi, 1
+    17 0000000A 48BE-                       mov rsi, msg
+    17 0000000C [0000000000000000] 
+    18 00000014 BA0D000000                  mov rdx, 13
+    19 00000019 0F05                        syscall
+    20 0000001B B83C000000                  mov rax, 60
+    21 00000020 BF00000000                  mov rdi, 0
+    22 00000025 0F05                        syscall
+    23                                  

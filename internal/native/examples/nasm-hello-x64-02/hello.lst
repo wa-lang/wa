@@ -1,0 +1,34 @@
+     1                                  ; Copyright (C) 2026 武汉凹语言科技有限公司
+     2                                  ; SPDX-License-Identifier: AGPL-3.0-or-later
+     3                                  
+     4                                  ; hello.wa.s
+     5                                  
+     6                                  section .data
+     7 00000000 68656C6C6F2C20776F-         msg db "hello, world",0
+     7 00000009 726C6400           
+     8 0000000D 0A                          NL  db 0xA ; 换行
+     9                                  
+    10                                  section .bss
+    11                                  
+    12                                  section .text
+    13                                      global main
+    14                                  
+    15                                  main:
+    16 00000000 B801000000                  mov rax, 1 ; 1 表示写入
+    17 00000005 BF01000000                  mov rdi, 1 ; 1 表示标准输出
+    18 0000000A 48BE-                       mov rsi, msg ; 要显示的字符串
+    18 0000000C [0000000000000000] 
+    19 00000014 BA0C000000                  mov rdx, 12  ; 字符串长度, 不包含 0
+    20 00000019 0F05                        syscall      ; 显示字符串
+    21                                  
+    22 0000001B B801000000                  mov rax, 1  ; 1 表示写入
+    23 00000020 BF01000000                  mov rdi, 1  ; 1 表示标准输出
+    24 00000025 48BE-                       mov rsi, NL ; 换行
+    24 00000027 [0D00000000000000] 
+    25 0000002F BA01000000                  mov rdx, 1  ; 字符串长度
+    26 00000034 0F05                        syscall     ; 显示字符串
+    27                                  
+    28 00000036 B83C000000                  mov rax, 60 ; 60 表示退出
+    29 0000003B BF00000000                  mov rdi, 0  ; 0 是退出状态码
+    30 00000040 0F05                        syscall     ; 退出
+    31                                  
