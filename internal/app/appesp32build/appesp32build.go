@@ -12,7 +12,7 @@ import (
 	"wa-lang.org/wa/internal/native/abi"
 	"wa-lang.org/wa/internal/native/asm"
 	"wa-lang.org/wa/internal/native/link"
-	"wa-lang.org/wa/internal/native/parser"
+	"wa-lang.org/wa/internal/native/parser/zparser"
 )
 
 var CmdESP32Build = &cli.Command{
@@ -52,7 +52,7 @@ var CmdESP32Build = &cli.Command{
 			os.Exit(1)
 		}
 
-		parser.DebugMode = c.Bool("debug")
+		zparser.DebugMode = c.Bool("debug")
 
 		infile := c.Args().First()
 		outfile := c.String("output")

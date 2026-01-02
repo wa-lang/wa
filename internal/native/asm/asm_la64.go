@@ -10,7 +10,7 @@ import (
 	"wa-lang.org/wa/internal/native/abi"
 	"wa-lang.org/wa/internal/native/ast"
 	"wa-lang.org/wa/internal/native/loong64"
-	"wa-lang.org/wa/internal/native/parser"
+	"wa-lang.org/wa/internal/native/parser/zparser"
 	"wa-lang.org/wa/internal/native/pcrel"
 )
 
@@ -19,7 +19,7 @@ func (p *_Assembler) asmFile_loong64(filename string, source []byte, opt *abi.Li
 	const maxPageSize = 64 << 10
 
 	// 解析汇编程序
-	p.file, err = parser.ParseFile(opt.CPU, p.fset, filename, source)
+	p.file, err = zparser.ParseFile(opt.CPU, p.fset, filename, source)
 	if err != nil {
 		return nil, err
 	}

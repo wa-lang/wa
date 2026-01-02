@@ -9,14 +9,14 @@ import (
 
 	"wa-lang.org/wa/internal/native/abi"
 	"wa-lang.org/wa/internal/native/ast"
-	"wa-lang.org/wa/internal/native/parser"
+	"wa-lang.org/wa/internal/native/parser/zparser"
 	"wa-lang.org/wa/internal/native/pcrel"
 	"wa-lang.org/wa/internal/native/riscv"
 )
 
 func (p *_Assembler) asmFile_riscv(filename string, source []byte, opt *abi.LinkOptions) (prog *abi.LinkedProgram, err error) {
 	// 解析汇编程序
-	p.file, err = parser.ParseFile(opt.CPU, p.fset, filename, source)
+	p.file, err = zparser.ParseFile(opt.CPU, p.fset, filename, source)
 	if err != nil {
 		return nil, err
 	}
