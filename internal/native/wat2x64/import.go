@@ -37,9 +37,6 @@ func (p *wat2X64Worker) buildImport(w io.Writer) error {
 		// 检查导入系统调用的函数签名
 		p.checkSyscallSig(importSpec)
 	}
-	if err := p.buildSyscall(w, hostFuncMap); err != nil {
-		return err
-	}
 
 	return nil
 }

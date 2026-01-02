@@ -5,31 +5,9 @@ package wat2x64
 
 import (
 	_ "embed"
-	"io"
 
 	"wa-lang.org/wa/internal/wat/ast"
 )
-
-const (
-	kSysWrite = "$syscall.write"
-	kSysExit  = "$syscall.exit"
-	kSysBrk   = "$syscall.brk"
-	kSysMmap  = "$syscall.mmap"
-)
-
-//go:embed z_syscall.was
-var syscall_was string
-
-// 生成系统调用代码
-func (p *wat2X64Worker) buildSyscall(w io.Writer, hostFuncMap map[string]bool) error {
-	if len(hostFuncMap) == 0 {
-		return nil
-	}
-	if _, err := w.Write([]byte(syscall_was)); err != nil {
-		return err
-	}
-	return nil
-}
 
 func (p *wat2X64Worker) checkSyscallSig(spec *ast.ImportSpec) {
 	// TODO: 检查系统调用函数签名类型是否匹配

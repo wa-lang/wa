@@ -81,8 +81,8 @@ func (p *wat2X64Worker) buildMemory(w io.Writer) error {
 		fmt.Fprintln(w, "    addi.d a5, zero, 0")
 		fmt.Fprintln(w)
 
-		fmt.Fprintf(w, "    # call %s\n", kSysMmap)
-		fmt.Fprintf(w, "    bl %s\n", kSysMmap)
+		fmt.Fprintf(w, "    # call %s\n", kBuiltinMmap)
+		fmt.Fprintf(w, "    bl %s\n", kBuiltinMmap)
 		fmt.Fprintln(w)
 
 		fmt.Fprintf(w, "    # $wat2la.memory.addr = a0\n")

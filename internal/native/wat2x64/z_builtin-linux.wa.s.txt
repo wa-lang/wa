@@ -1,0 +1,100 @@
+; --- 常量定义 ---
+SYS_WRITE equ 1
+SYS_MMAP  equ 9
+SYS_EXIT  equ 60
+
+section .data
+    ; 定义 panic 消息及其长度
+    panic_message: db `Hello World\n\0`
+    PANIC_MSG_LEN  equ $ - panic_message
+
+    ; 常量定义
+    STDOUT         equ 1
+    SYS_WRITE      equ 1
+    SYS_EXIT       equ 60
+
+section .text
+    global builtin_mmap
+    global builtin_exit
+    global builtin_panic
+
+    global builtin_write
+    global builtin_memcpy
+    global builtin_memset
+
+; func builtin_mmap(addr, len, prot, flags, fd, offset) -> i64
+; 函数调用输入 (ABI): rdi, rsi, rdx, rcx, r8, r9
+; 系统调用输入 (Syscall): rdi, rsi, rdx, r10, r8, r9
+builtin_mmap:
+    mov rax, SYS_MMAP
+    ; 将第四个参数从 rcx 移动到 r10 (Syscall 规定)
+    mov r10, rcx    
+    syscall
+    ret
+
+; --- func builtin_exit(code: i64) ---
+; 参数约定:
+; rdi = code (退出状态码，通常 0 表示成功，非 0 表示异常)
+; 返回值:
+; 该函数不会返回
+builtin_exit:
+    mov rax, 60         ; Linux x64 SYS_exit 调用号为 60
+    syscall             ; 执行系统调用
+
+    ; 理论上 syscall 执行后进程已结束，以下代码不会被执行
+    ; 但为了程序的健壮性，通常放置一个 hlt 或 ret
+    hlt
+
+; --- Panic 函数 ---
+; 无参数，直接终止程序
+builtin_panic:
+    ; SYS_write(STDOUT, panic_message, PANIC_MSG_LEN)
+    mov rdi, STDOUT
+    lea rsi, [rel panic_message] ; 使用 RIP 相对寻址，适合位置无关代码 (PIE)
+    mov rdx, PANIC_MSG_LEN
+    mov rax, SYS_WRITE
+    syscall
+
+    ; SYS_exit(1)
+    mov rdi, 1
+    mov rax, SYS_EXIT
+    syscall
+
+; --- func builtin_write(fd: i64, ptr: i64, len: i64) -> i64 ---
+; 参数约定 (System V ABI):
+; rdi = fd (文件描述符: 1 是 stdout, 2 是 stderr)
+; rsi = ptr (字符串内存地址)
+; rdx = len (写入的字节数)
+; 返回值:
+; rax = 实际写入的字节数 (若失败则为负数错误码)
+builtin_write:
+    mov rax, 1          ; Linux x64 SYS_write 调用号为 1
+    syscall             ; 执行系统调用
+    ret                 ; 返回，rax 中已包含写入结果
+
+; --- Memcpy 函数 ---
+; 参数: rdi = dst, rsi = src, rdx = len
+; 返回: rax = dst
+builtin_memcpy:
+    mov rax, rdi        ; 备份目标地址用于返回值
+    mov rcx, rdx        ; rep movsb 使用 rcx 作为计数器
+
+    ; 这里的汇编指令会根据 rcx 自动将 [rsi] 拷贝到 [rdi]
+    cld                 ; 清除方向标志，确保正向拷贝 (DF=0)
+    rep movsb
+    ret
+
+; --- Memset 函数 ---
+; 参数: rdi = dst, rsi = value, rdx = len
+; 返回: rax = dst
+builtin_memset:
+    mov rax, rdi        ; 备份起始地址用于返回
+    mov rcx, rdx        ; 设置计数器
+    mov r8, rax         ; 临时保存用于恢复 (虽然 rax 已经存了)
+
+    mov al, sil         ; sil 是 rsi 的低 8 位，即要填充的字节
+    cld                 ; 确保正向填充
+    rep stosb           ; 将 al 写入 [rdi]，执行 rcx 次
+
+    mov rax, r8         ; 恢复起始地址到返回值寄存器
+    ret

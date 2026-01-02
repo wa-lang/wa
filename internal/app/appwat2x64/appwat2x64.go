@@ -22,7 +22,7 @@ var CmdWat2x64 = &cli.Command{
 			Name:    "output",
 			Aliases: []string{"o"},
 			Usage:   "set code output file",
-			Value:   "a.out.was",
+			Value:   "a.out.wa.s",
 		},
 	},
 	Action: func(c *cli.Context) error {
@@ -41,10 +41,10 @@ var CmdWat2x64 = &cli.Command{
 					outfile = outfile[:n1-n2]
 				}
 			}
-			outfile += ".was"
+			outfile += ".wa.s"
 		}
-		if !strings.HasSuffix(outfile, ".was") {
-			outfile += ".was"
+		if !strings.HasSuffix(outfile, ".wa.s") {
+			outfile += ".wa.s"
 		}
 
 		source, err := os.ReadFile(infile)

@@ -9,17 +9,29 @@ import (
 )
 
 const (
+	kBuiltinMmap   = "$builtin.mmap"
+	kBuiltinExit   = "$builtin.exit"
+	kBuiltinPanic  = "$builtin.panic"
+	kBuiltinWrite  = "$builtin.write"
 	kBuiltinMemcpy = "$builtin.memcpy"
 	kBuiltinMemset = "$builtin.memset"
-	kBuiltinPanic  = "$builtin.panic"
 )
 
-//go:embed z_builtin.was
-var builtin_was string
+//go:embed z_builtin-linux.wa.s.txt
+var builtin_win64_wa_s string
+
+//go:embed z_builtin-linux.wa.s.txt
+var builtin_linux_wa_s string
 
 // 生成系统调用代码
-func (p *wat2X64Worker) buildBuiltin(w io.Writer) error {
-	if _, err := w.Write([]byte(builtin_was)); err != nil {
+func (p *wat2X64Worker) buildBuiltinLinux(w io.Writer) error {
+	if _, err := w.Write([]byte(builtin_linux_wa_s)); err != nil {
+		return err
+	}
+	return nil
+}
+func (p *wat2X64Worker) buildBuiltinWindows(w io.Writer) error {
+	if _, err := w.Write([]byte(builtin_win64_wa_s)); err != nil {
 		return err
 	}
 	return nil

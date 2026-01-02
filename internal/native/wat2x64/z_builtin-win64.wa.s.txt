@@ -1,0 +1,94 @@
+; 声明外部 Windows API
+extern GetStdHandle
+extern WriteFile
+extern ExitProcess
+extern VirtualAlloc
+
+section .data
+    panic_message: db `Hello World\n\0`
+    PANIC_MSG_LEN  equ $ - panic_message
+    
+    STD_OUTPUT_HANDLE equ -11
+
+section .text
+    global builtin_mmap
+    global builtin_exit
+    global builtin_panic
+    global builtin_write
+    global builtin_memcpy
+    global builtin_memset
+
+; --- func builtin_mmap (对应 Windows 的 VirtualAlloc) ---
+; Windows 没有直接等价的 mmap，通常用 VirtualAlloc 分配匿名内存
+; 输入: rcx=addr, rdx=len, r8=prot, r9=flags
+builtin_mmap:
+    sub rsp, 40             ; 预留影子空间 + 对齐
+    ; 参数已经在 rcx, rdx, r8, r9 中
+    ; 注意：VirtualAlloc 参数略有不同，这里仅为示意封装
+    call VirtualAlloc
+    add rsp, 40
+    ret
+
+; --- func builtin_exit(code: i64) ---
+; 输入: rcx = exit code
+builtin_exit:
+    sub rsp, 40
+    call ExitProcess        ; ExitProcess 不会返回
+    add rsp, 40
+    ret
+
+; --- func builtin_panic ---
+builtin_panic:
+    sub rsp, 40
+    ; 1. 获取 STDOUT 句柄
+    mov rcx, STD_OUTPUT_HANDLE
+    call GetStdHandle
+    
+    ; 2. 调用 WriteFile(handle, buf, len, NULL, NULL)
+    mov rcx, rax            ; handle
+    lea rdx, [rel panic_message] ; buffer
+    mov r8, PANIC_MSG_LEN   ; size
+    xor r9, r9              ; lpNumberOfBytesWritten (可为 NULL)
+    push 0                  ; lpOverlapped (第五个参数入栈)
+    sub rsp, 32             ; 为 WriteFile 调用的影子空间
+    call WriteFile
+    
+    ; 3. 退出
+    mov rcx, 1
+    call ExitProcess
+
+; --- func builtin_write(fd, ptr, len) -> i64 ---
+; 输入: rcx=fd, rdx=ptr, r8=len
+builtin_write:
+    sub rsp, 40
+    ; 简化逻辑：直接假设 rcx 已经是 GetStdHandle 拿到的句柄
+    mov r9, 0               ; lpNumberOfBytesWritten
+    push 0                  ; lpOverlapped
+    sub rsp, 32             
+    call WriteFile
+    add rsp, 64             ; 清理 push 和影子空间
+    ret
+
+; --- func builtin_memcpy(dst, src, len) ---
+; 参数: rcx=dst, rdx=src, r8=len
+builtin_memcpy:
+    mov rax, rcx            ; 返回值
+    mov r10, rcx            ; 备份 dst
+    mov rcx, r8             ; 计数器
+    mov rsi, rdx            ; 源地址
+    mov rdi, r10            ; 目标地址
+    cld
+    rep movsb
+    ret
+
+; --- func builtin_memset(dst, val, len) ---
+; 参数: rcx=dst, rdx=val, r8=len
+builtin_memset:
+    mov rax, rcx            ; 返回值
+    mov r10, rcx
+    mov al, dl              ; 值
+    mov rcx, r8             ; 长度
+    mov rdi, r10
+    cld
+    rep stosb
+    ret
