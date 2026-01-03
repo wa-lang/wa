@@ -3,7 +3,13 @@
 
 ; hello.wa.s
 
-%include "win32n.inc"
+TRUE equ 1
+FALSE equ 0
+NULL equ 0
+
+STD_INPUT_HANDLE equ -10
+STD_OUTPUT_HANDLE equ -11
+STD_ERROR_HANDLE equ -12
 
 extern WriteFile
 extern GetStdHandle
