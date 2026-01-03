@@ -24,6 +24,22 @@ func (cpu CPUType) String() string {
 	return fmt.Sprintf("abi.CPUType(%d)", int(cpu))
 }
 
+func ParseOSType(name string) OSType {
+	for i, s := range _OSType_strings {
+		if s != "" && strings.EqualFold(s, name) {
+			return OSType(i)
+		}
+	}
+	return OS_Nil
+}
+
+func (os OSType) String() string {
+	if os >= 0 && int(os) < len(_OSType_strings) {
+		return _OSType_strings[os]
+	}
+	return fmt.Sprintf("abi.OSType(%d)", int(os))
+}
+
 func ParseBuiltinFn(cpu CPUType, name string) BuiltinFn {
 	for i, s := range _BuiltinFn_strings {
 		if s != "" && strings.EqualFold(s, name) {

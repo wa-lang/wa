@@ -4,7 +4,8 @@
 package wat2x64
 
 import (
-	"errors"
+	"bytes"
+	"fmt"
 
 	"wa-lang.org/wa/internal/native/ast"
 	"wa-lang.org/wa/internal/wasm"
@@ -16,22 +17,24 @@ import (
 const DebugMode = false
 
 // Wat程序转译到 X64汇编
-func Wat2X64(filename string, source []byte) (m *watast.Module, code []byte, err error) {
-	return wat2x64(filename, source)
+func Wat2X64(filename string, source []byte, osName string) (m *watast.Module, code []byte, err error) {
+	return wat2x64(filename, source, osName)
 }
 
-func wat2x64(filename string, source []byte) (m *watast.Module, code []byte, err error) {
+func wat2x64(filename string, source []byte, osName string) (m *watast.Module, code []byte, err error) {
 	m, err = watparser.ParseModule(filename, source)
 	if err != nil {
 		return m, nil, err
 	}
 
-	worker := newWat2X64Worker(m)
+	worker := newWat2X64Worker(m, osName)
 	code, err = worker.BuildProgram()
 	return
 }
 
 type wat2X64Worker struct {
+	osName string
+
 	m *watast.Module
 
 	importGlobalCount int // 导入全局只读变量的数目
@@ -61,8 +64,8 @@ type inlinedTypeIndex struct {
 	inlinedIdx wasm.Index
 }
 
-func newWat2X64Worker(mWat *watast.Module) *wat2X64Worker {
-	p := &wat2X64Worker{m: mWat, trace: DebugMode}
+func newWat2X64Worker(mWat *watast.Module, osName string) *wat2X64Worker {
+	p := &wat2X64Worker{m: mWat, osName: osName, trace: DebugMode}
 
 	// 统计导入的global和func索引
 	p.importGlobalCount = 0
@@ -89,5 +92,58 @@ func newWat2X64Worker(mWat *watast.Module) *wat2X64Worker {
 }
 
 func (p *wat2X64Worker) BuildProgram() (code []byte, err error) {
-	return nil, errors.New("TODO")
+	p.dataSection = p.dataSection[:0]
+	p.textSection = p.textSection[:0]
+
+	p.constLitMap = map[uint64]uint64{}
+
+	var out bytes.Buffer
+
+	fmt.Fprintf(&out, "# 自动生成的代码, 不要手动修改!!!\n\n")
+
+	if err := p.buildImport(&out); err != nil {
+		return nil, err
+	}
+
+	if err := p.buildGlobal(&out); err != nil {
+		return nil, err
+	}
+
+	if err := p.buildTable(&out); err != nil {
+		return nil, err
+	}
+
+	if err := p.buildMemory(&out); err != nil {
+		return nil, err
+	}
+
+	if err := p.buildFuncs(&out); err != nil {
+		return nil, err
+	}
+
+	// 生成常量
+	if err := p.buildConstList(&out); err != nil {
+		return nil, err
+	}
+
+	// 内置函数
+	switch p.osName {
+	case "linux":
+		if err := p.buildBuiltinLinux(&out); err != nil {
+			return nil, err
+		}
+	case "windows":
+		if err := p.buildBuiltinWindows(&out); err != nil {
+			return nil, err
+		}
+	default:
+		panic(fmt.Sprintf("unknown os %s", p.osName))
+	}
+
+	// 启动函数
+	if err := p.buildStart(&out); err != nil {
+		return nil, err
+	}
+
+	return out.Bytes(), nil
 }

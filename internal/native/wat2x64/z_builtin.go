@@ -17,7 +17,7 @@ const (
 	kBuiltinMemset = "$builtin.memset"
 )
 
-//go:embed z_builtin-linux.wa.s.txt
+//go:embed z_builtin-win64.wa.s.txt
 var builtin_win64_wa_s string
 
 //go:embed z_builtin-linux.wa.s.txt

@@ -24,6 +24,11 @@ var CmdWat2x64 = &cli.Command{
 			Usage:   "set code output file",
 			Value:   "a.out.wa.s",
 		},
+		&cli.StringFlag{
+			Name:  "os",
+			Usage: "set os (linux|windows)",
+			Value: "linux",
+		},
 	},
 	Action: func(c *cli.Context) error {
 		if c.NArg() == 0 {
@@ -33,6 +38,7 @@ var CmdWat2x64 = &cli.Command{
 
 		infile := c.Args().First()
 		outfile := c.String("output")
+		osName := c.String("os")
 
 		if outfile == "" {
 			outfile = infile
@@ -53,7 +59,7 @@ var CmdWat2x64 = &cli.Command{
 			os.Exit(1)
 		}
 
-		_, code, err := wat2x64.Wat2X64(infile, source)
+		_, code, err := wat2x64.Wat2X64(infile, source, osName)
 		if err != nil {
 			fmt.Println(err)
 			os.Exit(1)

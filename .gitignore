@@ -13,11 +13,13 @@ wa.exe
 *.dll
 *.a
 *.o
+*.obj
 *.so
 *.dylib
 *.out*
 *.wasm
 *.wasm.*
+*.lst
 y.wa.*
 
 /docs/snake/*

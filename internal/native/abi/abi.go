@@ -29,8 +29,23 @@ var _CPUType_strings = []string{
 	X64:     "x64",
 }
 
+// 操作系统
+type OSType int
+
+const (
+	OS_Nil OSType = iota
+	LINUX
+	WINDOWS
+)
+
+var _OSType_strings = []string{
+	LINUX:   "linux",
+	WINDOWS: "windows",
+}
+
 // 链接参数
 type LinkOptions struct {
+	OS        OSType  // OS类型
 	CPU       CPUType // CPU类型
 	DRAMBase  int64   // 代码段开始地址
 	DRAMSize  int64   // 数据段开始地址
