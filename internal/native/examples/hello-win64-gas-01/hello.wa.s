@@ -5,31 +5,30 @@
 
 .intel_syntax noprefix
 
-.section .data
+.extern _write
+.globl main
 
-msg:
-    .asciz "Welcom to Windows World!"
-fmt:
-    .asciz "Windows 10 says: %s\n"
+.section .data
+msg: 
+    .ascii "hello, world\n"
+    msg_len = . - msg
 
 .section .text
-
-.globl main
-.extern printf
-
 main:
     push rbp
     mov  rbp, rsp
 
-    # Windows x64 ABI 传参: RCX, RDX
-    # 注意: GAS 环境下通常使用 lea 来获取符号地址以保证兼容性
-    lea  rcx, [rip + fmt]     # 相对 RIP 寻址，比直接加载更稳妥
+    # _write(STDOUT, msg, count)
+    mov  rcx, 1
     lea  rdx, [rip + msg]
-    
-    sub  rsp, 32              # 关键: Windows 影子空间
-    call printf
+    mov  r8d, msg_len
+
+    sub  rsp, 32
+    call _write
     add  rsp, 32
 
-    mov  rax, 0
+    # return 0
+    mov  eax, 0
     leave
     ret
+
