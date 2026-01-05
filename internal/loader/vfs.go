@@ -82,15 +82,15 @@ func loadProgramFileMeta(cfg *config.Config, filename string, src interface{}) (
 		}
 	}
 
-	if cfg.Target != "" {
-		manifest.Pkg.Target = cfg.Target
+	if cfg.TargetOS != "" {
+		manifest.Pkg.TargetOS = cfg.TargetOS
 	}
-	if manifest.Pkg.Target == "" {
-		manifest.Pkg.Target = config.WaOS_Default
+	if manifest.Pkg.TargetOS == "" {
+		manifest.Pkg.TargetOS = config.WaOS_Default
 	}
 
-	if cfg.Target != manifest.Pkg.Target {
-		cfg.Target = manifest.Pkg.Target
+	if cfg.TargetOS != manifest.Pkg.TargetOS {
+		cfg.TargetOS = manifest.Pkg.TargetOS
 	}
 
 	logger.Tracef(&config.EnableTrace_loader, "manifest: %s", manifest.JSONString())
@@ -186,15 +186,15 @@ func loadProgramMeta(cfg *config.Config, appPath string) (
 		return nil, nil, err
 	}
 
-	if cfg.Target != "" {
-		manifest.Pkg.Target = cfg.Target
+	if cfg.TargetOS != "" {
+		manifest.Pkg.TargetOS = cfg.TargetOS
 	}
-	if manifest.Pkg.Target == "" {
-		manifest.Pkg.Target = config.WaOS_Default
+	if manifest.Pkg.TargetOS == "" {
+		manifest.Pkg.TargetOS = config.WaOS_Default
 	}
 
-	if cfg.Target != manifest.Pkg.Target {
-		cfg.Target = manifest.Pkg.Target
+	if cfg.TargetOS != manifest.Pkg.TargetOS {
+		cfg.TargetOS = manifest.Pkg.TargetOS
 	}
 
 	logger.Tracef(&config.EnableTrace_loader, "manifest: %s", manifest.JSONString())

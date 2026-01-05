@@ -576,9 +576,9 @@ func (p *_Loader) ParseDir_wsFiles(pkgpath string) (files []*WsFile, err error) 
 func (p *_Loader) ParseDir_hostImportFiles(pkgpath string) (files []*WhostFile, err error) {
 	logger.Tracef(&config.EnableTrace_loader, "pkgpath: %v", pkgpath)
 
-	if p.cfg.Target == "" && p.prog.Manifest.Pkg.Target == "" {
-		p.cfg.Target = config.WaOS_Default
-		p.prog.Manifest.Pkg.Target = config.WaOS_Default
+	if p.cfg.TargetOS == "" && p.prog.Manifest.Pkg.TargetOS == "" {
+		p.cfg.TargetOS = config.WaOS_Default
+		p.prog.Manifest.Pkg.TargetOS = config.WaOS_Default
 	}
 
 	var (
@@ -941,10 +941,10 @@ func (p *_Loader) isTestFile(filename string) bool {
 }
 
 func (p *_Loader) GetTargetOS() string {
-	if s := p.cfg.Target; s != "" {
+	if s := p.cfg.TargetOS; s != "" {
 		return s
 	}
-	if s := p.prog.Manifest.Pkg.Target; s != "" {
+	if s := p.prog.Manifest.Pkg.TargetOS; s != "" {
 		return s
 	}
 	return config.WaOS_Default

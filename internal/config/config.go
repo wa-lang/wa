@@ -27,15 +27,16 @@ type PkgVFS struct {
 
 // 通用配置信息
 type Config struct {
-	Target    string   // 目标平台
-	WatOutput string   // 输出的 wat 文件路径
-	WaBackend string   // 编译器后端
-	WaSizes   StdSizes // 指针大小
-	BuilgTags []string // 条件编译的标志
-	UnitTest  bool     // 单元测试模式
-	Optimize  bool     // 是否优化
-	Debug     bool     // 调试模式
-	LDFlags            // 链接参数
+	TargetArch string   // 目标平台指令集
+	TargetOS   string   // 目标平台系统
+	WatOutput  string   // 输出的 wat 文件路径
+	WaBackend  string   // 编译器后端
+	WaSizes    StdSizes // 指针大小
+	BuilgTags  []string // 条件编译的标志
+	UnitTest   bool     // 单元测试模式
+	Optimize   bool     // 是否优化
+	Debug      bool     // 调试模式
+	LDFlags             // 链接参数
 }
 
 // 链接参数
@@ -52,6 +53,12 @@ func (p *Config) Clone() *Config {
 func DefaultConfig() *Config {
 	p := &Config{}
 
+	if p.TargetArch == "" {
+		p.TargetArch = WaArch_Default
+	}
+	if p.TargetOS == "" {
+		p.TargetOS = WaOS_Default
+	}
 	if p.WaBackend == "" {
 		p.WaBackend = WaBackend_Default
 	}

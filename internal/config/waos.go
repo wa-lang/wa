@@ -41,6 +41,7 @@ const (
 	WaOS_wasm4   = wasrc.WaOS_wasm4   // WASM4 接口
 	WaOS_arduino = wasrc.WaOS_arduino // Arduino
 	WaOS_linux   = wasrc.WaOS_linux   // Linux
+	WaOS_windows = wasrc.WaOS_windows // Windows
 	WaOS_unknown = wasrc.WaOS_unknown // Unknown
 )
 
@@ -50,6 +51,7 @@ const (
 	WaArch_wasm    = wasrc.WaArch_wasm    // wasm 平台
 	WaArch_loong64 = wasrc.WaArch_loong64 // 龙芯64
 	WaArch_riscv32 = wasrc.WaArch_riscv32 // RISCV32
+	WaArch_x64     = wasrc.WaArch_x64     // X64
 )
 
 // 后端列表
@@ -60,6 +62,11 @@ var WaOS_List = wasrc.WaOS_List
 
 // CPU 列表
 var WaArch_List = wasrc.WaArch_List
+
+// 检查 Arch 值是否 OK
+func CheckWaArch(arch string) bool {
+	return wasrc.CheckWaArch(arch)
+}
 
 // 检查 OS 值是否 OK
 func CheckWaOS(os string) bool {

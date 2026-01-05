@@ -120,7 +120,7 @@ func waGenerateWasm(filename, code string) []byte {
 
 func waGenerateWat(filename, code string) string {
 	cfg := api.DefaultConfig()
-	cfg.Target = api.WaOS_js
+	cfg.TargetOS = api.WaOS_js
 
 	wat, err := waBuildFile(cfg, filename, code)
 	if err != nil {
@@ -134,7 +134,7 @@ func waGenerateWat(filename, code string) string {
 
 func waGenerateWatVFS(vfs *config.PkgVFS, filename string) string {
 	cfg := api.DefaultConfig()
-	cfg.Target = api.WaOS_js
+	cfg.TargetOS = api.WaOS_js
 
 	wat, err := waBuildVFS(vfs, cfg, filename)
 	if err != nil {

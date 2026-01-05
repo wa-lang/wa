@@ -36,7 +36,7 @@ func (p *Compiler) Compile(prog *loader.Program) (output string, err error) {
 	p.prog = prog
 
 	// 不同平台 stack 大小不同
-	stkSize := wasrc.GetStackSize(config.WaBackend_wat, p.prog.Cfg.Target)
+	stkSize := wasrc.GetStackSize(config.WaBackend_wat, p.prog.Cfg.TargetOS)
 	p.module = wir.NewModule(stkSize)
 	p.module.AddGlobal("$wa.runtime.closure_data", "", p.module.GenValueType_Ptr(p.module.VOID), false, nil)
 	wir.SetCurrentModule(p.module)
@@ -125,7 +125,7 @@ func (p *Compiler) Compile(prog *loader.Program) (output string, err error) {
 func (p *Compiler) CompileWsFiles(prog *loader.Program) {
 	var sb strings.Builder
 
-	sb.WriteString(wasrc.GetBaseWsCode(config.WaBackend_wat, p.prog.Cfg.Target))
+	sb.WriteString(wasrc.GetBaseWsCode(config.WaBackend_wat, p.prog.Cfg.TargetOS))
 	sb.WriteString("\n")
 
 	var pkgpathList = make([]string, 0, len(prog.Pkgs))
@@ -164,7 +164,7 @@ func (p *Compiler) CompileWsFiles(prog *loader.Program) {
 func (p *Compiler) CompileWImportFiles(prog *loader.Program) string {
 	var sb strings.Builder
 
-	sb.WriteString(wasrc.GetBaseImportCode(p.prog.Cfg.Target))
+	sb.WriteString(wasrc.GetBaseImportCode(p.prog.Cfg.TargetOS))
 	sb.WriteString("\n")
 
 	var pkgpathList = make([]string, 0, len(prog.Pkgs))

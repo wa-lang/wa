@@ -21,6 +21,15 @@ func MakeFlag_output() *cli.StringFlag {
 	}
 }
 
+// 构建的指令集
+func MakeFlag_arch() *cli.StringFlag {
+	return &cli.StringFlag{
+		Name:  "arch",
+		Usage: fmt.Sprintf("set arch type (%s)", strings.Join(config.WaArch_List, "|")),
+		Value: "",
+	}
+}
+
 // 构建的目标
 func MakeFlag_target() *cli.StringFlag {
 	return &cli.StringFlag{
@@ -44,14 +53,6 @@ func MakeFlag_wat2c_prefix() *cli.StringFlag {
 		Name:  "wat2c-prefix",
 		Usage: "name prefix to use in wat2c generated code",
 		Value: "app",
-	}
-}
-
-// 构建面向 riscv 的 native 代码
-func MakeFlag_riscv_native() *cli.BoolFlag {
-	return &cli.BoolFlag{
-		Name:  "riscv-native",
-		Usage: "generate riscv native assembly code",
 	}
 }
 

@@ -36,6 +36,7 @@ const (
 	WaOS_wasm4   = "wasm4"   // WASM4 游戏
 	WaOS_arduino = "arduino" // Arduino 平台
 	WaOS_linux   = "linux"   // Linux
+	WaOS_windows = "windows" // Windows
 	WaOS_unknown = "unknown" // Unknown
 )
 
@@ -45,6 +46,7 @@ const (
 	WaArch_wasm    = "wasm"      // wasm 平台
 	WaArch_loong64 = "loong64"   // 龙芯64
 	WaArch_riscv32 = "riscv32"   // RISCV32
+	WaArch_x64     = "x64"       // X64
 )
 
 // 后端列表
@@ -59,6 +61,7 @@ var WaOS_List = []string{
 	WaOS_wasm4,
 	WaOS_arduino,
 	WaOS_linux,
+	WaOS_windows,
 	WaOS_unknown,
 }
 
@@ -67,6 +70,17 @@ var WaArch_List = []string{
 	WaArch_wasm,
 	WaArch_loong64,
 	WaArch_riscv32,
+	WaArch_x64,
+}
+
+// 检查 Arch 值是否 OK
+func CheckWaArch(arch string) bool {
+	for _, x := range WaArch_List {
+		if x == arch {
+			return true
+		}
+	}
+	return false
 }
 
 // 检查 OS 值是否 OK

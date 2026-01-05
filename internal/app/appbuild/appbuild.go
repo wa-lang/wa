@@ -61,7 +61,6 @@ var CmdBuild = &cli.Command{
 		appbase.MakeFlag_ld_max_memory(),
 		appbase.MakeFlag_optimize(),
 		appbase.MakeFlag_wat2c_native(),
-		appbase.MakeFlag_riscv_native(),
 	},
 	Action: CmdBuildAction,
 }
@@ -75,10 +74,6 @@ func CmdBuildAction(c *cli.Context) error {
 	}
 
 	var opt = appbase.BuildOptions(c)
-
-	if opt.RiscvNative {
-		return buildRiscvNative(opt, input)
-	}
 
 	_, _, _, err := BuildApp(opt, input, outfile)
 	return err
@@ -205,8 +200,8 @@ func BuildApp(opt *appbase.Option, input, outfile string) (mainFunc string, wasm
 			fmt.Printf("%q is invalid wa moudle\n", input)
 			os.Exit(1)
 		}
-		if opt.Target != "" {
-			manifest.Pkg.Target = opt.Target
+		if opt.TargetOS != "" {
+			manifest.Pkg.TargetOS = opt.TargetOS
 		}
 		if err := manifest.Valid(); err != nil {
 			fmt.Printf("%q is invalid wa module; %v\n", input, err)
@@ -232,7 +227,7 @@ func BuildApp(opt *appbase.Option, input, outfile string) (mainFunc string, wasm
 		// 用返回的 prog 替代, 状态可能有更新(W2Mode)
 		manifest = prog.Manifest
 
-		if s := manifest.Pkg.Target; opt.Optimize || s == config.WaOS_wasm4 || s == config.WaOS_arduino {
+		if s := manifest.Pkg.TargetOS; opt.Optimize || s == config.WaOS_wasm4 || s == config.WaOS_arduino {
 			watOutput, err = watstrip.WatStrip(input, watOutput)
 			if err != nil {
 				fmt.Println(err)
@@ -261,7 +256,7 @@ func BuildApp(opt *appbase.Option, input, outfile string) (mainFunc string, wasm
 		}
 
 		// 生成 js 胶水代码
-		switch manifest.Pkg.Target {
+		switch manifest.Pkg.TargetOS {
 		case config.WaOS_js:
 			jsOutfile := appbase.ReplaceExt(outfile, ".wasm", ".js")
 			jsOutput := compiler.GenJSBinding(filepath.Base(outfile))
@@ -458,7 +453,7 @@ func buildWat(opt *appbase.Option, filename string) (
 	return prog, compiler, []byte(output), nil
 }
 
-func buildRiscvNative(opt *appbase.Option, filename string) (err error) {
+func buildNative(opt *appbase.Option, filename string) (err error) {
 	cfg := opt.Config()
 	prog, err := loader.LoadProgram(cfg, filename)
 	if err != nil {
