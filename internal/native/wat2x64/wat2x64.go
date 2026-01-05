@@ -107,7 +107,7 @@ func (p *wat2X64Worker) BuildProgram() (code []byte, err error) {
 
 	var out bytes.Buffer
 
-	fmt.Fprintf(&out, "# 源文件: %s, 系统: %s\n", p.filename, p.osName)
+	fmt.Fprintf(&out, "# 源文件: %s, 系统: %s/X64\n", p.filename, p.osName)
 	fmt.Fprintf(&out, "# 自动生成的代码, 不要手动修改!!!\n\n")
 
 	p.gasIntelSyntax(&out)

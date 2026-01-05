@@ -11,12 +11,12 @@ import (
 )
 
 const (
-	kTableReg         = "T7"
-	kTableAddrName    = "$wat2la.table.addr"
-	kTableSizeName    = "$wat2la.table.size"
-	kTableMaxSizeName = "$wat2la.table.maxSize"
-
-	kFuncIndexTableName = "$wat2la.func.index.table"
+	kTableReg          = "T7"
+	kTableAddrName     = "$Table.addr"
+	kTableSizeName     = "$Table.size"
+	kTableMaxSizeName  = "$Table.maxSize"
+	kFuncIndexListName = "$Table.funcIndexList"
+	kFuncInitFuncName  = "$Table.initFunc"
 )
 
 func (p *wat2X64Worker) buildTable(w io.Writer) error {
@@ -29,53 +29,80 @@ func (p *wat2X64Worker) buildTable(w io.Writer) error {
 
 	const IntSize = 8
 
-	if p.m.Table.Name != "" {
-		fmt.Fprintf(w, "# table %s\n", p.m.Table.Name)
-	} else {
-		fmt.Fprintf(w, "# table\n")
-	}
-	if max := p.m.Table.MaxSize; max > 0 {
-		fmt.Fprintf(w, "global %s: i64 = %d\n", kTableSizeName, p.m.Table.Size)
-		fmt.Fprintf(w, "global %s: i64 = %d\n", kTableMaxSizeName, p.m.Table.MaxSize)
-		fmt.Fprintf(w, "global %s: %d = {\n", kTableAddrName, max*IntSize)
-	} else {
-		fmt.Fprintf(w, "global %s: i64 = %d\n", kTableSizeName, p.m.Table.Size)
-		fmt.Fprintf(w, "global %s: i64 = %d\n", kTableMaxSizeName, p.m.Table.Size)
-		fmt.Fprintf(w, "global %s: %d = {\n", kTableAddrName, p.m.Table.Size*IntSize)
-	}
-	{
-		// 为了更真实地模拟, 表格保存的是函数的索引!
-		for _, elem := range p.m.Elem {
-			for i, fnIdxOrName := range elem.Values {
-				fnIndex := p.findFuncIndex(fnIdxOrName)
-				fmt.Fprintf(w, "    %d: %d,\n", int(elem.Offset)+i*IntSize, fnIndex)
-			}
-		}
-	}
-	fmt.Fprintf(w, "}\n")
-	fmt.Fprintln(w)
+	p.gasComment(w, "定义表格")
+	p.gasSectionDataStart(w)
 
-	// 函数索引列表
 	if max := p.m.Table.MaxSize; max > 0 {
-		fmt.Fprintf(w, "global %s: %d = {\n", kFuncIndexTableName, max*IntSize)
+		p.gasDefI64(w, kTableSizeName, int64(p.m.Table.Size))
+		p.gasDefI64(w, kTableMaxSizeName, int64(p.m.Table.MaxSize))
+		p.gasDefArray(w, kTableAddrName, max, IntSize)
+		p.gasDefArray(w, kFuncIndexListName, len(p.m.Imports)+len(p.m.Funcs), IntSize)
+		fmt.Fprintln(w)
 	} else {
-		fmt.Fprintf(w, "global %s: %d = {\n", kFuncIndexTableName, p.m.Table.Size*IntSize)
+		p.gasDefI64(w, kTableSizeName, int64(p.m.Table.Size))
+		p.gasDefI64(w, kTableMaxSizeName, int64(p.m.Table.MaxSize))
+		p.gasDefArray(w, kTableAddrName, p.m.Table.Size, IntSize)
+		p.gasDefArray(w, kFuncIndexListName, len(p.m.Imports)+len(p.m.Funcs), IntSize)
+		fmt.Fprintln(w)
 	}
+
+	// 定义初始化函数
 	{
+		p.gasComment(w, "表格初始化函数")
+		p.gasSectionTextStart(w)
+		fmt.Fprintln(w)
+
+		p.gasFuncStart(w, kFuncInitFuncName)
+		p.gasCommentInFunc(w, "影子空间")
+		fmt.Fprintln(w, "    sub rsp, 40")
+		fmt.Fprintln(w)
+
+		p.gasCommentInFunc(w, "初始化全部函数索引列表")
+		fmt.Fprintln(w)
+
+		p.gasCommentInFunc(w, "加载函数索引列表地址")
+		fmt.Fprintf(w, "    lea rax, [rip + %s]\n", kFuncIndexListName)
+
 		// 索引从导入函数开始计算
 		var importFuncCount int
 		for i, x := range p.m.Imports {
 			if x.ObjKind == token.FUNC {
-				fmt.Fprintf(w, "    %d: %s,\n", i, x.FuncName)
+				p.gasCommentInFunc(w, fmt.Sprintf("导入[%d] %s", i, x.FuncName))
+				fmt.Fprintf(w, "    lea rcx, [rip + %s]\n", kFuncNamePrefix+x.FuncName)
+				fmt.Fprintf(w, "    mov [rax + %d], rcx\n", importFuncCount*8)
 				importFuncCount++
 			}
 		}
 		for i, x := range p.m.Funcs {
-			fmt.Fprintf(w, "    %d: %s,\n", importFuncCount+i, x.Name)
+			p.gasCommentInFunc(w, fmt.Sprintf("函数[%d] %s", i, x.Name))
+			fmt.Fprintf(w, "    lea rcx, [rip + %s]\n", kFuncNamePrefix+x.Name)
+			fmt.Fprintf(w, "    mov [rax + %d], rcx\n", (importFuncCount+i)*8)
+			importFuncCount++
 		}
+		fmt.Fprintln(w)
+
+		if len(p.m.Elem) > 0 {
+			p.gasCommentInFunc(w, "初始化表格元素")
+			fmt.Fprintln(w)
+
+			p.gasCommentInFunc(w, "加载表格地址")
+			fmt.Fprintf(w, "    lea rax, [rip + %s]\n", kTableAddrName)
+
+			for _, elem := range p.m.Elem {
+				for i, fnIdxOrName := range elem.Values {
+					fnIndex := p.findFuncIndex(fnIdxOrName)
+					p.gasCommentInFunc(w, fmt.Sprintf("表格[%d] = %s", i, fnIdxOrName))
+					fmt.Fprintf(w, "    mov qword ptr [rax + %d], %d\n", int(elem.Offset)+i*IntSize, fnIndex)
+				}
+			}
+			fmt.Fprintln(w)
+		}
+
+		p.gasCommentInFunc(w, "函数返回")
+		fmt.Fprintln(w, "    add rsp, 40")
+		fmt.Fprintln(w, "    ret")
+		fmt.Fprintln(w)
 	}
-	fmt.Fprintf(w, "}\n")
-	fmt.Fprintln(w)
 
 	return nil
 }

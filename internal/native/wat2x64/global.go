@@ -10,6 +10,10 @@ import (
 	"wa-lang.org/wa/internal/wat/token"
 )
 
+const (
+	kGlobalNamePrefix = "$G."
+)
+
 func (p *wat2X64Worker) buildGlobal(w io.Writer) error {
 	if len(p.m.Globals) == 0 {
 		return nil
@@ -20,13 +24,13 @@ func (p *wat2X64Worker) buildGlobal(w io.Writer) error {
 	for _, g := range p.m.Globals {
 		switch g.Type {
 		case token.I32:
-			p.gasDefI32(w, g.Name, g.I32Value)
+			p.gasDefI32(w, kGlobalNamePrefix+g.Name, g.I32Value)
 		case token.I64:
-			p.gasDefI64(w, g.Name, g.I64Value)
+			p.gasDefI64(w, kGlobalNamePrefix+g.Name, g.I64Value)
 		case token.F32:
-			p.gasDefF32(w, g.Name, g.F32Value)
+			p.gasDefF32(w, kGlobalNamePrefix+g.Name, g.F32Value)
 		case token.F64:
-			p.gasDefF64(w, g.Name, g.F64Value)
+			p.gasDefF64(w, kGlobalNamePrefix+g.Name, g.F64Value)
 		default:
 			return fmt.Errorf("unsupported global type: %s", g.Type)
 		}

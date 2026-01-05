@@ -10,7 +10,9 @@ import (
 	"wa-lang.org/wa/internal/wat/token"
 )
 
-// 目前宿主函数是固定的
+const (
+	kImportNamePrefix = "$Import."
+)
 
 func (p *wat2X64Worker) buildImport(w io.Writer) error {
 	if len(p.m.Imports) == 0 {
@@ -33,9 +35,9 @@ func (p *wat2X64Worker) buildImport(w io.Writer) error {
 
 		// 导入函数有个名字修饰, 避免重名
 		// 导入函数属于外部库, 需要通过外部文件单独定义
-		absImportName := "$import." + importSpec.ObjModule + "." + importSpec.ObjName
+		absImportName := kImportNamePrefix + importSpec.ObjModule + "." + importSpec.ObjName
 		p.gasExtern(w, absImportName)
-		p.gasSet(w, importSpec.FuncName, absImportName)
+		p.gasSet(w, kFuncNamePrefix+importSpec.FuncName, absImportName)
 	}
 
 	return nil

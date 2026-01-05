@@ -15,12 +15,22 @@ func (p *wat2X64Worker) gasComment(w io.Writer, text string) {
 	}
 }
 
+func (p *wat2X64Worker) gasCommentInFunc(w io.Writer, text string) {
+	text = strings.TrimSpace(text)
+	if strings.HasPrefix(text, "#") {
+		fmt.Fprintln(w, "    "+text)
+	} else {
+		fmt.Fprintln(w, "    #", text)
+	}
+}
+
 func (p *wat2X64Worker) gasIntelSyntax(w io.Writer) {
 	fmt.Fprintln(w, ".intel_syntax noprefix")
 }
 
 func (p *wat2X64Worker) gasSectionDataStart(w io.Writer) {
 	fmt.Fprintln(w, ".section .data")
+	fmt.Fprintln(w, ".align 8")
 }
 
 func (p *wat2X64Worker) gasSectionTextStart(w io.Writer) {
@@ -49,6 +59,10 @@ func (p *wat2X64Worker) gasDefF32(w io.Writer, name string, v float32) {
 
 func (p *wat2X64Worker) gasDefF64(w io.Writer, name string, v float64) {
 	fmt.Fprintf(w, "%s: .double %f\n", name, v)
+}
+
+func (p *wat2X64Worker) gasDefArray(w io.Writer, name string, elemSize, len int) {
+	fmt.Fprintf(w, "%s: .fill %d, %d, 0\n", name, len, elemSize)
 }
 
 func (p *wat2X64Worker) gasDefString(w io.Writer, name string, v string) {
