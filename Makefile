@@ -15,13 +15,7 @@ hello:
 	cd waroot && go run ../main.go run hello.wa
 
 dev:
-	go run main.go p9asm -S ./tests/p9asm/hello.s
-
-dev-nm:
-	go run main.go p9nm ./tests/p9asm/hello.o
-
-dev-link:
-	go run main.go p9link -o a.out ./tests/p9asm/hello.o
+	go run main.go build -arch=x64 -target=windows a.out.wat
 
 prime:
 	cd waroot && go run ../main.go run examples/prime

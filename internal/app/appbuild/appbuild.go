@@ -7,6 +7,7 @@ import (
 	_ "embed"
 	"fmt"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"strings"
 
@@ -16,6 +17,8 @@ import (
 	"wa-lang.org/wa/internal/config"
 	"wa-lang.org/wa/internal/loader"
 	"wa-lang.org/wa/internal/native/wair2la"
+	"wa-lang.org/wa/internal/native/wat2la"
+	"wa-lang.org/wa/internal/native/wat2x64"
 	"wa-lang.org/wa/internal/token"
 	"wa-lang.org/wa/internal/wat/watutil"
 	"wa-lang.org/wa/internal/wat/watutil/wat2c"
@@ -54,6 +57,7 @@ var CmdBuild = &cli.Command{
 	Usage: "compile Wa source code",
 	Flags: []cli.Flag{
 		appbase.MakeFlag_output(),
+		appbase.MakeFlag_arch(),
 		appbase.MakeFlag_target(),
 		appbase.MakeFlag_wat2c_prefix(),
 		appbase.MakeFlag_tags(),
@@ -100,6 +104,112 @@ func BuildApp(opt *appbase.Option, input, outfile string) (mainFunc string, wasm
 
 	// 只编译 wat 文件, 输出路径相同, 后缀名调整
 	if appbase.HasExt(input, ".wat") {
+		switch opt.TargetArch {
+		case config.WaArch_loong64:
+			// wa build -arch=loong64 -target=linux input.wat
+
+			if s := opt.TargetOS; s != "" && s != config.WaOS_linux {
+				panic(fmt.Sprintf("loong64 donot support %s", s))
+			}
+
+			// 设置默认输出目标
+			if outfile == "" {
+				outfile = appbase.ReplaceExt(input, ".wat", ".exe")
+			}
+
+			watData, err := os.ReadFile(input)
+			if err != nil {
+				fmt.Printf("read %s failed: %v\n", input, err)
+				os.Exit(1)
+			}
+			_, nasmBytes, err := wat2la.Wat2LA64(input, watData)
+			if err != nil {
+				fmt.Printf("wat2la %s failed: %v\n", input, err)
+				os.Exit(1)
+			}
+
+			// 保存汇编到文件
+			nasmfile := appbase.ReplaceExt(input, ".wat", ".wa.s")
+			err = os.WriteFile(nasmfile, nasmBytes, 0666)
+			if err != nil {
+				fmt.Printf("write %s failed: %v\n", outfile, err)
+				os.Exit(1)
+			}
+
+			// gcc 编译为 exe
+			gccPath, err := exec.LookPath("gcc")
+			if err != nil {
+				fmt.Printf("gcc not found\n")
+				os.Exit(1)
+			}
+			gccOutput, err := exec.Command(gccPath, nasmfile, "-o", outfile).CombinedOutput()
+			if err != nil {
+				fmt.Print(string(gccOutput))
+				fmt.Printf("gcc build failed: %v\n", err)
+				os.Exit(1)
+			}
+
+			// 写到文件
+			err = os.WriteFile(outfile, wasmBytes, 0666)
+			if err != nil {
+				fmt.Printf("write %s failed: %v\n", outfile, err)
+				os.Exit(1)
+			}
+
+			// OK
+			return "", nasmBytes, nil, nil
+
+		case config.WaArch_x64:
+			// wa build -arch=x64 -target=windows input.wat
+
+			// 设置默认输出目标
+			if outfile == "" {
+				outfile = appbase.ReplaceExt(input, ".wat", ".exe")
+			}
+
+			watData, err := os.ReadFile(input)
+			if err != nil {
+				fmt.Printf("read %s failed: %v\n", input, err)
+				os.Exit(1)
+			}
+			_, nasmBytes, err := wat2x64.Wat2X64(input, watData, opt.TargetOS)
+			if err != nil {
+				fmt.Printf("wat2x64 %s failed: %v\n", input, err)
+				os.Exit(1)
+			}
+
+			// 保存汇编到文件
+			nasmfile := appbase.ReplaceExt(input, ".wat", ".wa.s")
+			err = os.WriteFile(nasmfile, nasmBytes, 0666)
+			if err != nil {
+				fmt.Printf("write %s failed: %v\n", outfile, err)
+				os.Exit(1)
+			}
+
+			// gcc 编译为 exe
+			gccPath, err := exec.LookPath("gcc")
+			if err != nil {
+				fmt.Printf("gcc not found\n")
+				os.Exit(1)
+			}
+			gccOutput, err := exec.Command(gccPath, nasmfile, "-o", outfile).CombinedOutput()
+			if err != nil {
+				fmt.Print(string(gccOutput))
+				fmt.Printf("gcc build failed: %v\n", err)
+				os.Exit(1)
+			}
+
+			// 写到文件
+			err = os.WriteFile(outfile, wasmBytes, 0666)
+			if err != nil {
+				fmt.Printf("write %s failed: %v\n", outfile, err)
+				os.Exit(1)
+			}
+
+			// OK
+			return "", nasmBytes, nil, nil
+		}
+
 		// 设置默认输出目标
 		if outfile == "" {
 			outfile = appbase.ReplaceExt(input, ".wat", ".wasm")

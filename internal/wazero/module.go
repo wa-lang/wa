@@ -58,6 +58,11 @@ func (p *Module) RunMain(mainFunc string) (stdout, stderr []byte, err error) {
 		p.wazeroCtx, p.wazeroCompileModule, p.wazeroConf,
 	)
 
+	if p.wazeroInitErr != nil {
+		err = p.wazeroInitErr
+		return
+	}
+
 	if mainFunc != "" {
 		fn := p.wazeroModule.ExportedFunction(mainFunc)
 		if fn == nil {
