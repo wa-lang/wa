@@ -113,6 +113,13 @@ func (p *wat2X64Worker) BuildProgram() (code []byte, err error) {
 	p.gasIntelSyntax(&out)
 	fmt.Fprintln(&out)
 
+	// 声明全局函数
+	p.gasComment(&out, "系统调用")
+	p.gasExtern(&out, kSyscallMalloc)
+	p.gasGlobal(&out, kBuiltinMemcpy)
+	p.gasGlobal(&out, kBuiltinMemset)
+	fmt.Fprintln(&out)
+
 	if err := p.buildImport(&out); err != nil {
 		return nil, err
 	}

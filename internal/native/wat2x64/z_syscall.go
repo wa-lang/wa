@@ -9,6 +9,10 @@ import (
 	"wa-lang.org/wa/internal/wat/ast"
 )
 
+const (
+	kSyscallMalloc = "malloc"
+)
+
 func (p *wat2X64Worker) checkSyscallSig(spec *ast.ImportSpec) {
 	// TODO: 检查系统调用函数签名类型是否匹配
 }
