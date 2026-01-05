@@ -52,6 +52,7 @@ const (
 	WaArch_loong64 = wasrc.WaArch_loong64 // 龙芯64
 	WaArch_riscv32 = wasrc.WaArch_riscv32 // RISCV32
 	WaArch_x64     = wasrc.WaArch_x64     // X64
+	WaArch_clang   = wasrc.WaArch_clang   // C语言
 )
 
 // 后端列表

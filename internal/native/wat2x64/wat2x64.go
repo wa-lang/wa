@@ -27,7 +27,7 @@ func wat2x64(filename string, source []byte, osName string) (m *watast.Module, c
 		return m, nil, err
 	}
 
-	worker := newWat2X64Worker(m, osName)
+	worker := newWat2X64Worker(filename, m, osName)
 	code, err = worker.BuildProgram()
 	return
 }
@@ -35,7 +35,8 @@ func wat2x64(filename string, source []byte, osName string) (m *watast.Module, c
 type wat2X64Worker struct {
 	osName string
 
-	m *watast.Module
+	filename string
+	m        *watast.Module
 
 	importGlobalCount int // 导入全局只读变量的数目
 	importFuncCount   int // 导入函数的数目
@@ -55,6 +56,8 @@ type wat2X64Worker struct {
 	dataSection []*ast.Global
 	textSection []*ast.Func
 
+	nextId int64 // 用于生成唯一ID
+
 	trace bool // 调试开关
 }
 
@@ -64,8 +67,13 @@ type inlinedTypeIndex struct {
 	inlinedIdx wasm.Index
 }
 
-func newWat2X64Worker(mWat *watast.Module, osName string) *wat2X64Worker {
-	p := &wat2X64Worker{m: mWat, osName: osName, trace: DebugMode}
+func newWat2X64Worker(filename string, mWat *watast.Module, osName string) *wat2X64Worker {
+	p := &wat2X64Worker{
+		filename: filename,
+		m:        mWat,
+		osName:   osName,
+		trace:    DebugMode,
+	}
 
 	// 统计导入的global和func索引
 	p.importGlobalCount = 0
@@ -99,6 +107,7 @@ func (p *wat2X64Worker) BuildProgram() (code []byte, err error) {
 
 	var out bytes.Buffer
 
+	fmt.Fprintf(&out, "# 源文件: %s, 系统: %s\n", p.filename, p.osName)
 	fmt.Fprintf(&out, "# 自动生成的代码, 不要手动修改!!!\n\n")
 
 	if err := p.buildImport(&out); err != nil {
@@ -146,4 +155,13 @@ func (p *wat2X64Worker) BuildProgram() (code []byte, err error) {
 	}
 
 	return out.Bytes(), nil
+}
+
+func (p *wat2X64Worker) gasGenNextId(preifx string) string {
+	nextId := p.nextId
+	p.nextId++
+	if preifx == "" {
+		preifx = "$"
+	}
+	return fmt.Sprintf("%s.%08X", preifx, nextId)
 }

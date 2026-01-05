@@ -47,6 +47,7 @@ const (
 	WaArch_loong64 = "loong64"   // 龙芯64
 	WaArch_riscv32 = "riscv32"   // RISCV32
 	WaArch_x64     = "x64"       // X64
+	WaArch_clang   = "clang"     // C语言
 )
 
 // 后端列表
@@ -71,6 +72,7 @@ var WaArch_List = []string{
 	WaArch_loong64,
 	WaArch_riscv32,
 	WaArch_x64,
+	WaArch_clang,
 }
 
 // 检查 Arch 值是否 OK

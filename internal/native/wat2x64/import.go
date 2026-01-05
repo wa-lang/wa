@@ -17,8 +17,10 @@ func (p *wat2X64Worker) buildImport(w io.Writer) error {
 		return nil
 	}
 
-	// 同一个对象可能被导入多次
-	var hostFuncMap = make(map[string]bool)
+	if len(p.m.Imports) > 0 {
+		p.gasComment(w, "导入函数(由导入文件定义)")
+		defer fmt.Fprintln(w)
+	}
 
 	// 声明原始的宿主函数
 	for _, importSpec := range p.m.Imports {
@@ -26,16 +28,14 @@ func (p *wat2X64Worker) buildImport(w io.Writer) error {
 			panic(fmt.Sprintf("ERR: import global %s.%s", importSpec.ObjModule, importSpec.ObjName))
 		}
 
-		fnName := importSpec.ObjModule + "." + importSpec.ObjName
-
-		// 已经处理过
-		if hostFuncMap[fnName] {
-			continue
-		}
-		hostFuncMap[fnName] = true
-
 		// 检查导入系统调用的函数签名
 		p.checkSyscallSig(importSpec)
+
+		// 导入函数有个名字修饰, 避免重名
+		// 导入函数属于外部库, 需要通过外部文件单独定义
+		absImportName := "$import." + importSpec.ObjModule + "." + importSpec.ObjName
+		p.gasExtern(w, absImportName)
+		p.gasSet(w, importSpec.FuncName, absImportName)
 	}
 
 	return nil
