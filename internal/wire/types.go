@@ -259,7 +259,7 @@ type Tuple struct {
 }
 
 func (t *Tuple) Name() string {
-	name := "{"
+	name := "tuple{"
 	for i, f := range t.fields {
 		if i > 0 {
 			name += ", "
@@ -288,6 +288,8 @@ func (t *Tuple) Equal(u Type) bool {
 
 	return true
 }
+func (t *Tuple) Len() int       { return len(t.fields) }
+func (t *Tuple) At(id int) Type { return t.fields[id] }
 
 func (tl *Types) GenTuple(fields []Type) *Tuple {
 	nt := &Tuple{fields: fields}
@@ -306,10 +308,21 @@ func (tl *Types) GenTuple(fields []Type) *Tuple {
 Struct: 结构体
 **************************************/
 type Struct struct {
-	fields []*StructField
+	fields []StructField
 }
 
-func (t *Struct) Name() string   { panic("Todo") }
+func (t *Struct) Name() string {
+	name := "struct{"
+	for i, f := range t.fields {
+		if i > 0 {
+			name += ", "
+		}
+		name += f.String()
+	}
+
+	name += "}"
+	return name
+}
 func (t *Struct) Kind() TypeKind { return TypeKindStruct }
 func (t *Struct) Equal(u Type) bool {
 	ut, ok := u.(*Struct)
@@ -322,29 +335,26 @@ func (t *Struct) Equal(u Type) bool {
 	}
 
 	for i := range t.fields {
-		if !t.fields[i].Equal(ut.fields[i]) {
+		if !t.fields[i].Equal(&ut.fields[i]) {
 			return false
 		}
 	}
 
 	return true
 }
+func (t *Struct) Len() int              { return len(t.fields) }
+func (t *Struct) At(id int) StructField { return t.fields[id] }
 
-func (tl *Types) GenStruct() (*Struct, bool) {
-	panic("Todo")
-	//if t, ok := tl.Lookup(name); ok {
-	//	return t.(*Struct), true
-	//}
-	//
-	//var nt Struct
-	//nt.name = name
-	//tl.Add(&nt)
-	//return &nt, false
-}
+func (tl *Types) GenStruct(fields []StructField) *Struct {
+	nt := &Struct{fields: fields}
+	for _, t := range tl.structs {
+		if nt.Equal(t) {
+			return t
+		}
+	}
 
-func (t *Struct) AppendField(f *StructField) {
-	f.id = len(t.fields)
-	t.fields = append(t.fields, f)
+	tl.structs = append(tl.structs, nt)
+	return nt
 }
 
 type StructField struct {
@@ -354,3 +364,4 @@ type StructField struct {
 }
 
 func (i *StructField) Equal(u *StructField) bool { return i.Name == u.Name && i.Type.Equal(u.Type) }
+func (i *StructField) String() string            { return i.Name + " " + i.Type.Name() }
