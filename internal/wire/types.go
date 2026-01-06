@@ -3,10 +3,6 @@
 
 package wire
 
-import (
-	"wa-lang.org/wa/internal/logger"
-)
-
 /**************************************
 本文件定义了 wire 中与值类型相关的各种对象
 **************************************/
@@ -20,15 +16,15 @@ Types : 类型库，用于管理值类型，类型的名字是其身份标志
   - 若指定名称的类型已存在于类型库中，则返回现存的类型
 **************************************/
 type Types struct {
-	typs map[string]Type
-
 	Void, Bool, U8, U16, U32, U64, Uint, I8, I16, I32, I64, Int, F32, F64, Complex64, Complex128, Rune, String Type
+
+	ptrs    map[Type]*Ptr // Base->Ptr
+	tuples  []*Tuple
+	structs []*Struct
 }
 
 // Init 初始化类型库
 func (tl *Types) Init() {
-	tl.typs = make(map[string]Type)
-
 	tl.Void = &Void{}
 	tl.Bool = &Bool{}
 	tl.U8 = &U8{}
@@ -48,43 +44,7 @@ func (tl *Types) Init() {
 	tl.Rune = &Rune{}
 	tl.String = &String{}
 
-	tl.typs[tl.Void.Name()] = tl.Void
-	tl.typs[tl.Bool.Name()] = tl.Bool
-	tl.typs[tl.U8.Name()] = tl.U8
-	tl.typs[tl.U16.Name()] = tl.U16
-	tl.typs[tl.U32.Name()] = tl.U32
-	tl.typs[tl.U64.Name()] = tl.U64
-	tl.typs[tl.Uint.Name()] = tl.Uint
-	tl.typs[tl.I8.Name()] = tl.I8
-	tl.typs[tl.I16.Name()] = tl.I16
-	tl.typs[tl.I32.Name()] = tl.I32
-	tl.typs[tl.I64.Name()] = tl.I64
-	tl.typs[tl.Int.Name()] = tl.Int
-	tl.typs[tl.F32.Name()] = tl.F32
-	tl.typs[tl.F64.Name()] = tl.F64
-	tl.typs[tl.Complex64.Name()] = tl.Complex64
-	tl.typs[tl.Complex128.Name()] = tl.Complex128
-	tl.typs[tl.Rune.Name()] = tl.Rune
-	tl.typs[tl.String.Name()] = tl.String
-
-}
-
-// Lookup 根据给定的名字查找值类型
-func (tl *Types) Lookup(name string) (t Type, ok bool) {
-	t, ok = tl.typs[name]
-	return
-}
-
-// add 向 TypeLib 中添加一个新类型，注意不可重复添加
-func (tl *Types) add(t Type) {
-	if _, ok := tl.Lookup(t.Name()); ok {
-		logger.Fatalf("Type:%T already registered.", t)
-	}
-	tl.typs[t.Name()] = t
-}
-
-func (tl *Types) All() map[string]Type {
-	return tl.typs
+	tl.ptrs = make(map[Type]*Ptr)
 }
 
 /**************************************
@@ -282,12 +242,12 @@ func (t *Ptr) Equal(u Type) bool {
 }
 
 func (tl *Types) GenPtr(base Type) *Ptr {
-	nt := &Ptr{Base: base}
-	if t, ok := tl.Lookup(nt.Name()); ok {
-		return t.(*Ptr)
+	if t, ok := tl.ptrs[base]; ok {
+		return t
 	}
 
-	tl.add(nt)
+	nt := &Ptr{Base: base}
+	tl.ptrs[base] = nt
 	return nt
 }
 
@@ -298,7 +258,17 @@ type Tuple struct {
 	fields []Type
 }
 
-func (t *Tuple) Name() string   { panic("Todo") }
+func (t *Tuple) Name() string {
+	name := "{"
+	for i, f := range t.fields {
+		if i > 0 {
+			name += ", "
+		}
+		name += f.Name()
+	}
+	name += "}"
+	return name
+}
 func (t *Tuple) Kind() TypeKind { return TypeKindTuple }
 func (t *Tuple) Equal(u Type) bool {
 	ut, ok := u.(*Tuple)
@@ -320,10 +290,15 @@ func (t *Tuple) Equal(u Type) bool {
 }
 
 func (tl *Types) GenTuple(fields []Type) *Tuple {
-	panic("Todo") //name
-
 	nt := &Tuple{fields: fields}
-	tl.add(nt)
+
+	for _, t := range tl.tuples {
+		if nt.Equal(t) {
+			return t
+		}
+	}
+
+	tl.tuples = append(tl.tuples, nt)
 	return nt
 }
 
