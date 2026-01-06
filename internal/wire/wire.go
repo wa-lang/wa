@@ -78,7 +78,7 @@ const (
 	TypeKindPtr
 	TypeKindStruct
 	TypeKindTuple
-	TypeKindSignature
+	//TypeKindSignature
 	TypeKindSlice
 	TypeKindArray
 	TypeKindMap
@@ -177,19 +177,37 @@ type FnSig struct {
 	Results Type   //返回值类型，无返回值: Void，多返回值：Tuple
 }
 
-func (p *FnSig) Name() string    { panic("FnSig.Name() is unimplemented") }
-func (p *FnSig) Kind() TypeKind  { return TypeKindSignature }
-func (p *FnSig) Equal(Type) bool { panic("FnSig.Equal() is unimplemented") }
+//func (p *FnSig) Name() string    { panic("FnSig.Name() is unimplemented") }
+//func (p *FnSig) Kind() TypeKind  { return TypeKindSignature }
+func (s *FnSig) Equal(d *FnSig) bool {
+	if len(s.Params) != len(d.Params) {
+		return false
+	}
 
-///**************************************
-//Method: 方法
-//**************************************/
-//type Method struct {
-//	Sig        FnSig  //函数签名
-//	Name       string //方法名。b.MyMethod() 的方法名为 "MyMethod"
-//	FullFnName string //方法的函数全路径名（包括包路径、类型名，需要进行名字修饰）
-//}
-//
+	for i := range s.Params {
+		if !s.Params[i].Equal(d.Params[i]) {
+			return false
+		}
+	}
+
+	return s.Results.Equal(d.Results)
+}
+
+/**************************************
+Method: 方法
+**************************************/
+type Method struct {
+	Sig      FnSig  //函数签名
+	Name     string //方法名。b.MyMethod() 的方法名为 "MyMethod"
+	FullName string //方法的函数全路径名（包括包路径、类型名，需要进行名字修饰），接口方法的该属性为空
+}
+
+func (m *Method) Equal(d *Method) bool {
+	if m.Name != d.Name {
+		return false
+	}
+	return m.Sig.Equal(&d.Sig)
+}
 
 /**************************************
 FreeVar: 闭包捕获的外部变量

@@ -21,6 +21,8 @@ type Types struct {
 	ptrs    map[Type]*Ptr // Base->Ptr
 	tuples  []*Tuple
 	structs []*Struct
+	ifaces  []*Interface
+	nameds  map[string]*Named
 }
 
 // Init 初始化类型库
@@ -45,6 +47,7 @@ func (tl *Types) Init() {
 	tl.String = &String{}
 
 	tl.ptrs = make(map[Type]*Ptr)
+	tl.nameds = make(map[string]*Named)
 }
 
 /**************************************
@@ -365,3 +368,105 @@ type StructField struct {
 
 func (i *StructField) Equal(u *StructField) bool { return i.Name == u.Name && i.Type.Equal(u.Type) }
 func (i *StructField) String() string            { return i.Name + " " + i.Type.Name() }
+
+/**************************************
+Interface: 接口类型
+**************************************/
+type Interface struct {
+	methods []Method
+}
+
+func (t *Interface) Name() string   { return "interface{...}" }
+func (t *Interface) Kind() TypeKind { return TypeKindInterface }
+func (t *Interface) Equal(u Type) bool {
+	ut, ok := u.(*Interface)
+	if !ok {
+		return false
+	}
+
+	if len(t.methods) != len(ut.methods) {
+		return false
+	}
+
+	for i := range t.methods {
+		if !t.methods[i].Equal(&ut.methods[i]) {
+			return false
+		}
+	}
+
+	return true
+}
+
+func (t *Interface) NumMethods() int     { return len(t.methods) }
+func (t *Interface) Method(i int) Method { return t.methods[i] }
+
+func (tl *Types) GenInterface(methods []Method) *Interface {
+	nt := &Interface{methods: methods}
+
+	for _, t := range tl.ifaces {
+		if nt.Equal(t) {
+			return t
+		}
+	}
+
+	tl.ifaces = append(tl.ifaces, nt)
+	return nt
+}
+
+/**************************************
+Named: 具名类型，具名类型指向某个具体类型(underlying)
+ - 当具名类型指向接口时，它的方法集和接口保持一致，既不可调用 Named.AddMethod() 添加新方法；
+ - 具名类型指向其它类型时，它可以拥有自己的方法集
+**************************************/
+type Named struct {
+	name       string
+	underlying Type
+	methods    []Method
+}
+
+func (t *Named) Name() string   { return t.name }
+func (t *Named) Kind() TypeKind { return t.underlying.Kind() }
+func (t *Named) Equal(u Type) bool {
+	ut, ok := u.(*Named)
+	if !ok {
+		return false
+	}
+
+	return t.underlying.Equal(ut.underlying)
+}
+
+func (t *Named) Underlying() Type         { return t.underlying }
+func (t *Named) SetUnderlying(utype Type) { t.underlying = utype }
+
+func (t *Named) AddMethod(m Method) int {
+	if t.underlying.Kind() == TypeKindInterface {
+		panic("Can't call AddMethod() on Named whose underlying-type is Interface")
+	}
+	t.methods = append(t.methods, m)
+	return len(t.methods) - 1
+}
+func (t *Named) NumMethods() int {
+	if t.underlying.Kind() == TypeKindInterface {
+		return t.underlying.(*Interface).NumMethods()
+	}
+
+	return len(t.methods)
+}
+func (t *Named) Method(i int) Method {
+	if t.underlying.Kind() == TypeKindInterface {
+		return t.underlying.(*Interface).Method(i)
+	}
+
+	return t.methods[i]
+}
+
+// 创建一个具名类型，注意：新建的具名类型未指向任何具体类型，必须使用 Named.SetUnderlying() 设置
+func (tl *Types) GenNamed(name string) *Named {
+	if t, ok := tl.nameds[name]; ok {
+		return t
+	}
+
+	nt := &Named{name: name}
+	tl.nameds[name] = nt
+	return nt
+}
