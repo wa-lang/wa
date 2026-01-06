@@ -77,6 +77,10 @@ func (p *wat2X64Worker) gasFuncStart(w io.Writer, fnName string) {
 	fmt.Fprintf(w, "%s:\n", fnName)
 }
 
+func (p *wat2X64Worker) gasFuncLabel(w io.Writer, labelName string) {
+	fmt.Fprintf(w, "%s:\n", labelName)
+}
+
 // 函数名字重定向
 func (p *wat2X64Worker) gasSet(w io.Writer, src, dst string) {
 	fmt.Fprintf(w, ".set %s, %s\n", src, dst)
