@@ -50,9 +50,9 @@ func (p *wat2X64Worker) buildTable(w io.Writer) error {
 	{
 		p.gasComment(w, "表格初始化函数")
 		p.gasSectionTextStart(w)
-		fmt.Fprintln(w)
-
+		p.gasGlobal(w, kFuncInitFuncName)
 		p.gasFuncStart(w, kFuncInitFuncName)
+
 		p.gasCommentInFunc(w, "影子空间")
 		fmt.Fprintln(w, "    sub rsp, 40")
 		fmt.Fprintln(w)

@@ -136,6 +136,11 @@ func (p *wat2X64Worker) BuildProgram() (code []byte, err error) {
 		return nil, err
 	}
 
+	// 启动函数
+	if err := p.buildStart(&out); err != nil {
+		return nil, err
+	}
+
 	if err := p.buildFuncs(&out); err != nil {
 		return nil, err
 	}
@@ -146,22 +151,19 @@ func (p *wat2X64Worker) BuildProgram() (code []byte, err error) {
 	}
 
 	// 内置函数
-	switch p.osName {
-	case "linux":
-		if err := p.buildBuiltinLinux(&out); err != nil {
-			return nil, err
+	if false {
+		switch p.osName {
+		case "linux":
+			if err := p.buildBuiltinLinux(&out); err != nil {
+				return nil, err
+			}
+		case "windows":
+			if err := p.buildBuiltinWindows(&out); err != nil {
+				return nil, err
+			}
+		default:
+			panic(fmt.Sprintf("unknown os %s", p.osName))
 		}
-	case "windows":
-		if err := p.buildBuiltinWindows(&out); err != nil {
-			return nil, err
-		}
-	default:
-		panic(fmt.Sprintf("unknown os %s", p.osName))
-	}
-
-	// 启动函数
-	if err := p.buildStart(&out); err != nil {
-		return nil, err
 	}
 
 	return out.Bytes(), nil

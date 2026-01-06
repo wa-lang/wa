@@ -8,13 +8,43 @@ import (
 	"io"
 )
 
+const (
+	kFuncMain = "main"
+)
+
 // 启动函数
 func (p *wat2X64Worker) buildStart(w io.Writer) error {
-	fmt.Fprintln(w, "func _start {")
-	{
-		fmt.Fprintf(w, "    bl %s\n", kMemoryInitFuncName)
+	p.gasSectionTextStart(w)
+
+	p.gasGlobal(w, kFuncMain)
+	fmt.Fprintf(w, "%s:\n", kFuncMain)
+
+	fmt.Fprintln(w, "    push rbp")
+	fmt.Fprintln(w, "    mov  rbp, rsp")
+	fmt.Fprintln(w, "    sub  rsp, 32")
+	fmt.Fprintln(w)
+
+	fmt.Fprintf(w, "    call %s\n", kMemoryInitFuncName)
+	fmt.Fprintf(w, "    call %s\n", kFuncInitFuncName)
+
+	if p.m.Start != "" {
+		fmt.Fprintf(w, "    call %s\n", kFuncNamePrefix+p.m.Start)
 	}
-	fmt.Fprintln(w, "}")
+	if p.m.Start != kFuncMain {
+		for _, fn := range p.m.Funcs {
+			if fn.Name == kFuncMain {
+				fmt.Fprintf(w, "    call %s\n", kFuncNamePrefix+kFuncMain)
+			}
+		}
+	}
+	fmt.Fprintln(w)
+
+	p.gasCommentInFunc(w, "return 0")
+	fmt.Fprintln(w, "    xor  eax, eax")
+	fmt.Fprintln(w, "    add  rsp, 32")
+	fmt.Fprintln(w, "    pop  rbp")
+	fmt.Fprintln(w, "    ret")
+	fmt.Fprintln(w)
 
 	return nil
 }

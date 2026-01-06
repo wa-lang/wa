@@ -63,9 +63,9 @@ func (p *wat2X64Worker) buildMemory(w io.Writer) error {
 	{
 		p.gasComment(w, "内存初始化函数")
 		p.gasSectionTextStart(w)
-		fmt.Fprintln(w)
-
+		p.gasGlobal(w, kMemoryInitFuncName)
 		p.gasFuncStart(w, kMemoryInitFuncName)
+
 		p.gasCommentInFunc(w, "影子空间")
 		fmt.Fprintln(w, "    sub rsp, 40")
 		fmt.Fprintln(w)

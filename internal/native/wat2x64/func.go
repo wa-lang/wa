@@ -56,50 +56,20 @@ func (p *wat2X64Worker) buildFuncs(w io.Writer) error {
 		return nil
 	}
 
+	p.gasSectionTextStart(w)
+	fmt.Fprintln(w)
+
 	for _, f := range p.m.Funcs {
-		fmt.Fprintf(w, "func %s%s", kFuncNamePrefix, f.Name)
-		if len(f.Type.Params) > 0 {
-			fmt.Fprint(w, "(")
-			for i, arg := range f.Type.Params {
-				if i > 0 {
-					fmt.Fprint(w, ", ")
-				}
-				if arg.Name != "" {
-					fmt.Fprintf(w, "%s%s: %v", kFuncArgNamePrefix, arg.Name, arg.Type)
-				} else {
-					fmt.Fprintf(w, "%s%d, %v", kFuncArgNamePrefix, i, arg.Type)
-				}
-			}
-			fmt.Fprint(w, ")")
-		}
-		if len(f.Type.Results) > 1 {
-			fmt.Fprintf(w, " => (")
-			for i, x := range f.Type.Results {
-				if i > 0 {
-					fmt.Fprint(w, ", ")
-				}
-				fmt.Fprintf(w, "%s%d: %v", kFuncRetNamePrefix, i, x)
-			}
-			fmt.Fprint(w, ")")
-		} else if len(f.Type.Results) == 1 {
-			fmt.Fprintf(w, "%v", f.Type.Results[0])
-		}
-		fmt.Fprintln(w, " {")
+		p.localNames = nil
+		p.localTypes = nil
+		p.scopeLabels = nil
+		p.scopeStackBases = nil
+		p.scopeResults = nil
 
-		// 翻译函数实现
-		{
-			p.localNames = nil
-			p.localTypes = nil
-			p.scopeLabels = nil
-			p.scopeStackBases = nil
-			p.scopeResults = nil
-
-			if err := p.buildFunc_body(w, f); err != nil {
-				return err
-			}
+		fmt.Fprintf(w, "%s:\n", kFuncNamePrefix+f.Name)
+		if err := p.buildFunc_body(w, f); err != nil {
+			return err
 		}
-
-		fmt.Fprintln(w, "}")
 	}
 
 	return nil
@@ -171,7 +141,7 @@ func (p *wat2X64Worker) buildFunc_body(w io.Writer, fn *ast.Func) error {
 
 	// 第一步构建 ra 和 fp
 	{
-		fmt.Fprintf(&bufHeader, "     # 栈帧开始\n")
+		fmt.Fprintf(&bufHeader, "    # 栈帧开始\n")
 		fmt.Fprintln(&bufHeader, "    addi.d sp, sp, -16 # sp = sp - 16")
 		fmt.Fprintln(&bufHeader, "    st.d   $ra, sp, 8   # save $ra")
 		fmt.Fprintln(&bufHeader, "    st.d   fp, sp, 0   # save fp")
