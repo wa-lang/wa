@@ -11,7 +11,6 @@ import (
 const (
 	kMemoryInitFuncName = "$Memory.initFunc"
 
-	kMemoryReg          = "T8"
 	kMemoryAddrName     = "$Memory.addr"
 	kMemoryPagesName    = "$Memory.pages"
 	kMemoryMaxPagesName = "$Memory.maxPages"

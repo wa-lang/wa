@@ -7,7 +7,6 @@ import (
 	"bytes"
 	"fmt"
 	"io"
-	"math"
 
 	"wa-lang.org/wa/internal/native/abi"
 	nativeast "wa-lang.org/wa/internal/native/ast"
@@ -18,10 +17,8 @@ import (
 )
 
 const (
-	kFuncNamePrefix      = "$F."
-	kFuncArgNamePrefix   = ".F.arg."
-	kFuncRetNamePrefix   = ".F.ret."
-	kFuncLocalNamePrefix = ".F.local."
+	kFuncNamePrefix    = "$F."
+	kFuncRetNamePrefix = ".F.ret."
 )
 
 const (
@@ -162,22 +159,22 @@ func (p *wat2X64Worker) buildFunc_body(w io.Writer, fn *ast.Func) error {
 			// 将寄存器中的参数存储到对于的栈帧中
 			switch fn.Type.Params[i].Type {
 			case token.I32:
-				fmt.Fprintf(&bufHeader, "    mov %v, [rbp%+d] # save arg %s\n",
+				fmt.Fprintf(&bufHeader, "    mov %v, [rbp %+d] # save arg %s\n",
 					loong64.RegString(arg.Reg), arg.Off,
 					arg.Name,
 				)
 			case token.I64:
-				fmt.Fprintf(&bufHeader, "    mov %v, [rbp%+d] # save arg %s\n",
+				fmt.Fprintf(&bufHeader, "    mov %v, [rbp %+d] # save arg %s\n",
 					loong64.RegString(arg.Reg), arg.Off,
 					arg.Name,
 				)
 			case token.F32:
-				fmt.Fprintf(&bufHeader, "    mov %v, [rbp%+d] # save arg %s\n",
+				fmt.Fprintf(&bufHeader, "    mov %v, [rbp %+d] # save arg %s\n",
 					loong64.RegString(arg.Reg), arg.Off,
 					arg.Name,
 				)
 			case token.F64:
-				fmt.Fprintf(&bufHeader, "    mov %v, [rbp%+d] # save arg %s\n",
+				fmt.Fprintf(&bufHeader, "    mov %v, [rbp %+d] # save arg %s\n",
 					loong64.RegString(arg.Reg), arg.Off,
 					arg.Name,
 				)
@@ -193,19 +190,19 @@ func (p *wat2X64Worker) buildFunc_body(w io.Writer, fn *ast.Func) error {
 		for i, ret := range fnNative.Type.Return {
 			switch fn.Type.Results[i] {
 			case token.I32:
-				fmt.Fprintf(&bufHeader, "    mov dword ptr [rbp%+d] # ret %s = 0\n",
+				fmt.Fprintf(&bufHeader, "    mov dword ptr [rbp %+d] # ret %s = 0\n",
 					ret.Off, ret.Name,
 				)
 			case token.I64:
-				fmt.Fprintf(&bufHeader, "    mov qword ptr [rbp%+d] # ret %s = 0\n",
+				fmt.Fprintf(&bufHeader, "    mov qword ptr [rbp %+d] # ret %s = 0\n",
 					ret.Off, ret.Name,
 				)
 			case token.F32:
-				fmt.Fprintf(&bufHeader, "    mov dword ptr [rbp%+d] # ret %s = 0\n",
+				fmt.Fprintf(&bufHeader, "    mov dword ptr [rbp %+d] # ret %s = 0\n",
 					ret.Off, ret.Name,
 				)
 			case token.F64:
-				fmt.Fprintf(&bufHeader, "    mov qword ptr [rbp%+d] # ret %s = 0\n",
+				fmt.Fprintf(&bufHeader, "    mov qword ptr [rbp %+d] # ret %s = 0\n",
 					ret.Off, ret.Name,
 				)
 			default:
@@ -218,19 +215,19 @@ func (p *wat2X64Worker) buildFunc_body(w io.Writer, fn *ast.Func) error {
 	for i, local := range fnNative.Body.Locals {
 		switch fn.Body.Locals[i].Type {
 		case token.I32:
-			fmt.Fprintf(&bufHeader, "    mov dword ptr [rbp%+d] # local %s = 0\n",
+			fmt.Fprintf(&bufHeader, "    mov dword ptr [rbp %+d] # local %s = 0\n",
 				local.Off, local.Name,
 			)
 		case token.I64:
-			fmt.Fprintf(&bufHeader, "    mov qword ptr [rbp%+d] # local %s = 0\n",
+			fmt.Fprintf(&bufHeader, "    mov qword ptr [rbp %+d] # local %s = 0\n",
 				local.Off, local.Name,
 			)
 		case token.F32:
-			fmt.Fprintf(&bufHeader, "    mov dword ptr [rbp%+d] # local %s = 0\n",
+			fmt.Fprintf(&bufHeader, "    mov dword ptr [rbp %+d] # local %s = 0\n",
 				local.Off, local.Name,
 			)
 		case token.F64:
-			fmt.Fprintf(&bufHeader, "    mov qword ptr [rbp%+d] # local %s = 0\n",
+			fmt.Fprintf(&bufHeader, "    mov qword ptr [rbp %+d] # local %s = 0\n",
 				local.Off, local.Name,
 			)
 		default:
@@ -282,7 +279,7 @@ func (p *wat2X64Worker) buildFunc_body(w io.Writer, fn *ast.Func) error {
 
 		// 如果走内存, 返回地址
 		if len(fn.Type.Results) > 1 && fnNative.Type.Return[1].Reg == 0 {
-			fmt.Fprintf(&bufIns, "    mov rax, [rbp%+d] # ret %s\n",
+			fmt.Fprintf(&bufIns, "    mov rax, [rbp %+d] # ret %s\n",
 				fnNative.Type.Return[0].Off,
 				fnNative.Type.Return[0].Name,
 			)
@@ -293,25 +290,25 @@ func (p *wat2X64Worker) buildFunc_body(w io.Writer, fn *ast.Func) error {
 				}
 				switch fn.Type.Results[i] {
 				case token.I32:
-					fmt.Fprintf(&bufIns, "    mov %v, [rbp%+d] # ret %s\n",
+					fmt.Fprintf(&bufIns, "    mov %v, [rbp %+d] # ret %s\n",
 						loong64.RegString(ret.Reg),
 						fnNative.Type.Return[i].Off,
 						fnNative.Type.Return[i].Name,
 					)
 				case token.I64:
-					fmt.Fprintf(&bufIns, "    mov %v, [rbp%+d] # ret.%s\n",
+					fmt.Fprintf(&bufIns, "    mov %v, [rbp %+d] # ret.%s\n",
 						loong64.RegString(ret.Reg),
 						fnNative.Type.Return[i].Off,
 						fnNative.Type.Return[i].Name,
 					)
 				case token.F32:
-					fmt.Fprintf(&bufIns, "    mov %v, [rbp%+d] # ret %s\n",
+					fmt.Fprintf(&bufIns, "    mov %v, [rbp %+d] # ret %s\n",
 						loong64.RegString(ret.Reg),
 						fnNative.Type.Return[i].Off,
 						fnNative.Type.Return[i].Name,
 					)
 				case token.F64:
-					fmt.Fprintf(&bufIns, "    mov %v, [rbp%+d] # ret.%s\n",
+					fmt.Fprintf(&bufIns, "    mov %v, [rbp %+d] # ret.%s\n",
 						loong64.RegString(ret.Reg),
 						fnNative.Type.Return[i].Off,
 						fnNative.Type.Return[i].Name,
@@ -441,7 +438,7 @@ func (p *wat2X64Worker) buildFunc_ins(
 
 		sp0 := stk.Pop(token.I32)
 
-		fmt.Fprintf(w, "    mov eax, [rbp%+d]\n", p.fnWasmR0Base-sp0*8)
+		fmt.Fprintf(w, "    mov eax, [rbp %+d]\n", p.fnWasmR0Base-sp0*8)
 		fmt.Fprintf(w, "    test eax, eax\n")
 		if len(i.Else) > 0 {
 			fmt.Fprintf(w, "    jne %s%s # if eax != 0 { jmp body }\n", kLabelNamePreifx_ifBody, i.Label)
@@ -527,17 +524,17 @@ func (p *wat2X64Worker) buildFunc_ins(
 					reti := stk.Pop(xType)
 					switch xType {
 					case token.I32:
-						fmt.Fprintf(w, "    mov eax, dword ptr [rbp%+d]\n", p.fnWasmR0Base-reti*8)
-						fmt.Fprintf(w, "    mov dword ptr [rbp%+d], eax\n", p.fnWasmR0Base-(destScopeStackBase+i)*8)
+						fmt.Fprintf(w, "    mov eax, dword ptr [rbp %+d]\n", p.fnWasmR0Base-reti*8)
+						fmt.Fprintf(w, "    mov dword ptr [rbp %+d], eax\n", p.fnWasmR0Base-(destScopeStackBase+i)*8)
 					case token.I64:
-						fmt.Fprintf(w, "    mov qword ptr [rbp%+d], rax\n", p.fnWasmR0Base-reti*8)
-						fmt.Fprintf(w, "    mov qword ptr [rbp%+d], rax\n", p.fnWasmR0Base-(destScopeStackBase+i)*8)
+						fmt.Fprintf(w, "    mov qword ptr [rbp %+d], rax\n", p.fnWasmR0Base-reti*8)
+						fmt.Fprintf(w, "    mov qword ptr [rbp %+d], rax\n", p.fnWasmR0Base-(destScopeStackBase+i)*8)
 					case token.F32:
-						fmt.Fprintf(w, "    movss xmm0, dword ptr [rbp%+d]\n", p.fnWasmR0Base-reti*8)
-						fmt.Fprintf(w, "    movss dword ptr [rbp%+d], xmm0\n", p.fnWasmR0Base-(destScopeStackBase+i)*8)
+						fmt.Fprintf(w, "    movss xmm0, dword ptr [rbp %+d]\n", p.fnWasmR0Base-reti*8)
+						fmt.Fprintf(w, "    movss dword ptr [rbp %+d], xmm0\n", p.fnWasmR0Base-(destScopeStackBase+i)*8)
 					case token.F64:
-						fmt.Fprintf(w, "    movsd xmm0, qword ptr [rbp%+d]\n", p.fnWasmR0Base-reti*8)
-						fmt.Fprintf(w, "    movsd qword ptr [rbp%+d], xmm0\n", p.fnWasmR0Base-(destScopeStackBase+i)*8)
+						fmt.Fprintf(w, "    movsd xmm0, qword ptr [rbp %+d]\n", p.fnWasmR0Base-reti*8)
+						fmt.Fprintf(w, "    movsd qword ptr [rbp %+d], xmm0\n", p.fnWasmR0Base-(destScopeStackBase+i)*8)
 					default:
 						unreachable()
 					}
@@ -580,7 +577,7 @@ func (p *wat2X64Worker) buildFunc_ins(
 		assert(stk.Len() == scopeStackBase)
 
 		fmt.Fprintf(w, "    # br_if %s\n", labelName)
-		fmt.Fprintf(w, "    mov eax, dword ptr [rbp%+d]\n", p.fnWasmR0Base-sp0*8)
+		fmt.Fprintf(w, "    mov eax, dword ptr [rbp %+d]\n", p.fnWasmR0Base-sp0*8)
 		fmt.Fprintf(w, "    test eax, eax\n")
 		fmt.Fprintf(w, "    jne  %s\n", kLabelNamePreifx_next+labelName)
 
@@ -601,7 +598,7 @@ func (p *wat2X64Worker) buildFunc_ins(
 		sp0 := stk.Pop(token.I32)
 
 		fmt.Fprintf(w, "    # br_table\n")
-		fmt.Fprintf(w, "    mov eax, dword ptr [rbp%+d]\n", p.fnWasmR0Base-sp0*8)
+		fmt.Fprintf(w, "    mov eax, dword ptr [rbp %+d]\n", p.fnWasmR0Base-sp0*8)
 		{
 			// 当前block的返回值位置是相同的, 只能统一取一次
 			var retIdxList = make([]int, len(defaultScopeResults))
@@ -640,17 +637,17 @@ func (p *wat2X64Worker) buildFunc_ins(
 							reti := retIdxList[i]
 							switch xType {
 							case token.I32:
-								fmt.Fprintf(w, "    mov edx, dword ptr [rbp%+d]\n", p.fnWasmR0Base-reti*8)
-								fmt.Fprintf(w, "    mov dword ptr [rbp%+d], edx\n", p.fnWasmR0Base-(destScopeStackBase+i)*8)
+								fmt.Fprintf(w, "    mov edx, dword ptr [rbp %+d]\n", p.fnWasmR0Base-reti*8)
+								fmt.Fprintf(w, "    mov dword ptr [rbp %+d], edx\n", p.fnWasmR0Base-(destScopeStackBase+i)*8)
 							case token.I64:
-								fmt.Fprintf(w, "    mov rdx, qword ptr [rbp%+d]\n", p.fnWasmR0Base-reti*8)
-								fmt.Fprintf(w, "    mov qword ptr [rbp%+d], rdx\n", p.fnWasmR0Base-(destScopeStackBase+i)*8)
+								fmt.Fprintf(w, "    mov rdx, qword ptr [rbp %+d]\n", p.fnWasmR0Base-reti*8)
+								fmt.Fprintf(w, "    mov qword ptr [rbp %+d], rdx\n", p.fnWasmR0Base-(destScopeStackBase+i)*8)
 							case token.F32:
-								fmt.Fprintf(w, "    movss xmm0, dword ptr [rbp%+d]\n", p.fnWasmR0Base-reti*8)
-								fmt.Fprintf(w, "    movss dword ptr [rbp%+d], xmm0\n", p.fnWasmR0Base-(destScopeStackBase+i)*8)
+								fmt.Fprintf(w, "    movss xmm0, dword ptr [rbp %+d]\n", p.fnWasmR0Base-reti*8)
+								fmt.Fprintf(w, "    movss dword ptr [rbp %+d], xmm0\n", p.fnWasmR0Base-(destScopeStackBase+i)*8)
 							case token.F64:
-								fmt.Fprintf(w, "    movsd xmm0, qword ptr [rbp%+d]\n", p.fnWasmR0Base-reti*8)
-								fmt.Fprintf(w, "    movsd qword ptr [rbp%+d], xmm0\n", p.fnWasmR0Base-(destScopeStackBase+i)*8)
+								fmt.Fprintf(w, "    movsd xmm0, qword ptr [rbp %+d]\n", p.fnWasmR0Base-reti*8)
+								fmt.Fprintf(w, "    movsd qword ptr [rbp %+d], xmm0\n", p.fnWasmR0Base-(destScopeStackBase+i)*8)
 							default:
 								unreachable()
 							}
@@ -691,20 +688,20 @@ func (p *wat2X64Worker) buildFunc_ins(
 			sp0 := stk.Pop(fn.Type.Results[0])
 			switch fn.Type.Results[0] {
 			case token.I32:
-				fmt.Fprintf(w, "    mov eax, dword ptr [rbp%+d]\n", p.fnWasmR0Base-sp0*8)
-				fmt.Fprintf(w, "    mov dword ptr [rbp%+d], eax\n", fnNative.Type.Return[0].Off)
+				fmt.Fprintf(w, "    mov eax, dword ptr [rbp %+d]\n", p.fnWasmR0Base-sp0*8)
+				fmt.Fprintf(w, "    mov dword ptr [rbp %+d], eax\n", fnNative.Type.Return[0].Off)
 				fmt.Fprintf(w, "    jmp %s\n", kLabelName_return)
 			case token.I64:
-				fmt.Fprintf(w, "    mov rax, qword ptr [rbp%+d]\n", p.fnWasmR0Base-sp0*8)
-				fmt.Fprintf(w, "    mov qword ptr [rbp%+d], rax\n", fnNative.Type.Return[0].Off)
+				fmt.Fprintf(w, "    mov rax, qword ptr [rbp %+d]\n", p.fnWasmR0Base-sp0*8)
+				fmt.Fprintf(w, "    mov qword ptr [rbp %+d], rax\n", fnNative.Type.Return[0].Off)
 				fmt.Fprintf(w, "    jmp %s\n", kLabelName_return)
 			case token.F32:
-				fmt.Fprintf(w, "    movss xmm0, dword ptr [rbp%+d]\n", p.fnWasmR0Base-sp0*8)
-				fmt.Fprintf(w, "    movss dword ptr [rbp%+d], xmm0\n", fnNative.Type.Return[0].Off)
+				fmt.Fprintf(w, "    movss xmm0, dword ptr [rbp %+d]\n", p.fnWasmR0Base-sp0*8)
+				fmt.Fprintf(w, "    movss dword ptr [rbp %+d], xmm0\n", fnNative.Type.Return[0].Off)
 				fmt.Fprintf(w, "    jmp   %s\n", kLabelName_return)
 			case token.F64:
-				fmt.Fprintf(w, "    movsd xmm0, qword ptr [rbp%+d]\n", p.fnWasmR0Base-sp0*8)
-				fmt.Fprintf(w, "    movsd qword ptr [rbp%+d], xmm0\n", fnNative.Type.Return[0].Off)
+				fmt.Fprintf(w, "    movsd xmm0, qword ptr [rbp %+d]\n", p.fnWasmR0Base-sp0*8)
+				fmt.Fprintf(w, "    movsd qword ptr [rbp %+d], xmm0\n", fnNative.Type.Return[0].Off)
 				fmt.Fprintf(w, "    jmp   %s\n", kLabelName_return)
 			default:
 				unreachable()
@@ -715,17 +712,17 @@ func (p *wat2X64Worker) buildFunc_ins(
 				spi := stk.Pop(xType)
 				switch xType {
 				case token.I32:
-					fmt.Fprintf(w, "    mov eax, dword ptr [rbp%+d]\n", p.fnWasmR0Base-spi*8)
-					fmt.Fprintf(w, "    mov dword ptr [rbp%+d], eax\n", fnNative.Type.Return[i].Off)
+					fmt.Fprintf(w, "    mov eax, dword ptr [rbp %+d]\n", p.fnWasmR0Base-spi*8)
+					fmt.Fprintf(w, "    mov dword ptr [rbp %+d], eax\n", fnNative.Type.Return[i].Off)
 				case token.I64:
-					fmt.Fprintf(w, "    mov rax, qword ptr [rbp%+d]\n", p.fnWasmR0Base-spi*8)
-					fmt.Fprintf(w, "    mov qword ptr [rbp%+d], rax\n", fnNative.Type.Return[i].Off)
+					fmt.Fprintf(w, "    mov rax, qword ptr [rbp %+d]\n", p.fnWasmR0Base-spi*8)
+					fmt.Fprintf(w, "    mov qword ptr [rbp %+d], rax\n", fnNative.Type.Return[i].Off)
 				case token.F32:
-					fmt.Fprintf(w, "    movss xmm0, dword ptr [rbp%+d]\n", p.fnWasmR0Base-spi*8)
-					fmt.Fprintf(w, "    movss dword ptr [rbp%+d], xmm0\n", fnNative.Type.Return[i].Off)
+					fmt.Fprintf(w, "    movss xmm0, dword ptr [rbp %+d]\n", p.fnWasmR0Base-spi*8)
+					fmt.Fprintf(w, "    movss dword ptr [rbp %+d], xmm0\n", fnNative.Type.Return[i].Off)
 				case token.F64:
-					fmt.Fprintf(w, "    movsd xmm0, qword ptr [rbp%+d]\n", p.fnWasmR0Base-spi*8)
-					fmt.Fprintf(w, "    movsd qword ptr [rbp%+d], xmm0\n", fnNative.Type.Return[i].Off)
+					fmt.Fprintf(w, "    movsd xmm0, qword ptr [rbp %+d]\n", p.fnWasmR0Base-spi*8)
+					fmt.Fprintf(w, "    movsd qword ptr [rbp %+d], xmm0\n", fnNative.Type.Return[i].Off)
 				default:
 					unreachable()
 				}
@@ -784,57 +781,57 @@ func (p *wat2X64Worker) buildFunc_ins(
 			switch x.Type {
 			case token.I32:
 				if arg := fnCallNative.Type.Args[k]; arg.Reg != 0 {
-					fmt.Fprintf(w, "    mov %s, dword ptr [rbp%+d]\n",
+					fmt.Fprintf(w, "    mov %s, dword ptr [rbp %+d]\n",
 						loong64.RegString(arg.Reg),
 						p.fnWasmR0Base+argList[k]*8,
 					)
 				} else {
-					fmt.Fprintf(w, "    mov eax, dword ptr [rbp%+d]\n",
+					fmt.Fprintf(w, "    mov eax, dword ptr [rbp %+d]\n",
 						p.fnWasmR0Base+argList[k]*8,
 					)
-					fmt.Fprintf(w, "    mov dword ptr [rbp%+d], eax\n",
+					fmt.Fprintf(w, "    mov dword ptr [rbp %+d], eax\n",
 						arg.Off,
 					)
 				}
 			case token.I64:
 				if arg := fnCallNative.Type.Args[k]; arg.Reg != 0 {
-					fmt.Fprintf(w, "    mov %s, qword ptr [rbp%+d]\n",
+					fmt.Fprintf(w, "    mov %s, qword ptr [rbp %+d]\n",
 						loong64.RegString(arg.Reg),
 						p.fnWasmR0Base+argList[k]*8,
 					)
 				} else {
-					fmt.Fprintf(w, "    mov rax, qword ptr [rbp%+d]\n",
+					fmt.Fprintf(w, "    mov rax, qword ptr [rbp %+d]\n",
 						p.fnWasmR0Base+argList[k]*8,
 					)
-					fmt.Fprintf(w, "    mov qword ptr [rbp%+d], rax\n",
+					fmt.Fprintf(w, "    mov qword ptr [rbp %+d], rax\n",
 						arg.Off,
 					)
 				}
 			case token.F32:
 				if arg := fnCallNative.Type.Args[k]; arg.Reg != 0 {
-					fmt.Fprintf(w, "    movss %s, qword ptr [rbp%+d]\n",
+					fmt.Fprintf(w, "    movss %s, qword ptr [rbp %+d]\n",
 						loong64.RegString(arg.Reg),
 						p.fnWasmR0Base+argList[k]*8,
 					)
 				} else {
-					fmt.Fprintf(w, "    movss xmm4, dword ptr [rbp%+d]\n",
+					fmt.Fprintf(w, "    movss xmm4, dword ptr [rbp %+d]\n",
 						p.fnWasmR0Base+argList[k]*8,
 					)
-					fmt.Fprintf(w, "    movss dword ptr [rbp%+d], xmm4\n",
+					fmt.Fprintf(w, "    movss dword ptr [rbp %+d], xmm4\n",
 						arg.Off,
 					)
 				}
 			case token.F64:
 				if arg := fnCallNative.Type.Args[k]; arg.Reg != 0 {
-					fmt.Fprintf(w, "    movsd %s, qword ptr [rbp%+d]\n",
+					fmt.Fprintf(w, "    movsd %s, qword ptr [rbp %+d]\n",
 						loong64.RegString(arg.Reg),
 						p.fnWasmR0Base+argList[k]*8,
 					)
 				} else {
-					fmt.Fprintf(w, "    movsd xmm4, qword ptr [rbp%+d]\n",
+					fmt.Fprintf(w, "    movsd xmm4, qword ptr [rbp %+d]\n",
 						p.fnWasmR0Base+argList[k]*8,
 					)
-					fmt.Fprintf(w, "    movsd qword ptr [rbp%+d], xmm4\n",
+					fmt.Fprintf(w, "    movsd qword ptr [rbp %+d], xmm4\n",
 						arg.Off,
 					)
 				}
@@ -852,17 +849,17 @@ func (p *wat2X64Worker) buildFunc_ins(
 				reti := stk.Push(retType)
 				switch retType {
 				case token.I32:
-					fmt.Fprintf(w, "    mov eax, dword ptr [rbp%+d]\n", k*8)
-					fmt.Fprintf(w, "    mov dword ptr [rbp%+d], eax\n", p.fnWasmR0Base-reti*8)
+					fmt.Fprintf(w, "    mov eax, dword ptr [rbp %+d]\n", k*8)
+					fmt.Fprintf(w, "    mov dword ptr [rbp %+d], eax\n", p.fnWasmR0Base-reti*8)
 				case token.I64:
-					fmt.Fprintf(w, "    mov rax, qword ptr [rbp%+d]\n", k*8)
-					fmt.Fprintf(w, "    mov qword ptr [rbp%+d], rax\n", p.fnWasmR0Base-reti*8)
+					fmt.Fprintf(w, "    mov rax, qword ptr [rbp %+d]\n", k*8)
+					fmt.Fprintf(w, "    mov qword ptr [rbp %+d], rax\n", p.fnWasmR0Base-reti*8)
 				case token.F32:
-					fmt.Fprintf(w, "    movss xmm4, dword ptr [rbp%+d]\n", k*8)
-					fmt.Fprintf(w, "    movss dword ptr [rbp%+d], xmm4\n", p.fnWasmR0Base-reti*8)
+					fmt.Fprintf(w, "    movss xmm4, dword ptr [rbp %+d]\n", k*8)
+					fmt.Fprintf(w, "    movss dword ptr [rbp %+d], xmm4\n", p.fnWasmR0Base-reti*8)
 				case token.F64:
-					fmt.Fprintf(w, "    movsd xmm4, qword ptr [rbp%+d]\n", k*8)
-					fmt.Fprintf(w, "    movsd qword ptr [rbp%+d], xmm4\n", p.fnWasmR0Base-reti*8)
+					fmt.Fprintf(w, "    movsd xmm4, qword ptr [rbp %+d]\n", k*8)
+					fmt.Fprintf(w, "    movsd qword ptr [rbp %+d], xmm4\n", p.fnWasmR0Base-reti*8)
 				default:
 					unreachable()
 				}
@@ -876,22 +873,22 @@ func (p *wat2X64Worker) buildFunc_ins(
 				reti := stk.Push(retType)
 				switch retType {
 				case token.I32:
-					fmt.Fprintf(w, "    mov %s, dword ptr [rbp%+d]\n",
+					fmt.Fprintf(w, "    mov %s, dword ptr [rbp %+d]\n",
 						loong64.RegString(retNative.Reg),
 						p.fnWasmR0Base-reti*8,
 					)
 				case token.I64:
-					fmt.Fprintf(w, "    mov %s, qword ptr [rbp%+d]\n",
+					fmt.Fprintf(w, "    mov %s, qword ptr [rbp %+d]\n",
 						loong64.RegString(retNative.Reg),
 						p.fnWasmR0Base-reti*8,
 					)
 				case token.F32:
-					fmt.Fprintf(w, "    movss %s, dword ptr [rbp%+d]\n",
+					fmt.Fprintf(w, "    movss %s, dword ptr [rbp %+d]\n",
 						loong64.RegString(retNative.Reg),
 						p.fnWasmR0Base-reti*8,
 					)
 				case token.F64:
-					fmt.Fprintf(w, "    movsd %s, qword ptr [rbp%+d]\n",
+					fmt.Fprintf(w, "    movsd %s, qword ptr [rbp %+d]\n",
 						loong64.RegString(retNative.Reg),
 						p.fnWasmR0Base-reti*8,
 					)
@@ -943,7 +940,7 @@ func (p *wat2X64Worker) buildFunc_ins(
 		fnRegName := "r11"
 		p.gasCommentInFunc(w, "根据函数索引编号从列表查询函数地址")
 		fmt.Fprintf(w, "    lea rax, [rip + %s]\n", kFuncIndexListName)
-		fmt.Fprintf(w, "    mov r10, [rbp%+d]\n", p.fnWasmR0Base-sp0*8)
+		fmt.Fprintf(w, "    mov r10, [rbp %+d]\n", p.fnWasmR0Base-sp0*8)
 		fmt.Fprintf(w, "    add rax, r10\n")
 		fmt.Fprintf(w, "    lea %s, [rax]\n", fnRegName)
 
@@ -960,57 +957,57 @@ func (p *wat2X64Worker) buildFunc_ins(
 			switch x.Type {
 			case token.I32:
 				if arg := fnCallNative.Type.Args[k]; arg.Reg != 0 {
-					fmt.Fprintf(w, "    mov %s, dword ptr [rbp%+d]\n",
+					fmt.Fprintf(w, "    mov %s, dword ptr [rbp %+d]\n",
 						loong64.RegString(arg.Reg),
 						p.fnWasmR0Base+argList[k]*8,
 					)
 				} else {
-					fmt.Fprintf(w, "    mov eax, dword ptr [rbp%+d]\n",
+					fmt.Fprintf(w, "    mov eax, dword ptr [rbp %+d]\n",
 						p.fnWasmR0Base+argList[k]*8,
 					)
-					fmt.Fprintf(w, "    mov dword ptr [rbp%+d], eax\n",
+					fmt.Fprintf(w, "    mov dword ptr [rbp %+d], eax\n",
 						arg.Off,
 					)
 				}
 			case token.I64:
 				if arg := fnCallNative.Type.Args[k]; arg.Reg != 0 {
-					fmt.Fprintf(w, "    mov %s, qword ptr [rbp%+d]\n",
+					fmt.Fprintf(w, "    mov %s, qword ptr [rbp %+d]\n",
 						loong64.RegString(arg.Reg),
 						p.fnWasmR0Base+argList[k]*8,
 					)
 				} else {
-					fmt.Fprintf(w, "    mov rax, qword ptr [rbp%+d]\n",
+					fmt.Fprintf(w, "    mov rax, qword ptr [rbp %+d]\n",
 						p.fnWasmR0Base+argList[k]*8,
 					)
-					fmt.Fprintf(w, "    mov qword ptr [rbp%+d], rax\n",
+					fmt.Fprintf(w, "    mov qword ptr [rbp %+d], rax\n",
 						arg.Off,
 					)
 				}
 			case token.F32:
 				if arg := fnCallNative.Type.Args[k]; arg.Reg != 0 {
-					fmt.Fprintf(w, "    movss %s, qword ptr [rbp%+d]\n",
+					fmt.Fprintf(w, "    movss %s, qword ptr [rbp %+d]\n",
 						loong64.RegString(arg.Reg),
 						p.fnWasmR0Base+argList[k]*8,
 					)
 				} else {
-					fmt.Fprintf(w, "    movss xmm4, dword ptr [rbp%+d]\n",
+					fmt.Fprintf(w, "    movss xmm4, dword ptr [rbp %+d]\n",
 						p.fnWasmR0Base+argList[k]*8,
 					)
-					fmt.Fprintf(w, "    movss dword ptr [rbp%+d], xmm4\n",
+					fmt.Fprintf(w, "    movss dword ptr [rbp %+d], xmm4\n",
 						arg.Off,
 					)
 				}
 			case token.F64:
 				if arg := fnCallNative.Type.Args[k]; arg.Reg != 0 {
-					fmt.Fprintf(w, "    movsd %s, qword ptr [rbp%+d]\n",
+					fmt.Fprintf(w, "    movsd %s, qword ptr [rbp %+d]\n",
 						loong64.RegString(arg.Reg),
 						p.fnWasmR0Base+argList[k]*8,
 					)
 				} else {
-					fmt.Fprintf(w, "    movsd xmm4, qword ptr [rbp%+d]\n",
+					fmt.Fprintf(w, "    movsd xmm4, qword ptr [rbp %+d]\n",
 						p.fnWasmR0Base+argList[k]*8,
 					)
-					fmt.Fprintf(w, "    movsd qword ptr [rbp%+d], xmm4\n",
+					fmt.Fprintf(w, "    movsd qword ptr [rbp %+d], xmm4\n",
 						arg.Off,
 					)
 				}
@@ -1028,17 +1025,17 @@ func (p *wat2X64Worker) buildFunc_ins(
 				reti := stk.Push(retType)
 				switch retType {
 				case token.I32:
-					fmt.Fprintf(w, "    mov eax, dword ptr [rbp%+d]\n", k*8)
-					fmt.Fprintf(w, "    mov dword ptr [rbp%+d], eax\n", p.fnWasmR0Base-reti*8)
+					fmt.Fprintf(w, "    mov eax, dword ptr [rbp %+d]\n", k*8)
+					fmt.Fprintf(w, "    mov dword ptr [rbp %+d], eax\n", p.fnWasmR0Base-reti*8)
 				case token.I64:
-					fmt.Fprintf(w, "    mov rax, qword ptr [rbp%+d]\n", k*8)
-					fmt.Fprintf(w, "    mov qword ptr [rbp%+d], rax\n", p.fnWasmR0Base-reti*8)
+					fmt.Fprintf(w, "    mov rax, qword ptr [rbp %+d]\n", k*8)
+					fmt.Fprintf(w, "    mov qword ptr [rbp %+d], rax\n", p.fnWasmR0Base-reti*8)
 				case token.F32:
-					fmt.Fprintf(w, "    movss xmm4, dword ptr [rbp%+d]\n", k*8)
-					fmt.Fprintf(w, "    movss dword ptr [rbp%+d], xmm4\n", p.fnWasmR0Base-reti*8)
+					fmt.Fprintf(w, "    movss xmm4, dword ptr [rbp %+d]\n", k*8)
+					fmt.Fprintf(w, "    movss dword ptr [rbp %+d], xmm4\n", p.fnWasmR0Base-reti*8)
 				case token.F64:
-					fmt.Fprintf(w, "    movsd xmm4, qword ptr [rbp%+d]\n", k*8)
-					fmt.Fprintf(w, "    movsd qword ptr [rbp%+d], xmm4\n", p.fnWasmR0Base-reti*8)
+					fmt.Fprintf(w, "    movsd xmm4, qword ptr [rbp %+d]\n", k*8)
+					fmt.Fprintf(w, "    movsd qword ptr [rbp %+d], xmm4\n", p.fnWasmR0Base-reti*8)
 				default:
 					unreachable()
 				}
@@ -1052,22 +1049,22 @@ func (p *wat2X64Worker) buildFunc_ins(
 				reti := stk.Push(retType)
 				switch retType {
 				case token.I32:
-					fmt.Fprintf(w, "    mov %s, dword ptr [rbp%+d]\n",
+					fmt.Fprintf(w, "    mov %s, dword ptr [rbp %+d]\n",
 						loong64.RegString(retNative.Reg),
 						p.fnWasmR0Base-reti*8,
 					)
 				case token.I64:
-					fmt.Fprintf(w, "    mov %s, qword ptr [rbp%+d]\n",
+					fmt.Fprintf(w, "    mov %s, qword ptr [rbp %+d]\n",
 						loong64.RegString(retNative.Reg),
 						p.fnWasmR0Base-reti*8,
 					)
 				case token.F32:
-					fmt.Fprintf(w, "    movss %s, dword ptr [rbp%+d]\n",
+					fmt.Fprintf(w, "    movss %s, dword ptr [rbp %+d]\n",
 						loong64.RegString(retNative.Reg),
 						p.fnWasmR0Base-reti*8,
 					)
 				case token.F64:
-					fmt.Fprintf(w, "    movsd %s, qword ptr [rbp%+d]\n",
+					fmt.Fprintf(w, "    movsd %s, qword ptr [rbp %+d]\n",
 						loong64.RegString(retNative.Reg),
 						p.fnWasmR0Base-reti*8,
 					)
@@ -1100,7 +1097,7 @@ func (p *wat2X64Worker) buildFunc_ins(
 		// if sp0 != 0 { sp2 } else { sp1 }
 
 		p.gasCommentInFunc(w, "select")
-		fmt.Fprintf(w, "    mov  eax, dword ptr [rbp%+d]\n", p.fnWasmR0Base-spCondition*8)
+		fmt.Fprintf(w, "    mov  eax, dword ptr [rbp %+d]\n", p.fnWasmR0Base-spCondition*8)
 		fmt.Fprintf(w, "    test eax, eax\n")
 
 		switch valType {
@@ -1136,20 +1133,20 @@ func (p *wat2X64Worker) buildFunc_ins(
 		switch xType {
 		case token.I32:
 			fmt.Fprintf(w, "    # local.get %s i32\n", p.findLocalName(fn, i.X))
-			fmt.Fprintf(w, "    mov eax, dword ptr [rbp%+d]\n", xOff)
-			fmt.Fprintf(w, "    mov dword ptr [rbp%+d], eax\n", p.fnWasmR0Base-ret0*8)
+			fmt.Fprintf(w, "    mov eax, dword ptr [rbp %+d]\n", xOff)
+			fmt.Fprintf(w, "    mov dword ptr [rbp %+d], eax\n", p.fnWasmR0Base-ret0*8)
 		case token.I64:
 			fmt.Fprintf(w, "    # local.get %s i64\n", p.findLocalName(fn, i.X))
-			fmt.Fprintf(w, "    mov rax, qword ptr [rbp%+d]\n", xOff)
-			fmt.Fprintf(w, "    mov qword ptr [rbp%+d], rax\n", p.fnWasmR0Base-ret0*8)
+			fmt.Fprintf(w, "    mov rax, qword ptr [rbp %+d]\n", xOff)
+			fmt.Fprintf(w, "    mov qword ptr [rbp %+d], rax\n", p.fnWasmR0Base-ret0*8)
 		case token.F32:
 			fmt.Fprintf(w, "    # local.get %s f32\n", p.findLocalName(fn, i.X))
-			fmt.Fprintf(w, "    mov eax, dword ptr [rbp%+d]\n", xOff)
-			fmt.Fprintf(w, "    mov dword ptr [rbp%+d], eax\n", p.fnWasmR0Base-ret0*8)
+			fmt.Fprintf(w, "    mov eax, dword ptr [rbp %+d]\n", xOff)
+			fmt.Fprintf(w, "    mov dword ptr [rbp %+d], eax\n", p.fnWasmR0Base-ret0*8)
 		case token.F64:
 			fmt.Fprintf(w, "    # local.get %s f64\n", p.findLocalName(fn, i.X))
-			fmt.Fprintf(w, "    mov rax, qword ptr [rbp%+d]\n", xOff)
-			fmt.Fprintf(w, "    mov qword ptr [rbp%+d], rax\n", p.fnWasmR0Base-ret0*8)
+			fmt.Fprintf(w, "    mov rax, qword ptr [rbp %+d]\n", xOff)
+			fmt.Fprintf(w, "    mov qword ptr [rbp %+d], rax\n", p.fnWasmR0Base-ret0*8)
 		default:
 			unreachable()
 		}
@@ -1161,20 +1158,20 @@ func (p *wat2X64Worker) buildFunc_ins(
 		switch xType {
 		case token.I32:
 			fmt.Fprintf(w, "    # local.set %s i32\n", p.findLocalName(fn, i.X))
-			fmt.Fprintf(w, "    mov dword ptr [rbp%+d], eax\n", p.fnWasmR0Base-sp0*8)
-			fmt.Fprintf(w, "    mov eax, dword ptr [rbp%+d]\n", xOff)
+			fmt.Fprintf(w, "    mov dword ptr [rbp %+d], eax\n", p.fnWasmR0Base-sp0*8)
+			fmt.Fprintf(w, "    mov eax, dword ptr [rbp %+d]\n", xOff)
 		case token.I64:
 			fmt.Fprintf(w, "    # local.set %s i64\n", p.findLocalName(fn, i.X))
-			fmt.Fprintf(w, "    mov qword ptr [rbp%+d], rax\n", p.fnWasmR0Base-sp0*8)
-			fmt.Fprintf(w, "    mov rax, qword ptr [rbp%+d]\n", xOff)
+			fmt.Fprintf(w, "    mov qword ptr [rbp %+d], rax\n", p.fnWasmR0Base-sp0*8)
+			fmt.Fprintf(w, "    mov rax, qword ptr [rbp %+d]\n", xOff)
 		case token.F32:
 			fmt.Fprintf(w, "    # local.set %s f32\n", p.findLocalName(fn, i.X))
-			fmt.Fprintf(w, "    mov dword ptr [rbp%+d], eax\n", p.fnWasmR0Base-sp0*8)
-			fmt.Fprintf(w, "    mov eax, dword ptr [rbp%+d]\n", xOff)
+			fmt.Fprintf(w, "    mov dword ptr [rbp %+d], eax\n", p.fnWasmR0Base-sp0*8)
+			fmt.Fprintf(w, "    mov eax, dword ptr [rbp %+d]\n", xOff)
 		case token.F64:
 			fmt.Fprintf(w, "    # local.set %s f64\n", p.findLocalName(fn, i.X))
-			fmt.Fprintf(w, "    mov qword ptr [rbp%+d], rax\n", p.fnWasmR0Base-sp0*8)
-			fmt.Fprintf(w, "    mov rax, qword ptr [rbp%+d]\n", xOff)
+			fmt.Fprintf(w, "    mov qword ptr [rbp %+d], rax\n", p.fnWasmR0Base-sp0*8)
+			fmt.Fprintf(w, "    mov rax, qword ptr [rbp %+d]\n", xOff)
 		default:
 			unreachable()
 		}
@@ -1186,20 +1183,20 @@ func (p *wat2X64Worker) buildFunc_ins(
 		switch xType {
 		case token.I32:
 			fmt.Fprintf(w, "    # local.tee %s i32\n", p.findLocalName(fn, i.X))
-			fmt.Fprintf(w, "    mov eax, dword ptr [rbp%+d]\n", p.fnWasmR0Base-sp0*8)
-			fmt.Fprintf(w, "    mov dword ptr [rbp%+d], eax\n", xOff)
+			fmt.Fprintf(w, "    mov eax, dword ptr [rbp %+d]\n", p.fnWasmR0Base-sp0*8)
+			fmt.Fprintf(w, "    mov dword ptr [rbp %+d], eax\n", xOff)
 		case token.I64:
 			fmt.Fprintf(w, "    # local.tee %s i64\n", p.findLocalName(fn, i.X))
-			fmt.Fprintf(w, "    mov rax, qword ptr [rbp%+d]\n", p.fnWasmR0Base-sp0*8)
-			fmt.Fprintf(w, "    mov qword ptr [rbp%+d], rax\n", xOff)
+			fmt.Fprintf(w, "    mov rax, qword ptr [rbp %+d]\n", p.fnWasmR0Base-sp0*8)
+			fmt.Fprintf(w, "    mov qword ptr [rbp %+d], rax\n", xOff)
 		case token.F32:
 			fmt.Fprintf(w, "    # local.tee %s f32\n", p.findLocalName(fn, i.X))
-			fmt.Fprintf(w, "    mov eax, dword ptr [rbp%+d]\n", p.fnWasmR0Base-sp0*8)
-			fmt.Fprintf(w, "    mov dword ptr [rbp%+d], eax\n", xOff)
+			fmt.Fprintf(w, "    mov eax, dword ptr [rbp %+d]\n", p.fnWasmR0Base-sp0*8)
+			fmt.Fprintf(w, "    mov dword ptr [rbp %+d], eax\n", xOff)
 		case token.F64:
 			fmt.Fprintf(w, "    # local.tee %s f64\n", p.findLocalName(fn, i.X))
-			fmt.Fprintf(w, "    mov rax, qword ptr [rbp%+d]\n", p.fnWasmR0Base-sp0*8)
-			fmt.Fprintf(w, "    mov qword ptr [rbp%+d], rax\n", xOff)
+			fmt.Fprintf(w, "    mov rax, qword ptr [rbp %+d]\n", p.fnWasmR0Base-sp0*8)
+			fmt.Fprintf(w, "    mov qword ptr [rbp %+d], rax\n", xOff)
 		default:
 			unreachable()
 		}
@@ -1211,19 +1208,19 @@ func (p *wat2X64Worker) buildFunc_ins(
 		case token.I32:
 			fmt.Fprintf(w, "    # global.get %s i32\n", i.X)
 			fmt.Fprintf(w, "    mov eax, dword ptr [rip+%s]\n", p.findLocalName(fn, i.X))
-			fmt.Fprintf(w, "    mov dword ptr [rbp%+d], eax\n", p.fnWasmR0Base-ret0*8)
+			fmt.Fprintf(w, "    mov dword ptr [rbp %+d], eax\n", p.fnWasmR0Base-ret0*8)
 		case token.I64:
 			fmt.Fprintf(w, "    # global.get %s i64\n", i.X)
 			fmt.Fprintf(w, "    mov rax, qword ptr [rip+%s]\n", p.findLocalName(fn, i.X))
-			fmt.Fprintf(w, "    mov qword ptr [rbp%+d], rax\n", p.fnWasmR0Base-ret0*8)
+			fmt.Fprintf(w, "    mov qword ptr [rbp %+d], rax\n", p.fnWasmR0Base-ret0*8)
 		case token.F32:
 			fmt.Fprintf(w, "    # global.get %s f32\n", i.X)
 			fmt.Fprintf(w, "    mov eax, dword ptr [rip+%s]\n", p.findLocalName(fn, i.X))
-			fmt.Fprintf(w, "    mov dword ptr [rbp%+d], eax\n", p.fnWasmR0Base-ret0*8)
+			fmt.Fprintf(w, "    mov dword ptr [rbp %+d], eax\n", p.fnWasmR0Base-ret0*8)
 		case token.F64:
 			fmt.Fprintf(w, "    # global.get %s f64\n", i.X)
 			fmt.Fprintf(w, "    mov rax, qword ptr [rip+%s]\n", p.findLocalName(fn, i.X))
-			fmt.Fprintf(w, "    mov qword ptr [rbp%+d], rax\n", p.fnWasmR0Base-ret0*8)
+			fmt.Fprintf(w, "    mov qword ptr [rbp %+d], rax\n", p.fnWasmR0Base-ret0*8)
 		default:
 			unreachable()
 		}
@@ -1234,40 +1231,42 @@ func (p *wat2X64Worker) buildFunc_ins(
 		switch xType {
 		case token.I32:
 			fmt.Fprintf(w, "    # global.set %s i32\n", p.findLocalName(fn, i.X))
-			fmt.Fprintf(w, "    mov eax, dword ptr [rbp%+d]\n", p.fnWasmR0Base-sp0*8)
+			fmt.Fprintf(w, "    mov eax, dword ptr [rbp %+d]\n", p.fnWasmR0Base-sp0*8)
 			fmt.Fprintf(w, "    mov dword ptr [rip+%s], eax\n", p.findLocalName(fn, i.X))
 		case token.I64:
 			fmt.Fprintf(w, "    # global.set %s i64\n", p.findLocalName(fn, i.X))
-			fmt.Fprintf(w, "    mov rax, qword ptr [rbp%+d]\n", p.fnWasmR0Base-sp0*8)
+			fmt.Fprintf(w, "    mov rax, qword ptr [rbp %+d]\n", p.fnWasmR0Base-sp0*8)
 			fmt.Fprintf(w, "    mov qword ptr [rip+%s], rax\n", p.findLocalName(fn, i.X))
 		case token.F32:
 			fmt.Fprintf(w, "    # global.set %s f32\n", p.findLocalName(fn, i.X))
-			fmt.Fprintf(w, "    mov eax, dword ptr [rbp%+d]\n", p.fnWasmR0Base-sp0*8)
+			fmt.Fprintf(w, "    mov eax, dword ptr [rbp %+d]\n", p.fnWasmR0Base-sp0*8)
 			fmt.Fprintf(w, "    mov dword ptr [rip+%s], eax\n", p.findLocalName(fn, i.X))
 		case token.F64:
 			fmt.Fprintf(w, "    # global.set %s f64\n", p.findLocalName(fn, i.X))
-			fmt.Fprintf(w, "    mov rax, qword ptr [rbp%+d]\n", p.fnWasmR0Base-sp0*8)
+			fmt.Fprintf(w, "    mov rax, qword ptr [rbp %+d]\n", p.fnWasmR0Base-sp0*8)
 			fmt.Fprintf(w, "    mov qword ptr [rip+%s], rax\n", p.findLocalName(fn, i.X))
 		default:
 			unreachable()
 		}
+
 	case token.INS_TABLE_GET:
 		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.I32)
 		ret0 := p.fnWasmR0Base - 8*stk.Push(token.FUNCREF) // funcref
 		fmt.Fprintf(w, "    # table.get\n")
 		fmt.Fprintf(w, "    lea rax, [rip + %s]\n", kTableAddrName)
-		fmt.Fprintf(w, "    movsxd r10, dword ptr [rbp%+d]\n", sp0)
+		fmt.Fprintf(w, "    movsxd r10, dword ptr [rbp %+d]\n", sp0)
 		fmt.Fprintf(w, "    mov rax, dword ptr [rax+r10]\n")
-		fmt.Fprintf(w, "    mov dword ptr [rbp%+d], rax\n", ret0)
+		fmt.Fprintf(w, "    mov dword ptr [rbp %+d], rax\n", ret0)
 	case token.INS_TABLE_SET:
 		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.FUNCREF) // funcref
 		sp1 := p.fnWasmR0Base - 8*stk.Pop(token.I32)
 		fmt.Fprintf(w, "    # table.set\n")
 		fmt.Fprintf(w, "    lea rax, [rip + %s]\n", kTableAddrName)
-		fmt.Fprintf(w, "    movsxd r10, dword ptr [rbp%+d]\n", sp0)
-		fmt.Fprintf(w, "    movsxd r11, dword ptr [rbp%+d]\n", sp1)
+		fmt.Fprintf(w, "    movsxd r10, dword ptr [rbp %+d]\n", sp0)
+		fmt.Fprintf(w, "    movsxd r11, dword ptr [rbp %+d]\n", sp1)
 		fmt.Fprintf(w, "    mov rax, qword ptr [rax+r11]\n")
 		fmt.Fprintf(w, "    mov qword ptr [rbp+r11], r10\n")
+
 	case token.INS_I32_LOAD:
 		i := i.(ast.Ins_I32Load)
 
@@ -1275,10 +1274,11 @@ func (p *wat2X64Worker) buildFunc_ins(
 		ret0 := p.fnWasmR0Base - 8*stk.Push(token.I32)
 
 		fmt.Fprintf(w, "    # i32.load\n")
-		fmt.Fprintf(w, "    ld.w  t0, fp, %d # t0 = [pop]\n", sp0)
-		fmt.Fprintf(w, "    add.d t0, t0, %s # t0 = mempry + t0\n", kMemoryReg)
-		fmt.Fprintf(w, "    ld.w  t0, t0, %d # t0 = [t0+off]\n", i.Offset)
-		fmt.Fprintf(w, "    st.w  t0, fp, %d # push t0\n", ret0)
+		fmt.Fprintf(w, "    lea rax, [rip + %s]\n", kMemoryAddrName)
+		fmt.Fprintf(w, "    mov r10, dword [rbp %+d]\n", sp0)
+		fmt.Fprintf(w, "    add r10, rax\n")
+		fmt.Fprintf(w, "    mov eax, dword [r10 %+d]\n", i.Offset)
+		fmt.Fprintf(w, "    mov dword [rbp %+d], eax\n", ret0)
 
 	case token.INS_I64_LOAD:
 		i := i.(ast.Ins_I64Load)
@@ -1287,10 +1287,11 @@ func (p *wat2X64Worker) buildFunc_ins(
 		ret0 := p.fnWasmR0Base - 8*stk.Push(token.I64)
 
 		fmt.Fprintf(w, "    # i64.load\n")
-		fmt.Fprintf(w, "    ld.w  t0, fp, %d # t0 = [pop]\n", sp0)
-		fmt.Fprintf(w, "    add.d t0, t0, %s # t0 = mempry + t0\n", kMemoryReg)
-		fmt.Fprintf(w, "    ld.d  t0, t0, %d # t0 = [t0+off]\n", i.Offset)
-		fmt.Fprintf(w, "    st.d  t0, fp, %d # push t0\n", ret0)
+		fmt.Fprintf(w, "    lea rax, [rip + %s]\n", kMemoryAddrName)
+		fmt.Fprintf(w, "    mov r10, dword [rbp %+d]\n", sp0)
+		fmt.Fprintf(w, "    add r10, rax\n")
+		fmt.Fprintf(w, "    mov rax, qword [r10 %+d]\n", i.Offset)
+		fmt.Fprintf(w, "    mov qword [rbp %+d], rax\n", ret0)
 
 	case token.INS_F32_LOAD:
 		i := i.(ast.Ins_F32Load)
@@ -1298,11 +1299,12 @@ func (p *wat2X64Worker) buildFunc_ins(
 		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.I32)
 		ret0 := p.fnWasmR0Base - 8*stk.Push(token.F32)
 
-		fmt.Fprintf(w, "    # i64.load\n")
-		fmt.Fprintf(w, "    ld.w  t0, fp, %d # t0 = [pop]\n", sp0)
-		fmt.Fprintf(w, "    add.d t0, t0, %s # t0 = mempry + t0\n", kMemoryReg)
-		fmt.Fprintf(w, "    fld.s  t0, t0, %d # t0 = [t0+off]\n", i.Offset)
-		fmt.Fprintf(w, "    fst.s  t0, fp, %d # push t0\n", ret0)
+		fmt.Fprintf(w, "    # f32.load\n")
+		fmt.Fprintf(w, "    lea rax, [rip + %s]\n", kMemoryAddrName)
+		fmt.Fprintf(w, "    mov r10, dword [rbp %+d]\n", sp0)
+		fmt.Fprintf(w, "    add r10, rax\n")
+		fmt.Fprintf(w, "    movss xmm4, dword [r10 %+d]\n", i.Offset)
+		fmt.Fprintf(w, "    movss dword [rbp %+d], xmm4\n", ret0)
 
 	case token.INS_F64_LOAD:
 		i := i.(ast.Ins_I32Load)
@@ -1310,55 +1312,60 @@ func (p *wat2X64Worker) buildFunc_ins(
 		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.I32)
 		ret0 := p.fnWasmR0Base - 8*stk.Push(token.F64)
 
-		fmt.Fprintf(w, "    # i64.load\n")
-		fmt.Fprintf(w, "    ld.w  t0, fp, %d # t0 = [pop]\n", sp0)
-		fmt.Fprintf(w, "    add.d t0, t0, %s # t0 = mempry + t0\n", kMemoryReg)
-		fmt.Fprintf(w, "    fld.d  t0, t0, %d # t0 = [t0+off]\n", i.Offset)
-		fmt.Fprintf(w, "    fst.d  t0, fp, %d # push t0\n", ret0)
+		fmt.Fprintf(w, "    # f64.load\n")
+		fmt.Fprintf(w, "    lea rax, [rip + %s]\n", kMemoryAddrName)
+		fmt.Fprintf(w, "    mov r10, dword [rbp %+d]\n", sp0)
+		fmt.Fprintf(w, "    add r10, rax\n")
+		fmt.Fprintf(w, "    movsd xmm4, dword [r10 %+d]\n", i.Offset)
+		fmt.Fprintf(w, "    movsd qword [rbp %+d], xmm4\n", ret0)
 
 	case token.INS_I32_LOAD8_S:
 		i := i.(ast.Ins_I32Load8S)
 		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.I32)
 		ret0 := p.fnWasmR0Base - 8*stk.Push(token.I32)
 
-		fmt.Fprintf(w, "    # i64.load8_s\n")
-		fmt.Fprintf(w, "    ld.w  t0, fp, %d # t0 = [pop]\n", sp0)
-		fmt.Fprintf(w, "    add.d t0, t0, %s # t0 = mempry + t0\n", kMemoryReg)
-		fmt.Fprintf(w, "    ld.b  t0, t0, %d # t0 = [t0+off]\n", i.Offset)
-		fmt.Fprintf(w, "    st.b  t0, fp, %d # push t0\n", ret0)
+		fmt.Fprintf(w, "    # i32.load8_s\n")
+		fmt.Fprintf(w, "    lea rax, [rip + %s]\n", kMemoryAddrName)
+		fmt.Fprintf(w, "    mov r10, dword [rbp %+d]\n", sp0)
+		fmt.Fprintf(w, "    add r10, rax\n")
+		fmt.Fprintf(w, "    movsx eax, byte [r10 %+d]\n", i.Offset)
+		fmt.Fprintf(w, "    mov dword [rbp %+d], eax\n", ret0)
 
 	case token.INS_I32_LOAD8_U:
 		i := i.(ast.Ins_I32Load8U)
 		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.I32)
 		ret0 := p.fnWasmR0Base - 8*stk.Push(token.I32)
 
-		fmt.Fprintf(w, "    # i64.load8_u\n")
-		fmt.Fprintf(w, "    ld.w  t0, fp, %d # t0 = [pop]\n", sp0)
-		fmt.Fprintf(w, "    add.d t0, t0, %s # t0 = mempry + t0\n", kMemoryReg)
-		fmt.Fprintf(w, "    ld.bu t0, t0, %d # t0 = [t0+off]\n", i.Offset)
-		fmt.Fprintf(w, "    st.bu t0, fp, %d # push t0\n", ret0)
+		fmt.Fprintf(w, "    # i32.load8_u\n")
+		fmt.Fprintf(w, "    lea rax, [rip + %s]\n", kMemoryAddrName)
+		fmt.Fprintf(w, "    mov r10, dword [rbp %+d]\n", sp0)
+		fmt.Fprintf(w, "    add r10, rax\n")
+		fmt.Fprintf(w, "    movzx eax, byte [r10 %+d]\n", i.Offset)
+		fmt.Fprintf(w, "    mov dword [rbp %+d], eax\n", ret0)
 
 	case token.INS_I32_LOAD16_S:
 		i := i.(ast.Ins_I32Load16S)
 		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.I32)
 		ret0 := p.fnWasmR0Base - 8*stk.Push(token.I32)
 
-		fmt.Fprintf(w, "    # i64.load16_s\n")
-		fmt.Fprintf(w, "    ld.w  t0, fp, %d # t0 = [pop]\n", sp0)
-		fmt.Fprintf(w, "    add.d t0, t0, %s # t0 = mempry + t0\n", kMemoryReg)
-		fmt.Fprintf(w, "    ld.h  t0, t0, %d # t0 = [t0+off]\n", i.Offset)
-		fmt.Fprintf(w, "    st.h  t0, fp, %d # push t0\n", ret0)
+		fmt.Fprintf(w, "    # i32.load16_s\n")
+		fmt.Fprintf(w, "    lea rax, [rip + %s]\n", kMemoryAddrName)
+		fmt.Fprintf(w, "    mov r10, dword [rbp %+d]\n", sp0)
+		fmt.Fprintf(w, "    add r10, rax\n")
+		fmt.Fprintf(w, "    movsx eax, word [r10 %+d]\n", i.Offset)
+		fmt.Fprintf(w, "    mov dword [rbp %+d], eax\n", ret0)
 
 	case token.INS_I32_LOAD16_U:
 		i := i.(ast.Ins_I32Load16U)
 		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.I32)
 		ret0 := p.fnWasmR0Base - 8*stk.Push(token.I32)
 
-		fmt.Fprintf(w, "    # i64.load16_u\n")
-		fmt.Fprintf(w, "    ld.w  t0, fp, %d # t0 = [pop]\n", sp0)
-		fmt.Fprintf(w, "    add.d t0, t0, %s # t0 = mempry + t0\n", kMemoryReg)
-		fmt.Fprintf(w, "    ld.hu t0, t0, %d # t0 = [t0+off]\n", i.Offset)
-		fmt.Fprintf(w, "    st.hu t0, fp, %d # push t0\n", ret0)
+		fmt.Fprintf(w, "    # i32.load16_u\n")
+		fmt.Fprintf(w, "    lea rax, [rip + %s]\n", kMemoryAddrName)
+		fmt.Fprintf(w, "    mov r10, dword [rbp %+d]\n", sp0)
+		fmt.Fprintf(w, "    add r10, rax\n")
+		fmt.Fprintf(w, "    movzx eax, word [r10 %+d]\n", i.Offset)
+		fmt.Fprintf(w, "    mov dword [rbp %+d], eax\n", ret0)
 
 	case token.INS_I64_LOAD8_S:
 		i := i.(ast.Ins_I64Load8S)
@@ -1366,10 +1373,11 @@ func (p *wat2X64Worker) buildFunc_ins(
 		ret0 := p.fnWasmR0Base - 8*stk.Push(token.I64)
 
 		fmt.Fprintf(w, "    # i64.load8_s\n")
-		fmt.Fprintf(w, "    ld.w  t0, fp, %d # t0 = [pop]\n", sp0)
-		fmt.Fprintf(w, "    add.d t0, t0, %s # t0 = mempry + t0\n", kMemoryReg)
-		fmt.Fprintf(w, "    ld.hu t0, t0, %d # t0 = [t0+off]\n", i.Offset)
-		fmt.Fprintf(w, "    st.hu t0, fp, %d # push t0\n", ret0)
+		fmt.Fprintf(w, "    lea rax, [rip + %s]\n", kMemoryAddrName)
+		fmt.Fprintf(w, "    mov r10, dword [rbp %+d]\n", sp0)
+		fmt.Fprintf(w, "    add r10, rax\n")
+		fmt.Fprintf(w, "    movsx rax, byte [r10 %+d]\n", i.Offset)
+		fmt.Fprintf(w, "    mov qword [rbp %+d], rax\n", ret0)
 
 	case token.INS_I64_LOAD8_U:
 		i := i.(ast.Ins_I64Load8U)
@@ -1377,21 +1385,23 @@ func (p *wat2X64Worker) buildFunc_ins(
 		ret0 := p.fnWasmR0Base - 8*stk.Push(token.I64)
 
 		fmt.Fprintf(w, "    # i64.load8_u\n")
-		fmt.Fprintf(w, "    ld.w  t0, fp, %d # t0 = [pop]\n", sp0)
-		fmt.Fprintf(w, "    add.d t0, t0, %s # t0 = mempry + t0\n", kMemoryReg)
-		fmt.Fprintf(w, "    ld.hu t0, t0, %d # t0 = [t0+off]\n", i.Offset)
-		fmt.Fprintf(w, "    st.hu t0, fp, %d # push t0\n", ret0)
+		fmt.Fprintf(w, "    lea rax, [rip + %s]\n", kMemoryAddrName)
+		fmt.Fprintf(w, "    mov r10, dword [rbp %+d]\n", sp0)
+		fmt.Fprintf(w, "    add r10, rax\n")
+		fmt.Fprintf(w, "    movzx rax, byte [r10 %+d]\n", i.Offset)
+		fmt.Fprintf(w, "    mov qword [rbp %+d], rax\n", ret0)
 
 	case token.INS_I64_LOAD16_S:
 		i := i.(ast.Ins_I64Load16S)
 		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.I32)
 		ret0 := p.fnWasmR0Base - 8*stk.Push(token.I64)
 
-		fmt.Fprintf(w, "    # i64.load16_u\n")
-		fmt.Fprintf(w, "    ld.w  t0, fp, %d # t0 = [pop]\n", sp0)
-		fmt.Fprintf(w, "    add.d t0, t0, %s # t0 = mempry + t0\n", kMemoryReg)
-		fmt.Fprintf(w, "    ld.hu t0, t0, %d # t0 = [t0+off]\n", i.Offset)
-		fmt.Fprintf(w, "    st.hu t0, fp, %d # push t0\n", ret0)
+		fmt.Fprintf(w, "    # i64.load16_s\n")
+		fmt.Fprintf(w, "    lea rax, [rip + %s]\n", kMemoryAddrName)
+		fmt.Fprintf(w, "    mov r10, dword [rbp %+d]\n", sp0)
+		fmt.Fprintf(w, "    add r10, rax\n")
+		fmt.Fprintf(w, "    movsx eax, word [r10 %+d]\n", i.Offset)
+		fmt.Fprintf(w, "    mov qword [rbp %+d], eax\n", ret0)
 
 	case token.INS_I64_LOAD16_U:
 		i := i.(ast.Ins_I64Load16U)
@@ -1399,10 +1409,11 @@ func (p *wat2X64Worker) buildFunc_ins(
 		ret0 := p.fnWasmR0Base - 8*stk.Push(token.I64)
 
 		fmt.Fprintf(w, "    # i64.load16_u\n")
-		fmt.Fprintf(w, "    ld.w  t0, fp, %d # t0 = [pop]\n", sp0)
-		fmt.Fprintf(w, "    add.d t0, t0, %s # t0 = mempry + t0\n", kMemoryReg)
-		fmt.Fprintf(w, "    ld.hu t0, t0, %d # t0 = [t0+off]\n", i.Offset)
-		fmt.Fprintf(w, "    st.hu t0, fp, %d # push t0\n", ret0)
+		fmt.Fprintf(w, "    lea rax, [rip + %s]\n", kMemoryAddrName)
+		fmt.Fprintf(w, "    mov r10, dword [rbp %+d]\n", sp0)
+		fmt.Fprintf(w, "    add r10, rax\n")
+		fmt.Fprintf(w, "    movzx eax, word [r10 %+d]\n", i.Offset)
+		fmt.Fprintf(w, "    mov qword [rbp %+d], eax\n", ret0)
 
 	case token.INS_I64_LOAD32_S:
 		i := i.(ast.Ins_I64Load32S)
@@ -1410,10 +1421,11 @@ func (p *wat2X64Worker) buildFunc_ins(
 		ret0 := p.fnWasmR0Base - 8*stk.Push(token.I64)
 
 		fmt.Fprintf(w, "    # i64.load32_s\n")
-		fmt.Fprintf(w, "    ld.w  t0, fp, %d # t0 = [pop]\n", sp0)
-		fmt.Fprintf(w, "    add.d t0, t0, %s # t0 = mempry + t0\n", kMemoryReg)
-		fmt.Fprintf(w, "    ld.hu t0, t0, %d # t0 = [t0+off]\n", i.Offset)
-		fmt.Fprintf(w, "    st.hu t0, fp, %d # push t0\n", ret0)
+		fmt.Fprintf(w, "    lea rax, [rip + %s]\n", kMemoryAddrName)
+		fmt.Fprintf(w, "    mov r10, dword [rbp %+d]\n", sp0)
+		fmt.Fprintf(w, "    add r10, rax\n")
+		fmt.Fprintf(w, "    movsx eax, dword [r10 %+d]\n", i.Offset)
+		fmt.Fprintf(w, "    mov qword [rbp %+d], eax\n", ret0)
 
 	case token.INS_I64_LOAD32_U:
 		i := i.(ast.Ins_I64Load32U)
@@ -1421,226 +1433,188 @@ func (p *wat2X64Worker) buildFunc_ins(
 		ret0 := p.fnWasmR0Base - 8*stk.Push(token.I64)
 
 		fmt.Fprintf(w, "    # i64.load32_u\n")
-		fmt.Fprintf(w, "    ld.w  t0, fp, %d # t0 = [pop]\n", sp0)
-		fmt.Fprintf(w, "    add.d t0, t0, %s # t0 = mempry + t0\n", kMemoryReg)
-		fmt.Fprintf(w, "    ld.hu t0, t0, %d # t0 = [t0+off]\n", i.Offset)
-		fmt.Fprintf(w, "    st.hu t0, fp, %d # push t0\n", ret0)
+		fmt.Fprintf(w, "    lea rax, [rip + %s]\n", kMemoryAddrName)
+		fmt.Fprintf(w, "    mov r10, dword [rbp %+d]\n", sp0)
+		fmt.Fprintf(w, "    add r10, rax\n")
+		fmt.Fprintf(w, "    movzx eax, dword [r10 %+d]\n", i.Offset)
+		fmt.Fprintf(w, "    mov qword [rbp %+d], eax\n", ret0)
 
 	case token.INS_I32_STORE:
 		i := i.(ast.Ins_I32Store)
 		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.I32)
 		sp1 := p.fnWasmR0Base - 8*stk.Pop(token.I32)
 
-		fmt.Fprintf(w, "    # i32.store_xx\n")
-		fmt.Fprintf(w, "    ld.w  t0, fp, %d # t0 = [pop]\n", sp0)
-		fmt.Fprintf(w, "    add.d t0, t0, %s # t0 = mempry + t0\n", kMemoryReg)
-		fmt.Fprintf(w, "    ld.hu t0, fp, %d # push t0\n", sp1)
-		fmt.Fprintf(w, "    st.hu t0, t0, %d # t0 = [t0+off]\n", i.Offset)
+		fmt.Fprintf(w, "    # i32.store\n")
+		fmt.Fprintf(w, "    lea rax, [rip + %s]\n", kMemoryAddrName)
+		fmt.Fprintf(w, "    mov r10, dword [rbp %+d]\n", sp1)
+		fmt.Fprintf(w, "    add r10, rax\n")
+		fmt.Fprintf(w, "    mov eax, dword [rbp %+d]\n", sp0)
+		fmt.Fprintf(w, "    mov dword [r10 %+d], eax\n", i.Offset)
 
 	case token.INS_I64_STORE:
 		i := i.(ast.Ins_I64Store)
 		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.I64)
 		sp1 := p.fnWasmR0Base - 8*stk.Pop(token.I32)
 
-		fmt.Fprintf(w, "    # i32.store_xx\n")
-		fmt.Fprintf(w, "    ld.w  t0, fp, %d # t0 = [pop]\n", sp0)
-		fmt.Fprintf(w, "    add.d t0, t0, %s # t0 = mempry + t0\n", kMemoryReg)
-		fmt.Fprintf(w, "    ld.hu t0, fp, %d # push t0\n", sp1)
-		fmt.Fprintf(w, "    st.hu t0, t0, %d # t0 = [t0+off]\n", i.Offset)
+		fmt.Fprintf(w, "    # i64.store\n")
+		fmt.Fprintf(w, "    lea rax, [rip + %s]\n", kMemoryAddrName)
+		fmt.Fprintf(w, "    mov r10, dword [rbp %+d]\n", sp1)
+		fmt.Fprintf(w, "    add r10, rax\n")
+		fmt.Fprintf(w, "    mov rax, qword [rbp %+d]\n", sp0)
+		fmt.Fprintf(w, "    mov qword [r10 %+d], rax\n", i.Offset)
 
 	case token.INS_F32_STORE:
 		i := i.(ast.Ins_F32Store)
 		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.F32)
 		sp1 := p.fnWasmR0Base - 8*stk.Pop(token.I32)
 
-		fmt.Fprintf(w, "    # i32.store_xx\n")
-		fmt.Fprintf(w, "    ld.w  t0, fp, %d # t0 = [pop]\n", sp0)
-		fmt.Fprintf(w, "    add.d t0, t0, %s # t0 = mempry + t0\n", kMemoryReg)
-		fmt.Fprintf(w, "    ld.hu t0, fp, %d # push t0\n", sp1)
-		fmt.Fprintf(w, "    st.hu t0, t0, %d # t0 = [t0+off]\n", i.Offset)
+		fmt.Fprintf(w, "    # f32.store\n")
+		fmt.Fprintf(w, "    lea rax, [rip + %s]\n", kMemoryAddrName)
+		fmt.Fprintf(w, "    mov r10, dword [rbp %+d]\n", sp1)
+		fmt.Fprintf(w, "    add r10, rax\n")
+		fmt.Fprintf(w, "    mov xmm4, dword [rbp %+d]\n", sp0)
+		fmt.Fprintf(w, "    mov dword [r10 %+d], xmm4\n", i.Offset)
 
 	case token.INS_F64_STORE:
 		i := i.(ast.Ins_F64Store)
 		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.F64)
 		sp1 := p.fnWasmR0Base - 8*stk.Pop(token.I32)
 
-		fmt.Fprintf(w, "    # i32.store_xx\n")
-		fmt.Fprintf(w, "    ld.w  t0, fp, %d # t0 = [pop]\n", sp0)
-		fmt.Fprintf(w, "    add.d t0, t0, %s # t0 = mempry + t0\n", kMemoryReg)
-		fmt.Fprintf(w, "    ld.hu t0, fp, %d # push t0\n", sp1)
-		fmt.Fprintf(w, "    st.hu t0, t0, %d # t0 = [t0+off]\n", i.Offset)
+		fmt.Fprintf(w, "    # f64.store\n")
+		fmt.Fprintf(w, "    lea rax, [rip + %s]\n", kMemoryAddrName)
+		fmt.Fprintf(w, "    mov r10, dword [rbp %+d]\n", sp1)
+		fmt.Fprintf(w, "    add r10, rax\n")
+		fmt.Fprintf(w, "    mov xmm4, qword [rbp %+d]\n", sp0)
+		fmt.Fprintf(w, "    mov qword [r10 %+d], xmm4\n", i.Offset)
 
 	case token.INS_I32_STORE8:
 		i := i.(ast.Ins_I32Store8)
 		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.I32)
 		sp1 := p.fnWasmR0Base - 8*stk.Pop(token.I32)
 
-		fmt.Fprintf(w, "    # i32.store_xx\n")
-		fmt.Fprintf(w, "    ld.w  t0, fp, %d # t0 = [pop]\n", sp0)
-		fmt.Fprintf(w, "    add.d t0, t0, %s # t0 = mempry + t0\n", kMemoryReg)
-		fmt.Fprintf(w, "    ld.hu t0, fp, %d # push t0\n", sp1)
-		fmt.Fprintf(w, "    st.hu t0, t0, %d # t0 = [t0+off]\n", i.Offset)
+		fmt.Fprintf(w, "    # i32.store8\n")
+		fmt.Fprintf(w, "    lea rax, [rip + %s]\n", kMemoryAddrName)
+		fmt.Fprintf(w, "    mov r10, dword [rbp %+d]\n", sp1)
+		fmt.Fprintf(w, "    add r10, rax\n")
+		fmt.Fprintf(w, "    mov eax, dword [rbp %+d]\n", sp0)
+		fmt.Fprintf(w, "    mov byte [r10 %+d], eax\n", i.Offset)
 
 	case token.INS_I32_STORE16:
 		i := i.(ast.Ins_I32Store16)
 		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.I32)
 		sp1 := p.fnWasmR0Base - 8*stk.Pop(token.I32)
 
-		fmt.Fprintf(w, "    # i32.store_xx\n")
-		fmt.Fprintf(w, "    ld.w  t0, fp, %d # t0 = [pop]\n", sp0)
-		fmt.Fprintf(w, "    add.d t0, t0, %s # t0 = mempry + t0\n", kMemoryReg)
-		fmt.Fprintf(w, "    ld.hu t0, fp, %d # push t0\n", sp1)
-		fmt.Fprintf(w, "    st.hu t0, t0, %d # t0 = [t0+off]\n", i.Offset)
+		fmt.Fprintf(w, "    # i64.store16\n")
+		fmt.Fprintf(w, "    lea rax, [rip + %s]\n", kMemoryAddrName)
+		fmt.Fprintf(w, "    mov r10, dword [rbp %+d]\n", sp1)
+		fmt.Fprintf(w, "    add r10, rax\n")
+		fmt.Fprintf(w, "    mov eax, dword [rbp %+d]\n", sp0)
+		fmt.Fprintf(w, "    mov word [r10 %+d], eax\n", i.Offset)
 
 	case token.INS_I64_STORE8:
 		i := i.(ast.Ins_I64Store8)
 		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.I64)
 		sp1 := p.fnWasmR0Base - 8*stk.Pop(token.I32)
 
-		fmt.Fprintf(w, "    # i32.store_xx\n")
-		fmt.Fprintf(w, "    ld.w  t0, fp, %d # t0 = [pop]\n", sp0)
-		fmt.Fprintf(w, "    add.d t0, t0, %s # t0 = mempry + t0\n", kMemoryReg)
-		fmt.Fprintf(w, "    ld.hu t0, fp, %d # push t0\n", sp1)
-		fmt.Fprintf(w, "    st.hu t0, t0, %d # t0 = [t0+off]\n", i.Offset)
+		fmt.Fprintf(w, "    # i64.store8\n")
+		fmt.Fprintf(w, "    lea rax, [rip + %s]\n", kMemoryAddrName)
+		fmt.Fprintf(w, "    mov r10, dword [rbp %+d]\n", sp1)
+		fmt.Fprintf(w, "    add r10, rax\n")
+		fmt.Fprintf(w, "    mov eax, qword [rbp %+d]\n", sp0)
+		fmt.Fprintf(w, "    mov byte [r10 %+d], eax\n", i.Offset)
 
 	case token.INS_I64_STORE16:
 		i := i.(ast.Ins_I64Store16)
 		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.I64)
 		sp1 := p.fnWasmR0Base - 8*stk.Pop(token.I32)
 
-		fmt.Fprintf(w, "    # i32.store_xx\n")
-		fmt.Fprintf(w, "    ld.w  t0, fp, %d # t0 = [pop]\n", sp0)
-		fmt.Fprintf(w, "    add.d t0, t0, %s # t0 = mempry + t0\n", kMemoryReg)
-		fmt.Fprintf(w, "    ld.hu t0, fp, %d # push t0\n", sp1)
-		fmt.Fprintf(w, "    st.hu t0, t0, %d # t0 = [t0+off]\n", i.Offset)
+		fmt.Fprintf(w, "    # i64.store16\n")
+		fmt.Fprintf(w, "    lea rax, [rip + %s]\n", kMemoryAddrName)
+		fmt.Fprintf(w, "    mov r10, dword [rbp %+d]\n", sp1)
+		fmt.Fprintf(w, "    add r10, rax\n")
+		fmt.Fprintf(w, "    mov eax, qword [rbp %+d]\n", sp0)
+		fmt.Fprintf(w, "    mov word [r10 %+d], eax\n", i.Offset)
 
 	case token.INS_I64_STORE32:
 		i := i.(ast.Ins_I64Store32)
 		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.I64)
 		sp1 := p.fnWasmR0Base - 8*stk.Pop(token.I32)
 
-		fmt.Fprintf(w, "    # i32.store_xx\n")
-		fmt.Fprintf(w, "    ld.w  t0, fp, %d # t0 = [pop]\n", sp0)
-		fmt.Fprintf(w, "    add.d t0, t0, %s # t0 = mempry + t0\n", kMemoryReg)
-		fmt.Fprintf(w, "    ld.hu t0, fp, %d # push t0\n", sp1)
-		fmt.Fprintf(w, "    st.hu t0, t0, %d # t0 = [t0+off]\n", i.Offset)
+		fmt.Fprintf(w, "    # i64.store32\n")
+		fmt.Fprintf(w, "    lea rax, [rip + %s]\n", kMemoryAddrName)
+		fmt.Fprintf(w, "    mov r10, dword [rbp %+d]\n", sp1)
+		fmt.Fprintf(w, "    add r10, rax\n")
+		fmt.Fprintf(w, "    mov eax, qword [rbp %+d]\n", sp0)
+		fmt.Fprintf(w, "    mov dword [r10 %+d], eax\n", i.Offset)
 
 	case token.INS_MEMORY_SIZE:
 		sp0 := p.fnWasmR0Base - 8*stk.Push(token.I32)
 		fmt.Fprintf(w, "    # memory.size\n")
-		fmt.Fprintf(w, "    pcalau12i t0, %%pc_hi20(%s)\n", kMemoryPagesName)
-		fmt.Fprintf(w, "    addi.d    t0, t0, %%pc_lo12(%s)\n", kMemoryPagesName)
-		fmt.Fprintf(w, "    st.w      t0, fp, %d\n", sp0)
+		fmt.Fprintf(w, "    lea rax, [rip+%s]\n", kMemoryPagesName)
+		fmt.Fprintf(w, "    mov [rbp %+d], rax\n", sp0)
+
 	case token.INS_MEMORY_GROW:
 		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.I32)
 		ret0 := p.fnWasmR0Base - 8*stk.Push(token.I32)
 
-		// 最大内存在启动时就分配好, 这里只是调整全局变量
+		labelBody := p.gasGenNextId(kLabelNamePreifx_ifBody)
+		labelElse := p.gasGenNextId(kLabelNamePreifx_ifElse)
+		labelEnd := p.gasGenNextId(kLabelNamePreifx_ifEnd)
 
 		fmt.Fprintf(w, "    # memory.grow\n")
-		fmt.Fprintf(w, "    pcalau12i t0, %%pc_hi20(%s)\n", kMemoryPagesName)
-		fmt.Fprintf(w, "    addi.d    t0, t0, %%pc_lo12(%s)\n", kMemoryPagesName)
+		fmt.Fprintf(w, "    lea r10, [rip+%s]\n", kMemoryPagesName)
+		fmt.Fprintf(w, "    lea r11, [rip+%s]\n", kMemoryMaxPagesName)
+		fmt.Fprintf(w, "    mov rax, [rbp %+d]\n", sp0)
+		fmt.Fprintf(w, "    add rax, r10\n")
+		fmt.Fprintf(w, "    cmp rax, r11\n")
+		fmt.Fprintf(w, "    jg  %s\n", labelElse)
 
-		fmt.Fprintf(w, "    pcalau12i t1, %%pc_hi20(%s)\n", kMemoryMaxPagesName)
-		fmt.Fprintf(w, "    addi.d    t1, t1, %%pc_lo12(%s)\n", kMemoryMaxPagesName)
+		p.gasFuncLabel(w, labelBody)
+		fmt.Fprintf(w, "    mov [rbp %+d], rax\n", ret0)
+		fmt.Fprintf(w, "    jmp %s\n", labelEnd)
 
-		fmt.Fprintf(w, "    ld.w      t3, fp, %d\n", sp0)
-		fmt.Fprintf(w, "    add.d     t3, t3, t1\n")
+		p.gasFuncLabel(w, labelElse)
+		fmt.Fprintf(w, "    mov rax, -1\n")
+		fmt.Fprintf(w, "    mov [rbp %+d], rax\n", ret0)
 
-		fmt.Fprintf(w, "    blt       t1, t3, 16 # goto L.xxx.else\n")
-		fmt.Fprintf(w, "    st.w      t3, %s, 0\n", kMemoryPagesName)
-		fmt.Fprintf(w, "    st.w      t0, fp, %d\n", ret0)
-		fmt.Fprintf(w, "    jmp       8          # goto L.xxx.end\n")
-		fmt.Fprintf(w, "    lui.w     t4, -1     # L.xxx.else\n")
-		fmt.Fprintf(w, "    st.w      t4, fp, %d # L.xxx.end\n", ret0)
+		p.gasFuncLabel(w, labelEnd)
 
 	case token.INS_MEMORY_INIT:
-		i := i.(ast.Ins_MemoryInit)
-
-		len := p.fnWasmR0Base - 8*stk.Pop(token.I32)
-		off := p.fnWasmR0Base - 8*stk.Pop(token.I32)
-		dst := p.fnWasmR0Base - 8*stk.Pop(token.I32)
-
-		fmt.Fprintf(w, "    ld.d a0, fp, %d\n", dst)
-		fmt.Fprintf(w, "    ld.d a1, fp, %d\n", off)
-		fmt.Fprintf(w, "    ld.d a2, fp, %d\n", len)
-
-		dataName := fmt.Sprintf("$data.%08x.data", p.m.Data[i.DataIdx].Offset)
-		fmt.Fprintf(w, "    pcalau12i t0, %%pc_hi20(%s)\n", dataName)
-		fmt.Fprintf(w, "    addi.d    t0, t0, %%pc_lo12(%s)\n", dataName)
-		fmt.Fprintf(w, "    add.d     a1, a1, t0\n")
-		fmt.Fprintf(w, "    call        $builtin.memcpy\n")
+		panic("unsupport memory.init")
 
 	case token.INS_MEMORY_COPY:
-		len := p.fnWasmR0Base - 8*stk.Pop(token.I32)
-		src := p.fnWasmR0Base - 8*stk.Pop(token.I32)
-		dst := p.fnWasmR0Base - 8*stk.Pop(token.I32)
-
-		fmt.Fprintf(w, "    ld.d a0, fp, %d\n", dst)
-		fmt.Fprintf(w, "    ld.d a1, fp, %d\n", src)
-		fmt.Fprintf(w, "    ld.d a2, fp, %d\n", len)
-		fmt.Fprintf(w, "    call %s\n", kBuiltinMemcpy)
+		panic("unsupport memory.copy")
 
 	case token.INS_MEMORY_FILL:
-		len := p.fnWasmR0Base - 8*stk.Pop(token.I32)
-		val := p.fnWasmR0Base - 8*stk.Pop(token.I32)
-		dst := p.fnWasmR0Base - 8*stk.Pop(token.I32)
-
-		fmt.Fprintf(w, "    ld.d a0, fp, %d\n", dst)
-		fmt.Fprintf(w, "    ld.w a1, fp, %d\n", val)
-		fmt.Fprintf(w, "    ld.d a2, fp, %d\n", len)
-		fmt.Fprintf(w, "    call %s\n", kBuiltinMemset)
+		panic("unsupport memory.fill")
 
 	case token.INS_I32_CONST:
 		i := i.(ast.Ins_I32Const)
-		p.registerConst(uint64(i.X))
-		gName := fmt.Sprintf("%s%d", kConstPrefix, uint64(i.X))
-
 		sp0 := p.fnWasmR0Base - 8*stk.Push(token.I32)
-
-		fmt.Fprintf(w, "    pcalau12i t0, %%pc_hi20(%s)\n", gName)
-		fmt.Fprintf(w, "    addi.d    t0, t0, %%pc_lo12(%s)\n", gName)
-		fmt.Fprintf(w, "    ld.w      t0, t0, 0\n")
-		fmt.Fprintf(w, "    st.w      t0, fp, %d\n", sp0)
+		fmt.Fprintf(w, "    # i32.const %d\n", i.X)
+		fmt.Fprintf(w, "    movabs rax, %d\n", int64(i.X))
+		fmt.Fprintf(w, "    mov qword ptr [rbp %+d], rax\n", sp0)
 
 	case token.INS_I64_CONST:
 		i := i.(ast.Ins_I64Const)
-
-		p.registerConst(uint64(i.X))
-		gName := fmt.Sprintf("%s%d", kConstPrefix, uint64(i.X))
-
 		sp0 := p.fnWasmR0Base - 8*stk.Push(token.I64)
-
-		fmt.Fprintf(w, "    pcalau12i t0, %%pc_hi20(%s)\n", gName)
-		fmt.Fprintf(w, "    addi.d    t0, t0, %%pc_lo12(%s)\n", gName)
-		fmt.Fprintf(w, "    ld.d      t0, t0, 0\n")
-		fmt.Fprintf(w, "    st.d      t0, fp, %d\n", sp0)
+		fmt.Fprintf(w, "    # i64.const %d\n", i.X)
+		fmt.Fprintf(w, "    movabs rax, %d\n", int64(i.X))
+		fmt.Fprintf(w, "    mov qword ptr [rbp %+d], rax\n", sp0)
 
 	case token.INS_F32_CONST:
 		i := i.(ast.Ins_F32Const)
-
-		p.registerConst(uint64(math.Float32bits(i.X)))
-		gName := fmt.Sprintf("%s%d", kConstPrefix, uint64(i.X))
-
 		sp0 := p.fnWasmR0Base - 8*stk.Push(token.F32)
-
-		fmt.Fprintf(w, "    pcalau12i t0, %%pc_hi20(%s)\n", gName)
-		fmt.Fprintf(w, "    addi.d    t0, t0, %%pc_lo12(%s)\n", gName)
-		fmt.Fprintf(w, "    fld.s     t0, t0, 0\n")
-		fmt.Fprintf(w, "    fst.s     t0, fp, %d\n", sp0)
+		fmt.Fprintf(w, "    # f32.const %f\n", i.X)
+		fmt.Fprintf(w, "    movss xmm4, %f\n", i.X)
+		fmt.Fprintf(w, "    movss dword ptr [rbp %+d], xmm4\n", sp0)
 
 	case token.INS_F64_CONST:
 		i := i.(ast.Ins_F64Const)
-
-		p.registerConst(uint64(math.Float64bits(i.X)))
-		gName := fmt.Sprintf("%s%d", kConstPrefix, uint64(i.X))
-
 		sp0 := p.fnWasmR0Base - 8*stk.Push(token.F64)
-
-		fmt.Fprintf(w, "    pcalau12i t0, %%pc_hi20(%s)\n", gName)
-		fmt.Fprintf(w, "    addi.d    t0, t0, %%pc_lo12(%s)\n", gName)
-		fmt.Fprintf(w, "    fld.d     t0, t0, 0\n")
-		fmt.Fprintf(w, "    fst.d     t0, fp, %d\n", sp0)
+		fmt.Fprintf(w, "    # f32.const %f\n", i.X)
+		fmt.Fprintf(w, "    movsd xmm4, %f\n", i.X)
+		fmt.Fprintf(w, "    movsd qword ptr [rbp %+d], xmm4\n", sp0)
 
 	case token.INS_I32_EQZ:
 		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.I32)

@@ -11,7 +11,6 @@ import (
 )
 
 const (
-	kTableReg          = "T7"
 	kTableAddrName     = "$Table.addr"
 	kTableSizeName     = "$Table.size"
 	kTableMaxSizeName  = "$Table.maxSize"
