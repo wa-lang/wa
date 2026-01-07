@@ -38,6 +38,15 @@ type Alloc struct {
 	object   interface{} // 与该值关联的 AST 结点。对凹语言前端，应为 types.Object
 }
 
+func (i *Alloc) Name() string { return i.name }
+func (i *Alloc) Type() Type {
+	if i.Location == LocationKindLocal {
+		return i.dataType
+	} else {
+		return i.refType
+	}
+}
+func (i *Alloc) retained() bool { return false }
 func (i *Alloc) String() string {
 	switch i.Location {
 	case LocationKindLocal:
@@ -50,18 +59,6 @@ func (i *Alloc) String() string {
 		return fmt.Sprintf("var %s %s = alloc.heap(%s)", i.refType.Name(), i.name, i.dataType.Name())
 	}
 	panic(fmt.Sprintf("Invalid LocationType: %v", i.Location))
-}
-
-func (i *Alloc) Name() string {
-	return i.name
-}
-
-func (i *Alloc) Type() Type {
-	if i.Location == LocationKindLocal {
-		return i.dataType
-	} else {
-		return i.refType
-	}
 }
 
 // Location 接口相关
@@ -94,20 +91,15 @@ type Load struct {
 	Loc Location
 }
 
-func (i *Load) Name() string {
-	return i.String()
-}
-
+func (i *Load) Name() string   { return i.String() }
+func (i *Load) Type() Type     { return i.Loc.DataType() }
+func (i *Load) retained() bool { return false }
 func (i *Load) String() string {
 	if i.Loc.LocationKind() == LocationKindLocal {
 		return i.Loc.Name()
 	} else {
 		return "*" + i.Loc.Name()
 	}
-}
-
-func (i *Load) Type() Type {
-	return i.Loc.DataType()
 }
 
 // 生成一条 Load 指令
@@ -315,17 +307,10 @@ type Unop struct {
 	Op OpCode
 }
 
-func (i *Unop) Name() string {
-	return i.String()
-}
-
-func (i *Unop) Type() Type {
-	return i.X.Type()
-}
-
-func (i *Unop) String() string {
-	return fmt.Sprintf("%s%s", OpCodeNames[i.Op], i.X.Name())
-}
+func (i *Unop) Name() string   { return i.String() }
+func (i *Unop) Type() Type     { return i.X.Type() }
+func (i *Unop) retained() bool { return false }
+func (i *Unop) String() string { return fmt.Sprintf("%s%s", OpCodeNames[i.Op], i.X.Name()) }
 
 // 生成一条 Unop 指令
 func (b *Block) NewUnop(x Expr, op OpCode, pos int) *Unop {
@@ -346,10 +331,7 @@ type Biop struct {
 	Op   OpCode
 }
 
-func (i *Biop) Name() string {
-	return i.String()
-}
-
+func (i *Biop) Name() string { return i.String() }
 func (i *Biop) Type() Type {
 	switch i.Op {
 	case LEG:
@@ -362,7 +344,7 @@ func (i *Biop) Type() Type {
 		return i.X.Type()
 	}
 }
-
+func (i *Biop) retained() bool { return i.Type().Kind() == TypeKindString }
 func (i *Biop) String() string {
 	return fmt.Sprintf("(%s %s %s)", i.X.Name(), OpCodeNames[i.Op], i.Y.Name())
 }
@@ -372,29 +354,6 @@ func (b *Block) NewBiop(x, y Expr, op OpCode, pos int) *Biop {
 	v := &Biop{X: x, Y: y, Op: op}
 	v.Stringer = v
 	v.pos = pos
-	v.setScope(b)
-
-	return v
-}
-
-/**************************************
-Call: 函数调用指令，Callee 为 StaticCall、BuiltinCall、MethodCall、InterfaceCall、ClosureCall 之一，Call 实现了 Expr
-**************************************/
-type Call struct {
-	aStmt
-	Callee Expr
-}
-
-func (i *Call) Name() string   { return i.String() }
-func (i *Call) Type() Type     { return i.Callee.Type() }
-func (i *Call) Pos() int       { return i.Callee.Pos() }
-func (i *Call) String() string { return i.Callee.(fmt.Stringer).String() }
-
-// 在 Block 中添加一条 InstCall 指令，callee 为 StaticCall、BuiltinCall、MethodCall、InterfaceCall、ClosureCall 之一
-func (b *Block) NewCall(callee Expr) *Call {
-	v := &Call{Callee: callee}
-	v.Stringer = v
-	v.pos = callee.Pos()
 	v.setScope(b)
 
 	return v

@@ -140,10 +140,13 @@ type Expr interface {
 
 	// 表达式在源码中的位置
 	Pos() int
+
+	// 保留
+	retained() bool
 }
 
 /**************************************
-Param: 函数的输入参数，满足 Value 接口
+Param: 函数的输入参数，满足 Expr 接口
 **************************************/
 type Param struct {
 	name string
@@ -155,9 +158,10 @@ func (p *Param) Name() string   { return p.name }
 func (p *Param) Format() string { return p.name }
 func (p *Param) Type() Type     { return p.typ }
 func (p *Param) Pos() int       { return p.pos }
+func (p *Param) retained() bool { return false }
 
 /**************************************
-Const: 常量，满足 Value 接口
+Const: 常量，满足 Expr 接口
 **************************************/
 type Const struct {
 	name string
@@ -165,9 +169,10 @@ type Const struct {
 	pos  int
 }
 
-func (p *Const) Name() string { return p.name }
-func (p *Const) Type() Type   { return p.typ }
-func (p *Const) Pos() int     { return p.pos }
+func (p *Const) Name() string   { return p.name }
+func (p *Const) Type() Type     { return p.typ }
+func (p *Const) Pos() int       { return p.pos }
+func (p *Const) retained() bool { return false }
 
 /**************************************
 FnSig: 函数签名
@@ -223,57 +228,7 @@ type FreeVar struct {
 func (p *FreeVar) Name() string               { return p.name }
 func (p *FreeVar) Type() Type                 { return p.typ }
 func (p *FreeVar) Pos() int                   { return p.pos }
+func (p *FreeVar) retained() bool             { return false }
 func (p *FreeVar) Object() interface{}        { return p.object }
 func (p *FreeVar) LocationKind() LocationKind { return LocationKindHeap }
 func (p *FreeVar) DataType() Type             { return p.typ }
-
-/**************************************
-StaticCall: 包函数、非闭包匿名函数调用。满足 Expr 接口。
-**************************************/
-type StaticCall struct {
-	CallCommon
-}
-
-func (p *StaticCall) Pos() int { return p.CallCommon.Pos }
-
-/**************************************
-BuiltinCall: 内置函数调用。内置函数调用为特殊的静态调用，满足 Expr 接口
-**************************************/
-type BuiltinCall struct {
-	CallCommon
-}
-
-func (p *BuiltinCall) Pos() int { return p.CallCommon.Pos }
-
-/**************************************
-MethodCall: 对象方法调用，满足 Expr 接口
-**************************************/
-type MethodCall struct {
-	Recv Expr // recv/接收器
-	CallCommon
-}
-
-func (p *MethodCall) Pos() int       { return p.CallCommon.Pos }
-func (p *MethodCall) String() string { return p.Recv.Name() + "." + p.CallCommon.String() }
-
-/**************************************
-InterfaceCall: 接口方法调用（既 Invoke），满足 Expr 接口
-**************************************/
-type InterfaceCall struct {
-	Interface Expr // 被调用的接口
-	CallCommon
-}
-
-func (p *InterfaceCall) Pos() int       { return p.CallCommon.Pos }
-func (p *InterfaceCall) String() string { return p.Interface.Name() + "." + p.CallCommon.String() }
-
-/**************************************
-ClosureCall: 闭包调用，满足 Expr 接口
-**************************************/
-type ClosureCall struct {
-	Closure Expr
-	CallCommon
-}
-
-func (p *ClosureCall) Pos() int       { return p.CallCommon.Pos }
-func (p *ClosureCall) String() string { return p.Closure.Name() + "." + p.CallCommon.String() }
