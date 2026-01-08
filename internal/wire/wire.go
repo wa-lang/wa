@@ -76,6 +76,8 @@ const (
 	TypeKindString
 
 	TypeKindPtr
+	TypeKindChunk
+	TypeKindRef
 	TypeKindStruct
 	TypeKindTuple
 	//TypeKindSignature

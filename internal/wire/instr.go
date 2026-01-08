@@ -72,7 +72,7 @@ func (b *Block) AddLocal(name string, typ Type, pos int, obj interface{}) Locati
 	v.Stringer = v
 	v.name = name
 	v.dataType = typ
-	v.refType = b.types.GenPtr(typ)
+	v.refType = b.types.GenRef(typ)
 	v.pos = pos
 	v.object = obj
 	if obj != nil {

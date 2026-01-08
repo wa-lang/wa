@@ -13,12 +13,15 @@ package wire
 Types : 类型库，用于管理值类型，类型的名字是其身份标志
 类型不可以直接声明，必须通过 TypeLib.GenXXX 系列方法创建
 对于大部分 TypeLib.GenXXX()：
-  - 若指定名称的类型已存在于类型库中，则返回现存的类型
+  - 若指定的类型已存在于类型库中，则返回现存的类型
 **************************************/
 type Types struct {
 	Void, Bool, U8, U16, U32, U64, Uint, I8, I16, I32, I64, Int, F32, F64, Complex64, Complex128, Rune, String Type
 
-	ptrs    map[Type]*Ptr // Base->Ptr
+	ptrs map[Type]*Ptr // Base->Ptr
+	//chunks map[Type]*chunk // Base->chunk
+	refs map[Type]*Ref // Base->Ref
+
 	tuples  []*Tuple
 	structs []*Struct
 	ifaces  []*Interface
@@ -44,9 +47,12 @@ func (tl *Types) Init() {
 	tl.Complex64 = &Complex64{}
 	tl.Complex128 = &Complex128{}
 	tl.Rune = &Rune{}
-	tl.String = &String{}
+
+	tl.String = tl.genString()
 
 	tl.ptrs = make(map[Type]*Ptr)
+	//tl.chunks = make(map[Type]*chunk)
+	tl.refs = make(map[Type]*Ref)
 	tl.nameds = make(map[string]*Named)
 }
 
@@ -222,11 +228,23 @@ func (t *Rune) Equal(u Type) bool { _, ok := u.(*Rune); return ok }
 /**************************************
 String: 字符串
 **************************************/
-type String struct{}
+type String struct {
+	underlying Struct
+}
 
 func (t *String) Name() string      { return "string" }
 func (t *String) Kind() TypeKind    { return TypeKindString }
 func (t *String) Equal(u Type) bool { _, ok := u.(*String); return ok }
+
+func (tl *Types) genString() *String {
+	nt := &String{}
+	c := StructField{Name: "c", Type: &chunk{Base: tl.U8}, id: 0}
+	d := StructField{Name: "d", Type: &Ptr{Base: tl.U8}, id: 1}
+	l := StructField{Name: "l", Type: tl.Uint, id: 2}
+
+	nt.underlying.fields = []StructField{c, d, l}
+	return nt
+}
 
 /**************************************
 Ptr: 指针，长度取决于目标平台
@@ -239,6 +257,9 @@ func (t *Ptr) Name() string   { return t.Base.Name() + "$$ptr" }
 func (t *Ptr) Kind() TypeKind { return TypeKindPtr }
 func (t *Ptr) Equal(u Type) bool {
 	if ut, ok := u.(*Ptr); ok {
+		if t == ut {
+			return true
+		}
 		return t.Base.Equal(ut.Base)
 	}
 	return false
@@ -253,6 +274,35 @@ func (tl *Types) GenPtr(base Type) *Ptr {
 	tl.ptrs[base] = nt
 	return nt
 }
+
+/**************************************
+chunk: 数据块，本质是指针，长度取决于目标平台
+**************************************/
+type chunk struct {
+	Base Type
+}
+
+func (t *chunk) Name() string   { return t.Base.Name() + "$$chunk" }
+func (t *chunk) Kind() TypeKind { return TypeKindChunk }
+func (t *chunk) Equal(u Type) bool {
+	if ut, ok := u.(*chunk); ok {
+		if t == ut {
+			return true
+		}
+		return t.Base.Equal(ut.Base)
+	}
+	return false
+}
+
+//func (tl *Types) genChunk(base Type) *chunk {
+//	if t, ok := tl.chunks[base]; ok {
+//		return t
+//	}
+//
+//	nt := &chunk{Base: base}
+//	tl.chunks[base] = nt
+//	return nt
+//}
 
 /**************************************
 Tuple: 元组
@@ -347,6 +397,11 @@ func (t *Struct) Equal(u Type) bool {
 }
 func (t *Struct) Len() int              { return len(t.fields) }
 func (t *Struct) At(id int) StructField { return t.fields[id] }
+func (t *Struct) setFieldId() {
+	for i := range t.fields {
+		t.fields[i].id = i
+	}
+}
 
 func (tl *Types) GenStruct(fields []StructField) *Struct {
 	nt := &Struct{fields: fields}
@@ -356,6 +411,7 @@ func (tl *Types) GenStruct(fields []StructField) *Struct {
 		}
 	}
 
+	nt.setFieldId()
 	tl.structs = append(tl.structs, nt)
 	return nt
 }
@@ -368,6 +424,38 @@ type StructField struct {
 
 func (i *StructField) Equal(u *StructField) bool { return i.Name == u.Name && i.Type.Equal(u.Type) }
 func (i *StructField) String() string            { return i.Name + " " + i.Type.Name() }
+
+/**************************************
+Ref: 引用类型
+**************************************/
+type Ref struct {
+	Base       Type
+	underlying Struct
+}
+
+func (t *Ref) Name() string   { return t.Base.Name() + "$$ref" }
+func (t *Ref) Kind() TypeKind { return TypeKindRef }
+func (t *Ref) Equal(u Type) bool {
+	if ut, ok := u.(*Ref); ok {
+		if t == ut {
+			return true
+		}
+		return t.Base.Equal(ut.Base)
+	}
+	return false
+}
+
+func (tl *Types) GenRef(base Type) *Ref {
+	if t, ok := tl.refs[base]; ok {
+		return t
+	}
+
+	nt := &Ref{Base: base}
+	b := StructField{Name: "c", Type: &chunk{Base: base}, id: 0}
+	d := StructField{Name: "d", Type: &Ptr{Base: base}, id: 1}
+	nt.underlying.fields = []StructField{b, d}
+	return nt
+}
 
 /**************************************
 Interface: 接口类型
