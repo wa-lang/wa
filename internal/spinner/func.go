@@ -351,7 +351,7 @@ func (b *Builder) returnStmt(s *ast.ReturnStmt, f *Func, block *wire.Block) {
 //      m: 1
 //   }
 //   return &i.m
-// 将导致 i 逃逸
+// 将导致 i 逃逸 至 Heap
 func (b *Builder) location(e ast.Expr, escaping wire.LocationKind, block *wire.Block) wire.Location {
 	switch e := e.(type) {
 	case *ast.Ident:
@@ -426,7 +426,7 @@ func (b *Builder) expr1(e ast.Expr, tv types.TypeAndValue, block *wire.Block) wi
 		}
 
 		if _, ok := obj.(*types.Var); ok {
-			loc := block.Lookup(obj, wire.LocationKindLocal)
+			loc := block.Lookup(obj, wire.LocationKindRegister)
 			return block.NewLoad(loc, int(obj.Pos()))
 		}
 

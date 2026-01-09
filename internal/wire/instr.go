@@ -40,7 +40,7 @@ type Alloc struct {
 
 func (i *Alloc) Name() string { return i.name }
 func (i *Alloc) Type() Type {
-	if i.Location == LocationKindLocal {
+	if i.Location == LocationKindRegister {
 		return i.dataType
 	} else {
 		return i.refType
@@ -49,7 +49,7 @@ func (i *Alloc) Type() Type {
 func (i *Alloc) retained() bool { return false }
 func (i *Alloc) String() string {
 	switch i.Location {
-	case LocationKindLocal:
+	case LocationKindRegister:
 		return fmt.Sprintf("var %s %s", i.name, i.dataType.Name())
 
 	case LocationKindStack:
@@ -66,7 +66,7 @@ func (i *Alloc) LocationKind() LocationKind { return i.Location }
 func (i *Alloc) DataType() Type             { return i.dataType }
 func (i *Alloc) Object() interface{}        { return i.object }
 
-// AddLocal 在 Block 中分配一个局部变量
+// AddLocal 在 Block 中分配一个局部变量，初始时位于 Register
 func (b *Block) AddLocal(name string, typ Type, pos int, obj interface{}) Location {
 	v := &Alloc{}
 	v.Stringer = v
@@ -95,7 +95,7 @@ func (i *Load) Name() string   { return i.String() }
 func (i *Load) Type() Type     { return i.Loc.DataType() }
 func (i *Load) retained() bool { return false }
 func (i *Load) String() string {
-	if i.Loc.LocationKind() == LocationKindLocal {
+	if i.Loc.LocationKind() == LocationKindRegister {
 		return i.Loc.Name()
 	} else {
 		return "*" + i.Loc.Name()
@@ -136,7 +136,7 @@ func (i *InstStore) String() string {
 			continue
 		}
 
-		if loc.LocationKind() == LocationKindLocal {
+		if loc.LocationKind() == LocationKindRegister {
 			sb.WriteString(loc.Name())
 		} else {
 			sb.WriteRune('*')
