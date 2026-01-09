@@ -24,10 +24,15 @@ import (
 Func: 创建 wire.Function 时的中间结构
 **************************************/
 type Func struct {
-	sig          *types.Signature
-	body         ast.Stmt
-	namedResults []wire.Location
+	sig      *types.Signature
+	body     ast.Stmt
+	pos, end int
+	results  []wire.Location
 }
+
+const (
+	_FN_START = "$fn_start"
+)
 
 //-------------------------------------
 
@@ -37,6 +42,8 @@ func (b *Builder) BuildFuncDecl(decl *ast.FuncDecl) *wire.Function {
 	fn := Func{
 		sig:  fndecl.Type().(*types.Signature),
 		body: decl.Body,
+		pos:  int(decl.Pos()),
+		end:  int(decl.End()),
 	}
 
 	return b.buildFunc(&fn)
@@ -47,6 +54,8 @@ func (b *Builder) BuildFuncLit(lit *ast.FuncLit) *wire.Function {
 	fn := Func{
 		sig:  b.info.TypeOf(lit).(*types.Signature),
 		body: lit.Body,
+		pos:  int(lit.Pos()),
+		end:  int(lit.End()),
 	}
 
 	return b.buildFunc(&fn)
@@ -128,15 +137,33 @@ func (b *Builder) buildFunc(f *Func) (fn *wire.Function) {
 			fn.Results = append(fn.Results, typ)
 
 			name := r.Name()
-			if len(name) != 0 {
-				// 分配具名返回值
-				loc := fn.Body.AddLocal(name, typ, int(r.Pos()), r)
-				f.namedResults = append(f.namedResults, loc)
+			if len(name) == 0 {
+				name = fmt.Sprintf("$ret%d", i)
 			}
+			// 分配返回值
+			loc := fn.Body.AddLocal(name, typ, int(r.Pos()), r)
+			f.results = append(f.results, loc)
 		}
 	}
 
-	b.stmt(f.body, f, fn.Body)
+	fn_start := fn.Body.EmitBlock(_FN_START, f.pos)
+
+	if s, ok := f.body.(*ast.BlockStmt); ok {
+		b.blockStmt(s.List, f, fn_start)
+	} else {
+		b.stmt(f.body, f, fn_start)
+	}
+
+	// Todo：Defer
+
+	// Return
+	if len(f.results) > 0 {
+		var results []wire.Expr
+		for _, r := range f.results {
+			results = append(results, fn.Body.NewLoad(r, f.end))
+		}
+		fn.Body.EmitReturn(results, f.end)
+	}
 
 	fn.EndBody()
 	return
@@ -313,22 +340,8 @@ func (b *Builder) returnStmt(s *ast.ReturnStmt, f *Func, block *wire.Block) {
 		}
 	}
 
-	if f.namedResults != nil {
-		// 函数包含具名返回值，具名返回值赋值
-		block.EmitStoreN(f.namedResults, results, int(s.TokPos))
-	}
-
-	// Todo：Defer
-
-	if f.namedResults != nil {
-		// 重新装载具名返回值
-		results = results[:0]
-		for _, r := range f.namedResults {
-			results = append(results, block.NewLoad(r, int(s.TokPos)))
-		}
-	}
-
-	block.EmitReturn(results, int(s.TokPos))
+	block.EmitStoreN(f.results, results, int(s.Pos()))
+	block.EmitBr(_FN_START, int(s.Pos()))
 }
 
 // location 方法返回一个左值表达式的位置

@@ -253,7 +253,7 @@ type Ptr struct {
 	Base Type
 }
 
-func (t *Ptr) Name() string   { return t.Base.Name() + "$$ptr" }
+func (t *Ptr) Name() string   { return "*" + t.Base.Name() }
 func (t *Ptr) Kind() TypeKind { return TypeKindPtr }
 func (t *Ptr) Equal(u Type) bool {
 	if ut, ok := u.(*Ptr); ok {
@@ -276,7 +276,7 @@ func (tl *Types) GenPtr(base Type) *Ptr {
 }
 
 /**************************************
-chunk: 数据块，本质是指针，长度取决于目标平台
+chunk: 数据块，本质是指针，runtime 自动管理内存时使用
 **************************************/
 type chunk struct {
 	Base Type
@@ -426,7 +426,7 @@ func (i *StructField) Equal(u *StructField) bool { return i.Name == u.Name && i.
 func (i *StructField) String() string            { return i.Name + " " + i.Type.Name() }
 
 /**************************************
-Ref: 引用类型
+Ref: 引用类型，runtime 自动内存管理时，Ptr 转化为 Ref
 **************************************/
 type Ref struct {
 	Base       Type

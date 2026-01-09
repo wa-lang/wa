@@ -50,13 +50,13 @@ func (i *Alloc) retained() bool { return false }
 func (i *Alloc) String() string {
 	switch i.Location {
 	case LocationKindLocal:
-		return fmt.Sprintf("var %s %s", i.dataType.Name(), i.name)
+		return fmt.Sprintf("var %s %s", i.name, i.dataType.Name())
 
 	case LocationKindStack:
-		return fmt.Sprintf("var %s %s = alloc.stack(%s)", i.refType.Name(), i.name, i.dataType.Name())
+		return fmt.Sprintf("var %s %s = alloc.stack(%s)", i.name, i.refType.Name(), i.dataType.Name())
 
 	case LocationKindHeap:
-		return fmt.Sprintf("var %s %s = alloc.heap(%s)", i.refType.Name(), i.name, i.dataType.Name())
+		return fmt.Sprintf("var %s %s = alloc.heap(%s)", i.name, i.refType.Name(), i.dataType.Name())
 	}
 	panic(fmt.Sprintf("Invalid LocationType: %v", i.Location))
 }
@@ -72,7 +72,7 @@ func (b *Block) AddLocal(name string, typ Type, pos int, obj interface{}) Locati
 	v.Stringer = v
 	v.name = name
 	v.dataType = typ
-	v.refType = b.types.GenRef(typ)
+	v.refType = b.types.GenPtr(typ)
 	v.pos = pos
 	v.object = obj
 	if obj != nil {
@@ -211,6 +211,30 @@ func (b *Block) EmitStoreN(locs []Location, vals []Expr, pos int) *InstStore {
 //
 //	return v
 //}
+
+/**************************************
+Br: Br 指令
+**************************************/
+type Br struct {
+	aStmt
+	Label string
+}
+
+func (i *Br) String() string {
+	s := "br " + i.Label
+	return s
+}
+
+// 在 Block 中添加一条 Br 指令
+func (b *Block) EmitBr(label string, pos int) *Br {
+	v := &Br{}
+	v.Stringer = v
+	v.Label = label
+	v.pos = pos
+
+	b.emit(v)
+	return v
+}
 
 /**************************************
 Return: Return 指令

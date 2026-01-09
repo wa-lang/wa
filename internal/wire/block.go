@@ -20,7 +20,7 @@ Todo: Block 是否满足 Value（既是否可有返回值）待讨论
 **************************************/
 type Block struct {
 	aStmt
-	Comment string // 附加注释
+	Label string // 标签
 	//Locals  []Value       // 该块内定义的局部变量
 	Stmts []Stmt // 该块所含的指令
 
@@ -73,7 +73,13 @@ func (b *Block) Lookup(obj interface{}, level LocationKind) Location {
 }
 func (b *Block) Format(tab string, sb *strings.Builder) {
 	sb.WriteString(tab)
-	sb.WriteString("{\n")
+	if len(b.Label) > 0 {
+		sb.WriteString("{ : ")
+		sb.WriteString(b.Label)
+		sb.WriteRune('\n')
+	} else {
+		sb.WriteString("{\n")
+	}
 
 	tab_t := tab + "  "
 	for _, v := range b.Stmts {
@@ -85,10 +91,10 @@ func (b *Block) Format(tab string, sb *strings.Builder) {
 }
 
 // CreateBlock 创建一个 Block 初始化其 scope 等，但并不添加至父 Block 中
-func (b *Block) createBlock(comment string, pos int) *Block {
+func (b *Block) createBlock(label string, pos int) *Block {
 	block := &Block{}
 	block.Stringer = block
-	block.Comment = comment
+	block.Label = label
 	block.pos = pos
 	block.objects = make(map[interface{}]Location)
 	block.types = b.types
@@ -98,8 +104,8 @@ func (b *Block) createBlock(comment string, pos int) *Block {
 }
 
 // EmitBlock 在 Block 中添加一个子 Block
-func (b *Block) EmitBlock(comment string, pos int) *Block {
-	block := b.createBlock(comment, pos)
+func (b *Block) EmitBlock(label string, pos int) *Block {
+	block := b.createBlock(label, pos)
 
 	b.emit(block)
 	return block
