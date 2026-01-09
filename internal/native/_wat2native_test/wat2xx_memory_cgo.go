@@ -1,6 +1,8 @@
 // Copyright (C) 2026 武汉凹语言科技有限公司
 // SPDX-License-Identifier: AGPL-3.0-or-later
 
+//go:build cgo && !inline_asm
+
 package main
 
 /*
@@ -58,55 +60,55 @@ static double wat2xx_F64Load(int32_t addr, int32_t offset) {
 }
 
 static int32_t wat2xx_I32Load8_s(int32_t addr, int32_t offset) {
-	int32_t result;
+	int8_t result;
 	memcpy(&result, wat2xx_memory+addr+offset, sizeof(result));
-	return result;
+	return (int32_t)(result);
 }
 static int32_t wat2xx_I32Load8_u(int32_t addr, int32_t offset) {
-	int32_t result;
+	uint8_t result;
 	memcpy(&result, wat2xx_memory+addr+offset, sizeof(result));
-	return result;
+	return (int32_t)(result);
 }
 static int32_t wat2xx_I32Load16_s(int32_t addr, int32_t offset) {
-	int32_t result;
+	int16_t result;
 	memcpy(&result, wat2xx_memory+addr+offset, sizeof(result));
-	return result;
+	return (int32_t)(result);
 }
 static int32_t wat2xx_I32Load16_u(int32_t addr, int32_t offset) {
-	int32_t result;
+	uint16_t result;
 	memcpy(&result, wat2xx_memory+addr+offset, sizeof(result));
-	return result;
+	return (int32_t)(result);
 }
 
 static int64_t wat2xx_I64Load8_s(int32_t addr, int32_t offset) {
-	int64_t result;
+	int8_t result;
 	memcpy(&result, wat2xx_memory+addr+offset, sizeof(result));
-	return result;
+	return (int64_t)(result);
 }
 static int64_t wat2xx_I64Load8_u(int32_t addr, int32_t offset) {
-	int64_t result;
+	uint8_t result;
 	memcpy(&result, wat2xx_memory+addr+offset, sizeof(result));
-	return result;
+	return (int64_t)(result);
 }
 static int64_t wat2xx_I64Load16_s(int32_t addr, int32_t offset) {
-	int64_t result;
+	int16_t result;
 	memcpy(&result, wat2xx_memory+addr+offset, sizeof(result));
-	return result;
+	return (int64_t)(result);
 }
 static int64_t wat2xx_I64Load16_u(int32_t addr, int32_t offset) {
-	int64_t result;
+	uint16_t result;
 	memcpy(&result, wat2xx_memory+addr+offset, sizeof(result));
-	return result;
+	return (int64_t)(result);
 }
 static int64_t wat2xx_I64Load32_s(int32_t addr, int32_t offset) {
-	int64_t result;
+	int32_t result;
 	memcpy(&result, wat2xx_memory+addr+offset, sizeof(result));
-	return result;
+	return (int64_t)(result);
 }
 static int64_t wat2xx_I64Load32_u(int32_t addr, int32_t offset) {
-	int64_t result;
+	uint32_t result;
 	memcpy(&result, wat2xx_memory+addr+offset, sizeof(result));
-	return result;
+	return (int64_t)(result);
 }
 
 static void wat2xx_I32Store(int32_t addr, int32_t offset, int32_t v) {
@@ -122,20 +124,25 @@ static void wat2xx_F64Store(int32_t addr, int32_t offset, double v) {
 	memcpy(wat2xx_memory+addr+offset, &v, sizeof(v));
 }
 
-static void wat2xx_I32Store8(int32_t addr, int32_t offset, int8_t v) {
+static void wat2xx_I32Store8(int32_t addr, int32_t offset, int32_t value) {
+	int8_t v = (int8_t)(value);
 	memcpy(wat2xx_memory+addr+offset, &v, sizeof(v));
 }
-static void wat2xx_I32Store16(int32_t addr, int32_t offset, int16_t v) {
+static void wat2xx_I32Store16(int32_t addr, int32_t offset, int32_t value) {
+	int16_t v = (int16_t)(value);
 	memcpy(wat2xx_memory+addr+offset, &v, sizeof(v));
 }
 
-static void wat2xx_I64Store8(int32_t addr, int32_t offset, int8_t v) {
+static void wat2xx_I64Store8(int32_t addr, int32_t offset, int64_t value) {
+	int8_t v = (int8_t)(value);
 	memcpy(wat2xx_memory+addr+offset, &v, sizeof(v));
 }
-static void wat2xx_I64Store16(int32_t addr, int32_t offset, int16_t v) {
+static void wat2xx_I64Store16(int32_t addr, int32_t offset, int64_t value) {
+	int16_t v = (int16_t)(value);
 	memcpy(wat2xx_memory+addr+offset, &v, sizeof(v));
 }
-static void wat2xx_I64Store32(int32_t addr, int32_t offset, int32_t v) {
+static void wat2xx_I64Store32(int32_t addr, int32_t offset, int64_t value) {
+	int32_t v = (int32_t)(value);
 	memcpy(wat2xx_memory+addr+offset, &v, sizeof(v));
 }
 */
@@ -217,19 +224,19 @@ func F64Store(addr, offset int32, value float64) {
 	C.wat2xx_F64Store(C.int32_t(addr), C.int32_t(offset), C.double(value))
 }
 
-func I32Store8(addr, offset int32, value int8) {
-	C.wat2xx_I32Store8(C.int32_t(addr), C.int32_t(offset), C.int8_t(value))
+func I32Store8(addr, offset int32, value int32) {
+	C.wat2xx_I32Store8(C.int32_t(addr), C.int32_t(offset), C.int32_t(value))
 }
-func I32Store16(addr, offset int32, value int16) {
-	C.wat2xx_I32Store16(C.int32_t(addr), C.int32_t(offset), C.int16_t(value))
+func I32Store16(addr, offset int32, value int32) {
+	C.wat2xx_I32Store16(C.int32_t(addr), C.int32_t(offset), C.int32_t(value))
 }
 
-func I64Store8(addr, offset int32, value int8) {
-	C.wat2xx_I64Store8(C.int32_t(addr), C.int32_t(offset), C.int8_t(value))
+func I64Store8(addr, offset int32, value int64) {
+	C.wat2xx_I64Store8(C.int32_t(addr), C.int32_t(offset), C.int64_t(value))
 }
-func I64Store16(addr, offset int32, value int16) {
-	C.wat2xx_I64Store16(C.int32_t(addr), C.int32_t(offset), C.int16_t(value))
+func I64Store16(addr, offset int32, value int64) {
+	C.wat2xx_I64Store16(C.int32_t(addr), C.int32_t(offset), C.int64_t(value))
 }
-func I64Store32(addr, offset int32, value int32) {
-	C.wat2xx_I64Store32(C.int32_t(addr), C.int32_t(offset), C.int32_t(value))
+func I64Store32(addr, offset int32, value int64) {
+	C.wat2xx_I64Store32(C.int32_t(addr), C.int32_t(offset), C.int64_t(value))
 }
