@@ -5,9 +5,39 @@
 
 package main
 
-func F64Eq(a, b float64) int32 { return 0 }
-func F64Ne(a, b float64) int32 { return 0 }
-func F64Lt(a, b float64) int32 { return 0 }
-func F64Gt(a, b float64) int32 { return 0 }
-func F64Le(a, b float64) int32 { return 0 }
-func F64Ge(a, b float64) int32 { return 0 }
+func F64Eq(a, b float64) int32 {
+	if a == b {
+		return 1
+	}
+	return 0
+}
+func F64Ne(a, b float64) int32 {
+	if a != b {
+		return 1
+	}
+	return 0
+}
+func F64Lt(a, b float64) int32 {
+	if a < b {
+		return 1
+	}
+	return 0
+}
+func F64Gt(a, b float64) int32 {
+	if a > b {
+		return 1
+	}
+	return 0
+}
+func F64Le(a, b float64) int32 {
+	if a <= b {
+		return 1
+	}
+	return 0
+}
+func F64Ge(a, b float64) int32 {
+	if a >= b {
+		return 1
+	}
+	return 0
+}
