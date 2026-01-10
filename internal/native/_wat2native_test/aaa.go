@@ -7,5 +7,5 @@ import "fmt"
 
 func main() {
 	fmt.Println("test wat2xx asm code!")
-	fmt.Println("1+2=", wat2xxI32Add(1, 2))
+	fmt.Println("1+2=", I32Add(1, 2))
 }

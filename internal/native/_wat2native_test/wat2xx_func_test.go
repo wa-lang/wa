@@ -24,7 +24,7 @@ func TestWat2xxI32Add(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got := wat2xxI32Add(tt.a, tt.b)
+			got := I32Add(tt.a, tt.b)
 			if got != tt.want {
 				t.Errorf("%s 失败: %d + %d = 预期 %d, 实际 %d",
 					tt.name, tt.a, tt.b, tt.want, got)

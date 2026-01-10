@@ -1,7 +1,7 @@
 // Copyright (C) 2026 武汉凹语言科技有限公司
 // SPDX-License-Identifier: AGPL-3.0-or-later
 
-//go:build cgo && inline_asm
+//go:build inline_asm
 
 package main
 
@@ -27,6 +27,6 @@ static int32_t wat2xxI32Add_linux_loong64(int32_t a, int32_t b) {
 */
 import "C"
 
-func wat2xxI32Add(a, b int32) int32 {
+func I32Add(a, b int32) int32 {
 	return int32(C.wat2xxI32Add_linux_loong64(C.int32_t(a), C.int32_t(b)))
 }

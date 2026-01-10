@@ -7,4 +7,10 @@ cgo:
 asm:
 	go test -tags="inline_asm"
 
+go:
+	CGO_ENABLED=0 go test
+
+go-win:
+	set CGO_ENABLED=0&& go test
+
 clean:
