@@ -5,12 +5,78 @@
 
 package main
 
-func I32Trunc_f32_s(v float32) int32 { return 0 }
-func I32Trunc_f32_u(v float32) int32 { return 0 }
-func I32Trunc_f64_s(v float64) int32 { return 0 }
-func I32Trunc_f64_u(v float64) int32 { return 0 }
+import "math"
 
-func I64Trunc_f32_s(v float32) int64 { return 0 }
-func I64Trunc_f32_u(v float32) int64 { return 0 }
-func I64Trunc_f64_s(v float64) int64 { return 0 }
-func I64Trunc_f64_u(v float64) int64 { return 0 }
+func I32Trunc_f32_s(v float32) int32 {
+	if math.IsNaN(float64(v)) {
+		panic("invalid conversion to integer")
+	}
+	if v >= -math.MinInt32-1 && v < math.MaxInt32+1 {
+		return int32(v)
+	}
+	panic("integer overflow")
+}
+func I32Trunc_f32_u(v float32) int32 {
+	if math.IsNaN(float64(v)) {
+		panic("invalid conversion to integer")
+	}
+	if v > -1.0 && v < math.MaxUint32+1 {
+		return int32(uint32(v))
+	}
+	panic("integer overflow")
+}
+func I32Trunc_f64_s(v float64) int32 {
+	if math.IsNaN(v) {
+		panic("invalid conversion to integer")
+	}
+	if v > math.MinInt32-1 && v < math.MaxInt32+1 {
+		return int32(v)
+	}
+	panic("integer overflow")
+}
+func I32Trunc_f64_u(v float64) int32 {
+	if math.IsNaN(v) {
+		panic("invalid conversion to integer")
+	}
+	if v > -1.0 && v < math.MaxUint32+1 {
+		return int32(uint32(v))
+	}
+	panic("integer overflow")
+}
+
+func I64Trunc_f32_s(v float32) int64 {
+	if math.IsNaN(float64(v)) {
+		panic("invalid conversion to integer")
+	}
+	if v >= float32(math.MinInt64) && v < -float32(math.MinInt64) {
+		return int64(v)
+	}
+	panic("integer overflow")
+}
+func I64Trunc_f32_u(v float32) int64 {
+	if math.IsNaN(float64(v)) {
+		panic("invalid conversion to integer")
+	}
+	if v > -1.0 && v < -2.0*float32(math.MinInt64) {
+		return int64(uint64(v))
+	}
+	panic("integer overflow")
+}
+func I64Trunc_f64_s(v float64) int64 {
+	if math.IsNaN(v) {
+		panic("invalid conversion to integer")
+	}
+	if v >= math.MinInt64 && v < -math.MinInt64 {
+		return int64(v)
+	}
+	panic("integer overflow")
+}
+func I64Trunc_f64_u(v float64) int64 {
+	if math.IsNaN(v) {
+		panic("invalid conversion to integer")
+	}
+	if v > -1.0 && v < 18446744073709551616.0 { // 2^64
+		return int64(uint64(v))
+	}
+	panic("integer overflow")
+}
