@@ -5,13 +5,15 @@
 
 package main
 
-import "math"
+import (
+	"math"
+)
 
 func I32Trunc_f32_s(v float32) int32 {
 	if math.IsNaN(float64(v)) {
 		panic("invalid conversion to integer")
 	}
-	if v >= -math.MinInt32-1 && v < math.MaxInt32+1 {
+	if v >= math.MinInt32-1 && v < math.MaxInt32+1 {
 		return int32(v)
 	}
 	panic("integer overflow")
