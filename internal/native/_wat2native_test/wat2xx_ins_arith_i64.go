@@ -77,6 +77,6 @@ func I64Shr_u(a, b int64) int64 {
 func I64Rotl(a, b int64) int64 {
 	return int64(bits.RotateLeft64(uint64(a), int(b)))
 }
-func I64Sotr(a, b int64) int64 {
+func I64Rotr(a, b int64) int64 {
 	return int64(bits.RotateLeft64(uint64(a), -int(b)))
 }
