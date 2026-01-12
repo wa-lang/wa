@@ -3,6 +3,7 @@
 
 cgo:
 	go test
+	go run .
 
 asm:
 	go test -tags="inline_asm"

@@ -3,9 +3,16 @@
 
 package main
 
-import "fmt"
+import (
+	"fmt"
+	"unsafe"
+)
 
 func main() {
 	fmt.Println("test wat2xx asm code!")
 	fmt.Println("1+2=", I32Add(1, 2))
+
+	data := []byte{'H', 'e', 'l', 'l', 'o', 'W', 'a'}
+	ptr := uintptr(unsafe.Pointer(&data[0]))
+	PrintString(ptr, 5)
 }
