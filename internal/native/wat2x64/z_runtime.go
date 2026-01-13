@@ -76,6 +76,11 @@ func (p *wat2X64Worker) buildRuntimeImpl_panic(w io.Writer) error {
 	fmt.Fprintf(w, "    call %s\n", kRuntimePanic)
 	fmt.Fprintln(w)
 
+	fmt.Fprintf(w, "    # 退出程序\n")
+	fmt.Fprintf(w, "    mov  rcx, 1 # 退出码\n")
+	fmt.Fprintf(w, "    call %s\n", kRuntimeExit)
+	fmt.Fprintln(w)
+
 	fmt.Fprintf(w, "    # return\n")
 	fmt.Fprintf(w, "    add rsp, 40\n")
 	fmt.Fprintf(w, "    ret\n")

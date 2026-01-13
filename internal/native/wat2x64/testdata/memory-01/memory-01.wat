@@ -3,7 +3,7 @@
 
 (module $memory_01
     ;; func syscall.write(fd int64, data *byte, size int64) => int64
-    (import "syscall" "write" (func $syscall.write (param i64 i64 i64) (result i64)))
+    (import "syscall" "_write" (func $syscall.write (param i64 i64 i64) (result i64)))
 
     (memory 1)(export "memory" (memory 0))
     (data (i32.const 8) "hello world\n")

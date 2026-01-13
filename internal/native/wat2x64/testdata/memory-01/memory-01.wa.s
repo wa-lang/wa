@@ -16,8 +16,8 @@
 .set .Runtime.memset, memset
 
 # 导入函数(由导入文件定义)
-.extern $Import.syscall.write
-.set $F.syscall.write, $Import.syscall.write
+.extern _write
+.set .Import.syscall._write, _write
 
 # 定义内存
 .section .data
@@ -126,6 +126,10 @@ $F.main:
     mov  rdx, [rip + .Runtime.panic.message]
     mov  r8, [rip + .Runtime.panic.messageLen] # size
     call .Runtime.panic
+
+    # 退出程序
+    mov  rcx, 1 # 退出码
+    call .Runtime._exit
 
     # return
     add rsp, 40
