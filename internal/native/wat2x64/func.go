@@ -376,7 +376,7 @@ func (p *wat2X64Worker) buildFunc_ins(
 
 	switch tok := i.Token(); tok {
 	case token.INS_UNREACHABLE:
-		fmt.Fprintf(w, "    call %s # unreachable", kBuiltinPanic)
+		fmt.Fprintf(w, "    call %s # unreachable", kRuntimePanic)
 	case token.INS_NOP:
 		fmt.Fprintln(w, "    nop")
 

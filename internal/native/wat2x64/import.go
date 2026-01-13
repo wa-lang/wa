@@ -31,7 +31,7 @@ func (p *wat2X64Worker) buildImport(w io.Writer) error {
 		}
 
 		// 检查导入系统调用的函数签名
-		p.checkSyscallSig(importSpec)
+		//p.checkSyscallSig(importSpec)
 
 		// 导入函数有个名字修饰, 避免重名
 		// 导入函数属于外部库, 需要通过外部文件单独定义

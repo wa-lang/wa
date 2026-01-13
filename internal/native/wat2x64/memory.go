@@ -80,7 +80,7 @@ func (p *wat2X64Worker) buildMemory(w io.Writer) error {
 		fmt.Fprintf(w, "    lea  rcx, [rip + %s]\n", kMemoryAddrName)
 		fmt.Fprintf(w, "    mov  rdx, 0\n")
 		fmt.Fprintf(w, "    mov  r8, %d\n", maxPages*(1<<16))
-		fmt.Fprintf(w, "    call %s\n", kBuiltinMemset)
+		fmt.Fprintf(w, "    call %s\n", kRuntimeMemset)
 		fmt.Fprintln(w)
 
 		if len(p.m.Data) > 0 {
@@ -97,7 +97,7 @@ func (p *wat2X64Worker) buildMemory(w io.Writer) error {
 				fmt.Fprintf(w, "    add  rcx, %d\n", d.Offset)
 				fmt.Fprintf(w, "    mov  rdx, [rip + %s]\n", fmt.Sprintf("%s%d", kMemoryDataOffsetPrefix, i))
 				fmt.Fprintf(w, "    mov  r8, %d\n", len(d.Value))
-				fmt.Fprintf(w, "    call %s\n", kBuiltinMemcpy)
+				fmt.Fprintf(w, "    call %s\n", kRuntimeMemcpy)
 			}
 
 			fmt.Fprintln(w)

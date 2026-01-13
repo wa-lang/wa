@@ -3,10 +3,17 @@
 
 .intel_syntax noprefix
 
-# 系统调用
+# 运行时函数
+.extern _write
+.extern _exit
 .extern malloc
-.globl $builtin.memcpy
-.globl $builtin.memset
+.extern memcpy
+.extern memset
+.set .Runtime._write, _write
+.set .Runtime._exit, _exit
+.set .Runtime.malloc, malloc
+.set .Runtime.memcpy, memcpy
+.set .Runtime.memset, memset
 
 # 导入函数(由导入文件定义)
 .extern $Import.syscall.write
@@ -41,7 +48,7 @@ $Memory.initFunc:
     lea  rcx, [rip + $Memory.addr]
     mov  rdx, 0
     mov  r8, 65536
-    call $builtin.memset
+    call .Runtime.memset
 
     # 初始化内存
 
@@ -50,7 +57,7 @@ $Memory.initFunc:
     add  rcx, 8
     mov  rdx, [rip + $Memory.dataOffset.0]
     mov  r8, 12
-    call $builtin.memcpy
+    call .Runtime.memcpy
 
     # 函数返回
     add rsp, 40
@@ -101,5 +108,26 @@ $F.main:
     # 栈帧结束
     add  rsp, 32
     pop  rbp
+    ret
+
+.section .data
+.align 8
+.Runtime.panic.message: .asciz "panic"
+.Runtime.panic.messageLen: .quad 5
+
+.section .text
+.globl .Runtime.panic
+.Runtime.panic:
+    # 影子内存
+    sub rsp, 40
+
+    # runtime.write(stderr, panicMessage, size)
+    mov  rcx, 2 # stderr
+    mov  rdx, [rip + .Runtime.panic.message]
+    mov  r8, [rip + .Runtime.panic.messageLen] # size
+    call .Runtime.panic
+
+    # return
+    add rsp, 40
     ret
 

@@ -113,13 +113,10 @@ func (p *wat2X64Worker) BuildProgram() (code []byte, err error) {
 	p.gasIntelSyntax(&out)
 	fmt.Fprintln(&out)
 
-	// 声明全局函数
-	p.gasComment(&out, "系统调用")
-	p.gasExtern(&out, kSyscallMalloc)
-	p.gasGlobal(&out, kBuiltinMemcpy)
-	p.gasGlobal(&out, kBuiltinMemset)
-	fmt.Fprintln(&out)
+	// 生成运行时函数
+	p.buildRuntimeHead(&out)
 
+	// 导入函数
 	if err := p.buildImport(&out); err != nil {
 		return nil, err
 	}
@@ -150,20 +147,9 @@ func (p *wat2X64Worker) BuildProgram() (code []byte, err error) {
 		return nil, err
 	}
 
-	// 内置函数
-	if false {
-		switch p.osName {
-		case "linux":
-			if err := p.buildBuiltinLinux(&out); err != nil {
-				return nil, err
-			}
-		case "windows":
-			if err := p.buildBuiltinWindows(&out); err != nil {
-				return nil, err
-			}
-		default:
-			panic(fmt.Sprintf("unknown os %s", p.osName))
-		}
+	// 生成运行时函数
+	if err := p.buildRuntimeImpl(&out); err != nil {
+		return nil, err
 	}
 
 	return out.Bytes(), nil
