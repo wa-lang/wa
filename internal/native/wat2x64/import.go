@@ -20,7 +20,7 @@ func (p *wat2X64Worker) buildImport(w io.Writer) error {
 	}
 
 	if len(p.m.Imports) > 0 {
-		p.gasComment(w, "导入函数(由导入文件定义)")
+		p.gasComment(w, "导入函数(外部库定义)")
 		defer fmt.Fprintln(w)
 	}
 

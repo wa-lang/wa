@@ -9,15 +9,15 @@ import (
 )
 
 const (
-	kMemoryInitFuncName = "$Memory.initFunc"
+	kMemoryInitFuncName = ".Memory.initFunc"
 
-	kMemoryAddrName     = "$Memory.addr"
-	kMemoryPagesName    = "$Memory.pages"
-	kMemoryMaxPagesName = "$Memory.maxPages"
+	kMemoryAddrName     = ".Memory.addr"
+	kMemoryPagesName    = ".Memory.pages"
+	kMemoryMaxPagesName = ".Memory.maxPages"
 
-	kMemoryDataOffsetPrefix = "$Memory.dataOffset."
-	kMemoryDataSizePrefix   = "$Memory.dataSize."
-	kMemoryDataPtrPrefix    = "$Memory.dataPtr."
+	kMemoryDataOffsetPrefix = ".Memory.dataOffset."
+	kMemoryDataSizePrefix   = ".Memory.dataSize."
+	kMemoryDataPtrPrefix    = ".Memory.dataPtr."
 )
 
 func (p *wat2X64Worker) buildMemory(w io.Writer) error {
@@ -28,9 +28,7 @@ func (p *wat2X64Worker) buildMemory(w io.Writer) error {
 	p.gasComment(w, "定义内存")
 	p.gasSectionDataStart(w)
 
-	maxPages := int64(p.m.Memory.Pages)
 	if max := p.m.Memory.MaxPages; max > 0 {
-		maxPages = int64(max)
 		p.gasDefI64(w, kMemoryAddrName, 0)
 		p.gasDefI64(w, kMemoryPagesName, int64(p.m.Memory.Pages))
 		p.gasDefI64(w, kMemoryMaxPagesName, int64(max))
@@ -45,12 +43,10 @@ func (p *wat2X64Worker) buildMemory(w io.Writer) error {
 	// 生成需要填充内存的 data 段数据
 	// 需要在程序启动时调用相关函数进行填充
 	if len(p.m.Data) > 0 {
+		p.gasComment(w, "内存数据")
+		p.gasSectionDataStart(w)
 		for i, d := range p.m.Data {
-			if len(d.Value) > 10 {
-				p.gasComment(w, fmt.Sprintf("Memory[%d]: %v...", d.Offset, string(d.Value[:10])))
-			} else {
-				p.gasComment(w, fmt.Sprintf("Memory[%d]: %v", d.Offset, string(d.Value)))
-			}
+			p.gasComment(w, fmt.Sprintf("memcpy(&Memory[%d], data[%d], size)", d.Offset, i))
 			p.gasDefI64(w, fmt.Sprintf("%s%d", kMemoryDataOffsetPrefix, i), int64(d.Offset))
 			p.gasDefI64(w, fmt.Sprintf("%s%d", kMemoryDataSizePrefix, i), int64(len(d.Value)))
 			p.gasDefString(w, fmt.Sprintf("%s%d", kMemoryDataPtrPrefix, i), string(d.Value))
@@ -70,16 +66,18 @@ func (p *wat2X64Worker) buildMemory(w io.Writer) error {
 		fmt.Fprintln(w)
 
 		p.gasCommentInFunc(w, "分配内存")
-		fmt.Fprintf(w, "    mov  rcx, %d # %d pages\n", maxPages*(1<<16), maxPages)
-		fmt.Fprintf(w, "    call malloc\n")
+		fmt.Fprintf(w, "    mov  rcx, [rip + %s]\n", kMemoryMaxPagesName)
+		fmt.Fprintf(w, "    shl  rcx, 16\n")
+		fmt.Fprintf(w, "    call %s\n", kRuntimeMalloc)
 		fmt.Fprintf(w, "    lea  rdx, [rip + %s]\n", kMemoryAddrName)
 		fmt.Fprintf(w, "    mov  [rdx], rax\n")
 		fmt.Fprintln(w)
 
 		p.gasCommentInFunc(w, "内存清零")
-		fmt.Fprintf(w, "    lea  rcx, [rip + %s]\n", kMemoryAddrName)
+		fmt.Fprintf(w, "    mov  rcx, [rip + %s]\n", kMemoryAddrName)
 		fmt.Fprintf(w, "    mov  rdx, 0\n")
-		fmt.Fprintf(w, "    mov  r8, %d\n", maxPages*(1<<16))
+		fmt.Fprintf(w, "    mov  r8, [rip + %s]\n", kMemoryMaxPagesName)
+		fmt.Fprintf(w, "    shl  r8, 16\n")
 		fmt.Fprintf(w, "    call %s\n", kRuntimeMemset)
 		fmt.Fprintln(w)
 
@@ -88,15 +86,13 @@ func (p *wat2X64Worker) buildMemory(w io.Writer) error {
 			fmt.Fprintln(w)
 
 			for i, d := range p.m.Data {
-				if len(d.Value) > 10 {
-					p.gasCommentInFunc(w, fmt.Sprintf("Memory[%d]: %v...", d.Offset, string(d.Value[:10])))
-				} else {
-					p.gasCommentInFunc(w, fmt.Sprintf("Memory[%d]: %v", d.Offset, string(d.Value)))
-				}
-				fmt.Fprintf(w, "    lea  rcx, [rip + %s]\n", kMemoryAddrName)
-				fmt.Fprintf(w, "    add  rcx, %d\n", d.Offset)
-				fmt.Fprintf(w, "    mov  rdx, [rip + %s]\n", fmt.Sprintf("%s%d", kMemoryDataOffsetPrefix, i))
-				fmt.Fprintf(w, "    mov  r8, %d\n", len(d.Value))
+				p.gasCommentInFunc(w, fmt.Sprintf("# memcpy(&Memory[%d], data[%d], size)", d.Offset, i))
+
+				fmt.Fprintf(w, "    mov  rax, [rip + %s]\n", kMemoryAddrName)
+				fmt.Fprintf(w, "    mov  rcx, [rip + %s%d]\n", kMemoryDataOffsetPrefix, i)
+				fmt.Fprintf(w, "    add  rcx, rax\n")
+				fmt.Fprintf(w, "    lea  rdx, [rip + %s%d]\n", kMemoryDataPtrPrefix, i)
+				fmt.Fprintf(w, "    mov  r8, [rip + %s%d]\n", kMemoryDataSizePrefix, i)
 				fmt.Fprintf(w, "    call %s\n", kRuntimeMemcpy)
 			}
 

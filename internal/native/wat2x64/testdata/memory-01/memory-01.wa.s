@@ -15,69 +15,58 @@
 .set .Runtime.memcpy, memcpy
 .set .Runtime.memset, memset
 
-# 导入函数(由导入文件定义)
+# 导入函数(外部库定义)
 .extern _write
 .set .Import.syscall._write, _write
 
 # 定义内存
 .section .data
 .align 8
-$Memory.addr: .quad 0
-$Memory.pages: .quad 1
-$Memory.maxPages: .quad 1
+.Memory.addr: .quad 0
+.Memory.pages: .quad 1
+.Memory.maxPages: .quad 1
 
-# Memory[8]: hello worl...
-$Memory.dataOffset.0: .quad 8
-$Memory.dataSize.0: .quad 12
-$Memory.dataPtr.0: .asciz "hello world\n"
+# 内存数据
+.section .data
+.align 8
+# memcpy(&Memory[8], data[0], size)
+.Memory.dataOffset.0: .quad 8
+.Memory.dataSize.0: .quad 12
+.Memory.dataPtr.0: .asciz "hello world\n"
 
 # 内存初始化函数
 .section .text
-.globl $Memory.initFunc
-$Memory.initFunc:
+.globl .Memory.initFunc
+.Memory.initFunc:
     # 影子空间
     sub rsp, 40
 
     # 分配内存
-    mov  rcx, 65536 # 1 pages
-    call malloc
-    lea  rdx, [rip + $Memory.addr]
+    mov  rcx, [rip + .Memory.maxPages]
+    shl  rcx, 16
+    call .Runtime.malloc
+    lea  rdx, [rip + .Memory.addr]
     mov  [rdx], rax
 
     # 内存清零
-    lea  rcx, [rip + $Memory.addr]
+    mov  rcx, [rip + .Memory.addr]
     mov  rdx, 0
-    mov  r8, 65536
+    mov  r8, [rip + .Memory.maxPages]
+    shl  r8, 16
     call .Runtime.memset
 
     # 初始化内存
 
-    # Memory[8]: hello worl...
-    lea  rcx, [rip + $Memory.addr]
-    add  rcx, 8
-    mov  rdx, [rip + $Memory.dataOffset.0]
-    mov  r8, 12
+    # memcpy(&Memory[8], data[0], size)
+    mov  rax, [rip + .Memory.addr]
+    mov  rcx, [rip + .Memory.dataOffset.0]
+    add  rcx, rax
+    lea  rdx, [rip + .Memory.dataPtr.0]
+    mov  r8, [rip + .Memory.dataSize.0]
     call .Runtime.memcpy
 
     # 函数返回
     add rsp, 40
-    ret
-
-.section .text
-.globl main
-main:
-    push rbp
-    mov  rbp, rsp
-    sub  rsp, 32
-
-    call $Memory.initFunc
-    call $Table.initFunc
-    call $F.main
-
-    # return 0
-    xor  eax, eax
-    add  rsp, 32
-    pop  rbp
     ret
 
 .section .text
@@ -106,6 +95,23 @@ $F.main:
 .L.return:
 
     # 栈帧结束
+    add  rsp, 32
+    pop  rbp
+    ret
+
+.section .text
+.globl main
+main:
+    push rbp
+    mov  rbp, rsp
+    sub  rsp, 32
+
+    call .Memory.initFunc
+    call $Table.initFunc
+    call $F.main
+
+    # return 0
+    xor  eax, eax
     add  rsp, 32
     pop  rbp
     ret

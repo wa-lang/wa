@@ -121,24 +121,28 @@ func (p *wat2X64Worker) BuildProgram() (code []byte, err error) {
 		return nil, err
 	}
 
-	if err := p.buildGlobal(&out); err != nil {
+	// 构建内存
+	if err := p.buildMemory(&out); err != nil {
 		return nil, err
 	}
 
+	// 构建表格
 	if err := p.buildTable(&out); err != nil {
 		return nil, err
 	}
 
-	if err := p.buildMemory(&out); err != nil {
+	// 构建全局变量
+	if err := p.buildGlobal(&out); err != nil {
+		return nil, err
+	}
+
+	// 构建函数
+	if err := p.buildFuncs(&out); err != nil {
 		return nil, err
 	}
 
 	// 启动函数
 	if err := p.buildStart(&out); err != nil {
-		return nil, err
-	}
-
-	if err := p.buildFuncs(&out); err != nil {
 		return nil, err
 	}
 
