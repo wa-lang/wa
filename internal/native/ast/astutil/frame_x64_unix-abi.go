@@ -11,17 +11,17 @@ import (
 )
 
 // 构建栈帧中参数和返回值的位置
-func buildFuncFrame_x64(cpu abi.CPUType, fn *ast.Func) error {
-	if err := buildFuncArgReturn_x64(cpu, fn); err != nil {
+func buildFuncFrame_x64_unix(cpu abi.CPUType, fn *ast.Func) error {
+	if err := buildFuncArgReturn_x64_unix(cpu, fn); err != nil {
 		return err
 	}
-	if err := buildFuncLocals_x64(cpu, fn); err != nil {
+	if err := buildFuncLocals_x64_unix(cpu, fn); err != nil {
 		return err
 	}
 	return nil
 }
 
-func buildFuncArgReturn_x64(cpu abi.CPUType, fn *ast.Func) error {
+func buildFuncArgReturn_x64_unix(cpu abi.CPUType, fn *ast.Func) error {
 	var headSize = 4 * 2 // RA + FP
 	if cpu == abi.RISCV64 {
 		headSize = 8 * 2
@@ -152,7 +152,7 @@ func buildFuncArgReturn_x64(cpu abi.CPUType, fn *ast.Func) error {
 }
 
 // 构造局部遍历在栈帧的位置
-func buildFuncLocals_x64(cpu abi.CPUType, fn *ast.Func) error {
+func buildFuncLocals_x64_unix(cpu abi.CPUType, fn *ast.Func) error {
 	var headSize = 4 * 2 // RA + FP
 	if cpu == abi.RISCV64 {
 		headSize = 8 * 2

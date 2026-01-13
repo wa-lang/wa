@@ -18,7 +18,8 @@ const (
 	LOONG64
 	RISCV64
 	RISCV32
-	X64
+	X64     // Windows ABI
+	X64Unix // UNIX System V ABI
 	CPU_Max
 )
 
@@ -27,6 +28,7 @@ var _CPUType_strings = []string{
 	RISCV64: "riscv64",
 	RISCV32: "riscv32",
 	X64:     "x64",
+	X64Unix: "X64-Unix",
 }
 
 // 操作系统
