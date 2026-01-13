@@ -1,4 +1,4 @@
-# 源文件: hello-03.wat, 系统: windows/X64
+# 源文件: memory-01.wat, 系统: windows/X64
 # 自动生成的代码, 不要手动修改!!!
 
 .intel_syntax noprefix
@@ -9,8 +9,8 @@
 .globl $builtin.memset
 
 # 导入函数(由导入文件定义)
-.extern $Import.env.env_write
-.set $F.env_write, $Import.env.env_write
+.extern $Import.syscall.write
+.set $F.syscall.write, $Import.syscall.write
 
 # 定义内存
 .section .data
@@ -19,10 +19,10 @@ $Memory.addr: .quad 0
 $Memory.pages: .quad 1
 $Memory.maxPages: .quad 1
 
-# Memory[0]: ABI Test
-$Memory.dataOffset.0: .quad 0
-$Memory.dataSize.0: .quad 8
-$Memory.dataPtr.0: .asciz "ABI Test"
+# Memory[8]: hello worl...
+$Memory.dataOffset.0: .quad 8
+$Memory.dataSize.0: .quad 12
+$Memory.dataPtr.0: .asciz "hello world\n"
 
 # 内存初始化函数
 .section .text
@@ -45,11 +45,11 @@ $Memory.initFunc:
 
     # 初始化内存
 
-    # Memory[0]: ABI Test
+    # Memory[8]: hello worl...
     lea  rcx, [rip + $Memory.addr]
-    add  rcx, 0
+    add  rcx, 8
     mov  rdx, [rip + $Memory.dataOffset.0]
-    mov  r8, 8
+    mov  r8, 12
     call $builtin.memcpy
 
     # 函数返回
@@ -65,6 +65,7 @@ main:
 
     call $Memory.initFunc
     call $Table.initFunc
+    call $F.main
 
     # return 0
     xor  eax, eax
@@ -74,7 +75,7 @@ main:
 
 .section .text
 
-$F.:
+$F.main:
     # 栈帧开始
     push rbp
     mov  rbp, rsp
@@ -84,28 +85,16 @@ $F.:
     # i64.const 1
     movabs rax, 1
     mov qword ptr [rbp -24], rax
-    # i64.const 0
-    movabs rax, 0
-    mov qword ptr [rbp -32], rax
     # i64.const 8
     movabs rax, 8
+    mov qword ptr [rbp -32], rax
+    # i64.const 12
+    movabs rax, 12
     mov qword ptr [rbp -40], rax
-    # i64.const 100
-    movabs rax, 100
-    mov qword ptr [rbp -48], rax
-    # i64.const 200
-    movabs rax, 200
-    mov qword ptr [rbp -56], rax
-    # i64.const 300
-    movabs rax, 300
-    mov qword ptr [rbp -64], rax
     mov R4, qword ptr [rbp -24]
     mov R5, qword ptr [rbp -16]
     mov R6, qword ptr [rbp -8]
-    mov R7, qword ptr [rbp +0]
-    mov R8, qword ptr [rbp +8]
-    mov R9, qword ptr [rbp +16]
-    call env_write    mov R4, qword ptr [rbp -24]
+    call syscall.write    mov R4, qword ptr [rbp -24]
     nop # drop R0
 .L.return:
 

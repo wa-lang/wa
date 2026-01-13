@@ -1,7 +1,7 @@
 ;; Copyright (C) 2026 武汉凹语言科技有限公司
 ;; SPDX-License-Identifier: AGPL-3.0-or-later
 
-(module $verify_win64_abi
+(module $abi_args_01
     ;; 导入一个 6 参数的函数
     ;; 验证点：
     ;; 1-4 参数通过寄存器传递

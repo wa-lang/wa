@@ -1,7 +1,7 @@
 ;; Copyright (C) 2026 武汉凹语言科技有限公司
 ;; SPDX-License-Identifier: AGPL-3.0-or-later
 
-(module $hello_x64
+(module $table_01
     ;; func syscall.write(fd int64, data *byte, size int64) => int64
     (import "syscall" "write" (func $syscall.write (param i64 i64 i64) (result i64)))
 

@@ -1,4 +1,4 @@
-# 源文件: hello-02.wat, 系统: windows/X64
+# 源文件: table-01.wat, 系统: windows/X64
 # 自动生成的代码, 不要手动修改!!!
 
 .intel_syntax noprefix
@@ -16,7 +16,7 @@
 .section .data
 .align 8
 $Table.size: .quad 1
-$Table.maxSize: .quad 1
+$Table.maxSize: .quad 0
 $Table.addr: .fill 8, 1, 0
 $Table.funcIndexList: .fill 8, 2, 0
 

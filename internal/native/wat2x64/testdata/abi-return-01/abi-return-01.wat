@@ -1,7 +1,7 @@
 ;; Copyright (C) 2026 武汉凹语言科技有限公司
 ;; SPDX-License-Identifier: AGPL-3.0-or-later
 
-(module $verify_win64_abi
+(module $abi_return_01
     (import "env" "env_get_multi_values" 
         (func $env_get_multi_values (param i64) (result i64 i64 i64))
     )
