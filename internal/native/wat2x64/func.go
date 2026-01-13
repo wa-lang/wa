@@ -53,9 +53,6 @@ func (p *wat2X64Worker) buildFuncs(w io.Writer) error {
 		return nil
 	}
 
-	p.gasSectionTextStart(w)
-	fmt.Fprintln(w)
-
 	for _, f := range p.m.Funcs {
 		p.localNames = nil
 		p.localTypes = nil
@@ -63,6 +60,8 @@ func (p *wat2X64Worker) buildFuncs(w io.Writer) error {
 		p.scopeStackBases = nil
 		p.scopeResults = nil
 
+		p.gasComment(w, "func "+f.Name)
+		p.gasSectionTextStart(w)
 		if f.ExportName == f.Name {
 			p.gasGlobal(w, kFuncNamePrefix+f.Name)
 		}
@@ -141,10 +140,9 @@ func (p *wat2X64Worker) buildFunc_body(w io.Writer, fn *ast.Func) error {
 
 	// 第一步构建 ra 和 fp
 	{
-		p.gasCommentInFunc(&bufHeader, "栈帧开始")
-		fmt.Fprintln(&bufHeader, "    push rbp")
-		fmt.Fprintln(&bufHeader, "    mov  rbp, rsp")
-		fmt.Fprintln(&bufHeader, "    sub  rsp, 32")
+		p.gasCommentInFunc(&bufHeader, "rsp%16 == 0")
+		p.gasCommentInFunc(&bufHeader, "(rsp-8-40)%16 == 0")
+		fmt.Fprintln(&bufHeader, "    sub rsp, 40")
 		fmt.Fprintln(&bufHeader)
 	}
 
@@ -321,9 +319,8 @@ func (p *wat2X64Worker) buildFunc_body(w io.Writer, fn *ast.Func) error {
 
 	// 结束栈帧
 	{
-		p.gasCommentInFunc(&bufIns, "栈帧结束")
-		fmt.Fprintln(&bufIns, "    add  rsp, 32")
-		fmt.Fprintln(&bufIns, "    pop  rbp")
+		p.gasCommentInFunc(&bufIns, "函数返回")
+		fmt.Fprintln(&bufIns, "    add rsp, 40")
 		fmt.Fprintln(&bufIns, "    ret")
 		fmt.Fprintln(&bufIns)
 	}

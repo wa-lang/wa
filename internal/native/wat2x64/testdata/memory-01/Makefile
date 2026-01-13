@@ -4,7 +4,7 @@
 WA:=go run ../../../../../main.go
 
 golden:
-	gcc golden-win64.s -o a.out0.exe
+	gcc env.c golden-win64.s -o a.out0.exe
 	a.out0.exe
 
 dev:

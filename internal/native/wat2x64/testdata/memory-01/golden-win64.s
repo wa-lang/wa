@@ -16,12 +16,15 @@
 .set .Runtime.memset, memset
 
 # 导入函数(外部库定义)
-.extern _write
-.set .Import.syscall._write, _write
+.extern wat2x64_syscall_write
+.set .Import.syscall.write, wat2x64_syscall_write
 
 # 定义内存
 .section .data
 .align 8
+.globl .Memory.addr
+.globl .Memory.pages
+.globl .Memory.maxPages
 .Memory.addr: .quad 0
 .Memory.pages: .quad 1
 .Memory.maxPages: .quad 1
@@ -112,22 +115,32 @@ main:
     add rsp, 40
     ret
 
-# 入口函数, 后续是编译器自动生成
+# func main
 .section .text
-.global .F.main
 .F.main:
-    # rsp%16 == 0
-    # (rsp-8-40)%16 == 0
-    sub rsp, 40
+    push rbp
+    mov  rbp, rsp
+    sub rsp, 64
 
-    # syscall.write(stdout, &memory[ptr], size)
-    mov  rcx, 1 # stdout
-    mov  rax, [rip + .Memory.addr]
-    mov  rdx, [rip + .Memory.dataOffset.0]
-    add  rdx, rax # rdx = &memory[ptr]
-    mov  r8, [rip + .Memory.dataSize.0] # size
-    call .Import.syscall._write
+    # i64.const 1
+    movabs rax, 1
+    mov    [rbp - 8], rax
+
+    # i64.const 8
+    movabs rax, 8
+    mov    [rbp - 16], rax
+
+    # i64.const 12
+    movabs rax, 12
+    mov    [rbp - 24], rax
+
+    # syscall.write(stdout, ptr, size)
+    mov rcx, [rbp - 8]    # arg 0
+    mov rdx, [rbp - 16]   # arg 1
+    mov r8,  [rbp - 24]   # arg 2
+    call .Import.syscall.write
 
     # 函数返回
-    add rsp, 40
+    mov rsp, rbp
+    pop rbp
     ret

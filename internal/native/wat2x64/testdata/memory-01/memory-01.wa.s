@@ -16,12 +16,15 @@
 .set .Runtime.memset, memset
 
 # 导入函数(外部库定义)
-.extern _write
-.set .Import.syscall._write, _write
+.extern wat2x64_syscall_write
+.set .Import.syscall.write, wat2x64_syscall_write
 
 # 定义内存
 .section .data
 .align 8
+.globl .Memory.addr
+.globl .Memory.pages
+.globl .Memory.maxPages
 .Memory.addr: .quad 0
 .Memory.pages: .quad 1
 .Memory.maxPages: .quad 1
@@ -112,13 +115,12 @@ main:
     add rsp, 40
     ret
 
+# func main
 .section .text
-
 .F.main:
-    # 栈帧开始
-    push rbp
-    mov  rbp, rsp
-    sub  rsp, 32
+    # rsp%16 == 0
+    # (rsp-8-40)%16 == 0
+    sub rsp, 40
 
     sub rsp, 0
     # i64.const 1
@@ -137,8 +139,7 @@ main:
     nop # drop R0
 .L.return:
 
-    # 栈帧结束
-    add  rsp, 32
-    pop  rbp
+    # 函数返回
+    add rsp, 40
     ret
 

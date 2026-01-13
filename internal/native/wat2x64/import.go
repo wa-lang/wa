@@ -12,6 +12,8 @@ import (
 
 const (
 	kImportNamePrefix = ".Import."
+
+	kEnvSyscallPrefix = "wat2x64_"
 )
 
 func (p *wat2X64Worker) buildImport(w io.Writer) error {
@@ -37,12 +39,12 @@ func (p *wat2X64Worker) buildImport(w io.Writer) error {
 			panic(fmt.Sprintf("ERR: import %s.%s", importSpec.ObjModule, importSpec.ObjName))
 		}
 
-		absName := importSpec.ObjModule + "." + importSpec.ObjName
+		absName := importSpec.ObjModule + "_" + importSpec.ObjName
 		if seenMap[absName] {
 			continue
 		}
 		seenMap[absName] = true
-		p.gasExtern(w, importSpec.ObjName)
+		p.gasExtern(w, kEnvSyscallPrefix+absName)
 	}
 
 	// 定义导入函数的别名
@@ -51,12 +53,12 @@ func (p *wat2X64Worker) buildImport(w io.Writer) error {
 			panic(fmt.Sprintf("ERR: import global %s.%s", importSpec.ObjModule, importSpec.ObjName))
 		}
 
-		absName := importSpec.ObjModule + "." + importSpec.ObjName
+		absName := importSpec.ObjModule + "_" + importSpec.ObjName
 		if !seenMap[absName] {
 			continue
 		}
 
-		p.gasSet(w, kImportNamePrefix+absName, importSpec.ObjName)
+		p.gasSet(w, kImportNamePrefix+importSpec.ObjModule+"."+importSpec.ObjName, kEnvSyscallPrefix+absName)
 	}
 
 	return nil

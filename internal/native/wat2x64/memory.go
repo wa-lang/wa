@@ -27,6 +27,9 @@ func (p *wat2X64Worker) buildMemory(w io.Writer) error {
 
 	p.gasComment(w, "定义内存")
 	p.gasSectionDataStart(w)
+	p.gasGlobal(w, kMemoryAddrName)
+	p.gasGlobal(w, kMemoryPagesName)
+	p.gasGlobal(w, kMemoryMaxPagesName)
 
 	if max := p.m.Memory.MaxPages; max > 0 {
 		p.gasDefI64(w, kMemoryAddrName, 0)
