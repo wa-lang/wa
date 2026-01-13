@@ -136,23 +136,18 @@ func (p *wat2X64Worker) BuildProgram() (code []byte, err error) {
 		return nil, err
 	}
 
-	// 构建函数
-	if err := p.buildFuncs(&out); err != nil {
-		return nil, err
-	}
-
 	// 启动函数
 	if err := p.buildStart(&out); err != nil {
 		return nil, err
 	}
 
-	// 生成常量
-	if err := p.buildConstList(&out); err != nil {
+	// 生成运行时函数
+	if err := p.buildRuntimeImpl(&out); err != nil {
 		return nil, err
 	}
 
-	// 生成运行时函数
-	if err := p.buildRuntimeImpl(&out); err != nil {
+	// 构建函数
+	if err := p.buildFuncs(&out); err != nil {
 		return nil, err
 	}
 

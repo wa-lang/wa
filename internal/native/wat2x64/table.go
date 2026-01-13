@@ -20,6 +20,7 @@ const (
 
 func (p *wat2X64Worker) buildTable(w io.Writer) error {
 	if p.m.Table == nil {
+		// TODO: 表格函数固定生成
 		return nil
 	}
 	if p.m.Table.Type != token.FUNCREF {

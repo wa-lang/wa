@@ -69,51 +69,22 @@
     add rsp, 40
     ret
 
-.section .text
-
-$F.main:
-    # 栈帧开始
-    push rbp
-    mov  rbp, rsp
-    sub  rsp, 32
-
-    sub rsp, 0
-    # i64.const 1
-    movabs rax, 1
-    mov qword ptr [rbp -24], rax
-    # i64.const 8
-    movabs rax, 8
-    mov qword ptr [rbp -32], rax
-    # i64.const 12
-    movabs rax, 12
-    mov qword ptr [rbp -40], rax
-    mov R4, qword ptr [rbp -24]
-    mov R5, qword ptr [rbp -16]
-    mov R6, qword ptr [rbp -8]
-    call syscall.write    mov R4, qword ptr [rbp -24]
-    nop # drop R0
-.L.return:
-
-    # 栈帧结束
-    add  rsp, 32
-    pop  rbp
-    ret
-
+# 汇编程序入口函数
 .section .text
 .globl main
 main:
-    push rbp
-    mov  rbp, rsp
-    sub  rsp, 32
+    # 影子内存
+    sub rsp, 40
 
     call .Memory.initFunc
-    call $Table.initFunc
-    call $F.main
+    call .F.main
 
-    # return 0
-    xor  eax, eax
-    add  rsp, 32
-    pop  rbp
+    # runtime.exit(0)
+    mov  rcx, 0
+    call .Runtime._exit
+
+    # exit 后这里不会被执行, 但是依然保留
+    add rsp, 40
     ret
 
 .section .data
@@ -139,5 +110,35 @@ main:
 
     # return
     add rsp, 40
+    ret
+
+.section .text
+
+.F.main:
+    # 栈帧开始
+    push rbp
+    mov  rbp, rsp
+    sub  rsp, 32
+
+    sub rsp, 0
+    # i64.const 1
+    movabs rax, 1
+    mov qword ptr [rbp -24], rax
+    # i64.const 8
+    movabs rax, 8
+    mov qword ptr [rbp -32], rax
+    # i64.const 12
+    movabs rax, 12
+    mov qword ptr [rbp -40], rax
+    mov R4, qword ptr [rbp -24]
+    mov R5, qword ptr [rbp -16]
+    mov R6, qword ptr [rbp -8]
+    call syscall.write    mov R4, qword ptr [rbp -24]
+    nop # drop R0
+.L.return:
+
+    # 栈帧结束
+    add  rsp, 32
+    pop  rbp
     ret
 

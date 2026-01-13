@@ -69,39 +69,18 @@
     add rsp, 40
     ret
 
-# 入口函数, 后续是编译器自动生成
-.section .text
-.global .F.main
-.F.main:
-    # rsp%16 == 0
-    # (rsp-8-40)%16 == 0
-    sub rsp, 40
-
-    # syscall.write(stdout, &memory[ptr], size)
-    mov  rcx, 1 # stdout
-    mov  rax, [rip + .Memory.addr]
-    mov  rdx, [rip + .Memory.dataOffset.0]
-    add  rdx, rax # rdx = &memory[ptr]
-    mov  r8, [rip + .Memory.dataSize.0] # size
-    call .Import.syscall._write
-
-    # 函数返回
-    add rsp, 40
-    ret
-
 # 汇编程序入口函数
 .section .text
 .globl main
 main:
-    # rsp%16 == 0
-    # (rsp-8-40)%16 == 0
+    # 影子内存
     sub rsp, 40
 
     call .Memory.initFunc
     call .F.main
 
     # runtime.exit(0)
-    mov  rcx, 0 # exit code
+    mov  rcx, 0
     call .Runtime._exit
 
     # exit 后这里不会被执行, 但是依然保留
@@ -133,3 +112,22 @@ main:
     add rsp, 40
     ret
 
+# 入口函数, 后续是编译器自动生成
+.section .text
+.global .F.main
+.F.main:
+    # rsp%16 == 0
+    # (rsp-8-40)%16 == 0
+    sub rsp, 40
+
+    # syscall.write(stdout, &memory[ptr], size)
+    mov  rcx, 1 # stdout
+    mov  rax, [rip + .Memory.addr]
+    mov  rdx, [rip + .Memory.dataOffset.0]
+    add  rdx, rax # rdx = &memory[ptr]
+    mov  r8, [rip + .Memory.dataSize.0] # size
+    call .Import.syscall._write
+
+    # 函数返回
+    add rsp, 40
+    ret

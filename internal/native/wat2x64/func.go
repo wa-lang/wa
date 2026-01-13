@@ -17,7 +17,7 @@ import (
 )
 
 const (
-	kFuncNamePrefix    = "$F."
+	kFuncNamePrefix    = ".F."
 	kFuncRetNamePrefix = ".F.ret."
 )
 
