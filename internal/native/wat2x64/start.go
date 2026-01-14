@@ -19,8 +19,9 @@ func (p *wat2X64Worker) buildStart(w io.Writer) error {
 	p.gasGlobal(w, kFuncMain)
 	fmt.Fprintf(w, "%s:\n", kFuncMain)
 
-	p.gasCommentInFunc(w, "影子内存")
-	fmt.Fprintln(w, "    sub rsp, 40")
+	fmt.Fprintln(w, "    push rbp")
+	fmt.Fprintln(w, "    mov  rbp, rsp")
+	fmt.Fprintln(w, "    sub  rsp, 32")
 	fmt.Fprintln(w)
 
 	fmt.Fprintf(w, "    call %s\n", kMemoryInitFuncName)
@@ -43,7 +44,8 @@ func (p *wat2X64Worker) buildStart(w io.Writer) error {
 	fmt.Fprintln(w)
 
 	p.gasCommentInFunc(w, "exit 后这里不会被执行, 但是依然保留")
-	fmt.Fprintln(w, "    add rsp, 40")
+	fmt.Fprintln(w, "    mov rsp, rbp")
+	fmt.Fprintln(w, "    pop rbp")
 	fmt.Fprintln(w, "    ret")
 	fmt.Fprintln(w)
 

@@ -7,11 +7,12 @@ import (
 	"bytes"
 	"fmt"
 	"io"
+	"math"
 
 	"wa-lang.org/wa/internal/native/abi"
 	nativeast "wa-lang.org/wa/internal/native/ast"
 	"wa-lang.org/wa/internal/native/ast/astutil"
-	"wa-lang.org/wa/internal/native/loong64"
+	"wa-lang.org/wa/internal/native/x64"
 	"wa-lang.org/wa/internal/wat/ast"
 	"wa-lang.org/wa/internal/wat/token"
 )
@@ -90,6 +91,13 @@ func (p *wat2X64Worker) buildFunc_body(w io.Writer, fn *ast.Func) error {
 	assert(len(p.scopeStackBases) == 0)
 	assert(len(p.scopeResults) == 0)
 
+	// 至少要有一个指令
+	if len(fn.Body.Insts) == 0 {
+		fn.Body.Insts = []ast.Instruction{
+			ast.Ins_Return{OpToken: ast.OpToken(token.INS_RETURN)},
+		}
+	}
+
 	// 转化为汇编的结构, 准备构建函数栈帧
 	fnNative := &nativeast.Func{
 		Name: fn.Name,
@@ -134,115 +142,14 @@ func (p *wat2X64Worker) buildFunc_body(w io.Writer, fn *ast.Func) error {
 
 	// 模拟构建函数栈帧
 	// 后面需要根据参数是否走寄存器传递生成相关的入口代码和返回代码
-	if err := astutil.BuildFuncFrame(abi.LOONG64, fnNative); err != nil {
+	if err := astutil.BuildFuncFrame(abi.X64, fnNative); err != nil {
 		return err
 	}
 
-	// 第一步构建 ra 和 fp
-	{
-		p.gasCommentInFunc(&bufHeader, "rsp%16 == 0")
-		p.gasCommentInFunc(&bufHeader, "(rsp-8-40)%16 == 0")
-		fmt.Fprintln(&bufHeader, "    sub rsp, 40")
-		fmt.Fprintln(&bufHeader)
-	}
-
-	// 将寄存器参数备份到栈
-	if len(fn.Type.Params) > 0 {
-		p.gasCommentInFunc(&bufHeader, "将寄存器参数备份到栈")
-		for i, arg := range fnNative.Type.Args {
-			if arg.Reg == 0 {
-				continue // 走栈的输入参数不需要
-			}
-
-			// 将寄存器中的参数存储到对于的栈帧中
-			switch fn.Type.Params[i].Type {
-			case token.I32:
-				fmt.Fprintf(&bufHeader, "    mov %v, [rbp %+d] # save arg %s\n",
-					loong64.RegString(arg.Reg), arg.Off,
-					arg.Name,
-				)
-			case token.I64:
-				fmt.Fprintf(&bufHeader, "    mov %v, [rbp %+d] # save arg %s\n",
-					loong64.RegString(arg.Reg), arg.Off,
-					arg.Name,
-				)
-			case token.F32:
-				fmt.Fprintf(&bufHeader, "    mov %v, [rbp %+d] # save arg %s\n",
-					loong64.RegString(arg.Reg), arg.Off,
-					arg.Name,
-				)
-			case token.F64:
-				fmt.Fprintf(&bufHeader, "    mov %v, [rbp %+d] # save arg %s\n",
-					loong64.RegString(arg.Reg), arg.Off,
-					arg.Name,
-				)
-			default:
-				panic("unreachable")
-			}
-		}
-	}
-
-	// 返回值初始化为 0
-	if len(fnNative.Type.Return) > 0 {
-		p.gasCommentInFunc(&bufHeader, "将返回值变量初始化为0")
-		for i, ret := range fnNative.Type.Return {
-			switch fn.Type.Results[i] {
-			case token.I32:
-				fmt.Fprintf(&bufHeader, "    mov dword ptr [rbp %+d] # ret %s = 0\n",
-					ret.Off, ret.Name,
-				)
-			case token.I64:
-				fmt.Fprintf(&bufHeader, "    mov qword ptr [rbp %+d] # ret %s = 0\n",
-					ret.Off, ret.Name,
-				)
-			case token.F32:
-				fmt.Fprintf(&bufHeader, "    mov dword ptr [rbp %+d] # ret %s = 0\n",
-					ret.Off, ret.Name,
-				)
-			case token.F64:
-				fmt.Fprintf(&bufHeader, "    mov qword ptr [rbp %+d] # ret %s = 0\n",
-					ret.Off, ret.Name,
-				)
-			default:
-				panic("unreachable")
-			}
-		}
-	}
-
-	// 局部变量初始化为 0
-	for i, local := range fnNative.Body.Locals {
-		switch fn.Body.Locals[i].Type {
-		case token.I32:
-			fmt.Fprintf(&bufHeader, "    mov dword ptr [rbp %+d] # local %s = 0\n",
-				local.Off, local.Name,
-			)
-		case token.I64:
-			fmt.Fprintf(&bufHeader, "    mov qword ptr [rbp %+d] # local %s = 0\n",
-				local.Off, local.Name,
-			)
-		case token.F32:
-			fmt.Fprintf(&bufHeader, "    mov dword ptr [rbp %+d] # local %s = 0\n",
-				local.Off, local.Name,
-			)
-		case token.F64:
-			fmt.Fprintf(&bufHeader, "    mov qword ptr [rbp %+d] # local %s = 0\n",
-				local.Off, local.Name,
-			)
-		default:
-			panic("unreachable")
-		}
-	}
-
 	// WASM 栈的开始位置
-	// WASM 栈底第一个元素相对于 FP 的偏移位置, 每个元素 8 字节
-	p.fnWasmR0Base = 0 - fnNative.FrameSize - 8
-
-	// 至少要有一个指令
-	if len(fn.Body.Insts) == 0 {
-		fn.Body.Insts = []ast.Instruction{
-			ast.Ins_Return{OpToken: ast.OpToken(token.INS_RETURN)},
-		}
-	}
+	// WASM 栈底第一个元素相对于 rbp 的偏移位置, 每个元素 8 字节
+	// 栈指令依赖该偏移量
+	p.fnWasmR0Base = 0 - fnNative.FrameSize
 
 	// 开始解析 wasm 指令
 	var stk valueTypeStack
@@ -258,30 +165,103 @@ func (p *wat2X64Worker) buildFunc_body(w io.Writer, fn *ast.Func) error {
 		}
 	}
 
-	// 头部代码: 更新栈底精确位置
+	// 补充构建头部栈帧
 	{
-		n := 0 - fnNative.FrameSize - stk.MaxDepth()
+		frameSize := fnNative.FrameSize + stk.MaxDepth()*8
 
-		// SP 必须对齐到 16 字节
-		if n%16 != 0 {
-			n = ((n + 15) / 16) * 16
+		// 对齐到 16 字节
+		if x := frameSize; x%16 != 0 {
+			x = ((x + 15) / 16) * 16
+			frameSize = x
 		}
 
-		fmt.Fprintf(&bufHeader, "    sub rsp, %d\n", n)
+		fmt.Fprintf(&bufHeader, "    push rbp\n")
+		fmt.Fprintf(&bufHeader, "    mov  rbp, rsp\n")
+		fmt.Fprintf(&bufHeader, "    sub  rsp, %d\n", frameSize)
+		fmt.Fprintln(&bufHeader)
+	}
+
+	// 将寄存器参数备份到栈
+	if len(fn.Type.Params) > 0 {
+		p.gasCommentInFunc(&bufHeader, "将寄存器参数备份到栈")
+		for i, arg := range fnNative.Type.Args {
+			if arg.Reg == 0 {
+				continue // 走栈的输入参数已经在栈中
+			}
+
+			// 将寄存器中的参数存储到对于的栈帧中
+			switch fn.Type.Params[i].Type {
+			case token.I32:
+				fmt.Fprintf(&bufHeader, "    mov [rbp %+d], %v # save arg %s\n",
+					arg.Off, x64.RegString(arg.Reg),
+					arg.Name,
+				)
+			case token.I64:
+				fmt.Fprintf(&bufHeader, "    mov [rbp %+d], %v # save arg %s\n",
+					arg.Off, x64.RegString(arg.Reg),
+					arg.Name,
+				)
+			case token.F32:
+				fmt.Fprintf(&bufHeader, "    movss qword ptr [rbp %+d], %v # save arg %s\n",
+					arg.Off, x64.RegString(arg.Reg),
+					arg.Name,
+				)
+			case token.F64:
+				fmt.Fprintf(&bufHeader, "    movsd qword ptr [rbp %+d], %v # save arg %s\n",
+					arg.Off, x64.RegString(arg.Reg),
+					arg.Name,
+				)
+			default:
+				panic("unreachable")
+			}
+		}
+	} else {
+		p.gasCommentInFunc(&bufHeader, "没有参数需要备份到栈")
+		fmt.Fprintln(&bufHeader)
+	}
+
+	// 返回值初始化为 0
+	if len(fnNative.Type.Return) > 0 {
+		p.gasCommentInFunc(&bufHeader, "将返回值变量初始化为0")
+		for _, ret := range fnNative.Type.Return {
+			fmt.Fprintf(&bufHeader,
+				"    mov dword ptr [rbp %+d], 0 # ret %s = 0\n",
+				ret.Off, ret.Name,
+			)
+		}
+	} else {
+		p.gasCommentInFunc(&bufHeader, "没有返回值变量需要初始化为0")
+		fmt.Fprintln(&bufHeader)
+	}
+
+	// 局部变量初始化为 0
+	if len(fnNative.Body.Locals) > 0 {
+		p.gasCommentInFunc(&bufHeader, "将局部变量初始化为0")
+		for _, local := range fnNative.Body.Locals {
+			fmt.Fprintf(&bufHeader, "    mov dword ptr [rbp %+d] # local %s = 0\n",
+				local.Off, local.Name,
+			)
+		}
+	} else {
+		p.gasCommentInFunc(&bufHeader, "没有局部变量需要初始化为0")
+		fmt.Fprintln(&bufHeader)
 	}
 
 	// 根据ABI处理返回值
+	// 需要将栈顶位置的结果转化为本地ABI规范的返回值
 	{
 		// 返回代码位置
+		fmt.Fprintln(&bufIns)
+		p.gasCommentInFunc(&bufIns, "根据ABI处理返回值")
 		p.gasFuncLabel(&bufIns, kLabelName_return)
 
 		// 如果走内存, 返回地址
 		if len(fn.Type.Results) > 1 && fnNative.Type.Return[1].Reg == 0 {
-			fmt.Fprintf(&bufIns, "    mov rax, [rbp %+d] # ret %s\n",
+			fmt.Fprintf(&bufIns, "    mov rax, [rbp %+d] # ret address\n",
 				fnNative.Type.Return[0].Off,
-				fnNative.Type.Return[0].Name,
 			)
 		} else {
+			// 如果走寄存器, 则复制寄存器
 			for i, ret := range fnNative.Type.Return {
 				if ret.Reg == 0 {
 					continue
@@ -289,25 +269,25 @@ func (p *wat2X64Worker) buildFunc_body(w io.Writer, fn *ast.Func) error {
 				switch fn.Type.Results[i] {
 				case token.I32:
 					fmt.Fprintf(&bufIns, "    mov %v, [rbp %+d] # ret %s\n",
-						loong64.RegString(ret.Reg),
+						x64.RegString(ret.Reg),
 						fnNative.Type.Return[i].Off,
 						fnNative.Type.Return[i].Name,
 					)
 				case token.I64:
-					fmt.Fprintf(&bufIns, "    mov %v, [rbp %+d] # ret.%s\n",
-						loong64.RegString(ret.Reg),
+					fmt.Fprintf(&bufIns, "    mov %v, [rbp %+d] # ret %s\n",
+						x64.RegString(ret.Reg),
 						fnNative.Type.Return[i].Off,
 						fnNative.Type.Return[i].Name,
 					)
 				case token.F32:
-					fmt.Fprintf(&bufIns, "    mov %v, [rbp %+d] # ret %s\n",
-						loong64.RegString(ret.Reg),
+					fmt.Fprintf(&bufIns, "    movss %v, qword ptr [rbp %+d] # ret %s\n",
+						x64.RegString(ret.Reg),
 						fnNative.Type.Return[i].Off,
 						fnNative.Type.Return[i].Name,
 					)
 				case token.F64:
-					fmt.Fprintf(&bufIns, "    mov %v, [rbp %+d] # ret.%s\n",
-						loong64.RegString(ret.Reg),
+					fmt.Fprintf(&bufIns, "    movsd %v, qword ptr [rbp %+d] # ret.%s\n",
+						x64.RegString(ret.Reg),
 						fnNative.Type.Return[i].Off,
 						fnNative.Type.Return[i].Name,
 					)
@@ -320,7 +300,8 @@ func (p *wat2X64Worker) buildFunc_body(w io.Writer, fn *ast.Func) error {
 	// 结束栈帧
 	{
 		p.gasCommentInFunc(&bufIns, "函数返回")
-		fmt.Fprintln(&bufIns, "    add rsp, 40")
+		fmt.Fprintln(&bufIns, "    mov rsp, rbp")
+		fmt.Fprintln(&bufIns, "    pop rbp")
 		fmt.Fprintln(&bufIns, "    ret")
 		fmt.Fprintln(&bufIns)
 	}
@@ -330,7 +311,7 @@ func (p *wat2X64Worker) buildFunc_body(w io.Writer, fn *ast.Func) error {
 	// 指令复制到 w
 	io.Copy(w, &bufIns)
 
-	// 有些函数最后的位置不是 return, 需要手动清理栈
+	// 有些函数最后的位置不是 return, 需要手动清理栈(验证栈正确性)
 	switch tok := stk.LastInstruction().Token(); tok {
 	case token.INS_RETURN:
 		// 已经处理过了
@@ -373,9 +354,9 @@ func (p *wat2X64Worker) buildFunc_ins(
 
 	switch tok := i.Token(); tok {
 	case token.INS_UNREACHABLE:
-		fmt.Fprintf(w, "    call %s # unreachable", kRuntimePanic)
+		fmt.Fprintf(w, "    call %s # unreachable\n", kRuntimePanic)
 	case token.INS_NOP:
-		fmt.Fprintln(w, "    nop")
+		fmt.Fprintf(w, "    nop\n")
 
 	case token.INS_BLOCK:
 		i := i.(ast.Ins_Block)
@@ -732,6 +713,7 @@ func (p *wat2X64Worker) buildFunc_ins(
 		i := i.(ast.Ins_Call)
 
 		fnCallType := p.findFuncType(i.X)
+		fnCallIdx := p.findFuncIndex(i.X)
 
 		// 构建被调用函数的栈帧信息
 		fnCallNative := &nativeast.Func{
@@ -761,7 +743,7 @@ func (p *wat2X64Worker) buildFunc_ins(
 
 		// 模拟构建函数栈帧
 		// 后面需要根据参数是否走寄存器传递生成相关的入口代码和返回代码
-		if err := astutil.BuildFuncFrame(abi.LOONG64, fnCallNative); err != nil {
+		if err := astutil.BuildFuncFrame(abi.X64, fnCallNative); err != nil {
 			return err
 		}
 
@@ -773,62 +755,68 @@ func (p *wat2X64Worker) buildFunc_ins(
 			argList[k] = stk.Pop(x.Type)
 		}
 
+		p.gasCommentInFunc(w, fmt.Sprintf("call %s(...)", i.X))
+
 		// 准备调用参数
 		for k, x := range fnCallType.Params {
 			switch x.Type {
 			case token.I32:
 				if arg := fnCallNative.Type.Args[k]; arg.Reg != 0 {
-					fmt.Fprintf(w, "    mov %s, dword ptr [rbp %+d]\n",
-						loong64.RegString(arg.Reg),
-						p.fnWasmR0Base+argList[k]*8,
+					fmt.Fprintf(w, "    mov %s, [rbp%+d] # arg %d\n",
+						x64.RegString(arg.Reg),
+						p.fnWasmR0Base-argList[k]*8-8,
+						k,
 					)
 				} else {
-					fmt.Fprintf(w, "    mov eax, dword ptr [rbp %+d]\n",
-						p.fnWasmR0Base+argList[k]*8,
+					fmt.Fprintf(w, "    mov eax, [rbp%+d]\n",
+						p.fnWasmR0Base-argList[k]*8-8,
 					)
-					fmt.Fprintf(w, "    mov dword ptr [rbp %+d], eax\n",
+					fmt.Fprintf(w, "    mov [rbp%+d], eax\n",
 						arg.Off,
 					)
 				}
 			case token.I64:
 				if arg := fnCallNative.Type.Args[k]; arg.Reg != 0 {
-					fmt.Fprintf(w, "    mov %s, qword ptr [rbp %+d]\n",
-						loong64.RegString(arg.Reg),
-						p.fnWasmR0Base+argList[k]*8,
+					fmt.Fprintf(w, "    mov %s, [rbp%+d] # arg %d\n",
+						x64.RegString(arg.Reg),
+						p.fnWasmR0Base-argList[k]*8-8,
+						k,
 					)
 				} else {
-					fmt.Fprintf(w, "    mov rax, qword ptr [rbp %+d]\n",
-						p.fnWasmR0Base+argList[k]*8,
+					fmt.Fprintf(w, "    mov rax, [rbp%+d]\n",
+						p.fnWasmR0Base-argList[k]*8-8,
 					)
-					fmt.Fprintf(w, "    mov qword ptr [rbp %+d], rax\n",
+					fmt.Fprintf(w, "    mov [rbp%+d], rax\n",
 						arg.Off,
 					)
 				}
 			case token.F32:
 				if arg := fnCallNative.Type.Args[k]; arg.Reg != 0 {
-					fmt.Fprintf(w, "    movss %s, qword ptr [rbp %+d]\n",
-						loong64.RegString(arg.Reg),
-						p.fnWasmR0Base+argList[k]*8,
+					fmt.Fprintf(w, "    movss %s, qword ptr [rbp%+d] # arg %d\n",
+						x64.RegString(arg.Reg),
+						p.fnWasmR0Base-argList[k]*8-8,
+						k,
 					)
 				} else {
-					fmt.Fprintf(w, "    movss xmm4, dword ptr [rbp %+d]\n",
-						p.fnWasmR0Base+argList[k]*8,
+					fmt.Fprintf(w, "    movss xmm4, dword ptr [rbp%+d]\n",
+						p.fnWasmR0Base-argList[k]*8-8,
 					)
-					fmt.Fprintf(w, "    movss dword ptr [rbp %+d], xmm4\n",
+					fmt.Fprintf(w, "    movss dword ptr [rbp%+d], xmm4\n",
 						arg.Off,
 					)
 				}
 			case token.F64:
 				if arg := fnCallNative.Type.Args[k]; arg.Reg != 0 {
-					fmt.Fprintf(w, "    movsd %s, qword ptr [rbp %+d]\n",
-						loong64.RegString(arg.Reg),
-						p.fnWasmR0Base+argList[k]*8,
+					fmt.Fprintf(w, "    movsd %s, qword ptr [rbp%+d] # arg %d\n",
+						x64.RegString(arg.Reg),
+						p.fnWasmR0Base-argList[k]*8-8,
+						k,
 					)
 				} else {
-					fmt.Fprintf(w, "    movsd xmm4, qword ptr [rbp %+d]\n",
-						p.fnWasmR0Base+argList[k]*8,
+					fmt.Fprintf(w, "    movsd xmm4, qword ptr [rbp%+d]\n",
+						p.fnWasmR0Base-argList[k]*8-8,
 					)
-					fmt.Fprintf(w, "    movsd qword ptr [rbp %+d], xmm4\n",
+					fmt.Fprintf(w, "    movsd qword ptr [rbp%+d], xmm4\n",
 						arg.Off,
 					)
 				}
@@ -836,7 +824,12 @@ func (p *wat2X64Worker) buildFunc_ins(
 				unreachable()
 			}
 		}
-		fmt.Fprintf(w, "    call %s", i.X)
+
+		if fnCallIdx <= p.importFuncCount {
+			fmt.Fprintf(w, "    call %s\n", kImportNamePrefix+i.X)
+		} else {
+			fmt.Fprintf(w, "    call %s\n", kFuncNamePrefix+i.X)
+		}
 
 		// 提取返回值
 		if len(fnCallNative.Type.Return) > 1 && fnCallNative.Type.Return[1].Reg == 0 {
@@ -846,23 +839,24 @@ func (p *wat2X64Worker) buildFunc_ins(
 				reti := stk.Push(retType)
 				switch retType {
 				case token.I32:
-					fmt.Fprintf(w, "    mov eax, dword ptr [rbp %+d]\n", k*8)
-					fmt.Fprintf(w, "    mov dword ptr [rbp %+d], eax\n", p.fnWasmR0Base-reti*8)
+					fmt.Fprintf(w, "    mov eax, dword ptr [rbp%+d]\n", k*8)
+					fmt.Fprintf(w, "    mov dword ptr [rbp%+d], eax\n", p.fnWasmR0Base-reti*8-8)
 				case token.I64:
-					fmt.Fprintf(w, "    mov rax, qword ptr [rbp %+d]\n", k*8)
-					fmt.Fprintf(w, "    mov qword ptr [rbp %+d], rax\n", p.fnWasmR0Base-reti*8)
+					fmt.Fprintf(w, "    mov rax, qword ptr [rbp%+d]\n", k*8)
+					fmt.Fprintf(w, "    mov qword ptr [rbp%+d], rax\n", p.fnWasmR0Base-reti*8-8)
 				case token.F32:
-					fmt.Fprintf(w, "    movss xmm4, dword ptr [rbp %+d]\n", k*8)
-					fmt.Fprintf(w, "    movss dword ptr [rbp %+d], xmm4\n", p.fnWasmR0Base-reti*8)
+					fmt.Fprintf(w, "    movss xmm4, dword ptr [rbp%+d]\n", k*8)
+					fmt.Fprintf(w, "    movss dword ptr [rbp%+d], xmm4\n", p.fnWasmR0Base-reti*8-8)
 				case token.F64:
-					fmt.Fprintf(w, "    movsd xmm4, qword ptr [rbp %+d]\n", k*8)
-					fmt.Fprintf(w, "    movsd qword ptr [rbp %+d], xmm4\n", p.fnWasmR0Base-reti*8)
+					fmt.Fprintf(w, "    movsd xmm4, qword ptr [rbp%+d]\n", k*8)
+					fmt.Fprintf(w, "    movsd qword ptr [rbp%+d], xmm4\n", p.fnWasmR0Base-reti*8-8)
 				default:
 					unreachable()
 				}
 			}
 		} else {
 			// 走寄存器返回
+			// 需要转换为从WASM栈返回
 			for k, retType := range fnCallType.Results {
 				retNative := fnCallNative.Type.Return[k]
 				assert(retNative.Reg != 0)
@@ -870,24 +864,24 @@ func (p *wat2X64Worker) buildFunc_ins(
 				reti := stk.Push(retType)
 				switch retType {
 				case token.I32:
-					fmt.Fprintf(w, "    mov %s, dword ptr [rbp %+d]\n",
-						loong64.RegString(retNative.Reg),
-						p.fnWasmR0Base-reti*8,
+					fmt.Fprintf(w, "    mov [rbp%+d], %s\n",
+						p.fnWasmR0Base-reti*8-8,
+						x64.RegString(retNative.Reg),
 					)
 				case token.I64:
-					fmt.Fprintf(w, "    mov %s, qword ptr [rbp %+d]\n",
-						loong64.RegString(retNative.Reg),
-						p.fnWasmR0Base-reti*8,
+					fmt.Fprintf(w, "    mov [rbp%+d], %s\n",
+						p.fnWasmR0Base-reti*8-8,
+						x64.RegString(retNative.Reg),
 					)
 				case token.F32:
-					fmt.Fprintf(w, "    movss %s, dword ptr [rbp %+d]\n",
-						loong64.RegString(retNative.Reg),
-						p.fnWasmR0Base-reti*8,
+					fmt.Fprintf(w, "    movss dword ptr [rbp%+d], %s\n",
+						p.fnWasmR0Base-reti*8-8,
+						x64.RegString(retNative.Reg),
 					)
 				case token.F64:
-					fmt.Fprintf(w, "    movsd %s, qword ptr [rbp %+d]\n",
-						loong64.RegString(retNative.Reg),
-						p.fnWasmR0Base-reti*8,
+					fmt.Fprintf(w, "    movsd qword ptr [rbp%+d], %s\n",
+						p.fnWasmR0Base-reti*8-8,
+						x64.RegString(retNative.Reg),
 					)
 				default:
 					unreachable()
@@ -928,7 +922,7 @@ func (p *wat2X64Worker) buildFunc_ins(
 
 		// 模拟构建函数栈帧
 		// 后面需要根据参数是否走寄存器传递生成相关的入口代码和返回代码
-		if err := astutil.BuildFuncFrame(abi.LOONG64, fnCallNative); err != nil {
+		if err := astutil.BuildFuncFrame(abi.X64, fnCallNative); err != nil {
 			return err
 		}
 
@@ -955,7 +949,7 @@ func (p *wat2X64Worker) buildFunc_ins(
 			case token.I32:
 				if arg := fnCallNative.Type.Args[k]; arg.Reg != 0 {
 					fmt.Fprintf(w, "    mov %s, dword ptr [rbp %+d]\n",
-						loong64.RegString(arg.Reg),
+						x64.RegString(arg.Reg),
 						p.fnWasmR0Base+argList[k]*8,
 					)
 				} else {
@@ -969,7 +963,7 @@ func (p *wat2X64Worker) buildFunc_ins(
 			case token.I64:
 				if arg := fnCallNative.Type.Args[k]; arg.Reg != 0 {
 					fmt.Fprintf(w, "    mov %s, qword ptr [rbp %+d]\n",
-						loong64.RegString(arg.Reg),
+						x64.RegString(arg.Reg),
 						p.fnWasmR0Base+argList[k]*8,
 					)
 				} else {
@@ -983,7 +977,7 @@ func (p *wat2X64Worker) buildFunc_ins(
 			case token.F32:
 				if arg := fnCallNative.Type.Args[k]; arg.Reg != 0 {
 					fmt.Fprintf(w, "    movss %s, qword ptr [rbp %+d]\n",
-						loong64.RegString(arg.Reg),
+						x64.RegString(arg.Reg),
 						p.fnWasmR0Base+argList[k]*8,
 					)
 				} else {
@@ -997,7 +991,7 @@ func (p *wat2X64Worker) buildFunc_ins(
 			case token.F64:
 				if arg := fnCallNative.Type.Args[k]; arg.Reg != 0 {
 					fmt.Fprintf(w, "    movsd %s, qword ptr [rbp %+d]\n",
-						loong64.RegString(arg.Reg),
+						x64.RegString(arg.Reg),
 						p.fnWasmR0Base+argList[k]*8,
 					)
 				} else {
@@ -1047,22 +1041,22 @@ func (p *wat2X64Worker) buildFunc_ins(
 				switch retType {
 				case token.I32:
 					fmt.Fprintf(w, "    mov %s, dword ptr [rbp %+d]\n",
-						loong64.RegString(retNative.Reg),
+						x64.RegString(retNative.Reg),
 						p.fnWasmR0Base-reti*8,
 					)
 				case token.I64:
 					fmt.Fprintf(w, "    mov %s, qword ptr [rbp %+d]\n",
-						loong64.RegString(retNative.Reg),
+						x64.RegString(retNative.Reg),
 						p.fnWasmR0Base-reti*8,
 					)
 				case token.F32:
 					fmt.Fprintf(w, "    movss %s, dword ptr [rbp %+d]\n",
-						loong64.RegString(retNative.Reg),
+						x64.RegString(retNative.Reg),
 						p.fnWasmR0Base-reti*8,
 					)
 				case token.F64:
 					fmt.Fprintf(w, "    movsd %s, qword ptr [rbp %+d]\n",
-						loong64.RegString(retNative.Reg),
+						x64.RegString(retNative.Reg),
 						p.fnWasmR0Base-reti*8,
 					)
 				default:
@@ -1073,7 +1067,7 @@ func (p *wat2X64Worker) buildFunc_ins(
 
 	case token.INS_DROP:
 		sp0 := stk.DropAny()
-		fmt.Fprintf(w, "    nop # drop R%d\n", sp0)
+		fmt.Fprintf(w, "    nop # drop [rbp%+d]\n", p.fnWasmR0Base-sp0*8-8)
 	case token.INS_SELECT:
 		i := i.(ast.Ins_Select)
 
@@ -1587,31 +1581,32 @@ func (p *wat2X64Worker) buildFunc_ins(
 
 	case token.INS_I32_CONST:
 		i := i.(ast.Ins_I32Const)
-		sp0 := p.fnWasmR0Base - 8*stk.Push(token.I32)
+		sp0 := p.fnWasmR0Base - 8*stk.Push(token.I32) - 8
 		fmt.Fprintf(w, "    # i32.const %d\n", i.X)
 		fmt.Fprintf(w, "    movabs rax, %d\n", int64(i.X))
-		fmt.Fprintf(w, "    mov qword ptr [rbp %+d], rax\n", sp0)
+		fmt.Fprintf(w, "    mov qword ptr [rbp%+d], rax\n", sp0)
 
 	case token.INS_I64_CONST:
 		i := i.(ast.Ins_I64Const)
-		sp0 := p.fnWasmR0Base - 8*stk.Push(token.I64)
+		sp0 := p.fnWasmR0Base - 8*stk.Push(token.I64) - 8
 		fmt.Fprintf(w, "    # i64.const %d\n", i.X)
 		fmt.Fprintf(w, "    movabs rax, %d\n", int64(i.X))
-		fmt.Fprintf(w, "    mov qword ptr [rbp %+d], rax\n", sp0)
+		fmt.Fprintf(w, "    mov    [rbp%+d], rax\n", sp0)
+		fmt.Fprintln(w)
 
 	case token.INS_F32_CONST:
 		i := i.(ast.Ins_F32Const)
-		sp0 := p.fnWasmR0Base - 8*stk.Push(token.F32)
+		sp0 := p.fnWasmR0Base - 8*stk.Push(token.F32) - 8
 		fmt.Fprintf(w, "    # f32.const %f\n", i.X)
-		fmt.Fprintf(w, "    movss xmm4, %f\n", i.X)
-		fmt.Fprintf(w, "    movss dword ptr [rbp %+d], xmm4\n", sp0)
+		fmt.Fprintf(w, "    movabs rax, 0x%X\n", math.Float32bits(i.X))
+		fmt.Fprintf(w, "    movd   [rbp%+d], rax\n", sp0)
 
 	case token.INS_F64_CONST:
 		i := i.(ast.Ins_F64Const)
-		sp0 := p.fnWasmR0Base - 8*stk.Push(token.F64)
-		fmt.Fprintf(w, "    # f32.const %f\n", i.X)
-		fmt.Fprintf(w, "    movsd xmm4, %f\n", i.X)
-		fmt.Fprintf(w, "    movsd qword ptr [rbp %+d], xmm4\n", sp0)
+		sp0 := p.fnWasmR0Base - 8*stk.Push(token.F64) - 8
+		fmt.Fprintf(w, "    # f64.const %f\n", i.X)
+		fmt.Fprintf(w, "    movabs rax, 0x%X\n", math.Float64bits(i.X))
+		fmt.Fprintf(w, "    movq   [rbp%+d], xmm4\n", sp0)
 
 	case token.INS_I32_EQZ:
 		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.I32)

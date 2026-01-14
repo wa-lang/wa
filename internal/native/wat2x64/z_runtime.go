@@ -65,8 +65,9 @@ func (p *wat2X64Worker) buildRuntimeImpl_panic(w io.Writer) error {
 	p.gasGlobal(w, kRuntimePanic)
 	p.gasFuncStart(w, kRuntimePanic)
 
-	fmt.Fprintf(w, "    # 影子内存\n")
-	fmt.Fprintf(w, "    sub rsp, 40\n")
+	fmt.Fprintf(w, "    push rbp\n")
+	fmt.Fprintf(w, "    mov  rbp, rsp\n")
+	fmt.Fprintf(w, "    sub  rsp, 32\n")
 	fmt.Fprintln(w)
 
 	fmt.Fprintf(w, "    # runtime.write(stderr, panicMessage, size)\n")
@@ -82,7 +83,8 @@ func (p *wat2X64Worker) buildRuntimeImpl_panic(w io.Writer) error {
 	fmt.Fprintln(w)
 
 	fmt.Fprintf(w, "    # return\n")
-	fmt.Fprintf(w, "    add rsp, 40\n")
+	fmt.Fprintf(w, "    mov rsp, rbp\n")
+	fmt.Fprintf(w, "    pop rbp\n")
 	fmt.Fprintf(w, "    ret\n")
 	fmt.Fprintln(w)
 

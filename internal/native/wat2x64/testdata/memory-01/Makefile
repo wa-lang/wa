@@ -9,5 +9,7 @@ golden:
 
 dev:
 	$(WA) build -arch=x64 -target=windows memory-01.wat
+	gcc env.c memory-01.wa.s -o a.out1.exe
+	a.out1.exe
 
 clean:

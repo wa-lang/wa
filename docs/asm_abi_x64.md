@@ -13,6 +13,7 @@
 
 ## Microsoft X64 ABI
 
+- 每个标量在栈上的空间都是8个字节
 - 栈指针 rsp 必须保持 16 字节对齐
 - 整数参数: rcx, rdx, r8, r9, stack(右到左入栈)
 - 浮点数参数: xmm0-xmm3, stack(右到左入栈)
@@ -56,6 +57,7 @@
 
 ## System V AMD64 ABI
 
+- 每个标量在栈上的空间都是8个字节
 - 栈指针 rsp 必须是对齐到 16 字节
 - 整数参数: rdi, rsi, rdx, rcx, r8, r9, stack(右到左入栈)
 - 浮点数参数: xmm0-xmm7, stack(右到左入栈)

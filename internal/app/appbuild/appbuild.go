@@ -164,7 +164,7 @@ func BuildApp(opt *appbase.Option, input, outfile string) (mainFunc string, wasm
 
 			// 设置默认输出目标
 			if outfile == "" {
-				outfile = appbase.ReplaceExt(input, ".wat", ".exe")
+				outfile = appbase.ReplaceExt(input, ".wat", ".wa.s")
 			}
 
 			watData, err := os.ReadFile(input)
@@ -179,28 +179,7 @@ func BuildApp(opt *appbase.Option, input, outfile string) (mainFunc string, wasm
 			}
 
 			// 保存汇编到文件
-			nasmfile := appbase.ReplaceExt(input, ".wat", ".wa.s")
-			err = os.WriteFile(nasmfile, nasmBytes, 0666)
-			if err != nil {
-				fmt.Printf("write %s failed: %v\n", outfile, err)
-				os.Exit(1)
-			}
-
-			// gcc 编译为 exe
-			gccPath, err := exec.LookPath("gcc")
-			if err != nil {
-				fmt.Printf("gcc not found\n")
-				os.Exit(1)
-			}
-			gccOutput, err := exec.Command(gccPath, nasmfile, "-o", outfile).CombinedOutput()
-			if err != nil {
-				fmt.Print(string(gccOutput))
-				fmt.Printf("gcc build failed: %v\n", err)
-				os.Exit(1)
-			}
-
-			// 写到文件
-			err = os.WriteFile(outfile, wasmBytes, 0666)
+			err = os.WriteFile(outfile, nasmBytes, 0666)
 			if err != nil {
 				fmt.Printf("write %s failed: %v\n", outfile, err)
 				os.Exit(1)

@@ -64,8 +64,9 @@ func (p *wat2X64Worker) buildMemory(w io.Writer) error {
 		p.gasGlobal(w, kMemoryInitFuncName)
 		p.gasFuncStart(w, kMemoryInitFuncName)
 
-		p.gasCommentInFunc(w, "影子空间")
-		fmt.Fprintln(w, "    sub rsp, 40")
+		fmt.Fprintln(w, "    push rbp")
+		fmt.Fprintln(w, "    mov  rbp, rsp")
+		fmt.Fprintln(w, "    sub  rsp, 32")
 		fmt.Fprintln(w)
 
 		p.gasCommentInFunc(w, "分配内存")
@@ -103,7 +104,8 @@ func (p *wat2X64Worker) buildMemory(w io.Writer) error {
 		}
 
 		p.gasCommentInFunc(w, "函数返回")
-		fmt.Fprintln(w, "    add rsp, 40")
+		fmt.Fprintln(w, "    mov rsp, rbp")
+		fmt.Fprintln(w, "    pop rbp")
 		fmt.Fprintln(w, "    ret")
 		fmt.Fprintln(w)
 	}

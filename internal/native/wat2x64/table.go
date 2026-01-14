@@ -53,8 +53,9 @@ func (p *wat2X64Worker) buildTable(w io.Writer) error {
 		p.gasGlobal(w, kFuncInitFuncName)
 		p.gasFuncStart(w, kFuncInitFuncName)
 
-		p.gasCommentInFunc(w, "影子空间")
-		fmt.Fprintln(w, "    sub rsp, 40")
+		fmt.Fprintln(w, "    push rbp")
+		fmt.Fprintln(w, "    mov  rbp, rsp")
+		fmt.Fprintln(w, "    sub  rsp, 32")
 		fmt.Fprintln(w)
 
 		p.gasCommentInFunc(w, "初始化全部函数索引列表")
@@ -99,7 +100,8 @@ func (p *wat2X64Worker) buildTable(w io.Writer) error {
 		}
 
 		p.gasCommentInFunc(w, "函数返回")
-		fmt.Fprintln(w, "    add rsp, 40")
+		fmt.Fprintln(w, "    mov rsp, rbp")
+		fmt.Fprintln(w, "    pop rbp")
 		fmt.Fprintln(w, "    ret")
 		fmt.Fprintln(w)
 	}

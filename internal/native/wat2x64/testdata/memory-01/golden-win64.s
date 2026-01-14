@@ -41,8 +41,9 @@
 .section .text
 .globl .Memory.initFunc
 .Memory.initFunc:
-    # 影子空间
-    sub rsp, 40
+    push rbp
+    mov  rbp, rsp
+    sub  rsp, 32
 
     # 分配内存
     mov  rcx, [rip + .Memory.maxPages]
@@ -69,15 +70,17 @@
     call .Runtime.memcpy
 
     # 函数返回
-    add rsp, 40
+    mov rsp, rbp
+    pop rbp
     ret
 
 # 汇编程序入口函数
 .section .text
 .globl main
 main:
-    # 影子内存
-    sub rsp, 40
+    push rbp
+    mov  rbp, rsp
+    sub  rsp, 32
 
     call .Memory.initFunc
     call .F.main
@@ -87,7 +90,8 @@ main:
     call .Runtime._exit
 
     # exit 后这里不会被执行, 但是依然保留
-    add rsp, 40
+    mov rsp, rbp
+    pop rbp
     ret
 
 .section .data
@@ -98,8 +102,9 @@ main:
 .section .text
 .globl .Runtime.panic
 .Runtime.panic:
-    # 影子内存
-    sub rsp, 40
+    push rbp
+    mov  rbp, rsp
+    sub  rsp, 32
 
     # runtime.write(stderr, panicMessage, size)
     mov  rcx, 2 # stderr
@@ -112,7 +117,8 @@ main:
     call .Runtime._exit
 
     # return
-    add rsp, 40
+    mov rsp, rbp
+    pop rbp
     ret
 
 # func main
@@ -120,27 +126,39 @@ main:
 .F.main:
     push rbp
     mov  rbp, rsp
-    sub rsp, 64
+    sub  rsp, 32
+
+    # 没有参数需要备份到栈
+
+    # 没有返回值变量需要初始化为0
+
+    # 没有局部变量需要初始化为0
 
     # i64.const 1
     movabs rax, 1
-    mov    [rbp - 8], rax
+    mov    [rbp-8], rax
 
     # i64.const 8
     movabs rax, 8
-    mov    [rbp - 16], rax
+    mov    [rbp-16], rax
 
     # i64.const 12
     movabs rax, 12
-    mov    [rbp - 24], rax
+    mov    [rbp-24], rax
 
-    # syscall.write(stdout, ptr, size)
-    mov rcx, [rbp - 8]    # arg 0
-    mov rdx, [rbp - 16]   # arg 1
-    mov r8,  [rbp - 24]   # arg 2
+    # call syscall.write(...)
+    mov rcx, [rbp-8] # arg 0
+    mov rdx, [rbp-16] # arg 1
+    mov r8, [rbp-24] # arg 2
     call .Import.syscall.write
+    mov [rbp-8], rax
+    nop # drop [rbp-8]
+
+    # 根据ABI处理返回值
+.L.return:
 
     # 函数返回
     mov rsp, rbp
     pop rbp
     ret
+

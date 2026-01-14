@@ -28,24 +28,19 @@ func buildFuncFrame_x64_windows(fn *ast.Func) error {
 	)
 
 	// 计算输入参数需要的栈大小
-	argsStackSize := len(fn.Type.Return) * 8
+	fn.ArgsSize = len(fn.Type.Args) * 8
 
 	// 影子空间是强制保留的
-	if argsStackSize < 32 {
-		argsStackSize = 32
-	}
-
-	// 调用其他函数的参数也需要 16 字节对齐
-	if x := argsStackSize; x%16 != 0 {
-		x = ((x + 15) / 16) * 16
-		argsStackSize = x
+	if fn.ArgsSize < 32 {
+		fn.ArgsSize = 32
 	}
 
 	// 返回值
 	switch len(fn.Type.Return) {
 	case 0:
 	case 1:
-		// 给返回值的影子空间
+		// 给单个返回值的影子空间
+		// 由函数内部保留
 		sp -= 8
 
 		// 是基于 rbp 的位置
@@ -67,8 +62,10 @@ func buildFuncFrame_x64_windows(fn *ast.Func) error {
 		}
 	default:
 		// 栈返回值需要跳过输入参数和栈帧头
+		base := fn.ArgsSize + headSize
+		fn.ArgsSize += len(fn.Type.Return) * 8
 		for i := 0; i < len(fn.Type.Return); i++ {
-			fn.Type.Return[i].Off = headSize + argsStackSize + i*8
+			fn.Type.Return[i].Off = base + i*8
 			fn.Type.Return[i].Cap = 1
 		}
 	}
@@ -106,29 +103,10 @@ func buildFuncFrame_x64_windows(fn *ast.Func) error {
 	}
 
 	// 计算局部变量的空间
-	for i := 0; i < len(fn.Body.Locals); i++ {
-		switch x := fn.Body.Locals[i]; x.Type {
-		case token.I32, token.U32, token.I32_zh, token.U32_zh:
-			sp = sp - 4*x.Cap
-			x.Off = sp // rbp
-		case token.I64, token.U64, token.I64_zh, token.U64_zh:
-			if sp%8 != 0 {
-				sp -= 4
-			}
-			sp = sp - 8*x.Cap
-			x.Off = sp // rbp
-		case token.F32, token.F32_zh:
-			sp = sp - 4*x.Cap
-			x.Off = sp // rbp
-		case token.F64, token.F64_zh:
-			if sp%8 != 0 {
-				sp -= 4
-			}
-			sp = sp - 8*x.Cap
-			x.Off = sp // rbp
-		default:
-			panic("unreachable")
-		}
+	// 每个标量在栈上的空间都是8个字节
+	for _, x := range fn.Body.Locals {
+		sp = sp - x.Cap*8
+		x.Off = sp // rbp
 	}
 
 	// rsp 需要 16 字节对齐

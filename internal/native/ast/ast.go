@@ -85,7 +85,8 @@ type Func struct {
 	Name      string            // 函数名
 	Prop      []string          // 属性列表, [Key=Val,...]
 	Type      *FuncType         // 函数类型
-	FrameSize int               // 栈帧大小(头部/参数/返回值/局部变量)
+	ArgsSize  int               // 调用该函数需要的栈大小(参数/返回值)
+	FrameSize int               // 函数内栈帧大小(局部变量/临时空间), 不包含头部(rip/rbp)
 	BodySize  int               // 指令大小(没有类型信息)
 	Body      *FuncBody         // 函数体
 	LinkInfo  *abi.LinkedSymbol // 链接信息
