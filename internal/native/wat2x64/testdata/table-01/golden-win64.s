@@ -3,23 +3,28 @@
 
 .intel_syntax noprefix
 
-# 导入 系统调用
+# 运行时函数
 .extern _write
 .extern _exit
-.set .Import.syscall.write, _write
-.set .Import.syscall.exit,  _exit
-
-# 导入 runtime 函数
 .extern malloc
 .extern memcpy
 .extern memset
-.set .Import.runtime.malloc, malloc
-.set .Import.runtime.memcpy, memcpy
-.set .Import.runtime.memset, memset
+.set .Runtime._write, _write
+.set .Runtime._exit, _exit
+.set .Runtime.malloc, malloc
+.set .Runtime.memcpy, memcpy
+.set .Runtime.memset, memset
+
+# 导入函数(外部库定义)
+.extern wat2x64_syscall_write
+.set .Import.syscall.write, wat2x64_syscall_write
 
 # 定义内存
 .section .data
 .align 8
+.globl .Memory.addr
+.globl .Memory.pages
+.globl .Memory.maxPages
 .Memory.addr: .quad 0
 .Memory.pages: .quad 1
 .Memory.maxPages: .quad 1
@@ -27,43 +32,23 @@
 # 内存数据
 .section .data
 .align 8
-# Memory[8]: hello worl...
+# memcpy(&Memory[8], data[0], size)
 .Memory.dataOffset.0: .quad 8
 .Memory.dataSize.0: .quad 12
-.Memory.dataPtr.0: .ascii "hello world\n"
-
-# 定义表格
-.section .data
-.align 8
-.Table.addr: .quad 0
-.Table.size: .quad 1
-.Table.maxSize: .quad 1
-
-# 表格元素
-.section .data
-.align 8
-.Table.elemOffset.0: .quad 0
-.Table.elemFuncIndex.0: .quad 0 # .Import.syscall.write
-
-# 函数列表
-# 保持连续并填充全部函数
-.section .data
-.align 8
-.Func.indexList:
-.Func.indexList.0: .quad .Import.syscall.write
-.Func.indexList.end: .quad 0
+.Memory.dataPtr.0: .asciz "hello world\n"
 
 # 内存初始化函数
 .section .text
 .globl .Memory.initFunc
 .Memory.initFunc:
-    # 影子空间
-    sub rsp, 40
+    push rbp
+    mov  rbp, rsp
+    sub  rsp, 32
 
     # 分配内存
     mov  rcx, [rip + .Memory.maxPages]
-    shl  rcx, 16 # sizeof(page) == 65536
-    call malloc
+    shl  rcx, 16
+    call .Runtime.malloc
     lea  rdx, [rip + .Memory.addr]
     mov  [rdx], rax
 
@@ -71,74 +56,162 @@
     mov  rcx, [rip + .Memory.addr]
     mov  rdx, 0
     mov  r8, [rip + .Memory.maxPages]
-    shl  r8, 16 # sizeof(page) == 65536
-    call .Import.runtime.memset
+    shl  r8, 16
+    call .Runtime.memset
 
     # 初始化内存
 
-    # Memory[8]: hello worl...
+    # memcpy(&Memory[8], data[0], size)
     mov  rax, [rip + .Memory.addr]
     mov  rcx, [rip + .Memory.dataOffset.0]
     add  rcx, rax
     lea  rdx, [rip + .Memory.dataPtr.0]
     mov  r8, [rip + .Memory.dataSize.0]
-    call .Import.runtime.memcpy
+    call .Runtime.memcpy
 
     # 函数返回
-    add rsp, 40
+    mov rsp, rbp
+    pop rbp
     ret
 
+# 定义表格
+.section .data
+.align 8
+.globl .Table.addr
+.globl .Table.size
+.globl .Table.maxSize
+.Table.addr: .quad 0
+.Table.size: .quad 1
+.Table.maxSize: .quad 1
+
+# 函数列表
+# 保持连续并填充全部函数
+.section .data
+.align 8
+.Table.funcIndexList:
+.Table.funcIndexList.0: .quad .Import.syscall.write
+.Table.funcIndexList.1: .quad .F.main
+.Table.funcIndexList.end: .quad 0
 
 # 表格初始化函数
 .section .text
 .globl .Table.initFunc
 .Table.initFunc:
-    # 影子空间
-    sub rsp, 40
+    push rbp
+    mov  rbp, rsp
+    sub  rsp, 32
 
     # 分配表格
     mov  rcx, [rip + .Table.maxSize]
-    shl  rcx, 3 # sizeof(int) == 8
-    call malloc
-    lea  rdx, [rip + .Table.addr]
-    mov  [rdx], rax
+    shl  rcx, 3 # sizeof(i64) == 8
+    call .Runtime.malloc
+    mov  [rip + .Table.addr], rax
 
-    # 表格清零
+    # 表格填充 0xFF
     mov  rcx, [rip + .Table.addr]
-    mov  rdx, 0
+    mov  rdx, 0xFF
     mov  r8, [rip + .Table.maxSize]
-    shl  r8, 3 # sizeof(int) == 8
-    call .Import.runtime.memset
+    shl  r8, 3 # sizeof(i64) == 8
+    call .Runtime.memset
 
     # 初始化表格
-    
-    # data[0]: ...
-    mov  rax, [rip + .Table.addr]
-    mov  rcx, [rip + .Table.elemOffset.0]
-    add  rcx, rax
-    lea  rdx, [rip + .Table.elemFuncIndex.0]
-    mov  r8, 8
-    call .Import.runtime.memcpy
+
+    # 加载表格地址
+    mov rax, [rip + .Table.addr]
+    # elem[0]: table[0+0] = syscall.write
+    mov qword ptr [rax+0], 0
 
     # 函数返回
-    add rsp, 40
+    mov rsp, rbp
+    pop rbp
     ret
 
-# Wasm 入口函数, 后续是编译器自动生成
+# 汇编程序入口函数
 .section .text
-.global .F.main
+.globl main
+main:
+    push rbp
+    mov  rbp, rsp
+    sub  rsp, 32
+
+    call .Memory.initFunc
+    call .Table.initFunc
+    call .F.main
+
+    # runtime.exit(0)
+    mov  rcx, 0
+    call .Runtime._exit
+
+    # exit 后这里不会被执行, 但是依然保留
+    mov rsp, rbp
+    pop rbp
+    ret
+
+.section .data
+.align 8
+.Runtime.panic.message: .asciz "panic"
+.Runtime.panic.messageLen: .quad 5
+
+.section .text
+.globl .Runtime.panic
+.Runtime.panic:
+    push rbp
+    mov  rbp, rsp
+    sub  rsp, 32
+
+    # runtime.write(stderr, panicMessage, size)
+    mov  rcx, 2 # stderr
+    mov  rdx, [rip + .Runtime.panic.message]
+    mov  r8, [rip + .Runtime.panic.messageLen] # size
+    call .Runtime.panic
+
+    # 退出程序
+    mov  rcx, 1 # 退出码
+    call .Runtime._exit
+
+    # return
+    mov rsp, rbp
+    pop rbp
+    ret
+
+# func main
+.section .text
 .F.main:
-    # rsp%16 == 0
-    # (rsp-8-40)%16 == 0
-    sub rsp, 40
+    push rbp
+    mov  rbp, rsp
+    sub  rsp, 32
+
+    # 没有参数需要备份到栈
+
+    # 没有返回值变量需要初始化为0
+
+    # 没有局部变量需要初始化为0
+
+    # i64.const 1
+    movabs rax, 1
+    mov    [rbp-8], rax
+
+    # i64.const 8
+    movabs rax, 8
+    mov    [rbp-16], rax
+
+    # i64.const 12
+    movabs rax, 12
+    mov    [rbp-24], rax
+
+    # i32.const 0
+    movabs rax, 0
+    mov qword ptr [rbp-32], rax
+
+    # 加载函数的地址
 
     # r10 = table[0]
     mov  rax, [rip + .Table.addr]
     mov  rbx, 0
     mov  r10, [rax + rbx*8]
 
-    # r11 = .Func.indexList[r10]
-    lea  r11, [rip + .Func.indexList]
+    # r11 = .Table.funcIndexList[r10]
+    lea  r11, [rip + .Table.funcIndexList]
     mov  rax, [r11 + r10*8]
     mov  r11, rax
 
@@ -150,26 +223,11 @@
     mov  r8, [rip + .Memory.dataSize.0] # size
     call r11
 
+    # 根据ABI处理返回值
+.L.return:
+
     # 函数返回
-    add rsp, 40
+    mov rsp, rbp
+    pop rbp
     ret
 
-# 汇编程序入口函数
-.section .text
-.global main
-main:
-    # rsp%16 == 0
-    # (rsp-8-40)%16 == 0
-    sub rsp, 40
-
-    call .Memory.initFunc
-    call .Table.initFunc
-    call .F.main
-
-    # syscall.exit(0)
-    mov  rcx, 0 # exit code
-    call .Import.syscall.exit
-
-    # exit 后这里不会被执行, 但是依然保留
-    add rsp, 40
-    ret

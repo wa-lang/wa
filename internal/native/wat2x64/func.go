@@ -930,7 +930,7 @@ func (p *wat2X64Worker) buildFunc_ins(
 		sp0 := stk.Pop(token.I32)
 		fnRegName := "r11"
 		p.gasCommentInFunc(w, "根据函数索引编号从列表查询函数地址")
-		fmt.Fprintf(w, "    lea rax, [rip + %s]\n", kFuncIndexListName)
+		fmt.Fprintf(w, "    lea rax, [rip + %s]\n", kTableFuncIndexListName)
 		fmt.Fprintf(w, "    mov r10, [rbp %+d]\n", p.fnWasmR0Base-sp0*8)
 		fmt.Fprintf(w, "    add rax, r10\n")
 		fmt.Fprintf(w, "    lea %s, [rax]\n", fnRegName)

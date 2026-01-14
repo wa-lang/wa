@@ -24,7 +24,12 @@ func (p *wat2X64Worker) buildStart(w io.Writer) error {
 	fmt.Fprintln(w, "    sub  rsp, 32")
 	fmt.Fprintln(w)
 
-	fmt.Fprintf(w, "    call %s\n", kMemoryInitFuncName)
+	if p.m.Memory != nil {
+		fmt.Fprintf(w, "    call %s\n", kMemoryInitFuncName)
+	}
+	if p.m.Table != nil {
+		fmt.Fprintf(w, "    call %s\n", kTableInitFuncName)
+	}
 
 	if p.m.Start != "" {
 		fmt.Fprintf(w, "    call %s\n", kFuncNamePrefix+p.m.Start)
