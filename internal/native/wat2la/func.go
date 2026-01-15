@@ -197,35 +197,35 @@ func (p *wat2laWorker) buildFunc_body(w io.Writer, fn *ast.Func) error {
 			switch fn.Type.Params[i].Type {
 			case token.I32:
 				fmt.Fprintf(&bufHeader, "    st.w %v, fp, %d # save %s%s\n",
-					loong64.RegString(arg.Reg), arg.Off,
+					loong64.RegString(arg.Reg), arg.RBPOff,
 					kFuncArgNamePrefix, arg.Name,
 				)
 			case token.I64:
 				fmt.Fprintf(&bufHeader, "    st.d %v, fp, %d # save %s%s\n",
-					loong64.RegString(arg.Reg), arg.Off,
+					loong64.RegString(arg.Reg), arg.RBPOff,
 					kFuncArgNamePrefix, arg.Name,
 				)
 			case token.F32:
 				if arg.Reg >= loong64.REG_A0 && arg.Reg <= loong64.REG_A7 {
 					fmt.Fprintf(&bufHeader, "    st.w %v, fp, %d # save %s%s\n",
-						loong64.RegString(arg.Reg), arg.Off,
+						loong64.RegString(arg.Reg), arg.RBPOff,
 						kFuncArgNamePrefix, arg.Name,
 					)
 				} else {
 					fmt.Fprintf(&bufHeader, "    fst.s %v, fp, %d # save %s%s\n",
-						loong64.RegString(arg.Reg), arg.Off,
+						loong64.RegString(arg.Reg), arg.RBPOff,
 						kFuncArgNamePrefix, arg.Name,
 					)
 				}
 			case token.F64:
 				if arg.Reg >= loong64.REG_A0 && arg.Reg <= loong64.REG_A7 {
 					fmt.Fprintf(&bufHeader, "    st.d %v, fp, %d # save %s%s\n",
-						loong64.RegString(arg.Reg), arg.Off,
+						loong64.RegString(arg.Reg), arg.RBPOff,
 						kFuncArgNamePrefix, arg.Name,
 					)
 				} else {
 					fmt.Fprintf(&bufHeader, "    fst.d %v, fp, %d # save %s%s\n",
-						loong64.RegString(arg.Reg), arg.Off,
+						loong64.RegString(arg.Reg), arg.RBPOff,
 						kFuncArgNamePrefix, arg.Name,
 					)
 				}
@@ -240,19 +240,19 @@ func (p *wat2laWorker) buildFunc_body(w io.Writer, fn *ast.Func) error {
 		switch fn.Type.Results[i] {
 		case token.I32:
 			fmt.Fprintf(&bufHeader, "    st.w zero, fp, %d # %s%s = 0\n",
-				ret.Off, kFuncRetNamePrefix, ret.Name,
+				ret.RBPOff, kFuncRetNamePrefix, ret.Name,
 			)
 		case token.I64:
 			fmt.Fprintf(&bufHeader, "    st.d zero, fp, %d # %s%s = 0\n",
-				ret.Off, kFuncRetNamePrefix, ret.Name,
+				ret.RBPOff, kFuncRetNamePrefix, ret.Name,
 			)
 		case token.F32:
 			fmt.Fprintf(&bufHeader, "    fst.s zero, fp, %d # %s%s = 0\n",
-				ret.Off, kFuncRetNamePrefix, ret.Name,
+				ret.RBPOff, kFuncRetNamePrefix, ret.Name,
 			)
 		case token.F64:
 			fmt.Fprintf(&bufHeader, "    fst.d zero, fp, %d # %s%s = 0\n",
-				ret.Off, kFuncRetNamePrefix, ret.Name,
+				ret.RBPOff, kFuncRetNamePrefix, ret.Name,
 			)
 		default:
 			panic("unreachable")
@@ -264,19 +264,19 @@ func (p *wat2laWorker) buildFunc_body(w io.Writer, fn *ast.Func) error {
 		switch fn.Body.Locals[i].Type {
 		case token.I32:
 			fmt.Fprintf(&bufHeader, "    st.w zero, fp, %d # %s%s = 0\n",
-				local.Off, kFuncLocalNamePrefix, local.Name,
+				local.RBPOff, kFuncLocalNamePrefix, local.Name,
 			)
 		case token.I64:
 			fmt.Fprintf(&bufHeader, "    st.d zero, fp, %d # %s%s = 0\n",
-				local.Off, kFuncLocalNamePrefix, local.Name,
+				local.RBPOff, kFuncLocalNamePrefix, local.Name,
 			)
 		case token.F32:
 			fmt.Fprintf(&bufHeader, "    fst.s zero, fp, %d # %s%s = 0\n",
-				local.Off, kFuncLocalNamePrefix, local.Name,
+				local.RBPOff, kFuncLocalNamePrefix, local.Name,
 			)
 		case token.F64:
 			fmt.Fprintf(&bufHeader, "    fst.d zero, fp, %d # %s%s = 0\n",
-				local.Off, kFuncLocalNamePrefix, local.Name,
+				local.RBPOff, kFuncLocalNamePrefix, local.Name,
 			)
 		default:
 			panic("unreachable")
@@ -328,7 +328,7 @@ func (p *wat2laWorker) buildFunc_body(w io.Writer, fn *ast.Func) error {
 		// 如果走内存, 返回地址
 		if len(fn.Type.Results) > 1 && fnNative.Type.Return[1].Reg == 0 {
 			fmt.Fprintf(&bufIns, "    addi.d a0, fp, %d # ret.%s\n",
-				fnNative.Type.Return[0].Off,
+				fnNative.Type.Return[0].RBPOff,
 				fnNative.Type.Return[0].Name,
 			)
 		} else {
@@ -340,25 +340,25 @@ func (p *wat2laWorker) buildFunc_body(w io.Writer, fn *ast.Func) error {
 				case token.I32:
 					fmt.Fprintf(&bufIns, "    ld.w %v, fp, %d # ret.%s\n",
 						loong64.RegString(ret.Reg),
-						fnNative.Type.Return[i].Off,
+						fnNative.Type.Return[i].RBPOff,
 						fnNative.Type.Return[i].Name,
 					)
 				case token.I64:
 					fmt.Fprintf(&bufIns, "    ld.d %v, fp, %d # ret.%s\n",
 						loong64.RegString(ret.Reg),
-						fnNative.Type.Return[i].Off,
+						fnNative.Type.Return[i].RBPOff,
 						fnNative.Type.Return[i].Name,
 					)
 				case token.F32:
 					fmt.Fprintf(&bufIns, "    fld.s %v, fp, %d # ret.%s\n",
 						loong64.RegString(ret.Reg),
-						fnNative.Type.Return[i].Off,
+						fnNative.Type.Return[i].RBPOff,
 						fnNative.Type.Return[i].Name,
 					)
 				case token.F64:
 					fmt.Fprintf(&bufIns, "    fld.d %v, fp, %d # ret.%s\n",
 						loong64.RegString(ret.Reg),
-						fnNative.Type.Return[i].Off,
+						fnNative.Type.Return[i].RBPOff,
 						fnNative.Type.Return[i].Name,
 					)
 				}
@@ -736,19 +736,19 @@ func (p *wat2laWorker) buildFunc_ins(
 			switch fn.Type.Results[0] {
 			case token.I32:
 				fmt.Fprintf(w, "    ld.w t0, fp, %d\n", p.fnWasmR0Base-sp0*8)
-				fmt.Fprintf(w, "    st.w t0, fp, %d\n", fnNative.Type.Return[0].Off)
+				fmt.Fprintf(w, "    st.w t0, fp, %d\n", fnNative.Type.Return[0].RBPOff)
 				fmt.Fprintf(w, "    b    %s\n", kLabelName_return)
 			case token.I64:
 				fmt.Fprintf(w, "    ld.d t0, fp, %d\n", p.fnWasmR0Base-sp0*8)
-				fmt.Fprintf(w, "    st.d t0, fp, %d\n", fnNative.Type.Return[0].Off)
+				fmt.Fprintf(w, "    st.d t0, fp, %d\n", fnNative.Type.Return[0].RBPOff)
 				fmt.Fprintf(w, "    b    %s\n", kLabelName_return)
 			case token.F32:
 				fmt.Fprintf(w, "    fld.s t0, fp, %d\n", p.fnWasmR0Base-sp0*8)
-				fmt.Fprintf(w, "    fst.s t0, fp, %d\n", fnNative.Type.Return[0].Off)
+				fmt.Fprintf(w, "    fst.s t0, fp, %d\n", fnNative.Type.Return[0].RBPOff)
 				fmt.Fprintf(w, "    b     %s\n", kLabelName_return)
 			case token.F64:
 				fmt.Fprintf(w, "    fld.d t0, fp, %d\n", p.fnWasmR0Base-sp0*8)
-				fmt.Fprintf(w, "    fst.d t0, fp, %d\n", fnNative.Type.Return[0].Off)
+				fmt.Fprintf(w, "    fst.d t0, fp, %d\n", fnNative.Type.Return[0].RBPOff)
 				fmt.Fprintf(w, "    b     %s\n", kLabelName_return)
 			default:
 				unreachable()
@@ -760,16 +760,16 @@ func (p *wat2laWorker) buildFunc_ins(
 				switch xType {
 				case token.I32:
 					fmt.Fprintf(w, "    ld.w t0, fp, %d\n", p.fnWasmR0Base-spi*8)
-					fmt.Fprintf(w, "    st.w t0, fp, %d\n", fnNative.Type.Return[i].Off)
+					fmt.Fprintf(w, "    st.w t0, fp, %d\n", fnNative.Type.Return[i].RBPOff)
 				case token.I64:
 					fmt.Fprintf(w, "    ld.d t0, fp, %d\n", p.fnWasmR0Base-spi*8)
-					fmt.Fprintf(w, "    st.d t0, fp, %d\n", fnNative.Type.Return[i].Off)
+					fmt.Fprintf(w, "    st.d t0, fp, %d\n", fnNative.Type.Return[i].RBPOff)
 				case token.F32:
 					fmt.Fprintf(w, "    fld.s t0, fp, %d\n", p.fnWasmR0Base-spi*8)
-					fmt.Fprintf(w, "    fst.s t0, fp, %d\n", fnNative.Type.Return[i].Off)
+					fmt.Fprintf(w, "    fst.s t0, fp, %d\n", fnNative.Type.Return[i].RBPOff)
 				case token.F64:
 					fmt.Fprintf(w, "    fld.d t0, fp, %d\n", p.fnWasmR0Base-spi*8)
-					fmt.Fprintf(w, "    fst.d t0, fp, %d\n", fnNative.Type.Return[i].Off)
+					fmt.Fprintf(w, "    fst.d t0, fp, %d\n", fnNative.Type.Return[i].RBPOff)
 				default:
 					unreachable()
 				}
@@ -837,7 +837,7 @@ func (p *wat2laWorker) buildFunc_ins(
 						p.fnWasmR0Base+argList[k]*8,
 					)
 					fmt.Fprintf(w, "    st.w t1, fp, %d",
-						arg.Off,
+						arg.RBPOff,
 					)
 				}
 			case token.I64:
@@ -851,7 +851,7 @@ func (p *wat2laWorker) buildFunc_ins(
 						p.fnWasmR0Base+argList[k]*8,
 					)
 					fmt.Fprintf(w, "    st.d t1, fp, %d",
-						arg.Off,
+						arg.RBPOff,
 					)
 				}
 			case token.F32:
@@ -872,7 +872,7 @@ func (p *wat2laWorker) buildFunc_ins(
 						p.fnWasmR0Base+argList[k]*8,
 					)
 					fmt.Fprintf(w, "    fst.s t1, fp, %d",
-						arg.Off,
+						arg.RBPOff,
 					)
 				}
 			case token.F64:
@@ -893,7 +893,7 @@ func (p *wat2laWorker) buildFunc_ins(
 						p.fnWasmR0Base+argList[k]*8,
 					)
 					fmt.Fprintf(w, "    fst.d t1, fp, %d",
-						arg.Off,
+						arg.RBPOff,
 					)
 				}
 			default:
@@ -1024,7 +1024,7 @@ func (p *wat2laWorker) buildFunc_ins(
 						p.fnWasmR0Base+argList[k]*8,
 					)
 					fmt.Fprintf(w, "    st.w t1, fp, %d",
-						arg.Off,
+						arg.RBPOff,
 					)
 				}
 			case token.I64:
@@ -1038,7 +1038,7 @@ func (p *wat2laWorker) buildFunc_ins(
 						p.fnWasmR0Base+argList[k]*8,
 					)
 					fmt.Fprintf(w, "    st.d t1, fp, %d",
-						arg.Off,
+						arg.RBPOff,
 					)
 				}
 			case token.F32:
@@ -1052,7 +1052,7 @@ func (p *wat2laWorker) buildFunc_ins(
 						p.fnWasmR0Base+argList[k]*8,
 					)
 					fmt.Fprintf(w, "    fst.s t1, fp, %d",
-						arg.Off,
+						arg.RBPOff,
 					)
 				}
 			case token.F64:
@@ -1066,7 +1066,7 @@ func (p *wat2laWorker) buildFunc_ins(
 						p.fnWasmR0Base+argList[k]*8,
 					)
 					fmt.Fprintf(w, "    fst.d t1, fp, %d",
-						arg.Off,
+						arg.RBPOff,
 					)
 				}
 			default:

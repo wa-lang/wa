@@ -45,7 +45,7 @@ func buildFuncArgReturn_riscv(cpu abi.CPUType, fn *ast.Func) error {
 				iRetReg++
 			}
 			sp = sp - 4
-			ret.Off = sp
+			ret.RBPOff = sp
 
 		case token.I64, token.U64, token.I64_zh, token.U64_zh:
 			if iRetReg <= riscv.REG_A1 {
@@ -56,7 +56,7 @@ func buildFuncArgReturn_riscv(cpu abi.CPUType, fn *ast.Func) error {
 				sp -= 4
 			}
 			sp = sp - 8
-			ret.Off = sp
+			ret.RBPOff = sp
 
 		case token.F32, token.F32_zh:
 			if fRetReg <= riscv.REG_FA1 {
@@ -64,7 +64,7 @@ func buildFuncArgReturn_riscv(cpu abi.CPUType, fn *ast.Func) error {
 				fRetReg++
 			}
 			sp = sp - 4
-			ret.Off = sp
+			ret.RBPOff = sp
 
 		case token.F64, token.F64_zh:
 			if fRetReg <= riscv.REG_FA1 {
@@ -75,7 +75,7 @@ func buildFuncArgReturn_riscv(cpu abi.CPUType, fn *ast.Func) error {
 				sp -= 4
 			}
 			sp = sp - 8
-			ret.Off = sp
+			ret.RBPOff = sp
 
 		default:
 			panic("unreachable")
@@ -122,25 +122,25 @@ func buildFuncArgReturn_riscv(cpu abi.CPUType, fn *ast.Func) error {
 		switch arg.Type {
 		case token.I32, token.U32, token.I32_zh, token.U32_zh:
 			sp = sp - 4
-			arg.Off = sp
+			arg.RBPOff = sp
 
 		case token.I64, token.U64, token.I64_zh, token.U64_zh:
 			if sp%8 != 0 {
 				sp -= 4
 			}
 			sp = sp - 8
-			arg.Off = sp
+			arg.RBPOff = sp
 
 		case token.F32, token.F32_zh:
 			sp = sp - 4
-			arg.Off = sp
+			arg.RBPOff = sp
 
 		case token.F64, token.F64_zh:
 			if sp%8 != 0 {
 				sp -= 4
 			}
 			sp = sp - 8
-			arg.Off = sp
+			arg.RBPOff = sp
 
 		default:
 			panic("unreachable")
@@ -166,12 +166,12 @@ func buildFuncLocals_riscv(cpu abi.CPUType, fn *ast.Func) error {
 
 	// 对齐到输入参数和返回值位置的底部
 	if len(fn.Type.Return) > 0 {
-		if off := fn.Type.Return[0].Off; off < sp {
+		if off := fn.Type.Return[0].RBPOff; off < sp {
 			sp = off
 		}
 	}
 	if len(fn.Type.Args) > 0 {
-		if off := fn.Type.Args[0].Off; off < sp {
+		if off := fn.Type.Args[0].RBPOff; off < sp {
 			sp = off
 		}
 	}
@@ -181,22 +181,22 @@ func buildFuncLocals_riscv(cpu abi.CPUType, fn *ast.Func) error {
 		switch x := fn.Body.Locals[i]; x.Type {
 		case token.I32, token.U32, token.I32_zh, token.U32_zh:
 			sp = sp - 4*x.Cap
-			x.Off = sp
+			x.RBPOff = sp
 		case token.I64, token.U64, token.I64_zh, token.U64_zh:
 			if sp%8 != 0 {
 				sp -= 4
 			}
 			sp = sp - 8*x.Cap
-			x.Off = sp
+			x.RBPOff = sp
 		case token.F32, token.F32_zh:
 			sp = sp - 4*x.Cap
-			x.Off = sp
+			x.RBPOff = sp
 		case token.F64, token.F64_zh:
 			if sp%8 != 0 {
 				sp -= 4
 			}
 			sp = sp - 8*x.Cap
-			x.Off = sp
+			x.RBPOff = sp
 		default:
 			panic("unreachable")
 		}

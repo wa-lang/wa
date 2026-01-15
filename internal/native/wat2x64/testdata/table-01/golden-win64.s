@@ -205,23 +205,22 @@ main:
 
     # 加载函数的地址
 
-    # r10 = table[0]
+    # r10 = table[[rbp-32]]
     mov  rax, [rip + .Table.addr]
-    mov  rbx, 0
-    mov  r10, [rax + rbx*8]
+    mov  r10, [rbp - 32] # pop
+    mov  r10, [rax + r10*8]
 
     # r11 = .Table.funcIndexList[r10]
-    lea  r11, [rip + .Table.funcIndexList]
-    mov  rax, [r11 + r10*8]
-    mov  r11, rax
+    lea  rax, [rip + .Table.funcIndexList]
+    mov  r11, [rax + r10*8]
 
-    # table[0](stdout, &memory[ptr], size)
-    mov  rcx, 1 # stdout
-    mov  rax, [rip + .Memory.addr]
-    mov  rdx, [rip + .Memory.dataOffset.0]
-    add  rdx, rax # rdx = &memory[ptr]
-    mov  r8, [rip + .Memory.dataSize.0] # size
+    # call table[?](...)
+    mov  rcx, [rbp-8] # arg 0
+    mov  rdx, [rbp-16] # arg 1
+    mov  r8, [rbp-24] # arg 2
     call r11
+    mov [rbp-8], rax
+    nop # drop [rbp-8]
 
     # 根据ABI处理返回值
 .L.return:

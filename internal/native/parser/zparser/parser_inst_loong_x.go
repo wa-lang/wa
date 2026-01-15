@@ -558,7 +558,7 @@ func (p *parser) parseInst_loong_imm_si12(fn *ast.Func) (s12 int32, symbol strin
 				if x.Reg != 0 {
 					p.errorf(p.pos, "%v is register", x.Name)
 				}
-				s12 = int32(x.Off)
+				s12 = int32(x.RBPOff)
 				return
 			}
 		}
@@ -567,13 +567,13 @@ func (p *parser) parseInst_loong_imm_si12(fn *ast.Func) (s12 int32, symbol strin
 				if x.Reg != 0 {
 					p.errorf(p.pos, "%v is register", x.Name)
 				}
-				s12 = int32(x.Off)
+				s12 = int32(x.RBPOff)
 				return
 			}
 		}
 		for _, x := range fn.Body.Locals {
 			if x.Name == name {
-				s12 = int32(x.Off)
+				s12 = int32(x.RBPOff)
 				return
 			}
 		}

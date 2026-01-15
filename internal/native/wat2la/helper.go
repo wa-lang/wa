@@ -79,19 +79,19 @@ func (p *wat2laWorker) findLocalOffset(fnNative *nativeast.Func, fn *ast.Func, i
 			panic(fmt.Sprintf("wat2la: unknown local %q", ident))
 		}
 		if idx < len(fn.Type.Params) {
-			return fnNative.Type.Args[idx].Off
+			return fnNative.Type.Args[idx].RBPOff
 		}
 		n := idx - len(fn.Type.Params)
-		return fnNative.Body.Locals[n].Off
+		return fnNative.Body.Locals[n].RBPOff
 	}
 	for idx, arg := range fn.Type.Params {
 		if arg.Name == ident {
-			return fnNative.Type.Args[idx].Off
+			return fnNative.Type.Args[idx].RBPOff
 		}
 	}
 	for idx, arg := range fn.Body.Locals {
 		if arg.Name == ident {
-			return fnNative.Body.Locals[idx].Off
+			return fnNative.Body.Locals[idx].RBPOff
 		}
 	}
 	panic("unreachable")

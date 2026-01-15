@@ -126,7 +126,7 @@ main:
 .F.main:
     push rbp
     mov  rbp, rsp
-    sub  rsp, 32
+    sub  rsp, 64
 
     # 没有参数需要备份到栈
 

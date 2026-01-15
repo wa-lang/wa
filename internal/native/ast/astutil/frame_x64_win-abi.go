@@ -47,16 +47,16 @@ func buildFuncFrame_x64_windows(fn *ast.Func) error {
 		switch ret := fn.Type.Return[0]; ret.Type {
 		case token.I32, token.U32, token.I32_zh, token.U32_zh:
 			fn.Type.Return[0].Reg = x64.REG_RAX
-			fn.Type.Return[0].Off = -8 // rbp-8
+			fn.Type.Return[0].RBPOff = -8 // rbp-8
 		case token.I64, token.U64, token.I64_zh, token.U64_zh:
 			fn.Type.Return[0].Reg = x64.REG_RAX
-			fn.Type.Return[0].Off = -8 // rbp-8
+			fn.Type.Return[0].RBPOff = -8 // rbp-8
 		case token.F32, token.F32_zh:
 			fn.Type.Return[0].Reg = x64.REG_XMM0
-			fn.Type.Return[0].Off = -8 // rbp-8
+			fn.Type.Return[0].RBPOff = -8 // rbp-8
 		case token.F64, token.F64_zh:
 			fn.Type.Return[0].Reg = x64.REG_XMM0
-			fn.Type.Return[0].Off = -8 // rbp-8
+			fn.Type.Return[0].RBPOff = -8 // rbp-8
 		default:
 			panic("unreachable")
 		}
@@ -65,7 +65,7 @@ func buildFuncFrame_x64_windows(fn *ast.Func) error {
 		base := fn.ArgsSize + headSize
 		fn.ArgsSize += len(fn.Type.Return) * 8
 		for i := 0; i < len(fn.Type.Return); i++ {
-			fn.Type.Return[i].Off = base + i*8
+			fn.Type.Return[i].RBPOff = base + i*8
 			fn.Type.Return[i].Cap = 1
 		}
 	}
@@ -78,25 +78,29 @@ func buildFuncFrame_x64_windows(fn *ast.Func) error {
 				arg.Reg = iArgRegList[iArgRegIdx]
 				iArgRegIdx++
 			}
-			arg.Off = headSize + i*8 // rbp
+			arg.RBPOff = headSize + i*8 // rbp
+			arg.RSPOff = i * 8          // 调用前的 rsp
 		case token.I64, token.U64, token.I64_zh, token.U64_zh:
 			if iArgRegIdx < len(iArgRegList) {
 				arg.Reg = iArgRegList[iArgRegIdx]
 				iArgRegIdx++
 			}
-			arg.Off = headSize + i*8 // rbp
+			arg.RBPOff = headSize + i*8 // rbp
+			arg.RSPOff = i * 8          // 调用前的 rsp
 		case token.F32, token.F32_zh:
 			if fArgRegIdx < len(fArgRegList) {
 				arg.Reg = fArgRegList[fArgRegIdx]
 				fArgRegIdx++
 			}
-			arg.Off = headSize + i*8 // rbp
+			arg.RBPOff = headSize + i*8 // rbp
+			arg.RSPOff = i * 8          // 调用前的 rsp
 		case token.F64, token.F64_zh:
 			if fArgRegIdx < len(fArgRegList) {
 				arg.Reg = fArgRegList[fArgRegIdx]
 				fArgRegIdx++
 			}
-			arg.Off = headSize + i*8 // rbp
+			arg.RBPOff = headSize + i*8 // rbp
+			arg.RSPOff = i * 8          // 调用前的 rsp
 		default:
 			panic("unreachable")
 		}
@@ -106,7 +110,7 @@ func buildFuncFrame_x64_windows(fn *ast.Func) error {
 	// 每个标量在栈上的空间都是8个字节
 	for _, x := range fn.Body.Locals {
 		sp = sp - x.Cap*8
-		x.Off = sp // rbp
+		x.RBPOff = sp // rbp
 	}
 
 	// rsp 需要 16 字节对齐
