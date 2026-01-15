@@ -5,8 +5,10 @@
 #include <stdint.h>
 #include <io.h>
 
+extern int64_t wat2x64_Memory_addr __asm__(".Memory.addr");
+
 // 按照 Win64 调用约定，前四个参数在寄存器，后两个在栈上
-int64_t env_write(int64_t fd, char* ptr, int64_t size, int64_t p4, int64_t p5, int64_t p6) {
+int64_t wat2x64_env_write(int64_t fd, char* ptr, int64_t size, int64_t p4, int64_t p5, int64_t p6) {
     printf("--- Win64 ABI Verification ---\n");
     printf("Param 1 (RCX): %lld\n", fd);
     printf("Param 2 (RDX): %lld\n", ptr);
@@ -16,12 +18,12 @@ int64_t env_write(int64_t fd, char* ptr, int64_t size, int64_t p4, int64_t p5, i
     printf("Param 6 (Stack RSP+40): %lld\n", p6);
     printf("-------------------------------\n");
 
-    _write(fd, ptr, size);
+    _write(fd, (void *)(wat2x64_Memory_addr+ptr), size);
 
     // 返回一个值供 WASM 检查
     return 0;
 }
 
-void env_print_i64(int64_t x) {
+void wat2x64_env_print_i64(int64_t x) {
     printf("printI64: %lld\n", x);
 }

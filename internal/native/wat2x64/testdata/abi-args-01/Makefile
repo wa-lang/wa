@@ -9,5 +9,7 @@ golden:
 
 dev:
 	$(WA) build -arch=x64 -target=windows abi-args-01.wat
+	gcc golden-env.c abi-args-01.wa.s -o a.out1.exe
+	a.out1.exe
 
 clean:

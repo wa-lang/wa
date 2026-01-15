@@ -35,10 +35,6 @@ func (p *wat2X64Worker) buildImport(w io.Writer) error {
 			panic(fmt.Sprintf("ERR: import %s.%s", importSpec.ObjModule, importSpec.ObjName))
 		}
 
-		if importSpec.ObjModule != "syscall" {
-			panic(fmt.Sprintf("ERR: import %s.%s", importSpec.ObjModule, importSpec.ObjName))
-		}
-
 		absName := importSpec.ObjModule + "_" + importSpec.ObjName
 		if seenMap[absName] {
 			continue

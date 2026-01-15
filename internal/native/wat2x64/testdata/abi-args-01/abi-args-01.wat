@@ -6,26 +6,27 @@
     ;; 验证点：
     ;; 1-4 参数通过寄存器传递
     ;; 5-6 参数必须通过栈传递（在影子空间之上）
-    (import "env" "env_write" 
-        (func $env_write 
+    (import "env" "write" 
+        (func $env.write 
             (param i64 i64 i64 i64 i64 i64) 
             (result i64)
         )
     )
+    (import "env" "print_i64" (func $env.print_i64 (param i64)))
 
     (memory 1)
-    (data (i32.const 0) "ABI Test")
+    (data (i32.const 8) "hello world\n")
 
-    (func (export "_start")
+    (func $main (export "_start")
         ;; 准备 6 个参数
         i64.const 1         ;; p1 -> RCX (stdout)
-        i64.const 0         ;; p2 -> RDX (buffer offset)
-        i64.const 8         ;; p3 -> R8  (size)
+        i64.const 8         ;; p2 -> RDX (buffer offset)
+        i64.const 12        ;; p3 -> R8  (size)
         i64.const 100       ;; p4 -> R9  (extra info)
         i64.const 200       ;; p5 -> Stack [RSP + 32]
         i64.const 300       ;; p6 -> Stack [RSP + 40]
 
-        call $env_write
+        call $env.write
         drop
     )
 )
