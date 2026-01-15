@@ -73,8 +73,7 @@ func (p *wat2X64Worker) buildMemory(w io.Writer) error {
 		fmt.Fprintf(w, "    mov  rcx, [rip + %s]\n", kMemoryMaxPagesName)
 		fmt.Fprintf(w, "    shl  rcx, 16\n")
 		fmt.Fprintf(w, "    call %s\n", kRuntimeMalloc)
-		fmt.Fprintf(w, "    lea  rdx, [rip + %s]\n", kMemoryAddrName)
-		fmt.Fprintf(w, "    mov  [rdx], rax\n")
+		fmt.Fprintf(w, "    mov  [rip + %s], rax\n", kMemoryAddrName)
 		fmt.Fprintln(w)
 
 		p.gasCommentInFunc(w, "内存清零")

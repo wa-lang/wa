@@ -4,22 +4,20 @@
 .intel_syntax noprefix
 
 # 运行时函数
-.extern _write
-.extern _exit
+.extern write
+.extern exit
 .extern malloc
 .extern memcpy
 .extern memset
-.set .Runtime.write, _write
-.set .Runtime.exit, _exit
+.set .Runtime.write, write
+.set .Runtime.exit, exit
 .set .Runtime.malloc, malloc
 .set .Runtime.memcpy, memcpy
 .set .Runtime.memset, memset
 
 # 导入函数(外部库定义)
-.extern wat2x64_env_get_multi_values
-.extern wat2x64_env_print_i64
-.set .Import.env.get_multi_values, wat2x64_env_get_multi_values
-.set .Import.env.print_i64, wat2x64_env_print_i64
+.extern wat2x64_syscall_write
+.set .Import.syscall.write, wat2x64_syscall_write
 
 # 定义内存
 .section .data
@@ -37,7 +35,7 @@
 # memcpy(&Memory[8], data[0], size)
 .Memory.dataOffset.0: .quad 8
 .Memory.dataSize.0: .quad 12
-.Memory.dataPtr.0: .ascii "hello world\n"
+.Memory.dataPtr.0: .asciz "hello world\n"
 
 # 内存初始化函数
 .section .text
@@ -48,26 +46,24 @@
     sub  rsp, 32
 
     # 分配内存
-    mov  rcx, [rip + .Memory.maxPages]
-    shl  rcx, 16
+    mov  rdi, [rip + .Memory.maxPages]
+    shl  rdi, 16
     call .Runtime.malloc
     mov  [rip + .Memory.addr], rax
 
     # 内存清零
-    mov  rcx, [rip + .Memory.addr]
-    mov  rdx, 0
-    mov  r8, [rip + .Memory.maxPages]
-    shl  r8, 16
+    mov  rdi, [rip + .Memory.addr]
+    mov  rsi, 0
+    mov  rdx, [rip + .Memory.maxPages]
+    shl  rdx, 16
     call .Runtime.memset
 
     # 初始化内存
-
-    # memcpy(&Memory[0], data[0], size)
     mov  rax, [rip + .Memory.addr]
-    mov  rcx, [rip + .Memory.dataOffset.0]
-    add  rcx, rax
-    lea  rdx, [rip + .Memory.dataPtr.0]
-    mov  r8, [rip + .Memory.dataSize.0]
+    mov  rdi, [rip + .Memory.dataOffset.0]
+    add  rdi, rax
+    lea  rsi, [rip + .Memory.dataPtr.0]
+    mov  rdx, [rip + .Memory.dataSize.0]
     call .Runtime.memcpy
 
     # 函数返回
@@ -82,12 +78,12 @@ main:
     push rbp
     mov  rbp, rsp
     sub  rsp, 32
-
+    
     call .Memory.initFunc
     call .F.main
 
     # runtime.exit(0)
-    mov  rcx, 0
+    mov  rdi, 0
     call .Runtime.exit
 
     # exit 后这里不会被执行, 但是依然保留
@@ -108,13 +104,13 @@ main:
     sub  rsp, 32
 
     # runtime.write(stderr, panicMessage, size)
-    mov  rcx, 2 # stderr
-    lea  rdx, [rip + .Runtime.panic.message]
-    mov  r8, [rip + .Runtime.panic.messageLen] # size
+    mov  rdi, 2 # stderr
+    lea  rsi, [rip + .Runtime.panic.message]
+    mov  rdx, [rip + .Runtime.panic.messageLen] # size
     call .Runtime.write
 
     # 退出程序
-    mov  rcx, 1 # 退出码
+    mov  rdi, 1 # 退出码
     call .Runtime.exit
 
     # return
@@ -122,28 +118,44 @@ main:
     pop rbp
     ret
 
-# Wasm 入口函数, 后续是编译器自动生成
+# func main
 .section .text
-.global .F.main
 .F.main:
-    # 栈对齐并分配空间:
-    # 影子空间(32字节) + 结构体空间(24字节) + 16字节对齐保护 = 64 字节
-    sub rsp, 64
+    push rbp
+    mov  rbp, rsp
+    sub  rsp, 64
 
-    # env_get_multi_values()
-    # 根据 Win64 ABI，第一个参数 RCX 必须指向存储返回值的内存地址
-    # 我们使用刚分配的栈空间：[rsp + 32] (跳过影子空间)
-    # 原本 WAT 里的第一个参数 (param i64) 顺延到 RDX
-    lea  rcx, [rsp + 32]
-    mov  rdx, 100
-    call .Import.env.get_multi_values
-    mov  rcx, [rsp + 48] # v3
-    call .Import.env.print_i64
-    mov  rcx, [rsp + 40] # v2
-    call .Import.env.print_i64
-    mov  rcx, [rsp + 32] # v1
-    call .Import.env.print_i64
+    # 没有参数需要备份到栈
+
+    # 没有返回值变量需要初始化为0
+
+    # 没有局部变量需要初始化为0
+
+    # i64.const 1
+    movabs rax, 1
+    mov    [rbp-8], rax
+
+    # i64.const 8
+    movabs rax, 8
+    mov    [rbp-16], rax
+
+    # i64.const 12
+    movabs rax, 12
+    mov    [rbp-24], rax
+
+    # call syscall.write(...)
+    mov rdi, qword ptr [rbp-8]  # arg 0
+    mov rsi, qword ptr [rbp-16] # arg 1
+    mov rdx, qword ptr [rbp-24] # arg 2
+    call .Import.syscall.write
+    mov qword ptr [rbp-8], rax
+    nop # drop [rbp-8]
+
+    # 根据ABI处理返回值
+.L.return:
 
     # 函数返回
-    add rsp, 64
+    mov rsp, rbp
+    pop rbp
     ret
+

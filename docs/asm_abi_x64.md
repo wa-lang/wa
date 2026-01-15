@@ -11,6 +11,15 @@
 - 栈的参数和返回值根据类型要求对齐
 - SP 寄存器必须 16 字节对齐
 
+## Windows 和 Linux 的 ABI 差异
+
+- 参数寄存器: Windos 用 RCX/RDX/R8/R9, Linux 用 RDI/RSI/RDX/RCX/R8/R9
+- 两个返回值: Windows 要走栈空间返回, Linux 下可占用2个寄存器(整数 RAX/RDX, 浮点数 XMM0/XMM1)
+- 走栈的多返回值: 返回地址占用第一个参数寄存器, 并且最终地址通过 RAX 返回
+- 影子空间: Windows 必须预留 32 字节影子, Linux 则不需要
+- 外部函数名: Windows 下通常带下划线(如 `_exit`), 通常不带(如 `exit`)
+- 栈对齐: 调用前都需要 16 字节对齐
+
 ## Microsoft X64 ABI
 
 - 每个标量在栈上的空间都是8个字节

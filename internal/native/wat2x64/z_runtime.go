@@ -12,8 +12,8 @@ import (
 const (
 	_kRuntimeNamePrefix = ".Runtime."
 
-	kRuntimeWrite           = _kRuntimeNamePrefix + "_write"
-	kRuntimeExit            = _kRuntimeNamePrefix + "_exit"
+	kRuntimeWrite           = _kRuntimeNamePrefix + "write"
+	kRuntimeExit            = _kRuntimeNamePrefix + "exit"
 	kRuntimeMalloc          = _kRuntimeNamePrefix + "malloc"
 	kRuntimeMemcpy          = _kRuntimeNamePrefix + "memcpy"
 	kRuntimeMemset          = _kRuntimeNamePrefix + "memset"
@@ -32,15 +32,20 @@ func (p *wat2X64Worker) buildRuntimeHead(w io.Writer) error {
 		kRuntimeMemset,
 		// panic 内部实现
 	}
+	var m = map[string]string{
+		kRuntimeWrite:  "_write",
+		kRuntimeExit:   "_exit",
+		kRuntimeMalloc: "malloc",
+		kRuntimeMemcpy: "memcpy",
+		kRuntimeMemset: "memset",
+	}
 
 	p.gasComment(w, "运行时函数")
 	for _, absName := range list {
-		baseName := absName[len(_kRuntimeNamePrefix):]
-		p.gasExtern(w, baseName)
+		p.gasExtern(w, m[absName])
 	}
 	for _, absName := range list {
-		baseName := absName[len(_kRuntimeNamePrefix):]
-		p.gasSet(w, absName, baseName)
+		p.gasSet(w, absName, m[absName])
 	}
 	fmt.Fprintln(w)
 	return nil
@@ -72,9 +77,9 @@ func (p *wat2X64Worker) buildRuntimeImpl_panic(w io.Writer) error {
 
 	fmt.Fprintf(w, "    # runtime.write(stderr, panicMessage, size)\n")
 	fmt.Fprintf(w, "    mov  rcx, 2 # stderr\n")
-	fmt.Fprintf(w, "    mov  rdx, [rip + %s]\n", kRuntimePanicMessage)
+	fmt.Fprintf(w, "    lea  rdx, [rip + %s]\n", kRuntimePanicMessage)
 	fmt.Fprintf(w, "    mov  r8, [rip + %s] # size\n", kRuntimePanicMessageLen)
-	fmt.Fprintf(w, "    call %s\n", kRuntimePanic)
+	fmt.Fprintf(w, "    call %s\n", kRuntimeWrite)
 	fmt.Fprintln(w)
 
 	fmt.Fprintf(w, "    # 退出程序\n")

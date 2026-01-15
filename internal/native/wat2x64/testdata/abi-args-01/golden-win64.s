@@ -9,8 +9,8 @@
 .extern malloc
 .extern memcpy
 .extern memset
-.set .Runtime._write, _write
-.set .Runtime._exit, _exit
+.set .Runtime.write, _write
+.set .Runtime.exit, _exit
 .set .Runtime.malloc, malloc
 .set .Runtime.memcpy, memcpy
 .set .Runtime.memset, memset
@@ -51,8 +51,7 @@
     mov  rcx, [rip + .Memory.maxPages]
     shl  rcx, 16
     call .Runtime.malloc
-    lea  rdx, [rip + .Memory.addr]
-    mov  [rdx], rax
+    mov  [rip + .Memory.addr], rax
 
     # 内存清零
     mov  rcx, [rip + .Memory.addr]
@@ -89,7 +88,7 @@ main:
 
     # runtime.exit(0)
     mov  rcx, 0
-    call .Runtime._exit
+    call .Runtime.exit
 
     # exit 后这里不会被执行, 但是依然保留
     mov rsp, rbp
@@ -110,13 +109,13 @@ main:
 
     # runtime.write(stderr, panicMessage, size)
     mov  rcx, 2 # stderr
-    mov  rdx, [rip + .Runtime.panic.message]
+    lea  rdx, [rip + .Runtime.panic.message]
     mov  r8, [rip + .Runtime.panic.messageLen] # size
-    call .Runtime.panic
+    call .Runtime.write
 
     # 退出程序
     mov  rcx, 1 # 退出码
-    call .Runtime._exit
+    call .Runtime.exit
 
     # return
     mov rsp, rbp
