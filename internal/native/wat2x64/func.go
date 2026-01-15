@@ -182,6 +182,13 @@ func (p *wat2X64Worker) buildFunc_body(w io.Writer, fn *ast.Func) error {
 		fmt.Fprintln(&bufHeader)
 	}
 
+	// 走栈返回
+	if len(fnNative.Type.Return) > 1 && fnNative.Type.Return[1].Reg == 0 {
+		p.gasCommentInFunc(&bufHeader, "将返回地址备份到栈")
+		fmt.Fprintf(&bufHeader, "    mov [rbp%+d], rcx # return address\n", 2*8)
+		fmt.Fprintln(&bufHeader)
+	}
+
 	// 将寄存器参数备份到栈
 	if len(fn.Type.Params) > 0 {
 		p.gasCommentInFunc(&bufHeader, "将寄存器参数备份到栈")
@@ -707,6 +714,7 @@ func (p *wat2X64Worker) buildFunc_ins(
 					unreachable()
 				}
 			}
+			fmt.Fprintf(w, "    mov    rax, [rbp%+d] # return address\n", 2*8)
 			fmt.Fprintf(w, "    jmp    %s\n", kLabelName_return)
 		}
 		assert(stk.Len() == 0)
@@ -846,9 +854,8 @@ func (p *wat2X64Worker) buildFunc_ins(
 
 		// 提取返回值
 		if len(fnCallNative.Type.Return) > 1 && fnCallNative.Type.Return[1].Reg == 0 {
-			// 走栈返回结果, rax 是地址
+			// 走栈返回结果, 地址通过 rcx 传入, 通过 rax 返回
 			// 根据 ABI 规范获取返回值, 再保存到 WASM 栈中
-			// BUG: 返回的栈地址由传入的 rcx 指定, 不能通过 rbp 定位!!!
 			for k, retType := range fnCallType.Results {
 				reti := stk.Push(retType)
 				switch retType {
@@ -974,6 +981,12 @@ func (p *wat2X64Worker) buildFunc_ins(
 			argList[k] = stk.Pop(x.Type)
 		}
 
+		// 如果是走栈返回, 第一个是隐藏参数
+		if len(fnCallNative.Type.Return) > 1 && fnCallNative.Type.Return[1].Reg == 0 {
+			assert(p.osName == abi.WINDOWS.String())
+			fmt.Fprintf(w, "    lea rcx, [rsp%+d] # return address\n", len(fnCallType.Params)*8)
+		}
+
 		// 准备调用参数
 		for k, x := range fnCallType.Params {
 			switch x.Type {
@@ -1045,7 +1058,7 @@ func (p *wat2X64Worker) buildFunc_ins(
 
 		// 提取返回值
 		if len(fnCallNative.Type.Return) > 1 && fnCallNative.Type.Return[1].Reg == 0 {
-			// 走栈返回结果, rax 是地址
+			// 走栈返回结果, 地址通过 rcx 传入, 通过 rax 返回
 			// 根据 ABI 规范获取返回值, 再保存到 WASM 栈中
 			for k, retType := range fnCallType.Results {
 				reti := stk.Push(retType)
