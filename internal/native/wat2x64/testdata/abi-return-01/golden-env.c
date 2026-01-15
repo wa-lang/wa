@@ -13,8 +13,8 @@ typedef struct {
 
 // C 函数: 返回结构体
 // 注意: 根据 Win64 ABI，这会被编译为:
-// void env_get_multi_values(EnvMultiRet* hidden_ptr, int64_t input_val)
-EnvMultiRet env_get_multi_values(int64_t input_val) {
+// void wat2x64_env_get_multi_values(EnvMultiRet* hidden_ptr, int64_t input_val)
+EnvMultiRet wat2x64_env_get_multi_values(int64_t input_val) {
     EnvMultiRet r;
     r.v1 = input_val + 1;
     r.v2 = input_val + 2;
@@ -26,6 +26,6 @@ EnvMultiRet env_get_multi_values(int64_t input_val) {
     return r;
 }
 
-void env_print_i64(int64_t x) {
+void wat2x64_env_print_i64(int64_t x) {
     printf("printI64: %lld\n", x);
 }

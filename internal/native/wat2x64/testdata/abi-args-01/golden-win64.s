@@ -34,7 +34,7 @@
 # 内存数据
 .section .data
 .align 8
-# memcpy(&Memory[0], data[0], size)
+# memcpy(&Memory[8], data[0], size)
 .Memory.dataOffset.0: .quad 8
 .Memory.dataSize.0: .quad 12
 .Memory.dataPtr.0: .asciz "hello world\n"

@@ -14,6 +14,7 @@ import (
 
 // 构建栈帧中参数和返回值的位置
 func buildFuncFrame_x64_windows(fn *ast.Func) error {
+	const MaxRegArgs = 4   // 最多4个寄存器参数
 	const headSize = 8 * 2 // RIP + RBP
 
 	var (
@@ -23,6 +24,7 @@ func buildFuncFrame_x64_windows(fn *ast.Func) error {
 
 		iArgRegIdx int
 		fArgRegIdx int
+		nArgReg    int // 寄存器参数数量
 
 		sp int = 0 // 局部栈大小
 	)
@@ -68,36 +70,44 @@ func buildFuncFrame_x64_windows(fn *ast.Func) error {
 			fn.Type.Return[i].RBPOff = base + i*8
 			fn.Type.Return[i].Cap = 1
 		}
+
+		// 跳过第一个参数寄存器
+		iArgRegIdx++
+		nArgReg++
 	}
 
 	// 输入参数全部在调用方分配空间
 	for i, arg := range fn.Type.Args {
 		switch arg.Type {
 		case token.I32, token.U32, token.I32_zh, token.U32_zh:
-			if iArgRegIdx < len(iArgRegList) {
+			if nArgReg < MaxRegArgs && iArgRegIdx < len(iArgRegList) {
 				arg.Reg = iArgRegList[iArgRegIdx]
 				iArgRegIdx++
+				nArgReg++
 			}
 			arg.RBPOff = headSize + i*8 // rbp
 			arg.RSPOff = i * 8          // 调用前的 rsp
 		case token.I64, token.U64, token.I64_zh, token.U64_zh:
-			if iArgRegIdx < len(iArgRegList) {
+			if nArgReg < MaxRegArgs && iArgRegIdx < len(iArgRegList) {
 				arg.Reg = iArgRegList[iArgRegIdx]
 				iArgRegIdx++
+				nArgReg++
 			}
 			arg.RBPOff = headSize + i*8 // rbp
 			arg.RSPOff = i * 8          // 调用前的 rsp
 		case token.F32, token.F32_zh:
-			if fArgRegIdx < len(fArgRegList) {
+			if nArgReg < MaxRegArgs && fArgRegIdx < len(fArgRegList) {
 				arg.Reg = fArgRegList[fArgRegIdx]
 				fArgRegIdx++
+				nArgReg++
 			}
 			arg.RBPOff = headSize + i*8 // rbp
 			arg.RSPOff = i * 8          // 调用前的 rsp
 		case token.F64, token.F64_zh:
-			if fArgRegIdx < len(fArgRegList) {
+			if nArgReg < MaxRegArgs && fArgRegIdx < len(fArgRegList) {
 				arg.Reg = fArgRegList[fArgRegIdx]
 				fArgRegIdx++
+				nArgReg++
 			}
 			arg.RBPOff = headSize + i*8 // rbp
 			arg.RSPOff = i * 8          // 调用前的 rsp
@@ -113,13 +123,8 @@ func buildFuncFrame_x64_windows(fn *ast.Func) error {
 		x.RBPOff = sp // rbp
 	}
 
-	// rsp 需要 16 字节对齐
-	if x := 0 - sp; x%16 != 0 {
-		x = ((x + 15) / 16) * 16
-		sp = 0 - x
-	}
-
 	// 当前栈帧大小(不包含调用其他函数的参数)
+	// 当前并未做任何对齐操作
 	fn.FrameSize = 0 - sp
 	return nil
 }
