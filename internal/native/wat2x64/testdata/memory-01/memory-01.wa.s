@@ -147,11 +147,11 @@ main:
     mov    [rbp-24], rax
 
     # call syscall.write(...)
-    mov rcx, [rbp-8] # arg 0
-    mov rdx, [rbp-16] # arg 1
-    mov r8, [rbp-24] # arg 2
+    mov rcx, qword ptr [rbp-8] # arg 0
+    mov rdx, qword ptr [rbp-16] # arg 1
+    mov r8, qword ptr [rbp-24] # arg 2
     call .Import.syscall.write
-    mov [rbp-8], rax
+    mov qword ptr [rbp-8], rax
     nop # drop [rbp-8]
 
     # 根据ABI处理返回值

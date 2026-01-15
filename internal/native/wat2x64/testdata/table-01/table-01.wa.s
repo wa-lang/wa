@@ -179,7 +179,7 @@ main:
 .F.main:
     push rbp
     mov  rbp, rsp
-    sub  rsp, 32
+    sub  rsp, 64
 
     # 没有参数需要备份到栈
 
@@ -200,18 +200,27 @@ main:
     mov    [rbp-24], rax
 
     # i32.const 0
-    movabs rax, 0
-    mov qword ptr [rbp-32], rax
-    # 根据函数索引编号从列表查询函数地址
-    lea rax, [rip + .Table.funcIndexList]
-    mov r10, [rbp -24]
-    add rax, r10
-    lea r11, [rax]
-    mov rcx, qword ptr [rbp +0]
-    mov rdx, qword ptr [rbp +8]
-    mov r8, qword ptr [rbp +16]
+    mov eax, 0
+    mov [rbp-32], eax
+
+    # 加载函数的地址
+
+    # r10 = table[?]
+    mov  rax, [rip+.Table.addr]
+    mov  r10, [rbp-32]
+    mov  r10, [rax+r10*8]
+
+    # r11 = .Table.funcIndexList[r10]
+    lea  rax, [rip+.Table.funcIndexList]
+    mov  r11, [rax+r10*8]
+
+    # call_indirect r11(...)
+    # type (i64,i64,i64) => i64
+    mov rcx, qword ptr [rbp-8] # arg 0
+    mov rdx, qword ptr [rbp-16] # arg 1
+    mov r8, qword ptr [rbp-24] # arg 2
     call r11
-    mov rax, qword ptr [rbp +0]
+    mov qword ptr [rbp-8], rax
     nop # drop [rbp-8]
 
     # 根据ABI处理返回值
