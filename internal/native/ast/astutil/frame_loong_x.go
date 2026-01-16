@@ -4,214 +4,131 @@
 package astutil
 
 import (
-	"wa-lang.org/wa/internal/native/abi"
 	"wa-lang.org/wa/internal/native/ast"
-	"wa-lang.org/wa/internal/native/loong64"
 	"wa-lang.org/wa/internal/native/token"
 )
 
-// 参考 /docs/asm_abi_la64.md
+// ABI: $(WA_REPO)/docs/asm_abi_la64.md
 
 // 构建栈帧中参数和返回值的位置
-func buildFuncFrame_loong64(cpu abi.CPUType, fn *ast.Func) error {
-	if cpu != abi.LOONG64 {
-		panic("unreachable")
-	}
-	if err := buildFuncArgReturn_loong64(fn); err != nil {
-		return err
-	}
-	if err := buildFuncLocals_loong64(fn); err != nil {
-		return err
-	}
-	return nil
-}
+func buildFuncFrame_loong64(fn *ast.Func) error {
+	const headSize = 8 * 2 // RA + RBP
 
-func buildFuncArgReturn_loong64(fn *ast.Func) error {
 	var (
-		headSize = 8 * 2 // RA + FP
+		argRegAlloctor = newArgsRegAlloctor_LA64Linux()
+		retRegAlloctor = newRetRegAlloctor_LA64Linux()
 
-		iArgReg abi.RegType = loong64.REG_A0
-		fArgReg abi.RegType = loong64.REG_FA0
-		iRetReg abi.RegType = loong64.REG_A0
-		fRetReg abi.RegType = loong64.REG_FA0
+		retOnStack bool // 返回值在栈上
 
-		sp int = 0 - headSize // 栈顶位置
+		argsSize  int // 调用方输入参数大小
+		frameSize int // 被调用方局部栈大小
 	)
 
-	// 返回值
-	for i := len(fn.Type.Return) - 1; i >= 0; i-- {
-		switch ret := fn.Type.Return[i]; ret.Type {
-		case token.I32, token.U32, token.I32_zh, token.U32_zh:
-			if iRetReg <= loong64.REG_A1 {
-				ret.Reg = iRetReg
-				iRetReg++
+	// 尝试为返回值分配寄存器
+	// 返回值是否走栈要看寄存器分配结果
+	{
+		for _, reti := range fn.Type.Return {
+			switch reti.Type {
+			case token.I32, token.U32, token.I32_zh, token.U32_zh:
+				if reti.Reg = retRegAlloctor.GetInt(); reti.Reg == 0 {
+					retOnStack = true
+				}
+			case token.I64, token.U64, token.I64_zh, token.U64_zh:
+				if reti.Reg = retRegAlloctor.GetInt(); reti.Reg == 0 {
+					retOnStack = true
+				}
+			case token.F32, token.F32_zh:
+				if reti.Reg = retRegAlloctor.GetFloat(); reti.Reg == 0 {
+					retOnStack = true
+				}
+			case token.F64, token.F64_zh:
+				if reti.Reg = retRegAlloctor.GetFloat(); reti.Reg == 0 {
+					retOnStack = true
+				}
+			default:
+				panic("unreachable")
 			}
-			sp = sp - 4
-			ret.RBPOff = sp
-
-		case token.I64, token.U64, token.I64_zh, token.U64_zh:
-			if iRetReg <= loong64.REG_A1 {
-				ret.Reg = iRetReg
-				iRetReg++
+		}
+		if retOnStack {
+			for _, reti := range fn.Type.Return {
+				reti.Reg = 0
 			}
-			if sp%8 != 0 {
-				sp -= 4
-			}
-			sp = sp - 8
-			ret.RBPOff = sp
-
-		case token.F32, token.F32_zh:
-			if fRetReg <= loong64.REG_FA1 {
-				ret.Reg = fRetReg
-				fRetReg++
-			}
-			sp = sp - 4
-			ret.RBPOff = sp
-
-		case token.F64, token.F64_zh:
-			if fRetReg <= loong64.REG_FA1 {
-				ret.Reg = fRetReg
-				fRetReg++
-			}
-			if sp%8 != 0 {
-				sp -= 4
-			}
-			sp = sp - 8
-			ret.RBPOff = sp
-
-		default:
-			panic("unreachable")
 		}
 	}
 
-	// 输入参数
+	// 为输入参数分配寄存器和对应的内存
+	// 输入参数可能有寄存器和栈内存混合的情况
 	for _, arg := range fn.Type.Args {
 		switch arg.Type {
 		case token.I32, token.U32, token.I32_zh, token.U32_zh:
-			if iArgReg <= loong64.REG_A7 {
-				arg.Reg = iArgReg
-				iArgReg++
+			if r := argRegAlloctor.GetInt(); r != 0 {
+				arg.Reg = r
+				arg.RBPOff = 0 - frameSize - 8
+				frameSize += 8
+			} else {
+				arg.RSPOff = argsSize
+				arg.RBPOff = argsSize + headSize
+				argsSize += 8
 			}
 		case token.I64, token.U64, token.I64_zh, token.U64_zh:
-			if iArgReg <= loong64.REG_A7 {
-				arg.Reg = iArgReg
-				iArgReg++
+			if r := argRegAlloctor.GetInt(); r != 0 {
+				arg.Reg = r
+				arg.RBPOff = 0 - frameSize - 8
+				frameSize += 8
+			} else {
+				arg.RSPOff = argsSize
+				arg.RBPOff = argsSize + headSize
+				argsSize += 8
 			}
 		case token.F32, token.F32_zh:
-			if fArgReg <= loong64.REG_FA7 {
-				arg.Reg = fArgReg
-				fArgReg++
-			} else if iArgReg <= loong64.REG_A7 {
-				// 浮点数寄存器不足时可复用空闲的整数寄存器(英文ABI手册v2.01)
-				// 基于当前位置判断是否有空闲(据说基于尚未来公开的v2.50)
-				arg.Reg = iArgReg
-				iArgReg++
+			if r := argRegAlloctor.GetFloat(); r != 0 {
+				arg.Reg = r
+				arg.RBPOff = 0 - frameSize - 8
+				frameSize += 8
+			} else {
+				arg.RSPOff = argsSize
+				arg.RBPOff = argsSize + headSize
+				argsSize += 8
 			}
 		case token.F64, token.F64_zh:
-			if fArgReg <= loong64.REG_FA7 {
-				arg.Reg = fArgReg
-				fArgReg++
-			} else if iArgReg <= loong64.REG_A7 {
-				// 浮点数寄存器不足时可复用空闲的整数寄存器(英文ABI手册v2.01)
-				// 基于当前位置判断是否有空闲(据说基于尚未来公开的v2.50)
-				arg.Reg = iArgReg
-				iArgReg++
+			if r := argRegAlloctor.GetFloat(); r != 0 {
+				arg.Reg = r
+				arg.RBPOff = 0 - frameSize - 8
+				frameSize += 8
+			} else {
+				arg.RSPOff = argsSize
+				arg.RBPOff = argsSize + headSize
+				argsSize += 8
 			}
 		default:
 			panic("unreachable")
 		}
 	}
 
-	// 修复走寄存器的输入参数位置
-	for i := len(fn.Type.Args) - 1; i >= 0; i-- {
-		arg := fn.Type.Args[i]
-
-		// 跳过走栈的输入参数(已经在调用方处理)
-		if arg.Reg == 0 {
-			continue
+	// 为返回值分配对应的内存
+	// 返回值只能是全部走寄存器或者全部走栈内存
+	if retOnStack {
+		// 返回值全部走栈, 需要输入方分配
+		for _, ret := range fn.Type.Return {
+			ret.RSPOff = argsSize
+			ret.RBPOff = argsSize + headSize
+			argsSize += 8
 		}
-
-		switch arg.Type {
-		case token.I32, token.U32, token.I32_zh, token.U32_zh:
-			sp = sp - 4
-			arg.RBPOff = sp
-
-		case token.I64, token.U64, token.I64_zh, token.U64_zh:
-			if sp%8 != 0 {
-				sp -= 4
-			}
-			sp = sp - 8
-			arg.RBPOff = sp
-
-		case token.F32, token.F32_zh:
-			sp = sp - 4
-			arg.RBPOff = sp
-
-		case token.F64, token.F64_zh:
-			if sp%8 != 0 {
-				sp -= 4
-			}
-			sp = sp - 8
-			arg.RBPOff = sp
-
-		default:
-			panic("unreachable")
-		}
-	}
-
-	fn.FrameSize = 0 - sp
-	return nil
-}
-
-// 构造局部遍历在栈帧的位置
-func buildFuncLocals_loong64(fn *ast.Func) error {
-	var (
-		headSize = 8 * 2
-		sp       = 0 - headSize // 栈顶位置
-	)
-
-	if len(fn.Body.Locals) == 0 {
-		return nil
-	}
-
-	// 对齐到输入参数和返回值位置的底部
-	if len(fn.Type.Return) > 0 {
-		if off := fn.Type.Return[0].RBPOff; off < sp {
-			sp = off
-		}
-	}
-	if len(fn.Type.Args) > 0 {
-		if off := fn.Type.Args[0].RBPOff; off < sp {
-			sp = off
+	} else {
+		// 返回值全部走寄存器
+		for _, ret := range fn.Type.Return {
+			ret.RBPOff = 0 - frameSize - 8
+			frameSize += 8
 		}
 	}
 
 	// 局部变量
-	for i := len(fn.Body.Locals) - 1; i >= 0; i-- {
-		switch x := fn.Body.Locals[i]; x.Type {
-		case token.I32, token.U32, token.I32_zh, token.U32_zh:
-			sp = sp - 4*x.Cap
-			x.RBPOff = sp
-		case token.I64, token.U64, token.I64_zh, token.U64_zh:
-			if sp%8 != 0 {
-				sp -= 4
-			}
-			sp = sp - 8*x.Cap
-			x.RBPOff = sp
-		case token.F32, token.F32_zh:
-			sp = sp - 4*x.Cap
-			x.RBPOff = sp
-		case token.F64, token.F64_zh:
-			if sp%8 != 0 {
-				sp -= 4
-			}
-			sp = sp - 8*x.Cap
-			x.RBPOff = sp
-		default:
-			panic("unreachable")
-		}
+	for _, local := range fn.Body.Locals {
+		local.RBPOff = 0 - frameSize - 8*local.Cap
+		frameSize += 8 * local.Cap
 	}
 
-	fn.FrameSize = 0 - sp
+	fn.ArgsSize = argsSize
+	fn.FrameSize = frameSize
 	return nil
 }
