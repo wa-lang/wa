@@ -21,7 +21,7 @@ func BuildFuncFrame(cpu abi.CPUType, fn *ast.Func) error {
 	case abi.X64:
 		return buildFuncFrame_x64_windows(fn)
 	case abi.X64Unix:
-		return buildFuncFrame_x64_unix(cpu, fn)
+		return buildFuncFrame_x64_unix(fn)
 	default:
 		panic("unreachable")
 	}
