@@ -6,6 +6,8 @@ package wat2x64
 import (
 	"fmt"
 	"io"
+
+	"wa-lang.org/wa/internal/native/abi"
 )
 
 const (
@@ -18,6 +20,13 @@ func (p *wat2X64Worker) buildStart(w io.Writer) error {
 	p.gasSectionTextStart(w)
 	p.gasGlobal(w, kFuncMain)
 	fmt.Fprintf(w, "%s:\n", kFuncMain)
+
+	// 参数寄存器
+	regArg0 := "rcx"
+
+	if p.cpuType == abi.X64Unix {
+		regArg0 = "rdi"
+	}
 
 	fmt.Fprintln(w, "    push rbp")
 	fmt.Fprintln(w, "    mov  rbp, rsp")
@@ -44,7 +53,7 @@ func (p *wat2X64Worker) buildStart(w io.Writer) error {
 	fmt.Fprintln(w)
 
 	p.gasCommentInFunc(w, "runtime.exit(0)")
-	fmt.Fprintf(w, "    mov  rcx, 0\n")
+	fmt.Fprintf(w, "    mov  %s, 0\n", regArg0)
 	fmt.Fprintf(w, "    call %s\n", kRuntimeExit)
 	fmt.Fprintln(w)
 

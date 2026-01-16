@@ -1,5 +1,5 @@
-# Copyright (C) 2026 武汉凹语言科技有限公司
-# SPDX-License-Identifier: AGPL-3.0-or-later
+# 源文件: memory-01.wat, ABI: X64-Unix
+# 自动生成的代码, 不要手动修改!!!
 
 .intel_syntax noprefix
 
@@ -80,7 +80,7 @@ main:
     push rbp
     mov  rbp, rsp
     sub  rsp, 32
-    
+
     call .Memory.initFunc
     call .F.main
 
@@ -125,7 +125,7 @@ main:
 .F.main:
     push rbp
     mov  rbp, rsp
-    sub  rsp, 64
+    sub  rsp, 32
 
     # 没有参数需要备份到栈
 

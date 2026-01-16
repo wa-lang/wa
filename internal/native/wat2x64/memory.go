@@ -6,6 +6,8 @@ package wat2x64
 import (
 	"fmt"
 	"io"
+
+	"wa-lang.org/wa/internal/native/abi"
 )
 
 const (
@@ -57,6 +59,17 @@ func (p *wat2X64Worker) buildMemory(w io.Writer) error {
 		fmt.Fprintln(w)
 	}
 
+	// 参数寄存器
+	regArg0 := "rcx"
+	regArg1 := "rdx"
+	regArg2 := "r8"
+
+	if p.cpuType == abi.X64Unix {
+		regArg0 = "rdi"
+		regArg1 = "rsi"
+		regArg2 = "rdx"
+	}
+
 	// 生成初始化函数
 	{
 		p.gasComment(w, "内存初始化函数")
@@ -70,17 +83,17 @@ func (p *wat2X64Worker) buildMemory(w io.Writer) error {
 		fmt.Fprintln(w)
 
 		p.gasCommentInFunc(w, "分配内存")
-		fmt.Fprintf(w, "    mov  rcx, [rip + %s]\n", kMemoryMaxPagesName)
-		fmt.Fprintf(w, "    shl  rcx, 16\n")
+		fmt.Fprintf(w, "    mov  %s, [rip + %s]\n", regArg0, kMemoryMaxPagesName)
+		fmt.Fprintf(w, "    shl  %s, 16\n", regArg0)
 		fmt.Fprintf(w, "    call %s\n", kRuntimeMalloc)
 		fmt.Fprintf(w, "    mov  [rip + %s], rax\n", kMemoryAddrName)
 		fmt.Fprintln(w)
 
 		p.gasCommentInFunc(w, "内存清零")
-		fmt.Fprintf(w, "    mov  rcx, [rip + %s]\n", kMemoryAddrName)
-		fmt.Fprintf(w, "    mov  rdx, 0\n")
-		fmt.Fprintf(w, "    mov  r8, [rip + %s]\n", kMemoryMaxPagesName)
-		fmt.Fprintf(w, "    shl  r8, 16\n")
+		fmt.Fprintf(w, "    mov  %s, [rip + %s]\n", regArg0, kMemoryAddrName)
+		fmt.Fprintf(w, "    mov  %s, 0\n", regArg1)
+		fmt.Fprintf(w, "    mov  %s, [rip + %s]\n", regArg2, kMemoryMaxPagesName)
+		fmt.Fprintf(w, "    shl  %s, 16\n", regArg2)
 		fmt.Fprintf(w, "    call %s\n", kRuntimeMemset)
 		fmt.Fprintln(w)
 
@@ -92,10 +105,10 @@ func (p *wat2X64Worker) buildMemory(w io.Writer) error {
 				p.gasCommentInFunc(w, fmt.Sprintf("# memcpy(&Memory[%d], data[%d], size)", d.Offset, i))
 
 				fmt.Fprintf(w, "    mov  rax, [rip + %s]\n", kMemoryAddrName)
-				fmt.Fprintf(w, "    mov  rcx, [rip + %s%d]\n", kMemoryDataOffsetPrefix, i)
-				fmt.Fprintf(w, "    add  rcx, rax\n")
-				fmt.Fprintf(w, "    lea  rdx, [rip + %s%d]\n", kMemoryDataPtrPrefix, i)
-				fmt.Fprintf(w, "    mov  r8, [rip + %s%d]\n", kMemoryDataSizePrefix, i)
+				fmt.Fprintf(w, "    mov  %s, [rip + %s%d]\n", regArg0, kMemoryDataOffsetPrefix, i)
+				fmt.Fprintf(w, "    add  %s, rax\n", regArg0)
+				fmt.Fprintf(w, "    lea  %s, [rip + %s%d]\n", regArg1, kMemoryDataPtrPrefix, i)
+				fmt.Fprintf(w, "    mov  %s, [rip + %s%d]\n", regArg2, kMemoryDataSizePrefix, i)
 				fmt.Fprintf(w, "    call %s\n", kRuntimeMemcpy)
 			}
 

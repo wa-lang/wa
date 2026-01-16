@@ -7,6 +7,8 @@ import (
 	_ "embed"
 	"fmt"
 	"io"
+
+	"wa-lang.org/wa/internal/native/abi"
 )
 
 const (
@@ -38,6 +40,11 @@ func (p *wat2X64Worker) buildRuntimeHead(w io.Writer) error {
 		kRuntimeMalloc: "malloc",
 		kRuntimeMemcpy: "memcpy",
 		kRuntimeMemset: "memset",
+	}
+
+	if p.cpuType == abi.X64Unix {
+		m[kRuntimeWrite] = "write"
+		m[kRuntimeExit] = "exit"
 	}
 
 	p.gasComment(w, "运行时函数")
@@ -75,15 +82,26 @@ func (p *wat2X64Worker) buildRuntimeImpl_panic(w io.Writer) error {
 	fmt.Fprintf(w, "    sub  rsp, 32\n")
 	fmt.Fprintln(w)
 
+	// 参数寄存器
+	regArg0 := "rcx"
+	regArg1 := "rdx"
+	regArg2 := "r8"
+
+	if p.cpuType == abi.X64Unix {
+		regArg0 = "rdi"
+		regArg1 = "rsi"
+		regArg2 = "rdx"
+	}
+
 	fmt.Fprintf(w, "    # runtime.write(stderr, panicMessage, size)\n")
-	fmt.Fprintf(w, "    mov  rcx, 2 # stderr\n")
-	fmt.Fprintf(w, "    lea  rdx, [rip + %s]\n", kRuntimePanicMessage)
-	fmt.Fprintf(w, "    mov  r8, [rip + %s] # size\n", kRuntimePanicMessageLen)
+	fmt.Fprintf(w, "    mov  %s, 2 # stderr\n", regArg0)
+	fmt.Fprintf(w, "    lea  %s, [rip + %s]\n", regArg1, kRuntimePanicMessage)
+	fmt.Fprintf(w, "    mov  %s, [rip + %s] # size\n", regArg2, kRuntimePanicMessageLen)
 	fmt.Fprintf(w, "    call %s\n", kRuntimeWrite)
 	fmt.Fprintln(w)
 
 	fmt.Fprintf(w, "    # 退出程序\n")
-	fmt.Fprintf(w, "    mov  rcx, 1 # 退出码\n")
+	fmt.Fprintf(w, "    mov  %s, 1 # 退出码\n", regArg0)
 	fmt.Fprintf(w, "    call %s\n", kRuntimeExit)
 	fmt.Fprintln(w)
 

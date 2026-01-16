@@ -6,7 +6,9 @@ package wat2x64
 import (
 	"bytes"
 	"fmt"
+	"strings"
 
+	"wa-lang.org/wa/internal/native/abi"
 	"wa-lang.org/wa/internal/native/ast"
 	"wa-lang.org/wa/internal/wasm"
 	watast "wa-lang.org/wa/internal/wat/ast"
@@ -33,7 +35,7 @@ func wat2x64(filename string, source []byte, osName string) (m *watast.Module, c
 }
 
 type wat2X64Worker struct {
-	osName string
+	cpuType abi.CPUType
 
 	filename string
 	m        *watast.Module
@@ -72,8 +74,13 @@ func newWat2X64Worker(filename string, mWat *watast.Module, osName string) *wat2
 	p := &wat2X64Worker{
 		filename: filename,
 		m:        mWat,
-		osName:   osName,
 		trace:    DebugMode,
+	}
+
+	if strings.EqualFold(osName, "windows") {
+		p.cpuType = abi.X64Windows
+	} else {
+		p.cpuType = abi.X64Unix
 	}
 
 	// 统计导入的global和func索引
@@ -108,7 +115,7 @@ func (p *wat2X64Worker) BuildProgram() (code []byte, err error) {
 
 	var out bytes.Buffer
 
-	fmt.Fprintf(&out, "# 源文件: %s, 系统: %s/X64\n", p.filename, p.osName)
+	fmt.Fprintf(&out, "# 源文件: %s, ABI: %s\n", p.filename, p.cpuType)
 	fmt.Fprintf(&out, "# 自动生成的代码, 不要手动修改!!!\n\n")
 
 	p.gasIntelSyntax(&out)

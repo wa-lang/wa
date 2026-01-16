@@ -18,7 +18,7 @@ func BuildFuncFrame(cpu abi.CPUType, fn *ast.Func) error {
 		return buildFuncFrame_riscv(cpu, fn)
 	case abi.RISCV64:
 		return buildFuncFrame_riscv(cpu, fn)
-	case abi.X64:
+	case abi.X64Windows:
 		return buildFuncFrame_x64_windows(fn)
 	case abi.X64Unix:
 		return buildFuncFrame_x64_unix(fn)

@@ -16,4 +16,9 @@ dev:
 	gcc env.c memory-01.wa.s -o a.out1.exe
 	a.out1.exe
 
+dev-linux:
+	$(WA) build -arch=x64 -target=linux -o memory-01.linux.wa.s memory-01.wat
+	gcc env.c memory-01.linux.wa.s -z noexecstack -o a.out1.exe
+	./a.out1.exe
+
 clean:

@@ -142,7 +142,7 @@ func (p *wat2X64Worker) buildFunc_body(w io.Writer, fn *ast.Func) error {
 
 	// 模拟构建函数栈帧
 	// 后面需要根据参数是否走寄存器传递生成相关的入口代码和返回代码
-	if err := astutil.BuildFuncFrame(abi.X64, fnNative); err != nil {
+	if err := astutil.BuildFuncFrame(p.cpuType, fnNative); err != nil {
 		return err
 	}
 
@@ -753,7 +753,7 @@ func (p *wat2X64Worker) buildFunc_ins(
 
 		// 模拟构建函数栈帧
 		// 后面需要根据参数是否走寄存器传递生成相关的入口代码和返回代码
-		if err := astutil.BuildFuncFrame(abi.X64, fnCallNative); err != nil {
+		if err := astutil.BuildFuncFrame(p.cpuType, fnCallNative); err != nil {
 			return err
 		}
 
@@ -774,7 +774,7 @@ func (p *wat2X64Worker) buildFunc_ins(
 
 		// 如果是走栈返回, 第一个是隐藏参数
 		if len(fnCallNative.Type.Return) > 1 && fnCallNative.Type.Return[1].Reg == 0 {
-			assert(p.osName == abi.WINDOWS.String())
+			assert(p.cpuType == abi.X64Windows)
 			fmt.Fprintf(w, "    lea rcx, [rsp%+d] # return address\n", len(fnCallType.Params)*8)
 		}
 
@@ -943,7 +943,7 @@ func (p *wat2X64Worker) buildFunc_ins(
 
 		// 模拟构建函数栈帧
 		// 后面需要根据参数是否走寄存器传递生成相关的入口代码和返回代码
-		if err := astutil.BuildFuncFrame(abi.X64, fnCallNative); err != nil {
+		if err := astutil.BuildFuncFrame(p.cpuType, fnCallNative); err != nil {
 			return err
 		}
 
@@ -983,7 +983,7 @@ func (p *wat2X64Worker) buildFunc_ins(
 
 		// 如果是走栈返回, 第一个是隐藏参数
 		if len(fnCallNative.Type.Return) > 1 && fnCallNative.Type.Return[1].Reg == 0 {
-			assert(p.osName == abi.WINDOWS.String())
+			assert(p.cpuType == abi.X64Windows)
 			fmt.Fprintf(w, "    lea rcx, [rsp%+d] # return address\n", len(fnCallType.Params)*8)
 		}
 
