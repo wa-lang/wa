@@ -188,7 +188,7 @@ main:
     addi.d $t0, $zero, 12
     st.d   $t0, $fp, -24
 
-    # 调用 syscall.write(1, 8, 12)
+    # call syscall.write(...)
     ld.d $a0, $fp, -8 # arg 0
     ld.d $a1, $fp, -16 # arg 1
     ld.d $a2, $fp, -24 # arg 2

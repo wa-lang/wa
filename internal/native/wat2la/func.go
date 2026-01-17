@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"io"
 	"math"
+	"strings"
 
 	"wa-lang.org/wa/internal/native/abi"
 	nativeast "wa-lang.org/wa/internal/native/ast"
@@ -370,9 +371,14 @@ func (p *wat2laWorker) buildFunc_ins(
 
 	switch tok := i.Token(); tok {
 	case token.INS_UNREACHABLE:
-		fmt.Fprintf(w, "    bl %s # unreachable", kRuntimePanic)
+		p.gasCommentInFunc(w, "unreachable")
+		fmt.Fprintf(w, "    pcalau12i $t0, %%pc_hi20(%s)\n", kRuntimePanic)
+		fmt.Fprintf(w, "    addi.d $t0, $t0, %%pc_lo12(%s)\n", kRuntimePanic)
+		fmt.Fprintf(w, "    jirl $ra, $t0, 0\n")
+		fmt.Fprintln(w)
+
 	case token.INS_NOP:
-		fmt.Fprintln(w, indent, "addi zero, zero, 0 # nop")
+		fmt.Fprintln(w, indent, "addi.w $zero, $zero, 0 # nop")
 
 	case token.INS_BLOCK:
 		i := i.(ast.Ins_Block)
@@ -728,6 +734,7 @@ func (p *wat2laWorker) buildFunc_ins(
 		i := i.(ast.Ins_Call)
 
 		fnCallType := p.findFuncType(i.X)
+		fnCallIdx := p.findFuncIndex(i.X)
 
 		// 构建被调用函数的栈帧信息
 		fnCallNative := &nativeast.Func{
@@ -757,8 +764,13 @@ func (p *wat2laWorker) buildFunc_ins(
 
 		// 模拟构建函数栈帧
 		// 后面需要根据参数是否走寄存器传递生成相关的入口代码和返回代码
-		if err := astutil.BuildFuncFrame(abi.LOONG64, fnCallNative); err != nil {
+		if err := astutil.BuildFuncFrame(p.cpuType, fnCallNative); err != nil {
 			return err
+		}
+
+		// 统计调用子函数需要的最大栈空间
+		if fnCallNative.ArgsSize > p.fnMaxCallArgsSize {
+			p.fnMaxCallArgsSize = fnCallNative.ArgsSize
 		}
 
 		// 参数列表
@@ -769,76 +781,89 @@ func (p *wat2laWorker) buildFunc_ins(
 			argList[k] = stk.Pop(x.Type)
 		}
 
+		p.gasCommentInFunc(w, fmt.Sprintf("call %s(...)", i.X))
+
+		// 如果是走栈返回, 第一个是隐藏参数
+		if len(fnCallNative.Type.Return) > 0 && fnCallNative.Type.Return[0].Reg == 0 {
+			assert(p.cpuType == abi.LOONG64)
+			fmt.Fprintf(w, "    # todo\n")
+			fmt.Fprintf(w, "    # lea rcx, [rsp%+d] # return address\n", len(fnCallType.Params)*8)
+		}
+
 		// 准备调用参数
 		for k, x := range fnCallType.Params {
 			switch x.Type {
 			case token.I32:
 				if arg := fnCallNative.Type.Args[k]; arg.Reg != 0 {
-					fmt.Fprintf(w, "    ld.w %s, fp, %d",
-						loong64.RegString(arg.Reg),
-						p.fnWasmR0Base+argList[k]*8,
+					fmt.Fprintf(w, "    ld.w %s, $fp, %d # arg %d\n",
+						"$"+strings.ToLower(loong64.RegAliasString(arg.Reg)),
+						p.fnWasmR0Base-argList[k]*8-8,
+						k,
 					)
 				} else {
-					fmt.Fprintf(w, "    ld.w t1, fp, %d",
-						p.fnWasmR0Base+argList[k]*8,
+					fmt.Fprintf(w, "    ld.w $t1, $fp, %d",
+						p.fnWasmR0Base-argList[k]*8-8,
 					)
-					fmt.Fprintf(w, "    st.w t1, fp, %d",
+					fmt.Fprintf(w, "    st.w $t1, $fp, %d",
 						arg.RBPOff,
 					)
 				}
 			case token.I64:
 				if arg := fnCallNative.Type.Args[k]; arg.Reg != 0 {
-					fmt.Fprintf(w, "    ld.d %s, fp, %d",
-						loong64.RegString(arg.Reg),
-						p.fnWasmR0Base+argList[k]*8,
+					fmt.Fprintf(w, "    ld.d %s, $fp, %d # arg %d\n",
+						"$"+strings.ToLower(loong64.RegAliasString(arg.Reg)),
+						p.fnWasmR0Base-argList[k]*8-8,
+						k,
 					)
 				} else {
-					fmt.Fprintf(w, "    ld.d t1, fp, %d",
-						p.fnWasmR0Base+argList[k]*8,
+					fmt.Fprintf(w, "    ld.d $t1, $fp, %d",
+						p.fnWasmR0Base-argList[k]*8-8,
 					)
-					fmt.Fprintf(w, "    st.d t1, fp, %d",
+					fmt.Fprintf(w, "    st.d $t1, $fp, %d",
 						arg.RBPOff,
 					)
 				}
 			case token.F32:
 				if arg := fnCallNative.Type.Args[k]; arg.Reg != 0 {
 					if arg.Reg >= loong64.REG_FA0 && arg.Reg <= loong64.REG_A7 {
-						fmt.Fprintf(w, "    fld.s %s, fp, %d",
-							loong64.RegString(arg.Reg),
-							p.fnWasmR0Base+argList[k]*8,
+						fmt.Fprintf(w, "    fld.s %s, $fp, %d # arg %d\n",
+							"$"+strings.ToLower(loong64.RegAliasString(arg.Reg)),
+							p.fnWasmR0Base-argList[k]*8-8,
+							k,
 						)
 					} else {
-						fmt.Fprintf(w, "    ld.w %s, fp, %d",
-							loong64.RegString(arg.Reg),
+						fmt.Fprintf(w, "    ld.w %s, $fp, %d",
+							"$"+strings.ToLower(loong64.RegAliasString(arg.Reg)),
 							p.fnWasmR0Base+argList[k]*8,
 						)
 					}
 				} else {
-					fmt.Fprintf(w, "    fld.s t1, fp, %d",
-						p.fnWasmR0Base+argList[k]*8,
+					fmt.Fprintf(w, "    fld.s $t1, $fp, %d",
+						p.fnWasmR0Base-argList[k]*8-8,
 					)
-					fmt.Fprintf(w, "    fst.s t1, fp, %d",
+					fmt.Fprintf(w, "    fst.s $t1, $fp, %d",
 						arg.RBPOff,
 					)
 				}
 			case token.F64:
 				if arg := fnCallNative.Type.Args[k]; arg.Reg != 0 {
 					if arg.Reg >= loong64.REG_FA0 && arg.Reg <= loong64.REG_A7 {
-						fmt.Fprintf(w, "    fld.d %s, fp, %d",
-							loong64.RegString(arg.Reg),
-							p.fnWasmR0Base+argList[k]*8,
+						fmt.Fprintf(w, "    fld.d %s, $fp, %d # arg %d\n",
+							"$"+strings.ToLower(loong64.RegAliasString(arg.Reg)),
+							p.fnWasmR0Base-argList[k]*8-8,
+							k,
 						)
 					} else {
-						fmt.Fprintf(w, "    ld.d %s, fp, %d",
-							loong64.RegString(arg.Reg),
-							p.fnWasmR0Base+argList[k]*8,
+						fmt.Fprintf(w, "    ld.d %s, $fp, %d",
+							"$"+strings.ToLower(loong64.RegAliasString(arg.Reg)),
+							p.fnWasmR0Base-argList[k]*8-8,
 						)
 					}
 				} else {
-					fmt.Fprintf(w, "    fld.d t1, fp, %d",
-						p.fnWasmR0Base+argList[k]*8,
+					fmt.Fprintf(w, "    fld.d $t1, $fp, %d",
+						p.fnWasmR0Base-argList[k]*8-8,
 					)
-					fmt.Fprintf(w, "    fst.d t1, fp, %d",
+					fmt.Fprintf(w, "    fst.d $t1, $fp, %d",
 						arg.RBPOff,
 					)
 				}
@@ -846,7 +871,16 @@ func (p *wat2laWorker) buildFunc_ins(
 				unreachable()
 			}
 		}
-		fmt.Fprintf(w, "    bl %s", i.X)
+
+		if fnCallIdx <= p.importFuncCount {
+			fmt.Fprintf(w, "    pcalau12i $t0, %%pc_hi20(%s)\n", kImportNamePrefix+i.X)
+			fmt.Fprintf(w, "    addi.d $t0, $t0, %%pc_lo12(%s)\n", kImportNamePrefix+i.X)
+			fmt.Fprintf(w, "    jirl $ra, $t0, 0\n")
+		} else {
+			fmt.Fprintf(w, "    pcalau12i $t0, %%pc_hi20(%s)\n", kFuncNamePrefix+i.X)
+			fmt.Fprintf(w, "    addi.d $t0, $t0, %%pc_lo12(%s)\n", kFuncNamePrefix+i.X)
+			fmt.Fprintf(w, "    jirl $ra, $t0, 0\n")
+		}
 
 		// 提取返回值
 		if len(fnCallNative.Type.Return) > 1 && fnCallNative.Type.Return[1].Reg == 0 {
@@ -856,17 +890,17 @@ func (p *wat2laWorker) buildFunc_ins(
 				reti := stk.Push(retType)
 				switch retType {
 				case token.I32:
-					fmt.Fprintf(w, "    ld.w t0, a0, %d\n", k*8)
-					fmt.Fprintf(w, "    st.w t0, fp, %d\n", p.fnWasmR0Base-reti*8)
+					fmt.Fprintf(w, "    ld.w $t0, $a0, %d\n", k*8)
+					fmt.Fprintf(w, "    st.w $t0, $fp, %d\n", p.fnWasmR0Base-reti*8-8)
 				case token.I64:
-					fmt.Fprintf(w, "    ld.d t0, a0, %d\n", k*8)
-					fmt.Fprintf(w, "    st.d t0, fp, %d\n", p.fnWasmR0Base-reti*8)
+					fmt.Fprintf(w, "    ld.d $t0, $a0, %d\n", k*8)
+					fmt.Fprintf(w, "    st.d $t0, $fp, %d\n", p.fnWasmR0Base-reti*8-8)
 				case token.F32:
-					fmt.Fprintf(w, "    fld.s t0, a0, %d\n", k*8)
-					fmt.Fprintf(w, "    fst.s t0, fp, %d\n", p.fnWasmR0Base-reti*8)
+					fmt.Fprintf(w, "    fld.s $t0, $a0, %d\n", k*8)
+					fmt.Fprintf(w, "    fst.s $t0, $fp, %d\n", p.fnWasmR0Base-reti*8-8)
 				case token.F64:
-					fmt.Fprintf(w, "    fld.d t0, a0, %d\n", k*8)
-					fmt.Fprintf(w, "    fst.d t0, fp, %d\n", p.fnWasmR0Base-reti*8)
+					fmt.Fprintf(w, "    fld.d $t0, $a0, %d\n", k*8)
+					fmt.Fprintf(w, "    fst.d $t0, $fp, %d\n", p.fnWasmR0Base-reti*8-8)
 				default:
 					unreachable()
 				}
@@ -880,24 +914,24 @@ func (p *wat2laWorker) buildFunc_ins(
 				reti := stk.Push(retType)
 				switch retType {
 				case token.I32:
-					fmt.Fprintf(w, "    st.w %s, fp, %d\n",
-						loong64.RegString(retNative.Reg),
-						p.fnWasmR0Base-reti*8,
+					fmt.Fprintf(w, "    st.w %s, $fp, %d\n",
+						"$"+strings.ToLower(loong64.RegAliasString(retNative.Reg)),
+						p.fnWasmR0Base-reti*8-8,
 					)
 				case token.I64:
-					fmt.Fprintf(w, "    st.d %s, fp, %d\n",
-						loong64.RegString(retNative.Reg),
-						p.fnWasmR0Base-reti*8,
+					fmt.Fprintf(w, "    st.d %s, $fp, %d\n",
+						"$"+strings.ToLower(loong64.RegAliasString(retNative.Reg)),
+						p.fnWasmR0Base-reti*8-8,
 					)
 				case token.F32:
-					fmt.Fprintf(w, "    fst.s %s, fp, %d\n",
-						loong64.RegString(retNative.Reg),
-						p.fnWasmR0Base-reti*8,
+					fmt.Fprintf(w, "    fst.s %s, $fp, %d\n",
+						"$"+strings.ToLower(loong64.RegAliasString(retNative.Reg)),
+						p.fnWasmR0Base-reti*8-8,
 					)
 				case token.F64:
-					fmt.Fprintf(w, "    fst.d %s, fp, %d\n",
-						loong64.RegString(retNative.Reg),
-						p.fnWasmR0Base-reti*8,
+					fmt.Fprintf(w, "    fst.d %s, $fp, %d\n",
+						"$"+strings.ToLower(loong64.RegAliasString(retNative.Reg)),
+						p.fnWasmR0Base-reti*8-8,
 					)
 				default:
 					unreachable()
@@ -1080,7 +1114,7 @@ func (p *wat2laWorker) buildFunc_ins(
 
 	case token.INS_DROP:
 		sp0 := stk.DropAny()
-		fmt.Fprintf(w, "    addi zero, zero, 0 # drop R%d\n", sp0)
+		fmt.Fprintf(w, "    addi.w $zero, $zero, 0 # drop [fp%+d]\n", p.fnWasmR0Base-sp0*8-8)
 	case token.INS_SELECT:
 		i := i.(ast.Ins_Select)
 

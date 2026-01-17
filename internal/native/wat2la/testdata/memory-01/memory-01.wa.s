@@ -188,8 +188,15 @@ main:
     addi.d $t0, $zero, 12
     st.d   $t0, $fp, -24
 
-    ld.d R4, fp, 0    ld.d R5, fp, 8    ld.d R6, fp, 16    bl syscall.write    st.d R4, fp, 0
-    addi zero, zero, 0 # drop R0
+    # call syscall.write(...)
+    ld.d $a0, $fp, -8 # arg 0
+    ld.d $a1, $fp, -16 # arg 1
+    ld.d $a2, $fp, -24 # arg 2
+    pcalau12i $t0, %pc_hi20(.Import.syscall.write)
+    addi.d $t0, $t0, %pc_lo12(.Import.syscall.write)
+    jirl $ra, $t0, 0
+    st.d $a0, $fp, -8
+    addi.w $zero, $zero, 0 # drop [fp-8]
 
     # 根据ABI处理返回值
 .L.return:
