@@ -85,6 +85,11 @@ func buildFuncFrame_loong64(fn *ast.Func) error {
 				arg.Reg = r
 				arg.RBPOff = 0 - frameSize - 8
 				frameSize += 8
+			} else if r := argRegAlloctor.GetInt(); r != 0 {
+				// 浮点数寄存器不足时可复用空闲的整数寄存器(英文ABI手册v2.01)
+				// 基于当前位置判断是否有空闲(基于尚未来公开的v2.50), 可能剥夺正常的整数寄存器
+				arg.RBPOff = 0 - frameSize - 8
+				frameSize += 8
 			} else {
 				arg.RSPOff = argsSize
 				arg.RBPOff = argsSize + headSize
@@ -93,6 +98,11 @@ func buildFuncFrame_loong64(fn *ast.Func) error {
 		case token.F64, token.F64_zh:
 			if r := argRegAlloctor.GetFloat(); r != 0 {
 				arg.Reg = r
+				arg.RBPOff = 0 - frameSize - 8
+				frameSize += 8
+			} else if r := argRegAlloctor.GetInt(); r != 0 {
+				// 浮点数寄存器不足时可复用空闲的整数寄存器(英文ABI手册v2.01)
+				// 基于当前位置判断是否有空闲(基于尚未来公开的v2.50), 可能剥夺正常的整数寄存器
 				arg.RBPOff = 0 - frameSize - 8
 				frameSize += 8
 			} else {
