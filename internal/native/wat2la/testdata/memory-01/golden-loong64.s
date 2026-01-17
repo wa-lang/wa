@@ -144,10 +144,11 @@ main:
 # func main
 .section .text
 .F.main:
+    addi.d  $sp, $sp, -16 
+    st.d    $ra, $sp, 8
+    st.d    $fp, $sp, 0
+    addi.d  $fp, $sp, 0
     addi.d  $sp, $sp, -64
-    st.d    $ra, $sp, 56
-    st.d    $fp, $sp, 48
-    addi.d  $fp, $sp, 64
 
     # 没有参数需要备份到栈
 
@@ -156,33 +157,34 @@ main:
     # 没有局部变量需要初始化为0
 
     # i64.const 1
-    addi.d  $t0, $zero, 1
-    st.d    $t0, $fp, -8
+    addi.d $t0, $zero, 1
+    st.d   $t0, $fp, -8
 
     # i64.const 8
-    addi.d  $t0, $zero, 8
-    st.d    $t0, $fp, -16
+    addi.d $t0, $zero, 8
+    st.d   $t0, $fp, -16
 
     # i64.const 12
-    addi.d  $t0, $zero, 12
-    st.d    $t0, $fp, -24
+    addi.d $t0, $zero, 12
+    st.d   $t0, $fp, -24
 
     # 调用 syscall.write(1, 8, 12)
-    ld.d      $a0, $fp, -8
-    ld.d      $a1, $fp, -16
-    ld.d      $a2, $fp, -24
+    ld.d $a0, $fp, -8 # arg 0
+    ld.d $a1, $fp, -16 # arg 1
+    ld.d $a2, $fp, -24 # arg 2
     pcalau12i $t0, %pc_hi20(.Import.syscall.write)
-    addi.d    $t0, $t0, %pc_lo12(.Import.syscall.write)
-    jirl      $ra, $t0, 0
-    st.d      $a0, $fp, -8
-    # drop
+    addi.d $t0, $t0, %pc_lo12(.Import.syscall.write)
+    jirl $ra, $t0, 0
+    st.d $a0, $fp, -8
+    addi.w $zero, $zero, 0 # drop [fp-8]
 
     # 根据ABI处理返回值
 .L.return:
 
     # 函数返回
-    ld.d    $ra, $sp, 56
-    ld.d    $fp, $sp, 48
+    addi.d  $sp, $fp, 0
+    ld.d    $ra, $sp, 8
+    ld.d    $fp, $sp, 0
     addi.d  $sp, $sp, 64
     jirl    $zero, $ra, 0
 
