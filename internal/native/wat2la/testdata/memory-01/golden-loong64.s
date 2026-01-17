@@ -39,10 +39,11 @@
 .section .text
 .globl .Memory.initFunc
 .Memory.initFunc:
+    addi.d  $sp, $sp, -16
+    st.d    $ra, $sp, 8
+    st.d    $fp, $sp, 0
+    addi.d  $fp, $sp, 0
     addi.d  $sp, $sp, -32
-    st.d    $ra, $sp, 24
-    st.d    $fp, $sp, 16
-    addi.d  $fp, $sp, 32
 
     # 分配内存
     pcalau12i $t0, %pc_hi20(.Memory.maxPages)
@@ -86,18 +87,21 @@
     jirl      $ra, $t0, 0
 
     # 函数返回
-    ld.d    $ra, $sp, 24
-    ld.d    $fp, $sp, 16
-    addi.d  $sp, $sp, 32
+    addi.d  $sp, $fp, 0
+    ld.d    $ra, $sp, 8
+    ld.d    $fp, $sp, 0
+    addi.d  $sp, $sp, 16
     jirl    $zero, $ra, 0
 
 # 汇编程序入口函数
 .section .text
 .globl main
 main:
+    addi.d  $sp, $sp, -16
+    st.d    $ra, $sp, 8
+    st.d    $fp, $sp, 0
+    addi.d  $fp, $sp, 0
     addi.d  $sp, $sp, -32
-    st.d    $ra, $sp, 24
-    st.d    $fp, $sp, 16
 
     pcalau12i $t0, %pc_hi20(.Memory.initFunc)
     addi.d    $t0, $t0, %pc_lo12(.Memory.initFunc)
@@ -113,6 +117,13 @@ main:
     addi.d    $t0, $t0, %pc_lo12(.Runtime.exit)
     jirl      $ra, $t0, 0
 
+    # exit 后这里不会被执行, 但是依然保留
+    addi.d  $sp, $fp, 0
+    ld.d    $ra, $sp, 8
+    ld.d    $fp, $sp, 0
+    addi.d  $sp, $sp, 16
+    jirl    $zero, $ra, 0
+
 .section .data
 .align 3
 .Runtime.panic.message:    .asciz "panic"
@@ -121,8 +132,11 @@ main:
 .section .text
 .globl .Runtime.panic
 .Runtime.panic:
+    addi.d  $sp, $sp, -16
+    st.d    $ra, $sp, 8
+    st.d    $fp, $sp, 0
+    addi.d  $fp, $sp, 0
     addi.d  $sp, $sp, -32
-    st.d    $ra, $sp, 24
 
     # runtime.write(stderr, panicMessage, size)
     addi.d    $a0, $zero, 2
@@ -140,6 +154,13 @@ main:
     pcalau12i $t0, %pc_hi20(.Runtime.exit)
     addi.d    $t0, $t0, %pc_lo12(.Runtime.exit)
     jirl      $ra, $t0, 0
+
+    # return
+    addi.d  $sp, $fp, 0
+    ld.d    $ra, $sp, 8
+    ld.d    $fp, $sp, 0
+    addi.d  $sp, $sp, 16
+    jirl    $zero, $ra, 0
 
 # func main
 .section .text
@@ -185,6 +206,6 @@ main:
     addi.d  $sp, $fp, 0
     ld.d    $ra, $sp, 8
     ld.d    $fp, $sp, 0
-    addi.d  $sp, $sp, 64
+    addi.d  $sp, $sp, 16
     jirl    $zero, $ra, 0
 
