@@ -7,14 +7,13 @@ import (
 	"bytes"
 	"fmt"
 
+	"wa-lang.org/wa/internal/native/abi"
 	"wa-lang.org/wa/internal/native/ast"
 	"wa-lang.org/wa/internal/wasm"
 	watast "wa-lang.org/wa/internal/wat/ast"
 	watparser "wa-lang.org/wa/internal/wat/parser"
 	wattoken "wa-lang.org/wa/internal/wat/token"
 )
-
-// TODO: 自动化汇编指令地址回填, 需要一个手动构建指令序列的方式
 
 const DebugMode = false
 
@@ -29,13 +28,16 @@ func wat2la(filename string, source []byte) (m *watast.Module, code []byte, err 
 		return m, nil, err
 	}
 
-	worker := newWat2LAWorker(m)
+	worker := newWat2LAWorker(filename, m)
 	code, err = worker.BuildProgram()
 	return
 }
 
 type wat2laWorker struct {
-	m *watast.Module
+	cpuType abi.CPUType
+
+	filename string
+	m        *watast.Module
 
 	importGlobalCount int // 导入全局只读变量的数目
 	importFuncCount   int // 导入函数的数目
@@ -43,17 +45,20 @@ type wat2laWorker struct {
 	inlinedTypeIndices []*inlinedTypeIndex
 	inlinedTypes       []*wasm.FunctionType
 
-	localNames      []string           // 参数和局部变量名
-	localTypes      []wattoken.Token   // 参数和局部变量类型
-	scopeLabels     []string           // 嵌套的label查询, if/block/loop
-	scopeStackBases []int              // if/block/loop, 开始的栈位置
-	scopeResults    [][]wattoken.Token // 对应块的返回值数量和类型
-	fnWasmR0Base    int                // 当前函数的WASM栈R0位置
+	localNames        []string           // 参数和局部变量名
+	localTypes        []wattoken.Token   // 参数和局部变量类型
+	scopeLabels       []string           // 嵌套的label查询, if/block/loop
+	scopeStackBases   []int              // if/block/loop, 开始的栈位置
+	scopeResults      [][]wattoken.Token // 对应块的返回值数量和类型
+	fnWasmR0Base      int                // 当前函数的WASM栈R0位置
+	fnMaxCallArgsSize int                // 调用子函数需要的最大空间
 
 	constLitMap map[uint64]uint64 // 常量列表
 
 	dataSection []*ast.Global
 	textSection []*ast.Func
+
+	nextId int64 // 用于生成唯一ID
 
 	trace bool // 调试开关
 }
@@ -64,8 +69,13 @@ type inlinedTypeIndex struct {
 	inlinedIdx wasm.Index
 }
 
-func newWat2LAWorker(mWat *watast.Module) *wat2laWorker {
-	p := &wat2laWorker{m: mWat, trace: DebugMode}
+func newWat2LAWorker(filename string, mWat *watast.Module) *wat2laWorker {
+	p := &wat2laWorker{
+		cpuType:  abi.LOONG64,
+		filename: filename,
+		m:        mWat,
+		trace:    DebugMode,
+	}
 
 	// 统计导入的global和func索引
 	p.importGlobalCount = 0
@@ -99,35 +109,29 @@ func (p *wat2laWorker) BuildProgram() (code []byte, err error) {
 
 	var out bytes.Buffer
 
+	fmt.Fprintf(&out, "# 源文件: %s, ABI: %s\n", p.filename, p.cpuType)
 	fmt.Fprintf(&out, "# 自动生成的代码, 不要手动修改!!!\n\n")
 
+	// 生成运行时函数
+	p.buildRuntimeHead(&out)
+
+	// 导入函数
 	if err := p.buildImport(&out); err != nil {
 		return nil, err
 	}
 
-	if err := p.buildGlobal(&out); err != nil {
-		return nil, err
-	}
-
-	if err := p.buildTable(&out); err != nil {
-		return nil, err
-	}
-
+	// 构建内存
 	if err := p.buildMemory(&out); err != nil {
 		return nil, err
 	}
 
-	if err := p.buildFuncs(&out); err != nil {
+	// 构建表格
+	if err := p.buildTable(&out); err != nil {
 		return nil, err
 	}
 
-	// 生成常量
-	if err := p.buildConstList(&out); err != nil {
-		return nil, err
-	}
-
-	// 内置函数
-	if err := p.buildBuiltin(&out); err != nil {
+	// 构建全局变量
+	if err := p.buildGlobal(&out); err != nil {
 		return nil, err
 	}
 
@@ -136,5 +140,21 @@ func (p *wat2laWorker) BuildProgram() (code []byte, err error) {
 		return nil, err
 	}
 
+	// 生成运行时函数
+	if err := p.buildRuntimeImpl(&out); err != nil {
+		return nil, err
+	}
+
+	// 构建函数
+	if err := p.buildFuncs(&out); err != nil {
+		return nil, err
+	}
+
 	return out.Bytes(), nil
+}
+
+func (p *wat2laWorker) gasGenNextId(preifx string) string {
+	nextId := p.nextId
+	p.nextId++
+	return fmt.Sprintf("%s.%08X", preifx, nextId)
 }

@@ -13,32 +13,31 @@ import (
 	nativeast "wa-lang.org/wa/internal/native/ast"
 	"wa-lang.org/wa/internal/native/ast/astutil"
 	"wa-lang.org/wa/internal/native/loong64"
+	"wa-lang.org/wa/internal/native/x64"
 	"wa-lang.org/wa/internal/wat/ast"
 	"wa-lang.org/wa/internal/wat/token"
 )
 
 const (
-	kFuncNamePrefix      = "$F."
-	kFuncArgNamePrefix   = "%F.arg."
-	kFuncRetNamePrefix   = "%F.ret."
-	kFuncLocalNamePrefix = "%F.local."
+	kFuncNamePrefix    = ".F."
+	kFuncRetNamePrefix = ".F.ret."
 )
 
 const (
-	kLabelName_return = "%L.return"
+	kLabelName_return = ".L.return"
 
-	kLabelNamePreifx_blockBegin = "%L.block.begin."
-	kLabelNamePreifx_blockEnd   = "%L.block.end."
+	kLabelNamePreifx_blockBegin = ".L.block.begin."
+	kLabelNamePreifx_blockEnd   = ".L.block.end."
 
-	kLabelNamePreifx_ifBegin = "%L.if.begin."
-	kLabelNamePreifx_ifBody  = "%L.if.body."
-	kLabelNamePreifx_ifElse  = "%L.if.else."
-	kLabelNamePreifx_ifEnd   = "%L.if.end."
+	kLabelNamePreifx_ifBegin = ".L.if.begin."
+	kLabelNamePreifx_ifBody  = ".L.if.body."
+	kLabelNamePreifx_ifElse  = ".L.if.else."
+	kLabelNamePreifx_ifEnd   = ".L.if.end."
 
-	kLabelNamePreifx_loopBegin = "%L.loop.begin."
-	kLabelNamePreifx_loopEnd   = "%L.loop.end."
+	kLabelNamePreifx_loopBegin = ".L.loop.begin."
+	kLabelNamePreifx_loopEnd   = ".L.loop.end."
 
-	kLabelNamePreifx_next = "%L.next."
+	kLabelNamePreifx_next = ".L.next."
 )
 
 //
@@ -57,49 +56,21 @@ func (p *wat2laWorker) buildFuncs(w io.Writer) error {
 	}
 
 	for _, f := range p.m.Funcs {
-		fmt.Fprintf(w, "func %s%s", kFuncNamePrefix, f.Name)
-		if len(f.Type.Params) > 0 {
-			fmt.Fprint(w, "(")
-			for i, arg := range f.Type.Params {
-				if i > 0 {
-					fmt.Fprint(w, ", ")
-				}
-				if arg.Name != "" {
-					fmt.Fprintf(w, "%s%s: %v", kFuncArgNamePrefix, arg.Name, arg.Type)
-				} else {
-					fmt.Fprintf(w, "%s%d, %v", kFuncArgNamePrefix, i, arg.Type)
-				}
-			}
-			fmt.Fprint(w, ")")
-		}
-		if len(f.Type.Results) > 1 {
-			fmt.Fprintf(w, " => (")
-			for i, x := range f.Type.Results {
-				if i > 0 {
-					fmt.Fprint(w, ", ")
-				}
-				fmt.Fprintf(w, "%s%d: %v", kFuncRetNamePrefix, i, x)
-			}
-			fmt.Fprint(w, ")")
-		} else if len(f.Type.Results) == 1 {
-			fmt.Fprintf(w, "%v", f.Type.Results[0])
-		}
-		fmt.Fprintln(w, " {")
+		p.localNames = nil
+		p.localTypes = nil
+		p.scopeLabels = nil
+		p.scopeStackBases = nil
+		p.scopeResults = nil
 
-		// 翻译函数实现
-		{
-			p.localNames = nil
-			p.localTypes = nil
-			p.scopeLabels = nil
-			p.scopeStackBases = nil
-			p.scopeResults = nil
-
-			if err := p.buildFunc_body(w, f); err != nil {
-				return err
-			}
+		p.gasComment(w, "func "+f.Name)
+		p.gasSectionTextStart(w)
+		if f.ExportName == f.Name {
+			p.gasGlobal(w, kFuncNamePrefix+f.Name)
 		}
-
-		fmt.Fprintln(w, "}")
+		p.gasFuncStart(w, kFuncNamePrefix+f.Name)
+		if err := p.buildFunc_body(w, f); err != nil {
+			return err
+		}
 	}
 
 	return nil
@@ -121,13 +92,11 @@ func (p *wat2laWorker) buildFunc_body(w io.Writer, fn *ast.Func) error {
 	assert(len(p.scopeStackBases) == 0)
 	assert(len(p.scopeResults) == 0)
 
-	if len(fn.Body.Locals) > 0 {
-		for _, x := range fn.Body.Locals {
-			p.localNames = append(p.localNames, x.Name)
-			p.localTypes = append(p.localTypes, x.Type)
-			fmt.Fprintf(&bufHeader, "    local %s%s: %v\n", kFuncLocalNamePrefix, x.Name, x.Type)
+	// 至少要有一个指令
+	if len(fn.Body.Insts) == 0 {
+		fn.Body.Insts = []ast.Instruction{
+			ast.Ins_Return{OpToken: ast.OpToken(token.INS_RETURN)},
 		}
-		fmt.Fprintln(&bufHeader)
 	}
 
 	// 转化为汇编的结构, 准备构建函数栈帧
@@ -157,142 +126,32 @@ func (p *wat2laWorker) buildFunc_body(w io.Writer, fn *ast.Func) error {
 	}
 	for i, local := range fn.Body.Locals {
 		fnNative.Body.Locals[i] = &nativeast.Local{
-			Name: fmt.Sprintf("%s%s", kFuncLocalNamePrefix, local.Name),
+			Name: local.Name,
 			Type: wat2nativeType(local.Type),
 			Cap:  1,
 		}
 	}
 
+	if len(fn.Body.Locals) > 0 {
+		for _, x := range fn.Body.Locals {
+			p.localNames = append(p.localNames, x.Name)
+			p.localTypes = append(p.localTypes, x.Type)
+			p.gasCommentInFunc(w, fmt.Sprintf("local %s: %s", x.Name, x.Type))
+		}
+		fmt.Fprintln(&bufHeader)
+	}
+
 	// 模拟构建函数栈帧
 	// 后面需要根据参数是否走寄存器传递生成相关的入口代码和返回代码
-	if err := astutil.BuildFuncFrame(abi.LOONG64, fnNative); err != nil {
+	if err := astutil.BuildFuncFrame(p.cpuType, fnNative); err != nil {
 		return err
 	}
 
-	// 第一步构建 ra 和 fp
-	{
-		fmt.Fprintf(&bufHeader, "     # 栈帧开始\n")
-		fmt.Fprintln(&bufHeader, "    addi.d sp, sp, -16 # sp = sp - 16")
-		fmt.Fprintln(&bufHeader, "    st.d   $ra, sp, 8   # save $ra")
-		fmt.Fprintln(&bufHeader, "    st.d   fp, sp, 0   # save fp")
-
-		fmt.Fprintf(&bufHeader, "    # memory address\n")
-		fmt.Fprintf(&bufHeader, "    pcalau12i %s, %%pc_hi20(%s)\n", kMemoryReg, kMemoryAddrName)
-		fmt.Fprintf(&bufHeader, "    addi.d    %s, %s, %%pc_lo12(%s)\n", kMemoryReg, kMemoryReg, kMemoryAddrName)
-
-		fmt.Fprintf(&bufHeader, "    # table address\n")
-		fmt.Fprintf(&bufHeader, "    pcalau12i %s, %%pc_hi20(%s)\n", kTableReg, kTableAddrName)
-		fmt.Fprintf(&bufHeader, "    addi.d    %s, %s, %%pc_lo12(%s)\n", kTableReg, kTableReg, kTableAddrName)
-	}
-
-	// 将寄存器参数备份到栈
-	if len(fn.Type.Params) > 0 {
-		fmt.Fprintf(&bufHeader, "    # 将寄存器参数备份到栈\n")
-		for i, arg := range fnNative.Type.Args {
-			if arg.Reg == 0 {
-				continue // 走栈的输入参数不需要
-			}
-
-			// 将寄存器中的参数存储到对于的栈帧中
-			switch fn.Type.Params[i].Type {
-			case token.I32:
-				fmt.Fprintf(&bufHeader, "    st.w %v, fp, %d # save %s%s\n",
-					loong64.RegString(arg.Reg), arg.RBPOff,
-					kFuncArgNamePrefix, arg.Name,
-				)
-			case token.I64:
-				fmt.Fprintf(&bufHeader, "    st.d %v, fp, %d # save %s%s\n",
-					loong64.RegString(arg.Reg), arg.RBPOff,
-					kFuncArgNamePrefix, arg.Name,
-				)
-			case token.F32:
-				if arg.Reg >= loong64.REG_A0 && arg.Reg <= loong64.REG_A7 {
-					fmt.Fprintf(&bufHeader, "    st.w %v, fp, %d # save %s%s\n",
-						loong64.RegString(arg.Reg), arg.RBPOff,
-						kFuncArgNamePrefix, arg.Name,
-					)
-				} else {
-					fmt.Fprintf(&bufHeader, "    fst.s %v, fp, %d # save %s%s\n",
-						loong64.RegString(arg.Reg), arg.RBPOff,
-						kFuncArgNamePrefix, arg.Name,
-					)
-				}
-			case token.F64:
-				if arg.Reg >= loong64.REG_A0 && arg.Reg <= loong64.REG_A7 {
-					fmt.Fprintf(&bufHeader, "    st.d %v, fp, %d # save %s%s\n",
-						loong64.RegString(arg.Reg), arg.RBPOff,
-						kFuncArgNamePrefix, arg.Name,
-					)
-				} else {
-					fmt.Fprintf(&bufHeader, "    fst.d %v, fp, %d # save %s%s\n",
-						loong64.RegString(arg.Reg), arg.RBPOff,
-						kFuncArgNamePrefix, arg.Name,
-					)
-				}
-			default:
-				panic("unreachable")
-			}
-		}
-	}
-
-	// 返回值初始化为 0
-	for i, ret := range fnNative.Type.Return {
-		switch fn.Type.Results[i] {
-		case token.I32:
-			fmt.Fprintf(&bufHeader, "    st.w zero, fp, %d # %s%s = 0\n",
-				ret.RBPOff, kFuncRetNamePrefix, ret.Name,
-			)
-		case token.I64:
-			fmt.Fprintf(&bufHeader, "    st.d zero, fp, %d # %s%s = 0\n",
-				ret.RBPOff, kFuncRetNamePrefix, ret.Name,
-			)
-		case token.F32:
-			fmt.Fprintf(&bufHeader, "    fst.s zero, fp, %d # %s%s = 0\n",
-				ret.RBPOff, kFuncRetNamePrefix, ret.Name,
-			)
-		case token.F64:
-			fmt.Fprintf(&bufHeader, "    fst.d zero, fp, %d # %s%s = 0\n",
-				ret.RBPOff, kFuncRetNamePrefix, ret.Name,
-			)
-		default:
-			panic("unreachable")
-		}
-	}
-
-	// 局部变量初始化为 0
-	for i, local := range fnNative.Body.Locals {
-		switch fn.Body.Locals[i].Type {
-		case token.I32:
-			fmt.Fprintf(&bufHeader, "    st.w zero, fp, %d # %s%s = 0\n",
-				local.RBPOff, kFuncLocalNamePrefix, local.Name,
-			)
-		case token.I64:
-			fmt.Fprintf(&bufHeader, "    st.d zero, fp, %d # %s%s = 0\n",
-				local.RBPOff, kFuncLocalNamePrefix, local.Name,
-			)
-		case token.F32:
-			fmt.Fprintf(&bufHeader, "    fst.s zero, fp, %d # %s%s = 0\n",
-				local.RBPOff, kFuncLocalNamePrefix, local.Name,
-			)
-		case token.F64:
-			fmt.Fprintf(&bufHeader, "    fst.d zero, fp, %d # %s%s = 0\n",
-				local.RBPOff, kFuncLocalNamePrefix, local.Name,
-			)
-		default:
-			panic("unreachable")
-		}
-	}
-
 	// WASM 栈的开始位置
-	// WASM 栈底第一个元素相对于 FP 的偏移位置, 每个元素 8 字节
-	p.fnWasmR0Base = 0 - fnNative.FrameSize - 8
-
-	// 至少要有一个指令
-	if len(fn.Body.Insts) == 0 {
-		fn.Body.Insts = []ast.Instruction{
-			ast.Ins_Return{OpToken: ast.OpToken(token.INS_RETURN)},
-		}
-	}
+	// WASM 栈底第一个元素相对于 fp 的偏移位置, 每个元素 8 字节
+	// 栈指令依赖该偏移量
+	p.fnWasmR0Base = 0 - fnNative.FrameSize
+	p.fnMaxCallArgsSize = 0
 
 	// 开始解析 wasm 指令
 	var stk valueTypeStack
@@ -308,56 +167,140 @@ func (p *wat2laWorker) buildFunc_body(w io.Writer, fn *ast.Func) error {
 		}
 	}
 
-	// 头部代码: 更新栈底精确位置
+	// 补充构建头部栈帧
 	{
-		n := 0 - fnNative.FrameSize - stk.MaxDepth()
+		frameSize := fnNative.FrameSize + stk.MaxDepth()*8 + p.fnMaxCallArgsSize
 
-		// SP 必须对齐到 16 字节
-		if n%16 != 0 {
-			n = ((n + 15) / 16) * 16
+		// 对齐到 16 字节
+		if x := frameSize; x%16 != 0 {
+			x = ((x + 15) / 16) * 16
+			frameSize = x
 		}
 
-		fmt.Fprintf(&bufHeader, "    addi.d sp, sp, %d\n", n)
+		fmt.Fprintf(&bufHeader, "    addi.d  $sp, $sp, -16\n")
+		fmt.Fprintf(&bufHeader, "    st.d    $ra, $sp, 8\n")
+		fmt.Fprintf(&bufHeader, "    st.d    $fp, $sp, 0\n")
+		fmt.Fprintf(&bufHeader, "    addi.d  $fp, $sp, 0\n")
+		fmt.Fprintf(&bufHeader, "    addi.d  $sp, $sp, %d\n", 0-frameSize)
+
+		fmt.Fprintln(&bufHeader)
+	}
+
+	// 走栈返回
+	if len(fnNative.Type.Return) > 1 && fnNative.Type.Return[1].Reg == 0 {
+		p.gasCommentInFunc(&bufHeader, "将返回地址备份到栈")
+		fmt.Fprintf(&bufHeader, "    # mov [rbp%+d], rcx # return address\n", 2*8)
+		fmt.Fprintln(&bufHeader)
+	}
+
+	// 将寄存器参数备份到栈
+	if len(fn.Type.Params) > 0 {
+		p.gasCommentInFunc(&bufHeader, "将寄存器参数备份到栈")
+		for i, arg := range fnNative.Type.Args {
+			if arg.Reg == 0 {
+				continue // 走栈的输入参数已经在栈中
+			}
+
+			// 将寄存器中的参数存储到对于的栈帧中
+			switch fn.Type.Params[i].Type {
+			case token.I32:
+				fmt.Fprintf(&bufHeader, "    mov [rbp%+d], %v # save arg %s\n",
+					arg.RBPOff, x64.RegString(arg.Reg),
+					arg.Name,
+				)
+			case token.I64:
+				fmt.Fprintf(&bufHeader, "    mov [rbp%+d], %v # save arg %s\n",
+					arg.RBPOff, x64.RegString(arg.Reg),
+					arg.Name,
+				)
+			case token.F32:
+				fmt.Fprintf(&bufHeader, "    movss qword ptr [rbp%+d], %v # save arg %s\n",
+					arg.RBPOff, x64.RegString(arg.Reg),
+					arg.Name,
+				)
+			case token.F64:
+				fmt.Fprintf(&bufHeader, "    movsd qword ptr [rbp%+d], %v # save arg %s\n",
+					arg.RBPOff, x64.RegString(arg.Reg),
+					arg.Name,
+				)
+			default:
+				panic("unreachable")
+			}
+		}
+	} else {
+		p.gasCommentInFunc(&bufHeader, "没有参数需要备份到栈")
+		fmt.Fprintln(&bufHeader)
+	}
+
+	// 返回值初始化为 0
+	if len(fnNative.Type.Return) > 0 {
+		p.gasCommentInFunc(&bufHeader, "将返回值变量初始化为0")
+		for _, ret := range fnNative.Type.Return {
+			fmt.Fprintf(&bufHeader,
+				"    mov dword ptr [rbp%+d], 0 # ret %s = 0\n",
+				ret.RBPOff, ret.Name,
+			)
+		}
+	} else {
+		p.gasCommentInFunc(&bufHeader, "没有返回值变量需要初始化为0")
+		fmt.Fprintln(&bufHeader)
+	}
+
+	// 局部变量初始化为 0
+	if len(fnNative.Body.Locals) > 0 {
+		p.gasCommentInFunc(&bufHeader, "将局部变量初始化为0")
+		for _, local := range fnNative.Body.Locals {
+			fmt.Fprintf(&bufHeader, "    mov dword ptr [rbp%+d], 0 # local %s = 0\n",
+				local.RBPOff, local.Name,
+			)
+		}
+		fmt.Fprintln(&bufHeader)
+	} else {
+		p.gasCommentInFunc(&bufHeader, "没有局部变量需要初始化为0")
+		fmt.Fprintln(&bufHeader)
 	}
 
 	// 根据ABI处理返回值
+	// 需要将栈顶位置的结果转化为本地ABI规范的返回值
 	{
 		// 返回代码位置
-		fmt.Fprintf(&bufIns, "    %s:\n", kLabelName_return)
+		fmt.Fprintln(&bufIns)
+		p.gasCommentInFunc(&bufIns, "根据ABI处理返回值")
+		p.gasFuncLabel(&bufIns, kLabelName_return)
 
 		// 如果走内存, 返回地址
 		if len(fn.Type.Results) > 1 && fnNative.Type.Return[1].Reg == 0 {
-			fmt.Fprintf(&bufIns, "    addi.d a0, fp, %d # ret.%s\n",
+			fmt.Fprintf(&bufIns, "    mov rax, [rbp%+d] # ret address\n",
 				fnNative.Type.Return[0].RBPOff,
-				fnNative.Type.Return[0].Name,
 			)
 		} else {
+			// 如果走寄存器, 则复制寄存器
 			for i, ret := range fnNative.Type.Return {
 				if ret.Reg == 0 {
 					continue
 				}
 				switch fn.Type.Results[i] {
 				case token.I32:
-					fmt.Fprintf(&bufIns, "    ld.w %v, fp, %d # ret.%s\n",
-						loong64.RegString(ret.Reg),
+					fmt.Fprintf(&bufIns, "    mov %v, [rbp%+d] # ret %s\n",
+						x64.RegString(ret.Reg),
 						fnNative.Type.Return[i].RBPOff,
 						fnNative.Type.Return[i].Name,
 					)
 				case token.I64:
-					fmt.Fprintf(&bufIns, "    ld.d %v, fp, %d # ret.%s\n",
-						loong64.RegString(ret.Reg),
+					fmt.Fprintf(&bufIns, "    mov %v, [rbp%+d] # ret %s\n",
+						x64.RegString(ret.Reg),
 						fnNative.Type.Return[i].RBPOff,
 						fnNative.Type.Return[i].Name,
 					)
 				case token.F32:
-					fmt.Fprintf(&bufIns, "    fld.s %v, fp, %d # ret.%s\n",
-						loong64.RegString(ret.Reg),
+					fmt.Fprintf(&bufIns, "    movss %v, qword ptr [rbp%+d] # ret %s\n",
+						x64.RegString(ret.Reg),
 						fnNative.Type.Return[i].RBPOff,
 						fnNative.Type.Return[i].Name,
 					)
 				case token.F64:
-					fmt.Fprintf(&bufIns, "    fld.d %v, fp, %d # ret.%s\n",
-						loong64.RegString(ret.Reg),
+					fmt.Fprintf(&bufIns, "    movsd %v, qword ptr [rbp%+d] # ret.%s\n",
+						x64.RegString(ret.Reg),
 						fnNative.Type.Return[i].RBPOff,
 						fnNative.Type.Return[i].Name,
 					)
@@ -365,14 +308,17 @@ func (p *wat2laWorker) buildFunc_body(w io.Writer, fn *ast.Func) error {
 			}
 		}
 	}
+	fmt.Fprintln(&bufIns)
 
 	// 结束栈帧
 	{
-		fmt.Fprintf(&bufIns, "     # 栈帧结束\n")
-		fmt.Fprintln(&bufIns, "    addi.d   sp, fp, 0 # sp = fp")
-		fmt.Fprintln(&bufIns, "    ld.d $ra, fp, -8   # restore $ra")
-		fmt.Fprintln(&bufIns, "    ld.d fp, fp, -16   # restore fp")
-		fmt.Fprintln(&bufIns, "    jr $ra             # return")
+		p.gasCommentInFunc(&bufIns, "函数返回")
+		fmt.Fprintln(&bufIns, "    addi.d  $sp, $fp, 0")
+		fmt.Fprintln(&bufIns, "    ld.d    $ra, $sp, 8")
+		fmt.Fprintln(&bufIns, "    ld.d    $fp, $sp, 0")
+		fmt.Fprintln(&bufIns, "    addi.d  $sp, $sp, 16")
+		fmt.Fprintln(&bufIns, "    jirl    $zero, $ra, 0")
+		fmt.Fprintln(&bufIns)
 	}
 
 	// 头部赋值到 w
@@ -380,7 +326,7 @@ func (p *wat2laWorker) buildFunc_body(w io.Writer, fn *ast.Func) error {
 	// 指令复制到 w
 	io.Copy(w, &bufIns)
 
-	// 有些函数最后的位置不是 return, 需要手动清理栈
+	// 有些函数最后的位置不是 return, 需要手动清理栈(验证栈正确性)
 	switch tok := stk.LastInstruction().Token(); tok {
 	case token.INS_RETURN:
 		// 已经处理过了
@@ -424,7 +370,7 @@ func (p *wat2laWorker) buildFunc_ins(
 
 	switch tok := i.Token(); tok {
 	case token.INS_UNREACHABLE:
-		fmt.Fprintf(w, "    bl %s # unreachable", kBuiltinPanic)
+		fmt.Fprintf(w, "    bl %s # unreachable", kRuntimePanic)
 	case token.INS_NOP:
 		fmt.Fprintln(w, indent, "addi zero, zero, 0 # nop")
 
@@ -1323,7 +1269,7 @@ func (p *wat2laWorker) buildFunc_ins(
 		ret0 := p.fnWasmR0Base - 8*stk.Push(token.FUNCREF) // funcref
 		fmt.Fprintf(w, "    # table.get\n")
 		fmt.Fprintf(w, "    ld.w  t0, fp, %d # t0 = [pop]\n", sp0)
-		fmt.Fprintf(w, "    add.d t0, t0, %s # t0 = table + t0\n", kTableReg)
+		//fmt.Fprintf(w, "    add.d t0, t0, %s # t0 = table + t0\n", kTableReg)
 		fmt.Fprintf(w, "    ld.w  t0, t0, 0  # t0 = [t0]\n")
 		fmt.Fprintf(w, "    st.w  t0, fp, %d # push t0\n", ret0)
 	case token.INS_TABLE_SET:
@@ -1332,7 +1278,7 @@ func (p *wat2laWorker) buildFunc_ins(
 		fmt.Fprintf(w, "    # table.get\n")
 		fmt.Fprintf(w, "    ld.w  t2, fp, %d # t2 = pop\n", sp0)
 		fmt.Fprintf(w, "    ld.w  t0, fp, %d # t0 = $pop\n", sp1)
-		fmt.Fprintf(w, "    add.d t0, t0, %s # t0 = table + t0\n", kTableReg)
+		//fmt.Fprintf(w, "    add.d t0, t0, %s # t0 = table + t0\n", kTableReg)
 		fmt.Fprintf(w, "    st.w  t2, t0, 0\n")
 	case token.INS_I32_LOAD:
 		i := i.(ast.Ins_I32Load)
@@ -1342,7 +1288,7 @@ func (p *wat2laWorker) buildFunc_ins(
 
 		fmt.Fprintf(w, "    # i32.load\n")
 		fmt.Fprintf(w, "    ld.w  t0, fp, %d # t0 = [pop]\n", sp0)
-		fmt.Fprintf(w, "    add.d t0, t0, %s # t0 = mempry + t0\n", kMemoryReg)
+		//fmt.Fprintf(w, "    add.d t0, t0, %s # t0 = mempry + t0\n", kMemoryReg)
 		fmt.Fprintf(w, "    ld.w  t0, t0, %d # t0 = [t0+off]\n", i.Offset)
 		fmt.Fprintf(w, "    st.w  t0, fp, %d # push t0\n", ret0)
 
@@ -1354,7 +1300,7 @@ func (p *wat2laWorker) buildFunc_ins(
 
 		fmt.Fprintf(w, "    # i64.load\n")
 		fmt.Fprintf(w, "    ld.w  t0, fp, %d # t0 = [pop]\n", sp0)
-		fmt.Fprintf(w, "    add.d t0, t0, %s # t0 = mempry + t0\n", kMemoryReg)
+		//fmt.Fprintf(w, "    add.d t0, t0, %s # t0 = mempry + t0\n", kMemoryReg)
 		fmt.Fprintf(w, "    ld.d  t0, t0, %d # t0 = [t0+off]\n", i.Offset)
 		fmt.Fprintf(w, "    st.d  t0, fp, %d # push t0\n", ret0)
 
@@ -1366,7 +1312,7 @@ func (p *wat2laWorker) buildFunc_ins(
 
 		fmt.Fprintf(w, "    # i64.load\n")
 		fmt.Fprintf(w, "    ld.w  t0, fp, %d # t0 = [pop]\n", sp0)
-		fmt.Fprintf(w, "    add.d t0, t0, %s # t0 = mempry + t0\n", kMemoryReg)
+		//fmt.Fprintf(w, "    add.d t0, t0, %s # t0 = mempry + t0\n", kMemoryReg)
 		fmt.Fprintf(w, "    fld.s  t0, t0, %d # t0 = [t0+off]\n", i.Offset)
 		fmt.Fprintf(w, "    fst.s  t0, fp, %d # push t0\n", ret0)
 
@@ -1378,7 +1324,7 @@ func (p *wat2laWorker) buildFunc_ins(
 
 		fmt.Fprintf(w, "    # i64.load\n")
 		fmt.Fprintf(w, "    ld.w  t0, fp, %d # t0 = [pop]\n", sp0)
-		fmt.Fprintf(w, "    add.d t0, t0, %s # t0 = mempry + t0\n", kMemoryReg)
+		//fmt.Fprintf(w, "    add.d t0, t0, %s # t0 = mempry + t0\n", kMemoryReg)
 		fmt.Fprintf(w, "    fld.d  t0, t0, %d # t0 = [t0+off]\n", i.Offset)
 		fmt.Fprintf(w, "    fst.d  t0, fp, %d # push t0\n", ret0)
 
@@ -1389,7 +1335,7 @@ func (p *wat2laWorker) buildFunc_ins(
 
 		fmt.Fprintf(w, "    # i64.load8_s\n")
 		fmt.Fprintf(w, "    ld.w  t0, fp, %d # t0 = [pop]\n", sp0)
-		fmt.Fprintf(w, "    add.d t0, t0, %s # t0 = mempry + t0\n", kMemoryReg)
+		//fmt.Fprintf(w, "    add.d t0, t0, %s # t0 = mempry + t0\n", kMemoryReg)
 		fmt.Fprintf(w, "    ld.b  t0, t0, %d # t0 = [t0+off]\n", i.Offset)
 		fmt.Fprintf(w, "    st.b  t0, fp, %d # push t0\n", ret0)
 
@@ -1400,7 +1346,7 @@ func (p *wat2laWorker) buildFunc_ins(
 
 		fmt.Fprintf(w, "    # i64.load8_u\n")
 		fmt.Fprintf(w, "    ld.w  t0, fp, %d # t0 = [pop]\n", sp0)
-		fmt.Fprintf(w, "    add.d t0, t0, %s # t0 = mempry + t0\n", kMemoryReg)
+		//fmt.Fprintf(w, "    add.d t0, t0, %s # t0 = mempry + t0\n", kMemoryReg)
 		fmt.Fprintf(w, "    ld.bu t0, t0, %d # t0 = [t0+off]\n", i.Offset)
 		fmt.Fprintf(w, "    st.bu t0, fp, %d # push t0\n", ret0)
 
@@ -1411,7 +1357,7 @@ func (p *wat2laWorker) buildFunc_ins(
 
 		fmt.Fprintf(w, "    # i64.load16_s\n")
 		fmt.Fprintf(w, "    ld.w  t0, fp, %d # t0 = [pop]\n", sp0)
-		fmt.Fprintf(w, "    add.d t0, t0, %s # t0 = mempry + t0\n", kMemoryReg)
+		//fmt.Fprintf(w, "    add.d t0, t0, %s # t0 = mempry + t0\n", kMemoryReg)
 		fmt.Fprintf(w, "    ld.h  t0, t0, %d # t0 = [t0+off]\n", i.Offset)
 		fmt.Fprintf(w, "    st.h  t0, fp, %d # push t0\n", ret0)
 
@@ -1422,7 +1368,7 @@ func (p *wat2laWorker) buildFunc_ins(
 
 		fmt.Fprintf(w, "    # i64.load16_u\n")
 		fmt.Fprintf(w, "    ld.w  t0, fp, %d # t0 = [pop]\n", sp0)
-		fmt.Fprintf(w, "    add.d t0, t0, %s # t0 = mempry + t0\n", kMemoryReg)
+		//fmt.Fprintf(w, "    add.d t0, t0, %s # t0 = mempry + t0\n", kMemoryReg)
 		fmt.Fprintf(w, "    ld.hu t0, t0, %d # t0 = [t0+off]\n", i.Offset)
 		fmt.Fprintf(w, "    st.hu t0, fp, %d # push t0\n", ret0)
 
@@ -1433,7 +1379,7 @@ func (p *wat2laWorker) buildFunc_ins(
 
 		fmt.Fprintf(w, "    # i64.load8_s\n")
 		fmt.Fprintf(w, "    ld.w  t0, fp, %d # t0 = [pop]\n", sp0)
-		fmt.Fprintf(w, "    add.d t0, t0, %s # t0 = mempry + t0\n", kMemoryReg)
+		//fmt.Fprintf(w, "    add.d t0, t0, %s # t0 = mempry + t0\n", kMemoryReg)
 		fmt.Fprintf(w, "    ld.hu t0, t0, %d # t0 = [t0+off]\n", i.Offset)
 		fmt.Fprintf(w, "    st.hu t0, fp, %d # push t0\n", ret0)
 
@@ -1444,7 +1390,7 @@ func (p *wat2laWorker) buildFunc_ins(
 
 		fmt.Fprintf(w, "    # i64.load8_u\n")
 		fmt.Fprintf(w, "    ld.w  t0, fp, %d # t0 = [pop]\n", sp0)
-		fmt.Fprintf(w, "    add.d t0, t0, %s # t0 = mempry + t0\n", kMemoryReg)
+		//fmt.Fprintf(w, "    add.d t0, t0, %s # t0 = mempry + t0\n", kMemoryReg)
 		fmt.Fprintf(w, "    ld.hu t0, t0, %d # t0 = [t0+off]\n", i.Offset)
 		fmt.Fprintf(w, "    st.hu t0, fp, %d # push t0\n", ret0)
 
@@ -1455,7 +1401,7 @@ func (p *wat2laWorker) buildFunc_ins(
 
 		fmt.Fprintf(w, "    # i64.load16_u\n")
 		fmt.Fprintf(w, "    ld.w  t0, fp, %d # t0 = [pop]\n", sp0)
-		fmt.Fprintf(w, "    add.d t0, t0, %s # t0 = mempry + t0\n", kMemoryReg)
+		//fmt.Fprintf(w, "    add.d t0, t0, %s # t0 = mempry + t0\n", kMemoryReg)
 		fmt.Fprintf(w, "    ld.hu t0, t0, %d # t0 = [t0+off]\n", i.Offset)
 		fmt.Fprintf(w, "    st.hu t0, fp, %d # push t0\n", ret0)
 
@@ -1466,7 +1412,7 @@ func (p *wat2laWorker) buildFunc_ins(
 
 		fmt.Fprintf(w, "    # i64.load16_u\n")
 		fmt.Fprintf(w, "    ld.w  t0, fp, %d # t0 = [pop]\n", sp0)
-		fmt.Fprintf(w, "    add.d t0, t0, %s # t0 = mempry + t0\n", kMemoryReg)
+		//fmt.Fprintf(w, "    add.d t0, t0, %s # t0 = mempry + t0\n", kMemoryReg)
 		fmt.Fprintf(w, "    ld.hu t0, t0, %d # t0 = [t0+off]\n", i.Offset)
 		fmt.Fprintf(w, "    st.hu t0, fp, %d # push t0\n", ret0)
 
@@ -1477,7 +1423,7 @@ func (p *wat2laWorker) buildFunc_ins(
 
 		fmt.Fprintf(w, "    # i64.load32_s\n")
 		fmt.Fprintf(w, "    ld.w  t0, fp, %d # t0 = [pop]\n", sp0)
-		fmt.Fprintf(w, "    add.d t0, t0, %s # t0 = mempry + t0\n", kMemoryReg)
+		//fmt.Fprintf(w, "    add.d t0, t0, %s # t0 = mempry + t0\n", kMemoryReg)
 		fmt.Fprintf(w, "    ld.hu t0, t0, %d # t0 = [t0+off]\n", i.Offset)
 		fmt.Fprintf(w, "    st.hu t0, fp, %d # push t0\n", ret0)
 
@@ -1488,7 +1434,7 @@ func (p *wat2laWorker) buildFunc_ins(
 
 		fmt.Fprintf(w, "    # i64.load32_u\n")
 		fmt.Fprintf(w, "    ld.w  t0, fp, %d # t0 = [pop]\n", sp0)
-		fmt.Fprintf(w, "    add.d t0, t0, %s # t0 = mempry + t0\n", kMemoryReg)
+		//fmt.Fprintf(w, "    add.d t0, t0, %s # t0 = mempry + t0\n", kMemoryReg)
 		fmt.Fprintf(w, "    ld.hu t0, t0, %d # t0 = [t0+off]\n", i.Offset)
 		fmt.Fprintf(w, "    st.hu t0, fp, %d # push t0\n", ret0)
 
@@ -1499,7 +1445,7 @@ func (p *wat2laWorker) buildFunc_ins(
 
 		fmt.Fprintf(w, "    # i32.store_xx\n")
 		fmt.Fprintf(w, "    ld.w  t0, fp, %d # t0 = [pop]\n", sp0)
-		fmt.Fprintf(w, "    add.d t0, t0, %s # t0 = mempry + t0\n", kMemoryReg)
+		//fmt.Fprintf(w, "    add.d t0, t0, %s # t0 = mempry + t0\n", kMemoryReg)
 		fmt.Fprintf(w, "    ld.hu t0, fp, %d # push t0\n", sp1)
 		fmt.Fprintf(w, "    st.hu t0, t0, %d # t0 = [t0+off]\n", i.Offset)
 
@@ -1510,7 +1456,7 @@ func (p *wat2laWorker) buildFunc_ins(
 
 		fmt.Fprintf(w, "    # i32.store_xx\n")
 		fmt.Fprintf(w, "    ld.w  t0, fp, %d # t0 = [pop]\n", sp0)
-		fmt.Fprintf(w, "    add.d t0, t0, %s # t0 = mempry + t0\n", kMemoryReg)
+		//fmt.Fprintf(w, "    add.d t0, t0, %s # t0 = mempry + t0\n", kMemoryReg)
 		fmt.Fprintf(w, "    ld.hu t0, fp, %d # push t0\n", sp1)
 		fmt.Fprintf(w, "    st.hu t0, t0, %d # t0 = [t0+off]\n", i.Offset)
 
@@ -1521,7 +1467,7 @@ func (p *wat2laWorker) buildFunc_ins(
 
 		fmt.Fprintf(w, "    # i32.store_xx\n")
 		fmt.Fprintf(w, "    ld.w  t0, fp, %d # t0 = [pop]\n", sp0)
-		fmt.Fprintf(w, "    add.d t0, t0, %s # t0 = mempry + t0\n", kMemoryReg)
+		//fmt.Fprintf(w, "    add.d t0, t0, %s # t0 = mempry + t0\n", kMemoryReg)
 		fmt.Fprintf(w, "    ld.hu t0, fp, %d # push t0\n", sp1)
 		fmt.Fprintf(w, "    st.hu t0, t0, %d # t0 = [t0+off]\n", i.Offset)
 
@@ -1532,7 +1478,7 @@ func (p *wat2laWorker) buildFunc_ins(
 
 		fmt.Fprintf(w, "    # i32.store_xx\n")
 		fmt.Fprintf(w, "    ld.w  t0, fp, %d # t0 = [pop]\n", sp0)
-		fmt.Fprintf(w, "    add.d t0, t0, %s # t0 = mempry + t0\n", kMemoryReg)
+		//fmt.Fprintf(w, "    add.d t0, t0, %s # t0 = mempry + t0\n", kMemoryReg)
 		fmt.Fprintf(w, "    ld.hu t0, fp, %d # push t0\n", sp1)
 		fmt.Fprintf(w, "    st.hu t0, t0, %d # t0 = [t0+off]\n", i.Offset)
 
@@ -1543,7 +1489,7 @@ func (p *wat2laWorker) buildFunc_ins(
 
 		fmt.Fprintf(w, "    # i32.store_xx\n")
 		fmt.Fprintf(w, "    ld.w  t0, fp, %d # t0 = [pop]\n", sp0)
-		fmt.Fprintf(w, "    add.d t0, t0, %s # t0 = mempry + t0\n", kMemoryReg)
+		//fmt.Fprintf(w, "    add.d t0, t0, %s # t0 = mempry + t0\n", kMemoryReg)
 		fmt.Fprintf(w, "    ld.hu t0, fp, %d # push t0\n", sp1)
 		fmt.Fprintf(w, "    st.hu t0, t0, %d # t0 = [t0+off]\n", i.Offset)
 
@@ -1554,7 +1500,7 @@ func (p *wat2laWorker) buildFunc_ins(
 
 		fmt.Fprintf(w, "    # i32.store_xx\n")
 		fmt.Fprintf(w, "    ld.w  t0, fp, %d # t0 = [pop]\n", sp0)
-		fmt.Fprintf(w, "    add.d t0, t0, %s # t0 = mempry + t0\n", kMemoryReg)
+		//fmt.Fprintf(w, "    add.d t0, t0, %s # t0 = mempry + t0\n", kMemoryReg)
 		fmt.Fprintf(w, "    ld.hu t0, fp, %d # push t0\n", sp1)
 		fmt.Fprintf(w, "    st.hu t0, t0, %d # t0 = [t0+off]\n", i.Offset)
 
@@ -1565,7 +1511,7 @@ func (p *wat2laWorker) buildFunc_ins(
 
 		fmt.Fprintf(w, "    # i32.store_xx\n")
 		fmt.Fprintf(w, "    ld.w  t0, fp, %d # t0 = [pop]\n", sp0)
-		fmt.Fprintf(w, "    add.d t0, t0, %s # t0 = mempry + t0\n", kMemoryReg)
+		//fmt.Fprintf(w, "    add.d t0, t0, %s # t0 = mempry + t0\n", kMemoryReg)
 		fmt.Fprintf(w, "    ld.hu t0, fp, %d # push t0\n", sp1)
 		fmt.Fprintf(w, "    st.hu t0, t0, %d # t0 = [t0+off]\n", i.Offset)
 
@@ -1576,7 +1522,7 @@ func (p *wat2laWorker) buildFunc_ins(
 
 		fmt.Fprintf(w, "    # i32.store_xx\n")
 		fmt.Fprintf(w, "    ld.w  t0, fp, %d # t0 = [pop]\n", sp0)
-		fmt.Fprintf(w, "    add.d t0, t0, %s # t0 = mempry + t0\n", kMemoryReg)
+		//fmt.Fprintf(w, "    add.d t0, t0, %s # t0 = mempry + t0\n", kMemoryReg)
 		fmt.Fprintf(w, "    ld.hu t0, fp, %d # push t0\n", sp1)
 		fmt.Fprintf(w, "    st.hu t0, t0, %d # t0 = [t0+off]\n", i.Offset)
 
@@ -1587,7 +1533,7 @@ func (p *wat2laWorker) buildFunc_ins(
 
 		fmt.Fprintf(w, "    # i32.store_xx\n")
 		fmt.Fprintf(w, "    ld.w  t0, fp, %d # t0 = [pop]\n", sp0)
-		fmt.Fprintf(w, "    add.d t0, t0, %s # t0 = mempry + t0\n", kMemoryReg)
+		//fmt.Fprintf(w, "    add.d t0, t0, %s # t0 = mempry + t0\n", kMemoryReg)
 		fmt.Fprintf(w, "    ld.hu t0, fp, %d # push t0\n", sp1)
 		fmt.Fprintf(w, "    st.hu t0, t0, %d # t0 = [t0+off]\n", i.Offset)
 
