@@ -1,5 +1,5 @@
-# Copyright (C) 2026 武汉凹语言科技有限公司
-# SPDX-License-Identifier: AGPL-3.0-or-later
+# 源文件: memory-01.wat, ABI: loong64
+# 自动生成的代码, 不要手动修改!!!
 
 # 运行时函数
 .extern write
@@ -164,11 +164,11 @@ main:
 # func main
 .section .text
 .F.main:
-    addi.d  $sp, $sp, -16 
+    addi.d  $sp, $sp, -16
     st.d    $ra, $sp, 8
     st.d    $fp, $sp, 0
     addi.d  $fp, $sp, 0
-    addi.d  $sp, $sp, -64
+    addi.d  $sp, $sp, -32
 
     # 没有参数需要备份到栈
 
@@ -188,15 +188,8 @@ main:
     addi.d $t0, $zero, 12
     st.d   $t0, $fp, -24
 
-    # 调用 syscall.write(1, 8, 12)
-    ld.d $a0, $fp, -8 # arg 0
-    ld.d $a1, $fp, -16 # arg 1
-    ld.d $a2, $fp, -24 # arg 2
-    pcalau12i $t0, %pc_hi20(.Import.syscall.write)
-    addi.d $t0, $t0, %pc_lo12(.Import.syscall.write)
-    jirl $ra, $t0, 0
-    st.d $a0, $fp, -8
-    addi.w $zero, $zero, 0 # drop [fp-8]
+    ld.d R4, fp, 0    ld.d R5, fp, 8    ld.d R6, fp, 16    bl syscall.write    st.d R4, fp, 0
+    addi zero, zero, 0 # drop R0
 
     # 根据ABI处理返回值
 .L.return:

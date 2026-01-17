@@ -13,7 +13,7 @@ import (
 const (
 	kImportNamePrefix = ".Import."
 
-	kEnvSyscallPrefix = "wat2xla_"
+	kEnvSyscallPrefix = "wat2la_"
 )
 
 func (p *wat2laWorker) buildImport(w io.Writer) error {

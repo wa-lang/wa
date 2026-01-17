@@ -1605,54 +1605,105 @@ func (p *wat2laWorker) buildFunc_ins(
 
 	case token.INS_I32_CONST:
 		i := i.(ast.Ins_I32Const)
-		p.registerConst(uint64(i.X))
-		gName := fmt.Sprintf("%s%d", kConstPrefix, uint64(i.X))
 
-		sp0 := p.fnWasmR0Base - 8*stk.Push(token.I32)
+		sp0 := p.fnWasmR0Base - 8*stk.Push(token.I32) - 8
 
-		fmt.Fprintf(w, "    pcalau12i t0, %%pc_hi20(%s)\n", gName)
-		fmt.Fprintf(w, "    addi.d    t0, t0, %%pc_lo12(%s)\n", gName)
-		fmt.Fprintf(w, "    ld.w      t0, t0, 0\n")
-		fmt.Fprintf(w, "    st.w      t0, fp, %d\n", sp0)
+		fmt.Fprintf(w, "    # i32.const %d\n", i.X)
+		if i.X >= -2048 && i.X <= 2047 {
+			fmt.Fprintf(w, "    addi.d $t0, $zero, %d\n", i.X)
+			fmt.Fprintf(w, "    st.d   $t0, $fp, %d\n", sp0)
+			fmt.Fprintln(w)
+		} else {
+			hi20 := uint32(i.X) >> 12
+			lo12 := uint32(i.X) & 0xFFF
+			fmt.Fprintf(w, "    lu12i.w $t0, 0x%X\n", hi20)
+			fmt.Fprintf(w, "    ori     $t0, $t0, 0x%X\n", lo12)
+			fmt.Fprintf(w, "    st.d    $t0, $fp, %d\n", sp0)
+			fmt.Fprintln(w)
+		}
 
 	case token.INS_I64_CONST:
 		i := i.(ast.Ins_I64Const)
 
-		p.registerConst(uint64(i.X))
-		gName := fmt.Sprintf("%s%d", kConstPrefix, uint64(i.X))
+		sp0 := p.fnWasmR0Base - 8*stk.Push(token.I64) - 8
 
-		sp0 := p.fnWasmR0Base - 8*stk.Push(token.I64)
+		fmt.Fprintf(w, "    # i64.const %d\n", i.X)
+		if i.X >= -2048 && i.X <= 2047 {
+			fmt.Fprintf(w, "    addi.d $t0, $zero, %d\n", i.X)
+			fmt.Fprintf(w, "    st.d   $t0, $fp, %d\n", sp0)
+			fmt.Fprintln(w)
+		} else if int64(int32(i.X)) == i.X {
+			hi20 := uint32(int32(i.X)) >> 12
+			lo12 := uint32(int32(i.X)) & 0xFFF
+			fmt.Fprintf(w, "    lu12i.w $t0, 0x%X\n", hi20)
+			fmt.Fprintf(w, "    ori     $t0, $t0, 0x%X\n", lo12)
+			fmt.Fprintf(w, "    st.d    $t0, $fp, %d\n", sp0)
+			fmt.Fprintln(w)
+		} else {
+			val := uint64(i.X)
+			hi20 := uint32(val) >> 12 & 0xFFFFF
+			lo12 := uint32(val) & 0xFFF
+			mid20 := (val >> 32) & 0xFFFFF
+			top12 := (val >> 52) & 0xFFF
 
-		fmt.Fprintf(w, "    pcalau12i t0, %%pc_hi20(%s)\n", gName)
-		fmt.Fprintf(w, "    addi.d    t0, t0, %%pc_lo12(%s)\n", gName)
-		fmt.Fprintf(w, "    ld.d      t0, t0, 0\n")
-		fmt.Fprintf(w, "    st.d      t0, fp, %d\n", sp0)
+			fmt.Fprintf(w, "    lu12i.w $t0, 0x%X\n", hi20)
+			fmt.Fprintf(w, "    ori     $t0, $t0, 0x%X\n", lo12)
+			fmt.Fprintf(w, "    lu32i.d $t0, 0x%X\n", mid20)
+			fmt.Fprintf(w, "    lu52i.d $t0, $t0, 0x%X\n", top12)
+			fmt.Fprintf(w, "    st.d    $t0, $fp, %d\n", sp0)
+			fmt.Fprintln(w)
+		}
 
 	case token.INS_F32_CONST:
 		i := i.(ast.Ins_F32Const)
+		bits := math.Float32bits(i.X)
 
-		p.registerConst(uint64(math.Float32bits(i.X)))
-		gName := fmt.Sprintf("%s%d", kConstPrefix, uint64(i.X))
+		sp0 := p.fnWasmR0Base - 8*stk.Push(token.F32) - 8
 
-		sp0 := p.fnWasmR0Base - 8*stk.Push(token.F32)
-
-		fmt.Fprintf(w, "    pcalau12i t0, %%pc_hi20(%s)\n", gName)
-		fmt.Fprintf(w, "    addi.d    t0, t0, %%pc_lo12(%s)\n", gName)
-		fmt.Fprintf(w, "    fld.s     t0, t0, 0\n")
-		fmt.Fprintf(w, "    fst.s     t0, fp, %d\n", sp0)
+		fmt.Fprintf(w, "    # f32.const %f (raw: 0x%08X)\n", i.X, bits)
+		if x := int32(bits); x >= -2048 && x <= 2047 {
+			fmt.Fprintf(w, "    addi.d $t0, $zero, %d\n", x)
+			fmt.Fprintf(w, "    st.d   $t0, $fp, %d\n", sp0)
+			fmt.Fprintln(w)
+		} else {
+			hi20 := bits >> 12
+			lo12 := bits & 0xFFF
+			fmt.Fprintf(w, "    lu12i.w $t0, 0x%X\n", hi20)
+			fmt.Fprintf(w, "    ori     $t0, $t0, 0x%X\n", lo12)
+			fmt.Fprintf(w, "    st.d    $t0, $fp, %d\n", sp0)
+			fmt.Fprintln(w)
+		}
 
 	case token.INS_F64_CONST:
 		i := i.(ast.Ins_F64Const)
+		bits := math.Float64bits(i.X)
 
-		p.registerConst(uint64(math.Float64bits(i.X)))
-		gName := fmt.Sprintf("%s%d", kConstPrefix, uint64(i.X))
+		sp0 := p.fnWasmR0Base - 8*stk.Push(token.F64) - 8
 
-		sp0 := p.fnWasmR0Base - 8*stk.Push(token.F64)
-
-		fmt.Fprintf(w, "    pcalau12i t0, %%pc_hi20(%s)\n", gName)
-		fmt.Fprintf(w, "    addi.d    t0, t0, %%pc_lo12(%s)\n", gName)
-		fmt.Fprintf(w, "    fld.d     t0, t0, 0\n")
-		fmt.Fprintf(w, "    fst.d     t0, fp, %d\n", sp0)
+		fmt.Fprintf(w, "    # f64.const %f (raw: 0x%016X)\n", i.X, bits)
+		if x := int64(bits); x >= -2048 && x <= 2047 {
+			fmt.Fprintf(w, "    addi.d $t0, $zero, %d\n", x)
+			fmt.Fprintf(w, "    st.d   $t0, $fp, %d\n", sp0)
+			fmt.Fprintln(w)
+		} else if int64(int32(x)) == x {
+			hi20 := bits >> 12
+			lo12 := bits & 0xFFF
+			fmt.Fprintf(w, "    lu12i.w $t0, 0x%X\n", hi20)
+			fmt.Fprintf(w, "    ori     $t0, $t0, 0x%X\n", lo12)
+			fmt.Fprintf(w, "    st.d    $t0, $fp, %d\n", sp0)
+			fmt.Fprintln(w)
+		} else {
+			hi20 := (uint32(bits) >> 12) & 0xFFFFF
+			lo12 := uint32(bits) & 0xFFF
+			mid20 := (bits >> 32) & 0xFFFFF
+			top12 := (bits >> 52) & 0xFFF
+			fmt.Fprintf(w, "    lu12i.w $t0, 0x%X\n", hi20)
+			fmt.Fprintf(w, "    ori     $t0, $t0, 0x%X\n", lo12)
+			fmt.Fprintf(w, "    lu32i.d $t0, 0x%X\n", mid20)
+			fmt.Fprintf(w, "    lu52i.d $t0, $t0, 0x%X\n", top12)
+			fmt.Fprintf(w, "    st.d    $t0, $fp, %d\n", sp0)
+			fmt.Fprintln(w)
+		}
 
 	case token.INS_I32_EQZ:
 		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.I32)
