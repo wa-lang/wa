@@ -774,8 +774,11 @@ func (p *wat2X64Worker) buildFunc_ins(
 
 		// 如果是走栈返回, 第一个是隐藏参数
 		if len(fnCallNative.Type.Return) > 1 && fnCallNative.Type.Return[1].Reg == 0 {
-			assert(p.cpuType == abi.X64Windows)
-			fmt.Fprintf(w, "    lea rcx, [rsp%+d] # return address\n", len(fnCallType.Params)*8)
+			if p.cpuType == abi.X64Unix {
+				fmt.Fprintf(w, "    lea rdi, [rsp%+d] # return address\n", len(fnCallType.Params)*8)
+			} else {
+				fmt.Fprintf(w, "    lea rcx, [rsp%+d] # return address\n", len(fnCallType.Params)*8)
+			}
 		}
 
 		// 准备调用参数
@@ -983,8 +986,11 @@ func (p *wat2X64Worker) buildFunc_ins(
 
 		// 如果是走栈返回, 第一个是隐藏参数
 		if len(fnCallNative.Type.Return) > 1 && fnCallNative.Type.Return[1].Reg == 0 {
-			assert(p.cpuType == abi.X64Windows)
-			fmt.Fprintf(w, "    lea rcx, [rsp%+d] # return address\n", len(fnCallType.Params)*8)
+			if p.cpuType == abi.X64Unix {
+				fmt.Fprintf(w, "    lea rdi, [rsp%+d] # return address\n", len(fnCallType.Params)*8)
+			} else {
+				fmt.Fprintf(w, "    lea rcx, [rsp%+d] # return address\n", len(fnCallType.Params)*8)
+			}
 		}
 
 		// 准备调用参数

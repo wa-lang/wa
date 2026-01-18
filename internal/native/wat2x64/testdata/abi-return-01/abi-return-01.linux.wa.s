@@ -1,5 +1,5 @@
-# Copyright (C) 2026 武汉凹语言科技有限公司
-# SPDX-License-Identifier: AGPL-3.0-or-later
+# 源文件: abi-return-01.wat, ABI: X64-Unix
+# 自动生成的代码, 不要手动修改!!!
 
 .intel_syntax noprefix
 
@@ -106,24 +106,54 @@ main:
 
 # func main
 .section .text
-.global .F.main
 .F.main:
+    # local input: i64
+
     push rbp
     mov  rbp, rsp
     sub  rsp, 64
 
-    # env_get_multi_values()
-    # 根据 Linux ABI，第一个参数 RDI 必须指向存储返回值的内存地址
-    # 原本 WAT 里的第一个参数 (param i64) 顺延到 rsi
-    lea  rdi, [rsp + 0]
-    mov  rsi, 100
+    # 没有参数需要备份到栈
+
+    # 没有返回值变量需要初始化为0
+
+    # 将局部变量初始化为0
+    mov dword ptr [rbp-8], 0 # local input = 0
+
+    # i64.const 100
+    movabs rax, 100
+    mov    [rbp-16], rax
+
+    # local.set input i64
+    mov rax, qword ptr [rbp-16]
+    mov qword ptr [rbp-8], rax
+
+    # local.get input i64
+    mov rax, qword ptr [rbp-8]
+    mov qword ptr [rbp-16], rax
+
+    # call env.get_multi_values(...)
+    lea rdi, [rsp+8] # return address
+    mov rsi, qword ptr [rbp-16] # arg 0
     call .Import.env.get_multi_values
-    mov  rdi, [rsp + 16] # v3
+    mov r10, qword ptr [rax+0]
+    mov qword ptr [rbp-16], r10
+    mov r10, qword ptr [rax+8]
+    mov qword ptr [rbp-24], r10
+    mov r10, qword ptr [rax+16]
+    mov qword ptr [rbp-32], r10
+    # call env.print_i64(...)
+    mov rdi, qword ptr [rbp-32] # arg 0
     call .Import.env.print_i64
-    mov  rdi, [rsp + 8] # v2
+    # call env.print_i64(...)
+    mov rdi, qword ptr [rbp-24] # arg 0
     call .Import.env.print_i64
-    mov  rdi, [rsp + 0] # v1
+    # call env.print_i64(...)
+    mov rdi, qword ptr [rbp-16] # arg 0
     call .Import.env.print_i64
+
+    # 根据ABI处理返回值
+.L.return:
 
     # 函数返回
     mov rsp, rbp

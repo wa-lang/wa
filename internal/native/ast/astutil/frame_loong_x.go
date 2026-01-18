@@ -50,6 +50,8 @@ func buildFuncFrame_loong64(fn *ast.Func) error {
 			}
 		}
 		if retOnStack {
+			// 跳过第一个参数寄存器
+			_ = argRegAlloctor.GetInt()
 			for _, reti := range fn.Type.Return {
 				reti.Reg = 0
 			}
