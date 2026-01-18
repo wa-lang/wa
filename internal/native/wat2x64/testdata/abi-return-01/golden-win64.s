@@ -122,13 +122,13 @@ main:
     pop rbp
     ret
 
-# Wasm 入口函数, 后续是编译器自动生成
+# func main
 .section .text
 .global .F.main
 .F.main:
-    # 栈对齐并分配空间:
-    # 影子空间(32字节) + 结构体空间(24字节) + 16字节对齐保护 = 64 字节
-    sub rsp, 64
+    push rbp
+    mov  rbp, rsp
+    sub  rsp, 64
 
     # env_get_multi_values()
     # 根据 Win64 ABI，第一个参数 RCX 必须指向存储返回值的内存地址
@@ -145,5 +145,7 @@ main:
     call .Import.env.print_i64
 
     # 函数返回
-    add rsp, 64
+    mov rsp, rbp
+    pop rbp
     ret
+

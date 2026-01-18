@@ -1,16 +1,16 @@
-# 源文件: abi-return-01.wat, ABI: x64-Windows
-# 自动生成的代码, 不要手动修改!!!
+# Copyright (C) 2026 武汉凹语言科技有限公司
+# SPDX-License-Identifier: AGPL-3.0-or-later
 
 .intel_syntax noprefix
 
 # 运行时函数
-.extern _write
-.extern _exit
+.extern write
+.extern exit
 .extern malloc
 .extern memcpy
 .extern memset
-.set .Runtime.write, _write
-.set .Runtime.exit, _exit
+.set .Runtime.write, write
+.set .Runtime.exit, exit
 .set .Runtime.malloc, malloc
 .set .Runtime.memcpy, memcpy
 .set .Runtime.memset, memset
@@ -31,6 +31,14 @@
 .Memory.pages: .quad 1
 .Memory.maxPages: .quad 1
 
+# 内存数据
+.section .data
+.align 8
+# memcpy(&Memory[8], data[0], size)
+.Memory.dataOffset.0: .quad 8
+.Memory.dataSize.0: .quad 12
+.Memory.dataPtr.0: .ascii "hello world\n"
+
 # 内存初始化函数
 .section .text
 .globl .Memory.initFunc
@@ -40,17 +48,27 @@
     sub  rsp, 32
 
     # 分配内存
-    mov  rcx, [rip + .Memory.maxPages]
-    shl  rcx, 16
+    mov  rdi, [rip + .Memory.maxPages]
+    shl  rdi, 16
     call .Runtime.malloc
     mov  [rip + .Memory.addr], rax
 
     # 内存清零
-    mov  rcx, [rip + .Memory.addr]
-    mov  rdx, 0
-    mov  r8, [rip + .Memory.maxPages]
-    shl  r8, 16
+    mov  rdi, [rip + .Memory.addr]
+    mov  rsi, 0
+    mov  rdx, [rip + .Memory.maxPages]
+    shl  rdx, 16
     call .Runtime.memset
+
+    # 初始化内存
+
+    # memcpy(&Memory[8], data[0], size)
+    mov  rax, [rip + .Memory.addr]
+    mov  rdi, [rip + .Memory.dataOffset.0]
+    add  rdi, rax
+    lea  rsi, [rip + .Memory.dataPtr.0]
+    mov  rdx, [rip + .Memory.dataSize.0]
+    call .Runtime.memcpy
 
     # 函数返回
     mov rsp, rbp
@@ -69,7 +87,7 @@ main:
     call .F.main
 
     # runtime.exit(0)
-    mov  rcx, 0
+    mov  rdi, 0
     call .Runtime.exit
 
     # exit 后这里不会被执行, 但是依然保留
@@ -90,13 +108,13 @@ main:
     sub  rsp, 32
 
     # runtime.write(stderr, panicMessage, size)
-    mov  rcx, 2 # stderr
-    lea  rdx, [rip + .Runtime.panic.message]
-    mov  r8, [rip + .Runtime.panic.messageLen] # size
+    mov  rdi, 2 # stderr
+    lea  rsi, [rip + .Runtime.panic.message]
+    mov  rdx, [rip + .Runtime.panic.messageLen] # size
     call .Runtime.write
 
     # 退出程序
-    mov  rcx, 1 # 退出码
+    mov  rdi, 1 # 退出码
     call .Runtime.exit
 
     # return
@@ -106,54 +124,24 @@ main:
 
 # func main
 .section .text
+.global .F.main
 .F.main:
-    # local input: i64
-
     push rbp
     mov  rbp, rsp
-    sub  rsp, 96
+    sub  rsp, 64
 
-    # 没有参数需要备份到栈
-
-    # 没有返回值变量需要初始化为0
-
-    # 将局部变量初始化为0
-    mov dword ptr [rbp-8], 0 # local input = 0
-
-    # i64.const 100
-    movabs rax, 100
-    mov    [rbp-16], rax
-
-    # local.set input i64
-    mov rax, qword ptr [rbp-16]
-    mov qword ptr [rbp-8], rax
-
-    # local.get input i64
-    mov rax, qword ptr [rbp-8]
-    mov qword ptr [rbp-16], rax
-
-    # call env.get_multi_values(...)
-    lea rcx, [rsp+8] # return address
-    mov rdx, qword ptr [rbp-16] # arg 0
+    # env_get_multi_values()
+    # 根据 Linux ABI，第一个参数 RDI 必须指向存储返回值的内存地址
+    # 原本 WAT 里的第一个参数 (param i64) 顺延到 rsi
+    lea  rdi, [rsp + 0]
+    mov  rsi, 100
     call .Import.env.get_multi_values
-    mov r10, qword ptr [rax+0]
-    mov qword ptr [rbp-16], r10
-    mov r10, qword ptr [rax+8]
-    mov qword ptr [rbp-24], r10
-    mov r10, qword ptr [rax+16]
-    mov qword ptr [rbp-32], r10
-    # call env.print_i64(...)
-    mov rcx, qword ptr [rbp-32] # arg 0
+    mov  rdi, [rsp + 16] # v3
     call .Import.env.print_i64
-    # call env.print_i64(...)
-    mov rcx, qword ptr [rbp-24] # arg 0
+    mov  rdi, [rsp + 8] # v2
     call .Import.env.print_i64
-    # call env.print_i64(...)
-    mov rcx, qword ptr [rbp-16] # arg 0
+    mov  rdi, [rsp + 0] # v1
     call .Import.env.print_i64
-
-    # 根据ABI处理返回值
-.L.return:
 
     # 函数返回
     mov rsp, rbp

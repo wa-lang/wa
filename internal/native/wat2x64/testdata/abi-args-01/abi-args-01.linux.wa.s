@@ -1,5 +1,5 @@
-# Copyright (C) 2026 武汉凹语言科技有限公司
-# SPDX-License-Identifier: AGPL-3.0-or-later
+# 源文件: abi-args-01.wat, ABI: X64-Unix
+# 自动生成的代码, 不要手动修改!!!
 
 .intel_syntax noprefix
 
@@ -162,7 +162,7 @@ main:
     # i64.const 400
     movabs rax, 400
     mov    [rbp-56], rax
-    
+
     # i64.const 500
     movabs rax, 500
     mov    [rbp-64], rax
