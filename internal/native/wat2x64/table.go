@@ -90,17 +90,17 @@ func (p *wat2X64Worker) buildTable(w io.Writer) error {
 		fmt.Fprintln(w)
 
 		p.gasCommentInFunc(w, "分配表格")
-		fmt.Fprintf(w, "    mov  rcx, [rip + %s]\n", kTableMaxSizeName)
-		fmt.Fprintf(w, "    shl  rcx, 3 # sizeof(i64) == 8\n")
+		fmt.Fprintf(w, "    mov  rdi, [rip + %s]\n", kTableMaxSizeName)
+		fmt.Fprintf(w, "    shl  rdi, 3 # sizeof(i64) == 8\n")
 		fmt.Fprintf(w, "    call %s\n", kRuntimeMalloc)
 		fmt.Fprintf(w, "    mov  [rip + %s], rax\n", kTableAddrName)
 		fmt.Fprintln(w)
 
 		p.gasCommentInFunc(w, "表格填充 0xFF")
-		fmt.Fprintf(w, "    mov  rcx, [rip + %s]\n", kTableAddrName)
-		fmt.Fprintf(w, "    mov  rdx, 0xFF\n")
-		fmt.Fprintf(w, "    mov  r8, [rip + %s]\n", kTableMaxSizeName)
-		fmt.Fprintf(w, "    shl  r8, 3 # sizeof(i64) == 8\n")
+		fmt.Fprintf(w, "    mov  rdi, [rip + %s]\n", kTableAddrName)
+		fmt.Fprintf(w, "    mov  rsi, 0xFF\n")
+		fmt.Fprintf(w, "    mov  rdx, [rip + %s]\n", kTableMaxSizeName)
+		fmt.Fprintf(w, "    shl  rdx, 3 # sizeof(i64) == 8\n")
 		fmt.Fprintf(w, "    call %s\n", kRuntimeMemset)
 		fmt.Fprintln(w)
 
