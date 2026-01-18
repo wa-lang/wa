@@ -127,7 +127,7 @@ main:
 .F.main:
     push rbp
     mov  rbp, rsp
-    sub  rsp, 96
+    sub  rsp, 128
 
     # 没有参数需要备份到栈
 
@@ -158,6 +158,14 @@ main:
     # i64.const 300
     movabs rax, 300
     mov    [rbp-48], rax
+    
+    # i64.const 400
+    movabs rax, 400
+    mov    [rbp-56], rax
+    
+    # i64.const 500
+    movabs rax, 500
+    mov    [rbp-64], rax
 
     # call env.write(...)
     mov rcx, qword ptr [rbp-8] # arg 0
@@ -168,6 +176,10 @@ main:
     mov qword ptr [rsp+32], rax
     mov rax, qword ptr [rbp-48]
     mov qword ptr [rsp+40], rax
+    mov rax, qword ptr [rbp-56]
+    mov qword ptr [rsp+48], rax
+    mov rax, qword ptr [rbp-64]
+    mov qword ptr [rsp+56], rax
     call .Import.env.write
     mov qword ptr [rbp-8], rax
     nop # drop [rbp-8]

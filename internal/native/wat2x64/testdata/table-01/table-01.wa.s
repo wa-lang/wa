@@ -1,4 +1,4 @@
-# 源文件: table-01.wat, 系统: windows/X64
+# 源文件: table-01.wat, ABI: x64-Windows
 # 自动生成的代码, 不要手动修改!!!
 
 .intel_syntax noprefix

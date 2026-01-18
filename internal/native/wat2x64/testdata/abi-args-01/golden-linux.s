@@ -1,16 +1,16 @@
-# 源文件: abi-args-01.wat, ABI: x64-Windows
-# 自动生成的代码, 不要手动修改!!!
+# Copyright (C) 2026 武汉凹语言科技有限公司
+# SPDX-License-Identifier: AGPL-3.0-or-later
 
 .intel_syntax noprefix
 
 # 运行时函数
-.extern _write
-.extern _exit
+.extern write
+.extern exit
 .extern malloc
 .extern memcpy
 .extern memset
-.set .Runtime.write, _write
-.set .Runtime.exit, _exit
+.set .Runtime.write, write
+.set .Runtime.exit, exit
 .set .Runtime.malloc, malloc
 .set .Runtime.memcpy, memcpy
 .set .Runtime.memset, memset
@@ -48,26 +48,26 @@
     sub  rsp, 32
 
     # 分配内存
-    mov  rcx, [rip + .Memory.maxPages]
-    shl  rcx, 16
+    mov  rdi, [rip + .Memory.maxPages]
+    shl  rdi, 16
     call .Runtime.malloc
     mov  [rip + .Memory.addr], rax
 
     # 内存清零
-    mov  rcx, [rip + .Memory.addr]
-    mov  rdx, 0
-    mov  r8, [rip + .Memory.maxPages]
-    shl  r8, 16
+    mov  rdi, [rip + .Memory.addr]
+    mov  rsi, 0
+    mov  rdx, [rip + .Memory.maxPages]
+    shl  rdx, 16
     call .Runtime.memset
 
     # 初始化内存
 
-    # memcpy(&Memory[8], data[0], size)
+    # memcpy(&Memory[0], data[0], size)
     mov  rax, [rip + .Memory.addr]
-    mov  rcx, [rip + .Memory.dataOffset.0]
-    add  rcx, rax
-    lea  rdx, [rip + .Memory.dataPtr.0]
-    mov  r8, [rip + .Memory.dataSize.0]
+    mov  rdi, [rip + .Memory.dataOffset.0]
+    add  rdi, rax
+    lea  rsi, [rip + .Memory.dataPtr.0]
+    mov  rdx, [rip + .Memory.dataSize.0]
     call .Runtime.memcpy
 
     # 函数返回
@@ -87,11 +87,11 @@ main:
     call .F.main
 
     # runtime.exit(0)
-    mov  rcx, 0
+    mov  rdi, 0
     call .Runtime.exit
 
     # exit 后这里不会被执行, 但是依然保留
-    mov rsp, rbp
+    mov rdi, rbp
     pop rbp
     ret
 
@@ -108,13 +108,13 @@ main:
     sub  rsp, 32
 
     # runtime.write(stderr, panicMessage, size)
-    mov  rcx, 2 # stderr
-    lea  rdx, [rip + .Runtime.panic.message]
-    mov  r8, [rip + .Runtime.panic.messageLen] # size
+    mov  rdi, 2 # stderr
+    lea  rsi, [rip + .Runtime.panic.message]
+    mov  rdx, [rip + .Runtime.panic.messageLen] # size
     call .Runtime.write
 
     # 退出程序
-    mov  rcx, 1 # 退出码
+    mov  rdi, 1 # 退出码
     call .Runtime.exit
 
     # return
@@ -162,24 +162,22 @@ main:
     # i64.const 400
     movabs rax, 400
     mov    [rbp-56], rax
-
+    
     # i64.const 500
     movabs rax, 500
     mov    [rbp-64], rax
 
     # call env.write(...)
-    mov rcx, qword ptr [rbp-8] # arg 0
-    mov rdx, qword ptr [rbp-16] # arg 1
-    mov r8, qword ptr [rbp-24] # arg 2
-    mov r9, qword ptr [rbp-32] # arg 3
-    mov rax, qword ptr [rbp-40]
-    mov qword ptr [rsp+32], rax
-    mov rax, qword ptr [rbp-48]
-    mov qword ptr [rsp+40], rax
+    mov rdi, qword ptr [rbp-8] # arg 0
+    mov rsi, qword ptr [rbp-16] # arg 1
+    mov rdx, qword ptr [rbp-24] # arg 2
+    mov rcx, qword ptr [rbp-32] # arg 3
+    mov r8, qword ptr [rbp-40] # arg 4
+    mov r9, qword ptr [rbp-48] # arg 5
     mov rax, qword ptr [rbp-56]
-    mov qword ptr [rsp+48], rax
+    mov qword ptr [rsp+0], rax
     mov rax, qword ptr [rbp-64]
-    mov qword ptr [rsp+56], rax
+    mov qword ptr [rsp+8], rax
     call .Import.env.write
     mov qword ptr [rbp-8], rax
     nop # drop [rbp-8]
