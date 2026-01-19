@@ -1350,21 +1350,29 @@ func (p *wat2laWorker) buildFunc_ins(
 			unreachable()
 		}
 	case token.INS_TABLE_GET:
-		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.I32)
-		ret0 := p.fnWasmR0Base - 8*stk.Push(token.FUNCREF) // funcref
+		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.I32) - 8
+		ret0 := p.fnWasmR0Base - 8*stk.Push(token.FUNCREF) - 8 // funcref
 		fmt.Fprintf(w, "    # table.get\n")
-		fmt.Fprintf(w, "    ld.w  t0, fp, %d # t0 = [pop]\n", sp0)
-		//fmt.Fprintf(w, "    add.d t0, t0, %s # t0 = table + t0\n", kTableReg)
-		fmt.Fprintf(w, "    ld.w  t0, t0, 0  # t0 = [t0]\n")
-		fmt.Fprintf(w, "    st.w  t0, fp, %d # push t0\n", ret0)
+		fmt.Fprintf(w, "    pcalau12i $t0, %%pc_hi20(%s)\n", kTableAddrName)
+		fmt.Fprintf(w, "    addi.d    $t0, $t0, %%pc_lo12(%s)\n", kTableAddrName)
+		fmt.Fprintf(w, "    ld.d      $t0, $t0, 0\n")
+		fmt.Fprintf(w, "    ld.w      $t1, $fp, %d # offset\n", sp0)
+		fmt.Fprintf(w, "    alsl.d    $t1, $t1, $t0, 2 # t1 = t1<<(2+1) + t0\n")
+		fmt.Fprintf(w, "    ld.d      $t1, $t1, 0\n")
+		fmt.Fprintf(w, "    st.w      $t1, $fp, %d\n", ret0)
+		fmt.Fprintln(w)
 	case token.INS_TABLE_SET:
-		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.FUNCREF) // funcref
-		sp1 := p.fnWasmR0Base - 8*stk.Pop(token.I32)
-		fmt.Fprintf(w, "    # table.get\n")
-		fmt.Fprintf(w, "    ld.w  t2, fp, %d # t2 = pop\n", sp0)
-		fmt.Fprintf(w, "    ld.w  t0, fp, %d # t0 = $pop\n", sp1)
-		//fmt.Fprintf(w, "    add.d t0, t0, %s # t0 = table + t0\n", kTableReg)
-		fmt.Fprintf(w, "    st.w  t2, t0, 0\n")
+		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.FUNCREF) - 8 // funcref
+		sp1 := p.fnWasmR0Base - 8*stk.Pop(token.I32) - 8
+		fmt.Fprintf(w, "    # table.set\n")
+		fmt.Fprintf(w, "    pcalau12i $t0, %%pc_hi20(%s)\n", kTableAddrName)
+		fmt.Fprintf(w, "    addi.d    $t0, $t0, %%pc_lo12(%s)\n", kTableAddrName)
+		fmt.Fprintf(w, "    ld.d      $t0, $t0, 0\n")
+		fmt.Fprintf(w, "    ld.w      $t1, $fp, %d # offset\n", sp1)
+		fmt.Fprintf(w, "    alsl.d    $t1, $t1, $t0, 2 # t1 = t1<<(2+1) + t0\n")
+		fmt.Fprintf(w, "    ld.w      $t2, $fp, %d # funcref\n", sp0)
+		fmt.Fprintf(w, "    ld.d      $t2, $t1, 0\n")
+		fmt.Fprintln(w)
 	case token.INS_I32_LOAD:
 		i := i.(ast.Ins_I32Load)
 

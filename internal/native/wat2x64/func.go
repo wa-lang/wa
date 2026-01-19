@@ -1315,22 +1315,21 @@ func (p *wat2X64Worker) buildFunc_ins(
 		}
 
 	case token.INS_TABLE_GET:
-		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.I32)
-		ret0 := p.fnWasmR0Base - 8*stk.Push(token.FUNCREF) // funcref
+		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.I32) - 8
+		ret0 := p.fnWasmR0Base - 8*stk.Push(token.FUNCREF) - 8 // funcref
 		fmt.Fprintf(w, "    # table.get\n")
-		fmt.Fprintf(w, "    lea rax, [rip + %s]\n", kTableAddrName)
-		fmt.Fprintf(w, "    movsxd r10, dword ptr [rbp%+d]\n", sp0)
-		fmt.Fprintf(w, "    mov rax, dword ptr [rax+r10]\n")
+		fmt.Fprintf(w, "    mov rax, qword ptr [rip + %s]\n", kTableAddrName)
+		fmt.Fprintf(w, "    mov r10d, dword ptr [rbp%+d]\n", sp0)
+		fmt.Fprintf(w, "    mov rax, dword ptr [rax+r10*8]\n")
 		fmt.Fprintf(w, "    mov dword ptr [rbp%+d], rax\n", ret0)
 	case token.INS_TABLE_SET:
-		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.FUNCREF) // funcref
-		sp1 := p.fnWasmR0Base - 8*stk.Pop(token.I32)
+		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.FUNCREF) - 8 // funcref
+		sp1 := p.fnWasmR0Base - 8*stk.Pop(token.I32) - 8
 		fmt.Fprintf(w, "    # table.set\n")
-		fmt.Fprintf(w, "    lea rax, [rip + %s]\n", kTableAddrName)
-		fmt.Fprintf(w, "    movsxd r10, dword ptr [rbp%+d]\n", sp0)
-		fmt.Fprintf(w, "    movsxd r11, dword ptr [rbp%+d]\n", sp1)
-		fmt.Fprintf(w, "    mov rax, qword ptr [rax+r11]\n")
-		fmt.Fprintf(w, "    mov qword ptr [rbp+r11], r10\n")
+		fmt.Fprintf(w, "    mov rax, qword ptr [rip + %s]\n", kTableAddrName)
+		fmt.Fprintf(w, "    mov r10d, dword ptr [rbp%+d]\n", sp0)
+		fmt.Fprintf(w, "    mov r11d, dword ptr [rbp%+d]\n", sp1)
+		fmt.Fprintf(w, "    mov dword ptr [rax+r11*8], r10\n")
 
 	case token.INS_I32_LOAD:
 		i := i.(ast.Ins_I32Load)
