@@ -8,7 +8,7 @@
 extern int64_t wat2xla_Memory_addr __asm__(".Memory.addr");
 
 // 按照 龙芯 调用约定
-int64_t wat2xla_env_write(int64_t fd, char* ptr, int64_t size, int64_t p4, int64_t p5, int64_t p6, int64_t p7, int64_t p8, int64_t p9, int64_t p10) {
+int64_t wat2la_env_write(int64_t fd, char* ptr, int64_t size, int64_t p4, int64_t p5, int64_t p6, int64_t p7, int64_t p8, int64_t p9, int64_t p10) {
     printf("--- Linux/Loong64 ABI Verification ---\n");
     printf("Param 1 (a0): %ld\n", fd);
     printf("Param 2 (a1): %ld\n", (int64_t)(ptr));
@@ -28,7 +28,7 @@ int64_t wat2xla_env_write(int64_t fd, char* ptr, int64_t size, int64_t p4, int64
     return 0;
 }
 
-void wat2xla_env_print_i64(int64_t x) {
+void wat2la_env_print_i64(int64_t x) {
     printf("printI64: %ld\n", x);
 }
 
