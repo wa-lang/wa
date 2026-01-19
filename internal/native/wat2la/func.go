@@ -786,8 +786,7 @@ func (p *wat2laWorker) buildFunc_ins(
 		// 如果是走栈返回, 第一个是隐藏参数
 		if len(fnCallNative.Type.Return) > 0 && fnCallNative.Type.Return[0].Reg == 0 {
 			assert(p.cpuType == abi.LOONG64)
-			fmt.Fprintf(w, "    # todo\n")
-			fmt.Fprintf(w, "    # lea rcx, [rsp%+d] # return address\n", len(fnCallType.Params)*8)
+			fmt.Fprintf(w, "    add.d $a0, $a0, 0 # return address\n")
 		}
 
 		// 准备调用参数
@@ -801,11 +800,11 @@ func (p *wat2laWorker) buildFunc_ins(
 						k,
 					)
 				} else {
-					fmt.Fprintf(w, "    ld.w $t1, $fp, %d",
+					fmt.Fprintf(w, "    ld.w $t0, $fp, %d\n",
 						p.fnWasmR0Base-argList[k]*8-8,
 					)
-					fmt.Fprintf(w, "    st.w $t1, $fp, %d",
-						arg.RBPOff,
+					fmt.Fprintf(w, "    st.w $t0, $sp, %d\n",
+						arg.RSPOff,
 					)
 				}
 			case token.I64:
@@ -816,11 +815,11 @@ func (p *wat2laWorker) buildFunc_ins(
 						k,
 					)
 				} else {
-					fmt.Fprintf(w, "    ld.d $t1, $fp, %d",
+					fmt.Fprintf(w, "    ld.d $t0, $fp, %d\n",
 						p.fnWasmR0Base-argList[k]*8-8,
 					)
-					fmt.Fprintf(w, "    st.d $t1, $fp, %d",
-						arg.RBPOff,
+					fmt.Fprintf(w, "    st.d $t0, $sp, %d\n",
+						arg.RSPOff,
 					)
 				}
 			case token.F32:
@@ -832,17 +831,17 @@ func (p *wat2laWorker) buildFunc_ins(
 							k,
 						)
 					} else {
-						fmt.Fprintf(w, "    ld.w %s, $fp, %d",
+						fmt.Fprintf(w, "    ld.w %s, $fp, %d\n",
 							"$"+strings.ToLower(loong64.RegAliasString(arg.Reg)),
 							p.fnWasmR0Base+argList[k]*8,
 						)
 					}
 				} else {
-					fmt.Fprintf(w, "    fld.s $t1, $fp, %d",
+					fmt.Fprintf(w, "    fld.s $t0, $fp, %d\n",
 						p.fnWasmR0Base-argList[k]*8-8,
 					)
-					fmt.Fprintf(w, "    fst.s $t1, $fp, %d",
-						arg.RBPOff,
+					fmt.Fprintf(w, "    fst.s $t0, $sp, %d\n",
+						arg.RSPOff,
 					)
 				}
 			case token.F64:
@@ -854,17 +853,17 @@ func (p *wat2laWorker) buildFunc_ins(
 							k,
 						)
 					} else {
-						fmt.Fprintf(w, "    ld.d %s, $fp, %d",
+						fmt.Fprintf(w, "    ld.d %s, $fp, %d\n",
 							"$"+strings.ToLower(loong64.RegAliasString(arg.Reg)),
 							p.fnWasmR0Base-argList[k]*8-8,
 						)
 					}
 				} else {
-					fmt.Fprintf(w, "    fld.d $t1, $fp, %d",
+					fmt.Fprintf(w, "    fld.d $t0, $fp, %d\n",
 						p.fnWasmR0Base-argList[k]*8-8,
 					)
-					fmt.Fprintf(w, "    fst.d $t1, $fp, %d",
-						arg.RBPOff,
+					fmt.Fprintf(w, "    fst.d $t0, $sp, %d\n",
+						arg.RSPOff,
 					)
 				}
 			default:
