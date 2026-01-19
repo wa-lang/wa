@@ -161,7 +161,7 @@ main:
     nop # drop [rbp-8]
 
     # 根据ABI处理返回值
-.L.return:
+.L.return.main:
 
     # 函数返回
     mov rsp, rbp
@@ -184,7 +184,7 @@ main:
     call .Runtime.panic # unreachable
 
     # 根据ABI处理返回值
-.L.return:
+.L.return.runtime.throw:
 
     # 函数返回
     mov rsp, rbp
@@ -209,7 +209,7 @@ main:
     mov dword ptr [rbp-16], eax
 
     # 根据ABI处理返回值
-.L.return:
+.L.return.runtime.getStackPtr:
     mov rax, [rbp-8] # ret .F.ret.0
 
     # 函数返回
@@ -239,7 +239,7 @@ main:
     mov dword ptr [rip+$G.__stack_ptr], eax
 
     # 根据ABI处理返回值
-.L.return:
+.L.return.runtime.setStackPtr:
 
     # 函数返回
     mov rsp, rbp
@@ -278,10 +278,10 @@ main:
     mov dword ptr [rbp-16], eax
     mov eax, dword ptr [rbp-8]
     mov dword ptr [rbp-8], eax
-    jmp .L.return
+    jmp .L.return.runtime.stackAlloc
 
     # 根据ABI处理返回值
-.L.return:
+.L.return.runtime.stackAlloc:
     mov rax, [rbp-8] # ret .F.ret.0
 
     # 函数返回
@@ -318,7 +318,7 @@ main:
     mov dword ptr [rip+$G.__stack_ptr], eax
 
     # 根据ABI处理返回值
-.L.return:
+.L.return.runtime.stackFree:
 
     # 函数返回
     mov rsp, rbp
@@ -343,7 +343,7 @@ main:
     mov dword ptr [rbp-16], eax
 
     # 根据ABI处理返回值
-.L.return:
+.L.return.runtime.heapBase:
     mov rax, [rbp-8] # ret .F.ret.0
 
     # 函数返回

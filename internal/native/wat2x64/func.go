@@ -23,20 +23,20 @@ const (
 )
 
 const (
-	kLabelName_return = ".L.return"
+	kLabelPrefixName_return = ".L.return."
 
-	kLabelNamePreifx_blockBegin = ".L.block.begin."
-	kLabelNamePreifx_blockEnd   = ".L.block.end."
+	kLabelNamePrefix_blockBegin = ".L.block.begin."
+	kLabelNamePrefix_blockEnd   = ".L.block.end."
 
-	kLabelNamePreifx_ifBegin = ".L.if.begin."
-	kLabelNamePreifx_ifBody  = ".L.if.body."
-	kLabelNamePreifx_ifElse  = ".L.if.else."
-	kLabelNamePreifx_ifEnd   = ".L.if.end."
+	kLabelNamePrefix_ifBegin = ".L.if.begin."
+	kLabelNamePrefix_ifBody  = ".L.if.body."
+	kLabelNamePrefix_ifElse  = ".L.if.else."
+	kLabelNamePrefix_ifEnd   = ".L.if.end."
 
-	kLabelNamePreifx_loopBegin = ".L.loop.begin."
-	kLabelNamePreifx_loopEnd   = ".L.loop.end."
+	kLabelNamePrefix_loopBegin = ".L.loop.begin."
+	kLabelNamePrefix_loopEnd   = ".L.loop.end."
 
-	kLabelNamePreifx_next = ".L.next."
+	kLabelNamePrefix_next = ".L.next."
 )
 
 //
@@ -266,7 +266,7 @@ func (p *wat2X64Worker) buildFunc_body(w io.Writer, fn *ast.Func) error {
 		// 返回代码位置
 		fmt.Fprintln(&bufIns)
 		p.gasCommentInFunc(&bufIns, "根据ABI处理返回值")
-		p.gasFuncLabel(&bufIns, kLabelName_return)
+		p.gasFuncLabel(&bufIns, kLabelPrefixName_return+fn.Name)
 
 		// 如果走内存, 返回地址
 		if len(fn.Type.Results) > 1 && fnNative.Type.Return[1].Reg == 0 {
@@ -381,7 +381,7 @@ func (p *wat2X64Worker) buildFunc_ins(
 		defer p.leaveLabelScope()
 
 		if i.Label != "" {
-			p.gasFuncLabel(w, kLabelNamePreifx_blockBegin+i.Label)
+			p.gasFuncLabel(w, kLabelNamePrefix_blockBegin+i.Label)
 		}
 
 		for _, ins := range i.List {
@@ -391,8 +391,8 @@ func (p *wat2X64Worker) buildFunc_ins(
 		}
 
 		if i.Label != "" {
-			p.gasFuncLabel(w, kLabelNamePreifx_next+i.Label)
-			p.gasFuncLabel(w, kLabelNamePreifx_blockEnd+i.Label)
+			p.gasFuncLabel(w, kLabelNamePrefix_next+i.Label)
+			p.gasFuncLabel(w, kLabelNamePrefix_blockEnd+i.Label)
 		}
 
 	case token.INS_LOOP:
@@ -405,8 +405,8 @@ func (p *wat2X64Worker) buildFunc_ins(
 		defer p.leaveLabelScope()
 
 		if i.Label != "" {
-			p.gasFuncLabel(w, kLabelNamePreifx_loopBegin+i.Label)
-			p.gasFuncLabel(w, kLabelNamePreifx_next+i.Label)
+			p.gasFuncLabel(w, kLabelNamePrefix_loopBegin+i.Label)
+			p.gasFuncLabel(w, kLabelNamePrefix_next+i.Label)
 		}
 		for _, ins := range i.List {
 			if err := p.buildFunc_ins(w, fnNative, fn, stk, ins); err != nil {
@@ -414,14 +414,14 @@ func (p *wat2X64Worker) buildFunc_ins(
 			}
 		}
 		if i.Label != "" {
-			p.gasFuncLabel(w, kLabelNamePreifx_loopEnd+i.Label)
+			p.gasFuncLabel(w, kLabelNamePrefix_loopEnd+i.Label)
 		}
 
 	case token.INS_IF:
 		i := i.(ast.Ins_If)
 
 		if i.Label != "" {
-			p.gasFuncLabel(w, kLabelNamePreifx_ifBegin+i.Label)
+			p.gasFuncLabel(w, kLabelNamePrefix_ifBegin+i.Label)
 		}
 
 		// 龙芯没有 pop 指令，需要2个指令才能实现
@@ -432,9 +432,9 @@ func (p *wat2X64Worker) buildFunc_ins(
 		fmt.Fprintf(w, "    mov eax, [rbp%+d]\n", p.fnWasmR0Base-sp0*8)
 		fmt.Fprintf(w, "    test eax, eax\n")
 		if len(i.Else) > 0 {
-			fmt.Fprintf(w, "    jne %s%s # if eax != 0 { jmp body }\n", kLabelNamePreifx_ifBody, i.Label)
+			fmt.Fprintf(w, "    jne %s%s # if eax != 0 { jmp body }\n", kLabelNamePrefix_ifBody, i.Label)
 		} else {
-			fmt.Fprintf(w, "    je %s%s # if eax != 0 { jmp end }\n", kLabelNamePreifx_ifEnd, i.Label)
+			fmt.Fprintf(w, "    je %s%s # if eax != 0 { jmp end }\n", kLabelNamePrefix_ifEnd, i.Label)
 		}
 
 		stkBase := stk.Len()
@@ -444,7 +444,7 @@ func (p *wat2X64Worker) buildFunc_ins(
 		defer p.leaveLabelScope()
 
 		if i.Label != "" {
-			p.gasFuncLabel(w, kLabelNamePreifx_ifBody+i.Label)
+			p.gasFuncLabel(w, kLabelNamePrefix_ifBody+i.Label)
 		}
 		for _, ins := range i.Body {
 			if err := p.buildFunc_ins(w, fnNative, fn, stk, ins); err != nil {
@@ -457,7 +457,7 @@ func (p *wat2X64Worker) buildFunc_ins(
 			defer func() { p.Tracef("buildFunc_ins: %s end: %v\n", token.INS_ELSE, stk.String()) }()
 
 			if i.Label != "" {
-				p.gasFuncLabel(w, kLabelNamePreifx_ifElse+i.Label)
+				p.gasFuncLabel(w, kLabelNamePrefix_ifElse+i.Label)
 			}
 
 			// 这是静态分析, 需要消除 if 分支对栈分配的影响
@@ -475,8 +475,8 @@ func (p *wat2X64Worker) buildFunc_ins(
 			}
 		}
 		if i.Label != "" {
-			p.gasFuncLabel(w, kLabelNamePreifx_next+i.Label)
-			p.gasFuncLabel(w, kLabelNamePreifx_ifEnd+i.Label)
+			p.gasFuncLabel(w, kLabelNamePrefix_next+i.Label)
+			p.gasFuncLabel(w, kLabelNamePrefix_ifEnd+i.Label)
 		}
 
 	case token.INS_ELSE:
@@ -544,7 +544,7 @@ func (p *wat2X64Worker) buildFunc_ins(
 		// 中间栈帧的数据会在外层block指令时处理
 		assert(stk.Len() == currentScopeStackBase)
 
-		fmt.Fprintf(w, "    jmp %s%s\n", kLabelNamePreifx_next, labelName)
+		fmt.Fprintf(w, "    jmp %s%s\n", kLabelNamePrefix_next, labelName)
 
 	case token.INS_BR_IF:
 		i := i.(ast.Ins_BrIf)
@@ -570,7 +570,7 @@ func (p *wat2X64Worker) buildFunc_ins(
 		fmt.Fprintf(w, "    # br_if %s\n", labelName)
 		fmt.Fprintf(w, "    mov eax, dword ptr [rbp%+d]\n", p.fnWasmR0Base-sp0*8)
 		fmt.Fprintf(w, "    test eax, eax\n")
-		fmt.Fprintf(w, "    jne  %s\n", kLabelNamePreifx_next+labelName)
+		fmt.Fprintf(w, "    jne  %s\n", kLabelNamePrefix_next+labelName)
 
 	case token.INS_BR_TABLE:
 		i := i.(ast.Ins_BrTable)
@@ -649,11 +649,11 @@ func (p *wat2X64Worker) buildFunc_ins(
 				if k < len(i.XList)-1 {
 					fmt.Fprintf(w, "    # br_table case %d\n", k)
 					fmt.Fprintf(w, "    cmp eax, %d\n", k)
-					fmt.Fprintf(w, "    jne %s\n", kLabelNamePreifx_next+labelName)
+					fmt.Fprintf(w, "    jne %s\n", kLabelNamePrefix_next+labelName)
 				} else {
 					assert(labelName == defaultLabelName)
 					fmt.Fprintf(w, "    # br_table default\n")
-					fmt.Fprintf(w, "    jmp %s\n", kLabelNamePreifx_next+defaultLabelName)
+					fmt.Fprintf(w, "    jmp %s\n", kLabelNamePrefix_next+defaultLabelName)
 				}
 			}
 		}
@@ -674,26 +674,26 @@ func (p *wat2X64Worker) buildFunc_ins(
 	case token.INS_RETURN:
 		switch len(fn.Type.Results) {
 		case 0:
-			fmt.Fprintf(w, "    jmp %s\n", kLabelName_return)
+			fmt.Fprintf(w, "    jmp %s\n", kLabelPrefixName_return+fn.Name)
 		case 1:
 			sp0 := stk.Pop(fn.Type.Results[0])
 			switch fn.Type.Results[0] {
 			case token.I32:
 				fmt.Fprintf(w, "    mov eax, dword ptr [rbp%+d]\n", p.fnWasmR0Base-sp0*8)
 				fmt.Fprintf(w, "    mov dword ptr [rbp%+d], eax\n", fnNative.Type.Return[0].RBPOff)
-				fmt.Fprintf(w, "    jmp %s\n", kLabelName_return)
+				fmt.Fprintf(w, "    jmp %s\n", kLabelPrefixName_return+fn.Name)
 			case token.I64:
 				fmt.Fprintf(w, "    mov rax, qword ptr [rbp%+d]\n", p.fnWasmR0Base-sp0*8)
 				fmt.Fprintf(w, "    mov qword ptr [rbp%+d], rax\n", fnNative.Type.Return[0].RBPOff)
-				fmt.Fprintf(w, "    jmp %s\n", kLabelName_return)
+				fmt.Fprintf(w, "    jmp %s\n", kLabelPrefixName_return+fn.Name)
 			case token.F32:
 				fmt.Fprintf(w, "    movss xmm0, dword ptr [rbp%+d]\n", p.fnWasmR0Base-sp0*8)
 				fmt.Fprintf(w, "    movss dword ptr [rbp%+d], xmm0\n", fnNative.Type.Return[0].RBPOff)
-				fmt.Fprintf(w, "    jmp   %s\n", kLabelName_return)
+				fmt.Fprintf(w, "    jmp   %s\n", kLabelPrefixName_return+fn.Name)
 			case token.F64:
 				fmt.Fprintf(w, "    movsd xmm0, qword ptr [rbp%+d]\n", p.fnWasmR0Base-sp0*8)
 				fmt.Fprintf(w, "    movsd qword ptr [rbp%+d], xmm0\n", fnNative.Type.Return[0].RBPOff)
-				fmt.Fprintf(w, "    jmp   %s\n", kLabelName_return)
+				fmt.Fprintf(w, "    jmp   %s\n", kLabelPrefixName_return+fn.Name)
 			default:
 				unreachable()
 			}
@@ -719,7 +719,7 @@ func (p *wat2X64Worker) buildFunc_ins(
 				}
 			}
 			fmt.Fprintf(w, "    mov    rax, [rbp%+d] # return address\n", 2*8)
-			fmt.Fprintf(w, "    jmp    %s\n", kLabelName_return)
+			fmt.Fprintf(w, "    jmp    %s\n", kLabelPrefixName_return+fn.Name)
 		}
 		assert(stk.Len() == 0)
 
@@ -1621,9 +1621,9 @@ func (p *wat2X64Worker) buildFunc_ins(
 		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.I32)
 		ret0 := p.fnWasmR0Base - 8*stk.Push(token.I32)
 
-		labelBody := p.gasGenNextId(kLabelNamePreifx_ifBody)
-		labelElse := p.gasGenNextId(kLabelNamePreifx_ifElse)
-		labelEnd := p.gasGenNextId(kLabelNamePreifx_ifEnd)
+		labelBody := p.gasGenNextId(kLabelNamePrefix_ifBody)
+		labelElse := p.gasGenNextId(kLabelNamePrefix_ifElse)
+		labelEnd := p.gasGenNextId(kLabelNamePrefix_ifEnd)
 
 		fmt.Fprintf(w, "    # memory.grow\n")
 		fmt.Fprintf(w, "    lea r10, [rip+%s]\n", kMemoryPagesName)
@@ -2679,7 +2679,7 @@ func (p *wat2X64Worker) buildFunc_ins(
 		sp1 := p.fnWasmR0Base - 8*stk.Pop(token.F32)
 		ret0 := p.fnWasmR0Base - 8*stk.Push(token.F32)
 
-		labelNotEqual := p.gasGenNextId(kLabelNamePreifx_ifEnd)
+		labelNotEqual := p.gasGenNextId(kLabelNamePrefix_ifEnd)
 
 		fmt.Fprintf(w, "    # f32.max\n")
 		fmt.Fprintf(w, "    movss   xmm4, dword ptr [rbp%+d]\n", sp0)
@@ -2826,7 +2826,7 @@ func (p *wat2X64Worker) buildFunc_ins(
 		sp1 := p.fnWasmR0Base - 8*stk.Pop(token.F64)
 		ret0 := p.fnWasmR0Base - 8*stk.Push(token.F64)
 
-		labelIfDone := p.gasGenNextId(kLabelNamePreifx_ifEnd)
+		labelIfDone := p.gasGenNextId(kLabelNamePrefix_ifEnd)
 
 		fmt.Fprintf(w, "    # f64.min\n")
 		fmt.Fprintf(w, "    movsd xmm4, qword ptr [rbp%+d]\n", sp0)
@@ -2844,7 +2844,7 @@ func (p *wat2X64Worker) buildFunc_ins(
 		sp1 := p.fnWasmR0Base - 8*stk.Pop(token.F64)
 		ret0 := p.fnWasmR0Base - 8*stk.Push(token.F64)
 
-		labelNotEqual := p.gasGenNextId(kLabelNamePreifx_ifEnd)
+		labelNotEqual := p.gasGenNextId(kLabelNamePrefix_ifEnd)
 
 		fmt.Fprintf(w, "    # f64.max\n")
 		fmt.Fprintf(w, "    movsd xmm4, qword ptr [rbp%+d]\n", sp0)

@@ -25,20 +25,20 @@ const (
 )
 
 const (
-	kLabelName_return = ".L.return"
+	kLabelPrefixName_return = ".L.return."
 
-	kLabelNamePreifx_blockBegin = ".L.block.begin."
-	kLabelNamePreifx_blockEnd   = ".L.block.end."
+	kLabelNamePrefix_blockBegin = ".L.block.begin."
+	kLabelNamePrefix_blockEnd   = ".L.block.end."
 
-	kLabelNamePreifx_ifBegin = ".L.if.begin."
-	kLabelNamePreifx_ifBody  = ".L.if.body."
-	kLabelNamePreifx_ifElse  = ".L.if.else."
-	kLabelNamePreifx_ifEnd   = ".L.if.end."
+	kLabelNamePrefix_ifBegin = ".L.if.begin."
+	kLabelNamePrefix_ifBody  = ".L.if.body."
+	kLabelNamePrefix_ifElse  = ".L.if.else."
+	kLabelNamePrefix_ifEnd   = ".L.if.end."
 
-	kLabelNamePreifx_loopBegin = ".L.loop.begin."
-	kLabelNamePreifx_loopEnd   = ".L.loop.end."
+	kLabelNamePrefix_loopBegin = ".L.loop.begin."
+	kLabelNamePrefix_loopEnd   = ".L.loop.end."
 
-	kLabelNamePreifx_next = ".L.next."
+	kLabelNamePrefix_next = ".L.next."
 )
 
 //
@@ -271,7 +271,7 @@ func (p *wat2laWorker) buildFunc_body(w io.Writer, fn *ast.Func) error {
 		// 返回代码位置
 		fmt.Fprintln(&bufIns)
 		p.gasCommentInFunc(&bufIns, "根据ABI处理返回值")
-		p.gasFuncLabel(&bufIns, kLabelName_return)
+		p.gasFuncLabel(&bufIns, kLabelPrefixName_return+fn.Name)
 
 		// 如果走内存, 返回地址
 		if len(fn.Type.Results) > 1 && fnNative.Type.Return[1].Reg == 0 {
@@ -394,7 +394,7 @@ func (p *wat2laWorker) buildFunc_ins(
 		defer p.leaveLabelScope()
 
 		if i.Label != "" {
-			fmt.Fprintf(w, "%s%s:\n", kLabelNamePreifx_blockBegin, i.Label)
+			fmt.Fprintf(w, "%s%s:\n", kLabelNamePrefix_blockBegin, i.Label)
 		}
 
 		for _, ins := range i.List {
@@ -404,8 +404,8 @@ func (p *wat2laWorker) buildFunc_ins(
 		}
 
 		if i.Label != "" {
-			fmt.Fprintf(w, "%s%s:\n", kLabelNamePreifx_next, i.Label)
-			fmt.Fprintf(w, "%s%s:\n", kLabelNamePreifx_blockEnd, i.Label)
+			fmt.Fprintf(w, "%s%s:\n", kLabelNamePrefix_next, i.Label)
+			fmt.Fprintf(w, "%s%s:\n", kLabelNamePrefix_blockEnd, i.Label)
 		}
 
 	case token.INS_LOOP:
@@ -418,8 +418,8 @@ func (p *wat2laWorker) buildFunc_ins(
 		defer p.leaveLabelScope()
 
 		if i.Label != "" {
-			fmt.Fprintf(w, "%s%s:\n", kLabelNamePreifx_loopBegin, i.Label)
-			fmt.Fprintf(w, "%s%s:\n", kLabelNamePreifx_next, i.Label)
+			fmt.Fprintf(w, "%s%s:\n", kLabelNamePrefix_loopBegin, i.Label)
+			fmt.Fprintf(w, "%s%s:\n", kLabelNamePrefix_next, i.Label)
 		}
 		for _, ins := range i.List {
 			if err := p.buildFunc_ins(w, fnNative, fn, stk, ins); err != nil {
@@ -427,14 +427,14 @@ func (p *wat2laWorker) buildFunc_ins(
 			}
 		}
 		if i.Label != "" {
-			fmt.Fprintf(w, "%s%s:\n", kLabelNamePreifx_loopEnd, i.Label)
+			fmt.Fprintf(w, "%s%s:\n", kLabelNamePrefix_loopEnd, i.Label)
 		}
 
 	case token.INS_IF:
 		i := i.(ast.Ins_If)
 
 		if i.Label != "" {
-			fmt.Fprintf(w, "%s%s:\n", kLabelNamePreifx_ifBegin, i.Label)
+			fmt.Fprintf(w, "%s%s:\n", kLabelNamePrefix_ifBegin, i.Label)
 		}
 
 		// 龙芯没有 pop 指令，需要2个指令才能实现
@@ -443,11 +443,11 @@ func (p *wat2laWorker) buildFunc_ins(
 		sp0 := stk.Pop(token.I32)
 
 		fmt.Fprintf(w, "    ld.w t0, fp, %d\n", p.fnWasmR0Base-sp0*8)
-		fmt.Fprintf(w, "    bne  t0, zero, %s%s\n", kLabelNamePreifx_ifBody, i.Label)
+		fmt.Fprintf(w, "    bne  t0, zero, %s%s\n", kLabelNamePrefix_ifBody, i.Label)
 		if len(i.Else) > 0 {
-			fmt.Fprintf(w, "    bne  t0, zero, %s%s\n", kLabelNamePreifx_ifBody, i.Label)
+			fmt.Fprintf(w, "    bne  t0, zero, %s%s\n", kLabelNamePrefix_ifBody, i.Label)
 		} else {
-			fmt.Fprintf(w, "    bne  t0, zero, %s%s\n", kLabelNamePreifx_ifEnd, i.Label)
+			fmt.Fprintf(w, "    bne  t0, zero, %s%s\n", kLabelNamePrefix_ifEnd, i.Label)
 		}
 
 		stkBase := stk.Len()
@@ -457,7 +457,7 @@ func (p *wat2laWorker) buildFunc_ins(
 		defer p.leaveLabelScope()
 
 		if i.Label != "" {
-			fmt.Fprintf(w, "%s%s:\n", kLabelNamePreifx_ifBody, i.Label)
+			fmt.Fprintf(w, "%s%s:\n", kLabelNamePrefix_ifBody, i.Label)
 		}
 		for _, ins := range i.Body {
 			if err := p.buildFunc_ins(w, fnNative, fn, stk, ins); err != nil {
@@ -470,7 +470,7 @@ func (p *wat2laWorker) buildFunc_ins(
 			defer func() { p.Tracef("buildFunc_ins: %s%s end: %v\n", indent, token.INS_ELSE, stk.String()) }()
 
 			if i.Label != "" {
-				fmt.Fprintf(w, "%s%s:\n", kLabelNamePreifx_ifElse, i.Label)
+				fmt.Fprintf(w, "%s%s:\n", kLabelNamePrefix_ifElse, i.Label)
 			}
 
 			// 这是静态分析, 需要消除 if 分支对栈分配的影响
@@ -488,8 +488,8 @@ func (p *wat2laWorker) buildFunc_ins(
 			}
 		}
 		if i.Label != "" {
-			fmt.Fprintf(w, "%s%s:\n", kLabelNamePreifx_next, i.Label)
-			fmt.Fprintf(w, "%s%s:\n", kLabelNamePreifx_ifEnd, i.Label)
+			fmt.Fprintf(w, "%s%s:\n", kLabelNamePrefix_next, i.Label)
+			fmt.Fprintf(w, "%s%s:\n", kLabelNamePrefix_ifEnd, i.Label)
 		}
 
 	case token.INS_ELSE:
@@ -557,7 +557,7 @@ func (p *wat2laWorker) buildFunc_ins(
 		// 中间栈帧的数据会在外层block指令时处理
 		assert(stk.Len() == currentScopeStackBase)
 
-		fmt.Fprintf(w, "    b %s%s\n", kLabelNamePreifx_next, labelName)
+		fmt.Fprintf(w, "    b %s%s\n", kLabelNamePrefix_next, labelName)
 
 	case token.INS_BR_IF:
 		i := i.(ast.Ins_BrIf)
@@ -582,7 +582,7 @@ func (p *wat2laWorker) buildFunc_ins(
 
 		fmt.Fprintf(w, "    # br_if %s\n", labelName)
 		fmt.Fprintf(w, "    ld.w t0, fp, %d\n", p.fnWasmR0Base-sp0*8)
-		fmt.Fprintf(w, "    bne t0, zero, %s%s\n", kLabelNamePreifx_next, labelName)
+		fmt.Fprintf(w, "    bne t0, zero, %s%s\n", kLabelNamePrefix_next, labelName)
 
 	case token.INS_BR_TABLE:
 		i := i.(ast.Ins_BrTable)
@@ -661,11 +661,11 @@ func (p *wat2laWorker) buildFunc_ins(
 				if k < len(i.XList)-1 {
 					fmt.Fprintf(w, "    # br_table case %d\n", k)
 					fmt.Fprintf(w, "    ld.w t1, zero, %d;\n", k)
-					fmt.Fprintf(w, "    bne  t0, t1, %s%s\n", kLabelNamePreifx_next, labelName)
+					fmt.Fprintf(w, "    bne  t0, t1, %s%s\n", kLabelNamePrefix_next, labelName)
 				} else {
 					assert(labelName == defaultLabelName)
 					fmt.Fprintf(w, "    # br_table default\n")
-					fmt.Fprintf(w, "    b %s%s\n", kLabelNamePreifx_next, defaultLabelName)
+					fmt.Fprintf(w, "    b %s%s\n", kLabelNamePrefix_next, defaultLabelName)
 				}
 			}
 		}
@@ -686,26 +686,26 @@ func (p *wat2laWorker) buildFunc_ins(
 	case token.INS_RETURN:
 		switch len(fn.Type.Results) {
 		case 0:
-			fmt.Fprintf(w, "    b %s\n", kLabelName_return)
+			fmt.Fprintf(w, "    b %s\n", kLabelPrefixName_return+fn.Name)
 		case 1:
 			sp0 := stk.Pop(fn.Type.Results[0])
 			switch fn.Type.Results[0] {
 			case token.I32:
 				fmt.Fprintf(w, "    ld.w t0, fp, %d\n", p.fnWasmR0Base-sp0*8)
 				fmt.Fprintf(w, "    st.w t0, fp, %d\n", fnNative.Type.Return[0].RBPOff)
-				fmt.Fprintf(w, "    b    %s\n", kLabelName_return)
+				fmt.Fprintf(w, "    b    %s\n", kLabelPrefixName_return+fn.Name)
 			case token.I64:
 				fmt.Fprintf(w, "    ld.d t0, fp, %d\n", p.fnWasmR0Base-sp0*8)
 				fmt.Fprintf(w, "    st.d t0, fp, %d\n", fnNative.Type.Return[0].RBPOff)
-				fmt.Fprintf(w, "    b    %s\n", kLabelName_return)
+				fmt.Fprintf(w, "    b    %s\n", kLabelPrefixName_return+fn.Name)
 			case token.F32:
 				fmt.Fprintf(w, "    fld.s t0, fp, %d\n", p.fnWasmR0Base-sp0*8)
 				fmt.Fprintf(w, "    fst.s t0, fp, %d\n", fnNative.Type.Return[0].RBPOff)
-				fmt.Fprintf(w, "    b     %s\n", kLabelName_return)
+				fmt.Fprintf(w, "    b     %s\n", kLabelPrefixName_return+fn.Name)
 			case token.F64:
 				fmt.Fprintf(w, "    fld.d t0, fp, %d\n", p.fnWasmR0Base-sp0*8)
 				fmt.Fprintf(w, "    fst.d t0, fp, %d\n", fnNative.Type.Return[0].RBPOff)
-				fmt.Fprintf(w, "    b     %s\n", kLabelName_return)
+				fmt.Fprintf(w, "    b     %s\n", kLabelPrefixName_return+fn.Name)
 			default:
 				unreachable()
 			}
@@ -730,7 +730,7 @@ func (p *wat2laWorker) buildFunc_ins(
 					unreachable()
 				}
 			}
-			fmt.Fprintf(w, "    b    %s\n", kLabelName_return)
+			fmt.Fprintf(w, "    b    %s\n", kLabelPrefixName_return+fn.Name)
 		}
 		assert(stk.Len() == 0)
 
