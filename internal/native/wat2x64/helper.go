@@ -205,7 +205,7 @@ func (p *wat2X64Worker) findFuncType(ident string) *ast.FuncType {
 		}
 	}
 
-	panic(fmt.Sprintf("wat2la: unknown func %q", ident))
+	panic(fmt.Sprintf("wat2x64: unknown func %q", ident))
 }
 
 func (p *wat2X64Worker) findFuncIndex(ident string) int {

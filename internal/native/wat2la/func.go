@@ -433,9 +433,12 @@ func (p *wat2laWorker) buildFunc_ins(
 	case token.INS_IF:
 		i := i.(ast.Ins_If)
 
-		if i.Label != "" {
-			fmt.Fprintf(w, "%s%s:\n", kLabelNamePrefix_ifBegin, i.Label)
+		labelSuffix := i.Label
+		if labelSuffix == "" {
+			labelSuffix = p.gasGenNextId("z")
 		}
+
+		fmt.Fprintf(w, "%s%s:\n", kLabelNamePrefix_ifBegin, labelSuffix)
 
 		// 龙芯没有 pop 指令，需要2个指令才能实现
 		// 因此通过固定的偏移量，只需要一个指令
@@ -443,11 +446,11 @@ func (p *wat2laWorker) buildFunc_ins(
 		sp0 := stk.Pop(token.I32)
 
 		fmt.Fprintf(w, "    ld.w t0, fp, %d\n", p.fnWasmR0Base-sp0*8)
-		fmt.Fprintf(w, "    bne  t0, zero, %s%s\n", kLabelNamePrefix_ifBody, i.Label)
+		fmt.Fprintf(w, "    bne  t0, zero, %s%s\n", kLabelNamePrefix_ifBody, labelSuffix)
 		if len(i.Else) > 0 {
-			fmt.Fprintf(w, "    bne  t0, zero, %s%s\n", kLabelNamePrefix_ifBody, i.Label)
+			fmt.Fprintf(w, "    bne  t0, zero, %s%s\n", kLabelNamePrefix_ifBody, labelSuffix)
 		} else {
-			fmt.Fprintf(w, "    bne  t0, zero, %s%s\n", kLabelNamePrefix_ifEnd, i.Label)
+			fmt.Fprintf(w, "    bne  t0, zero, %s%s\n", kLabelNamePrefix_ifEnd, labelSuffix)
 		}
 
 		stkBase := stk.Len()
@@ -456,9 +459,8 @@ func (p *wat2laWorker) buildFunc_ins(
 		p.enterLabelScope(stkBase, i.Label, i.Results)
 		defer p.leaveLabelScope()
 
-		if i.Label != "" {
-			fmt.Fprintf(w, "%s%s:\n", kLabelNamePrefix_ifBody, i.Label)
-		}
+		fmt.Fprintf(w, "%s%s:\n", kLabelNamePrefix_ifBody, labelSuffix)
+
 		for _, ins := range i.Body {
 			if err := p.buildFunc_ins(w, fnNative, fn, stk, ins); err != nil {
 				return err
@@ -469,9 +471,7 @@ func (p *wat2laWorker) buildFunc_ins(
 			p.Tracef("buildFunc_ins: %s%s begin: %v\n", indent, token.INS_ELSE, stk.String())
 			defer func() { p.Tracef("buildFunc_ins: %s%s end: %v\n", indent, token.INS_ELSE, stk.String()) }()
 
-			if i.Label != "" {
-				fmt.Fprintf(w, "%s%s:\n", kLabelNamePrefix_ifElse, i.Label)
-			}
+			fmt.Fprintf(w, "%s%s:\n", kLabelNamePrefix_ifElse, labelSuffix)
 
 			// 这是静态分析, 需要消除 if 分支对栈分配的影响
 			for _, retType := range i.Results {
@@ -487,10 +487,8 @@ func (p *wat2laWorker) buildFunc_ins(
 				}
 			}
 		}
-		if i.Label != "" {
-			fmt.Fprintf(w, "%s%s:\n", kLabelNamePrefix_next, i.Label)
-			fmt.Fprintf(w, "%s%s:\n", kLabelNamePrefix_ifEnd, i.Label)
-		}
+		fmt.Fprintf(w, "%s%s:\n", kLabelNamePrefix_next, labelSuffix)
+		fmt.Fprintf(w, "%s%s:\n", kLabelNamePrefix_ifEnd, labelSuffix)
 
 	case token.INS_ELSE:
 		unreachable()

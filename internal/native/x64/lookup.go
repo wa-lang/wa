@@ -34,3 +34,11 @@ func RegString(r abi.RegType) string {
 	}
 	return fmt.Sprintf("x64.badreg(%d)", r)
 }
+
+// 寄存器转字符串格式(32位格式)
+func Reg32String(r abi.RegType) string {
+	if REG_RAX <= r && r < REG_END {
+		return _Register32[int(r)]
+	}
+	return fmt.Sprintf("x64.badreg(%d)", r)
+}

@@ -33,3 +33,34 @@ var _Register = []string{
 	REG_XMM6: "xmm6",
 	REG_XMM7: "xmm7",
 }
+
+// 寄存器名字列表
+var _Register32 = []string{
+	// 通用寄存器
+	REG_RAX: "eax",
+	REG_RCX: "ecx",
+	REG_RDX: "edx",
+	REG_RBX: "ebx",
+	REG_RSP: "esp",
+	REG_RBP: "ebp",
+	REG_RSI: "esi",
+	REG_RDI: "edi",
+	REG_R8:  "r8d",
+	REG_R9:  "r9d",
+	REG_R10: "r10d",
+	REG_R11: "r11d",
+	REG_R12: "r12d",
+	REG_R13: "r13d",
+	REG_R14: "r14d",
+	REG_R15: "r15d",
+
+	// 浮点数寄存器
+	REG_XMM0: "xmm0",
+	REG_XMM1: "xmm1",
+	REG_XMM2: "xmm2",
+	REG_XMM3: "xmm3",
+	REG_XMM4: "xmm4",
+	REG_XMM5: "xmm5",
+	REG_XMM6: "xmm6",
+	REG_XMM7: "xmm7",
+}

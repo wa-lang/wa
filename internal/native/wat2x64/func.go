@@ -205,7 +205,7 @@ func (p *wat2X64Worker) buildFunc_body(w io.Writer, fn *ast.Func) error {
 			switch fn.Type.Params[i].Type {
 			case token.I32:
 				fmt.Fprintf(&bufHeader, "    mov [rbp%+d], %v # save arg %s\n",
-					arg.RBPOff, x64.RegString(arg.Reg),
+					arg.RBPOff, x64.Reg32String(arg.Reg),
 					arg.Name,
 				)
 			case token.I64:
@@ -282,7 +282,7 @@ func (p *wat2X64Worker) buildFunc_body(w io.Writer, fn *ast.Func) error {
 				switch fn.Type.Results[i] {
 				case token.I32:
 					fmt.Fprintf(&bufIns, "    mov %v, [rbp%+d] # ret %s\n",
-						x64.RegString(ret.Reg),
+						x64.Reg32String(ret.Reg),
 						fnNative.Type.Return[i].RBPOff,
 						fnNative.Type.Return[i].Name,
 					)
@@ -420,9 +420,12 @@ func (p *wat2X64Worker) buildFunc_ins(
 	case token.INS_IF:
 		i := i.(ast.Ins_If)
 
-		if i.Label != "" {
-			p.gasFuncLabel(w, kLabelNamePrefix_ifBegin+i.Label)
+		labelSuffix := i.Label
+		if labelSuffix == "" {
+			labelSuffix = p.gasGenNextId("z")
 		}
+
+		p.gasFuncLabel(w, kLabelNamePrefix_ifBegin+labelSuffix)
 
 		// 龙芯没有 pop 指令，需要2个指令才能实现
 		// 因此通过固定的偏移量，只需要一个指令
@@ -432,9 +435,9 @@ func (p *wat2X64Worker) buildFunc_ins(
 		fmt.Fprintf(w, "    mov eax, [rbp%+d]\n", p.fnWasmR0Base-sp0*8)
 		fmt.Fprintf(w, "    test eax, eax\n")
 		if len(i.Else) > 0 {
-			fmt.Fprintf(w, "    jne %s%s # if eax != 0 { jmp body }\n", kLabelNamePrefix_ifBody, i.Label)
+			fmt.Fprintf(w, "    jne %s%s # if eax != 0 { jmp body }\n", kLabelNamePrefix_ifBody, labelSuffix)
 		} else {
-			fmt.Fprintf(w, "    je %s%s # if eax != 0 { jmp end }\n", kLabelNamePrefix_ifEnd, i.Label)
+			fmt.Fprintf(w, "    je %s%s # if eax != 0 { jmp end }\n", kLabelNamePrefix_ifEnd, labelSuffix)
 		}
 
 		stkBase := stk.Len()
@@ -443,9 +446,8 @@ func (p *wat2X64Worker) buildFunc_ins(
 		p.enterLabelScope(stkBase, i.Label, i.Results)
 		defer p.leaveLabelScope()
 
-		if i.Label != "" {
-			p.gasFuncLabel(w, kLabelNamePrefix_ifBody+i.Label)
-		}
+		p.gasFuncLabel(w, kLabelNamePrefix_ifBody+labelSuffix)
+
 		for _, ins := range i.Body {
 			if err := p.buildFunc_ins(w, fnNative, fn, stk, ins); err != nil {
 				return err
@@ -456,9 +458,7 @@ func (p *wat2X64Worker) buildFunc_ins(
 			p.Tracef("buildFunc_ins: %s begin: %v\n", token.INS_ELSE, stk.String())
 			defer func() { p.Tracef("buildFunc_ins: %s end: %v\n", token.INS_ELSE, stk.String()) }()
 
-			if i.Label != "" {
-				p.gasFuncLabel(w, kLabelNamePrefix_ifElse+i.Label)
-			}
+			p.gasFuncLabel(w, kLabelNamePrefix_ifElse+labelSuffix)
 
 			// 这是静态分析, 需要消除 if 分支对栈分配的影响
 			for _, retType := range i.Results {
@@ -474,10 +474,8 @@ func (p *wat2X64Worker) buildFunc_ins(
 				}
 			}
 		}
-		if i.Label != "" {
-			p.gasFuncLabel(w, kLabelNamePrefix_next+i.Label)
-			p.gasFuncLabel(w, kLabelNamePrefix_ifEnd+i.Label)
-		}
+		p.gasFuncLabel(w, kLabelNamePrefix_next+labelSuffix)
+		p.gasFuncLabel(w, kLabelNamePrefix_ifEnd+labelSuffix)
 
 	case token.INS_ELSE:
 		unreachable()
@@ -795,7 +793,7 @@ func (p *wat2X64Worker) buildFunc_ins(
 			case token.I32:
 				if arg := fnCallNative.Type.Args[k]; arg.Reg != 0 {
 					fmt.Fprintf(w, "    mov %s, dword ptr [rbp%+d] # arg %d\n",
-						x64.RegString(arg.Reg),
+						x64.Reg32String(arg.Reg),
 						p.fnWasmR0Base-argList[k]*8-8,
 						k,
 					)
@@ -898,7 +896,7 @@ func (p *wat2X64Worker) buildFunc_ins(
 				case token.I32:
 					fmt.Fprintf(w, "    mov dword ptr [rbp%+d], %s\n",
 						p.fnWasmR0Base-reti*8-8,
-						x64.RegString(retNative.Reg),
+						x64.Reg32String(retNative.Reg),
 					)
 				case token.I64:
 					fmt.Fprintf(w, "    mov qword ptr [rbp%+d], %s\n",
@@ -1011,7 +1009,7 @@ func (p *wat2X64Worker) buildFunc_ins(
 			case token.I32:
 				if arg := fnCallNative.Type.Args[k]; arg.Reg != 0 {
 					fmt.Fprintf(w, "    mov %s, dword ptr [rbp%+d] # arg %d\n",
-						x64.RegString(arg.Reg),
+						x64.Reg32String(arg.Reg),
 						p.fnWasmR0Base-argList[k]*8-8,
 						k,
 					)
@@ -1108,7 +1106,7 @@ func (p *wat2X64Worker) buildFunc_ins(
 				case token.I32:
 					fmt.Fprintf(w, "    mov dword ptr [rbp%+d], %s\n",
 						p.fnWasmR0Base-reti*8-8,
-						x64.RegString(retNative.Reg),
+						x64.Reg32String(retNative.Reg),
 					)
 				case token.I64:
 					fmt.Fprintf(w, "    mov qword ptr [rbp%+d], %s\n",
@@ -2201,7 +2199,7 @@ func (p *wat2X64Worker) buildFunc_ins(
 
 		fmt.Fprintf(w, "    # i32.mul\n")
 		fmt.Fprintf(w, "    mov eax, dword ptr [rbp%+d]\n", sp0)
-		fmt.Fprintf(w, "    mul eax, dword ptr [rbp%+d]\n", sp1)
+		fmt.Fprintf(w, "    imul eax, dword ptr [rbp%+d]\n", sp1)
 		fmt.Fprintf(w, "    mov dword ptr [rbp%+d], eax\n", ret0)
 
 	case token.INS_I32_DIV_S:
@@ -2223,12 +2221,12 @@ func (p *wat2X64Worker) buildFunc_ins(
 		ret0 := p.fnWasmR0Base - 8*stk.Push(token.I32)
 
 		fmt.Fprintf(w, "    # i32.div_u\n")
-		fmt.Fprintf(w, "    mov qword ptr [rbp+8], edx\n")
+		fmt.Fprintf(w, "    mov edx, dword ptr [rbp%d]\n", sp1)
 		fmt.Fprintf(w, "    mov eax, dword ptr [rbp%+d]\n", sp0)
 		fmt.Fprintf(w, "    xor edx, edx\n")
 		fmt.Fprintf(w, "    div dword ptr [rbp%+d]\n", sp1)
 		fmt.Fprintf(w, "    mov dword ptr [rbp%+d], eax\n", ret0)
-		fmt.Fprintf(w, "    mov edx, qword ptr [rbp+8]\n")
+		fmt.Fprintf(w, "    mov edx, dword ptr [rbp+8]\n")
 
 	case token.INS_I32_REM_S:
 		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.I32)
