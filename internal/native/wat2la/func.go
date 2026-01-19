@@ -251,7 +251,7 @@ func (p *wat2laWorker) buildFunc_body(w io.Writer, fn *ast.Func) error {
 	if len(fnNative.Body.Locals) > 0 {
 		p.gasCommentInFunc(&bufHeader, "将局部变量初始化为0")
 		for _, local := range fnNative.Body.Locals {
-			fmt.Fprintf(&bufHeader, "    mov dword ptr [rbp%+d], 0 # local %s = 0\n",
+			fmt.Fprintf(&bufHeader, "    st.d   $zero, $fp, %d # local %s = 0\n",
 				local.RBPOff, local.Name,
 			)
 		}
@@ -786,7 +786,9 @@ func (p *wat2laWorker) buildFunc_ins(
 		// 如果是走栈返回, 第一个是隐藏参数
 		if len(fnCallNative.Type.Return) > 0 && fnCallNative.Type.Return[0].Reg == 0 {
 			assert(p.cpuType == abi.LOONG64)
-			fmt.Fprintf(w, "    add.d $a0, $a0, 0 # return address\n")
+			fmt.Fprintf(w, "    addi.d $a0, $sp, %d # return address\n",
+				fnCallNative.ArgsSize-len(fnCallNative.Type.Return)*8,
+			)
 		}
 
 		// 准备调用参数
@@ -1007,6 +1009,14 @@ func (p *wat2laWorker) buildFunc_ins(
 		p.gasCommentInFunc(w, fmt.Sprintf("call_indirect %s(...)", "$t2"))
 		p.gasCommentInFunc(w, fmt.Sprintf("type %s", fnCallType))
 
+		// 如果是走栈返回, 第一个是隐藏参数
+		if len(fnCallNative.Type.Return) > 0 && fnCallNative.Type.Return[0].Reg == 0 {
+			assert(p.cpuType == abi.LOONG64)
+			fmt.Fprintf(w, "    addi.d $a0, $sp, %d # return address\n",
+				fnCallNative.ArgsSize-len(fnCallNative.Type.Return)*8,
+			)
+		}
+
 		// 参数列表
 		// 出栈的顺序相反
 		argList := make([]int, len(fnCallType.Params))
@@ -1206,19 +1216,24 @@ func (p *wat2laWorker) buildFunc_ins(
 		xType := p.findLocalType(fn, i.X)
 		xOff := p.findLocalOffset(fnNative, fn, i.X)
 		ret0 := stk.Push(xType)
+		fmt.Fprintf(w, "    # local.get %s\n", p.findLocalName(fn, i.X))
 		switch xType {
 		case token.I32:
-			fmt.Fprintf(w, "    ld.w t0, fp, %d # %s\n", xOff, p.findLocalName(fn, i.X))
-			fmt.Fprintf(w, "    st.w t0, fp, %d # %s\n", p.fnWasmR0Base-ret0*8, p.findLocalName(fn, i.X))
+			fmt.Fprintf(w, "    ld.w $t0, $fp, %d\n", xOff)
+			fmt.Fprintf(w, "    st.w $t0, $fp, %d\n", p.fnWasmR0Base-ret0*8-8)
+			fmt.Fprintln(w)
 		case token.I64:
-			fmt.Fprintf(w, "    ld.d t0, fp, %d # %s\n", xOff, p.findLocalName(fn, i.X))
-			fmt.Fprintf(w, "    st.d t0, fp, %d # %s\n", p.fnWasmR0Base-ret0*8, p.findLocalName(fn, i.X))
+			fmt.Fprintf(w, "    ld.d $t0, $fp, %d\n", xOff)
+			fmt.Fprintf(w, "    st.d $t0, $fp, %d\n", p.fnWasmR0Base-ret0*8-8)
+			fmt.Fprintln(w)
 		case token.F32:
-			fmt.Fprintf(w, "    fld.s ft0, fp, %d # %s\n", xOff, p.findLocalName(fn, i.X))
-			fmt.Fprintf(w, "    fst.s ft0, fp, %d # %s\n", p.fnWasmR0Base-ret0*8, p.findLocalName(fn, i.X))
+			fmt.Fprintf(w, "    fld.s $ft0, $fp, %d\n", xOff)
+			fmt.Fprintf(w, "    fst.s $ft0, $fp, %d\n", p.fnWasmR0Base-ret0*8-8)
+			fmt.Fprintln(w)
 		case token.F64:
-			fmt.Fprintf(w, "    fld.d ft0, fp, %d # %s\n", xOff, p.findLocalName(fn, i.X))
-			fmt.Fprintf(w, "    fst.d ft0, fp, %d # %s\n", p.fnWasmR0Base-ret0*8, p.findLocalName(fn, i.X))
+			fmt.Fprintf(w, "    fld.d $ft0, $fp, %d\n", xOff)
+			fmt.Fprintf(w, "    fst.d $ft0, $fp, %d\n", p.fnWasmR0Base-ret0*8-8)
+			fmt.Fprintln(w)
 		default:
 			unreachable()
 		}
@@ -1227,19 +1242,24 @@ func (p *wat2laWorker) buildFunc_ins(
 		xType := p.findLocalType(fn, i.X)
 		xOff := p.findLocalOffset(fnNative, fn, i.X)
 		sp0 := stk.Pop(xType)
+		fmt.Fprintf(w, "   # local.set %s\n", p.findLocalName(fn, i.X))
 		switch xType {
 		case token.I32:
-			fmt.Fprintf(w, "    ld.w t0, fp, %d # %s\n", p.fnWasmR0Base-sp0*8, p.findLocalName(fn, i.X))
-			fmt.Fprintf(w, "    st.w t0, fp, %d # %s\n", xOff, p.findLocalName(fn, i.X))
+			fmt.Fprintf(w, "    ld.w $t0, $fp, %d\n", p.fnWasmR0Base-sp0*8-8)
+			fmt.Fprintf(w, "    st.w $t0, $fp, %d\n", xOff)
+			fmt.Fprintln(w)
 		case token.I64:
-			fmt.Fprintf(w, "    ld.d t0, fp, %d # %s\n", p.fnWasmR0Base-sp0*8, p.findLocalName(fn, i.X))
-			fmt.Fprintf(w, "    st.d t0, fp, %d # %s\n", xOff, p.findLocalName(fn, i.X))
+			fmt.Fprintf(w, "    ld.d $t0, $fp, %d\n", p.fnWasmR0Base-sp0*8-8)
+			fmt.Fprintf(w, "    st.d $t0, $fp, %d\n", xOff)
+			fmt.Fprintln(w)
 		case token.F32:
-			fmt.Fprintf(w, "    fld.w ft0, fp, %d # %s\n", p.fnWasmR0Base-sp0*8, p.findLocalName(fn, i.X))
-			fmt.Fprintf(w, "    fst.w ft0, fp, %d # %s\n", xOff, p.findLocalName(fn, i.X))
+			fmt.Fprintf(w, "    fld.w $ft0, $fp, %d\n", p.fnWasmR0Base-sp0*8-8)
+			fmt.Fprintf(w, "    fst.w $ft0, $fp, %d\n", xOff)
+			fmt.Fprintln(w)
 		case token.F64:
-			fmt.Fprintf(w, "    fld.w ft0, fp, %d # %s\n", p.fnWasmR0Base-sp0*8, p.findLocalName(fn, i.X))
-			fmt.Fprintf(w, "    fst.w ft0, fp, %d # %s\n", xOff, p.findLocalName(fn, i.X))
+			fmt.Fprintf(w, "    fld.w $ft0, $fp, %d\n", p.fnWasmR0Base-sp0*8-8)
+			fmt.Fprintf(w, "    fst.w $ft0, $fp, %d\n", xOff)
+			fmt.Fprintln(w)
 		default:
 			unreachable()
 		}

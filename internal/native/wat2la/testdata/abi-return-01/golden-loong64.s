@@ -152,39 +152,47 @@ main:
     # 没有返回值变量需要初始化为0
 
     # 将局部变量初始化为0
-    addi.d $t0, $zero, 0
-    st.d   $t0, $fp, -8 # local input = 0
+    st.d   $zero, $fp, -8 # local input = 0
 
     # i64.const 100
     addi.d $t0, $zero, 100
     st.d   $t0, $fp, -16
 
-    # local.set $input
-    ld.d   $t0, $fp, -16
-    st.d   $t0, $fp, -8
+    # local.set input
+    ld.d $t0, $fp, -16
+    st.d $t0, $fp, -8
 
-    # local.get $input
-    ld.d   $t0, $fp, -8
-    st.d   $t0, $fp, -16
+    # local.get input
+    ld.d $t0, $fp, -8
+    st.d $t0, $fp, -16
 
     # call env.get_multi_values(...)
-    addi.d    $a0, $sp, 0
-    addi.d    $a1, $zero, 100
+    addi.d $a0, $sp, 0 # return address
+    ld.d $a1, $fp, -16 # arg 0
     pcalau12i $t0, %pc_hi20(.Import.env.get_multi_values)
-    addi.d    $t0, $t0, %pc_lo12(.Import.env.get_multi_values)
-    jirl      $ra, $t0, 0
-    ld.d      $a0, $sp, 16 # v3
+    addi.d $t0, $t0, %pc_lo12(.Import.env.get_multi_values)
+    jirl $ra, $t0, 0
+    ld.d $t0, $a0, 0
+    st.d $t0, $fp, -16
+    ld.d $t0, $a0, 8
+    st.d $t0, $fp, -24
+    ld.d $t0, $a0, 16
+    st.d $t0, $fp, -32
+    # call env.print_i64(...)
+    ld.d $a0, $fp, -32 # arg 0
     pcalau12i $t0, %pc_hi20(.Import.env.print_i64)
-    addi.d    $t0, $t0, %pc_lo12(.Import.env.print_i64)
-    jirl      $ra, $t0, 0
-    ld.d      $a0, $sp, 8 # v2
+    addi.d $t0, $t0, %pc_lo12(.Import.env.print_i64)
+    jirl $ra, $t0, 0
+    # call env.print_i64(...)
+    ld.d $a0, $fp, -24 # arg 0
     pcalau12i $t0, %pc_hi20(.Import.env.print_i64)
-    addi.d    $t0, $t0, %pc_lo12(.Import.env.print_i64)
-    jirl      $ra, $t0, 0
-    ld.d      $a0, $sp, 0 # v1
+    addi.d $t0, $t0, %pc_lo12(.Import.env.print_i64)
+    jirl $ra, $t0, 0
+    # call env.print_i64(...)
+    ld.d $a0, $fp, -16 # arg 0
     pcalau12i $t0, %pc_hi20(.Import.env.print_i64)
-    addi.d    $t0, $t0, %pc_lo12(.Import.env.print_i64)
-    jirl      $ra, $t0, 0
+    addi.d $t0, $t0, %pc_lo12(.Import.env.print_i64)
+    jirl $ra, $t0, 0
 
     # 根据ABI处理返回值
 .L.return:
