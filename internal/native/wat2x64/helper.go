@@ -18,6 +18,25 @@ func (p *wat2X64Worker) Tracef(foramt string, a ...interface{}) {
 	}
 }
 
+func (p *wat2X64Worker) findGlobalName(ident string) string {
+	if ident == "" {
+		panic("wat2la: empty local name")
+	}
+
+	if idx, err := strconv.Atoi(ident); err == nil {
+		if idx < 0 || idx >= len(p.m.Globals) {
+			panic(fmt.Sprintf("wat2la: unknown global %q", ident))
+		}
+		return p.m.Globals[idx].Name
+	}
+	for _, g := range p.m.Globals {
+		if g.Name == ident {
+			return g.Name
+		}
+	}
+	panic("unreachable")
+}
+
 func (p *wat2X64Worker) findGlobalType(ident string) token.Token {
 	if ident == "" {
 		panic("wat2la: empty global name")

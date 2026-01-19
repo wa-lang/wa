@@ -133,7 +133,7 @@ main:
     mov qword ptr [rbp-16], rax
 
     # call env.get_multi_values(...)
-    lea rcx, [rsp+8] # return address
+    lea rcx, [rsp+32] # return address
     mov rdx, qword ptr [rbp-16] # arg 0
     call .Import.env.get_multi_values
     mov r10, qword ptr [rax+0]
