@@ -5,7 +5,7 @@
 #include <stdint.h>
 #include <unistd.h>
 
-extern int64_t wat2xla_Memory_addr __asm__(".Memory.addr");
+extern int64_t wat2la_Memory_addr __asm__(".Memory.addr");
 
 // 按照 龙芯 调用约定
 int64_t wat2la_env_write(int64_t fd, char* ptr, int64_t size, int64_t p4, int64_t p5, int64_t p6, int64_t p7, int64_t p8, int64_t p9, int64_t p10) {
@@ -22,7 +22,7 @@ int64_t wat2la_env_write(int64_t fd, char* ptr, int64_t size, int64_t p4, int64_
     printf("Param10 (Stack RSP+8): %ld\n", p10);
     printf("-------------------------------\n");
 
-    write(fd, (void *)(wat2xla_Memory_addr+ptr), size);
+    write(fd, (void *)(wat2la_Memory_addr+ptr), size);
 
     // 返回一个值供 WASM 检查
     return 0;
