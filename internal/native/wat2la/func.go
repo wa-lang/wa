@@ -976,11 +976,37 @@ func (p *wat2laWorker) buildFunc_ins(
 			return err
 		}
 
+		// 统计调用子函数需要的最大栈空间
+		if fnCallNative.ArgsSize > p.fnMaxCallArgsSize {
+			p.fnMaxCallArgsSize = fnCallNative.ArgsSize
+		}
+
 		// 获取函数地址
-		// TODO: 需要根据索引从函数列表查询
+		p.gasCommentInFunc(w, "加载函数的地址")
+		fmt.Fprintln(w)
+
+		// 需要根据索引从函数列表查询
 		sp0 := stk.Pop(token.I32)
-		fnRegName := "t2"
-		fmt.Fprintf(w, "    ld.d %s, fp, %d\n", fnRegName, p.fnWasmR0Base-sp0*8)
+		p.gasCommentInFunc(w, "t1 = table[?]")
+		fmt.Fprintf(w, "    pcalau12i $t0, %%pc_hi20(%s)\n", kTableAddrName)
+		fmt.Fprintf(w, "    addi.d    $t0, $t0, %%pc_lo12(%s)\n", kTableAddrName)
+		fmt.Fprintf(w, "    ld.d      $t0, $t0, 0\n")
+		fmt.Fprintf(w, "    ld.d      $t1, $fp, %d\n", p.fnWasmR0Base-sp0*8-8)
+		fmt.Fprintf(w, "    slli.d    $t1, $t1, 3 # sizeof(i64) == 8\n")
+		fmt.Fprintf(w, "    add.d     $t1, $t0, $t1\n")
+		fmt.Fprintf(w, "    ld.d      $t1, $t1, 0\n")
+		fmt.Fprintln(w)
+
+		p.gasCommentInFunc(w, fmt.Sprintf("t2 = %s[t1]", kTableFuncIndexListName))
+		fmt.Fprintf(w, "    pcalau12i $t0, %%pc_hi20(%s)\n", kTableFuncIndexListName)
+		fmt.Fprintf(w, "    addi.d    $t0, $t0, %%pc_lo12(%s)\n", kTableFuncIndexListName)
+		fmt.Fprintf(w, "    slli.d    $t1, $t1, 3 # sizeof(i64) == 8\n")
+		fmt.Fprintf(w, "    add.d     $t1, $t0, $t1\n")
+		fmt.Fprintf(w, "    ld.d      $t2, $t1, 0\n")
+		fmt.Fprintln(w)
+
+		p.gasCommentInFunc(w, fmt.Sprintf("call_indirect %s(...)", "$t2"))
+		p.gasCommentInFunc(w, fmt.Sprintf("type %s", fnCallType))
 
 		// 参数列表
 		// 出栈的顺序相反
@@ -995,57 +1021,61 @@ func (p *wat2laWorker) buildFunc_ins(
 			switch x.Type {
 			case token.I32:
 				if arg := fnCallNative.Type.Args[k]; arg.Reg != 0 {
-					fmt.Fprintf(w, "    ld.w %s, fp, %d",
-						loong64.RegString(arg.Reg),
-						p.fnWasmR0Base+argList[k]*8,
+					fmt.Fprintf(w, "    ld.w %s, $fp, %d # arg %d\n",
+						"$"+strings.ToLower(loong64.RegAliasString(arg.Reg)),
+						p.fnWasmR0Base-argList[k]*8-8,
+						k,
 					)
 				} else {
-					fmt.Fprintf(w, "    ld.w t1, fp, %d",
-						p.fnWasmR0Base+argList[k]*8,
+					fmt.Fprintf(w, "    ld.w $t1, $fp, %d\n",
+						p.fnWasmR0Base-argList[k]*8-8,
 					)
-					fmt.Fprintf(w, "    st.w t1, fp, %d",
+					fmt.Fprintf(w, "    st.w $t1, $fp, %d\n",
 						arg.RBPOff,
 					)
 				}
 			case token.I64:
 				if arg := fnCallNative.Type.Args[k]; arg.Reg != 0 {
-					fmt.Fprintf(w, "    ld.d %s, fp, %d",
-						loong64.RegString(arg.Reg),
-						p.fnWasmR0Base+argList[k]*8,
+					fmt.Fprintf(w, "    ld.d %s, $fp, %d # arg %d\n",
+						"$"+strings.ToLower(loong64.RegAliasString(arg.Reg)),
+						p.fnWasmR0Base-argList[k]*8-8,
+						k,
 					)
 				} else {
-					fmt.Fprintf(w, "    ld.d t1, fp, %d",
-						p.fnWasmR0Base+argList[k]*8,
+					fmt.Fprintf(w, "    ld.d $t1, $fp, %d\n",
+						p.fnWasmR0Base-argList[k]*8-8,
 					)
-					fmt.Fprintf(w, "    st.d t1, fp, %d",
+					fmt.Fprintf(w, "    st.d $t1, $fp, %d\n",
 						arg.RBPOff,
 					)
 				}
 			case token.F32:
 				if arg := fnCallNative.Type.Args[k]; arg.Reg != 0 {
-					fmt.Fprintf(w, "    fld.s %s, fp, %d",
-						loong64.RegString(arg.Reg),
-						p.fnWasmR0Base+argList[k]*8,
+					fmt.Fprintf(w, "    fld.s %s, $fp, %d # arg %d\n",
+						"$"+strings.ToLower(loong64.RegAliasString(arg.Reg)),
+						p.fnWasmR0Base-argList[k]*8-8,
+						k,
 					)
 				} else {
-					fmt.Fprintf(w, "    fld.s t1, fp, %d",
-						p.fnWasmR0Base+argList[k]*8,
+					fmt.Fprintf(w, "    fld.s $t1, $fp, %d\n",
+						p.fnWasmR0Base-argList[k]*8-8,
 					)
-					fmt.Fprintf(w, "    fst.s t1, fp, %d",
+					fmt.Fprintf(w, "    fst.s $t1, $fp, %d\n",
 						arg.RBPOff,
 					)
 				}
 			case token.F64:
 				if arg := fnCallNative.Type.Args[k]; arg.Reg != 0 {
-					fmt.Fprintf(w, "    fld.d %s, fp, %d",
-						loong64.RegString(arg.Reg),
-						p.fnWasmR0Base+argList[k]*8,
+					fmt.Fprintf(w, "    fld.d %s, $fp, %d # arg %d\n",
+						"$"+strings.ToLower(loong64.RegAliasString(arg.Reg)),
+						p.fnWasmR0Base-argList[k]*8-8,
+						k,
 					)
 				} else {
-					fmt.Fprintf(w, "    fld.d t1, fp, %d",
-						p.fnWasmR0Base+argList[k]*8,
+					fmt.Fprintf(w, "    fld.d $t1, $fp, %d\n",
+						p.fnWasmR0Base-argList[k]*8-8,
 					)
-					fmt.Fprintf(w, "    fst.d t1, fp, %d",
+					fmt.Fprintf(w, "    fst.d $t1, $fp, %d\n",
 						arg.RBPOff,
 					)
 				}
@@ -1053,7 +1083,8 @@ func (p *wat2laWorker) buildFunc_ins(
 				unreachable()
 			}
 		}
-		fmt.Fprintf(w, "    bl %s\n", fnRegName)
+
+		fmt.Fprintf(w, "    jirl $ra, $t2, 0\n")
 
 		// 提取返回值
 		if len(fnCallNative.Type.Return) > 1 && fnCallNative.Type.Return[1].Reg == 0 {
@@ -1063,17 +1094,17 @@ func (p *wat2laWorker) buildFunc_ins(
 				reti := stk.Push(retType)
 				switch retType {
 				case token.I32:
-					fmt.Fprintf(w, "    ld.w t0, a0, %d\n", k*8)
-					fmt.Fprintf(w, "    st.w t0, fp, %d\n", p.fnWasmR0Base-reti*8)
+					fmt.Fprintf(w, "    ld.w $t0, $a0, %d\n", k*8)
+					fmt.Fprintf(w, "    st.w $t0, $fp, %d\n", p.fnWasmR0Base-reti*8-8)
 				case token.I64:
-					fmt.Fprintf(w, "    ld.d t0, a0, %d\n", k*8)
-					fmt.Fprintf(w, "    st.d t0, fp, %d\n", p.fnWasmR0Base-reti*8)
+					fmt.Fprintf(w, "    ld.d $t0, $a0, %d\n", k*8)
+					fmt.Fprintf(w, "    st.d $t0, $fp, %d\n", p.fnWasmR0Base-reti*8-8)
 				case token.F32:
-					fmt.Fprintf(w, "    fld.s t0, a0, %d\n", k*8)
-					fmt.Fprintf(w, "    fst.s t0, fp, %d\n", p.fnWasmR0Base-reti*8)
+					fmt.Fprintf(w, "    fld.s $t0, $a0, %d\n", k*8)
+					fmt.Fprintf(w, "    fst.s $t0, $fp, %d\n", p.fnWasmR0Base-reti*8-8)
 				case token.F64:
-					fmt.Fprintf(w, "    fld.d t0, a0, %d\n", k*8)
-					fmt.Fprintf(w, "    fst.d t0, fp, %d\n", p.fnWasmR0Base-reti*8)
+					fmt.Fprintf(w, "    fld.d $t0, $a0, %d\n", k*8)
+					fmt.Fprintf(w, "    fst.d $t0, $fp, %d\n", p.fnWasmR0Base-reti*8-8)
 				default:
 					unreachable()
 				}
@@ -1087,24 +1118,24 @@ func (p *wat2laWorker) buildFunc_ins(
 				reti := stk.Push(retType)
 				switch retType {
 				case token.I32:
-					fmt.Fprintf(w, "    st.w %s, fp, %d\n",
-						loong64.RegString(retNative.Reg),
-						p.fnWasmR0Base-reti*8,
+					fmt.Fprintf(w, "    st.w %s, $fp, %d\n",
+						"$"+strings.ToLower(loong64.RegAliasString(retNative.Reg)),
+						p.fnWasmR0Base-reti*8-8,
 					)
 				case token.I64:
-					fmt.Fprintf(w, "    st.d %s, fp, %d\n",
-						loong64.RegString(retNative.Reg),
-						p.fnWasmR0Base-reti*8,
+					fmt.Fprintf(w, "    st.d %s, $fp, %d\n",
+						"$"+strings.ToLower(loong64.RegAliasString(retNative.Reg)),
+						p.fnWasmR0Base-reti*8-8,
 					)
 				case token.F32:
-					fmt.Fprintf(w, "    fst.s %s, fp, %d\n",
-						loong64.RegString(retNative.Reg),
-						p.fnWasmR0Base-reti*8,
+					fmt.Fprintf(w, "    fst.s %s, $fp, %d\n",
+						"$"+strings.ToLower(loong64.RegAliasString(retNative.Reg)),
+						p.fnWasmR0Base-reti*8-8,
 					)
 				case token.F64:
-					fmt.Fprintf(w, "    fst.d %s, fp, %d\n",
-						loong64.RegString(retNative.Reg),
-						p.fnWasmR0Base-reti*8,
+					fmt.Fprintf(w, "    fst.d %s, $fp, %d\n",
+						"$"+strings.ToLower(loong64.RegAliasString(retNative.Reg)),
+						p.fnWasmR0Base-reti*8-8,
 					)
 				default:
 					unreachable()

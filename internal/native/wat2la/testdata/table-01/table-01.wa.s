@@ -123,24 +123,38 @@
     addi.d  $sp, $sp, -32
 
     # 分配表格
-    # mov  rcx, [rip + .Table.maxSize]
-    # shl  rcx, 3 # sizeof(i64) == 8
-    # call .Runtime.malloc
-    # mov  [rip + .Table.addr], rax
+    pcalau12i $t0, %pc_hi20(.Table.maxSize)
+    addi.d    $t0, $t0, %pc_lo12(.Table.maxSize)
+    ld.d      $t0, $t0, 0
+    slli.d    $a0, $t0, 3 # sizeof(i64) == 8
+    pcalau12i $t0, %pc_hi20(.Runtime.malloc)
+    addi.d    $t0, $t0, %pc_lo12(.Runtime.malloc)
+    jirl      $ra, $t0, 0
+    pcalau12i $t1, %pc_hi20(.Table.addr)
+    addi.d    $t1, $t1, %pc_lo12(.Table.addr)
+    st.d      $a0, $t1, 0
 
     # 表格填充 0xFF
-    # mov  rcx, [rip + .Table.addr]
-    # mov  rdx, 0xFF
-    # mov  r8, [rip + .Table.maxSize]
-    # shl  r8, 3 # sizeof(i64) == 8
-    # call .Runtime.memset
+    addi.d    $a1, $zero, 0xFF # a1 = 0xFF
+    pcalau12i $t0, %pc_hi20(.Table.maxSize)
+    addi.d    $t0, $t0, %pc_lo12(.Table.maxSize)
+    ld.d      $t0, $t0, 0
+    slli.d    $a2, $t0, 3 # sizeof(i64) == 8
+    pcalau12i $t0, %pc_hi20(.Runtime.memset)
+    addi.d    $t0, $t0, %pc_lo12(.Runtime.memset)
+    jirl      $ra, $t0, 0
 
     # 初始化表格
 
     # 加载表格地址
-    # mov rax, [rip + .Table.addr]
+    pcalau12i $t0, %pc_hi20(.Table.addr)
+    addi.d    $t0, $t0, %pc_lo12(.Table.addr)
+    ld.d      $t0, $t0, 0
     # elem[0]: table[0+0] = syscall.write
-    # mov qword ptr [rax+0], 0
+    addi.d    $t1, $zero, 0 # offset
+    addi.d    $t2, $zero, 0 # func index
+    add.d     $t1, $t1, $t0 # offset
+    st.d      $t2, $t1, 0
 
     # 函数返回
     addi.d  $sp, $fp, 0
@@ -251,9 +265,31 @@ main:
     addi.d $t0, $zero, 0
     st.d   $t0, $fp, -32
 
-    ld.d t2, fp, -24
-    ld.d R4, fp, 0    ld.d R5, fp, 8    ld.d R6, fp, 16    bl t2
-    st.d R4, fp, 0
+    # 加载函数的地址
+
+    # t1 = table[?]
+    pcalau12i $t0, %pc_hi20(.Table.addr)
+    addi.d    $t0, $t0, %pc_lo12(.Table.addr)
+    ld.d      $t0, $t0, 0
+    ld.d      $t1, $fp, -32
+    slli.d    $t1, $t1, 3 # sizeof(i64) == 8
+    add.d     $t1, $t0, $t1
+    ld.d      $t1, $t1, 0
+
+    # t2 = .Table.funcIndexList[t1]
+    pcalau12i $t0, %pc_hi20(.Table.funcIndexList)
+    addi.d    $t0, $t0, %pc_lo12(.Table.funcIndexList)
+    slli.d    $t1, $t1, 3 # sizeof(i64) == 8
+    add.d     $t1, $t0, $t1
+    ld.d      $t2, $t1, 0
+
+    # call_indirect $t2(...)
+    # type (i64,i64,i64) => i64
+    ld.d $a0, $fp, -8 # arg 0
+    ld.d $a1, $fp, -16 # arg 1
+    ld.d $a2, $fp, -24 # arg 2
+    jirl $ra, $t2, 0
+    st.d $a0, $fp, -8
     addi.w $zero, $zero, 0 # drop [fp-8]
 
     # 根据ABI处理返回值

@@ -151,8 +151,10 @@
     addi.d    $t0, $t0, %pc_lo12(.Table.addr)
     ld.d      $t0, $t0, 0
     # elem[0]: table[0+0] = syscall.write
-    addi.d    $t1, $zero, 0
-    st.d      $t1, $t0, 0
+    addi.d    $t1, $zero, 0 # offset
+    addi.d    $t2, $zero, 0 # func index
+    add.d     $t1, $t1, $t0 # offset
+    st.d      $t2, $t1, 0
 
     # 函数返回
     addi.d  $sp, $fp, 0
@@ -270,18 +272,18 @@ main:
     addi.d    $t0, $t0, %pc_lo12(.Table.addr)
     ld.d      $t0, $t0, 0
     ld.d      $t1, $fp, -32
-    slli.d    $t1, $t1, 3 # sizeof(i64) == 3
-    addi.d    $t1, $t0, 0
+    slli.d    $t1, $t1, 3 # sizeof(i64) == 8
+    add.d     $t1, $t0, $t1
     ld.d      $t1, $t1, 0
 
     # t2 = .Table.funcIndexList[t1]
     pcalau12i $t0, %pc_hi20(.Table.funcIndexList)
     addi.d    $t0, $t0, %pc_lo12(.Table.funcIndexList)
-    slli.d    $t1, $t1, 3 # sizeof(i64) == 3
-    addi.d    $t1, $t0, 0
+    slli.d    $t1, $t1, 3 # sizeof(i64) == 8
+    add.d     $t1, $t0, $t1
     ld.d      $t2, $t1, 0
 
-    # call_indirect r11(...)
+    # call_indirect $t2(...)
     # type (i64,i64,i64) => i64
     ld.d $a0, $fp, -8 # arg 0
     ld.d $a1, $fp, -16 # arg 1

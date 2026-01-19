@@ -93,18 +93,27 @@ func (p *wat2laWorker) buildTable(w io.Writer) error {
 		fmt.Fprintln(w)
 
 		p.gasCommentInFunc(w, "分配表格")
-		fmt.Fprintf(w, "    # mov  rcx, [rip + %s]\n", kTableMaxSizeName)
-		fmt.Fprintf(w, "    # shl  rcx, 3 # sizeof(i64) == 8\n")
-		fmt.Fprintf(w, "    # call %s\n", kRuntimeMalloc)
-		fmt.Fprintf(w, "    # mov  [rip + %s], rax\n", kTableAddrName)
+		fmt.Fprintf(w, "    pcalau12i $t0, %%pc_hi20(%s)\n", kTableMaxSizeName)
+		fmt.Fprintf(w, "    addi.d    $t0, $t0, %%pc_lo12(%s)\n", kTableMaxSizeName)
+		fmt.Fprintf(w, "    ld.d      $t0, $t0, 0\n")
+		fmt.Fprintf(w, "    slli.d    $a0, $t0, 3 # sizeof(i64) == 8\n")
+		fmt.Fprintf(w, "    pcalau12i $t0, %%pc_hi20(%s)\n", kRuntimeMalloc)
+		fmt.Fprintf(w, "    addi.d    $t0, $t0, %%pc_lo12(%s)\n", kRuntimeMalloc)
+		fmt.Fprintf(w, "    jirl      $ra, $t0, 0\n")
+		fmt.Fprintf(w, "    pcalau12i $t1, %%pc_hi20(%s)\n", kTableAddrName)
+		fmt.Fprintf(w, "    addi.d    $t1, $t1, %%pc_lo12(%s)\n", kTableAddrName)
+		fmt.Fprintf(w, "    st.d      $a0, $t1, 0\n")
 		fmt.Fprintln(w)
 
 		p.gasCommentInFunc(w, "表格填充 0xFF")
-		fmt.Fprintf(w, "    # mov  rcx, [rip + %s]\n", kTableAddrName)
-		fmt.Fprintf(w, "    # mov  rdx, 0xFF\n")
-		fmt.Fprintf(w, "    # mov  r8, [rip + %s]\n", kTableMaxSizeName)
-		fmt.Fprintf(w, "    # shl  r8, 3 # sizeof(i64) == 8\n")
-		fmt.Fprintf(w, "    # call %s\n", kRuntimeMemset)
+		fmt.Fprintf(w, "    addi.d    $a1, $zero, 0xFF # a1 = 0xFF\n")
+		fmt.Fprintf(w, "    pcalau12i $t0, %%pc_hi20(%s)\n", kTableMaxSizeName)
+		fmt.Fprintf(w, "    addi.d    $t0, $t0, %%pc_lo12(%s)\n", kTableMaxSizeName)
+		fmt.Fprintf(w, "    ld.d      $t0, $t0, 0\n")
+		fmt.Fprintf(w, "    slli.d    $a2, $t0, 3 # sizeof(i64) == 8\n")
+		fmt.Fprintf(w, "    pcalau12i $t0, %%pc_hi20(%s)\n", kRuntimeMemset)
+		fmt.Fprintf(w, "    addi.d    $t0, $t0, %%pc_lo12(%s)\n", kRuntimeMemset)
+		fmt.Fprintf(w, "    jirl      $ra, $t0, 0\n")
 		fmt.Fprintln(w)
 
 		if len(p.m.Elem) > 0 {
@@ -112,13 +121,40 @@ func (p *wat2laWorker) buildTable(w io.Writer) error {
 			fmt.Fprintln(w)
 
 			p.gasCommentInFunc(w, "加载表格地址")
-			fmt.Fprintf(w, "    # mov rax, [rip + %s]\n", kTableAddrName)
+			fmt.Fprintf(w, "    pcalau12i $t0, %%pc_hi20(%s)\n", kTableAddrName)
+			fmt.Fprintf(w, "    addi.d    $t0, $t0, %%pc_lo12(%s)\n", kTableAddrName)
+			fmt.Fprintf(w, "    ld.d      $t0, $t0, 0\n")
 
 			for i, elem := range p.m.Elem {
 				for j, fnIdxOrName := range elem.Values {
 					fnIndex := p.findFuncIndex(fnIdxOrName)
+					tableOffset := int32(int(elem.Offset) + j*IntSize)
+
 					p.gasCommentInFunc(w, fmt.Sprintf("elem[%d]: table[%d+%d] = %s", i, elem.Offset, j, fnIdxOrName))
-					fmt.Fprintf(w, "    # mov qword ptr [rax+%d], %d\n", int(elem.Offset)+j*IntSize, fnIndex)
+
+					// 生成偏移地址常量
+					if x := tableOffset; x >= -2048 && x <= 2047 {
+						fmt.Fprintf(w, "    addi.d    $t1, $zero, %d # offset\n", x)
+					} else {
+						hi20 := uint32(x) >> 12
+						lo12 := uint32(x) & 0xFFF
+						fmt.Fprintf(w, "    lu12i.w   $t1, 0x%X\n # offset", hi20)
+						fmt.Fprintf(w, "    ori       $t1, $t1, 0x%X\n", lo12)
+					}
+
+					// 生成函数索引常量
+					if x := fnIndex; x >= -2048 && x <= 2047 {
+						fmt.Fprintf(w, "    addi.d    $t2, $zero, %d # func index\n", x)
+					} else {
+						hi20 := uint32(x) >> 12
+						lo12 := uint32(x) & 0xFFF
+						fmt.Fprintf(w, "    lu12i.w   $t2, 0x%X\n # func index", hi20)
+						fmt.Fprintf(w, "    ori       $t2, $t2, 0x%X\n", lo12)
+					}
+
+					// 计算绝对偏移地址
+					fmt.Fprintf(w, "    add.d     $t1, $t1, $t0 # offset\n")
+					fmt.Fprintf(w, "    st.d      $t2, $t1, 0\n")
 				}
 			}
 			fmt.Fprintln(w)
