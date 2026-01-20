@@ -351,8 +351,9 @@ func (b *Builder) returnStmt(s *ast.ReturnStmt, f *Func, block *wire.Block) {
 //      m: 1
 //   }
 //   return &i.m
-// 将导致 i 逃逸
+// 将导致 i 逃逸 至 Heap
 func (b *Builder) location(e ast.Expr, escaping wire.LocationKind, block *wire.Block) wire.Location {
+	e = unparen(e)
 	switch e := e.(type) {
 	case *ast.Ident:
 		if isBlankIdent(e) {
@@ -366,6 +367,21 @@ func (b *Builder) location(e ast.Expr, escaping wire.LocationKind, block *wire.B
 		}
 
 		return v
+
+	case *ast.StarExpr:
+		tv := b.info.Types[e.X]
+		if tv.Value != nil {
+			panic("unexpected constant")
+		}
+
+		if tv.Addressable() {
+			loc := b.location(e.X, escaping, block)
+			return block.NewAsLocation(block.NewLoad(loc, loc.Pos()), loc.DataType(), loc.Pos())
+		} else {
+			et := b.info.Types[e]
+			dt := b.BuildType(et.Type)
+			return block.NewAsLocation(b.expr1(e.X, tv, block), dt, int(e.X.Pos()))
+		}
 	}
 
 	panic(fmt.Sprintf("unexpected address expression: %T", e))
@@ -426,7 +442,7 @@ func (b *Builder) expr1(e ast.Expr, tv types.TypeAndValue, block *wire.Block) wi
 		}
 
 		if _, ok := obj.(*types.Var); ok {
-			loc := block.Lookup(obj, wire.LocationKindLocal)
+			loc := block.Lookup(obj, wire.LocationKindRegister)
 			return block.NewLoad(loc, int(obj.Pos()))
 		}
 

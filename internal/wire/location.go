@@ -9,7 +9,7 @@ LocationKind: 位置类别
 type LocationKind int
 
 const (
-	LocationKindLocal LocationKind = iota
+	LocationKindRegister LocationKind = iota
 	LocationKindStack
 	LocationKindHeap
 )

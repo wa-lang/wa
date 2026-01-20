@@ -40,7 +40,7 @@ type Alloc struct {
 
 func (i *Alloc) Name() string { return i.name }
 func (i *Alloc) Type() Type {
-	if i.Location == LocationKindLocal {
+	if i.Location == LocationKindRegister {
 		return i.dataType
 	} else {
 		return i.refType
@@ -49,7 +49,7 @@ func (i *Alloc) Type() Type {
 func (i *Alloc) retained() bool { return false }
 func (i *Alloc) String() string {
 	switch i.Location {
-	case LocationKindLocal:
+	case LocationKindRegister:
 		return fmt.Sprintf("var %s %s", i.name, i.dataType.Name())
 
 	case LocationKindStack:
@@ -66,7 +66,7 @@ func (i *Alloc) LocationKind() LocationKind { return i.Location }
 func (i *Alloc) DataType() Type             { return i.dataType }
 func (i *Alloc) Object() interface{}        { return i.object }
 
-// AddLocal 在 Block 中分配一个局部变量
+// AddLocal 在 Block 中分配一个局部变量，初始时位于 Register
 func (b *Block) AddLocal(name string, typ Type, pos int, obj interface{}) Location {
 	v := &Alloc{}
 	v.Stringer = v
@@ -95,7 +95,7 @@ func (i *Load) Name() string   { return i.String() }
 func (i *Load) Type() Type     { return i.Loc.DataType() }
 func (i *Load) retained() bool { return false }
 func (i *Load) String() string {
-	if i.Loc.LocationKind() == LocationKindLocal {
+	if i.Loc.LocationKind() == LocationKindRegister {
 		return i.Loc.Name()
 	} else {
 		return "*" + i.Loc.Name()
@@ -124,8 +124,35 @@ type InstStore struct {
 	Val []Expr
 }
 
+//func unfoldTuple(t *Tuple) []Type {
+//	var ret []Type
+//	for _, f := range t.fields {
+//		if tu, ok := f.(*Tuple); ok {
+//			ret = append(ret, unfoldTuple(tu)...)
+//		} else {
+//			ret = append(ret, tu)
+//		}
+//	}
+//	return ret
+//}
+
 func (i *InstStore) String() string {
 	var sb strings.Builder
+
+	//var vtypes []Type
+	//for _, val := range i.Val {
+	//	vt := val.Type()
+	//	if tu, ok := vt.(*Tuple); ok {
+	//		vtypes = append(vtypes, unfoldTuple(tu)...)
+	//	} else {
+	//		vtypes = append(vtypes, vt)
+	//	}
+	//}
+	//
+	//if len(vtypes) != len(i.Loc) {
+	//	panic("len(vtypes) != len(i.Loc)")
+	//}
+
 	for i, loc := range i.Loc {
 		if i > 0 {
 			sb.WriteString(", ")
@@ -136,7 +163,7 @@ func (i *InstStore) String() string {
 			continue
 		}
 
-		if loc.LocationKind() == LocationKindLocal {
+		if loc.LocationKind() == LocationKindRegister {
 			sb.WriteString(loc.Name())
 		} else {
 			sb.WriteRune('*')
@@ -472,5 +499,34 @@ func (b *Block) EmitLoop(cond Expr, label string, pos int) *Loop {
 	v.Post = b.createBlock(label+".post", pos)
 
 	b.emit(v)
+	return v
+}
+
+/**************************************
+AsLocation: AsLocation 指令，将一个 Expr 转换为 Location，该对象实现了 Location 接口
+**************************************/
+type AsLocation struct {
+	aStmt
+	addr     Expr
+	dataType Type
+}
+
+func (i *AsLocation) Name() string   { return i.String() }
+func (i *AsLocation) Type() Type     { return i.addr.Type() }
+func (i *AsLocation) retained() bool { return false }
+func (i *AsLocation) String() string { return fmt.Sprintf("(%s)", i.addr.Name()) }
+
+// Location 接口相关
+func (i *AsLocation) LocationKind() LocationKind { return LocationKindHeap }
+func (i *AsLocation) DataType() Type             { return i.dataType }
+func (i *AsLocation) Object() interface{}        { return nil }
+
+// 生成一条 AsLocation 指令
+func (b *Block) NewAsLocation(addr Expr, dataType Type, pos int) *AsLocation {
+	v := &AsLocation{addr: addr, dataType: dataType}
+	v.Stringer = v
+	v.pos = pos
+	v.setScope(b)
+
 	return v
 }
