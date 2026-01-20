@@ -64,7 +64,7 @@ func (p *wat2laWorker) buildFuncs(w io.Writer) error {
 		p.scopeStackBases = nil
 		p.scopeResults = nil
 
-		p.gasComment(w, "func "+f.Name)
+		p.gasComment(w, "func "+f.Name+f.Type.String())
 		p.gasSectionTextStart(w)
 		if f.ExportName == f.Name {
 			p.gasGlobal(w, kFuncNamePrefix+f.Name)
@@ -210,24 +210,24 @@ func (p *wat2laWorker) buildFunc_body(w io.Writer, fn *ast.Func) error {
 			// 将寄存器中的参数存储到对于的栈帧中
 			switch fn.Type.Params[i].Type {
 			case token.I32:
-				fmt.Fprintf(&bufHeader, "    mov [rbp%+d], %v # save arg %s\n",
+				fmt.Fprintf(&bufHeader, "    mov [rbp%+d], %v # save arg.%d\n",
 					arg.RBPOff, x64.RegString(arg.Reg),
-					arg.Name,
+					i,
 				)
 			case token.I64:
-				fmt.Fprintf(&bufHeader, "    mov [rbp%+d], %v # save arg %s\n",
+				fmt.Fprintf(&bufHeader, "    mov [rbp%+d], %v # save arg.%d\n",
 					arg.RBPOff, x64.RegString(arg.Reg),
-					arg.Name,
+					i,
 				)
 			case token.F32:
-				fmt.Fprintf(&bufHeader, "    movss qword ptr [rbp%+d], %v # save arg %s\n",
+				fmt.Fprintf(&bufHeader, "    movss qword ptr [rbp%+d], %v # save arg.%d\n",
 					arg.RBPOff, x64.RegString(arg.Reg),
-					arg.Name,
+					i,
 				)
 			case token.F64:
-				fmt.Fprintf(&bufHeader, "    movsd qword ptr [rbp%+d], %v # save arg %s\n",
+				fmt.Fprintf(&bufHeader, "    movsd qword ptr [rbp%+d], %v # save arg.%d\n",
 					arg.RBPOff, x64.RegString(arg.Reg),
-					arg.Name,
+					i,
 				)
 			default:
 				panic("unreachable")
@@ -241,12 +241,13 @@ func (p *wat2laWorker) buildFunc_body(w io.Writer, fn *ast.Func) error {
 	// 返回值初始化为 0
 	if len(fnNative.Type.Return) > 0 {
 		p.gasCommentInFunc(&bufHeader, "将返回值变量初始化为0")
-		for _, ret := range fnNative.Type.Return {
+		for i, ret := range fnNative.Type.Return {
 			fmt.Fprintf(&bufHeader,
-				"    mov dword ptr [rbp%+d], 0 # ret %s = 0\n",
-				ret.RBPOff, ret.Name,
+				"    mov dword ptr [rbp%+d], 0 # ret.%d = 0\n",
+				ret.RBPOff, i,
 			)
 		}
+		fmt.Fprintln(&bufHeader)
 	} else {
 		p.gasCommentInFunc(&bufHeader, "没有返回值变量需要初始化为0")
 		fmt.Fprintln(&bufHeader)
@@ -1397,8 +1398,8 @@ func (p *wat2laWorker) buildFunc_ins(
 	case token.INS_I32_LOAD:
 		i := i.(ast.Ins_I32Load)
 
-		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.I32)
-		ret0 := p.fnWasmR0Base - 8*stk.Push(token.I32)
+		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.I32) - 8
+		ret0 := p.fnWasmR0Base - 8*stk.Push(token.I32) - 8
 
 		fmt.Fprintf(w, "    # i32.load\n")
 		fmt.Fprintf(w, "    ld.w  t0, fp, %d # t0 = [pop]\n", sp0)
@@ -1409,8 +1410,8 @@ func (p *wat2laWorker) buildFunc_ins(
 	case token.INS_I64_LOAD:
 		i := i.(ast.Ins_I64Load)
 
-		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.I32)
-		ret0 := p.fnWasmR0Base - 8*stk.Push(token.I64)
+		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.I32) - 8
+		ret0 := p.fnWasmR0Base - 8*stk.Push(token.I64) - 8
 
 		fmt.Fprintf(w, "    # i64.load\n")
 		fmt.Fprintf(w, "    ld.w  t0, fp, %d # t0 = [pop]\n", sp0)
@@ -1421,8 +1422,8 @@ func (p *wat2laWorker) buildFunc_ins(
 	case token.INS_F32_LOAD:
 		i := i.(ast.Ins_F32Load)
 
-		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.I32)
-		ret0 := p.fnWasmR0Base - 8*stk.Push(token.F32)
+		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.I32) - 8
+		ret0 := p.fnWasmR0Base - 8*stk.Push(token.F32) - 8
 
 		fmt.Fprintf(w, "    # i64.load\n")
 		fmt.Fprintf(w, "    ld.w  t0, fp, %d # t0 = [pop]\n", sp0)
@@ -1433,8 +1434,8 @@ func (p *wat2laWorker) buildFunc_ins(
 	case token.INS_F64_LOAD:
 		i := i.(ast.Ins_I32Load)
 
-		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.I32)
-		ret0 := p.fnWasmR0Base - 8*stk.Push(token.F64)
+		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.I32) - 8
+		ret0 := p.fnWasmR0Base - 8*stk.Push(token.F64) - 8
 
 		fmt.Fprintf(w, "    # i64.load\n")
 		fmt.Fprintf(w, "    ld.w  t0, fp, %d # t0 = [pop]\n", sp0)
@@ -1444,8 +1445,8 @@ func (p *wat2laWorker) buildFunc_ins(
 
 	case token.INS_I32_LOAD8_S:
 		i := i.(ast.Ins_I32Load8S)
-		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.I32)
-		ret0 := p.fnWasmR0Base - 8*stk.Push(token.I32)
+		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.I32) - 8
+		ret0 := p.fnWasmR0Base - 8*stk.Push(token.I32) - 8
 
 		fmt.Fprintf(w, "    # i64.load8_s\n")
 		fmt.Fprintf(w, "    ld.w  t0, fp, %d # t0 = [pop]\n", sp0)
@@ -1455,8 +1456,8 @@ func (p *wat2laWorker) buildFunc_ins(
 
 	case token.INS_I32_LOAD8_U:
 		i := i.(ast.Ins_I32Load8U)
-		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.I32)
-		ret0 := p.fnWasmR0Base - 8*stk.Push(token.I32)
+		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.I32) - 8
+		ret0 := p.fnWasmR0Base - 8*stk.Push(token.I32) - 8
 
 		fmt.Fprintf(w, "    # i64.load8_u\n")
 		fmt.Fprintf(w, "    ld.w  t0, fp, %d # t0 = [pop]\n", sp0)
@@ -1466,8 +1467,8 @@ func (p *wat2laWorker) buildFunc_ins(
 
 	case token.INS_I32_LOAD16_S:
 		i := i.(ast.Ins_I32Load16S)
-		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.I32)
-		ret0 := p.fnWasmR0Base - 8*stk.Push(token.I32)
+		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.I32) - 8
+		ret0 := p.fnWasmR0Base - 8*stk.Push(token.I32) - 8
 
 		fmt.Fprintf(w, "    # i64.load16_s\n")
 		fmt.Fprintf(w, "    ld.w  t0, fp, %d # t0 = [pop]\n", sp0)
@@ -1477,8 +1478,8 @@ func (p *wat2laWorker) buildFunc_ins(
 
 	case token.INS_I32_LOAD16_U:
 		i := i.(ast.Ins_I32Load16U)
-		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.I32)
-		ret0 := p.fnWasmR0Base - 8*stk.Push(token.I32)
+		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.I32) - 8
+		ret0 := p.fnWasmR0Base - 8*stk.Push(token.I32) - 8
 
 		fmt.Fprintf(w, "    # i64.load16_u\n")
 		fmt.Fprintf(w, "    ld.w  t0, fp, %d # t0 = [pop]\n", sp0)
@@ -1488,8 +1489,8 @@ func (p *wat2laWorker) buildFunc_ins(
 
 	case token.INS_I64_LOAD8_S:
 		i := i.(ast.Ins_I64Load8S)
-		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.I32)
-		ret0 := p.fnWasmR0Base - 8*stk.Push(token.I64)
+		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.I32) - 8
+		ret0 := p.fnWasmR0Base - 8*stk.Push(token.I64) - 8
 
 		fmt.Fprintf(w, "    # i64.load8_s\n")
 		fmt.Fprintf(w, "    ld.w  t0, fp, %d # t0 = [pop]\n", sp0)
@@ -1499,8 +1500,8 @@ func (p *wat2laWorker) buildFunc_ins(
 
 	case token.INS_I64_LOAD8_U:
 		i := i.(ast.Ins_I64Load8U)
-		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.I32)
-		ret0 := p.fnWasmR0Base - 8*stk.Push(token.I64)
+		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.I32) - 8
+		ret0 := p.fnWasmR0Base - 8*stk.Push(token.I64) - 8
 
 		fmt.Fprintf(w, "    # i64.load8_u\n")
 		fmt.Fprintf(w, "    ld.w  t0, fp, %d # t0 = [pop]\n", sp0)
@@ -1510,8 +1511,8 @@ func (p *wat2laWorker) buildFunc_ins(
 
 	case token.INS_I64_LOAD16_S:
 		i := i.(ast.Ins_I64Load16S)
-		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.I32)
-		ret0 := p.fnWasmR0Base - 8*stk.Push(token.I64)
+		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.I32) - 8
+		ret0 := p.fnWasmR0Base - 8*stk.Push(token.I64) - 8
 
 		fmt.Fprintf(w, "    # i64.load16_u\n")
 		fmt.Fprintf(w, "    ld.w  t0, fp, %d # t0 = [pop]\n", sp0)
@@ -1521,8 +1522,8 @@ func (p *wat2laWorker) buildFunc_ins(
 
 	case token.INS_I64_LOAD16_U:
 		i := i.(ast.Ins_I64Load16U)
-		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.I32)
-		ret0 := p.fnWasmR0Base - 8*stk.Push(token.I64)
+		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.I32) - 8
+		ret0 := p.fnWasmR0Base - 8*stk.Push(token.I64) - 8
 
 		fmt.Fprintf(w, "    # i64.load16_u\n")
 		fmt.Fprintf(w, "    ld.w  t0, fp, %d # t0 = [pop]\n", sp0)
@@ -1532,8 +1533,8 @@ func (p *wat2laWorker) buildFunc_ins(
 
 	case token.INS_I64_LOAD32_S:
 		i := i.(ast.Ins_I64Load32S)
-		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.I32)
-		ret0 := p.fnWasmR0Base - 8*stk.Push(token.I64)
+		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.I32) - 8
+		ret0 := p.fnWasmR0Base - 8*stk.Push(token.I64) - 8
 
 		fmt.Fprintf(w, "    # i64.load32_s\n")
 		fmt.Fprintf(w, "    ld.w  t0, fp, %d # t0 = [pop]\n", sp0)
@@ -1543,8 +1544,8 @@ func (p *wat2laWorker) buildFunc_ins(
 
 	case token.INS_I64_LOAD32_U:
 		i := i.(ast.Ins_I64Load32U)
-		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.I32)
-		ret0 := p.fnWasmR0Base - 8*stk.Push(token.I64)
+		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.I32) - 8
+		ret0 := p.fnWasmR0Base - 8*stk.Push(token.I64) - 8
 
 		fmt.Fprintf(w, "    # i64.load32_u\n")
 		fmt.Fprintf(w, "    ld.w  t0, fp, %d # t0 = [pop]\n", sp0)
@@ -1554,8 +1555,8 @@ func (p *wat2laWorker) buildFunc_ins(
 
 	case token.INS_I32_STORE:
 		i := i.(ast.Ins_I32Store)
-		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.I32)
-		sp1 := p.fnWasmR0Base - 8*stk.Pop(token.I32)
+		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.I32) - 8
+		sp1 := p.fnWasmR0Base - 8*stk.Pop(token.I32) - 8
 
 		fmt.Fprintf(w, "    # i32.store_xx\n")
 		fmt.Fprintf(w, "    ld.w  t0, fp, %d # t0 = [pop]\n", sp0)
@@ -1565,8 +1566,8 @@ func (p *wat2laWorker) buildFunc_ins(
 
 	case token.INS_I64_STORE:
 		i := i.(ast.Ins_I64Store)
-		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.I64)
-		sp1 := p.fnWasmR0Base - 8*stk.Pop(token.I32)
+		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.I64) - 8
+		sp1 := p.fnWasmR0Base - 8*stk.Pop(token.I32) - 8
 
 		fmt.Fprintf(w, "    # i32.store_xx\n")
 		fmt.Fprintf(w, "    ld.w  t0, fp, %d # t0 = [pop]\n", sp0)
@@ -1576,8 +1577,8 @@ func (p *wat2laWorker) buildFunc_ins(
 
 	case token.INS_F32_STORE:
 		i := i.(ast.Ins_F32Store)
-		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.F32)
-		sp1 := p.fnWasmR0Base - 8*stk.Pop(token.I32)
+		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.F32) - 8
+		sp1 := p.fnWasmR0Base - 8*stk.Pop(token.I32) - 8
 
 		fmt.Fprintf(w, "    # i32.store_xx\n")
 		fmt.Fprintf(w, "    ld.w  t0, fp, %d # t0 = [pop]\n", sp0)
@@ -1587,8 +1588,8 @@ func (p *wat2laWorker) buildFunc_ins(
 
 	case token.INS_F64_STORE:
 		i := i.(ast.Ins_F64Store)
-		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.F64)
-		sp1 := p.fnWasmR0Base - 8*stk.Pop(token.I32)
+		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.F64) - 8
+		sp1 := p.fnWasmR0Base - 8*stk.Pop(token.I32) - 8
 
 		fmt.Fprintf(w, "    # i32.store_xx\n")
 		fmt.Fprintf(w, "    ld.w  t0, fp, %d # t0 = [pop]\n", sp0)
@@ -1598,8 +1599,8 @@ func (p *wat2laWorker) buildFunc_ins(
 
 	case token.INS_I32_STORE8:
 		i := i.(ast.Ins_I32Store8)
-		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.I32)
-		sp1 := p.fnWasmR0Base - 8*stk.Pop(token.I32)
+		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.I32) - 8
+		sp1 := p.fnWasmR0Base - 8*stk.Pop(token.I32) - 8
 
 		fmt.Fprintf(w, "    # i32.store_xx\n")
 		fmt.Fprintf(w, "    ld.w  t0, fp, %d # t0 = [pop]\n", sp0)
@@ -1609,8 +1610,8 @@ func (p *wat2laWorker) buildFunc_ins(
 
 	case token.INS_I32_STORE16:
 		i := i.(ast.Ins_I32Store16)
-		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.I32)
-		sp1 := p.fnWasmR0Base - 8*stk.Pop(token.I32)
+		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.I32) - 8
+		sp1 := p.fnWasmR0Base - 8*stk.Pop(token.I32) - 8
 
 		fmt.Fprintf(w, "    # i32.store_xx\n")
 		fmt.Fprintf(w, "    ld.w  t0, fp, %d # t0 = [pop]\n", sp0)
@@ -1620,8 +1621,8 @@ func (p *wat2laWorker) buildFunc_ins(
 
 	case token.INS_I64_STORE8:
 		i := i.(ast.Ins_I64Store8)
-		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.I64)
-		sp1 := p.fnWasmR0Base - 8*stk.Pop(token.I32)
+		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.I64) - 8
+		sp1 := p.fnWasmR0Base - 8*stk.Pop(token.I32) - 8
 
 		fmt.Fprintf(w, "    # i32.store_xx\n")
 		fmt.Fprintf(w, "    ld.w  t0, fp, %d # t0 = [pop]\n", sp0)
@@ -1631,8 +1632,8 @@ func (p *wat2laWorker) buildFunc_ins(
 
 	case token.INS_I64_STORE16:
 		i := i.(ast.Ins_I64Store16)
-		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.I64)
-		sp1 := p.fnWasmR0Base - 8*stk.Pop(token.I32)
+		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.I64) - 8
+		sp1 := p.fnWasmR0Base - 8*stk.Pop(token.I32) - 8
 
 		fmt.Fprintf(w, "    # i32.store_xx\n")
 		fmt.Fprintf(w, "    ld.w  t0, fp, %d # t0 = [pop]\n", sp0)
@@ -1642,8 +1643,8 @@ func (p *wat2laWorker) buildFunc_ins(
 
 	case token.INS_I64_STORE32:
 		i := i.(ast.Ins_I64Store32)
-		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.I64)
-		sp1 := p.fnWasmR0Base - 8*stk.Pop(token.I32)
+		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.I64) - 8
+		sp1 := p.fnWasmR0Base - 8*stk.Pop(token.I32) - 8
 
 		fmt.Fprintf(w, "    # i32.store_xx\n")
 		fmt.Fprintf(w, "    ld.w  t0, fp, %d # t0 = [pop]\n", sp0)
@@ -1652,14 +1653,14 @@ func (p *wat2laWorker) buildFunc_ins(
 		fmt.Fprintf(w, "    st.hu t0, t0, %d # t0 = [t0+off]\n", i.Offset)
 
 	case token.INS_MEMORY_SIZE:
-		sp0 := p.fnWasmR0Base - 8*stk.Push(token.I32)
+		sp0 := p.fnWasmR0Base - 8*stk.Push(token.I32) - 8
 		fmt.Fprintf(w, "    # memory.size\n")
 		fmt.Fprintf(w, "    pcalau12i t0, %%pc_hi20(%s)\n", kMemoryPagesName)
 		fmt.Fprintf(w, "    addi.d    t0, t0, %%pc_lo12(%s)\n", kMemoryPagesName)
 		fmt.Fprintf(w, "    st.w      t0, fp, %d\n", sp0)
 	case token.INS_MEMORY_GROW:
-		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.I32)
-		ret0 := p.fnWasmR0Base - 8*stk.Push(token.I32)
+		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.I32) - 8
+		ret0 := p.fnWasmR0Base - 8*stk.Push(token.I32) - 8
 
 		// 最大内存在启动时就分配好, 这里只是调整全局变量
 
@@ -1683,9 +1684,9 @@ func (p *wat2laWorker) buildFunc_ins(
 	case token.INS_MEMORY_INIT:
 		i := i.(ast.Ins_MemoryInit)
 
-		len := p.fnWasmR0Base - 8*stk.Pop(token.I32)
-		off := p.fnWasmR0Base - 8*stk.Pop(token.I32)
-		dst := p.fnWasmR0Base - 8*stk.Pop(token.I32)
+		len := p.fnWasmR0Base - 8*stk.Pop(token.I32) - 8
+		off := p.fnWasmR0Base - 8*stk.Pop(token.I32) - 8
+		dst := p.fnWasmR0Base - 8*stk.Pop(token.I32) - 8
 
 		fmt.Fprintf(w, "    ld.d a0, fp, %d\n", dst)
 		fmt.Fprintf(w, "    ld.d a1, fp, %d\n", off)
@@ -1698,9 +1699,9 @@ func (p *wat2laWorker) buildFunc_ins(
 		fmt.Fprintf(w, "    bl        $builtin.memcpy\n")
 
 	case token.INS_MEMORY_COPY:
-		len := p.fnWasmR0Base - 8*stk.Pop(token.I32)
-		src := p.fnWasmR0Base - 8*stk.Pop(token.I32)
-		dst := p.fnWasmR0Base - 8*stk.Pop(token.I32)
+		len := p.fnWasmR0Base - 8*stk.Pop(token.I32) - 8
+		src := p.fnWasmR0Base - 8*stk.Pop(token.I32) - 8
+		dst := p.fnWasmR0Base - 8*stk.Pop(token.I32) - 8
 
 		fmt.Fprintf(w, "    ld.d a0, fp, %d\n", dst)
 		fmt.Fprintf(w, "    ld.d a1, fp, %d\n", src)
@@ -1708,9 +1709,9 @@ func (p *wat2laWorker) buildFunc_ins(
 		fmt.Fprintf(w, "    bl   $builtin.memcpy\n")
 
 	case token.INS_MEMORY_FILL:
-		len := p.fnWasmR0Base - 8*stk.Pop(token.I32)
-		val := p.fnWasmR0Base - 8*stk.Pop(token.I32)
-		dst := p.fnWasmR0Base - 8*stk.Pop(token.I32)
+		len := p.fnWasmR0Base - 8*stk.Pop(token.I32) - 8
+		val := p.fnWasmR0Base - 8*stk.Pop(token.I32) - 8
+		dst := p.fnWasmR0Base - 8*stk.Pop(token.I32) - 8
 
 		fmt.Fprintf(w, "    ld.d a0, fp, %d\n", dst)
 		fmt.Fprintf(w, "    ld.w a1, fp, %d\n", val)
@@ -1820,8 +1821,8 @@ func (p *wat2laWorker) buildFunc_ins(
 		}
 
 	case token.INS_I32_EQZ:
-		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.I32)
-		ret0 := p.fnWasmR0Base - 8*stk.Push(token.I32)
+		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.I32) - 8
+		ret0 := p.fnWasmR0Base - 8*stk.Push(token.I32) - 8
 
 		fmt.Fprintf(w, "    lui.w   t0, 1\n")
 		fmt.Fprintf(w, "    ld.w    t1, fp, %d\n", sp0)
@@ -1829,9 +1830,9 @@ func (p *wat2laWorker) buildFunc_ins(
 		fmt.Fprintf(w, "    st.w    t2, fp, %d\n", ret0)
 
 	case token.INS_I32_EQ:
-		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.I32)
-		sp1 := p.fnWasmR0Base - 8*stk.Pop(token.I32)
-		ret0 := p.fnWasmR0Base - 8*stk.Push(token.I32)
+		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.I32) - 8
+		sp1 := p.fnWasmR0Base - 8*stk.Pop(token.I32) - 8
+		ret0 := p.fnWasmR0Base - 8*stk.Push(token.I32) - 8
 
 		fmt.Fprintf(w, "    lui.w   t0, 1\n")
 		fmt.Fprintf(w, "    ld.w    t1, fp, %d\n", sp0)
@@ -1841,9 +1842,9 @@ func (p *wat2laWorker) buildFunc_ins(
 		fmt.Fprintf(w, "    st.w    t1, fp, %d\n", ret0)
 
 	case token.INS_I32_NE:
-		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.I32)
-		sp1 := p.fnWasmR0Base - 8*stk.Pop(token.I32)
-		ret0 := p.fnWasmR0Base - 8*stk.Push(token.I32)
+		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.I32) - 8
+		sp1 := p.fnWasmR0Base - 8*stk.Pop(token.I32) - 8
+		ret0 := p.fnWasmR0Base - 8*stk.Push(token.I32) - 8
 
 		fmt.Fprintf(w, "    lui.w   t0, 1\n")
 		fmt.Fprintf(w, "    ld.w    t1, fp, %d\n", sp0)
@@ -1853,9 +1854,9 @@ func (p *wat2laWorker) buildFunc_ins(
 		fmt.Fprintf(w, "    st.w    t1, fp, %d\n", ret0)
 
 	case token.INS_I32_LT_S:
-		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.I32)
-		sp1 := p.fnWasmR0Base - 8*stk.Pop(token.I32)
-		ret0 := p.fnWasmR0Base - 8*stk.Push(token.I32)
+		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.I32) - 8
+		sp1 := p.fnWasmR0Base - 8*stk.Pop(token.I32) - 8
+		ret0 := p.fnWasmR0Base - 8*stk.Push(token.I32) - 8
 
 		fmt.Fprintf(w, "    ld.w    t1, fp, %d\n", sp0)
 		fmt.Fprintf(w, "    ld.w    t2, fp, %d\n", sp1)
@@ -1863,9 +1864,9 @@ func (p *wat2laWorker) buildFunc_ins(
 		fmt.Fprintf(w, "    st.w    t0, fp, %d\n", ret0)
 
 	case token.INS_I32_LT_U:
-		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.I32)
-		sp1 := p.fnWasmR0Base - 8*stk.Pop(token.I32)
-		ret0 := p.fnWasmR0Base - 8*stk.Push(token.I32)
+		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.I32) - 8
+		sp1 := p.fnWasmR0Base - 8*stk.Pop(token.I32) - 8
+		ret0 := p.fnWasmR0Base - 8*stk.Push(token.I32) - 8
 
 		fmt.Fprintf(w, "    ld.w    t1, fp, %d\n", sp0)
 		fmt.Fprintf(w, "    ld.w    t2, fp, %d\n", sp1)
@@ -1873,9 +1874,9 @@ func (p *wat2laWorker) buildFunc_ins(
 		fmt.Fprintf(w, "    st.w    t0, fp, %d\n", ret0)
 
 	case token.INS_I32_GT_S:
-		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.I32)
-		sp1 := p.fnWasmR0Base - 8*stk.Pop(token.I32)
-		ret0 := p.fnWasmR0Base - 8*stk.Push(token.I32)
+		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.I32) - 8
+		sp1 := p.fnWasmR0Base - 8*stk.Pop(token.I32) - 8
+		ret0 := p.fnWasmR0Base - 8*stk.Push(token.I32) - 8
 
 		fmt.Fprintf(w, "    ld.w    t1, fp, %d\n", sp0)
 		fmt.Fprintf(w, "    ld.w    t2, fp, %d\n", sp1)
@@ -1883,9 +1884,9 @@ func (p *wat2laWorker) buildFunc_ins(
 		fmt.Fprintf(w, "    st.w    t0, fp, %d\n", ret0)
 
 	case token.INS_I32_GT_U:
-		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.I32)
-		sp1 := p.fnWasmR0Base - 8*stk.Pop(token.I32)
-		ret0 := p.fnWasmR0Base - 8*stk.Push(token.I32)
+		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.I32) - 8
+		sp1 := p.fnWasmR0Base - 8*stk.Pop(token.I32) - 8
+		ret0 := p.fnWasmR0Base - 8*stk.Push(token.I32) - 8
 
 		fmt.Fprintf(w, "    ld.w    t1, fp, %d\n", sp0)
 		fmt.Fprintf(w, "    ld.w    t2, fp, %d\n", sp1)
@@ -1893,9 +1894,9 @@ func (p *wat2laWorker) buildFunc_ins(
 		fmt.Fprintf(w, "    st.w    t0, fp, %d\n", ret0)
 
 	case token.INS_I32_LE_S:
-		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.I32)
-		sp1 := p.fnWasmR0Base - 8*stk.Pop(token.I32)
-		ret0 := p.fnWasmR0Base - 8*stk.Push(token.I32)
+		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.I32) - 8
+		sp1 := p.fnWasmR0Base - 8*stk.Pop(token.I32) - 8
+		ret0 := p.fnWasmR0Base - 8*stk.Push(token.I32) - 8
 
 		fmt.Fprintf(w, "    ld.w    t1, fp, %d\n", sp0)
 		fmt.Fprintf(w, "    ld.w    t2, fp, %d\n", sp1)
@@ -1903,9 +1904,9 @@ func (p *wat2laWorker) buildFunc_ins(
 		fmt.Fprintf(w, "    st.w    t0, fp, %d\n", ret0)
 
 	case token.INS_I32_LE_U:
-		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.I32)
-		sp1 := p.fnWasmR0Base - 8*stk.Pop(token.I32)
-		ret0 := p.fnWasmR0Base - 8*stk.Push(token.I32)
+		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.I32) - 8
+		sp1 := p.fnWasmR0Base - 8*stk.Pop(token.I32) - 8
+		ret0 := p.fnWasmR0Base - 8*stk.Push(token.I32) - 8
 
 		fmt.Fprintf(w, "    ld.w    t1, fp, %d\n", sp0)
 		fmt.Fprintf(w, "    ld.w    t2, fp, %d\n", sp1)
@@ -1913,9 +1914,9 @@ func (p *wat2laWorker) buildFunc_ins(
 		fmt.Fprintf(w, "    st.w    t0, fp, %d\n", ret0)
 
 	case token.INS_I32_GE_S:
-		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.I32)
-		sp1 := p.fnWasmR0Base - 8*stk.Pop(token.I32)
-		ret0 := p.fnWasmR0Base - 8*stk.Push(token.I32)
+		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.I32) - 8
+		sp1 := p.fnWasmR0Base - 8*stk.Pop(token.I32) - 8
+		ret0 := p.fnWasmR0Base - 8*stk.Push(token.I32) - 8
 
 		fmt.Fprintf(w, "    ld.w    t1, fp, %d\n", sp0)
 		fmt.Fprintf(w, "    ld.w    t2, fp, %d\n", sp1)
@@ -1923,9 +1924,9 @@ func (p *wat2laWorker) buildFunc_ins(
 		fmt.Fprintf(w, "    st.w    t0, fp, %d\n", ret0)
 
 	case token.INS_I32_GE_U:
-		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.I32)
-		sp1 := p.fnWasmR0Base - 8*stk.Pop(token.I32)
-		ret0 := p.fnWasmR0Base - 8*stk.Push(token.I32)
+		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.I32) - 8
+		sp1 := p.fnWasmR0Base - 8*stk.Pop(token.I32) - 8
+		ret0 := p.fnWasmR0Base - 8*stk.Push(token.I32) - 8
 
 		fmt.Fprintf(w, "    ld.w    t1, fp, %d\n", sp0)
 		fmt.Fprintf(w, "    ld.w    t2, fp, %d\n", sp1)
@@ -1933,8 +1934,8 @@ func (p *wat2laWorker) buildFunc_ins(
 		fmt.Fprintf(w, "    st.w    t0, fp, %d\n", ret0)
 
 	case token.INS_I64_EQZ:
-		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.I64)
-		ret0 := p.fnWasmR0Base - 8*stk.Push(token.I32)
+		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.I64) - 8
+		ret0 := p.fnWasmR0Base - 8*stk.Push(token.I32) - 8
 
 		fmt.Fprintf(w, "    lui.w   t0, 1\n")
 		fmt.Fprintf(w, "    ld.w    t1, fp, %d\n", sp0)
@@ -1942,9 +1943,9 @@ func (p *wat2laWorker) buildFunc_ins(
 		fmt.Fprintf(w, "    st.w    t2, fp, %d\n", ret0)
 
 	case token.INS_I64_EQ:
-		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.I64)
-		sp1 := p.fnWasmR0Base - 8*stk.Pop(token.I64)
-		ret0 := p.fnWasmR0Base - 8*stk.Push(token.I32)
+		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.I64) - 8
+		sp1 := p.fnWasmR0Base - 8*stk.Pop(token.I64) - 8
+		ret0 := p.fnWasmR0Base - 8*stk.Push(token.I32) - 8
 
 		fmt.Fprintf(w, "    lui.w   t0, 1\n")
 		fmt.Fprintf(w, "    ld.w    t1, fp, %d\n", sp0)
@@ -1954,9 +1955,9 @@ func (p *wat2laWorker) buildFunc_ins(
 		fmt.Fprintf(w, "    st.w    t1, fp, %d\n", ret0)
 
 	case token.INS_I64_NE:
-		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.I64)
-		sp1 := p.fnWasmR0Base - 8*stk.Pop(token.I64)
-		ret0 := p.fnWasmR0Base - 8*stk.Push(token.I32)
+		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.I64) - 8
+		sp1 := p.fnWasmR0Base - 8*stk.Pop(token.I64) - 8
+		ret0 := p.fnWasmR0Base - 8*stk.Push(token.I32) - 8
 
 		fmt.Fprintf(w, "    lui.w   t0, 1\n")
 		fmt.Fprintf(w, "    ld.w    t1, fp, %d\n", sp0)
@@ -1966,9 +1967,9 @@ func (p *wat2laWorker) buildFunc_ins(
 		fmt.Fprintf(w, "    st.w    t1, fp, %d\n", ret0)
 
 	case token.INS_I64_LT_S:
-		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.I64)
-		sp1 := p.fnWasmR0Base - 8*stk.Pop(token.I64)
-		ret0 := p.fnWasmR0Base - 8*stk.Push(token.I32)
+		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.I64) - 8
+		sp1 := p.fnWasmR0Base - 8*stk.Pop(token.I64) - 8
+		ret0 := p.fnWasmR0Base - 8*stk.Push(token.I32) - 8
 
 		fmt.Fprintf(w, "    ld.w    t1, fp, %d\n", sp0)
 		fmt.Fprintf(w, "    ld.w    t2, fp, %d\n", sp1)
@@ -1976,9 +1977,9 @@ func (p *wat2laWorker) buildFunc_ins(
 		fmt.Fprintf(w, "    st.w    t0, fp, %d\n", ret0)
 
 	case token.INS_I64_LT_U:
-		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.I64)
-		sp1 := p.fnWasmR0Base - 8*stk.Pop(token.I64)
-		ret0 := p.fnWasmR0Base - 8*stk.Push(token.I32)
+		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.I64) - 8
+		sp1 := p.fnWasmR0Base - 8*stk.Pop(token.I64) - 8
+		ret0 := p.fnWasmR0Base - 8*stk.Push(token.I32) - 8
 
 		fmt.Fprintf(w, "    ld.w    t1, fp, %d\n", sp0)
 		fmt.Fprintf(w, "    ld.w    t2, fp, %d\n", sp1)
@@ -1986,9 +1987,9 @@ func (p *wat2laWorker) buildFunc_ins(
 		fmt.Fprintf(w, "    st.w    t0, fp, %d\n", ret0)
 
 	case token.INS_I64_GT_S:
-		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.I64)
-		sp1 := p.fnWasmR0Base - 8*stk.Pop(token.I64)
-		ret0 := p.fnWasmR0Base - 8*stk.Push(token.I32)
+		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.I64) - 8
+		sp1 := p.fnWasmR0Base - 8*stk.Pop(token.I64) - 8
+		ret0 := p.fnWasmR0Base - 8*stk.Push(token.I32) - 8
 
 		fmt.Fprintf(w, "    ld.w    t1, fp, %d\n", sp0)
 		fmt.Fprintf(w, "    ld.w    t2, fp, %d\n", sp1)
@@ -1996,9 +1997,9 @@ func (p *wat2laWorker) buildFunc_ins(
 		fmt.Fprintf(w, "    st.w    t0, fp, %d\n", ret0)
 
 	case token.INS_I64_GT_U:
-		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.I64)
-		sp1 := p.fnWasmR0Base - 8*stk.Pop(token.I64)
-		ret0 := p.fnWasmR0Base - 8*stk.Push(token.I32)
+		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.I64) - 8
+		sp1 := p.fnWasmR0Base - 8*stk.Pop(token.I64) - 8
+		ret0 := p.fnWasmR0Base - 8*stk.Push(token.I32) - 8
 
 		fmt.Fprintf(w, "    ld.w    t1, fp, %d\n", sp0)
 		fmt.Fprintf(w, "    ld.w    t2, fp, %d\n", sp1)
@@ -2006,9 +2007,9 @@ func (p *wat2laWorker) buildFunc_ins(
 		fmt.Fprintf(w, "    st.w    t0, fp, %d\n", ret0)
 
 	case token.INS_I64_LE_S:
-		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.I64)
-		sp1 := p.fnWasmR0Base - 8*stk.Pop(token.I64)
-		ret0 := p.fnWasmR0Base - 8*stk.Push(token.I32)
+		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.I64) - 8
+		sp1 := p.fnWasmR0Base - 8*stk.Pop(token.I64) - 8
+		ret0 := p.fnWasmR0Base - 8*stk.Push(token.I32) - 8
 
 		fmt.Fprintf(w, "    ld.w    t1, fp, %d\n", sp0)
 		fmt.Fprintf(w, "    ld.w    t2, fp, %d\n", sp1)
@@ -2016,9 +2017,9 @@ func (p *wat2laWorker) buildFunc_ins(
 		fmt.Fprintf(w, "    st.w    t0, fp, %d\n", ret0)
 
 	case token.INS_I64_LE_U:
-		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.I64)
-		sp1 := p.fnWasmR0Base - 8*stk.Pop(token.I64)
-		ret0 := p.fnWasmR0Base - 8*stk.Push(token.I32)
+		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.I64) - 8
+		sp1 := p.fnWasmR0Base - 8*stk.Pop(token.I64) - 8
+		ret0 := p.fnWasmR0Base - 8*stk.Push(token.I32) - 8
 
 		fmt.Fprintf(w, "    ld.w    t1, fp, %d\n", sp0)
 		fmt.Fprintf(w, "    ld.w    t2, fp, %d\n", sp1)
@@ -2026,9 +2027,9 @@ func (p *wat2laWorker) buildFunc_ins(
 		fmt.Fprintf(w, "    st.w    t0, fp, %d\n", ret0)
 
 	case token.INS_I64_GE_S:
-		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.I64)
-		sp1 := p.fnWasmR0Base - 8*stk.Pop(token.I64)
-		ret0 := p.fnWasmR0Base - 8*stk.Push(token.I32)
+		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.I64) - 8
+		sp1 := p.fnWasmR0Base - 8*stk.Pop(token.I64) - 8
+		ret0 := p.fnWasmR0Base - 8*stk.Push(token.I32) - 8
 
 		fmt.Fprintf(w, "    ld.w    t1, fp, %d\n", sp0)
 		fmt.Fprintf(w, "    ld.w    t2, fp, %d\n", sp1)
@@ -2036,9 +2037,9 @@ func (p *wat2laWorker) buildFunc_ins(
 		fmt.Fprintf(w, "    st.w    t0, fp, %d\n", ret0)
 
 	case token.INS_I64_GE_U:
-		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.I64)
-		sp1 := p.fnWasmR0Base - 8*stk.Pop(token.I64)
-		ret0 := p.fnWasmR0Base - 8*stk.Push(token.I32)
+		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.I64) - 8
+		sp1 := p.fnWasmR0Base - 8*stk.Pop(token.I64) - 8
+		ret0 := p.fnWasmR0Base - 8*stk.Push(token.I32) - 8
 
 		fmt.Fprintf(w, "    ld.w    t1, fp, %d\n", sp0)
 		fmt.Fprintf(w, "    ld.w    t2, fp, %d\n", sp1)
@@ -2046,9 +2047,9 @@ func (p *wat2laWorker) buildFunc_ins(
 		fmt.Fprintf(w, "    st.w    t0, fp, %d\n", ret0)
 
 	case token.INS_F32_EQ:
-		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.F32)
-		sp1 := p.fnWasmR0Base - 8*stk.Pop(token.F32)
-		ret0 := p.fnWasmR0Base - 8*stk.Push(token.I32)
+		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.F32) - 8
+		sp1 := p.fnWasmR0Base - 8*stk.Pop(token.F32) - 8
+		ret0 := p.fnWasmR0Base - 8*stk.Push(token.I32) - 8
 
 		fmt.Fprintf(w, "    lui.w   t0, 1\n")
 		fmt.Fprintf(w, "    ld.w    t1, fp, %d\n", sp0)
@@ -2058,9 +2059,9 @@ func (p *wat2laWorker) buildFunc_ins(
 		fmt.Fprintf(w, "    st.w    t1, fp, %d\n", ret0)
 
 	case token.INS_F32_NE:
-		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.F32)
-		sp1 := p.fnWasmR0Base - 8*stk.Pop(token.F32)
-		ret0 := p.fnWasmR0Base - 8*stk.Push(token.I32)
+		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.F32) - 8
+		sp1 := p.fnWasmR0Base - 8*stk.Pop(token.F32) - 8
+		ret0 := p.fnWasmR0Base - 8*stk.Push(token.I32) - 8
 
 		fmt.Fprintf(w, "    lui.w   t0, 1\n")
 		fmt.Fprintf(w, "    ld.w    t1, fp, %d\n", sp0)
@@ -2070,9 +2071,9 @@ func (p *wat2laWorker) buildFunc_ins(
 		fmt.Fprintf(w, "    st.w    t1, fp, %d\n", ret0)
 
 	case token.INS_F32_LT:
-		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.F32)
-		sp1 := p.fnWasmR0Base - 8*stk.Pop(token.F32)
-		ret0 := p.fnWasmR0Base - 8*stk.Push(token.I32)
+		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.F32) - 8
+		sp1 := p.fnWasmR0Base - 8*stk.Pop(token.F32) - 8
+		ret0 := p.fnWasmR0Base - 8*stk.Push(token.I32) - 8
 
 		fmt.Fprintf(w, "    ld.w    t1, fp, %d\n", sp0)
 		fmt.Fprintf(w, "    ld.w    t2, fp, %d\n", sp1)
@@ -2080,9 +2081,9 @@ func (p *wat2laWorker) buildFunc_ins(
 		fmt.Fprintf(w, "    st.w    t0, fp, %d\n", ret0)
 
 	case token.INS_F32_GT:
-		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.F32)
-		sp1 := p.fnWasmR0Base - 8*stk.Pop(token.F32)
-		ret0 := p.fnWasmR0Base - 8*stk.Push(token.I32)
+		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.F32) - 8
+		sp1 := p.fnWasmR0Base - 8*stk.Pop(token.F32) - 8
+		ret0 := p.fnWasmR0Base - 8*stk.Push(token.I32) - 8
 
 		fmt.Fprintf(w, "    ld.w    t1, fp, %d\n", sp0)
 		fmt.Fprintf(w, "    ld.w    t2, fp, %d\n", sp1)
@@ -2090,9 +2091,9 @@ func (p *wat2laWorker) buildFunc_ins(
 		fmt.Fprintf(w, "    st.w    t0, fp, %d\n", ret0)
 
 	case token.INS_F32_LE:
-		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.F32)
-		sp1 := p.fnWasmR0Base - 8*stk.Pop(token.F32)
-		ret0 := p.fnWasmR0Base - 8*stk.Push(token.I32)
+		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.F32) - 8
+		sp1 := p.fnWasmR0Base - 8*stk.Pop(token.F32) - 8
+		ret0 := p.fnWasmR0Base - 8*stk.Push(token.I32) - 8
 
 		fmt.Fprintf(w, "    ld.w    t1, fp, %d\n", sp0)
 		fmt.Fprintf(w, "    ld.w    t2, fp, %d\n", sp1)
@@ -2100,9 +2101,9 @@ func (p *wat2laWorker) buildFunc_ins(
 		fmt.Fprintf(w, "    st.w    t0, fp, %d\n", ret0)
 
 	case token.INS_F32_GE:
-		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.F32)
-		sp1 := p.fnWasmR0Base - 8*stk.Pop(token.F32)
-		ret0 := p.fnWasmR0Base - 8*stk.Push(token.I32)
+		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.F32) - 8
+		sp1 := p.fnWasmR0Base - 8*stk.Pop(token.F32) - 8
+		ret0 := p.fnWasmR0Base - 8*stk.Push(token.I32) - 8
 
 		fmt.Fprintf(w, "    ld.w    t1, fp, %d\n", sp0)
 		fmt.Fprintf(w, "    ld.w    t2, fp, %d\n", sp1)
@@ -2110,9 +2111,9 @@ func (p *wat2laWorker) buildFunc_ins(
 		fmt.Fprintf(w, "    st.w    t0, fp, %d\n", ret0)
 
 	case token.INS_F64_EQ:
-		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.F64)
-		sp1 := p.fnWasmR0Base - 8*stk.Pop(token.F64)
-		ret0 := p.fnWasmR0Base - 8*stk.Push(token.I32)
+		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.F64) - 8
+		sp1 := p.fnWasmR0Base - 8*stk.Pop(token.F64) - 8
+		ret0 := p.fnWasmR0Base - 8*stk.Push(token.I32) - 8
 
 		fmt.Fprintf(w, "    lui.w   t0, 1\n")
 		fmt.Fprintf(w, "    ld.w    t1, fp, %d\n", sp0)
@@ -2122,9 +2123,9 @@ func (p *wat2laWorker) buildFunc_ins(
 		fmt.Fprintf(w, "    st.w    t1, fp, %d\n", ret0)
 
 	case token.INS_F64_NE:
-		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.F64)
-		sp1 := p.fnWasmR0Base - 8*stk.Pop(token.F64)
-		ret0 := p.fnWasmR0Base - 8*stk.Push(token.I32)
+		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.F64) - 8
+		sp1 := p.fnWasmR0Base - 8*stk.Pop(token.F64) - 8
+		ret0 := p.fnWasmR0Base - 8*stk.Push(token.I32) - 8
 
 		fmt.Fprintf(w, "    lui.w   t0, 1\n")
 		fmt.Fprintf(w, "    ld.w    t1, fp, %d\n", sp0)
@@ -2134,9 +2135,9 @@ func (p *wat2laWorker) buildFunc_ins(
 		fmt.Fprintf(w, "    st.w    t1, fp, %d\n", ret0)
 
 	case token.INS_F64_LT:
-		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.F64)
-		sp1 := p.fnWasmR0Base - 8*stk.Pop(token.F64)
-		ret0 := p.fnWasmR0Base - 8*stk.Push(token.I32)
+		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.F64) - 8
+		sp1 := p.fnWasmR0Base - 8*stk.Pop(token.F64) - 8
+		ret0 := p.fnWasmR0Base - 8*stk.Push(token.I32) - 8
 
 		fmt.Fprintf(w, "    ld.w    t1, fp, %d\n", sp0)
 		fmt.Fprintf(w, "    ld.w    t2, fp, %d\n", sp1)
@@ -2144,9 +2145,9 @@ func (p *wat2laWorker) buildFunc_ins(
 		fmt.Fprintf(w, "    st.w    t0, fp, %d\n", ret0)
 
 	case token.INS_F64_GT:
-		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.F64)
-		sp1 := p.fnWasmR0Base - 8*stk.Pop(token.F64)
-		ret0 := p.fnWasmR0Base - 8*stk.Push(token.I32)
+		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.F64) - 8
+		sp1 := p.fnWasmR0Base - 8*stk.Pop(token.F64) - 8
+		ret0 := p.fnWasmR0Base - 8*stk.Push(token.I32) - 8
 
 		fmt.Fprintf(w, "    ld.w    t1, fp, %d\n", sp0)
 		fmt.Fprintf(w, "    ld.w    t2, fp, %d\n", sp1)
@@ -2154,9 +2155,9 @@ func (p *wat2laWorker) buildFunc_ins(
 		fmt.Fprintf(w, "    st.w    t0, fp, %d\n", ret0)
 
 	case token.INS_F64_LE:
-		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.F64)
-		sp1 := p.fnWasmR0Base - 8*stk.Pop(token.F64)
-		ret0 := p.fnWasmR0Base - 8*stk.Push(token.I32)
+		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.F64) - 8
+		sp1 := p.fnWasmR0Base - 8*stk.Pop(token.F64) - 8
+		ret0 := p.fnWasmR0Base - 8*stk.Push(token.I32) - 8
 
 		fmt.Fprintf(w, "    ld.w    t1, fp, %d\n", sp0)
 		fmt.Fprintf(w, "    ld.w    t2, fp, %d\n", sp1)
@@ -2164,9 +2165,9 @@ func (p *wat2laWorker) buildFunc_ins(
 		fmt.Fprintf(w, "    st.w    t0, fp, %d\n", ret0)
 
 	case token.INS_F64_GE:
-		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.F64)
-		sp1 := p.fnWasmR0Base - 8*stk.Pop(token.F64)
-		ret0 := p.fnWasmR0Base - 8*stk.Push(token.I32)
+		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.F64) - 8
+		sp1 := p.fnWasmR0Base - 8*stk.Pop(token.F64) - 8
+		ret0 := p.fnWasmR0Base - 8*stk.Push(token.I32) - 8
 
 		fmt.Fprintf(w, "    ld.w    t1, fp, %d\n", sp0)
 		fmt.Fprintf(w, "    ld.w    t2, fp, %d\n", sp1)
@@ -2174,33 +2175,33 @@ func (p *wat2laWorker) buildFunc_ins(
 		fmt.Fprintf(w, "    st.w    t0, fp, %d\n", ret0)
 
 	case token.INS_I32_CLZ:
-		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.I32)
-		ret0 := p.fnWasmR0Base - 8*stk.Push(token.I32)
+		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.I32) - 8
+		ret0 := p.fnWasmR0Base - 8*stk.Push(token.I32) - 8
 
 		fmt.Fprintf(w, "    ld.w    t0, fp, %d\n", sp0)
 		fmt.Fprintf(w, "    clz.w   t1, t0\n")
 		fmt.Fprintf(w, "    st.w    t1, fp, %d\n", ret0)
 
 	case token.INS_I32_CTZ:
-		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.I32)
-		ret0 := p.fnWasmR0Base - 8*stk.Push(token.I32)
+		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.I32) - 8
+		ret0 := p.fnWasmR0Base - 8*stk.Push(token.I32) - 8
 
 		fmt.Fprintf(w, "    ld.w    t0, fp, %d\n", sp0)
 		fmt.Fprintf(w, "    ctz.w   t1, t0\n")
 		fmt.Fprintf(w, "    st.w    t1, fp, %d\n", ret0)
 
 	case token.INS_I32_POPCNT:
-		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.I32)
-		ret0 := p.fnWasmR0Base - 8*stk.Push(token.I32)
+		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.I32) - 8
+		ret0 := p.fnWasmR0Base - 8*stk.Push(token.I32) - 8
 
 		fmt.Fprintf(w, "    ld.w    a0, fp, %d\n", sp0)
 		fmt.Fprintf(w, "    bl      $builtin.pcnt.w\n")
 		fmt.Fprintf(w, "    st.w    a0, fp, %d\n", ret0)
 
 	case token.INS_I32_ADD:
-		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.I32)
-		sp1 := p.fnWasmR0Base - 8*stk.Pop(token.I32)
-		ret0 := p.fnWasmR0Base - 8*stk.Push(token.I32)
+		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.I32) - 8
+		sp1 := p.fnWasmR0Base - 8*stk.Pop(token.I32) - 8
+		ret0 := p.fnWasmR0Base - 8*stk.Push(token.I32) - 8
 
 		fmt.Fprintf(w, "    ld.w    a0, fp, %d\n", sp0)
 		fmt.Fprintf(w, "    ld.w    a1, fp, %d\n", sp1)
@@ -2208,9 +2209,9 @@ func (p *wat2laWorker) buildFunc_ins(
 		fmt.Fprintf(w, "    st.w    a0, fp, %d\n", ret0)
 
 	case token.INS_I32_SUB:
-		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.I32)
-		sp1 := p.fnWasmR0Base - 8*stk.Pop(token.I32)
-		ret0 := p.fnWasmR0Base - 8*stk.Push(token.I32)
+		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.I32) - 8
+		sp1 := p.fnWasmR0Base - 8*stk.Pop(token.I32) - 8
+		ret0 := p.fnWasmR0Base - 8*stk.Push(token.I32) - 8
 
 		fmt.Fprintf(w, "    ld.w    a0, fp, %d\n", sp0)
 		fmt.Fprintf(w, "    ld.w    a1, fp, %d\n", sp1)
@@ -2218,9 +2219,9 @@ func (p *wat2laWorker) buildFunc_ins(
 		fmt.Fprintf(w, "    st.w    a0, fp, %d\n", ret0)
 
 	case token.INS_I32_MUL:
-		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.I32)
-		sp1 := p.fnWasmR0Base - 8*stk.Pop(token.I32)
-		ret0 := p.fnWasmR0Base - 8*stk.Push(token.I32)
+		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.I32) - 8
+		sp1 := p.fnWasmR0Base - 8*stk.Pop(token.I32) - 8
+		ret0 := p.fnWasmR0Base - 8*stk.Push(token.I32) - 8
 
 		fmt.Fprintf(w, "    ld.w    a0, fp, %d\n", sp0)
 		fmt.Fprintf(w, "    ld.w    a1, fp, %d\n", sp1)
@@ -2228,9 +2229,9 @@ func (p *wat2laWorker) buildFunc_ins(
 		fmt.Fprintf(w, "    st.w    a0, fp, %d\n", ret0)
 
 	case token.INS_I32_DIV_S:
-		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.I32)
-		sp1 := p.fnWasmR0Base - 8*stk.Pop(token.I32)
-		ret0 := p.fnWasmR0Base - 8*stk.Push(token.I32)
+		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.I32) - 8
+		sp1 := p.fnWasmR0Base - 8*stk.Pop(token.I32) - 8
+		ret0 := p.fnWasmR0Base - 8*stk.Push(token.I32) - 8
 
 		fmt.Fprintf(w, "    ld.w    a0, fp, %d\n", sp0)
 		fmt.Fprintf(w, "    ld.w    a1, fp, %d\n", sp1)
@@ -2238,9 +2239,9 @@ func (p *wat2laWorker) buildFunc_ins(
 		fmt.Fprintf(w, "    st.w    a0, fp, %d\n", ret0)
 
 	case token.INS_I32_DIV_U:
-		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.I32)
-		sp1 := p.fnWasmR0Base - 8*stk.Pop(token.I32)
-		ret0 := p.fnWasmR0Base - 8*stk.Push(token.I32)
+		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.I32) - 8
+		sp1 := p.fnWasmR0Base - 8*stk.Pop(token.I32) - 8
+		ret0 := p.fnWasmR0Base - 8*stk.Push(token.I32) - 8
 
 		fmt.Fprintf(w, "    ld.w    a0, fp, %d\n", sp0)
 		fmt.Fprintf(w, "    ld.w    a1, fp, %d\n", sp1)
@@ -2248,9 +2249,9 @@ func (p *wat2laWorker) buildFunc_ins(
 		fmt.Fprintf(w, "    st.w    a0, fp, %d\n", ret0)
 
 	case token.INS_I32_REM_S:
-		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.I32)
-		sp1 := p.fnWasmR0Base - 8*stk.Pop(token.I32)
-		ret0 := p.fnWasmR0Base - 8*stk.Push(token.I32)
+		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.I32) - 8
+		sp1 := p.fnWasmR0Base - 8*stk.Pop(token.I32) - 8
+		ret0 := p.fnWasmR0Base - 8*stk.Push(token.I32) - 8
 
 		fmt.Fprintf(w, "    ld.w    a0, fp, %d\n", sp0)
 		fmt.Fprintf(w, "    ld.w    a1, fp, %d\n", sp1)
@@ -2258,9 +2259,9 @@ func (p *wat2laWorker) buildFunc_ins(
 		fmt.Fprintf(w, "    st.w    a0, fp, %d\n", ret0)
 
 	case token.INS_I32_REM_U:
-		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.I32)
-		sp1 := p.fnWasmR0Base - 8*stk.Pop(token.I32)
-		ret0 := p.fnWasmR0Base - 8*stk.Push(token.I32)
+		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.I32) - 8
+		sp1 := p.fnWasmR0Base - 8*stk.Pop(token.I32) - 8
+		ret0 := p.fnWasmR0Base - 8*stk.Push(token.I32) - 8
 
 		fmt.Fprintf(w, "    ld.w    a0, fp, %d\n", sp0)
 		fmt.Fprintf(w, "    ld.w    a1, fp, %d\n", sp1)
@@ -2268,9 +2269,9 @@ func (p *wat2laWorker) buildFunc_ins(
 		fmt.Fprintf(w, "    st.w    a0, fp, %d\n", ret0)
 
 	case token.INS_I32_AND:
-		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.I32)
-		sp1 := p.fnWasmR0Base - 8*stk.Pop(token.I32)
-		ret0 := p.fnWasmR0Base - 8*stk.Push(token.I32)
+		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.I32) - 8
+		sp1 := p.fnWasmR0Base - 8*stk.Pop(token.I32) - 8
+		ret0 := p.fnWasmR0Base - 8*stk.Push(token.I32) - 8
 
 		fmt.Fprintf(w, "    ld.w    a0, fp, %d\n", sp0)
 		fmt.Fprintf(w, "    ld.w    a1, fp, %d\n", sp1)
@@ -2278,9 +2279,9 @@ func (p *wat2laWorker) buildFunc_ins(
 		fmt.Fprintf(w, "    st.w    a0, fp, %d\n", ret0)
 
 	case token.INS_I32_OR:
-		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.I32)
-		sp1 := p.fnWasmR0Base - 8*stk.Pop(token.I32)
-		ret0 := p.fnWasmR0Base - 8*stk.Push(token.I32)
+		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.I32) - 8
+		sp1 := p.fnWasmR0Base - 8*stk.Pop(token.I32) - 8
+		ret0 := p.fnWasmR0Base - 8*stk.Push(token.I32) - 8
 
 		fmt.Fprintf(w, "    ld.w    a0, fp, %d\n", sp0)
 		fmt.Fprintf(w, "    ld.w    a1, fp, %d\n", sp1)
@@ -2288,9 +2289,9 @@ func (p *wat2laWorker) buildFunc_ins(
 		fmt.Fprintf(w, "    st.w    a0, fp, %d\n", ret0)
 
 	case token.INS_I32_XOR:
-		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.I32)
-		sp1 := p.fnWasmR0Base - 8*stk.Pop(token.I32)
-		ret0 := p.fnWasmR0Base - 8*stk.Push(token.I32)
+		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.I32) - 8
+		sp1 := p.fnWasmR0Base - 8*stk.Pop(token.I32) - 8
+		ret0 := p.fnWasmR0Base - 8*stk.Push(token.I32) - 8
 
 		fmt.Fprintf(w, "    ld.w    a0, fp, %d\n", sp0)
 		fmt.Fprintf(w, "    ld.w    a1, fp, %d\n", sp1)
@@ -2298,9 +2299,9 @@ func (p *wat2laWorker) buildFunc_ins(
 		fmt.Fprintf(w, "    st.w    a0, fp, %d\n", ret0)
 
 	case token.INS_I32_SHL:
-		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.I32)
-		sp1 := p.fnWasmR0Base - 8*stk.Pop(token.I32)
-		ret0 := p.fnWasmR0Base - 8*stk.Push(token.I32)
+		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.I32) - 8
+		sp1 := p.fnWasmR0Base - 8*stk.Pop(token.I32) - 8
+		ret0 := p.fnWasmR0Base - 8*stk.Push(token.I32) - 8
 
 		fmt.Fprintf(w, "    ld.w    a0, fp, %d\n", sp0)
 		fmt.Fprintf(w, "    ld.w    a1, fp, %d\n", sp1)
@@ -2308,9 +2309,9 @@ func (p *wat2laWorker) buildFunc_ins(
 		fmt.Fprintf(w, "    st.w    a0, fp, %d\n", ret0)
 
 	case token.INS_I32_SHR_S:
-		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.I32)
-		sp1 := p.fnWasmR0Base - 8*stk.Pop(token.I32)
-		ret0 := p.fnWasmR0Base - 8*stk.Push(token.I32)
+		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.I32) - 8
+		sp1 := p.fnWasmR0Base - 8*stk.Pop(token.I32) - 8
+		ret0 := p.fnWasmR0Base - 8*stk.Push(token.I32) - 8
 
 		fmt.Fprintf(w, "    ld.w    a0, fp, %d\n", sp0)
 		fmt.Fprintf(w, "    ld.w    a1, fp, %d\n", sp1)
@@ -2318,9 +2319,9 @@ func (p *wat2laWorker) buildFunc_ins(
 		fmt.Fprintf(w, "    st.w    a0, fp, %d\n", ret0)
 
 	case token.INS_I32_SHR_U:
-		sp0 := stk.Pop(token.I32)
-		sp1 := stk.Pop(token.I32)
-		ret0 := stk.Push(token.I32)
+		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.I32) - 8
+		sp1 := p.fnWasmR0Base - 8*stk.Pop(token.I32) - 8
+		ret0 := p.fnWasmR0Base - 8*stk.Push(token.I32) - 8
 
 		fmt.Fprintf(w, "    ld.w    a0, fp, %d\n", sp0)
 		fmt.Fprintf(w, "    ld.w    a1, fp, %d\n", sp1)
@@ -2328,9 +2329,9 @@ func (p *wat2laWorker) buildFunc_ins(
 		fmt.Fprintf(w, "    st.w    a0, fp, %d\n", ret0)
 
 	case token.INS_I32_ROTL:
-		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.I32)
-		sp1 := p.fnWasmR0Base - 8*stk.Pop(token.I32)
-		ret0 := p.fnWasmR0Base - 8*stk.Push(token.I32)
+		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.I32) - 8
+		sp1 := p.fnWasmR0Base - 8*stk.Pop(token.I32) - 8
+		ret0 := p.fnWasmR0Base - 8*stk.Push(token.I32) - 8
 
 		fmt.Fprintf(w, "    ld.w    a0, fp, %d\n", sp0)
 		fmt.Fprintf(w, "    ld.w    a1, fp, %d\n", sp1)
@@ -2340,9 +2341,9 @@ func (p *wat2laWorker) buildFunc_ins(
 		fmt.Fprintf(w, "    st.w    a0, fp, %d\n", ret0)
 
 	case token.INS_I32_ROTR:
-		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.I32)
-		sp1 := p.fnWasmR0Base - 8*stk.Pop(token.I32)
-		ret0 := p.fnWasmR0Base - 8*stk.Push(token.I32)
+		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.I32) - 8
+		sp1 := p.fnWasmR0Base - 8*stk.Pop(token.I32) - 8
+		ret0 := p.fnWasmR0Base - 8*stk.Push(token.I32) - 8
 
 		fmt.Fprintf(w, "    ld.w    a0, fp, %d\n", sp0)
 		fmt.Fprintf(w, "    ld.w    a1, fp, %d\n", sp1)
@@ -2350,33 +2351,33 @@ func (p *wat2laWorker) buildFunc_ins(
 		fmt.Fprintf(w, "    st.w    a0, fp, %d\n", ret0)
 
 	case token.INS_I64_CLZ:
-		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.I64)
-		ret0 := p.fnWasmR0Base - 8*stk.Push(token.I32)
+		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.I64) - 8
+		ret0 := p.fnWasmR0Base - 8*stk.Push(token.I32) - 8
 
 		fmt.Fprintf(w, "    ld.w    a0, fp, %d\n", sp0)
 		fmt.Fprintf(w, "    clz.w   a0, a0\n")
 		fmt.Fprintf(w, "    st.w    a0, fp, %d\n", ret0)
 
 	case token.INS_I64_CTZ:
-		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.I64)
-		ret0 := p.fnWasmR0Base - 8*stk.Push(token.I32)
+		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.I64) - 8
+		ret0 := p.fnWasmR0Base - 8*stk.Push(token.I32) - 8
 
 		fmt.Fprintf(w, "    ld.d    a0, fp, %d\n", sp0)
 		fmt.Fprintf(w, "    ctz.d   a0, a0\n")
 		fmt.Fprintf(w, "    st.d    a0, fp, %d\n", ret0)
 
 	case token.INS_I64_POPCNT:
-		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.I64)
-		ret0 := p.fnWasmR0Base - 8*stk.Push(token.I32)
+		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.I64) - 8
+		ret0 := p.fnWasmR0Base - 8*stk.Push(token.I32) - 8
 
 		fmt.Fprintf(w, "    ld.d    a0, fp, %d\n", sp0)
 		fmt.Fprintf(w, "    bl      $builtin.pcnt.d\n")
 		fmt.Fprintf(w, "    st.d    a0, fp, %d\n", ret0)
 
 	case token.INS_I64_ADD:
-		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.I64)
-		sp1 := p.fnWasmR0Base - 8*stk.Pop(token.I64)
-		ret0 := p.fnWasmR0Base - 8*stk.Push(token.I64)
+		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.I64) - 8
+		sp1 := p.fnWasmR0Base - 8*stk.Pop(token.I64) - 8
+		ret0 := p.fnWasmR0Base - 8*stk.Push(token.I64) - 8
 
 		fmt.Fprintf(w, "    ld.d    a0, fp, %d\n", sp0)
 		fmt.Fprintf(w, "    ld.d    a1, fp, %d\n", sp1)
@@ -2384,9 +2385,9 @@ func (p *wat2laWorker) buildFunc_ins(
 		fmt.Fprintf(w, "    st.d    a0, fp, %d\n", ret0)
 
 	case token.INS_I64_SUB:
-		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.I64)
-		sp1 := p.fnWasmR0Base - 8*stk.Pop(token.I64)
-		ret0 := p.fnWasmR0Base - 8*stk.Push(token.I64)
+		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.I64) - 8
+		sp1 := p.fnWasmR0Base - 8*stk.Pop(token.I64) - 8
+		ret0 := p.fnWasmR0Base - 8*stk.Push(token.I64) - 8
 
 		fmt.Fprintf(w, "    ld.d    a0, fp, %d\n", sp0)
 		fmt.Fprintf(w, "    ld.d    a1, fp, %d\n", sp1)
@@ -2394,9 +2395,9 @@ func (p *wat2laWorker) buildFunc_ins(
 		fmt.Fprintf(w, "    st.d    a0, fp, %d\n", ret0)
 
 	case token.INS_I64_MUL:
-		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.I64)
-		sp1 := p.fnWasmR0Base - 8*stk.Pop(token.I64)
-		ret0 := p.fnWasmR0Base - 8*stk.Push(token.I64)
+		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.I64) - 8
+		sp1 := p.fnWasmR0Base - 8*stk.Pop(token.I64) - 8
+		ret0 := p.fnWasmR0Base - 8*stk.Push(token.I64) - 8
 
 		fmt.Fprintf(w, "    ld.d    a0, fp, %d\n", sp0)
 		fmt.Fprintf(w, "    ld.d    a1, fp, %d\n", sp1)
@@ -2404,9 +2405,9 @@ func (p *wat2laWorker) buildFunc_ins(
 		fmt.Fprintf(w, "    st.d    a0, fp, %d\n", ret0)
 
 	case token.INS_I64_DIV_S:
-		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.I64)
-		sp1 := p.fnWasmR0Base - 8*stk.Pop(token.I64)
-		ret0 := p.fnWasmR0Base - 8*stk.Push(token.I64)
+		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.I64) - 8
+		sp1 := p.fnWasmR0Base - 8*stk.Pop(token.I64) - 8
+		ret0 := p.fnWasmR0Base - 8*stk.Push(token.I64) - 8
 
 		fmt.Fprintf(w, "    ld.dw    a0, fp, %d\n", sp0)
 		fmt.Fprintf(w, "    ld.d    a1, fp, %d\n", sp1)
@@ -2414,9 +2415,9 @@ func (p *wat2laWorker) buildFunc_ins(
 		fmt.Fprintf(w, "    st.d    a0, fp, %d\n", ret0)
 
 	case token.INS_I64_DIV_U:
-		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.I64)
-		sp1 := p.fnWasmR0Base - 8*stk.Pop(token.I64)
-		ret0 := p.fnWasmR0Base - 8*stk.Push(token.I64)
+		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.I64) - 8
+		sp1 := p.fnWasmR0Base - 8*stk.Pop(token.I64) - 8
+		ret0 := p.fnWasmR0Base - 8*stk.Push(token.I64) - 8
 
 		fmt.Fprintf(w, "    ld.d    a0, fp, %d\n", sp0)
 		fmt.Fprintf(w, "    ld.d    a1, fp, %d\n", sp1)
@@ -2424,9 +2425,9 @@ func (p *wat2laWorker) buildFunc_ins(
 		fmt.Fprintf(w, "    st.d    a0, fp, %d\n", ret0)
 
 	case token.INS_I64_REM_S:
-		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.I64)
-		sp1 := p.fnWasmR0Base - 8*stk.Pop(token.I64)
-		ret0 := p.fnWasmR0Base - 8*stk.Push(token.I64)
+		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.I64) - 8
+		sp1 := p.fnWasmR0Base - 8*stk.Pop(token.I64) - 8
+		ret0 := p.fnWasmR0Base - 8*stk.Push(token.I64) - 8
 
 		fmt.Fprintf(w, "    ld.d    a0, fp, %d\n", sp0)
 		fmt.Fprintf(w, "    ld.d    a1, fp, %d\n", sp1)
@@ -2434,9 +2435,9 @@ func (p *wat2laWorker) buildFunc_ins(
 		fmt.Fprintf(w, "    st.d    a0, fp, %d\n", ret0)
 
 	case token.INS_I64_REM_U:
-		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.I64)
-		sp1 := p.fnWasmR0Base - 8*stk.Pop(token.I64)
-		ret0 := p.fnWasmR0Base - 8*stk.Push(token.I64)
+		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.I64) - 8
+		sp1 := p.fnWasmR0Base - 8*stk.Pop(token.I64) - 8
+		ret0 := p.fnWasmR0Base - 8*stk.Push(token.I64) - 8
 
 		fmt.Fprintf(w, "    ld.d    a0, fp, %d\n", sp0)
 		fmt.Fprintf(w, "    ld.d    a1, fp, %d\n", sp1)
@@ -2444,9 +2445,9 @@ func (p *wat2laWorker) buildFunc_ins(
 		fmt.Fprintf(w, "    st.d    a0, fp, %d\n", ret0)
 
 	case token.INS_I64_AND:
-		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.I64)
-		sp1 := p.fnWasmR0Base - 8*stk.Pop(token.I64)
-		ret0 := p.fnWasmR0Base - 8*stk.Push(token.I64)
+		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.I64) - 8
+		sp1 := p.fnWasmR0Base - 8*stk.Pop(token.I64) - 8
+		ret0 := p.fnWasmR0Base - 8*stk.Push(token.I64) - 8
 
 		fmt.Fprintf(w, "    ld.d    a0, fp, %d\n", sp0)
 		fmt.Fprintf(w, "    ld.d    a1, fp, %d\n", sp1)
@@ -2454,9 +2455,9 @@ func (p *wat2laWorker) buildFunc_ins(
 		fmt.Fprintf(w, "    st.d    a0, fp, %d\n", ret0)
 
 	case token.INS_I64_OR:
-		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.I64)
-		sp1 := p.fnWasmR0Base - 8*stk.Pop(token.I64)
-		ret0 := p.fnWasmR0Base - 8*stk.Push(token.I64)
+		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.I64) - 8
+		sp1 := p.fnWasmR0Base - 8*stk.Pop(token.I64) - 8
+		ret0 := p.fnWasmR0Base - 8*stk.Push(token.I64) - 8
 
 		fmt.Fprintf(w, "    ld.d    a0, fp, %d\n", sp0)
 		fmt.Fprintf(w, "    ld.d    a1, fp, %d\n", sp1)
@@ -2464,9 +2465,9 @@ func (p *wat2laWorker) buildFunc_ins(
 		fmt.Fprintf(w, "    st.d    a0, fp, %d\n", ret0)
 
 	case token.INS_I64_XOR:
-		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.I64)
-		sp1 := p.fnWasmR0Base - 8*stk.Pop(token.I64)
-		ret0 := p.fnWasmR0Base - 8*stk.Push(token.I64)
+		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.I64) - 8
+		sp1 := p.fnWasmR0Base - 8*stk.Pop(token.I64) - 8
+		ret0 := p.fnWasmR0Base - 8*stk.Push(token.I64) - 8
 
 		fmt.Fprintf(w, "    ld.d    a0, fp, %d\n", sp0)
 		fmt.Fprintf(w, "    ld.d    a1, fp, %d\n", sp1)
@@ -2474,9 +2475,9 @@ func (p *wat2laWorker) buildFunc_ins(
 		fmt.Fprintf(w, "    st.d    a0, fp, %d\n", ret0)
 
 	case token.INS_I64_SHL:
-		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.I64)
-		sp1 := p.fnWasmR0Base - 8*stk.Pop(token.I64)
-		ret0 := p.fnWasmR0Base - 8*stk.Push(token.I64)
+		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.I64) - 8
+		sp1 := p.fnWasmR0Base - 8*stk.Pop(token.I64) - 8
+		ret0 := p.fnWasmR0Base - 8*stk.Push(token.I64) - 8
 
 		fmt.Fprintf(w, "    ld.d    a0, fp, %d\n", sp0)
 		fmt.Fprintf(w, "    ld.d    a1, fp, %d\n", sp1)
@@ -2484,9 +2485,9 @@ func (p *wat2laWorker) buildFunc_ins(
 		fmt.Fprintf(w, "    st.d    a0, fp, %d\n", ret0)
 
 	case token.INS_I64_SHR_S:
-		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.I64)
-		sp1 := p.fnWasmR0Base - 8*stk.Pop(token.I64)
-		ret0 := p.fnWasmR0Base - 8*stk.Push(token.I64)
+		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.I64) - 8
+		sp1 := p.fnWasmR0Base - 8*stk.Pop(token.I64) - 8
+		ret0 := p.fnWasmR0Base - 8*stk.Push(token.I64) - 8
 
 		fmt.Fprintf(w, "    ld.d    a0, fp, %d\n", sp0)
 		fmt.Fprintf(w, "    ld.d    a1, fp, %d\n", sp1)
@@ -2494,9 +2495,9 @@ func (p *wat2laWorker) buildFunc_ins(
 		fmt.Fprintf(w, "    st.d    a0, fp, %d\n", ret0)
 
 	case token.INS_I64_SHR_U:
-		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.I64)
-		sp1 := p.fnWasmR0Base - 8*stk.Pop(token.I64)
-		ret0 := p.fnWasmR0Base - 8*stk.Push(token.I64)
+		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.I64) - 8
+		sp1 := p.fnWasmR0Base - 8*stk.Pop(token.I64) - 8
+		ret0 := p.fnWasmR0Base - 8*stk.Push(token.I64) - 8
 
 		fmt.Fprintf(w, "    ld.d    a0, fp, %d\n", sp0)
 		fmt.Fprintf(w, "    ld.d    a1, fp, %d\n", sp1)
@@ -2504,9 +2505,9 @@ func (p *wat2laWorker) buildFunc_ins(
 		fmt.Fprintf(w, "    st.d    a0, fp, %d\n", ret0)
 
 	case token.INS_I64_ROTL:
-		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.I64)
-		sp1 := p.fnWasmR0Base - 8*stk.Pop(token.I64)
-		ret0 := p.fnWasmR0Base - 8*stk.Push(token.I64)
+		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.I64) - 8
+		sp1 := p.fnWasmR0Base - 8*stk.Pop(token.I64) - 8
+		ret0 := p.fnWasmR0Base - 8*stk.Push(token.I64) - 8
 
 		fmt.Fprintf(w, "    ld.d    a0, fp, %d\n", sp0)
 		fmt.Fprintf(w, "    ld.d    a1, fp, %d\n", sp1)
@@ -2516,9 +2517,9 @@ func (p *wat2laWorker) buildFunc_ins(
 		fmt.Fprintf(w, "    st.d    a0, fp, %d\n", ret0)
 
 	case token.INS_I64_ROTR:
-		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.I64)
-		sp1 := p.fnWasmR0Base - 8*stk.Pop(token.I64)
-		ret0 := p.fnWasmR0Base - 8*stk.Push(token.I64)
+		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.I64) - 8
+		sp1 := p.fnWasmR0Base - 8*stk.Pop(token.I64) - 8
+		ret0 := p.fnWasmR0Base - 8*stk.Push(token.I64) - 8
 
 		fmt.Fprintf(w, "    ld.d    a0, fp, %d\n", sp0)
 		fmt.Fprintf(w, "    ld.d    a1, fp, %d\n", sp1)
@@ -2526,24 +2527,24 @@ func (p *wat2laWorker) buildFunc_ins(
 		fmt.Fprintf(w, "    st.d    a0, fp, %d\n", ret0)
 
 	case token.INS_F32_ABS:
-		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.F32)
-		ret0 := p.fnWasmR0Base - 8*stk.Push(token.F32)
+		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.F32) - 8
+		ret0 := p.fnWasmR0Base - 8*stk.Push(token.F32) - 8
 
 		fmt.Fprintf(w, "    fld.s   fa0, fp, %d\n", sp0)
 		fmt.Fprintf(w, "    fabs.s  fa0, fa0\n")
 		fmt.Fprintf(w, "    fst.s   fa0, fp, %d\n", ret0)
 
 	case token.INS_F32_NEG:
-		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.F32)
-		ret0 := p.fnWasmR0Base - 8*stk.Push(token.F32)
+		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.F32) - 8
+		ret0 := p.fnWasmR0Base - 8*stk.Push(token.F32) - 8
 
 		fmt.Fprintf(w, "    fld.s   fa0, fp, %d\n", sp0)
 		fmt.Fprintf(w, "    fneg.s  fa0, a0\n")
 		fmt.Fprintf(w, "    fst.s   fa0, fp, %d\n", ret0)
 
 	case token.INS_F32_CEIL:
-		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.F32)
-		ret0 := p.fnWasmR0Base - 8*stk.Push(token.F32)
+		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.F32) - 8
+		ret0 := p.fnWasmR0Base - 8*stk.Push(token.F32) - 8
 
 		fmt.Fprintf(w, "    fld.s       fa0, fp, %d\n", sp0)
 		fmt.Fprintf(w, "    ftintrp.w.s fa1, fa0\n")
@@ -2551,8 +2552,8 @@ func (p *wat2laWorker) buildFunc_ins(
 		fmt.Fprintf(w, "    fst.s       fa1, fp, %d\n", ret0)
 
 	case token.INS_F32_FLOOR:
-		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.F32)
-		ret0 := p.fnWasmR0Base - 8*stk.Push(token.F32)
+		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.F32) - 8
+		ret0 := p.fnWasmR0Base - 8*stk.Push(token.F32) - 8
 
 		fmt.Fprintf(w, "    fld.s       fa0, fp, %d\n", sp0)
 		fmt.Fprintf(w, "    ftintrm.w.s fa1, fa0\n")
@@ -2560,8 +2561,8 @@ func (p *wat2laWorker) buildFunc_ins(
 		fmt.Fprintf(w, "    fst.s       fa1, fp, %d\n", ret0)
 
 	case token.INS_F32_TRUNC:
-		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.F32)
-		ret0 := p.fnWasmR0Base - 8*stk.Push(token.F32)
+		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.F32) - 8
+		ret0 := p.fnWasmR0Base - 8*stk.Push(token.F32) - 8
 
 		fmt.Fprintf(w, "    fld.s       fa0, fp, %d\n", sp0)
 		fmt.Fprintf(w, "    ftintrz.w.s fa1, fa0\n")
@@ -2569,8 +2570,8 @@ func (p *wat2laWorker) buildFunc_ins(
 		fmt.Fprintf(w, "    fst.s       fa1, fp, %d\n", ret0)
 
 	case token.INS_F32_NEAREST:
-		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.F32)
-		ret0 := p.fnWasmR0Base - 8*stk.Push(token.F32)
+		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.F32) - 8
+		ret0 := p.fnWasmR0Base - 8*stk.Push(token.F32) - 8
 
 		fmt.Fprintf(w, "    fld.s        fa0, fp, %d\n", sp0)
 		fmt.Fprintf(w, "    ftintrne.w.s fa1, fa0\n")
@@ -2578,17 +2579,17 @@ func (p *wat2laWorker) buildFunc_ins(
 		fmt.Fprintf(w, "    fst.s        fa1, fp, %d\n", ret0)
 
 	case token.INS_F32_SQRT:
-		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.F32)
-		ret0 := p.fnWasmR0Base - 8*stk.Push(token.F32)
+		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.F32) - 8
+		ret0 := p.fnWasmR0Base - 8*stk.Push(token.F32) - 8
 
 		fmt.Fprintf(w, "    fld.s   fa0, fp, %d\n", sp0)
 		fmt.Fprintf(w, "    fsqrt.s fa0, fa0\n")
 		fmt.Fprintf(w, "    fst.s   fa0, fp, %d\n", ret0)
 
 	case token.INS_F32_ADD:
-		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.F32)
-		sp1 := p.fnWasmR0Base - 8*stk.Pop(token.F32)
-		ret0 := p.fnWasmR0Base - 8*stk.Push(token.F32)
+		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.F32) - 8
+		sp1 := p.fnWasmR0Base - 8*stk.Pop(token.F32) - 8
+		ret0 := p.fnWasmR0Base - 8*stk.Push(token.F32) - 8
 
 		fmt.Fprintf(w, "    fld.s   fa0, fp, %d\n", sp0)
 		fmt.Fprintf(w, "    fld.s   fa1, fp, %d\n", sp1)
@@ -2596,9 +2597,9 @@ func (p *wat2laWorker) buildFunc_ins(
 		fmt.Fprintf(w, "    fst.s   fa0, fp, %d\n", ret0)
 
 	case token.INS_F32_SUB:
-		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.F32)
-		sp1 := p.fnWasmR0Base - 8*stk.Pop(token.F32)
-		ret0 := p.fnWasmR0Base - 8*stk.Push(token.F32)
+		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.F32) - 8
+		sp1 := p.fnWasmR0Base - 8*stk.Pop(token.F32) - 8
+		ret0 := p.fnWasmR0Base - 8*stk.Push(token.F32) - 8
 
 		fmt.Fprintf(w, "    fld.s   fa0, fp, %d\n", sp0)
 		fmt.Fprintf(w, "    fld.s   fa1, fp, %d\n", sp1)
@@ -2606,9 +2607,9 @@ func (p *wat2laWorker) buildFunc_ins(
 		fmt.Fprintf(w, "    fst.s   fa0, fp, %d\n", ret0)
 
 	case token.INS_F32_MUL:
-		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.F32)
-		sp1 := p.fnWasmR0Base - 8*stk.Pop(token.F32)
-		ret0 := p.fnWasmR0Base - 8*stk.Push(token.F32)
+		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.F32) - 8
+		sp1 := p.fnWasmR0Base - 8*stk.Pop(token.F32) - 8
+		ret0 := p.fnWasmR0Base - 8*stk.Push(token.F32) - 8
 
 		fmt.Fprintf(w, "    fld.s   fa0, fp, %d\n", sp0)
 		fmt.Fprintf(w, "    fld.s   fa1, fp, %d\n", sp1)
@@ -2616,9 +2617,9 @@ func (p *wat2laWorker) buildFunc_ins(
 		fmt.Fprintf(w, "    fst.s   fa0, fp, %d\n", ret0)
 
 	case token.INS_F32_DIV:
-		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.F32)
-		sp1 := p.fnWasmR0Base - 8*stk.Pop(token.F32)
-		ret0 := p.fnWasmR0Base - 8*stk.Push(token.F32)
+		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.F32) - 8
+		sp1 := p.fnWasmR0Base - 8*stk.Pop(token.F32) - 8
+		ret0 := p.fnWasmR0Base - 8*stk.Push(token.F32) - 8
 
 		fmt.Fprintf(w, "    fld.s   fa0, fp, %d\n", sp0)
 		fmt.Fprintf(w, "    fld.s   fa1, fp, %d\n", sp1)
@@ -2626,9 +2627,9 @@ func (p *wat2laWorker) buildFunc_ins(
 		fmt.Fprintf(w, "    fst.s   fa0, fp, %d\n", ret0)
 
 	case token.INS_F32_MIN:
-		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.F32)
-		sp1 := p.fnWasmR0Base - 8*stk.Pop(token.F32)
-		ret0 := p.fnWasmR0Base - 8*stk.Push(token.F32)
+		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.F32) - 8
+		sp1 := p.fnWasmR0Base - 8*stk.Pop(token.F32) - 8
+		ret0 := p.fnWasmR0Base - 8*stk.Push(token.F32) - 8
 
 		fmt.Fprintf(w, "    fld.s   fa0, fp, %d\n", sp0)
 		fmt.Fprintf(w, "    fld.s   fa1, fp, %d\n", sp1)
@@ -2636,9 +2637,9 @@ func (p *wat2laWorker) buildFunc_ins(
 		fmt.Fprintf(w, "    fst.s   fa0, fp, %d\n", ret0)
 
 	case token.INS_F32_MAX:
-		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.F32)
-		sp1 := p.fnWasmR0Base - 8*stk.Pop(token.F32)
-		ret0 := p.fnWasmR0Base - 8*stk.Push(token.F32)
+		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.F32) - 8
+		sp1 := p.fnWasmR0Base - 8*stk.Pop(token.F32) - 8
+		ret0 := p.fnWasmR0Base - 8*stk.Push(token.F32) - 8
 
 		fmt.Fprintf(w, "    fld.s   fa0, fp, %d\n", sp0)
 		fmt.Fprintf(w, "    fld.s   fa1, fp, %d\n", sp1)
@@ -2646,9 +2647,9 @@ func (p *wat2laWorker) buildFunc_ins(
 		fmt.Fprintf(w, "    fst.s   fa0, fp, %d\n", ret0)
 
 	case token.INS_F32_COPYSIGN:
-		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.F32)
-		sp1 := p.fnWasmR0Base - 8*stk.Pop(token.F32)
-		ret0 := p.fnWasmR0Base - 8*stk.Push(token.F32)
+		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.F32) - 8
+		sp1 := p.fnWasmR0Base - 8*stk.Pop(token.F32) - 8
+		ret0 := p.fnWasmR0Base - 8*stk.Push(token.F32) - 8
 
 		fmt.Fprintf(w, "    fld.s       fa0, fp, %d\n", sp0)
 		fmt.Fprintf(w, "    fld.s       fa1, fp, %d\n", sp1)
@@ -2656,24 +2657,24 @@ func (p *wat2laWorker) buildFunc_ins(
 		fmt.Fprintf(w, "    fst.s       fa0, fp, %d\n", ret0)
 
 	case token.INS_F64_ABS:
-		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.F64)
-		ret0 := p.fnWasmR0Base - 8*stk.Push(token.F64)
+		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.F64) - 8
+		ret0 := p.fnWasmR0Base - 8*stk.Push(token.F64) - 8
 
 		fmt.Fprintf(w, "    fld.d   fa0, fp, %d\n", sp0)
 		fmt.Fprintf(w, "    fabs.d  fa0, fa0\n")
 		fmt.Fprintf(w, "    fst.d   fa0, fp, %d\n", ret0)
 
 	case token.INS_F64_NEG:
-		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.F64)
-		ret0 := p.fnWasmR0Base - 8*stk.Push(token.F64)
+		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.F64) - 8
+		ret0 := p.fnWasmR0Base - 8*stk.Push(token.F64) - 8
 
 		fmt.Fprintf(w, "    fld.d   fa0, fp, %d\n", sp0)
 		fmt.Fprintf(w, "    fneg.d  fa0, a0\n")
 		fmt.Fprintf(w, "    fst.d   fa0, fp, %d\n", ret0)
 
 	case token.INS_F64_CEIL:
-		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.F64)
-		ret0 := p.fnWasmR0Base - 8*stk.Push(token.F64)
+		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.F64) - 8
+		ret0 := p.fnWasmR0Base - 8*stk.Push(token.F64) - 8
 
 		fmt.Fprintf(w, "    fld.d       fa0, fp, %d\n", sp0)
 		fmt.Fprintf(w, "    ftintrp.d.d fa1, fa0\n")
@@ -2681,8 +2682,8 @@ func (p *wat2laWorker) buildFunc_ins(
 		fmt.Fprintf(w, "    fst.d       fa1, fp, %d\n", ret0)
 
 	case token.INS_F64_FLOOR:
-		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.F64)
-		ret0 := p.fnWasmR0Base - 8*stk.Push(token.F64)
+		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.F64) - 8
+		ret0 := p.fnWasmR0Base - 8*stk.Push(token.F64) - 8
 
 		fmt.Fprintf(w, "    fld.d       fa0, fp, %d\n", sp0)
 		fmt.Fprintf(w, "    ftintrm.d.d fa1, fa0\n")
@@ -2690,8 +2691,8 @@ func (p *wat2laWorker) buildFunc_ins(
 		fmt.Fprintf(w, "    fst.d       fa1, fp, %d\n", ret0)
 
 	case token.INS_F64_TRUNC:
-		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.F64)
-		ret0 := p.fnWasmR0Base - 8*stk.Push(token.F64)
+		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.F64) - 8
+		ret0 := p.fnWasmR0Base - 8*stk.Push(token.F64) - 8
 
 		fmt.Fprintf(w, "    fld.d       fa0, fp, %d\n", sp0)
 		fmt.Fprintf(w, "    ftintrz.d.d fa1, fa0\n")
@@ -2699,8 +2700,8 @@ func (p *wat2laWorker) buildFunc_ins(
 		fmt.Fprintf(w, "    fst.d       fa1, fp, %d\n", ret0)
 
 	case token.INS_F64_NEAREST:
-		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.F64)
-		ret0 := p.fnWasmR0Base - 8*stk.Push(token.F64)
+		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.F64) - 8
+		ret0 := p.fnWasmR0Base - 8*stk.Push(token.F64) - 8
 
 		fmt.Fprintf(w, "    fld.d        fa0, fp, %d\n", sp0)
 		fmt.Fprintf(w, "    ftintrne.d.d fa1, fa0\n")
@@ -2708,17 +2709,17 @@ func (p *wat2laWorker) buildFunc_ins(
 		fmt.Fprintf(w, "    fst.d        fa1, fp, %d\n", ret0)
 
 	case token.INS_F64_SQRT:
-		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.F64)
-		ret0 := p.fnWasmR0Base - 8*stk.Push(token.F64)
+		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.F64) - 8
+		ret0 := p.fnWasmR0Base - 8*stk.Push(token.F64) - 8
 
 		fmt.Fprintf(w, "    fld.d   fa0, fp, %d\n", sp0)
 		fmt.Fprintf(w, "    fsqrt.d fa0, fa0\n")
 		fmt.Fprintf(w, "    fst.d   fa0, fp, %d\n", ret0)
 
 	case token.INS_F64_ADD:
-		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.F64)
-		sp1 := p.fnWasmR0Base - 8*stk.Pop(token.F64)
-		ret0 := p.fnWasmR0Base - 8*stk.Push(token.F64)
+		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.F64) - 8
+		sp1 := p.fnWasmR0Base - 8*stk.Pop(token.F64) - 8
+		ret0 := p.fnWasmR0Base - 8*stk.Push(token.F64) - 8
 
 		fmt.Fprintf(w, "    fld.d   fa0, fp, %d\n", sp0)
 		fmt.Fprintf(w, "    fld.d   fa1, fp, %d\n", sp1)
@@ -2726,9 +2727,9 @@ func (p *wat2laWorker) buildFunc_ins(
 		fmt.Fprintf(w, "    fst.d   fa0, fp, %d\n", ret0)
 
 	case token.INS_F64_SUB:
-		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.F64)
-		sp1 := p.fnWasmR0Base - 8*stk.Pop(token.F64)
-		ret0 := p.fnWasmR0Base - 8*stk.Push(token.F64)
+		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.F64) - 8
+		sp1 := p.fnWasmR0Base - 8*stk.Pop(token.F64) - 8
+		ret0 := p.fnWasmR0Base - 8*stk.Push(token.F64) - 8
 
 		fmt.Fprintf(w, "    fld.d   fa0, fp, %d\n", sp0)
 		fmt.Fprintf(w, "    fld.d   fa1, fp, %d\n", sp1)
@@ -2736,9 +2737,9 @@ func (p *wat2laWorker) buildFunc_ins(
 		fmt.Fprintf(w, "    fst.d   fa0, fp, %d\n", ret0)
 
 	case token.INS_F64_MUL:
-		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.F64)
-		sp1 := p.fnWasmR0Base - 8*stk.Pop(token.F64)
-		ret0 := p.fnWasmR0Base - 8*stk.Push(token.F64)
+		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.F64) - 8
+		sp1 := p.fnWasmR0Base - 8*stk.Pop(token.F64) - 8
+		ret0 := p.fnWasmR0Base - 8*stk.Push(token.F64) - 8
 
 		fmt.Fprintf(w, "    fld.d   fa0, fp, %d\n", sp0)
 		fmt.Fprintf(w, "    fld.d   fa1, fp, %d\n", sp1)
@@ -2746,9 +2747,9 @@ func (p *wat2laWorker) buildFunc_ins(
 		fmt.Fprintf(w, "    fst.d   fa0, fp, %d\n", ret0)
 
 	case token.INS_F64_DIV:
-		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.F64)
-		sp1 := p.fnWasmR0Base - 8*stk.Pop(token.F64)
-		ret0 := p.fnWasmR0Base - 8*stk.Push(token.F64)
+		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.F64) - 8
+		sp1 := p.fnWasmR0Base - 8*stk.Pop(token.F64) - 8
+		ret0 := p.fnWasmR0Base - 8*stk.Push(token.F64) - 8
 
 		fmt.Fprintf(w, "    fld.d   fa0, fp, %d\n", sp0)
 		fmt.Fprintf(w, "    fld.d   fa1, fp, %d\n", sp1)
@@ -2756,9 +2757,9 @@ func (p *wat2laWorker) buildFunc_ins(
 		fmt.Fprintf(w, "    fst.d   fa0, fp, %d\n", ret0)
 
 	case token.INS_F64_MIN:
-		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.F64)
-		sp1 := p.fnWasmR0Base - 8*stk.Pop(token.F64)
-		ret0 := p.fnWasmR0Base - 8*stk.Push(token.F64)
+		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.F64) - 8
+		sp1 := p.fnWasmR0Base - 8*stk.Pop(token.F64) - 8
+		ret0 := p.fnWasmR0Base - 8*stk.Push(token.F64) - 8
 
 		fmt.Fprintf(w, "    fld.d   fa0, fp, %d\n", sp0)
 		fmt.Fprintf(w, "    fld.d   fa1, fp, %d\n", sp1)
@@ -2766,9 +2767,9 @@ func (p *wat2laWorker) buildFunc_ins(
 		fmt.Fprintf(w, "    fst.d   fa0, fp, %d\n", ret0)
 
 	case token.INS_F64_MAX:
-		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.F64)
-		sp1 := p.fnWasmR0Base - 8*stk.Pop(token.F64)
-		ret0 := p.fnWasmR0Base - 8*stk.Push(token.F64)
+		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.F64) - 8
+		sp1 := p.fnWasmR0Base - 8*stk.Pop(token.F64) - 8
+		ret0 := p.fnWasmR0Base - 8*stk.Push(token.F64) - 8
 
 		fmt.Fprintf(w, "    fld.d   fa0, fp, %d\n", sp0)
 		fmt.Fprintf(w, "    fld.d   fa1, fp, %d\n", sp1)
@@ -2776,9 +2777,9 @@ func (p *wat2laWorker) buildFunc_ins(
 		fmt.Fprintf(w, "    fst.d   fa0, fp, %d\n", ret0)
 
 	case token.INS_F64_COPYSIGN:
-		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.F64)
-		sp1 := p.fnWasmR0Base - 8*stk.Pop(token.F64)
-		ret0 := p.fnWasmR0Base - 8*stk.Push(token.F64)
+		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.F64) - 8
+		sp1 := p.fnWasmR0Base - 8*stk.Pop(token.F64) - 8
+		ret0 := p.fnWasmR0Base - 8*stk.Push(token.F64) - 8
 
 		fmt.Fprintf(w, "    fld.d       fa0, fp, %d\n", sp0)
 		fmt.Fprintf(w, "    fld.d       fa1, fp, %d\n", sp1)
@@ -2786,16 +2787,16 @@ func (p *wat2laWorker) buildFunc_ins(
 		fmt.Fprintf(w, "    fst.d       fa0, fp, %d\n", ret0)
 
 	case token.INS_I32_WRAP_I64:
-		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.I64)
-		ret0 := p.fnWasmR0Base - 8*stk.Push(token.I32)
+		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.I64) - 8
+		ret0 := p.fnWasmR0Base - 8*stk.Push(token.I32) - 8
 
 		fmt.Fprintf(w, "    ld.d    t0, fp, %d\n", sp0)
 		fmt.Fprintf(w, "    slli.w  t0, t0, 0\n")
 		fmt.Fprintf(w, "    st.d    t0, fp, %d\n", ret0)
 
 	case token.INS_I32_TRUNC_F32_S:
-		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.F32)
-		ret0 := p.fnWasmR0Base - 8*stk.Push(token.I32)
+		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.F32) - 8
+		ret0 := p.fnWasmR0Base - 8*stk.Push(token.I32) - 8
 
 		fmt.Fprintf(w, "    fld.s    fa0, fp, %d\n", sp0)
 		fmt.Fprintf(w, "    ftintrz.w.s fa0, fa0\n") // 浮点转32位整型，存放在浮点寄存器
@@ -2803,8 +2804,8 @@ func (p *wat2laWorker) buildFunc_ins(
 		fmt.Fprintf(w, "    st.d    t0, fp, %d\n", ret0)
 
 	case token.INS_I32_TRUNC_F32_U:
-		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.F32)
-		ret0 := p.fnWasmR0Base - 8*stk.Push(token.I32)
+		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.F32) - 8
+		ret0 := p.fnWasmR0Base - 8*stk.Push(token.I32) - 8
 
 		fmt.Fprintf(w, "    fld.s    fa0, fp, %d\n", sp0)
 		fmt.Fprintf(w, "    ftintrz.l.s fa0, fa0\n")
@@ -2812,8 +2813,8 @@ func (p *wat2laWorker) buildFunc_ins(
 		fmt.Fprintf(w, "    st.d    t0, fp, %d\n", ret0)
 
 	case token.INS_I32_TRUNC_F64_S:
-		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.F64)
-		ret0 := p.fnWasmR0Base - 8*stk.Push(token.I32)
+		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.F64) - 8
+		ret0 := p.fnWasmR0Base - 8*stk.Push(token.I32) - 8
 
 		fmt.Fprintf(w, "    fld.d    fa0, fp, %d\n", sp0)
 		fmt.Fprintf(w, "    ftintrz.w.d fa0, fa0\n")
@@ -2821,8 +2822,8 @@ func (p *wat2laWorker) buildFunc_ins(
 		fmt.Fprintf(w, "    st.d    t0, fp, %d\n", ret0)
 
 	case token.INS_I32_TRUNC_F64_U:
-		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.F64)
-		ret0 := p.fnWasmR0Base - 8*stk.Push(token.I32)
+		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.F64) - 8
+		ret0 := p.fnWasmR0Base - 8*stk.Push(token.I32) - 8
 
 		fmt.Fprintf(w, "    fld.d    fa0, fp, %d\n", sp0)
 		fmt.Fprintf(w, "    ftintrz.l.d fa0, fa0\n")
@@ -2830,22 +2831,22 @@ func (p *wat2laWorker) buildFunc_ins(
 		fmt.Fprintf(w, "    st.d    t0, fp, %d\n", ret0)
 
 	case token.INS_I64_EXTEND_I32_S:
-		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.I32)
-		ret0 := p.fnWasmR0Base - 8*stk.Push(token.I64)
+		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.I32) - 8
+		ret0 := p.fnWasmR0Base - 8*stk.Push(token.I64) - 8
 
 		fmt.Fprintf(w, "    ld.w    t0, fp, %d\n", sp0) // ld.w 会自动符号扩展到64位
 		fmt.Fprintf(w, "    st.d    t0, fp, %d\n", ret0)
 
 	case token.INS_I64_EXTEND_I32_U:
-		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.I32)
-		ret0 := p.fnWasmR0Base - 8*stk.Push(token.I64)
+		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.I32) - 8
+		ret0 := p.fnWasmR0Base - 8*stk.Push(token.I64) - 8
 
 		fmt.Fprintf(w, "    ld.wu   t0, fp, %d\n", sp0) // ld.wu 零扩展到64位
 		fmt.Fprintf(w, "    st.d    t0, fp, %d\n", ret0)
 
 	case token.INS_I64_TRUNC_F32_S:
-		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.F32)
-		ret0 := p.fnWasmR0Base - 8*stk.Push(token.I64)
+		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.F32) - 8
+		ret0 := p.fnWasmR0Base - 8*stk.Push(token.I64) - 8
 
 		fmt.Fprintf(w, "    fld.s    fa0, fp, %d\n", sp0)
 		fmt.Fprintf(w, "    ftintrz.l.s fa0, fa0\n")
@@ -2853,8 +2854,8 @@ func (p *wat2laWorker) buildFunc_ins(
 		fmt.Fprintf(w, "    st.d    t0, fp, %d\n", ret0)
 
 	case token.INS_I64_TRUNC_F32_U:
-		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.F32)
-		ret0 := p.fnWasmR0Base - 8*stk.Push(token.I64)
+		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.F32) - 8
+		ret0 := p.fnWasmR0Base - 8*stk.Push(token.I64) - 8
 
 		fmt.Fprintf(w, "    fld.s    fa0, fp, %d\n", sp0)
 		fmt.Fprintf(w, "    ftintrz.l.s fa0, fa0\n")
@@ -2862,8 +2863,8 @@ func (p *wat2laWorker) buildFunc_ins(
 		fmt.Fprintf(w, "    st.d    t0, fp, %d\n", ret0)
 
 	case token.INS_I64_TRUNC_F64_S:
-		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.F64)
-		ret0 := p.fnWasmR0Base - 8*stk.Push(token.I64)
+		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.F64) - 8
+		ret0 := p.fnWasmR0Base - 8*stk.Push(token.I64) - 8
 
 		fmt.Fprintf(w, "    fld.d    fa0, fp, %d\n", sp0)
 		fmt.Fprintf(w, "    ftintrz.l.d fa0, fa0\n")
@@ -2871,8 +2872,8 @@ func (p *wat2laWorker) buildFunc_ins(
 		fmt.Fprintf(w, "    st.d    t0, fp, %d\n", ret0)
 
 	case token.INS_I64_TRUNC_F64_U:
-		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.F64)
-		ret0 := p.fnWasmR0Base - 8*stk.Push(token.I64)
+		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.F64) - 8
+		ret0 := p.fnWasmR0Base - 8*stk.Push(token.I64) - 8
 
 		fmt.Fprintf(w, "    fld.d    fa0, fp, %d\n", sp0)
 		fmt.Fprintf(w, "    ftintrz.l.d fa0, fa0\n")
@@ -2880,8 +2881,8 @@ func (p *wat2laWorker) buildFunc_ins(
 		fmt.Fprintf(w, "    st.d    t0, fp, %d\n", ret0)
 
 	case token.INS_F32_CONVERT_I32_S:
-		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.I32)
-		ret0 := p.fnWasmR0Base - 8*stk.Push(token.F32)
+		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.I32) - 8
+		ret0 := p.fnWasmR0Base - 8*stk.Push(token.F32) - 8
 
 		fmt.Fprintf(w, "    ld.w     t0, fp, %d\n", sp0)
 		fmt.Fprintf(w, "    movgr2fr.w fa0, t0\n")
@@ -2889,8 +2890,8 @@ func (p *wat2laWorker) buildFunc_ins(
 		fmt.Fprintf(w, "    fst.s    fa0, fp, %d\n", ret0)
 
 	case token.INS_F32_CONVERT_I32_U:
-		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.I32)
-		ret0 := p.fnWasmR0Base - 8*stk.Push(token.F32)
+		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.I32) - 8
+		ret0 := p.fnWasmR0Base - 8*stk.Push(token.F32) - 8
 
 		fmt.Fprintf(w, "    ld.wu    t0, fp, %d\n", sp0)
 		fmt.Fprintf(w, "    movgr2fr.d fa0, t0\n")
@@ -2898,8 +2899,8 @@ func (p *wat2laWorker) buildFunc_ins(
 		fmt.Fprintf(w, "    fst.s    fa0, fp, %d\n", ret0)
 
 	case token.INS_F32_CONVERT_I64_S:
-		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.I64)
-		ret0 := p.fnWasmR0Base - 8*stk.Push(token.F32)
+		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.I64) - 8
+		ret0 := p.fnWasmR0Base - 8*stk.Push(token.F32) - 8
 
 		fmt.Fprintf(w, "    ld.d     t0, fp, %d\n", sp0)
 		fmt.Fprintf(w, "    movgr2fr.d fa0, t0\n")
@@ -2907,8 +2908,8 @@ func (p *wat2laWorker) buildFunc_ins(
 		fmt.Fprintf(w, "    fst.s    fa0, fp, %d\n", ret0)
 
 	case token.INS_F32_CONVERT_I64_U:
-		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.I64)
-		ret0 := p.fnWasmR0Base - 8*stk.Push(token.F32)
+		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.I64) - 8
+		ret0 := p.fnWasmR0Base - 8*stk.Push(token.F32) - 8
 
 		fmt.Fprintf(w, "    ld.d     t0, fp, %d\n", sp0)
 		fmt.Fprintf(w, "    movgr2fr.d fa0, t0\n")
@@ -2916,16 +2917,16 @@ func (p *wat2laWorker) buildFunc_ins(
 		fmt.Fprintf(w, "    fst.s    fa0, fp, %d\n", ret0)
 
 	case token.INS_F32_DEMOTE_F64:
-		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.I64)
-		ret0 := p.fnWasmR0Base - 8*stk.Push(token.F32)
+		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.I64) - 8
+		ret0 := p.fnWasmR0Base - 8*stk.Push(token.F32) - 8
 
 		fmt.Fprintf(w, "    fld.d    fa0, fp, %d\n", sp0)
 		fmt.Fprintf(w, "    fcvt.s.d fa0, fa0\n")
 		fmt.Fprintf(w, "    fst.s    fa0, fp, %d\n", ret0)
 
 	case token.INS_F64_CONVERT_I32_S:
-		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.I32)
-		ret0 := p.fnWasmR0Base - 8*stk.Push(token.F64)
+		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.I32) - 8
+		ret0 := p.fnWasmR0Base - 8*stk.Push(token.F64) - 8
 
 		fmt.Fprintf(w, "    ld.w     t0, fp, %d\n", sp0)
 		fmt.Fprintf(w, "    movgr2fr.w fa0, t0\n")
@@ -2933,8 +2934,8 @@ func (p *wat2laWorker) buildFunc_ins(
 		fmt.Fprintf(w, "    fst.d    fa0, fp, %d\n", ret0)
 
 	case token.INS_F64_CONVERT_I32_U:
-		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.I32)
-		ret0 := p.fnWasmR0Base - 8*stk.Push(token.F64)
+		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.I32) - 8
+		ret0 := p.fnWasmR0Base - 8*stk.Push(token.F64) - 8
 
 		fmt.Fprintf(w, "    ld.wu    t0, fp, %d\n", sp0)
 		fmt.Fprintf(w, "    movgr2fr.d fa0, t0\n")
@@ -2942,8 +2943,8 @@ func (p *wat2laWorker) buildFunc_ins(
 		fmt.Fprintf(w, "    fst.d    fa0, fp, %d\n", ret0)
 
 	case token.INS_F64_CONVERT_I64_S:
-		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.I64)
-		ret0 := p.fnWasmR0Base - 8*stk.Push(token.F64)
+		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.I64) - 8
+		ret0 := p.fnWasmR0Base - 8*stk.Push(token.F64) - 8
 
 		fmt.Fprintf(w, "    ld.d     t0, fp, %d\n", sp0)
 		fmt.Fprintf(w, "    movgr2fr.d fa0, t0\n")
@@ -2951,8 +2952,8 @@ func (p *wat2laWorker) buildFunc_ins(
 		fmt.Fprintf(w, "    fst.d    fa0, fp, %d\n", ret0)
 
 	case token.INS_F64_CONVERT_I64_U:
-		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.I64)
-		ret0 := p.fnWasmR0Base - 8*stk.Push(token.F64)
+		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.I64) - 8
+		ret0 := p.fnWasmR0Base - 8*stk.Push(token.F64) - 8
 
 		fmt.Fprintf(w, "    ld.d      t0, fp, %d\n", sp0)
 		fmt.Fprintf(w, "    movgr2fr.d fa0, t0\n")
@@ -2960,40 +2961,40 @@ func (p *wat2laWorker) buildFunc_ins(
 		fmt.Fprintf(w, "    fst.d      fa0, fp, %d\n", ret0)
 
 	case token.INS_F64_PROMOTE_F32:
-		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.F32)
-		ret0 := p.fnWasmR0Base - 8*stk.Push(token.F64)
+		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.F32) - 8
+		ret0 := p.fnWasmR0Base - 8*stk.Push(token.F64) - 8
 
 		fmt.Fprintf(w, "    fld.s    fa0, fp, %d\n", sp0)
 		fmt.Fprintf(w, "    fcvt.d.s fa0, fa0\n")
 		fmt.Fprintf(w, "    fst.d    fa0, fp, %d\n", ret0)
 
 	case token.INS_I32_REINTERPRET_F32:
-		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.F32)
-		ret0 := p.fnWasmR0Base - 8*stk.Push(token.F64)
+		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.F32) - 8
+		ret0 := p.fnWasmR0Base - 8*stk.Push(token.F64) - 8
 
 		fmt.Fprintf(w, "    fld.s    fa0, fp, %d\n", sp0)
 		fmt.Fprintf(w, "    movfr2gr.s t0, fa0\n")
 		fmt.Fprintf(w, "    st.d    t0, fp, %d\n", ret0)
 
 	case token.INS_I64_REINTERPRET_F64:
-		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.I64)
-		ret0 := p.fnWasmR0Base - 8*stk.Push(token.F64)
+		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.I64) - 8
+		ret0 := p.fnWasmR0Base - 8*stk.Push(token.F64) - 8
 
 		fmt.Fprintf(w, "    fld.d    fa0, fp, %d\n", sp0)
 		fmt.Fprintf(w, "    movfr2gr.d t0, fa0\n")
 		fmt.Fprintf(w, "    st.d    t0, fp, %d\n", ret0)
 
 	case token.INS_F32_REINTERPRET_I32:
-		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.I32)
-		ret0 := p.fnWasmR0Base - 8*stk.Push(token.F32)
+		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.I32) - 8
+		ret0 := p.fnWasmR0Base - 8*stk.Push(token.F32) - 8
 
 		fmt.Fprintf(w, "    ld.w    t0, fp, %d\n", sp0)
 		fmt.Fprintf(w, "    movgr2fr.w fa0, t0\n")
 		fmt.Fprintf(w, "    fst.s    fa0, fp, %d\n", ret0)
 
 	case token.INS_F64_REINTERPRET_I64:
-		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.I64)
-		ret0 := p.fnWasmR0Base - 8*stk.Push(token.F64)
+		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.I64) - 8
+		ret0 := p.fnWasmR0Base - 8*stk.Push(token.F64) - 8
 
 		fmt.Fprintf(w, "    ld.d     t0, fp, %d\n", sp0)
 		fmt.Fprintf(w, "    movgr2fr.d fa0, t0\n")

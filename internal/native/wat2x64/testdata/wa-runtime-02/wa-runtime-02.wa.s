@@ -76,9 +76,9 @@
 # 定义全局变量
 .section .data
 .align 8
-$G.__stack_ptr: .long 1024
-$G.__heap_base: .long 1048576
-$G.__heap_lfixed_cap: .long 64
+.G.__stack_ptr: .long 1024
+.G.__heap_base: .long 1048576
+.G.__heap_lfixed_cap: .long 64
 
 # 汇编程序入口函数
 .section .text
@@ -191,7 +191,7 @@ main:
     pop rbp
     ret
 
-# func runtime.getStackPtr
+# func runtime.getStackPtr => i32
 .section .text
 .F.runtime.getStackPtr:
     push rbp
@@ -201,11 +201,12 @@ main:
     # 没有参数需要备份到栈
 
     # 将返回值变量初始化为0
-    mov dword ptr [rbp-8], 0 # ret .F.ret.0 = 0
+    mov dword ptr [rbp-8], 0 # ret.0 = 0
+
     # 没有局部变量需要初始化为0
 
     # global.get __stack_ptr i32
-    mov eax, dword ptr [rip+$G.__stack_ptr]
+    mov eax, dword ptr [rip+.G.__stack_ptr]
     mov dword ptr [rbp-16], eax
 
     # 根据ABI处理返回值
@@ -217,7 +218,7 @@ main:
     pop rbp
     ret
 
-# func runtime.setStackPtr
+# func runtime.setStackPtr(sp:i32)
 .section .text
 .F.runtime.setStackPtr:
     push rbp
@@ -225,7 +226,8 @@ main:
     sub  rsp, 16
 
     # 将寄存器参数备份到栈
-    mov [rbp+16], ecx # save arg sp
+    mov [rbp+16], ecx # save arg.0
+
     # 没有返回值变量需要初始化为0
 
     # 没有局部变量需要初始化为0
@@ -236,7 +238,7 @@ main:
 
     # global.set __stack_ptr i32
     mov eax, dword ptr [rbp-8]
-    mov dword ptr [rip+$G.__stack_ptr], eax
+    mov dword ptr [rip+.G.__stack_ptr], eax
 
     # 根据ABI处理返回值
 .L.return.runtime.setStackPtr:
@@ -246,7 +248,7 @@ main:
     pop rbp
     ret
 
-# func runtime.stackAlloc
+# func runtime.stackAlloc(size:i32) => i32
 .section .text
 .F.runtime.stackAlloc:
     push rbp
@@ -254,29 +256,31 @@ main:
     sub  rsp, 32
 
     # 将寄存器参数备份到栈
-    mov [rbp+16], ecx # save arg size
+    mov [rbp+16], ecx # save arg.0
+
     # 将返回值变量初始化为0
-    mov dword ptr [rbp-8], 0 # ret .F.ret.0 = 0
+    mov dword ptr [rbp-8], 0 # ret.0 = 0
+
     # 没有局部变量需要初始化为0
 
     # global.get __stack_ptr i32
-    mov eax, dword ptr [rip+$G.__stack_ptr]
+    mov eax, dword ptr [rip+.G.__stack_ptr]
     mov dword ptr [rbp-16], eax
     # local.get size i32
     mov eax, dword ptr [rbp+16]
     mov dword ptr [rbp-24], eax
 
     # i32.sub
-    mov eax, dword ptr [rbp-16]
-    sub eax, dword ptr [rbp-8]
-    mov dword ptr [rbp-8], eax
+    mov eax, dword ptr [rbp-24]
+    sub eax, dword ptr [rbp-16]
+    mov dword ptr [rbp-16], eax
     # global.set __stack_ptr i32
     mov eax, dword ptr [rbp-16]
-    mov dword ptr [rip+$G.__stack_ptr], eax
+    mov dword ptr [rip+.G.__stack_ptr], eax
     # global.get __stack_ptr i32
-    mov eax, dword ptr [rip+$G.__stack_ptr]
+    mov eax, dword ptr [rip+.G.__stack_ptr]
     mov dword ptr [rbp-16], eax
-    mov eax, dword ptr [rbp-8]
+    mov eax, dword ptr [rbp-16]
     mov dword ptr [rbp-8], eax
     jmp .L.return.runtime.stackAlloc
 
@@ -289,7 +293,7 @@ main:
     pop rbp
     ret
 
-# func runtime.stackFree
+# func runtime.stackFree(size:i32)
 .section .text
 .F.runtime.stackFree:
     push rbp
@@ -297,25 +301,26 @@ main:
     sub  rsp, 16
 
     # 将寄存器参数备份到栈
-    mov [rbp+16], ecx # save arg size
+    mov [rbp+16], ecx # save arg.0
+
     # 没有返回值变量需要初始化为0
 
     # 没有局部变量需要初始化为0
 
     # global.get __stack_ptr i32
-    mov eax, dword ptr [rip+$G.__stack_ptr]
+    mov eax, dword ptr [rip+.G.__stack_ptr]
     mov dword ptr [rbp-8], eax
     # local.get size i32
     mov eax, dword ptr [rbp+16]
     mov dword ptr [rbp-16], eax
 
     # i32.add
-    mov eax, dword ptr [rbp-8]
-    add eax, dword ptr [rbp+0]
-    mov dword ptr [rbp+0], eax
+    mov eax, dword ptr [rbp-16]
+    add eax, dword ptr [rbp-8]
+    mov dword ptr [rbp-8], eax
     # global.set __stack_ptr i32
     mov eax, dword ptr [rbp-8]
-    mov dword ptr [rip+$G.__stack_ptr], eax
+    mov dword ptr [rip+.G.__stack_ptr], eax
 
     # 根据ABI处理返回值
 .L.return.runtime.stackFree:
@@ -325,7 +330,7 @@ main:
     pop rbp
     ret
 
-# func runtime.heapBase
+# func runtime.heapBase => i32
 .section .text
 .F.runtime.heapBase:
     push rbp
@@ -335,11 +340,12 @@ main:
     # 没有参数需要备份到栈
 
     # 将返回值变量初始化为0
-    mov dword ptr [rbp-8], 0 # ret .F.ret.0 = 0
+    mov dword ptr [rbp-8], 0 # ret.0 = 0
+
     # 没有局部变量需要初始化为0
 
     # global.get __heap_base i32
-    mov eax, dword ptr [rip+$G.__heap_base]
+    mov eax, dword ptr [rip+.G.__heap_base]
     mov dword ptr [rbp-16], eax
 
     # 根据ABI处理返回值
@@ -351,7 +357,7 @@ main:
     pop rbp
     ret
 
-# func runtime.HeapAlloc
+# func runtime.HeapAlloc(nbytes:i32) => i32
 .section .text
 .globl .F.runtime.HeapAlloc
 .F.runtime.HeapAlloc:
@@ -362,9 +368,11 @@ main:
     sub  rsp, 64
 
     # 将寄存器参数备份到栈
-    mov [rbp+16], ecx # save arg nbytes
+    mov [rbp+16], ecx # save arg.0
+
     # 将返回值变量初始化为0
-    mov dword ptr [rbp-8], 0 # ret .F.ret.0 = 0
+    mov dword ptr [rbp-8], 0 # ret.0 = 0
+
     # 将局部变量初始化为0
     mov dword ptr [rbp-16], 0 # local ptr = 0
 
@@ -373,13 +381,13 @@ main:
     mov dword ptr [rbp-24], eax
 
     # i32.eqz
-    mov  eax, dword ptr [rbp-16]
+    mov  eax, dword ptr [rbp-24]
     test eax, eax
     setz al
     movzx eax, al
-    mov dword ptr [rbp-16], eax
+    mov dword ptr [rbp-24], eax
 .L.if.begin.00000000:
-    mov eax, [rbp-16]
+    mov eax, [rbp-24]
     test eax, eax
     je .L.if.end.00000000 # if eax != 0 { jmp end }
 .L.if.body.00000000:
@@ -387,7 +395,7 @@ main:
     mov eax, 0
     mov [rbp-24], eax
 
-    mov eax, dword ptr [rbp-16]
+    mov eax, dword ptr [rbp-24]
     mov dword ptr [rbp-8], eax
     jmp .L.return.runtime.HeapAlloc
 .L.next.00000000:
@@ -401,28 +409,28 @@ main:
     mov [rbp-32], eax
 
     # i32.add
-    mov eax, dword ptr [rbp-24]
-    add eax, dword ptr [rbp-16]
-    mov dword ptr [rbp-16], eax
+    mov eax, dword ptr [rbp-32]
+    add eax, dword ptr [rbp-24]
+    mov dword ptr [rbp-24], eax
     # i32.const 8
     mov eax, 8
     mov [rbp-32], eax
 
     # i32.div_u
-    mov edx, dword ptr [rbp-16]
-    mov eax, dword ptr [rbp-24]
+    mov edx, dword ptr [rbp-24]
+    mov eax, dword ptr [rbp-32]
     xor edx, edx
-    div dword ptr [rbp-16]
-    mov dword ptr [rbp-16], eax
+    div dword ptr [rbp-24]
+    mov dword ptr [rbp-24], eax
     mov edx, dword ptr [rbp+8]
     # i32.const 8
     mov eax, 8
     mov [rbp-32], eax
 
     # i32.mul
-    mov eax, dword ptr [rbp-24]
-    imul eax, dword ptr [rbp-16]
-    mov dword ptr [rbp-16], eax
+    mov eax, dword ptr [rbp-32]
+    imul eax, dword ptr [rbp-24]
+    mov dword ptr [rbp-24], eax
     # local.set nbytes i32
     mov eax, dword ptr [rbp-24]
     mov dword ptr [rbp+16], eax
@@ -450,9 +458,9 @@ main:
     mov [rbp-32], eax
 
     # i32.sub
-    mov eax, dword ptr [rbp-24]
-    sub eax, dword ptr [rbp-16]
-    mov dword ptr [rbp-16], eax
+    mov eax, dword ptr [rbp-32]
+    sub eax, dword ptr [rbp-24]
+    mov dword ptr [rbp-24], eax
     # local.tee nbytes i32
     mov eax, dword ptr [rbp-24]
     mov dword ptr [rbp+16], eax
@@ -461,25 +469,25 @@ main:
     mov dword ptr [rbp-32], eax
 
     # i32.add
-    mov eax, dword ptr [rbp-24]
-    add eax, dword ptr [rbp-16]
-    mov dword ptr [rbp-16], eax
+    mov eax, dword ptr [rbp-32]
+    add eax, dword ptr [rbp-24]
+    mov dword ptr [rbp-24], eax
     # i64.const 0
     movabs rax, 0
     mov    [rbp-32], rax
 
     # i64.store
     lea rax, [rip + .Memory.addr]
-    mov r10, dword [rbp-16]
+    mov r10, dword [rbp-24]
     add r10, rax
-    mov rax, qword [rbp-24]
+    mov rax, qword [rbp-32]
     mov qword [r10 +0], rax
     # local.get nbytes i32
     mov eax, dword ptr [rbp+16]
     mov dword ptr [rbp-24], eax
 
 .L.if.begin.00000002:
-    mov eax, [rbp-16]
+    mov eax, [rbp-24]
     test eax, eax
     je .L.if.end.00000002 # if eax != 0 { jmp end }
 .L.if.body.00000002:
@@ -501,7 +509,7 @@ main:
     pop rbp
     ret
 
-# func runtime.HeapFree
+# func runtime.HeapFree(ptr:i32)
 .section .text
 .globl .F.runtime.HeapFree
 .F.runtime.HeapFree:
@@ -510,7 +518,8 @@ main:
     sub  rsp, 48
 
     # 将寄存器参数备份到栈
-    mov [rbp+16], ecx # save arg ptr
+    mov [rbp+16], ecx # save arg.0
+
     # 没有返回值变量需要初始化为0
 
     # 没有局部变量需要初始化为0
@@ -531,7 +540,7 @@ main:
     pop rbp
     ret
 
-# func runtime.malloc
+# func runtime.malloc(size:i32) => i32
 .section .text
 .F.runtime.malloc:
     push rbp
@@ -539,9 +548,11 @@ main:
     sub  rsp, 16
 
     # 将寄存器参数备份到栈
-    mov [rbp+16], ecx # save arg size
+    mov [rbp+16], ecx # save arg.0
+
     # 将返回值变量初始化为0
-    mov dword ptr [rbp-8], 0 # ret .F.ret.0 = 0
+    mov dword ptr [rbp-8], 0 # ret.0 = 0
+
     # 没有局部变量需要初始化为0
 
     # i32.const 0
@@ -558,7 +569,7 @@ main:
     pop rbp
     ret
 
-# func runtime.free
+# func runtime.free(ptr:i32)
 .section .text
 .F.runtime.free:
     push rbp
@@ -566,7 +577,8 @@ main:
     sub  rsp, 0
 
     # 将寄存器参数备份到栈
-    mov [rbp+16], ecx # save arg ptr
+    mov [rbp+16], ecx # save arg.0
+
     # 没有返回值变量需要初始化为0
 
     # 没有局部变量需要初始化为0

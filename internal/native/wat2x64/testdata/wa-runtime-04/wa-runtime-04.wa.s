@@ -169,13 +169,13 @@
 # 定义全局变量
 .section .data
 .align 8
-$G.__stack_ptr: .long 1024
-$G.__heap_base: .long 1048576
-$G.__heap_lfixed_cap: .long 64
-$G.__heap_ptr: .long 0
-$G.__heap_top: .long 0
-$G.__heap_l128_freep: .long 0
-$G.__heap_init_flag: .long 0
+.G.__stack_ptr: .long 1024
+.G.__heap_base: .long 1048576
+.G.__heap_lfixed_cap: .long 64
+.G.__heap_ptr: .long 0
+.G.__heap_top: .long 0
+.G.__heap_l128_freep: .long 0
+.G.__heap_init_flag: .long 0
 
 # 汇编程序入口函数
 .section .text
@@ -289,7 +289,7 @@ main:
     pop rbp
     ret
 
-# func runtime.getStackPtr
+# func runtime.getStackPtr => i32
 .section .text
 .F.runtime.getStackPtr:
     push rbp
@@ -299,11 +299,12 @@ main:
     # 没有参数需要备份到栈
 
     # 将返回值变量初始化为0
-    mov dword ptr [rbp-8], 0 # ret .F.ret.0 = 0
+    mov dword ptr [rbp-8], 0 # ret.0 = 0
+
     # 没有局部变量需要初始化为0
 
     # global.get __stack_ptr i32
-    mov eax, dword ptr [rip+$G.__stack_ptr]
+    mov eax, dword ptr [rip+.G.__stack_ptr]
     mov dword ptr [rbp-16], eax
 
     # 根据ABI处理返回值
@@ -315,7 +316,7 @@ main:
     pop rbp
     ret
 
-# func runtime.setStackPtr
+# func runtime.setStackPtr(sp:i32)
 .section .text
 .F.runtime.setStackPtr:
     push rbp
@@ -323,7 +324,8 @@ main:
     sub  rsp, 16
 
     # 将寄存器参数备份到栈
-    mov [rbp+16], ecx # save arg sp
+    mov [rbp+16], ecx # save arg.0
+
     # 没有返回值变量需要初始化为0
 
     # 没有局部变量需要初始化为0
@@ -334,7 +336,7 @@ main:
 
     # global.set __stack_ptr i32
     mov eax, dword ptr [rbp-8]
-    mov dword ptr [rip+$G.__stack_ptr], eax
+    mov dword ptr [rip+.G.__stack_ptr], eax
 
     # 根据ABI处理返回值
 .L.return.runtime.setStackPtr:
@@ -344,7 +346,7 @@ main:
     pop rbp
     ret
 
-# func runtime.stackAlloc
+# func runtime.stackAlloc(size:i32) => i32
 .section .text
 .F.runtime.stackAlloc:
     push rbp
@@ -352,29 +354,31 @@ main:
     sub  rsp, 32
 
     # 将寄存器参数备份到栈
-    mov [rbp+16], ecx # save arg size
+    mov [rbp+16], ecx # save arg.0
+
     # 将返回值变量初始化为0
-    mov dword ptr [rbp-8], 0 # ret .F.ret.0 = 0
+    mov dword ptr [rbp-8], 0 # ret.0 = 0
+
     # 没有局部变量需要初始化为0
 
     # global.get __stack_ptr i32
-    mov eax, dword ptr [rip+$G.__stack_ptr]
+    mov eax, dword ptr [rip+.G.__stack_ptr]
     mov dword ptr [rbp-16], eax
     # local.get size i32
     mov eax, dword ptr [rbp+16]
     mov dword ptr [rbp-24], eax
 
     # i32.sub
-    mov eax, dword ptr [rbp-16]
-    sub eax, dword ptr [rbp-8]
-    mov dword ptr [rbp-8], eax
+    mov eax, dword ptr [rbp-24]
+    sub eax, dword ptr [rbp-16]
+    mov dword ptr [rbp-16], eax
     # global.set __stack_ptr i32
     mov eax, dword ptr [rbp-16]
-    mov dword ptr [rip+$G.__stack_ptr], eax
+    mov dword ptr [rip+.G.__stack_ptr], eax
     # global.get __stack_ptr i32
-    mov eax, dword ptr [rip+$G.__stack_ptr]
+    mov eax, dword ptr [rip+.G.__stack_ptr]
     mov dword ptr [rbp-16], eax
-    mov eax, dword ptr [rbp-8]
+    mov eax, dword ptr [rbp-16]
     mov dword ptr [rbp-8], eax
     jmp .L.return.runtime.stackAlloc
 
@@ -387,7 +391,7 @@ main:
     pop rbp
     ret
 
-# func runtime.stackFree
+# func runtime.stackFree(size:i32)
 .section .text
 .F.runtime.stackFree:
     push rbp
@@ -395,25 +399,26 @@ main:
     sub  rsp, 16
 
     # 将寄存器参数备份到栈
-    mov [rbp+16], ecx # save arg size
+    mov [rbp+16], ecx # save arg.0
+
     # 没有返回值变量需要初始化为0
 
     # 没有局部变量需要初始化为0
 
     # global.get __stack_ptr i32
-    mov eax, dword ptr [rip+$G.__stack_ptr]
+    mov eax, dword ptr [rip+.G.__stack_ptr]
     mov dword ptr [rbp-8], eax
     # local.get size i32
     mov eax, dword ptr [rbp+16]
     mov dword ptr [rbp-16], eax
 
     # i32.add
-    mov eax, dword ptr [rbp-8]
-    add eax, dword ptr [rbp+0]
-    mov dword ptr [rbp+0], eax
+    mov eax, dword ptr [rbp-16]
+    add eax, dword ptr [rbp-8]
+    mov dword ptr [rbp-8], eax
     # global.set __stack_ptr i32
     mov eax, dword ptr [rbp-8]
-    mov dword ptr [rip+$G.__stack_ptr], eax
+    mov dword ptr [rip+.G.__stack_ptr], eax
 
     # 根据ABI处理返回值
 .L.return.runtime.stackFree:
@@ -423,7 +428,7 @@ main:
     pop rbp
     ret
 
-# func runtime.heapBase
+# func runtime.heapBase => i32
 .section .text
 .F.runtime.heapBase:
     push rbp
@@ -433,11 +438,12 @@ main:
     # 没有参数需要备份到栈
 
     # 将返回值变量初始化为0
-    mov dword ptr [rbp-8], 0 # ret .F.ret.0 = 0
+    mov dword ptr [rbp-8], 0 # ret.0 = 0
+
     # 没有局部变量需要初始化为0
 
     # global.get __heap_base i32
-    mov eax, dword ptr [rip+$G.__heap_base]
+    mov eax, dword ptr [rip+.G.__heap_base]
     mov dword ptr [rbp-16], eax
 
     # 根据ABI处理返回值
@@ -449,7 +455,7 @@ main:
     pop rbp
     ret
 
-# func runtime.HeapAlloc
+# func runtime.HeapAlloc(nbytes:i32) => i32
 .section .text
 .globl .F.runtime.HeapAlloc
 .F.runtime.HeapAlloc:
@@ -460,9 +466,11 @@ main:
     sub  rsp, 64
 
     # 将寄存器参数备份到栈
-    mov [rbp+16], ecx # save arg nbytes
+    mov [rbp+16], ecx # save arg.0
+
     # 将返回值变量初始化为0
-    mov dword ptr [rbp-8], 0 # ret .F.ret.0 = 0
+    mov dword ptr [rbp-8], 0 # ret.0 = 0
+
     # 将局部变量初始化为0
     mov dword ptr [rbp-16], 0 # local ptr = 0
 
@@ -471,13 +479,13 @@ main:
     mov dword ptr [rbp-24], eax
 
     # i32.eqz
-    mov  eax, dword ptr [rbp-16]
+    mov  eax, dword ptr [rbp-24]
     test eax, eax
     setz al
     movzx eax, al
-    mov dword ptr [rbp-16], eax
+    mov dword ptr [rbp-24], eax
 .L.if.begin.00000000:
-    mov eax, [rbp-16]
+    mov eax, [rbp-24]
     test eax, eax
     je .L.if.end.00000000 # if eax != 0 { jmp end }
 .L.if.body.00000000:
@@ -485,7 +493,7 @@ main:
     mov eax, 0
     mov [rbp-24], eax
 
-    mov eax, dword ptr [rbp-16]
+    mov eax, dword ptr [rbp-24]
     mov dword ptr [rbp-8], eax
     jmp .L.return.runtime.HeapAlloc
 .L.next.00000000:
@@ -499,28 +507,28 @@ main:
     mov [rbp-32], eax
 
     # i32.add
-    mov eax, dword ptr [rbp-24]
-    add eax, dword ptr [rbp-16]
-    mov dword ptr [rbp-16], eax
+    mov eax, dword ptr [rbp-32]
+    add eax, dword ptr [rbp-24]
+    mov dword ptr [rbp-24], eax
     # i32.const 8
     mov eax, 8
     mov [rbp-32], eax
 
     # i32.div_u
-    mov edx, dword ptr [rbp-16]
-    mov eax, dword ptr [rbp-24]
+    mov edx, dword ptr [rbp-24]
+    mov eax, dword ptr [rbp-32]
     xor edx, edx
-    div dword ptr [rbp-16]
-    mov dword ptr [rbp-16], eax
+    div dword ptr [rbp-24]
+    mov dword ptr [rbp-24], eax
     mov edx, dword ptr [rbp+8]
     # i32.const 8
     mov eax, 8
     mov [rbp-32], eax
 
     # i32.mul
-    mov eax, dword ptr [rbp-24]
-    imul eax, dword ptr [rbp-16]
-    mov dword ptr [rbp-16], eax
+    mov eax, dword ptr [rbp-32]
+    imul eax, dword ptr [rbp-24]
+    mov dword ptr [rbp-24], eax
     # local.set nbytes i32
     mov eax, dword ptr [rbp-24]
     mov dword ptr [rbp+16], eax
@@ -548,9 +556,9 @@ main:
     mov [rbp-32], eax
 
     # i32.sub
-    mov eax, dword ptr [rbp-24]
-    sub eax, dword ptr [rbp-16]
-    mov dword ptr [rbp-16], eax
+    mov eax, dword ptr [rbp-32]
+    sub eax, dword ptr [rbp-24]
+    mov dword ptr [rbp-24], eax
     # local.tee nbytes i32
     mov eax, dword ptr [rbp-24]
     mov dword ptr [rbp+16], eax
@@ -559,25 +567,25 @@ main:
     mov dword ptr [rbp-32], eax
 
     # i32.add
-    mov eax, dword ptr [rbp-24]
-    add eax, dword ptr [rbp-16]
-    mov dword ptr [rbp-16], eax
+    mov eax, dword ptr [rbp-32]
+    add eax, dword ptr [rbp-24]
+    mov dword ptr [rbp-24], eax
     # i64.const 0
     movabs rax, 0
     mov    [rbp-32], rax
 
     # i64.store
     lea rax, [rip + .Memory.addr]
-    mov r10, dword [rbp-16]
+    mov r10, dword [rbp-24]
     add r10, rax
-    mov rax, qword [rbp-24]
+    mov rax, qword [rbp-32]
     mov qword [r10 +0], rax
     # local.get nbytes i32
     mov eax, dword ptr [rbp+16]
     mov dword ptr [rbp-24], eax
 
 .L.if.begin.00000002:
-    mov eax, [rbp-16]
+    mov eax, [rbp-24]
     test eax, eax
     je .L.if.end.00000002 # if eax != 0 { jmp end }
 .L.if.body.00000002:
@@ -599,7 +607,7 @@ main:
     pop rbp
     ret
 
-# func runtime.HeapFree
+# func runtime.HeapFree(ptr:i32)
 .section .text
 .globl .F.runtime.HeapFree
 .F.runtime.HeapFree:
@@ -608,7 +616,8 @@ main:
     sub  rsp, 48
 
     # 将寄存器参数备份到栈
-    mov [rbp+16], ecx # save arg ptr
+    mov [rbp+16], ecx # save arg.0
+
     # 没有返回值变量需要初始化为0
 
     # 没有局部变量需要初始化为0
@@ -629,7 +638,7 @@ main:
     pop rbp
     ret
 
-# func runtime.Block.Init
+# func runtime.Block.Init(ptr:i32,item_count:i32,release_func:i32,item_size:i32) => i32
 .section .text
 .F.runtime.Block.Init:
     push rbp
@@ -637,12 +646,14 @@ main:
     sub  rsp, 32
 
     # 将寄存器参数备份到栈
-    mov [rbp+16], ecx # save arg ptr
-    mov [rbp+24], edx # save arg item_count
-    mov [rbp+32], r8d # save arg release_func
-    mov [rbp+40], r9d # save arg item_size
+    mov [rbp+16], ecx # save arg.0
+    mov [rbp+24], edx # save arg.1
+    mov [rbp+32], r8d # save arg.2
+    mov [rbp+40], r9d # save arg.3
+
     # 将返回值变量初始化为0
-    mov dword ptr [rbp-8], 0 # ret .F.ret.0 = 0
+    mov dword ptr [rbp-8], 0 # ret.0 = 0
+
     # 没有局部变量需要初始化为0
 
     # local.get ptr i32
@@ -654,7 +665,7 @@ main:
     mov dword ptr [rbp-24], eax
 
 .L.if.begin.00000003:
-    mov eax, [rbp-16]
+    mov eax, [rbp-24]
     test eax, eax
     je .L.if.end.00000003 # if eax != 0 { jmp end }
 .L.if.body.00000003:
@@ -668,9 +679,9 @@ main:
 
     # i32.store
     lea rax, [rip + .Memory.addr]
-    mov r10, dword [rbp-16]
+    mov r10, dword [rbp-24]
     add r10, rax
-    mov eax, dword [rbp-24]
+    mov eax, dword [rbp-32]
     mov dword [r10 +0], eax
     # local.get ptr i32
     mov eax, dword ptr [rbp+16]
@@ -682,9 +693,9 @@ main:
 
     # i32.store
     lea rax, [rip + .Memory.addr]
-    mov r10, dword [rbp-16]
+    mov r10, dword [rbp-24]
     add r10, rax
-    mov eax, dword [rbp-24]
+    mov eax, dword [rbp-32]
     mov dword [r10 +4], eax
     # local.get ptr i32
     mov eax, dword ptr [rbp+16]
@@ -696,9 +707,9 @@ main:
 
     # i32.store
     lea rax, [rip + .Memory.addr]
-    mov r10, dword [rbp-16]
+    mov r10, dword [rbp-24]
     add r10, rax
-    mov eax, dword [rbp-24]
+    mov eax, dword [rbp-32]
     mov dword [r10 +8], eax
     # local.get ptr i32
     mov eax, dword ptr [rbp+16]
@@ -710,9 +721,9 @@ main:
 
     # i32.store
     lea rax, [rip + .Memory.addr]
-    mov r10, dword [rbp-16]
+    mov r10, dword [rbp-24]
     add r10, rax
-    mov eax, dword [rbp-24]
+    mov eax, dword [rbp-32]
     mov dword [r10 +12], eax
 .L.next.00000003:
 .L.if.end.00000003:
@@ -726,7 +737,7 @@ main:
     pop rbp
     ret
 
-# func runtime.Block.SetFinalizer
+# func runtime.Block.SetFinalizer(ptr:i32,release_func:i32)
 .section .text
 .F.runtime.Block.SetFinalizer:
     push rbp
@@ -734,8 +745,9 @@ main:
     sub  rsp, 16
 
     # 将寄存器参数备份到栈
-    mov [rbp+16], ecx # save arg ptr
-    mov [rbp+24], edx # save arg release_func
+    mov [rbp+16], ecx # save arg.0
+    mov [rbp+24], edx # save arg.1
+
     # 没有返回值变量需要初始化为0
 
     # 没有局部变量需要初始化为0
@@ -745,7 +757,7 @@ main:
     mov dword ptr [rbp-8], eax
 
 .L.if.begin.00000004:
-    mov eax, [rbp+0]
+    mov eax, [rbp-8]
     test eax, eax
     je .L.if.end.00000004 # if eax != 0 { jmp end }
 .L.if.body.00000004:
@@ -759,9 +771,9 @@ main:
 
     # i32.store
     lea rax, [rip + .Memory.addr]
-    mov r10, dword [rbp+0]
+    mov r10, dword [rbp-8]
     add r10, rax
-    mov eax, dword [rbp-8]
+    mov eax, dword [rbp-16]
     mov dword [r10 +8], eax
 .L.next.00000004:
 .L.if.end.00000004:
@@ -774,7 +786,7 @@ main:
     pop rbp
     ret
 
-# func runtime.Block.HeapAlloc
+# func runtime.Block.HeapAlloc(item_count:i32,release_func:i32,item_size:i32) => i32,i32)
 .section .text
 .globl .F.runtime.Block.HeapAlloc
 .F.runtime.Block.HeapAlloc:
@@ -788,12 +800,14 @@ main:
     mov [rbp+16], rcx # return address
 
     # 将寄存器参数备份到栈
-    mov [rbp+16], edx # save arg item_count
-    mov [rbp+24], r8d # save arg release_func
-    mov [rbp+32], r9d # save arg item_size
+    mov [rbp+16], edx # save arg.0
+    mov [rbp+24], r8d # save arg.1
+    mov [rbp+32], r9d # save arg.2
+
     # 将返回值变量初始化为0
-    mov dword ptr [rbp+48], 0 # ret .F.ret.0 = 0
-    mov dword ptr [rbp+56], 0 # ret .F.ret.1 = 0
+    mov dword ptr [rbp+48], 0 # ret.0 = 0
+    mov dword ptr [rbp+56], 0 # ret.1 = 0
+
     # 将局部变量初始化为0
     mov dword ptr [rbp-8], 0 # local b = 0
 
@@ -806,17 +820,17 @@ main:
     mov dword ptr [rbp-24], eax
 
     # i32.mul
-    mov eax, dword ptr [rbp-16]
-    imul eax, dword ptr [rbp-8]
-    mov dword ptr [rbp-8], eax
+    mov eax, dword ptr [rbp-24]
+    imul eax, dword ptr [rbp-16]
+    mov dword ptr [rbp-16], eax
     # i32.const 16
     mov eax, 16
     mov [rbp-24], eax
 
     # i32.add
-    mov eax, dword ptr [rbp-16]
-    add eax, dword ptr [rbp-8]
-    mov dword ptr [rbp-8], eax
+    mov eax, dword ptr [rbp-24]
+    add eax, dword ptr [rbp-16]
+    mov dword ptr [rbp-16], eax
     # call runtime.HeapAlloc(...)
     mov ecx, dword ptr [rbp-16] # arg 0
     call .F.runtime.HeapAlloc
@@ -852,9 +866,9 @@ main:
     mov [rbp-32], eax
 
     # i32.add
-    mov eax, dword ptr [rbp-24]
-    add eax, dword ptr [rbp-16]
-    mov dword ptr [rbp-16], eax
+    mov eax, dword ptr [rbp-32]
+    add eax, dword ptr [rbp-24]
+    mov dword ptr [rbp-24], eax
 
     # 根据ABI处理返回值
 .L.return.runtime.Block.HeapAlloc:
@@ -865,7 +879,7 @@ main:
     pop rbp
     ret
 
-# func runtime.DupI32
+# func runtime.DupI32(a:i32) => i32,i32)
 .section .text
 .F.runtime.DupI32:
     push rbp
@@ -876,10 +890,12 @@ main:
     mov [rbp+16], rcx # return address
 
     # 将寄存器参数备份到栈
-    mov [rbp+16], edx # save arg a
+    mov [rbp+16], edx # save arg.0
+
     # 将返回值变量初始化为0
-    mov dword ptr [rbp+48], 0 # ret .F.ret.0 = 0
-    mov dword ptr [rbp+56], 0 # ret .F.ret.1 = 0
+    mov dword ptr [rbp+48], 0 # ret.0 = 0
+    mov dword ptr [rbp+56], 0 # ret.1 = 0
+
     # 没有局部变量需要初始化为0
 
     # local.get a i32
@@ -900,7 +916,7 @@ main:
     pop rbp
     ret
 
-# func runtime.SwapI32
+# func runtime.SwapI32(a:i32,b:i32) => i32,i32)
 .section .text
 .F.runtime.SwapI32:
     push rbp
@@ -911,11 +927,13 @@ main:
     mov [rbp+16], rcx # return address
 
     # 将寄存器参数备份到栈
-    mov [rbp+16], edx # save arg a
-    mov [rbp+24], r8d # save arg b
+    mov [rbp+16], edx # save arg.0
+    mov [rbp+24], r8d # save arg.1
+
     # 将返回值变量初始化为0
-    mov dword ptr [rbp+48], 0 # ret .F.ret.0 = 0
-    mov dword ptr [rbp+56], 0 # ret .F.ret.1 = 0
+    mov dword ptr [rbp+48], 0 # ret.0 = 0
+    mov dword ptr [rbp+56], 0 # ret.1 = 0
+
     # 没有局部变量需要初始化为0
 
     # local.get b i32
@@ -936,7 +954,7 @@ main:
     pop rbp
     ret
 
-# func runtime.Block.Retain
+# func runtime.Block.Retain(ptr:i32) => i32
 .section .text
 .globl .F.runtime.Block.Retain
 .F.runtime.Block.Retain:
@@ -945,9 +963,11 @@ main:
     sub  rsp, 48
 
     # 将寄存器参数备份到栈
-    mov [rbp+16], ecx # save arg ptr
+    mov [rbp+16], ecx # save arg.0
+
     # 将返回值变量初始化为0
-    mov dword ptr [rbp-8], 0 # ret .F.ret.0 = 0
+    mov dword ptr [rbp-8], 0 # ret.0 = 0
+
     # 没有局部变量需要初始化为0
 
     # local.get ptr i32
@@ -959,7 +979,7 @@ main:
     mov dword ptr [rbp-24], eax
 
 .L.if.begin.00000005:
-    mov eax, [rbp-16]
+    mov eax, [rbp-24]
     test eax, eax
     je .L.if.end.00000005 # if eax != 0 { jmp end }
 .L.if.body.00000005:
@@ -973,23 +993,23 @@ main:
 
     # i32.load
     lea rax, [rip + .Memory.addr]
-    mov r10, dword [rbp-24]
+    mov r10, dword [rbp-32]
     add r10, rax
     mov eax, dword [r10 +0]
-    mov dword [rbp-24], eax
+    mov dword [rbp-32], eax
     # i32.const 1
     mov eax, 1
     mov [rbp-40], eax
 
     # i32.add
-    mov eax, dword ptr [rbp-32]
-    add eax, dword ptr [rbp-24]
-    mov dword ptr [rbp-24], eax
+    mov eax, dword ptr [rbp-40]
+    add eax, dword ptr [rbp-32]
+    mov dword ptr [rbp-32], eax
     # i32.store
     lea rax, [rip + .Memory.addr]
-    mov r10, dword [rbp-16]
+    mov r10, dword [rbp-24]
     add r10, rax
-    mov eax, dword [rbp-24]
+    mov eax, dword [rbp-32]
     mov dword [r10 +0], eax
 .L.next.00000005:
 .L.if.end.00000005:
@@ -1003,7 +1023,7 @@ main:
     pop rbp
     ret
 
-# func runtime.Block.Release
+# func runtime.Block.Release(ptr:i32)
 .section .text
 .globl .F.runtime.Block.Release
 .F.runtime.Block.Release:
@@ -1018,7 +1038,8 @@ main:
     sub  rsp, 96
 
     # 将寄存器参数备份到栈
-    mov [rbp+16], ecx # save arg ptr
+    mov [rbp+16], ecx # save arg.0
+
     # 没有返回值变量需要初始化为0
 
     # 将局部变量初始化为0
@@ -1037,14 +1058,14 @@ main:
     mov [rbp-56], eax
 
     # i32.eq
-    mov r10d, dword ptr [rbp-48]
-    mov r11d, dword ptr [rbp-40]
+    mov r10d, dword ptr [rbp-56]
+    mov r11d, dword ptr [rbp-48]
     cmp r10d, r11d
     sete al
     movzx eax, al
-    mov dword ptr [rbp-40], eax
+    mov dword ptr [rbp-48], eax
 .L.if.begin.00000006:
-    mov eax, [rbp-40]
+    mov eax, [rbp-48]
     test eax, eax
     je .L.if.end.00000006 # if eax != 0 { jmp end }
 .L.if.body.00000006:
@@ -1057,18 +1078,18 @@ main:
 
     # i32.load
     lea rax, [rip + .Memory.addr]
-    mov r10, dword [rbp-40]
+    mov r10, dword [rbp-48]
     add r10, rax
     mov eax, dword [r10 +0]
-    mov dword [rbp-40], eax
+    mov dword [rbp-48], eax
     # i32.const 1
     mov eax, 1
     mov [rbp-56], eax
 
     # i32.sub
-    mov eax, dword ptr [rbp-48]
-    sub eax, dword ptr [rbp-40]
-    mov dword ptr [rbp-40], eax
+    mov eax, dword ptr [rbp-56]
+    sub eax, dword ptr [rbp-48]
+    mov dword ptr [rbp-48], eax
     # local.set ref_count i32
     mov eax, dword ptr [rbp-48]
     mov dword ptr [rbp-8], eax
@@ -1078,7 +1099,7 @@ main:
     mov dword ptr [rbp-48], eax
 
 .L.if.begin.00000007:
-    mov eax, [rbp-40]
+    mov eax, [rbp-48]
     test eax, eax
     jne .L.if.body.00000007 # if eax != 0 { jmp body }
 .L.if.body.00000007:
@@ -1092,9 +1113,9 @@ main:
 
     # i32.store
     lea rax, [rip + .Memory.addr]
-    mov r10, dword [rbp-40]
+    mov r10, dword [rbp-48]
     add r10, rax
-    mov eax, dword [rbp-48]
+    mov eax, dword [rbp-56]
     mov dword [r10 +0], eax
 .L.if.else.00000007:
     # local.get ptr i32
@@ -1103,10 +1124,10 @@ main:
 
     # i32.load
     lea rax, [rip + .Memory.addr]
-    mov r10, dword [rbp-40]
+    mov r10, dword [rbp-48]
     add r10, rax
     mov eax, dword [r10 +8]
-    mov dword [rbp-40], eax
+    mov dword [rbp-48], eax
     # local.set free_func i32
     mov eax, dword ptr [rbp-48]
     mov dword ptr [rbp-24], eax
@@ -1116,7 +1137,7 @@ main:
     mov dword ptr [rbp-48], eax
 
 .L.if.begin.00000008:
-    mov eax, [rbp-40]
+    mov eax, [rbp-48]
     test eax, eax
     je .L.if.end.00000008 # if eax != 0 { jmp end }
 .L.if.body.00000008:
@@ -1126,10 +1147,10 @@ main:
 
     # i32.load
     lea rax, [rip + .Memory.addr]
-    mov r10, dword [rbp-40]
+    mov r10, dword [rbp-48]
     add r10, rax
     mov eax, dword [r10 +4]
-    mov dword [rbp-40], eax
+    mov dword [rbp-48], eax
     # local.set item_count i32
     mov eax, dword ptr [rbp-48]
     mov dword ptr [rbp-16], eax
@@ -1139,7 +1160,7 @@ main:
     mov dword ptr [rbp-48], eax
 
 .L.if.begin.00000009:
-    mov eax, [rbp-40]
+    mov eax, [rbp-48]
     test eax, eax
     je .L.if.end.00000009 # if eax != 0 { jmp end }
 .L.if.body.00000009:
@@ -1149,10 +1170,10 @@ main:
 
     # i32.load
     lea rax, [rip + .Memory.addr]
-    mov r10, dword [rbp-40]
+    mov r10, dword [rbp-48]
     add r10, rax
     mov eax, dword [r10 +12]
-    mov dword [rbp-40], eax
+    mov dword [rbp-48], eax
     # local.set item_size i32
     mov eax, dword ptr [rbp-48]
     mov dword ptr [rbp-32], eax
@@ -1166,9 +1187,9 @@ main:
     mov [rbp-56], eax
 
     # i32.add
-    mov eax, dword ptr [rbp-48]
-    add eax, dword ptr [rbp-40]
-    mov dword ptr [rbp-40], eax
+    mov eax, dword ptr [rbp-56]
+    add eax, dword ptr [rbp-48]
+    mov dword ptr [rbp-48], eax
     # local.set data_ptr i32
     mov eax, dword ptr [rbp-48]
     mov dword ptr [rbp-40], eax
@@ -1207,9 +1228,9 @@ main:
     mov [rbp-56], eax
 
     # i32.sub
-    mov eax, dword ptr [rbp-48]
-    sub eax, dword ptr [rbp-40]
-    mov dword ptr [rbp-40], eax
+    mov eax, dword ptr [rbp-56]
+    sub eax, dword ptr [rbp-48]
+    mov dword ptr [rbp-48], eax
     # local.set item_count i32
     mov eax, dword ptr [rbp-48]
     mov dword ptr [rbp-16], eax
@@ -1219,7 +1240,7 @@ main:
     mov dword ptr [rbp-48], eax
 
 .L.if.begin.0000000B:
-    mov eax, [rbp-40]
+    mov eax, [rbp-48]
     test eax, eax
     je .L.if.end.0000000B # if eax != 0 { jmp end }
 .L.if.body.0000000B:
@@ -1232,9 +1253,9 @@ main:
     mov dword ptr [rbp-56], eax
 
     # i32.add
-    mov eax, dword ptr [rbp-48]
-    add eax, dword ptr [rbp-40]
-    mov dword ptr [rbp-40], eax
+    mov eax, dword ptr [rbp-56]
+    add eax, dword ptr [rbp-48]
+    mov dword ptr [rbp-48], eax
     # local.set data_ptr i32
     mov eax, dword ptr [rbp-48]
     mov dword ptr [rbp-40], eax
@@ -1265,7 +1286,7 @@ main:
     pop rbp
     ret
 
-# func $wa.runtime.i32_ref_to_ptr
+# func $wa.runtime.i32_ref_to_ptr(b:i32,d:i32) => i32
 .section .text
 .F.$wa.runtime.i32_ref_to_ptr:
     push rbp
@@ -1273,10 +1294,12 @@ main:
     sub  rsp, 16
 
     # 将寄存器参数备份到栈
-    mov [rbp+16], ecx # save arg b
-    mov [rbp+24], edx # save arg d
+    mov [rbp+16], ecx # save arg.0
+    mov [rbp+24], edx # save arg.1
+
     # 将返回值变量初始化为0
-    mov dword ptr [rbp-8], 0 # ret .F.ret.0 = 0
+    mov dword ptr [rbp-8], 0 # ret.0 = 0
+
     # 没有局部变量需要初始化为0
 
     # local.get d i32
@@ -1293,7 +1316,7 @@ main:
     pop rbp
     ret
 
-# func $wa.runtime.i64_ref_to_ptr
+# func $wa.runtime.i64_ref_to_ptr(b:i32,d:i32) => i32
 .section .text
 .F.$wa.runtime.i64_ref_to_ptr:
     push rbp
@@ -1301,10 +1324,12 @@ main:
     sub  rsp, 16
 
     # 将寄存器参数备份到栈
-    mov [rbp+16], ecx # save arg b
-    mov [rbp+24], edx # save arg d
+    mov [rbp+16], ecx # save arg.0
+    mov [rbp+24], edx # save arg.1
+
     # 将返回值变量初始化为0
-    mov dword ptr [rbp-8], 0 # ret .F.ret.0 = 0
+    mov dword ptr [rbp-8], 0 # ret.0 = 0
+
     # 没有局部变量需要初始化为0
 
     # local.get d i32
@@ -1321,7 +1346,7 @@ main:
     pop rbp
     ret
 
-# func $wa.runtime.slice_to_ptr
+# func $wa.runtime.slice_to_ptr(b:i32,d:i32,l:i32,c:i32) => i32
 .section .text
 .F.$wa.runtime.slice_to_ptr:
     push rbp
@@ -1329,12 +1354,14 @@ main:
     sub  rsp, 16
 
     # 将寄存器参数备份到栈
-    mov [rbp+16], ecx # save arg b
-    mov [rbp+24], edx # save arg d
-    mov [rbp+32], r8d # save arg l
-    mov [rbp+40], r9d # save arg c
+    mov [rbp+16], ecx # save arg.0
+    mov [rbp+24], edx # save arg.1
+    mov [rbp+32], r8d # save arg.2
+    mov [rbp+40], r9d # save arg.3
+
     # 将返回值变量初始化为0
-    mov dword ptr [rbp-8], 0 # ret .F.ret.0 = 0
+    mov dword ptr [rbp-8], 0 # ret.0 = 0
+
     # 没有局部变量需要初始化为0
 
     # local.get d i32
@@ -1351,7 +1378,7 @@ main:
     pop rbp
     ret
 
-# func heap_assert_valid_ptr
+# func heap_assert_valid_ptr(ptr:i32)
 .section .text
 .F.heap_assert_valid_ptr:
     push rbp
@@ -1359,7 +1386,8 @@ main:
     sub  rsp, 16
 
     # 将寄存器参数备份到栈
-    mov [rbp+16], ecx # save arg ptr
+    mov [rbp+16], ecx # save arg.0
+
     # 没有返回值变量需要初始化为0
 
     # 没有局部变量需要初始化为0
@@ -1373,14 +1401,14 @@ main:
     mov [rbp-16], eax
 
     # i32.gt_s
-    mov r10d, dword ptr [rbp-8]
-    mov r11d, dword ptr [rbp+0]
+    mov r10d, dword ptr [rbp-16]
+    mov r11d, dword ptr [rbp-8]
     cmp r10d, r11d
     setg al
     movzx eax, al
-    mov dword ptr [rbp+0], eax
+    mov dword ptr [rbp-8], eax
 .L.if.begin.0000000C:
-    mov eax, [rbp+0]
+    mov eax, [rbp-8]
     test eax, eax
     jne .L.if.body.0000000C # if eax != 0 { jmp body }
 .L.if.body.0000000C:
@@ -1398,19 +1426,19 @@ main:
 
     # i32.rem_s
     mov dword ptr [rbp+8], edx
-    mov eax, dword ptr [rbp-8]
+    mov eax, dword ptr [rbp-16]
     cdq
-    idiv dword ptr [rbp+0]
-    mov dword ptr [rbp+0], edx
+    idiv dword ptr [rbp-8]
+    mov dword ptr [rbp-8], edx
     mov edx, dword ptr [rbp+8]
     # i32.eqz
-    mov  eax, dword ptr [rbp+0]
+    mov  eax, dword ptr [rbp-8]
     test eax, eax
     setz al
     movzx eax, al
-    mov dword ptr [rbp+0], eax
+    mov dword ptr [rbp-8], eax
 .L.if.begin.0000000D:
-    mov eax, [rbp+0]
+    mov eax, [rbp-8]
     test eax, eax
     jne .L.if.body.0000000D # if eax != 0 { jmp body }
 .L.if.body.0000000D:
@@ -1427,7 +1455,7 @@ main:
     pop rbp
     ret
 
-# func heap_is_fixed_list_enabled
+# func heap_is_fixed_list_enabled => i32
 .section .text
 .F.heap_is_fixed_list_enabled:
     push rbp
@@ -1437,20 +1465,21 @@ main:
     # 没有参数需要备份到栈
 
     # 将返回值变量初始化为0
-    mov dword ptr [rbp-8], 0 # ret .F.ret.0 = 0
+    mov dword ptr [rbp-8], 0 # ret.0 = 0
+
     # 没有局部变量需要初始化为0
 
     # global.get __heap_lfixed_cap i32
-    mov eax, dword ptr [rip+$G.__heap_lfixed_cap]
+    mov eax, dword ptr [rip+.G.__heap_lfixed_cap]
     mov dword ptr [rbp-16], eax
     # i32.eqz
-    mov  eax, dword ptr [rbp-8]
+    mov  eax, dword ptr [rbp-16]
     test eax, eax
     setz al
     movzx eax, al
-    mov dword ptr [rbp-8], eax
+    mov dword ptr [rbp-16], eax
 .L.if.begin.0000000E:
-    mov eax, [rbp-8]
+    mov eax, [rbp-16]
     test eax, eax
     jne .L.if.body.0000000E # if eax != 0 { jmp body }
 .L.if.body.0000000E:
@@ -1489,16 +1518,16 @@ main:
     # 没有局部变量需要初始化为0
 
     # global.get __heap_lfixed_cap i32
-    mov eax, dword ptr [rip+$G.__heap_lfixed_cap]
+    mov eax, dword ptr [rip+.G.__heap_lfixed_cap]
     mov dword ptr [rbp-8], eax
     # i32.eqz
-    mov  eax, dword ptr [rbp+0]
+    mov  eax, dword ptr [rbp-8]
     test eax, eax
     setz al
     movzx eax, al
-    mov dword ptr [rbp+0], eax
+    mov dword ptr [rbp-8], eax
 .L.if.begin.0000000F:
-    mov eax, [rbp+0]
+    mov eax, [rbp-8]
     test eax, eax
     je .L.if.end.0000000F # if eax != 0 { jmp end }
 .L.if.body.0000000F:
@@ -1514,7 +1543,7 @@ main:
     pop rbp
     ret
 
-# func heap_is_fixed_size
+# func heap_is_fixed_size(size:i32) => i32
 .section .text
 .F.heap_is_fixed_size:
     push rbp
@@ -1522,16 +1551,18 @@ main:
     sub  rsp, 64
 
     # 将寄存器参数备份到栈
-    mov [rbp+16], ecx # save arg size
+    mov [rbp+16], ecx # save arg.0
+
     # 将返回值变量初始化为0
-    mov dword ptr [rbp-8], 0 # ret .F.ret.0 = 0
+    mov dword ptr [rbp-8], 0 # ret.0 = 0
+
     # 没有局部变量需要初始化为0
 
     # call heap_is_fixed_list_enabled(...)
     call .F.heap_is_fixed_list_enabled
     mov dword ptr [rbp-16], eax
 .L.if.begin.00000010:
-    mov eax, [rbp-8]
+    mov eax, [rbp-16]
     test eax, eax
     jne .L.if.body.00000010 # if eax != 0 { jmp body }
 .L.if.body.00000010:
@@ -1540,7 +1571,7 @@ main:
     mov eax, 0
     mov [rbp-16], eax
 
-    mov eax, dword ptr [rbp-8]
+    mov eax, dword ptr [rbp-16]
     mov dword ptr [rbp-8], eax
     jmp .L.return.heap_is_fixed_size
 .L.next.00000010:
@@ -1554,14 +1585,14 @@ main:
     mov [rbp-24], eax
 
     # i32.le_s
-    mov r10d, dword ptr [rbp-16]
-    mov r11d, dword ptr [rbp-8]
+    mov r10d, dword ptr [rbp-24]
+    mov r11d, dword ptr [rbp-16]
     cmp r10d, r11d
     setle al
     movzx eax, al
-    mov dword ptr [rbp-8], eax
+    mov dword ptr [rbp-16], eax
 .L.if.begin.00000011:
-    mov eax, [rbp-8]
+    mov eax, [rbp-16]
     test eax, eax
     jne .L.if.body.00000011 # if eax != 0 { jmp body }
 .L.if.body.00000011:
@@ -1586,7 +1617,7 @@ main:
     pop rbp
     ret
 
-# func heap_alignment8
+# func heap_alignment8(size:i32) => i32
 .section .text
 .F.heap_alignment8:
     push rbp
@@ -1594,9 +1625,11 @@ main:
     sub  rsp, 32
 
     # 将寄存器参数备份到栈
-    mov [rbp+16], ecx # save arg size
+    mov [rbp+16], ecx # save arg.0
+
     # 将返回值变量初始化为0
-    mov dword ptr [rbp-8], 0 # ret .F.ret.0 = 0
+    mov dword ptr [rbp-8], 0 # ret.0 = 0
+
     # 没有局部变量需要初始化为0
 
     # local.get size i32
@@ -1608,28 +1641,28 @@ main:
     mov [rbp-24], eax
 
     # i32.add
-    mov eax, dword ptr [rbp-16]
-    add eax, dword ptr [rbp-8]
-    mov dword ptr [rbp-8], eax
+    mov eax, dword ptr [rbp-24]
+    add eax, dword ptr [rbp-16]
+    mov dword ptr [rbp-16], eax
     # i32.const 8
     mov eax, 8
     mov [rbp-24], eax
 
     # i32.div_s
     mov dword ptr [rbp+8], edx
-    mov eax, dword ptr [rbp-16]
+    mov eax, dword ptr [rbp-24]
     cdq
-    idiv dword ptr [rbp-8]
-    mov dword ptr [rbp-8], eax
+    idiv dword ptr [rbp-16]
+    mov dword ptr [rbp-16], eax
     mov edx, dword ptr [rbp+8]
     # i32.const 8
     mov eax, 8
     mov [rbp-24], eax
 
     # i32.mul
-    mov eax, dword ptr [rbp-16]
-    imul eax, dword ptr [rbp-8]
-    mov dword ptr [rbp-8], eax
+    mov eax, dword ptr [rbp-24]
+    imul eax, dword ptr [rbp-16]
+    mov dword ptr [rbp-16], eax
 
     # 根据ABI处理返回值
 .L.return.heap_alignment8:
@@ -1640,7 +1673,7 @@ main:
     pop rbp
     ret
 
-# func heap_assert_align8
+# func heap_assert_align8(size:i32)
 .section .text
 .F.heap_assert_align8:
     push rbp
@@ -1648,7 +1681,8 @@ main:
     sub  rsp, 16
 
     # 将寄存器参数备份到栈
-    mov [rbp+16], ecx # save arg size
+    mov [rbp+16], ecx # save arg.0
+
     # 没有返回值变量需要初始化为0
 
     # 没有局部变量需要初始化为0
@@ -1663,19 +1697,19 @@ main:
 
     # i32.rem_s
     mov dword ptr [rbp+8], edx
-    mov eax, dword ptr [rbp-8]
+    mov eax, dword ptr [rbp-16]
     cdq
-    idiv dword ptr [rbp+0]
-    mov dword ptr [rbp+0], edx
+    idiv dword ptr [rbp-8]
+    mov dword ptr [rbp-8], edx
     mov edx, dword ptr [rbp+8]
     # i32.eqz
-    mov  eax, dword ptr [rbp+0]
+    mov  eax, dword ptr [rbp-8]
     test eax, eax
     setz al
     movzx eax, al
-    mov dword ptr [rbp+0], eax
+    mov dword ptr [rbp-8], eax
 .L.if.begin.00000012:
-    mov eax, [rbp+0]
+    mov eax, [rbp-8]
     test eax, eax
     jne .L.if.body.00000012 # if eax != 0 { jmp body }
 .L.if.body.00000012:
@@ -1692,7 +1726,7 @@ main:
     pop rbp
     ret
 
-# func heap_block.init
+# func heap_block.init(ptr:i32,size:i32,next:i32)
 .section .text
 .F.heap_block.init:
     push rbp
@@ -1700,9 +1734,10 @@ main:
     sub  rsp, 16
 
     # 将寄存器参数备份到栈
-    mov [rbp+16], ecx # save arg ptr
-    mov [rbp+24], edx # save arg size
-    mov [rbp+32], r8d # save arg next
+    mov [rbp+16], ecx # save arg.0
+    mov [rbp+24], edx # save arg.1
+    mov [rbp+32], r8d # save arg.2
+
     # 没有返回值变量需要初始化为0
 
     # 没有局部变量需要初始化为0
@@ -1717,9 +1752,9 @@ main:
 
     # i32.store
     lea rax, [rip + .Memory.addr]
-    mov r10, dword [rbp+0]
+    mov r10, dword [rbp-8]
     add r10, rax
-    mov eax, dword [rbp-8]
+    mov eax, dword [rbp-16]
     mov dword [r10 +0], eax
     # local.get ptr i32
     mov eax, dword ptr [rbp+16]
@@ -1731,9 +1766,9 @@ main:
 
     # i32.store
     lea rax, [rip + .Memory.addr]
-    mov r10, dword [rbp+0]
+    mov r10, dword [rbp-8]
     add r10, rax
-    mov eax, dword [rbp-8]
+    mov eax, dword [rbp-16]
     mov dword [r10 +4], eax
 
     # 根据ABI处理返回值
@@ -1744,7 +1779,7 @@ main:
     pop rbp
     ret
 
-# func heap_block.set_size
+# func heap_block.set_size(ptr:i32,size:i32)
 .section .text
 .F.heap_block.set_size:
     push rbp
@@ -1752,8 +1787,9 @@ main:
     sub  rsp, 16
 
     # 将寄存器参数备份到栈
-    mov [rbp+16], ecx # save arg ptr
-    mov [rbp+24], edx # save arg size
+    mov [rbp+16], ecx # save arg.0
+    mov [rbp+24], edx # save arg.1
+
     # 没有返回值变量需要初始化为0
 
     # 没有局部变量需要初始化为0
@@ -1768,9 +1804,9 @@ main:
 
     # i32.store
     lea rax, [rip + .Memory.addr]
-    mov r10, dword [rbp+0]
+    mov r10, dword [rbp-8]
     add r10, rax
-    mov eax, dword [rbp-8]
+    mov eax, dword [rbp-16]
     mov dword [r10 +0], eax
 
     # 根据ABI处理返回值
@@ -1781,7 +1817,7 @@ main:
     pop rbp
     ret
 
-# func heap_block.set_next
+# func heap_block.set_next(ptr:i32,next:i32)
 .section .text
 .F.heap_block.set_next:
     push rbp
@@ -1789,8 +1825,9 @@ main:
     sub  rsp, 16
 
     # 将寄存器参数备份到栈
-    mov [rbp+16], ecx # save arg ptr
-    mov [rbp+24], edx # save arg next
+    mov [rbp+16], ecx # save arg.0
+    mov [rbp+24], edx # save arg.1
+
     # 没有返回值变量需要初始化为0
 
     # 没有局部变量需要初始化为0
@@ -1805,9 +1842,9 @@ main:
 
     # i32.store
     lea rax, [rip + .Memory.addr]
-    mov r10, dword [rbp+0]
+    mov r10, dword [rbp-8]
     add r10, rax
-    mov eax, dword [rbp-8]
+    mov eax, dword [rbp-16]
     mov dword [r10 +4], eax
 
     # 根据ABI处理返回值
@@ -1818,7 +1855,7 @@ main:
     pop rbp
     ret
 
-# func heap_block.size
+# func heap_block.size(ptr:i32) => i32
 .section .text
 .F.heap_block.size:
     push rbp
@@ -1826,9 +1863,11 @@ main:
     sub  rsp, 16
 
     # 将寄存器参数备份到栈
-    mov [rbp+16], ecx # save arg ptr
+    mov [rbp+16], ecx # save arg.0
+
     # 将返回值变量初始化为0
-    mov dword ptr [rbp-8], 0 # ret .F.ret.0 = 0
+    mov dword ptr [rbp-8], 0 # ret.0 = 0
+
     # 没有局部变量需要初始化为0
 
     # local.get ptr i32
@@ -1837,10 +1876,10 @@ main:
 
     # i32.load
     lea rax, [rip + .Memory.addr]
-    mov r10, dword [rbp-8]
+    mov r10, dword [rbp-16]
     add r10, rax
     mov eax, dword [r10 +0]
-    mov dword [rbp-8], eax
+    mov dword [rbp-16], eax
 
     # 根据ABI处理返回值
 .L.return.heap_block.size:
@@ -1851,7 +1890,7 @@ main:
     pop rbp
     ret
 
-# func heap_block.next
+# func heap_block.next(ptr:i32) => i32
 .section .text
 .F.heap_block.next:
     push rbp
@@ -1859,9 +1898,11 @@ main:
     sub  rsp, 16
 
     # 将寄存器参数备份到栈
-    mov [rbp+16], ecx # save arg ptr
+    mov [rbp+16], ecx # save arg.0
+
     # 将返回值变量初始化为0
-    mov dword ptr [rbp-8], 0 # ret .F.ret.0 = 0
+    mov dword ptr [rbp-8], 0 # ret.0 = 0
+
     # 没有局部变量需要初始化为0
 
     # local.get ptr i32
@@ -1870,10 +1911,10 @@ main:
 
     # i32.load
     lea rax, [rip + .Memory.addr]
-    mov r10, dword [rbp-8]
+    mov r10, dword [rbp-16]
     add r10, rax
     mov eax, dword [r10 +4]
-    mov dword [rbp-8], eax
+    mov dword [rbp-16], eax
 
     # 根据ABI处理返回值
 .L.return.heap_block.next:
@@ -1884,7 +1925,7 @@ main:
     pop rbp
     ret
 
-# func heap_block.data
+# func heap_block.data(ptr:i32) => i32
 .section .text
 .F.heap_block.data:
     push rbp
@@ -1892,9 +1933,11 @@ main:
     sub  rsp, 32
 
     # 将寄存器参数备份到栈
-    mov [rbp+16], ecx # save arg ptr
+    mov [rbp+16], ecx # save arg.0
+
     # 将返回值变量初始化为0
-    mov dword ptr [rbp-8], 0 # ret .F.ret.0 = 0
+    mov dword ptr [rbp-8], 0 # ret.0 = 0
+
     # 没有局部变量需要初始化为0
 
     # local.get ptr i32
@@ -1906,9 +1949,9 @@ main:
     mov [rbp-24], eax
 
     # i32.add
-    mov eax, dword ptr [rbp-16]
-    add eax, dword ptr [rbp-8]
-    mov dword ptr [rbp-8], eax
+    mov eax, dword ptr [rbp-24]
+    add eax, dword ptr [rbp-16]
+    mov dword ptr [rbp-16], eax
 
     # 根据ABI处理返回值
 .L.return.heap_block.data:
@@ -1919,7 +1962,7 @@ main:
     pop rbp
     ret
 
-# func heap_block.end
+# func heap_block.end(ptr:i32) => i32
 .section .text
 .F.heap_block.end:
     push rbp
@@ -1927,9 +1970,11 @@ main:
     sub  rsp, 32
 
     # 将寄存器参数备份到栈
-    mov [rbp+16], ecx # save arg ptr
+    mov [rbp+16], ecx # save arg.0
+
     # 将返回值变量初始化为0
-    mov dword ptr [rbp-8], 0 # ret .F.ret.0 = 0
+    mov dword ptr [rbp-8], 0 # ret.0 = 0
+
     # 没有局部变量需要初始化为0
 
     # local.get ptr i32
@@ -1938,26 +1983,26 @@ main:
 
     # i32.load
     lea rax, [rip + .Memory.addr]
-    mov r10, dword [rbp-8]
+    mov r10, dword [rbp-16]
     add r10, rax
     mov eax, dword [r10 +0]
-    mov dword [rbp-8], eax
+    mov dword [rbp-16], eax
     # local.get ptr i32
     mov eax, dword ptr [rbp+16]
     mov dword ptr [rbp-24], eax
 
     # i32.add
-    mov eax, dword ptr [rbp-16]
-    add eax, dword ptr [rbp-8]
-    mov dword ptr [rbp-8], eax
+    mov eax, dword ptr [rbp-24]
+    add eax, dword ptr [rbp-16]
+    mov dword ptr [rbp-16], eax
     # i32.const 8
     mov eax, 8
     mov [rbp-24], eax
 
     # i32.add
-    mov eax, dword ptr [rbp-16]
-    add eax, dword ptr [rbp-8]
-    mov dword ptr [rbp-8], eax
+    mov eax, dword ptr [rbp-24]
+    add eax, dword ptr [rbp-16]
+    mov dword ptr [rbp-16], eax
 
     # 根据ABI处理返回值
 .L.return.heap_block.end:
@@ -1968,7 +2013,7 @@ main:
     pop rbp
     ret
 
-# func heap_free_list.ptr_and_fixed_size
+# func heap_free_list.ptr_and_fixed_size(size:i32) => i32,i32)
 .section .text
 .F.heap_free_list.ptr_and_fixed_size:
     push rbp
@@ -1979,32 +2024,34 @@ main:
     mov [rbp+16], rcx # return address
 
     # 将寄存器参数备份到栈
-    mov [rbp+16], edx # save arg size
+    mov [rbp+16], edx # save arg.0
+
     # 将返回值变量初始化为0
-    mov dword ptr [rbp+48], 0 # ret .F.ret.0 = 0
-    mov dword ptr [rbp+56], 0 # ret .F.ret.1 = 0
+    mov dword ptr [rbp+48], 0 # ret.0 = 0
+    mov dword ptr [rbp+56], 0 # ret.1 = 0
+
     # 没有局部变量需要初始化为0
 
     # call heap_is_fixed_list_enabled(...)
     call .F.heap_is_fixed_list_enabled
     mov dword ptr [rbp-8], eax
 .L.if.begin.00000013:
-    mov eax, [rbp+0]
+    mov eax, [rbp-8]
     test eax, eax
     jne .L.if.body.00000013 # if eax != 0 { jmp body }
 .L.if.body.00000013:
 .L.if.else.00000013:
     # global.get __heap_base i32
-    mov eax, dword ptr [rip+$G.__heap_base]
+    mov eax, dword ptr [rip+.G.__heap_base]
     mov dword ptr [rbp-8], eax
     # i32.const 32
     mov eax, 32
     mov [rbp-16], eax
 
     # i32.add
-    mov eax, dword ptr [rbp-8]
-    add eax, dword ptr [rbp+0]
-    mov dword ptr [rbp+0], eax
+    mov eax, dword ptr [rbp-16]
+    add eax, dword ptr [rbp-8]
+    mov dword ptr [rbp-8], eax
     # local.get size i32
     mov eax, dword ptr [rbp+16]
     mov dword ptr [rbp-16], eax
@@ -2013,9 +2060,9 @@ main:
     mov ecx, dword ptr [rbp-16] # arg 0
     call .F.heap_alignment8
     mov dword ptr [rbp-16], eax
-    mov eax, dword ptr [rbp-8]
+    mov eax, dword ptr [rbp-16]
     mov dword ptr [rbp+56], eax
-    mov eax, dword ptr [rbp+0]
+    mov eax, dword ptr [rbp-8]
     mov dword ptr [rbp+48], eax
     mov    rax, [rbp+16] # return address
     jmp    .L.return.heap_free_list.ptr_and_fixed_size
@@ -2030,28 +2077,28 @@ main:
     mov [rbp-16], eax
 
     # i32.gt_s
-    mov r10d, dword ptr [rbp-8]
-    mov r11d, dword ptr [rbp+0]
+    mov r10d, dword ptr [rbp-16]
+    mov r11d, dword ptr [rbp-8]
     cmp r10d, r11d
     setg al
     movzx eax, al
-    mov dword ptr [rbp+0], eax
+    mov dword ptr [rbp-8], eax
 .L.if.begin.00000014:
-    mov eax, [rbp+0]
+    mov eax, [rbp-8]
     test eax, eax
     je .L.if.end.00000014 # if eax != 0 { jmp end }
 .L.if.body.00000014:
     # global.get __heap_base i32
-    mov eax, dword ptr [rip+$G.__heap_base]
+    mov eax, dword ptr [rip+.G.__heap_base]
     mov dword ptr [rbp-8], eax
     # i32.const 32
     mov eax, 32
     mov [rbp-16], eax
 
     # i32.add
-    mov eax, dword ptr [rbp-8]
-    add eax, dword ptr [rbp+0]
-    mov dword ptr [rbp+0], eax
+    mov eax, dword ptr [rbp-16]
+    add eax, dword ptr [rbp-8]
+    mov dword ptr [rbp-8], eax
 .L.block.begin.00000015:
     # local.get size i32
     mov eax, dword ptr [rbp+16]
@@ -2062,14 +2109,14 @@ main:
     mov [rbp-24], eax
 
     # i32.le_s
-    mov r10d, dword ptr [rbp-16]
-    mov r11d, dword ptr [rbp-8]
+    mov r10d, dword ptr [rbp-24]
+    mov r11d, dword ptr [rbp-16]
     cmp r10d, r11d
     setle al
     movzx eax, al
-    mov dword ptr [rbp-8], eax
+    mov dword ptr [rbp-16], eax
 .L.if.begin.00000016:
-    mov eax, [rbp-8]
+    mov eax, [rbp-16]
     test eax, eax
     jne .L.if.body.00000016 # if eax != 0 { jmp body }
 .L.if.body.00000016:
@@ -2090,9 +2137,9 @@ main:
 .L.if.end.00000016:
 .L.next.00000015:
 .L.block.end.00000015:
-    mov eax, dword ptr [rbp-8]
+    mov eax, dword ptr [rbp-16]
     mov dword ptr [rbp+56], eax
-    mov eax, dword ptr [rbp+0]
+    mov eax, dword ptr [rbp-8]
     mov dword ptr [rbp+48], eax
     mov    rax, [rbp+16] # return address
     jmp    .L.return.heap_free_list.ptr_and_fixed_size
@@ -2107,35 +2154,35 @@ main:
     mov [rbp-16], eax
 
     # i32.gt_s
-    mov r10d, dword ptr [rbp-8]
-    mov r11d, dword ptr [rbp+0]
+    mov r10d, dword ptr [rbp-16]
+    mov r11d, dword ptr [rbp-8]
     cmp r10d, r11d
     setg al
     movzx eax, al
-    mov dword ptr [rbp+0], eax
+    mov dword ptr [rbp-8], eax
 .L.if.begin.00000017:
-    mov eax, [rbp+0]
+    mov eax, [rbp-8]
     test eax, eax
     je .L.if.end.00000017 # if eax != 0 { jmp end }
 .L.if.body.00000017:
     # global.get __heap_base i32
-    mov eax, dword ptr [rip+$G.__heap_base]
+    mov eax, dword ptr [rip+.G.__heap_base]
     mov dword ptr [rbp-8], eax
     # i32.const 24
     mov eax, 24
     mov [rbp-16], eax
 
     # i32.add
-    mov eax, dword ptr [rbp-8]
-    add eax, dword ptr [rbp+0]
-    mov dword ptr [rbp+0], eax
+    mov eax, dword ptr [rbp-16]
+    add eax, dword ptr [rbp-8]
+    mov dword ptr [rbp-8], eax
     # i32.const 80
     mov eax, 80
     mov [rbp-16], eax
 
-    mov eax, dword ptr [rbp-8]
+    mov eax, dword ptr [rbp-16]
     mov dword ptr [rbp+56], eax
-    mov eax, dword ptr [rbp+0]
+    mov eax, dword ptr [rbp-8]
     mov dword ptr [rbp+48], eax
     mov    rax, [rbp+16] # return address
     jmp    .L.return.heap_free_list.ptr_and_fixed_size
@@ -2150,35 +2197,35 @@ main:
     mov [rbp-16], eax
 
     # i32.gt_s
-    mov r10d, dword ptr [rbp-8]
-    mov r11d, dword ptr [rbp+0]
+    mov r10d, dword ptr [rbp-16]
+    mov r11d, dword ptr [rbp-8]
     cmp r10d, r11d
     setg al
     movzx eax, al
-    mov dword ptr [rbp+0], eax
+    mov dword ptr [rbp-8], eax
 .L.if.begin.00000018:
-    mov eax, [rbp+0]
+    mov eax, [rbp-8]
     test eax, eax
     je .L.if.end.00000018 # if eax != 0 { jmp end }
 .L.if.body.00000018:
     # global.get __heap_base i32
-    mov eax, dword ptr [rip+$G.__heap_base]
+    mov eax, dword ptr [rip+.G.__heap_base]
     mov dword ptr [rbp-8], eax
     # i32.const 16
     mov eax, 16
     mov [rbp-16], eax
 
     # i32.add
-    mov eax, dword ptr [rbp-8]
-    add eax, dword ptr [rbp+0]
-    mov dword ptr [rbp+0], eax
+    mov eax, dword ptr [rbp-16]
+    add eax, dword ptr [rbp-8]
+    mov dword ptr [rbp-8], eax
     # i32.const 48
     mov eax, 48
     mov [rbp-16], eax
 
-    mov eax, dword ptr [rbp-8]
+    mov eax, dword ptr [rbp-16]
     mov dword ptr [rbp+56], eax
-    mov eax, dword ptr [rbp+0]
+    mov eax, dword ptr [rbp-8]
     mov dword ptr [rbp+48], eax
     mov    rax, [rbp+16] # return address
     jmp    .L.return.heap_free_list.ptr_and_fixed_size
@@ -2193,50 +2240,50 @@ main:
     mov [rbp-16], eax
 
     # i32.gt_s
-    mov r10d, dword ptr [rbp-8]
-    mov r11d, dword ptr [rbp+0]
+    mov r10d, dword ptr [rbp-16]
+    mov r11d, dword ptr [rbp-8]
     cmp r10d, r11d
     setg al
     movzx eax, al
-    mov dword ptr [rbp+0], eax
+    mov dword ptr [rbp-8], eax
 .L.if.begin.00000019:
-    mov eax, [rbp+0]
+    mov eax, [rbp-8]
     test eax, eax
     je .L.if.end.00000019 # if eax != 0 { jmp end }
 .L.if.body.00000019:
     # global.get __heap_base i32
-    mov eax, dword ptr [rip+$G.__heap_base]
+    mov eax, dword ptr [rip+.G.__heap_base]
     mov dword ptr [rbp-8], eax
     # i32.const 8
     mov eax, 8
     mov [rbp-16], eax
 
     # i32.add
-    mov eax, dword ptr [rbp-8]
-    add eax, dword ptr [rbp+0]
-    mov dword ptr [rbp+0], eax
+    mov eax, dword ptr [rbp-16]
+    add eax, dword ptr [rbp-8]
+    mov dword ptr [rbp-8], eax
     # i32.const 32
     mov eax, 32
     mov [rbp-16], eax
 
-    mov eax, dword ptr [rbp-8]
+    mov eax, dword ptr [rbp-16]
     mov dword ptr [rbp+56], eax
-    mov eax, dword ptr [rbp+0]
+    mov eax, dword ptr [rbp-8]
     mov dword ptr [rbp+48], eax
     mov    rax, [rbp+16] # return address
     jmp    .L.return.heap_free_list.ptr_and_fixed_size
 .L.next.00000019:
 .L.if.end.00000019:
     # global.get __heap_base i32
-    mov eax, dword ptr [rip+$G.__heap_base]
+    mov eax, dword ptr [rip+.G.__heap_base]
     mov dword ptr [rbp-8], eax
     # i32.const 24
     mov eax, 24
     mov [rbp-16], eax
 
-    mov eax, dword ptr [rbp-8]
+    mov eax, dword ptr [rbp-16]
     mov dword ptr [rbp+56], eax
-    mov eax, dword ptr [rbp+0]
+    mov eax, dword ptr [rbp-8]
     mov dword ptr [rbp+48], eax
     mov    rax, [rbp+16] # return address
     jmp    .L.return.heap_free_list.ptr_and_fixed_size
@@ -2264,10 +2311,10 @@ main:
     # 没有局部变量需要初始化为0
 
     # global.get __heap_init_flag i32
-    mov eax, dword ptr [rip+$G.__heap_init_flag]
+    mov eax, dword ptr [rip+.G.__heap_init_flag]
     mov dword ptr [rbp-8], eax
 .L.if.begin.0000001A:
-    mov eax, [rbp+0]
+    mov eax, [rbp-8]
     test eax, eax
     je .L.if.end.0000001A # if eax != 0 { jmp end }
 .L.if.body.0000001A:
@@ -2280,23 +2327,23 @@ main:
 
     # global.set __heap_init_flag i32
     mov eax, dword ptr [rbp-8]
-    mov dword ptr [rip+$G.__heap_init_flag], eax
+    mov dword ptr [rip+.G.__heap_init_flag], eax
     # global.get __stack_ptr i32
-    mov eax, dword ptr [rip+$G.__stack_ptr]
+    mov eax, dword ptr [rip+.G.__stack_ptr]
     mov dword ptr [rbp-8], eax
     # i32.const 0
     mov eax, 0
     mov [rbp-16], eax
 
     # i32.gt_s
-    mov r10d, dword ptr [rbp-8]
-    mov r11d, dword ptr [rbp+0]
+    mov r10d, dword ptr [rbp-16]
+    mov r11d, dword ptr [rbp-8]
     cmp r10d, r11d
     setg al
     movzx eax, al
-    mov dword ptr [rbp+0], eax
+    mov dword ptr [rbp-8], eax
 .L.if.begin.0000001B:
-    mov eax, [rbp+0]
+    mov eax, [rbp-8]
     test eax, eax
     jne .L.if.body.0000001B # if eax != 0 { jmp body }
 .L.if.body.0000001B:
@@ -2305,20 +2352,20 @@ main:
 .L.next.0000001B:
 .L.if.end.0000001B:
     # global.get __stack_ptr i32
-    mov eax, dword ptr [rip+$G.__stack_ptr]
+    mov eax, dword ptr [rip+.G.__stack_ptr]
     mov dword ptr [rbp-8], eax
     # global.get __heap_base i32
-    mov eax, dword ptr [rip+$G.__heap_base]
+    mov eax, dword ptr [rip+.G.__heap_base]
     mov dword ptr [rbp-16], eax
     # i32.lt_s
-    mov r10d, dword ptr [rbp-8]
-    mov r11d, dword ptr [rbp+0]
+    mov r10d, dword ptr [rbp-16]
+    mov r11d, dword ptr [rbp-8]
     cmp r10d, r11d
     setl al
     movzx eax, al
-    mov dword ptr [rbp+0], eax
+    mov dword ptr [rbp-8], eax
 .L.if.begin.0000001C:
-    mov eax, [rbp+0]
+    mov eax, [rbp-8]
     test eax, eax
     jne .L.if.body.0000001C # if eax != 0 { jmp body }
 .L.if.body.0000001C:
@@ -2327,54 +2374,54 @@ main:
 .L.next.0000001C:
 .L.if.end.0000001C:
     # global.get __heap_base i32
-    mov eax, dword ptr [rip+$G.__heap_base]
+    mov eax, dword ptr [rip+.G.__heap_base]
     mov dword ptr [rbp-8], eax
     # call heap_assert_align8(...)
     mov ecx, dword ptr [rbp-8] # arg 0
     call .F.heap_assert_align8
     # global.get __heap_base i32
-    mov eax, dword ptr [rip+$G.__heap_base]
+    mov eax, dword ptr [rip+.G.__heap_base]
     mov dword ptr [rbp-8], eax
     # i32.const 48
     mov eax, 48
     mov [rbp-16], eax
 
     # i32.add
-    mov eax, dword ptr [rbp-8]
-    add eax, dword ptr [rbp+0]
-    mov dword ptr [rbp+0], eax
+    mov eax, dword ptr [rbp-16]
+    add eax, dword ptr [rbp-8]
+    mov dword ptr [rbp-8], eax
     # global.set __heap_ptr i32
     mov eax, dword ptr [rbp-8]
-    mov dword ptr [rip+$G.__heap_ptr], eax
+    mov dword ptr [rip+.G.__heap_ptr], eax
     # memory.size
     lea rax, [rip+.Memory.pages]
-    mov [rbp+0], rax
+    mov [rbp-8], rax
     # i32.const 65536
     mov eax, 65536
     mov [rbp-16], eax
 
     # i32.mul
-    mov eax, dword ptr [rbp-8]
-    imul eax, dword ptr [rbp+0]
-    mov dword ptr [rbp+0], eax
+    mov eax, dword ptr [rbp-16]
+    imul eax, dword ptr [rbp-8]
+    mov dword ptr [rbp-8], eax
     # global.set __heap_top i32
     mov eax, dword ptr [rbp-8]
-    mov dword ptr [rip+$G.__heap_top], eax
+    mov dword ptr [rip+.G.__heap_top], eax
     # global.get __heap_top i32
-    mov eax, dword ptr [rip+$G.__heap_top]
+    mov eax, dword ptr [rip+.G.__heap_top]
     mov dword ptr [rbp-8], eax
     # global.get __heap_ptr i32
-    mov eax, dword ptr [rip+$G.__heap_ptr]
+    mov eax, dword ptr [rip+.G.__heap_ptr]
     mov dword ptr [rbp-16], eax
     # i32.gt_s
-    mov r10d, dword ptr [rbp-8]
-    mov r11d, dword ptr [rbp+0]
+    mov r10d, dword ptr [rbp-16]
+    mov r11d, dword ptr [rbp-8]
     cmp r10d, r11d
     setg al
     movzx eax, al
-    mov dword ptr [rbp+0], eax
+    mov dword ptr [rbp-8], eax
 .L.if.begin.0000001D:
-    mov eax, [rbp+0]
+    mov eax, [rbp-8]
     test eax, eax
     jne .L.if.body.0000001D # if eax != 0 { jmp body }
 .L.if.body.0000001D:
@@ -2383,7 +2430,7 @@ main:
 .L.next.0000001D:
 .L.if.end.0000001D:
     # global.get __heap_base i32
-    mov eax, dword ptr [rip+$G.__heap_base]
+    mov eax, dword ptr [rip+.G.__heap_base]
     mov dword ptr [rbp-8], eax
     # i32.const 0
     mov eax, 0
@@ -2396,28 +2443,28 @@ main:
     # memory.fill    # .Runtime.memset(&.Memory.addr[R0.i32], R1.i32, R2.i32);
 
     # global.get __heap_base i32
-    mov eax, dword ptr [rip+$G.__heap_base]
+    mov eax, dword ptr [rip+.G.__heap_base]
     mov dword ptr [rbp-8], eax
     # i32.const 32
     mov eax, 32
     mov [rbp-16], eax
 
     # i32.add
-    mov eax, dword ptr [rbp-8]
-    add eax, dword ptr [rbp+0]
-    mov dword ptr [rbp+0], eax
+    mov eax, dword ptr [rbp-16]
+    add eax, dword ptr [rbp-8]
+    mov dword ptr [rbp-8], eax
     # global.set __heap_l128_freep i32
     mov eax, dword ptr [rbp-8]
-    mov dword ptr [rip+$G.__heap_l128_freep], eax
+    mov dword ptr [rip+.G.__heap_l128_freep], eax
     # global.get __heap_l128_freep i32
-    mov eax, dword ptr [rip+$G.__heap_l128_freep]
+    mov eax, dword ptr [rip+.G.__heap_l128_freep]
     mov dword ptr [rbp-8], eax
     # i32.const 0
     mov eax, 0
     mov [rbp-16], eax
 
     # global.get __heap_l128_freep i32
-    mov eax, dword ptr [rip+$G.__heap_l128_freep]
+    mov eax, dword ptr [rip+.G.__heap_l128_freep]
     mov dword ptr [rbp-24], eax
     # call heap_block.init(...)
     mov ecx, dword ptr [rbp-8] # arg 0
@@ -2433,7 +2480,7 @@ main:
     pop rbp
     ret
 
-# func runtime.malloc
+# func runtime.malloc(size:i32) => i32
 .section .text
 .F.runtime.malloc:
     # local free_list: i32
@@ -2444,9 +2491,11 @@ main:
     sub  rsp, 96
 
     # 将寄存器参数备份到栈
-    mov [rbp+16], ecx # save arg size
+    mov [rbp+16], ecx # save arg.0
+
     # 将返回值变量初始化为0
-    mov dword ptr [rbp-8], 0 # ret .F.ret.0 = 0
+    mov dword ptr [rbp-8], 0 # ret.0 = 0
+
     # 将局部变量初始化为0
     mov dword ptr [rbp-16], 0 # local free_list = 0
     mov dword ptr [rbp-24], 0 # local b = 0
@@ -2489,7 +2538,7 @@ main:
     call .F.heap_is_fixed_list_enabled
     mov dword ptr [rbp-32], eax
 .L.if.begin.0000001E:
-    mov eax, [rbp-24]
+    mov eax, [rbp-32]
     test eax, eax
     je .L.if.end.0000001E # if eax != 0 { jmp end }
 .L.if.body.0000001E:
@@ -2502,7 +2551,7 @@ main:
     call .F.heap_is_fixed_size
     mov dword ptr [rbp-32], eax
 .L.if.begin.0000001F:
-    mov eax, [rbp-24]
+    mov eax, [rbp-32]
     test eax, eax
     je .L.if.end.0000001F # if eax != 0 { jmp end }
 .L.if.body.0000001F:
@@ -2518,13 +2567,13 @@ main:
     mov eax, dword ptr [rbp-32]
     mov dword ptr [rbp-24], eax
     # i32.eqz
-    mov  eax, dword ptr [rbp-24]
+    mov  eax, dword ptr [rbp-32]
     test eax, eax
     setz al
     movzx eax, al
-    mov dword ptr [rbp-24], eax
+    mov dword ptr [rbp-32], eax
 .L.if.begin.00000020:
-    mov eax, [rbp-24]
+    mov eax, [rbp-32]
     test eax, eax
     jne .L.if.body.00000020 # if eax != 0 { jmp body }
 .L.if.body.00000020:
@@ -2537,7 +2586,7 @@ main:
     mov ecx, dword ptr [rbp-32] # arg 0
     call .F.heap_block.data
     mov dword ptr [rbp-32], eax
-    mov eax, dword ptr [rbp-24]
+    mov eax, dword ptr [rbp-32]
     mov dword ptr [rbp-8], eax
     jmp .L.return.runtime.malloc
 .L.next.00000020:
@@ -2558,13 +2607,13 @@ main:
     mov eax, dword ptr [rbp-32]
     mov dword ptr [rbp-24], eax
     # i32.eqz
-    mov  eax, dword ptr [rbp-24]
+    mov  eax, dword ptr [rbp-32]
     test eax, eax
     setz al
     movzx eax, al
-    mov dword ptr [rbp-24], eax
+    mov dword ptr [rbp-32], eax
 .L.if.begin.00000021:
-    mov eax, [rbp-24]
+    mov eax, [rbp-32]
     test eax, eax
     jne .L.if.body.00000021 # if eax != 0 { jmp body }
 .L.if.body.00000021:
@@ -2577,7 +2626,7 @@ main:
     mov ecx, dword ptr [rbp-32] # arg 0
     call .F.heap_block.data
     mov dword ptr [rbp-32], eax
-    mov eax, dword ptr [rbp-24]
+    mov eax, dword ptr [rbp-32]
     mov dword ptr [rbp-8], eax
     jmp .L.return.runtime.malloc
 .L.next.00000021:
@@ -2594,13 +2643,13 @@ main:
     mov eax, dword ptr [rbp-32]
     mov dword ptr [rbp-24], eax
     # i32.eqz
-    mov  eax, dword ptr [rbp-24]
+    mov  eax, dword ptr [rbp-32]
     test eax, eax
     setz al
     movzx eax, al
-    mov dword ptr [rbp-24], eax
+    mov dword ptr [rbp-32], eax
 .L.if.begin.00000022:
-    mov eax, [rbp-24]
+    mov eax, [rbp-32]
     test eax, eax
     jne .L.if.body.00000022 # if eax != 0 { jmp body }
 .L.if.body.00000022:
@@ -2613,7 +2662,7 @@ main:
     mov ecx, dword ptr [rbp-32] # arg 0
     call .F.heap_block.data
     mov dword ptr [rbp-32], eax
-    mov eax, dword ptr [rbp-24]
+    mov eax, dword ptr [rbp-32]
     mov dword ptr [rbp-8], eax
     jmp .L.return.runtime.malloc
 .L.next.00000022:
@@ -2622,7 +2671,7 @@ main:
     mov eax, 0
     mov [rbp-32], eax
 
-    mov eax, dword ptr [rbp-24]
+    mov eax, dword ptr [rbp-32]
     mov dword ptr [rbp-8], eax
     jmp .L.return.runtime.malloc
 
@@ -2635,7 +2684,7 @@ main:
     pop rbp
     ret
 
-# func wa_malloc_reuse_fixed
+# func wa_malloc_reuse_fixed(free_list:i32) => i32
 .section .text
 .F.wa_malloc_reuse_fixed:
     # local p: i32
@@ -2645,9 +2694,11 @@ main:
     sub  rsp, 80
 
     # 将寄存器参数备份到栈
-    mov [rbp+16], ecx # save arg free_list
+    mov [rbp+16], ecx # save arg.0
+
     # 将返回值变量初始化为0
-    mov dword ptr [rbp-8], 0 # ret .F.ret.0 = 0
+    mov dword ptr [rbp-8], 0 # ret.0 = 0
+
     # 将局部变量初始化为0
     mov dword ptr [rbp-16], 0 # local p = 0
 
@@ -2662,13 +2713,13 @@ main:
     call .F.heap_block.size
     mov dword ptr [rbp-24], eax
     # i32.eqz
-    mov  eax, dword ptr [rbp-16]
+    mov  eax, dword ptr [rbp-24]
     test eax, eax
     setz al
     movzx eax, al
-    mov dword ptr [rbp-16], eax
+    mov dword ptr [rbp-24], eax
 .L.if.begin.00000023:
-    mov eax, [rbp-16]
+    mov eax, [rbp-24]
     test eax, eax
     je .L.if.end.00000023 # if eax != 0 { jmp end }
 .L.if.body.00000023:
@@ -2676,7 +2727,7 @@ main:
     mov eax, 0
     mov [rbp-24], eax
 
-    mov eax, dword ptr [rbp-16]
+    mov eax, dword ptr [rbp-24]
     mov dword ptr [rbp-8], eax
     jmp .L.return.wa_malloc_reuse_fixed
 .L.next.00000023:
@@ -2699,9 +2750,9 @@ main:
     mov [rbp-40], eax
 
     # i32.sub
-    mov eax, dword ptr [rbp-32]
-    sub eax, dword ptr [rbp-24]
-    mov dword ptr [rbp-24], eax
+    mov eax, dword ptr [rbp-40]
+    sub eax, dword ptr [rbp-32]
+    mov dword ptr [rbp-32], eax
 .L.next.00000024:
 .L.block.end.00000024:
     # call heap_block.set_size(...)
@@ -2755,7 +2806,7 @@ main:
     mov eax, dword ptr [rbp-16]
     mov dword ptr [rbp-24], eax
 
-    mov eax, dword ptr [rbp-16]
+    mov eax, dword ptr [rbp-24]
     mov dword ptr [rbp-8], eax
     jmp .L.return.wa_malloc_reuse_fixed
 
@@ -2768,7 +2819,7 @@ main:
     pop rbp
     ret
 
-# func heap_reuse_varying
+# func heap_reuse_varying(nbytes:i32) => i32
 .section .text
 .F.heap_reuse_varying:
     # local prevp: i32
@@ -2780,16 +2831,18 @@ main:
     sub  rsp, 96
 
     # 将寄存器参数备份到栈
-    mov [rbp+16], ecx # save arg nbytes
+    mov [rbp+16], ecx # save arg.0
+
     # 将返回值变量初始化为0
-    mov dword ptr [rbp-8], 0 # ret .F.ret.0 = 0
+    mov dword ptr [rbp-8], 0 # ret.0 = 0
+
     # 将局部变量初始化为0
     mov dword ptr [rbp-16], 0 # local prevp = 0
     mov dword ptr [rbp-24], 0 # local remaining = 0
     mov dword ptr [rbp-32], 0 # local p = 0
 
     # global.get __heap_l128_freep i32
-    mov eax, dword ptr [rip+$G.__heap_l128_freep]
+    mov eax, dword ptr [rip+.G.__heap_l128_freep]
     mov dword ptr [rbp-40], eax
     # local.set prevp i32
     mov eax, dword ptr [rbp-40]
@@ -2826,18 +2879,18 @@ main:
     mov [rbp-56], eax
 
     # i32.add
-    mov eax, dword ptr [rbp-48]
-    add eax, dword ptr [rbp-40]
-    mov dword ptr [rbp-40], eax
+    mov eax, dword ptr [rbp-56]
+    add eax, dword ptr [rbp-48]
+    mov dword ptr [rbp-48], eax
     # i32.ge_s
-    mov r10d, dword ptr [rbp-40]
-    mov r11d, dword ptr [rbp-32]
+    mov r10d, dword ptr [rbp-48]
+    mov r11d, dword ptr [rbp-40]
     cmp r10d, r11d
     setge al
     movzx eax, al
-    mov dword ptr [rbp-32], eax
+    mov dword ptr [rbp-40], eax
 .L.if.begin.00000027:
-    mov eax, [rbp-32]
+    mov eax, [rbp-40]
     test eax, eax
     je .L.if.end.00000027 # if eax != 0 { jmp end }
 .L.if.body.00000027:
@@ -2854,9 +2907,9 @@ main:
     mov dword ptr [rbp-48], eax
 
     # i32.add
-    mov eax, dword ptr [rbp-40]
-    add eax, dword ptr [rbp-32]
-    mov dword ptr [rbp-32], eax
+    mov eax, dword ptr [rbp-48]
+    add eax, dword ptr [rbp-40]
+    mov dword ptr [rbp-40], eax
     # local.set remaining i32
     mov eax, dword ptr [rbp-40]
     mov dword ptr [rbp-24], eax
@@ -2894,17 +2947,17 @@ main:
     mov dword ptr [rbp-56], eax
 
     # i32.sub
-    mov eax, dword ptr [rbp-48]
-    sub eax, dword ptr [rbp-40]
-    mov dword ptr [rbp-40], eax
+    mov eax, dword ptr [rbp-56]
+    sub eax, dword ptr [rbp-48]
+    mov dword ptr [rbp-48], eax
     # i32.const 8
     mov eax, 8
     mov [rbp-56], eax
 
     # i32.sub
-    mov eax, dword ptr [rbp-48]
-    sub eax, dword ptr [rbp-40]
-    mov dword ptr [rbp-40], eax
+    mov eax, dword ptr [rbp-56]
+    sub eax, dword ptr [rbp-48]
+    mov dword ptr [rbp-48], eax
     # call heap_block.set_size(...)
     mov ecx, dword ptr [rbp-40] # arg 0
     mov edx, dword ptr [rbp-48] # arg 1
@@ -2927,7 +2980,7 @@ main:
 
     # global.set __heap_l128_freep i32
     mov eax, dword ptr [rbp-40]
-    mov dword ptr [rip+$G.__heap_l128_freep], eax
+    mov dword ptr [rip+.G.__heap_l128_freep], eax
     # local.get p i32
     mov eax, dword ptr [rbp-32]
     mov dword ptr [rbp-40], eax
@@ -2949,7 +3002,7 @@ main:
     mov eax, dword ptr [rbp-32]
     mov dword ptr [rbp-40], eax
 
-    mov eax, dword ptr [rbp-32]
+    mov eax, dword ptr [rbp-40]
     mov dword ptr [rbp-8], eax
     jmp .L.return.heap_reuse_varying
 .L.next.00000027:
@@ -2967,14 +3020,14 @@ main:
     mov dword ptr [rbp-48], eax
 
     # i32.ge_s
-    mov r10d, dword ptr [rbp-40]
-    mov r11d, dword ptr [rbp-32]
+    mov r10d, dword ptr [rbp-48]
+    mov r11d, dword ptr [rbp-40]
     cmp r10d, r11d
     setge al
     movzx eax, al
-    mov dword ptr [rbp-32], eax
+    mov dword ptr [rbp-40], eax
 .L.if.begin.00000028:
-    mov eax, [rbp-32]
+    mov eax, [rbp-40]
     test eax, eax
     je .L.if.end.00000028 # if eax != 0 { jmp end }
 .L.if.body.00000028:
@@ -3003,7 +3056,7 @@ main:
 
     # global.set __heap_l128_freep i32
     mov eax, dword ptr [rbp-40]
-    mov dword ptr [rip+$G.__heap_l128_freep], eax
+    mov dword ptr [rip+.G.__heap_l128_freep], eax
     # local.get p i32
     mov eax, dword ptr [rbp-32]
     mov dword ptr [rbp-40], eax
@@ -3020,7 +3073,7 @@ main:
     mov eax, dword ptr [rbp-32]
     mov dword ptr [rbp-40], eax
 
-    mov eax, dword ptr [rbp-32]
+    mov eax, dword ptr [rbp-40]
     mov dword ptr [rbp-8], eax
     jmp .L.return.heap_reuse_varying
 .L.next.00000028:
@@ -3030,17 +3083,17 @@ main:
     mov dword ptr [rbp-40], eax
 
     # global.get __heap_l128_freep i32
-    mov eax, dword ptr [rip+$G.__heap_l128_freep]
+    mov eax, dword ptr [rip+.G.__heap_l128_freep]
     mov dword ptr [rbp-48], eax
     # i32.eq
-    mov r10d, dword ptr [rbp-40]
-    mov r11d, dword ptr [rbp-32]
+    mov r10d, dword ptr [rbp-48]
+    mov r11d, dword ptr [rbp-40]
     cmp r10d, r11d
     sete al
     movzx eax, al
-    mov dword ptr [rbp-32], eax
+    mov dword ptr [rbp-40], eax
 .L.if.begin.0000002A:
-    mov eax, [rbp-32]
+    mov eax, [rbp-40]
     test eax, eax
     je .L.if.end.0000002A # if eax != 0 { jmp end }
 .L.if.body.0000002A:
@@ -3048,7 +3101,7 @@ main:
     mov eax, 0
     mov [rbp-40], eax
 
-    mov eax, dword ptr [rbp-32]
+    mov eax, dword ptr [rbp-40]
     mov dword ptr [rbp-8], eax
     jmp .L.return.heap_reuse_varying
 .L.next.0000002A:
@@ -3086,7 +3139,7 @@ main:
     pop rbp
     ret
 
-# func heap_new_allocation
+# func heap_new_allocation(size:i32) => i32
 .section .text
 .F.heap_new_allocation:
     # local ptr: i32
@@ -3098,16 +3151,18 @@ main:
     sub  rsp, 96
 
     # 将寄存器参数备份到栈
-    mov [rbp+16], ecx # save arg size
+    mov [rbp+16], ecx # save arg.0
+
     # 将返回值变量初始化为0
-    mov dword ptr [rbp-8], 0 # ret .F.ret.0 = 0
+    mov dword ptr [rbp-8], 0 # ret.0 = 0
+
     # 将局部变量初始化为0
     mov dword ptr [rbp-16], 0 # local ptr = 0
     mov dword ptr [rbp-24], 0 # local block_size = 0
     mov dword ptr [rbp-32], 0 # local pages = 0
 
     # global.get __heap_ptr i32
-    mov eax, dword ptr [rip+$G.__heap_ptr]
+    mov eax, dword ptr [rip+.G.__heap_ptr]
     mov dword ptr [rbp-40], eax
     # local.set ptr i32
     mov eax, dword ptr [rbp-40]
@@ -3122,36 +3177,36 @@ main:
     mov dword ptr [rbp-48], eax
 
     # i32.add
-    mov eax, dword ptr [rbp-40]
-    add eax, dword ptr [rbp-32]
-    mov dword ptr [rbp-32], eax
+    mov eax, dword ptr [rbp-48]
+    add eax, dword ptr [rbp-40]
+    mov dword ptr [rbp-40], eax
     # local.set block_size i32
     mov eax, dword ptr [rbp-40]
     mov dword ptr [rbp-24], eax
 
     # global.get __heap_ptr i32
-    mov eax, dword ptr [rip+$G.__heap_ptr]
+    mov eax, dword ptr [rip+.G.__heap_ptr]
     mov dword ptr [rbp-40], eax
     # local.get block_size i32
     mov eax, dword ptr [rbp-24]
     mov dword ptr [rbp-48], eax
 
     # i32.add
-    mov eax, dword ptr [rbp-40]
-    add eax, dword ptr [rbp-32]
-    mov dword ptr [rbp-32], eax
+    mov eax, dword ptr [rbp-48]
+    add eax, dword ptr [rbp-40]
+    mov dword ptr [rbp-40], eax
     # global.get __heap_top i32
-    mov eax, dword ptr [rip+$G.__heap_top]
+    mov eax, dword ptr [rip+.G.__heap_top]
     mov dword ptr [rbp-48], eax
     # i32.ge_s
-    mov r10d, dword ptr [rbp-40]
-    mov r11d, dword ptr [rbp-32]
+    mov r10d, dword ptr [rbp-48]
+    mov r11d, dword ptr [rbp-40]
     cmp r10d, r11d
     setge al
     movzx eax, al
-    mov dword ptr [rbp-32], eax
+    mov dword ptr [rbp-40], eax
 .L.if.begin.0000002B:
-    mov eax, [rbp-32]
+    mov eax, [rbp-40]
     test eax, eax
     je .L.if.end.0000002B # if eax != 0 { jmp end }
 .L.if.body.0000002B:
@@ -3164,19 +3219,19 @@ main:
     mov [rbp-48], eax
 
     # i32.add
-    mov eax, dword ptr [rbp-40]
-    add eax, dword ptr [rbp-32]
-    mov dword ptr [rbp-32], eax
+    mov eax, dword ptr [rbp-48]
+    add eax, dword ptr [rbp-40]
+    mov dword ptr [rbp-40], eax
     # i32.const 65536
     mov eax, 65536
     mov [rbp-48], eax
 
     # i32.div_s
     mov dword ptr [rbp+8], edx
-    mov eax, dword ptr [rbp-40]
+    mov eax, dword ptr [rbp-48]
     cdq
-    idiv dword ptr [rbp-32]
-    mov dword ptr [rbp-32], eax
+    idiv dword ptr [rbp-40]
+    mov dword ptr [rbp-40], eax
     mov edx, dword ptr [rbp+8]
     # local.set pages i32
     mov eax, dword ptr [rbp-40]
@@ -3189,30 +3244,30 @@ main:
     # memory.grow
     lea r10, [rip+.Memory.pages]
     lea r11, [rip+.Memory.maxPages]
-    mov rax, [rbp-32]
+    mov rax, [rbp-40]
     add rax, r10
     cmp rax, r11
     jg  .L.if.else.0000002C
 .L.if.body.0000002C:
-    mov [rbp-32], rax
+    mov [rbp-40], rax
     jmp .L.if.end.0000002C
 .L.if.else.0000002C:
     mov rax, -1
-    mov [rbp-32], rax
+    mov [rbp-40], rax
 .L.if.end.0000002C:
     # i32.const 0
     mov eax, 0
     mov [rbp-48], eax
 
     # i32.lt_s
-    mov r10d, dword ptr [rbp-40]
-    mov r11d, dword ptr [rbp-32]
+    mov r10d, dword ptr [rbp-48]
+    mov r11d, dword ptr [rbp-40]
     cmp r10d, r11d
     setl al
     movzx eax, al
-    mov dword ptr [rbp-32], eax
+    mov dword ptr [rbp-40], eax
 .L.if.begin.0000002D:
-    mov eax, [rbp-32]
+    mov eax, [rbp-40]
     test eax, eax
     je .L.if.end.0000002D # if eax != 0 { jmp end }
 .L.if.body.0000002D:
@@ -3220,13 +3275,13 @@ main:
     mov eax, 0
     mov [rbp-40], eax
 
-    mov eax, dword ptr [rbp-32]
+    mov eax, dword ptr [rbp-40]
     mov dword ptr [rbp-8], eax
     jmp .L.return.heap_new_allocation
 .L.next.0000002D:
 .L.if.end.0000002D:
     # global.get __heap_top i32
-    mov eax, dword ptr [rip+$G.__heap_top]
+    mov eax, dword ptr [rip+.G.__heap_top]
     mov dword ptr [rbp-40], eax
 .L.block.begin.0000002E:
     # local.get pages i32
@@ -3238,34 +3293,34 @@ main:
     mov [rbp-56], eax
 
     # i32.mul
-    mov eax, dword ptr [rbp-48]
-    imul eax, dword ptr [rbp-40]
-    mov dword ptr [rbp-40], eax
+    mov eax, dword ptr [rbp-56]
+    imul eax, dword ptr [rbp-48]
+    mov dword ptr [rbp-48], eax
 .L.next.0000002E:
 .L.block.end.0000002E:
     # i32.add
-    mov eax, dword ptr [rbp-40]
-    add eax, dword ptr [rbp-32]
-    mov dword ptr [rbp-32], eax
+    mov eax, dword ptr [rbp-48]
+    add eax, dword ptr [rbp-40]
+    mov dword ptr [rbp-40], eax
     # global.set __heap_top i32
     mov eax, dword ptr [rbp-40]
-    mov dword ptr [rip+$G.__heap_top], eax
+    mov dword ptr [rip+.G.__heap_top], eax
 .L.next.0000002B:
 .L.if.end.0000002B:
     # global.get __heap_ptr i32
-    mov eax, dword ptr [rip+$G.__heap_ptr]
+    mov eax, dword ptr [rip+.G.__heap_ptr]
     mov dword ptr [rbp-40], eax
     # local.get block_size i32
     mov eax, dword ptr [rbp-24]
     mov dword ptr [rbp-48], eax
 
     # i32.add
-    mov eax, dword ptr [rbp-40]
-    add eax, dword ptr [rbp-32]
-    mov dword ptr [rbp-32], eax
+    mov eax, dword ptr [rbp-48]
+    add eax, dword ptr [rbp-40]
+    mov dword ptr [rbp-40], eax
     # global.set __heap_ptr i32
     mov eax, dword ptr [rbp-40]
-    mov dword ptr [rip+$G.__heap_ptr], eax
+    mov dword ptr [rip+.G.__heap_ptr], eax
     # local.get ptr i32
     mov eax, dword ptr [rbp-16]
     mov dword ptr [rbp-40], eax
@@ -3287,7 +3342,7 @@ main:
     mov eax, dword ptr [rbp-16]
     mov dword ptr [rbp-40], eax
 
-    mov eax, dword ptr [rbp-32]
+    mov eax, dword ptr [rbp-40]
     mov dword ptr [rbp-8], eax
     jmp .L.return.heap_new_allocation
 
@@ -3300,7 +3355,7 @@ main:
     pop rbp
     ret
 
-# func runtime.free
+# func runtime.free(ptr:i32)
 .section .text
 .F.runtime.free:
     # local size: i32
@@ -3312,7 +3367,8 @@ main:
     sub  rsp, 96
 
     # 将寄存器参数备份到栈
-    mov [rbp+16], ecx # save arg ptr
+    mov [rbp+16], ecx # save arg.0
+
     # 没有返回值变量需要初始化为0
 
     # 将局部变量初始化为0
@@ -3345,9 +3401,9 @@ main:
     mov [rbp-40], eax
 
     # i32.sub
-    mov eax, dword ptr [rbp-32]
-    sub eax, dword ptr [rbp-24]
-    mov dword ptr [rbp-24], eax
+    mov eax, dword ptr [rbp-40]
+    sub eax, dword ptr [rbp-32]
+    mov dword ptr [rbp-32], eax
     # local.set block i32
     mov eax, dword ptr [rbp-32]
     mov dword ptr [rbp-16], eax
@@ -3368,7 +3424,7 @@ main:
     call .F.heap_is_fixed_list_enabled
     mov dword ptr [rbp-32], eax
 .L.if.begin.0000002F:
-    mov eax, [rbp-24]
+    mov eax, [rbp-32]
     test eax, eax
     je .L.if.end.0000002F # if eax != 0 { jmp end }
 .L.if.body.0000002F:
@@ -3381,7 +3437,7 @@ main:
     call .F.heap_is_fixed_size
     mov dword ptr [rbp-32], eax
 .L.if.begin.00000030:
-    mov eax, [rbp-24]
+    mov eax, [rbp-32]
     test eax, eax
     je .L.if.end.00000030 # if eax != 0 { jmp end }
 .L.if.body.00000030:
@@ -3428,7 +3484,7 @@ main:
     pop rbp
     ret
 
-# func wa_lfixed_free_block
+# func wa_lfixed_free_block(freep:i32,block:i32)
 .section .text
 .F.wa_lfixed_free_block:
     push rbp
@@ -3436,8 +3492,9 @@ main:
     sub  rsp, 64
 
     # 将寄存器参数备份到栈
-    mov [rbp+16], ecx # save arg freep
-    mov [rbp+24], edx # save arg block
+    mov [rbp+16], ecx # save arg.0
+    mov [rbp+24], edx # save arg.1
+
     # 没有返回值变量需要初始化为0
 
     # 没有局部变量需要初始化为0
@@ -3453,17 +3510,17 @@ main:
     call .F.heap_block.size
     mov dword ptr [rbp-8], eax
     # global.get __heap_lfixed_cap i32
-    mov eax, dword ptr [rip+$G.__heap_lfixed_cap]
+    mov eax, dword ptr [rip+.G.__heap_lfixed_cap]
     mov dword ptr [rbp-16], eax
     # i32.eq
-    mov r10d, dword ptr [rbp-8]
-    mov r11d, dword ptr [rbp+0]
+    mov r10d, dword ptr [rbp-16]
+    mov r11d, dword ptr [rbp-8]
     cmp r10d, r11d
     sete al
     movzx eax, al
-    mov dword ptr [rbp+0], eax
+    mov dword ptr [rbp-8], eax
 .L.if.begin.00000031:
-    mov eax, [rbp+0]
+    mov eax, [rbp-8]
     test eax, eax
     je .L.if.end.00000031 # if eax != 0 { jmp end }
 .L.if.body.00000031:
@@ -3525,9 +3582,9 @@ main:
     mov [rbp-24], eax
 
     # i32.add
-    mov eax, dword ptr [rbp-16]
-    add eax, dword ptr [rbp-8]
-    mov dword ptr [rbp-8], eax
+    mov eax, dword ptr [rbp-24]
+    add eax, dword ptr [rbp-16]
+    mov dword ptr [rbp-16], eax
 .L.next.00000033:
 .L.block.end.00000033:
     # call heap_block.set_size(...)
@@ -3543,7 +3600,7 @@ main:
     pop rbp
     ret
 
-# func wa_lfixed_free_all
+# func wa_lfixed_free_all(freep:i32)
 .section .text
 .F.wa_lfixed_free_all:
     # local p: i32
@@ -3554,7 +3611,8 @@ main:
     sub  rsp, 80
 
     # 将寄存器参数备份到栈
-    mov [rbp+16], ecx # save arg freep
+    mov [rbp+16], ecx # save arg.0
+
     # 没有返回值变量需要初始化为0
 
     # 将局部变量初始化为0
@@ -3583,13 +3641,13 @@ main:
     mov dword ptr [rbp-24], eax
 
     # i32.eqz
-    mov  eax, dword ptr [rbp-16]
+    mov  eax, dword ptr [rbp-24]
     test eax, eax
     setz al
     movzx eax, al
-    mov dword ptr [rbp-16], eax
+    mov dword ptr [rbp-24], eax
 .L.if.begin.00000036:
-    mov eax, [rbp-16]
+    mov eax, [rbp-24]
     test eax, eax
     je .L.if.end.00000036 # if eax != 0 { jmp end }
 .L.if.body.00000036:
@@ -3653,7 +3711,7 @@ main:
     pop rbp
     ret
 
-# func wa_l128_free
+# func wa_l128_free(bp:i32)
 .section .text
 .F.wa_l128_free:
     # local p: i32
@@ -3663,14 +3721,15 @@ main:
     sub  rsp, 80
 
     # 将寄存器参数备份到栈
-    mov [rbp+16], ecx # save arg bp
+    mov [rbp+16], ecx # save arg.0
+
     # 没有返回值变量需要初始化为0
 
     # 将局部变量初始化为0
     mov dword ptr [rbp-8], 0 # local p = 0
 
     # global.get __heap_l128_freep i32
-    mov eax, dword ptr [rip+$G.__heap_l128_freep]
+    mov eax, dword ptr [rip+.G.__heap_l128_freep]
     mov dword ptr [rbp-16], eax
     # local.set p i32
     mov eax, dword ptr [rbp-16]
@@ -3688,14 +3747,14 @@ main:
     mov dword ptr [rbp-24], eax
 
     # i32.gt_s
-    mov r10d, dword ptr [rbp-16]
-    mov r11d, dword ptr [rbp-8]
+    mov r10d, dword ptr [rbp-24]
+    mov r11d, dword ptr [rbp-16]
     cmp r10d, r11d
     setg al
     movzx eax, al
-    mov dword ptr [rbp-8], eax
+    mov dword ptr [rbp-16], eax
 .L.if.begin.00000039:
-    mov eax, [rbp-8]
+    mov eax, [rbp-16]
     test eax, eax
     je .L.if.end.00000039 # if eax != 0 { jmp end }
 .L.if.body.00000039:
@@ -3712,14 +3771,14 @@ main:
     call .F.heap_block.next
     mov dword ptr [rbp-24], eax
     # i32.lt_s
-    mov r10d, dword ptr [rbp-16]
-    mov r11d, dword ptr [rbp-8]
+    mov r10d, dword ptr [rbp-24]
+    mov r11d, dword ptr [rbp-16]
     cmp r10d, r11d
     setl al
     movzx eax, al
-    mov dword ptr [rbp-8], eax
+    mov dword ptr [rbp-16], eax
 .L.if.begin.0000003A:
-    mov eax, [rbp-8]
+    mov eax, [rbp-16]
     test eax, eax
     je .L.if.end.0000003A # if eax != 0 { jmp end }
 .L.if.body.0000003A:
@@ -3741,14 +3800,14 @@ main:
     call .F.heap_block.next
     mov dword ptr [rbp-24], eax
     # i32.ge_s
-    mov r10d, dword ptr [rbp-16]
-    mov r11d, dword ptr [rbp-8]
+    mov r10d, dword ptr [rbp-24]
+    mov r11d, dword ptr [rbp-16]
     cmp r10d, r11d
     setge al
     movzx eax, al
-    mov dword ptr [rbp-8], eax
+    mov dword ptr [rbp-16], eax
 .L.if.begin.0000003B:
-    mov eax, [rbp-8]
+    mov eax, [rbp-16]
     test eax, eax
     je .L.if.end.0000003B # if eax != 0 { jmp end }
 .L.if.body.0000003B:
@@ -3761,14 +3820,14 @@ main:
     mov dword ptr [rbp-24], eax
 
     # i32.gt_s
-    mov r10d, dword ptr [rbp-16]
-    mov r11d, dword ptr [rbp-8]
+    mov r10d, dword ptr [rbp-24]
+    mov r11d, dword ptr [rbp-16]
     cmp r10d, r11d
     setg al
     movzx eax, al
-    mov dword ptr [rbp-8], eax
+    mov dword ptr [rbp-16], eax
 .L.if.begin.0000003C:
-    mov eax, [rbp-8]
+    mov eax, [rbp-16]
     test eax, eax
     je .L.if.end.0000003C # if eax != 0 { jmp end }
 .L.if.body.0000003C:
@@ -3788,14 +3847,14 @@ main:
     call .F.heap_block.next
     mov dword ptr [rbp-24], eax
     # i32.lt_s
-    mov r10d, dword ptr [rbp-16]
-    mov r11d, dword ptr [rbp-8]
+    mov r10d, dword ptr [rbp-24]
+    mov r11d, dword ptr [rbp-16]
     cmp r10d, r11d
     setl al
     movzx eax, al
-    mov dword ptr [rbp-8], eax
+    mov dword ptr [rbp-16], eax
 .L.if.begin.0000003D:
-    mov eax, [rbp-8]
+    mov eax, [rbp-16]
     test eax, eax
     je .L.if.end.0000003D # if eax != 0 { jmp end }
 .L.if.body.0000003D:
@@ -3833,17 +3892,17 @@ main:
     call .F.heap_block.size
     mov dword ptr [rbp-24], eax
     # i32.add
-    mov eax, dword ptr [rbp-16]
-    add eax, dword ptr [rbp-8]
-    mov dword ptr [rbp-8], eax
+    mov eax, dword ptr [rbp-24]
+    add eax, dword ptr [rbp-16]
+    mov dword ptr [rbp-16], eax
     # i32.const 8
     mov eax, 8
     mov [rbp-24], eax
 
     # i32.add
-    mov eax, dword ptr [rbp-16]
-    add eax, dword ptr [rbp-8]
-    mov dword ptr [rbp-8], eax
+    mov eax, dword ptr [rbp-24]
+    add eax, dword ptr [rbp-16]
+    mov dword ptr [rbp-16], eax
     # local.get p i32
     mov eax, dword ptr [rbp-8]
     mov dword ptr [rbp-24], eax
@@ -3853,14 +3912,14 @@ main:
     call .F.heap_block.next
     mov dword ptr [rbp-24], eax
     # i32.eq
-    mov r10d, dword ptr [rbp-16]
-    mov r11d, dword ptr [rbp-8]
+    mov r10d, dword ptr [rbp-24]
+    mov r11d, dword ptr [rbp-16]
     cmp r10d, r11d
     sete al
     movzx eax, al
-    mov dword ptr [rbp-8], eax
+    mov dword ptr [rbp-16], eax
 .L.if.begin.0000003E:
-    mov eax, [rbp-8]
+    mov eax, [rbp-16]
     test eax, eax
     jne .L.if.body.0000003E # if eax != 0 { jmp body }
 .L.if.body.0000003E:
@@ -3894,13 +3953,13 @@ main:
     mov [rbp-40], eax
 
     # i32.add
+    mov eax, dword ptr [rbp-40]
+    add eax, dword ptr [rbp-32]
+    mov dword ptr [rbp-32], eax
+    # i32.add
     mov eax, dword ptr [rbp-32]
     add eax, dword ptr [rbp-24]
     mov dword ptr [rbp-24], eax
-    # i32.add
-    mov eax, dword ptr [rbp-24]
-    add eax, dword ptr [rbp-16]
-    mov dword ptr [rbp-16], eax
 .L.next.0000003F:
 .L.block.end.0000003F:
     # call heap_block.set_size(...)
@@ -3962,30 +4021,30 @@ main:
     call .F.heap_block.size
     mov dword ptr [rbp-24], eax
     # i32.add
-    mov eax, dword ptr [rbp-16]
-    add eax, dword ptr [rbp-8]
-    mov dword ptr [rbp-8], eax
+    mov eax, dword ptr [rbp-24]
+    add eax, dword ptr [rbp-16]
+    mov dword ptr [rbp-16], eax
     # i32.const 8
     mov eax, 8
     mov [rbp-24], eax
 
     # i32.add
-    mov eax, dword ptr [rbp-16]
-    add eax, dword ptr [rbp-8]
-    mov dword ptr [rbp-8], eax
+    mov eax, dword ptr [rbp-24]
+    add eax, dword ptr [rbp-16]
+    mov dword ptr [rbp-16], eax
     # local.get bp i32
     mov eax, dword ptr [rbp+16]
     mov dword ptr [rbp-24], eax
 
     # i32.eq
-    mov r10d, dword ptr [rbp-16]
-    mov r11d, dword ptr [rbp-8]
+    mov r10d, dword ptr [rbp-24]
+    mov r11d, dword ptr [rbp-16]
     cmp r10d, r11d
     sete al
     movzx eax, al
-    mov dword ptr [rbp-8], eax
+    mov dword ptr [rbp-16], eax
 .L.if.begin.00000041:
-    mov eax, [rbp-8]
+    mov eax, [rbp-16]
     test eax, eax
     jne .L.if.body.00000041 # if eax != 0 { jmp body }
 .L.if.body.00000041:
@@ -4015,13 +4074,13 @@ main:
     mov [rbp-40], eax
 
     # i32.add
+    mov eax, dword ptr [rbp-40]
+    add eax, dword ptr [rbp-32]
+    mov dword ptr [rbp-32], eax
+    # i32.add
     mov eax, dword ptr [rbp-32]
     add eax, dword ptr [rbp-24]
     mov dword ptr [rbp-24], eax
-    # i32.add
-    mov eax, dword ptr [rbp-24]
-    add eax, dword ptr [rbp-16]
-    mov dword ptr [rbp-16], eax
 .L.next.00000042:
 .L.block.end.00000042:
     # call heap_block.set_size(...)
@@ -4065,7 +4124,7 @@ main:
 
     # global.set __heap_l128_freep i32
     mov eax, dword ptr [rbp-16]
-    mov dword ptr [rip+$G.__heap_l128_freep], eax
+    mov dword ptr [rip+.G.__heap_l128_freep], eax
 
     # 根据ABI处理返回值
 .L.return.wa_l128_free:
