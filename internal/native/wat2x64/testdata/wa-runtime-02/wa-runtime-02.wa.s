@@ -271,8 +271,8 @@ main:
     mov dword ptr [rbp-24], eax
 
     # i32.sub
-    mov eax, dword ptr [rbp-24]
-    sub eax, dword ptr [rbp-16]
+    mov eax, dword ptr [rbp-16]
+    sub eax, dword ptr [rbp-24]
     mov dword ptr [rbp-16], eax
     # global.set __stack_ptr i32
     mov eax, dword ptr [rbp-16]
@@ -315,8 +315,8 @@ main:
     mov dword ptr [rbp-16], eax
 
     # i32.add
-    mov eax, dword ptr [rbp-16]
-    add eax, dword ptr [rbp-8]
+    mov eax, dword ptr [rbp-8]
+    add eax, dword ptr [rbp-16]
     mov dword ptr [rbp-8], eax
     # global.set __stack_ptr i32
     mov eax, dword ptr [rbp-8]
@@ -381,11 +381,11 @@ main:
     mov dword ptr [rbp-24], eax
 
     # i32.eqz
-    mov  eax, dword ptr [rbp-24]
-    test eax, eax
-    setz al
-    movzx eax, al
-    mov dword ptr [rbp-24], eax
+    mov   eax, dword ptr [rbp-24]
+    cmp   eax, 0  # (eax==0)?
+    sete  al      # al = (eax==0)? 1: 0
+    movzx eax, al # eax = al
+    mov   dword ptr [rbp-24], eax
 .L.if.begin.00000000:
     mov eax, [rbp-24]
     test eax, eax
@@ -400,6 +400,7 @@ main:
     jmp .L.return.runtime.HeapAlloc
 .L.next.00000000:
 .L.if.end.00000000:
+
     # local.get nbytes i32
     mov eax, dword ptr [rbp+16]
     mov dword ptr [rbp-24], eax
@@ -409,8 +410,8 @@ main:
     mov [rbp-32], eax
 
     # i32.add
-    mov eax, dword ptr [rbp-32]
-    add eax, dword ptr [rbp-24]
+    mov eax, dword ptr [rbp-24]
+    add eax, dword ptr [rbp-32]
     mov dword ptr [rbp-24], eax
     # i32.const 8
     mov eax, 8
@@ -428,8 +429,8 @@ main:
     mov [rbp-32], eax
 
     # i32.mul
-    mov eax, dword ptr [rbp-32]
-    imul eax, dword ptr [rbp-24]
+    mov eax, dword ptr [rbp-24]
+    imul eax, dword ptr [rbp-32]
     mov dword ptr [rbp-24], eax
     # local.set nbytes i32
     mov eax, dword ptr [rbp-24]
@@ -447,8 +448,8 @@ main:
     mov eax, dword ptr [rbp-24]
     mov dword ptr [rbp-16], eax
 
-.L.loop.begin.zero00000001:
-.L.next.zero00000001:
+.L.loop.begin.zero.00000001:
+.L.next.zero.00000001:
     # local.get nbytes i32
     mov eax, dword ptr [rbp+16]
     mov dword ptr [rbp-24], eax
@@ -458,8 +459,8 @@ main:
     mov [rbp-32], eax
 
     # i32.sub
-    mov eax, dword ptr [rbp-32]
-    sub eax, dword ptr [rbp-24]
+    mov eax, dword ptr [rbp-24]
+    sub eax, dword ptr [rbp-32]
     mov dword ptr [rbp-24], eax
     # local.tee nbytes i32
     mov eax, dword ptr [rbp-24]
@@ -469,8 +470,8 @@ main:
     mov dword ptr [rbp-32], eax
 
     # i32.add
-    mov eax, dword ptr [rbp-32]
-    add eax, dword ptr [rbp-24]
+    mov eax, dword ptr [rbp-24]
+    add eax, dword ptr [rbp-32]
     mov dword ptr [rbp-24], eax
     # i64.const 0
     movabs rax, 0
@@ -491,10 +492,12 @@ main:
     test eax, eax
     je .L.if.end.00000002 # if eax != 0 { jmp end }
 .L.if.body.00000002:
-    jmp .L.next.zero00000001
+    jmp .L.next.zero.00000001
 .L.next.00000002:
 .L.if.end.00000002:
-.L.loop.end.zero00000001:
+
+.L.loop.end.zero.00000001:
+
     # local.get ptr i32
     mov eax, dword ptr [rbp-16]
     mov dword ptr [rbp-24], eax

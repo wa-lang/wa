@@ -295,5 +295,8 @@ func (p *wat2laWorker) leaveLabelScope() {
 }
 
 func (p *wat2laWorker) makeLabelId(prefix, name, suffix string) string {
+	if name != "" && suffix != "" && suffix[0] != '.' {
+		suffix = "." + suffix
+	}
 	return prefix + name + suffix
 }
