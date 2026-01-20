@@ -253,6 +253,18 @@ func (p *wat2laWorker) findLabelName(label string) string {
 	panic(fmt.Sprintf("wat2la: unknown label %q", label))
 }
 
+func (p *wat2laWorker) findLabelSuffixId(label string) string {
+	if label == "" {
+		panic("wat2la: empty label suffix id")
+	}
+
+	idx := p.findLabelIndex(label)
+	if idx < len(p.scopeLabelsSuffix) {
+		return p.scopeLabelsSuffix[len(p.scopeLabelsSuffix)-idx-1]
+	}
+	panic(fmt.Sprintf("wat2la: unknown label %q", label))
+}
+
 func (p *wat2laWorker) findLabelIndex(label string) int {
 	if label == "" {
 		panic("wat2la: empty label")
@@ -269,13 +281,19 @@ func (p *wat2laWorker) findLabelIndex(label string) int {
 	panic(fmt.Sprintf("wat2la: unknown label %q", label))
 }
 
-func (p *wat2laWorker) enterLabelScope(stkBase int, label string, results []token.Token) {
+func (p *wat2laWorker) enterLabelScope(stkBase int, label, labelSuffix string, results []token.Token) {
 	p.scopeLabels = append(p.scopeLabels, label)
+	p.scopeLabelsSuffix = append(p.scopeLabelsSuffix, labelSuffix)
 	p.scopeStackBases = append(p.scopeStackBases, stkBase)
 	p.scopeResults = append(p.scopeResults, results)
 }
 func (p *wat2laWorker) leaveLabelScope() {
 	p.scopeLabels = p.scopeLabels[:len(p.scopeLabels)-1]
+	p.scopeLabelsSuffix = p.scopeLabelsSuffix[:len(p.scopeLabelsSuffix)-1]
 	p.scopeStackBases = p.scopeStackBases[:len(p.scopeStackBases)-1]
 	p.scopeResults = p.scopeResults[:len(p.scopeResults)-1]
+}
+
+func (p *wat2laWorker) makeLabelId(prefix, name, suffix string) string {
+	return prefix + name + suffix
 }

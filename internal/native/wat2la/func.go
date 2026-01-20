@@ -60,6 +60,7 @@ func (p *wat2laWorker) buildFuncs(w io.Writer) error {
 		p.localNames = nil
 		p.localTypes = nil
 		p.scopeLabels = nil
+		p.scopeLabelsSuffix = nil
 		p.scopeStackBases = nil
 		p.scopeResults = nil
 
@@ -268,10 +269,12 @@ func (p *wat2laWorker) buildFunc_body(w io.Writer, fn *ast.Func) error {
 	// 根据ABI处理返回值
 	// 需要将栈顶位置的结果转化为本地ABI规范的返回值
 	{
+		labelRetuenId := p.makeLabelId(kLabelPrefixName_return, fn.Name, "")
+
 		// 返回代码位置
 		fmt.Fprintln(&bufIns)
 		p.gasCommentInFunc(&bufIns, "根据ABI处理返回值")
-		p.gasFuncLabel(&bufIns, kLabelPrefixName_return+fn.Name)
+		p.gasFuncLabel(&bufIns, labelRetuenId)
 
 		// 如果走内存, 返回地址
 		if len(fn.Type.Results) > 1 && fnNative.Type.Return[1].Reg == 0 {
@@ -390,12 +393,17 @@ func (p *wat2laWorker) buildFunc_ins(
 		stkBase := stk.Len()
 		defer func() { assert(stk.Len() == stkBase+len(i.Results)) }()
 
-		p.enterLabelScope(stkBase, i.Label, i.Results)
+		labelName := i.Label
+		labelSuffix := p.genNextId()
+
+		labelBlockBeginId := p.makeLabelId(kLabelNamePrefix_blockBegin, labelName, labelSuffix)
+		labelBlockEndId := p.makeLabelId(kLabelNamePrefix_blockEnd, labelName, labelSuffix)
+		labelBlockNextId := p.makeLabelId(kLabelNamePrefix_next, labelName, labelSuffix)
+
+		p.enterLabelScope(stkBase, i.Label, labelSuffix, i.Results)
 		defer p.leaveLabelScope()
 
-		if i.Label != "" {
-			fmt.Fprintf(w, "%s%s:\n", kLabelNamePrefix_blockBegin, i.Label)
-		}
+		p.gasFuncLabel(w, labelBlockBeginId)
 
 		for _, ins := range i.List {
 			if err := p.buildFunc_ins(w, fnNative, fn, stk, ins); err != nil {
@@ -403,10 +411,8 @@ func (p *wat2laWorker) buildFunc_ins(
 			}
 		}
 
-		if i.Label != "" {
-			fmt.Fprintf(w, "%s%s:\n", kLabelNamePrefix_next, i.Label)
-			fmt.Fprintf(w, "%s%s:\n", kLabelNamePrefix_blockEnd, i.Label)
-		}
+		p.gasFuncLabel(w, labelBlockNextId)
+		p.gasFuncLabel(w, labelBlockEndId)
 
 	case token.INS_LOOP:
 		i := i.(ast.Ins_Loop)
@@ -414,52 +420,60 @@ func (p *wat2laWorker) buildFunc_ins(
 		stkBase := stk.Len()
 		defer func() { assert(stk.Len() == stkBase+len(i.Results)) }()
 
-		p.enterLabelScope(stkBase, i.Label, i.Results)
+		labelName := i.Label
+		labelSuffix := p.genNextId()
+
+		labelLoopBeginId := p.makeLabelId(kLabelNamePrefix_loopBegin, labelName, labelSuffix)
+		labelLoopEndId := p.makeLabelId(kLabelNamePrefix_loopEnd, labelName, labelSuffix)
+		labelLoopNextId := p.makeLabelId(kLabelNamePrefix_next, labelName, labelSuffix)
+
+		p.enterLabelScope(stkBase, i.Label, labelSuffix, i.Results)
 		defer p.leaveLabelScope()
 
-		if i.Label != "" {
-			fmt.Fprintf(w, "%s%s:\n", kLabelNamePrefix_loopBegin, i.Label)
-			fmt.Fprintf(w, "%s%s:\n", kLabelNamePrefix_next, i.Label)
-		}
+		p.gasFuncLabel(w, labelLoopBeginId)
+		p.gasFuncLabel(w, labelLoopNextId)
+
 		for _, ins := range i.List {
 			if err := p.buildFunc_ins(w, fnNative, fn, stk, ins); err != nil {
 				return err
 			}
 		}
-		if i.Label != "" {
-			fmt.Fprintf(w, "%s%s:\n", kLabelNamePrefix_loopEnd, i.Label)
-		}
+		p.gasFuncLabel(w, labelLoopEndId)
 
 	case token.INS_IF:
 		i := i.(ast.Ins_If)
 
-		labelSuffix := i.Label
-		if labelSuffix == "" {
-			labelSuffix = p.gasGenNextId("z")
-		}
+		labelName := i.Label
+		labelSuffix := p.genNextId()
 
-		fmt.Fprintf(w, "%s%s:\n", kLabelNamePrefix_ifBegin, labelSuffix)
+		labelIfBeginId := p.makeLabelId(kLabelNamePrefix_ifBegin, labelName, labelSuffix)
+		labelIfBodyId := p.makeLabelId(kLabelNamePrefix_ifBody, labelName, labelSuffix)
+		labelIfElseId := p.makeLabelId(kLabelNamePrefix_ifElse, labelName, labelSuffix)
+		labelIfEndId := p.makeLabelId(kLabelNamePrefix_ifEnd, labelName, labelSuffix)
+		labelNextId := p.makeLabelId(kLabelNamePrefix_next, labelName, labelSuffix)
+
+		p.gasFuncLabel(w, labelIfBeginId)
 
 		// 龙芯没有 pop 指令，需要2个指令才能实现
 		// 因此通过固定的偏移量，只需要一个指令
 
 		sp0 := stk.Pop(token.I32)
 
-		fmt.Fprintf(w, "    ld.w t0, fp, %d\n", p.fnWasmR0Base-sp0*8)
-		fmt.Fprintf(w, "    bne  t0, zero, %s%s\n", kLabelNamePrefix_ifBody, labelSuffix)
+		fmt.Fprintf(w, "    ld.w t0, fp, %d\n", p.fnWasmR0Base-sp0*8-8)
+		fmt.Fprintf(w, "    bne  t0, zero, %s\n", labelIfBodyId)
 		if len(i.Else) > 0 {
-			fmt.Fprintf(w, "    bne  t0, zero, %s%s\n", kLabelNamePrefix_ifBody, labelSuffix)
+			fmt.Fprintf(w, "    bne  t0, zero, %s\n", labelIfBodyId)
 		} else {
-			fmt.Fprintf(w, "    bne  t0, zero, %s%s\n", kLabelNamePrefix_ifEnd, labelSuffix)
+			fmt.Fprintf(w, "    bne  t0, zero, %s\n", labelIfEndId)
 		}
 
 		stkBase := stk.Len()
 		defer func() { assert(stk.Len() == stkBase+len(i.Results)) }()
 
-		p.enterLabelScope(stkBase, i.Label, i.Results)
+		p.enterLabelScope(stkBase, i.Label, labelSuffix, i.Results)
 		defer p.leaveLabelScope()
 
-		fmt.Fprintf(w, "%s%s:\n", kLabelNamePrefix_ifBody, labelSuffix)
+		fmt.Fprintf(w, "%s:\n", labelIfBodyId)
 
 		for _, ins := range i.Body {
 			if err := p.buildFunc_ins(w, fnNative, fn, stk, ins); err != nil {
@@ -471,7 +485,7 @@ func (p *wat2laWorker) buildFunc_ins(
 			p.Tracef("buildFunc_ins: %s%s begin: %v\n", indent, token.INS_ELSE, stk.String())
 			defer func() { p.Tracef("buildFunc_ins: %s%s end: %v\n", indent, token.INS_ELSE, stk.String()) }()
 
-			fmt.Fprintf(w, "%s%s:\n", kLabelNamePrefix_ifElse, labelSuffix)
+			fmt.Fprintf(w, "%s:\n", labelIfElseId)
 
 			// 这是静态分析, 需要消除 if 分支对栈分配的影响
 			for _, retType := range i.Results {
@@ -487,8 +501,8 @@ func (p *wat2laWorker) buildFunc_ins(
 				}
 			}
 		}
-		fmt.Fprintf(w, "%s%s:\n", kLabelNamePrefix_next, labelSuffix)
-		fmt.Fprintf(w, "%s%s:\n", kLabelNamePrefix_ifEnd, labelSuffix)
+		fmt.Fprintf(w, "%s:\n", labelNextId)
+		fmt.Fprintf(w, "%s:\n", labelIfEndId)
 
 	case token.INS_ELSE:
 		unreachable()
@@ -503,6 +517,8 @@ func (p *wat2laWorker) buildFunc_ins(
 
 		labelIdx := p.findLabelIndex(i.X)
 		labelName := p.findLabelName(i.X)
+		labelSuffix := p.findLabelSuffixId(i.X)
+		labelNextId := p.makeLabelId(kLabelNamePrefix_next, labelName, labelSuffix)
 
 		destScopeStackBase := p.scopeStackBases[len(p.scopeLabels)-labelIdx-1]
 		destScopeResults := p.scopeResults[len(p.scopeLabels)-labelIdx-1]
@@ -526,17 +542,17 @@ func (p *wat2laWorker) buildFunc_ins(
 					reti := stk.Pop(xType)
 					switch xType {
 					case token.I32:
-						fmt.Fprintf(w, "    ld.w t0, fp, %d\n", p.fnWasmR0Base-reti*8)
-						fmt.Fprintf(w, "    st.w t0, fp, %d\n", p.fnWasmR0Base-(destScopeStackBase+i)*8)
+						fmt.Fprintf(w, "    ld.w t0, fp, %d\n", p.fnWasmR0Base-reti*8-8)
+						fmt.Fprintf(w, "    st.w t0, fp, %d\n", p.fnWasmR0Base-(destScopeStackBase+i)*8-8)
 					case token.I64:
-						fmt.Fprintf(w, "    ld.d t0, fp, %d\n", p.fnWasmR0Base-reti*8)
-						fmt.Fprintf(w, "    st.d t0, fp, %d\n", p.fnWasmR0Base-(destScopeStackBase+i)*8)
+						fmt.Fprintf(w, "    ld.d t0, fp, %d\n", p.fnWasmR0Base-reti*8-8)
+						fmt.Fprintf(w, "    st.d t0, fp, %d\n", p.fnWasmR0Base-(destScopeStackBase+i)*8-8)
 					case token.F32:
-						fmt.Fprintf(w, "    fld.s ft0, fp, %d\n", p.fnWasmR0Base-reti*8)
-						fmt.Fprintf(w, "    fst.s ft0, fp, %d\n", p.fnWasmR0Base-(destScopeStackBase+i)*8)
+						fmt.Fprintf(w, "    fld.s ft0, fp, %d\n", p.fnWasmR0Base-reti*8-8)
+						fmt.Fprintf(w, "    fst.s ft0, fp, %d\n", p.fnWasmR0Base-(destScopeStackBase+i)*8-8)
 					case token.F64:
-						fmt.Fprintf(w, "    fld.d ft0, fp, %d\n", p.fnWasmR0Base-reti*8)
-						fmt.Fprintf(w, "    fst.d ft0, fp, %d\n", p.fnWasmR0Base-(destScopeStackBase+i)*8)
+						fmt.Fprintf(w, "    fld.d ft0, fp, %d\n", p.fnWasmR0Base-reti*8-8)
+						fmt.Fprintf(w, "    fst.d ft0, fp, %d\n", p.fnWasmR0Base-(destScopeStackBase+i)*8-8)
 					default:
 						unreachable()
 					}
@@ -555,12 +571,14 @@ func (p *wat2laWorker) buildFunc_ins(
 		// 中间栈帧的数据会在外层block指令时处理
 		assert(stk.Len() == currentScopeStackBase)
 
-		fmt.Fprintf(w, "    b %s%s\n", kLabelNamePrefix_next, labelName)
+		fmt.Fprintf(w, "    b %s\n", labelNextId)
 
 	case token.INS_BR_IF:
 		i := i.(ast.Ins_BrIf)
 		labelIdx := p.findLabelIndex(i.X)
 		labelName := p.findLabelName(i.X)
+		labelSuffix := p.findLabelSuffixId(i.X)
+		labelNextId := p.makeLabelId(kLabelNamePrefix_next, labelName, labelSuffix)
 
 		scopeStackBase := p.scopeStackBases[len(p.scopeLabels)-labelIdx-1]
 		scopeResults := p.scopeResults[len(p.scopeLabels)-labelIdx-1]
@@ -579,8 +597,8 @@ func (p *wat2laWorker) buildFunc_ins(
 		assert(stk.Len() == scopeStackBase)
 
 		fmt.Fprintf(w, "    # br_if %s\n", labelName)
-		fmt.Fprintf(w, "    ld.w t0, fp, %d\n", p.fnWasmR0Base-sp0*8)
-		fmt.Fprintf(w, "    bne t0, zero, %s%s\n", kLabelNamePrefix_next, labelName)
+		fmt.Fprintf(w, "    ld.w t0, fp, %d\n", p.fnWasmR0Base-sp0*8-8)
+		fmt.Fprintf(w, "    bne t0, zero, %s\n", labelNextId)
 
 	case token.INS_BR_TABLE:
 		i := i.(ast.Ins_BrTable)
@@ -592,14 +610,16 @@ func (p *wat2laWorker) buildFunc_ins(
 		// 默认分支
 		defaultLabelIdx := p.findLabelIndex(i.XList[len(i.XList)-1])
 		defaultLabelName := p.findLabelName(i.XList[len(i.XList)-1])
+		defaultLabelSuffix := p.findLabelSuffixId(i.XList[len(i.XList)-1])
 		defaultScopeResults := p.scopeResults[len(p.scopeLabels)-defaultLabelIdx-1]
+		defaultLabelNextId := p.makeLabelId(kLabelNamePrefix_next, defaultLabelName, defaultLabelSuffix)
 
 		currentScopeStackBase := p.scopeStackBases[len(p.scopeLabels)-1]
 
 		sp0 := stk.Pop(token.I32)
 
 		fmt.Fprintf(w, "    # br_table\n")
-		fmt.Fprintf(w, "    ld.w t0, fp, %d\n", p.fnWasmR0Base-sp0*8)
+		fmt.Fprintf(w, "    ld.w t0, fp, %d\n", p.fnWasmR0Base-sp0*8-8)
 		{
 			// 当前block的返回值位置是相同的, 只能统一取一次
 			var retIdxList = make([]int, len(defaultScopeResults))
@@ -611,6 +631,8 @@ func (p *wat2laWorker) buildFunc_ins(
 			for k := 0; k < len(i.XList); k++ {
 				labelIdx := p.findLabelIndex(i.XList[k])
 				labelName := p.findLabelName(i.XList[k])
+				labelSuffix := p.findLabelSuffixId(i.XList[k])
+				labelNextId := p.makeLabelId(kLabelNamePrefix_next, labelName, labelSuffix)
 
 				destScopeStackBase := p.scopeStackBases[len(p.scopeLabels)-labelIdx-1]
 				destScopeResults := p.scopeResults[len(p.scopeLabels)-labelIdx-1]
@@ -638,17 +660,17 @@ func (p *wat2laWorker) buildFunc_ins(
 							reti := retIdxList[i]
 							switch xType {
 							case token.I32:
-								fmt.Fprintf(w, "    ld.w t1, fp, %d;\n", p.fnWasmR0Base-reti*8)
-								fmt.Fprintf(w, "    st.w t1, fp, %d;\n", p.fnWasmR0Base-(destScopeStackBase+i)*8)
+								fmt.Fprintf(w, "    ld.w t1, fp, %d;\n", p.fnWasmR0Base-reti*8-8)
+								fmt.Fprintf(w, "    st.w t1, fp, %d;\n", p.fnWasmR0Base-(destScopeStackBase+i)*8-8)
 							case token.I64:
-								fmt.Fprintf(w, "    ld.d t1, fp, %d;\n", p.fnWasmR0Base-reti*8)
-								fmt.Fprintf(w, "    st.d t1, fp, %d;\n", p.fnWasmR0Base-(destScopeStackBase+i)*8)
+								fmt.Fprintf(w, "    ld.d t1, fp, %d;\n", p.fnWasmR0Base-reti*8-8)
+								fmt.Fprintf(w, "    st.d t1, fp, %d;\n", p.fnWasmR0Base-(destScopeStackBase+i)*8-8)
 							case token.F32:
-								fmt.Fprintf(w, "    fld.w t1, fp, %d;\n", p.fnWasmR0Base-reti*8)
-								fmt.Fprintf(w, "    fst.w t1, fp, %d;\n", p.fnWasmR0Base-(destScopeStackBase+i)*8)
+								fmt.Fprintf(w, "    fld.w t1, fp, %d;\n", p.fnWasmR0Base-reti*8-8)
+								fmt.Fprintf(w, "    fst.w t1, fp, %d;\n", p.fnWasmR0Base-(destScopeStackBase+i)*8-8)
 							case token.F64:
-								fmt.Fprintf(w, "    fld.d t1, fp, %d;\n", p.fnWasmR0Base-reti*8)
-								fmt.Fprintf(w, "    fst.d t1, fp, %d;\n", p.fnWasmR0Base-(destScopeStackBase+i)*8)
+								fmt.Fprintf(w, "    fld.d t1, fp, %d;\n", p.fnWasmR0Base-reti*8-8)
+								fmt.Fprintf(w, "    fst.d t1, fp, %d;\n", p.fnWasmR0Base-(destScopeStackBase+i)*8-8)
 							default:
 								unreachable()
 							}
@@ -659,11 +681,11 @@ func (p *wat2laWorker) buildFunc_ins(
 				if k < len(i.XList)-1 {
 					fmt.Fprintf(w, "    # br_table case %d\n", k)
 					fmt.Fprintf(w, "    ld.w t1, zero, %d;\n", k)
-					fmt.Fprintf(w, "    bne  t0, t1, %s%s\n", kLabelNamePrefix_next, labelName)
+					fmt.Fprintf(w, "    bne  t0, t1, %s\n", labelNextId)
 				} else {
 					assert(labelName == defaultLabelName)
 					fmt.Fprintf(w, "    # br_table default\n")
-					fmt.Fprintf(w, "    b %s%s\n", kLabelNamePrefix_next, defaultLabelName)
+					fmt.Fprintf(w, "    b %s\n", defaultLabelNextId)
 				}
 			}
 		}
@@ -682,28 +704,29 @@ func (p *wat2laWorker) buildFunc_ins(
 		fmt.Fprintf(w, "    # br_table end\n")
 
 	case token.INS_RETURN:
+		labelReturnId := p.makeLabelId(kLabelPrefixName_return, fn.Name, "")
 		switch len(fn.Type.Results) {
 		case 0:
-			fmt.Fprintf(w, "    b %s\n", kLabelPrefixName_return+fn.Name)
+			fmt.Fprintf(w, "    b %s\n", labelReturnId)
 		case 1:
 			sp0 := stk.Pop(fn.Type.Results[0])
 			switch fn.Type.Results[0] {
 			case token.I32:
-				fmt.Fprintf(w, "    ld.w t0, fp, %d\n", p.fnWasmR0Base-sp0*8)
+				fmt.Fprintf(w, "    ld.w t0, fp, %d\n", p.fnWasmR0Base-sp0*8-8)
 				fmt.Fprintf(w, "    st.w t0, fp, %d\n", fnNative.Type.Return[0].RBPOff)
-				fmt.Fprintf(w, "    b    %s\n", kLabelPrefixName_return+fn.Name)
+				fmt.Fprintf(w, "    b    %s\n", labelReturnId)
 			case token.I64:
-				fmt.Fprintf(w, "    ld.d t0, fp, %d\n", p.fnWasmR0Base-sp0*8)
+				fmt.Fprintf(w, "    ld.d t0, fp, %d\n", p.fnWasmR0Base-sp0*8-8)
 				fmt.Fprintf(w, "    st.d t0, fp, %d\n", fnNative.Type.Return[0].RBPOff)
-				fmt.Fprintf(w, "    b    %s\n", kLabelPrefixName_return+fn.Name)
+				fmt.Fprintf(w, "    b    %s\n", labelReturnId)
 			case token.F32:
-				fmt.Fprintf(w, "    fld.s t0, fp, %d\n", p.fnWasmR0Base-sp0*8)
+				fmt.Fprintf(w, "    fld.s t0, fp, %d\n", p.fnWasmR0Base-sp0*8-8)
 				fmt.Fprintf(w, "    fst.s t0, fp, %d\n", fnNative.Type.Return[0].RBPOff)
-				fmt.Fprintf(w, "    b     %s\n", kLabelPrefixName_return+fn.Name)
+				fmt.Fprintf(w, "    b     %s\n", labelReturnId)
 			case token.F64:
-				fmt.Fprintf(w, "    fld.d t0, fp, %d\n", p.fnWasmR0Base-sp0*8)
+				fmt.Fprintf(w, "    fld.d t0, fp, %d\n", p.fnWasmR0Base-sp0*8-8)
 				fmt.Fprintf(w, "    fst.d t0, fp, %d\n", fnNative.Type.Return[0].RBPOff)
-				fmt.Fprintf(w, "    b     %s\n", kLabelPrefixName_return+fn.Name)
+				fmt.Fprintf(w, "    b     %s\n", labelReturnId)
 			default:
 				unreachable()
 			}
@@ -713,22 +736,22 @@ func (p *wat2laWorker) buildFunc_ins(
 				spi := stk.Pop(xType)
 				switch xType {
 				case token.I32:
-					fmt.Fprintf(w, "    ld.w t0, fp, %d\n", p.fnWasmR0Base-spi*8)
+					fmt.Fprintf(w, "    ld.w t0, fp, %d\n", p.fnWasmR0Base-spi*8-8)
 					fmt.Fprintf(w, "    st.w t0, fp, %d\n", fnNative.Type.Return[i].RBPOff)
 				case token.I64:
-					fmt.Fprintf(w, "    ld.d t0, fp, %d\n", p.fnWasmR0Base-spi*8)
+					fmt.Fprintf(w, "    ld.d t0, fp, %d\n", p.fnWasmR0Base-spi*8-8)
 					fmt.Fprintf(w, "    st.d t0, fp, %d\n", fnNative.Type.Return[i].RBPOff)
 				case token.F32:
-					fmt.Fprintf(w, "    fld.s t0, fp, %d\n", p.fnWasmR0Base-spi*8)
+					fmt.Fprintf(w, "    fld.s t0, fp, %d\n", p.fnWasmR0Base-spi*8-8)
 					fmt.Fprintf(w, "    fst.s t0, fp, %d\n", fnNative.Type.Return[i].RBPOff)
 				case token.F64:
-					fmt.Fprintf(w, "    fld.d t0, fp, %d\n", p.fnWasmR0Base-spi*8)
+					fmt.Fprintf(w, "    fld.d t0, fp, %d\n", p.fnWasmR0Base-spi*8-8)
 					fmt.Fprintf(w, "    fst.d t0, fp, %d\n", fnNative.Type.Return[i].RBPOff)
 				default:
 					unreachable()
 				}
 			}
-			fmt.Fprintf(w, "    b    %s\n", kLabelPrefixName_return+fn.Name)
+			fmt.Fprintf(w, "    b    %s\n", labelReturnId)
 		}
 		assert(stk.Len() == 0)
 
@@ -1178,38 +1201,38 @@ func (p *wat2laWorker) buildFunc_ins(
 		switch valType {
 		case token.I32:
 			fmt.Fprintf(w, "    # select\n")
-			fmt.Fprintf(w, "    ld.w t1, fp, %d\n", p.fnWasmR0Base-spCondition*8)
-			fmt.Fprintf(w, "    ld.w t2, fp, %d\n", p.fnWasmR0Base-spValueTrue*8)
-			fmt.Fprintf(w, "    ld.w t3, fp, %d\n", p.fnWasmR0Base-spValueFalse*8)
+			fmt.Fprintf(w, "    ld.w t1, fp, %d\n", p.fnWasmR0Base-spCondition*8-8)
+			fmt.Fprintf(w, "    ld.w t2, fp, %d\n", p.fnWasmR0Base-spValueTrue*8-8)
+			fmt.Fprintf(w, "    ld.w t3, fp, %d\n", p.fnWasmR0Base-spValueFalse*8-8)
 			fmt.Fprintf(w, "    masknez t0, t2, t1")
 			fmt.Fprintf(w, "    maskeqz t0, t3, t1")
-			fmt.Fprintf(w, "    st.w t0, fp, %d\n", p.fnWasmR0Base-ret0*8)
+			fmt.Fprintf(w, "    st.w t0, fp, %d\n", p.fnWasmR0Base-ret0*8-8)
 		case token.I64:
 			fmt.Fprintf(w, "    # select\n")
-			fmt.Fprintf(w, "    ld.w t1, fp, %d\n", p.fnWasmR0Base-spCondition*8)
-			fmt.Fprintf(w, "    ld.d t2, fp, %d\n", p.fnWasmR0Base-spValueTrue*8)
-			fmt.Fprintf(w, "    ld.d t3, fp, %d\n", p.fnWasmR0Base-spValueFalse*8)
+			fmt.Fprintf(w, "    ld.w t1, fp, %d\n", p.fnWasmR0Base-spCondition*8-8)
+			fmt.Fprintf(w, "    ld.d t2, fp, %d\n", p.fnWasmR0Base-spValueTrue*8-8)
+			fmt.Fprintf(w, "    ld.d t3, fp, %d\n", p.fnWasmR0Base-spValueFalse*8-8)
 			fmt.Fprintf(w, "    masknez t0, t2, t1")
 			fmt.Fprintf(w, "    maskeqz t0, t3, t1")
-			fmt.Fprintf(w, "    st.d t0, fp, %d\n", p.fnWasmR0Base-ret0*8)
+			fmt.Fprintf(w, "    st.d t0, fp, %d\n", p.fnWasmR0Base-ret0*8-8)
 		case token.F32:
 			// TODO: 浮点数选择需要验证
 			fmt.Fprintf(w, "    # select\n")
-			fmt.Fprintf(w, "    ld.w t1, fp, %d\n", p.fnWasmR0Base-spCondition*8)
-			fmt.Fprintf(w, "    fld.s ft2, fp, %d\n", p.fnWasmR0Base-spValueTrue*8)
-			fmt.Fprintf(w, "    fld.s ft3, fp, %d\n", p.fnWasmR0Base-spValueFalse*8)
+			fmt.Fprintf(w, "    ld.w t1, fp, %d\n", p.fnWasmR0Base-spCondition*8-8)
+			fmt.Fprintf(w, "    fld.s ft2, fp, %d\n", p.fnWasmR0Base-spValueTrue*8-8)
+			fmt.Fprintf(w, "    fld.s ft3, fp, %d\n", p.fnWasmR0Base-spValueFalse*8-8)
 			fmt.Fprintf(w, "    movgr2cf fcc0, t1")
 			fmt.Fprintf(w, "    fsel ft0, ft2, ft3, ")
-			fmt.Fprintf(w, "    fst.s t1, fp, %d\n", p.fnWasmR0Base-ret0*8)
+			fmt.Fprintf(w, "    fst.s t1, fp, %d\n", p.fnWasmR0Base-ret0*8-8)
 		case token.F64:
 			// TODO: 浮点数选择需要验证
 			fmt.Fprintf(w, "    # select\n")
-			fmt.Fprintf(w, "    ld.w t1, fp, %d\n", p.fnWasmR0Base-spCondition*8)
-			fmt.Fprintf(w, "    fld.d ft2, fp, %d\n", p.fnWasmR0Base-spValueTrue*8)
-			fmt.Fprintf(w, "    fld.d ft3, fp, %d\n", p.fnWasmR0Base-spValueFalse*8)
+			fmt.Fprintf(w, "    ld.w t1, fp, %d\n", p.fnWasmR0Base-spCondition*8-8)
+			fmt.Fprintf(w, "    fld.d ft2, fp, %d\n", p.fnWasmR0Base-spValueTrue*8-8)
+			fmt.Fprintf(w, "    fld.d ft3, fp, %d\n", p.fnWasmR0Base-spValueFalse*8-8)
 			fmt.Fprintf(w, "    movgr2cf fcc0, t1")
 			fmt.Fprintf(w, "    fsel ft0, ft2, ft3, ")
-			fmt.Fprintf(w, "    fst.d t1, fp, %d\n", p.fnWasmR0Base-ret0*8)
+			fmt.Fprintf(w, "    fst.d t1, fp, %d\n", p.fnWasmR0Base-ret0*8-8)
 		default:
 			unreachable()
 		}
