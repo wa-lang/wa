@@ -3,7 +3,7 @@
 
 ;; 在 wat 最简单的例子基础上, 增加凹语言 runtime 底层简单的叶子函数
 
-(module $wa_runtime_01
+(module $wa_runtime_02
     (import "syscall" "write" (func $syscall.write (param i64 i64 i64) (result i64)))
 
     (memory 1)(export "memory" (memory 0))
