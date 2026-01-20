@@ -163,12 +163,6 @@ func (p *wat2X64Worker) BuildProgram() (code []byte, err error) {
 	return out.Bytes(), nil
 }
 
-func (p *wat2X64Worker) gasGenNextId(preifx string) string {
-	nextId := p.nextId
-	p.nextId++
-	return fmt.Sprintf("%s.%08X", preifx, nextId)
-}
-
 func (p *wat2X64Worker) genNextId() string {
 	nextId := p.nextId
 	p.nextId++

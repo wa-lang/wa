@@ -281,9 +281,9 @@ func (p *wat2X64Worker) findLabelIndex(label string) int {
 	panic(fmt.Sprintf("wat2x64: unknown label %q", label))
 }
 
-func (p *wat2X64Worker) enterLabelScope(stkBase int, label string, results []token.Token) {
+func (p *wat2X64Worker) enterLabelScope(stkBase int, label, labelSuffix string, results []token.Token) {
 	p.scopeLabels = append(p.scopeLabels, label)
-	p.scopeLabelsSuffix = append(p.scopeLabelsSuffix, p.genNextId())
+	p.scopeLabelsSuffix = append(p.scopeLabelsSuffix, labelSuffix)
 	p.scopeStackBases = append(p.scopeStackBases, stkBase)
 	p.scopeResults = append(p.scopeResults, results)
 }
@@ -292,4 +292,8 @@ func (p *wat2X64Worker) leaveLabelScope() {
 	p.scopeLabelsSuffix = p.scopeLabelsSuffix[:len(p.scopeLabelsSuffix)-1]
 	p.scopeStackBases = p.scopeStackBases[:len(p.scopeStackBases)-1]
 	p.scopeResults = p.scopeResults[:len(p.scopeResults)-1]
+}
+
+func (p *wat2X64Worker) makeLabelId(prefix, name, suffix string) string {
+	return prefix + name + suffix
 }

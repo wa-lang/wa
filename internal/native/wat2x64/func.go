@@ -265,10 +265,12 @@ func (p *wat2X64Worker) buildFunc_body(w io.Writer, fn *ast.Func) error {
 	// 根据ABI处理返回值
 	// 需要将栈顶位置的结果转化为本地ABI规范的返回值
 	{
+		labelRetuenId := p.makeLabelId(kLabelPrefixName_return, fn.Name, "")
+
 		// 返回代码位置
 		fmt.Fprintln(&bufIns)
 		p.gasCommentInFunc(&bufIns, "根据ABI处理返回值")
-		p.gasFuncLabel(&bufIns, kLabelPrefixName_return+fn.Name)
+		p.gasFuncLabel(&bufIns, labelRetuenId)
 
 		// 如果走内存, 返回地址
 		if len(fn.Type.Results) > 1 && fnNative.Type.Return[1].Reg == 0 {
@@ -379,13 +381,17 @@ func (p *wat2X64Worker) buildFunc_ins(
 		stkBase := stk.Len()
 		defer func() { assert(stk.Len() == stkBase+len(i.Results)) }()
 
-		p.enterLabelScope(stkBase, i.Label, i.Results)
-		defer p.leaveLabelScope()
-
 		labelName := i.Label
 		labelSuffix := p.genNextId()
 
-		p.gasFuncLabel(w, kLabelNamePrefix_blockBegin+labelName+labelSuffix)
+		labelBlockBeginId := p.makeLabelId(kLabelNamePrefix_blockBegin, labelName, labelSuffix)
+		labelBlockEndId := p.makeLabelId(kLabelNamePrefix_blockEnd, labelName, labelSuffix)
+		labelBlockNextId := p.makeLabelId(kLabelNamePrefix_next, labelName, labelSuffix)
+
+		p.enterLabelScope(stkBase, i.Label, labelSuffix, i.Results)
+		defer p.leaveLabelScope()
+
+		p.gasFuncLabel(w, labelBlockBeginId)
 
 		for _, ins := range i.List {
 			if err := p.buildFunc_ins(w, fnNative, fn, stk, ins); err != nil {
@@ -393,8 +399,8 @@ func (p *wat2X64Worker) buildFunc_ins(
 			}
 		}
 
-		p.gasFuncLabel(w, kLabelNamePrefix_next+labelName+labelSuffix)
-		p.gasFuncLabel(w, kLabelNamePrefix_blockEnd+labelName+labelSuffix)
+		p.gasFuncLabel(w, labelBlockNextId)
+		p.gasFuncLabel(w, labelBlockEndId)
 
 	case token.INS_LOOP:
 		i := i.(ast.Ins_Loop)
@@ -402,14 +408,18 @@ func (p *wat2X64Worker) buildFunc_ins(
 		stkBase := stk.Len()
 		defer func() { assert(stk.Len() == stkBase+len(i.Results)) }()
 
-		p.enterLabelScope(stkBase, i.Label, i.Results)
+		labelName := i.Label
+		labelSuffix := p.genNextId()
+
+		labelLoopBeginId := p.makeLabelId(kLabelNamePrefix_loopBegin, labelName, labelSuffix)
+		labelLoopEndId := p.makeLabelId(kLabelNamePrefix_loopEnd, labelName, labelSuffix)
+		labelLoopNextId := p.makeLabelId(kLabelNamePrefix_next, labelName, labelSuffix)
+
+		p.enterLabelScope(stkBase, i.Label, labelSuffix, i.Results)
 		defer p.leaveLabelScope()
 
-		labelName := p.findLabelName(i.Label)
-		labelSuffix := p.findLabelSuffixId(i.Label)
-
-		p.gasFuncLabel(w, kLabelNamePrefix_loopBegin+labelName+labelSuffix)
-		p.gasFuncLabel(w, kLabelNamePrefix_next+labelName+labelSuffix)
+		p.gasFuncLabel(w, labelLoopBeginId)
+		p.gasFuncLabel(w, labelLoopNextId)
 
 		for _, ins := range i.List {
 			if err := p.buildFunc_ins(w, fnNative, fn, stk, ins); err != nil {
@@ -417,14 +427,21 @@ func (p *wat2X64Worker) buildFunc_ins(
 			}
 		}
 
-		p.gasFuncLabel(w, kLabelNamePrefix_loopEnd+labelName+labelSuffix)
+		p.gasFuncLabel(w, labelLoopEndId)
 
 	case token.INS_IF:
 		i := i.(ast.Ins_If)
 
-		labelSuffix := p.gasGenNextId(i.Label)
+		labelName := i.Label
+		labelSuffix := p.genNextId()
 
-		p.gasFuncLabel(w, kLabelNamePrefix_ifBegin+labelSuffix)
+		labelIfBeginId := p.makeLabelId(kLabelNamePrefix_ifBegin, labelName, labelSuffix)
+		labelIfBodyId := p.makeLabelId(kLabelNamePrefix_ifBody, labelName, labelSuffix)
+		labelIfElseId := p.makeLabelId(kLabelNamePrefix_ifElse, labelName, labelSuffix)
+		labelIfEndId := p.makeLabelId(kLabelNamePrefix_ifEnd, labelName, labelSuffix)
+		labelNextId := p.makeLabelId(kLabelNamePrefix_next, labelName, labelSuffix)
+
+		p.gasFuncLabel(w, labelIfBeginId)
 
 		// 龙芯没有 pop 指令，需要2个指令才能实现
 		// 因此通过固定的偏移量，只需要一个指令
@@ -434,18 +451,18 @@ func (p *wat2X64Worker) buildFunc_ins(
 		fmt.Fprintf(w, "    mov eax, [rbp%+d]\n", p.fnWasmR0Base-sp0*8)
 		fmt.Fprintf(w, "    test eax, eax\n")
 		if len(i.Else) > 0 {
-			fmt.Fprintf(w, "    jne %s%s # if eax != 0 { jmp body }\n", kLabelNamePrefix_ifBody, labelSuffix)
+			fmt.Fprintf(w, "    jne %s # if eax != 0 { jmp body }\n", labelIfBodyId)
 		} else {
-			fmt.Fprintf(w, "    je %s%s # if eax != 0 { jmp end }\n", kLabelNamePrefix_ifEnd, labelSuffix)
+			fmt.Fprintf(w, "    je %s # if eax != 0 { jmp end }\n", labelIfEndId)
 		}
 
 		stkBase := stk.Len()
 		defer func() { assert(stk.Len() == stkBase+len(i.Results)) }()
 
-		p.enterLabelScope(stkBase, i.Label, i.Results)
+		p.enterLabelScope(stkBase, i.Label, labelSuffix, i.Results)
 		defer p.leaveLabelScope()
 
-		p.gasFuncLabel(w, kLabelNamePrefix_ifBody+labelSuffix)
+		p.gasFuncLabel(w, labelIfBodyId)
 
 		for _, ins := range i.Body {
 			if err := p.buildFunc_ins(w, fnNative, fn, stk, ins); err != nil {
@@ -457,7 +474,7 @@ func (p *wat2X64Worker) buildFunc_ins(
 			p.Tracef("buildFunc_ins: %s begin: %v\n", token.INS_ELSE, stk.String())
 			defer func() { p.Tracef("buildFunc_ins: %s end: %v\n", token.INS_ELSE, stk.String()) }()
 
-			p.gasFuncLabel(w, kLabelNamePrefix_ifElse+labelSuffix)
+			p.gasFuncLabel(w, labelIfElseId)
 
 			// 这是静态分析, 需要消除 if 分支对栈分配的影响
 			for _, retType := range i.Results {
@@ -473,8 +490,8 @@ func (p *wat2X64Worker) buildFunc_ins(
 				}
 			}
 		}
-		p.gasFuncLabel(w, kLabelNamePrefix_next+labelSuffix)
-		p.gasFuncLabel(w, kLabelNamePrefix_ifEnd+labelSuffix)
+		p.gasFuncLabel(w, labelNextId)
+		p.gasFuncLabel(w, labelIfEndId)
 
 	case token.INS_ELSE:
 		unreachable()
@@ -490,6 +507,7 @@ func (p *wat2X64Worker) buildFunc_ins(
 		labelIdx := p.findLabelIndex(i.X)
 		labelName := p.findLabelName(i.X)
 		labelSuffix := p.findLabelSuffixId(i.X)
+		labelNextId := p.makeLabelId(kLabelNamePrefix_next, labelName, labelSuffix)
 
 		destScopeStackBase := p.scopeStackBases[len(p.scopeLabels)-labelIdx-1]
 		destScopeResults := p.scopeResults[len(p.scopeLabels)-labelIdx-1]
@@ -507,7 +525,7 @@ func (p *wat2X64Worker) buildFunc_ins(
 			// 如果返回值位置和目标block的base不一致则需要逐个复制
 			if firstResultOffset > destScopeStackBase {
 				// 返回值是逆序出栈
-				fmt.Fprintf(w, "    # copy jmp %s result\n", labelName+labelSuffix)
+				fmt.Fprintf(w, "    # copy jmp %s result\n", labelNextId)
 				for i := len(destScopeResults) - 1; i >= 0; i-- {
 					xType := destScopeResults[i]
 					reti := stk.Pop(xType)
@@ -542,13 +560,14 @@ func (p *wat2X64Worker) buildFunc_ins(
 		// 中间栈帧的数据会在外层block指令时处理
 		assert(stk.Len() == currentScopeStackBase)
 
-		fmt.Fprintf(w, "    jmp %s%s\n", kLabelNamePrefix_next, labelName)
+		fmt.Fprintf(w, "    jmp %s\n", labelNextId)
 
 	case token.INS_BR_IF:
 		i := i.(ast.Ins_BrIf)
 		labelIdx := p.findLabelIndex(i.X)
 		labelName := p.findLabelName(i.X)
 		labelSuffix := p.findLabelSuffixId(i.X)
+		labelNextId := p.makeLabelId(kLabelNamePrefix_next, labelName, labelSuffix)
 
 		scopeStackBase := p.scopeStackBases[len(p.scopeLabels)-labelIdx-1]
 		scopeResults := p.scopeResults[len(p.scopeLabels)-labelIdx-1]
@@ -569,7 +588,7 @@ func (p *wat2X64Worker) buildFunc_ins(
 		fmt.Fprintf(w, "    # br_if %s\n", labelName+labelSuffix)
 		fmt.Fprintf(w, "    mov eax, dword ptr [rbp%+d]\n", p.fnWasmR0Base-sp0*8)
 		fmt.Fprintf(w, "    test eax, eax\n")
-		fmt.Fprintf(w, "    jne  %s\n", kLabelNamePrefix_next+labelName+labelSuffix)
+		fmt.Fprintf(w, "    jne  %s\n", labelNextId)
 
 	case token.INS_BR_TABLE:
 		i := i.(ast.Ins_BrTable)
@@ -583,6 +602,7 @@ func (p *wat2X64Worker) buildFunc_ins(
 		defaultLabelName := p.findLabelName(i.XList[len(i.XList)-1])
 		defaultLabelSuffix := p.findLabelSuffixId(i.XList[len(i.XList)-1])
 		defaultScopeResults := p.scopeResults[len(p.scopeLabels)-defaultLabelIdx-1]
+		defaultLabelNextId := p.makeLabelId(kLabelNamePrefix_next, defaultLabelName, defaultLabelSuffix)
 
 		currentScopeStackBase := p.scopeStackBases[len(p.scopeLabels)-1]
 
@@ -602,6 +622,7 @@ func (p *wat2X64Worker) buildFunc_ins(
 				labelIdx := p.findLabelIndex(i.XList[k])
 				labelName := p.findLabelName(i.XList[k])
 				labelSuffix := p.findLabelSuffixId(i.XList[k])
+				labelNextId := p.makeLabelId(kLabelNamePrefix_next, labelName, labelSuffix)
 
 				destScopeStackBase := p.scopeStackBases[len(p.scopeLabels)-labelIdx-1]
 				destScopeResults := p.scopeResults[len(p.scopeLabels)-labelIdx-1]
@@ -650,11 +671,11 @@ func (p *wat2X64Worker) buildFunc_ins(
 				if k < len(i.XList)-1 {
 					fmt.Fprintf(w, "    # br_table case %d\n", k)
 					fmt.Fprintf(w, "    cmp eax, %d\n", k)
-					fmt.Fprintf(w, "    jne %s\n", kLabelNamePrefix_next+labelName+labelSuffix)
+					fmt.Fprintf(w, "    jne %s\n", labelNextId)
 				} else {
 					assert(labelName == defaultLabelName)
 					fmt.Fprintf(w, "    # br_table default\n")
-					fmt.Fprintf(w, "    jmp %s\n", kLabelNamePrefix_next+defaultLabelName+defaultLabelSuffix)
+					fmt.Fprintf(w, "    jmp %s\n", defaultLabelNextId)
 				}
 			}
 		}
@@ -673,28 +694,29 @@ func (p *wat2X64Worker) buildFunc_ins(
 		fmt.Fprintf(w, "    # br_table end\n")
 
 	case token.INS_RETURN:
+		labelReturnId := p.makeLabelId(kLabelPrefixName_return, fn.Name, "")
 		switch len(fn.Type.Results) {
 		case 0:
-			fmt.Fprintf(w, "    jmp %s\n", kLabelPrefixName_return+fn.Name)
+			fmt.Fprintf(w, "    jmp %s\n", labelReturnId)
 		case 1:
 			sp0 := stk.Pop(fn.Type.Results[0])
 			switch fn.Type.Results[0] {
 			case token.I32:
 				fmt.Fprintf(w, "    mov eax, dword ptr [rbp%+d]\n", p.fnWasmR0Base-sp0*8)
 				fmt.Fprintf(w, "    mov dword ptr [rbp%+d], eax\n", fnNative.Type.Return[0].RBPOff)
-				fmt.Fprintf(w, "    jmp %s\n", kLabelPrefixName_return+fn.Name)
+				fmt.Fprintf(w, "    jmp %s\n", labelReturnId)
 			case token.I64:
 				fmt.Fprintf(w, "    mov rax, qword ptr [rbp%+d]\n", p.fnWasmR0Base-sp0*8)
 				fmt.Fprintf(w, "    mov qword ptr [rbp%+d], rax\n", fnNative.Type.Return[0].RBPOff)
-				fmt.Fprintf(w, "    jmp %s\n", kLabelPrefixName_return+fn.Name)
+				fmt.Fprintf(w, "    jmp %s\n", labelReturnId)
 			case token.F32:
 				fmt.Fprintf(w, "    movss xmm0, dword ptr [rbp%+d]\n", p.fnWasmR0Base-sp0*8)
 				fmt.Fprintf(w, "    movss dword ptr [rbp%+d], xmm0\n", fnNative.Type.Return[0].RBPOff)
-				fmt.Fprintf(w, "    jmp   %s\n", kLabelPrefixName_return+fn.Name)
+				fmt.Fprintf(w, "    jmp   %s\n", labelReturnId)
 			case token.F64:
 				fmt.Fprintf(w, "    movsd xmm0, qword ptr [rbp%+d]\n", p.fnWasmR0Base-sp0*8)
 				fmt.Fprintf(w, "    movsd qword ptr [rbp%+d], xmm0\n", fnNative.Type.Return[0].RBPOff)
-				fmt.Fprintf(w, "    jmp   %s\n", kLabelPrefixName_return+fn.Name)
+				fmt.Fprintf(w, "    jmp   %s\n", labelReturnId)
 			default:
 				unreachable()
 			}
@@ -720,7 +742,7 @@ func (p *wat2X64Worker) buildFunc_ins(
 				}
 			}
 			fmt.Fprintf(w, "    mov    rax, [rbp%+d] # return address\n", 2*8)
-			fmt.Fprintf(w, "    jmp    %s\n", kLabelPrefixName_return+fn.Name)
+			fmt.Fprintf(w, "    jmp    %s\n", labelReturnId)
 		}
 		assert(stk.Len() == 0)
 
@@ -1622,9 +1644,11 @@ func (p *wat2X64Worker) buildFunc_ins(
 		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.I32)
 		ret0 := p.fnWasmR0Base - 8*stk.Push(token.I32)
 
-		labelBody := p.gasGenNextId(kLabelNamePrefix_ifBody)
-		labelElse := p.gasGenNextId(kLabelNamePrefix_ifElse)
-		labelEnd := p.gasGenNextId(kLabelNamePrefix_ifEnd)
+		labelSuffix := p.genNextId()
+
+		labelBody := p.makeLabelId(kLabelNamePrefix_ifBody, "", labelSuffix)
+		labelElse := p.makeLabelId(kLabelNamePrefix_ifElse, "", labelSuffix)
+		labelEnd := p.makeLabelId(kLabelNamePrefix_ifEnd, "", labelSuffix)
 
 		fmt.Fprintf(w, "    # memory.grow\n")
 		fmt.Fprintf(w, "    lea r10, [rip+%s]\n", kMemoryPagesName)
@@ -2721,7 +2745,8 @@ func (p *wat2X64Worker) buildFunc_ins(
 		sp1 := p.fnWasmR0Base - 8*stk.Pop(token.F32)
 		ret0 := p.fnWasmR0Base - 8*stk.Push(token.F32)
 
-		labelNotEqual := p.gasGenNextId(kLabelNamePrefix_ifEnd)
+		labelSuffix := p.genNextId()
+		labelNotEqual := p.makeLabelId(kLabelNamePrefix_ifEnd, "", labelSuffix)
 
 		fmt.Fprintf(w, "    # f32.max\n")
 		fmt.Fprintf(w, "    movss   xmm4, dword ptr [rbp%+d]\n", sp0)
@@ -2868,7 +2893,8 @@ func (p *wat2X64Worker) buildFunc_ins(
 		sp1 := p.fnWasmR0Base - 8*stk.Pop(token.F64)
 		ret0 := p.fnWasmR0Base - 8*stk.Push(token.F64)
 
-		labelIfDone := p.gasGenNextId(kLabelNamePrefix_ifEnd)
+		labelSuffix := p.genNextId()
+		labelIfDone := p.makeLabelId(kLabelNamePrefix_ifEnd, "", labelSuffix)
 
 		fmt.Fprintf(w, "    # f64.min\n")
 		fmt.Fprintf(w, "    movsd xmm4, qword ptr [rbp%+d]\n", sp0)
@@ -2886,7 +2912,8 @@ func (p *wat2X64Worker) buildFunc_ins(
 		sp1 := p.fnWasmR0Base - 8*stk.Pop(token.F64)
 		ret0 := p.fnWasmR0Base - 8*stk.Push(token.F64)
 
-		labelNotEqual := p.gasGenNextId(kLabelNamePrefix_ifEnd)
+		labelSuffix := p.genNextId()
+		labelNotEqual := p.makeLabelId(kLabelNamePrefix_ifEnd, "", labelSuffix)
 
 		fmt.Fprintf(w, "    # f64.max\n")
 		fmt.Fprintf(w, "    movsd xmm4, qword ptr [rbp%+d]\n", sp0)
