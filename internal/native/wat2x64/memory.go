@@ -6,18 +6,20 @@ package wat2x64
 import (
 	"fmt"
 	"io"
+
+	"wa-lang.org/wa/internal/native/abi"
 )
 
 const (
-	kMemoryInitFuncName = "$Memory.initFunc"
+	kMemoryInitFuncName = ".Memory.initFunc"
 
-	kMemoryAddrName     = "$Memory.addr"
-	kMemoryPagesName    = "$Memory.pages"
-	kMemoryMaxPagesName = "$Memory.maxPages"
+	kMemoryAddrName     = ".Memory.addr"
+	kMemoryPagesName    = ".Memory.pages"
+	kMemoryMaxPagesName = ".Memory.maxPages"
 
-	kMemoryDataOffsetPrefix = "$Memory.dataOffset."
-	kMemoryDataSizePrefix   = "$Memory.dataSize."
-	kMemoryDataPtrPrefix    = "$Memory.dataPtr."
+	kMemoryDataOffsetPrefix = ".Memory.dataOffset."
+	kMemoryDataSizePrefix   = ".Memory.dataSize."
+	kMemoryDataPtrPrefix    = ".Memory.dataPtr."
 )
 
 func (p *wat2X64Worker) buildMemory(w io.Writer) error {
@@ -27,10 +29,11 @@ func (p *wat2X64Worker) buildMemory(w io.Writer) error {
 
 	p.gasComment(w, "定义内存")
 	p.gasSectionDataStart(w)
+	p.gasGlobal(w, kMemoryAddrName)
+	p.gasGlobal(w, kMemoryPagesName)
+	p.gasGlobal(w, kMemoryMaxPagesName)
 
-	maxPages := int64(p.m.Memory.Pages)
 	if max := p.m.Memory.MaxPages; max > 0 {
-		maxPages = int64(max)
 		p.gasDefI64(w, kMemoryAddrName, 0)
 		p.gasDefI64(w, kMemoryPagesName, int64(p.m.Memory.Pages))
 		p.gasDefI64(w, kMemoryMaxPagesName, int64(max))
@@ -45,17 +48,26 @@ func (p *wat2X64Worker) buildMemory(w io.Writer) error {
 	// 生成需要填充内存的 data 段数据
 	// 需要在程序启动时调用相关函数进行填充
 	if len(p.m.Data) > 0 {
+		p.gasComment(w, "内存数据")
+		p.gasSectionDataStart(w)
 		for i, d := range p.m.Data {
-			if len(d.Value) > 10 {
-				p.gasComment(w, fmt.Sprintf("Memory[%d]: %v...", d.Offset, string(d.Value[:10])))
-			} else {
-				p.gasComment(w, fmt.Sprintf("Memory[%d]: %v", d.Offset, string(d.Value)))
-			}
+			p.gasComment(w, fmt.Sprintf("memcpy(&Memory[%d], data[%d], size)", d.Offset, i))
 			p.gasDefI64(w, fmt.Sprintf("%s%d", kMemoryDataOffsetPrefix, i), int64(d.Offset))
 			p.gasDefI64(w, fmt.Sprintf("%s%d", kMemoryDataSizePrefix, i), int64(len(d.Value)))
 			p.gasDefString(w, fmt.Sprintf("%s%d", kMemoryDataPtrPrefix, i), string(d.Value))
 		}
 		fmt.Fprintln(w)
+	}
+
+	// 参数寄存器
+	regArg0 := "rcx"
+	regArg1 := "rdx"
+	regArg2 := "r8"
+
+	if p.cpuType == abi.X64Unix {
+		regArg0 = "rdi"
+		regArg1 = "rsi"
+		regArg2 = "rdx"
 	}
 
 	// 生成初始化函数
@@ -65,22 +77,24 @@ func (p *wat2X64Worker) buildMemory(w io.Writer) error {
 		p.gasGlobal(w, kMemoryInitFuncName)
 		p.gasFuncStart(w, kMemoryInitFuncName)
 
-		p.gasCommentInFunc(w, "影子空间")
-		fmt.Fprintln(w, "    sub rsp, 40")
+		fmt.Fprintln(w, "    push rbp")
+		fmt.Fprintln(w, "    mov  rbp, rsp")
+		fmt.Fprintln(w, "    sub  rsp, 32")
 		fmt.Fprintln(w)
 
 		p.gasCommentInFunc(w, "分配内存")
-		fmt.Fprintf(w, "    mov  rcx, %d # %d pages\n", maxPages*(1<<16), maxPages)
-		fmt.Fprintf(w, "    call malloc\n")
-		fmt.Fprintf(w, "    lea  rdx, [rip + %s]\n", kMemoryAddrName)
-		fmt.Fprintf(w, "    mov  [rdx], rax\n")
+		fmt.Fprintf(w, "    mov  %s, [rip + %s]\n", regArg0, kMemoryMaxPagesName)
+		fmt.Fprintf(w, "    shl  %s, 16\n", regArg0)
+		fmt.Fprintf(w, "    call %s\n", kRuntimeMalloc)
+		fmt.Fprintf(w, "    mov  [rip + %s], rax\n", kMemoryAddrName)
 		fmt.Fprintln(w)
 
 		p.gasCommentInFunc(w, "内存清零")
-		fmt.Fprintf(w, "    lea  rcx, [rip + %s]\n", kMemoryAddrName)
-		fmt.Fprintf(w, "    mov  rdx, 0\n")
-		fmt.Fprintf(w, "    mov  r8, %d\n", maxPages*(1<<16))
-		fmt.Fprintf(w, "    call %s\n", kBuiltinMemset)
+		fmt.Fprintf(w, "    mov  %s, [rip + %s]\n", regArg0, kMemoryAddrName)
+		fmt.Fprintf(w, "    mov  %s, 0\n", regArg1)
+		fmt.Fprintf(w, "    mov  %s, [rip + %s]\n", regArg2, kMemoryMaxPagesName)
+		fmt.Fprintf(w, "    shl  %s, 16\n", regArg2)
+		fmt.Fprintf(w, "    call %s\n", kRuntimeMemset)
 		fmt.Fprintln(w)
 
 		if len(p.m.Data) > 0 {
@@ -88,23 +102,22 @@ func (p *wat2X64Worker) buildMemory(w io.Writer) error {
 			fmt.Fprintln(w)
 
 			for i, d := range p.m.Data {
-				if len(d.Value) > 10 {
-					p.gasCommentInFunc(w, fmt.Sprintf("Memory[%d]: %v...", d.Offset, string(d.Value[:10])))
-				} else {
-					p.gasCommentInFunc(w, fmt.Sprintf("Memory[%d]: %v", d.Offset, string(d.Value)))
-				}
-				fmt.Fprintf(w, "    lea  rcx, [rip + %s]\n", kMemoryAddrName)
-				fmt.Fprintf(w, "    add  rcx, %d\n", d.Offset)
-				fmt.Fprintf(w, "    mov  rdx, [rip + %s]\n", fmt.Sprintf("%s%d", kMemoryDataOffsetPrefix, i))
-				fmt.Fprintf(w, "    mov  r8, %d\n", len(d.Value))
-				fmt.Fprintf(w, "    call %s\n", kBuiltinMemcpy)
+				p.gasCommentInFunc(w, fmt.Sprintf("# memcpy(&Memory[%d], data[%d], size)", d.Offset, i))
+
+				fmt.Fprintf(w, "    mov  rax, [rip + %s]\n", kMemoryAddrName)
+				fmt.Fprintf(w, "    mov  %s, [rip + %s%d]\n", regArg0, kMemoryDataOffsetPrefix, i)
+				fmt.Fprintf(w, "    add  %s, rax\n", regArg0)
+				fmt.Fprintf(w, "    lea  %s, [rip + %s%d]\n", regArg1, kMemoryDataPtrPrefix, i)
+				fmt.Fprintf(w, "    mov  %s, [rip + %s%d]\n", regArg2, kMemoryDataSizePrefix, i)
+				fmt.Fprintf(w, "    call %s\n", kRuntimeMemcpy)
 			}
 
 			fmt.Fprintln(w)
 		}
 
 		p.gasCommentInFunc(w, "函数返回")
-		fmt.Fprintln(w, "    add rsp, 40")
+		fmt.Fprintln(w, "    mov rsp, rbp")
+		fmt.Fprintln(w, "    pop rbp")
 		fmt.Fprintln(w, "    ret")
 		fmt.Fprintln(w)
 	}

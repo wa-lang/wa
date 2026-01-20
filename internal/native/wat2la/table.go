@@ -11,71 +11,163 @@ import (
 )
 
 const (
-	kTableReg         = "T7"
-	kTableAddrName    = "$wat2la.table.addr"
-	kTableSizeName    = "$wat2la.table.size"
-	kTableMaxSizeName = "$wat2la.table.maxSize"
+	kTableInitFuncName = ".Table.initFunc"
 
-	kFuncIndexTableName = "$wat2la.func.index.table"
+	kTableAddrName    = ".Table.addr"
+	kTableSizeName    = ".Table.size"
+	kTableMaxSizeName = ".Table.maxSize"
+
+	kTableFuncIndexListName       = ".Table.funcIndexList"
+	kTableFuncIndexListElemPrefix = ".Table.funcIndexList."
+	kTableFuncIndexListEndName    = ".Table.funcIndexList.end"
 )
 
 func (p *wat2laWorker) buildTable(w io.Writer) error {
 	if p.m.Table == nil {
 		return nil
 	}
+
 	if p.m.Table.Type != token.FUNCREF {
 		return fmt.Errorf("unsupported table type: %s", p.m.Table.Type)
 	}
 
 	const IntSize = 8
 
-	if p.m.Table.Name != "" {
-		fmt.Fprintf(w, "# table %s\n", p.m.Table.Name)
-	} else {
-		fmt.Fprintf(w, "# table\n")
-	}
-	if max := p.m.Table.MaxSize; max > 0 {
-		fmt.Fprintf(w, "global %s: i64 = %d\n", kTableSizeName, p.m.Table.Size)
-		fmt.Fprintf(w, "global %s: i64 = %d\n", kTableMaxSizeName, p.m.Table.MaxSize)
-		fmt.Fprintf(w, "global %s: %d = {\n", kTableAddrName, max*IntSize)
-	} else {
-		fmt.Fprintf(w, "global %s: i64 = %d\n", kTableSizeName, p.m.Table.Size)
-		fmt.Fprintf(w, "global %s: i64 = %d\n", kTableMaxSizeName, p.m.Table.Size)
-		fmt.Fprintf(w, "global %s: %d = {\n", kTableAddrName, p.m.Table.Size*IntSize)
-	}
-	{
-		// 为了更真实地模拟, 表格保存的是函数的索引!
-		for _, elem := range p.m.Elem {
-			for i, fnIdxOrName := range elem.Values {
-				fnIndex := p.findFuncIndex(fnIdxOrName)
-				fmt.Fprintf(w, "    %d: %d,\n", int(elem.Offset)+i*IntSize, fnIndex)
-			}
-		}
-	}
-	fmt.Fprintf(w, "}\n")
-	fmt.Fprintln(w)
+	p.gasComment(w, "定义表格")
+	p.gasSectionDataStart(w)
+	p.gasGlobal(w, kTableAddrName)
+	p.gasGlobal(w, kTableSizeName)
+	p.gasGlobal(w, kTableMaxSizeName)
 
-	// 函数索引列表
 	if max := p.m.Table.MaxSize; max > 0 {
-		fmt.Fprintf(w, "global %s: %d = {\n", kFuncIndexTableName, max*IntSize)
+		p.gasDefI64(w, kTableAddrName, 0)
+		p.gasDefI64(w, kTableSizeName, int64(p.m.Table.Size))
+		p.gasDefI64(w, kTableMaxSizeName, int64(p.m.Table.MaxSize))
+		fmt.Fprintln(w)
 	} else {
-		fmt.Fprintf(w, "global %s: %d = {\n", kFuncIndexTableName, p.m.Table.Size*IntSize)
+		p.gasDefI64(w, kTableAddrName, 0)
+		p.gasDefI64(w, kTableSizeName, int64(p.m.Table.Size))
+		p.gasDefI64(w, kTableMaxSizeName, int64(p.m.Table.Size))
+		fmt.Fprintln(w)
 	}
+
+	p.gasComment(w, "函数列表")
+	p.gasComment(w, "保持连续并填充全部函数")
+	p.gasSectionDataStart(w)
+	p.gasFuncLabel(w, kTableFuncIndexListName)
 	{
 		// 索引从导入函数开始计算
 		var importFuncCount int
-		for i, x := range p.m.Imports {
+		for _, x := range p.m.Imports {
 			if x.ObjKind == token.FUNC {
-				fmt.Fprintf(w, "    %d: %s,\n", i, x.FuncName)
+				fmt.Fprintf(w, "%s%d: .quad %s\n",
+					kTableFuncIndexListElemPrefix, importFuncCount,
+					kImportNamePrefix+x.FuncName,
+				)
 				importFuncCount++
 			}
 		}
-		for i, x := range p.m.Funcs {
-			fmt.Fprintf(w, "    %d: %s,\n", importFuncCount+i, x.Name)
+		for _, x := range p.m.Funcs {
+			fmt.Fprintf(w, "%s%d: .quad %s\n",
+				kTableFuncIndexListElemPrefix, importFuncCount,
+				kFuncNamePrefix+x.Name,
+			)
+			importFuncCount++
 		}
 	}
-	fmt.Fprintf(w, "}\n")
+	p.gasDefI64(w, kTableFuncIndexListEndName, 0)
 	fmt.Fprintln(w)
+
+	// 定义初始化函数
+	{
+		p.gasComment(w, "表格初始化函数")
+		p.gasSectionTextStart(w)
+		p.gasGlobal(w, kTableInitFuncName)
+		p.gasFuncStart(w, kTableInitFuncName)
+
+		fmt.Fprintf(w, "    addi.d  $sp, $sp, -16\n")
+		fmt.Fprintf(w, "    st.d    $ra, $sp, 8\n")
+		fmt.Fprintf(w, "    st.d    $fp, $sp, 0\n")
+		fmt.Fprintf(w, "    addi.d  $fp, $sp, 0\n")
+		fmt.Fprintf(w, "    addi.d  $sp, $sp, -32\n")
+		fmt.Fprintln(w)
+
+		p.gasCommentInFunc(w, "分配表格")
+		fmt.Fprintf(w, "    pcalau12i $t0, %%pc_hi20(%s)\n", kTableMaxSizeName)
+		fmt.Fprintf(w, "    addi.d    $t0, $t0, %%pc_lo12(%s)\n", kTableMaxSizeName)
+		fmt.Fprintf(w, "    ld.d      $t0, $t0, 0\n")
+		fmt.Fprintf(w, "    slli.d    $a0, $t0, 3 # sizeof(i64) == 8\n")
+		fmt.Fprintf(w, "    pcalau12i $t0, %%pc_hi20(%s)\n", kRuntimeMalloc)
+		fmt.Fprintf(w, "    addi.d    $t0, $t0, %%pc_lo12(%s)\n", kRuntimeMalloc)
+		fmt.Fprintf(w, "    jirl      $ra, $t0, 0\n")
+		fmt.Fprintf(w, "    pcalau12i $t1, %%pc_hi20(%s)\n", kTableAddrName)
+		fmt.Fprintf(w, "    addi.d    $t1, $t1, %%pc_lo12(%s)\n", kTableAddrName)
+		fmt.Fprintf(w, "    st.d      $a0, $t1, 0\n")
+		fmt.Fprintln(w)
+
+		p.gasCommentInFunc(w, "表格填充 0xFF")
+		fmt.Fprintf(w, "    addi.d    $a1, $zero, 0xFF # a1 = 0xFF\n")
+		fmt.Fprintf(w, "    pcalau12i $t0, %%pc_hi20(%s)\n", kTableMaxSizeName)
+		fmt.Fprintf(w, "    addi.d    $t0, $t0, %%pc_lo12(%s)\n", kTableMaxSizeName)
+		fmt.Fprintf(w, "    ld.d      $t0, $t0, 0\n")
+		fmt.Fprintf(w, "    slli.d    $a2, $t0, 3 # sizeof(i64) == 8\n")
+		fmt.Fprintf(w, "    pcalau12i $t0, %%pc_hi20(%s)\n", kRuntimeMemset)
+		fmt.Fprintf(w, "    addi.d    $t0, $t0, %%pc_lo12(%s)\n", kRuntimeMemset)
+		fmt.Fprintf(w, "    jirl      $ra, $t0, 0\n")
+		fmt.Fprintln(w)
+
+		if len(p.m.Elem) > 0 {
+			p.gasCommentInFunc(w, "初始化表格")
+			fmt.Fprintln(w)
+
+			p.gasCommentInFunc(w, "加载表格地址")
+			fmt.Fprintf(w, "    pcalau12i $t0, %%pc_hi20(%s)\n", kTableAddrName)
+			fmt.Fprintf(w, "    addi.d    $t0, $t0, %%pc_lo12(%s)\n", kTableAddrName)
+			fmt.Fprintf(w, "    ld.d      $t0, $t0, 0\n")
+
+			for i, elem := range p.m.Elem {
+				for j, fnIdxOrName := range elem.Values {
+					fnIndex := p.findFuncIndex(fnIdxOrName)
+					tableOffset := int32(int(elem.Offset) + j*IntSize)
+
+					p.gasCommentInFunc(w, fmt.Sprintf("elem[%d]: table[%d+%d] = %s", i, elem.Offset, j, fnIdxOrName))
+
+					// 生成偏移地址常量
+					if x := tableOffset; x >= -2048 && x <= 2047 {
+						fmt.Fprintf(w, "    addi.d    $t1, $zero, %d # offset\n", x)
+					} else {
+						hi20 := uint32(x) >> 12
+						lo12 := uint32(x) & 0xFFF
+						fmt.Fprintf(w, "    lu12i.w   $t1, 0x%X\n # offset", hi20)
+						fmt.Fprintf(w, "    ori       $t1, $t1, 0x%X\n", lo12)
+					}
+
+					// 生成函数索引常量
+					if x := fnIndex; x >= -2048 && x <= 2047 {
+						fmt.Fprintf(w, "    addi.d    $t2, $zero, %d # func index\n", x)
+					} else {
+						hi20 := uint32(x) >> 12
+						lo12 := uint32(x) & 0xFFF
+						fmt.Fprintf(w, "    lu12i.w   $t2, 0x%X\n # func index", hi20)
+						fmt.Fprintf(w, "    ori       $t2, $t2, 0x%X\n", lo12)
+					}
+
+					// 计算绝对偏移地址
+					fmt.Fprintf(w, "    add.d     $t1, $t1, $t0 # offset\n")
+					fmt.Fprintf(w, "    st.d      $t2, $t1, 0\n")
+				}
+			}
+			fmt.Fprintln(w)
+		}
+
+		fmt.Fprintf(w, "    # 函数返回\n")
+		fmt.Fprintf(w, "    addi.d  $sp, $fp, 0\n")
+		fmt.Fprintf(w, "    ld.d    $ra, $sp, 8\n")
+		fmt.Fprintf(w, "    ld.d    $fp, $sp, 0\n")
+		fmt.Fprintf(w, "    addi.d  $sp, $sp, 16\n")
+		fmt.Fprintf(w, "    jirl    $zero, $ra, 0\n")
+		fmt.Fprintln(w)
+	}
 
 	return nil
 }

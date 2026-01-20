@@ -1,0 +1,115 @@
+// Copyright (C) 2025 武汉凹语言科技有限公司
+// SPDX-License-Identifier: AGPL-3.0-or-later
+
+package wat2x64
+
+import (
+	_ "embed"
+	"fmt"
+	"io"
+
+	"wa-lang.org/wa/internal/native/abi"
+)
+
+const (
+	_kRuntimeNamePrefix = ".Runtime."
+
+	kRuntimeWrite           = _kRuntimeNamePrefix + "write"
+	kRuntimeExit            = _kRuntimeNamePrefix + "exit"
+	kRuntimeMalloc          = _kRuntimeNamePrefix + "malloc"
+	kRuntimeMemcpy          = _kRuntimeNamePrefix + "memcpy"
+	kRuntimeMemset          = _kRuntimeNamePrefix + "memset"
+	kRuntimePanic           = _kRuntimeNamePrefix + "panic"
+	kRuntimePanicMessage    = _kRuntimeNamePrefix + "panic.message"
+	kRuntimePanicMessageLen = _kRuntimeNamePrefix + "panic.messageLen"
+)
+
+// 生成运行时函数
+func (p *wat2X64Worker) buildRuntimeHead(w io.Writer) error {
+	var list = []string{
+		kRuntimeWrite,
+		kRuntimeExit,
+		kRuntimeMalloc,
+		kRuntimeMemcpy,
+		kRuntimeMemset,
+		// panic 内部实现
+	}
+	var m = map[string]string{
+		kRuntimeWrite:  "_write",
+		kRuntimeExit:   "_exit",
+		kRuntimeMalloc: "malloc",
+		kRuntimeMemcpy: "memcpy",
+		kRuntimeMemset: "memset",
+	}
+
+	if p.cpuType == abi.X64Unix {
+		m[kRuntimeWrite] = "write"
+		m[kRuntimeExit] = "exit"
+	}
+
+	p.gasComment(w, "运行时函数")
+	for _, absName := range list {
+		p.gasExtern(w, m[absName])
+	}
+	for _, absName := range list {
+		p.gasSet(w, absName, m[absName])
+	}
+	fmt.Fprintln(w)
+	return nil
+}
+
+// 生成运行时函数
+func (p *wat2X64Worker) buildRuntimeImpl(w io.Writer) error {
+	if err := p.buildRuntimeImpl_panic(w); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (p *wat2X64Worker) buildRuntimeImpl_panic(w io.Writer) error {
+	const panicMessage = "panic"
+	p.gasSectionDataStart(w)
+	p.gasDefString(w, kRuntimePanicMessage, panicMessage)
+	p.gasDefI64(w, kRuntimePanicMessageLen, int64(len(panicMessage)))
+	fmt.Fprintln(w)
+
+	p.gasSectionTextStart(w)
+	p.gasGlobal(w, kRuntimePanic)
+	p.gasFuncStart(w, kRuntimePanic)
+
+	fmt.Fprintf(w, "    push rbp\n")
+	fmt.Fprintf(w, "    mov  rbp, rsp\n")
+	fmt.Fprintf(w, "    sub  rsp, 32\n")
+	fmt.Fprintln(w)
+
+	// 参数寄存器
+	regArg0 := "rcx"
+	regArg1 := "rdx"
+	regArg2 := "r8"
+
+	if p.cpuType == abi.X64Unix {
+		regArg0 = "rdi"
+		regArg1 = "rsi"
+		regArg2 = "rdx"
+	}
+
+	fmt.Fprintf(w, "    # runtime.write(stderr, panicMessage, size)\n")
+	fmt.Fprintf(w, "    mov  %s, 2 # stderr\n", regArg0)
+	fmt.Fprintf(w, "    lea  %s, [rip + %s]\n", regArg1, kRuntimePanicMessage)
+	fmt.Fprintf(w, "    mov  %s, [rip + %s] # size\n", regArg2, kRuntimePanicMessageLen)
+	fmt.Fprintf(w, "    call %s\n", kRuntimeWrite)
+	fmt.Fprintln(w)
+
+	fmt.Fprintf(w, "    # 退出程序\n")
+	fmt.Fprintf(w, "    mov  %s, 1 # 退出码\n", regArg0)
+	fmt.Fprintf(w, "    call %s\n", kRuntimeExit)
+	fmt.Fprintln(w)
+
+	fmt.Fprintf(w, "    # return\n")
+	fmt.Fprintf(w, "    mov rsp, rbp\n")
+	fmt.Fprintf(w, "    pop rbp\n")
+	fmt.Fprintf(w, "    ret\n")
+	fmt.Fprintln(w)
+
+	return nil
+}

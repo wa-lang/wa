@@ -11,7 +11,9 @@ import (
 )
 
 const (
-	kImportNamePrefix = "$Import."
+	kImportNamePrefix = ".Import."
+
+	kEnvSyscallPrefix = "wat2x64_"
 )
 
 func (p *wat2X64Worker) buildImport(w io.Writer) error {
@@ -20,24 +22,39 @@ func (p *wat2X64Worker) buildImport(w io.Writer) error {
 	}
 
 	if len(p.m.Imports) > 0 {
-		p.gasComment(w, "导入函数(由导入文件定义)")
+		p.gasComment(w, "导入函数(外部库定义)")
 		defer fmt.Fprintln(w)
 	}
 
+	// 是否已经导入过
+	seenMap := make(map[string]bool)
+
 	// 声明原始的宿主函数
+	for _, importSpec := range p.m.Imports {
+		if importSpec.ObjKind != token.FUNC {
+			panic(fmt.Sprintf("ERR: import %s.%s", importSpec.ObjModule, importSpec.ObjName))
+		}
+
+		absName := importSpec.ObjModule + "_" + importSpec.ObjName
+		if seenMap[absName] {
+			continue
+		}
+		seenMap[absName] = true
+		p.gasExtern(w, kEnvSyscallPrefix+absName)
+	}
+
+	// 定义导入函数的别名
 	for _, importSpec := range p.m.Imports {
 		if importSpec.ObjKind != token.FUNC {
 			panic(fmt.Sprintf("ERR: import global %s.%s", importSpec.ObjModule, importSpec.ObjName))
 		}
 
-		// 检查导入系统调用的函数签名
-		p.checkSyscallSig(importSpec)
+		absName := importSpec.ObjModule + "_" + importSpec.ObjName
+		if !seenMap[absName] {
+			continue
+		}
 
-		// 导入函数有个名字修饰, 避免重名
-		// 导入函数属于外部库, 需要通过外部文件单独定义
-		absImportName := kImportNamePrefix + importSpec.ObjModule + "." + importSpec.ObjName
-		p.gasExtern(w, absImportName)
-		p.gasSet(w, kFuncNamePrefix+importSpec.FuncName, absImportName)
+		p.gasSet(w, kImportNamePrefix+importSpec.ObjModule+"."+importSpec.ObjName, kEnvSyscallPrefix+absName)
 	}
 
 	return nil

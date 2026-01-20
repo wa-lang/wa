@@ -6,7 +6,9 @@ package wat2x64
 import (
 	"bytes"
 	"fmt"
+	"strings"
 
+	"wa-lang.org/wa/internal/native/abi"
 	"wa-lang.org/wa/internal/native/ast"
 	"wa-lang.org/wa/internal/wasm"
 	watast "wa-lang.org/wa/internal/wat/ast"
@@ -33,7 +35,7 @@ func wat2x64(filename string, source []byte, osName string) (m *watast.Module, c
 }
 
 type wat2X64Worker struct {
-	osName string
+	cpuType abi.CPUType
 
 	filename string
 	m        *watast.Module
@@ -44,12 +46,14 @@ type wat2X64Worker struct {
 	inlinedTypeIndices []*inlinedTypeIndex
 	inlinedTypes       []*wasm.FunctionType
 
-	localNames      []string           // 参数和局部变量名
-	localTypes      []wattoken.Token   // 参数和局部变量类型
-	scopeLabels     []string           // 嵌套的label查询, if/block/loop
-	scopeStackBases []int              // if/block/loop, 开始的栈位置
-	scopeResults    [][]wattoken.Token // 对应块的返回值数量和类型
-	fnWasmR0Base    int                // 当前函数的WASM栈R0位置
+	localNames        []string           // 参数和局部变量名
+	localTypes        []wattoken.Token   // 参数和局部变量类型
+	scopeLabels       []string           // 嵌套的label查询, if/block/loop
+	scopeLabelsSuffix []string           // 作用域唯一后缀(避免重名)
+	scopeStackBases   []int              // if/block/loop, 开始的栈位置
+	scopeResults      [][]wattoken.Token // 对应块的返回值数量和类型
+	fnWasmR0Base      int                // 当前函数的WASM栈R0位置
+	fnMaxCallArgsSize int                // 调用子函数需要的最大空间
 
 	constLitMap map[uint64]uint64 // 常量列表
 
@@ -71,8 +75,13 @@ func newWat2X64Worker(filename string, mWat *watast.Module, osName string) *wat2
 	p := &wat2X64Worker{
 		filename: filename,
 		m:        mWat,
-		osName:   osName,
 		trace:    DebugMode,
+	}
+
+	if strings.EqualFold(osName, "windows") {
+		p.cpuType = abi.X64Windows
+	} else {
+		p.cpuType = abi.X64Unix
 	}
 
 	// 统计导入的global和func索引
@@ -107,32 +116,32 @@ func (p *wat2X64Worker) BuildProgram() (code []byte, err error) {
 
 	var out bytes.Buffer
 
-	fmt.Fprintf(&out, "# 源文件: %s, 系统: %s/X64\n", p.filename, p.osName)
+	fmt.Fprintf(&out, "# 源文件: %s, ABI: %s\n", p.filename, p.cpuType)
 	fmt.Fprintf(&out, "# 自动生成的代码, 不要手动修改!!!\n\n")
 
 	p.gasIntelSyntax(&out)
 	fmt.Fprintln(&out)
 
-	// 声明全局函数
-	p.gasComment(&out, "系统调用")
-	p.gasExtern(&out, kSyscallMalloc)
-	p.gasGlobal(&out, kBuiltinMemcpy)
-	p.gasGlobal(&out, kBuiltinMemset)
-	fmt.Fprintln(&out)
+	// 生成运行时函数
+	p.buildRuntimeHead(&out)
 
+	// 导入函数
 	if err := p.buildImport(&out); err != nil {
 		return nil, err
 	}
 
-	if err := p.buildGlobal(&out); err != nil {
+	// 构建内存
+	if err := p.buildMemory(&out); err != nil {
 		return nil, err
 	}
 
+	// 构建表格
 	if err := p.buildTable(&out); err != nil {
 		return nil, err
 	}
 
-	if err := p.buildMemory(&out); err != nil {
+	// 构建全局变量
+	if err := p.buildGlobal(&out); err != nil {
 		return nil, err
 	}
 
@@ -141,36 +150,21 @@ func (p *wat2X64Worker) BuildProgram() (code []byte, err error) {
 		return nil, err
 	}
 
+	// 生成运行时函数
+	if err := p.buildRuntimeImpl(&out); err != nil {
+		return nil, err
+	}
+
+	// 构建函数
 	if err := p.buildFuncs(&out); err != nil {
 		return nil, err
-	}
-
-	// 生成常量
-	if err := p.buildConstList(&out); err != nil {
-		return nil, err
-	}
-
-	// 内置函数
-	if false {
-		switch p.osName {
-		case "linux":
-			if err := p.buildBuiltinLinux(&out); err != nil {
-				return nil, err
-			}
-		case "windows":
-			if err := p.buildBuiltinWindows(&out); err != nil {
-				return nil, err
-			}
-		default:
-			panic(fmt.Sprintf("unknown os %s", p.osName))
-		}
 	}
 
 	return out.Bytes(), nil
 }
 
-func (p *wat2X64Worker) gasGenNextId(preifx string) string {
+func (p *wat2X64Worker) genNextId() string {
 	nextId := p.nextId
 	p.nextId++
-	return fmt.Sprintf("%s.%08X", preifx, nextId)
+	return fmt.Sprintf("%08X", nextId)
 }

@@ -18,6 +18,25 @@ func (p *wat2laWorker) Tracef(foramt string, a ...interface{}) {
 	}
 }
 
+func (p *wat2laWorker) findGlobalName(ident string) string {
+	if ident == "" {
+		panic("wat2la: empty local name")
+	}
+
+	if idx, err := strconv.Atoi(ident); err == nil {
+		if idx < 0 || idx >= len(p.m.Globals) {
+			panic(fmt.Sprintf("wat2la: unknown global %q", ident))
+		}
+		return p.m.Globals[idx].Name
+	}
+	for _, g := range p.m.Globals {
+		if g.Name == ident {
+			return g.Name
+		}
+	}
+	panic("unreachable")
+}
+
 func (p *wat2laWorker) findGlobalType(ident string) token.Token {
 	if ident == "" {
 		panic("wat2la: empty global name")
@@ -79,19 +98,19 @@ func (p *wat2laWorker) findLocalOffset(fnNative *nativeast.Func, fn *ast.Func, i
 			panic(fmt.Sprintf("wat2la: unknown local %q", ident))
 		}
 		if idx < len(fn.Type.Params) {
-			return fnNative.Type.Args[idx].Off
+			return fnNative.Type.Args[idx].RBPOff
 		}
 		n := idx - len(fn.Type.Params)
-		return fnNative.Body.Locals[n].Off
+		return fnNative.Body.Locals[n].RBPOff
 	}
 	for idx, arg := range fn.Type.Params {
 		if arg.Name == ident {
-			return fnNative.Type.Args[idx].Off
+			return fnNative.Type.Args[idx].RBPOff
 		}
 	}
 	for idx, arg := range fn.Body.Locals {
 		if arg.Name == ident {
-			return fnNative.Body.Locals[idx].Off
+			return fnNative.Body.Locals[idx].RBPOff
 		}
 	}
 	panic("unreachable")
@@ -234,6 +253,18 @@ func (p *wat2laWorker) findLabelName(label string) string {
 	panic(fmt.Sprintf("wat2la: unknown label %q", label))
 }
 
+func (p *wat2laWorker) findLabelSuffixId(label string) string {
+	if label == "" {
+		panic("wat2la: empty label suffix id")
+	}
+
+	idx := p.findLabelIndex(label)
+	if idx < len(p.scopeLabelsSuffix) {
+		return p.scopeLabelsSuffix[len(p.scopeLabelsSuffix)-idx-1]
+	}
+	panic(fmt.Sprintf("wat2la: unknown label %q", label))
+}
+
 func (p *wat2laWorker) findLabelIndex(label string) int {
 	if label == "" {
 		panic("wat2la: empty label")
@@ -250,13 +281,19 @@ func (p *wat2laWorker) findLabelIndex(label string) int {
 	panic(fmt.Sprintf("wat2la: unknown label %q", label))
 }
 
-func (p *wat2laWorker) enterLabelScope(stkBase int, label string, results []token.Token) {
+func (p *wat2laWorker) enterLabelScope(stkBase int, label, labelSuffix string, results []token.Token) {
 	p.scopeLabels = append(p.scopeLabels, label)
+	p.scopeLabelsSuffix = append(p.scopeLabelsSuffix, labelSuffix)
 	p.scopeStackBases = append(p.scopeStackBases, stkBase)
 	p.scopeResults = append(p.scopeResults, results)
 }
 func (p *wat2laWorker) leaveLabelScope() {
 	p.scopeLabels = p.scopeLabels[:len(p.scopeLabels)-1]
+	p.scopeLabelsSuffix = p.scopeLabelsSuffix[:len(p.scopeLabelsSuffix)-1]
 	p.scopeStackBases = p.scopeStackBases[:len(p.scopeStackBases)-1]
 	p.scopeResults = p.scopeResults[:len(p.scopeResults)-1]
+}
+
+func (p *wat2laWorker) makeLabelId(prefix, name, suffix string) string {
+	return prefix + name + suffix
 }

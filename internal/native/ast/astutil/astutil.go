@@ -13,13 +13,15 @@ import (
 func BuildFuncFrame(cpu abi.CPUType, fn *ast.Func) error {
 	switch cpu {
 	case abi.LOONG64:
-		return buildFuncFrame_loong64(cpu, fn)
+		return buildFuncFrame_loong64(fn)
 	case abi.RISCV32:
 		return buildFuncFrame_riscv(cpu, fn)
 	case abi.RISCV64:
 		return buildFuncFrame_riscv(cpu, fn)
-	case abi.X64:
-		return buildFuncFrame_x64(cpu, fn)
+	case abi.X64Windows:
+		return buildFuncFrame_x64_windows(fn)
+	case abi.X64Unix:
+		return buildFuncFrame_x64_unix(fn)
 	default:
 		panic("unreachable")
 	}
