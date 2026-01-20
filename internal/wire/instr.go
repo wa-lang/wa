@@ -124,8 +124,35 @@ type InstStore struct {
 	Val []Expr
 }
 
+//func unfoldTuple(t *Tuple) []Type {
+//	var ret []Type
+//	for _, f := range t.fields {
+//		if tu, ok := f.(*Tuple); ok {
+//			ret = append(ret, unfoldTuple(tu)...)
+//		} else {
+//			ret = append(ret, tu)
+//		}
+//	}
+//	return ret
+//}
+
 func (i *InstStore) String() string {
 	var sb strings.Builder
+
+	//var vtypes []Type
+	//for _, val := range i.Val {
+	//	vt := val.Type()
+	//	if tu, ok := vt.(*Tuple); ok {
+	//		vtypes = append(vtypes, unfoldTuple(tu)...)
+	//	} else {
+	//		vtypes = append(vtypes, vt)
+	//	}
+	//}
+	//
+	//if len(vtypes) != len(i.Loc) {
+	//	panic("len(vtypes) != len(i.Loc)")
+	//}
+
 	for i, loc := range i.Loc {
 		if i > 0 {
 			sb.WriteString(", ")
@@ -472,5 +499,34 @@ func (b *Block) EmitLoop(cond Expr, label string, pos int) *Loop {
 	v.Post = b.createBlock(label+".post", pos)
 
 	b.emit(v)
+	return v
+}
+
+/**************************************
+AsLocation: AsLocation 指令，将一个 Expr 转换为 Location，该对象实现了 Location 接口
+**************************************/
+type AsLocation struct {
+	aStmt
+	addr     Expr
+	dataType Type
+}
+
+func (i *AsLocation) Name() string   { return i.String() }
+func (i *AsLocation) Type() Type     { return i.addr.Type() }
+func (i *AsLocation) retained() bool { return false }
+func (i *AsLocation) String() string { return fmt.Sprintf("(%s)", i.addr.Name()) }
+
+// Location 接口相关
+func (i *AsLocation) LocationKind() LocationKind { return LocationKindHeap }
+func (i *AsLocation) DataType() Type             { return i.dataType }
+func (i *AsLocation) Object() interface{}        { return nil }
+
+// 生成一条 AsLocation 指令
+func (b *Block) NewAsLocation(addr Expr, dataType Type, pos int) *AsLocation {
+	v := &AsLocation{addr: addr, dataType: dataType}
+	v.Stringer = v
+	v.pos = pos
+	v.setScope(b)
+
 	return v
 }

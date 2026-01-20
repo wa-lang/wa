@@ -92,6 +92,9 @@ func (b *Builder) constval(val constant.Value, typ types.Type, pos int) wire.Exp
 	} else if t.Equal(b.module.Types.I8) || t.Equal(b.module.Types.I16) || t.Equal(b.module.Types.I32) || t.Equal(b.module.Types.I64) || t.Equal(b.module.Types.Int) || t.Equal(b.module.Types.Rune) {
 		val, _ := constant.Int64Val(val)
 		return b.module.NewConst(strconv.Itoa(int(val)), t, pos)
+	} else if t.Equal(b.module.Types.String) {
+		val := constant.StringVal(val)
+		return b.module.NewConst(val, t, pos)
 	}
 
 	panic("Todo")
