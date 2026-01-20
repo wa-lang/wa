@@ -49,6 +49,7 @@ type wat2X64Worker struct {
 	localNames        []string           // 参数和局部变量名
 	localTypes        []wattoken.Token   // 参数和局部变量类型
 	scopeLabels       []string           // 嵌套的label查询, if/block/loop
+	scopeLabelsSuffix []string           // 作用域唯一后缀(避免重名)
 	scopeStackBases   []int              // if/block/loop, 开始的栈位置
 	scopeResults      [][]wattoken.Token // 对应块的返回值数量和类型
 	fnWasmR0Base      int                // 当前函数的WASM栈R0位置
@@ -166,4 +167,10 @@ func (p *wat2X64Worker) gasGenNextId(preifx string) string {
 	nextId := p.nextId
 	p.nextId++
 	return fmt.Sprintf("%s.%08X", preifx, nextId)
+}
+
+func (p *wat2X64Worker) genNextId() string {
+	nextId := p.nextId
+	p.nextId++
+	return fmt.Sprintf("%08X", nextId)
 }

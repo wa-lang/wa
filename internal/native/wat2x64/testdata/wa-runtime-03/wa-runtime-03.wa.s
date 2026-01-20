@@ -451,11 +451,11 @@ main:
     setz al
     movzx eax, al
     mov dword ptr [rbp-16], eax
-.L.if.begin.z.00000000:
+.L.if.begin..00000000:
     mov eax, [rbp-16]
     test eax, eax
-    je .L.if.end.z.00000000 # if eax != 0 { jmp end }
-.L.if.body.z.00000000:
+    je .L.if.end..00000000 # if eax != 0 { jmp end }
+.L.if.body..00000000:
     # i32.const 0
     mov eax, 0
     mov [rbp-24], eax
@@ -463,8 +463,8 @@ main:
     mov eax, dword ptr [rbp-16]
     mov dword ptr [rbp-8], eax
     jmp .L.return.runtime.HeapAlloc
-.L.next.z.00000000:
-.L.if.end.z.00000000:
+.L.next..00000000:
+.L.if.end..00000000:
     # local.get nbytes i32
     mov eax, dword ptr [rbp+16]
     mov dword ptr [rbp-24], eax
@@ -512,8 +512,8 @@ main:
     mov eax, dword ptr [rbp-24]
     mov dword ptr [rbp-16], eax
 
-.L.loop.begin.zero:
-.L.next.zero:
+.L.loop.begin.zero00000002:
+.L.next.zero00000002:
     # local.get nbytes i32
     mov eax, dword ptr [rbp+16]
     mov dword ptr [rbp-24], eax
@@ -551,15 +551,15 @@ main:
     mov eax, dword ptr [rbp+16]
     mov dword ptr [rbp-24], eax
 
-.L.if.begin.z.00000001:
+.L.if.begin..00000003:
     mov eax, [rbp-16]
     test eax, eax
-    je .L.if.end.z.00000001 # if eax != 0 { jmp end }
-.L.if.body.z.00000001:
+    je .L.if.end..00000003 # if eax != 0 { jmp end }
+.L.if.body..00000003:
     jmp .L.next.zero
-.L.next.z.00000001:
-.L.if.end.z.00000001:
-.L.loop.end.zero:
+.L.next..00000003:
+.L.if.end..00000003:
+.L.loop.end.zero00000002:
     # local.get ptr i32
     mov eax, dword ptr [rbp-16]
     mov dword ptr [rbp-24], eax
@@ -628,11 +628,11 @@ main:
     mov eax, dword ptr [rbp+16]
     mov dword ptr [rbp-24], eax
 
-.L.if.begin.z.00000002:
+.L.if.begin..00000005:
     mov eax, [rbp-16]
     test eax, eax
-    je .L.if.end.z.00000002 # if eax != 0 { jmp end }
-.L.if.body.z.00000002:
+    je .L.if.end..00000005 # if eax != 0 { jmp end }
+.L.if.body..00000005:
     # local.get ptr i32
     mov eax, dword ptr [rbp+16]
     mov dword ptr [rbp-24], eax
@@ -689,8 +689,8 @@ main:
     add r10, rax
     mov eax, dword [rbp-24]
     mov dword [r10 +12], eax
-.L.next.z.00000002:
-.L.if.end.z.00000002:
+.L.next..00000005:
+.L.if.end..00000005:
 
     # 根据ABI处理返回值
 .L.return.runtime.Block.Init:
@@ -719,11 +719,11 @@ main:
     mov eax, dword ptr [rbp+16]
     mov dword ptr [rbp-8], eax
 
-.L.if.begin.z.00000003:
+.L.if.begin..00000007:
     mov eax, [rbp+0]
     test eax, eax
-    je .L.if.end.z.00000003 # if eax != 0 { jmp end }
-.L.if.body.z.00000003:
+    je .L.if.end..00000007 # if eax != 0 { jmp end }
+.L.if.body..00000007:
     # local.get ptr i32
     mov eax, dword ptr [rbp+16]
     mov dword ptr [rbp-8], eax
@@ -738,8 +738,8 @@ main:
     add r10, rax
     mov eax, dword [rbp-8]
     mov dword [r10 +8], eax
-.L.next.z.00000003:
-.L.if.end.z.00000003:
+.L.next..00000007:
+.L.if.end..00000007:
 
     # 根据ABI处理返回值
 .L.return.runtime.Block.SetFinalizer:
@@ -933,11 +933,11 @@ main:
     mov eax, dword ptr [rbp+16]
     mov dword ptr [rbp-24], eax
 
-.L.if.begin.z.00000004:
+.L.if.begin..00000009:
     mov eax, [rbp-16]
     test eax, eax
-    je .L.if.end.z.00000004 # if eax != 0 { jmp end }
-.L.if.body.z.00000004:
+    je .L.if.end..00000009 # if eax != 0 { jmp end }
+.L.if.body..00000009:
     # local.get ptr i32
     mov eax, dword ptr [rbp+16]
     mov dword ptr [rbp-24], eax
@@ -966,8 +966,8 @@ main:
     add r10, rax
     mov eax, dword [rbp-24]
     mov dword [r10 +0], eax
-.L.next.z.00000004:
-.L.if.end.z.00000004:
+.L.next..00000009:
+.L.if.end..00000009:
 
     # 根据ABI处理返回值
 .L.return.runtime.Block.Retain:
@@ -1018,14 +1018,14 @@ main:
     sete al
     movzx eax, al
     mov dword ptr [rbp-40], eax
-.L.if.begin.z.00000005:
+.L.if.begin..0000000B:
     mov eax, [rbp-40]
     test eax, eax
-    je .L.if.end.z.00000005 # if eax != 0 { jmp end }
-.L.if.body.z.00000005:
+    je .L.if.end..0000000B # if eax != 0 { jmp end }
+.L.if.body..0000000B:
     jmp .L.return.runtime.Block.Release
-.L.next.z.00000005:
-.L.if.end.z.00000005:
+.L.next..0000000B:
+.L.if.end..0000000B:
     # local.get ptr i32
     mov eax, dword ptr [rbp+16]
     mov dword ptr [rbp-48], eax
@@ -1052,11 +1052,11 @@ main:
     mov eax, dword ptr [rbp-8]
     mov dword ptr [rbp-48], eax
 
-.L.if.begin.z.00000006:
+.L.if.begin..0000000D:
     mov eax, [rbp-40]
     test eax, eax
-    jne .L.if.body.z.00000006 # if eax != 0 { jmp body }
-.L.if.body.z.00000006:
+    jne .L.if.body..0000000D # if eax != 0 { jmp body }
+.L.if.body..0000000D:
     # local.get ptr i32
     mov eax, dword ptr [rbp+16]
     mov dword ptr [rbp-48], eax
@@ -1071,7 +1071,7 @@ main:
     add r10, rax
     mov eax, dword [rbp-48]
     mov dword [r10 +0], eax
-.L.if.else.z.00000006:
+.L.if.else..0000000D:
     # local.get ptr i32
     mov eax, dword ptr [rbp+16]
     mov dword ptr [rbp-48], eax
@@ -1090,11 +1090,11 @@ main:
     mov eax, dword ptr [rbp-24]
     mov dword ptr [rbp-48], eax
 
-.L.if.begin.z.00000007:
+.L.if.begin..0000000F:
     mov eax, [rbp-40]
     test eax, eax
-    je .L.if.end.z.00000007 # if eax != 0 { jmp end }
-.L.if.body.z.00000007:
+    je .L.if.end..0000000F # if eax != 0 { jmp end }
+.L.if.body..0000000F:
     # local.get ptr i32
     mov eax, dword ptr [rbp+16]
     mov dword ptr [rbp-48], eax
@@ -1113,11 +1113,11 @@ main:
     mov eax, dword ptr [rbp-16]
     mov dword ptr [rbp-48], eax
 
-.L.if.begin.z.00000008:
+.L.if.begin..00000011:
     mov eax, [rbp-40]
     test eax, eax
-    je .L.if.end.z.00000008 # if eax != 0 { jmp end }
-.L.if.body.z.00000008:
+    je .L.if.end..00000011 # if eax != 0 { jmp end }
+.L.if.body..00000011:
     # local.get ptr i32
     mov eax, dword ptr [rbp+16]
     mov dword ptr [rbp-48], eax
@@ -1148,8 +1148,8 @@ main:
     mov eax, dword ptr [rbp-48]
     mov dword ptr [rbp-40], eax
 
-.L.loop.begin.free_next:
-.L.next.free_next:
+.L.loop.begin.free_next00000013:
+.L.next.free_next00000013:
     # local.get data_ptr i32
     mov eax, dword ptr [rbp-40]
     mov dword ptr [rbp-48], eax
@@ -1193,11 +1193,11 @@ main:
     mov eax, dword ptr [rbp-16]
     mov dword ptr [rbp-48], eax
 
-.L.if.begin.z.00000009:
+.L.if.begin..00000014:
     mov eax, [rbp-40]
     test eax, eax
-    je .L.if.end.z.00000009 # if eax != 0 { jmp end }
-.L.if.body.z.00000009:
+    je .L.if.end..00000014 # if eax != 0 { jmp end }
+.L.if.body..00000014:
     # local.get data_ptr i32
     mov eax, dword ptr [rbp-40]
     mov dword ptr [rbp-48], eax
@@ -1215,13 +1215,13 @@ main:
     mov dword ptr [rbp-40], eax
 
     jmp .L.next.free_next
-.L.next.z.00000009:
-.L.if.end.z.00000009:
-.L.loop.end.free_next:
-.L.next.z.00000008:
-.L.if.end.z.00000008:
-.L.next.z.00000007:
-.L.if.end.z.00000007:
+.L.next..00000014:
+.L.if.end..00000014:
+.L.loop.end.free_next00000013:
+.L.next..00000011:
+.L.if.end..00000011:
+.L.next..0000000F:
+.L.if.end..0000000F:
     # local.get ptr i32
     mov eax, dword ptr [rbp+16]
     mov dword ptr [rbp-48], eax
@@ -1229,8 +1229,8 @@ main:
     # call runtime.HeapFree(...)
     mov ecx, dword ptr [rbp-48] # arg 0
     call .F.runtime.HeapFree
-.L.next.z.00000006:
-.L.if.end.z.00000006:
+.L.next..0000000D:
+.L.if.end..0000000D:
 
     # 根据ABI处理返回值
 .L.return.runtime.Block.Release:

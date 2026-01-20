@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"io"
 	"math"
+	"strings"
 
 	"wa-lang.org/wa/internal/native/abi"
 	nativeast "wa-lang.org/wa/internal/native/ast"
@@ -58,6 +59,7 @@ func (p *wat2X64Worker) buildFuncs(w io.Writer) error {
 		p.localNames = nil
 		p.localTypes = nil
 		p.scopeLabels = nil
+		p.scopeLabelsSuffix = nil
 		p.scopeStackBases = nil
 		p.scopeResults = nil
 
@@ -380,9 +382,10 @@ func (p *wat2X64Worker) buildFunc_ins(
 		p.enterLabelScope(stkBase, i.Label, i.Results)
 		defer p.leaveLabelScope()
 
-		if i.Label != "" {
-			p.gasFuncLabel(w, kLabelNamePrefix_blockBegin+i.Label)
-		}
+		labelName := i.Label
+		labelSuffix := p.genNextId()
+
+		p.gasFuncLabel(w, kLabelNamePrefix_blockBegin+labelName+labelSuffix)
 
 		for _, ins := range i.List {
 			if err := p.buildFunc_ins(w, fnNative, fn, stk, ins); err != nil {
@@ -390,10 +393,8 @@ func (p *wat2X64Worker) buildFunc_ins(
 			}
 		}
 
-		if i.Label != "" {
-			p.gasFuncLabel(w, kLabelNamePrefix_next+i.Label)
-			p.gasFuncLabel(w, kLabelNamePrefix_blockEnd+i.Label)
-		}
+		p.gasFuncLabel(w, kLabelNamePrefix_next+labelName+labelSuffix)
+		p.gasFuncLabel(w, kLabelNamePrefix_blockEnd+labelName+labelSuffix)
 
 	case token.INS_LOOP:
 		i := i.(ast.Ins_Loop)
@@ -404,26 +405,24 @@ func (p *wat2X64Worker) buildFunc_ins(
 		p.enterLabelScope(stkBase, i.Label, i.Results)
 		defer p.leaveLabelScope()
 
-		if i.Label != "" {
-			p.gasFuncLabel(w, kLabelNamePrefix_loopBegin+i.Label)
-			p.gasFuncLabel(w, kLabelNamePrefix_next+i.Label)
-		}
+		labelName := p.findLabelName(i.Label)
+		labelSuffix := p.findLabelSuffixId(i.Label)
+
+		p.gasFuncLabel(w, kLabelNamePrefix_loopBegin+labelName+labelSuffix)
+		p.gasFuncLabel(w, kLabelNamePrefix_next+labelName+labelSuffix)
+
 		for _, ins := range i.List {
 			if err := p.buildFunc_ins(w, fnNative, fn, stk, ins); err != nil {
 				return err
 			}
 		}
-		if i.Label != "" {
-			p.gasFuncLabel(w, kLabelNamePrefix_loopEnd+i.Label)
-		}
+
+		p.gasFuncLabel(w, kLabelNamePrefix_loopEnd+labelName+labelSuffix)
 
 	case token.INS_IF:
 		i := i.(ast.Ins_If)
 
-		labelSuffix := i.Label
-		if labelSuffix == "" {
-			labelSuffix = p.gasGenNextId("z")
-		}
+		labelSuffix := p.gasGenNextId(i.Label)
 
 		p.gasFuncLabel(w, kLabelNamePrefix_ifBegin+labelSuffix)
 
@@ -490,6 +489,7 @@ func (p *wat2X64Worker) buildFunc_ins(
 
 		labelIdx := p.findLabelIndex(i.X)
 		labelName := p.findLabelName(i.X)
+		labelSuffix := p.findLabelSuffixId(i.X)
 
 		destScopeStackBase := p.scopeStackBases[len(p.scopeLabels)-labelIdx-1]
 		destScopeResults := p.scopeResults[len(p.scopeLabels)-labelIdx-1]
@@ -507,7 +507,7 @@ func (p *wat2X64Worker) buildFunc_ins(
 			// 如果返回值位置和目标block的base不一致则需要逐个复制
 			if firstResultOffset > destScopeStackBase {
 				// 返回值是逆序出栈
-				fmt.Fprintf(w, "    # copy jmp %s result\n", labelName)
+				fmt.Fprintf(w, "    # copy jmp %s result\n", labelName+labelSuffix)
 				for i := len(destScopeResults) - 1; i >= 0; i-- {
 					xType := destScopeResults[i]
 					reti := stk.Pop(xType)
@@ -548,6 +548,7 @@ func (p *wat2X64Worker) buildFunc_ins(
 		i := i.(ast.Ins_BrIf)
 		labelIdx := p.findLabelIndex(i.X)
 		labelName := p.findLabelName(i.X)
+		labelSuffix := p.findLabelSuffixId(i.X)
 
 		scopeStackBase := p.scopeStackBases[len(p.scopeLabels)-labelIdx-1]
 		scopeResults := p.scopeResults[len(p.scopeLabels)-labelIdx-1]
@@ -565,10 +566,10 @@ func (p *wat2X64Worker) buildFunc_ins(
 		sp0 := stk.Pop(token.I32)
 		assert(stk.Len() == scopeStackBase)
 
-		fmt.Fprintf(w, "    # br_if %s\n", labelName)
+		fmt.Fprintf(w, "    # br_if %s\n", labelName+labelSuffix)
 		fmt.Fprintf(w, "    mov eax, dword ptr [rbp%+d]\n", p.fnWasmR0Base-sp0*8)
 		fmt.Fprintf(w, "    test eax, eax\n")
-		fmt.Fprintf(w, "    jne  %s\n", kLabelNamePrefix_next+labelName)
+		fmt.Fprintf(w, "    jne  %s\n", kLabelNamePrefix_next+labelName+labelSuffix)
 
 	case token.INS_BR_TABLE:
 		i := i.(ast.Ins_BrTable)
@@ -580,6 +581,7 @@ func (p *wat2X64Worker) buildFunc_ins(
 		// 默认分支
 		defaultLabelIdx := p.findLabelIndex(i.XList[len(i.XList)-1])
 		defaultLabelName := p.findLabelName(i.XList[len(i.XList)-1])
+		defaultLabelSuffix := p.findLabelSuffixId(i.XList[len(i.XList)-1])
 		defaultScopeResults := p.scopeResults[len(p.scopeLabels)-defaultLabelIdx-1]
 
 		currentScopeStackBase := p.scopeStackBases[len(p.scopeLabels)-1]
@@ -599,6 +601,7 @@ func (p *wat2X64Worker) buildFunc_ins(
 			for k := 0; k < len(i.XList); k++ {
 				labelIdx := p.findLabelIndex(i.XList[k])
 				labelName := p.findLabelName(i.XList[k])
+				labelSuffix := p.findLabelSuffixId(i.XList[k])
 
 				destScopeStackBase := p.scopeStackBases[len(p.scopeLabels)-labelIdx-1]
 				destScopeResults := p.scopeResults[len(p.scopeLabels)-labelIdx-1]
@@ -620,7 +623,7 @@ func (p *wat2X64Worker) buildFunc_ins(
 					// 如果返回值位置和目标block的base不一致则需要逐个复制
 					if firstResultOffset > destScopeStackBase {
 						// 返回值是逆序出栈
-						fmt.Fprintf(w, "    # copy br_table %s result\n", labelName)
+						fmt.Fprintf(w, "    # copy br_table %s result\n", labelName+labelSuffix)
 						for i := 0; i < len(destScopeResults); i++ {
 							xType := destScopeResults[i]
 							reti := retIdxList[i]
@@ -647,11 +650,11 @@ func (p *wat2X64Worker) buildFunc_ins(
 				if k < len(i.XList)-1 {
 					fmt.Fprintf(w, "    # br_table case %d\n", k)
 					fmt.Fprintf(w, "    cmp eax, %d\n", k)
-					fmt.Fprintf(w, "    jne %s\n", kLabelNamePrefix_next+labelName)
+					fmt.Fprintf(w, "    jne %s\n", kLabelNamePrefix_next+labelName+labelSuffix)
 				} else {
 					assert(labelName == defaultLabelName)
 					fmt.Fprintf(w, "    # br_table default\n")
-					fmt.Fprintf(w, "    jmp %s\n", kLabelNamePrefix_next+defaultLabelName)
+					fmt.Fprintf(w, "    jmp %s\n", kLabelNamePrefix_next+defaultLabelName+defaultLabelSuffix)
 				}
 			}
 		}
@@ -869,8 +872,8 @@ func (p *wat2X64Worker) buildFunc_ins(
 				reti := stk.Push(retType)
 				switch retType {
 				case token.I32:
-					fmt.Fprintf(w, "    mov r10, dword ptr [rax%+d]\n", k*8)
-					fmt.Fprintf(w, "    mov dword ptr [rbp%+d], r10\n", p.fnWasmR0Base-reti*8-8)
+					fmt.Fprintf(w, "    mov r10d, dword ptr [rax%+d]\n", k*8)
+					fmt.Fprintf(w, "    mov dword ptr [rbp%+d], r10d\n", p.fnWasmR0Base-reti*8-8)
 				case token.I64:
 					fmt.Fprintf(w, "    mov r10, qword ptr [rax%+d]\n", k*8)
 					fmt.Fprintf(w, "    mov qword ptr [rbp%+d], r10\n", p.fnWasmR0Base-reti*8-8)
@@ -1080,8 +1083,8 @@ func (p *wat2X64Worker) buildFunc_ins(
 				reti := stk.Push(retType)
 				switch retType {
 				case token.I32:
-					fmt.Fprintf(w, "    mov r10, dword ptr [rax%+d]\n", k*8)
-					fmt.Fprintf(w, "    mov dword ptr [rbp%+d], r10\n", p.fnWasmR0Base-reti*8-8)
+					fmt.Fprintf(w, "    mov r10d, dword ptr [rax%+d]\n", k*8)
+					fmt.Fprintf(w, "    mov dword ptr [rbp%+d], r10d\n", p.fnWasmR0Base-reti*8-8)
 				case token.I64:
 					fmt.Fprintf(w, "    mov r10, qword ptr [rax%+d]\n", k*8)
 					fmt.Fprintf(w, "    mov qword ptr [rbp%+d], r10\n", p.fnWasmR0Base-reti*8-8)
@@ -1642,13 +1645,54 @@ func (p *wat2X64Worker) buildFunc_ins(
 		p.gasFuncLabel(w, labelEnd)
 
 	case token.INS_MEMORY_INIT:
-		panic("unsupport memory.init")
+		i := i.(ast.Ins_MemoryInit)
+
+		len := stk.Pop(token.I32)
+		off := stk.Pop(token.I32)
+		dst := stk.Pop(token.I32)
+
+		var sb strings.Builder
+		datai := p.m.Data[i.DataIdx].Value[off:][:len]
+		for _, x := range datai {
+			sb.WriteString(fmt.Sprintf("\\x%02x", x))
+		}
+
+		fmt.Fprintf(w, "    # memory.init")
+		fmt.Fprintf(w, "    # %s(&%s[R%d.i32], (void*)(\"%s\"), %d); // %s\n",
+			kRuntimeMemcpy, kMemoryAddrName,
+			dst, sb.String(), len,
+			insString(i),
+		)
+
+		fmt.Fprintln(w)
 
 	case token.INS_MEMORY_COPY:
-		panic("unsupport memory.copy")
+		len := stk.Pop(token.I32)
+		src := stk.Pop(token.I32)
+		dst := stk.Pop(token.I32)
+
+		fmt.Fprintf(w, "    # memory.copy")
+		fmt.Fprintf(w, "    # %s(&%s[R%d.i32], &%s_memory[R%d.i32], R%d.i32);\n",
+			kRuntimeMemcpy,
+			kMemoryAddrName, dst,
+			kMemoryAddrName, src,
+			len,
+		)
+
+		fmt.Fprintln(w)
 
 	case token.INS_MEMORY_FILL:
-		panic("unsupport memory.fill")
+		len := stk.Pop(token.I32)
+		val := stk.Pop(token.I32)
+		dst := stk.Pop(token.I32)
+
+		fmt.Fprintf(w, "    # memory.fill")
+		fmt.Fprintf(w, "    # %s(&%s[R%d.i32], R%d.i32, R%d.i32);\n",
+			kRuntimeMemset,
+			kMemoryAddrName,
+			dst, val, len,
+		)
+		fmt.Fprintln(w)
 
 	case token.INS_I32_CONST:
 		i := i.(ast.Ins_I32Const)
@@ -2208,12 +2252,12 @@ func (p *wat2X64Worker) buildFunc_ins(
 		ret0 := p.fnWasmR0Base - 8*stk.Push(token.I32)
 
 		fmt.Fprintf(w, "    # i32.div_s\n")
-		fmt.Fprintf(w, "    mov qword ptr [rbp+8], edx\n")
+		fmt.Fprintf(w, "    mov dword ptr [rbp+8], edx\n")
 		fmt.Fprintf(w, "    mov eax, dword ptr [rbp%+d]\n", sp0)
 		fmt.Fprintf(w, "    cdq\n")
 		fmt.Fprintf(w, "    idiv dword ptr [rbp%+d]\n", sp1)
 		fmt.Fprintf(w, "    mov dword ptr [rbp%+d], eax\n", ret0)
-		fmt.Fprintf(w, "    mov edx, qword ptr [rbp+8]\n")
+		fmt.Fprintf(w, "    mov edx, dword ptr [rbp+8]\n")
 
 	case token.INS_I32_DIV_U:
 		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.I32)
@@ -2234,12 +2278,12 @@ func (p *wat2X64Worker) buildFunc_ins(
 		ret0 := p.fnWasmR0Base - 8*stk.Push(token.I32)
 
 		fmt.Fprintf(w, "    # i32.rem_s\n")
-		fmt.Fprintf(w, "    mov qword ptr [rbp+8], edx\n")
+		fmt.Fprintf(w, "    mov dword ptr [rbp+8], edx\n")
 		fmt.Fprintf(w, "    mov eax, dword ptr [rbp%+d]\n", sp0)
 		fmt.Fprintf(w, "    cdq\n")
 		fmt.Fprintf(w, "    idiv dword ptr [rbp%+d]\n", sp1)
 		fmt.Fprintf(w, "    mov dword ptr [rbp%+d], edx\n", ret0)
-		fmt.Fprintf(w, "    mov edx, qword ptr [rbp+8]\n")
+		fmt.Fprintf(w, "    mov edx, dword ptr [rbp+8]\n")
 
 	case token.INS_I32_REM_U:
 		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.I32)

@@ -20,12 +20,12 @@ func (p *wat2X64Worker) Tracef(foramt string, a ...interface{}) {
 
 func (p *wat2X64Worker) findGlobalName(ident string) string {
 	if ident == "" {
-		panic("wat2la: empty local name")
+		panic("wat2x64: empty local name")
 	}
 
 	if idx, err := strconv.Atoi(ident); err == nil {
 		if idx < 0 || idx >= len(p.m.Globals) {
-			panic(fmt.Sprintf("wat2la: unknown global %q", ident))
+			panic(fmt.Sprintf("wat2x64: unknown global %q", ident))
 		}
 		return p.m.Globals[idx].Name
 	}
@@ -39,13 +39,13 @@ func (p *wat2X64Worker) findGlobalName(ident string) string {
 
 func (p *wat2X64Worker) findGlobalType(ident string) token.Token {
 	if ident == "" {
-		panic("wat2la: empty global name")
+		panic("wat2x64: empty global name")
 	}
 
 	// 全局变量是索引类型
 	if idx, err := strconv.Atoi(ident); err == nil {
 		if idx < 0 {
-			panic(fmt.Sprintf("wat2la: unknown global %q", ident))
+			panic(fmt.Sprintf("wat2x64: unknown global %q", ident))
 		}
 
 		// 是导入的全局变量
@@ -90,12 +90,12 @@ func (p *wat2X64Worker) findGlobalType(ident string) token.Token {
 
 func (p *wat2X64Worker) findLocalOffset(fnNative *nativeast.Func, fn *ast.Func, ident string) int {
 	if ident == "" {
-		panic("wat2la: empty local name")
+		panic("wat2x64: empty local name")
 	}
 
 	if idx, err := strconv.Atoi(ident); err == nil {
 		if idx < 0 || idx >= len(fn.Type.Params)+len(fn.Body.Locals) {
-			panic(fmt.Sprintf("wat2la: unknown local %q", ident))
+			panic(fmt.Sprintf("wat2x64: unknown local %q", ident))
 		}
 		if idx < len(fn.Type.Params) {
 			return fnNative.Type.Args[idx].RBPOff
@@ -118,12 +118,12 @@ func (p *wat2X64Worker) findLocalOffset(fnNative *nativeast.Func, fn *ast.Func, 
 
 func (p *wat2X64Worker) findLocalType(fn *ast.Func, ident string) token.Token {
 	if ident == "" {
-		panic("wat2la: empty local name")
+		panic("wat2x64: empty local name")
 	}
 
 	if idx, err := strconv.Atoi(ident); err == nil {
 		if idx < 0 || idx >= len(fn.Type.Params)+len(fn.Body.Locals) {
-			panic(fmt.Sprintf("wat2la: unknown local %q", ident))
+			panic(fmt.Sprintf("wat2x64: unknown local %q", ident))
 		}
 		return p.localTypes[idx]
 	}
@@ -142,12 +142,12 @@ func (p *wat2X64Worker) findLocalType(fn *ast.Func, ident string) token.Token {
 
 func (p *wat2X64Worker) findLocalName(fn *ast.Func, ident string) string {
 	if ident == "" {
-		panic("wat2la: empty local name")
+		panic("wat2x64: empty local name")
 	}
 
 	if idx, err := strconv.Atoi(ident); err == nil {
 		if idx < 0 || idx >= len(fn.Type.Params)+len(fn.Body.Locals) {
-			panic(fmt.Sprintf("wat2la: unknown local %q", ident))
+			panic(fmt.Sprintf("wat2x64: unknown local %q", ident))
 		}
 		return p.localNames[idx]
 	}
@@ -166,12 +166,12 @@ func (p *wat2X64Worker) findLocalName(fn *ast.Func, ident string) string {
 
 func (p *wat2X64Worker) findType(ident string) *ast.FuncType {
 	if ident == "" {
-		panic("wat2la: empty ident")
+		panic("wat2x64: empty ident")
 	}
 
 	if idx, err := strconv.Atoi(ident); err == nil {
 		if idx < 0 || idx >= len(p.m.Types) {
-			panic(fmt.Sprintf("wat2la: unknown type %q", ident))
+			panic(fmt.Sprintf("wat2x64: unknown type %q", ident))
 		}
 		return p.m.Types[idx].Type
 	}
@@ -180,12 +180,12 @@ func (p *wat2X64Worker) findType(ident string) *ast.FuncType {
 			return x.Type
 		}
 	}
-	panic(fmt.Sprintf("wat2la: unknown type %q", ident))
+	panic(fmt.Sprintf("wat2x64: unknown type %q", ident))
 }
 
 func (p *wat2X64Worker) findFuncType(ident string) *ast.FuncType {
 	if ident == "" {
-		panic("wat2la: empty ident")
+		panic("wat2x64: empty ident")
 	}
 
 	// 查找导入的函数类型
@@ -210,7 +210,7 @@ func (p *wat2X64Worker) findFuncType(ident string) *ast.FuncType {
 
 func (p *wat2X64Worker) findFuncIndex(ident string) int {
 	if ident == "" {
-		panic("wat2la: empty ident")
+		panic("wat2x64: empty ident")
 	}
 
 	if idx, err := strconv.Atoi(ident); err == nil {
@@ -238,24 +238,36 @@ func (p *wat2X64Worker) findFuncIndex(ident string) int {
 		}
 	}
 
-	panic(fmt.Sprintf("wat2la: unknown func %q", ident))
+	panic(fmt.Sprintf("wat2x64: unknown func %q", ident))
 }
 
 func (p *wat2X64Worker) findLabelName(label string) string {
 	if label == "" {
-		panic("wat2la: empty label")
+		panic("wat2x64: empty label name")
 	}
 
 	idx := p.findLabelIndex(label)
 	if idx < len(p.scopeLabels) {
 		return p.scopeLabels[len(p.scopeLabels)-idx-1]
 	}
-	panic(fmt.Sprintf("wat2la: unknown label %q", label))
+	panic(fmt.Sprintf("wat2x64: unknown label %q", label))
+}
+
+func (p *wat2X64Worker) findLabelSuffixId(label string) string {
+	if label == "" {
+		panic("wat2x64: empty label suffix id")
+	}
+
+	idx := p.findLabelIndex(label)
+	if idx < len(p.scopeLabelsSuffix) {
+		return p.scopeLabelsSuffix[len(p.scopeLabelsSuffix)-idx-1]
+	}
+	panic(fmt.Sprintf("wat2x64: unknown label %q", label))
 }
 
 func (p *wat2X64Worker) findLabelIndex(label string) int {
 	if label == "" {
-		panic("wat2la: empty label")
+		panic("wat2x64: empty label index")
 	}
 
 	if idx, err := strconv.Atoi(label); err == nil {
@@ -266,16 +278,18 @@ func (p *wat2X64Worker) findLabelIndex(label string) int {
 			return i
 		}
 	}
-	panic(fmt.Sprintf("wat2la: unknown label %q", label))
+	panic(fmt.Sprintf("wat2x64: unknown label %q", label))
 }
 
 func (p *wat2X64Worker) enterLabelScope(stkBase int, label string, results []token.Token) {
 	p.scopeLabels = append(p.scopeLabels, label)
+	p.scopeLabelsSuffix = append(p.scopeLabelsSuffix, p.genNextId())
 	p.scopeStackBases = append(p.scopeStackBases, stkBase)
 	p.scopeResults = append(p.scopeResults, results)
 }
 func (p *wat2X64Worker) leaveLabelScope() {
 	p.scopeLabels = p.scopeLabels[:len(p.scopeLabels)-1]
+	p.scopeLabelsSuffix = p.scopeLabelsSuffix[:len(p.scopeLabelsSuffix)-1]
 	p.scopeStackBases = p.scopeStackBases[:len(p.scopeStackBases)-1]
 	p.scopeResults = p.scopeResults[:len(p.scopeResults)-1]
 }

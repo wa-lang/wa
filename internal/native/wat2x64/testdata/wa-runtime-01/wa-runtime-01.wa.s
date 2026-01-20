@@ -210,7 +210,7 @@ main:
 
     # 根据ABI处理返回值
 .L.return.runtime.getStackPtr:
-    mov rax, [rbp-8] # ret .F.ret.0
+    mov eax, [rbp-8] # ret .F.ret.0
 
     # 函数返回
     mov rsp, rbp
@@ -225,7 +225,7 @@ main:
     sub  rsp, 16
 
     # 将寄存器参数备份到栈
-    mov [rbp+16], rcx # save arg sp
+    mov [rbp+16], ecx # save arg sp
     # 没有返回值变量需要初始化为0
 
     # 没有局部变量需要初始化为0
@@ -254,7 +254,7 @@ main:
     sub  rsp, 32
 
     # 将寄存器参数备份到栈
-    mov [rbp+16], rcx # save arg size
+    mov [rbp+16], ecx # save arg size
     # 将返回值变量初始化为0
     mov dword ptr [rbp-8], 0 # ret .F.ret.0 = 0
     # 没有局部变量需要初始化为0
@@ -282,7 +282,7 @@ main:
 
     # 根据ABI处理返回值
 .L.return.runtime.stackAlloc:
-    mov rax, [rbp-8] # ret .F.ret.0
+    mov eax, [rbp-8] # ret .F.ret.0
 
     # 函数返回
     mov rsp, rbp
@@ -297,7 +297,7 @@ main:
     sub  rsp, 16
 
     # 将寄存器参数备份到栈
-    mov [rbp+16], rcx # save arg size
+    mov [rbp+16], ecx # save arg size
     # 没有返回值变量需要初始化为0
 
     # 没有局部变量需要初始化为0
@@ -344,7 +344,7 @@ main:
 
     # 根据ABI处理返回值
 .L.return.runtime.heapBase:
-    mov rax, [rbp-8] # ret .F.ret.0
+    mov eax, [rbp-8] # ret .F.ret.0
 
     # 函数返回
     mov rsp, rbp
