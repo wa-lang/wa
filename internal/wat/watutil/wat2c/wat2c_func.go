@@ -2222,7 +2222,7 @@ func (p *wat2cWorker) buildFunc_ins(w io.Writer, fn *ast.Func, stk *valueTypeSta
 			insString(i),
 		)
 	case token.INS_F32_DEMOTE_F64:
-		sp0 := stk.Pop(token.I64)
+		sp0 := stk.Pop(token.F64)
 		ret0 := stk.Push(token.F32)
 		fmt.Fprintf(w, "%sR%d.f32 = (float)(R%d.f64); // %s\n",
 			indent, ret0, sp0,
@@ -2265,14 +2265,14 @@ func (p *wat2cWorker) buildFunc_ins(w io.Writer, fn *ast.Func, stk *valueTypeSta
 		)
 	case token.INS_I32_REINTERPRET_F32:
 		sp0 := stk.Pop(token.F32)
-		ret0 := stk.Push(token.F64)
+		ret0 := stk.Push(token.I32)
 		fmt.Fprintf(w, "%sR%d = R%d; // %s\n",
 			indent, ret0, sp0,
 			insString(i),
 		)
 	case token.INS_I64_REINTERPRET_F64:
-		sp0 := stk.Pop(token.I64)
-		ret0 := stk.Push(token.F64)
+		sp0 := stk.Pop(token.F64)
+		ret0 := stk.Push(token.I64)
 		fmt.Fprintf(w, "%sR%d = R%d; // %s\n",
 			indent, ret0, sp0,
 			insString(i),

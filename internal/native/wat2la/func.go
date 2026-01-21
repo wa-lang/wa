@@ -3036,7 +3036,7 @@ func (p *wat2laWorker) buildFunc_ins(
 		fmt.Fprintf(w, "    fst.s    fa0, fp, %d\n", ret0)
 
 	case token.INS_F32_DEMOTE_F64:
-		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.I64) - 8
+		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.F64) - 8
 		ret0 := p.fnWasmR0Base - 8*stk.Push(token.F32) - 8
 
 		fmt.Fprintf(w, "    # f32.demote_f64\n")
@@ -3095,16 +3095,16 @@ func (p *wat2laWorker) buildFunc_ins(
 
 	case token.INS_I32_REINTERPRET_F32:
 		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.F32) - 8
-		ret0 := p.fnWasmR0Base - 8*stk.Push(token.F64) - 8
+		ret0 := p.fnWasmR0Base - 8*stk.Push(token.I32) - 8
 
 		fmt.Fprintf(w, "    # i32.reinterpret_f32\n")
 		fmt.Fprintf(w, "    fld.s    fa0, fp, %d\n", sp0)
 		fmt.Fprintf(w, "    movfr2gr.s t0, fa0\n")
-		fmt.Fprintf(w, "    st.d    t0, fp, %d\n", ret0)
+		fmt.Fprintf(w, "    st.w    t0, fp, %d\n", ret0)
 
 	case token.INS_I64_REINTERPRET_F64:
-		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.I64) - 8
-		ret0 := p.fnWasmR0Base - 8*stk.Push(token.F64) - 8
+		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.F64) - 8
+		ret0 := p.fnWasmR0Base - 8*stk.Push(token.I64) - 8
 
 		fmt.Fprintf(w, "    # i64.reinterpret_f64\n")
 		fmt.Fprintf(w, "    fld.d    fa0, fp, %d\n", sp0)
