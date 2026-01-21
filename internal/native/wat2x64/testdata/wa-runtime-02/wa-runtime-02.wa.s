@@ -418,20 +418,20 @@ main:
     mov [rbp-32], eax
 
     # i32.div_u
-    mov edx, dword ptr [rbp-24]
-    mov eax, dword ptr [rbp-32]
-    xor edx, edx
-    div dword ptr [rbp-24]
-    mov dword ptr [rbp-24], eax
-    mov edx, dword ptr [rbp+8]
+    push rdx
+    mov  eax, dword ptr [rbp-24]
+    xor  edx, edx # 无符号高位清零
+    div  dword ptr [rbp-32]
+    mov  dword ptr [rbp-24], eax
+    pop  rdx
     # i32.const 8
     mov eax, 8
     mov [rbp-32], eax
 
     # i32.mul
-    mov eax, dword ptr [rbp-24]
+    mov  eax, dword ptr [rbp-24]
     imul eax, dword ptr [rbp-32]
-    mov dword ptr [rbp-24], eax
+    mov  dword ptr [rbp-24], eax
     # local.set nbytes i32
     mov eax, dword ptr [rbp-24]
     mov dword ptr [rbp+16], eax

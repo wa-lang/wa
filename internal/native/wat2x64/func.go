@@ -375,7 +375,7 @@ func (p *wat2X64Worker) buildFunc_ins(
 	case token.INS_UNREACHABLE:
 		fmt.Fprintf(w, "    call %s # unreachable\n", kRuntimePanic)
 	case token.INS_NOP:
-		fmt.Fprintf(w, "    nop\n")
+		fmt.Fprintf(w, "    nop # nop\n")
 
 	case token.INS_BLOCK:
 		i := i.(ast.Ins_Block)
@@ -1187,25 +1187,25 @@ func (p *wat2X64Worker) buildFunc_ins(
 
 		switch valType {
 		case token.I32:
-			fmt.Fprintf(w, "    mov    r10, dword ptr [rbp - %d]\n", p.fnWasmR0Base-spValueFalse*8-8)
-			fmt.Fprintf(w, "    mov    r11, dword ptr [rbp - %d]\n", p.fnWasmR0Base-spValueTrue*8-8)
-			fmt.Fprintf(w, "    cmovne r10, r11")
-			fmt.Fprintf(w, "    mov    dword ptr [rbp - %d], r10", p.fnWasmR0Base-ret0*8-8)
+			fmt.Fprintf(w, "    mov    r10d, dword ptr [rbp%+d]\n", p.fnWasmR0Base-spValueFalse*8-8)
+			fmt.Fprintf(w, "    mov    r11d, dword ptr [rbp%+d]\n", p.fnWasmR0Base-spValueTrue*8-8)
+			fmt.Fprintf(w, "    cmovne r10d, r11d\n")
+			fmt.Fprintf(w, "    mov    dword ptr [rbp%+d], r10d", p.fnWasmR0Base-ret0*8-8)
 		case token.I64:
-			fmt.Fprintf(w, "    mov    r10, qword ptr [rbp - %d]\n", p.fnWasmR0Base-spValueFalse*8-8)
-			fmt.Fprintf(w, "    mov    r11, qword ptr [rbp - %d]\n", p.fnWasmR0Base-spValueTrue*8-8)
-			fmt.Fprintf(w, "    cmovne r10, r11")
-			fmt.Fprintf(w, "    mov    qword ptr [rbp - %d], r10", p.fnWasmR0Base-ret0*8-8)
+			fmt.Fprintf(w, "    mov    r10, qword ptr [rbp%+d]\n", p.fnWasmR0Base-spValueFalse*8-8)
+			fmt.Fprintf(w, "    mov    r11, qword ptr [rbp%+d]\n", p.fnWasmR0Base-spValueTrue*8-8)
+			fmt.Fprintf(w, "    cmovne r10, r11\n")
+			fmt.Fprintf(w, "    mov    qword ptr [rbp%+d], r10", p.fnWasmR0Base-ret0*8-8)
 		case token.F32:
-			fmt.Fprintf(w, "    movss  xmm4, dword ptr [rbp - %d]\n", p.fnWasmR0Base-spValueFalse*8-8)
-			fmt.Fprintf(w, "    movss  xmm5, dword ptr [rbp - %d]\n", p.fnWasmR0Base-spValueTrue*8-8)
-			fmt.Fprintf(w, "    cmovne xmm4, xmm5")
-			fmt.Fprintf(w, "    movss  dword ptr [rbp - %d], xmm4", p.fnWasmR0Base-ret0*8-8)
+			fmt.Fprintf(w, "    mov    r10d, dword ptr [rbp%+d]\n", p.fnWasmR0Base-spValueFalse*8-8)
+			fmt.Fprintf(w, "    mov    r11d, dword ptr [rbp%+d]\n", p.fnWasmR0Base-spValueTrue*8-8)
+			fmt.Fprintf(w, "    cmovne r10d, r11d\n")
+			fmt.Fprintf(w, "    mov    dword ptr [rbp%+d], r10d", p.fnWasmR0Base-ret0*8-8)
 		case token.F64:
-			fmt.Fprintf(w, "    movsd  xmm4, qword ptr [rbp - %d]\n", p.fnWasmR0Base-spValueFalse*8-8)
-			fmt.Fprintf(w, "    movsd  xmm5, qword ptr [rbp - %d]\n", p.fnWasmR0Base-spValueTrue*8-8)
-			fmt.Fprintf(w, "    cmovne xmm4, xmm5")
-			fmt.Fprintf(w, "    movsd  qword ptr [rbp - %d], xmm4", p.fnWasmR0Base-ret0*8-8)
+			fmt.Fprintf(w, "    mov    r10, qword ptr [rbp%+d]\n", p.fnWasmR0Base-spValueFalse*8-8)
+			fmt.Fprintf(w, "    mov    r11, qword ptr [rbp%+d]\n", p.fnWasmR0Base-spValueTrue*8-8)
+			fmt.Fprintf(w, "    cmovne r10, r11\n")
+			fmt.Fprintf(w, "    mov    qword ptr [rbp%+d], r10", p.fnWasmR0Base-ret0*8-8)
 		default:
 			unreachable()
 		}
