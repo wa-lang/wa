@@ -1767,22 +1767,22 @@ func (p *wat2cWorker) buildFunc_ins(w io.Writer, fn *ast.Func, stk *valueTypeSta
 		)
 	case token.INS_I64_CLZ:
 		sp0 := stk.Pop(token.I64)
-		ret0 := stk.Push(token.I32)
-		fmt.Fprintf(w, "%sR%d.i32 = I64_CLZ(R%d.i64); // %s\n",
+		ret0 := stk.Push(token.I64)
+		fmt.Fprintf(w, "%sR%d.i64 = I64_CLZ(R%d.i64); // %s\n",
 			indent, ret0, sp0,
 			insString(i),
 		)
 	case token.INS_I64_CTZ:
 		sp0 := stk.Pop(token.I64)
-		ret0 := stk.Push(token.I32)
-		fmt.Fprintf(w, "%sR%d.i32 = I64_CTZ(R%d.i64); // %s\n",
+		ret0 := stk.Push(token.I64)
+		fmt.Fprintf(w, "%sR%d.i64 = I64_CTZ(R%d.i64); // %s\n",
 			indent, ret0, sp0,
 			insString(i),
 		)
 	case token.INS_I64_POPCNT:
 		sp0 := stk.Pop(token.I64)
-		ret0 := stk.Push(token.I32)
-		fmt.Fprintf(w, "%sR%d.i32 = I64_POPCNT(R%d.i64); // %s\n",
+		ret0 := stk.Push(token.I64)
+		fmt.Fprintf(w, "%sR%d.i64 = I64_POPCNT(R%d.i64); // %s\n",
 			indent, ret0, sp0,
 			insString(i),
 		)

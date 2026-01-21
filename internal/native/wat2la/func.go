@@ -2410,16 +2410,16 @@ func (p *wat2laWorker) buildFunc_ins(
 
 	case token.INS_I64_CLZ:
 		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.I64) - 8
-		ret0 := p.fnWasmR0Base - 8*stk.Push(token.I32) - 8
+		ret0 := p.fnWasmR0Base - 8*stk.Push(token.I64) - 8
 
 		fmt.Fprintf(w, "    # i64.clz\n")
 		fmt.Fprintf(w, "    ld.w    a0, fp, %d\n", sp0)
 		fmt.Fprintf(w, "    clz.w   a0, a0\n")
-		fmt.Fprintf(w, "    st.w    a0, fp, %d\n", ret0)
+		fmt.Fprintf(w, "    st.d    a0, fp, %d\n", ret0)
 
 	case token.INS_I64_CTZ:
 		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.I64) - 8
-		ret0 := p.fnWasmR0Base - 8*stk.Push(token.I32) - 8
+		ret0 := p.fnWasmR0Base - 8*stk.Push(token.I64) - 8
 
 		fmt.Fprintf(w, "    # i64.ctz\n")
 		fmt.Fprintf(w, "    ld.d    a0, fp, %d\n", sp0)
@@ -2428,7 +2428,7 @@ func (p *wat2laWorker) buildFunc_ins(
 
 	case token.INS_I64_POPCNT:
 		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.I64) - 8
-		ret0 := p.fnWasmR0Base - 8*stk.Push(token.I32) - 8
+		ret0 := p.fnWasmR0Base - 8*stk.Push(token.I64) - 8
 
 		fmt.Fprintf(w, "    # i64.popcnt\n")
 		fmt.Fprintf(w, "    ld.d    a0, fp, %d\n", sp0)
