@@ -19,6 +19,7 @@ const (
 	kRuntimeMalloc          = _kRuntimeNamePrefix + "malloc"
 	kRuntimeMemcpy          = _kRuntimeNamePrefix + "memcpy"
 	kRuntimeMemset          = _kRuntimeNamePrefix + "memset"
+	kRuntimeMemmove         = _kRuntimeNamePrefix + "memmove"
 	kRuntimePanic           = _kRuntimeNamePrefix + "panic"
 	kRuntimePanicMessage    = _kRuntimeNamePrefix + "panic.message"
 	kRuntimePanicMessageLen = _kRuntimeNamePrefix + "panic.messageLen"
@@ -32,14 +33,16 @@ func (p *wat2X64Worker) buildRuntimeHead(w io.Writer) error {
 		kRuntimeMalloc,
 		kRuntimeMemcpy,
 		kRuntimeMemset,
+		kRuntimeMemmove,
 		// panic 内部实现
 	}
 	var m = map[string]string{
-		kRuntimeWrite:  "_write",
-		kRuntimeExit:   "_exit",
-		kRuntimeMalloc: "malloc",
-		kRuntimeMemcpy: "memcpy",
-		kRuntimeMemset: "memset",
+		kRuntimeWrite:   "_write",
+		kRuntimeExit:    "_exit",
+		kRuntimeMalloc:  "malloc",
+		kRuntimeMemcpy:  "memcpy",
+		kRuntimeMemset:  "memset",
+		kRuntimeMemmove: "memmove",
 	}
 
 	if p.cpuType == abi.X64Unix {

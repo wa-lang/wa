@@ -9,11 +9,13 @@
 .extern malloc
 .extern memcpy
 .extern memset
+.extern memmove
 .set .Runtime.write, _write
 .set .Runtime.exit, _exit
 .set .Runtime.malloc, malloc
 .set .Runtime.memcpy, memcpy
 .set .Runtime.memset, memset
+.set .Runtime.memmove, memmove
 
 # 导入函数(外部库定义)
 .extern wat2x64_syscall_write
@@ -478,11 +480,11 @@ main:
     mov    [rbp-32], rax
 
     # i64.store
-    lea rax, [rip + .Memory.addr]
-    mov r10, dword [rbp-24]
+    mov rax, [rip + .Memory.addr]
+    mov r10d, dword ptr [rbp-24]
     add r10, rax
-    mov rax, qword [rbp-32]
-    mov qword [r10 +0], rax
+    mov rax, qword ptr [rbp-32]
+    mov qword ptr [r10+0], rax
     # local.get nbytes i32
     mov eax, dword ptr [rbp+16]
     mov dword ptr [rbp-24], eax

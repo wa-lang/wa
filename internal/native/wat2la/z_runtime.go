@@ -17,6 +17,7 @@ const (
 	kRuntimeMalloc          = _kRuntimeNamePrefix + "malloc"
 	kRuntimeMemcpy          = _kRuntimeNamePrefix + "memcpy"
 	kRuntimeMemset          = _kRuntimeNamePrefix + "memset"
+	kRuntimeMemmove         = _kRuntimeNamePrefix + "memmove"
 	kRuntimePanic           = _kRuntimeNamePrefix + "panic"
 	kRuntimePanicMessage    = _kRuntimeNamePrefix + "panic.message"
 	kRuntimePanicMessageLen = _kRuntimeNamePrefix + "panic.messageLen"
@@ -30,14 +31,16 @@ func (p *wat2laWorker) buildRuntimeHead(w io.Writer) error {
 		kRuntimeMalloc,
 		kRuntimeMemcpy,
 		kRuntimeMemset,
+		kRuntimeMemmove,
 		// panic 内部实现
 	}
 	var m = map[string]string{
-		kRuntimeWrite:  "write",
-		kRuntimeExit:   "exit",
-		kRuntimeMalloc: "malloc",
-		kRuntimeMemcpy: "memcpy",
-		kRuntimeMemset: "memset",
+		kRuntimeWrite:   "write",
+		kRuntimeExit:    "exit",
+		kRuntimeMalloc:  "malloc",
+		kRuntimeMemcpy:  "memcpy",
+		kRuntimeMemset:  "memset",
+		kRuntimeMemmove: "memmove",
 	}
 
 	p.gasComment(w, "运行时函数")
