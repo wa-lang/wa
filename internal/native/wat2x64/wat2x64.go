@@ -48,6 +48,7 @@ type wat2X64Worker struct {
 
 	localNames        []string           // 参数和局部变量名
 	localTypes        []wattoken.Token   // 参数和局部变量类型
+	scopeTypes        []wattoken.Token   // 区块的类型, 用于区别处理 br 时的返回值
 	scopeLabels       []string           // 嵌套的label查询, if/block/loop
 	scopeLabelsSuffix []string           // 作用域唯一后缀(避免重名)
 	scopeStackBases   []int              // if/block/loop, 开始的栈位置

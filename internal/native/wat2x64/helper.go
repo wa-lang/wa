@@ -241,6 +241,18 @@ func (p *wat2X64Worker) findFuncIndex(ident string) int {
 	panic(fmt.Sprintf("wat2x64: unknown func %q", ident))
 }
 
+func (p *wat2X64Worker) findLabelScopeType(label string) token.Token {
+	if label == "" {
+		panic("wat2x64: empty label name")
+	}
+
+	idx := p.findLabelIndex(label)
+	if idx < len(p.scopeTypes) {
+		return p.scopeTypes[len(p.scopeTypes)-idx-1]
+	}
+	panic(fmt.Sprintf("wat2x64: unknown label %q", label))
+}
+
 func (p *wat2X64Worker) findLabelName(label string) string {
 	if label == "" {
 		panic("wat2x64: empty label name")
@@ -281,13 +293,15 @@ func (p *wat2X64Worker) findLabelIndex(label string) int {
 	panic(fmt.Sprintf("wat2x64: unknown label %q", label))
 }
 
-func (p *wat2X64Worker) enterLabelScope(stkBase int, label, labelSuffix string, results []token.Token) {
+func (p *wat2X64Worker) enterLabelScope(typ token.Token, stkBase int, label, labelSuffix string, results []token.Token) {
+	p.scopeTypes = append(p.scopeTypes, typ)
 	p.scopeLabels = append(p.scopeLabels, label)
 	p.scopeLabelsSuffix = append(p.scopeLabelsSuffix, labelSuffix)
 	p.scopeStackBases = append(p.scopeStackBases, stkBase)
 	p.scopeResults = append(p.scopeResults, results)
 }
 func (p *wat2X64Worker) leaveLabelScope() {
+	p.scopeTypes = p.scopeTypes[:len(p.scopeTypes)-1]
 	p.scopeLabels = p.scopeLabels[:len(p.scopeLabels)-1]
 	p.scopeLabelsSuffix = p.scopeLabelsSuffix[:len(p.scopeLabelsSuffix)-1]
 	p.scopeStackBases = p.scopeStackBases[:len(p.scopeStackBases)-1]

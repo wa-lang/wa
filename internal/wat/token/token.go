@@ -541,3 +541,16 @@ func (tok Token) IsOperator() bool {
 func (tok Token) IsIsntruction() bool {
 	return instruction_beg < tok && tok < instruction_end
 }
+
+// 是否为终结指令
+func (tok Token) IsTerminal() bool {
+	switch tok {
+	case INS_UNREACHABLE:
+		return true
+	case INS_RETURN:
+		return true
+	case INS_BR, INS_BR_TABLE:
+		return true
+	}
+	return false
+}
