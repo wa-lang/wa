@@ -277,6 +277,51 @@ func (f *Function) replaceLocation(stmt Stmt, ol, nl Location) {
 			f.replaceLocation(s, ol, nl)
 		}
 
+	case *Call:
+		var call_common *CallCommon
+		switch call := stmt.Callee.(type) {
+		case *BuiltinCall:
+			call_common = &call.CallCommon
+
+		case *StaticCall:
+			call_common = &call.CallCommon
+
+		case *MethodCall:
+			call_common = &call.CallCommon
+			if loc, ok := call.Recv.(Location); ok {
+				if loc == ol {
+					call.Recv = nl
+				}
+			}
+			if s, ok := call.Recv.(Stmt); ok {
+				f.replaceLocation(s, ol, nl)
+			}
+
+		case *InterfaceCall:
+			call_common = &call.CallCommon
+			if loc, ok := call.Interface.(Location); ok {
+				if loc == ol {
+					call.Interface = nl
+				}
+			}
+			if s, ok := call.Interface.(Stmt); ok {
+				f.replaceLocation(s, ol, nl)
+			}
+		}
+
+		for i, arg := range call_common.Args {
+			if loc, ok := arg.(Location); ok {
+				if loc == ol {
+					call_common.Args[i] = nl
+					continue
+				}
+			}
+
+			if s, ok := arg.(Stmt); ok {
+				f.replaceLocation(s, ol, nl)
+			}
+		}
+
 	}
 
 }
