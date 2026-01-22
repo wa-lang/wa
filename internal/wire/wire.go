@@ -148,21 +148,6 @@ type Expr interface {
 }
 
 /**************************************
-Param: 函数的输入参数，满足 Expr 接口
-**************************************/
-type Param struct {
-	name string
-	typ  Type
-	pos  int
-}
-
-func (p *Param) Name() string   { return p.name }
-func (p *Param) Format() string { return p.name }
-func (p *Param) Type() Type     { return p.typ }
-func (p *Param) Pos() int       { return p.pos }
-func (p *Param) retained() bool { return false }
-
-/**************************************
 Const: 常量，满足 Expr 接口
 **************************************/
 type Const struct {

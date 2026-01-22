@@ -31,7 +31,7 @@ Alloc: Alloc 指令，分配一个变量位置，该对象同时实现了 Locati
 **************************************/
 type Alloc struct {
 	aStmt
-	Location LocationKind
+	location LocationKind
 	name     string
 	dataType Type
 	refType  Type
@@ -40,7 +40,7 @@ type Alloc struct {
 
 func (i *Alloc) Name() string { return i.name }
 func (i *Alloc) Type() Type {
-	if i.Location == LocationKindRegister {
+	if i.location == LocationKindRegister {
 		return i.dataType
 	} else {
 		return i.refType
@@ -48,7 +48,7 @@ func (i *Alloc) Type() Type {
 }
 func (i *Alloc) retained() bool { return false }
 func (i *Alloc) String() string {
-	switch i.Location {
+	switch i.location {
 	case LocationKindRegister:
 		return fmt.Sprintf("var %s %s", i.name, i.dataType.Name())
 
@@ -58,21 +58,25 @@ func (i *Alloc) String() string {
 	case LocationKindHeap:
 		return fmt.Sprintf("var %s %s = alloc.heap(%s)", i.name, i.refType.Name(), i.dataType.Name())
 	}
-	panic(fmt.Sprintf("Invalid LocationType: %v", i.Location))
+	panic(fmt.Sprintf("Invalid LocationType: %v", i.location))
 }
 
 // Location 接口相关
-func (i *Alloc) LocationKind() LocationKind { return i.Location }
+func (i *Alloc) LocationKind() LocationKind { return i.location }
 func (i *Alloc) DataType() Type             { return i.dataType }
 func (i *Alloc) Object() interface{}        { return i.object }
 
 // AddLocal 在 Block 中分配一个局部变量，初始时位于 Register
-func (b *Block) AddLocal(name string, typ Type, pos int, obj interface{}) Location {
+func (b *Block) AddLocal(name string, typ Type, pos int, obj interface{}, refMode bool) *Alloc {
 	v := &Alloc{}
 	v.Stringer = v
 	v.name = name
 	v.dataType = typ
-	v.refType = b.types.GenPtr(typ)
+	if refMode {
+		v.refType = b.types.GenRef(typ)
+	} else {
+		v.refType = b.types.genPtr(typ)
+	}
 	v.pos = pos
 	v.object = obj
 	if obj != nil {
@@ -118,7 +122,7 @@ Store: Store 指令，将 Val 存储到 Loc 指定的位置，Store 支持多赋
  - val 有可能为元组（Tuple），因此 Loc 的长度可能和 Val 的长度不同，此时应将元组展开，完全展开后二者的长度应一致
  - 向 nil 的 loc 赋值是合法的，这等价于向匿名变量 _ 赋值，此时应触发 Drop 动作
 **************************************/
-type InstStore struct {
+type Store struct {
 	aStmt
 	Loc []Location
 	Val []Expr
@@ -136,7 +140,7 @@ type InstStore struct {
 //	return ret
 //}
 
-func (i *InstStore) String() string {
+func (i *Store) String() string {
 	var sb strings.Builder
 
 	//var vtypes []Type
@@ -183,8 +187,8 @@ func (i *InstStore) String() string {
 }
 
 // 在 Block 中添加一条 Store 指令
-func (b *Block) EmitStore(loc Location, val Expr, pos int) *InstStore {
-	v := &InstStore{}
+func (b *Block) EmitStore(loc Location, val Expr, pos int) *Store {
+	v := &Store{}
 	v.Stringer = v
 	v.Loc = []Location{loc}
 	v.Val = []Expr{val}
@@ -195,8 +199,8 @@ func (b *Block) EmitStore(loc Location, val Expr, pos int) *InstStore {
 }
 
 // Block.EmitStore 的多重赋值版
-func (b *Block) EmitStoreN(locs []Location, vals []Expr, pos int) *InstStore {
-	v := &InstStore{}
+func (b *Block) EmitStoreN(locs []Location, vals []Expr, pos int) *Store {
+	v := &Store{}
 	v.Stringer = v
 	v.Loc = locs
 	v.Val = vals
