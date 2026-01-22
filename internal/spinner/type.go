@@ -108,7 +108,7 @@ func (b *Builder) BuildType(t types.Type) wire.Type {
 
 	case *types.Pointer:
 		delete(b.typeTable, name)
-		wtype = b.module.Types.GenPtr(b.BuildType(t.Elem()))
+		wtype = b.module.Types.GenRef(b.BuildType(t.Elem()))
 		b.typeTable[name] = &wtype
 
 		//panic("Todo")

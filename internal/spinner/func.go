@@ -27,12 +27,7 @@ type Func struct {
 	sig      *types.Signature
 	body     ast.Stmt
 	pos, end int
-	results  []wire.Location
 }
-
-const (
-	_FN_START = "$fn_start"
-)
 
 //-------------------------------------
 
@@ -68,8 +63,7 @@ func (b *Builder) buildFunc(f *Func) (fn *wire.Function) {
 	if f.body == nil {
 		if recv := f.sig.Recv(); recv != nil {
 			rt := b.BuildType(recv.Type())
-			r := b.module.NewParam(recv.Name(), rt, int(recv.Pos()))
-			fn.Params = append(fn.Params, r)
+			fn.AddParam(recv.Name(), rt, int(recv.Pos()), nil, true)
 		}
 
 		if params := f.sig.Params(); params != nil {
@@ -81,8 +75,8 @@ func (b *Builder) buildFunc(f *Func) (fn *wire.Function) {
 				if len(name) == 0 {
 					name = fmt.Sprintf("$arg%d", i)
 				}
-				param := b.module.NewParam(name, typ, int(p.Pos()))
-				fn.Params = append(fn.Params, param)
+
+				fn.AddParam(name, typ, int(p.Pos()), nil, true)
 			}
 		}
 
@@ -91,7 +85,7 @@ func (b *Builder) buildFunc(f *Func) (fn *wire.Function) {
 				r := f.sig.Results().At(i)
 				typ := b.BuildType(r.Type())
 
-				fn.Results = append(fn.Results, typ)
+				fn.AddResult("", typ, int(r.Pos()), nil, true)
 			}
 		}
 
@@ -103,10 +97,7 @@ func (b *Builder) buildFunc(f *Func) (fn *wire.Function) {
 	if r := f.sig.Recv(); r != nil {
 		typ := b.BuildType(r.Type())
 		name := r.Name() // 接收器不会是匿名的
-		recv := b.module.NewParam(name, typ, int(r.Pos()))
-		fn.Params = append(fn.Params, recv)
-		loc := fn.Body.AddLocal(name, typ, int(r.Pos()), r)
-		fn.Body.EmitStore(loc, recv, int(r.Pos()))
+		fn.AddParam(name, typ, int(r.Pos()), r, true)
 	}
 
 	if params := f.sig.Params(); params != nil {
@@ -118,15 +109,8 @@ func (b *Builder) buildFunc(f *Func) (fn *wire.Function) {
 			if len(name) == 0 {
 				// 匿名参数
 				name = fmt.Sprintf("$arg%d", i)
-				param := b.module.NewParam(name, typ, int(p.Pos()))
-				fn.Params = append(fn.Params, param)
-			} else {
-				// 具名参数
-				param := b.module.NewParam(name, typ, int(p.Pos()))
-				fn.Params = append(fn.Params, param)
-				loc := fn.Body.AddLocal("$"+name, typ, int(p.Pos()), p)
-				fn.Body.EmitStore(loc, param, int(p.Pos()))
 			}
+			fn.AddParam(name, typ, int(p.Pos()), p, true)
 		}
 	}
 
@@ -134,36 +118,23 @@ func (b *Builder) buildFunc(f *Func) (fn *wire.Function) {
 		for i := 0; i < f.sig.Results().Len(); i++ {
 			r := f.sig.Results().At(i)
 			typ := b.BuildType(r.Type())
-			fn.Results = append(fn.Results, typ)
 
 			name := r.Name()
 			if len(name) == 0 {
 				name = fmt.Sprintf("$ret%d", i)
 			}
-			// 分配返回值
-			loc := fn.Body.AddLocal(name, typ, int(r.Pos()), r)
-			f.results = append(f.results, loc)
+			// 返回值
+			fn.AddResult(name, typ, int(r.Pos()), r, true)
 		}
 	}
 
-	fn_start := fn.Body.EmitBlock(_FN_START, f.pos)
-
 	if s, ok := f.body.(*ast.BlockStmt); ok {
-		b.blockStmt(s.List, f, fn_start)
+		b.blockStmt(s.List, f, fn.Body)
 	} else {
-		b.stmt(f.body, f, fn_start)
+		b.stmt(f.body, f, fn.Body)
 	}
 
 	// Todo：Defer
-
-	// Return
-	if len(f.results) > 0 {
-		var results []wire.Expr
-		for _, r := range f.results {
-			results = append(results, fn.Body.NewLoad(r, f.end))
-		}
-		fn.Body.EmitReturn(results, f.end)
-	}
 
 	fn.EndBody()
 	return
@@ -299,7 +270,7 @@ func (b *Builder) localValueSpec(spec *ast.ValueSpec, block *wire.Block) {
 func (b *Builder) addLocalForIdent(id *ast.Ident, block *wire.Block) wire.Location {
 	obj := b.info.Defs[id]
 	typ := b.BuildType(obj.Type())
-	return block.AddLocal(obj.Name(), typ, int(obj.Pos()), obj)
+	return block.AddLocal(obj.Name(), typ, int(obj.Pos()), obj, true)
 }
 
 // 向 block 中添加赋值（ = , := ）操作
@@ -340,8 +311,7 @@ func (b *Builder) returnStmt(s *ast.ReturnStmt, f *Func, block *wire.Block) {
 		}
 	}
 
-	block.EmitStoreN(f.results, results, int(s.Pos()))
-	block.EmitBr(_FN_START, int(s.Pos()))
+	block.EmitReturn(results, int(s.Pos()))
 }
 
 // location 方法返回一个左值表达式的位置

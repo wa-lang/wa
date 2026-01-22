@@ -265,7 +265,7 @@ func (t *Ptr) Equal(u Type) bool {
 	return false
 }
 
-func (tl *Types) GenPtr(base Type) *Ptr {
+func (tl *Types) genPtr(base Type) *Ptr {
 	if t, ok := tl.ptrs[base]; ok {
 		return t
 	}

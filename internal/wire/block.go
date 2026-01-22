@@ -24,23 +24,21 @@ type Block struct {
 	//Locals  []Value       // 该块内定义的局部变量
 	Stmts []Stmt // 该块所含的指令
 
-	objects map[interface{}]Location // 关联 AST 结点 -> 块内值
-	types   *Types                   // 该函数所属 Module 的类型库，切勿手动修改
+	objects map[interface{}]*Alloc // AST 结点 -> 块内 Location
+	types   *Types                 // 该函数所属 Module 的类型库，切勿手动修改
 }
 
 // 初始化 Block
 func (b *Block) init() {
-	b.objects = make(map[interface{}]Location)
+	b.objects = make(map[interface{}]*Alloc)
 }
 
 // Scope 接口相关
 func (b *Block) ScopeKind() ScopeKind { return ScopeKindBlock }
 func (b *Block) Lookup(obj interface{}, level LocationKind) Location {
 	if v, ok := b.objects[obj]; ok {
-		if alloc, ok := v.(*Alloc); ok {
-			if level > alloc.Location {
-				alloc.Location = level
-			}
+		if level > v.location {
+			v.location = level
 		}
 		return v
 	}
@@ -96,7 +94,7 @@ func (b *Block) createBlock(label string, pos int) *Block {
 	block.Stringer = block
 	block.Label = label
 	block.pos = pos
-	block.objects = make(map[interface{}]Location)
+	block.objects = make(map[interface{}]*Alloc)
 	block.types = b.types
 
 	block.setScope(b)

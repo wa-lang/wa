@@ -57,16 +57,6 @@ func (m *Module) NewFunction() *Function {
 	return &f
 }
 
-// 创建一个 参数值
-func (m *Module) NewParam(name string, typ Type, pos int) Expr {
-	p := Param{
-		name: name,
-		typ:  typ,
-		pos:  pos,
-	}
-	return &p
-}
-
 // 创建一个 常量值
 func (m *Module) NewConst(name string, typ Type, pos int) Expr {
 	c := Const{
