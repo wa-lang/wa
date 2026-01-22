@@ -23,14 +23,6 @@ const (
 )
 
 func (p *wat2laWorker) buildTable(w io.Writer) error {
-	if p.m.Table == nil {
-		return nil
-	}
-
-	if p.m.Table.Type != token.FUNCREF {
-		return fmt.Errorf("unsupported table type: %s", p.m.Table.Type)
-	}
-
 	const IntSize = 8
 
 	p.gasComment(w, "定义表格")
@@ -38,6 +30,18 @@ func (p *wat2laWorker) buildTable(w io.Writer) error {
 	p.gasGlobal(w, kTableAddrName)
 	p.gasGlobal(w, kTableSizeName)
 	p.gasGlobal(w, kTableMaxSizeName)
+
+	if p.m.Table == nil {
+		p.gasDefI64(w, kTableAddrName, 0)
+		p.gasDefI64(w, kTableSizeName, 1)
+		p.gasDefI64(w, kTableMaxSizeName, 1)
+		fmt.Fprintln(w)
+		return nil
+	}
+
+	if p.m.Table.Type != token.FUNCREF {
+		return fmt.Errorf("unsupported table type: %s", p.m.Table.Type)
+	}
 
 	if max := p.m.Table.MaxSize; max > 0 {
 		p.gasDefI64(w, kTableAddrName, 0)

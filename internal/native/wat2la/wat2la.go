@@ -47,14 +47,13 @@ type wat2laWorker struct {
 
 	localNames        []string           // 参数和局部变量名
 	localTypes        []wattoken.Token   // 参数和局部变量类型
+	scopeTypes        []wattoken.Token   // 区块的类型, 用于区别处理 br 时的返回值
 	scopeLabels       []string           // 嵌套的label查询, if/block/loop
 	scopeLabelsSuffix []string           // 作用域唯一后缀(避免重名)
 	scopeStackBases   []int              // if/block/loop, 开始的栈位置
 	scopeResults      [][]wattoken.Token // 对应块的返回值数量和类型
 	fnWasmR0Base      int                // 当前函数的WASM栈R0位置
 	fnMaxCallArgsSize int                // 调用子函数需要的最大空间
-
-	constLitMap map[uint64]uint64 // 常量列表
 
 	dataSection []*ast.Global
 	textSection []*ast.Func
@@ -105,8 +104,6 @@ func newWat2LAWorker(filename string, mWat *watast.Module) *wat2laWorker {
 func (p *wat2laWorker) BuildProgram() (code []byte, err error) {
 	p.dataSection = p.dataSection[:0]
 	p.textSection = p.textSection[:0]
-
-	p.constLitMap = map[uint64]uint64{}
 
 	var out bytes.Buffer
 

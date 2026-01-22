@@ -56,8 +56,6 @@ type wat2X64Worker struct {
 	fnWasmR0Base      int                // 当前函数的WASM栈R0位置
 	fnMaxCallArgsSize int                // 调用子函数需要的最大空间
 
-	constLitMap map[uint64]uint64 // 常量列表
-
 	dataSection []*ast.Global
 	textSection []*ast.Func
 
@@ -112,8 +110,6 @@ func newWat2X64Worker(filename string, mWat *watast.Module, osName string) *wat2
 func (p *wat2X64Worker) BuildProgram() (code []byte, err error) {
 	p.dataSection = p.dataSection[:0]
 	p.textSection = p.textSection[:0]
-
-	p.constLitMap = map[uint64]uint64{}
 
 	var out bytes.Buffer
 

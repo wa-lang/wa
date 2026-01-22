@@ -23,16 +23,19 @@ const (
 )
 
 func (p *wat2X64Worker) buildMemory(w io.Writer) error {
-	if p.m.Memory == nil {
-		return nil
-	}
-
 	p.gasComment(w, "定义内存")
 	p.gasSectionDataStart(w)
 	p.gasGlobal(w, kMemoryAddrName)
 	p.gasGlobal(w, kMemoryPagesName)
 	p.gasGlobal(w, kMemoryMaxPagesName)
 
+	if p.m.Memory == nil {
+		p.gasDefI64(w, kMemoryAddrName, 0)
+		p.gasDefI64(w, kMemoryPagesName, 1)
+		p.gasDefI64(w, kMemoryMaxPagesName, 1)
+		fmt.Fprintln(w)
+		return nil
+	}
 	if max := p.m.Memory.MaxPages; max > 0 {
 		p.gasDefI64(w, kMemoryAddrName, 0)
 		p.gasDefI64(w, kMemoryPagesName, int64(p.m.Memory.Pages))

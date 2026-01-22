@@ -498,6 +498,11 @@ func (p *wat2X64Worker) buildFunc_ins(
 				if err := p.buildFunc_ins(w, fnNative, fn, stk, ins); err != nil {
 					return err
 				}
+
+				// 跳过后续的死代码分析
+				if ins.Token().IsTerminal() {
+					break
+				}
 			}
 		}
 		p.gasFuncLabel(w, labelNextId)
