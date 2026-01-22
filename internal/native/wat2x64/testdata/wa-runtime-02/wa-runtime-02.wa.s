@@ -160,7 +160,9 @@ main:
     mov r8, qword ptr [rbp-24] # arg 2
     call .Import.syscall.write
     mov qword ptr [rbp-8], rax
+
     nop # drop [rbp-8]
+
 
     # 根据ABI处理返回值
 .L.return.main:
@@ -184,6 +186,7 @@ main:
     # 没有局部变量需要初始化为0
 
     call .Runtime.panic # unreachable
+
 
     # 根据ABI处理返回值
 .L.return.runtime.throw:
@@ -210,6 +213,7 @@ main:
     # global.get __stack_ptr i32
     mov eax, dword ptr [rip+.G.__stack_ptr]
     mov dword ptr [rbp-16], eax
+
 
     # 根据ABI处理返回值
 .L.return.runtime.getStackPtr:
@@ -242,6 +246,7 @@ main:
     mov eax, dword ptr [rbp-8]
     mov dword ptr [rip+.G.__stack_ptr], eax
 
+
     # 根据ABI处理返回值
 .L.return.runtime.setStackPtr:
 
@@ -268,6 +273,7 @@ main:
     # global.get __stack_ptr i32
     mov eax, dword ptr [rip+.G.__stack_ptr]
     mov dword ptr [rbp-16], eax
+
     # local.get size i32
     mov eax, dword ptr [rbp+16]
     mov dword ptr [rbp-24], eax
@@ -276,15 +282,20 @@ main:
     mov eax, dword ptr [rbp-16]
     sub eax, dword ptr [rbp-24]
     mov dword ptr [rbp-16], eax
+
     # global.set __stack_ptr i32
     mov eax, dword ptr [rbp-16]
     mov dword ptr [rip+.G.__stack_ptr], eax
+
     # global.get __stack_ptr i32
     mov eax, dword ptr [rip+.G.__stack_ptr]
     mov dword ptr [rbp-16], eax
+
+    # return
     mov eax, dword ptr [rbp-16]
     mov dword ptr [rbp-8], eax
     jmp .L.return.runtime.stackAlloc
+
 
     # 根据ABI处理返回值
 .L.return.runtime.stackAlloc:
@@ -312,6 +323,7 @@ main:
     # global.get __stack_ptr i32
     mov eax, dword ptr [rip+.G.__stack_ptr]
     mov dword ptr [rbp-8], eax
+
     # local.get size i32
     mov eax, dword ptr [rbp+16]
     mov dword ptr [rbp-16], eax
@@ -320,9 +332,11 @@ main:
     mov eax, dword ptr [rbp-8]
     add eax, dword ptr [rbp-16]
     mov dword ptr [rbp-8], eax
+
     # global.set __stack_ptr i32
     mov eax, dword ptr [rbp-8]
     mov dword ptr [rip+.G.__stack_ptr], eax
+
 
     # 根据ABI处理返回值
 .L.return.runtime.stackFree:
@@ -349,6 +363,7 @@ main:
     # global.get __heap_base i32
     mov eax, dword ptr [rip+.G.__heap_base]
     mov dword ptr [rbp-16], eax
+
 
     # 根据ABI处理返回值
 .L.return.runtime.heapBase:
@@ -388,20 +403,24 @@ main:
     sete  al      # al = (eax==0)? 1: 0
     movzx eax, al # eax = al
     mov   dword ptr [rbp-24], eax
-.L.if.begin.00000000:
+
+    # if.begin(name=, suffix=00000000)
     mov eax, [rbp-24]
-    test eax, eax
-    je .L.if.end.00000000 # if eax != 0 { jmp end }
-.L.if.body.00000000:
+    cmp eax, 0
+    jne .L.brNext.00000000
+
+    # if.body(name=, suffix=00000000)
     # i32.const 0
     mov eax, 0
     mov [rbp-24], eax
 
+    # return
     mov eax, dword ptr [rbp-24]
     mov dword ptr [rbp-8], eax
     jmp .L.return.runtime.HeapAlloc
-.L.next.00000000:
-.L.if.end.00000000:
+
+.L.brNext.00000000:
+    # if.end(name=, suffix=00000000)
 
     # local.get nbytes i32
     mov eax, dword ptr [rbp+16]
@@ -415,6 +434,7 @@ main:
     mov eax, dword ptr [rbp-24]
     add eax, dword ptr [rbp-32]
     mov dword ptr [rbp-24], eax
+
     # i32.const 8
     mov eax, 8
     mov [rbp-32], eax
@@ -426,6 +446,7 @@ main:
     div  dword ptr [rbp-32]
     mov  dword ptr [rbp-24], eax
     pop  rdx
+
     # i32.const 8
     mov eax, 8
     mov [rbp-32], eax
@@ -434,6 +455,7 @@ main:
     mov  eax, dword ptr [rbp-24]
     imul eax, dword ptr [rbp-32]
     mov  dword ptr [rbp-24], eax
+
     # local.set nbytes i32
     mov eax, dword ptr [rbp-24]
     mov dword ptr [rbp+16], eax
@@ -446,12 +468,13 @@ main:
     mov ecx, dword ptr [rbp-24] # arg 0
     call .F.runtime.malloc
     mov dword ptr [rbp-24], eax
+
     # local.set ptr i32
     mov eax, dword ptr [rbp-24]
     mov dword ptr [rbp-16], eax
 
-.L.loop.begin.zero.00000001:
-.L.next.zero.00000001:
+    # loop.begin(name=zero, suffix=00000001)
+.L.brNext.zero.00000001:
     # local.get nbytes i32
     mov eax, dword ptr [rbp+16]
     mov dword ptr [rbp-24], eax
@@ -464,9 +487,11 @@ main:
     mov eax, dword ptr [rbp-24]
     sub eax, dword ptr [rbp-32]
     mov dword ptr [rbp-24], eax
+
     # local.tee nbytes i32
     mov eax, dword ptr [rbp-24]
     mov dword ptr [rbp+16], eax
+
     # local.get ptr i32
     mov eax, dword ptr [rbp-16]
     mov dword ptr [rbp-32], eax
@@ -475,6 +500,7 @@ main:
     mov eax, dword ptr [rbp-24]
     add eax, dword ptr [rbp-32]
     mov dword ptr [rbp-24], eax
+
     # i64.const 0
     movabs rax, 0
     mov    [rbp-32], rax
@@ -485,20 +511,24 @@ main:
     add r10, rax
     mov rax, qword ptr [rbp-32]
     mov qword ptr [r10+0], rax
+
     # local.get nbytes i32
     mov eax, dword ptr [rbp+16]
     mov dword ptr [rbp-24], eax
 
-.L.if.begin.00000002:
+    # if.begin(name=, suffix=00000002)
     mov eax, [rbp-24]
-    test eax, eax
-    je .L.if.end.00000002 # if eax != 0 { jmp end }
-.L.if.body.00000002:
-    jmp .L.next.zero.00000001
-.L.next.00000002:
-.L.if.end.00000002:
+    cmp eax, 0
+    jne .L.brNext.00000002
 
-.L.loop.end.zero.00000001:
+    # if.body(name=, suffix=00000002)
+    # br zero
+    jmp .L.brNext.zero.00000001
+
+.L.brNext.00000002:
+    # if.end(name=, suffix=00000002)
+
+    # loop.end(name=zero, suffix=00000001)
 
     # local.get ptr i32
     mov eax, dword ptr [rbp-16]
@@ -536,6 +566,7 @@ main:
     # call runtime.free(...)
     mov ecx, dword ptr [rbp-8] # arg 0
     call .F.runtime.free
+
 
     # 根据ABI处理返回值
 .L.return.runtime.HeapFree:
@@ -588,7 +619,9 @@ main:
 
     # 没有局部变量需要初始化为0
 
+    # return
     jmp .L.return.runtime.free
+
 
     # 根据ABI处理返回值
 .L.return.runtime.free:
