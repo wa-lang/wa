@@ -122,13 +122,78 @@ main:
     mov dword ptr [rbp-8], 0 # local N = 0
     mov dword ptr [rbp-16], 0 # local i = 0
 
-    # i64.const 5
-    movabs rax, 5
+    # i64.const 10
+    movabs rax, 10
     mov    [rbp-24], rax
+
+    # local.set N i64
+    mov rax, qword ptr [rbp-24]
+    mov qword ptr [rbp-8], rax
+
+    # i64.const 1
+    movabs rax, 1
+    mov    [rbp-24], rax
+
+    # local.set i i64
+    mov rax, qword ptr [rbp-24]
+    mov qword ptr [rbp-16], rax
+
+    # loop.begin(name=my_loop, suffix=00000000)
+.L.brNext.my_loop.00000000:
+    # local.get i i64
+    mov rax, qword ptr [rbp-16]
+    mov qword ptr [rbp-24], rax
+
+    # call fib(...)
+    mov rcx, qword ptr [rbp-24] # arg 0
+    call .F.fib
+    mov qword ptr [rbp-24], rax
 
     # call env.print_i64(...)
     mov rcx, qword ptr [rbp-24] # arg 0
     call .Import.env.print_i64
+
+    # local.get i i64
+    mov rax, qword ptr [rbp-16]
+    mov qword ptr [rbp-24], rax
+
+    # i64.const 1
+    movabs rax, 1
+    mov    [rbp-32], rax
+
+    # i64.add
+    mov rax, qword ptr [rbp-24]
+    add rax, qword ptr [rbp-32]
+    mov qword ptr [rbp-24], rax
+
+    # local.set i i64
+    mov rax, qword ptr [rbp-24]
+    mov qword ptr [rbp-16], rax
+
+    # local.get i i64
+    mov rax, qword ptr [rbp-16]
+    mov qword ptr [rbp-24], rax
+
+    # local.get N i64
+    mov rax, qword ptr [rbp-8]
+    mov qword ptr [rbp-32], rax
+
+    # i64.lt_u
+    mov   r10, qword ptr [rbp-24]
+    mov   r11, qword ptr [rbp-32]
+    cmp   r10, r11
+    setb  al
+    movzx eax, al
+    mov   dword ptr [rbp-24], eax
+
+    # br_if my_loop00000000
+    mov eax, dword ptr [rbp-24]
+    cmp eax, 0
+    je  .L.brFallthrough.my_loop.00000000
+    jmp .L.brNext.my_loop.00000000
+.L.brFallthrough.my_loop.00000000:
+
+    # loop.end(name=my_loop, suffix=00000000)
 
 
     # 根据ABI处理返回值
@@ -171,20 +236,20 @@ main:
     movzx eax, al
     mov   dword ptr [rbp-16], eax
 
-    # if.begin(name=, suffix=00000000)
+    # if.begin(name=, suffix=00000001)
     mov eax, [rbp-16]
     cmp eax, 0
-    jne .L.else.00000000
+    je  .L.else.00000001
 
-    # if.body(name=, suffix=00000000)
+    # if.body(name=, suffix=00000001)
     # i64.const 1
     movabs rax, 1
     mov    [rbp-16], rax
 
-    jmp .L.brNext.00000000
+    jmp .L.brNext.00000001
 
-    # if.else(name=, suffix=00000000)
-.L.else.00000000:
+    # if.else(name=, suffix=00000001)
+.L.else.00000001:
     # local.get n i64
     mov rax, qword ptr [rbp+16]
     mov qword ptr [rbp-16], rax
@@ -226,9 +291,13 @@ main:
     add rax, qword ptr [rbp-24]
     mov qword ptr [rbp-16], rax
 
-.L.brNext.00000000:
-    # if.end(name=, suffix=00000000)
+.L.brNext.00000001:
+    # if.end(name=, suffix=00000001)
 
+    # return
+    # copy result from stack
+    mov rax, qword ptr [rbp-16]
+    mov qword ptr [rbp-8], rax # ret.0
 
     # 根据ABI处理返回值
 .L.return.fib:

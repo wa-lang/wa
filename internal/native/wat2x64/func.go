@@ -262,6 +262,34 @@ func (p *wat2X64Worker) buildFunc_body(w io.Writer, fn *ast.Func) error {
 		fmt.Fprintln(&bufHeader)
 	}
 
+	// 将栈上的值保存到返回值变量
+	assert(stk.Len() == len(fn.Type.Results))
+	if n := len(fn.Type.Results); n > 0 {
+		p.gasCommentInFunc(&bufIns, "return")
+		p.gasCommentInFunc(&bufIns, "copy result from stack")
+		for i := n - 1; i >= 0; i-- {
+			reti := fnNative.Type.Return[i]
+			sp := p.fnWasmR0Base - 8*stk.Pop(fn.Type.Results[i]) - 8
+			switch fn.Type.Results[i] {
+			case token.I32:
+				fmt.Fprintf(&bufIns, "    mov eax,  dword ptr [rbp%+d]\n", sp)
+				fmt.Fprintf(&bufIns, "    mov dword ptr [rbp%+d], eax # ret.%d\n", reti.RBPOff, i)
+			case token.I64:
+				fmt.Fprintf(&bufIns, "    mov rax, qword ptr [rbp%+d]\n", sp)
+				fmt.Fprintf(&bufIns, "    mov qword ptr [rbp%+d], rax # ret.%d\n", reti.RBPOff, i)
+			case token.F32:
+				fmt.Fprintf(&bufIns, "    mov eax, dword ptr [rbp%+d]\n", sp)
+				fmt.Fprintf(&bufIns, "    mov dword ptr [rbp%+d], eax # ret.%d\n", reti.RBPOff, i)
+			case token.F64:
+				fmt.Fprintf(&bufIns, "    mov rax, qword ptr [rbp%+d]\n", sp)
+				fmt.Fprintf(&bufIns, "    mov qword ptr [rbp%+d], rax # ret.%d\n", reti.RBPOff, i)
+			default:
+				panic("unreachable")
+			}
+		}
+	}
+	assert(stk.Len() == 0)
+
 	// 根据ABI处理返回值
 	// 需要将栈顶位置的结果转化为本地ABI规范的返回值
 	{
@@ -327,35 +355,6 @@ func (p *wat2X64Worker) buildFunc_body(w io.Writer, fn *ast.Func) error {
 	io.Copy(w, &bufHeader)
 	// 指令复制到 w
 	io.Copy(w, &bufIns)
-
-	// 有些函数最后的位置不是 return, 需要手动清理栈(验证栈正确性)
-	switch tok := stk.LastInstruction().Token(); tok {
-	case token.INS_RETURN:
-		// 已经处理过了
-	case token.INS_UNREACHABLE:
-		// 清空残余的栈, 不做类型校验
-		if tok == token.INS_UNREACHABLE {
-			for stk.Len() > 0 {
-				stk.DropAny()
-			}
-		}
-
-	default:
-		// 补充 return
-		assert(stk.Len() == len(fn.Type.Results))
-
-		const indent = "  "
-		switch len(fn.Type.Results) {
-		case 0:
-		case 1:
-			stk.Pop(fn.Type.Results[0])
-		default:
-			for _, xType := range fn.Type.Results {
-				stk.Pop(xType)
-			}
-		}
-	}
-	assert(stk.Len() == 0)
 
 	return nil
 }
@@ -452,10 +451,10 @@ func (p *wat2X64Worker) buildFunc_ins(
 		fmt.Fprintf(w, "    mov eax, [rbp%+d]\n", p.fnWasmR0Base-sp0*8-8)
 		fmt.Fprintf(w, "    cmp eax, 0\n")
 		if len(i.Else) > 0 {
-			fmt.Fprintf(w, "    jne %s\n", labelIfElseId)
+			fmt.Fprintf(w, "    je  %s\n", labelIfElseId)
 			fmt.Fprintln(w)
 		} else {
-			fmt.Fprintf(w, "    jne %s\n", labelNextId)
+			fmt.Fprintf(w, "    je  %s\n", labelNextId)
 			fmt.Fprintln(w)
 		}
 
@@ -476,15 +475,13 @@ func (p *wat2X64Worker) buildFunc_ins(
 				break
 			}
 		}
+		fmt.Fprintf(w, "    jmp %s\n", labelNextId)
+		fmt.Fprintln(w)
 
 		// 处理 else 分支
 		if len(i.Else) > 0 {
 			p.Tracef("buildFunc_ins: %s begin: %v\n", token.INS_ELSE, stk.String())
 			defer func() { p.Tracef("buildFunc_ins: %s end: %v\n", token.INS_ELSE, stk.String()) }()
-
-			// if.body 跳转到 end
-			fmt.Fprintf(w, "    jmp %s\n", labelNextId)
-			fmt.Fprintln(w)
 
 			fmt.Fprintf(w, "    # if.else(name=%s, suffix=%s)\n", labelName, labelSuffix)
 			p.gasFuncLabel(w, labelIfElseId)
