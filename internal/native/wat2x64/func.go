@@ -34,12 +34,7 @@ const (
 
 //
 // 函数栈帧布局
-// 参考 /docs/asm_abi_la64.md
-//
-// 补充说明:
-// - GP 以 global 变量保存
-// - 预留出足够的 WasmStack 空间, 避免和子函数返回的数据空间冲突
-// - WasmStack 上的内存也通过 FP 定位
+// 参考 /docs/asm_abi_x64.md
 //
 
 func (p *wat2X64Worker) buildFuncs(w io.Writer) error {
@@ -82,16 +77,14 @@ func (p *wat2X64Worker) buildFunc_body(w io.Writer, fn *ast.Func) error {
 
 	assert(p.m.Memory.AddrType == token.I32)
 
+	assert(len(p.localNames) == 0)
+	assert(len(p.localTypes) == 0)
+
+	assert(len(p.scopeTypes) == 0)
 	assert(len(p.scopeLabels) == 0)
+	assert(len(p.scopeLabelsSuffix) == 0)
 	assert(len(p.scopeStackBases) == 0)
 	assert(len(p.scopeResults) == 0)
-
-	// 至少要有一个指令
-	if len(fn.Body.Insts) == 0 {
-		fn.Body.Insts = []ast.Instruction{
-			ast.Ins_Return{OpToken: ast.OpToken(token.INS_RETURN)},
-		}
-	}
 
 	// 转化为汇编的结构, 准备构建函数栈帧
 	fnNative := &nativeast.Func{

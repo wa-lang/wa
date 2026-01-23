@@ -57,6 +57,16 @@
     pop rbp
     ret
 
+# 定义表格
+.section .data
+.align 8
+.globl .Table.addr
+.globl .Table.size
+.globl .Table.maxSize
+.Table.addr: .quad 0
+.Table.size: .quad 1
+.Table.maxSize: .quad 1
+
 # 汇编程序入口函数
 .section .text
 .globl main
