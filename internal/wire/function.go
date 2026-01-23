@@ -165,7 +165,7 @@ func (f *Function) EndBody() {
 			param.location = LocationKindRegister
 			f.Body.EmitStore(loc, f.Body.NewLoad(param, param.pos), param.pos)
 
-			f.replaceLocation(body, param, loc)
+			stmtReplaceLocation(body, param, loc)
 		}
 	}
 
@@ -181,11 +181,25 @@ func (f *Function) EndBody() {
 	//setImvId(0, f.Body)
 }
 
-func (f *Function) replaceLocation(stmt Stmt, ol, nl Location) {
+func exprReplaceLocation(e Expr, ol, nl Location) Expr {
+	if loc, ok := e.(Location); ok {
+		if loc == ol {
+			return nl
+		}
+	}
+
+	if s, ok := e.(Stmt); ok {
+		stmtReplaceLocation(s, ol, nl)
+	}
+
+	return e
+}
+
+func stmtReplaceLocation(stmt Stmt, ol, nl Location) {
 	switch stmt := stmt.(type) {
 	case *Block:
 		for _, s := range stmt.Stmts {
-			f.replaceLocation(s, ol, nl)
+			stmtReplaceLocation(s, ol, nl)
 		}
 
 	case *Alloc:
@@ -198,7 +212,7 @@ func (f *Function) replaceLocation(stmt Stmt, ol, nl Location) {
 		}
 
 		if s, ok := stmt.Loc.(Stmt); ok {
-			f.replaceLocation(s, ol, nl)
+			stmtReplaceLocation(s, ol, nl)
 		}
 
 	case *Store:
@@ -209,21 +223,12 @@ func (f *Function) replaceLocation(stmt Stmt, ol, nl Location) {
 			}
 
 			if s, ok := stmt.Loc[i].(Stmt); ok {
-				f.replaceLocation(s, ol, nl)
+				stmtReplaceLocation(s, ol, nl)
 			}
 		}
 
 		for i, val := range stmt.Val {
-			if loc, ok := val.(Location); ok {
-				if loc == ol {
-					stmt.Val[i] = nl
-					continue
-				}
-			}
-
-			if s, ok := val.(Stmt); ok {
-				f.replaceLocation(s, ol, nl)
-			}
+			stmt.Val[i] = exprReplaceLocation(val, ol, nl)
 		}
 
 	case *Br:
@@ -231,83 +236,28 @@ func (f *Function) replaceLocation(stmt Stmt, ol, nl Location) {
 
 	case *Return:
 		for i, ret := range stmt.Results {
-			if loc, ok := ret.(Location); ok {
-				if loc == ol {
-					stmt.Results[i] = nl
-					continue
-				}
-			}
-
-			if s, ok := ret.(Stmt); ok {
-				f.replaceLocation(s, ol, nl)
-			}
+			stmt.Results[i] = exprReplaceLocation(ret, ol, nl)
 		}
 
 	case *Unop:
-		if loc, ok := stmt.X.(Location); ok {
-			if loc == ol {
-				stmt.X = nl
-				return
-			}
-		}
-
-		if s, ok := stmt.X.(Stmt); ok {
-			f.replaceLocation(s, ol, nl)
-		}
+		stmt.X = exprReplaceLocation(stmt.X, ol, nl)
 
 	case *Biop:
-		if loc, ok := stmt.X.(Location); ok {
-			if loc == ol {
-				stmt.X = nl
-			}
-		}
-		if s, ok := stmt.X.(Stmt); ok {
-			f.replaceLocation(s, ol, nl)
-		}
-
-		if loc, ok := stmt.Y.(Location); ok {
-			if loc == ol {
-				stmt.Y = nl
-			}
-		}
-		if s, ok := stmt.Y.(Stmt); ok {
-			f.replaceLocation(s, ol, nl)
-		}
+		stmt.X = exprReplaceLocation(stmt.X, ol, nl)
+		stmt.Y = exprReplaceLocation(stmt.Y, ol, nl)
 
 	case *If:
-		if loc, ok := stmt.Cond.(Location); ok {
-			if loc == ol {
-				stmt.Cond = nl
-			}
-		}
-		if s, ok := stmt.Cond.(Stmt); ok {
-			f.replaceLocation(s, ol, nl)
-		}
-		f.replaceLocation(stmt.True, ol, nl)
-		f.replaceLocation(stmt.False, ol, nl)
+		stmt.Cond = exprReplaceLocation(stmt.Cond, ol, nl)
+		stmtReplaceLocation(stmt.True, ol, nl)
+		stmtReplaceLocation(stmt.False, ol, nl)
 
 	case *Loop:
-		if loc, ok := stmt.Cond.(Location); ok {
-			if loc == ol {
-				stmt.Cond = nl
-			}
-		}
-		if s, ok := stmt.Cond.(Stmt); ok {
-			f.replaceLocation(s, ol, nl)
-		}
-		f.replaceLocation(stmt.Body, ol, nl)
-		f.replaceLocation(stmt.Post, ol, nl)
+		stmt.Cond = exprReplaceLocation(stmt.Cond, ol, nl)
+		stmtReplaceLocation(stmt.Body, ol, nl)
+		stmtReplaceLocation(stmt.Post, ol, nl)
 
 	case *AsLocation:
-		if loc, ok := stmt.addr.(Location); ok {
-			if loc == ol {
-				stmt.addr = nl
-				return
-			}
-		}
-		if s, ok := stmt.addr.(Stmt); ok {
-			f.replaceLocation(s, ol, nl)
-		}
+		stmt.addr = exprReplaceLocation(stmt.addr, ol, nl)
 
 	case *Call:
 		var call_common *CallCommon
@@ -320,38 +270,15 @@ func (f *Function) replaceLocation(stmt Stmt, ol, nl Location) {
 
 		case *MethodCall:
 			call_common = &call.CallCommon
-			if loc, ok := call.Recv.(Location); ok {
-				if loc == ol {
-					call.Recv = nl
-				}
-			}
-			if s, ok := call.Recv.(Stmt); ok {
-				f.replaceLocation(s, ol, nl)
-			}
+			call.Recv = exprReplaceLocation(call.Recv, ol, nl)
 
 		case *InterfaceCall:
 			call_common = &call.CallCommon
-			if loc, ok := call.Interface.(Location); ok {
-				if loc == ol {
-					call.Interface = nl
-				}
-			}
-			if s, ok := call.Interface.(Stmt); ok {
-				f.replaceLocation(s, ol, nl)
-			}
+			call.Interface = exprReplaceLocation(call.Interface, ol, nl)
 		}
 
 		for i, arg := range call_common.Args {
-			if loc, ok := arg.(Location); ok {
-				if loc == ol {
-					call_common.Args[i] = nl
-					continue
-				}
-			}
-
-			if s, ok := arg.(Stmt); ok {
-				f.replaceLocation(s, ol, nl)
-			}
+			call_common.Args[i] = exprReplaceLocation(arg, ol, nl)
 		}
 
 	default:
