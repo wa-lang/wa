@@ -201,22 +201,26 @@ func (p *wat2laWorker) buildFunc_body(w io.Writer, fn *ast.Func) error {
 			switch fn.Type.Params[i].Type {
 			case token.I32:
 				fmt.Fprintf(&bufHeader, "    st.w %s, $fp, %d # save arg.%d\n",
-					loong64.RegString(arg.Reg), arg.RBPOff,
+					"$"+strings.ToLower(loong64.RegAliasString(arg.Reg)),
+					arg.RBPOff,
 					i,
 				)
 			case token.I64:
 				fmt.Fprintf(&bufHeader, "    st.d %s, $fp, %d # save arg.%d\n",
-					loong64.RegString(arg.Reg), arg.RBPOff,
+					"$"+strings.ToLower(loong64.RegAliasString(arg.Reg)),
+					arg.RBPOff,
 					i,
 				)
 			case token.F32:
 				fmt.Fprintf(&bufHeader, "    st.w %s, $fp, %d # save arg.%d\n",
-					loong64.RegString(arg.Reg), arg.RBPOff,
+					"$"+strings.ToLower(loong64.RegAliasString(arg.Reg)),
+					arg.RBPOff,
 					i,
 				)
 			case token.F64:
 				fmt.Fprintf(&bufHeader, "    st.d %s, $fp, %d # save arg.%d\n",
-					loong64.RegString(arg.Reg), arg.RBPOff,
+					"$"+strings.ToLower(loong64.RegAliasString(arg.Reg)),
+					arg.RBPOff,
 					i,
 				)
 			default:
@@ -309,25 +313,25 @@ func (p *wat2laWorker) buildFunc_body(w io.Writer, fn *ast.Func) error {
 				switch fn.Type.Results[i] {
 				case token.I32:
 					fmt.Fprintf(&bufIns, "    ld.w %v, $fp, %d # ret %s\n",
-						loong64.RegString(ret.Reg),
+						"$"+strings.ToLower(loong64.RegAliasString(ret.Reg)),
 						fnNative.Type.Return[i].RBPOff,
 						fnNative.Type.Return[i].Name,
 					)
 				case token.I64:
 					fmt.Fprintf(&bufIns, "    ld.d %v, $fp, %d # ret %s\n",
-						loong64.RegString(ret.Reg),
+						"$"+strings.ToLower(loong64.RegAliasString(ret.Reg)),
 						fnNative.Type.Return[i].RBPOff,
 						fnNative.Type.Return[i].Name,
 					)
 				case token.F32:
 					fmt.Fprintf(&bufIns, "    ld.w %v, $fp, %d # ret %s\n",
-						loong64.RegString(ret.Reg),
+						"$"+strings.ToLower(loong64.RegAliasString(ret.Reg)),
 						fnNative.Type.Return[i].RBPOff,
 						fnNative.Type.Return[i].Name,
 					)
 				case token.F64:
 					fmt.Fprintf(&bufIns, "    ld.d %v, $fp, %d # ret %s\n",
-						loong64.RegString(ret.Reg),
+						"$"+strings.ToLower(loong64.RegAliasString(ret.Reg)),
 						fnNative.Type.Return[i].RBPOff,
 						fnNative.Type.Return[i].Name,
 					)
