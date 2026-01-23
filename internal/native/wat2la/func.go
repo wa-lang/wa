@@ -1655,10 +1655,20 @@ func (p *wat2laWorker) buildFunc_ins(
 		sp1 := p.fnWasmR0Base - 8*stk.Pop(token.I32) - 8
 
 		fmt.Fprintf(w, "    # i32.store\n")
-		fmt.Fprintf(w, "    ld.w  $t0, $fp, %d # $t0 = [pop]\n", sp0)
-		//fmt.Fprintf(w, "    add.d $t0, $t0, %s # $t0 = mempry + $t0\n", kMemoryReg)
-		fmt.Fprintf(w, "    ld.hu $t0, $fp, %d # push $t0\n", sp1)
-		fmt.Fprintf(w, "    st.hu $t0, $t0, %d # $t0 = [t0+off]\n", i.Offset)
+
+		// 内存的开始地址
+		fmt.Fprintf(w, "    pcalau12i $t0, %%pc_hi20(%s)\n", kMemoryAddrName)
+		fmt.Fprintf(w, "    addi.d    $t0, $t0, %%pc_lo12(%s)\n", kMemoryAddrName)
+		fmt.Fprintf(w, "    ld.d      $t0, $t0, 0\n")
+
+		// 加上目标地址
+		fmt.Fprintf(w, "    ld.w  $t1, $fp, %d\n", sp1)
+		fmt.Fprintf(w, "    add.d $t0, $t0, $t1\n")
+
+		// 出栈+保存
+		assert(i.Offset < 2048)
+		fmt.Fprintf(w, "    ld.w  $t1, $fp, %d\n", sp0)
+		fmt.Fprintf(w, "    st.w  $t1, $t0, %d\n", i.Offset)
 		fmt.Fprintln(w)
 
 	case token.INS_I64_STORE:
@@ -1667,10 +1677,20 @@ func (p *wat2laWorker) buildFunc_ins(
 		sp1 := p.fnWasmR0Base - 8*stk.Pop(token.I32) - 8
 
 		fmt.Fprintf(w, "    # i64.store\n")
-		fmt.Fprintf(w, "    ld.w  $t0, $fp, %d # $t0 = [pop]\n", sp0)
-		//fmt.Fprintf(w, "    add.d $t0, $t0, %s # $t0 = mempry + $t0\n", kMemoryReg)
-		fmt.Fprintf(w, "    ld.hu $t0, $fp, %d # push $t0\n", sp1)
-		fmt.Fprintf(w, "    st.hu $t0, $t0, %d # $t0 = [t0+off]\n", i.Offset)
+
+		// 内存的开始地址
+		fmt.Fprintf(w, "    pcalau12i $t0, %%pc_hi20(%s)\n", kMemoryAddrName)
+		fmt.Fprintf(w, "    addi.d    $t0, $t0, %%pc_lo12(%s)\n", kMemoryAddrName)
+		fmt.Fprintf(w, "    ld.d      $t0, $t0, 0\n")
+
+		// 加上目标地址
+		fmt.Fprintf(w, "    ld.w  $t1, $fp, %d\n", sp1)
+		fmt.Fprintf(w, "    add.d $t0, $t0, $t1\n")
+
+		// 出栈+保存
+		assert(i.Offset < 2048)
+		fmt.Fprintf(w, "    ld.d  $t1, $fp, %d\n", sp0)
+		fmt.Fprintf(w, "    st.d  $t1, $t0, %d\n", i.Offset)
 		fmt.Fprintln(w)
 
 	case token.INS_F32_STORE:
@@ -1679,10 +1699,20 @@ func (p *wat2laWorker) buildFunc_ins(
 		sp1 := p.fnWasmR0Base - 8*stk.Pop(token.I32) - 8
 
 		fmt.Fprintf(w, "    # f32.store\n")
-		fmt.Fprintf(w, "    ld.w  $t0, $fp, %d # $t0 = [pop]\n", sp0)
-		//fmt.Fprintf(w, "    add.d $t0, $t0, %s # $t0 = mempry + $t0\n", kMemoryReg)
-		fmt.Fprintf(w, "    ld.hu $t0, $fp, %d # push $t0\n", sp1)
-		fmt.Fprintf(w, "    st.hu $t0, $t0, %d # $t0 = [t0+off]\n", i.Offset)
+
+		// 内存的开始地址
+		fmt.Fprintf(w, "    pcalau12i $t0, %%pc_hi20(%s)\n", kMemoryAddrName)
+		fmt.Fprintf(w, "    addi.d    $t0, $t0, %%pc_lo12(%s)\n", kMemoryAddrName)
+		fmt.Fprintf(w, "    ld.d      $t0, $t0, 0\n")
+
+		// 加上目标地址
+		fmt.Fprintf(w, "    ld.w  $t1, $fp, %d\n", sp1)
+		fmt.Fprintf(w, "    add.d $t0, $t0, $t1\n")
+
+		// 出栈+保存
+		assert(i.Offset < 2048)
+		fmt.Fprintf(w, "    fld.s  $ft1, $fp, %d\n", sp0)
+		fmt.Fprintf(w, "    fst.s  $ft1, $t0, %d\n", i.Offset)
 		fmt.Fprintln(w)
 
 	case token.INS_F64_STORE:
@@ -1691,10 +1721,20 @@ func (p *wat2laWorker) buildFunc_ins(
 		sp1 := p.fnWasmR0Base - 8*stk.Pop(token.I32) - 8
 
 		fmt.Fprintf(w, "    # f64.store\n")
-		fmt.Fprintf(w, "    ld.w  $t0, $fp, %d # $t0 = [pop]\n", sp0)
-		//fmt.Fprintf(w, "    add.d $t0, $t0, %s # $t0 = mempry + $t0\n", kMemoryReg)
-		fmt.Fprintf(w, "    ld.hu $t0, $fp, %d # push $t0\n", sp1)
-		fmt.Fprintf(w, "    st.hu $t0, $t0, %d # $t0 = [t0+off]\n", i.Offset)
+
+		// 内存的开始地址
+		fmt.Fprintf(w, "    pcalau12i $t0, %%pc_hi20(%s)\n", kMemoryAddrName)
+		fmt.Fprintf(w, "    addi.d    $t0, $t0, %%pc_lo12(%s)\n", kMemoryAddrName)
+		fmt.Fprintf(w, "    ld.d      $t0, $t0, 0\n")
+
+		// 加上目标地址
+		fmt.Fprintf(w, "    ld.w  $t1, $fp, %d\n", sp1)
+		fmt.Fprintf(w, "    add.d $t0, $t0, $t1\n")
+
+		// 出栈+保存
+		assert(i.Offset < 2048)
+		fmt.Fprintf(w, "    fld.d  $ft1, $fp, %d\n", sp0)
+		fmt.Fprintf(w, "    fst.d  $ft1, $t0, %d\n", i.Offset)
 		fmt.Fprintln(w)
 
 	case token.INS_I32_STORE8:
@@ -1703,10 +1743,20 @@ func (p *wat2laWorker) buildFunc_ins(
 		sp1 := p.fnWasmR0Base - 8*stk.Pop(token.I32) - 8
 
 		fmt.Fprintf(w, "    # i32.store8\n")
-		fmt.Fprintf(w, "    ld.w  $t0, $fp, %d # $t0 = [pop]\n", sp0)
-		//fmt.Fprintf(w, "    add.d $t0, $t0, %s # $t0 = mempry + $t0\n", kMemoryReg)
-		fmt.Fprintf(w, "    ld.hu $t0, $fp, %d # push $t0\n", sp1)
-		fmt.Fprintf(w, "    st.hu $t0, $t0, %d # $t0 = [t0+off]\n", i.Offset)
+
+		// 内存的开始地址
+		fmt.Fprintf(w, "    pcalau12i $t0, %%pc_hi20(%s)\n", kMemoryAddrName)
+		fmt.Fprintf(w, "    addi.d    $t0, $t0, %%pc_lo12(%s)\n", kMemoryAddrName)
+		fmt.Fprintf(w, "    ld.d      $t0, $t0, 0\n")
+
+		// 加上目标地址
+		fmt.Fprintf(w, "    ld.w  $t1, $fp, %d\n", sp1)
+		fmt.Fprintf(w, "    add.d $t0, $t0, $t1\n")
+
+		// 出栈+保存
+		assert(i.Offset < 2048)
+		fmt.Fprintf(w, "    ld.w  $t1, $fp, %d\n", sp0)
+		fmt.Fprintf(w, "    st.b  $t1, $t0, %d\n", i.Offset)
 		fmt.Fprintln(w)
 
 	case token.INS_I32_STORE16:
@@ -1715,10 +1765,20 @@ func (p *wat2laWorker) buildFunc_ins(
 		sp1 := p.fnWasmR0Base - 8*stk.Pop(token.I32) - 8
 
 		fmt.Fprintf(w, "    # i32.store16\n")
-		fmt.Fprintf(w, "    ld.w  $t0, $fp, %d # $t0 = [pop]\n", sp0)
-		//fmt.Fprintf(w, "    add.d $t0, $t0, %s # $t0 = mempry + $t0\n", kMemoryReg)
-		fmt.Fprintf(w, "    ld.hu $t0, $fp, %d # push $t0\n", sp1)
-		fmt.Fprintf(w, "    st.hu $t0, $t0, %d # $t0 = [t0+off]\n", i.Offset)
+
+		// 内存的开始地址
+		fmt.Fprintf(w, "    pcalau12i $t0, %%pc_hi20(%s)\n", kMemoryAddrName)
+		fmt.Fprintf(w, "    addi.d    $t0, $t0, %%pc_lo12(%s)\n", kMemoryAddrName)
+		fmt.Fprintf(w, "    ld.d      $t0, $t0, 0\n")
+
+		// 加上目标地址
+		fmt.Fprintf(w, "    ld.w  $t1, $fp, %d\n", sp1)
+		fmt.Fprintf(w, "    add.d $t0, $t0, $t1\n")
+
+		// 出栈+保存
+		assert(i.Offset < 2048)
+		fmt.Fprintf(w, "    ld.w  $t1, $fp, %d\n", sp0)
+		fmt.Fprintf(w, "    st.h  $t1, $t0, %d\n", i.Offset)
 		fmt.Fprintln(w)
 
 	case token.INS_I64_STORE8:
@@ -1727,10 +1787,20 @@ func (p *wat2laWorker) buildFunc_ins(
 		sp1 := p.fnWasmR0Base - 8*stk.Pop(token.I32) - 8
 
 		fmt.Fprintf(w, "    # i64.store8\n")
-		fmt.Fprintf(w, "    ld.w  $t0, $fp, %d # $t0 = [pop]\n", sp0)
-		//fmt.Fprintf(w, "    add.d $t0, $t0, %s # $t0 = mempry + $t0\n", kMemoryReg)
-		fmt.Fprintf(w, "    ld.hu $t0, $fp, %d # push $t0\n", sp1)
-		fmt.Fprintf(w, "    st.hu $t0, $t0, %d # $t0 = [t0+off]\n", i.Offset)
+
+		// 内存的开始地址
+		fmt.Fprintf(w, "    pcalau12i $t0, %%pc_hi20(%s)\n", kMemoryAddrName)
+		fmt.Fprintf(w, "    addi.d    $t0, $t0, %%pc_lo12(%s)\n", kMemoryAddrName)
+		fmt.Fprintf(w, "    ld.d      $t0, $t0, 0\n")
+
+		// 加上目标地址
+		fmt.Fprintf(w, "    ld.w  $t1, $fp, %d\n", sp1)
+		fmt.Fprintf(w, "    add.d $t0, $t0, $t1\n")
+
+		// 出栈+保存
+		assert(i.Offset < 2048)
+		fmt.Fprintf(w, "    ld.d  $t1, $fp, %d\n", sp0)
+		fmt.Fprintf(w, "    st.b  $t1, $t0, %d\n", i.Offset)
 		fmt.Fprintln(w)
 
 	case token.INS_I64_STORE16:
@@ -1739,10 +1809,20 @@ func (p *wat2laWorker) buildFunc_ins(
 		sp1 := p.fnWasmR0Base - 8*stk.Pop(token.I32) - 8
 
 		fmt.Fprintf(w, "    # i64.store16\n")
-		fmt.Fprintf(w, "    ld.w  $t0, $fp, %d # $t0 = [pop]\n", sp0)
-		//fmt.Fprintf(w, "    add.d $t0, $t0, %s # $t0 = mempry + $t0\n", kMemoryReg)
-		fmt.Fprintf(w, "    ld.hu $t0, $fp, %d # push $t0\n", sp1)
-		fmt.Fprintf(w, "    st.hu $t0, $t0, %d # $t0 = [t0+off]\n", i.Offset)
+
+		// 内存的开始地址
+		fmt.Fprintf(w, "    pcalau12i $t0, %%pc_hi20(%s)\n", kMemoryAddrName)
+		fmt.Fprintf(w, "    addi.d    $t0, $t0, %%pc_lo12(%s)\n", kMemoryAddrName)
+		fmt.Fprintf(w, "    ld.d      $t0, $t0, 0\n")
+
+		// 加上目标地址
+		fmt.Fprintf(w, "    ld.w  $t1, $fp, %d\n", sp1)
+		fmt.Fprintf(w, "    add.d $t0, $t0, $t1\n")
+
+		// 出栈+保存
+		assert(i.Offset < 2048)
+		fmt.Fprintf(w, "    ld.d  $t1, $fp, %d\n", sp0)
+		fmt.Fprintf(w, "    st.h  $t1, $t0, %d\n", i.Offset)
 		fmt.Fprintln(w)
 
 	case token.INS_I64_STORE32:
@@ -1751,10 +1831,20 @@ func (p *wat2laWorker) buildFunc_ins(
 		sp1 := p.fnWasmR0Base - 8*stk.Pop(token.I32) - 8
 
 		fmt.Fprintf(w, "    # i64.store32\n")
-		fmt.Fprintf(w, "    ld.w  $t0, $fp, %d # $t0 = [pop]\n", sp0)
-		//fmt.Fprintf(w, "    add.d $t0, $t0, %s # $t0 = mempry + $t0\n", kMemoryReg)
-		fmt.Fprintf(w, "    ld.hu $t0, $fp, %d # push $t0\n", sp1)
-		fmt.Fprintf(w, "    st.hu $t0, $t0, %d # $t0 = [t0+off]\n", i.Offset)
+
+		// 内存的开始地址
+		fmt.Fprintf(w, "    pcalau12i $t0, %%pc_hi20(%s)\n", kMemoryAddrName)
+		fmt.Fprintf(w, "    addi.d    $t0, $t0, %%pc_lo12(%s)\n", kMemoryAddrName)
+		fmt.Fprintf(w, "    ld.d      $t0, $t0, 0\n")
+
+		// 加上目标地址
+		fmt.Fprintf(w, "    ld.w  $t1, $fp, %d\n", sp1)
+		fmt.Fprintf(w, "    add.d $t0, $t0, $t1\n")
+
+		// 出栈+保存
+		assert(i.Offset < 2048)
+		fmt.Fprintf(w, "    ld.d  $t1, $fp, %d\n", sp0)
+		fmt.Fprintf(w, "    st.w  $t1, $t0, %d\n", i.Offset)
 		fmt.Fprintln(w)
 
 	case token.INS_MEMORY_SIZE:
