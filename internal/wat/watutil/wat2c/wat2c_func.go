@@ -904,7 +904,7 @@ func (p *wat2cWorker) buildFunc_ins(w io.Writer, fn *ast.Func, stk *valueTypeSta
 			)
 		}
 	case token.INS_F64_LOAD:
-		i := i.(ast.Ins_I32Load)
+		i := i.(ast.Ins_F64Load)
 		if p.m.Memory.AddrType == token.I32 {
 			sp0 := stk.Pop(token.I32)
 			ret0 := stk.Push(token.F64)

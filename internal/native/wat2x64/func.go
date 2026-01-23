@@ -1487,7 +1487,7 @@ func (p *wat2X64Worker) buildFunc_ins(
 		fmt.Fprintln(w)
 
 	case token.INS_F64_LOAD:
-		i := i.(ast.Ins_I32Load)
+		i := i.(ast.Ins_F64Load)
 
 		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.I32) - 8
 		ret0 := p.fnWasmR0Base - 8*stk.Push(token.F64) - 8
