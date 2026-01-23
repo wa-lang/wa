@@ -3136,9 +3136,9 @@ func (p *wat2laWorker) buildFunc_ins(
 		ret0 := p.fnWasmR0Base - 8*stk.Push(token.F32) - 8
 
 		fmt.Fprintf(w, "    # f32.abs\n")
-		fmt.Fprintf(w, "    fld.s   $fa0, $fp, %d\n", sp0)
-		fmt.Fprintf(w, "    fabs.s  $fa0, $fa0\n")
-		fmt.Fprintf(w, "    fst.s   $fa0, $fp, %d\n", ret0)
+		fmt.Fprintf(w, "    fld.s   $ft0, $fp, %d\n", sp0)
+		fmt.Fprintf(w, "    fabs.s  $ft0, $ft0\n")
+		fmt.Fprintf(w, "    fst.s   $ft0, $fp, %d\n", ret0)
 		fmt.Fprintln(w)
 
 	case token.INS_F32_NEG:
@@ -3146,9 +3146,9 @@ func (p *wat2laWorker) buildFunc_ins(
 		ret0 := p.fnWasmR0Base - 8*stk.Push(token.F32) - 8
 
 		fmt.Fprintf(w, "    # f32.neg\n")
-		fmt.Fprintf(w, "    fld.s   $fa0, $fp, %d\n", sp0)
-		fmt.Fprintf(w, "    fneg.s  $fa0, $a0\n")
-		fmt.Fprintf(w, "    fst.s   $fa0, $fp, %d\n", ret0)
+		fmt.Fprintf(w, "    fld.s   $ft0, $fp, %d\n", sp0)
+		fmt.Fprintf(w, "    fneg.s  $ft0, $ft0\n")
+		fmt.Fprintf(w, "    fst.s   $ft0, $fp, %d\n", ret0)
 		fmt.Fprintln(w)
 
 	case token.INS_F32_CEIL:
@@ -3156,10 +3156,9 @@ func (p *wat2laWorker) buildFunc_ins(
 		ret0 := p.fnWasmR0Base - 8*stk.Push(token.F32) - 8
 
 		fmt.Fprintf(w, "    # f32.ceil\n")
-		fmt.Fprintf(w, "    fld.s       $fa0, $fp, %d\n", sp0)
-		fmt.Fprintf(w, "    ftintrp.w.s $fa1, $fa0\n")
-		fmt.Fprintf(w, "    ffint.s.w   $fa1, $fa1\n")
-		fmt.Fprintf(w, "    fst.s       $fa1, $fp, %d\n", ret0)
+		fmt.Fprintf(w, "    fld.s     $ft0, $fp, %d\n", sp0)
+		fmt.Fprintf(w, "    frintrp.s $ft0, $ft0\n")
+		fmt.Fprintf(w, "    fst.s     $ft0, $fp, %d\n", ret0)
 		fmt.Fprintln(w)
 
 	case token.INS_F32_FLOOR:
@@ -3167,10 +3166,9 @@ func (p *wat2laWorker) buildFunc_ins(
 		ret0 := p.fnWasmR0Base - 8*stk.Push(token.F32) - 8
 
 		fmt.Fprintf(w, "    # f32.floor\n")
-		fmt.Fprintf(w, "    fld.s       $fa0, $fp, %d\n", sp0)
-		fmt.Fprintf(w, "    ftintrm.w.s $fa1, $fa0\n")
-		fmt.Fprintf(w, "    ffint.s.w   $fa1, $fa1\n")
-		fmt.Fprintf(w, "    fst.s       $fa1, $fp, %d\n", ret0)
+		fmt.Fprintf(w, "    fld.s     $ft0, $fp, %d\n", sp0)
+		fmt.Fprintf(w, "    frintrm.s $ft0, $ft0\n")
+		fmt.Fprintf(w, "    fst.s     $ft0, $fp, %d\n", ret0)
 		fmt.Fprintln(w)
 
 	case token.INS_F32_TRUNC:
@@ -3178,10 +3176,9 @@ func (p *wat2laWorker) buildFunc_ins(
 		ret0 := p.fnWasmR0Base - 8*stk.Push(token.F32) - 8
 
 		fmt.Fprintf(w, "    # f32.trunc\n")
-		fmt.Fprintf(w, "    fld.s       $fa0, $fp, %d\n", sp0)
-		fmt.Fprintf(w, "    ftintrz.w.s $fa1, $fa0\n")
-		fmt.Fprintf(w, "    ffint.s.w   $fa1, $fa1\n")
-		fmt.Fprintf(w, "    fst.s       $fa1, $fp, %d\n", ret0)
+		fmt.Fprintf(w, "    fld.s     $ft0, $fp, %d\n", sp0)
+		fmt.Fprintf(w, "    frintrz.s $ft0, $ft0\n")
+		fmt.Fprintf(w, "    fst.s     $ft0, $fp, %d\n", ret0)
 		fmt.Fprintln(w)
 
 	case token.INS_F32_NEAREST:
@@ -3189,10 +3186,9 @@ func (p *wat2laWorker) buildFunc_ins(
 		ret0 := p.fnWasmR0Base - 8*stk.Push(token.F32) - 8
 
 		fmt.Fprintf(w, "    # f32.nearest\n")
-		fmt.Fprintf(w, "    fld.s        $fa0, $fp, %d\n", sp0)
-		fmt.Fprintf(w, "    ftintrne.w.s $fa1, $fa0\n")
-		fmt.Fprintf(w, "    ffint.s.w    $fa1, $fa1\n")
-		fmt.Fprintf(w, "    fst.s        $fa1, $fp, %d\n", ret0)
+		fmt.Fprintf(w, "    fld.s      $ft0, $fp, %d\n", sp0)
+		fmt.Fprintf(w, "    frintrne.s $ft0, $ft0\n")
+		fmt.Fprintf(w, "    fst.s      $ft0, $fp, %d\n", ret0)
 		fmt.Fprintln(w)
 
 	case token.INS_F32_SQRT:
@@ -3200,9 +3196,9 @@ func (p *wat2laWorker) buildFunc_ins(
 		ret0 := p.fnWasmR0Base - 8*stk.Push(token.F32) - 8
 
 		fmt.Fprintf(w, "    # f32.sqrt\n")
-		fmt.Fprintf(w, "    fld.s   $fa0, $fp, %d\n", sp0)
-		fmt.Fprintf(w, "    fsqrt.s $fa0, $fa0\n")
-		fmt.Fprintf(w, "    fst.s   $fa0, $fp, %d\n", ret0)
+		fmt.Fprintf(w, "    fld.s   $ft0, $fp, %d\n", sp0)
+		fmt.Fprintf(w, "    fsqrt.s $ft0, $ft0\n")
+		fmt.Fprintf(w, "    fst.s   $ft0, $fp, %d\n", ret0)
 		fmt.Fprintln(w)
 
 	case token.INS_F32_ADD:
@@ -3211,10 +3207,10 @@ func (p *wat2laWorker) buildFunc_ins(
 		ret0 := p.fnWasmR0Base - 8*stk.Push(token.F32) - 8
 
 		fmt.Fprintf(w, "    # f32.add\n")
-		fmt.Fprintf(w, "    fld.s   $fa0, $fp, %d\n", sp1)
-		fmt.Fprintf(w, "    fld.s   $fa1, $fp, %d\n", sp0)
-		fmt.Fprintf(w, "    fadd.s  $fa0, $fa0, $fa1\n")
-		fmt.Fprintf(w, "    fst.s   $fa0, $fp, %d\n", ret0)
+		fmt.Fprintf(w, "    fld.s   $ft0, $fp, %d\n", sp1)
+		fmt.Fprintf(w, "    fld.s   $ft1, $fp, %d\n", sp0)
+		fmt.Fprintf(w, "    fadd.s  $ft0, $ft0, $ft1\n")
+		fmt.Fprintf(w, "    fst.s   $ft0, $fp, %d\n", ret0)
 		fmt.Fprintln(w)
 
 	case token.INS_F32_SUB:
@@ -3223,10 +3219,10 @@ func (p *wat2laWorker) buildFunc_ins(
 		ret0 := p.fnWasmR0Base - 8*stk.Push(token.F32) - 8
 
 		fmt.Fprintf(w, "    # f32.sub\n")
-		fmt.Fprintf(w, "    fld.s   $fa0, $fp, %d\n", sp1)
-		fmt.Fprintf(w, "    fld.s   $fa1, $fp, %d\n", sp0)
-		fmt.Fprintf(w, "    fsub.s  $fa0, $fa0, $fa1\n")
-		fmt.Fprintf(w, "    fst.s   $fa0, $fp, %d\n", ret0)
+		fmt.Fprintf(w, "    fld.s   $ft0, $fp, %d\n", sp1)
+		fmt.Fprintf(w, "    fld.s   $ft1, $fp, %d\n", sp0)
+		fmt.Fprintf(w, "    fsub.s  $ft0, $ft0, $ft1\n")
+		fmt.Fprintf(w, "    fst.s   $ft0, $fp, %d\n", ret0)
 		fmt.Fprintln(w)
 
 	case token.INS_F32_MUL:
@@ -3235,10 +3231,10 @@ func (p *wat2laWorker) buildFunc_ins(
 		ret0 := p.fnWasmR0Base - 8*stk.Push(token.F32) - 8
 
 		fmt.Fprintf(w, "    # f32.mul\n")
-		fmt.Fprintf(w, "    fld.s   $fa0, $fp, %d\n", sp1)
-		fmt.Fprintf(w, "    fld.s   $fa1, $fp, %d\n", sp0)
-		fmt.Fprintf(w, "    fmul.s  $fa0, $fa0, $fa1\n")
-		fmt.Fprintf(w, "    fst.s   $fa0, $fp, %d\n", ret0)
+		fmt.Fprintf(w, "    fld.s   $ft0, $fp, %d\n", sp1)
+		fmt.Fprintf(w, "    fld.s   $ft1, $fp, %d\n", sp0)
+		fmt.Fprintf(w, "    fmul.s  $ft0, $ft0, $ft1\n")
+		fmt.Fprintf(w, "    fst.s   $ft0, $fp, %d\n", ret0)
 		fmt.Fprintln(w)
 
 	case token.INS_F32_DIV:
@@ -3247,10 +3243,10 @@ func (p *wat2laWorker) buildFunc_ins(
 		ret0 := p.fnWasmR0Base - 8*stk.Push(token.F32) - 8
 
 		fmt.Fprintf(w, "    # f32.div\n")
-		fmt.Fprintf(w, "    fld.s   $fa0, $fp, %d\n", sp1)
-		fmt.Fprintf(w, "    fld.s   $fa1, $fp, %d\n", sp0)
-		fmt.Fprintf(w, "    fdiv.s  $fa0, $fa0, $fa1\n")
-		fmt.Fprintf(w, "    fst.s   $fa0, $fp, %d\n", ret0)
+		fmt.Fprintf(w, "    fld.s   $ft0, $fp, %d\n", sp1)
+		fmt.Fprintf(w, "    fld.s   $ft1, $fp, %d\n", sp0)
+		fmt.Fprintf(w, "    fdiv.s  $ft0, $ft0, $ft1\n")
+		fmt.Fprintf(w, "    fst.s   $ft0, $fp, %d\n", ret0)
 		fmt.Fprintln(w)
 
 	case token.INS_F32_MIN:
@@ -3259,10 +3255,10 @@ func (p *wat2laWorker) buildFunc_ins(
 		ret0 := p.fnWasmR0Base - 8*stk.Push(token.F32) - 8
 
 		fmt.Fprintf(w, "    # f32.min\n")
-		fmt.Fprintf(w, "    fld.s   $fa0, $fp, %d\n", sp1)
-		fmt.Fprintf(w, "    fld.s   $fa1, $fp, %d\n", sp0)
-		fmt.Fprintf(w, "    fmin.s  $fa0, $fa0, $fa1 $fa1\n")
-		fmt.Fprintf(w, "    fst.s   $fa0, $fp, %d\n", ret0)
+		fmt.Fprintf(w, "    fld.s   $ft0, $fp, %d\n", sp1)
+		fmt.Fprintf(w, "    fld.s   $ft1, $fp, %d\n", sp0)
+		fmt.Fprintf(w, "    fmin.s  $ft0, $ft0, $ft1\n")
+		fmt.Fprintf(w, "    fst.s   $ft0, $fp, %d\n", ret0)
 		fmt.Fprintln(w)
 
 	case token.INS_F32_MAX:
@@ -3271,10 +3267,10 @@ func (p *wat2laWorker) buildFunc_ins(
 		ret0 := p.fnWasmR0Base - 8*stk.Push(token.F32) - 8
 
 		fmt.Fprintf(w, "    # f32.max\n")
-		fmt.Fprintf(w, "    fld.s   $fa0, $fp, %d\n", sp1)
-		fmt.Fprintf(w, "    fld.s   $fa1, $fp, %d\n", sp0)
-		fmt.Fprintf(w, "    fmax.s  $fa0, $fa0, $fa1 $fa1\n")
-		fmt.Fprintf(w, "    fst.s   $fa0, $fp, %d\n", ret0)
+		fmt.Fprintf(w, "    fld.s   $ft0, $fp, %d\n", sp1)
+		fmt.Fprintf(w, "    fld.s   $ft1, $fp, %d\n", sp0)
+		fmt.Fprintf(w, "    fmax.s  $ft0, $ft0, $ft1\n")
+		fmt.Fprintf(w, "    fst.s   $ft0, $fp, %d\n", ret0)
 		fmt.Fprintln(w)
 
 	case token.INS_F32_COPYSIGN:
@@ -3283,10 +3279,10 @@ func (p *wat2laWorker) buildFunc_ins(
 		ret0 := p.fnWasmR0Base - 8*stk.Push(token.F32) - 8
 
 		fmt.Fprintf(w, "    # f32.copysign\n")
-		fmt.Fprintf(w, "    fld.s       $fa0, $fp, %d\n", sp1)
-		fmt.Fprintf(w, "    fld.s       $fa1, $fp, %d\n", sp0)
-		fmt.Fprintf(w, "    fcopysign.s $fa0, $fa0, $fa1 $fa1\n")
-		fmt.Fprintf(w, "    fst.s       $fa0, $fp, %d\n", ret0)
+		fmt.Fprintf(w, "    fld.s       $ft0, $fp, %d\n", sp1)
+		fmt.Fprintf(w, "    fld.s       $ft1, $fp, %d\n", sp0)
+		fmt.Fprintf(w, "    fcopysign.s $ft0, $ft0, $ft1\n")
+		fmt.Fprintf(w, "    fst.s       $ft0, $fp, %d\n", ret0)
 		fmt.Fprintln(w)
 
 	case token.INS_F64_ABS:
@@ -3294,9 +3290,9 @@ func (p *wat2laWorker) buildFunc_ins(
 		ret0 := p.fnWasmR0Base - 8*stk.Push(token.F64) - 8
 
 		fmt.Fprintf(w, "    # f64.abs\n")
-		fmt.Fprintf(w, "    fld.d   $fa0, $fp, %d\n", sp0)
-		fmt.Fprintf(w, "    fabs.d  $fa0, $fa0\n")
-		fmt.Fprintf(w, "    fst.d   $fa0, $fp, %d\n", ret0)
+		fmt.Fprintf(w, "    fld.d   $ft0, $fp, %d\n", sp0)
+		fmt.Fprintf(w, "    fabs.d  $ft0, $ft0\n")
+		fmt.Fprintf(w, "    fst.d   $ft0, $fp, %d\n", ret0)
 		fmt.Fprintln(w)
 
 	case token.INS_F64_NEG:
@@ -3304,9 +3300,9 @@ func (p *wat2laWorker) buildFunc_ins(
 		ret0 := p.fnWasmR0Base - 8*stk.Push(token.F64) - 8
 
 		fmt.Fprintf(w, "    # f64.neg\n")
-		fmt.Fprintf(w, "    fld.d   $fa0, $fp, %d\n", sp0)
-		fmt.Fprintf(w, "    fneg.d  $fa0, $a0\n")
-		fmt.Fprintf(w, "    fst.d   $fa0, $fp, %d\n", ret0)
+		fmt.Fprintf(w, "    fld.d   $ft0, $fp, %d\n", sp0)
+		fmt.Fprintf(w, "    fneg.d  $ft0, $ft0\n")
+		fmt.Fprintf(w, "    fst.d   $ft0, $fp, %d\n", ret0)
 		fmt.Fprintln(w)
 
 	case token.INS_F64_CEIL:
@@ -3314,10 +3310,9 @@ func (p *wat2laWorker) buildFunc_ins(
 		ret0 := p.fnWasmR0Base - 8*stk.Push(token.F64) - 8
 
 		fmt.Fprintf(w, "    # f64.ceil\n")
-		fmt.Fprintf(w, "    fld.d       $fa0, $fp, %d\n", sp0)
-		fmt.Fprintf(w, "    ftintrp.d.d $fa1, $fa0\n")
-		fmt.Fprintf(w, "    ffint.d.d   $fa1, $fa1\n")
-		fmt.Fprintf(w, "    fst.d       $fa1, $fp, %d\n", ret0)
+		fmt.Fprintf(w, "    fld.d     $ft0, $fp, %d\n", sp0)
+		fmt.Fprintf(w, "    frintrp.d $ft0, $ft0\n")
+		fmt.Fprintf(w, "    fst.d     $ft0, $fp, %d\n", ret0)
 		fmt.Fprintln(w)
 
 	case token.INS_F64_FLOOR:
@@ -3325,10 +3320,9 @@ func (p *wat2laWorker) buildFunc_ins(
 		ret0 := p.fnWasmR0Base - 8*stk.Push(token.F64) - 8
 
 		fmt.Fprintf(w, "    # f64.floor\n")
-		fmt.Fprintf(w, "    fld.d       $fa0, $fp, %d\n", sp0)
-		fmt.Fprintf(w, "    ftintrm.d.d $fa1, $fa0\n")
-		fmt.Fprintf(w, "    ffint.d.d   $fa1, $fa1\n")
-		fmt.Fprintf(w, "    fst.d       $fa1, $fp, %d\n", ret0)
+		fmt.Fprintf(w, "    fld.d     $ft0, $fp, %d\n", sp0)
+		fmt.Fprintf(w, "    frintrm.d $ft0, $ft0\n")
+		fmt.Fprintf(w, "    fst.d     $ft0, $fp, %d\n", ret0)
 		fmt.Fprintln(w)
 
 	case token.INS_F64_TRUNC:
@@ -3336,10 +3330,9 @@ func (p *wat2laWorker) buildFunc_ins(
 		ret0 := p.fnWasmR0Base - 8*stk.Push(token.F64) - 8
 
 		fmt.Fprintf(w, "    # f64.trunc\n")
-		fmt.Fprintf(w, "    fld.d       $fa0, $fp, %d\n", sp0)
-		fmt.Fprintf(w, "    ftintrz.d.d $fa1, $fa0\n")
-		fmt.Fprintf(w, "    ffint.d.d   $fa1, $fa1\n")
-		fmt.Fprintf(w, "    fst.d       $fa1, $fp, %d\n", ret0)
+		fmt.Fprintf(w, "    fld.d     $ft0, $fp, %d\n", sp0)
+		fmt.Fprintf(w, "    frintrz.d $ft0, $ft0\n")
+		fmt.Fprintf(w, "    fst.d     $ft0, $fp, %d\n", ret0)
 		fmt.Fprintln(w)
 
 	case token.INS_F64_NEAREST:
@@ -3347,10 +3340,9 @@ func (p *wat2laWorker) buildFunc_ins(
 		ret0 := p.fnWasmR0Base - 8*stk.Push(token.F64) - 8
 
 		fmt.Fprintf(w, "    # f64.nearest\n")
-		fmt.Fprintf(w, "    fld.d        $fa0, $fp, %d\n", sp0)
-		fmt.Fprintf(w, "    ftintrne.d.d $fa1, $fa0\n")
-		fmt.Fprintf(w, "    ffint.d.d    $fa1, $fa1\n")
-		fmt.Fprintf(w, "    fst.d        $fa1, $fp, %d\n", ret0)
+		fmt.Fprintf(w, "    fld.d      $ft0, $fp, %d\n", sp0)
+		fmt.Fprintf(w, "    frintrne.d $ft0, $ft0\n")
+		fmt.Fprintf(w, "    fst.d      $ft0, $fp, %d\n", ret0)
 		fmt.Fprintln(w)
 
 	case token.INS_F64_SQRT:
@@ -3358,9 +3350,9 @@ func (p *wat2laWorker) buildFunc_ins(
 		ret0 := p.fnWasmR0Base - 8*stk.Push(token.F64) - 8
 
 		fmt.Fprintf(w, "    # f64.sqrt\n")
-		fmt.Fprintf(w, "    fld.d   $fa0, $fp, %d\n", sp0)
-		fmt.Fprintf(w, "    fsqrt.d $fa0, $fa0\n")
-		fmt.Fprintf(w, "    fst.d   $fa0, $fp, %d\n", ret0)
+		fmt.Fprintf(w, "    fld.d   $ft0, $fp, %d\n", sp0)
+		fmt.Fprintf(w, "    fsqrt.d $ft0, $ft0\n")
+		fmt.Fprintf(w, "    fst.d   $ft0, $fp, %d\n", ret0)
 		fmt.Fprintln(w)
 
 	case token.INS_F64_ADD:
@@ -3369,10 +3361,10 @@ func (p *wat2laWorker) buildFunc_ins(
 		ret0 := p.fnWasmR0Base - 8*stk.Push(token.F64) - 8
 
 		fmt.Fprintf(w, "    # f64.add\n")
-		fmt.Fprintf(w, "    fld.d   $fa0, $fp, %d\n", sp1)
-		fmt.Fprintf(w, "    fld.d   $fa1, $fp, %d\n", sp0)
-		fmt.Fprintf(w, "    fadd.d  $fa0, $fa0, $fa1\n")
-		fmt.Fprintf(w, "    fst.d   $fa0, $fp, %d\n", ret0)
+		fmt.Fprintf(w, "    fld.d   $ft0, $fp, %d\n", sp1)
+		fmt.Fprintf(w, "    fld.d   $ft1, $fp, %d\n", sp0)
+		fmt.Fprintf(w, "    fadd.d  $ft0, $ft0, $ft1\n")
+		fmt.Fprintf(w, "    fst.d   $ft0, $fp, %d\n", ret0)
 		fmt.Fprintln(w)
 
 	case token.INS_F64_SUB:
@@ -3381,10 +3373,10 @@ func (p *wat2laWorker) buildFunc_ins(
 		ret0 := p.fnWasmR0Base - 8*stk.Push(token.F64) - 8
 
 		fmt.Fprintf(w, "    # f64.sub\n")
-		fmt.Fprintf(w, "    fld.d   $fa0, $fp, %d\n", sp1)
-		fmt.Fprintf(w, "    fld.d   $fa1, $fp, %d\n", sp0)
-		fmt.Fprintf(w, "    fsub.d  $fa0, $fa0, $fa1\n")
-		fmt.Fprintf(w, "    fst.d   $fa0, $fp, %d\n", ret0)
+		fmt.Fprintf(w, "    fld.d   $ft0, $fp, %d\n", sp1)
+		fmt.Fprintf(w, "    fld.d   $ft1, $fp, %d\n", sp0)
+		fmt.Fprintf(w, "    fsub.d  $ft0, $ft0, $ft1\n")
+		fmt.Fprintf(w, "    fst.d   $ft0, $fp, %d\n", ret0)
 		fmt.Fprintln(w)
 
 	case token.INS_F64_MUL:
@@ -3393,10 +3385,10 @@ func (p *wat2laWorker) buildFunc_ins(
 		ret0 := p.fnWasmR0Base - 8*stk.Push(token.F64) - 8
 
 		fmt.Fprintf(w, "    # f64.mul\n")
-		fmt.Fprintf(w, "    fld.d   $fa0, $fp, %d\n", sp1)
-		fmt.Fprintf(w, "    fld.d   $fa1, $fp, %d\n", sp0)
-		fmt.Fprintf(w, "    fmul.d  $fa0, $fa0, $fa1\n")
-		fmt.Fprintf(w, "    fst.d   $fa0, $fp, %d\n", ret0)
+		fmt.Fprintf(w, "    fld.d   $ft0, $fp, %d\n", sp1)
+		fmt.Fprintf(w, "    fld.d   $ft1, $fp, %d\n", sp0)
+		fmt.Fprintf(w, "    fmul.d  $ft0, $ft0, $ft1\n")
+		fmt.Fprintf(w, "    fst.d   $ft0, $fp, %d\n", ret0)
 		fmt.Fprintln(w)
 
 	case token.INS_F64_DIV:
@@ -3405,10 +3397,10 @@ func (p *wat2laWorker) buildFunc_ins(
 		ret0 := p.fnWasmR0Base - 8*stk.Push(token.F64) - 8
 
 		fmt.Fprintf(w, "    # f64.div\n")
-		fmt.Fprintf(w, "    fld.d   $fa0, $fp, %d\n", sp1)
-		fmt.Fprintf(w, "    fld.d   $fa1, $fp, %d\n", sp0)
-		fmt.Fprintf(w, "    fdiv.d  $fa0, $fa0, $fa1\n")
-		fmt.Fprintf(w, "    fst.d   $fa0, $fp, %d\n", ret0)
+		fmt.Fprintf(w, "    fld.d   $ft0, $fp, %d\n", sp1)
+		fmt.Fprintf(w, "    fld.d   $ft1, $fp, %d\n", sp0)
+		fmt.Fprintf(w, "    fdiv.d  $ft0, $ft0, $ft1\n")
+		fmt.Fprintf(w, "    fst.d   $ft0, $fp, %d\n", ret0)
 		fmt.Fprintln(w)
 
 	case token.INS_F64_MIN:
@@ -3417,10 +3409,10 @@ func (p *wat2laWorker) buildFunc_ins(
 		ret0 := p.fnWasmR0Base - 8*stk.Push(token.F64) - 8
 
 		fmt.Fprintf(w, "    # f64.min\n")
-		fmt.Fprintf(w, "    fld.d   $fa0, $fp, %d\n", sp1)
-		fmt.Fprintf(w, "    fld.d   $fa1, $fp, %d\n", sp0)
-		fmt.Fprintf(w, "    fmin.d  $fa0, $fa0, $fa1 $fa1\n")
-		fmt.Fprintf(w, "    fst.d   $fa0, $fp, %d\n", ret0)
+		fmt.Fprintf(w, "    fld.d   $ft0, $fp, %d\n", sp1)
+		fmt.Fprintf(w, "    fld.d   $ft1, $fp, %d\n", sp0)
+		fmt.Fprintf(w, "    fmin.d  $ft0, $ft0, $ft1\n")
+		fmt.Fprintf(w, "    fst.d   $ft0, $fp, %d\n", ret0)
 		fmt.Fprintln(w)
 
 	case token.INS_F64_MAX:
@@ -3429,10 +3421,10 @@ func (p *wat2laWorker) buildFunc_ins(
 		ret0 := p.fnWasmR0Base - 8*stk.Push(token.F64) - 8
 
 		fmt.Fprintf(w, "    # f64.max\n")
-		fmt.Fprintf(w, "    fld.d   $fa0, $fp, %d\n", sp1)
-		fmt.Fprintf(w, "    fld.d   $fa1, $fp, %d\n", sp0)
-		fmt.Fprintf(w, "    fmax.d  $fa0, $fa0, $fa1 $fa1\n")
-		fmt.Fprintf(w, "    fst.d   $fa0, $fp, %d\n", ret0)
+		fmt.Fprintf(w, "    fld.d   $ft0, $fp, %d\n", sp1)
+		fmt.Fprintf(w, "    fld.d   $ft1, $fp, %d\n", sp0)
+		fmt.Fprintf(w, "    fmax.d  $ft0, $ft0, $ft1\n")
+		fmt.Fprintf(w, "    fst.d   $ft0, $fp, %d\n", ret0)
 		fmt.Fprintln(w)
 
 	case token.INS_F64_COPYSIGN:
@@ -3441,10 +3433,10 @@ func (p *wat2laWorker) buildFunc_ins(
 		ret0 := p.fnWasmR0Base - 8*stk.Push(token.F64) - 8
 
 		fmt.Fprintf(w, "    # f64.copysign\n")
-		fmt.Fprintf(w, "    fld.d       $fa0, $fp, %d\n", sp1)
-		fmt.Fprintf(w, "    fld.d       $fa1, $fp, %d\n", sp0)
-		fmt.Fprintf(w, "    fcopysign.d $fa0, $fa0, $fa1 $fa1\n")
-		fmt.Fprintf(w, "    fst.d       $fa0, $fp, %d\n", ret0)
+		fmt.Fprintf(w, "    fld.d       $ft0, $fp, %d\n", sp1)
+		fmt.Fprintf(w, "    fld.d       $ft1, $fp, %d\n", sp0)
+		fmt.Fprintf(w, "    fcopysign.d $ft0, $ft0, $ft1\n")
+		fmt.Fprintf(w, "    fst.d       $ft0, $fp, %d\n", ret0)
 		fmt.Fprintln(w)
 
 	case token.INS_I32_WRAP_I64:
