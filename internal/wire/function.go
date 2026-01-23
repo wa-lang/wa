@@ -3,7 +3,10 @@
 
 package wire
 
-import "strings"
+import (
+	"fmt"
+	"strings"
+)
 
 /**************************************
 本文件包含了 function 对象的功能
@@ -152,6 +155,7 @@ func (f *Function) EndBody() {
 
 	f.StartBody()
 
+	// 逃逸参数置换：
 	for _, param := range f.params {
 		if param.LocationKind() != LocationKindRegister {
 			_, refMode := param.refType.(*Ref)
@@ -183,6 +187,9 @@ func (f *Function) replaceLocation(stmt Stmt, ol, nl Location) {
 		for _, s := range stmt.Stmts {
 			f.replaceLocation(s, ol, nl)
 		}
+
+	case *Alloc:
+		return
 
 	case *Load:
 		if stmt.Loc == ol {
@@ -219,6 +226,9 @@ func (f *Function) replaceLocation(stmt Stmt, ol, nl Location) {
 			}
 		}
 
+	case *Br:
+		return
+
 	case *Return:
 		for i, ret := range stmt.Results {
 			if loc, ok := ret.(Location); ok {
@@ -249,7 +259,6 @@ func (f *Function) replaceLocation(stmt Stmt, ol, nl Location) {
 		if loc, ok := stmt.X.(Location); ok {
 			if loc == ol {
 				stmt.X = nl
-				return
 			}
 		}
 		if s, ok := stmt.X.(Stmt); ok {
@@ -259,12 +268,35 @@ func (f *Function) replaceLocation(stmt Stmt, ol, nl Location) {
 		if loc, ok := stmt.Y.(Location); ok {
 			if loc == ol {
 				stmt.Y = nl
-				return
 			}
 		}
 		if s, ok := stmt.Y.(Stmt); ok {
 			f.replaceLocation(s, ol, nl)
 		}
+
+	case *If:
+		if loc, ok := stmt.Cond.(Location); ok {
+			if loc == ol {
+				stmt.Cond = nl
+			}
+		}
+		if s, ok := stmt.Cond.(Stmt); ok {
+			f.replaceLocation(s, ol, nl)
+		}
+		f.replaceLocation(stmt.True, ol, nl)
+		f.replaceLocation(stmt.False, ol, nl)
+
+	case *Loop:
+		if loc, ok := stmt.Cond.(Location); ok {
+			if loc == ol {
+				stmt.Cond = nl
+			}
+		}
+		if s, ok := stmt.Cond.(Stmt); ok {
+			f.replaceLocation(s, ol, nl)
+		}
+		f.replaceLocation(stmt.Body, ol, nl)
+		f.replaceLocation(stmt.Post, ol, nl)
 
 	case *AsLocation:
 		if loc, ok := stmt.addr.(Location); ok {
@@ -322,6 +354,8 @@ func (f *Function) replaceLocation(stmt Stmt, ol, nl Location) {
 			}
 		}
 
+	default:
+		panic(fmt.Sprintf("Todo: %s", stmt.String()))
 	}
 
 }
