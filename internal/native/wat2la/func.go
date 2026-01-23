@@ -1255,6 +1255,7 @@ func (p *wat2laWorker) buildFunc_ins(
 		sp0 := stk.DropAny()
 		fmt.Fprintf(w, "    addi.w $zero, $zero, 0 # drop [fp%+d]\n", p.fnWasmR0Base-sp0*8-8)
 		fmt.Fprintln(w)
+
 	case token.INS_SELECT:
 		i := i.(ast.Ins_Select)
 
@@ -1273,41 +1274,40 @@ func (p *wat2laWorker) buildFunc_ins(
 
 		// 注意返回值的顺序
 		// if sp0 != 0 { sp2 } else { sp1 }
+		fmt.Fprintf(w, "    # select\n")
 		switch valType {
 		case token.I32:
-			fmt.Fprintf(w, "    # select\n")
-			fmt.Fprintf(w, "    ld.w $t1, $fp, %d\n", p.fnWasmR0Base-spCondition*8-8)
-			fmt.Fprintf(w, "    ld.w $t2, $fp, %d\n", p.fnWasmR0Base-spValueTrue*8-8)
-			fmt.Fprintf(w, "    ld.w $t3, $fp, %d\n", p.fnWasmR0Base-spValueFalse*8-8)
-			fmt.Fprintf(w, "    masknez $t0, $t2, $t1\n")
-			fmt.Fprintf(w, "    maskeqz $t0, $t3, $t1\n")
-			fmt.Fprintf(w, "    st.w $t0, $fp, %d\n", p.fnWasmR0Base-ret0*8-8)
+			fmt.Fprintf(w, "    ld.w    $t0, $fp, %d\n", p.fnWasmR0Base-spCondition*8-8)
+			fmt.Fprintf(w, "    ld.w    $t1, $fp, %d\n", p.fnWasmR0Base-spValueTrue*8-8)
+			fmt.Fprintf(w, "    ld.w    $t2, $fp, %d\n", p.fnWasmR0Base-spValueFalse*8-8)
+			fmt.Fprintf(w, "    masknez $t3, $t1, $t0\n")
+			fmt.Fprintf(w, "    maskeqz $t4, $t2, $t0\n")
+			fmt.Fprintf(w, "    or      $t0, $t3, $t4\n")
+			fmt.Fprintf(w, "    st.w    $t0, $fp, %d\n", p.fnWasmR0Base-ret0*8-8)
 		case token.I64:
-			fmt.Fprintf(w, "    # select\n")
-			fmt.Fprintf(w, "    ld.w $t1, $fp, %d\n", p.fnWasmR0Base-spCondition*8-8)
-			fmt.Fprintf(w, "    ld.d $t2, $fp, %d\n", p.fnWasmR0Base-spValueTrue*8-8)
-			fmt.Fprintf(w, "    ld.d $t3, $fp, %d\n", p.fnWasmR0Base-spValueFalse*8-8)
-			fmt.Fprintf(w, "    masknez $t0, $t2, $t1\n")
-			fmt.Fprintf(w, "    maskeqz $t0, $t3, $t1\n")
-			fmt.Fprintf(w, "    st.d $t0, $fp, %d\n", p.fnWasmR0Base-ret0*8-8)
+			fmt.Fprintf(w, "    ld.w    $t0, $fp, %d\n", p.fnWasmR0Base-spCondition*8-8)
+			fmt.Fprintf(w, "    ld.d    $t1, $fp, %d\n", p.fnWasmR0Base-spValueTrue*8-8)
+			fmt.Fprintf(w, "    ld.d    $t2, $fp, %d\n", p.fnWasmR0Base-spValueFalse*8-8)
+			fmt.Fprintf(w, "    masknez $t3, $t1, $t0\n")
+			fmt.Fprintf(w, "    maskeqz $t4, $t2, $t0\n")
+			fmt.Fprintf(w, "    or      $t0, $t3, $t4\n")
+			fmt.Fprintf(w, "    st.d    $t0, $fp, %d\n", p.fnWasmR0Base-ret0*8-8)
 		case token.F32:
-			// TODO: 浮点数选择需要验证
-			fmt.Fprintf(w, "    # select\n")
-			fmt.Fprintf(w, "    ld.w $t1, $fp, %d\n", p.fnWasmR0Base-spCondition*8-8)
-			fmt.Fprintf(w, "    fld.s $ft2, $fp, %d\n", p.fnWasmR0Base-spValueTrue*8-8)
-			fmt.Fprintf(w, "    fld.s $ft3, $fp, %d\n", p.fnWasmR0Base-spValueFalse*8-8)
-			fmt.Fprintf(w, "    movgr2cf fcc0, $t1 # TODO\n")
-			fmt.Fprintf(w, "    fsel $ft0, $ft2, $ft3\n")
-			fmt.Fprintf(w, "    fst.s $t1, $fp, %d\n", p.fnWasmR0Base-ret0*8-8)
+			fmt.Fprintf(w, "    ld.w    $t0, $fp, %d\n", p.fnWasmR0Base-spCondition*8-8)
+			fmt.Fprintf(w, "    ld.w    $t1, $fp, %d\n", p.fnWasmR0Base-spValueTrue*8-8)
+			fmt.Fprintf(w, "    ld.w    $t2, $fp, %d\n", p.fnWasmR0Base-spValueFalse*8-8)
+			fmt.Fprintf(w, "    masknez $t3, $t1, $t0\n")
+			fmt.Fprintf(w, "    maskeqz $t4, $t2, $t0\n")
+			fmt.Fprintf(w, "    or      $t0, $t3, $t4\n")
+			fmt.Fprintf(w, "    st.w    $t0, $fp, %d\n", p.fnWasmR0Base-ret0*8-8)
 		case token.F64:
-			// TODO: 浮点数选择需要验证
-			fmt.Fprintf(w, "    # select\n")
-			fmt.Fprintf(w, "    ld.w $t1, $fp, %d\n", p.fnWasmR0Base-spCondition*8-8)
-			fmt.Fprintf(w, "    fld.d $ft2, $fp, %d\n", p.fnWasmR0Base-spValueTrue*8-8)
-			fmt.Fprintf(w, "    fld.d $ft3, $fp, %d\n", p.fnWasmR0Base-spValueFalse*8-8)
-			fmt.Fprintf(w, "    movgr2cf fcc0, $t1 # TODO\n")
-			fmt.Fprintf(w, "    fsel $ft0, $ft2, $ft3\n")
-			fmt.Fprintf(w, "    fst.d $t1, $fp, %d\n", p.fnWasmR0Base-ret0*8-8)
+			fmt.Fprintf(w, "    ld.w    $t0, $fp, %d\n", p.fnWasmR0Base-spCondition*8-8)
+			fmt.Fprintf(w, "    ld.d    $t1, $fp, %d\n", p.fnWasmR0Base-spValueTrue*8-8)
+			fmt.Fprintf(w, "    ld.d    $t2, $fp, %d\n", p.fnWasmR0Base-spValueFalse*8-8)
+			fmt.Fprintf(w, "    masknez $t3, $t1, $t0\n")
+			fmt.Fprintf(w, "    maskeqz $t4, $t2, $t0\n")
+			fmt.Fprintf(w, "    or      $t0, $t3, $t4\n")
+			fmt.Fprintf(w, "    st.d    $t0, $fp, %d\n", p.fnWasmR0Base-ret0*8-8)
 		default:
 			unreachable()
 		}
@@ -1762,6 +1762,7 @@ func (p *wat2laWorker) buildFunc_ins(
 		fmt.Fprintf(w, "    # memory.size\n")
 		fmt.Fprintf(w, "    pcalau12i $t0, %%pc_hi20(%s)\n", kMemoryPagesName)
 		fmt.Fprintf(w, "    addi.d    $t0, $t0, %%pc_lo12(%s)\n", kMemoryPagesName)
+		fmt.Fprintf(w, "    ld.w      $t0, $t0, 0\n")
 		fmt.Fprintf(w, "    st.w      $t0, $fp, %d\n", sp0)
 		fmt.Fprintln(w)
 
@@ -1769,7 +1770,10 @@ func (p *wat2laWorker) buildFunc_ins(
 		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.I32) - 8
 		ret0 := p.fnWasmR0Base - 8*stk.Push(token.I32) - 8
 
-		// 最大内存在启动时就分配好, 这里只是调整全局变量
+		labelSuffix := p.genNextId()
+
+		labelElse := p.makeLabelId(kLabelPrefixName_else, "", labelSuffix)
+		labelEnd := p.makeLabelId(kLabelPrefixName_end, "", labelSuffix)
 
 		fmt.Fprintf(w, "    # memory.grow\n")
 		fmt.Fprintf(w, "    pcalau12i $t0, %%pc_hi20(%s)\n", kMemoryPagesName)
@@ -1778,15 +1782,21 @@ func (p *wat2laWorker) buildFunc_ins(
 		fmt.Fprintf(w, "    pcalau12i $t1, %%pc_hi20(%s)\n", kMemoryMaxPagesName)
 		fmt.Fprintf(w, "    addi.d    $t1, $t1, %%pc_lo12(%s)\n", kMemoryMaxPagesName)
 
-		fmt.Fprintf(w, "    ld.w      t3, $fp, %d\n", sp0)
-		fmt.Fprintf(w, "    add.d     t3, t3, $t1\n")
+		fmt.Fprintf(w, "    ld.w      $t2, $fp, %d\n", sp0)
+		fmt.Fprintf(w, "    ld.w      $t3, $t0, 0 # pageNum\n")
+		fmt.Fprintf(w, "    ld.w      $t4, $t1, 0 # maxPageNum\n")
+		fmt.Fprintf(w, "    add.w     $t2, $t2, $t3\n")
 
-		fmt.Fprintf(w, "    blt       $t1, t3, 16 # goto L.xxx.else\n")
-		fmt.Fprintf(w, "    st.w      t3, %s, 0\n", kMemoryPagesName)
-		fmt.Fprintf(w, "    st.w      $t0, $fp, %d\n", ret0)
-		fmt.Fprintf(w, "    b         8          # goto L.xxx.end\n")
-		fmt.Fprintf(w, "    lui.w     t4, -1     # L.xxx.else\n")
-		fmt.Fprintf(w, "    st.w      t4, $fp, %d # L.xxx.end\n", ret0)
+		fmt.Fprintf(w, "    blt       $t4, $t2, %s # jmp if t2 > maxPageNum \n", labelElse)
+		fmt.Fprintf(w, "    st.w      $t2, $t0, 0 # update pageNum\n")
+		fmt.Fprintf(w, "    st.w      $t3, $fp, %d\n", ret0)
+		fmt.Fprintf(w, "    b         %s\n", labelEnd)
+
+		p.gasFuncLabel(w, labelElse)
+		fmt.Fprintf(w, "    addi.w $t0, $zero, -1\n")
+		fmt.Fprintf(w, "    st.w   $t0, $fp, %d\n", ret0)
+
+		p.gasFuncLabel(w, labelEnd)
 		fmt.Fprintln(w)
 
 	case token.INS_MEMORY_INIT:
@@ -1797,15 +1807,29 @@ func (p *wat2laWorker) buildFunc_ins(
 		dst := p.fnWasmR0Base - 8*stk.Pop(token.I32) - 8
 
 		fmt.Fprintf(w, "    # memory.init")
-		fmt.Fprintf(w, "    ld.d $a0, $fp, %d\n", dst)
-		fmt.Fprintf(w, "    ld.d $a1, $fp, %d\n", off)
-		fmt.Fprintf(w, "    ld.d $a2, $fp, %d\n", len)
 
-		dataName := fmt.Sprintf("$data.%08x.data", p.m.Data[i.DataIdx].Offset)
-		fmt.Fprintf(w, "    pcalau12i $t0, %%pc_hi20(%s)\n", dataName)
-		fmt.Fprintf(w, "    addi.d    $t0, $t0, %%pc_lo12(%s)\n", dataName)
-		fmt.Fprintf(w, "    add.d     $a1, $a1, $t0\n")
-		fmt.Fprintf(w, "    bl        $builtin.memcpy\n")
+		// 内存的开始地址
+		fmt.Fprintf(w, "    pcalau12i $t0, %%pc_hi20(%s)\n", kMemoryAddrName)
+		fmt.Fprintf(w, "    addi.d    $t0, $t0, %%pc_lo12(%s)\n", kMemoryAddrName)
+		fmt.Fprintf(w, "    ld.d      $t0, $t0, 0\n")
+
+		// 字符串是一个地址, 不需要再加载了
+		fmt.Fprintf(w, "    pcalau12i $t1, %%pc_hi20(%s%d)\n", kMemoryDataPtrPrefix, i.DataIdx)
+		fmt.Fprintf(w, "    addi.d    $t1, $t1, %%pc_lo12(%s%d)\n", kMemoryDataPtrPrefix, i.DataIdx)
+
+		// 加载函数地址
+		fmt.Fprintf(w, "    pcalau12i $t2, %%pc_hi20(%s)\n", kRuntimeMemcpy)
+		fmt.Fprintf(w, "    addi.d    $t2, $t2, %%pc_lo12(%s)\n", kRuntimeMemcpy)
+
+		// 准备调用参数
+		fmt.Fprintf(w, "    ld.w  $a0, $fp, %d\n", dst)
+		fmt.Fprintf(w, "    add.d $a0, $a0, $t0\n")
+		fmt.Fprintf(w, "    ld.w  $a1, $fp, %d\n", off)
+		fmt.Fprintf(w, "    add.d $a1, $a1, $t1\n")
+		fmt.Fprintf(w, "    ld.w  $a2, $fp, %d\n", len)
+
+		// 调用函数
+		fmt.Fprintf(w, "    jirl  $ra, $t2, 0 # %s\n", kRuntimeMemcpy)
 		fmt.Fprintln(w)
 
 	case token.INS_MEMORY_COPY:
@@ -1814,10 +1838,25 @@ func (p *wat2laWorker) buildFunc_ins(
 		dst := p.fnWasmR0Base - 8*stk.Pop(token.I32) - 8
 
 		fmt.Fprintf(w, "    # memory.copy")
-		fmt.Fprintf(w, "    ld.d $a0, $fp, %d\n", dst)
-		fmt.Fprintf(w, "    ld.d $a1, $fp, %d\n", src)
-		fmt.Fprintf(w, "    ld.d $a2, $fp, %d\n", len)
-		fmt.Fprintf(w, "    bl   $builtin.memcpy\n")
+
+		// 内存的开始地址
+		fmt.Fprintf(w, "    pcalau12i $t0, %%pc_hi20(%s)\n", kMemoryAddrName)
+		fmt.Fprintf(w, "    addi.d    $t0, $t0, %%pc_lo12(%s)\n", kMemoryAddrName)
+		fmt.Fprintf(w, "    ld.d      $t0, $t0, 0\n")
+
+		// 加载函数地址
+		fmt.Fprintf(w, "    pcalau12i $t1, %%pc_hi20(%s)\n", kRuntimeMemmove)
+		fmt.Fprintf(w, "    addi.d    $t1, $t1, %%pc_lo12(%s)\n", kRuntimeMemmove)
+
+		// 准备调用参数
+		fmt.Fprintf(w, "    ld.w  $a0, $fp, %d\n", dst)
+		fmt.Fprintf(w, "    add.d $a0, $a0, $t0\n")
+		fmt.Fprintf(w, "    ld.w  $a1, $fp, %d\n", src)
+		fmt.Fprintf(w, "    add.d $a1, $a1, $t0\n")
+		fmt.Fprintf(w, "    ld.w  $a2, $fp, %d\n", len)
+
+		// 调用函数
+		fmt.Fprintf(w, "    jirl  $ra, $t1, 0 # %s\n", kRuntimeMemmove)
 		fmt.Fprintln(w)
 
 	case token.INS_MEMORY_FILL:
@@ -1826,10 +1865,24 @@ func (p *wat2laWorker) buildFunc_ins(
 		dst := p.fnWasmR0Base - 8*stk.Pop(token.I32) - 8
 
 		fmt.Fprintf(w, "    # memory.fill")
-		fmt.Fprintf(w, "    ld.d $a0, $fp, %d\n", dst)
-		fmt.Fprintf(w, "    ld.w $a1, $fp, %d\n", val)
-		fmt.Fprintf(w, "    ld.d $a2, $fp, %d\n", len)
-		fmt.Fprintf(w, "    bl   $builtin.memset\n")
+
+		// 内存的开始地址
+		fmt.Fprintf(w, "    pcalau12i $t0, %%pc_hi20(%s)\n", kMemoryAddrName)
+		fmt.Fprintf(w, "    addi.d    $t0, $t0, %%pc_lo12(%s)\n", kMemoryAddrName)
+		fmt.Fprintf(w, "    ld.d      $t0, $t0, 0\n")
+
+		// 加载函数地址
+		fmt.Fprintf(w, "    pcalau12i $t1, %%pc_hi20(%s)\n", kRuntimeMemset)
+		fmt.Fprintf(w, "    addi.d    $t1, $t1, %%pc_lo12(%s)\n", kRuntimeMemset)
+
+		// 准备调用参数
+		fmt.Fprintf(w, "    ld.w  $a0, $fp, %d\n", dst)
+		fmt.Fprintf(w, "    add.d $a0, $a0, $t0\n")
+		fmt.Fprintf(w, "    ld.w  $a1, $fp, %d\n", val)
+		fmt.Fprintf(w, "    ld.w  $a2, $fp, %d\n", len)
+
+		// 调用函数
+		fmt.Fprintf(w, "    jirl  $ra, $t1, 0 # %s\n", kRuntimeMemset)
 		fmt.Fprintln(w)
 
 	case token.INS_I32_CONST:

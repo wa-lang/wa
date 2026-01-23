@@ -1804,7 +1804,7 @@ func (p *wat2X64Worker) buildFunc_ins(
 		fmt.Fprintf(w, "    mov  %s, [rip + %s]\n", regArg0, kMemoryAddrName)
 		fmt.Fprintf(w, "    mov  eax, dword ptr [rbp%+d]\n", dst)
 		fmt.Fprintf(w, "    add  %s, rax\n", regArg0)
-		fmt.Fprintf(w, "    mov  %s, [rip + %s%d]\n", regArg1, kMemoryDataPtrPrefix, i.DataIdx)
+		fmt.Fprintf(w, "    lea  %s, [rip + %s%d]\n", regArg1, kMemoryDataPtrPrefix, i.DataIdx)
 		fmt.Fprintf(w, "    mov  eax, dword ptr [rbp%+d]\n", off)
 		fmt.Fprintf(w, "    add  %s, rax\n", regArg1)
 		fmt.Fprintf(w, "    mov  eax, dword ptr [rbp%+d]\n", len)
