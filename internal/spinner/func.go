@@ -59,6 +59,8 @@ func (b *Builder) BuildFuncLit(lit *ast.FuncLit) *wire.Function {
 // 从 Func 中创建 wire.Function
 func (b *Builder) buildFunc(f *Func) (fn *wire.Function) {
 	fn = b.module.NewFunction()
+	fn.StartPos = f.pos
+	fn.EndPos = f.end
 
 	if f.body == nil {
 		if recv := f.sig.Recv(); recv != nil {

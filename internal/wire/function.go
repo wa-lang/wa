@@ -28,6 +28,7 @@ type Function struct {
 	scope Scope  // 匿名函数的父域为 Block，全局（非匿名）函数的父域为 Module
 	types *Types // 该函数所属 Module 的类型库，切勿手动修改
 
+	StartPos, EndPos int
 }
 
 // Scope 接口相关
@@ -74,8 +75,6 @@ func (f *Function) Format(tab string, sb *strings.Builder) {
 		if i > 0 {
 			sb.WriteString(", ")
 		}
-		sb.WriteString(v.Name())
-		sb.WriteRune(' ')
 		sb.WriteString(v.DataType().Name())
 	}
 	sb.WriteRune(')')
@@ -156,20 +155,36 @@ func (f *Function) EndBody() {
 	f.StartBody()
 
 	// 逃逸参数置换：
-	for _, param := range f.params {
+	for i, param := range f.params {
 		if param.LocationKind() != LocationKindRegister {
-			_, refMode := param.refType.(*Ref)
-			loc := f.Body.AddLocal("$"+param.name, param.dataType, param.pos, param.object, refMode)
-			loc.location = param.location
+			np := *param
+			np.Stringer = &np
+			np.location = LocationKindRegister
+			np.setScope(f)
 
-			param.location = LocationKindRegister
-			f.Body.EmitStore(loc, f.Body.NewLoad(param, param.pos), param.pos)
-
-			stmtReplaceLocation(body, param, loc)
+			param.name = "$" + param.name
+			f.Body.emit(param)
+			f.Body.EmitStore(param, f.Body.NewLoad(&np, np.pos), np.pos)
+			f.params[i] = &np
 		}
 	}
 
+	// 返回置换
+	for _, ret := range f.results {
+		f.Body.emit(ret)
+	}
+	f.retRepalce(body)
+
 	f.Body.emit(body)
+
+	// Todo: defer
+
+	// 插入真返回指令
+	var ret_exprs []Expr
+	for _, r := range f.results {
+		ret_exprs = append(ret_exprs, f.Body.NewLoad(r, f.EndPos))
+	}
+	f.Body.EmitReturn(ret_exprs, f.EndPos)
 
 	{
 		var sb strings.Builder
@@ -279,6 +294,134 @@ func stmtReplaceLocation(stmt Stmt, ol, nl Location) {
 
 		for i, arg := range call_common.Args {
 			call_common.Args[i] = exprReplaceLocation(arg, ol, nl)
+		}
+
+	default:
+		panic(fmt.Sprintf("Todo: %s", stmt.String()))
+	}
+
+}
+
+func (f *Function) retRepalce(stmt Stmt) {
+	switch stmt := stmt.(type) {
+	case *Block:
+		if len(stmt.Stmts) == 0 {
+			return
+		}
+
+		var i int
+		for i = 0; i < len(stmt.Stmts)-1; i++ {
+			f.retRepalce(stmt.Stmts[i])
+		}
+
+		if ret_stmt, ok := stmt.Stmts[i].(*Return); ok {
+			br := &Br{}
+			br.Stringer = br
+			br.Label = _FN_START
+			br.pos = ret_stmt.pos
+			br.setScope(stmt)
+			if len(f.results) > 0 && len(ret_stmt.Results) > 0 {
+				store := &Store{}
+				store.Stringer = store
+				for _, loc := range f.results {
+					store.Loc = append(store.Loc, loc)
+				}
+				store.Val = ret_stmt.Results
+				store.pos = ret_stmt.pos
+				store.setScope(stmt)
+
+				stmt.Stmts[i] = store
+				stmt.Stmts = append(stmt.Stmts, br)
+			} else {
+				stmt.Stmts[i] = br
+			}
+		}
+
+	case *Alloc:
+		return
+
+	case *Load:
+		if s, ok := stmt.Loc.(Stmt); ok {
+			f.retRepalce(s)
+		}
+
+	case *Store:
+		for _, loc := range stmt.Loc {
+			if s, ok := loc.(Stmt); ok {
+				f.retRepalce(s)
+			}
+		}
+
+		for _, val := range stmt.Val {
+			if s, ok := val.(Stmt); ok {
+				f.retRepalce(s)
+			}
+		}
+
+	case *Br:
+		return
+
+	case *Return:
+		panic("Return can only be at the end of a block")
+
+	case *Unop:
+		if s, ok := stmt.X.(Stmt); ok {
+			f.retRepalce(s)
+		}
+
+	case *Biop:
+		if s, ok := stmt.X.(Stmt); ok {
+			f.retRepalce(s)
+		}
+		if s, ok := stmt.Y.(Stmt); ok {
+			f.retRepalce(s)
+		}
+
+	case *If:
+		if s, ok := stmt.Cond.(Stmt); ok {
+			f.retRepalce(s)
+		}
+		f.retRepalce(stmt.True)
+		f.retRepalce(stmt.False)
+
+	case *Loop:
+		if s, ok := stmt.Cond.(Stmt); ok {
+			f.retRepalce(s)
+		}
+		f.retRepalce(stmt.Body)
+		f.retRepalce(stmt.Post)
+
+	case *AsLocation:
+		if s, ok := stmt.addr.(Stmt); ok {
+			f.retRepalce(s)
+		}
+
+	case *Call:
+		var call_common *CallCommon
+		switch call := stmt.Callee.(type) {
+		case *BuiltinCall:
+			call_common = &call.CallCommon
+
+		case *StaticCall:
+			call_common = &call.CallCommon
+
+		case *MethodCall:
+			call_common = &call.CallCommon
+			if s, ok := call.Recv.(Stmt); ok {
+				f.retRepalce(s)
+			}
+
+		case *InterfaceCall:
+			call_common = &call.CallCommon
+			if s, ok := call.Interface.(Stmt); ok {
+				f.retRepalce(s)
+			}
+		}
+
+		for _, arg := range call_common.Args {
+			if s, ok := arg.(Stmt); ok {
+				f.retRepalce(s)
+			}
 		}
 
 	default:

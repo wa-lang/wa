@@ -268,7 +268,7 @@ func (b *Block) EmitBr(label string, pos int) *Br {
 }
 
 /**************************************
-Return: Return 指令
+Return: Return 指令，函数返回，该指令只能出现在 Block 末尾
 **************************************/
 type Return struct {
 	aStmt
