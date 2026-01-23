@@ -2495,12 +2495,11 @@ func (p *wat2laWorker) buildFunc_ins(
 		ret0 := p.fnWasmR0Base - 8*stk.Push(token.I32) - 8
 
 		fmt.Fprintf(w, "    # f32.eq\n")
-		fmt.Fprintf(w, "    lui.w   $t0, 1\n")
-		fmt.Fprintf(w, "    ld.w    $t1, $fp, %d\n", sp0)
-		fmt.Fprintf(w, "    ld.w    $t2, $fp, %d\n", sp1)
-		fmt.Fprintf(w, "    sub.w   $t1, $t1, $t2\n")
-		fmt.Fprintf(w, "    maskeqz $t1, $t1, $t2\n")
-		fmt.Fprintf(w, "    st.w    $t1, $fp, %d\n", ret0)
+		fmt.Fprintf(w, "    fld.s      $ft0, $fp, %d\n", sp1)
+		fmt.Fprintf(w, "    fld.s      $ft1, $fp, %d\n", sp0)
+		fmt.Fprintf(w, "    fcmp.ceq.s $fcc0, $ft0, $ft1\n")
+		fmt.Fprintf(w, "    movcf2gr   $t0, $fcc0\n")
+		fmt.Fprintf(w, "    st.w       $t0, $fp, %d\n", ret0)
 		fmt.Fprintln(w)
 
 	case token.INS_F32_NE:
@@ -2509,12 +2508,11 @@ func (p *wat2laWorker) buildFunc_ins(
 		ret0 := p.fnWasmR0Base - 8*stk.Push(token.I32) - 8
 
 		fmt.Fprintf(w, "    # f32.ne\n")
-		fmt.Fprintf(w, "    lui.w   $t0, 1\n")
-		fmt.Fprintf(w, "    ld.w    $t1, $fp, %d\n", sp1)
-		fmt.Fprintf(w, "    ld.w    $t2, $fp, %d\n", sp0)
-		fmt.Fprintf(w, "    sub.w   $t1, $t1, $t2\n")
-		fmt.Fprintf(w, "    masknez $t1, $t1, $t2\n")
-		fmt.Fprintf(w, "    st.w    $t1, $fp, %d\n", ret0)
+		fmt.Fprintf(w, "    fld.s       $ft0, $fp, %d\n", sp1)
+		fmt.Fprintf(w, "    fld.s       $ft1, $fp, %d\n", sp0)
+		fmt.Fprintf(w, "    fcmp.cune.s $fcc0, $ft0, $ft1\n")
+		fmt.Fprintf(w, "    movcf2gr    $t0, $fcc0\n")
+		fmt.Fprintf(w, "    st.w        $t0, $fp, %d\n", ret0)
 		fmt.Fprintln(w)
 
 	case token.INS_F32_LT:
@@ -2523,10 +2521,11 @@ func (p *wat2laWorker) buildFunc_ins(
 		ret0 := p.fnWasmR0Base - 8*stk.Push(token.I32) - 8
 
 		fmt.Fprintf(w, "    # f32.lt\n")
-		fmt.Fprintf(w, "    ld.w    $t1, $fp, %d\n", sp1)
-		fmt.Fprintf(w, "    ld.w    $t2, $fp, %d\n", sp0)
-		fmt.Fprintf(w, "    slt     $t0, $t1, $t2\n")
-		fmt.Fprintf(w, "    st.w    $t0, $fp, %d\n", ret0)
+		fmt.Fprintf(w, "    fld.s      $ft0, $fp, %d\n", sp1)
+		fmt.Fprintf(w, "    fld.s      $ft1, $fp, %d\n", sp0)
+		fmt.Fprintf(w, "    fcmp.clt.s $fcc0, $ft0, $ft1\n")
+		fmt.Fprintf(w, "    movcf2gr   $t0, $fcc0\n")
+		fmt.Fprintf(w, "    st.w       $t0, $fp, %d\n", ret0)
 		fmt.Fprintln(w)
 
 	case token.INS_F32_GT:
@@ -2535,10 +2534,11 @@ func (p *wat2laWorker) buildFunc_ins(
 		ret0 := p.fnWasmR0Base - 8*stk.Push(token.I32) - 8
 
 		fmt.Fprintf(w, "    # f32.gt\n")
-		fmt.Fprintf(w, "    ld.w    $t1, $fp, %d\n", sp1)
-		fmt.Fprintf(w, "    ld.w    $t2, $fp, %d\n", sp0)
-		fmt.Fprintf(w, "    slt     $t1, $t0, $t2\n")
-		fmt.Fprintf(w, "    st.w    $t0, $fp, %d\n", ret0)
+		fmt.Fprintf(w, "    fld.s      $ft0, $fp, %d\n", sp1)
+		fmt.Fprintf(w, "    fld.s      $ft1, $fp, %d\n", sp0)
+		fmt.Fprintf(w, "    fcmp.clt.s $fcc0, $ft1, $ft0\n")
+		fmt.Fprintf(w, "    movcf2gr   $t0, $fcc0\n")
+		fmt.Fprintf(w, "    st.w       $t0, $fp, %d\n", ret0)
 		fmt.Fprintln(w)
 
 	case token.INS_F32_LE:
@@ -2547,10 +2547,11 @@ func (p *wat2laWorker) buildFunc_ins(
 		ret0 := p.fnWasmR0Base - 8*stk.Push(token.I32) - 8
 
 		fmt.Fprintf(w, "    # f32.le\n")
-		fmt.Fprintf(w, "    ld.w    $t1, $fp, %d\n", sp1)
-		fmt.Fprintf(w, "    ld.w    $t2, $fp, %d\n", sp0)
-		fmt.Fprintf(w, "    slt     $t1, $t0, $t2\n")
-		fmt.Fprintf(w, "    st.w    $t0, $fp, %d\n", ret0)
+		fmt.Fprintf(w, "    fld.s      $ft0, $fp, %d\n", sp1)
+		fmt.Fprintf(w, "    fld.s      $ft1, $fp, %d\n", sp0)
+		fmt.Fprintf(w, "    fcmp.cle.s $fcc0, $ft0, $ft1\n")
+		fmt.Fprintf(w, "    movcf2gr   $t0, $fcc0\n")
+		fmt.Fprintf(w, "    st.w       $t0, $fp, %d\n", ret0)
 		fmt.Fprintln(w)
 
 	case token.INS_F32_GE:
@@ -2559,10 +2560,11 @@ func (p *wat2laWorker) buildFunc_ins(
 		ret0 := p.fnWasmR0Base - 8*stk.Push(token.I32) - 8
 
 		fmt.Fprintf(w, "    # f32.ge\n")
-		fmt.Fprintf(w, "    ld.w    $t1, $fp, %d\n", sp1)
-		fmt.Fprintf(w, "    ld.w    $t2, $fp, %d\n", sp0)
-		fmt.Fprintf(w, "    slt     $t1, $t0, $t2\n")
-		fmt.Fprintf(w, "    st.w    $t0, $fp, %d\n", ret0)
+		fmt.Fprintf(w, "    fld.s      $ft0, $fp, %d\n", sp1)
+		fmt.Fprintf(w, "    fld.s      $ft1, $fp, %d\n", sp0)
+		fmt.Fprintf(w, "    fcmp.cle.s $fcc0, $ft1, $ft0\n")
+		fmt.Fprintf(w, "    movcf2gr   $t0, $fcc0\n")
+		fmt.Fprintf(w, "    st.w       $t0, $fp, %d\n", ret0)
 		fmt.Fprintln(w)
 
 	case token.INS_F64_EQ:
@@ -2571,12 +2573,11 @@ func (p *wat2laWorker) buildFunc_ins(
 		ret0 := p.fnWasmR0Base - 8*stk.Push(token.I32) - 8
 
 		fmt.Fprintf(w, "    # f64.eq\n")
-		fmt.Fprintf(w, "    lui.w   $t0, 1\n")
-		fmt.Fprintf(w, "    ld.w    $t1, $fp, %d\n", sp1)
-		fmt.Fprintf(w, "    ld.w    $t2, $fp, %d\n", sp0)
-		fmt.Fprintf(w, "    sub.w   $t1, $t1, $t2\n")
-		fmt.Fprintf(w, "    maskeqz $t1, $t1, $t2\n")
-		fmt.Fprintf(w, "    st.w    $t1, $fp, %d\n", ret0)
+		fmt.Fprintf(w, "    fld.d      $ft0, $fp, %d\n", sp1)
+		fmt.Fprintf(w, "    fld.d      $ft1, $fp, %d\n", sp0)
+		fmt.Fprintf(w, "    fcmp.ceq.d $fcc0, $ft0, $ft1\n")
+		fmt.Fprintf(w, "    movcf2gr   $t0, $fcc0\n")
+		fmt.Fprintf(w, "    st.w       $t0, $fp, %d\n", ret0)
 		fmt.Fprintln(w)
 
 	case token.INS_F64_NE:
@@ -2585,12 +2586,11 @@ func (p *wat2laWorker) buildFunc_ins(
 		ret0 := p.fnWasmR0Base - 8*stk.Push(token.I32) - 8
 
 		fmt.Fprintf(w, "    # f64.ne\n")
-		fmt.Fprintf(w, "    lui.w   $t0, 1\n")
-		fmt.Fprintf(w, "    ld.w    $t1, $fp, %d\n", sp1)
-		fmt.Fprintf(w, "    ld.w    $t2, $fp, %d\n", sp0)
-		fmt.Fprintf(w, "    sub.w   $t1, $t1, $t2\n")
-		fmt.Fprintf(w, "    masknez $t1, $t1, $t2\n")
-		fmt.Fprintf(w, "    st.w    $t1, $fp, %d\n", ret0)
+		fmt.Fprintf(w, "    fld.d       $ft0, $fp, %d\n", sp1)
+		fmt.Fprintf(w, "    fld.d       $ft1, $fp, %d\n", sp0)
+		fmt.Fprintf(w, "    fcmp.cune.d $fcc0, $ft0, $ft1\n")
+		fmt.Fprintf(w, "    movcf2gr    $t0, $fcc0\n")
+		fmt.Fprintf(w, "    st.w        $t0, $fp, %d\n", ret0)
 		fmt.Fprintln(w)
 
 	case token.INS_F64_LT:
@@ -2599,10 +2599,11 @@ func (p *wat2laWorker) buildFunc_ins(
 		ret0 := p.fnWasmR0Base - 8*stk.Push(token.I32) - 8
 
 		fmt.Fprintf(w, "    # f64.lt\n")
-		fmt.Fprintf(w, "    ld.w    $t1, $fp, %d\n", sp1)
-		fmt.Fprintf(w, "    ld.w    $t2, $fp, %d\n", sp0)
-		fmt.Fprintf(w, "    slt     $t0, $t1, $t2\n")
-		fmt.Fprintf(w, "    st.w    $t0, $fp, %d\n", ret0)
+		fmt.Fprintf(w, "    fld.d      $ft0, $fp, %d\n", sp1)
+		fmt.Fprintf(w, "    fld.d      $ft1, $fp, %d\n", sp0)
+		fmt.Fprintf(w, "    fcmp.clt.d $fcc0, $ft0, $ft1\n")
+		fmt.Fprintf(w, "    movcf2gr   $t0, $fcc0\n")
+		fmt.Fprintf(w, "    st.w       $t0, $fp, %d\n", ret0)
 		fmt.Fprintln(w)
 
 	case token.INS_F64_GT:
@@ -2611,10 +2612,11 @@ func (p *wat2laWorker) buildFunc_ins(
 		ret0 := p.fnWasmR0Base - 8*stk.Push(token.I32) - 8
 
 		fmt.Fprintf(w, "    # f64.gt\n")
-		fmt.Fprintf(w, "    ld.w    $t1, $fp, %d\n", sp1)
-		fmt.Fprintf(w, "    ld.w    $t2, $fp, %d\n", sp0)
-		fmt.Fprintf(w, "    slt     $t1, $t0, $t2\n")
-		fmt.Fprintf(w, "    st.w    $t0, $fp, %d\n", ret0)
+		fmt.Fprintf(w, "    fld.d      $ft0, $fp, %d\n", sp1)
+		fmt.Fprintf(w, "    fld.d      $ft1, $fp, %d\n", sp0)
+		fmt.Fprintf(w, "    fcmp.clt.d $fcc0, $ft1, $ft0\n")
+		fmt.Fprintf(w, "    movcf2gr   $t0, $fcc0\n")
+		fmt.Fprintf(w, "    st.w       $t0, $fp, %d\n", ret0)
 		fmt.Fprintln(w)
 
 	case token.INS_F64_LE:
@@ -2623,10 +2625,11 @@ func (p *wat2laWorker) buildFunc_ins(
 		ret0 := p.fnWasmR0Base - 8*stk.Push(token.I32) - 8
 
 		fmt.Fprintf(w, "    # f64.le\n")
-		fmt.Fprintf(w, "    ld.w    $t1, $fp, %d\n", sp1)
-		fmt.Fprintf(w, "    ld.w    $t2, $fp, %d\n", sp0)
-		fmt.Fprintf(w, "    slt     $t1, $t0, $t2\n")
-		fmt.Fprintf(w, "    st.w    $t0, $fp, %d\n", ret0)
+		fmt.Fprintf(w, "    fld.d      $ft0, $fp, %d\n", sp1)
+		fmt.Fprintf(w, "    fld.d      $ft1, $fp, %d\n", sp0)
+		fmt.Fprintf(w, "    fcmp.cle.d $fcc0, $ft0, $ft1\n")
+		fmt.Fprintf(w, "    movcf2gr   $t0, $fcc0\n")
+		fmt.Fprintf(w, "    st.w       $t0, $fp, %d\n", ret0)
 		fmt.Fprintln(w)
 
 	case token.INS_F64_GE:
@@ -2635,10 +2638,11 @@ func (p *wat2laWorker) buildFunc_ins(
 		ret0 := p.fnWasmR0Base - 8*stk.Push(token.I32) - 8
 
 		fmt.Fprintf(w, "    # f64.ge\n")
-		fmt.Fprintf(w, "    ld.w    $t1, $fp, %d\n", sp1)
-		fmt.Fprintf(w, "    ld.w    $t2, $fp, %d\n", sp0)
-		fmt.Fprintf(w, "    slt     $t1, $t0, $t2\n")
-		fmt.Fprintf(w, "    st.w    $t0, $fp, %d\n", ret0)
+		fmt.Fprintf(w, "    fld.d      $ft0, $fp, %d\n", sp1)
+		fmt.Fprintf(w, "    fld.d      $ft1, $fp, %d\n", sp0)
+		fmt.Fprintf(w, "    fcmp.cle.d $fcc0, $ft1, $ft0\n")
+		fmt.Fprintf(w, "    movcf2gr   $t0, $fcc0\n")
+		fmt.Fprintf(w, "    st.w       $t0, $fp, %d\n", ret0)
 		fmt.Fprintln(w)
 
 	case token.INS_I32_CLZ:
