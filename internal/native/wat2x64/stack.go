@@ -21,6 +21,17 @@ type valueTypeStack struct {
 	maxStackPointer    int
 }
 
+func (s *valueTypeStack) CopyFrom(q *valueTypeStack) {
+	*s = *q
+	s.stack = append([]token.Token{}, q.stack...)
+}
+
+func (s *valueTypeStack) Clone() *valueTypeStack {
+	v := *s
+	v.stack = append([]token.Token{}, s.stack...)
+	return &v
+}
+
 func (s *valueTypeStack) Len() int {
 	return len(s.stack)
 }
