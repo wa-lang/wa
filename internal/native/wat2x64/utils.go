@@ -5,6 +5,8 @@ package wat2x64
 
 import (
 	"fmt"
+	"reflect"
+	"unsafe"
 
 	nativeast "wa-lang.org/wa/internal/native/ast"
 	nativetok "wa-lang.org/wa/internal/native/token"
@@ -75,4 +77,10 @@ func wat2nativeFunc(fnName string, fnType *ast.FuncType, fnLocals []ast.Field) *
 		}
 	}
 	return fnNative
+}
+
+func isSameInstList(s1, s2 []ast.Instruction) bool {
+	h1 := (*reflect.SliceHeader)(unsafe.Pointer(&s1))
+	h2 := (*reflect.SliceHeader)(unsafe.Pointer(&s2))
+	return h1.Data == h2.Data
 }

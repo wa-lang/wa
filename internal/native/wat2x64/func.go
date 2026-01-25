@@ -60,14 +60,6 @@ func (p *wat2X64Worker) buildFuncs(w io.Writer) error {
 func (p *wat2X64Worker) buildFunc_body(w io.Writer, fn *ast.Func) error {
 	p.Tracef("buildFunc_body: %s\n", fn.Name)
 
-	var bufHeader bytes.Buffer
-
-	if p.m.Memory != nil {
-		addrType := p.m.Memory.AddrType
-		assert(addrType == token.I32 || addrType == token.I64)
-	}
-
-	assert(p.m.Memory.AddrType == token.I32)
 	assert(len(fn.Type.Results) == len(fn.Body.Results))
 
 	// 转化为汇编的结构, 准备构建函数栈帧
@@ -88,7 +80,9 @@ func (p *wat2X64Worker) buildFunc_body(w io.Writer, fn *ast.Func) error {
 	// 开始解析 wasm 指令
 	var stk valueTypeStack
 	var scopeStack scopeContextStack
-	var bufIns bytes.Buffer
+	var bufHeader bytes.Buffer
+	var bufBody bytes.Buffer
+	var bufReturn bytes.Buffer
 	{
 		stk.funcName = fn.Name
 		assert(stk.Len() == 0)
@@ -102,12 +96,13 @@ func (p *wat2X64Worker) buildFunc_body(w io.Writer, fn *ast.Func) error {
 		}
 
 		// 便于函数主体指令
-		if err := p.buildFunc_ins(&bufIns, fnNative, fn, &stk, &scopeStack, *fn.Body); err != nil {
+		if err := p.buildFunc_ins(&bufBody, fnNative, fn, &stk, &scopeStack, *fn.Body); err != nil {
 			return err
 		}
 	}
 
 	// 补充构建头部栈帧
+	// 需要先统计 WASM 栈的最大深度和调用子函数的参数和返回值空间
 	{
 		frameSize := fnNative.FrameSize + stk.MaxDepth()*8 + p.fnMaxCallArgsSize
 
@@ -123,7 +118,8 @@ func (p *wat2X64Worker) buildFunc_body(w io.Writer, fn *ast.Func) error {
 		fmt.Fprintln(&bufHeader)
 	}
 
-	// 走栈返回
+	// 如果走栈返回
+	// 先将调用者传入的返回值栈地址寄存器参数备份
 	if len(fnNative.Type.Return) > 1 && fnNative.Type.Return[1].Reg == 0 {
 		p.gasCommentInFunc(&bufHeader, "将返回地址备份到栈")
 		fmt.Fprintf(&bufHeader, "    mov [rbp%+d], rcx # return address\n", 2*8)
@@ -151,7 +147,7 @@ func (p *wat2X64Worker) buildFunc_body(w io.Writer, fn *ast.Func) error {
 					i,
 				)
 			case token.F32:
-				fmt.Fprintf(&bufHeader, "    movss qword ptr [rbp%+d], %v # save arg.%d\n",
+				fmt.Fprintf(&bufHeader, "    movss dword ptr [rbp%+d], %v # save arg.%d\n",
 					arg.RBPOff, x64.RegString(arg.Reg),
 					i,
 				)
@@ -199,50 +195,58 @@ func (p *wat2X64Worker) buildFunc_body(w io.Writer, fn *ast.Func) error {
 		fmt.Fprintln(&bufHeader)
 	}
 
+	// 确定物理返回的 Label 位置
+	{
+		labelRetuenId := p.makeLabelId(kLabelPrefixName_return, fn.Name, "")
+
+		// 返回代码位置
+		p.gasCommentInFunc(&bufReturn, "根据ABI处理返回值")
+		p.gasFuncLabel(&bufReturn, labelRetuenId)
+		fmt.Fprintln(&bufReturn)
+	}
+
 	// 将栈上的值保存到返回值变量
+	// 这是函数Body作为一个Block的返回值
+	// 栈上多余的数据以及在 return 和 br 指令时刻搬运完成
 	assert(stk.Len() == len(fn.Type.Results))
 	if n := len(fn.Type.Results); n > 0 {
-		p.gasCommentInFunc(&bufIns, "return")
-		p.gasCommentInFunc(&bufIns, "copy result from stack")
+		p.gasCommentInFunc(&bufReturn, "将栈上数据复制到返回值变量")
 		for i := n - 1; i >= 0; i-- {
 			reti := fnNative.Type.Return[i]
 			sp := p.fnWasmR0Base - 8*stk.Pop(fn.Type.Results[i]) - 8
 			switch fn.Type.Results[i] {
 			case token.I32:
-				fmt.Fprintf(&bufIns, "    mov eax,  dword ptr [rbp%+d]\n", sp)
-				fmt.Fprintf(&bufIns, "    mov dword ptr [rbp%+d], eax # ret.%d\n", reti.RBPOff, i)
+				fmt.Fprintf(&bufReturn, "    mov eax,  dword ptr [rbp%+d]\n", sp)
+				fmt.Fprintf(&bufReturn, "    mov dword ptr [rbp%+d], eax # ret.%d\n", reti.RBPOff, i)
 			case token.I64:
-				fmt.Fprintf(&bufIns, "    mov rax, qword ptr [rbp%+d]\n", sp)
-				fmt.Fprintf(&bufIns, "    mov qword ptr [rbp%+d], rax # ret.%d\n", reti.RBPOff, i)
+				fmt.Fprintf(&bufReturn, "    mov rax, qword ptr [rbp%+d]\n", sp)
+				fmt.Fprintf(&bufReturn, "    mov qword ptr [rbp%+d], rax # ret.%d\n", reti.RBPOff, i)
 			case token.F32:
-				fmt.Fprintf(&bufIns, "    mov eax, dword ptr [rbp%+d]\n", sp)
-				fmt.Fprintf(&bufIns, "    mov dword ptr [rbp%+d], eax # ret.%d\n", reti.RBPOff, i)
+				fmt.Fprintf(&bufReturn, "    mov eax, dword ptr [rbp%+d]\n", sp)
+				fmt.Fprintf(&bufReturn, "    mov dword ptr [rbp%+d], eax # ret.%d\n", reti.RBPOff, i)
 			case token.F64:
-				fmt.Fprintf(&bufIns, "    mov rax, qword ptr [rbp%+d]\n", sp)
-				fmt.Fprintf(&bufIns, "    mov qword ptr [rbp%+d], rax # ret.%d\n", reti.RBPOff, i)
+				fmt.Fprintf(&bufReturn, "    mov rax, qword ptr [rbp%+d]\n", sp)
+				fmt.Fprintf(&bufReturn, "    mov qword ptr [rbp%+d], rax # ret.%d\n", reti.RBPOff, i)
 			default:
 				panic("unreachable")
 			}
 		}
+		fmt.Fprintln(&bufReturn)
 	}
 	assert(stk.Len() == 0)
 
 	// 根据ABI处理返回值
 	// 需要将栈顶位置的结果转化为本地ABI规范的返回值
 	{
-		labelRetuenId := p.makeLabelId(kLabelPrefixName_return, fn.Name, "")
-
-		// 返回代码位置
-		fmt.Fprintln(&bufIns)
-		p.gasCommentInFunc(&bufIns, "根据ABI处理返回值")
-		p.gasFuncLabel(&bufIns, labelRetuenId)
-
 		// 如果走内存, 返回地址
 		if len(fn.Type.Results) > 1 && fnNative.Type.Return[1].Reg == 0 {
-			fmt.Fprintf(&bufIns, "    mov rax, [rbp%+d] # ret address\n",
+			p.gasCommentInFunc(&bufReturn, "将返回地址复制到寄存器")
+			fmt.Fprintf(&bufReturn, "    mov rax, [rbp%+d] # ret address\n",
 				fnNative.Type.Return[0].RBPOff,
 			)
 		} else {
+			p.gasCommentInFunc(&bufReturn, "将返回值变量复制到寄存器")
+
 			// 如果走寄存器, 则复制寄存器
 			for i, ret := range fnNative.Type.Return {
 				if ret.Reg == 0 {
@@ -250,48 +254,50 @@ func (p *wat2X64Worker) buildFunc_body(w io.Writer, fn *ast.Func) error {
 				}
 				switch fn.Type.Results[i] {
 				case token.I32:
-					fmt.Fprintf(&bufIns, "    mov %v, [rbp%+d] # ret %s\n",
+					fmt.Fprintf(&bufReturn, "    mov %v, [rbp%+d] # ret.%d\n",
 						x64.Reg32String(ret.Reg),
 						fnNative.Type.Return[i].RBPOff,
-						fnNative.Type.Return[i].Name,
+						i,
 					)
 				case token.I64:
-					fmt.Fprintf(&bufIns, "    mov %v, [rbp%+d] # ret %s\n",
+					fmt.Fprintf(&bufReturn, "    mov %v, [rbp%+d] # ret.%d\n",
 						x64.RegString(ret.Reg),
 						fnNative.Type.Return[i].RBPOff,
-						fnNative.Type.Return[i].Name,
+						i,
 					)
 				case token.F32:
-					fmt.Fprintf(&bufIns, "    movss %v, qword ptr [rbp%+d] # ret %s\n",
+					fmt.Fprintf(&bufReturn, "    movss %v, qword ptr [rbp%+d] # ret.%d\n",
 						x64.RegString(ret.Reg),
 						fnNative.Type.Return[i].RBPOff,
-						fnNative.Type.Return[i].Name,
+						i,
 					)
 				case token.F64:
-					fmt.Fprintf(&bufIns, "    movsd %v, qword ptr [rbp%+d] # ret.%s\n",
+					fmt.Fprintf(&bufReturn, "    movsd %v, qword ptr [rbp%+d] # ret.%d\n",
 						x64.RegString(ret.Reg),
 						fnNative.Type.Return[i].RBPOff,
-						fnNative.Type.Return[i].Name,
+						i,
 					)
 				}
 			}
 		}
 	}
-	fmt.Fprintln(&bufIns)
+	fmt.Fprintln(&bufReturn)
 
 	// 结束栈帧
 	{
-		p.gasCommentInFunc(&bufIns, "函数返回")
-		fmt.Fprintln(&bufIns, "    mov rsp, rbp")
-		fmt.Fprintln(&bufIns, "    pop rbp")
-		fmt.Fprintln(&bufIns, "    ret")
-		fmt.Fprintln(&bufIns)
+		p.gasCommentInFunc(&bufReturn, "函数返回")
+		fmt.Fprintln(&bufReturn, "    mov rsp, rbp")
+		fmt.Fprintln(&bufReturn, "    pop rbp")
+		fmt.Fprintln(&bufReturn, "    ret")
+		fmt.Fprintln(&bufReturn)
 	}
 
-	// 头部赋值到 w
+	// 头部复制到 w
 	io.Copy(w, &bufHeader)
 	// 指令复制到 w
-	io.Copy(w, &bufIns)
+	io.Copy(w, &bufBody)
+	// 尾部复制到 w
+	io.Copy(w, &bufReturn)
 
 	return nil
 }
@@ -319,57 +325,90 @@ func (p *wat2X64Worker) buildFunc_ins(
 	case token.INS_BLOCK:
 		i := i.(ast.Ins_Block)
 
-		stkBase := stk.Len()
-		defer func() { assert(stk.Len() == stkBase+len(i.Results)) }()
-
 		labelName := i.Label
 		labelSuffix := p.genNextId()
 		labelBlockNextId := p.makeLabelId(kLabelPrefixName_brNext, labelName, labelSuffix)
 
-		scopeStack.EnterScope(token.INS_BLOCK, stkBase, i.Label, labelSuffix, i.Results)
-		defer scopeStack.LeaveScope()
-
-		fmt.Fprintf(w, "    # block.begin(name=%s, suffix=%s)\n", labelName, labelSuffix)
-
-		for _, ins := range i.List {
-			if err := p.buildFunc_ins(w, fnNative, fn, stk, scopeStack, ins); err != nil {
-				return err
-			}
-
-			// 跳过后续的死代码分析
-			if ins.Token().IsTerminal() {
-				break
-			}
+		if isSameInstList(fn.Body.List, i.List) {
+			fmt.Fprintf(w, "    # fn.body.begin(name=%s, suffix=%s)\n", labelName, labelSuffix)
+			fmt.Fprintln(w)
+		} else {
+			fmt.Fprintf(w, "    # block.begin(name=%s, suffix=%s)\n", labelName, labelSuffix)
+			fmt.Fprintln(w)
 		}
 
-		p.gasFuncLabel(w, labelBlockNextId)
-		fmt.Fprintf(w, "    # block.end(name=%s, suffix=%s)\n", labelName, labelSuffix)
-		fmt.Fprintln(w)
+		// 编译块内的指令
+		{
+			stkBase := stk.Len()
+
+			scopeStack.EnterScope(token.INS_BLOCK, stkBase, labelName, labelSuffix, i.Results)
+			defer scopeStack.LeaveScope()
+
+			for _, ins := range i.List {
+				if err := p.buildFunc_ins(w, fnNative, fn, stk, scopeStack, ins); err != nil {
+					return err
+				}
+
+				// 跳过后续的死代码分析
+				if ins.Token().IsTerminal() {
+					break
+				}
+			}
+
+			if scopeStack.Top().IgnoreStackCheck {
+				// TODO: 清理栈残留数据
+			} else {
+				// TODO: 验证栈的深度
+			}
+
+			// 用于 br/br-if/br-table 指令跳转
+			// block 的跳转地址在结尾
+			p.gasFuncLabel(w, labelBlockNextId)
+		}
+
+		if isSameInstList(fn.Body.List, i.List) {
+			fmt.Fprintf(w, "    # fn.body.end(name=%s, suffix=%s)\n", labelName, labelSuffix)
+			fmt.Fprintln(w)
+		} else {
+			fmt.Fprintf(w, "    # block.end(name=%s, suffix=%s)\n", labelName, labelSuffix)
+			fmt.Fprintln(w)
+		}
 
 	case token.INS_LOOP:
 		i := i.(ast.Ins_Loop)
-
-		stkBase := stk.Len()
-		defer func() { assert(stk.Len() == stkBase+len(i.Results)) }()
 
 		labelName := i.Label
 		labelSuffix := p.genNextId()
 		labelLoopNextId := p.makeLabelId(kLabelPrefixName_brNext, labelName, labelSuffix)
 
-		scopeStack.EnterScope(token.INS_LOOP, stkBase, i.Label, labelSuffix, i.Results)
-		defer scopeStack.LeaveScope()
-
 		fmt.Fprintf(w, "    # loop.begin(name=%s, suffix=%s)\n", labelName, labelSuffix)
-		p.gasFuncLabel(w, labelLoopNextId)
 
-		for _, ins := range i.List {
-			if err := p.buildFunc_ins(w, fnNative, fn, stk, scopeStack, ins); err != nil {
-				return err
+		// 编译块内的指令
+		{
+			stkBase := stk.Len()
+
+			scopeStack.EnterScope(token.INS_LOOP, stkBase, i.Label, labelSuffix, i.Results)
+			defer scopeStack.LeaveScope()
+
+			// 用于 br/br-if/br-table 指令跳转
+			// loop 的跳转地址在开头
+			p.gasFuncLabel(w, labelLoopNextId)
+
+			for _, ins := range i.List {
+				if err := p.buildFunc_ins(w, fnNative, fn, stk, scopeStack, ins); err != nil {
+					return err
+				}
+
+				// 跳过后续的死代码分析
+				if ins.Token().IsTerminal() {
+					break
+				}
 			}
 
-			// 跳过后续的死代码分析
-			if ins.Token().IsTerminal() {
-				break
+			if scopeStack.Top().IgnoreStackCheck {
+				// TODO: 清理栈残留数据
+			} else {
+				// TODO: 验证栈的深度
 			}
 		}
 
@@ -786,7 +825,7 @@ func (p *wat2X64Worker) buildFunc_ins(
 				}
 			case token.F32:
 				if arg := fnCallNative.Type.Args[k]; arg.Reg != 0 {
-					fmt.Fprintf(w, "    movss %s, qword ptr [rbp%+d] # arg %d\n",
+					fmt.Fprintf(w, "    movss %s, dword ptr [rbp%+d] # arg %d\n",
 						x64.RegString(arg.Reg),
 						p.fnWasmR0Base-argList[k]*8-8,
 						k,
@@ -981,7 +1020,7 @@ func (p *wat2X64Worker) buildFunc_ins(
 				}
 			case token.F32:
 				if arg := fnCallNative.Type.Args[k]; arg.Reg != 0 {
-					fmt.Fprintf(w, "    movss %s, qword ptr [rbp%+d] # arg %d\n",
+					fmt.Fprintf(w, "    movss %s, dword ptr [rbp%+d] # arg %d\n",
 						x64.RegString(arg.Reg),
 						p.fnWasmR0Base-argList[k]*8-8,
 						k,
