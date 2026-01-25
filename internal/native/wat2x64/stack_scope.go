@@ -4,7 +4,6 @@
 package wat2x64
 
 import (
-	"fmt"
 	"strconv"
 
 	"wa-lang.org/wa/internal/wat/token"
@@ -32,12 +31,6 @@ func (p *scopeContextStack) Len() int {
 func (p *scopeContextStack) Top() *scopeContext {
 	return p.stack[len(p.stack)-1]
 }
-func (p *scopeContextStack) Target(idx int) *scopeContext {
-	return p.stack[idx]
-}
-func (p *scopeContextStack) TargetByLabelIndex(labelIdx int) *scopeContext {
-	return p.stack[p.Len()-labelIdx-1]
-}
 
 func (p *scopeContextStack) EnterScope(typ token.Token, stkBase int, label, labelSuffix string, results []token.Token) {
 	p.stack = append(p.stack, &scopeContext{
@@ -53,54 +46,24 @@ func (p *scopeContextStack) LeaveScope() {
 	p.stack = p.stack[:len(p.stack)-1]
 }
 
-func (p *scopeContextStack) findLabelScopeType(label string) token.Token {
+func (p *scopeContextStack) FindScopeContext(label string) *scopeContext {
 	if label == "" {
 		panic("wat2x64: empty label name")
 	}
-
-	idx := p.findLabelIndex(label)
-	if idx < len(p.stack) {
-		return p.stack[len(p.stack)-idx-1].Type
-	}
-	panic(fmt.Sprintf("wat2x64: unknown label %q", label))
-}
-
-func (p *scopeContextStack) findLabelName(label string) string {
-	if label == "" {
-		panic("wat2x64: empty label name")
-	}
-
-	idx := p.findLabelIndex(label)
-	if idx < len(p.stack) {
-		return p.stack[len(p.stack)-idx-1].Label
-	}
-	panic(fmt.Sprintf("wat2x64: unknown label %q", label))
-}
-
-func (p *scopeContextStack) findLabelSuffixId(label string) string {
-	if label == "" {
-		panic("wat2x64: empty label suffix id")
-	}
-
-	idx := p.findLabelIndex(label)
-	if idx < len(p.stack) {
-		return p.stack[len(p.stack)-idx-1].LabelSuffix
-	}
-	panic(fmt.Sprintf("wat2x64: unknown label %q", label))
-}
-
-func (p *scopeContextStack) findLabelIndex(label string) int {
-	if label == "" {
-		panic("wat2x64: empty label index")
-	}
-
 	if idx, err := strconv.Atoi(label); err == nil {
-		return idx
-	}
-	for i := 0; i < len(p.stack); i++ {
-		if s := p.stack[len(p.stack)-i-1]; s.Label == label {
-			return i
+		if idx >= 0 && idx < len(p.stack) {
+			return p.stack[len(p.stack)-idx-1]
+		} else {
+			panic("wat2x64: invalid label index")
+		}
+	} else {
+		// 逆序从内向外部查找
+		// 正常情况下 label 是唯一的, 不同顺序不影响结果
+		for i := len(p.stack) - 1; i >= 0; i-- {
+			if ctx := p.stack[i]; ctx.Label == label {
+				return ctx
+			}
 		}
 	}
-	panic(fmt.Sprintf("wat2x64: unknown label %q", label))
+	return nil
 }

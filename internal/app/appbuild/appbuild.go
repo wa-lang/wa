@@ -15,6 +15,7 @@ import (
 	"wa-lang.org/wa/internal/backends/compiler_wat"
 	"wa-lang.org/wa/internal/config"
 	"wa-lang.org/wa/internal/loader"
+	"wa-lang.org/wa/internal/native/abi"
 	"wa-lang.org/wa/internal/native/wair2la"
 	"wa-lang.org/wa/internal/native/wat2la"
 	"wa-lang.org/wa/internal/native/wat2x64"
@@ -145,6 +146,11 @@ func BuildApp(opt *appbase.Option, input, outfile string) (mainFunc string, wasm
 				panic(fmt.Sprintf("x64 donot support %s", s))
 			}
 
+			cpuType := abi.X64Windows
+			if strings.EqualFold(opt.TargetOS, config.WaOS_linux) {
+				cpuType = abi.X64Unix
+			}
+
 			// 设置默认输出目标
 			if outfile == "" {
 				outfile = appbase.ReplaceExt(input, ".wat", ".wa.s")
@@ -155,7 +161,7 @@ func BuildApp(opt *appbase.Option, input, outfile string) (mainFunc string, wasm
 				fmt.Printf("read %s failed: %v\n", input, err)
 				os.Exit(1)
 			}
-			_, nasmBytes, err := wat2x64.Wat2X64(input, watData, opt.TargetOS)
+			_, nasmBytes, err := wat2x64.Wat2X64(input, watData, cpuType)
 			if err != nil {
 				fmt.Printf("wat2x64 %s failed: %v\n", input, err)
 				os.Exit(1)

@@ -459,14 +459,11 @@ func (p *wat2X64Worker) buildFunc_ins(
 		// br会根据目标block的返回值个数, 从当前block产生的栈中去返回值,
 		// 至于中间被跳过的block栈数据全部被丢弃.
 
-		labelIdx := scopeStack.findLabelIndex(i.X)
-		labelName := scopeStack.findLabelName(i.X)
-		labelSuffix := scopeStack.findLabelSuffixId(i.X)
-		labelNextId := p.makeLabelId(kLabelPrefixName_brNext, labelName, labelSuffix)
-		labelScopeTyp := scopeStack.findLabelScopeType(i.X)
+		scopeContex := scopeStack.FindScopeContext(i.X)
+		labelNextId := p.makeLabelId(kLabelPrefixName_brNext, scopeContex.Label, scopeContex.LabelSuffix)
 
-		destScopeStackBase := scopeStack.stack[scopeStack.Len()-labelIdx-1].StackBase
-		destScopeResults := scopeStack.stack[scopeStack.Len()-labelIdx-1].Result
+		destScopeStackBase := scopeContex.StackBase
+		destScopeResults := scopeContex.Result
 
 		currentScopeStackBase := scopeStack.stack[scopeStack.Len()-1].StackBase
 
@@ -474,7 +471,7 @@ func (p *wat2X64Worker) buildFunc_ins(
 
 		// br对应的block带返回值
 		// 如果目标是 loop 则不需要处理结果, 因为还要继续循环
-		if labelScopeTyp != token.INS_LOOP && len(destScopeResults) > 0 {
+		if scopeContex.Type != token.INS_LOOP && len(destScopeResults) > 0 {
 			// 必须确保当前block的stk上有足够的返回值
 			assert(currentScopeStackBase+len(destScopeResults) >= stk.Len())
 
@@ -525,29 +522,26 @@ func (p *wat2X64Worker) buildFunc_ins(
 	case token.INS_BR_IF:
 		i := i.(ast.Ins_BrIf)
 
-		labelIdx := scopeStack.findLabelIndex(i.X)
-		labelName := scopeStack.findLabelName(i.X)
-		labelSuffix := scopeStack.findLabelSuffixId(i.X)
-		labelBrNextId := p.makeLabelId(kLabelPrefixName_brNext, labelName, labelSuffix)
-		labelBrFallthroughId := p.makeLabelId(kLabelPrefixName_brFallthrough, labelName, labelSuffix)
-		labelScopeTyp := scopeStack.findLabelScopeType(i.X)
+		scopeContex := scopeStack.FindScopeContext(i.X)
+		labelBrNextId := p.makeLabelId(kLabelPrefixName_brNext, scopeContex.Label, scopeContex.LabelSuffix)
+		labelBrFallthroughId := p.makeLabelId(kLabelPrefixName_brFallthrough, scopeContex.Label, scopeContex.LabelSuffix)
 
-		destScopeStackBase := scopeStack.stack[scopeStack.Len()-labelIdx-1].StackBase
-		destScopeResults := scopeStack.stack[scopeStack.Len()-labelIdx-1].Result
+		destScopeStackBase := scopeContex.StackBase
+		destScopeResults := scopeContex.Result
 
 		currentScopeStackBase := scopeStack.stack[scopeStack.Len()-1].StackBase
 
 		// 弹出的是条件
 		sp0 := stk.Pop(token.I32)
 
-		fmt.Fprintf(w, "    # br_if %s\n", labelName+labelSuffix)
+		fmt.Fprintf(w, "    # br_if %s.%s\n", scopeContex.Label, scopeContex.LabelSuffix)
 		fmt.Fprintf(w, "    mov eax, dword ptr [rbp%+d]\n", p.fnWasmR0Base-sp0*8-8)
 		fmt.Fprintf(w, "    cmp eax, 0\n")
 		fmt.Fprintf(w, "    je  %s\n", labelBrFallthroughId)
 
 		// 对应的block带返回值
 		// 如果目标是 loop 则不需要处理结果, 因为还要继续循环
-		if labelScopeTyp != token.INS_LOOP && len(destScopeResults) > 0 {
+		if scopeContex.Type != token.INS_LOOP && len(destScopeResults) > 0 {
 			// 必须确保当前block的stk上有足够的返回值
 			assert(currentScopeStackBase+len(destScopeResults) >= stk.Len())
 
@@ -601,12 +595,8 @@ func (p *wat2X64Worker) buildFunc_ins(
 		labelSuffix := p.genNextId()
 
 		// 默认分支
-		defaultLabelIdx := scopeStack.findLabelIndex(i.XList[len(i.XList)-1])
-		defaultLabelName := scopeStack.findLabelName(i.XList[len(i.XList)-1])
-		defaultLabelSuffix := scopeStack.findLabelSuffixId(i.XList[len(i.XList)-1])
-
-		defaultScopeResults := scopeStack.stack[scopeStack.Len()-defaultLabelIdx-1].Result
-		defaultLabelNextId := p.makeLabelId(kLabelPrefixName_brNext, defaultLabelName, defaultLabelSuffix)
+		defaultScopeContex := scopeStack.FindScopeContext(i.XList[len(i.XList)-1])
+		defaultLabelNextId := p.makeLabelId(kLabelPrefixName_brNext, defaultScopeContex.Label, defaultScopeContex.LabelSuffix)
 
 		currentScopeStackBase := scopeStack.stack[scopeStack.Len()-1].StackBase
 
@@ -630,25 +620,20 @@ func (p *wat2X64Worker) buildFunc_ins(
 		// 定义每个分支的跳转代码
 		{
 			// 当前block的返回值位置是相同的, 只能统一取一次
-			var retIdxList = make([]int, len(defaultScopeResults))
-			for k := len(defaultScopeResults) - 1; k >= 0; k-- {
-				xTyp := defaultScopeResults[k]
+			var retIdxList = make([]int, len(defaultScopeContex.Result))
+			for k := len(defaultScopeContex.Result) - 1; k >= 0; k-- {
+				xTyp := defaultScopeContex.Result[k]
 				retIdxList[k] = stk.Pop(xTyp)
 			}
 
 			for k := 0; k < len(i.XList); k++ {
-				labelIdx := scopeStack.findLabelIndex(i.XList[k])
-				labelName := scopeStack.findLabelName(i.XList[k])
-				labelSuffix := scopeStack.findLabelSuffixId(i.XList[k])
-				labelNextId := p.makeLabelId(kLabelPrefixName_brNext, labelName, labelSuffix)
-
-				destScopeStackBase := scopeStack.stack[scopeStack.Len()-labelIdx-1].StackBase
-				destScopeResults := scopeStack.stack[scopeStack.Len()-labelIdx-1].Result
+				destScopeContex := scopeStack.FindScopeContext(i.XList[k])
+				labelNextId := p.makeLabelId(kLabelPrefixName_brNext, destScopeContex.Label, labelSuffix)
 
 				// 验证每个目标返回值必须和default一致
-				assert(len(defaultScopeResults) == len(destScopeResults))
-				for i := 0; i < len(defaultScopeResults); i++ {
-					assert(defaultScopeResults[i] == destScopeResults[i])
+				assert(len(defaultScopeContex.Result) == len(destScopeContex.Result))
+				for i := 0; i < len(defaultScopeContex.Result); i++ {
+					assert(defaultScopeContex.Result[i] == destScopeContex.Result[i])
 				}
 
 				if k < len(i.XList)-1 {
@@ -658,32 +643,32 @@ func (p *wat2X64Worker) buildFunc_ins(
 				}
 
 				// 带返回值的情况
-				if len(destScopeResults) > 0 {
+				if len(destScopeContex.Result) > 0 {
 					// 必须确保当前block的stk上有足够的返回值
-					assert(currentScopeStackBase+len(destScopeResults) >= stk.Len())
+					assert(currentScopeStackBase+len(destScopeContex.Result) >= stk.Len())
 
 					// 第一个返回值返回值的偏移地址
-					firstResultOffset := stk.Len() - len(destScopeResults)
+					firstResultOffset := stk.Len() - len(destScopeContex.Result)
 
 					// 如果返回值位置和目标block的base不一致则需要逐个复制
-					if firstResultOffset > destScopeStackBase {
+					if firstResultOffset > destScopeContex.StackBase {
 						// 返回值是逆序出栈
-						for i := 0; i < len(destScopeResults); i++ {
-							xType := destScopeResults[i]
+						for i := 0; i < len(destScopeContex.Result); i++ {
+							xType := destScopeContex.Result[i]
 							reti := retIdxList[i]
 							switch xType {
 							case token.I32:
 								fmt.Fprintf(w, "    mov r10d, dword ptr [rbp%+d] # copy result\n", p.fnWasmR0Base-reti*8-8)
-								fmt.Fprintf(w, "    mov dword ptr [rbp%+d], r10d\n", p.fnWasmR0Base-(destScopeStackBase+i)*8-8)
+								fmt.Fprintf(w, "    mov dword ptr [rbp%+d], r10d\n", p.fnWasmR0Base-(destScopeContex.StackBase+i)*8-8)
 							case token.I64:
 								fmt.Fprintf(w, "    mov r10, qword ptr [rbp%+d] # copy result\n", p.fnWasmR0Base-reti*8-8)
-								fmt.Fprintf(w, "    mov qword ptr [rbp%+d], r10\n", p.fnWasmR0Base-(destScopeStackBase+i)*8-8)
+								fmt.Fprintf(w, "    mov qword ptr [rbp%+d], r10\n", p.fnWasmR0Base-(destScopeContex.StackBase+i)*8-8)
 							case token.F32:
 								fmt.Fprintf(w, "    mov r10d, dword ptr [rbp%+d] # copy result\n", p.fnWasmR0Base-reti*8-8)
-								fmt.Fprintf(w, "    mov dword ptr [rbp%+d], r10d\n", p.fnWasmR0Base-(destScopeStackBase+i)*8-8)
+								fmt.Fprintf(w, "    mov dword ptr [rbp%+d], r10d\n", p.fnWasmR0Base-(destScopeContex.StackBase+i)*8-8)
 							case token.F64:
 								fmt.Fprintf(w, "    mov r10, qword ptr [rbp%+d] # copy result\n", p.fnWasmR0Base-reti*8-8)
-								fmt.Fprintf(w, "    mov qword ptr [rbp%+d], r10\n", p.fnWasmR0Base-(destScopeStackBase+i)*8-8)
+								fmt.Fprintf(w, "    mov qword ptr [rbp%+d], r10\n", p.fnWasmR0Base-(destScopeContex.StackBase+i)*8-8)
 							default:
 								unreachable()
 							}

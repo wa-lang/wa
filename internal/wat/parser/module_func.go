@@ -26,6 +26,7 @@ func (p *parser) parseModuleSection_func() *ast.Func {
 	p.consumeComments()
 	if p.tok == token.IDENT {
 		fn.Name = p.parseIdent()
+		fn.Body.Label = fn.Name // 函数名作为Body的Label
 	}
 
 Loop:

@@ -9,6 +9,8 @@ import (
 	"strings"
 
 	"wa-lang.org/wa/internal/3rdparty/cli"
+	"wa-lang.org/wa/internal/config"
+	"wa-lang.org/wa/internal/native/abi"
 	"wa-lang.org/wa/internal/native/wat2x64"
 )
 
@@ -59,7 +61,11 @@ var CmdWat2x64 = &cli.Command{
 			os.Exit(1)
 		}
 
-		_, code, err := wat2x64.Wat2X64(infile, source, osName)
+		cpuType := abi.X64Windows
+		if strings.EqualFold(osName, config.WaOS_linux) {
+			cpuType = abi.X64Unix
+		}
+		_, code, err := wat2x64.Wat2X64(infile, source, cpuType)
 		if err != nil {
 			fmt.Println(err)
 			os.Exit(1)
