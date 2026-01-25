@@ -95,22 +95,17 @@ type Global struct {
 
 // 函数定义
 type Func struct {
-	Name       string    // 函数名
-	ExportName string    // 导出名字
-	Type       *FuncType // 函数类型
-	Body       *FuncBody // 函数体
+	Name       string     // 函数名
+	ExportName string     // 导出名字
+	Type       *FuncType  // 函数类型
+	Locals     []Field    // 局部变量
+	Body       *Ins_Block // 函数体是一个Block
 }
 
 // 函数类型
 type FuncType struct {
 	Params  []Field       // 参数名字
 	Results []token.Token // 返回值类型: I32, I64, F32, F64
-}
-
-// 函数定义
-type FuncBody struct {
-	Locals []Field       // 局部变量
-	Insts  []Instruction // 指令列表
 }
 
 // 参数和局部变量信息

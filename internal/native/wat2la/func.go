@@ -80,6 +80,7 @@ func (p *wat2laWorker) buildFunc_body(w io.Writer, fn *ast.Func) error {
 
 	assert(len(p.localNames) == 0)
 	assert(len(p.localTypes) == 0)
+	assert(len(fn.Type.Results) == len(fn.Body.Results))
 
 	assert(len(p.scopeTypes) == 0)
 	assert(len(p.scopeLabels) == 0)
@@ -95,7 +96,7 @@ func (p *wat2laWorker) buildFunc_body(w io.Writer, fn *ast.Func) error {
 			Return: make([]*nativeast.Local, len(fn.Type.Results)),
 		},
 		Body: &nativeast.FuncBody{
-			Locals: make([]*nativeast.Local, len(fn.Body.Locals)),
+			Locals: make([]*nativeast.Local, len(fn.Locals)),
 		},
 	}
 	for i, arg := range fn.Type.Params {
@@ -112,7 +113,7 @@ func (p *wat2laWorker) buildFunc_body(w io.Writer, fn *ast.Func) error {
 			Cap:  1,
 		}
 	}
-	for i, local := range fn.Body.Locals {
+	for i, local := range fn.Locals {
 		fnNative.Body.Locals[i] = &nativeast.Local{
 			Name: local.Name,
 			Type: wat2nativeType(local.Type),
@@ -124,8 +125,8 @@ func (p *wat2laWorker) buildFunc_body(w io.Writer, fn *ast.Func) error {
 		p.localNames = append(p.localNames, x.Name)
 		p.localTypes = append(p.localTypes, x.Type)
 	}
-	if len(fn.Body.Locals) > 0 {
-		for _, x := range fn.Body.Locals {
+	if len(fn.Locals) > 0 {
+		for _, x := range fn.Locals {
 			p.localNames = append(p.localNames, x.Name)
 			p.localTypes = append(p.localTypes, x.Type)
 			p.gasCommentInFunc(w, fmt.Sprintf("local %s: %s", x.Name, x.Type))
@@ -152,7 +153,7 @@ func (p *wat2laWorker) buildFunc_body(w io.Writer, fn *ast.Func) error {
 		stk.funcName = fn.Name
 
 		assert(stk.Len() == 0)
-		for _, ins := range fn.Body.Insts {
+		for _, ins := range fn.Body.List {
 			if err := p.buildFunc_ins(&bufIns, fnNative, fn, &stk, ins); err != nil {
 				return err
 			}

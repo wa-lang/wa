@@ -153,7 +153,7 @@ func (p *wat2cWorker) findLocalType(fn *ast.Func, ident string) token.Token {
 	}
 
 	if idx, err := strconv.Atoi(ident); err == nil {
-		if idx < 0 || idx >= len(fn.Type.Params)+len(fn.Body.Locals) {
+		if idx < 0 || idx >= len(fn.Type.Params)+len(fn.Locals) {
 			panic(fmt.Sprintf("wat2c: unknown local %q", ident))
 		}
 		return p.localTypes[idx]
@@ -163,7 +163,7 @@ func (p *wat2cWorker) findLocalType(fn *ast.Func, ident string) token.Token {
 			return p.localTypes[idx]
 		}
 	}
-	for idx, arg := range fn.Body.Locals {
+	for idx, arg := range fn.Locals {
 		if arg.Name == ident {
 			return p.localTypes[len(fn.Type.Params)+idx]
 		}
@@ -177,7 +177,7 @@ func (p *wat2cWorker) findLocalName(fn *ast.Func, ident string) string {
 	}
 
 	if idx, err := strconv.Atoi(ident); err == nil {
-		if idx < 0 || idx >= len(fn.Type.Params)+len(fn.Body.Locals) {
+		if idx < 0 || idx >= len(fn.Type.Params)+len(fn.Locals) {
 			panic(fmt.Sprintf("wat2c: unknown local %q", ident))
 		}
 		return p.localNames[idx]
@@ -187,7 +187,7 @@ func (p *wat2cWorker) findLocalName(fn *ast.Func, ident string) string {
 			return p.localNames[idx]
 		}
 	}
-	for idx, arg := range fn.Body.Locals {
+	for idx, arg := range fn.Locals {
 		if arg.Name == ident {
 			return p.localNames[len(fn.Type.Params)+idx]
 		}

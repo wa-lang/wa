@@ -39,7 +39,7 @@ func (p *watPrinter) printFuncs() error {
 			fmt.Fprint(p.w, ")")
 		}
 
-		if len(fn.Body.Locals) != 0 || len(fn.Body.Insts) != 0 {
+		if len(fn.Locals) != 0 || len(fn.Body.List) != 0 {
 			fmt.Fprintln(p.w)
 			p.printFuncs_body(fn)
 			fmt.Fprintf(p.w, "%s)\n", p.indent)
@@ -52,7 +52,7 @@ func (p *watPrinter) printFuncs() error {
 }
 
 func (p *watPrinter) printFuncs_body(fn *ast.Func) {
-	for _, local := range fn.Body.Locals {
+	for _, local := range fn.Locals {
 		fmt.Fprint(p.w, p.indent+p.indent)
 		fmt.Fprint(p.w, "(local")
 		if local.Name != "" {
@@ -61,7 +61,7 @@ func (p *watPrinter) printFuncs_body(fn *ast.Func) {
 		fmt.Fprintf(p.w, " %v)\n", local.Type)
 	}
 
-	for _, ins := range fn.Body.Insts {
+	for _, ins := range fn.Body.List {
 		p.printFuncs_body_ins(ins, 0)
 	}
 }

@@ -151,7 +151,7 @@ func (p *wat2wasmWorker) buildTypeSection() error {
 		if err := p.buildFuncType(fn.Name, fn.Type); err != nil {
 			return err
 		}
-		if err := p.buildFuncBodyTypes(fn.Name, fn.Body.Insts); err != nil {
+		if err := p.buildFuncBodyTypes(fn.Name, fn.Body.List); err != nil {
 			return err
 		}
 	}
@@ -314,10 +314,10 @@ func (p *wat2wasmWorker) buildCodeSection() error {
 
 	for _, fn := range p.mWat.Funcs {
 		fnCode := &wasm.Code{}
-		for _, local := range fn.Body.Locals {
+		for _, local := range fn.Locals {
 			fnCode.LocalTypes = append(fnCode.LocalTypes, p.buildValueType(local.Type))
 		}
-		for _, ins := range fn.Body.Insts {
+		for _, ins := range fn.Body.List {
 			p.buildInstruction(fnCode, fn, ins)
 		}
 
@@ -381,7 +381,7 @@ func (p *wat2wasmWorker) buildNameSection() error {
 				})
 			}
 		}
-		for j, local := range fn.Body.Locals {
+		for j, local := range fn.Locals {
 			localNameMap = append(localNameMap, &wasm.NameAssoc{
 				Index: wasm.Index(j),
 				Name:  local.Name,

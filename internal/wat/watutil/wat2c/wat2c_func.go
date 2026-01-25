@@ -29,8 +29,8 @@ func (p *wat2cWorker) buildFunc_body(w io.Writer, fn *ast.Func, cRetType string)
 	assert(len(p.scopeStackBases) == 0)
 	assert(len(p.scopeResults) == 0)
 
-	if len(fn.Body.Locals) > 0 {
-		for _, x := range fn.Body.Locals {
+	if len(fn.Locals) > 0 {
+		for _, x := range fn.Locals {
 			localName := toCName(x.Name)
 			p.localNames = append(p.localNames, localName)
 			p.localTypes = append(p.localTypes, x.Type)
@@ -54,8 +54,8 @@ func (p *wat2cWorker) buildFunc_body(w io.Writer, fn *ast.Func, cRetType string)
 	}
 
 	// 至少要有一个指令
-	if len(fn.Body.Insts) == 0 {
-		fn.Body.Insts = []ast.Instruction{
+	if len(fn.Body.List) == 0 {
+		fn.Body.List = []ast.Instruction{
 			ast.Ins_Return{OpToken: ast.OpToken(token.INS_RETURN)},
 		}
 	}
@@ -65,7 +65,7 @@ func (p *wat2cWorker) buildFunc_body(w io.Writer, fn *ast.Func, cRetType string)
 	p.use_R_u8 = false
 
 	assert(stk.Len() == 0)
-	for _, ins := range fn.Body.Insts {
+	for _, ins := range fn.Body.List {
 		if err := p.buildFunc_ins(&bufIns, fn, &stk, ins, 1); err != nil {
 			return err
 		}

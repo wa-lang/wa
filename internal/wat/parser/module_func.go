@@ -18,7 +18,9 @@ func (p *parser) parseModuleSection_func() *ast.Func {
 
 	fn := &ast.Func{
 		Type: &ast.FuncType{},
-		Body: &ast.FuncBody{},
+		Body: &ast.Ins_Block{
+			OpToken: ast.OpToken(token.INS_BLOCK),
+		},
 	}
 
 	p.consumeComments()
@@ -69,11 +71,12 @@ Loop:
 			p.acceptToken(token.RESULT)
 			for _, x := range p.parseNumberTypeList() {
 				fn.Type.Results = append(fn.Type.Results, x)
+				fn.Body.Results = append(fn.Body.Results, x)
 			}
 			p.acceptToken(token.RPAREN)
 
 		case token.LOCAL:
-			if len(fn.Body.Insts) > 0 {
+			if len(fn.Body.List) > 0 {
 				p.errorf(p.pos, "local must befor instruction")
 			}
 
@@ -85,7 +88,7 @@ Loop:
 			}
 
 			field.Type = p.parseNumberType()
-			fn.Body.Locals = append(fn.Body.Locals, field)
+			fn.Locals = append(fn.Locals, field)
 
 			p.acceptToken(token.RPAREN)
 
@@ -96,9 +99,6 @@ Loop:
 
 	// 解析指令
 	// 不支持指令折叠
-	if fn.Body == nil {
-		fn.Body = &ast.FuncBody{}
-	}
 	for {
 		p.consumeComments()
 		if !p.tok.IsIsntruction() {
@@ -106,7 +106,7 @@ Loop:
 		}
 
 		ins := p.parseInstruction()
-		fn.Body.Insts = append(fn.Body.Insts, ins)
+		fn.Body.List = append(fn.Body.List, ins)
 	}
 
 	return fn

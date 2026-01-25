@@ -39,7 +39,9 @@ func new_RemoveUnusedPass(m *ast.Module) *_RemoveUnusedPass {
 				Func: &ast.Func{
 					Name: importSpec.FuncName,
 					Type: importSpec.FuncType,
-					Body: &ast.FuncBody{},
+					Body: &ast.Ins_Block{
+						OpToken: ast.OpToken(token.INS_BLOCK),
+					},
 				},
 			}
 		}
@@ -109,7 +111,7 @@ Loop:
 
 func (p *_RemoveUnusedPass) markFuncReachable(fn *funcObj) {
 	fn.color = black
-	for _, ins := range fn.Body.Insts {
+	for _, ins := range fn.Body.List {
 		p.markFuncReachable_ins(ins)
 	}
 }

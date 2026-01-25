@@ -67,7 +67,7 @@ func (p *wat2wasmWorker) findFuncLocalIndex(fn *ast.Func, ident string) wasm.Ind
 			return wasm.Index(i)
 		}
 	}
-	for i, x := range fn.Body.Locals {
+	for i, x := range fn.Locals {
 		if x.Name == ident {
 			return wasm.Index(len(fn.Type.Params) + i)
 		}
