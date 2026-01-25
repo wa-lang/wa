@@ -46,10 +46,8 @@ type wat2X64Worker struct {
 	inlinedTypeIndices []*inlinedTypeIndex
 	inlinedTypes       []*wasm.FunctionType
 
-	localNames        []string         // 参数和局部变量名
-	localTypes        []wattoken.Token // 参数和局部变量类型
-	fnWasmR0Base      int              // 当前函数的WASM栈R0位置
-	fnMaxCallArgsSize int              // 调用子函数需要的最大空间
+	fnWasmR0Base      int // 当前函数的WASM栈R0位置
+	fnMaxCallArgsSize int // 调用子函数需要的最大空间
 
 	dataSection []*ast.Global
 	textSection []*ast.Func

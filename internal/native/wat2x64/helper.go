@@ -94,14 +94,18 @@ func (p *wat2X64Worker) findLocalOffset(fnNative *nativeast.Func, fn *ast.Func, 
 	}
 
 	if idx, err := strconv.Atoi(ident); err == nil {
-		if idx < 0 || idx >= len(fn.Type.Params)+len(fn.Locals) {
+		if idx < 0 || idx >= len(fn.Type.Params)+len(fn.Type.Results)+len(fn.Locals) {
 			panic(fmt.Sprintf("wat2x64: unknown local %q", ident))
 		}
 		if idx < len(fn.Type.Params) {
 			return fnNative.Type.Args[idx].RBPOff
 		}
-		n := idx - len(fn.Type.Params)
-		return fnNative.Body.Locals[n].RBPOff
+		idx = idx - len(fn.Type.Params)
+		if idx < len(fn.Type.Results) {
+			return fnNative.Type.Return[idx].RBPOff
+		}
+		idx = idx - len(fn.Type.Results)
+		return fnNative.Body.Locals[idx].RBPOff
 	}
 	for idx, arg := range fn.Type.Params {
 		if arg.Name == ident {
@@ -122,43 +126,27 @@ func (p *wat2X64Worker) findLocalType(fn *ast.Func, ident string) token.Token {
 	}
 
 	if idx, err := strconv.Atoi(ident); err == nil {
-		if idx < 0 || idx >= len(fn.Type.Params)+len(fn.Locals) {
+		if idx < 0 || idx >= len(fn.Type.Params)+len(fn.Type.Results)+len(fn.Locals) {
 			panic(fmt.Sprintf("wat2x64: unknown local %q", ident))
 		}
-		return p.localTypes[idx]
+		if idx < len(fn.Type.Params) {
+			return fn.Type.Params[idx].Type
+		}
+		idx = idx - len(fn.Type.Params)
+		if idx < len(fn.Type.Results) {
+			return fn.Type.Results[idx]
+		}
+		idx = idx - len(fn.Type.Results)
+		return fn.Locals[idx].Type
 	}
-	for idx, arg := range fn.Type.Params {
+	for _, arg := range fn.Type.Params {
 		if arg.Name == ident {
-			return p.localTypes[idx]
+			return arg.Type
 		}
 	}
-	for idx, arg := range fn.Locals {
-		if arg.Name == ident {
-			return p.localTypes[len(fn.Type.Params)+idx]
-		}
-	}
-	panic("unreachable")
-}
-
-func (p *wat2X64Worker) findLocalName(fn *ast.Func, ident string) string {
-	if ident == "" {
-		panic("wat2x64: empty local name")
-	}
-
-	if idx, err := strconv.Atoi(ident); err == nil {
-		if idx < 0 || idx >= len(fn.Type.Params)+len(fn.Locals) {
-			panic(fmt.Sprintf("wat2x64: unknown local %q", ident))
-		}
-		return p.localNames[idx]
-	}
-	for idx, arg := range fn.Type.Params {
-		if arg.Name == ident {
-			return p.localNames[idx]
-		}
-	}
-	for idx, arg := range fn.Locals {
-		if arg.Name == ident {
-			return p.localNames[len(fn.Type.Params)+idx]
+	for _, local := range fn.Locals {
+		if local.Name == ident {
+			return local.Type
 		}
 	}
 	panic("unreachable")

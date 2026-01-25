@@ -4,13 +4,11 @@
 package wat2x64
 
 import (
-	"bytes"
 	"fmt"
-	"strings"
 
+	nativeast "wa-lang.org/wa/internal/native/ast"
 	nativetok "wa-lang.org/wa/internal/native/token"
 	"wa-lang.org/wa/internal/wat/ast"
-	"wa-lang.org/wa/internal/wat/printer"
 	"wa-lang.org/wa/internal/wat/token"
 )
 
@@ -28,13 +26,6 @@ func unreachable() {
 	panic("unreachable")
 }
 
-// 格式化指令
-func insString(i ast.Instruction) string {
-	var buf bytes.Buffer
-	printer.PrintInstruction(&buf, "", i, 0)
-	return strings.TrimSpace(buf.String())
-}
-
 func wat2nativeType(typ token.Token) nativetok.Token {
 	switch typ {
 	case token.I32:
@@ -48,4 +39,40 @@ func wat2nativeType(typ token.Token) nativetok.Token {
 	default:
 		panic("unreachable")
 	}
+}
+
+// 转化为本地函数结构(不含指令)
+func wat2nativeFunc(fnName string, fnType *ast.FuncType, fnLocals []ast.Field) *nativeast.Func {
+	fnNative := &nativeast.Func{
+		Name: fnName,
+		Type: &nativeast.FuncType{
+			Args:   make([]*nativeast.Local, len(fnType.Params)),
+			Return: make([]*nativeast.Local, len(fnType.Results)),
+		},
+		Body: &nativeast.FuncBody{
+			Locals: make([]*nativeast.Local, len(fnLocals)),
+		},
+	}
+	for i, arg := range fnType.Params {
+		fnNative.Type.Args[i] = &nativeast.Local{
+			Name: arg.Name,
+			Type: wat2nativeType(arg.Type),
+			Cap:  1,
+		}
+	}
+	for i, typ := range fnType.Results {
+		fnNative.Type.Return[i] = &nativeast.Local{
+			Name: fmt.Sprintf("%s%d", kFuncRetNamePrefix, i),
+			Type: wat2nativeType(typ),
+			Cap:  1,
+		}
+	}
+	for i, local := range fnLocals {
+		fnNative.Body.Locals[i] = &nativeast.Local{
+			Name: local.Name,
+			Type: wat2nativeType(local.Type),
+			Cap:  1,
+		}
+	}
+	return fnNative
 }

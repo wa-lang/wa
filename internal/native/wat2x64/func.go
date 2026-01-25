@@ -43,9 +43,6 @@ func (p *wat2X64Worker) buildFuncs(w io.Writer) error {
 	}
 
 	for _, f := range p.m.Funcs {
-		p.localNames = nil
-		p.localTypes = nil
-
 		p.gasComment(w, "func "+f.Name+f.Type.String())
 		p.gasSectionTextStart(w)
 		if f.ExportName == f.Name {
@@ -71,56 +68,10 @@ func (p *wat2X64Worker) buildFunc_body(w io.Writer, fn *ast.Func) error {
 	}
 
 	assert(p.m.Memory.AddrType == token.I32)
-
-	assert(len(p.localNames) == 0)
-	assert(len(p.localTypes) == 0)
 	assert(len(fn.Type.Results) == len(fn.Body.Results))
 
 	// 转化为汇编的结构, 准备构建函数栈帧
-	fnNative := &nativeast.Func{
-		Name: fn.Name,
-		Type: &nativeast.FuncType{
-			Args:   make([]*nativeast.Local, len(fn.Type.Params)),
-			Return: make([]*nativeast.Local, len(fn.Type.Results)),
-		},
-		Body: &nativeast.FuncBody{
-			Locals: make([]*nativeast.Local, len(fn.Locals)),
-		},
-	}
-	for i, arg := range fn.Type.Params {
-		fnNative.Type.Args[i] = &nativeast.Local{
-			Name: arg.Name,
-			Type: wat2nativeType(arg.Type),
-			Cap:  1,
-		}
-	}
-	for i, typ := range fn.Type.Results {
-		fnNative.Type.Return[i] = &nativeast.Local{
-			Name: fmt.Sprintf("%s%d", kFuncRetNamePrefix, i),
-			Type: wat2nativeType(typ),
-			Cap:  1,
-		}
-	}
-	for i, local := range fn.Locals {
-		fnNative.Body.Locals[i] = &nativeast.Local{
-			Name: local.Name,
-			Type: wat2nativeType(local.Type),
-			Cap:  1,
-		}
-	}
-
-	for _, x := range fn.Type.Params {
-		p.localNames = append(p.localNames, x.Name)
-		p.localTypes = append(p.localTypes, x.Type)
-	}
-	if len(fn.Locals) > 0 {
-		for _, x := range fn.Locals {
-			p.localNames = append(p.localNames, x.Name)
-			p.localTypes = append(p.localTypes, x.Type)
-			p.gasCommentInFunc(w, fmt.Sprintf("local %s: %s", x.Name, x.Type))
-		}
-		fmt.Fprintln(&bufHeader)
-	}
+	fnNative := wat2nativeFunc(fn.Name, fn.Type, fn.Locals)
 
 	// 模拟构建函数栈帧
 	// 后面需要根据参数是否走寄存器传递生成相关的入口代码和返回代码
@@ -140,17 +91,19 @@ func (p *wat2X64Worker) buildFunc_body(w io.Writer, fn *ast.Func) error {
 	var bufIns bytes.Buffer
 	{
 		stk.funcName = fn.Name
-
 		assert(stk.Len() == 0)
-		for _, ins := range fn.Body.List {
-			if err := p.buildFunc_ins(&bufIns, fnNative, fn, &stk, &scopeStack, ins); err != nil {
-				return err
-			}
 
-			// 跳过后续的死代码分析
-			if ins.Token().IsTerminal() {
-				break
+		// 定义局部变量
+		if len(fn.Locals) > 0 {
+			for _, x := range fn.Locals {
+				p.gasCommentInFunc(w, fmt.Sprintf("local %s: %s", x.Name, x.Type))
 			}
+			fmt.Fprintln(&bufHeader)
+		}
+
+		// 便于函数主体指令
+		if err := p.buildFunc_ins(&bufIns, fnNative, fn, &stk, &scopeStack, *fn.Body); err != nil {
+			return err
 		}
 	}
 
@@ -777,30 +730,7 @@ func (p *wat2X64Worker) buildFunc_ins(
 		fnCallIdx := p.findFuncIndex(i.X)
 
 		// 构建被调用函数的栈帧信息
-		fnCallNative := &nativeast.Func{
-			Name: i.X,
-			Type: &nativeast.FuncType{
-				Args:   make([]*nativeast.Local, len(fnCallType.Params)),
-				Return: make([]*nativeast.Local, len(fnCallType.Results)),
-			},
-			Body: &nativeast.FuncBody{
-				// 不需要局部变量信息
-			},
-		}
-		for i, arg := range fnCallType.Params {
-			fnCallNative.Type.Args[i] = &nativeast.Local{
-				Name: arg.Name,
-				Type: wat2nativeType(arg.Type),
-				Cap:  1,
-			}
-		}
-		for i, typ := range fnCallType.Results {
-			fnCallNative.Type.Return[i] = &nativeast.Local{
-				Name: fmt.Sprintf("%s%d", kFuncRetNamePrefix, i),
-				Type: wat2nativeType(typ),
-				Cap:  1,
-			}
-		}
+		fnCallNative := wat2nativeFunc(i.X, fnCallType, nil)
 
 		// 模拟构建函数栈帧
 		// 后面需要根据参数是否走寄存器传递生成相关的入口代码和返回代码
@@ -975,30 +905,8 @@ func (p *wat2X64Worker) buildFunc_ins(
 		fnCallType := p.findType(i.TypeIdx)
 
 		// 构建被调用函数的栈帧信息
-		fnCallNative := &nativeast.Func{
-			Name: "", // 间接调用, 没有名字(可以尝试根据地址查询名字)
-			Type: &nativeast.FuncType{
-				Args:   make([]*nativeast.Local, len(fnCallType.Params)),
-				Return: make([]*nativeast.Local, len(fnCallType.Results)),
-			},
-			Body: &nativeast.FuncBody{
-				// 不需要局部变量信息
-			},
-		}
-		for i, arg := range fnCallType.Params {
-			fnCallNative.Type.Args[i] = &nativeast.Local{
-				Name: arg.Name,
-				Type: wat2nativeType(arg.Type),
-				Cap:  1,
-			}
-		}
-		for i, typ := range fnCallType.Results {
-			fnCallNative.Type.Return[i] = &nativeast.Local{
-				Name: fmt.Sprintf("%s%d", kFuncRetNamePrefix, i),
-				Type: wat2nativeType(typ),
-				Cap:  1,
-			}
-		}
+		// 间接调用, 没有名字(可以尝试根据地址查询名字)
+		fnCallNative := wat2nativeFunc("", fnCallType, nil)
 
 		// 模拟构建函数栈帧
 		// 后面需要根据参数是否走寄存器传递生成相关的入口代码和返回代码
