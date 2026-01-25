@@ -9,11 +9,8 @@ import (
 	"strings"
 
 	"wa-lang.org/wa/internal/native/abi"
-	"wa-lang.org/wa/internal/native/ast"
-	"wa-lang.org/wa/internal/wasm"
 	watast "wa-lang.org/wa/internal/wat/ast"
 	watparser "wa-lang.org/wa/internal/wat/parser"
-	wattoken "wa-lang.org/wa/internal/wat/token"
 )
 
 const DebugMode = false
@@ -40,27 +37,12 @@ type wat2X64Worker struct {
 	filename string
 	m        *watast.Module
 
-	importGlobalCount int // 导入全局只读变量的数目
-	importFuncCount   int // 导入函数的数目
-
-	inlinedTypeIndices []*inlinedTypeIndex
-	inlinedTypes       []*wasm.FunctionType
-
 	fnWasmR0Base      int // 当前函数的WASM栈R0位置
 	fnMaxCallArgsSize int // 调用子函数需要的最大空间
-
-	dataSection []*ast.Global
-	textSection []*ast.Func
 
 	nextId int64 // 用于生成唯一ID
 
 	trace bool // 调试开关
-}
-
-type inlinedTypeIndex struct {
-	section    wasm.SectionID
-	idx        wasm.Index
-	inlinedIdx wasm.Index
 }
 
 func newWat2X64Worker(filename string, mWat *watast.Module, osName string) *wat2X64Worker {
@@ -76,18 +58,6 @@ func newWat2X64Worker(filename string, mWat *watast.Module, osName string) *wat2
 		p.cpuType = abi.X64Unix
 	}
 
-	// 统计导入的global和func索引
-	p.importGlobalCount = 0
-	p.importFuncCount = 0
-	for _, importSpec := range p.m.Imports {
-		switch importSpec.ObjKind {
-		case wattoken.GLOBAL:
-			p.importGlobalCount++
-		case wattoken.FUNC:
-			p.importFuncCount++
-		}
-	}
-
 	// 如果 start 字段为空, 则尝试用 _start 导出函数替代
 	if p.m.Start == "" {
 		for _, fn := range p.m.Funcs {
@@ -101,9 +71,6 @@ func newWat2X64Worker(filename string, mWat *watast.Module, osName string) *wat2
 }
 
 func (p *wat2X64Worker) BuildProgram() (code []byte, err error) {
-	p.dataSection = p.dataSection[:0]
-	p.textSection = p.textSection[:0]
-
 	var out bytes.Buffer
 
 	fmt.Fprintf(&out, "# 源文件: %s, ABI: %s\n", p.filename, p.cpuType)

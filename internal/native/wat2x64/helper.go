@@ -44,39 +44,12 @@ func (p *wat2X64Worker) findGlobalType(ident string) token.Token {
 
 	// 全局变量是索引类型
 	if idx, err := strconv.Atoi(ident); err == nil {
-		if idx < 0 {
+		if idx < 0 || idx >= len(p.m.Globals) {
 			panic(fmt.Sprintf("wat2x64: unknown global %q", ident))
 		}
 
-		// 是导入的全局变量
-		if idx < p.importGlobalCount {
-			var nextIndex int
-			for _, importSpec := range p.m.Imports {
-				if importSpec.ObjKind != token.GLOBAL {
-					continue
-				}
-				// 找到导入对象
-				if nextIndex == idx {
-					return importSpec.GlobalType
-				}
-				// 更新索引
-				nextIndex++
-			}
-		}
-
 		// 模块内部定义的全局变量
-		return p.m.Globals[idx-p.importGlobalCount].Type
-	}
-
-	// 从导入对象开始查找
-	for _, importSpec := range p.m.Imports {
-		if importSpec.ObjKind != token.GLOBAL {
-			continue
-		}
-		// 找到导入对象
-		if importSpec.GlobalName == ident {
-			return importSpec.GlobalType
-		}
+		return p.m.Globals[idx].Type
 	}
 
 	// 查找本地定义的全局对象
@@ -222,7 +195,7 @@ func (p *wat2X64Worker) findFuncIndex(ident string) int {
 	// 查找本地定义的函数
 	for i, fn := range p.m.Funcs {
 		if fn.Name == ident {
-			return p.importFuncCount + i
+			return len(p.m.Imports) + i
 		}
 	}
 

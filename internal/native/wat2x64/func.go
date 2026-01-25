@@ -834,7 +834,7 @@ func (p *wat2X64Worker) buildFunc_ins(
 			}
 		}
 
-		if fnCallIdx <= p.importFuncCount {
+		if fnCallIdx < len(p.m.Imports) {
 			fmt.Fprintf(w, "    call %s\n", kImportNamePrefix+i.X)
 		} else {
 			fmt.Fprintf(w, "    call %s\n", kFuncNamePrefix+i.X)
