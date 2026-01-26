@@ -761,7 +761,7 @@ func (p *wat2X64Worker) buildFunc_ins(
 			if k < len(i.XList)-1 {
 				fmt.Fprintf(w, "    # br_table case %d\n", k)
 				fmt.Fprintf(w, "    cmp eax, %d\n", k)
-				fmt.Fprintf(w, "    je  %s\n", p.makeLabelId(kLabelPrefixName_brCase, "", labelSuffix))
+				fmt.Fprintf(w, "    je  %s\n", p.makeLabelId(kLabelPrefixName_brCase, i.XList[k], labelSuffix))
 			} else {
 				fmt.Fprintf(w, "    # br_table default\n")
 				fmt.Fprintf(w, "    jmp %s\n", p.makeLabelId(kLabelPrefixName_brDefault, "", labelSuffix))
@@ -789,7 +789,7 @@ func (p *wat2X64Worker) buildFunc_ins(
 
 				// 生成跳转的标签
 				if k < len(i.XList)-1 {
-					p.gasFuncLabel(w, p.makeLabelId(kLabelPrefixName_brCase, "", labelSuffix))
+					p.gasFuncLabel(w, p.makeLabelId(kLabelPrefixName_brCase, i.XList[k], labelSuffix))
 				} else {
 					p.gasFuncLabel(w, p.makeLabelId(kLabelPrefixName_brDefault, "", labelSuffix))
 				}
