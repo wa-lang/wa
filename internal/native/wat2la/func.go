@@ -30,7 +30,6 @@ const (
 	kLabelPrefixName_brFallthrough = ".Wa.L.brFallthrough."
 	kLabelPrefixName_else          = ".Wa.L.else."
 	kLabelPrefixName_end           = ".Wa.L.end."
-	kLabelPrefixName_return        = ".Wa.L.return."
 )
 
 //
@@ -44,14 +43,6 @@ func (p *wat2laWorker) buildFuncs(w io.Writer) error {
 	}
 
 	for _, f := range p.m.Funcs {
-		p.localNames = nil
-		p.localTypes = nil
-		p.scopeTypes = nil
-		p.scopeLabels = nil
-		p.scopeLabelsSuffix = nil
-		p.scopeStackBases = nil
-		p.scopeResults = nil
-
 		p.gasComment(w, "func "+f.Name+f.Type.String())
 		p.gasSectionTextStart(w)
 		if f.ExportName == f.Name {
@@ -69,70 +60,10 @@ func (p *wat2laWorker) buildFuncs(w io.Writer) error {
 func (p *wat2laWorker) buildFunc_body(w io.Writer, fn *ast.Func) error {
 	p.Tracef("buildFunc_body: %s\n", fn.Name)
 
-	var bufHeader bytes.Buffer
-
-	if p.m.Memory != nil {
-		addrType := p.m.Memory.AddrType
-		assert(addrType == token.I32 || addrType == token.I64)
-	}
-
-	assert(p.m.Memory.AddrType == token.I32)
-
-	assert(len(p.localNames) == 0)
-	assert(len(p.localTypes) == 0)
 	assert(len(fn.Type.Results) == len(fn.Body.Results))
 
-	assert(len(p.scopeTypes) == 0)
-	assert(len(p.scopeLabels) == 0)
-	assert(len(p.scopeLabelsSuffix) == 0)
-	assert(len(p.scopeStackBases) == 0)
-	assert(len(p.scopeResults) == 0)
-
 	// 转化为汇编的结构, 准备构建函数栈帧
-	fnNative := &nativeast.Func{
-		Name: fn.Name,
-		Type: &nativeast.FuncType{
-			Args:   make([]*nativeast.Local, len(fn.Type.Params)),
-			Return: make([]*nativeast.Local, len(fn.Type.Results)),
-		},
-		Body: &nativeast.FuncBody{
-			Locals: make([]*nativeast.Local, len(fn.Locals)),
-		},
-	}
-	for i, arg := range fn.Type.Params {
-		fnNative.Type.Args[i] = &nativeast.Local{
-			Name: arg.Name,
-			Type: wat2nativeType(arg.Type),
-			Cap:  1,
-		}
-	}
-	for i, typ := range fn.Type.Results {
-		fnNative.Type.Return[i] = &nativeast.Local{
-			Name: fmt.Sprintf("%s%d", kFuncRetNamePrefix, i),
-			Type: wat2nativeType(typ),
-			Cap:  1,
-		}
-	}
-	for i, local := range fn.Locals {
-		fnNative.Body.Locals[i] = &nativeast.Local{
-			Name: local.Name,
-			Type: wat2nativeType(local.Type),
-			Cap:  1,
-		}
-	}
-
-	for _, x := range fn.Type.Params {
-		p.localNames = append(p.localNames, x.Name)
-		p.localTypes = append(p.localTypes, x.Type)
-	}
-	if len(fn.Locals) > 0 {
-		for _, x := range fn.Locals {
-			p.localNames = append(p.localNames, x.Name)
-			p.localTypes = append(p.localTypes, x.Type)
-			p.gasCommentInFunc(w, fmt.Sprintf("local %s: %s", x.Name, x.Type))
-		}
-		fmt.Fprintln(&bufHeader)
-	}
+	fnNative := wat2nativeFunc(fn.Name, fn.Type, fn.Locals)
 
 	// 模拟构建函数栈帧
 	// 后面需要根据参数是否走寄存器传递生成相关的入口代码和返回代码
@@ -148,24 +79,30 @@ func (p *wat2laWorker) buildFunc_body(w io.Writer, fn *ast.Func) error {
 
 	// 开始解析 wasm 指令
 	var stk valueTypeStack
-	var bufIns bytes.Buffer
+	var scopeStack scopeContextStack
+	var bufHeader bytes.Buffer
+	var bufBody bytes.Buffer
+	var bufReturn bytes.Buffer
 	{
 		stk.funcName = fn.Name
-
 		assert(stk.Len() == 0)
-		for _, ins := range fn.Body.List {
-			if err := p.buildFunc_ins(&bufIns, fnNative, fn, &stk, ins); err != nil {
-				return err
-			}
 
-			// 跳过后续的死代码分析
-			if ins.Token().IsTerminal() {
-				break
+		// 定义局部变量
+		if len(fn.Locals) > 0 {
+			for _, x := range fn.Locals {
+				p.gasCommentInFunc(w, fmt.Sprintf("local %s: %s", x.Name, x.Type))
 			}
+			fmt.Fprintln(&bufHeader)
+		}
+
+		// 编译函数主体指令
+		if err := p.buildFunc_ins(&bufBody, fnNative, fn, &stk, &scopeStack, *fn.Body); err != nil {
+			return err
 		}
 	}
 
 	// 补充构建头部栈帧
+	// 需要先统计 WASM 栈的最大深度和调用子函数的参数和返回值空间
 	{
 		frameSize := fnNative.FrameSize + stk.MaxDepth()*8 + p.fnMaxCallArgsSize
 
@@ -184,6 +121,7 @@ func (p *wat2laWorker) buildFunc_body(w io.Writer, fn *ast.Func) error {
 	}
 
 	// 走栈返回
+	// 先将调用者传入的返回值栈地址寄存器参数备份
 	if len(fnNative.Type.Return) > 1 && fnNative.Type.Return[1].Reg == 0 {
 		p.gasCommentInFunc(&bufHeader, "将返回地址备份到栈")
 		fmt.Fprintf(&bufHeader, "    st.d $a0, $fp, %d # return address\n", 2*8)
@@ -262,50 +200,52 @@ func (p *wat2laWorker) buildFunc_body(w io.Writer, fn *ast.Func) error {
 		fmt.Fprintln(&bufHeader)
 	}
 
+	// 准备物理函数的返回值处理
+	p.gasCommentInFunc(&bufReturn, "根据ABI处理返回值")
+	fmt.Fprintln(&bufReturn)
+
 	// 将栈上的值保存到返回值变量
+	// 这是函数Body作为一个Block的返回值
+	// 栈上多余的数据以及在 return 和 br 指令时刻搬运完成
 	assert(stk.Len() == len(fn.Type.Results))
 	if n := len(fn.Type.Results); n > 0 {
-		p.gasCommentInFunc(&bufIns, "return")
-		p.gasCommentInFunc(&bufIns, "copy result from stack")
+		p.gasCommentInFunc(&bufReturn, "将栈上数据复制到返回值变量")
 		for i := n - 1; i >= 0; i-- {
 			reti := fnNative.Type.Return[i]
 			sp := p.fnWasmR0Base - 8*stk.Pop(fn.Type.Results[i]) - 8
 			switch fn.Type.Results[i] {
 			case token.I32:
-				fmt.Fprintf(&bufIns, "    ld.w $t0, $fp, %d\n", sp)
-				fmt.Fprintf(&bufIns, "    st.w $t0, $fp, %d # ret.%d\n", reti.RBPOff, i)
+				fmt.Fprintf(&bufReturn, "    ld.w $t0, $fp, %d\n", sp)
+				fmt.Fprintf(&bufReturn, "    st.w $t0, $fp, %d # ret.%d\n", reti.RBPOff, i)
 			case token.I64:
-				fmt.Fprintf(&bufIns, "    ld.d $t0, $fp, %d\n", sp)
-				fmt.Fprintf(&bufIns, "    st.d $t0, $fp, %d # ret.%d\n", reti.RBPOff, i)
+				fmt.Fprintf(&bufReturn, "    ld.d $t0, $fp, %d\n", sp)
+				fmt.Fprintf(&bufReturn, "    st.d $t0, $fp, %d # ret.%d\n", reti.RBPOff, i)
 			case token.F32:
-				fmt.Fprintf(&bufIns, "    ld.w $t0, $fp, %d\n", sp)
-				fmt.Fprintf(&bufIns, "    st.w $t0, $fp, %d # ret.%d\n", reti.RBPOff, i)
+				fmt.Fprintf(&bufReturn, "    ld.w $t0, $fp, %d\n", sp)
+				fmt.Fprintf(&bufReturn, "    st.w $t0, $fp, %d # ret.%d\n", reti.RBPOff, i)
 			case token.F64:
-				fmt.Fprintf(&bufIns, "    ld.d $t0, $fp, %d\n", sp)
-				fmt.Fprintf(&bufIns, "    st.d $t0, $fp, %d # ret.%d\n", reti.RBPOff, i)
+				fmt.Fprintf(&bufReturn, "    ld.d $t0, $fp, %d\n", sp)
+				fmt.Fprintf(&bufReturn, "    st.d $t0, $fp, %d # ret.%d\n", reti.RBPOff, i)
 			default:
 				panic("unreachable")
 			}
 		}
+		fmt.Fprintln(&bufReturn)
 	}
 	assert(stk.Len() == 0)
 
 	// 根据ABI处理返回值
 	// 需要将栈顶位置的结果转化为本地ABI规范的返回值
 	{
-		labelRetuenId := p.makeLabelId(kLabelPrefixName_return, fn.Name, "")
-
-		// 返回代码位置
-		fmt.Fprintln(&bufIns)
-		p.gasCommentInFunc(&bufIns, "根据ABI处理返回值")
-		p.gasFuncLabel(&bufIns, labelRetuenId)
-
 		// 如果走内存, 返回地址
 		if len(fn.Type.Results) > 1 && fnNative.Type.Return[1].Reg == 0 {
-			fmt.Fprintf(&bufIns, "    ld.d $a0, $fp, %d # ret address\n",
+			p.gasCommentInFunc(&bufReturn, "将返回地址复制到寄存器")
+			fmt.Fprintf(&bufReturn, "    ld.d $a0, $fp, %d # ret address\n",
 				fnNative.Type.Return[0].RBPOff,
 			)
 		} else {
+			p.gasCommentInFunc(&bufReturn, "将返回值变量复制到寄存器")
+
 			// 如果走寄存器, 则复制寄存器
 			for i, ret := range fnNative.Type.Return {
 				if ret.Reg == 0 {
@@ -313,25 +253,25 @@ func (p *wat2laWorker) buildFunc_body(w io.Writer, fn *ast.Func) error {
 				}
 				switch fn.Type.Results[i] {
 				case token.I32:
-					fmt.Fprintf(&bufIns, "    ld.w %v, $fp, %d # ret %s\n",
+					fmt.Fprintf(&bufReturn, "    ld.w %v, $fp, %d # ret %s\n",
 						"$"+strings.ToLower(loong64.RegAliasString(ret.Reg)),
 						fnNative.Type.Return[i].RBPOff,
 						fnNative.Type.Return[i].Name,
 					)
 				case token.I64:
-					fmt.Fprintf(&bufIns, "    ld.d %v, $fp, %d # ret %s\n",
+					fmt.Fprintf(&bufReturn, "    ld.d %v, $fp, %d # ret %s\n",
 						"$"+strings.ToLower(loong64.RegAliasString(ret.Reg)),
 						fnNative.Type.Return[i].RBPOff,
 						fnNative.Type.Return[i].Name,
 					)
 				case token.F32:
-					fmt.Fprintf(&bufIns, "    ld.w %v, $fp, %d # ret %s\n",
+					fmt.Fprintf(&bufReturn, "    ld.w %v, $fp, %d # ret %s\n",
 						"$"+strings.ToLower(loong64.RegAliasString(ret.Reg)),
 						fnNative.Type.Return[i].RBPOff,
 						fnNative.Type.Return[i].Name,
 					)
 				case token.F64:
-					fmt.Fprintf(&bufIns, "    ld.d %v, $fp, %d # ret %s\n",
+					fmt.Fprintf(&bufReturn, "    ld.d %v, $fp, %d # ret %s\n",
 						"$"+strings.ToLower(loong64.RegAliasString(ret.Reg)),
 						fnNative.Type.Return[i].RBPOff,
 						fnNative.Type.Return[i].Name,
@@ -340,39 +280,61 @@ func (p *wat2laWorker) buildFunc_body(w io.Writer, fn *ast.Func) error {
 			}
 		}
 	}
-	fmt.Fprintln(&bufIns)
+	fmt.Fprintln(&bufReturn)
 
 	// 结束栈帧
 	{
-		p.gasCommentInFunc(&bufIns, "函数返回")
-		fmt.Fprintln(&bufIns, "    addi.d  $sp, $fp, 0")
-		fmt.Fprintln(&bufIns, "    ld.d    $ra, $sp, 8")
-		fmt.Fprintln(&bufIns, "    ld.d    $fp, $sp, 0")
-		fmt.Fprintln(&bufIns, "    addi.d  $sp, $sp, 16")
-		fmt.Fprintln(&bufIns, "    jirl    $zero, $ra, 0")
-		fmt.Fprintln(&bufIns)
+		p.gasCommentInFunc(&bufReturn, "函数返回")
+		fmt.Fprintln(&bufReturn, "    addi.d  $sp, $fp, 0")
+		fmt.Fprintln(&bufReturn, "    ld.d    $ra, $sp, 8")
+		fmt.Fprintln(&bufReturn, "    ld.d    $fp, $sp, 0")
+		fmt.Fprintln(&bufReturn, "    addi.d  $sp, $sp, 16")
+		fmt.Fprintln(&bufReturn, "    jirl    $zero, $ra, 0")
+		fmt.Fprintln(&bufReturn)
 	}
 
-	// 头部赋值到 w
+	// 头部复制到 w
 	io.Copy(w, &bufHeader)
 	// 指令复制到 w
-	io.Copy(w, &bufIns)
+	io.Copy(w, &bufBody)
+	// 尾部复制到 w
+	io.Copy(w, &bufReturn)
 
 	return nil
 }
 
 func (p *wat2laWorker) buildFunc_ins(
-	w io.Writer, fnNative *nativeast.Func,
-	fn *ast.Func, stk *valueTypeStack, i ast.Instruction,
+	w io.Writer,
+	fnNative *nativeast.Func, fn *ast.Func,
+	stk *valueTypeStack, scopeStack *scopeContextStack,
+	i ast.Instruction,
 ) error {
 	stk.NextInstruction(i)
 
-	const indent = "    "
-	p.Tracef("buildFunc_ins: %s%s begin: %v\n", indent, i.Token(), stk.String())
-	defer func() { p.Tracef("buildFunc_ins: %s%s end: %v\n", indent, i.Token(), stk.String()) }()
+	p.Tracef("buildFunc_ins: %s begin: %v\n", i.Token(), stk.String())
+	defer func() { p.Tracef("buildFunc_ins: %s end: %v\n", i.Token(), stk.String()) }()
+
+	defer func() {
+		if i.Token().IsTerminal() {
+			assert(scopeStack.Top().IgnoreStackCheck)
+		}
+	}()
 
 	switch tok := i.Token(); tok {
 	case token.INS_UNREACHABLE:
+		currentScopeContext := scopeStack.Top()
+		currentScopeContext.IgnoreStackCheck = true
+
+		assert(stk.Len() >= currentScopeContext.StackBase)
+
+		// 将静态分析栈平衡
+		for stk.Len() > currentScopeContext.StackBase {
+			stk.DropAny()
+		}
+		for _, retType := range currentScopeContext.Result {
+			stk.Push(retType)
+		}
+
 		p.gasCommentInFunc(w, "unreachable")
 		fmt.Fprintf(w, "    pcalau12i $t0, %%pc_hi20(%s)\n", kRuntimePanic)
 		fmt.Fprintf(w, "    addi.d $t0, $t0, %%pc_lo12(%s)\n", kRuntimePanic)
@@ -380,65 +342,137 @@ func (p *wat2laWorker) buildFunc_ins(
 		fmt.Fprintln(w)
 
 	case token.INS_NOP:
-		fmt.Fprintln(w, indent, "addi.w $zero, $zero, 0 # nop")
+		fmt.Fprintln(w, "    addi.w $zero, $zero, 0 # nop")
 		fmt.Fprintln(w)
 
 	case token.INS_BLOCK:
 		i := i.(ast.Ins_Block)
 
-		stkBase := stk.Len()
-		defer func() { assert(stk.Len() == stkBase+len(i.Results)) }()
-
-		labelName := i.Label
+		labelName := fixName(i.Label)
 		labelSuffix := p.genNextId()
 		labelBlockNextId := p.makeLabelId(kLabelPrefixName_brNext, labelName, labelSuffix)
 
-		p.enterLabelScope(token.INS_BLOCK, stkBase, i.Label, labelSuffix, i.Results)
-		defer p.leaveLabelScope()
-
-		fmt.Fprintf(w, "    # block.begin(name=%s, suffix=%s)\n", labelName, labelSuffix)
-
-		for _, ins := range i.List {
-			if err := p.buildFunc_ins(w, fnNative, fn, stk, ins); err != nil {
-				return err
-			}
-
-			// 跳过后续的死代码分析
-			if ins.Token().IsTerminal() {
-				break
-			}
+		if isSameInstList(fn.Body.List, i.List) {
+			fmt.Fprintf(w, "    # fn.body.begin(name=%s, suffix=%s)\n", labelName, labelSuffix)
+			fmt.Fprintln(w)
+		} else {
+			fmt.Fprintf(w, "    # block.begin(name=%s, suffix=%s)\n", labelName, labelSuffix)
+			fmt.Fprintln(w)
 		}
 
-		p.gasFuncLabel(w, labelBlockNextId)
-		fmt.Fprintf(w, "    # block.end(name=%s, suffix=%s)\n", labelName, labelSuffix)
-		fmt.Fprintln(w)
+		// 编译块内的指令
+		scopeStack.EnterScope(token.INS_BLOCK, stk.Len(), labelName, labelSuffix, i.Results)
+		{
+			scopeCtx := scopeStack.Top()
+			scopeCtx.InstList = i.List
+
+			for _, ins := range i.List {
+				if err := p.buildFunc_ins(w, fnNative, fn, stk, scopeStack, ins); err != nil {
+					return err
+				}
+
+				// 跳过后续的死代码分析
+				if ins.Token().IsTerminal() {
+					break
+				}
+			}
+
+			if scopeCtx.IgnoreStackCheck {
+				// 验证和搬运工作已经在 return 和 br 指令处完成
+				// 可能跨越了多个块, 只能在调转指令处定位到目标块进行检查
+				n := scopeCtx.StackBase + len(i.Results)
+				assert(stk.Len() >= n)
+
+				// 这里只需要重置栈
+				for stk.Len() > scopeCtx.StackBase {
+					stk.DropAny()
+				}
+
+				// 并且填入合适的块返回值, 以后后续检查继续进行
+				for _, reti := range i.Results {
+					stk.Push(reti)
+				}
+
+			} else {
+				// 从 end 正常结束需要精确验证栈匹配
+				assert(stk.Len() == scopeCtx.StackBase+len(i.Results))
+				for k, expect := range i.Results {
+					if got := stk.TokenAt(scopeCtx.StackBase + k); got != expect {
+						panic(fmt.Sprintf("expect = %v, got = %v", expect, got))
+					}
+				}
+			}
+
+			// 用于 br/br-if/br-table 指令跳转
+			// block 的跳转地址在结尾
+			p.gasFuncLabel(w, labelBlockNextId)
+		}
+		scopeStack.LeaveScope()
+
+		if isSameInstList(fn.Body.List, i.List) {
+			fmt.Fprintf(w, "    # fn.body.end(name=%s, suffix=%s)\n", labelName, labelSuffix)
+			fmt.Fprintln(w)
+		} else {
+			fmt.Fprintf(w, "    # block.end(name=%s, suffix=%s)\n", labelName, labelSuffix)
+			fmt.Fprintln(w)
+		}
 
 	case token.INS_LOOP:
 		i := i.(ast.Ins_Loop)
 
-		stkBase := stk.Len()
-		defer func() { assert(stk.Len() == stkBase+len(i.Results)) }()
-
-		labelName := i.Label
+		labelName := fixName(i.Label)
 		labelSuffix := p.genNextId()
 		labelLoopNextId := p.makeLabelId(kLabelPrefixName_brNext, labelName, labelSuffix)
 
-		p.enterLabelScope(token.INS_LOOP, stkBase, i.Label, labelSuffix, i.Results)
-		defer p.leaveLabelScope()
-
 		fmt.Fprintf(w, "    # loop.begin(name=%s, suffix=%s)\n", labelName, labelSuffix)
-		p.gasFuncLabel(w, labelLoopNextId)
 
-		for _, ins := range i.List {
-			if err := p.buildFunc_ins(w, fnNative, fn, stk, ins); err != nil {
-				return err
+		// 编译块内的指令
+		scopeStack.EnterScope(token.INS_LOOP, stk.Len(), labelName, labelSuffix, i.Results)
+		{
+			scopeCtx := scopeStack.Top()
+
+			// 用于 br/br-if/br-table 指令跳转
+			// loop 的跳转地址在开头
+			p.gasFuncLabel(w, labelLoopNextId)
+
+			for _, ins := range i.List {
+				if err := p.buildFunc_ins(w, fnNative, fn, stk, scopeStack, ins); err != nil {
+					return err
+				}
+
+				// 跳过后续的死代码分析
+				if ins.Token().IsTerminal() {
+					break
+				}
 			}
 
-			// 跳过后续的死代码分析
-			if ins.Token().IsTerminal() {
-				break
+			if scopeCtx.IgnoreStackCheck {
+				// 验证和搬运工作已经在 return 和 br 指令处完成
+				// 可能跨越了多个块, 只能在调转指令处定位到目标块进行检查
+				n := scopeCtx.StackBase + len(i.Results)
+				assert(stk.Len() >= n)
+
+				// 这里只需要重置栈
+				for stk.Len() > scopeCtx.StackBase {
+					stk.DropAny()
+				}
+
+				// 并且填入合适的块返回值, 以后后续检查继续进行
+				for _, reti := range i.Results {
+					stk.Push(reti)
+				}
+
+			} else {
+				// 从 end 正常结束需要精确验证栈匹配
+				assert(stk.Len() == scopeCtx.StackBase+len(i.Results))
+				for k, expect := range i.Results {
+					if got := stk.TokenAt(scopeCtx.StackBase + k); got != expect {
+						panic(fmt.Sprintf("expect = %v, got = %v", expect, got))
+					}
+				}
 			}
 		}
+		scopeStack.LeaveScope()
 
 		fmt.Fprintf(w, "    # loop.end(name=%s, suffix=%s)\n", labelName, labelSuffix)
 		fmt.Fprintln(w)
@@ -446,13 +480,10 @@ func (p *wat2laWorker) buildFunc_ins(
 	case token.INS_IF:
 		i := i.(ast.Ins_If)
 
-		labelName := i.Label
+		labelName := fixName(i.Label)
 		labelSuffix := p.genNextId()
 		labelIfElseId := p.makeLabelId(kLabelPrefixName_else, labelName, labelSuffix)
 		labelNextId := p.makeLabelId(kLabelPrefixName_brNext, labelName, labelSuffix)
-
-		// 龙芯没有 pop 指令，需要2个指令才能实现
-		// 因此通过固定的偏移量，只需要一个指令
 
 		sp0 := stk.Pop(token.I32)
 
@@ -464,43 +495,15 @@ func (p *wat2laWorker) buildFunc_ins(
 			fmt.Fprintf(w, "    beqz $t0, %s\n", labelNextId)
 		}
 
-		stkBase := stk.Len()
-		defer func() { assert(stk.Len() == stkBase+len(i.Results)) }()
-
-		p.enterLabelScope(token.INS_IF, stkBase, i.Label, labelSuffix, i.Results)
-		defer p.leaveLabelScope()
-
 		fmt.Fprintf(w, "    # if.body(name=%s, suffix=%s)\n", labelName, labelSuffix)
-		for _, ins := range i.Body {
-			if err := p.buildFunc_ins(w, fnNative, fn, stk, ins); err != nil {
-				return err
-			}
 
-			// 跳过后续的死代码分析
-			if ins.Token().IsTerminal() {
-				break
-			}
-		}
-		fmt.Fprintf(w, "    b   %s\n", labelNextId)
-		fmt.Fprintln(w)
+		// 编译 if 块内的指令
+		scopeStack.EnterScope(token.INS_IF, stk.Len(), labelName, labelSuffix, i.Results)
+		{
+			scopeCtx := scopeStack.Top()
 
-		if len(i.Else) > 0 {
-			p.Tracef("buildFunc_ins: %s%s begin: %v\n", indent, token.INS_ELSE, stk.String())
-			defer func() { p.Tracef("buildFunc_ins: %s%s end: %v\n", indent, token.INS_ELSE, stk.String()) }()
-
-			fmt.Fprintf(w, "    # if.else(name=%s, suffix=%s)\n", labelName, labelSuffix)
-			fmt.Fprintf(w, "%s:\n", labelIfElseId)
-
-			// 这是静态分析, 需要消除 if 分支对栈分配的影响
-			for _, retType := range i.Results {
-				stk.Pop(retType)
-			}
-
-			// 重新开始
-			assert(stk.Len() == stkBase)
-
-			for _, ins := range i.Else {
-				if err := p.buildFunc_ins(w, fnNative, fn, stk, ins); err != nil {
+			for _, ins := range i.Body {
+				if err := p.buildFunc_ins(w, fnNative, fn, stk, scopeStack, ins); err != nil {
 					return err
 				}
 
@@ -509,7 +512,99 @@ func (p *wat2laWorker) buildFunc_ins(
 					break
 				}
 			}
+
+			if scopeCtx.IgnoreStackCheck {
+				// 验证和搬运工作已经在 return 和 br 指令处完成
+				// 可能跨越了多个块, 只能在调转指令处定位到目标块进行检查
+				n := scopeCtx.StackBase + len(i.Results)
+				assert(stk.Len() >= n)
+
+				// 这里只需要重置栈
+				for stk.Len() > scopeCtx.StackBase {
+					stk.DropAny()
+				}
+
+				// 并且填入合适的块返回值, 以后后续检查继续进行
+				for _, reti := range i.Results {
+					stk.Push(reti)
+				}
+
+			} else {
+				// 从 end 正常结束需要精确验证栈匹配
+				assert(stk.Len() == scopeCtx.StackBase+len(i.Results))
+				for k, expect := range i.Results {
+					if got := stk.TokenAt(scopeCtx.StackBase + k); got != expect {
+						panic(fmt.Sprintf("expect = %v, got = %v", expect, got))
+					}
+				}
+			}
+
+			// 如果有 else 分支则要将栈上的返回值也清除
+			// else 分析时会再次生成, 以确保栈的平衡
+			if len(i.Else) > 0 {
+				assert(stk.Len() == scopeCtx.StackBase+len(i.Results))
+				for k := len(i.Results) - 1; k >= 0; k-- {
+					retType := i.Results[k]
+					stk.Pop(retType)
+				}
+			}
+
+			fmt.Fprintf(w, "    b %s\n", labelNextId)
+			fmt.Fprintln(w)
 		}
+		scopeStack.LeaveScope()
+
+		// 编译 else 块内的指令
+		scopeStack.EnterScope(token.INS_ELSE, stk.Len(), labelName, labelSuffix, i.Results)
+		if len(i.Else) > 0 {
+			scopeCtx := scopeStack.Top()
+
+			// 生成 else 入口标签点
+			p.gasFuncLabel(w, labelIfElseId)
+
+			for _, ins := range i.Else {
+				if err := p.buildFunc_ins(w, fnNative, fn, stk, scopeStack, ins); err != nil {
+					return err
+				}
+
+				// 跳过后续的死代码分析
+				if ins.Token().IsTerminal() {
+					break
+				}
+			}
+
+			if scopeCtx.IgnoreStackCheck {
+				// 验证和搬运工作已经在 return 和 br 指令处完成
+				// 可能跨越了多个块, 只能在调转指令处定位到目标块进行检查
+				n := scopeCtx.StackBase + len(i.Results)
+				assert(stk.Len() >= n)
+
+				// 这里只需要重置栈
+				for stk.Len() > scopeCtx.StackBase {
+					stk.DropAny()
+				}
+
+				// 并且填入合适的块返回值, 以后后续检查继续进行
+				for _, reti := range i.Results {
+					stk.Push(reti)
+				}
+
+			} else {
+				// 从 end 正常结束需要精确验证栈匹配
+				assert(stk.Len() == scopeCtx.StackBase+len(i.Results))
+				for k, expect := range i.Results {
+					if got := stk.TokenAt(scopeCtx.StackBase + k); got != expect {
+						panic(fmt.Sprintf("expect = %v, got = %v", expect, got))
+					}
+				}
+			}
+
+			assert(stk.Len() == scopeCtx.StackBase+len(i.Results))
+		}
+		scopeStack.LeaveScope()
+
+		// 用于 br/br-if/br-table 指令跳转
+		// if/else 块的跳转地址在结尾
 		p.gasFuncLabel(w, labelNextId)
 		fmt.Fprintf(w, "    # if.end(name=%s, suffix=%s)\n", labelName, labelSuffix)
 		fmt.Fprintln(w)
@@ -522,51 +617,52 @@ func (p *wat2laWorker) buildFunc_ins(
 	case token.INS_BR:
 		i := i.(ast.Ins_Br)
 
+		// 设置当前 block 为非正常的 end 结束
+		currentScopeContext := scopeStack.Top()
+		currentScopeContext.IgnoreStackCheck = true
+
 		// br会根据目标block的返回值个数, 从当前block产生的栈中去返回值,
 		// 至于中间被跳过的block栈数据全部被丢弃.
 
-		labelIdx := p.findLabelIndex(i.X)
-		labelName := p.findLabelName(i.X)
-		labelSuffix := p.findLabelSuffixId(i.X)
-		labelNextId := p.makeLabelId(kLabelPrefixName_brNext, labelName, labelSuffix)
-		labelScopeTyp := p.findLabelScopeType(i.X)
-
-		destScopeStackBase := p.scopeStackBases[len(p.scopeLabels)-labelIdx-1]
-		destScopeResults := p.scopeResults[len(p.scopeLabels)-labelIdx-1]
-
-		currentScopeStackBase := p.scopeStackBases[len(p.scopeLabels)-1]
+		destScopeContex := scopeStack.FindScopeContext(i.X)
+		labelNextId := p.makeLabelId(kLabelPrefixName_brNext, fixName(destScopeContex.Label), destScopeContex.LabelSuffix)
 
 		fmt.Fprintf(w, "    # br %s\n", i.X)
 
 		// br对应的block带返回值
 		// 如果目标是 loop 则不需要处理结果, 因为还要继续循环
-		if labelScopeTyp != token.INS_LOOP && len(destScopeResults) > 0 {
+		if destScopeContex.Type != token.INS_LOOP && len(destScopeContex.Result) > 0 {
 			// 必须确保当前block的stk上有足够的返回值
-			assert(currentScopeStackBase+len(destScopeResults) >= stk.Len())
+			assert(stk.Len() >= destScopeContex.StackBase+len(destScopeContex.Result))
 
 			// 第一个返回值返回值的偏移地址
-			firstResultOffset := stk.Len() - len(destScopeResults)
+			firstResultBase := stk.Len() - len(destScopeContex.Result)
+
+			// 验证栈上的值和返回值类型匹配
+			for k, expect := range destScopeContex.Result {
+				if got := stk.TokenAt(firstResultBase + k); got != expect {
+					panic(fmt.Sprintf("expect = %v, got = %v", expect, got))
+				}
+			}
 
 			// 如果返回值位置和目标block的base不一致则需要逐个复制
-			if firstResultOffset > destScopeStackBase {
+			if firstResultBase > destScopeContex.StackBase {
 				// 返回值是逆序出栈
-				fmt.Fprintf(w, "%s# copy br %s result\n", indent, labelName)
-				for i := len(destScopeResults) - 1; i >= 0; i-- {
-					xType := destScopeResults[i]
-					reti := stk.Pop(xType)
-					switch xType {
+				// 注意: 这里只是搬运, 不能改变栈的状态
+				for i := len(destScopeContex.Result) - 1; i >= 0; i-- {
+					switch xType := destScopeContex.Result[i]; xType {
 					case token.I32:
-						fmt.Fprintf(w, "    ld.w $t0, $fp, %d\n", p.fnWasmR0Base-reti*8-8)
-						fmt.Fprintf(w, "    st.w $t0, $fp, %d\n", p.fnWasmR0Base-(destScopeStackBase+i)*8-8)
+						fmt.Fprintf(w, "    ld.w $t0, $fp, %d\n", p.fnWasmR0Base-(firstResultBase+i)*8-8)
+						fmt.Fprintf(w, "    st.w $t0, $fp, %d\n", p.fnWasmR0Base-(destScopeContex.StackBase+i)*8-8)
 					case token.I64:
-						fmt.Fprintf(w, "    ld.d $t0, $fp, %d\n", p.fnWasmR0Base-reti*8-8)
-						fmt.Fprintf(w, "    st.d $t0, $fp, %d\n", p.fnWasmR0Base-(destScopeStackBase+i)*8-8)
+						fmt.Fprintf(w, "    ld.d $t0, $fp, %d\n", p.fnWasmR0Base-(firstResultBase+i)*8-8)
+						fmt.Fprintf(w, "    st.d $t0, $fp, %d\n", p.fnWasmR0Base-(destScopeContex.StackBase+i)*8-8)
 					case token.F32:
-						fmt.Fprintf(w, "    fld.s $ft0, $fp, %d\n", p.fnWasmR0Base-reti*8-8)
-						fmt.Fprintf(w, "    fst.s $ft0, $fp, %d\n", p.fnWasmR0Base-(destScopeStackBase+i)*8-8)
+						fmt.Fprintf(w, "    fld.s $ft0, $fp, %d\n", p.fnWasmR0Base-(firstResultBase+i)*8-8)
+						fmt.Fprintf(w, "    fst.s $ft0, $fp, %d\n", p.fnWasmR0Base-(destScopeContex.StackBase+i)*8-8)
 					case token.F64:
-						fmt.Fprintf(w, "    fld.d $ft0, $fp, %d\n", p.fnWasmR0Base-reti*8-8)
-						fmt.Fprintf(w, "    fst.d $ft0, $fp, %d\n", p.fnWasmR0Base-(destScopeStackBase+i)*8-8)
+						fmt.Fprintf(w, "    fld.d $ft0, $fp, %d\n", p.fnWasmR0Base-(firstResultBase+i)*8-8)
+						fmt.Fprintf(w, "    fst.d $ft0, $fp, %d\n", p.fnWasmR0Base-(destScopeContex.StackBase+i)*8-8)
 					default:
 						unreachable()
 					}
@@ -574,80 +670,66 @@ func (p *wat2laWorker) buildFunc_ins(
 			}
 		}
 
-		// 清除当前block的栈中除了目标返回值剩余的值
-		// 这个操作只是为了退出当前block, 因为br已经是最后一个指令(br-if 和 br-table 需要不同的处理规则)
-		// 外层的block需要一个清理之后的栈
-		// 后续的死代码将被忽略
-		for stk.Len() > currentScopeStackBase {
-			stk.DropAny()
-		}
-
-		// 退出当前block时, stack已经被清理
-		// 中间栈帧的数据会在外层block指令时处理
-		assert(stk.Len() == currentScopeStackBase)
+		// br 指令不对栈做清理工作
 
 		fmt.Fprintf(w, "    b %s\n", labelNextId)
 		fmt.Fprintln(w)
 
 	case token.INS_BR_IF:
 		i := i.(ast.Ins_BrIf)
-		labelIdx := p.findLabelIndex(i.X)
-		labelName := p.findLabelName(i.X)
-		labelSuffix := p.findLabelSuffixId(i.X)
-		labelBrNextId := p.makeLabelId(kLabelPrefixName_brNext, labelName, labelSuffix)
-		labelBrFallthroughId := p.makeLabelId(kLabelPrefixName_brFallthrough, labelName, labelSuffix)
-		labelScopeTyp := p.findLabelScopeType(i.X)
 
-		destScopeStackBase := p.scopeStackBases[len(p.scopeLabels)-labelIdx-1]
-		destScopeResults := p.scopeResults[len(p.scopeLabels)-labelIdx-1]
+		// 设置当前 block 为非正常的 end 结束
+		currentScopeContext := scopeStack.Top()
+		currentScopeContext.IgnoreStackCheck = true
 
-		currentScopeStackBase := p.scopeStackBases[len(p.scopeLabels)-1]
+		destScopeContex := scopeStack.FindScopeContext(i.X)
+		labelBrNextId := p.makeLabelId(kLabelPrefixName_brNext, destScopeContex.Label, destScopeContex.LabelSuffix)
+		labelBrFallthroughId := p.makeLabelId(kLabelPrefixName_brFallthrough, destScopeContex.Label, destScopeContex.LabelSuffix)
 
 		// 弹出的是条件
 		sp0 := stk.Pop(token.I32)
 
-		fmt.Fprintf(w, "    # br_if %s\n", labelName)
+		fmt.Fprintf(w, "    # br_if %s.%s\n", destScopeContex.Label, destScopeContex.LabelSuffix)
 		fmt.Fprintf(w, "    ld.w $t0, $fp, %d\n", p.fnWasmR0Base-sp0*8-8)
 		fmt.Fprintf(w, "    beqz $t0, %s\n", labelBrFallthroughId)
 
 		// 对应的block带返回值
 		// 如果目标是 loop 则不需要处理结果, 因为还要继续循环
-		if labelScopeTyp != token.INS_LOOP && len(destScopeResults) > 0 {
+		if destScopeContex.Type != token.INS_LOOP && len(destScopeContex.Result) > 0 {
 			// 必须确保当前block的stk上有足够的返回值
-			assert(currentScopeStackBase+len(destScopeResults) >= stk.Len())
+			assert(currentScopeContext.StackBase+len(destScopeContex.Result) >= stk.Len())
 
 			// 第一个返回值返回值的偏移地址
-			firstResultOffset := stk.Len() - len(destScopeResults)
+			firstResultBase := stk.Len() - len(destScopeContex.Result)
+
+			// 验证栈上的值和返回值类型匹配
+			for k, expect := range destScopeContex.Result {
+				if got := stk.TokenAt(firstResultBase + k); got != expect {
+					panic(fmt.Sprintf("expect = %v, got = %v", expect, got))
+				}
+			}
 
 			// 如果返回值位置和目标block的base不一致则需要逐个复制
-			if firstResultOffset > destScopeStackBase {
+			if firstResultBase > destScopeContex.StackBase {
 				// 返回值是逆序出栈
-				for i := len(destScopeResults) - 1; i >= 0; i-- {
-					xType := destScopeResults[i]
-					reti := stk.Pop(xType)
-					switch xType {
+				// 注意: 这里只是搬运, 不能改变栈的状态
+				for i := len(destScopeContex.Result) - 1; i >= 0; i-- {
+					switch xType := destScopeContex.Result[i]; xType {
 					case token.I32:
-						fmt.Fprintf(w, "    ld.w $t0, $fp, %d\n", p.fnWasmR0Base-reti*8-8)
-						fmt.Fprintf(w, "    st.w $t0, $fp, %d\n", p.fnWasmR0Base-(destScopeStackBase+i)*8-8)
+						fmt.Fprintf(w, "    ld.w $t0, $fp, %d\n", p.fnWasmR0Base-(firstResultBase+i)*8-8)
+						fmt.Fprintf(w, "    st.w $t0, $fp, %d\n", p.fnWasmR0Base-(destScopeContex.StackBase+i)*8-8)
 					case token.I64:
-						fmt.Fprintf(w, "    ld.d $t0, $fp, %d\n", p.fnWasmR0Base-reti*8-8)
-						fmt.Fprintf(w, "    st.d $t0, $fp, %d\n", p.fnWasmR0Base-(destScopeStackBase+i)*8-8)
+						fmt.Fprintf(w, "    ld.d $t0, $fp, %d\n", p.fnWasmR0Base-(firstResultBase+i)*8-8)
+						fmt.Fprintf(w, "    st.d $t0, $fp, %d\n", p.fnWasmR0Base-(destScopeContex.StackBase+i)*8-8)
 					case token.F32:
-						fmt.Fprintf(w, "    ld.w $t0, $fp, %d\n", p.fnWasmR0Base-reti*8-8)
-						fmt.Fprintf(w, "    st.w $t0, $fp, %d\n", p.fnWasmR0Base-(destScopeStackBase+i)*8-8)
+						fmt.Fprintf(w, "    ld.w $t0, $fp, %d\n", p.fnWasmR0Base-(firstResultBase+i)*8-8)
+						fmt.Fprintf(w, "    st.w $t0, $fp, %d\n", p.fnWasmR0Base-(destScopeContex.StackBase+i)*8-8)
 					case token.F64:
-						fmt.Fprintf(w, "    ld.d $t0, $fp, %d\n", p.fnWasmR0Base-reti*8-8)
-						fmt.Fprintf(w, "    st.d $t0, $fp, %d\n", p.fnWasmR0Base-(destScopeStackBase+i)*8-8)
+						fmt.Fprintf(w, "    ld.d $t0, $fp, %d\n", p.fnWasmR0Base-(firstResultBase+i)*8-8)
+						fmt.Fprintf(w, "    st.d $t0, $fp, %d\n", p.fnWasmR0Base-(destScopeContex.StackBase+i)*8-8)
 					default:
 						unreachable()
 					}
-				}
-
-				// br-if 因为涉及 else 分支, 需要确保 br-if 两个分支上的栈平衡
-				// 因此需要将栈回退到当前 block 开始的状态
-				for i := 0; i < len(destScopeResults); i++ {
-					xType := destScopeResults[i]
-					stk.Push(xType)
 				}
 			}
 		}
@@ -660,19 +742,18 @@ func (p *wat2laWorker) buildFunc_ins(
 		i := i.(ast.Ins_BrTable)
 		assert(len(i.XList) > 1)
 
+		// 设置当前 block 为非正常的 end 结束
+		currentScopeContext := scopeStack.Top()
+		currentScopeContext.IgnoreStackCheck = true
+
 		// br-table的行为和br比较相似, 因此不涉及else部分不用担心栈平衡的问题.
 		// 但是每个目标block的返回值必须完全一致
 
 		labelSuffix := p.genNextId()
 
 		// 默认分支
-		defaultLabelIdx := p.findLabelIndex(i.XList[len(i.XList)-1])
-		defaultLabelName := p.findLabelName(i.XList[len(i.XList)-1])
-		defaultLabelSuffix := p.findLabelSuffixId(i.XList[len(i.XList)-1])
-		defaultScopeResults := p.scopeResults[len(p.scopeLabels)-defaultLabelIdx-1]
-		defaultLabelNextId := p.makeLabelId(kLabelPrefixName_brNext, defaultLabelName, defaultLabelSuffix)
-
-		currentScopeStackBase := p.scopeStackBases[len(p.scopeLabels)-1]
+		defaultScopeContex := scopeStack.FindScopeContext(i.XList[len(i.XList)-1])
+		defaultLabelNextId := p.makeLabelId(kLabelPrefixName_brNext, fixName(defaultScopeContex.Label), defaultScopeContex.LabelSuffix)
 
 		sp0 := stk.Pop(token.I32)
 
@@ -686,70 +767,72 @@ func (p *wat2laWorker) buildFunc_ins(
 				fmt.Fprintf(w, "    # br_table case %d\n", k)
 				fmt.Fprintf(w, "    addi.d $t1, $zero, %d\n", k)
 				fmt.Fprintf(w, "    sub.d  $t1, $t1, $t0\n")
-				fmt.Fprintf(w, "    beqz   %s\n", p.makeLabelId(kLabelPrefixName_brCase, "", labelSuffix))
+				fmt.Fprintf(w, "    beqz   %s\n", p.makeLabelId(kLabelPrefixName_brCase, i.XList[k], labelSuffix))
 			} else {
 				fmt.Fprintf(w, "    # br_table default\n")
-				fmt.Fprintf(w, "    b   %s\n", p.makeLabelId(kLabelPrefixName_brDefault, "", labelSuffix))
+				fmt.Fprintf(w, "    b %s\n", p.makeLabelId(kLabelPrefixName_brDefault, "", labelSuffix))
 			}
 		}
 
 		// 定义每个分支的跳转代码
 		{
 			// 当前block的返回值位置是相同的, 只能统一取一次
-			var retIdxList = make([]int, len(defaultScopeResults))
-			for k := len(defaultScopeResults) - 1; k >= 0; k-- {
-				xTyp := defaultScopeResults[k]
+			var retIdxList = make([]int, len(defaultScopeContex.Result))
+			for k := len(defaultScopeContex.Result) - 1; k >= 0; k-- {
+				xTyp := defaultScopeContex.Result[k]
 				retIdxList[k] = stk.Pop(xTyp)
 			}
 
 			for k := 0; k < len(i.XList); k++ {
-				labelIdx := p.findLabelIndex(i.XList[k])
-				labelName := p.findLabelName(i.XList[k])
-				labelSuffix := p.findLabelSuffixId(i.XList[k])
-				labelNextId := p.makeLabelId(kLabelPrefixName_brNext, labelName, labelSuffix)
-
-				destScopeStackBase := p.scopeStackBases[len(p.scopeLabels)-labelIdx-1]
-				destScopeResults := p.scopeResults[len(p.scopeLabels)-labelIdx-1]
+				destScopeContex := scopeStack.FindScopeContext(i.XList[k])
+				labelNextId := p.makeLabelId(kLabelPrefixName_brNext, fixName(destScopeContex.Label), destScopeContex.LabelSuffix)
 
 				// 验证每个目标返回值必须和default一致
-				assert(len(defaultScopeResults) == len(destScopeResults))
-				for i := 0; i < len(defaultScopeResults); i++ {
-					assert(defaultScopeResults[i] == destScopeResults[i])
+				assert(len(defaultScopeContex.Result) == len(destScopeContex.Result))
+				for i := 0; i < len(defaultScopeContex.Result); i++ {
+					assert(defaultScopeContex.Result[i] == destScopeContex.Result[i])
 				}
 
+				// 生成跳转的标签
+				// 这个是当前的 table 中转, 后面还会再中转一次, 后缀名不同
 				if k < len(i.XList)-1 {
-					p.gasFuncLabel(w, p.makeLabelId(kLabelPrefixName_brCase, "", labelSuffix))
+					p.gasFuncLabel(w, p.makeLabelId(kLabelPrefixName_brCase, i.XList[k], labelSuffix))
 				} else {
 					p.gasFuncLabel(w, p.makeLabelId(kLabelPrefixName_brDefault, "", labelSuffix))
 				}
 
 				// 带返回值的情况
-				if len(destScopeResults) > 0 {
+				if len(destScopeContex.Result) > 0 {
 					// 必须确保当前block的stk上有足够的返回值
-					assert(currentScopeStackBase+len(destScopeResults) >= stk.Len())
+					assert(stk.Len() >= destScopeContex.StackBase+len(destScopeContex.Result))
 
 					// 第一个返回值返回值的偏移地址
-					firstResultOffset := stk.Len() - len(destScopeResults)
+					firstResultBase := stk.Len() - len(destScopeContex.Result)
+
+					// 验证栈上的值和返回值类型匹配
+					for k, expect := range destScopeContex.Result {
+						if got := stk.TokenAt(firstResultBase + k); got != expect {
+							panic(fmt.Sprintf("expect = %v, got = %v", expect, got))
+						}
+					}
 
 					// 如果返回值位置和目标block的base不一致则需要逐个复制
-					if firstResultOffset > destScopeStackBase {
+					if firstResultBase > destScopeContex.StackBase {
 						// 返回值是逆序出栈
-						for i := 0; i < len(destScopeResults); i++ {
-							xType := destScopeResults[i]
-							reti := retIdxList[i]
-							switch xType {
+						for i := 0; i < len(destScopeContex.Result); i++ {
+							switch xType := destScopeContex.Result[i]; xType {
 							case token.I32:
-								fmt.Fprintf(w, "    ld.w $t1, $fp, %d # copy result\n", p.fnWasmR0Base-reti*8-8)
-								fmt.Fprintf(w, "    st.w $t1, $fp, %d\n", p.fnWasmR0Base-(destScopeStackBase+i)*8-8)
+								fmt.Fprintf(w, "    ld.w $t1, $fp, %d # copy result\n", p.fnWasmR0Base-(firstResultBase+i)*8-8)
+								fmt.Fprintf(w, "    st.w $t1, $fp, %d\n", p.fnWasmR0Base-(destScopeContex.StackBase+i)*8-8)
 							case token.I64:
-								fmt.Fprintf(w, "    ld.d $t1, $fp, %d # copy result\n", p.fnWasmR0Base-reti*8-8)
-								fmt.Fprintf(w, "    st.d $t1, $fp, %d\n", p.fnWasmR0Base-(destScopeStackBase+i)*8-8)
+								fmt.Fprintf(w, "    ld.d $t1, $fp, %d # copy result\n", p.fnWasmR0Base-(firstResultBase+i)*8-8)
+								fmt.Fprintf(w, "    st.d $t1, $fp, %d\n", p.fnWasmR0Base-(destScopeContex.StackBase+i)*8-8)
 							case token.F32:
-								fmt.Fprintf(w, "    ld.w $t1, $fp, %d # copy result\n", p.fnWasmR0Base-reti*8-8)
-								fmt.Fprintf(w, "    st.w $t1, $fp, %d\n", p.fnWasmR0Base-(destScopeStackBase+i)*8-8)
+								fmt.Fprintf(w, "    ld.w $t1, $fp, %d # copy result\n", p.fnWasmR0Base-(firstResultBase+i)*8-8)
+								fmt.Fprintf(w, "    st.w $t1, $fp, %d\n", p.fnWasmR0Base-(destScopeContex.StackBase+i)*8-8)
 							case token.F64:
-								fmt.Fprintf(w, "    ld.d $t1, $fp, %d # copy result\n", p.fnWasmR0Base-reti*8-8)
-								fmt.Fprintf(w, "    st.d $t1, $fp, %d\n", p.fnWasmR0Base-(destScopeStackBase+i)*8-8)
+								fmt.Fprintf(w, "    ld.d $t1, $fp, %d # copy result\n", p.fnWasmR0Base-(firstResultBase+i)*8-8)
+								fmt.Fprintf(w, "    st.d $t1, $fp, %d\n", p.fnWasmR0Base-(destScopeContex.StackBase+i)*8-8)
 							default:
 								unreachable()
 							}
@@ -766,72 +849,71 @@ func (p *wat2laWorker) buildFunc_ins(
 			}
 		}
 
-		// 清除当前block的栈中除了目标返回值剩余的值
-		// 这个操作只是为了退出当前block, 因为br已经是最后一个指令
-		// 外层的block需要一个清理之后的栈
-		for stk.Len() > currentScopeStackBase {
-			stk.DropAny()
-		}
-
-		// 退出当前block时, stack已经被清理
-		// 中间栈帧的数据会在外层block指令时处理
-		assert(stk.Len() == currentScopeStackBase)
+		// br 指令不对栈做清理工作
 
 		fmt.Fprintf(w, "    # br_table end\n")
 		fmt.Fprintln(w)
 
 	case token.INS_RETURN:
-		labelReturnId := p.makeLabelId(kLabelPrefixName_return, fn.Name, "")
+		// 设置当前 block 为非正常的 end 结束
+		currentScopeContext := scopeStack.Top()
+		currentScopeContext.IgnoreStackCheck = true
+
+		// return 是 br 指令的语法糖
+		// br会根据目标block的返回值个数, 从当前block产生的栈中去返回值,
+		// 至于中间被跳过的block栈数据全部被丢弃.
+
+		destScopeContex := scopeStack.GetReturnScopeContext()
+		assert(isSameInstList(fn.Body.List, destScopeContex.InstList))
+
+		labelNextId := p.makeLabelId(kLabelPrefixName_brNext, fixName(destScopeContex.Label), destScopeContex.LabelSuffix)
+
 		p.gasCommentInFunc(w, "return")
-		switch len(fn.Type.Results) {
-		case 0:
-			fmt.Fprintf(w, "    b %s\n", labelReturnId)
-		case 1:
-			sp0 := stk.Pop(fn.Type.Results[0])
-			switch fn.Type.Results[0] {
-			case token.I32:
-				fmt.Fprintf(w, "    ld.w $t0, $fp, %d\n", p.fnWasmR0Base-sp0*8-8)
-				fmt.Fprintf(w, "    st.w $t0, $fp, %d\n", fnNative.Type.Return[0].RBPOff)
-				fmt.Fprintf(w, "    b    %s\n", labelReturnId)
-			case token.I64:
-				fmt.Fprintf(w, "    ld.d $t0, $fp, %d\n", p.fnWasmR0Base-sp0*8-8)
-				fmt.Fprintf(w, "    st.d $t0, $fp, %d\n", fnNative.Type.Return[0].RBPOff)
-				fmt.Fprintf(w, "    b    %s\n", labelReturnId)
-			case token.F32:
-				fmt.Fprintf(w, "    ld.w $t0, $fp, %d\n", p.fnWasmR0Base-sp0*8-8)
-				fmt.Fprintf(w, "    st.w $t0, $fp, %d\n", fnNative.Type.Return[0].RBPOff)
-				fmt.Fprintf(w, "    b     %s\n", labelReturnId)
-			case token.F64:
-				fmt.Fprintf(w, "    ld.d $t0, $fp, %d\n", p.fnWasmR0Base-sp0*8-8)
-				fmt.Fprintf(w, "    st.d $t0, $fp, %d\n", fnNative.Type.Return[0].RBPOff)
-				fmt.Fprintf(w, "    b     %s\n", labelReturnId)
-			default:
-				unreachable()
-			}
-		default:
-			for i := len(fn.Type.Results) - 1; i >= 0; i-- {
-				xType := fn.Type.Results[i]
-				spi := stk.Pop(xType)
-				switch xType {
-				case token.I32:
-					fmt.Fprintf(w, "    $ld.w $t0, $fp, %d\n", p.fnWasmR0Base-spi*8-8)
-					fmt.Fprintf(w, "    $st.w $t0, $fp, %d\n", fnNative.Type.Return[i].RBPOff)
-				case token.I64:
-					fmt.Fprintf(w, "    ld.d $t0, $fp, %d\n", p.fnWasmR0Base-spi*8-8)
-					fmt.Fprintf(w, "    st.d $t0, $fp, %d\n", fnNative.Type.Return[i].RBPOff)
-				case token.F32:
-					fmt.Fprintf(w, "    $ld.w $t0, $fp, %d\n", p.fnWasmR0Base-spi*8-8)
-					fmt.Fprintf(w, "    $st.w $t0, $fp, %d\n", fnNative.Type.Return[i].RBPOff)
-				case token.F64:
-					fmt.Fprintf(w, "    ld.d $t0, $fp, %d\n", p.fnWasmR0Base-spi*8-8)
-					fmt.Fprintf(w, "    st.d $t0, $fp, %d\n", fnNative.Type.Return[i].RBPOff)
-				default:
-					unreachable()
+
+		// br对应的block带返回值
+		// 如果目标是 loop 则不需要处理结果, 因为还要继续循环
+		if destScopeContex.Type != token.INS_LOOP && len(destScopeContex.Result) > 0 {
+			// 必须确保当前block的stk上有足够的返回值
+			assert(stk.Len() >= destScopeContex.StackBase+len(destScopeContex.Result))
+
+			// 第一个返回值返回值的偏移地址
+			firstResultBase := stk.Len() - len(destScopeContex.Result)
+
+			// 验证栈上的值和返回值类型匹配
+			for k, expect := range destScopeContex.Result {
+				if got := stk.TokenAt(firstResultBase + k); got != expect {
+					panic(fmt.Sprintf("expect = %v, got = %v", expect, got))
 				}
 			}
-			fmt.Fprintf(w, "    b    %s\n", labelReturnId)
+
+			// 如果返回值位置和目标block的base不一致则需要逐个复制
+			if firstResultBase > destScopeContex.StackBase {
+				// 返回值是逆序出栈
+				// 注意: 这里只是搬运, 不能改变栈的状态
+				for i := len(destScopeContex.Result) - 1; i >= 0; i-- {
+					switch xType := destScopeContex.Result[i]; xType {
+					case token.I32:
+						fmt.Fprintf(w, "    ld.w $t0, $fp, %d # copy result\n", p.fnWasmR0Base-(firstResultBase+i)*8-8)
+						fmt.Fprintf(w, "    st.w $t0, $fp, %d\n", p.fnWasmR0Base-(destScopeContex.StackBase+i)*8-8)
+					case token.I64:
+						fmt.Fprintf(w, "    ld.d $t0, $fp, %d # copy result\n", p.fnWasmR0Base-(firstResultBase+i)*8-8)
+						fmt.Fprintf(w, "    st.d $t0, $fp, %d\n", p.fnWasmR0Base-(destScopeContex.StackBase+i)*8-8)
+					case token.F32:
+						fmt.Fprintf(w, "    ld.w $t0, $fp, %d # copy result\n", p.fnWasmR0Base-(firstResultBase+i)*8-8)
+						fmt.Fprintf(w, "    st.w $t0, $fp, %d\n", p.fnWasmR0Base-(destScopeContex.StackBase+i)*8-8)
+					case token.F64:
+						fmt.Fprintf(w, "    ld.d $t0, $fp, %d # copy result\n", p.fnWasmR0Base-(firstResultBase+i)*8-8)
+						fmt.Fprintf(w, "    st.d $t0, $fp, %d\n", p.fnWasmR0Base-(destScopeContex.StackBase+i)*8-8)
+					default:
+						unreachable()
+					}
+				}
+			}
 		}
-		assert(stk.Len() == 0)
+
+		// return 只是跳转到 body 块的结尾, 清理和返回值在后面处理
+		fmt.Fprintf(w, "    b %s\n", labelNextId)
+		fmt.Fprintln(w)
 
 	case token.INS_CALL:
 		i := i.(ast.Ins_Call)
@@ -840,30 +922,7 @@ func (p *wat2laWorker) buildFunc_ins(
 		fnCallIdx := p.findFuncIndex(i.X)
 
 		// 构建被调用函数的栈帧信息
-		fnCallNative := &nativeast.Func{
-			Name: i.X,
-			Type: &nativeast.FuncType{
-				Args:   make([]*nativeast.Local, len(fnCallType.Params)),
-				Return: make([]*nativeast.Local, len(fnCallType.Results)),
-			},
-			Body: &nativeast.FuncBody{
-				// 不需要局部变量信息
-			},
-		}
-		for i, arg := range fnCallType.Params {
-			fnCallNative.Type.Args[i] = &nativeast.Local{
-				Name: arg.Name,
-				Type: wat2nativeType(arg.Type),
-				Cap:  1,
-			}
-		}
-		for i, typ := range fnCallType.Results {
-			fnCallNative.Type.Return[i] = &nativeast.Local{
-				Name: fmt.Sprintf("%s%d", kFuncRetNamePrefix, i),
-				Type: wat2nativeType(typ),
-				Cap:  1,
-			}
-		}
+		fnCallNative := wat2nativeFunc(i.X, fnCallType, nil)
 
 		// 模拟构建函数栈帧
 		// 后面需要根据参数是否走寄存器传递生成相关的入口代码和返回代码
@@ -976,13 +1035,14 @@ func (p *wat2laWorker) buildFunc_ins(
 			}
 		}
 
-		if fnCallIdx <= p.importFuncCount {
-			fmt.Fprintf(w, "    pcalau12i $t0, %%pc_hi20(%s)\n", kImportNamePrefix+i.X)
-			fmt.Fprintf(w, "    addi.d $t0, $t0, %%pc_lo12(%s)\n", kImportNamePrefix+i.X)
+		if fnCallIdx < len(p.m.Imports) {
+			fnCallName := p.m.Imports[fnCallIdx].ObjModule + "." + p.m.Imports[fnCallIdx].ObjName
+			fmt.Fprintf(w, "    pcalau12i $t0, %%pc_hi20(%s)\n", kImportNamePrefix+fixName(fnCallName))
+			fmt.Fprintf(w, "    addi.d $t0, $t0, %%pc_lo12(%s)\n", kImportNamePrefix+fixName(fnCallName))
 			fmt.Fprintf(w, "    jirl $ra, $t0, 0\n")
 		} else {
-			fmt.Fprintf(w, "    pcalau12i $t0, %%pc_hi20(%s)\n", kFuncNamePrefix+i.X)
-			fmt.Fprintf(w, "    addi.d $t0, $t0, %%pc_lo12(%s)\n", kFuncNamePrefix+i.X)
+			fmt.Fprintf(w, "    pcalau12i $t0, %%pc_hi20(%s)\n", kFuncNamePrefix+fixName(i.X))
+			fmt.Fprintf(w, "    addi.d $t0, $t0, %%pc_lo12(%s)\n", kFuncNamePrefix+fixName(i.X))
 			fmt.Fprintf(w, "    jirl $ra, $t0, 0\n")
 		}
 
@@ -1042,6 +1102,7 @@ func (p *wat2laWorker) buildFunc_ins(
 				}
 			}
 		}
+		fmt.Fprintln(w)
 
 	case token.INS_CALL_INDIRECT:
 		i := i.(ast.Ins_CallIndirect)
@@ -1049,30 +1110,8 @@ func (p *wat2laWorker) buildFunc_ins(
 		fnCallType := p.findType(i.TypeIdx)
 
 		// 构建被调用函数的栈帧信息
-		fnCallNative := &nativeast.Func{
-			Name: "", // 间接调用, 没有名字(可以尝试根据地址查询名字)
-			Type: &nativeast.FuncType{
-				Args:   make([]*nativeast.Local, len(fnCallType.Params)),
-				Return: make([]*nativeast.Local, len(fnCallType.Results)),
-			},
-			Body: &nativeast.FuncBody{
-				// 不需要局部变量信息
-			},
-		}
-		for i, arg := range fnCallType.Params {
-			fnCallNative.Type.Args[i] = &nativeast.Local{
-				Name: arg.Name,
-				Type: wat2nativeType(arg.Type),
-				Cap:  1,
-			}
-		}
-		for i, typ := range fnCallType.Results {
-			fnCallNative.Type.Return[i] = &nativeast.Local{
-				Name: fmt.Sprintf("%s%d", kFuncRetNamePrefix, i),
-				Type: wat2nativeType(typ),
-				Cap:  1,
-			}
-		}
+		// 间接调用, 没有名字(可以尝试根据地址查询名字)
+		fnCallNative := wat2nativeFunc("", fnCallType, nil)
 
 		// 模拟构建函数栈帧
 		// 后面需要根据参数是否走寄存器传递生成相关的入口代码和返回代码
@@ -1199,7 +1238,6 @@ func (p *wat2laWorker) buildFunc_ins(
 		fmt.Fprintf(w, "    jirl $ra, $t2, 0\n")
 
 		// 提取返回值
-		// TODO: 类似代码有冗余
 		if len(fnCallNative.Type.Return) > 1 && fnCallNative.Type.Return[1].Reg == 0 {
 			// 走栈返回结果, $a0 是地址
 			// 根据 ABI 规范获取返回值, 再保存到 WASM 栈中
@@ -1255,6 +1293,7 @@ func (p *wat2laWorker) buildFunc_ins(
 				}
 			}
 		}
+		fmt.Fprintln(w)
 
 	case token.INS_DROP:
 		sp0 := stk.DropAny()
@@ -1328,22 +1367,20 @@ func (p *wat2laWorker) buildFunc_ins(
 		case token.I32:
 			fmt.Fprintf(w, "    ld.w $t0, $fp, %d\n", xOff)
 			fmt.Fprintf(w, "    st.w $t0, $fp, %d\n", p.fnWasmR0Base-ret0*8-8)
-			fmt.Fprintln(w)
 		case token.I64:
 			fmt.Fprintf(w, "    ld.d $t0, $fp, %d\n", xOff)
 			fmt.Fprintf(w, "    st.d $t0, $fp, %d\n", p.fnWasmR0Base-ret0*8-8)
-			fmt.Fprintln(w)
 		case token.F32:
 			fmt.Fprintf(w, "    ld.w $t0, $fp, %d\n", xOff)
 			fmt.Fprintf(w, "    st.w $t0, $fp, %d\n", p.fnWasmR0Base-ret0*8-8)
-			fmt.Fprintln(w)
 		case token.F64:
 			fmt.Fprintf(w, "    ld.d $t0, $fp, %d\n", xOff)
 			fmt.Fprintf(w, "    st.d $t0, $fp, %d\n", p.fnWasmR0Base-ret0*8-8)
-			fmt.Fprintln(w)
 		default:
 			unreachable()
 		}
+		fmt.Fprintln(w)
+
 	case token.INS_LOCAL_SET:
 		i := i.(ast.Ins_LocalSet)
 		xType := p.findLocalType(fn, i.X)

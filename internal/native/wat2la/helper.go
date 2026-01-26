@@ -44,39 +44,12 @@ func (p *wat2laWorker) findGlobalType(ident string) token.Token {
 
 	// 全局变量是索引类型
 	if idx, err := strconv.Atoi(ident); err == nil {
-		if idx < 0 {
-			panic(fmt.Sprintf("wat2la: unknown global %q", ident))
-		}
-
-		// 是导入的全局变量
-		if idx < p.importGlobalCount {
-			var nextIndex int
-			for _, importSpec := range p.m.Imports {
-				if importSpec.ObjKind != token.GLOBAL {
-					continue
-				}
-				// 找到导入对象
-				if nextIndex == idx {
-					return importSpec.GlobalType
-				}
-				// 更新索引
-				nextIndex++
-			}
+		if idx < 0 || idx >= len(p.m.Globals) {
+			panic(fmt.Sprintf("wat2x64: unknown global %q", ident))
 		}
 
 		// 模块内部定义的全局变量
-		return p.m.Globals[idx-p.importGlobalCount].Type
-	}
-
-	// 从导入对象开始查找
-	for _, importSpec := range p.m.Imports {
-		if importSpec.ObjKind != token.GLOBAL {
-			continue
-		}
-		// 找到导入对象
-		if importSpec.GlobalName == ident {
-			return importSpec.GlobalType
-		}
+		return p.m.Globals[idx].Type
 	}
 
 	// 查找本地定义的全局对象
@@ -122,19 +95,27 @@ func (p *wat2laWorker) findLocalType(fn *ast.Func, ident string) token.Token {
 	}
 
 	if idx, err := strconv.Atoi(ident); err == nil {
-		if idx < 0 || idx >= len(fn.Type.Params)+len(fn.Locals) {
+		if idx < 0 || idx >= len(fn.Type.Params)+len(fn.Type.Results)+len(fn.Locals) {
 			panic(fmt.Sprintf("wat2la: unknown local %q", ident))
 		}
-		return p.localTypes[idx]
+		if idx < len(fn.Type.Params) {
+			return fn.Type.Params[idx].Type
+		}
+		idx = idx - len(fn.Type.Params)
+		if idx < len(fn.Type.Results) {
+			return fn.Type.Results[idx]
+		}
+		idx = idx - len(fn.Type.Results)
+		return fn.Locals[idx].Type
 	}
-	for idx, arg := range fn.Type.Params {
+	for _, arg := range fn.Type.Params {
 		if arg.Name == ident {
-			return p.localTypes[idx]
+			return arg.Type
 		}
 	}
-	for idx, arg := range fn.Locals {
-		if arg.Name == ident {
-			return p.localTypes[len(fn.Type.Params)+idx]
+	for _, local := range fn.Locals {
+		if local.Name == ident {
+			return local.Type
 		}
 	}
 	panic("unreachable")
@@ -210,78 +191,11 @@ func (p *wat2laWorker) findFuncIndex(ident string) int {
 	// 查找本地定义的函数
 	for i, fn := range p.m.Funcs {
 		if fn.Name == ident {
-			return p.importFuncCount + i
+			return len(p.m.Imports) + i
 		}
 	}
 
 	panic(fmt.Sprintf("wat2la: unknown func %q", ident))
-}
-
-func (p *wat2laWorker) findLabelScopeType(label string) token.Token {
-	if label == "" {
-		panic("wat2la: empty label name")
-	}
-
-	idx := p.findLabelIndex(label)
-	if idx < len(p.scopeTypes) {
-		return p.scopeTypes[len(p.scopeTypes)-idx-1]
-	}
-	panic(fmt.Sprintf("wat2la: unknown label %q", label))
-}
-
-func (p *wat2laWorker) findLabelName(label string) string {
-	if label == "" {
-		panic("wat2la: empty label")
-	}
-
-	idx := p.findLabelIndex(label)
-	if idx < len(p.scopeLabels) {
-		return p.scopeLabels[len(p.scopeLabels)-idx-1]
-	}
-	panic(fmt.Sprintf("wat2la: unknown label %q", label))
-}
-
-func (p *wat2laWorker) findLabelSuffixId(label string) string {
-	if label == "" {
-		panic("wat2la: empty label suffix id")
-	}
-
-	idx := p.findLabelIndex(label)
-	if idx < len(p.scopeLabelsSuffix) {
-		return p.scopeLabelsSuffix[len(p.scopeLabelsSuffix)-idx-1]
-	}
-	panic(fmt.Sprintf("wat2la: unknown label %q", label))
-}
-
-func (p *wat2laWorker) findLabelIndex(label string) int {
-	if label == "" {
-		panic("wat2la: empty label")
-	}
-
-	if idx, err := strconv.Atoi(label); err == nil {
-		return idx
-	}
-	for i := 0; i < len(p.scopeLabels); i++ {
-		if s := p.scopeLabels[len(p.scopeLabels)-i-1]; s == label {
-			return i
-		}
-	}
-	panic(fmt.Sprintf("wat2la: unknown label %q", label))
-}
-
-func (p *wat2laWorker) enterLabelScope(typ token.Token, stkBase int, label, labelSuffix string, results []token.Token) {
-	p.scopeTypes = append(p.scopeTypes, typ)
-	p.scopeLabels = append(p.scopeLabels, label)
-	p.scopeLabelsSuffix = append(p.scopeLabelsSuffix, labelSuffix)
-	p.scopeStackBases = append(p.scopeStackBases, stkBase)
-	p.scopeResults = append(p.scopeResults, results)
-}
-func (p *wat2laWorker) leaveLabelScope() {
-	p.scopeTypes = p.scopeTypes[:len(p.scopeTypes)-1]
-	p.scopeLabels = p.scopeLabels[:len(p.scopeLabels)-1]
-	p.scopeLabelsSuffix = p.scopeLabelsSuffix[:len(p.scopeLabelsSuffix)-1]
-	p.scopeStackBases = p.scopeStackBases[:len(p.scopeStackBases)-1]
-	p.scopeResults = p.scopeResults[:len(p.scopeResults)-1]
 }
 
 func (p *wat2laWorker) makeLabelId(prefix, name, suffix string) string {

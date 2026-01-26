@@ -94,7 +94,7 @@ func (p *wat2X64Worker) buildFunc_body(w io.Writer, fn *ast.Func) error {
 			fmt.Fprintln(&bufHeader)
 		}
 
-		// 便于函数主体指令
+		// 编译函数主体指令
 		if err := p.buildFunc_ins(&bufBody, fnNative, fn, &stk, &scopeStack, *fn.Body); err != nil {
 			return err
 		}
@@ -929,14 +929,6 @@ func (p *wat2X64Worker) buildFunc_ins(
 			p.fnMaxCallArgsSize = fnCallNative.ArgsSize
 		}
 
-		// 参数列表
-		// 出栈的顺序相反
-		argList := make([]int, len(fnCallType.Params))
-		for k := len(argList) - 1; k >= 0; k-- {
-			x := fnCallType.Params[k]
-			argList[k] = stk.Pop(x.Type)
-		}
-
 		p.gasCommentInFunc(w, fmt.Sprintf("call %s(...)", i.X))
 
 		// 如果是走栈返回, 第一个是隐藏参数
@@ -950,6 +942,14 @@ func (p *wat2X64Worker) buildFunc_ins(
 					fnCallNative.ArgsSize-len(fnCallNative.Type.Return)*8,
 				)
 			}
+		}
+
+		// 参数列表
+		// 出栈的顺序相反
+		argList := make([]int, len(fnCallType.Params))
+		for k := len(argList) - 1; k >= 0; k-- {
+			x := fnCallType.Params[k]
+			argList[k] = stk.Pop(x.Type)
 		}
 
 		// 准备调用参数
@@ -1127,14 +1127,6 @@ func (p *wat2X64Worker) buildFunc_ins(
 		p.gasCommentInFunc(w, fmt.Sprintf("call_indirect %s(...)", r11))
 		p.gasCommentInFunc(w, fmt.Sprintf("type %s", fnCallType))
 
-		// 参数列表
-		// 出栈的顺序相反
-		argList := make([]int, len(fnCallType.Params))
-		for k := len(argList) - 1; k >= 0; k-- {
-			x := fnCallType.Params[k]
-			argList[k] = stk.Pop(x.Type)
-		}
-
 		// 如果是走栈返回, 第一个是隐藏参数
 		if len(fnCallNative.Type.Return) > 1 && fnCallNative.Type.Return[1].Reg == 0 {
 			if p.cpuType == abi.X64Unix {
@@ -1146,6 +1138,14 @@ func (p *wat2X64Worker) buildFunc_ins(
 					fnCallNative.ArgsSize-len(fnCallNative.Type.Return)*8,
 				)
 			}
+		}
+
+		// 参数列表
+		// 出栈的顺序相反
+		argList := make([]int, len(fnCallType.Params))
+		for k := len(argList) - 1; k >= 0; k-- {
+			x := fnCallType.Params[k]
+			argList[k] = stk.Pop(x.Type)
 		}
 
 		// 准备调用参数

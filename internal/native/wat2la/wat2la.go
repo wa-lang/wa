@@ -7,22 +7,17 @@ import (
 	"bytes"
 	"fmt"
 
+	"wa-lang.org/wa/internal/config"
 	"wa-lang.org/wa/internal/native/abi"
-	"wa-lang.org/wa/internal/native/ast"
 	"wa-lang.org/wa/internal/wasm"
 	watast "wa-lang.org/wa/internal/wat/ast"
 	watparser "wa-lang.org/wa/internal/wat/parser"
-	wattoken "wa-lang.org/wa/internal/wat/token"
 )
 
 const DebugMode = false
 
 // Wat程序转译到 龙芯汇编
 func Wat2LA64(filename string, source []byte) (m *watast.Module, code []byte, err error) {
-	return wat2la(filename, source)
-}
-
-func wat2la(filename string, source []byte) (m *watast.Module, code []byte, err error) {
 	m, err = watparser.ParseModule(filename, source)
 	if err != nil {
 		return m, nil, err
@@ -34,29 +29,16 @@ func wat2la(filename string, source []byte) (m *watast.Module, code []byte, err 
 }
 
 type wat2laWorker struct {
-	cpuType abi.CPUType
+	m *watast.Module
 
 	filename string
-	m        *watast.Module
-
-	importGlobalCount int // 导入全局只读变量的数目
-	importFuncCount   int // 导入函数的数目
+	cpuType  abi.CPUType
 
 	inlinedTypeIndices []*inlinedTypeIndex
 	inlinedTypes       []*wasm.FunctionType
 
-	localNames        []string           // 参数和局部变量名
-	localTypes        []wattoken.Token   // 参数和局部变量类型
-	scopeTypes        []wattoken.Token   // 区块的类型, 用于区别处理 br 时的返回值
-	scopeLabels       []string           // 嵌套的label查询, if/block/loop
-	scopeLabelsSuffix []string           // 作用域唯一后缀(避免重名)
-	scopeStackBases   []int              // if/block/loop, 开始的栈位置
-	scopeResults      [][]wattoken.Token // 对应块的返回值数量和类型
-	fnWasmR0Base      int                // 当前函数的WASM栈R0位置
-	fnMaxCallArgsSize int                // 调用子函数需要的最大空间
-
-	dataSection []*ast.Global
-	textSection []*ast.Func
+	fnWasmR0Base      int // 当前函数的WASM栈R0位置
+	fnMaxCallArgsSize int // 调用子函数需要的最大空间
 
 	nextId int64 // 用于生成唯一ID
 
@@ -71,22 +53,14 @@ type inlinedTypeIndex struct {
 
 func newWat2LAWorker(filename string, mWat *watast.Module) *wat2laWorker {
 	p := &wat2laWorker{
+		m:        mWat,
 		cpuType:  abi.LOONG64,
 		filename: filename,
-		m:        mWat,
 		trace:    DebugMode,
 	}
 
-	// 统计导入的global和func索引
-	p.importGlobalCount = 0
-	p.importFuncCount = 0
-	for _, importSpec := range p.m.Imports {
-		switch importSpec.ObjKind {
-		case wattoken.GLOBAL:
-			p.importGlobalCount++
-		case wattoken.FUNC:
-			p.importFuncCount++
-		}
+	if config.EnableTrace_wat2x64 {
+		p.trace = true
 	}
 
 	// 如果 start 字段为空, 则尝试用 _start 导出函数替代
@@ -102,9 +76,6 @@ func newWat2LAWorker(filename string, mWat *watast.Module) *wat2laWorker {
 }
 
 func (p *wat2laWorker) BuildProgram() (code []byte, err error) {
-	p.dataSection = p.dataSection[:0]
-	p.textSection = p.textSection[:0]
-
 	var out bytes.Buffer
 
 	fmt.Fprintf(&out, "# 源文件: %s, ABI: %s\n", p.filename, p.cpuType)
