@@ -62,7 +62,9 @@ func (p *wat2X64Worker) gasDefF64(w io.Writer, name string, v float64) {
 }
 
 func (p *wat2X64Worker) gasDefString(w io.Writer, name string, v string) {
-	fmt.Fprintf(w, "%s: .asciz %q\n", name, v)
+	fmt.Fprintf(w, "%s: .asciz \"", name)
+	fmt.Fprint(w, v)
+	fmt.Fprintln(w, "\"")
 }
 
 func (p *wat2X64Worker) gasFuncStart(w io.Writer, fnName string) {

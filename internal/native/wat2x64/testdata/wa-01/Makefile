@@ -9,6 +9,12 @@ dev:
 	gcc env.c wa-01.wa.s -o a.out1.exe
 	a.out1.exe
 
+wz:
+	$(WA) build wa-01.wz
+	$(WA) build -arch=x64 -target=windows wa-01.wat
+	gcc env.c wa-01.wa.s -o a.out1.exe
+	a.out1.exe
+
 linux:
 	$(WA) build wa-01.wa
 	$(WA) build -arch=x64 -target=linux wa-01.wat
