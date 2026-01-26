@@ -779,7 +779,7 @@ func (p *wat2X64Worker) buildFunc_ins(
 
 			for k := 0; k < len(i.XList); k++ {
 				destScopeContex := scopeStack.FindScopeContext(i.XList[k])
-				labelNextId := p.makeLabelId(kLabelPrefixName_brNext, fixName(destScopeContex.Label), labelSuffix)
+				labelNextId := p.makeLabelId(kLabelPrefixName_brNext, fixName(destScopeContex.Label), destScopeContex.LabelSuffix)
 
 				// 验证每个目标返回值必须和default一致
 				assert(len(defaultScopeContex.Result) == len(destScopeContex.Result))
@@ -788,6 +788,7 @@ func (p *wat2X64Worker) buildFunc_ins(
 				}
 
 				// 生成跳转的标签
+				// 这个是当前的 table 中转, 后面还会再中转一次, 后缀名不同
 				if k < len(i.XList)-1 {
 					p.gasFuncLabel(w, p.makeLabelId(kLabelPrefixName_brCase, i.XList[k], labelSuffix))
 				} else {
@@ -1020,7 +1021,8 @@ func (p *wat2X64Worker) buildFunc_ins(
 		}
 
 		if fnCallIdx < len(p.m.Imports) {
-			fmt.Fprintf(w, "    call %s\n", kImportNamePrefix+fixName(i.X))
+			fnCallName := p.m.Imports[fnCallIdx].ObjModule + "." + p.m.Imports[fnCallIdx].ObjName
+			fmt.Fprintf(w, "    call %s\n", kImportNamePrefix+fixName(fnCallName))
 		} else {
 			fmt.Fprintf(w, "    call %s\n", kFuncNamePrefix+fixName(i.X))
 		}

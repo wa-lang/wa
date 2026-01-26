@@ -11,7 +11,8 @@ import (
 )
 
 const (
-	kFuncMain = "main"
+	kFuncMain  = "main"
+	kFuncMain2 = "_main"
 )
 
 // 启动函数
@@ -45,8 +46,9 @@ func (p *wat2X64Worker) buildStart(w io.Writer) error {
 	}
 	if p.m.Start != kFuncMain {
 		for _, fn := range p.m.Funcs {
-			if fn.Name == kFuncMain {
-				fmt.Fprintf(w, "    call %s\n", kFuncNamePrefix+kFuncMain)
+			switch fn.Name {
+			case kFuncMain, kFuncMain2:
+				fmt.Fprintf(w, "    call %s\n", kFuncNamePrefix+fixName(fn.Name))
 			}
 		}
 	}

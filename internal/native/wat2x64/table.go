@@ -67,7 +67,7 @@ func (p *wat2X64Worker) buildTable(w io.Writer) error {
 			if x.ObjKind == token.FUNC {
 				fmt.Fprintf(w, "%s%d: .quad %s\n",
 					kTableFuncIndexListElemPrefix, importFuncCount,
-					kImportNamePrefix+fixName(x.FuncName),
+					kImportNamePrefix+fixName(x.ObjModule+"."+x.ObjName),
 				)
 				importFuncCount++
 			}
