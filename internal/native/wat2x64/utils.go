@@ -93,3 +93,10 @@ func fixName(s string) string {
 	}
 	return s
 }
+
+func toCName(s string) string {
+	s = strings.ReplaceAll(s, "/", "_")
+	s = strings.ReplaceAll(s, "`", "_")
+	s = strings.ReplaceAll(s, ".", "_")
+	return s
+}

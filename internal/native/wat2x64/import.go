@@ -11,9 +11,7 @@ import (
 )
 
 const (
-	kImportNamePrefix = ".Import."
-
-	kEnvSyscallPrefix = "wat2x64_"
+	kImportNamePrefix = ".Wa.Import."
 )
 
 func (p *wat2X64Worker) buildImport(w io.Writer) error {
@@ -40,7 +38,7 @@ func (p *wat2X64Worker) buildImport(w io.Writer) error {
 			continue
 		}
 		seenMap[absName] = true
-		p.gasExtern(w, kEnvSyscallPrefix+absName)
+		p.gasExtern(w, toCName(kImportNamePrefix+absName))
 	}
 
 	// 定义导入函数的别名
@@ -54,7 +52,7 @@ func (p *wat2X64Worker) buildImport(w io.Writer) error {
 			continue
 		}
 
-		p.gasSet(w, kImportNamePrefix+importSpec.ObjModule+"."+importSpec.ObjName, kEnvSyscallPrefix+absName)
+		p.gasSet(w, kImportNamePrefix+importSpec.ObjModule+"."+importSpec.ObjName, toCName(kImportNamePrefix+absName))
 	}
 
 	return nil

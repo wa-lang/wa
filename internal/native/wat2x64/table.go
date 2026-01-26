@@ -12,15 +12,15 @@ import (
 )
 
 const (
-	kTableInitFuncName = ".Table.initFunc"
+	kTableInitFuncName = ".Wa.Table.initFunc"
 
-	kTableAddrName    = ".Table.addr"
-	kTableSizeName    = ".Table.size"
-	kTableMaxSizeName = ".Table.maxSize"
+	kTableAddrName    = ".Wa.Table.addr"
+	kTableSizeName    = ".Wa.Table.size"
+	kTableMaxSizeName = ".Wa.Table.maxSize"
 
-	kTableFuncIndexListName       = ".Table.funcIndexList"
-	kTableFuncIndexListElemPrefix = ".Table.funcIndexList."
-	kTableFuncIndexListEndName    = ".Table.funcIndexList.end"
+	kTableFuncIndexListName       = ".Wa.Table.funcIndexList"
+	kTableFuncIndexListElemPrefix = ".Wa.Table.funcIndexList."
+	kTableFuncIndexListEndName    = ".Wa.Table.funcIndexList.end"
 )
 
 func (p *wat2X64Worker) buildTable(w io.Writer) error {
