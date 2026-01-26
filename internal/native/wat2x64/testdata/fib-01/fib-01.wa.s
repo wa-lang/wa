@@ -132,6 +132,8 @@ main:
     mov dword ptr [rbp-8], 0 # local N = 0
     mov dword ptr [rbp-16], 0 # local i = 0
 
+    # fn.body.begin(name=main, suffix=00000000)
+
     # i64.const 10
     movabs rax, 10
     mov    [rbp-24], rax
@@ -148,8 +150,8 @@ main:
     mov rax, qword ptr [rbp-24]
     mov qword ptr [rbp-16], rax
 
-    # loop.begin(name=my_loop, suffix=00000000)
-.L.brNext.my_loop.00000000:
+    # loop.begin(name=my_loop, suffix=00000001)
+.L.brNext.my_loop.00000001:
     # local.get i i64
     mov rax, qword ptr [rbp-16]
     mov qword ptr [rbp-24], rax
@@ -196,18 +198,21 @@ main:
     movzx eax, al
     mov   dword ptr [rbp-24], eax
 
-    # br_if my_loop00000000
+    # br_if my_loop.00000001
     mov eax, dword ptr [rbp-24]
     cmp eax, 0
-    je  .L.brFallthrough.my_loop.00000000
-    jmp .L.brNext.my_loop.00000000
-.L.brFallthrough.my_loop.00000000:
+    je  .L.brFallthrough.my_loop.00000001
+    jmp .L.brNext.my_loop.00000001
+.L.brFallthrough.my_loop.00000001:
 
-    # loop.end(name=my_loop, suffix=00000000)
+    # loop.end(name=my_loop, suffix=00000001)
 
+.L.brNext.main.00000000:
+    # fn.body.end(name=main, suffix=00000000)
 
     # 根据ABI处理返回值
-.L.return.main:
+
+    # 将返回值变量复制到寄存器
 
     # 函数返回
     mov rsp, rbp
@@ -230,6 +235,8 @@ main:
 
     # 没有局部变量需要初始化为0
 
+    # fn.body.begin(name=fib, suffix=00000002)
+
     # local.get n i64
     mov rax, qword ptr [rbp+16]
     mov qword ptr [rbp-16], rax
@@ -246,20 +253,19 @@ main:
     movzx eax, al
     mov   dword ptr [rbp-16], eax
 
-    # if.begin(name=, suffix=00000001)
+    # if.begin(name=, suffix=00000003)
     mov eax, [rbp-16]
     cmp eax, 0
-    je  .L.else.00000001
+    je  .L.else.00000003
 
-    # if.body(name=, suffix=00000001)
+    # if.body(name=, suffix=00000003)
     # i64.const 1
     movabs rax, 1
     mov    [rbp-16], rax
 
-    jmp .L.brNext.00000001
+    jmp .L.brNext.00000003
 
-    # if.else(name=, suffix=00000001)
-.L.else.00000001:
+.L.else.00000003:
     # local.get n i64
     mov rax, qword ptr [rbp+16]
     mov qword ptr [rbp-16], rax
@@ -301,17 +307,20 @@ main:
     add rax, qword ptr [rbp-24]
     mov qword ptr [rbp-16], rax
 
-.L.brNext.00000001:
-    # if.end(name=, suffix=00000001)
+.L.brNext.00000003:
+    # if.end(name=, suffix=00000003)
 
-    # return
-    # copy result from stack
+.L.brNext.fib.00000002:
+    # fn.body.end(name=fib, suffix=00000002)
+
+    # 根据ABI处理返回值
+
+    # 将栈上数据复制到返回值变量
     mov rax, qword ptr [rbp-16]
     mov qword ptr [rbp-8], rax # ret.0
 
-    # 根据ABI处理返回值
-.L.return.fib:
-    mov rax, [rbp-8] # ret .F.ret.0
+    # 将返回值变量复制到寄存器
+    mov rax, [rbp-8] # ret.0
 
     # 函数返回
     mov rsp, rbp

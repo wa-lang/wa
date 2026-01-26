@@ -7,6 +7,7 @@ import (
 	"bytes"
 	"fmt"
 
+	"wa-lang.org/wa/internal/config"
 	"wa-lang.org/wa/internal/native/abi"
 	watast "wa-lang.org/wa/internal/wat/ast"
 	watparser "wa-lang.org/wa/internal/wat/parser"
@@ -48,6 +49,10 @@ func newWat2X64Worker(filename string, mWat *watast.Module, cpuType abi.CPUType)
 		cpuType:  cpuType,
 		filename: filename,
 		trace:    DebugMode,
+	}
+
+	if config.EnableTrace_wat2x64 {
+		p.trace = true
 	}
 
 	// 如果 start 字段为空, 则尝试用 _start 导出函数替代

@@ -306,8 +306,28 @@ func (p *wat2X64Worker) buildFunc_ins(
 	p.Tracef("buildFunc_ins: %s begin: %v\n", i.Token(), stk.String())
 	defer func() { p.Tracef("buildFunc_ins: %s end: %v\n", i.Token(), stk.String()) }()
 
+	defer func() {
+		if i.Token().IsTerminal() {
+			assert(scopeStack.Top().IgnoreStackCheck)
+		}
+	}()
+
 	switch tok := i.Token(); tok {
 	case token.INS_UNREACHABLE:
+		currentScopeContext := scopeStack.Top()
+		currentScopeContext.IgnoreStackCheck = true
+
+		assert(stk.Len() >= currentScopeContext.StackBase)
+
+		// 将静态分析栈平衡
+		for stk.Len() > currentScopeContext.StackBase {
+			stk.DropAny()
+		}
+		for _, retType := range currentScopeContext.Result {
+			stk.Push(retType)
+		}
+
+		// 运行时调用异常函数退出
 		fmt.Fprintf(w, "    call %s # unreachable\n", kRuntimePanic)
 		fmt.Fprintln(w)
 
@@ -364,17 +384,6 @@ func (p *wat2X64Worker) buildFunc_ins(
 				}
 
 			} else {
-				// BUG: wa-runtime-04
-				// fnName: heap_reuse_varying (nbytes:i32) => i32
-				// ins: block
-				// stk: []
-				if stk.Len() != scopeCtx.StackBase+len(i.Results) {
-					fmt.Println("=== BUG: wa-runtime-04 ===")
-					fmt.Println("fnName:", fn.Name, fn.Type.String())
-					fmt.Println("ins:", i.String())
-					fmt.Println("stk:", stk.StackString())
-					fmt.Println("=== BUG: wa-runtime-04 ===")
-				}
 				// 从 end 正常结束需要精确验证栈匹配
 				assert(stk.Len() == scopeCtx.StackBase+len(i.Results))
 				for k, expect := range i.Results {
@@ -527,7 +536,8 @@ func (p *wat2X64Worker) buildFunc_ins(
 			// else 分析时会再次生成, 以确保栈的平衡
 			if len(i.Else) > 0 {
 				assert(stk.Len() == scopeCtx.StackBase+len(i.Results))
-				for _, retType := range i.Results {
+				for k := len(i.Results) - 1; k >= 0; k-- {
+					retType := i.Results[k]
 					stk.Pop(retType)
 				}
 			}
