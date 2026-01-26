@@ -45,9 +45,9 @@ func (p *wat2X64Worker) buildFuncs(w io.Writer) error {
 		p.gasComment(w, "func "+f.Name+f.Type.String())
 		p.gasSectionTextStart(w)
 		if f.ExportName == f.Name {
-			p.gasGlobal(w, kFuncNamePrefix+f.Name)
+			p.gasGlobal(w, kFuncNamePrefix+fixName(f.Name))
 		}
-		p.gasFuncStart(w, kFuncNamePrefix+f.Name)
+		p.gasFuncStart(w, kFuncNamePrefix+fixName(f.Name))
 		if err := p.buildFunc_body(w, f); err != nil {
 			return err
 		}
@@ -338,7 +338,7 @@ func (p *wat2X64Worker) buildFunc_ins(
 	case token.INS_BLOCK:
 		i := i.(ast.Ins_Block)
 
-		labelName := i.Label
+		labelName := fixName(i.Label)
 		labelSuffix := p.genNextId()
 		labelBlockNextId := p.makeLabelId(kLabelPrefixName_brNext, labelName, labelSuffix)
 
@@ -410,14 +410,14 @@ func (p *wat2X64Worker) buildFunc_ins(
 	case token.INS_LOOP:
 		i := i.(ast.Ins_Loop)
 
-		labelName := i.Label
+		labelName := fixName(i.Label)
 		labelSuffix := p.genNextId()
 		labelLoopNextId := p.makeLabelId(kLabelPrefixName_brNext, labelName, labelSuffix)
 
 		fmt.Fprintf(w, "    # loop.begin(name=%s, suffix=%s)\n", labelName, labelSuffix)
 
 		// 编译块内的指令
-		scopeStack.EnterScope(token.INS_LOOP, stk.Len(), i.Label, labelSuffix, i.Results)
+		scopeStack.EnterScope(token.INS_LOOP, stk.Len(), labelName, labelSuffix, i.Results)
 		{
 			scopeCtx := scopeStack.Top()
 
@@ -470,7 +470,7 @@ func (p *wat2X64Worker) buildFunc_ins(
 	case token.INS_IF:
 		i := i.(ast.Ins_If)
 
-		labelName := i.Label
+		labelName := fixName(i.Label)
 		labelSuffix := p.genNextId()
 		labelIfElseId := p.makeLabelId(kLabelPrefixName_else, labelName, labelSuffix)
 		labelNextId := p.makeLabelId(kLabelPrefixName_brNext, labelName, labelSuffix)
@@ -491,7 +491,7 @@ func (p *wat2X64Worker) buildFunc_ins(
 		fmt.Fprintf(w, "    # if.body(name=%s, suffix=%s)\n", labelName, labelSuffix)
 
 		// 编译 if 块内的指令
-		scopeStack.EnterScope(token.INS_IF, stk.Len(), i.Label, labelSuffix, i.Results)
+		scopeStack.EnterScope(token.INS_IF, stk.Len(), labelName, labelSuffix, i.Results)
 		{
 			scopeCtx := scopeStack.Top()
 
@@ -548,7 +548,7 @@ func (p *wat2X64Worker) buildFunc_ins(
 		scopeStack.LeaveScope()
 
 		// 编译 else 块内的指令
-		scopeStack.EnterScope(token.INS_ELSE, stk.Len(), i.Label, labelSuffix, i.Results)
+		scopeStack.EnterScope(token.INS_ELSE, stk.Len(), labelName, labelSuffix, i.Results)
 		if len(i.Else) > 0 {
 			scopeCtx := scopeStack.Top()
 
@@ -618,7 +618,7 @@ func (p *wat2X64Worker) buildFunc_ins(
 		// 至于中间被跳过的block栈数据全部被丢弃.
 
 		destScopeContex := scopeStack.FindScopeContext(i.X)
-		labelNextId := p.makeLabelId(kLabelPrefixName_brNext, destScopeContex.Label, destScopeContex.LabelSuffix)
+		labelNextId := p.makeLabelId(kLabelPrefixName_brNext, fixName(destScopeContex.Label), destScopeContex.LabelSuffix)
 
 		fmt.Fprintf(w, "    # br %s\n", i.X)
 
@@ -749,7 +749,7 @@ func (p *wat2X64Worker) buildFunc_ins(
 
 		// 默认分支
 		defaultScopeContex := scopeStack.FindScopeContext(i.XList[len(i.XList)-1])
-		defaultLabelNextId := p.makeLabelId(kLabelPrefixName_brNext, defaultScopeContex.Label, defaultScopeContex.LabelSuffix)
+		defaultLabelNextId := p.makeLabelId(kLabelPrefixName_brNext, fixName(defaultScopeContex.Label), defaultScopeContex.LabelSuffix)
 
 		sp0 := stk.Pop(token.I32)
 
@@ -779,7 +779,7 @@ func (p *wat2X64Worker) buildFunc_ins(
 
 			for k := 0; k < len(i.XList); k++ {
 				destScopeContex := scopeStack.FindScopeContext(i.XList[k])
-				labelNextId := p.makeLabelId(kLabelPrefixName_brNext, destScopeContex.Label, labelSuffix)
+				labelNextId := p.makeLabelId(kLabelPrefixName_brNext, fixName(destScopeContex.Label), labelSuffix)
 
 				// 验证每个目标返回值必须和default一致
 				assert(len(defaultScopeContex.Result) == len(destScopeContex.Result))
@@ -859,7 +859,7 @@ func (p *wat2X64Worker) buildFunc_ins(
 		destScopeContex := scopeStack.GetReturnScopeContext()
 		assert(isSameInstList(fn.Body.List, destScopeContex.InstList))
 
-		labelNextId := p.makeLabelId(kLabelPrefixName_brNext, destScopeContex.Label, destScopeContex.LabelSuffix)
+		labelNextId := p.makeLabelId(kLabelPrefixName_brNext, fixName(destScopeContex.Label), destScopeContex.LabelSuffix)
 
 		p.gasCommentInFunc(w, "return")
 
@@ -1020,9 +1020,9 @@ func (p *wat2X64Worker) buildFunc_ins(
 		}
 
 		if fnCallIdx < len(p.m.Imports) {
-			fmt.Fprintf(w, "    call %s\n", kImportNamePrefix+i.X)
+			fmt.Fprintf(w, "    call %s\n", kImportNamePrefix+fixName(i.X))
 		} else {
-			fmt.Fprintf(w, "    call %s\n", kFuncNamePrefix+i.X)
+			fmt.Fprintf(w, "    call %s\n", kFuncNamePrefix+fixName(i.X))
 		}
 
 		// 提取返回值

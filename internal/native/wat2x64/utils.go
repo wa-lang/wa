@@ -6,6 +6,7 @@ package wat2x64
 import (
 	"fmt"
 	"reflect"
+	"strings"
 	"unsafe"
 
 	nativeast "wa-lang.org/wa/internal/native/ast"
@@ -83,4 +84,12 @@ func isSameInstList(s1, s2 []ast.Instruction) bool {
 	h1 := (*reflect.SliceHeader)(unsafe.Pointer(&s1))
 	h2 := (*reflect.SliceHeader)(unsafe.Pointer(&s2))
 	return h1.Data == h2.Data
+}
+
+func fixName(s string) string {
+	if strings.ContainsAny(s, "/`") {
+		s = strings.ReplaceAll(s, "/", ".")
+		s = strings.ReplaceAll(s, "`", ".")
+	}
+	return s
 }
