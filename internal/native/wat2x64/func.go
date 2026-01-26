@@ -259,7 +259,7 @@ func (p *wat2X64Worker) buildFunc_body(w io.Writer, fn *ast.Func) error {
 						i,
 					)
 				case token.F32:
-					fmt.Fprintf(&bufReturn, "    movss %v, qword ptr [rbp%+d] # ret.%d\n",
+					fmt.Fprintf(&bufReturn, "    movss %v, dword ptr [rbp%+d] # ret.%d\n",
 						x64.RegString(ret.Reg),
 						fnNative.Type.Return[i].RBPOff,
 						i,
