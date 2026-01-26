@@ -27,4 +27,16 @@ linux-wz:
 	gcc env.c wa-01.wa.s -z noexecstack -o a.out1.exe
 	./a.out1.exe
 
+loong64:
+	$(WA) build wa-01.wa
+	$(WA) build -arch=loong64 -target=linux wa-01.wat
+	gcc env.c wa-01.wa.s -z noexecstack -o a.out1.exe
+	./a.out1.exe
+
+loong64-wz:
+	$(WA) build wa-01.wz
+	$(WA) build -arch=loong64 -target=linux wa-01.wat
+	gcc env.c wa-01.wa.s -z noexecstack -o a.out1.exe
+	./a.out1.exe
+
 clean:

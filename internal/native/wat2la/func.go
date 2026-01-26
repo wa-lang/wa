@@ -46,9 +46,9 @@ func (p *wat2laWorker) buildFuncs(w io.Writer) error {
 		p.gasComment(w, "func "+f.Name+f.Type.String())
 		p.gasSectionTextStart(w)
 		if f.ExportName == f.Name {
-			p.gasGlobal(w, kFuncNamePrefix+f.Name)
+			p.gasGlobal(w, kFuncNamePrefix+fixName(f.Name))
 		}
-		p.gasFuncStart(w, kFuncNamePrefix+f.Name)
+		p.gasFuncStart(w, kFuncNamePrefix+fixName(f.Name))
 		if err := p.buildFunc_body(w, f); err != nil {
 			return err
 		}
@@ -151,13 +151,13 @@ func (p *wat2laWorker) buildFunc_body(w io.Writer, fn *ast.Func) error {
 					i,
 				)
 			case token.F32:
-				fmt.Fprintf(&bufHeader, "    st.w %s, $fp, %d # save arg.%d\n",
+				fmt.Fprintf(&bufHeader, "    fst.s %s, $fp, %d # save arg.%d\n",
 					"$"+strings.ToLower(loong64.RegAliasString(arg.Reg)),
 					arg.RBPOff,
 					i,
 				)
 			case token.F64:
-				fmt.Fprintf(&bufHeader, "    st.d %s, $fp, %d # save arg.%d\n",
+				fmt.Fprintf(&bufHeader, "    fst.d %s, $fp, %d # save arg.%d\n",
 					"$"+strings.ToLower(loong64.RegAliasString(arg.Reg)),
 					arg.RBPOff,
 					i,
@@ -166,6 +166,8 @@ func (p *wat2laWorker) buildFunc_body(w io.Writer, fn *ast.Func) error {
 				panic("unreachable")
 			}
 		}
+		fmt.Fprintln(&bufHeader)
+
 	} else {
 		p.gasCommentInFunc(&bufHeader, "没有参数需要备份到栈")
 		fmt.Fprintln(&bufHeader)
@@ -265,13 +267,13 @@ func (p *wat2laWorker) buildFunc_body(w io.Writer, fn *ast.Func) error {
 						fnNative.Type.Return[i].Name,
 					)
 				case token.F32:
-					fmt.Fprintf(&bufReturn, "    ld.w %v, $fp, %d # ret %s\n",
+					fmt.Fprintf(&bufReturn, "    fld.s %v, $fp, %d # ret %s\n",
 						"$"+strings.ToLower(loong64.RegAliasString(ret.Reg)),
 						fnNative.Type.Return[i].RBPOff,
 						fnNative.Type.Return[i].Name,
 					)
 				case token.F64:
-					fmt.Fprintf(&bufReturn, "    ld.d %v, $fp, %d # ret %s\n",
+					fmt.Fprintf(&bufReturn, "    fld.d %v, $fp, %d # ret %s\n",
 						"$"+strings.ToLower(loong64.RegAliasString(ret.Reg)),
 						fnNative.Type.Return[i].RBPOff,
 						fnNative.Type.Return[i].Name,
@@ -767,7 +769,7 @@ func (p *wat2laWorker) buildFunc_ins(
 				fmt.Fprintf(w, "    # br_table case %d\n", k)
 				fmt.Fprintf(w, "    addi.d $t1, $zero, %d\n", k)
 				fmt.Fprintf(w, "    sub.d  $t1, $t1, $t0\n")
-				fmt.Fprintf(w, "    beqz   %s\n", p.makeLabelId(kLabelPrefixName_brCase, i.XList[k], labelSuffix))
+				fmt.Fprintf(w, "    beqz   $t1, %s\n", p.makeLabelId(kLabelPrefixName_brCase, i.XList[k], labelSuffix))
 			} else {
 				fmt.Fprintf(w, "    # br_table default\n")
 				fmt.Fprintf(w, "    b %s\n", p.makeLabelId(kLabelPrefixName_brDefault, "", labelSuffix))
@@ -988,14 +990,14 @@ func (p *wat2laWorker) buildFunc_ins(
 				}
 			case token.F32:
 				if arg := fnCallNative.Type.Args[k]; arg.Reg != 0 {
-					if arg.Reg >= loong64.REG_FA0 && arg.Reg <= loong64.REG_A7 {
+					if arg.Reg >= loong64.REG_FA0 && arg.Reg <= loong64.REG_FA7 {
 						fmt.Fprintf(w, "    fld.s %s, $fp, %d # arg %d\n",
 							"$"+strings.ToLower(loong64.RegAliasString(arg.Reg)),
 							p.fnWasmR0Base-argList[k]*8-8,
 							k,
 						)
 					} else {
-						fmt.Fprintf(w, "    ld.w %s, $fp, %d\n",
+						fmt.Fprintf(w, "    fld.s %s, $fp, %d\n",
 							"$"+strings.ToLower(loong64.RegAliasString(arg.Reg)),
 							p.fnWasmR0Base+argList[k]*8,
 						)
@@ -1010,14 +1012,14 @@ func (p *wat2laWorker) buildFunc_ins(
 				}
 			case token.F64:
 				if arg := fnCallNative.Type.Args[k]; arg.Reg != 0 {
-					if arg.Reg >= loong64.REG_FA0 && arg.Reg <= loong64.REG_A7 {
+					if arg.Reg >= loong64.REG_FA0 && arg.Reg <= loong64.REG_FA7 {
 						fmt.Fprintf(w, "    fld.d %s, $fp, %d # arg %d\n",
 							"$"+strings.ToLower(loong64.RegAliasString(arg.Reg)),
 							p.fnWasmR0Base-argList[k]*8-8,
 							k,
 						)
 					} else {
-						fmt.Fprintf(w, "    ld.d %s, $fp, %d\n",
+						fmt.Fprintf(w, "    fld.d %s, $fp, %d\n",
 							"$"+strings.ToLower(loong64.RegAliasString(arg.Reg)),
 							p.fnWasmR0Base-argList[k]*8-8,
 						)

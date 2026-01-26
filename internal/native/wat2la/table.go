@@ -66,7 +66,7 @@ func (p *wat2laWorker) buildTable(w io.Writer) error {
 			if x.ObjKind == token.FUNC {
 				fmt.Fprintf(w, "%s%d: .quad %s\n",
 					kTableFuncIndexListElemPrefix, importFuncCount,
-					kImportNamePrefix+x.FuncName,
+					kImportNamePrefix+fixName(x.ObjModule+"."+x.ObjName),
 				)
 				importFuncCount++
 			}
@@ -74,7 +74,7 @@ func (p *wat2laWorker) buildTable(w io.Writer) error {
 		for _, x := range p.m.Funcs {
 			fmt.Fprintf(w, "%s%d: .quad %s\n",
 				kTableFuncIndexListElemPrefix, importFuncCount,
-				kFuncNamePrefix+x.Name,
+				kFuncNamePrefix+fixName(x.Name),
 			)
 			importFuncCount++
 		}
