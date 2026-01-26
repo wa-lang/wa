@@ -9,15 +9,15 @@ import (
 )
 
 const (
-	kMemoryInitFuncName = ".Memory.initFunc"
+	kMemoryInitFuncName = ".Wa.Memory.initFunc"
 
-	kMemoryAddrName     = ".Memory.addr"
-	kMemoryPagesName    = ".Memory.pages"
-	kMemoryMaxPagesName = ".Memory.maxPages"
+	kMemoryAddrName     = ".Wa.Memory.addr"
+	kMemoryPagesName    = ".Wa.Memory.pages"
+	kMemoryMaxPagesName = ".Wa.Memory.maxPages"
 
-	kMemoryDataOffsetPrefix = ".Memory.dataOffset."
-	kMemoryDataSizePrefix   = ".Memory.dataSize."
-	kMemoryDataPtrPrefix    = ".Memory.dataPtr."
+	kMemoryDataOffsetPrefix = ".Wa.Memory.dataOffset."
+	kMemoryDataSizePrefix   = ".Wa.Memory.dataSize."
+	kMemoryDataPtrPrefix    = ".Wa.Memory.dataPtr."
 )
 
 func (p *wat2laWorker) buildMemory(w io.Writer) error {

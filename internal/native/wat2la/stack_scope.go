@@ -1,7 +1,7 @@
 // Copyright (C) 2026 武汉凹语言科技有限公司
 // SPDX-License-Identifier: AGPL-3.0-or-later
 
-package wat2x64
+package wat2la
 
 import (
 	"strconv"
@@ -54,13 +54,13 @@ func (p *scopeContextStack) GetReturnScopeContext() *scopeContext {
 
 func (p *scopeContextStack) FindScopeContext(label string) *scopeContext {
 	if label == "" {
-		panic("wat2x64: empty label name")
+		panic("wat2la: empty label name")
 	}
 	if idx, err := strconv.Atoi(label); err == nil {
 		if idx >= 0 && idx < len(p.stack) {
 			return p.stack[len(p.stack)-idx-1]
 		} else {
-			panic("wat2x64: invalid label index")
+			panic("wat2la: invalid label index")
 		}
 	} else {
 		// 逆序从内向外部查找

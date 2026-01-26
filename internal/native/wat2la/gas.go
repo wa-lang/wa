@@ -60,16 +60,10 @@ func (p *wat2laWorker) gasDefF64(w io.Writer, name string, v float64) {
 	fmt.Fprintf(w, "%s: .double %f\n", name, v)
 }
 
-func (p *wat2laWorker) gasDefArray(w io.Writer, name string, elemSize, len int) {
-	fmt.Fprintf(w, "%s: .fill %d, %d, 0\n", name, len, elemSize)
-}
-
 func (p *wat2laWorker) gasDefString(w io.Writer, name string, v string) {
-	fmt.Fprintf(w, "%s: .asciz %q\n", name, v)
-}
-
-func (p *wat2laWorker) gasDefConstInt(w io.Writer, name string, v int) {
-	fmt.Fprintf(w, "%s = %d\n", name, v)
+	fmt.Fprintf(w, "%s: .asciz \"", name)
+	fmt.Fprint(w, v)
+	fmt.Fprintln(w, "\"")
 }
 
 func (p *wat2laWorker) gasFuncStart(w io.Writer, fnName string) {

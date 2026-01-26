@@ -10,7 +10,7 @@ import (
 )
 
 const (
-	_kRuntimeNamePrefix = ".Runtime."
+	_kRuntimeNamePrefix = ".Wa.Runtime."
 
 	kRuntimeWrite           = _kRuntimeNamePrefix + "write"
 	kRuntimeExit            = _kRuntimeNamePrefix + "exit"
@@ -34,21 +34,13 @@ func (p *wat2laWorker) buildRuntimeHead(w io.Writer) error {
 		kRuntimeMemmove,
 		// panic 内部实现
 	}
-	var m = map[string]string{
-		kRuntimeWrite:   "write",
-		kRuntimeExit:    "exit",
-		kRuntimeMalloc:  "malloc",
-		kRuntimeMemcpy:  "memcpy",
-		kRuntimeMemset:  "memset",
-		kRuntimeMemmove: "memmove",
-	}
 
 	p.gasComment(w, "运行时函数")
 	for _, absName := range list {
-		p.gasExtern(w, m[absName])
+		p.gasExtern(w, toCName(absName))
 	}
 	for _, absName := range list {
-		p.gasSet(w, absName, m[absName])
+		p.gasSet(w, absName, toCName(absName))
 	}
 	fmt.Fprintln(w)
 	return nil

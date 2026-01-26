@@ -11,7 +11,7 @@ import (
 )
 
 const (
-	kGlobalNamePrefix = ".G."
+	kGlobalNamePrefix = ".Wa.G."
 )
 
 func (p *wat2laWorker) buildGlobal(w io.Writer) error {

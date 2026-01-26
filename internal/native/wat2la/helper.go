@@ -140,30 +140,6 @@ func (p *wat2laWorker) findLocalType(fn *ast.Func, ident string) token.Token {
 	panic("unreachable")
 }
 
-func (p *wat2laWorker) findLocalName(fn *ast.Func, ident string) string {
-	if ident == "" {
-		panic("wat2la: empty local name")
-	}
-
-	if idx, err := strconv.Atoi(ident); err == nil {
-		if idx < 0 || idx >= len(fn.Type.Params)+len(fn.Locals) {
-			panic(fmt.Sprintf("wat2la: unknown local %q", ident))
-		}
-		return p.localNames[idx]
-	}
-	for idx, arg := range fn.Type.Params {
-		if arg.Name == ident {
-			return p.localNames[idx]
-		}
-	}
-	for idx, arg := range fn.Locals {
-		if arg.Name == ident {
-			return p.localNames[len(fn.Type.Params)+idx]
-		}
-	}
-	panic("unreachable")
-}
-
 func (p *wat2laWorker) findType(ident string) *ast.FuncType {
 	if ident == "" {
 		panic("wat2la: empty ident")

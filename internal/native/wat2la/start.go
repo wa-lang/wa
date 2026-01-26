@@ -9,7 +9,8 @@ import (
 )
 
 const (
-	kFuncMain = "main"
+	kFuncMain  = "main"
+	kFuncMain2 = "_main"
 )
 
 // 启动函数
@@ -44,9 +45,10 @@ func (p *wat2laWorker) buildStart(w io.Writer) error {
 	}
 	if p.m.Start != kFuncMain {
 		for _, fn := range p.m.Funcs {
-			if fn.Name == kFuncMain {
-				fmt.Fprintf(w, "    pcalau12i $t0, %%pc_hi20(%s)\n", kFuncNamePrefix+kFuncMain)
-				fmt.Fprintf(w, "    addi.d    $t0, $t0, %%pc_lo12(%s)\n", kFuncNamePrefix+kFuncMain)
+			switch fn.Name {
+			case kFuncMain, kFuncMain2:
+				fmt.Fprintf(w, "    pcalau12i $t0, %%pc_hi20(%s)\n", kFuncNamePrefix+fixName(fn.Name))
+				fmt.Fprintf(w, "    addi.d    $t0, $t0, %%pc_lo12(%s)\n", kFuncNamePrefix+fixName(fn.Name))
 				fmt.Fprintf(w, "    jirl      $ra, $t0, 0\n")
 			}
 		}

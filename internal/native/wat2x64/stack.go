@@ -21,17 +21,6 @@ type valueTypeStack struct {
 	maxStackPointer    int
 }
 
-func (s *valueTypeStack) CopyFrom(q *valueTypeStack) {
-	*s = *q
-	s.stack = append([]token.Token{}, q.stack...)
-}
-
-func (s *valueTypeStack) Clone() *valueTypeStack {
-	v := *s
-	v.stack = append([]token.Token{}, s.stack...)
-	return &v
-}
-
 func (s *valueTypeStack) Len() int {
 	return len(s.stack)
 }
@@ -44,7 +33,7 @@ func (s *valueTypeStack) NextInstruction(ins ast.Instruction) {
 	s.funcInstruction = ins
 	s.funcInstructionPos++
 	if s.trace {
-		fmt.Printf("wat2c.valueTypeStack.Ins : ------ %-*s;; %03d:%v\n",
+		fmt.Printf("wat2x64.valueTypeStack.Ins : ------ %-*s;; %03d:%v\n",
 			40, s.StackString(), s.funcInstructionPos, s.funcInstruction,
 		)
 	}

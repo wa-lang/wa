@@ -19,18 +19,18 @@ import (
 )
 
 const (
-	kFuncNamePrefix    = ".F."
-	kFuncRetNamePrefix = ".F.ret."
+	kFuncNamePrefix    = ".Wa.F."
+	kFuncRetNamePrefix = ".Wa.F.ret."
 )
 
 const (
-	kLabelPrefixName_brNext        = ".L.brNext."
-	kLabelPrefixName_brCase        = ".L.brCase."
-	kLabelPrefixName_brDefault     = ".L.brDefault."
-	kLabelPrefixName_brFallthrough = ".L.brFallthrough."
-	kLabelPrefixName_else          = ".L.else."
-	kLabelPrefixName_end           = ".L.end."
-	kLabelPrefixName_return        = ".L.return."
+	kLabelPrefixName_brNext        = ".Wa.L.brNext."
+	kLabelPrefixName_brCase        = ".Wa.L.brCase."
+	kLabelPrefixName_brDefault     = ".Wa.L.brDefault."
+	kLabelPrefixName_brFallthrough = ".Wa.L.brFallthrough."
+	kLabelPrefixName_else          = ".Wa.L.else."
+	kLabelPrefixName_end           = ".Wa.L.end."
+	kLabelPrefixName_return        = ".Wa.L.return."
 )
 
 //

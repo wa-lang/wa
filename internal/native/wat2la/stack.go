@@ -33,7 +33,7 @@ func (s *valueTypeStack) NextInstruction(ins ast.Instruction) {
 	s.funcInstruction = ins
 	s.funcInstructionPos++
 	if s.trace {
-		fmt.Printf("wat2c.valueTypeStack.Ins : ------ %-*s;; %03d:%v\n",
+		fmt.Printf("wat2la.valueTypeStack.Ins : ------ %-*s;; %03d:%v\n",
 			40, s.StackString(), s.funcInstructionPos, s.funcInstruction,
 		)
 	}
@@ -62,6 +62,10 @@ func (s *valueTypeStack) TopToken() token.Token {
 		panic("unexpected stack empty; # " + s.String())
 	}
 	idx := len(s.stack) - 1
+	return s.stack[idx]
+}
+
+func (s *valueTypeStack) TokenAt(idx int) token.Token {
 	return s.stack[idx]
 }
 
