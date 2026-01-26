@@ -338,11 +338,9 @@ func (p *wat2X64Worker) buildFunc_ins(
 		}
 
 		// 编译块内的指令
+		scopeStack.EnterScope(token.INS_BLOCK, stk.Len(), labelName, labelSuffix, i.Results)
 		{
-			stkBase := stk.Len()
-
-			scopeStack.EnterScope(token.INS_BLOCK, stkBase, labelName, labelSuffix, i.Results)
-			defer scopeStack.LeaveScope()
+			scopeCtx := scopeStack.Top()
 
 			for _, ins := range i.List {
 				if err := p.buildFunc_ins(w, fnNative, fn, stk, scopeStack, ins); err != nil {
@@ -355,16 +353,48 @@ func (p *wat2X64Worker) buildFunc_ins(
 				}
 			}
 
-			if scopeStack.Top().IgnoreStackCheck {
-				// TODO: 清理栈残留数据
+			if scopeCtx.IgnoreStackCheck {
+				// 验证和搬运工作已经在 return 和 br 指令处完成
+				// 可能跨越了多个块, 只能在调转指令处定位到目标块进行检查
+				n := scopeCtx.StackBase + len(i.Results)
+				assert(stk.Len() >= n)
+
+				// 这里只需要重置栈
+				for stk.Len() > scopeCtx.StackBase {
+					stk.DropAny()
+				}
+
+				// 并且填入合适的块返回值, 以后后续检查继续进行
+				for _, reti := range i.Results {
+					stk.Push(reti)
+				}
+
 			} else {
-				// TODO: 验证栈的深度
+				// BUG: wa-runtime-04
+				// fnName: heap_reuse_varying (nbytes:i32) => i32
+				// ins: block
+				// stk: []
+				if stk.Len() != scopeCtx.StackBase+len(i.Results) {
+					fmt.Println("=== BUG: wa-runtime-04 ===")
+					fmt.Println("fnName:", fn.Name, fn.Type.String())
+					fmt.Println("ins:", i.String())
+					fmt.Println("stk:", stk.StackString())
+					fmt.Println("=== BUG: wa-runtime-04 ===")
+				}
+				// 从 end 正常结束需要精确验证栈匹配
+				assert(stk.Len() == scopeCtx.StackBase+len(i.Results))
+				for k, expect := range i.Results {
+					if got := stk.TokenAt(scopeCtx.StackBase + k); got != expect {
+						panic(fmt.Sprintf("expect = %v, got = %v", expect, got))
+					}
+				}
 			}
 
 			// 用于 br/br-if/br-table 指令跳转
 			// block 的跳转地址在结尾
 			p.gasFuncLabel(w, labelBlockNextId)
 		}
+		scopeStack.LeaveScope()
 
 		if isSameInstList(fn.Body.List, i.List) {
 			fmt.Fprintf(w, "    # fn.body.end(name=%s, suffix=%s)\n", labelName, labelSuffix)
@@ -384,11 +414,9 @@ func (p *wat2X64Worker) buildFunc_ins(
 		fmt.Fprintf(w, "    # loop.begin(name=%s, suffix=%s)\n", labelName, labelSuffix)
 
 		// 编译块内的指令
+		scopeStack.EnterScope(token.INS_LOOP, stk.Len(), i.Label, labelSuffix, i.Results)
 		{
-			stkBase := stk.Len()
-
-			scopeStack.EnterScope(token.INS_LOOP, stkBase, i.Label, labelSuffix, i.Results)
-			defer scopeStack.LeaveScope()
+			scopeCtx := scopeStack.Top()
 
 			// 用于 br/br-if/br-table 指令跳转
 			// loop 的跳转地址在开头
@@ -405,12 +433,33 @@ func (p *wat2X64Worker) buildFunc_ins(
 				}
 			}
 
-			if scopeStack.Top().IgnoreStackCheck {
-				// TODO: 清理栈残留数据
+			if scopeCtx.IgnoreStackCheck {
+				// 验证和搬运工作已经在 return 和 br 指令处完成
+				// 可能跨越了多个块, 只能在调转指令处定位到目标块进行检查
+				n := scopeCtx.StackBase + len(i.Results)
+				assert(stk.Len() >= n)
+
+				// 这里只需要重置栈
+				for stk.Len() > scopeCtx.StackBase {
+					stk.DropAny()
+				}
+
+				// 并且填入合适的块返回值, 以后后续检查继续进行
+				for _, reti := range i.Results {
+					stk.Push(reti)
+				}
+
 			} else {
-				// TODO: 验证栈的深度
+				// 从 end 正常结束需要精确验证栈匹配
+				assert(stk.Len() == scopeCtx.StackBase+len(i.Results))
+				for k, expect := range i.Results {
+					if got := stk.TokenAt(scopeCtx.StackBase + k); got != expect {
+						panic(fmt.Sprintf("expect = %v, got = %v", expect, got))
+					}
+				}
 			}
 		}
+		scopeStack.LeaveScope()
 
 		fmt.Fprintf(w, "    # loop.end(name=%s, suffix=%s)\n", labelName, labelSuffix)
 		fmt.Fprintln(w)
@@ -436,41 +485,70 @@ func (p *wat2X64Worker) buildFunc_ins(
 			fmt.Fprintln(w)
 		}
 
-		stkBase := stk.Len()
-		defer func() { assert(stk.Len() == stkBase+len(i.Results)) }()
-
-		scopeStack.EnterScope(token.INS_IF, stkBase, i.Label, labelSuffix, i.Results)
-		defer scopeStack.LeaveScope()
-
 		fmt.Fprintf(w, "    # if.body(name=%s, suffix=%s)\n", labelName, labelSuffix)
-		for _, ins := range i.Body {
-			if err := p.buildFunc_ins(w, fnNative, fn, stk, scopeStack, ins); err != nil {
-				return err
+
+		// 编译 if 块内的指令
+		scopeStack.EnterScope(token.INS_IF, stk.Len(), i.Label, labelSuffix, i.Results)
+		{
+			scopeCtx := scopeStack.Top()
+
+			for _, ins := range i.Body {
+				if err := p.buildFunc_ins(w, fnNative, fn, stk, scopeStack, ins); err != nil {
+					return err
+				}
+
+				// 跳过后续的死代码分析
+				if ins.Token().IsTerminal() {
+					break
+				}
 			}
 
-			// 跳过后续的死代码分析
-			if ins.Token().IsTerminal() {
-				break
+			if scopeCtx.IgnoreStackCheck {
+				// 验证和搬运工作已经在 return 和 br 指令处完成
+				// 可能跨越了多个块, 只能在调转指令处定位到目标块进行检查
+				n := scopeCtx.StackBase + len(i.Results)
+				assert(stk.Len() >= n)
+
+				// 这里只需要重置栈
+				for stk.Len() > scopeCtx.StackBase {
+					stk.DropAny()
+				}
+
+				// 并且填入合适的块返回值, 以后后续检查继续进行
+				for _, reti := range i.Results {
+					stk.Push(reti)
+				}
+
+			} else {
+				// 从 end 正常结束需要精确验证栈匹配
+				assert(stk.Len() == scopeCtx.StackBase+len(i.Results))
+				for k, expect := range i.Results {
+					if got := stk.TokenAt(scopeCtx.StackBase + k); got != expect {
+						panic(fmt.Sprintf("expect = %v, got = %v", expect, got))
+					}
+				}
 			}
+
+			// 如果有 else 分支则要将栈上的返回值也清除
+			// else 分析时会再次生成, 以确保栈的平衡
+			if len(i.Else) > 0 {
+				for _, retType := range i.Results {
+					stk.Pop(retType)
+				}
+			}
+
+			fmt.Fprintf(w, "    jmp %s\n", labelNextId)
+			fmt.Fprintln(w)
 		}
-		fmt.Fprintf(w, "    jmp %s\n", labelNextId)
-		fmt.Fprintln(w)
+		scopeStack.LeaveScope()
 
-		// 处理 else 分支
+		// 编译 else 块内的指令
+		scopeStack.EnterScope(token.INS_ELSE, stk.Len(), i.Label, labelSuffix, i.Results)
 		if len(i.Else) > 0 {
-			p.Tracef("buildFunc_ins: %s begin: %v\n", token.INS_ELSE, stk.String())
-			defer func() { p.Tracef("buildFunc_ins: %s end: %v\n", token.INS_ELSE, stk.String()) }()
+			scopeCtx := scopeStack.Top()
 
-			fmt.Fprintf(w, "    # if.else(name=%s, suffix=%s)\n", labelName, labelSuffix)
+			// 生成 else 入口标签点
 			p.gasFuncLabel(w, labelIfElseId)
-
-			// 这是静态分析, 需要消除 if 分支对栈分配的影响
-			for _, retType := range i.Results {
-				stk.Pop(retType)
-			}
-
-			// 重新开始
-			assert(stk.Len() == stkBase)
 
 			for _, ins := range i.Else {
 				if err := p.buildFunc_ins(w, fnNative, fn, stk, scopeStack, ins); err != nil {
@@ -482,7 +560,38 @@ func (p *wat2X64Worker) buildFunc_ins(
 					break
 				}
 			}
+
+			if scopeCtx.IgnoreStackCheck {
+				// 验证和搬运工作已经在 return 和 br 指令处完成
+				// 可能跨越了多个块, 只能在调转指令处定位到目标块进行检查
+				n := scopeCtx.StackBase + len(i.Results)
+				assert(stk.Len() >= n)
+
+				// 这里只需要重置栈
+				for stk.Len() > scopeCtx.StackBase {
+					stk.DropAny()
+				}
+
+				// 并且填入合适的块返回值, 以后后续检查继续进行
+				for _, reti := range i.Results {
+					stk.Push(reti)
+				}
+
+			} else {
+				// 从 end 正常结束需要精确验证栈匹配
+				assert(stk.Len() == scopeCtx.StackBase+len(i.Results))
+				for k, expect := range i.Results {
+					if got := stk.TokenAt(scopeCtx.StackBase + k); got != expect {
+						panic(fmt.Sprintf("expect = %v, got = %v", expect, got))
+					}
+				}
+			}
+
 		}
+		scopeStack.LeaveScope()
+
+		// 用于 br/br-if/br-table 指令跳转
+		// if/else 块的跳转地址在结尾
 		p.gasFuncLabel(w, labelNextId)
 		fmt.Fprintf(w, "    # if.end(name=%s, suffix=%s)\n", labelName, labelSuffix)
 		fmt.Fprintln(w)
@@ -494,6 +603,9 @@ func (p *wat2X64Worker) buildFunc_ins(
 
 	case token.INS_BR:
 		i := i.(ast.Ins_Br)
+
+		// 设置当前 block 为非正常的 end 结束
+		scopeStack.Top().IgnoreStackCheck = true
 
 		// br会根据目标block的返回值个数, 从当前block产生的栈中去返回值,
 		// 至于中间被跳过的block栈数据全部被丢弃.
@@ -561,6 +673,9 @@ func (p *wat2X64Worker) buildFunc_ins(
 	case token.INS_BR_IF:
 		i := i.(ast.Ins_BrIf)
 
+		// 设置当前 block 为非正常的 end 结束
+		scopeStack.Top().IgnoreStackCheck = true
+
 		scopeContex := scopeStack.FindScopeContext(i.X)
 		labelBrNextId := p.makeLabelId(kLabelPrefixName_brNext, scopeContex.Label, scopeContex.LabelSuffix)
 		labelBrFallthroughId := p.makeLabelId(kLabelPrefixName_brFallthrough, scopeContex.Label, scopeContex.LabelSuffix)
@@ -627,6 +742,9 @@ func (p *wat2X64Worker) buildFunc_ins(
 	case token.INS_BR_TABLE:
 		i := i.(ast.Ins_BrTable)
 		assert(len(i.XList) > 1)
+
+		// 设置当前 block 为非正常的 end 结束
+		scopeStack.Top().IgnoreStackCheck = true
 
 		// br-table的行为和br比较相似, 因此不涉及else部分不用担心栈平衡的问题.
 		// 但是每个目标block的返回值必须完全一致
@@ -739,6 +857,9 @@ func (p *wat2X64Worker) buildFunc_ins(
 		fmt.Fprintln(w)
 
 	case token.INS_RETURN:
+		// 设置当前 block 为非正常的 end 结束
+		scopeStack.Top().IgnoreStackCheck = true
+
 		assert(stk.Len() == len(fn.Type.Results))
 		// return 只是跳转到 body 块的结尾, 清理和返回值在后面处理
 		// TODO: 需要生成搬运结果的代码

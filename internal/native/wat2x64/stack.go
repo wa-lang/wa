@@ -76,6 +76,10 @@ func (s *valueTypeStack) TopToken() token.Token {
 	return s.stack[idx]
 }
 
+func (s *valueTypeStack) TokenAt(idx int) token.Token {
+	return s.stack[idx]
+}
+
 func (s *valueTypeStack) Push(v token.Token) int {
 	if s.trace {
 		fmt.Printf("wat2c.valueTypeStack.Push: %v => %-*s;; %03d:%v\n",
