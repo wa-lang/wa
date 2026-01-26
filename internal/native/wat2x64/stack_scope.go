@@ -6,18 +6,20 @@ package wat2x64
 import (
 	"strconv"
 
+	"wa-lang.org/wa/internal/wat/ast"
 	"wa-lang.org/wa/internal/wat/token"
 	wattoken "wa-lang.org/wa/internal/wat/token"
 )
 
 // 块空间状态
 type scopeContext struct {
-	Type             wattoken.Token   // 区块的类型, 用于区别处理 br 时的返回值
-	Label            string           // 嵌套的label查询, if/block/loop
-	LabelSuffix      string           // 作用域唯一后缀(避免重名)
-	StackBase        int              // if/block/loop, 开始的栈位置
-	Result           []wattoken.Token // 对应块的返回值数量和类型
-	IgnoreStackCheck bool             // 是否忽略当前栈的精简检查(br和return指令需要忽略)
+	Type             wattoken.Token    // 区块的类型, 用于区别处理 br 时的返回值
+	Label            string            // 嵌套的label查询, if/block/loop
+	LabelSuffix      string            // 作用域唯一后缀(避免重名)
+	StackBase        int               // if/block/loop, 开始的栈位置
+	Result           []wattoken.Token  // 对应块的返回值数量和类型
+	IgnoreStackCheck bool              // 是否忽略当前栈的精简检查(br和return指令需要忽略)
+	InstList         []ast.Instruction // 用于 body 测试
 }
 
 // 空间状态栈
@@ -44,6 +46,10 @@ func (p *scopeContextStack) EnterScope(typ token.Token, stkBase int, label, labe
 }
 func (p *scopeContextStack) LeaveScope() {
 	p.stack = p.stack[:len(p.stack)-1]
+}
+
+func (p *scopeContextStack) GetReturnScopeContext() *scopeContext {
+	return p.stack[0]
 }
 
 func (p *scopeContextStack) FindScopeContext(label string) *scopeContext {
