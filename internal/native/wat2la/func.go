@@ -116,7 +116,19 @@ func (p *wat2laWorker) buildFunc_body(w io.Writer, fn *ast.Func) error {
 		fmt.Fprintf(&bufHeader, "    st.d    $ra, $sp, 8\n")
 		fmt.Fprintf(&bufHeader, "    st.d    $fp, $sp, 0\n")
 		fmt.Fprintf(&bufHeader, "    addi.d  $fp, $sp, 0\n")
-		fmt.Fprintf(&bufHeader, "    addi.d  $sp, $sp, %d\n", 0-frameSize)
+
+		// 栈调整可能超出立即数范围, 需要区分处理
+		fmt.Fprintf(&bufHeader, "    # $sp = $sp - %d\n", frameSize)
+		if x := int32(0 - frameSize); x >= -2048 && x <= 2047 {
+			fmt.Fprintf(&bufHeader, "    addi.d  $sp, $sp, %d\n", 0-frameSize)
+		} else {
+			hi20 := uint32(x) >> 12
+			lo12 := uint32(x) & 0xFFF
+			fmt.Fprintf(&bufHeader, "    lu12i.w $t0, 0x%X\n", hi20)
+			fmt.Fprintf(&bufHeader, "    ori     $t0, $t0, 0x%X\n", lo12)
+			fmt.Fprintf(&bufHeader, "    add.d   $sp, $sp, $t0\n")
+		}
+
 		fmt.Fprintln(&bufHeader)
 	}
 
