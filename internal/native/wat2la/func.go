@@ -153,24 +153,28 @@ func (p *wat2laWorker) buildFunc_body(w io.Writer, fn *ast.Func) error {
 			// 将寄存器中的参数存储到对于的栈帧中
 			switch fn.Type.Params[i].Type {
 			case token.I32:
+				assert(!p.isS12Overflow(int32(arg.RBPOff)))
 				fmt.Fprintf(&bufHeader, "    st.w %s, $fp, %d # save arg.%d\n",
 					"$"+strings.ToLower(loong64.RegAliasString(arg.Reg)),
 					arg.RBPOff,
 					i,
 				)
 			case token.I64:
+				assert(!p.isS12Overflow(int32(arg.RBPOff)))
 				fmt.Fprintf(&bufHeader, "    st.d %s, $fp, %d # save arg.%d\n",
 					"$"+strings.ToLower(loong64.RegAliasString(arg.Reg)),
 					arg.RBPOff,
 					i,
 				)
 			case token.F32:
+				assert(!p.isS12Overflow(int32(arg.RBPOff)))
 				fmt.Fprintf(&bufHeader, "    fst.s %s, $fp, %d # save arg.%d\n",
 					"$"+strings.ToLower(loong64.RegAliasString(arg.Reg)),
 					arg.RBPOff,
 					i,
 				)
 			case token.F64:
+				assert(!p.isS12Overflow(int32(arg.RBPOff)))
 				fmt.Fprintf(&bufHeader, "    fst.d %s, $fp, %d # save arg.%d\n",
 					"$"+strings.ToLower(loong64.RegAliasString(arg.Reg)),
 					arg.RBPOff,
@@ -210,7 +214,7 @@ func (p *wat2laWorker) buildFunc_body(w io.Writer, fn *ast.Func) error {
 				fmt.Fprintf(&bufHeader, "    # st.d $zero, $fp, %d # local %s = 0\n",
 					local.RBPOff, local.Name,
 				)
-				p.emitFPStore(&bufHeader, "st.d", "$zero", "$t1", int32(local.RBPOff))
+				p.emitFP_st_d(&bufHeader, "$zero", "$t1", int32(local.RBPOff))
 			} else {
 				fmt.Fprintf(&bufHeader, "    st.d   $zero, $fp, %d # local %s = 0\n",
 					local.RBPOff, local.Name,
@@ -236,6 +240,8 @@ func (p *wat2laWorker) buildFunc_body(w io.Writer, fn *ast.Func) error {
 		for i := n - 1; i >= 0; i-- {
 			reti := fnNative.Type.Return[i]
 			sp := p.fnWasmR0Base - 8*stk.Pop(fn.Type.Results[i]) - 8
+			assert(!p.isS12Overflow(int32(reti.RBPOff)))
+			assert(!p.isS12Overflow(int32(sp)))
 			switch fn.Type.Results[i] {
 			case token.I32:
 				fmt.Fprintf(&bufReturn, "    ld.w $t0, $fp, %d\n", sp)
@@ -673,6 +679,10 @@ func (p *wat2laWorker) buildFunc_ins(
 				// 返回值是逆序出栈
 				// 注意: 这里只是搬运, 不能改变栈的状态
 				for i := len(destScopeContex.Result) - 1; i >= 0; i-- {
+					spSrc := p.fnWasmR0Base - (firstResultBase+i)*8 - 8
+					spDst := p.fnWasmR0Base - (destScopeContex.StackBase+i)*8 - 8
+					assert(!p.isS12Overflow(int32(spSrc)))
+					assert(!p.isS12Overflow(int32(spDst)))
 					switch xType := destScopeContex.Result[i]; xType {
 					case token.I32:
 						fmt.Fprintf(w, "    ld.w $t0, $fp, %d\n", p.fnWasmR0Base-(firstResultBase+i)*8-8)
@@ -737,6 +747,11 @@ func (p *wat2laWorker) buildFunc_ins(
 				// 返回值是逆序出栈
 				// 注意: 这里只是搬运, 不能改变栈的状态
 				for i := len(destScopeContex.Result) - 1; i >= 0; i-- {
+					spSrc := p.fnWasmR0Base - (firstResultBase+i)*8 - 8
+					spDst := p.fnWasmR0Base - (destScopeContex.StackBase+i)*8 - 8
+					assert(!p.isS12Overflow(int32(spSrc)))
+					assert(!p.isS12Overflow(int32(spDst)))
+
 					switch xType := destScopeContex.Result[i]; xType {
 					case token.I32:
 						fmt.Fprintf(w, "    ld.w $t0, $fp, %d\n", p.fnWasmR0Base-(firstResultBase+i)*8-8)
@@ -843,6 +858,11 @@ func (p *wat2laWorker) buildFunc_ins(
 					if firstResultBase > destScopeContex.StackBase {
 						// 返回值是逆序出栈
 						for i := 0; i < len(destScopeContex.Result); i++ {
+							spSrc := p.fnWasmR0Base - (firstResultBase+i)*8 - 8
+							spDst := p.fnWasmR0Base - (destScopeContex.StackBase+i)*8 - 8
+							assert(!p.isS12Overflow(int32(spSrc)))
+							assert(!p.isS12Overflow(int32(spDst)))
+
 							switch xType := destScopeContex.Result[i]; xType {
 							case token.I32:
 								fmt.Fprintf(w, "    ld.w $t1, $fp, %d # copy result\n", p.fnWasmR0Base-(firstResultBase+i)*8-8)
@@ -914,6 +934,11 @@ func (p *wat2laWorker) buildFunc_ins(
 				// 返回值是逆序出栈
 				// 注意: 这里只是搬运, 不能改变栈的状态
 				for i := len(destScopeContex.Result) - 1; i >= 0; i-- {
+					spSrc := p.fnWasmR0Base - (firstResultBase+i)*8 - 8
+					spDst := p.fnWasmR0Base - (destScopeContex.StackBase+i)*8 - 8
+					assert(!p.isS12Overflow(int32(spSrc)))
+					assert(!p.isS12Overflow(int32(spDst)))
+
 					switch xType := destScopeContex.Result[i]; xType {
 					case token.I32:
 						fmt.Fprintf(w, "    ld.w $t0, $fp, %d # copy result\n", p.fnWasmR0Base-(firstResultBase+i)*8-8)
@@ -978,6 +1003,8 @@ func (p *wat2laWorker) buildFunc_ins(
 
 		// 准备调用参数
 		for k, x := range fnCallType.Params {
+			sp := p.fnWasmR0Base - argList[k]*8 - 8
+			assert(!p.isS12Overflow(int32(sp)))
 			switch x.Type {
 			case token.I32:
 				if arg := fnCallNative.Type.Args[k]; arg.Reg != 0 {
@@ -1074,20 +1101,21 @@ func (p *wat2laWorker) buildFunc_ins(
 			// 走栈返回结果, $a0 是地址
 			// 根据 ABI 规范获取返回值, 再保存到 WASM 栈中
 			for k, retType := range fnCallType.Results {
-				reti := stk.Push(retType)
+				reti := p.fnWasmR0Base - stk.Push(retType)*8 - 8
+				assert(!p.isS12Overflow(int32(reti)))
 				switch retType {
 				case token.I32:
 					fmt.Fprintf(w, "    ld.w $t0, $a0, %d\n", k*8)
-					fmt.Fprintf(w, "    st.w $t0, $fp, %d\n", p.fnWasmR0Base-reti*8-8)
+					fmt.Fprintf(w, "    st.w $t0, $fp, %d\n", reti)
 				case token.I64:
 					fmt.Fprintf(w, "    ld.d $t0, $a0, %d\n", k*8)
-					fmt.Fprintf(w, "    st.d $t0, $fp, %d\n", p.fnWasmR0Base-reti*8-8)
+					fmt.Fprintf(w, "    st.d $t0, $fp, %d\n", reti)
 				case token.F32:
 					fmt.Fprintf(w, "    ld.w $t0, $a0, %d\n", k*8)
-					fmt.Fprintf(w, "    st.w $t0, $fp, %d\n", p.fnWasmR0Base-reti*8-8)
+					fmt.Fprintf(w, "    st.w $t0, $fp, %d\n", reti)
 				case token.F64:
 					fmt.Fprintf(w, "    ld.d $t0, $a0, %d\n", k*8)
-					fmt.Fprintf(w, "    st.d $t0, $fp, %d\n", p.fnWasmR0Base-reti*8-8)
+					fmt.Fprintf(w, "    st.d $t0, $fp, %d\n", reti)
 				default:
 					unreachable()
 				}
@@ -1098,27 +1126,29 @@ func (p *wat2laWorker) buildFunc_ins(
 				retNative := fnCallNative.Type.Return[k]
 				assert(retNative.Reg != 0)
 
-				reti := stk.Push(retType)
+				reti := p.fnWasmR0Base - stk.Push(retType)*8 - 8
+				assert(!p.isS12Overflow(int32(reti)))
+
 				switch retType {
 				case token.I32:
 					fmt.Fprintf(w, "    st.w %s, $fp, %d\n",
 						"$"+strings.ToLower(loong64.RegAliasString(retNative.Reg)),
-						p.fnWasmR0Base-reti*8-8,
+						reti,
 					)
 				case token.I64:
 					fmt.Fprintf(w, "    st.d %s, $fp, %d\n",
 						"$"+strings.ToLower(loong64.RegAliasString(retNative.Reg)),
-						p.fnWasmR0Base-reti*8-8,
+						reti,
 					)
 				case token.F32:
 					fmt.Fprintf(w, "    fst.s %s, $fp, %d\n",
 						"$"+strings.ToLower(loong64.RegAliasString(retNative.Reg)),
-						p.fnWasmR0Base-reti*8-8,
+						reti,
 					)
 				case token.F64:
 					fmt.Fprintf(w, "    fst.d %s, $fp, %d\n",
 						"$"+strings.ToLower(loong64.RegAliasString(retNative.Reg)),
-						p.fnWasmR0Base-reti*8-8,
+						reti,
 					)
 				default:
 					unreachable()
@@ -1192,17 +1222,20 @@ func (p *wat2laWorker) buildFunc_ins(
 
 		// 准备调用参数
 		for k, x := range fnCallType.Params {
+			argi := p.fnWasmR0Base - argList[k]*8 - 8
+			assert(!p.isS12Overflow(int32(argi)))
+			assert(!p.isS12Overflow(int32(fnCallNative.Type.Args[k].RBPOff)))
 			switch x.Type {
 			case token.I32:
 				if arg := fnCallNative.Type.Args[k]; arg.Reg != 0 {
 					fmt.Fprintf(w, "    ld.w %s, $fp, %d # arg %d\n",
 						"$"+strings.ToLower(loong64.RegAliasString(arg.Reg)),
-						p.fnWasmR0Base-argList[k]*8-8,
+						argi,
 						k,
 					)
 				} else {
 					fmt.Fprintf(w, "    ld.w $t1, $fp, %d\n",
-						p.fnWasmR0Base-argList[k]*8-8,
+						argi,
 					)
 					fmt.Fprintf(w, "    st.w $t1, $fp, %d\n",
 						arg.RBPOff,
@@ -1212,12 +1245,12 @@ func (p *wat2laWorker) buildFunc_ins(
 				if arg := fnCallNative.Type.Args[k]; arg.Reg != 0 {
 					fmt.Fprintf(w, "    ld.d %s, $fp, %d # arg %d\n",
 						"$"+strings.ToLower(loong64.RegAliasString(arg.Reg)),
-						p.fnWasmR0Base-argList[k]*8-8,
+						argi,
 						k,
 					)
 				} else {
 					fmt.Fprintf(w, "    ld.d $t1, $fp, %d\n",
-						p.fnWasmR0Base-argList[k]*8-8,
+						argi,
 					)
 					fmt.Fprintf(w, "    st.d $t1, $fp, %d\n",
 						arg.RBPOff,
@@ -1227,12 +1260,12 @@ func (p *wat2laWorker) buildFunc_ins(
 				if arg := fnCallNative.Type.Args[k]; arg.Reg != 0 {
 					fmt.Fprintf(w, "    fld.s %s, $fp, %d # arg %d\n",
 						"$"+strings.ToLower(loong64.RegAliasString(arg.Reg)),
-						p.fnWasmR0Base-argList[k]*8-8,
+						argi,
 						k,
 					)
 				} else {
 					fmt.Fprintf(w, "    fld.s $t1, $fp, %d\n",
-						p.fnWasmR0Base-argList[k]*8-8,
+						argi,
 					)
 					fmt.Fprintf(w, "    fst.s $t1, $fp, %d\n",
 						arg.RBPOff,
@@ -1242,12 +1275,12 @@ func (p *wat2laWorker) buildFunc_ins(
 				if arg := fnCallNative.Type.Args[k]; arg.Reg != 0 {
 					fmt.Fprintf(w, "    fld.d %s, $fp, %d # arg %d\n",
 						"$"+strings.ToLower(loong64.RegAliasString(arg.Reg)),
-						p.fnWasmR0Base-argList[k]*8-8,
+						argi,
 						k,
 					)
 				} else {
 					fmt.Fprintf(w, "    fld.d $t1, $fp, %d\n",
-						p.fnWasmR0Base-argList[k]*8-8,
+						argi,
 					)
 					fmt.Fprintf(w, "    fst.d $t1, $fp, %d\n",
 						arg.RBPOff,
@@ -1265,20 +1298,21 @@ func (p *wat2laWorker) buildFunc_ins(
 			// 走栈返回结果, $a0 是地址
 			// 根据 ABI 规范获取返回值, 再保存到 WASM 栈中
 			for k, retType := range fnCallType.Results {
-				reti := stk.Push(retType)
+				reti := p.fnWasmR0Base - stk.Push(retType)*8 - 8
+				assert(!p.isS12Overflow(int32(reti)))
 				switch retType {
 				case token.I32:
 					fmt.Fprintf(w, "    ld.w $t0, $a0, %d\n", k*8)
-					fmt.Fprintf(w, "    st.w $t0, $fp, %d\n", p.fnWasmR0Base-reti*8-8)
+					fmt.Fprintf(w, "    st.w $t0, $fp, %d\n", reti)
 				case token.I64:
 					fmt.Fprintf(w, "    ld.d $t0, $a0, %d\n", k*8)
-					fmt.Fprintf(w, "    st.d $t0, $fp, %d\n", p.fnWasmR0Base-reti*8-8)
+					fmt.Fprintf(w, "    st.d $t0, $fp, %d\n", reti)
 				case token.F32:
 					fmt.Fprintf(w, "    ld.w $t0, $a0, %d\n", k*8)
-					fmt.Fprintf(w, "    st.w $t0, $fp, %d\n", p.fnWasmR0Base-reti*8-8)
+					fmt.Fprintf(w, "    st.w $t0, $fp, %d\n", reti)
 				case token.F64:
 					fmt.Fprintf(w, "    ld.d $t0, $a0, %d\n", k*8)
-					fmt.Fprintf(w, "    st.d $t0, $fp, %d\n", p.fnWasmR0Base-reti*8-8)
+					fmt.Fprintf(w, "    st.d $t0, $fp, %d\n", reti)
 				default:
 					unreachable()
 				}
@@ -1289,27 +1323,29 @@ func (p *wat2laWorker) buildFunc_ins(
 				retNative := fnCallNative.Type.Return[k]
 				assert(retNative.Reg != 0)
 
-				reti := stk.Push(retType)
+				reti := p.fnWasmR0Base - stk.Push(retType)*8 - 8
+				assert(!p.isS12Overflow(int32(reti)))
+
 				switch retType {
 				case token.I32:
 					fmt.Fprintf(w, "    st.w %s, $fp, %d\n",
 						"$"+strings.ToLower(loong64.RegAliasString(retNative.Reg)),
-						p.fnWasmR0Base-reti*8-8,
+						reti,
 					)
 				case token.I64:
 					fmt.Fprintf(w, "    st.d %s, $fp, %d\n",
 						"$"+strings.ToLower(loong64.RegAliasString(retNative.Reg)),
-						p.fnWasmR0Base-reti*8-8,
+						reti,
 					)
 				case token.F32:
 					fmt.Fprintf(w, "    fst.s %s, $fp, %d\n",
 						"$"+strings.ToLower(loong64.RegAliasString(retNative.Reg)),
-						p.fnWasmR0Base-reti*8-8,
+						reti,
 					)
 				case token.F64:
 					fmt.Fprintf(w, "    fst.d %s, $fp, %d\n",
 						"$"+strings.ToLower(loong64.RegAliasString(retNative.Reg)),
-						p.fnWasmR0Base-reti*8-8,
+						reti,
 					)
 				default:
 					unreachable()
@@ -1319,14 +1355,16 @@ func (p *wat2laWorker) buildFunc_ins(
 		fmt.Fprintln(w)
 
 	case token.INS_DROP:
-		sp0 := stk.DropAny()
-		fmt.Fprintf(w, "    addi.w $zero, $zero, 0 # drop [fp%+d]\n", p.fnWasmR0Base-sp0*8-8)
+		sp0 := p.fnWasmR0Base - stk.DropAny()*8 - 8
+		assert(!p.isS12Overflow(int32(sp0)))
+
+		fmt.Fprintf(w, "    addi.w $zero, $zero, 0 # drop [fp%+d]\n", sp0)
 		fmt.Fprintln(w)
 
 	case token.INS_SELECT:
 		i := i.(ast.Ins_Select)
 
-		spCondition := stk.Pop(token.I32) // 判断条件
+		spCondition := p.fnWasmR0Base - stk.Pop(token.I32)*8 - 8 // 判断条件
 
 		// wasm 2.0 支持带类型
 		valType := i.ResultTyp
@@ -1334,47 +1372,52 @@ func (p *wat2laWorker) buildFunc_ins(
 			// 不带类型, 2个数值类型必须一样
 			valType = stk.TopToken()
 		}
-		spValueFalse := stk.Pop(valType)
-		spValueTrue := stk.Pop(valType)
+		spValueFalse := p.fnWasmR0Base - stk.Pop(valType)*8 - 8
+		spValueTrue := p.fnWasmR0Base - stk.Pop(valType)*8 - 8
 
-		ret0 := stk.Push(valType)
+		ret0 := p.fnWasmR0Base - stk.Push(valType)*8 - 8
+
+		assert(!p.isS12Overflow(int32(spCondition)))
+		assert(!p.isS12Overflow(int32(spValueFalse)))
+		assert(!p.isS12Overflow(int32(spValueTrue)))
+		assert(!p.isS12Overflow(int32(ret0)))
 
 		// 注意返回值的顺序
 		// if sp0 != 0 { sp2 } else { sp1 }
 		fmt.Fprintf(w, "    # select\n")
 		switch valType {
 		case token.I32:
-			fmt.Fprintf(w, "    ld.w    $t0, $fp, %d\n", p.fnWasmR0Base-spCondition*8-8)
-			fmt.Fprintf(w, "    ld.w    $t1, $fp, %d\n", p.fnWasmR0Base-spValueTrue*8-8)
-			fmt.Fprintf(w, "    ld.w    $t2, $fp, %d\n", p.fnWasmR0Base-spValueFalse*8-8)
+			fmt.Fprintf(w, "    ld.w    $t0, $fp, %d\n", spCondition)
+			fmt.Fprintf(w, "    ld.w    $t1, $fp, %d\n", spValueTrue)
+			fmt.Fprintf(w, "    ld.w    $t2, $fp, %d\n", spValueFalse)
 			fmt.Fprintf(w, "    masknez $t3, $t1, $t0\n")
 			fmt.Fprintf(w, "    maskeqz $t4, $t2, $t0\n")
 			fmt.Fprintf(w, "    or      $t0, $t3, $t4\n")
-			fmt.Fprintf(w, "    st.w    $t0, $fp, %d\n", p.fnWasmR0Base-ret0*8-8)
+			fmt.Fprintf(w, "    st.w    $t0, $fp, %d\n", ret0)
 		case token.I64:
-			fmt.Fprintf(w, "    ld.w    $t0, $fp, %d\n", p.fnWasmR0Base-spCondition*8-8)
-			fmt.Fprintf(w, "    ld.d    $t1, $fp, %d\n", p.fnWasmR0Base-spValueTrue*8-8)
-			fmt.Fprintf(w, "    ld.d    $t2, $fp, %d\n", p.fnWasmR0Base-spValueFalse*8-8)
+			fmt.Fprintf(w, "    ld.w    $t0, $fp, %d\n", spCondition)
+			fmt.Fprintf(w, "    ld.d    $t1, $fp, %d\n", spValueTrue)
+			fmt.Fprintf(w, "    ld.d    $t2, $fp, %d\n", spValueFalse)
 			fmt.Fprintf(w, "    masknez $t3, $t1, $t0\n")
 			fmt.Fprintf(w, "    maskeqz $t4, $t2, $t0\n")
 			fmt.Fprintf(w, "    or      $t0, $t3, $t4\n")
-			fmt.Fprintf(w, "    st.d    $t0, $fp, %d\n", p.fnWasmR0Base-ret0*8-8)
+			fmt.Fprintf(w, "    st.d    $t0, $fp, %d\n", ret0)
 		case token.F32:
-			fmt.Fprintf(w, "    ld.w    $t0, $fp, %d\n", p.fnWasmR0Base-spCondition*8-8)
-			fmt.Fprintf(w, "    ld.w    $t1, $fp, %d\n", p.fnWasmR0Base-spValueTrue*8-8)
-			fmt.Fprintf(w, "    ld.w    $t2, $fp, %d\n", p.fnWasmR0Base-spValueFalse*8-8)
+			fmt.Fprintf(w, "    ld.w    $t0, $fp, %d\n", spCondition)
+			fmt.Fprintf(w, "    ld.w    $t1, $fp, %d\n", spValueTrue)
+			fmt.Fprintf(w, "    ld.w    $t2, $fp, %d\n", spValueFalse)
 			fmt.Fprintf(w, "    masknez $t3, $t1, $t0\n")
 			fmt.Fprintf(w, "    maskeqz $t4, $t2, $t0\n")
 			fmt.Fprintf(w, "    or      $t0, $t3, $t4\n")
-			fmt.Fprintf(w, "    st.w    $t0, $fp, %d\n", p.fnWasmR0Base-ret0*8-8)
+			fmt.Fprintf(w, "    st.w    $t0, $fp, %d\n", ret0)
 		case token.F64:
-			fmt.Fprintf(w, "    ld.w    $t0, $fp, %d\n", p.fnWasmR0Base-spCondition*8-8)
-			fmt.Fprintf(w, "    ld.d    $t1, $fp, %d\n", p.fnWasmR0Base-spValueTrue*8-8)
-			fmt.Fprintf(w, "    ld.d    $t2, $fp, %d\n", p.fnWasmR0Base-spValueFalse*8-8)
+			fmt.Fprintf(w, "    ld.w    $t0, $fp, %d\n", spCondition)
+			fmt.Fprintf(w, "    ld.d    $t1, $fp, %d\n", spValueTrue)
+			fmt.Fprintf(w, "    ld.d    $t2, $fp, %d\n", spValueFalse)
 			fmt.Fprintf(w, "    masknez $t3, $t1, $t0\n")
 			fmt.Fprintf(w, "    maskeqz $t4, $t2, $t0\n")
 			fmt.Fprintf(w, "    or      $t0, $t3, $t4\n")
-			fmt.Fprintf(w, "    st.d    $t0, $fp, %d\n", p.fnWasmR0Base-ret0*8-8)
+			fmt.Fprintf(w, "    st.d    $t0, $fp, %d\n", ret0)
 		default:
 			unreachable()
 		}
@@ -1384,21 +1427,22 @@ func (p *wat2laWorker) buildFunc_ins(
 		i := i.(ast.Ins_LocalGet)
 		xType := p.findLocalType(fn, i.X)
 		xOff := p.findLocalOffset(fnNative, fn, i.X)
-		ret0 := stk.Push(xType)
+		ret0 := p.fnWasmR0Base - stk.Push(xType)*8 - 8
+
 		fmt.Fprintf(w, "    # local.get %s\n", i.X)
 		switch xType {
 		case token.I32:
-			fmt.Fprintf(w, "    ld.w $t0, $fp, %d\n", xOff)
-			fmt.Fprintf(w, "    st.w $t0, $fp, %d\n", p.fnWasmR0Base-ret0*8-8)
+			p.emitFP_ld_w(w, "$t0", "$t1", int32(xOff))
+			p.emitFP_st_w(w, "$t0", "$t1", int32(ret0))
 		case token.I64:
-			fmt.Fprintf(w, "    ld.d $t0, $fp, %d\n", xOff)
-			fmt.Fprintf(w, "    st.d $t0, $fp, %d\n", p.fnWasmR0Base-ret0*8-8)
+			p.emitFP_ld_d(w, "$t0", "$t1", int32(xOff))
+			p.emitFP_st_d(w, "$t0", "$t1", int32(ret0))
 		case token.F32:
-			fmt.Fprintf(w, "    ld.w $t0, $fp, %d\n", xOff)
-			fmt.Fprintf(w, "    st.w $t0, $fp, %d\n", p.fnWasmR0Base-ret0*8-8)
+			p.emitFP_ld_w(w, "$t0", "$t1", int32(xOff))
+			p.emitFP_st_w(w, "$t0", "$t1", int32(ret0))
 		case token.F64:
-			fmt.Fprintf(w, "    ld.d $t0, $fp, %d\n", xOff)
-			fmt.Fprintf(w, "    st.d $t0, $fp, %d\n", p.fnWasmR0Base-ret0*8-8)
+			p.emitFP_ld_d(w, "$t0", "$t1", int32(xOff))
+			p.emitFP_st_d(w, "$t0", "$t1", int32(ret0))
 		default:
 			unreachable()
 		}
@@ -1408,21 +1452,22 @@ func (p *wat2laWorker) buildFunc_ins(
 		i := i.(ast.Ins_LocalSet)
 		xType := p.findLocalType(fn, i.X)
 		xOff := p.findLocalOffset(fnNative, fn, i.X)
-		sp0 := stk.Pop(xType)
+		sp0 := p.fnWasmR0Base - stk.Pop(xType)*8 - 8
+		assert(!p.isS12Overflow(int32(sp0)))
 		fmt.Fprintf(w, "   # local.set %s\n", i.X)
 		switch xType {
 		case token.I32:
-			fmt.Fprintf(w, "    ld.w $t0, $fp, %d\n", p.fnWasmR0Base-sp0*8-8)
-			fmt.Fprintf(w, "    st.w $t0, $fp, %d\n", xOff)
+			p.emitFP_ld_w(w, "$t0", "$t1", int32(sp0))
+			p.emitFP_st_w(w, "$t0", "$t1", int32(xOff))
 		case token.I64:
-			fmt.Fprintf(w, "    ld.d $t0, $fp, %d\n", p.fnWasmR0Base-sp0*8-8)
-			fmt.Fprintf(w, "    st.d $t0, $fp, %d\n", xOff)
+			p.emitFP_ld_d(w, "$t0", "$t1", int32(sp0))
+			p.emitFP_st_d(w, "$t0", "$t1", int32(xOff))
 		case token.F32:
-			fmt.Fprintf(w, "    ld.w $t0, $fp, %d\n", p.fnWasmR0Base-sp0*8-8)
-			fmt.Fprintf(w, "    st.w $t0, $fp, %d\n", xOff)
+			p.emitFP_ld_w(w, "$t0", "$t1", int32(sp0))
+			p.emitFP_st_w(w, "$t0", "$t1", int32(xOff))
 		case token.F64:
-			fmt.Fprintf(w, "    ld.d $t0, $fp, %d\n", p.fnWasmR0Base-sp0*8-8)
-			fmt.Fprintf(w, "    st.d $t0, $fp, %d\n", xOff)
+			p.emitFP_ld_d(w, "$t0", "$t1", int32(sp0))
+			p.emitFP_st_d(w, "$t0", "$t1", int32(xOff))
 		default:
 			unreachable()
 		}
@@ -1432,21 +1477,22 @@ func (p *wat2laWorker) buildFunc_ins(
 		i := i.(ast.Ins_LocalTee)
 		xType := p.findLocalType(fn, i.X)
 		xOff := p.findLocalOffset(fnNative, fn, i.X)
-		sp0 := stk.Top(xType)
+		sp0 := p.fnWasmR0Base - stk.Top(xType)*8 - 8
+		assert(!p.isS12Overflow(int32(sp0)))
 		fmt.Fprintf(w, "   # local.tee %s\n", i.X)
 		switch xType {
 		case token.I32:
-			fmt.Fprintf(w, "    ld.w $t0, $fp, %d\n", p.fnWasmR0Base-sp0*8-8)
-			fmt.Fprintf(w, "    st.w $t0, $fp, %d\n", xOff)
+			p.emitFP_ld_w(w, "$t0", "$t1", int32(sp0))
+			p.emitFP_st_w(w, "$t0", "$t1", int32(xOff))
 		case token.I64:
-			fmt.Fprintf(w, "    ld.d $t0, $fp, %d\n", p.fnWasmR0Base-sp0*8-8)
-			fmt.Fprintf(w, "    st.d $t0, $fp, %d\n", xOff)
+			p.emitFP_ld_d(w, "$t0", "$t1", int32(sp0))
+			p.emitFP_st_d(w, "$t0", "$t1", int32(xOff))
 		case token.F32:
-			fmt.Fprintf(w, "    ld.w $t0, $fp, %d\n", p.fnWasmR0Base-sp0*8-8)
-			fmt.Fprintf(w, "    st.w $t0, $fp, %d\n", xOff)
+			p.emitFP_ld_w(w, "$t0", "$t1", int32(sp0))
+			p.emitFP_st_w(w, "$t0", "$t1", int32(xOff))
 		case token.F64:
-			fmt.Fprintf(w, "    ld.d $t0, $fp, %d\n", p.fnWasmR0Base-sp0*8-8)
-			fmt.Fprintf(w, "    st.d $t0, $fp, %d\n", xOff)
+			p.emitFP_ld_d(w, "$t0", "$t1", int32(sp0))
+			p.emitFP_st_d(w, "$t0", "$t1", int32(xOff))
 		default:
 			unreachable()
 		}
@@ -1456,29 +1502,30 @@ func (p *wat2laWorker) buildFunc_ins(
 		i := i.(ast.Ins_GlobalGet)
 		xName := kGlobalNamePrefix + p.findGlobalName(i.X)
 		xType := p.findGlobalType(i.X)
-		ret0 := stk.Push(xType)
+		ret0 := p.fnWasmR0Base - stk.Push(xType)*8 - 8
+		assert(!p.isS12Overflow(int32(ret0)))
 		fmt.Fprintf(w, "    # global.get %s\n", i.X)
 		switch xType {
 		case token.I32:
 			fmt.Fprintf(w, "    pcalau12i $t1, %%pc_hi20(%s)\n", xName)
 			fmt.Fprintf(w, "    addi.d    $t1, $t1, %%pc_lo12(%s)\n", xName)
 			fmt.Fprintf(w, "    ld.w      $t0, $t1, 0\n")
-			fmt.Fprintf(w, "    st.w      $t0, $fp, %d\n", p.fnWasmR0Base-ret0*8-8)
+			fmt.Fprintf(w, "    st.w      $t0, $fp, %d\n", ret0)
 		case token.I64:
 			fmt.Fprintf(w, "    pcalau12i $t1, %%pc_hi20(%s)\n", xName)
 			fmt.Fprintf(w, "    addi.d    $t1, $t1, %%pc_lo12(%s)\n", xName)
 			fmt.Fprintf(w, "    ld.d      $t0, $t1, 0\n")
-			fmt.Fprintf(w, "    st.d      $t0, $fp, %d\n", p.fnWasmR0Base-ret0*8-8)
+			fmt.Fprintf(w, "    st.d      $t0, $fp, %d\n", ret0)
 		case token.F32:
 			fmt.Fprintf(w, "    pcalau12i $t1, %%pc_hi20(%s)\n", xName)
 			fmt.Fprintf(w, "    addi.d    $t1, $t1, %%pc_lo12(%s)\n", xName)
 			fmt.Fprintf(w, "    ld.w      $t0, $t1, 0\n")
-			fmt.Fprintf(w, "    st.w      $t0, $fp, %d\n", p.fnWasmR0Base-ret0*8-8)
+			fmt.Fprintf(w, "    st.w      $t0, $fp, %d\n", ret0)
 		case token.F64:
 			fmt.Fprintf(w, "    pcalau12i $t1, %%pc_hi20(%s)\n", xName)
 			fmt.Fprintf(w, "    addi.d    $t1, $t1, %%pc_lo12(%s)\n", xName)
 			fmt.Fprintf(w, "    ld.d      $t0, $t1, 0\n")
-			fmt.Fprintf(w, "    st.d      $t0, $fp, %d\n", p.fnWasmR0Base-ret0*8-8)
+			fmt.Fprintf(w, "    st.d      $t0, $fp, %d\n", ret0)
 		default:
 			unreachable()
 		}
@@ -1488,28 +1535,29 @@ func (p *wat2laWorker) buildFunc_ins(
 		i := i.(ast.Ins_GlobalSet)
 		xName := kGlobalNamePrefix + p.findGlobalName(i.X)
 		xType := p.findGlobalType(i.X)
-		sp0 := stk.Pop(xType)
+		sp0 := p.fnWasmR0Base - stk.Pop(xType)*8 - 8
+		assert(!p.isS12Overflow(int32(sp0)))
 		fmt.Fprintf(w, "    # global.set %s\n", i.X)
 		switch xType {
 		case token.I32:
 			fmt.Fprintf(w, "    pcalau12i $t1, %%pc_hi20(%s)\n", xName)
 			fmt.Fprintf(w, "    addi.d    $t1, $t1, %%pc_lo12(%s)\n", xName)
-			fmt.Fprintf(w, "    ld.w      $t0, $fp, %d\n", p.fnWasmR0Base-sp0*8-8)
+			fmt.Fprintf(w, "    ld.w      $t0, $fp, %d\n", sp0)
 			fmt.Fprintf(w, "    st.w      $t0, $t1, 0\n")
 		case token.I64:
 			fmt.Fprintf(w, "    pcalau12i $t1, %%pc_hi20(%s)\n", xName)
 			fmt.Fprintf(w, "    addi.d    $t1, $t1, %%pc_lo12(%s)\n", xName)
-			fmt.Fprintf(w, "    ld.d      $t0, $fp, %d\n", p.fnWasmR0Base-sp0*8-8)
+			fmt.Fprintf(w, "    ld.d      $t0, $fp, %d\n", sp0)
 			fmt.Fprintf(w, "    st.d      $t0, $t1, 0\n")
 		case token.F32:
 			fmt.Fprintf(w, "    pcalau12i $t1, %%pc_hi20(%s)\n", xName)
 			fmt.Fprintf(w, "    addi.d    $t1, $t1, %%pc_lo12(%s)\n", xName)
-			fmt.Fprintf(w, "    ld.w      $t0, $fp, %d\n", p.fnWasmR0Base-sp0*8-8)
+			fmt.Fprintf(w, "    ld.w      $t0, $fp, %d\n", sp0)
 			fmt.Fprintf(w, "    st.w      $t0, $t1, 0\n")
 		case token.F64:
 			fmt.Fprintf(w, "    pcalau12i $t1, %%pc_hi20(%s)\n", xName)
 			fmt.Fprintf(w, "    addi.d    $t1, $t1, %%pc_lo12(%s)\n", xName)
-			fmt.Fprintf(w, "    ld.d      $t0, $fp, %d\n", p.fnWasmR0Base-sp0*8-8)
+			fmt.Fprintf(w, "    ld.d      $t0, $fp, %d\n", sp0)
 			fmt.Fprintf(w, "    st.d      $t0, $t1, 0\n")
 		default:
 			unreachable()
@@ -1519,6 +1567,8 @@ func (p *wat2laWorker) buildFunc_ins(
 	case token.INS_TABLE_GET:
 		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.I32) - 8
 		ret0 := p.fnWasmR0Base - 8*stk.Push(token.FUNCREF) - 8 // funcref
+		assert(!p.isS12Overflow(int32(sp0)))
+		assert(!p.isS12Overflow(int32(ret0)))
 		fmt.Fprintf(w, "    # table.get\n")
 		fmt.Fprintf(w, "    pcalau12i $t0, %%pc_hi20(%s)\n", kTableAddrName)
 		fmt.Fprintf(w, "    addi.d    $t0, $t0, %%pc_lo12(%s)\n", kTableAddrName)
@@ -1532,6 +1582,8 @@ func (p *wat2laWorker) buildFunc_ins(
 	case token.INS_TABLE_SET:
 		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.FUNCREF) - 8 // funcref
 		sp1 := p.fnWasmR0Base - 8*stk.Pop(token.I32) - 8
+		assert(!p.isS12Overflow(int32(sp0)))
+		assert(!p.isS12Overflow(int32(sp1)))
 		fmt.Fprintf(w, "    # table.set\n")
 		fmt.Fprintf(w, "    pcalau12i $t0, %%pc_hi20(%s)\n", kTableAddrName)
 		fmt.Fprintf(w, "    addi.d    $t0, $t0, %%pc_lo12(%s)\n", kTableAddrName)
@@ -1547,6 +1599,9 @@ func (p *wat2laWorker) buildFunc_ins(
 
 		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.I32) - 8
 		ret0 := p.fnWasmR0Base - 8*stk.Push(token.I32) - 8
+
+		assert(!p.isS12Overflow(int32(sp0)))
+		assert(!p.isS12Overflow(int32(ret0)))
 
 		fmt.Fprintf(w, "    # i32.load\n")
 
@@ -1571,6 +1626,9 @@ func (p *wat2laWorker) buildFunc_ins(
 		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.I32) - 8
 		ret0 := p.fnWasmR0Base - 8*stk.Push(token.I64) - 8
 
+		assert(!p.isS12Overflow(int32(sp0)))
+		assert(!p.isS12Overflow(int32(ret0)))
+
 		fmt.Fprintf(w, "    # i64.load\n")
 
 		// 内存的开始地址
@@ -1593,6 +1651,9 @@ func (p *wat2laWorker) buildFunc_ins(
 
 		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.I32) - 8
 		ret0 := p.fnWasmR0Base - 8*stk.Push(token.F32) - 8
+
+		assert(!p.isS12Overflow(int32(sp0)))
+		assert(!p.isS12Overflow(int32(ret0)))
 
 		fmt.Fprintf(w, "    # f32.load\n")
 
@@ -1617,6 +1678,9 @@ func (p *wat2laWorker) buildFunc_ins(
 		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.I32) - 8
 		ret0 := p.fnWasmR0Base - 8*stk.Push(token.F64) - 8
 
+		assert(!p.isS12Overflow(int32(sp0)))
+		assert(!p.isS12Overflow(int32(ret0)))
+
 		fmt.Fprintf(w, "    # f64.load\n")
 
 		// 内存的开始地址
@@ -1638,6 +1702,9 @@ func (p *wat2laWorker) buildFunc_ins(
 		i := i.(ast.Ins_I32Load8S)
 		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.I32) - 8
 		ret0 := p.fnWasmR0Base - 8*stk.Push(token.I32) - 8
+
+		assert(!p.isS12Overflow(int32(sp0)))
+		assert(!p.isS12Overflow(int32(ret0)))
 
 		fmt.Fprintf(w, "    # i32.load8_s\n")
 
@@ -1661,6 +1728,9 @@ func (p *wat2laWorker) buildFunc_ins(
 		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.I32) - 8
 		ret0 := p.fnWasmR0Base - 8*stk.Push(token.I32) - 8
 
+		assert(!p.isS12Overflow(int32(sp0)))
+		assert(!p.isS12Overflow(int32(ret0)))
+
 		fmt.Fprintf(w, "    # i32.load8_u\n")
 
 		// 内存的开始地址
@@ -1682,6 +1752,9 @@ func (p *wat2laWorker) buildFunc_ins(
 		i := i.(ast.Ins_I32Load16S)
 		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.I32) - 8
 		ret0 := p.fnWasmR0Base - 8*stk.Push(token.I32) - 8
+
+		assert(!p.isS12Overflow(int32(sp0)))
+		assert(!p.isS12Overflow(int32(ret0)))
 
 		fmt.Fprintf(w, "    # i32.load16_s\n")
 
@@ -1705,6 +1778,9 @@ func (p *wat2laWorker) buildFunc_ins(
 		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.I32) - 8
 		ret0 := p.fnWasmR0Base - 8*stk.Push(token.I32) - 8
 
+		assert(!p.isS12Overflow(int32(sp0)))
+		assert(!p.isS12Overflow(int32(ret0)))
+
 		fmt.Fprintf(w, "    # i32.load16_u\n")
 
 		// 内存的开始地址
@@ -1726,6 +1802,9 @@ func (p *wat2laWorker) buildFunc_ins(
 		i := i.(ast.Ins_I64Load8S)
 		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.I32) - 8
 		ret0 := p.fnWasmR0Base - 8*stk.Push(token.I64) - 8
+
+		assert(!p.isS12Overflow(int32(sp0)))
+		assert(!p.isS12Overflow(int32(ret0)))
 
 		fmt.Fprintf(w, "    # i64.load8_s\n")
 
@@ -1749,6 +1828,9 @@ func (p *wat2laWorker) buildFunc_ins(
 		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.I32) - 8
 		ret0 := p.fnWasmR0Base - 8*stk.Push(token.I64) - 8
 
+		assert(!p.isS12Overflow(int32(sp0)))
+		assert(!p.isS12Overflow(int32(ret0)))
+
 		fmt.Fprintf(w, "    # i64.load8_u\n")
 
 		// 内存的开始地址
@@ -1770,6 +1852,9 @@ func (p *wat2laWorker) buildFunc_ins(
 		i := i.(ast.Ins_I64Load16S)
 		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.I32) - 8
 		ret0 := p.fnWasmR0Base - 8*stk.Push(token.I64) - 8
+
+		assert(!p.isS12Overflow(int32(sp0)))
+		assert(!p.isS12Overflow(int32(ret0)))
 
 		fmt.Fprintf(w, "    # i64.load16_s\n")
 
@@ -1793,6 +1878,9 @@ func (p *wat2laWorker) buildFunc_ins(
 		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.I32) - 8
 		ret0 := p.fnWasmR0Base - 8*stk.Push(token.I64) - 8
 
+		assert(!p.isS12Overflow(int32(sp0)))
+		assert(!p.isS12Overflow(int32(ret0)))
+
 		fmt.Fprintf(w, "    # i64.load16_u\n")
 
 		// 内存的开始地址
@@ -1814,6 +1902,9 @@ func (p *wat2laWorker) buildFunc_ins(
 		i := i.(ast.Ins_I64Load32S)
 		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.I32) - 8
 		ret0 := p.fnWasmR0Base - 8*stk.Push(token.I64) - 8
+
+		assert(!p.isS12Overflow(int32(sp0)))
+		assert(!p.isS12Overflow(int32(ret0)))
 
 		fmt.Fprintf(w, "    # i64.load32_s\n")
 
@@ -1837,6 +1928,9 @@ func (p *wat2laWorker) buildFunc_ins(
 		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.I32) - 8
 		ret0 := p.fnWasmR0Base - 8*stk.Push(token.I64) - 8
 
+		assert(!p.isS12Overflow(int32(sp0)))
+		assert(!p.isS12Overflow(int32(ret0)))
+
 		fmt.Fprintf(w, "    # i64.load32_u\n")
 
 		// 内存的开始地址
@@ -1858,6 +1952,9 @@ func (p *wat2laWorker) buildFunc_ins(
 		i := i.(ast.Ins_I32Store)
 		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.I32) - 8
 		sp1 := p.fnWasmR0Base - 8*stk.Pop(token.I32) - 8
+
+		assert(!p.isS12Overflow(int32(sp0)))
+		assert(!p.isS12Overflow(int32(sp1)))
 
 		fmt.Fprintf(w, "    # i32.store\n")
 
@@ -1881,6 +1978,9 @@ func (p *wat2laWorker) buildFunc_ins(
 		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.I64) - 8
 		sp1 := p.fnWasmR0Base - 8*stk.Pop(token.I32) - 8
 
+		assert(!p.isS12Overflow(int32(sp0)))
+		assert(!p.isS12Overflow(int32(sp1)))
+
 		fmt.Fprintf(w, "    # i64.store\n")
 
 		// 内存的开始地址
@@ -1902,6 +2002,9 @@ func (p *wat2laWorker) buildFunc_ins(
 		i := i.(ast.Ins_F32Store)
 		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.F32) - 8
 		sp1 := p.fnWasmR0Base - 8*stk.Pop(token.I32) - 8
+
+		assert(!p.isS12Overflow(int32(sp0)))
+		assert(!p.isS12Overflow(int32(sp1)))
 
 		fmt.Fprintf(w, "    # f32.store\n")
 
@@ -1925,6 +2028,9 @@ func (p *wat2laWorker) buildFunc_ins(
 		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.F64) - 8
 		sp1 := p.fnWasmR0Base - 8*stk.Pop(token.I32) - 8
 
+		assert(!p.isS12Overflow(int32(sp0)))
+		assert(!p.isS12Overflow(int32(sp1)))
+
 		fmt.Fprintf(w, "    # f64.store\n")
 
 		// 内存的开始地址
@@ -1946,6 +2052,9 @@ func (p *wat2laWorker) buildFunc_ins(
 		i := i.(ast.Ins_I32Store8)
 		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.I32) - 8
 		sp1 := p.fnWasmR0Base - 8*stk.Pop(token.I32) - 8
+
+		assert(!p.isS12Overflow(int32(sp0)))
+		assert(!p.isS12Overflow(int32(sp1)))
 
 		fmt.Fprintf(w, "    # i32.store8\n")
 
@@ -1969,6 +2078,9 @@ func (p *wat2laWorker) buildFunc_ins(
 		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.I32) - 8
 		sp1 := p.fnWasmR0Base - 8*stk.Pop(token.I32) - 8
 
+		assert(!p.isS12Overflow(int32(sp0)))
+		assert(!p.isS12Overflow(int32(sp1)))
+
 		fmt.Fprintf(w, "    # i32.store16\n")
 
 		// 内存的开始地址
@@ -1990,6 +2102,9 @@ func (p *wat2laWorker) buildFunc_ins(
 		i := i.(ast.Ins_I64Store8)
 		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.I64) - 8
 		sp1 := p.fnWasmR0Base - 8*stk.Pop(token.I32) - 8
+
+		assert(!p.isS12Overflow(int32(sp0)))
+		assert(!p.isS12Overflow(int32(sp1)))
 
 		fmt.Fprintf(w, "    # i64.store8\n")
 
@@ -2013,6 +2128,9 @@ func (p *wat2laWorker) buildFunc_ins(
 		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.I64) - 8
 		sp1 := p.fnWasmR0Base - 8*stk.Pop(token.I32) - 8
 
+		assert(!p.isS12Overflow(int32(sp0)))
+		assert(!p.isS12Overflow(int32(sp1)))
+
 		fmt.Fprintf(w, "    # i64.store16\n")
 
 		// 内存的开始地址
@@ -2035,6 +2153,9 @@ func (p *wat2laWorker) buildFunc_ins(
 		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.I64) - 8
 		sp1 := p.fnWasmR0Base - 8*stk.Pop(token.I32) - 8
 
+		assert(!p.isS12Overflow(int32(sp0)))
+		assert(!p.isS12Overflow(int32(sp1)))
+
 		fmt.Fprintf(w, "    # i64.store32\n")
 
 		// 内存的开始地址
@@ -2054,6 +2175,8 @@ func (p *wat2laWorker) buildFunc_ins(
 
 	case token.INS_MEMORY_SIZE:
 		sp0 := p.fnWasmR0Base - 8*stk.Push(token.I32) - 8
+		assert(!p.isS12Overflow(int32(sp0)))
+
 		fmt.Fprintf(w, "    # memory.size\n")
 		fmt.Fprintf(w, "    pcalau12i $t0, %%pc_hi20(%s)\n", kMemoryPagesName)
 		fmt.Fprintf(w, "    addi.d    $t0, $t0, %%pc_lo12(%s)\n", kMemoryPagesName)
@@ -2064,6 +2187,9 @@ func (p *wat2laWorker) buildFunc_ins(
 	case token.INS_MEMORY_GROW:
 		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.I32) - 8
 		ret0 := p.fnWasmR0Base - 8*stk.Push(token.I32) - 8
+
+		assert(!p.isS12Overflow(int32(sp0)))
+		assert(!p.isS12Overflow(int32(ret0)))
 
 		labelSuffix := p.genNextId()
 
@@ -2101,6 +2227,10 @@ func (p *wat2laWorker) buildFunc_ins(
 		off := p.fnWasmR0Base - 8*stk.Pop(token.I32) - 8
 		dst := p.fnWasmR0Base - 8*stk.Pop(token.I32) - 8
 
+		assert(!p.isS12Overflow(int32(len)))
+		assert(!p.isS12Overflow(int32(off)))
+		assert(!p.isS12Overflow(int32(dst)))
+
 		fmt.Fprintf(w, "    # memory.init")
 
 		// 内存的开始地址
@@ -2132,6 +2262,10 @@ func (p *wat2laWorker) buildFunc_ins(
 		src := p.fnWasmR0Base - 8*stk.Pop(token.I32) - 8
 		dst := p.fnWasmR0Base - 8*stk.Pop(token.I32) - 8
 
+		assert(!p.isS12Overflow(int32(len)))
+		assert(!p.isS12Overflow(int32(src)))
+		assert(!p.isS12Overflow(int32(dst)))
+
 		fmt.Fprintf(w, "    # memory.copy")
 
 		// 内存的开始地址
@@ -2159,6 +2293,10 @@ func (p *wat2laWorker) buildFunc_ins(
 		val := p.fnWasmR0Base - 8*stk.Pop(token.I32) - 8
 		dst := p.fnWasmR0Base - 8*stk.Pop(token.I32) - 8
 
+		assert(!p.isS12Overflow(int32(len)))
+		assert(!p.isS12Overflow(int32(val)))
+		assert(!p.isS12Overflow(int32(dst)))
+
 		fmt.Fprintf(w, "    # memory.fill")
 
 		// 内存的开始地址
@@ -2184,13 +2322,14 @@ func (p *wat2laWorker) buildFunc_ins(
 		i := i.(ast.Ins_I32Const)
 
 		sp0 := p.fnWasmR0Base - 8*stk.Push(token.I32) - 8
+		assert(!p.isS12Overflow(int32(sp0)))
 
 		fmt.Fprintf(w, "    # i32.const %d\n", i.X)
 		if i.X >= -2048 && i.X <= 2047 {
 			fmt.Fprintf(w, "    addi.d $t0, $zero, %d\n", i.X)
 			if p.isS12Overflow(int32(sp0)) {
 				fmt.Fprintf(w, "    # st.d $t0, $fp, %d\n", sp0)
-				p.emitFPStore(w, "st.d", "$t0", "$t1", int32(sp0))
+				p.emitFP_st_d(w, "$t0", "$t1", int32(sp0))
 				fmt.Fprintln(w)
 			} else {
 				fmt.Fprintf(w, "    st.d   $t0, $fp, %d\n", sp0)
@@ -2202,7 +2341,7 @@ func (p *wat2laWorker) buildFunc_ins(
 			fmt.Fprintf(w, "    ori     $t0, $t0, 0x%X\n", lo12)
 			if p.isS12Overflow(int32(sp0)) {
 				fmt.Fprintf(w, "    # st.d $t0, $fp, %d\n", sp0)
-				p.emitFPStore(w, "st.d", "$t0", "$t1", int32(sp0))
+				p.emitFP_st_d(w, "$t0", "$t1", int32(sp0))
 			} else {
 				fmt.Fprintf(w, "    st.d    $t0, $fp, %d\n", sp0)
 			}
@@ -2213,13 +2352,14 @@ func (p *wat2laWorker) buildFunc_ins(
 		i := i.(ast.Ins_I64Const)
 
 		sp0 := p.fnWasmR0Base - 8*stk.Push(token.I64) - 8
+		assert(!p.isS12Overflow(int32(sp0)))
 
 		fmt.Fprintf(w, "    # i64.const %d\n", i.X)
 		if i.X >= -2048 && i.X <= 2047 {
 			fmt.Fprintf(w, "    addi.d $t0, $zero, %d\n", i.X)
 			if p.isS12Overflow(int32(sp0)) {
 				fmt.Fprintf(w, "    # st.d   $t0, $fp, %d\n", sp0)
-				p.emitFPStore(w, "st.d", "$t0", "$t1", int32(sp0))
+				p.emitFP_st_d(w, "$t0", "$t1", int32(sp0))
 			} else {
 				fmt.Fprintf(w, "    st.d   $t0, $fp, %d\n", sp0)
 			}
@@ -2231,7 +2371,7 @@ func (p *wat2laWorker) buildFunc_ins(
 			fmt.Fprintf(w, "    ori     $t0, $t0, 0x%X\n", lo12)
 			if p.isS12Overflow(int32(sp0)) {
 				fmt.Fprintf(w, "    # st.d   $t0, $fp, %d\n", sp0)
-				p.emitFPStore(w, "st.d", "$t0", "$t1", int32(sp0))
+				p.emitFP_st_d(w, "$t0", "$t1", int32(sp0))
 			} else {
 				fmt.Fprintf(w, "    st.d   $t0, $fp, %d\n", sp0)
 			}
@@ -2249,7 +2389,7 @@ func (p *wat2laWorker) buildFunc_ins(
 			fmt.Fprintf(w, "    lu52i.d $t0, $t0, %d\n", i32SignExtend(top12, 12))
 			if p.isS12Overflow(int32(sp0)) {
 				fmt.Fprintf(w, "    # st.d   $t0, $fp, %d\n", sp0)
-				p.emitFPStore(w, "st.d", "$t0", "$t1", int32(sp0))
+				p.emitFP_st_d(w, "$t0", "$t1", int32(sp0))
 			} else {
 				fmt.Fprintf(w, "    st.d   $t0, $fp, %d\n", sp0)
 			}
@@ -2261,18 +2401,28 @@ func (p *wat2laWorker) buildFunc_ins(
 		bits := math.Float32bits(i.X)
 
 		sp0 := p.fnWasmR0Base - 8*stk.Push(token.F32) - 8
+		assert(!p.isS12Overflow(int32(sp0)))
 
 		fmt.Fprintf(w, "    # f32.const %f (raw: 0x%08X)\n", i.X, bits)
 		if x := int32(bits); x >= -2048 && x <= 2047 {
 			fmt.Fprintf(w, "    addi.d $t0, $zero, %d\n", x)
-			fmt.Fprintf(w, "    st.d   $t0, $fp, %d\n", sp0)
+			if p.isS12Overflow(int32(sp0)) {
+				p.emitFP_st_d(w, "$t0", "$t1", int32(sp0))
+			} else {
+				fmt.Fprintf(w, "    st.d   $t0, $fp, %d\n", sp0)
+			}
 			fmt.Fprintln(w)
 		} else {
 			hi20 := bits >> 12
 			lo12 := bits & 0xFFF
 			fmt.Fprintf(w, "    lu12i.w $t0, 0x%X\n", hi20)
 			fmt.Fprintf(w, "    ori     $t0, $t0, 0x%X\n", lo12)
-			fmt.Fprintf(w, "    st.d    $t0, $fp, %d\n", sp0)
+
+			if p.isS12Overflow(int32(sp0)) {
+				p.emitFP_st_d(w, "$t0", "$t1", int32(sp0))
+			} else {
+				fmt.Fprintf(w, "    st.d   $t0, $fp, %d\n", sp0)
+			}
 			fmt.Fprintln(w)
 		}
 
@@ -2281,18 +2431,28 @@ func (p *wat2laWorker) buildFunc_ins(
 		bits := math.Float64bits(i.X)
 
 		sp0 := p.fnWasmR0Base - 8*stk.Push(token.F64) - 8
+		assert(!p.isS12Overflow(int32(sp0)))
 
 		fmt.Fprintf(w, "    # f64.const %f (raw: 0x%016X)\n", i.X, bits)
 		if x := int64(bits); x >= -2048 && x <= 2047 {
 			fmt.Fprintf(w, "    addi.d $t0, $zero, %d\n", x)
-			fmt.Fprintf(w, "    st.d   $t0, $fp, %d\n", sp0)
+
+			if p.isS12Overflow(int32(sp0)) {
+				p.emitFP_st_d(w, "$t0", "$t1", int32(sp0))
+			} else {
+				fmt.Fprintf(w, "    st.d   $t0, $fp, %d\n", sp0)
+			}
 			fmt.Fprintln(w)
 		} else if int64(int32(x)) == x {
 			hi20 := bits >> 12
 			lo12 := bits & 0xFFF
 			fmt.Fprintf(w, "    lu12i.w $t0, 0x%X\n", hi20)
 			fmt.Fprintf(w, "    ori     $t0, $t0, 0x%X\n", lo12)
-			fmt.Fprintf(w, "    st.d    $t0, $fp, %d\n", sp0)
+			if p.isS12Overflow(int32(sp0)) {
+				p.emitFP_st_d(w, "$t0", "$t1", int32(sp0))
+			} else {
+				fmt.Fprintf(w, "    st.d   $t0, $fp, %d\n", sp0)
+			}
 			fmt.Fprintln(w)
 		} else {
 			hi20 := (uint32(bits) >> 12) & 0xFFFFF
@@ -2303,13 +2463,20 @@ func (p *wat2laWorker) buildFunc_ins(
 			fmt.Fprintf(w, "    ori     $t0, $t0, 0x%X\n", lo12)
 			fmt.Fprintf(w, "    lu32i.d $t0, 0x%X\n", mid20)
 			fmt.Fprintf(w, "    lu52i.d $t0, $t0, 0x%X\n", top12)
-			fmt.Fprintf(w, "    st.d    $t0, $fp, %d\n", sp0)
+			if p.isS12Overflow(int32(sp0)) {
+				p.emitFP_st_d(w, "$t0", "$t1", int32(sp0))
+			} else {
+				fmt.Fprintf(w, "    st.d   $t0, $fp, %d\n", sp0)
+			}
 			fmt.Fprintln(w)
 		}
 
 	case token.INS_I32_EQZ:
 		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.I32) - 8
 		ret0 := p.fnWasmR0Base - 8*stk.Push(token.I32) - 8
+
+		assert(!p.isS12Overflow(int32(sp0)))
+		assert(!p.isS12Overflow(int32(ret0)))
 
 		fmt.Fprintf(w, "    # i32.eqz\n")
 		fmt.Fprintf(w, "    ld.w    $t0, $fp, %d\n", sp0)
@@ -2321,6 +2488,10 @@ func (p *wat2laWorker) buildFunc_ins(
 		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.I32) - 8
 		sp1 := p.fnWasmR0Base - 8*stk.Pop(token.I32) - 8
 		ret0 := p.fnWasmR0Base - 8*stk.Push(token.I32) - 8
+
+		assert(!p.isS12Overflow(int32(sp0)))
+		assert(!p.isS12Overflow(int32(sp1)))
+		assert(!p.isS12Overflow(int32(ret0)))
 
 		fmt.Fprintf(w, "    # i32.eq\n")
 		fmt.Fprintf(w, "    ld.w    $t0, $fp, %d\n", sp1)
@@ -2335,6 +2506,10 @@ func (p *wat2laWorker) buildFunc_ins(
 		sp1 := p.fnWasmR0Base - 8*stk.Pop(token.I32) - 8
 		ret0 := p.fnWasmR0Base - 8*stk.Push(token.I32) - 8
 
+		assert(!p.isS12Overflow(int32(sp0)))
+		assert(!p.isS12Overflow(int32(sp1)))
+		assert(!p.isS12Overflow(int32(ret0)))
+
 		fmt.Fprintf(w, "    # i32.ne\n")
 		fmt.Fprintf(w, "    ld.w    $t0, $fp, %d\n", sp1)
 		fmt.Fprintf(w, "    ld.w    $t1, $fp, %d\n", sp0)
@@ -2348,6 +2523,10 @@ func (p *wat2laWorker) buildFunc_ins(
 		sp1 := p.fnWasmR0Base - 8*stk.Pop(token.I32) - 8
 		ret0 := p.fnWasmR0Base - 8*stk.Push(token.I32) - 8
 
+		assert(!p.isS12Overflow(int32(sp0)))
+		assert(!p.isS12Overflow(int32(sp1)))
+		assert(!p.isS12Overflow(int32(ret0)))
+
 		fmt.Fprintf(w, "    # i32.lt_s\n")
 		fmt.Fprintf(w, "    ld.w    $t0, $fp, %d\n", sp1)
 		fmt.Fprintf(w, "    ld.w    $t1, $fp, %d\n", sp0)
@@ -2359,6 +2538,10 @@ func (p *wat2laWorker) buildFunc_ins(
 		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.I32) - 8
 		sp1 := p.fnWasmR0Base - 8*stk.Pop(token.I32) - 8
 		ret0 := p.fnWasmR0Base - 8*stk.Push(token.I32) - 8
+
+		assert(!p.isS12Overflow(int32(sp0)))
+		assert(!p.isS12Overflow(int32(sp1)))
+		assert(!p.isS12Overflow(int32(ret0)))
 
 		fmt.Fprintf(w, "    # i32.lt_u\n")
 		fmt.Fprintf(w, "    ld.wu   $t0, $fp, %d\n", sp1)
@@ -2372,6 +2555,10 @@ func (p *wat2laWorker) buildFunc_ins(
 		sp1 := p.fnWasmR0Base - 8*stk.Pop(token.I32) - 8
 		ret0 := p.fnWasmR0Base - 8*stk.Push(token.I32) - 8
 
+		assert(!p.isS12Overflow(int32(sp0)))
+		assert(!p.isS12Overflow(int32(sp1)))
+		assert(!p.isS12Overflow(int32(ret0)))
+
 		fmt.Fprintf(w, "    # i32.gt_s\n")
 		fmt.Fprintf(w, "    ld.w    $t0, $fp, %d\n", sp1)
 		fmt.Fprintf(w, "    ld.w    $t1, $fp, %d\n", sp0)
@@ -2384,6 +2571,10 @@ func (p *wat2laWorker) buildFunc_ins(
 		sp1 := p.fnWasmR0Base - 8*stk.Pop(token.I32) - 8
 		ret0 := p.fnWasmR0Base - 8*stk.Push(token.I32) - 8
 
+		assert(!p.isS12Overflow(int32(sp0)))
+		assert(!p.isS12Overflow(int32(sp1)))
+		assert(!p.isS12Overflow(int32(ret0)))
+
 		fmt.Fprintf(w, "    # i32.gt_u\n")
 		fmt.Fprintf(w, "    ld.wu   $t0, $fp, %d\n", sp1)
 		fmt.Fprintf(w, "    ld.wu   $t1, $fp, %d\n", sp0)
@@ -2395,6 +2586,10 @@ func (p *wat2laWorker) buildFunc_ins(
 		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.I32) - 8
 		sp1 := p.fnWasmR0Base - 8*stk.Pop(token.I32) - 8
 		ret0 := p.fnWasmR0Base - 8*stk.Push(token.I32) - 8
+
+		assert(!p.isS12Overflow(int32(sp0)))
+		assert(!p.isS12Overflow(int32(sp1)))
+		assert(!p.isS12Overflow(int32(ret0)))
 
 		fmt.Fprintf(w, "    # i32.le_s\n")
 		fmt.Fprintf(w, "    ld.w    $t0, $fp, %d\n", sp1)
@@ -2409,6 +2604,10 @@ func (p *wat2laWorker) buildFunc_ins(
 		sp1 := p.fnWasmR0Base - 8*stk.Pop(token.I32) - 8
 		ret0 := p.fnWasmR0Base - 8*stk.Push(token.I32) - 8
 
+		assert(!p.isS12Overflow(int32(sp0)))
+		assert(!p.isS12Overflow(int32(sp1)))
+		assert(!p.isS12Overflow(int32(ret0)))
+
 		fmt.Fprintf(w, "    # i32.le_u\n")
 		fmt.Fprintf(w, "    ld.wu   $t0, $fp, %d\n", sp1)
 		fmt.Fprintf(w, "    ld.wu   $t1, $fp, %d\n", sp0)
@@ -2421,6 +2620,10 @@ func (p *wat2laWorker) buildFunc_ins(
 		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.I32) - 8
 		sp1 := p.fnWasmR0Base - 8*stk.Pop(token.I32) - 8
 		ret0 := p.fnWasmR0Base - 8*stk.Push(token.I32) - 8
+
+		assert(!p.isS12Overflow(int32(sp0)))
+		assert(!p.isS12Overflow(int32(sp1)))
+		assert(!p.isS12Overflow(int32(ret0)))
 
 		fmt.Fprintf(w, "    # i32.ge_s\n")
 		fmt.Fprintf(w, "    ld.w    $t0, $fp, %d\n", sp1)
@@ -2435,6 +2638,10 @@ func (p *wat2laWorker) buildFunc_ins(
 		sp1 := p.fnWasmR0Base - 8*stk.Pop(token.I32) - 8
 		ret0 := p.fnWasmR0Base - 8*stk.Push(token.I32) - 8
 
+		assert(!p.isS12Overflow(int32(sp0)))
+		assert(!p.isS12Overflow(int32(sp1)))
+		assert(!p.isS12Overflow(int32(ret0)))
+
 		fmt.Fprintf(w, "    # i32.ge_u\n")
 		fmt.Fprintf(w, "    ld.wu   $t0, $fp, %d\n", sp1)
 		fmt.Fprintf(w, "    ld.wu   $t1, $fp, %d\n", sp0)
@@ -2447,6 +2654,9 @@ func (p *wat2laWorker) buildFunc_ins(
 		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.I64) - 8
 		ret0 := p.fnWasmR0Base - 8*stk.Push(token.I32) - 8
 
+		assert(!p.isS12Overflow(int32(sp0)))
+		assert(!p.isS12Overflow(int32(ret0)))
+
 		fmt.Fprintf(w, "    # i64.eqz\n")
 		fmt.Fprintf(w, "    ld.d    $t0, $fp, %d\n", sp0)
 		fmt.Fprintf(w, "    sltui   $t1, $t0, 1\n")
@@ -2457,6 +2667,10 @@ func (p *wat2laWorker) buildFunc_ins(
 		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.I64) - 8
 		sp1 := p.fnWasmR0Base - 8*stk.Pop(token.I64) - 8
 		ret0 := p.fnWasmR0Base - 8*stk.Push(token.I32) - 8
+
+		assert(!p.isS12Overflow(int32(sp0)))
+		assert(!p.isS12Overflow(int32(sp1)))
+		assert(!p.isS12Overflow(int32(ret0)))
 
 		fmt.Fprintf(w, "    # i64.eq\n")
 		fmt.Fprintf(w, "    ld.d    $t0, $fp, %d\n", sp1)
@@ -2471,6 +2685,10 @@ func (p *wat2laWorker) buildFunc_ins(
 		sp1 := p.fnWasmR0Base - 8*stk.Pop(token.I64) - 8
 		ret0 := p.fnWasmR0Base - 8*stk.Push(token.I32) - 8
 
+		assert(!p.isS12Overflow(int32(sp0)))
+		assert(!p.isS12Overflow(int32(sp1)))
+		assert(!p.isS12Overflow(int32(ret0)))
+
 		fmt.Fprintf(w, "    # i64.ne\n")
 		fmt.Fprintf(w, "    ld.d    $t0, $fp, %d\n", sp1)
 		fmt.Fprintf(w, "    ld.d    $t1, $fp, %d\n", sp0)
@@ -2484,6 +2702,10 @@ func (p *wat2laWorker) buildFunc_ins(
 		sp1 := p.fnWasmR0Base - 8*stk.Pop(token.I64) - 8
 		ret0 := p.fnWasmR0Base - 8*stk.Push(token.I32) - 8
 
+		assert(!p.isS12Overflow(int32(sp0)))
+		assert(!p.isS12Overflow(int32(sp1)))
+		assert(!p.isS12Overflow(int32(ret0)))
+
 		fmt.Fprintf(w, "    # i64.lt_s\n")
 		fmt.Fprintf(w, "    ld.d    $t0, $fp, %d\n", sp1)
 		fmt.Fprintf(w, "    ld.d    $t1, $fp, %d\n", sp0)
@@ -2495,6 +2717,10 @@ func (p *wat2laWorker) buildFunc_ins(
 		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.I64) - 8
 		sp1 := p.fnWasmR0Base - 8*stk.Pop(token.I64) - 8
 		ret0 := p.fnWasmR0Base - 8*stk.Push(token.I32) - 8
+
+		assert(!p.isS12Overflow(int32(sp0)))
+		assert(!p.isS12Overflow(int32(sp1)))
+		assert(!p.isS12Overflow(int32(ret0)))
 
 		fmt.Fprintf(w, "    # i64.lt_u\n")
 		fmt.Fprintf(w, "    ld.d    $t0, $fp, %d\n", sp1)
@@ -2508,6 +2734,10 @@ func (p *wat2laWorker) buildFunc_ins(
 		sp1 := p.fnWasmR0Base - 8*stk.Pop(token.I64) - 8
 		ret0 := p.fnWasmR0Base - 8*stk.Push(token.I32) - 8
 
+		assert(!p.isS12Overflow(int32(sp0)))
+		assert(!p.isS12Overflow(int32(sp1)))
+		assert(!p.isS12Overflow(int32(ret0)))
+
 		fmt.Fprintf(w, "    # i64.gt_s\n")
 		fmt.Fprintf(w, "    ld.d    $t0, $fp, %d\n", sp1)
 		fmt.Fprintf(w, "    ld.d    $t1, $fp, %d\n", sp0)
@@ -2520,6 +2750,10 @@ func (p *wat2laWorker) buildFunc_ins(
 		sp1 := p.fnWasmR0Base - 8*stk.Pop(token.I64) - 8
 		ret0 := p.fnWasmR0Base - 8*stk.Push(token.I32) - 8
 
+		assert(!p.isS12Overflow(int32(sp0)))
+		assert(!p.isS12Overflow(int32(sp1)))
+		assert(!p.isS12Overflow(int32(ret0)))
+
 		fmt.Fprintf(w, "    # i64.gt_u\n")
 		fmt.Fprintf(w, "    ld.d    $t0, $fp, %d\n", sp1)
 		fmt.Fprintf(w, "    ld.d    $t1, $fp, %d\n", sp0)
@@ -2531,6 +2765,10 @@ func (p *wat2laWorker) buildFunc_ins(
 		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.I64) - 8
 		sp1 := p.fnWasmR0Base - 8*stk.Pop(token.I64) - 8
 		ret0 := p.fnWasmR0Base - 8*stk.Push(token.I32) - 8
+
+		assert(!p.isS12Overflow(int32(sp0)))
+		assert(!p.isS12Overflow(int32(sp1)))
+		assert(!p.isS12Overflow(int32(ret0)))
 
 		fmt.Fprintf(w, "    # i64.le_s\n")
 		fmt.Fprintf(w, "    ld.d    $t0, $fp, %d\n", sp1)
@@ -2545,6 +2783,10 @@ func (p *wat2laWorker) buildFunc_ins(
 		sp1 := p.fnWasmR0Base - 8*stk.Pop(token.I64) - 8
 		ret0 := p.fnWasmR0Base - 8*stk.Push(token.I32) - 8
 
+		assert(!p.isS12Overflow(int32(sp0)))
+		assert(!p.isS12Overflow(int32(sp1)))
+		assert(!p.isS12Overflow(int32(ret0)))
+
 		fmt.Fprintf(w, "    # i64.le_u\n")
 		fmt.Fprintf(w, "    ld.d    $t0, $fp, %d\n", sp1)
 		fmt.Fprintf(w, "    ld.d    $t1, $fp, %d\n", sp0)
@@ -2557,6 +2799,10 @@ func (p *wat2laWorker) buildFunc_ins(
 		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.I64) - 8
 		sp1 := p.fnWasmR0Base - 8*stk.Pop(token.I64) - 8
 		ret0 := p.fnWasmR0Base - 8*stk.Push(token.I32) - 8
+
+		assert(!p.isS12Overflow(int32(sp0)))
+		assert(!p.isS12Overflow(int32(sp1)))
+		assert(!p.isS12Overflow(int32(ret0)))
 
 		fmt.Fprintf(w, "    # i64.ge_s\n")
 		fmt.Fprintf(w, "    ld.d    $t0, $fp, %d\n", sp1)
@@ -2571,6 +2817,10 @@ func (p *wat2laWorker) buildFunc_ins(
 		sp1 := p.fnWasmR0Base - 8*stk.Pop(token.I64) - 8
 		ret0 := p.fnWasmR0Base - 8*stk.Push(token.I32) - 8
 
+		assert(!p.isS12Overflow(int32(sp0)))
+		assert(!p.isS12Overflow(int32(sp1)))
+		assert(!p.isS12Overflow(int32(ret0)))
+
 		fmt.Fprintf(w, "    # i64.ge_u\n")
 		fmt.Fprintf(w, "    ld.d    $t0, $fp, %d\n", sp1)
 		fmt.Fprintf(w, "    ld.d    $t1, $fp, %d\n", sp0)
@@ -2583,6 +2833,10 @@ func (p *wat2laWorker) buildFunc_ins(
 		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.F32) - 8
 		sp1 := p.fnWasmR0Base - 8*stk.Pop(token.F32) - 8
 		ret0 := p.fnWasmR0Base - 8*stk.Push(token.I32) - 8
+
+		assert(!p.isS12Overflow(int32(sp0)))
+		assert(!p.isS12Overflow(int32(sp1)))
+		assert(!p.isS12Overflow(int32(ret0)))
 
 		fmt.Fprintf(w, "    # f32.eq\n")
 		fmt.Fprintf(w, "    fld.s      $ft0, $fp, %d\n", sp1)
@@ -2597,6 +2851,10 @@ func (p *wat2laWorker) buildFunc_ins(
 		sp1 := p.fnWasmR0Base - 8*stk.Pop(token.F32) - 8
 		ret0 := p.fnWasmR0Base - 8*stk.Push(token.I32) - 8
 
+		assert(!p.isS12Overflow(int32(sp0)))
+		assert(!p.isS12Overflow(int32(sp1)))
+		assert(!p.isS12Overflow(int32(ret0)))
+
 		fmt.Fprintf(w, "    # f32.ne\n")
 		fmt.Fprintf(w, "    fld.s       $ft0, $fp, %d\n", sp1)
 		fmt.Fprintf(w, "    fld.s       $ft1, $fp, %d\n", sp0)
@@ -2609,6 +2867,10 @@ func (p *wat2laWorker) buildFunc_ins(
 		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.F32) - 8
 		sp1 := p.fnWasmR0Base - 8*stk.Pop(token.F32) - 8
 		ret0 := p.fnWasmR0Base - 8*stk.Push(token.I32) - 8
+
+		assert(!p.isS12Overflow(int32(sp0)))
+		assert(!p.isS12Overflow(int32(sp1)))
+		assert(!p.isS12Overflow(int32(ret0)))
 
 		fmt.Fprintf(w, "    # f32.lt\n")
 		fmt.Fprintf(w, "    fld.s      $ft0, $fp, %d\n", sp1)
@@ -2623,6 +2885,10 @@ func (p *wat2laWorker) buildFunc_ins(
 		sp1 := p.fnWasmR0Base - 8*stk.Pop(token.F32) - 8
 		ret0 := p.fnWasmR0Base - 8*stk.Push(token.I32) - 8
 
+		assert(!p.isS12Overflow(int32(sp0)))
+		assert(!p.isS12Overflow(int32(sp1)))
+		assert(!p.isS12Overflow(int32(ret0)))
+
 		fmt.Fprintf(w, "    # f32.gt\n")
 		fmt.Fprintf(w, "    fld.s      $ft0, $fp, %d\n", sp1)
 		fmt.Fprintf(w, "    fld.s      $ft1, $fp, %d\n", sp0)
@@ -2635,6 +2901,10 @@ func (p *wat2laWorker) buildFunc_ins(
 		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.F32) - 8
 		sp1 := p.fnWasmR0Base - 8*stk.Pop(token.F32) - 8
 		ret0 := p.fnWasmR0Base - 8*stk.Push(token.I32) - 8
+
+		assert(!p.isS12Overflow(int32(sp0)))
+		assert(!p.isS12Overflow(int32(sp1)))
+		assert(!p.isS12Overflow(int32(ret0)))
 
 		fmt.Fprintf(w, "    # f32.le\n")
 		fmt.Fprintf(w, "    fld.s      $ft0, $fp, %d\n", sp1)
@@ -2649,6 +2919,10 @@ func (p *wat2laWorker) buildFunc_ins(
 		sp1 := p.fnWasmR0Base - 8*stk.Pop(token.F32) - 8
 		ret0 := p.fnWasmR0Base - 8*stk.Push(token.I32) - 8
 
+		assert(!p.isS12Overflow(int32(sp0)))
+		assert(!p.isS12Overflow(int32(sp1)))
+		assert(!p.isS12Overflow(int32(ret0)))
+
 		fmt.Fprintf(w, "    # f32.ge\n")
 		fmt.Fprintf(w, "    fld.s      $ft0, $fp, %d\n", sp1)
 		fmt.Fprintf(w, "    fld.s      $ft1, $fp, %d\n", sp0)
@@ -2661,6 +2935,10 @@ func (p *wat2laWorker) buildFunc_ins(
 		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.F64) - 8
 		sp1 := p.fnWasmR0Base - 8*stk.Pop(token.F64) - 8
 		ret0 := p.fnWasmR0Base - 8*stk.Push(token.I32) - 8
+
+		assert(!p.isS12Overflow(int32(sp0)))
+		assert(!p.isS12Overflow(int32(sp1)))
+		assert(!p.isS12Overflow(int32(ret0)))
 
 		fmt.Fprintf(w, "    # f64.eq\n")
 		fmt.Fprintf(w, "    fld.d      $ft0, $fp, %d\n", sp1)
@@ -2675,6 +2953,10 @@ func (p *wat2laWorker) buildFunc_ins(
 		sp1 := p.fnWasmR0Base - 8*stk.Pop(token.F64) - 8
 		ret0 := p.fnWasmR0Base - 8*stk.Push(token.I32) - 8
 
+		assert(!p.isS12Overflow(int32(sp0)))
+		assert(!p.isS12Overflow(int32(sp1)))
+		assert(!p.isS12Overflow(int32(ret0)))
+
 		fmt.Fprintf(w, "    # f64.ne\n")
 		fmt.Fprintf(w, "    fld.d       $ft0, $fp, %d\n", sp1)
 		fmt.Fprintf(w, "    fld.d       $ft1, $fp, %d\n", sp0)
@@ -2687,6 +2969,10 @@ func (p *wat2laWorker) buildFunc_ins(
 		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.F64) - 8
 		sp1 := p.fnWasmR0Base - 8*stk.Pop(token.F64) - 8
 		ret0 := p.fnWasmR0Base - 8*stk.Push(token.I32) - 8
+
+		assert(!p.isS12Overflow(int32(sp0)))
+		assert(!p.isS12Overflow(int32(sp1)))
+		assert(!p.isS12Overflow(int32(ret0)))
 
 		fmt.Fprintf(w, "    # f64.lt\n")
 		fmt.Fprintf(w, "    fld.d      $ft0, $fp, %d\n", sp1)
@@ -2701,6 +2987,10 @@ func (p *wat2laWorker) buildFunc_ins(
 		sp1 := p.fnWasmR0Base - 8*stk.Pop(token.F64) - 8
 		ret0 := p.fnWasmR0Base - 8*stk.Push(token.I32) - 8
 
+		assert(!p.isS12Overflow(int32(sp0)))
+		assert(!p.isS12Overflow(int32(sp1)))
+		assert(!p.isS12Overflow(int32(ret0)))
+
 		fmt.Fprintf(w, "    # f64.gt\n")
 		fmt.Fprintf(w, "    fld.d      $ft0, $fp, %d\n", sp1)
 		fmt.Fprintf(w, "    fld.d      $ft1, $fp, %d\n", sp0)
@@ -2713,6 +3003,10 @@ func (p *wat2laWorker) buildFunc_ins(
 		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.F64) - 8
 		sp1 := p.fnWasmR0Base - 8*stk.Pop(token.F64) - 8
 		ret0 := p.fnWasmR0Base - 8*stk.Push(token.I32) - 8
+
+		assert(!p.isS12Overflow(int32(sp0)))
+		assert(!p.isS12Overflow(int32(sp1)))
+		assert(!p.isS12Overflow(int32(ret0)))
 
 		fmt.Fprintf(w, "    # f64.le\n")
 		fmt.Fprintf(w, "    fld.d      $ft0, $fp, %d\n", sp1)
@@ -2727,6 +3021,10 @@ func (p *wat2laWorker) buildFunc_ins(
 		sp1 := p.fnWasmR0Base - 8*stk.Pop(token.F64) - 8
 		ret0 := p.fnWasmR0Base - 8*stk.Push(token.I32) - 8
 
+		assert(!p.isS12Overflow(int32(sp0)))
+		assert(!p.isS12Overflow(int32(sp1)))
+		assert(!p.isS12Overflow(int32(ret0)))
+
 		fmt.Fprintf(w, "    # f64.ge\n")
 		fmt.Fprintf(w, "    fld.d      $ft0, $fp, %d\n", sp1)
 		fmt.Fprintf(w, "    fld.d      $ft1, $fp, %d\n", sp0)
@@ -2739,6 +3037,9 @@ func (p *wat2laWorker) buildFunc_ins(
 		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.I32) - 8
 		ret0 := p.fnWasmR0Base - 8*stk.Push(token.I32) - 8
 
+		assert(!p.isS12Overflow(int32(sp0)))
+		assert(!p.isS12Overflow(int32(ret0)))
+
 		fmt.Fprintf(w, "    # i32.clz\n")
 		fmt.Fprintf(w, "    ld.w    $t0, $fp, %d\n", sp0)
 		fmt.Fprintf(w, "    clz.w   $t0, $t0\n")
@@ -2749,6 +3050,9 @@ func (p *wat2laWorker) buildFunc_ins(
 		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.I32) - 8
 		ret0 := p.fnWasmR0Base - 8*stk.Push(token.I32) - 8
 
+		assert(!p.isS12Overflow(int32(sp0)))
+		assert(!p.isS12Overflow(int32(ret0)))
+
 		fmt.Fprintf(w, "    # i32.ctz\n")
 		fmt.Fprintf(w, "    ld.w    $t0, $fp, %d\n", sp0)
 		fmt.Fprintf(w, "    ctz.w   $t0, $t0\n")
@@ -2758,6 +3062,9 @@ func (p *wat2laWorker) buildFunc_ins(
 	case token.INS_I32_POPCNT:
 		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.I32) - 8
 		ret0 := p.fnWasmR0Base - 8*stk.Push(token.I32) - 8
+
+		assert(!p.isS12Overflow(int32(sp0)))
+		assert(!p.isS12Overflow(int32(ret0)))
 
 		fmt.Fprintf(w, "    # i32.popcnt\n")
 		fmt.Fprintf(w, "    ld.wu   $t0, $fp, %d\n", sp0)
@@ -2798,6 +3105,10 @@ func (p *wat2laWorker) buildFunc_ins(
 		sp1 := p.fnWasmR0Base - 8*stk.Pop(token.I32) - 8
 		ret0 := p.fnWasmR0Base - 8*stk.Push(token.I32) - 8
 
+		assert(!p.isS12Overflow(int32(sp0)))
+		assert(!p.isS12Overflow(int32(sp1)))
+		assert(!p.isS12Overflow(int32(ret0)))
+
 		fmt.Fprintf(w, "    # i32.add\n")
 		fmt.Fprintf(w, "    ld.w    $t0, $fp, %d\n", sp1)
 		fmt.Fprintf(w, "    ld.w    $t1, $fp, %d\n", sp0)
@@ -2809,6 +3120,10 @@ func (p *wat2laWorker) buildFunc_ins(
 		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.I32) - 8
 		sp1 := p.fnWasmR0Base - 8*stk.Pop(token.I32) - 8
 		ret0 := p.fnWasmR0Base - 8*stk.Push(token.I32) - 8
+
+		assert(!p.isS12Overflow(int32(sp0)))
+		assert(!p.isS12Overflow(int32(sp1)))
+		assert(!p.isS12Overflow(int32(ret0)))
 
 		fmt.Fprintf(w, "    # i32.sub\n")
 		fmt.Fprintf(w, "    ld.w    $t0, $fp, %d\n", sp1)
@@ -2822,6 +3137,10 @@ func (p *wat2laWorker) buildFunc_ins(
 		sp1 := p.fnWasmR0Base - 8*stk.Pop(token.I32) - 8
 		ret0 := p.fnWasmR0Base - 8*stk.Push(token.I32) - 8
 
+		assert(!p.isS12Overflow(int32(sp0)))
+		assert(!p.isS12Overflow(int32(sp1)))
+		assert(!p.isS12Overflow(int32(ret0)))
+
 		fmt.Fprintf(w, "    # i32.mul\n")
 		fmt.Fprintf(w, "    ld.w    $t0, $fp, %d\n", sp1)
 		fmt.Fprintf(w, "    ld.w    $t1, $fp, %d\n", sp0)
@@ -2833,6 +3152,10 @@ func (p *wat2laWorker) buildFunc_ins(
 		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.I32) - 8
 		sp1 := p.fnWasmR0Base - 8*stk.Pop(token.I32) - 8
 		ret0 := p.fnWasmR0Base - 8*stk.Push(token.I32) - 8
+
+		assert(!p.isS12Overflow(int32(sp0)))
+		assert(!p.isS12Overflow(int32(sp1)))
+		assert(!p.isS12Overflow(int32(ret0)))
 
 		fmt.Fprintf(w, "    # i32.div_s\n")
 		fmt.Fprintf(w, "    ld.w    $t0, $fp, %d\n", sp1)
@@ -2846,6 +3169,10 @@ func (p *wat2laWorker) buildFunc_ins(
 		sp1 := p.fnWasmR0Base - 8*stk.Pop(token.I32) - 8
 		ret0 := p.fnWasmR0Base - 8*stk.Push(token.I32) - 8
 
+		assert(!p.isS12Overflow(int32(sp0)))
+		assert(!p.isS12Overflow(int32(sp1)))
+		assert(!p.isS12Overflow(int32(ret0)))
+
 		fmt.Fprintf(w, "    # i32.div_u\n")
 		fmt.Fprintf(w, "    ld.wu   $t0, $fp, %d\n", sp1)
 		fmt.Fprintf(w, "    ld.wu   $t1, $fp, %d\n", sp0)
@@ -2857,6 +3184,10 @@ func (p *wat2laWorker) buildFunc_ins(
 		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.I32) - 8
 		sp1 := p.fnWasmR0Base - 8*stk.Pop(token.I32) - 8
 		ret0 := p.fnWasmR0Base - 8*stk.Push(token.I32) - 8
+
+		assert(!p.isS12Overflow(int32(sp0)))
+		assert(!p.isS12Overflow(int32(sp1)))
+		assert(!p.isS12Overflow(int32(ret0)))
 
 		fmt.Fprintf(w, "    # i32.rem_s\n")
 		fmt.Fprintf(w, "    ld.w    $t0, $fp, %d\n", sp1)
@@ -2870,6 +3201,10 @@ func (p *wat2laWorker) buildFunc_ins(
 		sp1 := p.fnWasmR0Base - 8*stk.Pop(token.I32) - 8
 		ret0 := p.fnWasmR0Base - 8*stk.Push(token.I32) - 8
 
+		assert(!p.isS12Overflow(int32(sp0)))
+		assert(!p.isS12Overflow(int32(sp1)))
+		assert(!p.isS12Overflow(int32(ret0)))
+
 		fmt.Fprintf(w, "    # i32.rem_u\n")
 		fmt.Fprintf(w, "    ld.wu   $t0, $fp, %d\n", sp1)
 		fmt.Fprintf(w, "    ld.wu   $t1, $fp, %d\n", sp0)
@@ -2881,6 +3216,10 @@ func (p *wat2laWorker) buildFunc_ins(
 		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.I32) - 8
 		sp1 := p.fnWasmR0Base - 8*stk.Pop(token.I32) - 8
 		ret0 := p.fnWasmR0Base - 8*stk.Push(token.I32) - 8
+
+		assert(!p.isS12Overflow(int32(sp0)))
+		assert(!p.isS12Overflow(int32(sp1)))
+		assert(!p.isS12Overflow(int32(ret0)))
 
 		fmt.Fprintf(w, "    # i32.and\n")
 		fmt.Fprintf(w, "    ld.w    $t0, $fp, %d\n", sp1)
@@ -2894,6 +3233,10 @@ func (p *wat2laWorker) buildFunc_ins(
 		sp1 := p.fnWasmR0Base - 8*stk.Pop(token.I32) - 8
 		ret0 := p.fnWasmR0Base - 8*stk.Push(token.I32) - 8
 
+		assert(!p.isS12Overflow(int32(sp0)))
+		assert(!p.isS12Overflow(int32(sp1)))
+		assert(!p.isS12Overflow(int32(ret0)))
+
 		fmt.Fprintf(w, "    # i32.or\n")
 		fmt.Fprintf(w, "    ld.w    $t0, $fp, %d\n", sp1)
 		fmt.Fprintf(w, "    ld.w    $t1, $fp, %d\n", sp0)
@@ -2905,6 +3248,10 @@ func (p *wat2laWorker) buildFunc_ins(
 		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.I32) - 8
 		sp1 := p.fnWasmR0Base - 8*stk.Pop(token.I32) - 8
 		ret0 := p.fnWasmR0Base - 8*stk.Push(token.I32) - 8
+
+		assert(!p.isS12Overflow(int32(sp0)))
+		assert(!p.isS12Overflow(int32(sp1)))
+		assert(!p.isS12Overflow(int32(ret0)))
 
 		fmt.Fprintf(w, "    # i32.xor\n")
 		fmt.Fprintf(w, "    ld.w    $t0, $fp, %d\n", sp1)
@@ -2918,6 +3265,10 @@ func (p *wat2laWorker) buildFunc_ins(
 		sp1 := p.fnWasmR0Base - 8*stk.Pop(token.I32) - 8
 		ret0 := p.fnWasmR0Base - 8*stk.Push(token.I32) - 8
 
+		assert(!p.isS12Overflow(int32(sp0)))
+		assert(!p.isS12Overflow(int32(sp1)))
+		assert(!p.isS12Overflow(int32(ret0)))
+
 		fmt.Fprintf(w, "    # i32.shl\n")
 		fmt.Fprintf(w, "    ld.w    $t0, $fp, %d\n", sp1)
 		fmt.Fprintf(w, "    ld.w    $t1, $fp, %d\n", sp0)
@@ -2929,6 +3280,10 @@ func (p *wat2laWorker) buildFunc_ins(
 		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.I32) - 8
 		sp1 := p.fnWasmR0Base - 8*stk.Pop(token.I32) - 8
 		ret0 := p.fnWasmR0Base - 8*stk.Push(token.I32) - 8
+
+		assert(!p.isS12Overflow(int32(sp0)))
+		assert(!p.isS12Overflow(int32(sp1)))
+		assert(!p.isS12Overflow(int32(ret0)))
 
 		fmt.Fprintf(w, "    # i32.shr_s\n")
 		fmt.Fprintf(w, "    ld.w    $t0, $fp, %d\n", sp1)
@@ -2942,6 +3297,10 @@ func (p *wat2laWorker) buildFunc_ins(
 		sp1 := p.fnWasmR0Base - 8*stk.Pop(token.I32) - 8
 		ret0 := p.fnWasmR0Base - 8*stk.Push(token.I32) - 8
 
+		assert(!p.isS12Overflow(int32(sp0)))
+		assert(!p.isS12Overflow(int32(sp1)))
+		assert(!p.isS12Overflow(int32(ret0)))
+
 		fmt.Fprintf(w, "    # i32.shr_u\n")
 		fmt.Fprintf(w, "    ld.wu   $t0, $fp, %d\n", sp1)
 		fmt.Fprintf(w, "    ld.wu   $t1, $fp, %d\n", sp0)
@@ -2953,6 +3312,10 @@ func (p *wat2laWorker) buildFunc_ins(
 		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.I32) - 8
 		sp1 := p.fnWasmR0Base - 8*stk.Pop(token.I32) - 8
 		ret0 := p.fnWasmR0Base - 8*stk.Push(token.I32) - 8
+
+		assert(!p.isS12Overflow(int32(sp0)))
+		assert(!p.isS12Overflow(int32(sp1)))
+		assert(!p.isS12Overflow(int32(ret0)))
 
 		fmt.Fprintf(w, "    # i32.rotl\n")
 		fmt.Fprintf(w, "    ld.w    $t0, $fp, %d\n", sp1)
@@ -2967,6 +3330,10 @@ func (p *wat2laWorker) buildFunc_ins(
 		sp1 := p.fnWasmR0Base - 8*stk.Pop(token.I32) - 8
 		ret0 := p.fnWasmR0Base - 8*stk.Push(token.I32) - 8
 
+		assert(!p.isS12Overflow(int32(sp0)))
+		assert(!p.isS12Overflow(int32(sp1)))
+		assert(!p.isS12Overflow(int32(ret0)))
+
 		fmt.Fprintf(w, "    # i32.rotr\n")
 		fmt.Fprintf(w, "    ld.w    $t0, $fp, %d\n", sp1)
 		fmt.Fprintf(w, "    ld.w    $t1, $fp, %d\n", sp0)
@@ -2978,6 +3345,9 @@ func (p *wat2laWorker) buildFunc_ins(
 		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.I64) - 8
 		ret0 := p.fnWasmR0Base - 8*stk.Push(token.I64) - 8
 
+		assert(!p.isS12Overflow(int32(sp0)))
+		assert(!p.isS12Overflow(int32(ret0)))
+
 		fmt.Fprintf(w, "    # i64.clz\n")
 		fmt.Fprintf(w, "    ld.d    $t0, $fp, %d\n", sp0)
 		fmt.Fprintf(w, "    clz.d   $t0, $t0\n")
@@ -2988,6 +3358,9 @@ func (p *wat2laWorker) buildFunc_ins(
 		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.I64) - 8
 		ret0 := p.fnWasmR0Base - 8*stk.Push(token.I64) - 8
 
+		assert(!p.isS12Overflow(int32(sp0)))
+		assert(!p.isS12Overflow(int32(ret0)))
+
 		fmt.Fprintf(w, "    # i64.ctz\n")
 		fmt.Fprintf(w, "    ld.d    $t0, $fp, %d\n", sp0)
 		fmt.Fprintf(w, "    ctz.d   $t0, $t0\n")
@@ -2997,6 +3370,9 @@ func (p *wat2laWorker) buildFunc_ins(
 	case token.INS_I64_POPCNT:
 		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.I64) - 8
 		ret0 := p.fnWasmR0Base - 8*stk.Push(token.I64) - 8
+
+		assert(!p.isS12Overflow(int32(sp0)))
+		assert(!p.isS12Overflow(int32(ret0)))
 
 		fmt.Fprintf(w, "    # i64.popcnt\n")
 		fmt.Fprintf(w, "    ld.d    $t0, $fp, %d\n", sp0)
@@ -3045,6 +3421,10 @@ func (p *wat2laWorker) buildFunc_ins(
 		sp1 := p.fnWasmR0Base - 8*stk.Pop(token.I64) - 8
 		ret0 := p.fnWasmR0Base - 8*stk.Push(token.I64) - 8
 
+		assert(!p.isS12Overflow(int32(sp0)))
+		assert(!p.isS12Overflow(int32(sp1)))
+		assert(!p.isS12Overflow(int32(ret0)))
+
 		fmt.Fprintf(w, "    # i64.add\n")
 		fmt.Fprintf(w, "    ld.d    $t0, $fp, %d\n", sp1)
 		fmt.Fprintf(w, "    ld.d    $t1, $fp, %d\n", sp0)
@@ -3056,6 +3436,10 @@ func (p *wat2laWorker) buildFunc_ins(
 		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.I64) - 8
 		sp1 := p.fnWasmR0Base - 8*stk.Pop(token.I64) - 8
 		ret0 := p.fnWasmR0Base - 8*stk.Push(token.I64) - 8
+
+		assert(!p.isS12Overflow(int32(sp0)))
+		assert(!p.isS12Overflow(int32(sp1)))
+		assert(!p.isS12Overflow(int32(ret0)))
 
 		fmt.Fprintf(w, "    # i64.sub\n")
 		fmt.Fprintf(w, "    ld.d    $t0, $fp, %d\n", sp1)
@@ -3069,6 +3453,10 @@ func (p *wat2laWorker) buildFunc_ins(
 		sp1 := p.fnWasmR0Base - 8*stk.Pop(token.I64) - 8
 		ret0 := p.fnWasmR0Base - 8*stk.Push(token.I64) - 8
 
+		assert(!p.isS12Overflow(int32(sp0)))
+		assert(!p.isS12Overflow(int32(sp1)))
+		assert(!p.isS12Overflow(int32(ret0)))
+
 		fmt.Fprintf(w, "    # i64.mul\n")
 		fmt.Fprintf(w, "    ld.d    $t0, $fp, %d\n", sp1)
 		fmt.Fprintf(w, "    ld.d    $t1, $fp, %d\n", sp0)
@@ -3080,6 +3468,10 @@ func (p *wat2laWorker) buildFunc_ins(
 		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.I64) - 8
 		sp1 := p.fnWasmR0Base - 8*stk.Pop(token.I64) - 8
 		ret0 := p.fnWasmR0Base - 8*stk.Push(token.I64) - 8
+
+		assert(!p.isS12Overflow(int32(sp0)))
+		assert(!p.isS12Overflow(int32(sp1)))
+		assert(!p.isS12Overflow(int32(ret0)))
 
 		fmt.Fprintf(w, "    # i64.div_s\n")
 		fmt.Fprintf(w, "    ld.d    $t0, $fp, %d\n", sp1)
@@ -3093,6 +3485,10 @@ func (p *wat2laWorker) buildFunc_ins(
 		sp1 := p.fnWasmR0Base - 8*stk.Pop(token.I64) - 8
 		ret0 := p.fnWasmR0Base - 8*stk.Push(token.I64) - 8
 
+		assert(!p.isS12Overflow(int32(sp0)))
+		assert(!p.isS12Overflow(int32(sp1)))
+		assert(!p.isS12Overflow(int32(ret0)))
+
 		fmt.Fprintf(w, "    # i64.div_u\n")
 		fmt.Fprintf(w, "    ld.d    $t0, $fp, %d\n", sp1)
 		fmt.Fprintf(w, "    ld.d    $t1, $fp, %d\n", sp0)
@@ -3104,6 +3500,10 @@ func (p *wat2laWorker) buildFunc_ins(
 		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.I64) - 8
 		sp1 := p.fnWasmR0Base - 8*stk.Pop(token.I64) - 8
 		ret0 := p.fnWasmR0Base - 8*stk.Push(token.I64) - 8
+
+		assert(!p.isS12Overflow(int32(sp0)))
+		assert(!p.isS12Overflow(int32(sp1)))
+		assert(!p.isS12Overflow(int32(ret0)))
 
 		fmt.Fprintf(w, "    # i64.rem_s\n")
 		fmt.Fprintf(w, "    ld.d    $t0, $fp, %d\n", sp1)
@@ -3117,6 +3517,10 @@ func (p *wat2laWorker) buildFunc_ins(
 		sp1 := p.fnWasmR0Base - 8*stk.Pop(token.I64) - 8
 		ret0 := p.fnWasmR0Base - 8*stk.Push(token.I64) - 8
 
+		assert(!p.isS12Overflow(int32(sp0)))
+		assert(!p.isS12Overflow(int32(sp1)))
+		assert(!p.isS12Overflow(int32(ret0)))
+
 		fmt.Fprintf(w, "    # i64.rem_u\n")
 		fmt.Fprintf(w, "    ld.d    $t0, $fp, %d\n", sp1)
 		fmt.Fprintf(w, "    ld.d    $t1, $fp, %d\n", sp0)
@@ -3128,6 +3532,10 @@ func (p *wat2laWorker) buildFunc_ins(
 		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.I64) - 8
 		sp1 := p.fnWasmR0Base - 8*stk.Pop(token.I64) - 8
 		ret0 := p.fnWasmR0Base - 8*stk.Push(token.I64) - 8
+
+		assert(!p.isS12Overflow(int32(sp0)))
+		assert(!p.isS12Overflow(int32(sp1)))
+		assert(!p.isS12Overflow(int32(ret0)))
 
 		fmt.Fprintf(w, "    # i64.and\n")
 		fmt.Fprintf(w, "    ld.d    $t0, $fp, %d\n", sp1)
@@ -3141,6 +3549,10 @@ func (p *wat2laWorker) buildFunc_ins(
 		sp1 := p.fnWasmR0Base - 8*stk.Pop(token.I64) - 8
 		ret0 := p.fnWasmR0Base - 8*stk.Push(token.I64) - 8
 
+		assert(!p.isS12Overflow(int32(sp0)))
+		assert(!p.isS12Overflow(int32(sp1)))
+		assert(!p.isS12Overflow(int32(ret0)))
+
 		fmt.Fprintf(w, "    # i64.or\n")
 		fmt.Fprintf(w, "    ld.d    $t0, $fp, %d\n", sp1)
 		fmt.Fprintf(w, "    ld.d    $t1, $fp, %d\n", sp0)
@@ -3152,6 +3564,10 @@ func (p *wat2laWorker) buildFunc_ins(
 		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.I64) - 8
 		sp1 := p.fnWasmR0Base - 8*stk.Pop(token.I64) - 8
 		ret0 := p.fnWasmR0Base - 8*stk.Push(token.I64) - 8
+
+		assert(!p.isS12Overflow(int32(sp0)))
+		assert(!p.isS12Overflow(int32(sp1)))
+		assert(!p.isS12Overflow(int32(ret0)))
 
 		fmt.Fprintf(w, "    # i64.xor\n")
 		fmt.Fprintf(w, "    ld.d    $t0, $fp, %d\n", sp1)
@@ -3165,6 +3581,10 @@ func (p *wat2laWorker) buildFunc_ins(
 		sp1 := p.fnWasmR0Base - 8*stk.Pop(token.I64) - 8
 		ret0 := p.fnWasmR0Base - 8*stk.Push(token.I64) - 8
 
+		assert(!p.isS12Overflow(int32(sp0)))
+		assert(!p.isS12Overflow(int32(sp1)))
+		assert(!p.isS12Overflow(int32(ret0)))
+
 		fmt.Fprintf(w, "    # i64.shl\n")
 		fmt.Fprintf(w, "    ld.d    $t0, $fp, %d\n", sp1)
 		fmt.Fprintf(w, "    ld.d    $t1, $fp, %d\n", sp0)
@@ -3176,6 +3596,10 @@ func (p *wat2laWorker) buildFunc_ins(
 		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.I64) - 8
 		sp1 := p.fnWasmR0Base - 8*stk.Pop(token.I64) - 8
 		ret0 := p.fnWasmR0Base - 8*stk.Push(token.I64) - 8
+
+		assert(!p.isS12Overflow(int32(sp0)))
+		assert(!p.isS12Overflow(int32(sp1)))
+		assert(!p.isS12Overflow(int32(ret0)))
 
 		fmt.Fprintf(w, "    # i64.shr_s\n")
 		fmt.Fprintf(w, "    ld.d    $t0, $fp, %d\n", sp1)
@@ -3189,6 +3613,10 @@ func (p *wat2laWorker) buildFunc_ins(
 		sp1 := p.fnWasmR0Base - 8*stk.Pop(token.I64) - 8
 		ret0 := p.fnWasmR0Base - 8*stk.Push(token.I64) - 8
 
+		assert(!p.isS12Overflow(int32(sp0)))
+		assert(!p.isS12Overflow(int32(sp1)))
+		assert(!p.isS12Overflow(int32(ret0)))
+
 		fmt.Fprintf(w, "    # i64.shr_u\n")
 		fmt.Fprintf(w, "    ld.d    $t0, $fp, %d\n", sp1)
 		fmt.Fprintf(w, "    ld.d    $t1, $fp, %d\n", sp0)
@@ -3200,6 +3628,10 @@ func (p *wat2laWorker) buildFunc_ins(
 		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.I64) - 8
 		sp1 := p.fnWasmR0Base - 8*stk.Pop(token.I64) - 8
 		ret0 := p.fnWasmR0Base - 8*stk.Push(token.I64) - 8
+
+		assert(!p.isS12Overflow(int32(sp0)))
+		assert(!p.isS12Overflow(int32(sp1)))
+		assert(!p.isS12Overflow(int32(ret0)))
 
 		fmt.Fprintf(w, "    # i64.rotl\n")
 		fmt.Fprintf(w, "    ld.d    $t0, $fp, %d\n", sp1)
@@ -3214,6 +3646,10 @@ func (p *wat2laWorker) buildFunc_ins(
 		sp1 := p.fnWasmR0Base - 8*stk.Pop(token.I64) - 8
 		ret0 := p.fnWasmR0Base - 8*stk.Push(token.I64) - 8
 
+		assert(!p.isS12Overflow(int32(sp0)))
+		assert(!p.isS12Overflow(int32(sp1)))
+		assert(!p.isS12Overflow(int32(ret0)))
+
 		fmt.Fprintf(w, "    # i64.rotr\n")
 		fmt.Fprintf(w, "    ld.d    $t0, $fp, %d\n", sp1)
 		fmt.Fprintf(w, "    ld.d    $t1, $fp, %d\n", sp0)
@@ -3225,6 +3661,9 @@ func (p *wat2laWorker) buildFunc_ins(
 		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.F32) - 8
 		ret0 := p.fnWasmR0Base - 8*stk.Push(token.F32) - 8
 
+		assert(!p.isS12Overflow(int32(sp0)))
+		assert(!p.isS12Overflow(int32(ret0)))
+
 		fmt.Fprintf(w, "    # f32.abs\n")
 		fmt.Fprintf(w, "    fld.s   $ft0, $fp, %d\n", sp0)
 		fmt.Fprintf(w, "    fabs.s  $ft0, $ft0\n")
@@ -3234,6 +3673,9 @@ func (p *wat2laWorker) buildFunc_ins(
 	case token.INS_F32_NEG:
 		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.F32) - 8
 		ret0 := p.fnWasmR0Base - 8*stk.Push(token.F32) - 8
+
+		assert(!p.isS12Overflow(int32(sp0)))
+		assert(!p.isS12Overflow(int32(ret0)))
 
 		fmt.Fprintf(w, "    # f32.neg\n")
 		fmt.Fprintf(w, "    fld.s   $ft0, $fp, %d\n", sp0)
@@ -3245,6 +3687,9 @@ func (p *wat2laWorker) buildFunc_ins(
 		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.F32) - 8
 		ret0 := p.fnWasmR0Base - 8*stk.Push(token.F32) - 8
 
+		assert(!p.isS12Overflow(int32(sp0)))
+		assert(!p.isS12Overflow(int32(ret0)))
+
 		fmt.Fprintf(w, "    # f32.ceil\n")
 		fmt.Fprintf(w, "    fld.s     $ft0, $fp, %d\n", sp0)
 		fmt.Fprintf(w, "    frintrp.s $ft0, $ft0\n")
@@ -3254,6 +3699,9 @@ func (p *wat2laWorker) buildFunc_ins(
 	case token.INS_F32_FLOOR:
 		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.F32) - 8
 		ret0 := p.fnWasmR0Base - 8*stk.Push(token.F32) - 8
+
+		assert(!p.isS12Overflow(int32(sp0)))
+		assert(!p.isS12Overflow(int32(ret0)))
 
 		fmt.Fprintf(w, "    # f32.floor\n")
 		fmt.Fprintf(w, "    fld.s     $ft0, $fp, %d\n", sp0)
@@ -3265,6 +3713,9 @@ func (p *wat2laWorker) buildFunc_ins(
 		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.F32) - 8
 		ret0 := p.fnWasmR0Base - 8*stk.Push(token.F32) - 8
 
+		assert(!p.isS12Overflow(int32(sp0)))
+		assert(!p.isS12Overflow(int32(ret0)))
+
 		fmt.Fprintf(w, "    # f32.trunc\n")
 		fmt.Fprintf(w, "    fld.s     $ft0, $fp, %d\n", sp0)
 		fmt.Fprintf(w, "    frintrz.s $ft0, $ft0\n")
@@ -3274,6 +3725,9 @@ func (p *wat2laWorker) buildFunc_ins(
 	case token.INS_F32_NEAREST:
 		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.F32) - 8
 		ret0 := p.fnWasmR0Base - 8*stk.Push(token.F32) - 8
+
+		assert(!p.isS12Overflow(int32(sp0)))
+		assert(!p.isS12Overflow(int32(ret0)))
 
 		fmt.Fprintf(w, "    # f32.nearest\n")
 		fmt.Fprintf(w, "    fld.s      $ft0, $fp, %d\n", sp0)
@@ -3285,6 +3739,9 @@ func (p *wat2laWorker) buildFunc_ins(
 		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.F32) - 8
 		ret0 := p.fnWasmR0Base - 8*stk.Push(token.F32) - 8
 
+		assert(!p.isS12Overflow(int32(sp0)))
+		assert(!p.isS12Overflow(int32(ret0)))
+
 		fmt.Fprintf(w, "    # f32.sqrt\n")
 		fmt.Fprintf(w, "    fld.s   $ft0, $fp, %d\n", sp0)
 		fmt.Fprintf(w, "    fsqrt.s $ft0, $ft0\n")
@@ -3295,6 +3752,10 @@ func (p *wat2laWorker) buildFunc_ins(
 		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.F32) - 8
 		sp1 := p.fnWasmR0Base - 8*stk.Pop(token.F32) - 8
 		ret0 := p.fnWasmR0Base - 8*stk.Push(token.F32) - 8
+
+		assert(!p.isS12Overflow(int32(sp0)))
+		assert(!p.isS12Overflow(int32(sp1)))
+		assert(!p.isS12Overflow(int32(ret0)))
 
 		fmt.Fprintf(w, "    # f32.add\n")
 		fmt.Fprintf(w, "    fld.s   $ft0, $fp, %d\n", sp1)
@@ -3308,6 +3769,10 @@ func (p *wat2laWorker) buildFunc_ins(
 		sp1 := p.fnWasmR0Base - 8*stk.Pop(token.F32) - 8
 		ret0 := p.fnWasmR0Base - 8*stk.Push(token.F32) - 8
 
+		assert(!p.isS12Overflow(int32(sp0)))
+		assert(!p.isS12Overflow(int32(sp1)))
+		assert(!p.isS12Overflow(int32(ret0)))
+
 		fmt.Fprintf(w, "    # f32.sub\n")
 		fmt.Fprintf(w, "    fld.s   $ft0, $fp, %d\n", sp1)
 		fmt.Fprintf(w, "    fld.s   $ft1, $fp, %d\n", sp0)
@@ -3319,6 +3784,10 @@ func (p *wat2laWorker) buildFunc_ins(
 		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.F32) - 8
 		sp1 := p.fnWasmR0Base - 8*stk.Pop(token.F32) - 8
 		ret0 := p.fnWasmR0Base - 8*stk.Push(token.F32) - 8
+
+		assert(!p.isS12Overflow(int32(sp0)))
+		assert(!p.isS12Overflow(int32(sp1)))
+		assert(!p.isS12Overflow(int32(ret0)))
 
 		fmt.Fprintf(w, "    # f32.mul\n")
 		fmt.Fprintf(w, "    fld.s   $ft0, $fp, %d\n", sp1)
@@ -3332,6 +3801,10 @@ func (p *wat2laWorker) buildFunc_ins(
 		sp1 := p.fnWasmR0Base - 8*stk.Pop(token.F32) - 8
 		ret0 := p.fnWasmR0Base - 8*stk.Push(token.F32) - 8
 
+		assert(!p.isS12Overflow(int32(sp0)))
+		assert(!p.isS12Overflow(int32(sp1)))
+		assert(!p.isS12Overflow(int32(ret0)))
+
 		fmt.Fprintf(w, "    # f32.div\n")
 		fmt.Fprintf(w, "    fld.s   $ft0, $fp, %d\n", sp1)
 		fmt.Fprintf(w, "    fld.s   $ft1, $fp, %d\n", sp0)
@@ -3343,6 +3816,10 @@ func (p *wat2laWorker) buildFunc_ins(
 		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.F32) - 8
 		sp1 := p.fnWasmR0Base - 8*stk.Pop(token.F32) - 8
 		ret0 := p.fnWasmR0Base - 8*stk.Push(token.F32) - 8
+
+		assert(!p.isS12Overflow(int32(sp0)))
+		assert(!p.isS12Overflow(int32(sp1)))
+		assert(!p.isS12Overflow(int32(ret0)))
 
 		fmt.Fprintf(w, "    # f32.min\n")
 		fmt.Fprintf(w, "    fld.s   $ft0, $fp, %d\n", sp1)
@@ -3356,6 +3833,10 @@ func (p *wat2laWorker) buildFunc_ins(
 		sp1 := p.fnWasmR0Base - 8*stk.Pop(token.F32) - 8
 		ret0 := p.fnWasmR0Base - 8*stk.Push(token.F32) - 8
 
+		assert(!p.isS12Overflow(int32(sp0)))
+		assert(!p.isS12Overflow(int32(sp1)))
+		assert(!p.isS12Overflow(int32(ret0)))
+
 		fmt.Fprintf(w, "    # f32.max\n")
 		fmt.Fprintf(w, "    fld.s   $ft0, $fp, %d\n", sp1)
 		fmt.Fprintf(w, "    fld.s   $ft1, $fp, %d\n", sp0)
@@ -3368,6 +3849,10 @@ func (p *wat2laWorker) buildFunc_ins(
 		sp1 := p.fnWasmR0Base - 8*stk.Pop(token.F32) - 8
 		ret0 := p.fnWasmR0Base - 8*stk.Push(token.F32) - 8
 
+		assert(!p.isS12Overflow(int32(sp0)))
+		assert(!p.isS12Overflow(int32(sp1)))
+		assert(!p.isS12Overflow(int32(ret0)))
+
 		fmt.Fprintf(w, "    # f32.copysign\n")
 		fmt.Fprintf(w, "    fld.s       $ft0, $fp, %d\n", sp1)
 		fmt.Fprintf(w, "    fld.s       $ft1, $fp, %d\n", sp0)
@@ -3379,6 +3864,9 @@ func (p *wat2laWorker) buildFunc_ins(
 		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.F64) - 8
 		ret0 := p.fnWasmR0Base - 8*stk.Push(token.F64) - 8
 
+		assert(!p.isS12Overflow(int32(sp0)))
+		assert(!p.isS12Overflow(int32(ret0)))
+
 		fmt.Fprintf(w, "    # f64.abs\n")
 		fmt.Fprintf(w, "    fld.d   $ft0, $fp, %d\n", sp0)
 		fmt.Fprintf(w, "    fabs.d  $ft0, $ft0\n")
@@ -3388,6 +3876,9 @@ func (p *wat2laWorker) buildFunc_ins(
 	case token.INS_F64_NEG:
 		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.F64) - 8
 		ret0 := p.fnWasmR0Base - 8*stk.Push(token.F64) - 8
+
+		assert(!p.isS12Overflow(int32(sp0)))
+		assert(!p.isS12Overflow(int32(ret0)))
 
 		fmt.Fprintf(w, "    # f64.neg\n")
 		fmt.Fprintf(w, "    fld.d   $ft0, $fp, %d\n", sp0)
@@ -3399,6 +3890,9 @@ func (p *wat2laWorker) buildFunc_ins(
 		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.F64) - 8
 		ret0 := p.fnWasmR0Base - 8*stk.Push(token.F64) - 8
 
+		assert(!p.isS12Overflow(int32(sp0)))
+		assert(!p.isS12Overflow(int32(ret0)))
+
 		fmt.Fprintf(w, "    # f64.ceil\n")
 		fmt.Fprintf(w, "    fld.d     $ft0, $fp, %d\n", sp0)
 		fmt.Fprintf(w, "    frintrp.d $ft0, $ft0\n")
@@ -3408,6 +3902,9 @@ func (p *wat2laWorker) buildFunc_ins(
 	case token.INS_F64_FLOOR:
 		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.F64) - 8
 		ret0 := p.fnWasmR0Base - 8*stk.Push(token.F64) - 8
+
+		assert(!p.isS12Overflow(int32(sp0)))
+		assert(!p.isS12Overflow(int32(ret0)))
 
 		fmt.Fprintf(w, "    # f64.floor\n")
 		fmt.Fprintf(w, "    fld.d     $ft0, $fp, %d\n", sp0)
@@ -3419,6 +3916,9 @@ func (p *wat2laWorker) buildFunc_ins(
 		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.F64) - 8
 		ret0 := p.fnWasmR0Base - 8*stk.Push(token.F64) - 8
 
+		assert(!p.isS12Overflow(int32(sp0)))
+		assert(!p.isS12Overflow(int32(ret0)))
+
 		fmt.Fprintf(w, "    # f64.trunc\n")
 		fmt.Fprintf(w, "    fld.d     $ft0, $fp, %d\n", sp0)
 		fmt.Fprintf(w, "    frintrz.d $ft0, $ft0\n")
@@ -3428,6 +3928,9 @@ func (p *wat2laWorker) buildFunc_ins(
 	case token.INS_F64_NEAREST:
 		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.F64) - 8
 		ret0 := p.fnWasmR0Base - 8*stk.Push(token.F64) - 8
+
+		assert(!p.isS12Overflow(int32(sp0)))
+		assert(!p.isS12Overflow(int32(ret0)))
 
 		fmt.Fprintf(w, "    # f64.nearest\n")
 		fmt.Fprintf(w, "    fld.d      $ft0, $fp, %d\n", sp0)
@@ -3439,6 +3942,9 @@ func (p *wat2laWorker) buildFunc_ins(
 		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.F64) - 8
 		ret0 := p.fnWasmR0Base - 8*stk.Push(token.F64) - 8
 
+		assert(!p.isS12Overflow(int32(sp0)))
+		assert(!p.isS12Overflow(int32(ret0)))
+
 		fmt.Fprintf(w, "    # f64.sqrt\n")
 		fmt.Fprintf(w, "    fld.d   $ft0, $fp, %d\n", sp0)
 		fmt.Fprintf(w, "    fsqrt.d $ft0, $ft0\n")
@@ -3449,6 +3955,10 @@ func (p *wat2laWorker) buildFunc_ins(
 		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.F64) - 8
 		sp1 := p.fnWasmR0Base - 8*stk.Pop(token.F64) - 8
 		ret0 := p.fnWasmR0Base - 8*stk.Push(token.F64) - 8
+
+		assert(!p.isS12Overflow(int32(sp0)))
+		assert(!p.isS12Overflow(int32(sp1)))
+		assert(!p.isS12Overflow(int32(ret0)))
 
 		fmt.Fprintf(w, "    # f64.add\n")
 		fmt.Fprintf(w, "    fld.d   $ft0, $fp, %d\n", sp1)
@@ -3462,6 +3972,10 @@ func (p *wat2laWorker) buildFunc_ins(
 		sp1 := p.fnWasmR0Base - 8*stk.Pop(token.F64) - 8
 		ret0 := p.fnWasmR0Base - 8*stk.Push(token.F64) - 8
 
+		assert(!p.isS12Overflow(int32(sp0)))
+		assert(!p.isS12Overflow(int32(sp1)))
+		assert(!p.isS12Overflow(int32(ret0)))
+
 		fmt.Fprintf(w, "    # f64.sub\n")
 		fmt.Fprintf(w, "    fld.d   $ft0, $fp, %d\n", sp1)
 		fmt.Fprintf(w, "    fld.d   $ft1, $fp, %d\n", sp0)
@@ -3473,6 +3987,10 @@ func (p *wat2laWorker) buildFunc_ins(
 		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.F64) - 8
 		sp1 := p.fnWasmR0Base - 8*stk.Pop(token.F64) - 8
 		ret0 := p.fnWasmR0Base - 8*stk.Push(token.F64) - 8
+
+		assert(!p.isS12Overflow(int32(sp0)))
+		assert(!p.isS12Overflow(int32(sp1)))
+		assert(!p.isS12Overflow(int32(ret0)))
 
 		fmt.Fprintf(w, "    # f64.mul\n")
 		fmt.Fprintf(w, "    fld.d   $ft0, $fp, %d\n", sp1)
@@ -3486,6 +4004,10 @@ func (p *wat2laWorker) buildFunc_ins(
 		sp1 := p.fnWasmR0Base - 8*stk.Pop(token.F64) - 8
 		ret0 := p.fnWasmR0Base - 8*stk.Push(token.F64) - 8
 
+		assert(!p.isS12Overflow(int32(sp0)))
+		assert(!p.isS12Overflow(int32(sp1)))
+		assert(!p.isS12Overflow(int32(ret0)))
+
 		fmt.Fprintf(w, "    # f64.div\n")
 		fmt.Fprintf(w, "    fld.d   $ft0, $fp, %d\n", sp1)
 		fmt.Fprintf(w, "    fld.d   $ft1, $fp, %d\n", sp0)
@@ -3497,6 +4019,10 @@ func (p *wat2laWorker) buildFunc_ins(
 		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.F64) - 8
 		sp1 := p.fnWasmR0Base - 8*stk.Pop(token.F64) - 8
 		ret0 := p.fnWasmR0Base - 8*stk.Push(token.F64) - 8
+
+		assert(!p.isS12Overflow(int32(sp0)))
+		assert(!p.isS12Overflow(int32(sp1)))
+		assert(!p.isS12Overflow(int32(ret0)))
 
 		fmt.Fprintf(w, "    # f64.min\n")
 		fmt.Fprintf(w, "    fld.d   $ft0, $fp, %d\n", sp1)
@@ -3510,6 +4036,10 @@ func (p *wat2laWorker) buildFunc_ins(
 		sp1 := p.fnWasmR0Base - 8*stk.Pop(token.F64) - 8
 		ret0 := p.fnWasmR0Base - 8*stk.Push(token.F64) - 8
 
+		assert(!p.isS12Overflow(int32(sp0)))
+		assert(!p.isS12Overflow(int32(sp1)))
+		assert(!p.isS12Overflow(int32(ret0)))
+
 		fmt.Fprintf(w, "    # f64.max\n")
 		fmt.Fprintf(w, "    fld.d   $ft0, $fp, %d\n", sp1)
 		fmt.Fprintf(w, "    fld.d   $ft1, $fp, %d\n", sp0)
@@ -3522,6 +4052,10 @@ func (p *wat2laWorker) buildFunc_ins(
 		sp1 := p.fnWasmR0Base - 8*stk.Pop(token.F64) - 8
 		ret0 := p.fnWasmR0Base - 8*stk.Push(token.F64) - 8
 
+		assert(!p.isS12Overflow(int32(sp0)))
+		assert(!p.isS12Overflow(int32(sp1)))
+		assert(!p.isS12Overflow(int32(ret0)))
+
 		fmt.Fprintf(w, "    # f64.copysign\n")
 		fmt.Fprintf(w, "    fld.d       $ft0, $fp, %d\n", sp1)
 		fmt.Fprintf(w, "    fld.d       $ft1, $fp, %d\n", sp0)
@@ -3533,6 +4067,9 @@ func (p *wat2laWorker) buildFunc_ins(
 		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.I64) - 8
 		ret0 := p.fnWasmR0Base - 8*stk.Push(token.I32) - 8
 
+		assert(!p.isS12Overflow(int32(sp0)))
+		assert(!p.isS12Overflow(int32(ret0)))
+
 		fmt.Fprintf(w, "    # i32.wrap_i64\n")
 		fmt.Fprintf(w, "    ld.d    $t0, $fp, %d\n", sp0)
 		fmt.Fprintf(w, "    addi.w  $t0, $t0, 0\n")
@@ -3542,6 +4079,9 @@ func (p *wat2laWorker) buildFunc_ins(
 	case token.INS_I32_TRUNC_F32_S:
 		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.F32) - 8
 		ret0 := p.fnWasmR0Base - 8*stk.Push(token.I32) - 8
+
+		assert(!p.isS12Overflow(int32(sp0)))
+		assert(!p.isS12Overflow(int32(ret0)))
 
 		fmt.Fprintf(w, "    # i32.trunc_f32_s\n")
 		fmt.Fprintf(w, "    fld.s       $ft0, $fp, %d\n", sp0)
@@ -3553,6 +4093,9 @@ func (p *wat2laWorker) buildFunc_ins(
 	case token.INS_I32_TRUNC_F32_U:
 		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.F32) - 8
 		ret0 := p.fnWasmR0Base - 8*stk.Push(token.I32) - 8
+
+		assert(!p.isS12Overflow(int32(sp0)))
+		assert(!p.isS12Overflow(int32(ret0)))
 
 		fmt.Fprintf(w, "    # i32.trunc_f32_u\n")
 		fmt.Fprintf(w, "    fld.s       $ft0, $fp, %d\n", sp0)
@@ -3566,6 +4109,9 @@ func (p *wat2laWorker) buildFunc_ins(
 		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.F64) - 8
 		ret0 := p.fnWasmR0Base - 8*stk.Push(token.I32) - 8
 
+		assert(!p.isS12Overflow(int32(sp0)))
+		assert(!p.isS12Overflow(int32(ret0)))
+
 		fmt.Fprintf(w, "    # i32.trunc_f64_s\n")
 		fmt.Fprintf(w, "    fld.d       $ft0, $fp, %d\n", sp0)
 		fmt.Fprintf(w, "    ftintrz.w.d $ft0, $ft0\n")
@@ -3576,6 +4122,9 @@ func (p *wat2laWorker) buildFunc_ins(
 	case token.INS_I32_TRUNC_F64_U:
 		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.F64) - 8
 		ret0 := p.fnWasmR0Base - 8*stk.Push(token.I32) - 8
+
+		assert(!p.isS12Overflow(int32(sp0)))
+		assert(!p.isS12Overflow(int32(ret0)))
 
 		fmt.Fprintf(w, "    # i32.trunc_f64_u\n")
 		fmt.Fprintf(w, "    fld.d       $ft0, $fp, %d\n", sp0)
@@ -3589,6 +4138,9 @@ func (p *wat2laWorker) buildFunc_ins(
 		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.I32) - 8
 		ret0 := p.fnWasmR0Base - 8*stk.Push(token.I64) - 8
 
+		assert(!p.isS12Overflow(int32(sp0)))
+		assert(!p.isS12Overflow(int32(ret0)))
+
 		fmt.Fprintf(w, "    # i64.extend_i32_s\n")
 		fmt.Fprintf(w, "    ld.w    $t0, $fp, %d\n", sp0)
 		fmt.Fprintf(w, "    st.d    $t0, $fp, %d\n", ret0)
@@ -3598,6 +4150,9 @@ func (p *wat2laWorker) buildFunc_ins(
 		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.I32) - 8
 		ret0 := p.fnWasmR0Base - 8*stk.Push(token.I64) - 8
 
+		assert(!p.isS12Overflow(int32(sp0)))
+		assert(!p.isS12Overflow(int32(ret0)))
+
 		fmt.Fprintf(w, "    # i64.extend_i32_u\n")
 		fmt.Fprintf(w, "    ld.wu   $t0, $fp, %d\n", sp0)
 		fmt.Fprintf(w, "    st.d    $t0, $fp, %d\n", ret0)
@@ -3606,6 +4161,9 @@ func (p *wat2laWorker) buildFunc_ins(
 	case token.INS_I64_TRUNC_F32_S:
 		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.F32) - 8
 		ret0 := p.fnWasmR0Base - 8*stk.Push(token.I64) - 8
+
+		assert(!p.isS12Overflow(int32(sp0)))
+		assert(!p.isS12Overflow(int32(ret0)))
 
 		fmt.Fprintf(w, "    # i64.trunc_f32_s\n")
 		fmt.Fprintf(w, "    fld.s       $ft0, $fp, %d\n", sp0)
@@ -3618,6 +4176,9 @@ func (p *wat2laWorker) buildFunc_ins(
 		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.F32) - 8
 		ret0 := p.fnWasmR0Base - 8*stk.Push(token.I64) - 8
 
+		assert(!p.isS12Overflow(int32(sp0)))
+		assert(!p.isS12Overflow(int32(ret0)))
+
 		fmt.Fprintf(w, "    # i64.trunc_f32_u\n")
 		fmt.Fprintf(w, "    fld.s       $ft0, $fp, %d\n", sp0)
 		fmt.Fprintf(w, "    ftintrz.l.s $ft0, $ft0  # f32 => i64\n")
@@ -3628,6 +4189,9 @@ func (p *wat2laWorker) buildFunc_ins(
 	case token.INS_I64_TRUNC_F64_S:
 		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.F64) - 8
 		ret0 := p.fnWasmR0Base - 8*stk.Push(token.I64) - 8
+
+		assert(!p.isS12Overflow(int32(sp0)))
+		assert(!p.isS12Overflow(int32(ret0)))
 
 		fmt.Fprintf(w, "    # i64.trunc_f64_s\n")
 		fmt.Fprintf(w, "    fld.d       $ft0, $fp, %d\n", sp0)
@@ -3640,6 +4204,9 @@ func (p *wat2laWorker) buildFunc_ins(
 		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.F64) - 8
 		ret0 := p.fnWasmR0Base - 8*stk.Push(token.I64) - 8
 
+		assert(!p.isS12Overflow(int32(sp0)))
+		assert(!p.isS12Overflow(int32(ret0)))
+
 		fmt.Fprintf(w, "    # i64.trunc_f64_u\n")
 		fmt.Fprintf(w, "    fld.d       $ft0, $fp, %d\n", sp0)
 		fmt.Fprintf(w, "    ftintrz.l.d $ft0, $ft0\n")
@@ -3650,6 +4217,9 @@ func (p *wat2laWorker) buildFunc_ins(
 	case token.INS_F32_CONVERT_I32_S:
 		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.I32) - 8
 		ret0 := p.fnWasmR0Base - 8*stk.Push(token.F32) - 8
+
+		assert(!p.isS12Overflow(int32(sp0)))
+		assert(!p.isS12Overflow(int32(ret0)))
 
 		fmt.Fprintf(w, "    # f32.convert_i32_s\n")
 		fmt.Fprintf(w, "    ld.w       $t0, $fp, %d\n", sp0)
@@ -3662,6 +4232,9 @@ func (p *wat2laWorker) buildFunc_ins(
 		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.I32) - 8
 		ret0 := p.fnWasmR0Base - 8*stk.Push(token.F32) - 8
 
+		assert(!p.isS12Overflow(int32(sp0)))
+		assert(!p.isS12Overflow(int32(ret0)))
+
 		fmt.Fprintf(w, "    # f32.convert_i32_u\n")
 		fmt.Fprintf(w, "    ld.wu      $t0, $fp, %d\n", sp0)
 		fmt.Fprintf(w, "    movgr2fr.d $ft0, $t0\n")
@@ -3672,6 +4245,9 @@ func (p *wat2laWorker) buildFunc_ins(
 	case token.INS_F32_CONVERT_I64_S:
 		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.I64) - 8
 		ret0 := p.fnWasmR0Base - 8*stk.Push(token.F32) - 8
+
+		assert(!p.isS12Overflow(int32(sp0)))
+		assert(!p.isS12Overflow(int32(ret0)))
 
 		fmt.Fprintf(w, "    # f32.convert_i64_s\n")
 		fmt.Fprintf(w, "    ld.d       $t0, $fp, %d\n", sp0)
@@ -3684,6 +4260,9 @@ func (p *wat2laWorker) buildFunc_ins(
 		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.I64) - 8
 		ret0 := p.fnWasmR0Base - 8*stk.Push(token.F32) - 8
 
+		assert(!p.isS12Overflow(int32(sp0)))
+		assert(!p.isS12Overflow(int32(ret0)))
+
 		fmt.Fprintf(w, "    # f32.convert_i64_u\n")
 		fmt.Fprintf(w, "    ld.d       $t0, $fp, %d\n", sp0)
 		fmt.Fprintf(w, "    movgr2fr.d $ft0, $t0\n")
@@ -3695,6 +4274,9 @@ func (p *wat2laWorker) buildFunc_ins(
 		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.F64) - 8
 		ret0 := p.fnWasmR0Base - 8*stk.Push(token.F32) - 8
 
+		assert(!p.isS12Overflow(int32(sp0)))
+		assert(!p.isS12Overflow(int32(ret0)))
+
 		fmt.Fprintf(w, "    # f32.demote_f64\n")
 		fmt.Fprintf(w, "    fld.d    $ft0, $fp, %d\n", sp0)
 		fmt.Fprintf(w, "    fcvt.s.d $ft0, $ft0\n")
@@ -3704,6 +4286,9 @@ func (p *wat2laWorker) buildFunc_ins(
 	case token.INS_F64_CONVERT_I32_S:
 		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.I32) - 8
 		ret0 := p.fnWasmR0Base - 8*stk.Push(token.F64) - 8
+
+		assert(!p.isS12Overflow(int32(sp0)))
+		assert(!p.isS12Overflow(int32(ret0)))
 
 		fmt.Fprintf(w, "    # f64.convert_i32_s\n")
 		fmt.Fprintf(w, "    ld.w       $t0, $fp, %d\n", sp0)
@@ -3716,6 +4301,9 @@ func (p *wat2laWorker) buildFunc_ins(
 		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.I32) - 8
 		ret0 := p.fnWasmR0Base - 8*stk.Push(token.F64) - 8
 
+		assert(!p.isS12Overflow(int32(sp0)))
+		assert(!p.isS12Overflow(int32(ret0)))
+
 		fmt.Fprintf(w, "    # f64.convert_i32_u\n")
 		fmt.Fprintf(w, "    ld.wu      $t0, $fp, %d\n", sp0)
 		fmt.Fprintf(w, "    movgr2fr.d $ft0, $t0\n")
@@ -3726,6 +4314,9 @@ func (p *wat2laWorker) buildFunc_ins(
 	case token.INS_F64_CONVERT_I64_S:
 		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.I64) - 8
 		ret0 := p.fnWasmR0Base - 8*stk.Push(token.F64) - 8
+
+		assert(!p.isS12Overflow(int32(sp0)))
+		assert(!p.isS12Overflow(int32(ret0)))
 
 		fmt.Fprintf(w, "    # f64.convert_i64_s\n")
 		fmt.Fprintf(w, "    ld.d       $t0, $fp, %d\n", sp0)
@@ -3738,6 +4329,9 @@ func (p *wat2laWorker) buildFunc_ins(
 		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.I64) - 8
 		ret0 := p.fnWasmR0Base - 8*stk.Push(token.F64) - 8
 
+		assert(!p.isS12Overflow(int32(sp0)))
+		assert(!p.isS12Overflow(int32(ret0)))
+
 		fmt.Fprintf(w, "    # f64.convert_i64_u\n")
 		fmt.Fprintf(w, "    ld.d       $t0, $fp, %d\n", sp0)
 		fmt.Fprintf(w, "    movgr2fr.d $ft0, $t0\n")
@@ -3749,6 +4343,9 @@ func (p *wat2laWorker) buildFunc_ins(
 		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.F32) - 8
 		ret0 := p.fnWasmR0Base - 8*stk.Push(token.F64) - 8
 
+		assert(!p.isS12Overflow(int32(sp0)))
+		assert(!p.isS12Overflow(int32(ret0)))
+
 		fmt.Fprintf(w, "    # f64.promote_f32\n")
 		fmt.Fprintf(w, "    fld.s    $ft0, $fp, %d\n", sp0)
 		fmt.Fprintf(w, "    fcvt.d.s $ft0, $ft0\n")
@@ -3758,6 +4355,9 @@ func (p *wat2laWorker) buildFunc_ins(
 	case token.INS_I32_REINTERPRET_F32:
 		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.F32) - 8
 		ret0 := p.fnWasmR0Base - 8*stk.Push(token.I32) - 8
+
+		assert(!p.isS12Overflow(int32(sp0)))
+		assert(!p.isS12Overflow(int32(ret0)))
 
 		assert(sp0 == ret0)
 		fmt.Fprintf(w, "    # i32.reinterpret_f32\n")
@@ -3769,6 +4369,9 @@ func (p *wat2laWorker) buildFunc_ins(
 		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.F64) - 8
 		ret0 := p.fnWasmR0Base - 8*stk.Push(token.I64) - 8
 
+		assert(!p.isS12Overflow(int32(sp0)))
+		assert(!p.isS12Overflow(int32(ret0)))
+
 		assert(sp0 == ret0)
 		fmt.Fprintf(w, "    # i64.reinterpret_f64\n")
 		fmt.Fprintf(w, "    # ld.d $t0, $fp, %d\n", sp0)
@@ -3779,6 +4382,9 @@ func (p *wat2laWorker) buildFunc_ins(
 		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.I32) - 8
 		ret0 := p.fnWasmR0Base - 8*stk.Push(token.F32) - 8
 
+		assert(!p.isS12Overflow(int32(sp0)))
+		assert(!p.isS12Overflow(int32(ret0)))
+
 		assert(sp0 == ret0)
 		fmt.Fprintf(w, "    # f32.reinterpret_i32\n")
 		fmt.Fprintf(w, "    # ld.w $t0, $fp, %d\n", sp0)
@@ -3788,6 +4394,9 @@ func (p *wat2laWorker) buildFunc_ins(
 	case token.INS_F64_REINTERPRET_I64:
 		sp0 := p.fnWasmR0Base - 8*stk.Pop(token.I64) - 8
 		ret0 := p.fnWasmR0Base - 8*stk.Push(token.F64) - 8
+
+		assert(!p.isS12Overflow(int32(sp0)))
+		assert(!p.isS12Overflow(int32(ret0)))
 
 		assert(sp0 == ret0)
 		fmt.Fprintf(w, "    # f64.reinterpret_i64\n")
