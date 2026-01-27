@@ -37,6 +37,8 @@ const (
 // 参考 /docs/asm_abi_la64.md
 //
 
+// TODO: sp 可能有溢出风险, 需要检查
+
 func (p *wat2laWorker) buildFuncs(w io.Writer) error {
 	if len(p.m.Funcs) == 0 {
 		return nil
@@ -124,7 +126,7 @@ func (p *wat2laWorker) buildFunc_body(w io.Writer, fn *ast.Func) error {
 		} else {
 			hi20 := uint32(x) >> 12
 			lo12 := uint32(x) & 0xFFF
-			fmt.Fprintf(&bufHeader, "    lu12i.w $t0, 0x%X\n", hi20)
+			fmt.Fprintf(&bufHeader, "    lu12i.w $t0, %d\n", i32SignExtend(hi20, 20))
 			fmt.Fprintf(&bufHeader, "    ori     $t0, $t0, 0x%X\n", lo12)
 			fmt.Fprintf(&bufHeader, "    add.d   $sp, $sp, $t0\n")
 		}
@@ -2184,7 +2186,7 @@ func (p *wat2laWorker) buildFunc_ins(
 		} else {
 			hi20 := uint32(i.X) >> 12
 			lo12 := uint32(i.X) & 0xFFF
-			fmt.Fprintf(w, "    lu12i.w $t0, 0x%X\n", hi20)
+			fmt.Fprintf(w, "    lu12i.w $t0, %d\n", i32SignExtend(hi20, 20))
 			fmt.Fprintf(w, "    ori     $t0, $t0, 0x%X\n", lo12)
 			fmt.Fprintf(w, "    st.d    $t0, $fp, %d\n", sp0)
 			fmt.Fprintln(w)
@@ -2203,7 +2205,7 @@ func (p *wat2laWorker) buildFunc_ins(
 		} else if int64(int32(i.X)) == i.X {
 			hi20 := uint32(int32(i.X)) >> 12
 			lo12 := uint32(int32(i.X)) & 0xFFF
-			fmt.Fprintf(w, "    lu12i.w $t0, 0x%X\n", hi20)
+			fmt.Fprintf(w, "    lu12i.w $t0, %d\n", i32SignExtend(hi20, 20))
 			fmt.Fprintf(w, "    ori     $t0, $t0, 0x%X\n", lo12)
 			fmt.Fprintf(w, "    st.d    $t0, $fp, %d\n", sp0)
 			fmt.Fprintln(w)
@@ -2211,13 +2213,13 @@ func (p *wat2laWorker) buildFunc_ins(
 			val := uint64(i.X)
 			hi20 := uint32(val) >> 12 & 0xFFFFF
 			lo12 := uint32(val) & 0xFFF
-			mid20 := (val >> 32) & 0xFFFFF
-			top12 := (val >> 52) & 0xFFF
+			mid20 := uint32((val >> 32) & 0xFFFFF)
+			top12 := uint32((val >> 52) & 0xFFF)
 
-			fmt.Fprintf(w, "    lu12i.w $t0, 0x%X\n", hi20)
+			fmt.Fprintf(w, "    lu12i.w $t0, %d\n", i32SignExtend(hi20, 20))
 			fmt.Fprintf(w, "    ori     $t0, $t0, 0x%X\n", lo12)
-			fmt.Fprintf(w, "    lu32i.d $t0, 0x%X\n", mid20)
-			fmt.Fprintf(w, "    lu52i.d $t0, $t0, 0x%X\n", top12)
+			fmt.Fprintf(w, "    lu32i.d $t0, %d\n", i32SignExtend(mid20, 20))
+			fmt.Fprintf(w, "    lu52i.d $t0, $t0, %d\n", i32SignExtend(top12, 12))
 			fmt.Fprintf(w, "    st.d    $t0, $fp, %d\n", sp0)
 			fmt.Fprintln(w)
 		}
