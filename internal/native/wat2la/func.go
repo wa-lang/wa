@@ -206,9 +206,16 @@ func (p *wat2laWorker) buildFunc_body(w io.Writer, fn *ast.Func) error {
 	if len(fnNative.Body.Locals) > 0 {
 		p.gasCommentInFunc(&bufHeader, "将局部变量初始化为0")
 		for _, local := range fnNative.Body.Locals {
-			fmt.Fprintf(&bufHeader, "    st.d   $zero, $fp, %d # local %s = 0\n",
-				local.RBPOff, local.Name,
-			)
+			if p.isS12Overflow(int32(local.RBPOff)) {
+				fmt.Fprintf(&bufHeader, "    # st.d $zero, $fp, %d # local %s = 0\n",
+					local.RBPOff, local.Name,
+				)
+				p.emitFPStore(&bufHeader, "st.d", "$zero", "$t1", int32(local.RBPOff))
+			} else {
+				fmt.Fprintf(&bufHeader, "    st.d   $zero, $fp, %d # local %s = 0\n",
+					local.RBPOff, local.Name,
+				)
+			}
 		}
 		fmt.Fprintln(&bufHeader)
 	} else {
@@ -2181,14 +2188,24 @@ func (p *wat2laWorker) buildFunc_ins(
 		fmt.Fprintf(w, "    # i32.const %d\n", i.X)
 		if i.X >= -2048 && i.X <= 2047 {
 			fmt.Fprintf(w, "    addi.d $t0, $zero, %d\n", i.X)
-			fmt.Fprintf(w, "    st.d   $t0, $fp, %d\n", sp0)
-			fmt.Fprintln(w)
+			if p.isS12Overflow(int32(sp0)) {
+				fmt.Fprintf(w, "    # st.d $t0, $fp, %d\n", sp0)
+				p.emitFPStore(w, "st.d", "$t0", "$t1", int32(sp0))
+				fmt.Fprintln(w)
+			} else {
+				fmt.Fprintf(w, "    st.d   $t0, $fp, %d\n", sp0)
+			}
 		} else {
 			hi20 := uint32(i.X) >> 12
 			lo12 := uint32(i.X) & 0xFFF
 			fmt.Fprintf(w, "    lu12i.w $t0, %d\n", i32SignExtend(hi20, 20))
 			fmt.Fprintf(w, "    ori     $t0, $t0, 0x%X\n", lo12)
-			fmt.Fprintf(w, "    st.d    $t0, $fp, %d\n", sp0)
+			if p.isS12Overflow(int32(sp0)) {
+				fmt.Fprintf(w, "    # st.d $t0, $fp, %d\n", sp0)
+				p.emitFPStore(w, "st.d", "$t0", "$t1", int32(sp0))
+			} else {
+				fmt.Fprintf(w, "    st.d    $t0, $fp, %d\n", sp0)
+			}
 			fmt.Fprintln(w)
 		}
 
@@ -2200,14 +2217,24 @@ func (p *wat2laWorker) buildFunc_ins(
 		fmt.Fprintf(w, "    # i64.const %d\n", i.X)
 		if i.X >= -2048 && i.X <= 2047 {
 			fmt.Fprintf(w, "    addi.d $t0, $zero, %d\n", i.X)
-			fmt.Fprintf(w, "    st.d   $t0, $fp, %d\n", sp0)
+			if p.isS12Overflow(int32(sp0)) {
+				fmt.Fprintf(w, "    # st.d   $t0, $fp, %d\n", sp0)
+				p.emitFPStore(w, "st.d", "$t0", "$t1", int32(sp0))
+			} else {
+				fmt.Fprintf(w, "    st.d   $t0, $fp, %d\n", sp0)
+			}
 			fmt.Fprintln(w)
 		} else if int64(int32(i.X)) == i.X {
 			hi20 := uint32(int32(i.X)) >> 12
 			lo12 := uint32(int32(i.X)) & 0xFFF
 			fmt.Fprintf(w, "    lu12i.w $t0, %d\n", i32SignExtend(hi20, 20))
 			fmt.Fprintf(w, "    ori     $t0, $t0, 0x%X\n", lo12)
-			fmt.Fprintf(w, "    st.d    $t0, $fp, %d\n", sp0)
+			if p.isS12Overflow(int32(sp0)) {
+				fmt.Fprintf(w, "    # st.d   $t0, $fp, %d\n", sp0)
+				p.emitFPStore(w, "st.d", "$t0", "$t1", int32(sp0))
+			} else {
+				fmt.Fprintf(w, "    st.d   $t0, $fp, %d\n", sp0)
+			}
 			fmt.Fprintln(w)
 		} else {
 			val := uint64(i.X)
@@ -2220,7 +2247,12 @@ func (p *wat2laWorker) buildFunc_ins(
 			fmt.Fprintf(w, "    ori     $t0, $t0, 0x%X\n", lo12)
 			fmt.Fprintf(w, "    lu32i.d $t0, %d\n", i32SignExtend(mid20, 20))
 			fmt.Fprintf(w, "    lu52i.d $t0, $t0, %d\n", i32SignExtend(top12, 12))
-			fmt.Fprintf(w, "    st.d    $t0, $fp, %d\n", sp0)
+			if p.isS12Overflow(int32(sp0)) {
+				fmt.Fprintf(w, "    # st.d   $t0, $fp, %d\n", sp0)
+				p.emitFPStore(w, "st.d", "$t0", "$t1", int32(sp0))
+			} else {
+				fmt.Fprintf(w, "    st.d   $t0, $fp, %d\n", sp0)
+			}
 			fmt.Fprintln(w)
 		}
 
