@@ -8,7 +8,6 @@ import (
 	"io"
 
 	"wa-lang.org/wa/internal/native/abi"
-	"wa-lang.org/wa/internal/wat/token"
 )
 
 const (
@@ -24,10 +23,6 @@ const (
 )
 
 func (p *wat2X64Worker) buildMemory(w io.Writer) error {
-	if p.m.Memory != nil {
-		assert(p.m.Memory.AddrType == token.I32)
-	}
-
 	p.gasComment(w, "定义内存")
 	p.gasSectionDataStart(w)
 	p.gasGlobal(w, kMemoryAddrName)

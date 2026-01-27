@@ -512,10 +512,10 @@ func (p *wat2laWorker) buildFunc_ins(
 		labelIfElseId := p.makeLabelId(kLabelPrefixName_else, labelName, labelSuffix)
 		labelNextId := p.makeLabelId(kLabelPrefixName_brNext, labelName, labelSuffix)
 
-		sp0 := stk.Pop(token.I32)
+		sp0 := p.fnWasmR0Base - stk.Pop(token.I32)*8 - 8
 
-		fmt.Fprintf(w, "    # if.begin(name=%s, suffix=%s)\n", labelName, labelSuffix)
-		fmt.Fprintf(w, "    ld.w $t0, $fp, %d\n", p.fnWasmR0Base-sp0*8-8)
+		p.comment(w, "# if.begin(name=%s, suffix=%s)", labelName, labelSuffix)
+		p.ld_w(w, "$t0", "$fp", int32(sp0), "$t1")
 		if len(i.Else) > 0 {
 			fmt.Fprintf(w, "    beqz $t0, %s\n", labelIfElseId)
 		} else {
@@ -791,10 +791,10 @@ func (p *wat2laWorker) buildFunc_ins(
 		defaultScopeContex := scopeStack.FindScopeContext(i.XList[len(i.XList)-1])
 		defaultLabelNextId := p.makeLabelId(kLabelPrefixName_brNext, fixName(defaultScopeContex.Label), defaultScopeContex.LabelSuffix)
 
-		sp0 := stk.Pop(token.I32)
+		sp0 := p.fnWasmR0Base - stk.Pop(token.I32)*8 - 8
 
-		fmt.Fprintf(w, "    # br_table\n")
-		fmt.Fprintf(w, "    ld.w $t0, $fp, %d\n", p.fnWasmR0Base-sp0*8-8)
+		p.comment(w, "# br_table")
+		p.ld_w(w, "$t0", "$fp", int32(sp0), "$t1")
 
 		// 生成跳转链
 		for k := 0; k < len(i.XList); k++ {

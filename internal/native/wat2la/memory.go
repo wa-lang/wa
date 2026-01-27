@@ -55,7 +55,7 @@ func (p *wat2laWorker) buildMemory(w io.Writer) error {
 			p.gasComment(w, fmt.Sprintf("memcpy(&Memory[%d], data[%d], size)", d.Offset, i))
 			p.gasDefI64(w, fmt.Sprintf("%s%d", kMemoryDataOffsetPrefix, i), int64(d.Offset))
 			p.gasDefI64(w, fmt.Sprintf("%s%d", kMemoryDataSizePrefix, i), int64(len(d.Value)))
-			p.gasDefString(w, fmt.Sprintf("%s%d", kMemoryDataPtrPrefix, i), string(d.Value))
+			p.gasDefString(w, fmt.Sprintf("%s%d", kMemoryDataPtrPrefix, i), toGasString(d.Value))
 		}
 		fmt.Fprintln(w)
 	}

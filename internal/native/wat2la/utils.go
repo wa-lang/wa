@@ -101,6 +101,24 @@ func toCName(s string) string {
 	return s
 }
 
+// C 语言中 \x 转义序列是“贪婪”的, 会一直读取尽可能多的十六进制字符作为转义值的一部分，不会自动终止。
+// 因此 \x000a 会被解析为 \x0a, 而不是 \x00 和 "0a" 字符串
+// 解决的办法是通过字符串强制切割: \x00""0a
+
+// 对于 gas 汇编中, 采用3个数字的八进制转义
+func toGasString(dataValue []byte) string {
+	var sb strings.Builder
+	for _, b := range dataValue {
+		// 仅保留安全的 ASCII 可打印字符, 避开双引号 " 和反斜杠 \
+		if b >= 32 && b <= 126 && b != '"' && b != '\\' {
+			sb.WriteByte(b)
+		} else {
+			sb.WriteString(fmt.Sprintf("\\%03o", b))
+		}
+	}
+	return sb.String()
+}
+
 // 把 val 的低 bit 位当作一个有符号数扩展成 int32
 func i32SignExtend(val uint32, bit uint) int32 {
 	// 1. 先左移, 把符号位移到最高位
