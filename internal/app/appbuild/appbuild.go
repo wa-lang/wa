@@ -9,6 +9,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"runtime"
 	"strings"
 
 	"wa-lang.org/wa/internal/3rdparty/cli"
@@ -259,6 +260,11 @@ func BuildApp(opt *appbase.Option, input, outfile string) (mainFunc string, wasm
 				panic(fmt.Sprintf("loong64 donot support %s", s))
 			}
 
+			gccEnabled := true
+			if runtime.GOARCH != config.WaArch_loong64 {
+				gccEnabled = false
+			}
+
 			// 设置默认输出目标
 			var nativeAsmFile string
 			var nativeEnvFile string
@@ -295,11 +301,19 @@ func BuildApp(opt *appbase.Option, input, outfile string) (mainFunc string, wasm
 			}
 
 			// gcc x.c x.s -z noexecstack -o x.exe
-			gccCmd := exec.Command("gcc", nativeEnvFile, nativeAsmFile, "-z", "noexecstack", "-o", nativeExtFile)
-			output, err := gccCmd.CombinedOutput()
-			if err != nil {
-				fmt.Println(string(output))
-				fmt.Printf("build failed: %v\n", err)
+			if gccEnabled {
+				gccCmd := exec.Command("gcc", nativeEnvFile, nativeAsmFile, "-z", "noexecstack", "-o", nativeExtFile)
+				output, err := gccCmd.CombinedOutput()
+				if err != nil {
+					fmt.Println(string(output))
+					fmt.Printf("build failed: %v\n", err)
+					os.Exit(1)
+				}
+			} else {
+				fmt.Printf("donot use gcc %s/%s on host %s/%s",
+					opt.TargetOS, opt.TargetArch,
+					runtime.GOOS, runtime.GOARCH,
+				)
 				os.Exit(1)
 			}
 
@@ -312,6 +326,11 @@ func BuildApp(opt *appbase.Option, input, outfile string) (mainFunc string, wasm
 
 			if s := opt.TargetOS; s != "" && s != config.WaOS_linux && s != config.WaOS_windows {
 				panic(fmt.Sprintf("x64 donot support %s", s))
+			}
+
+			gccEnabled := true
+			if runtime.GOARCH != "amd64" || runtime.GOOS != opt.TargetOS {
+				gccEnabled = false
 			}
 
 			cpuType := abi.X64Windows
@@ -363,16 +382,24 @@ func BuildApp(opt *appbase.Option, input, outfile string) (mainFunc string, wasm
 			}
 
 			// gcc x.c x.s -z noexecstack -o x.exe
-			var gccCmd *exec.Cmd
-			if cpuType == abi.X64Unix {
-				gccCmd = exec.Command("gcc", nativeEnvFile, nativeAsmFile, "-z", "noexecstack", "-o", nativeExtFile)
+			if gccEnabled {
+				var gccCmd *exec.Cmd
+				if cpuType == abi.X64Unix {
+					gccCmd = exec.Command("gcc", nativeEnvFile, nativeAsmFile, "-z", "noexecstack", "-o", nativeExtFile)
+				} else {
+					gccCmd = exec.Command("gcc", nativeEnvFile, nativeAsmFile, "-o", nativeExtFile)
+				}
+				output, err := gccCmd.CombinedOutput()
+				if err != nil {
+					fmt.Println(string(output))
+					fmt.Printf("gcc build failed: %v\n", err)
+					os.Exit(1)
+				}
 			} else {
-				gccCmd = exec.Command("gcc", nativeEnvFile, nativeAsmFile, "-o", nativeExtFile)
-			}
-			output, err := gccCmd.CombinedOutput()
-			if err != nil {
-				fmt.Println(string(output))
-				fmt.Printf("gcc build failed: %v\n", err)
+				fmt.Printf("donot use gcc %s/%s on host %s/%s",
+					opt.TargetOS, opt.TargetArch,
+					runtime.GOOS, runtime.GOARCH,
+				)
 				os.Exit(1)
 			}
 
@@ -474,6 +501,11 @@ func BuildApp(opt *appbase.Option, input, outfile string) (mainFunc string, wasm
 				panic(fmt.Sprintf("loong64 donot support %s", s))
 			}
 
+			gccEnabled := true
+			if runtime.GOARCH != config.WaArch_loong64 {
+				gccEnabled = false
+			}
+
 			// 设置默认输出目标
 			var nativeAsmFile string
 			var nativeEnvFile string
@@ -510,11 +542,19 @@ func BuildApp(opt *appbase.Option, input, outfile string) (mainFunc string, wasm
 			}
 
 			// gcc x.c x.s -z noexecstack -o x.exe
-			gccCmd := exec.Command("gcc", nativeEnvFile, nativeAsmFile, "-z", "noexecstack", "-o", nativeExtFile)
-			output, err := gccCmd.CombinedOutput()
-			if err != nil {
-				fmt.Println(string(output))
-				fmt.Printf("build failed: %v\n", err)
+			if gccEnabled {
+				gccCmd := exec.Command("gcc", nativeEnvFile, nativeAsmFile, "-z", "noexecstack", "-o", nativeExtFile)
+				output, err := gccCmd.CombinedOutput()
+				if err != nil {
+					fmt.Println(string(output))
+					fmt.Printf("build failed: %v\n", err)
+					os.Exit(1)
+				}
+			} else {
+				fmt.Printf("donot use gcc %s/%s on host %s/%s",
+					opt.TargetOS, opt.TargetArch,
+					runtime.GOOS, runtime.GOARCH,
+				)
 				os.Exit(1)
 			}
 
@@ -527,6 +567,11 @@ func BuildApp(opt *appbase.Option, input, outfile string) (mainFunc string, wasm
 
 			if s := opt.TargetOS; s != "" && s != config.WaOS_linux && s != config.WaOS_windows {
 				panic(fmt.Sprintf("x64 donot support %s", s))
+			}
+
+			gccEnabled := true
+			if runtime.GOARCH != "amd64" || runtime.GOOS != opt.TargetOS {
+				gccEnabled = false
 			}
 
 			cpuType := abi.X64Windows
@@ -578,16 +623,24 @@ func BuildApp(opt *appbase.Option, input, outfile string) (mainFunc string, wasm
 			}
 
 			// gcc x.c x.s -z noexecstack -o x.exe
-			var gccCmd *exec.Cmd
-			if cpuType == abi.X64Unix {
-				gccCmd = exec.Command("gcc", nativeEnvFile, nativeAsmFile, "-z", "noexecstack", "-o", nativeExtFile)
+			if gccEnabled {
+				var gccCmd *exec.Cmd
+				if cpuType == abi.X64Unix {
+					gccCmd = exec.Command("gcc", nativeEnvFile, nativeAsmFile, "-z", "noexecstack", "-o", nativeExtFile)
+				} else {
+					gccCmd = exec.Command("gcc", nativeEnvFile, nativeAsmFile, "-o", nativeExtFile)
+				}
+				output, err := gccCmd.CombinedOutput()
+				if err != nil {
+					fmt.Println(string(output))
+					fmt.Printf("gcc build failed: %v\n", err)
+					os.Exit(1)
+				}
 			} else {
-				gccCmd = exec.Command("gcc", nativeEnvFile, nativeAsmFile, "-o", nativeExtFile)
-			}
-			output, err := gccCmd.CombinedOutput()
-			if err != nil {
-				fmt.Println(string(output))
-				fmt.Printf("gcc build failed: %v\n", err)
+				fmt.Printf("donot use gcc %s/%s on host %s/%s",
+					opt.TargetOS, opt.TargetArch,
+					runtime.GOOS, runtime.GOARCH,
+				)
 				os.Exit(1)
 			}
 
