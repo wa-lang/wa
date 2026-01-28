@@ -2,11 +2,8 @@
 // SPDX-License-Identifier: MIT
 
 func PrintPosition(pos: i32) {
-	__import__print_position(pos)
-}
-
-func PrintRune(v: i32) {
-	__import__print_rune(v)
+	s := "TODO(linux): PrintPosition"
+	__import__print_str(__linkname__string_to_ptr(s), i32(len(s)))
 }
 
 func Puts(ptr: i32, len: i32) {

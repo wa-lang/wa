@@ -1,3 +1,5 @@
 *.fset
+*.env.c
 *.wa.s
+*.wz.s
 *.wat

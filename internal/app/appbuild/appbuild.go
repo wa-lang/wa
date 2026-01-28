@@ -36,8 +36,8 @@ var arduino_host_cpp string
 //go:embed assets/native-env-linux-la64.c
 var native_env_linux_la64_c string
 
-//go:embed assets/native-env-linux-x64.c
-var native_env_linux_x64_c string
+//go:embed assets/native-env-linux-x64.s
+var native_env_linux_x64_s string
 
 //go:embed assets/native-env-windows-x64.c
 var native_env_windows_x64_c string
@@ -270,11 +270,11 @@ func BuildApp(opt *appbase.Option, input, outfile string) (mainFunc string, wasm
 			var nativeEnvFile string
 			var nativeExtFile string
 			if appbase.HasExt(input, ".wz") {
-				nativeEnvFile = appbase.ReplaceExt(outfile, ".wasm", ".wz.c")
+				nativeEnvFile = appbase.ReplaceExt(outfile, ".wasm", ".env.c")
 				nativeAsmFile = appbase.ReplaceExt(outfile, ".wasm", ".wz.s")
 				nativeExtFile = appbase.ReplaceExt(outfile, ".wasm", ".exe")
 			} else {
-				nativeEnvFile = appbase.ReplaceExt(outfile, ".wasm", ".wa.c")
+				nativeEnvFile = appbase.ReplaceExt(outfile, ".wasm", ".env.c")
 				nativeAsmFile = appbase.ReplaceExt(outfile, ".wasm", ".wa.s")
 				nativeExtFile = appbase.ReplaceExt(outfile, ".wasm", ".exe")
 			}
@@ -342,14 +342,26 @@ func BuildApp(opt *appbase.Option, input, outfile string) (mainFunc string, wasm
 			var nativeAsmFile string
 			var nativeEnvFile string
 			var nativeExtFile string
-			if appbase.HasExt(input, ".wz") {
-				nativeEnvFile = appbase.ReplaceExt(outfile, ".wasm", ".wz.c")
-				nativeAsmFile = appbase.ReplaceExt(outfile, ".wasm", ".wz.s")
-				nativeExtFile = appbase.ReplaceExt(outfile, ".wasm", ".exe")
+			if cpuType == abi.X64Unix {
+				if appbase.HasExt(input, ".wz") {
+					nativeEnvFile = appbase.ReplaceExt(outfile, ".wasm", ".env.s")
+					nativeAsmFile = appbase.ReplaceExt(outfile, ".wasm", ".wz.s")
+					nativeExtFile = appbase.ReplaceExt(outfile, ".wasm", ".exe")
+				} else {
+					nativeEnvFile = appbase.ReplaceExt(outfile, ".wasm", ".env.s")
+					nativeAsmFile = appbase.ReplaceExt(outfile, ".wasm", ".wa.s")
+					nativeExtFile = appbase.ReplaceExt(outfile, ".wasm", ".exe")
+				}
 			} else {
-				nativeEnvFile = appbase.ReplaceExt(outfile, ".wasm", ".wa.c")
-				nativeAsmFile = appbase.ReplaceExt(outfile, ".wasm", ".wa.s")
-				nativeExtFile = appbase.ReplaceExt(outfile, ".wasm", ".exe")
+				if appbase.HasExt(input, ".wz") {
+					nativeEnvFile = appbase.ReplaceExt(outfile, ".wasm", ".env.c")
+					nativeAsmFile = appbase.ReplaceExt(outfile, ".wasm", ".wz.s")
+					nativeExtFile = appbase.ReplaceExt(outfile, ".wasm", ".exe")
+				} else {
+					nativeEnvFile = appbase.ReplaceExt(outfile, ".wasm", ".env.c")
+					nativeAsmFile = appbase.ReplaceExt(outfile, ".wasm", ".wa.s")
+					nativeExtFile = appbase.ReplaceExt(outfile, ".wasm", ".exe")
+				}
 			}
 
 			// 将 wat 翻译为本地汇编代码
@@ -368,7 +380,7 @@ func BuildApp(opt *appbase.Option, input, outfile string) (mainFunc string, wasm
 
 			// 生成本地对接的环境文件
 			if cpuType == abi.X64Unix {
-				err = os.WriteFile(nativeEnvFile, []byte(native_env_linux_x64_c), 0666)
+				err = os.WriteFile(nativeEnvFile, []byte(native_env_linux_x64_s), 0666)
 				if err != nil {
 					fmt.Printf("write %s failed: %v\n", nativeEnvFile, err)
 					os.Exit(1)
@@ -511,11 +523,11 @@ func BuildApp(opt *appbase.Option, input, outfile string) (mainFunc string, wasm
 			var nativeEnvFile string
 			var nativeExtFile string
 			if appbase.HasExt(input, ".wz") {
-				nativeEnvFile = appbase.ReplaceExt(outfile, ".wasm", ".wz.c")
+				nativeEnvFile = appbase.ReplaceExt(outfile, ".wasm", ".env.c")
 				nativeAsmFile = appbase.ReplaceExt(outfile, ".wasm", ".wz.s")
 				nativeExtFile = appbase.ReplaceExt(outfile, ".wasm", ".exe")
 			} else {
-				nativeEnvFile = appbase.ReplaceExt(outfile, ".wasm", ".wa.c")
+				nativeEnvFile = appbase.ReplaceExt(outfile, ".wasm", ".env.c")
 				nativeAsmFile = appbase.ReplaceExt(outfile, ".wasm", ".wa.s")
 				nativeExtFile = appbase.ReplaceExt(outfile, ".wasm", ".exe")
 			}
@@ -583,14 +595,26 @@ func BuildApp(opt *appbase.Option, input, outfile string) (mainFunc string, wasm
 			var nativeAsmFile string
 			var nativeEnvFile string
 			var nativeExtFile string
-			if appbase.HasExt(input, ".wz") {
-				nativeEnvFile = appbase.ReplaceExt(outfile, ".wasm", ".wz.c")
-				nativeAsmFile = appbase.ReplaceExt(outfile, ".wasm", ".wz.s")
-				nativeExtFile = appbase.ReplaceExt(outfile, ".wasm", ".exe")
+			if cpuType == abi.X64Unix {
+				if appbase.HasExt(input, ".wz") {
+					nativeEnvFile = appbase.ReplaceExt(outfile, ".wasm", ".env.s")
+					nativeAsmFile = appbase.ReplaceExt(outfile, ".wasm", ".wz.s")
+					nativeExtFile = appbase.ReplaceExt(outfile, ".wasm", ".exe")
+				} else {
+					nativeEnvFile = appbase.ReplaceExt(outfile, ".wasm", ".env.s")
+					nativeAsmFile = appbase.ReplaceExt(outfile, ".wasm", ".wa.s")
+					nativeExtFile = appbase.ReplaceExt(outfile, ".wasm", ".exe")
+				}
 			} else {
-				nativeEnvFile = appbase.ReplaceExt(outfile, ".wasm", ".wa.c")
-				nativeAsmFile = appbase.ReplaceExt(outfile, ".wasm", ".wa.s")
-				nativeExtFile = appbase.ReplaceExt(outfile, ".wasm", ".exe")
+				if appbase.HasExt(input, ".wz") {
+					nativeEnvFile = appbase.ReplaceExt(outfile, ".wasm", ".env.c")
+					nativeAsmFile = appbase.ReplaceExt(outfile, ".wasm", ".wz.s")
+					nativeExtFile = appbase.ReplaceExt(outfile, ".wasm", ".exe")
+				} else {
+					nativeEnvFile = appbase.ReplaceExt(outfile, ".wasm", ".env.c")
+					nativeAsmFile = appbase.ReplaceExt(outfile, ".wasm", ".wa.s")
+					nativeExtFile = appbase.ReplaceExt(outfile, ".wasm", ".exe")
+				}
 			}
 
 			// 将 wat 翻译为本地汇编代码
@@ -609,7 +633,7 @@ func BuildApp(opt *appbase.Option, input, outfile string) (mainFunc string, wasm
 
 			// 生成本地对接的环境文件
 			if cpuType == abi.X64Unix {
-				err = os.WriteFile(nativeEnvFile, []byte(native_env_linux_x64_c), 0666)
+				err = os.WriteFile(nativeEnvFile, []byte(native_env_linux_x64_s), 0666)
 				if err != nil {
 					fmt.Printf("write %s failed: %v\n", nativeEnvFile, err)
 					os.Exit(1)

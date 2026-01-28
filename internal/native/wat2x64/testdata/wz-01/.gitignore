@@ -1,6 +1,5 @@
-*.wa.c
+*.env.c
 *.wa.s
-*.wz.c
 *.wz.s
 *.wat
 *.exe
