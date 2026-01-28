@@ -2393,9 +2393,9 @@ func (p *wat2laWorker) buildFunc_ins(
 			}
 			fmt.Fprintln(w)
 		} else {
-			hi20 := bits >> 12
-			lo12 := bits & 0xFFF
-			fmt.Fprintf(w, "    lu12i.w $t0, 0x%X\n", hi20)
+			hi20 := uint32(bits >> 12)
+			lo12 := uint32(bits & 0xFFF)
+			fmt.Fprintf(w, "    lu12i.w $t0, %d\n", i32SignExtend(hi20, 20))
 			fmt.Fprintf(w, "    ori     $t0, $t0, 0x%X\n", lo12)
 
 			if p.isS12Overflow(int32(sp0)) {
@@ -2424,9 +2424,9 @@ func (p *wat2laWorker) buildFunc_ins(
 			}
 			fmt.Fprintln(w)
 		} else if int64(int32(x)) == x {
-			hi20 := bits >> 12
-			lo12 := bits & 0xFFF
-			fmt.Fprintf(w, "    lu12i.w $t0, 0x%X\n", hi20)
+			hi20 := uint32(bits >> 12)
+			lo12 := uint32(bits & 0xFFF)
+			fmt.Fprintf(w, "    lu12i.w $t0, %d\n", i32SignExtend(hi20, 20))
 			fmt.Fprintf(w, "    ori     $t0, $t0, 0x%X\n", lo12)
 			if p.isS12Overflow(int32(sp0)) {
 				p.st_d(w, "$t0", "$fp", int32(sp0), "$t1")
@@ -2437,12 +2437,12 @@ func (p *wat2laWorker) buildFunc_ins(
 		} else {
 			hi20 := (uint32(bits) >> 12) & 0xFFFFF
 			lo12 := uint32(bits) & 0xFFF
-			mid20 := (bits >> 32) & 0xFFFFF
-			top12 := (bits >> 52) & 0xFFF
-			fmt.Fprintf(w, "    lu12i.w $t0, 0x%X\n", hi20)
+			mid20 := uint32((bits >> 32) & 0xFFFFF)
+			top12 := uint32((bits >> 52) & 0xFFF)
+			fmt.Fprintf(w, "    lu12i.w $t0, %d\n", i32SignExtend(hi20, 20))
 			fmt.Fprintf(w, "    ori     $t0, $t0, 0x%X\n", lo12)
-			fmt.Fprintf(w, "    lu32i.d $t0, 0x%X\n", mid20)
-			fmt.Fprintf(w, "    lu52i.d $t0, $t0, 0x%X\n", top12)
+			fmt.Fprintf(w, "    lu32i.d $t0, %d\n", i32SignExtend(mid20, 20))
+			fmt.Fprintf(w, "    lu52i.d $t0, $t0, %d\n", i32SignExtend(top12, 12))
 			if p.isS12Overflow(int32(sp0)) {
 				p.st_d(w, "$t0", "$fp", int32(sp0), "$t1")
 			} else {
