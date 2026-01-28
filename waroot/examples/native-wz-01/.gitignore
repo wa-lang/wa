@@ -1,0 +1,6 @@
+*.wa.c
+*.wa.s
+*.wz.c
+*.wz.s
+*.wat
+*.exe

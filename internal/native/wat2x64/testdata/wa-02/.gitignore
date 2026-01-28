@@ -1,0 +1,4 @@
+*.wa.c
+*.wa.s
+*.wat
+*.exe

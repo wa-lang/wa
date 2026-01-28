@@ -280,6 +280,13 @@ func BuildApp(opt *appbase.Option, input, outfile string) (mainFunc string, wasm
 				os.Exit(1)
 			}
 
+			// 保存生成的汇编语言文件
+			err = os.WriteFile(nativeAsmFile, []byte(nasmBytes), 0666)
+			if err != nil {
+				fmt.Printf("write %s failed: %v\n", nativeAsmFile, err)
+				os.Exit(1)
+			}
+
 			// 生成本地对接的环境文件
 			err = os.WriteFile(nativeEnvFile, []byte(native_env_linux_la64_c), 0666)
 			if err != nil {
@@ -333,23 +340,35 @@ func BuildApp(opt *appbase.Option, input, outfile string) (mainFunc string, wasm
 				os.Exit(1)
 			}
 
+			// 保存生成的汇编语言文件
+			err = os.WriteFile(nativeAsmFile, []byte(nasmBytes), 0666)
+			if err != nil {
+				fmt.Printf("write %s failed: %v\n", nativeAsmFile, err)
+				os.Exit(1)
+			}
+
 			// 生成本地对接的环境文件
 			if cpuType == abi.X64Unix {
 				err = os.WriteFile(nativeEnvFile, []byte(native_env_linux_x64_c), 0666)
 				if err != nil {
-					fmt.Printf("write %s failed: %v\n", outfile, err)
+					fmt.Printf("write %s failed: %v\n", nativeEnvFile, err)
 					os.Exit(1)
 				}
 			} else {
 				err = os.WriteFile(nativeEnvFile, []byte(native_env_windows_x64_c), 0666)
 				if err != nil {
-					fmt.Printf("write %s failed: %v\n", outfile, err)
+					fmt.Printf("write %s failed: %v\n", nativeEnvFile, err)
 					os.Exit(1)
 				}
 			}
 
 			// gcc x.c x.s -z noexecstack -o x.exe
-			gccCmd := exec.Command("gcc", nativeEnvFile, nativeAsmFile, "-z", "noexecstack", "-o", nativeExtFile)
+			var gccCmd *exec.Cmd
+			if cpuType == abi.X64Unix {
+				gccCmd = exec.Command("gcc", nativeEnvFile, nativeAsmFile, "-z", "noexecstack", "-o", nativeExtFile)
+			} else {
+				gccCmd = exec.Command("gcc", nativeEnvFile, nativeAsmFile, "-o", nativeExtFile)
+			}
 			output, err := gccCmd.CombinedOutput()
 			if err != nil {
 				fmt.Println(string(output))
@@ -444,6 +463,136 @@ func BuildApp(opt *appbase.Option, input, outfile string) (mainFunc string, wasm
 		if err != nil {
 			fmt.Printf("write %s failed: %v\n", outfile, err)
 			os.Exit(1)
+		}
+
+		// 构建本地可执行程序
+		switch opt.TargetArch {
+		case config.WaArch_loong64:
+			// wa build -arch=loong64 -target=linux input.wat
+
+			if s := opt.TargetOS; s != "" && s != config.WaOS_linux {
+				panic(fmt.Sprintf("loong64 donot support %s", s))
+			}
+
+			// 设置默认输出目标
+			var nativeAsmFile string
+			var nativeEnvFile string
+			var nativeExtFile string
+			if appbase.HasExt(input, ".wz") {
+				nativeEnvFile = appbase.ReplaceExt(outfile, ".wasm", ".wz.c")
+				nativeAsmFile = appbase.ReplaceExt(outfile, ".wasm", ".wz.s")
+				nativeExtFile = appbase.ReplaceExt(outfile, ".wasm", ".exe")
+			} else {
+				nativeEnvFile = appbase.ReplaceExt(outfile, ".wasm", ".wa.c")
+				nativeAsmFile = appbase.ReplaceExt(outfile, ".wasm", ".wa.s")
+				nativeExtFile = appbase.ReplaceExt(outfile, ".wasm", ".exe")
+			}
+
+			// 将 wat 翻译为本地汇编代码
+			_, nasmBytes, err := wat2la.Wat2LA64(input, watOutput)
+			if err != nil {
+				fmt.Printf("wat2la %s failed: %v\n", input, err)
+				os.Exit(1)
+			}
+
+			// 保存生成的汇编语言文件
+			err = os.WriteFile(nativeAsmFile, []byte(nasmBytes), 0666)
+			if err != nil {
+				fmt.Printf("write %s failed: %v\n", nativeAsmFile, err)
+				os.Exit(1)
+			}
+
+			// 生成本地对接的环境文件
+			err = os.WriteFile(nativeEnvFile, []byte(native_env_linux_la64_c), 0666)
+			if err != nil {
+				fmt.Printf("write %s failed: %v\n", outfile, err)
+				os.Exit(1)
+			}
+
+			// gcc x.c x.s -z noexecstack -o x.exe
+			gccCmd := exec.Command("gcc", nativeEnvFile, nativeAsmFile, "-z", "noexecstack", "-o", nativeExtFile)
+			output, err := gccCmd.CombinedOutput()
+			if err != nil {
+				fmt.Println(string(output))
+				fmt.Printf("build failed: %v\n", err)
+				os.Exit(1)
+			}
+
+			// OK
+			return "", nasmBytes, nil, nil
+
+		case config.WaArch_x64:
+			// wa build -arch=x64 -target=linux input.wat
+			// wa build -arch=x64 -target=windows input.wat
+
+			if s := opt.TargetOS; s != "" && s != config.WaOS_linux && s != config.WaOS_windows {
+				panic(fmt.Sprintf("x64 donot support %s", s))
+			}
+
+			cpuType := abi.X64Windows
+			if strings.EqualFold(opt.TargetOS, config.WaOS_linux) {
+				cpuType = abi.X64Unix
+			}
+
+			// 设置默认输出目标
+			var nativeAsmFile string
+			var nativeEnvFile string
+			var nativeExtFile string
+			if appbase.HasExt(input, ".wz") {
+				nativeEnvFile = appbase.ReplaceExt(outfile, ".wasm", ".wz.c")
+				nativeAsmFile = appbase.ReplaceExt(outfile, ".wasm", ".wz.s")
+				nativeExtFile = appbase.ReplaceExt(outfile, ".wasm", ".exe")
+			} else {
+				nativeEnvFile = appbase.ReplaceExt(outfile, ".wasm", ".wa.c")
+				nativeAsmFile = appbase.ReplaceExt(outfile, ".wasm", ".wa.s")
+				nativeExtFile = appbase.ReplaceExt(outfile, ".wasm", ".exe")
+			}
+
+			// 将 wat 翻译为本地汇编代码
+			_, nasmBytes, err := wat2x64.Wat2X64(input, watOutput, cpuType)
+			if err != nil {
+				fmt.Printf("wat2x64 %s failed: %v\n", input, err)
+				os.Exit(1)
+			}
+
+			// 保存生成的汇编语言文件
+			err = os.WriteFile(nativeAsmFile, []byte(nasmBytes), 0666)
+			if err != nil {
+				fmt.Printf("write %s failed: %v\n", nativeAsmFile, err)
+				os.Exit(1)
+			}
+
+			// 生成本地对接的环境文件
+			if cpuType == abi.X64Unix {
+				err = os.WriteFile(nativeEnvFile, []byte(native_env_linux_x64_c), 0666)
+				if err != nil {
+					fmt.Printf("write %s failed: %v\n", nativeEnvFile, err)
+					os.Exit(1)
+				}
+			} else {
+				err = os.WriteFile(nativeEnvFile, []byte(native_env_windows_x64_c), 0666)
+				if err != nil {
+					fmt.Printf("write %s failed: %v\n", nativeEnvFile, err)
+					os.Exit(1)
+				}
+			}
+
+			// gcc x.c x.s -z noexecstack -o x.exe
+			var gccCmd *exec.Cmd
+			if cpuType == abi.X64Unix {
+				gccCmd = exec.Command("gcc", nativeEnvFile, nativeAsmFile, "-z", "noexecstack", "-o", nativeExtFile)
+			} else {
+				gccCmd = exec.Command("gcc", nativeEnvFile, nativeAsmFile, "-o", nativeExtFile)
+			}
+			output, err := gccCmd.CombinedOutput()
+			if err != nil {
+				fmt.Println(string(output))
+				fmt.Printf("gcc build failed: %v\n", err)
+				os.Exit(1)
+			}
+
+			// OK
+			return "", nasmBytes, nil, nil
 		}
 
 		// fileset 写到文件中
