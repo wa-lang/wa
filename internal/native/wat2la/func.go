@@ -267,7 +267,7 @@ func (p *wat2laWorker) buildFunc_body(w io.Writer, fn *ast.Func) error {
 		// 如果走内存, 返回地址
 		if len(fn.Type.Results) > 1 && fnNative.Type.Return[1].Reg == 0 {
 			p.gasCommentInFunc(&bufReturn, "将返回地址复制到寄存器")
-			fmt.Fprintf(&bufReturn, "    ld.d $a0, $fp, %d # ret address\n",
+			fmt.Fprintf(&bufReturn, "    addi.d $a0, $fp, %d # ret address\n",
 				fnNative.Type.Return[0].RBPOff,
 			)
 		} else {

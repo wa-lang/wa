@@ -26,6 +26,8 @@ func buildFuncFrame_x64_windows(fn *ast.Func) error {
 		fArgRegIdx int
 		nArgReg    int // 寄存器参数数量
 
+		arg0Base int = 0 // 第一个参数的偏移地址
+
 		sp int = 0 // 局部栈大小
 	)
 
@@ -64,15 +66,18 @@ func buildFuncFrame_x64_windows(fn *ast.Func) error {
 		}
 	default:
 		// 栈返回值需要跳过输入参数和栈帧头
-		base := fn.ArgsSize + headSize
-		fn.ArgsSize += len(fn.Type.Return) * 8
+		base := headSize + 8 + len(fn.Type.Args)*8
+		fn.ArgsSize += len(fn.Type.Return)*8 + 8
 		for i := 0; i < len(fn.Type.Return); i++ {
 			fn.Type.Return[i].RBPOff = base + i*8
 			fn.Type.Return[i].Cap = 1
 		}
 
 		// 跳过第一个参数寄存器
+		// Windows 下参数位置和寄存器是对应的
+		arg0Base = 8
 		iArgRegIdx++
+		fArgRegIdx++
 		nArgReg++
 	}
 
@@ -85,32 +90,32 @@ func buildFuncFrame_x64_windows(fn *ast.Func) error {
 				iArgRegIdx++
 				nArgReg++
 			}
-			arg.RBPOff = headSize + i*8 // rbp
-			arg.RSPOff = i * 8          // 调用前的 rsp
+			arg.RBPOff = headSize + arg0Base + i*8 // rbp
+			arg.RSPOff = arg0Base + i*8            // 调用前的 rsp
 		case token.I64, token.U64, token.I64_zh, token.U64_zh:
 			if nArgReg < MaxRegArgs && iArgRegIdx < len(iArgRegList) {
 				arg.Reg = iArgRegList[iArgRegIdx]
 				iArgRegIdx++
 				nArgReg++
 			}
-			arg.RBPOff = headSize + i*8 // rbp
-			arg.RSPOff = i * 8          // 调用前的 rsp
+			arg.RBPOff = headSize + arg0Base + i*8 // rbp
+			arg.RSPOff = arg0Base + i*8            // 调用前的 rsp
 		case token.F32, token.F32_zh:
 			if nArgReg < MaxRegArgs && fArgRegIdx < len(fArgRegList) {
 				arg.Reg = fArgRegList[fArgRegIdx]
 				fArgRegIdx++
 				nArgReg++
 			}
-			arg.RBPOff = headSize + i*8 // rbp
-			arg.RSPOff = i * 8          // 调用前的 rsp
+			arg.RBPOff = headSize + arg0Base + i*8 // rbp
+			arg.RSPOff = i * 8                     // 调用前的 rsp
 		case token.F64, token.F64_zh:
 			if nArgReg < MaxRegArgs && fArgRegIdx < len(fArgRegList) {
 				arg.Reg = fArgRegList[fArgRegIdx]
 				fArgRegIdx++
 				nArgReg++
 			}
-			arg.RBPOff = headSize + i*8 // rbp
-			arg.RSPOff = i * 8          // 调用前的 rsp
+			arg.RBPOff = headSize + arg0Base + i*8 // rbp
+			arg.RSPOff = arg0Base + i*8            // 调用前的 rsp
 		default:
 			panic("unreachable")
 		}

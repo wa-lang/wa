@@ -234,7 +234,7 @@ func (p *wat2X64Worker) buildFunc_body(w io.Writer, fn *ast.Func) error {
 		// 如果走内存, 返回地址
 		if len(fn.Type.Results) > 1 && fnNative.Type.Return[1].Reg == 0 {
 			p.gasCommentInFunc(&bufReturn, "将返回地址复制到寄存器")
-			fmt.Fprintf(&bufReturn, "    mov rax, [rbp%+d] # ret address\n",
+			fmt.Fprintf(&bufReturn, "    lea rax, [rbp%+d] # ret address\n",
 				fnNative.Type.Return[0].RBPOff,
 			)
 		} else {
@@ -765,6 +765,7 @@ func (p *wat2X64Worker) buildFunc_ins(
 			} else {
 				fmt.Fprintf(w, "    # br_table default\n")
 				fmt.Fprintf(w, "    jmp %s\n", p.makeLabelId(kLabelPrefixName_brDefault, "", labelSuffix))
+				fmt.Fprintln(w)
 			}
 		}
 
