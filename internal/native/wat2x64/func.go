@@ -1941,7 +1941,7 @@ func (p *wat2X64Worker) buildFunc_ins(
 		sp0 := p.fnWasmR0Base - 8*stk.Push(token.F64) - 8
 		fmt.Fprintf(w, "    # f64.const %f\n", i.X)
 		fmt.Fprintf(w, "    movabs rax, 0x%X\n", math.Float64bits(i.X))
-		fmt.Fprintf(w, "    movq   [rbp%+d], xmm4\n", sp0)
+		fmt.Fprintf(w, "    movq   [rbp%+d], rax\n", sp0)
 		fmt.Fprintln(w)
 
 	case token.INS_I32_EQZ:
