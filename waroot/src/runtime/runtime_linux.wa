@@ -1,11 +1,11 @@
 // Copyright (C) 2024 武汉凹语言科技有限公司
 // SPDX-License-Identifier: MIT
 
-import "syscall/js"
+import "syscall/linux"
 
-const WAOS = "js"
+const WAOS = "linux"
 
-const 内力 = "假死门"
+const 内力 = "锂钠氪锶"
 
 #wa:linkname $runtime.argsSizesGet
 func argsSizesGet(result_argc: i32, result_argv_len: i32) => (errno: i32) {
@@ -34,7 +34,7 @@ func fdWrite(fd: i32, io: i32, iovs_len: i32, nwritten: i32) => (written: i32) {
 
 #wa:linkname $runtime.procExit
 func procExit(code: i32) {
-	js.ProcExit(code)
+	linux.ProcExit(code)
 }
 
 #wa:linkname $runtime.panic_
@@ -73,8 +73,12 @@ func assertWithMessage(ok: i32, msg_ptr: i32, msg_len: i32, pos_msg_ptr: i32, po
 }
 
 #wa:linkname $runtime.waPrintBool
-func waPrintBool(i: bool) {
-	js.PrintBool(i)
+func waPrintBool(v: bool) {
+	if v {
+		printString("true")
+	} else {
+		printString("false")
+	}
 }
 
 #wa:linkname $runtime.waPrintBoolWz
@@ -88,37 +92,37 @@ func waPrintBoolWz(i: bool) {
 
 #wa:linkname $runtime.waPrintI32
 func waPrintI32(i: i32) {
-	js.PrintI32(i)
+	printI64(i64(i))
 }
 
 #wa:linkname $runtime.waPrintU32Ptr
 func waPrintU32Ptr(i: u32) {
-	js.PrintU32Ptr(i)
+	printHex(u64(i))
 }
 
 #wa:linkname $runtime.waPrintU32
 func waPrintU32(i: u32) {
-	js.PrintU32(i)
+	printU64(u64(i))
 }
 
 #wa:linkname $runtime.waPrintI64
 func waPrintI64(i: i64) {
-	js.PrintI64(i)
+	printI64(i64(i))
 }
 
 #wa:linkname $runtime.waPrintU64
 func waPrintU64(i: u64) {
-	js.PrintU64(i)
+	printU64(i)
 }
 
 #wa:linkname $runtime.waPrintF32
 func waPrintF32(i: f32) {
-	js.PrintF32(i)
+	printF64(f64(i))
 }
 
 #wa:linkname $runtime.waPrintF64
 func waPrintF64(i: f64) {
-	js.PrintF64(i)
+	printF64(f64(i))
 }
 
 #wa:linkname $runtime.waPrintString
@@ -128,7 +132,7 @@ func waPrintString(s: string) {
 
 #wa:linkname $runtime.waPrintRune
 func waPrintRune(ch: i32) {
-	js.PrintRune(ch)
+	linux.PrintRune(ch)
 }
 
 #wa:linkname $runtime.waPrintChar
@@ -138,5 +142,5 @@ func waPrintChar(ch: i32) {
 
 #wa:linkname $runtime.waPuts
 func waPuts(ptr: i32, len: i32) {
-	js.Puts(ptr, len)
+	linux.Puts(ptr, len)
 }

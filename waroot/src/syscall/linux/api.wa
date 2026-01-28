@@ -1,0 +1,18 @@
+// Copyright (C) 2024 武汉凹语言科技有限公司
+// SPDX-License-Identifier: MIT
+
+func PrintPosition(pos: i32) {
+	__import__print_position(pos)
+}
+
+func PrintRune(v: i32) {
+	__import__print_rune(v)
+}
+
+func Puts(ptr: i32, len: i32) {
+	__import__print_str(ptr, len)
+}
+
+func ProcExit(v: i32) {
+	__import__proc_exit(v)
+}
