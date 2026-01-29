@@ -4,7 +4,7 @@
 WA:=go run ../../../../../../main.go
 
 run:
-	gcc env.s app.s -o a.out0.exe -z noexecstack
+	gcc app.s -o a.out0.exe -z noexecstack
 	./a.out0.exe
 
 dev:
