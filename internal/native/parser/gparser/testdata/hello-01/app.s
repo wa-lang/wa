@@ -3,8 +3,20 @@
 
 .section .data
 .align 3
-.app.hello.str: .asciz "hello"
-.app.hello.len: .quad 5
+.app.hello.str: .asciz "hello\n"
+.app.hello.len: .quad 6
+
+.section .text
+.globl _start
+_start:
+    # main
+    pcalau12i $t0, %pc_hi20(main)
+    addi.d $t0, $t0, %pc_lo12(main)
+    jirl $ra, $t0, 0
+
+    # exit
+    addi.d $a7, $zero, 93 # sys_exit
+    syscall 0
 
 .section .text
 .globl main
@@ -19,15 +31,13 @@ main:
     pcalau12i $a1, %pc_hi20(.app.hello.str) # arg.1: ptr
     addi.d    $a1, $a1, %pc_lo12(.app.hello.str)
     pcalau12i $a2, %pc_hi20(.app.hello.len) # arg.2: len
-    addi.d    $a2, $t0, %pc_lo12(.app.hello.len)
-    addi.d $a7, $zero, 64 # sys_write
-    syscall 0
-    jirl   $zero, $ra, 0
+    addi.d    $a2, $a2, %pc_lo12(.app.hello.len)
+    ld.d      $a2, $a2, 0
+    addi.d    $a7, $zero, 64 # sys_write
+    syscall   0
 
-    # exit(0)
-    addi.d $a0, $zero, 0  # arg.0 exit_code
-    addi.d $a7, $zero, 93 # sys_exit
-    syscall 0
+    # return 0
+    addi.d $a0, $zero, 0
 
     addi.d  $sp, $fp, 0
     ld.d    $ra, $sp, 8
