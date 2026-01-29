@@ -75,6 +75,23 @@ const (
 	FUNC_zh   // 函数
 	END_zh    // 完毕
 
+	// gas 汇编语法关键字(子集)
+
+	GAS_X64_INTEL_SYNTAX // .intel_syntax noprefix, x64 专有
+	GAS_X64_NOPREFIX     // .intel_syntax noprefix, x64 专有
+
+	GAS_EXTERN  // .extern _write
+	GAS_SET     // .set .Wa.Runtime.write, _write
+	GAS_ALIGN   // .align 8
+	GAS_BLOBA   // .globl .Wa.Memory.addr
+	GAS_BYTE    // .name: .byte 0
+	GAS_SHORT   // .name: .short 0
+	GAS_LONG    // .name: .long 0
+	GAS_QUAD    // .name: .quad 0
+	GAS_ASSCII  // .name: .ascii "abc\000"
+	GAS_ASSCIZ  // .name: .asciz "abc"
+	GAS_SECTION // .section .text
+
 	keyword_end // 关键字结束
 )
 
@@ -153,6 +170,21 @@ var tokens = [...]string{
 	LOCAL_zh:  "局部",
 	FUNC_zh:   "函数",
 	END_zh:    "完毕",
+
+	GAS_X64_INTEL_SYNTAX: ".intel_syntax",
+	GAS_X64_NOPREFIX:     "noprefix",
+
+	GAS_EXTERN:  ".extern",
+	GAS_SET:     ".set",
+	GAS_ALIGN:   ".align",
+	GAS_BLOBA:   ".globl",
+	GAS_BYTE:    ".byte",
+	GAS_SHORT:   ".short",
+	GAS_LONG:    ".long",
+	GAS_QUAD:    ".quad",
+	GAS_ASSCII:  ".ascii",
+	GAS_ASSCIZ:  ".asciz",
+	GAS_SECTION: ".section",
 }
 
 func (tok Token) String() string {

@@ -12,14 +12,16 @@ import (
 // 每个文件只是一个代码片段, 不能识别外部的符号类型, 只针对指令做简单的语义检查
 // 只在链接阶段处理外部的符号依赖, 并做符号地址检查
 type File struct {
-	Pos      token.Pos       // 位置
-	CPU      abi.CPUType     // CPU类型
-	Doc      *CommentGroup   // 关联文档
-	Consts   []*Const        // 全局常量
-	Globals  []*Global       // 全局对象
-	Funcs    []*Func         // 函数对象
-	Comments []*CommentGroup // 孤立的注释
-	Objects  []Object        // 保序的列表
+	Pos      token.Pos         // 位置
+	CPU      abi.CPUType       // CPU类型
+	Doc      *CommentGroup     // 关联文档
+	Externs  []string          // 外部的符号
+	Aliases  map[string]string // 符号的别名
+	Consts   []*Const          // 全局常量
+	Globals  []*Global         // 全局对象
+	Funcs    []*Func           // 函数对象
+	Comments []*CommentGroup   // 孤立的注释
+	Objects  []Object          // 保序的列表
 }
 
 // 单行注释
@@ -65,6 +67,8 @@ type Global struct {
 	Comments []*CommentGroup   // 孤立的注释
 	Objects  []Object          // 保序的对象
 	LinkInfo *abi.LinkedSymbol // 链接信息
+	Section  string            // 段名
+	Align    int               // 对齐
 }
 
 // 初始化的面值
@@ -79,17 +83,19 @@ type InitValue struct {
 
 // 函数对象
 type Func struct {
-	Pos       token.Pos         // 位置
-	Tok       token.Token       // 关键字(可能有多语言)
-	Doc       *CommentGroup     // 关联文档
-	Name      string            // 函数名
-	Prop      []string          // 属性列表, [Key=Val,...]
-	Type      *FuncType         // 函数类型
-	ArgsSize  int               // 调用该函数需要的栈大小(参数/返回值)
-	FrameSize int               // 函数内栈帧大小(局部变量/临时空间), 不包含头部(rip/rbp)
-	BodySize  int               // 指令大小(没有类型信息)
-	Body      *FuncBody         // 函数体
-	LinkInfo  *abi.LinkedSymbol // 链接信息
+	Pos        token.Pos         // 位置
+	Tok        token.Token       // 关键字(可能有多语言)
+	Doc        *CommentGroup     // 关联文档
+	Name       string            // 函数名
+	Prop       []string          // 属性列表, [Key=Val,...]
+	Type       *FuncType         // 函数类型
+	ArgsSize   int               // 调用该函数需要的栈大小(参数/返回值)
+	FrameSize  int               // 函数内栈帧大小(局部变量/临时空间), 不包含头部(rip/rbp)
+	BodySize   int               // 指令大小(没有类型信息)
+	Body       *FuncBody         // 函数体
+	LinkInfo   *abi.LinkedSymbol // 链接信息
+	Section    string            // 段名
+	ExportName string            // 导出的名字
 }
 
 // 函数类型

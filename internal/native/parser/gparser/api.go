@@ -14,7 +14,7 @@ import (
 	"wa-lang.org/wa/internal/native/token"
 )
 
-var DebugMode = false
+var DebugMode = true
 
 func ParseFile(cpu abi.CPUType, fset *token.FileSet, filename string, src []byte) (f *ast.File, err error) {
 	if fset == nil {

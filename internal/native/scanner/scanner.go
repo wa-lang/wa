@@ -680,7 +680,7 @@ scanAgain:
 	// determine token value
 	insertSemi := false
 	switch ch := s.ch; {
-	case isLetter(ch) || ch == '$' || ch == '%':
+	case isLetter(ch) || ch == '$' || ch == '%' || ch == '.':
 		lit = s.scanIdentifier()
 		if len(lit) > 1 || isLetter(ch) {
 			// keywords are longer than one letter - avoid lookup otherwise

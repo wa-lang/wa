@@ -3,7 +3,9 @@
 
 package gparser
 
-import "wa-lang.org/wa/internal/native/token"
+import (
+	"wa-lang.org/wa/internal/native/token"
+)
 
 func (p *parser) parseFile() {
 	// 解析开头的关联文档
@@ -23,6 +25,9 @@ func (p *parser) parseFile() {
 			commentObj := p.parseCommentGroup(true)
 			p.prog.Comments = append(p.prog.Comments, commentObj)
 			p.prog.Objects = append(p.prog.Objects, commentObj)
+		case token.GAS_SECTION:
+			panic("TODO:" + p.tok.String())
+
 		case token.CONST, token.CONST_zh:
 			constObj := p.parseConst(p.tok)
 			p.prog.Consts = append(p.prog.Consts, constObj)

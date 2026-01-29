@@ -6,10 +6,12 @@ package asm
 import (
 	"encoding/binary"
 	"fmt"
+	"strings"
 
 	"wa-lang.org/wa/internal/native/abi"
 	"wa-lang.org/wa/internal/native/ast"
 	"wa-lang.org/wa/internal/native/loong64"
+	"wa-lang.org/wa/internal/native/parser/gparser"
 	"wa-lang.org/wa/internal/native/parser/zparser"
 	"wa-lang.org/wa/internal/native/pcrel"
 )
@@ -19,9 +21,16 @@ func (p *_Assembler) asmFile_loong64(filename string, source []byte, opt *abi.Li
 	const maxPageSize = 64 << 10
 
 	// 解析汇编程序
-	p.file, err = zparser.ParseFile(opt.CPU, p.fset, filename, source)
-	if err != nil {
-		return nil, err
+	if strings.HasSuffix(filename, ".wz.s") {
+		p.file, err = zparser.ParseFile(opt.CPU, p.fset, filename, source)
+		if err != nil {
+			return nil, err
+		}
+	} else {
+		p.file, err = gparser.ParseFile(opt.CPU, p.fset, filename, source)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	// 指令段的地址必须页对齐
