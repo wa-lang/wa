@@ -33,8 +33,8 @@ var arduino_ino string
 //go:embed assets/arduino-host.cpp
 var arduino_host_cpp string
 
-//go:embed assets/native-env-linux-la64.c
-var native_env_linux_la64_c string
+//go:embed assets/native-env-linux-la64.s
+var native_env_linux_la64_s string
 
 //go:embed assets/native-env-linux-x64.s
 var native_env_linux_x64_s string
@@ -270,11 +270,11 @@ func BuildApp(opt *appbase.Option, input, outfile string) (mainFunc string, wasm
 			var nativeEnvFile string
 			var nativeExtFile string
 			if appbase.HasExt(input, ".wz") {
-				nativeEnvFile = appbase.ReplaceExt(outfile, ".wasm", ".env.c")
+				nativeEnvFile = appbase.ReplaceExt(outfile, ".wasm", ".env.s")
 				nativeAsmFile = appbase.ReplaceExt(outfile, ".wasm", ".wz.s")
 				nativeExtFile = appbase.ReplaceExt(outfile, ".wasm", ".exe")
 			} else {
-				nativeEnvFile = appbase.ReplaceExt(outfile, ".wasm", ".env.c")
+				nativeEnvFile = appbase.ReplaceExt(outfile, ".wasm", ".env.s")
 				nativeAsmFile = appbase.ReplaceExt(outfile, ".wasm", ".wa.s")
 				nativeExtFile = appbase.ReplaceExt(outfile, ".wasm", ".exe")
 			}
@@ -294,7 +294,7 @@ func BuildApp(opt *appbase.Option, input, outfile string) (mainFunc string, wasm
 			}
 
 			// 生成本地对接的环境文件
-			err = os.WriteFile(nativeEnvFile, []byte(native_env_linux_la64_c), 0666)
+			err = os.WriteFile(nativeEnvFile, []byte(native_env_linux_la64_s), 0666)
 			if err != nil {
 				fmt.Printf("write %s failed: %v\n", outfile, err)
 				os.Exit(1)
@@ -523,11 +523,11 @@ func BuildApp(opt *appbase.Option, input, outfile string) (mainFunc string, wasm
 			var nativeEnvFile string
 			var nativeExtFile string
 			if appbase.HasExt(input, ".wz") {
-				nativeEnvFile = appbase.ReplaceExt(outfile, ".wasm", ".env.c")
+				nativeEnvFile = appbase.ReplaceExt(outfile, ".wasm", ".env.s")
 				nativeAsmFile = appbase.ReplaceExt(outfile, ".wasm", ".wz.s")
 				nativeExtFile = appbase.ReplaceExt(outfile, ".wasm", ".exe")
 			} else {
-				nativeEnvFile = appbase.ReplaceExt(outfile, ".wasm", ".env.c")
+				nativeEnvFile = appbase.ReplaceExt(outfile, ".wasm", ".env.s")
 				nativeAsmFile = appbase.ReplaceExt(outfile, ".wasm", ".wa.s")
 				nativeExtFile = appbase.ReplaceExt(outfile, ".wasm", ".exe")
 			}
@@ -547,7 +547,7 @@ func BuildApp(opt *appbase.Option, input, outfile string) (mainFunc string, wasm
 			}
 
 			// 生成本地对接的环境文件
-			err = os.WriteFile(nativeEnvFile, []byte(native_env_linux_la64_c), 0666)
+			err = os.WriteFile(nativeEnvFile, []byte(native_env_linux_la64_s), 0666)
 			if err != nil {
 				fmt.Printf("write %s failed: %v\n", outfile, err)
 				os.Exit(1)
