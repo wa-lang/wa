@@ -6,6 +6,10 @@ func PrintPosition(pos: i32) {
 	__import__print_str(__linkname__string_to_ptr(s), i32(len(s)))
 }
 
+func PrintRune(v: i32) {
+	__import__print_rune(v)
+}
+
 func Puts(ptr: i32, len: i32) {
 	__import__print_str(ptr, len)
 }

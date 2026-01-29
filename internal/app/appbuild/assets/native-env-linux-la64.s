@@ -106,3 +106,27 @@ _Wa_Import_syscall_linux_print_str:
 .global _Wa_Import_syscall_linux_proc_exit
 _Wa_Import_syscall_linux_proc_exit:
     b _Wa_Runtime_exit
+
+# void _Wa_Import_syscall_linux_print_rune(int32_t c)
+.section .text
+.global _Wa_Import_syscall_linux_print_rune
+_Wa_Import_syscall_linux_print_rune:
+    addi.d  $sp, $sp, -16
+    st.d    $ra, $sp, 8
+    st.d    $fp, $sp, 0
+    addi.d  $fp, $sp, 0
+    addi.d  $sp, $sp, -16
+
+    st.b    $a0, $sp, 0
+
+    li.d    $a0, 1      # arg.0: stdout
+    addi.d  $a1, $sp, 0 # arg.1: buffer
+    li.d    $a2, 1      # arg.2: count
+    li.d    $a7, 64     # sys_write
+    syscall 0
+
+    addi.d  $sp, $fp, 0
+    ld.d    $fp, $sp, 0
+    ld.d    $ra, $sp, 8
+    addi.d  $sp, $sp, 16
+    jirl    $zero, $ra, 0

@@ -4,6 +4,9 @@
 // #wa:import syscall_linux print_position
 // func __import__print_position(pos: i32)
 
+#wa:import syscall_linux print_rune
+func __import__print_rune(ch: i32)
+
 #wa:import syscall_linux print_str
 func __import__print_str(ptr: i32, len: i32)
 

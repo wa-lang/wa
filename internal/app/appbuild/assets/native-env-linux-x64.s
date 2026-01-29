@@ -113,3 +113,23 @@ _Wa_Import_syscall_linux_print_str:
 .global _Wa_Import_syscall_linux_proc_exit
 _Wa_Import_syscall_linux_proc_exit:
     jmp _Wa_Runtime_exit
+
+# void _Wa_Import_syscall_linux_print_rune(int32_t c)
+.section .text
+.global _Wa_Import_syscall_linux_print_rune
+_Wa_Import_syscall_linux_print_rune:
+    push rbp
+    mov  rbp, rsp
+    sub  rsp, 16
+    
+    mov  [rsp], dil
+    
+    mov  rax, 1   # sys_write
+    mov  rdi, 1   # stdout
+    mov  rsi, rsp # buf
+    mov  rdx, 1   # count
+    syscall
+    
+    add  rsp, 16
+    pop  rbp
+    ret

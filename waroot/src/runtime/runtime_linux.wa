@@ -131,32 +131,8 @@ func waPrintString(s: string) {
 }
 
 #wa:linkname $runtime.waPrintRune
-func waPrintRune(r: i32) {
-	switch {
-	case r <= 0x7F:
-		printBytes([]byte{byte(r)})
-
-	case r <= 0x7FF:
-		printBytes([]byte{
-			byte(0xC0 | (r >> 6)),
-			byte(0x80 | (r & 0x3F)),
-		})
-
-	case r <= 0xFFFF:
-		printBytes([]byte{
-			byte(0xE0 | (r >> 12)),
-			byte(0x80 | ((r >> 6) & 0x3F)),
-			byte(0x80 | (r & 0x3F)),
-		})
-
-	default:
-		printBytes([]byte{
-			byte(0xF0 | (r >> 18)),
-			byte(0x80 | ((r >> 12) & 0x3F)),
-			byte(0x80 | ((r >> 6) & 0x3F)),
-			byte(0x80 | (r & 0x3F)),
-		})
-	}
+func waPrintRune(ch: i32) {
+	linux.PrintRune(ch)
 }
 
 #wa:linkname $runtime.waPrintChar
