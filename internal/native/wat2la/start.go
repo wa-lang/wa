@@ -9,6 +9,7 @@ import (
 )
 
 const (
+	kFuncStart = "_start"
 	kFuncMain  = "main"
 	kFuncMain2 = "_main"
 )
@@ -17,8 +18,8 @@ const (
 func (p *wat2laWorker) buildStart(w io.Writer) error {
 	p.gasComment(w, "汇编程序入口函数")
 	p.gasSectionTextStart(w)
-	p.gasGlobal(w, kFuncMain)
-	fmt.Fprintf(w, "%s:\n", kFuncMain)
+	p.gasGlobal(w, kFuncStart)
+	fmt.Fprintf(w, "%s:\n", kFuncStart)
 
 	fmt.Fprintln(w, "    addi.d  $sp, $sp, -16")
 	fmt.Fprintln(w, "    st.d    $ra, $sp, 8")

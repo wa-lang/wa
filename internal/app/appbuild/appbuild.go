@@ -302,7 +302,7 @@ func BuildApp(opt *appbase.Option, input, outfile string) (mainFunc string, wasm
 
 			// gcc x.c x.s -z noexecstack -o x.exe
 			if gccEnabled {
-				gccCmd := exec.Command("gcc", nativeEnvFile, nativeAsmFile, "-z", "noexecstack", "-o", nativeExtFile)
+				gccCmd := exec.Command("gcc", nativeEnvFile, nativeAsmFile, "-nostdlib", "-static", "-z", "noexecstack", "-o", nativeExtFile)
 				output, err := gccCmd.CombinedOutput()
 				if err != nil {
 					fmt.Println(string(output))
@@ -397,9 +397,9 @@ func BuildApp(opt *appbase.Option, input, outfile string) (mainFunc string, wasm
 			if gccEnabled {
 				var gccCmd *exec.Cmd
 				if cpuType == abi.X64Unix {
-					gccCmd = exec.Command("gcc", nativeEnvFile, nativeAsmFile, "-z", "noexecstack", "-o", nativeExtFile)
+					gccCmd = exec.Command("gcc", nativeEnvFile, nativeAsmFile, "-nostdlib", "-static", "-z", "noexecstack", "-o", nativeExtFile)
 				} else {
-					gccCmd = exec.Command("gcc", nativeEnvFile, nativeAsmFile, "-o", nativeExtFile)
+					gccCmd = exec.Command("gcc", nativeEnvFile, nativeAsmFile, "-static", "-o", nativeExtFile)
 				}
 				output, err := gccCmd.CombinedOutput()
 				if err != nil {
@@ -555,7 +555,7 @@ func BuildApp(opt *appbase.Option, input, outfile string) (mainFunc string, wasm
 
 			// gcc x.c x.s -z noexecstack -o x.exe
 			if gccEnabled {
-				gccCmd := exec.Command("gcc", nativeEnvFile, nativeAsmFile, "-z", "noexecstack", "-o", nativeExtFile)
+				gccCmd := exec.Command("gcc", nativeEnvFile, nativeAsmFile, "-nostdlib", "-static", "-z", "noexecstack", "-o", nativeExtFile)
 				output, err := gccCmd.CombinedOutput()
 				if err != nil {
 					fmt.Println(string(output))
@@ -650,9 +650,9 @@ func BuildApp(opt *appbase.Option, input, outfile string) (mainFunc string, wasm
 			if gccEnabled {
 				var gccCmd *exec.Cmd
 				if cpuType == abi.X64Unix {
-					gccCmd = exec.Command("gcc", nativeEnvFile, nativeAsmFile, "-z", "noexecstack", "-o", nativeExtFile)
+					gccCmd = exec.Command("gcc", nativeEnvFile, nativeAsmFile, "-nostdlib", "-static", "-z", "noexecstack", "-o", nativeExtFile)
 				} else {
-					gccCmd = exec.Command("gcc", nativeEnvFile, nativeAsmFile, "-o", nativeExtFile)
+					gccCmd = exec.Command("gcc", nativeEnvFile, nativeAsmFile, "-static", "-o", nativeExtFile)
 				}
 				output, err := gccCmd.CombinedOutput()
 				if err != nil {

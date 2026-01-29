@@ -11,6 +11,7 @@ import (
 )
 
 const (
+	kFuncStart = "_start"
 	kFuncMain  = "main"
 	kFuncMain2 = "_main"
 )
@@ -19,8 +20,14 @@ const (
 func (p *wat2X64Worker) buildStart(w io.Writer) error {
 	p.gasComment(w, "汇编程序入口函数")
 	p.gasSectionTextStart(w)
-	p.gasGlobal(w, kFuncMain)
-	fmt.Fprintf(w, "%s:\n", kFuncMain)
+
+	if p.cpuType == abi.X64Windows {
+		p.gasGlobal(w, kFuncMain)
+		fmt.Fprintf(w, "%s:\n", kFuncMain)
+	} else {
+		p.gasGlobal(w, kFuncStart)
+		fmt.Fprintf(w, "%s:\n", kFuncStart)
+	}
 
 	// 参数寄存器
 	regArg0 := "rcx"
