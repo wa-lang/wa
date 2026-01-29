@@ -133,3 +133,52 @@ _Wa_Import_syscall_linux_print_rune:
     add  rsp, 16
     pop  rbp
     ret
+
+# void _Wa_Import_syscall_linux_print_i64(int64_t val)
+.section .text
+.global _Wa_Import_syscall_linux_print_i64
+_Wa_Import_syscall_linux_print_i64:
+    push rbp
+    mov  rbp, rsp
+    sub  rsp, 32            # 分配缓冲区
+
+    mov  rax, rdi           # rax = val
+    lea  rcx, [rbp - 1]     # rcx 从缓冲区末尾向前移动
+    mov  r8, 10             # 除数
+
+    # 1. 处理负数特殊情况
+    test rax, rax
+    jns  .Wa.L.syscall.linux.print_i64.convert
+    neg  rax                # 如果是负数, 取反
+
+.Wa.L.syscall.linux.print_i64.convert:
+    xor  rdx, rdx           # 每次除法前必须清空 rdx
+    div  r8                 # rdx:rax / 10 -> rax=商, rdx=余数
+    add  dl, '0'            # 余数转 ASCII
+    mov  [rcx], dl
+    dec  rcx
+    test rax, rax           # 商是否为 0
+    jnz  .Wa.L.syscall.linux.print_i64.convert
+
+    # 2. 补负号
+    cmp  rdi, 0
+    jge  .Wa.L.syscall.linux.print_i64.setup_print
+    mov  byte ptr [rcx], '-'
+    dec  rcx
+
+.Wa.L.syscall.linux.print_i64.setup_print:
+    # 3. 计算长度并打印
+    # rcx 现在指向字符串第一个字符的前一个位置
+    inc  rcx                # 指向第一个字符
+    mov  rdx, rbp
+    sub  rdx, rcx           # rdx = rbp - rcx (当前字符串长度)
+
+    mov  rax, 1             # sys_write
+    mov  rsi, rcx           # buffer
+    mov  rdi, 1             # fd = stdout
+    syscall
+
+    add  rsp, 32
+    pop  rbp
+    ret
+

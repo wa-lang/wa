@@ -130,3 +130,50 @@ _Wa_Import_syscall_linux_print_rune:
     ld.d    $ra, $sp, 8
     addi.d  $sp, $sp, 16
     jirl    $zero, $ra, 0
+
+# void _Wa_Import_syscall_linux_print_i64(int64_t val)
+.section .text
+.global _Wa_Import_syscall_linux_print_i64
+_Wa_Import_syscall_linux_print_i64:
+    addi.d  $sp, $sp, -16
+    st.d    $ra, $sp, 8
+    st.d    $fp, $sp, 0
+    addi.d  $fp, $sp, 0
+    addi.d  $sp, $sp, -32
+    
+    move    $t0, $a0         # t0 = 工作变量 (val)
+    addi.d  $t1, $fp, -1     # t1 为缓冲区指针 (从后往前填)
+    li.d    $t2, 10          # 除数
+
+    # 1. 处理负数
+    bge     $t0, $zero, .Wa.L.syscall.linux.print_i64.convert
+    sub.d   $t0, $zero, $t0  # t0 = abs(t0)
+
+.Wa.L.syscall.linux.print_i64.convert:
+    div.d   $t3, $t0, $t2    # t3 = 商
+    mod.d   $t4, $t0, $t2    # t4 = 余数
+    addi.w  $t4, $t4, 48     # 加上 '0' 的 ASCII 码
+    st.b    $t4, $t1, 0      # 存入缓冲区
+    addi.d  $t1, $t1, -1     # 指针前移
+    move    $t0, $t3         # 更新待处理的数字
+    bnez    $t0, .Wa.L.syscall.linux.print_i64.convert  # 如果商不为 0 则继续
+
+    # 2. 补负号
+    bge     $a0, $zero, .Wa.L.syscall.linux.print_i64.print
+    li.d    $t4, 45          # '-'
+    st.b    $t4, $t1, 0
+    addi.d  $t1, $t1, -1
+
+.Wa.L.syscall.linux.print_i64.print:
+    li.d    $a0, 1           # arg.0: stdout
+    addi.d  $a1, $t1, 1      # arg.1: buffer
+    sub.d   $a2, $fp, $a1    # arg.2: count
+    li.d    $a7, 64          # sys_write
+    syscall 0
+
+    addi.d  $sp, $fp, 0
+    ld.d    $fp, $sp, 0
+    ld.d    $ra, $sp, 8
+    addi.d  $sp, $sp, 16
+    jirl    $zero, $ra, 0
+

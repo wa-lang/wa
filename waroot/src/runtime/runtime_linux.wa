@@ -92,7 +92,7 @@ func waPrintBoolWz(i: bool) {
 
 #wa:linkname $runtime.waPrintI32
 func waPrintI32(i: i32) {
-	printI64(i64(i))
+	linux.PrintI64(i64(i))
 }
 
 #wa:linkname $runtime.waPrintU32Ptr
@@ -107,7 +107,7 @@ func waPrintU32(i: u32) {
 
 #wa:linkname $runtime.waPrintI64
 func waPrintI64(i: i64) {
-	printI64(i64(i))
+	linux.PrintI64(i64(i))
 }
 
 #wa:linkname $runtime.waPrintU64
