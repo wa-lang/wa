@@ -191,19 +191,6 @@ func (p *parser) acceptToken(expectToken token.Token, moreExpectTokens ...token.
 	}
 }
 
-// 吃掉其中一个
-func (p *parser) acceptTokenAorB(expectTokenA, expectTokenB token.Token) (got token.Token) {
-	assert(expectTokenA != expectTokenB)
-	got = p.tok
-	switch p.tok {
-	case expectTokenA, expectTokenB:
-		p.next()
-	default:
-		p.errorf(p.pos, "expect %v or %v, got %v", expectTokenA, expectTokenB, p.tok)
-	}
-	return got
-}
-
 // 解析标别符
 func (p *parser) parseIdent() string {
 	s := p.lit
@@ -280,17 +267,4 @@ func (p *parser) parseAs() abi.As {
 	as := p.tok.RawAs()
 	p.acceptToken(p.tok)
 	return as
-}
-
-func (p *parser) getIntSize() int {
-	switch p.cpu {
-	case abi.LOONG64:
-		return 8
-	case abi.RISCV32:
-		return 4
-	case abi.RISCV64:
-		return 8
-	default:
-		panic("unreachable")
-	}
 }

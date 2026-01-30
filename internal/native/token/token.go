@@ -50,6 +50,10 @@ const (
 
 	// 英文版关键字
 
+	BYTE   // byte
+	SHORT  // short
+	LONG   // long
+	QUAD   // quad
 	I32    // int32
 	I64    // int64
 	U32    // uint32

@@ -69,6 +69,7 @@ type Global struct {
 	LinkInfo *abi.LinkedSymbol // 链接信息
 	Section  string            // 段名
 	Align    int               // 对齐
+	Exported bool              // 是否导出
 }
 
 // 初始化的面值

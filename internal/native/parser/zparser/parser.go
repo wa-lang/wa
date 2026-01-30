@@ -278,16 +278,3 @@ func (p *parser) parseAs() abi.As {
 	p.acceptToken(p.tok)
 	return as
 }
-
-func (p *parser) getIntSize() int {
-	switch p.cpu {
-	case abi.LOONG64:
-		return 8
-	case abi.RISCV32:
-		return 4
-	case abi.RISCV64:
-		return 8
-	default:
-		panic("unreachable")
-	}
-}

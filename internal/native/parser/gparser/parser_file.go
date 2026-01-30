@@ -13,6 +13,7 @@ func (p *parser) parseFile() {
 	p.prog.Doc = p.parseCommentGroup(true)
 
 	// 特别处理intel语法开关
+	x64IntelSyntax := false
 	for {
 		if p.err != nil {
 			return
@@ -32,10 +33,18 @@ func (p *parser) parseFile() {
 				p.errorf(p.pos, "%v only enabled on X64 CPU", p.tok)
 			}
 			p.acceptToken(token.GAS_X64_NOPREFIX)
+			x64IntelSyntax = true
 		}
 
 		// 解析后续代码
 		break
+	}
+
+	// x64 必须打开 intel 语法开关
+	if p.cpu == abi.X64Unix || p.cpu == abi.X64Windows {
+		if !x64IntelSyntax {
+			p.errorf(p.pos, "%v missing", token.GAS_X64_INTEL_SYNTAX)
+		}
 	}
 
 	// 解析代码主体
@@ -44,7 +53,7 @@ func (p *parser) parseFile() {
 			return
 		}
 		if p.tok == token.EOF {
-			return
+			break
 		}
 
 		switch p.tok {
@@ -60,20 +69,20 @@ func (p *parser) parseFile() {
 		case token.GAS_SECTION:
 			p.parseFile_gasSection()
 
-		case token.CONST, token.CONST_zh:
-			constObj := p.parseConst(p.tok)
-			p.prog.Consts = append(p.prog.Consts, constObj)
-			p.prog.Objects = append(p.prog.Objects, constObj)
-		case token.GLOBAL, token.GLOBAL_zh:
-			globalObj := p.parseGlobal(p.tok)
-			p.prog.Globals = append(p.prog.Globals, globalObj)
-			p.prog.Objects = append(p.prog.Objects, globalObj)
-		case token.FUNC, token.FUNC_zh:
-			funcObj := p.parseFunc(p.tok)
-			p.prog.Funcs = append(p.prog.Funcs, funcObj)
-			p.prog.Objects = append(p.prog.Objects, funcObj)
 		default:
 			p.errorf(p.pos, "unkonw token: %v", p.tok)
+		}
+	}
+
+	// 收集信息导出符号信息
+	for _, g := range p.prog.Globals {
+		if p.gasGlobal[g.Name] {
+			g.Exported = true
+		}
+	}
+	for _, fn := range p.prog.Funcs {
+		if p.gasGlobal[fn.Name] {
+			fn.ExportName = fn.Name
 		}
 	}
 }
