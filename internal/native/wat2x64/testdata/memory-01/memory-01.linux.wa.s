@@ -4,89 +4,101 @@
 .intel_syntax noprefix
 
 # 运行时函数
-.extern write
-.extern exit
-.extern malloc
-.extern memcpy
-.extern memset
-.set .Runtime.write, write
-.set .Runtime.exit, exit
-.set .Runtime.malloc, malloc
-.set .Runtime.memcpy, memcpy
-.set .Runtime.memset, memset
+.extern _Wa_Runtime_write
+.extern _Wa_Runtime_exit
+.extern _Wa_Runtime_malloc
+.extern _Wa_Runtime_memcpy
+.extern _Wa_Runtime_memset
+.extern _Wa_Runtime_memmove
+.set .Wa.Runtime.write, _Wa_Runtime_write
+.set .Wa.Runtime.exit, _Wa_Runtime_exit
+.set .Wa.Runtime.malloc, _Wa_Runtime_malloc
+.set .Wa.Runtime.memcpy, _Wa_Runtime_memcpy
+.set .Wa.Runtime.memset, _Wa_Runtime_memset
+.set .Wa.Runtime.memmove, _Wa_Runtime_memmove
 
 # 导入函数(外部库定义)
-.extern wat2x64_syscall_write
-.set .Import.syscall.write, wat2x64_syscall_write
+.extern _Wa_Import_syscall_write
+.set .Wa.Import.syscall.write, _Wa_Import_syscall_write
 
 # 定义内存
 .section .data
 .align 8
-.globl .Memory.addr
-.globl .Memory.pages
-.globl .Memory.maxPages
-.Memory.addr: .quad 0
-.Memory.pages: .quad 1
-.Memory.maxPages: .quad 1
+.globl .Wa.Memory.addr
+.globl .Wa.Memory.pages
+.globl .Wa.Memory.maxPages
+.Wa.Memory.addr: .quad 0
+.Wa.Memory.pages: .quad 1
+.Wa.Memory.maxPages: .quad 1
 
 # 内存数据
 .section .data
 .align 8
 # memcpy(&Memory[8], data[0], size)
-.Memory.dataOffset.0: .quad 8
-.Memory.dataSize.0: .quad 12
-.Memory.dataPtr.0: .asciz "hello world\n"
+.Wa.Memory.dataOffset.0: .quad 8
+.Wa.Memory.dataSize.0: .quad 12
+.Wa.Memory.dataPtr.0: .asciz "hello world\012"
 
 # 内存初始化函数
 .section .text
-.globl .Memory.initFunc
-.Memory.initFunc:
+.globl .Wa.Memory.initFunc
+.Wa.Memory.initFunc:
     push rbp
     mov  rbp, rsp
     sub  rsp, 32
 
     # 分配内存
-    mov  rdi, [rip + .Memory.maxPages]
+    mov  rdi, [rip + .Wa.Memory.maxPages]
     shl  rdi, 16
-    call .Runtime.malloc
-    mov  [rip + .Memory.addr], rax
+    call .Wa.Runtime.malloc
+    mov  [rip + .Wa.Memory.addr], rax
 
     # 内存清零
-    mov  rdi, [rip + .Memory.addr]
+    mov  rdi, [rip + .Wa.Memory.addr]
     mov  rsi, 0
-    mov  rdx, [rip + .Memory.maxPages]
+    mov  rdx, [rip + .Wa.Memory.maxPages]
     shl  rdx, 16
-    call .Runtime.memset
+    call .Wa.Runtime.memset
 
     # 初始化内存
 
     # memcpy(&Memory[8], data[0], size)
-    mov  rax, [rip + .Memory.addr]
-    mov  rdi, [rip + .Memory.dataOffset.0]
+    mov  rax, [rip + .Wa.Memory.addr]
+    mov  rdi, [rip + .Wa.Memory.dataOffset.0]
     add  rdi, rax
-    lea  rsi, [rip + .Memory.dataPtr.0]
-    mov  rdx, [rip + .Memory.dataSize.0]
-    call .Runtime.memcpy
+    lea  rsi, [rip + .Wa.Memory.dataPtr.0]
+    mov  rdx, [rip + .Wa.Memory.dataSize.0]
+    call .Wa.Runtime.memcpy
 
     # 函数返回
     mov rsp, rbp
     pop rbp
     ret
 
+# 定义表格
+.section .data
+.align 8
+.globl .Wa.Table.addr
+.globl .Wa.Table.size
+.globl .Wa.Table.maxSize
+.Wa.Table.addr: .quad 0
+.Wa.Table.size: .quad 1
+.Wa.Table.maxSize: .quad 1
+
 # 汇编程序入口函数
 .section .text
-.globl main
-main:
+.globl _start
+_start:
     push rbp
     mov  rbp, rsp
     sub  rsp, 32
 
-    call .Memory.initFunc
-    call .F.main
+    call .Wa.Memory.initFunc
+    call .Wa.F.main
 
     # runtime.exit(0)
     mov  rdi, 0
-    call .Runtime.exit
+    call .Wa.Runtime.exit
 
     # exit 后这里不会被执行, 但是依然保留
     mov rsp, rbp
@@ -95,25 +107,25 @@ main:
 
 .section .data
 .align 8
-.Runtime.panic.message: .asciz "panic"
-.Runtime.panic.messageLen: .quad 5
+.Wa.Runtime.panic.message: .asciz "panic"
+.Wa.Runtime.panic.messageLen: .quad 5
 
 .section .text
-.globl .Runtime.panic
-.Runtime.panic:
+.globl .Wa.Runtime.panic
+.Wa.Runtime.panic:
     push rbp
     mov  rbp, rsp
     sub  rsp, 32
 
     # runtime.write(stderr, panicMessage, size)
     mov  rdi, 2 # stderr
-    lea  rsi, [rip + .Runtime.panic.message]
-    mov  rdx, [rip + .Runtime.panic.messageLen] # size
-    call .Runtime.write
+    lea  rsi, [rip + .Wa.Runtime.panic.message]
+    mov  rdx, [rip + .Wa.Runtime.panic.messageLen] # size
+    call .Wa.Runtime.write
 
     # 退出程序
     mov  rdi, 1 # 退出码
-    call .Runtime.exit
+    call .Wa.Runtime.exit
 
     # return
     mov rsp, rbp
@@ -122,7 +134,7 @@ main:
 
 # func main
 .section .text
-.F.main:
+.Wa.F.main:
     push rbp
     mov  rbp, rsp
     sub  rsp, 32
@@ -132,6 +144,8 @@ main:
     # 没有返回值变量需要初始化为0
 
     # 没有局部变量需要初始化为0
+
+    # fn.body.begin(name=main, suffix=00000000)
 
     # i64.const 1
     movabs rax, 1
@@ -149,12 +163,17 @@ main:
     mov rdi, qword ptr [rbp-8] # arg 0
     mov rsi, qword ptr [rbp-16] # arg 1
     mov rdx, qword ptr [rbp-24] # arg 2
-    call .Import.syscall.write
+    call .Wa.Import.syscall.write
     mov qword ptr [rbp-8], rax
+
     nop # drop [rbp-8]
 
+.Wa.L.brNext.main.00000000:
+    # fn.body.end(name=main, suffix=00000000)
+
     # 根据ABI处理返回值
-.L.return:
+
+    # 将返回值变量复制到寄存器
 
     # 函数返回
     mov rsp, rbp

@@ -37,7 +37,7 @@
 # memcpy(&Memory[8], data[0], size)
 .Wa.Memory.dataOffset.0: .quad 8
 .Wa.Memory.dataSize.0: .quad 12
-.Wa.Memory.dataPtr.0: .asciz "hello world\n"
+.Wa.Memory.dataPtr.0: .asciz "hello world\012"
 
 # 内存初始化函数
 .section .text
