@@ -24,6 +24,11 @@ type parser struct {
 	scanner *scanner.Scanner
 	prog    *ast.File
 
+	gasAlign   int               // 当前的对齐, 遇到 section 后重置
+	gasExtern  map[string]bool   // 外部符号
+	gasAliases map[string]string // 别名
+	gasGlobal  map[string]bool   // 导出符号
+
 	pos token.Pos
 	tok token.Token
 	lit string
@@ -51,6 +56,11 @@ func newParser(cpu abi.CPUType, fset *token.FileSet, filename string, src []byte
 		src:      src,
 		trace:    DebugMode,
 	}
+
+	// 导出的符号
+	p.gasExtern = make(map[string]bool)
+	p.gasAliases = make(map[string]string)
+	p.gasGlobal = make(map[string]bool)
 
 	switch cpu {
 	case abi.LOONG64:
@@ -85,7 +95,11 @@ func newParser(cpu abi.CPUType, fset *token.FileSet, filename string, src []byte
 func (p *parser) ParseFile() (prog *ast.File, err error) {
 	if p.trace {
 		fmt.Println("filename:", p.filename)
-		fmt.Printf("code: %s\n", string(p.src))
+		if N := 60; len(p.src) <= N {
+			fmt.Printf("code: %s\n", string(p.src))
+		} else {
+			fmt.Printf("code: %s...\n", string(p.src[:N]))
+		}
 	}
 
 	defer func() {
@@ -103,7 +117,10 @@ func (p *parser) ParseFile() (prog *ast.File, err error) {
 		}
 	}()
 
-	p.prog = &ast.File{CPU: p.cpu}
+	p.prog = &ast.File{
+		CPU:     p.cpu,
+		Aliases: make(map[string]string),
+	}
 
 	p.scanner.Init(p.file, p.src,
 		func(pos token.Position, msg string) {

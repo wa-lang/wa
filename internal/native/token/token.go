@@ -83,7 +83,7 @@ const (
 	GAS_EXTERN  // .extern _write
 	GAS_SET     // .set .Wa.Runtime.write, _write
 	GAS_ALIGN   // .align 8
-	GAS_BLOBA   // .globl .Wa.Memory.addr
+	GAS_GLOBA   // .globl .Wa.Memory.addr
 	GAS_BYTE    // .name: .byte 0
 	GAS_SHORT   // .name: .short 0
 	GAS_LONG    // .name: .long 0
@@ -177,7 +177,7 @@ var tokens = [...]string{
 	GAS_EXTERN:  ".extern",
 	GAS_SET:     ".set",
 	GAS_ALIGN:   ".align",
-	GAS_BLOBA:   ".globl",
+	GAS_GLOBA:   ".globl",
 	GAS_BYTE:    ".byte",
 	GAS_SHORT:   ".short",
 	GAS_LONG:    ".long",
