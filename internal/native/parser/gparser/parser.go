@@ -49,6 +49,7 @@ func newParser(cpu abi.CPUType, fset *token.FileSet, filename string, src []byte
 		file:     fset.AddFile(filename, -1, len(src)),
 		filename: filename,
 		src:      src,
+		trace:    DebugMode,
 	}
 
 	switch cpu {
