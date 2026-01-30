@@ -245,6 +245,14 @@ func (tok Token) IsOperator() bool { return operator_beg < tok && tok < operator
 // 关键字
 func (tok Token) IsKeyword() bool { return keyword_beg < tok && tok < keyword_end }
 
+// Gas 关键字
+func (tok Token) IsGasKeyword() bool {
+	if tok.IsKeyword() {
+		return tok == GAS_X64_NOPREFIX || tokens[tok][0] == '.'
+	}
+	return false
+}
+
 // 寄存器
 func (tok Token) IsRegister() bool { return REG_BEGIN <= tok && tok < REG_END }
 

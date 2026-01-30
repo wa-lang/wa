@@ -7,11 +7,12 @@ package token
 type LangType int
 
 const (
-	LangType_Unknown LangType = iota
-	LangType_Wa               // 凹语言英文
-	LangType_Wz               // 凹语言中文
-	LangType_Wat              // Wasm 文本
-	LangType_Native           // Native 汇编
+	LangType_Unknown  LangType = iota
+	LangType_Wa                // 凹语言英文
+	LangType_Wz                // 凹语言中文
+	LangType_Wat               // Wasm 文本
+	LangType_Nasm_gas          // Native 汇编, gas 语法
+	LangType_Nasm              // Native 汇编
 )
 
 func (lang LangType) String() string {
@@ -22,8 +23,10 @@ func (lang LangType) String() string {
 		return "wa-lang/wz"
 	case LangType_Wat:
 		return "wa-lang/wat"
-	case LangType_Native:
-		return "wa-lang/native"
+	case LangType_Nasm_gas:
+		return "wa-lang/nasm-gas"
+	case LangType_Nasm:
+		return "wa-lang/nasm"
 	default:
 		return "wa-lang/unknown"
 	}

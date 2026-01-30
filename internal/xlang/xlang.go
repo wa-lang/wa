@@ -7,8 +7,12 @@ import (
 	"path/filepath"
 	"strings"
 
+	nav_scanner "wa-lang.org/wa/internal/native/scanner"
+	nav_token "wa-lang.org/wa/internal/native/token"
 	"wa-lang.org/wa/internal/scanner"
 	"wa-lang.org/wa/internal/token"
+	wat_scanner "wa-lang.org/wa/internal/wat/scanner"
+	wat_token "wa-lang.org/wa/internal/wat/token"
 )
 
 // 判断代码的类型
@@ -21,8 +25,12 @@ func DetectLang(filename string, code []byte) token.LangType {
 		return token.LangType_Wz
 	case ".wat":
 		return token.LangType_Wat
-	case ".ws":
-		return token.LangType_Native
+	case ".wa.s":
+		return token.LangType_Nasm_gas
+	case ".wz.s":
+		return token.LangType_Nasm
+	case ".ws", ".s":
+		return token.LangType_Nasm
 	}
 
 	// 判断 wa/wz
@@ -65,6 +73,65 @@ func DetectLang(filename string, code []byte) token.LangType {
 		}
 	}
 
-	// wat/ws 不做深度识别
+	// 判断 nasm-gas/nasm-zh
+	{
+		var s nav_scanner.Scanner
+		fset := nav_token.NewFileSet()
+		file := fset.AddFile(filename, fset.Base(), len(code))
+		s.Init(file, code, nil, nav_scanner.ScanComments)
+
+		for {
+			_, tok, lit := s.Scan()
+			if tok == nav_token.EOF || tok == nav_token.ILLEGAL {
+				break
+			}
+
+			if tok.IsGasKeyword() {
+				return token.LangType_Nasm_gas
+			}
+
+			// 英文的关键字
+			if tok.IsKeyword() {
+				return token.LangType_Nasm
+			}
+
+			// 中文的关键字
+			if tok == nav_token.IDENT {
+				if token.LookupEx(lit, true) != token.IDENT {
+					return token.LangType_Wz
+				}
+			}
+
+			// 跳过普通注释
+			if tok == nav_token.COMMENT {
+				continue
+			}
+		}
+	}
+
+	// 识别 wat 类型
+	{
+		var s wat_scanner.Scanner
+		file := wat_token.NewFile(filename, len(code))
+		s.Init(file, code, nil, wat_scanner.ScanComments)
+
+		for {
+			_, tok, _ := s.Scan()
+			if tok == wat_token.EOF || tok == wat_token.ILLEGAL {
+				break
+			}
+
+			if tok.IsKeyword() {
+				return token.LangType_Wat
+			}
+
+			// 跳过普通注释
+			if tok == wat_token.COMMENT {
+				continue
+			}
+		}
+	}
+
+	// 未知类型
 	return token.LangType_Unknown
 }
