@@ -442,7 +442,8 @@ func (p *parser) parseInst_loong(fn *ast.Func) (inst *ast.Instruction) {
 	case loong64.OpFormatType_cj_offset:
 		cj, cjSymbol := p.parseInst_loong_imm_cj_3bit()
 		p.acceptToken(token.COMMA)
-		offSymbol := p.parseInst_loong_imm_offset()
+		off, offSymbol := p.parseInst_loong_imm_offset()
+		inst.Arg.Imm = off
 		inst.Arg.Rs1 = abi.RegType(cj) // Rs1 寄存器保存 cj
 		inst.Arg.Rs1Name = cjSymbol
 		inst.Arg.Symbol = offSymbol
@@ -450,7 +451,8 @@ func (p *parser) parseInst_loong(fn *ast.Func) (inst *ast.Instruction) {
 	case loong64.OpFormatType_rj_offset:
 		rj := p.parseRegI_loong(fn)
 		p.acceptToken(token.COMMA)
-		offSymbol := p.parseInst_loong_imm_offset()
+		off, offSymbol := p.parseInst_loong_imm_offset()
+		inst.Arg.Imm = off
 		inst.Arg.Rs1 = rj
 		inst.Arg.Symbol = offSymbol
 		return inst
@@ -459,7 +461,8 @@ func (p *parser) parseInst_loong(fn *ast.Func) (inst *ast.Instruction) {
 		p.acceptToken(token.COMMA)
 		rd := p.parseRegI_loong(fn)
 		p.acceptToken(token.COMMA)
-		offSymbol := p.parseInst_loong_imm_offset()
+		off, offSymbol := p.parseInst_loong_imm_offset()
+		inst.Arg.Imm = off
 		inst.Arg.Rd = rd
 		inst.Arg.Rs1 = rj
 		inst.Arg.Symbol = offSymbol
@@ -469,13 +472,15 @@ func (p *parser) parseInst_loong(fn *ast.Func) (inst *ast.Instruction) {
 		p.acceptToken(token.COMMA)
 		rj := p.parseRegI_loong(fn)
 		p.acceptToken(token.COMMA)
-		offSymbol := p.parseInst_loong_imm_offset()
+		off, offSymbol := p.parseInst_loong_imm_offset()
+		inst.Arg.Imm = off
 		inst.Arg.Rd = rd
 		inst.Arg.Rs1 = rj
 		inst.Arg.Symbol = offSymbol
 		return inst
 	case loong64.OpFormatType_offset:
-		offSymbol := p.parseInst_loong_imm_offset()
+		off, offSymbol := p.parseInst_loong_imm_offset()
+		inst.Arg.Imm = off
 		inst.Arg.Symbol = offSymbol
 		return inst
 
@@ -485,27 +490,6 @@ func (p *parser) parseInst_loong(fn *ast.Func) (inst *ast.Instruction) {
 }
 
 func (p *parser) parseRegI_loong(fn *ast.Func) abi.RegType {
-	// 参数和返回值 可能是寄存器
-	if p.tok == token.IDENT {
-		name := p.parseIdent()
-		for _, x := range fn.Type.Args {
-			if x.Name == name {
-				if x.Reg < loong64.REG_R0 || x.Reg > loong64.REG_R31 {
-					p.errorf(p.pos, "%v is not loongarch int register", x.Name)
-				}
-				return x.Reg
-			}
-		}
-		for _, x := range fn.Type.Return {
-			if x.Name == name {
-				if x.Reg < loong64.REG_R0 || x.Reg > loong64.REG_R31 {
-					p.errorf(p.pos, "%v is not loongarch int register", x.Name)
-				}
-				return x.Reg
-			}
-		}
-	}
-
 	x := p.parseRegister()
 	if x < loong64.REG_R0 || x > loong64.REG_R31 {
 		p.errorf(p.pos, "%v is not loongarch int register", x)
@@ -514,27 +498,6 @@ func (p *parser) parseRegI_loong(fn *ast.Func) abi.RegType {
 }
 
 func (p *parser) parseRegF_loong(fn *ast.Func) abi.RegType {
-	// 参数和返回值 可能是寄存器
-	if p.tok == token.IDENT {
-		name := p.parseIdent()
-		for _, x := range fn.Type.Args {
-			if x.Name == name {
-				if x.Reg < loong64.REG_F0 || x.Reg > loong64.REG_F31 {
-					p.errorf(p.pos, "%v is not loongarch float register", x.Name)
-				}
-				return x.Reg
-			}
-		}
-		for _, x := range fn.Type.Return {
-			if x.Name == name {
-				if x.Reg < loong64.REG_F0 || x.Reg > loong64.REG_F31 {
-					p.errorf(p.pos, "%v is not loongarch float register", x.Name)
-				}
-				return x.Reg
-			}
-		}
-	}
-
 	x := p.parseRegister()
 	if x < loong64.REG_F0 || x > loong64.REG_F31 {
 		p.errorf(p.pos, "%v is not loongarch float register", x)
@@ -550,35 +513,6 @@ func (p *parser) parseInst_loong_imm_ui6() (ui6 int32, symbol string) {
 }
 
 func (p *parser) parseInst_loong_imm_si12(fn *ast.Func) (s12 int32, symbol string, symbolDecor abi.BuiltinFn) {
-	// 参数/返回值/局部变量 都可能是在栈上
-	if p.tok == token.IDENT {
-		name := p.parseIdent()
-		for _, x := range fn.Type.Args {
-			if x.Name == name {
-				if x.Reg != 0 {
-					p.errorf(p.pos, "%v is register", x.Name)
-				}
-				s12 = int32(x.RBPOff)
-				return
-			}
-		}
-		for _, x := range fn.Type.Return {
-			if x.Name == name {
-				if x.Reg != 0 {
-					p.errorf(p.pos, "%v is register", x.Name)
-				}
-				s12 = int32(x.RBPOff)
-				return
-			}
-		}
-		for _, x := range fn.Body.Locals {
-			if x.Name == name {
-				s12 = int32(x.RBPOff)
-				return
-			}
-		}
-	}
-
 	return p.parseInst_loong_immOrSymbolDecor()
 }
 
@@ -597,8 +531,8 @@ func (p *parser) parseInst_loong_imm_si20() (si20 int32, symbol string, symbolDe
 }
 
 // 汇编程序中跳转地址必须用符号表示(因为很难手工获取PC相对地址)
-func (p *parser) parseInst_loong_imm_offset() (symbol string) {
-	return p.parseIdent()
+func (p *parser) parseInst_loong_imm_offset() (si16 int32, symbol string) {
+	return p.parseInst_loong_immOrSymbol()
 }
 
 func (p *parser) parseInst_loong_imm_sa2() (sa2 int32, symbol string) {
@@ -666,6 +600,10 @@ func (p *parser) parseInst_loong_imm_hint_15bit() (x int32, symbol string) {
 
 func (p *parser) parseInst_loong_immOrSymbol() (imm int32, symbol string) {
 	switch p.tok {
+	case token.SUB:
+		p.next()
+		imm = 0 - p.parseInt32Lit()
+		return
 	case token.INT:
 		imm = p.parseInt32Lit()
 		return
@@ -679,13 +617,18 @@ func (p *parser) parseInst_loong_immOrSymbol() (imm int32, symbol string) {
 }
 
 func (p *parser) parseInst_loong_immOrSymbolDecor() (imm int32, symbol string, symbolDecor abi.BuiltinFn) {
+	if p.tok == token.SUB {
+		p.next()
+		imm = 0 - p.parseInt32Lit()
+		return
+	}
 	if p.tok == token.INT {
 		imm = p.parseInt32Lit()
 		return
 	}
 
 	if p.tok != token.IDENT {
-		p.errorf(p.pos, "export IDENT, got %v", p.tok)
+		p.errorf(p.pos, "export IDENT, got %v/%s", p.tok, p.lit)
 	}
 
 	pos := p.pos

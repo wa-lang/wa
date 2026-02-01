@@ -95,21 +95,29 @@ func (p *parser) parseFile_gasGlobalDefine(sectionName string) *ast.Global {
 		Name:    p.parseIdent(),
 	}
 
+	p.acceptToken(token.COLON)
+
 	g.Tok = p.tok
 
 	switch p.tok {
 	case token.GAS_BYTE:
 		g.Type = token.BYTE
+		p.next()
 	case token.GAS_SHORT:
 		g.Type = token.SHORT
+		p.next()
 	case token.GAS_LONG:
 		g.Type = token.LONG
+		p.next()
 	case token.GAS_QUAD:
 		g.Type = token.QUAD
+		p.next()
 	case token.GAS_ASSCII:
 		g.Type = token.STRING
+		p.next()
 	case token.GAS_ASSCIZ:
 		g.Type = token.STRING
+		p.next()
 	default:
 		p.errorf(p.pos, "unkonw token: %v", p.tok)
 	}
@@ -117,6 +125,8 @@ func (p *parser) parseFile_gasGlobalDefine(sectionName string) *ast.Global {
 	g.Init = append(g.Init, &ast.InitValue{
 		Lit: p.parseBasicLit(),
 	})
+
+	p.consumeSemicolonList()
 
 	return g
 }
@@ -142,7 +152,7 @@ func (p *parser) parseFile_gasFuncList(sectionName string) {
 			p.prog.Funcs = append(p.prog.Funcs, p.parseFile_gasFuncDefine(sectionName))
 
 		default:
-			p.errorf(p.pos, "unkonw token: %v", p.tok)
+			return
 		}
 	}
 }

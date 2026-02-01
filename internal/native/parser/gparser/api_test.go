@@ -12,9 +12,7 @@ import (
 )
 
 func TestParseFile(t *testing.T) {
-	gparser.DebugMode = true
-
-	t.Skip("TODO")
+	gparser.DebugMode = false
 
 	fset := token.NewFileSet()
 	file, err := gparser.ParseFile(abi.LOONG64, fset, "./testdata/hello-01/app.s", nil)

@@ -21,6 +21,10 @@ func RegValid(reg abi.RegType) bool {
 
 // 根据名字查找寄存器(忽略大小写, 忽略下划线和点的区别)
 func LookupRegister(regName string) (r abi.RegType, ok bool) {
+	// 临时方案, 支持有美元符号前缀
+	if len(regName) > 0 && regName[0] == '$' {
+		regName = regName[1:]
+	}
 	if regName == "" {
 		return
 	}

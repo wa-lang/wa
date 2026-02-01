@@ -7,7 +7,6 @@ package token
 
 import (
 	"strconv"
-	"strings"
 
 	"wa-lang.org/wa/internal/native/abi"
 )
@@ -33,6 +32,7 @@ const (
 
 	operator_beg // 运算符开始
 	ADD          // +
+	SUB          // -
 	ASSIGN       // =
 	ARROW        // =>
 	COLON        // :
@@ -215,11 +215,6 @@ func init() {
 // 查询标识符的类型
 // 寄存器和指令负责和 Token 名字空间的映射关系, 查询失败返回 0
 func Lookup(ident string, lookupRegisterOrAs func(ident string) Token) Token {
-	// 以 $ 或 % 开头分别为全局和局部符号
-	if strings.HasPrefix(ident, "$") || strings.HasPrefix(ident, "%") {
-		return IDENT
-	}
-
 	// 关键字类型
 	if tok, is_keyword := keywords[ident]; is_keyword {
 		return tok
