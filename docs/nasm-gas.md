@@ -78,7 +78,7 @@ main:
 
 全局变量需要绑定到数据段(`.data`和`.rodata`), 并且指令地址的对齐方式:
 
-```
+```s
 .section .data
 .align 3
 .Table.funcIndexList.0: .quad .Import.syscall.write
@@ -94,6 +94,23 @@ main:
 - `.quad`, 8个字节
 - `.ascii`, ASCII字符串
 - `.asciz`, ASCII字符串, 在结尾添加 `\0`
+- `.incbin`, 包含外部的数据文件
+
+预留一定字节的空间:
+
+```s
+.section .data
+.align 3
+.some.table: .skip 100
+```
+
+以上是预留100字节的空间, 地址是`2^3=8`字节对齐.
+
+包含外部的资源文件:
+
+```s
+.image.data: .incbin "lena.jpg"
+```
 
 ## 定义函数
 
@@ -117,7 +134,7 @@ main:
 
 凹语言自带的汇编器不支持链接外部的符号, 对于 `.extern _Wa_Runtime_write` 语法凹语言汇编器可以解析但是不能链接, 这种情况可以用gcc汇编器.
 
-对于未来可能会支持的X64汇编语言, 必须在开头加上 `.intel_syntax noprefix` 指令, 表示使用 intel 的指令语法风格, 同时
+对于未来可能会支持的X64汇编语言, 必须在开头加上 `.intel_syntax noprefix` 指令, 表示使用 intel 的指令语法风格, 同时去掉寄存器和立即数开头的`%`和`$`等前缀.
 
 ## 补充说明
 
