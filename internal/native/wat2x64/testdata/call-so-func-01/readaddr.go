@@ -4,9 +4,10 @@
 package main
 
 import (
-	"debug/elf"
 	"fmt"
 	"log"
+
+	"wa-lang.org/wa/internal/native/link/elf"
 )
 
 func main() {

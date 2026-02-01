@@ -6,7 +6,7 @@ package asm
 import (
 	"encoding/binary"
 	"fmt"
-	"strings"
+	"os"
 
 	"wa-lang.org/wa/internal/native/abi"
 	"wa-lang.org/wa/internal/native/ast"
@@ -14,23 +14,38 @@ import (
 	"wa-lang.org/wa/internal/native/parser/gparser"
 	"wa-lang.org/wa/internal/native/parser/zparser"
 	"wa-lang.org/wa/internal/native/pcrel"
+	"wa-lang.org/wa/internal/token"
+	"wa-lang.org/wa/internal/xlang"
 )
 
 func (p *_Assembler) asmFile_loong64(filename string, source []byte, opt *abi.LinkOptions) (prog *abi.LinkedProgram, err error) {
 	// 最大的页大小
 	const maxPageSize = 64 << 10
 
+	// get source
+	if source == nil {
+		source, err = os.ReadFile(filename)
+		if err != nil {
+			return nil, err
+		}
+	}
+
 	// 解析汇编程序
-	if strings.HasSuffix(filename, ".wz.s") {
+	xtype := xlang.DetectLang(filename, source)
+	switch xtype {
+	case token.LangType_Nasm:
 		p.file, err = zparser.ParseFile(opt.CPU, p.fset, filename, source)
 		if err != nil {
 			return nil, err
 		}
-	} else {
+	case token.LangType_Nasm_gas:
 		p.file, err = gparser.ParseFile(opt.CPU, p.fset, filename, source)
 		if err != nil {
 			return nil, err
 		}
+	default:
+		err = fmt.Errorf("unsupport file format: %s: %v", filename, xtype)
+		return
 	}
 
 	// 指令段的地址必须页对齐

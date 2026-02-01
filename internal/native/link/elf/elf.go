@@ -370,3 +370,36 @@ type CompressionHeader64 struct {
 	Size      uint64
 	Addralign uint64
 }
+
+// ELF32 Symbol.
+type Sym32 struct {
+	Name  uint32
+	Value uint32
+	Size  uint32
+	Info  uint8
+	Other uint8
+	Shndx uint16
+}
+
+const Sym32Size = 16
+
+// ELF64 symbol table entries.
+type Sym64 struct {
+	Name  uint32 // String table index of name.
+	Info  uint8  // Type and binding information.
+	Other uint8  // Reserved (not used).
+	Shndx uint16 // Section index of symbol.
+	Value uint64 // Symbol value.
+	Size  uint64 // Size of associated object.
+}
+
+const Sym64Size = 24
+
+// Dynamic version flags.
+type DynamicVersionFlag uint16
+
+const (
+	VER_FLG_BASE DynamicVersionFlag = 0x1 /* Version definition of the file. */
+	VER_FLG_WEAK DynamicVersionFlag = 0x2 /* Weak version identifier. */
+	VER_FLG_INFO DynamicVersionFlag = 0x4 /* Reference exists for informational purposes. */
+)
