@@ -33,7 +33,7 @@ func (p *_Assembler) asmFile_loong64(filename string, source []byte, opt *abi.Li
 	// 解析汇编程序
 	xtype := xlang.DetectLang(filename, source)
 	switch xtype {
-	case token.LangType_Nasm:
+	case token.LangType_Nasm_zh:
 		p.file, err = zparser.ParseFile(opt.CPU, p.fset, filename, source)
 		if err != nil {
 			return nil, err

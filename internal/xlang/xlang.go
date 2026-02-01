@@ -28,9 +28,7 @@ func DetectLang(filename string, code []byte) token.LangType {
 	case ".wa.s":
 		return token.LangType_Nasm_gas
 	case ".wz.s":
-		return token.LangType_Nasm
-	case ".ws", ".s":
-		return token.LangType_Nasm
+		return token.LangType_Nasm_zh
 	}
 
 	// 判断 wa/wz
@@ -88,11 +86,6 @@ func DetectLang(filename string, code []byte) token.LangType {
 
 			if tok.IsGasKeyword() {
 				return token.LangType_Nasm_gas
-			}
-
-			// 英文的关键字
-			if tok.IsKeyword() {
-				return token.LangType_Nasm
 			}
 
 			// 中文的关键字
