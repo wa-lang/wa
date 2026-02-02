@@ -1113,9 +1113,10 @@ func (p *wat2X64Worker) buildFunc_ins(
 		fmt.Fprintln(w)
 
 		const r10 = "r10"
+		const r10d = "r10d"
 		p.gasCommentInFunc(w, fmt.Sprintf("%s = table[?]", r10))
 		fmt.Fprintf(w, "    mov  rax, [rip+%s]\n", kTableAddrName)
-		fmt.Fprintf(w, "    mov  %s, [rbp%+d]\n", r10, sp0)
+		fmt.Fprintf(w, "    mov  %s, [rbp%+d] # i32\n", r10d, sp0)
 		fmt.Fprintf(w, "    mov  %s, [rax+%s*8]\n", r10, r10)
 		fmt.Fprintln(w)
 
@@ -1916,8 +1917,8 @@ func (p *wat2X64Worker) buildFunc_ins(
 		i := i.(ast.Ins_I32Const)
 		sp0 := p.fnWasmR0Base - 8*stk.Push(token.I32) - 8
 		fmt.Fprintf(w, "    # i32.const %d\n", i.X)
-		fmt.Fprintf(w, "    mov eax, %d\n", i.X)
-		fmt.Fprintf(w, "    mov [rbp%+d], eax\n", sp0)
+		fmt.Fprintf(w, "    mov rax, %d\n", i.X)
+		fmt.Fprintf(w, "    mov [rbp%+d], rax\n", sp0)
 		fmt.Fprintln(w)
 
 	case token.INS_I64_CONST:
@@ -1934,7 +1935,7 @@ func (p *wat2X64Worker) buildFunc_ins(
 		sp0 := p.fnWasmR0Base - 8*stk.Push(token.F32) - 8
 		fmt.Fprintf(w, "    # f32.const %f\n", i.X)
 		fmt.Fprintf(w, "    mov  eax, 0x%X\n", math.Float32bits(i.X))
-		fmt.Fprintf(w, "    movd [rbp%+d], eax\n", sp0)
+		fmt.Fprintf(w, "    movd [rbp%+d], rax\n", sp0)
 		fmt.Fprintln(w)
 
 	case token.INS_F64_CONST:

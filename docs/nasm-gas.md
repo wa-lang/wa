@@ -93,6 +93,7 @@ main:
 - `.long`, 4个字节
 - `.quad`, 8个字节
 - `.ascii`, ASCII字符串
+- `.asciz`, ASCII字符串, `\0`结尾
 - `.skip`, 一段0填充的内存
 - `.incbin`, 包含外部的数据文件
 

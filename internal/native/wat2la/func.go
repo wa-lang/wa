@@ -1175,7 +1175,7 @@ func (p *wat2laWorker) buildFunc_ins(
 		fmt.Fprintf(w, "    pcalau12i $t0, %%pc_hi20(%s)\n", kTableAddrName)
 		fmt.Fprintf(w, "    addi.d    $t0, $t0, %%pc_lo12(%s)\n", kTableAddrName)
 		fmt.Fprintf(w, "    ld.d      $t0, $t0, 0\n")
-		fmt.Fprintf(w, "    ld.d      $t1, $fp, %d\n", p.fnWasmR0Base-sp0*8-8)
+		fmt.Fprintf(w, "    ld.w      $t1, $fp, %d # i32\n", p.fnWasmR0Base-sp0*8-8)
 		fmt.Fprintf(w, "    slli.d    $t1, $t1, 3 # sizeof(i64) == 8\n")
 		fmt.Fprintf(w, "    add.d     $t1, $t0, $t1\n")
 		fmt.Fprintf(w, "    ld.d      $t1, $t1, 0\n")
