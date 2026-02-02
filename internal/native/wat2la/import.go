@@ -27,32 +27,19 @@ func (p *wat2laWorker) buildImport(w io.Writer) error {
 	// 是否已经导入过
 	seenMap := make(map[string]bool)
 
-	// 声明原始的宿主函数
-	for _, importSpec := range p.m.Imports {
-		if importSpec.ObjKind != token.FUNC {
-			panic(fmt.Sprintf("ERR: import %s.%s", importSpec.ObjModule, importSpec.ObjName))
-		}
-
-		absName := importSpec.ObjModule + "_" + importSpec.ObjName
-		if seenMap[absName] {
-			continue
-		}
-		seenMap[absName] = true
-		p.gasExtern(w, toCName(kImportNamePrefix+absName))
-	}
-
-	// 定义导入函数的别名
+	// 声明导入函数的别名
 	for _, importSpec := range p.m.Imports {
 		if importSpec.ObjKind != token.FUNC {
 			panic(fmt.Sprintf("ERR: import global %s.%s", importSpec.ObjModule, importSpec.ObjName))
 		}
 
-		absName := importSpec.ObjModule + "_" + importSpec.ObjName
+		absName := kImportNamePrefix + importSpec.ObjModule + "." + importSpec.ObjName
 		if !seenMap[absName] {
 			continue
 		}
 
-		p.gasSet(w, kImportNamePrefix+importSpec.ObjModule+"."+importSpec.ObjName, toCName(kImportNamePrefix+absName))
+		seenMap[absName] = true
+		p.gasExtern(w, absName)
 	}
 
 	return nil

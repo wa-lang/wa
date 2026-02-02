@@ -94,13 +94,6 @@ func fixName(s string) string {
 	return s
 }
 
-func toCName(s string) string {
-	s = strings.ReplaceAll(s, "/", "_")
-	s = strings.ReplaceAll(s, "`", "_")
-	s = strings.ReplaceAll(s, ".", "_")
-	return s
-}
-
 // C 语言中 \x 转义序列是“贪婪”的, 会一直读取尽可能多的十六进制字符作为转义值的一部分，不会自动终止。
 // 因此 \x000a 会被解析为 \x0a, 而不是 \x00 和 "0a" 字符串
 // 解决的办法是通过字符串强制切割: \x00""0a

@@ -39,10 +39,7 @@ func (p *wat2X64Worker) buildRuntimeHead(w io.Writer) error {
 
 	p.gasComment(w, "运行时函数")
 	for _, absName := range list {
-		p.gasExtern(w, toCName(absName))
-	}
-	for _, absName := range list {
-		p.gasSet(w, absName, toCName(absName))
+		p.gasExtern(w, absName)
 	}
 	fmt.Fprintln(w)
 	return nil

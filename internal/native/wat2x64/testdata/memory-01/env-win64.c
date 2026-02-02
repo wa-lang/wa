@@ -14,6 +14,15 @@
 
 extern int64_t _Wa_Memory_addr __asm__(".Wa.Memory.addr");
 
+extern int   _Wa_Runtime_write(int fd, void *buf, int count)        asm(".Wa.Runtime.write");
+extern void  _Wa_Runtime_exit(int status)                           asm(".Wa.Runtime.exit");
+extern void* _Wa_Runtime_malloc(int size)                           asm(".Wa.Runtime.malloc");
+extern void* _Wa_Runtime_memcpy(void* dst, const void* src, int n)  asm(".Wa.Runtime.memcpy");
+extern void* _Wa_Runtime_memmove(void* dst, const void* src, int n) asm(".Wa.Runtime.memmove");
+extern void* _Wa_Runtime_memset(void* s, int c, int n)              asm(".Wa.Runtime.memset");
+
+extern int   _Wa_Import_syscall_write(int fd, int ptr, int size)    asm(".Wa.Import.syscall.write");
+
 int _Wa_Import_syscall_write(int fd, int ptr, int size) {
     printf("_Wa_Import_syscall_write: %d, %d, %d\n", fd, ptr, size);
 #if defined(_WIN64)

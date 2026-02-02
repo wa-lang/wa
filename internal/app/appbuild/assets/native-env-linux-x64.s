@@ -7,23 +7,23 @@
 
 # int _Wa_Runtime_write(int fd, void *buf, int count)
 .section .text
-.global _Wa_Runtime_write
-_Wa_Runtime_write:
+.global .Wa.Runtime.write
+.Wa.Runtime.write:
     mov eax, 1
     syscall
     ret
 
 # void _Wa_Runtime_exit(int status)
 .section .text
-.global _Wa_Runtime_exit
-_Wa_Runtime_exit:
+.global .Wa.Runtime.exit
+.Wa.Runtime.exit:
     mov eax, 60
     syscall
 
 # void* _Wa_Runtime_malloc(int size)
 .section .text
-.global _Wa_Runtime_malloc
-_Wa_Runtime_malloc:
+.global .Wa.Runtime.malloc
+.Wa.Runtime.malloc:
     mov r8, -1   # fd = -1
     mov r9, 0    # offset = 0
     mov r10, 34  # flags = MAP_PRIVATE | MAP_ANONYMOUS (0x02 | 0x20)
@@ -36,8 +36,8 @@ _Wa_Runtime_malloc:
 
 # void* _Wa_Runtime_memcpy(void* dst, const void* src, int n)
 .section .text
-.global _Wa_Runtime_memcpy
-_Wa_Runtime_memcpy:
+.global .Wa.Runtime.memcpy
+.Wa.Runtime.memcpy:
     mov  rax, rdi
     test rdx, rdx
     jz   .Wa.L.memcpy.done
@@ -53,8 +53,8 @@ _Wa_Runtime_memcpy:
 
 # void* _Wa_Runtime_memmove(void* dst, const void* src, int n)
 .section .text
-.global _Wa_Runtime_memmove
-_Wa_Runtime_memmove:
+.global .Wa.Runtime.memmove
+.Wa.Runtime.memmove:
     mov rax, rdi              # 备份 dst 用于返回
     cmp rdi, rsi              # 比较 dst 和 src
     je  .Wa.L.memmove.done    # 如果相等, 直接结束
@@ -81,8 +81,8 @@ _Wa_Runtime_memmove:
     ret
 
 # void* _Wa_Runtime_memset(void* s, int c, int n)
-.global _Wa_Runtime_memset
-_Wa_Runtime_memset:
+.global .Wa.Runtime.memset
+.Wa.Runtime.memset:
     mov rax, rdi        # 返回 s
     test rdx, rdx
     jz .Wa.L.memset.done
@@ -95,8 +95,8 @@ _Wa_Runtime_memset:
     ret
 
 # void _Wa_Import_syscall_linux_print_str (uint32_t ptr, int32_t len)
-.global _Wa_Import_syscall_linux_print_str
-_Wa_Import_syscall_linux_print_str:
+.global .Wa.Import.syscall_linux.print_str
+.Wa.Import.syscall_linux.print_str:
     # rax = base + ptr
     mov rax, [rip + .Wa.Memory.addr]
     add rax, rdi
@@ -110,14 +110,14 @@ _Wa_Import_syscall_linux_print_str:
     ret
 
 # void _Wa_Import_syscall_linux_proc_exit(int32_t code)
-.global _Wa_Import_syscall_linux_proc_exit
-_Wa_Import_syscall_linux_proc_exit:
-    jmp _Wa_Runtime_exit
+.global .Wa.Import.syscall_linux.proc_exit
+.Wa.Import.syscall_linux.proc_exit:
+    jmp .Wa.Runtime.exit
 
 # void _Wa_Import_syscall_linux_print_rune(int32_t c)
 .section .text
-.global _Wa_Import_syscall_linux_print_rune
-_Wa_Import_syscall_linux_print_rune:
+.global .Wa.Import.syscall_linux.print_rune
+.Wa.Import.syscall_linux.print_rune:
     push rbp
     mov  rbp, rsp
     sub  rsp, 16
@@ -136,8 +136,8 @@ _Wa_Import_syscall_linux_print_rune:
 
 # void _Wa_Import_syscall_linux_print_i64(int64_t val)
 .section .text
-.global _Wa_Import_syscall_linux_print_i64
-_Wa_Import_syscall_linux_print_i64:
+.global .Wa.Import.syscall_linux.print_i64
+.Wa.Import.syscall_linux.print_i64:
     push rbp
     mov  rbp, rsp
     sub  rsp, 32            # 分配缓冲区
@@ -148,25 +148,25 @@ _Wa_Import_syscall_linux_print_i64:
 
     # 1. 处理负数特殊情况
     test rax, rax
-    jns  .Wa.L.syscall.linux.print_i64.convert
+    jns  .Wa.L.syscall_linux.print_i64.convert
     neg  rax                # 如果是负数, 取反
 
-.Wa.L.syscall.linux.print_i64.convert:
+.Wa.L.syscall_linux.print_i64.convert:
     xor  rdx, rdx           # 每次除法前必须清空 rdx
     div  r8                 # rdx:rax / 10 -> rax=商, rdx=余数
     add  dl, '0'            # 余数转 ASCII
     mov  [rcx], dl
     dec  rcx
     test rax, rax           # 商是否为 0
-    jnz  .Wa.L.syscall.linux.print_i64.convert
+    jnz  .Wa.L.syscall_linux.print_i64.convert
 
     # 2. 补负号
     cmp  rdi, 0
-    jge  .Wa.L.syscall.linux.print_i64.setup_print
+    jge  .Wa.L.syscall_linux.print_i64.setup_print
     mov  byte ptr [rcx], '-'
     dec  rcx
 
-.Wa.L.syscall.linux.print_i64.setup_print:
+.Wa.L.syscall_linux.print_i64.setup_print:
     # 3. 计算长度并打印
     # rcx 现在指向字符串第一个字符的前一个位置
     inc  rcx                # 指向第一个字符

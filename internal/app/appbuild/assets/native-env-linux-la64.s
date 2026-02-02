@@ -5,23 +5,23 @@
 
 # int _Wa_Runtime_write(int fd, void *buf, int count)
 .section .text
-.global _Wa_Runtime_write
-_Wa_Runtime_write:
+.global .Wa.Runtime.write
+.Wa.Runtime.write:
     addi.d $a7, $zero, 64 # sys_write
     syscall 0
     jirl   $zero, $ra, 0
 
 # void _Wa_Runtime_exit(int status)
 .section .text
-.global _Wa_Runtime_exit
-_Wa_Runtime_exit:
+.global .Wa.Runtime.exit
+.Wa.Runtime.exit:
     addi.d $a7, $zero, 93 # sys_exit
     syscall 0
 
 # void* _Wa_Runtime_malloc(int size)
 .section .text
-.global _Wa_Runtime_malloc
-_Wa_Runtime_malloc:
+.global .Wa.Runtime.malloc
+.Wa.Runtime.malloc:
     or     $a1, $a0, $zero   # length = size
     addi.d $a0, $zero, 0     # addr = NULL
     addi.d $a2, $zero, 3     # prot = PROT_READ | PROT_WRITE
@@ -34,8 +34,8 @@ _Wa_Runtime_malloc:
 
 # void* _Wa_Runtime_memcpy(void* dst, const void* src, int n)
 .section .text
-.global _Wa_Runtime_memcpy
-_Wa_Runtime_memcpy:
+.global .Wa.Runtime.memcpy
+.Wa.Runtime.memcpy:
     or     $t0, $a0, $zero   # 备份 dst
     beq    $a2, $zero, .Wa.L.memcpy.done
 .Wa.L.memcpy.loop:
@@ -51,11 +51,11 @@ _Wa_Runtime_memcpy:
 
 # void* _Wa_Runtime_memmove(void* dst, const void* src, int n)
 .section .text
-.global _Wa_Runtime_memmove
-_Wa_Runtime_memmove:
+.global .Wa.Runtime.memmove
+.Wa.Runtime.memmove:
     beq    $a0, $a1, .Wa.L.memmove.done
     # 如果 a0 < a1 (无符号比较), 跳转到向前拷贝
-    bltu   $a0, $a1, _Wa_Runtime_memcpy 
+    bltu   $a0, $a1, .Wa.Runtime.memcpy 
 
     # 后向拷贝 (dst > src)
     or     $t0, $a0, $zero
@@ -75,8 +75,8 @@ _Wa_Runtime_memmove:
     jirl   $zero, $ra, 0
 
 # void* _Wa_Runtime_memset(void* s, int c, int n)
-.global _Wa_Runtime_memset
-_Wa_Runtime_memset:
+.global .Wa.Runtime.memset
+.Wa.Runtime.memset:
     or     $t0, $a0, $zero
     beq    $a2, $zero, .Wa.L.memset.done
 .Wa.L.memset.loop:
@@ -89,8 +89,8 @@ _Wa_Runtime_memset:
     jirl   $zero, $ra, 0
 
 # void _Wa_Import_syscall_linux_print_str (uint32_t ptr, int32_t len)
-.global _Wa_Import_syscall_linux_print_str
-_Wa_Import_syscall_linux_print_str:
+.global .Wa.Import.syscall_linux.print_str
+.Wa.Import.syscall_linux.print_str:
     pcalau12i $t0, %pc_hi20(.Wa.Memory.addr)
     ld.d      $t0, $t0, %pc_lo12(.Wa.Memory.addr)
 
@@ -103,14 +103,14 @@ _Wa_Import_syscall_linux_print_str:
     jirl   $zero, $ra, 0
 
 # void _Wa_Import_syscall_linux_proc_exit(int32_t code)
-.global _Wa_Import_syscall_linux_proc_exit
-_Wa_Import_syscall_linux_proc_exit:
-    b _Wa_Runtime_exit
+.global .Wa.Import.syscall_linux.proc_exit
+.Wa.Import.syscall_linux.proc_exit:
+    b .Wa.Runtime.exit
 
 # void _Wa_Import_syscall_linux_print_rune(int32_t c)
 .section .text
-.global _Wa_Import_syscall_linux_print_rune
-_Wa_Import_syscall_linux_print_rune:
+.global .Wa.Import.syscall_linux.print_rune
+.Wa.Import.syscall_linux.print_rune:
     addi.d  $sp, $sp, -16
     st.d    $ra, $sp, 8
     st.d    $fp, $sp, 0
@@ -133,8 +133,8 @@ _Wa_Import_syscall_linux_print_rune:
 
 # void _Wa_Import_syscall_linux_print_i64(int64_t val)
 .section .text
-.global _Wa_Import_syscall_linux_print_i64
-_Wa_Import_syscall_linux_print_i64:
+.global .Wa.Import.syscall_linux.print_i64
+.Wa.Import.syscall_linux.print_i64:
     addi.d  $sp, $sp, -16
     st.d    $ra, $sp, 8
     st.d    $fp, $sp, 0
@@ -146,25 +146,25 @@ _Wa_Import_syscall_linux_print_i64:
     li.d    $t2, 10          # 除数
 
     # 1. 处理负数
-    bge     $t0, $zero, .Wa.L.syscall.linux.print_i64.convert
+    bge     $t0, $zero, .Wa.L.syscall_linux.print_i64.convert
     sub.d   $t0, $zero, $t0  # t0 = abs(t0)
 
-.Wa.L.syscall.linux.print_i64.convert:
+.Wa.L.syscall_linux.print_i64.convert:
     div.d   $t3, $t0, $t2    # t3 = 商
     mod.d   $t4, $t0, $t2    # t4 = 余数
     addi.w  $t4, $t4, 48     # 加上 '0' 的 ASCII 码
     st.b    $t4, $t1, 0      # 存入缓冲区
     addi.d  $t1, $t1, -1     # 指针前移
     move    $t0, $t3         # 更新待处理的数字
-    bnez    $t0, .Wa.L.syscall.linux.print_i64.convert  # 如果商不为 0 则继续
+    bnez    $t0, .Wa.L.syscall_linux.print_i64.convert  # 如果商不为 0 则继续
 
     # 2. 补负号
-    bge     $a0, $zero, .Wa.L.syscall.linux.print_i64.print
+    bge     $a0, $zero, .Wa.L.syscall_linux.print_i64.print
     li.d    $t4, 45          # '-'
     st.b    $t4, $t1, 0
     addi.d  $t1, $t1, -1
 
-.Wa.L.syscall.linux.print_i64.print:
+.Wa.L.syscall_linux.print_i64.print:
     li.d    $a0, 1           # arg.0: stdout
     addi.d  $a1, $t1, 1      # arg.1: buffer
     sub.d   $a2, $fp, $a1    # arg.2: count
