@@ -3,7 +3,9 @@
 
 package wire
 
-import "strings"
+import (
+	"strings"
+)
 
 /**************************************
 本文件包含了 Block 对象的功能
@@ -18,27 +20,28 @@ Block 定义了作用域，块内的值无法在块外访问
 函数体对应的 Block，其父 Block 应为 nil
 Todo: Block 是否满足 Value（既是否可有返回值）待讨论
 **************************************/
+
 type Block struct {
 	aStmt
 	Label string // 标签
-	//Locals  []Value       // 该块内定义的局部变量
 	Stmts []Stmt // 该块所含的指令
 
-	objects map[interface{}]*Alloc // AST 结点 -> 块内 Location
-	types   *Types                 // 该函数所属 Module 的类型库，切勿手动修改
+	scope   Scope
+	objects map[interface{}]*Var // AST 结点 -> 块内变量
+	types   *Types               // 该函数所属 Module 的类型库，切勿手动修改
 }
 
 // 初始化 Block
 func (b *Block) init() {
-	b.objects = make(map[interface{}]*Alloc)
+	b.objects = make(map[interface{}]*Var)
 }
 
 // Scope 接口相关
 func (b *Block) ScopeKind() ScopeKind { return ScopeKindBlock }
-func (b *Block) Lookup(obj interface{}, level LocationKind) Location {
+func (b *Block) Lookup(obj interface{}, level VarKind) *Var {
 	if v, ok := b.objects[obj]; ok {
-		if level > v.location {
-			v.location = level
+		if level > v.kind {
+			v.kind = level
 		}
 		return v
 	}
@@ -59,15 +62,12 @@ func (b *Block) Lookup(obj interface{}, level LocationKind) Location {
 	}
 
 	// b 所属的函数是闭包，需要进行变量捕捉
-	outer := parent_fn.Lookup(obj, LocationKindHeap)
-	v := &FreeVar{
-		name:   outer.Name(),
-		typ:    outer.Type(),
-		pos:    outer.Pos(),
-		object: outer.Object(),
-		outer:  outer,
-	}
-	return v
+	//outer := parent_fn.Lookup(obj, LocationKindHeap)
+	//v := &FreeVar{
+	//	outer: outer,
+	//}
+	//return v
+	panic("Todo")
 }
 func (b *Block) Format(tab string, sb *strings.Builder) {
 	sb.WriteString(tab)
@@ -88,16 +88,20 @@ func (b *Block) Format(tab string, sb *strings.Builder) {
 	sb.WriteString("}")
 }
 
+func (b *Block) ParentScope() Scope {
+	return b.scope
+}
+
 // CreateBlock 创建一个 Block 初始化其 scope 等，但并不添加至父 Block 中
 func (b *Block) createBlock(label string, pos int) *Block {
 	block := &Block{}
 	block.Stringer = block
 	block.Label = label
 	block.pos = pos
-	block.objects = make(map[interface{}]*Alloc)
+	block.objects = make(map[interface{}]*Var)
 	block.types = b.types
 
-	block.setScope(b)
+	block.scope = b
 	return block
 }
 
@@ -111,6 +115,5 @@ func (b *Block) EmitBlock(label string, pos int) *Block {
 
 // emit 向 Block 中添加一个指令
 func (b *Block) emit(stmt Stmt) {
-	stmt.setScope(b)
 	b.Stmts = append(b.Stmts, stmt)
 }

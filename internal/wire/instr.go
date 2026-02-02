@@ -9,74 +9,81 @@ import (
 )
 
 /**************************************
-aStmt: 实现 Stmt 接口与 Pos、Scope 相关的方法
+aStmt: 实现 Stmt 接口与 Pos 相关的方法
 包含 aStmt 的对象必须自行实现 Stringer 接口！
 **************************************/
+
 type aStmt struct {
 	fmt.Stringer
-	pos   int
-	scope Scope
+	pos int
 }
 
-func (v *aStmt) ParentScope() Scope { return v.scope }
-func (v *aStmt) setScope(s Scope)   { v.scope = s }
-func (v *aStmt) Pos() int           { return v.pos }
+func (v *aStmt) Pos() int { return v.pos }
 func (v *aStmt) Format(tab string, sb *strings.Builder) {
 	sb.WriteString(tab)
 	sb.WriteString(v.String())
 }
 
 /**************************************
-Alloc: Alloc 指令，分配一个变量位置，该对象同时实现了 Location 接口
+VarKind: 变量位置类别
 **************************************/
-type Alloc struct {
+
+type VarKind int
+
+const (
+	Register VarKind = iota
+	//Stack
+	Heap
+)
+
+/**************************************
+Var: Var 指令，定义一个变量
+**************************************/
+
+type Var struct {
 	aStmt
-	location LocationKind
-	name     string
-	dataType Type
-	refType  Type
-	object   interface{} // 与该值关联的 AST 结点。对凹语言前端，应为 types.Object
+	kind   VarKind
+	name   string
+	dtype  Type
+	rtype  Type
+	object interface{} // 与该值关联的 AST 结点。对凹语言前端，应为 types.Object
 }
 
-func (i *Alloc) Name() string { return i.name }
-func (i *Alloc) Type() Type {
-	if i.location == LocationKindRegister {
-		return i.dataType
+func (i *Var) Name() string { return i.name }
+func (i *Var) Type() Type {
+	if i.kind == Register {
+		return i.dtype
 	} else {
-		return i.refType
+		return i.rtype
 	}
 }
-func (i *Alloc) retained() bool { return false }
-func (i *Alloc) String() string {
-	switch i.location {
-	case LocationKindRegister:
-		return fmt.Sprintf("var %s %s", i.name, i.dataType.Name())
+func (i *Var) retained() bool { return false }
+func (i *Var) String() string {
+	switch i.kind {
+	case Register:
+		return fmt.Sprintf("var %s %s", i.name, i.dtype.Name())
 
-	case LocationKindStack:
-		return fmt.Sprintf("var %s %s = alloc.stack(%s)", i.name, i.refType.Name(), i.dataType.Name())
+	//case Stack:
+	//	return fmt.Sprintf("var %s %s = alloc.stack(%s)", i.name, i.rtype.Name(), i.dtype.Name())
 
-	case LocationKindHeap:
-		return fmt.Sprintf("var %s %s = alloc.heap(%s)", i.name, i.refType.Name(), i.dataType.Name())
+	case Heap:
+		return fmt.Sprintf("var %s %s = alloc.heap(%s)", i.name, i.rtype.Name(), i.dtype.Name())
 	}
-	panic(fmt.Sprintf("Invalid LocationType: %v", i.location))
+	panic(fmt.Sprintf("Invalid VarKind: %v", i.kind))
 }
+func (i *Var) DataType() Type { return i.dtype }
+func (i *Var) RefType() Type  { return i.rtype }
 
-// Location 接口相关
-func (i *Alloc) LocationKind() LocationKind { return i.location }
-func (i *Alloc) DataType() Type             { return i.dataType }
-func (i *Alloc) Object() interface{}        { return i.object }
+//func (i *Var) Object() interface{} { return i.object }
 
 // AddLocal 在 Block 中分配一个局部变量，初始时位于 Register
-func (b *Block) AddLocal(name string, typ Type, pos int, obj interface{}, refMode bool) *Alloc {
-	v := &Alloc{}
+func (b *Block) AddLocal(name string, typ Type, pos int, obj interface{}) *Var {
+	v := &Var{}
 	v.Stringer = v
 	v.name = name
-	v.dataType = typ
-	if refMode {
-		v.refType = b.types.GenRef(typ)
-	} else {
-		v.refType = b.types.genPtr(typ)
-	}
+	v.dtype = typ
+	v.rtype = b.types.GenRef(typ)
+
 	v.pos = pos
 	v.object = obj
 	if obj != nil {
@@ -89,42 +96,61 @@ func (b *Block) AddLocal(name string, typ Type, pos int, obj interface{}, refMod
 
 /**************************************
 Load: Load 指令，装载 Loc 处的变量，Load 实现了 Expr 接口
+  - Loc 应为 *Var，或类型为 Ref、Ptr 的 Expr
 **************************************/
+
 type Load struct {
 	aStmt
-	Loc Location
+	Loc Expr
 }
 
-func (i *Load) Name() string   { return i.String() }
-func (i *Load) Type() Type     { return i.Loc.DataType() }
+func (i *Load) Name() string { return i.String() }
+func (i *Load) Type() Type {
+	if v, ok := i.Loc.(*Var); ok {
+		return v.DataType()
+	}
+
+	switch t := i.Loc.Type().(type) {
+	case *Ref:
+		return t.Base
+
+	case *Ptr:
+		return t.Base
+
+	default:
+		panic(fmt.Sprintf("Invalid Loc.Type():%s", i.Loc.Type().Name()))
+	}
+}
 func (i *Load) retained() bool { return false }
 func (i *Load) String() string {
-	if i.Loc.LocationKind() == LocationKindRegister {
-		return i.Loc.Name()
-	} else {
-		return "*" + i.Loc.Name()
+	if v, ok := i.Loc.(*Var); ok {
+		if v.kind == Register {
+			return v.name
+		}
 	}
+
+	return fmt.Sprintf("*(%s)", i.Loc.Name())
 }
 
 // 生成一条 Load 指令
-func (b *Block) NewLoad(loc Location, pos int) *Load {
+func NewLoad(loc Expr, pos int) *Load {
 	v := &Load{}
 	v.Stringer = v
 	v.Loc = loc
 	v.pos = pos
-	v.setScope(b)
-
 	return v
 }
 
 /**************************************
 Store: Store 指令，将 Val 存储到 Loc 指定的位置，Store 支持多赋值，该指令应触发 RC+1 动作
- - val 有可能为元组（Tuple），因此 Loc 的长度可能和 Val 的长度不同，此时应将元组展开，完全展开后二者的长度应一致
- - 向 nil 的 loc 赋值是合法的，这等价于向匿名变量 _ 赋值，此时应触发 Drop 动作
+  - Loc 中的元素应为 *Var，或类型为 Ref、Ptr 的 Expr
+  - val 有可能为元组（Tuple），因此 Loc 的长度可能和 Val 的长度不同，此时应将元组展开，完全展开后二者的长度应一致
+  - 向 nil 的 loc 赋值是合法的，这等价于向匿名变量 _ 赋值，此时应触发 Drop 动作
 **************************************/
+
 type Store struct {
 	aStmt
-	Loc []Location
+	Loc []Expr
 	Val []Expr
 }
 
@@ -167,12 +193,13 @@ func (i *Store) String() string {
 			continue
 		}
 
-		if loc.LocationKind() == LocationKindRegister {
-			sb.WriteString(loc.Name())
-		} else {
-			sb.WriteRune('*')
-			sb.WriteString(loc.Name())
+		loc_name := "*(" + loc.Name() + ")"
+		if v, ok := loc.(*Var); ok {
+			if v.kind == Register {
+				loc_name = loc.Name()
+			}
 		}
+		sb.WriteString(loc_name)
 	}
 
 	sb.WriteString(" = ")
@@ -186,11 +213,20 @@ func (i *Store) String() string {
 	return sb.String()
 }
 
-// 在 Block 中添加一条 Store 指令
-func (b *Block) EmitStore(loc Location, val Expr, pos int) *Store {
+func NewStore(loc Expr, val Expr, pos int) *Store {
 	v := &Store{}
 	v.Stringer = v
-	v.Loc = []Location{loc}
+	v.Loc = []Expr{loc}
+	v.Val = []Expr{val}
+	v.pos = pos
+	return v
+}
+
+// 在 Block 中添加一条 Store 指令
+func (b *Block) EmitStore(loc Expr, val Expr, pos int) *Store {
+	v := &Store{}
+	v.Stringer = v
+	v.Loc = []Expr{loc}
 	v.Val = []Expr{val}
 	v.pos = pos
 
@@ -199,7 +235,7 @@ func (b *Block) EmitStore(loc Location, val Expr, pos int) *Store {
 }
 
 // Block.EmitStore 的多重赋值版
-func (b *Block) EmitStoreN(locs []Location, vals []Expr, pos int) *Store {
+func (b *Block) EmitStoreN(locs []Expr, vals []Expr, pos int) *Store {
 	v := &Store{}
 	v.Stringer = v
 	v.Loc = locs
@@ -246,6 +282,7 @@ func (b *Block) EmitStoreN(locs []Location, vals []Expr, pos int) *Store {
 /**************************************
 Br: Br 指令
 **************************************/
+
 type Br struct {
 	aStmt
 	Label string
@@ -270,6 +307,7 @@ func (b *Block) EmitBr(label string, pos int) *Br {
 /**************************************
 Return: Return 指令，函数返回，该指令只能出现在 Block 末尾
 **************************************/
+
 type Return struct {
 	aStmt
 	Results []Expr
@@ -301,6 +339,7 @@ func (b *Block) EmitReturn(results []Expr, pos int) *Return {
 /**************************************
 OpCode: 运算符
 **************************************/
+
 type OpCode int
 
 const (
@@ -356,6 +395,7 @@ var OpCodeNames = [...]string{
 /**************************************
 Unop: 单目运算，算符范围[NOT, XOR]，Unop 实现了 Expr
 **************************************/
+
 type Unop struct {
 	aStmt
 	X  Expr
@@ -368,11 +408,10 @@ func (i *Unop) retained() bool { return false }
 func (i *Unop) String() string { return fmt.Sprintf("%s%s", OpCodeNames[i.Op], i.X.Name()) }
 
 // 生成一条 Unop 指令
-func (b *Block) NewUnop(x Expr, op OpCode, pos int) *Unop {
+func NewUnop(x Expr, op OpCode, pos int) *Unop {
 	v := &Unop{X: x, Op: op}
 	v.Stringer = v
 	v.pos = pos
-	v.setScope(b)
 
 	return v
 }
@@ -380,6 +419,7 @@ func (b *Block) NewUnop(x Expr, op OpCode, pos int) *Unop {
 /**************************************
 Biop: 双目运算，算符范围[XOR, LEG]，BiOp 实现了 Expr
 **************************************/
+
 type Biop struct {
 	aStmt
 	X, Y Expr
@@ -390,10 +430,10 @@ func (i *Biop) Name() string { return i.String() }
 func (i *Biop) Type() Type {
 	switch i.Op {
 	case LEG:
-		return i.scope.(*Block).types.Int
+		return &Int{}
 
 	case EQL, NEQ, GTR, LSS, GEQ, LEQ:
-		return i.scope.(*Block).types.Bool
+		return &Bool{}
 
 	default:
 		return i.X.Type()
@@ -405,18 +445,17 @@ func (i *Biop) String() string {
 }
 
 // 生成一条 Biop 指令
-func (b *Block) NewBiop(x, y Expr, op OpCode, pos int) *Biop {
+func NewBiop(x, y Expr, op OpCode, pos int) *Biop {
 	v := &Biop{X: x, Y: y, Op: op}
 	v.Stringer = v
 	v.pos = pos
-	v.setScope(b)
-
 	return v
 }
 
 /**************************************
 If: 条件指令
 **************************************/
+
 type If struct {
 	aStmt
 	Cond  Expr   // 判断条件
@@ -467,6 +506,7 @@ loop $Label {
 	}  // <- break 转这里
 }
 **************************************/
+
 type Loop struct {
 	aStmt
 	Cond  Expr   // 循环条件
@@ -507,30 +547,42 @@ func (b *Block) EmitLoop(cond Expr, label string, pos int) *Loop {
 }
 
 /**************************************
-AsLocation: AsLocation 指令，将一个 Expr 转换为 Location，该对象实现了 Location 接口
+Retain: Retain 指令，引用计数 +1，Retain 指令实现了 Expr，返回 X
 **************************************/
-type AsLocation struct {
+
+type Retain struct {
 	aStmt
-	addr     Expr
-	dataType Type
+	X Expr
 }
 
-func (i *AsLocation) Name() string   { return i.String() }
-func (i *AsLocation) Type() Type     { return i.addr.Type() }
-func (i *AsLocation) retained() bool { return false }
-func (i *AsLocation) String() string { return fmt.Sprintf("(%s)", i.addr.Name()) }
+func (i *Retain) Name() string   { return i.String() }
+func (i *Retain) Type() Type     { return i.X.Type() }
+func (i *Retain) retained() bool { panic("") }
+func (i *Retain) String() string { return fmt.Sprintf("retain(%s)", i.X.Name()) }
 
-// Location 接口相关
-func (i *AsLocation) LocationKind() LocationKind { return LocationKindHeap }
-func (i *AsLocation) DataType() Type             { return i.dataType }
-func (i *AsLocation) Object() interface{}        { return nil }
-
-// 生成一条 AsLocation 指令
-func (b *Block) NewAsLocation(addr Expr, dataType Type, pos int) *AsLocation {
-	v := &AsLocation{addr: addr, dataType: dataType}
+// 生成一条 Retain 指令
+func NewRetain(x Expr, pos int) *Retain {
+	v := &Retain{X: x}
 	v.Stringer = v
 	v.pos = pos
-	v.setScope(b)
+	return v
+}
 
+/**************************************
+Release: Release 指令，引用计数 -1
+**************************************/
+
+type Release struct {
+	aStmt
+	X Expr
+}
+
+func (i *Release) String() string { return fmt.Sprintf("release(%s)", i.X.Name()) }
+
+// 生成一条 Retain 指令
+func NewRelease(x Expr, pos int) *Release {
+	v := &Release{X: x}
+	v.Stringer = v
+	v.pos = pos
 	return v
 }

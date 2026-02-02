@@ -30,7 +30,7 @@ type Scope interface {
 	ParentScope() Scope
 
 	// 递归向上查找关联对象为 obj 的 变量位置，对凹语言前端，obj 应为 types.Object
-	Lookup(obj interface{}, level LocationKind) Location
+	Lookup(obj interface{}, level VarKind) *Var
 
 	// 格式化输出
 	Format(tab string, sb *strings.Builder)
@@ -94,6 +94,7 @@ type Type interface {
 	Name() string    //类型名，自定义类型应包含包路径，需要进行名字修饰
 	Kind() TypeKind  //该类型的类别
 	Equal(Type) bool //判断该类型与输入类型是否相等，注意该比较仅关心类别和结构，不关心类型名
+	hasRef() bool
 }
 
 ///**************************************
@@ -121,12 +122,6 @@ type Stmt interface {
 
 	// 格式化输出
 	Format(tab string, sb *strings.Builder)
-
-	// 获取该指令所属的域
-	ParentScope() Scope
-
-	// 设置该指令所属的域
-	setScope(Scope)
 }
 
 /**************************************
@@ -205,17 +200,14 @@ func (m *Method) Equal(d *Method) bool {
 FreeVar: 闭包捕获的外部变量
 **************************************/
 type FreeVar struct {
-	name   string
-	typ    Type
-	pos    int
-	object interface{}
-	outer  Location // 被捕获的闭包变量
+	outer *Var // 被捕获的闭包变量
 }
 
-func (p *FreeVar) Name() string               { return p.name }
-func (p *FreeVar) Type() Type                 { return p.typ }
-func (p *FreeVar) Pos() int                   { return p.pos }
-func (p *FreeVar) retained() bool             { return false }
-func (p *FreeVar) Object() interface{}        { return p.object }
-func (p *FreeVar) LocationKind() LocationKind { return LocationKindHeap }
-func (p *FreeVar) DataType() Type             { return p.typ }
+func (p *FreeVar) Name() string        { return p.outer.Name() }
+func (p *FreeVar) Type() Type          { return p.outer.Type() }
+func (p *FreeVar) Pos() int            { return p.outer.Pos() }
+func (p *FreeVar) retained() bool      { return false }
+func (p *FreeVar) Object() interface{} { return p.outer.object }
+
+//func (p *FreeVar) LocationKind() LocationKind { return LocationKindHeap }
+//func (p *FreeVar) DataType() Type             { return p.typ }

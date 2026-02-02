@@ -18,16 +18,17 @@ import (
 Module: 定义了一个 wire 模块，对应于 ast.Program
 Module 内含的所有成员极其子成员的 ValueType，必须经由本 Module 的 Types 创建
 **************************************/
+
 type Module struct {
 	Types   Types
-	Globals map[interface{}]Location // 全局变量，对凹语言前端，键（key）为 types.Object
+	Globals map[interface{}]*Var // 全局变量，对凹语言前端，键（key）为 types.Object
 	Funcs   []*Function
 }
 
 // Scope 接口相关
 func (m *Module) ScopeKind() ScopeKind { return ScopeKindModule }
 func (m *Module) ParentScope() Scope   { return nil }
-func (m *Module) Lookup(obj interface{}, level LocationKind) Location {
+func (m *Module) Lookup(obj interface{}, level VarKind) *Var {
 	v, ok := m.Globals[obj]
 	if !ok {
 		panic(fmt.Sprintf("no Value for: %v", obj))
@@ -45,7 +46,7 @@ func (m *Module) Format(tab string, sb *strings.Builder) {
 // 初始化 Module
 func (m *Module) Init() {
 	m.Types.Init()
-	m.Globals = make(map[interface{}]Location)
+	m.Globals = make(map[interface{}]*Var)
 }
 
 // 创建一个 Function。该函数仅创建值，并不会将其合并至 Module 的相应位置

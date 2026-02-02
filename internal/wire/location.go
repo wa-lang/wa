@@ -4,28 +4,17 @@
 package wire
 
 /**************************************
-LocationKind: 位置类别
-**************************************/
-type LocationKind int
-
-const (
-	LocationKindRegister LocationKind = iota
-	LocationKindStack
-	LocationKindHeap
-)
-
-/**************************************
 Location: 可被赋值的位置，可能类别为栈地址、寄存器、堆地址
 **************************************/
-type Location interface {
-	Expr
-
-	// 变量位置类型
-	LocationKind() LocationKind
-
-	// Location指向的对象的类型
-	DataType() Type
-
-	// 与该位置关联的 AST 结点。对凹语言前端，应为 types.Object
-	Object() interface{}
-}
+//type Location interface {
+//	Expr
+//
+//	// 变量位置类型
+//	LocationKind() LocationKind
+//
+//	// Location指向的对象的类型
+//	DataType() Type
+//
+//	// 与该位置关联的 AST 结点。对凹语言前端，应为 types.Object
+//	Object() interface{}
+//}
