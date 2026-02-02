@@ -33,8 +33,11 @@ var arduino_ino string
 //go:embed assets/arduino-host.cpp
 var arduino_host_cpp string
 
-//go:embed assets/native-env-linux-la64.s
-var native_env_linux_la64_s string
+//go:embed assets/native-env-linux-la64.wa.s
+var native_env_linux_la64_wa_s string
+
+//go:embed assets/native-env-linux-la64.wz.s
+var native_env_linux_la64_wz_s string
 
 //go:embed assets/native-env-linux-x64.s
 var native_env_linux_x64_s string
@@ -133,7 +136,7 @@ func BuildApp(opt *appbase.Option, input, outfile string) (mainFunc string, wasm
 				fmt.Printf("read %s failed: %v\n", input, err)
 				os.Exit(1)
 			}
-			_, nasmBytes, err := wat2la.Wat2LA64(input, watData)
+			_, nasmBytes, err := wat2la.Wat2LA64(input, watData, token.LangType_Nasm_gas)
 			if err != nil {
 				fmt.Printf("wat2la %s failed: %v\n", input, err)
 				os.Exit(1)
@@ -269,18 +272,24 @@ func BuildApp(opt *appbase.Option, input, outfile string) (mainFunc string, wasm
 			var nativeAsmFile string
 			var nativeEnvFile string
 			var nativeExtFile string
+			var native_env_linux_la64_s string
+			var targetLang token.LangType
 			if appbase.HasExt(input, ".wz") {
-				nativeEnvFile = appbase.ReplaceExt(outfile, ".wasm", ".env.s")
+				targetLang = token.LangType_Nasm_zh
+				native_env_linux_la64_s = native_env_linux_la64_wz_s
+				nativeEnvFile = appbase.ReplaceExt(outfile, ".wasm", ".env.wz.s")
 				nativeAsmFile = appbase.ReplaceExt(outfile, ".wasm", ".wz.s")
 				nativeExtFile = appbase.ReplaceExt(outfile, ".wasm", ".exe")
 			} else {
-				nativeEnvFile = appbase.ReplaceExt(outfile, ".wasm", ".env.s")
+				targetLang = token.LangType_Nasm_gas
+				native_env_linux_la64_s = native_env_linux_la64_wa_s
+				nativeEnvFile = appbase.ReplaceExt(outfile, ".wasm", ".env.wa.s")
 				nativeAsmFile = appbase.ReplaceExt(outfile, ".wasm", ".wa.s")
 				nativeExtFile = appbase.ReplaceExt(outfile, ".wasm", ".exe")
 			}
 
 			// 将 wat 翻译为本地汇编代码
-			_, nasmBytes, err := wat2la.Wat2LA64(input, watOutput)
+			_, nasmBytes, err := wat2la.Wat2LA64(input, watOutput, targetLang)
 			if err != nil {
 				fmt.Printf("wat2la %s failed: %v\n", input, err)
 				os.Exit(1)
@@ -344,11 +353,11 @@ func BuildApp(opt *appbase.Option, input, outfile string) (mainFunc string, wasm
 			var nativeExtFile string
 			if cpuType == abi.X64Unix {
 				if appbase.HasExt(input, ".wz") {
-					nativeEnvFile = appbase.ReplaceExt(outfile, ".wasm", ".env.s")
+					nativeEnvFile = appbase.ReplaceExt(outfile, ".wasm", ".env.wz.s")
 					nativeAsmFile = appbase.ReplaceExt(outfile, ".wasm", ".wz.s")
 					nativeExtFile = appbase.ReplaceExt(outfile, ".wasm", ".exe")
 				} else {
-					nativeEnvFile = appbase.ReplaceExt(outfile, ".wasm", ".env.s")
+					nativeEnvFile = appbase.ReplaceExt(outfile, ".wasm", ".env.wa.s")
 					nativeAsmFile = appbase.ReplaceExt(outfile, ".wasm", ".wa.s")
 					nativeExtFile = appbase.ReplaceExt(outfile, ".wasm", ".exe")
 				}
@@ -522,18 +531,24 @@ func BuildApp(opt *appbase.Option, input, outfile string) (mainFunc string, wasm
 			var nativeAsmFile string
 			var nativeEnvFile string
 			var nativeExtFile string
+			var native_env_linux_la64_s string
+			var targetLang token.LangType
 			if appbase.HasExt(input, ".wz") {
-				nativeEnvFile = appbase.ReplaceExt(outfile, ".wasm", ".env.s")
+				targetLang = token.LangType_Nasm_zh
+				native_env_linux_la64_s = native_env_linux_la64_wz_s
+				nativeEnvFile = appbase.ReplaceExt(outfile, ".wasm", ".env.wz.s")
 				nativeAsmFile = appbase.ReplaceExt(outfile, ".wasm", ".wz.s")
 				nativeExtFile = appbase.ReplaceExt(outfile, ".wasm", ".exe")
 			} else {
-				nativeEnvFile = appbase.ReplaceExt(outfile, ".wasm", ".env.s")
+				targetLang = token.LangType_Nasm_gas
+				native_env_linux_la64_s = native_env_linux_la64_wa_s
+				nativeEnvFile = appbase.ReplaceExt(outfile, ".wasm", ".env.wa.s")
 				nativeAsmFile = appbase.ReplaceExt(outfile, ".wasm", ".wa.s")
 				nativeExtFile = appbase.ReplaceExt(outfile, ".wasm", ".exe")
 			}
 
 			// 将 wat 翻译为本地汇编代码
-			_, nasmBytes, err := wat2la.Wat2LA64(input, watOutput)
+			_, nasmBytes, err := wat2la.Wat2LA64(input, watOutput, targetLang)
 			if err != nil {
 				fmt.Printf("wat2la %s failed: %v\n", input, err)
 				os.Exit(1)
@@ -597,11 +612,11 @@ func BuildApp(opt *appbase.Option, input, outfile string) (mainFunc string, wasm
 			var nativeExtFile string
 			if cpuType == abi.X64Unix {
 				if appbase.HasExt(input, ".wz") {
-					nativeEnvFile = appbase.ReplaceExt(outfile, ".wasm", ".env.s")
+					nativeEnvFile = appbase.ReplaceExt(outfile, ".wasm", ".env.wz.s")
 					nativeAsmFile = appbase.ReplaceExt(outfile, ".wasm", ".wz.s")
 					nativeExtFile = appbase.ReplaceExt(outfile, ".wasm", ".exe")
 				} else {
-					nativeEnvFile = appbase.ReplaceExt(outfile, ".wasm", ".env.s")
+					nativeEnvFile = appbase.ReplaceExt(outfile, ".wasm", ".env.wa.s")
 					nativeAsmFile = appbase.ReplaceExt(outfile, ".wasm", ".wa.s")
 					nativeExtFile = appbase.ReplaceExt(outfile, ".wasm", ".exe")
 				}
