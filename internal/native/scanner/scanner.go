@@ -726,12 +726,8 @@ scanAgain:
 			tok = token.SUB
 			lit = "-"
 		case '=':
-			if s.ch == '>' {
-				s.next()
-				tok = token.ARROW
-			} else {
-				tok = token.ASSIGN
-			}
+			tok = token.ASSIGN
+			lit = "="
 		case ':', '：':
 			tok = token.COLON
 			lit = ":"
@@ -745,11 +741,6 @@ scanAgain:
 		case ')', '）':
 			insertSemi = true
 			tok = token.RPAREN
-		case '{':
-			tok = token.LBRACE
-		case '}':
-			insertSemi = true
-			tok = token.RBRACE
 		case '#':
 			// #-style comment
 			if s.insertSemi && s.findLineEnd('#') {

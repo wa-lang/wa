@@ -18,7 +18,6 @@ import (
 	"wa-lang.org/wa/internal/config"
 	"wa-lang.org/wa/internal/loader"
 	"wa-lang.org/wa/internal/native/abi"
-	"wa-lang.org/wa/internal/native/wair2la"
 	"wa-lang.org/wa/internal/native/wat2la"
 	"wa-lang.org/wa/internal/native/wat2x64"
 	"wa-lang.org/wa/internal/token"
@@ -895,24 +894,4 @@ func buildWat(opt *appbase.Option, filename string) (
 	}
 
 	return prog, compiler, []byte(output), nil
-}
-
-func buildNative(opt *appbase.Option, filename string) (err error) {
-	cfg := opt.Config()
-	prog, err := loader.LoadProgram(cfg, filename)
-	if err != nil {
-		return err
-	}
-
-	asmCode, err := wair2la.GenLoongAssembly(prog)
-	if err != nil {
-		return err
-	}
-
-	err = os.WriteFile("a.out.s", asmCode, 0666)
-	if err != nil {
-		return err
-	}
-
-	return nil
 }

@@ -18,19 +18,9 @@ func (p *parser) parseFile_gasExtern() {
 	p.consumeSemicolonList()
 }
 
-// 别名
-func (p *parser) parseFile_gasSet() {
-	p.acceptToken(token.GAS_SET)
-	srcName := p.parseIdent()
-	p.acceptToken(token.COMMA)
-	dstName := p.parseIdent()
-	p.gasAliases[srcName] = dstName
-	p.consumeSemicolonList()
-}
-
 // 导出符号
 func (p *parser) parseFile_gasGlobal() {
-	p.acceptToken(token.GAS_GLOBA)
+	p.acceptToken(token.GAS_GLOBL)
 	ident := p.parseIdent()
 	p.gasGlobal[ident] = true
 	// 对象可能在后面定义, 最后再收集
@@ -78,7 +68,7 @@ func (p *parser) parseFile_gasGlobalDefineList(sectionName string) {
 			p.prog.Comments = append(p.prog.Comments, commentObj)
 			p.prog.Objects = append(p.prog.Objects, commentObj)
 
-		case token.GAS_GLOBA:
+		case token.GAS_GLOBL:
 			p.parseFile_gasGlobal()
 		case token.IDENT:
 			p.prog.Globals = append(p.prog.Globals, p.parseFile_gasGlobalDefine(sectionName))
@@ -101,30 +91,33 @@ func (p *parser) parseFile_gasGlobalDefine(sectionName string) *ast.Global {
 
 	switch p.tok {
 	case token.GAS_BYTE:
-		g.Type = token.BYTE
+		g.Type = token.I8
 		p.next()
 	case token.GAS_SHORT:
-		g.Type = token.SHORT
+		g.Type = token.I16
 		p.next()
 	case token.GAS_LONG:
-		g.Type = token.LONG
+		g.Type = token.I32
 		p.next()
 	case token.GAS_QUAD:
-		g.Type = token.QUAD
+		g.Type = token.I64
 		p.next()
 	case token.GAS_ASSCII:
-		g.Type = token.STRING
+		g.Type = 0
 		p.next()
-	case token.GAS_ASSCIZ:
-		g.Type = token.STRING
+	case token.GAS_SKIP:
+		g.Type = 0
+		p.next()
+	case token.GAS_INCBIN:
+		g.Type = 0
 		p.next()
 	default:
 		p.errorf(p.pos, "unkonw token: %v", p.tok)
 	}
 
-	g.Init = append(g.Init, &ast.InitValue{
+	g.Init = &ast.InitValue{
 		Lit: p.parseBasicLit(),
-	})
+	}
 
 	p.consumeSemicolonList()
 
@@ -146,7 +139,7 @@ func (p *parser) parseFile_gasFuncList(sectionName string) {
 			p.prog.Comments = append(p.prog.Comments, commentObj)
 			p.prog.Objects = append(p.prog.Objects, commentObj)
 
-		case token.GAS_GLOBA:
+		case token.GAS_GLOBL:
 			p.parseFile_gasGlobal()
 		case token.IDENT:
 			p.prog.Funcs = append(p.prog.Funcs, p.parseFile_gasFuncDefine(sectionName))

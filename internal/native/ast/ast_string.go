@@ -5,13 +5,11 @@ package ast
 
 import (
 	"fmt"
-	"strconv"
 	"strings"
 
 	"wa-lang.org/wa/internal/native/abi"
 	"wa-lang.org/wa/internal/native/loong64"
 	"wa-lang.org/wa/internal/native/riscv"
-	"wa-lang.org/wa/internal/native/token"
 )
 
 func (p *File) String() string {
@@ -76,9 +74,6 @@ func (p *CommentGroup) String() string {
 }
 
 func (p *BasicLit) String() string {
-	if p.TypeCast != token.NONE && p.TypeCast != p.LitKind.DefaultNumberType() {
-		return fmt.Sprintf("%v(%s)", p.TypeCast, p.LitString)
-	}
 	return p.LitString
 }
 
@@ -102,7 +97,7 @@ func (p *Global) String() string {
 		sb.WriteRune('\n')
 	}
 
-	if p.Type != token.NONE {
+	if p.Type != 0 {
 		sb.WriteString(fmt.Sprintf("%v %s:%v = ", p.Tok, p.Name, p.Type))
 	} else if p.Size != 0 {
 		sb.WriteString(fmt.Sprintf("%v %s:%d = ", p.Tok, p.Name, p.Size))
@@ -110,46 +105,10 @@ func (p *Global) String() string {
 		sb.WriteString(fmt.Sprintf("%v %s = ", p.Tok, p.Name))
 	}
 
-	switch {
-	case len(p.Init) == 0:
-		sb.WriteString("{}")
-	case len(p.Init) == 1 && p.Init[0].Doc == nil && p.Init[0].Offset == 0:
-		xInit := p.Init[0]
-		if xInit.Lit != nil {
-			sb.WriteString(xInit.Lit.String())
-		} else {
-			sb.WriteString(xInit.Symbal)
-		}
-	default:
-		sb.WriteString("{")
-		if len(p.Objects) > 0 {
-			var prevObj Object
-			for _, obj := range p.Objects {
-				if obj.GetDoc() != nil || !isSameType(obj, prevObj) {
-					sb.WriteString("\n")
-				}
-				sb.WriteString("\t")
-				sb.WriteString(obj.String())
-				sb.WriteString(",\n")
-				prevObj = obj
-			}
-		} else {
-			// 孤立的注释输出位置将失去上下文相关性
-			for _, obj := range p.Comments {
-				sb.WriteString(obj.String())
-				sb.WriteString("\n\n")
-			}
-
-			for i, xInit := range p.Init {
-				if i > 0 {
-					sb.WriteByte('\n')
-				}
-				sb.WriteString("\t")
-				sb.WriteString(xInit.String())
-				sb.WriteString(",\n")
-			}
-		}
-		sb.WriteString("}")
+	if p.Init != nil {
+		sb.WriteString(p.Init.Lit.String())
+	} else {
+		sb.WriteString(p.Init.Symbal)
 	}
 
 	return sb.String()
@@ -157,19 +116,14 @@ func (p *Global) String() string {
 
 func (p *InitValue) String() string {
 	var sb strings.Builder
-	if p.Doc != nil {
-		sb.WriteString(p.Doc.String())
-		sb.WriteByte('\n')
-	}
-	sb.WriteString(strconv.Itoa(p.Offset))
-	sb.WriteString(": ")
 	if p.Lit != nil {
 		sb.WriteString(p.Lit.String())
 	} else {
 		sb.WriteString(p.Symbal)
 	}
-	if p.Comment != nil {
-		sb.WriteString(p.Comment.String())
+	if p.Doc != nil {
+		sb.WriteString(p.Doc.String())
+		sb.WriteByte('\n')
 	}
 	return sb.String()
 }
@@ -184,16 +138,6 @@ func (p *Func) String() string {
 	sb.WriteString(p.Tok.String())
 	sb.WriteString(" ")
 	sb.WriteString(p.Name)
-	if len(p.Prop) > 0 {
-		sb.WriteString("[")
-		for i, prop := range p.Prop {
-			if i > 0 {
-				sb.WriteString(",")
-			}
-			sb.WriteString(prop)
-		}
-		sb.WriteString("]")
-	}
 	sb.WriteString(p.Type.String())
 	sb.WriteString(" ")
 	sb.WriteString("{\n")

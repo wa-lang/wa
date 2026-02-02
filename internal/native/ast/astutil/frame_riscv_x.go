@@ -39,7 +39,7 @@ func buildFuncArgReturn_riscv(cpu abi.CPUType, fn *ast.Func) error {
 	// 返回值
 	for i := len(fn.Type.Return) - 1; i >= 0; i-- {
 		switch ret := fn.Type.Return[i]; ret.Type {
-		case token.I32, token.U32, token.I32_zh, token.U32_zh:
+		case token.I32:
 			if iRetReg <= riscv.REG_A1 {
 				ret.Reg = iRetReg
 				iRetReg++
@@ -47,7 +47,7 @@ func buildFuncArgReturn_riscv(cpu abi.CPUType, fn *ast.Func) error {
 			sp = sp - 4
 			ret.RBPOff = sp
 
-		case token.I64, token.U64, token.I64_zh, token.U64_zh:
+		case token.I64:
 			if iRetReg <= riscv.REG_A1 {
 				ret.Reg = iRetReg
 				iRetReg++
@@ -58,7 +58,7 @@ func buildFuncArgReturn_riscv(cpu abi.CPUType, fn *ast.Func) error {
 			sp = sp - 8
 			ret.RBPOff = sp
 
-		case token.F32, token.F32_zh:
+		case token.F32:
 			if fRetReg <= riscv.REG_FA1 {
 				ret.Reg = fRetReg
 				fRetReg++
@@ -66,7 +66,7 @@ func buildFuncArgReturn_riscv(cpu abi.CPUType, fn *ast.Func) error {
 			sp = sp - 4
 			ret.RBPOff = sp
 
-		case token.F64, token.F64_zh:
+		case token.F64:
 			if fRetReg <= riscv.REG_FA1 {
 				ret.Reg = fRetReg
 				fRetReg++
@@ -85,22 +85,22 @@ func buildFuncArgReturn_riscv(cpu abi.CPUType, fn *ast.Func) error {
 	// 输入参数
 	for _, arg := range fn.Type.Args {
 		switch arg.Type {
-		case token.I32, token.U32, token.I32_zh, token.U32_zh:
+		case token.I32:
 			if iArgReg <= riscv.REG_A7 {
 				arg.Reg = iArgReg
 				iArgReg++
 			}
-		case token.I64, token.U64, token.I64_zh, token.U64_zh:
+		case token.I64:
 			if iArgReg <= riscv.REG_A7 {
 				arg.Reg = iArgReg
 				iArgReg++
 			}
-		case token.F32, token.F32_zh:
+		case token.F32:
 			if fArgReg <= riscv.REG_FA7 {
 				arg.Reg = fArgReg
 				fArgReg++
 			}
-		case token.F64, token.F64_zh:
+		case token.F64:
 			if fArgReg <= riscv.REG_FA7 {
 				arg.Reg = fArgReg
 				fArgReg++
@@ -120,22 +120,22 @@ func buildFuncArgReturn_riscv(cpu abi.CPUType, fn *ast.Func) error {
 		}
 
 		switch arg.Type {
-		case token.I32, token.U32, token.I32_zh, token.U32_zh:
+		case token.I32:
 			sp = sp - 4
 			arg.RBPOff = sp
 
-		case token.I64, token.U64, token.I64_zh, token.U64_zh:
+		case token.I64:
 			if sp%8 != 0 {
 				sp -= 4
 			}
 			sp = sp - 8
 			arg.RBPOff = sp
 
-		case token.F32, token.F32_zh:
+		case token.F32:
 			sp = sp - 4
 			arg.RBPOff = sp
 
-		case token.F64, token.F64_zh:
+		case token.F64:
 			if sp%8 != 0 {
 				sp -= 4
 			}
@@ -179,19 +179,19 @@ func buildFuncLocals_riscv(cpu abi.CPUType, fn *ast.Func) error {
 	// 局部变量
 	for i := len(fn.Body.Locals) - 1; i >= 0; i-- {
 		switch x := fn.Body.Locals[i]; x.Type {
-		case token.I32, token.U32, token.I32_zh, token.U32_zh:
+		case token.I32:
 			sp = sp - 4*x.Cap
 			x.RBPOff = sp
-		case token.I64, token.U64, token.I64_zh, token.U64_zh:
+		case token.I64:
 			if sp%8 != 0 {
 				sp -= 4
 			}
 			sp = sp - 8*x.Cap
 			x.RBPOff = sp
-		case token.F32, token.F32_zh:
+		case token.F32:
 			sp = sp - 4*x.Cap
 			x.RBPOff = sp
-		case token.F64, token.F64_zh:
+		case token.F64:
 			if sp%8 != 0 {
 				sp -= 4
 			}

@@ -13,11 +13,6 @@ import (
 
 // global $f32: 20 = f32(12.5)
 
-// global $info: 1024 = {
-//     5: "abc",    # 从第5字节开始 `abc\0`
-//     9: i32(123), # 从第9字节开始
-// }
-
 func (p *parser) parseGlobal(tok token.Token) *ast.Global {
 	g := &ast.Global{Pos: p.pos, Tok: tok}
 
@@ -26,128 +21,53 @@ func (p *parser) parseGlobal(tok token.Token) *ast.Global {
 		p.prog.Objects = p.prog.Objects[:len(p.prog.Objects)-1]
 	}
 
-	g.Tok = p.acceptTokenAorB(token.GLOBAL, token.GLOBAL_zh)
+	g.Tok = p.acceptToken(token.GLOBAL_zh)
 	g.Name = p.parseIdent()
 
 	if p.tok == token.COLON {
 		p.acceptToken(token.COLON)
 		switch p.tok {
-		case token.I32, token.I32_zh:
-			g.Type = p.tok
+		case token.BYTE_zh:
+			g.Type = token.I8
+			g.Size = 1
+			p.acceptToken(p.tok)
+		case token.SHORT_zh:
+			g.Type = token.I16
+			g.Size = 2
+			p.acceptToken(p.tok)
+		case token.LONG_zh:
+			g.Type = token.I32
 			g.Size = 4
 			p.acceptToken(p.tok)
-		case token.I64, token.I64_zh:
-			g.Type = p.tok
+		case token.QUAD_zh:
+			g.Type = token.I64
 			g.Size = 8
 			p.acceptToken(p.tok)
-		case token.U32, token.U32_zh:
-			g.Type = p.tok
-			g.Size = 4
-			p.acceptToken(p.tok)
-		case token.U64, token.U64_zh:
-			g.Type = p.tok
-			g.Size = 8
-			p.acceptToken(p.tok)
-		case token.F32:
-			g.Type = p.tok
-			g.Size = 4
-			p.acceptToken(token.F32)
-		case token.F64:
-			g.Type = p.tok
-			g.Size = 8
-			p.acceptToken(token.F64)
-		case token.INT:
-			// 没有固定类型, 只有内存大小
-			g.Type = token.NONE
-			g.Size = p.parseIntLit()
 		default:
-			// 不需要显式指定类型或内存大小的情况
-			// global x = INT/FLOAT/STRING
+			panic("unreachable")
 		}
 	}
 
 	// 全局变量必须显式初始化
 	p.acceptToken(token.ASSIGN)
 
-	if p.tok == token.LBRACE {
-		p.parseGlobal_initGroup(g)
+	g.Init = &ast.InitValue{}
+
+	if p.tok == token.IDENT {
+		g.Init.Symbal = p.parseIdent()
+		if g.Size == 0 {
+			g.Size = 8
+		}
 	} else {
-		initV := &ast.InitValue{Pos: p.pos}
-		initV.Doc = p.parseDocComment(&g.Comments, initV.Pos)
-		if initV.Doc != nil {
-			g.Objects = g.Objects[:len(g.Objects)-1]
-		}
-
-		if p.tok == token.IDENT {
-			initV.Symbal = p.parseIdent()
-			if g.Size == 0 {
-				g.Size = 8
-			}
-		} else {
-			initV.Lit = p.parseBasicLit()
-			if g.Size == 0 {
-				if initV.Lit.LitKind == token.STRING {
-					g.Size = len(initV.Lit.ConstV.(string))
-				} else {
-					switch tok := initV.Lit.TypeCast; tok {
-					case token.NONE:
-						panic("unreachable")
-					default:
-						g.Size = int(tok.NumberTypeSize())
-					}
-				}
+		g.Init.Lit = p.parseBasicLit()
+		if g.Size == 0 {
+			if g.Init.Lit.LitKind == token.STRING {
+				g.Size = len(g.Init.Lit.ConstV.(string))
 			}
 		}
-		initV.Comment = p.parseTailComment(initV.Pos)
-		g.Init = []*ast.InitValue{initV}
-	}
-
-	if g.Size == 0 {
-		p.errorf(p.pos, "unknown global %s memory size", g.Name)
 	}
 
 	p.consumeSemicolonList()
 
 	return g
-}
-
-func (p *parser) parseGlobal_initGroup(g *ast.Global) {
-	p.acceptToken(token.LBRACE)
-	defer p.acceptToken(token.RBRACE)
-
-	// 结构体初始化
-	// 必须显式以整数字面值指定要初始化的偏移地址
-Loop:
-	for {
-		switch p.tok {
-		case token.RBRACE:
-			break Loop
-		case token.COMMENT:
-			commentObj := p.parseCommentGroup(false)
-			g.Comments = append(g.Comments, commentObj)
-			g.Objects = append(g.Objects, commentObj)
-		case token.INT:
-			initV := &ast.InitValue{Pos: p.pos}
-			{
-				initV.Doc = p.parseDocComment(&g.Comments, initV.Pos)
-				if initV.Doc != nil {
-					g.Objects = g.Objects[:len(g.Objects)-1]
-				}
-
-				initV.Offset = p.parseIntLit()
-				p.acceptToken(token.COLON)
-				if p.tok == token.IDENT {
-					initV.Symbal = p.parseIdent()
-				} else {
-					initV.Lit = p.parseBasicLit()
-				}
-				initV.Comment = p.parseTailComment(initV.Pos)
-			}
-			g.Init = append(g.Init, initV)
-			g.Objects = append(g.Objects, initV)
-
-		default:
-			p.errorf(p.pos, "unknown token %v", p.tok)
-		}
-	}
 }

@@ -29,7 +29,7 @@ func unreachable() {
 	panic("unreachable")
 }
 
-func wat2nativeType(typ token.Token) nativetok.Token {
+func wat2nativeType(typ token.Token) nativetok.Type {
 	switch typ {
 	case token.I32:
 		return nativetok.I32

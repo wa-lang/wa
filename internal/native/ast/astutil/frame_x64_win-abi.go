@@ -49,16 +49,16 @@ func buildFuncFrame_x64_windows(fn *ast.Func) error {
 
 		// 是基于 rbp 的位置
 		switch ret := fn.Type.Return[0]; ret.Type {
-		case token.I32, token.U32, token.I32_zh, token.U32_zh:
+		case token.I32:
 			fn.Type.Return[0].Reg = x64.REG_RAX
 			fn.Type.Return[0].RBPOff = -8 // rbp-8
-		case token.I64, token.U64, token.I64_zh, token.U64_zh:
+		case token.I64:
 			fn.Type.Return[0].Reg = x64.REG_RAX
 			fn.Type.Return[0].RBPOff = -8 // rbp-8
-		case token.F32, token.F32_zh:
+		case token.F32:
 			fn.Type.Return[0].Reg = x64.REG_XMM0
 			fn.Type.Return[0].RBPOff = -8 // rbp-8
-		case token.F64, token.F64_zh:
+		case token.F64:
 			fn.Type.Return[0].Reg = x64.REG_XMM0
 			fn.Type.Return[0].RBPOff = -8 // rbp-8
 		default:
@@ -84,7 +84,7 @@ func buildFuncFrame_x64_windows(fn *ast.Func) error {
 	// 输入参数全部在调用方分配空间
 	for i, arg := range fn.Type.Args {
 		switch arg.Type {
-		case token.I32, token.U32, token.I32_zh, token.U32_zh:
+		case token.I32:
 			if nArgReg < MaxRegArgs && iArgRegIdx < len(iArgRegList) {
 				arg.Reg = iArgRegList[iArgRegIdx]
 				iArgRegIdx++
@@ -92,7 +92,7 @@ func buildFuncFrame_x64_windows(fn *ast.Func) error {
 			}
 			arg.RBPOff = headSize + arg0Base + i*8 // rbp
 			arg.RSPOff = arg0Base + i*8            // 调用前的 rsp
-		case token.I64, token.U64, token.I64_zh, token.U64_zh:
+		case token.I64:
 			if nArgReg < MaxRegArgs && iArgRegIdx < len(iArgRegList) {
 				arg.Reg = iArgRegList[iArgRegIdx]
 				iArgRegIdx++
@@ -100,7 +100,7 @@ func buildFuncFrame_x64_windows(fn *ast.Func) error {
 			}
 			arg.RBPOff = headSize + arg0Base + i*8 // rbp
 			arg.RSPOff = arg0Base + i*8            // 调用前的 rsp
-		case token.F32, token.F32_zh:
+		case token.F32:
 			if nArgReg < MaxRegArgs && fArgRegIdx < len(fArgRegList) {
 				arg.Reg = fArgRegList[fArgRegIdx]
 				fArgRegIdx++
@@ -108,7 +108,7 @@ func buildFuncFrame_x64_windows(fn *ast.Func) error {
 			}
 			arg.RBPOff = headSize + arg0Base + i*8 // rbp
 			arg.RSPOff = i * 8                     // 调用前的 rsp
-		case token.F64, token.F64_zh:
+		case token.F64:
 			if nArgReg < MaxRegArgs && fArgRegIdx < len(fArgRegList) {
 				arg.Reg = fArgRegList[fArgRegIdx]
 				fArgRegIdx++

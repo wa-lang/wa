@@ -21,13 +21,8 @@ func (p *parser) parseBasicLit() *ast.BasicLit {
 	// 常量 $甲 = 整64（‘A’） # i64
 
 	switch p.tok {
-	case token.I32, token.I32_zh,
-		token.I64, token.I64_zh,
-		token.U32, token.U32_zh,
-		token.U64, token.U64_zh,
-		token.F32, token.F32_zh,
-		token.F64, token.F64_zh:
-		pVal.TypeCast = p.tok
+	case token.BYTE_zh, token.SHORT_zh,
+		token.LONG_zh, token.QUAD_zh:
 		p.acceptToken(token.LPAREN)
 		defer p.acceptToken(token.RPAREN)
 	}
@@ -36,9 +31,6 @@ func (p *parser) parseBasicLit() *ast.BasicLit {
 	switch p.tok {
 	case token.CHAR, token.INT, token.FLOAT:
 		pVal.LitKind = p.tok
-		if pVal.TypeCast == token.NONE {
-			pVal.TypeCast = p.tok.DefaultNumberType()
-		}
 		pVal.LitString = p.lit
 		p.acceptToken(p.tok)
 	case token.STRING:

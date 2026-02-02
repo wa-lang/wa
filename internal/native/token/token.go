@@ -3,7 +3,7 @@
 
 package token
 
-// 注意: 禁止依赖 riscv 等子包
+// 注意: 禁止依赖 loong64/riscv 等子包
 
 import (
 	"strconv"
@@ -21,7 +21,7 @@ const (
 	COMMENT              // 注释
 
 	literal_beg // 面值开始
-	IDENT       // 标识符, 以 $ 或 % 开头, $ 表示全局变量
+	IDENT       // 标识符
 	REG         // 寄存器
 	INST        // 机器指令
 	INT         // 12345
@@ -34,7 +34,6 @@ const (
 	ADD          // +
 	SUB          // -
 	ASSIGN       // =
-	ARROW        // =>
 	COLON        // :
 	COMMA        // ,
 	SEMICOLON    // ;
@@ -42,61 +41,47 @@ const (
 	RPAREN       // )
 	LBRACK       // [
 	RBRACK       // ]
-	LBRACE       // {
-	RBRACE       // }
 	operator_end // 运算符结束
-
-	keyword_beg // 关键字开始
-
-	// 英文版关键字
-
-	BYTE   // byte
-	SHORT  // short
-	LONG   // long
-	QUAD   // quad
-	I32    // int32
-	I64    // int64
-	U32    // uint32
-	U64    // uint64
-	F32    // float32
-	F64    // float64
-	CONST  // 常量
-	GLOBAL // 全局
-	LOCAL  // 局部
-	FUNC   // 函数
 
 	// 中文版关键字
 
-	I32_zh    // 普整
-	I64_zh    // 长整
-	U32_zh    // 普正
-	U64_zh    // 长正
-	F32_zh    // 单精
-	F64_zh    // 双精
-	CONST_zh  // 常量
-	GLOBAL_zh // 全局
-	LOCAL_zh  // 局部
-	FUNC_zh   // 函数
-	END_zh    // 完毕
+	zh_keyword_beg // 关键字开始
+
+	CONST_zh    // 常量
+	GLOBAL_zh   // 全局
+	READONLY_zh // 只读
+	FUNC_zh     // 函数
+	END_zh      // 完毕
+	BYTE_zh     // 字节
+	SHORT_zh    // 单字
+	LONG_zh     // 双字
+	QUAD_zh     // 四字
+	ASCII_zh    // 字串
+	SKIP_zh     // 留空
+	FILE_zh     // 文件
+
+	zh_keyword_end // 关键字结束
 
 	// gas 汇编语法关键字(子集)
+
+	gas_keyword_beg // 关键字开始
 
 	GAS_X64_INTEL_SYNTAX // .intel_syntax noprefix, x64 专有
 	GAS_X64_NOPREFIX     // .intel_syntax noprefix, x64 专有
 
 	GAS_EXTERN  // .extern _write
-	GAS_SET     // .set .Wa.Runtime.write, _write
 	GAS_ALIGN   // .align 8
-	GAS_GLOBA   // .globl .Wa.Memory.addr
+	GAS_GLOBL   // .globl .Wa.Memory.addr
 	GAS_BYTE    // .name: .byte 0
 	GAS_SHORT   // .name: .short 0
 	GAS_LONG    // .name: .long 0
 	GAS_QUAD    // .name: .quad 0
 	GAS_ASSCII  // .name: .ascii "abc\000"
-	GAS_ASSCIZ  // .name: .asciz "abc"
+	GAS_SKIP    // .name: .skip 100
+	GAS_INCBIN  // .name: .incbin "lena.jpg"
 	GAS_SECTION // .section .text
 
-	keyword_end // 关键字结束
+	gas_keyword_end // 关键字结束
 )
 
 // 寄存器到 Token 空间的映射
@@ -141,7 +126,6 @@ var tokens = [...]string{
 
 	ADD:       "+",
 	ASSIGN:    "=",
-	ARROW:     "=>",
 	COLON:     ":",
 	COMMA:     ",",
 	SEMICOLON: ";",
@@ -149,45 +133,33 @@ var tokens = [...]string{
 	RPAREN:    ")",
 	LBRACK:    "[",
 	RBRACK:    "]",
-	LBRACE:    "{",
-	RBRACE:    "}",
 
-	I32:    "i32",
-	I64:    "i64",
-	U32:    "u32",
-	U64:    "u64",
-	F32:    "f32",
-	F64:    "f64",
-	CONST:  "const",
-	GLOBAL: "global",
-	LOCAL:  "local",
-	FUNC:   "func",
-
-	I32_zh:    "普整",
-	I64_zh:    "长整",
-	U32_zh:    "普正",
-	U64_zh:    "长正",
-	F32_zh:    "单精",
-	F64_zh:    "双精",
-	CONST_zh:  "常量",
-	GLOBAL_zh: "全局",
-	LOCAL_zh:  "局部",
-	FUNC_zh:   "函数",
-	END_zh:    "完毕",
+	CONST_zh:    "常量",
+	GLOBAL_zh:   "全局",
+	READONLY_zh: "只读",
+	FUNC_zh:     "函数",
+	END_zh:      "完毕",
+	BYTE_zh:     "字节",
+	SHORT_zh:    "单字",
+	LONG_zh:     "双字",
+	QUAD_zh:     "四字",
+	ASCII_zh:    "字串",
+	SKIP_zh:     "留空",
+	FILE_zh:     "文件",
 
 	GAS_X64_INTEL_SYNTAX: ".intel_syntax",
 	GAS_X64_NOPREFIX:     "noprefix",
 
 	GAS_EXTERN:  ".extern",
-	GAS_SET:     ".set",
 	GAS_ALIGN:   ".align",
-	GAS_GLOBA:   ".globl",
+	GAS_GLOBL:   ".globl",
 	GAS_BYTE:    ".byte",
 	GAS_SHORT:   ".short",
 	GAS_LONG:    ".long",
 	GAS_QUAD:    ".quad",
 	GAS_ASSCII:  ".ascii",
-	GAS_ASSCIZ:  ".asciz",
+	GAS_SKIP:    ".skip",
+	GAS_INCBIN:  ".incbin",
 	GAS_SECTION: ".section",
 }
 
@@ -202,13 +174,18 @@ func (tok Token) String() string {
 	return s
 }
 
-var keywords map[string]Token
+var gas_keywords map[string]Token
+var zh_keywords map[string]Token
 
 func init() {
-	keywords = make(map[string]Token)
+	gas_keywords = make(map[string]Token)
+	zh_keywords = make(map[string]Token)
 
-	for i := keyword_beg + 1; i < keyword_end; i++ {
-		keywords[tokens[i]] = i
+	for i := gas_keyword_beg + 1; i < gas_keyword_end; i++ {
+		gas_keywords[tokens[i]] = i
+	}
+	for i := zh_keyword_beg + 1; i < zh_keyword_end; i++ {
+		zh_keywords[tokens[i]] = i
 	}
 }
 
@@ -216,7 +193,10 @@ func init() {
 // 寄存器和指令负责和 Token 名字空间的映射关系, 查询失败返回 0
 func Lookup(ident string, lookupRegisterOrAs func(ident string) Token) Token {
 	// 关键字类型
-	if tok, is_keyword := keywords[ident]; is_keyword {
+	if tok, is_keyword := gas_keywords[ident]; is_keyword {
+		return tok
+	}
+	if tok, is_keyword := zh_keywords[ident]; is_keyword {
 		return tok
 	}
 
@@ -238,14 +218,16 @@ func (tok Token) IsLiteral() bool { return literal_beg < tok && tok < literal_en
 func (tok Token) IsOperator() bool { return operator_beg < tok && tok < operator_end }
 
 // 关键字
-func (tok Token) IsKeyword() bool { return keyword_beg < tok && tok < keyword_end }
+func (tok Token) IsKeyword() bool { return tok.IsGasKeyword() || tok.IsZhKeyword() }
 
 // Gas 关键字
 func (tok Token) IsGasKeyword() bool {
-	if tok.IsKeyword() {
-		return tok == GAS_X64_NOPREFIX || tokens[tok][0] == '.'
-	}
-	return false
+	return gas_keyword_beg < tok && tok < gas_keyword_end
+}
+
+// 中文关键字
+func (tok Token) IsZhKeyword() bool {
+	return zh_keyword_beg < tok && tok < zh_keyword_end
 }
 
 // 寄存器
@@ -274,58 +256,6 @@ func (tok Token) RawAs() abi.As {
 		return abi.As(tok - A_RISCV_BEGIN)
 	}
 	return 0
-}
-
-// 默认的数值类型
-func (tok Token) DefaultNumberType() Token {
-	switch tok {
-	case CHAR, INT:
-		return I32
-	case FLOAT:
-		return F32
-	default:
-		return tok
-	}
-}
-
-// 是否数值类型
-func (tok Token) IsNumberType() bool {
-	switch tok {
-	case I32, I32_zh:
-		return true
-	case I64, I64_zh:
-		return true
-	case U32, U32_zh:
-		return true
-	case U64, U64_zh:
-		return true
-	case F32, F32_zh:
-		return true
-	case F64, F64_zh:
-		return true
-	default:
-		return false
-	}
-}
-
-// 数值类型的内存大小(不含指针和字符串类型)
-func (tok Token) NumberTypeSize() Token {
-	switch tok {
-	case I32, I32_zh:
-		return 4
-	case I64, I64_zh:
-		return 8
-	case U32, U32_zh:
-		return 4
-	case U64, U64_zh:
-		return 8
-	case F32, F32_zh:
-		return 4
-	case F64, F64_zh:
-		return 8
-	default:
-		panic("unreachable")
-	}
 }
 
 // 是否是导出的符号

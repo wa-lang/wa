@@ -21,7 +21,7 @@ func (p *parser) parseConst(tok token.Token) *ast.Const {
 		p.prog.Objects = p.prog.Objects[:len(p.prog.Objects)-1]
 	}
 
-	pConst.Tok = p.acceptTokenAorB(token.CONST, token.CONST_zh)
+	pConst.Tok = p.acceptToken(token.CONST_zh)
 	pConst.Name = p.parseIdent()
 	p.acceptToken(token.ASSIGN)
 	pConst.Value = p.parseBasicLit()

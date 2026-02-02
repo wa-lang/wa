@@ -118,8 +118,7 @@ func (p *parser) ParseFile() (prog *ast.File, err error) {
 	}()
 
 	p.prog = &ast.File{
-		CPU:     p.cpu,
-		Aliases: make(map[string]string),
+		CPU: p.cpu,
 	}
 
 	p.scanner.Init(p.file, p.src,

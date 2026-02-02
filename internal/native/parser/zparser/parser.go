@@ -168,15 +168,15 @@ func (p *parser) consumeSemicolonList() {
 }
 
 // 吃掉一个预期的 token
-func (p *parser) acceptToken(expectToken token.Token, moreExpectTokens ...token.Token) {
+func (p *parser) acceptToken(expectToken token.Token, moreExpectTokens ...token.Token) token.Token {
 	if p.tok == expectToken {
 		p.next()
-		return
+		return p.tok
 	}
 	for _, tok := range moreExpectTokens {
 		if p.tok == tok {
 			p.next()
-			return
+			return p.tok
 		}
 	}
 
@@ -186,6 +186,7 @@ func (p *parser) acceptToken(expectToken token.Token, moreExpectTokens ...token.
 	} else {
 		p.errorf(p.pos, "expect %v, got %v", expectToken, p.tok)
 	}
+	return token.NONE
 }
 
 // 吃掉其中一个

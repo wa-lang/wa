@@ -3,7 +3,7 @@
 
 .section .data
 .align 3
-.app.hello.str: .asciz "hello\n"
+.app.hello.str: .ascii "hello\n\000"
 .app.hello.len: .quad 6
 
 .section .text

@@ -5,7 +5,6 @@ package astutil
 
 import (
 	"wa-lang.org/wa/internal/native/ast"
-	"wa-lang.org/wa/internal/native/token"
 )
 
 // ABI: $(WA_REPO)/docs/asm_abi_la64.md
@@ -28,20 +27,12 @@ func buildFuncFrame_loong64(fn *ast.Func) error {
 	// 返回值是否走栈要看寄存器分配结果
 	{
 		for _, reti := range fn.Type.Return {
-			switch reti.Type {
-			case token.I32, token.U32, token.I32_zh, token.U32_zh:
+			switch {
+			case reti.Type.IsIntType():
 				if reti.Reg = retRegAlloctor.GetInt(); reti.Reg == 0 {
 					retOnStack = true
 				}
-			case token.I64, token.U64, token.I64_zh, token.U64_zh:
-				if reti.Reg = retRegAlloctor.GetInt(); reti.Reg == 0 {
-					retOnStack = true
-				}
-			case token.F32, token.F32_zh:
-				if reti.Reg = retRegAlloctor.GetFloat(); reti.Reg == 0 {
-					retOnStack = true
-				}
-			case token.F64, token.F64_zh:
+			case reti.Type.IsFloatType():
 				if reti.Reg = retRegAlloctor.GetFloat(); reti.Reg == 0 {
 					retOnStack = true
 				}
@@ -61,8 +52,8 @@ func buildFuncFrame_loong64(fn *ast.Func) error {
 	// 为输入参数分配寄存器和对应的内存
 	// 输入参数可能有寄存器和栈内存混合的情况
 	for _, arg := range fn.Type.Args {
-		switch arg.Type {
-		case token.I32, token.U32, token.I32_zh, token.U32_zh:
+		switch {
+		case arg.Type.IsFloatType():
 			if r := argRegAlloctor.GetInt(); r != 0 {
 				arg.Reg = r
 				arg.RBPOff = 0 - frameSize - 8
@@ -72,32 +63,7 @@ func buildFuncFrame_loong64(fn *ast.Func) error {
 				arg.RBPOff = argsSize + headSize
 				argsSize += 8
 			}
-		case token.I64, token.U64, token.I64_zh, token.U64_zh:
-			if r := argRegAlloctor.GetInt(); r != 0 {
-				arg.Reg = r
-				arg.RBPOff = 0 - frameSize - 8
-				frameSize += 8
-			} else {
-				arg.RSPOff = argsSize
-				arg.RBPOff = argsSize + headSize
-				argsSize += 8
-			}
-		case token.F32, token.F32_zh:
-			if r := argRegAlloctor.GetFloat(); r != 0 {
-				arg.Reg = r
-				arg.RBPOff = 0 - frameSize - 8
-				frameSize += 8
-			} else if r := argRegAlloctor.GetInt(); r != 0 {
-				// 浮点数寄存器不足时可复用空闲的整数寄存器(英文ABI手册v2.01)
-				// 基于当前位置判断是否有空闲(基于尚未来公开的v2.50), 可能剥夺正常的整数寄存器
-				arg.RBPOff = 0 - frameSize - 8
-				frameSize += 8
-			} else {
-				arg.RSPOff = argsSize
-				arg.RBPOff = argsSize + headSize
-				argsSize += 8
-			}
-		case token.F64, token.F64_zh:
+		case arg.Type.IsFloatType():
 			if r := argRegAlloctor.GetFloat(); r != 0 {
 				arg.Reg = r
 				arg.RBPOff = 0 - frameSize - 8

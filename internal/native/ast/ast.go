@@ -12,16 +12,15 @@ import (
 // 每个文件只是一个代码片段, 不能识别外部的符号类型, 只针对指令做简单的语义检查
 // 只在链接阶段处理外部的符号依赖, 并做符号地址检查
 type File struct {
-	Pos      token.Pos         // 位置
-	CPU      abi.CPUType       // CPU类型
-	Doc      *CommentGroup     // 关联文档
-	Externs  []string          // 外部的符号
-	Aliases  map[string]string // 符号的别名
-	Consts   []*Const          // 全局常量
-	Globals  []*Global         // 全局对象
-	Funcs    []*Func           // 函数对象
-	Comments []*CommentGroup   // 孤立的注释
-	Objects  []Object          // 保序的列表
+	Pos      token.Pos       // 位置
+	CPU      abi.CPUType     // CPU类型
+	Doc      *CommentGroup   // 关联文档
+	Externs  []string        // 外部的符号
+	Consts   []*Const        // 全局常量
+	Globals  []*Global       // 全局对象
+	Funcs    []*Func         // 函数对象
+	Comments []*CommentGroup // 孤立的注释
+	Objects  []Object        // 保序的列表
 }
 
 // 单行注释
@@ -39,7 +38,6 @@ type CommentGroup struct {
 // 基本的面值
 type BasicLit struct {
 	Pos       token.Pos   // 位置
-	TypeCast  token.Token // 默认类型强制转型, I32/U32/I64/U64/F32/F64/NONE
 	LitKind   token.Token // INT/FLOAT/CHAR/STRING, 默认类型 INT=>I64, FLOAT=>F64, CHAR => I32
 	LitString string      // 原始的字符串: 42, 0x7f, 3.14, 1e-9, 'a', '\x7f', "foo" or `\m\n\o`
 	ConstV    interface{} // 解析后的常量值, 对应的类型: int64, float64, string
@@ -61,10 +59,9 @@ type Global struct {
 	Tok      token.Token       // 关键字(可能有多语言)
 	Doc      *CommentGroup     // 关联文档
 	Name     string            // 全局变量名
-	Type     token.Token       // I32/I64/U32/U64/PTR/NONE
+	Type     token.Type        // 全局变量的类型(结合初始值类型推导)
 	Size     int               // 内存大小(没有类型信息)
-	Init     []*InitValue      // 初始数据
-	Comments []*CommentGroup   // 孤立的注释
+	Init     *InitValue        // 初始数据
 	Objects  []Object          // 保序的对象
 	LinkInfo *abi.LinkedSymbol // 链接信息
 	Section  string            // 段名
@@ -74,12 +71,10 @@ type Global struct {
 
 // 初始化的面值
 type InitValue struct {
-	Pos     token.Pos     // 位置
-	Doc     *CommentGroup // 关联文档(可能在前面或者尾部单行注释)
-	Offset  int           // 相对偏移
-	Lit     *BasicLit     // 或字面值
-	Symbal  string        // 或标识符
-	Comment *Comment      // 尾部单行注释
+	Pos    token.Pos     // 位置
+	Doc    *CommentGroup // 尾部注释
+	Lit    *BasicLit     // 或字面值
+	Symbal string        // 或标识符(只能是常量或地址)
 }
 
 // 函数对象
@@ -88,7 +83,6 @@ type Func struct {
 	Tok        token.Token       // 关键字(可能有多语言)
 	Doc        *CommentGroup     // 关联文档
 	Name       string            // 函数名
-	Prop       []string          // 属性列表, [Key=Val,...]
 	Type       *FuncType         // 函数类型
 	ArgsSize   int               // 调用该函数需要的栈大小(参数/返回值)
 	FrameSize  int               // 函数内栈帧大小(局部变量/临时空间), 不包含头部(rip/rbp)
@@ -122,7 +116,7 @@ type Local struct {
 	Tok     token.Token   // 关键字(可能有多语言)
 	Doc     *CommentGroup // 关联文档
 	Name    string        // 名字
-	Type    token.Token   // 类型
+	Type    token.Type    // 类型
 	Comment *Comment      // 尾部单行注释
 	Reg     abi.RegType   // 对应的寄存器, 在生成机器码阶段计算
 	RBPOff  int           // 相对于Rbp的偏移地址, 在生成机器码阶段计算

@@ -64,8 +64,6 @@ func (p *parser) parseFile() {
 
 		case token.GAS_EXTERN:
 			p.parseFile_gasExtern()
-		case token.GAS_SET:
-			p.parseFile_gasSet()
 		case token.GAS_SECTION:
 			p.parseFile_gasSection()
 
