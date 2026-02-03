@@ -10,6 +10,7 @@ import (
 	"wa-lang.org/wa/internal/native/abi"
 	"wa-lang.org/wa/internal/native/ast"
 	"wa-lang.org/wa/internal/native/loong64"
+	"wa-lang.org/wa/internal/native/riscv"
 	"wa-lang.org/wa/internal/native/scanner"
 	"wa-lang.org/wa/internal/native/token"
 )
@@ -73,6 +74,20 @@ func newParser(cpu abi.CPUType, fset *token.FileSet, filename string, src []byte
 				// 将原始的指令映射到 token.Token 编码
 				if as, ok := loong64.LookupAs(ident); ok {
 					return token.A_LOONG_BEGIN + token.Token(as)
+				}
+				return token.NONE
+			},
+		)
+	case abi.RISCV32, abi.RISCV64:
+		p.scanner = scanner.NewScanner(
+			func(ident string) token.Token {
+				// 将原始的寄存器映射到 token.Token 编码
+				if reg, ok := riscv.LookupRegister(ident); ok {
+					return token.REG_RISCV_BEGIN + token.Token(reg)
+				}
+				// 将原始的指令映射到 token.Token 编码
+				if as, ok := riscv.LookupAs(ident); ok {
+					return token.A_RISCV_BEGIN + token.Token(as)
 				}
 				return token.NONE
 			},
@@ -170,15 +185,15 @@ func (p *parser) consumeSemicolonList() {
 }
 
 // 吃掉一个预期的 token
-func (p *parser) acceptToken(expectToken token.Token, moreExpectTokens ...token.Token) {
-	if p.tok == expectToken {
+func (p *parser) acceptToken(expectToken token.Token, moreExpectTokens ...token.Token) token.Token {
+	if tok := p.tok; tok == expectToken {
 		p.next()
-		return
+		return tok
 	}
 	for _, tok := range moreExpectTokens {
 		if p.tok == tok {
 			p.next()
-			return
+			return tok
 		}
 	}
 
@@ -188,6 +203,8 @@ func (p *parser) acceptToken(expectToken token.Token, moreExpectTokens ...token.
 	} else {
 		p.errorf(p.pos, "expect %v, got %v", expectToken, p.tok)
 	}
+
+	return 0
 }
 
 // 解析标别符
