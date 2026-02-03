@@ -3,6 +3,20 @@
 
 .extern .Wa.Memory.addr
 
+# void _Wa_Import_syscall_write (int fd, uint32_t ptr, int32_t len)
+.section .text
+.global .Wa.Import.syscall_linux.print_str
+.Wa.Import.syscall_linux.print_str:
+    pcalau12i $t0, %pc_hi20(.Wa.Memory.addr)
+    ld.d      $t0, $t0, %pc_lo12(.Wa.Memory.addr)
+
+    # a0 = fd
+    add.d  $a1, $a1, $t0 # a1 = base + ptr
+    # a2 = len
+    addi.d $a7, $zero, 64 # sys_write
+    syscall 0
+    jirl   $zero, $ra, 0
+
 # int _Wa_Runtime_write(int fd, void *buf, int count)
 .section .text
 .global .Wa.Runtime.write
@@ -119,10 +133,10 @@
 
     st.b    $a0, $sp, 0
 
-    li.d    $a0, 1      # arg.0: stdout
-    addi.d  $a1, $sp, 0 # arg.1: buffer
-    li.d    $a2, 1      # arg.2: count
-    li.d    $a7, 64     # sys_write
+    addi.d  $a0, $zero, 1  # arg.0: stdout
+    addi.d  $a1, $sp, 0    # arg.1: buffer
+    addi.d  $a2, $zero, 1  # arg.2: count
+    addi.d  $a7, $zero, 64 # sys_write
     syscall 0
 
     addi.d  $sp, $fp, 0
@@ -141,9 +155,9 @@
     addi.d  $fp, $sp, 0
     addi.d  $sp, $sp, -32
     
-    move    $t0, $a0         # t0 = 工作变量 (val)
+    or      $t0, $zero, $a0  # t0 = 工作变量 (val)
     addi.d  $t1, $fp, -1     # t1 为缓冲区指针 (从后往前填)
-    li.d    $t2, 10          # 除数
+    addi.d  $t2, $zero, 10   # 除数
 
     # 1. 处理负数
     bge     $t0, $zero, .Wa.L.syscall_linux.print_i64.convert
@@ -155,20 +169,20 @@
     addi.w  $t4, $t4, 48     # 加上 '0' 的 ASCII 码
     st.b    $t4, $t1, 0      # 存入缓冲区
     addi.d  $t1, $t1, -1     # 指针前移
-    move    $t0, $t3         # 更新待处理的数字
+    or      $t0, $zero, $t3  # 更新待处理的数字
     bnez    $t0, .Wa.L.syscall_linux.print_i64.convert  # 如果商不为 0 则继续
 
     # 2. 补负号
     bge     $a0, $zero, .Wa.L.syscall_linux.print_i64.print
-    li.d    $t4, 45          # '-'
+    addi.d  $t4, $zero, 45   # '-'
     st.b    $t4, $t1, 0
     addi.d  $t1, $t1, -1
 
 .Wa.L.syscall_linux.print_i64.print:
-    li.d    $a0, 1           # arg.0: stdout
+    addi.d  $a0, $zero, 1    # arg.0: stdout
     addi.d  $a1, $t1, 1      # arg.1: buffer
     sub.d   $a2, $fp, $a1    # arg.2: count
-    li.d    $a7, 64          # sys_write
+    addi.d  $a7, $zero, 64   # sys_write
     syscall 0
 
     addi.d  $sp, $fp, 0

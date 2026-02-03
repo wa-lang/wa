@@ -47,6 +47,7 @@ const (
 
 	zh_keyword_beg // 关键字开始
 
+	EXTERN_zh   // 声明
 	CONST_zh    // 常量
 	GLOBAL_zh   // 全局
 	READONLY_zh // 只读
@@ -135,6 +136,7 @@ var tokens = [...]string{
 	LBRACK:    "[",
 	RBRACK:    "]",
 
+	EXTERN_zh:   "声明",
 	CONST_zh:    "常量",
 	GLOBAL_zh:   "全局",
 	READONLY_zh: "只读",

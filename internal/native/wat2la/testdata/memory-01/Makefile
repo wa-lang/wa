@@ -3,8 +3,10 @@
 
 WA:=go run ../../../../../main.go
 
+ENC_S:=../../assets/native-env-linux-la64.wa.s
+
 loong64:
-	gcc env.c golden-loong64.s -o a.out0.exe -z noexecstack
+	gcc $(ENC_S) golden-loong64.s -o a.out0.exe -z noexecstack
 	./a.out0.exe
 
 dev:
