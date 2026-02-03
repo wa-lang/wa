@@ -150,11 +150,9 @@ func (f *Function) EndBody() {
 
 	f.StartBody()
 
-	var pre, post []Stmt
-
 	// 逃逸参数置换：
 	for i, param := range f.params {
-		if param.kind != Register || param.DataType().hasRef() {
+		if param.kind != Register || (param.DataType().hasRef() && ob.varStored(param)) {
 			np := *param
 			np.Stringer = &np
 			np.kind = Register
@@ -166,7 +164,6 @@ func (f *Function) EndBody() {
 			} else {
 				f.Body.EmitStore(param, NewLoad(&np, np.pos), np.pos)
 			}
-			post = append(post, NewRelease(param, param.pos))
 
 			f.params[i] = &np
 		}
@@ -184,10 +181,10 @@ func (f *Function) EndBody() {
 	nb.Label = _FN_START
 	nb.init()
 
-	f.blockRcProc(ob, false, nb, &pre, &post)
-	f.Body.Stmts = append(f.Body.Stmts, pre...)
+	f.blockRcProc(ob, false, nb)
 	f.Body.emit(nb)
-	f.Body.Stmts = append(f.Body.Stmts, post...)
+
+	f.varRangeProc(f.Body)
 
 	// Todo: defer
 
@@ -204,109 +201,6 @@ func (f *Function) EndBody() {
 		f.Format("  ", &sb)
 		println(sb.String())
 	}
-}
-
-func exprReplaceLocation(e Expr, ov, nv *Var) Expr {
-	if v, ok := e.(*Var); ok {
-		if v == ov {
-			return ov
-		}
-	}
-
-	if s, ok := e.(Stmt); ok {
-		stmtReplaceLocation(s, ov, nv)
-	}
-
-	return e
-}
-
-func stmtReplaceLocation(stmt Stmt, ov, nv *Var) {
-	switch stmt := stmt.(type) {
-	case *Block:
-		for _, s := range stmt.Stmts {
-			stmtReplaceLocation(s, ov, nv)
-		}
-
-	case *Var:
-		return
-
-	case *Load:
-		if stmt.Loc == ov {
-			stmt.Loc = nv
-			return
-		}
-
-		if s, ok := stmt.Loc.(Stmt); ok {
-			stmtReplaceLocation(s, ov, nv)
-		}
-
-	case *Store:
-		for i := range stmt.Loc {
-			if stmt.Loc[i] == ov {
-				stmt.Loc[i] = nv
-				continue
-			}
-
-			if s, ok := stmt.Loc[i].(Stmt); ok {
-				stmtReplaceLocation(s, ov, nv)
-			}
-		}
-
-		for i, val := range stmt.Val {
-			stmt.Val[i] = exprReplaceLocation(val, ov, nv)
-		}
-
-	case *Br:
-		return
-
-	case *Return:
-		for i, ret := range stmt.Results {
-			stmt.Results[i] = exprReplaceLocation(ret, ov, nv)
-		}
-
-	case *Unop:
-		stmt.X = exprReplaceLocation(stmt.X, ov, nv)
-
-	case *Biop:
-		stmt.X = exprReplaceLocation(stmt.X, ov, nv)
-		stmt.Y = exprReplaceLocation(stmt.Y, ov, nv)
-
-	case *If:
-		stmt.Cond = exprReplaceLocation(stmt.Cond, ov, nv)
-		stmtReplaceLocation(stmt.True, ov, nv)
-		stmtReplaceLocation(stmt.False, ov, nv)
-
-	case *Loop:
-		stmt.Cond = exprReplaceLocation(stmt.Cond, ov, nv)
-		stmtReplaceLocation(stmt.Body, ov, nv)
-		stmtReplaceLocation(stmt.Post, ov, nv)
-
-	case *Call:
-		var call_common *CallCommon
-		switch call := stmt.Callee.(type) {
-		case *BuiltinCall:
-			call_common = &call.CallCommon
-
-		case *StaticCall:
-			call_common = &call.CallCommon
-
-		case *MethodCall:
-			call_common = &call.CallCommon
-			call.Recv = exprReplaceLocation(call.Recv, ov, nv)
-
-		case *InterfaceCall:
-			call_common = &call.CallCommon
-			call.Interface = exprReplaceLocation(call.Interface, ov, nv)
-		}
-
-		for i, arg := range call_common.Args {
-			call_common.Args[i] = exprReplaceLocation(arg, ov, nv)
-		}
-
-	default:
-		panic(fmt.Sprintf("Todo: %s", stmt.String()))
-	}
-
 }
 
 func (f *Function) retRepalce(stmt Stmt) {
@@ -346,87 +240,25 @@ func (f *Function) retRepalce(stmt Stmt) {
 			}
 		}
 
-	case *Var:
-		return
-
-	case *Load:
-		if s, ok := stmt.Loc.(Stmt); ok {
-			f.retRepalce(s)
-		}
-
-	case *Store:
-		for _, loc := range stmt.Loc {
-			if s, ok := loc.(Stmt); ok {
-				f.retRepalce(s)
-			}
-		}
-
-		for _, val := range stmt.Val {
-			if s, ok := val.(Stmt); ok {
-				f.retRepalce(s)
-			}
-		}
-
-	case *Br:
-		return
-
-	case *Return:
-		panic("Return can only be at the end of a block")
-
-	case *Unop:
-		if s, ok := stmt.X.(Stmt); ok {
-			f.retRepalce(s)
-		}
-
-	case *Biop:
-		if s, ok := stmt.X.(Stmt); ok {
-			f.retRepalce(s)
-		}
-		if s, ok := stmt.Y.(Stmt); ok {
-			f.retRepalce(s)
-		}
-
 	case *If:
-		if s, ok := stmt.Cond.(Stmt); ok {
-			f.retRepalce(s)
-		}
 		f.retRepalce(stmt.True)
 		f.retRepalce(stmt.False)
 
 	case *Loop:
-		if s, ok := stmt.Cond.(Stmt); ok {
-			f.retRepalce(s)
-		}
 		f.retRepalce(stmt.Body)
 		f.retRepalce(stmt.Post)
 
+	case *Return:
+		panic("Return can only be at the end of a block")
+
+	case *Var:
+	case *Load:
+	case *Store:
+	case *Br:
+	case *Unop:
+	case *Biop:
 	case *Call:
-		var call_common *CallCommon
-		switch call := stmt.Callee.(type) {
-		case *BuiltinCall:
-			call_common = &call.CallCommon
-
-		case *StaticCall:
-			call_common = &call.CallCommon
-
-		case *MethodCall:
-			call_common = &call.CallCommon
-			if s, ok := call.Recv.(Stmt); ok {
-				f.retRepalce(s)
-			}
-
-		case *InterfaceCall:
-			call_common = &call.CallCommon
-			if s, ok := call.Interface.(Stmt); ok {
-				f.retRepalce(s)
-			}
-		}
-
-		for _, arg := range call_common.Args {
-			if s, ok := arg.(Stmt); ok {
-				f.retRepalce(s)
-			}
-		}
+		return
 
 	default:
 		panic(fmt.Sprintf("Todo: %s", stmt.String()))
@@ -434,13 +266,57 @@ func (f *Function) retRepalce(stmt Stmt) {
 
 }
 
-func (f *Function) blockRcProc(s *Block, inloop bool, d *Block, pre *[]Stmt, post *[]Stmt) {
-	for _, stmt := range s.Stmts {
-		f.stmtRcProc(stmt, inloop, d, pre, post)
+func (f *Function) varRangeProc(b *Block) {
+	for _, stmt := range b.Stmts {
+		switch s := stmt.(type) {
+		case *Block:
+			f.varRangeProc(s)
+
+		case *Var:
+			r := b.varUsageRange(s)
+			if r.last == -1 {
+				panic(fmt.Sprintf("var:%s not used", s.Name()))
+			}
+
+			var t []Stmt
+			t = append(t, b.Stmts[:r.last+1]...)
+			t = append(t, NewDrop(s, b.Stmts[r.last].Pos()))
+			t = append(t, b.Stmts[r.last+1:]...)
+			b.Stmts = t
+
+		case *If:
+			f.varRangeProc(s.True)
+			f.varRangeProc(s.False)
+
+		case *Loop:
+			f.varRangeProc(s.Body)
+			f.varRangeProc(s.Post)
+
+		case *Load:
+		case *Store:
+		case *Br:
+		case *Return:
+		case *Unop:
+		case *Biop:
+		case *Retain:
+		case *Drop:
+			return
+
+		default:
+			panic(fmt.Sprintf("Todo: %s", stmt.String()))
+		}
+
 	}
 }
 
-func (f *Function) stmtRcProc(s Stmt, inloop bool, b *Block, pre *[]Stmt, post *[]Stmt) {
+func (f *Function) blockRcProc(b *Block, inloop bool, d *Block) {
+	for _, stmt := range b.Stmts {
+		f.stmtRcProc(stmt, inloop, d)
+	}
+}
+
+func (f *Function) stmtRcProc(s Stmt, inloop bool, b *Block) {
+	var post []Stmt
 	switch s := s.(type) {
 	case *Block:
 		if len(s.Stmts) == 0 {
@@ -449,39 +325,25 @@ func (f *Function) stmtRcProc(s Stmt, inloop bool, b *Block, pre *[]Stmt, post *
 
 		block := b.EmitBlock(s.Label, s.pos)
 		for _, stmt := range s.Stmts {
-			f.stmtRcProc(stmt, inloop, block, pre, post)
+			f.stmtRcProc(stmt, inloop, block)
 		}
 
 	case *Var:
-		*pre = append(*pre, s)
-		switch s.kind {
-		case Register:
-			if s.DataType().hasRef() {
-				release := NewRelease(s, 0)
-				*post = append(*post, release)
-			}
-
-		case Heap:
-			release := NewRelease(s, 0)
-			*post = append(*post, release)
-
-		default:
-			panic(fmt.Sprintf("Invalid VarKind: %v", s.kind))
-		}
+		b.emit(s)
 
 	case *Load:
 		panic("Load should not be here")
 
 	case *Store:
 		for i := range s.Val {
-			s.Val[i] = f.exprRcProc(s.Val[i], inloop, false, b, pre, post)
+			s.Val[i] = f.exprRcProc(s.Val[i], inloop, false, b, &post)
 			if s.Val[i].Type().hasRef() && !s.Val[i].retained() {
 				s.Val[i] = NewRetain(s.Val[i], s.Val[i].Pos())
 			}
 		}
 
 		for i := range s.Loc {
-			s.Loc[i] = f.exprRcProc(s.Loc[i], inloop, true, b, pre, post)
+			s.Loc[i] = f.exprRcProc(s.Loc[i], inloop, true, b, &post)
 		}
 
 		b.emit(s)
@@ -493,30 +355,34 @@ func (f *Function) stmtRcProc(s Stmt, inloop bool, b *Block, pre *[]Stmt, post *
 		panic("Return should not be here")
 
 	case *If:
-		cond := f.exprRcProc(s.Cond, inloop, true, b, pre, post)
+		cond := f.exprRcProc(s.Cond, inloop, true, b, &post)
 		n := b.EmitIf(cond, s.pos)
-		f.blockRcProc(s.True, inloop, n.True, pre, post)
-		f.blockRcProc(s.False, inloop, n.False, pre, post)
+		f.blockRcProc(s.True, inloop, n.True)
+		f.blockRcProc(s.False, inloop, n.False)
 
 	case *Loop:
-		cond := f.exprRcProc(s.Cond, true, true, b, pre, post)
+		cond := f.exprRcProc(s.Cond, true, true, b, &post)
 
 		l := b.EmitLoop(cond, s.Label, s.pos)
-		f.blockRcProc(s.Body, true, l.Body, pre, post)
-		f.blockRcProc(s.Post, true, l.Post, pre, post)
+		f.blockRcProc(s.Body, true, l.Body)
+		f.blockRcProc(s.Post, true, l.Post)
 
 	case *Retain:
-		panic("Retain should not be here")
+		b.emit(s)
 
-	case *Release:
-		panic("Release should not be here")
+	case *Drop:
+		b.emit(s)
 
 	default:
 		panic(fmt.Sprintf("Todo: %s", s.String()))
 	}
+
+	for _, p := range post {
+		b.emit(p)
+	}
 }
 
-func (f *Function) exprRcProc(e Expr, inloop bool, replace bool, b *Block, pre *[]Stmt, post *[]Stmt) (ret Expr) {
+func (f *Function) exprRcProc(e Expr, inloop bool, replace bool, b *Block, post *[]Stmt) (ret Expr) {
 	if e == nil {
 		return
 	}
@@ -530,14 +396,14 @@ func (f *Function) exprRcProc(e Expr, inloop bool, replace bool, b *Block, pre *
 		return
 
 	case *Load:
-		e.Loc = f.exprRcProc(e.Loc, inloop, true, b, pre, post)
+		e.Loc = f.exprRcProc(e.Loc, inloop, true, b, post)
 
 	case *Unop:
-		e.X = f.exprRcProc(e.X, inloop, true, b, pre, post)
+		e.X = f.exprRcProc(e.X, inloop, true, b, post)
 
 	case *Biop:
-		e.X = f.exprRcProc(e.X, inloop, true, b, pre, post)
-		e.Y = f.exprRcProc(e.Y, inloop, true, b, pre, post)
+		e.X = f.exprRcProc(e.X, inloop, true, b, post)
+		e.Y = f.exprRcProc(e.Y, inloop, true, b, post)
 
 	case *Call:
 		var call_common *CallCommon
@@ -550,15 +416,18 @@ func (f *Function) exprRcProc(e Expr, inloop bool, replace bool, b *Block, pre *
 
 		case *MethodCall:
 			call_common = &call.CallCommon
-			call.Recv = f.exprRcProc(call.Recv, inloop, true, b, pre, post)
+			call.Recv = f.exprRcProc(call.Recv, inloop, true, b, post)
 
 		case *InterfaceCall:
 			call_common = &call.CallCommon
-			call.Interface = f.exprRcProc(call.Interface, inloop, true, b, pre, post)
+			call.Interface = f.exprRcProc(call.Interface, inloop, true, b, post)
+
+		default:
+			panic("Todo")
 		}
 
 		for i := range call_common.Args {
-			call_common.Args[i] = f.exprRcProc(call_common.Args[i], inloop, true, b, pre, post)
+			call_common.Args[i] = f.exprRcProc(call_common.Args[i], inloop, true, b, post)
 		}
 
 	case Stmt:
@@ -568,15 +437,15 @@ func (f *Function) exprRcProc(e Expr, inloop bool, replace bool, b *Block, pre *
 	if e.retained() && replace {
 		imv := &Var{}
 		imv.Stringer = imv
-		imv.name = fmt.Sprintf("$$imv%d", f.numImv)
+		imv.name = fmt.Sprintf("$%d", f.numImv)
 		f.numImv++
 		imv.dtype = e.Type()
-		*pre = append(*pre, imv)
 
+		b.emit(imv)
 		b.EmitStore(imv, e, e.Pos())
 		ret = NewLoad(imv, e.Pos())
 
-		release := NewRelease(imv, 0)
+		release := NewDrop(imv, 0)
 		*post = append(*post, release)
 	}
 
@@ -605,4 +474,110 @@ func (f *Function) exprRcProc(e Expr, inloop bool, replace bool, b *Block, pre *
 //		}
 //	}
 //	return num
+//}
+
+//func exprReplaceLocation(e Expr, ov, nv *Var) Expr {
+//	if v, ok := e.(*Var); ok {
+//		if v == ov {
+//			return ov
+//		}
+//	}
+//
+//	if s, ok := e.(Stmt); ok {
+//		stmtReplaceLocation(s, ov, nv)
+//	}
+//
+//	return e
+//}
+//
+//func stmtReplaceLocation(stmt Stmt, ov, nv *Var) {
+//	switch stmt := stmt.(type) {
+//	case *Block:
+//		for _, s := range stmt.Stmts {
+//			stmtReplaceLocation(s, ov, nv)
+//		}
+//
+//	case *Var:
+//		return
+//
+//	case *Load:
+//		if stmt.Loc == ov {
+//			stmt.Loc = nv
+//			return
+//		}
+//
+//		if s, ok := stmt.Loc.(Stmt); ok {
+//			stmtReplaceLocation(s, ov, nv)
+//		}
+//
+//	case *Store:
+//		for i := range stmt.Loc {
+//			if stmt.Loc[i] == ov {
+//				stmt.Loc[i] = nv
+//				continue
+//			}
+//
+//			if s, ok := stmt.Loc[i].(Stmt); ok {
+//				stmtReplaceLocation(s, ov, nv)
+//			}
+//		}
+//
+//		for i, val := range stmt.Val {
+//			stmt.Val[i] = exprReplaceLocation(val, ov, nv)
+//		}
+//
+//	case *Br:
+//		return
+//
+//	case *Return:
+//		for i, ret := range stmt.Results {
+//			stmt.Results[i] = exprReplaceLocation(ret, ov, nv)
+//		}
+//
+//	case *Unop:
+//		stmt.X = exprReplaceLocation(stmt.X, ov, nv)
+//
+//	case *Biop:
+//		stmt.X = exprReplaceLocation(stmt.X, ov, nv)
+//		stmt.Y = exprReplaceLocation(stmt.Y, ov, nv)
+//
+//	case *If:
+//		stmt.Cond = exprReplaceLocation(stmt.Cond, ov, nv)
+//		stmtReplaceLocation(stmt.True, ov, nv)
+//		stmtReplaceLocation(stmt.False, ov, nv)
+//
+//	case *Loop:
+//		stmt.Cond = exprReplaceLocation(stmt.Cond, ov, nv)
+//		stmtReplaceLocation(stmt.Body, ov, nv)
+//		stmtReplaceLocation(stmt.Post, ov, nv)
+//
+//	case *Call:
+//		var call_common *CallCommon
+//		switch call := stmt.Callee.(type) {
+//		case *BuiltinCall:
+//			call_common = &call.CallCommon
+//
+//		case *StaticCall:
+//			call_common = &call.CallCommon
+//
+//		case *MethodCall:
+//			call_common = &call.CallCommon
+//			call.Recv = exprReplaceLocation(call.Recv, ov, nv)
+//
+//		case *InterfaceCall:
+//			call_common = &call.CallCommon
+//			call.Interface = exprReplaceLocation(call.Interface, ov, nv)
+//
+//		default:
+//			panic("Todo")
+//		}
+//
+//		for i, arg := range call_common.Args {
+//			call_common.Args[i] = exprReplaceLocation(arg, ov, nv)
+//		}
+//
+//	default:
+//		panic(fmt.Sprintf("Todo: %s", stmt.String()))
+//	}
+//
 //}

@@ -63,9 +63,6 @@ func (i *Var) String() string {
 	case Register:
 		return fmt.Sprintf("var %s %s", i.name, i.dtype.Name())
 
-	//case Stack:
-	//	return fmt.Sprintf("var %s %s = alloc.stack(%s)", i.name, i.rtype.Name(), i.dtype.Name())
-
 	case Heap:
 		return fmt.Sprintf("var %s %s = alloc.heap(%s)", i.name, i.rtype.Name(), i.dtype.Name())
 	}
@@ -569,19 +566,19 @@ func NewRetain(x Expr, pos int) *Retain {
 }
 
 /**************************************
-Release: Release 指令，引用计数 -1
+Drop: Drop 指令，丢弃指定 Var
 **************************************/
 
-type Release struct {
+type Drop struct {
 	aStmt
-	X Expr
+	X *Var
 }
 
-func (i *Release) String() string { return fmt.Sprintf("release(%s)", i.X.Name()) }
+func (i *Drop) String() string { return fmt.Sprintf("drop(%s)", i.X.Name()) }
 
-// 生成一条 Retain 指令
-func NewRelease(x Expr, pos int) *Release {
-	v := &Release{X: x}
+// 生成一条 Drop 指令
+func NewDrop(x *Var, pos int) *Drop {
+	v := &Drop{X: x}
 	v.Stringer = v
 	v.pos = pos
 	return v
