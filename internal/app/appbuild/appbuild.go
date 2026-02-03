@@ -32,15 +32,6 @@ var arduino_ino string
 //go:embed assets/arduino-host.cpp
 var arduino_host_cpp string
 
-//go:embed assets/native-env-linux-la64.wa.s
-var native_env_linux_la64_wa_s string
-
-//go:embed assets/native-env-linux-la64.wz.s
-var native_env_linux_la64_wz_s string
-
-//go:embed assets/native-env-linux-x64.s
-var native_env_linux_x64_s string
-
 //go:embed assets/native-env-windows-x64.c
 var native_env_windows_x64_c string
 
@@ -269,20 +260,14 @@ func BuildApp(opt *appbase.Option, input, outfile string) (mainFunc string, wasm
 
 			// 设置默认输出目标
 			var nativeAsmFile string
-			var nativeEnvFile string
 			var nativeExtFile string
-			var native_env_linux_la64_s string
 			var targetLang token.LangType
 			if appbase.HasExt(input, ".wz") {
 				targetLang = token.LangType_Nasm_zh
-				native_env_linux_la64_s = native_env_linux_la64_wz_s
-				nativeEnvFile = appbase.ReplaceExt(outfile, ".wasm", ".env.wz.s")
 				nativeAsmFile = appbase.ReplaceExt(outfile, ".wasm", ".wz.s")
 				nativeExtFile = appbase.ReplaceExt(outfile, ".wasm", ".exe")
 			} else {
 				targetLang = token.LangType_Nasm_gas
-				native_env_linux_la64_s = native_env_linux_la64_wa_s
-				nativeEnvFile = appbase.ReplaceExt(outfile, ".wasm", ".env.wa.s")
 				nativeAsmFile = appbase.ReplaceExt(outfile, ".wasm", ".wa.s")
 				nativeExtFile = appbase.ReplaceExt(outfile, ".wasm", ".exe")
 			}
@@ -301,16 +286,9 @@ func BuildApp(opt *appbase.Option, input, outfile string) (mainFunc string, wasm
 				os.Exit(1)
 			}
 
-			// 生成本地对接的环境文件
-			err = os.WriteFile(nativeEnvFile, []byte(native_env_linux_la64_s), 0666)
-			if err != nil {
-				fmt.Printf("write %s failed: %v\n", outfile, err)
-				os.Exit(1)
-			}
-
 			// gcc x.c x.s -z noexecstack -o x.exe
 			if gccEnabled {
-				gccCmd := exec.Command("gcc", nativeEnvFile, nativeAsmFile, "-nostdlib", "-static", "-z", "noexecstack", "-o", nativeExtFile)
+				gccCmd := exec.Command("gcc", nativeAsmFile, "-nostdlib", "-static", "-z", "noexecstack", "-o", nativeExtFile)
 				output, err := gccCmd.CombinedOutput()
 				if err != nil {
 					fmt.Println(string(output))
@@ -352,11 +330,9 @@ func BuildApp(opt *appbase.Option, input, outfile string) (mainFunc string, wasm
 			var nativeExtFile string
 			if cpuType == abi.X64Unix {
 				if appbase.HasExt(input, ".wz") {
-					nativeEnvFile = appbase.ReplaceExt(outfile, ".wasm", ".env.wz.s")
 					nativeAsmFile = appbase.ReplaceExt(outfile, ".wasm", ".wz.s")
 					nativeExtFile = appbase.ReplaceExt(outfile, ".wasm", ".exe")
 				} else {
-					nativeEnvFile = appbase.ReplaceExt(outfile, ".wasm", ".env.wa.s")
 					nativeAsmFile = appbase.ReplaceExt(outfile, ".wasm", ".wa.s")
 					nativeExtFile = appbase.ReplaceExt(outfile, ".wasm", ".exe")
 				}
@@ -387,13 +363,7 @@ func BuildApp(opt *appbase.Option, input, outfile string) (mainFunc string, wasm
 			}
 
 			// 生成本地对接的环境文件
-			if cpuType == abi.X64Unix {
-				err = os.WriteFile(nativeEnvFile, []byte(native_env_linux_x64_s), 0666)
-				if err != nil {
-					fmt.Printf("write %s failed: %v\n", nativeEnvFile, err)
-					os.Exit(1)
-				}
-			} else {
+			if cpuType == abi.X64Windows {
 				err = os.WriteFile(nativeEnvFile, []byte(native_env_windows_x64_c), 0666)
 				if err != nil {
 					fmt.Printf("write %s failed: %v\n", nativeEnvFile, err)
@@ -405,7 +375,7 @@ func BuildApp(opt *appbase.Option, input, outfile string) (mainFunc string, wasm
 			if gccEnabled {
 				var gccCmd *exec.Cmd
 				if cpuType == abi.X64Unix {
-					gccCmd = exec.Command("gcc", nativeEnvFile, nativeAsmFile, "-nostdlib", "-static", "-z", "noexecstack", "-o", nativeExtFile)
+					gccCmd = exec.Command("gcc", nativeAsmFile, "-nostdlib", "-static", "-z", "noexecstack", "-o", nativeExtFile)
 				} else {
 					gccCmd = exec.Command("gcc", nativeEnvFile, nativeAsmFile, "-static", "-o", nativeExtFile)
 				}
@@ -528,20 +498,14 @@ func BuildApp(opt *appbase.Option, input, outfile string) (mainFunc string, wasm
 
 			// 设置默认输出目标
 			var nativeAsmFile string
-			var nativeEnvFile string
 			var nativeExtFile string
-			var native_env_linux_la64_s string
 			var targetLang token.LangType
 			if appbase.HasExt(input, ".wz") {
 				targetLang = token.LangType_Nasm_zh
-				native_env_linux_la64_s = native_env_linux_la64_wz_s
-				nativeEnvFile = appbase.ReplaceExt(outfile, ".wasm", ".env.wz.s")
 				nativeAsmFile = appbase.ReplaceExt(outfile, ".wasm", ".wz.s")
 				nativeExtFile = appbase.ReplaceExt(outfile, ".wasm", ".exe")
 			} else {
 				targetLang = token.LangType_Nasm_gas
-				native_env_linux_la64_s = native_env_linux_la64_wa_s
-				nativeEnvFile = appbase.ReplaceExt(outfile, ".wasm", ".env.wa.s")
 				nativeAsmFile = appbase.ReplaceExt(outfile, ".wasm", ".wa.s")
 				nativeExtFile = appbase.ReplaceExt(outfile, ".wasm", ".exe")
 			}
@@ -560,16 +524,9 @@ func BuildApp(opt *appbase.Option, input, outfile string) (mainFunc string, wasm
 				os.Exit(1)
 			}
 
-			// 生成本地对接的环境文件
-			err = os.WriteFile(nativeEnvFile, []byte(native_env_linux_la64_s), 0666)
-			if err != nil {
-				fmt.Printf("write %s failed: %v\n", outfile, err)
-				os.Exit(1)
-			}
-
 			// gcc x.c x.s -z noexecstack -o x.exe
 			if gccEnabled {
-				gccCmd := exec.Command("gcc", nativeEnvFile, nativeAsmFile, "-nostdlib", "-static", "-z", "noexecstack", "-o", nativeExtFile)
+				gccCmd := exec.Command("gcc", nativeAsmFile, "-nostdlib", "-static", "-z", "noexecstack", "-o", nativeExtFile)
 				output, err := gccCmd.CombinedOutput()
 				if err != nil {
 					fmt.Println(string(output))
@@ -611,11 +568,9 @@ func BuildApp(opt *appbase.Option, input, outfile string) (mainFunc string, wasm
 			var nativeExtFile string
 			if cpuType == abi.X64Unix {
 				if appbase.HasExt(input, ".wz") {
-					nativeEnvFile = appbase.ReplaceExt(outfile, ".wasm", ".env.wz.s")
 					nativeAsmFile = appbase.ReplaceExt(outfile, ".wasm", ".wz.s")
 					nativeExtFile = appbase.ReplaceExt(outfile, ".wasm", ".exe")
 				} else {
-					nativeEnvFile = appbase.ReplaceExt(outfile, ".wasm", ".env.wa.s")
 					nativeAsmFile = appbase.ReplaceExt(outfile, ".wasm", ".wa.s")
 					nativeExtFile = appbase.ReplaceExt(outfile, ".wasm", ".exe")
 				}
@@ -646,13 +601,7 @@ func BuildApp(opt *appbase.Option, input, outfile string) (mainFunc string, wasm
 			}
 
 			// 生成本地对接的环境文件
-			if cpuType == abi.X64Unix {
-				err = os.WriteFile(nativeEnvFile, []byte(native_env_linux_x64_s), 0666)
-				if err != nil {
-					fmt.Printf("write %s failed: %v\n", nativeEnvFile, err)
-					os.Exit(1)
-				}
-			} else {
+			if cpuType == abi.X64Windows {
 				err = os.WriteFile(nativeEnvFile, []byte(native_env_windows_x64_c), 0666)
 				if err != nil {
 					fmt.Printf("write %s failed: %v\n", nativeEnvFile, err)
@@ -664,7 +613,7 @@ func BuildApp(opt *appbase.Option, input, outfile string) (mainFunc string, wasm
 			if gccEnabled {
 				var gccCmd *exec.Cmd
 				if cpuType == abi.X64Unix {
-					gccCmd = exec.Command("gcc", nativeEnvFile, nativeAsmFile, "-nostdlib", "-static", "-z", "noexecstack", "-o", nativeExtFile)
+					gccCmd = exec.Command("gcc", nativeAsmFile, "-nostdlib", "-static", "-z", "noexecstack", "-o", nativeExtFile)
 				} else {
 					gccCmd = exec.Command("gcc", nativeEnvFile, nativeAsmFile, "-static", "-o", nativeExtFile)
 				}

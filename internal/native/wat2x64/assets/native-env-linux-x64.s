@@ -1,10 +1,3 @@
-# Copyright (C) 2026 武汉凹语言科技有限公司
-# SPDX-License-Identifier: AGPL-3.0-or-later
-
-.intel_syntax noprefix
-
-.extern .Wa.Memory.addr
-
 # int _Wa_Runtime_write(int fd, void *buf, int count)
 .section .text
 .global .Wa.Runtime.write
@@ -182,3 +175,12 @@
     pop  rbp
     ret
 
+.section .text
+.global .Wa.Import.syscall.write
+.Wa.Import.syscall.write:
+    mov  rdi, rdi # arg.0: fd
+    mov  rax, [rip + .Wa.Memory.addr]
+    add  rsi, rax # arg.1: buffer
+    mov  eax, 1 # arg.2: len
+    syscall
+    ret

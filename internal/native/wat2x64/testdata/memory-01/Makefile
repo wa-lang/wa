@@ -18,7 +18,7 @@ dev:
 
 dev-linux:
 	$(WA) build -arch=x64 -target=linux -o memory-01.linux.wa.s memory-01.wat
-	gcc -nostdlib -static env-linux-x64.s memory-01.linux.wa.s -z noexecstack -o a.out1.exe
+	gcc -nostdlib -static memory-01.linux.wa.s -z noexecstack -o a.out1.exe
 	./a.out1.exe
 
 clean:

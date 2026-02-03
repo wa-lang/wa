@@ -7,6 +7,8 @@ import (
 	_ "embed"
 	"fmt"
 	"io"
+
+	"wa-lang.org/wa/internal/token"
 )
 
 const (
@@ -23,6 +25,12 @@ const (
 	kRuntimePanicMessageLen = _kRuntimeNamePrefix + "panic.messageLen"
 )
 
+//go:embed assets/native-env-linux-la64.wa.s
+var native_env_linux_la64_wa_s string
+
+//go:embed assets/native-env-linux-la64.wz.s
+var native_env_linux_la64_wz_s string
+
 // 生成运行时函数
 func (p *wat2laWorker) buildRuntimeHead(w io.Writer) error {
 	var list = []string{
@@ -37,7 +45,7 @@ func (p *wat2laWorker) buildRuntimeHead(w io.Writer) error {
 
 	p.gasComment(w, "运行时函数")
 	for _, absName := range list {
-		p.gasExtern(w, absName)
+		fmt.Fprintf(w, "# .extern %s\n", absName)
 	}
 	fmt.Fprintln(w)
 	return nil
@@ -45,6 +53,11 @@ func (p *wat2laWorker) buildRuntimeHead(w io.Writer) error {
 
 // 生成运行时函数
 func (p *wat2laWorker) buildRuntimeImpl(w io.Writer) error {
+	if p.targetLang == token.LangType_Nasm_gas {
+		fmt.Fprintln(w, native_env_linux_la64_wa_s)
+	} else {
+		fmt.Fprintln(w, native_env_linux_la64_wz_s)
+	}
 	if err := p.buildRuntimeImpl_panic(w); err != nil {
 		return err
 	}

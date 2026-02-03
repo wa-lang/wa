@@ -39,7 +39,7 @@ func (p *wat2X64Worker) buildImport(w io.Writer) error {
 		}
 
 		seenMap[absName] = true
-		p.gasExtern(w, absName)
+		fmt.Fprintf(w, "# .extern %s\n", absName)
 	}
 
 	return nil
