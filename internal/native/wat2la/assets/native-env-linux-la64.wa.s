@@ -5,8 +5,8 @@
 
 # void _Wa_Import_syscall_write (int fd, uint32_t ptr, int32_t len)
 .section .text
-.global .Wa.Import.syscall_linux.print_str
-.Wa.Import.syscall_linux.print_str:
+.global .Wa.Import.syscall.write
+.Wa.Import.syscall.write:
     pcalau12i $t0, %pc_hi20(.Wa.Memory.addr)
     ld.d      $t0, $t0, %pc_lo12(.Wa.Memory.addr)
 

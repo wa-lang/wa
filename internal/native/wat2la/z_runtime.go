@@ -56,7 +56,8 @@ func (p *wat2laWorker) buildRuntimeImpl(w io.Writer) error {
 	if p.targetLang == token.LangType_Nasm_gas {
 		fmt.Fprintln(w, native_env_linux_la64_wa_s)
 	} else {
-		fmt.Fprintln(w, native_env_linux_la64_wz_s)
+		// TODO: 改成中文版汇编实现
+		fmt.Fprintln(w, native_env_linux_la64_wa_s)
 	}
 	if err := p.buildRuntimeImpl_panic(w); err != nil {
 		return err

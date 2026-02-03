@@ -89,8 +89,8 @@
 
 # 汇编程序入口函数
 .section .text
-.globl main
-main:
+.globl _start
+_start:
     addi.d  $sp, $sp, -16
     st.d    $ra, $sp, 8
     st.d    $fp, $sp, 0
@@ -98,7 +98,7 @@ main:
     addi.d  $sp, $sp, -32
 
     pcalau12i $t0, %pc_hi20(.Wa.Memory.initFunc)
-    addi.d    $t0, $t0, %pc_lo12(.Memory.initFunc)
+    addi.d    $t0, $t0, %pc_lo12(.Wa.Memory.initFunc)
     jirl      $ra, $t0, 0
     pcalau12i $t0, %pc_hi20(.Wa.F.main)
     addi.d    $t0, $t0, %pc_lo12(.Wa.F.main)

@@ -53,7 +53,7 @@ func buildFuncFrame_loong64(fn *ast.Func) error {
 	// 输入参数可能有寄存器和栈内存混合的情况
 	for _, arg := range fn.Type.Args {
 		switch {
-		case arg.Type.IsFloatType():
+		case arg.Type.IsIntType():
 			if r := argRegAlloctor.GetInt(); r != 0 {
 				arg.Reg = r
 				arg.RBPOff = 0 - frameSize - 8
