@@ -59,6 +59,7 @@ type Global struct {
 	Tok      token.Token       // 关键字(可能有多语言)
 	Doc      *CommentGroup     // 关联文档
 	Name     string            // 全局变量名
+	TypeTok  token.Token       // 原始的类型
 	Type     token.Type        // 全局变量的类型(结合初始值类型推导)
 	Size     int               // 内存大小(没有类型信息)
 	Init     *InitValue        // 初始数据

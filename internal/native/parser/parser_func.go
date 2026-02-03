@@ -19,6 +19,7 @@ func (p *parser) parseFunc(tok token.Token) *ast.Func {
 	fn := &ast.Func{
 		Pos:  p.pos,
 		Tok:  tok,
+		Type: new(ast.FuncType),
 		Body: new(ast.FuncBody),
 	}
 
@@ -58,7 +59,7 @@ Loop:
 
 		default:
 
-			// 构造局部遍历在栈帧的位置
+			// 构造局部变量在栈帧的位置
 			if err := astutil.BuildFuncFrame(p.cpu, fn); err != nil {
 				p.errorf(p.pos, "build stack frame failed: %v", err)
 			}

@@ -15,12 +15,20 @@ func TestParseFile(t *testing.T) {
 	parser.DebugMode = false
 
 	fset := token.NewFileSet()
-	file, err := parser.ParseFile(abi.LOONG64, fset, "./testdata/hello-01/app.s", nil)
+
+	fileGas, err := parser.ParseFile(abi.LOONG64, fset, "./testdata/hello-01/app.wa.s", nil)
 	if err != nil {
 		t.Fatal(err)
 	}
+	if fileGas.CPU != abi.LOONG64 {
+		t.Fatalf("CPU: invalid")
+	}
 
-	if file.CPU != abi.LOONG64 {
+	fileZh, err := parser.ParseFile(abi.LOONG64, fset, "./testdata/hello-01/app.wz.s", nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if fileZh.CPU != abi.LOONG64 {
 		t.Fatalf("CPU: invalid")
 	}
 }

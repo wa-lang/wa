@@ -24,32 +24,50 @@ func (p *parser) parseGlobal(tok token.Token) *ast.Global {
 	g.Tok = p.acceptToken(token.GLOBAL_zh)
 	g.Name = p.parseIdent()
 
-	if p.tok == token.COLON {
-		p.acceptToken(token.COLON)
-		switch p.tok {
-		case token.BYTE_zh:
-			g.Type = token.I8
-			g.Size = 1
-			p.acceptToken(p.tok)
-		case token.SHORT_zh:
-			g.Type = token.I16
-			g.Size = 2
-			p.acceptToken(p.tok)
-		case token.LONG_zh:
-			g.Type = token.I32
-			g.Size = 4
-			p.acceptToken(p.tok)
-		case token.QUAD_zh:
-			g.Type = token.I64
-			g.Size = 8
-			p.acceptToken(p.tok)
-		default:
-			panic("unreachable")
-		}
+	p.acceptToken(token.COLON)
+	switch p.tok {
+	case token.BYTE_zh:
+		g.TypeTok = token.BYTE_zh
+		g.Type = token.I8
+		g.Size = 1
+		p.acceptToken(p.tok)
+	case token.SHORT_zh:
+		g.TypeTok = token.SHORT_zh
+		g.Type = token.I16
+		g.Size = 2
+		p.acceptToken(p.tok)
+	case token.LONG_zh:
+		g.TypeTok = token.LONG_zh
+		g.Type = token.I32
+		g.Size = 4
+		p.acceptToken(p.tok)
+	case token.QUAD_zh:
+		g.TypeTok = token.QUAD_zh
+		g.Type = token.I64
+		g.Size = 8
+		p.acceptToken(p.tok)
+
+	case token.ASCII_zh:
+		g.TypeTok = token.ASCII_zh
+		g.Type = token.I8
+		p.acceptToken(p.tok)
+	case token.SKIP_zh:
+		g.TypeTok = token.SKIP_zh
+		g.Type = token.I8
+		p.acceptToken(p.tok)
+	case token.FILE_zh:
+		g.TypeTok = token.FILE_zh
+		g.Type = token.I8
+		p.acceptToken(p.tok)
+
+	default:
+		panic("unreachable: lit:" + p.lit)
 	}
 
 	// 全局变量必须显式初始化
 	p.acceptToken(token.ASSIGN)
+
+	// TODO: 初始化值和类型要匹配
 
 	g.Init = &ast.InitValue{}
 

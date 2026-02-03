@@ -4,10 +4,13 @@
 WA:=go run ../../../../../../main.go
 
 run:
-	gcc -nostdlib -static app.s -o a.out0.exe -z noexecstack
+	gcc -nostdlib -static app.wa.s -o a.out0.exe -z noexecstack
 	./a.out0.exe
 
 dev:
-	$(WA) asm2elf -arch=loong64 app.s
+	$(WA) asm2elf -arch=loong64 app.wa.s
+
+dev-zh:
+	$(WA) asm2elf -arch=loong64 app.wz.s
 
 clean:

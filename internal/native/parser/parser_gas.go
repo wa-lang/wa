@@ -155,6 +155,7 @@ func (p *parser) parseFile_gasFuncDefine(sectionName string) *ast.Func {
 		Section: sectionName,
 		Pos:     p.pos,
 		Tok:     p.tok,
+		Type:    new(ast.FuncType),
 		Body:    new(ast.FuncBody),
 	}
 
