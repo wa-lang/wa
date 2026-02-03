@@ -30,6 +30,8 @@ type Block struct {
 	scope   Scope
 	objects map[interface{}]*Var // AST 结点 -> 块内变量
 	types   *Types               // 该函数所属 Module 的类型库，切勿手动修改
+
+	imvCount int
 }
 
 // 初始化 Block

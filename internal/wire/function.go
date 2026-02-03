@@ -30,8 +30,6 @@ type Function struct {
 	types *Types // 该函数所属 Module 的类型库，切勿手动修改
 
 	StartPos, EndPos int
-
-	numImv int
 }
 
 // Scope 接口相关
@@ -181,7 +179,7 @@ func (f *Function) EndBody() {
 	nb.Label = _FN_START
 	nb.init()
 
-	f.blockRcProc(ob, false, nb)
+	blockImvRcProc(ob, false, nb)
 	f.Body.emit(nb)
 
 	f.varRangeProc(f.Body)
@@ -309,80 +307,75 @@ func (f *Function) varRangeProc(b *Block) {
 	}
 }
 
-func (f *Function) blockRcProc(b *Block, inloop bool, d *Block) {
+func blockImvRcProc(b *Block, inloop bool, d *Block) {
 	for _, stmt := range b.Stmts {
-		f.stmtRcProc(stmt, inloop, d)
+		stmtImvRcProc(stmt, inloop, d)
 	}
 }
 
-func (f *Function) stmtRcProc(s Stmt, inloop bool, b *Block) {
-	var post []Stmt
+func stmtImvRcProc(s Stmt, inloop bool, d *Block) {
 	switch s := s.(type) {
 	case *Block:
 		if len(s.Stmts) == 0 {
 			return
 		}
 
-		block := b.EmitBlock(s.Label, s.pos)
+		block := d.EmitBlock(s.Label, s.pos)
 		for _, stmt := range s.Stmts {
-			f.stmtRcProc(stmt, inloop, block)
+			stmtImvRcProc(stmt, inloop, block)
 		}
 
 	case *Var:
-		b.emit(s)
+		d.emit(s)
 
 	case *Load:
 		panic("Load should not be here")
 
 	case *Store:
 		for i := range s.Val {
-			s.Val[i] = f.exprRcProc(s.Val[i], inloop, false, b, &post)
+			s.Val[i] = exprImvRcProc(s.Val[i], inloop, false, d)
 			if s.Val[i].Type().hasRef() && !s.Val[i].retained() {
 				s.Val[i] = NewRetain(s.Val[i], s.Val[i].Pos())
 			}
 		}
 
 		for i := range s.Loc {
-			s.Loc[i] = f.exprRcProc(s.Loc[i], inloop, true, b, &post)
+			s.Loc[i] = exprImvRcProc(s.Loc[i], inloop, true, d)
 		}
 
-		b.emit(s)
+		d.emit(s)
 
 	case *Br:
-		b.emit(s)
+		d.emit(s)
 
 	case *Return:
 		panic("Return should not be here")
 
 	case *If:
-		cond := f.exprRcProc(s.Cond, inloop, true, b, &post)
-		n := b.EmitIf(cond, s.pos)
-		f.blockRcProc(s.True, inloop, n.True)
-		f.blockRcProc(s.False, inloop, n.False)
+		cond := exprImvRcProc(s.Cond, inloop, true, d)
+		n := d.EmitIf(cond, s.pos)
+		blockImvRcProc(s.True, inloop, n.True)
+		blockImvRcProc(s.False, inloop, n.False)
 
 	case *Loop:
-		cond := f.exprRcProc(s.Cond, true, true, b, &post)
+		cond := exprImvRcProc(s.Cond, true, true, d)
 
-		l := b.EmitLoop(cond, s.Label, s.pos)
-		f.blockRcProc(s.Body, true, l.Body)
-		f.blockRcProc(s.Post, true, l.Post)
+		l := d.EmitLoop(cond, s.Label, s.pos)
+		blockImvRcProc(s.Body, true, l.Body)
+		blockImvRcProc(s.Post, true, l.Post)
 
 	case *Retain:
-		b.emit(s)
+		d.emit(s)
 
 	case *Drop:
-		b.emit(s)
+		d.emit(s)
 
 	default:
 		panic(fmt.Sprintf("Todo: %s", s.String()))
 	}
-
-	for _, p := range post {
-		b.emit(p)
-	}
 }
 
-func (f *Function) exprRcProc(e Expr, inloop bool, replace bool, b *Block, post *[]Stmt) (ret Expr) {
+func exprImvRcProc(e Expr, inloop bool, replace bool, d *Block) (ret Expr) {
 	if e == nil {
 		return
 	}
@@ -396,14 +389,14 @@ func (f *Function) exprRcProc(e Expr, inloop bool, replace bool, b *Block, post 
 		return
 
 	case *Load:
-		e.Loc = f.exprRcProc(e.Loc, inloop, true, b, post)
+		e.Loc = exprImvRcProc(e.Loc, inloop, true, d)
 
 	case *Unop:
-		e.X = f.exprRcProc(e.X, inloop, true, b, post)
+		e.X = exprImvRcProc(e.X, inloop, true, d)
 
 	case *Biop:
-		e.X = f.exprRcProc(e.X, inloop, true, b, post)
-		e.Y = f.exprRcProc(e.Y, inloop, true, b, post)
+		e.X = exprImvRcProc(e.X, inloop, true, d)
+		e.Y = exprImvRcProc(e.Y, inloop, true, d)
 
 	case *Call:
 		var call_common *CallCommon
@@ -416,18 +409,18 @@ func (f *Function) exprRcProc(e Expr, inloop bool, replace bool, b *Block, post 
 
 		case *MethodCall:
 			call_common = &call.CallCommon
-			call.Recv = f.exprRcProc(call.Recv, inloop, true, b, post)
+			call.Recv = exprImvRcProc(call.Recv, inloop, true, d)
 
 		case *InterfaceCall:
 			call_common = &call.CallCommon
-			call.Interface = f.exprRcProc(call.Interface, inloop, true, b, post)
+			call.Interface = exprImvRcProc(call.Interface, inloop, true, d)
 
 		default:
 			panic("Todo")
 		}
 
 		for i := range call_common.Args {
-			call_common.Args[i] = f.exprRcProc(call_common.Args[i], inloop, true, b, post)
+			call_common.Args[i] = exprImvRcProc(call_common.Args[i], inloop, true, d)
 		}
 
 	case Stmt:
@@ -437,16 +430,13 @@ func (f *Function) exprRcProc(e Expr, inloop bool, replace bool, b *Block, post 
 	if e.retained() && replace {
 		imv := &Var{}
 		imv.Stringer = imv
-		imv.name = fmt.Sprintf("$%d", f.numImv)
-		f.numImv++
+		imv.name = fmt.Sprintf("$%d", d.imvCount)
+		d.imvCount++
 		imv.dtype = e.Type()
 
-		b.emit(imv)
-		b.EmitStore(imv, e, e.Pos())
+		d.emit(imv)
+		d.EmitStore(imv, e, e.Pos())
 		ret = NewLoad(imv, e.Pos())
-
-		release := NewDrop(imv, 0)
-		*post = append(*post, release)
 	}
 
 	return
