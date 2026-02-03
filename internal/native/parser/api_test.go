@@ -1,21 +1,21 @@
 // Copyright (C) 2026 武汉凹语言科技有限公司
 // SPDX-License-Identifier: AGPL-3.0-or-later
 
-package gparser_test
+package parser_test
 
 import (
 	"testing"
 
 	"wa-lang.org/wa/internal/native/abi"
-	"wa-lang.org/wa/internal/native/parser/gparser"
+	"wa-lang.org/wa/internal/native/parser"
 	"wa-lang.org/wa/internal/native/token"
 )
 
 func TestParseFile(t *testing.T) {
-	gparser.DebugMode = false
+	parser.DebugMode = false
 
 	fset := token.NewFileSet()
-	file, err := gparser.ParseFile(abi.LOONG64, fset, "./testdata/hello-01/app.s", nil)
+	file, err := parser.ParseFile(abi.LOONG64, fset, "./testdata/hello-01/app.s", nil)
 	if err != nil {
 		t.Fatal(err)
 	}

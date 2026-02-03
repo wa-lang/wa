@@ -11,8 +11,7 @@ import (
 	"wa-lang.org/wa/internal/native/abi"
 	"wa-lang.org/wa/internal/native/ast"
 	"wa-lang.org/wa/internal/native/loong64"
-	"wa-lang.org/wa/internal/native/parser/gparser"
-	"wa-lang.org/wa/internal/native/parser/zparser"
+	"wa-lang.org/wa/internal/native/parser"
 	"wa-lang.org/wa/internal/native/pcrel"
 	"wa-lang.org/wa/internal/token"
 	"wa-lang.org/wa/internal/xlang"
@@ -34,12 +33,12 @@ func (p *_Assembler) asmFile_loong64(filename string, source []byte, opt *abi.Li
 	xtype := xlang.DetectLang(filename, source)
 	switch xtype {
 	case token.LangType_Nasm_zh:
-		p.file, err = zparser.ParseFile(opt.CPU, p.fset, filename, source)
+		p.file, err = parser.ParseFile(opt.CPU, p.fset, filename, source)
 		if err != nil {
 			return nil, err
 		}
 	case token.LangType_Nasm_gas:
-		p.file, err = gparser.ParseFile(opt.CPU, p.fset, filename, source)
+		p.file, err = parser.ParseFile(opt.CPU, p.fset, filename, source)
 		if err != nil {
 			return nil, err
 		}

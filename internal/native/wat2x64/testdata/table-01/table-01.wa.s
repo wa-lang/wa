@@ -4,15 +4,15 @@
 .intel_syntax noprefix
 
 # 运行时函数
-.extern .Wa.Runtime.write
-.extern .Wa.Runtime.exit
-.extern .Wa.Runtime.malloc
-.extern .Wa.Runtime.memcpy
-.extern .Wa.Runtime.memset
-.extern .Wa.Runtime.memmove
+# .extern .Wa.Runtime.write
+# .extern .Wa.Runtime.exit
+# .extern .Wa.Runtime.malloc
+# .extern .Wa.Runtime.memcpy
+# .extern .Wa.Runtime.memset
+# .extern .Wa.Runtime.memmove
 
 # 导入函数(外部库定义)
-.extern .Wa.Import.syscall.write
+# .extern .Wa.Import.syscall.write
 
 # 定义内存
 .section .data
