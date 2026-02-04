@@ -49,7 +49,9 @@ func CmdAstAction(c *cli.Context) error {
 		os.Exit(0)
 	}
 	if appbase.HasExt(filename, ".wa.s", ".wz.s") {
-		native_parser.DebugMode = c.Bool("debug")
+		if c.Bool("debug") {
+			native_parser.DebugMode = true
+		}
 
 		cpuType := abi.ParseCPUType(c.String("arch"))
 

@@ -52,7 +52,9 @@ var CmdESP32Build = &cli.Command{
 			os.Exit(1)
 		}
 
-		parser.DebugMode = c.Bool("debug")
+		if c.Bool("debug") {
+			parser.DebugMode = true
+		}
 
 		infile := c.Args().First()
 		outfile := c.String("output")

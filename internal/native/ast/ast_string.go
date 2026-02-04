@@ -5,6 +5,7 @@ package ast
 
 import (
 	"fmt"
+	"strconv"
 	"strings"
 
 	"wa-lang.org/wa/internal/native/abi"
@@ -18,26 +19,45 @@ func (p *File) String() string {
 
 	if p.Doc != nil {
 		sb.WriteString(p.Doc.String())
-		sb.WriteString("\n\n")
+		sb.WriteString("\n")
 	}
 
 	if p.IntelSyntax != nil {
 		sb.WriteString(p.IntelSyntax.String())
-		sb.WriteString("\n\n")
+		sb.WriteString("\n")
 	}
 
 	// 优先以原始的顺序输出
 	var prevObj Object
-	for _, obj := range p.Objects {
+	for i, obj := range p.Objects {
 		if obj.GetDoc() != nil || !isSameType(obj, prevObj) {
 			sb.WriteString("\n")
 		}
+
+		// 全局变量: 如果是相同的段和对齐只需要打印一次
+		if g, _ := obj.(*Global); g != nil {
+			gPrev, _ := prevObj.(*Global)
+			if gPrev == nil || gPrev.Section != g.Section || gPrev.Align != g.Align {
+				sb.WriteString(token.GAS_SECTION.String())
+				sb.WriteString(" ")
+				sb.WriteString(g.Section)
+				sb.WriteString("\n")
+
+				sb.WriteString(token.GAS_ALIGN.String())
+				sb.WriteString(" ")
+				sb.WriteString(strconv.Itoa(g.Align))
+				sb.WriteString("\n")
+			}
+		}
+
 		sb.WriteString(obj.String())
-		sb.WriteString("\n")
+		if i < len(p.Objects)-1 {
+			sb.WriteString("\n")
+		}
 		prevObj = obj
 	}
 
-	return strings.TrimSpace(sb.String())
+	return sb.String()
 }
 
 func (p *Comment) String() string {
@@ -51,7 +71,7 @@ func (p *CommentGroup) String() string {
 			sb.WriteRune('\n')
 		}
 		if !p.TopLevel {
-			sb.WriteByte('\t')
+			sb.WriteString("    ")
 		}
 		sb.WriteString(c.String())
 	}
@@ -76,7 +96,11 @@ func (p *Const) String() string {
 		sb.WriteString(p.Doc.String())
 		sb.WriteRune('\n')
 	}
-	sb.WriteString(fmt.Sprintf("%v %s = %v", p.Tok, p.Name, p.Value))
+	if p.Tok == token.CONST_zh {
+		sb.WriteString(fmt.Sprintf("%v %s = %v", p.Tok, p.Name, p.Value))
+	} else {
+		sb.WriteString(fmt.Sprintf("%s = %v", p.Name, p.Value))
+	}
 	if p.Comment != nil {
 		sb.WriteString(p.Comment.String())
 	}
@@ -90,18 +114,16 @@ func (p *Global) String() string {
 		sb.WriteRune('\n')
 	}
 
-	if p.Type != 0 {
+	if p.Tok == token.GLOBAL_zh {
 		sb.WriteString(fmt.Sprintf("%v %s:%v = ", p.Tok, p.Name, p.Type))
-	} else if p.Size != 0 {
-		sb.WriteString(fmt.Sprintf("%v %s:%d = ", p.Tok, p.Name, p.Size))
 	} else {
-		sb.WriteString(fmt.Sprintf("%v %s = ", p.Tok, p.Name))
+		sb.WriteString(fmt.Sprintf("%s: %v ", p.Name, p.TypeTok))
 	}
 
-	if p.Init != nil {
-		sb.WriteString(p.Init.Lit.String())
-	} else {
+	if p.Init.Symbal != "" {
 		sb.WriteString(p.Init.Symbal)
+	} else {
+		sb.WriteString(p.Init.Lit.String())
 	}
 
 	return sb.String()
@@ -109,10 +131,12 @@ func (p *Global) String() string {
 
 func (p *InitValue) String() string {
 	var sb strings.Builder
-	if p.Lit != nil {
+	if p.Symbal != "" {
+		sb.WriteString(p.Symbal)
+	} else if p.Lit != nil {
 		sb.WriteString(p.Lit.String())
 	} else {
-		sb.WriteString(p.Symbal)
+		sb.WriteString("?")
 	}
 	if p.Comment != nil {
 		sb.WriteRune(' ')
@@ -128,12 +152,27 @@ func (p *Func) String() string {
 		sb.WriteString(p.Doc.String())
 		sb.WriteRune('\n')
 	}
-	sb.WriteString(p.Tok.String())
-	sb.WriteString(" ")
-	sb.WriteString(p.Name)
-	sb.WriteString(p.Type.String())
-	sb.WriteString(" ")
-	sb.WriteString("{\n")
+	if p.Tok == token.FUNC_zh {
+		sb.WriteString(p.Tok.String())
+		sb.WriteString(" ")
+		sb.WriteString(p.Name)
+		sb.WriteString(":\n")
+	} else {
+		if p.Section != "" {
+			sb.WriteString(token.GAS_SECTION.String())
+			sb.WriteString(" ")
+			sb.WriteString(p.Section)
+			sb.WriteString("\n")
+		}
+		if p.ExportName != "" {
+			sb.WriteString(token.GAS_GLOBL.String())
+			sb.WriteString(" ")
+			sb.WriteString(p.ExportName)
+			sb.WriteString("\n")
+			sb.WriteString(p.Name)
+			sb.WriteString(":\n")
+		}
+	}
 
 	if len(p.Body.Objects) > 0 {
 		var prevObj Object
@@ -176,7 +215,14 @@ func (p *Func) String() string {
 			sb.WriteString("\n\n")
 		}
 	}
-	sb.WriteString("}\n")
+
+	if p.Tok == token.FUNC_zh {
+		sb.WriteString(token.END_zh.String())
+		sb.WriteString("\n")
+
+	} else {
+		sb.WriteString("\n")
+	}
 
 	return sb.String()
 }
@@ -220,7 +266,7 @@ func (p *Local) String() string {
 		sb.WriteString(p.Doc.String())
 		sb.WriteString("\n")
 	}
-	sb.WriteString("\t")
+	sb.WriteString("    ")
 	sb.WriteString(p.Tok.String())
 	sb.WriteString(" ")
 	sb.WriteString(p.Name)
@@ -257,10 +303,16 @@ func (p *Instruction) String() string {
 		if p.Label != "" {
 			sb.WriteString("\n")
 		}
-		sb.WriteString("\t")
+		sb.WriteString("    ")
 		switch p.CPU {
 		case abi.LOONG64:
-			sb.WriteString(loong64.AsmSyntax(p.As, p.AsName, p.Arg))
+			sb.WriteString(loong64.AsmSyntaxEx(p.As, p.AsName, p.Arg,
+				func(r abi.RegType) string {
+					s := loong64.RegAliasString(r)
+					return "$" + strings.ToLower(s)
+				},
+				loong64.AsString,
+			))
 		case abi.RISCV32, abi.RISCV64:
 			sb.WriteString(riscv.AsmSyntax(p.As, p.AsName, p.Arg))
 		default:

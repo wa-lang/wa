@@ -69,6 +69,22 @@ func (p *parser) parseFile() {
 		case token.GAS_ALIGN:
 			p.acceptToken(token.GAS_ALIGN)
 			p.gasAlign = p.parseIntLit()
+			switch p.cpu {
+			case abi.LOONG64:
+				if x := p.gasAlign; x <= 0 || x > 3 {
+					p.errorf(p.pos, "invalid align: %d", p.gasAlign)
+				}
+			case abi.RISCV32, abi.RISCV64:
+				if x := p.gasAlign; x <= 0 || x > 3 {
+					p.errorf(p.pos, "invalid align: %d", p.gasAlign)
+				}
+			case abi.X64Unix, abi.X64Windows:
+				if x := p.gasAlign; x != 1 && x != 2 && x != 4 && x != 8 {
+					p.errorf(p.pos, "invalid align: %d", p.gasAlign)
+				}
+			default:
+				p.errorf(p.pos, "invalid align: %d", p.gasAlign)
+			}
 			p.consumeSemicolonList()
 
 		case token.IDENT:
@@ -156,24 +172,27 @@ func (p *parser) parseFile() {
 
 			case ".text", ".init", ".fini":
 				funcObj := &ast.Func{
-					Pos:  p.pos,
-					Tok:  p.tok,
 					Type: new(ast.FuncType),
 					Body: new(ast.FuncBody),
 
 					Section: p.gasSectionName,
 				}
 
-				assert(p.cpu == abi.RISCV64 || p.cpu == abi.RISCV32 || p.cpu == abi.LOONG64)
+				funcObj.Pos = p.pos
+				funcObj.Name = p.parseIdent()
+				p.acceptToken(token.COLON)
 
-				funcObj.Body.Pos = p.pos
+				funcObj.Doc = p.parseDocComment(&p.prog.Comments, funcObj.Pos)
+				if funcObj.Doc != nil {
+					p.prog.Objects = p.prog.Objects[:len(p.prog.Objects)-1]
+				}
 
 				for {
 					if p.err != nil {
-						return
+						break
 					}
 					if p.tok == token.EOF {
-						return
+						break
 					}
 
 					// 注释

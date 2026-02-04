@@ -18,6 +18,7 @@ _start:
     addi.d $a7, $zero, 93 # sys_exit
     syscall 0
 
+
 .section .text
 .globl main
 main:
@@ -36,9 +37,10 @@ main:
     addi.d    $a7, $zero, 64 # sys_write
     syscall   0
 
-    # return 0
+    # set return value
     addi.d $a0, $zero, 0
 
+    # return
     addi.d  $sp, $fp, 0
     ld.d    $ra, $sp, 8
     ld.d    $fp, $sp, 0
