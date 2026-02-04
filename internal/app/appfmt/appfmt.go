@@ -15,8 +15,6 @@ import (
 	"wa-lang.org/wa/internal/app/appbase"
 	"wa-lang.org/wa/internal/config"
 	"wa-lang.org/wa/internal/format"
-	"wa-lang.org/wa/internal/native/abi"
-	natfmt "wa-lang.org/wa/internal/native/format"
 	"wa-lang.org/wa/internal/wat/watutil/watfmt"
 )
 
@@ -24,12 +22,7 @@ var CmdFmt = &cli.Command{
 	Name:      "fmt",
 	Usage:     "format Wa source code file",
 	ArgsUsage: "[<file.wa>|<path>|<path>/...]",
-	Flags: []cli.Flag{
-		&cli.BoolFlag{
-			Name:  "riscv",
-			Usage: "set riscv cpu type for assembly code",
-		},
-	},
+	Flags:     []cli.Flag{},
 	Action: func(c *cli.Context) error {
 		for _, path := range c.Args().Slice() {
 			if err := Fmt(c, path); err != nil {
@@ -47,10 +40,6 @@ func Fmt(c *cli.Context, path string) error {
 	}
 	if appbase.IsNativeFile(path, ".wa", ".wz") {
 		_, err := fmtFile(path)
-		return err
-	}
-	if appbase.IsNativeFile(path, ".ws") && c.Bool("riscv") {
-		err := fmtNativeAsmFile(c, path)
 		return err
 	}
 
@@ -124,30 +113,6 @@ func fmtWatFile(path string) (err error) {
 		return err
 	}
 	data, err := watfmt.Format(path, src)
-	if err != nil {
-		return err
-	}
-	os.Stdout.Write(data)
-	if !bytes.HasSuffix(data, []byte("\n")) {
-		os.Stdout.Write([]byte("\n"))
-	}
-	return nil
-}
-
-func fmtNativeAsmFile(c *cli.Context, path string) (err error) {
-	if !c.Bool("riscv") {
-		return fmt.Errorf("only support ricv type")
-	}
-
-	if c.Bool("debug") {
-		natfmt.SetDebug()
-	}
-
-	src, err := os.ReadFile(path)
-	if err != nil {
-		return err
-	}
-	data, err := natfmt.Format(abi.RISCV64, path, src)
 	if err != nil {
 		return err
 	}

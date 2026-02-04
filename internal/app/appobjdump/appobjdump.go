@@ -37,6 +37,10 @@ var CmdObjdump = &cli.Command{
 			Aliases: []string{"s"},
 			Usage:   "set section name",
 		},
+		&cli.BoolFlag{
+			Name:  "zh",
+			Usage: "set zh mode",
+		},
 	},
 	Action: func(c *cli.Context) error {
 		if c.NArg() == 0 {
@@ -47,11 +51,12 @@ var CmdObjdump = &cli.Command{
 		infile := c.Args().First()
 		sectionName := c.String("section")
 		listSection := c.Bool("list")
+		isZhMode := c.Bool("zh")
 
 		if sectionName != "" || listSection {
 			cmdObjdump(infile, sectionName, listSection)
 		} else {
-			cmdProgdump(infile)
+			cmdProgdump(infile, isZhMode)
 		}
 
 		return nil
@@ -59,7 +64,7 @@ var CmdObjdump = &cli.Command{
 }
 
 // 打印 prog 数据
-func cmdProgdump(filename string) {
+func cmdProgdump(filename string, isZhMode bool) {
 	f, err := elf.Open(filename)
 	if err != nil {
 		panic(err)
@@ -92,7 +97,7 @@ func cmdProgdump(filename string) {
 				textAddr = f.Entry
 			}
 
-			printProgText(f.Machine, textAddr, textData)
+			printProgText(f.Machine, textAddr, textData, isZhMode)
 		} else {
 			dataAddr := uint64(p.Vaddr)
 			dataData := make([]byte, p.Filesz)
@@ -106,33 +111,41 @@ func cmdProgdump(filename string) {
 	}
 }
 
-func printProgText(machine elf.Machine, addr uint64, data []byte) {
+func printProgText(machine elf.Machine, addr uint64, data []byte, isZhMode bool) {
 	addrWidth := len(fmt.Sprintf("%x", addr))
 
 	fmt.Println("[.text.]")
 	for k := 0; k < len(data); k += 4 {
 		fmt.Printf("%0*X: ", addrWidth, addr+uint64(k))
 		x := binary.LittleEndian.Uint32(data[k:][:4])
-		fmt.Printf("%08X # %s\n", x, decodeInst(machine, x))
+		fmt.Printf("%08X # %s\n", x, decodeInst(machine, x, isZhMode))
 	}
 	fmt.Println()
 }
 
-func decodeInst(machine elf.Machine, x uint32) string {
+func decodeInst(machine elf.Machine, x uint32, isZhMode bool) string {
 	switch machine {
 	case elf.EM_LOONGARCH:
 		as, arg, err := loong64.Decode(x)
 		if err != nil {
 			return "???"
 		}
-		return loong64.AsmSyntax(as, "", arg)
+		if isZhMode {
+			return loong64.AsmSyntaxEx(as, "", arg, loong64.ZhRegAliasString, loong64.ZhAsString)
+		} else {
+			return loong64.AsmSyntax(as, "", arg)
+		}
 
 	case elf.EM_RISCV:
 		as, arg, err := riscv.Decode(x)
 		if err != nil {
 			return "???"
 		}
-		return riscv.AsmSyntax(as, "", arg)
+		if isZhMode {
+			return riscv.AsmSyntaxEx(as, "", arg, riscv.ZhRegAliasString, riscv.ZhAsString)
+		} else {
+			return riscv.AsmSyntax(as, "", arg)
+		}
 
 	default:
 		panic(fmt.Sprintf("unsupport %v", machine))

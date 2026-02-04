@@ -80,9 +80,7 @@ func File(vfs fs.FS, filename string, src interface{}) (text []byte, changed boo
 		return golden, true, err
 	case token.LangType_Wat:
 		return text, false, nil
-	case token.LangType_Nasm_gas:
-		return text, false, nil
-	case token.LangType_Nasm_zh:
+	case token.LangType_Nasm:
 		return text, false, nil
 
 	default:

@@ -59,7 +59,7 @@ func RegString(r abi.RegType) string {
 	case REG_F0 <= r && r <= REG_F31:
 		return fmt.Sprintf("F%d", r-REG_F0)
 	}
-	return fmt.Sprintf("riscv.badreg(%d)", r)
+	return fmt.Sprintf("loong64.badreg(%d)", r)
 }
 func ZhRegString(r abi.RegType) string {
 	switch {
@@ -68,7 +68,7 @@ func ZhRegString(r abi.RegType) string {
 	case REG_F0 <= r && r <= REG_F31:
 		return _ZhRegister[r]
 	}
-	return fmt.Sprintf("riscv.badreg(%d)", r)
+	return fmt.Sprintf("loong64.badreg(%d)", r)
 }
 
 // 寄存器别名
@@ -115,7 +115,18 @@ func AsString(as abi.As, asName string) string {
 	if int(as) < len(_Anames) {
 		return _Anames[as]
 	}
-	return fmt.Sprintf("riscv.badas(%d)", int(as))
+	return fmt.Sprintf("loong64.badas(%d)", int(as))
+}
+
+// 汇编指令转字符串格式
+func ZhAsString(as abi.As, asName string) string {
+	if asName != "" {
+		return asName
+	}
+	if int(as) < len(_ZhAnames) {
+		return _ZhAnames[as]
+	}
+	return fmt.Sprintf("loong64.badas(%d)", int(as))
 }
 
 // 指令的编码格式

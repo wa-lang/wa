@@ -126,7 +126,7 @@ func BuildApp(opt *appbase.Option, input, outfile string) (mainFunc string, wasm
 				fmt.Printf("read %s failed: %v\n", input, err)
 				os.Exit(1)
 			}
-			_, nasmBytes, err := wat2la.Wat2LA64(input, watData, token.LangType_Nasm_gas)
+			_, nasmBytes, err := wat2la.Wat2LA64(input, watData, false)
 			if err != nil {
 				fmt.Printf("wat2la %s failed: %v\n", input, err)
 				os.Exit(1)
@@ -261,19 +261,19 @@ func BuildApp(opt *appbase.Option, input, outfile string) (mainFunc string, wasm
 			// 设置默认输出目标
 			var nativeAsmFile string
 			var nativeExtFile string
-			var targetLang token.LangType
+			var isZhLang bool
 			if appbase.HasExt(input, ".wz") {
-				targetLang = token.LangType_Nasm_zh
+				isZhLang = true
 				nativeAsmFile = appbase.ReplaceExt(outfile, ".wasm", ".wz.s")
 				nativeExtFile = appbase.ReplaceExt(outfile, ".wasm", ".exe")
 			} else {
-				targetLang = token.LangType_Nasm_gas
+				isZhLang = false
 				nativeAsmFile = appbase.ReplaceExt(outfile, ".wasm", ".wa.s")
 				nativeExtFile = appbase.ReplaceExt(outfile, ".wasm", ".exe")
 			}
 
 			// 将 wat 翻译为本地汇编代码
-			_, nasmBytes, err := wat2la.Wat2LA64(input, watOutput, targetLang)
+			_, nasmBytes, err := wat2la.Wat2LA64(input, watOutput, isZhLang)
 			if err != nil {
 				fmt.Printf("wat2la %s failed: %v\n", input, err)
 				os.Exit(1)
@@ -499,19 +499,19 @@ func BuildApp(opt *appbase.Option, input, outfile string) (mainFunc string, wasm
 			// 设置默认输出目标
 			var nativeAsmFile string
 			var nativeExtFile string
-			var targetLang token.LangType
+			var isZhLang bool
 			if appbase.HasExt(input, ".wz") {
-				targetLang = token.LangType_Nasm_zh
+				isZhLang = true
 				nativeAsmFile = appbase.ReplaceExt(outfile, ".wasm", ".wz.s")
 				nativeExtFile = appbase.ReplaceExt(outfile, ".wasm", ".exe")
 			} else {
-				targetLang = token.LangType_Nasm_gas
+				isZhLang = false
 				nativeAsmFile = appbase.ReplaceExt(outfile, ".wasm", ".wa.s")
 				nativeExtFile = appbase.ReplaceExt(outfile, ".wasm", ".exe")
 			}
 
 			// 将 wat 翻译为本地汇编代码
-			_, nasmBytes, err := wat2la.Wat2LA64(input, watOutput, targetLang)
+			_, nasmBytes, err := wat2la.Wat2LA64(input, watOutput, isZhLang)
 			if err != nil {
 				fmt.Printf("wat2la %s failed: %v\n", input, err)
 				os.Exit(1)

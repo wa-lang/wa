@@ -9,7 +9,6 @@ import (
 
 	"wa-lang.org/wa/internal/config"
 	"wa-lang.org/wa/internal/native/abi"
-	"wa-lang.org/wa/internal/token"
 	"wa-lang.org/wa/internal/wasm"
 	watast "wa-lang.org/wa/internal/wat/ast"
 	watparser "wa-lang.org/wa/internal/wat/parser"
@@ -18,15 +17,13 @@ import (
 const DebugMode = false
 
 // Wat程序转译到 龙芯汇编
-func Wat2LA64(filename string, source []byte, targetLang token.LangType) (m *watast.Module, code []byte, err error) {
-	assert(targetLang == token.LangType_Nasm_gas || targetLang == token.LangType_Nasm_zh)
-
+func Wat2LA64(filename string, source []byte, isZhLang bool) (m *watast.Module, code []byte, err error) {
 	m, err = watparser.ParseModule(filename, source)
 	if err != nil {
 		return m, nil, err
 	}
 
-	worker := newWat2LAWorker(filename, m, targetLang)
+	worker := newWat2LAWorker(filename, m, isZhLang)
 	code, err = worker.BuildProgram()
 	return
 }
@@ -34,9 +31,9 @@ func Wat2LA64(filename string, source []byte, targetLang token.LangType) (m *wat
 type wat2laWorker struct {
 	m *watast.Module
 
-	filename   string
-	cpuType    abi.CPUType
-	targetLang token.LangType
+	filename string
+	cpuType  abi.CPUType
+	isZhLang bool
 
 	inlinedTypeIndices []*inlinedTypeIndex
 	inlinedTypes       []*wasm.FunctionType
@@ -55,13 +52,13 @@ type inlinedTypeIndex struct {
 	inlinedIdx wasm.Index
 }
 
-func newWat2LAWorker(filename string, mWat *watast.Module, targetLang token.LangType) *wat2laWorker {
+func newWat2LAWorker(filename string, mWat *watast.Module, isZhLang bool) *wat2laWorker {
 	p := &wat2laWorker{
-		m:          mWat,
-		cpuType:    abi.LOONG64,
-		targetLang: targetLang,
-		filename:   filename,
-		trace:      DebugMode,
+		m:        mWat,
+		cpuType:  abi.LOONG64,
+		isZhLang: isZhLang,
+		filename: filename,
+		trace:    DebugMode,
 	}
 
 	if config.EnableTrace_wat2x64 {

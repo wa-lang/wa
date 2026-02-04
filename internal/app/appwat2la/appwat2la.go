@@ -10,7 +10,6 @@ import (
 
 	"wa-lang.org/wa/internal/3rdparty/cli"
 	"wa-lang.org/wa/internal/native/wat2la"
-	"wa-lang.org/wa/internal/token"
 )
 
 var CmdWat2la = &cli.Command{
@@ -39,9 +38,9 @@ var CmdWat2la = &cli.Command{
 		infile := c.Args().First()
 		outfile := c.String("output")
 
-		targetLang := token.LangType_Nasm_gas
+		isZhLang := false
 		if c.Bool("zh") {
-			targetLang = token.LangType_Nasm_zh
+			isZhLang = true
 		}
 
 		if outfile == "" {
@@ -63,7 +62,7 @@ var CmdWat2la = &cli.Command{
 			os.Exit(1)
 		}
 
-		_, code, err := wat2la.Wat2LA64(infile, source, targetLang)
+		_, code, err := wat2la.Wat2LA64(infile, source, isZhLang)
 		if err != nil {
 			fmt.Println(err)
 			os.Exit(1)

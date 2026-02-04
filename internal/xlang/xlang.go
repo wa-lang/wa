@@ -25,10 +25,14 @@ func DetectLang(filename string, code []byte) token.LangType {
 		return token.LangType_Wz
 	case ".wat":
 		return token.LangType_Wat
-	case ".wa.s":
-		return token.LangType_Nasm_gas
-	case ".wz.s":
-		return token.LangType_Nasm_zh
+	}
+
+	// 后缀名有多个 '.'
+	switch s := strings.ToLower(filename); true {
+	case strings.HasSuffix(s, ".wa.s"):
+		return token.LangType_Nasm
+	case strings.HasSuffix(s, ".wz.s"):
+		return token.LangType_Nasm
 	}
 
 	// 判断 wa/wz
@@ -79,20 +83,14 @@ func DetectLang(filename string, code []byte) token.LangType {
 		s.Init(file, code, nil, nav_scanner.ScanComments)
 
 		for {
-			_, tok, lit := s.Scan()
+			_, tok, _ := s.Scan()
 			if tok == nav_token.EOF || tok == nav_token.ILLEGAL {
 				break
 			}
 
-			if tok.IsGasKeyword() {
-				return token.LangType_Nasm_gas
-			}
-
-			// 中文的关键字
-			if tok == nav_token.IDENT {
-				if token.LookupEx(lit, true) != token.IDENT {
-					return token.LangType_Wz
-				}
+			// 识别关键字
+			if tok.IsGasKeyword() || tok.IsZhKeyword() {
+				return token.LangType_Nasm
 			}
 
 			// 跳过普通注释

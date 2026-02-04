@@ -104,6 +104,16 @@ func AsString(as abi.As, asName string) string {
 	return fmt.Sprintf("riscv.badas(%d)", int(as))
 }
 
+func ZhAsString(as abi.As, asName string) string {
+	if asName != "" {
+		return asName
+	}
+	if int(as) < len(_ZhAnames) {
+		return _ZhAnames[as]
+	}
+	return fmt.Sprintf("riscv.badas(%d)", int(as))
+}
+
 // 机器模式
 func (m Mode) String() string {
 	return _ModeNames[m]

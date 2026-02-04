@@ -7,8 +7,6 @@ import (
 	_ "embed"
 	"fmt"
 	"io"
-
-	"wa-lang.org/wa/internal/token"
 )
 
 const (
@@ -53,10 +51,9 @@ func (p *wat2laWorker) buildRuntimeHead(w io.Writer) error {
 
 // 生成运行时函数
 func (p *wat2laWorker) buildRuntimeImpl(w io.Writer) error {
-	if p.targetLang == token.LangType_Nasm_gas {
-		fmt.Fprintln(w, native_env_linux_la64_wa_s)
+	if p.isZhLang {
+		fmt.Fprintln(w, native_env_linux_la64_wz_s)
 	} else {
-		// TODO: 改成中文版汇编实现
 		fmt.Fprintln(w, native_env_linux_la64_wa_s)
 	}
 	if err := p.buildRuntimeImpl_panic(w); err != nil {

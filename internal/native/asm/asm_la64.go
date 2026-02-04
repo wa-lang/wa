@@ -32,12 +32,7 @@ func (p *_Assembler) asmFile_loong64(filename string, source []byte, opt *abi.Li
 	// 解析汇编程序
 	xtype := xlang.DetectLang(filename, source)
 	switch xtype {
-	case token.LangType_Nasm_zh:
-		p.file, err = parser.ParseFile(opt.CPU, p.fset, filename, source)
-		if err != nil {
-			return nil, err
-		}
-	case token.LangType_Nasm_gas:
+	case token.LangType_Nasm:
 		p.file, err = parser.ParseFile(opt.CPU, p.fset, filename, source)
 		if err != nil {
 			return nil, err
@@ -75,6 +70,7 @@ func (p *_Assembler) asmFile_loong64(filename string, source []byte, opt *abi.Li
 
 	// 全局变量分配内存空间
 	for _, g := range p.file.Globals {
+		// TODO: 留空为0的情况特殊处理
 		assert(g.Size > 0)
 		g.LinkInfo = &abi.LinkedSymbol{
 			Name: g.Name,

@@ -29,7 +29,7 @@ var CmdAsm2elf = &cli.Command{
 		},
 		&cli.StringFlag{
 			Name:  "arch",
-			Usage: "set target architecture (riscv32|riscv64|loong64)",
+			Usage: "set target architecture (loong64|riscv32|riscv64)",
 			Value: "loong64",
 		},
 		&cli.Int64Flag{
