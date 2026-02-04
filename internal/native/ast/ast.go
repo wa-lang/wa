@@ -12,15 +12,16 @@ import (
 // 每个文件只是一个代码片段, 不能识别外部的符号类型, 只针对指令做简单的语义检查
 // 只在链接阶段处理外部的符号依赖, 并做符号地址检查
 type File struct {
-	Pos      token.Pos       // 位置
-	CPU      abi.CPUType     // CPU类型
-	Doc      *CommentGroup   // 关联文档
-	Externs  []string        // 外部的符号
-	Consts   []*Const        // 全局常量
-	Globals  []*Global       // 全局对象
-	Funcs    []*Func         // 函数对象
-	Comments []*CommentGroup // 孤立的注释
-	Objects  []Object        // 保序的列表
+	Pos         token.Pos               // 位置
+	CPU         abi.CPUType             // CPU类型
+	Doc         *CommentGroup           // 关联文档
+	IntelSyntax *GasIntelSyntaxNoprefix // X64必须采用 Intel 语法
+	Externs     []*GasExtern            // 外部的符号
+	Consts      []*Const                // 全局常量
+	Globals     []*Global               // 全局对象
+	Funcs       []*Func                 // 函数对象
+	Comments    []*CommentGroup         // 孤立的注释
+	Objects     []Object                // 保序的列表
 }
 
 // 单行注释
@@ -33,6 +34,17 @@ type Comment struct {
 type CommentGroup struct {
 	TopLevel bool       // 是否为全局类型的注释
 	List     []*Comment // len(List) > 0
+}
+
+// X64 汇编特有的头部
+type GasIntelSyntaxNoprefix struct {
+	Pos token.Pos // 位置
+}
+
+// 外部符号
+type GasExtern struct {
+	Pos  token.Pos // 位置
+	Name string    // 符号名字
 }
 
 // 基本的面值
@@ -72,10 +84,10 @@ type Global struct {
 
 // 初始化的面值
 type InitValue struct {
-	Pos    token.Pos     // 位置
-	Doc    *CommentGroup // 尾部注释
-	Lit    *BasicLit     // 或字面值
-	Symbal string        // 或标识符(只能是常量或地址)
+	Pos     token.Pos // 位置
+	Lit     *BasicLit // 或字面值
+	Symbal  string    // 或标识符(只能是常量或地址)
+	Comment *Comment  // 尾部单行注释
 }
 
 // 函数对象

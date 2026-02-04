@@ -10,6 +10,7 @@ import (
 	"wa-lang.org/wa/internal/native/abi"
 	"wa-lang.org/wa/internal/native/loong64"
 	"wa-lang.org/wa/internal/native/riscv"
+	"wa-lang.org/wa/internal/native/token"
 )
 
 func (p *File) String() string {
@@ -17,42 +18,26 @@ func (p *File) String() string {
 
 	if p.Doc != nil {
 		sb.WriteString(p.Doc.String())
-		sb.WriteRune('\n')
+		sb.WriteString("\n\n")
 	}
 
-	if len(p.Objects) > 0 {
-		// 优先以原始的顺序输出
-		var prevObj Object
-		for _, obj := range p.Objects {
-			if obj.GetDoc() != nil || !isSameType(obj, prevObj) {
-				sb.WriteString("\n")
-			}
-			sb.WriteString(obj.String())
+	if p.IntelSyntax != nil {
+		sb.WriteString(p.IntelSyntax.String())
+		sb.WriteString("\n\n")
+	}
+
+	// 优先以原始的顺序输出
+	var prevObj Object
+	for _, obj := range p.Objects {
+		if obj.GetDoc() != nil || !isSameType(obj, prevObj) {
 			sb.WriteString("\n")
-			prevObj = obj
 		}
-	} else {
-		// 孤立的注释输出位置将失去上下文相关性
-		for _, obj := range p.Comments {
-			sb.WriteString(obj.String())
-			sb.WriteString("\n\n")
-		}
-
-		for _, obj := range p.Consts {
-			sb.WriteString(obj.String())
-			sb.WriteString("\n\n")
-		}
-		for _, obj := range p.Globals {
-			sb.WriteString(obj.String())
-			sb.WriteString("\n\n")
-		}
-		for _, obj := range p.Funcs {
-			sb.WriteString(obj.String())
-			sb.WriteString("\n\n")
-		}
+		sb.WriteString(obj.String())
+		sb.WriteString("\n")
+		prevObj = obj
 	}
 
-	return sb.String()
+	return strings.TrimSpace(sb.String())
 }
 
 func (p *Comment) String() string {
@@ -71,6 +56,14 @@ func (p *CommentGroup) String() string {
 		sb.WriteString(c.String())
 	}
 	return sb.String()
+}
+
+func (p *GasIntelSyntaxNoprefix) String() string {
+	return fmt.Sprintf("%s %s", token.GAS_X64_INTEL_SYNTAX, token.GAS_X64_NOPREFIX)
+}
+
+func (p *GasExtern) String() string {
+	return fmt.Sprintf("%s %s", token.GAS_EXTERN, p.Name)
 }
 
 func (p *BasicLit) String() string {
@@ -121,9 +114,9 @@ func (p *InitValue) String() string {
 	} else {
 		sb.WriteString(p.Symbal)
 	}
-	if p.Doc != nil {
-		sb.WriteString(p.Doc.String())
-		sb.WriteByte('\n')
+	if p.Comment != nil {
+		sb.WriteRune(' ')
+		sb.WriteString(p.Comment.String())
 	}
 	return sb.String()
 }

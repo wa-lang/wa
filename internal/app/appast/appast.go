@@ -102,11 +102,11 @@ func PrintWatAST(filename string) error {
 
 func PrintNasmAST(filename string, cpuType abi.CPUType) error {
 	fset := native_token.NewFileSet()
-	m, err := native_parser.ParseFile(cpuType, fset, filename, nil)
+	file, err := native_parser.ParseFile(cpuType, fset, filename, nil)
 	if err != nil {
 		return err
 	}
 
-	fmt.Println(m)
+	fmt.Println(file.String())
 	return nil
 }
