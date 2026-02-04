@@ -27,7 +27,7 @@ type parser struct {
 
 	gasSectionName string          // 当前段名字
 	gasAlign       int             // 当前的对齐, 遇到 section 后重置
-	gasGlobal      map[string]bool // 导出符号
+	gasGlobl       map[string]bool // 导出符号
 
 	pos token.Pos
 	tok token.Token
@@ -58,7 +58,7 @@ func newParser(cpu abi.CPUType, fset *token.FileSet, filename string, src []byte
 	}
 
 	// 导出的符号
-	p.gasGlobal = make(map[string]bool)
+	p.gasGlobl = make(map[string]bool)
 
 	switch cpu {
 	case abi.LOONG64:

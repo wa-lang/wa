@@ -682,8 +682,8 @@ scanAgain:
 	switch ch := s.ch; {
 	case isLetter(ch) || ch == '$' || ch == '%' || ch == '.':
 		lit = s.scanIdentifier()
-		if len(lit) > 1 {
-			// keywords are longer than one letter - avoid lookup otherwise
+		if len(lit) > 1 || isLetter(ch) {
+			// 龙芯最短的跳转指令 b 只有1个字符
 			tok = token.Lookup(lit, s.lookupRegisterOrAs)
 			switch tok {
 			case token.IDENT:

@@ -34,6 +34,7 @@ func (p *FuncType) GetDoc() *CommentGroup               { return nil }
 func (p *FuncBody) GetDoc() *CommentGroup               { return nil }
 func (p *Local) GetDoc() *CommentGroup                  { return p.Doc }
 func (p *Instruction) GetDoc() *CommentGroup            { return p.Doc }
+func (p *BlankLine) GetDoc() *CommentGroup              { return nil }
 
 func (p *File) BeginPos() token.Pos                   { return p.Pos }
 func (p *Comment) BeginPos() token.Pos                { return p.Pos }
@@ -49,6 +50,7 @@ func (p *FuncType) BeginPos() token.Pos               { return p.Pos }
 func (p *FuncBody) BeginPos() token.Pos               { return p.Pos }
 func (p *Local) BeginPos() token.Pos                  { return p.Pos }
 func (p *Instruction) BeginPos() token.Pos            { return p.Pos }
+func (p *BlankLine) BeginPos() token.Pos              { return p.Pos }
 
 func isSameType(a, b Object) bool {
 	return reflect.TypeOf(a) == reflect.TypeOf(b)

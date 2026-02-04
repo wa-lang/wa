@@ -185,31 +185,16 @@ func (p *Func) String() string {
 		var buf bytes.Buffer
 		var w = tabwriter.NewWriter(&buf, 1, 1, 1, ' ', 0)
 
-		var prevObj Object
-		for i, obj := range p.Body.Objects {
-			instObj, _ := obj.(*Instruction)
-			insertBlankLine := false
-			if i > 0 {
-				// 当前语句带文档, 前一个不是 Label, 尽量前面保持分开
-				if obj.GetDoc() != nil || !isSameType(obj, prevObj) {
-					if inst, ok := prevObj.(*Instruction); ok && inst.Label == "" {
-						insertBlankLine = true
-					}
-				}
-
-				// 当前语句是 Label
-				if instObj != nil && instObj.Label != "" {
-					insertBlankLine = true
-				}
-			}
-			if insertBlankLine {
+		for _, obj := range p.Body.Objects {
+			if _, ok := obj.(*BlankLine); ok {
 				fmt.Fprintln(w)
 				w.Flush()
+				continue
 			}
 
+			instObj, _ := obj.(*Instruction)
 			if instObj == nil {
 				fmt.Fprintln(w, obj.String())
-				prevObj = obj
 				continue
 			}
 
@@ -219,8 +204,6 @@ func (p *Func) String() string {
 			} else {
 				fmt.Fprintln(w, instObj.tabString())
 			}
-
-			prevObj = obj
 		}
 		w.Flush()
 
@@ -230,9 +213,6 @@ func (p *Func) String() string {
 
 	if p.Tok == token.FUNC_zh {
 		sb.WriteString(token.END_zh.String())
-		sb.WriteString("\n")
-
-	} else {
 		sb.WriteString("\n")
 	}
 
@@ -378,6 +358,7 @@ func (p *Instruction) ZhString() string {
 func (p *Instruction) tabString() string {
 	var sb strings.Builder
 	if p.Doc != nil {
+		sb.WriteString("    ")
 		sb.WriteString(p.Doc.String())
 		sb.WriteString("\n")
 	}
@@ -475,4 +456,8 @@ func (p *Instruction) tabZhString() string {
 		sb.WriteString(p.Comment.String())
 	}
 	return sb.String()
+}
+
+func (p *BlankLine) String() string {
+	return ""
 }

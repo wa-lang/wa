@@ -48,7 +48,7 @@ func CmdAstAction(c *cli.Context) error {
 		}
 		os.Exit(0)
 	}
-	if appbase.HasExt(filename, ".wa.s", ".wz.s") {
+	if appbase.HasExt(filename, ".wa.s", ".wz.s", ".s") {
 		if c.Bool("debug") {
 			native_parser.DebugMode = true
 		}

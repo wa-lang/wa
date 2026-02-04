@@ -55,16 +55,132 @@ func (p *parser) parseFile() {
 
 			// 声明为导出符号, 后续解析到真实定义的时候再合并信息
 			globalName := p.parseIdent()
-			p.gasGlobal[globalName] = true
+			p.gasGlobl[globalName] = true
 			p.consumeSemicolonList()
 
 		case token.GAS_SECTION:
+			beginTok := p.pos
 			p.acceptToken(token.GAS_SECTION)
 
 			p.gasSectionName = p.parseIdent()
 			p.gasAlign = 0
-
 			p.consumeSemicolonList()
+
+			switch p.gasSectionName {
+			case ".text", ".init", ".fini":
+				funcObj := &ast.Func{
+					Pos:  beginTok,
+					Type: new(ast.FuncType),
+					Body: new(ast.FuncBody),
+
+					Section: p.gasSectionName,
+				}
+
+				// 关联注释需要马上解析
+				funcObj.Doc = p.parseDocComment(&p.prog.Comments, funcObj.Pos)
+				if funcObj.Doc != nil {
+					p.prog.Objects = p.prog.Objects[:len(p.prog.Objects)-1]
+				}
+
+				// 函数定义时候经先常导出符号
+				if p.tok == token.GAS_GLOBL {
+					p.acceptToken(token.GAS_GLOBL)
+
+					// 声明为导出符号, 后续解析到真实定义的时候再合并信息
+					globlName := p.parseIdent()
+					p.gasGlobl[globlName] = true
+					p.consumeSemicolonList()
+				}
+
+				// 开始解析函数定义的标签
+				funcObj.Name = p.parseIdent()
+				p.acceptToken(token.COLON)
+
+				for {
+					if p.err != nil {
+						break
+					}
+					if p.tok == token.EOF {
+						break
+					}
+
+					// 注释
+					if p.tok == token.COMMENT {
+						// 插入空行
+						if len(funcObj.Body.Objects) > 0 {
+							prevObj := funcObj.Body.Objects[len(funcObj.Body.Objects)-1]
+							prevLine := p.posLine(prevObj.BeginPos())
+							curLine := p.posLine(p.pos)
+							if curLine-prevLine > 1 {
+								funcObj.Body.Objects = append(funcObj.Body.Objects, &ast.BlankLine{
+									Pos: p.pos - 1,
+								})
+							}
+						}
+
+						commentObj := p.parseCommentGroup(true)
+						funcObj.Body.Comments = append(funcObj.Body.Comments, commentObj)
+						funcObj.Body.Objects = append(funcObj.Body.Objects, commentObj)
+						continue
+					}
+
+					// 解析指令
+					if p.tok == token.IDENT || p.tok.IsAs() {
+						// 插入空行
+						if len(funcObj.Body.Objects) > 0 {
+							prevObj := funcObj.Body.Objects[len(funcObj.Body.Objects)-1]
+							prevLine := p.posLine(prevObj.BeginPos())
+							curLine := p.posLine(p.pos)
+							if curLine-prevLine > 1 {
+								funcObj.Body.Objects = append(funcObj.Body.Objects, &ast.BlankLine{
+									Pos: p.pos - 1,
+								})
+							}
+						}
+
+						// 解析指令的关联注释
+						instDoc := p.parseDocComment(&funcObj.Body.Comments, p.pos)
+						if instDoc != nil {
+							funcObj.Body.Objects = funcObj.Body.Objects[:len(funcObj.Body.Objects)-1]
+						}
+
+						inst := p.parseInst(funcObj)
+						inst.Doc = instDoc
+
+						funcObj.Body.Insts = append(funcObj.Body.Insts, inst)
+						funcObj.Body.Objects = append(funcObj.Body.Objects, inst)
+						continue
+					}
+
+					// 未知 token
+					break
+				}
+
+				p.prog.Funcs = append(p.prog.Funcs, funcObj)
+				p.prog.Objects = append(p.prog.Objects, funcObj)
+
+				// 最后一个指令如果是注释, 则提到全局对象
+				if len(funcObj.Body.Objects) > 0 {
+					lastInstObj := funcObj.Body.Objects[len(funcObj.Body.Objects)-1]
+					if commentObj, ok := lastInstObj.(*ast.CommentGroup); ok {
+						funcObj.Body.Comments = funcObj.Body.Comments[:len(funcObj.Body.Comments)-1]
+						funcObj.Body.Objects = funcObj.Body.Objects[:len(funcObj.Body.Objects)-1]
+
+						p.prog.Comments = append(p.prog.Comments, commentObj)
+						p.prog.Objects = append(p.prog.Objects, commentObj)
+					}
+				}
+
+				// 删除结尾的空行
+				for len(funcObj.Body.Objects) > 0 {
+					lastInstObj := funcObj.Body.Objects[len(funcObj.Body.Objects)-1]
+					if _, ok := lastInstObj.(*ast.BlankLine); ok {
+						funcObj.Body.Objects = funcObj.Body.Objects[:len(funcObj.Body.Objects)-1]
+					} else {
+						break
+					}
+				}
+			}
 
 		case token.GAS_ALIGN:
 			p.acceptToken(token.GAS_ALIGN)
@@ -171,52 +287,8 @@ func (p *parser) parseFile() {
 				}
 
 			case ".text", ".init", ".fini":
-				funcObj := &ast.Func{
-					Type: new(ast.FuncType),
-					Body: new(ast.FuncBody),
-
-					Section: p.gasSectionName,
-				}
-
-				funcObj.Pos = p.pos
-				funcObj.Name = p.parseIdent()
-				p.acceptToken(token.COLON)
-
-				funcObj.Doc = p.parseDocComment(&p.prog.Comments, funcObj.Pos)
-				if funcObj.Doc != nil {
-					p.prog.Objects = p.prog.Objects[:len(p.prog.Objects)-1]
-				}
-
-				for {
-					if p.err != nil {
-						break
-					}
-					if p.tok == token.EOF {
-						break
-					}
-
-					// 注释
-					if p.tok == token.COMMENT {
-						commentObj := p.parseCommentGroup(false)
-						funcObj.Body.Comments = append(funcObj.Body.Comments, commentObj)
-						funcObj.Body.Objects = append(funcObj.Body.Objects, commentObj)
-						continue
-					}
-
-					// 解析指令
-					if p.tok == token.IDENT || p.tok.IsAs() {
-						inst := p.parseInst(funcObj)
-						funcObj.Body.Insts = append(funcObj.Body.Insts, inst)
-						funcObj.Body.Objects = append(funcObj.Body.Objects, inst)
-						continue
-					}
-
-					// 未知 token
-					break
-				}
-
-				p.prog.Funcs = append(p.prog.Funcs, funcObj)
-				p.prog.Objects = append(p.prog.Objects, funcObj)
+				// 函数已经提前解析
+				panic("unreachable")
 
 			default:
 				p.errorf(p.pos, "invalid section name: %s", p.gasSectionName)
@@ -253,12 +325,12 @@ func (p *parser) parseFile() {
 
 	// 收集信息导出符号信息
 	for _, g := range p.prog.Globals {
-		if p.gasGlobal[g.Name] {
+		if p.gasGlobl[g.Name] {
 			g.Exported = true
 		}
 	}
 	for _, fn := range p.prog.Funcs {
-		if p.gasGlobal[fn.Name] {
+		if p.gasGlobl[fn.Name] {
 			fn.ExportName = fn.Name
 		}
 	}

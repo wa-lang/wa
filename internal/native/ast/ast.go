@@ -119,7 +119,7 @@ type FuncBody struct {
 	Locals   []*Local        // 局部变量
 	Insts    []*Instruction  // 指令列表
 	Comments []*CommentGroup // 孤立的注释
-	Objects  []Object        // 保序对象列表
+	Objects  []Object        // 保序对象列表(包含空行)
 }
 
 // 参数/返回值/局部变量
@@ -148,4 +148,9 @@ type Instruction struct {
 	AsName  string          // 指令的名字(支持多语言)
 	Arg     *abi.AsArgument // 指令参数
 	Comment *Comment        // 尾部单行注释
+}
+
+// 空行, 用于指令间分隔打印
+type BlankLine struct {
+	Pos token.Pos
 }
