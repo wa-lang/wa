@@ -36,17 +36,19 @@ func (p *File) String() string {
 
 		// 全局变量: 如果是相同的段和对齐只需要打印一次
 		if g, _ := obj.(*Global); g != nil {
-			gPrev, _ := prevObj.(*Global)
-			if gPrev == nil || gPrev.Section != g.Section || gPrev.Align != g.Align {
-				sb.WriteString(token.GAS_SECTION.String())
-				sb.WriteString(" ")
-				sb.WriteString(g.Section)
-				sb.WriteString("\n")
+			if g.Tok != token.GLOBAL_zh {
+				gPrev, _ := prevObj.(*Global)
+				if gPrev == nil || gPrev.Tok != g.Tok || gPrev.Section != g.Section || gPrev.Align != g.Align {
+					sb.WriteString(token.GAS_SECTION.String())
+					sb.WriteString(" ")
+					sb.WriteString(g.Section)
+					sb.WriteString("\n")
 
-				sb.WriteString(token.GAS_ALIGN.String())
-				sb.WriteString(" ")
-				sb.WriteString(strconv.Itoa(g.Align))
-				sb.WriteString("\n")
+					sb.WriteString(token.GAS_ALIGN.String())
+					sb.WriteString(" ")
+					sb.WriteString(strconv.Itoa(g.Align))
+					sb.WriteString("\n")
+				}
 			}
 		}
 
@@ -115,7 +117,7 @@ func (p *Global) String() string {
 	}
 
 	if p.Tok == token.GLOBAL_zh {
-		sb.WriteString(fmt.Sprintf("%v %s:%v = ", p.Tok, p.Name, p.Type))
+		sb.WriteString(fmt.Sprintf("%v %s: %v = ", p.Tok, p.Name, p.TypeTok))
 	} else {
 		sb.WriteString(fmt.Sprintf("%s: %v ", p.Name, p.TypeTok))
 	}
@@ -194,7 +196,15 @@ func (p *Func) String() string {
 			if insertBlankLine {
 				sb.WriteString("\n")
 			}
-			sb.WriteString(obj.String())
+			if p.Tok == token.FUNC_zh {
+				if x, ok := obj.(ZhStringer); ok {
+					sb.WriteString(x.ZhString())
+				} else {
+					sb.WriteString(obj.String())
+				}
+			} else {
+				sb.WriteString(obj.String())
+			}
 			sb.WriteString("\n")
 			prevObj = obj
 		}
@@ -311,7 +321,47 @@ func (p *Instruction) String() string {
 				loong64.AsString,
 			))
 		case abi.RISCV32, abi.RISCV64:
-			sb.WriteString(riscv.AsmSyntax(p.As, p.AsName, p.Arg))
+			sb.WriteString(riscv.AsmSyntaxEx(p.As, p.AsName, p.Arg,
+				riscv.RegAliasString,
+				riscv.AsString,
+			))
+		default:
+			panic("unreachable")
+		}
+	}
+	if p.Comment != nil {
+		sb.WriteString(" ")
+		sb.WriteString(p.Comment.String())
+	}
+	return sb.String()
+}
+
+func (p *Instruction) ZhString() string {
+	var sb strings.Builder
+	if p.Doc != nil {
+		sb.WriteString(p.Doc.String())
+		sb.WriteString("\n")
+	}
+	if p.Label != "" {
+		sb.WriteString(p.Label)
+		sb.WriteString(":")
+	}
+	if p.As != 0 {
+		if p.Label != "" {
+			sb.WriteString("\n")
+		}
+		sb.WriteString("    ")
+		switch p.CPU {
+		case abi.LOONG64:
+			sb.WriteString(loong64.AsmSyntaxEx(p.As, p.AsName, p.Arg,
+				loong64.ZhRegAliasString,
+				loong64.AsString,
+			))
+		case abi.RISCV32, abi.RISCV64:
+			sb.WriteString(riscv.AsmSyntaxEx(p.As, p.AsName, p.Arg,
+				riscv.ZhRegAliasString,
+				riscv.AsString,
+			))
 		default:
 			panic("unreachable")
 		}

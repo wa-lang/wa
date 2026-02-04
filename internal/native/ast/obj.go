@@ -16,6 +16,10 @@ type Object interface {
 	String() string
 }
 
+type ZhStringer interface {
+	ZhString() string
+}
+
 func (p *File) GetDoc() *CommentGroup                   { return p.Doc }
 func (p *Comment) GetDoc() *CommentGroup                { return nil }
 func (p *CommentGroup) GetDoc() *CommentGroup           { return nil }
