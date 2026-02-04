@@ -4,6 +4,7 @@
 package ast
 
 import (
+	"bytes"
 	"fmt"
 	"strconv"
 	"strings"
@@ -12,6 +13,7 @@ import (
 	"wa-lang.org/wa/internal/native/loong64"
 	"wa-lang.org/wa/internal/native/riscv"
 	"wa-lang.org/wa/internal/native/token"
+	"wa-lang.org/wa/internal/printer/tabwriter"
 )
 
 func (p *File) String() string {
@@ -176,9 +178,16 @@ func (p *Func) String() string {
 		}
 	}
 
-	if len(p.Body.Objects) > 0 {
+	// 打印指令
+	// 指令参数和尾部注释对齐
+	{
+		// 用于格式化指令对齐
+		var buf bytes.Buffer
+		var w = tabwriter.NewWriter(&buf, 1, 1, 1, ' ', 0)
+
 		var prevObj Object
 		for i, obj := range p.Body.Objects {
+			instObj, _ := obj.(*Instruction)
 			insertBlankLine := false
 			if i > 0 {
 				// 当前语句带文档, 前一个不是 Label, 尽量前面保持分开
@@ -189,41 +198,34 @@ func (p *Func) String() string {
 				}
 
 				// 当前语句是 Label
-				if inst, ok := obj.(*Instruction); ok && inst.Label != "" {
+				if instObj != nil && instObj.Label != "" {
 					insertBlankLine = true
 				}
 			}
 			if insertBlankLine {
-				sb.WriteString("\n")
+				fmt.Fprintln(w)
+				w.Flush()
 			}
+
+			if instObj == nil {
+				fmt.Fprintln(w, obj.String())
+				prevObj = obj
+				continue
+			}
+
+			// 指令类型
 			if p.Tok == token.FUNC_zh {
-				if x, ok := obj.(ZhStringer); ok {
-					sb.WriteString(x.ZhString())
-				} else {
-					sb.WriteString(obj.String())
-				}
+				fmt.Fprintln(w, instObj.tabZhString())
 			} else {
-				sb.WriteString(obj.String())
+				fmt.Fprintln(w, instObj.tabString())
 			}
-			sb.WriteString("\n")
+
 			prevObj = obj
 		}
-	} else {
-		// 孤立的注释输出位置将失去上下文相关性
-		for _, obj := range p.Body.Comments {
-			sb.WriteString(obj.String())
-			sb.WriteString("\n\n")
-		}
+		w.Flush()
 
-		for _, obj := range p.Body.Locals {
-			sb.WriteString(obj.String())
-			sb.WriteString("\n\n")
-		}
-
-		for _, obj := range p.Body.Insts {
-			sb.WriteString(obj.String())
-			sb.WriteString("\n\n")
-		}
+		// 输出到字符串目标
+		sb.Write(buf.Bytes())
 	}
 
 	if p.Tok == token.FUNC_zh {
@@ -368,6 +370,108 @@ func (p *Instruction) ZhString() string {
 	}
 	if p.Comment != nil {
 		sb.WriteString(" ")
+		sb.WriteString(p.Comment.String())
+	}
+	return sb.String()
+}
+
+func (p *Instruction) tabString() string {
+	var sb strings.Builder
+	if p.Doc != nil {
+		sb.WriteString(p.Doc.String())
+		sb.WriteString("\n")
+	}
+	if p.Label != "" {
+		sb.WriteString(p.Label)
+		sb.WriteString(":")
+	}
+	if p.As != 0 {
+		if p.Label != "" {
+			sb.WriteString("\n")
+		}
+		sb.WriteString("    ")
+		switch p.CPU {
+		case abi.LOONG64:
+			s := loong64.AsmSyntaxEx(p.As, p.AsName, p.Arg,
+				loong64.RegAliasString,
+				loong64.AsString,
+			)
+			if idx := strings.IndexByte(s, ' '); idx > 0 {
+				sb.WriteString(s[:idx])
+				sb.WriteByte('\t')
+				sb.WriteString(s[idx+1:])
+			} else {
+				sb.WriteString(s)
+			}
+		case abi.RISCV32, abi.RISCV64:
+			s := riscv.AsmSyntaxEx(p.As, p.AsName, p.Arg,
+				riscv.RegAliasString,
+				riscv.AsString,
+			)
+			if idx := strings.IndexByte(s, ' '); idx > 0 {
+				sb.WriteString(s[:idx])
+				sb.WriteByte('\t')
+				sb.WriteString(s[idx+1:])
+			} else {
+				sb.WriteString(s)
+			}
+		default:
+			panic("unreachable")
+		}
+	}
+	if p.Comment != nil {
+		sb.WriteString("\t")
+		sb.WriteString(p.Comment.String())
+	}
+	return sb.String()
+}
+
+func (p *Instruction) tabZhString() string {
+	var sb strings.Builder
+	if p.Doc != nil {
+		sb.WriteString(p.Doc.String())
+		sb.WriteString("\n")
+	}
+	if p.Label != "" {
+		sb.WriteString(p.Label)
+		sb.WriteString(":")
+	}
+	if p.As != 0 {
+		if p.Label != "" {
+			sb.WriteString("\n")
+		}
+		sb.WriteString("    ")
+		switch p.CPU {
+		case abi.LOONG64:
+			s := loong64.AsmSyntaxEx(p.As, p.AsName, p.Arg,
+				loong64.ZhRegAliasString,
+				loong64.AsString,
+			)
+			if idx := strings.IndexByte(s, ' '); idx > 0 {
+				sb.WriteString(s[:idx])
+				sb.WriteByte('\t')
+				sb.WriteString(s[idx+1:])
+			} else {
+				sb.WriteString(s)
+			}
+		case abi.RISCV32, abi.RISCV64:
+			s := riscv.AsmSyntaxEx(p.As, p.AsName, p.Arg,
+				riscv.ZhRegAliasString,
+				riscv.AsString,
+			)
+			if idx := strings.IndexByte(s, ' '); idx > 0 {
+				sb.WriteString(s[:idx])
+				sb.WriteByte('\t')
+				sb.WriteString(s[idx+1:])
+			} else {
+				sb.WriteString(s)
+			}
+		default:
+			panic("unreachable")
+		}
+	}
+	if p.Comment != nil {
+		sb.WriteString("\t")
 		sb.WriteString(p.Comment.String())
 	}
 	return sb.String()

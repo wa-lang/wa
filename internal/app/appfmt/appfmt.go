@@ -15,6 +15,8 @@ import (
 	"wa-lang.org/wa/internal/app/appbase"
 	"wa-lang.org/wa/internal/config"
 	"wa-lang.org/wa/internal/format"
+	"wa-lang.org/wa/internal/native/abi"
+	natfmt "wa-lang.org/wa/internal/native/format"
 	"wa-lang.org/wa/internal/wat/watutil/watfmt"
 )
 
@@ -22,7 +24,13 @@ var CmdFmt = &cli.Command{
 	Name:      "fmt",
 	Usage:     "format Wa source code file",
 	ArgsUsage: "[<file.wa>|<path>|<path>/...]",
-	Flags:     []cli.Flag{},
+	Flags: []cli.Flag{
+		&cli.StringFlag{
+			Name:  "arch",
+			Usage: "set nasm architecture (loong64|riscv32|riscv64)",
+			Value: "loong64",
+		},
+	},
 	Action: func(c *cli.Context) error {
 		for _, path := range c.Args().Slice() {
 			if err := Fmt(c, path); err != nil {
@@ -40,6 +48,10 @@ func Fmt(c *cli.Context, path string) error {
 	}
 	if appbase.IsNativeFile(path, ".wa", ".wz") {
 		_, err := fmtFile(path)
+		return err
+	}
+	if appbase.IsNativeFile(path, ".wa.s") || appbase.IsNativeFile(path, ".wz.s") {
+		err := fmtNasmFile(c, path)
 		return err
 	}
 
@@ -96,10 +108,6 @@ func fmtFile(path string) (changed bool, err error) {
 		return false, err
 	}
 	if changed {
-		//if strings.HasSuffix(path, ".wz") {
-		//	fmt.Println(string(code))
-		//	return false, nil
-		//}
 		if err = os.WriteFile(path, code, 0666); err != nil {
 			return false, err
 		}
@@ -113,6 +121,28 @@ func fmtWatFile(path string) (err error) {
 		return err
 	}
 	data, err := watfmt.Format(path, src)
+	if err != nil {
+		return err
+	}
+	os.Stdout.Write(data)
+	if !bytes.HasSuffix(data, []byte("\n")) {
+		os.Stdout.Write([]byte("\n"))
+	}
+	return nil
+}
+
+func fmtNasmFile(c *cli.Context, path string) (err error) {
+	if c.Bool("debug") {
+		natfmt.SetDebug()
+	}
+
+	src, err := os.ReadFile(path)
+	if err != nil {
+		return err
+	}
+
+	cpu := abi.ParseCPUType(c.String("arch"))
+	data, err := natfmt.Format(cpu, path, src)
 	if err != nil {
 		return err
 	}

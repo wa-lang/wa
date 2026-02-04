@@ -82,7 +82,7 @@ func ZhRegAliasString(r abi.RegType) string {
 			return s
 		}
 	}
-	return RegString(r)
+	return ZhRegString(r)
 }
 
 // 根据名字查找汇编指令(忽略大小写, 忽略下划线和点的区别)
