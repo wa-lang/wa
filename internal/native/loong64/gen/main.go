@@ -108,7 +108,7 @@ func genOpFormatType_table(w *bytes.Buffer, pkgname string) {
 		opName := "A" + strings.ReplaceAll(op.name, ".", "_")
 		w.WriteString(opName)
 		w.WriteString(`:"`)
-		w.WriteString(op.name)
+		w.WriteString(strings.ToLower(op.name)) // 用小写字母, 保持官方习惯一致
 		w.WriteString(`",`)
 		w.WriteRune('\n')
 	}

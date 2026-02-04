@@ -21,10 +21,6 @@ func RegValid(reg abi.RegType) bool {
 
 // 根据名字查找寄存器(忽略大小写, 忽略下划线和点的区别)
 func LookupRegister(regName string) (r abi.RegType, ok bool) {
-	// 临时方案, 支持有美元符号前缀
-	if len(regName) > 0 && regName[0] == '$' {
-		regName = regName[1:]
-	}
 	if regName == "" {
 		return
 	}
@@ -55,9 +51,9 @@ func LookupRegister(regName string) (r abi.RegType, ok bool) {
 func RegString(r abi.RegType) string {
 	switch {
 	case REG_R0 <= r && r <= REG_R31:
-		return fmt.Sprintf("R%d", r-REG_R0)
+		return fmt.Sprintf("$r%d", r-REG_R0)
 	case REG_F0 <= r && r <= REG_F31:
-		return fmt.Sprintf("F%d", r-REG_F0)
+		return fmt.Sprintf("$f%d", r-REG_F0)
 	}
 	return fmt.Sprintf("loong64.badreg(%d)", r)
 }

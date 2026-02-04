@@ -6,416 +6,416 @@ package loong64
 // 寄存器名字列表
 var _Register = []string{
 	// 通用寄存器
-	REG_R0:  "R0",
-	REG_R1:  "R1",
-	REG_R2:  "R2",
-	REG_R3:  "R3",
-	REG_R4:  "R4",
-	REG_R5:  "R5",
-	REG_R6:  "R6",
-	REG_R7:  "R7",
-	REG_R8:  "R8",
-	REG_R9:  "R9",
-	REG_R10: "R10",
-	REG_R11: "R11",
-	REG_R12: "R12",
-	REG_R13: "R13",
-	REG_R14: "R14",
-	REG_R15: "R15",
-	REG_R16: "R16",
-	REG_R17: "R17",
-	REG_R18: "R18",
-	REG_R19: "R19",
-	REG_R20: "R20",
-	REG_R21: "R21",
-	REG_R22: "R22",
-	REG_R23: "R23",
-	REG_R24: "R24",
-	REG_R25: "R25",
-	REG_R26: "R26",
-	REG_R27: "R27",
-	REG_R28: "R28",
-	REG_R29: "R29",
-	REG_R30: "R30",
-	REG_R31: "R31",
+	REG_R0:  "$r0",
+	REG_R1:  "$r1",
+	REG_R2:  "$r2",
+	REG_R3:  "$r3",
+	REG_R4:  "$r4",
+	REG_R5:  "$r5",
+	REG_R6:  "$r6",
+	REG_R7:  "$r7",
+	REG_R8:  "$r8",
+	REG_R9:  "$r9",
+	REG_R10: "$r10",
+	REG_R11: "$r11",
+	REG_R12: "$r12",
+	REG_R13: "$r13",
+	REG_R14: "$r14",
+	REG_R15: "$r15",
+	REG_R16: "$r16",
+	REG_R17: "$r17",
+	REG_R18: "$r18",
+	REG_R19: "$r19",
+	REG_R20: "$r20",
+	REG_R21: "$r21",
+	REG_R22: "$r22",
+	REG_R23: "$r23",
+	REG_R24: "$r24",
+	REG_R25: "$r25",
+	REG_R26: "$r26",
+	REG_R27: "$r27",
+	REG_R28: "$r28",
+	REG_R29: "$r29",
+	REG_R30: "$r30",
+	REG_R31: "$r31",
 
 	// 浮点数寄存器(F/D扩展)
-	REG_F0:  "F0",
-	REG_F1:  "F1",
-	REG_F2:  "F2",
-	REG_F3:  "F3",
-	REG_F4:  "F4",
-	REG_F5:  "F5",
-	REG_F6:  "F6",
-	REG_F7:  "F7",
-	REG_F8:  "F8",
-	REG_F9:  "F9",
-	REG_F10: "F10",
-	REG_F11: "F11",
-	REG_F12: "F12",
-	REG_F13: "F13",
-	REG_F14: "F14",
-	REG_F15: "F15",
-	REG_F16: "F16",
-	REG_F17: "F17",
-	REG_F18: "F18",
-	REG_F19: "F19",
-	REG_F20: "F20",
-	REG_F21: "F21",
-	REG_F22: "F22",
-	REG_F23: "F23",
-	REG_F24: "F24",
-	REG_F25: "F25",
-	REG_F26: "F26",
-	REG_F27: "F27",
-	REG_F28: "F28",
-	REG_F29: "F29",
-	REG_F30: "F30",
-	REG_F31: "F31",
+	REG_F0:  "$f0",
+	REG_F1:  "$f1",
+	REG_F2:  "$f2",
+	REG_F3:  "$f3",
+	REG_F4:  "$f4",
+	REG_F5:  "$f5",
+	REG_F6:  "$f6",
+	REG_F7:  "$f7",
+	REG_F8:  "$f8",
+	REG_F9:  "$f9",
+	REG_F10: "$f10",
+	REG_F11: "$f11",
+	REG_F12: "$f12",
+	REG_F13: "$f13",
+	REG_F14: "$f14",
+	REG_F15: "$f15",
+	REG_F16: "$f16",
+	REG_F17: "$f17",
+	REG_F18: "$f18",
+	REG_F19: "$f19",
+	REG_F20: "$f20",
+	REG_F21: "$f21",
+	REG_F22: "$f22",
+	REG_F23: "$f23",
+	REG_F24: "$f24",
+	REG_F25: "$f25",
+	REG_F26: "$f26",
+	REG_F27: "$f27",
+	REG_F28: "$f28",
+	REG_F29: "$f29",
+	REG_F30: "$f30",
+	REG_F31: "$f31",
 
 	// LSX
-	REG_VF0:  "VF0",
-	REG_VF1:  "VF1",
-	REG_VF2:  "VF2",
-	REG_VF3:  "VF3",
-	REG_VF4:  "VF4",
-	REG_VF5:  "VF5",
-	REG_VF6:  "VF6",
-	REG_VF7:  "VF7",
-	REG_VF8:  "VF8",
-	REG_VF9:  "VF9",
-	REG_VF10: "VF10",
-	REG_VF11: "VF11",
-	REG_VF12: "VF12",
-	REG_VF13: "VF13",
-	REG_VF14: "VF14",
-	REG_VF15: "VF15",
-	REG_VF16: "VF16",
-	REG_VF17: "VF17",
-	REG_VF18: "VF18",
-	REG_VF19: "VF19",
-	REG_VF20: "VF20",
-	REG_VF21: "VF21",
-	REG_VF22: "VF22",
-	REG_VF23: "VF23",
-	REG_VF24: "VF24",
-	REG_VF25: "VF25",
-	REG_VF26: "VF26",
-	REG_VF27: "VF27",
-	REG_VF28: "VF28",
-	REG_VF29: "VF29",
-	REG_VF30: "VF30",
-	REG_VF31: "VF31",
+	REG_VF0:  "$vr0",
+	REG_VF1:  "$vr1",
+	REG_VF2:  "$vr2",
+	REG_VF3:  "$vr3",
+	REG_VF4:  "$vr4",
+	REG_VF5:  "$vr5",
+	REG_VF6:  "$vr6",
+	REG_VF7:  "$vr7",
+	REG_VF8:  "$vr8",
+	REG_VF9:  "$vr9",
+	REG_VF10: "$vr10",
+	REG_VF11: "$vr11",
+	REG_VF12: "$vr12",
+	REG_VF13: "$vr13",
+	REG_VF14: "$vr14",
+	REG_VF15: "$vr15",
+	REG_VF16: "$vr16",
+	REG_VF17: "$vr17",
+	REG_VF18: "$vr18",
+	REG_VF19: "$vr19",
+	REG_VF20: "$vr20",
+	REG_VF21: "$vr21",
+	REG_VF22: "$vr22",
+	REG_VF23: "$vr23",
+	REG_VF24: "$vr24",
+	REG_VF25: "$vr25",
+	REG_VF26: "$vr26",
+	REG_VF27: "$vr27",
+	REG_VF28: "$vr28",
+	REG_VF29: "$vr29",
+	REG_VF30: "$vr30",
+	REG_VF31: "$vr31",
 
 	// LASX
-	REG_XF0:  "XF0",
-	REG_XF1:  "XF1",
-	REG_XF2:  "XF2",
-	REG_XF3:  "XF3",
-	REG_XF4:  "XF4",
-	REG_XF5:  "XF5",
-	REG_XF6:  "XF6",
-	REG_XF7:  "XF7",
-	REG_XF8:  "XF8",
-	REG_XF9:  "XF9",
-	REG_XF10: "XF10",
-	REG_XF11: "XF11",
-	REG_XF12: "XF12",
-	REG_XF13: "XF13",
-	REG_XF14: "XF14",
-	REG_XF15: "XF15",
-	REG_XF16: "XF16",
-	REG_XF17: "XF17",
-	REG_XF18: "XF18",
-	REG_XF19: "XF19",
-	REG_XF20: "XF20",
-	REG_XF21: "XF21",
-	REG_XF22: "XF22",
-	REG_XF23: "XF23",
-	REG_XF24: "XF24",
-	REG_XF25: "XF25",
-	REG_XF26: "XF26",
-	REG_XF27: "XF27",
-	REG_XF28: "XF28",
-	REG_XF29: "XF29",
-	REG_XF30: "XF30",
-	REG_XF31: "XF31",
+	REG_XF0:  "$xr0",
+	REG_XF1:  "$xr1",
+	REG_XF2:  "$xr2",
+	REG_XF3:  "$xr3",
+	REG_XF4:  "$xr4",
+	REG_XF5:  "$xr5",
+	REG_XF6:  "$xr6",
+	REG_XF7:  "$xr7",
+	REG_XF8:  "$xr8",
+	REG_XF9:  "$xr9",
+	REG_XF10: "$xr10",
+	REG_XF11: "$xr11",
+	REG_XF12: "$xr12",
+	REG_XF13: "$xr13",
+	REG_XF14: "$xr14",
+	REG_XF15: "$xr15",
+	REG_XF16: "$xr16",
+	REG_XF17: "$xr17",
+	REG_XF18: "$xr18",
+	REG_XF19: "$xr19",
+	REG_XF20: "$xr20",
+	REG_XF21: "$xr21",
+	REG_XF22: "$xr22",
+	REG_XF23: "$xr23",
+	REG_XF24: "$xr24",
+	REG_XF25: "$xr25",
+	REG_XF26: "$xr26",
+	REG_XF27: "$xr27",
+	REG_XF28: "$xr28",
+	REG_XF29: "$xr29",
+	REG_XF30: "$xr30",
+	REG_XF31: "$xr31",
 }
 
 // 寄存器名字列表(中文)
 var _ZhRegister = []string{
 	// 通用寄存器
-	REG_R0:  "甲格",
-	REG_R1:  "乙格",
-	REG_R2:  "丙格",
-	REG_R3:  "丁格",
-	REG_R4:  "戊格",
-	REG_R5:  "己格",
-	REG_R6:  "庚格",
-	REG_R7:  "辛格",
-	REG_R8:  "壬格",
-	REG_R9:  "癸格",
-	REG_R10: "子格",
-	REG_R11: "丑格",
-	REG_R12: "寅格",
-	REG_R13: "卯格",
-	REG_R14: "辰格",
-	REG_R15: "巳格",
-	REG_R16: "午格",
-	REG_R17: "未格",
-	REG_R18: "申格",
-	REG_R19: "酉格",
-	REG_R20: "戌格",
-	REG_R21: "亥格",
-	REG_R22: "乾格",
-	REG_R23: "坤格",
-	REG_R24: "震格",
-	REG_R25: "巽格",
-	REG_R26: "坎格",
-	REG_R27: "离格",
-	REG_R28: "艮格",
-	REG_R29: "兑格",
-	REG_R30: "阴格",
-	REG_R31: "阳格",
+	REG_R0:  "$甲格",
+	REG_R1:  "$乙格",
+	REG_R2:  "$丙格",
+	REG_R3:  "$丁格",
+	REG_R4:  "$戊格",
+	REG_R5:  "$己格",
+	REG_R6:  "$庚格",
+	REG_R7:  "$辛格",
+	REG_R8:  "$壬格",
+	REG_R9:  "$癸格",
+	REG_R10: "$子格",
+	REG_R11: "$丑格",
+	REG_R12: "$寅格",
+	REG_R13: "$卯格",
+	REG_R14: "$辰格",
+	REG_R15: "$巳格",
+	REG_R16: "$午格",
+	REG_R17: "$未格",
+	REG_R18: "$申格",
+	REG_R19: "$酉格",
+	REG_R20: "$戌格",
+	REG_R21: "$亥格",
+	REG_R22: "$乾格",
+	REG_R23: "$坤格",
+	REG_R24: "$震格",
+	REG_R25: "$巽格",
+	REG_R26: "$坎格",
+	REG_R27: "$离格",
+	REG_R28: "$艮格",
+	REG_R29: "$兑格",
+	REG_R30: "$阴格",
+	REG_R31: "$阳格",
 
 	// 浮点数寄存器(F/D扩展)
-	REG_F0:  "甲皿",
-	REG_F1:  "乙皿",
-	REG_F2:  "丙皿",
-	REG_F3:  "丁皿",
-	REG_F4:  "戊皿",
-	REG_F5:  "己皿",
-	REG_F6:  "庚皿",
-	REG_F7:  "辛皿",
-	REG_F8:  "壬皿",
-	REG_F9:  "癸皿",
-	REG_F10: "子皿",
-	REG_F11: "丑皿",
-	REG_F12: "寅皿",
-	REG_F13: "卯皿",
-	REG_F14: "辰皿",
-	REG_F15: "巳皿",
-	REG_F16: "午皿",
-	REG_F17: "未皿",
-	REG_F18: "申皿",
-	REG_F19: "酉皿",
-	REG_F20: "戌皿",
-	REG_F21: "亥皿",
-	REG_F22: "乾皿",
-	REG_F23: "坤皿",
-	REG_F24: "震皿",
-	REG_F25: "巽皿",
-	REG_F26: "坎皿",
-	REG_F27: "离皿",
-	REG_F28: "艮皿",
-	REG_F29: "兑皿",
-	REG_F30: "阴皿",
-	REG_F31: "阳皿",
+	REG_F0:  "$甲皿",
+	REG_F1:  "$乙皿",
+	REG_F2:  "$丙皿",
+	REG_F3:  "$丁皿",
+	REG_F4:  "$戊皿",
+	REG_F5:  "$己皿",
+	REG_F6:  "$庚皿",
+	REG_F7:  "$辛皿",
+	REG_F8:  "$壬皿",
+	REG_F9:  "$癸皿",
+	REG_F10: "$子皿",
+	REG_F11: "$丑皿",
+	REG_F12: "$寅皿",
+	REG_F13: "$卯皿",
+	REG_F14: "$辰皿",
+	REG_F15: "$巳皿",
+	REG_F16: "$午皿",
+	REG_F17: "$未皿",
+	REG_F18: "$申皿",
+	REG_F19: "$酉皿",
+	REG_F20: "$戌皿",
+	REG_F21: "$亥皿",
+	REG_F22: "$乾皿",
+	REG_F23: "$坤皿",
+	REG_F24: "$震皿",
+	REG_F25: "$巽皿",
+	REG_F26: "$坎皿",
+	REG_F27: "$离皿",
+	REG_F28: "$艮皿",
+	REG_F29: "$兑皿",
+	REG_F30: "$阴皿",
+	REG_F31: "$阳皿",
 
 	// LSX
-	REG_VF0:  "威甲皿",
-	REG_VF1:  "威乙皿",
-	REG_VF2:  "威丙皿",
-	REG_VF3:  "威丁皿",
-	REG_VF4:  "威戊皿",
-	REG_VF5:  "威己皿",
-	REG_VF6:  "威庚皿",
-	REG_VF7:  "威辛皿",
-	REG_VF8:  "威壬皿",
-	REG_VF9:  "威癸皿",
-	REG_VF10: "威子皿",
-	REG_VF11: "威丑皿",
-	REG_VF12: "威寅皿",
-	REG_VF13: "威卯皿",
-	REG_VF14: "威辰皿",
-	REG_VF15: "威巳皿",
-	REG_VF16: "威午皿",
-	REG_VF17: "威未皿",
-	REG_VF18: "威申皿",
-	REG_VF19: "威酉皿",
-	REG_VF20: "威戌皿",
-	REG_VF21: "威亥皿",
-	REG_VF22: "威乾皿",
-	REG_VF23: "威坤皿",
-	REG_VF24: "威震皿",
-	REG_VF25: "威巽皿",
-	REG_VF26: "威坎皿",
-	REG_VF27: "威离皿",
-	REG_VF28: "威艮皿",
-	REG_VF29: "威兑皿",
-	REG_VF30: "威阴皿",
-	REG_VF31: "威阳皿",
+	REG_VF0:  "$威甲格",
+	REG_VF1:  "$威乙格",
+	REG_VF2:  "$威丙格",
+	REG_VF3:  "$威丁格",
+	REG_VF4:  "$威戊格",
+	REG_VF5:  "$威己格",
+	REG_VF6:  "$威庚格",
+	REG_VF7:  "$威辛格",
+	REG_VF8:  "$威壬格",
+	REG_VF9:  "$威癸格",
+	REG_VF10: "$威子格",
+	REG_VF11: "$威丑格",
+	REG_VF12: "$威寅格",
+	REG_VF13: "$威卯格",
+	REG_VF14: "$威辰格",
+	REG_VF15: "$威巳格",
+	REG_VF16: "$威午格",
+	REG_VF17: "$威未格",
+	REG_VF18: "$威申格",
+	REG_VF19: "$威酉格",
+	REG_VF20: "$威戌格",
+	REG_VF21: "$威亥格",
+	REG_VF22: "$威乾格",
+	REG_VF23: "$威坤格",
+	REG_VF24: "$威震格",
+	REG_VF25: "$威巽格",
+	REG_VF26: "$威坎格",
+	REG_VF27: "$威离格",
+	REG_VF28: "$威艮格",
+	REG_VF29: "$威兑格",
+	REG_VF30: "$威阴格",
+	REG_VF31: "$威阳格",
 
 	// LASX
-	REG_XF0:  "叉甲皿",
-	REG_XF1:  "叉乙皿",
-	REG_XF2:  "叉丙皿",
-	REG_XF3:  "叉丁皿",
-	REG_XF4:  "叉戊皿",
-	REG_XF5:  "叉己皿",
-	REG_XF6:  "叉庚皿",
-	REG_XF7:  "叉辛皿",
-	REG_XF8:  "叉壬皿",
-	REG_XF9:  "叉癸皿",
-	REG_XF10: "叉子皿",
-	REG_XF11: "叉丑皿",
-	REG_XF12: "叉寅皿",
-	REG_XF13: "叉卯皿",
-	REG_XF14: "叉辰皿",
-	REG_XF15: "叉巳皿",
-	REG_XF16: "叉午皿",
-	REG_XF17: "叉未皿",
-	REG_XF18: "叉申皿",
-	REG_XF19: "叉酉皿",
-	REG_XF20: "叉戌皿",
-	REG_XF21: "叉亥皿",
-	REG_XF22: "叉乾皿",
-	REG_XF23: "叉坤皿",
-	REG_XF24: "叉震皿",
-	REG_XF25: "叉巽皿",
-	REG_XF26: "叉坎皿",
-	REG_XF27: "叉离皿",
-	REG_XF28: "叉艮皿",
-	REG_XF29: "叉兑皿",
-	REG_XF30: "叉阴皿",
-	REG_XF31: "叉阳皿",
+	REG_XF0:  "$叉甲格",
+	REG_XF1:  "$叉乙格",
+	REG_XF2:  "$叉丙格",
+	REG_XF3:  "$叉丁格",
+	REG_XF4:  "$叉戊格",
+	REG_XF5:  "$叉己格",
+	REG_XF6:  "$叉庚格",
+	REG_XF7:  "$叉辛格",
+	REG_XF8:  "$叉壬格",
+	REG_XF9:  "$叉癸格",
+	REG_XF10: "$叉子格",
+	REG_XF11: "$叉丑格",
+	REG_XF12: "$叉寅格",
+	REG_XF13: "$叉卯格",
+	REG_XF14: "$叉辰格",
+	REG_XF15: "$叉巳格",
+	REG_XF16: "$叉午格",
+	REG_XF17: "$叉未格",
+	REG_XF18: "$叉申格",
+	REG_XF19: "$叉酉格",
+	REG_XF20: "$叉戌格",
+	REG_XF21: "$叉亥格",
+	REG_XF22: "$叉乾格",
+	REG_XF23: "$叉坤格",
+	REG_XF24: "$叉震格",
+	REG_XF25: "$叉巽格",
+	REG_XF26: "$叉坎格",
+	REG_XF27: "$叉离格",
+	REG_XF28: "$叉艮格",
+	REG_XF29: "$叉兑格",
+	REG_XF30: "$叉阴格",
+	REG_XF31: "$叉阳格",
 }
 
 // 寄存器别名
 var _RegisterAlias = []string{
-	REG_ZERO: "ZERO", // 零寄存器
-	REG_RA:   "RA",   // 返回地址
-	REG_TP:   "TP",   // 线程指针
-	REG_SP:   "SP",   // 栈指针
-	REG_GP:   "GP",   // 复用于 WASM 的 Memory 地址, 临时方案
-	REG_A0:   "A0",   // 函数参数/返回值
-	REG_A1:   "A1",   // 函数参数/返回值
-	REG_A2:   "A2",   // 函数参数
-	REG_A3:   "A3",   // 函数参数
-	REG_A4:   "A4",   // 函数参数
-	REG_A5:   "A5",   // 函数参数
-	REG_A6:   "A6",   // 函数参数
-	REG_A7:   "A7",   // 函数参数
-	REG_T0:   "T0",   // 临时变量
-	REG_T1:   "T1",   // 临时变量
-	REG_T2:   "T2",   // 临时变量
-	REG_T3:   "T3",   // 临时变量
-	REG_T4:   "T4",   // 临时变量
-	REG_T5:   "T5",   // 临时变量
-	REG_T6:   "T6",   // 临时变量
-	REG_T7:   "T7",   // 临时变量
-	REG_T8:   "T8",   // 临时变量
-	REG_X:    "X",    // 保留寄存器
-	REG_FP:   "FP",   // 帧指针
-	REG_S0:   "S0",   // Saved register
-	REG_S1:   "S1",   // Saved register
-	REG_S2:   "S2",   // Saved register
-	REG_S3:   "S3",   // Saved register
-	REG_S4:   "S4",   // Saved register
-	REG_S5:   "S5",   // Saved register
-	REG_S6:   "S6",   // Saved register
-	REG_S7:   "S7",   // Saved register
+	REG_ZERO: "$zero", // 零寄存器
+	REG_RA:   "$ra",   // 返回地址
+	REG_TP:   "$tp",   // 线程指针
+	REG_SP:   "$sp",   // 栈指针
+	REG_GP:   "$gp",   // 复用于 WASM 的 Memory 地址, 临时方案
+	REG_A0:   "$a0",   // 函数参数/返回值
+	REG_A1:   "$a1",   // 函数参数/返回值
+	REG_A2:   "$a2",   // 函数参数
+	REG_A3:   "$a3",   // 函数参数
+	REG_A4:   "$a4",   // 函数参数
+	REG_A5:   "$a5",   // 函数参数
+	REG_A6:   "$a6",   // 函数参数
+	REG_A7:   "$a7",   // 函数参数
+	REG_T0:   "$t0",   // 临时变量
+	REG_T1:   "$t1",   // 临时变量
+	REG_T2:   "$t2",   // 临时变量
+	REG_T3:   "$t3",   // 临时变量
+	REG_T4:   "$t4",   // 临时变量
+	REG_T5:   "$t5",   // 临时变量
+	REG_T6:   "$t6",   // 临时变量
+	REG_T7:   "$t7",   // 临时变量
+	REG_T8:   "$t8",   // 临时变量
+	REG_X:    "$xx",   // 保留寄存器
+	REG_FP:   "$fp",   // 帧指针
+	REG_S0:   "$s0",   // Saved register
+	REG_S1:   "$s1",   // Saved register
+	REG_S2:   "$s2",   // Saved register
+	REG_S3:   "$s3",   // Saved register
+	REG_S4:   "$s4",   // Saved register
+	REG_S5:   "$s5",   // Saved register
+	REG_S6:   "$s6",   // Saved register
+	REG_S7:   "$s7",   // Saved register
 
-	REG_FA0:  "FA0",  // 函数参数/返回值
-	REG_FA1:  "FA1",  // 函数参数/返回值
-	REG_FA2:  "FA2",  // 函数参数
-	REG_FA3:  "FA3",  // 函数参数
-	REG_FA4:  "FA4",  // 函数参数
-	REG_FA5:  "FA5",  // 函数参数
-	REG_FA6:  "FA6",  // 函数参数
-	REG_FA7:  "FA7",  // 函数参数
-	REG_FT0:  "FT0",  // 临时变量
-	REG_FT1:  "FT1",  // 临时变量
-	REG_FT2:  "FT2",  // 临时变量
-	REG_FT3:  "FT3",  // 临时变量
-	REG_FT4:  "FT4",  // 临时变量
-	REG_FT5:  "FT5",  // 临时变量
-	REG_FT6:  "FT6",  // 临时变量
-	REG_FT7:  "FT7",  // 临时变量
-	REG_FT8:  "FT8",  // 临时变量
-	REG_FT9:  "FT9",  // 临时变量
-	REG_FT10: "FT10", // 临时变量
-	REG_FT11: "FT11", // 临时变量
-	REG_FT12: "FT12", // 临时变量
-	REG_FT13: "FT13", // 临时变量
-	REG_FT14: "FT14", // 临时变量
-	REG_FT15: "FT15", // 临时变量
-	REG_FS0:  "FS0",  // Saved register
-	REG_FS1:  "FS1",  // Saved register
-	REG_FS2:  "FS2",  // Saved register
-	REG_FS3:  "FS3",  // Saved register
-	REG_FS4:  "FS4",  // Saved register
-	REG_FS5:  "FS5",  // Saved register
-	REG_FS6:  "FS6",  // Saved register
-	REG_FS7:  "FS7",  // Saved register
+	REG_FA0:  "$fa0",  // 函数参数/返回值
+	REG_FA1:  "$fa1",  // 函数参数/返回值
+	REG_FA2:  "$fa2",  // 函数参数
+	REG_FA3:  "$fa3",  // 函数参数
+	REG_FA4:  "$fa4",  // 函数参数
+	REG_FA5:  "$fa5",  // 函数参数
+	REG_FA6:  "$fa6",  // 函数参数
+	REG_FA7:  "$fa7",  // 函数参数
+	REG_FT0:  "$ft0",  // 临时变量
+	REG_FT1:  "$ft1",  // 临时变量
+	REG_FT2:  "$ft2",  // 临时变量
+	REG_FT3:  "$ft3",  // 临时变量
+	REG_FT4:  "$ft4",  // 临时变量
+	REG_FT5:  "$ft5",  // 临时变量
+	REG_FT6:  "$ft6",  // 临时变量
+	REG_FT7:  "$ft7",  // 临时变量
+	REG_FT8:  "$ft8",  // 临时变量
+	REG_FT9:  "$ft9",  // 临时变量
+	REG_FT10: "$ft10", // 临时变量
+	REG_FT11: "$ft11", // 临时变量
+	REG_FT12: "$ft12", // 临时变量
+	REG_FT13: "$ft13", // 临时变量
+	REG_FT14: "$ft14", // 临时变量
+	REG_FT15: "$ft15", // 临时变量
+	REG_FS0:  "$fs0",  // Saved register
+	REG_FS1:  "$fs1",  // Saved register
+	REG_FS2:  "$fs2",  // Saved register
+	REG_FS3:  "$fs3",  // Saved register
+	REG_FS4:  "$fs4",  // Saved register
+	REG_FS5:  "$fs5",  // Saved register
+	REG_FS6:  "$fs6",  // Saved register
+	REG_FS7:  "$fs7",  // Saved register
 }
 
 var _ZhRegisterAlias = []string{
-	REG_ZERO: "零格",  // 零寄存器
-	REG_RA:   "回格",  // 返回地址
-	REG_TP:   "线格",  // 线程指针
-	REG_SP:   "栈格",  // 栈指针
-	REG_FP:   "帧格",  // 帧指针
-	REG_GP:   "基格",  // 复用于 WASM 的 Memory 地址, 临时方案
-	REG_A0:   "参甲格", // 函数参数/返回值
-	REG_A1:   "参乙格", // 函数参数/返回值
-	REG_A2:   "参丙格", // 函数参数
-	REG_A3:   "参丁格", // 函数参数
-	REG_A4:   "参戊格", // 函数参数
-	REG_A5:   "参己格", // 函数参数
-	REG_A6:   "参庚格", // 函数参数
-	REG_A7:   "参辛格", // 函数参数
-	REG_T0:   "暂甲格", // 临时变量
-	REG_T1:   "暂乙格", // 临时变量
-	REG_T2:   "暂丙格", // 临时变量
-	REG_T3:   "暂丁格", // 临时变量
-	REG_T4:   "暂戊格", // 临时变量
-	REG_T5:   "暂己格", // 临时变量
-	REG_T6:   "暂庚格", // 临时变量
-	REG_T7:   "暂辛格", // 临时变量
-	REG_T8:   "暂壬格", // 临时变量
-	REG_X:    "保留格", // 保留寄存器
-	REG_S0:   "守甲格", // Saved register
-	REG_S1:   "守乙格", // Saved register
-	REG_S2:   "守丙格", // Saved register
-	REG_S3:   "守丁格", // Saved register
-	REG_S4:   "守戊格", // Saved register
-	REG_S5:   "守己格", // Saved register
-	REG_S6:   "守庚格", // Saved register
-	REG_S7:   "守辛格", // Saved register
+	REG_ZERO: "$零格",  // 零寄存器
+	REG_RA:   "$回格",  // 返回地址
+	REG_TP:   "$线格",  // 线程指针
+	REG_SP:   "$栈格",  // 栈指针
+	REG_FP:   "$帧格",  // 帧指针
+	REG_GP:   "$基格",  // 复用于 WASM 的 Memory 地址, 临时方案
+	REG_A0:   "$参甲格", // 函数参数/返回值
+	REG_A1:   "$参乙格", // 函数参数/返回值
+	REG_A2:   "$参丙格", // 函数参数
+	REG_A3:   "$参丁格", // 函数参数
+	REG_A4:   "$参戊格", // 函数参数
+	REG_A5:   "$参己格", // 函数参数
+	REG_A6:   "$参庚格", // 函数参数
+	REG_A7:   "$参辛格", // 函数参数
+	REG_T0:   "$暂甲格", // 临时变量
+	REG_T1:   "$暂乙格", // 临时变量
+	REG_T2:   "$暂丙格", // 临时变量
+	REG_T3:   "$暂丁格", // 临时变量
+	REG_T4:   "$暂戊格", // 临时变量
+	REG_T5:   "$暂己格", // 临时变量
+	REG_T6:   "$暂庚格", // 临时变量
+	REG_T7:   "$暂辛格", // 临时变量
+	REG_T8:   "$暂壬格", // 临时变量
+	REG_X:    "$保留格", // 保留寄存器
+	REG_S0:   "$守甲格", // Saved register
+	REG_S1:   "$守乙格", // Saved register
+	REG_S2:   "$守丙格", // Saved register
+	REG_S3:   "$守丁格", // Saved register
+	REG_S4:   "$守戊格", // Saved register
+	REG_S5:   "$守己格", // Saved register
+	REG_S6:   "$守庚格", // Saved register
+	REG_S7:   "$守辛格", // Saved register
 
-	REG_FA0:  "参甲皿", // 函数参数/返回值
-	REG_FA1:  "参乙皿", // 函数参数/返回值
-	REG_FA2:  "参丙皿", // 函数参数
-	REG_FA3:  "参丁皿", // 函数参数
-	REG_FA4:  "参戊皿", // 函数参数
-	REG_FA5:  "参己皿", // 函数参数
-	REG_FA6:  "参庚皿", // 函数参数
-	REG_FA7:  "参辛皿", // 函数参数
-	REG_FT0:  "暂甲皿", // 临时变量
-	REG_FT1:  "暂乙皿", // 临时变量
-	REG_FT2:  "暂丙皿", // 临时变量
-	REG_FT3:  "暂丁皿", // 临时变量
-	REG_FT4:  "暂戊皿", // 临时变量
-	REG_FT5:  "暂己皿", // 临时变量
-	REG_FT6:  "暂庚皿", // 临时变量
-	REG_FT7:  "暂辛皿", // 临时变量
-	REG_FT8:  "暂壬皿", // 临时变量
-	REG_FT9:  "暂癸皿", // 临时变量
-	REG_FT10: "暂子皿", // 临时变量
-	REG_FT11: "暂丑皿", // 临时变量
-	REG_FT12: "暂寅皿", // 临时变量
-	REG_FT13: "暂卯皿", // 临时变量
-	REG_FT14: "暂辰皿", // 临时变量
-	REG_FT15: "暂巳皿", // 临时变量
-	REG_FS0:  "守甲皿", // Saved register
-	REG_FS1:  "守乙皿", // Saved register
-	REG_FS2:  "守丙皿", // Saved register
-	REG_FS3:  "守丁皿", // Saved register
-	REG_FS4:  "守戊皿", // Saved register
-	REG_FS5:  "守己皿", // Saved register
-	REG_FS6:  "守庚皿", // Saved register
-	REG_FS7:  "守辛皿", // Saved register
+	REG_FA0:  "$参甲皿", // 函数参数/返回值
+	REG_FA1:  "$参乙皿", // 函数参数/返回值
+	REG_FA2:  "$参丙皿", // 函数参数
+	REG_FA3:  "$参丁皿", // 函数参数
+	REG_FA4:  "$参戊皿", // 函数参数
+	REG_FA5:  "$参己皿", // 函数参数
+	REG_FA6:  "$参庚皿", // 函数参数
+	REG_FA7:  "$参辛皿", // 函数参数
+	REG_FT0:  "$暂甲皿", // 临时变量
+	REG_FT1:  "$暂乙皿", // 临时变量
+	REG_FT2:  "$暂丙皿", // 临时变量
+	REG_FT3:  "$暂丁皿", // 临时变量
+	REG_FT4:  "$暂戊皿", // 临时变量
+	REG_FT5:  "$暂己皿", // 临时变量
+	REG_FT6:  "$暂庚皿", // 临时变量
+	REG_FT7:  "$暂辛皿", // 临时变量
+	REG_FT8:  "$暂壬皿", // 临时变量
+	REG_FT9:  "$暂癸皿", // 临时变量
+	REG_FT10: "$暂子皿", // 临时变量
+	REG_FT11: "$暂丑皿", // 临时变量
+	REG_FT12: "$暂寅皿", // 临时变量
+	REG_FT13: "$暂卯皿", // 临时变量
+	REG_FT14: "$暂辰皿", // 临时变量
+	REG_FT15: "$暂巳皿", // 临时变量
+	REG_FS0:  "$守甲皿", // Saved register
+	REG_FS1:  "$守乙皿", // Saved register
+	REG_FS2:  "$守丙皿", // Saved register
+	REG_FS3:  "$守丁皿", // Saved register
+	REG_FS4:  "$守戊皿", // Saved register
+	REG_FS5:  "$守己皿", // Saved register
+	REG_FS6:  "$守庚皿", // Saved register
+	REG_FS7:  "$守辛皿", // Saved register
 }
 
 // 中文指令集

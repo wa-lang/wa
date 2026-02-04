@@ -307,10 +307,7 @@ func (p *Instruction) String() string {
 		switch p.CPU {
 		case abi.LOONG64:
 			sb.WriteString(loong64.AsmSyntaxEx(p.As, p.AsName, p.Arg,
-				func(r abi.RegType) string {
-					s := loong64.RegAliasString(r)
-					return "$" + strings.ToLower(s)
-				},
+				loong64.RegAliasString,
 				loong64.AsString,
 			))
 		case abi.RISCV32, abi.RISCV64:

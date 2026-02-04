@@ -26,7 +26,7 @@ func ExampleAsmSyntax() {
 	))
 
 	// Output:
-	// ADD.W R1, R2, R3
+	// add.w $r1, $r2, $r3
 }
 
 func ExampleEncodeLA64_xALui12iwAndOri() {
@@ -72,11 +72,11 @@ func ExampleEncodeLA64_xALui12iwAndOri() {
 	}
 
 	// Output:
-	// 0x15000004 # LU12I.W A0, 524288
-	// 0b00010101000000000000000000000100 # LU12I.W A0, 524288
+	// 0x15000004 # lu12i.w $a0, 524288
+	// 0b00010101000000000000000000000100 # lu12i.w $a0, 524288
 	// 0b10000000000000000000000000101000 # message
-	// 0x0380A084 # ORI A0, A0, 40
-	// 0b00000011100000001010000010000100 # ORI A0, A0, 40
+	// 0x0380A084 # ori $a0, $a0, 40
+	// 0b00000011100000001010000010000100 # ori $a0, $a0, 40
 	// 0b10000000000000000000000000101000 # message
 }
 
@@ -119,16 +119,16 @@ func ExampleEncodeLA64() {
 	}
 
 	// Output:
-	// 0x14000004 # LU12I.W A0, 0
-	// 0x0280F084 # ADDI.W A0, A0, 60
-	// 0x2A000085 # LD.BU A1, A0, 0
-	// 0x58001805 # BEQ ZERO, A1, 24
-	// 0x1420000C # LU12I.W T0, 65536
-	// 0x0280018C # ADDI.W T0, T0, 0
-	// 0x29000185 # ST.B A1, T0, 0
-	// 0x02800484 # ADDI.W A0, A0, 1
-	// 0x53FFEBFF # B -24
-	// 0x53FFFFFF # B -4
+	// 0x14000004 # lu12i.w $a0, 0
+	// 0x0280F084 # addi.w $a0, $a0, 60
+	// 0x2A000085 # ld.bu $a1, $a0, 0
+	// 0x58001805 # beq $zero, $a1, 24
+	// 0x1420000C # lu12i.w $t0, 65536
+	// 0x0280018C # addi.w $t0, $t0, 0
+	// 0x29000185 # st.b $a1, $t0, 0
+	// 0x02800484 # addi.w $a0, $a0, 1
+	// 0x53FFEBFF # b -24
+	// 0x53FFFFFF # b -4
 }
 
 func ExampleDecode() {
@@ -158,14 +158,14 @@ func ExampleDecode() {
 	}
 
 	// Output:
-	// 0x14000004 # LU12I.W A0, 0
-	// 0x0280F084 # ADDI.W A0, A0, 60
-	// 0x2A000085 # LD.BU A1, A0, 0
-	// 0x58001805 # BEQ ZERO, A1, 24
-	// 0x1420000C # LU12I.W T0, 65536
-	// 0x0280018C # ADDI.W T0, T0, 0
-	// 0x29000185 # ST.B A1, T0, 0
-	// 0x02800484 # ADDI.W A0, A0, 1
-	// 0x53FFEBFF # B -24
-	// 0x53FFFFFF # B -4
+	// 0x14000004 # lu12i.w $a0, 0
+	// 0x0280F084 # addi.w $a0, $a0, 60
+	// 0x2A000085 # ld.bu $a1, $a0, 0
+	// 0x58001805 # beq $zero, $a1, 24
+	// 0x1420000C # lu12i.w $t0, 65536
+	// 0x0280018C # addi.w $t0, $t0, 0
+	// 0x29000185 # st.b $a1, $t0, 0
+	// 0x02800484 # addi.w $a0, $a0, 1
+	// 0x53FFEBFF # b -24
+	// 0x53FFFFFF # b -4
 }

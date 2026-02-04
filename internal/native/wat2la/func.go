@@ -8,7 +8,6 @@ import (
 	"fmt"
 	"io"
 	"math"
-	"strings"
 
 	"wa-lang.org/wa/internal/native/abi"
 	nativeast "wa-lang.org/wa/internal/native/ast"
@@ -155,28 +154,28 @@ func (p *wat2laWorker) buildFunc_body(w io.Writer, fn *ast.Func) error {
 			case token.I32:
 				assert(!p.isS12Overflow(int32(arg.RBPOff)))
 				fmt.Fprintf(&bufHeader, "    st.w %s, $fp, %d # save arg.%d\n",
-					"$"+strings.ToLower(loong64.RegAliasString(arg.Reg)),
+					loong64.RegAliasString(arg.Reg),
 					arg.RBPOff,
 					i,
 				)
 			case token.I64:
 				assert(!p.isS12Overflow(int32(arg.RBPOff)))
 				fmt.Fprintf(&bufHeader, "    st.d %s, $fp, %d # save arg.%d\n",
-					"$"+strings.ToLower(loong64.RegAliasString(arg.Reg)),
+					loong64.RegAliasString(arg.Reg),
 					arg.RBPOff,
 					i,
 				)
 			case token.F32:
 				assert(!p.isS12Overflow(int32(arg.RBPOff)))
 				fmt.Fprintf(&bufHeader, "    fst.s %s, $fp, %d # save arg.%d\n",
-					"$"+strings.ToLower(loong64.RegAliasString(arg.Reg)),
+					loong64.RegAliasString(arg.Reg),
 					arg.RBPOff,
 					i,
 				)
 			case token.F64:
 				assert(!p.isS12Overflow(int32(arg.RBPOff)))
 				fmt.Fprintf(&bufHeader, "    fst.d %s, $fp, %d # save arg.%d\n",
-					"$"+strings.ToLower(loong64.RegAliasString(arg.Reg)),
+					loong64.RegAliasString(arg.Reg),
 					arg.RBPOff,
 					i,
 				)
@@ -281,25 +280,25 @@ func (p *wat2laWorker) buildFunc_body(w io.Writer, fn *ast.Func) error {
 				switch fn.Type.Results[i] {
 				case token.I32:
 					fmt.Fprintf(&bufReturn, "    ld.w %v, $fp, %d # ret %s\n",
-						"$"+strings.ToLower(loong64.RegAliasString(ret.Reg)),
+						loong64.RegAliasString(ret.Reg),
 						fnNative.Type.Return[i].RBPOff,
 						fnNative.Type.Return[i].Name,
 					)
 				case token.I64:
 					fmt.Fprintf(&bufReturn, "    ld.d %v, $fp, %d # ret %s\n",
-						"$"+strings.ToLower(loong64.RegAliasString(ret.Reg)),
+						loong64.RegAliasString(ret.Reg),
 						fnNative.Type.Return[i].RBPOff,
 						fnNative.Type.Return[i].Name,
 					)
 				case token.F32:
 					fmt.Fprintf(&bufReturn, "    fld.s %v, $fp, %d # ret %s\n",
-						"$"+strings.ToLower(loong64.RegAliasString(ret.Reg)),
+						loong64.RegAliasString(ret.Reg),
 						fnNative.Type.Return[i].RBPOff,
 						fnNative.Type.Return[i].Name,
 					)
 				case token.F64:
 					fmt.Fprintf(&bufReturn, "    fld.d %v, $fp, %d # ret %s\n",
-						"$"+strings.ToLower(loong64.RegAliasString(ret.Reg)),
+						loong64.RegAliasString(ret.Reg),
 						fnNative.Type.Return[i].RBPOff,
 						fnNative.Type.Return[i].Name,
 					)
@@ -1006,7 +1005,7 @@ func (p *wat2laWorker) buildFunc_ins(
 			case token.I32:
 				if arg := fnCallNative.Type.Args[k]; arg.Reg != 0 {
 					p.ld_w(w,
-						"$"+strings.ToLower(loong64.RegAliasString(arg.Reg)),
+						loong64.RegAliasString(arg.Reg),
 						"$fp", int32(sp),
 						"$t0",
 					)
@@ -1017,7 +1016,7 @@ func (p *wat2laWorker) buildFunc_ins(
 			case token.I64:
 				if arg := fnCallNative.Type.Args[k]; arg.Reg != 0 {
 					p.ld_d(w,
-						"$"+strings.ToLower(loong64.RegAliasString(arg.Reg)),
+						loong64.RegAliasString(arg.Reg),
 						"$fp", int32(sp),
 						"$t0",
 					)
@@ -1029,14 +1028,14 @@ func (p *wat2laWorker) buildFunc_ins(
 				if arg := fnCallNative.Type.Args[k]; arg.Reg != 0 {
 					if arg.Reg >= loong64.REG_FA0 && arg.Reg <= loong64.REG_FA7 {
 						p.fld_s(w,
-							"$"+strings.ToLower(loong64.RegAliasString(arg.Reg)),
+							loong64.RegAliasString(arg.Reg),
 							"$fp", int32(sp),
 							"$t0",
 						)
 					} else {
 						assert(false) // 复用了整数寄存器
 						p.ld_w(w,
-							"$"+strings.ToLower(loong64.RegAliasString(arg.Reg)),
+							loong64.RegAliasString(arg.Reg),
 							"$fp", int32(sp),
 							"$t0",
 						)
@@ -1049,14 +1048,14 @@ func (p *wat2laWorker) buildFunc_ins(
 				if arg := fnCallNative.Type.Args[k]; arg.Reg != 0 {
 					if arg.Reg >= loong64.REG_FA0 && arg.Reg <= loong64.REG_FA7 {
 						p.fld_d(w,
-							"$"+strings.ToLower(loong64.RegAliasString(arg.Reg)),
+							loong64.RegAliasString(arg.Reg),
 							"$fp", int32(sp),
 							"$t0",
 						)
 					} else {
 						assert(false) // 复用了整数寄存器
 						p.ld_d(w,
-							"$"+strings.ToLower(loong64.RegAliasString(arg.Reg)),
+							loong64.RegAliasString(arg.Reg),
 							"$fp", int32(sp),
 							"$t0",
 						)
@@ -1116,25 +1115,25 @@ func (p *wat2laWorker) buildFunc_ins(
 				switch retType {
 				case token.I32:
 					p.st_w(w,
-						"$"+strings.ToLower(loong64.RegAliasString(retNative.Reg)),
+						loong64.RegAliasString(retNative.Reg),
 						"$fp", int32(reti),
 						"$t0",
 					)
 				case token.I64:
 					p.st_d(w,
-						"$"+strings.ToLower(loong64.RegAliasString(retNative.Reg)),
+						loong64.RegAliasString(retNative.Reg),
 						"$fp", int32(reti),
 						"$t0",
 					)
 				case token.F32:
 					p.fst_s(w,
-						"$"+strings.ToLower(loong64.RegAliasString(retNative.Reg)),
+						loong64.RegAliasString(retNative.Reg),
 						"$fp", int32(reti),
 						"$ft0",
 					)
 				case token.F64:
 					p.fst_d(w,
-						"$"+strings.ToLower(loong64.RegAliasString(retNative.Reg)),
+						loong64.RegAliasString(retNative.Reg),
 						"$fp", int32(reti),
 						"$ft0",
 					)
@@ -1217,7 +1216,7 @@ func (p *wat2laWorker) buildFunc_ins(
 			case token.I32:
 				if arg := fnCallNative.Type.Args[k]; arg.Reg != 0 {
 					fmt.Fprintf(w, "    ld.w %s, $fp, %d # arg %d\n",
-						"$"+strings.ToLower(loong64.RegAliasString(arg.Reg)),
+						loong64.RegAliasString(arg.Reg),
 						argi,
 						k,
 					)
@@ -1232,7 +1231,7 @@ func (p *wat2laWorker) buildFunc_ins(
 			case token.I64:
 				if arg := fnCallNative.Type.Args[k]; arg.Reg != 0 {
 					fmt.Fprintf(w, "    ld.d %s, $fp, %d # arg %d\n",
-						"$"+strings.ToLower(loong64.RegAliasString(arg.Reg)),
+						loong64.RegAliasString(arg.Reg),
 						argi,
 						k,
 					)
@@ -1247,7 +1246,7 @@ func (p *wat2laWorker) buildFunc_ins(
 			case token.F32:
 				if arg := fnCallNative.Type.Args[k]; arg.Reg != 0 {
 					fmt.Fprintf(w, "    fld.s %s, $fp, %d # arg %d\n",
-						"$"+strings.ToLower(loong64.RegAliasString(arg.Reg)),
+						loong64.RegAliasString(arg.Reg),
 						argi,
 						k,
 					)
@@ -1262,7 +1261,7 @@ func (p *wat2laWorker) buildFunc_ins(
 			case token.F64:
 				if arg := fnCallNative.Type.Args[k]; arg.Reg != 0 {
 					fmt.Fprintf(w, "    fld.d %s, $fp, %d # arg %d\n",
-						"$"+strings.ToLower(loong64.RegAliasString(arg.Reg)),
+						loong64.RegAliasString(arg.Reg),
 						argi,
 						k,
 					)
@@ -1317,22 +1316,22 @@ func (p *wat2laWorker) buildFunc_ins(
 				switch retType {
 				case token.I32:
 					fmt.Fprintf(w, "    st.w %s, $fp, %d\n",
-						"$"+strings.ToLower(loong64.RegAliasString(retNative.Reg)),
+						loong64.RegAliasString(retNative.Reg),
 						reti,
 					)
 				case token.I64:
 					fmt.Fprintf(w, "    st.d %s, $fp, %d\n",
-						"$"+strings.ToLower(loong64.RegAliasString(retNative.Reg)),
+						loong64.RegAliasString(retNative.Reg),
 						reti,
 					)
 				case token.F32:
 					fmt.Fprintf(w, "    fst.s %s, $fp, %d\n",
-						"$"+strings.ToLower(loong64.RegAliasString(retNative.Reg)),
+						loong64.RegAliasString(retNative.Reg),
 						reti,
 					)
 				case token.F64:
 					fmt.Fprintf(w, "    fst.d %s, $fp, %d\n",
-						"$"+strings.ToLower(loong64.RegAliasString(retNative.Reg)),
+						loong64.RegAliasString(retNative.Reg),
 						reti,
 					)
 				default:
