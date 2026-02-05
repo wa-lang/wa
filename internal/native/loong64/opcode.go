@@ -75,8 +75,8 @@ const (
 	OpFormatType_2R_ui5
 	OpFormatType_2R_ui6
 	OpFormatType_2R_si12
-	OpFormatType_2R_ui12
 	OpFormatType_1F_1R_si12
+	OpFormatType_2R_ui12
 	OpFormatType_2R_si14
 	OpFormatType_1R_si20
 	OpFormatType_0_2R
@@ -126,6 +126,16 @@ func (ctx *_OpContextType) regI(r abi.RegType) uint32 {
 // 返回浮点数寄存器机器码编号
 func (ctx *_OpContextType) regF(r abi.RegType) uint32 {
 	return ctx.regVal(r, REG_F0, REG_F31)
+}
+
+// 浮点数状态寄存器
+func (ctx *_OpContextType) regFCSR(r abi.RegType) uint32 {
+	return ctx.regVal(r, REG_FCSR0, REG_FCSR3)
+}
+
+// 浮点数条件标志寄存器
+func (ctx *_OpContextType) regFCC(r abi.RegType) uint32 {
+	return ctx.regVal(r, REG_FCC0, REG_FCC7)
 }
 
 // 返回寄存器机器码编号

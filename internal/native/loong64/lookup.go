@@ -80,16 +80,20 @@ func ZhRegString(r abi.RegType) string {
 // 寄存器别名
 func RegAliasString(r abi.RegType) string {
 	if r >= REG_R0 && r < REG_END {
-		if s := _RegisterAlias[r]; s != "" {
-			return s
+		if int(r) < len(_RegisterAlias) {
+			if s := _RegisterAlias[r]; s != "" {
+				return s
+			}
 		}
 	}
 	return RegString(r)
 }
 func ZhRegAliasString(r abi.RegType) string {
 	if r >= REG_R0 && r < REG_END {
-		if s := _ZhRegisterAlias[r]; s != "" {
-			return s
+		if int(r) < len(_ZhRegisterAlias) {
+			if s := _ZhRegisterAlias[r]; s != "" {
+				return s
+			}
 		}
 	}
 	return ZhRegString(r)

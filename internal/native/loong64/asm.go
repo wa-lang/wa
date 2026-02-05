@@ -63,6 +63,8 @@ func (ctx *_OpContextType) asmSyntax(
 		return fmt.Sprintf("%s %s, %s, %s", asNameFn(as, asName), rName(arg.Rd), rName(arg.Rs1), immValue)
 	case OpFormatType_2R_si12:
 		return fmt.Sprintf("%s %s, %s, %s", asNameFn(as, asName), rName(arg.Rd), rName(arg.Rs1), immValue)
+	case OpFormatType_1F_1R_si12:
+		return fmt.Sprintf("%s %s, %s, %s", asNameFn(as, asName), rName(arg.Rd), rName(arg.Rs1), immValue)
 	case OpFormatType_2R_ui12:
 		return fmt.Sprintf("%s %s, %s, %s", asNameFn(as, asName), rName(arg.Rd), rName(arg.Rs1), immValue)
 	case OpFormatType_2R_si14:
@@ -104,47 +106,19 @@ func (ctx *_OpContextType) asmSyntax(
 		}
 		return fmt.Sprintf("%s %s, %s, %s, %s", asNameFn(as, asName), rName(arg.Rd), rName(arg.Rs1), msbd, lsbd)
 	case OpFormatType_fcsr_1R:
-		fcsrSymbol := arg.RdName
-		if fcsrSymbol == "" {
-			fcsrSymbol = fmt.Sprint(int(arg.Rd))
-		}
-		return fmt.Sprintf("%s %s, %s", asNameFn(as, asName), fcsrSymbol, rName(arg.Rs1))
+		return fmt.Sprintf("%s %s, %s", asNameFn(as, asName), rName(arg.Rd), rName(arg.Rs1))
 	case OpFormatType_1R_fcsr:
-		fcsrSymbol := arg.Rs1Name
-		if fcsrSymbol == "" {
-			fcsrSymbol = fmt.Sprint(int(arg.Rs1))
-		}
-		return fmt.Sprintf("%s %s, %s", asNameFn(as, asName), rName(arg.Rd), fcsrSymbol)
+		return fmt.Sprintf("%s %s, %s", asNameFn(as, asName), rName(arg.Rd), rName(arg.Rs1))
 	case OpFormatType_cd_1R:
-		cdSymbol := arg.RdName
-		if cdSymbol == "" {
-			cdSymbol = fmt.Sprint(int(arg.Imm))
-		}
-		return fmt.Sprintf("%s %s, %s", asNameFn(as, asName), cdSymbol, rName(arg.Rs1))
+		return fmt.Sprintf("%s %s, %s", asNameFn(as, asName), rName(arg.Rd), rName(arg.Rs1))
 	case OpFormatType_cd_1F:
-		cdSymbol := arg.RdName
-		if cdSymbol == "" {
-			cdSymbol = fmt.Sprint(int(arg.Imm))
-		}
-		return fmt.Sprintf("%s %s, %s", asNameFn(as, asName), cdSymbol, rName(arg.Rs1))
+		return fmt.Sprintf("%s %s, %s", asNameFn(as, asName), rName(arg.Rd), rName(arg.Rs1))
 	case OpFormatType_cd_2F:
-		cdSymbol := arg.RdName
-		if cdSymbol == "" {
-			cdSymbol = fmt.Sprint(int(arg.Imm))
-		}
-		return fmt.Sprintf("%s %s, %s, %s", asNameFn(as, asName), cdSymbol, rName(arg.Rs1), rName(arg.Rs2))
+		return fmt.Sprintf("%s %s, %s, %s", asNameFn(as, asName), rName(arg.Rd), rName(arg.Rs1), rName(arg.Rs2))
 	case OpFormatType_1R_cj:
-		cjSymbol := arg.Rs1Name
-		if cjSymbol == "" {
-			cjSymbol = fmt.Sprint(int(arg.Rs1))
-		}
-		return fmt.Sprintf("%s %s, %s", asNameFn(as, asName), rName(arg.Rd), cjSymbol)
+		return fmt.Sprintf("%s %s, %s", asNameFn(as, asName), rName(arg.Rd), rName(arg.Rs1))
 	case OpFormatType_1F_cj:
-		cjSymbol := arg.Rs1Name
-		if cjSymbol == "" {
-			cjSymbol = fmt.Sprint(int(arg.Rs1))
-		}
-		return fmt.Sprintf("%s %s, %s", asNameFn(as, asName), rName(arg.Rd), cjSymbol)
+		return fmt.Sprintf("%s %s, %s", asNameFn(as, asName), rName(arg.Rd), rName(arg.Rs1))
 	case OpFormatType_1R_csr:
 		return fmt.Sprintf("%s %s, %s", asNameFn(as, asName), rName(arg.Rd), immValue)
 	case OpFormatType_2R_csr:
@@ -178,11 +152,7 @@ func (ctx *_OpContextType) asmSyntax(
 	case OpFormatType_hint:
 		return fmt.Sprintf("%s %s", asNameFn(as, asName), immValue)
 	case OpFormatType_cj_offset:
-		cjSymbol := arg.Rs1Name
-		if cjSymbol == "" {
-			cjSymbol = fmt.Sprint(int(arg.Rs1))
-		}
-		return fmt.Sprintf("%s %s, %s", asNameFn(as, asName), cjSymbol, immValue)
+		return fmt.Sprintf("%s %s, %s", asNameFn(as, asName), rName(arg.Rs1), immValue)
 	case OpFormatType_rj_offset:
 		return fmt.Sprintf("%s %s, %s", asNameFn(as, asName), rName(arg.Rs1), immValue)
 	case OpFormatType_rj_rd_offset:

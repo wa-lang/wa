@@ -118,6 +118,14 @@ func (ctx *_OpContextType) encodeRaw(as abi.As, arg *abi.AsArgument) (x uint32, 
 		si12 := uint32(arg.Imm) & 0xFFF
 		x |= (si12 << 10) | (rj << 5) | rd
 		return
+	case OpFormatType_1F_1R_si12:
+		// 编码时候带符号的立即数正数部分范围可以放宽到无符号
+		assert(arg.Imm >= -(1<<11) && arg.Imm < (1<<12))
+		fd := ctx.regF(arg.Rd)
+		rj := ctx.regI(arg.Rs1)
+		si12 := uint32(arg.Imm) & 0xFFF
+		x |= (si12 << 10) | (rj << 5) | fd
+		return
 	case OpFormatType_2R_ui12:
 		assert(arg.Imm >= 0 && arg.Imm < (1<<12))
 		rd := ctx.regI(arg.Rd)
@@ -186,39 +194,39 @@ func (ctx *_OpContextType) encodeRaw(as abi.As, arg *abi.AsArgument) (x uint32, 
 		x |= (msbd << 16) | (lsbd << 10) | (rj << 5) | rd
 		return
 	case OpFormatType_fcsr_1R:
-		fcsr := uint32(arg.Rd)
+		fcsr := ctx.regFCSR(arg.Rd)
 		rj := ctx.regI(arg.Rs1)
 		x |= (rj << 5) | fcsr
 		return
 	case OpFormatType_1R_fcsr:
 		rd := ctx.regI(arg.Rd)
-		fcsr := uint32(arg.Rs1)
+		fcsr := ctx.regFCSR(arg.Rs1)
 		x |= (fcsr << 5) | rd
 		return
 	case OpFormatType_cd_1R:
-		cd := uint32(arg.Rd) & 0b_111
+		cd := ctx.regFCC(arg.Rd)
 		rj := ctx.regI(arg.Rs1)
 		x |= (rj << 5) | cd
 		return
 	case OpFormatType_cd_1F:
-		cd := uint32(arg.Rd) & 0b_111
+		cd := ctx.regFCC(arg.Rd)
 		fj := ctx.regF(arg.Rs1)
 		x |= (fj << 5) | cd
 		return
 	case OpFormatType_cd_2F:
-		cd := uint32(arg.Rd) & 0b_111
+		cd := ctx.regFCC(arg.Rd)
 		fj := ctx.regF(arg.Rs1)
 		fk := ctx.regF(arg.Rs1)
 		x |= (fk << 10) | (fj << 5) | cd
 		return
 	case OpFormatType_1R_cj:
 		rd := ctx.regI(arg.Rd)
-		cj := uint32(arg.Rs1) & 0b_111
+		cj := ctx.regFCC(arg.Rs1)
 		x |= (cj << 5) | rd
 		return
 	case OpFormatType_1F_cj:
 		fd := ctx.regF(arg.Rd)
-		cj := uint32(arg.Rs1) & 0b_111
+		cj := ctx.regFCC(arg.Rs1)
 		x |= (cj << 5) | fd
 		return
 	case OpFormatType_1R_csr:
@@ -282,7 +290,7 @@ func (ctx *_OpContextType) encodeRaw(as abi.As, arg *abi.AsArgument) (x uint32, 
 		assert(arg.Imm&0b11 == 0)
 		imm := uint32(arg.Imm >> 2)
 		off16_20 := (imm >> 16) & 0b_1_1111
-		cj := uint32(arg.Rs1) & 0b_111
+		cj := ctx.regFCC(arg.Rs1)
 		off0_15 := imm & 0xFFFF
 		x |= (off0_15 << 10) | (cj << 5) | off16_20
 		return

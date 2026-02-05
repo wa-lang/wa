@@ -222,32 +222,32 @@ func (op _OpContextType) decodeInst(x uint32) (as abi.As, arg *abi.AsArgument, a
 	case OpFormatType_fcsr_1R:
 		argRaw.Rd = rd
 		argRaw.Rs1 = rj
-		arg.Rd = abi.RegType(rd)
+		arg.Rd = op.decodeRegFCSR(rd)
 		arg.Rs1 = op.decodeRegI(rj)
 		return
 	case OpFormatType_1R_fcsr:
 		argRaw.Rd = rd
 		argRaw.Rs1 = rj
 		arg.Rd = op.decodeRegI(rd)
-		arg.Rs1 = abi.RegType(rj)
+		arg.Rs1 = op.decodeRegFCSR(rj)
 		return
 	case OpFormatType_cd_1R:
 		argRaw.Rd = rd
 		argRaw.Rs1 = rj
-		arg.Rd = abi.RegType(rd)
+		arg.Rd = op.decodeRegFCC(rd)
 		arg.Rs1 = op.decodeRegI(rj)
 		return
 	case OpFormatType_cd_1F:
 		argRaw.Rd = rd
 		argRaw.Rs1 = rj
-		arg.Rd = abi.RegType(rd)
+		arg.Rd = op.decodeRegFCC(rd)
 		arg.Rs1 = op.decodeRegF(rj)
 		return
 	case OpFormatType_cd_2F:
 		argRaw.Rd = rd
 		argRaw.Rs1 = rj
 		argRaw.Rs2 = rk
-		arg.Rd = abi.RegType(rd)
+		arg.Rd = op.decodeRegFCC(rd)
 		arg.Rs1 = op.decodeRegF(rj)
 		arg.Rs2 = op.decodeRegF(rk)
 		return
@@ -255,13 +255,13 @@ func (op _OpContextType) decodeInst(x uint32) (as abi.As, arg *abi.AsArgument, a
 		argRaw.Rd = rd
 		argRaw.Rs1 = rj
 		arg.Rd = op.decodeRegI(rd)
-		arg.Rs1 = abi.RegType(rj)
+		arg.Rs1 = op.decodeRegFCC(rj)
 		return
 	case OpFormatType_1F_cj:
 		argRaw.Rd = rd
 		argRaw.Rs1 = rj
 		arg.Rd = op.decodeRegF(rd)
-		arg.Rs1 = abi.RegType(rj)
+		arg.Rs1 = op.decodeRegFCC(rj)
 		return
 	case OpFormatType_1R_csr:
 		imm := int32(uimm(x, 10, 14))
@@ -346,7 +346,7 @@ func (op _OpContextType) decodeInst(x uint32) (as abi.As, arg *abi.AsArgument, a
 		imm = i32SignExtend(imm, 21) << 2
 		argRaw.Rs1 = rj & 0b_111
 		argRaw.Imm = imm
-		arg.Rs1 = abi.RegType(rj)
+		arg.Rs1 = op.decodeRegFCC(rj)
 		arg.Imm = imm
 		return
 	case OpFormatType_rj_offset:
@@ -390,10 +390,24 @@ func (op _OpContextType) decodeInst(x uint32) (as abi.As, arg *abi.AsArgument, a
 
 // 解码寄存器
 func (op _OpContextType) decodeRegI(r uint32) abi.RegType {
+	assert(int(r) >= 0 && int(r) < 32)
 	return abi.RegType(r) + REG_R0
 }
 
 // 解码寄存器(浮点数)
 func (op _OpContextType) decodeRegF(r uint32) abi.RegType {
+	assert(int(r) >= 0 && int(r) < 32)
 	return abi.RegType(r) + REG_F0
+}
+
+// 解码浮点数状态寄存器
+func (op _OpContextType) decodeRegFCSR(r uint32) abi.RegType {
+	assert(int(r) >= 0 && int(r) < 4)
+	return abi.RegType(r) + REG_FCSR0
+}
+
+// 解码浮点数标志寄存器
+func (op _OpContextType) decodeRegFCC(r uint32) abi.RegType {
+	assert(int(r) >= 0 && int(r) < 8)
+	return abi.RegType(r) + REG_FCC0
 }

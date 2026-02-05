@@ -288,49 +288,41 @@ func (p *parser) parseInst_loong(fn *ast.Func) (inst *ast.Instruction) {
 		inst.Arg.Rs3Name = lsbdSymbol
 		return inst
 	case loong64.OpFormatType_fcsr_1R:
-		fcsr, fcsrSymbol := p.parseInst_loong_imm_fcsr_5bit()
+		fcsr := p.parseRegFCSR_loong(fn)
 		p.acceptToken(token.COMMA)
 		rj := p.parseRegI_loong(fn)
-		inst.Arg.Rd = abi.RegType(fcsr) // Rd 寄存器参数位置用于记录 fscr
-		inst.Arg.RdName = fcsrSymbol
+		inst.Arg.Rd = fcsr
 		inst.Arg.Rs1 = rj
 		return inst
 	case loong64.OpFormatType_1R_fcsr:
 		rd := p.parseRegI_loong(fn)
 		p.acceptToken(token.COMMA)
-		fcsr, fcsrSymbol := p.parseInst_loong_imm_fcsr_5bit()
+		fcsr := p.parseRegFCSR_loong(fn)
 		inst.Arg.Rd = rd
-		inst.Arg.Rs1 = abi.RegType(fcsr) // Rs1 寄存器参数位置用于记录 fscr
-		inst.Arg.Rs1Name = fcsrSymbol
+		inst.Arg.Rs1 = fcsr
 		return inst
 
 	case loong64.OpFormatType_cd_1R:
-		cd, cdSymbol := p.parseInst_loong_imm_cd_3bit()
+		cd := p.parseRegFCC_loong(fn)
 		p.acceptToken(token.COMMA)
 		rj := p.parseRegI_loong(fn)
-		p.acceptToken(token.COMMA)
-		inst.Arg.Rd = abi.RegType(cd) // Rd 寄存器参数位置用于记录 cd
-		inst.Arg.RdName = cdSymbol
+		inst.Arg.Rd = cd
 		inst.Arg.Rs1 = rj
 		return inst
 	case loong64.OpFormatType_cd_1F:
-		cd, cdSymbol := p.parseInst_loong_imm_cd_3bit()
+		cd := p.parseRegFCC_loong(fn)
 		p.acceptToken(token.COMMA)
 		fj := p.parseRegF_loong(fn)
-		p.acceptToken(token.COMMA)
-		inst.Arg.Rd = abi.RegType(cd) // Rd 寄存器参数位置用于记录 cd
-		inst.Arg.RdName = cdSymbol
+		inst.Arg.Rd = cd
 		inst.Arg.Rs1 = fj
 		return inst
 	case loong64.OpFormatType_cd_2F:
-		cd, cdSymbol := p.parseInst_loong_imm_cd_3bit()
+		cd := p.parseRegFCC_loong(fn)
 		p.acceptToken(token.COMMA)
 		fj := p.parseRegF_loong(fn)
 		p.acceptToken(token.COMMA)
 		fk := p.parseRegF_loong(fn)
-		p.acceptToken(token.COMMA)
-		inst.Arg.Rd = abi.RegType(cd) // Rd 寄存器参数位置用于记录 cd
-		inst.Arg.RdName = cdSymbol
+		inst.Arg.Rd = cd
 		inst.Arg.Rs1 = fj
 		inst.Arg.Rs2 = fk
 		return inst
@@ -339,18 +331,16 @@ func (p *parser) parseInst_loong(fn *ast.Func) (inst *ast.Instruction) {
 		// 一组至少有 4 个类似的指令, 条件寄存器的名字缺少
 		rd := p.parseRegI_loong(fn)
 		p.acceptToken(token.COMMA)
-		cj, cjSymbol := p.parseInst_loong_imm_cj_3bit()
+		cj := p.parseRegFCC_loong(fn)
 		inst.Arg.Rd = rd
-		inst.Arg.Rs1 = abi.RegType(cj) // Rs1 寄存器参数位置用于记录 cj
-		inst.Arg.Rs1Name = cjSymbol
+		inst.Arg.Rs1 = cj
 		return inst
 	case loong64.OpFormatType_1F_cj:
 		fd := p.parseRegF_loong(fn)
 		p.acceptToken(token.COMMA)
-		cj, cjSymbol := p.parseInst_loong_imm_cj_3bit()
+		cj := p.parseRegFCC_loong(fn)
 		inst.Arg.Rd = fd
-		inst.Arg.Rs1 = abi.RegType(cj) // Rs1 寄存器参数位置用于记录 cj
-		inst.Arg.Rs1Name = cjSymbol
+		inst.Arg.Rs1 = cj
 		return inst
 	case loong64.OpFormatType_1R_csr:
 		rd := p.parseRegI_loong(fn)
@@ -442,7 +432,6 @@ func (p *parser) parseInst_loong(fn *ast.Func) (inst *ast.Instruction) {
 		rj := p.parseRegI_loong(fn)
 		p.acceptToken(token.COMMA)
 		rk := p.parseRegI_loong(fn)
-		p.acceptToken(token.COMMA)
 		inst.Arg.Rd = abi.RegType(hint) // Rd 寄存器保存 hint
 		inst.Arg.RdName = hintSymbol
 		inst.Arg.Rs1 = rj
@@ -455,12 +444,11 @@ func (p *parser) parseInst_loong(fn *ast.Func) (inst *ast.Instruction) {
 		return inst
 
 	case loong64.OpFormatType_cj_offset:
-		cj, cjSymbol := p.parseInst_loong_imm_cj_3bit()
+		cj := p.parseRegFCC_loong(fn)
 		p.acceptToken(token.COMMA)
 		off, offSymbol := p.parseInst_loong_imm_offset()
 		inst.Arg.Imm = off
-		inst.Arg.Rs1 = abi.RegType(cj) // Rs1 寄存器保存 cj
-		inst.Arg.Rs1Name = cjSymbol
+		inst.Arg.Rs1 = cj
 		inst.Arg.Symbol = offSymbol
 		return inst
 	case loong64.OpFormatType_rj_offset:
@@ -516,6 +504,22 @@ func (p *parser) parseRegF_loong(fn *ast.Func) abi.RegType {
 	x := p.parseRegister()
 	if x < loong64.REG_F0 || x > loong64.REG_F31 {
 		p.errorf(p.pos, "%v is not loongarch float register", x)
+	}
+	return x
+}
+
+func (p *parser) parseRegFCSR_loong(fn *ast.Func) abi.RegType {
+	x := p.parseRegister()
+	if x < loong64.REG_FCSR0 || x > loong64.REG_FCSR3 {
+		p.errorf(p.pos, "%v is not loongarch fcsr register", x)
+	}
+	return x
+}
+
+func (p *parser) parseRegFCC_loong(fn *ast.Func) abi.RegType {
+	x := p.parseRegister()
+	if x < loong64.REG_FCC0 || x > loong64.REG_FCC7 {
+		p.errorf(p.pos, "%v is not loongarch fcc register", x)
 	}
 	return x
 }
@@ -579,15 +583,6 @@ func (p *parser) parseInst_loong_imm_lsbd_6bit() (x int32, symbol string) {
 	return p.parseInst_loong_immOrSymbol()
 }
 
-func (p *parser) parseInst_loong_imm_fcsr_5bit() (x int32, symbol string) {
-	return p.parseInst_loong_immOrSymbol()
-}
-func (p *parser) parseInst_loong_imm_cd_3bit() (x int32, symbol string) {
-	return p.parseInst_loong_immOrSymbol()
-}
-func (p *parser) parseInst_loong_imm_cj_3bit() (x int32, symbol string) {
-	return p.parseInst_loong_immOrSymbol()
-}
 func (p *parser) parseInst_loong_imm_csr_14bit() (x int32, symbol string) {
 	return p.parseInst_loong_immOrSymbol()
 }
