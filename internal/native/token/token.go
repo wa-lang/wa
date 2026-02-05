@@ -77,8 +77,8 @@ const (
 	GAS_SHORT   // .name: .short 0
 	GAS_LONG    // .name: .long 0
 	GAS_QUAD    // .name: .quad 0
-	GAS_ASSCII  // .name: .ascii "abc\000"
-	GAS_ASSCIZ  // .name: .asciz "abc"
+	GAS_ASCII   // .name: .ascii "abc\000"
+	GAS_ASCIZ   // .name: .asciz "abc"
 	GAS_SKIP    // .name: .skip 100
 	GAS_INCBIN  // .name: .incbin "lena.jpg"
 	GAS_SECTION // .section .text
@@ -160,8 +160,8 @@ var tokens = [...]string{
 	GAS_SHORT:   ".short",
 	GAS_LONG:    ".long",
 	GAS_QUAD:    ".quad",
-	GAS_ASSCII:  ".ascii",
-	GAS_ASSCIZ:  ".asciz",
+	GAS_ASCII:   ".ascii",
+	GAS_ASCIZ:   ".asciz",
 	GAS_SKIP:    ".skip",
 	GAS_INCBIN:  ".incbin",
 	GAS_SECTION: ".section",

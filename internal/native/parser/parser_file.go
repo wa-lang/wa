@@ -270,8 +270,8 @@ func (p *parser) parseFile() {
 						token.GAS_SHORT,
 						token.GAS_LONG,
 						token.GAS_QUAD,
-						token.GAS_ASSCII,
-						token.GAS_ASSCIZ,
+						token.GAS_ASCII,
+						token.GAS_ASCIZ,
 						token.GAS_SKIP,
 						token.GAS_INCBIN,
 					)

@@ -64,7 +64,7 @@ func (p *wat2laWorker) buildTable(w io.Writer) error {
 	p.gasComment(w, "函数列表")
 	p.gasComment(w, "保持连续并填充全部函数")
 	p.gasSectionDataStart(w)
-	p.gasFuncLabel(w, kTableFuncIndexListName)
+	fmt.Fprintf(w, "%s: .ascii \"\"\n", kTableFuncIndexListName)
 	{
 		// 索引从导入函数开始计算
 		var importFuncCount int

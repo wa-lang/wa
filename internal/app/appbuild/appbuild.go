@@ -295,12 +295,6 @@ func BuildApp(opt *appbase.Option, input, outfile string) (mainFunc string, wasm
 					fmt.Printf("build failed: %v\n", err)
 					os.Exit(1)
 				}
-			} else {
-				fmt.Printf("donot use gcc %s/%s on host %s/%s",
-					opt.TargetOS, opt.TargetArch,
-					runtime.GOOS, runtime.GOARCH,
-				)
-				os.Exit(1)
 			}
 
 			// OK
@@ -385,12 +379,6 @@ func BuildApp(opt *appbase.Option, input, outfile string) (mainFunc string, wasm
 					fmt.Printf("gcc build failed: %v\n", err)
 					os.Exit(1)
 				}
-			} else {
-				fmt.Printf("donot use gcc %s/%s on host %s/%s",
-					opt.TargetOS, opt.TargetArch,
-					runtime.GOOS, runtime.GOARCH,
-				)
-				os.Exit(1)
 			}
 
 			// OK
