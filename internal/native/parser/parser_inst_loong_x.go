@@ -305,7 +305,7 @@ func (p *parser) parseInst_loong(fn *ast.Func) (inst *ast.Instruction) {
 		return inst
 
 	case loong64.OpFormatType_cd_1R:
-		cd, cdSymbol := p.parseInst_loong_imm_cd_2bit()
+		cd, cdSymbol := p.parseInst_loong_imm_cd_3bit()
 		p.acceptToken(token.COMMA)
 		rj := p.parseRegI_loong(fn)
 		p.acceptToken(token.COMMA)
@@ -314,7 +314,7 @@ func (p *parser) parseInst_loong(fn *ast.Func) (inst *ast.Instruction) {
 		inst.Arg.Rs1 = rj
 		return inst
 	case loong64.OpFormatType_cd_1F:
-		cd, cdSymbol := p.parseInst_loong_imm_cd_2bit()
+		cd, cdSymbol := p.parseInst_loong_imm_cd_3bit()
 		p.acceptToken(token.COMMA)
 		fj := p.parseRegF_loong(fn)
 		p.acceptToken(token.COMMA)
@@ -323,7 +323,7 @@ func (p *parser) parseInst_loong(fn *ast.Func) (inst *ast.Instruction) {
 		inst.Arg.Rs1 = fj
 		return inst
 	case loong64.OpFormatType_cd_2F:
-		cd, cdSymbol := p.parseInst_loong_imm_cd_2bit()
+		cd, cdSymbol := p.parseInst_loong_imm_cd_3bit()
 		p.acceptToken(token.COMMA)
 		fj := p.parseRegF_loong(fn)
 		p.acceptToken(token.COMMA)
@@ -582,7 +582,7 @@ func (p *parser) parseInst_loong_imm_lsbd_6bit() (x int32, symbol string) {
 func (p *parser) parseInst_loong_imm_fcsr_5bit() (x int32, symbol string) {
 	return p.parseInst_loong_immOrSymbol()
 }
-func (p *parser) parseInst_loong_imm_cd_2bit() (x int32, symbol string) {
+func (p *parser) parseInst_loong_imm_cd_3bit() (x int32, symbol string) {
 	return p.parseInst_loong_immOrSymbol()
 }
 func (p *parser) parseInst_loong_imm_cj_3bit() (x int32, symbol string) {

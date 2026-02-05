@@ -73,6 +73,22 @@ var _Register = []string{
 	REG_F30: "$f30",
 	REG_F31: "$f31",
 
+	// 浮点数状态寄存器
+	REG_FCSR0: "$fcsr0",
+	REG_FCSR1: "$fcsr1",
+	REG_FCSR2: "$fcsr2",
+	REG_FCSR3: "$fcsr3",
+
+	// 条件标志寄存器
+	REG_FCC0: "$fcc0",
+	REG_FCC1: "$fcc1",
+	REG_FCC2: "$fcc2",
+	REG_FCC3: "$fcc3",
+	REG_FCC4: "$fcc4",
+	REG_FCC5: "$fcc5",
+	REG_FCC6: "$fcc6",
+	REG_FCC7: "$fcc7",
+
 	// LSX
 	REG_VF0:  "$vr0",
 	REG_VF1:  "$vr1",
@@ -211,6 +227,22 @@ var _ZhRegister = []string{
 	REG_F29: "$兑皿",
 	REG_F30: "$阴皿",
 	REG_F31: "$阳皿",
+
+	// 浮点数状态寄存器
+	REG_FCSR0: "$浮点状态甲",
+	REG_FCSR1: "$浮点状态乙",
+	REG_FCSR2: "$浮点状态丙",
+	REG_FCSR3: "$浮点状态丁",
+
+	// 条件标志寄存器
+	REG_FCC0: "$浮点标志甲",
+	REG_FCC1: "$浮点标志乙",
+	REG_FCC2: "$浮点标志丙",
+	REG_FCC3: "$浮点标志丁",
+	REG_FCC4: "$浮点标志戊",
+	REG_FCC5: "$浮点标志己",
+	REG_FCC6: "$浮点标志庚",
+	REG_FCC7: "$浮点标志辛",
 
 	// LSX
 	REG_VF0:  "$威甲格",

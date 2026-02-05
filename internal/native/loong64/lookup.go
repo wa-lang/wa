@@ -55,6 +55,11 @@ func RegString(r abi.RegType) string {
 	case REG_F0 <= r && r <= REG_F31:
 		return fmt.Sprintf("$f%d", r-REG_F0)
 	}
+	if r >= 0 && r < REG_END {
+		if int(r) < len(_Register) && _Register[r] != "" {
+			return _Register[r]
+		}
+	}
 	return fmt.Sprintf("loong64.badreg(%d)", r)
 }
 func ZhRegString(r abi.RegType) string {
@@ -63,6 +68,11 @@ func ZhRegString(r abi.RegType) string {
 		return _ZhRegister[r]
 	case REG_F0 <= r && r <= REG_F31:
 		return _ZhRegister[r]
+	}
+	if r >= 0 && r < REG_END {
+		if int(r) < len(_ZhRegister) && _ZhRegister[r] != "" {
+			return _ZhRegister[r]
+		}
 	}
 	return fmt.Sprintf("loong64.badreg(%d)", r)
 }
