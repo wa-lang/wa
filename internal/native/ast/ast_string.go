@@ -422,6 +422,7 @@ func (p *Instruction) tabString() string {
 func (p *Instruction) tabZhString() string {
 	var sb strings.Builder
 	if p.Doc != nil {
+		sb.WriteString("    ")
 		sb.WriteString(p.Doc.String())
 		sb.WriteString("\n")
 	}

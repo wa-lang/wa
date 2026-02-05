@@ -325,7 +325,7 @@ func (p *parser) parseFile() {
 			p.gasSectionName = ""
 			p.gasAlign = 0
 
-			funcObj := p.parseFunc(p.tok)
+			funcObj := p.parseFunc()
 			p.prog.Funcs = append(p.prog.Funcs, funcObj)
 			p.prog.Objects = append(p.prog.Objects, funcObj)
 

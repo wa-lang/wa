@@ -4,9 +4,7 @@
 package parser
 
 import (
-	"wa-lang.org/wa/internal/native/abi"
 	"wa-lang.org/wa/internal/native/ast"
-	"wa-lang.org/wa/internal/native/ast/astutil"
 	"wa-lang.org/wa/internal/native/token"
 )
 
@@ -15,14 +13,13 @@ import (
 // Loop:
 // 完毕
 
-func (p *parser) parseFunc(tok token.Token) *ast.Func {
+func (p *parser) parseFunc() *ast.Func {
 	fn := &ast.Func{
-		Pos:  p.pos,
-		Tok:  tok,
 		Type: new(ast.FuncType),
 		Body: new(ast.FuncBody),
 	}
 
+	fn.Pos = p.pos
 	fn.Doc = p.parseDocComment(&p.prog.Comments, fn.Pos)
 	if fn.Doc != nil {
 		p.prog.Objects = p.prog.Objects[:len(p.prog.Objects)-1]
@@ -38,39 +35,81 @@ func (p *parser) parseFunc(tok token.Token) *ast.Func {
 }
 
 func (p *parser) parseFunc_body(fn *ast.Func) {
-	assert(p.cpu == abi.RISCV64 || p.cpu == abi.RISCV32 || p.cpu == abi.LOONG64)
-
 	fn.Body.Pos = p.pos
 
 	p.acceptToken(token.COLON)
 	defer p.acceptToken(token.END_zh)
 
-Loop:
 	for {
-		switch p.tok {
-		case token.EOF, token.ILLEGAL:
-			break Loop
-		case token.END_zh:
-			break Loop
-		case token.COMMENT:
-			commentObj := p.parseCommentGroup(false)
+		if p.err != nil {
+			break
+		}
+		if p.tok == token.EOF {
+			break
+		}
+		if p.tok == token.END_zh {
+			break
+		}
+
+		// 注释
+		if p.tok == token.COMMENT {
+			// 插入空行
+			if len(fn.Body.Objects) > 0 {
+				prevObj := fn.Body.Objects[len(fn.Body.Objects)-1]
+				prevLine := p.posLine(prevObj.BeginPos())
+				curLine := p.posLine(p.pos)
+				if curLine-prevLine > 1 {
+					fn.Body.Objects = append(fn.Body.Objects, &ast.BlankLine{
+						Pos: p.pos - 1,
+					})
+				}
+			}
+
+			commentObj := p.parseCommentGroup(true)
 			fn.Body.Comments = append(fn.Body.Comments, commentObj)
 			fn.Body.Objects = append(fn.Body.Objects, commentObj)
+			continue
+		}
 
-		default:
-
-			// 构造局部变量在栈帧的位置
-			if err := astutil.BuildFuncFrame(p.cpu, fn); err != nil {
-				p.errorf(p.pos, "build stack frame failed: %v", err)
+		// 解析指令
+		if p.tok == token.IDENT || p.tok.IsAs() {
+			// 插入空行
+			if len(fn.Body.Objects) > 0 {
+				prevObj := fn.Body.Objects[len(fn.Body.Objects)-1]
+				prevLine := p.posLine(prevObj.BeginPos())
+				curLine := p.posLine(p.pos)
+				if curLine-prevLine > 1 {
+					fn.Body.Objects = append(fn.Body.Objects, &ast.BlankLine{
+						Pos: p.pos - 1,
+					})
+				}
 			}
 
-			if p.tok == token.IDENT || p.tok.IsAs() {
-				inst := p.parseInst(fn)
-				fn.Body.Insts = append(fn.Body.Insts, inst)
-				fn.Body.Objects = append(fn.Body.Objects, inst)
-			} else {
-				p.errorf(p.pos, "unknow as %v", p.tok)
+			// 解析指令的关联注释
+			instDoc := p.parseDocComment(&fn.Body.Comments, p.pos)
+			if instDoc != nil {
+				fn.Body.Objects = fn.Body.Objects[:len(fn.Body.Objects)-1]
 			}
+
+			inst := p.parseInst(fn)
+			inst.Doc = instDoc
+
+			fn.Body.Insts = append(fn.Body.Insts, inst)
+			fn.Body.Objects = append(fn.Body.Objects, inst)
+			continue
+		}
+
+		// 未知 token
+		break
+	}
+
+	// 删除结尾的空行
+	for len(fn.Body.Objects) > 0 {
+		lastInstObj := fn.Body.Objects[len(fn.Body.Objects)-1]
+		if _, ok := lastInstObj.(*ast.BlankLine); ok {
+			fn.Body.Objects = fn.Body.Objects[:len(fn.Body.Objects)-1]
+		} else {
+			break
 		}
 	}
 }
