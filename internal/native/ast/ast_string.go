@@ -173,9 +173,9 @@ func (p *Func) String() string {
 			sb.WriteString(" ")
 			sb.WriteString(p.ExportName)
 			sb.WriteString("\n")
-			sb.WriteString(p.Name)
-			sb.WriteString(":\n")
 		}
+		sb.WriteString(p.Name)
+		sb.WriteString(":\n")
 	}
 
 	// 打印指令
@@ -189,6 +189,12 @@ func (p *Func) String() string {
 			if _, ok := obj.(*BlankLine); ok {
 				fmt.Fprintln(w)
 				w.Flush()
+				continue
+			}
+
+			// 注释添加缩进
+			if comment, ok := obj.(*CommentGroup); ok {
+				fmt.Fprintf(w, "    %s\n", comment)
 				continue
 			}
 

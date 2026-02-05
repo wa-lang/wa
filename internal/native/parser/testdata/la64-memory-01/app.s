@@ -2,30 +2,23 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 
 # 运行时函数
-.extern _Wa_Runtime_write
-.extern _Wa_Runtime_exit
-.extern _Wa_Runtime_malloc
-.extern _Wa_Runtime_memcpy
-.extern _Wa_Runtime_memset
-.extern _Wa_Runtime_memmove
-.set .Wa.Runtime.write, _Wa_Runtime_write
-.set .Wa.Runtime.exit, _Wa_Runtime_exit
-.set .Wa.Runtime.malloc, _Wa_Runtime_malloc
-.set .Wa.Runtime.memcpy, _Wa_Runtime_memcpy
-.set .Wa.Runtime.memset, _Wa_Runtime_memset
-.set .Wa.Runtime.memmove, _Wa_Runtime_memmove
+
+.extern .Wa.Runtime.write
+.extern .Wa.Runtime.exit
+.extern .Wa.Runtime.malloc
+.extern .Wa.Runtime.memcpy
+.extern .Wa.Runtime.memset
+.extern .Wa.Runtime.memmove
 
 # 导入函数(外部库定义)
-.extern _Wa_Import_syscall_linux_print_i64
-.extern _Wa_Import_syscall_linux_print_rune
-.extern _Wa_Import_syscall_linux_print_str
-.extern _Wa_Import_syscall_linux_proc_exit
-.set .Wa.Import.syscall_linux.print_i64, _Wa_Import_syscall_linux_print_i64
-.set .Wa.Import.syscall_linux.print_rune, _Wa_Import_syscall_linux_print_rune
-.set .Wa.Import.syscall_linux.print_str, _Wa_Import_syscall_linux_print_str
-.set .Wa.Import.syscall_linux.proc_exit, _Wa_Import_syscall_linux_proc_exit
+
+.extern .Wa.Import.syscall_linux.print_i64
+.extern .Wa.Import.syscall_linux.print_rune
+.extern .Wa.Import.syscall_linux.print_str
+.extern .Wa.Import.syscall_linux.proc_exit
 
 # 定义内存
+
 .section .data
 .align 3
 .globl .Wa.Memory.addr
@@ -36,6 +29,7 @@
 .Wa.Memory.maxPages: .quad 1
 
 # 内存数据
+
 .section .data
 .align 3
 # memcpy(&Memory[8], data[0], size)
@@ -47,11 +41,11 @@
 .section .text
 .globl .Wa.Memory.initFunc
 .Wa.Memory.initFunc:
-    addi.d  $sp, $sp, -16
-    st.d    $ra, $sp, 8
-    st.d    $fp, $sp, 0
-    addi.d  $fp, $sp, 0
-    addi.d  $sp, $sp, -32
+    addi.d $sp, $sp, -16
+    st.d   $ra, $sp, 8
+    st.d   $fp, $sp, 0
+    addi.d $fp, $sp, 0
+    addi.d $sp, $sp, -32
 
     # 分配内存
     pcalau12i $t0, %pc_hi20(.Wa.Memory.maxPages)
@@ -95,21 +89,22 @@
     jirl      $ra, $t0, 0
 
     # 函数返回
-    addi.d  $sp, $fp, 0
-    ld.d    $ra, $sp, 8
-    ld.d    $fp, $sp, 0
-    addi.d  $sp, $sp, 16
-    jirl    $zero, $ra, 0
+    addi.d $sp, $fp, 0
+    ld.d   $ra, $sp, 8
+    ld.d   $fp, $sp, 0
+    addi.d $sp, $sp, 16
+    jirl   $zero, $ra, 0
+
 
 # 汇编程序入口函数
 .section .text
 .globl main
 main:
-    addi.d  $sp, $sp, -16
-    st.d    $ra, $sp, 8
-    st.d    $fp, $sp, 0
-    addi.d  $fp, $sp, 0
-    addi.d  $sp, $sp, -32
+    addi.d $sp, $sp, -16
+    st.d   $ra, $sp, 8
+    st.d   $fp, $sp, 0
+    addi.d $fp, $sp, 0
+    addi.d $sp, $sp, -32
 
     pcalau12i $t0, %pc_hi20(.Wa.Memory.initFunc)
     addi.d    $t0, $t0, %pc_lo12(.Wa.Memory.initFunc)
@@ -125,11 +120,12 @@ main:
     jirl      $ra, $t0, 0
 
     # exit 后这里不会被执行, 但是依然保留
-    addi.d  $sp, $fp, 0
-    ld.d    $ra, $sp, 8
-    ld.d    $fp, $sp, 0
-    addi.d  $sp, $sp, 16
-    jirl    $zero, $ra, 0
+    addi.d $sp, $fp, 0
+    ld.d   $ra, $sp, 8
+    ld.d   $fp, $sp, 0
+    addi.d $sp, $sp, 16
+    jirl   $zero, $ra, 0
+
 
 .section .data
 .align 3
@@ -139,11 +135,11 @@ main:
 .section .text
 .globl .Wa.Runtime.panic
 .Wa.Runtime.panic:
-    addi.d  $sp, $sp, -16
-    st.d    $ra, $sp, 8
-    st.d    $fp, $sp, 0
-    addi.d  $fp, $sp, 0
-    addi.d  $sp, $sp, -32
+    addi.d $sp, $sp, -16
+    st.d   $ra, $sp, 8
+    st.d   $fp, $sp, 0
+    addi.d $fp, $sp, 0
+    addi.d $sp, $sp, -32
 
     # runtime.write(stderr, panicMessage, size)
     addi.d    $a0, $zero, 2
@@ -163,20 +159,21 @@ main:
     jirl      $ra, $t0, 0
 
     # return
-    addi.d  $sp, $fp, 0
-    ld.d    $ra, $sp, 8
-    ld.d    $fp, $sp, 0
-    addi.d  $sp, $sp, 16
-    jirl    $zero, $ra, 0
+    addi.d $sp, $fp, 0
+    ld.d   $ra, $sp, 8
+    ld.d   $fp, $sp, 0
+    addi.d $sp, $sp, 16
+    jirl   $zero, $ra, 0
+
 
 # func main
 .section .text
 .Wa.F.__main__.main:
-    addi.d  $sp, $sp, -16 
-    st.d    $ra, $sp, 8
-    st.d    $fp, $sp, 0
-    addi.d  $fp, $sp, 0
-    addi.d  $sp, $sp, -64
+    addi.d $sp, $sp, -16
+    st.d   $ra, $sp, 8
+    st.d   $fp, $sp, 0
+    addi.d $fp, $sp, 0
+    addi.d $sp, $sp, -64
 
     # 没有参数需要备份到栈
 
@@ -197,19 +194,19 @@ main:
     st.d   $t0, $fp, -24
 
     # call syscall/linux.print_str(str, len)
-    ld.d $a0, $fp, -16 # arg 1
-    ld.d $a1, $fp, -24 # arg 2
+    ld.d      $a0, $fp, -16 # arg 1
+    ld.d      $a1, $fp, -24 # arg 2
     pcalau12i $t0, %pc_hi20(.Wa.Import.syscall_linux.print_str)
-    addi.d $t0, $t0, %pc_lo12(.Wa.Import.syscall_linux.print_str)
-    jirl $ra, $t0, 0
+    addi.d    $t0, $t0, %pc_lo12(.Wa.Import.syscall_linux.print_str)
+    jirl      $ra, $t0, 0
 
     # 根据ABI处理返回值
 .L.return:
 
     # 函数返回
-    addi.d  $sp, $fp, 0
-    ld.d    $ra, $sp, 8
-    ld.d    $fp, $sp, 0
-    addi.d  $sp, $sp, 16
-    jirl    $zero, $ra, 0
+    addi.d $sp, $fp, 0
+    ld.d   $ra, $sp, 8
+    ld.d   $fp, $sp, 0
+    addi.d $sp, $sp, 16
+    jirl   $zero, $ra, 0
 

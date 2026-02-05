@@ -9,6 +9,7 @@ run:
 
 ast:
 	$(WA) ast -arch=loong64 env.s > env.out.s
+	$(WA) ast -arch=loong64 app.s > app.out.s
 
 dev:
 	$(WA) asm2elf -arch=loong64 app.s

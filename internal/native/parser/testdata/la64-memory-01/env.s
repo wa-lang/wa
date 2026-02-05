@@ -3,27 +3,27 @@
 
 .extern .Wa.Memory.addr
 
-# int _Wa_Runtime_write(int fd, void *buf, int count)
+# int .Wa.Runtime.write(int fd, void *buf, int count)
 .section .text
-.globl _Wa_Runtime_write
-_Wa_Runtime_write:
+.globl .Wa.Runtime.write
+.Wa.Runtime.write:
     addi.d  $a7, $zero, 64 # sys_write
     syscall 0
     jirl    $zero, $ra, 0
 
 
-# void _Wa_Runtime_exit(int status)
+# void .Wa.Runtime.exit(int status)
 .section .text
-.globl _Wa_Runtime_exit
-_Wa_Runtime_exit:
+.globl .Wa.Runtime.exit
+.Wa.Runtime.exit:
     addi.d  $a7, $zero, 93 # sys_exit
     syscall 0
 
 
-# void* _Wa_Runtime_malloc(int size)
+# void* .Wa.Runtime.malloc(int size)
 .section .text
-.globl _Wa_Runtime_malloc
-_Wa_Runtime_malloc:
+.globl .Wa.Runtime.malloc
+.Wa.Runtime.malloc:
     or      $a1, $a0, $zero # length = size
     addi.d  $a0, $zero, 0   # addr = NULL
     addi.d  $a2, $zero, 3   # prot = PROT_READ | PROT_WRITE
@@ -35,10 +35,10 @@ _Wa_Runtime_malloc:
     jirl    $zero, $ra, 0
 
 
-# void* _Wa_Runtime_memcpy(void* dst, const void* src, int n)
+# void* .Wa.Runtime.memcpy(void* dst, const void* src, int n)
 .section .text
-.globl _Wa_Runtime_memcpy
-_Wa_Runtime_memcpy:
+.globl .Wa.Runtime.memcpy
+.Wa.Runtime.memcpy:
     or  $t0, $a0, $zero # 备份 dst
     beq $a2, $zero, .Wa.L.memcpy.done
 
@@ -55,14 +55,14 @@ _Wa_Runtime_memcpy:
     jirl $zero, $ra, 0
 
 
-# void* _Wa_Runtime_memmove(void* dst, const void* src, int n)
+# void* .Wa.Runtime.memmove(void* dst, const void* src, int n)
 .section .text
-.globl _Wa_Runtime_memmove
-_Wa_Runtime_memmove:
+.globl .Wa.Runtime.memmove
+.Wa.Runtime.memmove:
     beq $a0, $a1, .Wa.L.memmove.done
 
     # 如果 a0 < a1 (无符号比较), 跳转到向前拷贝
-    bltu $a0, $a1, _Wa_Runtime_memcpy
+    bltu $a0, $a1, .Wa.Runtime.memcpy
 
     # 后向拷贝 (dst > src)
     or    $t0, $a0, $zero
@@ -85,10 +85,10 @@ _Wa_Runtime_memmove:
     jirl $zero, $ra, 0
 
 
-# void* _Wa_Runtime_memset(void* s, int c, int n)
+# void* .Wa.Runtime.memset(void* s, int c, int n)
 .section .text
-.globl _Wa_Runtime_memset
-_Wa_Runtime_memset:
+.globl .Wa.Runtime.memset
+.Wa.Runtime.memset:
     or  $t0, $a0, $zero
     beq $a2, $zero, .Wa.L.memset.done
 
@@ -103,10 +103,10 @@ _Wa_Runtime_memset:
     jirl $zero, $ra, 0
 
 
-# void _Wa_Import_syscall_linux_print_str (uint32_t ptr, int32_t len)
+# void .Wa.Import.syscall_linux.print_str (uint32_t ptr, int32_t len)
 .section .text
-.globl _Wa_Import_syscall_linux_print_str
-_Wa_Import_syscall_linux_print_str:
+.globl .Wa.Import.syscall_linux.print_str
+.Wa.Import.syscall_linux.print_str:
     pcalau12i $t0, %pc_hi20(.Wa.Memory.addr)
     ld.d      $t0, $t0, %pc_lo12(.Wa.Memory.addr)
 
@@ -119,17 +119,17 @@ _Wa_Import_syscall_linux_print_str:
     jirl    $zero, $ra, 0
 
 
-# void _Wa_Import_syscall_linux_proc_exit(int32_t code)
+# void .Wa.Import.syscall_linux.proc_exit(int32_t code)
 .section .text
-.globl _Wa_Import_syscall_linux_proc_exit
-_Wa_Import_syscall_linux_proc_exit:
-    b _Wa_Runtime_exit
+.globl .Wa.Import.syscall_linux.proc_exit
+.Wa.Import.syscall_linux.proc_exit:
+    b .Wa.Runtime.exit
 
 
-# void _Wa_Import_syscall_linux_print_rune(int32_t c)
+# void .Wa.Import.syscall_linux.print_rune(int32_t c)
 .section .text
-.globl _Wa_Import_syscall_linux_print_rune
-_Wa_Import_syscall_linux_print_rune:
+.globl .Wa.Import.syscall_linux.print_rune
+.Wa.Import.syscall_linux.print_rune:
     addi.d $sp, $sp, -16
     st.d   $ra, $sp, 8
     st.d   $fp, $sp, 0
@@ -151,10 +151,10 @@ _Wa_Import_syscall_linux_print_rune:
     jirl   $zero, $ra, 0
 
 
-# void _Wa_Import_syscall_linux_print_i64(int64_t val)
+# void .Wa.Import.syscall_linux.print_i64(int64_t val)
 .section .text
-.globl _Wa_Import_syscall_linux_print_i64
-_Wa_Import_syscall_linux_print_i64:
+.globl .Wa.Import.syscall_linux.print_i64
+.Wa.Import.syscall_linux.print_i64:
     addi.d $sp, $sp, -16
     st.d   $ra, $sp, 8
     st.d   $fp, $sp, 0
