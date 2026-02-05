@@ -16,7 +16,7 @@ type File struct {
 	CPU         abi.CPUType             // CPU类型
 	Doc         *CommentGroup           // 关联文档
 	IntelSyntax *GasIntelSyntaxNoprefix // X64必须采用 Intel 语法
-	Externs     []*GasExtern            // 外部的符号
+	Externs     []*Extern               // 外部的符号
 	Consts      []*Const                // 全局常量
 	Globals     []*Global               // 全局对象
 	Funcs       []*Func                 // 函数对象
@@ -42,9 +42,10 @@ type GasIntelSyntaxNoprefix struct {
 }
 
 // 外部符号
-type GasExtern struct {
-	Pos  token.Pos // 位置
-	Name string    // 符号名字
+type Extern struct {
+	Pos  token.Pos   // 位置
+	Tok  token.Token // 关键字(区分不同的语法)
+	Name string      // 符号名字
 }
 
 // 基本的面值

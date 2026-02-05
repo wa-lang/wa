@@ -224,6 +224,7 @@ main:
 ```s
 .section .data
 .align 3
+.globl .some.table
 .some.table: .skip 100
 ```
 
@@ -258,6 +259,8 @@ main:
 凹语言自带的汇编器不支持链接外部的符号, 对于 `.extern _Wa_Runtime_write` 语法凹语言汇编器可以解析但是不能链接, 这种情况可以用gcc汇编器.
 
 对于未来可能会支持的X64汇编语言, 必须在开头加上 `.intel_syntax noprefix` 指令, 表示使用 intel 的指令语法风格, 同时去掉寄存器和立即数开头的`%`和`$`等前缀.
+
+GAS语法中`.globl`和`.global`是两个等价的命令, 用于标志符号是导出的, 前者是Unix时代汇编器短名字的习惯. 凹汇编语言能识别两者, 但格式化时会强制输出为`.globl`短名字格式.
 
 ## 4. 指令中的宏
 

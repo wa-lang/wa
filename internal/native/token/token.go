@@ -72,7 +72,7 @@ const (
 
 	GAS_EXTERN  // .extern _write
 	GAS_ALIGN   // .align 8
-	GAS_GLOBL   // .globl .Wa.Memory.addr
+	GAS_GLOBL   // .globl .Wa.Memory.addr # .global 是别名, 等价
 	GAS_BYTE    // .name: .byte 0
 	GAS_SHORT   // .name: .short 0
 	GAS_LONG    // .name: .long 0
@@ -196,6 +196,12 @@ func init() {
 // 查询标识符的类型
 // 寄存器和指令负责和 Token 名字空间的映射关系, 查询失败返回 0
 func Lookup(ident string, lookupRegisterOrAs func(ident string) Token) Token {
+	// 特殊处理 .global 别名
+	const gas_global = ".global"
+	if ident == gas_global {
+		return GAS_GLOBL
+	}
+
 	// 关键字类型
 	if tok, is_keyword := gas_keywords[ident]; is_keyword {
 		return tok

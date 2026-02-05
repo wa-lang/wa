@@ -40,9 +40,20 @@ func (p *parser) parseFile() {
 			}
 
 		case token.GAS_EXTERN:
-			ext := &ast.GasExtern{Pos: p.pos}
+			ext := &ast.Extern{Pos: p.pos, Tok: token.GAS_EXTERN}
 
 			p.acceptToken(token.GAS_EXTERN)
+			ext.Name = p.parseIdent()
+			p.prog.Externs = append(p.prog.Externs, ext)
+			p.consumeSemicolonList()
+
+			p.prog.Externs = append(p.prog.Externs, ext)
+			p.prog.Objects = append(p.prog.Objects, ext)
+
+		case token.EXTERN_zh:
+			ext := &ast.Extern{Pos: p.pos, Tok: token.EXTERN_zh}
+
+			p.acceptToken(token.EXTERN_zh)
 			ext.Name = p.parseIdent()
 			p.prog.Externs = append(p.prog.Externs, ext)
 			p.consumeSemicolonList()
@@ -288,7 +299,7 @@ func (p *parser) parseFile() {
 
 			case ".text", ".init", ".fini":
 				// 函数已经提前解析
-				panic("unreachable")
+				panic("unreachable:" + p.fset.Position(p.pos).String())
 
 			default:
 				p.errorf(p.pos, "invalid section name: %s", p.gasSectionName)

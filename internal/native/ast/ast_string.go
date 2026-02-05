@@ -92,8 +92,8 @@ func (p *GasIntelSyntaxNoprefix) String() string {
 	return fmt.Sprintf("%s %s", token.GAS_X64_INTEL_SYNTAX, token.GAS_X64_NOPREFIX)
 }
 
-func (p *GasExtern) String() string {
-	return fmt.Sprintf("%s %s", token.GAS_EXTERN, p.Name)
+func (p *Extern) String() string {
+	return fmt.Sprintf("%s %s", p.Tok, p.Name)
 }
 
 func (p *BasicLit) String() string {
