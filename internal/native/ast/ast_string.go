@@ -51,6 +51,12 @@ func (p *File) String() string {
 					sb.WriteString(strconv.Itoa(g.Align))
 					sb.WriteString("\n")
 				}
+				if g.ExportName != "" {
+					sb.WriteString(token.GAS_GLOBL.String())
+					sb.WriteByte(' ')
+					sb.WriteString(g.ExportName)
+					sb.WriteByte('\n')
+				}
 			}
 		}
 

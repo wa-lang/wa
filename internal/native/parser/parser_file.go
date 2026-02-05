@@ -326,7 +326,7 @@ func (p *parser) parseFile() {
 	// 收集信息导出符号信息
 	for _, g := range p.prog.Globals {
 		if p.gasGlobl[g.Name] {
-			g.Exported = true
+			g.ExportName = g.Name
 		}
 	}
 	for _, fn := range p.prog.Funcs {

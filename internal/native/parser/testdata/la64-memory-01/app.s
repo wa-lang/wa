@@ -22,10 +22,10 @@
 .section .data
 .align 3
 .globl .Wa.Memory.addr
-.globl .Wa.Memory.pages
-.globl .Wa.Memory.maxPages
 .Wa.Memory.addr: .quad 0
+.globl .Wa.Memory.pages
 .Wa.Memory.pages: .quad 1
+.globl .Wa.Memory.maxPages
 .Wa.Memory.maxPages: .quad 1
 
 # 内存数据

@@ -73,11 +73,11 @@ func (p *wat2laWorker) buildRuntimeImpl_panic(w io.Writer) error {
 	p.gasGlobal(w, kRuntimePanic)
 	p.gasFuncStart(w, kRuntimePanic)
 
-	fmt.Fprintf(w, "    addi.d  $sp, $sp, -16\n")
-	fmt.Fprintf(w, "    st.d    $ra, $sp, 8\n")
-	fmt.Fprintf(w, "    st.d    $fp, $sp, 0\n")
-	fmt.Fprintf(w, "    addi.d  $fp, $sp, 0\n")
-	fmt.Fprintf(w, "    addi.d  $sp, $sp, -32\n")
+	fmt.Fprintf(w, "    addi.d $sp, $sp, -16\n")
+	fmt.Fprintf(w, "    st.d   $ra, $sp, 8\n")
+	fmt.Fprintf(w, "    st.d   $fp, $sp, 0\n")
+	fmt.Fprintf(w, "    addi.d $fp, $sp, 0\n")
+	fmt.Fprintf(w, "    addi.d $sp, $sp, -32\n")
 	fmt.Fprintln(w)
 
 	fmt.Fprintf(w, "    # runtime.write(stderr, panicMessage, size)\n")
@@ -100,11 +100,11 @@ func (p *wat2laWorker) buildRuntimeImpl_panic(w io.Writer) error {
 	fmt.Fprintln(w)
 
 	fmt.Fprintf(w, "    # return\n")
-	fmt.Fprintf(w, "    addi.d  $sp, $fp, 0\n")
-	fmt.Fprintf(w, "    ld.d    $ra, $sp, 8\n")
-	fmt.Fprintf(w, "    ld.d    $fp, $sp, 0\n")
-	fmt.Fprintf(w, "    addi.d  $sp, $sp, 16\n")
-	fmt.Fprintf(w, "    jirl    $zero, $ra, 0\n")
+	fmt.Fprintf(w, "    addi.d $sp, $fp, 0\n")
+	fmt.Fprintf(w, "    ld.d   $ra, $sp, 8\n")
+	fmt.Fprintf(w, "    ld.d   $fp, $sp, 0\n")
+	fmt.Fprintf(w, "    addi.d $sp, $sp, 16\n")
+	fmt.Fprintf(w, "    jirl   $zero, $ra, 0\n")
 	fmt.Fprintln(w)
 
 	return nil
