@@ -172,7 +172,16 @@ func getOpFormatType(as int, asArgs instArgs) OpFormatType {
 		case Arg_ui12_21_10:
 			return OpFormatType_2R_ui12
 		case Arg_si12_21_10:
-			return OpFormatType_2R_si12
+			switch {
+			case asArgs[0] == Arg_fd:
+				assert(asArgs[1] == Arg_rj)
+				return OpFormatType_1F_1R_si12
+			case asArgs[0] == Arg_rd:
+				assert(asArgs[1] == Arg_rj)
+				return OpFormatType_2R_si12
+			default:
+				panic("unreachable")
+			}
 		case Arg_si14_23_10:
 			return OpFormatType_2R_si14
 		case Arg_si16_25_10:
@@ -364,6 +373,8 @@ func OpFormatTypeString(x OpFormatType) string {
 		return "OpFormatType_2R_ui6"
 	case OpFormatType_2R_si12:
 		return "OpFormatType_2R_si12"
+	case OpFormatType_1F_1R_si12:
+		return "OpFormatType_1F_1R_si12"
 	case OpFormatType_2R_ui12:
 		return "OpFormatType_2R_ui12"
 	case OpFormatType_2R_si14:

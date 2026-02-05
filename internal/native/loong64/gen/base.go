@@ -27,6 +27,7 @@ const (
 	OpFormatType_2R_ui5
 	OpFormatType_2R_ui6
 	OpFormatType_2R_si12
+	OpFormatType_1F_1R_si12
 	OpFormatType_2R_ui12
 	OpFormatType_2R_si14
 	OpFormatType_1R_si20
@@ -129,6 +130,7 @@ var OpFormatTypeNameList = []string{
 	"OpFormatType_2R_ui5",
 	"OpFormatType_2R_ui6",
 	"OpFormatType_2R_si12",
+	"OpFormatType_1F_1R_si12",
 	"OpFormatType_2R_ui12",
 	"OpFormatType_2R_si14",
 	"OpFormatType_1R_si20",

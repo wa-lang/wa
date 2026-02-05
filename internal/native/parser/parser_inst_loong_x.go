@@ -157,6 +157,19 @@ func (p *parser) parseInst_loong(fn *ast.Func) (inst *ast.Instruction) {
 		inst.Arg.SymbolDecor = symbolDecor
 		return inst
 
+	case loong64.OpFormatType_1F_1R_si12:
+		fd := p.parseRegF_loong(fn)
+		p.acceptToken(token.COMMA)
+		rj := p.parseRegI_loong(fn)
+		p.acceptToken(token.COMMA)
+		si12, si12Symbol, symbolDecor := p.parseInst_loong_imm_si12(fn)
+		inst.Arg.Rd = fd
+		inst.Arg.Rs1 = rj
+		inst.Arg.Imm = si12
+		inst.Arg.Symbol = si12Symbol
+		inst.Arg.SymbolDecor = symbolDecor
+		return inst
+
 	case loong64.OpFormatType_2R_ui12:
 		rd := p.parseRegI_loong(fn)
 		p.acceptToken(token.COMMA)
@@ -322,6 +335,8 @@ func (p *parser) parseInst_loong(fn *ast.Func) (inst *ast.Instruction) {
 		inst.Arg.Rs2 = fk
 		return inst
 	case loong64.OpFormatType_1R_cj:
+		// BUG: movcf2gr $t0, $fcc0
+		// 一组至少有 4 个类似的指令, 条件寄存器的名字缺少
 		rd := p.parseRegI_loong(fn)
 		p.acceptToken(token.COMMA)
 		cj, cjSymbol := p.parseInst_loong_imm_cj_3bit()

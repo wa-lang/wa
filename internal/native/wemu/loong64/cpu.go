@@ -710,14 +710,6 @@ func (p *CPU) execInst(bus *device.Bus, as abi.As, arg *abi.AsRawArgument) error
 		case loong64.AADDI_W:
 			p.RegX[arg.Rd] = p.RegX[arg.Rs1] + LAUInt(arg.Imm)
 			return nil
-		case loong64.AFLD_D:
-			panic("TODO")
-		case loong64.AFLD_S:
-			panic("TODO")
-		case loong64.AFST_D:
-			panic("TODO")
-		case loong64.AFST_S:
-			panic("TODO")
 		case loong64.ALD_B:
 			panic("TODO")
 		case loong64.ALD_BU:
@@ -774,6 +766,22 @@ func (p *CPU) execInst(bus *device.Bus, as abi.As, arg *abi.AsRawArgument) error
 			}
 			return nil
 		}
+	case loong64.OpFormatType_1F_1R_si12:
+
+		switch as {
+		default:
+			return fmt.Errorf("unsupport: %s", loong64.AsString(as, ""))
+
+		case loong64.AFLD_D:
+			panic("TODO")
+		case loong64.AFLD_S:
+			panic("TODO")
+		case loong64.AFST_D:
+			panic("TODO")
+		case loong64.AFST_S:
+			panic("TODO")
+		}
+
 	case loong64.OpFormatType_2R_ui12:
 		switch as {
 		default:

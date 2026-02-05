@@ -76,6 +76,7 @@ const (
 	OpFormatType_2R_ui6
 	OpFormatType_2R_si12
 	OpFormatType_2R_ui12
+	OpFormatType_1F_1R_si12
 	OpFormatType_2R_si14
 	OpFormatType_1R_si20
 	OpFormatType_0_2R
@@ -161,6 +162,8 @@ func (x OpFormatType) String() string {
 		return "OpFormatType_2R_ui6"
 	case OpFormatType_2R_si12:
 		return "OpFormatType_2R_si12"
+	case OpFormatType_1F_1R_si12:
+		return "OpFormatType_1F_1R_si12"
 	case OpFormatType_2R_ui12:
 		return "OpFormatType_2R_ui12"
 	case OpFormatType_2R_si14:
