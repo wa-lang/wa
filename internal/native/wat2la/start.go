@@ -21,11 +21,11 @@ func (p *wat2laWorker) buildStart(w io.Writer) error {
 	p.gasGlobal(w, kFuncStart)
 	fmt.Fprintf(w, "%s:\n", kFuncStart)
 
-	fmt.Fprintln(w, "    addi.d  $sp, $sp, -16")
-	fmt.Fprintln(w, "    st.d    $ra, $sp, 8")
-	fmt.Fprintln(w, "    st.d    $fp, $sp, 0")
-	fmt.Fprintln(w, "    addi.d  $fp, $sp, 0")
-	fmt.Fprintln(w, "    addi.d  $sp, $sp, -32")
+	fmt.Fprintln(w, "    addi.d $sp, $sp, -16")
+	fmt.Fprintln(w, "    st.d   $ra, $sp, 8")
+	fmt.Fprintln(w, "    st.d   $fp, $sp, 0")
+	fmt.Fprintln(w, "    addi.d $fp, $sp, 0")
+	fmt.Fprintln(w, "    addi.d $sp, $sp, -32")
 	fmt.Fprintln(w)
 
 	if p.m.Memory != nil {
@@ -64,11 +64,11 @@ func (p *wat2laWorker) buildStart(w io.Writer) error {
 	fmt.Fprintln(w)
 
 	p.gasCommentInFunc(w, "exit 后这里不会被执行, 但是依然保留")
-	fmt.Fprintln(w, "    addi.d  $sp, $fp, 0")
-	fmt.Fprintln(w, "    ld.d    $ra, $sp, 8")
-	fmt.Fprintln(w, "    ld.d    $fp, $sp, 0")
-	fmt.Fprintln(w, "    addi.d  $sp, $sp, 16")
-	fmt.Fprintln(w, "    jirl    $zero, $ra, 0")
+	fmt.Fprintln(w, "    addi.d $sp, $fp, 0")
+	fmt.Fprintln(w, "    ld.d   $ra, $sp, 8")
+	fmt.Fprintln(w, "    ld.d   $fp, $sp, 0")
+	fmt.Fprintln(w, "    addi.d $sp, $sp, 16")
+	fmt.Fprintln(w, "    jirl   $zero, $ra, 0")
 	fmt.Fprintln(w)
 
 	return nil

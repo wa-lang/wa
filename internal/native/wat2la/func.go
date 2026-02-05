@@ -113,15 +113,15 @@ func (p *wat2laWorker) buildFunc_body(w io.Writer, fn *ast.Func) error {
 			frameSize = x
 		}
 
-		fmt.Fprintf(&bufHeader, "    addi.d  $sp, $sp, -16\n")
-		fmt.Fprintf(&bufHeader, "    st.d    $ra, $sp, 8\n")
-		fmt.Fprintf(&bufHeader, "    st.d    $fp, $sp, 0\n")
-		fmt.Fprintf(&bufHeader, "    addi.d  $fp, $sp, 0\n")
+		fmt.Fprintf(&bufHeader, "    addi.d $sp, $sp, -16\n")
+		fmt.Fprintf(&bufHeader, "    st.d   $ra, $sp, 8\n")
+		fmt.Fprintf(&bufHeader, "    st.d   $fp, $sp, 0\n")
+		fmt.Fprintf(&bufHeader, "    addi.d $fp, $sp, 0\n")
 
 		// 栈调整可能超出立即数范围, 需要区分处理
 		fmt.Fprintf(&bufHeader, "    # $sp = $sp - %d\n", frameSize)
 		if x := int32(0 - frameSize); x >= -2048 && x <= 2047 {
-			fmt.Fprintf(&bufHeader, "    addi.d  $sp, $sp, %d\n", 0-frameSize)
+			fmt.Fprintf(&bufHeader, "    addi.d $sp, $sp, %d\n", 0-frameSize)
 		} else {
 			hi20 := uint32(x) >> 12
 			lo12 := uint32(x) & 0xFFF
@@ -311,11 +311,11 @@ func (p *wat2laWorker) buildFunc_body(w io.Writer, fn *ast.Func) error {
 	// 结束栈帧
 	{
 		p.gasCommentInFunc(&bufReturn, "函数返回")
-		fmt.Fprintln(&bufReturn, "    addi.d  $sp, $fp, 0")
-		fmt.Fprintln(&bufReturn, "    ld.d    $ra, $sp, 8")
-		fmt.Fprintln(&bufReturn, "    ld.d    $fp, $sp, 0")
-		fmt.Fprintln(&bufReturn, "    addi.d  $sp, $sp, 16")
-		fmt.Fprintln(&bufReturn, "    jirl    $zero, $ra, 0")
+		fmt.Fprintln(&bufReturn, "    addi.d $sp, $fp, 0")
+		fmt.Fprintln(&bufReturn, "    ld.d   $ra, $sp, 8")
+		fmt.Fprintln(&bufReturn, "    ld.d   $fp, $sp, 0")
+		fmt.Fprintln(&bufReturn, "    addi.d $sp, $sp, 16")
+		fmt.Fprintln(&bufReturn, "    jirl   $zero, $ra, 0")
 		fmt.Fprintln(&bufReturn)
 	}
 
@@ -1072,12 +1072,12 @@ func (p *wat2laWorker) buildFunc_ins(
 		if fnCallIdx < len(p.m.Imports) {
 			fnCallName := p.m.Imports[fnCallIdx].ObjModule + "." + p.m.Imports[fnCallIdx].ObjName
 			fmt.Fprintf(w, "    pcalau12i $t0, %%pc_hi20(%s)\n", kImportNamePrefix+fixName(fnCallName))
-			fmt.Fprintf(w, "    addi.d $t0, $t0, %%pc_lo12(%s)\n", kImportNamePrefix+fixName(fnCallName))
-			fmt.Fprintf(w, "    jirl $ra, $t0, 0\n")
+			fmt.Fprintf(w, "    addi.d    $t0, $t0, %%pc_lo12(%s)\n", kImportNamePrefix+fixName(fnCallName))
+			fmt.Fprintf(w, "    jirl      $ra, $t0, 0\n")
 		} else {
 			fmt.Fprintf(w, "    pcalau12i $t0, %%pc_hi20(%s)\n", kFuncNamePrefix+fixName(i.X))
-			fmt.Fprintf(w, "    addi.d $t0, $t0, %%pc_lo12(%s)\n", kFuncNamePrefix+fixName(i.X))
-			fmt.Fprintf(w, "    jirl $ra, $t0, 0\n")
+			fmt.Fprintf(w, "    addi.d    $t0, $t0, %%pc_lo12(%s)\n", kFuncNamePrefix+fixName(i.X))
+			fmt.Fprintf(w, "    jirl      $ra, $t0, 0\n")
 		}
 
 		// 提取返回值
