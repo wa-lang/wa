@@ -4,6 +4,7 @@
 package appobjdump
 
 import (
+	"bytes"
 	"encoding/binary"
 	"fmt"
 	"io"
@@ -15,6 +16,7 @@ import (
 	"wa-lang.org/wa/internal/native/link/elf"
 	"wa-lang.org/wa/internal/native/loong64"
 	"wa-lang.org/wa/internal/native/riscv"
+	"wa-lang.org/wa/internal/printer/tabwriter"
 )
 
 var CmdObjdump = &cli.Command{
@@ -114,13 +116,24 @@ func cmdProgdump(filename string, isZhMode bool) {
 func printProgText(machine elf.Machine, addr uint64, data []byte, isZhMode bool) {
 	addrWidth := len(fmt.Sprintf("%x", addr))
 
-	fmt.Println("[.text.]")
+	// 用于格式化指令对齐
+	var buf bytes.Buffer
+	var w = tabwriter.NewWriter(&buf, 1, 1, 1, ' ', 0)
+
+	fmt.Fprintln(w, "[.text.]")
 	for k := 0; k < len(data); k += 4 {
-		fmt.Printf("%0*X: ", addrWidth, addr+uint64(k))
+		fmt.Fprintf(w, "%0*X: ", addrWidth, addr+uint64(k))
 		x := binary.LittleEndian.Uint32(data[k:][:4])
-		fmt.Printf("%08X # %s\n", x, decodeInst(machine, x, isZhMode))
+		instStr := []byte(decodeInst(machine, x, isZhMode))
+		if idx := bytes.IndexByte(instStr, ' '); idx > 0 {
+			instStr[idx] = '\t'
+		}
+		fmt.Fprintf(w, "%08X # %s\n", x, string(instStr))
 	}
-	fmt.Println()
+	fmt.Fprintln(w)
+
+	w.Flush()
+	fmt.Print(buf.String())
 }
 
 func decodeInst(machine elf.Machine, x uint32, isZhMode bool) string {
