@@ -160,8 +160,23 @@ func (p *_Assembler) asmGlobal(g *ast.Global) (err error) {
 			panic(fmt.Errorf("global %q init value overflow: %v", g.Name, g.Init.Lit))
 		}
 	case token.I64:
-		v := g.Init.Lit.ConstV.(int64)
-		binary.LittleEndian.PutUint64(g.LinkInfo.Data, uint64(v))
+		switch v := g.Init.Lit.ConstV.(type) {
+		case int64:
+			if g.TypeTok == token.GAS_SKIP || g.TypeTok == token.SKIP_zh {
+				g.LinkInfo.Data = make([]byte, v)
+			} else {
+				binary.LittleEndian.PutUint64(g.LinkInfo.Data, uint64(v))
+			}
+		case string:
+			g.LinkInfo.Data = []byte(v)
+			if g.TypeTok == token.GAS_ASCIZ {
+				g.LinkInfo.Data = append(g.LinkInfo.Data, '\000')
+			}
+		case []byte:
+			g.LinkInfo.Data = v
+		default:
+			panic("unreachable")
+		}
 	case token.F32:
 		v := g.Init.Lit.ConstV.(float64)
 		binary.LittleEndian.PutUint32(g.LinkInfo.Data, math.Float32bits(float32(v)))

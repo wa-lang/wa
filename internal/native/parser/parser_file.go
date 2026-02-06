@@ -4,6 +4,9 @@
 package parser
 
 import (
+	"math"
+	"os"
+
 	"wa-lang.org/wa/internal/native/abi"
 	"wa-lang.org/wa/internal/native/ast"
 	"wa-lang.org/wa/internal/native/token"
@@ -74,7 +77,23 @@ func (p *parser) parseFile() {
 			p.acceptToken(token.GAS_SECTION)
 
 			p.gasSectionName = p.parseIdent()
-			p.gasAlign = 0
+			if _, ok := p.gasSectionAlign[p.gasSectionName]; !ok {
+				switch p.gasSectionName {
+				case ".text", ".init", ".fini":
+					if p.cpu == abi.X64Unix || p.cpu == abi.X64Windows {
+						p.gasSectionAlign[p.gasSectionName] = 4
+					} else {
+						p.gasSectionAlign[p.gasSectionName] = 2
+					}
+				default:
+					if p.cpu == abi.X64Unix || p.cpu == abi.X64Windows {
+						p.gasSectionAlign[p.gasSectionName] = 1
+					} else {
+						p.gasSectionAlign[p.gasSectionName] = 0
+					}
+				}
+			}
+			p.gasAlign = p.gasSectionAlign[p.gasSectionName]
 			p.consumeSemicolonList()
 
 			switch p.gasSectionName {
@@ -85,6 +104,13 @@ func (p *parser) parseFile() {
 					Body: new(ast.FuncBody),
 
 					Section: p.gasSectionName,
+				}
+
+				// 函数段强制4字节对齐
+				if p.cpu == abi.X64Unix || p.cpu == abi.X64Windows {
+					assert(p.gasAlign == 4)
+				} else {
+					assert(p.gasAlign == 2)
 				}
 
 				// 关联注释需要马上解析
@@ -195,22 +221,26 @@ func (p *parser) parseFile() {
 
 		case token.GAS_ALIGN:
 			p.acceptToken(token.GAS_ALIGN)
+			assert(p.gasSectionName != "")
 			p.gasAlign = p.parseIntLit()
-			switch p.cpu {
-			case abi.LOONG64:
-				if x := p.gasAlign; x <= 0 || x > 3 {
-					p.errorf(p.pos, "invalid align: %d", p.gasAlign)
+			p.gasSectionAlign[p.gasSectionName] = p.gasAlign
+
+			switch p.gasSectionName {
+			case ".text", ".init", ".fini":
+				// 函数必须是4字节对齐
+				if p.cpu == abi.X64Unix || p.cpu == abi.X64Windows {
+					assert(p.gasAlign == 4)
+				} else {
+					assert(p.gasAlign == 2)
 				}
-			case abi.RISCV32, abi.RISCV64:
-				if x := p.gasAlign; x <= 0 || x > 3 {
-					p.errorf(p.pos, "invalid align: %d", p.gasAlign)
-				}
-			case abi.X64Unix, abi.X64Windows:
-				if x := p.gasAlign; x != 1 && x != 2 && x != 4 && x != 8 {
-					p.errorf(p.pos, "invalid align: %d", p.gasAlign)
-				}
+
 			default:
-				p.errorf(p.pos, "invalid align: %d", p.gasAlign)
+				// 数据段只有: 1/2/4/8/16字节
+				if p.cpu == abi.X64Unix || p.cpu == abi.X64Windows {
+					assert(p.gasAlign == 1 || p.gasAlign == 2 || p.gasAlign == 4 || p.gasAlign == 8 || p.gasAlign == 16)
+				} else {
+					assert(p.gasAlign >= 0 && p.gasAlign <= 4)
+				}
 			}
 			p.consumeSemicolonList()
 
@@ -288,7 +318,65 @@ func (p *parser) parseFile() {
 						p.consumeSemicolonList()
 					}
 
-					// TODO: 验证初始化值的合法性, 填充类型和Size
+					// 验证初始化值的合法性, 填充类型和Size
+					switch globalObj.TypeTok {
+					case token.GAS_BYTE:
+						globalObj.Type = token.I8
+						globalObj.Size = 1
+						v := int(globalObj.Init.Lit.ConstV.(int64))
+						assert(v >= math.MinInt8 && v < math.MaxUint8)
+					case token.GAS_SHORT:
+						globalObj.Type = token.I16
+						globalObj.Size = 2
+						v := int(globalObj.Init.Lit.ConstV.(int64))
+						assert(v >= math.MinInt16 && v < math.MaxUint16)
+					case token.GAS_LONG:
+						switch v := globalObj.Init.Lit.ConstV.(type) {
+						case int64:
+							globalObj.Type = token.I32
+							globalObj.Size = 4
+							assert(v >= math.MinInt32 && v < math.MaxUint32)
+						case float64:
+							globalObj.Type = token.F32
+							globalObj.Size = 4
+						default:
+							panic("unreachable")
+						}
+					case token.GAS_QUAD:
+						switch globalObj.Init.Lit.ConstV.(type) {
+						case int64:
+							globalObj.Type = token.I64
+							globalObj.Size = 8
+						case float64:
+							globalObj.Type = token.F64
+							globalObj.Size = 8
+						default:
+							panic("unreachable")
+						}
+					case token.GAS_ASCII:
+						globalObj.Type = token.I64 // 地址类型
+						globalObj.Size = len(globalObj.Init.Lit.ConstV.(string))
+					case token.GAS_ASCIZ:
+						globalObj.Type = token.I64 // 地址类型
+						globalObj.Size = len(globalObj.Init.Lit.ConstV.(string)) + 1
+					case token.GAS_SKIP:
+						globalObj.Type = token.I64 // 地址类型
+						globalObj.Size = int(globalObj.Init.Lit.ConstV.(int64))
+					case token.GAS_INCBIN:
+						globalObj.Type = token.I64 // 地址类型
+						filename := globalObj.Init.Lit.ConstV.(string)
+						if fi, err := os.Lstat(filename); err != nil {
+							p.errorf(p.pos, "%v %v failed: %v", token.GAS_INCBIN, filename, err)
+						} else {
+							const maxSize = 2 << 20
+							if fi.Size() > maxSize {
+								p.errorf(p.pos, "%v %v file size large than 2MB: %v", token.GAS_INCBIN, filename, err)
+							}
+							globalObj.Size = int(fi.Size())
+						}
+					default:
+						panic("unreachable")
+					}
 
 					p.prog.Globals = append(p.prog.Globals, globalObj)
 					p.prog.Objects = append(p.prog.Objects, globalObj)

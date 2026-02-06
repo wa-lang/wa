@@ -25,9 +25,10 @@ type parser struct {
 	scanner *scanner.Scanner
 	prog    *ast.File
 
-	gasSectionName string          // 当前段名字
-	gasAlign       int             // 当前的对齐, 遇到 section 后重置
-	gasGlobl       map[string]bool // 导出符号
+	gasSectionName  string          // 当前段名字
+	gasAlign        int             // 当前段的对齐
+	gasSectionAlign map[string]int  // 当前的对齐, 遇到 section 后重置
+	gasGlobl        map[string]bool // 导出符号
 
 	pos token.Pos
 	tok token.Token
@@ -58,6 +59,7 @@ func newParser(cpu abi.CPUType, fset *token.FileSet, filename string, src []byte
 	}
 
 	// 导出的符号
+	p.gasSectionAlign = make(map[string]int)
 	p.gasGlobl = make(map[string]bool)
 
 	switch cpu {

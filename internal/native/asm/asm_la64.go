@@ -13,8 +13,7 @@ import (
 	"wa-lang.org/wa/internal/native/loong64"
 	"wa-lang.org/wa/internal/native/parser"
 	"wa-lang.org/wa/internal/native/pcrel"
-	"wa-lang.org/wa/internal/token"
-	"wa-lang.org/wa/internal/xlang"
+	"wa-lang.org/wa/internal/native/token"
 )
 
 func (p *_Assembler) asmFile_loong64(filename string, source []byte, opt *abi.LinkOptions) (prog *abi.LinkedProgram, err error) {
@@ -30,16 +29,9 @@ func (p *_Assembler) asmFile_loong64(filename string, source []byte, opt *abi.Li
 	}
 
 	// 解析汇编程序
-	xtype := xlang.DetectLang(filename, source)
-	switch xtype {
-	case token.LangType_Nasm:
-		p.file, err = parser.ParseFile(opt.CPU, p.fset, filename, source)
-		if err != nil {
-			return nil, err
-		}
-	default:
-		err = fmt.Errorf("unsupport file format: %s: %v", filename, xtype)
-		return
+	p.file, err = parser.ParseFile(opt.CPU, p.fset, filename, source)
+	if err != nil {
+		return nil, err
 	}
 
 	// 指令段的地址必须页对齐
@@ -70,8 +62,52 @@ func (p *_Assembler) asmFile_loong64(filename string, source []byte, opt *abi.Li
 
 	// 全局变量分配内存空间
 	for _, g := range p.file.Globals {
-		// TODO: 留空为0的情况特殊处理
-		assert(g.Size > 0)
+		switch g.TypeTok {
+		case token.BYTE_zh:
+			assert(g.Size == 1)
+		case token.SHORT_zh:
+			assert(g.Size == 2)
+		case token.LONG_zh:
+			assert(g.Size == 4)
+		case token.QUAD_zh:
+			assert(g.Size == 8)
+		case token.ASCII_zh:
+			if s := g.Init.Lit.ConstV.(string); len(s) != 0 {
+				assert(g.Size == len(s))
+			}
+		case token.SKIP_zh:
+			if v := g.Init.Lit.ConstV.(int64); v != 0 {
+				assert(v >= 0)
+				assert(g.Size == int(v))
+			}
+		case token.FILE_zh:
+			panic("TODO") // 需要包含资源上下文
+
+		case token.GAS_BYTE:
+			assert(g.Size == 1)
+		case token.GAS_SHORT:
+			assert(g.Size == 2)
+		case token.GAS_LONG:
+			assert(g.Size == 4)
+		case token.GAS_QUAD:
+			assert(g.Size == 8)
+
+		case token.GAS_ASCII:
+			s := g.Init.Lit.ConstV.(string)
+			assert(g.Size == len(s))
+		case token.GAS_ASCIZ:
+			s := g.Init.Lit.ConstV.(string)
+			assert(g.Size == len(s)+1)
+		case token.GAS_SKIP:
+			n := g.Init.Lit.ConstV.(int64)
+			assert(n >= 0)
+			assert(g.Size == int(n))
+		case token.GAS_INCBIN:
+			panic("TODO") // 需要包含资源上下文
+		default:
+			panic("unreachable")
+		}
+
 		g.LinkInfo = &abi.LinkedSymbol{
 			Name: g.Name,
 			Addr: p.alloc(int64(g.Size), 0),
