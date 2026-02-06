@@ -148,7 +148,7 @@ func (f *Function) EndBody() {
 
 	f.StartBody()
 
-	// 逃逸参数置换：
+	// 参数置换：
 	for i, param := range f.params {
 		if param.kind != Register || (param.DataType().hasRef() && ob.varStored(param)) {
 			np := *param
@@ -274,7 +274,7 @@ func (f *Function) varRangeProc(b *Block, reserve map[*Var]bool) {
 
 		case *Var:
 			if _, ok := reserve[s]; ok {
-				return
+				continue
 			}
 
 			r := b.varUsageRange(s)
@@ -304,7 +304,7 @@ func (f *Function) varRangeProc(b *Block, reserve map[*Var]bool) {
 		case *Biop:
 		case *Retain:
 		case *Drop:
-			return
+			continue
 
 		default:
 			panic(fmt.Sprintf("Todo: %s", stmt.String()))
