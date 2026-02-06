@@ -168,8 +168,10 @@ func (f *Function) EndBody() {
 	}
 
 	// 返回置换
+	rets := make(map[*Var]bool)
 	for _, ret := range f.results {
 		f.Body.emit(ret)
+		rets[ret] = true
 	}
 	f.retRepalce(ob)
 
@@ -182,7 +184,7 @@ func (f *Function) EndBody() {
 	blockImvRcProc(ob, false, nb)
 	f.Body.emit(nb)
 
-	f.varRangeProc(f.Body)
+	f.varRangeProc(f.Body, rets)
 
 	// Todo: defer
 
@@ -264,13 +266,17 @@ func (f *Function) retRepalce(stmt Stmt) {
 
 }
 
-func (f *Function) varRangeProc(b *Block) {
+func (f *Function) varRangeProc(b *Block, reserve map[*Var]bool) {
 	for _, stmt := range b.Stmts {
 		switch s := stmt.(type) {
 		case *Block:
-			f.varRangeProc(s)
+			f.varRangeProc(s, reserve)
 
 		case *Var:
+			if _, ok := reserve[s]; ok {
+				return
+			}
+
 			r := b.varUsageRange(s)
 			if r.last == -1 {
 				panic(fmt.Sprintf("var:%s not used", s.Name()))
@@ -283,12 +289,12 @@ func (f *Function) varRangeProc(b *Block) {
 			b.Stmts = t
 
 		case *If:
-			f.varRangeProc(s.True)
-			f.varRangeProc(s.False)
+			f.varRangeProc(s.True, reserve)
+			f.varRangeProc(s.False, reserve)
 
 		case *Loop:
-			f.varRangeProc(s.Body)
-			f.varRangeProc(s.Post)
+			f.varRangeProc(s.Body, reserve)
+			f.varRangeProc(s.Post, reserve)
 
 		case *Load:
 		case *Store:
