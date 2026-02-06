@@ -64,45 +64,53 @@ func (p *_Assembler) asmFile_loong64(filename string, source []byte, opt *abi.Li
 	for _, g := range p.file.Globals {
 		switch g.TypeTok {
 		case token.BYTE_zh:
+			assert(g.Type == token.I8)
 			assert(g.Size == 1)
 		case token.SHORT_zh:
+			assert(g.Type == token.I16)
 			assert(g.Size == 2)
 		case token.LONG_zh:
+			assert(g.Type == token.I32 || g.Type == token.F32)
 			assert(g.Size == 4)
 		case token.QUAD_zh:
+			assert(g.Type == token.I64 || g.Type == token.F64)
 			assert(g.Size == 8)
+		case token.ADDR_zh:
+			if p.file.CPU == abi.RISCV32 {
+				assert(g.Type == token.I32)
+				assert(g.Size == 4)
+			} else {
+				assert(g.Type == token.I64)
+				assert(g.Size == 8)
+			}
 		case token.ASCII_zh:
-			if s := g.Init.Lit.ConstV.(string); len(s) != 0 {
-				assert(g.Size == len(s))
-			}
-		case token.SKIP_zh:
-			if v := g.Init.Lit.ConstV.(int64); v != 0 {
-				assert(v >= 0)
-				assert(g.Size == int(v))
-			}
-		case token.FILE_zh:
-			panic("TODO") // 需要包含资源上下文
-
+			assert(g.Type == token.Nil)
+			s := g.Init.Lit.ConstV.(string)
+			assert(g.Size == len(s))
 		case token.GAS_BYTE:
+			assert(g.Type == token.I8)
 			assert(g.Size == 1)
 		case token.GAS_SHORT:
+			assert(g.Type == token.I16)
 			assert(g.Size == 2)
 		case token.GAS_LONG:
+			assert(g.Type == token.I32 || g.Type == token.F32)
 			assert(g.Size == 4)
 		case token.GAS_QUAD:
+			assert(g.Type == token.I64 || g.Type == token.F64)
 			assert(g.Size == 8)
 
 		case token.GAS_ASCII:
+			assert(g.Type == token.Nil)
 			s := g.Init.Lit.ConstV.(string)
 			assert(g.Size == len(s))
-		case token.GAS_ASCIZ:
-			s := g.Init.Lit.ConstV.(string)
-			assert(g.Size == len(s)+1)
 		case token.GAS_SKIP:
+			assert(g.Type == token.Nil)
 			n := g.Init.Lit.ConstV.(int64)
 			assert(n >= 0)
 			assert(g.Size == int(n))
 		case token.GAS_INCBIN:
+			assert(g.Type == token.Nil)
 			panic("TODO") // 需要包含资源上下文
 		default:
 			panic("unreachable")

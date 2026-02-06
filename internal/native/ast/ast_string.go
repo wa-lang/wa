@@ -100,23 +100,6 @@ func (p *BasicLit) String() string {
 	return p.LitString
 }
 
-func (p *Const) String() string {
-	var sb strings.Builder
-	if p.Doc != nil {
-		sb.WriteString(p.Doc.String())
-		sb.WriteRune('\n')
-	}
-	if p.Tok == token.CONST_zh {
-		sb.WriteString(fmt.Sprintf("%v %s = %v", p.Tok, p.Name, p.Value))
-	} else {
-		sb.WriteString(fmt.Sprintf("%s = %v", p.Name, p.Value))
-	}
-	if p.Comment != nil {
-		sb.WriteString(p.Comment.String())
-	}
-	return sb.String()
-}
-
 func (p *Global) String() string {
 	var sb strings.Builder
 	if p.Doc != nil {

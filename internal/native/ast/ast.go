@@ -17,7 +17,6 @@ type File struct {
 	Doc         *CommentGroup           // 关联文档
 	IntelSyntax *GasIntelSyntaxNoprefix // X64必须采用 Intel 语法
 	Externs     []*Extern               // 外部的符号
-	Consts      []*Const                // 全局常量
 	Globals     []*Global               // 全局对象
 	Funcs       []*Func                 // 函数对象
 	Comments    []*CommentGroup         // 孤立的注释
@@ -54,16 +53,6 @@ type BasicLit struct {
 	LitKind   token.Token // INT/FLOAT/CHAR/STRING, 默认类型 INT=>I64, FLOAT=>F64, CHAR => I32
 	LitString string      // 原始的字符串: 42, 0x7f, 3.14, 1e-9, 'a', '\x7f', "foo" or `\m\n\o`
 	ConstV    interface{} // 解析后的常量值, 对应的类型: int64, float64, string
-}
-
-// 全局常量
-type Const struct {
-	Pos     token.Pos     // 位置
-	Tok     token.Token   // 关键字(可能有多语言)
-	Doc     *CommentGroup // 关联文档
-	Name    string        // 常量名
-	Value   *BasicLit     // 常量面值
-	Comment *Comment      // 尾部单行注释
 }
 
 // 全局对象

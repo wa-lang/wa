@@ -9,7 +9,8 @@ import "fmt"
 type Type int
 
 const (
-	I8 Type = iota + 1
+	Nil Type = iota + 1
+	I8
 	I16
 	I32
 	I64
@@ -56,6 +57,8 @@ func (t Type) Size() int {
 
 func (t Type) String() string {
 	switch t {
+	case Nil:
+		return "nil"
 	case I8:
 		return "i8"
 	case I16:

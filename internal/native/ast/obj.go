@@ -26,7 +26,6 @@ func (p *CommentGroup) GetDoc() *CommentGroup           { return nil }
 func (p *GasIntelSyntaxNoprefix) GetDoc() *CommentGroup { return nil }
 func (p *Extern) GetDoc() *CommentGroup                 { return nil }
 func (p *BasicLit) GetDoc() *CommentGroup               { return nil }
-func (p *Const) GetDoc() *CommentGroup                  { return p.Doc }
 func (p *Global) GetDoc() *CommentGroup                 { return p.Doc }
 func (p *InitValue) GetDoc() *CommentGroup              { return nil }
 func (p *Func) GetDoc() *CommentGroup                   { return p.Doc }
@@ -42,7 +41,6 @@ func (p *CommentGroup) BeginPos() token.Pos           { return p.List[0].Pos }
 func (p *GasIntelSyntaxNoprefix) BeginPos() token.Pos { return p.Pos }
 func (p *Extern) BeginPos() token.Pos                 { return p.Pos }
 func (p *BasicLit) BeginPos() token.Pos               { return p.Pos }
-func (p *Const) BeginPos() token.Pos                  { return p.Pos }
 func (p *Global) BeginPos() token.Pos                 { return p.Pos }
 func (p *InitValue) BeginPos() token.Pos              { return p.Pos }
 func (p *Func) BeginPos() token.Pos                   { return p.Pos }

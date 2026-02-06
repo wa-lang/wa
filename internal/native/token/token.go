@@ -57,9 +57,8 @@ const (
 	SHORT_zh    // 单字
 	LONG_zh     // 双字
 	QUAD_zh     // 四字
+	ADDR_zh     // 地址
 	ASCII_zh    // 字串
-	SKIP_zh     // 留空
-	FILE_zh     // 文件
 
 	zh_keyword_end // 关键字结束
 
@@ -78,7 +77,6 @@ const (
 	GAS_LONG    // .name: .long 0
 	GAS_QUAD    // .name: .quad 0
 	GAS_ASCII   // .name: .ascii "abc\000"
-	GAS_ASCIZ   // .name: .asciz "abc"
 	GAS_SKIP    // .name: .skip 100
 	GAS_INCBIN  // .name: .incbin "lena.jpg"
 	GAS_SECTION // .section .text
@@ -146,9 +144,8 @@ var tokens = [...]string{
 	SHORT_zh:    "单字",
 	LONG_zh:     "双字",
 	QUAD_zh:     "四字",
+	ADDR_zh:     "地址",
 	ASCII_zh:    "字串",
-	SKIP_zh:     "留空",
-	FILE_zh:     "文件",
 
 	GAS_X64_INTEL_SYNTAX: ".intel_syntax",
 	GAS_X64_NOPREFIX:     "noprefix",
@@ -161,7 +158,6 @@ var tokens = [...]string{
 	GAS_LONG:    ".long",
 	GAS_QUAD:    ".quad",
 	GAS_ASCII:   ".ascii",
-	GAS_ASCIZ:   ".asciz",
 	GAS_SKIP:    ".skip",
 	GAS_INCBIN:  ".incbin",
 	GAS_SECTION: ".section",

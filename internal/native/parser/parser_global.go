@@ -5,8 +5,8 @@ package parser
 
 import (
 	"math"
-	"os"
 
+	"wa-lang.org/wa/internal/native/abi"
 	"wa-lang.org/wa/internal/native/ast"
 	"wa-lang.org/wa/internal/native/token"
 )
@@ -18,12 +18,15 @@ import (
 
 func (p *parser) parseGlobal(tok token.Token) *ast.Global {
 	g := &ast.Global{
-		Pos: p.pos,
-		Tok: tok,
-
+		Pos:  p.pos,
+		Tok:  tok,
 		Init: &ast.InitValue{},
+	}
 
-		Section: ".text",
+	if tok == token.READONLY_zh {
+		g.Section = ".rodata"
+	} else {
+		g.Section = ".text"
 	}
 
 	g.Doc = p.parseDocComment(&p.prog.Comments, g.Pos)
@@ -42,9 +45,8 @@ func (p *parser) parseGlobal(tok token.Token) *ast.Global {
 		token.SHORT_zh,
 		token.LONG_zh,
 		token.QUAD_zh,
+		token.ADDR_zh,
 		token.ASCII_zh,
-		token.SKIP_zh,
-		token.FILE_zh,
 	)
 
 	// 全局变量必须显式初始化
@@ -97,24 +99,17 @@ func (p *parser) parseGlobal(tok token.Token) *ast.Global {
 		default:
 			panic("unreachable")
 		}
-	case token.ASCII_zh:
-		g.Type = token.I64 // 地址类型
-		g.Size = len(g.Init.Lit.ConstV.(string))
-	case token.SKIP_zh:
-		g.Type = token.I64 // 地址类型
-		g.Size = int(g.Init.Lit.ConstV.(int64))
-	case token.FILE_zh:
-		g.Type = token.I64 // 地址类型
-		filename := g.Init.Lit.ConstV.(string)
-		if fi, err := os.Lstat(filename); err != nil {
-			p.errorf(p.pos, "%v %v failed: %v", token.GAS_INCBIN, filename, err)
+	case token.ADDR_zh:
+		if p.cpu == abi.RISCV32 {
+			g.Type = token.I32
+			g.Size = 4
 		} else {
-			const maxSize = 2 << 20
-			if fi.Size() > maxSize {
-				p.errorf(p.pos, "%v %v file size large than 2MB: %v", token.GAS_INCBIN, filename, err)
-			}
-			g.Size = int(fi.Size())
+			g.Type = token.I64
+			g.Size = 8
 		}
+	case token.ASCII_zh:
+		g.Type = token.Nil // 没有类型
+		g.Size = len(g.Init.Lit.ConstV.(string))
 	default:
 		panic("unreachable")
 	}

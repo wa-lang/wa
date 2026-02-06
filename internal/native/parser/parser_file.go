@@ -252,138 +252,104 @@ func (p *parser) parseFile() {
 			case ".data", ".radata", ".bss":
 				beginPos := p.pos
 				name := p.parseIdent()
-				switch p.tok {
-				case token.ASSIGN:
-					p.next()
+				p.acceptToken(token.COLON)
 
-					constObj := &ast.Const{
-						Pos:  beginPos,
-						Name: name,
-					}
+				globalObj := &ast.Global{
+					Pos:  beginPos,
+					Name: name,
+					Init: &ast.InitValue{},
 
-					constObj.Doc = p.parseDocComment(&p.prog.Comments, constObj.Pos)
-					if constObj.Doc != nil {
-						p.prog.Objects = p.prog.Objects[:len(p.prog.Objects)-1]
-					}
+					Section: p.gasSectionName,
+					Align:   p.gasAlign,
+				}
 
-					// TODO: 重新基础常量解析, 包含标识符
-					constObj.Value = p.parseBasicLit()
-					if constObj.Value.LitKind == token.STRING {
-						p.errorf(constObj.Value.Pos, "const(%s) donot support string type", constObj.Value.LitString)
-					}
-					constObj.Comment = p.parseTailComment(constObj.Pos)
+				globalObj.Doc = p.parseDocComment(&p.prog.Comments, globalObj.Pos)
+				if globalObj.Doc != nil {
+					p.prog.Objects = p.prog.Objects[:len(p.prog.Objects)-1]
+				}
+
+				// 解析类型Token
+				globalObj.TypeTok = p.acceptToken(
+					token.GAS_BYTE,
+					token.GAS_SHORT,
+					token.GAS_LONG,
+					token.GAS_QUAD,
+					token.GAS_ASCII,
+					token.GAS_SKIP,
+					token.GAS_INCBIN,
+				)
+
+				// 解析初始化值
+				globalObj.Init.Pos = p.pos
+				if p.tok == token.IDENT {
+					globalObj.Init.Symbal = p.parseIdent()
+					globalObj.Init.Comment = p.parseTailComment(globalObj.Init.Pos)
 					p.consumeSemicolonList()
+				} else {
+					globalObj.Init.Lit = p.parseBasicLit()
+					globalObj.Init.Comment = p.parseTailComment(globalObj.Init.Pos)
+					p.consumeSemicolonList()
+				}
 
-					p.prog.Consts = append(p.prog.Consts, constObj)
-					p.prog.Objects = append(p.prog.Objects, constObj)
-
-				case token.COLON:
-					p.next()
-
-					globalObj := &ast.Global{
-						Pos:  beginPos,
-						Name: name,
-						Init: &ast.InitValue{},
-
-						Section: p.gasSectionName,
-						Align:   p.gasAlign,
-					}
-
-					globalObj.Doc = p.parseDocComment(&p.prog.Comments, globalObj.Pos)
-					if globalObj.Doc != nil {
-						p.prog.Objects = p.prog.Objects[:len(p.prog.Objects)-1]
-					}
-
-					// 解析类型Token
-					globalObj.TypeTok = p.acceptToken(
-						token.GAS_BYTE,
-						token.GAS_SHORT,
-						token.GAS_LONG,
-						token.GAS_QUAD,
-						token.GAS_ASCII,
-						token.GAS_ASCIZ,
-						token.GAS_SKIP,
-						token.GAS_INCBIN,
-					)
-
-					// 解析初始化值
-					globalObj.Init.Pos = p.pos
-					if p.tok == token.IDENT {
-						globalObj.Init.Symbal = p.parseIdent()
-						globalObj.Init.Comment = p.parseTailComment(globalObj.Init.Pos)
-						p.consumeSemicolonList()
-					} else {
-						globalObj.Init.Lit = p.parseBasicLit()
-						globalObj.Init.Comment = p.parseTailComment(globalObj.Init.Pos)
-						p.consumeSemicolonList()
-					}
-
-					// 验证初始化值的合法性, 填充类型和Size
-					switch globalObj.TypeTok {
-					case token.GAS_BYTE:
-						globalObj.Type = token.I8
-						globalObj.Size = 1
-						v := int(globalObj.Init.Lit.ConstV.(int64))
-						assert(v >= math.MinInt8 && v < math.MaxUint8)
-					case token.GAS_SHORT:
-						globalObj.Type = token.I16
-						globalObj.Size = 2
-						v := int(globalObj.Init.Lit.ConstV.(int64))
-						assert(v >= math.MinInt16 && v < math.MaxUint16)
-					case token.GAS_LONG:
-						switch v := globalObj.Init.Lit.ConstV.(type) {
-						case int64:
-							globalObj.Type = token.I32
-							globalObj.Size = 4
-							assert(v >= math.MinInt32 && v < math.MaxUint32)
-						case float64:
-							globalObj.Type = token.F32
-							globalObj.Size = 4
-						default:
-							panic("unreachable")
-						}
-					case token.GAS_QUAD:
-						switch globalObj.Init.Lit.ConstV.(type) {
-						case int64:
-							globalObj.Type = token.I64
-							globalObj.Size = 8
-						case float64:
-							globalObj.Type = token.F64
-							globalObj.Size = 8
-						default:
-							panic("unreachable")
-						}
-					case token.GAS_ASCII:
-						globalObj.Type = token.I64 // 地址类型
-						globalObj.Size = len(globalObj.Init.Lit.ConstV.(string))
-					case token.GAS_ASCIZ:
-						globalObj.Type = token.I64 // 地址类型
-						globalObj.Size = len(globalObj.Init.Lit.ConstV.(string)) + 1
-					case token.GAS_SKIP:
-						globalObj.Type = token.I64 // 地址类型
-						globalObj.Size = int(globalObj.Init.Lit.ConstV.(int64))
-					case token.GAS_INCBIN:
-						globalObj.Type = token.I64 // 地址类型
-						filename := globalObj.Init.Lit.ConstV.(string)
-						if fi, err := os.Lstat(filename); err != nil {
-							p.errorf(p.pos, "%v %v failed: %v", token.GAS_INCBIN, filename, err)
-						} else {
-							const maxSize = 2 << 20
-							if fi.Size() > maxSize {
-								p.errorf(p.pos, "%v %v file size large than 2MB: %v", token.GAS_INCBIN, filename, err)
-							}
-							globalObj.Size = int(fi.Size())
-						}
+				// 验证初始化值的合法性, 填充类型和Size
+				switch globalObj.TypeTok {
+				case token.GAS_BYTE:
+					globalObj.Type = token.I8
+					globalObj.Size = 1
+					v := int(globalObj.Init.Lit.ConstV.(int64))
+					assert(v >= math.MinInt8 && v < math.MaxUint8)
+				case token.GAS_SHORT:
+					globalObj.Type = token.I16
+					globalObj.Size = 2
+					v := int(globalObj.Init.Lit.ConstV.(int64))
+					assert(v >= math.MinInt16 && v < math.MaxUint16)
+				case token.GAS_LONG:
+					switch v := globalObj.Init.Lit.ConstV.(type) {
+					case int64:
+						globalObj.Type = token.I32
+						globalObj.Size = 4
+						assert(v >= math.MinInt32 && v < math.MaxUint32)
+					case float64:
+						globalObj.Type = token.F32
+						globalObj.Size = 4
 					default:
 						panic("unreachable")
 					}
-
-					p.prog.Globals = append(p.prog.Globals, globalObj)
-					p.prog.Objects = append(p.prog.Objects, globalObj)
-
+				case token.GAS_QUAD:
+					switch globalObj.Init.Lit.ConstV.(type) {
+					case int64:
+						globalObj.Type = token.I64
+						globalObj.Size = 8
+					case float64:
+						globalObj.Type = token.F64
+						globalObj.Size = 8
+					default:
+						panic("unreachable")
+					}
+				case token.GAS_ASCII:
+					globalObj.Type = token.Nil
+					globalObj.Size = len(globalObj.Init.Lit.ConstV.(string))
+				case token.GAS_SKIP:
+					globalObj.Type = token.Nil
+					globalObj.Size = int(globalObj.Init.Lit.ConstV.(int64))
+				case token.GAS_INCBIN:
+					globalObj.Type = token.Nil
+					filename := globalObj.Init.Lit.ConstV.(string)
+					if fi, err := os.Lstat(filename); err != nil {
+						p.errorf(p.pos, "%v %v failed: %v", token.GAS_INCBIN, filename, err)
+					} else {
+						const maxSize = 2 << 20
+						if fi.Size() > maxSize {
+							p.errorf(p.pos, "%v %v file size large than 2MB: %v", token.GAS_INCBIN, filename, err)
+						}
+						globalObj.Size = int(fi.Size())
+					}
 				default:
-					p.errorf(p.pos, "expect %v or %v, got %v", token.ASSIGN, token.COLON, p.tok)
+					panic("unreachable")
 				}
+
+				p.prog.Globals = append(p.prog.Globals, globalObj)
+				p.prog.Objects = append(p.prog.Objects, globalObj)
 
 			case ".text", ".init", ".fini":
 				// 函数已经提前解析
@@ -393,15 +359,7 @@ func (p *parser) parseFile() {
 				p.errorf(p.pos, "invalid section name: %s", p.gasSectionName)
 			}
 
-		case token.CONST_zh:
-			p.gasSectionName = ""
-			p.gasAlign = 0
-
-			constObj := p.parseConst(p.tok)
-			p.prog.Consts = append(p.prog.Consts, constObj)
-			p.prog.Objects = append(p.prog.Objects, constObj)
-
-		case token.GLOBAL_zh:
+		case token.GLOBAL_zh, token.READONLY_zh:
 			p.gasSectionName = ""
 			p.gasAlign = 0
 

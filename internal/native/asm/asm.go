@@ -162,16 +162,13 @@ func (p *_Assembler) asmGlobal(g *ast.Global) (err error) {
 	case token.I64:
 		switch v := g.Init.Lit.ConstV.(type) {
 		case int64:
-			if g.TypeTok == token.GAS_SKIP || g.TypeTok == token.SKIP_zh {
+			if g.TypeTok == token.GAS_SKIP {
 				g.LinkInfo.Data = make([]byte, v)
 			} else {
 				binary.LittleEndian.PutUint64(g.LinkInfo.Data, uint64(v))
 			}
 		case string:
 			g.LinkInfo.Data = []byte(v)
-			if g.TypeTok == token.GAS_ASCIZ {
-				g.LinkInfo.Data = append(g.LinkInfo.Data, '\000')
-			}
 		case []byte:
 			g.LinkInfo.Data = v
 		default:
@@ -194,17 +191,6 @@ func (p *_Assembler) asmGlobal(g *ast.Global) (err error) {
 
 // 全局变量或函数的地址
 func (p *_Assembler) symbolAddress(s string) (int64, bool) {
-	// 查找全局的常量(只会引用整数类型)
-	for _, x := range p.file.Consts {
-		if x.Name == s {
-			v, ok := x.Value.ConstV.(int64)
-			if !ok {
-				panic(fmt.Sprintf("const %q is %v", s, x.Value.ConstV))
-			}
-			return v, true
-		}
-	}
-
 	// 查找全局变量
 	for _, x := range p.file.Globals {
 		if x.Name == s {
