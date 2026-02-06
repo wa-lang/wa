@@ -62,64 +62,112 @@ func (p *_Assembler) asmFile_loong64(filename string, source []byte, opt *abi.Li
 
 	// 全局变量分配内存空间
 	for _, g := range p.file.Globals {
+		g.LinkInfo = &abi.LinkedSymbol{
+			Name: g.Name,
+		}
+
 		switch g.TypeTok {
 		case token.BYTE_zh:
 			assert(g.Type == token.I8)
 			assert(g.Size == 1)
+			g.LinkInfo.Addr = p.alloc(int64(g.Size), 1)
+			g.LinkInfo.Data = make([]byte, g.Size)
 		case token.SHORT_zh:
 			assert(g.Type == token.I16)
 			assert(g.Size == 2)
+			g.LinkInfo.Addr = p.alloc(int64(g.Size), 2)
+			g.LinkInfo.Data = make([]byte, g.Size)
 		case token.LONG_zh:
 			assert(g.Type == token.I32 || g.Type == token.F32)
 			assert(g.Size == 4)
+			g.LinkInfo.Addr = p.alloc(int64(g.Size), 4)
+			g.LinkInfo.Data = make([]byte, g.Size)
 		case token.QUAD_zh:
 			assert(g.Type == token.I64 || g.Type == token.F64)
 			assert(g.Size == 8)
+			g.LinkInfo.Addr = p.alloc(int64(g.Size), 8)
+			g.LinkInfo.Data = make([]byte, g.Size)
 		case token.ADDR_zh:
 			if p.file.CPU == abi.RISCV32 {
 				assert(g.Type == token.I32)
 				assert(g.Size == 4)
+				g.LinkInfo.Addr = p.alloc(int64(g.Size), 4)
+				g.LinkInfo.Data = make([]byte, g.Size)
 			} else {
 				assert(g.Type == token.I64)
 				assert(g.Size == 8)
+				g.LinkInfo.Addr = p.alloc(int64(g.Size), 8)
+				g.LinkInfo.Data = make([]byte, g.Size)
 			}
 		case token.ASCII_zh:
-			assert(g.Type == token.Nil)
+			assert(g.Type == token.Bin)
 			s := g.Init.Lit.ConstV.(string)
 			assert(g.Size == len(s))
+			g.LinkInfo.Addr = p.alloc(int64(g.Size), 1)
+			g.LinkInfo.Data = make([]byte, g.Size)
 		case token.GAS_BYTE:
 			assert(g.Type == token.I8)
 			assert(g.Size == 1)
+			g.LinkInfo.Addr = p.alloc(int64(g.Size), 1)
+			g.LinkInfo.Data = make([]byte, g.Size)
 		case token.GAS_SHORT:
 			assert(g.Type == token.I16)
 			assert(g.Size == 2)
+			g.LinkInfo.Addr = p.alloc(int64(g.Size), 2)
+			g.LinkInfo.Data = make([]byte, g.Size)
 		case token.GAS_LONG:
 			assert(g.Type == token.I32 || g.Type == token.F32)
 			assert(g.Size == 4)
+			g.LinkInfo.Addr = p.alloc(int64(g.Size), 4)
+			g.LinkInfo.Data = make([]byte, g.Size)
 		case token.GAS_QUAD:
 			assert(g.Type == token.I64 || g.Type == token.F64)
 			assert(g.Size == 8)
+			g.LinkInfo.Addr = p.alloc(int64(g.Size), 8)
+			g.LinkInfo.Data = make([]byte, g.Size)
 
 		case token.GAS_ASCII:
-			assert(g.Type == token.Nil)
+			assert(g.Type == token.Bin)
 			s := g.Init.Lit.ConstV.(string)
 			assert(g.Size == len(s))
+			g.LinkInfo.Addr = p.alloc(int64(g.Size), 1)
+			g.LinkInfo.Data = make([]byte, g.Size)
 		case token.GAS_SKIP:
-			assert(g.Type == token.Nil)
+			assert(g.Type == token.Bin)
 			n := g.Init.Lit.ConstV.(int64)
 			assert(n >= 0)
 			assert(g.Size == int(n))
+			g.LinkInfo.Addr = p.alloc(int64(g.Size), 1)
+			g.LinkInfo.Data = make([]byte, g.Size)
 		case token.GAS_INCBIN:
-			assert(g.Type == token.Nil)
-			panic("TODO") // 需要包含资源上下文
+			assert(g.Type == token.Bin)
+
+			// 检查文件的大小是否超出限制
+			filename := g.Init.Lit.ConstV.(string)
+			if fi, err := os.Lstat(filename); err != nil {
+				panic(fmt.Sprintf("file %s not found", filename))
+			} else {
+				const maxSize = 2 << 20
+				if fi.Size() > maxSize {
+					panic(fmt.Sprintf("%v %v file size large than 2MB", token.GAS_INCBIN, filename))
+				}
+				g.Size = int(fi.Size())
+			}
+
+			// 读取文件数据
+			data, err := os.ReadFile(filename)
+			if err != nil {
+				panic(fmt.Sprintf("read file %s failed: %v", filename, err))
+			}
+			if len(data) != g.Size {
+				panic(fmt.Sprintf("read file %s failed: %v", filename, err))
+			}
+
+			g.LinkInfo.Addr = p.alloc(int64(g.Size), 1)
+			g.LinkInfo.Data = data
+
 		default:
 			panic("unreachable")
-		}
-
-		g.LinkInfo = &abi.LinkedSymbol{
-			Name: g.Name,
-			Addr: p.alloc(int64(g.Size), 0),
-			Data: make([]byte, g.Size),
 		}
 	}
 

@@ -54,11 +54,13 @@ func (p *parser) parseGlobal(tok token.Token) *ast.Global {
 
 	// 解析初始化值
 	g.Init.Pos = p.pos
-	if p.tok == token.IDENT {
+	if g.TypeTok == token.ADDR_zh {
+		// 只有地址类型, 初始化值可能式标识符
 		g.Init.Symbal = p.parseIdent()
 		g.Init.Comment = p.parseTailComment(g.Init.Pos)
 		p.consumeSemicolonList()
 	} else {
+		// 其他都是普通的面值(稍后进行类型检查)
 		g.Init.Lit = p.parseBasicLit()
 		g.Init.Comment = p.parseTailComment(g.Init.Pos)
 		p.consumeSemicolonList()
@@ -100,6 +102,7 @@ func (p *parser) parseGlobal(tok token.Token) *ast.Global {
 			panic("unreachable")
 		}
 	case token.ADDR_zh:
+		assert(g.Init.Symbal != "")
 		if p.cpu == abi.RISCV32 {
 			g.Type = token.I32
 			g.Size = 4
@@ -108,7 +111,7 @@ func (p *parser) parseGlobal(tok token.Token) *ast.Global {
 			g.Size = 8
 		}
 	case token.ASCII_zh:
-		g.Type = token.Nil // 没有类型
+		g.Type = token.Bin // 二进制类型
 		g.Size = len(g.Init.Lit.ConstV.(string))
 	default:
 		panic("unreachable")

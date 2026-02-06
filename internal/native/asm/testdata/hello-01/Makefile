@@ -3,6 +3,10 @@
 
 WA:=go run ../../../../../main.go
 
+dev:
+	$(WA) asm2elf -arch=loong64 app.wa.s
+	$(WA) objdump -prog app.wa.elf.exe
+
 ast:
 	$(WA) ast -arch=loong64 app.wa.s
 

@@ -313,7 +313,12 @@ func (p *parser) parseFile() {
 						globalObj.Type = token.F32
 						globalObj.Size = 4
 					default:
-						panic("unreachable")
+						if globalObj.Init.Symbal != "" {
+							globalObj.Type = token.I32
+							globalObj.Size = 4
+						} else {
+							panic("unreachable")
+						}
 					}
 				case token.GAS_QUAD:
 					switch globalObj.Init.Lit.ConstV.(type) {
@@ -324,23 +329,28 @@ func (p *parser) parseFile() {
 						globalObj.Type = token.F64
 						globalObj.Size = 8
 					default:
-						panic("unreachable")
+						if globalObj.Init.Symbal != "" {
+							globalObj.Type = token.I64
+							globalObj.Size = 8
+						} else {
+							panic("unreachable")
+						}
 					}
 				case token.GAS_ASCII:
-					globalObj.Type = token.Nil
+					globalObj.Type = token.Bin
 					globalObj.Size = len(globalObj.Init.Lit.ConstV.(string))
 				case token.GAS_SKIP:
-					globalObj.Type = token.Nil
+					globalObj.Type = token.Bin
 					globalObj.Size = int(globalObj.Init.Lit.ConstV.(int64))
 				case token.GAS_INCBIN:
-					globalObj.Type = token.Nil
+					globalObj.Type = token.Bin
 					filename := globalObj.Init.Lit.ConstV.(string)
 					if fi, err := os.Lstat(filename); err != nil {
 						p.errorf(p.pos, "%v %v failed: %v", token.GAS_INCBIN, filename, err)
 					} else {
 						const maxSize = 2 << 20
 						if fi.Size() > maxSize {
-							p.errorf(p.pos, "%v %v file size large than 2MB: %v", token.GAS_INCBIN, filename, err)
+							p.errorf(p.pos, "%v %v file size large than 2MB", token.GAS_INCBIN, filename)
 						}
 						globalObj.Size = int(fi.Size())
 					}
