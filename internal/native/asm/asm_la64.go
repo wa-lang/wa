@@ -10,6 +10,7 @@ import (
 
 	"wa-lang.org/wa/internal/native/abi"
 	"wa-lang.org/wa/internal/native/ast"
+	"wa-lang.org/wa/internal/native/link/elf"
 	"wa-lang.org/wa/internal/native/loong64"
 	"wa-lang.org/wa/internal/native/parser"
 	"wa-lang.org/wa/internal/native/pcrel"
@@ -39,11 +40,11 @@ func (p *_Assembler) asmFile_loong64(filename string, source []byte, opt *abi.Li
 	assert(p.prog.TextAddr%maxPageSize == 0)
 
 	// 给 ELF 头和 程序头预留出空间
-	const fileHeaderSize = 64 + 56*2
-	p.prog.TextData = make([]byte, 0x10c)
-	assert(len(p.prog.TextData) > fileHeaderSize)
+	// 如果有调试用的段数据, 放到后面
+	const fileHeaderSize = elf.ELF64HDRSIZE + elf.ELF64PHDRSIZE*2
+	p.prog.TextData = make([]byte, fileHeaderSize)
+	assert(len(p.prog.TextData) == fileHeaderSize)
 	p.dramNextAddr += int64(len(p.prog.TextData))
-	p.prog.Entry = p.dramNextAddr
 
 	// 全局函数分配内存空间
 	for _, fn := range p.file.Funcs {
@@ -205,11 +206,19 @@ func (p *_Assembler) asmFile_loong64(filename string, source []byte, opt *abi.Li
 	// 收集全部信息
 	{
 		// text 段数据(头部空间保留)
-		assert(len(p.prog.TextData) == int(p.prog.Entry)-int(p.prog.TextAddr))
+		assert(p.prog.Entry == 0)
 		for _, fn := range p.file.Funcs {
 			assert(fn.LinkInfo.AlignPadding == 0)
 			p.prog.TextData = append(p.prog.TextData, fn.LinkInfo.Data...)
+
+			// 设置入口函数
+			if fn.Name == abi.DefaultEntryFunc || fn.Name == abi.DefaultEntryFuncZh {
+				p.prog.Entry = fn.LinkInfo.Addr
+			}
 		}
+
+		assert(p.prog.Entry > 0)
+		assert((p.prog.Entry - p.prog.TextAddr) >= fileHeaderSize)
 
 		// data 段数据
 		assert(len(p.prog.DataData) == 0)

@@ -80,6 +80,14 @@ func cmdProgdump(filename string, isZhMode bool) {
 	fmt.Printf("Entry  : %x\n", f.Entry)
 	fmt.Println()
 
+	// 指令段开头映射的是 ELF 头和 程序头预空间
+	var fileHeaderSize int
+	if f.Class == elf.ELFCLASS64 {
+		fileHeaderSize = elf.ELF64HDRSIZE + elf.ELF64PHDRSIZE*len(f.Progs)
+	} else {
+		fileHeaderSize = elf.ELF32HDRSIZE + elf.ELF32PHDRSIZE*len(f.Progs)
+	}
+
 	for _, p := range f.Progs {
 		if p.Type != elf.PT_LOAD || p.Flags&elf.PF_R == 0 {
 			continue // 跳过不可读部分
@@ -93,10 +101,11 @@ func cmdProgdump(filename string, isZhMode bool) {
 				fmt.Println("ERR:", err)
 				continue
 			}
-			if f.Entry > textAddr {
-				diff := f.Entry - textAddr
-				textData = textData[diff:]
-				textAddr = f.Entry
+
+			// 跳过头部数据
+			if len(textData) > fileHeaderSize {
+				textData = textData[fileHeaderSize:]
+				textAddr += uint64(fileHeaderSize)
 			}
 
 			printProgText(f.Machine, textAddr, textData, isZhMode)

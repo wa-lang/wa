@@ -257,8 +257,9 @@ func _LinkELF_LA64(prog *abi.LinkedProgram) ([]byte, error) {
 	}
 
 	// 填充指令段开头的数据
-	fileHeaderSpaceSize := prog.Entry - prog.TextAddr
-	assert(fileHeaderSpaceSize >= elf.ELF64HDRSIZE+elf.ELF64PHDRSIZE*2)
+	// Entry 可能不是第一个指令
+	const fileHeaderSpaceSize = elf.ELF64HDRSIZE + elf.ELF64PHDRSIZE*2
+	assert((prog.Entry - prog.TextAddr) >= fileHeaderSpaceSize)
 	assert(len(prog.TextData) > int(fileHeaderSpaceSize))
 
 	// 写段内容
