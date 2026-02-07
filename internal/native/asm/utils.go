@@ -18,7 +18,9 @@ func assert(ok bool, message ...interface{}) {
 }
 
 // 对齐到 a 的倍数
-func align(x, a int64) int64 {
-	y := x + a - 1
-	return y - y%a
+func align(x0, a int64) (x1 int64, padding int) {
+	y := x0 + a - 1
+	x1 = y - y%a
+	padding = int(x1 - x0)
+	return
 }

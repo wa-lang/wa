@@ -56,10 +56,11 @@ type LinkOptions struct {
 
 // 链接后的符号
 type LinkedSymbol struct {
-	Name string // 名字
-	Addr int64  // 内存地址
-	Size int64  // 内存大小
-	Data []byte // 内存数据
+	Name         string // 名字
+	Addr         int64  // 内存地址
+	Size         int64  // 内存大小
+	Data         []byte // 内存数据
+	AlignPadding int    // 开头对齐需要的填充数
 }
 
 // 程链接后的程序

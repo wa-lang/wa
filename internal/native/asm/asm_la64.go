@@ -48,11 +48,9 @@ func (p *_Assembler) asmFile_loong64(filename string, source []byte, opt *abi.Li
 	// 全局函数分配内存空间
 	for _, fn := range p.file.Funcs {
 		fn.BodySize = int(p.funcBodyLen(fn))
-		fn.LinkInfo = &abi.LinkedSymbol{
-			Name: fn.Name,
-			Addr: p.alloc(int64(fn.BodySize), 0),
-			Data: make([]byte, fn.BodySize),
-		}
+		fn.LinkInfo = &abi.LinkedSymbol{Name: fn.Name}
+		fn.LinkInfo.Addr, fn.LinkInfo.AlignPadding = p.alloc(int64(fn.BodySize), 4)
+		fn.LinkInfo.Data = make([]byte, fn.BodySize)
 	}
 
 	// 数据段从下个页面开始
@@ -70,74 +68,74 @@ func (p *_Assembler) asmFile_loong64(filename string, source []byte, opt *abi.Li
 		case token.BYTE_zh:
 			assert(g.Type == token.I8)
 			assert(g.Size == 1)
-			g.LinkInfo.Addr = p.alloc(int64(g.Size), 1)
+			g.LinkInfo.Addr, g.LinkInfo.AlignPadding = p.alloc(int64(g.Size), 1)
 			g.LinkInfo.Data = make([]byte, g.Size)
 		case token.SHORT_zh:
 			assert(g.Type == token.I16)
 			assert(g.Size == 2)
-			g.LinkInfo.Addr = p.alloc(int64(g.Size), 2)
+			g.LinkInfo.Addr, g.LinkInfo.AlignPadding = p.alloc(int64(g.Size), 2)
 			g.LinkInfo.Data = make([]byte, g.Size)
 		case token.LONG_zh:
 			assert(g.Type == token.I32 || g.Type == token.F32)
 			assert(g.Size == 4)
-			g.LinkInfo.Addr = p.alloc(int64(g.Size), 4)
+			g.LinkInfo.Addr, g.LinkInfo.AlignPadding = p.alloc(int64(g.Size), 4)
 			g.LinkInfo.Data = make([]byte, g.Size)
 		case token.QUAD_zh:
 			assert(g.Type == token.I64 || g.Type == token.F64)
 			assert(g.Size == 8)
-			g.LinkInfo.Addr = p.alloc(int64(g.Size), 8)
+			g.LinkInfo.Addr, g.LinkInfo.AlignPadding = p.alloc(int64(g.Size), 8)
 			g.LinkInfo.Data = make([]byte, g.Size)
 		case token.ADDR_zh:
 			if p.file.CPU == abi.RISCV32 {
 				assert(g.Type == token.I32)
 				assert(g.Size == 4)
-				g.LinkInfo.Addr = p.alloc(int64(g.Size), 4)
+				g.LinkInfo.Addr, g.LinkInfo.AlignPadding = p.alloc(int64(g.Size), 4)
 				g.LinkInfo.Data = make([]byte, g.Size)
 			} else {
 				assert(g.Type == token.I64)
 				assert(g.Size == 8)
-				g.LinkInfo.Addr = p.alloc(int64(g.Size), 8)
+				g.LinkInfo.Addr, g.LinkInfo.AlignPadding = p.alloc(int64(g.Size), 8)
 				g.LinkInfo.Data = make([]byte, g.Size)
 			}
 		case token.ASCII_zh:
 			assert(g.Type == token.Bin)
 			s := g.Init.Lit.ConstV.(string)
 			assert(g.Size == len(s))
-			g.LinkInfo.Addr = p.alloc(int64(g.Size), 1)
+			g.LinkInfo.Addr, g.LinkInfo.AlignPadding = p.alloc(int64(g.Size), 1)
 			g.LinkInfo.Data = make([]byte, g.Size)
 		case token.GAS_BYTE:
 			assert(g.Type == token.I8)
 			assert(g.Size == 1)
-			g.LinkInfo.Addr = p.alloc(int64(g.Size), 1)
+			g.LinkInfo.Addr, g.LinkInfo.AlignPadding = p.alloc(int64(g.Size), 1)
 			g.LinkInfo.Data = make([]byte, g.Size)
 		case token.GAS_SHORT:
 			assert(g.Type == token.I16)
 			assert(g.Size == 2)
-			g.LinkInfo.Addr = p.alloc(int64(g.Size), 2)
+			g.LinkInfo.Addr, g.LinkInfo.AlignPadding = p.alloc(int64(g.Size), 2)
 			g.LinkInfo.Data = make([]byte, g.Size)
 		case token.GAS_LONG:
 			assert(g.Type == token.I32 || g.Type == token.F32)
 			assert(g.Size == 4)
-			g.LinkInfo.Addr = p.alloc(int64(g.Size), 4)
+			g.LinkInfo.Addr, g.LinkInfo.AlignPadding = p.alloc(int64(g.Size), 4)
 			g.LinkInfo.Data = make([]byte, g.Size)
 		case token.GAS_QUAD:
 			assert(g.Type == token.I64 || g.Type == token.F64)
 			assert(g.Size == 8)
-			g.LinkInfo.Addr = p.alloc(int64(g.Size), 8)
+			g.LinkInfo.Addr, g.LinkInfo.AlignPadding = p.alloc(int64(g.Size), 8)
 			g.LinkInfo.Data = make([]byte, g.Size)
 
 		case token.GAS_ASCII:
 			assert(g.Type == token.Bin)
 			s := g.Init.Lit.ConstV.(string)
 			assert(g.Size == len(s))
-			g.LinkInfo.Addr = p.alloc(int64(g.Size), 1)
+			g.LinkInfo.Addr, g.LinkInfo.AlignPadding = p.alloc(int64(g.Size), 1)
 			g.LinkInfo.Data = make([]byte, g.Size)
 		case token.GAS_SKIP:
 			assert(g.Type == token.Bin)
 			n := g.Init.Lit.ConstV.(int64)
 			assert(n >= 0)
 			assert(g.Size == int(n))
-			g.LinkInfo.Addr = p.alloc(int64(g.Size), 1)
+			g.LinkInfo.Addr, g.LinkInfo.AlignPadding = p.alloc(int64(g.Size), 1)
 			g.LinkInfo.Data = make([]byte, g.Size)
 		case token.GAS_INCBIN:
 			assert(g.Type == token.Bin)
@@ -163,7 +161,7 @@ func (p *_Assembler) asmFile_loong64(filename string, source []byte, opt *abi.Li
 				panic(fmt.Sprintf("read file %s failed: %v", filename, err))
 			}
 
-			g.LinkInfo.Addr = p.alloc(int64(g.Size), 1)
+			g.LinkInfo.Addr, g.LinkInfo.AlignPadding = p.alloc(int64(g.Size), 1)
 			g.LinkInfo.Data = data
 
 		default:
@@ -190,12 +188,16 @@ func (p *_Assembler) asmFile_loong64(filename string, source []byte, opt *abi.Li
 		// text 段数据(头部空间保留)
 		assert(len(p.prog.TextData) == int(p.prog.Entry)-int(p.prog.TextAddr))
 		for _, fn := range p.file.Funcs {
+			assert(fn.LinkInfo.AlignPadding == 0)
 			p.prog.TextData = append(p.prog.TextData, fn.LinkInfo.Data...)
 		}
 
 		// data 段数据
 		assert(len(p.prog.DataData) == 0)
 		for _, g := range p.file.Globals {
+			for i := 0; i < g.LinkInfo.AlignPadding; i++ {
+				p.prog.DataData = append(p.prog.DataData, 0)
+			}
 			p.prog.DataData = append(p.prog.DataData, g.LinkInfo.Data...)
 		}
 	}

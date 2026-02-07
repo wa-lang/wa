@@ -27,9 +27,6 @@ type _Assembler struct {
 	file *ast.File
 	prog *abi.LinkedProgram
 
-	// 默认的对齐字节数
-	defaultAlign int
-
 	// 下个内存分配地址
 	dramNextAddr int64
 	dramEndAddr  int64
@@ -64,31 +61,19 @@ func (p *_Assembler) init(filename string, source []byte, opt *abi.LinkOptions) 
 		CPU: opt.CPU,
 	}
 
-	switch p.opt.CPU {
-	case abi.LOONG64:
-		p.defaultAlign = 4
-	case abi.RISCV32, abi.RISCV64:
-		p.defaultAlign = 4
-	default:
-		panic("unreachable")
-	}
-
-	p.dramNextAddr = align(opt.DRAMBase, 4)
+	p.dramNextAddr, _ = align(opt.DRAMBase, 4)
 	p.dramEndAddr = opt.DRAMBase + opt.DRAMSize
 
 	p.symbalMap = make(map[string]*abi.LinkedSymbol)
 }
 
 // 分配内存空间
-func (p *_Assembler) alloc(memSize, addrAlign int64) (addr int64) {
-	if addrAlign == 0 {
-		addrAlign = int64(p.defaultAlign)
-	}
+func (p *_Assembler) alloc(memSize, addrAlign int64) (addr int64, padding int) {
 	assert(addrAlign > 0)
-	p.dramNextAddr = align(p.dramNextAddr, addrAlign)
+	p.dramNextAddr, padding = align(p.dramNextAddr, addrAlign)
 	addr, p.dramNextAddr = p.dramNextAddr, p.dramNextAddr+memSize
 	assert(p.dramNextAddr < p.dramEndAddr)
-	return addr
+	return addr, padding
 }
 
 // 计算函数指令需要的内存大小

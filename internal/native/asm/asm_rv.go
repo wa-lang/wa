@@ -25,11 +25,14 @@ func (p *_Assembler) asmFile_riscv(filename string, source []byte, opt *abi.Link
 	textAddrStart := p.dramNextAddr
 	for _, fn := range p.file.Funcs {
 		fn.BodySize = int(p.funcBodyLen(fn))
-		fn.LinkInfo = &abi.LinkedSymbol{
-			Name: fn.Name,
-			Addr: p.alloc(int64(fn.BodySize), 0),
-			Data: make([]byte, fn.BodySize),
-		}
+		fn.LinkInfo = &abi.LinkedSymbol{Name: fn.Name}
+		fn.LinkInfo.Addr, fn.LinkInfo.AlignPadding = p.alloc(int64(fn.BodySize), 4)
+		fn.LinkInfo.Data = make([]byte, fn.BodySize)
+	}
+
+	// 以下代码已经腐化, 需要和龙芯最新实现对齐
+	if true {
+		panic("TODO")
 	}
 
 	// 龙芯数据段从下个页面开始
@@ -38,11 +41,9 @@ func (p *_Assembler) asmFile_riscv(filename string, source []byte, opt *abi.Link
 	// 全局变量分配内存空间
 	for _, g := range p.file.Globals {
 		assert(g.Size > 0)
-		g.LinkInfo = &abi.LinkedSymbol{
-			Name: g.Name,
-			Addr: p.alloc(int64(g.Size), 0),
-			Data: make([]byte, g.Size),
-		}
+		g.LinkInfo = &abi.LinkedSymbol{Name: g.Name}
+		g.LinkInfo.Addr, g.LinkInfo.AlignPadding = p.alloc(int64(g.Size), 0)
+		g.LinkInfo.Data = make([]byte, g.Size)
 	}
 
 	// 编译函数
