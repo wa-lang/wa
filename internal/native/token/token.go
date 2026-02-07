@@ -57,6 +57,8 @@ const (
 	SHORT_zh    // 单字
 	LONG_zh     // 双字
 	QUAD_zh     // 四字
+	FLOAT_zh    // 单精
+	DOUBLE_zh   // 双精
 	ADDR_zh     // 地址
 	ASCII_zh    // 字串
 
@@ -76,6 +78,8 @@ const (
 	GAS_SHORT   // .name: .short 0
 	GAS_LONG    // .name: .long 0
 	GAS_QUAD    // .name: .quad 0
+	GAS_FLOAT   // .name: .quad 0.0
+	GAS_DOUBLE  // .name: .quad 0.0
 	GAS_ASCII   // .name: .ascii "abc\000"
 	GAS_SKIP    // .name: .skip 100
 	GAS_INCBIN  // .name: .incbin "lena.jpg"
@@ -144,6 +148,8 @@ var tokens = [...]string{
 	SHORT_zh:    "单字",
 	LONG_zh:     "双字",
 	QUAD_zh:     "四字",
+	FLOAT_zh:    "单精",
+	DOUBLE_zh:   "双精",
 	ADDR_zh:     "地址",
 	ASCII_zh:    "字串",
 
@@ -157,6 +163,8 @@ var tokens = [...]string{
 	GAS_SHORT:   ".short",
 	GAS_LONG:    ".long",
 	GAS_QUAD:    ".quad",
+	GAS_FLOAT:   ".float",
+	GAS_DOUBLE:  ".double",
 	GAS_ASCII:   ".ascii",
 	GAS_SKIP:    ".skip",
 	GAS_INCBIN:  ".incbin",

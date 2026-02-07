@@ -84,9 +84,6 @@ func (p *parser) parseGlobal(tok token.Token) *ast.Global {
 			g.Type = token.I32
 			g.Size = 4
 			assert(v >= math.MinInt32 && v < math.MaxUint32)
-		case float64:
-			g.Type = token.F32
-			g.Size = 4
 		default:
 			panic("unreachable")
 		}
@@ -95,12 +92,17 @@ func (p *parser) parseGlobal(tok token.Token) *ast.Global {
 		case int64:
 			g.Type = token.I64
 			g.Size = 8
-		case float64:
-			g.Type = token.F64
-			g.Size = 8
 		default:
 			panic("unreachable")
 		}
+	case token.FLOAT_zh:
+		g.Type = token.F32
+		g.Size = 4
+		_ = g.Init.Lit.ConstV.(float64)
+	case token.DOUBLE_zh:
+		g.Type = token.F64
+		g.Size = 8
+		_ = g.Init.Lit.ConstV.(float64)
 	case token.ADDR_zh:
 		assert(g.Init.Symbal != "")
 		if p.cpu == abi.RISCV32 {

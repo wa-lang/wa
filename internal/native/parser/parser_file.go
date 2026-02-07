@@ -309,9 +309,6 @@ func (p *parser) parseFile() {
 						globalObj.Type = token.I32
 						globalObj.Size = 4
 						assert(v >= math.MinInt32 && v < math.MaxUint32)
-					case float64:
-						globalObj.Type = token.F32
-						globalObj.Size = 4
 					default:
 						if globalObj.Init.Symbal != "" {
 							globalObj.Type = token.I32
@@ -325,9 +322,6 @@ func (p *parser) parseFile() {
 					case int64:
 						globalObj.Type = token.I64
 						globalObj.Size = 8
-					case float64:
-						globalObj.Type = token.F64
-						globalObj.Size = 8
 					default:
 						if globalObj.Init.Symbal != "" {
 							globalObj.Type = token.I64
@@ -336,6 +330,14 @@ func (p *parser) parseFile() {
 							panic("unreachable")
 						}
 					}
+				case token.GAS_FLOAT:
+					globalObj.Type = token.F32
+					globalObj.Size = 4
+					_ = globalObj.Init.Lit.ConstV.(float64)
+				case token.GAS_DOUBLE:
+					globalObj.Type = token.F64
+					globalObj.Size = 8
+					_ = globalObj.Init.Lit.ConstV.(float64)
 				case token.GAS_ASCII:
 					globalObj.Type = token.Bin
 					globalObj.Size = len(globalObj.Init.Lit.ConstV.(string))

@@ -76,12 +76,22 @@ func (p *_Assembler) asmFile_loong64(filename string, source []byte, opt *abi.Li
 			g.LinkInfo.Addr, g.LinkInfo.AlignPadding = p.alloc(int64(g.Size), 2)
 			g.LinkInfo.Data = make([]byte, g.Size)
 		case token.LONG_zh:
-			assert(g.Type == token.I32 || g.Type == token.F32)
+			assert(g.Type == token.I32)
 			assert(g.Size == 4)
 			g.LinkInfo.Addr, g.LinkInfo.AlignPadding = p.alloc(int64(g.Size), 4)
 			g.LinkInfo.Data = make([]byte, g.Size)
 		case token.QUAD_zh:
-			assert(g.Type == token.I64 || g.Type == token.F64)
+			assert(g.Type == token.I64)
+			assert(g.Size == 8)
+			g.LinkInfo.Addr, g.LinkInfo.AlignPadding = p.alloc(int64(g.Size), 8)
+			g.LinkInfo.Data = make([]byte, g.Size)
+		case token.FLOAT_zh:
+			assert(g.Type == token.F32)
+			assert(g.Size == 4)
+			g.LinkInfo.Addr, g.LinkInfo.AlignPadding = p.alloc(int64(g.Size), 4)
+			g.LinkInfo.Data = make([]byte, g.Size)
+		case token.DOUBLE_zh:
+			assert(g.Type == token.F64)
 			assert(g.Size == 8)
 			g.LinkInfo.Addr, g.LinkInfo.AlignPadding = p.alloc(int64(g.Size), 8)
 			g.LinkInfo.Data = make([]byte, g.Size)
@@ -114,16 +124,25 @@ func (p *_Assembler) asmFile_loong64(filename string, source []byte, opt *abi.Li
 			g.LinkInfo.Addr, g.LinkInfo.AlignPadding = p.alloc(int64(g.Size), 2)
 			g.LinkInfo.Data = make([]byte, g.Size)
 		case token.GAS_LONG:
-			assert(g.Type == token.I32 || g.Type == token.F32)
+			assert(g.Type == token.I32)
 			assert(g.Size == 4)
 			g.LinkInfo.Addr, g.LinkInfo.AlignPadding = p.alloc(int64(g.Size), 4)
 			g.LinkInfo.Data = make([]byte, g.Size)
 		case token.GAS_QUAD:
-			assert(g.Type == token.I64 || g.Type == token.F64)
+			assert(g.Type == token.I64)
 			assert(g.Size == 8)
 			g.LinkInfo.Addr, g.LinkInfo.AlignPadding = p.alloc(int64(g.Size), 8)
 			g.LinkInfo.Data = make([]byte, g.Size)
-
+		case token.GAS_FLOAT:
+			assert(g.Type == token.F32)
+			assert(g.Size == 4)
+			g.LinkInfo.Addr, g.LinkInfo.AlignPadding = p.alloc(int64(g.Size), 4)
+			g.LinkInfo.Data = make([]byte, g.Size)
+		case token.GAS_DOUBLE:
+			assert(g.Type == token.F64)
+			assert(g.Size == 8)
+			g.LinkInfo.Addr, g.LinkInfo.AlignPadding = p.alloc(int64(g.Size), 8)
+			g.LinkInfo.Data = make([]byte, g.Size)
 		case token.GAS_ASCII:
 			assert(g.Type == token.Bin)
 			s := g.Init.Lit.ConstV.(string)
