@@ -8,11 +8,6 @@ import (
 	"wa-lang.org/wa/internal/native/token"
 )
 
-// 函数 $add:
-//     # 指令
-// Loop:
-// 完毕
-
 func (p *parser) parseFunc() *ast.Func {
 	fn := &ast.Func{
 		Type: new(ast.FuncType),

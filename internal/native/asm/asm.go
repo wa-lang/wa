@@ -30,9 +30,6 @@ type _Assembler struct {
 	// 下个内存分配地址
 	dramNextAddr int64
 	dramEndAddr  int64
-
-	// 符号表(不含const)
-	symbalMap map[string]*abi.LinkedSymbol
 }
 
 func (p *_Assembler) asmFile(filename string, source []byte, opt *abi.LinkOptions) (prog *abi.LinkedProgram, err error) {
@@ -63,8 +60,6 @@ func (p *_Assembler) init(filename string, source []byte, opt *abi.LinkOptions) 
 
 	p.dramNextAddr, _ = align(opt.DRAMBase, 4)
 	p.dramEndAddr = opt.DRAMBase + opt.DRAMSize
-
-	p.symbalMap = make(map[string]*abi.LinkedSymbol)
 }
 
 // 分配内存空间
@@ -110,10 +105,13 @@ func (p *_Assembler) asmGlobal(g *ast.Global) (err error) {
 		} else {
 			binary.LittleEndian.PutUint64(g.LinkInfo.Data, uint64(v))
 		}
+		return nil
 	}
 
 	// 常量面值初始化
 	switch g.Type {
+	case token.Bin:
+		copy(g.LinkInfo.Data, []byte(g.Init.Lit.ConstV.(string)))
 	case token.I8:
 		v := g.Init.Lit.ConstV.(int64)
 		switch {
@@ -145,20 +143,8 @@ func (p *_Assembler) asmGlobal(g *ast.Global) (err error) {
 			panic(fmt.Errorf("global %q init value overflow: %v", g.Name, g.Init.Lit))
 		}
 	case token.I64:
-		switch v := g.Init.Lit.ConstV.(type) {
-		case int64:
-			if g.TypeTok == token.GAS_SKIP {
-				g.LinkInfo.Data = make([]byte, v)
-			} else {
-				binary.LittleEndian.PutUint64(g.LinkInfo.Data, uint64(v))
-			}
-		case string:
-			g.LinkInfo.Data = []byte(v)
-		case []byte:
-			g.LinkInfo.Data = v
-		default:
-			panic("unreachable")
-		}
+		v := g.Init.Lit.ConstV.(int64)
+		binary.LittleEndian.PutUint64(g.LinkInfo.Data, uint64(v))
 	case token.F32:
 		v := g.Init.Lit.ConstV.(float64)
 		binary.LittleEndian.PutUint32(g.LinkInfo.Data, math.Float32bits(float32(v)))
@@ -166,11 +152,9 @@ func (p *_Assembler) asmGlobal(g *ast.Global) (err error) {
 		v := g.Init.Lit.ConstV.(float64)
 		binary.LittleEndian.PutUint64(g.LinkInfo.Data, math.Float64bits(float64(v)))
 	default:
-		assert(g.Init.Lit.LitKind == token.STRING)
-		copy(g.LinkInfo.Data, []byte(g.Init.Lit.ConstV.(string)))
+		panic("unreahable")
 	}
 
-	p.symbalMap[g.Name] = g.LinkInfo
 	return nil
 }
 

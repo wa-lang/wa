@@ -11,11 +11,6 @@ import (
 	"wa-lang.org/wa/internal/native/token"
 )
 
-// global $f64: f64 = 12.34567
-// global $name = "wa native assembly language"
-
-// global $f32: 20 = f32(12.5)
-
 func (p *parser) parseGlobal(tok token.Token) *ast.Global {
 	g := &ast.Global{
 		Pos:  p.pos,
@@ -79,21 +74,24 @@ func (p *parser) parseGlobal(tok token.Token) *ast.Global {
 		v := int(g.Init.Lit.ConstV.(int64))
 		assert(v >= math.MinInt16 && v < math.MaxUint16)
 	case token.LONG_zh:
-		switch v := g.Init.Lit.ConstV.(type) {
-		case int64:
+		if p.cpu == abi.RISCV32 && g.Init.Symbal != "" {
 			g.Type = token.I32
 			g.Size = 4
+		} else {
+			g.Type = token.I32
+			g.Size = 4
+			v := g.Init.Lit.ConstV.(int64)
 			assert(v >= math.MinInt32 && v < math.MaxUint32)
-		default:
-			panic("unreachable")
 		}
 	case token.QUAD_zh:
-		switch g.Init.Lit.ConstV.(type) {
-		case int64:
+		if g.Init.Symbal != "" {
 			g.Type = token.I64
 			g.Size = 8
-		default:
-			panic("unreachable")
+		} else {
+			g.Type = token.I64
+			g.Size = 8
+			v := g.Init.Lit.ConstV.(int64)
+			_ = v
 		}
 	case token.FLOAT_zh:
 		g.Type = token.F32

@@ -304,31 +304,23 @@ func (p *parser) parseFile() {
 					v := int(globalObj.Init.Lit.ConstV.(int64))
 					assert(v >= math.MinInt16 && v < math.MaxUint16)
 				case token.GAS_LONG:
-					switch v := globalObj.Init.Lit.ConstV.(type) {
-					case int64:
+					if p.cpu == abi.RISCV32 && globalObj.Init.Symbal != "" {
 						globalObj.Type = token.I32
 						globalObj.Size = 4
+					} else {
+						globalObj.Type = token.I32
+						globalObj.Size = 4
+						v := globalObj.Init.Lit.ConstV.(int64)
 						assert(v >= math.MinInt32 && v < math.MaxUint32)
-					default:
-						if globalObj.Init.Symbal != "" {
-							globalObj.Type = token.I32
-							globalObj.Size = 4
-						} else {
-							panic("unreachable")
-						}
 					}
 				case token.GAS_QUAD:
-					switch globalObj.Init.Lit.ConstV.(type) {
-					case int64:
+					if globalObj.Init.Symbal != "" {
 						globalObj.Type = token.I64
 						globalObj.Size = 8
-					default:
-						if globalObj.Init.Symbal != "" {
-							globalObj.Type = token.I64
-							globalObj.Size = 8
-						} else {
-							panic("unreachable")
-						}
+					} else {
+						globalObj.Type = token.I64
+						globalObj.Size = 8
+						_ = globalObj.Init.Lit.ConstV.(int64)
 					}
 				case token.GAS_FLOAT:
 					globalObj.Type = token.F32
