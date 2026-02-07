@@ -2277,7 +2277,7 @@ func (p *wat2laWorker) buildFunc_ins(
 		assert(!p.isS12Overflow(int32(val)))
 		assert(!p.isS12Overflow(int32(dst)))
 
-		fmt.Fprintf(w, "    # memory.fill")
+		fmt.Fprintf(w, "    # memory.fill\n")
 
 		// 内存的开始地址
 		fmt.Fprintf(w, "    pcalau12i $t0, %%pc_hi20(%s)\n", kMemoryAddrName)

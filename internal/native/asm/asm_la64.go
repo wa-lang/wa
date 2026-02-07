@@ -295,20 +295,24 @@ func (p *_Assembler) asmFuncBody_inst_loong64(fn *ast.Func) (err error) {
 			case abi.BuiltinFn_ABS_LO12, abi.BuiltinFn_ABS_LO12_zh: // 低12bit
 				lo, ok := abs_hi2loMap[inst.Arg.Symbol]
 				if !ok {
-					panic(fmt.Errorf("symbol %q not found", inst.Arg.Symbol))
+					panic(fmt.Errorf("%s: symbol %q not found", fn.Name, inst.Arg.Symbol))
 				}
 				inst.Arg.Imm = lo
 
 			case abi.BuiltinFn_PC_HI20, abi.BuiltinFn_PC_HI20_zh:
+				// TODO: 这2个宏不支持独立使用, 需要改进!!
+
 				// 直接以符号名字作为 key 记录, 和 RISCV 处理不同
 				hi, lo := pcrel.MakeLa64PCRel(addr, pc)
 				pc_hi2loMap[inst.Arg.Symbol] = lo
 				inst.Arg.Imm = hi
 
 			case abi.BuiltinFn_PC_LO12, abi.BuiltinFn_PC_LO12_zh:
+				// TODO: 这2个宏不支持独立使用, 需要改进!!
+
 				lo, ok := pc_hi2loMap[inst.Arg.Symbol]
 				if !ok {
-					panic(fmt.Errorf("symbol %q not found", inst.Arg.Symbol))
+					panic(fmt.Errorf("%s: symbol %q not found", fn.Name, inst.Arg.Symbol))
 				}
 				inst.Arg.Imm = lo
 
