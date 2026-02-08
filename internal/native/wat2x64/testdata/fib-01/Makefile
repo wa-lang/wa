@@ -15,7 +15,7 @@ linux:
 
 loong64:
 	$(WA) build -arch=loong64 -target=linux -o fib-01.loong64.wa.s fib-01.wat
-	gcc env-linux.c fib-01.loong64.wa.s -o a.out1.exe
+	gcc -nostdlib -static -z noexecstack env-linux.c fib-01.loong64.wa.s -o a.out1.exe
 	./a.out1.exe
 
 clean:
