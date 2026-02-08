@@ -14,7 +14,20 @@
 #   include <unistd.h>
 #endif
 
-extern uintptr_t _Wa_Memory_addr __asm__(".Wa.Memory.addr");
+typedef struct EnvMultiRet EnvMultiRet;
+
+extern int64_t _Wa_Memory_addr __asm__(".Wa.Memory.addr");
+
+extern int   _Wa_Runtime_write(int fd, void *buf, int count)        asm(".Wa.Runtime.write");
+extern void  _Wa_Runtime_exit(int status)                           asm(".Wa.Runtime.exit");
+extern void* _Wa_Runtime_malloc(int size)                           asm(".Wa.Runtime.malloc");
+extern void* _Wa_Runtime_memcpy(void* dst, const void* src, int n)  asm(".Wa.Runtime.memcpy");
+extern void* _Wa_Runtime_memmove(void* dst, const void* src, int n) asm(".Wa.Runtime.memmove");
+extern void* _Wa_Runtime_memset(void* s, int c, int n)              asm(".Wa.Runtime.memset");
+
+extern EnvMultiRet _Wa_Import_env_get_multi_values(int64_t input_val) asm(".Wa.Import.env.get_multi_values");
+
+extern void _Wa_Import_env_print_i64(int64_t x) asm(".Wa.Import.env.print_i64");
 
 int _Wa_Runtime_write(int fd, void *buf, int count) {
 #if defined(_WIN64)
@@ -45,11 +58,11 @@ void* _Wa_Runtime_memset(void* s, int c, int n) {
 }
 
 // 定义对应 Wasm 多返回值的结构体
-typedef struct {
+struct EnvMultiRet {
     int64_t v1;
     int64_t v2;
     int64_t v3;
-} EnvMultiRet;
+};
 
 // C 函数: 返回结构体
 // 注意: 根据 Win64 ABI，这会被编译为:
@@ -60,13 +73,13 @@ EnvMultiRet _Wa_Import_env_get_multi_values(int64_t input_val) {
     r.v2 = input_val + 2;
     r.v3 = input_val + 3;
     printf(
-        "C side: input=%lld, returning [%lld, %lld, %lld]\n", 
-        input_val, r.v1, r.v2, r.v3
+        "C side: input=%d, returning [%d, %d, %d]\n", 
+        (int)(input_val), (int)(r.v1), (int)(r.v2), (int)(r.v3)
     );
     return r;
 }
 
 void _Wa_Import_env_print_i64(int64_t x) {
-    printf("printI64: %lld\n", x);
+    printf("printI64: %d\n", (int)(x));
 }
 

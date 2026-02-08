@@ -117,6 +117,7 @@ main:
 
 # func main
 .section .text
+.global .Wa.F.main
 .Wa.F.main:
     push rbp
     mov  rbp, rsp

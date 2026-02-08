@@ -1,4 +1,4 @@
-# 源文件: abi-return-01.wat, ABI: X64-Unix
+# 源文件: abi-args-01.wat, ABI: X64-Unix
 # 自动生成的代码, 不要手动修改!!!
 
 .intel_syntax noprefix
@@ -12,7 +12,7 @@
 # .extern .Wa.Runtime.memmove
 
 # 导入函数(外部库定义)
-# .extern .Wa.Import.env.get_multi_values
+# .extern .Wa.Import.env.write
 # .extern .Wa.Import.env.print_i64
 
 # 定义内存
@@ -24,6 +24,14 @@
 .Wa.Memory.pages: .quad 1
 .globl .Wa.Memory.maxPages
 .Wa.Memory.maxPages: .quad 1
+
+# 内存数据
+.section .data
+.align 8
+# memcpy(&Memory[8], data[0], size)
+.Wa.Memory.dataOffset.0: .quad 8
+.Wa.Memory.dataSize.0: .quad 12
+.Wa.Memory.dataPtr.0: .ascii "hello world\012"
 
 # 内存初始化函数
 .section .text
@@ -45,6 +53,16 @@
     mov  rdx, [rip + .Wa.Memory.maxPages]
     shl  rdx, 16
     call .Wa.Runtime.memset
+
+    # 初始化内存
+
+    # memcpy(&Memory[8], data[0], size)
+    mov  rax, [rip + .Wa.Memory.addr]
+    mov  rdi, [rip + .Wa.Memory.dataOffset.0]
+    add  rdi, rax
+    lea  rsi, [rip + .Wa.Memory.dataPtr.0]
+    mov  rdx, [rip + .Wa.Memory.dataSize.0]
+    call .Wa.Runtime.memcpy
 
     # 函数返回
     mov rsp, rbp
@@ -298,55 +316,65 @@ _start:
 # func main
 .section .text
 .Wa.F.main:
-    # local input: i64
-
     push rbp
     mov  rbp, rsp
-    sub  rsp, 64
+    sub  rsp, 80
 
     # 没有参数需要备份到栈
 
     # 没有返回值变量需要初始化为0
 
-    # 将局部变量初始化为0
-    mov dword ptr [rbp-8], 0 # local input = 0
+    # 没有局部变量需要初始化为0
 
     # fn.body.begin(name=main, suffix=00000000)
 
-    # i64.const 100
-    movabs rax, 100
+    # i64.const 1
+    movabs rax, 1
+    mov    [rbp-8], rax
+
+    # i64.const 8
+    movabs rax, 8
     mov    [rbp-16], rax
 
-    # local.set input i64
-    mov rax, qword ptr [rbp-16]
+    # i64.const 12
+    movabs rax, 12
+    mov    [rbp-24], rax
+
+    # i64.const 100
+    movabs rax, 100
+    mov    [rbp-32], rax
+
+    # i64.const 200
+    movabs rax, 200
+    mov    [rbp-40], rax
+
+    # i64.const 300
+    movabs rax, 300
+    mov    [rbp-48], rax
+
+    # i64.const 400
+    movabs rax, 400
+    mov    [rbp-56], rax
+
+    # i64.const 500
+    movabs rax, 500
+    mov    [rbp-64], rax
+
+    # call env.write(...)
+    mov rdi, qword ptr [rbp-8] # arg 0
+    mov rsi, qword ptr [rbp-16] # arg 1
+    mov rdx, qword ptr [rbp-24] # arg 2
+    mov rcx, qword ptr [rbp-32] # arg 3
+    mov r8, qword ptr [rbp-40] # arg 4
+    mov r9, qword ptr [rbp-48] # arg 5
+    mov rax, qword ptr [rbp-56]
+    mov qword ptr [rsp+0], rax
+    mov rax, qword ptr [rbp-64]
+    mov qword ptr [rsp+8], rax
+    call .Wa.Import.env.write
     mov qword ptr [rbp-8], rax
 
-    # local.get input i64
-    mov rax, qword ptr [rbp-8]
-    mov qword ptr [rbp-16], rax
-
-    # call env.get_multi_values(...)
-    lea rdi, [rsp+0] # return address
-    mov rsi, qword ptr [rbp-16] # arg 0
-    call .Wa.Import.env.get_multi_values
-    mov r10, qword ptr [rax+0]
-    mov qword ptr [rbp-16], r10
-    mov r10, qword ptr [rax+8]
-    mov qword ptr [rbp-24], r10
-    mov r10, qword ptr [rax+16]
-    mov qword ptr [rbp-32], r10
-
-    # call env.print_i64(...)
-    mov rdi, qword ptr [rbp-32] # arg 0
-    call .Wa.Import.env.print_i64
-
-    # call env.print_i64(...)
-    mov rdi, qword ptr [rbp-24] # arg 0
-    call .Wa.Import.env.print_i64
-
-    # call env.print_i64(...)
-    mov rdi, qword ptr [rbp-16] # arg 0
-    call .Wa.Import.env.print_i64
+    nop # drop [rbp-8]
 
 .Wa.L.brNext.main.00000000:
     # fn.body.end(name=main, suffix=00000000)

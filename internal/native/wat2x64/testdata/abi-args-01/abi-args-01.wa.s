@@ -4,25 +4,25 @@
 .intel_syntax noprefix
 
 # 运行时函数
-.extern .Wa.Runtime.write
-.extern .Wa.Runtime.exit
-.extern .Wa.Runtime.malloc
-.extern .Wa.Runtime.memcpy
-.extern .Wa.Runtime.memset
-.extern .Wa.Runtime.memmove
+# .extern .Wa.Runtime.write
+# .extern .Wa.Runtime.exit
+# .extern .Wa.Runtime.malloc
+# .extern .Wa.Runtime.memcpy
+# .extern .Wa.Runtime.memset
+# .extern .Wa.Runtime.memmove
 
 # 导入函数(外部库定义)
-.extern .Wa.Import.env.write
-.extern .Wa.Import.env.print_i64
+# .extern .Wa.Import.env.write
+# .extern .Wa.Import.env.print_i64
 
 # 定义内存
 .section .data
 .align 8
 .globl .Wa.Memory.addr
-.globl .Wa.Memory.pages
-.globl .Wa.Memory.maxPages
 .Wa.Memory.addr: .quad 0
+.globl .Wa.Memory.pages
 .Wa.Memory.pages: .quad 1
+.globl .Wa.Memory.maxPages
 .Wa.Memory.maxPages: .quad 1
 
 # 内存数据
@@ -31,7 +31,7 @@
 # memcpy(&Memory[8], data[0], size)
 .Wa.Memory.dataOffset.0: .quad 8
 .Wa.Memory.dataSize.0: .quad 12
-.Wa.Memory.dataPtr.0: .asciz "hello world\012"
+.Wa.Memory.dataPtr.0: .ascii "hello world\012"
 
 # 内存初始化函数
 .section .text
@@ -101,7 +101,7 @@ main:
 
 .section .data
 .align 8
-.Wa.Runtime.panic.message: .asciz "panic"
+.Wa.Runtime.panic.message: .ascii "panic"
 .Wa.Runtime.panic.messageLen: .quad 5
 
 .section .text

@@ -4,53 +4,54 @@
 .intel_syntax noprefix
 
 # 运行时函数
-.extern write
-.extern exit
-.extern malloc
-.extern memcpy
-.extern memset
-.set .Runtime.write, write
-.set .Runtime.exit, exit
-.set .Runtime.malloc, malloc
-.set .Runtime.memcpy, memcpy
-.set .Runtime.memset, memset
+.extern .Wa.Runtime.write
+.extern .Wa.Runtime.exit
+.extern .Wa.Runtime.malloc
+.extern .Wa.Runtime.memcpy
+.extern .Wa.Runtime.memset
 
 # 导入函数(外部库定义)
-.extern wat2x64_env_get_multi_values
-.extern wat2x64_env_print_i64
-.set .Import.env.get_multi_values, wat2x64_env_get_multi_values
-.set .Import.env.print_i64, wat2x64_env_print_i64
+.extern .Wa.Import.env.get_multi_values
+.extern .Wa.Import.env.print_i64
 
 # 定义内存
 .section .data
 .align 8
-.globl .Memory.addr
-.globl .Memory.pages
-.globl .Memory.maxPages
-.Memory.addr: .quad 0
-.Memory.pages: .quad 1
-.Memory.maxPages: .quad 1
+.globl .Wa.Memory.addr
+.globl .Wa.Memory.pages
+.globl .Wa.Memory.maxPages
+.Wa.Memory.addr: .quad 0
+.Wa.Memory.pages: .quad 1
+.Wa.Memory.maxPages: .quad 1
+
+# 内存数据
+.section .data
+.align 8
+# memcpy(&Memory[8], data[0], size)
+.Wa.Memory.dataOffset.0: .quad 8
+.Wa.Memory.dataSize.0: .quad 12
+.Wa.Memory.dataPtr.0: .ascii "hello world\n\000"
 
 # 内存初始化函数
 .section .text
-.globl .Memory.initFunc
-.Memory.initFunc:
+.globl .Wa.Memory.initFunc
+.Wa.Memory.initFunc:
     push rbp
     mov  rbp, rsp
     sub  rsp, 32
 
     # 分配内存
-    mov  rdi, [rip + .Memory.maxPages]
+    mov  rdi, [rip + .Wa.Memory.maxPages]
     shl  rdi, 16
-    call .Runtime.malloc
-    mov  [rip + .Memory.addr], rax
+    call .Wa.Runtime.malloc
+    mov  [rip + .Wa.Memory.addr], rax
 
     # 内存清零
-    mov  rdi, [rip + .Memory.addr]
+    mov  rdi, [rip + .Wa.Memory.addr]
     mov  rsi, 0
-    mov  rdx, [rip + .Memory.maxPages]
+    mov  rdx, [rip + .Wa.Memory.maxPages]
     shl  rdx, 16
-    call .Runtime.memset
+    call .Wa.Runtime.memset
 
     # 函数返回
     mov rsp, rbp
@@ -65,12 +66,12 @@ main:
     mov  rbp, rsp
     sub  rsp, 32
 
-    call .Memory.initFunc
-    call .F.main
+    call .Wa.Memory.initFunc
+    call .Wa.F.main
 
     # runtime.exit(0)
     mov  rdi, 0
-    call .Runtime.exit
+    call .Wa.Runtime.exit
 
     # exit 后这里不会被执行, 但是依然保留
     mov rsp, rbp
@@ -79,25 +80,25 @@ main:
 
 .section .data
 .align 8
-.Runtime.panic.message: .asciz "panic"
-.Runtime.panic.messageLen: .quad 5
+.Wa.Runtime.panic.message: .ascii "panic\000"
+.Wa.Runtime.panic.messageLen: .quad 5
 
 .section .text
-.globl .Runtime.panic
-.Runtime.panic:
+.globl .Wa.Runtime.panic
+.Wa.Runtime.panic:
     push rbp
     mov  rbp, rsp
     sub  rsp, 32
 
     # runtime.write(stderr, panicMessage, size)
     mov  rdi, 2 # stderr
-    lea  rsi, [rip + .Runtime.panic.message]
-    mov  rdx, [rip + .Runtime.panic.messageLen] # size
-    call .Runtime.write
+    lea  rsi, [rip + .Wa.Runtime.panic.message]
+    mov  rdx, [rip + .Wa.Runtime.panic.messageLen] # size
+    call .Wa.Runtime.write
 
     # 退出程序
     mov  rdi, 1 # 退出码
-    call .Runtime.exit
+    call .Wa.Runtime.exit
 
     # return
     mov rsp, rbp
@@ -106,8 +107,8 @@ main:
 
 # func main
 .section .text
-.global .F.main
-.F.main:
+.global .Wa.F.main
+.Wa.F.main:
     push rbp
     mov  rbp, rsp
     sub  rsp, 64
@@ -117,13 +118,13 @@ main:
     # 原本 WAT 里的第一个参数 (param i64) 顺延到 rsi
     lea  rdi, [rsp + 0]
     mov  rsi, 100
-    call .Import.env.get_multi_values
+    call .Wa.Import.env.get_multi_values
     mov  rdi, [rsp + 16] # v3
-    call .Import.env.print_i64
+    call .Wa.Import.env.print_i64
     mov  rdi, [rsp + 8] # v2
-    call .Import.env.print_i64
+    call .Wa.Import.env.print_i64
     mov  rdi, [rsp + 0] # v1
-    call .Import.env.print_i64
+    call .Wa.Import.env.print_i64
 
     # 函数返回
     mov rsp, rbp

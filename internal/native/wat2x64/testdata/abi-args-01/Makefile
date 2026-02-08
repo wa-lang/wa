@@ -4,16 +4,21 @@
 WA:=go run ../../../../../main.go
 
 golden:
-	gcc env.c golden-win64.s -o a.out0.exe
+	gcc env-win64.c golden-win64.s -o a.out0.exe
 	a.out0.exe
 
 linux:
-	gcc env.c golden-linux.s -o a.out0.exe -z noexecstack
+	gcc env-linux.c env-linux-x64.s golden-linux.s -o a.out0.exe -z noexecstack
 	./a.out0.exe
 
 dev:
 	$(WA) build -arch=x64 -target=windows abi-args-01.wat
-	gcc env.c abi-args-01.wa.s -o a.out1.exe
+	gcc env-win64.c abi-args-01.wa.s -o a.out1.exe
 	a.out1.exe
+
+dev-linux:
+	$(WA) build -arch=x64 -target=linux -o abi-args-01.linux.wa.s abi-args-01.wat
+	gcc -nostdlib -static env-linux.c abi-args-01.linux.wa.s -z noexecstack -o a.out1.exe
+	./a.out1.exe
 
 clean:

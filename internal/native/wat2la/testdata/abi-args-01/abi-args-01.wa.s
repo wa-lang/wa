@@ -2,22 +2,15 @@
 # 自动生成的代码, 不要手动修改!!!
 
 # 运行时函数
-.extern write
-.extern exit
-.extern malloc
-.extern memcpy
-.extern memset
-.set .Runtime.write, write
-.set .Runtime.exit, exit
-.set .Runtime.malloc, malloc
-.set .Runtime.memcpy, memcpy
-.set .Runtime.memset, memset
+.extern .Wa.Runtime.write
+.extern .Wa.Runtime.exit
+.extern .Wa.Runtime.malloc
+.extern .Wa.Runtime.memcpy
+.extern .Wa.Runtime.memset
 
 # 导入函数(外部库定义)
-.extern wat2la_env_write
-.extern wat2la_env_print_i64
-.set .Import.env.write, wat2la_env_write
-.set .Import.env.print_i64, wat2la_env_print_i64
+.extern .Wa.Import.env.write
+.extern .Wa.Import.env.print_i64
 
 # 定义内存
 .section .data
