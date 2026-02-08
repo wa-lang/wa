@@ -14,17 +14,17 @@
 
 extern int64_t _Wa_Memory_addr __asm__(".Wa.Memory.addr");
 
+extern int   _Wa_Runtime_write(int fd, void *buf, int count)        asm(".Wa.Runtime.write");
+extern void  _Wa_Runtime_exit(int status)                           asm(".Wa.Runtime.exit");
+extern void* _Wa_Runtime_malloc(int size)                           asm(".Wa.Runtime.malloc");
+extern void* _Wa_Runtime_memcpy(void* dst, const void* src, int n)  asm(".Wa.Runtime.memcpy");
+extern void* _Wa_Runtime_memmove(void* dst, const void* src, int n) asm(".Wa.Runtime.memmove");
+extern void* _Wa_Runtime_memset(void* s, int c, int n)              asm(".Wa.Runtime.memset");
+
+extern void _Wa_Import_env_print_i64(int64_t x) asm(".Wa.Import.env.print_i64");
+
 void _Wa_Import_env_print_i64(int64_t x) {
     printf("printI64: %d\n", (int)(x));
-}
-
-int _Wa_Import_syscall_write(int fd, int ptr, int size) {
-    printf("_Wa_Import_syscall_write: %d, %d, %d\n", fd, ptr, size);
-#if defined(_WIN64)
-    return _write(fd, (void*)(_Wa_Memory_addr+ptr), size);
-#else
-    return write(fd, (void*)(_Wa_Memory_addr+ptr), size);
-#endif
 }
 
 int _Wa_Runtime_write(int fd, void *buf, int count) {

@@ -4,53 +4,46 @@
 .intel_syntax noprefix
 
 # 运行时函数
-.extern _write
-.extern _exit
-.extern malloc
-.extern memcpy
-.extern memset
-.extern memmove
-.set .Runtime.write, _write
-.set .Runtime.exit, _exit
-.set .Runtime.malloc, malloc
-.set .Runtime.memcpy, memcpy
-.set .Runtime.memset, memset
-.set .Runtime.memmove, memmove
+# .extern .Wa.Runtime.write
+# .extern .Wa.Runtime.exit
+# .extern .Wa.Runtime.malloc
+# .extern .Wa.Runtime.memcpy
+# .extern .Wa.Runtime.memset
+# .extern .Wa.Runtime.memmove
 
 # 导入函数(外部库定义)
-.extern wat2x64_env_print_i64
-.set .Import.env.print_i64, wat2x64_env_print_i64
+# .extern .Wa.Import.env.print_i64
 
 # 定义内存
 .section .data
 .align 8
-.globl .Memory.addr
-.globl .Memory.pages
-.globl .Memory.maxPages
-.Memory.addr: .quad 0
-.Memory.pages: .quad 1
-.Memory.maxPages: .quad 1
+.globl .Wa.Memory.addr
+.Wa.Memory.addr: .quad 0
+.globl .Wa.Memory.pages
+.Wa.Memory.pages: .quad 1
+.globl .Wa.Memory.maxPages
+.Wa.Memory.maxPages: .quad 1
 
 # 内存初始化函数
 .section .text
-.globl .Memory.initFunc
-.Memory.initFunc:
+.globl .Wa.Memory.initFunc
+.Wa.Memory.initFunc:
     push rbp
     mov  rbp, rsp
     sub  rsp, 32
 
     # 分配内存
-    mov  rcx, [rip + .Memory.maxPages]
+    mov  rcx, [rip + .Wa.Memory.maxPages]
     shl  rcx, 16
-    call .Runtime.malloc
-    mov  [rip + .Memory.addr], rax
+    call .Wa.Runtime.malloc
+    mov  [rip + .Wa.Memory.addr], rax
 
     # 内存清零
-    mov  rcx, [rip + .Memory.addr]
+    mov  rcx, [rip + .Wa.Memory.addr]
     mov  rdx, 0
-    mov  r8, [rip + .Memory.maxPages]
+    mov  r8, [rip + .Wa.Memory.maxPages]
     shl  r8, 16
-    call .Runtime.memset
+    call .Wa.Runtime.memset
 
     # 函数返回
     mov rsp, rbp
@@ -60,12 +53,12 @@
 # 定义表格
 .section .data
 .align 8
-.globl .Table.addr
-.globl .Table.size
-.globl .Table.maxSize
-.Table.addr: .quad 0
-.Table.size: .quad 1
-.Table.maxSize: .quad 1
+.globl .Wa.Table.addr
+.globl .Wa.Table.size
+.globl .Wa.Table.maxSize
+.Wa.Table.addr: .quad 0
+.Wa.Table.size: .quad 1
+.Wa.Table.maxSize: .quad 1
 
 # 汇编程序入口函数
 .section .text
@@ -75,12 +68,12 @@ main:
     mov  rbp, rsp
     sub  rsp, 32
 
-    call .Memory.initFunc
-    call .F.main
+    call .Wa.Memory.initFunc
+    call .Wa.F.main
 
     # runtime.exit(0)
     mov  rcx, 0
-    call .Runtime.exit
+    call .Wa.Runtime.exit
 
     # exit 后这里不会被执行, 但是依然保留
     mov rsp, rbp
@@ -89,25 +82,25 @@ main:
 
 .section .data
 .align 8
-.Runtime.panic.message: .asciz "panic"
-.Runtime.panic.messageLen: .quad 5
+.Wa.Runtime.panic.message: .ascii "panic"
+.Wa.Runtime.panic.messageLen: .quad 5
 
 .section .text
-.globl .Runtime.panic
-.Runtime.panic:
+.globl .Wa.Runtime.panic
+.Wa.Runtime.panic:
     push rbp
     mov  rbp, rsp
     sub  rsp, 32
 
     # runtime.write(stderr, panicMessage, size)
     mov  rcx, 2 # stderr
-    lea  rdx, [rip + .Runtime.panic.message]
-    mov  r8, [rip + .Runtime.panic.messageLen] # size
-    call .Runtime.write
+    lea  rdx, [rip + .Wa.Runtime.panic.message]
+    mov  r8, [rip + .Wa.Runtime.panic.messageLen] # size
+    call .Wa.Runtime.write
 
     # 退出程序
     mov  rcx, 1 # 退出码
-    call .Runtime.exit
+    call .Wa.Runtime.exit
 
     # return
     mov rsp, rbp
@@ -116,7 +109,7 @@ main:
 
 # func main
 .section .text
-.F.main:
+.Wa.F.main:
     # local N: i64
     # local i: i64
 
@@ -151,19 +144,19 @@ main:
     mov qword ptr [rbp-16], rax
 
     # loop.begin(name=my_loop, suffix=00000001)
-.L.brNext.my_loop.00000001:
+.Wa.L.brNext.my_loop.00000001:
     # local.get i i64
     mov rax, qword ptr [rbp-16]
     mov qword ptr [rbp-24], rax
 
     # call fib(...)
     mov rcx, qword ptr [rbp-24] # arg 0
-    call .F.fib
+    call .Wa.F.fib
     mov qword ptr [rbp-24], rax
 
     # call env.print_i64(...)
     mov rcx, qword ptr [rbp-24] # arg 0
-    call .Import.env.print_i64
+    call .Wa.Import.env.print_i64
 
     # local.get i i64
     mov rax, qword ptr [rbp-16]
@@ -201,13 +194,13 @@ main:
     # br_if my_loop.00000001
     mov eax, dword ptr [rbp-24]
     cmp eax, 0
-    je  .L.brFallthrough.my_loop.00000001
-    jmp .L.brNext.my_loop.00000001
-.L.brFallthrough.my_loop.00000001:
+    je  .Wa.L.brFallthrough.my_loop.00000001
+    jmp .Wa.L.brNext.my_loop.00000001
+.Wa.L.brFallthrough.my_loop.00000001:
 
     # loop.end(name=my_loop, suffix=00000001)
 
-.L.brNext.main.00000000:
+.Wa.L.brNext.main.00000000:
     # fn.body.end(name=main, suffix=00000000)
 
     # 根据ABI处理返回值
@@ -221,8 +214,8 @@ main:
 
 # func fib(n:i64) => i64
 .section .text
-.globl .F.fib
-.F.fib:
+.globl .Wa.F.fib
+.Wa.F.fib:
     push rbp
     mov  rbp, rsp
     sub  rsp, 64
@@ -256,16 +249,16 @@ main:
     # if.begin(name=, suffix=00000003)
     mov eax, [rbp-16]
     cmp eax, 0
-    je  .L.else.00000003
+    je  .Wa.L.else.00000003
 
     # if.body(name=, suffix=00000003)
     # i64.const 1
     movabs rax, 1
     mov    [rbp-16], rax
 
-    jmp .L.brNext.00000003
+    jmp .Wa.L.brNext.00000003
 
-.L.else.00000003:
+.Wa.L.else.00000003:
     # local.get n i64
     mov rax, qword ptr [rbp+16]
     mov qword ptr [rbp-16], rax
@@ -281,7 +274,7 @@ main:
 
     # call fib(...)
     mov rcx, qword ptr [rbp-16] # arg 0
-    call .F.fib
+    call .Wa.F.fib
     mov qword ptr [rbp-16], rax
 
     # local.get n i64
@@ -299,7 +292,7 @@ main:
 
     # call fib(...)
     mov rcx, qword ptr [rbp-24] # arg 0
-    call .F.fib
+    call .Wa.F.fib
     mov qword ptr [rbp-24], rax
 
     # i64.add
@@ -307,10 +300,10 @@ main:
     add rax, qword ptr [rbp-24]
     mov qword ptr [rbp-16], rax
 
-.L.brNext.00000003:
+.Wa.L.brNext.00000003:
     # if.end(name=, suffix=00000003)
 
-.L.brNext.fib.00000002:
+.Wa.L.brNext.fib.00000002:
     # fn.body.end(name=fib, suffix=00000002)
 
     # 根据ABI处理返回值
