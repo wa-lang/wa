@@ -4,18 +4,27 @@
 package asm
 
 import (
-	"encoding/binary"
 	"fmt"
-	"math"
 
 	"wa-lang.org/wa/internal/native/abi"
 	"wa-lang.org/wa/internal/native/ast"
+	"wa-lang.org/wa/internal/native/loong64"
+	"wa-lang.org/wa/internal/native/riscv"
 	"wa-lang.org/wa/internal/native/token"
 )
 
 // 将汇编语法树转为固定位置的机器码
 func AssembleFile(filename string, source []byte, opt *abi.LinkOptions) (prog *abi.LinkedProgram, err error) {
-	return new(_Assembler).asmFile(filename, source, opt)
+	switch opt.CPU {
+	case abi.LOONG64:
+		return new(_Assembler).asmFile(filename, source, opt)
+	case abi.RISCV32:
+		return new(_Assembler).asmFile(filename, source, opt)
+	case abi.RISCV64:
+		return new(_Assembler).asmFile(filename, source, opt)
+	default:
+		return nil, fmt.Errorf("unknonw cpu: %v", opt.CPU)
+	}
 }
 
 type _Assembler struct {
@@ -27,24 +36,12 @@ type _Assembler struct {
 	file *ast.File
 	prog *abi.LinkedProgram
 
+	// 全局符号
+	objectMap map[string]ast.Object
+
 	// 下个内存分配地址
 	dramNextAddr int64
 	dramEndAddr  int64
-}
-
-func (p *_Assembler) asmFile(filename string, source []byte, opt *abi.LinkOptions) (prog *abi.LinkedProgram, err error) {
-	p.init(filename, source, opt)
-
-	switch p.prog.CPU {
-	case abi.LOONG64:
-		return p.asmFile_loong64(filename, source, opt)
-	case abi.RISCV32:
-		return p.asmFile_riscv(filename, source, opt)
-	case abi.RISCV64:
-		return p.asmFile_riscv(filename, source, opt)
-	default:
-		return nil, fmt.Errorf("unknonw cpu: %v", p.prog.CPU)
-	}
 }
 
 func (p *_Assembler) init(filename string, source []byte, opt *abi.LinkOptions) {
@@ -57,6 +54,8 @@ func (p *_Assembler) init(filename string, source []byte, opt *abi.LinkOptions) 
 	p.prog = &abi.LinkedProgram{
 		CPU: opt.CPU,
 	}
+
+	p.objectMap = make(map[string]ast.Object)
 
 	p.dramNextAddr, _ = align(opt.DRAMBase, 4)
 	p.dramEndAddr = opt.DRAMBase + opt.DRAMSize
@@ -93,71 +92,6 @@ func (p *_Assembler) instLen(inst *ast.Instruction) int64 {
 	}
 }
 
-func (p *_Assembler) asmGlobal(g *ast.Global) (err error) {
-	// g.LinkInfo.Data 空间需要提前初始化
-	if g.Init.Symbal != "" {
-		v, ok := p.symbolAddress(g.Init.Symbal)
-		if !ok {
-			panic(fmt.Errorf("symbol %q not found", g.Init.Symbal))
-		}
-		if p.opt.CPU == abi.RISCV32 {
-			binary.LittleEndian.PutUint32(g.LinkInfo.Data, uint32(v))
-		} else {
-			binary.LittleEndian.PutUint64(g.LinkInfo.Data, uint64(v))
-		}
-		return nil
-	}
-
-	// 常量面值初始化
-	switch g.Type {
-	case token.Bin:
-		copy(g.LinkInfo.Data, []byte(g.Init.Lit.ConstV.(string)))
-	case token.I8:
-		v := g.Init.Lit.ConstV.(int64)
-		switch {
-		case v >= 0 && v <= math.MaxUint8:
-			g.LinkInfo.Data = append(g.LinkInfo.Data, uint8(v))
-		case v >= math.MinInt8 && v <= math.MaxInt8:
-			g.LinkInfo.Data = append(g.LinkInfo.Data, uint8(int8(v)))
-		default:
-			panic(fmt.Errorf("global %q init value overflow: %v", g.Name, g.Init.Lit))
-		}
-	case token.I16:
-		v := g.Init.Lit.ConstV.(int64)
-		switch {
-		case v >= 0 && v <= math.MaxUint16:
-			binary.LittleEndian.PutUint16(g.LinkInfo.Data, uint16(v))
-		case v >= math.MinInt16 && v <= math.MaxInt16:
-			binary.LittleEndian.PutUint16(g.LinkInfo.Data, uint16(int16(v)))
-		default:
-			panic(fmt.Errorf("global %q init value overflow: %v", g.Name, g.Init.Lit))
-		}
-	case token.I32:
-		v := g.Init.Lit.ConstV.(int64)
-		switch {
-		case v >= 0 && v <= math.MaxUint32:
-			binary.LittleEndian.PutUint32(g.LinkInfo.Data, uint32(v))
-		case v >= math.MinInt32 && v <= math.MaxInt32:
-			binary.LittleEndian.PutUint32(g.LinkInfo.Data, uint32(int32(v)))
-		default:
-			panic(fmt.Errorf("global %q init value overflow: %v", g.Name, g.Init.Lit))
-		}
-	case token.I64:
-		v := g.Init.Lit.ConstV.(int64)
-		binary.LittleEndian.PutUint64(g.LinkInfo.Data, uint64(v))
-	case token.F32:
-		v := g.Init.Lit.ConstV.(float64)
-		binary.LittleEndian.PutUint32(g.LinkInfo.Data, math.Float32bits(float32(v)))
-	case token.F64:
-		v := g.Init.Lit.ConstV.(float64)
-		binary.LittleEndian.PutUint64(g.LinkInfo.Data, math.Float64bits(float64(v)))
-	default:
-		panic("unreahable")
-	}
-
-	return nil
-}
-
 // 全局变量或函数的地址
 func (p *_Assembler) symbolAddress(s string) (int64, bool) {
 	// 查找全局变量
@@ -176,4 +110,15 @@ func (p *_Assembler) symbolAddress(s string) (int64, bool) {
 
 	// 查找失败
 	return 0, false
+}
+
+func (p *_Assembler) encodeInst(as abi.As, arg *abi.AsArgument) (uint32, error) {
+	switch p.file.CPU {
+	case abi.LOONG64:
+		return loong64.EncodeLA64(as, arg)
+	case abi.RISCV64:
+		return riscv.EncodeRV64(as, arg)
+	default:
+		panic("unreachable")
+	}
 }

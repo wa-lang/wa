@@ -11,13 +11,14 @@ import (
 	"wa-lang.org/wa/internal/native/abi"
 	"wa-lang.org/wa/internal/native/ast"
 	"wa-lang.org/wa/internal/native/link/elf"
-	"wa-lang.org/wa/internal/native/loong64"
 	"wa-lang.org/wa/internal/native/parser"
 	"wa-lang.org/wa/internal/native/pcrel"
 	"wa-lang.org/wa/internal/native/token"
 )
 
-func (p *_Assembler) asmFile_loong64(filename string, source []byte, opt *abi.LinkOptions) (prog *abi.LinkedProgram, err error) {
+func (p *_Assembler) asmFile(filename string, source []byte, opt *abi.LinkOptions) (prog *abi.LinkedProgram, err error) {
+	p.init(filename, source, opt)
+
 	// 最大的页大小
 	const maxPageSize = 64 << 10
 
@@ -51,6 +52,11 @@ func (p *_Assembler) asmFile_loong64(filename string, source []byte, opt *abi.Li
 
 	// 全局函数分配内存空间
 	for _, fn := range p.file.Funcs {
+		if _, ok := p.objectMap[fn.Name]; ok {
+			panic(fmt.Sprintf("object %s exists", fn.Name))
+		}
+		p.objectMap[fn.Name] = fn
+
 		fn.BodySize = int(p.funcBodyLen(fn))
 		fn.LinkInfo = &abi.LinkedSymbol{Name: fn.Name}
 		fn.LinkInfo.Addr, fn.LinkInfo.AlignPadding = p.alloc(int64(fn.BodySize), 4)
@@ -64,6 +70,11 @@ func (p *_Assembler) asmFile_loong64(filename string, source []byte, opt *abi.Li
 
 	// 全局变量分配内存空间
 	for _, g := range p.file.Globals {
+		if _, ok := p.objectMap[g.Name]; ok {
+			panic(fmt.Sprintf("object %s exists", g.Name))
+		}
+		p.objectMap[g.Name] = g
+
 		g.LinkInfo = &abi.LinkedSymbol{
 			Name: g.Name,
 		}
@@ -351,7 +362,7 @@ func (p *_Assembler) asmFuncBody_inst_loong64(fn *ast.Func) (err error) {
 		}
 
 		// 编码使用的是符号被处理后对应的立即数
-		x, err := loong64.EncodeLA64(inst.As, inst.Arg)
+		x, err := p.encodeInst(inst.As, inst.Arg)
 		if err != nil {
 			return fmt.Errorf("%v: %w", inst, err)
 		}
