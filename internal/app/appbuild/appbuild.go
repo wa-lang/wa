@@ -18,8 +18,11 @@ import (
 	"wa-lang.org/wa/internal/config"
 	"wa-lang.org/wa/internal/loader"
 	"wa-lang.org/wa/internal/native/abi"
+	"wa-lang.org/wa/internal/native/asm"
+	"wa-lang.org/wa/internal/native/link"
 	"wa-lang.org/wa/internal/native/wat2la"
 	"wa-lang.org/wa/internal/native/wat2x64"
+	"wa-lang.org/wa/internal/native/wemu/device/dram"
 	"wa-lang.org/wa/internal/token"
 	"wa-lang.org/wa/internal/wat/watutil"
 	"wa-lang.org/wa/internal/wat/watutil/wat2c"
@@ -253,11 +256,6 @@ func BuildApp(opt *appbase.Option, input, outfile string) (mainFunc string, wasm
 				panic(fmt.Sprintf("loong64 donot support %s", s))
 			}
 
-			gccEnabled := true
-			if runtime.GOARCH != config.WaArch_loong64 {
-				gccEnabled = false
-			}
-
 			// 设置默认输出目标
 			var nativeAsmFile string
 			var nativeExtFile string
@@ -286,13 +284,28 @@ func BuildApp(opt *appbase.Option, input, outfile string) (mainFunc string, wasm
 				os.Exit(1)
 			}
 
-			// gcc x.c x.s -z noexecstack -o x.exe
-			if gccEnabled {
-				gccCmd := exec.Command("gcc", nativeAsmFile, "-nostdlib", "-static", "-z", "noexecstack", "-o", nativeExtFile)
-				output, err := gccCmd.CombinedOutput()
+			// 汇编为 elf 可执行文件
+			{
+				opt := &abi.LinkOptions{}
+				opt.CPU = abi.LOONG64
+				opt.DRAMBase = dram.DRAM_BASE_LA64
+				opt.DRAMSize = dram.DRAM_SIZE // 16MB, 临时用于演示
+
+				// 解析汇编程序, 并生成对应cpu的机器码
+				prog, err := asm.AssembleFile(nativeAsmFile, nasmBytes, opt)
 				if err != nil {
-					fmt.Println(string(output))
-					fmt.Printf("build failed: %v\n", err)
+					fmt.Println(err)
+					os.Exit(1)
+				}
+
+				// 包存到ELF格式文件
+				elfBytes, err := link.LinkELF(prog)
+				if err != nil {
+					fmt.Println(err)
+					os.Exit(1)
+				}
+				if err := os.WriteFile(nativeExtFile, elfBytes, 0777); err != nil {
+					fmt.Println(err)
 					os.Exit(1)
 				}
 			}
@@ -479,11 +492,6 @@ func BuildApp(opt *appbase.Option, input, outfile string) (mainFunc string, wasm
 				panic(fmt.Sprintf("loong64 donot support %s", s))
 			}
 
-			gccEnabled := true
-			if runtime.GOARCH != config.WaArch_loong64 {
-				gccEnabled = false
-			}
-
 			// 设置默认输出目标
 			var nativeAsmFile string
 			var nativeExtFile string
@@ -512,21 +520,30 @@ func BuildApp(opt *appbase.Option, input, outfile string) (mainFunc string, wasm
 				os.Exit(1)
 			}
 
-			// gcc x.c x.s -z noexecstack -o x.exe
-			if gccEnabled {
-				gccCmd := exec.Command("gcc", nativeAsmFile, "-nostdlib", "-static", "-z", "noexecstack", "-o", nativeExtFile)
-				output, err := gccCmd.CombinedOutput()
+			// 汇编为 elf 可执行文件
+			{
+				opt := &abi.LinkOptions{}
+				opt.CPU = abi.LOONG64
+				opt.DRAMBase = dram.DRAM_BASE_LA64
+				opt.DRAMSize = dram.DRAM_SIZE // 16MB, 临时用于演示
+
+				// 解析汇编程序, 并生成对应cpu的机器码
+				prog, err := asm.AssembleFile(nativeAsmFile, nasmBytes, opt)
 				if err != nil {
-					fmt.Println(string(output))
-					fmt.Printf("build failed: %v\n", err)
+					fmt.Println(err)
 					os.Exit(1)
 				}
-			} else {
-				fmt.Printf("donot use gcc %s/%s on host %s/%s",
-					opt.TargetOS, opt.TargetArch,
-					runtime.GOOS, runtime.GOARCH,
-				)
-				os.Exit(1)
+
+				// 包存到ELF格式文件
+				elfBytes, err := link.LinkELF(prog)
+				if err != nil {
+					fmt.Println(err)
+					os.Exit(1)
+				}
+				if err := os.WriteFile(nativeExtFile, elfBytes, 0777); err != nil {
+					fmt.Println(err)
+					os.Exit(1)
+				}
 			}
 
 			// OK
