@@ -12,14 +12,15 @@ func GetTargetAddressLa64(pc int64, pc_hi20, pc_lo12 int32) int64 {
 
 // MakeLa64PCRel 计算龙芯64目标地址相对于 PC 地址的相对偏移量
 func MakeLa64PCRel(targetAddress, pc int64) (pc_hi20, pc_lo12 int32) {
-	delta := targetAddress - pc
+	pcPage := pc &^ 0xFFF
+	delta := targetAddress - pcPage
 
-	pc_hi20 = int32((delta + 0x800) >> 12)
-	pc_lo12 = int32(targetAddress & 0xFFF)
+	pc_hi20 = int32((delta) >> 12)
+	pc_lo12 = int32(delta & 0xFFF)
 
 	if pc_lo12 >= 0x800 {
-		pc_lo12 -= 0x1000
+		pc_hi20++
 	}
-
+	pc_hi20 &= 0xFFFFF
 	return
 }
