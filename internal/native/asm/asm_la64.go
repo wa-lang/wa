@@ -341,12 +341,9 @@ func (p *_Assembler) asmFuncBody_inst_loong64(fn *ast.Func) (err error) {
 			default:
 				assert(inst.Arg.SymbolDecor == abi.BuiltinFn_Nil)
 
-				// 如果是label, 则为 pc 相对地址
-				if _, isLabel := label2pcMap[inst.Arg.Symbol]; isLabel {
-					inst.Arg.Imm = int32(addr - pc)
-				} else {
-					inst.Arg.Imm = int32(addr)
-				}
+				// 龙芯平台, 符号作为地址大于等于 uint32
+				// 必须处理为 pc 相对地址才有可能正常表示
+				inst.Arg.Imm = int32(addr - pc)
 			}
 		}
 

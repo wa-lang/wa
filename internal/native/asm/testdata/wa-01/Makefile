@@ -8,6 +8,12 @@ dev:
 	$(WA) asm2elf -arch=loong64 wa-01.wa.s
 	./wa-01.wa.elf.exe
 
+gcc:
+	$(WA) build -arch=loong64 -target=linux wa-01.wa
+	$(WA) asm2elf -arch=loong64 wa-01.wa.s
+	gcc -nostdlib -static -z noexecstack -o wa-01.wa.elf.exe wa-01.wa.s
+	./wa-01.wa.elf.exe
+
 loong64:
 	$(WA) build -arch=loong64 -target=linux wa-01.wa
 	./wa-01.exe
