@@ -2,5 +2,5 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 
 func main {
-	println("hello loongarch")
+	println("你好,", 1<<11-11<<1, "年!")
 }

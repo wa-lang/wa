@@ -4,7 +4,7 @@
 声明 .Wa.Memory.addr
 
 # void _Wa_Import_syscall_write (int fd, uint32_t ptr, int32_t len)
-函数 .Wa.Import.syscall_linux.print_str:
+函数 .Wa.Import.syscall.write:
     计齐加高12立 $暂甲格, %相对.高20(.Wa.Memory.addr)
     装载.长      $暂甲格, $暂甲格, %相对.低12(.Wa.Memory.addr)
 
