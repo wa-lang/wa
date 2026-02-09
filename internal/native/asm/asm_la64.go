@@ -41,6 +41,9 @@ func (p *_Assembler) asmFile_loong64(filename string, source []byte, opt *abi.Li
 
 	// 给 ELF 头和 程序头预留出空间
 	// 如果有调试用的段数据, 放到后面
+	//
+	// gcc 会生成4个程序头, 和 .note.gnu.property 段
+	// 有效的 text 数据可能从 0x144 附近开始
 	const fileHeaderSize = elf.ELF64HDRSIZE + elf.ELF64PHDRSIZE*2
 	p.prog.TextData = make([]byte, fileHeaderSize)
 	assert(len(p.prog.TextData) == fileHeaderSize)

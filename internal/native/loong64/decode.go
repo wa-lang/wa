@@ -131,6 +131,15 @@ func (op _OpContextType) decodeInst(x uint32) (as abi.As, arg *abi.AsArgument, a
 		arg.Rs1 = op.decodeRegI(rj)
 		arg.Imm = imm
 		return
+	case OpFormatType_1F_1R_si12:
+		imm := simm(x, 10, 12)
+		argRaw.Rd = rd
+		argRaw.Rs1 = rj
+		argRaw.Imm = imm
+		arg.Rd = op.decodeRegF(rd)
+		arg.Rs1 = op.decodeRegI(rj)
+		arg.Imm = imm
+		return
 	case OpFormatType_2R_ui12:
 		imm := int32(uimm(x, 10, 12))
 		argRaw.Rd = rd
@@ -384,7 +393,7 @@ func (op _OpContextType) decodeInst(x uint32) (as abi.As, arg *abi.AsArgument, a
 		arg.Imm = imm
 		return
 	default:
-		panic("unreachable")
+		panic("unreachable" + op.fmt.String())
 	}
 }
 
