@@ -4,13 +4,18 @@
 package loong64
 
 import (
+	"fmt"
 	"unicode"
 	"unicode/utf8"
 )
 
-func assert(ok bool) {
+func assert(ok bool, a ...interface{}) {
 	if !ok {
-		panic("assert failed")
+		if len(a) > 0 {
+			panic("assert failed:" + fmt.Sprint(a...))
+		} else {
+			panic("assert failed")
+		}
 	}
 }
 

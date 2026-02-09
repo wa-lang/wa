@@ -346,7 +346,7 @@ func (op _OpContextType) decodeInst(x uint32) (as abi.As, arg *abi.AsArgument, a
 		imm = i32SignExtend(imm, 21) << 2
 		argRaw.Rs1 = rj & 0b_111
 		argRaw.Imm = imm
-		arg.Rs1 = op.decodeRegFCC(rj)
+		arg.Rs1 = op.decodeRegFCC(argRaw.Rs1)
 		arg.Imm = imm
 		return
 	case OpFormatType_rj_offset:
