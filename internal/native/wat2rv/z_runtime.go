@@ -52,8 +52,7 @@ func (p *wat2rvWorker) buildRuntimeHead(w io.Writer) error {
 // 生成运行时函数
 func (p *wat2rvWorker) buildRuntimeImpl(w io.Writer) error {
 	if p.isZhLang {
-		// TODO: 改为中文汇编语言实现的运行时
-		fmt.Fprintln(w, native_env_linux_rv64_wa_s)
+		fmt.Fprintln(w, native_env_linux_rv64_wz_s)
 	} else {
 		fmt.Fprintln(w, native_env_linux_rv64_wa_s)
 	}

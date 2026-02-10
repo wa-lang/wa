@@ -104,7 +104,7 @@ const (
 	BuiltinFn_HI       // %hi(symbol)
 	BuiltinFn_LO       // %lo(symbol)
 	BuiltinFn_PCREL_HI // %pcrel_hi(symbol)
-	BuiltinFn_PCREL_LO // %pcrel_lo(label) # 注意, RISCV 中该参数是 label
+	BuiltinFn_PCREL_LO // %pcrel_lo(label|symbol) # 注意, RISCV 中该参数是 label, symbol 是凹汇编器扩展
 
 	// 通用宏
 	BuiltinFn_SIZEOF // %sizeof(symbol) # 获取全局变量的内存大小
