@@ -37,3 +37,57 @@ const (
 	// 寄存器编号结束
 	REG_END
 )
+
+// 凹语言用到的部分指令
+const (
+	_          abi.As = iota
+	AADD              // add
+	AADDSD            // addsd
+	AADDSS            // addss
+	AAND              // and
+	ACALL             // call
+	ACDQ              // cdq
+	ACMP              // cmp
+	ACVTSI2SD         // cvtsi2sd
+	ACVTTSD2SI        // cvttsd2si
+	ADIV              // div
+	ADIVSD            // divsd
+	ADIVSS            // divss
+	AIDIV             // idiv
+	AIMUL             // imul
+	AJA               // ja
+	AJE               // je
+	AJMP              // jmp
+	ALEA              // lea
+	AMOV              // mov
+	AMOVABS           // movabs
+	AMOVQ             // movq
+	AMOVSD            // movsd
+	AMOVSS            // movss
+	AMOVZX            // movzx
+	AMULSD            // mulsd
+	AMULSS            // mulss
+	ANOP              // nop
+	AOR               // or
+	APOP              // pop
+	APUSH             // push
+	ARET              // ret
+	ASAR              // sar
+	ASETA             // seta
+	ASETAE            // setae
+	ASETB             // setb
+	ASETBE            // setbe
+	ASETE             // sete
+	ASETG             // setg
+	ASETGE            // setge
+	ASETL             // setl
+	ASETLE            // setle
+	ASETNE            // setne
+	ASETNP            // setnp
+	ASHL              // shl
+	ASUB              // sub
+	ASUBSD            // subsd
+	ASUBSS            // subss
+	AUCOMISD          // ucomisd
+	AXOR              // xor
+)

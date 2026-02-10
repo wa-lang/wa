@@ -42,3 +42,27 @@ func Reg32String(r abi.RegType) string {
 	}
 	return fmt.Sprintf("x64.badreg(%d)", r)
 }
+
+// 根据名字查找汇编指令(忽略大小写, 忽略下划线和点的区别)
+func LookupAs(asName string) (as abi.As, ok bool) {
+	if asName == "" {
+		return
+	}
+	for i, s := range _Anames {
+		if strEqualFold(s, asName) {
+			return abi.As(i), true
+		}
+	}
+	return 0, false
+}
+
+// 汇编指令转字符串格式
+func AsString(as abi.As, asName string) string {
+	if asName != "" {
+		return asName
+	}
+	if int(as) < len(_Anames) {
+		return _Anames[as]
+	}
+	return fmt.Sprintf("riscv.badas(%d)", int(as))
+}
