@@ -14,6 +14,8 @@ func (p *parser) parseInst(fn *ast.Func) (inst *ast.Instruction) {
 		return p.parseInst_loong(fn)
 	case abi.RISCV32, abi.RISCV64:
 		return p.parseInst_riscv(fn)
+	case abi.X64Unix, abi.X64Windows:
+		return p.parseInst_x64(fn)
 	default:
 		panic("unreachable")
 	}
