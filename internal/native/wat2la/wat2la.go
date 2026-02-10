@@ -61,7 +61,7 @@ func newWat2LAWorker(filename string, mWat *watast.Module, isZhLang bool) *wat2l
 		trace:    DebugMode,
 	}
 
-	if config.EnableTrace_wat2x64 {
+	if config.EnableTrace_wat2xx {
 		p.trace = true
 	}
 

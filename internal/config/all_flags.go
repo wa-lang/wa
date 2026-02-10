@@ -14,8 +14,7 @@ var (
 	EnableTrace_app      bool
 	EnableTrace_compiler bool
 	EnableTrace_loader   bool
-	EnableTrace_wat2x64  bool
-	EnableTrace_wat2la   bool
+	EnableTrace_wat2xx   bool
 )
 
 func SetDebugMode() {
@@ -42,10 +41,8 @@ func setEnableTrace(parten string) {
 		EnableTrace_compiler = true
 	case "loader":
 		EnableTrace_loader = true
-	case "wat2x64":
-		EnableTrace_wat2x64 = true
-	case "wat2la":
-		EnableTrace_wat2la = true
+	case "wat2xx":
+		EnableTrace_wat2xx = true
 	case "*":
 		EnableTrace_app = true
 		EnableTrace_compiler = true

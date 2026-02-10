@@ -51,7 +51,7 @@ func newWat2X64Worker(filename string, mWat *watast.Module, cpuType abi.CPUType)
 		trace:    DebugMode,
 	}
 
-	if config.EnableTrace_wat2x64 {
+	if config.EnableTrace_wat2xx {
 		p.trace = true
 	}
 

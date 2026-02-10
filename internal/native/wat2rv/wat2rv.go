@@ -55,13 +55,13 @@ type inlinedTypeIndex struct {
 func newWat2LAWorker(filename string, mWat *watast.Module, isZhLang bool) *wat2rvWorker {
 	p := &wat2rvWorker{
 		m:        mWat,
-		cpuType:  abi.LOONG64,
+		cpuType:  abi.RISCV64, // 暂时面向linux环境
 		isZhLang: isZhLang,
 		filename: filename,
 		trace:    DebugMode,
 	}
 
-	if config.EnableTrace_wat2x64 {
+	if config.EnableTrace_wat2xx {
 		p.trace = true
 	}
 
