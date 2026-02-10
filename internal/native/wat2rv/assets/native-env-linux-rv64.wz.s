@@ -1,6 +1,8 @@
 # Copyright (C) 2026 武汉凹语言科技有限公司
 # SPDX-License-Identifier: AGPL-3.0-或-later
 
+# TODO: 改为RISCV中文汇编
+
 声明 .Wa.Memory.addr
 
 # void _Wa_Import_syscall_write (int fd, uint32_t ptr, int32_t len)
