@@ -45,7 +45,7 @@ func (m *Module) Format(tab string, sb *strings.Builder) {
 
 // 初始化 Module
 func (m *Module) Init() {
-	m.Types.Init()
+	m.Types.Init(4)
 	m.Globals = make(map[interface{}]*Var)
 }
 

@@ -299,6 +299,9 @@ func exprContainsVar(expr Expr, v *Var) bool {
 	}
 
 	switch e := expr.(type) {
+	case *Const:
+		return false
+
 	case *Var:
 		return e == v
 
@@ -343,6 +346,9 @@ func exprContainsVar(expr Expr, v *Var) bool {
 		}
 
 	case *Retain:
+		return exprContainsVar(e.X, v)
+
+	case *DupRef:
 		return exprContainsVar(e.X, v)
 
 	default:

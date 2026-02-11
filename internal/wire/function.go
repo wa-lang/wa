@@ -251,13 +251,7 @@ func (f *Function) retRepalce(stmt Stmt) {
 	case *Return:
 		panic("Return can only be at the end of a block")
 
-	case *Var:
-	case *Load:
-	case *Store:
-	case *Br:
-	case *Unop:
-	case *Biop:
-	case *Call:
+	case *Var, *Load, *Store, *Br, *Unop, *Biop, *Call:
 		return
 
 	default:
@@ -296,14 +290,7 @@ func (f *Function) varRangeProc(b *Block, reserve map[*Var]bool) {
 			f.varRangeProc(s.Body, reserve)
 			f.varRangeProc(s.Post, reserve)
 
-		case *Load:
-		case *Store:
-		case *Br:
-		case *Return:
-		case *Unop:
-		case *Biop:
-		case *Retain:
-		case *Drop:
+		case *Load, *Store, *Br, *Return, *Unop, *Biop, *Retain, *Drop:
 			continue
 
 		default:
@@ -320,6 +307,7 @@ func blockImvRcProc(b *Block, inloop bool, d *Block) {
 }
 
 func stmtImvRcProc(s Stmt, inloop bool, d *Block) {
+	var post []Stmt
 	switch s := s.(type) {
 	case *Block:
 		if len(s.Stmts) == 0 {
@@ -338,15 +326,15 @@ func stmtImvRcProc(s Stmt, inloop bool, d *Block) {
 		panic("Load should not be here")
 
 	case *Store:
+		for i := range s.Loc {
+			s.Loc[i] = exprImvRcProc(s.Loc[i], inloop, true, d, &post)
+		}
+
 		for i := range s.Val {
-			s.Val[i] = exprImvRcProc(s.Val[i], inloop, false, d)
+			s.Val[i] = exprImvRcProc(s.Val[i], inloop, false, d, &post)
 			if s.Val[i].Type().hasRef() && !s.Val[i].retained() {
 				s.Val[i] = NewRetain(s.Val[i], s.Val[i].Pos())
 			}
-		}
-
-		for i := range s.Loc {
-			s.Loc[i] = exprImvRcProc(s.Loc[i], inloop, true, d)
 		}
 
 		d.emit(s)
@@ -358,13 +346,13 @@ func stmtImvRcProc(s Stmt, inloop bool, d *Block) {
 		panic("Return should not be here")
 
 	case *If:
-		cond := exprImvRcProc(s.Cond, inloop, true, d)
+		cond := exprImvRcProc(s.Cond, inloop, true, d, &post)
 		n := d.EmitIf(cond, s.pos)
 		blockImvRcProc(s.True, inloop, n.True)
 		blockImvRcProc(s.False, inloop, n.False)
 
 	case *Loop:
-		cond := exprImvRcProc(s.Cond, true, true, d)
+		cond := exprImvRcProc(s.Cond, true, true, d, &post)
 
 		l := d.EmitLoop(cond, s.Label, s.pos)
 		blockImvRcProc(s.Body, true, l.Body)
@@ -379,9 +367,14 @@ func stmtImvRcProc(s Stmt, inloop bool, d *Block) {
 	default:
 		panic(fmt.Sprintf("Todo: %s", s.String()))
 	}
+
+	for _, i := range post {
+		d.emit(i)
+	}
 }
 
-func exprImvRcProc(e Expr, inloop bool, replace bool, d *Block) (ret Expr) {
+func exprImvRcProc(e Expr, inloop bool, replace bool, d *Block, post *[]Stmt) (ret Expr) {
+	ret = e
 	if e == nil {
 		return
 	}
@@ -389,20 +382,19 @@ func exprImvRcProc(e Expr, inloop bool, replace bool, d *Block) (ret Expr) {
 		return
 	}
 
-	ret = e
 	switch e := e.(type) {
 	case *Var:
 		return
 
 	case *Load:
-		e.Loc = exprImvRcProc(e.Loc, inloop, true, d)
+		e.Loc = exprImvRcProc(e.Loc, inloop, true, d, post)
 
 	case *Unop:
-		e.X = exprImvRcProc(e.X, inloop, true, d)
+		e.X = exprImvRcProc(e.X, inloop, true, d, post)
 
 	case *Biop:
-		e.X = exprImvRcProc(e.X, inloop, true, d)
-		e.Y = exprImvRcProc(e.Y, inloop, true, d)
+		e.X = exprImvRcProc(e.X, inloop, true, d, post)
+		e.Y = exprImvRcProc(e.Y, inloop, true, d, post)
 
 	case *Call:
 		var call_common *CallCommon
@@ -415,18 +407,18 @@ func exprImvRcProc(e Expr, inloop bool, replace bool, d *Block) (ret Expr) {
 
 		case *MethodCall:
 			call_common = &call.CallCommon
-			call.Recv = exprImvRcProc(call.Recv, inloop, true, d)
+			call.Recv = exprImvRcProc(call.Recv, inloop, true, d, post)
 
 		case *InterfaceCall:
 			call_common = &call.CallCommon
-			call.Interface = exprImvRcProc(call.Interface, inloop, true, d)
+			call.Interface = exprImvRcProc(call.Interface, inloop, true, d, post)
 
 		default:
 			panic("Todo")
 		}
 
 		for i := range call_common.Args {
-			call_common.Args[i] = exprImvRcProc(call_common.Args[i], inloop, true, d)
+			call_common.Args[i] = exprImvRcProc(call_common.Args[i], inloop, true, d, post)
 		}
 
 	case Stmt:
@@ -434,15 +426,22 @@ func exprImvRcProc(e Expr, inloop bool, replace bool, d *Block) (ret Expr) {
 	}
 
 	if e.retained() && replace {
-		imv := &Var{}
-		imv.Stringer = imv
-		imv.name = fmt.Sprintf("$%d", d.imvCount)
+		dupref := NewDupRef(e, fmt.Sprintf("$%d", d.imvCount), e.Pos())
 		d.imvCount++
-		imv.dtype = e.Type()
+		ret = dupref
 
-		d.emit(imv)
-		d.EmitStore(imv, e, e.Pos())
-		ret = NewLoad(imv, e.Pos())
+		drop := NewDrop(dupref.Imv, e.Pos())
+		*post = append(*post, drop)
+
+		//imv := &Var{}
+		//imv.Stringer = imv
+		//imv.name = fmt.Sprintf("$%d", d.imvCount)
+		//d.imvCount++
+		//imv.dtype = e.Type()
+		//
+		//d.emit(imv)
+		//d.EmitStore(imv, e, e.Pos())
+		//ret = NewLoad(imv, e.Pos())
 	}
 
 	return

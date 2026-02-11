@@ -15,7 +15,6 @@ import (
 本文用于将类型转为 wire.Type
 **************************************/
 
-//
 func (b *Builder) BuildType(t types.Type) wire.Type {
 	if t, ok := t.(*types.Basic); ok {
 		switch t.Kind() {
@@ -56,11 +55,11 @@ func (b *Builder) BuildType(t types.Type) wire.Type {
 		case types.Float64, types.UntypedFloat:
 			return b.module.Types.F64
 
-		case types.Complex64:
-			return b.module.Types.Complex64
-
-		case types.Complex128:
-			return b.module.Types.Complex128
+		//case types.Complex64:
+		//	return b.module.Types.Complex64
+		//
+		//case types.Complex128:
+		//	return b.module.Types.Complex128
 
 		case types.Uint:
 			return b.module.Types.Uint

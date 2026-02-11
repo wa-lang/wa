@@ -583,3 +583,31 @@ func NewDrop(x *Var, pos int) *Drop {
 	v.pos = pos
 	return v
 }
+
+/**************************************
+DupRef: DupRef 指令，引用复制，DupRef 指令实现了 Expr，返回 X
+**************************************/
+
+type DupRef struct {
+	aStmt
+	X   Expr
+	Imv *Var
+}
+
+func (i *DupRef) Name() string   { return i.String() }
+func (i *DupRef) Type() Type     { return i.X.Type() }
+func (i *DupRef) retained() bool { panic("") }
+func (i *DupRef) String() string { return fmt.Sprintf("dupref(%s, %s)", i.X.Name(), i.Imv.Name()) }
+
+// 生成一条 DupRef 指令
+func NewDupRef(x Expr, imvName string, pos int) *DupRef {
+	v := &DupRef{X: x}
+	v.Stringer = v
+	v.pos = pos
+
+	imv := &Var{name: imvName}
+	imv.Stringer = imv
+	v.Imv = imv
+
+	return v
+}
