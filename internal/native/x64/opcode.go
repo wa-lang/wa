@@ -64,7 +64,7 @@ var x64ModeTable = [...]OpFormatType{
 	ASETNE:     OpFormatType_Any,
 	ASETNP:     OpFormatType_Any,
 	ASHL:       OpFormatType_Reg2Reg,
-	ASUB:       OpFormatType_Reg2Reg,
+	ASUB:       OpFormatType_Any2Any,
 	ASUBSD:     OpFormatType_Reg2Reg,
 	ASUBSS:     OpFormatType_Reg2Reg,
 	ASYSCALL:   OpFormatType_NoArgs,

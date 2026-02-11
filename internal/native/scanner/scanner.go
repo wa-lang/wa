@@ -741,6 +741,11 @@ scanAgain:
 		case ')', '）':
 			insertSemi = true
 			tok = token.RPAREN
+		case '[':
+			tok = token.LBRACK
+		case ']':
+			insertSemi = true
+			tok = token.RBRACK
 		case '#':
 			// #-style comment
 			if s.insertSemi && s.findLineEnd('#') {

@@ -99,7 +99,9 @@ func AsString(as abi.As, asName string) string {
 		return asName
 	}
 	if int(as) < len(_Anames) {
-		return _Anames[as]
+		if s := _Anames[as]; s != "" {
+			return s
+		}
 	}
 	return fmt.Sprintf("riscv.badas(%d)", int(as))
 }
@@ -109,12 +111,19 @@ func ZhAsString(as abi.As, asName string) string {
 		return asName
 	}
 	if int(as) < len(_ZhAnames) {
-		return _ZhAnames[as]
+		if s := _ZhAnames[as]; s != "" {
+			return s
+		}
 	}
 	return fmt.Sprintf("riscv.badas(%d)", int(as))
 }
 
 // 机器模式
 func (m Mode) String() string {
-	return _ModeNames[m]
+	if int(m) >= 0 && int(m) < len(_ModeNames) {
+		if s := _ModeNames[m]; s != "" {
+			return s
+		}
+	}
+	return fmt.Sprintf("riscv.badmod(%d)", int(m))
 }

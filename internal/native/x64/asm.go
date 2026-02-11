@@ -31,17 +31,6 @@ func AsmOperand(op *abi.X64Operand) string {
 	case abi.X64Operand_Imm:
 		return fmt.Sprintf("%d", op.Imm)
 	case abi.X64Operand_Mem:
-		// 处理指针前缀
-		ptrPrefix := ""
-		switch op.PtrTyp {
-		case abi.X64BytePtr:
-			ptrPrefix = "byte ptr "
-		case abi.X64DWordPtr:
-			ptrPrefix = "dword ptr "
-		case abi.X64QWordPtr:
-			ptrPrefix = "qword ptr "
-		}
-
 		// 处理地址部分 [base + symbol + offset]
 		addr := ""
 		if op.Reg != 0 {
@@ -59,7 +48,7 @@ func AsmOperand(op *abi.X64Operand) string {
 			}
 			addr += fmt.Sprintf("%d", op.Offset)
 		}
-		return fmt.Sprintf("%s[%s]", ptrPrefix, addr)
+		return fmt.Sprintf("%s[%s]", op.PtrTyp.String(), addr)
 	}
 	return ""
 }

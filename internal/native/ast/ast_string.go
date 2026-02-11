@@ -394,6 +394,15 @@ func (p *Instruction) tabString() string {
 			} else {
 				sb.WriteString(s)
 			}
+		case abi.X64Unix, abi.X64Windows:
+			s := x64.AsmSyntax(p.As, p.AsName, p.ArgX64)
+			if idx := strings.IndexByte(s, ' '); idx > 0 {
+				sb.WriteString(s[:idx])
+				sb.WriteByte('\t')
+				sb.WriteString(s[idx+1:])
+			} else {
+				sb.WriteString(s)
+			}
 		default:
 			panic("unreachable")
 		}
@@ -439,6 +448,15 @@ func (p *Instruction) tabZhString() string {
 				riscv.ZhRegAliasString,
 				riscv.AsString,
 			)
+			if idx := strings.IndexByte(s, ' '); idx > 0 {
+				sb.WriteString(s[:idx])
+				sb.WriteByte('\t')
+				sb.WriteString(s[idx+1:])
+			} else {
+				sb.WriteString(s)
+			}
+		case abi.X64Unix, abi.X64Windows:
+			s := x64.AsmSyntax(p.As, p.AsName, p.ArgX64)
 			if idx := strings.IndexByte(s, ' '); idx > 0 {
 				sb.WriteString(s[:idx])
 				sb.WriteByte('\t')

@@ -3,6 +3,10 @@
 
 package abi
 
+import (
+	"fmt"
+)
+
 // X64 操作数类型
 type X64OperandType int16
 
@@ -11,6 +15,21 @@ const (
 	X64Operand_Mem
 	X64Operand_Imm
 )
+
+var _X64OperandType_strings = []string{
+	X64Operand_Reg: "reg",
+	X64Operand_Mem: "mem",
+	X64Operand_Imm: "imm",
+}
+
+func (v X64OperandType) String() string {
+	if v >= 0 && int(v) < len(_X64OperandType_strings) {
+		if s := _X64OperandType_strings[v]; s != "" {
+			return s
+		}
+	}
+	return fmt.Sprintf("abi.X64OperandType(%d)", int(v))
+}
 
 // X64 指针类型
 type X64PtrType int64
@@ -22,6 +41,22 @@ const (
 	X64DWordPtr
 	X64QWordPtr
 )
+
+var _X64PtrType_strings = []string{
+	X64BytePtr:  "byte ptr",
+	X64WordPtr:  "word ptr",
+	X64DWordPtr: "dword ptr",
+	X64QWordPtr: "qword ptr",
+}
+
+func (v X64PtrType) String() string {
+	if v >= 0 && int(v) < len(_X64PtrType_strings) {
+		if s := _X64PtrType_strings[v]; s != "" {
+			return s
+		}
+	}
+	return fmt.Sprintf("abi.X64PtrType(%d)", int(v))
+}
 
 // X64 操作数
 type X64Operand struct {

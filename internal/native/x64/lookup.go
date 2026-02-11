@@ -29,16 +29,20 @@ func LookupRegister(regName string) (r abi.RegType, ok bool) {
 
 // 寄存器转字符串格式
 func RegString(r abi.RegType) string {
-	if REG_RAX <= r && r < REG_END {
-		return _Register[int(r)]
+	if int(r) < len(_Register) {
+		if s := _Register[int(r)]; s != "" {
+			return s
+		}
 	}
 	return fmt.Sprintf("x64.badreg(%d)", r)
 }
 
 // 寄存器转字符串格式(32位格式)
 func Reg32String(r abi.RegType) string {
-	if REG_RAX <= r && r < REG_END {
-		return _Register32[int(r)]
+	if int(r) < len(_Register32) {
+		if s := _Register32[int(r)]; s != "" {
+			return s
+		}
 	}
 	return fmt.Sprintf("x64.badreg(%d)", r)
 }
@@ -62,7 +66,9 @@ func AsString(as abi.As, asName string) string {
 		return asName
 	}
 	if int(as) < len(_Anames) {
-		return _Anames[as]
+		if s := _Anames[as]; s != "" {
+			return s
+		}
 	}
 	return fmt.Sprintf("riscv.badas(%d)", int(as))
 }

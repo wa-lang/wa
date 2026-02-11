@@ -5,7 +5,67 @@ package x64
 
 // 寄存器名字列表
 var _Register = []string{
-	// 通用寄存器
+	// 低8位寄存器
+	REG_AL:   "al",
+	REG_BL:   "bl",
+	REG_CL:   "cl",
+	REG_DL:   "dl",
+	REG_SIL:  "sil",
+	REG_DIL:  "dil",
+	REG_BPL:  "bpl",
+	REG_SPL:  "spl",
+	REG_R8B:  "r8b",
+	REG_R9B:  "r9b",
+	REG_R10B: "r10b",
+	REG_R11B: "r11b",
+	REG_R12B: "r12b",
+	REG_R13B: "r13b",
+	REG_R14B: "r14b",
+	REG_R15B: "r15b",
+
+	// 高8位寄存器
+	REG_AH: "ah",
+	REG_BH: "bh",
+	REG_CH: "ch",
+	REG_DH: "dh",
+
+	// 16位寄存器
+	REG_AX:   "ax",
+	REG_BX:   "bx",
+	REG_CX:   "cx",
+	REG_DX:   "dx",
+	REG_SI:   "si",
+	REG_DI:   "di",
+	REG_BP:   "bp",
+	REG_SP:   "sp",
+	REG_R8W:  "r8w",
+	REG_R9W:  "r9w",
+	REG_R10W: "r10w",
+	REG_R11W: "r11w",
+	REG_R12W: "r12w",
+	REG_R13W: "r13w",
+	REG_R14W: "r14w",
+	REG_R15W: "r15w",
+
+	// 32位寄存器
+	REG_EAX:  "eax",
+	REG_EBX:  "ebx",
+	REG_ECX:  "ecx",
+	REG_EDX:  "edx",
+	REG_ESI:  "esi",
+	REG_EDI:  "edi",
+	REG_EBP:  "ebp",
+	REG_ESP:  "esp",
+	REG_R8D:  "r8d",
+	REG_R9D:  "r9d",
+	REG_R10D: "r10d",
+	REG_R11D: "r11d",
+	REG_R12D: "r12d",
+	REG_R13D: "r13d",
+	REG_R14D: "r14d",
+	REG_R15D: "r15d",
+
+	// 64位寄存器
 	REG_RAX: "rax",
 	REG_RCX: "rcx",
 	REG_RDX: "rdx",
