@@ -88,8 +88,8 @@ func (p *wat2X64Worker) buildRuntimeImpl_panic(w io.Writer) error {
 
 	fmt.Fprintf(w, "    # runtime.write(stderr, panicMessage, size)\n")
 	fmt.Fprintf(w, "    mov  %s, 2 # stderr\n", regArg0)
-	fmt.Fprintf(w, "    lea  %s, [rip + %s]\n", regArg1, kRuntimePanicMessage)
-	fmt.Fprintf(w, "    mov  %s, [rip + %s] # size\n", regArg2, kRuntimePanicMessageLen)
+	fmt.Fprintf(w, "    lea  %s, qword ptr [rip + %s]\n", regArg1, kRuntimePanicMessage)
+	fmt.Fprintf(w, "    mov  %s, qword ptr [rip + %s] # size\n", regArg2, kRuntimePanicMessageLen)
 	fmt.Fprintf(w, "    call %s\n", kRuntimeWrite)
 	fmt.Fprintln(w)
 

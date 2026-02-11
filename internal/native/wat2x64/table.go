@@ -28,13 +28,13 @@ func (p *wat2X64Worker) buildTable(w io.Writer) error {
 
 	p.gasComment(w, "定义表格")
 	p.gasSectionDataStart(w)
-	p.gasGlobal(w, kTableAddrName)
-	p.gasGlobal(w, kTableSizeName)
-	p.gasGlobal(w, kTableMaxSizeName)
 
 	if p.m.Table == nil {
+		p.gasGlobal(w, kTableAddrName)
 		p.gasDefI64(w, kTableAddrName, 0)
+		p.gasGlobal(w, kTableSizeName)
 		p.gasDefI64(w, kTableSizeName, 1)
+		p.gasGlobal(w, kTableMaxSizeName)
 		p.gasDefI64(w, kTableMaxSizeName, 1)
 		fmt.Fprintln(w)
 		return nil
@@ -45,13 +45,19 @@ func (p *wat2X64Worker) buildTable(w io.Writer) error {
 	}
 
 	if max := p.m.Table.MaxSize; max > 0 {
+		p.gasGlobal(w, kTableAddrName)
 		p.gasDefI64(w, kTableAddrName, 0)
+		p.gasGlobal(w, kTableSizeName)
 		p.gasDefI64(w, kTableSizeName, int64(p.m.Table.Size))
+		p.gasGlobal(w, kTableMaxSizeName)
 		p.gasDefI64(w, kTableMaxSizeName, int64(p.m.Table.MaxSize))
 		fmt.Fprintln(w)
 	} else {
+		p.gasGlobal(w, kTableAddrName)
 		p.gasDefI64(w, kTableAddrName, 0)
+		p.gasGlobal(w, kTableSizeName)
 		p.gasDefI64(w, kTableSizeName, int64(p.m.Table.Size))
+		p.gasGlobal(w, kTableMaxSizeName)
 		p.gasDefI64(w, kTableMaxSizeName, int64(p.m.Table.Size))
 		fmt.Fprintln(w)
 	}

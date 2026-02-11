@@ -77,11 +77,17 @@ func (p *parser) parseInst_x64(fn *ast.Func) (inst *ast.Instruction) {
 		assert(inst.ArgX64.Dst.Kind == abi.X64Operand_Mem)
 		return
 	case x64.OpFormatType_Reg2Reg:
+		dstPos := p.pos
 		inst.ArgX64.Dst = p.parseX64Operand()
+		if expect, got := abi.X64Operand_Reg, inst.ArgX64.Dst.Kind; expect != got {
+			p.errorf(dstPos, "invalid kind: expect %v, got %v", expect, got)
+		}
 		p.acceptToken(token.COMMA)
+		srcPos := p.pos
 		inst.ArgX64.Src = p.parseX64Operand()
-		assert(inst.ArgX64.Src.Kind == abi.X64Operand_Reg)
-		assert(inst.ArgX64.Dst.Kind == abi.X64Operand_Reg)
+		if expect, got := abi.X64Operand_Reg, inst.ArgX64.Src.Kind; expect != got {
+			p.errorf(srcPos, "invalid kind: expect %v, got %v", expect, got)
+		}
 		return
 	case x64.OpFormatType_Mem2Reg:
 		inst.ArgX64.Dst = p.parseX64Operand()
@@ -180,7 +186,7 @@ func (p *parser) parseX64Operand() *abi.X64Operand {
 				}
 				op.Symbol = p.parseIdent()
 			default:
-				panic("unreachable")
+				p.errorf(p.pos, "invalid token: %v(%v)", p.tok, p.lit)
 			}
 		}
 		p.acceptToken(token.RBRACK)
@@ -189,6 +195,12 @@ func (p *parser) parseX64Operand() *abi.X64Operand {
 	case token.INT, token.CHAR:
 		op.Kind = abi.X64Operand_Imm
 		op.Imm = int64(p.parseIntLit())
+		return op
+
+	case token.SUB:
+		p.acceptToken(token.SUB)
+		op.Kind = abi.X64Operand_Imm
+		op.Imm = 0 - int64(p.parseIntLit())
 		return op
 
 	case token.IDENT:
@@ -202,7 +214,7 @@ func (p *parser) parseX64Operand() *abi.X64Operand {
 			op.Reg = p.parseRegister()
 			return op
 		}
-		p.errorf(p.pos, "unexpected x64 operand: %v", p.tok)
+		p.errorf(p.pos, "unexpected x64 operand: %v(%v)", p.tok, p.lit)
 		return nil
 	}
 }

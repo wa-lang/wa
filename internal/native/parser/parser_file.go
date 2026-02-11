@@ -357,7 +357,7 @@ func (p *parser) parseFile() {
 
 			case ".text", ".init", ".fini":
 				// 函数已经提前解析
-				panic("unreachable:" + p.fset.Position(p.pos).String())
+				p.errorf(p.pos, "unreachable")
 
 			default:
 				p.errorf(p.pos, "invalid section name: %s", p.gasSectionName)

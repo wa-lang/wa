@@ -116,14 +116,21 @@ const (
 	ACMP              // cmp
 	ACVTSI2SD         // cvtsi2sd
 	ACVTTSD2SI        // cvttsd2si
+	ADEC              // dec
 	ADIV              // div
 	ADIVSD            // divsd
 	ADIVSS            // divss
 	AIDIV             // idiv
 	AIMUL             // imul
+	AINC              // inc
 	AJA               // ja
+	AJB               // jb
 	AJE               // je
+	AJGE              // jge
 	AJMP              // jmp
+	AJNS              // jns
+	AJNZ              // jnz
+	AJZ               // jz
 	ALEA              // lea
 	AMOV              // mov
 	AMOVABS           // movabs
@@ -133,6 +140,7 @@ const (
 	AMOVZX            // movzx
 	AMULSD            // mulsd
 	AMULSS            // mulss
+	ANEG              // neg
 	ANOP              // nop
 	AOR               // or
 	APOP              // pop
@@ -151,10 +159,12 @@ const (
 	ASETNE            // setne
 	ASETNP            // setnp
 	ASHL              // shl
+	ASTD              // std
 	ASUB              // sub
 	ASUBSD            // subsd
 	ASUBSS            // subss
 	ASYSCALL          // syscall
+	ATEST             // test
 	AUCOMISD          // ucomisd
 	AXOR              // xor
 
