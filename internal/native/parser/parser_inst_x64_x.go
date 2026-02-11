@@ -14,7 +14,7 @@ func (p *parser) parseInst_x64(fn *ast.Func) (inst *ast.Instruction) {
 	assert(p.cpu == abi.X64Unix || p.cpu == abi.X64Windows)
 
 	inst = new(ast.Instruction)
-	inst.Arg = new(abi.AsArgument)
+	inst.ArgX64 = new(abi.X64Argument)
 
 	inst.CPU = p.cpu
 	inst.Doc = p.parseDocComment(&fn.Body.Comments, inst.Pos)
@@ -42,109 +42,112 @@ func (p *parser) parseInst_x64(fn *ast.Func) (inst *ast.Instruction) {
 	inst.AsName = p.lit
 	inst.As = p.parseAs()
 
-	switch inst.As {
+	switch x64.AsMode(inst.As) {
+	case abi.X64Mode_NoArgs:
+		return
+
+	case abi.X64Mode_Unary:
+		inst.ArgX64.Dst = p.parseX64Operand()
+		return
+
+	case abi.X64Mode_Binary:
+		inst.ArgX64.Dst = p.parseX64Operand()
+		p.acceptToken(token.COMMA)
+		inst.ArgX64.Src = p.parseX64Operand()
+		return
+
 	default:
 		p.errorf(p.pos, "%v is not x64 instruction", p.tok)
-	case x64.AADD:
-		panic("TODO")
-	case x64.AADDSD:
-		panic("TODO")
-	case x64.AADDSS:
-		panic("TODO")
-	case x64.AAND:
-		panic("TODO")
-	case x64.ACALL:
-		panic("TODO")
-	case x64.ACDQ:
-		panic("TODO")
-	case x64.ACMP:
-		panic("TODO")
-	case x64.ACVTSI2SD:
-		panic("TODO")
-	case x64.ACVTTSD2SI:
-		panic("TODO")
-	case x64.ADIV:
-		panic("TODO")
-	case x64.ADIVSD:
-		panic("TODO")
-	case x64.ADIVSS:
-		panic("TODO")
-	case x64.AIDIV:
-		panic("TODO")
-	case x64.AIMUL:
-		panic("TODO")
-	case x64.AJA:
-		panic("TODO")
-	case x64.AJE:
-		panic("TODO")
-	case x64.AJMP:
-		panic("TODO")
-	case x64.ALEA:
-		panic("TODO")
-	case x64.AMOV:
-		p.parseInst_x64_mov(fn, inst)
-		return
-	case x64.AMOVABS:
-		panic("TODO")
-	case x64.AMOVQ:
-		panic("TODO")
-	case x64.AMOVSD:
-		panic("TODO")
-	case x64.AMOVSS:
-		panic("TODO")
-	case x64.AMOVZX:
-		panic("TODO")
-	case x64.AMULSD:
-		panic("TODO")
-	case x64.AMULSS:
-		panic("TODO")
-	case x64.ANOP:
-		panic("TODO")
-	case x64.AOR:
-		panic("TODO")
-	case x64.APOP:
-		panic("TODO")
-	case x64.APUSH:
-		panic("TODO")
-	case x64.ARET:
-		panic("TODO")
-	case x64.ASAR:
-		panic("TODO")
-	case x64.ASETA:
-		panic("TODO")
-	case x64.ASETAE:
-		panic("TODO")
-	case x64.ASETB:
-		panic("TODO")
-	case x64.ASETBE:
-		panic("TODO")
-	case x64.ASETE:
-		panic("TODO")
-	case x64.ASETG:
-		panic("TODO")
-	case x64.ASETGE:
-		panic("TODO")
-	case x64.ASETL:
-		panic("TODO")
-	case x64.ASETLE:
-		panic("TODO")
-	case x64.ASETNE:
-		panic("TODO")
-	case x64.ASETNP:
-		panic("TODO")
-	case x64.ASHL:
-		panic("TODO")
-	case x64.ASUB:
-		panic("TODO")
-	case x64.ASUBSD:
-		panic("TODO")
-	case x64.ASUBSS:
-		panic("TODO")
-	case x64.AUCOMISD:
-		panic("TODO")
-	case x64.AXOR:
-		panic("TODO")
 	}
 
 	panic("unreachable")
+}
+
+// mov eax, 1
+// mov rbp, rsp
+// mov [rip + .Wa.Memory.addr], rax
+// mov r8b, [rsi]
+// mov [rdi], r8b
+// mov byte ptr [rcx], '-'
+// mov rdi, qword ptr [rbp-8] # arg 0
+// mov qword ptr [rbp-8], rax
+
+func (p *parser) parseX64Operand() *abi.X64Operand {
+	op := &abi.X64Operand{}
+
+	// 检查是否有内存大小前缀 (byte ptr, dword ptr, etc.)
+	if ptrType := p.tryParseX64PtrType(p.lit); ptrType != 0 {
+		op.PtrTyp = ptrType
+		p.next()
+		p.acceptIdentToken(token.IDENT, "ptr")
+	}
+
+	switch p.tok {
+	case token.LBRACK:
+		// 处理内存寻址 [rip + symbol] 或 [reg + offset]
+		op.Kind = abi.X64X64Operand_Mem
+		p.next()
+
+		// 处理首个组件(寄存器/符号/数字)
+		if p.tok.IsRegister() {
+			op.Reg = p.parseRegister()
+		} else if p.tok == token.IDENT {
+			op.Symbol = p.parseIdent()
+		} else if p.tok == token.INT {
+			op.Offset = int64(p.parseIntLit())
+		}
+
+		// 解析偏移量或符号: + symbol / - 8
+		for p.tok == token.ADD || p.tok == token.SUB {
+			sign := int64(1)
+			if p.tok == token.SUB {
+				sign = -1
+			}
+			p.next()
+
+			switch p.tok {
+			case token.INT:
+				op.Offset += int64(p.parseIntLit()) * sign
+			case token.IDENT:
+				op.Symbol = p.parseIdent()
+			default:
+				panic("unreachable")
+			}
+		}
+		p.acceptToken(token.RBRACK)
+		return op
+
+	case token.INT, token.CHAR:
+		op.Kind = abi.X64X64Operand_Imm
+		op.Imm = int64(p.parseIntLit())
+		return op
+
+	case token.IDENT:
+		op.Kind = abi.X64X64Operand_Imm
+		op.Symbol = p.parseIdent()
+		return op
+
+	default:
+		if p.tok.IsRegister() {
+			op.Kind = abi.X64X64Operand_Reg
+			op.Reg = p.parseRegister()
+			return op
+		}
+		p.errorf(p.pos, "unexpected x64 operand: %v", p.tok)
+		return nil
+	}
+}
+
+func (p *parser) tryParseX64PtrType(lit string) abi.X64PtrType {
+	switch lit {
+	case "byte":
+		return abi.X64BytePtr
+	case "word":
+		return abi.X64WordPtr
+	case "dword":
+		return abi.X64DWordPtr
+	case "qword":
+		return abi.X64QWordPtr
+	}
+	return 0
 }

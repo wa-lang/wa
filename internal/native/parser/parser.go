@@ -221,6 +221,15 @@ func (p *parser) acceptToken(expectToken token.Token, moreExpectTokens ...token.
 	return 0
 }
 
+func (p *parser) acceptIdentToken(expectToken token.Token, ident string) token.Token {
+	if tok := p.tok; tok == expectToken && p.lit == ident {
+		p.next()
+		return tok
+	}
+	p.errorf(p.pos, "expect %v(%s), got %v(%s)", expectToken, ident, p.tok, p.lit)
+	return 0
+}
+
 // 解析标别符
 func (p *parser) parseIdent() string {
 	s := p.lit
@@ -231,6 +240,12 @@ func (p *parser) parseIdent() string {
 // 解析整数常量面值解析整数常量面值
 func (p *parser) parseIntLit() int {
 	pos, lit := p.pos, p.lit
+
+	if p.tok == token.CHAR {
+		p.acceptToken(token.CHAR)
+		return int(lit[1]) // '?'
+	}
+
 	p.acceptToken(token.INT)
 
 	if len(lit) > 2 && lit[0] == '0' && (lit[1] == 'x' || lit[1] == 'X') {

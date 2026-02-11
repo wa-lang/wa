@@ -88,6 +88,10 @@ const (
 	ASUB              // sub
 	ASUBSD            // subsd
 	ASUBSS            // subss
+	ASYSCALL          // syscall
 	AUCOMISD          // ucomisd
 	AXOR              // xor
+
+	// End marker
+	ALAST
 )

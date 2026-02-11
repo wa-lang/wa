@@ -66,3 +66,10 @@ func AsString(as abi.As, asName string) string {
 	}
 	return fmt.Sprintf("riscv.badas(%d)", int(as))
 }
+
+func AsMode(as abi.As) abi.X64Mode {
+	if int(as) < len(x64ModeTable) {
+		return x64ModeTable[as]
+	}
+	return 0
+}
