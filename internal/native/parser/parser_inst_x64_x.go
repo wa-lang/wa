@@ -42,18 +42,77 @@ func (p *parser) parseInst_x64(fn *ast.Func) (inst *ast.Instruction) {
 	inst.AsName = p.lit
 	inst.As = p.parseAs()
 
-	switch x64.AsMode(inst.As) {
-	case abi.X64Mode_NoArgs:
+	switch x64.AsOpFormatType(inst.As) {
+	case x64.OpFormatType_NoArgs:
 		return
 
-	case abi.X64Mode_Unary:
+	case x64.OpFormatType_Imm:
+		inst.ArgX64.Dst = p.parseX64Operand()
+		assert(inst.ArgX64.Dst.Kind == abi.X64Operand_Imm)
+		return
+	case x64.OpFormatType_Reg:
+		inst.ArgX64.Dst = p.parseX64Operand()
+		assert(inst.ArgX64.Dst.Kind == abi.X64Operand_Reg)
+		return
+	case x64.OpFormatType_Mem:
+		inst.ArgX64.Dst = p.parseX64Operand()
+		assert(inst.ArgX64.Dst.Kind == abi.X64Operand_Mem)
+		return
+	case x64.OpFormatType_Any:
 		inst.ArgX64.Dst = p.parseX64Operand()
 		return
 
-	case abi.X64Mode_Binary:
+	case x64.OpFormatType_Imm2Reg:
+		inst.ArgX64.Dst = p.parseX64Operand()
+		assert(inst.ArgX64.Dst.Kind == abi.X64Operand_Imm)
+		p.acceptToken(token.COMMA)
+		inst.ArgX64.Src = p.parseX64Operand()
+		assert(inst.ArgX64.Src.Kind == abi.X64Operand_Reg)
+		return
+	case x64.OpFormatType_Imm2Mem:
+		inst.ArgX64.Dst = p.parseX64Operand()
+		assert(inst.ArgX64.Dst.Kind == abi.X64Operand_Imm)
+		p.acceptToken(token.COMMA)
+		inst.ArgX64.Src = p.parseX64Operand()
+		assert(inst.ArgX64.Src.Kind == abi.X64Operand_Mem)
+		return
+	case x64.OpFormatType_Reg2Reg:
+		inst.ArgX64.Dst = p.parseX64Operand()
+		assert(inst.ArgX64.Dst.Kind == abi.X64Operand_Reg)
+		p.acceptToken(token.COMMA)
+		inst.ArgX64.Src = p.parseX64Operand()
+		assert(inst.ArgX64.Src.Kind == abi.X64Operand_Reg)
+		return
+	case x64.OpFormatType_Mem2Reg:
+		inst.ArgX64.Dst = p.parseX64Operand()
+		assert(inst.ArgX64.Dst.Kind == abi.X64Operand_Mem)
+		p.acceptToken(token.COMMA)
+		inst.ArgX64.Src = p.parseX64Operand()
+		assert(inst.ArgX64.Src.Kind == abi.X64Operand_Reg)
+		return
+	case x64.OpFormatType_Reg2Mem:
+		inst.ArgX64.Dst = p.parseX64Operand()
+		assert(inst.ArgX64.Dst.Kind == abi.X64Operand_Reg)
+		p.acceptToken(token.COMMA)
+		inst.ArgX64.Src = p.parseX64Operand()
+		assert(inst.ArgX64.Src.Kind == abi.X64Operand_Mem)
+		return
+
+	case x64.OpFormatType_Any2Any:
 		inst.ArgX64.Dst = p.parseX64Operand()
 		p.acceptToken(token.COMMA)
 		inst.ArgX64.Src = p.parseX64Operand()
+		switch inst.ArgX64.Src.Kind {
+		case abi.X64Operand_Imm:
+			dstKind := inst.ArgX64.Dst.Kind
+			assert(dstKind == abi.X64Operand_Reg || dstKind == abi.X64Operand_Mem)
+		case abi.X64Operand_Reg:
+			dstKind := inst.ArgX64.Dst.Kind
+			assert(dstKind == abi.X64Operand_Reg || dstKind == abi.X64Operand_Mem)
+		case abi.X64Operand_Mem:
+			dstKind := inst.ArgX64.Dst.Kind
+			assert(dstKind == abi.X64Operand_Reg)
+		}
 		return
 
 	default:
@@ -85,7 +144,7 @@ func (p *parser) parseX64Operand() *abi.X64Operand {
 	switch p.tok {
 	case token.LBRACK:
 		// 处理内存寻址 [rip + symbol] 或 [reg + offset]
-		op.Kind = abi.X64X64Operand_Mem
+		op.Kind = abi.X64Operand_Mem
 		p.next()
 
 		// 处理首个组件(寄存器/符号/数字)
@@ -118,18 +177,18 @@ func (p *parser) parseX64Operand() *abi.X64Operand {
 		return op
 
 	case token.INT, token.CHAR:
-		op.Kind = abi.X64X64Operand_Imm
+		op.Kind = abi.X64Operand_Imm
 		op.Imm = int64(p.parseIntLit())
 		return op
 
 	case token.IDENT:
-		op.Kind = abi.X64X64Operand_Imm
+		op.Kind = abi.X64Operand_Imm
 		op.Symbol = p.parseIdent()
 		return op
 
 	default:
 		if p.tok.IsRegister() {
-			op.Kind = abi.X64X64Operand_Reg
+			op.Kind = abi.X64Operand_Reg
 			op.Reg = p.parseRegister()
 			return op
 		}

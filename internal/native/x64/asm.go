@@ -26,11 +26,11 @@ func AsmSyntax(as abi.As, asName string, arg *abi.X64Argument) string {
 // 格式化操作数
 func AsmOperand(op *abi.X64Operand) string {
 	switch op.Kind {
-	case abi.X64X64Operand_Reg:
+	case abi.X64Operand_Reg:
 		return RegString(op.Reg)
-	case abi.X64X64Operand_Imm:
+	case abi.X64Operand_Imm:
 		return fmt.Sprintf("%d", op.Imm)
-	case abi.X64X64Operand_Mem:
+	case abi.X64Operand_Mem:
 		// 处理指针前缀
 		ptrPrefix := ""
 		switch op.PtrTyp {

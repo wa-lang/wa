@@ -3,22 +3,13 @@
 
 package abi
 
-// X64 指令类型
-type X64Mode int
-
-const (
-	X64Mode_NoArgs X64Mode = iota + 1 // 无参数: ret, nop, cdq
-	X64Mode_Unary                     // 一元: push, pop, jmp, call, setcc
-	X64Mode_Binary                    // 二元: mov, add, sub, lea, movzx
-)
-
 // X64 操作数类型
 type X64OperandType int16
 
 const (
-	X64X64Operand_Reg X64OperandType = iota + 1
-	X64X64Operand_Mem
-	X64X64Operand_Imm
+	X64Operand_Reg X64OperandType = iota + 1
+	X64Operand_Mem
+	X64Operand_Imm
 )
 
 // X64 指针类型

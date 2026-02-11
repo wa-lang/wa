@@ -3,10 +3,6 @@
 
 package x64
 
-import (
-	"wa-lang.org/wa/internal/native/abi"
-)
-
 // 寄存器名字列表
 var _Register = []string{
 	// 通用寄存器
@@ -122,61 +118,4 @@ var _Anames = []string{
 	ASYSCALL:   "syscall",
 	AUCOMISD:   "ucomisd",
 	AXOR:       "xor",
-}
-
-// 假设 AMAX 是指令枚举的最大值
-// 假设 AMAX 是指令枚举的最大值
-var x64ModeTable = [...]abi.X64Mode{
-	AADD:       abi.X64Mode_Binary,
-	AADDSD:     abi.X64Mode_Binary,
-	AADDSS:     abi.X64Mode_Binary,
-	AAND:       abi.X64Mode_Binary,
-	ACDQ:       abi.X64Mode_NoArgs,
-	ACALL:      abi.X64Mode_Unary,
-	ACMP:       abi.X64Mode_Binary,
-	ACVTSI2SD:  abi.X64Mode_Binary,
-	ACVTTSD2SI: abi.X64Mode_Binary,
-	ADIV:       abi.X64Mode_Unary,
-	ADIVSD:     abi.X64Mode_Binary,
-	ADIVSS:     abi.X64Mode_Binary,
-	AIDIV:      abi.X64Mode_Unary,
-	AIMUL:      abi.X64Mode_Binary,
-	AJA:        abi.X64Mode_Unary,
-	AJE:        abi.X64Mode_Unary,
-	AJMP:       abi.X64Mode_Unary,
-	ALEA:       abi.X64Mode_Binary,
-	AMOV:       abi.X64Mode_Binary,
-	AMOVABS:    abi.X64Mode_Binary,
-	AMOVQ:      abi.X64Mode_Binary,
-	AMOVSD:     abi.X64Mode_Binary,
-	AMOVSS:     abi.X64Mode_Binary,
-	AMOVZX:     abi.X64Mode_Binary,
-	AMULSD:     abi.X64Mode_Binary,
-	AMULSS:     abi.X64Mode_Binary,
-	ANOP:       abi.X64Mode_NoArgs,
-	AOR:        abi.X64Mode_Binary,
-	APOP:       abi.X64Mode_Unary,
-	APUSH:      abi.X64Mode_Unary,
-	ARET:       abi.X64Mode_NoArgs,
-	ASAR:       abi.X64Mode_Binary,
-	ASETA:      abi.X64Mode_Unary,
-	ASETAE:     abi.X64Mode_Unary,
-	ASETB:      abi.X64Mode_Unary,
-	ASETBE:     abi.X64Mode_Unary,
-	ASETE:      abi.X64Mode_Unary,
-	ASETG:      abi.X64Mode_Unary,
-	ASETGE:     abi.X64Mode_Unary,
-	ASETL:      abi.X64Mode_Unary,
-	ASETLE:     abi.X64Mode_Unary,
-	ASETNE:     abi.X64Mode_Unary,
-	ASETNP:     abi.X64Mode_Unary,
-	ASHL:       abi.X64Mode_Binary,
-	ASUB:       abi.X64Mode_Binary,
-	ASUBSD:     abi.X64Mode_Binary,
-	ASUBSS:     abi.X64Mode_Binary,
-	ASYSCALL:   abi.X64Mode_NoArgs,
-	AUCOMISD:   abi.X64Mode_Binary,
-	AXOR:       abi.X64Mode_Binary,
-
-	ALAST: 0,
 }
