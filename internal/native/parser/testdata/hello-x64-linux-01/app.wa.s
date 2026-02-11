@@ -10,18 +10,20 @@ hello.len: .quad 14
 
 # int _Wa_Runtime_write(int fd, void *buf, int count)
 .section .text
-.global .Wa.Runtime.write
+.globl .Wa.Runtime.write
 .Wa.Runtime.write:
     mov eax, 1
     syscall
     ret
 
+
 # void _Wa_Runtime_exit(int status)
 .section .text
-.global .Wa.Runtime.exit
+.globl .Wa.Runtime.exit
 .Wa.Runtime.exit:
     mov eax, 60
     syscall
+
 
 # 汇编程序入口函数
 .section .text
@@ -33,8 +35,8 @@ _start:
 
     # runtime.write(stdout, msg, len)
     mov  rdi, 1 # arg.0: stdout
-    lea  rsi, [rip + hello.msg]
-    mov  rdx, [rip + hello.len]
+    lea  rsi, qword ptr [rip + hello.msg]
+    mov  rdx, qword ptr [rip + hello.len]
     call .Wa.Runtime.write
 
     # runtime.exit(0)
@@ -45,3 +47,4 @@ _start:
     mov rsp, rbp
     pop rbp
     ret
+

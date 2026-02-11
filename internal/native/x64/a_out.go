@@ -9,6 +9,9 @@ const (
 	// 通用寄存器
 	_ abi.RegType = iota // 0 是无效的编号
 
+	// 指针计数器
+	REG_RIP
+
 	// 低8位寄存器
 	REG_AL
 	REG_BL

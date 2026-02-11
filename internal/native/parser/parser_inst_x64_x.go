@@ -143,6 +143,10 @@ func (p *parser) parseX64Operand() *abi.X64Operand {
 
 	switch p.tok {
 	case token.LBRACK:
+		if op.PtrTyp == 0 {
+			p.errorf(p.pos, "pointer type missing")
+		}
+
 		// 处理内存寻址 [rip + symbol] 或 [reg + offset]
 		op.Kind = abi.X64Operand_Mem
 		p.next()
@@ -166,8 +170,14 @@ func (p *parser) parseX64Operand() *abi.X64Operand {
 
 			switch p.tok {
 			case token.INT:
-				op.Offset += int64(p.parseIntLit()) * sign
+				if op.Offset != 0 {
+					p.errorf(p.pos, "offset(%d) exists", op.Offset)
+				}
+				op.Offset = int64(p.parseIntLit()) * sign
 			case token.IDENT:
+				if op.Symbol != "" {
+					p.errorf(p.pos, "symbol(%s) exists", op.Symbol)
+				}
 				op.Symbol = p.parseIdent()
 			default:
 				panic("unreachable")

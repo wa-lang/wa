@@ -8,6 +8,8 @@ dev:
 	./a.out
 
 ast:
-	$(WA) ast -arch=x64 app.wa.s
+	$(WA) ast -arch=x64 app.wa.s > a.out1.s
+	gcc -nostdlib -static -z noexecstack a.out1.s
+	./a.out
 
 clean:

@@ -5,6 +5,9 @@ package x64
 
 // 寄存器名字列表
 var _Register = []string{
+	// 指针计数器
+	REG_RIP: "rip",
+
 	// 低8位寄存器
 	REG_AL:   "al",
 	REG_BL:   "bl",

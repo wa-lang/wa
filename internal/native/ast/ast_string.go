@@ -26,6 +26,9 @@ func (p *File) String() string {
 	}
 
 	if p.IntelSyntax != nil {
+		if p.Doc != nil {
+			sb.WriteString("\n")
+		}
 		sb.WriteString(p.IntelSyntax.String())
 		sb.WriteString("\n")
 	}
