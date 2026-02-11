@@ -130,14 +130,15 @@ type Local struct {
 // 机器指令
 // 函数体内的独立注释作为空指令记录
 type Instruction struct {
-	CPU     abi.CPUType     // CPU类型, 用于格式化
-	Pos     token.Pos       // 位置
-	Doc     *CommentGroup   // 关联文档
-	Label   string          // 指令对应的 Label, 可以只是 Label
-	As      abi.As          // 汇编指令
-	AsName  string          // 指令的名字(支持多语言)
-	Arg     *abi.AsArgument // 指令参数
-	Comment *Comment        // 尾部单行注释
+	CPU     abi.CPUType      // CPU类型, 用于格式化
+	Pos     token.Pos        // 位置
+	Doc     *CommentGroup    // 关联文档
+	Label   string           // 指令对应的 Label, 可以只是 Label
+	As      abi.As           // 汇编指令
+	AsName  string           // 指令的名字(支持多语言)
+	Arg     *abi.AsArgument  // 指令参数
+	ArgX64  *abi.X64Argument // X64 指令参数
+	Comment *Comment         // 尾部单行注释
 }
 
 // 空行, 用于指令间分隔打印

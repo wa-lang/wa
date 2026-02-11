@@ -304,7 +304,7 @@ func (p *Instruction) String() string {
 				riscv.AsString,
 			))
 		case abi.X64Unix, abi.X64Windows:
-			sb.WriteString(x64.AsmSyntax(p.As, p.AsName, p.Arg))
+			sb.WriteString(x64.AsmSyntax(p.As, p.AsName, p.ArgX64))
 		default:
 			panic("unreachable")
 		}

@@ -82,7 +82,8 @@ func (p *parser) parseInst_x64(fn *ast.Func) (inst *ast.Instruction) {
 	case x64.ALEA:
 		panic("TODO")
 	case x64.AMOV:
-		panic("TODO")
+		p.parseInst_x64_mov(fn, inst)
+		return
 	case x64.AMOVABS:
 		panic("TODO")
 	case x64.AMOVQ:
