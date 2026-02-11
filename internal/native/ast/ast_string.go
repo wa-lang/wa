@@ -13,6 +13,7 @@ import (
 	"wa-lang.org/wa/internal/native/loong64"
 	"wa-lang.org/wa/internal/native/riscv"
 	"wa-lang.org/wa/internal/native/token"
+	"wa-lang.org/wa/internal/native/x64"
 	"wa-lang.org/wa/internal/printer/tabwriter"
 )
 
@@ -302,6 +303,8 @@ func (p *Instruction) String() string {
 				riscv.RegAliasString,
 				riscv.AsString,
 			))
+		case abi.X64Unix, abi.X64Windows:
+			sb.WriteString(x64.AsmSyntax(p.As, p.AsName, p.Arg))
 		default:
 			panic("unreachable")
 		}

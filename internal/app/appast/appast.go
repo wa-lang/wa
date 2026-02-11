@@ -25,7 +25,7 @@ var CmdAst = &cli.Command{
 	Flags: []cli.Flag{
 		&cli.StringFlag{
 			Name:  "arch",
-			Usage: "set target architecture (loong64|riscv32|riscv64)",
+			Usage: "set target architecture (loong64|riscv32|riscv64|x64)",
 			Value: "loong64",
 		},
 	},

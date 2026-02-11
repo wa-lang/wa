@@ -9,11 +9,22 @@ import (
 )
 
 func ParseCPUType(name string) CPUType {
+	if name == "" {
+		return CPU_Nil
+	}
 	for i, s := range _CPUType_strings {
 		if s != "" && strings.EqualFold(s, name) {
 			return CPUType(i)
 		}
 	}
+
+	// x64 别名补充检查
+	for _, s := range _CPUType_x64Unix_strings {
+		if s != "" && strings.EqualFold(s, name) {
+			return X64Unix
+		}
+	}
+
 	return CPU_Nil
 }
 

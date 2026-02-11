@@ -13,6 +13,7 @@ import (
 	"wa-lang.org/wa/internal/native/riscv"
 	"wa-lang.org/wa/internal/native/scanner"
 	"wa-lang.org/wa/internal/native/token"
+	"wa-lang.org/wa/internal/native/x64"
 )
 
 type parser struct {
@@ -87,6 +88,20 @@ func newParser(cpu abi.CPUType, fset *token.FileSet, filename string, src []byte
 				// 将原始的指令映射到 token.Token 编码
 				if as, ok := riscv.LookupAs(ident); ok {
 					return token.A_RISCV_BEGIN + token.Token(as)
+				}
+				return token.NONE
+			},
+		)
+	case abi.X64Unix, abi.X64Windows:
+		p.scanner = scanner.NewScanner(
+			func(ident string) token.Token {
+				// 将原始的寄存器映射到 token.Token 编码
+				if reg, ok := x64.LookupRegister(ident); ok {
+					return token.REG_X64_BEGIN + token.Token(reg)
+				}
+				// 将原始的指令映射到 token.Token 编码
+				if as, ok := x64.LookupAs(ident); ok {
+					return token.A_X64_BEGIN + token.Token(as)
 				}
 				return token.NONE
 			},

@@ -18,8 +18,8 @@ const (
 	LOONG64
 	RISCV64
 	RISCV32
-	X64Windows // Windows ABI
 	X64Unix    // UNIX System V ABI
+	X64Windows // Windows ABI
 	ARM64      // 邪恶之臂牛屎
 	CPU_Max
 )
@@ -28,9 +28,13 @@ var _CPUType_strings = []string{
 	LOONG64:    "loong64",
 	RISCV64:    "riscv64",
 	RISCV32:    "riscv32",
+	X64Unix:    "X64-Unix", // "x64"
 	X64Windows: "x64-Windows",
-	X64Unix:    "X64-Unix",
 	ARM64:      "arm64",
+}
+
+var _CPUType_x64Unix_strings = []string{
+	"x64", "amd64",
 }
 
 // 操作系统
