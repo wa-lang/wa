@@ -136,12 +136,12 @@ func (p *wat2X64Worker) buildFunc_body(w io.Writer, fn *ast.Func) error {
 			// 将寄存器中的参数存储到对于的栈帧中
 			switch fn.Type.Params[i].Type {
 			case token.I32:
-				fmt.Fprintf(&bufHeader, "    mov [rbp%+d], %v # save arg.%d\n",
+				fmt.Fprintf(&bufHeader, "    mov dword ptr [rbp%+d], %v # save arg.%d\n",
 					arg.RBPOff, x64.Reg32String(arg.Reg),
 					i,
 				)
 			case token.I64:
-				fmt.Fprintf(&bufHeader, "    mov [rbp%+d], %v # save arg.%d\n",
+				fmt.Fprintf(&bufHeader, "    mov qword ptr [rbp%+d], %v # save arg.%d\n",
 					arg.RBPOff, x64.RegString(arg.Reg),
 					i,
 				)
@@ -209,7 +209,7 @@ func (p *wat2X64Worker) buildFunc_body(w io.Writer, fn *ast.Func) error {
 			sp := p.fnWasmR0Base - 8*stk.Pop(fn.Type.Results[i]) - 8
 			switch fn.Type.Results[i] {
 			case token.I32:
-				fmt.Fprintf(&bufReturn, "    mov eax,  dword ptr [rbp%+d]\n", sp)
+				fmt.Fprintf(&bufReturn, "    mov eax, dword ptr [rbp%+d]\n", sp)
 				fmt.Fprintf(&bufReturn, "    mov dword ptr [rbp%+d], eax # ret.%d\n", reti.RBPOff, i)
 			case token.I64:
 				fmt.Fprintf(&bufReturn, "    mov rax, qword ptr [rbp%+d]\n", sp)
@@ -247,13 +247,13 @@ func (p *wat2X64Worker) buildFunc_body(w io.Writer, fn *ast.Func) error {
 				}
 				switch fn.Type.Results[i] {
 				case token.I32:
-					fmt.Fprintf(&bufReturn, "    mov %v, [rbp%+d] # ret.%d\n",
+					fmt.Fprintf(&bufReturn, "    mov %v, dword ptr [rbp%+d] # ret.%d\n",
 						x64.Reg32String(ret.Reg),
 						fnNative.Type.Return[i].RBPOff,
 						i,
 					)
 				case token.I64:
-					fmt.Fprintf(&bufReturn, "    mov %v, [rbp%+d] # ret.%d\n",
+					fmt.Fprintf(&bufReturn, "    mov %v, qword ptr [rbp%+d] # ret.%d\n",
 						x64.RegString(ret.Reg),
 						fnNative.Type.Return[i].RBPOff,
 						i,
@@ -478,7 +478,7 @@ func (p *wat2X64Worker) buildFunc_ins(
 		sp0 := stk.Pop(token.I32)
 
 		fmt.Fprintf(w, "    # if.begin(name=%s, suffix=%s)\n", labelName, labelSuffix)
-		fmt.Fprintf(w, "    mov eax, [rbp%+d]\n", p.fnWasmR0Base-sp0*8-8)
+		fmt.Fprintf(w, "    mov eax, dword ptr [rbp%+d]\n", p.fnWasmR0Base-sp0*8-8)
 		fmt.Fprintf(w, "    cmp eax, 0\n")
 		if len(i.Else) > 0 {
 			fmt.Fprintf(w, "    je  %s\n", labelIfElseId)
