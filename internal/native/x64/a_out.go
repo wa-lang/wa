@@ -115,6 +115,7 @@ const (
 	ACDQ              // cdq
 	ACMP              // cmp
 	ACVTSI2SD         // cvtsi2sd
+	ACVTSS2SD         // cvtss2sd
 	ACVTTSD2SI        // cvttsd2si
 	ADEC              // dec
 	ADIV              // div
@@ -137,6 +138,7 @@ const (
 	AMOVQ             // movq
 	AMOVSD            // movsd
 	AMOVSS            // movss
+	AMOVSXD           // movsxd
 	AMOVZX            // movzx
 	AMULSD            // mulsd
 	AMULSS            // mulss

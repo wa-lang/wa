@@ -249,7 +249,8 @@ func (p *parser) parseIntLit() int {
 	p.acceptToken(token.INT)
 
 	if len(lit) > 2 && lit[0] == '0' && (lit[1] == 'x' || lit[1] == 'X') {
-		n, err := strconv.ParseInt(lit[2:], 16, 64)
+		// x64 平台可能产生 uint64 类型的常量
+		n, err := strconv.ParseUint(lit[2:], 16, 64)
 		if err != nil {
 			p.errorf(pos, "expect int, got %q", lit)
 		}
