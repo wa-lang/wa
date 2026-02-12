@@ -1115,15 +1115,20 @@ func (p *wat2X64Worker) buildFunc_ins(
 		const r10 = "r10"
 		const r10d = "r10d"
 		p.gasCommentInFunc(w, fmt.Sprintf("%s = table[?]", r10))
-		fmt.Fprintf(w, "    mov  rax, [rip+%s]\n", kTableAddrName)
-		fmt.Fprintf(w, "    mov  %s, [rbp%+d] # i32\n", r10d, sp0)
-		fmt.Fprintf(w, "    mov  %s, [rax+%s*8]\n", r10, r10)
+		fmt.Fprintf(w, "    mov  rax, qword ptr [rip+%s]\n", kTableAddrName)
+		fmt.Fprintf(w, "    mov  %s, dword ptr [rbp%+d] # i32\n", r10d, sp0)
+		fmt.Fprintf(w, "    shl  %s, 3\n", r10)
+		fmt.Fprintf(w, "    add  %s, rax\n", r10)
+		fmt.Fprintf(w, "    mov  %s, qword ptr [%s]\n", r10, r10)
 		fmt.Fprintln(w)
 
 		const r11 = "r11"
 		p.gasCommentInFunc(w, fmt.Sprintf("%s = %s[%s]", r11, kTableFuncIndexListName, r10))
-		fmt.Fprintf(w, "    lea  rax, [rip+%s]\n", kTableFuncIndexListName)
-		fmt.Fprintf(w, "    mov  %s, [rax+%s*8]\n", r11, r10)
+		fmt.Fprintf(w, "    lea  rax, qword ptr [rip+%s]\n", kTableFuncIndexListName)
+		fmt.Fprintf(w, "    mov  %s, %s\n", r11, r10)
+		fmt.Fprintf(w, "    shl  %s, 3\n", r11)
+		fmt.Fprintf(w, "    add  %s, rax\n", r11)
+		fmt.Fprintf(w, "    mov  %s, qword ptr [%s]\n", r11, r11)
 		fmt.Fprintln(w)
 
 		p.gasCommentInFunc(w, fmt.Sprintf("call_indirect %s(...)", r11))
@@ -1132,11 +1137,11 @@ func (p *wat2X64Worker) buildFunc_ins(
 		// 如果是走栈返回, 第一个是隐藏参数
 		if len(fnCallNative.Type.Return) > 1 && fnCallNative.Type.Return[1].Reg == 0 {
 			if p.cpuType == abi.X64Unix {
-				fmt.Fprintf(w, "    lea rdi, [rsp%+d] # return address\n",
+				fmt.Fprintf(w, "    lea rdi, qword ptr [rsp%+d] # return address\n",
 					fnCallNative.ArgsSize-len(fnCallNative.Type.Return)*8,
 				)
 			} else {
-				fmt.Fprintf(w, "    lea rcx, [rsp%+d] # return address\n",
+				fmt.Fprintf(w, "    lea rcx, qword ptr [rsp%+d] # return address\n",
 					fnCallNative.ArgsSize-len(fnCallNative.Type.Return)*8,
 				)
 			}

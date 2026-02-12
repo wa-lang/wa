@@ -97,7 +97,7 @@
 
 # void* _Wa_Runtime_memset(void* s, int c, int n)
 .section .text
-.global .Wa.Runtime.memset
+.globl .Wa.Runtime.memset
 .Wa.Runtime.memset:
     mov  rax, rdi # 返回 s
     test rdx, rdx
@@ -116,7 +116,7 @@
 .globl .Wa.Import.syscall_linux.print_str
 .Wa.Import.syscall_linux.print_str:
     # rax = base + ptr
-    mov rax, qword ptr [rip + .Wa.Memory.addr]
+    mov rax, qword ptr [rip+.Wa.Memory.addr]
     add rax, rdi
 
     mov rdx, rsi # arg.2: len
@@ -209,7 +209,7 @@
 .globl .Wa.Import.syscall.write
 .Wa.Import.syscall.write:
     mov rdi, rdi # arg.0: fd
-    mov rax, qword ptr [rip + .Wa.Memory.addr]
+    mov rax, qword ptr [rip+.Wa.Memory.addr]
     add rsi, rax # arg.1: buffer
     mov eax, 1   # arg.2: len
     syscall

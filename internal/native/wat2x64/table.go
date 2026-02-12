@@ -65,7 +65,7 @@ func (p *wat2X64Worker) buildTable(w io.Writer) error {
 	p.gasComment(w, "函数列表")
 	p.gasComment(w, "保持连续并填充全部函数")
 	p.gasSectionDataStart(w)
-	p.gasFuncLabel(w, kTableFuncIndexListName)
+	fmt.Fprintf(w, "%s: .ascii \"\"\n", kTableFuncIndexListName)
 	{
 		// 索引从导入函数开始计算
 		var importFuncCount int
@@ -113,16 +113,16 @@ func (p *wat2X64Worker) buildTable(w io.Writer) error {
 		fmt.Fprintln(w)
 
 		p.gasCommentInFunc(w, "分配表格")
-		fmt.Fprintf(w, "    mov  %s, [rip + %s]\n", regArg0, kTableMaxSizeName)
+		fmt.Fprintf(w, "    mov  %s, qword ptr [rip+%s]\n", regArg0, kTableMaxSizeName)
 		fmt.Fprintf(w, "    shl  %s, 3 # sizeof(i64) == 8\n", regArg0)
 		fmt.Fprintf(w, "    call %s\n", kRuntimeMalloc)
-		fmt.Fprintf(w, "    mov  [rip + %s], rax\n", kTableAddrName)
+		fmt.Fprintf(w, "    mov  qword ptr [rip+%s], rax\n", kTableAddrName)
 		fmt.Fprintln(w)
 
 		p.gasCommentInFunc(w, "表格填充 0xFF")
-		fmt.Fprintf(w, "    mov  %s, [rip + %s]\n", regArg0, kTableAddrName)
-		fmt.Fprintf(w, "    mov  %s, 0xFF\n", regArg1)
-		fmt.Fprintf(w, "    mov  %s, [rip + %s]\n", regArg2, kTableMaxSizeName)
+		fmt.Fprintf(w, "    mov  %s, qword ptr [rip+%s]\n", regArg0, kTableAddrName)
+		fmt.Fprintf(w, "    mov  %s, 255 # 0xFF\n", regArg1)
+		fmt.Fprintf(w, "    mov  %s, qword ptr [rip+%s]\n", regArg2, kTableMaxSizeName)
 		fmt.Fprintf(w, "    shl  %s, 3 # sizeof(i64) == 8\n", regArg2)
 		fmt.Fprintf(w, "    call %s\n", kRuntimeMemset)
 		fmt.Fprintln(w)
@@ -132,13 +132,17 @@ func (p *wat2X64Worker) buildTable(w io.Writer) error {
 			fmt.Fprintln(w)
 
 			p.gasCommentInFunc(w, "加载表格地址")
-			fmt.Fprintf(w, "    mov rax, [rip + %s]\n", kTableAddrName)
+			fmt.Fprintf(w, "    mov rax, qword ptr [rip+%s]\n", kTableAddrName)
 
 			for i, elem := range p.m.Elem {
 				for j, fnIdxOrName := range elem.Values {
 					fnIndex := p.findFuncIndex(fnIdxOrName)
 					p.gasCommentInFunc(w, fmt.Sprintf("elem[%d]: table[%d+%d] = %s", i, elem.Offset, j, fnIdxOrName))
-					fmt.Fprintf(w, "    mov qword ptr [rax+%d], %d\n", int(elem.Offset)+j*IntSize, fnIndex)
+					if off := int(elem.Offset) + j*IntSize; off != 0 {
+						fmt.Fprintf(w, "    mov qword ptr [rax+%d], %d\n", off, fnIndex)
+					} else {
+						fmt.Fprintf(w, "    mov qword ptr [rax], %d\n", fnIndex)
+					}
 				}
 			}
 			fmt.Fprintln(w)

@@ -92,16 +92,16 @@ func (p *wat2X64Worker) buildMemory(w io.Writer) error {
 		fmt.Fprintln(w)
 
 		p.gasCommentInFunc(w, "分配内存")
-		fmt.Fprintf(w, "    mov  %s, qword ptr [rip + %s]\n", regArg0, kMemoryMaxPagesName)
+		fmt.Fprintf(w, "    mov  %s, qword ptr [rip+%s]\n", regArg0, kMemoryMaxPagesName)
 		fmt.Fprintf(w, "    shl  %s, 16\n", regArg0)
 		fmt.Fprintf(w, "    call %s\n", kRuntimeMalloc)
-		fmt.Fprintf(w, "    mov  qword ptr [rip + %s], rax\n", kMemoryAddrName)
+		fmt.Fprintf(w, "    mov  qword ptr [rip+%s], rax\n", kMemoryAddrName)
 		fmt.Fprintln(w)
 
 		p.gasCommentInFunc(w, "内存清零")
-		fmt.Fprintf(w, "    mov  %s, qword ptr [rip + %s]\n", regArg0, kMemoryAddrName)
+		fmt.Fprintf(w, "    mov  %s, qword ptr [rip+%s]\n", regArg0, kMemoryAddrName)
 		fmt.Fprintf(w, "    mov  %s, 0\n", regArg1)
-		fmt.Fprintf(w, "    mov  %s, qword ptr [rip + %s]\n", regArg2, kMemoryMaxPagesName)
+		fmt.Fprintf(w, "    mov  %s, qword ptr [rip+%s]\n", regArg2, kMemoryMaxPagesName)
 		fmt.Fprintf(w, "    shl  %s, 16\n", regArg2)
 		fmt.Fprintf(w, "    call %s\n", kRuntimeMemset)
 		fmt.Fprintln(w)
@@ -113,11 +113,11 @@ func (p *wat2X64Worker) buildMemory(w io.Writer) error {
 			for i, d := range p.m.Data {
 				p.gasCommentInFunc(w, fmt.Sprintf("# memcpy(&Memory[%d], data[%d], size)", d.Offset, i))
 
-				fmt.Fprintf(w, "    mov  rax, qword ptr [rip + %s]\n", kMemoryAddrName)
-				fmt.Fprintf(w, "    mov  %s, qword ptr [rip + %s%d]\n", regArg0, kMemoryDataOffsetPrefix, i)
+				fmt.Fprintf(w, "    mov  rax, qword ptr [rip+%s]\n", kMemoryAddrName)
+				fmt.Fprintf(w, "    mov  %s, qword ptr [rip+%s%d]\n", regArg0, kMemoryDataOffsetPrefix, i)
 				fmt.Fprintf(w, "    add  %s, rax\n", regArg0)
-				fmt.Fprintf(w, "    lea  %s, qword ptr [rip + %s%d]\n", regArg1, kMemoryDataPtrPrefix, i)
-				fmt.Fprintf(w, "    mov  %s, qword ptr [rip + %s%d]\n", regArg2, kMemoryDataSizePrefix, i)
+				fmt.Fprintf(w, "    lea  %s, qword ptr [rip+%s%d]\n", regArg1, kMemoryDataPtrPrefix, i)
+				fmt.Fprintf(w, "    mov  %s, qword ptr [rip+%s%d]\n", regArg2, kMemoryDataSizePrefix, i)
 				fmt.Fprintf(w, "    call %s\n", kRuntimeMemcpy)
 			}
 

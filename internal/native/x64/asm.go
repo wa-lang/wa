@@ -42,13 +42,13 @@ func AsmOperand(op *abi.X64Operand) string {
 		}
 		if op.Symbol != "" {
 			if addr != "" {
-				addr += " + "
+				addr += "+"
 			}
 			addr += op.Symbol
 		}
 		if op.Offset != 0 {
 			if addr != "" && op.Offset > 0 {
-				addr += " + "
+				addr += "+"
 			}
 			addr += fmt.Sprintf("%d", op.Offset)
 		}
