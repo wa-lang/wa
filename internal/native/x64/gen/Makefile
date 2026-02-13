@@ -1,7 +1,5 @@
-# Copyright (C) 2026 武汉凹语言科技有限公司
-# SPDX-License-Identifier: AGPL-3.0-or-later
-
 default:
-	go run .
+	go run x86map.go -fmt=decoder x86.csv > ../x86asm/tables.go
+	go fmt ../x86asm/tables.go
 
-clean:
+cean:
