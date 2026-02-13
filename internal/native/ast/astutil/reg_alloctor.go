@@ -5,7 +5,6 @@ package astutil
 
 import (
 	"wa-lang.org/wa/internal/native/abi"
-	"wa-lang.org/wa/internal/native/arm64"
 	"wa-lang.org/wa/internal/native/loong64"
 	"wa-lang.org/wa/internal/native/x64"
 )
@@ -110,48 +109,6 @@ func newRetRegAlloctor_X64Linux() *_RegAlloctor {
 		fRegList: []abi.RegType{
 			x64.REG_XMM0,
 			x64.REG_XMM1,
-		},
-	}
-}
-
-// TODO: 修改正确
-// Linux/LA64 ABI 输入参数寄存器
-func newArgsRegAlloctor_ARM64Linux() *_RegAlloctor {
-	return &_RegAlloctor{
-		iRegList: []abi.RegType{
-			arm64.REG_A0,
-			arm64.REG_A1,
-			arm64.REG_A2,
-			arm64.REG_A3,
-			arm64.REG_A4,
-			arm64.REG_A5,
-			arm64.REG_A6,
-			arm64.REG_A7,
-		},
-		fRegList: []abi.RegType{
-			arm64.REG_FA0,
-			arm64.REG_FA1,
-			arm64.REG_FA2,
-			arm64.REG_FA3,
-			arm64.REG_FA4,
-			arm64.REG_FA5,
-			arm64.REG_FA6,
-			arm64.REG_FA7,
-		},
-	}
-}
-
-// TODO: 修改正确
-// Linux/LA64 ABI 返回值寄存器
-func newRetRegAlloctor_ARM64Linux() *_RegAlloctor {
-	return &_RegAlloctor{
-		iRegList: []abi.RegType{
-			arm64.REG_A0,
-			arm64.REG_A1,
-		},
-		fRegList: []abi.RegType{
-			arm64.REG_FA0,
-			arm64.REG_FA1,
 		},
 	}
 }
