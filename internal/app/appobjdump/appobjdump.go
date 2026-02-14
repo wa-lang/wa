@@ -16,6 +16,7 @@ import (
 	"wa-lang.org/wa/internal/native/link/elf"
 	"wa-lang.org/wa/internal/native/loong64"
 	"wa-lang.org/wa/internal/native/riscv"
+	"wa-lang.org/wa/internal/native/x64/x86asm"
 	"wa-lang.org/wa/internal/printer/tabwriter"
 )
 
@@ -108,7 +109,12 @@ func cmdProgdump(filename string, isZhMode bool) {
 				textAddr += uint64(fileHeaderSize)
 			}
 
-			printProgText(f.Machine, textAddr, textData, isZhMode)
+			if f.Machine == elf.EM_X86_64 {
+				printProgText_x64(textAddr, textData)
+			} else {
+				printProgText(f.Machine, textAddr, textData, isZhMode)
+			}
+
 		} else {
 			dataAddr := uint64(p.Vaddr)
 			dataData := make([]byte, p.Filesz)
@@ -120,6 +126,38 @@ func cmdProgdump(filename string, isZhMode bool) {
 			printProgData(dataAddr, dataData)
 		}
 	}
+}
+
+func printProgText_x64(addr uint64, data []byte) {
+	addrWidth := len(fmt.Sprintf("%x", addr))
+
+	// 用于格式化指令对齐
+	var buf bytes.Buffer
+	var w = tabwriter.NewWriter(&buf, 1, 1, 1, ' ', 0)
+
+	var inst x86asm.Inst
+	var err error
+
+	fmt.Fprintln(w, "[.text.]")
+	for k := 0; k < len(data); k += inst.Len {
+		fmt.Fprintf(w, "%0*X: ", addrWidth, addr+uint64(k))
+
+		inst, err = x86asm.Decode(data[k:], 64)
+		if err != nil {
+			fmt.Fprintln(w, err)
+			break
+		}
+
+		instStr := []byte(x86asm.IntelSyntax(inst, 0, nil))
+		if idx := bytes.IndexByte(instStr, ' '); idx > 0 {
+			instStr[idx] = '\t'
+		}
+		fmt.Fprintf(w, "%X\t# %s\n", data[k:][:inst.Len], string(instStr))
+	}
+	fmt.Fprintln(w)
+
+	w.Flush()
+	fmt.Print(buf.String())
 }
 
 func printProgText(machine elf.Machine, addr uint64, data []byte, isZhMode bool) {

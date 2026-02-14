@@ -8,4 +8,7 @@ build:
 	./a.out
 	echo $$?
 
+objdump:
+	$(WA) objdump -prog a.out > 00.out.txt
+
 clean:
