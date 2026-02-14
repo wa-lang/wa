@@ -80,6 +80,12 @@ var CmdAsm2elf = &cli.Command{
 			if opt.DRAMBase == 0 {
 				opt.DRAMBase = dram.DRAM_BASE_RISCV
 			}
+		case "x64", "amd64":
+			opt.CPU = abi.X64Unix
+			if opt.DRAMBase == 0 {
+				opt.DRAMBase = dram.DRAM_BASE_X64_LINUX
+			}
+
 		default:
 			fmt.Printf("unknown arch: %s\n", arch)
 			os.Exit(1)

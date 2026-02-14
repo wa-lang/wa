@@ -4,9 +4,20 @@
 package x64
 
 import (
+	"fmt"
 	"unicode"
 	"unicode/utf8"
 )
+
+func assert(ok bool, message ...interface{}) {
+	if !ok {
+		if len(message) != 0 {
+			panic(fmt.Sprint(append([]interface{}{"assert failed:"}, message...)...))
+		} else {
+			panic("assert failed")
+		}
+	}
+}
 
 // 忽略大小写
 // 下划线和"."视作相同

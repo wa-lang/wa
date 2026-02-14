@@ -40,12 +40,12 @@ type Addr struct {
 type AddrType uint8
 
 const (
-	TYPE_NONE AddrType = iota
-	TYPE_REG
-	TYPE_MEM
-	TYPE_CONST
-	TYPE_BRANCH
-	TYPE_ADDR
+	TYPE_NONE   AddrType = iota
+	TYPE_REG             // AX
+	TYPE_MEM             // [rip+name]
+	TYPE_CONST           // 123
+	TYPE_BRANCH          // jmp
+	TYPE_ADDR            // lea
 )
 
 func (p *Prog) GetFrom3() *Addr {

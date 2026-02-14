@@ -17,6 +17,12 @@ const DRAM_BASE_LA64 = 0x120000000
 // Same as QEMU virt machine, DRAM starts at 0x80000000.
 const DRAM_BASE_RISCV = 0x80000000
 
+// X64/Linux 默认地址
+const DRAM_BASE_X64_LINUX = 0x400000
+
+// X64/Linux 默认地址
+const DRAM_BASE_X64_WINDOWS = 0x140000000
+
 // 内存设备
 type DRAM struct {
 	name     string

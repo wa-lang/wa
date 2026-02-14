@@ -14,13 +14,13 @@ const (
 
 	// 低8位寄存器
 	REG_AL
-	REG_BL
 	REG_CL
 	REG_DL
+	REG_BL
 	REG_SIL
 	REG_DIL
-	REG_BPL
 	REG_SPL
+	REG_BPL
 	REG_R8B
 	REG_R9B
 	REG_R10B
@@ -32,19 +32,19 @@ const (
 
 	// 高8位寄存器
 	REG_AH
-	REG_BH
 	REG_CH
 	REG_DH
+	REG_BH
 
 	// 16位寄存器
 	REG_AX
-	REG_BX
 	REG_CX
 	REG_DX
+	REG_BX
 	REG_SI
 	REG_DI
-	REG_BP
 	REG_SP
+	REG_BP
 	REG_R8W
 	REG_R9W
 	REG_R10W
@@ -56,13 +56,13 @@ const (
 
 	// 32位寄存器
 	REG_EAX
-	REG_EBX
 	REG_ECX
 	REG_EDX
+	REG_EBX
+	REG_ESP
+	REG_EBP
 	REG_ESI
 	REG_EDI
-	REG_EBP
-	REG_ESP
 	REG_R8D
 	REG_R9D
 	REG_R10D

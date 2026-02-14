@@ -8,6 +8,11 @@ build:
 	./a.out
 	echo $$?
 
+dev:
+	$(WA) asm2elf -arch=x64 -o a.out.elf hello.s
+	$(WA) objdump -prog a.out.elf > 11.out.txt
+	./a.out.elf
+
 objdump:
 	$(WA) objdump -prog a.out > 00.out.txt
 

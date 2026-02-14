@@ -12,7 +12,14 @@ import (
 
 // 编码后指令的长度, 忽略 Symbol 的具体值
 func EncodeLen(as abi.As, arg *abi.X64Argument) (size int, err error) {
-	panic("TODO")
+	switch as {
+	case AMOV:
+		return len("bf7b000000") / 2, nil
+	case ASYSCALL:
+		return len("0f05") / 2, nil
+	default:
+		panic("TODO")
+	}
 }
 
 // 指令编码, Symbol 对应的值需要提前解析到 Offset 属性中
@@ -23,8 +30,24 @@ func Encode(as abi.As, arg *abi.X64Argument) (code []byte, err error) {
 
 	switch as {
 	case AMOV:
-		// TODO: 根据寄存器类型选择 MOV 指令
-		prog.As = p9x86.AMOVQ
+		assert(arg.Src.Kind == abi.X64Operand_Imm)
+		assert(arg.Dst.Kind == abi.X64Operand_Reg)
+
+		assert(prog.From.Type == p9x86.TYPE_CONST)
+		assert(prog.To.Type == p9x86.TYPE_REG)
+
+		switch {
+		case arg.Dst.Reg >= REG_EAX && arg.Dst.Reg <= REG_R15D:
+			assert(prog.To.Reg >= p9x86.REG_AX && prog.To.Reg <= p9x86.REG_R15)
+			assert(arg.Src.Imm == prog.From.Offset)
+			prog.As = p9x86.AMOVL
+		case arg.Dst.Reg >= REG_RAX && arg.Dst.Reg <= REG_R15:
+			assert(prog.To.Reg >= p9x86.REG_AX && prog.To.Reg <= p9x86.REG_R15)
+			assert(arg.Src.Imm == prog.From.Offset)
+			prog.As = p9x86.AMOVQ
+		default:
+			panic("unreachable")
+		}
 	case AADD:
 		prog.As = p9x86.AADDQ
 	case ASUB:
@@ -36,6 +59,8 @@ func Encode(as abi.As, arg *abi.X64Argument) (code []byte, err error) {
 	case ARET:
 		prog.As = p9x86.ARET
 	case ASYSCALL:
+		assert(arg.Dst.Kind == 0)
+		assert(arg.Src.Kind == 0)
 		prog.As = p9x86.ASYSCALL
 	case ACALL:
 		prog.As = p9x86.ACALL
@@ -50,6 +75,17 @@ func Encode(as abi.As, arg *abi.X64Argument) (code []byte, err error) {
 	return code, nil
 }
 
+func reg2p9Reg(r abi.RegType) int16 {
+	switch {
+	case r >= REG_EAX && r <= REG_R15D:
+		return p9x86.REG_AX + int16(r-REG_EAX)
+	case r >= REG_RAX && r <= REG_R15:
+		return p9x86.REG_AX + int16(r-REG_RAX)
+	default:
+		panic("unreachable")
+	}
+}
+
 func operand2P9Addr(op *abi.X64Operand) p9x86.Addr {
 	if op == nil {
 		return p9x86.Addr{Type: p9x86.TYPE_NONE}
@@ -59,25 +95,17 @@ func operand2P9Addr(op *abi.X64Operand) p9x86.Addr {
 
 	switch op.Kind {
 	case abi.X64Operand_Reg:
-		// 映射为寄存器类型
 		addr.Type = p9x86.TYPE_REG
-		addr.Reg = int16(op.Reg)
+		addr.Reg = reg2p9Reg(op.Reg)
 
 	case abi.X64Operand_Imm:
-		// 映射为常量（立即数）
-		// 例如：MOV $123, RAX 中的 $123
 		addr.Type = p9x86.TYPE_CONST
 		addr.Offset = op.Imm
 
 	case abi.X64Operand_Mem:
-		// 映射为内存引用
-		// 这里的逻辑处理 [Reg + Offset]
-		addr.Type = p9x86.TYPE_MEM
-		addr.Reg = int16(op.Reg) // 基址寄存器 (Base)
-		addr.Offset = op.Offset  // 位移 (Displacement)
-
-		// 如果是 RIP 相对寻址 [rip + 0x10]，
-		// 你的解析器应确保 op.Reg 是 REG_RIP 的编号
+		addr.Type = p9x86.TYPE_MEM // lea/jmp 等需要再次修复
+		addr.Reg = reg2p9Reg(op.Reg)
+		addr.Offset = op.Offset
 	}
 
 	return addr
