@@ -12,8 +12,12 @@ import (
 )
 
 func (p *_Assembler) asmFuncBody_inst_x64_linux(fn *ast.Func) (err error) {
-	// 函数内部指令的PC列表
-	p.x64NextPcMap = make(map[*ast.Instruction]int64)
+	// 重置函数的编码缓存
+	fn.LinkInfo.Data = fn.LinkInfo.Data[:0]
+	assert(len(fn.LinkInfo.Data) == 0)
+
+	// 指令的长度
+	p.x64InstLenMap = make(map[*ast.Instruction]int)
 
 	// label 的地址列表
 	label2pcMap := make(map[string]int64)
@@ -34,39 +38,39 @@ func (p *_Assembler) asmFuncBody_inst_x64_linux(fn *ast.Func) (err error) {
 
 		// 更新下一个指令对应的 pc 位置
 		if n, err := x64.EncodeLen(inst.As, inst.ArgX64); err == nil {
+			p.x64InstLenMap[inst] = n
 			pc += int64(n)
 		} else {
 			panic(fmt.Errorf("encode %v failed: %v", inst.As, err))
 		}
-
-		// 记录下个指针位置
-		p.x64NextPcMap[inst] = pc
 	}
 
 	// 第二遍遍历编码指令
 	pc = fn.LinkInfo.Addr
+	assert(len(fn.LinkInfo.Data) == 0)
 	for _, inst := range fn.Body.Insts {
 		if inst.As == 0 {
 			// 跳过空的指令, 比如标号
 			continue
 		}
 
+		// 查询当前指令的长度
+		instLen := p.x64InstLenMap[inst]
+
 		// 修复符号的地址
 		// pc 需要使用下个指令的位置
-		p.x64FixSymbol(inst, p.x64NextPcMap[inst], label2pcMap)
+		p.x64FixSymbol(inst, pc+int64(instLen), label2pcMap)
 
 		// 编码使用的是符号被处理后对应的立即数
 		if code, err := x64.Encode(inst.As, inst.ArgX64); err == nil {
 			fn.LinkInfo.Data = append(fn.LinkInfo.Data, code...)
+			assert(len(code) == instLen)
 		} else {
 			panic(fmt.Errorf("encode %v failed: %v", inst.As, err))
 		}
 
 		// 更新下一个指令对应的 pc 位置
-		pc += int64(len(fn.LinkInfo.Data))
-
-		// 之前预估的指令长度必须和真实的长度一致
-		assert(pc == p.x64NextPcMap[inst])
+		pc += int64(instLen)
 	}
 
 	return nil
@@ -93,11 +97,9 @@ func (p *_Assembler) x64FixSymbol(inst *ast.Instruction, pc int64, label2pcMap m
 
 		switch {
 		case op.Kind == abi.X64Operand_Mem && op.Reg == x64.REG_RIP:
-			instrLen := p.x64NextPcMap[inst]
-			op.Offset = targetPC - (pc + instrLen)
+			op.Offset = targetPC - pc
 		case inst.As == x64.ACALL || inst.As == x64.AJMP:
-			instrLen := p.x64NextPcMap[inst]
-			op.Imm = targetPC - (pc + instrLen)
+			op.Imm = targetPC - pc
 		default:
 			panic("unreachable")
 		}

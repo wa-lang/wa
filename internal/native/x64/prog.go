@@ -56,8 +56,8 @@ func BuildProg(as abi.As, arg *abi.X64Argument) (inst *Prog, err error) {
 	case ARET:
 		prog.As = p9x86.ARET
 	case ASYSCALL:
-		assert(arg.Dst.Kind == 0)
-		assert(arg.Src.Kind == 0)
+		assert(arg.Dst == nil)
+		assert(arg.Src == nil)
 		prog.As = p9x86.ASYSCALL
 	case ACALL:
 		prog.As = p9x86.ACALL

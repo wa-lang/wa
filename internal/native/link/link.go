@@ -21,6 +21,8 @@ func LinkELF(prog *abi.LinkedProgram) ([]byte, error) {
 		return _LinkELF_RV64(prog)
 	case abi.LOONG64:
 		return _LinkELF_LA64(prog)
+	case abi.X64Unix:
+		return _LinkELF_X64_linux(prog)
 	default:
 		return nil, fmt.Errorf("link.LinkELF: unknown cpu type: %v", prog.CPU)
 	}

@@ -42,8 +42,8 @@ type _Assembler struct {
 	// 全局符号
 	objectMap map[string]ast.Object
 
-	// 下一个指令的位置
-	x64NextPcMap map[*ast.Instruction]int64
+	// 指令编码后的长度
+	x64InstLenMap map[*ast.Instruction]int
 
 	// 下个内存分配地址
 	dramNextAddr int64
