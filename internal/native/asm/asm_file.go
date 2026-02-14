@@ -214,8 +214,16 @@ func (p *_Assembler) asmFile(filename string, source []byte, opt *abi.LinkOption
 				return nil, err
 			}
 		}
+
+	case abi.X64Unix:
+		for _, fn := range p.file.Funcs {
+			if err := p.asmFuncBody_inst_x64_linux(fn); err != nil {
+				return nil, err
+			}
+		}
+
 	default:
-		panic("unreachable")
+		panic(fmt.Sprintf("unnsupport cpu: %v", p.file.CPU))
 	}
 
 	// 编译全局变量

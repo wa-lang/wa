@@ -22,6 +22,8 @@ func AssembleFile(filename string, source []byte, opt *abi.LinkOptions) (prog *a
 		return new(_Assembler).asmFile(filename, source, opt)
 	case abi.RISCV64:
 		return new(_Assembler).asmFile(filename, source, opt)
+	case abi.X64Unix:
+		return new(_Assembler).asmFile(filename, source, opt)
 	default:
 		return nil, fmt.Errorf("unknonw cpu: %v", opt.CPU)
 	}
@@ -38,6 +40,9 @@ type _Assembler struct {
 
 	// 全局符号
 	objectMap map[string]ast.Object
+
+	// 下一个指令的位置
+	x64NextPcMap map[*ast.Instruction]int64
 
 	// 下个内存分配地址
 	dramNextAddr int64
@@ -87,6 +92,8 @@ func (p *_Assembler) instLen(inst *ast.Instruction) int64 {
 		return 4
 	case abi.RISCV32, abi.RISCV64:
 		return 4
+	case abi.X64Unix, abi.X64Windows:
+		return p.instLen_x64(inst)
 	default:
 		panic("unreachable")
 	}
