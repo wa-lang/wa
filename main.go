@@ -14,6 +14,7 @@ import (
 
 	"wa-lang.org/wa/internal/3rdparty/cli"
 	"wa-lang.org/wa/internal/app/appasm2elf"
+	"wa-lang.org/wa/internal/app/appasm2pe"
 	"wa-lang.org/wa/internal/app/appast"
 	"wa-lang.org/wa/internal/app/appbase"
 	"wa-lang.org/wa/internal/app/appbuild"
@@ -120,6 +121,7 @@ func main() {
 
 		// 待完善的子命令(隐藏)
 		appasm2elf.CmdAsm2elf,
+		appasm2pe.CmdAsm2pe,
 		appesp32build.CmdESP32Build,
 		appesp32dump.CmdESP32Dump,
 		appesp32flash.CmdESP32Flash,
