@@ -37,10 +37,6 @@ func (p *wat2X64Worker) gasSectionTextStart(w io.Writer) {
 	fmt.Fprintln(w, ".section .text")
 }
 
-func (p *wat2X64Worker) gasExtern(w io.Writer, name string) {
-	fmt.Fprintln(w, ".extern", name)
-}
-
 func (p *wat2X64Worker) gasGlobal(w io.Writer, name string) {
 	fmt.Fprintln(w, ".globl", name)
 }
@@ -73,9 +69,4 @@ func (p *wat2X64Worker) gasFuncStart(w io.Writer, fnName string) {
 
 func (p *wat2X64Worker) gasFuncLabel(w io.Writer, labelName string) {
 	fmt.Fprintf(w, "%s:\n", labelName)
-}
-
-// 函数名字重定向
-func (p *wat2X64Worker) gasSet(w io.Writer, src, dst string) {
-	fmt.Fprintf(w, ".set %s, %s\n", src, dst)
 }

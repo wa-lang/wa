@@ -7,9 +7,7 @@ import (
 	_ "embed"
 	"fmt"
 	"os"
-	"os/exec"
 	"path/filepath"
-	"runtime"
 	"strings"
 
 	"wa-lang.org/wa/internal/3rdparty/cli"
@@ -34,9 +32,6 @@ var arduino_ino string
 
 //go:embed assets/arduino-host.cpp
 var arduino_host_cpp string
-
-//go:embed assets/native-env-windows-x64.c
-var native_env_windows_x64_c string
 
 //go:embed assets/native-js-host.cpp
 var native_js_host_cpp string
@@ -321,38 +316,20 @@ func BuildApp(opt *appbase.Option, input, outfile string) (mainFunc string, wasm
 				panic(fmt.Sprintf("x64 donot support %s", s))
 			}
 
-			gccEnabled := true
-			if runtime.GOARCH != "amd64" || runtime.GOOS != opt.TargetOS {
-				gccEnabled = false
-			}
-
-			cpuType := abi.X64Windows
-			if strings.EqualFold(opt.TargetOS, config.WaOS_linux) {
-				cpuType = abi.X64Unix
+			cpuType := abi.X64Unix
+			if strings.EqualFold(opt.TargetOS, config.WaOS_windows) {
+				cpuType = abi.X64Windows
 			}
 
 			// 设置默认输出目标
 			var nativeAsmFile string
-			var nativeEnvFile string
 			var nativeExtFile string
-			if cpuType == abi.X64Unix {
-				if appbase.HasExt(input, ".wz") {
-					nativeAsmFile = appbase.ReplaceExt(outfile, ".wasm", ".wz.s")
-					nativeExtFile = appbase.ReplaceExt(outfile, ".wasm", ".exe")
-				} else {
-					nativeAsmFile = appbase.ReplaceExt(outfile, ".wasm", ".wa.s")
-					nativeExtFile = appbase.ReplaceExt(outfile, ".wasm", ".exe")
-				}
+			if appbase.HasExt(input, ".wz") {
+				nativeAsmFile = appbase.ReplaceExt(outfile, ".wasm", ".wz.s")
+				nativeExtFile = appbase.ReplaceExt(outfile, ".wasm", ".exe")
 			} else {
-				if appbase.HasExt(input, ".wz") {
-					nativeEnvFile = appbase.ReplaceExt(outfile, ".wasm", ".env.c")
-					nativeAsmFile = appbase.ReplaceExt(outfile, ".wasm", ".wz.s")
-					nativeExtFile = appbase.ReplaceExt(outfile, ".wasm", ".exe")
-				} else {
-					nativeEnvFile = appbase.ReplaceExt(outfile, ".wasm", ".env.c")
-					nativeAsmFile = appbase.ReplaceExt(outfile, ".wasm", ".wa.s")
-					nativeExtFile = appbase.ReplaceExt(outfile, ".wasm", ".exe")
-				}
+				nativeAsmFile = appbase.ReplaceExt(outfile, ".wasm", ".wa.s")
+				nativeExtFile = appbase.ReplaceExt(outfile, ".wasm", ".exe")
 			}
 
 			// 将 wat 翻译为本地汇编代码
@@ -369,29 +346,38 @@ func BuildApp(opt *appbase.Option, input, outfile string) (mainFunc string, wasm
 				os.Exit(1)
 			}
 
-			// 生成本地对接的环境文件
-			if cpuType == abi.X64Windows {
-				err = os.WriteFile(nativeEnvFile, []byte(native_env_windows_x64_c), 0666)
-				if err != nil {
-					fmt.Printf("write %s failed: %v\n", nativeEnvFile, err)
-					os.Exit(1)
-				}
-			}
+			switch cpuType {
+			case abi.X64Unix:
+				// 汇编为 elf 可执行文件
+				opt := &abi.LinkOptions{}
+				opt.CPU = abi.X64Unix
+				opt.DRAMBase = dram.DRAM_BASE_X64_LINUX
+				opt.DRAMSize = dram.DRAM_SIZE // 16MB, 临时用于演示
 
-			// gcc x.c x.s -z noexecstack -o x.exe
-			if gccEnabled {
-				var gccCmd *exec.Cmd
-				if cpuType == abi.X64Unix {
-					gccCmd = exec.Command("gcc", nativeAsmFile, "-nostdlib", "-static", "-z", "noexecstack", "-o", nativeExtFile)
-				} else {
-					gccCmd = exec.Command("gcc", nativeEnvFile, nativeAsmFile, "-static", "-o", nativeExtFile)
-				}
-				output, err := gccCmd.CombinedOutput()
+				// 解析汇编程序, 并生成对应cpu的机器码
+				prog, err := asm.AssembleFile(nativeAsmFile, nasmBytes, opt)
 				if err != nil {
-					fmt.Println(string(output))
-					fmt.Printf("gcc build failed: %v\n", err)
+					fmt.Println(err)
 					os.Exit(1)
 				}
+
+				// 包存到ELF格式文件
+				elfBytes, err := link.LinkELF(prog)
+				if err != nil {
+					fmt.Println(err)
+					os.Exit(1)
+				}
+				if err := os.WriteFile(nativeExtFile, elfBytes, 0777); err != nil {
+					fmt.Println(err)
+					os.Exit(1)
+				}
+
+			case abi.X64Windows:
+				fmt.Println("TODO: support build x64-windows")
+				os.Exit(1)
+
+			default:
+				panic("unreachable")
 			}
 
 			// OK
@@ -557,38 +543,20 @@ func BuildApp(opt *appbase.Option, input, outfile string) (mainFunc string, wasm
 				panic(fmt.Sprintf("x64 donot support %s", s))
 			}
 
-			gccEnabled := true
-			if runtime.GOARCH != "amd64" || runtime.GOOS != opt.TargetOS {
-				gccEnabled = false
-			}
-
-			cpuType := abi.X64Windows
-			if strings.EqualFold(opt.TargetOS, config.WaOS_linux) {
-				cpuType = abi.X64Unix
+			cpuType := abi.X64Unix
+			if strings.EqualFold(opt.TargetOS, config.WaOS_windows) {
+				cpuType = abi.X64Windows
 			}
 
 			// 设置默认输出目标
 			var nativeAsmFile string
-			var nativeEnvFile string
 			var nativeExtFile string
-			if cpuType == abi.X64Unix {
-				if appbase.HasExt(input, ".wz") {
-					nativeAsmFile = appbase.ReplaceExt(outfile, ".wasm", ".wz.s")
-					nativeExtFile = appbase.ReplaceExt(outfile, ".wasm", ".exe")
-				} else {
-					nativeAsmFile = appbase.ReplaceExt(outfile, ".wasm", ".wa.s")
-					nativeExtFile = appbase.ReplaceExt(outfile, ".wasm", ".exe")
-				}
+			if appbase.HasExt(input, ".wz") {
+				nativeAsmFile = appbase.ReplaceExt(outfile, ".wasm", ".wz.s")
+				nativeExtFile = appbase.ReplaceExt(outfile, ".wasm", ".exe")
 			} else {
-				if appbase.HasExt(input, ".wz") {
-					nativeEnvFile = appbase.ReplaceExt(outfile, ".wasm", ".env.c")
-					nativeAsmFile = appbase.ReplaceExt(outfile, ".wasm", ".wz.s")
-					nativeExtFile = appbase.ReplaceExt(outfile, ".wasm", ".exe")
-				} else {
-					nativeEnvFile = appbase.ReplaceExt(outfile, ".wasm", ".env.c")
-					nativeAsmFile = appbase.ReplaceExt(outfile, ".wasm", ".wa.s")
-					nativeExtFile = appbase.ReplaceExt(outfile, ".wasm", ".exe")
-				}
+				nativeAsmFile = appbase.ReplaceExt(outfile, ".wasm", ".wa.s")
+				nativeExtFile = appbase.ReplaceExt(outfile, ".wasm", ".exe")
 			}
 
 			// 将 wat 翻译为本地汇编代码
@@ -605,35 +573,38 @@ func BuildApp(opt *appbase.Option, input, outfile string) (mainFunc string, wasm
 				os.Exit(1)
 			}
 
-			// 生成本地对接的环境文件
-			if cpuType == abi.X64Windows {
-				err = os.WriteFile(nativeEnvFile, []byte(native_env_windows_x64_c), 0666)
-				if err != nil {
-					fmt.Printf("write %s failed: %v\n", nativeEnvFile, err)
-					os.Exit(1)
-				}
-			}
+			switch cpuType {
+			case abi.X64Unix:
+				// 汇编为 elf 可执行文件
+				opt := &abi.LinkOptions{}
+				opt.CPU = abi.X64Unix
+				opt.DRAMBase = dram.DRAM_BASE_X64_LINUX
+				opt.DRAMSize = dram.DRAM_SIZE // 16MB, 临时用于演示
 
-			// gcc x.c x.s -z noexecstack -o x.exe
-			if gccEnabled {
-				var gccCmd *exec.Cmd
-				if cpuType == abi.X64Unix {
-					gccCmd = exec.Command("gcc", nativeAsmFile, "-nostdlib", "-static", "-z", "noexecstack", "-o", nativeExtFile)
-				} else {
-					gccCmd = exec.Command("gcc", nativeEnvFile, nativeAsmFile, "-static", "-o", nativeExtFile)
-				}
-				output, err := gccCmd.CombinedOutput()
+				// 解析汇编程序, 并生成对应cpu的机器码
+				prog, err := asm.AssembleFile(nativeAsmFile, nasmBytes, opt)
 				if err != nil {
-					fmt.Println(string(output))
-					fmt.Printf("gcc build failed: %v\n", err)
+					fmt.Println(err)
 					os.Exit(1)
 				}
-			} else {
-				fmt.Printf("donot use gcc %s/%s on host %s/%s",
-					opt.TargetOS, opt.TargetArch,
-					runtime.GOOS, runtime.GOARCH,
-				)
+
+				// 包存到ELF格式文件
+				elfBytes, err := link.LinkELF(prog)
+				if err != nil {
+					fmt.Println(err)
+					os.Exit(1)
+				}
+				if err := os.WriteFile(nativeExtFile, elfBytes, 0777); err != nil {
+					fmt.Println(err)
+					os.Exit(1)
+				}
+
+			case abi.X64Windows:
+				fmt.Println("TODO: support build x64-windows")
 				os.Exit(1)
+
+			default:
+				panic("unreachable")
 			}
 
 			// OK

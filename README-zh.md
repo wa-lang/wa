@@ -26,6 +26,47 @@
 
 > 特别注意：与 Issue 相比，发起 PR 更容易获得贡献点（贡献点可用于参加回馈活动，如：[首次凹语言贡献者回馈活动](https://wa-lang.org/smalltalk/st0078.html)）。当您在项目中找到问题发起 Issue后，不妨与我们联系，我们会帮助您将 Issue 转为 PR。
 
+## 凹语言编译器架构
+
+凹语言设计采用中英文双前端，对接到凹语言IR统一的中间表示，后端对接中英文自研汇编器，最终对接到不同的指令集架构, 最终实现全链路自研(没有GCC/LLVM等外部依赖).
+
+```mermaid
+graph LR
+    wa_ext(凹语言英文.wa);
+    wz_ext(凹语言中文.wz);
+
+    wa_ast(凹语言英文 AST);
+    wz_ast(凹语言中文 AST);
+    
+    wair(凹语言IR);
+
+    wasm(WASM);
+    nasm(凹语言汇编器);
+    c_cpp(C/C++);
+
+    x64(X64);
+    loong64(龙芯64);
+    riscv(RISCV);
+
+    wa_ext --> wa_ast;
+    wz_ext --> wz_ast;
+
+    wa_ast --> wair;
+    wz_ast --> wair;
+
+    wair --> wasm
+    wair --> nasm
+    wair --> c_cpp
+
+    nasm --> loong64
+    nasm --> x64
+    nasm --> riscv
+```
+
+- 注: 其中RISCV平台因为缺少环境, 尚未进行真机测试.
+- 注: 凹语言IR 尚在设计完善中, 目前以wasm作为中间IR.
+
+
 ## Playground 在线预览
 
 [https://wa-lang.org/playground](https://wa-lang.org/playground)

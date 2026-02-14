@@ -34,6 +34,47 @@ The project is still in the prototype stage. If you have co-construction or PR n
 
 > Note: Submitting a PR to this repository is deemed to be your recognition and acceptance of the [Wa Contributor Agreement](./wca/wca.md)(Aka WCA), but your PRs will not be reviewed or accepted until WCA is actually signed.
 
+## Wa Language Compiler Architecture
+
+Wa is designed with a dual-frontend system (supporting both Chinese and English syntax) that interfaces with a unified Intermediate Representation (Wa-lang IR). The backend connects to proprietary Chinese/English assemblers, targeting various Instruction Set Architectures (ISA). This design achieves a fully self-developed toolchain without external dependencies such as GCC or LLVM.
+
+
+```mermaid
+graph LR
+    wa_ext(Wa English.wa);
+    wz_ext(Wa Chinese.wz);
+
+    wa_ast(Wa English AST);
+    wz_ast(Wa Chinese AST);
+    
+    wair(Wa-IR);
+
+    wasm(WASM);
+    nasm(Wa Native Assembler);
+    c_cpp(C/C++);
+
+    x64(X64);
+    loong64(LoongArch);
+    riscv(RISCV);
+
+    wa_ext --> wa_ast;
+    wz_ext --> wz_ast;
+
+    wa_ast --> wair;
+    wz_ast --> wair;
+
+    wair --> wasm
+    wair --> nasm
+    wair --> c_cpp
+
+    nasm --> loong64
+    nasm --> x64
+    nasm --> riscv
+```
+
+- Note: The RISC-V platform has not yet undergone hardware testing due to the lack of a physical environment.
+- Note: The Wa-lang IR is currently being refined; WebAssembly (Wasm) is presently utilized as the intermediate IR.
+
 ## Playground
 
 [https://wa-lang.org/playground](https://wa-lang.org/playground)
