@@ -3,9 +3,14 @@
 
 package x64
 
-import "wa-lang.org/wa/internal/native/abi"
+import "wa-lang.org/wa/internal/native/x64/x86asm"
+
+// 底层的指令别名
+type Inst = x86asm.Inst
 
 // 解析机器码指令
-func Decode(p []byte) (size int, as abi.As, arg *abi.AsArgument, err error) {
-	panic("TODO")
+// 这是道底层的 p9x86 定义的格式, 可用于格式化打印
+// 到 abi.As/arg *abi.AsArgument 类型需要手动转化
+func Decode(p []byte, mode int) (inst Inst, err error) {
+	return x86asm.Decode(p, 64)
 }

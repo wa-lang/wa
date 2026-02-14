@@ -6,7 +6,6 @@
 package x86asm
 
 import (
-	"bytes"
 	"fmt"
 )
 
@@ -393,26 +392,7 @@ func (i Imm) String() string {
 }
 
 func (i Inst) String() string {
-	var buf bytes.Buffer
-	for _, p := range i.Prefix {
-		if p == 0 {
-			break
-		}
-		if p&PrefixImplicit != 0 {
-			continue
-		}
-		fmt.Fprintf(&buf, "%v ", p)
-	}
-	fmt.Fprintf(&buf, "%v", i.Op)
-	sep := " "
-	for _, v := range i.Args {
-		if v == nil {
-			break
-		}
-		fmt.Fprintf(&buf, "%s%v", sep, v)
-		sep = ", "
-	}
-	return buf.String()
+	return IntelSyntax(i, 0, nil)
 }
 
 func isMem(a Arg) bool {

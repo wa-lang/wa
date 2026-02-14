@@ -16,7 +16,7 @@ import (
 	"wa-lang.org/wa/internal/native/link/elf"
 	"wa-lang.org/wa/internal/native/loong64"
 	"wa-lang.org/wa/internal/native/riscv"
-	"wa-lang.org/wa/internal/native/x64/x86asm"
+	"wa-lang.org/wa/internal/native/x64"
 	"wa-lang.org/wa/internal/printer/tabwriter"
 )
 
@@ -135,20 +135,20 @@ func printProgText_x64(addr uint64, data []byte) {
 	var buf bytes.Buffer
 	var w = tabwriter.NewWriter(&buf, 1, 1, 1, ' ', 0)
 
-	var inst x86asm.Inst
+	var inst x64.Inst
 	var err error
 
 	fmt.Fprintln(w, "[.text.]")
 	for k := 0; k < len(data); k += inst.Len {
 		fmt.Fprintf(w, "%0*X: ", addrWidth, addr+uint64(k))
 
-		inst, err = x86asm.Decode(data[k:], 64)
+		inst, err = x64.Decode(data[k:], 64)
 		if err != nil {
 			fmt.Fprintln(w, err)
 			break
 		}
 
-		instStr := []byte(x86asm.IntelSyntax(inst, 0, nil))
+		instStr := []byte(inst.String())
 		if idx := bytes.IndexByte(instStr, ' '); idx > 0 {
 			instStr[idx] = '\t'
 		}

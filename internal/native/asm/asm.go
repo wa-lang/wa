@@ -11,6 +11,7 @@ import (
 	"wa-lang.org/wa/internal/native/loong64"
 	"wa-lang.org/wa/internal/native/riscv"
 	"wa-lang.org/wa/internal/native/token"
+	"wa-lang.org/wa/internal/native/x64"
 )
 
 // 将汇编语法树转为固定位置的机器码
@@ -93,7 +94,11 @@ func (p *_Assembler) instLen(inst *ast.Instruction) int64 {
 	case abi.RISCV32, abi.RISCV64:
 		return 4
 	case abi.X64Unix, abi.X64Windows:
-		return p.instLen_x64(inst)
+		n, err := x64.EncodeLen(inst.As, inst.ArgX64)
+		if err != nil {
+			panic(err)
+		}
+		return int64(n)
 	default:
 		panic("unreachable")
 	}
