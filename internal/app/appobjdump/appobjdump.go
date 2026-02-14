@@ -135,7 +135,7 @@ func printProgText_x64(addr uint64, data []byte) {
 	var buf bytes.Buffer
 	var w = tabwriter.NewWriter(&buf, 1, 1, 1, ' ', 0)
 
-	var inst x64.Inst
+	var inst *x64.Inst
 	var err error
 
 	fmt.Fprintln(w, "[.text.]")

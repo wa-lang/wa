@@ -10,9 +10,7 @@ func Init() {
 
 // 编码指令
 func AsmInst(p *Prog) []byte {
-	var ab AsmBuf
-	ab.Asmins(p)
-	return ab.Bytes()
+	return p.Encode()
 }
 
 // 指令码
@@ -47,6 +45,12 @@ const (
 	TYPE_BRANCH          // jmp
 	TYPE_ADDR            // lea
 )
+
+func (p *Prog) Encode() []byte {
+	var ab AsmBuf
+	ab.Asmins(p)
+	return ab.Bytes()
+}
 
 func (p *Prog) GetFrom3() *Addr {
 	if p.RestArgs == nil {

@@ -1,3 +1,6 @@
+// Copyright (C) 2026 武汉凹语言科技有限公司
+// SPDX-License-Identifier: AGPL-3.0-or-later
+
 package x64
 
 import (
@@ -8,7 +11,6 @@ import (
 )
 
 func tAssert(tb testing.TB, ok bool, message ...interface{}) {
-
 	tb.Helper()
 	if !ok {
 		if len(message) != 0 {
