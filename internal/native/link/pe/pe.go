@@ -75,8 +75,8 @@ type SectionHeader64 struct {
 	Name                 [8]byte // 必须是 8 字节，如 ".text\0\0\0"
 	VirtualSize          uint32  // 段数据大小
 	VirtualAddress       uint32  // 内存偏移 (RVA)
-	SizeOfRawData        uint32  // 文件中对齐后的大小, 需要满足 OptionalHeader64.SectionAlignment 对齐
-	PointerToRawData     uint32  // 文件中对齐后的偏移, 需要满足 OptionalHeader64.FileAlignment 对齐
+	Size                 uint32  // 文件中对齐后的大小, 需要满足 OptionalHeader64.SectionAlignment 对齐
+	Offset               uint32  // 文件中对齐后的偏移, 需要满足 OptionalHeader64.FileAlignment 对齐
 	PointerToRelocations uint32  // 填 0
 	PointerToLineNumbers uint32  // 填 0
 	NumberOfRelocations  uint16  // 填 0
@@ -84,6 +84,7 @@ type SectionHeader64 struct {
 	Characteristics      uint32  // 权限 (代码段: 0x60000020, 数据段: 0xC0000040)
 }
 
+// 机器码类型
 const (
 	IMAGE_FILE_MACHINE_UNKNOWN = 0x0
 	IMAGE_FILE_MACHINE_AMD64   = 0x8664
@@ -101,4 +102,16 @@ const (
 	IMAGE_SUBSYSTEM_UNKNOWN     = 0
 	IMAGE_SUBSYSTEM_WINDOWS_GUI = 2 // GUI 程序
 	IMAGE_SUBSYSTEM_WINDOWS_CUI = 3 // 命令行程序
+)
+
+// 段数据标志位
+const (
+	IMAGE_SCN_CNT_CODE               = 0x00000020
+	IMAGE_SCN_CNT_INITIALIZED_DATA   = 0x00000040
+	IMAGE_SCN_CNT_UNINITIALIZED_DATA = 0x00000080
+	IMAGE_SCN_LNK_COMDAT             = 0x00001000
+	IMAGE_SCN_MEM_DISCARDABLE        = 0x02000000
+	IMAGE_SCN_MEM_EXECUTE            = 0x20000000
+	IMAGE_SCN_MEM_READ               = 0x40000000
+	IMAGE_SCN_MEM_WRITE              = 0x80000000
 )
