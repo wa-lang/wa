@@ -373,8 +373,29 @@ func BuildApp(opt *appbase.Option, input, outfile string) (mainFunc string, wasm
 				}
 
 			case abi.X64Windows:
-				fmt.Println("TODO: support build x64-windows")
-				os.Exit(1)
+				// 汇编为 pe 可执行文件
+				opt := &abi.LinkOptions{}
+				opt.CPU = abi.X64Windows
+				opt.DRAMBase = dram.DRAM_BASE_X64_WINDOWS
+				opt.DRAMSize = dram.DRAM_SIZE // 16MB, 临时用于演示
+
+				// 解析汇编程序, 并生成对应cpu的机器码
+				prog, err := asm.AssembleFile(nativeAsmFile, nasmBytes, opt)
+				if err != nil {
+					fmt.Println(err)
+					os.Exit(1)
+				}
+
+				// 包存到ELF格式文件
+				peBytes, err := link.LinkEXE(prog)
+				if err != nil {
+					fmt.Println(err)
+					os.Exit(1)
+				}
+				if err := os.WriteFile(nativeExtFile, peBytes, 0777); err != nil {
+					fmt.Println(err)
+					os.Exit(1)
+				}
 
 			default:
 				panic("unreachable")
@@ -600,8 +621,29 @@ func BuildApp(opt *appbase.Option, input, outfile string) (mainFunc string, wasm
 				}
 
 			case abi.X64Windows:
-				fmt.Println("TODO: support build x64-windows")
-				os.Exit(1)
+				// 汇编为 pe 可执行文件
+				opt := &abi.LinkOptions{}
+				opt.CPU = abi.X64Windows
+				opt.DRAMBase = dram.DRAM_BASE_X64_WINDOWS
+				opt.DRAMSize = dram.DRAM_SIZE // 16MB, 临时用于演示
+
+				// 解析汇编程序, 并生成对应cpu的机器码
+				prog, err := asm.AssembleFile(nativeAsmFile, nasmBytes, opt)
+				if err != nil {
+					fmt.Println(err)
+					os.Exit(1)
+				}
+
+				// 包存到ELF格式文件
+				peBytes, err := link.LinkEXE(prog)
+				if err != nil {
+					fmt.Println(err)
+					os.Exit(1)
+				}
+				if err := os.WriteFile(nativeExtFile, peBytes, 0777); err != nil {
+					fmt.Println(err)
+					os.Exit(1)
+				}
 
 			default:
 				panic("unreachable")
