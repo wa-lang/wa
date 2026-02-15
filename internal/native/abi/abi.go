@@ -76,6 +76,8 @@ type LinkedProgram struct {
 	TextData []byte // 程序段数据
 	DataAddr int64  // 数据段地址
 	DataData []byte // 数据段数据
+
+	X64ImageBase int64 // 镜像基础地址
 }
 
 // 寄存器类型

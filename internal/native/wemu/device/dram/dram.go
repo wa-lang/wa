@@ -6,6 +6,8 @@ package dram
 import (
 	"encoding/binary"
 	"fmt"
+
+	"wa-lang.org/wa/internal/native/link/pe"
 )
 
 // 默认的内存大小
@@ -21,7 +23,7 @@ const DRAM_BASE_RISCV = 0x80000000
 const DRAM_BASE_X64_LINUX = 0x400000
 
 // X64/Linux 默认地址
-const DRAM_BASE_X64_WINDOWS = 0x140000000
+const DRAM_BASE_X64_WINDOWS = pe.DefaultImageBase
 
 // 内存设备
 type DRAM struct {

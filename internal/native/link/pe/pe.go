@@ -6,6 +6,11 @@ package pe
 const (
 	PE32Magic = 0x10b
 	PE64Magic = 0x20b
+
+	DefaultSectionAlignment = 0x1000 // 内存中按 4KB 对齐
+	DefaultFileAlignment    = 0x200  // 磁盘上按 512 字节对齐
+
+	DefaultImageBase = 0x140000000
 )
 
 // DOS文件头部
