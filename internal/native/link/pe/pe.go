@@ -3,6 +3,11 @@
 
 package pe
 
+const (
+	PE32Magic = 0x10b
+	PE64Magic = 0x20b
+)
+
 // DOS文件头部
 type DosHeader struct {
 	Magic          [2]byte // 'M', 'Z'

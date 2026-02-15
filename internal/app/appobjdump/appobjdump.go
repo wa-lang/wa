@@ -23,8 +23,8 @@ import (
 var CmdObjdump = &cli.Command{
 	Hidden:    true,
 	Name:      "objdump",
-	Usage:     "dump elf text and data sections",
-	ArgsUsage: "<file.elf>",
+	Usage:     "dump elf/pe text and data sections",
+	ArgsUsage: "<file>",
 	Flags: []cli.Flag{
 		&cli.BoolFlag{
 			Name:  "prog",
@@ -33,12 +33,16 @@ var CmdObjdump = &cli.Command{
 		&cli.BoolFlag{
 			Name:    "list",
 			Aliases: []string{"l"},
-			Usage:   "list elf section name",
+			Usage:   "list section name",
 		},
 		&cli.StringFlag{
 			Name:    "section",
 			Aliases: []string{"s"},
 			Usage:   "set section name",
+		},
+		&cli.BoolFlag{
+			Name:  "pe",
+			Usage: "set pe mode",
 		},
 		&cli.BoolFlag{
 			Name:  "zh",
@@ -54,7 +58,13 @@ var CmdObjdump = &cli.Command{
 		infile := c.Args().First()
 		sectionName := c.String("section")
 		listSection := c.Bool("list")
+		isPeMode := c.Bool("pe")
 		isZhMode := c.Bool("zh")
+
+		if isPeMode {
+			cmdProgdumpPE(infile)
+			return nil
+		}
 
 		if sectionName != "" || listSection {
 			cmdObjdump(infile, sectionName, listSection)

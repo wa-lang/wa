@@ -34,12 +34,12 @@ func (s *Section) Data() ([]byte, error) {
 	return buf[:n], err
 }
 
-func Open(name string) (*File, error) {
+func OpenPE64(name string) (*File, error) {
 	f, err := os.Open(name)
 	if err != nil {
 		return nil, err
 	}
-	ff, err := NewFile(f)
+	ff, err := NewFilePE64(f)
 	if err != nil {
 		f.Close()
 		return nil, err
@@ -57,7 +57,7 @@ func (f *File) Close() error {
 	return err
 }
 
-func NewFile(r io.ReaderAt) (*File, error) {
+func NewFilePE64(r io.ReaderAt) (*File, error) {
 	f := new(File)
 	sr := io.NewSectionReader(r, 0, 1<<63-1)
 
@@ -166,7 +166,7 @@ func readOptionalHeader(r io.ReadSeeker, sz uint16) (*OptionalHeader64, error) {
 	}
 
 	switch ohMagic {
-	case 0x20b: // PE32+
+	case PE64Magic: // PE32+
 		var (
 			oh64 OptionalHeader64
 			// There can be 0 or more data directories. So the minimum size of optional
