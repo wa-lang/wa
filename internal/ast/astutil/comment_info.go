@@ -14,6 +14,7 @@ type CommentInfo struct {
 	BuildIgnore bool     // #wa:build ignore
 	BuildTags   []string // #wa:build s1 s2 ...
 
+	Align         string     // #wa:align xxx
 	LinkName      string     // #wa:linkname xxx
 	ExportName    string     // #wa:export xxx
 	ImportName    [2]string  // #wa:import xxx yyy
@@ -75,6 +76,12 @@ func ParseCommentInfo(docList ...*ast.CommentGroup) (info CommentInfo) {
 					}
 				}
 				info.BuildTags = parts[1:]
+
+			case token.K_X_wa_align, token.K_X_wz_align:
+				if len(parts) >= 2 {
+					info.Align = parts[1]
+				}
+
 			case token.K_X_wa_linkname, token.K_X_wz_linkname:
 				if len(parts) >= 2 {
 					info.LinkName = strings.Join(parts[1:], " ")

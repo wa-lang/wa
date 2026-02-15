@@ -13,6 +13,7 @@ const (
 	K_X_wa       = "#wa:"
 	K_X_wa_build = "#wa:build"
 
+	K_X_wa_align          = "#wa:align"
 	K_X_wa_linkname       = "#wa:linkname"
 	K_X_wa_export         = "#wa:export"
 	K_X_wa_import         = "#wa:import"

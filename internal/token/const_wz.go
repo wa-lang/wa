@@ -14,6 +14,7 @@ const (
 	K_X_wz       = "#凹:"
 	K_X_wz_build = "#凹:构建"
 
+	K_X_wz_align          = "#凹:对齐"
 	K_X_wz_linkname       = "#凹:链接名"
 	K_X_wz_export         = "#凹:导出"
 	K_X_wz_import         = "#凹:引入"
