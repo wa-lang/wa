@@ -51,10 +51,18 @@ func (p *Prog) xLen(arg *abi.X64Argument) int {
 
 func (p *Prog) reg2p9Reg(r abi.RegType) int16 {
 	switch {
+	case r == REG_RIP:
+		return 0 // plan9 需要独处理
+	case r >= REG_EAX && r <= REG_R15B:
+		return p9x86.REG_AL + int16(r-REG_AL)
 	case r >= REG_EAX && r <= REG_R15D:
 		return p9x86.REG_AX + int16(r-REG_EAX)
 	case r >= REG_RAX && r <= REG_R15:
 		return p9x86.REG_AX + int16(r-REG_RAX)
+	case r >= REG_AH && r <= REG_BH:
+		return p9x86.REG_AH + int16(r-REG_AH)
+	case r >= REG_XMM0 && r <= REG_XMM7:
+		return p9x86.REG_F0 + int16(r-REG_XMM0)
 	default:
 		panic("unreachable")
 	}

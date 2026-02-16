@@ -14,6 +14,26 @@ func RegValid(reg abi.RegType) bool {
 	return reg > 0 && reg < REG_END
 }
 
+func RegValid_Int(reg abi.RegType) bool {
+	return RegValid_I8(reg) || RegValid_I16(reg) || RegValid_I32(reg) || RegValid_I64(64)
+}
+func RegValid_I8(reg abi.RegType) bool {
+	return (reg >= REG_AL && reg <= REG_R15B) || (reg >= REG_AH && reg <= REG_BH)
+}
+func RegValid_I16(reg abi.RegType) bool {
+	return reg >= REG_AX && reg <= REG_R15W
+}
+func RegValid_I32(reg abi.RegType) bool {
+	return reg >= REG_EAX && reg <= REG_R15D
+}
+func RegValid_I64(reg abi.RegType) bool {
+	return reg >= REG_RAX && reg <= REG_R15
+}
+
+func RegValid_Float(reg abi.RegType) bool {
+	return reg >= REG_XMM0 && reg <= REG_XMM7
+}
+
 // 寄存器宽度
 func RegXLen(r abi.RegType) int {
 	switch {

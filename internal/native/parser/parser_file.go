@@ -16,6 +16,35 @@ func (p *parser) parseFile() {
 	// 解析开头的关联文档
 	p.prog.Doc = p.parseCommentGroup(true)
 
+	// X64 强制采用 intel 语法
+	if p.cpu == abi.X64Unix || p.cpu == abi.X64Windows {
+		for {
+			if p.err != nil {
+				return
+			}
+			if p.tok == token.EOF {
+				break
+			}
+
+			switch p.tok {
+			case token.COMMENT:
+				commentObj := p.parseCommentGroup(true)
+				p.prog.Comments = append(p.prog.Comments, commentObj)
+				p.prog.Objects = append(p.prog.Objects, commentObj)
+
+			case token.GAS_X64_INTEL_SYNTAX:
+				p.prog.IntelSyntax = &ast.GasIntelSyntaxNoprefix{
+					Pos: p.pos,
+				}
+				p.acceptToken(token.GAS_X64_INTEL_SYNTAX)
+				p.acceptToken(token.GAS_X64_NOPREFIX)
+			}
+		}
+		if p.prog.IntelSyntax == nil {
+			p.errorf(p.pos, "%s missing", token.GAS_X64_INTEL_SYNTAX)
+		}
+	}
+
 	// 解析代码主体
 	for {
 		if p.err != nil {
@@ -30,17 +59,6 @@ func (p *parser) parseFile() {
 			commentObj := p.parseCommentGroup(true)
 			p.prog.Comments = append(p.prog.Comments, commentObj)
 			p.prog.Objects = append(p.prog.Objects, commentObj)
-
-		case token.GAS_X64_INTEL_SYNTAX:
-			if p.cpu == abi.X64Unix || p.cpu == abi.X64Windows {
-				p.prog.IntelSyntax = &ast.GasIntelSyntaxNoprefix{
-					Pos: p.pos,
-				}
-				p.acceptToken(token.GAS_X64_INTEL_SYNTAX)
-				p.acceptToken(token.GAS_X64_NOPREFIX)
-			} else {
-				p.errorf(p.pos, "%v only enabled on X64 CPU", p.tok)
-			}
 
 		case token.GAS_EXTERN:
 			ext := &ast.Extern{Pos: p.pos, Tok: token.GAS_EXTERN}
