@@ -14,6 +14,28 @@ func RegValid(reg abi.RegType) bool {
 	return reg > 0 && reg < REG_END
 }
 
+// 寄存器宽度
+func RegXLen(r abi.RegType) int {
+	switch {
+	case r == REG_RIP:
+		return 4 // 相对地址类型
+	case r >= REG_AL && r <= REG_R15B:
+		return 1
+	case r >= REG_AH && r <= REG_BH: // 注意顺序
+		return 1
+	case r >= REG_AX && r <= REG_R15W:
+		return 2
+	case r >= REG_EAX && r <= REG_R15D:
+		return 4
+	case r >= REG_RAX && r <= REG_R15:
+		return 8
+	case r >= REG_XMM0 && r <= REG_XMM7:
+		return 4 // 浮点临时是以4字节计算
+	default:
+		panic("unreachable")
+	}
+}
+
 // 根据名字查找寄存器(忽略大小写, 忽略下划线和点的区别)
 func LookupRegister(regName string) (r abi.RegType, ok bool) {
 	if regName == "" {
