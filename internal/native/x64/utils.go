@@ -110,10 +110,3 @@ hasUnicode:
 	// First string is empty, so check if the second one is also empty.
 	return len(t) == 0
 }
-
-func maxInt(a, b int) int {
-	if a > b {
-		return a
-	}
-	return b
-}
