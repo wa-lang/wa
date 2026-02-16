@@ -1939,8 +1939,8 @@ func (p *wat2X64Worker) buildFunc_ins(
 		i := i.(ast.Ins_F32Const)
 		sp0 := p.fnWasmR0Base - 8*stk.Push(token.F32) - 8
 		fmt.Fprintf(w, "    # f32.const %f\n", i.X)
-		fmt.Fprintf(w, "    mov  eax, 0x%X\n", math.Float32bits(i.X))
-		fmt.Fprintf(w, "    movd qword ptr [rbp%+d], rax\n", sp0)
+		fmt.Fprintf(w, "    mov eax, 0x%X\n", math.Float32bits(i.X))
+		fmt.Fprintf(w, "    mov qword ptr [rbp%+d], rax\n", sp0)
 		fmt.Fprintln(w)
 
 	case token.INS_F64_CONST:
@@ -1948,7 +1948,7 @@ func (p *wat2X64Worker) buildFunc_ins(
 		sp0 := p.fnWasmR0Base - 8*stk.Push(token.F64) - 8
 		fmt.Fprintf(w, "    # f64.const %f\n", i.X)
 		fmt.Fprintf(w, "    movabs rax, 0x%X\n", math.Float64bits(i.X))
-		fmt.Fprintf(w, "    movq   qword ptr [rbp%+d], rax\n", sp0)
+		fmt.Fprintf(w, "    mov    qword ptr [rbp%+d], rax\n", sp0)
 		fmt.Fprintln(w)
 
 	case token.INS_I32_EQZ:
@@ -2298,7 +2298,7 @@ func (p *wat2X64Worker) buildFunc_ins(
 		fmt.Fprintf(w, "    ucomiss xmm4, xmm5\n")
 		fmt.Fprintf(w, "    setb    al\n")
 		fmt.Fprintf(w, "    setnp   cl # set if not NaN\n")
-		fmt.Fprintf(w, "    and al, cl\n")
+		fmt.Fprintf(w, "    and     al, cl\n")
 		fmt.Fprintf(w, "    movzx   eax, al\n")
 		fmt.Fprintf(w, "    mov     dword ptr [rbp%+d], eax\n", ret0)
 		fmt.Fprintln(w)
@@ -2362,7 +2362,7 @@ func (p *wat2X64Worker) buildFunc_ins(
 		fmt.Fprintf(w, "    ucomisd xmm4, xmm5\n")
 		fmt.Fprintf(w, "    sete    al\n")
 		fmt.Fprintf(w, "    setnp   cl # set if not NaN\n")
-		fmt.Fprintf(w, "    and al, cl\n")
+		fmt.Fprintf(w, "    and     al, cl\n")
 		fmt.Fprintf(w, "    movzx   eax, al\n")
 		fmt.Fprintf(w, "    mov     dword ptr [rbp%+d], eax\n", ret0)
 		fmt.Fprintln(w)

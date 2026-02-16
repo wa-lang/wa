@@ -114,9 +114,13 @@ const (
 	ACALL             // call
 	ACDQ              // cdq
 	ACMP              // cmp
+	ACMOVNE           // cmovne
+	ACQO              // cqo
 	ACVTSI2SD         // cvtsi2sd
 	ACVTSS2SD         // cvtss2sd
 	ACVTTSD2SI        // cvttsd2si
+	ACVTTSS2SI        // cvttss2si
+	ACVTSI2SS         // cvtsi2ss
 	ADEC              // dec
 	ADIV              // div
 	ADIVSD            // divsd
@@ -133,9 +137,13 @@ const (
 	AJNZ              // jnz
 	AJZ               // jz
 	ALEA              // lea
+	ALZCNT            // lzcnt
+	AMAXSD            // maxsd
+	AMAXSS            // maxss
+	AMINSD            // minsd
+	AMINSS            // minss
 	AMOV              // mov
 	AMOVABS           // movabs
-	AMOVQ             // movq
 	AMOVSD            // movsd
 	AMOVSS            // movss
 	AMOVSXD           // movsxd
@@ -146,8 +154,13 @@ const (
 	ANOP              // nop
 	AOR               // or
 	APOP              // pop
+	APOPCNT           // popcnt
 	APUSH             // push
 	ARET              // ret
+	AROL              // rol
+	AROR              // ror
+	AROUNDSD          // roundsd
+	AROUNDSS          // roundss
 	ASAR              // sar
 	ASETA             // seta
 	ASETAE            // setae
@@ -161,12 +174,16 @@ const (
 	ASETNE            // setne
 	ASETNP            // setnp
 	ASHL              // shl
+	ASHR              // shr
+	ASQRTSD           // sqrtsd
+	ASQRTSS           // sqrtss
 	ASTD              // std
 	ASUB              // sub
 	ASUBSD            // subsd
 	ASUBSS            // subss
 	ASYSCALL          // syscall
 	ATEST             // test
+	ATZCNT            // tzcnt
 	AUCOMISD          // ucomisd
 	AXOR              // xor
 

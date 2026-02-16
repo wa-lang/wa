@@ -267,10 +267,6 @@ func (prog *Prog) buildProg(as abi.As, arg *abi.X64Argument) (inst *Prog, err er
 		// movabs rax, 0x3FF0000000000000
 		assert(prog.nArg(arg) == 2)
 		prog.As = p9x86.AMOVQ
-	case AMOVQ: // movq
-		// movq [rbp-760], rax
-		assert(prog.nArg(arg) == 2)
-		prog.As = p9x86.AMOVQ
 	case AMOVSD: // movsd
 		// movsd xmm4, qword ptr [rbp-320]
 		// movsd qword ptr [rbp-760], xmm4

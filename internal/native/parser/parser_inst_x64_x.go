@@ -121,6 +121,11 @@ func (p *parser) parseInst_x64(fn *ast.Func) (inst *ast.Instruction) {
 		}
 		return
 
+	case x64.OpFormatType_Any2Any_Imm:
+		// roundsd
+		// roundss
+		panic("TODO")
+
 	default:
 		p.errorf(p.pos, "%v is not x64 instruction", p.tok)
 	}
