@@ -182,10 +182,50 @@ func (prog *Prog) buildProg(as abi.As, arg *abi.X64Argument) (inst *Prog, err er
 		prog.To = dst
 
 	case ACVTTSS2SI: // cvttss2si
-		panic(fmt.Sprintf("TODO: %v", as))
+		// cvttss2si eax, xmm4
+		// cvttss2si rax, xmm4
+		assert(prog.nArg(arg) == 2)
+		switch prog.xLen(arg) {
+		case 4:
+			// float32 -> int32
+			assert(RegValid_Float(arg.Src.Reg))
+			assert(RegValid_I32(arg.Dst.Reg))
+			prog.As = p9x86.ACVTSS2SL
+		case 8:
+			// float32 -> int64
+			assert(RegValid_Float(arg.Src.Reg))
+			assert(RegValid_I64(arg.Dst.Reg))
+			prog.As = p9x86.ACVTSS2SQ
+		default:
+			panic("unreachable")
+		}
+		prog.From = src
+		prog.To = dst
+
 	case ACVTSI2SS: // cvtsi2ss
-		panic(fmt.Sprintf("TODO: %v", as))
+		// cvtsi2ss xmm4, eax
+		// cvtsi2ss xmm4, rax
+		assert(prog.nArg(arg) == 2)
+
+		switch prog.xLen(arg) {
+		case 4:
+			// int32 -> float32
+			assert(RegValid_I32(arg.Src.Reg))
+			assert(RegValid_Float(arg.Dst.Reg))
+			prog.As = p9x86.ACVTSL2SS
+		case 8:
+			// int64 -> float32
+			assert(RegValid_I64(arg.Src.Reg))
+			assert(RegValid_Float(arg.Dst.Reg))
+			prog.As = p9x86.ACVTSQ2SS
+		default:
+			panic("unreachable")
+		}
+		prog.From = src
+		prog.To = dst
+
 	case ADEC: // dec
+		// dec rcx
 		assert(prog.nArg(arg) == 1)
 		switch prog.xLen(arg) {
 		case 1:
@@ -199,8 +239,11 @@ func (prog *Prog) buildProg(as abi.As, arg *abi.X64Argument) (inst *Prog, err er
 		default:
 			panic("unreachable")
 		}
+		prog.To = dst
+
 	case ADIV: // div
 		// div dword ptr [rbp-768]
+		assert(prog.nArg(arg) == 1)
 		switch prog.xLen(arg) {
 		case 1:
 			prog.As = p9x86.ADIVB
@@ -213,14 +256,25 @@ func (prog *Prog) buildProg(as abi.As, arg *abi.X64Argument) (inst *Prog, err er
 		default:
 			panic("unreachable")
 		}
+		prog.To = dst
+
 	case ADIVSD: // divsd
 		// divsd xmm4, qword ptr [rbp-160]
+		assert(prog.nArg(arg) == 2)
 		prog.As = p9x86.ADIVSD
+		prog.From = src
+		prog.To = dst
+
 	case ADIVSS: // divss
 		// divss xmm4, dword ptr [rbp-160]
+		assert(prog.nArg(arg) == 2)
 		prog.As = p9x86.ADIVSS
+		prog.From = src
+		prog.To = dst
+
 	case AIDIV: // idiv
 		// idiv dword ptr [rbp-768]
+		assert(prog.nArg(arg) == 1)
 		switch prog.xLen(arg) {
 		case 1:
 			prog.As = p9x86.AIDIVB
@@ -233,6 +287,8 @@ func (prog *Prog) buildProg(as abi.As, arg *abi.X64Argument) (inst *Prog, err er
 		default:
 			panic("unreachable")
 		}
+		prog.To = dst
+
 	case AIMUL: // imul
 		// imul eax, dword ptr [rbp-784]
 		assert(prog.nArg(arg) == 2)
@@ -248,6 +304,9 @@ func (prog *Prog) buildProg(as abi.As, arg *abi.X64Argument) (inst *Prog, err er
 		default:
 			panic("unreachable")
 		}
+		prog.From = src
+		prog.To = dst
+
 	case AINC: // inc
 		assert(prog.nArg(arg) == 1)
 		switch prog.xLen(arg) {
@@ -262,26 +321,53 @@ func (prog *Prog) buildProg(as abi.As, arg *abi.X64Argument) (inst *Prog, err er
 		default:
 			panic("unreachable")
 		}
+		prog.To = dst
+
 	case AJA: // ja
 		// # memory.grow
 		// ja .Wa.L.else.00000051
+		assert(prog.nArg(arg) == 1)
 		prog.As = p9x86.AJHI
+		prog.To = dst
+
 	case AJB: // jb
+		// jb .Wa.L.memmove.forward
+		assert(prog.nArg(arg) == 1)
 		prog.As = p9x86.AJCS
+		prog.To = dst
+
 	case AJE: // je
 		// je .Wa.L.brNext.00000052
+		assert(prog.nArg(arg) == 1)
 		prog.As = p9x86.AJEQ
+		prog.To = dst
+
 	case AJGE: // jge
+		assert(prog.nArg(arg) == 1)
 		prog.As = p9x86.AJEQ
+		prog.To = dst
+
 	case AJMP: // jmp
 		// jmp .Wa.L.brNext.00000052
+		assert(prog.nArg(arg) == 1)
 		prog.As = p9x86.AJMP
+		prog.To = dst
+
 	case AJNS: // jns
+		assert(prog.nArg(arg) == 1)
 		prog.As = p9x86.AJNE
+		prog.To = dst
+
 	case AJNZ: // jnz
+		assert(prog.nArg(arg) == 1)
 		prog.As = p9x86.AJNE
+		prog.To = dst
+
 	case AJZ: // jz
+		assert(prog.nArg(arg) == 1)
 		prog.As = p9x86.AJEQ
+		prog.To = dst
+
 	case ALEA: // lea
 		// lea rcx, [rsp+40] # return address
 		// lea rax, [rip+.Wa.Table.funcIndexList]
@@ -298,16 +384,56 @@ func (prog *Prog) buildProg(as abi.As, arg *abi.X64Argument) (inst *Prog, err er
 		default:
 			panic("unreachable")
 		}
+		prog.From = src
+		prog.To = dst
+
 	case ALZCNT: // lzcnt
-		panic(fmt.Sprintf("TODO: %v", as))
+		// lzcnt eax, eax
+		// lzcnt rax, rax
+		assert(prog.nArg(arg) == 2)
+		switch prog.xLen(arg) {
+		case 1:
+			panic("unreachable")
+		case 2:
+			prog.As = p9x86.ALZCNTW
+		case 4:
+			prog.As = p9x86.ALZCNTL
+		case 8:
+			prog.As = p9x86.ALZCNTQ
+		default:
+			panic("unreachable")
+		}
+		prog.From = src
+		prog.To = dst
+
 	case AMAXSD: // maxsd
-		panic(fmt.Sprintf("TODO: %v", as))
+		//  maxsd xmm4, qword ptr [rbp+8]
+		assert(prog.nArg(arg) == 2)
+		prog.As = p9x86.AMAXSD
+		prog.From = src
+		prog.To = dst
+
 	case AMAXSS: // maxss
-		panic(fmt.Sprintf("TODO: %v", as))
+		// maxss xmm4, dword ptr [rbp+8]
+		assert(prog.nArg(arg) == 2)
+		prog.As = p9x86.AMAXSS
+		prog.From = src
+		prog.To = dst
+
 	case AMINSD: // minsd
-		panic(fmt.Sprintf("TODO: %v", as))
+		// minsd xmm4, qword ptr [rbp+8]
+		assert(prog.nArg(arg) == 2)
+		prog.As = p9x86.AMINSD
+		prog.From = src
+		prog.To = dst
+
 	case AMINSS: // minss
-		panic(fmt.Sprintf("TODO: %v", as))
+		// minss xmm4, dword ptr [rbp+8]
+		assert(prog.nArg(arg) == 2)
+		prog.As = p9x86.AMINSS
+		prog.From = src
+		prog.To = dst
+
 	case AMOV: // mov
 		// mov rax, -1
 		// mov rsp, rbp
@@ -330,21 +456,33 @@ func (prog *Prog) buildProg(as abi.As, arg *abi.X64Argument) (inst *Prog, err er
 		default:
 			panic("unreachable")
 		}
+		prog.From = src
+		prog.To = dst
+
 	case AMOVABS: // movabs
 		// movabs rax, 0
 		// movabs rax, 0x3FF0000000000000
 		assert(prog.nArg(arg) == 2)
 		prog.As = p9x86.AMOVQ
+		prog.From = src
+		prog.To = dst
+
 	case AMOVSD: // movsd
 		// movsd xmm4, qword ptr [rbp-320]
 		// movsd qword ptr [rbp-760], xmm4
 		assert(prog.nArg(arg) == 2)
 		prog.As = p9x86.AMOVSD
+		prog.From = src
+		prog.To = dst
+
 	case AMOVSS: // movss
 		// movss xmm4, dword ptr [rbp+16]
 		// movss dword ptr [rbp-24], xmm4
 		assert(prog.nArg(arg) == 2)
 		prog.As = p9x86.AMOVSS
+		prog.From = src
+		prog.To = dst
+
 	case AMOVSXD: // movsxd
 		assert(prog.nArg(arg) == 2)
 		switch prog.xLen(arg) {
@@ -359,6 +497,9 @@ func (prog *Prog) buildProg(as abi.As, arg *abi.X64Argument) (inst *Prog, err er
 		default:
 			panic("unreachable")
 		}
+		prog.From = src
+		prog.To = dst
+
 	case AMOVZX: // movzx
 		// movzx eax, al # eax = al
 		assert(prog.nArg(arg) == 2)
@@ -374,15 +515,26 @@ func (prog *Prog) buildProg(as abi.As, arg *abi.X64Argument) (inst *Prog, err er
 		default:
 			panic("unreachable")
 		}
+		prog.From = src
+		prog.To = dst
+
 	case AMULSD: // mulsd
 		// mulsd xmm4, qword ptr [rbp-160]
 		assert(prog.nArg(arg) == 2)
 		prog.As = p9x86.AMULSD
+		prog.From = src
+		prog.To = dst
+
 	case AMULSS: // mulss
 		// mulss xmm4, dword ptr [rbp-160]
 		assert(prog.nArg(arg) == 2)
 		prog.As = p9x86.AMULSS
+		prog.From = src
+		prog.To = dst
+
 	case ANEG: // neg
+		// neg rax
+		assert(prog.nArg(arg) == 1)
 		switch prog.xLen(arg) {
 		case 1:
 			prog.As = p9x86.ANEGB
@@ -395,11 +547,15 @@ func (prog *Prog) buildProg(as abi.As, arg *abi.X64Argument) (inst *Prog, err er
 		default:
 			panic("unreachable")
 		}
+		prog.To = dst
+
 	case ANOP: // nop
 		assert(prog.nArg(arg) == 0)
 		prog.As = p9x86.ANOPW
+
 	case AOR: // or
 		// or eax, dword ptr [rbp-1304]
+		assert(prog.nArg(arg) == 2)
 		switch prog.xLen(arg) {
 		case 1:
 			prog.As = p9x86.AORB
@@ -412,6 +568,9 @@ func (prog *Prog) buildProg(as abi.As, arg *abi.X64Argument) (inst *Prog, err er
 		default:
 			panic("unreachable")
 		}
+		prog.From = src
+		prog.To = dst
+
 	case APOP: // pop
 		// pop rcx
 		assert(prog.nArg(arg) == 1)
@@ -429,8 +588,27 @@ func (prog *Prog) buildProg(as abi.As, arg *abi.X64Argument) (inst *Prog, err er
 		default:
 			panic("unreachable")
 		}
+		prog.To = dst
+
 	case APOPCNT: // popcnt
-		panic(fmt.Sprintf("TODO: %v", as))
+		// popcnt eax, eax
+		// popcnt rax, rax
+		assert(prog.nArg(arg) == 2)
+		switch prog.xLen(arg) {
+		case 1:
+			panic("unreachable")
+		case 2:
+			prog.As = p9x86.APOPCNTW
+		case 4:
+			prog.As = p9x86.APOPCNTL
+		case 8:
+			prog.As = p9x86.APOPCNTQ
+		default:
+			panic("unreachable")
+		}
+		prog.From = src
+		prog.To = dst
+
 	case APUSH: // push
 		// push rbp
 		assert(prog.nArg(arg) == 1)
@@ -448,19 +626,67 @@ func (prog *Prog) buildProg(as abi.As, arg *abi.X64Argument) (inst *Prog, err er
 		default:
 			panic("unreachable")
 		}
+		prog.To = dst
+
 	case ARET: // ret
 		assert(prog.nArg(arg) == 0)
 		prog.As = p9x86.ARET
+
 	case AROL: // rol
-		panic(fmt.Sprintf("TODO: %v", as))
+		// rol  eax, cl # cl 是 ecx 低8位
+		assert(prog.nArg(arg) == 2)
+		switch prog.xLen(arg) {
+		case 1:
+			prog.As = p9x86.AROLB
+		case 2:
+			prog.As = p9x86.AROLW
+		case 4:
+			prog.As = p9x86.AROLL
+		case 8:
+			prog.As = p9x86.AROLQ
+		default:
+			panic("unreachable")
+		}
+		prog.From = src
+		prog.To = dst
+
 	case AROR: // ror
-		panic(fmt.Sprintf("TODO: %v", as))
+		// ror eax, cl # cl 是 ecx 低8位
+		assert(prog.nArg(arg) == 2)
+		switch prog.xLen(arg) {
+		case 1:
+			prog.As = p9x86.ARORB
+		case 2:
+			prog.As = p9x86.ARORW
+		case 4:
+			prog.As = p9x86.ARORL
+		case 8:
+			prog.As = p9x86.ARORQ
+		default:
+			panic("unreachable")
+		}
+		prog.From = src
+		prog.To = dst
+
 	case AROUNDSD: // roundsd
+		// roundsd xmm4, xmm4, 2
+		// 3 个参数
+		prog.As = p9x86.AROUNDSD
+		prog.From = src
+		prog.To = dst
 		panic(fmt.Sprintf("TODO: %v", as))
+
 	case AROUNDSS: // roundss
+		// roundss xmm4, xmm4, 2
+		// 3 个参数
+		prog.As = p9x86.AROUNDSS
+		prog.From = src
+		prog.To = dst
 		panic(fmt.Sprintf("TODO: %v", as))
+
 	case ASAR: // sar
 		// sar eax, cl # cl 是 ecx 低8位
+		assert(prog.nArg(arg) == 2)
 		switch prog.xLen(arg) {
 		case 1:
 			prog.As = p9x86.ASARB
@@ -473,39 +699,75 @@ func (prog *Prog) buildProg(as abi.As, arg *abi.X64Argument) (inst *Prog, err er
 		default:
 			panic("unreachable")
 		}
+		prog.From = src
+		prog.To = dst
+
 	case ASETA: // seta
 		// seta al
+		assert(prog.nArg(arg) == 1)
+		prog.To = dst
 		panic("TODO")
+
 	case ASETAE: // setae
 		// setae al
+		assert(prog.nArg(arg) == 1)
+		prog.To = dst
 		panic("TODO")
+
 	case ASETB: // setb
 		// setb al
+		assert(prog.nArg(arg) == 1)
+		prog.To = dst
 		panic("TODO")
+
 	case ASETBE: // setbe
 		// setbe al
+		assert(prog.nArg(arg) == 1)
+		prog.To = dst
 		panic("TODO")
+
 	case ASETE: // sete
 		// sete al # al = (eax==0)? 1: 0
+		assert(prog.nArg(arg) == 1)
+		prog.To = dst
 		panic("TODO")
+
 	case ASETG: // setg
 		// setg al
+		assert(prog.nArg(arg) == 1)
+		prog.To = dst
 		panic("TODO")
+
 	case ASETGE: // setge
 		// setge al
+		assert(prog.nArg(arg) == 1)
+		prog.To = dst
 		panic("TODO")
+
 	case ASETL: // setl
 		// setl al
+		assert(prog.nArg(arg) == 1)
+		prog.To = dst
 		panic("TODO")
+
 	case ASETLE: // setle
 		// setle al
+		assert(prog.nArg(arg) == 1)
+		prog.To = dst
 		panic("TODO")
+
 	case ASETNE: // setne
 		// setne al # al = (r10d==r11d)? 1: 0
+		assert(prog.nArg(arg) == 1)
+		prog.To = dst
 		panic("TODO")
+
 	case ASETNP: // setnp
 		// setnp cl # set if not NaN
+		assert(prog.nArg(arg) == 1)
+		prog.To = dst
 		panic("TODO")
+
 	case ASHL: // shl
 		// shl eax, cl # cl 是 ecx 低8位
 		assert(prog.nArg(arg) == 2)
@@ -521,14 +783,44 @@ func (prog *Prog) buildProg(as abi.As, arg *abi.X64Argument) (inst *Prog, err er
 		default:
 			panic("unreachable")
 		}
+		prog.From = src
+		prog.To = dst
+
 	case ASHR: // shr
-		panic(fmt.Sprintf("TODO: %v", as))
+		// shr eax, cl # cl 是 ecx 低8位
+		assert(prog.nArg(arg) == 2)
+		switch prog.xLen(arg) {
+		case 1:
+			prog.As = p9x86.ASHRB
+		case 2:
+			prog.As = p9x86.ASHRW
+		case 4:
+			prog.As = p9x86.ASHRL
+		case 8:
+			prog.As = p9x86.ASHRQ
+		default:
+			panic("unreachable")
+		}
+		prog.From = src
+		prog.To = dst
+
 	case ASQRTSD: // sqrtsd
-		panic(fmt.Sprintf("TODO: %v", as))
+		// sqrtsd xmm4, xmm4
+		assert(prog.nArg(arg) == 2)
+		prog.As = p9x86.ASQRTSD
+		prog.From = src
+		prog.To = dst
+
 	case ASQRTSS: // sqrtss
-		panic(fmt.Sprintf("TODO: %v", as))
+		// sqrtss xmm4, xmm4
+		assert(prog.nArg(arg) == 2)
+		prog.As = p9x86.ASQRTSS
+		prog.From = src
+		prog.To = dst
+
 	case ASTD: // std
 		prog.As = p9x86.ASTD
+
 	case ASUB: // sub
 		// sub rsp, 80
 		// sub eax, dword ptr [rbp-464]
@@ -545,14 +837,23 @@ func (prog *Prog) buildProg(as abi.As, arg *abi.X64Argument) (inst *Prog, err er
 		default:
 			panic("unreachable")
 		}
+		prog.From = src
+		prog.To = dst
+
 	case ASUBSD: // subsd
 		// subsd xmm4, qword ptr [rbp-768]
 		assert(prog.nArg(arg) == 2)
 		prog.As = p9x86.ASUBSD
+		prog.From = src
+		prog.To = dst
+
 	case ASUBSS: // subss
 		// subss xmm4, dword ptr [rbp-160]
 		assert(prog.nArg(arg) == 2)
 		prog.As = p9x86.ASUBSS
+		prog.From = src
+		prog.To = dst
+
 	case ASYSCALL: // syscall
 		assert(prog.nArg(arg) == 0)
 		prog.As = p9x86.ASYSCALL
@@ -571,11 +872,34 @@ func (prog *Prog) buildProg(as abi.As, arg *abi.X64Argument) (inst *Prog, err er
 		default:
 			panic("unreachable")
 		}
+		prog.From = src
+		prog.To = dst
 
 	case ATZCNT: // tzcnt
-		panic(fmt.Sprintf("TODO: %v", as))
+		// tzcnt eax, eax
+		assert(prog.nArg(arg) == 2)
+		switch prog.xLen(arg) {
+		case 1:
+			panic("unreachable")
+		case 2:
+			prog.As = p9x86.ATZCNTW
+		case 4:
+			prog.As = p9x86.ATZCNTL
+		case 8:
+			prog.As = p9x86.ATZCNTQ
+		default:
+			panic("unreachable")
+		}
+		prog.From = src
+		prog.To = dst
+
 	case AUCOMISD: // ucomisd
+		// ucomisd xmm4, xmm5
+		assert(prog.nArg(arg) == 2)
 		prog.As = p9x86.AUCOMISD
+		prog.From = src
+		prog.To = dst
+
 	case AXOR: // xor
 		// xor rdx, rdx
 		assert(prog.nArg(arg) == 2)
@@ -591,8 +915,11 @@ func (prog *Prog) buildProg(as abi.As, arg *abi.X64Argument) (inst *Prog, err er
 		default:
 			panic("unreachable")
 		}
+		prog.From = src
+		prog.To = dst
+
 	default:
-		panic(fmt.Sprintf("TODO: %v", as))
+		panic(fmt.Sprintf("x64: unsupport as: %v", as))
 	}
 
 	return prog, nil
