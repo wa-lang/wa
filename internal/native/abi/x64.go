@@ -74,7 +74,9 @@ type X64Argument struct {
 	// 无参: Dst == nil && Src == nil (例如 RET)
 	// 一元: Dst != nil && Src == nil (例如 PUSH, CALL, INC)
 	// 二元: Dst != nil && Src != nil (例如 MOV, ADD, XOR)
+	// 更多参数在 Rest 中
 
-	Dst *X64Operand
-	Src *X64Operand
+	Dst  *X64Operand
+	Src  *X64Operand
+	Rest []*X64Operand
 }

@@ -29,7 +29,7 @@ func (p *Prog) Encode() []byte {
 func (p *Prog) nArg(arg *abi.X64Argument) int {
 	switch {
 	case arg.Dst != nil && arg.Src != nil:
-		return 2
+		return 2 + len(arg.Rest)
 	case arg.Dst != nil && arg.Src == nil:
 		return 1
 	case arg.Dst == nil && arg.Src == nil:

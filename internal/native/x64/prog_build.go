@@ -670,19 +670,19 @@ func (prog *Prog) buildProg(as abi.As, arg *abi.X64Argument) (inst *Prog, err er
 
 	case AROUNDSD: // roundsd
 		// roundsd xmm4, xmm4, 2
-		// 3 个参数
+		assert(prog.nArg(arg) == 3)
 		prog.As = p9x86.AROUNDSD
 		prog.From = src
 		prog.To = dst
-		panic(fmt.Sprintf("TODO: %v", as))
+		prog.RestArgs = append(prog.RestArgs, prog.operand2P9Addr(arg.Rest[0]))
 
 	case AROUNDSS: // roundss
 		// roundss xmm4, xmm4, 2
-		// 3 个参数
+		assert(prog.nArg(arg) == 3)
 		prog.As = p9x86.AROUNDSS
 		prog.From = src
 		prog.To = dst
-		panic(fmt.Sprintf("TODO: %v", as))
+		prog.RestArgs = append(prog.RestArgs, prog.operand2P9Addr(arg.Rest[0]))
 
 	case ASAR: // sar
 		// sar eax, cl # cl 是 ecx 低8位
@@ -705,68 +705,68 @@ func (prog *Prog) buildProg(as abi.As, arg *abi.X64Argument) (inst *Prog, err er
 	case ASETA: // seta
 		// seta al
 		assert(prog.nArg(arg) == 1)
+		prog.As = p9x86.ASETHI
 		prog.To = dst
-		panic("TODO")
 
 	case ASETAE: // setae
 		// setae al
 		assert(prog.nArg(arg) == 1)
+		prog.As = p9x86.ASETCC
 		prog.To = dst
-		panic("TODO")
 
 	case ASETB: // setb
 		// setb al
 		assert(prog.nArg(arg) == 1)
+		prog.As = p9x86.ASETCS
 		prog.To = dst
-		panic("TODO")
 
 	case ASETBE: // setbe
 		// setbe al
 		assert(prog.nArg(arg) == 1)
+		prog.As = p9x86.ASETLS
 		prog.To = dst
-		panic("TODO")
 
 	case ASETE: // sete
 		// sete al # al = (eax==0)? 1: 0
 		assert(prog.nArg(arg) == 1)
+		prog.As = p9x86.ASETEQ
 		prog.To = dst
-		panic("TODO")
 
 	case ASETG: // setg
 		// setg al
 		assert(prog.nArg(arg) == 1)
+		prog.As = p9x86.ASETGT
 		prog.To = dst
-		panic("TODO")
 
 	case ASETGE: // setge
 		// setge al
 		assert(prog.nArg(arg) == 1)
+		prog.As = p9x86.ASETGE
 		prog.To = dst
-		panic("TODO")
 
 	case ASETL: // setl
 		// setl al
 		assert(prog.nArg(arg) == 1)
+		prog.As = p9x86.ASETLT
 		prog.To = dst
-		panic("TODO")
 
 	case ASETLE: // setle
 		// setle al
 		assert(prog.nArg(arg) == 1)
+		prog.As = p9x86.ASETLE
 		prog.To = dst
-		panic("TODO")
 
 	case ASETNE: // setne
 		// setne al # al = (r10d==r11d)? 1: 0
 		assert(prog.nArg(arg) == 1)
+		prog.As = p9x86.ASETNE
 		prog.To = dst
-		panic("TODO")
 
 	case ASETNP: // setnp
 		// setnp cl # set if not NaN
 		assert(prog.nArg(arg) == 1)
+		prog.As = p9x86.ASETPC
 		prog.To = dst
-		panic("TODO")
 
 	case ASHL: // shl
 		// shl eax, cl # cl 是 ecx 低8位
