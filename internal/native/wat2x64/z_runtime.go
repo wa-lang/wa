@@ -28,8 +28,8 @@ const (
 //go:embed assets/native-env-linux-x64.s
 var native_env_linux_x64_s string
 
-//go:embed assets/native-env-windows-x64.c
-var native_env_windows_x64_c string
+//go:embed assets/native-env-windows-x64.s
+var native_env_windows_x64_s string
 
 // 生成运行时函数
 func (p *wat2X64Worker) buildRuntimeHead(w io.Writer) error {
@@ -57,10 +57,7 @@ func (p *wat2X64Worker) buildRuntimeImpl(w io.Writer) error {
 	case abi.X64Unix:
 		fmt.Fprintln(w, native_env_linux_x64_s)
 	case abi.X64Windows:
-		// TODO: 更换为纯汇编
-		if false {
-			fmt.Fprintln(w, native_env_windows_x64_c)
-		}
+		fmt.Fprintln(w, native_env_windows_x64_s)
 	default:
 		panic("unreachable")
 	}
