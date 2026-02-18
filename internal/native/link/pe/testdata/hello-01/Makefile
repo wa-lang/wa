@@ -12,8 +12,12 @@ FLAGS+=-s
 FLAGS+=-lkernel32
 
 build:
-	gcc minimal.s $(FLAGS)  -o minimal.exe
+	gcc minimal.s $(FLAGS) -o minimal.exe
 	minimal.exe
+
+gen:
+	go run gen-golden-exe.go -o a.out.exe
+	a.out.exe
 
 peinfo:
 	go run peinfo.go minimal.exe

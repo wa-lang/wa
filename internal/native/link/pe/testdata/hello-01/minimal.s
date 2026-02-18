@@ -3,6 +3,8 @@
 
 .intel_syntax noprefix
 
+# kernel32.dll
+
 .extern ExitProcess
 
 .section .text
