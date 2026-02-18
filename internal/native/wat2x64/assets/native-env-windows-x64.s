@@ -7,17 +7,6 @@
 .extern VirtualAlloc
 .extern WriteFile
 
-# int _Wa_Import_syscall_write(int fd, int ptr, int size) {
-.section .text
-.globl .Wa.Import.syscall.write
-.Wa.Import.syscall.write:
-    push rbp
-    mov  r10, [rip+.Wa.Memory.addr]
-    add  rdx, r10 # buf
-    call .Wa.Runtime.write
-    pop  rbp
-    ret
-
 
 # int _Wa_Runtime_write(int fd, void *buf, int count)
 .section .text
@@ -92,23 +81,45 @@
 .section .text
 .globl .Wa.Runtime.exit
 .Wa.Runtime.exit:
-    sub rsp, 40
+    push rbp
+    mov  rbp, rsp
+    sub  rsp, 32
+
+    # void ExitProcess(
+    #   [in] UINT uExitCode
+    # );
+
     call ExitProcess
+
+    # 函数返回
+    mov rsp, rbp
+    pop rbp
+    ret
 
 
 # void* _Wa_Runtime_malloc(int size)
 .section .text
 .globl .Wa.Runtime.malloc
 .Wa.Runtime.malloc:
-    sub rsp, 40
+    push rbp
+    mov  rbp, rsp
+    sub  rsp, 32
 
-    mov rdx, rcx      # dwSize
-    xor rcx, rcx      # lpAddress = NULL
-    mov r8,  0x3000   # MEM_COMMIT | MEM_RESERVE
-    mov r9,  0x04     # PAGE_READWRITE
+    # LPVOID VirtualAlloc(
+    #   [in, optional] LPVOID lpAddress,
+    #   [in]           SIZE_T dwSize,
+    #   [in]           DWORD  flAllocationType,
+    #   [in]           DWORD  flProtect
+    # );
+
+    mov  rdx, rcx      # dwSize
+    xor  rcx, rcx      # lpAddress = NULL
+    mov  r8,  0x3000   # MEM_COMMIT | MEM_RESERVE
+    mov  r9,  0x04     # PAGE_READWRITE
     call VirtualAlloc # rax = allocated memory
 
-    add rsp, 40
+    mov rsp, rbp
+    pop rbp
     ret
 
 

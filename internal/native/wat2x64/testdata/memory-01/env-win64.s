@@ -97,6 +97,8 @@
 .section .text
 .globl .Wa.Runtime.exit
 .Wa.Runtime.exit:
+    push rbp
+    mov  rbp, rsp
     sub  rsp, 32
 
     # void ExitProcess(
@@ -104,6 +106,11 @@
     # );
 
     call ExitProcess
+
+    # 函数返回
+    mov rsp, rbp
+    pop rbp
+    ret
 
 
 # void* _Wa_Runtime_malloc(int size)
