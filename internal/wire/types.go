@@ -289,11 +289,11 @@ func (t *String) Underlying() Type  { return &t.underlying }
 
 func (tl *Types) genString() *String {
 	nt := &String{}
-	c := StructField{Name: "c", Type: &chunk{Base: tl.U8, size: tl.intSize}, id: 0}
-	d := StructField{Name: "d", Type: &Ptr{Base: tl.U8, size: tl.intSize}, id: 1}
-	l := StructField{Name: "l", Type: tl.Uint, id: 2}
+	c := StructMember{Name: "c", Type: &chunk{Base: tl.U8, size: tl.intSize}, id: 0}
+	d := StructMember{Name: "d", Type: &Ptr{Base: tl.U8, size: tl.intSize}, id: 1}
+	l := StructMember{Name: "l", Type: tl.Uint, id: 2}
 
-	nt.underlying.fields = []StructField{c, d, l}
+	nt.underlying.member = []StructMember{c, d, l}
 	return nt
 }
 
@@ -428,13 +428,13 @@ func (tl *Types) GenTuple(fields []Type) *Tuple {
 Struct: 结构体
 **************************************/
 type Struct struct {
-	fields   []StructField
+	member   []StructMember
 	hasChunk bool
 }
 
 func (t *Struct) Name() string {
 	name := "struct{"
-	for i, f := range t.fields {
+	for i, f := range t.member {
 		if i > 0 {
 			name += ", "
 		}
@@ -451,12 +451,12 @@ func (t *Struct) Equal(u Type) bool {
 		return false
 	}
 
-	if len(t.fields) != len(ut.fields) {
+	if len(t.member) != len(ut.member) {
 		return false
 	}
 
-	for i := range t.fields {
-		if !t.fields[i].Equal(&ut.fields[i]) {
+	for i := range t.member {
+		if !t.member[i].Equal(&ut.member[i]) {
 			return false
 		}
 	}
@@ -466,16 +466,16 @@ func (t *Struct) Equal(u Type) bool {
 func (t *Struct) hasRef() bool     { return t.hasChunk }
 func (t *Struct) Underlying() Type { return t }
 
-func (t *Struct) Len() int              { return len(t.fields) }
-func (t *Struct) At(id int) StructField { return t.fields[id] }
+func (t *Struct) Len() int               { return len(t.member) }
+func (t *Struct) At(id int) StructMember { return t.member[id] }
 func (t *Struct) setFieldId() {
-	for i := range t.fields {
-		t.fields[i].id = i
+	for i := range t.member {
+		t.member[i].id = i
 	}
 }
 
-func (tl *Types) GenStruct(fields []StructField) *Struct {
-	nt := &Struct{fields: fields}
+func (tl *Types) GenStruct(fields []StructMember) *Struct {
+	nt := &Struct{member: fields}
 	for _, f := range fields {
 		if f.Type.hasRef() {
 			nt.hasChunk = true
@@ -494,14 +494,14 @@ func (tl *Types) GenStruct(fields []StructField) *Struct {
 	return nt
 }
 
-type StructField struct {
+type StructMember struct {
 	Name string
 	Type Type
 	id   int
 }
 
-func (i *StructField) Equal(u *StructField) bool { return i.Name == u.Name && i.Type.Equal(u.Type) }
-func (i *StructField) String() string            { return i.Name + " " + i.Type.Name() }
+func (i *StructMember) Equal(u *StructMember) bool { return i.Name == u.Name && i.Type.Equal(u.Type) }
+func (i *StructMember) String() string             { return i.Name + " " + i.Type.Name() }
 
 /**************************************
 Ref: 引用类型，runtime 自动内存管理时，Ptr 转化为 Ref
@@ -531,9 +531,9 @@ func (tl *Types) GenRef(base Type) *Ref {
 	}
 
 	nt := &Ref{Base: base}
-	b := StructField{Name: "c", Type: &chunk{Base: base, size: tl.intSize}, id: 0}
-	d := StructField{Name: "d", Type: &Ptr{Base: base, size: tl.intSize}, id: 1}
-	nt.underlying.fields = []StructField{b, d}
+	b := StructMember{Name: "c", Type: &chunk{Base: base, size: tl.intSize}, id: 0}
+	d := StructMember{Name: "d", Type: &Ptr{Base: base, size: tl.intSize}, id: 1}
+	nt.underlying.member = []StructMember{b, d}
 	return nt
 }
 

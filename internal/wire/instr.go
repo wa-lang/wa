@@ -47,6 +47,8 @@ type Var struct {
 	dtype  Type
 	rtype  Type
 	object interface{} // 与该值关联的 AST 结点。对凹语言前端，应为 types.Object
+
+	tank *tank
 }
 
 func (i *Var) Name() string { return i.name }
@@ -66,7 +68,7 @@ func (i *Var) String() string {
 	case Heap:
 		return fmt.Sprintf("var %s %s = alloc.heap(%s)", i.name, i.rtype.Name(), i.dtype.Name())
 	}
-	panic(fmt.Sprintf("Invalid VarKind: %v", i.kind))
+	panic(fmt.Sprintf("Todo: VarKind: %v", i.kind))
 }
 func (i *Var) DataType() Type { return i.dtype }
 func (i *Var) RefType() Type  { return i.rtype }
@@ -92,17 +94,17 @@ func (b *Block) AddLocal(name string, typ Type, pos int, obj interface{}) *Var {
 }
 
 /**************************************
-Load: Load 指令，装载 Loc 处的变量，Load 实现了 Expr 接口
+Get: Get 指令，获取变量 Loc 的值，Get 实现了 Expr 接口
   - Loc 应为 *Var，或类型为 Ref、Ptr 的 Expr
 **************************************/
 
-type Load struct {
+type Get struct {
 	aStmt
 	Loc Expr
 }
 
-func (i *Load) Name() string { return i.String() }
-func (i *Load) Type() Type {
+func (i *Get) Name() string { return i.String() }
+func (i *Get) Type() Type {
 	if v, ok := i.Loc.(*Var); ok {
 		return v.DataType()
 	}
@@ -118,8 +120,8 @@ func (i *Load) Type() Type {
 		panic(fmt.Sprintf("Invalid Loc.Type():%s", i.Loc.Type().Name()))
 	}
 }
-func (i *Load) retained() bool { return false }
-func (i *Load) String() string {
+func (i *Get) retained() bool { return false }
+func (i *Get) String() string {
 	if v, ok := i.Loc.(*Var); ok {
 		if v.kind == Register {
 			return v.name
@@ -129,9 +131,9 @@ func (i *Load) String() string {
 	return fmt.Sprintf("*(%s)", i.Loc.Name())
 }
 
-// 生成一条 Load 指令
-func NewLoad(loc Expr, pos int) *Load {
-	v := &Load{}
+// 生成一条 Get 指令
+func NewGet(loc Expr, pos int) *Get {
+	v := &Get{}
 	v.Stringer = v
 	v.Loc = loc
 	v.pos = pos
@@ -139,13 +141,13 @@ func NewLoad(loc Expr, pos int) *Load {
 }
 
 /**************************************
-Store: Store 指令，将 Val 存储到 Loc 指定的位置，Store 支持多赋值，该指令应触发 RC+1 动作
+Set: Set 指令，将 Val 存储到 Loc 指定的位置，Set 支持多赋值，该指令应触发 RC-1 动作
   - Loc 中的元素应为 *Var，或类型为 Ref、Ptr 的 Expr
   - val 有可能为元组（Tuple），因此 Loc 的长度可能和 Val 的长度不同，此时应将元组展开，完全展开后二者的长度应一致
   - 向 nil 的 loc 赋值是合法的，这等价于向匿名变量 _ 赋值，此时应触发 Drop 动作
 **************************************/
 
-type Store struct {
+type Set struct {
 	aStmt
 	Loc []Expr
 	Val []Expr
@@ -163,7 +165,7 @@ type Store struct {
 //	return ret
 //}
 
-func (i *Store) String() string {
+func (i *Set) String() string {
 	var sb strings.Builder
 
 	//var vtypes []Type
@@ -210,8 +212,8 @@ func (i *Store) String() string {
 	return sb.String()
 }
 
-func NewStore(loc Expr, val Expr, pos int) *Store {
-	v := &Store{}
+func NewSet(loc Expr, val Expr, pos int) *Set {
+	v := &Set{}
 	v.Stringer = v
 	v.Loc = []Expr{loc}
 	v.Val = []Expr{val}
@@ -220,8 +222,8 @@ func NewStore(loc Expr, val Expr, pos int) *Store {
 }
 
 // 在 Block 中添加一条 Store 指令
-func (b *Block) EmitStore(loc Expr, val Expr, pos int) *Store {
-	v := &Store{}
+func (b *Block) EmitSet(loc Expr, val Expr, pos int) *Set {
+	v := &Set{}
 	v.Stringer = v
 	v.Loc = []Expr{loc}
 	v.Val = []Expr{val}
@@ -232,8 +234,8 @@ func (b *Block) EmitStore(loc Expr, val Expr, pos int) *Store {
 }
 
 // Block.EmitStore 的多重赋值版
-func (b *Block) EmitStoreN(locs []Expr, vals []Expr, pos int) *Store {
-	v := &Store{}
+func (b *Block) EmitSetN(locs []Expr, vals []Expr, pos int) *Set {
+	v := &Set{}
 	v.Stringer = v
 	v.Loc = locs
 	v.Val = vals

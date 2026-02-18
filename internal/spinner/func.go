@@ -165,7 +165,7 @@ func (b *Builder) stmt(s ast.Stmt, f *Func, block *wire.Block) {
 
 	case *ast.ExprStmt:
 		v := b.expr(s.X, block)
-		block.EmitStore(nil, v, int(s.Pos()))
+		block.EmitSet(nil, v, int(s.Pos()))
 
 	case *ast.IncDecStmt:
 		op := wire.ADD
@@ -173,9 +173,9 @@ func (b *Builder) stmt(s ast.Stmt, f *Func, block *wire.Block) {
 			op = wire.SUB
 		}
 		loc := b.location(s.X, 0, block)
-		ov := wire.NewLoad(loc, int(s.Pos()))
+		ov := wire.NewGet(loc, int(s.Pos()))
 		nv := wire.NewBiop(ov, b.constval(constant.MakeInt64(1), b.info.TypeOf(s.X), int(s.Pos())), op, int(s.Pos()))
-		block.EmitStore(loc, nv, int(s.Pos()))
+		block.EmitSet(loc, nv, int(s.Pos()))
 
 	case *ast.AssignStmt:
 		switch s.Tok {
@@ -184,7 +184,7 @@ func (b *Builder) stmt(s ast.Stmt, f *Func, block *wire.Block) {
 
 		default: // += 等操作符
 			loc := b.location(s.Lhs[0], 0, block)
-			x := wire.NewLoad(loc, int(s.Pos()))
+			x := wire.NewGet(loc, int(s.Pos()))
 			y := b.expr(s.Rhs[0], block)
 			var op wire.OpCode
 			switch s.Tok {
@@ -214,7 +214,7 @@ func (b *Builder) stmt(s ast.Stmt, f *Func, block *wire.Block) {
 				panic(fmt.Sprintf("Unknown OpCode: %v", s.Tok))
 			}
 			nv := wire.NewBiop(x, y, op, int(s.Pos()))
-			block.EmitStore(loc, nv, int(s.Pos()))
+			block.EmitSet(loc, nv, int(s.Pos()))
 		}
 
 	case *ast.ReturnStmt:
@@ -350,7 +350,7 @@ func (b *Builder) location(e ast.Expr, escaping wire.VarKind, block *wire.Block)
 
 		if tv.Addressable() {
 			loc := b.location(e.X, escaping, block)
-			return wire.NewLoad(loc, loc.Pos())
+			return wire.NewGet(loc, loc.Pos())
 		} else {
 			return b.expr1(e.X, tv, block)
 		}
@@ -363,7 +363,7 @@ func (b *Builder) location(e ast.Expr, escaping wire.VarKind, block *wire.Block)
 // loc 为 nil 是合法的，发生于向匿名变量 _ 赋值时
 func (b *Builder) assign(loc wire.Expr, e ast.Expr, pos int, block *wire.Block) {
 	val := b.expr(e, block)
-	block.EmitStore(loc, val, pos)
+	block.EmitSet(loc, val, pos)
 }
 
 // assign 的多重赋值版本
@@ -374,7 +374,7 @@ func (b *Builder) assignN(locs []wire.Expr, exprs []ast.Expr, pos int, block *wi
 		vals = append(vals, val)
 	}
 
-	block.EmitStoreN(locs, vals, pos)
+	block.EmitSetN(locs, vals, pos)
 }
 
 // expr 方法将表达式 e 降解为 wire 指令并追加至 block 中，返回 e 对应的 wire.Value
@@ -391,7 +391,7 @@ func (b *Builder) expr(e ast.Expr, block *wire.Block) wire.Expr {
 	var v wire.Expr
 	if tv.Addressable() {
 		loc := b.location(e, 0, block)
-		v = wire.NewLoad(loc, int(e.Pos()))
+		v = wire.NewGet(loc, int(e.Pos()))
 	} else {
 		v = b.expr1(e, tv, block)
 	}
@@ -418,7 +418,7 @@ func (b *Builder) expr1(e ast.Expr, tv types.TypeAndValue, block *wire.Block) wi
 
 		if _, ok := obj.(*types.Var); ok {
 			loc := block.Lookup(obj, wire.Register)
-			return wire.NewLoad(loc, int(obj.Pos()))
+			return wire.NewGet(loc, int(obj.Pos()))
 		}
 
 		// 函数
