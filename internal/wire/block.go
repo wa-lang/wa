@@ -137,7 +137,7 @@ func varStoredInStmt(stmt Stmt, v *Var) bool {
 	case *Block:
 		return s.varStored(v)
 
-	case *Store:
+	case *Set:
 		for _, loc := range s.Loc {
 			if p, _ := loc.(*Var); p == v {
 				return true
@@ -155,7 +155,7 @@ func varStoredInStmt(stmt Stmt, v *Var) bool {
 		}
 
 	case *Var:
-	case *Load:
+	case *Get:
 	case *Br:
 	case *Return:
 	case *Unop:
@@ -210,10 +210,10 @@ func varUsedInStmt(stmt Stmt, v *Var) bool {
 	case *Var:
 		return false
 
-	case *Load:
+	case *Get:
 		return exprContainsVar(s.Loc, v)
 
-	case *Store:
+	case *Set:
 		for _, loc := range s.Loc {
 			if exprContainsVar(loc, v) {
 				return true
@@ -305,7 +305,7 @@ func exprContainsVar(expr Expr, v *Var) bool {
 	case *Var:
 		return e == v
 
-	case *Load:
+	case *Get:
 		return exprContainsVar(e.Loc, v)
 
 	case *Unop:

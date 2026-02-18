@@ -159,9 +159,9 @@ func (f *Function) EndBody() {
 			param.name = "$" + param.name
 			fb.emit(param)
 			if param.DataType().hasRef() {
-				fb.EmitStore(param, NewRetain(NewLoad(&np, np.pos), np.pos), np.pos)
+				fb.EmitSet(param, NewRetain(NewGet(&np, np.pos), np.pos), np.pos)
 			} else {
-				fb.EmitStore(param, NewLoad(&np, np.pos), np.pos)
+				fb.EmitSet(param, NewGet(&np, np.pos), np.pos)
 			}
 
 			f.params[i] = &np
@@ -194,7 +194,7 @@ func (f *Function) EndBody() {
 	for _, r := range f.results {
 		switch r.kind {
 		case Register:
-			ret_exprs = append(ret_exprs, NewLoad(r, f.EndPos))
+			ret_exprs = append(ret_exprs, NewGet(r, f.EndPos))
 
 		case Heap:
 			rr := *r
@@ -203,9 +203,9 @@ func (f *Function) EndBody() {
 			rr.name = fmt.Sprintf("$%d", fb.imvCount)
 			fb.imvCount++
 			fb.emit(&rr)
-			fb.EmitStore(&rr, NewLoad(r, f.EndPos), f.EndPos)
+			fb.EmitSet(&rr, NewGet(r, f.EndPos), f.EndPos)
 			fb.emit(NewDrop(r, f.EndPos))
-			ret_exprs = append(ret_exprs, NewLoad(&rr, f.EndPos))
+			ret_exprs = append(ret_exprs, NewGet(&rr, f.EndPos))
 
 		default:
 			panic(fmt.Sprintf("Todo: VarKind: %v", r.kind))
@@ -243,15 +243,15 @@ func (f *Function) retRepalce(stmt Stmt) {
 			br.Label = _FN_START
 			br.pos = ret_stmt.pos
 			if len(f.results) > 0 && len(ret_stmt.Results) > 0 {
-				store := &Store{}
-				store.Stringer = store
+				set := &Set{}
+				set.Stringer = set
 				for _, loc := range f.results {
-					store.Loc = append(store.Loc, loc)
+					set.Loc = append(set.Loc, loc)
 				}
-				store.Val = ret_stmt.Results
-				store.pos = ret_stmt.pos
+				set.Val = ret_stmt.Results
+				set.pos = ret_stmt.pos
 
-				stmt.Stmts[i] = store
+				stmt.Stmts[i] = set
 				stmt.Stmts = append(stmt.Stmts, br)
 			} else {
 				stmt.Stmts[i] = br
@@ -269,7 +269,7 @@ func (f *Function) retRepalce(stmt Stmt) {
 	case *Return:
 		panic("Return can only be at the end of a block")
 
-	case *Var, *Load, *Store, *Br, *Unop, *Biop, *Call:
+	case *Var, *Get, *Set, *Br, *Unop, *Biop, *Call:
 		return
 
 	default:
@@ -308,7 +308,7 @@ func (f *Function) varRangeProc(b *Block, reserve map[*Var]bool) {
 			f.varRangeProc(s.Body, reserve)
 			f.varRangeProc(s.Post, reserve)
 
-		case *Load, *Store, *Br, *Return, *Unop, *Biop, *Retain, *Drop:
+		case *Get, *Set, *Br, *Return, *Unop, *Biop, *Retain, *Drop:
 			continue
 
 		default:
@@ -340,10 +340,10 @@ func stmtImvRcProc(s Stmt, inloop bool, d *Block) {
 	case *Var:
 		d.emit(s)
 
-	case *Load:
-		panic("Load should not be here")
+	case *Get:
+		panic("Get should not be here")
 
-	case *Store:
+	case *Set:
 		for i := range s.Loc {
 			s.Loc[i] = exprImvRcProc(s.Loc[i], inloop, true, d, &post)
 		}
@@ -404,7 +404,7 @@ func exprImvRcProc(e Expr, inloop bool, replace bool, d *Block, post *[]Stmt) (r
 	case *Var:
 		return
 
-	case *Load:
+	case *Get:
 		e.Loc = exprImvRcProc(e.Loc, inloop, true, d, post)
 
 	case *Unop:
@@ -458,8 +458,8 @@ func exprImvRcProc(e Expr, inloop bool, replace bool, d *Block, post *[]Stmt) (r
 		//imv.dtype = e.Type()
 		//
 		//d.emit(imv)
-		//d.EmitStore(imv, e, e.Pos())
-		//ret = NewLoad(imv, e.Pos())
+		//d.EmitSet(imv, e, e.Pos())
+		//ret = NewGet(imv, e.Pos())
 	}
 
 	return
@@ -513,7 +513,7 @@ func exprImvRcProc(e Expr, inloop bool, replace bool, d *Block, post *[]Stmt) (r
 //	case *Var:
 //		return
 //
-//	case *Load:
+//	case *Get:
 //		if stmt.Loc == ov {
 //			stmt.Loc = nv
 //			return
@@ -523,7 +523,7 @@ func exprImvRcProc(e Expr, inloop bool, replace bool, d *Block, post *[]Stmt) (r
 //			stmtReplaceLocation(s, ov, nv)
 //		}
 //
-//	case *Store:
+//	case *Set:
 //		for i := range stmt.Loc {
 //			if stmt.Loc[i] == ov {
 //				stmt.Loc[i] = nv
