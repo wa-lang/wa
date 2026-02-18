@@ -16,7 +16,7 @@
     mov  rbp, rsp
     sub  rsp, 32
 
-    // 保存寄存器
+    # 保存寄存器
     mov [rbp-8], r12
     mov [rbp-16], r13
     mov [rbp-24], r14
@@ -66,7 +66,7 @@
     # return nWrite
     mov eax, dword ptr [rsp+40]
     
-    // 恢复寄存器
+    # 恢复寄存器
     mov r12, [rbp-8]
     mov r13, [rbp-16]
     mov r14, [rbp-24]
