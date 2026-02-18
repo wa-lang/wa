@@ -123,8 +123,8 @@
 
 # 汇编程序入口函数
 .section .text
-.globl main
-main:
+.globl _start
+_start:
     push rbp
     mov  rbp, rsp
     sub  rsp, 32

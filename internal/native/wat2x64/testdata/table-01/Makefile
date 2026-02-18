@@ -3,8 +3,18 @@
 
 WA:=go run ../../../../../main.go
 
+FLAGS:=-nostdlib
+FLAGS+=-Wl,-e,_start
+FLAGS+=-Wl,--subsystem,console
+FLAGS+=-Wl,--file-alignment,16
+FLAGS+=-Wl,--section-alignment,16
+FLAGS+=-Wl,--build-id=none
+FLAGS+=-Wl,--disable-dynamicbase
+FLAGS+=-s
+FLAGS+=-lkernel32
+
 golden:
-	gcc env-win64.c golden-win64.s -o a.out0.exe
+	gcc env-win64.s golden-win64.s $(FLAGS) -o a.out0.exe
 	a.out0.exe
 
 linux:
@@ -13,7 +23,7 @@ linux:
 
 dev:
 	$(WA) build -arch=x64 -target=windows table-01.wat
-	gcc env-win64.c table-01.wa.s -o a.out1.exe
+	gcc table-01.wa.s $(FLAGS) -o a.out1.exe
 	a.out1.exe
 
 dev-linux:
