@@ -147,20 +147,21 @@ func (f *Function) EndBody() {
 	ob.Label = _FN_START
 
 	f.StartBody()
+	fb := f.Body
 
 	// 参数置换：
 	for i, param := range f.params {
-		if param.kind != Register || (param.DataType().hasRef() && ob.varStored(param)) {
+		if param.kind != Register || param.DataType().hasRef() && ob.varUsageRange(param).first != -1 { //Todo: 待优化，若参数中携带的引用未被重新赋值则无需置换  ob.varStored(param)
 			np := *param
 			np.Stringer = &np
 			np.kind = Register
 
 			param.name = "$" + param.name
-			f.Body.emit(param)
+			fb.emit(param)
 			if param.DataType().hasRef() {
-				f.Body.EmitStore(param, NewRetain(NewLoad(&np, np.pos), np.pos), np.pos)
+				fb.EmitStore(param, NewRetain(NewLoad(&np, np.pos), np.pos), np.pos)
 			} else {
-				f.Body.EmitStore(param, NewLoad(&np, np.pos), np.pos)
+				fb.EmitStore(param, NewLoad(&np, np.pos), np.pos)
 			}
 
 			f.params[i] = &np
@@ -170,30 +171,47 @@ func (f *Function) EndBody() {
 	// 返回置换
 	rets := make(map[*Var]bool)
 	for _, ret := range f.results {
-		f.Body.emit(ret)
+		fb.emit(ret)
 		rets[ret] = true
 	}
 	f.retRepalce(ob)
 
 	nb := &Block{}
-	nb.scope = f.Body
+	nb.scope = fb
 	nb.types = f.types
 	nb.Label = _FN_START
 	nb.init()
 
 	blockImvRcProc(ob, false, nb)
-	f.Body.emit(nb)
+	fb.emit(nb)
 
-	f.varRangeProc(f.Body, rets)
+	f.varRangeProc(fb, rets)
 
 	// Todo: defer
 
 	// 插入真返回指令
 	var ret_exprs []Expr
 	for _, r := range f.results {
-		ret_exprs = append(ret_exprs, NewLoad(r, f.EndPos))
+		switch r.kind {
+		case Register:
+			ret_exprs = append(ret_exprs, NewLoad(r, f.EndPos))
+
+		case Heap:
+			rr := *r
+			rr.Stringer = &rr
+			rr.kind = Register
+			rr.name = fmt.Sprintf("$%d", fb.imvCount)
+			fb.imvCount++
+			fb.emit(&rr)
+			fb.EmitStore(&rr, NewLoad(r, f.EndPos), f.EndPos)
+			fb.emit(NewDrop(r, f.EndPos))
+			ret_exprs = append(ret_exprs, NewLoad(&rr, f.EndPos))
+
+		default:
+			panic(fmt.Sprintf("Todo: VarKind: %v", r.kind))
+		}
 	}
-	f.Body.EmitReturn(ret_exprs, f.EndPos)
+	fb.EmitReturn(ret_exprs, f.EndPos)
 
 	{
 		var sb strings.Builder
