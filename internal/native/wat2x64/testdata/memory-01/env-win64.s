@@ -92,3 +92,148 @@
     pop rbp
     ret
 
+
+# void _Wa_Runtime_exit(int status)
+.section .text
+.globl .Wa.Runtime.exit
+.Wa.Runtime.exit:
+    sub  rsp, 32
+
+    # void ExitProcess(
+    #   [in] UINT uExitCode
+    # );
+
+    call ExitProcess
+
+
+# void* _Wa_Runtime_malloc(int size)
+.section .text
+.globl .Wa.Runtime.malloc
+.Wa.Runtime.malloc:
+    push rbp
+    mov  rbp, rsp
+    sub  rsp, 32
+
+    # LPVOID VirtualAlloc(
+    #   [in, optional] LPVOID lpAddress,
+    #   [in]           SIZE_T dwSize,
+    #   [in]           DWORD  flAllocationType,
+    #   [in]           DWORD  flProtect
+    # );
+
+    mov  rdx, rcx      # dwSize
+    xor  rcx, rcx      # lpAddress = NULL
+    mov  r8,  0x3000   # MEM_COMMIT | MEM_RESERVE
+    mov  r9,  0x04     # PAGE_READWRITE
+    call VirtualAlloc # rax = allocated memory
+
+    mov rsp, rbp
+    pop rbp
+    ret
+
+
+# void* _Wa_Runtime_memcpy(void* dst, const void* src, int n)
+.section .text
+.globl .Wa.Runtime.memcpy
+.Wa.Runtime.memcpy:
+    mov  rax, rcx
+    test r8, r8
+    jz   .Wa.L.memcpy.done
+
+.Wa.L.memcpy.loop:
+    mov r9b, byte ptr [rdx]
+    mov byte ptr [rcx], r9b
+    inc rcx
+    inc rdx
+    dec r8
+    jnz .Wa.L.memcpy.loop
+
+.Wa.L.memcpy.done:
+    ret
+
+
+# void* _Wa_Runtime_memmove(void* dst, const void* src, int n)
+.section .text
+.globl .Wa.Runtime.memmove
+.Wa.Runtime.memmove:
+    mov  rax, rcx # 备份 dst 用于返回
+    test r8, r8   # n == 0 ?
+    jz   .Wa.L.memmove.done
+
+    cmp rcx, rdx
+    je  .Wa.L.memmove.done
+    jb  .Wa.L.memmove.forward  # dst < src → 前向拷贝
+
+    # =========================
+    # 后向拷贝 (dst > src)
+    # =========================
+
+    push rdi
+    push rsi
+
+    mov rdi, rcx
+    mov rsi, rdx
+
+    add rdi, r8
+    dec rdi
+    add rsi, r8
+    dec rsi
+
+    mov rcx, r8 # 计数器
+
+.Wa.L.memmove.back_loop:
+    mov r9b, byte ptr [rsi]
+    mov byte ptr [rdi], r9b
+    dec rdi
+    dec rsi
+    dec rcx
+    jnz .Wa.L.memmove.back_loop
+
+    pop rsi
+    pop rdi
+    jmp .Wa.L.memmove.done
+
+.Wa.L.memmove.forward:
+
+    # =========================
+    # 前向拷贝 (dst < src)
+    # =========================
+
+    push rdi
+    push rsi
+
+    mov rdi, rcx
+    mov rsi, rdx
+    mov rcx, r8
+
+.Wa.L.memmove.fwd_loop:
+    mov r9b, byte ptr [rsi]
+    mov byte ptr [rdi], r9b
+    inc rdi
+    inc rsi
+    dec rcx
+    jnz .Wa.L.memmove.fwd_loop
+
+    pop rsi
+    pop rdi
+
+.Wa.L.memmove.done:
+    ret
+
+
+# void* _Wa_Runtime_memset(void* s, int c, int n)
+.section .text
+.globl .Wa.Runtime.memset
+.Wa.Runtime.memset:
+    mov  rax, rcx # 返回 s
+    test r8, r8
+    jz   .Wa.L.memset.done
+
+.Wa.L.memset.loop:
+    mov byte ptr [rcx], dl # c 的低 8 位
+    inc rcx
+    dec r8
+    jnz .Wa.L.memset.loop
+
+.Wa.L.memset.done:
+    ret

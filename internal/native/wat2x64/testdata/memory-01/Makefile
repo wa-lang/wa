@@ -3,8 +3,13 @@
 
 WA:=go run ../../../../../main.go
 
+WIN64_FLAGS:=-nostdlib
+WIN64_FLAGS+=-Wl,-e,_start
+WIN64_FLAGS+=-Wl,--subsystem,console
+WIN64_FLAGS+=-lkernel32
+
 windows:
-	gcc env-win64.c env-win64.s golden-win64.s -o a.out0.exe
+	gcc env-win64.s golden-win64.s -o a.out0.exe
 	a.out0.exe
 
 linux:
@@ -13,7 +18,7 @@ linux:
 
 dev:
 	$(WA) build -arch=x64 -target=windows memory-01.wat
-	gcc env-win64.c memory-01.wa.s -o a.out1.exe
+	gcc env-win64.s memory-01.wa.s -o a.out1.exe
 	a.out1.exe
 
 dev-linux:
