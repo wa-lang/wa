@@ -30,7 +30,7 @@
 # memcpy(&Memory[8], data[0], size)
 .Wa.Memory.dataOffset.0: .quad 8
 .Wa.Memory.dataSize.0: .quad 12
-.Wa.Memory.dataPtr.0: .asciz "hello world\n"
+.Wa.Memory.dataPtr.0: .ascii "hello world\n"
 
 # 内存初始化函数
 .section .text
@@ -41,26 +41,26 @@
     sub  rsp, 32
 
     # 分配内存
-    mov  rcx, [rip + .Wa.Memory.maxPages]
+    mov  rcx, [rip+.Wa.Memory.maxPages]
     shl  rcx, 16
     call .Wa.Runtime.malloc
-    mov  [rip + .Wa.Memory.addr], rax
+    mov  [rip+.Wa.Memory.addr], rax
 
     # 内存清零
-    mov  rcx, [rip + .Wa.Memory.addr]
+    mov  rcx, [rip+.Wa.Memory.addr]
     mov  rdx, 0
-    mov  r8, [rip + .Wa.Memory.maxPages]
+    mov  r8, [rip+.Wa.Memory.maxPages]
     shl  r8, 16
     call .Wa.Runtime.memset
 
     # 初始化内存
 
     # memcpy(&Memory[8], data[0], size)
-    mov  rax, [rip + .Wa.Memory.addr]
-    mov  rcx, [rip + .Wa.Memory.dataOffset.0]
+    mov  rax, [rip+.Wa.Memory.addr]
+    mov  rcx, [rip+.Wa.Memory.dataOffset.0]
     add  rcx, rax
-    lea  rdx, [rip + .Wa.Memory.dataPtr.0]
-    mov  r8, [rip + .Wa.Memory.dataSize.0]
+    lea  rdx, [rip+.Wa.Memory.dataPtr.0]
+    mov  r8, [rip+.Wa.Memory.dataSize.0]
     call .Wa.Runtime.memcpy
 
     # 函数返回
@@ -90,7 +90,7 @@ main:
 
 .section .data
 .align 8
-.Wa.Runtime.panic.message: .asciz "panic"
+.Wa.Runtime.panic.message: .ascii "panic"
 .Wa.Runtime.panic.messageLen: .quad 5
 
 .section .text
