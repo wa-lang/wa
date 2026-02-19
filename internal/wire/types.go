@@ -323,13 +323,13 @@ func (t *chunk) hasRef() bool { return true }
 Tuple: 元组
 **************************************/
 type Tuple struct {
-	fields   []Type
+	members  []Type
 	hasChunk bool
 }
 
 func (t *Tuple) Name() string {
 	name := "tuple{"
-	for i, f := range t.fields {
+	for i, f := range t.members {
 		if i > 0 {
 			name += ", "
 		}
@@ -345,12 +345,12 @@ func (t *Tuple) Equal(u Type) bool {
 		return false
 	}
 
-	if len(t.fields) != len(ut.fields) {
+	if len(t.members) != len(ut.members) {
 		return false
 	}
 
-	for i := range t.fields {
-		if !t.fields[i].Equal(ut.fields[i]) {
+	for i := range t.members {
+		if !t.members[i].Equal(ut.members[i]) {
 			return false
 		}
 	}
@@ -359,11 +359,11 @@ func (t *Tuple) Equal(u Type) bool {
 }
 func (t *Tuple) hasRef() bool { return t.hasChunk }
 
-func (t *Tuple) Len() int       { return len(t.fields) }
-func (t *Tuple) At(id int) Type { return t.fields[id] }
+func (t *Tuple) Len() int       { return len(t.members) }
+func (t *Tuple) At(id int) Type { return t.members[id] }
 
 func (tl *Types) GenTuple(fields []Type) *Tuple {
-	nt := &Tuple{fields: fields}
+	nt := &Tuple{members: fields}
 	for _, f := range fields {
 		if f.hasRef() {
 			nt.hasChunk = true
@@ -385,13 +385,13 @@ func (tl *Types) GenTuple(fields []Type) *Tuple {
 Struct: 结构体
 **************************************/
 type Struct struct {
-	member   []StructMember
+	members  []StructMember
 	hasChunk bool
 }
 
 func (t *Struct) Name() string {
 	name := "struct{"
-	for i, f := range t.member {
+	for i, f := range t.members {
 		if i > 0 {
 			name += ", "
 		}
@@ -408,12 +408,12 @@ func (t *Struct) Equal(u Type) bool {
 		return false
 	}
 
-	if len(t.member) != len(ut.member) {
+	if len(t.members) != len(ut.members) {
 		return false
 	}
 
-	for i := range t.member {
-		if !t.member[i].Equal(&ut.member[i]) {
+	for i := range t.members {
+		if !t.members[i].Equal(&ut.members[i]) {
 			return false
 		}
 	}
@@ -422,16 +422,16 @@ func (t *Struct) Equal(u Type) bool {
 }
 func (t *Struct) hasRef() bool { return t.hasChunk }
 
-func (t *Struct) Len() int               { return len(t.member) }
-func (t *Struct) At(id int) StructMember { return t.member[id] }
+func (t *Struct) Len() int               { return len(t.members) }
+func (t *Struct) At(id int) StructMember { return t.members[id] }
 func (t *Struct) setFieldId() {
-	for i := range t.member {
-		t.member[i].id = i
+	for i := range t.members {
+		t.members[i].id = i
 	}
 }
 
 func (tl *Types) GenStruct(fields []StructMember) *Struct {
-	nt := &Struct{member: fields}
+	nt := &Struct{members: fields}
 	for _, f := range fields {
 		if f.Type.hasRef() {
 			nt.hasChunk = true

@@ -35,13 +35,13 @@ func (ri *rtImp) underlyingStruct(t Type) (underlying Struct) {
 	case *Ref:
 		c := StructMember{Name: "c", Type: &chunk{Base: t.Base}, id: 0}
 		d := StructMember{Name: "d", Type: &Ptr{Base: t.Base}, id: 1}
-		underlying.member = []StructMember{c, d}
+		underlying.members = []StructMember{c, d}
 
 	case *String:
 		c := StructMember{Name: "c", Type: &chunk{Base: &U8{}}, id: 0}
 		d := StructMember{Name: "d", Type: &Ptr{Base: &U8{}}, id: 1}
 		l := StructMember{Name: "l", Type: &Uint{}, id: 2}
-		underlying.member = []StructMember{c, d, l}
+		underlying.members = []StructMember{c, d, l}
 
 	default:
 		panic(fmt.Sprintf("Todo: %T", t))
@@ -78,13 +78,13 @@ func (ri *rtImp) initTank(t Type) *tank {
 		tank.register.typ = ri.chunk
 
 	case *Tuple:
-		for _, m := range t.fields {
+		for _, m := range t.members {
 			tm := ri.initTank(m)
 			tank.member = append(tank.member, tm)
 		}
 
 	case *Struct:
-		for _, m := range t.member {
+		for _, m := range t.members {
 			tm := ri.initTank(m.Type)
 			tank.member = append(tank.member, tm)
 		}
