@@ -19,7 +19,7 @@ type Call struct {
 func (i *Call) Name() string   { return i.String() }
 func (i *Call) Type() Type     { return i.Callee.Type() }
 func (i *Call) Pos() int       { return i.Callee.Pos() }
-func (i *Call) retained() bool { return i.Callee.Type().hasRef() }
+func (i *Call) retained() bool { return rtimp.hasChunk(i.Callee.Type()) }
 func (i *Call) String() string { return i.Callee.(fmt.Stringer).String() }
 
 // 在 Block 中添加一条 InstCall 指令，callee 为 StaticCall、BuiltinCall、MethodCall、InterfaceCall、ClosureCall 之一

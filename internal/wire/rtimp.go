@@ -8,6 +8,7 @@ import "fmt"
 type RtImp interface {
 	underlyingStruct(t Type) Struct
 	initTank(t Type) *tank
+	hasChunk(t Type) bool
 }
 
 var rtimp RtImp
@@ -28,6 +29,50 @@ func (ri *rtImp) init() {
 	ri.f32 = &F32{}
 	ri.f64 = &F64{}
 	ri.chunk = &chunk{Base: &Void{}}
+}
+
+func (ri *rtImp) hasChunk(t Type) bool {
+	switch t := t.(type) {
+	case *Void, *Bool:
+		return false
+
+	case *U8, *U16, *U32, *U64, *Uint:
+		return false
+
+	case *I8, *I16, *I32, *I64, *Int, *Rune:
+		return false
+
+	case *Ptr:
+		return false
+
+	case *chunk:
+		return true
+
+	case *Tuple:
+		for _, m := range t.members {
+			if ri.hasChunk(m) {
+				return true
+			}
+		}
+
+	case *Struct:
+		for _, m := range t.members {
+			if ri.hasChunk(m.Type) {
+				return true
+			}
+		}
+
+	case *String, *Ref:
+		return true
+
+	case *Named:
+		return ri.hasChunk(t.Underlying())
+
+	default:
+		panic(fmt.Sprintf("Todo: %T", t))
+	}
+
+	return false
 }
 
 func (ri *rtImp) underlyingStruct(t Type) (underlying Struct) {

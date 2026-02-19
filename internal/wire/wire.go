@@ -95,8 +95,6 @@ type Type interface {
 	Name() string    //类型名，自定义类型应包含包路径，需要进行名字修饰
 	Kind() TypeKind  //该类型的类别
 	Equal(Type) bool //判断该类型与输入类型是否相等，注意该比较仅关心类别和结构，不关心类型名
-
-	hasRef() bool
 }
 
 ///**************************************

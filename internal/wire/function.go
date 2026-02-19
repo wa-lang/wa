@@ -156,14 +156,15 @@ func (f *Function) EndBody() {
 
 	// 参数置换：
 	for i, param := range f.params {
-		if param.kind != Register || param.DataType().hasRef() && ob.varUsageRange(param).first != -1 { //Todo: 待优化，若参数中携带的引用未被重新赋值则无需置换  ob.varStored(param)
+		hasChunk := rtimp.hasChunk(param.DataType())
+		if param.kind != Register || hasChunk && ob.varUsageRange(param).first != -1 { //Todo: 待优化，若参数中携带的引用未被重新赋值则无需置换  ob.varStored(param)
 			np := *param
 			np.Stringer = &np
 			np.kind = Register
 
 			param.name = "$" + param.name
 			fb.emit(param)
-			if param.DataType().hasRef() {
+			if hasChunk {
 				fb.EmitSet(param, NewRetain(NewGet(&np, np.pos), np.pos), np.pos)
 			} else {
 				fb.EmitSet(param, NewGet(&np, np.pos), np.pos)
@@ -318,7 +319,7 @@ func stmtImvRcProc(s Stmt, inloop bool, d *Block) {
 
 		for i := range s.Val {
 			s.Val[i] = exprImvRcProc(s.Val[i], inloop, false, d, &post)
-			if s.Val[i].Type().hasRef() && !s.Val[i].retained() {
+			if rtimp.hasChunk(s.Val[i].Type()) && !s.Val[i].retained() {
 				s.Val[i] = NewRetain(s.Val[i], s.Val[i].Pos())
 			}
 		}
