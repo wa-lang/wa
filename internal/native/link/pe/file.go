@@ -252,7 +252,7 @@ func (f *File) ImportedSymbols() ([]string, error) {
 	}
 
 	// 检查 DataDirectory 数量
-	// 最后可能有一个空元素作为结束标志, 可能要多加一个
+	// 最后有一个空元素作为结束标志, 要多加一个
 	if f.OptionalHeader.NumberOfRvaAndSizes < IMAGE_DIRECTORY_ENTRY_IMPORT+1 {
 		return nil, nil
 	}
@@ -292,6 +292,8 @@ func (f *File) ImportedSymbols() ([]string, error) {
 	// 从段数据解析导入符号信息
 	var ida []ImportDirectory
 	for len(d) >= kImportDirectoryMinSize {
+		// ImportDirectory 有 20 个字节
+		// 每次从数组中读取一个结构元素, 直到遇到空元素
 		var dt ImportDirectory
 		dt.OriginalFirstThunk = binary.LittleEndian.Uint32(d[0:4])
 		dt.TimeDateStamp = binary.LittleEndian.Uint32(d[4:8])
@@ -299,31 +301,48 @@ func (f *File) ImportedSymbols() ([]string, error) {
 		dt.Name = binary.LittleEndian.Uint32(d[12:16])
 		dt.FirstThunk = binary.LittleEndian.Uint32(d[16:20])
 		d = d[20:]
+
+		// 结束的空元素
 		if dt.OriginalFirstThunk == 0 {
 			break
 		}
+
 		ida = append(ida, dt)
 	}
 
+	// 每个 ImportDirectory 又包含 Thunk 数组
+	// Thunk 数组包含了导入函数的名字和对应的DLL名字信息
 	names, _ := ds.Data()
 	var all []string
 	for _, dt := range ida {
 		// 读取动态库的名字
+		// 每个 ImportDirectory 对应一个动态库, 有一个名字
 		dt.dll, _ = getString(names, int(dt.Name-ds.VirtualAddress))
+
+		// 读取该动态库中存放导入函数名字数据的 Thunk 数组
 		d, _ = ds.Data()
-		// seek to OriginalFirstThunk
+
+		// 遍历 Thunk 数组
 		d = d[dt.OriginalFirstThunk-ds.VirtualAddress:]
 		for len(d) > 0 {
+			// 读取一个 8 字节的虚拟内存地址
 			va := binary.LittleEndian.Uint64(d[0:8])
 			d = d[8:]
+
+			// 空指针则结束
 			if va == 0 {
 				break
 			}
+
+			// 根据地址的最高bit位区分导入的方式
 			if va&0x8000000000000000 > 0 {
-				// TODO: 按序号导入函数
+				// 不支持按照序号导入
+				return nil, fmt.Errorf("%s: unsupport import by id(%x)", dt.dll, va)
 			} else {
 				// 按照函数名导入
 				// 格式 ExitProcess:KERNEL32.dll
+				// 函数名字符串开头有2字节的 hint 填充, 需要跳过
+				// hint 地址必须偶数对齐, 字符串长度为奇数时需要填充 \0
 				fn, _ := getString(names, int(uint32(va)-ds.VirtualAddress+2))
 				all = append(all, fn+":"+dt.dll)
 			}
