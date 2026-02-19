@@ -7,7 +7,9 @@ import (
 	_ "embed"
 	"fmt"
 	"os"
+	"os/exec"
 	"path/filepath"
+	"runtime"
 	"strings"
 
 	"wa-lang.org/wa/internal/3rdparty/cli"
@@ -348,53 +350,89 @@ func BuildApp(opt *appbase.Option, input, outfile string) (mainFunc string, wasm
 
 			switch cpuType {
 			case abi.X64Unix:
-				// 汇编为 elf 可执行文件
-				opt := &abi.LinkOptions{}
-				opt.CPU = abi.X64Unix
-				opt.DRAMBase = dram.DRAM_BASE_X64_LINUX
-				opt.DRAMSize = dram.DRAM_SIZE // 16MB, 临时用于演示
-
-				// 解析汇编程序, 并生成对应cpu的机器码
-				prog, err := asm.AssembleFile(nativeAsmFile, nasmBytes, opt)
-				if err != nil {
-					fmt.Println(err)
-					os.Exit(1)
+				gccEnabled := true
+				if runtime.GOARCH != "amd64" || runtime.GOOS != "linux" {
+					gccEnabled = false
 				}
 
-				// 包存到ELF格式文件
-				elfBytes, err := link.LinkELF(prog)
-				if err != nil {
-					fmt.Println(err)
-					os.Exit(1)
-				}
-				if err := os.WriteFile(nativeExtFile, elfBytes, 0777); err != nil {
-					fmt.Println(err)
-					os.Exit(1)
+				if gccEnabled {
+					gccCmd := exec.Command("gcc", nativeAsmFile, "-nostdlib", "-static", "-z", "noexecstack", "-o", nativeExtFile)
+					output, err := gccCmd.CombinedOutput()
+					if err != nil {
+						fmt.Println(string(output))
+						fmt.Printf("gcc build failed: %v\n", err)
+						os.Exit(1)
+					}
+				} else {
+					// 汇编为 elf 可执行文件
+					opt := &abi.LinkOptions{}
+					opt.CPU = abi.X64Unix
+					opt.DRAMBase = dram.DRAM_BASE_X64_LINUX
+					opt.DRAMSize = dram.DRAM_SIZE // 16MB, 临时用于演示
+
+					// 解析汇编程序, 并生成对应cpu的机器码
+					prog, err := asm.AssembleFile(nativeAsmFile, nasmBytes, opt)
+					if err != nil {
+						fmt.Println(err)
+						os.Exit(1)
+					}
+
+					// 自研工具链保存到ELF格式文件
+					elfBytes, err := link.LinkELF(prog)
+					if err != nil {
+						fmt.Println(err)
+						os.Exit(1)
+					}
+					if err := os.WriteFile(nativeExtFile, elfBytes, 0777); err != nil {
+						fmt.Println(err)
+						os.Exit(1)
+					}
 				}
 
 			case abi.X64Windows:
-				// 汇编为 pe 可执行文件
-				opt := &abi.LinkOptions{}
-				opt.CPU = abi.X64Windows
-				opt.DRAMBase = dram.DRAM_BASE_X64_WINDOWS
-				opt.DRAMSize = dram.DRAM_SIZE // 16MB, 临时用于演示
-
-				// 解析汇编程序, 并生成对应cpu的机器码
-				prog, err := asm.AssembleFile(nativeAsmFile, nasmBytes, opt)
-				if err != nil {
-					fmt.Println(err)
-					os.Exit(1)
+				gccEnabled := true
+				if runtime.GOARCH != "amd64" || runtime.GOOS != "windows" {
+					gccEnabled = false
 				}
 
-				// 包存到ELF格式文件
-				peBytes, err := link.LinkEXE(prog)
-				if err != nil {
-					fmt.Println(err)
-					os.Exit(1)
-				}
-				if err := os.WriteFile(nativeExtFile, peBytes, 0777); err != nil {
-					fmt.Println(err)
-					os.Exit(1)
+				if gccEnabled {
+					var args = []string{
+						nativeAsmFile,
+						"-nostdlib",
+						"-Wl,-e,_start",
+						"-lkernel32",
+						"-o", nativeExtFile,
+					}
+					output, err := exec.Command("gcc", args...).CombinedOutput()
+					if err != nil {
+						fmt.Println(string(output))
+						fmt.Printf("gcc build failed: %v\n", err)
+						os.Exit(1)
+					}
+				} else {
+					// 汇编为 pe 可执行文件
+					opt := &abi.LinkOptions{}
+					opt.CPU = abi.X64Windows
+					opt.DRAMBase = dram.DRAM_BASE_X64_WINDOWS
+					opt.DRAMSize = dram.DRAM_SIZE // 16MB, 临时用于演示
+
+					// 解析汇编程序, 并生成对应cpu的机器码
+					prog, err := asm.AssembleFile(nativeAsmFile, nasmBytes, opt)
+					if err != nil {
+						fmt.Println(err)
+						os.Exit(1)
+					}
+
+					// 包存到ELF格式文件
+					peBytes, err := link.LinkEXE(prog)
+					if err != nil {
+						fmt.Println(err)
+						os.Exit(1)
+					}
+					if err := os.WriteFile(nativeExtFile, peBytes, 0777); err != nil {
+						fmt.Println(err)
+						os.Exit(1)
+					}
 				}
 
 			default:
@@ -596,53 +634,89 @@ func BuildApp(opt *appbase.Option, input, outfile string) (mainFunc string, wasm
 
 			switch cpuType {
 			case abi.X64Unix:
-				// 汇编为 elf 可执行文件
-				opt := &abi.LinkOptions{}
-				opt.CPU = abi.X64Unix
-				opt.DRAMBase = dram.DRAM_BASE_X64_LINUX
-				opt.DRAMSize = dram.DRAM_SIZE // 16MB, 临时用于演示
-
-				// 解析汇编程序, 并生成对应cpu的机器码
-				prog, err := asm.AssembleFile(nativeAsmFile, nasmBytes, opt)
-				if err != nil {
-					fmt.Println(err)
-					os.Exit(1)
+				gccEnabled := true
+				if runtime.GOARCH != "amd64" || runtime.GOOS != "linux" {
+					gccEnabled = false
 				}
 
-				// 包存到ELF格式文件
-				elfBytes, err := link.LinkELF(prog)
-				if err != nil {
-					fmt.Println(err)
-					os.Exit(1)
-				}
-				if err := os.WriteFile(nativeExtFile, elfBytes, 0777); err != nil {
-					fmt.Println(err)
-					os.Exit(1)
+				if gccEnabled {
+					gccCmd := exec.Command("gcc", nativeAsmFile, "-nostdlib", "-static", "-z", "noexecstack", "-o", nativeExtFile)
+					output, err := gccCmd.CombinedOutput()
+					if err != nil {
+						fmt.Println(string(output))
+						fmt.Printf("gcc build failed: %v\n", err)
+						os.Exit(1)
+					}
+				} else {
+					// 汇编为 elf 可执行文件
+					opt := &abi.LinkOptions{}
+					opt.CPU = abi.X64Unix
+					opt.DRAMBase = dram.DRAM_BASE_X64_LINUX
+					opt.DRAMSize = dram.DRAM_SIZE // 16MB, 临时用于演示
+
+					// 解析汇编程序, 并生成对应cpu的机器码
+					prog, err := asm.AssembleFile(nativeAsmFile, nasmBytes, opt)
+					if err != nil {
+						fmt.Println(err)
+						os.Exit(1)
+					}
+
+					// 包存到ELF格式文件
+					elfBytes, err := link.LinkELF(prog)
+					if err != nil {
+						fmt.Println(err)
+						os.Exit(1)
+					}
+					if err := os.WriteFile(nativeExtFile, elfBytes, 0777); err != nil {
+						fmt.Println(err)
+						os.Exit(1)
+					}
 				}
 
 			case abi.X64Windows:
-				// 汇编为 pe 可执行文件
-				opt := &abi.LinkOptions{}
-				opt.CPU = abi.X64Windows
-				opt.DRAMBase = dram.DRAM_BASE_X64_WINDOWS
-				opt.DRAMSize = dram.DRAM_SIZE // 16MB, 临时用于演示
-
-				// 解析汇编程序, 并生成对应cpu的机器码
-				prog, err := asm.AssembleFile(nativeAsmFile, nasmBytes, opt)
-				if err != nil {
-					fmt.Println(err)
-					os.Exit(1)
+				gccEnabled := true
+				if runtime.GOARCH != "amd64" || runtime.GOOS != "windows" {
+					gccEnabled = false
 				}
 
-				// 包存到ELF格式文件
-				peBytes, err := link.LinkEXE(prog)
-				if err != nil {
-					fmt.Println(err)
-					os.Exit(1)
-				}
-				if err := os.WriteFile(nativeExtFile, peBytes, 0777); err != nil {
-					fmt.Println(err)
-					os.Exit(1)
+				if gccEnabled {
+					var args = []string{
+						nativeAsmFile,
+						"-nostdlib",
+						"-Wl,-e,_start",
+						"-lkernel32",
+						"-o", nativeExtFile,
+					}
+					output, err := exec.Command("gcc", args...).CombinedOutput()
+					if err != nil {
+						fmt.Println(string(output))
+						fmt.Printf("gcc build failed: %v\n", err)
+						os.Exit(1)
+					}
+				} else {
+					// 汇编为 pe 可执行文件
+					opt := &abi.LinkOptions{}
+					opt.CPU = abi.X64Windows
+					opt.DRAMBase = dram.DRAM_BASE_X64_WINDOWS
+					opt.DRAMSize = dram.DRAM_SIZE // 16MB, 临时用于演示
+
+					// 解析汇编程序, 并生成对应cpu的机器码
+					prog, err := asm.AssembleFile(nativeAsmFile, nasmBytes, opt)
+					if err != nil {
+						fmt.Println(err)
+						os.Exit(1)
+					}
+
+					// 包存到ELF格式文件
+					peBytes, err := link.LinkEXE(prog)
+					if err != nil {
+						fmt.Println(err)
+						os.Exit(1)
+					}
+					if err := os.WriteFile(nativeExtFile, peBytes, 0777); err != nil {
+						fmt.Println(err)
+						os.Exit(1)
+					}
 				}
 
 			default:

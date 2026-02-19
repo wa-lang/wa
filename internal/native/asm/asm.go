@@ -25,6 +25,8 @@ func AssembleFile(filename string, source []byte, opt *abi.LinkOptions) (prog *a
 		return new(_Assembler).asmFile(filename, source, opt)
 	case abi.X64Unix:
 		return new(_Assembler).asmFile(filename, source, opt)
+	case abi.X64Windows:
+		return new(_PEAssembler).asmFile(filename, source, opt)
 	default:
 		return nil, fmt.Errorf("unknonw cpu: %v", opt.CPU)
 	}
