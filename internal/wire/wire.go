@@ -70,21 +70,22 @@ const (
 	TypeKindUint
 	TypeKindF32
 	TypeKindF64
-	TypeKindComplex64
-	TypeKindComplex128
 	TypeKindRune
-	TypeKindString
 
 	TypeKindPtr
 	TypeKindChunk
-	TypeKindRef
-	TypeKindStruct
 	TypeKindTuple
+	TypeKindStruct
+	TypeKindString
+	TypeKindRef
+
 	//TypeKindSignature
 	TypeKindSlice
 	TypeKindArray
 	TypeKindMap
 	TypeKindInterface
+	TypeKindComplex64
+	TypeKindComplex128
 )
 
 /**************************************
@@ -96,7 +97,6 @@ type Type interface {
 	Equal(Type) bool //判断该类型与输入类型是否相等，注意该比较仅关心类别和结构，不关心类型名
 
 	hasRef() bool
-	Underlying() Type
 }
 
 ///**************************************

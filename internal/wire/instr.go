@@ -61,14 +61,22 @@ func (i *Var) Type() Type {
 }
 func (i *Var) retained() bool { return false }
 func (i *Var) String() string {
+	s := ""
 	switch i.kind {
 	case Register:
-		return fmt.Sprintf("var %s %s", i.name, i.dtype.Name())
+		s = fmt.Sprintf("var %s %s", i.name, i.dtype.Name())
 
 	case Heap:
-		return fmt.Sprintf("var %s %s = alloc.heap(%s)", i.name, i.rtype.Name(), i.dtype.Name())
+		s = fmt.Sprintf("var %s %s = alloc.heap(%s)", i.name, i.rtype.Name(), i.dtype.Name())
+
+	default:
+		panic(fmt.Sprintf("Todo: VarKind: %v", i.kind))
 	}
-	panic(fmt.Sprintf("Todo: VarKind: %v", i.kind))
+	if i.tank != nil {
+		s += " --- "
+		s += i.tank.String()
+	}
+	return s
 }
 func (i *Var) DataType() Type { return i.dtype }
 func (i *Var) RefType() Type  { return i.rtype }
@@ -576,7 +584,13 @@ type Drop struct {
 	X *Var
 }
 
-func (i *Drop) String() string { return fmt.Sprintf("drop(%s)", i.X.Name()) }
+func (i *Drop) String() string {
+	if i.X.tank != nil {
+		return fmt.Sprintf("drop(%s --- %s)", i.X.Name(), i.X.tank.String())
+	} else {
+		return fmt.Sprintf("drop(%s)", i.X.Name())
+	}
+}
 
 // 生成一条 Drop 指令
 func NewDrop(x *Var, pos int) *Drop {
@@ -609,6 +623,7 @@ func NewDupRef(x Expr, imvName string, pos int) *DupRef {
 
 	imv := &Var{name: imvName}
 	imv.Stringer = imv
+	imv.dtype = x.Type()
 	v.Imv = imv
 
 	return v

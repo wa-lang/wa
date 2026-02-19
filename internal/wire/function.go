@@ -30,6 +30,11 @@ type Function struct {
 	types *Types // 该函数所属 Module 的类型库，切勿手动修改
 
 	StartPos, EndPos int
+
+	freeCommonRegs []register
+	freeChunkRegs  []register
+	chunkRegs      []register
+	regCount       int
 }
 
 // Scope 接口相关
@@ -213,6 +218,9 @@ func (f *Function) EndBody() {
 	}
 	fb.EmitReturn(ret_exprs, f.EndPos)
 
+	// 虚拟寄存器
+	f.blockAllocReg(f.Body)
+
 	{
 		var sb strings.Builder
 		sb.WriteString("\n<=======EndBody() 后=======>\n")
@@ -276,46 +284,6 @@ func (f *Function) retRepalce(stmt Stmt) {
 		panic(fmt.Sprintf("Todo: %s", stmt.String()))
 	}
 
-}
-
-func (f *Function) varRangeProc(b *Block, reserve map[*Var]bool) {
-	for _, stmt := range b.Stmts {
-		switch s := stmt.(type) {
-		case *Block:
-			f.varRangeProc(s, reserve)
-
-		case *Var:
-			if _, ok := reserve[s]; ok {
-				continue
-			}
-
-			r := b.varUsageRange(s)
-			if r.last == -1 {
-				panic(fmt.Sprintf("var:%s not used", s.Name()))
-			}
-
-			var t []Stmt
-			t = append(t, b.Stmts[:r.last+1]...)
-			t = append(t, NewDrop(s, b.Stmts[r.last].Pos()))
-			t = append(t, b.Stmts[r.last+1:]...)
-			b.Stmts = t
-
-		case *If:
-			f.varRangeProc(s.True, reserve)
-			f.varRangeProc(s.False, reserve)
-
-		case *Loop:
-			f.varRangeProc(s.Body, reserve)
-			f.varRangeProc(s.Post, reserve)
-
-		case *Get, *Set, *Br, *Return, *Unop, *Biop, *Retain, *Drop:
-			continue
-
-		default:
-			panic(fmt.Sprintf("Todo: %s", stmt.String()))
-		}
-
-	}
 }
 
 func blockImvRcProc(b *Block, inloop bool, d *Block) {
@@ -463,6 +431,218 @@ func exprImvRcProc(e Expr, inloop bool, replace bool, d *Block, post *[]Stmt) (r
 	}
 
 	return
+}
+
+func (f *Function) varRangeProc(b *Block, reserve map[*Var]bool) {
+	for _, stmt := range b.Stmts {
+		switch s := stmt.(type) {
+		case *Block:
+			f.varRangeProc(s, reserve)
+
+		case *Var:
+			if _, ok := reserve[s]; ok {
+				continue
+			}
+
+			r := b.varUsageRange(s)
+			if r.last == -1 {
+				panic(fmt.Sprintf("var:%s not used", s.Name()))
+			}
+
+			var t []Stmt
+			t = append(t, b.Stmts[:r.last+1]...)
+			t = append(t, NewDrop(s, b.Stmts[r.last].Pos()))
+			t = append(t, b.Stmts[r.last+1:]...)
+			b.Stmts = t
+
+		case *If:
+			f.varRangeProc(s.True, reserve)
+			f.varRangeProc(s.False, reserve)
+
+		case *Loop:
+			f.varRangeProc(s.Body, reserve)
+			f.varRangeProc(s.Post, reserve)
+
+		case *Get, *Set, *Br, *Return, *Unop, *Biop, *Retain, *Drop:
+			continue
+
+		default:
+			panic(fmt.Sprintf("Todo: %s", stmt.String()))
+		}
+
+	}
+}
+
+func (f *Function) blockAllocReg(b *Block) {
+	for _, s := range b.Stmts {
+		switch s := s.(type) {
+		case *Block:
+			f.blockAllocReg(s)
+
+		case *Var:
+			f.varAllocReg(s)
+
+		case *Get:
+			panic("Get should not be here")
+
+		case *Set:
+			for _, loc := range s.Loc {
+				f.exprAllocReg(loc)
+			}
+			for _, val := range s.Val {
+				f.exprAllocReg(val)
+			}
+
+		case *If:
+			f.exprAllocReg(s.Cond)
+			f.blockAllocReg(s.True)
+			f.blockAllocReg(s.False)
+
+		case *Loop:
+			f.exprAllocReg(s.Cond)
+			f.blockAllocReg(s.Body)
+			f.blockAllocReg(s.Post)
+
+		case *Drop:
+			f.tankDropReg(s.X.tank)
+
+		case *Retain:
+			panic("Retain should not be here")
+
+		case *Br, *Return:
+
+		default:
+			panic(fmt.Sprintf("Todo: %s", s.String()))
+
+		}
+	}
+}
+
+func (f *Function) exprAllocReg(e Expr) {
+	if e == nil {
+		return
+	}
+	if _, ok := e.(Stmt); !ok {
+		return
+	}
+
+	switch e := e.(type) {
+	case *Var:
+
+	case *Get:
+		f.exprAllocReg(e.Loc)
+
+	case *Unop:
+		f.exprAllocReg(e.X)
+
+	case *Biop:
+		f.exprAllocReg(e.X)
+		f.exprAllocReg(e.Y)
+
+	case *Call:
+		var call_common *CallCommon
+		switch call := e.Callee.(type) {
+		case *BuiltinCall:
+			call_common = &call.CallCommon
+
+		case *StaticCall:
+			call_common = &call.CallCommon
+
+		case *MethodCall:
+			call_common = &call.CallCommon
+			f.exprAllocReg(call.Recv)
+
+		case *InterfaceCall:
+			call_common = &call.CallCommon
+			f.exprAllocReg(call.Interface)
+
+		default:
+			panic("Todo")
+		}
+
+		for _, arg := range call_common.Args {
+			f.exprAllocReg(arg)
+		}
+
+	case *DupRef:
+		f.exprAllocReg(e.X)
+		f.varAllocReg(e.Imv)
+
+	case *Retain:
+		f.exprAllocReg(e.X)
+
+	default:
+		panic(fmt.Sprintf("Todo: %s", e.(Stmt).String()))
+	}
+}
+
+func (f *Function) varAllocReg(v *Var) {
+	v.tank = rtimp.initTank(v.Type())
+	f.tankAllocReg(v.tank)
+}
+
+func (f *Function) tankAllocReg(t *tank) {
+	if len(t.member) == 0 {
+		t.register.id = f.allocRegister(t.register.typ)
+		return
+	}
+
+	for _, m := range t.member {
+		f.tankAllocReg(m)
+	}
+}
+
+func (f *Function) allocRegister(typ Type) (id int) {
+	if typ.Kind() == TypeKindChunk {
+		l := len(f.freeChunkRegs) - 1
+		if l >= 0 {
+			id = f.freeChunkRegs[l].id
+			f.freeChunkRegs = f.freeChunkRegs[:l]
+		} else {
+			id = f.regCount
+			f.regCount++
+			f.chunkRegs = append(f.chunkRegs, register{id: id, typ: typ})
+		}
+	} else {
+		free := false
+		for i := len(f.freeCommonRegs) - 1; i >= 0; i-- {
+			freeReg := f.freeCommonRegs[i]
+			if freeReg.typ.Equal(typ) {
+				id = freeReg.id
+				f.freeCommonRegs = append(f.freeCommonRegs[:i], f.freeCommonRegs[i+1:]...)
+				free = true
+				break
+			}
+		}
+
+		if !free {
+			id = f.regCount
+			f.regCount++
+		}
+	}
+	return
+}
+
+func (f *Function) tankDropReg(t *tank) {
+	if len(t.member) > 0 {
+		for _, m := range t.member {
+			f.tankDropReg(m)
+		}
+	} else {
+		f.dropRegister(t.register)
+	}
+}
+
+func (f *Function) dropRegister(r register) {
+	if r.id == -1 {
+		panic("dropRegister: id == -1")
+	}
+
+	if r.typ.Kind() == TypeKindChunk {
+		f.freeChunkRegs = append(f.freeChunkRegs, r)
+	} else {
+		f.freeCommonRegs = append(f.freeCommonRegs, r)
+	}
 }
 
 //func setImvId(num int, b *Block) int {

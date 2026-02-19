@@ -18,8 +18,6 @@ import (
 Block: 指令块，对应于 {...}。不可直接声明该类型对象，必须通过 Module.NewBlock() 创建
 Block 本身也满足指令接口，意味着指令块可嵌套
 Block 定义了作用域，块内的值无法在块外访问
-函数体对应的 Block，其父 Block 应为 nil
-Todo: Block 是否满足 Value（既是否可有返回值）待讨论
 **************************************/
 
 type Block struct {

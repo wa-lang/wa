@@ -3,23 +3,35 @@
 
 package wire
 
+import (
+	"fmt"
+	"strings"
+)
+
+type register struct {
+	id  int
+	typ Type
+}
+
 type tank struct {
-	register string
 	typ      Type
+	register register
 	member   []*tank
 }
 
-func initTank(typ Type) *tank {
-	ut := typ.Underlying()
-	var tank tank
-	tank.typ = ut
-
-	switch ut := ut.(type) {
-	case *Struct:
-		for _, m := range ut.member {
-			tm := initTank(m.Type)
-			tank.member = append(tank.member, tm)
+func (t *tank) String() string {
+	var b strings.Builder
+	if len(t.member) > 0 {
+		b.WriteByte('[')
+		for i, m := range t.member {
+			if i > 0 {
+				b.WriteString(", ")
+			}
+			b.WriteString(m.String())
 		}
+		b.WriteByte(']')
+	} else {
+		b.WriteString(fmt.Sprintf("$r%d", t.register.id))
 	}
-	return &tank
+	return b.String()
 }

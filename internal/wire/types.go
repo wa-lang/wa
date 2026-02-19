@@ -96,7 +96,6 @@ func (t *Void) Name() string      { return "void" }
 func (t *Void) Kind() TypeKind    { return TypeKindVoid }
 func (t *Void) Equal(u Type) bool { _, ok := u.(*Void); return ok }
 func (t *Void) hasRef() bool      { return false }
-func (t *Void) Underlying() Type  { return t }
 
 /**************************************
 Bool: 布尔，1字节
@@ -107,7 +106,6 @@ func (t *Bool) Name() string      { return "bool" }
 func (t *Bool) Kind() TypeKind    { return TypeKindBool }
 func (t *Bool) Equal(u Type) bool { _, ok := u.(*Bool); return ok }
 func (t *Bool) hasRef() bool      { return false }
-func (t *Bool) Underlying() Type  { return t }
 
 /**************************************
 I8: 8位有符号整数，1字节
@@ -118,7 +116,6 @@ func (t *I8) Name() string      { return "i8" }
 func (t *I8) Kind() TypeKind    { return TypeKindI8 }
 func (t *I8) Equal(u Type) bool { _, ok := u.(*I8); return ok }
 func (t *I8) hasRef() bool      { return false }
-func (t *I8) Underlying() Type  { return t }
 
 /**************************************
 U8: 8位无符号整数，1字节
@@ -129,7 +126,6 @@ func (t *U8) Name() string      { return "u8" }
 func (t *U8) Kind() TypeKind    { return TypeKindU8 }
 func (t *U8) Equal(u Type) bool { _, ok := u.(*U8); return ok }
 func (t *U8) hasRef() bool      { return false }
-func (t *U8) Underlying() Type  { return t }
 
 /**************************************
 I16: 16位有符号整数，2字节
@@ -140,7 +136,6 @@ func (t *I16) Name() string      { return "i16" }
 func (t *I16) Kind() TypeKind    { return TypeKindI16 }
 func (t *I16) Equal(u Type) bool { _, ok := u.(*I16); return ok }
 func (t *I16) hasRef() bool      { return false }
-func (t *I16) Underlying() Type  { return t }
 
 /**************************************
 tU16: 16位无符号整数，2字节
@@ -151,7 +146,6 @@ func (t *U16) Name() string      { return "u16" }
 func (t *U16) Kind() TypeKind    { return TypeKindU16 }
 func (t *U16) Equal(u Type) bool { _, ok := u.(*U16); return ok }
 func (t *U16) hasRef() bool      { return false }
-func (t *U16) Underlying() Type  { return t }
 
 /**************************************
 I32: 32位有符号整数，4字节
@@ -162,7 +156,6 @@ func (t *I32) Name() string      { return "i32" }
 func (t *I32) Kind() TypeKind    { return TypeKindI32 }
 func (t *I32) Equal(u Type) bool { _, ok := u.(*I32); return ok }
 func (t *I32) hasRef() bool      { return false }
-func (t *I32) Underlying() Type  { return t }
 
 /**************************************
 U32: 32位无符号整数，4字节
@@ -173,7 +166,6 @@ func (t *U32) Name() string      { return "u32" }
 func (t *U32) Kind() TypeKind    { return TypeKindU32 }
 func (t *U32) Equal(u Type) bool { _, ok := u.(*U32); return ok }
 func (t *U32) hasRef() bool      { return false }
-func (t *U32) Underlying() Type  { return t }
 
 /**************************************
 I64: 64位有符号整数，8字节
@@ -184,7 +176,6 @@ func (t *I64) Name() string      { return "i64" }
 func (t *I64) Kind() TypeKind    { return TypeKindI64 }
 func (t *I64) Equal(u Type) bool { _, ok := u.(*I64); return ok }
 func (t *I64) hasRef() bool      { return false }
-func (t *I64) Underlying() Type  { return t }
 
 /**************************************
 U64: 64位无符号整数，8字节
@@ -195,7 +186,6 @@ func (t *U64) Name() string      { return "u64" }
 func (t *U64) Kind() TypeKind    { return TypeKindU64 }
 func (t *U64) Equal(u Type) bool { _, ok := u.(*U64); return ok }
 func (t *U64) hasRef() bool      { return false }
-func (t *U64) Underlying() Type  { return t }
 
 /**************************************
 Uint: 平台相关无符号整型
@@ -206,7 +196,6 @@ func (t *Uint) Name() string      { return "uint" }
 func (t *Uint) Kind() TypeKind    { return TypeKindUint }
 func (t *Uint) Equal(u Type) bool { _, ok := u.(*Uint); return ok }
 func (t *Uint) hasRef() bool      { return false }
-func (t *Uint) Underlying() Type  { return t }
 
 /**************************************
 Int: 平台相关有符号整型
@@ -217,7 +206,6 @@ func (t *Int) Name() string      { return "int" }
 func (t *Int) Kind() TypeKind    { return TypeKindInt }
 func (t *Int) Equal(u Type) bool { _, ok := u.(*Int); return ok }
 func (t *Int) hasRef() bool      { return false }
-func (t *Int) Underlying() Type  { return t }
 
 /**************************************
 F32: 单精度浮点数，4字节
@@ -228,7 +216,6 @@ func (t *F32) Name() string      { return "f32" }
 func (t *F32) Kind() TypeKind    { return TypeKindF32 }
 func (t *F32) Equal(u Type) bool { _, ok := u.(*F32); return ok }
 func (t *F32) hasRef() bool      { return false }
-func (t *F32) Underlying() Type  { return t }
 
 /**************************************
 F64: 双精度浮点数，8字节
@@ -239,7 +226,6 @@ func (t *F64) Name() string      { return "f64" }
 func (t *F64) Kind() TypeKind    { return TypeKindF64 }
 func (t *F64) Equal(u Type) bool { _, ok := u.(*F64); return ok }
 func (t *F64) hasRef() bool      { return false }
-func (t *F64) Underlying() Type  { return t }
 
 /**************************************
 Complex64: 单精度复数，8字节
@@ -272,37 +258,12 @@ func (t *Rune) Name() string      { return "rune" }
 func (t *Rune) Kind() TypeKind    { return TypeKindRune }
 func (t *Rune) Equal(u Type) bool { _, ok := u.(*Rune); return ok }
 func (t *Rune) hasRef() bool      { return false }
-func (t *Rune) Underlying() Type  { return t }
-
-/**************************************
-String: 字符串
-**************************************/
-type String struct {
-	underlying Struct
-}
-
-func (t *String) Name() string      { return "string" }
-func (t *String) Kind() TypeKind    { return TypeKindString }
-func (t *String) Equal(u Type) bool { _, ok := u.(*String); return ok }
-func (t *String) hasRef() bool      { return true }
-func (t *String) Underlying() Type  { return &t.underlying }
-
-func (tl *Types) genString() *String {
-	nt := &String{}
-	c := StructMember{Name: "c", Type: &chunk{Base: tl.U8, size: tl.intSize}, id: 0}
-	d := StructMember{Name: "d", Type: &Ptr{Base: tl.U8, size: tl.intSize}, id: 1}
-	l := StructMember{Name: "l", Type: tl.Uint, id: 2}
-
-	nt.underlying.member = []StructMember{c, d, l}
-	return nt
-}
 
 /**************************************
 Ptr: 指针，长度取决于目标平台
 **************************************/
 type Ptr struct {
 	Base Type
-	size int
 }
 
 func (t *Ptr) Name() string   { return "*" + t.Base.Name() }
@@ -316,15 +277,14 @@ func (t *Ptr) Equal(u Type) bool {
 	}
 	return false
 }
-func (t *Ptr) hasRef() bool     { return false }
-func (t *Ptr) Underlying() Type { return t }
+func (t *Ptr) hasRef() bool { return false }
 
 func (tl *Types) genPtr(base Type) *Ptr {
 	if t, ok := tl.ptrs[base]; ok {
 		return t
 	}
 
-	nt := &Ptr{Base: base, size: tl.intSize}
+	nt := &Ptr{Base: base}
 	tl.ptrs[base] = nt
 	return nt
 }
@@ -334,7 +294,6 @@ chunk: 数据块，本质是指针，runtime 自动管理内存时使用
 **************************************/
 type chunk struct {
 	Base Type
-	size int
 }
 
 func (t *chunk) Name() string   { return t.Base.Name() + "$$chunk" }
@@ -348,8 +307,7 @@ func (t *chunk) Equal(u Type) bool {
 	}
 	return false
 }
-func (t *chunk) hasRef() bool     { return true }
-func (t *chunk) Underlying() Type { return t }
+func (t *chunk) hasRef() bool { return true }
 
 //func (tl *Types) genChunk(base Type) *chunk {
 //	if t, ok := tl.chunks[base]; ok {
@@ -399,8 +357,7 @@ func (t *Tuple) Equal(u Type) bool {
 
 	return true
 }
-func (t *Tuple) hasRef() bool     { return t.hasChunk }
-func (t *Tuple) Underlying() Type { return t }
+func (t *Tuple) hasRef() bool { return t.hasChunk }
 
 func (t *Tuple) Len() int       { return len(t.fields) }
 func (t *Tuple) At(id int) Type { return t.fields[id] }
@@ -463,8 +420,7 @@ func (t *Struct) Equal(u Type) bool {
 
 	return true
 }
-func (t *Struct) hasRef() bool     { return t.hasChunk }
-func (t *Struct) Underlying() Type { return t }
+func (t *Struct) hasRef() bool { return t.hasChunk }
 
 func (t *Struct) Len() int               { return len(t.member) }
 func (t *Struct) At(id int) StructMember { return t.member[id] }
@@ -504,6 +460,25 @@ func (i *StructMember) Equal(u *StructMember) bool { return i.Name == u.Name && 
 func (i *StructMember) String() string             { return i.Name + " " + i.Type.Name() }
 
 /**************************************
+String: 字符串
+**************************************/
+type String struct {
+	underlying Struct
+}
+
+func (t *String) Name() string        { return "string" }
+func (t *String) Kind() TypeKind      { return TypeKindString }
+func (t *String) Equal(u Type) bool   { _, ok := u.(*String); return ok }
+func (t *String) hasRef() bool        { return true }
+func (t *String) Underlying() *Struct { return &t.underlying }
+
+func (tl *Types) genString() *String {
+	nt := &String{}
+	nt.underlying = rtimp.underlyingStruct(nt)
+	return nt
+}
+
+/**************************************
 Ref: 引用类型，runtime 自动内存管理时，Ptr 转化为 Ref
 **************************************/
 type Ref struct {
@@ -522,8 +497,8 @@ func (t *Ref) Equal(u Type) bool {
 	}
 	return false
 }
-func (t *Ref) hasRef() bool     { return true }
-func (t *Ref) Underlying() Type { return &t.underlying }
+func (t *Ref) hasRef() bool        { return true }
+func (t *Ref) Underlying() *Struct { return &t.underlying }
 
 func (tl *Types) GenRef(base Type) *Ref {
 	if t, ok := tl.refs[base]; ok {
@@ -531,9 +506,7 @@ func (tl *Types) GenRef(base Type) *Ref {
 	}
 
 	nt := &Ref{Base: base}
-	b := StructMember{Name: "c", Type: &chunk{Base: base, size: tl.intSize}, id: 0}
-	d := StructMember{Name: "d", Type: &Ptr{Base: base, size: tl.intSize}, id: 1}
-	nt.underlying.member = []StructMember{b, d}
+	nt.underlying = rtimp.underlyingStruct(nt)
 	return nt
 }
 
@@ -564,8 +537,7 @@ func (t *Interface) Equal(u Type) bool {
 
 	return true
 }
-func (t *Interface) hasRef() bool     { return true }
-func (t *Interface) Underlying() Type { panic("todo") }
+func (t *Interface) hasRef() bool { return true }
 
 func (t *Interface) NumMethods() int     { return len(t.methods) }
 func (t *Interface) Method(i int) Method { return t.methods[i] }
