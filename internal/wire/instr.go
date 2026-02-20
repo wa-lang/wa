@@ -150,105 +150,134 @@ func NewGet(loc Expr, pos int) *Get {
 
 /**************************************
 Set: Set 指令，将 Val 存储到 Loc 指定的位置，Set 支持多赋值，该指令应触发 RC-1 动作
+  - Set 支持多赋值
   - Loc 中的元素应为 *Var，或类型为 Ref、Ptr 的 Expr
-  - val 有可能为元组（Tuple），因此 Loc 的长度可能和 Val 的长度不同，此时应将元组展开，完全展开后二者的长度应一致
-  - 向 nil 的 loc 赋值是合法的，这等价于向匿名变量 _ 赋值，此时应触发 Drop 动作
+  - Rh 可能为元组（Tuple），此时 Rhs 的长度应为 1，Lhs 的长度应为元组长度
+  - 向 nil 的 Lh 赋值是合法的，这等价于向匿名变量 _ 赋值，此时若 Rh 已 retain，应触发 release
 **************************************/
 
 type Set struct {
 	aStmt
-	Loc []Expr
-	Val []Expr
+	Lhs []Expr
+	Rhs []Expr
 }
-
-//func unfoldTuple(t *Tuple) []Type {
-//	var ret []Type
-//	for _, f := range t.fields {
-//		if tu, ok := f.(*Tuple); ok {
-//			ret = append(ret, unfoldTuple(tu)...)
-//		} else {
-//			ret = append(ret, tu)
-//		}
-//	}
-//	return ret
-//}
 
 func (i *Set) String() string {
 	var sb strings.Builder
 
-	//var vtypes []Type
-	//for _, val := range i.Val {
-	//	vt := val.Type()
-	//	if tu, ok := vt.(*Tuple); ok {
-	//		vtypes = append(vtypes, unfoldTuple(tu)...)
-	//	} else {
-	//		vtypes = append(vtypes, vt)
-	//	}
-	//}
-	//
-	//if len(vtypes) != len(i.Loc) {
-	//	panic("len(vtypes) != len(i.Loc)")
-	//}
-
-	for i, loc := range i.Loc {
+	for i, lh := range i.Lhs {
 		if i > 0 {
 			sb.WriteString(", ")
 		}
 
-		if loc == nil {
+		if lh == nil {
 			sb.WriteRune('_')
 			continue
 		}
 
-		loc_name := "*(" + loc.Name() + ")"
-		if v, ok := loc.(*Var); ok {
+		loc_name := "*(" + lh.Name() + ")"
+		if v, ok := lh.(*Var); ok {
 			if v.kind == Register {
-				loc_name = loc.Name()
+				loc_name = lh.Name()
 			}
 		}
 		sb.WriteString(loc_name)
 	}
 
 	sb.WriteString(" = ")
-	for i, val := range i.Val {
+	for i, rh := range i.Rhs {
 		if i > 0 {
 			sb.WriteString(", ")
 		}
-		sb.WriteString(val.Name())
+		sb.WriteString(rh.Name())
 	}
 
 	return sb.String()
 }
 
-func NewSet(loc Expr, val Expr, pos int) *Set {
+func NewSet(lhs []Expr, rhs []Expr, pos int) *Set {
 	v := &Set{}
 	v.Stringer = v
-	v.Loc = []Expr{loc}
-	v.Val = []Expr{val}
+	v.Lhs = lhs
+	v.Rhs = rhs
 	v.pos = pos
 	return v
 }
 
-// 在 Block 中添加一条 Store 指令
-func (b *Block) EmitSet(loc Expr, val Expr, pos int) *Set {
-	v := &Set{}
-	v.Stringer = v
-	v.Loc = []Expr{loc}
-	v.Val = []Expr{val}
-	v.pos = pos
-
+// 在 Block 中添加一条 Set 指令
+func (b *Block) EmitSet(lhs Expr, rhs Expr, pos int) *Set {
+	v := NewSet([]Expr{lhs}, []Expr{rhs}, pos)
 	b.emit(v)
 	return v
 }
 
-// Block.EmitStore 的多重赋值版
-func (b *Block) EmitSetN(locs []Expr, vals []Expr, pos int) *Set {
-	v := &Set{}
-	v.Stringer = v
-	v.Loc = locs
-	v.Val = vals
-	v.pos = pos
+// Block.EmitSet 的多重赋值版
+func (b *Block) EmitSetN(lhs []Expr, rhs []Expr, pos int) *Set {
+	v := NewSet(lhs, rhs, pos)
+	b.emit(v)
+	return v
+}
 
+/**************************************
+Assign: Assign 指令，将 Rhs 赋值给 Lhs
+  - Assgin 支持多赋值
+  - Lh 必须为 Register 型变量
+  - Rh 可能为元组（Tuple），此时 Rhs 的长度应为 1，Lhs 的长度应为元组长度
+  - 向 nil 的 Lh 赋值是合法的，这等价于向匿名变量 _ 赋值，此时若 Rh 已 retain，应触发 release
+**************************************/
+
+type Assign struct {
+	aStmt
+	Lhs []*Var
+	Rhs []Expr
+}
+
+func (i *Assign) String() string {
+	var sb strings.Builder
+
+	for i, lh := range i.Lhs {
+		if i > 0 {
+			sb.WriteString(", ")
+		}
+
+		if lh == nil {
+			sb.WriteRune('_')
+			continue
+		}
+
+		sb.WriteString(lh.Name())
+	}
+
+	sb.WriteString(" = ")
+	for i, rh := range i.Rhs {
+		if i > 0 {
+			sb.WriteString(", ")
+		}
+		sb.WriteString(rh.Name())
+	}
+
+	return sb.String()
+}
+
+func NewAssign(lhs []*Var, rhs []Expr, pos int) *Assign {
+	v := &Assign{}
+	v.Stringer = v
+	v.Lhs = lhs
+	v.Rhs = rhs
+	v.pos = pos
+	return v
+}
+
+// 在 Block 中添加一条 Assign 指令
+func (b *Block) EmitAssign(lhs *Var, rhs Expr, pos int) *Assign {
+	v := NewAssign([]*Var{lhs}, []Expr{rhs}, pos)
+	b.emit(v)
+	return v
+}
+
+// EmitAssign 的多重赋值版
+func (b *Block) EmitAssignN(lhs []*Var, rhs []Expr, pos int) *Assign {
+	v := NewAssign(lhs, rhs, pos)
 	b.emit(v)
 	return v
 }
@@ -300,13 +329,17 @@ func (i *Br) String() string {
 	return s
 }
 
-// 在 Block 中添加一条 Br 指令
-func (b *Block) EmitBr(label string, pos int) *Br {
+func NewBr(label string, pos int) *Br {
 	v := &Br{}
 	v.Stringer = v
 	v.Label = label
 	v.pos = pos
+	return v
+}
 
+// 在 Block 中添加一条 Br 指令
+func (b *Block) EmitBr(label string, pos int) *Br {
+	v := NewBr(label, pos)
 	b.emit(v)
 	return v
 }
@@ -554,7 +587,7 @@ func (b *Block) EmitLoop(cond Expr, label string, pos int) *Loop {
 }
 
 /**************************************
-Retain: Retain 指令，引用计数 +1，Retain 指令实现了 Expr，返回 X
+Retain: Retain 指令，引用计数 +1，Retain 指令实现了 Expr，返回 X 本身
 **************************************/
 
 type Retain struct {
@@ -576,7 +609,8 @@ func NewRetain(x Expr, pos int) *Retain {
 }
 
 /**************************************
-Drop: Drop 指令，丢弃指定 Var
+Drop: Drop 指令，丢弃 Var，丢弃后它所占用的虚拟寄存器可被重用
+  - Drop 一个 chunk 时并不会执行 release
 **************************************/
 
 type Drop struct {

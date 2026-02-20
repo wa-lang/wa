@@ -42,6 +42,9 @@ func (ri *rtImp) hasChunk(t Type) bool {
 	case *I8, *I16, *I32, *I64, *Int, *Rune:
 		return false
 
+	case *F32, *F64:
+		return false
+
 	case *Ptr:
 		return false
 

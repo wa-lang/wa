@@ -175,10 +175,8 @@ func (f *Function) EndBody() {
 	}
 
 	// 返回置换
-	rets := make(map[*Var]bool)
 	for _, ret := range f.results {
 		fb.emit(ret)
-		rets[ret] = true
 	}
 	f.retRepalce(ob)
 
@@ -189,9 +187,9 @@ func (f *Function) EndBody() {
 	nb.init()
 
 	blockImvRcProc(ob, false, nb)
-	fb.emit(nb)
+	f.varRangeProc(nb)
 
-	f.varRangeProc(fb, rets)
+	fb.emit(nb)
 
 	// Todo: defer
 
@@ -210,13 +208,13 @@ func (f *Function) EndBody() {
 			fb.imvCount++
 			fb.emit(&rr)
 			fb.EmitSet(&rr, NewGet(r, f.EndPos), f.EndPos)
-			fb.emit(NewDrop(r, f.EndPos))
 			ret_exprs = append(ret_exprs, NewGet(&rr, f.EndPos))
 
 		default:
 			panic(fmt.Sprintf("Todo: VarKind: %v", r.kind))
 		}
 	}
+	// Todo: 插入所有 chunk 的 release
 	fb.EmitReturn(ret_exprs, f.EndPos)
 
 	// 虚拟寄存器
@@ -247,20 +245,14 @@ func (f *Function) retRepalce(stmt Stmt) {
 		}
 
 		if ret_stmt, ok := stmt.Stmts[i].(*Return); ok {
-			br := &Br{}
-			br.Stringer = br
-			br.Label = _FN_START
-			br.pos = ret_stmt.pos
+			br := NewBr(_FN_START, ret_stmt.pos)
 			if len(f.results) > 0 && len(ret_stmt.Results) > 0 {
-				set := &Set{}
-				set.Stringer = set
-				for _, loc := range f.results {
-					set.Loc = append(set.Loc, loc)
+				lhs := make([]Expr, len(f.results))
+				for i, lh := range f.results {
+					lhs[i] = lh
 				}
-				set.Val = ret_stmt.Results
-				set.pos = ret_stmt.pos
 
-				stmt.Stmts[i] = set
+				stmt.Stmts[i] = NewSet(lhs, ret_stmt.Results, ret_stmt.pos)
 				stmt.Stmts = append(stmt.Stmts, br)
 			} else {
 				stmt.Stmts[i] = br
@@ -313,14 +305,14 @@ func stmtImvRcProc(s Stmt, inloop bool, d *Block) {
 		panic("Get should not be here")
 
 	case *Set:
-		for i := range s.Loc {
-			s.Loc[i] = exprImvRcProc(s.Loc[i], inloop, true, d, &post)
+		for i := range s.Lhs {
+			s.Lhs[i] = exprImvRcProc(s.Lhs[i], inloop, true, d, &post)
 		}
 
-		for i := range s.Val {
-			s.Val[i] = exprImvRcProc(s.Val[i], inloop, false, d, &post)
-			if rtimp.hasChunk(s.Val[i].Type()) && !s.Val[i].retained() {
-				s.Val[i] = NewRetain(s.Val[i], s.Val[i].Pos())
+		for i := range s.Rhs {
+			s.Rhs[i] = exprImvRcProc(s.Rhs[i], inloop, false, d, &post)
+			if rtimp.hasChunk(s.Rhs[i].Type()) && !s.Rhs[i].retained() {
+				s.Rhs[i] = NewRetain(s.Rhs[i], s.Rhs[i].Pos())
 			}
 		}
 
@@ -434,17 +426,13 @@ func exprImvRcProc(e Expr, inloop bool, replace bool, d *Block, post *[]Stmt) (r
 	return
 }
 
-func (f *Function) varRangeProc(b *Block, reserve map[*Var]bool) {
+func (f *Function) varRangeProc(b *Block) {
 	for _, stmt := range b.Stmts {
 		switch s := stmt.(type) {
 		case *Block:
-			f.varRangeProc(s, reserve)
+			f.varRangeProc(s)
 
 		case *Var:
-			if _, ok := reserve[s]; ok {
-				continue
-			}
-
 			r := b.varUsageRange(s)
 			if r.last == -1 {
 				panic(fmt.Sprintf("var:%s not used", s.Name()))
@@ -457,12 +445,12 @@ func (f *Function) varRangeProc(b *Block, reserve map[*Var]bool) {
 			b.Stmts = t
 
 		case *If:
-			f.varRangeProc(s.True, reserve)
-			f.varRangeProc(s.False, reserve)
+			f.varRangeProc(s.True)
+			f.varRangeProc(s.False)
 
 		case *Loop:
-			f.varRangeProc(s.Body, reserve)
-			f.varRangeProc(s.Post, reserve)
+			f.varRangeProc(s.Body)
+			f.varRangeProc(s.Post)
 
 		case *Get, *Set, *Br, *Return, *Unop, *Biop, *Retain, *Drop:
 			continue
@@ -487,11 +475,11 @@ func (f *Function) blockAllocReg(b *Block) {
 			panic("Get should not be here")
 
 		case *Set:
-			for _, loc := range s.Loc {
-				f.exprAllocReg(loc)
+			for _, lh := range s.Lhs {
+				f.exprAllocReg(lh)
 			}
-			for _, val := range s.Val {
-				f.exprAllocReg(val)
+			for _, rh := range s.Rhs {
+				f.exprAllocReg(rh)
 			}
 
 		case *If:
