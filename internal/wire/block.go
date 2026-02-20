@@ -120,54 +120,55 @@ func (b *Block) emit(stmt Stmt) {
 }
 
 // 判断 Var 是否被赋值
-func (b *Block) varStored(v *Var) bool {
-	for _, stmt := range b.Stmts {
-		if varStoredInStmt(stmt, v) {
-			return true
-		}
-	}
+//func (b *Block) varStored(v *Var) bool {
+//	for _, stmt := range b.Stmts {
+//		if varStoredInStmt(stmt, v) {
+//			return true
+//		}
+//	}
+//
+//	return false
+//}
 
-	return false
-}
-
-func varStoredInStmt(stmt Stmt, v *Var) bool {
-	switch s := stmt.(type) {
-	case *Block:
-		return s.varStored(v)
-
-	case *Set:
-		for _, lh := range s.Lhs {
-			if p, _ := lh.(*Var); p == v {
-				return true
-			}
-		}
-
-	case *If:
-		if s.True.varStored(v) || s.False.varStored(v) {
-			return true
-		}
-
-	case *Loop:
-		if s.Body.varStored(v) || s.Post.varStored(v) {
-			return true
-		}
-
-	case *Var:
-	case *Get:
-	case *Br:
-	case *Return:
-	case *Unop:
-	case *Biop:
-	case *Retain:
-	case *Drop:
-		return false
-
-	default:
-		panic(fmt.Sprintf("Todo: %s", s.String()))
-	}
-
-	return false
-}
+// varStoredInStmt 判断变量是否在语句中被赋值，该函数有隐患，暂不启用
+//func varStoredInStmt(stmt Stmt, v *Var) bool {
+//	switch s := stmt.(type) {
+//	case *Block:
+//		return s.varStored(v)
+//
+//	case *Set:
+//		for _, lh := range s.Lhs {
+//			if p, _ := lh.(*Var); p == v {
+//				return true
+//			}
+//		}
+//
+//	case *If:
+//		if s.True.varStored(v) || s.False.varStored(v) {
+//			return true
+//		}
+//
+//	case *Loop:
+//		if s.Body.varStored(v) || s.Post.varStored(v) {
+//			return true
+//		}
+//
+//	case *Var:
+//	case *Get:
+//	case *Br:
+//	case *Return:
+//	case *Unop:
+//	case *Biop:
+//	case *Retain:
+//	case *Drop:
+//		return false
+//
+//	default:
+//		panic(fmt.Sprintf("Todo: %s", s.String()))
+//	}
+//
+//	return false
+//}
 
 // usageRange 使用范围信息
 type usageRange struct {
