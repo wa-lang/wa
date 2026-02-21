@@ -186,8 +186,8 @@ func (f *Function) EndBody() {
 	nb.Label = _FN_START
 	nb.init()
 
-	blockImvRcProc(ob, false, nb)
-	f.varRangeProc(nb)
+	rc_block(ob, false, nb)
+	f.autoDrop(nb)
 
 	fb.emit(nb)
 
@@ -218,7 +218,7 @@ func (f *Function) EndBody() {
 	fb.EmitReturn(ret_exprs, f.EndPos)
 
 	// 虚拟寄存器
-	f.blockAllocReg(f.Body)
+	f.allocVR_block(f.Body, false)
 
 	{
 		var sb strings.Builder
@@ -279,13 +279,13 @@ func (f *Function) retRepalce(stmt Stmt) {
 
 }
 
-func blockImvRcProc(b *Block, inloop bool, d *Block) {
+func rc_block(b *Block, inloop bool, d *Block) {
 	for _, stmt := range b.Stmts {
-		stmtImvRcProc(stmt, inloop, d)
+		rc_stmt(stmt, inloop, d)
 	}
 }
 
-func stmtImvRcProc(s Stmt, inloop bool, d *Block) {
+func rc_stmt(s Stmt, inloop bool, d *Block) {
 	var post []Stmt
 	switch s := s.(type) {
 	case *Block:
@@ -295,7 +295,7 @@ func stmtImvRcProc(s Stmt, inloop bool, d *Block) {
 
 		block := d.EmitBlock(s.Label, s.pos)
 		for _, stmt := range s.Stmts {
-			stmtImvRcProc(stmt, inloop, block)
+			rc_stmt(stmt, inloop, block)
 		}
 
 	case *Var:
@@ -306,11 +306,11 @@ func stmtImvRcProc(s Stmt, inloop bool, d *Block) {
 
 	case *Set:
 		for i := range s.Lhs {
-			s.Lhs[i] = exprImvRcProc(s.Lhs[i], inloop, true, d, &post)
+			s.Lhs[i] = rc_expr(s.Lhs[i], inloop, true, d, &post)
 		}
 
 		for i := range s.Rhs {
-			s.Rhs[i] = exprImvRcProc(s.Rhs[i], inloop, false, d, &post)
+			s.Rhs[i] = rc_expr(s.Rhs[i], inloop, false, d, &post)
 			if rtimp.hasChunk(s.Rhs[i].Type()) && !s.Rhs[i].retained() {
 				s.Rhs[i] = NewRetain(s.Rhs[i], s.Rhs[i].Pos())
 			}
@@ -325,17 +325,17 @@ func stmtImvRcProc(s Stmt, inloop bool, d *Block) {
 		panic("Return should not be here")
 
 	case *If:
-		cond := exprImvRcProc(s.Cond, inloop, true, d, &post)
+		cond := rc_expr(s.Cond, inloop, true, d, &post)
 		n := d.EmitIf(cond, s.pos)
-		blockImvRcProc(s.True, inloop, n.True)
-		blockImvRcProc(s.False, inloop, n.False)
+		rc_block(s.True, inloop, n.True)
+		rc_block(s.False, inloop, n.False)
 
 	case *Loop:
-		cond := exprImvRcProc(s.Cond, true, true, d, &post)
+		cond := rc_expr(s.Cond, true, true, d, &post)
 
 		l := d.EmitLoop(cond, s.Label, s.pos)
-		blockImvRcProc(s.Body, true, l.Body)
-		blockImvRcProc(s.Post, true, l.Post)
+		rc_block(s.Body, true, l.Body)
+		rc_block(s.Post, true, l.Post)
 
 	case *Retain:
 		d.emit(s)
@@ -352,7 +352,7 @@ func stmtImvRcProc(s Stmt, inloop bool, d *Block) {
 	}
 }
 
-func exprImvRcProc(e Expr, inloop bool, replace bool, d *Block, post *[]Stmt) (ret Expr) {
+func rc_expr(e Expr, inloop bool, replace bool, d *Block, post *[]Stmt) (ret Expr) {
 	ret = e
 	if e == nil {
 		return
@@ -366,14 +366,14 @@ func exprImvRcProc(e Expr, inloop bool, replace bool, d *Block, post *[]Stmt) (r
 		return
 
 	case *Get:
-		e.Loc = exprImvRcProc(e.Loc, inloop, true, d, post)
+		e.Loc = rc_expr(e.Loc, inloop, true, d, post)
 
 	case *Unop:
-		e.X = exprImvRcProc(e.X, inloop, true, d, post)
+		e.X = rc_expr(e.X, inloop, true, d, post)
 
 	case *Biop:
-		e.X = exprImvRcProc(e.X, inloop, true, d, post)
-		e.Y = exprImvRcProc(e.Y, inloop, true, d, post)
+		e.X = rc_expr(e.X, inloop, true, d, post)
+		e.Y = rc_expr(e.Y, inloop, true, d, post)
 
 	case *Call:
 		var call_common *CallCommon
@@ -386,18 +386,18 @@ func exprImvRcProc(e Expr, inloop bool, replace bool, d *Block, post *[]Stmt) (r
 
 		case *MethodCall:
 			call_common = &call.CallCommon
-			call.Recv = exprImvRcProc(call.Recv, inloop, true, d, post)
+			call.Recv = rc_expr(call.Recv, inloop, true, d, post)
 
 		case *InterfaceCall:
 			call_common = &call.CallCommon
-			call.Interface = exprImvRcProc(call.Interface, inloop, true, d, post)
+			call.Interface = rc_expr(call.Interface, inloop, true, d, post)
 
 		default:
 			panic("Todo")
 		}
 
 		for i := range call_common.Args {
-			call_common.Args[i] = exprImvRcProc(call_common.Args[i], inloop, true, d, post)
+			call_common.Args[i] = rc_expr(call_common.Args[i], inloop, true, d, post)
 		}
 
 	case Stmt:
@@ -426,11 +426,11 @@ func exprImvRcProc(e Expr, inloop bool, replace bool, d *Block, post *[]Stmt) (r
 	return
 }
 
-func (f *Function) varRangeProc(b *Block) {
+func (f *Function) autoDrop(b *Block) {
 	for _, stmt := range b.Stmts {
 		switch s := stmt.(type) {
 		case *Block:
-			f.varRangeProc(s)
+			f.autoDrop(s)
 
 		case *Var:
 			r := b.varUsageRange(s)
@@ -445,12 +445,12 @@ func (f *Function) varRangeProc(b *Block) {
 			b.Stmts = t
 
 		case *If:
-			f.varRangeProc(s.True)
-			f.varRangeProc(s.False)
+			f.autoDrop(s.True)
+			f.autoDrop(s.False)
 
 		case *Loop:
-			f.varRangeProc(s.Body)
-			f.varRangeProc(s.Post)
+			f.autoDrop(s.Body)
+			f.autoDrop(s.Post)
 
 		case *Get, *Set, *Br, *Return, *Unop, *Biop, *Retain, *Drop:
 			continue
@@ -462,38 +462,38 @@ func (f *Function) varRangeProc(b *Block) {
 	}
 }
 
-func (f *Function) blockAllocReg(b *Block) {
+func (f *Function) allocVR_block(b *Block, inloop bool) {
 	for _, s := range b.Stmts {
 		switch s := s.(type) {
 		case *Block:
-			f.blockAllocReg(s)
+			f.allocVR_block(s, inloop)
 
 		case *Var:
-			f.varAllocReg(s)
+			f.allocVR_var(s, inloop)
 
 		case *Get:
 			panic("Get should not be here")
 
 		case *Set:
 			for _, lh := range s.Lhs {
-				f.exprAllocReg(lh)
+				f.allocVR_expr(lh, inloop)
 			}
 			for _, rh := range s.Rhs {
-				f.exprAllocReg(rh)
+				f.allocVR_expr(rh, inloop)
 			}
 
 		case *If:
-			f.exprAllocReg(s.Cond)
-			f.blockAllocReg(s.True)
-			f.blockAllocReg(s.False)
+			f.allocVR_expr(s.Cond, inloop)
+			f.allocVR_block(s.True, inloop)
+			f.allocVR_block(s.False, inloop)
 
 		case *Loop:
-			f.exprAllocReg(s.Cond)
-			f.blockAllocReg(s.Body)
-			f.blockAllocReg(s.Post)
+			f.allocVR_expr(s.Cond, true)
+			f.allocVR_block(s.Body, true)
+			f.allocVR_block(s.Post, true)
 
 		case *Drop:
-			f.tankDropReg(s.X.tank)
+			f.dropVR_tank(s.X.tank)
 
 		case *Retain:
 			panic("Retain should not be here")
@@ -507,7 +507,7 @@ func (f *Function) blockAllocReg(b *Block) {
 	}
 }
 
-func (f *Function) exprAllocReg(e Expr) {
+func (f *Function) allocVR_expr(e Expr, inloop bool) {
 	if e == nil {
 		return
 	}
@@ -519,14 +519,14 @@ func (f *Function) exprAllocReg(e Expr) {
 	case *Var:
 
 	case *Get:
-		f.exprAllocReg(e.Loc)
+		f.allocVR_expr(e.Loc, inloop)
 
 	case *Unop:
-		f.exprAllocReg(e.X)
+		f.allocVR_expr(e.X, inloop)
 
 	case *Biop:
-		f.exprAllocReg(e.X)
-		f.exprAllocReg(e.Y)
+		f.allocVR_expr(e.X, inloop)
+		f.allocVR_expr(e.Y, inloop)
 
 	case *Call:
 		var call_common *CallCommon
@@ -539,45 +539,45 @@ func (f *Function) exprAllocReg(e Expr) {
 
 		case *MethodCall:
 			call_common = &call.CallCommon
-			f.exprAllocReg(call.Recv)
+			f.allocVR_expr(call.Recv, inloop)
 
 		case *InterfaceCall:
 			call_common = &call.CallCommon
-			f.exprAllocReg(call.Interface)
+			f.allocVR_expr(call.Interface, inloop)
 
 		default:
 			panic("Todo")
 		}
 
 		for _, arg := range call_common.Args {
-			f.exprAllocReg(arg)
+			f.allocVR_expr(arg, inloop)
 		}
 
 	case *DupRef:
-		f.exprAllocReg(e.X)
-		f.varAllocReg(e.Imv)
+		f.allocVR_expr(e.X, inloop)
+		f.allocVR_var(e.Imv, inloop)
 
 	case *Retain:
-		f.exprAllocReg(e.X)
+		f.allocVR_expr(e.X, inloop)
 
 	default:
 		panic(fmt.Sprintf("Todo: %s", e.(Stmt).String()))
 	}
 }
 
-func (f *Function) varAllocReg(v *Var) {
+func (f *Function) allocVR_var(v *Var, inloop bool) {
 	v.tank = rtimp.initTank(v.Type())
-	f.tankAllocReg(v.tank)
+	f.allocVR_tank(v.tank, inloop)
 }
 
-func (f *Function) tankAllocReg(t *tank) {
+func (f *Function) allocVR_tank(t *tank, inloop bool) {
 	if len(t.member) == 0 {
 		t.register.id = f.allocRegister(t.register.typ)
 		return
 	}
 
 	for _, m := range t.member {
-		f.tankAllocReg(m)
+		f.allocVR_tank(m, inloop)
 	}
 }
 
@@ -612,10 +612,10 @@ func (f *Function) allocRegister(typ Type) (id int) {
 	return
 }
 
-func (f *Function) tankDropReg(t *tank) {
+func (f *Function) dropVR_tank(t *tank) {
 	if len(t.member) > 0 {
 		for _, m := range t.member {
-			f.tankDropReg(m)
+			f.dropVR_tank(m)
 		}
 	} else {
 		f.dropRegister(t.register)

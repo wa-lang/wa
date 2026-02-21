@@ -15,7 +15,7 @@ import (
 //-------------------------------------
 
 /**************************************
-Block: 指令块，对应于 {...}。不可直接声明该类型对象，必须通过 Module.NewBlock() 创建
+Block: 指令块，对应于 {...}。不可直接声明该类型对象，必须通过 newBlock() 创建
 Block 本身也满足指令接口，意味着指令块可嵌套
 Block 定义了作用域，块内的值无法在块外访问
 **************************************/
@@ -93,8 +93,8 @@ func (b *Block) ParentScope() Scope {
 	return b.scope
 }
 
-// CreateBlock 创建一个 Block 初始化其 scope 等，但并不添加至父 Block 中
-func (b *Block) createBlock(label string, pos int) *Block {
+// newBlock 创建一个 Block 初始化其 scope 等，但并不添加至父 Block 中
+func (b *Block) newBlock(label string, pos int) *Block {
 	block := &Block{}
 	block.Stringer = block
 	block.Label = label
@@ -108,7 +108,7 @@ func (b *Block) createBlock(label string, pos int) *Block {
 
 // EmitBlock 在 Block 中添加一个子 Block
 func (b *Block) EmitBlock(label string, pos int) *Block {
-	block := b.createBlock(label, pos)
+	block := b.newBlock(label, pos)
 
 	b.emit(block)
 	return block

@@ -527,8 +527,8 @@ func (b *Block) EmitIf(cond Expr, pos int) *If {
 	v.Stringer = v
 	v.pos = pos
 
-	v.True = b.createBlock("", pos)
-	v.False = b.createBlock("", pos)
+	v.True = b.newBlock("", pos)
+	v.False = b.newBlock("", pos)
 
 	b.emit(v)
 	return v
@@ -579,8 +579,8 @@ func (b *Block) EmitLoop(cond Expr, label string, pos int) *Loop {
 	v.Stringer = v
 	v.pos = pos
 
-	v.Body = b.createBlock(label+".body", pos)
-	v.Post = b.createBlock(label+".post", pos)
+	v.Body = b.newBlock(label+".body", pos)
+	v.Post = b.newBlock(label+".post", pos)
 
 	b.emit(v)
 	return v
