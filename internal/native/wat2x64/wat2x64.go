@@ -16,13 +16,13 @@ import (
 const DebugMode = false
 
 // Wat程序转译到 X64汇编
-func Wat2X64(filename string, source []byte, cpuType abi.CPUType) (m *watast.Module, code []byte, err error) {
+func Wat2X64(filename string, source []byte, cpuType abi.CPUType, entryFuncName string) (m *watast.Module, code []byte, err error) {
 	m, err = watparser.ParseModule(filename, source)
 	if err != nil {
 		return m, nil, err
 	}
 
-	worker := newWat2X64Worker(filename, m, cpuType)
+	worker := newWat2X64Worker(filename, m, cpuType, entryFuncName)
 	code, err = worker.BuildProgram()
 	return
 }
@@ -30,8 +30,9 @@ func Wat2X64(filename string, source []byte, cpuType abi.CPUType) (m *watast.Mod
 type wat2X64Worker struct {
 	m *watast.Module
 
-	filename string
-	cpuType  abi.CPUType
+	filename      string
+	cpuType       abi.CPUType
+	entryFuncName string
 
 	fnWasmR0Base      int // 当前函数的WASM栈R0位置
 	fnMaxCallArgsSize int // 调用子函数需要的最大空间
@@ -41,14 +42,15 @@ type wat2X64Worker struct {
 	trace bool // 调试开关
 }
 
-func newWat2X64Worker(filename string, mWat *watast.Module, cpuType abi.CPUType) *wat2X64Worker {
+func newWat2X64Worker(filename string, mWat *watast.Module, cpuType abi.CPUType, entryFuncName string) *wat2X64Worker {
 	assert(cpuType == abi.X64Windows || cpuType == abi.X64Unix)
 
 	p := &wat2X64Worker{
-		m:        mWat,
-		cpuType:  cpuType,
-		filename: filename,
-		trace:    DebugMode,
+		m:             mWat,
+		cpuType:       cpuType,
+		entryFuncName: entryFuncName,
+		filename:      filename,
+		trace:         DebugMode,
 	}
 
 	if config.EnableTrace_wat2xx {
@@ -100,7 +102,7 @@ func (p *wat2X64Worker) BuildProgram() (code []byte, err error) {
 	}
 
 	// 启动函数
-	if err := p.buildStart(&out); err != nil {
+	if err := p.buildEntryFunc(&out); err != nil {
 		return nil, err
 	}
 

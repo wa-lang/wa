@@ -48,8 +48,25 @@ func BuildApp_wa_wz(
 		gccArgsFilename = nativeAsmFile + ".gcc.args.txt"
 	}
 
+	// GCC 配置文件
+	gccArgcContent := prog.GccArgsCode()
+	if len(gccArgcContent) > 0 {
+		err = os.WriteFile(gccArgsFilename, []byte(gccArgcContent), 0666)
+		if err != nil {
+			fmt.Printf("write %s failed: %v\n", gccArgsFilename, err)
+			os.Exit(1)
+		}
+	}
+
+	// 入口函数
+	// 如果依然gcc参数, 则通过 main 函数入口
+	nativeEntryFuncName := ""
+	if len(gccArgcContent) != 0 {
+		nativeEntryFuncName = "main"
+	}
+
 	// 将 wat 翻译为本地汇编代码
-	_, nasmBytes, err := wat2la.Wat2LA64(input, watOutput, isZhLang)
+	_, nasmBytes, err := wat2la.Wat2LA64(input, watOutput, nativeEntryFuncName, isZhLang)
 	if err != nil {
 		fmt.Printf("wat2la %s failed: %v\n", input, err)
 		os.Exit(1)
@@ -71,16 +88,6 @@ func BuildApp_wa_wz(
 		}
 	}
 
-	// GCC 配置文件
-	gccArgcContent := prog.GccArgsCode()
-	if len(gccArgcContent) > 0 {
-		err = os.WriteFile(gccArgsFilename, []byte(gccArgcContent), 0666)
-		if err != nil {
-			fmt.Printf("write %s failed: %v\n", gccArgsFilename, err)
-			os.Exit(1)
-		}
-	}
-
 	// 保存生成的汇编语言文件
 	err = os.WriteFile(nativeAsmFile, []byte(nasmBytes), 0666)
 	if err != nil {
@@ -92,11 +99,10 @@ func BuildApp_wa_wz(
 	if len(gccArgcContent) > 0 {
 		args := []string{
 			nativeAsmFile,
-			"-nostdlib",
-			"-static",
-			"-z", "noexecstack",
 			"-o", nativeExtFile,
 			"@" + gccArgsFilename,
+			"-static",
+			"-z", "noexecstack",
 		}
 		if len(clangCode) > 0 {
 			args = append(args, clangFilename)

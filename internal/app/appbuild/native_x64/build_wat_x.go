@@ -37,7 +37,7 @@ func BuildApp_wat(opt *appbase.Option, input, outfile string) (mainFunc string, 
 		fmt.Printf("read %s failed: %v\n", input, err)
 		os.Exit(1)
 	}
-	_, nasmBytes, err := wat2x64.Wat2X64(input, watData, cpuType)
+	_, nasmBytes, err := wat2x64.Wat2X64(input, watData, cpuType, "")
 	if err != nil {
 		fmt.Printf("wat2x64 %s failed: %v\n", input, err)
 		os.Exit(1)
