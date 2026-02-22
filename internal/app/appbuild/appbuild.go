@@ -256,15 +256,18 @@ func BuildApp(opt *appbase.Option, input, outfile string) (mainFunc string, wasm
 			// 设置默认输出目标
 			var nativeAsmFile string
 			var nativeExtFile string
+			var gccArgsFilename string
 			var isZhLang bool
 			if appbase.HasExt(input, ".wz") {
 				isZhLang = true
 				nativeAsmFile = appbase.ReplaceExt(outfile, ".wasm", ".wz.s")
 				nativeExtFile = appbase.ReplaceExt(outfile, ".wasm", ".exe")
+				gccArgsFilename = nativeAsmFile + ".gcc.args.txt"
 			} else {
 				isZhLang = false
 				nativeAsmFile = appbase.ReplaceExt(outfile, ".wasm", ".wa.s")
 				nativeExtFile = appbase.ReplaceExt(outfile, ".wasm", ".exe")
+				gccArgsFilename = nativeAsmFile + ".gcc.args.txt"
 			}
 
 			// 将 wat 翻译为本地汇编代码
@@ -272,6 +275,22 @@ func BuildApp(opt *appbase.Option, input, outfile string) (mainFunc string, wasm
 			if err != nil {
 				fmt.Printf("wat2la %s failed: %v\n", input, err)
 				os.Exit(1)
+			}
+
+			// 拼接本地的汇编代码
+			nasmCode := prog.NasmCode()
+			if len(nasmCode) > 0 {
+				nasmBytes = append(nasmBytes, nasmCode...)
+			}
+
+			// GCC 配置文件
+			gccArgcContect := prog.GccArgsCode()
+			if len(gccArgcContect) > 0 {
+				err = os.WriteFile(gccArgsFilename, []byte(gccArgcContect), 0666)
+				if err != nil {
+					fmt.Printf("write %s failed: %v\n", gccArgsFilename, err)
+					os.Exit(1)
+				}
 			}
 
 			// 保存生成的汇编语言文件
@@ -282,7 +301,15 @@ func BuildApp(opt *appbase.Option, input, outfile string) (mainFunc string, wasm
 			}
 
 			// 汇编为 elf 可执行文件
-			{
+			if len(gccArgcContect) > 0 {
+				gccCmd := exec.Command("gcc", nativeAsmFile, "-nostdlib", "-static", "-z", "noexecstack", "-o", nativeExtFile, "@"+gccArgsFilename)
+				output, err := gccCmd.CombinedOutput()
+				if err != nil {
+					fmt.Println(string(output))
+					fmt.Printf("gcc build failed: %v\n", err)
+					os.Exit(1)
+				}
+			} else {
 				opt := &abi.LinkOptions{}
 				opt.CPU = abi.LOONG64
 				opt.DRAMBase = dram.DRAM_BASE_LA64
@@ -326,12 +353,15 @@ func BuildApp(opt *appbase.Option, input, outfile string) (mainFunc string, wasm
 			// 设置默认输出目标
 			var nativeAsmFile string
 			var nativeExtFile string
+			var gccArgsFilename string
 			if appbase.HasExt(input, ".wz") {
 				nativeAsmFile = appbase.ReplaceExt(outfile, ".wasm", ".wz.s")
 				nativeExtFile = appbase.ReplaceExt(outfile, ".wasm", ".exe")
+				gccArgsFilename = nativeAsmFile + ".gcc.args.txt"
 			} else {
 				nativeAsmFile = appbase.ReplaceExt(outfile, ".wasm", ".wa.s")
 				nativeExtFile = appbase.ReplaceExt(outfile, ".wasm", ".exe")
+				gccArgsFilename = nativeAsmFile + ".gcc.args.txt"
 			}
 
 			// 将 wat 翻译为本地汇编代码
@@ -339,6 +369,22 @@ func BuildApp(opt *appbase.Option, input, outfile string) (mainFunc string, wasm
 			if err != nil {
 				fmt.Printf("wat2x64 %s failed: %v\n", input, err)
 				os.Exit(1)
+			}
+
+			// 拼接本地的汇编代码
+			nasmCode := prog.NasmCode()
+			if len(nasmCode) > 0 {
+				nasmBytes = append(nasmBytes, nasmCode...)
+			}
+
+			// GCC 配置文件
+			gccArgcContect := prog.GccArgsCode()
+			if len(gccArgcContect) > 0 {
+				err = os.WriteFile(gccArgsFilename, []byte(gccArgcContect), 0666)
+				if err != nil {
+					fmt.Printf("write %s failed: %v\n", gccArgsFilename, err)
+					os.Exit(1)
+				}
 			}
 
 			// 保存生成的汇编语言文件
@@ -355,7 +401,7 @@ func BuildApp(opt *appbase.Option, input, outfile string) (mainFunc string, wasm
 					gccEnabled = false
 				}
 
-				if gccEnabled {
+				if gccEnabled || len(gccArgcContect) > 0 {
 					gccCmd := exec.Command("gcc", nativeAsmFile, "-nostdlib", "-static", "-z", "noexecstack", "-o", nativeExtFile)
 					output, err := gccCmd.CombinedOutput()
 					if err != nil {
@@ -395,7 +441,7 @@ func BuildApp(opt *appbase.Option, input, outfile string) (mainFunc string, wasm
 					gccEnabled = false
 				}
 
-				if gccEnabled {
+				if gccEnabled || len(gccArgcContect) > 0 {
 					var args = []string{
 						nativeAsmFile,
 						"-nostdlib",
@@ -540,15 +586,18 @@ func BuildApp(opt *appbase.Option, input, outfile string) (mainFunc string, wasm
 			// 设置默认输出目标
 			var nativeAsmFile string
 			var nativeExtFile string
+			var gccArgsFilename string
 			var isZhLang bool
 			if appbase.HasExt(input, ".wz") {
 				isZhLang = true
 				nativeAsmFile = appbase.ReplaceExt(outfile, ".wasm", ".wz.s")
 				nativeExtFile = appbase.ReplaceExt(outfile, ".wasm", ".exe")
+				gccArgsFilename = nativeAsmFile + ".gcc.args.txt"
 			} else {
 				isZhLang = false
 				nativeAsmFile = appbase.ReplaceExt(outfile, ".wasm", ".wa.s")
 				nativeExtFile = appbase.ReplaceExt(outfile, ".wasm", ".exe")
+				gccArgsFilename = nativeAsmFile + ".gcc.args.txt"
 			}
 
 			// 将 wat 翻译为本地汇编代码
@@ -556,6 +605,22 @@ func BuildApp(opt *appbase.Option, input, outfile string) (mainFunc string, wasm
 			if err != nil {
 				fmt.Printf("wat2la %s failed: %v\n", input, err)
 				os.Exit(1)
+			}
+
+			// 拼接本地的汇编代码
+			nasmCode := prog.NasmCode()
+			if len(nasmCode) > 0 {
+				nasmBytes = append(nasmBytes, nasmCode...)
+			}
+
+			// GCC 配置文件
+			gccArgcContect := prog.GccArgsCode()
+			if len(gccArgcContect) > 0 {
+				err = os.WriteFile(gccArgsFilename, []byte(gccArgcContect), 0666)
+				if err != nil {
+					fmt.Printf("write %s failed: %v\n", gccArgsFilename, err)
+					os.Exit(1)
+				}
 			}
 
 			// 保存生成的汇编语言文件
@@ -566,7 +631,15 @@ func BuildApp(opt *appbase.Option, input, outfile string) (mainFunc string, wasm
 			}
 
 			// 汇编为 elf 可执行文件
-			{
+			if len(gccArgcContect) > 0 {
+				gccCmd := exec.Command("gcc", nativeAsmFile, "-nostdlib", "-static", "-z", "noexecstack", "-o", nativeExtFile, "@"+gccArgsFilename)
+				output, err := gccCmd.CombinedOutput()
+				if err != nil {
+					fmt.Println(string(output))
+					fmt.Printf("gcc build failed: %v\n", err)
+					os.Exit(1)
+				}
+			} else {
 				opt := &abi.LinkOptions{}
 				opt.CPU = abi.LOONG64
 				opt.DRAMBase = dram.DRAM_BASE_LA64
@@ -610,12 +683,15 @@ func BuildApp(opt *appbase.Option, input, outfile string) (mainFunc string, wasm
 			// 设置默认输出目标
 			var nativeAsmFile string
 			var nativeExtFile string
+			var gccArgsFilename string
 			if appbase.HasExt(input, ".wz") {
 				nativeAsmFile = appbase.ReplaceExt(outfile, ".wasm", ".wz.s")
 				nativeExtFile = appbase.ReplaceExt(outfile, ".wasm", ".exe")
+				gccArgsFilename = nativeAsmFile + ".gcc.args.txt"
 			} else {
 				nativeAsmFile = appbase.ReplaceExt(outfile, ".wasm", ".wa.s")
 				nativeExtFile = appbase.ReplaceExt(outfile, ".wasm", ".exe")
+				gccArgsFilename = nativeAsmFile + ".gcc.args.txt"
 			}
 
 			// 将 wat 翻译为本地汇编代码
@@ -623,6 +699,22 @@ func BuildApp(opt *appbase.Option, input, outfile string) (mainFunc string, wasm
 			if err != nil {
 				fmt.Printf("wat2x64 %s failed: %v\n", input, err)
 				os.Exit(1)
+			}
+
+			// 拼接本地的汇编代码
+			nasmCode := prog.NasmCode()
+			if len(nasmCode) > 0 {
+				nasmBytes = append(nasmBytes, nasmCode...)
+			}
+
+			// GCC 配置文件
+			gccArgcContect := prog.GccArgsCode()
+			if len(gccArgcContect) > 0 {
+				err = os.WriteFile(gccArgsFilename, []byte(gccArgcContect), 0666)
+				if err != nil {
+					fmt.Printf("write %s failed: %v\n", gccArgsFilename, err)
+					os.Exit(1)
+				}
 			}
 
 			// 保存生成的汇编语言文件
@@ -639,8 +731,8 @@ func BuildApp(opt *appbase.Option, input, outfile string) (mainFunc string, wasm
 					gccEnabled = false
 				}
 
-				if gccEnabled {
-					gccCmd := exec.Command("gcc", nativeAsmFile, "-nostdlib", "-static", "-z", "noexecstack", "-o", nativeExtFile)
+				if gccEnabled || len(gccArgcContect) > 0 {
+					gccCmd := exec.Command("gcc", nativeAsmFile, "-nostdlib", "-static", "-z", "noexecstack", "-o", nativeExtFile, "@"+gccArgsFilename)
 					output, err := gccCmd.CombinedOutput()
 					if err != nil {
 						fmt.Println(string(output))
@@ -679,13 +771,14 @@ func BuildApp(opt *appbase.Option, input, outfile string) (mainFunc string, wasm
 					gccEnabled = false
 				}
 
-				if gccEnabled {
+				if gccEnabled || len(gccArgcContect) > 0 {
 					var args = []string{
 						nativeAsmFile,
 						"-nostdlib",
 						"-Wl,-e,_start",
 						"-lkernel32",
 						"-o", nativeExtFile,
+						"@" + gccArgsFilename,
 					}
 					output, err := exec.Command("gcc", args...).CombinedOutput()
 					if err != nil {

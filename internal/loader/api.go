@@ -4,6 +4,11 @@
 package loader
 
 import (
+	"bytes"
+	"fmt"
+	"sort"
+	"strings"
+
 	"wa-lang.org/wa/internal/ast"
 	"wa-lang.org/wa/internal/config"
 	"wa-lang.org/wa/internal/ssa"
@@ -94,4 +99,66 @@ func LoadProgramFile(cfg *config.Config, filename string, src interface{}) (*Pro
 // 入口 pkgPath 是包路径, 必须是 vfs.App 子包
 func LoadProgramVFS(vfs *config.PkgVFS, cfg *config.Config, pkgPath string) (*Program, error) {
 	return newLoader(cfg).LoadProgramVFS(vfs, pkgPath)
+}
+
+// gcc配置文件
+func (p *Program) GccArgsCode() []byte {
+	var pkgpathList []string
+	for k, pkg := range p.Pkgs {
+		if len(pkg.GccArgsFile) > 0 {
+			pkgpathList = append(pkgpathList, k)
+		}
+	}
+	if len(pkgpathList) == 0 {
+		return nil
+	}
+
+	sort.Strings(pkgpathList)
+
+	var buf bytes.Buffer
+	for _, pkgpath := range pkgpathList {
+		if buf.Len() > 0 {
+			fmt.Fprintln(&buf)
+		}
+		pkg := p.Pkgs[pkgpath]
+		for _, f := range pkg.GccArgsFile {
+			// 注意: gcc 配置文件不支持注释
+			if s := strings.TrimSpace(f.Content); len(s) > 0 {
+				fmt.Fprintln(&buf, s)
+				fmt.Fprintln(&buf)
+			}
+		}
+	}
+
+	return buf.Bytes()
+}
+
+// 本地汇编代码
+func (p *Program) NasmCode() []byte {
+	var pkgpathList []string
+	for k, pkg := range p.Pkgs {
+		if len(pkg.NasmFiles) > 0 {
+			pkgpathList = append(pkgpathList, k)
+		}
+	}
+	if len(pkgpathList) == 0 {
+		return nil
+	}
+
+	sort.Strings(pkgpathList)
+
+	var buf bytes.Buffer
+	for _, pkgpath := range pkgpathList {
+		if buf.Len() > 0 {
+			fmt.Fprintln(&buf)
+		}
+		pkg := p.Pkgs[pkgpath]
+		for _, f := range pkg.NasmFiles {
+			fmt.Fprintf(&buf, "# %s/%s\n", pkgpath, f.Name)
+			fmt.Fprintln(&buf, f.Code)
+			fmt.Fprintln(&buf)
+		}
+	}
+
+	return buf.Bytes()
 }

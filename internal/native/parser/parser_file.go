@@ -60,6 +60,14 @@ func (p *parser) parseFile() {
 			p.prog.Comments = append(p.prog.Comments, commentObj)
 			p.prog.Objects = append(p.prog.Objects, commentObj)
 
+		case token.GAS_X64_INTEL_SYNTAX:
+			if p.cpu == abi.X64Unix || p.cpu == abi.X64Windows {
+				p.acceptToken(token.GAS_X64_INTEL_SYNTAX)
+				p.acceptToken(token.GAS_X64_NOPREFIX)
+			} else {
+				p.errorf(p.pos, "unkonw token: %v", p.tok)
+			}
+
 		case token.GAS_EXTERN:
 			ext := &ast.Extern{Pos: p.pos, Tok: token.GAS_EXTERN}
 
