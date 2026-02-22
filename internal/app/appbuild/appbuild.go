@@ -256,17 +256,20 @@ func BuildApp(opt *appbase.Option, input, outfile string) (mainFunc string, wasm
 			// 设置默认输出目标
 			var nativeAsmFile string
 			var nativeExtFile string
+			var clangFilename string
 			var gccArgsFilename string
 			var isZhLang bool
 			if appbase.HasExt(input, ".wz") {
 				isZhLang = true
 				nativeAsmFile = appbase.ReplaceExt(outfile, ".wasm", ".wz.s")
 				nativeExtFile = appbase.ReplaceExt(outfile, ".wasm", ".exe")
+				clangFilename = nativeAsmFile + ".c"
 				gccArgsFilename = nativeAsmFile + ".gcc.args.txt"
 			} else {
 				isZhLang = false
 				nativeAsmFile = appbase.ReplaceExt(outfile, ".wasm", ".wa.s")
 				nativeExtFile = appbase.ReplaceExt(outfile, ".wasm", ".exe")
+				clangFilename = nativeAsmFile + ".c"
 				gccArgsFilename = nativeAsmFile + ".gcc.args.txt"
 			}
 
@@ -281,6 +284,16 @@ func BuildApp(opt *appbase.Option, input, outfile string) (mainFunc string, wasm
 			nasmCode := prog.NasmCode()
 			if len(nasmCode) > 0 {
 				nasmBytes = append(nasmBytes, nasmCode...)
+			}
+
+			// 本地C代码
+			clangCode := prog.ClangCode()
+			if len(clangCode) > 0 {
+				err = os.WriteFile(clangFilename, []byte(clangCode), 0666)
+				if err != nil {
+					fmt.Printf("write %s failed: %v\n", clangFilename, err)
+					os.Exit(1)
+				}
 			}
 
 			// GCC 配置文件
@@ -302,7 +315,18 @@ func BuildApp(opt *appbase.Option, input, outfile string) (mainFunc string, wasm
 
 			// 汇编为 elf 可执行文件
 			if len(gccArgcContect) > 0 {
-				gccCmd := exec.Command("gcc", nativeAsmFile, "-nostdlib", "-static", "-z", "noexecstack", "-o", nativeExtFile, "@"+gccArgsFilename)
+				args := []string{
+					nativeAsmFile,
+					"-nostdlib",
+					"-static",
+					"-z", "noexecstack",
+					"-o", nativeExtFile,
+					"@" + gccArgsFilename,
+				}
+				if len(clangCode) > 0 {
+					args = append(args, clangFilename)
+				}
+				gccCmd := exec.Command("gcc", args...)
 				output, err := gccCmd.CombinedOutput()
 				if err != nil {
 					fmt.Println(string(output))
@@ -353,14 +377,17 @@ func BuildApp(opt *appbase.Option, input, outfile string) (mainFunc string, wasm
 			// 设置默认输出目标
 			var nativeAsmFile string
 			var nativeExtFile string
+			var clangFilename string
 			var gccArgsFilename string
 			if appbase.HasExt(input, ".wz") {
 				nativeAsmFile = appbase.ReplaceExt(outfile, ".wasm", ".wz.s")
 				nativeExtFile = appbase.ReplaceExt(outfile, ".wasm", ".exe")
+				clangFilename = nativeAsmFile + ".c"
 				gccArgsFilename = nativeAsmFile + ".gcc.args.txt"
 			} else {
 				nativeAsmFile = appbase.ReplaceExt(outfile, ".wasm", ".wa.s")
 				nativeExtFile = appbase.ReplaceExt(outfile, ".wasm", ".exe")
+				clangFilename = nativeAsmFile + ".c"
 				gccArgsFilename = nativeAsmFile + ".gcc.args.txt"
 			}
 
@@ -369,6 +396,16 @@ func BuildApp(opt *appbase.Option, input, outfile string) (mainFunc string, wasm
 			if err != nil {
 				fmt.Printf("wat2x64 %s failed: %v\n", input, err)
 				os.Exit(1)
+			}
+
+			// 本地C代码
+			clangCode := prog.ClangCode()
+			if len(clangCode) > 0 {
+				err = os.WriteFile(clangFilename, []byte(clangCode), 0666)
+				if err != nil {
+					fmt.Printf("write %s failed: %v\n", clangFilename, err)
+					os.Exit(1)
+				}
 			}
 
 			// 拼接本地的汇编代码
@@ -402,7 +439,18 @@ func BuildApp(opt *appbase.Option, input, outfile string) (mainFunc string, wasm
 				}
 
 				if gccEnabled || len(gccArgcContect) > 0 {
-					gccCmd := exec.Command("gcc", nativeAsmFile, "-nostdlib", "-static", "-z", "noexecstack", "-o", nativeExtFile)
+					args := []string{
+						nativeAsmFile,
+						"-nostdlib",
+						"-static",
+						"-z", "noexecstack",
+						"-o", nativeExtFile,
+						"@" + gccArgsFilename,
+					}
+					if len(clangCode) > 0 {
+						args = append(args, clangFilename)
+					}
+					gccCmd := exec.Command("gcc", args...)
 					output, err := gccCmd.CombinedOutput()
 					if err != nil {
 						fmt.Println(string(output))
@@ -586,17 +634,20 @@ func BuildApp(opt *appbase.Option, input, outfile string) (mainFunc string, wasm
 			// 设置默认输出目标
 			var nativeAsmFile string
 			var nativeExtFile string
+			var clangFilename string
 			var gccArgsFilename string
 			var isZhLang bool
 			if appbase.HasExt(input, ".wz") {
 				isZhLang = true
 				nativeAsmFile = appbase.ReplaceExt(outfile, ".wasm", ".wz.s")
 				nativeExtFile = appbase.ReplaceExt(outfile, ".wasm", ".exe")
+				clangFilename = nativeAsmFile + ".c"
 				gccArgsFilename = nativeAsmFile + ".gcc.args.txt"
 			} else {
 				isZhLang = false
 				nativeAsmFile = appbase.ReplaceExt(outfile, ".wasm", ".wa.s")
 				nativeExtFile = appbase.ReplaceExt(outfile, ".wasm", ".exe")
+				clangFilename = nativeAsmFile + ".c"
 				gccArgsFilename = nativeAsmFile + ".gcc.args.txt"
 			}
 
@@ -611,6 +662,16 @@ func BuildApp(opt *appbase.Option, input, outfile string) (mainFunc string, wasm
 			nasmCode := prog.NasmCode()
 			if len(nasmCode) > 0 {
 				nasmBytes = append(nasmBytes, nasmCode...)
+			}
+
+			// 本地C代码
+			clangCode := prog.ClangCode()
+			if len(clangCode) > 0 {
+				err = os.WriteFile(clangFilename, []byte(clangCode), 0666)
+				if err != nil {
+					fmt.Printf("write %s failed: %v\n", clangFilename, err)
+					os.Exit(1)
+				}
 			}
 
 			// GCC 配置文件
@@ -632,7 +693,18 @@ func BuildApp(opt *appbase.Option, input, outfile string) (mainFunc string, wasm
 
 			// 汇编为 elf 可执行文件
 			if len(gccArgcContect) > 0 {
-				gccCmd := exec.Command("gcc", nativeAsmFile, "-nostdlib", "-static", "-z", "noexecstack", "-o", nativeExtFile, "@"+gccArgsFilename)
+				args := []string{
+					nativeAsmFile,
+					"-nostdlib",
+					"-static",
+					"-z", "noexecstack",
+					"-o", nativeExtFile,
+					"@" + gccArgsFilename,
+				}
+				if len(clangCode) > 0 {
+					args = append(args, clangFilename)
+				}
+				gccCmd := exec.Command("gcc", args...)
 				output, err := gccCmd.CombinedOutput()
 				if err != nil {
 					fmt.Println(string(output))
@@ -683,14 +755,17 @@ func BuildApp(opt *appbase.Option, input, outfile string) (mainFunc string, wasm
 			// 设置默认输出目标
 			var nativeAsmFile string
 			var nativeExtFile string
+			var clangFilename string
 			var gccArgsFilename string
 			if appbase.HasExt(input, ".wz") {
 				nativeAsmFile = appbase.ReplaceExt(outfile, ".wasm", ".wz.s")
 				nativeExtFile = appbase.ReplaceExt(outfile, ".wasm", ".exe")
+				clangFilename = nativeAsmFile + ".c"
 				gccArgsFilename = nativeAsmFile + ".gcc.args.txt"
 			} else {
 				nativeAsmFile = appbase.ReplaceExt(outfile, ".wasm", ".wa.s")
 				nativeExtFile = appbase.ReplaceExt(outfile, ".wasm", ".exe")
+				clangFilename = nativeAsmFile + ".c"
 				gccArgsFilename = nativeAsmFile + ".gcc.args.txt"
 			}
 
@@ -705,6 +780,16 @@ func BuildApp(opt *appbase.Option, input, outfile string) (mainFunc string, wasm
 			nasmCode := prog.NasmCode()
 			if len(nasmCode) > 0 {
 				nasmBytes = append(nasmBytes, nasmCode...)
+			}
+
+			// 本地C代码
+			clangCode := prog.ClangCode()
+			if len(clangCode) > 0 {
+				err = os.WriteFile(clangFilename, []byte(clangCode), 0666)
+				if err != nil {
+					fmt.Printf("write %s failed: %v\n", clangFilename, err)
+					os.Exit(1)
+				}
 			}
 
 			// GCC 配置文件
@@ -732,7 +817,19 @@ func BuildApp(opt *appbase.Option, input, outfile string) (mainFunc string, wasm
 				}
 
 				if gccEnabled || len(gccArgcContect) > 0 {
-					gccCmd := exec.Command("gcc", nativeAsmFile, "-nostdlib", "-static", "-z", "noexecstack", "-o", nativeExtFile, "@"+gccArgsFilename)
+					args := []string{
+						nativeAsmFile,
+						"-nostdlib",
+						"-static",
+						"-z",
+						"noexecstack",
+						"-o", nativeExtFile,
+						"@" + gccArgsFilename,
+					}
+					if len(clangCode) > 0 {
+						args = append(args, clangFilename)
+					}
+					gccCmd := exec.Command("gcc", args...)
 					output, err := gccCmd.CombinedOutput()
 					if err != nil {
 						fmt.Println(string(output))

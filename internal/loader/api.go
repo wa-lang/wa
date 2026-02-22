@@ -35,6 +35,7 @@ type Package struct {
 	Info         *types.Info    // 包的类型检查信息
 	Files        []*ast.File    // AST语法树
 	NasmFiles    []*NasmFile    // 本地汇编代码(*.wa.s,*.wz.s)
+	ClangFiles   []*ClangFile   // 本地C代码(*.wa.c,*.wz.c)
 	WatFiles     []*WatFile     // Wat汇编代码
 	WImportFiles []*WhostFile   // 宿主代码文件
 	GccArgsFile  []*GccArgsFile // GCC参数文件(强制切换gcc编译汇编)
@@ -61,6 +62,12 @@ type TestFuncInfo struct {
 
 // Wat汇编代码文件
 type WatFile struct {
+	Name string // 文件名
+	Code string // 汇编代码
+}
+
+// 本地C代码(*.wa.c,*.wz.c)
+type ClangFile struct {
 	Name string // 文件名
 	Code string // 汇编代码
 }
@@ -155,6 +162,36 @@ func (p *Program) NasmCode() []byte {
 		pkg := p.Pkgs[pkgpath]
 		for _, f := range pkg.NasmFiles {
 			fmt.Fprintf(&buf, "# %s/%s\n", pkgpath, f.Name)
+			fmt.Fprintln(&buf, f.Code)
+			fmt.Fprintln(&buf)
+		}
+	}
+
+	return buf.Bytes()
+}
+
+// 本地汇编代码
+func (p *Program) ClangCode() []byte {
+	var pkgpathList []string
+	for k, pkg := range p.Pkgs {
+		if len(pkg.ClangFiles) > 0 {
+			pkgpathList = append(pkgpathList, k)
+		}
+	}
+	if len(pkgpathList) == 0 {
+		return nil
+	}
+
+	sort.Strings(pkgpathList)
+
+	var buf bytes.Buffer
+	for _, pkgpath := range pkgpathList {
+		if buf.Len() > 0 {
+			fmt.Fprintln(&buf)
+		}
+		pkg := p.Pkgs[pkgpath]
+		for _, f := range pkg.ClangFiles {
+			fmt.Fprintf(&buf, "// %s/%s\n", pkgpath, f.Name)
 			fmt.Fprintln(&buf, f.Code)
 			fmt.Fprintln(&buf)
 		}
