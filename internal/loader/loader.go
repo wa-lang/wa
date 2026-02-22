@@ -217,7 +217,20 @@ func (p *_Loader) Import(pkgpath string) (*types.Package, error) {
 	var filenames []string
 
 	// 解析当前包的汇编代码
-	pkg.WsFiles, err = p.ParseDir_wsFiles(pkgpath)
+	pkg.NasmFiles, err = p.ParseDir_nasmFiles(pkgpath)
+	if err != nil {
+		logger.Tracef(&config.EnableTrace_loader, "err: %v", err)
+		return nil, err
+	}
+	pkg.WatFiles, err = p.ParseDir_watFiles(pkgpath)
+	if err != nil {
+		logger.Tracef(&config.EnableTrace_loader, "err: %v", err)
+		return nil, err
+	}
+
+	// 提取本地汇编的gcc参数
+	// 配置该文件时会强制用gcc编译
+	pkg.GccArgsFile, err = p.ParseDir_gccArgsFiles(pkgpath)
 	if err != nil {
 		logger.Tracef(&config.EnableTrace_loader, "err: %v", err)
 		return nil, err
@@ -514,7 +527,66 @@ func (p *_Loader) parseExampleOutputComment(f *ast.File, fn *ast.FuncDecl) (outp
 	return "", false
 }
 
-func (p *_Loader) ParseDir_wsFiles(pkgpath string) (files []*WsFile, err error) {
+func (p *_Loader) ParseDir_nasmFiles(pkgpath string) (files []*NasmFile, err error) {
+	logger.Tracef(&config.EnableTrace_loader, "pkgpath: %v", pkgpath)
+
+	if p.cfg.WaBackend == "" {
+		panic("unreachable")
+	}
+
+	var (
+		extNames          = []string{".wa.s", ".wz.s"}
+		unitTestMode bool = false
+
+		filenames []string
+		datas     [][]byte
+	)
+
+	switch {
+	case p.isStdPkg(pkgpath):
+		logger.Tracef(&config.EnableTrace_loader, "isStdPkg; pkgpath: %v", pkgpath)
+
+		filenames, datas, err = p.readDirFiles(p.vfs.Std, pkgpath, unitTestMode, extNames)
+		if err != nil {
+			logger.Tracef(&config.EnableTrace_loader, "err: %v", err)
+			return nil, err
+		}
+	case p.isSelfPkg(pkgpath):
+		relpkg := strings.TrimPrefix(pkgpath, p.prog.Manifest.Pkg.Pkgpath)
+		if relpkg == "" {
+			relpkg = "."
+		}
+
+		logger.Tracef(&config.EnableTrace_loader, "isSelfPkg; pkgpath=%v, relpkg=%v", pkgpath, relpkg)
+
+		filenames, datas, err = p.readDirFiles(p.vfs.App, relpkg, unitTestMode, extNames)
+		if err != nil {
+			logger.Tracef(&config.EnableTrace_loader, "err: %v", err)
+			return nil, err
+		}
+
+		logger.Trace(&config.EnableTrace_loader, "isSelfPkg; return ok")
+
+	default: // vendor
+		logger.Tracef(&config.EnableTrace_loader, "vendorPkg; pkgpath: %v", pkgpath)
+
+		filenames, datas, err = p.readDirFiles(p.vfs.Vendor, pkgpath, unitTestMode, extNames)
+		if err != nil {
+			logger.Tracef(&config.EnableTrace_loader, "err: %v", err)
+			return nil, err
+		}
+	}
+
+	for i := 0; i < len(filenames); i++ {
+		files = append(files, &NasmFile{
+			Name: filenames[i],
+			Code: string(datas[i]),
+		})
+	}
+	return
+}
+
+func (p *_Loader) ParseDir_watFiles(pkgpath string) (files []*WatFile, err error) {
 	logger.Tracef(&config.EnableTrace_loader, "pkgpath: %v", pkgpath)
 
 	if p.cfg.WaBackend == "" {
@@ -565,9 +637,68 @@ func (p *_Loader) ParseDir_wsFiles(pkgpath string) (files []*WsFile, err error) 
 	}
 
 	for i := 0; i < len(filenames); i++ {
-		files = append(files, &WsFile{
+		files = append(files, &WatFile{
 			Name: filenames[i],
 			Code: string(datas[i]),
+		})
+	}
+	return
+}
+
+func (p *_Loader) ParseDir_gccArgsFiles(pkgpath string) (files []*GccArgsFile, err error) {
+	logger.Tracef(&config.EnableTrace_loader, "pkgpath: %v", pkgpath)
+
+	if p.cfg.WaBackend == "" {
+		panic("unreachable")
+	}
+
+	var (
+		extNames          = []string{".gcc.txt"}
+		unitTestMode bool = false
+
+		filenames []string
+		datas     [][]byte
+	)
+
+	switch {
+	case p.isStdPkg(pkgpath):
+		logger.Tracef(&config.EnableTrace_loader, "isStdPkg; pkgpath: %v", pkgpath)
+
+		filenames, datas, err = p.readDirFiles(p.vfs.Std, pkgpath, unitTestMode, extNames)
+		if err != nil {
+			logger.Tracef(&config.EnableTrace_loader, "err: %v", err)
+			return nil, err
+		}
+	case p.isSelfPkg(pkgpath):
+		relpkg := strings.TrimPrefix(pkgpath, p.prog.Manifest.Pkg.Pkgpath)
+		if relpkg == "" {
+			relpkg = "."
+		}
+
+		logger.Tracef(&config.EnableTrace_loader, "isSelfPkg; pkgpath=%v, relpkg=%v", pkgpath, relpkg)
+
+		filenames, datas, err = p.readDirFiles(p.vfs.App, relpkg, unitTestMode, extNames)
+		if err != nil {
+			logger.Tracef(&config.EnableTrace_loader, "err: %v", err)
+			return nil, err
+		}
+
+		logger.Trace(&config.EnableTrace_loader, "isSelfPkg; return ok")
+
+	default: // vendor
+		logger.Tracef(&config.EnableTrace_loader, "vendorPkg; pkgpath: %v", pkgpath)
+
+		filenames, datas, err = p.readDirFiles(p.vfs.Vendor, pkgpath, unitTestMode, extNames)
+		if err != nil {
+			logger.Tracef(&config.EnableTrace_loader, "err: %v", err)
+			return nil, err
+		}
+	}
+
+	for i := 0; i < len(filenames); i++ {
+		files = append(files, &GccArgsFile{
+			Name:    filenames[i],
+			Content: string(datas[i]),
 		})
 	}
 	return

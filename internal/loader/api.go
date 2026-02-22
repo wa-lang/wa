@@ -29,8 +29,10 @@ type Package struct {
 	Pkg          *types.Package // 类型检查后的包
 	Info         *types.Info    // 包的类型检查信息
 	Files        []*ast.File    // AST语法树
-	WsFiles      []*WsFile      // 汇编代码
+	NasmFiles    []*NasmFile    // 本地汇编代码(*.wa.s,*.wz.s)
+	WatFiles     []*WatFile     // Wat汇编代码
 	WImportFiles []*WhostFile   // 宿主代码文件
+	GccArgsFile  []*GccArgsFile // GCC参数文件(强制切换gcc编译汇编)
 
 	SSAPkg   *ssa.Package
 	TestInfo *TestInfo
@@ -52,8 +54,14 @@ type TestFuncInfo struct {
 	OutputPanic bool      // 异常信息
 }
 
-// 汇编代码文件
-type WsFile struct {
+// Wat汇编代码文件
+type WatFile struct {
+	Name string // 文件名
+	Code string // 汇编代码
+}
+
+// 本地汇编代码(*.wa.s,*.wz.s)
+type NasmFile struct {
 	Name string // 文件名
 	Code string // 汇编代码
 }
@@ -62,6 +70,12 @@ type WsFile struct {
 type WhostFile struct {
 	Name string // 文件名
 	Code string // 宿主代码
+}
+
+// GCC的命令行参数
+type GccArgsFile struct {
+	Name    string // 文件名
+	Content string // 一行一个参数
 }
 
 // 加载程序

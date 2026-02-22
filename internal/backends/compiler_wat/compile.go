@@ -41,7 +41,7 @@ func (p *Compiler) Compile(prog *loader.Program) (output string, err error) {
 	p.module.AddGlobal("$wa.runtime.closure_data", "", p.module.GenValueType_Ptr(p.module.VOID), false, nil)
 	wir.SetCurrentModule(p.module)
 
-	p.CompileWsFiles(prog)
+	p.CompileWatFiles(prog)
 
 	p.tLib = newTypeLib(p.module, prog)
 
@@ -122,7 +122,7 @@ func (p *Compiler) Compile(prog *loader.Program) (output string, err error) {
 	return p.module.ToWatModule().String(), nil
 }
 
-func (p *Compiler) CompileWsFiles(prog *loader.Program) {
+func (p *Compiler) CompileWatFiles(prog *loader.Program) {
 	var sb strings.Builder
 
 	sb.WriteString(wasrc.GetBaseWsCode(config.WaBackend_wat, p.prog.Cfg.TargetOS))
@@ -138,7 +138,7 @@ func (p *Compiler) CompileWsFiles(prog *loader.Program) {
 
 	for _, pkgpath := range pkgpathList {
 		pkg := prog.Pkgs[pkgpath]
-		if len(pkg.WsFiles) == 0 {
+		if len(pkg.WatFiles) == 0 {
 			continue
 		}
 
@@ -148,7 +148,7 @@ func (p *Compiler) CompileWsFiles(prog *loader.Program) {
 			sb.WriteString(lineCommentSep)
 			sb.WriteString("\n")
 
-			for _, sf := range pkg.WsFiles {
+			for _, sf := range pkg.WatFiles {
 				sb.WriteString(";; file: " + sf.Name + "\n")
 				sb.WriteString("\n")
 
