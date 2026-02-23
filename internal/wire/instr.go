@@ -37,30 +37,31 @@ const (
 )
 
 /**************************************
-Var: Var 指令，定义一个变量
+Alloc: Alloc 指令，定义一个变量，实现了 Expr、Var 接口
 **************************************/
 
-type Var struct {
+type Alloc struct {
 	aStmt
 	kind   VarKind
 	name   string
 	dtype  Type
 	rtype  Type
 	object interface{} // 与该值关联的 AST 结点。对凹语言前端，应为 types.Object
+	init   Expr        //初始值，为 nil 表示 0 值
 
 	tank *tank
 }
 
-func (i *Var) Name() string { return i.name }
-func (i *Var) Type() Type {
+func (i *Alloc) Name() string { return i.name }
+func (i *Alloc) Type() Type {
 	if i.kind == Register {
 		return i.dtype
 	} else {
 		return i.rtype
 	}
 }
-func (i *Var) retained() bool { return false }
-func (i *Var) String() string {
+func (i *Alloc) retained() bool { return false }
+func (i *Alloc) String() string {
 	s := ""
 	switch i.kind {
 	case Register:
@@ -76,23 +77,36 @@ func (i *Var) String() string {
 		s += " --- "
 		s += i.tank.String()
 	}
+
+	if i.init != nil {
+		s += " = " + i.init.Name()
+	}
 	return s
 }
-func (i *Var) DataType() Type { return i.dtype }
-func (i *Var) RefType() Type  { return i.rtype }
+func (i *Alloc) Kind() VarKind  { return i.kind }
+func (i *Alloc) DataType() Type { return i.dtype }
+func (i *Alloc) RefType() Type  { return i.rtype }
 
-//func (i *Var) Object() interface{} { return i.object }
+//func (i *Alloc) Object() interface{} { return i.object }
+
+func (b *Block) NewAlloc(name string, typ Type, pos int, obj interface{}, init Expr) *Alloc {
+	v := &Alloc{
+		kind:   Register,
+		name:   name,
+		dtype:  typ,
+		rtype:  b.types.GenRef(typ),
+		init:   init,
+		object: obj,
+	}
+	v.Stringer = v
+	v.pos = pos
+
+	return v
+}
 
 // AddLocal 在 Block 中分配一个局部变量，初始时位于 Register
-func (b *Block) AddLocal(name string, typ Type, pos int, obj interface{}) *Var {
-	v := &Var{}
-	v.Stringer = v
-	v.name = name
-	v.dtype = typ
-	v.rtype = b.types.GenRef(typ)
-
-	v.pos = pos
-	v.object = obj
+func (b *Block) AddLocal(name string, typ Type, pos int, obj interface{}, init Expr) *Alloc {
+	v := b.NewAlloc(name, typ, pos, obj, init)
 	if obj != nil {
 		b.objects[obj] = v
 	}
@@ -103,7 +117,7 @@ func (b *Block) AddLocal(name string, typ Type, pos int, obj interface{}) *Var {
 
 /**************************************
 Get: Get 指令，获取变量 Loc 的值，Get 实现了 Expr 接口
-  - Loc 应为 *Var，或类型为 Ref、Ptr 的 Expr
+  - Loc 应为类型为 Var、Ref、Ptr 的 Expr
 **************************************/
 
 type Get struct {
@@ -113,7 +127,7 @@ type Get struct {
 
 func (i *Get) Name() string { return i.String() }
 func (i *Get) Type() Type {
-	if v, ok := i.Loc.(*Var); ok {
+	if v, ok := i.Loc.(Var); ok {
 		return v.DataType()
 	}
 
@@ -130,9 +144,9 @@ func (i *Get) Type() Type {
 }
 func (i *Get) retained() bool { return false }
 func (i *Get) String() string {
-	if v, ok := i.Loc.(*Var); ok {
-		if v.kind == Register {
-			return v.name
+	if v, ok := i.Loc.(Var); ok {
+		if v.Kind() == Register {
+			return v.Name()
 		}
 	}
 
@@ -151,7 +165,7 @@ func NewGet(loc Expr, pos int) *Get {
 /**************************************
 Set: Set 指令，将 Val 存储到 Loc 指定的位置，Set 支持多赋值，该指令应触发 RC-1 动作
   - Set 支持多赋值
-  - Loc 中的元素应为 *Var，或类型为 Ref、Ptr 的 Expr
+  - Lh 应为类型为 Va、rRef、Ptr 的 Expr
   - Rh 可能为元组（Tuple），此时 Rhs 的长度应为 1，Lhs 的长度应为元组长度
   - 向 nil 的 Lh 赋值是合法的，这等价于向匿名变量 _ 赋值，此时若 Rh 已 retain，应触发 release
 **************************************/
@@ -176,8 +190,8 @@ func (i *Set) String() string {
 		}
 
 		loc_name := "*(" + lh.Name() + ")"
-		if v, ok := lh.(*Var); ok {
-			if v.kind == Register {
+		if v, ok := lh.(Var); ok {
+			if v.Kind() == Register {
 				loc_name = lh.Name()
 			}
 		}
@@ -195,7 +209,11 @@ func (i *Set) String() string {
 	return sb.String()
 }
 
-func NewSet(lhs []Expr, rhs []Expr, pos int) *Set {
+func NewSet(lhs Expr, rhs Expr, pos int) *Set {
+	return NewSetN([]Expr{lhs}, []Expr{rhs}, pos)
+}
+
+func NewSetN(lhs []Expr, rhs []Expr, pos int) *Set {
 	v := &Set{}
 	v.Stringer = v
 	v.Lhs = lhs
@@ -206,14 +224,14 @@ func NewSet(lhs []Expr, rhs []Expr, pos int) *Set {
 
 // 在 Block 中添加一条 Set 指令
 func (b *Block) EmitSet(lhs Expr, rhs Expr, pos int) *Set {
-	v := NewSet([]Expr{lhs}, []Expr{rhs}, pos)
+	v := NewSet(lhs, rhs, pos)
 	b.emit(v)
 	return v
 }
 
 // Block.EmitSet 的多重赋值版
 func (b *Block) EmitSetN(lhs []Expr, rhs []Expr, pos int) *Set {
-	v := NewSet(lhs, rhs, pos)
+	v := NewSetN(lhs, rhs, pos)
 	b.emit(v)
 	return v
 }
@@ -228,7 +246,7 @@ Assign: Assign 指令，将 Rhs 赋值给 Lhs
 
 type Assign struct {
 	aStmt
-	Lhs []*Var
+	Lhs []Var
 	Rhs []Expr
 }
 
@@ -259,7 +277,7 @@ func (i *Assign) String() string {
 	return sb.String()
 }
 
-func NewAssign(lhs []*Var, rhs []Expr, pos int) *Assign {
+func NewAssign(lhs []Var, rhs []Expr, pos int) *Assign {
 	v := &Assign{}
 	v.Stringer = v
 	v.Lhs = lhs
@@ -269,14 +287,14 @@ func NewAssign(lhs []*Var, rhs []Expr, pos int) *Assign {
 }
 
 // 在 Block 中添加一条 Assign 指令
-func (b *Block) EmitAssign(lhs *Var, rhs Expr, pos int) *Assign {
-	v := NewAssign([]*Var{lhs}, []Expr{rhs}, pos)
+func (b *Block) EmitAssign(lhs Var, rhs Expr, pos int) *Assign {
+	v := NewAssign([]Var{lhs}, []Expr{rhs}, pos)
 	b.emit(v)
 	return v
 }
 
 // EmitAssign 的多重赋值版
-func (b *Block) EmitAssignN(lhs []*Var, rhs []Expr, pos int) *Assign {
+func (b *Block) EmitAssignN(lhs []Var, rhs []Expr, pos int) *Assign {
 	v := NewAssign(lhs, rhs, pos)
 	b.emit(v)
 	return v
@@ -493,6 +511,39 @@ func NewBiop(x, y Expr, op OpCode, pos int) *Biop {
 }
 
 /**************************************
+Combo: 组合指令，将多个指令组合成一个指令，实现了 Expr 接口，返回 Result
+**************************************/
+
+type Combo struct {
+	aStmt
+	Stmts  []Stmt
+	Result Expr
+}
+
+func (i *Combo) Name() string   { return i.String() }
+func (i *Combo) Type() Type     { return i.Result.Type() }
+func (i *Combo) retained() bool { return i.Result.retained() }
+
+func (i *Combo) String() string {
+	var sb strings.Builder
+	sb.WriteRune('{')
+	for _, stmt := range i.Stmts {
+		sb.WriteString(stmt.String())
+		sb.WriteString("; ")
+	}
+	sb.WriteString(i.Result.Name())
+	sb.WriteRune('}')
+	return sb.String()
+}
+
+func NewCombo(stmts []Stmt, result Expr, pos int) *Combo {
+	v := &Combo{Stmts: stmts, Result: result}
+	v.Stringer = v
+	v.pos = pos
+	return v
+}
+
+/**************************************
 If: 条件指令
 **************************************/
 
@@ -615,7 +666,7 @@ Drop: Drop 指令，丢弃 Var，丢弃后它所占用的虚拟寄存器可被�
 
 type Drop struct {
 	aStmt
-	X *Var
+	X *Alloc
 }
 
 func (i *Drop) String() string {
@@ -627,7 +678,7 @@ func (i *Drop) String() string {
 }
 
 // 生成一条 Drop 指令
-func NewDrop(x *Var, pos int) *Drop {
+func NewDrop(x *Alloc, pos int) *Drop {
 	v := &Drop{X: x}
 	v.Stringer = v
 	v.pos = pos
@@ -638,27 +689,27 @@ func NewDrop(x *Var, pos int) *Drop {
 DupRef: DupRef 指令，引用复制，DupRef 指令实现了 Expr，返回 X
 **************************************/
 
-type DupRef struct {
-	aStmt
-	X   Expr
-	Imv *Var
-}
-
-func (i *DupRef) Name() string   { return i.String() }
-func (i *DupRef) Type() Type     { return i.X.Type() }
-func (i *DupRef) retained() bool { panic("") }
-func (i *DupRef) String() string { return fmt.Sprintf("dupref(%s, %s)", i.X.Name(), i.Imv.Name()) }
-
-// 生成一条 DupRef 指令
-func NewDupRef(x Expr, imvName string, pos int) *DupRef {
-	v := &DupRef{X: x}
-	v.Stringer = v
-	v.pos = pos
-
-	imv := &Var{name: imvName}
-	imv.Stringer = imv
-	imv.dtype = x.Type()
-	v.Imv = imv
-
-	return v
-}
+//type DupRef struct {
+//	aStmt
+//	X   Expr
+//	Imv *Var
+//}
+//
+//func (i *DupRef) Name() string   { return i.String() }
+//func (i *DupRef) Type() Type     { return i.X.Type() }
+//func (i *DupRef) retained() bool { panic("") }
+//func (i *DupRef) String() string { return fmt.Sprintf("dupref(%s, %s)", i.X.Name(), i.Imv.Name()) }
+//
+//// 生成一条 DupRef 指令
+//func NewDupRef(x Expr, imvName string, pos int) *DupRef {
+//	v := &DupRef{X: x}
+//	v.Stringer = v
+//	v.pos = pos
+//
+//	imv := &Var{name: imvName}
+//	imv.Stringer = imv
+//	imv.dtype = x.Type()
+//	v.Imv = imv
+//
+//	return v
+//}

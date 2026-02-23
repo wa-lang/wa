@@ -30,7 +30,7 @@ type Scope interface {
 	ParentScope() Scope
 
 	// 递归向上查找关联对象为 obj 的 变量位置，对凹语言前端，obj 应为 types.Object
-	Lookup(obj interface{}, level VarKind) *Var
+	Lookup(obj interface{}, level VarKind) *Alloc
 
 	// 格式化输出
 	Format(tab string, sb *strings.Builder)
@@ -143,6 +143,16 @@ type Expr interface {
 }
 
 /**************************************
+Var:
+**************************************/
+type Var interface {
+	Expr
+
+	Kind() VarKind
+	DataType() Type
+}
+
+/**************************************
 Const: 常量，满足 Expr 接口
 **************************************/
 type Const struct {
@@ -200,7 +210,7 @@ func (m *Method) Equal(d *Method) bool {
 FreeVar: 闭包捕获的外部变量
 **************************************/
 type FreeVar struct {
-	outer *Var // 被捕获的闭包变量
+	outer *Alloc // 被捕获的闭包变量
 }
 
 func (p *FreeVar) Name() string        { return p.outer.Name() }

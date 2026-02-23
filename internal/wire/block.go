@@ -26,20 +26,20 @@ type Block struct {
 	Stmts []Stmt // 该块所含的指令
 
 	scope   Scope
-	objects map[interface{}]*Var // AST 结点 -> 块内变量
-	types   *Types               // 该函数所属 Module 的类型库，切勿手动修改
+	objects map[interface{}]*Alloc // AST 结点 -> 块内变量
+	types   *Types                 // 该函数所属 Module 的类型库，切勿手动修改
 
 	imvCount int
 }
 
 // 初始化 Block
 func (b *Block) init() {
-	b.objects = make(map[interface{}]*Var)
+	b.objects = make(map[interface{}]*Alloc)
 }
 
 // Scope 接口相关
 func (b *Block) ScopeKind() ScopeKind { return ScopeKindBlock }
-func (b *Block) Lookup(obj interface{}, level VarKind) *Var {
+func (b *Block) Lookup(obj interface{}, level VarKind) *Alloc {
 	if v, ok := b.objects[obj]; ok {
 		if level > v.kind {
 			v.kind = level
@@ -99,7 +99,7 @@ func (b *Block) newBlock(label string, pos int) *Block {
 	block.Stringer = block
 	block.Label = label
 	block.pos = pos
-	block.objects = make(map[interface{}]*Var)
+	block.objects = make(map[interface{}]*Alloc)
 	block.types = b.types
 
 	block.scope = b
@@ -177,7 +177,7 @@ type usageRange struct {
 }
 
 // varUsageRange 分析指定变量在该块中的使用情况，变量声明本身不属于被使用
-func (b *Block) varUsageRange(v *Var) usageRange {
+func (b *Block) varUsageRange(v *Alloc) usageRange {
 	info := usageRange{
 		first: -1,
 		last:  -1,
@@ -197,7 +197,7 @@ func (b *Block) varUsageRange(v *Var) usageRange {
 }
 
 // varUsedInStmt 检查语句是否使用了指定的变量
-func varUsedInStmt(stmt Stmt, v *Var) bool {
+func varUsedInStmt(stmt Stmt, v *Alloc) bool {
 	switch s := stmt.(type) {
 	case *Block:
 		for _, ss := range s.Stmts {
@@ -206,8 +206,8 @@ func varUsedInStmt(stmt Stmt, v *Var) bool {
 			}
 		}
 
-	case *Var:
-		return false
+	case *Alloc:
+		return exprContainsVar(s.init, v)
 
 	case *Get:
 		return exprContainsVar(s.Loc, v)
@@ -292,7 +292,7 @@ func varUsedInStmt(stmt Stmt, v *Var) bool {
 }
 
 // exprContainsVar 检查表达式是否包含指定的变量
-func exprContainsVar(expr Expr, v *Var) bool {
+func exprContainsVar(expr Expr, v *Alloc) bool {
 	if expr == nil {
 		return false
 	}
@@ -301,8 +301,8 @@ func exprContainsVar(expr Expr, v *Var) bool {
 	case *Const:
 		return false
 
-	case *Var:
-		return e == v
+	case *Alloc:
+		return e == v || exprContainsVar(e.init, v)
 
 	case *Get:
 		return exprContainsVar(e.Loc, v)
@@ -312,6 +312,14 @@ func exprContainsVar(expr Expr, v *Var) bool {
 
 	case *Biop:
 		return exprContainsVar(e.X, v) || exprContainsVar(e.Y, v)
+
+	case *Combo:
+		for _, stmt := range e.Stmts {
+			if varUsedInStmt(stmt, v) {
+				return true
+			}
+		}
+		return exprContainsVar(e.Result, v)
 
 	case *Call:
 		var call_common *CallCommon
@@ -347,11 +355,11 @@ func exprContainsVar(expr Expr, v *Var) bool {
 	case *Retain:
 		return exprContainsVar(e.X, v)
 
-	case *DupRef:
-		return exprContainsVar(e.X, v)
+	//case *DupRef:
+	//	return exprContainsVar(e.X, v)
 
 	default:
-		panic(fmt.Sprintf("Todo: %s", e.Name()))
+		panic(fmt.Sprintf("Todo: %t %s", e, e.Name()))
 	}
 	return false
 }

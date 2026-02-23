@@ -22,9 +22,9 @@ type Function struct {
 	InternalName string // 函数的内部名称(含包路径)，是其身份标识，应进行名字修饰
 	ExternalName string // 函数的导出名称，非导出函数应为 nil
 
-	params  []*Var // 参数列表
-	results []*Var // 返回值列表
-	Body    *Block // 函数体，为 nil 表明该函数为外部导入
+	params  []*Alloc // 参数列表
+	results []*Alloc // 返回值列表
+	Body    *Block   // 函数体，为 nil 表明该函数为外部导入
 
 	scope Scope  // 匿名函数的父域为 Block，全局（非匿名）函数的父域为 Module
 	types *Types // 该函数所属 Module 的类型库，切勿手动修改
@@ -40,7 +40,7 @@ type Function struct {
 // Scope 接口相关
 func (f *Function) ScopeKind() ScopeKind { return ScopeKindFunc }
 func (f *Function) ParentScope() Scope   { return f.scope }
-func (f *Function) Lookup(obj interface{}, level VarKind) *Var {
+func (f *Function) Lookup(obj interface{}, level VarKind) *Alloc {
 	for _, p := range f.params {
 		if p.object == obj {
 			if level > p.kind {
@@ -95,30 +95,32 @@ func (f *Function) Format(tab string, sb *strings.Builder) {
 }
 
 // 添加函数参数
-func (f *Function) AddParam(name string, typ Type, pos int, obj interface{}) *Var {
-	v := &Var{}
-	v.Stringer = v
-	v.name = name
-	v.dtype = typ
-	v.rtype = f.types.GenRef(typ)
-
-	v.pos = pos
-	v.object = obj
+func (f *Function) AddParam(name string, typ Type, pos int, obj interface{}) *Alloc {
+	v := f.Body.NewAlloc(name, typ, pos, obj, nil)
+	//v := &Var{}
+	//v.Stringer = v
+	//v.name = name
+	//v.dtype = typ
+	//v.rtype = f.types.GenRef(typ)
+	//
+	//v.pos = pos
+	//v.object = obj
 
 	f.params = append(f.params, v)
 	return v
 }
 
 // 添加返回值
-func (f *Function) AddResult(name string, typ Type, pos int, obj interface{}) *Var {
-	v := &Var{}
-	v.Stringer = v
-	v.name = name
-	v.dtype = typ
-	v.rtype = f.types.GenRef(typ)
-
-	v.pos = pos
-	v.object = obj
+func (f *Function) AddResult(name string, typ Type, pos int, obj interface{}) *Alloc {
+	v := f.Body.NewAlloc(name, typ, pos, obj, nil)
+	//v := &Var{}
+	//v.Stringer = v
+	//v.name = name
+	//v.dtype = typ
+	//v.rtype = f.types.GenRef(typ)
+	//
+	//v.pos = pos
+	//v.object = obj
 
 	f.results = append(f.results, v)
 	return v
@@ -252,7 +254,7 @@ func (f *Function) retRepalce(stmt Stmt) {
 					lhs[i] = lh
 				}
 
-				stmt.Stmts[i] = NewSet(lhs, ret_stmt.Results, ret_stmt.pos)
+				stmt.Stmts[i] = NewSetN(lhs, ret_stmt.Results, ret_stmt.pos)
 				stmt.Stmts = append(stmt.Stmts, br)
 			} else {
 				stmt.Stmts[i] = br
@@ -270,7 +272,7 @@ func (f *Function) retRepalce(stmt Stmt) {
 	case *Return:
 		panic("Return can only be at the end of a block")
 
-	case *Var, *Get, *Set, *Br, *Unop, *Biop, *Call:
+	case *Alloc, *Get, *Set, *Br, *Unop, *Biop, *Call:
 		return
 
 	default:
@@ -298,7 +300,11 @@ func rc_stmt(s Stmt, inloop bool, d *Block) {
 			rc_stmt(stmt, inloop, block)
 		}
 
-	case *Var:
+	case *Alloc:
+		s.init = rc_expr(s.init, inloop, false, d, &post)
+		if s.init != nil && rtimp.hasChunk(s.init.Type()) && !s.init.retained() {
+			s.init = NewRetain(s.init, s.init.Pos())
+		}
 		d.emit(s)
 
 	case *Get:
@@ -362,7 +368,7 @@ func rc_expr(e Expr, inloop bool, replace bool, d *Block, post *[]Stmt) (ret Exp
 	}
 
 	switch e := e.(type) {
-	case *Var:
+	case *Alloc:
 		return
 
 	case *Get:
@@ -374,6 +380,12 @@ func rc_expr(e Expr, inloop bool, replace bool, d *Block, post *[]Stmt) (ret Exp
 	case *Biop:
 		e.X = rc_expr(e.X, inloop, true, d, post)
 		e.Y = rc_expr(e.Y, inloop, true, d, post)
+
+	case *Combo:
+		for _, stmt := range e.Stmts {
+			rc_stmt(stmt, inloop, d)
+		}
+		e.Result = rc_expr(e.Result, inloop, true, d, post)
 
 	case *Call:
 		var call_common *CallCommon
@@ -405,12 +417,33 @@ func rc_expr(e Expr, inloop bool, replace bool, d *Block, post *[]Stmt) (ret Exp
 	}
 
 	if e.retained() && replace {
-		dupref := NewDupRef(e, fmt.Sprintf("$%d", d.imvCount), e.Pos())
-		d.imvCount++
-		ret = dupref
+		//imv := &Var{}
+		//imv.Stringer = imv
+		//imv.name = fmt.Sprintf("$%d", d.imvCount)
+		//d.imvCount++
+		//imv.dtype = e.Type()
 
-		drop := NewDrop(dupref.Imv, e.Pos())
+		imv := d.NewAlloc(fmt.Sprintf("$%d", d.imvCount), e.Type(), e.Pos(), nil, e)
+		d.imvCount++
+		//set := NewSet(imv, e, e.Pos())
+
+		combo := NewCombo([]Stmt{imv}, NewGet(imv, e.Pos()), e.Pos())
+
+		//imv := d.NewVar(fmt.Sprintf("$%d", d.imvCount), e.Type(), e.Pos(), nil, e)
+		//d.imvCount++
+		//combo := NewCombo([]Stmt{imv}, NewGet(imv, e.Pos()), e.Pos())
+
+		ret = combo
+
+		drop := NewDrop(imv, e.Pos())
 		*post = append(*post, drop)
+
+		//dupref := NewDupRef(e, fmt.Sprintf("$%d", d.imvCount), e.Pos())
+		//d.imvCount++
+		//ret = dupref
+		//
+		//drop := NewDrop(dupref.Imv, e.Pos())
+		//*post = append(*post, drop)
 
 		//imv := &Var{}
 		//imv.Stringer = imv
@@ -432,7 +465,7 @@ func (f *Function) autoDrop(b *Block) {
 		case *Block:
 			f.autoDrop(s)
 
-		case *Var:
+		case *Alloc:
 			r := b.varUsageRange(s)
 			if r.last == -1 {
 				panic(fmt.Sprintf("var:%s not used", s.Name()))
@@ -464,46 +497,50 @@ func (f *Function) autoDrop(b *Block) {
 
 func (f *Function) allocVR_block(b *Block, inloop bool) {
 	for _, s := range b.Stmts {
-		switch s := s.(type) {
-		case *Block:
-			f.allocVR_block(s, inloop)
+		f.allocVR_stmt(s, inloop)
+	}
+}
 
-		case *Var:
-			f.allocVR_var(s, inloop)
+func (f *Function) allocVR_stmt(s Stmt, inloop bool) {
+	switch s := s.(type) {
+	case *Block:
+		f.allocVR_block(s, inloop)
 
-		case *Get:
-			panic("Get should not be here")
+	case *Alloc:
+		f.allocVR_expr(s.init, inloop)
+		f.allocVR_var(s, inloop)
 
-		case *Set:
-			for _, lh := range s.Lhs {
-				f.allocVR_expr(lh, inloop)
-			}
-			for _, rh := range s.Rhs {
-				f.allocVR_expr(rh, inloop)
-			}
+	case *Get:
+		panic("Get should not be here")
 
-		case *If:
-			f.allocVR_expr(s.Cond, inloop)
-			f.allocVR_block(s.True, inloop)
-			f.allocVR_block(s.False, inloop)
-
-		case *Loop:
-			f.allocVR_expr(s.Cond, true)
-			f.allocVR_block(s.Body, true)
-			f.allocVR_block(s.Post, true)
-
-		case *Drop:
-			f.dropVR_tank(s.X.tank)
-
-		case *Retain:
-			panic("Retain should not be here")
-
-		case *Br, *Return:
-
-		default:
-			panic(fmt.Sprintf("Todo: %s", s.String()))
-
+	case *Set:
+		for _, lh := range s.Lhs {
+			f.allocVR_expr(lh, inloop)
 		}
+		for _, rh := range s.Rhs {
+			f.allocVR_expr(rh, inloop)
+		}
+
+	case *If:
+		f.allocVR_expr(s.Cond, inloop)
+		f.allocVR_block(s.True, inloop)
+		f.allocVR_block(s.False, inloop)
+
+	case *Loop:
+		f.allocVR_expr(s.Cond, true)
+		f.allocVR_block(s.Body, true)
+		f.allocVR_block(s.Post, true)
+
+	case *Drop:
+		f.dropVR_tank(s.X.tank)
+
+	case *Retain:
+		panic("Retain should not be here")
+
+	case *Br, *Return:
+
+	default:
+		panic(fmt.Sprintf("Todo: %s", s.String()))
 	}
 }
 
@@ -516,7 +553,8 @@ func (f *Function) allocVR_expr(e Expr, inloop bool) {
 	}
 
 	switch e := e.(type) {
-	case *Var:
+	case *Alloc:
+		return
 
 	case *Get:
 		f.allocVR_expr(e.Loc, inloop)
@@ -527,6 +565,12 @@ func (f *Function) allocVR_expr(e Expr, inloop bool) {
 	case *Biop:
 		f.allocVR_expr(e.X, inloop)
 		f.allocVR_expr(e.Y, inloop)
+
+	case *Combo:
+		for _, stmt := range e.Stmts {
+			f.allocVR_stmt(stmt, inloop)
+		}
+		f.allocVR_expr(e.Result, inloop)
 
 	case *Call:
 		var call_common *CallCommon
@@ -553,9 +597,9 @@ func (f *Function) allocVR_expr(e Expr, inloop bool) {
 			f.allocVR_expr(arg, inloop)
 		}
 
-	case *DupRef:
-		f.allocVR_expr(e.X, inloop)
-		f.allocVR_var(e.Imv, inloop)
+	//case *DupRef:
+	//	f.allocVR_expr(e.X, inloop)
+	//	f.allocVR_var(e.Imv, inloop)
 
 	case *Retain:
 		f.allocVR_expr(e.X, inloop)
@@ -565,7 +609,7 @@ func (f *Function) allocVR_expr(e Expr, inloop bool) {
 	}
 }
 
-func (f *Function) allocVR_var(v *Var, inloop bool) {
+func (f *Function) allocVR_var(v *Alloc, inloop bool) {
 	v.tank = rtimp.initTank(v.Type())
 	f.allocVR_tank(v.tank, inloop)
 }

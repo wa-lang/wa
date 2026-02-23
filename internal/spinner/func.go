@@ -270,10 +270,10 @@ func (b *Builder) localValueSpec(spec *ast.ValueSpec, block *wire.Block) {
 }
 
 // 在 block 中分配一个由 id 定义的局部变量
-func (b *Builder) addLocalForIdent(id *ast.Ident, block *wire.Block) *wire.Var {
+func (b *Builder) addLocalForIdent(id *ast.Ident, block *wire.Block) wire.Var {
 	obj := b.info.Defs[id]
 	typ := b.BuildType(obj.Type())
-	return block.AddLocal(obj.Name(), typ, int(obj.Pos()), obj)
+	return block.AddLocal(obj.Name(), typ, int(obj.Pos()), obj, nil)
 }
 
 // 向 block 中添加赋值（ = , := ）操作
