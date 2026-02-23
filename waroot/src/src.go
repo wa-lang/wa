@@ -185,6 +185,7 @@ var stdPkgs = []string{
 	"unicode",         // API 部分
 	"unicode/ctypes",  // API 完整, 测试已覆盖, wat2wasm ok
 	"unicode/utf8",    // API 完整, 测试已覆盖, wat2wasm ok
+	"unicode/utf16",   // API 完整
 }
 
 var wzStdPkgs = []string{
@@ -205,6 +206,7 @@ var wzStdPkgs = []string{
 	"图像",         // image
 	"图像/颜色",      // image/color
 	"万国码/码八方",    // unicode/utf8
+	"万国码/码十六",    // unicode/utf16
 	"小画家",        // js/p5
 	"字串包",        // strings
 	"字串转译",       //strconv
