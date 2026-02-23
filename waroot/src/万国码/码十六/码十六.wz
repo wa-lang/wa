@@ -1,6 +1,12 @@
 注: Copyright (C) 2026 武汉凹语言科技有限公司
 注: SPDX-License-Identifier: MIT
 
-引入 "unicode/utf16" => _
+引入 "unicode/utf16"
 
-注: todo
+函数·编码(内容: []符文) => []短正整:
+	返回 utf16·Encode(内容)
+完毕
+
+函数·解码(内容: []短正整) => []符文:
+	返回 utf16·Decode(内容)
+完毕

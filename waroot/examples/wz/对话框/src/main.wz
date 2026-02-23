@@ -1,9 +1,13 @@
 注: 版权 @2026 对话框 作者。保留所有权利。
 
-引入 "书"
+引入 "洪荒"
+引入 "万国码/码十六"
 引入 "syscall/windows"
 
 函数·主控:
-	书·说("hello msgbox!")
-	windows·HelloMsg()
+	windows.MessageBoxW(0,
+		洪荒.切片数据(码十六.编码([]符文("凹中文汉字编程语言与国产芯片会师！——凹语言原生支持龙芯指令集\r\nhttps://wa-lang.org/smalltalk/st0100.html\x00"))),
+		洪荒.切片数据(码十六.编码([]符文("标题: 凹语言-Windows/X64\x00"))),
+		windows.MB_ICONINFORMATION,
+	)
 完毕

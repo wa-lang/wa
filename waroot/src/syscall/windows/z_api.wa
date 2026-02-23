@@ -1,0 +1,23 @@
+// Copyright (C) 2026 武汉凹语言科技有限公司
+// SPDX-License-Identifier: MIT
+
+// int MessageBoxA(
+//   [in, optional] HWND   hWnd,
+//   [in, optional] LPCSTR lpText,
+//   [in, optional] LPCSTR lpCaption,
+//   [in]           UINT   uType
+// );
+
+const (
+	MB_OK              = 0x00000000 // 只有一个“确定”按钮
+	MB_ICONHAND        = 0x00000010 // 错误图标 (Stop/Error)
+	MB_ICONQUESTION    = 0x00000020 // 问号图标
+	MB_ICONEXCLAMATION = 0x00000030 // 警告图标 (Warning)
+	MB_ICONINFORMATION = 0x00000040 // 信息图标 (i 符号)
+)
+
+#wa:import syscall_windows MessageBoxA
+func MessageBoxA(hWnd: int, lpText, lpCaption: uintptr, uType: uint) => int
+
+#wa:import syscall_windows MessageBoxW
+func MessageBoxW(hWnd: int, lpText, lpCaption: uintptr, uType: uint) => int

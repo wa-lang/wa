@@ -18,6 +18,3 @@ func __import__proc_exit(code: i32)
 
 #wa:linkname $syscall/windows.__linkname__string_to_ptr
 func __linkname__string_to_ptr(s: string) => i32
-
-#wa:import syscall_windows hello_msg
-func __import__hello_msg()

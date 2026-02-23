@@ -21,7 +21,3 @@ func Puts(ptr: i32, len: i32) {
 func ProcExit(v: i32) {
 	__import__proc_exit(v)
 }
-
-func HelloMsg() {
-	__import__hello_msg()
-}
