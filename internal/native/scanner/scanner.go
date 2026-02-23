@@ -316,8 +316,8 @@ func isDigit(ch rune) bool {
 func (s *Scanner) scanIdentifier() string {
 	offs := s.offset
 	s.next()
-	// `_.$`和字母数字都是合法的字符
-	for isLetter(s.ch) || isDigit(s.ch) || s.ch == '$' || s.ch == '.' || s.ch == '_' {
+	// `_.$@`和字母数字都是合法的字符
+	for isLetter(s.ch) || isDigit(s.ch) || s.ch == '$' || s.ch == '.' || s.ch == '_' || s.ch == '@' {
 		s.next()
 	}
 	return string(s.src[offs:s.offset])
@@ -680,7 +680,7 @@ scanAgain:
 	// determine token value
 	insertSemi := false
 	switch ch := s.ch; {
-	case isLetter(ch) || ch == '$' || ch == '%' || ch == '.':
+	case isLetter(ch) || ch == '$' || ch == '%' || ch == '.' || ch == '@':
 		lit = s.scanIdentifier()
 		if len(lit) > 1 || isLetter(ch) {
 			// 龙芯最短的跳转指令 b 只有1个字符

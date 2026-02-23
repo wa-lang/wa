@@ -85,6 +85,11 @@ const (
 	GAS_INCBIN  // .name: .incbin "lena.jpg"
 	GAS_SECTION // .section .text
 
+	GAS_DEBUG_FILE // .file 1, "file.wa"    # 调试信息: 文件编号
+	GAS_DEBUG_LOC  // .loc  1 2 3           # 调试信息: 1 号文件, 第 2 行, 第 3 列
+	GAS_DEBUG_SIZE // .size man, .-main     # 调试信息: 函数大小
+	GAS_DEBUG_TYPE // .type name, @function # 调试信息: 符号类型, 数据为 @object
+
 	gas_keyword_end // 关键字结束
 )
 
@@ -173,6 +178,11 @@ var tokens = [...]string{
 	GAS_SKIP:    ".skip",
 	GAS_INCBIN:  ".incbin",
 	GAS_SECTION: ".section",
+
+	GAS_DEBUG_FILE: ".file",
+	GAS_DEBUG_LOC:  ".loc",
+	GAS_DEBUG_SIZE: ".size",
+	GAS_DEBUG_TYPE: ".type",
 }
 
 func (tok Token) String() string {

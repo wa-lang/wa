@@ -68,6 +68,13 @@ func (p *parser) parseFile() {
 				p.errorf(p.pos, "unkonw token: %v", p.tok)
 			}
 
+		case token.GAS_DEBUG_FILE:
+			p.parseDebugInfo_file()
+		case token.GAS_DEBUG_SIZE:
+			p.parseDebugInfo_size()
+		case token.GAS_DEBUG_TYPE:
+			p.parseDebugInfo_type()
+
 		case token.GAS_EXTERN:
 			ext := &ast.Extern{Pos: p.pos, Tok: token.GAS_EXTERN}
 
@@ -155,6 +162,11 @@ func (p *parser) parseFile() {
 					p.consumeSemicolonList()
 				}
 
+				// 目前函数的类型必须在函数标号之前
+				if p.tok == token.GAS_DEBUG_TYPE {
+					p.parseDebugInfo_type()
+				}
+
 				// 开始解析函数定义的标签
 				funcObj.Name = p.parseIdent()
 				p.acceptToken(token.COLON)
@@ -184,6 +196,12 @@ func (p *parser) parseFile() {
 						commentObj := p.parseCommentGroup(true)
 						funcObj.Body.Comments = append(funcObj.Body.Comments, commentObj)
 						funcObj.Body.Objects = append(funcObj.Body.Objects, commentObj)
+						continue
+					}
+
+					// 解析调试信息
+					if p.tok == token.GAS_DEBUG_LOC {
+						p.parseDebugInfo_loc()
 						continue
 					}
 
