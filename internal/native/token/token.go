@@ -90,6 +90,12 @@ const (
 	GAS_DEBUG_SIZE // .size man, .-main     # 调试信息: 函数大小
 	GAS_DEBUG_TYPE // .type name, @function # 调试信息: 符号类型, 数据为 @object
 
+	GAS_CFI_STARTPROC        // .cfi_startproc: 函数内指令, 函数开始
+	GAS_CFI_ENDPROC          // .cfi_endproc: 函数内指令, 函数结束
+	GAS_CFI_DEF_CFA_OFFSET   // .cfi_def_cfa_offset 16: 函数内指令, 帧地址偏移 16 字节
+	GAS_CFI_OFFSET           // .cfi_offset rbp, -16: 函数内指令, 寄存器保存的位置
+	GAS_CFI_DEF_CFA_REGISTER // .cfi_def_cfa_register rbp: 函数内指令, 切换到 rbp 定位帧
+
 	gas_keyword_end // 关键字结束
 )
 
@@ -183,6 +189,12 @@ var tokens = [...]string{
 	GAS_DEBUG_LOC:  ".loc",
 	GAS_DEBUG_SIZE: ".size",
 	GAS_DEBUG_TYPE: ".type",
+
+	GAS_CFI_STARTPROC:        ".cfi_startproc",
+	GAS_CFI_ENDPROC:          ".cfi_endproc",
+	GAS_CFI_DEF_CFA_OFFSET:   ".cfi_def_cfa_offset",
+	GAS_CFI_OFFSET:           ".cfi_offset",
+	GAS_CFI_DEF_CFA_REGISTER: ".cfi_def_cfa_register",
 }
 
 func (tok Token) String() string {

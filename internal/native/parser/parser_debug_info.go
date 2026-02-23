@@ -39,3 +39,39 @@ func (p *parser) parseDebugInfo_type() {
 	_ = p.parseIdent()         // @function/@object
 	p.consumeSemicolonList()
 }
+
+func (p *parser) parseDebugInfo_cfi_startproc() {
+	p.acceptToken(token.GAS_CFI_STARTPROC)
+	p.consumeSemicolonList()
+}
+
+func (p *parser) parseDebugInfo_cfi_endproc() {
+	p.acceptToken(token.GAS_CFI_ENDPROC)
+	p.consumeSemicolonList()
+}
+
+func (p *parser) parseDebugInfo_cfi_def_cfa_offset() {
+	p.acceptToken(token.GAS_CFI_DEF_CFA_OFFSET)
+	if p.tok == token.SUB {
+		p.next()
+	}
+	p.parseIntLit()
+	p.consumeSemicolonList()
+}
+
+func (p *parser) parseDebugInfo_cfi_offset() {
+	p.acceptToken(token.GAS_CFI_OFFSET)
+	p.parseRegister()
+	p.acceptToken(token.COMMA)
+	if p.tok == token.SUB {
+		p.next()
+	}
+	p.parseIntLit()
+	p.consumeSemicolonList()
+}
+
+func (p *parser) parseDebugInfo_cfi_def_cfa_register() {
+	p.acceptToken(token.GAS_CFI_DEF_CFA_REGISTER)
+	p.parseRegister()
+	p.consumeSemicolonList()
+}

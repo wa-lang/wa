@@ -200,6 +200,26 @@ func (p *parser) parseFile() {
 					}
 
 					// 解析调试信息
+					if p.tok == token.GAS_CFI_STARTPROC {
+						p.parseDebugInfo_cfi_startproc()
+						continue
+					}
+					if p.tok == token.GAS_CFI_ENDPROC {
+						p.parseDebugInfo_cfi_endproc()
+						break // 结束
+					}
+					if p.tok == token.GAS_CFI_DEF_CFA_OFFSET {
+						p.parseDebugInfo_cfi_def_cfa_offset()
+						continue
+					}
+					if p.tok == token.GAS_CFI_OFFSET {
+						p.parseDebugInfo_cfi_offset()
+						continue
+					}
+					if p.tok == token.GAS_CFI_DEF_CFA_REGISTER {
+						p.parseDebugInfo_cfi_def_cfa_register()
+						continue
+					}
 					if p.tok == token.GAS_DEBUG_LOC {
 						p.parseDebugInfo_loc()
 						continue
