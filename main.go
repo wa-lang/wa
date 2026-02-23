@@ -33,6 +33,7 @@ import (
 	"wa-lang.org/wa/internal/app/applex"
 	"wa-lang.org/wa/internal/app/applogo"
 	"wa-lang.org/wa/internal/app/applsp"
+	"wa-lang.org/wa/internal/app/appnative"
 	"wa-lang.org/wa/internal/app/appobjdump"
 	"wa-lang.org/wa/internal/app/appplay"
 	"wa-lang.org/wa/internal/app/apprun"
@@ -101,13 +102,16 @@ func main() {
 		appdev.CmdDev,
 
 		// 用户可见子命令
-		appplay.CmdPlay,
 		appinit.CmdInit,
 		appbuild.CmdBuild,
 		apprun.CmdRun,
-		appfmt.CmdFmt,
 		apptest.CmdTest,
+		appfmt.CmdFmt,
+
+		appnative.CmdNative,
 		appyacc.CmdYacc,
+
+		appplay.CmdPlay,
 		applogo.CmdLogo,
 
 		// 开发者用于测试(隐藏)
