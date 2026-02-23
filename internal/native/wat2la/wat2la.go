@@ -17,13 +17,13 @@ import (
 const DebugMode = false
 
 // Wat程序转译到 龙芯汇编
-func Wat2LA64(filename string, source []byte, isZhLang bool) (m *watast.Module, code []byte, err error) {
+func Wat2LA64(filename string, source []byte, entryFuncName string, isZhLang bool) (m *watast.Module, code []byte, err error) {
 	m, err = watparser.ParseModule(filename, source)
 	if err != nil {
 		return m, nil, err
 	}
 
-	worker := newWat2LAWorker(filename, m, isZhLang)
+	worker := newWat2LAWorker(filename, m, entryFuncName, isZhLang)
 	code, err = worker.BuildProgram()
 	return
 }
@@ -31,9 +31,10 @@ func Wat2LA64(filename string, source []byte, isZhLang bool) (m *watast.Module, 
 type wat2laWorker struct {
 	m *watast.Module
 
-	filename string
-	cpuType  abi.CPUType
-	isZhLang bool
+	filename      string
+	cpuType       abi.CPUType
+	entryFuncName string
+	isZhLang      bool
 
 	inlinedTypeIndices []*inlinedTypeIndex
 	inlinedTypes       []*wasm.FunctionType
@@ -52,13 +53,14 @@ type inlinedTypeIndex struct {
 	inlinedIdx wasm.Index
 }
 
-func newWat2LAWorker(filename string, mWat *watast.Module, isZhLang bool) *wat2laWorker {
+func newWat2LAWorker(filename string, mWat *watast.Module, entryFuncName string, isZhLang bool) *wat2laWorker {
 	p := &wat2laWorker{
-		m:        mWat,
-		cpuType:  abi.LOONG64,
-		isZhLang: isZhLang,
-		filename: filename,
-		trace:    DebugMode,
+		m:             mWat,
+		cpuType:       abi.LOONG64,
+		entryFuncName: entryFuncName,
+		isZhLang:      isZhLang,
+		filename:      filename,
+		trace:         DebugMode,
 	}
 
 	if config.EnableTrace_wat2xx {
@@ -107,7 +109,7 @@ func (p *wat2laWorker) BuildProgram() (code []byte, err error) {
 	}
 
 	// 启动函数
-	if err := p.buildStart(&out); err != nil {
+	if err := p.buildEntryFunc(&out); err != nil {
 		return nil, err
 	}
 

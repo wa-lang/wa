@@ -1,0 +1,2 @@
+-lkernel32
+-luser32

@@ -65,7 +65,7 @@ var CmdWat2x64 = &cli.Command{
 		if strings.EqualFold(osName, config.WaOS_linux) {
 			cpuType = abi.X64Unix
 		}
-		_, code, err := wat2x64.Wat2X64(infile, source, cpuType)
+		_, code, err := wat2x64.Wat2X64(infile, source, cpuType, "")
 		if err != nil {
 			fmt.Println(err)
 			os.Exit(1)

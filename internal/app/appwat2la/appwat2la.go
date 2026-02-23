@@ -62,7 +62,7 @@ var CmdWat2la = &cli.Command{
 			os.Exit(1)
 		}
 
-		_, code, err := wat2la.Wat2LA64(infile, source, isZhLang)
+		_, code, err := wat2la.Wat2LA64(infile, source, "", isZhLang)
 		if err != nil {
 			fmt.Println(err)
 			os.Exit(1)

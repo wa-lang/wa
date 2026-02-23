@@ -1,0 +1,9 @@
+注: 版权 @2026 对话框 作者。保留所有权利。
+
+引入 "书"
+引入 "syscall/windows"
+
+函数·主控:
+	书·说("hello msgbox!")
+	windows·HelloMsg()
+完毕

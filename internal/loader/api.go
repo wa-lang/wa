@@ -4,6 +4,11 @@
 package loader
 
 import (
+	"bytes"
+	"fmt"
+	"sort"
+	"strings"
+
 	"wa-lang.org/wa/internal/ast"
 	"wa-lang.org/wa/internal/config"
 	"wa-lang.org/wa/internal/ssa"
@@ -29,8 +34,11 @@ type Package struct {
 	Pkg          *types.Package // 类型检查后的包
 	Info         *types.Info    // 包的类型检查信息
 	Files        []*ast.File    // AST语法树
-	WsFiles      []*WsFile      // 汇编代码
+	NasmFiles    []*NasmFile    // 本地汇编代码(*.wa.s,*.wz.s)
+	ClangFiles   []*ClangFile   // 本地C代码(*.wa.c,*.wz.c)
+	WatFiles     []*WatFile     // Wat汇编代码
 	WImportFiles []*WhostFile   // 宿主代码文件
+	GccArgsFile  []*GccArgsFile // GCC参数文件(强制切换gcc编译汇编)
 
 	SSAPkg   *ssa.Package
 	TestInfo *TestInfo
@@ -52,8 +60,20 @@ type TestFuncInfo struct {
 	OutputPanic bool      // 异常信息
 }
 
-// 汇编代码文件
-type WsFile struct {
+// Wat汇编代码文件
+type WatFile struct {
+	Name string // 文件名
+	Code string // 汇编代码
+}
+
+// 本地C代码(*.wa.c,*.wz.c)
+type ClangFile struct {
+	Name string // 文件名
+	Code string // 汇编代码
+}
+
+// 本地汇编代码(*.wa.s,*.wz.s)
+type NasmFile struct {
 	Name string // 文件名
 	Code string // 汇编代码
 }
@@ -62,6 +82,12 @@ type WsFile struct {
 type WhostFile struct {
 	Name string // 文件名
 	Code string // 宿主代码
+}
+
+// GCC的命令行参数
+type GccArgsFile struct {
+	Name    string // 文件名
+	Content string // 一行一个参数
 }
 
 // 加载程序
@@ -80,4 +106,96 @@ func LoadProgramFile(cfg *config.Config, filename string, src interface{}) (*Pro
 // 入口 pkgPath 是包路径, 必须是 vfs.App 子包
 func LoadProgramVFS(vfs *config.PkgVFS, cfg *config.Config, pkgPath string) (*Program, error) {
 	return newLoader(cfg).LoadProgramVFS(vfs, pkgPath)
+}
+
+// gcc配置文件
+func (p *Program) GccArgsCode() []byte {
+	var pkgpathList []string
+	for k, pkg := range p.Pkgs {
+		if len(pkg.GccArgsFile) > 0 {
+			pkgpathList = append(pkgpathList, k)
+		}
+	}
+	if len(pkgpathList) == 0 {
+		return nil
+	}
+
+	sort.Strings(pkgpathList)
+
+	var buf bytes.Buffer
+	for _, pkgpath := range pkgpathList {
+		if buf.Len() > 0 {
+			fmt.Fprintln(&buf)
+		}
+		pkg := p.Pkgs[pkgpath]
+		for _, f := range pkg.GccArgsFile {
+			// 注意: gcc 配置文件不支持注释
+			if s := strings.TrimSpace(f.Content); len(s) > 0 {
+				fmt.Fprintln(&buf, s)
+				fmt.Fprintln(&buf)
+			}
+		}
+	}
+
+	return buf.Bytes()
+}
+
+// 本地汇编代码
+func (p *Program) NasmCode() []byte {
+	var pkgpathList []string
+	for k, pkg := range p.Pkgs {
+		if len(pkg.NasmFiles) > 0 {
+			pkgpathList = append(pkgpathList, k)
+		}
+	}
+	if len(pkgpathList) == 0 {
+		return nil
+	}
+
+	sort.Strings(pkgpathList)
+
+	var buf bytes.Buffer
+	for _, pkgpath := range pkgpathList {
+		if buf.Len() > 0 {
+			fmt.Fprintln(&buf)
+		}
+		pkg := p.Pkgs[pkgpath]
+		for _, f := range pkg.NasmFiles {
+			fmt.Fprintf(&buf, "# %s/%s\n", pkgpath, f.Name)
+			fmt.Fprintln(&buf, f.Code)
+			fmt.Fprintln(&buf)
+		}
+	}
+
+	return buf.Bytes()
+}
+
+// 本地汇编代码
+func (p *Program) ClangCode() []byte {
+	var pkgpathList []string
+	for k, pkg := range p.Pkgs {
+		if len(pkg.ClangFiles) > 0 {
+			pkgpathList = append(pkgpathList, k)
+		}
+	}
+	if len(pkgpathList) == 0 {
+		return nil
+	}
+
+	sort.Strings(pkgpathList)
+
+	var buf bytes.Buffer
+	for _, pkgpath := range pkgpathList {
+		if buf.Len() > 0 {
+			fmt.Fprintln(&buf)
+		}
+		pkg := p.Pkgs[pkgpath]
+		for _, f := range pkg.ClangFiles {
+			fmt.Fprintf(&buf, "// %s/%s\n", pkgpath, f.Name)
+			fmt.Fprintln(&buf, f.Code)
+			fmt.Fprintln(&buf)
+		}
+	}
+
+	return buf.Bytes()
 }

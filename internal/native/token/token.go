@@ -85,6 +85,17 @@ const (
 	GAS_INCBIN  // .name: .incbin "lena.jpg"
 	GAS_SECTION // .section .text
 
+	GAS_DEBUG_FILE // .file 1, "file.wa"    # 调试信息: 文件编号
+	GAS_DEBUG_LOC  // .loc  1 2 3           # 调试信息: 1 号文件, 第 2 行, 第 3 列
+	GAS_DEBUG_SIZE // .size man, .-main     # 调试信息: 函数大小
+	GAS_DEBUG_TYPE // .type name, @function # 调试信息: 符号类型, 数据为 @object
+
+	GAS_CFI_STARTPROC        // .cfi_startproc: 函数内指令, 函数开始
+	GAS_CFI_ENDPROC          // .cfi_endproc: 函数内指令, 函数结束
+	GAS_CFI_DEF_CFA_OFFSET   // .cfi_def_cfa_offset 16: 函数内指令, 帧地址偏移 16 字节
+	GAS_CFI_OFFSET           // .cfi_offset rbp, -16: 函数内指令, 寄存器保存的位置
+	GAS_CFI_DEF_CFA_REGISTER // .cfi_def_cfa_register rbp: 函数内指令, 切换到 rbp 定位帧
+
 	gas_keyword_end // 关键字结束
 )
 
@@ -173,6 +184,17 @@ var tokens = [...]string{
 	GAS_SKIP:    ".skip",
 	GAS_INCBIN:  ".incbin",
 	GAS_SECTION: ".section",
+
+	GAS_DEBUG_FILE: ".file",
+	GAS_DEBUG_LOC:  ".loc",
+	GAS_DEBUG_SIZE: ".size",
+	GAS_DEBUG_TYPE: ".type",
+
+	GAS_CFI_STARTPROC:        ".cfi_startproc",
+	GAS_CFI_ENDPROC:          ".cfi_endproc",
+	GAS_CFI_DEF_CFA_OFFSET:   ".cfi_def_cfa_offset",
+	GAS_CFI_OFFSET:           ".cfi_offset",
+	GAS_CFI_DEF_CFA_REGISTER: ".cfi_def_cfa_register",
 }
 
 func (tok Token) String() string {

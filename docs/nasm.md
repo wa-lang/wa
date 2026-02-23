@@ -277,7 +277,24 @@ GAS语法中`.globl`和`.global`是两个等价的命令, 用于标志符号是�
 - `%相对64.低20(符号)`: PC相对地址低20bit
 - `%相对64.高12(符号)`: PC相对地址高12bit
 
-## 5. 补充说明
+## 5. 调试信息
+
+凹语言自研汇编器暂不支持生成调试信息, 但是会正确解析并跳过以下的调试伪指令:
+
+- `.file 1, "file.wa"`: 全局指令, 文件编号
+- `.loc  1 2 3`: 函数内指令, 指令对应的源文件位置, 比如 1 号文件, 第 2 行, 第 3 列
+- `.size man, .-main`: 全局指令, 函数大小. 注意这里的表达式不能在地方使用
+- `.type name, @function`: 全局指令, 符号类型, 数据为 @object. 函数的类型必须在函数标号之前
+- `.cfi_startproc`: 调用栈帧信息(Call Frame Information), 函数开始
+- `.cfi_endproc`: 调用栈帧信息(Call Frame Information), 函数结束
+- `.cfi_def_cfa_offset 16`: 调用栈帧信息(Call Frame Information), 帧地址偏移 16 字节
+- `.cfi_offset rbp, -16`: 调用栈帧信息(Call Frame Information), 寄存器保存的位置
+- `.cfi_def_cfa_register rbp`: 调用栈帧信息(Call Frame Information), 切换到 rbp 定位帧
+- 函数参数和局部变量的调试信息需要额外编码, 暂不支持
+
+如果希望生成调试信息, 可以GAS语法兼容部分可以无缝切换为gcc命令生成目标文件.
+
+## 6. 补充说明
 
 凹汇编语言的中英文语法和混合使用, 凹语言的汇编器可以解析. 如果希望用GCC来编译中英文语法混合的凹汇编程序, 需要提供凹语言计划提供的命令行工具导出纯GAS语法再用GCC编译.
 
