@@ -12,8 +12,6 @@ import (
 
 	"wa-lang.org/wa/internal/3rdparty/cli"
 	"wa-lang.org/wa/internal/app/appbase"
-	"wa-lang.org/wa/internal/app/appbuild/native_loong64"
-	"wa-lang.org/wa/internal/app/appbuild/native_x64"
 	"wa-lang.org/wa/internal/backends/compiler_wat"
 	"wa-lang.org/wa/internal/config"
 	"wa-lang.org/wa/internal/loader"
@@ -102,17 +100,6 @@ func BuildApp(opt *appbase.Option, input, outfile string) (mainFunc string, wasm
 
 	// 只编译 wat 文件, 输出路径相同, 后缀名调整
 	if appbase.HasExt(input, ".wat") {
-		switch opt.TargetArch {
-		case config.WaArch_loong64:
-			// wa build -arch=loong64 -target=linux input.wat
-			return native_loong64.BuildApp_wat(opt, input, outfile)
-
-		case config.WaArch_x64:
-			// wa build -arch=x64 -target=linux input.wat
-			// wa build -arch=x64 -target=windows input.wat
-			return native_x64.BuildApp_wat(opt, input, outfile)
-		}
-
 		// 设置默认输出目标
 		if outfile == "" {
 			outfile = appbase.ReplaceExt(input, ".wat", ".wasm")
@@ -173,18 +160,6 @@ func BuildApp(opt *appbase.Option, input, outfile string) (mainFunc string, wasm
 				fmt.Printf("write %s failed: %v\n", outfile, err)
 				os.Exit(1)
 			}
-		}
-
-		// 构建本地可执行程序
-		switch opt.TargetArch {
-		case config.WaArch_loong64:
-			// wa build -arch=loong64 -target=linux input.wat
-			return native_loong64.BuildApp_wa_wz(opt, input, outfile, prog, watOutput)
-
-		case config.WaArch_x64:
-			// wa build -arch=x64 -target=linux input.wat
-			// wa build -arch=x64 -target=windows input.wat
-			return native_x64.BuildApp_wa_wz(opt, input, outfile, prog, watOutput)
 		}
 
 		// wat 编译为 wasm
@@ -270,18 +245,6 @@ func BuildApp(opt *appbase.Option, input, outfile string) (mainFunc string, wasm
 		if err != nil {
 			fmt.Printf("write %s failed: %v\n", outfile, err)
 			os.Exit(1)
-		}
-
-		// 构建本地可执行程序
-		switch opt.TargetArch {
-		case config.WaArch_loong64:
-			// wa build -arch=loong64 -target=linux input.wat
-			return native_loong64.BuildApp_wa_wz(opt, input, outfile, prog, watOutput)
-
-		case config.WaArch_x64:
-			// wa build -arch=x64 -target=linux input.wat
-			// wa build -arch=x64 -target=windows input.wat
-			return native_x64.BuildApp_wa_wz(opt, input, outfile, prog, watOutput)
 		}
 
 		// fileset 写到文件中

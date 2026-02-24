@@ -7,6 +7,8 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"runtime"
+	"strings"
 
 	"wa-lang.org/wa/internal/3rdparty/cli"
 	"wa-lang.org/wa/internal/app/appbase"
@@ -18,7 +20,45 @@ import (
 	"wa-lang.org/wa/internal/wat/watutil/watstrip"
 )
 
+var CmdNative_Build = &cli.Command{
+	Name:  "build",
+	Usage: "compile Wa source code in native mode",
+	Flags: []cli.Flag{
+		&cli.StringFlag{
+			Name:    "output",
+			Aliases: []string{"o"},
+			Usage:   "set output file",
+			Value:   "",
+		},
+		&cli.StringFlag{
+			Name:  "arch",
+			Usage: fmt.Sprintf("set arch type (%s|%s)", config.WaArch_x64, config.WaArch_loong64),
+			Value: "",
+		},
+		&cli.StringFlag{
+			Name:  "target",
+			Usage: fmt.Sprintf("set target type (%s|%s)", config.WaOS_windows, config.WaOS_linux),
+			Value: "",
+		},
+		&cli.StringFlag{
+			Name:  "tags",
+			Usage: "set build tags",
+		},
+		&cli.BoolFlag{
+			Name:  "optimize",
+			Usage: "enable optimize flag",
+		},
+	},
+
+	Action: CmdBuildAction,
+}
+
 func CmdBuildAction(c *cli.Context) error {
+	_, err := doCmdBuildAction(c)
+	return err
+}
+
+func doCmdBuildAction(c *cli.Context) (exePath string, err error) {
 	input := c.Args().First()
 	outfile := c.String("output")
 
@@ -26,21 +66,88 @@ func CmdBuildAction(c *cli.Context) error {
 		input, _ = os.Getwd()
 	}
 
-	var opt = appbase.BuildOptions(c)
-	_, err := BuildApp(opt, input, outfile)
-	return err
+	opt := &appbase.Option{
+		Debug:     c.Bool("debug"),
+		WaBackend: config.WaBackend_Default,
+		BuilgTags: strings.Fields(c.String("tags")),
+		Optimize:  c.Bool("optimize"),
+	}
+
+	targetArch := c.String("arch")
+	targetOS := c.String("target")
+
+	if targetArch != "" && !config.CheckWaArch(targetArch) {
+		fmt.Printf("unknown arch: %s\n", targetArch)
+		os.Exit(1)
+	}
+	if targetOS != "" && !config.CheckWaOS(targetOS) {
+		fmt.Printf("unknown target: %s\n", targetOS)
+		os.Exit(1)
+	}
+
+	// 处理默认值
+	switch {
+	case targetArch == "" && targetOS == "":
+		switch {
+		case runtime.GOARCH == "amd64" && runtime.GOOS == "windows":
+			targetArch = config.WaArch_x64
+			targetOS = config.WaOS_windows
+		case runtime.GOARCH == "amd64" && runtime.GOOS == "linux":
+			targetArch = config.WaArch_x64
+			targetOS = config.WaOS_linux
+		case runtime.GOARCH == "loong64":
+			targetArch = config.WaArch_loong64
+			targetOS = config.WaOS_linux
+		}
+	case targetArch == "":
+		switch targetOS {
+		case "windows":
+			targetArch = config.WaArch_x64
+		case "linux":
+			switch runtime.GOARCH {
+			case "amd64":
+				targetArch = config.WaArch_x64
+			case "loong64":
+				targetArch = config.WaArch_loong64
+			}
+		}
+	case targetOS == "":
+		switch targetArch {
+		case "x64", "amd64":
+			switch runtime.GOOS {
+			case "windwos":
+				targetOS = config.WaOS_windows
+			case "linux":
+				targetOS = config.WaOS_linux
+			}
+		case "loong64":
+			targetOS = config.WaOS_linux
+		}
+	}
+
+	// 检查目标类型
+	switch {
+	case targetOS == config.WaOS_windows && targetArch == config.WaArch_x64:
+		opt.TargetArch = config.WaArch_x64
+		opt.TargetOS = config.WaOS_windows
+	case targetOS == config.WaOS_linux && targetArch == config.WaArch_x64:
+		opt.TargetArch = config.WaArch_x64
+		opt.TargetOS = config.WaOS_linux
+	case targetOS == config.WaOS_linux && targetArch == config.WaArch_loong64:
+		opt.TargetArch = config.WaArch_loong64
+		opt.TargetOS = config.WaOS_linux
+	default:
+		fmt.Printf("unsupport target: %s/%s", targetOS, targetArch)
+		os.Exit(1)
+	}
+
+	return BuildApp(opt, input, outfile)
 }
 
 func BuildApp(opt *appbase.Option, input, outfile string) (exePath string, err error) {
 	// 路径是否存在
 	if !appbase.PathExists(input) {
 		fmt.Printf("%q not found\n", input)
-		os.Exit(1)
-	}
-
-	// 输出参数是否合法, 必须是 wasm
-	if outfile != "" && !appbase.HasExt(outfile, ".wasm", ".s") {
-		fmt.Printf("%q is not valid output path\n", outfile)
 		os.Exit(1)
 	}
 
@@ -63,19 +170,9 @@ func BuildApp(opt *appbase.Option, input, outfile string) (exePath string, err e
 		// 设置默认输出目标
 		if outfile == "" {
 			if appbase.HasExt(input, ".wz") {
-				outfile = appbase.ReplaceExt(input, ".wz", ".wasm")
+				outfile = appbase.ReplaceExt(input, ".wz", ".exe")
 			} else {
-				outfile = appbase.ReplaceExt(input, ".wa", ".wasm")
-			}
-		}
-
-		// wat 写到文件
-		watOutfile := appbase.ReplaceExt(outfile, ".wasm", ".wat")
-		if !opt.RunFileMode {
-			err = os.WriteFile(watOutfile, watOutput, 0666)
-			if err != nil {
-				fmt.Printf("write %s failed: %v\n", outfile, err)
-				os.Exit(1)
+				outfile = appbase.ReplaceExt(input, ".wa", ".exe")
 			}
 		}
 
@@ -83,12 +180,14 @@ func BuildApp(opt *appbase.Option, input, outfile string) (exePath string, err e
 		switch opt.TargetArch {
 		case config.WaArch_loong64:
 			// wa build -arch=loong64 -target=linux input.wat
-			return native_loong64.BuildApp_wa_wz(opt, input, outfile, prog, watOutput)
+			isZhLang := appbase.HasExt(input, ".wz")
+			return native_loong64.BuildApp_wa_wz(opt, input, outfile, prog, watOutput, isZhLang)
 
 		case config.WaArch_x64:
 			// wa build -arch=x64 -target=linux input.wat
 			// wa build -arch=x64 -target=windows input.wat
-			return native_x64.BuildApp_wa_wz(opt, input, outfile, prog, watOutput)
+			isZhLang := appbase.HasExt(input, ".wz")
+			return native_x64.BuildApp_wa_wz(opt, input, outfile, prog, watOutput, isZhLang)
 
 		default:
 			err = fmt.Errorf("unknown tarch: %v", opt.TargetArch)
@@ -119,10 +218,10 @@ func BuildApp(opt *appbase.Option, input, outfile string) (exePath string, err e
 
 		if outfile == "" {
 			if !manifest.IsStd {
-				outfile = filepath.Join(manifest.Root, "output", manifest.Pkg.Name) + ".wasm"
+				outfile = filepath.Join(manifest.Root, "output", manifest.Pkg.Name) + ".exe"
 				os.MkdirAll(filepath.Join(manifest.Root, "output"), 0777)
 			} else {
-				outfile = "a.out." + manifest.Pkg.Name + ".wasm"
+				outfile = "a.out." + manifest.Pkg.Name + ".exe"
 			}
 		}
 
@@ -144,24 +243,16 @@ func BuildApp(opt *appbase.Option, input, outfile string) (exePath string, err e
 			}
 		}
 
-		// wat 写到文件
-		watOutfile := appbase.ReplaceExt(outfile, ".wasm", ".wat")
-		err = os.WriteFile(watOutfile, watOutput, 0666)
-		if err != nil {
-			fmt.Printf("write %s failed: %v\n", outfile, err)
-			os.Exit(1)
-		}
-
 		// 构建本地可执行程序
 		switch opt.TargetArch {
 		case config.WaArch_loong64:
 			// wa build -arch=loong64 -target=linux input.wat
-			return native_loong64.BuildApp_wa_wz(opt, input, outfile, prog, watOutput)
+			return native_loong64.BuildApp_wa_wz(opt, input, outfile, prog, watOutput, manifest.W2Mode)
 
 		case config.WaArch_x64:
 			// wa build -arch=x64 -target=linux input.wat
 			// wa build -arch=x64 -target=windows input.wat
-			return native_x64.BuildApp_wa_wz(opt, input, outfile, prog, watOutput)
+			return native_x64.BuildApp_wa_wz(opt, input, outfile, prog, watOutput, manifest.W2Mode)
 
 		default:
 			err = fmt.Errorf("unknown tarch: %v", opt.TargetArch)

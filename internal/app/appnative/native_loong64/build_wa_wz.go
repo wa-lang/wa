@@ -21,32 +21,23 @@ import (
 func BuildApp_wa_wz(
 	opt *appbase.Option, input, outfile string,
 	prog *loader.Program, watOutput []byte,
+	isZhLang bool,
 ) (exePath string, err error) {
 	// wa build -arch=loong64 -target=linux input.wat
+
+	if outfile == "" {
+		panic("unreachable")
+	}
 
 	if s := opt.TargetOS; s != "" && s != config.WaOS_linux {
 		panic(fmt.Sprintf("loong64 donot support %s", s))
 	}
 
 	// 设置默认输出目标
-	var nativeAsmFile string
-	var nativeExtFile string
-	var clangFilename string
-	var gccArgsFilename string
-	var isZhLang bool
-	if appbase.HasExt(input, ".wz") {
-		isZhLang = true
-		nativeAsmFile = appbase.ReplaceExt(outfile, ".wasm", ".wz.s")
-		nativeExtFile = appbase.ReplaceExt(outfile, ".wasm", ".exe")
-		clangFilename = nativeAsmFile + ".c"
-		gccArgsFilename = nativeAsmFile + ".gcc.args.txt"
-	} else {
-		isZhLang = false
-		nativeAsmFile = appbase.ReplaceExt(outfile, ".wasm", ".wa.s")
-		nativeExtFile = appbase.ReplaceExt(outfile, ".wasm", ".exe")
-		clangFilename = nativeAsmFile + ".c"
-		gccArgsFilename = nativeAsmFile + ".gcc.args.txt"
-	}
+	var nativeExeFile = outfile
+	var nativeAsmFile = nativeExeFile + ".s"
+	var clangFilename = nativeExeFile + ".c"
+	var gccArgsFilename = nativeExeFile + ".gcc.args.txt"
 
 	// GCC 配置文件
 	gccArgcContent := prog.GccArgsCode()
@@ -99,7 +90,7 @@ func BuildApp_wa_wz(
 	if len(gccArgcContent) > 0 {
 		args := []string{
 			nativeAsmFile,
-			"-o", nativeExtFile,
+			"-o", nativeExeFile,
 			"@" + gccArgsFilename,
 			"-static",
 			"-z", "noexecstack",
@@ -133,12 +124,12 @@ func BuildApp_wa_wz(
 			fmt.Println(err)
 			os.Exit(1)
 		}
-		if err := os.WriteFile(nativeExtFile, elfBytes, 0777); err != nil {
+		if err := os.WriteFile(nativeExeFile, elfBytes, 0777); err != nil {
 			fmt.Println(err)
 			os.Exit(1)
 		}
 	}
 
 	// OK
-	return nativeExtFile, nil
+	return nativeExeFile, nil
 }

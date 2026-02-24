@@ -9,43 +9,42 @@ import (
 	"os/exec"
 
 	"wa-lang.org/wa/internal/3rdparty/cli"
-	"wa-lang.org/wa/internal/app/appbase"
 )
 
+var CmdNative_Run = &cli.Command{
+	Name:  "run",
+	Usage: "compile and run Wa program in native mode",
+	Flags: []cli.Flag{
+		&cli.StringFlag{
+			Name:  "tags",
+			Usage: "set build tags",
+		},
+		&cli.BoolFlag{
+			Name:  "optimize",
+			Usage: "enable optimize flag",
+		},
+	},
+
+	Action: CmdRunAction,
+}
+
 func CmdRunAction(c *cli.Context) error {
-	input := c.Args().First()
-
-	if input == "" || input == "." {
-		input, _ = os.Getwd()
-	}
-
-	var opt = appbase.BuildOptions(c)
-	if appbase.HasExt(input, ".wa", ".wz") {
-		// 执行单个 wa 脚本, 避免写磁盘
-		opt.RunFileMode = true
-	}
-
-	exePath, err := BuildApp(opt, input, "")
+	exePath, err := doCmdBuildAction(c)
 	if err != nil {
-		fmt.Println("appbuild.BuildApp:", err)
+		fmt.Println("appnative.BuildApp:", err)
 		os.Exit(1)
 		return nil
 	}
 
-	var appArgs []string
-	if c.NArg() > 1 {
-		appArgs = c.Args().Slice()
-	}
-
-	cmd := exec.Command(exePath, appArgs...)
+	cmd := exec.Command(exePath, c.Args().Slice()...)
 	output, err := cmd.CombinedOutput()
 	if err != nil {
-		fmt.Println(output)
+		fmt.Println(string(output))
 		fmt.Println(err)
 		os.Exit(1)
 		return nil
 	}
 
-	fmt.Println(output)
+	fmt.Print(string(output))
 	return nil
 }

@@ -5,7 +5,6 @@ package appnative
 
 import (
 	"wa-lang.org/wa/internal/3rdparty/cli"
-	"wa-lang.org/wa/internal/app/appbase"
 )
 
 var CmdNative = &cli.Command{
@@ -16,31 +15,6 @@ var CmdNative = &cli.Command{
 		CmdNative_Run,
 		CmdNative_Test,
 	},
-}
-
-var CmdNative_Build = &cli.Command{
-	Name:  "build",
-	Usage: "compile Wa source code in native mode",
-	Flags: []cli.Flag{
-		appbase.MakeFlag_output(),
-		appbase.MakeFlag_arch(),
-		appbase.MakeFlag_target(),
-		appbase.MakeFlag_tags(),
-	},
-
-	Action: CmdBuildAction,
-}
-
-var CmdNative_Run = &cli.Command{
-	Name:  "run",
-	Usage: "compile and run Wa program in native mode",
-	Flags: []cli.Flag{
-		appbase.MakeFlag_target(),
-		appbase.MakeFlag_tags(),
-		appbase.MakeFlag_optimize(),
-	},
-
-	Action: CmdRunAction,
 }
 
 var CmdNative_Test = &cli.Command{
