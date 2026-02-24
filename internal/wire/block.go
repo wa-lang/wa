@@ -209,9 +209,6 @@ func varUsedInStmt(stmt Stmt, v *Alloc) bool {
 	case *Alloc:
 		return exprContainsVar(s.init, v)
 
-	case *Get:
-		return exprContainsVar(s.Loc, v)
-
 	case *Set:
 		for _, lh := range s.Lhs {
 			if exprContainsVar(lh, v) {
@@ -235,51 +232,16 @@ func varUsedInStmt(stmt Stmt, v *Alloc) bool {
 			}
 		}
 
-	case *Unop:
-		return exprContainsVar(s.X, v)
-
-	case *Biop:
-		return exprContainsVar(s.X, v) || exprContainsVar(s.Y, v)
-
-	case *Call:
-		var call_common *CallCommon
-		switch call := s.Callee.(type) {
-		case *BuiltinCall:
-			call_common = &call.CallCommon
-
-		case *StaticCall:
-			call_common = &call.CallCommon
-
-		case *MethodCall:
-			if exprContainsVar(call.Recv, v) {
-				return true
-			}
-			call_common = &call.CallCommon
-
-		case *InterfaceCall:
-			if exprContainsVar(call.Interface, v) {
-				return true
-			}
-			call_common = &call.CallCommon
-
-		default:
-			panic("Todo")
-		}
-
-		for _, arg := range call_common.Args {
-			if exprContainsVar(arg, v) {
-				return true
-			}
-		}
-
 	case *If:
 		return exprContainsVar(s.Cond, v) || varUsedInStmt(s.True, v) || varUsedInStmt(s.False, v)
 
 	case *Loop:
+		for _, stmt := range s.PreCond {
+			if varUsedInStmt(stmt, v) {
+				return true
+			}
+		}
 		return exprContainsVar(s.Cond, v) || varUsedInStmt(s.Body, v) || varUsedInStmt(s.Post, v)
-
-	case *Retain:
-		return exprContainsVar(s.X, v)
 
 	case *Drop:
 		return false
@@ -313,13 +275,13 @@ func exprContainsVar(expr Expr, v *Alloc) bool {
 	case *Biop:
 		return exprContainsVar(e.X, v) || exprContainsVar(e.Y, v)
 
-	case *Combo:
-		for _, stmt := range e.Stmts {
-			if varUsedInStmt(stmt, v) {
-				return true
-			}
-		}
-		return exprContainsVar(e.Result, v)
+	//case *Combo:
+	//	for _, stmt := range e.Stmts {
+	//		if varUsedInStmt(stmt, v) {
+	//			return true
+	//		}
+	//	}
+	//	return exprContainsVar(e.Result, v)
 
 	case *Call:
 		var call_common *CallCommon

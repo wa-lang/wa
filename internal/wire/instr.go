@@ -47,7 +47,8 @@ type Alloc struct {
 	dtype  Type
 	rtype  Type
 	object interface{} // 与该值关联的 AST 结点。对凹语言前端，应为 types.Object
-	init   Expr        //初始值，为 nil 表示 0 值
+	init   Expr        // 初始值
+	noinit bool        // 是否不进行 0 值初始化
 
 	tank *tank
 }
@@ -73,19 +74,24 @@ func (i *Alloc) String() string {
 	default:
 		panic(fmt.Sprintf("Todo: VarKind: %v", i.kind))
 	}
-	if i.tank != nil {
-		s += " --- "
-		s += i.tank.String()
-	}
 
 	if i.init != nil {
 		s += " = " + i.init.Name()
+	} else if !i.noinit {
+		s += " = 0"
+	}
+
+	if i.tank != nil {
+		s += " --- "
+		s += i.tank.String()
 	}
 	return s
 }
 func (i *Alloc) Kind() VarKind  { return i.kind }
 func (i *Alloc) DataType() Type { return i.dtype }
-func (i *Alloc) RefType() Type  { return i.rtype }
+
+// func (i *Alloc) RefType() Type  { return i.rtype }
+func (i *Alloc) SetInit(init Expr) { i.init = init }
 
 //func (i *Alloc) Object() interface{} { return i.object }
 
@@ -513,35 +519,35 @@ func NewBiop(x, y Expr, op OpCode, pos int) *Biop {
 /**************************************
 Combo: 组合指令，将多个指令组合成一个指令，实现了 Expr 接口，返回 Result
 **************************************/
-
-type Combo struct {
-	aStmt
-	Stmts  []Stmt
-	Result Expr
-}
-
-func (i *Combo) Name() string   { return i.String() }
-func (i *Combo) Type() Type     { return i.Result.Type() }
-func (i *Combo) retained() bool { return i.Result.retained() }
-
-func (i *Combo) String() string {
-	var sb strings.Builder
-	sb.WriteRune('{')
-	for _, stmt := range i.Stmts {
-		sb.WriteString(stmt.String())
-		sb.WriteString("; ")
-	}
-	sb.WriteString(i.Result.Name())
-	sb.WriteRune('}')
-	return sb.String()
-}
-
-func NewCombo(stmts []Stmt, result Expr, pos int) *Combo {
-	v := &Combo{Stmts: stmts, Result: result}
-	v.Stringer = v
-	v.pos = pos
-	return v
-}
+//
+//type Combo struct {
+//	aStmt
+//	Stmts  []Stmt
+//	Result Expr
+//}
+//
+//func (i *Combo) Name() string   { return i.String() }
+//func (i *Combo) Type() Type     { return i.Result.Type() }
+//func (i *Combo) retained() bool { return i.Result.retained() }
+//
+//func (i *Combo) String() string {
+//	var sb strings.Builder
+//	sb.WriteRune('{')
+//	for _, stmt := range i.Stmts {
+//		sb.WriteString(stmt.String())
+//		sb.WriteString("; ")
+//	}
+//	sb.WriteString(i.Result.Name())
+//	sb.WriteRune('}')
+//	return sb.String()
+//}
+//
+//func NewCombo(stmts []Stmt, result Expr, pos int) *Combo {
+//	v := &Combo{Stmts: stmts, Result: result}
+//	v.Stringer = v
+//	v.pos = pos
+//	return v
+//}
 
 /**************************************
 If: 条件指令
@@ -600,17 +606,24 @@ loop $Label {
 
 type Loop struct {
 	aStmt
-	Cond  Expr   // 循环条件
-	Label string //
-	Body  *Block // 循环体，不会为 nil
-	Post  *Block // 循环后处理，不会为 nil
+	PreCond []Stmt
+	Cond    Expr   // 循环条件
+	Label   string //
+	Body    *Block // 循环体，不会为 nil
+	Post    *Block // 循环后处理，不会为 nil
 }
 
 func (i *Loop) Format(tab string, sb *strings.Builder) {
 	sb.WriteString(tab)
 	sb.WriteString("loop ")
+	for j, stmt := range i.PreCond {
+		sb.WriteString(stmt.String())
+		if j < len(i.PreCond) {
+			sb.WriteString("; ")
+		}
+	}
 	sb.WriteString(i.Cond.Name())
-	sb.WriteString(" $")
+	sb.WriteString(" : ")
 	sb.WriteString(i.Label)
 	sb.WriteString("\n")
 

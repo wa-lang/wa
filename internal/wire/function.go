@@ -288,7 +288,7 @@ func rc_block(b *Block, inloop bool, d *Block) {
 }
 
 func rc_stmt(s Stmt, inloop bool, d *Block) {
-	var post []Stmt
+	var pre []Stmt
 	switch s := s.(type) {
 	case *Block:
 		if len(s.Stmts) == 0 {
@@ -301,7 +301,8 @@ func rc_stmt(s Stmt, inloop bool, d *Block) {
 		}
 
 	case *Alloc:
-		s.init = rc_expr(s.init, inloop, false, d, &post)
+		s.init = rc_expr(s.init, inloop, false, false, d, &pre)
+		d.Stmts = append(d.Stmts, pre...)
 		if s.init != nil && rtimp.hasChunk(s.init.Type()) && !s.init.retained() {
 			s.init = NewRetain(s.init, s.init.Pos())
 		}
@@ -312,16 +313,17 @@ func rc_stmt(s Stmt, inloop bool, d *Block) {
 
 	case *Set:
 		for i := range s.Lhs {
-			s.Lhs[i] = rc_expr(s.Lhs[i], inloop, true, d, &post)
+			s.Lhs[i] = rc_expr(s.Lhs[i], inloop, true, false, d, &pre)
 		}
 
 		for i := range s.Rhs {
-			s.Rhs[i] = rc_expr(s.Rhs[i], inloop, false, d, &post)
+			s.Rhs[i] = rc_expr(s.Rhs[i], inloop, false, false, d, &pre)
 			if rtimp.hasChunk(s.Rhs[i].Type()) && !s.Rhs[i].retained() {
 				s.Rhs[i] = NewRetain(s.Rhs[i], s.Rhs[i].Pos())
 			}
 		}
 
+		d.Stmts = append(d.Stmts, pre...)
 		d.emit(s)
 
 	case *Br:
@@ -331,15 +333,18 @@ func rc_stmt(s Stmt, inloop bool, d *Block) {
 		panic("Return should not be here")
 
 	case *If:
-		cond := rc_expr(s.Cond, inloop, true, d, &post)
+		cond := rc_expr(s.Cond, inloop, true, false, d, &pre)
+		d.Stmts = append(d.Stmts, pre...)
 		n := d.EmitIf(cond, s.pos)
 		rc_block(s.True, inloop, n.True)
 		rc_block(s.False, inloop, n.False)
 
 	case *Loop:
-		cond := rc_expr(s.Cond, true, true, d, &post)
+		cond := rc_expr(s.Cond, true, true, true, d, &pre)
 
 		l := d.EmitLoop(cond, s.Label, s.pos)
+		l.PreCond = append(s.PreCond, pre...)
+
 		rc_block(s.Body, true, l.Body)
 		rc_block(s.Post, true, l.Post)
 
@@ -352,13 +357,9 @@ func rc_stmt(s Stmt, inloop bool, d *Block) {
 	default:
 		panic(fmt.Sprintf("Todo: %s", s.String()))
 	}
-
-	for _, i := range post {
-		d.emit(i)
-	}
 }
 
-func rc_expr(e Expr, inloop bool, replace bool, d *Block, post *[]Stmt) (ret Expr) {
+func rc_expr(e Expr, inloop bool, replace bool, isLoopCond bool, d *Block, pre *[]Stmt) (ret Expr) {
 	ret = e
 	if e == nil {
 		return
@@ -372,20 +373,14 @@ func rc_expr(e Expr, inloop bool, replace bool, d *Block, post *[]Stmt) (ret Exp
 		return
 
 	case *Get:
-		e.Loc = rc_expr(e.Loc, inloop, true, d, post)
+		e.Loc = rc_expr(e.Loc, inloop, true, isLoopCond, d, pre)
 
 	case *Unop:
-		e.X = rc_expr(e.X, inloop, true, d, post)
+		e.X = rc_expr(e.X, inloop, true, isLoopCond, d, pre)
 
 	case *Biop:
-		e.X = rc_expr(e.X, inloop, true, d, post)
-		e.Y = rc_expr(e.Y, inloop, true, d, post)
-
-	case *Combo:
-		for _, stmt := range e.Stmts {
-			rc_stmt(stmt, inloop, d)
-		}
-		e.Result = rc_expr(e.Result, inloop, true, d, post)
+		e.X = rc_expr(e.X, inloop, true, isLoopCond, d, pre)
+		e.Y = rc_expr(e.Y, inloop, true, isLoopCond, d, pre)
 
 	case *Call:
 		var call_common *CallCommon
@@ -398,18 +393,18 @@ func rc_expr(e Expr, inloop bool, replace bool, d *Block, post *[]Stmt) (ret Exp
 
 		case *MethodCall:
 			call_common = &call.CallCommon
-			call.Recv = rc_expr(call.Recv, inloop, true, d, post)
+			call.Recv = rc_expr(call.Recv, inloop, true, isLoopCond, d, pre)
 
 		case *InterfaceCall:
 			call_common = &call.CallCommon
-			call.Interface = rc_expr(call.Interface, inloop, true, d, post)
+			call.Interface = rc_expr(call.Interface, inloop, true, isLoopCond, d, pre)
 
 		default:
 			panic("Todo")
 		}
 
 		for i := range call_common.Args {
-			call_common.Args[i] = rc_expr(call_common.Args[i], inloop, true, d, post)
+			call_common.Args[i] = rc_expr(call_common.Args[i], inloop, true, isLoopCond, d, pre)
 		}
 
 	case Stmt:
@@ -417,43 +412,21 @@ func rc_expr(e Expr, inloop bool, replace bool, d *Block, post *[]Stmt) (ret Exp
 	}
 
 	if e.retained() && replace {
-		//imv := &Var{}
-		//imv.Stringer = imv
-		//imv.name = fmt.Sprintf("$%d", d.imvCount)
-		//d.imvCount++
-		//imv.dtype = e.Type()
+		if isLoopCond {
+			imv := d.NewAlloc(fmt.Sprintf("$%d", d.imvCount), e.Type(), e.Pos(), nil, nil)
+			imv.noinit = true
+			d.imvCount++
+			d.emit(imv)
 
-		imv := d.NewAlloc(fmt.Sprintf("$%d", d.imvCount), e.Type(), e.Pos(), nil, e)
-		d.imvCount++
-		//set := NewSet(imv, e, e.Pos())
+			*pre = append(*pre, NewSet(imv, e, e.Pos()))
+			ret = NewGet(imv, e.Pos())
+		} else {
+			imv := d.NewAlloc(fmt.Sprintf("$%d", d.imvCount), e.Type(), e.Pos(), nil, e)
+			d.imvCount++
+			d.emit(imv)
 
-		combo := NewCombo([]Stmt{imv}, NewGet(imv, e.Pos()), e.Pos())
-
-		//imv := d.NewVar(fmt.Sprintf("$%d", d.imvCount), e.Type(), e.Pos(), nil, e)
-		//d.imvCount++
-		//combo := NewCombo([]Stmt{imv}, NewGet(imv, e.Pos()), e.Pos())
-
-		ret = combo
-
-		drop := NewDrop(imv, e.Pos())
-		*post = append(*post, drop)
-
-		//dupref := NewDupRef(e, fmt.Sprintf("$%d", d.imvCount), e.Pos())
-		//d.imvCount++
-		//ret = dupref
-		//
-		//drop := NewDrop(dupref.Imv, e.Pos())
-		//*post = append(*post, drop)
-
-		//imv := &Var{}
-		//imv.Stringer = imv
-		//imv.name = fmt.Sprintf("$%d", d.imvCount)
-		//d.imvCount++
-		//imv.dtype = e.Type()
-		//
-		//d.emit(imv)
-		//d.EmitSet(imv, e, e.Pos())
-		//ret = NewGet(imv, e.Pos())
+			ret = NewGet(imv, e.Pos())
+		}
 	}
 
 	return
@@ -566,11 +539,11 @@ func (f *Function) allocVR_expr(e Expr, inloop bool) {
 		f.allocVR_expr(e.X, inloop)
 		f.allocVR_expr(e.Y, inloop)
 
-	case *Combo:
-		for _, stmt := range e.Stmts {
-			f.allocVR_stmt(stmt, inloop)
-		}
-		f.allocVR_expr(e.Result, inloop)
+	//case *Combo:
+	//	for _, stmt := range e.Stmts {
+	//		f.allocVR_stmt(stmt, inloop)
+	//	}
+	//	f.allocVR_expr(e.Result, inloop)
 
 	case *Call:
 		var call_common *CallCommon

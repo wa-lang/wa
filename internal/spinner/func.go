@@ -270,7 +270,7 @@ func (b *Builder) localValueSpec(spec *ast.ValueSpec, block *wire.Block) {
 }
 
 // 在 block 中分配一个由 id 定义的局部变量
-func (b *Builder) addLocalForIdent(id *ast.Ident, block *wire.Block) wire.Var {
+func (b *Builder) addLocalForIdent(id *ast.Ident, block *wire.Block) *wire.Alloc {
 	obj := b.info.Defs[id]
 	typ := b.BuildType(obj.Type())
 	return block.AddLocal(obj.Name(), typ, int(obj.Pos()), obj, nil)
@@ -281,6 +281,12 @@ func (b *Builder) assignStmt(s *ast.AssignStmt, block *wire.Block) {
 	isDef := false
 	if s.Tok == token.DEFINE {
 		isDef = true
+	}
+
+	if len(s.Lhs) == 1 && isDef {
+		loc := b.addLocalForIdent(s.Lhs[0].(*ast.Ident), block)
+		loc.SetInit(b.expr(s.Rhs[0], block))
+		return
 	}
 
 	locs := make([]wire.Expr, len(s.Lhs))
