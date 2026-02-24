@@ -4,10 +4,8 @@
 package appnative
 
 import (
-	"fmt"
-	"os"
-
 	"wa-lang.org/wa/internal/3rdparty/cli"
+	"wa-lang.org/wa/internal/app/appbase"
 )
 
 var CmdNative = &cli.Command{
@@ -24,43 +22,30 @@ var CmdNative_Build = &cli.Command{
 	Name:  "build",
 	Usage: "compile Wa source code in native mode",
 	Flags: []cli.Flag{
-		&cli.StringFlag{
-			Name:  "arch",
-			Usage: "set app default arch(x64/loong64)",
-			Value: "",
-		},
-		&cli.StringFlag{
-			Name:  "os",
-			Usage: "set app default os(windows/linux)",
-			Value: "",
-		},
+		appbase.MakeFlag_output(),
+		appbase.MakeFlag_arch(),
+		appbase.MakeFlag_target(),
+		appbase.MakeFlag_tags(),
 	},
 
-	Action: func(c *cli.Context) error {
-		fmt.Println("TODO")
-		os.Exit(1)
-		return nil
-	},
+	Action: CmdBuildAction,
 }
 
 var CmdNative_Run = &cli.Command{
 	Name:  "run",
 	Usage: "compile and run Wa program in native mode",
-
-	Action: func(c *cli.Context) error {
-		fmt.Println("TODO")
-		os.Exit(1)
-		return nil
+	Flags: []cli.Flag{
+		appbase.MakeFlag_target(),
+		appbase.MakeFlag_tags(),
+		appbase.MakeFlag_optimize(),
 	},
+
+	Action: CmdRunAction,
 }
 
 var CmdNative_Test = &cli.Command{
-	Name:  "test",
-	Usage: "test Wa packages in native mode",
-
-	Action: func(c *cli.Context) error {
-		fmt.Println("TODO")
-		os.Exit(1)
-		return nil
-	},
+	Hidden: true,
+	Name:   "test",
+	Usage:  "test Wa packages in native mode",
+	Action: CmdTestAction,
 }
