@@ -129,7 +129,7 @@ var waPredeclaredFuncs = [...]struct {
 	_unsafe_Sizeof:     {token.K_unsafe_Sizeof, 1, false, expression},
 	_unsafe_SliceData:  {token.K_unsafe_SliceData, 1, false, expression},
 	_unsafe_StringData: {token.K_unsafe_StringData, 1, false, expression},
-	_unsafe_MakeSlice:  {token.K_unsafe_MakeSlice, 2, false, expression},
+	_unsafe_MakeSlice:  {token.K_unsafe_MakeSlice, 3, false, expression},
 	_unsafe_MakeString: {token.K_unsafe_MakeString, 2, false, expression},
 
 	_runtime_SetFinalizer: {token.K_runtime_SetFinalizer, 2, false, statement},

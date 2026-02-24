@@ -888,11 +888,11 @@ func (g *functionGenerator) genBuiltin(name string, pos token.Pos, args []wir.Va
 		ret_type = g.module.UPTR
 
 	case token.K_unsafe_MakeSlice, token.K_unsafe_构造切片: // unsafe.MakeSlice
-		// unsafe.MakeSlice(ptr: *T, len: int) => []T
+		// unsafe.MakeSlice([]T, ptr: uintptr, len: int) => []T
 		panic("TODO: unsafe.MakeSlice")
 
 	case token.K_unsafe_MakeString, token.K_unsafe_构造字串: // unsafe.MakeString
-		// unsafe.MakeString(ptr: *byte, len: int) => string
+		// unsafe.MakeString(ptr: uintptr, len: int) => string
 		panic("TODO: unsafe.MakeString")
 
 	case token.K_runtime_SetFinalizer, token.K_runtime_设置终结函数: // runtime.SetFinalizer

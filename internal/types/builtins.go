@@ -588,28 +588,47 @@ func (check *Checker) builtin(x *operand, call *ast.CallExpr, id builtinId) (_ b
 		x.typ = retType
 
 	case _unsafe_MakeSlice:
-		// unsafe.MakeSlice(ptr: *T, len: int) => []T
+		// unsafe.MakeSlice([]T, ptr: uintptr, len: int) => []T
 
-		// 返回值的类型根据输入的指针类型确定
-		var retType Type
-		if t, _ := x.typ.Underlying().(*Pointer); t != nil {
-			retType = NewSlice(t.base)
-		} else {
-			check.invalidArg(x.pos(), "first argument must be a pointer type (got %s)", x.typ)
+		if nargs != 3 {
+			check.errorf(call.Pos(), "%v expects 3 arguments; found %d", call, nargs)
 			return
 		}
 
-		// 检查第二个长度参数
+		arg0 := call.Args[0]
+		T := check.typ(arg0)
+		if T == Typ[Invalid] {
+			return
+		}
+
+		// 第一个参数是期望返回的切片类型
+		var retType Type
+		if _, ok := T.Underlying().(*Slice); ok {
+			retType = T
+		} else {
+			check.invalidArg(arg0.Pos(), "cannot make %s; type must be slice, map, or channel", arg0)
+			return
+		}
+
+		// 检查指针参数
+		var ptr operand
+		arg(&ptr, 1)
+		if !ptr.assignableTo(check, Typ[Int], nil) {
+			check.invalidArg(ptr.pos(), "second argument must be uintptr (got %s)", ptr.typ)
+			return
+		}
+
+		// 检查第3个长度参数
 		var y operand
-		arg(&y, 1)
+		arg(&y, 2)
 		if !y.assignableTo(check, Typ[Int], nil) {
-			check.invalidArg(y.pos(), "second argument must be int (got %s)", y.typ)
+			check.invalidArg(y.pos(), "third argument must be int (got %s)", y.typ)
 			return
 		}
 
 		if check.Types != nil {
 			check.recordBuiltinType(
-				call.Fun, makeSig(check.isW2Mode(), retType, x.typ, y.typ),
+				call.Fun, makeSig(check.isW2Mode(), retType, ptr.typ, y.typ),
 			)
 		}
 
@@ -633,16 +652,16 @@ func (check *Checker) builtin(x *operand, call *ast.CallExpr, id builtinId) (_ b
 		x.typ = retType
 
 	case _unsafe_MakeString:
-		// unsafe.MakeString(ptr: *byte, len: int) => string
+		// unsafe.MakeString(ptr: uintptr, len: int) => string
 
-		var retType Type = Typ[String]
-		ptr, ok := x.typ.Underlying().(*Pointer)
-		if !ok {
-			check.invalidArg(x.pos(), "first argument must be a pointer to byte (got %s)", x.typ)
+		if nargs != 2 {
+			check.errorf(call.Pos(), "%v expects 2 arguments; found %d", call, nargs)
 			return
 		}
-		if ptr.Elem().Underlying() != Typ[Byte] {
-			check.invalidArg(x.pos(), "first argument must be a pointer to byte (got %s)", x.typ)
+
+		var retType Type = Typ[String]
+		if x.typ.Underlying() != Typ[Uintptr] {
+			check.invalidArg(x.pos(), "first argument must be uintptr (got %s)", x.typ)
 			return
 		}
 

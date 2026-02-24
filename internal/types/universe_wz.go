@@ -133,7 +133,7 @@ var wzPredeclaredFuncs = [...]struct {
 	_unsafe_Sizeof:     {token.K_unsafe_字节大小, 1, false, expression},
 	_unsafe_SliceData:  {token.K_unsafe_切片数据, 1, false, expression},
 	_unsafe_StringData: {token.K_unsafe_字串数据, 1, false, expression},
-	_unsafe_MakeSlice:  {token.K_unsafe_构造切片, 2, false, expression},
+	_unsafe_MakeSlice:  {token.K_unsafe_构造切片, 3, false, expression},
 	_unsafe_MakeString: {token.K_unsafe_构造字串, 2, false, expression},
 
 	_runtime_SetFinalizer: {token.K_runtime_设置终结函数, 2, false, statement},
