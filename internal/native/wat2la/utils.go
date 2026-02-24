@@ -87,9 +87,10 @@ func isSameInstList(s1, s2 []ast.Instruction) bool {
 }
 
 func fixName(s string) string {
-	if strings.ContainsAny(s, "/`") {
+	if strings.ContainsAny(s, "/`#") {
 		s = strings.ReplaceAll(s, "/", ".")
 		s = strings.ReplaceAll(s, "`", ".")
+		s = strings.ReplaceAll(s, "#", ".")
 	}
 	return s
 }

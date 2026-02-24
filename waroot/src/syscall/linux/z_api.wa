@@ -1,0 +1,11 @@
+// Copyright (C) 2026 武汉凹语言科技有限公司
+// SPDX-License-Identifier: MIT
+
+#wa:import syscall_linux GetArgc
+func GetArgc => int
+
+#wa:import syscall_linux GetArgvLen
+func GetArgvLen(idx: int) => int
+
+#wa:import syscall_linux GetArgvData
+func GetArgvData(dst: uintptr, srcIdx, n: int)

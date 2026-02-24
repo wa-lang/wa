@@ -4,11 +4,11 @@
 #wa:import syscall_windows GetArgc
 func GetArgc => int
 
-#wa:import syscall_windows GetArgv
-func GetArgv => uintptr
+#wa:import syscall_windows GetArgvLen
+func GetArgvLen(idx: int) => int
 
-#wa:import syscall_windows GetEnvp
-func GetEnvp => uintptr
+#wa:import syscall_windows GetArgvData
+func GetArgvData(dst: uintptr, srcIdx, n: int)
 
 // int MessageBoxA(
 //   [in, optional] HWND   hWnd,
