@@ -21,3 +21,9 @@ func SliceData(slice: []ArbitraryType) => uintptr
 
 // 字符串的底层数据指针
 func StringData(s: string) => uintptr
+
+// 切片的底层数据指针
+func MakeSlice(ptr: *ArbitraryTypeT, len: int) => []ArbitraryType
+
+// 字符串的底层数据指针
+func MakeString(ptr: *byte, len: int) => string

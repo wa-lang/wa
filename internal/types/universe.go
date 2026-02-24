@@ -71,6 +71,8 @@ const (
 	_unsafe_Raw
 	_unsafe_SliceData
 	_unsafe_StringData
+	_unsafe_MakeSlice
+	_unsafe_MakeString
 
 	// package runtime
 	_runtime_SetFinalizer

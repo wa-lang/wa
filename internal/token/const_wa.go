@@ -122,6 +122,8 @@ const (
 	K_unsafe_Sizeof     = "Sizeof"
 	K_unsafe_SliceData  = "SliceData"
 	K_unsafe_StringData = "StringData"
+	K_unsafe_MakeSlice  = "MakeSlice"
+	K_unsafe_MakeString = "MakeString"
 
 	// runtime
 	K_runtime_SetFinalizer = "SetFinalizer"

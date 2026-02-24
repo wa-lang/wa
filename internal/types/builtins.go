@@ -587,6 +587,35 @@ func (check *Checker) builtin(x *operand, call *ast.CallExpr, id builtinId) (_ b
 		x.mode = value
 		x.typ = retType
 
+	case _unsafe_MakeSlice:
+		// unsafe.MakeSlice(ptr: *T, len: int) => []T
+
+		// 返回值的类型根据输入的指针类型确定
+		var retType Type
+		if t, _ := x.typ.Underlying().(*Pointer); t != nil {
+			retType = NewSlice(t.base)
+		} else {
+			check.invalidArg(x.pos(), "first argument must be a pointer type (got %s)", x.typ)
+			return
+		}
+
+		// 检查第二个长度参数
+		var y operand
+		arg(&y, 1)
+		if !y.assignableTo(check, Typ[Int], nil) {
+			check.invalidArg(y.pos(), "second argument must be int (got %s)", y.typ)
+			return
+		}
+
+		if check.Types != nil {
+			check.recordBuiltinType(
+				call.Fun, makeSig(check.isW2Mode(), retType, x.typ, y.typ),
+			)
+		}
+
+		x.mode = value
+		x.typ = retType
+
 	case _unsafe_StringData:
 		if ok := isString(x.typ.Underlying()); !ok {
 			check.invalidArg(x.pos(), "%s is not a string", x.typ)
@@ -597,6 +626,38 @@ func (check *Checker) builtin(x *operand, call *ast.CallExpr, id builtinId) (_ b
 		if check.Types != nil {
 			check.recordBuiltinType(
 				call.Fun, makeSig(check.isW2Mode(), retType, x.typ),
+			)
+		}
+
+		x.mode = value
+		x.typ = retType
+
+	case _unsafe_MakeString:
+		// unsafe.MakeString(ptr: *byte, len: int) => string
+
+		var retType Type = Typ[String]
+		ptr, ok := x.typ.Underlying().(*Pointer)
+		if !ok {
+			check.invalidArg(x.pos(), "first argument must be a pointer to byte (got %s)", x.typ)
+			return
+		}
+		if ptr.Elem().Underlying() != Typ[Byte] {
+			check.invalidArg(x.pos(), "first argument must be a pointer to byte (got %s)", x.typ)
+			return
+		}
+
+		// 检查第二个长度参数
+		var y operand
+		arg(&y, 1)
+		if !y.assignableTo(check, Typ[Int], nil) {
+			check.invalidArg(y.pos(), "second argument must be int (got %s)", y.typ)
+			return
+		}
+
+		// 记录函数调用类型
+		if check.Types != nil {
+			check.recordBuiltinType(
+				call.Fun, makeSig(check.isW2Mode(), retType, x.typ, y.typ),
 			)
 		}
 

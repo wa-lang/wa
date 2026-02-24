@@ -130,6 +130,8 @@ const (
 	K_unsafe_字节大小  = "字节大小"  // unsafe.Sizeof
 	K_unsafe_切片数据  = "切片数据"  // unsafe.SliceData
 	K_unsafe_字串数据  = "字串数据"  // unsafe.StringData
+	K_unsafe_构造切片  = "构造切片"  // unsafe.MakeSlice
+	K_unsafe_构造字串  = "构造字串"  // unsafe.MakeString
 
 	// runtime
 	K_runtime_设置终结函数 = "设置终结函数" // runtime.SetFinalizer
