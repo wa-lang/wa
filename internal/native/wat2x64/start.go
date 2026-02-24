@@ -20,16 +20,22 @@ const (
 	kAppEnvpName = ".Wa.App.envp"
 )
 
-// 启动函数
-func (p *wat2X64Worker) buildEntryFunc(w io.Writer) error {
-	// 生成命令行参数
+// 生成命令行参数
+func (p *wat2X64Worker) buildEntryFuncHead(w io.Writer) error {
+	p.gasComment(w, "命令行参数")
+	p.gasSectionDataStart(w)
 	p.gasGlobal(w, kAppArgcName)
 	p.gasDefI64(w, kAppArgcName, 0)
 	p.gasGlobal(w, kAppArgvName)
 	p.gasDefI64(w, kAppArgvName, 0)
 	p.gasGlobal(w, kAppEnvpName)
 	p.gasDefI64(w, kAppEnvpName, 0)
+	fmt.Fprintln(w)
+	return nil
+}
 
+// 启动函数
+func (p *wat2X64Worker) buildEntryFunc(w io.Writer) error {
 	switch p.entryFuncName {
 	case kFuncStart:
 		return p.buildEntryFunc_start(w)

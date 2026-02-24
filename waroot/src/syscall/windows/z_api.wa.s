@@ -3,10 +3,35 @@
 
 .intel_syntax noprefix
 
+.extern .Wa.App.argc
+.extern .Wa.App.argv
+.extern .Wa.App.envp
+
 .extern .Wa.Memory.addr
 
 .extern MessageBoxA
 .extern MessageBoxW
+
+.section .text
+.globl .Wa.Import.syscall_windows.GetArgc
+.Wa.Import.syscall_windows.GetArgc:
+    mov rax, [rip+.Wa.App.argc]
+    ret
+
+
+.section .text
+.globl .Wa.Import.syscall_windows.GetArgv
+.Wa.Import.syscall_windows.GetArgv:
+    lea rax, [rip+.Wa.App.argv]
+    ret
+
+
+.section .text
+.globl .Wa.Import.syscall_windows.GetEnvp
+.Wa.Import.syscall_windows.GetEnvp:
+    lea rax, [rip+.Wa.App.envp]
+    ret
+
 
 .section .text
 .globl .Wa.Import.syscall_windows.MessageBoxA

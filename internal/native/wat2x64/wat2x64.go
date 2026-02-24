@@ -86,6 +86,9 @@ func (p *wat2X64Worker) BuildProgram() (code []byte, err error) {
 		return nil, err
 	}
 
+	// 生成命令行参数
+	p.buildEntryFuncHead(&out)
+
 	// 构建内存
 	if err := p.buildMemory(&out); err != nil {
 		return nil, err

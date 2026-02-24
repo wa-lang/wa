@@ -105,11 +105,12 @@ func BuildApp_wa_wz(
 			args := []string{
 				nativeAsmFile,
 				"-o", nativeExeFile,
-				"@" + gccArgsFilename,
 				"-static",
 				"-z", "noexecstack",
 			}
-			if len(gccArgcContent) == 0 {
+			if len(gccArgcContent) > 0 {
+				args = append(args, "@"+gccArgsFilename)
+			} else {
 				args = append(args, "-nostdlib")
 			}
 			if len(clangCode) > 0 {
@@ -158,10 +159,12 @@ func BuildApp_wa_wz(
 			var args = []string{
 				nativeAsmFile,
 				"-o", nativeExeFile,
-				"@" + gccArgsFilename,
 				"-lkernel32",
+				"-luser32",
 			}
-			if len(gccArgcContent) == 0 {
+			if len(gccArgcContent) > 0 {
+				args = append(args, "@"+gccArgsFilename)
+			} else {
 				args = append(args, "-nostdlib", "-Wl,-e,_start")
 			}
 			if len(clangCode) > 0 {
