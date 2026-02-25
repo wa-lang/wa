@@ -97,12 +97,11 @@ func (b *Builder) BuildType(t types.Type) wire.Type {
 			wtype = b.BuildType(t.At(0).Type())
 
 		default:
-			panic("Todo")
-			//var feilds []wir.Type
-			//for i := 0; i < t.Len(); i++ {
-			//	feilds = append(feilds, tLib.compile(t.At(i).Type()))
-			//}
-			//newType = tLib.module.GenValueType_Tuple(feilds)
+			var members []wire.Type
+			for i := 0; i < t.Len(); i++ {
+				members = append(members, b.BuildType(t.At(i).Type()))
+			}
+			wtype = b.module.Types.GenTuple(members)
 		}
 
 	case *types.Pointer:

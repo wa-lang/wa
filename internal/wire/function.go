@@ -167,9 +167,9 @@ func (f *Function) EndBody() {
 			param.name = "$" + param.name
 			fb.emit(param)
 			if hasChunk {
-				fb.EmitSet(param, NewRetain(NewGet(&np, np.pos), np.pos), np.pos)
+				param.init = NewRetain(NewGet(&np, np.pos), np.pos)
 			} else {
-				fb.EmitSet(param, NewGet(&np, np.pos), np.pos)
+				param.init = NewGet(&np, np.pos)
 			}
 
 			f.params[i] = &np
@@ -203,14 +203,17 @@ func (f *Function) EndBody() {
 			ret_exprs = append(ret_exprs, NewGet(r, f.EndPos))
 
 		case Heap:
-			rr := *r
-			rr.Stringer = &rr
-			rr.kind = Register
-			rr.name = fmt.Sprintf("$%d", fb.imvCount)
-			fb.imvCount++
-			fb.emit(&rr)
-			fb.EmitSet(&rr, NewGet(r, f.EndPos), f.EndPos)
-			ret_exprs = append(ret_exprs, NewGet(&rr, f.EndPos))
+			rr := NewImv(fb.newTempVarName(), NewGet(r, f.EndPos), f.EndPos)
+			fb.emit(rr)
+			ret_exprs = append(ret_exprs, rr)
+
+			//rr := *r
+			//rr.Stringer = &rr
+			//rr.kind = Register
+			//rr.name = fb.newTempVarName()
+			//fb.emit(&rr)
+			//fb.EmitSet(&rr, NewGet(r, f.EndPos), f.EndPos)
+			//ret_exprs = append(ret_exprs, NewGet(&rr, f.EndPos))
 
 		default:
 			panic(fmt.Sprintf("Todo: VarKind: %v", r.kind))
@@ -221,6 +224,9 @@ func (f *Function) EndBody() {
 
 	// 虚拟寄存器
 	f.allocVR_block(f.Body, false)
+
+	// Get指令替换
+	getReplace_stmt(f.Body)
 
 	{
 		var sb strings.Builder
@@ -324,7 +330,77 @@ func rc_stmt(s Stmt, inloop bool, d *Block) {
 		}
 
 		d.Stmts = append(d.Stmts, pre...)
-		d.emit(s)
+
+		assginable := true
+		for _, lh := range s.Lhs {
+			if lh == nil {
+				continue
+			}
+
+			v, ok := lh.(Var)
+			if !ok || v.Kind() != Register {
+				assginable = false
+				break
+			}
+		}
+
+		if assginable {
+			lhs := make([]Var, len(s.Lhs))
+			for i, lh := range s.Lhs {
+				lhs[i] = lh.(Var)
+			}
+			assign := NewAssignN(lhs, s.Rhs, s.pos)
+			d.emit(assign)
+		} else {
+			for i, lh := range s.Lhs {
+				if lh == nil {
+					continue
+				}
+				if _, ok := lh.(Var); ok {
+					continue
+				}
+
+				if get, ok := lh.(*Get); ok {
+					if _, ok := get.Loc.(Var); ok {
+						continue
+					}
+				}
+
+				loc := NewImv(d.newTempVarName(), lh, s.pos)
+				d.emit(loc)
+
+				s.Lhs[i] = loc
+			}
+
+			if len(s.Lhs) > len(s.Rhs) {
+				// 元组展开
+				rh := s.Rhs[0]
+				if rh.Type().Kind() != TypeKindTuple {
+					panic("RH is not a tuple")
+				}
+
+				tuple := NewImv(d.newTempVarName(), rh, s.pos)
+				d.emit(tuple)
+
+				s.Rhs = make([]Expr, len(s.Lhs))
+				for i := range s.Lhs {
+					s.Rhs[i] = NewExtract(tuple, i, s.pos)
+				}
+			}
+
+			for i, lh := range s.Lhs {
+				rh := s.Rhs[i]
+				if lh == nil {
+					d.emit(NewAssign(nil, rh, s.pos))
+				} else {
+					if v, ok := lh.(Var); ok && v.Kind() == Register {
+						d.emit(NewAssign(v, rh, s.pos))
+					} else {
+						d.emit(NewStore(lh, rh, s.pos))
+					}
+				}
+			}
+		}
 
 	case *Br:
 		d.emit(s)
@@ -413,19 +489,17 @@ func rc_expr(e Expr, inloop bool, replace bool, isLoopCond bool, d *Block, pre *
 
 	if e.retained() && replace {
 		if isLoopCond {
-			imv := d.NewAlloc(fmt.Sprintf("$%d", d.imvCount), e.Type(), e.Pos(), nil, nil)
-			imv.noinit = true
-			d.imvCount++
-			d.emit(imv)
+			tmp := d.NewAlloc(d.newTempVarName(), e.Type(), e.Pos(), nil, nil)
+			tmp.noinit = true
+			d.emit(tmp)
 
-			*pre = append(*pre, NewSet(imv, e, e.Pos()))
-			ret = NewGet(imv, e.Pos())
+			*pre = append(*pre, NewAssign(tmp, e, e.Pos()))
+			ret = NewGet(tmp, e.Pos())
 		} else {
-			imv := d.NewAlloc(fmt.Sprintf("$%d", d.imvCount), e.Type(), e.Pos(), nil, e)
-			d.imvCount++
-			d.emit(imv)
+			tmp := d.NewAlloc(d.newTempVarName(), e.Type(), e.Pos(), nil, e)
+			d.emit(tmp)
 
-			ret = NewGet(imv, e.Pos())
+			ret = NewGet(tmp, e.Pos())
 		}
 	}
 
@@ -450,6 +524,18 @@ func (f *Function) autoDrop(b *Block) {
 			t = append(t, b.Stmts[r.last+1:]...)
 			b.Stmts = t
 
+		case *Imv:
+			r := b.varUsageRange(s)
+			if r.last == -1 {
+				panic(fmt.Sprintf("var:%s not used", s.Name()))
+			}
+
+			var t []Stmt
+			t = append(t, b.Stmts[:r.last+1]...)
+			t = append(t, NewDrop(s, b.Stmts[r.last].Pos()))
+			t = append(t, b.Stmts[r.last+1:]...)
+			b.Stmts = t
+
 		case *If:
 			f.autoDrop(s.True)
 			f.autoDrop(s.False)
@@ -458,7 +544,7 @@ func (f *Function) autoDrop(b *Block) {
 			f.autoDrop(s.Body)
 			f.autoDrop(s.Post)
 
-		case *Get, *Set, *Br, *Return, *Unop, *Biop, *Retain, *Drop:
+		case *Get, *Set, *Assign, *Store, *Br, *Return, *Unop, *Biop, *Retain, *Drop:
 			continue
 
 		default:
@@ -483,6 +569,10 @@ func (f *Function) allocVR_stmt(s Stmt, inloop bool) {
 		f.allocVR_expr(s.init, inloop)
 		f.allocVR_var(s, inloop)
 
+	case *Imv:
+		f.allocVR_expr(s.val, inloop)
+		f.allocVR_imv(s, inloop)
+
 	case *Get:
 		panic("Get should not be here")
 
@@ -493,6 +583,18 @@ func (f *Function) allocVR_stmt(s Stmt, inloop bool) {
 		for _, rh := range s.Rhs {
 			f.allocVR_expr(rh, inloop)
 		}
+
+	case *Assign:
+		for _, lh := range s.Lhs {
+			f.allocVR_expr(lh, inloop)
+		}
+		for _, rh := range s.Rhs {
+			f.allocVR_expr(rh, inloop)
+		}
+
+	case *Store:
+		f.allocVR_expr(s.Loc, inloop)
+		f.allocVR_expr(s.Val, inloop)
 
 	case *If:
 		f.allocVR_expr(s.Cond, inloop)
@@ -505,7 +607,7 @@ func (f *Function) allocVR_stmt(s Stmt, inloop bool) {
 		f.allocVR_block(s.Post, true)
 
 	case *Drop:
-		f.dropVR_tank(s.X.tank)
+		f.dropVR_tank(s.X.Tank())
 
 	case *Retain:
 		panic("Retain should not be here")
@@ -526,11 +628,17 @@ func (f *Function) allocVR_expr(e Expr, inloop bool) {
 	}
 
 	switch e := e.(type) {
-	case *Alloc:
+	case *Alloc, *Imv:
 		return
 
 	case *Get:
 		f.allocVR_expr(e.Loc, inloop)
+
+	case *Load:
+		f.allocVR_expr(e.Loc, inloop)
+
+	case *Extract:
+		f.allocVR_expr(e.X, inloop)
 
 	case *Unop:
 		f.allocVR_expr(e.X, inloop)
@@ -583,7 +691,12 @@ func (f *Function) allocVR_expr(e Expr, inloop bool) {
 }
 
 func (f *Function) allocVR_var(v *Alloc, inloop bool) {
-	v.tank = rtimp.initTank(v.Type())
+	v.tank = rtimp.initTank(v.Type(), false)
+	f.allocVR_tank(v.tank, inloop)
+}
+
+func (f *Function) allocVR_imv(v *Imv, inloop bool) {
+	v.tank = rtimp.initTank(v.Type(), true)
 	f.allocVR_tank(v.tank, inloop)
 }
 
@@ -651,132 +764,133 @@ func (f *Function) dropRegister(r register) {
 	}
 }
 
-//func setImvId(num int, b *Block) int {
-//	for _, i := range b.Instrs {
-//		if v, ok := i.(imv); ok {
-//			if av, ok := v.(Value); ok {
-//				avt := av.Type()
-//				if avt != nil && !avt.Equal(&Void{}) {
-//					v.setId(num)
-//					num++
-//				}
-//			}
-//		}
-//
-//		switch i := i.(type) {
-//		case *Block:
-//			num = setImvId(num, i)
-//
-//		case *InstIf:
-//			num = setImvId(num, i.True)
-//			num = setImvId(num, i.False)
-//		}
-//	}
-//	return num
-//}
+func getReplace_stmt(stmt Stmt) {
+	switch stmt := stmt.(type) {
+	case *Block:
+		for _, s := range stmt.Stmts {
+			getReplace_stmt(s)
+		}
 
-//func exprReplaceLocation(e Expr, ov, nv *Var) Expr {
-//	if v, ok := e.(*Var); ok {
-//		if v == ov {
-//			return ov
-//		}
-//	}
-//
-//	if s, ok := e.(Stmt); ok {
-//		stmtReplaceLocation(s, ov, nv)
-//	}
-//
-//	return e
-//}
-//
-//func stmtReplaceLocation(stmt Stmt, ov, nv *Var) {
-//	switch stmt := stmt.(type) {
-//	case *Block:
-//		for _, s := range stmt.Stmts {
-//			stmtReplaceLocation(s, ov, nv)
-//		}
-//
-//	case *Var:
-//		return
-//
-//	case *Get:
-//		if stmt.Loc == ov {
-//			stmt.Loc = nv
-//			return
-//		}
-//
-//		if s, ok := stmt.Loc.(Stmt); ok {
-//			stmtReplaceLocation(s, ov, nv)
-//		}
-//
-//	case *Set:
-//		for i := range stmt.Loc {
-//			if stmt.Loc[i] == ov {
-//				stmt.Loc[i] = nv
-//				continue
-//			}
-//
-//			if s, ok := stmt.Loc[i].(Stmt); ok {
-//				stmtReplaceLocation(s, ov, nv)
-//			}
-//		}
-//
-//		for i, val := range stmt.Val {
-//			stmt.Val[i] = exprReplaceLocation(val, ov, nv)
-//		}
-//
-//	case *Br:
-//		return
-//
-//	case *Return:
-//		for i, ret := range stmt.Results {
-//			stmt.Results[i] = exprReplaceLocation(ret, ov, nv)
-//		}
-//
-//	case *Unop:
-//		stmt.X = exprReplaceLocation(stmt.X, ov, nv)
-//
-//	case *Biop:
-//		stmt.X = exprReplaceLocation(stmt.X, ov, nv)
-//		stmt.Y = exprReplaceLocation(stmt.Y, ov, nv)
-//
-//	case *If:
-//		stmt.Cond = exprReplaceLocation(stmt.Cond, ov, nv)
-//		stmtReplaceLocation(stmt.True, ov, nv)
-//		stmtReplaceLocation(stmt.False, ov, nv)
-//
-//	case *Loop:
-//		stmt.Cond = exprReplaceLocation(stmt.Cond, ov, nv)
-//		stmtReplaceLocation(stmt.Body, ov, nv)
-//		stmtReplaceLocation(stmt.Post, ov, nv)
-//
-//	case *Call:
-//		var call_common *CallCommon
-//		switch call := stmt.Callee.(type) {
-//		case *BuiltinCall:
-//			call_common = &call.CallCommon
-//
-//		case *StaticCall:
-//			call_common = &call.CallCommon
-//
-//		case *MethodCall:
-//			call_common = &call.CallCommon
-//			call.Recv = exprReplaceLocation(call.Recv, ov, nv)
-//
-//		case *InterfaceCall:
-//			call_common = &call.CallCommon
-//			call.Interface = exprReplaceLocation(call.Interface, ov, nv)
-//
-//		default:
-//			panic("Todo")
-//		}
-//
-//		for i, arg := range call_common.Args {
-//			call_common.Args[i] = exprReplaceLocation(arg, ov, nv)
-//		}
-//
-//	default:
-//		panic(fmt.Sprintf("Todo: %s", stmt.String()))
-//	}
-//
-//}
+	case *Alloc:
+		stmt.init = getReplace_expr(stmt.init)
+
+	case *Imv:
+		stmt.val = getReplace_expr(stmt.val)
+
+	case *Set:
+		for i := range stmt.Lhs {
+			stmt.Lhs[i] = getReplace_expr(stmt.Lhs[i])
+		}
+		for i := range stmt.Rhs {
+			stmt.Rhs[i] = getReplace_expr(stmt.Rhs[i])
+		}
+
+	case *Assign:
+		for i := range stmt.Rhs {
+			stmt.Rhs[i] = getReplace_expr(stmt.Rhs[i])
+		}
+
+	case *Store:
+		stmt.Loc = getReplace_expr(stmt.Loc)
+		stmt.Val = getReplace_expr(stmt.Val)
+
+	case *Return:
+		for i := range stmt.Results {
+			stmt.Results[i] = getReplace_expr(stmt.Results[i])
+		}
+
+	case *If:
+		stmt.Cond = getReplace_expr(stmt.Cond)
+		getReplace_stmt(stmt.True)
+		getReplace_stmt(stmt.False)
+
+	case *Loop:
+		for _, pre := range stmt.PreCond {
+			getReplace_stmt(pre)
+		}
+		stmt.Cond = getReplace_expr(stmt.Cond)
+		getReplace_stmt(stmt.Body)
+		getReplace_stmt(stmt.Post)
+
+	case *Br, *Drop:
+		return
+
+	default:
+		panic(fmt.Sprintf("Todo: %s", stmt.String()))
+
+	}
+}
+
+func getReplace_expr(e Expr) (ret Expr) {
+	ret = e
+	if e == nil {
+		return
+	}
+	if _, ok := e.(Stmt); !ok {
+		return
+	}
+
+	switch e := e.(type) {
+	case *Get:
+		if v, ok := e.Loc.(Var); !ok {
+			loc := getReplace_expr(e.Loc)
+			return NewLoad(loc, e.Pos())
+		} else {
+			if v.Kind() == Register {
+				return e.Loc
+			} else {
+				return NewLoad(e.Loc, e.Pos())
+			}
+		}
+
+	case *Load:
+		e.Loc = getReplace_expr(e.Loc)
+
+	case *Extract:
+		e.X = getReplace_expr(e.X)
+
+	case *Unop:
+		e.X = getReplace_expr(e.X)
+
+	case *Biop:
+		e.X = getReplace_expr(e.X)
+		e.Y = getReplace_expr(e.Y)
+
+	case *Retain:
+		e.X = getReplace_expr(e.X)
+
+	case *Call:
+		var call_common *CallCommon
+		switch call := e.Callee.(type) {
+		case *BuiltinCall:
+			call_common = &call.CallCommon
+
+		case *StaticCall:
+			call_common = &call.CallCommon
+
+		case *MethodCall:
+			call_common = &call.CallCommon
+			call.Recv = getReplace_expr(call.Recv)
+
+		case *InterfaceCall:
+			call_common = &call.CallCommon
+			call.Interface = getReplace_expr(call.Interface)
+
+		default:
+			panic("Todo")
+		}
+
+		for i := range call_common.Args {
+			call_common.Args[i] = getReplace_expr(call_common.Args[i])
+		}
+
+	case *Alloc, *Imv:
+		return
+
+	default:
+		panic(fmt.Sprintf("Todo: %t", e))
+
+	}
+
+	return
+}

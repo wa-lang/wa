@@ -7,7 +7,7 @@ import "fmt"
 
 type RtImp interface {
 	underlyingStruct(t Type) Struct
-	initTank(t Type) *tank
+	initTank(t Type, isImv bool) *tank
 	hasChunk(t Type) bool
 }
 
@@ -98,7 +98,7 @@ func (ri *rtImp) underlyingStruct(t Type) (underlying Struct) {
 	return
 }
 
-func (ri *rtImp) initTank(t Type) *tank {
+func (ri *rtImp) initTank(t Type, isImv bool) *tank {
 	tank := &tank{}
 	tank.typ = t
 	tank.register.id = -1
@@ -123,25 +123,29 @@ func (ri *rtImp) initTank(t Type) *tank {
 		tank.register.typ = ri.i32
 
 	case *chunk:
-		tank.register.typ = ri.chunk
+		if isImv {
+			tank.register.typ = ri.chunk
+		} else {
+			tank.register.typ = ri.i32
+		}
 
 	case *Tuple:
 		for _, m := range t.members {
-			tm := ri.initTank(m)
+			tm := ri.initTank(m, isImv)
 			tank.member = append(tank.member, tm)
 		}
 
 	case *Struct:
 		for _, m := range t.members {
-			tm := ri.initTank(m.Type)
+			tm := ri.initTank(m.Type, isImv)
 			tank.member = append(tank.member, tm)
 		}
 
 	case *String:
-		tank = ri.initTank(t.Underlying())
+		tank = ri.initTank(t.Underlying(), isImv)
 
 	case *Ref:
-		tank = ri.initTank(t.Underlying())
+		tank = ri.initTank(t.Underlying(), isImv)
 
 	default:
 		panic(fmt.Sprintf("Todo: %T", t))

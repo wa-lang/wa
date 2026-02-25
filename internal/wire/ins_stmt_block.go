@@ -29,7 +29,7 @@ type Block struct {
 	objects map[interface{}]*Alloc // AST 结点 -> 块内变量
 	types   *Types                 // 该函数所属 Module 的类型库，切勿手动修改
 
-	imvCount int
+	tCount int
 }
 
 // 初始化 Block
@@ -119,6 +119,12 @@ func (b *Block) emit(stmt Stmt) {
 	b.Stmts = append(b.Stmts, stmt)
 }
 
+func (b *Block) newTempVarName() string {
+	name := fmt.Sprintf("$%d", b.tCount)
+	b.tCount++
+	return name
+}
+
 // 判断 Var 是否被赋值
 //func (b *Block) varStored(v *Var) bool {
 //	for _, stmt := range b.Stmts {
@@ -177,7 +183,7 @@ type usageRange struct {
 }
 
 // varUsageRange 分析指定变量在该块中的使用情况，变量声明本身不属于被使用
-func (b *Block) varUsageRange(v *Alloc) usageRange {
+func (b *Block) varUsageRange(v Var) usageRange {
 	info := usageRange{
 		first: -1,
 		last:  -1,
@@ -197,7 +203,7 @@ func (b *Block) varUsageRange(v *Alloc) usageRange {
 }
 
 // varUsedInStmt 检查语句是否使用了指定的变量
-func varUsedInStmt(stmt Stmt, v *Alloc) bool {
+func varUsedInStmt(stmt Stmt, v Var) bool {
 	switch s := stmt.(type) {
 	case *Block:
 		for _, ss := range s.Stmts {
@@ -208,6 +214,12 @@ func varUsedInStmt(stmt Stmt, v *Alloc) bool {
 
 	case *Alloc:
 		return exprContainsVar(s.init, v)
+
+	case *Imv:
+		return exprContainsVar(s.val, v)
+
+	case *Drop:
+		return false
 
 	case *Set:
 		for _, lh := range s.Lhs {
@@ -221,6 +233,21 @@ func varUsedInStmt(stmt Stmt, v *Alloc) bool {
 			}
 		}
 		return false
+
+	case *Assign:
+		for _, lh := range s.Lhs {
+			if exprContainsVar(lh, v) {
+				return true
+			}
+		}
+		for _, rh := range s.Rhs {
+			if exprContainsVar(rh, v) {
+				return true
+			}
+		}
+
+	case *Store:
+		return exprContainsVar(s.Loc, v) || exprContainsVar(s.Val, v)
 
 	case *Br:
 		return false
@@ -243,9 +270,6 @@ func varUsedInStmt(stmt Stmt, v *Alloc) bool {
 		}
 		return exprContainsVar(s.Cond, v) || varUsedInStmt(s.Body, v) || varUsedInStmt(s.Post, v)
 
-	case *Drop:
-		return false
-
 	default:
 		panic(fmt.Sprintf("Todo: %s", s.String()))
 	}
@@ -254,7 +278,7 @@ func varUsedInStmt(stmt Stmt, v *Alloc) bool {
 }
 
 // exprContainsVar 检查表达式是否包含指定的变量
-func exprContainsVar(expr Expr, v *Alloc) bool {
+func exprContainsVar(expr Expr, v Var) bool {
 	if expr == nil {
 		return false
 	}
@@ -266,14 +290,26 @@ func exprContainsVar(expr Expr, v *Alloc) bool {
 	case *Alloc:
 		return e == v || exprContainsVar(e.init, v)
 
+	case *Imv:
+		return e == v || exprContainsVar(e.val, v)
+
 	case *Get:
 		return exprContainsVar(e.Loc, v)
+
+	case *Load:
+		return exprContainsVar(e.Loc, v)
+
+	case *Extract:
+		return exprContainsVar(e.X, v)
 
 	case *Unop:
 		return exprContainsVar(e.X, v)
 
 	case *Biop:
 		return exprContainsVar(e.X, v) || exprContainsVar(e.Y, v)
+
+	case *Retain:
+		return exprContainsVar(e.X, v)
 
 	//case *Combo:
 	//	for _, stmt := range e.Stmts {
@@ -313,9 +349,6 @@ func exprContainsVar(expr Expr, v *Alloc) bool {
 				return true
 			}
 		}
-
-	case *Retain:
-		return exprContainsVar(e.X, v)
 
 	//case *DupRef:
 	//	return exprContainsVar(e.X, v)

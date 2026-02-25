@@ -150,6 +150,7 @@ type Var interface {
 
 	Kind() VarKind
 	DataType() Type
+	Tank() *tank
 }
 
 /**************************************
