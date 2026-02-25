@@ -154,12 +154,13 @@ func (b *Block) EmitAssignN(lhs []Var, rhs []Expr, pos int) *Assign {
 
 /**************************************
 Store: Store 指令，将 Val 存储到 Loc 指定的位置
-  - Loc 类型应为 Ref、Ptr
+  - Loc 应为 Var
+  - Val 应为 Var 或 Const
 **************************************/
 
 type Store struct {
 	aStmt
-	Loc Expr
+	Loc Var
 	Val Expr
 }
 
@@ -167,7 +168,17 @@ func (i *Store) String() string {
 	return fmt.Sprintf("store(%s, %s)", i.Loc.Name(), i.Val.Name())
 }
 
-func NewStore(loc Expr, val Expr, pos int) *Store {
+func NewStore(loc Var, val Expr, pos int) *Store {
+	if val == nil {
+		panic("val is nil")
+	}
+
+	if _, ok := val.(Var); !ok {
+		if _, ok := val.(*Const); !ok {
+			panic(fmt.Sprintf("val is not a Var or Const: %s", val.Name()))
+		}
+	}
+
 	v := &Store{}
 	v.Stringer = v
 	v.Loc = loc

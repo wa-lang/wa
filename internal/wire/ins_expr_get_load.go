@@ -47,6 +47,15 @@ func (i *Get) String() string {
 
 // 生成一条 Get 指令
 func NewGet(loc Expr, pos int) *Get {
+	if loc == nil {
+		panic("loc is nil")
+	}
+	if _, ok := loc.(Var); !ok {
+		if loc.Type().Kind() != TypeKindPtr && loc.Type().Kind() != TypeKindRef {
+			panic(fmt.Sprintf("loc is not a Var, and loc.Type() is not Ptr or Ref: %s", loc.Type().Name()))
+		}
+	}
+
 	v := &Get{}
 	v.Stringer = v
 	v.Loc = loc
@@ -84,38 +93,16 @@ func (i *Load) String() string {
 
 // 生成一条 Load 指令
 func NewLoad(loc Expr, pos int) *Load {
+	if loc == nil {
+		panic("loc is nil")
+	}
+	if loc.Type().Kind() != TypeKindPtr && loc.Type().Kind() != TypeKindRef {
+		panic(fmt.Sprintf("loc.Type() is not Ptr or Ref: %s", loc.Type().Name()))
+	}
+
 	v := &Load{}
 	v.Stringer = v
 	v.Loc = loc
 	v.pos = pos
-	return v
-}
-
-/**************************************
-Extract: Extract 指令，提取元组 Tuple 的第 Index 个元素，Extract 实现了 Expr
-**************************************/
-
-type Extract struct {
-	aStmt
-	X     Expr
-	Index int
-}
-
-func (i *Extract) Name() string   { return i.String() }
-func (i *Extract) Type() Type     { return i.X.Type().(*Tuple).members[i.Index] }
-func (i *Extract) retained() bool { return false }
-
-func (i *Extract) String() string {
-	return fmt.Sprintf("extract(%s, %d)", i.X.Name(), i.Index)
-}
-
-// 生成一条 Extract 指令
-func NewExtract(tuple Expr, index int, pos int) *Extract {
-	v := &Extract{}
-	v.Stringer = v
-	v.X = tuple
-	v.Index = index
-	v.pos = pos
-
 	return v
 }

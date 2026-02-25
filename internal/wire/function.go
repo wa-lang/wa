@@ -331,74 +331,86 @@ func rc_stmt(s Stmt, inloop bool, d *Block) {
 
 		d.Stmts = append(d.Stmts, pre...)
 
-		assginable := true
-		for _, lh := range s.Lhs {
+		allAssignable := true
+		assignable := make([]bool, len(s.Lhs))
+		lhs := make([]Var, len(s.Lhs))
+		for i, lh := range s.Lhs {
 			if lh == nil {
+				lhs[i] = nil
+				assignable[i] = true
 				continue
 			}
 
-			v, ok := lh.(Var)
-			if !ok || v.Kind() != Register {
-				assginable = false
-				break
+			if v, ok := lh.(Var); ok && v.Kind() == Register {
+				lhs[i] = v
+				assignable[i] = true
+				continue
 			}
+
+			allAssignable = false
+			assignable[i] = false
+			if get, ok := lh.(*Get); ok {
+				if v, ok := get.Loc.(Var); ok && v.Kind() == Register {
+					lhs[i] = v
+					continue
+				}
+			}
+
+			loc := NewImv(d.newTempVarName(), lh, s.pos)
+			d.emit(loc)
+			lhs[i] = loc
 		}
 
-		if assginable {
-			lhs := make([]Var, len(s.Lhs))
-			for i, lh := range s.Lhs {
-				lhs[i] = lh.(Var)
-			}
-			assign := NewAssignN(lhs, s.Rhs, s.pos)
-			d.emit(assign)
+		if allAssignable {
+			d.emit(NewAssignN(lhs, s.Rhs, s.pos))
 		} else {
-			for i, lh := range s.Lhs {
-				if lh == nil {
-					continue
+			rhs := make([]Expr, len(s.Lhs))
+
+			if len(s.Lhs) > len(s.Rhs) {
+				// 元组展开
+				if s.Rhs[0].Type().Kind() != TypeKindTuple {
+					panic("RH is not a tuple")
 				}
-				if _, ok := lh.(Var); ok {
+
+				tuple := NewImv(d.newTempVarName(), s.Rhs[0], s.pos)
+				d.emit(tuple)
+
+				for i := range s.Lhs {
+					rhs[i] = NewExtract(tuple, i, s.pos)
+				}
+			} else {
+				copy(rhs, s.Rhs)
+			}
+
+			for i := range lhs {
+				loc := lhs[i]
+				rh := rhs[i]
+
+				if assignable[i] {
+					d.emit(NewAssign(loc, rh, s.pos))
 					continue
 				}
 
-				if get, ok := lh.(*Get); ok {
-					if _, ok := get.Loc.(Var); ok {
+				if v, ok := rh.(Var); ok {
+					d.emit(NewStore(loc, v, s.pos))
+					continue
+				}
+
+				if get, ok := rh.(*Get); ok {
+					if v, ok := get.Loc.(Var); ok && v.Kind() == Register {
+						d.emit(NewStore(loc, v, s.pos))
 						continue
 					}
 				}
 
-				loc := NewImv(d.newTempVarName(), lh, s.pos)
-				d.emit(loc)
-
-				s.Lhs[i] = loc
-			}
-
-			if len(s.Lhs) > len(s.Rhs) {
-				// 元组展开
-				rh := s.Rhs[0]
-				if rh.Type().Kind() != TypeKindTuple {
-					panic("RH is not a tuple")
+				if c, ok := rh.(*Const); ok {
+					d.emit(NewStore(loc, c, s.pos))
+					continue
 				}
 
-				tuple := NewImv(d.newTempVarName(), rh, s.pos)
-				d.emit(tuple)
-
-				s.Rhs = make([]Expr, len(s.Lhs))
-				for i := range s.Lhs {
-					s.Rhs[i] = NewExtract(tuple, i, s.pos)
-				}
-			}
-
-			for i, lh := range s.Lhs {
-				rh := s.Rhs[i]
-				if lh == nil {
-					d.emit(NewAssign(nil, rh, s.pos))
-				} else {
-					if v, ok := lh.(Var); ok && v.Kind() == Register {
-						d.emit(NewAssign(v, rh, s.pos))
-					} else {
-						d.emit(NewStore(lh, rh, s.pos))
-					}
-				}
+				imv := NewImv(d.newTempVarName(), rh, s.pos)
+				d.emit(imv)
+				d.emit(NewStore(loc, imv, s.pos))
 			}
 		}
 
@@ -628,7 +640,7 @@ func (f *Function) allocVR_expr(e Expr, inloop bool) {
 	}
 
 	switch e := e.(type) {
-	case *Alloc, *Imv:
+	case *Alloc, *Imv, *Extract:
 		return
 
 	case *Get:
@@ -636,9 +648,6 @@ func (f *Function) allocVR_expr(e Expr, inloop bool) {
 
 	case *Load:
 		f.allocVR_expr(e.Loc, inloop)
-
-	case *Extract:
-		f.allocVR_expr(e.X, inloop)
 
 	case *Unop:
 		f.allocVR_expr(e.X, inloop)
@@ -791,8 +800,8 @@ func getReplace_stmt(stmt Stmt) {
 		}
 
 	case *Store:
-		stmt.Loc = getReplace_expr(stmt.Loc)
-		stmt.Val = getReplace_expr(stmt.Val)
+		// Store 指令的 Loc 和 Val 都是 Var，无需替换
+		return
 
 	case *Return:
 		for i := range stmt.Results {
@@ -847,7 +856,7 @@ func getReplace_expr(e Expr) (ret Expr) {
 		e.Loc = getReplace_expr(e.Loc)
 
 	case *Extract:
-		e.X = getReplace_expr(e.X)
+		return
 
 	case *Unop:
 		e.X = getReplace_expr(e.X)

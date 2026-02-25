@@ -144,6 +144,39 @@ func NewImv(name string, val Expr, pos int) *Imv {
 }
 
 /**************************************
+Extract: Extract 指令，提取元组变量 X 的第 Index 个元素，Extract 实现了 Var 接口
+  - X 应为 Tuple 类型
+**************************************/
+
+type Extract struct {
+	aStmt
+	X     Var
+	Index int
+}
+
+func (i *Extract) Name() string   { return i.String() }
+func (i *Extract) Type() Type     { return i.X.Type().(*Tuple).members[i.Index] }
+func (i *Extract) retained() bool { return false }
+
+func (i *Extract) String() string {
+	return fmt.Sprintf("extract(%s, %d)", i.X.Name(), i.Index)
+}
+func (i *Extract) Kind() VarKind  { return Register }
+func (i *Extract) DataType() Type { return i.Type() }
+func (i *Extract) Tank() *tank    { return i.X.Tank().member[i.Index] }
+
+// 生成一条 Extract 指令
+func NewExtract(x Var, index int, pos int) *Extract {
+	v := &Extract{}
+	v.Stringer = v
+	v.X = x
+	v.Index = index
+	v.pos = pos
+
+	return v
+}
+
+/**************************************
 Drop: Drop 指令，丢弃 Var，丢弃后它所占用的虚拟寄存器可被重用
   - Drop 一个 chunk 时并不会执行 release
 **************************************/

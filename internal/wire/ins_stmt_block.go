@@ -293,14 +293,14 @@ func exprContainsVar(expr Expr, v Var) bool {
 	case *Imv:
 		return e == v || exprContainsVar(e.val, v)
 
+	case *Extract:
+		return exprContainsVar(e.X, v)
+
 	case *Get:
 		return exprContainsVar(e.Loc, v)
 
 	case *Load:
 		return exprContainsVar(e.Loc, v)
-
-	case *Extract:
-		return exprContainsVar(e.X, v)
 
 	case *Unop:
 		return exprContainsVar(e.X, v)

@@ -80,6 +80,10 @@ func (i *Unop) String() string { return fmt.Sprintf("%s%s", OpCodeNames[i.Op], i
 
 // 生成一条 Unop 指令
 func NewUnop(x Expr, op OpCode, pos int) *Unop {
+	if x == nil {
+		panic("x is nil")
+	}
+
 	v := &Unop{X: x, Op: op}
 	v.Stringer = v
 	v.pos = pos
@@ -117,6 +121,13 @@ func (i *Biop) String() string {
 
 // 生成一条 Biop 指令
 func NewBiop(x, y Expr, op OpCode, pos int) *Biop {
+	if x == nil {
+		panic("x is nil")
+	}
+	if y == nil {
+		panic("y is nil")
+	}
+
 	v := &Biop{X: x, Y: y, Op: op}
 	v.Stringer = v
 	v.pos = pos
@@ -172,6 +183,9 @@ func (i *Retain) String() string { return fmt.Sprintf("retain(%s)", i.X.Name()) 
 
 // 生成一条 Retain 指令
 func NewRetain(x Expr, pos int) *Retain {
+	if x == nil {
+		panic("x is nil")
+	}
 	v := &Retain{X: x}
 	v.Stringer = v
 	v.pos = pos
