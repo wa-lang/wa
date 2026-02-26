@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>p5app</title>
+</head>
+<body>
+  <div style="text-align: center;">
+    <canvas id="canvas" width="0" height="0"></canvas>
+  </div>
+
+  <div style="text-align: center;">
+    <pre id="output"></pre>
+  </div>
+
+  <script type="module">
+    import { WaApp } from "./p5app.js";
+    
+    let app = new WaApp();
+    app.init().then((result) => {
+      app.main();
+    })
+  </script>
+</body>
+</html>

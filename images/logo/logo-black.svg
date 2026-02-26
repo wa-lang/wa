@@ -1,0 +1,31 @@
+<!-- 
+// 版权 @2024 凹语言 作者。保留所有权利。
+// https://wa-lang.org
+-->
+
+<svg xmlns="http://www.w3.org/2000/svg"
+	viewBox="0 0 400 400" width="400" height="400"
+	style="border: 0px solid red"
+>
+
+<path
+	stroke="none" fill="black"
+	d="M60,50 h90 v100 h100 v-100 h90 l10,10 v280 l-10,10 h-280 l-10,-10 v-280"
+/>
+
+<path
+	stroke="none" fill="white"
+	d="M100,100 m-5,-5 h10 v10 h-10"
+/>
+
+<path
+	stroke="none" fill="white"
+	d="M400,100 m-100,0 m-5,-5 h10 v10 h-10"
+/>
+
+<path
+	stroke="white" fill="none" stroke-width="8" stroke-linecap="round"
+	d="M200,230 l34,34 l34,-34 M200,230 l-34,34 l-34,-34"
+/>
+
+</svg>
