@@ -167,30 +167,30 @@ Combo: 组合指令，将多个指令组合成一个指令，实现了 Expr 接�
 //	return v
 //}
 
-/**************************************
-Retain: Retain 指令，引用计数 +1，Retain 指令实现了 Expr，返回 X 本身
-**************************************/
-
-type Retain struct {
-	aStmt
-	X Expr
-}
-
-func (i *Retain) Name() string   { return i.String() }
-func (i *Retain) Type() Type     { return i.X.Type() }
-func (i *Retain) retained() bool { panic("") }
-func (i *Retain) String() string { return fmt.Sprintf("retain(%s)", i.X.Name()) }
-
-// 生成一条 Retain 指令
-func NewRetain(x Expr, pos int) *Retain {
-	if x == nil {
-		panic("x is nil")
-	}
-	v := &Retain{X: x}
-	v.Stringer = v
-	v.pos = pos
-	return v
-}
+///**************************************
+//Retain: Retain 指令，引用计数 +1，Retain 指令实现了 Expr，返回 X 本身
+//**************************************/
+//
+//type Retain struct {
+//	aStmt
+//	X Expr
+//}
+//
+//func (i *Retain) Name() string   { return i.String() }
+//func (i *Retain) Type() Type     { return i.X.Type() }
+//func (i *Retain) retained() bool { panic("") }
+//func (i *Retain) String() string { return fmt.Sprintf("retain(%s)", i.X.Name()) }
+//
+//// 生成一条 Retain 指令
+//func NewRetain(x Expr, pos int) *Retain {
+//	if x == nil {
+//		panic("x is nil")
+//	}
+//	v := &Retain{X: x}
+//	v.Stringer = v
+//	v.pos = pos
+//	return v
+//}
 
 /**************************************
 DupRef: DupRef 指令，引用复制，DupRef 指令实现了 Expr，返回 X

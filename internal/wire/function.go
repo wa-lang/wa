@@ -166,11 +166,8 @@ func (f *Function) EndBody() {
 
 			param.name = "$" + param.name
 			fb.emit(param)
-			if hasChunk {
-				param.init = NewRetain(NewGet(&np, np.pos), np.pos)
-			} else {
-				param.init = NewGet(&np, np.pos)
-			}
+
+			param.init = NewGet(&np, np.pos)
 
 			f.params[i] = &np
 		}
@@ -309,9 +306,6 @@ func rc_stmt(s Stmt, inloop bool, d *Block) {
 	case *Alloc:
 		s.init = rc_expr(s.init, inloop, false, false, d, &pre)
 		d.Stmts = append(d.Stmts, pre...)
-		if s.init != nil && rtimp.hasChunk(s.init.Type()) && !s.init.retained() {
-			s.init = NewRetain(s.init, s.init.Pos())
-		}
 		d.emit(s)
 
 	case *Get:
@@ -322,33 +316,42 @@ func rc_stmt(s Stmt, inloop bool, d *Block) {
 			s.Lhs[i] = rc_expr(s.Lhs[i], inloop, true, false, d, &pre)
 		}
 
-		for i := range s.Rhs {
-			s.Rhs[i] = rc_expr(s.Rhs[i], inloop, false, false, d, &pre)
-			if rtimp.hasChunk(s.Rhs[i].Type()) && !s.Rhs[i].retained() {
-				s.Rhs[i] = NewRetain(s.Rhs[i], s.Rhs[i].Pos())
+		rhNeedRetain := make([]bool, len(s.Lhs))
+		if len(s.Lhs) == len(s.Rhs) {
+			for i := range s.Rhs {
+				s.Rhs[i] = rc_expr(s.Rhs[i], inloop, false, false, d, &pre)
+				if rtimp.hasChunk(s.Rhs[i].Type()) && !s.Rhs[i].retained() {
+					rhNeedRetain[i] = true
+				}
+			}
+		} else {
+			// rh 是元组
+			notRetained := rtimp.hasChunk(s.Rhs[0].Type()) && !s.Rhs[0].retained()
+			for i := range rhNeedRetain {
+				rhNeedRetain[i] = notRetained
 			}
 		}
 
 		d.Stmts = append(d.Stmts, pre...)
 
-		allAssignable := true
-		assignable := make([]bool, len(s.Lhs))
+		allLhsAssignable := true
+		lhAssignable := make([]bool, len(s.Lhs))
 		lhs := make([]Var, len(s.Lhs))
 		for i, lh := range s.Lhs {
 			if lh == nil {
 				lhs[i] = nil
-				assignable[i] = true
+				lhAssignable[i] = true
 				continue
 			}
 
 			if v, ok := lh.(Var); ok && v.Kind() == Register {
 				lhs[i] = v
-				assignable[i] = true
+				lhAssignable[i] = true
 				continue
 			}
 
-			allAssignable = false
-			assignable[i] = false
+			allLhsAssignable = false
+			lhAssignable[i] = false
 			if get, ok := lh.(*Get); ok {
 				if v, ok := get.Loc.(Var); ok && v.Kind() == Register {
 					lhs[i] = v
@@ -361,8 +364,10 @@ func rc_stmt(s Stmt, inloop bool, d *Block) {
 			lhs[i] = loc
 		}
 
-		if allAssignable {
-			d.emit(NewAssignN(lhs, s.Rhs, s.pos))
+		if allLhsAssignable {
+			assign := NewAssignN(lhs, s.Rhs, s.pos)
+			copy(assign.needRetain, rhNeedRetain)
+			d.emit(assign)
 		} else {
 			rhs := make([]Expr, len(s.Lhs))
 
@@ -386,31 +391,41 @@ func rc_stmt(s Stmt, inloop bool, d *Block) {
 				loc := lhs[i]
 				rh := rhs[i]
 
-				if assignable[i] {
-					d.emit(NewAssign(loc, rh, s.pos))
+				if lhAssignable[i] {
+					assign := NewAssign(loc, rh, s.pos)
+					assign.needRetain[0] = rhNeedRetain[i]
+					d.emit(assign)
 					continue
 				}
 
 				if v, ok := rh.(Var); ok {
-					d.emit(NewStore(loc, v, s.pos))
+					store := NewStore(loc, v, s.pos)
+					store.needRetain = rhNeedRetain[i]
+					d.emit(store)
 					continue
 				}
 
 				if get, ok := rh.(*Get); ok {
 					if v, ok := get.Loc.(Var); ok && v.Kind() == Register {
-						d.emit(NewStore(loc, v, s.pos))
+						store := NewStore(loc, v, s.pos)
+						store.needRetain = rhNeedRetain[i]
+						d.emit(store)
 						continue
 					}
 				}
 
 				if c, ok := rh.(*Const); ok {
-					d.emit(NewStore(loc, c, s.pos))
+					store := NewStore(loc, c, s.pos)
+					store.needRetain = false
+					d.emit(store)
 					continue
 				}
 
 				imv := NewImv(d.newTempVarName(), rh, s.pos)
 				d.emit(imv)
-				d.emit(NewStore(loc, imv, s.pos))
+				store := NewStore(loc, imv, s.pos)
+				store.needRetain = rhNeedRetain[i]
+				d.emit(store)
 			}
 		}
 
@@ -436,8 +451,8 @@ func rc_stmt(s Stmt, inloop bool, d *Block) {
 		rc_block(s.Body, true, l.Body)
 		rc_block(s.Post, true, l.Post)
 
-	case *Retain:
-		d.emit(s)
+	//case *Retain:
+	//	d.emit(s)
 
 	case *Drop:
 		d.emit(s)
@@ -556,7 +571,7 @@ func (f *Function) autoDrop(b *Block) {
 			f.autoDrop(s.Body)
 			f.autoDrop(s.Post)
 
-		case *Get, *Set, *Assign, *Store, *Br, *Return, *Unop, *Biop, *Retain, *Drop:
+		case *Get, *Set, *Assign, *Store, *Br, *Return, *Unop, *Biop, *Drop:
 			continue
 
 		default:
@@ -621,8 +636,8 @@ func (f *Function) allocVR_stmt(s Stmt, inloop bool) {
 	case *Drop:
 		f.dropVR_tank(s.X.Tank())
 
-	case *Retain:
-		panic("Retain should not be here")
+	//case *Retain:
+	//	panic("Retain should not be here")
 
 	case *Br, *Return:
 
@@ -691,8 +706,8 @@ func (f *Function) allocVR_expr(e Expr, inloop bool) {
 	//	f.allocVR_expr(e.X, inloop)
 	//	f.allocVR_var(e.Imv, inloop)
 
-	case *Retain:
-		f.allocVR_expr(e.X, inloop)
+	//case *Retain:
+	//	f.allocVR_expr(e.X, inloop)
 
 	default:
 		panic(fmt.Sprintf("Todo: %s", e.(Stmt).String()))
@@ -865,8 +880,8 @@ func getReplace_expr(e Expr) (ret Expr) {
 		e.X = getReplace_expr(e.X)
 		e.Y = getReplace_expr(e.Y)
 
-	case *Retain:
-		e.X = getReplace_expr(e.X)
+	//case *Retain:
+	//	e.X = getReplace_expr(e.X)
 
 	case *Call:
 		var call_common *CallCommon

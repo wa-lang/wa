@@ -89,29 +89,35 @@ Assign: Assign 指令，将 Rhs 赋值给 Lhs
   - Assgin 支持多赋值
   - Lh 必须为 Register 型变量
   - Rh 可能为元组（Tuple），此时 Rhs 的长度应为 1，Lhs 的长度应为元组长度
-  - 向 nil 的 Lh 赋值是合法的，这等价于向匿名变量 _ 赋值，此时若 Rh 已 retain，应触发 release
+  - 向 nil 的 Lh 赋值是合法的，这等价于向匿名变量 _ 赋值
 **************************************/
 
 type Assign struct {
 	aStmt
-	Lhs []Var
-	Rhs []Expr
+	Lhs        []Var
+	needRetain []bool
+	Rhs        []Expr
 }
 
 func (i *Assign) String() string {
 	var sb strings.Builder
 
-	for i, lh := range i.Lhs {
-		if i > 0 {
+	for j, lh := range i.Lhs {
+		if j > 0 {
 			sb.WriteString(", ")
 		}
 
 		if lh == nil {
 			sb.WriteRune('_')
-			continue
+			if !i.needRetain[j] {
+				sb.WriteString("↓")
+			}
+		} else {
+			sb.WriteString(lh.Name())
+			if i.needRetain[j] && rtimp.hasChunk(lh.Type()) {
+				sb.WriteString("↑")
+			}
 		}
-
-		sb.WriteString(lh.Name())
 	}
 
 	sb.WriteString(" = ")
@@ -134,6 +140,7 @@ func NewAssignN(lhs []Var, rhs []Expr, pos int) *Assign {
 	v.Stringer = v
 	v.Lhs = lhs
 	v.Rhs = rhs
+	v.needRetain = make([]bool, len(lhs))
 	v.pos = pos
 	return v
 }
@@ -160,12 +167,17 @@ Store: Store 指令，将 Val 存储到 Loc 指定的位置
 
 type Store struct {
 	aStmt
-	Loc Var
-	Val Expr
+	Loc        Var
+	needRetain bool
+	Val        Expr
 }
 
 func (i *Store) String() string {
-	return fmt.Sprintf("store(%s, %s)", i.Loc.Name(), i.Val.Name())
+	if i.needRetain && rtimp.hasChunk(i.Val.Type()) {
+		return fmt.Sprintf("store(%s↑, %s)", i.Loc.Name(), i.Val.Name())
+	} else {
+		return fmt.Sprintf("store(%s, %s)", i.Loc.Name(), i.Val.Name())
+	}
 }
 
 func NewStore(loc Var, val Expr, pos int) *Store {

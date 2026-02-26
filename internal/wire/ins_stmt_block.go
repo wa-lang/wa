@@ -308,8 +308,8 @@ func exprContainsVar(expr Expr, v Var) bool {
 	case *Biop:
 		return exprContainsVar(e.X, v) || exprContainsVar(e.Y, v)
 
-	case *Retain:
-		return exprContainsVar(e.X, v)
+	//case *Retain:
+	//	return exprContainsVar(e.X, v)
 
 	//case *Combo:
 	//	for _, stmt := range e.Stmts {
