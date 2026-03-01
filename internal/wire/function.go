@@ -177,6 +177,7 @@ func (f *Function) EndBody() {
 	for _, ret := range f.results {
 		fb.emit(ret)
 	}
+	ob.Label = _FN_START
 	f.retRepalce(ob)
 
 	nb := &Block{}
@@ -246,7 +247,6 @@ func (f *Function) retRepalce(stmt Stmt) {
 
 		for i, s := range stmt.Stmts {
 			if ret_stmt, ok := s.(*Return); ok {
-				br := NewBr(_FN_START, ret_stmt.pos)
 				if len(f.results) > 0 && len(ret_stmt.Results) > 0 {
 					lhs := make([]Expr, len(f.results))
 					for i, lh := range f.results {
@@ -255,10 +255,11 @@ func (f *Function) retRepalce(stmt Stmt) {
 
 					stmt.Stmts[i] = NewSetN(lhs, ret_stmt.Results, ret_stmt.pos)
 					stmt.Stmts = stmt.Stmts[:i+1]
-					stmt.Stmts = append(stmt.Stmts, br)
 				} else {
-					stmt.Stmts[i] = br
-					stmt.Stmts = stmt.Stmts[:i+1]
+					stmt.Stmts = stmt.Stmts[:i]
+				}
+				if stmt.Label != _FN_START {
+					stmt.Stmts = append(stmt.Stmts, NewBr(_FN_START, ret_stmt.pos))
 				}
 				break
 			}
