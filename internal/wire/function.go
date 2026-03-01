@@ -244,24 +244,26 @@ func (f *Function) retRepalce(stmt Stmt) {
 			return
 		}
 
-		var i int
-		for i = 0; i < len(stmt.Stmts)-1; i++ {
-			f.retRepalce(stmt.Stmts[i])
-		}
+		for i, s := range stmt.Stmts {
+			if ret_stmt, ok := s.(*Return); ok {
+				br := NewBr(_FN_START, ret_stmt.pos)
+				if len(f.results) > 0 && len(ret_stmt.Results) > 0 {
+					lhs := make([]Expr, len(f.results))
+					for i, lh := range f.results {
+						lhs[i] = lh
+					}
 
-		if ret_stmt, ok := stmt.Stmts[i].(*Return); ok {
-			br := NewBr(_FN_START, ret_stmt.pos)
-			if len(f.results) > 0 && len(ret_stmt.Results) > 0 {
-				lhs := make([]Expr, len(f.results))
-				for i, lh := range f.results {
-					lhs[i] = lh
+					stmt.Stmts[i] = NewSetN(lhs, ret_stmt.Results, ret_stmt.pos)
+					stmt.Stmts = stmt.Stmts[:i+1]
+					stmt.Stmts = append(stmt.Stmts, br)
+				} else {
+					stmt.Stmts[i] = br
+					stmt.Stmts = stmt.Stmts[:i+1]
 				}
-
-				stmt.Stmts[i] = NewSetN(lhs, ret_stmt.Results, ret_stmt.pos)
-				stmt.Stmts = append(stmt.Stmts, br)
-			} else {
-				stmt.Stmts[i] = br
+				break
 			}
+
+			f.retRepalce(s)
 		}
 
 	case *If:
