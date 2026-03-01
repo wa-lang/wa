@@ -165,9 +165,9 @@ func (f *Function) EndBody() {
 			np.kind = Register
 
 			param.name = "$" + param.name
-			fb.emit(param)
-
 			param.init = NewGet(&np, np.pos)
+
+			rc_stmt(param, false, fb)
 
 			f.params[i] = &np
 		}
@@ -200,7 +200,7 @@ func (f *Function) EndBody() {
 			ret_exprs = append(ret_exprs, NewGet(r, f.EndPos))
 
 		case Heap:
-			rr := NewImv(fb.newTempVarName(), NewGet(r, f.EndPos), f.EndPos)
+			rr := newImv(fb.newTempVarName(), NewGet(r, f.EndPos), f.EndPos)
 			fb.emit(rr)
 			ret_exprs = append(ret_exprs, rr)
 
@@ -306,7 +306,14 @@ func rc_stmt(s Stmt, inloop bool, d *Block) {
 	case *Alloc:
 		s.init = rc_expr(s.init, inloop, false, false, d, &pre)
 		d.Stmts = append(d.Stmts, pre...)
-		d.emit(s)
+		if s.Kind() != Register && s.init != nil {
+			init := s.init
+			s.init = nil
+			d.emit(s)
+			rc_stmt(NewSet(s, init, s.pos), inloop, d)
+		} else {
+			d.emit(s)
+		}
 
 	case *Get:
 		panic("Get should not be here")
@@ -316,21 +323,25 @@ func rc_stmt(s Stmt, inloop bool, d *Block) {
 			s.Lhs[i] = rc_expr(s.Lhs[i], inloop, true, false, d, &pre)
 		}
 
-		rhNeedRetain := make([]bool, len(s.Lhs))
-		if len(s.Lhs) == len(s.Rhs) {
-			for i := range s.Rhs {
-				s.Rhs[i] = rc_expr(s.Rhs[i], inloop, false, false, d, &pre)
-				if rtimp.hasChunk(s.Rhs[i].Type()) && !s.Rhs[i].retained() {
-					rhNeedRetain[i] = true
-				}
-			}
-		} else {
-			// rh 是元组
-			notRetained := rtimp.hasChunk(s.Rhs[0].Type()) && !s.Rhs[0].retained()
-			for i := range rhNeedRetain {
-				rhNeedRetain[i] = notRetained
-			}
+		for i := range s.Rhs {
+			rc_expr(s.Rhs[i], inloop, false, false, d, &pre)
 		}
+
+		//rhNeedRetain := make([]bool, len(s.Lhs))
+		//if len(s.Lhs) == len(s.Rhs) {
+		//	for i := range s.Rhs {
+		//		rc_expr(s.Rhs[i], inloop, false, false, d, &pre)
+		//		if rtimp.hasChunk(s.Rhs[i].Type()) && !s.Rhs[i].retained() {
+		//			rhNeedRetain[i] = true
+		//		}
+		//	}
+		//} else {
+		//	// rh 是元组
+		//	notRetained := rtimp.hasChunk(s.Rhs[0].Type()) && !s.Rhs[0].retained()
+		//	for i := range rhNeedRetain {
+		//		rhNeedRetain[i] = notRetained
+		//	}
+		//}
 
 		d.Stmts = append(d.Stmts, pre...)
 
@@ -344,29 +355,37 @@ func rc_stmt(s Stmt, inloop bool, d *Block) {
 				continue
 			}
 
-			if v, ok := lh.(Var); ok && v.Kind() == Register {
-				lhs[i] = v
-				lhAssignable[i] = true
+			if v, ok := lh.(Var); ok {
+				if v.Kind() == Register { // v: T; v = expr; v 未逃逸
+					lhs[i] = v
+					lhAssignable[i] = true
+				} else { // v: T; v = expr;  v 逃逸
+					lhs[i] = v
+					lhAssignable[i] = false
+					allLhsAssignable = false
+				}
 				continue
 			}
 
 			allLhsAssignable = false
 			lhAssignable[i] = false
+
 			if get, ok := lh.(*Get); ok {
-				if v, ok := get.Loc.(Var); ok && v.Kind() == Register {
+				if v, ok := get.Loc.(Var); ok && v.Kind() == Register { // p: *T; *p = expr; p 未逃逸
 					lhs[i] = v
 					continue
 				}
 			}
 
-			loc := NewImv(d.newTempVarName(), lh, s.pos)
+			// 其余情况，左部是指针或引用类型的表达式：
+			loc := newImv(d.newTempVarName(), lh, s.pos)
 			d.emit(loc)
 			lhs[i] = loc
 		}
 
 		if allLhsAssignable {
-			assign := NewAssignN(lhs, s.Rhs, s.pos)
-			copy(assign.needRetain, rhNeedRetain)
+			assign := newAssignN(lhs, s.Rhs, s.pos)
+			//copy(assign.needRetain, rhNeedRetain)
 			d.emit(assign)
 		} else {
 			rhs := make([]Expr, len(s.Lhs))
@@ -377,11 +396,11 @@ func rc_stmt(s Stmt, inloop bool, d *Block) {
 					panic("RH is not a tuple")
 				}
 
-				tuple := NewImv(d.newTempVarName(), s.Rhs[0], s.pos)
+				tuple := newImv(d.newTempVarName(), s.Rhs[0], s.pos)
 				d.emit(tuple)
 
 				for i := range s.Lhs {
-					rhs[i] = NewExtract(tuple, i, s.pos)
+					rhs[i] = newExtract(tuple, i, s.pos)
 				}
 			} else {
 				copy(rhs, s.Rhs)
@@ -389,42 +408,36 @@ func rc_stmt(s Stmt, inloop bool, d *Block) {
 
 			for i := range lhs {
 				loc := lhs[i]
-				rh := rhs[i]
+				rh := getReplace_expr(rhs[i])
 
 				if lhAssignable[i] {
-					assign := NewAssign(loc, rh, s.pos)
-					assign.needRetain[0] = rhNeedRetain[i]
+					assign := newAssign(loc, rh, s.pos)
+					//assign.needRetain[0] = rhNeedRetain[i]
 					d.emit(assign)
 					continue
 				}
 
-				if v, ok := rh.(Var); ok {
-					store := NewStore(loc, v, s.pos)
-					store.needRetain = rhNeedRetain[i]
-					d.emit(store)
-					continue
-				}
-
-				if get, ok := rh.(*Get); ok {
-					if v, ok := get.Loc.(Var); ok && v.Kind() == Register {
-						store := NewStore(loc, v, s.pos)
-						store.needRetain = rhNeedRetain[i]
-						d.emit(store)
-						continue
-					}
-				}
-
 				if c, ok := rh.(*Const); ok {
-					store := NewStore(loc, c, s.pos)
-					store.needRetain = false
+					store := newStore(loc, c, s.pos)
+					//store.needRetain = false
 					d.emit(store)
 					continue
 				}
 
-				imv := NewImv(d.newTempVarName(), rh, s.pos)
+				if v, ok := rh.(Var); ok {
+					if v.Kind() != Register {
+						panic(fmt.Sprintf("rh: %s is not a Register", v.Name()))
+					}
+					store := newStore(loc, v, s.pos)
+					//store.needRetain = rhNeedRetain[i]
+					d.emit(store)
+					continue
+				}
+
+				imv := newImv(d.newTempVarName(), rh, s.pos)
 				d.emit(imv)
-				store := NewStore(loc, imv, s.pos)
-				store.needRetain = rhNeedRetain[i]
+				store := newStore(loc, imv, s.pos)
+				//store.needRetain = rhNeedRetain[i]
 				d.emit(store)
 			}
 		}
@@ -467,7 +480,7 @@ func rc_expr(e Expr, inloop bool, replace bool, isLoopCond bool, d *Block, pre *
 	if e == nil {
 		return
 	}
-	if _, ok := e.(Stmt); !ok {
+	if _, ok := e.(*Const); ok {
 		return
 	}
 
@@ -520,7 +533,7 @@ func rc_expr(e Expr, inloop bool, replace bool, isLoopCond bool, d *Block, pre *
 			tmp.noinit = true
 			d.emit(tmp)
 
-			*pre = append(*pre, NewAssign(tmp, e, e.Pos()))
+			*pre = append(*pre, newAssign(tmp, e, e.Pos()))
 			ret = NewGet(tmp, e.Pos())
 		} else {
 			tmp := d.NewAlloc(d.newTempVarName(), e.Type(), e.Pos(), nil, e)
@@ -547,7 +560,7 @@ func (f *Function) autoDrop(b *Block) {
 
 			var t []Stmt
 			t = append(t, b.Stmts[:r.last+1]...)
-			t = append(t, NewDrop(s, b.Stmts[r.last].Pos()))
+			t = append(t, newDrop(s, b.Stmts[r.last].Pos()))
 			t = append(t, b.Stmts[r.last+1:]...)
 			b.Stmts = t
 
@@ -559,7 +572,7 @@ func (f *Function) autoDrop(b *Block) {
 
 			var t []Stmt
 			t = append(t, b.Stmts[:r.last+1]...)
-			t = append(t, NewDrop(s, b.Stmts[r.last].Pos()))
+			t = append(t, newDrop(s, b.Stmts[r.last].Pos()))
 			t = append(t, b.Stmts[r.last+1:]...)
 			b.Stmts = t
 
@@ -650,7 +663,7 @@ func (f *Function) allocVR_expr(e Expr, inloop bool) {
 	if e == nil {
 		return
 	}
-	if _, ok := e.(Stmt); !ok {
+	if _, ok := e.(*Const); ok {
 		return
 	}
 
@@ -850,7 +863,7 @@ func getReplace_expr(e Expr) (ret Expr) {
 	if e == nil {
 		return
 	}
-	if _, ok := e.(Stmt); !ok {
+	if _, ok := e.(*Const); ok {
 		return
 	}
 
@@ -858,12 +871,12 @@ func getReplace_expr(e Expr) (ret Expr) {
 	case *Get:
 		if v, ok := e.Loc.(Var); !ok {
 			loc := getReplace_expr(e.Loc)
-			return NewLoad(loc, e.Pos())
+			return newLoad(loc, e.Pos())
 		} else {
 			if v.Kind() == Register {
 				return e.Loc
 			} else {
-				return NewLoad(e.Loc, e.Pos())
+				return newLoad(e.Loc, e.Pos())
 			}
 		}
 

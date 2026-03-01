@@ -9,17 +9,17 @@ import (
 )
 
 /**************************************
-Set: Set 指令，将 Val 存储到 Loc 指定的位置，Set 支持多赋值，该指令应触发 RC-1 动作
+Set: Set 指令，实现赋值 `=` 操作，将值保存至变量、或地址
   - Set 支持多赋值
-  - Lh 应为 Var、或类型为 Ref、Ptr 的 Expr
+  - Lh 应为 nil、 Var、或类型为 Ref/Ptr 的 Expr；Lh 为 nil 是合法的，这等价于向匿名变量 _ 赋值
   - Rh 可能为元组（Tuple），此时 Rhs 的长度应为 1，Lhs 的长度应为元组长度
-  - 向 nil 的 Lh 赋值是合法的，这等价于向匿名变量 _ 赋值，此时若 Rh 已 retain，应触发 release
 **************************************/
 
 type Set struct {
 	aStmt
-	Lhs []Expr
-	Rhs []Expr
+	Lhs     []Expr
+	Rhs     []Expr
+	rhsType []Type
 }
 
 func (i *Set) String() string {
@@ -36,11 +36,11 @@ func (i *Set) String() string {
 			continue
 		}
 
-		loc_name := "*(" + lh.Name() + ")"
-		if v, ok := lh.(Var); ok {
-			if v.Kind() == Register {
-				loc_name = lh.Name()
-			}
+		var loc_name string
+		if v, ok := lh.(Var); ok && v.Kind() == Register {
+			loc_name = lh.Name()
+		} else {
+			loc_name = "*(" + lh.Name() + ")"
 		}
 		sb.WriteString(loc_name)
 	}
@@ -66,6 +66,22 @@ func NewSetN(lhs []Expr, rhs []Expr, pos int) *Set {
 	v.Stringer = v
 	v.Lhs = lhs
 	v.Rhs = rhs
+
+	v.rhsType = make([]Type, len(lhs))
+	if len(lhs) != len(rhs) {
+		if len(rhs) != 1 {
+			panic("rhs is not a tuple")
+		}
+		tuple := rhs[0].Type().(*Tuple)
+		if len(tuple.members) != len(lhs) {
+			panic("tuple members length mismatch")
+		}
+		copy(v.rhsType, tuple.members)
+	} else {
+		for i := range rhs {
+			v.rhsType[i] = rhs[i].Type()
+		}
+	}
 	v.pos = pos
 	return v
 }
@@ -85,36 +101,41 @@ func (b *Block) EmitSetN(lhs []Expr, rhs []Expr, pos int) *Set {
 }
 
 /**************************************
-Assign: Assign 指令，将 Rhs 赋值给 Lhs
+Assign: Assign 指令，向 Register 变量赋值
   - Assgin 支持多赋值
-  - Lh 必须为 Register 型变量
+  - Lh 必须为 Register 变量 或 nil；Lh 为 nil 时等价于向匿名变量 _ 赋值
   - Rh 可能为元组（Tuple），此时 Rhs 的长度应为 1，Lhs 的长度应为元组长度
-  - 向 nil 的 Lh 赋值是合法的，这等价于向匿名变量 _ 赋值
+  - 该指令仅供内部使用，上层高级语法不应直接使用
 **************************************/
 
 type Assign struct {
 	aStmt
-	Lhs        []Var
-	needRetain []bool
-	Rhs        []Expr
+	Lhs     []Var
+	Rhs     []Expr
+	rhsType []Type
 }
 
 func (i *Assign) String() string {
 	var sb strings.Builder
 
+	var rh Expr
 	for j, lh := range i.Lhs {
 		if j > 0 {
 			sb.WriteString(", ")
 		}
 
+		if j < len(i.Rhs) {
+			rh = i.Rhs[j]
+		}
+
 		if lh == nil {
 			sb.WriteRune('_')
-			if !i.needRetain[j] {
+			if _, ok := rh.(*Const); !ok && rh.retained() && rtimp.hasChunk(i.rhsType[j]) {
 				sb.WriteString("↓")
 			}
 		} else {
 			sb.WriteString(lh.Name())
-			if i.needRetain[j] && rtimp.hasChunk(lh.Type()) {
+			if _, ok := rh.(*Const); !ok && !rh.retained() && rtimp.hasChunk(i.rhsType[j]) {
 				sb.WriteString("↑")
 			}
 		}
@@ -131,31 +152,32 @@ func (i *Assign) String() string {
 	return sb.String()
 }
 
-func NewAssign(lh Var, rh Expr, pos int) *Assign {
-	return NewAssignN([]Var{lh}, []Expr{rh}, pos)
+func newAssign(lh Var, rh Expr, pos int) *Assign {
+	return newAssignN([]Var{lh}, []Expr{rh}, pos)
 }
 
-func NewAssignN(lhs []Var, rhs []Expr, pos int) *Assign {
+func newAssignN(lhs []Var, rhs []Expr, pos int) *Assign {
 	v := &Assign{}
 	v.Stringer = v
 	v.Lhs = lhs
 	v.Rhs = rhs
-	v.needRetain = make([]bool, len(lhs))
 	v.pos = pos
-	return v
-}
 
-// 在 Block 中添加一条 Assign 指令
-func (b *Block) EmitAssign(lhs Var, rhs Expr, pos int) *Assign {
-	v := NewAssign(lhs, rhs, pos)
-	b.emit(v)
-	return v
-}
-
-// EmitAssign 的多重赋值版
-func (b *Block) EmitAssignN(lhs []Var, rhs []Expr, pos int) *Assign {
-	v := NewAssignN(lhs, rhs, pos)
-	b.emit(v)
+	v.rhsType = make([]Type, len(lhs))
+	if len(lhs) != len(rhs) {
+		if len(rhs) != 1 {
+			panic("rhs is not a tuple")
+		}
+		tuple := rhs[0].Type().(*Tuple)
+		if len(tuple.members) != len(lhs) {
+			panic("tuple members length mismatch")
+		}
+		copy(v.rhsType, tuple.members)
+	} else {
+		for i := range rhs {
+			v.rhsType[i] = rhs[i].Type()
+		}
+	}
 	return v
 }
 
@@ -163,24 +185,24 @@ func (b *Block) EmitAssignN(lhs []Var, rhs []Expr, pos int) *Assign {
 Store: Store 指令，将 Val 存储到 Loc 指定的位置
   - Loc 应为 Var
   - Val 应为 Var 或 Const
+  - 该指令仅供内部使用，上层高级语法不应直接使用
 **************************************/
 
 type Store struct {
 	aStmt
-	Loc        Var
-	needRetain bool
-	Val        Expr
+	Loc Var
+	Val Expr
 }
 
 func (i *Store) String() string {
-	if i.needRetain && rtimp.hasChunk(i.Val.Type()) {
+	if _, ok := i.Val.(*Const); !ok && !i.Val.retained() && rtimp.hasChunk(i.Val.Type()) {
 		return fmt.Sprintf("store(%s↑, %s)", i.Loc.Name(), i.Val.Name())
 	} else {
 		return fmt.Sprintf("store(%s, %s)", i.Loc.Name(), i.Val.Name())
 	}
 }
 
-func NewStore(loc Var, val Expr, pos int) *Store {
+func newStore(loc Var, val Expr, pos int) *Store {
 	if val == nil {
 		panic("val is nil")
 	}

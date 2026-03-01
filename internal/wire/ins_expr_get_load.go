@@ -66,6 +66,7 @@ func NewGet(loc Expr, pos int) *Get {
 /**************************************
 Load: Load 指令，获取内存 Loc 处的值， Load 实现了 Expr 接口
   - Loc 类型 应为 Ref、Ptr
+  - 该指令仅供内部使用，上层高级语法不应直接使用
 **************************************/
 
 type Load struct {
@@ -92,7 +93,7 @@ func (i *Load) String() string {
 }
 
 // 生成一条 Load 指令
-func NewLoad(loc Expr, pos int) *Load {
+func newLoad(loc Expr, pos int) *Load {
 	if loc == nil {
 		panic("loc is nil")
 	}

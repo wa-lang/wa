@@ -30,8 +30,9 @@ type Alloc struct {
 	dtype  Type
 	rtype  Type
 	object interface{} // 与该值关联的 AST 结点。对凹语言前端，应为 types.Object
-	init   Expr        // 初始值
-	noinit bool        // 是否不进行 0 值初始化
+
+	init   Expr // 初始值，仅 Register 型变量有初始值
+	noinit bool // 是否不进行 0 值初始化
 
 	tank *tank
 }
@@ -49,19 +50,30 @@ func (i *Alloc) String() string {
 	s := ""
 	switch i.kind {
 	case Register:
-		s = fmt.Sprintf("var %s %s", i.name, i.dtype.Name())
+		if i.init != nil {
+			if rtimp.hasChunk(i.init.Type()) && !i.init.retained() {
+				s = fmt.Sprintf("var %s↑ %s = %s", i.name, i.Type().Name(), i.init.Name())
+			} else {
+				s = fmt.Sprintf("var %s %s = %s", i.name, i.Type().Name(), i.init.Name())
+			}
+		} else if !i.noinit {
+			s = fmt.Sprintf("var %s %s = 0", i.name, i.Type().Name())
+		} else {
+			s = fmt.Sprintf("var %s %s", i.name, i.Type().Name())
+		}
 
 	case Heap:
-		s = fmt.Sprintf("var %s %s = alloc.heap(%s)", i.name, i.rtype.Name(), i.dtype.Name())
+		//if i.init != nil {
+		//panic(fmt.Sprintf("Heap var: %s has init-val", i.name))
+		//}
+		if i.init != nil {
+			s = fmt.Sprintf("var %s %s = alloc.heap(%s:%s)", i.name, i.rtype.Name(), i.init.Name(), i.dtype.Name())
+		} else {
+			s = fmt.Sprintf("var %s %s = alloc.heap(%s)", i.name, i.rtype.Name(), i.dtype.Name())
+		}
 
 	default:
 		panic(fmt.Sprintf("Todo: VarKind: %v", i.kind))
-	}
-
-	if i.init != nil {
-		s += " = " + i.init.Name()
-	} else if !i.noinit {
-		s += " = 0"
 	}
 
 	if i.tank != nil {
@@ -107,6 +119,7 @@ func (b *Block) AddLocal(name string, typ Type, pos int, obj interface{}, init E
 
 /**************************************
 Imv: Imv 指令，定义一个中间变量，实现了 Expr、Var 接口
+  - 该指令仅供内部使用，上层高级语法不应直接使用
 **************************************/
 
 type Imv struct {
@@ -119,7 +132,7 @@ type Imv struct {
 
 func (i *Imv) Name() string   { return i.name }
 func (i *Imv) Type() Type     { return i.val.Type() }
-func (i *Imv) retained() bool { return false }
+func (i *Imv) retained() bool { return i.val.retained() }
 func (i *Imv) String() string {
 	s := fmt.Sprintf("imv %s = %s", i.name, i.val.Name())
 	if i.tank != nil {
@@ -132,7 +145,7 @@ func (i *Imv) Kind() VarKind  { return Register }
 func (i *Imv) DataType() Type { return i.Type() }
 func (i *Imv) Tank() *tank    { return i.tank }
 
-func NewImv(name string, val Expr, pos int) *Imv {
+func newImv(name string, val Expr, pos int) *Imv {
 	v := &Imv{
 		name: name,
 		val:  val,
@@ -145,18 +158,19 @@ func NewImv(name string, val Expr, pos int) *Imv {
 
 /**************************************
 Extract: Extract 指令，提取元组变量 X 的第 Index 个元素，Extract 实现了 Var 接口
-  - X 应为 Tuple 类型
+  - X 应为 Tuple 类型的 Imv
+  - 该指令仅供内部使用，上层高级语法不应直接使用
 **************************************/
 
 type Extract struct {
 	aStmt
-	X     Var
+	X     *Imv
 	Index int
 }
 
 func (i *Extract) Name() string   { return i.String() }
 func (i *Extract) Type() Type     { return i.X.Type().(*Tuple).members[i.Index] }
-func (i *Extract) retained() bool { return false }
+func (i *Extract) retained() bool { return i.X.retained() }
 
 func (i *Extract) String() string {
 	return fmt.Sprintf("extract(%s, %d)", i.X.Name(), i.Index)
@@ -166,7 +180,7 @@ func (i *Extract) DataType() Type { return i.Type() }
 func (i *Extract) Tank() *tank    { return i.X.Tank().member[i.Index] }
 
 // 生成一条 Extract 指令
-func NewExtract(x Var, index int, pos int) *Extract {
+func newExtract(x *Imv, index int, pos int) *Extract {
 	v := &Extract{}
 	v.Stringer = v
 	v.X = x
@@ -179,6 +193,7 @@ func NewExtract(x Var, index int, pos int) *Extract {
 /**************************************
 Drop: Drop 指令，丢弃 Var，丢弃后它所占用的虚拟寄存器可被重用
   - Drop 一个 chunk 时并不会执行 release
+  - 该指令仅供内部使用，上层高级语法不应直接使用
 **************************************/
 
 type Drop struct {
@@ -196,7 +211,7 @@ func (i *Drop) String() string {
 }
 
 // 生成一条 Drop 指令
-func NewDrop(x Var, pos int) *Drop {
+func newDrop(x Var, pos int) *Drop {
 	v := &Drop{X: x}
 	v.Stringer = v
 	v.pos = pos
