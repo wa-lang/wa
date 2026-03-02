@@ -119,24 +119,24 @@ func newRetRegAlloctor_X64Linux() *_RegAlloctor {
 func newArgsRegAlloctor_ARM64Linux() *_RegAlloctor {
 	return &_RegAlloctor{
 		iRegList: []abi.RegType{
-			arm64.REG_A0,
-			arm64.REG_A1,
-			arm64.REG_A2,
-			arm64.REG_A3,
-			arm64.REG_A4,
-			arm64.REG_A5,
-			arm64.REG_A6,
-			arm64.REG_A7,
+			arm64.REG_X0,
+			arm64.REG_X1,
+			arm64.REG_X2,
+			arm64.REG_X3,
+			arm64.REG_X4,
+			arm64.REG_X5,
+			arm64.REG_X6,
+			arm64.REG_X7,
 		},
 		fRegList: []abi.RegType{
-			arm64.REG_FA0,
-			arm64.REG_FA1,
-			arm64.REG_FA2,
-			arm64.REG_FA3,
-			arm64.REG_FA4,
-			arm64.REG_FA5,
-			arm64.REG_FA6,
-			arm64.REG_FA7,
+			arm64.REG_V0,
+			arm64.REG_V1,
+			arm64.REG_V2,
+			arm64.REG_V3,
+			arm64.REG_V4,
+			arm64.REG_V5,
+			arm64.REG_V6,
+			arm64.REG_V7,
 		},
 	}
 }
@@ -146,12 +146,12 @@ func newArgsRegAlloctor_ARM64Linux() *_RegAlloctor {
 func newRetRegAlloctor_ARM64Linux() *_RegAlloctor {
 	return &_RegAlloctor{
 		iRegList: []abi.RegType{
-			arm64.REG_A0,
-			arm64.REG_A1,
+			arm64.REG_X0,
+			arm64.REG_X1,
 		},
 		fRegList: []abi.RegType{
-			arm64.REG_FA0,
-			arm64.REG_FA1,
+			arm64.REG_V0,
+			arm64.REG_V1,
 		},
 	}
 }
