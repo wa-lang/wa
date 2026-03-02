@@ -222,10 +222,10 @@ More examples [waroot/examples](waroot/examples)
 
 |Contributor|Contribution points|
 | --- | --- |
-|柴树杉| 99650|
-|丁尔男| 104150|
+|柴树杉| 124650|
+|丁尔男| 116650|
 |史斌  | 10000|
-|扈梦明| 60000|
+|扈梦明| 72500|
 |赵普明| 10000|
 |宋汝阳|  2000|
 |刘云峰|  1000|
