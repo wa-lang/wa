@@ -11,6 +11,7 @@ const (
 	Target_Nil         TargetType = iota
 	Target_js                     // abi=wasm
 	Target_wasm4                  // abi=wasm
+	Target_linux_arm64            // abi=arm64
 	Target_linux_la64             // abi=loong64
 	Target_linux_rv64             // abi=riscv64
 	Target_linux_x64              // abi=x64Unix
@@ -22,21 +23,23 @@ const (
 func ParseTargetType(s string) TargetType {
 	switch {
 	case strEqualFold(s, "js"):
-		return Target_Nil
+		return Target_js
 	case strEqualFold(s, "wasm4"):
-		return Target_Nil
+		return Target_wasm4
+	case strEqualFold(s, "linux-arm64", "linux/arm64"):
+		return Target_linux_arm64
 	case strEqualFold(s, "linux-la64", "linux/la64", "linux-loong64", "linux/loong64"):
-		return Target_Nil
+		return Target_linux_la64
 	case strEqualFold(s, "linux-rv64", "linux/rv64", "linux-riscv64", "linux/riscv64"):
-		return Target_Nil
+		return Target_linux_rv64
 	case strEqualFold(s, "linux-x64", "linux/x64", "linux-amd64", "linux/amd64"):
-		return Target_Nil
+		return Target_linux_x64
 	case strEqualFold(s, "windows-x64", "windows/x64", "windows-amd64", "windows/amd64", "win64"):
-		return Target_Nil
+		return Target_windows_x64
 	case strEqualFold(s, "arduino"):
-		return Target_Nil
+		return Target_arduino
 	case strEqualFold(s, "esp32"):
-		return Target_Nil
+		return Target_esp32
 	}
 	return Target_Nil
 }
@@ -47,6 +50,8 @@ func TargetTypeString(t TargetType) string {
 		return "js"
 	case Target_wasm4:
 		return "wasm4"
+	case Target_linux_arm64:
+		return "linux-arm64"
 	case Target_linux_la64:
 		return "linux-la64"
 	case Target_linux_rv64:
@@ -69,6 +74,8 @@ func TargetTypeABI(t TargetType) ABIType {
 		return ABI_WASM
 	case Target_wasm4:
 		return ABI_WASM
+	case Target_linux_arm64:
+		return ABI_ARM64
 	case Target_linux_la64:
 		return ABI_LOONG64
 	case Target_linux_rv64:

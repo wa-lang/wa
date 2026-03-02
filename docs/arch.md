@@ -20,6 +20,7 @@ graph LR
     x64(X64);
     loong64(龙芯64);
     riscv(RISCV);
+    arm64(ARM64);
 
     wa_ext --> wa_ast;
     wz_ext --> wz_ast;
@@ -34,6 +35,7 @@ graph LR
     nasm --> loong64
     nasm --> x64
     nasm --> riscv
+    nasm --> arm64
 ```
 
 - 注: 其中RISCV平台因为缺少环境, 尚未进行真机测试.

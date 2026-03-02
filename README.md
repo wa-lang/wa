@@ -56,6 +56,7 @@ graph LR
     x64(X64);
     loong64(LoongArch);
     riscv(RISCV);
+    arm64(ARM64);
 
     wa_ext --> wa_ast;
     wz_ext --> wz_ast;
@@ -70,6 +71,7 @@ graph LR
     nasm --> loong64
     nasm --> x64
     nasm --> riscv
+    nasm --> arm64
 ```
 
 - Note: The RISC-V platform has not yet undergone hardware testing due to the lack of a physical environment.
