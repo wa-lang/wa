@@ -106,12 +106,14 @@ const (
 	REG_LOONG_BEGIN Token = 1000 + 100*iota
 	REG_RISCV_BEGIN
 	REG_X64_BEGIN
+	REG_ARM64_BEGIN
 
 	REG_BEGIN     = REG_LOONG_BEGIN
 	REG_LOONG_END = REG_LOONG_BEGIN + 100
 	REG_RISCV_END = REG_RISCV_BEGIN + 100
 	REG_X64_END   = REG_X64_BEGIN + 100
-	REG_END       = REG_X64_END
+	REG_ARM64_END = REG_ARM64_BEGIN + 100
+	REG_END       = REG_ARM64_END
 )
 
 // 指令到 Token 空间的映射
@@ -121,12 +123,14 @@ const (
 	A_LOONG_BEGIN Token = 2000 + 2000*iota
 	A_RISCV_BEGIN
 	A_X64_BEGIN
+	A_ARM64_BEGIN
 	A_END
 
 	A_BEGIN     = A_LOONG_BEGIN
 	A_LOONG_END = A_LOONG_BEGIN + 2000
 	A_RISCV_END = A_RISCV_BEGIN + 2000
 	A_X64_END   = A_X64_BEGIN + 2000
+	A_ARM64_END = A_ARM64_BEGIN + 2000
 )
 
 var tokens = [...]string{
@@ -287,6 +291,9 @@ func (tok Token) RawReg() abi.RegType {
 	if REG_X64_BEGIN <= tok && tok < REG_X64_END {
 		return abi.RegType(tok - REG_X64_BEGIN)
 	}
+	if REG_ARM64_BEGIN <= tok && tok < REG_ARM64_END {
+		return abi.RegType(tok - REG_ARM64_BEGIN)
+	}
 	return 0
 }
 
@@ -300,6 +307,9 @@ func (tok Token) RawAs() abi.As {
 	}
 	if A_X64_BEGIN <= tok && tok < A_X64_END {
 		return abi.As(tok - A_X64_BEGIN)
+	}
+	if A_ARM64_BEGIN <= tok && tok < A_ARM64_END {
+		return abi.As(tok - A_ARM64_BEGIN)
 	}
 	return 0
 }
