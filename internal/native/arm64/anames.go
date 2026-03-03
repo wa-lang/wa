@@ -76,40 +76,6 @@ var _Register = []string{
 	REG_X29: "x29",
 	REG_X30: "x30",
 
-	// 浮点数寄存器
-	REG_V0:  "v0",
-	REG_V1:  "v1",
-	REG_V2:  "v2",
-	REG_V3:  "v3",
-	REG_V4:  "v4",
-	REG_V5:  "v5",
-	REG_V6:  "v6",
-	REG_V7:  "v7",
-	REG_V8:  "v8",
-	REG_V9:  "v9",
-	REG_V10: "v10",
-	REG_V11: "v11",
-	REG_V12: "v12",
-	REG_V13: "v13",
-	REG_V14: "v14",
-	REG_V15: "v15",
-	REG_V16: "v16",
-	REG_V17: "v17",
-	REG_V18: "v18",
-	REG_V19: "v19",
-	REG_V20: "v20",
-	REG_V21: "v21",
-	REG_V22: "v22",
-	REG_V23: "v23",
-	REG_V24: "v24",
-	REG_V25: "v25",
-	REG_V26: "v26",
-	REG_V27: "v27",
-	REG_V28: "v28",
-	REG_V29: "v29",
-	REG_V30: "v30",
-	REG_V31: "v31",
-
 	// 浮点数寄存器: float32
 	REG_S0:  "s0",
 	REG_S1:  "s1",
@@ -180,6 +146,148 @@ var _Register = []string{
 }
 
 // 寄存器名字列表
+var _ZhRegister = []string{
+	// 特殊寄存器 (硬件编码31)
+	REG_SP:  "栈格",
+	REG_WZR: "半零格", // zero
+	REG_XZR: "全零格", // zero
+
+	// 低32位寄存器
+	REG_W0:  "半甲格",
+	REG_W1:  "半乙格",
+	REG_W2:  "半丙格",
+	REG_W3:  "半丁格",
+	REG_W4:  "半戊格",
+	REG_W5:  "半己格",
+	REG_W6:  "半庚格",
+	REG_W7:  "半辛格",
+	REG_W8:  "半壬格",
+	REG_W9:  "半癸格",
+	REG_W10: "半子格",
+	REG_W11: "半丑格",
+	REG_W12: "半寅格",
+	REG_W13: "半卯格",
+	REG_W14: "半辰格",
+	REG_W15: "半巳格",
+	REG_W16: "半午格",
+	REG_W17: "半未格",
+	REG_W18: "半申格",
+	REG_W19: "半酉格",
+	REG_W20: "半戌格",
+	REG_W21: "半亥格",
+	REG_W22: "半乾格",
+	REG_W23: "半坤格",
+	REG_W24: "半震格",
+	REG_W25: "半巽格",
+	REG_W26: "半坎格",
+	REG_W27: "半离格",
+	REG_W28: "半艮格",
+	REG_W29: "半兑格",
+	REG_W30: "半阴格",
+
+	// 通用寄存器
+	REG_X0:  "全甲格",
+	REG_X1:  "全乙格",
+	REG_X2:  "全丙格",
+	REG_X3:  "全丁格",
+	REG_X4:  "全戊格",
+	REG_X5:  "全己格",
+	REG_X6:  "全庚格",
+	REG_X7:  "全辛格",
+	REG_X8:  "全壬格",
+	REG_X9:  "全癸格",
+	REG_X10: "全子格",
+	REG_X11: "全丑格",
+	REG_X12: "全寅格",
+	REG_X13: "全卯格",
+	REG_X14: "全辰格",
+	REG_X15: "全巳格",
+	REG_X16: "全午格",
+	REG_X17: "全未格",
+	REG_X18: "全申格",
+	REG_X19: "全酉格",
+	REG_X20: "全戌格",
+	REG_X21: "全亥格",
+	REG_X22: "全乾格",
+	REG_X23: "全坤格",
+	REG_X24: "全震格",
+	REG_X25: "全巽格",
+	REG_X26: "全坎格",
+	REG_X27: "全离格",
+	REG_X28: "全艮格",
+	REG_X29: "全兑格",
+	REG_X30: "全阴格",
+
+	// 浮点数寄存器: float32
+	REG_S0:  "半甲皿",
+	REG_S1:  "半乙皿",
+	REG_S2:  "半丙皿",
+	REG_S3:  "半丁皿",
+	REG_S4:  "半戊皿",
+	REG_S5:  "半己皿",
+	REG_S6:  "半庚皿",
+	REG_S7:  "半辛皿",
+	REG_S8:  "半壬皿",
+	REG_S9:  "半癸皿",
+	REG_S10: "半子皿",
+	REG_S11: "半丑皿",
+	REG_S12: "半寅皿",
+	REG_S13: "半卯皿",
+	REG_S14: "半辰皿",
+	REG_S15: "半巳皿",
+	REG_S16: "半午皿",
+	REG_S17: "半未皿",
+	REG_S18: "半申皿",
+	REG_S19: "半酉皿",
+	REG_S20: "半戌皿",
+	REG_S21: "半亥皿",
+	REG_S22: "半乾皿",
+	REG_S23: "半坤皿",
+	REG_S24: "半震皿",
+	REG_S25: "半巽皿",
+	REG_S26: "半坎皿",
+	REG_S27: "半离皿",
+	REG_S28: "半艮皿",
+	REG_S29: "半兑皿",
+	REG_S30: "半阴皿",
+	REG_S31: "半阳皿",
+
+	// 浮点数寄存器: float64
+	REG_D0:  "全甲皿",
+	REG_D1:  "全乙皿",
+	REG_D2:  "全丙皿",
+	REG_D3:  "全丁皿",
+	REG_D4:  "全戊皿",
+	REG_D5:  "全己皿",
+	REG_D6:  "全庚皿",
+	REG_D7:  "全辛皿",
+	REG_D8:  "全壬皿",
+	REG_D9:  "全癸皿",
+	REG_D10: "全子皿",
+	REG_D11: "全丑皿",
+	REG_D12: "全寅皿",
+	REG_D13: "全卯皿",
+	REG_D14: "全辰皿",
+	REG_D15: "全巳皿",
+	REG_D16: "全午皿",
+	REG_D17: "全未皿",
+	REG_D18: "全申皿",
+	REG_D19: "全酉皿",
+	REG_D20: "全戌皿",
+	REG_D21: "全亥皿",
+	REG_D22: "全乾皿",
+	REG_D23: "全坤皿",
+	REG_D24: "全震皿",
+	REG_D25: "全巽皿",
+	REG_D26: "全坎皿",
+	REG_D27: "全离皿",
+	REG_D28: "全艮皿",
+	REG_D29: "全兑皿",
+	REG_D30: "全阴皿",
+	REG_D31: "全阳皿",
+}
+
+// 寄存器名字列表
 var _Register32 = []string{
 	// 通用寄存器
 	REG_X0:  "w0",
@@ -213,40 +321,6 @@ var _Register32 = []string{
 	REG_X28: "w28",
 	REG_X29: "w29",
 	REG_X30: "w30",
-
-	// 浮点数寄存器
-	REG_V0:  "s0",
-	REG_V1:  "s1",
-	REG_V2:  "s2",
-	REG_V3:  "s3",
-	REG_V4:  "s4",
-	REG_V5:  "s5",
-	REG_V6:  "s6",
-	REG_V7:  "s7",
-	REG_V8:  "s8",
-	REG_V9:  "s9",
-	REG_V10: "s10",
-	REG_V11: "s11",
-	REG_V12: "s12",
-	REG_V13: "s13",
-	REG_V14: "s14",
-	REG_V15: "s15",
-	REG_V16: "s16",
-	REG_V17: "s17",
-	REG_V18: "s18",
-	REG_V19: "s19",
-	REG_V20: "s20",
-	REG_V21: "s21",
-	REG_V22: "s22",
-	REG_V23: "s23",
-	REG_V24: "s24",
-	REG_V25: "s25",
-	REG_V26: "s26",
-	REG_V27: "s27",
-	REG_V28: "s28",
-	REG_V29: "s29",
-	REG_V30: "s30",
-	REG_V31: "s31",
 }
 
 // 寄存器别名
@@ -259,6 +333,14 @@ var _RegisterAlias = []string{
 	REG_IP1: "ip1",
 	REG_FP:  "fp",
 	REG_LR:  "lr",
+}
+
+// 寄存器别名
+var _ZhRegisterAlias = []string{
+	REG_IP0: "暂甲格",
+	REG_IP1: "暂乙格",
+	REG_FP:  "帧格",
+	REG_LR:  "回格",
 }
 
 // 指令的名字
@@ -328,4 +410,82 @@ var _Anames = []string{
 	ASTURD:  "sturd",  // M[R[Rn] + DTAddr] = D[Rt]
 	AUDIV:   "udiv",   // R[Rd] = R[Rn] / R[Rm]
 	AUMULH:  "umulh",  // R[Rd] = (R[Rn] * R[Rm]) (127:64)
+}
+
+// 中文指令集
+//
+// 全格: i64
+// 半格: i32
+// 寸格: i16
+// 微格: byte
+//
+// 单精度: f32
+// 双精度: f64
+//
+// 其他指令部分按字面意思翻译, 比如 加 对应 ADD, 减 对应 SUB
+var _ZhAnames = []string{
+	AADD:    "加",          // R[Rd] = R[Rn] + R[Rm]
+	AADDI:   "加立",         // R[Rd] = R[Rn] + ALUImm
+	AADDIS:  "加立置",        // R[Rd], FLAGS = R[Rn] + ALUImm
+	AADDS:   "加置",         // R[Rd], FLAGS = R[Rn] +R[Rm]
+	AAND:    "与",          // R[Rd] = R[Rn] & R[Rm]
+	AANDI:   "与立",         // R[Rd] = R[Rn] & ALUImm
+	AANDIS:  "与立置",        // R[Rd], FLAGS = R[Rn] & ALUImm
+	AANDS:   "与置",         // R[Rd], FLAGS=R[Rn] & R[Rm]
+	AB:      "跳转",         // PC = PC + BranchAddr
+	AB_EQ:   "跳转.相等",      // PC = PC+ CondBranchAddr if FLAGS equal
+	AB_NE:   "跳转.不等",      // PC = PC+ CondBranchAddr if FLAGS not equal
+	AB_LT:   "跳转.小于",      // PC = PC+ CondBranchAddr if FLAGS less than
+	AB_LE:   "跳转.小于等于",    // PC = PC+ CondBranchAddr if FLAGS less than or equal
+	AB_GT:   "跳转.大于",      // PC = PC+ CondBranchAddr if FLAGS greater than
+	AB_GE:   "跳转.大于等于",    // PC = PC+ CondBranchAddr if FLAGS greater than or equal
+	AB_LO:   "跳转.低于",      // PC = PC+ CondBranchAddr if FLAGS lower
+	AB_LS:   "跳转.低于等于",    // PC = PC+ CondBranchAddr if FLAGS lower or same
+	AB_HI:   "跳转.高于",      // PC = PC+ CondBranchAddr if FLAGS higher
+	AB_HS:   "跳转.高于等于",    // PC = PC+ CondBranchAddr if FLAGS higher or same
+	ABL:     "链接跳转",       // R[30] = PC+4; PC = PC+ BranchAddr
+	ABR:     "间接跳转",       // PC= R[Rt]
+	ACBNZ:   "非零跳转",       // PC = PC + CondBranchAddr if(R[Rt]!=0)
+	ACBZ:    "为零跳转",       // PC = PC + CondBranchAddr if(R[Rt]==0)
+	AEOR:    "异或",         // R[Rd] = R[Rn] ^ R[Rm]
+	AEORI:   "异或立",        // R[Rd] = R[Rn] ^ ALUImm
+	ALDUR:   "装载.全格",      // R[Rt] = M[R[Rn] + DTAddr]
+	ALDURB:  "装载.微格",      // R[Rt]={56'bо, M[R[Rn] + DTAddr](7:0)}
+	ALDURH:  "装载.寸格",      // R[Rt]={48'bо, M[R[Rn] + DTAddr](15:0)}
+	ALDURSW: "装载.半格.符号扩展", // R[Rt]={32{M[R[Rn] + DTAddr][31]}, M[R[Rn] + DTAddr] (31:0)}
+	ALDXR:   "原子装载",       // R[Rd] = M[R[Rn] + DTAddr]
+	ALSL:    "左移",         // R[Rd] = R[Rn] << shamt
+	ALSR:    "右移",         // R[Rd] = R[Rn]>>> shamt
+	AMOVK:   "拷贝比特.仅覆盖",   // R[Rd](Instruction[22:21]*16: Instruction[22:21]*16-15)=MOVImm
+	AMOVZ:   "拷贝比特.先置零",   // R[Rd] = {MOVImm <<(Instruction[22:21]*16)}
+	AORR:    "或",          // R[Rd] = R[Rn] | R[Rm]
+	AORRI:   "或立",         // R[Rd] = R[Rn] | ALUImm
+	ASTUR:   "存储.全格",      // M[R[Rn] + DTAddr] = R[Rt]
+	ASTURB:  "存储.微格",      // M[R[Rn]+DTAddr](7:0) = R[Rt](7:0)
+	ASTURH:  "存储.寸格",      // M[R[Rn] + DTAddr](15:0) = R[Rt](15:0)
+	ASTURW:  "存储.半格.符号扩展", // M[R[Rn] + DTAddr](31:0) = R[Rt](31:0)
+	ASTXR:   "原子存储",       // M[R[Rn] + DTAddr] = R[Rt]; R[Rm] = (atomic)?0:1
+	ASUB:    "减",          // R[Rd] = R[Rn] - R[Rm]
+	ASUBI:   "减立",         // R[Rd] = R[Rn] - ALUImm
+	ASUBIS:  "减立置",        // R[Rd], FLAGS = R[Rn] - ALUImm
+	ASUBS:   "减置",         // R[Rd], FLAGS = R[Rn] - R[Rm]
+	AFADDS:  "浮加.单精度",     // S[Rd] = S[Rn] + S[Rm]
+	AFADDD:  "浮加.双精度",     // D[Rd] = D[Rn] + D[Rm]
+	AFCMPS:  "浮比较.单精度",    // FLAGS = (S[Rn] vs S[Rm])
+	AFCMPD:  "浮比较.双精度",    // FLAGS = (D[Rn] vs D[Rm])
+	AFDIVS:  "浮除.单精度",     // S[Rd] = S[Rn]/S[Rm]
+	AFDIVD:  "浮除.双精度",     // D[Rd] = D[Rn]/D[Rm]
+	AFMULS:  "浮乘.单精度",     // S[Rd] = S[Rn] * S[Rm]
+	AFMULD:  "浮乘.双精度",     // D[Rd] = D[Rn] * D[Rm]
+	AFSUBS:  "浮减.单精度",     // S[Rd] = S[Rn] – S[Rm]
+	AFSUBD:  "浮减.双精度",     // D[Rd] = D[Rn] - D[Rm]
+	ALDURS:  "装载.单精度",     // S[Rt] = M[R[Rn] + DTAddr]
+	ALDURD:  "装载.双精度",     // D[Rt] = M[R[Rn] + DTAddr]
+	AMUL:    "乘",          // R[Rd] = (R[Rn] * R[Rm]) (63:0)
+	ASDIV:   "除.有符号",      // R[Rd] = R[Rn]/R[Rm]
+	ASMULH:  "乘高.有符号",     // R[Rd] = (R[Rn] * R[Rm]) (127:64)
+	ASTURS:  "存储.单精度",     // M[R[Rn] + DTAddr] = S[Rt]
+	ASTURD:  "存储.双精度",     // M[R[Rn] + DTAddr] = D[Rt]
+	AUDIV:   "除.无符号",      // R[Rd] = R[Rn] / R[Rm]
+	AUMULH:  "乘高.无符号",     // R[Rd] = (R[Rn] * R[Rm]) (127:64)
 }

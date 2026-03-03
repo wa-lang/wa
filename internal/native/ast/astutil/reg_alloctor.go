@@ -129,14 +129,14 @@ func newArgsRegAlloctor_ARM64Linux() *_RegAlloctor {
 			arm64.REG_X7,
 		},
 		fRegList: []abi.RegType{
-			arm64.REG_V0,
-			arm64.REG_V1,
-			arm64.REG_V2,
-			arm64.REG_V3,
-			arm64.REG_V4,
-			arm64.REG_V5,
-			arm64.REG_V6,
-			arm64.REG_V7,
+			arm64.REG_D0,
+			arm64.REG_D1,
+			arm64.REG_D2,
+			arm64.REG_D3,
+			arm64.REG_D4,
+			arm64.REG_D5,
+			arm64.REG_D6,
+			arm64.REG_D7,
 		},
 	}
 }
@@ -150,8 +150,8 @@ func newRetRegAlloctor_ARM64Linux() *_RegAlloctor {
 			arm64.REG_X1,
 		},
 		fRegList: []abi.RegType{
-			arm64.REG_V0,
-			arm64.REG_V1,
+			arm64.REG_D0,
+			arm64.REG_D1,
 		},
 	}
 }
