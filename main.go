@@ -39,10 +39,7 @@ import (
 	"wa-lang.org/wa/internal/app/apprun"
 	"wa-lang.org/wa/internal/app/appssa"
 	"wa-lang.org/wa/internal/app/apptest"
-	"wa-lang.org/wa/internal/app/appwat2c"
-	"wa-lang.org/wa/internal/app/appwat2la"
-	"wa-lang.org/wa/internal/app/appwat2wasm"
-	"wa-lang.org/wa/internal/app/appwat2x64"
+	"wa-lang.org/wa/internal/app/appwat2xx"
 	"wa-lang.org/wa/internal/app/appwatstrip"
 	"wa-lang.org/wa/internal/app/appwemu"
 	"wa-lang.org/wa/internal/app/appyacc"
@@ -118,9 +115,8 @@ func main() {
 		applex.CmdLex,
 		appast.CmdAst,
 		appssa.CmdSsa,
-		appwat2wasm.CmdWat2wasm,
+		appwat2xx.CmdWat2XX,
 		appwatstrip.CmdWatStrip,
-		appwat2c.CmdWat2c,
 		appobjdump.CmdObjdump,
 
 		// 待完善的子命令(隐藏)
@@ -130,8 +126,6 @@ func main() {
 		appesp32dump.CmdESP32Dump,
 		appesp32flash.CmdESP32Flash,
 		appflash.CmdFlash,
-		appwat2la.CmdWat2la,
-		appwat2x64.CmdWat2x64,
 		appwemu.CmdWEmu,
 		appgo2wa.CmdGo2wa,
 		appgo2wz.CmdGo2wz,

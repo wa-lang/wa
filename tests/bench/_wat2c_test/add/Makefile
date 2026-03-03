@@ -4,7 +4,7 @@ WA:=go run ../../../../main.go
 
 default:
 	$(WA) build code.wa
-	$(WA) wat2c -o wa-app.c code.wat
+	$(WA) wat2xx clang -o wa-app.c code.wat
 	go run .
 
 clean:
