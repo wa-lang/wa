@@ -22,9 +22,7 @@ import (
 	"wa-lang.org/wa/internal/app/appdap"
 	"wa-lang.org/wa/internal/app/appdev"
 	"wa-lang.org/wa/internal/app/appdoc"
-	"wa-lang.org/wa/internal/app/appesp32build"
-	"wa-lang.org/wa/internal/app/appesp32dump"
-	"wa-lang.org/wa/internal/app/appesp32flash"
+	"wa-lang.org/wa/internal/app/appesp32"
 	"wa-lang.org/wa/internal/app/appflash"
 	"wa-lang.org/wa/internal/app/appfmt"
 	"wa-lang.org/wa/internal/app/appgo2wa"
@@ -116,15 +114,13 @@ func main() {
 		appast.CmdAst,
 		appssa.CmdSsa,
 		appwat2xx.CmdWat2XX,
+		appesp32.CmdESP32,
 		appwatstrip.CmdWatStrip,
 		appobjdump.CmdObjdump,
 
 		// 待完善的子命令(隐藏)
 		appasm2elf.CmdAsm2elf,
 		appasm2pe.CmdAsm2pe,
-		appesp32build.CmdESP32Build,
-		appesp32dump.CmdESP32Dump,
-		appesp32flash.CmdESP32Flash,
 		appflash.CmdFlash,
 		appwemu.CmdWEmu,
 		appgo2wa.CmdGo2wa,

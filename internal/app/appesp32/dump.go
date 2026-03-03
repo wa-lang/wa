@@ -1,7 +1,7 @@
 // Copyright (C) 2025 武汉凹语言科技有限公司
 // SPDX-License-Identifier: AGPL-3.0-or-later
 
-package appesp32dump
+package appesp32
 
 import (
 	"fmt"
@@ -12,10 +12,9 @@ import (
 )
 
 var CmdESP32Dump = &cli.Command{
-	Hidden: true,
-	Name:   "esp32dump",
-	Usage:  "dump esp32 image file",
-	Flags:  []cli.Flag{},
+	Name:  "dump",
+	Usage: "dump esp32 image file",
+	Flags: []cli.Flag{},
 	Action: func(c *cli.Context) error {
 		if c.NArg() == 0 {
 			fmt.Fprintln(os.Stderr, "no input file")

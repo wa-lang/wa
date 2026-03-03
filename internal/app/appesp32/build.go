@@ -1,7 +1,7 @@
 // Copyright (C) 2025 武汉凹语言科技有限公司
 // SPDX-License-Identifier: AGPL-3.0-or-later
 
-package appesp32build
+package appesp32
 
 import (
 	"fmt"
@@ -16,9 +16,8 @@ import (
 )
 
 var CmdESP32Build = &cli.Command{
-	Hidden: true,
-	Name:   "esp32build",
-	Usage:  "build esp32 image file",
+	Name:  "build",
+	Usage: "build esp32 image file",
 	Flags: []cli.Flag{
 		&cli.StringFlag{
 			Name:    "output",
