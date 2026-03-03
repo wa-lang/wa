@@ -23,7 +23,6 @@ import (
 	"wa-lang.org/wa/internal/app/appdev"
 	"wa-lang.org/wa/internal/app/appdoc"
 	"wa-lang.org/wa/internal/app/appesp32"
-	"wa-lang.org/wa/internal/app/appflash"
 	"wa-lang.org/wa/internal/app/appfmt"
 	"wa-lang.org/wa/internal/app/appgo2wa"
 	"wa-lang.org/wa/internal/app/appgo2wz"
@@ -121,7 +120,6 @@ func main() {
 		// 待完善的子命令(隐藏)
 		appasm2elf.CmdAsm2elf,
 		appasm2pe.CmdAsm2pe,
-		appflash.CmdFlash,
 		appwemu.CmdWEmu,
 		appgo2wa.CmdGo2wa,
 		appgo2wz.CmdGo2wz,
