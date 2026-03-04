@@ -13,8 +13,7 @@ import (
 	"strings"
 
 	"wa-lang.org/wa/internal/3rdparty/cli"
-	"wa-lang.org/wa/internal/app/appasm2elf"
-	"wa-lang.org/wa/internal/app/appasm2pe"
+	"wa-lang.org/wa/internal/app/appasm2xx"
 	"wa-lang.org/wa/internal/app/appast"
 	"wa-lang.org/wa/internal/app/appbase"
 	"wa-lang.org/wa/internal/app/appbuild"
@@ -112,14 +111,13 @@ func main() {
 		applex.CmdLex,
 		appast.CmdAst,
 		appssa.CmdSsa,
-		appwat2xx.CmdWat2XX,
-		appesp32.CmdESP32,
 		appwatstrip.CmdWatStrip,
 		appobjdump.CmdObjdump,
+		appwat2xx.CmdWat2XX,
+		appasm2xx.CmdAsm2xx,
+		appesp32.CmdESP32,
 
 		// 待完善的子命令(隐藏)
-		appasm2elf.CmdAsm2elf,
-		appasm2pe.CmdAsm2pe,
 		appwemu.CmdWEmu,
 		appgo2wa.CmdGo2wa,
 		appgo2wz.CmdGo2wz,

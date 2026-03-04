@@ -1,7 +1,7 @@
-// Copyright (C) 2026 武汉凹语言科技有限公司
+// Copyright (C) 2025 武汉凹语言科技有限公司
 // SPDX-License-Identifier: AGPL-3.0-or-later
 
-package appasm2pe
+package appasm2xx
 
 import (
 	"fmt"
@@ -16,9 +16,8 @@ import (
 	"wa-lang.org/wa/internal/native/wemu/device/dram"
 )
 
-var CmdAsm2pe = &cli.Command{
-	Hidden:    true,
-	Name:      "asm2pe",
+var CmdAsm2xx_pe = &cli.Command{
+	Name:      "pe",
 	Usage:     "convert wa native assembly code to pe binary format",
 	ArgsUsage: "<file.s>",
 	Flags: []cli.Flag{
