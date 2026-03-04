@@ -1,17 +1,16 @@
 // Copyright (C) 2024 武汉凹语言科技有限公司
 // SPDX-License-Identifier: AGPL-3.0-or-later
 
-package appdap
+package appdebug
 
 import (
 	"wa-lang.org/wa/internal/3rdparty/cli"
-	"wa-lang.org/wa/internal/dap"
+	"wa-lang.org/wa/internal/lsp"
 )
 
-var CmdDap = &cli.Command{
-	Hidden: true,
-	Name:   "dap",
-	Usage:  "run DAP server",
+var CmdLsp = &cli.Command{
+	Name:  "lsp",
+	Usage: "run Wa langugage server",
 	Flags: []cli.Flag{
 		&cli.StringFlag{
 			Name:  "wa-root",
@@ -28,9 +27,19 @@ var CmdDap = &cli.Command{
 			Usage: "set log file",
 			Value: "",
 		},
+		&cli.StringFlag{
+			Name:  "sync-file-dir",
+			Usage: "set sync file dir",
+			Value: "",
+		},
 	},
 	Action: func(c *cli.Context) error {
-		dap.Run()
-		return nil
+		opt := &lsp.Option{
+			LogFile:     c.String("log-file"),
+			SyncFileDir: c.String("sync-file-dir"),
+			WaOS:        c.String("wa-os"),
+			WaRoot:      c.String("wa-root"),
+		}
+		return lsp.NewLSPServer(opt).Run()
 	},
 }

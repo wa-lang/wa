@@ -18,7 +18,7 @@ import (
 	"wa-lang.org/wa/internal/app/appbase"
 	"wa-lang.org/wa/internal/app/appbuild"
 	"wa-lang.org/wa/internal/app/appcir"
-	"wa-lang.org/wa/internal/app/appdap"
+	"wa-lang.org/wa/internal/app/appdebug"
 	"wa-lang.org/wa/internal/app/appdev"
 	"wa-lang.org/wa/internal/app/appdoc"
 	"wa-lang.org/wa/internal/app/appesp32"
@@ -28,7 +28,6 @@ import (
 	"wa-lang.org/wa/internal/app/appinit"
 	"wa-lang.org/wa/internal/app/applex"
 	"wa-lang.org/wa/internal/app/applogo"
-	"wa-lang.org/wa/internal/app/applsp"
 	"wa-lang.org/wa/internal/app/appnative"
 	"wa-lang.org/wa/internal/app/appobjdump"
 	"wa-lang.org/wa/internal/app/appplay"
@@ -116,6 +115,7 @@ func main() {
 		appwat2xx.CmdWat2XX,
 		appasm2xx.CmdAsm2xx,
 		appesp32.CmdESP32,
+		appdebug.CmdDebug,
 
 		// 待完善的子命令(隐藏)
 		appwemu.CmdWEmu,
@@ -123,8 +123,6 @@ func main() {
 		appgo2wz.CmdGo2wz,
 		appcir.CmdCir,
 		appdoc.CmdDoc,
-		applsp.CmdLsp,
-		appdap.CmdDap,
 	}
 
 	cliApp.Run(os.Args)

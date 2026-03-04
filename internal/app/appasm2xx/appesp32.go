@@ -10,6 +10,7 @@ var CmdAsm2xx = &cli.Command{
 	Name:   "asm2xx",
 	Usage:  "convert native asm to executable file",
 	Subcommands: []*cli.Command{
+		CmdAsm2xx_wasm,
 		CmdAsm2xx_elf,
 		CmdAsm2xx_pe,
 	},

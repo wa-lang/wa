@@ -16,7 +16,6 @@ import (
 	"wa-lang.org/wa/internal/app/appbuild"
 	"wa-lang.org/wa/internal/app/appfmt"
 	"wa-lang.org/wa/internal/app/appinit"
-	"wa-lang.org/wa/internal/app/applsp"
 	"wa-lang.org/wa/internal/app/apprun"
 	"wa-lang.org/wa/internal/config"
 	"wa-lang.org/wa/internal/version"
@@ -72,7 +71,6 @@ func main() {
 		appbuild.CmdBuild,
 		apprun.CmdRun,
 		appfmt.CmdFmt,
-		applsp.CmdLsp, // hidden
 	}
 
 	cliApp.Run(os.Args)
