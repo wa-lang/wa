@@ -123,7 +123,7 @@ func (ri *rtImp) initTank(t Type, isImv bool) *tank {
 		tank.register.typ = ri.i32
 
 	case *chunk:
-		if isImv {
+		if !isImv {
 			tank.register.typ = ri.chunk
 		} else {
 			tank.register.typ = ri.i32
