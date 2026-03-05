@@ -78,6 +78,7 @@ const (
 	TypeKindStruct
 	TypeKindString
 	TypeKindRef
+	TypeKindNamed
 
 	//TypeKindSignature
 	TypeKindSlice

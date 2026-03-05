@@ -430,17 +430,17 @@ func (i *StructMember) String() string             { return i.Name + " " + i.Typ
 String: 字符串
 **************************************/
 type String struct {
-	underlying Struct
+	underlying *Struct
 }
 
-func (t *String) Name() string        { return "string" }
-func (t *String) Kind() TypeKind      { return TypeKindString }
-func (t *String) Equal(u Type) bool   { _, ok := u.(*String); return ok }
-func (t *String) Underlying() *Struct { return &t.underlying }
+func (t *String) Name() string      { return "string" }
+func (t *String) Kind() TypeKind    { return TypeKindString }
+func (t *String) Equal(u Type) bool { _, ok := u.(*String); return ok }
 
 func (tl *Types) genString() *String {
 	nt := &String{}
-	nt.underlying = rtimp.underlyingStruct(nt)
+	underlying := rtimp.underlyingStruct(nt)
+	nt.underlying = &underlying
 	return nt
 }
 
@@ -449,7 +449,7 @@ Ref: 引用类型，runtime 自动内存管理时，Ptr 转化为 Ref
 **************************************/
 type Ref struct {
 	Base       Type
-	underlying Struct
+	underlying *Struct
 }
 
 func (t *Ref) Name() string   { return t.Base.Name() + "$$ref" }
@@ -463,7 +463,6 @@ func (t *Ref) Equal(u Type) bool {
 	}
 	return false
 }
-func (t *Ref) Underlying() *Struct { return &t.underlying }
 
 func (tl *Types) GenRef(base Type) *Ref {
 	if t, ok := tl.refs[base]; ok {
@@ -471,7 +470,8 @@ func (tl *Types) GenRef(base Type) *Ref {
 	}
 
 	nt := &Ref{Base: base}
-	nt.underlying = rtimp.underlyingStruct(nt)
+	underlying := rtimp.underlyingStruct(nt)
+	nt.underlying = &underlying
 	return nt
 }
 
@@ -531,7 +531,7 @@ type Named struct {
 }
 
 func (t *Named) Name() string   { return t.name }
-func (t *Named) Kind() TypeKind { return t.underlying.Kind() }
+func (t *Named) Kind() TypeKind { return TypeKindNamed }
 func (t *Named) Equal(u Type) bool {
 	ut, ok := u.(*Named)
 	if !ok {
@@ -541,8 +541,13 @@ func (t *Named) Equal(u Type) bool {
 	return t.underlying.Equal(ut.underlying)
 }
 
-func (t *Named) Underlying() Type         { return t.underlying }
-func (t *Named) SetUnderlying(utype Type) { t.underlying = utype }
+func (t *Named) Underlying() Type { return t.underlying }
+func (t *Named) SetUnderlying(utype Type) {
+	if utype.Kind() == TypeKindNamed {
+		panic("Named.SetUnderlying: underlying type must not be *Named")
+	}
+	t.underlying = utype
+}
 
 func (t *Named) AddMethod(m Method) int {
 	if t.underlying.Kind() == TypeKindInterface {
@@ -575,4 +580,22 @@ func (tl *Types) GenNamed(name string) *Named {
 	nt := &Named{name: name}
 	tl.nameds[name] = nt
 	return nt
+}
+
+func unname(t Type) Type {
+	if named, ok := t.(*Named); ok {
+		return named.Underlying()
+	}
+	return t
+}
+
+func deref(t Type) Type {
+	switch t := t.(type) {
+	case *Ptr:
+		return t.Base
+	case *Ref:
+		return t.Base
+	default:
+		return t
+	}
 }

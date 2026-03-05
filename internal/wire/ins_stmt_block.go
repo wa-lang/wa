@@ -350,6 +350,15 @@ func exprContainsVar(expr Expr, v Var) bool {
 			}
 		}
 
+	case *MemberLocation:
+		return exprContainsVar(e.X, v)
+
+	case *Member:
+		return exprContainsVar(e.X, v)
+
+	case *MemberAddr:
+		return exprContainsVar(e.X, v)
+
 	//case *DupRef:
 	//	return exprContainsVar(e.X, v)
 

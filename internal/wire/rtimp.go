@@ -142,10 +142,23 @@ func (ri *rtImp) initTank(t Type, isImv bool) *tank {
 		}
 
 	case *String:
-		tank = ri.initTank(t.Underlying(), isImv)
+		if t.underlying != nil {
+			return ri.initTank(t.underlying, isImv)
+		}
+
+		underlying := ri.underlyingStruct(t)
+		tank = ri.initTank(&underlying, isImv)
 
 	case *Ref:
-		tank = ri.initTank(t.Underlying(), isImv)
+		if t.underlying != nil {
+			return ri.initTank(t.underlying, isImv)
+		}
+
+		underlying := ri.underlyingStruct(t)
+		tank = ri.initTank(&underlying, isImv)
+
+	case *Named:
+		tank = ri.initTank(t.underlying, isImv)
 
 	default:
 		panic(fmt.Sprintf("Todo: %T", t))

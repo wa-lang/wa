@@ -223,6 +223,13 @@ func (f *Function) EndBody() {
 	// 虚拟寄存器
 	f.allocVR_block(f.Body, false)
 
+	{
+		var sb strings.Builder
+		sb.WriteString("\n<=======allocVR_block() 后=======>\n")
+		f.Format("  ", &sb)
+		println(sb.String())
+	}
+
 	// Get指令替换
 	getReplace_stmt(f.Body)
 
@@ -327,7 +334,7 @@ func rc_stmt(s Stmt, inloop bool, d *Block) {
 		}
 
 		for i := range s.Rhs {
-			rc_expr(s.Rhs[i], inloop, false, false, d, &pre)
+			s.Rhs[i] = rc_expr(s.Rhs[i], inloop, false, false, d, &pre)
 		}
 
 		//rhNeedRetain := make([]bool, len(s.Lhs))
@@ -478,16 +485,16 @@ func rc_stmt(s Stmt, inloop bool, d *Block) {
 	}
 }
 
-func rc_expr(e Expr, inloop bool, replace bool, isLoopCond bool, d *Block, pre *[]Stmt) (ret Expr) {
-	ret = e
-	if e == nil {
+func rc_expr(expr Expr, inloop bool, replace bool, isLoopCond bool, d *Block, pre *[]Stmt) (ret Expr) {
+	ret = expr
+	if ret == nil {
 		return
 	}
-	if _, ok := e.(*Const); ok {
+	if _, ok := ret.(*Const); ok {
 		return
 	}
 
-	switch e := e.(type) {
+	switch e := ret.(type) {
 	case *Alloc:
 		return
 
@@ -526,23 +533,34 @@ func rc_expr(e Expr, inloop bool, replace bool, isLoopCond bool, d *Block, pre *
 			call_common.Args[i] = rc_expr(call_common.Args[i], inloop, true, isLoopCond, d, pre)
 		}
 
+	case *MemberLocation:
+		e.X = rc_expr(e.X, inloop, true, isLoopCond, d, pre)
+		e.X = getReplace_expr(e.X)
+		ret = e.renewUnderlying()
+
+	case *Member:
+		panic("Member should not be here")
+
+	case *MemberAddr:
+		panic("MemberAddr should not be here")
+
 	case Stmt:
 		panic(fmt.Sprintf("Todo: %s", e.String()))
 	}
 
-	if e.retained() && replace {
+	if ret.retained() && replace {
 		if isLoopCond {
-			tmp := d.NewAlloc(d.newTempVarName(), e.Type(), e.Pos(), nil, nil)
+			tmp := d.NewAlloc(d.newTempVarName(), ret.Type(), ret.Pos(), nil, nil)
 			tmp.noinit = true
 			d.emit(tmp)
 
-			*pre = append(*pre, newAssign(tmp, e, e.Pos()))
-			ret = NewGet(tmp, e.Pos())
+			*pre = append(*pre, newAssign(tmp, ret, ret.Pos()))
+			ret = NewGet(tmp, ret.Pos())
 		} else {
-			tmp := d.NewAlloc(d.newTempVarName(), e.Type(), e.Pos(), nil, e)
+			tmp := d.NewAlloc(d.newTempVarName(), ret.Type(), ret.Pos(), nil, ret)
 			d.emit(tmp)
 
-			ret = NewGet(tmp, e.Pos())
+			ret = NewGet(tmp, ret.Pos())
 		}
 	}
 
@@ -717,6 +735,15 @@ func (f *Function) allocVR_expr(e Expr, inloop bool) {
 		for _, arg := range call_common.Args {
 			f.allocVR_expr(arg, inloop)
 		}
+
+	case *MemberLocation:
+		f.allocVR_expr(e.X, inloop)
+
+	case *Member:
+		return
+
+	case *MemberAddr:
+		f.allocVR_expr(e.X, inloop)
 
 	//case *DupRef:
 	//	f.allocVR_expr(e.X, inloop)
@@ -923,6 +950,15 @@ func getReplace_expr(e Expr) (ret Expr) {
 		for i := range call_common.Args {
 			call_common.Args[i] = getReplace_expr(call_common.Args[i])
 		}
+
+	case *MemberLocation:
+		e.X = getReplace_expr(e.X)
+
+	case *Member:
+		return
+
+	case *MemberAddr:
+		e.X = getReplace_expr(e.X)
 
 	case *Alloc, *Imv:
 		return
