@@ -16,6 +16,7 @@ const (
 	ABI_RISCV32
 	ABI_X64Unix    // UNIX System V ABI
 	ABI_X64Windows // Windows ABI
+	ABI_ARM64
 	ABI_CLANG
 	ABI_Max
 )

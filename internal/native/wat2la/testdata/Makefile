@@ -4,7 +4,7 @@
 WA:=go run ../../../../main.go
 
 wat2la:
-	$(WA) wat2la a_step0.wat
+	$(WA) wat2xx la64 a_step0.wat
 
 la64-build:
 	$(WA) asm2elf -arch=loong64 hello.s

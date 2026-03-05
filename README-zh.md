@@ -47,6 +47,7 @@ graph LR
     x64(X64);
     loong64(龙芯64);
     riscv(RISCV);
+    arm64(ARM64);
 
     wa_ext --> wa_ast;
     wz_ext --> wz_ast;
@@ -61,6 +62,7 @@ graph LR
     nasm --> loong64
     nasm --> x64
     nasm --> riscv
+    nasm --> arm64
 ```
 
 - 注: 其中RISCV平台因为缺少环境, 尚未进行真机测试.
@@ -253,10 +255,10 @@ $ cd waroot && wa run examples/prime
 
 |贡献者|贡献点|
 | --- | --- |
-|柴树杉| 99650|
-|丁尔男| 104150|
+|柴树杉| 124650|
+|丁尔男| 116650|
 |史斌  | 10000|
-|扈梦明| 60000|
+|扈梦明| 72500|
 |赵普明| 10000|
 |宋汝阳|  2000|
 |刘云峰|  1000|

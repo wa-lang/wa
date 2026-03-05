@@ -13,36 +13,28 @@ import (
 	"strings"
 
 	"wa-lang.org/wa/internal/3rdparty/cli"
-	"wa-lang.org/wa/internal/app/appasm2elf"
-	"wa-lang.org/wa/internal/app/appasm2pe"
+	"wa-lang.org/wa/internal/app/appasm2xx"
 	"wa-lang.org/wa/internal/app/appast"
 	"wa-lang.org/wa/internal/app/appbase"
 	"wa-lang.org/wa/internal/app/appbuild"
 	"wa-lang.org/wa/internal/app/appcir"
-	"wa-lang.org/wa/internal/app/appdap"
+	"wa-lang.org/wa/internal/app/appdebug"
 	"wa-lang.org/wa/internal/app/appdev"
 	"wa-lang.org/wa/internal/app/appdoc"
-	"wa-lang.org/wa/internal/app/appesp32build"
-	"wa-lang.org/wa/internal/app/appesp32dump"
-	"wa-lang.org/wa/internal/app/appesp32flash"
-	"wa-lang.org/wa/internal/app/appflash"
+	"wa-lang.org/wa/internal/app/appesp32"
 	"wa-lang.org/wa/internal/app/appfmt"
 	"wa-lang.org/wa/internal/app/appgo2wa"
 	"wa-lang.org/wa/internal/app/appgo2wz"
 	"wa-lang.org/wa/internal/app/appinit"
 	"wa-lang.org/wa/internal/app/applex"
 	"wa-lang.org/wa/internal/app/applogo"
-	"wa-lang.org/wa/internal/app/applsp"
 	"wa-lang.org/wa/internal/app/appnative"
 	"wa-lang.org/wa/internal/app/appobjdump"
 	"wa-lang.org/wa/internal/app/appplay"
 	"wa-lang.org/wa/internal/app/apprun"
 	"wa-lang.org/wa/internal/app/appssa"
 	"wa-lang.org/wa/internal/app/apptest"
-	"wa-lang.org/wa/internal/app/appwat2c"
-	"wa-lang.org/wa/internal/app/appwat2la"
-	"wa-lang.org/wa/internal/app/appwat2wasm"
-	"wa-lang.org/wa/internal/app/appwat2x64"
+	"wa-lang.org/wa/internal/app/appwat2xx"
 	"wa-lang.org/wa/internal/app/appwatstrip"
 	"wa-lang.org/wa/internal/app/appwemu"
 	"wa-lang.org/wa/internal/app/appyacc"
@@ -118,27 +110,19 @@ func main() {
 		applex.CmdLex,
 		appast.CmdAst,
 		appssa.CmdSsa,
-		appwat2wasm.CmdWat2wasm,
 		appwatstrip.CmdWatStrip,
-		appwat2c.CmdWat2c,
 		appobjdump.CmdObjdump,
+		appwat2xx.CmdWat2XX,
+		appasm2xx.CmdAsm2xx,
+		appesp32.CmdESP32,
+		appdebug.CmdDebug,
 
 		// 待完善的子命令(隐藏)
-		appasm2elf.CmdAsm2elf,
-		appasm2pe.CmdAsm2pe,
-		appesp32build.CmdESP32Build,
-		appesp32dump.CmdESP32Dump,
-		appesp32flash.CmdESP32Flash,
-		appflash.CmdFlash,
-		appwat2la.CmdWat2la,
-		appwat2x64.CmdWat2x64,
 		appwemu.CmdWEmu,
 		appgo2wa.CmdGo2wa,
 		appgo2wz.CmdGo2wz,
 		appcir.CmdCir,
 		appdoc.CmdDoc,
-		applsp.CmdLsp,
-		appdap.CmdDap,
 	}
 
 	cliApp.Run(os.Args)

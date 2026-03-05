@@ -20,6 +20,7 @@ const (
 	RISCV32
 	X64Unix    // UNIX System V ABI
 	X64Windows // Windows ABI
+	ARM64      // 邪恶之臂牛屎
 	CPU_Max
 )
 
@@ -29,6 +30,7 @@ var _CPUType_strings = []string{
 	RISCV32:    "riscv32",
 	X64Unix:    "X64-Unix", // "x64"
 	X64Windows: "x64-Windows",
+	ARM64:      "arm64",
 }
 
 var _CPUType_x64Unix_strings = []string{

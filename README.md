@@ -56,6 +56,7 @@ graph LR
     x64(X64);
     loong64(LoongArch);
     riscv(RISCV);
+    arm64(ARM64);
 
     wa_ext --> wa_ast;
     wz_ext --> wz_ast;
@@ -70,6 +71,7 @@ graph LR
     nasm --> loong64
     nasm --> x64
     nasm --> riscv
+    nasm --> arm64
 ```
 
 - Note: The RISC-V platform has not yet undergone hardware testing due to the lack of a physical environment.
@@ -220,10 +222,10 @@ More examples [waroot/examples](waroot/examples)
 
 |Contributor|Contribution points|
 | --- | --- |
-|柴树杉| 99650|
-|丁尔男| 104150|
+|柴树杉| 124650|
+|丁尔男| 116650|
 |史斌  | 10000|
-|扈梦明| 60000|
+|扈梦明| 72500|
 |赵普明| 10000|
 |宋汝阳|  2000|
 |刘云峰|  1000|

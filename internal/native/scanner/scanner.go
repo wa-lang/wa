@@ -30,6 +30,8 @@ type ErrorHandler func(pos token.Position, msg string)
 type Scanner struct {
 	// 查询特定平台的指令和寄存器
 	lookupRegisterOrAs func(ident string) token.Token
+	// 是否为ARM64风格的注释
+	useArmStyleComment bool
 
 	// immutable state
 	file *token.File  // source file handle
@@ -52,9 +54,10 @@ type Scanner struct {
 
 const bom = 0xFEFF // byte order mark, only permitted as very first character
 
-func NewScanner(lookupRegisterOrAs func(ident string) token.Token) *Scanner {
+func NewScanner(lookupRegisterOrAs func(ident string) token.Token, useArmStyleComment bool) *Scanner {
 	s := &Scanner{}
 	s.lookupRegisterOrAs = lookupRegisterOrAs
+	s.useArmStyleComment = useArmStyleComment
 	return s
 }
 
@@ -747,16 +750,43 @@ scanAgain:
 			insertSemi = true
 			tok = token.RBRACK
 		case '#':
-			// #-style comment
-			if s.insertSemi && s.findLineEnd('#') {
+			if s.useArmStyleComment {
+				// ARM语法中 #123 为立即数
+				insertSemi = true
+				tok, lit = s.scanNumber()
+			} else {
+				// #-style comment
+				if s.insertSemi && s.findLineEnd('#') {
+					// reset position to the beginning of the comment
+					s.ch = '#'
+					s.offset = s.file.Offset(pos)
+					s.rdOffset = s.offset + 1
+					s.insertSemi = false // newline consumed
+					return pos, token.SEMICOLON, "\n"
+				}
+				comment := s.scanComment('#')
+				if s.mode&ScanComments == 0 {
+					// skip comment
+					s.insertSemi = false // newline consumed
+					goto scanAgain
+				}
+				tok = token.COMMENT
+				lit = comment
+			}
+
+		case '/':
+			// comment
+			// 对于 ARM64, # 被用于立即数前缀, 因此需要提供不同的注释语法
+			// 对于格式化时, 也需要做特别处理
+			if s.insertSemi && s.findLineEnd('/') {
 				// reset position to the beginning of the comment
-				s.ch = '#'
+				s.ch = '/'
 				s.offset = s.file.Offset(pos)
 				s.rdOffset = s.offset + 1
 				s.insertSemi = false // newline consumed
 				return pos, token.SEMICOLON, "\n"
 			}
-			comment := s.scanComment('#')
+			comment := s.scanComment('/')
 			if s.mode&ScanComments == 0 {
 				// skip comment
 				s.insertSemi = false // newline consumed

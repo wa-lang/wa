@@ -4,7 +4,7 @@
 WA:=go run ../../../main.go
 
 wat2la:
-	$(WA) wat2la ./testdata/a_step0.wat
+	$(WA) wat2xx la64 ./testdata/a_step0.wat
 
 clean:
 

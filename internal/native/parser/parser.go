@@ -8,6 +8,7 @@ import (
 	"strconv"
 
 	"wa-lang.org/wa/internal/native/abi"
+	"wa-lang.org/wa/internal/native/arm64"
 	"wa-lang.org/wa/internal/native/ast"
 	"wa-lang.org/wa/internal/native/loong64"
 	"wa-lang.org/wa/internal/native/riscv"
@@ -63,6 +64,11 @@ func newParser(cpu abi.CPUType, fset *token.FileSet, filename string, src []byte
 	p.gasSectionAlign = make(map[string]int)
 	p.gasGlobl = make(map[string]bool)
 
+	useArmStyleComment := false
+	if cpu == abi.ARM64 {
+		useArmStyleComment = true
+	}
+
 	switch cpu {
 	case abi.LOONG64:
 		p.scanner = scanner.NewScanner(
@@ -77,6 +83,7 @@ func newParser(cpu abi.CPUType, fset *token.FileSet, filename string, src []byte
 				}
 				return token.NONE
 			},
+			useArmStyleComment,
 		)
 	case abi.RISCV32, abi.RISCV64:
 		p.scanner = scanner.NewScanner(
@@ -91,6 +98,7 @@ func newParser(cpu abi.CPUType, fset *token.FileSet, filename string, src []byte
 				}
 				return token.NONE
 			},
+			useArmStyleComment,
 		)
 	case abi.X64Unix, abi.X64Windows:
 		p.scanner = scanner.NewScanner(
@@ -105,6 +113,22 @@ func newParser(cpu abi.CPUType, fset *token.FileSet, filename string, src []byte
 				}
 				return token.NONE
 			},
+			useArmStyleComment,
+		)
+	case abi.ARM64:
+		p.scanner = scanner.NewScanner(
+			func(ident string) token.Token {
+				// 将原始的寄存器映射到 token.Token 编码
+				if reg, ok := arm64.LookupRegister(ident); ok {
+					return token.REG_ARM64_BEGIN + token.Token(reg)
+				}
+				// 将原始的指令映射到 token.Token 编码
+				if as, ok := arm64.LookupAs(ident); ok {
+					return token.A_ARM64_BEGIN + token.Token(as)
+				}
+				return token.NONE
+			},
+			useArmStyleComment,
 		)
 	default:
 		panic(fmt.Errorf("unknown cpu: %v", cpu))
