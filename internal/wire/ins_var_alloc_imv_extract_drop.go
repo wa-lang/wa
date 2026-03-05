@@ -8,13 +8,13 @@ import (
 )
 
 /**************************************
-VarKind: 变量位置类别
+LocationKind: 位置类别
 **************************************/
 
-type VarKind int
+type LocationKind int
 
 const (
-	Register VarKind = iota
+	Register LocationKind = iota
 	//Stack
 	Heap
 )
@@ -25,7 +25,7 @@ Alloc: Alloc 指令，定义一个变量，实现了 Expr、Var 接口
 
 type Alloc struct {
 	aStmt
-	kind   VarKind
+	kind   LocationKind
 	name   string
 	dtype  Type
 	rtype  Type
@@ -82,9 +82,9 @@ func (i *Alloc) String() string {
 	}
 	return s
 }
-func (i *Alloc) Kind() VarKind  { return i.kind }
-func (i *Alloc) DataType() Type { return i.dtype }
-func (i *Alloc) Tank() *tank    { return i.tank }
+func (i *Alloc) Kind() LocationKind { return i.kind }
+func (i *Alloc) DataType() Type     { return i.dtype }
+func (i *Alloc) Tank() *tank        { return i.tank }
 
 // func (i *Alloc) RefType() Type  { return i.rtype }
 func (i *Alloc) SetInit(init Expr) { i.init = init }
@@ -141,9 +141,9 @@ func (i *Imv) String() string {
 	}
 	return s
 }
-func (i *Imv) Kind() VarKind  { return Register }
-func (i *Imv) DataType() Type { return i.Type() }
-func (i *Imv) Tank() *tank    { return i.tank }
+func (i *Imv) Kind() LocationKind { return Register }
+func (i *Imv) DataType() Type     { return i.Type() }
+func (i *Imv) Tank() *tank        { return i.tank }
 
 func newImv(name string, val Expr, pos int) *Imv {
 	v := &Imv{
@@ -175,9 +175,9 @@ func (i *Extract) retained() bool { return i.X.retained() }
 func (i *Extract) String() string {
 	return fmt.Sprintf("extract(%s, %d)", i.X.Name(), i.Index)
 }
-func (i *Extract) Kind() VarKind  { return Register }
-func (i *Extract) DataType() Type { return i.Type() }
-func (i *Extract) Tank() *tank    { return i.X.Tank().member[i.Index] }
+func (i *Extract) Kind() LocationKind { return Register }
+func (i *Extract) DataType() Type     { return i.Type() }
+func (i *Extract) Tank() *tank        { return i.X.Tank().member[i.Index] }
 
 // 生成一条 Extract 指令
 func newExtract(x *Imv, index int, pos int) *Extract {

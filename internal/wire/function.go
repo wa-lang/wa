@@ -40,7 +40,7 @@ type Function struct {
 // Scope 接口相关
 func (f *Function) ScopeKind() ScopeKind { return ScopeKindFunc }
 func (f *Function) ParentScope() Scope   { return f.scope }
-func (f *Function) Lookup(obj interface{}, level VarKind) *Alloc {
+func (f *Function) Lookup(obj interface{}, level LocationKind) *Alloc {
 	for _, p := range f.params {
 		if p.object == obj {
 			if level > p.kind {
