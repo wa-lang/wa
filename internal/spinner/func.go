@@ -360,6 +360,34 @@ func (b *Builder) location(e ast.Expr, escaping wire.VarKind, block *wire.Block)
 		} else {
 			return b.expr1(e.X, tv, block)
 		}
+
+	case *ast.SelectorExpr:
+		sel, ok := b.info.Selections[e]
+		if !ok {
+			// 包级标识符，而非结构体字段
+			return b.location(e.Sel, escaping, block)
+		}
+		if sel.Kind() != types.FieldVal {
+			panic("unexpected selector expression: " + sel.String())
+		}
+
+		ex := unparen(e.X)
+		tv := b.info.Types[ex]
+
+		var x wire.Expr
+		if !sel.Indirect() && !isPointer(tv.Type) {
+			x = b.location(ex, escaping, block)
+		} else {
+			x = b.expr(ex, block)
+		}
+
+		memaddr := block.NewMemberLocation(x, sel.Index()[0], int(e.Pos()))
+
+		for i := 1; i < len(sel.Index()); i++ {
+			memaddr = block.NewMemberLocation(memaddr, sel.Index()[i], int(e.Pos()))
+		}
+
+		return memaddr
 	}
 
 	panic(fmt.Sprintf("unexpected address expression: %T", e))

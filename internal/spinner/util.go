@@ -17,6 +17,12 @@ func isBlankIdent(e ast.Expr) bool {
 	return ok && id.Name == "_"
 }
 
+// isPointer 判断 typ 是否为指针类型
+func isPointer(typ types.Type) bool {
+	_, ok := typ.Underlying().(*types.Pointer)
+	return ok
+}
+
 // 若 typ 为指针类型，返回其基类型，否则返回自身
 func deref(typ types.Type) types.Type {
 	if p, ok := typ.Underlying().(*types.Pointer); ok {

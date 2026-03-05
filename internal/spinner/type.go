@@ -158,7 +158,20 @@ func (b *Builder) BuildType(t types.Type) wire.Type {
 			} //*/
 
 	case *types.Struct:
-		panic("Todo")
+		members := make([]wire.StructMember, t.NumFields())
+		for i := 0; i < t.NumFields(); i++ {
+			field := t.Field(i)
+			members[i].Type = b.BuildType(field.Type())
+
+			if field.Embedded() {
+				members[i].Name = "$" + field.Name()
+			} else {
+				members[i].Name = field.Name()
+			}
+		}
+		wtype = b.module.Types.GenStruct(members)
+
+		//panic("Todo")
 		/*
 			tStruct, found := tLib.module.GenValueType_Struct("s`" + strconv.Itoa(tLib.anonStructCount) + "`")
 			newType = tStruct
@@ -185,7 +198,10 @@ func (b *Builder) BuildType(t types.Type) wire.Type {
 			} //*/
 
 	case *types.Named:
-		panic("Todo")
+		name := getMangleName(t.Obj().Pkg(), t.Obj().Name())
+		named_type := b.module.Types.GenNamed(name)
+		named_type.SetUnderlying(b.BuildType(t.Underlying()))
+		wtype = named_type
 
 		/*
 			pkg_name := ""
@@ -323,4 +339,11 @@ func (b *Builder) BuildType(t types.Type) wire.Type {
 	return wtype
 
 	// 需要处理 Signature
+}
+
+func getMangleName(pkg *types.Package, name string) string {
+	if pkg != nil {
+		return pkg.Name() + "." + name
+	}
+	return name
 }
