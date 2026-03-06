@@ -11,13 +11,13 @@ import (
 /**************************************
 Set: Set 指令，实现赋值 `=` 操作，将值保存至变量、或地址
   - Set 支持多赋值
-  - Lh 应为 nil、 Var、或类型为 Ref/Ptr 的 Expr；Lh 为 nil 是合法的，这等价于向匿名变量 _ 赋值
+  - Lh 应为 Location；Lh 为 nil 是合法的，这等价于向匿名变量 _ 赋值
   - Rh 可能为元组（Tuple），此时 Rhs 的长度应为 1，Lhs 的长度应为元组长度
 **************************************/
 
 type Set struct {
 	aStmt
-	Lhs     []Expr
+	Lhs     []Location
 	Rhs     []Expr
 	rhsType []Type
 }
@@ -57,11 +57,11 @@ func (i *Set) String() string {
 	return sb.String()
 }
 
-func NewSet(lhs Expr, rhs Expr, pos int) *Set {
-	return NewSetN([]Expr{lhs}, []Expr{rhs}, pos)
+func NewSet(lhs Location, rhs Expr, pos int) *Set {
+	return NewSetN([]Location{lhs}, []Expr{rhs}, pos)
 }
 
-func NewSetN(lhs []Expr, rhs []Expr, pos int) *Set {
+func NewSetN(lhs []Location, rhs []Expr, pos int) *Set {
 	v := &Set{}
 	v.Stringer = v
 	v.Lhs = lhs
@@ -87,14 +87,14 @@ func NewSetN(lhs []Expr, rhs []Expr, pos int) *Set {
 }
 
 // 在 Block 中添加一条 Set 指令
-func (b *Block) EmitSet(lhs Expr, rhs Expr, pos int) *Set {
+func (b *Block) EmitSet(lhs Location, rhs Expr, pos int) *Set {
 	v := NewSet(lhs, rhs, pos)
 	b.emit(v)
 	return v
 }
 
 // Block.EmitSet 的多重赋值版
-func (b *Block) EmitSetN(lhs []Expr, rhs []Expr, pos int) *Set {
+func (b *Block) EmitSetN(lhs []Location, rhs []Expr, pos int) *Set {
 	v := NewSetN(lhs, rhs, pos)
 	b.emit(v)
 	return v

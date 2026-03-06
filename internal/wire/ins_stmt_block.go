@@ -223,7 +223,7 @@ func varUsedInStmt(stmt Stmt, v Var) bool {
 
 	case *Set:
 		for _, lh := range s.Lhs {
-			if exprContainsVar(lh, v) {
+			if locationContainsVar(lh, v) {
 				return true
 			}
 		}
@@ -297,7 +297,7 @@ func exprContainsVar(expr Expr, v Var) bool {
 		return exprContainsVar(e.X, v)
 
 	case *Get:
-		return exprContainsVar(e.Loc, v)
+		return locationContainsVar(e.Loc, v)
 
 	case *Load:
 		return exprContainsVar(e.Loc, v)
@@ -307,17 +307,6 @@ func exprContainsVar(expr Expr, v Var) bool {
 
 	case *Biop:
 		return exprContainsVar(e.X, v) || exprContainsVar(e.Y, v)
-
-	//case *Retain:
-	//	return exprContainsVar(e.X, v)
-
-	//case *Combo:
-	//	for _, stmt := range e.Stmts {
-	//		if varUsedInStmt(stmt, v) {
-	//			return true
-	//		}
-	//	}
-	//	return exprContainsVar(e.Result, v)
 
 	case *Call:
 		var call_common *CallCommon
@@ -350,20 +339,33 @@ func exprContainsVar(expr Expr, v Var) bool {
 			}
 		}
 
-	case *MemberLocation:
-		return exprContainsVar(e.X, v)
-
 	case *Member:
 		return exprContainsVar(e.X, v)
 
 	case *MemberAddr:
 		return exprContainsVar(e.X, v)
 
-	//case *DupRef:
-	//	return exprContainsVar(e.X, v)
+	case *asAddr:
+		return locationContainsVar(e.loc, v)
 
 	default:
 		panic(fmt.Sprintf("Todo: %t %s", e, e.Name()))
 	}
 	return false
+}
+
+func locationContainsVar(loc Location, v Var) bool {
+	switch loc := loc.(type) {
+	case Expr:
+		return exprContainsVar(loc, v)
+
+	case *asLoc:
+		return exprContainsVar(loc.expr, v)
+
+	case *MemberLocation:
+		return locationContainsVar(loc.X, v)
+
+	default:
+		panic(fmt.Sprintf("Todo: %T", loc))
+	}
 }

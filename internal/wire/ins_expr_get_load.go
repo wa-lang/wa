@@ -9,56 +9,33 @@ import (
 
 /**************************************
 Get: Get 指令，获取变量 Loc 的值，Get 实现了 Expr 接口
-  - Loc 应为Var、或类型为 Ref、Ptr 的 Expr
+  - Loc 应为 Location
 **************************************/
 
 type Get struct {
 	aStmt
-	Loc Expr
+	Loc Location
 }
 
-func (i *Get) Name() string { return i.String() }
-func (i *Get) Type() Type {
-	if v, ok := i.Loc.(Var); ok {
-		return v.DataType()
-	}
-
-	switch t := i.Loc.Type().(type) {
-	case *Ref:
-		return t.Base
-
-	case *Ptr:
-		return t.Base
-
-	default:
-		panic(fmt.Sprintf("Invalid Loc.Type():%s", i.Loc.Type().Name()))
-	}
-}
+func (i *Get) Name() string   { return i.String() }
+func (i *Get) Type() Type     { return i.Loc.DataType() }
 func (i *Get) retained() bool { return false }
 func (i *Get) String() string {
-	if v, ok := i.Loc.(Var); ok {
-		if v.Kind() == Register {
-			return fmt.Sprintf("get(%s)", v.Name())
-		}
+	if v, ok := i.Loc.(Var); ok && v.Kind() == Register {
+		return fmt.Sprintf("get(%s)", i.Loc.Name())
+	} else {
+		return fmt.Sprintf("get*(%s)", i.Loc.Name())
 	}
-
-	return fmt.Sprintf("get*(%s)", i.Loc.Name())
 }
 
 // 生成一条 Get 指令
-func NewGet(loc Expr, pos int) *Get {
+func NewGet(loc Location, pos int) *Get {
 	if loc == nil {
 		panic("loc is nil")
 	}
-	if _, ok := loc.(Var); !ok {
-		if loc.Type().Kind() != TypeKindPtr && loc.Type().Kind() != TypeKindRef {
-			panic(fmt.Sprintf("loc is not a Var, and loc.Type() is not Ptr or Ref: %s", loc.Type().Name()))
-		}
-	}
 
-	v := &Get{}
+	v := &Get{Loc: loc}
 	v.Stringer = v
-	v.Loc = loc
 	v.pos = pos
 	return v
 }

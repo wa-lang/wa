@@ -144,13 +144,20 @@ type Expr interface {
 }
 
 /**************************************
+Location: Location 接口，可 取值/赋值 的位置，可能为地址、引用、变量等
+**************************************/
+type Location interface {
+	Name() string
+	DataType() Type
+}
+
+/**************************************
 Var:
 **************************************/
 type Var interface {
 	Expr
-
+	Location
 	Kind() LocationKind
-	DataType() Type
 	Tank() *tank
 }
 

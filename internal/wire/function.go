@@ -255,7 +255,7 @@ func (f *Function) retRepalce(stmt Stmt) {
 		for i, s := range stmt.Stmts {
 			if ret_stmt, ok := s.(*Return); ok {
 				if len(f.results) > 0 && len(ret_stmt.Results) > 0 {
-					lhs := make([]Expr, len(f.results))
+					lhs := make([]Location, len(f.results))
 					for i, lh := range f.results {
 						lhs[i] = lh
 					}
@@ -330,7 +330,7 @@ func rc_stmt(s Stmt, inloop bool, d *Block) {
 
 	case *Set:
 		for i := range s.Lhs {
-			s.Lhs[i] = rc_expr(s.Lhs[i], inloop, true, false, d, &pre)
+			s.Lhs[i] = rc_location(s.Lhs[i], inloop, false, d, &pre)
 		}
 
 		for i := range s.Rhs {
@@ -380,7 +380,8 @@ func rc_stmt(s Stmt, inloop bool, d *Block) {
 			allLhsAssignable = false
 			lhAssignable[i] = false
 
-			if get, ok := lh.(*Get); ok {
+			lhe := loc2expr(lh)
+			if get, ok := lhe.(*Get); ok {
 				if v, ok := get.Loc.(Var); ok && v.Kind() == Register { // p: *T; *p = expr; p 未逃逸
 					lhs[i] = v
 					continue
@@ -388,7 +389,7 @@ func rc_stmt(s Stmt, inloop bool, d *Block) {
 			}
 
 			// 其余情况，左部是指针或引用类型的表达式：
-			loc := newImv(d.newTempVarName(), lh, s.pos)
+			loc := newImv(d.newTempVarName(), lhe, s.pos)
 			d.emit(loc)
 			lhs[i] = loc
 		}
@@ -499,7 +500,7 @@ func rc_expr(expr Expr, inloop bool, replace bool, isLoopCond bool, d *Block, pr
 		return
 
 	case *Get:
-		e.Loc = rc_expr(e.Loc, inloop, true, isLoopCond, d, pre)
+		e.Loc = rc_location(e.Loc, inloop, isLoopCond, d, pre)
 
 	case *Unop:
 		e.X = rc_expr(e.X, inloop, true, isLoopCond, d, pre)
@@ -533,16 +534,18 @@ func rc_expr(expr Expr, inloop bool, replace bool, isLoopCond bool, d *Block, pr
 			call_common.Args[i] = rc_expr(call_common.Args[i], inloop, true, isLoopCond, d, pre)
 		}
 
-	case *MemberLocation:
-		e.X = rc_expr(e.X, inloop, true, isLoopCond, d, pre)
-		e.X = getReplace_expr(e.X)
-		ret = e.renewUnderlying()
-
 	case *Member:
-		panic("Member should not be here")
+		return
 
 	case *MemberAddr:
-		panic("MemberAddr should not be here")
+		e.X = rc_expr(e.X, inloop, true, isLoopCond, d, pre)
+
+	case *asAddr:
+		loc := rc_location(e.loc, inloop, isLoopCond, d, pre)
+		ret = loc2expr(loc)
+		if !ret.Type().Equal(e.Type()) {
+			panic("asAddr() type mismatch")
+		}
 
 	case Stmt:
 		panic(fmt.Sprintf("Todo: %s", e.String()))
@@ -565,6 +568,51 @@ func rc_expr(expr Expr, inloop bool, replace bool, isLoopCond bool, d *Block, pr
 	}
 
 	return
+}
+
+func rc_location(loc Location, inloop bool, isLoopCond bool, d *Block, pre *[]Stmt) (ret Location) {
+	ret = loc
+	if ret == nil {
+		return
+	}
+
+	switch e := ret.(type) {
+	case *Alloc, *Imv:
+		return
+
+	case *asLoc:
+		e.expr = rc_expr(e.expr, inloop, true, isLoopCond, d, pre)
+		e.expr = getReplace_expr(e.expr)
+
+	case *MemberLocation:
+		e.X = rc_location(e.X, inloop, isLoopCond, d, pre)
+
+	default:
+		panic(fmt.Sprintf("Todo: %T", e))
+	}
+
+	return
+}
+
+func loc2expr(loc Location) Expr {
+	switch loc := loc.(type) {
+	case Expr:
+		return loc
+
+	case *MemberLocation:
+		x := loc2expr(loc.X)
+		if v, ok := x.(Var); ok && v.Kind() == Register && unname(v.Type()).Kind() == TypeKindStruct {
+			return newMember(v, loc.Id, loc.pos)
+		} else {
+			return newMemberAddr(x, loc.Id, loc.pos, loc.types)
+		}
+
+	case *asLoc:
+		return loc.expr
+
+	default:
+		panic(fmt.Sprintf("Todo: %T", loc))
+	}
 }
 
 func (f *Function) autoDrop(b *Block) {
@@ -627,133 +675,26 @@ func (f *Function) allocVR_stmt(s Stmt, inloop bool) {
 		f.allocVR_block(s, inloop)
 
 	case *Alloc:
-		f.allocVR_expr(s.init, inloop)
 		f.allocVR_var(s, inloop)
 
 	case *Imv:
-		f.allocVR_expr(s.val, inloop)
 		f.allocVR_imv(s, inloop)
 
-	case *Get:
-		panic("Get should not be here")
-
-	case *Set:
-		for _, lh := range s.Lhs {
-			f.allocVR_expr(lh, inloop)
-		}
-		for _, rh := range s.Rhs {
-			f.allocVR_expr(rh, inloop)
-		}
-
-	case *Assign:
-		for _, lh := range s.Lhs {
-			f.allocVR_expr(lh, inloop)
-		}
-		for _, rh := range s.Rhs {
-			f.allocVR_expr(rh, inloop)
-		}
-
-	case *Store:
-		f.allocVR_expr(s.Loc, inloop)
-		f.allocVR_expr(s.Val, inloop)
-
 	case *If:
-		f.allocVR_expr(s.Cond, inloop)
 		f.allocVR_block(s.True, inloop)
 		f.allocVR_block(s.False, inloop)
 
 	case *Loop:
-		f.allocVR_expr(s.Cond, true)
 		f.allocVR_block(s.Body, true)
 		f.allocVR_block(s.Post, true)
 
 	case *Drop:
 		f.dropVR_tank(s.X.Tank())
 
-	//case *Retain:
-	//	panic("Retain should not be here")
-
-	case *Br, *Return:
+	case *Br, *Return, *Get, *Set, *Assign, *Store:
 
 	default:
 		panic(fmt.Sprintf("Todo: %s", s.String()))
-	}
-}
-
-func (f *Function) allocVR_expr(e Expr, inloop bool) {
-	if e == nil {
-		return
-	}
-	if _, ok := e.(*Const); ok {
-		return
-	}
-
-	switch e := e.(type) {
-	case *Alloc, *Imv, *Extract:
-		return
-
-	case *Get:
-		f.allocVR_expr(e.Loc, inloop)
-
-	case *Load:
-		f.allocVR_expr(e.Loc, inloop)
-
-	case *Unop:
-		f.allocVR_expr(e.X, inloop)
-
-	case *Biop:
-		f.allocVR_expr(e.X, inloop)
-		f.allocVR_expr(e.Y, inloop)
-
-	//case *Combo:
-	//	for _, stmt := range e.Stmts {
-	//		f.allocVR_stmt(stmt, inloop)
-	//	}
-	//	f.allocVR_expr(e.Result, inloop)
-
-	case *Call:
-		var call_common *CallCommon
-		switch call := e.Callee.(type) {
-		case *BuiltinCall:
-			call_common = &call.CallCommon
-
-		case *StaticCall:
-			call_common = &call.CallCommon
-
-		case *MethodCall:
-			call_common = &call.CallCommon
-			f.allocVR_expr(call.Recv, inloop)
-
-		case *InterfaceCall:
-			call_common = &call.CallCommon
-			f.allocVR_expr(call.Interface, inloop)
-
-		default:
-			panic("Todo")
-		}
-
-		for _, arg := range call_common.Args {
-			f.allocVR_expr(arg, inloop)
-		}
-
-	case *MemberLocation:
-		f.allocVR_expr(e.X, inloop)
-
-	case *Member:
-		return
-
-	case *MemberAddr:
-		f.allocVR_expr(e.X, inloop)
-
-	//case *DupRef:
-	//	f.allocVR_expr(e.X, inloop)
-	//	f.allocVR_var(e.Imv, inloop)
-
-	//case *Retain:
-	//	f.allocVR_expr(e.X, inloop)
-
-	default:
-		panic(fmt.Sprintf("Todo: %s", e.(Stmt).String()))
 	}
 }
 
@@ -845,12 +786,7 @@ func getReplace_stmt(stmt Stmt) {
 		stmt.val = getReplace_expr(stmt.val)
 
 	case *Set:
-		for i := range stmt.Lhs {
-			stmt.Lhs[i] = getReplace_expr(stmt.Lhs[i])
-		}
-		for i := range stmt.Rhs {
-			stmt.Rhs[i] = getReplace_expr(stmt.Rhs[i])
-		}
+		panic("Set should not be here")
 
 	case *Assign:
 		for i := range stmt.Rhs {
@@ -899,14 +835,14 @@ func getReplace_expr(e Expr) (ret Expr) {
 
 	switch e := e.(type) {
 	case *Get:
-		if v, ok := e.Loc.(Var); !ok {
-			loc := getReplace_expr(e.Loc)
-			return newLoad(loc, e.Pos())
+		loc := loc2expr(e.Loc)
+		if v, ok := loc.(Var); !ok {
+			return newLoad(getReplace_expr(loc), e.Pos())
 		} else {
 			if v.Kind() == Register {
-				return e.Loc
+				return v
 			} else {
-				return newLoad(e.Loc, e.Pos())
+				return newLoad(v, e.Pos())
 			}
 		}
 
@@ -922,9 +858,6 @@ func getReplace_expr(e Expr) (ret Expr) {
 	case *Biop:
 		e.X = getReplace_expr(e.X)
 		e.Y = getReplace_expr(e.Y)
-
-	//case *Retain:
-	//	e.X = getReplace_expr(e.X)
 
 	case *Call:
 		var call_common *CallCommon
@@ -950,9 +883,6 @@ func getReplace_expr(e Expr) (ret Expr) {
 		for i := range call_common.Args {
 			call_common.Args[i] = getReplace_expr(call_common.Args[i])
 		}
-
-	case *MemberLocation:
-		e.X = getReplace_expr(e.X)
 
 	case *Member:
 		return

@@ -13,70 +13,35 @@ MemberLocation: 结构体成员位置指令，MemberLocation 实现了 Expr
 
 type MemberLocation struct {
 	aStmt
-	X  Expr
+	X  Location
 	Id int
 
-	types       *Types
-	member_type Type
-	member_name string
+	types  *Types
+	member StructMember
 }
 
 func (i *MemberLocation) Name() string   { return i.String() }
-func (i *MemberLocation) Type() Type     { return i.member_type }
-func (i *MemberLocation) retained() bool { return false }
+func (i *MemberLocation) DataType() Type { return i.member.Type }
 func (i *MemberLocation) String() string {
-	return fmt.Sprintf("member_location(%s, %s)", i.X.Name(), i.member_name)
+	return fmt.Sprintf("member_location(%s, %s)", i.X.Name(), i.member.Name)
 }
 
-func (i *MemberLocation) renewUnderlying() Expr {
-	if x, ok := i.X.(Var); ok && x.Kind() == Register && unname(x.Type()).Kind() == TypeKindStruct {
-		return newMember(x, i.Id, i.pos)
-	} else {
-		return newMemberAddr(i.X, i.Id, i.pos, i.types)
-	}
-}
-
-func (b *Block) NewMemberLocation(x Expr, id int, pos int) *MemberLocation {
+func (b *Block) NewMemberLocation(x Location, id int, pos int) *MemberLocation {
 	v := &MemberLocation{X: x, Id: id, types: b.types}
 	v.Stringer = v
 	v.pos = pos
 
-	xt := x.Type()
-
-	switch t := xt.(type) {
-	case *Ref:
-		if st, ok := unname(t.Base).(*Struct); ok {
-			m := st.At(id)
-			v.member_type = b.types.GenRef(m.Type)
-			v.member_name = m.Name
-		} else {
-			panic(fmt.Sprintf("Invalid X.Type():%s", xt.Name()))
-		}
-
-	case *Ptr:
-		if st, ok := unname(t.Base).(*Struct); ok {
-			m := st.At(id)
-			v.member_type = b.types.genPtr(m.Type)
-			v.member_name = m.Name
-		} else {
-			panic(fmt.Sprintf("Invalid X.Type():%s", xt.Name()))
-		}
-
-	default:
-		if st, ok := unname(t).(*Struct); ok {
-			m := st.At(id)
-			v.member_type = b.types.GenRef(m.Type)
-			v.member_name = m.Name
-		} else {
-			panic(fmt.Sprintf("Invalid X.Type():%s", xt.Name()))
-		}
+	if st, ok := unname(x.DataType()).(*Struct); ok {
+		v.member = st.At(id)
+	} else {
+		panic(fmt.Sprintf("Invalid X.DataType():%s", x.DataType().Name()))
 	}
 
 	return v
 }
 
 /**************************************
-Member: 结构体成员访问指令，Member 实现了 Expr、Var 接口
+Member: 寄存器型结构体成员访问指令，Member 实现了 Expr、Var 接口
   - X 应为 匿名或具名 Struct 类型的 Register 变量
 **************************************/
 
@@ -128,7 +93,7 @@ func newMember(x Var, id int, pos int) *Member {
 }
 
 /**************************************
-MemberAddr: 获取结构体成员地址，Member 实现了 Expr 接口
+MemberAddr: 获取结构体成员地址，Member 实现了 Expr、Location接口
   - X 的类型应为 Ref(T)、或 Ptr(T)，其中 T 为匿名或具名结构体
 **************************************/
 
@@ -137,14 +102,15 @@ type MemberAddr struct {
 	X  Expr
 	Id int
 
-	typ   Type
-	mname string
+	member StructMember
+	typ    Type
 }
 
 func (i *MemberAddr) Name() string   { return i.String() }
 func (i *MemberAddr) Type() Type     { return i.typ }
 func (i *MemberAddr) retained() bool { return false }
-func (i *MemberAddr) String() string { return fmt.Sprintf("%s->%s", i.X.Name(), i.mname) }
+func (i *MemberAddr) String() string { return fmt.Sprintf("%s->%s", i.X.Name(), i.member.Name) }
+func (i *MemberAddr) DataType() Type { return i.member.Type }
 
 func newMemberAddr(x Expr, id int, pos int, types *Types) *MemberAddr {
 	xkind := x.Type().Kind()
@@ -163,12 +129,12 @@ func newMemberAddr(x Expr, id int, pos int, types *Types) *MemberAddr {
 		v.Stringer = v
 		v.pos = pos
 
+		v.member = st.At(id)
 		if xkind == TypeKindRef {
-			v.typ = types.GenRef(st.At(id).Type)
+			v.typ = types.GenRef(v.member.Type)
 		} else {
-			v.typ = types.genPtr(st.At(id).Type)
+			v.typ = types.genPtr(v.member.Type)
 		}
-		v.mname = st.At(id).Name
 
 		return v
 	}
