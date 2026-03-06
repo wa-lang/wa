@@ -255,9 +255,9 @@ func (b *Builder) blockStmt(list []ast.Stmt, f *Func, block *wire.Block) {
 
 // localValueSpec 将局部变量声明降解，追加至 wire.Block
 func (b *Builder) localValueSpec(spec *ast.ValueSpec, block *wire.Block) {
-	var locs []wire.Expr
+	var locs []wire.Location
 	for _, v := range spec.Names {
-		var loc wire.Expr = nil
+		var loc wire.Location = nil
 		if !isBlankIdent(v) {
 			loc = b.addLocalForIdent(v, block)
 		}
@@ -289,10 +289,10 @@ func (b *Builder) assignStmt(s *ast.AssignStmt, block *wire.Block) {
 		return
 	}
 
-	locs := make([]wire.Expr, len(s.Lhs))
+	locs := make([]wire.Location, len(s.Lhs))
 	for i, lh := range s.Lhs {
 		if !isBlankIdent(lh) {
-			var loc wire.Expr
+			var loc wire.Location
 			if isDef {
 				loc = b.addLocalForIdent(lh.(*ast.Ident), block)
 			} else {
@@ -333,7 +333,7 @@ func (b *Builder) returnStmt(s *ast.ReturnStmt, f *Func, block *wire.Block) {
 //	return &i.m
 //
 // 将导致 i 逃逸 至 Heap
-func (b *Builder) location(e ast.Expr, escaping wire.LocationKind, block *wire.Block) wire.Expr {
+func (b *Builder) location(e ast.Expr, escaping wire.LocationKind, block *wire.Block) wire.Location {
 	e = unparen(e)
 	switch e := e.(type) {
 	case *ast.Ident:
@@ -356,9 +356,9 @@ func (b *Builder) location(e ast.Expr, escaping wire.LocationKind, block *wire.B
 
 		if tv.Addressable() {
 			loc := b.location(e.X, escaping, block)
-			return wire.NewGet(loc, loc.Pos())
+			return wire.AsLocation(wire.NewGet(loc, int(e.X.Pos())))
 		} else {
-			return b.expr1(e.X, tv, block)
+			return wire.AsLocation(b.expr1(e.X, tv, block))
 		}
 
 	case *ast.SelectorExpr:
@@ -374,11 +374,11 @@ func (b *Builder) location(e ast.Expr, escaping wire.LocationKind, block *wire.B
 		ex := unparen(e.X)
 		tv := b.info.Types[ex]
 
-		var x wire.Expr
+		var x wire.Location
 		if !sel.Indirect() && !isPointer(tv.Type) {
 			x = b.location(ex, escaping, block)
 		} else {
-			x = b.expr(ex, block)
+			x = wire.AsLocation(b.expr(ex, block))
 		}
 
 		memaddr := block.NewMemberLocation(x, sel.Index()[0], int(e.Pos()))
@@ -395,13 +395,13 @@ func (b *Builder) location(e ast.Expr, escaping wire.LocationKind, block *wire.B
 
 // assign 将表达式 e 赋值给位置 loc 的动作降解并追加至 block 中
 // loc 为 nil 是合法的，发生于向匿名变量 _ 赋值时
-func (b *Builder) assign(loc wire.Expr, e ast.Expr, pos int, block *wire.Block) {
+func (b *Builder) assign(loc wire.Location, e ast.Expr, pos int, block *wire.Block) {
 	val := b.expr(e, block)
 	block.EmitSet(loc, val, pos)
 }
 
 // assign 的多重赋值版本
-func (b *Builder) assignN(locs []wire.Expr, exprs []ast.Expr, pos int, block *wire.Block) {
+func (b *Builder) assignN(locs []wire.Location, exprs []ast.Expr, pos int, block *wire.Block) {
 	var vals []wire.Expr
 	for _, e := range exprs {
 		val := b.expr(e, block)
@@ -467,7 +467,8 @@ func (b *Builder) expr1(e ast.Expr, tv types.TypeAndValue, block *wire.Block) wi
 				// Todo: p 为空时，&*p 应panic
 				panic("Todo")
 			}
-			return loc
+			asAddr := wire.AsAddr(loc, b.BuildType(tv.Type), int(e.Pos()))
+			return asAddr
 		case token.ADD: // +x, 等价于 x
 			return b.expr(e.X, block)
 		case token.NOT: // !x
