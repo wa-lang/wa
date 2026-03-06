@@ -62,8 +62,8 @@ func (i *Member) String() string {
 		return fmt.Sprintf("%s.%s", i.X.Name(), i.member.Name)
 	}
 }
-func (i *Member) Kind() LocationKind { return Register }
-func (i *Member) DataType() Type     { return i.Type() }
+func (i *Member) Kind() VarKind  { return Register }
+func (i *Member) DataType() Type { return i.Type() }
 func (i *Member) Tank() *tank {
 	tank := i.X.Tank()
 	if tank != nil {

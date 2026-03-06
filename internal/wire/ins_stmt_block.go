@@ -39,7 +39,7 @@ func (b *Block) init() {
 
 // Scope 接口相关
 func (b *Block) ScopeKind() ScopeKind { return ScopeKindBlock }
-func (b *Block) Lookup(obj interface{}, level LocationKind) *Alloc {
+func (b *Block) Lookup(obj interface{}, level VarKind) *Alloc {
 	if v, ok := b.objects[obj]; ok {
 		if level > v.kind {
 			v.kind = level

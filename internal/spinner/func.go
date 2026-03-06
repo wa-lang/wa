@@ -333,7 +333,7 @@ func (b *Builder) returnStmt(s *ast.ReturnStmt, f *Func, block *wire.Block) {
 //	return &i.m
 //
 // 将导致 i 逃逸 至 Heap
-func (b *Builder) location(e ast.Expr, escaping wire.LocationKind, block *wire.Block) wire.Location {
+func (b *Builder) location(e ast.Expr, escaping wire.VarKind, block *wire.Block) wire.Location {
 	e = unparen(e)
 	switch e := e.(type) {
 	case *ast.Ident:
