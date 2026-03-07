@@ -594,8 +594,29 @@ func (b *Builder) expr1(e ast.Expr, tv types.TypeAndValue, block *wire.Block) wi
 		panic("")
 
 	case *ast.SelectorExpr:
-		// Todo
-		panic("")
+		sel, ok := b.info.Selections[e]
+		if !ok {
+			// 包级标识符，而非结构体字段
+			return b.expr(e.Sel, block)
+		}
+		switch sel.Kind() {
+		case types.FieldVal:
+			ex := unparen(e.X)
+			x := b.expr(ex, block)
+
+			v := wire.NewMemberValue(x, sel.Index()[0], int(e.Pos()))
+			for i := 1; i < len(sel.Index()); i++ {
+				v = wire.NewMemberValue(v, sel.Index()[i], int(e.Pos()))
+			}
+
+			return v
+
+		case types.MethodExpr:
+			panic("Todo")
+
+		case types.MethodVal:
+			panic("Todo")
+		}
 
 	case *ast.IndexExpr:
 		// Todo

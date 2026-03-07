@@ -534,6 +534,16 @@ func rc_expr(expr Expr, inloop bool, replace bool, isLoopCond bool, d *Block, pr
 			call_common.Args[i] = rc_expr(call_common.Args[i], inloop, true, isLoopCond, d, pre)
 		}
 
+	case *MemberValue:
+		v := rc_expr(e.X, inloop, true, isLoopCond, d, pre)
+		if va, ok := v.(Var); ok {
+			ret = newMember(va, e.Id, e.pos)
+		} else {
+			imv := newImv(d.newTempVarName(), v, e.pos)
+			d.emit(imv)
+			ret = newMember(imv, e.Id, e.pos)
+		}
+
 	case *Member:
 		return
 

@@ -339,6 +339,9 @@ func exprContainsVar(expr Expr, v Var) bool {
 			}
 		}
 
+	case *MemberValue:
+		return exprContainsVar(e.X, v)
+
 	case *Member:
 		return exprContainsVar(e.X, v)
 
@@ -355,6 +358,10 @@ func exprContainsVar(expr Expr, v Var) bool {
 }
 
 func locationContainsVar(loc Location, v Var) bool {
+	if loc == nil {
+		return false
+	}
+
 	switch loc := loc.(type) {
 	case Expr:
 		return exprContainsVar(loc, v)
