@@ -557,6 +557,9 @@ func rc_expr(expr Expr, inloop bool, replace bool, isLoopCond bool, d *Block, pr
 			panic("asAddr() type mismatch")
 		}
 
+	case *NilCheck:
+		e.X = rc_expr(e.X, inloop, true, isLoopCond, d, pre)
+
 	case Stmt:
 		panic(fmt.Sprintf("Todo: %s", e.String()))
 	}
@@ -898,6 +901,9 @@ func getReplace_expr(e Expr) (ret Expr) {
 		return
 
 	case *MemberAddr:
+		e.X = getReplace_expr(e.X)
+
+	case *NilCheck:
 		e.X = getReplace_expr(e.X)
 
 	case *Alloc, *Imv:

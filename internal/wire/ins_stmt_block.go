@@ -351,6 +351,9 @@ func exprContainsVar(expr Expr, v Var) bool {
 	case *asAddr:
 		return locationContainsVar(e.loc, v)
 
+	case *NilCheck:
+		return exprContainsVar(e.X, v)
+
 	default:
 		panic(fmt.Sprintf("Todo: %t %s", e, e.Name()))
 	}

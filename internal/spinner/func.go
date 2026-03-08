@@ -356,9 +356,13 @@ func (b *Builder) location(e ast.Expr, escaping wire.VarKind, block *wire.Block)
 
 		if tv.Addressable() {
 			loc := b.location(e.X, escaping, block)
-			return wire.AsLocation(wire.NewGet(loc, int(e.X.Pos())))
+			ptr := wire.NewGet(loc, int(e.X.Pos()))
+			cptr := wire.NewNilCheck(ptr)
+			return wire.AsLocation(cptr)
 		} else {
-			return wire.AsLocation(b.expr1(e.X, tv, block))
+			ptr := b.expr1(e.X, tv, block)
+			cptr := wire.NewNilCheck(ptr)
+			return wire.AsLocation(cptr)
 		}
 
 	case *ast.SelectorExpr:
@@ -378,7 +382,9 @@ func (b *Builder) location(e ast.Expr, escaping wire.VarKind, block *wire.Block)
 		if !sel.Indirect() && !isPointer(tv.Type) {
 			x = b.location(ex, escaping, block)
 		} else {
-			x = wire.AsLocation(b.expr(ex, block))
+			ptr := b.expr(ex, block)
+			cptr := wire.NewNilCheck(ptr)
+			x = wire.AsLocation(cptr)
 		}
 
 		memaddr := block.NewMemberLocation(x, sel.Index()[0], int(e.Pos()))
