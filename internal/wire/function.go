@@ -337,22 +337,6 @@ func rc_stmt(s Stmt, inloop bool, d *Block) {
 			s.Rhs[i] = rc_expr(s.Rhs[i], inloop, false, false, d, &pre)
 		}
 
-		//rhNeedRetain := make([]bool, len(s.Lhs))
-		//if len(s.Lhs) == len(s.Rhs) {
-		//	for i := range s.Rhs {
-		//		rc_expr(s.Rhs[i], inloop, false, false, d, &pre)
-		//		if rtimp.hasChunk(s.Rhs[i].Type()) && !s.Rhs[i].retained() {
-		//			rhNeedRetain[i] = true
-		//		}
-		//	}
-		//} else {
-		//	// rh 是元组
-		//	notRetained := rtimp.hasChunk(s.Rhs[0].Type()) && !s.Rhs[0].retained()
-		//	for i := range rhNeedRetain {
-		//		rhNeedRetain[i] = notRetained
-		//	}
-		//}
-
 		d.Stmts = append(d.Stmts, pre...)
 
 		allLhsAssignable := true
@@ -396,7 +380,6 @@ func rc_stmt(s Stmt, inloop bool, d *Block) {
 
 		if allLhsAssignable {
 			assign := newAssignN(lhs, s.Rhs, s.pos)
-			//copy(assign.needRetain, rhNeedRetain)
 			d.emit(assign)
 		} else {
 			rhs := make([]Expr, len(s.Lhs))
@@ -414,7 +397,15 @@ func rc_stmt(s Stmt, inloop bool, d *Block) {
 					rhs[i] = newExtract(tuple, i, s.pos)
 				}
 			} else {
-				copy(rhs, s.Rhs)
+				if len(s.Rhs) == 1 {
+					copy(rhs, s.Rhs)
+				} else {
+					for i := range s.Rhs {
+						imv := newImv(d.newTempVarName(), s.Rhs[i], s.pos)
+						d.emit(imv)
+						rhs[i] = imv
+					}
+				}
 			}
 
 			for i := range lhs {
@@ -423,14 +414,12 @@ func rc_stmt(s Stmt, inloop bool, d *Block) {
 
 				if lhAssignable[i] {
 					assign := newAssign(loc, rh, s.pos)
-					//assign.needRetain[0] = rhNeedRetain[i]
 					d.emit(assign)
 					continue
 				}
 
 				if c, ok := rh.(*Const); ok {
 					store := newStore(loc, c, s.pos)
-					//store.needRetain = false
 					d.emit(store)
 					continue
 				}
@@ -440,7 +429,6 @@ func rc_stmt(s Stmt, inloop bool, d *Block) {
 						panic(fmt.Sprintf("rh: %s is not a Register", v.Name()))
 					}
 					store := newStore(loc, v, s.pos)
-					//store.needRetain = rhNeedRetain[i]
 					d.emit(store)
 					continue
 				}
@@ -448,7 +436,6 @@ func rc_stmt(s Stmt, inloop bool, d *Block) {
 				imv := newImv(d.newTempVarName(), rh, s.pos)
 				d.emit(imv)
 				store := newStore(loc, imv, s.pos)
-				//store.needRetain = rhNeedRetain[i]
 				d.emit(store)
 			}
 		}
