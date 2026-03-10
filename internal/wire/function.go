@@ -301,7 +301,6 @@ func rc_block(b *Block, inloop bool, d *Block) {
 }
 
 func rc_stmt(s Stmt, inloop bool, d *Block) {
-	var pre []Stmt
 	switch s := s.(type) {
 	case *Block:
 		if len(s.Stmts) == 0 {
@@ -314,8 +313,7 @@ func rc_stmt(s Stmt, inloop bool, d *Block) {
 		}
 
 	case *Alloc:
-		s.init = rc_expr(s.init, inloop, false, false, d, &pre)
-		d.Stmts = append(d.Stmts, pre...)
+		s.init = rc_expr(s.init, inloop, false, d, nil)
 		if s.Kind() != Register && s.init != nil {
 			init := s.init
 			s.init = nil
@@ -330,14 +328,12 @@ func rc_stmt(s Stmt, inloop bool, d *Block) {
 
 	case *Set:
 		for i := range s.Lhs {
-			s.Lhs[i] = rc_location(s.Lhs[i], inloop, false, d, &pre)
+			s.Lhs[i] = rc_location(s.Lhs[i], inloop, d, nil)
 		}
 
 		for i := range s.Rhs {
-			s.Rhs[i] = rc_expr(s.Rhs[i], inloop, false, false, d, &pre)
+			s.Rhs[i] = rc_expr(s.Rhs[i], inloop, false, d, nil)
 		}
-
-		d.Stmts = append(d.Stmts, pre...)
 
 		allLhsAssignable := true
 		lhAssignable := make([]bool, len(s.Lhs))
@@ -447,17 +443,16 @@ func rc_stmt(s Stmt, inloop bool, d *Block) {
 		panic("Return should not be here")
 
 	case *If:
-		cond := rc_expr(s.Cond, inloop, true, false, d, &pre)
-		d.Stmts = append(d.Stmts, pre...)
+		cond := rc_expr(s.Cond, inloop, true, d, nil)
 		n := d.EmitIf(cond, s.pos)
 		rc_block(s.True, inloop, n.True)
 		rc_block(s.False, inloop, n.False)
 
 	case *Loop:
-		cond := rc_expr(s.Cond, true, true, true, d, &pre)
+		cond := rc_expr(s.Cond, true, true, d, &s.PreCond)
 
 		l := d.EmitLoop(cond, s.Label, s.pos)
-		l.PreCond = append(s.PreCond, pre...)
+		l.PreCond = s.PreCond
 
 		rc_block(s.Body, true, l.Body)
 		rc_block(s.Post, true, l.Post)
@@ -473,7 +468,7 @@ func rc_stmt(s Stmt, inloop bool, d *Block) {
 	}
 }
 
-func rc_expr(expr Expr, inloop bool, replace bool, isLoopCond bool, d *Block, pre *[]Stmt) (ret Expr) {
+func rc_expr(expr Expr, inloop bool, replace bool, d *Block, pre *[]Stmt) (ret Expr) {
 	ret = expr
 	if ret == nil {
 		return
@@ -487,14 +482,14 @@ func rc_expr(expr Expr, inloop bool, replace bool, isLoopCond bool, d *Block, pr
 		return
 
 	case *Get:
-		e.Loc = rc_location(e.Loc, inloop, isLoopCond, d, pre)
+		e.Loc = rc_location(e.Loc, inloop, d, pre)
 
 	case *Unop:
-		e.X = rc_expr(e.X, inloop, true, isLoopCond, d, pre)
+		e.X = rc_expr(e.X, inloop, true, d, pre)
 
 	case *Biop:
-		e.X = rc_expr(e.X, inloop, true, isLoopCond, d, pre)
-		e.Y = rc_expr(e.Y, inloop, true, isLoopCond, d, pre)
+		e.X = rc_expr(e.X, inloop, true, d, pre)
+		e.Y = rc_expr(e.Y, inloop, true, d, pre)
 
 	case *Call:
 		var call_common *CallCommon
@@ -507,22 +502,22 @@ func rc_expr(expr Expr, inloop bool, replace bool, isLoopCond bool, d *Block, pr
 
 		case *MethodCall:
 			call_common = &call.CallCommon
-			call.Recv = rc_expr(call.Recv, inloop, true, isLoopCond, d, pre)
+			call.Recv = rc_expr(call.Recv, inloop, true, d, pre)
 
 		case *InterfaceCall:
 			call_common = &call.CallCommon
-			call.Interface = rc_expr(call.Interface, inloop, true, isLoopCond, d, pre)
+			call.Interface = rc_expr(call.Interface, inloop, true, d, pre)
 
 		default:
 			panic("Todo")
 		}
 
 		for i := range call_common.Args {
-			call_common.Args[i] = rc_expr(call_common.Args[i], inloop, true, isLoopCond, d, pre)
+			call_common.Args[i] = rc_expr(call_common.Args[i], inloop, true, d, pre)
 		}
 
 	case *MemberValue:
-		v := rc_expr(e.X, inloop, true, isLoopCond, d, pre)
+		v := rc_expr(e.X, inloop, true, d, pre)
 		if va, ok := v.(Var); ok {
 			ret = newMember(va, e.Id, e.pos)
 		} else {
@@ -535,24 +530,24 @@ func rc_expr(expr Expr, inloop bool, replace bool, isLoopCond bool, d *Block, pr
 		return
 
 	case *MemberAddr:
-		e.X = rc_expr(e.X, inloop, true, isLoopCond, d, pre)
+		e.X = rc_expr(e.X, inloop, true, d, pre)
 
 	case *asAddr:
-		loc := rc_location(e.loc, inloop, isLoopCond, d, pre)
+		loc := rc_location(e.loc, inloop, d, pre)
 		ret = loc2expr(loc)
 		if !ret.Type().Equal(e.Type()) {
 			panic("asAddr() type mismatch")
 		}
 
 	case *NilCheck:
-		e.X = rc_expr(e.X, inloop, true, isLoopCond, d, pre)
+		e.X = rc_expr(e.X, inloop, true, d, pre)
 
 	case Stmt:
 		panic(fmt.Sprintf("Todo: %s", e.String()))
 	}
 
 	if ret.retained() && replace {
-		if isLoopCond {
+		if pre != nil {
 			tmp := d.NewAlloc(d.newTempVarName(), ret.Type(), ret.Pos(), nil, nil)
 			tmp.noinit = true
 			d.emit(tmp)
@@ -570,7 +565,7 @@ func rc_expr(expr Expr, inloop bool, replace bool, isLoopCond bool, d *Block, pr
 	return
 }
 
-func rc_location(loc Location, inloop bool, isLoopCond bool, d *Block, pre *[]Stmt) (ret Location) {
+func rc_location(loc Location, inloop bool, d *Block, pre *[]Stmt) (ret Location) {
 	ret = loc
 	if ret == nil {
 		return
@@ -581,11 +576,11 @@ func rc_location(loc Location, inloop bool, isLoopCond bool, d *Block, pre *[]St
 		return
 
 	case *asLoc:
-		e.expr = rc_expr(e.expr, inloop, true, isLoopCond, d, pre)
+		e.expr = rc_expr(e.expr, inloop, true, d, pre)
 		e.expr = getReplace_expr(e.expr)
 
 	case *MemberLocation:
-		e.X = rc_location(e.X, inloop, isLoopCond, d, pre)
+		e.X = rc_location(e.X, inloop, d, pre)
 
 	default:
 		panic(fmt.Sprintf("Todo: %T", e))
