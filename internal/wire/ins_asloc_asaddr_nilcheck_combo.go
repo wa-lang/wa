@@ -5,6 +5,7 @@ package wire
 
 import (
 	"fmt"
+	"strings"
 )
 
 /**************************************
@@ -89,4 +90,37 @@ func NewNilCheck(x Expr) Expr {
 		panic(fmt.Sprintf("Invalid X.Type():%s", x.Type().Name()))
 	}
 	return &NilCheck{X: x}
+}
+
+/**************************************
+Combo: 组合指令，将多个指令组合成一个指令，实现了 Expr 接口，返回 Result
+**************************************/
+
+type Combo struct {
+	aStmt
+	Stmts  []Stmt
+	Result Expr
+}
+
+func (i *Combo) Name() string   { return i.String() }
+func (i *Combo) Type() Type     { return i.Result.Type() }
+func (i *Combo) retained() bool { return i.Result.retained() }
+
+func (i *Combo) String() string {
+	var sb strings.Builder
+	sb.WriteRune('{')
+	for _, stmt := range i.Stmts {
+		sb.WriteString(stmt.String())
+		sb.WriteString("; ")
+	}
+	sb.WriteString(i.Result.Name())
+	sb.WriteRune('}')
+	return sb.String()
+}
+
+func NewCombo(stmts []Stmt, result Expr, pos int) *Combo {
+	v := &Combo{Stmts: stmts, Result: result}
+	v.Stringer = v
+	v.pos = pos
+	return v
 }
