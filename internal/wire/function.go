@@ -582,7 +582,11 @@ func rc_expr(expr Expr, inloop bool, replace bool, d *Block, pre *[]Stmt) (ret E
 			ret = newMember(va, e.Id, e.pos)
 		} else {
 			imv := newImv(d.newTempVarName(), v, e.pos)
-			d.emit(imv)
+			if pre == nil {
+				d.emit(imv)
+			} else {
+				*pre = append(*pre, imv)
+			}
 			ret = newMember(imv, e.Id, e.pos)
 		}
 
@@ -601,6 +605,12 @@ func rc_expr(expr Expr, inloop bool, replace bool, d *Block, pre *[]Stmt) (ret E
 
 	case *NilCheck:
 		e.X = rc_expr(e.X, inloop, true, d, pre)
+
+	case *Combo:
+		for _, stmt := range e.Stmts {
+			rc_stmt(stmt, inloop, d, pre)
+		}
+		ret = rc_expr(e.Result, inloop, true, d, pre)
 
 	case Stmt:
 		panic(fmt.Sprintf("Todo: %s", e.String()))
@@ -844,7 +854,11 @@ func getReplace_stmt(stmt Stmt) {
 		stmt.val = getReplace_expr(stmt.val)
 
 	case *Set:
-		panic("Set should not be here")
+		for i := range stmt.Rhs {
+			stmt.Rhs[i] = getReplace_expr(stmt.Rhs[i])
+		}
+
+		//panic("Set should not be here")
 
 	case *Assign:
 		for i := range stmt.Rhs {
@@ -950,6 +964,12 @@ func getReplace_expr(e Expr) (ret Expr) {
 
 	case *NilCheck:
 		e.X = getReplace_expr(e.X)
+
+	case *Combo:
+		for _, stmt := range e.Stmts {
+			getReplace_stmt(stmt)
+		}
+		e.Result = getReplace_expr(e.Result)
 
 	case *Alloc, *Imv:
 		return

@@ -354,6 +354,14 @@ func exprContainsVar(expr Expr, v Var) bool {
 	case *NilCheck:
 		return exprContainsVar(e.X, v)
 
+	case *Combo:
+		for _, stmt := range e.Stmts {
+			if varUsedInStmt(stmt, v) {
+				return true
+			}
+		}
+		return exprContainsVar(e.Result, v)
+
 	default:
 		panic(fmt.Sprintf("Todo: %t %s", e, e.Name()))
 	}
