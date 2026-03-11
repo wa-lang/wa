@@ -31,8 +31,7 @@ type Alloc struct {
 	rtype  Type
 	object interface{} // 与该值关联的 AST 结点。对凹语言前端，应为 types.Object
 
-	init   Expr // 初始值，仅 Register 型变量有初始值
-	noinit bool // 是否不进行 0 值初始化
+	init Expr // 初始值
 
 	tank *tank
 }
@@ -56,10 +55,8 @@ func (i *Alloc) String() string {
 			} else {
 				s = fmt.Sprintf("var %s %s = %s", i.name, i.Type().Name(), i.init.Name())
 			}
-		} else if !i.noinit {
-			s = fmt.Sprintf("var %s %s = 0", i.name, i.Type().Name())
 		} else {
-			s = fmt.Sprintf("var %s %s", i.name, i.Type().Name())
+			s = fmt.Sprintf("var %s %s = 0", i.name, i.Type().Name())
 		}
 
 	case Heap:

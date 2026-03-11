@@ -167,7 +167,7 @@ func (f *Function) EndBody() {
 			param.name = "$" + param.name
 			param.init = NewGet(&np, np.pos)
 
-			rc_stmt(param, false, fb)
+			rc_stmt(param, false, fb, nil)
 
 			f.params[i] = &np
 		}
@@ -187,7 +187,7 @@ func (f *Function) EndBody() {
 	nb.init()
 
 	rc_block(ob, false, nb)
-	f.autoDrop(nb)
+	f.drop_block(nb)
 
 	fb.emit(nb)
 
@@ -296,31 +296,43 @@ func (f *Function) retRepalce(stmt Stmt) {
 
 func rc_block(b *Block, inloop bool, d *Block) {
 	for _, stmt := range b.Stmts {
-		rc_stmt(stmt, inloop, d)
+		rc_stmt(stmt, inloop, d, nil)
 	}
 }
 
-func rc_stmt(s Stmt, inloop bool, d *Block) {
+func rc_stmt(s Stmt, inloop bool, d *Block, pre *[]Stmt) {
 	switch s := s.(type) {
 	case *Block:
 		if len(s.Stmts) == 0 {
 			return
 		}
 
+		if pre != nil {
+			panic("pre should be nil")
+		}
+
 		block := d.EmitBlock(s.Label, s.pos)
 		for _, stmt := range s.Stmts {
-			rc_stmt(stmt, inloop, block)
+			rc_stmt(stmt, inloop, block, nil)
 		}
 
 	case *Alloc:
-		s.init = rc_expr(s.init, inloop, false, d, nil)
+		s.init = rc_expr(s.init, inloop, false, d, pre)
 		if s.Kind() != Register && s.init != nil {
 			init := s.init
 			s.init = nil
-			d.emit(s)
-			rc_stmt(NewSet(s, init, s.pos), inloop, d)
+			if pre == nil {
+				d.emit(s)
+			} else {
+				*pre = append(*pre, s)
+			}
+			rc_stmt(NewSet(s, init, s.pos), inloop, d, pre)
 		} else {
-			d.emit(s)
+			if pre == nil {
+				d.emit(s)
+			} else {
+				*pre = append(*pre, s)
+			}
 		}
 
 	case *Get:
@@ -328,11 +340,11 @@ func rc_stmt(s Stmt, inloop bool, d *Block) {
 
 	case *Set:
 		for i := range s.Lhs {
-			s.Lhs[i] = rc_location(s.Lhs[i], inloop, d, nil)
+			s.Lhs[i] = rc_location(s.Lhs[i], inloop, d, pre)
 		}
 
 		for i := range s.Rhs {
-			s.Rhs[i] = rc_expr(s.Rhs[i], inloop, false, d, nil)
+			s.Rhs[i] = rc_expr(s.Rhs[i], inloop, false, d, pre)
 		}
 
 		allLhsAssignable := true
@@ -370,13 +382,21 @@ func rc_stmt(s Stmt, inloop bool, d *Block) {
 
 			// 其余情况，左部是指针或引用类型的表达式：
 			loc := newImv(d.newTempVarName(), lhe, s.pos)
-			d.emit(loc)
+			if pre == nil {
+				d.emit(loc)
+			} else {
+				*pre = append(*pre, loc)
+			}
 			lhs[i] = loc
 		}
 
 		if allLhsAssignable {
 			assign := newAssignN(lhs, s.Rhs, s.pos)
-			d.emit(assign)
+			if pre == nil {
+				d.emit(assign)
+			} else {
+				*pre = append(*pre, assign)
+			}
 		} else {
 			rhs := make([]Expr, len(s.Lhs))
 
@@ -387,7 +407,11 @@ func rc_stmt(s Stmt, inloop bool, d *Block) {
 				}
 
 				tuple := newImv(d.newTempVarName(), s.Rhs[0], s.pos)
-				d.emit(tuple)
+				if pre == nil {
+					d.emit(tuple)
+				} else {
+					*pre = append(*pre, tuple)
+				}
 
 				for i := range s.Lhs {
 					rhs[i] = newExtract(tuple, i, s.pos)
@@ -398,7 +422,11 @@ func rc_stmt(s Stmt, inloop bool, d *Block) {
 				} else {
 					for i := range s.Rhs {
 						imv := newImv(d.newTempVarName(), s.Rhs[i], s.pos)
-						d.emit(imv)
+						if pre == nil {
+							d.emit(imv)
+						} else {
+							*pre = append(*pre, imv)
+						}
 						rhs[i] = imv
 					}
 				}
@@ -410,13 +438,21 @@ func rc_stmt(s Stmt, inloop bool, d *Block) {
 
 				if lhAssignable[i] {
 					assign := newAssign(loc, rh, s.pos)
-					d.emit(assign)
+					if pre == nil {
+						d.emit(assign)
+					} else {
+						*pre = append(*pre, assign)
+					}
 					continue
 				}
 
 				if c, ok := rh.(*Const); ok {
 					store := newStore(loc, c, s.pos)
-					d.emit(store)
+					if pre == nil {
+						d.emit(store)
+					} else {
+						*pre = append(*pre, store)
+					}
 					continue
 				}
 
@@ -425,30 +461,50 @@ func rc_stmt(s Stmt, inloop bool, d *Block) {
 						panic(fmt.Sprintf("rh: %s is not a Register", v.Name()))
 					}
 					store := newStore(loc, v, s.pos)
-					d.emit(store)
+					if pre == nil {
+						d.emit(store)
+					} else {
+						*pre = append(*pre, store)
+					}
 					continue
 				}
 
 				imv := newImv(d.newTempVarName(), rh, s.pos)
-				d.emit(imv)
 				store := newStore(loc, imv, s.pos)
-				d.emit(store)
+				if pre == nil {
+					d.emit(imv)
+					d.emit(store)
+				} else {
+					*pre = append(*pre, imv)
+					*pre = append(*pre, store)
+				}
 			}
 		}
 
 	case *Br:
+		if pre != nil {
+			panic("pre should be nil")
+		}
 		d.emit(s)
 
 	case *Return:
 		panic("Return should not be here")
 
 	case *If:
+		if pre != nil {
+			panic("pre should be nil")
+		}
+
 		cond := rc_expr(s.Cond, inloop, true, d, nil)
 		n := d.EmitIf(cond, s.pos)
 		rc_block(s.True, inloop, n.True)
 		rc_block(s.False, inloop, n.False)
 
 	case *Loop:
+		if pre != nil {
+			panic("pre should be nil")
+		}
+
 		cond := rc_expr(s.Cond, true, true, d, &s.PreCond)
 
 		l := d.EmitLoop(cond, s.Label, s.pos)
@@ -461,7 +517,11 @@ func rc_stmt(s Stmt, inloop bool, d *Block) {
 	//	d.emit(s)
 
 	case *Drop:
-		d.emit(s)
+		if pre == nil {
+			d.emit(s)
+		} else {
+			*pre = append(*pre, s)
+		}
 
 	default:
 		panic(fmt.Sprintf("Todo: %s", s.String()))
@@ -547,19 +607,13 @@ func rc_expr(expr Expr, inloop bool, replace bool, d *Block, pre *[]Stmt) (ret E
 	}
 
 	if ret.retained() && replace {
+		tmp := d.NewAlloc(d.newTempVarName(), ret.Type(), ret.Pos(), nil, ret)
 		if pre != nil {
-			tmp := d.NewAlloc(d.newTempVarName(), ret.Type(), ret.Pos(), nil, nil)
-			tmp.noinit = true
-			d.emit(tmp)
-
-			*pre = append(*pre, newAssign(tmp, ret, ret.Pos()))
-			ret = NewGet(tmp, ret.Pos())
+			*pre = append(*pre, tmp)
 		} else {
-			tmp := d.NewAlloc(d.newTempVarName(), ret.Type(), ret.Pos(), nil, ret)
 			d.emit(tmp)
-
-			ret = NewGet(tmp, ret.Pos())
 		}
+		ret = NewGet(tmp, ret.Pos())
 	}
 
 	return
@@ -610,51 +664,57 @@ func loc2expr(loc Location) Expr {
 	}
 }
 
-func (f *Function) autoDrop(b *Block) {
+func (f *Function) drop_block(b *Block) {
 	for _, stmt := range b.Stmts {
-		switch s := stmt.(type) {
-		case *Block:
-			f.autoDrop(s)
+		f.drop_stmt(stmt, b)
+	}
+}
 
-		case *Alloc:
-			r := b.varUsageRange(s)
-			if r.last == -1 {
-				panic(fmt.Sprintf("var:%s not used", s.Name()))
-			}
+func (f *Function) drop_stmt(s Stmt, b *Block) {
+	switch s := s.(type) {
+	case *Block:
+		f.drop_block(s)
 
-			var t []Stmt
-			t = append(t, b.Stmts[:r.last+1]...)
-			t = append(t, newDrop(s, b.Stmts[r.last].Pos()))
-			t = append(t, b.Stmts[r.last+1:]...)
-			b.Stmts = t
-
-		case *Imv:
-			r := b.varUsageRange(s)
-			if r.last == -1 {
-				panic(fmt.Sprintf("var:%s not used", s.Name()))
-			}
-
-			var t []Stmt
-			t = append(t, b.Stmts[:r.last+1]...)
-			t = append(t, newDrop(s, b.Stmts[r.last].Pos()))
-			t = append(t, b.Stmts[r.last+1:]...)
-			b.Stmts = t
-
-		case *If:
-			f.autoDrop(s.True)
-			f.autoDrop(s.False)
-
-		case *Loop:
-			f.autoDrop(s.Body)
-			f.autoDrop(s.Post)
-
-		case *Get, *Set, *Assign, *Store, *Br, *Return, *Unop, *Biop, *Drop:
-			continue
-
-		default:
-			panic(fmt.Sprintf("Todo: %s", stmt.String()))
+	case *Alloc:
+		r := b.varUsageRange(s)
+		if r.last == -1 {
+			panic(fmt.Sprintf("var:%s not used", s.Name()))
 		}
 
+		var t []Stmt
+		t = append(t, b.Stmts[:r.last+1]...)
+		t = append(t, newDrop(s, b.Stmts[r.last].Pos()))
+		t = append(t, b.Stmts[r.last+1:]...)
+		b.Stmts = t
+
+	case *Imv:
+		r := b.varUsageRange(s)
+		if r.last == -1 {
+			panic(fmt.Sprintf("var:%s not used", s.Name()))
+		}
+
+		var t []Stmt
+		t = append(t, b.Stmts[:r.last+1]...)
+		t = append(t, newDrop(s, b.Stmts[r.last].Pos()))
+		t = append(t, b.Stmts[r.last+1:]...)
+		b.Stmts = t
+
+	case *If:
+		f.drop_block(s.True)
+		f.drop_block(s.False)
+
+	case *Loop:
+		for _, pre := range s.PreCond {
+			f.drop_stmt(pre, b)
+		}
+		f.drop_block(s.Body)
+		f.drop_block(s.Post)
+
+	case *Get, *Set, *Assign, *Store, *Br, *Return, *Unop, *Biop, *Drop:
+		return
+
+	default:
+		panic(fmt.Sprintf("Todo: %s", s.String()))
 	}
 }
 
@@ -680,6 +740,9 @@ func (f *Function) allocVR_stmt(s Stmt, inloop bool) {
 		f.allocVR_block(s.False, inloop)
 
 	case *Loop:
+		for _, pre := range s.PreCond {
+			f.allocVR_stmt(pre, true)
+		}
 		f.allocVR_block(s.Body, true)
 		f.allocVR_block(s.Post, true)
 
