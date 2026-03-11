@@ -79,9 +79,10 @@ func (i *Alloc) String() string {
 	}
 	return s
 }
-func (i *Alloc) Kind() VarKind  { return i.kind }
-func (i *Alloc) DataType() Type { return i.dtype }
-func (i *Alloc) Tank() *tank    { return i.tank }
+func (i *Alloc) Kind() VarKind     { return i.kind }
+func (i *Alloc) SetKind(t VarKind) { i.kind = t }
+func (i *Alloc) DataType() Type    { return i.dtype }
+func (i *Alloc) Tank() *tank       { return i.tank }
 
 // func (i *Alloc) RefType() Type  { return i.rtype }
 func (i *Alloc) SetInit(init Expr) { i.init = init }

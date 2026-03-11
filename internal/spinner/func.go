@@ -394,6 +394,49 @@ func (b *Builder) location(e ast.Expr, escaping wire.VarKind, block *wire.Block)
 		}
 
 		return memaddr
+
+	case *ast.CompositeLit:
+		typ := deref(b.info.Types[e].Type)
+		ut := typ.Underlying()
+		switch st := ut.(type) {
+		case *types.Struct:
+			wireType := b.BuildType(typ)
+			combo := wire.NewCombo(nil, nil, int(e.Pos()))
+			tmp := block.NewAlloc(fmt.Sprintf("$complit_%d", e.Pos()), wireType, int(e.Lbrace), nil, nil)
+			tmp.SetKind(wire.Heap)
+			combo.Stmts = append(combo.Stmts, tmp)
+			combo.Result = tmp
+
+			for i := 0; i < len(e.Elts); i++ {
+				elt := e.Elts[i]
+				var fieldIndex int
+				var valueExpr ast.Expr
+				var pos token.Pos
+				if kv, ok := elt.(*ast.KeyValueExpr); ok {
+					fname := kv.Key.(*ast.Ident).Name
+					for j, n := 0, st.NumFields(); j < n; j++ {
+						if st.Field(j).Name() == fname {
+							fieldIndex = j
+							valueExpr = kv.Value
+							pos = kv.Colon
+							break
+						}
+					}
+				} else {
+					fieldIndex = i
+					valueExpr = elt
+					pos = elt.Pos()
+				}
+				memberLoc := block.NewMemberLocation(tmp, fieldIndex, int(pos))
+				val := b.expr(valueExpr, block)
+				set := wire.NewSet(memberLoc, val, int(pos))
+				combo.Stmts = append(combo.Stmts, set)
+			}
+			return wire.AsLocation(combo)
+
+		default:
+			panic("CompositeLit todo: " + ut.String())
+		}
 	}
 
 	panic(fmt.Sprintf("unexpected address expression: %T", e))
@@ -629,8 +672,46 @@ func (b *Builder) expr1(e ast.Expr, tv types.TypeAndValue, block *wire.Block) wi
 		panic("")
 
 	case *ast.CompositeLit:
-		// Todo
-		panic("")
+		typ := deref(b.info.Types[e].Type)
+		ut := typ.Underlying()
+		switch st := ut.(type) {
+		case *types.Struct:
+			wireType := b.BuildType(typ)
+			combo := wire.NewCombo(nil, nil, int(e.Pos()))
+			tmp := block.NewAlloc(fmt.Sprintf("$complit_%d", e.Pos()), wireType, int(e.Lbrace), nil, nil)
+			combo.Stmts = append(combo.Stmts, tmp)
+			combo.Result = wire.NewGet(tmp, int(e.Pos()))
+
+			for i := 0; i < len(e.Elts); i++ {
+				elt := e.Elts[i]
+				var fieldIndex int
+				var valueExpr ast.Expr
+				var pos token.Pos
+				if kv, ok := elt.(*ast.KeyValueExpr); ok {
+					fname := kv.Key.(*ast.Ident).Name
+					for j, n := 0, st.NumFields(); j < n; j++ {
+						if st.Field(j).Name() == fname {
+							fieldIndex = j
+							valueExpr = kv.Value
+							pos = kv.Colon
+							break
+						}
+					}
+				} else {
+					fieldIndex = i
+					valueExpr = elt
+					pos = elt.Pos()
+				}
+				memberLoc := block.NewMemberLocation(tmp, fieldIndex, int(pos))
+				val := b.expr(valueExpr, block)
+				set := wire.NewSet(memberLoc, val, int(pos))
+				combo.Stmts = append(combo.Stmts, set)
+			}
+			return combo
+
+		default:
+			panic("CompositeLit todo: " + ut.String())
+		}
 
 	case *ast.StarExpr:
 		// Todo

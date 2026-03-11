@@ -611,7 +611,7 @@ func rc_expr(expr Expr, inloop bool, replace bool, d *Block, pre *[]Stmt) (ret E
 		for _, stmt := range e.Stmts {
 			rc_stmt(stmt, inloop, d, pre)
 		}
-		ret = rc_expr(e.Result, inloop, true, d, pre)
+		ret = getReplace_expr(rc_expr(e.Result, inloop, true, d, pre))
 
 	case Stmt:
 		panic(fmt.Sprintf("Todo: %s", e.String()))
