@@ -288,10 +288,10 @@ func exprContainsVar(expr Expr, v Var) bool {
 		return false
 
 	case *Alloc:
-		return e == v || exprContainsVar(e.init, v)
+		return e == v
 
 	case *Imv:
-		return e == v || exprContainsVar(e.val, v)
+		return e == v
 
 	case *Extract:
 		return exprContainsVar(e.X, v)

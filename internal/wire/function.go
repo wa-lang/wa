@@ -357,7 +357,9 @@ func rc_stmt(s Stmt, inloop bool, d *Block, pre *[]Stmt) {
 				continue
 			}
 
-			if v, ok := lh.(Var); ok {
+			lhe := loc2expr(lh)
+
+			if v, ok := lhe.(Var); ok {
 				if v.Kind() == Register { // v: T; v = expr; v 未逃逸
 					lhs[i] = v
 					lhAssignable[i] = true
@@ -372,7 +374,6 @@ func rc_stmt(s Stmt, inloop bool, d *Block, pre *[]Stmt) {
 			allLhsAssignable = false
 			lhAssignable[i] = false
 
-			lhe := loc2expr(lh)
 			if get, ok := lhe.(*Get); ok {
 				if v, ok := get.Loc.(Var); ok && v.Kind() == Register { // p: *T; *p = expr; p 未逃逸
 					lhs[i] = v
