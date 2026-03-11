@@ -611,7 +611,7 @@ func rc_expr(expr Expr, inloop bool, replace bool, d *Block, pre *[]Stmt) (ret E
 		for _, stmt := range e.Stmts {
 			rc_stmt(stmt, inloop, d, pre)
 		}
-		ret = getReplace_expr(rc_expr(e.Result, inloop, true, d, pre))
+		ret = e.Result
 
 	case Stmt:
 		panic(fmt.Sprintf("Todo: %s", e.String()))
@@ -970,7 +970,6 @@ func getReplace_expr(e Expr) (ret Expr) {
 		for _, stmt := range e.Stmts {
 			getReplace_stmt(stmt)
 		}
-		e.Result = getReplace_expr(e.Result)
 
 	case *Alloc, *Imv:
 		return

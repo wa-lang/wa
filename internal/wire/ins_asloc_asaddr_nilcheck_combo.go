@@ -93,18 +93,22 @@ func NewNilCheck(x Expr) Expr {
 }
 
 /**************************************
-Combo: 组合指令，将多个指令组合成一个指令，实现了 Expr 接口，返回 Result
+Combo: 组合指令，将多个指令组合成一个指令，实现了 Expr 、Var 接口，返回 Result
+  - Result 应为 Var
 **************************************/
 
 type Combo struct {
 	aStmt
 	Stmts  []Stmt
-	Result Expr
+	Result Var
 }
 
 func (i *Combo) Name() string   { return i.String() }
 func (i *Combo) Type() Type     { return i.Result.Type() }
 func (i *Combo) retained() bool { return i.Result.retained() }
+func (i *Combo) DataType() Type { return i.Result.DataType() }
+func (i *Combo) Kind() VarKind  { return i.Result.Kind() }
+func (i *Combo) Tank() *tank    { return i.Result.Tank() }
 
 func (i *Combo) String() string {
 	var sb strings.Builder
@@ -118,7 +122,7 @@ func (i *Combo) String() string {
 	return sb.String()
 }
 
-func NewCombo(stmts []Stmt, result Expr, pos int) *Combo {
+func NewCombo(stmts []Stmt, result Var, pos int) *Combo {
 	v := &Combo{Stmts: stmts, Result: result}
 	v.Stringer = v
 	v.pos = pos
