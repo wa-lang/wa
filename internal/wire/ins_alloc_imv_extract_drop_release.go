@@ -215,3 +215,25 @@ func newDrop(x Var, pos int) *Drop {
 	v.pos = pos
 	return v
 }
+
+/**************************************
+Release: 释放一个 chunk
+  - 该指令仅供内部使用，上层高级语法不应直接使用
+**************************************/
+
+type Release struct {
+	aStmt
+	X register
+}
+
+func (i *Release) String() string {
+	return fmt.Sprintf("release($r%d)", i.X.id)
+}
+
+// 生成一条 Drop 指令
+func newRelease(x register, pos int) *Release {
+	v := &Release{X: x}
+	v.Stringer = v
+	v.pos = pos
+	return v
+}

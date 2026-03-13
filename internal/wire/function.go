@@ -73,6 +73,10 @@ func (f *Function) Format(tab string, sb *strings.Builder) {
 		sb.WriteString(v.Name())
 		sb.WriteRune(' ')
 		sb.WriteString(v.DataType().Name())
+		if tank := v.Tank(); tank != nil {
+			sb.WriteString(" --- ")
+			sb.WriteString(tank.String())
+		}
 	}
 	sb.WriteRune(')')
 
@@ -97,15 +101,6 @@ func (f *Function) Format(tab string, sb *strings.Builder) {
 // 添加函数参数
 func (f *Function) AddParam(name string, typ Type, pos int, obj interface{}) *Alloc {
 	v := f.Body.NewAlloc(name, typ, pos, obj, nil)
-	//v := &Var{}
-	//v.Stringer = v
-	//v.name = name
-	//v.dtype = typ
-	//v.rtype = f.types.GenRef(typ)
-	//
-	//v.pos = pos
-	//v.object = obj
-
 	f.params = append(f.params, v)
 	return v
 }
@@ -113,15 +108,6 @@ func (f *Function) AddParam(name string, typ Type, pos int, obj interface{}) *Al
 // 添加返回值
 func (f *Function) AddResult(name string, typ Type, pos int, obj interface{}) *Alloc {
 	v := f.Body.NewAlloc(name, typ, pos, obj, nil)
-	//v := &Var{}
-	//v.Stringer = v
-	//v.name = name
-	//v.dtype = typ
-	//v.rtype = f.types.GenRef(typ)
-	//
-	//v.pos = pos
-	//v.object = obj
-
 	f.results = append(f.results, v)
 	return v
 }
@@ -187,7 +173,6 @@ func (f *Function) EndBody() {
 	nb.init()
 
 	rc_block(ob, false, nb)
-	f.drop_block(nb)
 
 	fb.emit(nb)
 
@@ -205,23 +190,23 @@ func (f *Function) EndBody() {
 			fb.emit(rr)
 			ret_exprs = append(ret_exprs, rr)
 
-			//rr := *r
-			//rr.Stringer = &rr
-			//rr.kind = Register
-			//rr.name = fb.newTempVarName()
-			//fb.emit(&rr)
-			//fb.EmitSet(&rr, NewGet(r, f.EndPos), f.EndPos)
-			//ret_exprs = append(ret_exprs, NewGet(&rr, f.EndPos))
-
 		default:
 			panic(fmt.Sprintf("Todo: VarKind: %v", r.kind))
 		}
 	}
-	// Todo: 插入所有 chunk 的 release
 	fb.EmitReturn(ret_exprs, f.EndPos)
 
+	for _, p := range f.params {
+		f.drop_stmt(p, false, fb)
+	}
+	f.drop_block(fb)
+
 	// 虚拟寄存器
-	f.allocVR_block(f.Body, false)
+	for _, p := range f.params {
+		p.tank = rtimp.initTank(p.Type(), true)
+		f.allocVR_tank(p.tank, true)
+	}
+	f.allocVR_block(fb, false)
 
 	{
 		var sb strings.Builder
@@ -231,7 +216,19 @@ func (f *Function) EndBody() {
 	}
 
 	// Get指令替换
-	getReplace_stmt(f.Body)
+	getReplace_stmt(fb)
+
+	// chunk release
+	for i := len(fb.Stmts) - 1; i >= 0; i-- {
+		if ret, ok := fb.Stmts[i].(*Return); ok {
+			fb.Stmts = fb.Stmts[:i]
+			for _, r := range f.chunkRegs {
+				fb.Stmts = append(fb.Stmts, newRelease(r, f.EndPos))
+			}
+			fb.Stmts = append(fb.Stmts, ret)
+			break
+		}
+	}
 
 	{
 		var sb strings.Builder
@@ -677,24 +674,31 @@ func loc2expr(loc Location) Expr {
 
 func (f *Function) drop_block(b *Block) {
 	for _, stmt := range b.Stmts {
-		f.drop_stmt(stmt, b)
+		f.drop_stmt(stmt, true, b)
 	}
 }
 
-func (f *Function) drop_stmt(s Stmt, b *Block) {
+func (f *Function) drop_stmt(s Stmt, verifyUsed bool, b *Block) {
 	switch s := s.(type) {
 	case *Block:
 		f.drop_block(s)
 
 	case *Alloc:
 		r := b.varUsageRange(s)
+		var pos int
 		if r.last == -1 {
-			panic(fmt.Sprintf("var:%s not used", s.Name()))
+			if verifyUsed {
+				panic(fmt.Sprintf("var:%s not used", s.Name()))
+			} else {
+				pos = s.Pos()
+			}
+		} else {
+			pos = b.Stmts[r.last].Pos()
 		}
 
 		var t []Stmt
 		t = append(t, b.Stmts[:r.last+1]...)
-		t = append(t, newDrop(s, b.Stmts[r.last].Pos()))
+		t = append(t, newDrop(s, pos))
 		t = append(t, b.Stmts[r.last+1:]...)
 		b.Stmts = t
 
@@ -716,7 +720,7 @@ func (f *Function) drop_stmt(s Stmt, b *Block) {
 
 	case *Loop:
 		for _, pre := range s.PreCond {
-			f.drop_stmt(pre, b)
+			f.drop_stmt(pre, verifyUsed, b)
 		}
 		f.drop_block(s.Body)
 		f.drop_block(s.Post)
