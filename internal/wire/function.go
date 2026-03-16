@@ -200,9 +200,9 @@ func (f *Function) EndBody() {
 	fb.EmitReturn(ret_exprs, f.EndPos)
 
 	for _, p := range f.params {
-		f.drop_stmt(p, false, fb)
+		f.insertDiscard_stmt(p, false, fb)
 	}
-	f.drop_block(fb)
+	f.insertDiscard_block(fb)
 
 	// 虚拟寄存器
 	for _, p := range f.params {
@@ -529,7 +529,7 @@ func rc_stmt(s Stmt, inloop bool, d *Block, pre *[]Stmt) {
 	//case *Retain:
 	//	d.emit(s)
 
-	case *Drop:
+	case *Discard:
 		if pre == nil {
 			d.emit(s)
 		} else {
@@ -687,16 +687,16 @@ func loc2expr(loc Location) Expr {
 	}
 }
 
-func (f *Function) drop_block(b *Block) {
+func (f *Function) insertDiscard_block(b *Block) {
 	for _, stmt := range b.Stmts {
-		f.drop_stmt(stmt, true, b)
+		f.insertDiscard_stmt(stmt, true, b)
 	}
 }
 
-func (f *Function) drop_stmt(s Stmt, verifyUsed bool, b *Block) {
+func (f *Function) insertDiscard_stmt(s Stmt, verifyUsed bool, b *Block) {
 	switch s := s.(type) {
 	case *Block:
-		f.drop_block(s)
+		f.insertDiscard_block(s)
 
 	case *Alloc:
 		r := b.varUsageRange(s)
@@ -713,7 +713,7 @@ func (f *Function) drop_stmt(s Stmt, verifyUsed bool, b *Block) {
 
 		var t []Stmt
 		t = append(t, b.Stmts[:r.last+1]...)
-		t = append(t, newDrop(s, pos))
+		t = append(t, newDiscard(s, pos))
 		t = append(t, b.Stmts[r.last+1:]...)
 		b.Stmts = t
 
@@ -725,22 +725,22 @@ func (f *Function) drop_stmt(s Stmt, verifyUsed bool, b *Block) {
 
 		var t []Stmt
 		t = append(t, b.Stmts[:r.last+1]...)
-		t = append(t, newDrop(s, b.Stmts[r.last].Pos()))
+		t = append(t, newDiscard(s, b.Stmts[r.last].Pos()))
 		t = append(t, b.Stmts[r.last+1:]...)
 		b.Stmts = t
 
 	case *If:
-		f.drop_block(s.True)
-		f.drop_block(s.False)
+		f.insertDiscard_block(s.True)
+		f.insertDiscard_block(s.False)
 
 	case *Loop:
 		for _, pre := range s.PreCond {
-			f.drop_stmt(pre, verifyUsed, b)
+			f.insertDiscard_stmt(pre, verifyUsed, b)
 		}
-		f.drop_block(s.Body)
-		f.drop_block(s.Post)
+		f.insertDiscard_block(s.Body)
+		f.insertDiscard_block(s.Post)
 
-	case *Get, *Set, *Assign, *Store, *Br, *Return, *Unop, *Biop, *Drop:
+	case *Get, *Set, *Assign, *Store, *Br, *Return, *Unop, *Biop, *Discard:
 		return
 
 	default:
@@ -776,7 +776,7 @@ func (f *Function) allocVR_stmt(s Stmt, inloop bool) {
 		f.allocVR_block(s.Body, true)
 		f.allocVR_block(s.Post, true)
 
-	case *Drop:
+	case *Discard:
 		f.dropVR_tank(s.X.Tank())
 
 	case *Br, *Return, *Get, *Set, *Assign, *Store:
@@ -908,7 +908,7 @@ func getReplace_stmt(stmt Stmt) {
 		getReplace_stmt(stmt.Body)
 		getReplace_stmt(stmt.Post)
 
-	case *Br, *Drop:
+	case *Br, *Discard:
 		return
 
 	default:

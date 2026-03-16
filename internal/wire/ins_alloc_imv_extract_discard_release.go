@@ -189,28 +189,28 @@ func newExtract(x *Imv, index int, pos int) *Extract {
 }
 
 /**************************************
-Drop: Drop 指令，丢弃 Var，丢弃后它所占用的虚拟寄存器可被重用
-  - Drop 一个 chunk 时并不会执行 release
+Discard: Discard 指令，丢弃 Var，丢弃后它所占用的虚拟寄存器可被重用
+  - Discard 一个 chunk 时并不会执行 release
   - 该指令仅供内部使用，上层高级语法不应直接使用
 **************************************/
 
-type Drop struct {
+type Discard struct {
 	aStmt
 	X Var
 }
 
-func (i *Drop) String() string {
+func (i *Discard) String() string {
 	tank := i.X.Tank()
 	if tank != nil {
-		return fmt.Sprintf("drop(%s --- %s)", i.X.Name(), tank.String())
+		return fmt.Sprintf("discard(%s --- %s)", i.X.Name(), tank.String())
 	} else {
-		return fmt.Sprintf("drop(%s)", i.X.Name())
+		return fmt.Sprintf("discard(%s)", i.X.Name())
 	}
 }
 
-// 生成一条 Drop 指令
-func newDrop(x Var, pos int) *Drop {
-	v := &Drop{X: x}
+// 生成一条 Discard 指令
+func newDiscard(x Var, pos int) *Discard {
+	v := &Discard{X: x}
 	v.Stringer = v
 	v.pos = pos
 	return v
@@ -230,7 +230,7 @@ func (i *Release) String() string {
 	return fmt.Sprintf("release($r%d)", i.X.id)
 }
 
-// 生成一条 Drop 指令
+// 生成一条 Release 指令
 func newRelease(x register, pos int) *Release {
 	v := &Release{X: x}
 	v.Stringer = v

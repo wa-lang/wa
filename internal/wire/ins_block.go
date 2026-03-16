@@ -166,7 +166,7 @@ func (b *Block) newTempVarName() string {
 //	case *Unop:
 //	case *Biop:
 //	case *Retain:
-//	case *Drop:
+//	case *Discard:
 //		return false
 //
 //	default:
@@ -218,7 +218,7 @@ func varUsedInStmt(stmt Stmt, v Var) bool {
 	case *Imv:
 		return exprContainsVar(s.val, v)
 
-	case *Drop:
+	case *Discard:
 		return false
 
 	case *Set:

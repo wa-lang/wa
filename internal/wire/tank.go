@@ -15,7 +15,7 @@ type register struct {
 
 func (r *register) String() string {
 	if r.id == -1 || r.typ == nil {
-		panic(fmt.Sprintf("register is invalid: %v", r))
+		panic(fmt.Sprintf("register is invalid: %d", r.id))
 	}
 	return fmt.Sprintf("$r%d", r.id)
 }
