@@ -13,6 +13,13 @@ type register struct {
 	typ Type
 }
 
+func (r *register) String() string {
+	if r.id == -1 || r.typ == nil {
+		panic(fmt.Sprintf("register is invalid: %v", r))
+	}
+	return fmt.Sprintf("$r%d", r.id)
+}
+
 type tank struct {
 	typ      Type
 	register register
@@ -34,4 +41,16 @@ func (t *tank) String() string {
 		b.WriteString(fmt.Sprintf("$r%d", t.register.id))
 	}
 	return b.String()
+}
+
+func (t *tank) raw() []register {
+	if len(t.member) == 0 {
+		return []register{t.register}
+	}
+
+	regs := []register{}
+	for _, m := range t.member {
+		regs = append(regs, m.raw()...)
+	}
+	return regs
 }

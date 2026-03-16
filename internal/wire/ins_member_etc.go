@@ -99,8 +99,8 @@ func (i *Member) String() string {
 		return fmt.Sprintf("%s.%s", i.X.Name(), i.member.Name)
 	}
 }
-func (i *Member) Kind() VarKind  { return Register }
-func (i *Member) DataType() Type { return i.Type() }
+func (i *Member) Kind() AllocKind { return AllocKindRegister }
+func (i *Member) DataType() Type  { return i.Type() }
 func (i *Member) Tank() *tank {
 	tank := i.X.Tank()
 	if tank != nil {
@@ -110,7 +110,7 @@ func (i *Member) Tank() *tank {
 }
 
 func newMember(x Var, id int, pos int) *Member {
-	if x.Kind() != Register {
+	if x.Kind() != AllocKindRegister {
 		panic("Member.X must be Register")
 	}
 

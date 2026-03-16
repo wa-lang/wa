@@ -11,12 +11,12 @@ import (
 VarKind: 变量类别
 **************************************/
 
-type VarKind int
+type AllocKind int
 
 const (
-	Register VarKind = iota
+	AllocKindRegister AllocKind = iota
 	//Stack
-	Heap
+	AllocKindHeap
 )
 
 /**************************************
@@ -25,7 +25,7 @@ Alloc: Alloc 指令，定义一个变量，实现了 Expr、Var 接口
 
 type Alloc struct {
 	aStmt
-	kind   VarKind
+	kind   AllocKind
 	name   string
 	dtype  Type
 	rtype  Type
@@ -38,7 +38,7 @@ type Alloc struct {
 
 func (i *Alloc) Name() string { return i.name }
 func (i *Alloc) Type() Type {
-	if i.kind == Register {
+	if i.kind == AllocKindRegister {
 		return i.dtype
 	} else {
 		return i.rtype
@@ -48,7 +48,7 @@ func (i *Alloc) retained() bool { return false }
 func (i *Alloc) String() string {
 	s := ""
 	switch i.kind {
-	case Register:
+	case AllocKindRegister:
 		if i.init != nil {
 			if rtimp.hasChunk(i.init.Type()) && !i.init.retained() {
 				s = fmt.Sprintf("var %s↑ %s = %s", i.name, i.Type().Name(), i.init.Name())
@@ -59,7 +59,7 @@ func (i *Alloc) String() string {
 			s = fmt.Sprintf("var %s %s = 0", i.name, i.Type().Name())
 		}
 
-	case Heap:
+	case AllocKindHeap:
 		//if i.init != nil {
 		//panic(fmt.Sprintf("Heap var: %s has init-val", i.name))
 		//}
@@ -70,7 +70,7 @@ func (i *Alloc) String() string {
 		}
 
 	default:
-		panic(fmt.Sprintf("Todo: VarKind: %v", i.kind))
+		panic(fmt.Sprintf("Todo: AllocKind: %v", i.kind))
 	}
 
 	if i.tank != nil {
@@ -79,10 +79,10 @@ func (i *Alloc) String() string {
 	}
 	return s
 }
-func (i *Alloc) Kind() VarKind     { return i.kind }
-func (i *Alloc) SetKind(t VarKind) { i.kind = t }
-func (i *Alloc) DataType() Type    { return i.dtype }
-func (i *Alloc) Tank() *tank       { return i.tank }
+func (i *Alloc) Kind() AllocKind     { return i.kind }
+func (i *Alloc) SetKind(t AllocKind) { i.kind = t }
+func (i *Alloc) DataType() Type      { return i.dtype }
+func (i *Alloc) Tank() *tank         { return i.tank }
 
 // func (i *Alloc) RefType() Type  { return i.rtype }
 func (i *Alloc) SetInit(init Expr) { i.init = init }
@@ -91,7 +91,7 @@ func (i *Alloc) SetInit(init Expr) { i.init = init }
 
 func (b *Block) NewAlloc(name string, typ Type, pos int, obj interface{}, init Expr) *Alloc {
 	v := &Alloc{
-		kind:   Register,
+		kind:   AllocKindRegister,
 		name:   name,
 		dtype:  typ,
 		rtype:  b.types.GenRef(typ),
@@ -139,9 +139,9 @@ func (i *Imv) String() string {
 	}
 	return s
 }
-func (i *Imv) Kind() VarKind  { return Register }
-func (i *Imv) DataType() Type { return i.Type() }
-func (i *Imv) Tank() *tank    { return i.tank }
+func (i *Imv) Kind() AllocKind { return AllocKindRegister }
+func (i *Imv) DataType() Type  { return i.Type() }
+func (i *Imv) Tank() *tank     { return i.tank }
 
 func newImv(name string, val Expr, pos int) *Imv {
 	v := &Imv{
@@ -173,9 +173,9 @@ func (i *Extract) retained() bool { return i.X.retained() }
 func (i *Extract) String() string {
 	return fmt.Sprintf("extract(%s, %d)", i.X.Name(), i.Index)
 }
-func (i *Extract) Kind() VarKind  { return Register }
-func (i *Extract) DataType() Type { return i.Type() }
-func (i *Extract) Tank() *tank    { return i.X.Tank().member[i.Index] }
+func (i *Extract) Kind() AllocKind { return AllocKindRegister }
+func (i *Extract) DataType() Type  { return i.Type() }
+func (i *Extract) Tank() *tank     { return i.X.Tank().member[i.Index] }
 
 // 生成一条 Extract 指令
 func newExtract(x *Imv, index int, pos int) *Extract {

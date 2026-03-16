@@ -21,7 +21,7 @@ func (i *Get) Name() string   { return i.String() }
 func (i *Get) Type() Type     { return i.Loc.DataType() }
 func (i *Get) retained() bool { return false }
 func (i *Get) String() string {
-	if v, ok := i.Loc.(Var); ok && v.Kind() == Register {
+	if v, ok := i.Loc.(Var); ok && v.Kind() == AllocKindRegister {
 		return fmt.Sprintf("get(%s)", i.Loc.Name())
 	} else {
 		return fmt.Sprintf("get*(%s)", i.Loc.Name())

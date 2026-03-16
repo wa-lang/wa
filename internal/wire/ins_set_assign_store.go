@@ -37,7 +37,7 @@ func (i *Set) String() string {
 		}
 
 		var loc_name string
-		if v, ok := lh.(Var); ok && v.Kind() == Register {
+		if v, ok := lh.(Var); ok && v.Kind() == AllocKindRegister {
 			loc_name = lh.Name()
 		} else {
 			loc_name = "*(" + lh.Name() + ")"

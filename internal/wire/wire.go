@@ -30,7 +30,7 @@ type Scope interface {
 	ParentScope() Scope
 
 	// 递归向上查找关联对象为 obj 的 变量位置，对凹语言前端，obj 应为 types.Object
-	Lookup(obj interface{}, level VarKind) *Alloc
+	Lookup(obj interface{}, level AllocKind) *Alloc
 
 	// 格式化输出
 	Format(tab string, sb *strings.Builder)
@@ -71,9 +71,10 @@ const (
 	TypeKindF32
 	TypeKindF64
 	TypeKindRune
-
 	TypeKindPtr
 	TypeKindChunk
+	BaseTypeNum
+
 	TypeKindTuple
 	TypeKindStruct
 	TypeKindString
@@ -157,7 +158,7 @@ Var:
 type Var interface {
 	Expr
 	Location
-	Kind() VarKind
+	Kind() AllocKind
 	Tank() *tank
 }
 

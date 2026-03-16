@@ -34,13 +34,14 @@ type Function struct {
 	freeCommonRegs []register
 	freeChunkRegs  []register
 	chunkRegs      []register
+	commonRegs     []register
 	regCount       int
 }
 
 // Scope 接口相关
 func (f *Function) ScopeKind() ScopeKind { return ScopeKindFunc }
 func (f *Function) ParentScope() Scope   { return f.scope }
-func (f *Function) Lookup(obj interface{}, level VarKind) *Alloc {
+func (f *Function) Lookup(obj interface{}, level AllocKind) *Alloc {
 	for _, p := range f.params {
 		if p.object == obj {
 			if level > p.kind {
@@ -145,10 +146,10 @@ func (f *Function) EndBody() {
 	// 参数置换：
 	for i, param := range f.params {
 		hasChunk := rtimp.hasChunk(param.DataType())
-		if param.kind != Register || hasChunk && ob.varUsageRange(param).first != -1 { //Todo: 待优化，若参数中携带的引用未被重新赋值则无需置换  ob.varStored(param)
+		if param.kind != AllocKindRegister || hasChunk && ob.varUsageRange(param).first != -1 { //Todo: 待优化，若参数中携带的引用未被重新赋值则无需置换  ob.varStored(param)
 			np := *param
 			np.Stringer = &np
-			np.kind = Register
+			np.kind = AllocKindRegister
 
 			param.name = "$" + param.name
 			param.init = NewGet(&np, np.pos)
@@ -179,19 +180,21 @@ func (f *Function) EndBody() {
 	// Todo: defer
 
 	// 插入真返回指令
+	var retVars []*Alloc
 	var ret_exprs []Expr
 	for _, r := range f.results {
 		switch r.kind {
-		case Register:
+		case AllocKindRegister:
 			ret_exprs = append(ret_exprs, NewGet(r, f.EndPos))
+			retVars = append(retVars, r)
 
-		case Heap:
+		case AllocKindHeap:
 			rr := newImv(fb.newTempVarName(), NewGet(r, f.EndPos), f.EndPos)
 			fb.emit(rr)
 			ret_exprs = append(ret_exprs, rr)
 
 		default:
-			panic(fmt.Sprintf("Todo: VarKind: %v", r.kind))
+			panic(fmt.Sprintf("Todo: AllocKind: %v", r.kind))
 		}
 	}
 	fb.EmitReturn(ret_exprs, f.EndPos)
@@ -219,10 +222,20 @@ func (f *Function) EndBody() {
 	getReplace_stmt(fb)
 
 	// chunk release
+	retRegs := make(map[int]bool)
+	for _, v := range retVars {
+		raw := v.Tank().raw()
+		for _, reg := range raw {
+			retRegs[reg.id] = true
+		}
+	}
 	for i := len(fb.Stmts) - 1; i >= 0; i-- {
 		if ret, ok := fb.Stmts[i].(*Return); ok {
 			fb.Stmts = fb.Stmts[:i]
 			for _, r := range f.chunkRegs {
+				if v, ok := retRegs[r.id]; ok && v {
+					continue
+				}
 				fb.Stmts = append(fb.Stmts, newRelease(r, f.EndPos))
 			}
 			fb.Stmts = append(fb.Stmts, ret)
@@ -236,6 +249,8 @@ func (f *Function) EndBody() {
 		f.Format("  ", &sb)
 		println(sb.String())
 	}
+
+	rtimp.BuildFunction(f)
 }
 
 func (f *Function) retRepalce(stmt Stmt) {
@@ -315,7 +330,7 @@ func rc_stmt(s Stmt, inloop bool, d *Block, pre *[]Stmt) {
 
 	case *Alloc:
 		s.init = rc_expr(s.init, inloop, false, d, pre)
-		if s.Kind() != Register && s.init != nil {
+		if s.Kind() != AllocKindRegister && s.init != nil {
 			init := s.init
 			s.init = nil
 			if pre == nil {
@@ -357,7 +372,7 @@ func rc_stmt(s Stmt, inloop bool, d *Block, pre *[]Stmt) {
 			lhe := loc2expr(lh)
 
 			if v, ok := lhe.(Var); ok {
-				if v.Kind() == Register { // v: T; v = expr; v 未逃逸
+				if v.Kind() == AllocKindRegister { // v: T; v = expr; v 未逃逸
 					lhs[i] = v
 					lhAssignable[i] = true
 				} else { // v: T; v = expr;  v 逃逸
@@ -372,7 +387,7 @@ func rc_stmt(s Stmt, inloop bool, d *Block, pre *[]Stmt) {
 			lhAssignable[i] = false
 
 			if get, ok := lhe.(*Get); ok {
-				if v, ok := get.Loc.(Var); ok && v.Kind() == Register { // p: *T; *p = expr; p 未逃逸
+				if v, ok := get.Loc.(Var); ok && v.Kind() == AllocKindRegister { // p: *T; *p = expr; p 未逃逸
 					lhs[i] = v
 					continue
 				}
@@ -455,7 +470,7 @@ func rc_stmt(s Stmt, inloop bool, d *Block, pre *[]Stmt) {
 				}
 
 				if v, ok := rh.(Var); ok {
-					if v.Kind() != Register {
+					if v.Kind() != AllocKindRegister {
 						panic(fmt.Sprintf("rh: %s is not a Register", v.Name()))
 					}
 					store := newStore(loc, v, s.pos)
@@ -658,7 +673,7 @@ func loc2expr(loc Location) Expr {
 
 	case *MemberLocation:
 		x := loc2expr(loc.X)
-		if v, ok := x.(Var); ok && v.Kind() == Register && unname(v.Type()).Kind() == TypeKindStruct {
+		if v, ok := x.(Var); ok && v.Kind() == AllocKindRegister && unname(v.Type()).Kind() == TypeKindStruct {
 			return newMember(v, loc.Id, loc.pos)
 		} else {
 			return newMemberAddr(x, loc.Id, loc.pos, loc.types)
@@ -818,6 +833,7 @@ func (f *Function) allocRegister(typ Type) (id int) {
 		if !free {
 			id = f.regCount
 			f.regCount++
+			f.commonRegs = append(f.commonRegs, register{id: id, typ: typ})
 		}
 	}
 	return
@@ -916,7 +932,7 @@ func getReplace_expr(e Expr) (ret Expr) {
 		if v, ok := loc.(Var); !ok {
 			return newLoad(getReplace_expr(loc), e.Pos())
 		} else {
-			if v.Kind() == Register {
+			if v.Kind() == AllocKindRegister {
 				return v
 			} else {
 				return newLoad(v, e.Pos())

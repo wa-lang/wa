@@ -333,7 +333,7 @@ func (b *Builder) returnStmt(s *ast.ReturnStmt, f *Func, block *wire.Block) {
 //	return &i.m
 //
 // 将导致 i 逃逸 至 Heap
-func (b *Builder) location(e ast.Expr, escaping wire.VarKind, block *wire.Block) wire.Location {
+func (b *Builder) location(e ast.Expr, escaping wire.AllocKind, block *wire.Block) wire.Location {
 	e = unparen(e)
 	switch e := e.(type) {
 	case *ast.Ident:
@@ -402,7 +402,7 @@ func (b *Builder) location(e ast.Expr, escaping wire.VarKind, block *wire.Block)
 	panic(fmt.Sprintf("unexpected address expression: %T", e))
 }
 
-func (b *Builder) compositeLit(e *ast.CompositeLit, escaping wire.VarKind, block *wire.Block) wire.Var {
+func (b *Builder) compositeLit(e *ast.CompositeLit, escaping wire.AllocKind, block *wire.Block) wire.Var {
 	typ := deref(b.info.Types[e].Type)
 	ut := typ.Underlying()
 	switch st := ut.(type) {
@@ -477,7 +477,7 @@ func (b *Builder) expr(e ast.Expr, block *wire.Block) wire.Expr {
 
 	var v wire.Expr
 	if tv.Addressable() {
-		loc := b.location(e, 0, block)
+		loc := b.location(e, wire.AllocKindRegister, block)
 		v = wire.NewGet(loc, int(e.Pos()))
 	} else {
 		v = b.expr1(e, tv, block)
@@ -504,7 +504,7 @@ func (b *Builder) expr1(e ast.Expr, tv types.TypeAndValue, block *wire.Block) wi
 		}
 
 		if _, ok := obj.(*types.Var); ok {
-			loc := block.Lookup(obj, wire.Register)
+			loc := block.Lookup(obj, wire.AllocKindRegister)
 			return wire.NewGet(loc, int(obj.Pos()))
 		}
 
@@ -515,7 +515,7 @@ func (b *Builder) expr1(e ast.Expr, tv types.TypeAndValue, block *wire.Block) wi
 	case *ast.UnaryExpr: // 一元算符
 		switch e.Op {
 		case token.AND: // &x, 逃逸
-			loc := b.location(e.X, wire.Heap, block)
+			loc := b.location(e.X, wire.AllocKindHeap, block)
 			if _, ok := unparen(e.X).(*ast.StarExpr); ok {
 				// Todo: p 为空时，&*p 应panic
 				panic("Todo")
@@ -676,7 +676,7 @@ func (b *Builder) expr1(e ast.Expr, tv types.TypeAndValue, block *wire.Block) wi
 		panic("")
 
 	case *ast.CompositeLit:
-		return b.compositeLit(e, wire.Register, block)
+		return b.compositeLit(e, wire.AllocKindRegister, block)
 
 	case *ast.StarExpr:
 		// Todo

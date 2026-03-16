@@ -103,12 +103,12 @@ type Combo struct {
 	Result Var
 }
 
-func (i *Combo) Name() string   { return i.String() }
-func (i *Combo) Type() Type     { return i.Result.Type() }
-func (i *Combo) retained() bool { return i.Result.retained() }
-func (i *Combo) DataType() Type { return i.Result.DataType() }
-func (i *Combo) Kind() VarKind  { return i.Result.Kind() }
-func (i *Combo) Tank() *tank    { return i.Result.Tank() }
+func (i *Combo) Name() string    { return i.String() }
+func (i *Combo) Type() Type      { return i.Result.Type() }
+func (i *Combo) retained() bool  { return i.Result.retained() }
+func (i *Combo) DataType() Type  { return i.Result.DataType() }
+func (i *Combo) Kind() AllocKind { return i.Result.Kind() }
+func (i *Combo) Tank() *tank     { return i.Result.Tank() }
 
 func (i *Combo) String() string {
 	var sb strings.Builder

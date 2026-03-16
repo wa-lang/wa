@@ -361,6 +361,11 @@ Struct: 结构体
 **************************************/
 type Struct struct {
 	members []StructMember
+
+	_built    bool
+	_size     int
+	_align    int
+	_hasChunk bool
 }
 
 func (t *Struct) Name() string {
@@ -397,10 +402,37 @@ func (t *Struct) Equal(u Type) bool {
 
 func (t *Struct) Len() int               { return len(t.members) }
 func (t *Struct) At(id int) StructMember { return t.members[id] }
-func (t *Struct) setFieldId() {
+func (t *Struct) build() {
+	t._size = 0
 	for i := range t.members {
-		t.members[i].id = i
+		member := &t.members[i]
+		ma := rtimp.alignof(member.Type)
+		ms := rtimp.sizeof(member.Type)
+		member._id = i
+		member._start = makeAlign(t._size, ma)
+
+		t._size = member._start + ms
+		if ma > t._align {
+			t._align = ma
+		}
 	}
+	t._size = makeAlign(t._size, t._align)
+
+	for _, member := range t.members {
+		if rtimp.hasChunk(member.Type) {
+			t._hasChunk = true
+			break
+		}
+	}
+
+	t._built = true
+}
+
+func makeAlign(i, align int) int {
+	if align == 1 || align == 0 {
+		return i
+	}
+	return (i + align - 1) / align * align
 }
 
 func (tl *Types) GenStruct(fields []StructMember) *Struct {
@@ -412,7 +444,7 @@ func (tl *Types) GenStruct(fields []StructMember) *Struct {
 		}
 	}
 
-	nt.setFieldId()
+	nt.build()
 	tl.structs = append(tl.structs, nt)
 	return nt
 }
@@ -420,7 +452,9 @@ func (tl *Types) GenStruct(fields []StructMember) *Struct {
 type StructMember struct {
 	Name string
 	Type Type
-	id   int
+
+	_id    int
+	_start int
 }
 
 func (i *StructMember) Equal(u *StructMember) bool { return i.Name == u.Name && i.Type.Equal(u.Type) }
@@ -439,8 +473,7 @@ func (t *String) Equal(u Type) bool { _, ok := u.(*String); return ok }
 
 func (tl *Types) genString() *String {
 	nt := &String{}
-	underlying := rtimp.underlyingStruct(nt)
-	nt.underlying = &underlying
+	nt.underlying = rtimp.underlyingStruct(nt)
 	return nt
 }
 
@@ -470,8 +503,7 @@ func (tl *Types) GenRef(base Type) *Ref {
 	}
 
 	nt := &Ref{Base: base}
-	underlying := rtimp.underlyingStruct(nt)
-	nt.underlying = &underlying
+	nt.underlying = rtimp.underlyingStruct(nt)
 	return nt
 }
 
