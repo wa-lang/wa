@@ -206,7 +206,7 @@ func (f *Function) EndBody() {
 
 	// 虚拟寄存器
 	for _, p := range f.params {
-		p.tank = rtimp.initTank(p.Type(), true)
+		p.tank = rtimp.initTank(p.Type(), KImv)
 		f.allocVR_tank(p.tank, true)
 	}
 	f.allocVR_block(fb, false)
@@ -787,12 +787,12 @@ func (f *Function) allocVR_stmt(s Stmt, inloop bool) {
 }
 
 func (f *Function) allocVR_var(v *Alloc, inloop bool) {
-	v.tank = rtimp.initTank(v.Type(), false)
+	v.tank = rtimp.initTank(v.Type(), KLocal)
 	f.allocVR_tank(v.tank, inloop)
 }
 
 func (f *Function) allocVR_imv(v *Imv, inloop bool) {
-	v.tank = rtimp.initTank(v.Type(), true)
+	v.tank = rtimp.initTank(v.Type(), KImv)
 	f.allocVR_tank(v.tank, inloop)
 }
 

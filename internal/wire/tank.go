@@ -8,9 +8,20 @@ import (
 	"strings"
 )
 
+type RegisterKind int
+
+const (
+	RegisterKindUnknonw RegisterKind = iota
+	KLocal
+	KImv
+	KGlobal
+)
+
 type register struct {
-	id  int
-	typ Type
+	id      int
+	typ     Type
+	_offset int
+	_kind   RegisterKind
 }
 
 func (r *register) String() string {
