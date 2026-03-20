@@ -249,6 +249,9 @@ func varUsedInStmt(stmt Stmt, v Var) bool {
 	case *Store:
 		return exprContainsVar(s.Loc, v) || exprContainsVar(s.Val, v)
 
+	case *NilCheck:
+		return exprContainsVar(s.X, v)
+
 	case *Br:
 		return false
 
@@ -351,7 +354,7 @@ func exprContainsVar(expr Expr, v Var) bool {
 	case *asAddr:
 		return locationContainsVar(e.loc, v)
 
-	case *NilCheck:
+	case *NilCheckWrapper:
 		return exprContainsVar(e.X, v)
 
 	case *Combo:

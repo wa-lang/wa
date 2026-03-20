@@ -71,25 +71,51 @@ func AsAddr(loc Location, typ Type, pos int) Expr {
 }
 
 /**************************************
-NilCheck: 检查 X 是否为 nil，为 nil 则 panic，不为 nil 则返回 X。NilCheck 实现了 Expr 接口
+NilCheckWrapper: 检查 X 是否为 nil，为 nil 则 panic，不为 nil 则返回 X。NilCheck 实现了 Expr 接口
   - X 类型应为 Ptr 或 Ref
 **************************************/
 
-type NilCheck struct {
+type NilCheckWrapper struct {
 	aStmt
 	X Expr
 }
 
-func (i *NilCheck) Name() string   { return i.String() }
-func (i *NilCheck) Type() Type     { return i.X.Type() }
-func (i *NilCheck) retained() bool { return false }
-func (i *NilCheck) String() string { return fmt.Sprintf("nilcheck(%s)", i.X.Name()) }
+func (i *NilCheckWrapper) Name() string   { return i.String() }
+func (i *NilCheckWrapper) Type() Type     { return i.X.Type() }
+func (i *NilCheckWrapper) retained() bool { return false }
+func (i *NilCheckWrapper) String() string { return fmt.Sprintf("nilcheckwrapper(%s)", i.X.Name()) }
 
-func NewNilCheck(x Expr) Expr {
+func NewNilCheckWrapper(x Expr) Expr {
 	if x.Type().Kind() != TypeKindPtr && x.Type().Kind() != TypeKindRef {
 		panic(fmt.Sprintf("Invalid X.Type():%s", x.Type().Name()))
 	}
-	return &NilCheck{X: x}
+
+	e := &NilCheckWrapper{X: x}
+	e.Stringer = e
+	e.pos = x.Pos()
+	return e
+}
+
+/**************************************
+NilCheck: 检查 X 是否为 nil
+  - X 类型应为 Ptr 或 Ref 类型的 Var
+**************************************/
+
+type NilCheck struct {
+	aStmt
+	X Var
+}
+
+func (i *NilCheck) String() string { return fmt.Sprintf("nilcheck(%s)", i.X.Name()) }
+
+func newNilCheck1(x Var) *NilCheck {
+	if x.Type().Kind() != TypeKindPtr && x.Type().Kind() != TypeKindRef {
+		panic(fmt.Sprintf("Invalid X.Type():%s", x.Type().Name()))
+	}
+	s := &NilCheck{X: x}
+	s.Stringer = s
+	s.pos = x.Pos()
+	return s
 }
 
 /**************************************

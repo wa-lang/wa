@@ -44,6 +44,7 @@ func NewGet(loc Location, pos int) *Get {
 Load: Load 指令，获取内存 Loc 处的值， Load 实现了 Expr 接口
   - Loc 类型 应为 Ref、Ptr
   - 该指令仅供内部使用，上层高级语法不应直接使用
+  - 后端仅需处理 Loc 为 Var 的情况
 **************************************/
 
 type Load struct {

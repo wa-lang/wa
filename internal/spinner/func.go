@@ -357,11 +357,11 @@ func (b *Builder) location(e ast.Expr, escaping wire.AllocKind, block *wire.Bloc
 		if tv.Addressable() {
 			loc := b.location(e.X, escaping, block)
 			ptr := wire.NewGet(loc, int(e.X.Pos()))
-			cptr := wire.NewNilCheck(ptr)
+			cptr := wire.NewNilCheckWrapper(ptr)
 			return wire.AsLocation(cptr)
 		} else {
 			ptr := b.expr1(e.X, tv, block)
-			cptr := wire.NewNilCheck(ptr)
+			cptr := wire.NewNilCheckWrapper(ptr)
 			return wire.AsLocation(cptr)
 		}
 
@@ -383,7 +383,7 @@ func (b *Builder) location(e ast.Expr, escaping wire.AllocKind, block *wire.Bloc
 			x = b.location(ex, escaping, block)
 		} else {
 			ptr := b.expr(ex, block)
-			cptr := wire.NewNilCheck(ptr)
+			cptr := wire.NewNilCheckWrapper(ptr)
 			x = wire.AsLocation(cptr)
 		}
 
