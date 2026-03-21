@@ -154,7 +154,7 @@ func (f *Function) EndBody() {
 			param.name = "$" + param.name
 			param.init = &np
 
-			decombo_stmt(param, false, fb, nil)
+			unpack_stmt(param, false, fb, nil)
 
 			f.params[i] = &np
 		}
@@ -191,7 +191,7 @@ func (f *Function) EndBody() {
 	nb.Label = _FN_START
 	nb.init()
 
-	decombo_block(ob, false, nb)
+	unpack_block(ob, false, nb)
 	{
 		var sb strings.Builder
 		sb.WriteString("\n<======= decombo  后=======>\n")
@@ -476,6 +476,27 @@ func getReplace_expr(e Expr) (ret Expr) {
 	return
 }
 
+func loc2expr(loc Location) Expr {
+	switch loc := loc.(type) {
+	case Expr:
+		return loc
+
+	case *MemberLocation:
+		x := loc2expr(loc.X)
+		if v, ok := x.(Var); ok && v.Kind() == AllocKindRegister && unname(v.Type()).Kind() == TypeKindStruct {
+			return newMember(v, loc.Id, loc.pos)
+		} else {
+			return newMemberAddr(x, loc.Id, loc.pos, loc.types)
+		}
+
+	case *asLoc:
+		return loc.expr
+
+	default:
+		panic(fmt.Sprintf("Todo: %T", loc))
+	}
+}
+
 func getReplace_location(loc Location) (ret Location) {
 	ret = loc
 	if ret == nil {
@@ -598,7 +619,7 @@ func arc_expr(block *Block, e Expr, inloop bool, replace bool) (ret Expr) {
 		return
 
 	case *Get:
-		panic("Get should not be here")
+		e.Loc = arc_location(block, e.Loc, inloop)
 
 	case *Load:
 		e.Loc = arc_expr(block, e.Loc, inloop, true)
@@ -735,14 +756,14 @@ func arc_var(block *Block, v Var, inloop bool) (ret Var) {
 	return
 }
 
-func decombo_block(b *Block, inloop bool, d *Block) {
+func unpack_block(b *Block, inloop bool, d *Block) {
 	d.tCount = b.tCount
 	for _, stmt := range b.Stmts {
-		decombo_stmt(stmt, inloop, d, nil)
+		unpack_stmt(stmt, inloop, d, nil)
 	}
 }
 
-func decombo_stmt(s Stmt, inloop bool, d *Block, pre *[]Stmt) {
+func unpack_stmt(s Stmt, inloop bool, d *Block, pre *[]Stmt) {
 	switch s := s.(type) {
 	case *Block:
 		if len(s.Stmts) == 0 {
@@ -755,11 +776,11 @@ func decombo_stmt(s Stmt, inloop bool, d *Block, pre *[]Stmt) {
 
 		block := d.EmitBlock(s.Label, s.pos)
 		for _, stmt := range s.Stmts {
-			decombo_stmt(stmt, inloop, block, nil)
+			unpack_stmt(stmt, inloop, block, nil)
 		}
 
 	case *Alloc:
-		s.init = decombo_expr(s.init, inloop, d, pre)
+		s.init = unpack_expr(s.init, inloop, d, pre)
 		if s.Kind() != AllocKindRegister && s.init != nil {
 			init := s.init
 			s.init = nil
@@ -779,7 +800,7 @@ func decombo_stmt(s Stmt, inloop bool, d *Block, pre *[]Stmt) {
 		}
 
 	case *Imv:
-		s.val = decombo_expr(s.val, inloop, d, pre)
+		s.val = unpack_expr(s.val, inloop, d, pre)
 		if pre == nil {
 			d.emit(s)
 		} else {
@@ -791,11 +812,11 @@ func decombo_stmt(s Stmt, inloop bool, d *Block, pre *[]Stmt) {
 
 	case *Set:
 		for i := range s.Lhs {
-			s.Lhs[i] = decombo_location(s.Lhs[i], inloop, d, pre)
+			s.Lhs[i] = unpack_location(s.Lhs[i], inloop, d, pre)
 		}
 
 		for i := range s.Rhs {
-			s.Rhs[i] = decombo_expr(s.Rhs[i], inloop, d, pre)
+			s.Rhs[i] = unpack_expr(s.Rhs[i], inloop, d, pre)
 		}
 
 		allLhsAssignable := true
@@ -966,7 +987,7 @@ func decombo_stmt(s Stmt, inloop bool, d *Block, pre *[]Stmt) {
 		}
 
 	case *NilCheck:
-		s.X = decombo_var(s.X, inloop, d, pre)
+		s.X = unpack_var(s.X, inloop, d, pre)
 		if pre == nil {
 			d.emit(s)
 		} else {
@@ -987,23 +1008,23 @@ func decombo_stmt(s Stmt, inloop bool, d *Block, pre *[]Stmt) {
 			panic("pre should be nil")
 		}
 
-		cond := decombo_expr(s.Cond, inloop, d, nil)
+		cond := unpack_expr(s.Cond, inloop, d, nil)
 		n := d.EmitIf(cond, s.pos)
-		decombo_block(s.True, inloop, n.True)
-		decombo_block(s.False, inloop, n.False)
+		unpack_block(s.True, inloop, n.True)
+		unpack_block(s.False, inloop, n.False)
 
 	case *Loop:
 		if pre != nil {
 			panic("pre should be nil")
 		}
 
-		cond := decombo_expr(s.Cond, true, d, &s.PreCond)
+		cond := unpack_expr(s.Cond, true, d, &s.PreCond)
 
 		l := d.EmitLoop(cond, s.Label, s.pos)
 		l.PreCond = s.PreCond
 
-		decombo_block(s.Body, true, l.Body)
-		decombo_block(s.Post, true, l.Post)
+		unpack_block(s.Body, true, l.Body)
+		unpack_block(s.Post, true, l.Post)
 
 	case *Discard:
 		if pre == nil {
@@ -1017,7 +1038,7 @@ func decombo_stmt(s Stmt, inloop bool, d *Block, pre *[]Stmt) {
 	}
 }
 
-func decombo_expr(expr Expr, inloop bool, d *Block, pre *[]Stmt) (ret Expr) {
+func unpack_expr(expr Expr, inloop bool, d *Block, pre *[]Stmt) (ret Expr) {
 	ret = expr
 	if ret == nil {
 		return
@@ -1034,7 +1055,7 @@ func decombo_expr(expr Expr, inloop bool, d *Block, pre *[]Stmt) (ret Expr) {
 		panic("Get should not be here")
 
 	case *Load:
-		loc := decombo_expr(e.Loc, inloop, d, pre)
+		loc := unpack_expr(e.Loc, inloop, d, pre)
 		if v, ok := loc.(Var); ok {
 			e.Loc = v
 		} else {
@@ -1042,15 +1063,15 @@ func decombo_expr(expr Expr, inloop bool, d *Block, pre *[]Stmt) (ret Expr) {
 			imv := newImv(d.newTempVarName(), loc, loc.Pos())
 			combo.Result = imv
 			combo.Stmts = append(combo.Stmts, imv)
-			e.Loc = decombo_expr(combo, inloop, d, pre)
+			e.Loc = unpack_expr(combo, inloop, d, pre)
 		}
 
 	case *Unop:
-		e.X = decombo_expr(e.X, inloop, d, pre)
+		e.X = unpack_expr(e.X, inloop, d, pre)
 
 	case *Biop:
-		e.X = decombo_expr(e.X, inloop, d, pre)
-		e.Y = decombo_expr(e.Y, inloop, d, pre)
+		e.X = unpack_expr(e.X, inloop, d, pre)
+		e.Y = unpack_expr(e.Y, inloop, d, pre)
 
 	case *Call:
 		var call_common *CallCommon
@@ -1063,39 +1084,39 @@ func decombo_expr(expr Expr, inloop bool, d *Block, pre *[]Stmt) (ret Expr) {
 
 		case *MethodCall:
 			call_common = &call.CallCommon
-			call.Recv = decombo_expr(call.Recv, inloop, d, pre)
+			call.Recv = unpack_expr(call.Recv, inloop, d, pre)
 
 		case *InterfaceCall:
 			call_common = &call.CallCommon
-			call.Interface = decombo_expr(call.Interface, inloop, d, pre)
+			call.Interface = unpack_expr(call.Interface, inloop, d, pre)
 
 		default:
 			panic("Todo")
 		}
 
 		for i := range call_common.Args {
-			call_common.Args[i] = decombo_expr(call_common.Args[i], inloop, d, pre)
+			call_common.Args[i] = unpack_expr(call_common.Args[i], inloop, d, pre)
 		}
 
 	case *MemberValue:
 		panic("MemberValue should not be here")
 
 	case *Member:
-		e.X = decombo_var(e.X, inloop, d, pre)
+		e.X = unpack_var(e.X, inloop, d, pre)
 		return
 
 	case *MemberAddr:
-		e.X = decombo_expr(e.X, inloop, d, pre)
+		e.X = unpack_expr(e.X, inloop, d, pre)
 
 	case *asAddr:
-		loc := decombo_location(e.loc, inloop, d, pre)
+		loc := unpack_location(e.loc, inloop, d, pre)
 		ret = loc2expr(loc)
 		if !ret.Type().Equal(e.Type()) {
 			panic("asAddr() type mismatch")
 		}
 
 	case *NilCheckWrapper:
-		x := decombo_expr(e.X, inloop, d, pre)
+		x := unpack_expr(e.X, inloop, d, pre)
 		combo := NewCombo(nil, nil, e.pos)
 		if v, ok := x.(Var); ok {
 			combo.Stmts = append(combo.Stmts, newNilCheck1(v))
@@ -1106,11 +1127,11 @@ func decombo_expr(expr Expr, inloop bool, d *Block, pre *[]Stmt) (ret Expr) {
 			combo.Stmts = append(combo.Stmts, newNilCheck1(imv))
 			combo.Result = imv
 		}
-		ret = decombo_expr(combo, inloop, d, pre)
+		ret = unpack_expr(combo, inloop, d, pre)
 
 	case *Combo:
 		for _, stmt := range e.Stmts {
-			decombo_stmt(stmt, inloop, d, pre)
+			unpack_stmt(stmt, inloop, d, pre)
 		}
 		ret = e.Result
 
@@ -1121,7 +1142,7 @@ func decombo_expr(expr Expr, inloop bool, d *Block, pre *[]Stmt) (ret Expr) {
 	return
 }
 
-func decombo_location(loc Location, inloop bool, d *Block, pre *[]Stmt) (ret Location) {
+func unpack_location(loc Location, inloop bool, d *Block, pre *[]Stmt) (ret Location) {
 	ret = loc
 	if ret == nil {
 		return
@@ -1132,22 +1153,22 @@ func decombo_location(loc Location, inloop bool, d *Block, pre *[]Stmt) (ret Loc
 		return
 
 	case *Member:
-		e.X = decombo_var(e.X, inloop, d, pre)
+		e.X = unpack_var(e.X, inloop, d, pre)
 
 	case *MemberLocation:
-		e.X = decombo_location(e.X, inloop, d, pre)
+		e.X = unpack_location(e.X, inloop, d, pre)
 
 	case *MemberAddr:
-		e.X = decombo_expr(e.X, inloop, d, pre)
+		e.X = unpack_expr(e.X, inloop, d, pre)
 
 	case *Combo:
 		for _, stmt := range e.Stmts {
-			decombo_stmt(stmt, inloop, d, pre)
+			unpack_stmt(stmt, inloop, d, pre)
 		}
-		e.Result = decombo_var(e.Result, inloop, d, pre)
+		e.Result = unpack_var(e.Result, inloop, d, pre)
 
 	case *asLoc:
-		e.expr = decombo_expr(e.expr, inloop, d, pre)
+		e.expr = unpack_expr(e.expr, inloop, d, pre)
 
 	default:
 		panic(fmt.Sprintf("Todo: %T", e))
@@ -1156,46 +1177,25 @@ func decombo_location(loc Location, inloop bool, d *Block, pre *[]Stmt) (ret Loc
 	return
 }
 
-func decombo_var(v Var, inloop bool, d *Block, pre *[]Stmt) (ret Var) {
+func unpack_var(v Var, inloop bool, d *Block, pre *[]Stmt) (ret Var) {
 	ret = v
 	switch v := v.(type) {
 	case *Alloc, *Imv, *Extract:
 
 	case *Member:
-		v.X = decombo_var(v.X, inloop, d, pre)
+		v.X = unpack_var(v.X, inloop, d, pre)
 
 	case *Combo:
 		for _, stmt := range v.Stmts {
-			decombo_stmt(stmt, inloop, d, pre)
+			unpack_stmt(stmt, inloop, d, pre)
 		}
-		ret = decombo_var(v.Result, inloop, d, pre)
+		ret = unpack_var(v.Result, inloop, d, pre)
 
 	default:
 		panic(fmt.Sprintf("Todo: %T", v))
 	}
 
 	return
-}
-
-func loc2expr(loc Location) Expr {
-	switch loc := loc.(type) {
-	case Expr:
-		return loc
-
-	case *MemberLocation:
-		x := loc2expr(loc.X)
-		if v, ok := x.(Var); ok && v.Kind() == AllocKindRegister && unname(v.Type()).Kind() == TypeKindStruct {
-			return newMember(v, loc.Id, loc.pos)
-		} else {
-			return newMemberAddr(x, loc.Id, loc.pos, loc.types)
-		}
-
-	case *asLoc:
-		return loc.expr
-
-	default:
-		panic(fmt.Sprintf("Todo: %T", loc))
-	}
 }
 
 func (f *Function) insertDiscard_block(b *Block) {
