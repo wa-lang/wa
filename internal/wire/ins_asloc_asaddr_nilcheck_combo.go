@@ -108,7 +108,7 @@ type NilCheck struct {
 
 func (i *NilCheck) String() string { return fmt.Sprintf("nilcheck(%s)", i.X.Name()) }
 
-func newNilCheck1(x Var) *NilCheck {
+func newNilCheck(x Var) *NilCheck {
 	if x.Type().Kind() != TypeKindPtr && x.Type().Kind() != TypeKindRef {
 		panic(fmt.Sprintf("Invalid X.Type():%s", x.Type().Name()))
 	}

@@ -194,7 +194,7 @@ func (f *Function) EndBody() {
 	unpack_block(ob, false, nb)
 	{
 		var sb strings.Builder
-		sb.WriteString("\n<======= decombo  后=======>\n")
+		sb.WriteString("\n<======= unpack  后=======>\n")
 		nb.Format("  ", &sb)
 		println(sb.String())
 	}
@@ -237,7 +237,7 @@ func (f *Function) EndBody() {
 
 	{
 		var sb strings.Builder
-		sb.WriteString("\n<=======allocVR_block() 后=======>\n")
+		sb.WriteString("\n<======= allocVR 后=======>\n")
 		f.Format("  ", &sb)
 		println(sb.String())
 	}
@@ -266,7 +266,7 @@ func (f *Function) EndBody() {
 
 	{
 		var sb strings.Builder
-		sb.WriteString("\n<=======EndBody() 后=======>\n")
+		sb.WriteString("\n<======= EndBody 后=======>\n")
 		f.Format("  ", &sb)
 		println(sb.String())
 	}
@@ -625,11 +625,11 @@ func arc_expr(block *Block, e Expr, inloop bool, replace bool) (ret Expr) {
 		e.Loc = arc_expr(block, e.Loc, inloop, true)
 
 	case *Unop:
-		e.X = arc_expr(block, e.X, inloop, replace)
+		e.X = arc_expr(block, e.X, inloop, true)
 
 	case *Biop:
-		e.X = arc_expr(block, e.X, inloop, replace)
-		e.Y = arc_expr(block, e.Y, inloop, replace)
+		e.X = arc_expr(block, e.X, inloop, true)
+		e.Y = arc_expr(block, e.Y, inloop, true)
 
 	case *Call:
 		var call_common *CallCommon
@@ -660,16 +660,7 @@ func arc_expr(block *Block, e Expr, inloop bool, replace bool) (ret Expr) {
 		e.X = arc_var(block, e.X, inloop)
 
 	case *MemberValue:
-		v := arc_expr(block, e.X, inloop, true)
-		if va, ok := v.(Var); ok {
-			ret = newMember(va, e.Id, e.pos)
-		} else {
-			imv := newImv(block.newTempVarName(), v, e.pos)
-			combo := NewCombo(nil, nil, e.pos)
-			combo.Stmts = append(combo.Stmts, imv)
-			combo.Result = newMember(imv, e.Id, e.pos)
-			ret = combo
-		}
+		e.X = arc_expr(block, e.X, inloop, true)
 
 	case *MemberAddr:
 		e.X = arc_expr(block, e.X, inloop, true)
@@ -1059,11 +1050,13 @@ func unpack_expr(expr Expr, inloop bool, d *Block, pre *[]Stmt) (ret Expr) {
 		if v, ok := loc.(Var); ok {
 			e.Loc = v
 		} else {
-			combo := NewCombo(nil, nil, loc.Pos())
 			imv := newImv(d.newTempVarName(), loc, loc.Pos())
-			combo.Result = imv
-			combo.Stmts = append(combo.Stmts, imv)
-			e.Loc = unpack_expr(combo, inloop, d, pre)
+			if d != nil {
+				d.emit(imv)
+			} else {
+				*pre = append(*pre, imv)
+			}
+			e.Loc = imv
 		}
 
 	case *Unop:
@@ -1099,7 +1092,18 @@ func unpack_expr(expr Expr, inloop bool, d *Block, pre *[]Stmt) (ret Expr) {
 		}
 
 	case *MemberValue:
-		panic("MemberValue should not be here")
+		v := unpack_expr(e.X, inloop, d, pre)
+		if va, ok := v.(Var); ok {
+			ret = newMember(va, e.Id, e.pos)
+		} else {
+			imv := newImv(d.newTempVarName(), v, e.pos)
+			if d != nil {
+				d.emit(imv)
+			} else {
+				*pre = append(*pre, imv)
+			}
+			ret = newMember(imv, e.Id, e.pos)
+		}
 
 	case *Member:
 		e.X = unpack_var(e.X, inloop, d, pre)
@@ -1117,17 +1121,24 @@ func unpack_expr(expr Expr, inloop bool, d *Block, pre *[]Stmt) (ret Expr) {
 
 	case *NilCheckWrapper:
 		x := unpack_expr(e.X, inloop, d, pre)
-		combo := NewCombo(nil, nil, e.pos)
 		if v, ok := x.(Var); ok {
-			combo.Stmts = append(combo.Stmts, newNilCheck1(v))
-			combo.Result = v
+			if d != nil {
+				d.emit(newNilCheck(v))
+			} else {
+				*pre = append(*pre, newNilCheck(v))
+			}
+			ret = v
 		} else {
 			imv := newImv(d.newTempVarName(), x, x.Pos())
-			combo.Stmts = append(combo.Stmts, imv)
-			combo.Stmts = append(combo.Stmts, newNilCheck1(imv))
-			combo.Result = imv
+			if d != nil {
+				d.emit(imv)
+				d.emit(newNilCheck(imv))
+			} else {
+				*pre = append(*pre, imv)
+				*pre = append(*pre, newNilCheck(imv))
+			}
+			ret = imv
 		}
-		ret = unpack_expr(combo, inloop, d, pre)
 
 	case *Combo:
 		for _, stmt := range e.Stmts {
