@@ -38,6 +38,10 @@ const (
 	LEG
 )
 
+func (op *OpCode) String() string {
+	return OpCodeNames[*op]
+}
+
 var OpCodeNames = [...]string{
 	NOT:    "!",
 	NEG:    "-",
@@ -76,7 +80,7 @@ type Unop struct {
 func (i *Unop) Name() string   { return i.String() }
 func (i *Unop) Type() Type     { return i.X.Type() }
 func (i *Unop) retained() bool { return false }
-func (i *Unop) String() string { return fmt.Sprintf("%s%s", OpCodeNames[i.Op], i.X.Name()) }
+func (i *Unop) String() string { return fmt.Sprintf("%s%s", i.Op.String(), i.X.Name()) }
 
 // 生成一条 Unop 指令
 func NewUnop(x Expr, op OpCode, pos int) *Unop {
@@ -116,7 +120,7 @@ func (i *Biop) Type() Type {
 }
 func (i *Biop) retained() bool { return i.Type().Kind() == TypeKindString }
 func (i *Biop) String() string {
-	return fmt.Sprintf("(%s %s %s)", i.X.Name(), OpCodeNames[i.Op], i.Y.Name())
+	return fmt.Sprintf("(%s %s %s)", i.X.Name(), i.Op.String(), i.Y.Name())
 }
 
 // 生成一条 Biop 指令

@@ -22,6 +22,7 @@ type register struct {
 	typ     Type
 	_offset int
 	_kind   RegisterKind
+	_otype  Type
 }
 
 func (r *register) String() string {
