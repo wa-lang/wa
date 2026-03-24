@@ -477,7 +477,17 @@ func (ri *rtImp) emitStore_register(ptr register, offset int, value register, ne
 		ret = append(ret, ri.emitRelease_stack())                          // p v
 	}
 
-	ret = append(ret, wat.NewInstStore(ri.watType(value.typ), offset, ri.sizeof(value.typ)))
+	switch value.typ.Kind() {
+	case TypeKindBool, TypeKindU8, TypeKindI8:
+		ret = append(ret, wat.NewInstStore8(offset, 1))
+
+	case TypeKindI16, TypeKindU16:
+		ret = append(ret, wat.NewInstStore16(offset, 2))
+
+	default:
+		ret = append(ret, wat.NewInstStore(ri.watType(value.typ), offset, ri.sizeof(value.typ)))
+	}
+
 	return ret
 }
 
@@ -488,7 +498,18 @@ func (ri *rtImp) emitStore_const(ptr register, offset int, value *Const) (ret []
 
 	ret = append(ret, ri.emitPush_register(ptr))
 	ret = append(ret, wat.NewInstConst(ri.watType(value.Type()), value.Name()))
-	ret = append(ret, wat.NewInstStore(ri.watType(value.Type()), offset, ri.sizeof(value.Type())))
+
+	switch value.Type().Kind() {
+	case TypeKindBool, TypeKindU8, TypeKindI8:
+		ret = append(ret, wat.NewInstStore8(offset, 1))
+
+	case TypeKindI16, TypeKindU16:
+		ret = append(ret, wat.NewInstStore16(offset, 2))
+
+	default:
+		ret = append(ret, wat.NewInstStore(ri.watType(value.Type()), offset, ri.sizeof(value.Type())))
+	}
+
 	return ret
 }
 
@@ -599,7 +620,20 @@ func (ri *rtImp) emitLoad_BaseType(ptr register, offset int, t Type) (ret []wat.
 
 	ret = make([]wat.Inst, 2)
 	ret[0] = ri.emitPush_register(ptr)
-	ret[1] = wat.NewInstLoad(ri.watType(t), offset, ri.sizeof(t))
+
+	switch t.Kind() {
+	case TypeKindBool, TypeKindU8:
+		ret[1] = wat.NewInstLoad8u(offset, 1)
+	case TypeKindI8:
+		ret[1] = wat.NewInstLoad8s(offset, 1)
+	case TypeKindI16:
+		ret[1] = wat.NewInstLoad16s(offset, 2)
+	case TypeKindU16:
+		ret[1] = wat.NewInstLoad16u(offset, 2)
+
+	default:
+		ret[1] = wat.NewInstLoad(ri.watType(t), offset, ri.sizeof(t))
+	}
 	return
 }
 
@@ -668,7 +702,6 @@ func (ri *rtImp) emitNilCheck(e *NilCheck) (ret []wat.Inst) {
 	return
 }
 
-// Todo: u8 等类型处理，Store 类同
 func (ri *rtImp) emitLoad(e *Load) (ret []wat.Inst) {
 	loc, ok := e.Loc.(Var)
 	if !ok {
