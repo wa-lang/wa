@@ -729,13 +729,14 @@ func (b *Builder) ifStmt(s *ast.IfStmt, f *Func, block *wire.Block) {
 }
 
 func (b *Builder) forStmt(s *ast.ForStmt, f *Func, block *wire.Block) {
-	block = block.EmitBlock("for.begin", int(s.Pos()))
+	label := fmt.Sprintf("$for%d", int(s.Pos()))
+	block = block.EmitBlock(label+".begin", int(s.Pos()))
 	if s.Init != nil {
 		b.stmt(s.Init, f, block)
 	}
 
 	cond := b.expr(s.Cond, block)
-	i := block.EmitLoop(cond, "", int(s.Cond.Pos()))
+	i := block.EmitLoop(cond, label, int(s.Cond.Pos()))
 
 	if s.Body != nil {
 		b.blockStmt(s.Body.List, f, i.Body)

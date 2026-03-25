@@ -186,6 +186,7 @@ instIf:
 **************************************/
 type instIf struct {
 	anInstruction
+	Name  string
 	True  []Inst
 	False []Inst
 	Ret   []ValueType
@@ -196,7 +197,12 @@ func NewInstIf(instsTrue, instsFalse []Inst, ret []ValueType) *instIf {
 }
 func (i *instIf) Format(indent string, sb *strings.Builder) {
 	sb.WriteString(indent)
-	sb.WriteString("if")
+	if len(i.Name) > 0 {
+		sb.WriteString("if $")
+		sb.WriteString(i.Name)
+	} else {
+		sb.WriteString("if")
+	}
 
 	if len(i.Ret) > 0 {
 		sb.WriteString(" (result")
@@ -221,7 +227,8 @@ func (i *instIf) Format(indent string, sb *strings.Builder) {
 	}
 
 	sb.WriteString(indent)
-	sb.WriteString("end")
+	sb.WriteString("end ;;")
+	sb.WriteString(i.Name)
 }
 
 /**************************************

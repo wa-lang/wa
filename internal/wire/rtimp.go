@@ -285,10 +285,7 @@ func (ri *rtImp) BuildFunction(f *Function) {
 		wf.Locals = append(wf.Locals, wat.NewVar(r.String(), ri.watType(r.typ)))
 	}
 
-	for i, stmt := range f.Body.Stmts {
-		if i > 0 {
-			wf.Insts = append(wf.Insts, wat.NewBlank())
-		}
+	for _, stmt := range f.Body.Stmts {
 		wf.Insts = append(wf.Insts, ri.emitStmt(stmt)...)
 	}
 
@@ -301,10 +298,7 @@ func (ri *rtImp) emitStmt(stmt Stmt) (ret []wat.Inst) {
 	switch s := stmt.(type) {
 	case *Block:
 		block := wat.NewInstBlock(s.Label)
-		for i, s := range s.Stmts {
-			if i > 0 {
-				block.Insts = append(block.Insts, wat.NewBlank())
-			}
+		for _, s := range s.Stmts {
 			block.Insts = append(block.Insts, ri.emitStmt(s)...)
 		}
 		ret = append(ret, wat.NewComment(s.Label))
@@ -330,6 +324,10 @@ func (ri *rtImp) emitStmt(stmt Stmt) (ret []wat.Inst) {
 		ret = append(ret, wat.NewComment("if "+s.Cond.Name()))
 		ret = append(ret, ri.emitIf(s)...)
 
+	case *Loop:
+		ret = append(ret, wat.NewComment("loop "+s.Label))
+		ret = append(ret, ri.emitLoop(s)...)
+
 	case *Discard:
 		return
 
@@ -349,6 +347,7 @@ func (ri *rtImp) emitStmt(stmt Stmt) (ret []wat.Inst) {
 		panic(fmt.Sprintf("Todo: %T", stmt))
 	}
 
+	ret = append(ret, wat.NewBlank())
 	return
 }
 
@@ -459,6 +458,34 @@ func (ri *rtImp) emitIf(s *If) (ret []wat.Inst) {
 	}
 
 	ret = append(ret, i)
+	return
+}
+
+func (ri *rtImp) emitLoop(s *Loop) (ret []wat.Inst) {
+	loopLabel := s.Label + ".loop"
+	loop := wat.NewInstLoop(loopLabel)
+
+	for _, preCond := range s.PreCond {
+		loop.Insts = append(loop.Insts, ri.emitStmt(preCond)...)
+	}
+	loop.Insts = append(loop.Insts, wat.NewComment(s.Cond.Name()))
+	loop.Insts = append(loop.Insts, ri.emitExpr(s.Cond)...)
+
+	body := wat.NewInstBlock(s.Label + ".body")
+	for _, stmt := range s.Body.Stmts {
+		body.Insts = append(body.Insts, ri.emitStmt(stmt)...)
+	}
+
+	_if := wat.NewInstIf(nil, nil, nil)
+	_if.Name = s.Label + ".do"
+	_if.True = append(_if.True, body)
+	for _, post := range s.Post.Stmts {
+		_if.True = append(_if.True, ri.emitStmt(post)...)
+	}
+	_if.True = append(_if.True, wat.NewInstBr(loopLabel))
+
+	loop.Insts = append(loop.Insts, _if)
+	ret = append(ret, loop)
 	return
 }
 

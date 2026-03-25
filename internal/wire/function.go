@@ -1051,7 +1051,7 @@ func unpack_expr(expr Expr, inloop bool, d *Block, pre *[]Stmt) (ret Expr) {
 			e.Loc = v
 		} else {
 			imv := newImv(d.newTempVarName(), loc, loc.Pos())
-			if d != nil {
+			if pre == nil {
 				d.emit(imv)
 			} else {
 				*pre = append(*pre, imv)
@@ -1097,7 +1097,7 @@ func unpack_expr(expr Expr, inloop bool, d *Block, pre *[]Stmt) (ret Expr) {
 			ret = newMember(va, e.Id, e.pos)
 		} else {
 			imv := newImv(d.newTempVarName(), v, e.pos)
-			if d != nil {
+			if pre == nil {
 				d.emit(imv)
 			} else {
 				*pre = append(*pre, imv)
@@ -1122,7 +1122,7 @@ func unpack_expr(expr Expr, inloop bool, d *Block, pre *[]Stmt) (ret Expr) {
 	case *NilCheckWrapper:
 		x := unpack_expr(e.X, inloop, d, pre)
 		if v, ok := x.(Var); ok {
-			if d != nil {
+			if pre == nil {
 				d.emit(newNilCheck(v))
 			} else {
 				*pre = append(*pre, newNilCheck(v))
@@ -1130,7 +1130,7 @@ func unpack_expr(expr Expr, inloop bool, d *Block, pre *[]Stmt) (ret Expr) {
 			ret = v
 		} else {
 			imv := newImv(d.newTempVarName(), x, x.Pos())
-			if d != nil {
+			if pre == nil {
 				d.emit(imv)
 				d.emit(newNilCheck(imv))
 			} else {

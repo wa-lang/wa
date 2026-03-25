@@ -158,7 +158,7 @@ func (b *Block) EmitLoop(cond Expr, label string, pos int) *Loop {
 		panic("cond must be bool.")
 	}
 
-	v := &Loop{Cond: cond}
+	v := &Loop{Cond: cond, Label: label}
 	v.Stringer = v
 	v.pos = pos
 
