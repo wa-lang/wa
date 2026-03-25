@@ -10,7 +10,6 @@ import (
 /**************************************
 OpCode: 运算符
 **************************************/
-
 type OpCode int
 
 const (
@@ -70,7 +69,6 @@ var OpCodeNames = [...]string{
 /**************************************
 Unop: 单目运算，算符范围[NOT, XOR]，Unop 实现了 Expr
 **************************************/
-
 type Unop struct {
 	aStmt
 	X  Expr
@@ -98,7 +96,6 @@ func NewUnop(x Expr, op OpCode, pos int) *Unop {
 /**************************************
 Biop: 双目运算，算符范围[XOR, LEG]，BiOp 实现了 Expr
 **************************************/
-
 type Biop struct {
 	aStmt
 	X, Y Expr

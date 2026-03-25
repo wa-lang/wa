@@ -11,7 +11,6 @@ import (
 /**************************************
 asLoc: 将 Expr 转换为 Location，asLoc 实现了 Location 接口
 **************************************/
-
 type asLoc struct {
 	aStmt
 	expr  Expr
@@ -46,7 +45,6 @@ func AsLocation(expr Expr) Location {
 /**************************************
 asAddr: 将 Location 转换为类型为指针或引用的 Expr，asAddr 实现了 Expr 接口
 **************************************/
-
 type asAddr struct {
 	aStmt
 	loc Location
@@ -74,7 +72,6 @@ func AsAddr(loc Location, typ Type, pos int) Expr {
 NilCheckWrapper: 检查 X 是否为 nil，为 nil 则 panic，不为 nil 则返回 X。NilCheck 实现了 Expr 接口
   - X 类型应为 Ptr 或 Ref
 **************************************/
-
 type NilCheckWrapper struct {
 	aStmt
 	X Expr
@@ -100,7 +97,6 @@ func NewNilCheckWrapper(x Expr) Expr {
 NilCheck: 检查 X 是否为 nil
   - X 类型应为 Ptr 或 Ref 类型的 Var
 **************************************/
-
 type NilCheck struct {
 	aStmt
 	X Var
@@ -122,7 +118,6 @@ func newNilCheck(x Var) *NilCheck {
 Combo: 组合指令，将多个指令组合成一个指令，实现了 Expr 、Var 接口，返回 Result
   - Result 应为 Var
 **************************************/
-
 type Combo struct {
 	aStmt
 	Stmts  []Stmt

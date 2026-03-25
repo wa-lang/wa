@@ -10,7 +10,6 @@ import (
 /**************************************
 Br: Br 指令
 **************************************/
-
 type Br struct {
 	aStmt
 	Label string
@@ -39,7 +38,6 @@ func (b *Block) EmitBr(label string, pos int) *Br {
 /**************************************
 Return: Return 指令，函数返回，该指令只能出现在 Block 末尾
 **************************************/
-
 type Return struct {
 	aStmt
 	Results []Expr
@@ -71,7 +69,6 @@ func (b *Block) EmitReturn(results []Expr, pos int) *Return {
 /**************************************
 If: 条件指令
 **************************************/
-
 type If struct {
 	aStmt
 	Cond  Expr   // 判断条件
@@ -122,7 +119,6 @@ loop $Label {
 	}  // <- break 转这里
 }
 **************************************/
-
 type Loop struct {
 	aStmt
 	PreCond []Stmt

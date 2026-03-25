@@ -14,7 +14,6 @@ Set: Set 指令，实现赋值 `=` 操作，将值保存至变量、或地址
   - Lh 应为 Location；Lh 为 nil 是合法的，这等价于向匿名变量 _ 赋值
   - Rh 可能为元组（Tuple），此时 Rhs 的长度应为 1，Lhs 的长度应为元组长度
 **************************************/
-
 type Set struct {
 	aStmt
 	Lhs     []Location
@@ -107,7 +106,6 @@ Assign: Assign 指令，向 Register 变量赋值
   - Rh 可能为元组（Tuple），此时 Rhs 的长度应为 1，Lhs 的长度应为元组长度
   - 该指令仅供内部使用，上层高级语法不应直接使用
 **************************************/
-
 type Assign struct {
 	aStmt
 	Lhs     []Var
@@ -187,7 +185,6 @@ Store: Store 指令，将 Val 存储到 Loc 指定的位置
   - Val 应为 Var 或 Const
   - 该指令仅供内部使用，上层高级语法不应直接使用
 **************************************/
-
 type Store struct {
 	aStmt
 	Loc Var

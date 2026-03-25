@@ -17,7 +17,6 @@ import (
 /**************************************
 Function: 函数。不可直接声明该类型的对象，必须通过 Module.NewFunction() 创建
 **************************************/
-
 type Function struct {
 	InternalName string // 函数的内部名称(含包路径)，是其身份标识，应进行名字修饰
 	ExternalName string // 函数的导出名称，非导出函数应为 nil

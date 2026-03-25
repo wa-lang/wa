@@ -12,7 +12,6 @@ import (
 aStmt: 实现 Stmt 接口与 Pos 相关的方法
 包含 aStmt 的对象必须自行实现 Stringer 接口！
 **************************************/
-
 type aStmt struct {
 	fmt.Stringer
 	pos int

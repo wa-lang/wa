@@ -18,7 +18,6 @@ import (
 Module: 定义了一个 wire 模块，对应于 ast.Program
 Module 内含的所有成员极其子成员的 ValueType，必须经由本 Module 的 Types 创建
 **************************************/
-
 type Module struct {
 	Types   Types
 	Globals map[interface{}]*Alloc // 全局变量，对凹语言前端，键（key）为 types.Object

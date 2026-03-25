@@ -11,7 +11,6 @@ import (
 MemberLocation: 获取结构体成员的位置，MemberLocation 实现了 Expr、Location 接口
   - X 应为 Location
 **************************************/
-
 type MemberLocation struct {
 	aStmt
 	X  Location
@@ -45,7 +44,6 @@ func (b *Block) NewMemberLocation(x Location, id int, pos int) *MemberLocation {
 MemberValue: 获取结构体成员的值，MemberValue 实现了 Expr 接口
   - X 应为类型为匿名或具名 Struct 的 Expr
 **************************************/
-
 type MemberValue struct {
 	aStmt
 	X  Expr
@@ -81,7 +79,6 @@ func NewMemberValue(x Expr, id int, pos int) *MemberValue {
 Member: 获取寄存器型结构体成员，Member 实现了 Expr、Var 接口
   - X 应为 匿名或具名 Struct 类型的 Register 变量
 **************************************/
-
 type Member struct {
 	aStmt
 	X      Var
@@ -133,7 +130,6 @@ func newMember(x Var, id int, pos int) *Member {
 MemberAddr: 获取结构体成员地址，Member 实现了 Expr、Location 接口
   - X 的类型应为 Ref(T)、或 Ptr(T)，其中 T 为匿名或具名结构体
 **************************************/
-
 type MemberAddr struct {
 	aStmt
 	X  Expr
