@@ -66,7 +66,7 @@ func (b *Builder) buildFunc(f *Func) (fn *wire.Function) {
 	if f.body == nil {
 		if recv := f.sig.Recv(); recv != nil {
 			rt := b.BuildType(recv.Type())
-			fn.AddParam(recv.Name(), rt, int(recv.Pos()), nil)
+			fn.AddParam(recv.Name(), rt, int(recv.Pos()), nil, false)
 		}
 
 		if params := f.sig.Params(); params != nil {
@@ -79,7 +79,7 @@ func (b *Builder) buildFunc(f *Func) (fn *wire.Function) {
 					name = fmt.Sprintf("$arg%d", i)
 				}
 
-				fn.AddParam(name, typ, int(p.Pos()), nil)
+				fn.AddParam(name, typ, int(p.Pos()), nil, false)
 			}
 		}
 
@@ -88,7 +88,7 @@ func (b *Builder) buildFunc(f *Func) (fn *wire.Function) {
 				r := f.sig.Results().At(i)
 				typ := b.BuildType(r.Type())
 
-				fn.AddResult("", typ, int(r.Pos()), nil)
+				fn.AddResult("", typ, int(r.Pos()), nil, false)
 			}
 		}
 
@@ -100,7 +100,7 @@ func (b *Builder) buildFunc(f *Func) (fn *wire.Function) {
 	if r := f.sig.Recv(); r != nil {
 		typ := b.BuildType(r.Type())
 		name := r.Name() // 接收器不会是匿名的
-		fn.AddParam(name, typ, int(r.Pos()), r)
+		fn.AddParam(name, typ, int(r.Pos()), r, false)
 	}
 
 	if params := f.sig.Params(); params != nil {
@@ -113,7 +113,7 @@ func (b *Builder) buildFunc(f *Func) (fn *wire.Function) {
 				// 匿名参数
 				name = fmt.Sprintf("$arg%d", i)
 			}
-			fn.AddParam(name, typ, int(p.Pos()), p)
+			fn.AddParam(name, typ, int(p.Pos()), p, false)
 		}
 	}
 
@@ -127,7 +127,7 @@ func (b *Builder) buildFunc(f *Func) (fn *wire.Function) {
 				name = fmt.Sprintf("$ret%d", i)
 			}
 			// 返回值
-			fn.AddResult(name, typ, int(r.Pos()), r)
+			fn.AddResult(name, typ, int(r.Pos()), r, false)
 		}
 	}
 
@@ -273,7 +273,7 @@ func (b *Builder) localValueSpec(spec *ast.ValueSpec, block *wire.Block) {
 func (b *Builder) addLocalForIdent(id *ast.Ident, block *wire.Block) *wire.Alloc {
 	obj := b.info.Defs[id]
 	typ := b.BuildType(obj.Type())
-	return block.AddLocal(obj.Name(), typ, int(obj.Pos()), obj, nil)
+	return block.AddLocal(obj.Name(), typ, int(obj.Pos()), obj, nil, false)
 }
 
 // 向 block 中添加赋值（ = , := ）操作
@@ -409,8 +409,8 @@ func (b *Builder) compositeLit(e *ast.CompositeLit, escaping wire.AllocKind, blo
 	case *types.Struct:
 		wireType := b.BuildType(typ)
 		combo := wire.NewCombo(nil, nil, int(e.Pos()))
-		tmp := block.NewAlloc(fmt.Sprintf("$complit_%d", e.Pos()), wireType, int(e.Lbrace), nil, nil)
-		tmp.SetKind(escaping)
+		tmp := block.NewAlloc(fmt.Sprintf("$complit_%d", e.Pos()), wireType, int(e.Lbrace), nil, nil, false)
+		tmp.UpdateKind(escaping)
 		combo.Stmts = append(combo.Stmts, tmp)
 		combo.Result = tmp
 

@@ -19,6 +19,7 @@ import (
 	"wa-lang.org/wa/internal/logger"
 	"wa-lang.org/wa/internal/parser"
 	"wa-lang.org/wa/internal/parser/w2parser"
+	"wa-lang.org/wa/internal/spinner"
 	"wa-lang.org/wa/internal/ssa"
 	"wa-lang.org/wa/internal/token"
 	"wa-lang.org/wa/internal/types"
@@ -153,6 +154,16 @@ func (p *_Loader) loadProgram(vfs *config.PkgVFS, manifest *config.Manifest) (*P
 		}
 	}
 
+	// 转为 wire
+	p.prog.SpinnerProgram = spinner.CreateProgram()
+	for pkgpath := range p.prog.Pkgs {
+		logger.Tracef(&config.EnableTrace_loader, "build wire; pkgpath: %v", pkgpath)
+		if err := p.buildWire(pkgpath); err != nil {
+			logger.Tracef(&config.EnableTrace_loader, "err: %v", err)
+			return nil, err
+		}
+	}
+
 	logger.Trace(&config.EnableTrace_loader, "return ok")
 	return p.prog, nil
 }
@@ -174,6 +185,27 @@ func (p *_Loader) buildSSA(pkgpath string) error {
 
 	pkg.SSAPkg = p.prog.SSAProgram.CreatePackage(pkg.Pkg, pkg.Files, pkg.Info, true)
 	pkg.SSAPkg.Build()
+
+	return nil
+}
+
+func (p *_Loader) buildWire(pkgpath string) error {
+	pkg := p.prog.Pkgs[pkgpath]
+	if pkg.SpinnerPkg != nil {
+		return nil
+	}
+
+	for _, importPkg := range pkg.Pkg.Imports() {
+		if p.prog.Pkgs[importPkg.Path()].SpinnerPkg == nil {
+			if err := p.buildWire(importPkg.Path()); err != nil {
+				logger.Tracef(&config.EnableTrace_loader, "err: %v", err)
+				return err
+			}
+		}
+	}
+
+	pkg.SpinnerPkg = p.prog.SpinnerProgram.CreatePackage(pkg.Pkg, pkg.Files, pkg.Info)
+	pkg.SpinnerPkg.Build()
 
 	return nil
 }

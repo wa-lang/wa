@@ -29,7 +29,8 @@ type Alloc struct {
 	rtype  Type
 	object interface{} // 与该值关联的 AST 结点。对凹语言前端，应为 types.Object
 
-	init Expr // 初始值
+	init   Expr // 初始值
+	rawPtr bool // 是否裸指针
 
 	tank *tank
 }
@@ -77,24 +78,36 @@ func (i *Alloc) String() string {
 	}
 	return s
 }
-func (i *Alloc) Kind() AllocKind     { return i.kind }
-func (i *Alloc) SetKind(t AllocKind) { i.kind = t }
-func (i *Alloc) DataType() Type      { return i.dtype }
-func (i *Alloc) Tank() *tank         { return i.tank }
+func (i *Alloc) Kind() AllocKind { return i.kind }
+func (i *Alloc) UpdateKind(t AllocKind) {
+	if t > i.kind {
+		i.kind = t
+	}
+	if i.rawPtr && t == AllocKindHeap {
+		panic("rawPtr and Heap cannot be used together")
+	}
+}
+func (i *Alloc) DataType() Type { return i.dtype }
+func (i *Alloc) Tank() *tank    { return i.tank }
 
 // func (i *Alloc) RefType() Type  { return i.rtype }
 func (i *Alloc) SetInit(init Expr) { i.init = init }
 
 //func (i *Alloc) Object() interface{} { return i.object }
 
-func (b *Block) NewAlloc(name string, typ Type, pos int, obj interface{}, init Expr) *Alloc {
+func (b *Block) NewAlloc(name string, typ Type, pos int, obj interface{}, init Expr, rawPtr bool) *Alloc {
 	v := &Alloc{
 		kind:   AllocKindRegister,
 		name:   name,
 		dtype:  typ,
-		rtype:  b.types.GenRef(typ),
 		init:   init,
+		rawPtr: rawPtr,
 		object: obj,
+	}
+	if rawPtr {
+		v.rtype = b.types.genPtr(typ)
+	} else {
+		v.rtype = b.types.GenRef(typ)
 	}
 	v.Stringer = v
 	v.pos = pos
@@ -103,8 +116,8 @@ func (b *Block) NewAlloc(name string, typ Type, pos int, obj interface{}, init E
 }
 
 // AddLocal 在 Block 中分配一个局部变量，初始时位于 Register
-func (b *Block) AddLocal(name string, typ Type, pos int, obj interface{}, init Expr) *Alloc {
-	v := b.NewAlloc(name, typ, pos, obj, init)
+func (b *Block) AddLocal(name string, typ Type, pos int, obj interface{}, init Expr, rawPtr bool) *Alloc {
+	v := b.NewAlloc(name, typ, pos, obj, init, rawPtr)
 	if obj != nil {
 		b.objects[obj] = v
 	}

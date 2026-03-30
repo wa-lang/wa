@@ -40,9 +40,7 @@ func (b *Block) init() {
 func (b *Block) ScopeKind() ScopeKind { return ScopeKindBlock }
 func (b *Block) Lookup(obj interface{}, level AllocKind) *Alloc {
 	if v, ok := b.objects[obj]; ok {
-		if level > v.kind {
-			v.kind = level
-		}
+		v.UpdateKind(level)
 		return v
 	}
 

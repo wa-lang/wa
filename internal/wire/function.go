@@ -43,17 +43,13 @@ func (f *Function) ParentScope() Scope   { return f.scope }
 func (f *Function) Lookup(obj interface{}, level AllocKind) *Alloc {
 	for _, p := range f.params {
 		if p.object == obj {
-			if level > p.kind {
-				p.kind = level
-			}
+			p.UpdateKind(level)
 			return p
 		}
 	}
 	for _, r := range f.results {
 		if r.object == obj {
-			if level > r.kind {
-				r.kind = level
-			}
+			r.UpdateKind(level)
 			return r
 		}
 	}
@@ -99,15 +95,15 @@ func (f *Function) Format(tab string, sb *strings.Builder) {
 }
 
 // 添加函数参数
-func (f *Function) AddParam(name string, typ Type, pos int, obj interface{}) *Alloc {
-	v := f.Body.NewAlloc(name, typ, pos, obj, nil)
+func (f *Function) AddParam(name string, typ Type, pos int, obj interface{}, rawPtr bool) *Alloc {
+	v := f.Body.NewAlloc(name, typ, pos, obj, nil, rawPtr)
 	f.params = append(f.params, v)
 	return v
 }
 
 // 添加返回值
-func (f *Function) AddResult(name string, typ Type, pos int, obj interface{}) *Alloc {
-	v := f.Body.NewAlloc(name, typ, pos, obj, nil)
+func (f *Function) AddResult(name string, typ Type, pos int, obj interface{}, rawPtr bool) *Alloc {
+	v := f.Body.NewAlloc(name, typ, pos, obj, nil, rawPtr)
 	f.results = append(f.results, v)
 	return v
 }
@@ -681,7 +677,7 @@ func arc_expr(block *Block, e Expr, inloop bool, replace bool) (ret Expr) {
 	}
 
 	if ret.retained() && replace {
-		tmp := block.NewAlloc(block.newTempVarName(), ret.Type(), ret.Pos(), nil, ret)
+		tmp := block.NewAlloc(block.newTempVarName(), ret.Type(), ret.Pos(), nil, ret, false)
 		combo := NewCombo(nil, tmp, ret.Pos())
 		combo.Stmts = append(combo.Stmts, tmp)
 		ret = combo

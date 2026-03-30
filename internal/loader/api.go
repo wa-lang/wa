@@ -11,6 +11,7 @@ import (
 
 	"wa-lang.org/wa/internal/ast"
 	"wa-lang.org/wa/internal/config"
+	"wa-lang.org/wa/internal/spinner"
 	"wa-lang.org/wa/internal/ssa"
 	"wa-lang.org/wa/internal/token"
 	"wa-lang.org/wa/internal/types"
@@ -27,6 +28,8 @@ type Program struct {
 
 	SSAProgram *ssa.Program
 	SSAMainPkg *ssa.Package
+
+	SpinnerProgram *spinner.Program
 }
 
 // 单个包对象
@@ -42,6 +45,8 @@ type Package struct {
 
 	SSAPkg   *ssa.Package
 	TestInfo *TestInfo
+
+	SpinnerPkg *spinner.Package
 }
 
 // 单元测试信息

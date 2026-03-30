@@ -6,6 +6,7 @@ package spinner
 import (
 	"strconv"
 
+	"wa-lang.org/wa/internal/ast"
 	"wa-lang.org/wa/internal/constant"
 	"wa-lang.org/wa/internal/types"
 	"wa-lang.org/wa/internal/wire"
@@ -17,27 +18,43 @@ import (
 
 //-------------------------------------
 
-/*
-*************************************
-IntSize: 目标平台整型数的宽度，不定宽整形、指针宽度均由其决定
-*************************************
-*/
-type IntSize int
+type Program struct {
+	Module    wire.Module
+	Packages  map[string]*Package
+	typeTable map[string]*wire.Type
+}
 
-const (
-	IntSize32 IntSize = iota
-	IntSize64
-)
+func CreateProgram() *Program {
+	return &Program{
+		Module:    wire.Module{},
+		Packages:  make(map[string]*Package),
+		typeTable: make(map[string]*wire.Type),
+	}
+}
 
-/*
-*************************************
+func (p *Program) CreatePackage(pkg *types.Package, files []*ast.File, info *types.Info) *Package {
+	return &Package{
+		prog:  p,
+		info:  info,
+		files: files,
+	}
+}
+
+type Package struct {
+	prog  *Program
+	info  *types.Info
+	files []*ast.File
+}
+
+func (p *Package) Build() {
+}
+
+/**************************************
 Builder:
-*************************************
-*/
+**************************************/
 type Builder struct {
-	IntSize IntSize
-	info    *types.Info
-	module  *wire.Module
+	info   *types.Info
+	module *wire.Module
 
 	typeTable map[string]*wire.Type
 }
