@@ -154,18 +154,26 @@ func (p *_Loader) loadProgram(vfs *config.PkgVFS, manifest *config.Manifest) (*P
 		}
 	}
 
+	//if err := p.buildWire(manifest); err != nil {
+	//	logger.Tracef(&config.EnableTrace_loader, "err: %v", err)
+	//	return nil, err
+	//}
+
+	return p.prog, nil
+}
+
+func (p *_Loader) buildWire(manifest *config.Manifest) error {
 	// 转为 wire
-	p.prog.SpinnerProgram = spinner.CreateProgram()
+	p.prog.Spinner = spinner.CreateSpinner(manifest)
 	for pkgpath := range p.prog.Pkgs {
-		logger.Tracef(&config.EnableTrace_loader, "build wire; pkgpath: %v", pkgpath)
-		if err := p.buildWire(pkgpath); err != nil {
+		if err := p.createSpinnerPackage(pkgpath); err != nil {
 			logger.Tracef(&config.EnableTrace_loader, "err: %v", err)
-			return nil, err
+			return err
 		}
 	}
+	p.prog.Spinner.Build()
 
-	logger.Trace(&config.EnableTrace_loader, "return ok")
-	return p.prog, nil
+	return nil
 }
 
 func (p *_Loader) buildSSA(pkgpath string) error {
@@ -189,7 +197,7 @@ func (p *_Loader) buildSSA(pkgpath string) error {
 	return nil
 }
 
-func (p *_Loader) buildWire(pkgpath string) error {
+func (p *_Loader) createSpinnerPackage(pkgpath string) error {
 	pkg := p.prog.Pkgs[pkgpath]
 	if pkg.SpinnerPkg != nil {
 		return nil
@@ -197,15 +205,14 @@ func (p *_Loader) buildWire(pkgpath string) error {
 
 	for _, importPkg := range pkg.Pkg.Imports() {
 		if p.prog.Pkgs[importPkg.Path()].SpinnerPkg == nil {
-			if err := p.buildWire(importPkg.Path()); err != nil {
+			if err := p.createSpinnerPackage(importPkg.Path()); err != nil {
 				logger.Tracef(&config.EnableTrace_loader, "err: %v", err)
 				return err
 			}
 		}
 	}
 
-	pkg.SpinnerPkg = p.prog.SpinnerProgram.CreatePackage(pkg.Pkg, pkg.Files, pkg.Info)
-	pkg.SpinnerPkg.Build()
+	pkg.SpinnerPkg = p.prog.Spinner.CreatePackage(pkg.Pkg, pkg.Files, pkg.Info)
 
 	return nil
 }

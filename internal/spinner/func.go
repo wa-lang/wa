@@ -21,58 +21,75 @@ import (
 //-------------------------------------
 
 /**************************************
-Func: 创建 wire.Function 时的中间结构
+FuncBuilder:
 **************************************/
-
-type Func struct {
-	sig      *types.Signature
-	body     ast.Stmt
-	pos, end int
+type FuncBuilder struct {
+	spinner *Spinner
+	info    *types.Info
 }
 
-//-------------------------------------
-
-// 将函数声明（ast.FuncDecl）转换为 wire.Function
-func (b *Builder) BuildFuncDecl(decl *ast.FuncDecl) *wire.Function {
-	fndecl := b.info.Defs[decl.Name]
-	fn := Func{
-		sig:  fndecl.Type().(*types.Signature),
-		body: decl.Body,
-		pos:  int(decl.Pos()),
-		end:  int(decl.End()),
+func CreateFuncBuilder(spinner *Spinner) *FuncBuilder {
+	return &FuncBuilder{
+		spinner: spinner,
 	}
-
-	return b.buildFunc(&fn)
 }
 
-// 将函数字面值（ast.FuncLit）转换为 wire.Function
-func (b *Builder) BuildFuncLit(lit *ast.FuncLit) *wire.Function {
-	fn := Func{
-		sig:  b.info.TypeOf(lit).(*types.Signature),
-		body: lit.Body,
-		pos:  int(lit.Pos()),
-		end:  int(lit.End()),
-	}
-
-	return b.buildFunc(&fn)
+func (fb *FuncBuilder) constval(val constant.Value, typ types.Type, pos int) wire.Expr {
+	return fb.spinner.constval(val, typ, pos)
 }
+
+func (fb *FuncBuilder) BuildType(t types.Type) wire.Type {
+	return fb.spinner.buildType(t)
+}
+
+func (fb *FuncBuilder) nilConst(typ types.Type, pos int) wire.Expr {
+	t := fb.BuildType(typ)
+	return fb.spinner.Module.NewConst("0", t, pos)
+}
+
+//// 将函数声明（ast.FuncDecl）转换为 wire.Function
+//func (fb *FuncBuilder) BuildFuncDecl(decl *ast.FuncDecl) *wire.Function {
+//	fndecl := fb.info.Defs[decl.Name]
+//	fn := Func{
+//		sig:  fndecl.Type().(*types.Signature),
+//		body: decl.Body,
+//		pos:  int(decl.Pos()),
+//		end:  int(decl.End()),
+//	}
+//
+//	return fb.buildFunc(&fn)
+//}
+//
+//// 将函数字面值（ast.FuncLit）转换为 wire.Function
+//func (fb *FuncBuilder) BuildFuncLit(lit *ast.FuncLit) *wire.Function {
+//	fn := Func{
+//		sig:  fb.info.TypeOf(lit).(*types.Signature),
+//		body: lit.Body,
+//		pos:  int(lit.Pos()),
+//		end:  int(lit.End()),
+//	}
+//
+//	return fb.buildFunc(&fn)
+//}
 
 // 从 Func 中创建 wire.Function
-func (b *Builder) buildFunc(f *Func) (fn *wire.Function) {
-	fn = b.module.NewFunction()
+func (fb *FuncBuilder) build(f *Func) (fn *wire.Function) {
+	fb.info = f.info
+	fn = fb.spinner.Module.NewFunction()
+	fn.InternalName = f.object.FullName()
 	fn.StartPos = f.pos
 	fn.EndPos = f.end
 
 	if f.body == nil {
 		if recv := f.sig.Recv(); recv != nil {
-			rt := b.BuildType(recv.Type())
+			rt := fb.BuildType(recv.Type())
 			fn.AddParam(recv.Name(), rt, int(recv.Pos()), nil, false)
 		}
 
 		if params := f.sig.Params(); params != nil {
 			for i := 0; i < params.Len(); i++ {
 				p := params.At(i)
-				typ := b.BuildType(p.Type())
+				typ := fb.BuildType(p.Type())
 
 				name := p.Name()
 				if len(name) == 0 {
@@ -86,7 +103,7 @@ func (b *Builder) buildFunc(f *Func) (fn *wire.Function) {
 		if results := f.sig.Results(); results != nil {
 			for i := 0; i < f.sig.Results().Len(); i++ {
 				r := f.sig.Results().At(i)
-				typ := b.BuildType(r.Type())
+				typ := fb.BuildType(r.Type())
 
 				fn.AddResult("", typ, int(r.Pos()), nil, false)
 			}
@@ -98,7 +115,7 @@ func (b *Builder) buildFunc(f *Func) (fn *wire.Function) {
 	fn.StartBody()
 
 	if r := f.sig.Recv(); r != nil {
-		typ := b.BuildType(r.Type())
+		typ := fb.BuildType(r.Type())
 		name := r.Name() // 接收器不会是匿名的
 		fn.AddParam(name, typ, int(r.Pos()), r, false)
 	}
@@ -106,7 +123,7 @@ func (b *Builder) buildFunc(f *Func) (fn *wire.Function) {
 	if params := f.sig.Params(); params != nil {
 		for i := 0; i < params.Len(); i++ {
 			p := params.At(i)
-			typ := b.BuildType(p.Type())
+			typ := fb.BuildType(p.Type())
 
 			name := p.Name()
 			if len(name) == 0 {
@@ -120,7 +137,7 @@ func (b *Builder) buildFunc(f *Func) (fn *wire.Function) {
 	if results := f.sig.Results(); results != nil {
 		for i := 0; i < f.sig.Results().Len(); i++ {
 			r := f.sig.Results().At(i)
-			typ := b.BuildType(r.Type())
+			typ := fb.BuildType(r.Type())
 
 			name := r.Name()
 			if len(name) == 0 {
@@ -132,39 +149,40 @@ func (b *Builder) buildFunc(f *Func) (fn *wire.Function) {
 	}
 
 	if s, ok := f.body.(*ast.BlockStmt); ok {
-		b.blockStmt(s.List, f, fn.Body)
+		fb.blockStmt(s.List, f, fn.Body)
 	} else {
-		b.stmt(f.body, f, fn.Body)
+		fb.stmt(f.body, f, fn.Body)
 	}
 
 	// Todo：Defer
 
 	fn.EndBody()
+	f.wireFunc = fn
 	return
 }
 
 // stmt 将 AST 语句降解为 wire 指令，追加至 wire.Block
-func (b *Builder) stmt(s ast.Stmt, f *Func, block *wire.Block) {
+func (fb *FuncBuilder) stmt(s ast.Stmt, f *Func, block *wire.Block) {
 	switch s := s.(type) {
 	case *ast.EmptyStmt:
 		return
 
 	case *ast.BlockStmt:
 		newblock := block.EmitBlock("", int(s.Pos()))
-		b.blockStmt(s.List, f, newblock)
+		fb.blockStmt(s.List, f, newblock)
 
 	case *ast.DeclStmt: // Con, Var or Typ
 		d := s.Decl.(*ast.GenDecl)
 		if d.Tok == token.VAR || d.Tok == token.GLOBAL {
 			for _, spec := range d.Specs {
 				if vs, ok := spec.(*ast.ValueSpec); ok {
-					b.localValueSpec(vs, block)
+					fb.localValueSpec(vs, block)
 				}
 			}
 		}
 
 	case *ast.ExprStmt:
-		v := b.expr(s.X, block)
+		v := fb.expr(s.X, block)
 		block.EmitSet(nil, v, int(s.Pos()))
 
 	case *ast.IncDecStmt:
@@ -172,20 +190,20 @@ func (b *Builder) stmt(s ast.Stmt, f *Func, block *wire.Block) {
 		if s.Tok == token.DEC {
 			op = wire.SUB
 		}
-		loc := b.location(s.X, 0, block)
+		loc := fb.location(s.X, 0, block)
 		ov := wire.NewGet(loc, int(s.Pos()))
-		nv := wire.NewBiop(ov, b.constval(constant.MakeInt64(1), b.info.TypeOf(s.X), int(s.Pos())), op, int(s.Pos()))
+		nv := wire.NewBiop(ov, fb.constval(constant.MakeInt64(1), fb.info.TypeOf(s.X), int(s.Pos())), op, int(s.Pos()))
 		block.EmitSet(loc, nv, int(s.Pos()))
 
 	case *ast.AssignStmt:
 		switch s.Tok {
 		case token.ASSIGN, token.DEFINE:
-			b.assignStmt(s, block)
+			fb.assignStmt(s, block)
 
 		default: // += 等操作符
-			loc := b.location(s.Lhs[0], 0, block)
+			loc := fb.location(s.Lhs[0], 0, block)
 			x := wire.NewGet(loc, int(s.Pos()))
-			y := b.expr(s.Rhs[0], block)
+			y := fb.expr(s.Rhs[0], block)
 			var op wire.OpCode
 			switch s.Tok {
 			case token.ADD_ASSIGN: // +=
@@ -218,13 +236,13 @@ func (b *Builder) stmt(s ast.Stmt, f *Func, block *wire.Block) {
 		}
 
 	case *ast.ReturnStmt:
-		b.returnStmt(s, f, block)
+		fb.returnStmt(s, f, block)
 
 	case *ast.IfStmt:
-		b.ifStmt(s, f, block)
+		fb.ifStmt(s, f, block)
 
 	case *ast.ForStmt:
-		b.forStmt(s, f, block)
+		fb.forStmt(s, f, block)
 
 	case *ast.DeferStmt:
 		panic("Todo")
@@ -247,45 +265,45 @@ func (b *Builder) stmt(s ast.Stmt, f *Func, block *wire.Block) {
 }
 
 // blockStmt 将一组 AST 语句降解为 wire 指令，追加至 wire.Block
-func (b *Builder) blockStmt(list []ast.Stmt, f *Func, block *wire.Block) {
+func (fb *FuncBuilder) blockStmt(list []ast.Stmt, f *Func, block *wire.Block) {
 	for _, s := range list {
-		b.stmt(s, f, block)
+		fb.stmt(s, f, block)
 	}
 }
 
 // localValueSpec 将局部变量声明降解，追加至 wire.Block
-func (b *Builder) localValueSpec(spec *ast.ValueSpec, block *wire.Block) {
+func (fb *FuncBuilder) localValueSpec(spec *ast.ValueSpec, block *wire.Block) {
 	var locs []wire.Location
 	for _, v := range spec.Names {
 		var loc wire.Location = nil
 		if !isBlankIdent(v) {
-			loc = b.addLocalForIdent(v, block)
+			loc = fb.addLocalForIdent(v, block)
 		}
 		locs = append(locs, loc)
 	}
 
 	if len(spec.Values) > 0 {
-		b.assignN(locs, spec.Values, int(spec.Pos()), block)
+		fb.assignN(locs, spec.Values, int(spec.Pos()), block)
 	}
 }
 
 // 在 block 中分配一个由 id 定义的局部变量
-func (b *Builder) addLocalForIdent(id *ast.Ident, block *wire.Block) *wire.Alloc {
-	obj := b.info.Defs[id]
-	typ := b.BuildType(obj.Type())
+func (fb *FuncBuilder) addLocalForIdent(id *ast.Ident, block *wire.Block) *wire.Alloc {
+	obj := fb.info.Defs[id]
+	typ := fb.BuildType(obj.Type())
 	return block.AddLocal(obj.Name(), typ, int(obj.Pos()), obj, nil, false)
 }
 
 // 向 block 中添加赋值（ = , := ）操作
-func (b *Builder) assignStmt(s *ast.AssignStmt, block *wire.Block) {
+func (fb *FuncBuilder) assignStmt(s *ast.AssignStmt, block *wire.Block) {
 	isDef := false
 	if s.Tok == token.DEFINE {
 		isDef = true
 	}
 
 	if len(s.Lhs) == 1 && isDef {
-		loc := b.addLocalForIdent(s.Lhs[0].(*ast.Ident), block)
-		loc.SetInit(b.expr(s.Rhs[0], block))
+		loc := fb.addLocalForIdent(s.Lhs[0].(*ast.Ident), block)
+		loc.SetInit(fb.expr(s.Rhs[0], block))
 		return
 	}
 
@@ -294,28 +312,28 @@ func (b *Builder) assignStmt(s *ast.AssignStmt, block *wire.Block) {
 		if !isBlankIdent(lh) {
 			var loc wire.Location
 			if isDef {
-				loc = b.addLocalForIdent(lh.(*ast.Ident), block)
+				loc = fb.addLocalForIdent(lh.(*ast.Ident), block)
 			} else {
-				loc = b.location(lh, 0, block) // 非逃逸
+				loc = fb.location(lh, 0, block) // 非逃逸
 			}
 			locs[i] = loc
 		}
 	}
 
-	b.assignN(locs, s.Rhs, int(s.Pos()), block)
+	fb.assignN(locs, s.Rhs, int(s.Pos()), block)
 }
 
-func (b *Builder) returnStmt(s *ast.ReturnStmt, f *Func, block *wire.Block) {
+func (fb *FuncBuilder) returnStmt(s *ast.ReturnStmt, f *Func, block *wire.Block) {
 	var results []wire.Expr
 
 	if len(s.Results) == 1 && f.sig.Results().Len() > 1 {
 		// 返回元组
-		v := b.exprN(s.Results[0], block)
+		v := fb.exprN(s.Results[0], block)
 		results = append(results, v)
 	} else {
 		// 1:1返回
 		for _, r := range s.Results {
-			v := b.expr(r, block)
+			v := fb.expr(r, block)
 			results = append(results, v)
 		}
 	}
@@ -333,7 +351,7 @@ func (b *Builder) returnStmt(s *ast.ReturnStmt, f *Func, block *wire.Block) {
 //	return &i.m
 //
 // 将导致 i 逃逸 至 Heap
-func (b *Builder) location(e ast.Expr, escaping wire.AllocKind, block *wire.Block) wire.Location {
+func (fb *FuncBuilder) location(e ast.Expr, escaping wire.AllocKind, block *wire.Block) wire.Location {
 	e = unparen(e)
 	switch e := e.(type) {
 	case *ast.Ident:
@@ -341,48 +359,48 @@ func (b *Builder) location(e ast.Expr, escaping wire.AllocKind, block *wire.Bloc
 			return nil
 		}
 
-		obj := b.info.ObjectOf(e)
-		if v, ok := b.module.Globals[obj]; ok {
+		obj := fb.info.ObjectOf(e)
+		if v, ok := fb.spinner.Module.Globals[obj]; ok {
 			return v
 		} else {
 			return block.Lookup(obj, escaping)
 		}
 
 	case *ast.StarExpr:
-		tv := b.info.Types[e.X]
+		tv := fb.info.Types[e.X]
 		if tv.Value != nil {
 			panic("unexpected constant")
 		}
 
 		if tv.Addressable() {
-			loc := b.location(e.X, escaping, block)
+			loc := fb.location(e.X, escaping, block)
 			ptr := wire.NewGet(loc, int(e.X.Pos()))
 			cptr := wire.NewNilCheckWrapper(ptr)
 			return wire.AsLocation(cptr)
 		} else {
-			ptr := b.expr1(e.X, tv, block)
+			ptr := fb.expr1(e.X, tv, block)
 			cptr := wire.NewNilCheckWrapper(ptr)
 			return wire.AsLocation(cptr)
 		}
 
 	case *ast.SelectorExpr:
-		sel, ok := b.info.Selections[e]
+		sel, ok := fb.info.Selections[e]
 		if !ok {
 			// 包级标识符，而非结构体字段
-			return b.location(e.Sel, escaping, block)
+			return fb.location(e.Sel, escaping, block)
 		}
 		if sel.Kind() != types.FieldVal {
 			panic("unexpected selector expression: " + sel.String())
 		}
 
 		ex := unparen(e.X)
-		tv := b.info.Types[ex]
+		tv := fb.info.Types[ex]
 
 		var x wire.Location
 		if !sel.Indirect() && !isPointer(tv.Type) {
-			x = b.location(ex, escaping, block)
+			x = fb.location(ex, escaping, block)
 		} else {
-			ptr := b.expr(ex, block)
+			ptr := fb.expr(ex, block)
 			cptr := wire.NewNilCheckWrapper(ptr)
 			x = wire.AsLocation(cptr)
 		}
@@ -396,18 +414,18 @@ func (b *Builder) location(e ast.Expr, escaping wire.AllocKind, block *wire.Bloc
 		return memaddr
 
 	case *ast.CompositeLit:
-		return b.compositeLit(e, escaping, block)
+		return fb.compositeLit(e, escaping, block)
 	}
 
 	panic(fmt.Sprintf("unexpected address expression: %T", e))
 }
 
-func (b *Builder) compositeLit(e *ast.CompositeLit, escaping wire.AllocKind, block *wire.Block) wire.Var {
-	typ := deref(b.info.Types[e].Type)
+func (fb *FuncBuilder) compositeLit(e *ast.CompositeLit, escaping wire.AllocKind, block *wire.Block) wire.Var {
+	typ := deref(fb.info.Types[e].Type)
 	ut := typ.Underlying()
 	switch st := ut.(type) {
 	case *types.Struct:
-		wireType := b.BuildType(typ)
+		wireType := fb.BuildType(typ)
 		combo := wire.NewCombo(nil, nil, int(e.Pos()))
 		tmp := block.NewAlloc(fmt.Sprintf("$complit_%d", e.Pos()), wireType, int(e.Lbrace), nil, nil, false)
 		tmp.UpdateKind(escaping)
@@ -435,7 +453,7 @@ func (b *Builder) compositeLit(e *ast.CompositeLit, escaping wire.AllocKind, blo
 				pos = elt.Pos()
 			}
 			memberLoc := block.NewMemberLocation(tmp, fieldIndex, int(pos))
-			val := b.expr(valueExpr, block)
+			val := fb.expr(valueExpr, block)
 			set := wire.NewSet(memberLoc, val, int(pos))
 			combo.Stmts = append(combo.Stmts, set)
 		}
@@ -448,16 +466,16 @@ func (b *Builder) compositeLit(e *ast.CompositeLit, escaping wire.AllocKind, blo
 
 // assign 将表达式 e 赋值给位置 loc 的动作降解并追加至 block 中
 // loc 为 nil 是合法的，发生于向匿名变量 _ 赋值时
-func (b *Builder) assign(loc wire.Location, e ast.Expr, pos int, block *wire.Block) {
-	val := b.expr(e, block)
+func (fb *FuncBuilder) assign(loc wire.Location, e ast.Expr, pos int, block *wire.Block) {
+	val := fb.expr(e, block)
 	block.EmitSet(loc, val, pos)
 }
 
 // assign 的多重赋值版本
-func (b *Builder) assignN(locs []wire.Location, exprs []ast.Expr, pos int, block *wire.Block) {
+func (fb *FuncBuilder) assignN(locs []wire.Location, exprs []ast.Expr, pos int, block *wire.Block) {
 	var vals []wire.Expr
 	for _, e := range exprs {
-		val := b.expr(e, block)
+		val := fb.expr(e, block)
 		vals = append(vals, val)
 	}
 
@@ -465,34 +483,34 @@ func (b *Builder) assignN(locs []wire.Location, exprs []ast.Expr, pos int, block
 }
 
 // expr 方法将表达式 e 降解为 wire 指令并追加至 block 中，返回 e 对应的 wire.Value
-func (b *Builder) expr(e ast.Expr, block *wire.Block) wire.Expr {
+func (fb *FuncBuilder) expr(e ast.Expr, block *wire.Block) wire.Expr {
 	e = astutil.Unparen(e)
 
-	tv := b.info.Types[e]
+	tv := fb.info.Types[e]
 
 	// 常量？
 	if tv.Value != nil {
-		return b.constval(tv.Value, tv.Type, int(e.Pos()))
+		return fb.constval(tv.Value, tv.Type, int(e.Pos()))
 	}
 
 	var v wire.Expr
 	if tv.Addressable() {
-		loc := b.location(e, wire.AllocKindRegister, block)
+		loc := fb.location(e, wire.AllocKindRegister, block)
 		v = wire.NewGet(loc, int(e.Pos()))
 	} else {
-		v = b.expr1(e, tv, block)
+		v = fb.expr1(e, tv, block)
 	}
 
 	return v
 }
 
-func (b *Builder) expr1(e ast.Expr, tv types.TypeAndValue, block *wire.Block) wire.Expr {
+func (fb *FuncBuilder) expr1(e ast.Expr, tv types.TypeAndValue, block *wire.Block) wire.Expr {
 	switch e := e.(type) {
 	case *ast.ParenExpr:
-		return b.expr(e.X, block)
+		return fb.expr(e.X, block)
 
 	case *ast.Ident:
-		obj := b.info.Uses[e]
+		obj := fb.info.Uses[e]
 		switch obj := obj.(type) {
 		case *types.Builtin:
 			// 内建函数
@@ -500,7 +518,7 @@ func (b *Builder) expr1(e ast.Expr, tv types.TypeAndValue, block *wire.Block) wi
 
 		case *types.Nil:
 			// nil
-			return b.nilConst(tv.Type, int(e.Pos()))
+			return fb.nilConst(tv.Type, int(e.Pos()))
 		}
 
 		if _, ok := obj.(*types.Var); ok {
@@ -515,23 +533,23 @@ func (b *Builder) expr1(e ast.Expr, tv types.TypeAndValue, block *wire.Block) wi
 	case *ast.UnaryExpr: // 一元算符
 		switch e.Op {
 		case token.AND: // &x, 逃逸
-			loc := b.location(e.X, wire.AllocKindHeap, block)
+			loc := fb.location(e.X, wire.AllocKindHeap, block)
 			if _, ok := unparen(e.X).(*ast.StarExpr); ok {
 				// Todo: p 为空时，&*p 应panic
 				panic("Todo")
 			}
-			asAddr := wire.AsAddr(loc, b.BuildType(tv.Type), int(e.Pos()))
+			asAddr := wire.AsAddr(loc, fb.BuildType(tv.Type), int(e.Pos()))
 			return asAddr
 		case token.ADD: // +x, 等价于 x
-			return b.expr(e.X, block)
+			return fb.expr(e.X, block)
 		case token.NOT: // !x
-			x := b.expr(e.X, block)
+			x := fb.expr(e.X, block)
 			return wire.NewUnop(x, wire.NOT, int(e.OpPos))
 		case token.SUB: // -x
-			x := b.expr(e.X, block)
+			x := fb.expr(e.X, block)
 			return wire.NewUnop(x, wire.NEG, int(e.OpPos))
 		case token.XOR: // ^x
-			x := b.expr(e.X, block)
+			x := fb.expr(e.X, block)
 			return wire.NewUnop(x, wire.XOR, int(e.OpPos))
 
 		default:
@@ -539,8 +557,8 @@ func (b *Builder) expr1(e ast.Expr, tv types.TypeAndValue, block *wire.Block) wi
 		} // :*ast.UnaryExpr */
 
 	case *ast.BinaryExpr: // 二元算符
-		x := b.expr(e.X, block)
-		y := b.expr(e.Y, block)
+		x := fb.expr(e.X, block)
+		y := fb.expr(e.Y, block)
 		switch e.Op {
 		case token.XOR:
 			return wire.NewBiop(x, y, wire.XOR, int(e.OpPos))
@@ -588,7 +606,7 @@ func (b *Builder) expr1(e ast.Expr, tv types.TypeAndValue, block *wire.Block) wi
 		} // :*ast.BinaryExpr */
 
 	case *ast.CallExpr:
-		if b.info.Types[e.Fun].IsType() {
+		if fb.info.Types[e.Fun].IsType() {
 			// 显式类型转换
 			panic("Todo")
 		}
@@ -596,7 +614,7 @@ func (b *Builder) expr1(e ast.Expr, tv types.TypeAndValue, block *wire.Block) wi
 		var callCommon wire.CallCommon
 
 		if id, ok := unparen(e.Fun).(*ast.Ident); ok {
-			switch obj := b.info.Uses[id].(type) {
+			switch obj := fb.info.Uses[id].(type) {
 			case *types.Builtin:
 				// 内置函数调用，如 make、panic 等，runtime.SetFinalizer 也在此处理
 				println(obj)
@@ -604,12 +622,12 @@ func (b *Builder) expr1(e ast.Expr, tv types.TypeAndValue, block *wire.Block) wi
 
 			case *types.Func:
 				callCommon.FnName = obj.FullName()
-				callCommon.Sig = b.buildSig(obj.Type().(*types.Signature))
+				callCommon.Sig = fb.buildSig(obj.Type().(*types.Signature))
 			}
 		}
 
 		if selector, ok := unparen(e.Fun).(*ast.SelectorExpr); ok {
-			sel, ok := b.info.Selections[selector]
+			sel, ok := fb.info.Selections[selector]
 			if ok && sel.Kind() == types.MethodVal {
 				obj := sel.Obj().(*types.Func)
 				recvType := obj.Type().(*types.Signature).Recv().Type()
@@ -626,7 +644,7 @@ func (b *Builder) expr1(e ast.Expr, tv types.TypeAndValue, block *wire.Block) wi
 		}
 
 		for _, v := range e.Args {
-			param := b.expr(v, block)
+			param := fb.expr(v, block)
 			callCommon.Args = append(callCommon.Args, param)
 		}
 		callCommon.Pos = int(e.Pos())
@@ -647,15 +665,15 @@ func (b *Builder) expr1(e ast.Expr, tv types.TypeAndValue, block *wire.Block) wi
 		panic("")
 
 	case *ast.SelectorExpr:
-		sel, ok := b.info.Selections[e]
+		sel, ok := fb.info.Selections[e]
 		if !ok {
 			// 包级标识符，而非结构体字段
-			return b.expr(e.Sel, block)
+			return fb.expr(e.Sel, block)
 		}
 		switch sel.Kind() {
 		case types.FieldVal:
 			ex := unparen(e.X)
-			x := b.expr(ex, block)
+			x := fb.expr(ex, block)
 
 			v := wire.NewMemberValue(x, sel.Index()[0], int(e.Pos()))
 			for i := 1; i < len(sel.Index()); i++ {
@@ -676,7 +694,7 @@ func (b *Builder) expr1(e ast.Expr, tv types.TypeAndValue, block *wire.Block) wi
 		panic("")
 
 	case *ast.CompositeLit:
-		return b.compositeLit(e, wire.AllocKindRegister, block)
+		return fb.compositeLit(e, wire.AllocKindRegister, block)
 
 	case *ast.StarExpr:
 		// Todo
@@ -688,65 +706,65 @@ func (b *Builder) expr1(e ast.Expr, tv types.TypeAndValue, block *wire.Block) wi
 
 // exprN 方法将多返回值表达式 e 降解并追加至 block，返回的 wire.Value 是元组
 // 除自定义的的多返回值函数外，"v, ok" 形式的类型断言、Map查找等也属于多返回值表达式
-func (b *Builder) exprN(e ast.Expr, block *wire.Block) wire.Expr {
+func (fb *FuncBuilder) exprN(e ast.Expr, block *wire.Block) wire.Expr {
 	switch e := e.(type) {
 	case *ast.ParenExpr:
-		return b.exprN(e.X, block)
+		return fb.exprN(e.X, block)
 	}
 	panic(fmt.Sprintf("exprN(%T)", e))
 }
 
-func (b *Builder) buildSig(s *types.Signature) (d wire.FnSig) {
+func (fb *FuncBuilder) buildSig(s *types.Signature) (d wire.FnSig) {
 	for i := 0; i < s.Params().Len(); i++ {
-		t := b.BuildType(s.Params().At(i).Type())
+		t := fb.BuildType(s.Params().At(i).Type())
 		d.Params = append(d.Params, t)
 	}
-	d.Results = b.BuildType(s.Results())
+	d.Results = fb.BuildType(s.Results())
 	return
 }
 
-func (b *Builder) ifStmt(s *ast.IfStmt, f *Func, block *wire.Block) {
+func (fb *FuncBuilder) ifStmt(s *ast.IfStmt, f *Func, block *wire.Block) {
 	if s.Init != nil {
 		block = block.EmitBlock("if.begin", int(s.Pos()))
-		b.stmt(s.Init, f, block)
+		fb.stmt(s.Init, f, block)
 	}
 
-	cond := b.expr(s.Cond, block)
+	cond := fb.expr(s.Cond, block)
 	i := block.EmitIf(cond, int(s.Cond.Pos()))
 
 	if s.Body != nil {
-		b.blockStmt(s.Body.List, f, i.True)
+		fb.blockStmt(s.Body.List, f, i.True)
 	}
 
 	if s.Else != nil {
 		if bs, ok := s.Else.(*ast.BlockStmt); ok {
-			b.blockStmt(bs.List, f, i.False)
+			fb.blockStmt(bs.List, f, i.False)
 		} else {
-			b.stmt(s.Else, f, i.False)
+			fb.stmt(s.Else, f, i.False)
 		}
 	}
 
 }
 
-func (b *Builder) forStmt(s *ast.ForStmt, f *Func, block *wire.Block) {
+func (fb *FuncBuilder) forStmt(s *ast.ForStmt, f *Func, block *wire.Block) {
 	label := fmt.Sprintf("$for%d", int(s.Pos()))
 	block = block.EmitBlock(label+".begin", int(s.Pos()))
 	if s.Init != nil {
-		b.stmt(s.Init, f, block)
+		fb.stmt(s.Init, f, block)
 	}
 
-	cond := b.expr(s.Cond, block)
+	cond := fb.expr(s.Cond, block)
 	i := block.EmitLoop(cond, label, int(s.Cond.Pos()))
 
 	if s.Body != nil {
-		b.blockStmt(s.Body.List, f, i.Body)
+		fb.blockStmt(s.Body.List, f, i.Body)
 	}
 
 	if s.Post != nil {
 		if bs, ok := s.Post.(*ast.BlockStmt); ok {
-			b.blockStmt(bs.List, f, i.Post)
+			fb.blockStmt(bs.List, f, i.Post)
 		} else {
-			b.stmt(s.Post, f, i.Post)
+			fb.stmt(s.Post, f, i.Post)
 		}
 	}
 }

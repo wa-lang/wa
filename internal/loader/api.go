@@ -29,7 +29,7 @@ type Program struct {
 	SSAProgram *ssa.Program
 	SSAMainPkg *ssa.Package
 
-	SpinnerProgram *spinner.Program
+	Spinner *spinner.Spinner
 }
 
 // 单个包对象
