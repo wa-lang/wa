@@ -29,10 +29,10 @@ type Alloc struct {
 	rtype  Type
 	object interface{} // 与该值关联的 AST 结点。对凹语言前端，应为 types.Object
 
-	init   Expr // 初始值
+	Init   Expr // 初始值
 	rawPtr bool // 是否裸指针
 
-	tank *tank
+	tank *Tank
 }
 
 func (i *Alloc) Name() string { return i.name }
@@ -43,16 +43,16 @@ func (i *Alloc) Type() Type {
 		return i.rtype
 	}
 }
-func (i *Alloc) retained() bool { return false }
+func (i *Alloc) Retained() bool { return false }
 func (i *Alloc) String() string {
 	s := ""
 	switch i.kind {
 	case AllocKindRegister:
-		if i.init != nil {
-			if rtimp.hasChunk(i.init.Type()) && !i.init.retained() {
-				s = fmt.Sprintf("var %s↑ %s = %s", i.name, i.Type().Name(), i.init.Name())
+		if i.Init != nil {
+			if i.Init.Type().HasChunk() && !i.Init.Retained() {
+				s = fmt.Sprintf("var %s↑ %s = %s", i.name, i.Type().Name(), i.Init.Name())
 			} else {
-				s = fmt.Sprintf("var %s %s = %s", i.name, i.Type().Name(), i.init.Name())
+				s = fmt.Sprintf("var %s %s = %s", i.name, i.Type().Name(), i.Init.Name())
 			}
 		} else {
 			s = fmt.Sprintf("var %s %s = 0", i.name, i.Type().Name())
@@ -62,8 +62,8 @@ func (i *Alloc) String() string {
 		//if i.init != nil {
 		//panic(fmt.Sprintf("Heap var: %s has init-val", i.name))
 		//}
-		if i.init != nil {
-			s = fmt.Sprintf("var %s %s = alloc.heap(%s:%s)", i.name, i.rtype.Name(), i.init.Name(), i.dtype.Name())
+		if i.Init != nil {
+			s = fmt.Sprintf("var %s %s = alloc.heap(%s:%s)", i.name, i.rtype.Name(), i.Init.Name(), i.dtype.Name())
 		} else {
 			s = fmt.Sprintf("var %s %s = alloc.heap(%s)", i.name, i.rtype.Name(), i.dtype.Name())
 		}
@@ -88,10 +88,10 @@ func (i *Alloc) UpdateKind(t AllocKind) {
 	}
 }
 func (i *Alloc) DataType() Type { return i.dtype }
-func (i *Alloc) Tank() *tank    { return i.tank }
+func (i *Alloc) Tank() *Tank    { return i.tank }
 
 // func (i *Alloc) RefType() Type  { return i.rtype }
-func (i *Alloc) SetInit(init Expr) { i.init = init }
+func (i *Alloc) SetInit(init Expr) { i.Init = init }
 
 //func (i *Alloc) Object() interface{} { return i.object }
 
@@ -100,7 +100,7 @@ func (b *Block) NewAlloc(name string, typ Type, pos int, obj interface{}, init E
 		kind:   AllocKindRegister,
 		name:   name,
 		dtype:  typ,
-		init:   init,
+		Init:   init,
 		rawPtr: rawPtr,
 		object: obj,
 	}
@@ -133,16 +133,16 @@ Imv: Imv 指令，定义一个中间变量，实现了 Expr、Var 接口
 type Imv struct {
 	aStmt
 	name string
-	val  Expr // 初始值
+	Val  Expr // 初始值
 
-	tank *tank
+	tank *Tank
 }
 
 func (i *Imv) Name() string   { return i.name }
-func (i *Imv) Type() Type     { return i.val.Type() }
-func (i *Imv) retained() bool { return i.val.retained() }
+func (i *Imv) Type() Type     { return i.Val.Type() }
+func (i *Imv) Retained() bool { return i.Val.Retained() }
 func (i *Imv) String() string {
-	s := fmt.Sprintf("imv %s = %s", i.name, i.val.Name())
+	s := fmt.Sprintf("imv %s = %s", i.name, i.Val.Name())
 	if i.tank != nil {
 		s += " --- "
 		s += i.tank.String()
@@ -151,12 +151,12 @@ func (i *Imv) String() string {
 }
 func (i *Imv) Kind() AllocKind { return AllocKindRegister }
 func (i *Imv) DataType() Type  { return i.Type() }
-func (i *Imv) Tank() *tank     { return i.tank }
+func (i *Imv) Tank() *Tank     { return i.tank }
 
 func newImv(name string, val Expr, pos int) *Imv {
 	v := &Imv{
 		name: name,
-		val:  val,
+		Val:  val,
 	}
 	v.Stringer = v
 	v.pos = pos
@@ -177,14 +177,14 @@ type Extract struct {
 
 func (i *Extract) Name() string   { return i.String() }
 func (i *Extract) Type() Type     { return i.X.Type().(*Tuple).members[i.Index] }
-func (i *Extract) retained() bool { return i.X.retained() }
+func (i *Extract) Retained() bool { return i.X.Retained() }
 
 func (i *Extract) String() string {
 	return fmt.Sprintf("extract(%s, %d)", i.X.Name(), i.Index)
 }
 func (i *Extract) Kind() AllocKind { return AllocKindRegister }
 func (i *Extract) DataType() Type  { return i.Type() }
-func (i *Extract) Tank() *tank     { return i.X.Tank().member[i.Index] }
+func (i *Extract) Tank() *Tank     { return i.X.Tank().Member[i.Index] }
 
 // 生成一条 Extract 指令
 func newExtract(x *Imv, index int, pos int) *Extract {
@@ -230,7 +230,7 @@ Release: 释放一个 chunk
 **************************************/
 type Release struct {
 	aStmt
-	X register
+	X Register
 }
 
 func (i *Release) String() string {
@@ -238,7 +238,7 @@ func (i *Release) String() string {
 }
 
 // 生成一条 Release 指令
-func newRelease(x register, pos int) *Release {
+func newRelease(x Register, pos int) *Release {
 	v := &Release{X: x}
 	v.Stringer = v
 	v.pos = pos

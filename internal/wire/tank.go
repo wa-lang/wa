@@ -17,32 +17,38 @@ const (
 	KGlobal
 )
 
-type register struct {
-	id      int
-	typ     Type
-	_offset int
-	_kind   RegisterKind
-	_otype  Type
+type Register struct {
+	id  int
+	typ Type
+
+	_kind  RegisterKind
+	_otype Type
 }
 
-func (r *register) String() string {
+func (r *Register) Type() Type { return r.typ }
+
+func (r *Register) Kind() RegisterKind { return r._kind }
+func (r *Register) OType() Type        { return r._otype }
+func (r *Register) String() string {
 	if r.id == -1 || r.typ == nil {
 		panic(fmt.Sprintf("register is invalid: %d", r.id))
 	}
 	return fmt.Sprintf("$r%d", r.id)
 }
 
-type tank struct {
+type Tank struct {
 	typ      Type
-	register register
-	member   []*tank
+	Register Register
+	Member   []*Tank
 }
 
-func (t *tank) String() string {
+func (t *Tank) Type() Type { return t.typ }
+
+func (t *Tank) String() string {
 	var b strings.Builder
-	if len(t.member) > 0 {
+	if len(t.Member) > 0 {
 		b.WriteByte('[')
-		for i, m := range t.member {
+		for i, m := range t.Member {
 			if i > 0 {
 				b.WriteString(", ")
 			}
@@ -50,19 +56,19 @@ func (t *tank) String() string {
 		}
 		b.WriteByte(']')
 	} else {
-		b.WriteString(fmt.Sprintf("$r%d", t.register.id))
+		b.WriteString(fmt.Sprintf("$r%d", t.Register.id))
 	}
 	return b.String()
 }
 
-func (t *tank) raw() []register {
-	if len(t.member) == 0 {
-		return []register{t.register}
+func (t *Tank) Raw() []Register {
+	if len(t.Member) == 0 {
+		return []Register{t.Register}
 	}
 
-	regs := []register{}
-	for _, m := range t.member {
-		regs = append(regs, m.raw()...)
+	regs := []Register{}
+	for _, m := range t.Member {
+		regs = append(regs, m.Raw()...)
 	}
 	return regs
 }

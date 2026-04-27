@@ -210,10 +210,10 @@ func varUsedInStmt(stmt Stmt, v Var) bool {
 		}
 
 	case *Alloc:
-		return exprContainsVar(s.init, v)
+		return exprContainsVar(s.Init, v)
 
 	case *Imv:
-		return exprContainsVar(s.val, v)
+		return exprContainsVar(s.Val, v)
 
 	case *Discard:
 		return false

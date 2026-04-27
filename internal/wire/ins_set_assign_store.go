@@ -110,7 +110,7 @@ type Assign struct {
 	aStmt
 	Lhs     []Var
 	Rhs     []Expr
-	rhsType []Type
+	RhsType []Type
 }
 
 func (i *Assign) String() string {
@@ -128,12 +128,12 @@ func (i *Assign) String() string {
 
 		if lh == nil {
 			sb.WriteRune('_')
-			if _, ok := rh.(*Const); !ok && rh.retained() && rtimp.hasChunk(i.rhsType[j]) {
+			if _, ok := rh.(*Const); !ok && rh.Retained() && i.RhsType[j].HasChunk() {
 				sb.WriteString("↓")
 			}
 		} else {
 			sb.WriteString(lh.Name())
-			if _, ok := rh.(*Const); !ok && !rh.retained() && rtimp.hasChunk(i.rhsType[j]) {
+			if _, ok := rh.(*Const); !ok && !rh.Retained() && i.RhsType[j].HasChunk() {
 				sb.WriteString("↑")
 			}
 		}
@@ -161,7 +161,7 @@ func newAssignN(lhs []Var, rhs []Expr, pos int) *Assign {
 	v.Rhs = rhs
 	v.pos = pos
 
-	v.rhsType = make([]Type, len(lhs))
+	v.RhsType = make([]Type, len(lhs))
 	if len(lhs) != len(rhs) {
 		if len(rhs) != 1 {
 			panic("rhs is not a tuple")
@@ -170,10 +170,10 @@ func newAssignN(lhs []Var, rhs []Expr, pos int) *Assign {
 		if len(tuple.members) != len(lhs) {
 			panic("tuple members length mismatch")
 		}
-		copy(v.rhsType, tuple.members)
+		copy(v.RhsType, tuple.members)
 	} else {
 		for i := range rhs {
-			v.rhsType[i] = rhs[i].Type()
+			v.RhsType[i] = rhs[i].Type()
 		}
 	}
 	return v
@@ -192,7 +192,7 @@ type Store struct {
 }
 
 func (i *Store) String() string {
-	if _, ok := i.Val.(*Const); !ok && !i.Val.retained() && rtimp.hasChunk(i.Val.Type()) {
+	if _, ok := i.Val.(*Const); !ok && !i.Val.Retained() && i.Val.Type().HasChunk() {
 		return fmt.Sprintf("store(%s↑, %s)", i.Loc.Name(), i.Val.Name())
 	} else {
 		return fmt.Sprintf("store(%s, %s)", i.Loc.Name(), i.Val.Name())

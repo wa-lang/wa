@@ -18,7 +18,7 @@ type Get struct {
 
 func (i *Get) Name() string   { return i.String() }
 func (i *Get) Type() Type     { return i.Loc.DataType() }
-func (i *Get) retained() bool { return false }
+func (i *Get) Retained() bool { return false }
 func (i *Get) String() string {
 	if v, ok := i.Loc.(Var); ok && v.Kind() == AllocKindRegister {
 		return fmt.Sprintf("get(%s)", i.Loc.Name())
@@ -63,7 +63,7 @@ func (i *Load) Type() Type {
 		panic(fmt.Sprintf("Invalid Loc.Type():%s", i.Loc.Type().Name()))
 	}
 }
-func (i *Load) retained() bool { return false }
+func (i *Load) Retained() bool { return false }
 func (i *Load) String() string {
 	return fmt.Sprintf("load(%s)", i.Loc.Name())
 }

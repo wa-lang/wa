@@ -77,7 +77,7 @@ type Unop struct {
 
 func (i *Unop) Name() string   { return i.String() }
 func (i *Unop) Type() Type     { return i.X.Type() }
-func (i *Unop) retained() bool { return false }
+func (i *Unop) Retained() bool { return false }
 func (i *Unop) String() string { return fmt.Sprintf("%s%s", i.Op.String(), i.X.Name()) }
 
 // 生成一条 Unop 指令
@@ -115,7 +115,7 @@ func (i *Biop) Type() Type {
 		return i.X.Type()
 	}
 }
-func (i *Biop) retained() bool { return i.Type().Kind() == TypeKindString }
+func (i *Biop) Retained() bool { return i.Type().Kind() == TypeKindString }
 func (i *Biop) String() string {
 	return fmt.Sprintf("(%s %s %s)", i.X.Name(), i.Op.String(), i.Y.Name())
 }
@@ -146,7 +146,7 @@ func NewBiop(x, y Expr, op OpCode, pos int) *Biop {
 //
 //func (i *Retain) Name() string   { return i.String() }
 //func (i *Retain) Type() Type     { return i.X.Type() }
-//func (i *Retain) retained() bool { panic("") }
+//func (i *Retain) Retained() bool { panic("") }
 //func (i *Retain) String() string { return fmt.Sprintf("retain(%s)", i.X.Name()) }
 //
 //// 生成一条 Retain 指令
@@ -172,7 +172,7 @@ DupRef: DupRef 指令，引用复制，DupRef 指令实现了 Expr，返回 X
 //
 //func (i *DupRef) Name() string   { return i.String() }
 //func (i *DupRef) Type() Type     { return i.X.Type() }
-//func (i *DupRef) retained() bool { panic("") }
+//func (i *DupRef) Retained() bool { panic("") }
 //func (i *DupRef) String() string { return fmt.Sprintf("dupref(%s, %s)", i.X.Name(), i.Imv.Name()) }
 //
 //// 生成一条 DupRef 指令

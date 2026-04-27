@@ -21,8 +21,8 @@ type Function struct {
 	InternalName string // 函数的内部名称(含包路径)，是其身份标识，应进行名字修饰
 	ExternalName string // 函数的导出名称，非导出函数应为 nil
 
-	params  []*Alloc // 参数列表
-	results []*Alloc // 返回值列表
+	Params  []*Alloc // 参数列表
+	Results []*Alloc // 返回值列表
 	Body    *Block   // 函数体，为 nil 表明该函数为外部导入
 
 	scope Scope  // 匿名函数的父域为 Block，全局（非匿名）函数的父域为 Module
@@ -30,10 +30,11 @@ type Function struct {
 
 	StartPos, EndPos int
 
-	freeCommonRegs []register
-	freeChunkRegs  []register
-	chunkRegs      []register
-	commonRegs     []register
+	ChunkRegs  []Register
+	CommonRegs []Register
+
+	freeCommonRegs []Register
+	freeChunkRegs  []Register
 	regCount       int
 }
 
@@ -41,13 +42,13 @@ type Function struct {
 func (f *Function) ScopeKind() ScopeKind { return ScopeKindFunc }
 func (f *Function) ParentScope() Scope   { return f.scope }
 func (f *Function) Lookup(obj interface{}, level AllocKind) *Alloc {
-	for _, p := range f.params {
+	for _, p := range f.Params {
 		if p.object == obj {
 			p.UpdateKind(level)
 			return p
 		}
 	}
-	for _, r := range f.results {
+	for _, r := range f.Results {
 		if r.object == obj {
 			r.UpdateKind(level)
 			return r
@@ -62,7 +63,7 @@ func (f *Function) Format(tab string, sb *strings.Builder) {
 	sb.WriteString(f.InternalName)
 
 	sb.WriteRune('(')
-	for i, v := range f.params {
+	for i, v := range f.Params {
 		if i > 0 {
 			sb.WriteString(", ")
 		}
@@ -77,7 +78,7 @@ func (f *Function) Format(tab string, sb *strings.Builder) {
 	sb.WriteRune(')')
 
 	sb.WriteString(" => (")
-	for i, v := range f.results {
+	for i, v := range f.Results {
 		if i > 0 {
 			sb.WriteString(", ")
 		}
@@ -97,14 +98,14 @@ func (f *Function) Format(tab string, sb *strings.Builder) {
 // 添加函数参数
 func (f *Function) AddParam(name string, typ Type, pos int, obj interface{}, rawPtr bool) *Alloc {
 	v := f.Body.NewAlloc(name, typ, pos, obj, nil, rawPtr)
-	f.params = append(f.params, v)
+	f.Params = append(f.Params, v)
 	return v
 }
 
 // 添加返回值
 func (f *Function) AddResult(name string, typ Type, pos int, obj interface{}, rawPtr bool) *Alloc {
 	v := f.Body.NewAlloc(name, typ, pos, obj, nil, rawPtr)
-	f.results = append(f.results, v)
+	f.Results = append(f.Results, v)
 	return v
 }
 
@@ -139,24 +140,24 @@ func (f *Function) EndBody() {
 	fb := f.Body
 
 	// 参数置换：
-	for i, param := range f.params {
-		hasChunk := rtimp.hasChunk(param.DataType())
+	for i, param := range f.Params {
+		hasChunk := param.DataType().HasChunk()
 		if param.kind != AllocKindRegister || hasChunk && ob.varUsageRange(param).first != -1 { //Todo: 待优化，若参数中携带的引用未被重新赋值则无需置换  ob.varStored(param)
 			np := *param
 			np.Stringer = &np
 			np.kind = AllocKindRegister
 
 			param.name = "$" + param.name
-			param.init = &np
+			param.Init = &np
 
 			unpack_stmt(param, false, fb, nil)
 
-			f.params[i] = &np
+			f.Params[i] = &np
 		}
 	}
 
 	// 返回置换
-	for _, ret := range f.results {
+	for _, ret := range f.Results {
 		fb.emit(ret)
 	}
 	ob.Label = _FN_START
@@ -201,7 +202,7 @@ func (f *Function) EndBody() {
 	// 插入真返回指令
 	var retVars []*Alloc
 	var ret_exprs []Expr
-	for _, r := range f.results {
+	for _, r := range f.Results {
 		switch r.kind {
 		case AllocKindRegister:
 			ret_exprs = append(ret_exprs, r)
@@ -218,13 +219,13 @@ func (f *Function) EndBody() {
 	}
 	fb.EmitReturn(ret_exprs, f.EndPos)
 
-	for _, p := range f.params {
+	for _, p := range f.Params {
 		f.insertDiscard_stmt(p, false, fb)
 	}
 	f.insertDiscard_block(fb)
 
 	// 虚拟寄存器
-	for _, p := range f.params {
+	for _, p := range f.Params {
 		p.tank = rtimp.initTank(p.Type(), KImv)
 		f.allocVR_tank(p.tank, true)
 	}
@@ -240,7 +241,7 @@ func (f *Function) EndBody() {
 	// chunk release
 	retRegs := make(map[int]bool)
 	for _, v := range retVars {
-		raw := v.Tank().raw()
+		raw := v.Tank().Raw()
 		for _, reg := range raw {
 			retRegs[reg.id] = true
 		}
@@ -248,7 +249,7 @@ func (f *Function) EndBody() {
 	for i := len(fb.Stmts) - 1; i >= 0; i-- {
 		if ret, ok := fb.Stmts[i].(*Return); ok {
 			fb.Stmts = fb.Stmts[:i]
-			for _, r := range f.chunkRegs {
+			for _, r := range f.ChunkRegs {
 				if v, ok := retRegs[r.id]; ok && v {
 					continue
 				}
@@ -266,7 +267,7 @@ func (f *Function) EndBody() {
 		println(sb.String())
 	}
 
-	rtimp.BuildFunction(f)
+	//rtimp.BuildFunction(f)
 }
 
 func (f *Function) retRepalce(stmt Stmt) {
@@ -282,9 +283,9 @@ func (f *Function) retRepalce(stmt Stmt) {
 
 		for i, s := range stmt.Stmts {
 			if ret_stmt, ok := s.(*Return); ok {
-				if len(f.results) > 0 && len(ret_stmt.Results) > 0 {
-					lhs := make([]Location, len(f.results))
-					for i, lh := range f.results {
+				if len(f.Results) > 0 && len(ret_stmt.Results) > 0 {
+					lhs := make([]Location, len(f.Results))
+					for i, lh := range f.Results {
 						lhs[i] = lh
 					}
 
@@ -330,10 +331,10 @@ func getReplace_stmt(stmt Stmt) {
 		}
 
 	case *Alloc:
-		stmt.init = getReplace_expr(stmt.init)
+		stmt.Init = getReplace_expr(stmt.Init)
 
 	case *Imv:
-		stmt.val = getReplace_expr(stmt.val)
+		stmt.Val = getReplace_expr(stmt.Val)
 
 	case *Set:
 		for i := range stmt.Lhs {
@@ -565,10 +566,10 @@ func arc_stmt(b *Block, s Stmt, inloop bool) {
 		arc_block(s, inloop)
 
 	case *Alloc:
-		s.init = arc_expr(b, s.init, inloop, false)
+		s.Init = arc_expr(b, s.Init, inloop, false)
 
 	case *Imv:
-		s.val = arc_expr(b, s.val, inloop, false)
+		s.Val = arc_expr(b, s.Val, inloop, false)
 
 	case *Set:
 		for i := range s.Lhs {
@@ -676,7 +677,7 @@ func arc_expr(block *Block, e Expr, inloop bool, replace bool) (ret Expr) {
 		panic(fmt.Sprintf("Todo: %s", e.String()))
 	}
 
-	if ret.retained() && replace {
+	if ret.Retained() && replace {
 		tmp := block.NewAlloc(block.newTempVarName(), ret.Type(), ret.Pos(), nil, ret, false)
 		combo := NewCombo(nil, tmp, ret.Pos())
 		combo.Stmts = append(combo.Stmts, tmp)
@@ -766,10 +767,10 @@ func unpack_stmt(s Stmt, inloop bool, d *Block, pre *[]Stmt) {
 		}
 
 	case *Alloc:
-		s.init = unpack_expr(s.init, inloop, d, pre)
-		if s.Kind() != AllocKindRegister && s.init != nil {
-			init := s.init
-			s.init = nil
+		s.Init = unpack_expr(s.Init, inloop, d, pre)
+		if s.Kind() != AllocKindRegister && s.Init != nil {
+			init := s.Init
+			s.Init = nil
 			if pre == nil {
 				d.emit(s)
 				d.emit(newStore(s, init, s.pos))
@@ -786,7 +787,7 @@ func unpack_stmt(s Stmt, inloop bool, d *Block, pre *[]Stmt) {
 		}
 
 	case *Imv:
-		s.val = unpack_expr(s.val, inloop, d, pre)
+		s.Val = unpack_expr(s.Val, inloop, d, pre)
 		if pre == nil {
 			d.emit(s)
 		} else {
@@ -1313,13 +1314,13 @@ func (f *Function) allocVR_imv(v *Imv, inloop bool) {
 	f.allocVR_tank(v.tank, inloop)
 }
 
-func (f *Function) allocVR_tank(t *tank, inloop bool) {
-	if len(t.member) == 0 {
-		t.register.id = f.allocRegister(t.register.typ)
+func (f *Function) allocVR_tank(t *Tank, inloop bool) {
+	if len(t.Member) == 0 {
+		t.Register.id = f.allocRegister(t.Register.typ)
 		return
 	}
 
-	for _, m := range t.member {
+	for _, m := range t.Member {
 		f.allocVR_tank(m, inloop)
 	}
 }
@@ -1333,7 +1334,7 @@ func (f *Function) allocRegister(typ Type) (id int) {
 		} else {
 			id = f.regCount
 			f.regCount++
-			f.chunkRegs = append(f.chunkRegs, register{id: id, typ: typ})
+			f.ChunkRegs = append(f.ChunkRegs, Register{id: id, typ: typ})
 		}
 	} else {
 		free := false
@@ -1350,23 +1351,23 @@ func (f *Function) allocRegister(typ Type) (id int) {
 		if !free {
 			id = f.regCount
 			f.regCount++
-			f.commonRegs = append(f.commonRegs, register{id: id, typ: typ})
+			f.CommonRegs = append(f.CommonRegs, Register{id: id, typ: typ})
 		}
 	}
 	return
 }
 
-func (f *Function) dropVR_tank(t *tank) {
-	if len(t.member) > 0 {
-		for _, m := range t.member {
+func (f *Function) dropVR_tank(t *Tank) {
+	if len(t.Member) > 0 {
+		for _, m := range t.Member {
 			f.dropVR_tank(m)
 		}
 	} else {
-		f.dropRegister(t.register)
+		f.dropRegister(t.Register)
 	}
 }
 
-func (f *Function) dropRegister(r register) {
+func (f *Function) dropRegister(r Register) {
 	if r.id == -1 {
 		panic("dropRegister: id == -1")
 	}

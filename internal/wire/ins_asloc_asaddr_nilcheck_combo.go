@@ -53,7 +53,7 @@ type asAddr struct {
 
 func (i *asAddr) Name() string   { return i.String() }
 func (i *asAddr) Type() Type     { return i.typ }
-func (i *asAddr) retained() bool { return false }
+func (i *asAddr) Retained() bool { return false }
 func (i *asAddr) String() string { return fmt.Sprintf("asaddr(%s)", i.loc.Name()) }
 
 func AsAddr(loc Location, typ Type, pos int) Expr {
@@ -79,7 +79,7 @@ type NilCheckWrapper struct {
 
 func (i *NilCheckWrapper) Name() string   { return i.String() }
 func (i *NilCheckWrapper) Type() Type     { return i.X.Type() }
-func (i *NilCheckWrapper) retained() bool { return false }
+func (i *NilCheckWrapper) Retained() bool { return false }
 func (i *NilCheckWrapper) String() string { return fmt.Sprintf("nilcheckwrapper(%s)", i.X.Name()) }
 
 func NewNilCheckWrapper(x Expr) Expr {
@@ -126,10 +126,10 @@ type Combo struct {
 
 func (i *Combo) Name() string    { return i.String() }
 func (i *Combo) Type() Type      { return i.Result.Type() }
-func (i *Combo) retained() bool  { return i.Result.retained() }
+func (i *Combo) Retained() bool  { return i.Result.Retained() }
 func (i *Combo) DataType() Type  { return i.Result.DataType() }
 func (i *Combo) Kind() AllocKind { return i.Result.Kind() }
-func (i *Combo) Tank() *tank     { return i.Result.Tank() }
+func (i *Combo) Tank() *Tank     { return i.Result.Tank() }
 
 func (i *Combo) String() string {
 	var sb strings.Builder

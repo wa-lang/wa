@@ -97,6 +97,7 @@ type Type interface {
 	Name() string    //类型名，自定义类型应包含包路径，需要进行名字修饰
 	Kind() TypeKind  //该类型的类别
 	Equal(Type) bool //判断该类型与输入类型是否相等，注意该比较仅关心类别和结构，不关心类型名
+	HasChunk() bool
 }
 
 ///**************************************
@@ -141,7 +142,7 @@ type Expr interface {
 	Pos() int
 
 	// 保留
-	retained() bool
+	Retained() bool
 }
 
 /**************************************
@@ -159,7 +160,7 @@ type Var interface {
 	Expr
 	Location
 	Kind() AllocKind
-	Tank() *tank
+	Tank() *Tank
 }
 
 /**************************************
@@ -174,7 +175,7 @@ type Const struct {
 func (p *Const) Name() string   { return p.name }
 func (p *Const) Type() Type     { return p.typ }
 func (p *Const) Pos() int       { return p.pos }
-func (p *Const) retained() bool { return false }
+func (p *Const) Retained() bool { return false }
 
 /**************************************
 FnSig: 函数签名

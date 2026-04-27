@@ -17,7 +17,7 @@ type MemberLocation struct {
 	Id int
 
 	types  *Types
-	member StructMember
+	member *StructMember
 }
 
 func (i *MemberLocation) Name() string   { return i.String() }
@@ -49,12 +49,12 @@ type MemberValue struct {
 	X  Expr
 	Id int
 
-	member StructMember
+	member *StructMember
 }
 
 func (i *MemberValue) Name() string   { return i.String() }
 func (i *MemberValue) Type() Type     { return i.member.Type }
-func (i *MemberValue) retained() bool { return false }
+func (i *MemberValue) Retained() bool { return false }
 func (i *MemberValue) String() string {
 	return fmt.Sprintf("member_value(%s, %s)", i.X.Name(), i.member.Name)
 }
@@ -83,12 +83,12 @@ type Member struct {
 	aStmt
 	X      Var
 	Id     int
-	member StructMember
+	member *StructMember
 }
 
 func (i *Member) Name() string   { return i.String() }
 func (i *Member) Type() Type     { return i.member.Type }
-func (i *Member) retained() bool { return false }
+func (i *Member) Retained() bool { return false }
 func (i *Member) String() string {
 	if tank := i.Tank(); tank != nil {
 		return fmt.Sprintf("%s.%s:%s", i.X.Name(), i.member.Name, tank.String())
@@ -98,10 +98,10 @@ func (i *Member) String() string {
 }
 func (i *Member) Kind() AllocKind { return AllocKindRegister }
 func (i *Member) DataType() Type  { return i.Type() }
-func (i *Member) Tank() *tank {
+func (i *Member) Tank() *Tank {
 	tank := i.X.Tank()
 	if tank != nil {
-		return i.X.Tank().member[i.Id]
+		return i.X.Tank().Member[i.Id]
 	}
 	return nil
 }
@@ -135,13 +135,13 @@ type MemberAddr struct {
 	X  Expr
 	Id int
 
-	member StructMember
+	member *StructMember
 	typ    Type
 }
 
 func (i *MemberAddr) Name() string   { return i.String() }
 func (i *MemberAddr) Type() Type     { return i.typ }
-func (i *MemberAddr) retained() bool { return false }
+func (i *MemberAddr) Retained() bool { return false }
 func (i *MemberAddr) String() string { return fmt.Sprintf("%s->%s", i.X.Name(), i.member.Name) }
 func (i *MemberAddr) DataType() Type { return i.member.Type }
 
